@@ -29,7 +29,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 def each (infile):
 	name = os.path.basename(infile)[:-3].upper()
-	fout.write ("## %s\n" % name)
+	fout.write ("\n## %s\n" % name)
 	blocks = re.findall (r'((\"\"\"|\'\'\')\s*\n@name:[\s\S]+?\2)', open(infile).read())
 	for block in blocks:
 		block = block[0][3:-3]
@@ -41,17 +41,30 @@ def each (infile):
 			line = lines[i]
 			if line.startswith ("@"):
 				if fieldname == 'name':
-					fout.write ("### %s\n" % content)
+					fout.write ("\n### %s\n" % content)
 				elif fieldname:
 					fout.write ("#### %s\n" % fieldname)
 					fout.write ("%s\n" % content)
 
 				fields    = line[1:].split(':')
 				fieldname = fields[0].strip()
+
 				if len(fields) > 1:
-					content = ''.join (fields[1:]) + '  \n'
+					c = ''.join(fields[1:]).strip()
+					if not c:
+						content = ''
+					else:
+						if fieldname == 'name':
+							content = ''.join(fields[1:])
+						else:
+							content = '-' + ''.join (fields[1:]) + '\n'
 			else:
-				content += line.lstrip("\t")
+				if fieldname == 'name':
+					content += ' ' + line.lstrip("\t")
+				else:
+					l = line.lstrip(" \t")
+					if not l: continue
+					content += '- ' + l + '\n'
 
 
 def doctoc ():
