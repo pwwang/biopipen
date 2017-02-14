@@ -1,3 +1,34 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Documentation for bioprocs v0.0.1](#documentation-for-bioprocs-v001)
+  - [TCGA](#tcga)
+    - [pSample2SubmitterID](#psample2submitterid)
+      - [description](#description)
+      - [input](#input)
+      - [output](#output)
+    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
+      - [description](#description-1)
+      - [input](#input-1)
+      - [output](#output-1)
+      - [requires](#requires)
+  - [DEG](#deg)
+    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [description](#description-2)
+      - [input](#input-2)
+      - [output](#output-2)
+      - [args](#args)
+      - [requires](#requires-1)
+    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [description](#description-3)
+      - [input](#input-3)
+      - [output](#output-3)
+      - [args](#args-1)
+      - [requires](#requires-2)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 # Documentation for bioprocs v0.0.1
 A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)

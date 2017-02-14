@@ -68,9 +68,11 @@ def each (infile):
 
 
 def doctoc ():
-	pass
-
-
+	from subprocess import Popen, PIPE
+	try:
+		Popen (['doctoc', dstfile], stdin=PIPE, stderr=PIPE, stdout=PIPE)
+	except:
+		pass
 
 def main ():
 	header()
