@@ -13,7 +13,22 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `mdfile:file`: the metadata file
 
 #### output
-- `outdir`:      the directory containing submitter-id named files
+- `outdir:file`: the directory containing submitter-id named files
+
+
+###  pConvertExpFiles2Matrix
+#### description
+- convert TCGA expression files to expression matrix, and convert sample name to submitter id
+
+#### input
+- `dir:file`:    the directory containing the samples
+- `mdfile:file`: the metadata file
+
+#### output
+- `outfile:file`:the output matrix
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 
 
 ## DEG
