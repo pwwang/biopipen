@@ -13,19 +13,29 @@
       - [input](#input-1)
       - [output](#output-1)
       - [requires](#requires)
-  - [DEG](#deg)
-    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
       - [description](#description-2)
       - [input](#input-2)
       - [output](#output-2)
-      - [args](#args)
-      - [requires](#requires-1)
-    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+  - [GSEA](#gsea)
+    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
       - [description](#description-3)
       - [input](#input-3)
       - [output](#output-3)
-      - [args](#args-1)
+      - [requires](#requires-1)
+  - [DEG](#deg)
+    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [description](#description-4)
+      - [input](#input-4)
+      - [output](#output-4)
+      - [args](#args)
       - [requires](#requires-2)
+    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [description](#description-5)
+      - [input](#input-5)
+      - [output](#output-5)
+      - [args](#args-1)
+      - [requires](#requires-3)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -57,6 +67,36 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### output
 - `outfile:file`:the output matrix
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
+
+
+###  pConvertMutFiles2Matrix
+#### description
+- convert TCGA mutation files (vcf.gz) to mut matrix, and convert sample name to submitter id
+
+#### input
+- `dir:file`:    the directory containing the samples
+- `mdfile:file`: the metadata file
+
+#### output
+- `outfile:file`:the output matrix
+
+
+## GSEA
+
+###  pMTarget2GTargetMat
+#### description
+- Convert motif target from MSigDB database (i.e. c3.tft.v5.2.entrez.gmt from GSEA to gene-target matrix
+- You also have to have a map of motif name to genes (https://github.com/andrewdyates/transcription_factors/blob/master/gsea_msigdb/transfac_id_to_genes_raw.tab)
+
+#### input
+- `gmtfile:file`: typically c3.tft.v5.2.entrez.gmt (have to be in entrez format)
+- `mapfile:file`: the motif-gene name map file
+
+#### output
+- `outfile:file`: the gene-target matrix
 
 #### requires
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)

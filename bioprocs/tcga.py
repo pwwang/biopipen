@@ -96,6 +96,7 @@ for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
 		line = line.strip()
 		if not line or "\\t" not in line: continue
 		(gene, exp) = line.split("\\t")
+		exp = "%.3f" % float(exp)
 		gene = gene.split('.')[0]
 		if not genes.has_key(gene):continue
 		gene = genes[gene]
@@ -111,4 +112,78 @@ for gene, expvec in exps.iteritems():
 fout.close()
 """
 
+"""
+@name:
+	pConvertMutFiles2Matrix
+@description:
+	convert TCGA mutation files (vcf.gz) to mut matrix, and convert sample name to submitter id
+@input:
+	`dir:file`:    the directory containing the samples
+	`mdfile:file`: the metadata file
+@output:
+	`outfile:file`:the output matrix
+"""
+pConvertMutFiles2Matrix = proc()
+pConvertMutFiles2Matrix.input     = "dir:file, mdfile:file"
+pConvertMutFiles2Matrix.output    = "outfile:file:mutmat.txt"
+pConvertMutFiles2Matrix.defaultSh = "python"
+pConvertMutFiles2Matrix.args      = {'minCount': 2}
+pConvertMutFiles2Matrix.script    = """
+import json, glob, os
+import gzip
+import mygene
+
+sam_meta = None
+sample_ids = {}
+with open ("{{mdfile}}") as f:
+	sam_meta = json.load (f)
+
+fout = open ("{{outfile}}", 'w')
+ext = ''
+for sam in sam_meta:
+	if not ext:
+		ext = os.path.splitext (sam['file_name'])[1]
+	assoc_entities = sam['associated_entities']
+	sid1           = assoc_entities[0]['entity_submitter_id'][:15]
+	sid2           = assoc_entities[1]['entity_submitter_id'][:15]
+	sid            = sid1 if sid1[-2] == '0' else sid2
+	sample_ids[sam['file_name']] = sid
+
+gz = ext == '.gz'
+muts  = {}
+bns   = ['sample']
+
+for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
+	bn = os.path.basename (samfile)
+	if not sample_ids.has_key(bn): continue
+	sid = sample_ids[bn]
+	bns.append (sid)
+	f = gzip.open (samfile) if gz else open (samfile)
+				
+	for line in f:
+		line = line.strip()
+		if line.startswith ('#') or not line: continue
+		
+		items = line.split("\\t")
+		mut   = "%s:%s" % (items[0], items[1])
+
+		if not muts.has_key(mut):
+			muts[mut] = {sid: 1}
+		else:
+			muts[mut][sid] = 1
+
+	f.close()
+
+fout.write ("\\t".join(bns) + "\\n")
+for mut, sids in muts.iteritems():
+	if len(sids) < {{proc.args.minCount}}: continue
+	fout.write (mut)
+	for s in bns:
+		if sids.has_key(s):
+			fout.write ("\\t1")
+		else:
+			fout.write ("\\t0")
+	fout.write ("\\n")
+fout.close()
+"""
 
