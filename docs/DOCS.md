@@ -17,25 +17,38 @@
       - [description](#description-2)
       - [input](#input-2)
       - [output](#output-2)
-  - [GSEA](#gsea)
-    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
+  - [CHIPSEQ](#chipseq)
+    - [pPeakToRegPotential](#ppeaktoregpotential)
       - [description](#description-3)
       - [input](#input-3)
       - [output](#output-3)
-      - [requires](#requires-1)
-  - [DEG](#deg)
-    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [args](#args)
+  - [GSEA](#gsea)
+    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
       - [description](#description-4)
       - [input](#input-4)
       - [output](#output-4)
-      - [args](#args)
-      - [requires](#requires-2)
-    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [args](#args-1)
+      - [requires](#requires-1)
+    - [pSSGSEA](#pssgsea)
       - [description](#description-5)
       - [input](#input-5)
       - [output](#output-5)
-      - [args](#args-1)
+      - [args](#args-2)
+      - [requires](#requires-2)
+  - [DEG](#deg)
+    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [description](#description-6)
+      - [input](#input-6)
+      - [output](#output-6)
+      - [args](#args-3)
       - [requires](#requires-3)
+    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [description](#description-7)
+      - [input](#input-7)
+      - [output](#output-7)
+      - [args](#args-4)
+      - [requires](#requires-4)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -84,6 +97,43 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`:the output matrix
 
 
+## CHIPSEQ
+
+###  pPeakToRegPotential
+#### description
+- Convert peaks to regulatory potential score for each gene
+- The formula is:
+- ```
+- -(0.5 + 4*di/d0)
+- PC = sum (pi * e                  )
+- ```
+- Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4489297/
+
+#### input
+- `peakfile:file`: The BED/peak file for peaks
+- `genefile:file`: The BED file for gene coordinates
+
+#### output
+- `outfile:file`: The regulatory potential file for each gene
+
+#### args
+- `intensity`: `pi` in the formula. Boolean value, whether use the peak intensity or not, default: `True`,
+- `geneformat`: The format for `genefile`, default: `ucsc+gz`. It could be:
+- - ucsc or ucsc+gz: typically, you can download from http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
+- - bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 4th column required as gene identity.
+- `peakformat`: The format for `peakfile`, default: `peak`. It could be:
+- - peak or peak+gz: (either [narrowPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format12) or [broadPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format13), the 7th column will be used as intensity
+- - bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 5th column will be used as intensity.
+- `window`: `2 * d0` in the formula. The window where the peaks fall in will be consided, default: `100000`. 
+- ```
+- |--------- window ----------|
+- |---- d0 -----|
+- |--- 50K --- TSS --- 50K ---|
+- ^ (peak center)
+- |-- di --|
+- ```
+
+
 ## GSEA
 
 ###  pMTarget2GTargetMat
@@ -97,6 +147,33 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### output
 - `outfile:file`: the gene-target matrix
+
+#### args
+- `species`: The species used to convert gene names, default: human
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
+
+
+###  pSSGSEA
+#### description
+- Single sample GSEA
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for file format
+
+#### input
+- `gctfile:file`: the expression file
+- `gmtfile:file`: the gmtfile for gene sets
+
+#### output
+- `outdir:file`: the output directory
+- - `report.txt`: the enrichment report for each Gene set.
+- - `RES_<GeneSet>.png`: the running ES plot for <GeneSet>
+- - `normP_<GeneSet>.png`: the norminal P value plot for <GeneSet>
+
+#### args
+- `weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
+- `padjust`:   P value adjustment method, default 'bonferroni'. Can be "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"
+- `nperm`:     Number of permutations. Default: 10000
 
 #### requires
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
