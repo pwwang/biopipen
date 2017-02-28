@@ -3,58 +3,110 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Documentation for bioprocs v0.0.1](#documentation-for-bioprocs-v001)
-  - [TCGA](#tcga)
-    - [pSample2SubmitterID](#psample2submitterid)
+  - [WXS](#wxs)
+  - [WEB](#web)
+    - [pDownloadPost](#pdownloadpost)
       - [description](#description)
       - [input](#input)
       - [output](#output)
-    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
+      - [args](#args)
+      - [requires](#requires)
+    - [pDownloadGet](#pdownloadget)
       - [description](#description-1)
       - [input](#input-1)
+      - [args](#args-1)
       - [output](#output-1)
-      - [requires](#requires)
-    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
+  - [TCGA](#tcga)
+    - [pSample2SubmitterID](#psample2submitterid)
       - [description](#description-2)
       - [input](#input-2)
       - [output](#output-2)
-  - [CHIPSEQ](#chipseq)
-    - [pPeakToRegPotential](#ppeaktoregpotential)
+    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
       - [description](#description-3)
       - [input](#input-3)
       - [output](#output-3)
-      - [args](#args)
-  - [GSEA](#gsea)
-    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
+      - [requires](#requires-1)
+    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
       - [description](#description-4)
       - [input](#input-4)
       - [output](#output-4)
-      - [args](#args-1)
-      - [requires](#requires-1)
-    - [pSSGSEA](#pssgsea)
+  - [CHIPSEQ](#chipseq)
+    - [pPeakToRegPotential](#ppeaktoregpotential)
       - [description](#description-5)
       - [input](#input-5)
       - [output](#output-5)
       - [args](#args-2)
-      - [requires](#requires-2)
-  - [DEG](#deg)
-    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+  - [GSEA](#gsea)
+    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
       - [description](#description-6)
       - [input](#input-6)
       - [output](#output-6)
       - [args](#args-3)
-      - [requires](#requires-3)
-    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [requires](#requires-2)
+    - [pSSGSEA](#pssgsea)
       - [description](#description-7)
       - [input](#input-7)
       - [output](#output-7)
       - [args](#args-4)
+      - [requires](#requires-3)
+  - [DEG](#deg)
+    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [description](#description-8)
+      - [input](#input-8)
+      - [output](#output-8)
+      - [args](#args-5)
       - [requires](#requires-4)
+    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [description](#description-9)
+      - [input](#input-9)
+      - [output](#output-9)
+      - [args](#args-6)
+      - [requires](#requires-5)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
 # Documentation for bioprocs v0.0.1
 A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
+
+## WXS
+
+## WEB
+
+###  pDownloadPost
+#### description
+- Download results by submitting a form, supporting pagination.
+
+#### input
+- `url`: the URL contains the form
+- `submitbtn`: the submit button to click to submit the form (use Xpath).
+- `nextbtn`: the button for next page (use Xpath)
+- `params`: the params used to fill the form (JSON string or transformed from dict by json.dumps).
+
+#### output
+- `outdir:file`: The directory saves the results
+
+#### args
+- `interval`: seconds to wait between fetching each page. Default: 1
+
+#### requires
+- - [`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
+- - [`Phantomjs`](http://phantomjs.org/)
+
+
+###  pDownloadGet
+#### description
+- Download results by urls.
+
+#### input
+- `url`: the URLs to download
+
+#### args
+- `keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
+
+#### output
+- `outdir:file`: The directory saves the results
+
 
 ## TCGA
 
