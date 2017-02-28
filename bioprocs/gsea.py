@@ -18,7 +18,7 @@ from pyppl import proc
 """
 pMTarget2GTargetMat = proc ()
 pMTarget2GTargetMat.input     = "gmtfile:file, mapfile:file"
-pMTarget2GTargetMat.output    = "outfile:file:gtmat.txt"
+pMTarget2GTargetMat.output    = "outfile:file:gtmat-{{#}}.txt"
 pMTarget2GTargetMat.args      = {'species': 'human'}
 pMTarget2GTargetMat.defaultSh = "python"
 pMTarget2GTargetMat.script    = """

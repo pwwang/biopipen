@@ -25,13 +25,13 @@ from pyppl import proc
 		- peak or peak+gz: (either [narrowPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format12) or [broadPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format13), the 7th column will be used as intensity
 		- bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 5th column will be used as intensity.
 	`window`: `2 * d0` in the formula. The window where the peaks fall in will be consided, default: `100000`. 
-	```
+```
 		|--------- window ----------|
 		|---- d0 -----|
 		|--- 50K --- TSS --- 50K ---|
 		     ^ (peak center)
 		     |-- di --|
-	```
+```
 """
 pPeakToRegPotential = proc ()
 pPeakToRegPotential.input     = "peakfile:file, genefile:file"

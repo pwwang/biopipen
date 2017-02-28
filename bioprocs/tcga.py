@@ -13,7 +13,7 @@ from pyppl import proc
 """
 pSample2SubmitterID = proc ()
 pSample2SubmitterID.input     = "dir:file, mdfile:file"
-pSample2SubmitterID.output    = "outdir:file:out"
+pSample2SubmitterID.output    = "outdir:file:out-{{#}}"
 pSample2SubmitterID.defaultSh = "python"
 pSample2SubmitterID.script    = """
 import json, glob, os
@@ -30,7 +30,7 @@ for sam in sam_meta:
 		ext = os.path.splitext (sam['file_name'])[1]
 	sample_ids[sam['file_name']] = sam['associated_entities'][0]['entity_submitter_id'][:15]
 
-for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
+for samfile in glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*", "*" + ext)):
 	bn = os.path.basename (samfile)
 	newfile = os.path.join ("{{outdir}}", sample_ids[bn] + ext)
 	if os.path.exists (newfile):
@@ -53,7 +53,7 @@ for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
 """
 pConvertExpFiles2Matrix = proc()
 pConvertExpFiles2Matrix.input     = "dir:file, mdfile:file"
-pConvertExpFiles2Matrix.output    = "outfile:file:expmat.txt"
+pConvertExpFiles2Matrix.output    = "outfile:file:expmat-{{#}}.txt"
 pConvertExpFiles2Matrix.defaultSh = "python"
 pConvertExpFiles2Matrix.script    = """
 import json, glob, os
@@ -125,7 +125,7 @@ fout.close()
 """
 pConvertMutFiles2Matrix = proc()
 pConvertMutFiles2Matrix.input     = "dir:file, mdfile:file"
-pConvertMutFiles2Matrix.output    = "outfile:file:mutmat.txt"
+pConvertMutFiles2Matrix.output    = "outfile:file:mutmat-{{#}}.txt"
 pConvertMutFiles2Matrix.defaultSh = "python"
 pConvertMutFiles2Matrix.args      = {'minCount': 2}
 pConvertMutFiles2Matrix.script    = """
