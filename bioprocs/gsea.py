@@ -107,6 +107,130 @@ fout.close()
 
 """
 @name:
+	pIntersectGMT
+@description:
+	Get the intersect gene set from multiple gmt files
+	To do intersect for more than 2 files: gmtfile1, gmtfile2, gmtfile3:
+	```
+	pIntersectGMT.input = {pIntersectGMT.input: channel.create([(gmtfile1, gmtfile2)])}
+	
+	pIntersectGMT2 = pIntersectGMT.copy()
+	pIntersectGMT2.depends = pIntersectGMT
+	pIntersectGMT2.input   = {pIntersectGMT2.input.keys()[0]: lambda ch: ch.insert(0, gmtfile3)}
+	```
+@input:
+	`gmtfile1:file`: The 1st gmt file
+	`gmtfile2:file`: The 2nd gmt file
+@output:
+	`outdir:file`: the output gmtfile
+@args:
+	`geneformat`: The gene names in gene set. Default: "symbol,alias". Available values see mygene docs.
+	`gz`: whether the files are with gz format, default: False. If `gz = True`, output file will be also gzipped.
+	`species`: The species, used for gene name conversion in mygene, default: human
+@requires:
+	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
+"""
+pIntersectGMT = proc()
+pIntersectGMT.input  = "gmtfile1:file, gmtfile2:file"
+pIntersectGMT.output = "outfile:file:intersected.gmt{{proc.args.gz | (lambda x: '.gz' if x else '')(_)}}"
+pIntersectGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
+pIntersectGMT.script = """
+#!/usr/bin/env python
+import gzip
+from mygene import MyGeneInfo
+mg = MyGeneInfo()
+openfunc = open if not {{proc.args.gz}} else gzip.open
+def readGMT (gmtfile):
+	ret = {}
+	with openfunc (gmtfile) as f:
+		for line in f:
+			line = line.strip()
+			if not line or line.startswith('#'): continue
+			items = line.split("\\t")
+			ret[items.pop(0)] = [items.pop(1), items]
+	return ret
+	
+gmt1 = readGMT("{{gmtfile1}}")
+gmt2 = readGMT("{{gmtfile2}}")
+keys = list(set(gmt1) & set(gmt2))
+
+with openfunc ("{{outfile}}", "w") as fout:
+	for key in keys:
+		comm1 = gmt1[key][0]
+		comm2 = gmt2[key][0]
+		comm  = comm1+"|"+comm2 if comm1!=comm2 else comm1
+		inter = list (set(gmt1[key][1]) & set(gmt2[key][1]))
+		genes = mg.querymany (inter, scopes="{{proc.args.geneformat}}", fields="symbol", species="{{proc.args.species}}")
+		genes = [gene['symbol'] for gene in genes if gene.has_key('symbol')]
+		if not inter: continue
+		fout.write ("%s\\t%s\\t%s\\n" % (key, comm, "\\t".join(inter)))
+		
+"""
+
+"""
+@name:
+	pUnionGMT
+@description:
+	Get the union gene set from multiple gmt files
+	To do union for more than 2 files: gmtfile1, gmtfile2, gmtfile3:
+	```
+	pUnionGMT.input = {pIntersectGMT.input: channel.create([(gmtfile1, gmtfile2)])}
+	
+	pUnionGMT2 = pIntersectGMT.copy()
+	pUnionGMT2.depends = pIntersectGMT
+	pUnionGMT2.input   = {pUnionGMT.input.keys()[0]: lambda ch: ch.insert(0, gmtfile3)}
+	```
+@input:
+	`gmtfile1:file`: The 1st gmt file
+	`gmtfile2:file`: The 2nd gmt file
+@output:
+	`outdir:file`: the output gmtfile
+@args:
+	`geneformat`: The gene names in gene set. Default: "symbol,alias". Available values see mygene docs.
+	`gz`: whether the files are with gz format, default: False. If `gz = True`, output file will be also gzipped.
+	`species`: The species, used for gene name conversion in mygene, default: human
+@requires:
+	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
+"""
+pUnionGMT = proc()
+pUnionGMT.input  = "gmtfile1:file, gmtfile2:file"
+pUnionGMT.output = "outfile:file:unioned.gmt{{proc.args.gz | (lambda x: '.gz' if x else '')(_)}}"
+pUnionGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
+pUnionGMT.script = """
+#!/usr/bin/env python
+import gzip
+from mygene import MyGeneInfo
+mg = MyGeneInfo()
+openfunc = open if not {{proc.args.gz}} else gzip.open
+def readGMT (gmtfile):
+	ret = {}
+	with openfunc (gmtfile) as f:
+		for line in f:
+			line = line.strip()
+			if not line or line.startswith('#'): continue
+			items = line.split("\\t")
+			ret[items.pop(0)] = [items.pop(1), items]
+	return ret
+	
+gmt1 = readGMT("{{gmtfile1}}")
+gmt2 = readGMT("{{gmtfile2}}")
+keys = list(set(gmt1) & set(gmt2))
+
+with openfunc ("{{outfile}}", "w") as fout:
+	for key in keys:
+		comm1 = gmt1[key][0]
+		comm2 = gmt2[key][0]
+		comm  = comm1+"|"+comm2 if comm1!=comm2 else comm1
+		inter = list (set(gmt1[key][1]) | set(gmt2[key][1]))
+		genes = mg.querymany (inter, scopes="{{proc.args.geneformat}}", fields="symbol", species="{{proc.args.species}}")
+		genes = [gene['symbol'] for gene in genes if gene.has_key('symbol')]
+		if not inter: continue
+		fout.write ("%s\\t%s\\t%s\\n" % (key, comm, "\\t".join(inter)))
+		
+"""
+
+"""
+@name:
 	pSSGSEA
 @description:
 	Single sample GSEA
@@ -197,6 +321,9 @@ EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{proc.ar
 	RES <- cumsum(tag.indicator * correl.vector * norm.tag - no.tag.indicator * norm.no.tag)      
 	max.ES <- max(RES)
 	min.ES <- min(RES)
+	if (is.na(max.ES) || is.na(min.ES)) {
+		return(list(ES = 0, arg.ES = 1, RES = RES, indicator = tag.indicator))   
+	}
 	if (max.ES > - min.ES) {
 	#      ES <- max.ES
 		ES <- signif(max.ES, digits = 5)
@@ -219,8 +346,8 @@ ESPlot = function (es, gs, outprefix) {
 		main.string <- paste("Gene Set: ", gset)
 		minRES = min (esret$RES)
 		maxRES = max (esret$RES)
-		if (maxRES < 0.3) maxRES <- 0.3
-		if (minRES > -0.3) minRES <- -0.3
+		if (is.na(maxRES) || maxRES < 0.3) maxRES <- 0.3
+		if (is.na(minRES) || minRES > -0.3) minRES <- -0.3
 		delta <- (maxRES - minRES)*.5
 		minplot <- minRES - delta
 		maxplot <- maxRES
@@ -256,7 +383,8 @@ NPvalPlot = function (es, outprefix) {
 		if (esrets[[1]]$ES < 0) {
 			nes = - esrets[[1]]$ES / mean (esrets[[1]]$RES[esrets[[1]]$RES < 0])
 		}
-		sub.string <- paste("ES =", signif(esrets[[1]]$ES, digits = 3), ", NES =", signif(nes, digits=3), ", Nom. p-val=", signif(esrets[[1]]$p, digits = 3), ", FDR=", signif(esrets[[1]]$q, digits = 3), sep="", collapse="")
+		#sub.string <- paste("ES =", signif(esrets[[1]]$ES, digits = 3), ", NES =", signif(nes, digits=3), ", Nom. p-val=", signif(esrets[[1]]$p, digits = 3), ", FDR=", signif(esrets[[1]]$q, digits = 3), sep="", collapse="")
+		sub.string <- paste("ES =", signif(esrets[[1]]$ES, digits = 3), ", NES =", signif(nes, digits=3), ", Nom. p-val=", signif(esrets[[1]]$p, digits = 3), sep="", collapse="")
 
 		phi = vector (length = Ns, mode = "numeric")
 		for (i in 1:Ns) {
@@ -291,15 +419,21 @@ ESWithPerm = function (exp, gs, nperm = {{proc.args.nperm}}) {
     ess = vector (length = nperm, mode = "numeric")
     ret[[ gset ]] = vector (length = nperm, mode = "list")
     ret[[ gset ]][[1]] = EnrichmentScore (geneList, gs[[gset]], correl.vector = corrVec)
+    ret[[ gset ]][[1]]$hits = geneList[as.logical(ret[[ gset ]][[1]]$indicator)]
     ess[1] = ret[[ gset ]][[1]]$ES
-    for (i in 1:nperm-1) {
+    for (i in 1:(nperm-1)) {
       geneList1 = sample(geneList)
       ret[[ gset ]][[i+1]] = EnrichmentScore (geneList1, gs[[gset]], correl.vector = corrVec)
+      #ret[[ gset ]][[i+1]]$hits = geneList1[as.logical(ret[[ gset ]][[i+1]]$tag.indicator)]
       ess[i+1] = ret[[ gset ]][[i+1]]$ES
     }
-    ess.sorted = sort (ess, index.return = T)
+    #ess.sorted = sort (ess, index.return = T)
     for (i in 1:nperm) {
-      ret[[ gset ]][[i]]$p = ess.sorted$ix[i] / nperm
+      if (ess[i] > 0) {
+        ret[[ gset ]][[i]]$p = sum (ess >= ess[i]) / nperm
+      } else {
+        ret[[ gset ]][[i]]$p = sum (ess <= ess[i]) / nperm
+      }
     }
   }
   
@@ -326,16 +460,19 @@ ExportResult = function (es, nes, outfile) {
 	pval = vector(length = 0, mode = "numeric")
 	fdr  = vector(length = 0, mode = "numeric")
 	maxI = integer(length = 0)
+	
 	for (gset in names(es)) {
 		esret = es[[gset]][[1]]
 		ES    = c (ES, esret$ES)
 		pval  = c (pval, esret$p)
 		fdr   = c (fdr, esret$q)
 		maxI  = c (maxI, esret$arg.ES)
+		Hits  = paste(esret$hits, collapse=",")
 	}
-	outmat = data.frame (cbind(ES = ES, NES = nes, Pval = pval, Qval = fdr, PeatAt = maxI))
+	outmat = data.frame (cbind(ES = ES, NES = nes, Pval = pval, Qval = fdr, PeatAt = maxI, Hits=Hits))
 	rownames (outmat) = names(es)
 	write.table (outmat, outfile, sep= "\\t", quote=F, col.names=T, row.names=T)
+	#write.table (es, outfile, append=T, sep= "\\t", quote=F, col.names=T, row.names=T)
 }
 dir.create("{{outdir}}", showWarnings = F, recursive = T)
 exp = readGCT("{{gctfile}}")

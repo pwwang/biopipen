@@ -64,25 +64,13 @@ browser.quit()
 @args:
 	`keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
 @output:
-	`outdir:file`: The directory saves the results
+	`outfile:file`: The output file
 """
 pDownloadGet = proc ()
 pDownloadGet.input  = "url"
-pDownloadGet.args   = {'keepname': True}
-pDownloadGet.output = "outdir:file:outdir"
+pDownloadGet.output = "outfile:file:{{url | __import__('os').path.basename(_).replace('?', '__Q__').replace('&', '__N__')  }}"
 pDownloadGet.script = """
 #!/usr/bin/env python
-import time, urllib, os
-from urlparse import urlparse
-url = urlparse('''{{url}}''')
-ext = os.path.splitext (url.path)[1]
-if {{proc.args.keepname}}:
-	name = os.path.basename (url.path)
-else:
-	name = "{{#}}%s" % ext
-if not os.path.exists("{{outdir}}"):
-	os.makedirs("{{outdir}}")
-outfile = os.path.join ("{{outdir}}", name)
-
-urllib.urlretrieve (url.geturl(), outfile)
+import urllib
+urllib.urlretrieve ('''{{url}}''', "{{outfile}}")
 """
