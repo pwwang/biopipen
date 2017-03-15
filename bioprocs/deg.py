@@ -57,13 +57,14 @@ write (paste(deg, opv, sep="\\t"), file = "{{degfile}}", append=T)
 	`degfile:file`: the output file containing DEGs
 @args:
 	`pval`: the cutoff of DEGs (default: .05)
+	`paired`: whether the samples are paired
 @requires:
 	[limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
 """
 pCallByLimmaFromFiles = proc ()
 pCallByLimmaFromFiles.input     = "expdir:file, group1, group2, group1name, group2name"
 pCallByLimmaFromFiles.output    = "degfile:file:{{expdir.fn}}.deg"
-pCallByLimmaFromFiles.args      = {'pval': 0.05}
+pCallByLimmaFromFiles.args      = {'pval': 0.05, 'paired': False}
 pCallByLimmaFromFiles.defaultSh = "Rscript"
 pCallByLimmaFromFiles.script    = """
 library('limma')
@@ -93,12 +94,29 @@ for (i in 1:length (group2)) {
 	tmp  = read.table (file, sep="\\t", header=F, row.names = 1)
 	expmatrix = cbind (expmatrix, tmp)
 }
-
-group   = c(rep("{{group1name}}", length(group1)), rep("{{group2name}}", length(group2)))
-design = model.matrix (~group)
+pairs = vector(mode="numeric")
+group = vector(mode="character")
+ng    = length(group1)
+if ({{proc.args.paired | str(_).upper()}}) {
+	for (i in 1:ng) {
+		pairs = c(pairs, i, i)
+		group = c(group, "{{group1name}}", "{{group2name}}")
+	}
+	pairs = factor(pairs)
+	group = factor(group)
+	design = model.matrix(~pairs+group)
+} else {
+	group   = c(rep("{{group1name}}", ng), rep("{{group2name}}", ng))
+	group = factor(group)
+	design = model.matrix(~group)
+}
 fit    = lmFit (expmatrix, design)
 fit    = eBayes(fit)
-ret    = topTable(fit, n=length(fit$p.value))
+if ({{proc.args.paired | str(_).upper()}}) {
+	ret    = topTable(fit, n=length(fit$p.value), coef=paste("group", "{{group1name}}", sep=""))
+} else {
+	ret    = topTable(fit, n=length(fit$p.value))
+}
 out    = ret [ret$P.Value < {{proc.args.pval}}, ]
 write.table (out, "{{degfile}}", quote=F, sep="\t")
 """
