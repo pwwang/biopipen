@@ -82,7 +82,7 @@ def each (infile):
 def doctoc ():
 	from subprocess import Popen, PIPE
 	try:
-		Popen (['doctoc', dstfile], stdin=PIPE, stderr=PIPE, stdout=PIPE)
+		Popen (['doctoc', dstfile, '--maxlevel', '3'], stdin=PIPE, stderr=PIPE, stdout=PIPE)
 	except:
 		pass
 
