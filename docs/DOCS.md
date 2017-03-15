@@ -30,38 +30,74 @@
       - [description](#description-4)
       - [input](#input-4)
       - [output](#output-4)
-  - [CHIPSEQ](#chipseq)
-    - [pPeakToRegPotential](#ppeaktoregpotential)
+  - [ALGORITHM](#algorithm)
+    - [pRWR](#prwr)
       - [description](#description-5)
       - [input](#input-5)
       - [output](#output-5)
       - [args](#args-2)
-  - [GSEA](#gsea)
-    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
+      - [requires](#requires-2)
+  - [COMMON](#common)
+    - [pSort](#psort)
       - [description](#description-6)
       - [input](#input-6)
       - [output](#output-6)
       - [args](#args-3)
-      - [requires](#requires-2)
-    - [pSSGSEA](#pssgsea)
+  - [CHIPSEQ](#chipseq)
+    - [pPeakToRegPotential](#ppeaktoregpotential)
       - [description](#description-7)
       - [input](#input-7)
       - [output](#output-7)
       - [args](#args-4)
-      - [requires](#requires-3)
-  - [DEG](#deg)
-    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+  - [GSEA](#gsea)
+    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
       - [description](#description-8)
       - [input](#input-8)
       - [output](#output-8)
       - [args](#args-5)
-      - [requires](#requires-4)
-    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [requires](#requires-3)
+    - [pIntersectGMT](#pintersectgmt)
       - [description](#description-9)
       - [input](#input-9)
       - [output](#output-9)
       - [args](#args-6)
+      - [requires](#requires-4)
+    - [pUnionGMT](#puniongmt)
+      - [description](#description-10)
+      - [input](#input-10)
+      - [output](#output-10)
+      - [args](#args-7)
       - [requires](#requires-5)
+    - [pSSGSEA](#pssgsea)
+      - [description](#description-11)
+      - [input](#input-11)
+      - [output](#output-11)
+      - [args](#args-8)
+      - [requires](#requires-6)
+  - [SNPARRAY](#snparray)
+    - [pSNP6Genotype](#psnp6genotype)
+      - [description](#description-12)
+      - [input](#input-12)
+      - [output](#output-12)
+      - [requires](#requires-7)
+    - [pGenoToAvInput](#pgenotoavinput)
+      - [description](#description-13)
+      - [input](#input-13)
+      - [output](#output-13)
+      - [requires](#requires-8)
+  - [DEG](#deg)
+    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [description](#description-14)
+      - [input](#input-14)
+      - [output](#output-14)
+      - [args](#args-9)
+      - [requires](#requires-9)
+    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [description](#description-15)
+      - [input](#input-15)
+      - [output](#output-15)
+      - [args](#args-10)
+      - [requires](#requires-10)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -105,7 +141,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
 
 #### output
-- `outdir:file`: The directory saves the results
+- `outfile:file`: The output file
 
 
 ## TCGA
@@ -147,6 +183,49 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### output
 - `outfile:file`:the output matrix
+
+
+## ALGORITHM
+
+###  pRWR
+#### description
+- Do random walk with restart (RWR)
+
+#### input
+- `Wfile:file`: The adjecent matrix
+- `Efile:file`: The start vector
+
+#### output
+- `outfile:file`: The output of final probabilities
+
+#### args
+- `c`:       The restart probability
+- `eps`:     The convergent cutoff || R(i+1) - R(i) ||
+- `tmax`:    Max iterations to stop
+- `Wformat`: The format of Wfile, rds or mat/txt, default: rds
+- `Eformat`: The format of Efile, rds or mat/txt, default: rds
+- `Rformat`: The format of the output file, rds or mat/txt, default: rds
+- `normW`:   Weather to normalize W or not, default False. Laplacian normalization is used (more to add).
+- `normE`:   Weather to normalize E or not, default False. E will be normalized as: E = E/sum(E)
+
+#### requires
+- if normW = True, R package `NetPreProc` is required.
+
+
+## COMMON
+
+###  pSort
+#### description
+- Sort file using linux command `sort`
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `sort-args`: The arguments used by `sort`
 
 
 ## CHIPSEQ
@@ -207,6 +286,60 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 
 
+###  pIntersectGMT
+#### description
+- Get the intersect gene set from multiple gmt files
+- To do intersect for more than 2 files: gmtfile1, gmtfile2, gmtfile3:
+- ```
+- pIntersectGMT.input = {pIntersectGMT.input: channel.create([(gmtfile1, gmtfile2)])}
+- pIntersectGMT2 = pIntersectGMT.copy()
+- pIntersectGMT2.depends = pIntersectGMT
+- pIntersectGMT2.input   = {pIntersectGMT2.input.keys()[0]: lambda ch: ch.insert(0, gmtfile3)}
+- ```
+
+#### input
+- `gmtfile1:file`: The 1st gmt file
+- `gmtfile2:file`: The 2nd gmt file
+
+#### output
+- `outdir:file`: the output gmtfile
+
+#### args
+- `geneformat`: The gene names in gene set. Default: "symbol,alias". Available values see mygene docs.
+- `gz`: whether the files are with gz format, default: False. If `gz = True`, output file will be also gzipped.
+- `species`: The species, used for gene name conversion in mygene, default: human
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
+
+
+###  pUnionGMT
+#### description
+- Get the union gene set from multiple gmt files
+- To do union for more than 2 files: gmtfile1, gmtfile2, gmtfile3:
+- ```
+- pUnionGMT.input = {pIntersectGMT.input: channel.create([(gmtfile1, gmtfile2)])}
+- pUnionGMT2 = pIntersectGMT.copy()
+- pUnionGMT2.depends = pIntersectGMT
+- pUnionGMT2.input   = {pUnionGMT.input.keys()[0]: lambda ch: ch.insert(0, gmtfile3)}
+- ```
+
+#### input
+- `gmtfile1:file`: The 1st gmt file
+- `gmtfile2:file`: The 2nd gmt file
+
+#### output
+- `outdir:file`: the output gmtfile
+
+#### args
+- `geneformat`: The gene names in gene set. Default: "symbol,alias". Available values see mygene docs.
+- `gz`: whether the files are with gz format, default: False. If `gz = True`, output file will be also gzipped.
+- `species`: The species, used for gene name conversion in mygene, default: human
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
+
+
 ###  pSSGSEA
 #### description
 - Single sample GSEA
@@ -229,6 +362,40 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
+
+
+## SNPARRAY
+
+###  pSNP6Genotype
+#### description
+- Call genotypes from GenomeWideSNP_6 CEL file
+
+#### input
+- `celfile:file`: the CEL file
+
+#### output
+- `outfile:file`: the outfile containing probe name and genotypes
+- format: <Probe name>\t<genotype>
+- <genotype> = 0: AA, 1: AB, 2: BB
+
+#### requires
+- [bioconductor-crlmm](http://bioconductor.org/packages/release/bioc/html/crlmm.html)
+
+
+###  pGenoToAvInput
+#### description
+- Convert the genotype called by pSNP6Genotype to [ANNOVAR input file](http://annovar.openbioinformatics.org/en/latest/user-guide/input/#annovar-input-file) using dbSNP identifiers.	
+
+#### input
+- `genofile:file`: the genofile generated by pSNP6Genotype, must be sorted by probe names
+- `annofile:flie`: the annotation file downloaded from http://www.affymetrix.com/support/technical/annotationfilesmain.affx
+- Could be in .gz format
+
+#### output
+- `outfile:file`: the avinput file
+
+#### requires
+- [python-read2](https://github.com/pwwang/read2)
 
 
 ## DEG
@@ -270,6 +437,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### args
 - `pval`: the cutoff of DEGs (default: .05)
+- `paired`: whether the samples are paired
 
 #### requires
 - [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
