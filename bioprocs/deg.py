@@ -12,7 +12,7 @@ from pyppl import proc
 	`group1name`:   the name of group1
 	`group2name`:   the name of group2
 @output:
-	degfile:file: the output file containing DEGs
+	`degfile:file`: the output file containing DEGs
 @args:
 	`pval`: the cutoff of DEGs (default: .05)
 @requires:

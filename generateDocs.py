@@ -31,6 +31,7 @@ def each (infile):
 	name = os.path.basename(infile)[:-3].upper()
 	fout.write ("\n## %s\n" % name)
 	blocks = re.findall (r'((\"\"\"|\'\'\')\s*\n@name:[\s\S]+?\2)', open(infile).read())
+	code = False
 	for block in blocks:
 		block = block[0][3:-3]
 		lines = block.split("\n")
@@ -64,7 +65,18 @@ def each (infile):
 				else:
 					l = line.lstrip(" \t")
 					if not l: continue
-					content += '- ' + l + '\n'
+					if l.startswith ("```"):
+						if not code:
+							code = True
+							content += l + '\n'
+						else:
+							code = False
+							content += l + '\n'
+					else:
+						if code:
+							content += line+ '\n'
+						else:
+							content += '- ' + l + '\n'
 
 
 def doctoc ():

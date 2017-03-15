@@ -16,8 +16,8 @@ from pyppl import proc
 @args:
 	`interval`: seconds to wait between fetching each page. Default: 1
 @requires:
-	- [`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
-	- [`Phantomjs`](http://phantomjs.org/)
+	[`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
+	[`Phantomjs`](http://phantomjs.org/)
 """
 pDownloadPost = proc ()
 pDownloadPost.input  = "url, submitbtn, nextbtn, params"
