@@ -4,100 +4,191 @@
 
 - [Documentation for bioprocs v0.0.1](#documentation-for-bioprocs-v001)
   - [WXS](#wxs)
-  - [WEB](#web)
-    - [pDownloadPost](#pdownloadpost)
+    - [pTrimmomaticPE](#ptrimmomaticpe)
       - [description](#description)
       - [input](#input)
       - [output](#output)
       - [args](#args)
       - [requires](#requires)
-    - [pDownloadGet](#pdownloadget)
+    - [pTrimmomaticSE](#ptrimmomaticse)
       - [description](#description-1)
       - [input](#input-1)
-      - [args](#args-1)
       - [output](#output-1)
-  - [TCGA](#tcga)
-    - [pSample2SubmitterID](#psample2submitterid)
+      - [args](#args-1)
+      - [requires](#requires-1)
+    - [pAlignPEByBWA](#palignpebybwa)
       - [description](#description-2)
       - [input](#input-2)
       - [output](#output-2)
-    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
+      - [args](#args-2)
+      - [requires](#requires-2)
+    - [pAlignSEByBWA](#palignsebybwa)
       - [description](#description-3)
       - [input](#input-3)
       - [output](#output-3)
-      - [requires](#requires-1)
-    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
+      - [args](#args-3)
+      - [requires](#requires-3)
+    - [pSortSam](#psortsam)
       - [description](#description-4)
       - [input](#input-4)
       - [output](#output-4)
-  - [ALGORITHM](#algorithm)
-    - [pRWR](#prwr)
+      - [args](#args-4)
+      - [requires](#requires-4)
+    - [pMarkDup](#pmarkdup)
       - [description](#description-5)
       - [input](#input-5)
       - [output](#output-5)
-      - [args](#args-2)
-      - [requires](#requires-2)
-  - [COMMON](#common)
-    - [pSort](#psort)
+      - [args](#args-5)
+      - [requires](#requires-5)
+    - [pIndexBam](#pindexbam)
       - [description](#description-6)
       - [input](#input-6)
       - [output](#output-6)
-      - [args](#args-3)
-  - [CHIPSEQ](#chipseq)
-    - [pPeakToRegPotential](#ppeaktoregpotential)
+      - [args](#args-6)
+      - [requires](#requires-6)
+    - [pCNVnator](#pcnvnator)
       - [description](#description-7)
       - [input](#input-7)
       - [output](#output-7)
-      - [args](#args-4)
-  - [GSEA](#gsea)
-    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
+      - [args](#args-7)
+      - [requires](#requires-7)
+  - [WEB](#web)
+    - [pDownloadPost](#pdownloadpost)
       - [description](#description-8)
       - [input](#input-8)
       - [output](#output-8)
-      - [args](#args-5)
-      - [requires](#requires-3)
-    - [pIntersectGMT](#pintersectgmt)
+      - [args](#args-8)
+      - [requires](#requires-8)
+    - [pDownloadGet](#pdownloadget)
       - [description](#description-9)
       - [input](#input-9)
+      - [args](#args-9)
       - [output](#output-9)
-      - [args](#args-6)
-      - [requires](#requires-4)
-    - [pUnionGMT](#puniongmt)
+  - [TCGA](#tcga)
+    - [pSample2SubmitterID](#psample2submitterid)
       - [description](#description-10)
       - [input](#input-10)
       - [output](#output-10)
-      - [args](#args-7)
-      - [requires](#requires-5)
-    - [pSSGSEA](#pssgsea)
+    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
       - [description](#description-11)
       - [input](#input-11)
       - [output](#output-11)
-      - [args](#args-8)
-      - [requires](#requires-6)
-  - [SNPARRAY](#snparray)
-    - [pSNP6Genotype](#psnp6genotype)
+      - [requires](#requires-9)
+    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
       - [description](#description-12)
       - [input](#input-12)
       - [output](#output-12)
-      - [requires](#requires-7)
-    - [pGenoToAvInput](#pgenotoavinput)
+  - [ALGORITHM](#algorithm)
+    - [pRWR](#prwr)
       - [description](#description-13)
       - [input](#input-13)
       - [output](#output-13)
-      - [requires](#requires-8)
-  - [DEG](#deg)
-    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [args](#args-10)
+      - [requires](#requires-10)
+  - [GATK](#gatk)
+    - [pRealignerTargetCreator](#prealignertargetcreator)
       - [description](#description-14)
       - [input](#input-14)
       - [output](#output-14)
-      - [args](#args-9)
-      - [requires](#requires-9)
-    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [args](#args-11)
+      - [requires](#requires-11)
+    - [pIndelRealigner](#pindelrealigner)
       - [description](#description-15)
       - [input](#input-15)
       - [output](#output-15)
-      - [args](#args-10)
-      - [requires](#requires-10)
+      - [args](#args-12)
+      - [requires](#requires-12)
+    - [pBaseRecalibrator](#pbaserecalibrator)
+      - [description](#description-16)
+      - [input](#input-16)
+      - [output](#output-16)
+      - [args](#args-13)
+      - [requires](#requires-13)
+    - [pPrintReads](#pprintreads)
+      - [description](#description-17)
+      - [input](#input-17)
+      - [output](#output-17)
+      - [args](#args-14)
+      - [requires](#requires-14)
+    - [pHaplotypeCaller](#phaplotypecaller)
+      - [description](#description-18)
+      - [input](#input-18)
+      - [output](#output-18)
+      - [args](#args-15)
+      - [requires](#requires-15)
+    - [pSelectVariants](#pselectvariants)
+      - [description](#description-19)
+      - [input](#input-19)
+      - [output](#output-19)
+      - [args](#args-16)
+      - [requires](#requires-16)
+    - [pVariantFiltration](#pvariantfiltration)
+      - [description](#description-20)
+      - [input](#input-20)
+      - [output](#output-20)
+      - [args](#args-17)
+      - [requires](#requires-17)
+  - [COMMON](#common)
+    - [pSort](#psort)
+      - [description](#description-21)
+      - [input](#input-21)
+      - [output](#output-21)
+      - [args](#args-18)
+  - [CHIPSEQ](#chipseq)
+    - [pPeakToRegPotential](#ppeaktoregpotential)
+      - [description](#description-22)
+      - [input](#input-22)
+      - [output](#output-22)
+      - [args](#args-19)
+  - [GSEA](#gsea)
+    - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
+      - [description](#description-23)
+      - [input](#input-23)
+      - [output](#output-23)
+      - [args](#args-20)
+      - [requires](#requires-18)
+    - [pIntersectGMT](#pintersectgmt)
+      - [description](#description-24)
+      - [input](#input-24)
+      - [output](#output-24)
+      - [args](#args-21)
+      - [requires](#requires-19)
+    - [pUnionGMT](#puniongmt)
+      - [description](#description-25)
+      - [input](#input-25)
+      - [output](#output-25)
+      - [args](#args-22)
+      - [requires](#requires-20)
+    - [pSSGSEA](#pssgsea)
+      - [description](#description-26)
+      - [input](#input-26)
+      - [output](#output-26)
+      - [args](#args-23)
+      - [requires](#requires-21)
+  - [SNPARRAY](#snparray)
+    - [pSNP6Genotype](#psnp6genotype)
+      - [description](#description-27)
+      - [input](#input-27)
+      - [output](#output-27)
+      - [requires](#requires-22)
+    - [pGenoToAvInput](#pgenotoavinput)
+      - [description](#description-28)
+      - [input](#input-28)
+      - [output](#output-28)
+      - [requires](#requires-23)
+  - [DEG](#deg)
+    - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
+      - [description](#description-29)
+      - [input](#input-29)
+      - [output](#output-29)
+      - [args](#args-24)
+      - [requires](#requires-24)
+    - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+      - [description](#description-30)
+      - [input](#input-30)
+      - [output](#output-30)
+      - [args](#args-25)
+      - [requires](#requires-25)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -106,6 +197,169 @@
 A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 ## WXS
+
+###  pTrimmomaticPE
+#### description
+- Trimming Illumina NGS paired-end data
+
+#### input
+- `fqfile1:file`: The 1st fastq file (could be in .gz format)
+- `fqfile2:file`: The 2nd fastq file
+
+#### output
+- `outfile1:file`: The 1st output file
+- `outfile2:file`: The 2nd output file
+
+#### args
+- `bin`:    The trimmomatic executable, default: "trimmomatic"
+- `phred`:  "phred33" (default) or "phred64"
+- `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+- - have to replace `{adapter}` with the path of the adapter file
+- `nthread`: 1
+
+#### requires
+- [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
+
+
+###  pTrimmomaticSE
+#### description
+- Trimming Illumina NGS single-end data
+
+#### input
+- `fqfile:file`: The fastq file (could be in .gz format)
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `bin`:    The trimmomatic executable, default: "trimmomatic"
+- `phred`:  "phred33" (default) or "phred64"
+- `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+- - have to replace `{adapter}` with the path of the adapter file
+- `nthread`: 1
+
+#### requires
+- [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
+
+
+###  pAlignPEByBWA
+#### description
+- Align paired-end reads to reference genome using bwa mem
+
+#### input
+- `infile1:file`: read file 1 (fastq, or fastq gzipped)
+- `infile2:file`: read file 2 (fastq, or fastq gzipped)
+
+#### output
+- `outfile:file`: The output sam file
+
+#### args
+- `bin`:    The bwa executable, default: bwa
+- `params`: Other params for bwa mem, default: "-M"
+- `nthread`: 1
+- `reffile`: The reference file
+
+#### requires
+- [bwa](https://github.com/lh3/bwa)
+
+
+###  pAlignSEByBWA
+#### description
+- Align paired-end reads to reference genome using bwa mem
+
+#### input
+- `infile:file`:  read file (fastq, or fastq gzipped)
+
+#### output
+- `outfile:file`: The output sam file
+
+#### args
+- `bin`:    The bwa executable, default: bwa
+- `params`: Other params for bwa mem, default: "-M"
+- `nthread`: 1
+- `reffile`: The reference file, required
+
+#### requires
+- [bwa](https://github.com/lh3/bwa)
+
+
+###  pSortSam
+#### description
+- Use `picard SortSam` to sort sam or bam file
+
+#### input
+- `infile:file`:  The sam or bam file to be sorted
+
+#### output
+- `outfile:file`: The sorted sam or bam file
+
+#### args
+- `bin`:    The picard executable, default: "picard SortSam"
+- `order`:  The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
+- `outtype`:The type of output file, sam or bam. Default: bam
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pMarkDup
+#### description
+- Use `picard MarkDuplicates` to  mark duplicates for bam file
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The marked bam file
+
+#### args
+- `bin`:    The picard executable, default: "picard MarkDuplicates"
+- `params`:  Other parameters for picard MarkDuplicates, default: ""
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pIndexBam
+#### description
+- Use `picard BuildBamIndex` to index bam file
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
+
+#### args
+- `bin`:    The picard executable, default: "picard BuildBamIndex"
+- `params`:  Other parameters for picard , default: ""
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pCNVnator
+#### description
+- Use `CNVnator` to call CNVs from bam file
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The vcf file
+
+#### args
+- `bin`:      The CNVnator executable, default: "cnvnator"
+- `bin-vcf`:  The converter executable to convert CNVnator results to vcf, default: "cnvnator2VCF.pl"
+- `binsize`:  The bin_size, default: 100
+- `genome`:   The genome: default: hg19
+- `chrom`:    Chromosome names, default: "" (all chromosomes)
+- `chrdir`:   The dir contains reference sequence of chromosomes, default: "" (don't specify)
+- 
+
+#### requires
+- [CNVnator](https://github.com/abyzovlab/CNVnator)
+
 
 ## WEB
 
@@ -210,6 +464,166 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - if normW = True, R package `NetPreProc` is required.
+
+
+## GATK
+
+###  pRealignerTargetCreator
+#### description
+- The local realignment process is designed to consume one or more BAM files and to locally realign reads such that the number of mismatching bases is minimized across all the reads. In general, a large percent of regions requiring local realignment are due to the presence of an insertion or deletion (indels) in the individual's genome with respect to the reference genome. Such alignment artifacts result in many bases mismatching the reference near the misalignment, which are easily mistaken as SNPs. Moreover, since read mapping algorithms operate on each read independently, it is impossible to place reads on the reference genome such that mismatches are minimized across all reads. Consequently, even when some reads are correctly mapped with indels, reads covering the indel near just the start or end of the read are often incorrectly mapped with respect the true indel, also requiring realignment. Local realignment serves to transform regions with misalignments due to indels into clean reads containing a consensus indel suitable for standard variant discovery approaches.
+- Note that indel realignment is no longer necessary for variant discovery if you plan to use a variant caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still required when using legacy callers such as UnifiedGenotyper or the original MuTect. There are 2 steps to the realignment process:
+- - Determining (small) suspicious intervals which are likely in need of realignment (RealignerTargetCreator)
+- - Running the realigner over those intervals (see the IndelRealigner tool)
+- For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
+
+#### input
+- `infile:file`:  The aligned bam file 
+
+#### output
+- `outfile:file`: A list of target intervals to pass to the IndelRealigner.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T RealignerTargetCreator"
+- `params`:  Other parameters for RealignerTargetCreator, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pIndelRealigner 
+#### description
+- The local realignment process is designed to consume one or more BAM files and to locally realign reads such that the number of mismatching bases is minimized across all the reads. In general, a large percent of regions requiring local realignment are due to the presence of an insertion or deletion (indels) in the individual's genome with respect to the reference genome. Such alignment artifacts result in many bases mismatching the reference near the misalignment, which are easily mistaken as SNPs. Moreover, since read mapping algorithms operate on each read independently, it is impossible to place reads on the reference genome such at mismatches are minimized across all reads. Consequently, even when some reads are correctly mapped with indels, reads covering the indel near just the start or end of the read are often incorrectly mapped with respect the true indel, also requiring realignment. Local realignment serves to transform regions with misalignments due to indels into clean reads containing a consensus indel suitable for standard variant discovery approaches.
+- Note that indel realignment is no longer necessary for variant discovery if you plan to use a variant caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still required when using legacy callers such as UnifiedGenotyper or the original MuTect.
+- There are 2 steps to the realignment process:
+- - Determining (small) suspicious intervals which are likely in need of realignment (see the RealignerTargetCreator tool)
+- - Running the realigner over those intervals (IndelRealigner)
+- For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
+
+#### input
+- `bamfile:file`: The aligned bam file
+- `intfile:file`: Intervals file output from RealignerTargetCreator
+
+#### output
+- `outfile:file`: A realigned version of input BAM file.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T IndelRealigner"
+- `params`:  Other parameters for IndelRealigner, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pBaseRecalibrator  
+#### description
+- Variant calling algorithms rely heavily on the quality scores assigned to the individual base calls in each sequence read. These scores are per-base estimates of error emitted by the sequencing machines. Unfortunately the scores produced by the machines are subject to various sources of systematic technical error, leading to over- or under-estimated base quality scores in the data. Base quality score recalibration (BQSR) is a process in which we apply machine learning to model these errors empirically and adjust the quality scores accordingly. This allows us to get more accurate base qualities, which in turn improves the accuracy of our variant calls. The base recalibration process involves two key steps: first the program builds a model of covariation based on the data and a set of known variants (which you can bootstrap if there is none available for your organism), then it adjusts the base quality scores in the data based on the model. There is an optional but highly recommended step that involves building a second model and generating before/after plots to visualize the effects of the recalibration process. This is useful for quality control purposes. This tool performs the first step described above: it builds the model of covariation and produces the recalibration table. It operates only at sites that are not in dbSNP; we assume that all reference mismatches we see are therefore errors and indicative of poor base quality. This tool generates tables based on various user-specified covariates (such as read group, reported quality score, cycle, and context). Assuming we are working with a large amount of data, we can then calculate an empirical probability of error given the particular covariates seen at this site, where p(error) = num mismatches / num observations. The output file is a table (of the several covariate values, number of observations, number of mismatches, empirical quality score).
+
+#### input
+- `bamfile:file`: A BAM file containing data that needs to be recalibrated.
+
+#### output
+- `outfile:file`: A GATKReport file with many tables:
+- - The list of arguments
+- - The quantized qualities table
+- - The recalibration table by read group
+- - The recalibration table by quality score
+- - The recalibration table for all the optional covariates
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T BaseRecalibrator"
+- `params`:  Other parameters for BaseRecalibrator, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pPrintReads   
+#### description
+- PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM format. It can dynamically merge the contents of multiple input BAM files, resulting in merged output sorted in coordinate order. It can also optionally filter reads based on various read properties such as read group tags using the `--read_filter/-rf` command line argument (see documentation on read filters for more information).
+- Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
+
+#### input
+- `bamfile:file`: A BAM file.
+- `recaltable:file`: The GATKReport file
+
+#### output
+- `outfile:file`: A single processed bam file.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T PrintReads"
+- `params`:  Other parameters for PrintReads, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pHaplotypeCaller 
+#### description
+- PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM format. It can dynamically merge the contents of multiple input BAM files, resulting in merged output sorted in coordinate order. It can also optionally filter reads based on various read properties such as read group tags using the `--read_filter/-rf` command line argument (see documentation on read filters for more information).
+- Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
+
+#### input
+- `bamfile:file`: A BAM file.
+
+#### output
+- `outfile:file`: Either a VCF or gVCF file with raw, unfiltered SNP and indel calls.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T HaplotypeCaller"
+- `params`:  Other parameters for HaplotypeCaller, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pSelectVariants
+#### description
+- Often, a VCF containing many samples and/or variants will need to be subset in order to facilitate certain analyses (e.g. comparing and contrasting cases vs. controls; extracting variant or non-variant loci that meet certain requirements, displaying just a few samples in a browser like IGV, etc.). SelectVariants can be used for this purpose.
+- There are many different options for selecting subsets of variants from a larger callset:
+- - Extract one or more samples from a callset based on either a complete sample name or a pattern match.
+- - Specify criteria for inclusion that place thresholds on annotation values, e.g. "DP > 1000" (depth of coverage greater than 1000x), "AF < 0.25" (sites with allele frequency less than 0.25). These - criteria are written as "JEXL expressions", which are documented in the article about using JEXL expressions.
+- - Provide concordance or discordance tracks in order to include or exclude variants that are also present in other given callsets.
+- - Select variants based on criteria like their type (e.g. INDELs only), evidence of mendelian violation, filtering status, allelicity, and so on.
+- There are also several options for recording the original values of certain annotations that are recalculated when a subsetting the new callset, trimming alleles, and so on.
+
+#### input
+- `vcffile:file`: A variant call set from which to select a subset.
+
+#### output
+- `outfile:file`: A new VCF file containing the selected subset of variants.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T SelectVariants"
+- `params`:  Other parameters for SelectVariants, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pVariantFiltration
+#### description
+- This tool is designed for hard-filtering variant calls based on certain criteria. Records are hard-filtered by changing the value in the FILTER field to something other than PASS. Filtered records will be preserved in the output unless their removal is requested in the command line.
+- The most common way of specifying filtering criteria is by using JEXL queries. See the article on JEXL expressions in the documentation Guide for detailed information and examples.
+
+#### input
+- `vcffile:file`: A variant set to filter.
+
+#### output
+- `outfile:file`: A filtered VCF.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T VariantFiltration"
+- `params`:  Other parameters for VariantFiltration, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
 
 
 ## COMMON
