@@ -8,10 +8,32 @@
     - [pTrimmomaticSE](#ptrimmomaticse)
     - [pAlignPEByBWA](#palignpebybwa)
     - [pAlignSEByBWA](#palignsebybwa)
-    - [pSortSam](#psortsam)
-    - [pMarkDup](#pmarkdup)
-    - [pIndexBam](#pindexbam)
+    - [pAlignPEByNGM](#palignpebyngm)
+    - [pAlignSEByNGM](#palignsebyngm)
     - [pCNVnator](#pcnvnator)
+    - [pVcf2Stat](#pvcf2stat)
+    - [pVcfStat2Mat](#pvcfstat2mat)
+    - [pVcfStats](#pvcfstats)
+    - [pCoverageByBamstats](#pcoveragebybamstats)
+    - [pPlotBamstats](#pplotbamstats)
+    - [pMutSig](#pmutsig)
+    - [pSnpEff2Maf](#psnpeff2maf)
+  - [CLUSTER](#cluster)
+    - [pDist2Coords](#pdist2coords)
+    - [pDecideK](#pdecidek)
+    - [pKMeans](#pkmeans)
+    - [pPamk](#ppamk)
+    - [pClara](#pclara)
+    - [pMClust](#pmclust)
+    - [pAPCluster](#papcluster)
+    - [pHClust](#phclust)
+  - [PICARD](#picard)
+    - [pMarkDuplicates](#pmarkduplicates)
+    - [pAddOrReplaceReadGroups](#paddorreplacereadgroups)
+    - [pCreateSequenceDictionary](#pcreatesequencedictionary)
+    - [pCollectWgsMetrics](#pcollectwgsmetrics)
+    - [pSortSam](#psortsam)
+    - [pIndexBam](#pindexbam)
   - [WEB](#web)
     - [pDownloadPost](#pdownloadpost)
     - [pDownloadGet](#pdownloadget)
@@ -29,6 +51,10 @@
     - [pHaplotypeCaller](#phaplotypecaller)
     - [pSelectVariants](#pselectvariants)
     - [pVariantFiltration](#pvariantfiltration)
+    - [pMuTect2](#pmutect2)
+  - [SNPEFF](#snpeff)
+    - [pAnn](#pann)
+    - [pCount](#pcount)
   - [COMMON](#common)
     - [pSort](#psort)
   - [CHIPSEQ](#chipseq)
@@ -44,6 +70,20 @@
   - [DEG](#deg)
     - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
     - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+  - [BEDTOOLS](#bedtools)
+    - [pGetfasta](#pgetfasta)
+    - [pClosest](#pclosest)
+    - [pFlank](#pflank)
+    - [pIntersect](#pintersect)
+    - [pMakewindows](#pmakewindows)
+    - [pMerge](#pmerge)
+    - [pMultiinter](#pmultiinter)
+    - [pRandom](#prandom)
+    - [pShift](#pshift)
+    - [pShuffle](#pshuffle)
+    - [pSubtract](#psubtract)
+    - [pWindow](#pwindow)
+    - [pGenomecov](#pgenomecov)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -138,59 +178,47 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [bwa](https://github.com/lh3/bwa)
 
 
-###  pSortSam
+###  pAlignPEByNGM
 #### description
-- Use `picard SortSam` to sort sam or bam file
+- Align paired-end reads to reference genome using NextGenMap
 
 #### input
-- `infile:file`:  The sam or bam file to be sorted
+- `infile1:file`: read file 1 (fastq, or fastq gzipped)
+- `infile2:file`: read file 2 (fastq, or fastq gzipped)
 
 #### output
-- `outfile:file`: The sorted sam or bam file
+- `outfile:file`: The output sam/bam file
 
 #### args
-- `bin`:    The picard executable, default: "picard SortSam"
-- `order`:  The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
-- `outtype`:The type of output file, sam or bam. Default: bam
+- `bin`:    The NextGenMap executable, default: ngm
+- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+- `nthread`: 1
+- `reffile`: The reference file
+- `outtype`: sam or bam, default: bam
 
 #### requires
-- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+- [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 
 
-###  pMarkDup
+###  pAlignSEByNGM
 #### description
-- Use `picard MarkDuplicates` to  mark duplicates for bam file
+- Align single-end reads to reference genome using NextGenMap
 
 #### input
-- `infile:file`:  The bam file 
+- `infile:file`: read file (fastq, or fastq gzipped)
 
 #### output
-- `outfile:file`: The marked bam file
+- `outfile:file`: The output sam/bam file
 
 #### args
-- `bin`:    The picard executable, default: "picard MarkDuplicates"
-- `params`:  Other parameters for picard MarkDuplicates, default: ""
+- `bin`:    The NextGenMap executable, default: ngm
+- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+- `nthread`: 1
+- `reffile`: The reference file
+- `outtype`: sam or bam, default: bam
 
 #### requires
-- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
-
-
-###  pIndexBam
-#### description
-- Use `picard BuildBamIndex` to index bam file
-
-#### input
-- `infile:file`:  The bam file 
-
-#### output
-- `outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
-
-#### args
-- `bin`:    The picard executable, default: "picard BuildBamIndex"
-- `params`:  Other parameters for picard , default: ""
-
-#### requires
-- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+- [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 
 
 ###  pCNVnator
@@ -214,6 +242,470 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [CNVnator](https://github.com/abyzovlab/CNVnator)
+
+
+###  pVcf2Stat
+#### description
+- Convert vcf to stat files for pVcfStats
+
+#### input
+- `vcffile:file`: The vcf file
+
+#### output
+- `outfile:file`: The stat file
+
+#### args
+- `chroms`: SNPs on chromosomes to consider, default: "*" (all chroms)
+- - use "chr1-22, chrX, chrY" for chr1 to chr22, chrX and chrY
+
+#### requires
+- [`pyvcf`](https://github.com/jamescasbon/PyVCF)
+
+
+###  pVcfStat2Mat
+#### description
+- Convert vcf stat files to matrix for clustering, rownames are sample names
+- First 2 lines TiTv and Heterozygosity will be ignored.
+
+#### input
+- `statdir:file`: The input directory containing vcf stat files
+
+#### output
+- `outfile:file`: The matrix file
+
+
+###  pVcfStats
+#### description
+- Calculate sample/snp call rate and heterozygosity, TiTv ratio from single-sample vcfs using result from pVcf2Stat
+
+#### input
+- `statdir:file`:   The directory containing vcf stat files
+
+#### output
+- `outsample:file`: The report of call rate for each sample
+- `figsample:file`: The bar chat of sample call rates
+- `outsnp:file`:    The report of call rate for each snp
+- `figsnp:file`:    The bar chat of snp call rates
+- `outhetero:file`: The report of heterozygosity of each sample
+- `fighetero:file`: The bar chat of snp call rates
+- `outtitv:file`:   The report of transition/transversion ratio of each sample
+- `figtitv:file`:   The bar chat of transition/transversion ratio
+
+
+###  pCoverageByBamstats
+#### description
+- Use `bamstats` to calculate coverage for bam file
+
+#### input
+- `infile:file`:  The bam file
+
+#### output
+- `outfile:file`:    The report of coverage for the bam file
+
+#### args
+- `bin`: The `bamstats` executable, default: "bamstats"
+- `params`: Other parameters for `bamstats`, default: ""
+
+#### requires
+- [bamstats](http://bamstats.sourceforge.net/)
+
+
+###  pPlotBamstats
+#### description
+- Plot coverage use output files generated by `bamstats` or `wxs.pCoverageByBamstats`
+
+#### input
+- `indir:file`: The directory containing bamstats output files
+
+#### args
+- `chroms`: Chromosomes to plot. Default: "" (all chroms)
+- - Note: Whether to have "chr" prefix or not depends on your reference when mapping.
+- - You can do a scope assignment: "chr1-chr22, chrX, chrY"
+
+#### output
+- `outdir:file`: The directory containing output figures
+
+
+###  pMutSig
+#### description
+- MutSig stands for "Mutation Significance".  MutSig analyzes lists of mutations discovered in DNA sequencing, to identify genes that were mutated more often than expected by chance given background mutation processes.
+- 
+- For more information, see Lawrence, M. et al. Mutational heterogeneity in cancer and the search for new cancer-associated genes. Nature 499, 214-218 (2013).
+- 
+- See [dcumentation](http://archive.broadinstitute.org/cancer/cga/mutsig_run)
+
+#### input
+- `maffile:file`: mutation table
+- `cvgfile:file`: coverage table
+- `cvrfile:file`: covariates table
+- `mutdict:file`: mutation_type_dictionary_file
+- `chrdir:file`:  chr_files_hg18 or chr_files_hg19 
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `bin`: The path to `run_MutSigCV.sh`, default: 'mutsig'
+- `mcr`: The Matlab MCR path
+
+#### requires
+- [MutSing](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
+
+
+###  pSnpEff2Maf
+#### description
+- Convert a snpEff-annotated somatic mutation vcf file (with normal and tumor samples) to [maf](https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+(MAF)+Specification) file
+
+#### input
+- `vcffile:file`: snpEff-annotated vcf file
+
+#### output
+- `outfile:file`: The maf file
+
+#### args
+- `params`: A dict to specify a constant for columns. For example: `proc.args.params['NCBI_Build'] = 'hg19'` will set column 'NCBI_Build' as 'hg19' for all records. Default: {}
+- - Keys could be one of these: ['Hugo_Symbol', 'Entrez_Gene_Id', 'Center', 'NCBI_Build', 'Chromosome', 'Start_Position', 'End_Position', 'Strand', 'Variant_Classification', 'Variant_Type', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2', 'dbSNP_RS', 'dbSNP_Val_Status', 'Tumor_Sample_Barcode', 'Matched_Norm_Sample_Barcode', 'Match_Norm_Seq_Allele1', 'Match_Norm_Seq_Allele2', 'Tumor_Validation_Allele1', 'Tumor_Validation_Allele2', 'Match_Norm_Validation_Allele1', 'Match_Norm_Validation_Allele2', 'Verification_Status', 'Validation_Status', 'Mutation_Status', 'Sequencing_Phase', 'Sequence_Source', 'Validation_Method', 'Score', 'BAM_File', 'Tumor_Sample_UUID', 'Matched_Norm_Sample_UUID']
+- `normal`: The normal sample position in `record.samples` from `pyvcf`, 0-based. Default: 0
+- `tumor`:  The tumor sample position in `record.samples` from `pyvcf`, 0-based. Default: 1
+
+#### requires
+- [pyvcf](https://github.com/jamescasbon/PyVCF)
+
+
+## CLUSTER
+
+###  pDist2Coords
+#### description
+- Convert a distance matrix to 2D coordinates, using multidimensional scaling
+
+#### input
+- `infile:file`: The distance matrix, could be a full distance matrix, a triangle matrix or a pair-wise distance file
+- - full dist matrix (full):
+```
+		s1	s2	s3
+	s1	0	1	1
+	s2	1	0	1
+	s3	1	1	0
+```
+- - triangle matrix (triangle), could be also lower triangle
+```
+		s1	s2	s3
+	s1	0	1	1
+	s2		0	1
+	s3			0
+```
+- - pair-wise (pair): (assuming auto-pair-wise distance = 0, that is: `s1	s1	0`)
+```
+	s1	s2	1
+	s1	s3	1
+	s2	s3	1
+```
+- - Both rownames and header of `full` and `triangle` can be omitted, just set `proc.args.rownames = "NULL"` and `proc.args.header = False`
+
+#### output
+- `outfile:file`: The output coordinate file
+
+#### args
+- `informat`: The format of the input file: full, triangle or pair. Default: full
+- `rownames`: The `row.names` argument for `read.table`, default: 1
+- `header`:   The `header` argument for `read.table` to read the input file, default: True.
+- `k`:        How many dimension? Default: 2 (R^2)
+
+
+###  pDecideK
+#### description
+- Decide number of clusters using different methods
+
+#### input
+- `infile:file`: the coordinates file, if all you have is a distance/similarity file, convert it to coordinates file using `pDist2Coords`
+
+#### output
+- `kfile:file`: the output file with `K`
+
+#### args
+- `method`:                         The method used to determine K
+- - `elbow:<ev.thres>:<inc.thres>`: Look for a bend or elbow in the sum of squared error (SSE) scree plot, see [ref](https://artax.karlin.mff.cuni.cz/r-help/library/GMD/html/elbow.html). Default: `elbow` = `elbow:.95:01`
+- - `pamk:<min>:<max>`:             You can do partitioning around medoids to estimate the number of clusters using the pamk function in the fpc package. Default: `pamk` = `pamk:2:15`
+- - `calinski:<min>:<max>`:         Calinski criterion. Default: `calinski` means `calinski:2:15`
+- - `mclust:<min>:<max>`:           Determine the optimal model and number of clusters according to the Bayesian Information Criterion for expectation-maximization, initialized by hierarchical clustering for parameterized Gaussian mixture models. [Ref1](http://www.stat.washington.edu/research/reports/2006/tr504.pdf
+- #), [Ref2](http://www.jstatsoft.org/v18/i06/paper). Default: `mclust` = `mclust:2:15`
+- - `ap`:                           Affinity propagation (AP) clustering, see [ref](http://dx.doi.org/10.1126/science.1136800)
+- - `gap:<min>:<max>`:              Gap Statistic for Estimating the Number of Clusters. Default: `gap:2:10`
+- - `nbclust`:                      The [NbClust package](http://cran.r-project.org/web/packages/NbClust/index.html) provides 30 indices to determine the number of clusters in a dataset.
+- `rownames`:                       The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:                         The `header` argument for `read.table` to read the input file, default: True.
+- `seed`:                           The seed for randomization, default: 0.
+
+#### requires
+- [`r-cluster`](https://cran.r-project.org/web/packages/cluster/index.html) if `gap` method used
+- [`r-GMD`](https://cran.r-project.org/web/packages/GMD/index.html) if `elbow` method userd
+- [`r-fpc`](https://cran.r-project.org/web/packages/fpc/index.html) if `pamk` method used
+- [`r-vegan`](https://cran.r-project.org/web/packages/vegan/index.html) if `calinski` method used
+- [`r-mclust`](https://cran.r-project.org/web/packages/mclust/index.html) if `mclust` method used
+- [`r-apcluster`](https://cran.r-project.org/web/packages/apcluster/index.html) if `ap` method used
+- [`r-NbClust`](https://cran.r-project.org/web/packages/NbClust/index.html) if `nbclust` method used
+
+
+###  pKMeans
+#### description
+- Do k-means clustering
+
+#### input
+- `infile:file`:    The input coordinates of the points.
+- `k`:              Number of clusters, it could also be a file with the number in it.
+
+#### output
+- `outdir:dir`: The output of final results
+
+#### args
+- `rownames`:       The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:         The `header` argument for `read.table` to read the input file, default: True.
+- `algorithm`:      The `algorithm` argument for `kmeans`, default "Hartigan-Wong" (could also be "Lloyd", "Forgy", "MacQueen")
+- `niter`:          The `max.iter` argument for `kmeans`, default: 10.
+- `nstart`:         The `nstart` argument for `kmeans`, default: 25.
+- `caption`:        The caption for the `fviz_cluster`, default: "K-means with K=%k%".
+
+#### requires
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+
+
+###  pPamk
+#### description
+- Do clustering using [fpc::pamk](https://www.rdocumentation.org/packages/fpc/versions/2.1-10/topics/pamk)
+
+#### input
+- `infile:file`:  The input coordinate file
+
+#### output
+- `outdir:dir`:   The output directory
+
+#### args
+- `rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:       The `header` argument for `read.table` to read the input file, default: True.
+- `min`:          The min # clusters to try, default: 2
+- `max`:          The max # clusters to try, default: 15
+- `caption`:      The caption for the `fviz_cluster`, default: "Partitioning Around Medoids (K=%K%)".
+- `seed`:         The seed for randomization, default: 0.
+
+#### requires
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+- [`r-fpc`](https://cran.r-project.org/web/packages/fpc/index.html)
+
+
+###  pClara
+#### description
+- CLARA is a partitioning method used to deal with much larger data sets (more than several thousand observations) in order to reduce computing time and RAM storage problem.
+
+#### input
+- `infile:file`:  The input coordinate file
+- `k`:            Number of clusters, it could also be a file with the number in it.
+
+#### output
+- `outdir:dir`:   The output of final results
+
+#### args
+- `rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:       The `header` argument for `read.table` to read the input file, default: True.
+- `samples`:      The `samples` argument for `clara`, default: 5.
+- `caption`:      The caption for the `fviz_cluster`, default: "CLARA Clustering with K=%k%".
+
+#### requires
+- [`r-cluster`](https://cran.r-project.org/web/packages/cluster/index.html)
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+
+
+###  pMClust
+#### description
+- Use `r-mclust` to do clustering. Current just do simple clustering with the package
+
+#### input
+- `infile:file`:  The input a coordinate file
+
+#### output
+- `outdir:dir`:   The output of final results
+
+#### args
+- `rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:       The `header` argument for `read.table` to read the input file, default: True.
+- `caption`:      The caption for the `fviz_cluster`, default: "CLARA Clustering".
+- `min`:          The min # clusters to try, default: 2
+- `max`:          The max # clusters to try, default: 15
+
+#### requires
+- [`r-mclust`](https://cran.r-project.org/web/packages/mclust/index.html)
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+
+
+###  pAPCluster
+#### description
+- Use `r-apcluster` to do clustering. 
+
+#### input
+- `infile:file`:  The input a coordinate file
+
+#### output
+- `outdir:dir`:   The output of final results
+
+#### args
+- `rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:       The `header` argument for `read.table` to read the input file, default: True.
+- `caption`:      The caption for the `fviz_cluster`, default: "APClustering".
+
+#### requires
+- [`r-apcluster`](https://cran.r-project.org/web/packages/apcluster/index.html)
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+
+
+###  pHClust
+#### description
+- Do hierarchical clustering.
+
+#### input
+- `infile:file`: The input files with variants as rows, features as columns.
+- - NOTE: clustering is performed on rows, rownames are the leaf labels.
+
+#### output
+- `outdir:dir`:  The result directory, containing:
+- - `hclust.merge.txt`: including merge and height information
+- - `hclust.order.txt`: including order and labels information
+- - `hclust.png`:       the dendrogram plot
+
+#### args
+- `fast`:     whether to use `fastcluster` package or not, default: False
+- `gg`:       whether to use `ggdendro` or not, default: False
+- `rownames`: The `row.names` for `read.table` to read the input file, default: 1.
+- `header`:   The `header` argument for `read.table` to read the input file, default: True.
+- `method`:   Which method to use for `hclust`. Default: "complete" (use `?hclust` to check all availables)
+- `rotate`:   Which to rotate the plot or not. Default: False
+
+#### requires
+- [`r-fastcluster`](https://cran.r-project.org/web/packages/fastcluster/index.html) if `proc.args.fast` is True
+- [`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `proc.args.gg` is True
+
+
+## PICARD
+
+###  pMarkDuplicates
+#### description
+- Identifies duplicate reads.
+- This tool locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR. See also EstimateLibraryComplexity for additional notes on PCR duplication artifacts. Duplicate reads can also result from a single amplification cluster, incorrectly detected as multiple clusters by the optical sensor of the sequencing instrument. These duplication artifacts are referred to as optical duplicates.
+- The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. An BARCODE_TAG option is available to facilitate duplicate marking using molecular barcodes. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
+- The tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for each read. Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. If you are not familiar with this type of annotation, please see the following [blog post](https://www.broadinstitute.org/gatk/blog?id=7019) for additional information.
+- Although the bitwise flag annotation indicates whether a read was marked as a duplicate, it does not identify the type of duplicate. To do this, a new tag called the duplicate type (DT) tag was recently added as an optional output in the 'optional field' section of a SAM/BAM file. Invoking the TAGGING_POLICY option, you can instruct the program to mark all the duplicates (All), only the optical duplicates (OpticalOnly), or no duplicates (DontTag). The records within the output of a SAM/BAM file will have values for the 'DT' tag (depending on the invoked TAGGING_POLICY), as either library/PCR-generated duplicates (LB), or sequencing-platform artifact duplicates (SQ). This tool uses the READ_NAME_REGEX and the OPTICAL_DUPLICATE_PIXEL_DISTANCE options as the primary methods to identify and differentiate duplicate types. Set READ_NAME_REGEX to null to skip optical duplicate detection, e.g. for RNA-seq or other data where duplicate sets are extremely large and estimating library complexity is not an aim. Note that without optical duplicate counts, library size estimation will be inaccurate.
+- MarkDuplicates also produces a metrics file indicating the numbers of duplicates for both single- and paired-end reads.
+- The program can take either coordinate-sorted or query-sorted inputs, however the behavior is slightly different. When the input is coordinate-sorted, unmapped mates of mapped records and supplementary/secondary alignments are not marked as duplicates. However, when the input is query-sorted (actually query-grouped), then unmapped mates and secondary/supplementary reads are not excluded from the duplication test and can be marked as duplicate reads.
+- If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The marked bam file
+
+#### args
+- `bin`:     The picard executable, default: "picard MarkDuplicates"
+- `params`:  Other parameters for picard MarkDuplicates, default: ""
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pAddOrReplaceReadGroups
+#### description
+- Replace read groups in a BAM file.This tool enables the user to replace all read groups in the INPUT file with a single new read group and assign all reads to this read group in the OUTPUT BAM file.
+- For more information about read groups, see the [GATK Dictionary entry](https://www.broadinstitute.org/gatk/guide/article?id=6472). 
+- This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH) (see http://ga4gh.org/#/documentation).
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The bam file with read group added
+
+#### args
+- `bin`:     The picard executable, default: "picard AddOrReplaceReadGroups"
+- `params`:  Other parameters for picard AddOrReplaceReadGroups, default: "RGID=4 RGLB=lib1 RGPL=illumina  RGPU=unit1 RGSM=20"
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pCreateSequenceDictionary
+#### description
+- Creates a sequence dictionary for a reference sequence. This tool creates a sequence dictionary file (with ".dict" extension) from a reference sequence provided in FASTA format, which is required by many processing and analysis tools. The output file contains a header but no SAMRecords, and the header contains only sequence records.
+- The reference sequence can be gzipped (both .fasta and .fasta.gz are supported).
+
+#### input
+- `infile:file`:  The fasta file 
+
+#### output
+- `outfile:file`: The same fasta file, but with dict file created
+
+#### args
+- `bin`:     The picard executable, default: "picard CreateSequenceDictionary"
+- `params`:  Other parameters for picard CreateSequenceDictionary, default: ""
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pCollectWgsMetrics
+#### description
+- Collect metrics about coverage and performance of whole genome sequencing (WGS) experiments.
+- This tool collects metrics about the fractions of reads that pass base- and mapping-quality filters as well as coverage (read-depth) levels for WGS analyses. Both minimum base- and mapping-quality values as well as the maximum read depths (coverage cap) are user defined.
+- Note: Metrics labeled as percentages are actually expressed as fractions!
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The metrics file
+
+#### args
+- `bin`:     The picard executable, default: "picard CollectWgsMetrics"
+- `params`:  Other parameters for `picard CollectWgsMetrics`, default: ""
+- `reffile`: The reference file, default: ""
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pSortSam
+#### description
+- Use `picard SortSam` to sort sam or bam file
+
+#### input
+- `infile:file`:  The sam or bam file to be sorted
+
+#### output
+- `outfile:file`: The sorted sam or bam file
+
+#### args
+- `bin`:     The picard executable, default: "picard SortSam"
+- `order`:   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
+- `outtype`: The type of output file, sam or bam. Default: bam
+- `params`:  Other parameters for `picard SortSame`, default: "-Xms1g -Xmx8g"
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pIndexBam
+#### description
+- Use `picard BuildBamIndex` to index bam file
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
+
+#### args
+- `bin`:    The picard executable, default: "picard BuildBamIndex"
+- `params`:  Other parameters for picard , default: "-Xms1g -Xmx8g"
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 
 
 ## WEB
@@ -341,9 +833,11 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `bin`:     The gatk executable, default: "gatk -T RealignerTargetCreator"
 - `params`:  Other parameters for RealignerTargetCreator, default: ""
 - `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 
 
 ###  pIndelRealigner 
@@ -366,9 +860,11 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `bin`:     The gatk executable, default: "gatk -T IndelRealigner"
 - `params`:  Other parameters for IndelRealigner, default: ""
 - `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 
 
 ###  pBaseRecalibrator  
@@ -389,7 +885,8 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 #### args
 - `bin`:     The gatk executable, default: "gatk -T BaseRecalibrator"
 - `params`:  Other parameters for BaseRecalibrator, default: ""
-- `reffile`: The reference file
+- `reffile`: The reference file, required
+- `knownSites`: The known polymorphic sites to mask out, required
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
@@ -479,6 +976,73 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
+
+
+###  pMuTect2
+#### description
+- MuTect2 is a somatic SNP and indel caller that combines the DREAM challenge-winning somatic genotyping engine of the original MuTect ([Cibulskis et al., 2013](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html)) with the assembly-based machinery of HaplotypeCaller. The basic operation of MuTect2 proceeds similarly to that of the HaplotypeCaller.
+- NOTE: only Tumor/Normal variant calling implemented in bioprocs
+
+#### input
+- `tumor:file`:  the tumor bam file
+- `normal:file`: the normal bam file
+
+#### output
+- `outfile:file`: The vcf file containing somatic mutations
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T MuTect2"
+- `params`:  Other parameters for MuTect2, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: the samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+## SNPEFF
+
+###  pAnn
+#### description
+- This is the default command. It is used for annotating variant filed (e.g. VCF files).
+
+#### input
+- `infile:file`:  The input file 
+
+#### output
+- `outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html
+
+#### args
+- `bin`:       The snpEff executable, default: "snpEff"
+- `params`:    Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"
+- `genome`:    The genome used for annotation, default: "hg19"
+- `informat`:  The format of input file [vcf or bed], default: "vcf"
+- `outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"
+- `csvStats`:  Whether to generate csv stats file, default: "{{infile.fn}}.stats.csv", set False to disable.
+- `stats`:     The name of the summary file, default: "{{infile.fn}}.summary.html", set False to disable.
+
+#### requires
+- [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
+
+
+###  pCount
+#### description
+- Count how many intervals (from a BAM, BED or VCF file) overlap with each genomic interval.
+
+#### input
+- `infiles:files`:  The input files
+
+#### output
+- `outdir:file`: The directory containg summary (html) file and output file
+
+#### args
+- `bin`:     The snpEff executable, default: "snpEff"
+- `params`:  Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"
+- `genome`:  The genome used for counting, default: "hg19"
+
+#### requires
+- [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
 
 
 ## COMMON
@@ -710,4 +1274,250 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
+
+
+## BEDTOOLS
+
+###  pGetfasta
+#### description
+- `bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED/GFF/VCF file.
+
+#### input
+- `infile:file`: The input bed file
+- `fafile:file`: The input fasta file
+
+#### output
+- `outfile:file`: The generated fasta file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools getfasta`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pClosest
+#### description
+- Similar to intersect, closest searches for overlapping features in A and B. In the event that no feature in B overlaps the current feature in A, closest will report the nearest (that is, least genomic distance from the start or end of A) feature in B. For example, one might want to find which is the closest gene to a significant GWAS polymorphism. Note that closest will report an overlapping feature as the closest that is, it does not restrict to closest non-overlapping feature. The following iconic cheatsheet summarizes the funcitonality available through the various optyions provided by the closest tool.
+
+#### input
+- `afile:file`:   The -a file
+- `bfiles:files`: The -b files
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools closest`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pFlank
+#### description
+- `bedtools flank` will create two new flanking intervals for each interval in a BED/GFF/VCF file. Note that flank will restrict the created flanking intervals to the size of the chromosome (i.e. no start < 0 and no end > chromosome size).
+
+#### input
+- `infile:file`:  The input file
+- `gfile:file`:   The genome size file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools flank`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pIntersect
+#### description
+- By far, the most common question asked of two sets of genomic features is whether or not any of the features in the two sets overlap with one another. This is known as feature intersection. bedtools intersect allows one to screen for overlaps between two sets of genomic features. Moreover, it allows one to have fine control as to how the intersections are reported. bedtools intersect works with both BED/GFF/VCF and BAM files as input.
+
+#### input
+- `afile:file`:   The a file
+- `bfiles:files`: The b files
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools intersect`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pMakewindows
+#### description
+- Makes adjacent or sliding windows across a genome or BED file.
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `informat`:The format of input file, whether is a "bed" file or "genome" size file. Default: "bed"
+- `params`:  Other parameters for `bedtools makewindows`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pMerge
+#### description
+- `bedtools merge` combines overlapping or book-ended features in an interval file into a single feature which spans all of the combined features.
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools merge`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pMultiinter
+#### description
+- Identifies common intervals among multiple BED/GFF/VCF files.
+
+#### input
+- `infiles:files`: The input files
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools multiinter`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pRandom
+#### description
+- `bedtools random` will generate a random set of intervals in BED6 format. One can specify both the number (-n) and the size (-l) of the intervals that should be generated.
+
+#### input
+- `gfile:file`: The genome size file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools random`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pShift
+#### description
+- `bedtools shift` will move each feature in a feature file by a user-defined number of bases. While something like this could be done with an awk '{OFS="\t" print $1,$2+<shift>,$3+<shift>}', bedtools shift will restrict the resizing to the size of the chromosome (i.e. no features before 0 or past the chromosome end).
+
+#### input
+- `infile:file`: The input file
+- `gfile:file`:  The genome size file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools shift`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pShuffle
+#### description
+- `bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file. One can also provide an exclusions BED/GFF/VCF file that lists regions where you do not want the permuted features to be placed. For example, one might want to prevent features from being placed in known genome gaps. shuffle is useful as a null basis against which to test the significance of associations of one feature with another.
+
+#### input
+- `infile:file`: The input file
+- `gfile:file`:  The genome size file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools shuffle`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pSubtract
+#### description
+- `bedtools subtract` searches for features in B that overlap A. If an overlapping feature is found in B, the overlapping portion is removed from A and the remaining portion of A is reported. If a feature in B overlaps all of a feature in A, the A feature will not be reported.
+
+#### input
+- `afile:file`: The a file
+- `bfile:file`: The b file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools subtract`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pWindow
+#### description
+- Similar to `bedtools intersect`, `window` searches for overlapping features in A and B. However, window adds a specified number (1000, by default) of base pairs upstream and downstream of each feature in A. In effect, this allows features in B that are near features in A to be detected.
+
+#### input
+- `afile:file`: The a file
+- `bfile:file`: The b file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools window`, default: ""
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+###  pGenomecov
+#### description
+- `bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.
+- NOTE: only bam file input implemented here.
+
+#### input
+- `infile:file`: The bam file
+
+#### output
+- `outfile:file`: The result file
+
+#### args
+- `bin`:     The bedtools executable, default: "bedtools"
+- `params`:  Other parameters for `bedtools genomecov`, default: "-bg"
+
+#### requires
+- [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
