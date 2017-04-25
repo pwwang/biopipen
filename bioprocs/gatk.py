@@ -21,19 +21,48 @@ from pyppl import proc
 	`bin`:     The gatk executable, default: "gatk -T RealignerTargetCreator"
 	`params`:  Other parameters for RealignerTargetCreator, default: ""
 	`reffile`: The reference file
+	`bin-samtools`: The samtools executable, default: samtools
 @requires:
 	[GATK](https://software.broadinstitute.org/gatk)
+	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 """
 pRealignerTargetCreator = proc()
 pRealignerTargetCreator.input  = "infile:file"
 pRealignerTargetCreator.output = "outfile:file:{{infile.fn}}.indelRealigner.intervals"
-pRealignerTargetCreator.args   = { "bin": "gatk -T RealignerTargetCreator", "params": "", "reffile": "" }
+pRealignerTargetCreator.args   = { "bin": "gatk -T RealignerTargetCreator", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pRealignerTargetCreator.script = """
+# make sure reference is specified
 if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{infile}}" -o "{{outfile}}" {{params}}
+
+# make sure reference index is generated
+if [[ ! -e "{{proc.args.reffile}}.fai" ]]; then
+	{{proc.args.bin-samtools}} faidx "{{proc.args.reffile}}"
+fi
+
+# get index file of bam file
+idxfile0="{{proc.indir}}/{{infile.fn}}.bai" # needed
+idxfile1=$(readlink "{{infile}}" | sed "s/bam/bai/")
+idxfile2=$(readlink -f "{{infile}}" | sed "s/bam/bai/")
+if [[ ( ! -e $idxfile0 ) && ( ! -e $idxfile1) && ( ! -e $idxfile2) ]]; then
+	if [[ -w $(dirname $idxfile2) ]]; then
+		{{proc.args.bin-samtools}} index $(readlink -f "{{infile}}") "$idxfile2"
+	else
+		{{proc.args.bin-samtools}} index "{{infile}}" "$idxfile0"
+	fi
+fi
+if [[ ! -e $idxfile0 ]]; then
+	if [[ -e $idxfile1 ]]; then
+		ln -s $idxfile1 $idxfile0
+	elif [[ -e $idxfile2 ]]; then
+		ln -s $idxfile2 idxfile0
+	fi
+fi
+
+# run cmd
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{infile}}" -o "{{outfile}}" {{proc.args.params}}
 """
 
 """
@@ -55,19 +84,39 @@ fi
 	`bin`:     The gatk executable, default: "gatk -T IndelRealigner"
 	`params`:  Other parameters for IndelRealigner, default: ""
 	`reffile`: The reference file
+	`bin-samtools`: The samtools executable, default: samtools
 @requires:
 	[GATK](https://software.broadinstitute.org/gatk)
+	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 """
 pIndelRealigner = proc()
 pIndelRealigner.input  = "bamfile:file, intfile:file"
-pIndelRealigner.output = "outfile:file:{{bamfile.fn}}.realigned.bam"
-pIndelRealigner.args   = { "bin": "gatk -T IndelRealigner", "params": "", "reffile": "" }
+pIndelRealigner.output = "outfile:file:{{bamfile.fn | (lambda x: __import__('re').sub(r'(\\.dedup)?$', '', x))(_)}}.realigned.bam"
+pIndelRealigner.args   = { "bin": "gatk -T IndelRealigner", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pIndelRealigner.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" -targetIntervals "{{intfile}}" {{params}}
+# get indx file of bam file
+idxfile0="{{proc.indir}}/{{bamfile.fn}}.bai" # needed
+idxfile1=$(readlink "{{bamfile}}" | sed "s/bam/bai/")
+idxfile2=$(readlink -f "{{bamfile}}" | sed "s/bam/bai/")
+if [[ ( ! -e $idxfile0 ) && ( ! -e $idxfile1) && ( ! -e $idxfile2) ]]; then
+	if [[ -w $(dirname $idxfile2) ]]; then
+		{{proc.args.bin-samtools}} index $(readlink -f "{{bamfile}}") "$idxfile2"
+	else
+		{{proc.args.bin-samtools}} index "{{bamfile}}" "$idxfile0"
+	fi
+fi
+if [[ ! -e $idxfile0 ]]; then
+	if [[ -e $idxfile1 ]]; then
+		ln -s $idxfile1 $idxfile0
+	elif [[ -e $idxfile2 ]]; then
+		ln -s $idxfile2 idxfile0
+	fi
+fi
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" -targetIntervals "{{intfile}}" {{proc.args.params}}
 """
 
 """
@@ -87,20 +136,25 @@ fi
 @args:
 	`bin`:     The gatk executable, default: "gatk -T BaseRecalibrator"
 	`params`:  Other parameters for BaseRecalibrator, default: ""
-	`reffile`: The reference file
+	`reffile`: The reference file, required
+	`knownSites`: The known polymorphic sites to mask out, required
 @requires:
 	[GATK](https://software.broadinstitute.org/gatk)
 """
 pBaseRecalibrator = proc()
 pBaseRecalibrator.input  = "bamfile:file"
 pBaseRecalibrator.output = "outfile:file:{{bamfile.fn}}.recal.table"
-pBaseRecalibrator.args   = { "bin": "gatk -T BaseRecalibrator", "params": "", "reffile": "" }
+pBaseRecalibrator.args   = { "bin": "gatk -T BaseRecalibrator", "knownSites": "", "params": "", "reffile": "" }
 pBaseRecalibrator.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" {{params}}
+if [[ -z "{{proc.args.knownSites}}" ]]; then
+	echo "knownSites file not specified!" 1>&2
+	exit 1
+fi
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" -knownSites "{{proc.args.knownSites}}" {{proc.args.params}}
 """
 
 """
@@ -123,14 +177,14 @@ fi
 """
 pPrintReads = proc()
 pPrintReads.input  = "bamfile:file, recaltable:file"
-pPrintReads.output = "outfile:file:{{bamfile.fn}}.recal.bam"
+pPrintReads.output = "outfile:file:{{bamfile.fn | (lambda x: __import__('re').sub(r'(\\.realigned)?$', '', x))(_)}}.bam"
 pPrintReads.args   = { "bin": "gatk -T PrintReads", "params": "", "reffile": "" }
 pPrintReads.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" -BQSR "{{recaltable}}" {{params}}
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" -BQSR "{{recaltable}}" {{proc.args.params}}
 """
 
 """
@@ -159,7 +213,7 @@ if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" {{params}}
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -I "{{bamfile}}" -o "{{outfile}}" {{proc.args.params}}
 """
 
 """
@@ -193,7 +247,7 @@ if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -V "{{vcffile}}" -o "{{outfile}}" {{params}}
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -V "{{vcffile}}" -o "{{outfile}}" {{proc.args.params}}
 """
 
 """
@@ -215,12 +269,80 @@ fi
 """
 pVariantFiltration = proc()
 pVariantFiltration.input  = "vcffile:file"
-pVariantFiltration.output = "outfile:file:{{vcffile.fn}}.filtered.vcf"
+pVariantFiltration.output = "outfile:file:{{vcffile.fn | (lambda x: __import__('re').sub(r'(\\.selected)?$', '', x))(_)}}.filtered.vcf"
 pVariantFiltration.args   = { "bin": "gatk -T VariantFiltration", "params": "", "reffile": "" }
 pVariantFiltration.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} -R "{{proc.args.reffile}}" -V "{{vcffile}}" -o "{{outfile}}" {{params}}
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -V "{{vcffile}}" -o "{{outfile}}" {{proc.args.params}}
+"""
+
+"""
+@name:
+	pMuTect2
+@description:
+	MuTect2 is a somatic SNP and indel caller that combines the DREAM challenge-winning somatic genotyping engine of the original MuTect ([Cibulskis et al., 2013](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html)) with the assembly-based machinery of HaplotypeCaller. The basic operation of MuTect2 proceeds similarly to that of the HaplotypeCaller.
+	
+	NOTE: only Tumor/Normal variant calling implemented in bioprocs
+@input:
+	`tumor:file`:  the tumor bam file
+	`normal:file`: the normal bam file
+@output:
+	`outfile:file`: The vcf file containing somatic mutations
+@args:
+	`bin`:     The gatk executable, default: "gatk -T MuTect2"
+	`params`:  Other parameters for MuTect2, default: ""
+	`reffile`: The reference file
+	`bin-samtools`: the samtools executable, default: samtools
+@requires:
+	[GATK](https://software.broadinstitute.org/gatk)
+	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+"""
+pMuTect2 = proc()
+pMuTect2.input  = "tumor:file, normal:file"
+pMuTect2.output = "outfile:file:{{tumor.fn}}.{{normal.fn}}.vcf"
+pMuTect2.args   = { "bin": "gatk -T MuTect2", "params": "", "reffile": "", "bin-samtools": "samtools" }
+pMuTect2.script = """
+if [[ -z "{{proc.args.reffile}}" ]]; then
+	echo "Reference file not specified!" 1>&2
+	exit 1
+fi
+# get indx file of bam file
+idxtumor0="{{proc.indir}}/{{tumor.fn}}.bai" # needed
+idxtumor1=$(readlink "{{tumor}}" | sed "s/bam/bai/")
+idxtumor2=$(readlink -f "{{tumor}}" | sed "s/bam/bai/")
+if [[ ( ! -e $idxtumor0 ) && ( ! -e $idxtumor1) && ( ! -e $idxtumor2) ]]; then
+	if [[ -w $(dirname $idxtumor2) ]]; then
+		{{proc.args.bin-samtools}} index $(readlink -f "{{tumor}}") "$idxtumor2"
+	else
+		{{proc.args.bin-samtools}} index "{{tumor}}" "$idxtumor0"
+	fi
+fi
+if [[ ! -e $idxtumor0 ]]; then
+	if [[ -e $idxtumor1 ]]; then
+		ln -s $idxtumor1 $idxtumor0
+	elif [[ -e $idxtumor2 ]]; then
+		ln -s $idxtumor2 idxtumor0
+	fi
+fi
+idxnormal0="{{proc.indir}}/{{normal.fn}}.bai" # needed
+idxnormal1=$(readlink "{{normal}}" | sed "s/bam/bai/")
+idxnormal2=$(readlink -f "{{normal}}" | sed "s/bam/bai/")
+if [[ ( ! -e $idxnormal0 ) && ( ! -e $idxnormal1) && ( ! -e $idxnormal2) ]]; then
+	if [[ -w $(dirname $idxnormal2) ]]; then
+		{{proc.args.bin-samtools}} index $(readlink -f "{{normal}}") "$idxnormal2"
+	else
+		{{proc.args.bin-samtools}} index "{{normal}}" "$idxnormal0"
+	fi
+fi
+if [[ ! -e $idxnormal0 ]]; then
+	if [[ -e $idxnormal1 ]]; then
+		ln -s $idxnormal1 $idxnormal0
+	elif [[ -e $idxnormal2 ]]; then
+		ln -s $idxnormal2 idxnormal0
+	fi
+fi
+{{proc.args.bin}} -R "{{proc.args.reffile}}" -I:tumor "{{tumor}}" -I:normal "{{normal}}" -o "{{outfile}}" {{proc.args.params}}
 """

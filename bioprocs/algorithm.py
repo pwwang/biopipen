@@ -41,18 +41,19 @@ if (Wformat == "rds") {
 	W = as.matrix(W)
 }
 
+if (normW) {
+	library(NetPreProc)
+	W = abs(W)
+	W = Laplacian.norm(W)
+}
+
 if (Eformat == "rds") {
 	E = readRDS ("{{Efile}}")
 } else {
 	E = read.table ("{{Efile}}", header=F, row.names=1, check.names=F, strip.white=T)
 }
 E = as.matrix(E)
-
-if (normW) {
-	library(NetPreProc)
-	W = abs(W)
-	W = Laplacian.norm(W)
-}
+E = E[colnames(W), ]
 
 RWR = function (W, e, c = {{proc.args.c}}, eps = {{proc.args.eps}}, tmax={{proc.args.tmax}}) {
 	r0 = e
@@ -73,7 +74,7 @@ print (paste("tmax:", r$tmax))
 if (Rformat == 'rds') {
 	saveRDS (r$r, "{{outfile}}")
 } else {
-	write.table (r$r, "{{outfile}}", quote=F, row.names = T, sep="\\t")
+	write.table (format(r$r, digits=3), "{{outfile}}", quote=F, col.names=F, row.names = T, sep="\\t")
 }
 """
 
