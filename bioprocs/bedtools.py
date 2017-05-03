@@ -12,6 +12,8 @@ from pyppl import proc
 @input:
 	`infile:file`: The input bed file
 	`fafile:file`: The input fasta file
+@brings:
+	`fafile`: "{{fafile.fn}}.fa*i", The fasta index file
 @output:
 	`outfile:file`: The generated fasta file
 @args:
@@ -22,6 +24,7 @@ from pyppl import proc
 """
 pGetfasta = proc()
 pGetfasta.input  = "infile:file, fafile:file"
+pGetfasta.brings = {"fafile": "{{fafile.fn}}.fa*i"}
 pGetfasta.output = "outfile:file:{{infile.fn}}.fa"
 pGetfasta.args   = { "bin": "bedtools", "params": "" }
 pGetfasta.script = """

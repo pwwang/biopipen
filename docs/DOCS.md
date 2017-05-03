@@ -52,6 +52,15 @@
     - [pSelectVariants](#pselectvariants)
     - [pVariantFiltration](#pvariantfiltration)
     - [pMuTect2](#pmutect2)
+  - [GENOMEPLOT](#genomeplot)
+    - [pGeneTrack](#pgenetrack)
+    - [pAnnoTrack](#pannotrack)
+    - [pDataTrack](#pdatatrack)
+    - [pUcscTrack](#pucsctrack)
+    - [pGenomePlot](#pgenomeplot)
+  - [TFBS](#tfbs)
+    - [pMotifScanByMEME](#pmotifscanbymeme)
+    - [pMEMEMDB2Gene](#pmememdb2gene)
   - [SNPEFF](#snpeff)
     - [pAnn](#pann)
     - [pCount](#pcount)
@@ -64,12 +73,15 @@
     - [pIntersectGMT](#pintersectgmt)
     - [pUnionGMT](#puniongmt)
     - [pSSGSEA](#pssgsea)
+  - [SEQ](#seq)
+    - [pConsv](#pconsv)
   - [SNPARRAY](#snparray)
     - [pSNP6Genotype](#psnp6genotype)
     - [pGenoToAvInput](#pgenotoavinput)
   - [DEG](#deg)
     - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
     - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+  - [NCBI](#ncbi)
   - [BEDTOOLS](#bedtools)
     - [pGetfasta](#pgetfasta)
     - [pClosest](#pclosest)
@@ -1001,6 +1013,152 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 
 
+## GENOMEPLOT
+
+###      pGeneTrack
+#### description
+- Generate the gene track using ucsc data source
+
+#### input
+- `name`:   The name of the track
+- `genome`: The genome
+- `chrom`:  The chromosome
+- `from`:   The start
+- `to`:     The end
+
+#### output
+- `outfile:file`: The file to save the track
+
+#### args
+- use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+###      pAnnoTrack
+#### description
+- Generate annotation track
+
+#### input
+- `infile:file`: the file for the track
+- `name`:        the name of the track
+- `genome`:      the genome
+- `chrom`:       the chromosome
+- `from`:        the start position to display
+- `to`:          the end position to display
+
+#### output
+- `outfile:file`:the dumped track
+
+#### args
+- use `displayPars(AnnotationTrack())` to see all available args.
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+###      pDataTrack
+#### description
+- The data track of Gviz
+
+#### input
+- `infile:file`: the file for the track
+- `name`:        the name of the track
+- `genome`:      the genome
+- `chrom`:       the chromosome
+- `from`:        the start position to display
+- `to`:          the end position to display
+
+#### output
+- `outfile:file`:the rds file for the track
+- `gout`:        the genome
+- `cout`:        the chromosome
+- `fout`:        the start
+- `tout`:        the end
+
+#### args
+- See `displayPars(DataTrack())` for all available display params
+- Quote all params!
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz/man/DataTrack-class.html)
+
+
+###      pUcscTrack
+#### description
+- Generate track from ucsc
+
+#### input
+- `ucscTrack`:   the track to fetch from ucsc. [Avialable tracks](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
+- `table`:       the table from ucsc. [Available table](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
+- `gvizTrack`:   the object track to generate. One of "AnnotationTrack", "GeneRegionTrack", "DataTrack", "GenomeAxisTrack"
+- `name`:        the name of the track
+- `genome`:      the genome
+- `chrom`:       the chromosome
+- `from`:        the start position to display
+- `to`:          the end position to display
+
+#### output
+- `outfile:file`:the dumped track
+
+#### args
+- use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args.
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+###      pGenomePlot
+#### description
+- plot the genomic features
+
+#### input
+- `trkfiles:files`: the list of track dumped files
+- `genome`:         the genome
+- `chrom`:          the chromosome
+- `from`:           the start position to display
+- `to`:             the end position to display
+
+#### output
+- `outfile:file`:   the figure
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+## TFBS
+
+###  pMotifScanByMEME
+#### input
+- `mfile:file`: The motif file
+- `sfile:file`: The sequence file
+
+#### output
+- `outdir:file`: The output dir
+
+#### args
+- `bin-fimo`: The path of `fimo` executable, default: "fimo"
+- `params`:   Other parameters for `fimo`
+
+#### requires
+- [`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
+
+
+###  pMEMEMDB2Gene
+#### input
+- `memefile:file`: The meme motif downloaded from MEME website
+- `species`:       The species, can be tax id, or common name
+- - only can be one of fruitfly, mouse, human, frog, zebrafish, thale-cress, pig, rat, nematode
+- - check them from http://http://mygene.info/v3/metadata
+
+#### output
+- `outfile:file`:  The output file containing the name pairs
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene)
+
+
 ## SNPEFF
 
 ###  pAnn
@@ -1197,6 +1355,36 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 
 
+## SEQ
+
+###  pConsv
+#### description
+- Get the conservation scores of regions.
+- It uses wigFix to find the conservation scores.
+- But first you have to convert those wigFix.gz files to bigWig files using ucsc-wigToBigWig
+
+#### input
+- `bedfile:file`: The bedfile with regions in the same chromosome
+- `bwdir:file`:   The bigwig directory, the bigwig files must be named as "chrN.*"
+- - For example: `chr1.phyloP30way.bw`
+
+#### output
+- `outdir:dir`    The output file, containing the output file, random regions and their scores if pvalue is calulated
+
+#### args
+- `bin-bwtool`:   The path of bwtool executable. Default: `bwtool`
+- `bin-bedtools`: The path of bedtools executable. Default: `bedtools`
+- `calcp`:        Whether to calculate the pvalue for not for each region.
+- `nperm`:        The number of permutations of pvalue is calcuated.
+- `seed`:         The seed to generate the random regions.
+- `gsize`:        The genome size file for generating random regions.
+- - Can be a local file or a file hosted at UCSC: http://hgdownload.cse.ucsc.edu/goldenPath/<genome>/bigZips/<genome>.chrom.sizes
+
+#### requires
+- [bwtool](https://github.com/CRG-Barcelona/bwtool)
+- [bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html) if `calcp` is `True`
+
+
 ## SNPARRAY
 
 ###  pSNP6Genotype
@@ -1276,6 +1464,8 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
 
 
+## NCBI
+
 ## BEDTOOLS
 
 ###  pGetfasta
@@ -1285,6 +1475,9 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 #### input
 - `infile:file`: The input bed file
 - `fafile:file`: The input fasta file
+
+#### brings
+- `fafile`: "{{fafile.fn}}.fa*i", The fasta index file
 
 #### output
 - `outfile:file`: The generated fasta file
