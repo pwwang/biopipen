@@ -27,6 +27,8 @@
     - [pMClust](#pmclust)
     - [pAPCluster](#papcluster)
     - [pHClust](#phclust)
+  - [RANK](#rank)
+    - [pRankProduct](#prankproduct)
   - [PICARD](#picard)
     - [pMarkDuplicates](#pmarkduplicates)
     - [pAddOrReplaceReadGroups](#paddorreplacereadgroups)
@@ -38,6 +40,8 @@
     - [pDownloadPost](#pdownloadpost)
     - [pDownloadGet](#pdownloadget)
   - [TCGA](#tcga)
+    - [pDownload](#pdownload)
+    - [pRPPA](#prppa)
     - [pSample2SubmitterID](#psample2submitterid)
     - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
     - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
@@ -66,6 +70,9 @@
     - [pCount](#pcount)
   - [COMMON](#common)
     - [pSort](#psort)
+  - [PCA](#pca)
+    - [pPCA](#ppca)
+    - [pSelectPCs](#pselectpcs)
   - [CHIPSEQ](#chipseq)
     - [pPeakToRegPotential](#ppeaktoregpotential)
   - [GSEA](#gsea)
@@ -81,6 +88,8 @@
   - [DEG](#deg)
     - [pCallByLimmaFromMatrix](#pcallbylimmafrommatrix)
     - [pCallByLimmaFromFiles](#pcallbylimmafromfiles)
+    - [pCallByEdgeRFromFiles](#pcallbyedgerfromfiles)
+    - [pRawCounts2](#prawcounts2)
   - [NCBI](#ncbi)
   - [BEDTOOLS](#bedtools)
     - [pGetfasta](#pgetfasta)
@@ -595,6 +604,44 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `proc.args.gg` is True
 
 
+## RANK
+
+###  pRankProduct
+#### description
+- Calculate the rank product of a set of ranks. Refer to [here](https://en.wikipedia.org/wiki/Rank_product)
+
+#### input
+- `infile:file`: The input file
+- - Format:
+```
+				Case1	Case2	...
+	Feature1	8.2  	10.1 	...
+	Feature2	2.3  	8.0  	...
+	...
+```
+- - Or instead of values, you can also have ranks in the input file:
+```
+				Rank1	Rank2	...
+	Feature1	2    	1    	...
+	Feature2	3    	2    	...
+	...
+```
+
+#### output
+- `outfile:file`: The output file with original ranks, rank products and p-value if required
+
+#### args
+- `informat`: The input format of the values. Whether they are real values (value) or ranks (rank). Default: value
+- `pval`:     Whether to calculate the p-value or not. Default: True
+- `header`:   Whether the input file has headers (rownames are required!). Default: True
+- `plot`:     Number of rows to plot. Default: 0 (Don't plot)
+- `cex`:      Font size for plotting. Default: 0.9
+- `cnheight`: Colname height. Default: 80
+- `rnwidth`:  Rowname width. Default: 50
+- `width`:    Width of the png file. Default: 2000
+- `height`:   height of the png file. Default: 2000
+
+
 ## PICARD
 
 ###  pMarkDuplicates
@@ -758,6 +805,36 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 
 ## TCGA
+
+###  pDownload
+#### description
+- Download TCGA use `gdc-client` and a manifest file
+
+#### input
+- `manifile:file`: the manifest file
+
+#### output
+- `outdir:file`:   the directory containing downloaded file
+
+#### args
+- `params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
+- `bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
+
+
+###  pRPPA
+#### description
+- Download TCGA use `gdc-client` and a manifest file
+
+#### input
+- `manifile:file`: the manifest file
+
+#### output
+- `outdir:file`:   the directory containing downloaded file
+
+#### args
+- `params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
+- `bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
+
 
 ###  pSample2SubmitterID
 #### description
@@ -1216,7 +1293,52 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The output file
 
 #### args
-- `sort-args`: The arguments used by `sort`
+- `skip`:   To skip first N lines. Default: 0
+- `params`: The arguments used by `sort`
+
+
+## PCA
+
+###  pPCA
+#### description
+- Perform PCA analysis
+
+#### input
+- `infile:file`: The matrix to do the analysis
+- - Note that rows are features, columns are samples, if not, use `args.transpose = True`
+
+#### output
+- `outfile:file`: The output coordinate file
+- - Columns are PCs, rows are samples
+
+#### args
+- `transpose`:  Whether to transpose the input matrix from infile. Default: False
+- `rownames`:   The `row.names` argument for `read.table`, default: 1
+- `header`:     The `header` argument for `read.table` to read the input file, default: True.
+- `screeplot`:  Whether to generate the screeplot or not. Default: True
+- `sp_ncp`:     Number of components in screeplot. Default: 0 (auto detect)
+- - if total # components (tcp) < 20: use all
+- - else if tcp > 20, use 20
+- `varplot`:    Whether to generate the variable plot or not. Default: False
+- `biplot`:     Whether to generate the variable plot or not. Default: True
+
+#### requires
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
+
+
+###  pSelectPCs
+#### description
+- Select a subset of PCs from pPCA results
+
+#### input
+- `indir:file`: The directory generated from pPCA
+
+#### output
+- `outfile:file`: The file containing selected PCs
+
+#### args
+- `n`: The number of PCs to select. Default: 0.9
+- - If it is < 1, used as the % variation explained from stdev.txt
 
 
 ## CHIPSEQ
@@ -1462,6 +1584,57 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
+
+
+###  pCallByEdgeRFromFiles
+#### description
+- Call DEG from expression files
+
+#### input
+- `expdir:file`:  the directory containing expression files
+- `group1`:       columns of group1 (separated by comma)
+- `group2`:       columns of group2 (separated by comma)
+- `group1name`:   the name of group1
+- `group2name`:   the name of group2   
+
+#### output
+- `degdir:dir`:   the output directory containing DEGs and plots
+
+#### args
+- `filter`:  the pair (X,Y) on how to filter the data by cpm (`d <- d[rowSums(cpm(d)>X) >= Y,]`). Default: "1,2"
+- - keep genes with at least X counts per million (CPM) in at least Y samples
+- `pval`:    the cutoff of DEGs (default: .05)
+- `paired`:  whether the samples are paired
+- `bcvplot`: whether to plot biological coefficient of variation, default: True
+- `displot`: whether to plot biological coefficient of variation, default: True
+- `fcplot`:  whether to plot fold changes, default: True
+
+#### requires
+- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html)
+
+
+###  pRawCounts2
+#### description
+- Convert raw counts to another unit
+
+#### input
+- `expfile:file`: the expression matrix
+- - rows are genes, columns are samples, if not use `args.transpose = True`
+
+#### output
+- `outfile:file`: the converted expression matrix
+
+#### args
+- `transpose`: transpose the input matrix? default: False
+- `log2`:      whether to take log2? default: False
+- `unit`:      convert to which unit? default: cpm (or rpkm)
+- `header`:    whether input file has header? default: True
+- `rownames`:  the index of the column as rownames. default: 1
+- `glenfile`:  the gene length file, for RPKM
+- - no head, row names are genes, have to be exact the same order and length as the rownames of expfile
+
+#### requires
+- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html)
 
 
 ## NCBI
