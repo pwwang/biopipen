@@ -10,13 +10,20 @@ from pyppl import proc
 @output:
 	`outfile:file`: The output file
 @args:
-	`sort-args`: The arguments used by `sort`
+	`skip`:   To skip first N lines. Default: 0
+	`params`: The arguments used by `sort`
 """
 pSort = proc ()
 pSort.input  = "infile:file"
 pSort.output = "outfile:file:{{infile.bn}}.sorted"
-pSort.args   = {"sort-args": ""}
+pSort.args   = {"params": "", "skip": 0}
 pSort.script = """
 #!/usr/bin/env bash
-sort {{proc.args.sort-args}} "{{infile}}" > "{{outfile}}"
+if [[ "{{proc.args.skip}}" == "0" ]]; then
+	sort {{proc.args.params}} "{{infile}}" > "{{outfile}}"
+else
+	nhead={{proc.args.skip}}
+	ntail=$((nhead+1))
+	( head -n $nhead "{{infile}}" && tail -n +$ntail "{{infile}}" | sort {{proc.args.params}} ) > "{{outfile}}"
+fi
 """

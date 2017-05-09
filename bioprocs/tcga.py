@@ -2,6 +2,48 @@ from pyppl import proc
 
 """
 @name:
+	pDownload
+@description:
+	Download TCGA use `gdc-client` and a manifest file
+@input:
+	`manifile:file`: the manifest file
+@output:
+	`outdir:file`:   the directory containing downloaded file
+@args:
+	`params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
+	`bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
+"""
+pDownload = proc ()
+pDownload.input     = "manifile:file"
+pDownload.output    = "outdir:dir:{{manifile.fn}}"
+pDownload.args      = {"params": "--no-file-md5sum -n 20", "bin-gdc": "gdc-client"}
+pDownload.script    = """
+{{proc.args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{proc.args.params}}
+"""
+
+"""
+@name:
+	pRPPA
+@description:
+	Download TCGA use `gdc-client` and a manifest file
+@input:
+	`manifile:file`: the manifest file
+@output:
+	`outdir:file`:   the directory containing downloaded file
+@args:
+	`params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
+	`bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
+"""
+pDownload = proc ()
+pDownload.input     = "manifile:file"
+pDownload.output    = "outdir:dir:{{manifile.fn}}"
+pDownload.args      = {"params": "--no-file-md5sum -n 20", "bin-gdc": "gdc-client"}
+pDownload.script    = """
+{{proc.args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{proc.args.params}}
+"""
+
+"""
+@name:
 	pSample2SubmitterID
 @description:
 	convert TCGA sample names with submitter id with metadata and sample containing folder
@@ -32,6 +74,7 @@ for sam in sam_meta:
 
 for samfile in glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*", "*" + ext)):
 	bn = os.path.basename (samfile)
+	if not sample_ids.has_key (bn): continue
 	newfile = os.path.join ("{{outdir}}", sample_ids[bn] + ext)
 	if os.path.exists (newfile):
 		os.remove(newfile)

@@ -112,13 +112,14 @@ write.table (coords, "{{outfile}}", col.names=F, row.names=F, quote=F, sep="\\t"
 """
 pDecideK = proc()
 pDecideK.input   = "infile:file"
-pDecideK.output  = "kfile:file"
+pDecideK.output  = "kfile:file:{{infile.fn}}-K.txt"
 pDecideK.args    = { 'method': 'elbow', 'rownames': 1, 'header': True, 'seed': 0 }
 pDecideK.lang    = "Rscript"
 pDecideK.script  = """
 set.seed ({{proc.args.seed}})
 library ('factoextra')
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = data[, apply(data, 2, sd)!=0, drop=F]
 k = 0
 parseK = function (k) {
 	parts = noquote (unlist(strsplit(k, ":")))
@@ -205,23 +206,24 @@ write (k, "{{kfile}}")
 """
 pKMeans = proc ()
 pKMeans.input   = 'infile:file, k'
-pKMeans.output  = 'outdir:dir:{{infile.fn}}_kmeans'
+pKMeans.output  = 'outdir:dir:{{infile.fn}}.kmeans'
 pKMeans.args    = { 'rownames': 1, 'header': True, 'algorithm': 'Hartigan-Wong', 'niter': 10, 'nstart': 25, 'caption': 'K-means with K=%K%' }
 pKMeans.lang    = 'Rscript'
 pKMeans.script  = """
 library ('factoextra')
 data      = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data      = data[, apply(data, 2, sd)!=0, drop=F]
 k         = as.numeric ("{{k}}")
 if (is.na (k)) {
 	kf    = "{{k}}"
-	k     = as.numberic (readChar (kf, file.info(kf)$size))
+	k     = as.numeric (readChar (kf, file.info(kf)$size))
 }
 km        = kmeans (data, k, iter.max={{proc.args.niter}}, nstart="{{proc.args.nstart}}", algorithm="{{proc.args.algorithm}}")
 clustfile = file.path ("{{outdir}}", "cluster.txt")
 write.table (km$cluster, clustfile, quote=F, col.names = F, sep="\\t")
 clustfig  = file.path ("{{outdir}}", "cluster.png")
 png (file = clustfig)
-fviz_cluster (km, data=data, main = gsub("%K%", k, "{{proc.args.caption}}"))
+print(fviz_cluster (km, data=data, main = gsub("%K%", k, "{{proc.args.caption}}")))
 dev.off()
 """
 
@@ -247,21 +249,21 @@ dev.off()
 """
 pPamk = proc()
 pPamk.input    = "infile:file"
-pPamk.output   = "outdir:dir:{{infile.fn}}_pamk"
+pPamk.output   = "outdir:dir:{{infile.fn}}.pamk"
 pPamk.args     = {'rownames': 1, 'header': True, "min":2, "max":15, "seed":0, "caption": "Partitioning Around Medoids (K=%k%)"}
 pPamk.lang     = "Rscript"
 pPamk.script   = """
 library(fpc)
 library(factoextra)
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
-
+data = data[, apply(data, 2, sd)!=0, drop=F]
 p = pamk (data, krange={{proc.args.min}}:{{proc.args.max}}, seed={{proc.args.seed}})
 p$pamobject$data = data
 clustfile = file.path ("{{outdir}}", "cluster.txt")
 write.table (p$pamobject$clustering, clustfile, quote=F, col.names = F, sep="\\t")
 clustfig  = file.path ("{{outdir}}", "cluster.png")
 png (file = clustfig)
-fviz_cluster (p$pamobject, main = gsub("%K%", p$nc, "{{proc.args.caption}}"))
+print (fviz_cluster (p$pamobject, main = gsub("%K%", p$nc, "{{proc.args.caption}}")))
 dev.off()
 """
 
@@ -286,13 +288,14 @@ dev.off()
 """
 pClara  = proc()
 pClara.input   = "infile:file, k"
-pClara.output  = 'outdir:dir:{{infile.fn}}_clara'
+pClara.output  = 'outdir:dir:{{infile.fn}}.clara'
 pClara.args    = { 'rownames': 1, 'header': True, 'samples': 5, 'caption': 'CLARA Clustering with K=%K%' }
 pClara.lang    = 'Rscript'
 pClara.script  = """
 library ('factoextra')
 library ('cluster')
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = data[, apply(data, 2, sd)!=0, drop=F]
 k         = as.numeric ("{{k}}")
 if (is.na (k)) {
 	kf    = "{{k}}"
@@ -305,7 +308,7 @@ write.table (clr$cluster, clustfile, quote=F, col.names = F, sep="\\t")
 clustfig  = file.path ("{{outdir}}", "cluster.png")
 png (file = clustfig)
 labels    = colnames(data)
-fviz_cluster (clr, main = gsub("%K%", k, "{{proc.args.caption}}"))
+print (fviz_cluster (clr, main = gsub("%K%", k, "{{proc.args.caption}}")))
 dev.off()
 """
 
@@ -330,21 +333,21 @@ dev.off()
 """
 pMClust  = proc()
 pMClust.input   = "infile:file"
-pMClust.output  = 'outdir:dir:{{infile.fn}}_mclust'
+pMClust.output  = 'outdir:dir:{{infile.fn}}.mclust'
 pMClust.args    = { 'rownames': 1, 'header': True, 'min':2, 'max':15, 'caption': 'MClust Clustering' }
 pMClust.lang    = 'Rscript'
 pMClust.script  = """
 library ('factoextra')
 library ('mclust')
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
-
+data = data[, apply(data, 2, sd)!=0, drop=F]
 mc        = Mclust (data, G={{proc.args.min}}:{{proc.args.max}})
 clustfile = file.path ("{{outdir}}", "cluster.txt")
 write.table (mc$classification, clustfile, quote=F, col.names = F, sep="\\t")
 clustfig  = file.path ("{{outdir}}", "cluster.png")
 png (file = clustfig)
 labels    = colnames(data)
-fviz_cluster (mc, main = gsub("%K%", max(mc$classification), "{{proc.args.caption}}"))
+print (fviz_cluster (mc, main = gsub("%K%", max(mc$classification), "{{proc.args.caption}}")))
 dev.off()
 """
 
@@ -367,14 +370,14 @@ dev.off()
 """
 pAPCluster  = proc()
 pAPCluster.input   = "infile:file"
-pAPCluster.output  = 'outdir:dir:{{infile.fn}}_apcluster'
-pAPCluster.args    = { 'rownames': 1, 'header': True, 'caption': 'APClustering' }
+pAPCluster.output  = 'outdir:dir:{{infile.fn}}.apcluster'
+pAPCluster.args    = { 'rownames': 1, 'header': True, 'caption': 'APClustering with K=%K%' }
 pAPCluster.lang    = 'Rscript'
 pAPCluster.script  = """
 library ('factoextra')
 library ('apcluster')
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
-
+data = data[, apply(data, 2, sd)!=0, drop=F]
 ap        = apcluster(negDistMat(r=2), data)
 clusters  = ap@clusters
 nclust    = length (clusters)
@@ -393,7 +396,7 @@ write.table (clusts, clustfile, quote=F, col.names = F, sep="\\t")
 clustfig  = file.path ("{{outdir}}", "cluster.png")
 png (file = clustfig)
 labels    = colnames(data)
-fviz_cluster (fvizobj, main = gsub("%K%", nclust, "{{proc.args.caption}}"))
+print (fviz_cluster (fvizobj, main = gsub("%K%", nclust, "{{proc.args.caption}}")))
 dev.off()
 """
 
@@ -423,11 +426,12 @@ dev.off()
 """
 pHClust = proc()
 pHClust.input  = "infile:file"
-pHClust.output = "outdir:dir:{{infile.fn}}_hclust"
+pHClust.output = "outdir:dir:{{infile.fn}}.hclust"
 pHClust.args   = {"fast":False, "gg":False, "rownames":1, "header":True, 'method': 'complete', 'rotate': False}
 pHClust.lang   = "Rscript"
 pHClust.script = """
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = data[, apply(data, 2, sd)!=0, drop=F]
 dmat = dist(data)
 if ({{proc.args.fast | str(_).upper()}}) {
 	library('fastcluster')
