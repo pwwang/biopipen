@@ -7,7 +7,7 @@ from pyppl import proc
 	Perform PCA analysis
 @input:
 	`infile:file`: The matrix to do the analysis
-	- Note that rows are features, columns are samples, if not, use `args.transpose = True`
+	- Note that rows are samples, columns are features, if not, use `args.transpose = True`
 @output:
 	`outfile:file`: The output coordinate file
 	- Columns are PCs, rows are samples
@@ -44,7 +44,7 @@ data = read.table ("{{infile}}", row.names=rownames, header={{proc.args.header |
 if ({{ proc.args.transpose | str(_).upper() }}) data = t(data)
 pc     = prcomp (data)
 pcfile = file.path("{{outdir}}", "pcs.txt")
-pcs    = pc$rotation
+pcs    = pc$x
 tcp    = ncol (pcs)
 if ({{proc.args.screeplot | str(_).upper()}}) {
 	spfile = file.path ("{{outdir}}", "screeplot.png")

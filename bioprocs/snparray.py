@@ -22,7 +22,7 @@ pSNP6Genotype.script    = """
 require(oligoClasses)
 library(crlmm)
 
-crlmmResult <- crlmm("{{celfile}}", verbose=TRUE)
+crlmmResult <- crlmm("{{celfile}}", SNRMin=0)
 gts = calls(crlmmResult) - 1
 #outfile = paste (sep="/", "/data2/junwenwang/panwen/output/TCGA-genotypes/LUAD/gts", paste(basename(args[1]), "gts", sep="."))
 

@@ -26,7 +26,7 @@ pGetfasta = proc()
 pGetfasta.input  = "infile:file, fafile:file"
 pGetfasta.brings = {"fafile": "{{fafile.fn}}.fa*i"}
 pGetfasta.output = "outfile:file:{{infile.fn}}.fa"
-pGetfasta.args   = { "bin": "bedtools", "params": "" }
+pGetfasta.args   = { "bin": "bedtools", "params": "-name" }
 pGetfasta.script = """
 {{proc.args.bin}} getfasta {{proc.args.params}} -fi "{{fafile}}" -bed "{{infile}}" > "{{outfile}}"
 """
@@ -100,7 +100,7 @@ pIntersect.input  = "afile:file, bfiles:files"
 pIntersect.output = "outfile:file:{{afile.fn}}.intersect.bt"
 pIntersect.args   = { "bin": "bedtools", "params": "" }
 pIntersect.script = """
-{{proc.args.bin}} intersect {{proc.args.params}} -a "{{afile}}" -b "{{bfiles | reduce(lambda x, y: x + '" "' + y, _)}}" > "{{outfile}}"
+{{proc.args.bin}} intersect -nonamecheck {{proc.args.params}} -a "{{afile}}" -b "{{bfiles | reduce(lambda x, y: x + '" "' + y, _)}}" > "{{outfile}}"
 """
 
 """

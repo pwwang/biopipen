@@ -30,6 +30,7 @@ from pyppl import proc
 @args:
 	`bin`:     The picard executable, default: "picard MarkDuplicates"
 	`params`:  Other parameters for picard MarkDuplicates, default: ""
+	`tmpdir`:  The tmpdir to use. Default: /tmp
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
 """
@@ -38,8 +39,11 @@ pMarkDuplicates.input  = "infile:file"
 pMarkDuplicates.output = "outfile:file:{{infile.fn | (lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x))(_)}}.dedup.bam"
 pMarkDuplicates.args   = { "bin": "picard MarkDuplicates", "params": "" }
 pMarkDuplicates.script = """
+tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile.fn}}"
+mkdir -p "$tmpdir"
 mfile="{{proc.outdir}}/{{infile.fn}}.metrics.txt"
-{{proc.args.bin}} I="{{infile}}" O="{{outfile}}" M="$mfile" {{proc.args.params}}
+{{proc.args.bin}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" I="{{infile}}" O="{{outfile}}" M="$mfile" {{proc.args.params}}
+rm -rf "$tmpdir"
 """
 
 """
@@ -52,22 +56,27 @@ mfile="{{proc.outdir}}/{{infile.fn}}.metrics.txt"
 	
 	This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH) (see http://ga4gh.org/#/documentation).
 @input:
-	`infile:file`:  The bam file 
+	`infile:file`:  The bam file
+	`rg`:           The read group information. For example:
+		- "RGID=4 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=20"
 @output:
 	`outfile:file`: The bam file with read group added
 @args:
 	`bin`:     The picard executable, default: "picard AddOrReplaceReadGroups"
-	`params`:  Other parameters for picard AddOrReplaceReadGroups, default: "RGID=4 RGLB=lib1 RGPL=illumina  RGPU=unit1 RGSM=20"
+	`params`:  Other parameters for picard AddOrReplaceReadGroups, default: ""
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
 """
 pAddOrReplaceReadGroups = proc()
-pAddOrReplaceReadGroups.input  = "infile:file"
+pAddOrReplaceReadGroups.input  = "infile:file, rg"
 pAddOrReplaceReadGroups.output = "outfile:file:{{infile.fn}}.rg.bam"
-pAddOrReplaceReadGroups.args   = { "bin": "picard MarkDuplicates", "params": "RGID=4 RGLB=lib1 RGPL=illumina  RGPU=unit1 RGSM=20" }
+pAddOrReplaceReadGroups.args   = { "bin": "picard AddOrReplaceReadGroups", "params": "" }
 pAddOrReplaceReadGroups.script = """
-mfile="{{proc.outdir}}/{{infile.fn}}.metrics.txt"
-{{proc.args.bin}} I="{{infile}}" O="{{outfile}}" {{proc.args.params}}
+rg="{{rg}}"
+if [[ "$rg" != *"RGPL="* ]]; then rg="$rg RGPL=illumina"; fi
+if [[ "$rg" != *"RGPU="* ]]; then rg="$rg RGPU=unit1"; fi
+if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
+{{proc.args.bin}} I="{{infile}}" O="{{outfile}}" $rg {{proc.args.params}}
 """
 
 """
@@ -143,15 +152,19 @@ fi
 	`order`:   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
 	`outtype`: The type of output file, sam or bam. Default: bam
 	`params`:  Other parameters for `picard SortSame`, default: "-Xms1g -Xmx8g"
+	`tmpdir`:  The tmpdir to use. Default: /tmp
 @requires:
 	[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 """
 pSortSam = proc()
 pSortSam.input  = "infile:file"
 pSortSam.output = "outfile:file:{{infile.fn}}.sorted.{{proc.args.outtype}}"
-pSortSam.args   = { "bin": "picard SortSam", "order": "coordinate", "outtype": "bam", "params": "-Xms1g -Xmx8g" }
+pSortSam.args   = { "bin": "picard SortSam", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp" }
 pSortSam.script = """
-{{proc.args.bin}} {{proc.args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{proc.args.order}}
+tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile.fn}}"
+mkdir -p "$tmpdir"
+{{proc.args.bin}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" {{proc.args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{proc.args.order}}
+rm -rf "$tmpdir"
 """
 
 """

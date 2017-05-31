@@ -121,3 +121,48 @@ if {{proc.args.calcp}}:
 				fout.write (line + "\\t%.2E\\n" % pval(score, permscores))
 	fout.close()
 """
+
+"""
+@name:
+	pGetPromoterBed
+@description:
+	Get the promoter region in bed format
+@input:
+	`gene`: the gene
+@output:
+	`outfile:file`: the bed file containing the promoter region
+@args:
+	`up`: the upstream to the tss, default: 2000
+	`down`: the downstream to the tss, default: 2000
+	`genome`: the genome, default: hg19
+@require:
+	[python-mygene](http://mygene.info/)
+"""
+pGetPromoterBed = proc()
+pGetPromoterBed.input  = "gene"
+pGetPromoterBed.output = "outfile:file:{{gene}}.promoter.bed"
+pGetPromoterBed.args   = {"up": 2000, "down": 2000, "genome": "hg19"}
+pGetPromoterBed.lang   = "python"
+pGetPromoterBed.script = """
+from mygene import MyGeneInfo
+mg = MyGeneInfo()
+ret = mg.query('{{gene}}', fields="genomic_pos_{{proc.args.genome}}", scopes="symbol", species="{{proc.args.genome}}")
+if not ret.has_key ('hits'):
+	print "TSS not found for gene: {{gene}}" 
+	sys.exit (1)
+pos = None
+hit = ret['hits'][0]
+if hit.has_key('genomic_pos_{{proc.args.genome}}'):
+	pos = hit['genomic_pos_{{proc.args.genome}}']
+
+if not pos:
+	print "TSS not found for gene: {{gene}}" 
+	sys.exit (1)
+chr    = "chr" + str(pos['chr'])
+strand = pos['strand']
+tss    = pos['start'] if strand == 1 else pos['end']
+pstart = tss - {{proc.args.up}}
+pend   = tss + {{proc.args.down}}
+with open ("{{outfile}}", "w") as f:
+	f.write ("%s\\t%s\\t%s\\t%s\\t%s\\t%s" % (chr, pstart, pend, "{{gene}}", 0, ("+" if strand == 1 else "-")))
+"""

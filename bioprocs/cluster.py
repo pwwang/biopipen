@@ -420,6 +420,7 @@ dev.off()
 	`header`:   The `header` argument for `read.table` to read the input file, default: True.
 	`method`:   Which method to use for `hclust`. Default: "complete" (use `?hclust` to check all availables)
 	`rotate`:   Which to rotate the plot or not. Default: False
+	`transpose`:Whether to transpose the matrix before cluster. Default: False
 @requires:
 	[`r-fastcluster`](https://cran.r-project.org/web/packages/fastcluster/index.html) if `proc.args.fast` is True
 	[`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `proc.args.gg` is True
@@ -427,10 +428,11 @@ dev.off()
 pHClust = proc()
 pHClust.input  = "infile:file"
 pHClust.output = "outdir:dir:{{infile.fn}}.hclust"
-pHClust.args   = {"fast":False, "gg":False, "rownames":1, "header":True, 'method': 'complete', 'rotate': False}
+pHClust.args   = {"fast":False, "gg":False, "rownames":1, "header":True, 'method': 'complete', 'rotate': False, 'transpose': False}
 pHClust.lang   = "Rscript"
 pHClust.script = """
 data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+if ({{proc.args.transpose | str(_).upper()}}) data = t(data)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 dmat = dist(data)
 if ({{proc.args.fast | str(_).upper()}}) {

@@ -364,14 +364,14 @@ if (nrplot > 0) {
 	  cnames = colnames(data)
 	  cnx    = rnwidth + cellwidth/2 + (cols[1, ]-1) * (cellwidth + colgap)
 	  cnx    = as.vector(cnx)
-	  cny    = rep(height - cnheight/2, numcol)
-	  text (cnx, cny, cnames, srt=45, cex={{proc.args.cex}})
+	  cny    = rep(height - cnheight + 4*rowgap, numcol)
+	  text (cnx, cny, cnames, srt=45, cex={{proc.args.cex}}, adj = c(0, 0))
 	  
-	  # townames
+	  # rownames
 	  rnames = rownames(data)
-	  rnx    = rep(rnwidth/2, numrow)
+	  rnx    = rep(rnwidth - 4*colgap, numrow)
 	  rny    = height - cnheight - cellheight / 2 - (rows[, 1] - 1) * (cellheight + rowgap)
-	  text (rnx, rny, rnames, cex={{proc.args.cex}})
+	  text (rnx, rny, rnames, cex={{proc.args.cex}}, adj = c(1, 0.5))
 	  
 	  # colors
 	  vd     = matrix (as.vector(as.matrix(data)), ncol=1)

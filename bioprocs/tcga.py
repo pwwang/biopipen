@@ -23,27 +23,6 @@ pDownload.script    = """
 
 """
 @name:
-	pRPPA
-@description:
-	Download TCGA use `gdc-client` and a manifest file
-@input:
-	`manifile:file`: the manifest file
-@output:
-	`outdir:file`:   the directory containing downloaded file
-@args:
-	`params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
-	`bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
-"""
-pDownload = proc ()
-pDownload.input     = "manifile:file"
-pDownload.output    = "outdir:dir:{{manifile.fn}}"
-pDownload.args      = {"params": "--no-file-md5sum -n 20", "bin-gdc": "gdc-client"}
-pDownload.script    = """
-{{proc.args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{proc.args.params}}
-"""
-
-"""
-@name:
 	pSample2SubmitterID
 @description:
 	convert TCGA sample names with submitter id with metadata and sample containing folder
@@ -55,12 +34,11 @@ pDownload.script    = """
 """
 pSample2SubmitterID = proc ()
 pSample2SubmitterID.input     = "dir:file, mdfile:file"
-pSample2SubmitterID.output    = "outdir:file:out-{{#}}"
+pSample2SubmitterID.output    = "outdir:dir:out-{{#}}"
 pSample2SubmitterID.defaultSh = "python"
 pSample2SubmitterID.script    = """
 import json, glob, os
-if not os.path.exists ("{{outdir}}"):
-	os.makedirs("{{outdir}}")
+
 sam_meta = None
 sample_ids = {}
 with open ("{{mdfile}}") as f:

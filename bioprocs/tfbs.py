@@ -19,11 +19,45 @@ A set of TFBS procs
 """
 pMotifScanByMEME = proc ()
 pMotifScanByMEME.input  = "mfile:file, sfile:file"
-pMotifScanByMEME.output = "outdir:file:{{mfile.fn}}.{{sfile.fn}}.fimo"
+pMotifScanByMEME.output = "outdir:file:{{mfile.fn}}-{{sfile.fn}}.fimo"
 pMotifScanByMEME.args   = {"params": "", "bin-fimo": "fimo"}
 pMotifScanByMEME.script = """
 if [[ -e "{{outdir}}" ]]; then rm -rf "{{outdir}}"; fi
 {{proc.args.bin-fimo}} --o "{{outdir}}" {{proc.args.params}} "{{mfile}}" "{{sfile}}"
+"""
+
+pMS2Bed = proc ()
+pMS2Bed.input  = "msdir:file"
+pMS2Bed.output = "outfile:file:{{msdir.fn}}.bed"
+pMS2Bed.lang   = "python"
+pMS2Bed.script = """
+#pattern name   sequence name   start   stop    strand  score   p-value q-value matched sequence
+#TFDP1   TERT::chr5:1293184-1297184  2266    2287    -   22.1515 5.06e-09    1.95e-05    GCGAGCGGCGCGCGGGCGGGGA
+#TFDP1   TERT::chr5:1293184-1297184  1986    2007    +   20.6212 2.97e-08    5.71e-05    CGCCGCGAGGAGAgggcggggc
+#TFDP1   TERT::chr5:1293184-1297184  1706    1727    +   20.0758 5.26e-08    6.74e-05    CGGAAGGAgggggcggcggggg
+#TBX15   TERT::chr5:1293184-1297184  3888    3906    -   19.422  1.24e-07    0.000529    ACGGGGGTGGGGGTGGGGT
+# sometimes "TERT::" part is missing
+
+with open ("{{msdir}}/fimo.txt") as f, open("{{outfile}}", "w") as fout:
+	for line in f:
+		line   = line.strip()
+		if not line or line.startswith("#"): continue
+		parts  = line.split()
+		out    = [''] * 9
+		range  = parts[1].split("::")[1] if "::" in parts[1] else parts[1]
+		suffix = "::" + parts[1].split("::")[0] if "::" in parts[1] else ""
+		ranges = range.split(':')
+		out[0] = ranges[0]
+		start  = ranges[1].split('-')[0]
+		out[1] = str(int(start) + int(parts[2]))
+		out[2] = str(int(start) + int(parts[3]))
+		out[3] = parts[0] + suffix
+		out[4] = parts[5]
+		out[5] = parts[4]
+		out[6] = parts[6]
+		out[7] = parts[7]
+		out[8] = parts[8]
+		fout.write ("\\t".join(out) + "\\n")
 """
 
 """
@@ -41,7 +75,7 @@ if [[ -e "{{outdir}}" ]]; then rm -rf "{{outdir}}"; fi
 """
 pMEMEmDB2Gene = proc ()
 pMEMEmDB2Gene.input  = "memefile:file, species"
-pMEMEmDB2Gene.output = "outfile:file:{{ memefile | __import__('os').readlink(_) | __import__('os').path.dirname(_) | __import__('os').path.basename(_) }}.{{memefile.fn}}.m2gene"
+pMEMEmDB2Gene.output = "outfile:file:{{ memefile | __import__('os').readlink(_) | __import__('os').path.dirname(_) | __import__('os').path.basename(_) }}-{{memefile.fn}}.m2gene"
 pMEMEmDB2Gene.lang   = "python"
 pMEMEmDB2Gene.script = """
 memedir = "{{ memefile | __import__('os').readlink(_) | __import__('os').path.dirname(_) | __import__('os').path.basename(_) }}"
