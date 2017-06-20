@@ -5,7 +5,7 @@ setup (
 	name             = 'bioprocs',
 	version          = bioprocs.VERSION,
 	description      = "A set of procs for bioinformatics using pyppl",
-	url              = "https://github.com/pwwang/pyppl",
+	url              = "https://github.com/pwwang/bioprocs",
 	author           = "pwwang",
 	author_email     = "pwwang@pwwang.com",
 	license          = "MIT",
