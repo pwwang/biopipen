@@ -20,14 +20,14 @@ Generate plot using given data
 """
 pBoxPlot = proc()
 pBoxPlot.input  = "datafile:file"
-pBoxPlot.output = "outpng:file:{{datafile.fn}}.png"
+pBoxPlot.output = "outpng:file:{{datafile | fn}}.png"
 pBoxPlot.lang   = "Rscript"
 pBoxPlot.args   = {"header": True, "rownames": 1, "params": ""}
 pBoxPlot.script = """
 png (file = "{{outpng}}", res=300, width=2000, height=2000)
-data = read.table ("{{datafile}}", sep="\\t", header={{proc.args.header | str(_).upper()}}, row.names={{proc.args.rownames}}, check.names=F)
+data = read.table ("{{datafile}}", sep="\\t", header={{proc.args.header | Rbool}}, row.names={{proc.args.rownames}}, check.names=F)
 boxplot (
-	data{{proc.args.params | (lambda x: ", " + x if x else "")(_) }}
+	data{{proc.args.params | lambda x: ", " + x if x else "" }}
 )
 dev.off()
 """

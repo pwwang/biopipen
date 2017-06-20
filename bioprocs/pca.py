@@ -26,7 +26,7 @@ from pyppl import proc
 """
 pPCA = proc()
 pPCA.input   = "infile:file"
-pPCA.output  = "outdir:dir:{{infile.fn}}.pca"
+pPCA.output  = "outdir:dir:{{infile | fn}}.pca"
 pPCA.args    = {
 	'transpose': False,
 	'rownames': 1,
@@ -39,14 +39,14 @@ pPCA.args    = {
 pPCA.lang    = "Rscript"
 pPCA.script  = """
 library("factoextra")
-rownames = {{proc.args.rownames | (lambda x: x if str(x).isdigit() else "NULL" )(_)}}
-data = read.table ("{{infile}}", row.names=rownames, header={{proc.args.header | str(_).upper() }}, check.names=F)
-if ({{ proc.args.transpose | str(_).upper() }}) data = t(data)
+rownames = {{proc.args.rownames | lambda x: x if str(x).isdigit() else "NULL" }}
+data = read.table ("{{infile}}", row.names=rownames, header={{proc.args.header | Rbool }}, check.names=F)
+if ({{ proc.args.transpose | Rbool }}) data = t(data)
 pc     = prcomp (data)
 pcfile = file.path("{{outdir}}", "pcs.txt")
 pcs    = pc$x
 tcp    = ncol (pcs)
-if ({{proc.args.screeplot | str(_).upper()}}) {
+if ({{proc.args.screeplot | Rbool}}) {
 	spfile = file.path ("{{outdir}}", "screeplot.png")
 	png (file = spfile)
 	ncp = {{proc.args.sp_ncp}}
@@ -58,7 +58,7 @@ if ({{proc.args.screeplot | str(_).upper()}}) {
 	print (fviz_screeplot (pc, ncp = ncp))
 	dev.off()
 }
-if ({{proc.args.varplot | str(_).upper()}}) {
+if ({{proc.args.varplot | Rbool}}) {
 	vpfile = file.path ("{{outdir}}", "varplot.png")
 	png (file = vpfile)
 	print (fviz_pca_var(pc, col.var="contrib",
@@ -67,7 +67,7 @@ if ({{proc.args.varplot | str(_).upper()}}) {
 	))
 	dev.off()
 }
-if ({{proc.args.biplot | str(_).upper()}}) {
+if ({{proc.args.biplot | Rbool}}) {
 	bpfile = file.path ("{{outdir}}", "biplot.png")
 	png (file = bpfile)
 	print (fviz_pca_biplot(pc, repel = TRUE))
@@ -93,7 +93,7 @@ write.table (pcs, pcfile, col.names=T, row.names=T, quote=F, sep="\\t")
 """
 pSelectPCs = proc ()
 pSelectPCs.input  = "indir:file"
-pSelectPCs.output = "outfile:file:{{indir.fn}}.pcs.txt"
+pSelectPCs.output = "outfile:file:{{indir | fn}}.pcs.txt"
 pSelectPCs.args   = {"n": 0.9}
 pSelectPCs.lang   = "python"
 pSelectPCs.script = """

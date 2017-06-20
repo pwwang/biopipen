@@ -24,12 +24,12 @@ from pyppl import proc
 """
 pRWR = proc ()
 pRWR.input     = "Wfile:file, Efile:file"
-pRWR.output    = "outfile:file:R-{{Efile.fn}}"
+pRWR.output    = "outfile:file:R-{{Efile | fn}}"
 pRWR.args      = {'c': 0.1, 'eps': 1e-5, 'tmax': 10000, 'Wformat': 'rds', 'Eformat': 'rds', 'Rformat': 'rds', 'normW': False, 'normE': False}
 pRWR.defaultSh = "Rscript"
 pRWR.script    = """
-normW   = {{proc.args.normW | (lambda x: "TRUE" if x else "FALSE")(_)}}
-normE   = {{proc.args.normE | (lambda x: "TRUE" if x else "FALSE")(_)}}
+normW   = {{proc.args.normW | Rbool}}
+normE   = {{proc.args.normE | Rbool}}
 Wformat = "{{proc.args.Wformat}}"
 Eformat = "{{proc.args.Eformat}}"
 Rformat = "{{proc.args.Rformat}}"

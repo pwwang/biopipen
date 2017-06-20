@@ -132,7 +132,7 @@ fout.close()
 """
 pIntersectGMT = proc()
 pIntersectGMT.input  = "gmtfile1:file, gmtfile2:file"
-pIntersectGMT.output = "outfile:file:intersected.gmt{{proc.args.gz | (lambda x: '.gz' if x else '')(_)}}"
+pIntersectGMT.output = "outfile:file:intersected.gmt{{proc.args.gz | lambda x: '.gz' if x else ''}}"
 pIntersectGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
 pIntersectGMT.script = """
 #!/usr/bin/env python
@@ -194,7 +194,7 @@ with openfunc ("{{outfile}}", "w") as fout:
 """
 pUnionGMT = proc()
 pUnionGMT.input  = "gmtfile1:file, gmtfile2:file"
-pUnionGMT.output = "outfile:file:unioned.gmt{{proc.args.gz | (lambda x: '.gz' if x else '')(_)}}"
+pUnionGMT.output = "outfile:file:unioned.gmt{{proc.args.gz | lambda x: '.gz' if x else ''}}"
 pUnionGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
 pUnionGMT.script = """
 #!/usr/bin/env python
@@ -252,7 +252,7 @@ with openfunc ("{{outfile}}", "w") as fout:
 """
 pSSGSEA = proc ()
 pSSGSEA.input     = "gctfile:file, gmtfile:file"
-pSSGSEA.output    = "outdir:file:{{gctfile.fn}}_results"
+pSSGSEA.output    = "outdir:file:{{gctfile|fn}}_results"
 pSSGSEA.args      = {'weightexp': 0.75, 'padjust': 'bonferroni', 'nperm': 10000}
 pSSGSEA.script    = """
 #!/usr/bin/env Rscript
@@ -510,14 +510,15 @@ ExportResult (es = esq, nes=nes, outfile = "{{outdir}}/report.txt")
 """
 pEnrichr = proc()
 pEnrichr.input  = "infile:file"
-pEnrichr.output = "outdir:dir:{{infile.fn}}.enrichr"
+pEnrichr.output = "outdir:dir:{{infile | fn}}.{{#}}.enrichr"
 pEnrichr.lang   = "python"
 pEnrichr.args   = {"topn": 10, "dbs": "KEGG_2016", "norm": False, "rmtags": True, "plot": True, "title": "Gene enrichment: {db}"}
+pEnrichr.errhow = 'retry'
 pEnrichr.script = """
 import json
 import requests
 import math
-genes = [line.strip() for line in open("{{infile}}") if line.strip()]
+genes = [line.split()[0] for line in open("{{infile}}") if line.strip()]
 if {{proc.args.norm}}:
 	from mygene import MyGeneInfo
 	mg = MyGeneInfo()
@@ -534,7 +535,7 @@ if {{proc.args.plot}}:
 ## upload
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
 genes_str   = "\\n".join(genes)
-description = '{{infile.fn}}'
+description = '{{infile | fn}}'
 payload = {
     'list': (None, genes_str),
     'description': (None, description)

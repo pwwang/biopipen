@@ -16,7 +16,7 @@ from pyppl import proc
 @input:
 	`infile:file`:  The aligned bam file
 @brings:
-	`infile`: `{{infile.fn}}.bai` The index file of input bam file
+	`infile`: `{{infile | fn}}.bai` The index file of input bam file
 @output:
 	`outfile:file`: A list of target intervals to pass to the IndelRealigner.
 @args:
@@ -30,8 +30,8 @@ from pyppl import proc
 """
 pRealignerTargetCreator = proc()
 pRealignerTargetCreator.input  = "infile:file"
-pRealignerTargetCreator.brings = {"infile": "{{infile.fn}}.bai"}
-pRealignerTargetCreator.output = "outfile:file:{{infile.fn}}.indelRealigner.intervals"
+pRealignerTargetCreator.brings = {"infile": "{{infile | fn}}.bai"}
+pRealignerTargetCreator.output = "outfile:file:{{infile | fn}}.indelRealigner.intervals"
 pRealignerTargetCreator.args   = { "bin": "gatk -T RealignerTargetCreator", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pRealignerTargetCreator.script = """
 # make sure reference is specified
@@ -67,7 +67,7 @@ fi
 	`bamfile:file`: The aligned bam file
 	`intfile:file`: Intervals file output from RealignerTargetCreator
 @brings:
-	`infile`: `{{infile.fn}}.bai` The index file of input bam file
+	`infile`: `{{infile | fn}}.bai` The index file of input bam file
 @output:
 	`outfile:file`: A realigned version of input BAM file.
 @args:
@@ -81,8 +81,8 @@ fi
 """
 pIndelRealigner = proc()
 pIndelRealigner.input  = "bamfile:file, intfile:file"
-pIndelRealigner.brings = {"bamfile": "{{bamfile.fn}}.bai"}
-pIndelRealigner.output = "outfile:file:{{bamfile.fn | (lambda x: __import__('re').sub(r'(\\.dedup)?$', '', x))(_)}}.realigned.bam"
+pIndelRealigner.brings = {"bamfile": "{{bamfile | fn}}.bai"}
+pIndelRealigner.output = "outfile:file:{{bamfile | fn | lambda x: __import__('re').sub(r'(\\.dedup)?$', '', x)}}.realigned.bam"
 pIndelRealigner.args   = { "bin": "gatk -T IndelRealigner", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pIndelRealigner.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -128,7 +128,7 @@ fi
 """
 pBaseRecalibrator = proc()
 pBaseRecalibrator.input  = "bamfile:file"
-pBaseRecalibrator.output = "outfile:file:{{bamfile.fn}}.recal.table"
+pBaseRecalibrator.output = "outfile:file:{{bamfile | fn}}.recal.table"
 pBaseRecalibrator.args   = { "bin": "gatk -T BaseRecalibrator", "knownSites": "", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pBaseRecalibrator.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -168,7 +168,7 @@ fi
 """
 pPrintReads = proc()
 pPrintReads.input  = "bamfile:file, recaltable:file"
-pPrintReads.output = "outfile:file:{{bamfile.fn | (lambda x: __import__('re').sub(r'(\\.realigned)?$', '', x))(_)}}.bam"
+pPrintReads.output = "outfile:file:{{bamfile | fn | lambda x: __import__('re').sub(r'(\\.realigned)?$', '', x)}}.bam"
 pPrintReads.args   = { "bin": "gatk -T PrintReads", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pPrintReads.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -206,8 +206,8 @@ fi
 """
 pHaplotypeCaller = proc()
 pHaplotypeCaller.input  = "bamfile:file"
-pHaplotypeCaller.brings = {"bamfile": "{{bamfile.fn}}.ba*i"}
-pHaplotypeCaller.output = "outfile:file:{{bamfile.fn}}.vcf"
+pHaplotypeCaller.brings = {"bamfile": "{{bamfile | fn}}.ba*i"}
+pHaplotypeCaller.output = "outfile:file:{{bamfile | fn}}.vcf"
 pHaplotypeCaller.args   = { "bin": "gatk -T HaplotypeCaller", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pHaplotypeCaller.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -250,7 +250,7 @@ fi
 """
 pSelectVariants = proc()
 pSelectVariants.input  = "vcffile:file"
-pSelectVariants.output = "outfile:file:{{vcffile.fn}}.selected.vcf"
+pSelectVariants.output = "outfile:file:{{vcffile | fn}}.selected.vcf"
 pSelectVariants.args   = { "bin": "gatk -T SelectVariants", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pSelectVariants.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -284,7 +284,7 @@ fi
 """
 pVariantFiltration = proc()
 pVariantFiltration.input  = "vcffile:file"
-pVariantFiltration.output = "outfile:file:{{vcffile.fn | (lambda x: __import__('re').sub(r'(\\.selected)?$', '', x))(_)}}.filtered.vcf"
+pVariantFiltration.output = "outfile:file:{{vcffile | fn | lambda x: __import__('re').sub(r'(\\.selected)?$', '', x)}}.filtered.vcf"
 pVariantFiltration.args   = { "bin": "gatk -T VariantFiltration", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pVariantFiltration.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -309,8 +309,8 @@ fi
 	`tumor:file`:  the tumor bam file
 	`normal:file`: the normal bam file
 @brings:
-	`tumor`:  `{{tumor.fn}}.bai` the index file of tumor
-	`normal`: `{{normal.fn}}.bai` the index file of normal
+	`tumor`:  `{{tumor | fn}}.bai` the index file of tumor
+	`normal`: `{{normal | fn}}.bai` the index file of normal
 @output:
 	`outfile:file`: The vcf file containing somatic mutations
 @args:
@@ -324,8 +324,8 @@ fi
 """
 pMuTect2 = proc()
 pMuTect2.input  = "tumor:file, normal:file"
-pMuTect2.brings = {"tumor": "{{tumor.fn}}.bai", "normal": "{{normal.fn}}.bai"}
-pMuTect2.output = "outfile:file:{{tumor.fn}}-{{normal.fn}}.vcf"
+pMuTect2.brings = {"tumor": "{{tumor | fn}}.bai", "normal": "{{normal | fn}}.bai"}
+pMuTect2.output = "outfile:file:{{tumor | fn}}-{{normal | fn}}.vcf"
 pMuTect2.args   = { "bin": "gatk -T MuTect2", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pMuTect2.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -357,8 +357,8 @@ fi
 	`tumor:file`:  the tumor bam file
 	`normal:file`: the normal bam file
 @brings:
-	`tumor`:  `{{tumor.fn}}.bai` the index file of tumor
-	`normal`: `{{normal.fn}}.bai` the index file of normal
+	`tumor`:  `{{tumor | fn}}.bai` the index file of tumor
+	`normal`: `{{normal | fn}}.bai` the index file of normal
 @output:
 	`outfile:file`: The vcf file containing somatic mutations
 @args:
@@ -372,8 +372,8 @@ fi
 """
 pMuTect2Interval = proc()
 pMuTect2Interval.input  = "tumor:file, normal:file"
-pMuTect2Interval.brings = {"tumor": "{{tumor.fn}}.bai", "normal": "{{normal.fn}}.bai"}
-pMuTect2Interval.output = "outfile:file:{{tumor.fn}}-{{normal.fn}}.vcf"
+pMuTect2Interval.brings = {"tumor": "{{tumor | fn}}.bai", "normal": "{{normal | fn}}.bai"}
+pMuTect2Interval.output = "outfile:file:{{tumor | fn}}-{{normal | fn}}.vcf"
 pMuTect2Interval.args   = { "bin": "gatk -T MuTect2", "params": "", "reffile": "", "bin-samtools": "samtools" }
 pMuTect2Interval.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then

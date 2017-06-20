@@ -27,8 +27,8 @@ Prepare WXS data, including alignment, QC,...
 pTrimmomaticPE = proc ()
 pTrimmomaticPE.input   = "fqfile1:file, fqfile2:file"
 pTrimmomaticPE.output  = [
-	"outfile1:file:{{fqfile1.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.clean.fq.gz",
-	"outfile2:file:{{fqfile2.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.clean.fq.gz"
+	"outfile1:file:{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz",
+	"outfile2:file:{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz"
 ]
 pTrimmomaticPE.args    = {
 	#"bin": "java -jar trimmomatic.jar"
@@ -50,9 +50,9 @@ if [[ "$params" == *"{adapter}"* ]]; then
 	t="$trimdir/adapters/TruSeq3-PE.fa"
 	params=${params//$r/$t}
 fi
-unpaired1="{{proc.outdir}}/{{fqfile1.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.unpaired.fq.gz"
-unpaired2="{{proc.outdir}}/{{fqfile2.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.unpaired.fq.gz"
-logfile="{{proc.outdir}}/{{fqfile1.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}-{{fqfile2.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.log"
+unpaired1="{{proc.outdir}}/{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.unpaired.fq.gz"
+unpaired2="{{proc.outdir}}/{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.unpaired.fq.gz"
+logfile="{{proc.outdir}}/{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}-{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.log"
 $bin PE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{{fqfile1}}" "{{fqfile2}}" "{{outfile1}}" $unpaired1 "{{outfile2}}" $unpaired2 $params
 """
 
@@ -76,7 +76,7 @@ $bin PE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{
 """
 pTrimmomaticSE = proc ()
 pTrimmomaticSE.input   = "fqfile:file"
-pTrimmomaticSE.output  = "outfile:file:{{fqfile.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.clean.fq.gz"
+pTrimmomaticSE.output  = "outfile:file:{{fqfile | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz"
 pTrimmomaticSE.args    = {
 	#"bin": "java -jar trimmomatic.jar"
 	"bin":    "trimmomatic",
@@ -98,7 +98,7 @@ if [[ "$params" == *"{adapter}"* ]]; then
 	params=${params//$r/$t}
 fi
 
-logfile="{{proc.outdir}}/{{fqfile.fn | (lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x))(_)}}.log"
+logfile="{{proc.outdir}}/{{fqfile | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.log"
 $bin SE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{{fqfile}}" "{{outfile}}"  $params
 """
 
@@ -122,7 +122,7 @@ $bin SE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{
 """
 pAlignPEByBWA = proc ()
 pAlignPEByBWA.input   = "infile1:file, infile2:file"
-pAlignPEByBWA.output  = "outfile:file:{{infile1.fn | (lambda x: __import__('re').sub(r'[^\\w]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x))(_)}}.sam"
+pAlignPEByBWA.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^\\w]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.sam"
 pAlignPEByBWA.args    = {
 	#"bin": "java -jar trimmomatic.jar"
 	"bin":     "bwa",
@@ -161,7 +161,7 @@ fi
 """
 pAlignSEByBWA = proc ()
 pAlignSEByBWA.input   = "infile:file"
-pAlignSEByBWA.output  = "outfile:file:{{infile.fn | (lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)?$', '', x))(_)}}.sam"
+pAlignSEByBWA.output  = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.sam"
 pAlignSEByBWA.args    = {
 	#"bin": "java -jar trimmomatic.jar"
 	"bin":     "bwa",
@@ -202,7 +202,7 @@ fi
 """
 pAlignPEByNGM = proc ()
 pAlignPEByNGM.input   = "infile1:file, infile2:file"
-pAlignPEByNGM.output  = "outfile:file:{{infile1.fn | (lambda x: __import__('re').sub(r'[^\\w]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x))(_)}}.{{proc.args.outtype}}"
+pAlignPEByNGM.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^\\w]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.{{proc.args.outtype}}"
 pAlignPEByNGM.args    = {
 	"bin":     "ngm",
 	"params":  "--rg-id ngm --rg-sm sample",
@@ -242,7 +242,7 @@ fi
 """
 pAlignSEByNGM = proc ()
 pAlignSEByNGM.input   = "infile:file"
-pAlignSEByNGM.output  = "outfile:file:{{infile.fn}}.{{proc.args.outtype}}"
+pAlignSEByNGM.output  = "outfile:file:{{infile | fn}}.{{proc.args.outtype}}"
 pAlignSEByNGM.args    = {
 	"bin":     "ngm",
 	"params":  "--rg-id ngm --rg-sm sample",
@@ -284,6 +284,6 @@ pMergeBams.input   = "sname, bams:files"
 pMergeBams.output  = "outfile:file:{{sname}}.bam"
 pMergeBams.args    = {"bind-samtools": "samtools", "nthread": 1, "params": ""}
 pMergeBams.script  = """
-{{proc.args.bin-samtools}} merge -@ {{proc.args.nthread}} {{proc.args.params}} {{outfile}} "{{bams | '" "'.join(_)}}"
+{{proc.args.bin-samtools}} merge -@ {{proc.args.nthread}} {{proc.args.params}} {{outfile}} {{bams | asquote}}
 """
 

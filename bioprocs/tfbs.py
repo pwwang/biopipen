@@ -19,7 +19,7 @@ A set of TFBS procs
 """
 pMotifScanByMEME = proc ()
 pMotifScanByMEME.input  = "mfile:file, sfile:file"
-pMotifScanByMEME.output = "outdir:file:{{mfile.fn}}-{{sfile.fn}}.fimo"
+pMotifScanByMEME.output = "outdir:file:{{mfile | fn}}-{{sfile | fn}}.fimo"
 pMotifScanByMEME.args   = {"params": "", "bin-fimo": "fimo"}
 pMotifScanByMEME.script = """
 if [[ -e "{{outdir}}" ]]; then rm -rf "{{outdir}}"; fi
@@ -28,7 +28,7 @@ if [[ -e "{{outdir}}" ]]; then rm -rf "{{outdir}}"; fi
 
 pMS2Bed = proc ()
 pMS2Bed.input  = "msdir:file"
-pMS2Bed.output = "outfile:file:{{msdir.fn}}.bed"
+pMS2Bed.output = "outfile:file:{{msdir | fn}}.bed"
 pMS2Bed.lang   = "python"
 pMS2Bed.script = """
 #pattern name   sequence name   start   stop    strand  score   p-value q-value matched sequence
@@ -75,10 +75,10 @@ with open ("{{msdir}}/fimo.txt") as f, open("{{outfile}}", "w") as fout:
 """
 pMEMEmDB2Gene = proc ()
 pMEMEmDB2Gene.input  = "memefile:file, species"
-pMEMEmDB2Gene.output = "outfile:file:{{ memefile | __import__('os').readlink(_) | __import__('os').path.dirname(_) | __import__('os').path.basename(_) }}-{{memefile.fn}}.m2gene"
+pMEMEmDB2Gene.output = "outfile:file:{{ memefile | readlink | dirname | bn }}-{{memefile | fn}}.m2gene"
 pMEMEmDB2Gene.lang   = "python"
 pMEMEmDB2Gene.script = """
-memedir = "{{ memefile | __import__('os').readlink(_) | __import__('os').path.dirname(_) | __import__('os').path.basename(_) }}"
+memedir = "{{ memefile | readlink | dirname | bn }}"
 from mygene import MyGeneInfo
 mg = MyGeneInfo()
 import re
@@ -201,7 +201,7 @@ with open ("{{memefile}}", "r") as f, open ("{{outfile}}", "w") as fout:
 	for line in f:
 		if not line.startswith ("MOTIF"): continue
 		t    = line.strip().split(" ")
-		gene = getGene (t, memedir, "{{memefile.fn}}")
+		gene = getGene (t, memedir, "{{memefile | fn}}")
 		if not gene: continue
 		if not isinstance (gene, list): gene = [gene]
 		fout.write ("%s\\t%s\\n" % (t[1], "|".join(gene)))

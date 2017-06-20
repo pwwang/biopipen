@@ -30,7 +30,7 @@ A set of procs to handle sequences
 """
 pConsv = proc()
 pConsv.input  = "bedfile:file, bwdir:file"
-pConsv.output = "outdir:dir:{{bedfile.fn}}.consv"
+pConsv.output = "outdir:dir:{{bedfile | fn}}.consv"
 pConsv.args   = {"calcp": True, "nperm": 10000, "seed": 0, "gsize": "", "bin-bwtool": "bwtool", "bin-bedtools": "bedtools"}
 pConsv.lang   = "python"
 pConsv.script = """
@@ -109,7 +109,7 @@ if {{proc.args.calcp}}:
 	
 	outfile    = path.join ("{{outdir}}", "result.consv.txt")
 	fout       = open (outfile, "w")
-	for ofile in glob ("{{outdir}}/{{bedfile.fn}}.*.consv.txt"):
+	for ofile in glob ("{{outdir}}/{{bedfile | fn}}.*.consv.txt"):
 		with open (ofile) as f:
 			for line in f:
 				line = line.strip()

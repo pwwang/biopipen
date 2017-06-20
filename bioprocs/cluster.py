@@ -38,16 +38,16 @@ from pyppl import proc
 """
 pDist2Coords = proc()
 pDist2Coords.input   = "infile:file"
-pDist2Coords.output  = "outfile:file:{{infile.fn}}.coords"
+pDist2Coords.output  = "outfile:file:{{infile | fn}}.coords"
 pDist2Coords.args    = {'informat': 'full', 'rownames': 1, 'header': True, 'k': 2}
 pDist2Coords.lang    = "Rscript"
 pDist2Coords.script  = """
 informat = "{{proc.args.informat}}"
 rownames = {{proc.args.rownames}}
 if (informat == "full") {
-	mat = read.table ("{{infile}}", row.names=rownames, header={{proc.args.header | str(_).upper() }}, check.names=F)
+	mat = read.table ("{{infile}}", row.names=rownames, header={{proc.args.header | Rbool }}, check.names=F)
 } else if (informat == "triangle") {
-	mat = read.table ("{{infile}}", sep="\\t", row.names=rownames, header={{proc.args.header | str(_).upper() }}, check.names=F, fill=T)
+	mat = read.table ("{{infile}}", sep="\\t", row.names=rownames, header={{proc.args.header | Rbool }}, check.names=F, fill=T)
 	for (i in 1:nrow(mat)) {
 		for (j in i:nrow(mat)) {
 			if (j == i)  { mat[i,j] = 0; mat[j, i] = 0}
@@ -112,13 +112,13 @@ write.table (coords, "{{outfile}}", col.names=F, row.names=F, quote=F, sep="\\t"
 """
 pDecideK = proc()
 pDecideK.input   = "infile:file"
-pDecideK.output  = "kfile:file:{{infile.fn}}-K.txt"
+pDecideK.output  = "kfile:file:{{infile | fn}}-K.txt"
 pDecideK.args    = { 'method': 'elbow', 'rownames': 1, 'header': True, 'seed': 0 }
 pDecideK.lang    = "Rscript"
 pDecideK.script  = """
 set.seed ({{proc.args.seed}})
 library ('factoextra')
-data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 k = 0
 parseK = function (k) {
@@ -206,12 +206,12 @@ write (k, "{{kfile}}")
 """
 pKMeans = proc ()
 pKMeans.input   = 'infile:file, k'
-pKMeans.output  = 'outdir:dir:{{infile.fn}}.kmeans'
+pKMeans.output  = 'outdir:dir:{{infile | fn}}.kmeans'
 pKMeans.args    = { 'rownames': 1, 'header': True, 'algorithm': 'Hartigan-Wong', 'niter': 10, 'nstart': 25, 'caption': 'K-means with K=%K%' }
 pKMeans.lang    = 'Rscript'
 pKMeans.script  = """
 library ('factoextra')
-data      = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data      = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
 data      = data[, apply(data, 2, sd)!=0, drop=F]
 k         = as.numeric ("{{k}}")
 if (is.na (k)) {
@@ -249,13 +249,13 @@ dev.off()
 """
 pPamk = proc()
 pPamk.input    = "infile:file"
-pPamk.output   = "outdir:dir:{{infile.fn}}.pamk"
+pPamk.output   = "outdir:dir:{{infile | fn}}.pamk"
 pPamk.args     = {'rownames': 1, 'header': True, "min":2, "max":15, "seed":0, "caption": "Partitioning Around Medoids (K=%k%)"}
 pPamk.lang     = "Rscript"
 pPamk.script   = """
 library(fpc)
 library(factoextra)
-data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 p = pamk (data, krange={{proc.args.min}}:{{proc.args.max}}, seed={{proc.args.seed}})
 p$pamobject$data = data
@@ -288,13 +288,13 @@ dev.off()
 """
 pClara  = proc()
 pClara.input   = "infile:file, k"
-pClara.output  = 'outdir:dir:{{infile.fn}}.clara'
+pClara.output  = 'outdir:dir:{{infile | fn}}.clara'
 pClara.args    = { 'rownames': 1, 'header': True, 'samples': 5, 'caption': 'CLARA Clustering with K=%K%' }
 pClara.lang    = 'Rscript'
 pClara.script  = """
 library ('factoextra')
 library ('cluster')
-data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 k         = as.numeric ("{{k}}")
 if (is.na (k)) {
@@ -333,13 +333,13 @@ dev.off()
 """
 pMClust  = proc()
 pMClust.input   = "infile:file"
-pMClust.output  = 'outdir:dir:{{infile.fn}}.mclust'
+pMClust.output  = 'outdir:dir:{{infile | fn}}.mclust'
 pMClust.args    = { 'rownames': 1, 'header': True, 'min':2, 'max':15, 'caption': 'MClust Clustering' }
 pMClust.lang    = 'Rscript'
 pMClust.script  = """
 library ('factoextra')
 library ('mclust')
-data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 mc        = Mclust (data, G={{proc.args.min}}:{{proc.args.max}})
 clustfile = file.path ("{{outdir}}", "cluster.txt")
@@ -370,13 +370,13 @@ dev.off()
 """
 pAPCluster  = proc()
 pAPCluster.input   = "infile:file"
-pAPCluster.output  = 'outdir:dir:{{infile.fn}}.apcluster'
+pAPCluster.output  = 'outdir:dir:{{infile | fn}}.apcluster'
 pAPCluster.args    = { 'rownames': 1, 'header': True, 'caption': 'APClustering with K=%K%' }
 pAPCluster.lang    = 'Rscript'
 pAPCluster.script  = """
 library ('factoextra')
 library ('apcluster')
-data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
+data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 ap        = apcluster(negDistMat(r=2), data)
 clusters  = ap@clusters
@@ -427,15 +427,15 @@ dev.off()
 """
 pHClust = proc()
 pHClust.input  = "infile:file"
-pHClust.output = "outdir:dir:{{infile.fn}}.hclust"
+pHClust.output = "outdir:dir:{{infile | fn}}.hclust"
 pHClust.args   = {"fast":False, "gg":False, "rownames":1, "header":True, 'method': 'complete', 'rotate': False, 'transpose': False}
 pHClust.lang   = "Rscript"
 pHClust.script = """
-data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | str(_).upper() }}, check.names=F)
-if ({{proc.args.transpose | str(_).upper()}}) data = t(data)
+data = read.table ("{{infile}}", row.names={{proc.args.rownames}}, header={{proc.args.header | Rbool }}, check.names=F)
+if ({{proc.args.transpose | Rbool}}) data = t(data)
 data = data[, apply(data, 2, sd)!=0, drop=F]
 dmat = dist(data)
-if ({{proc.args.fast | str(_).upper()}}) {
+if ({{proc.args.fast | Rbool}}) {
 	library('fastcluster')
 }
 orderfile = file.path ("{{outdir}}", "hclust.order.txt")
@@ -443,12 +443,12 @@ mergefile = file.path ("{{outdir}}", "hclust.merge.txt")
 clustfig  = file.path ("{{outdir}}", "hclust.png")
 hobj = hclust (dmat, method="{{proc.args.method}}")
 png (file = clustfig)
-if ({{proc.args.gg | str(_).upper()}}) {
+if ({{proc.args.gg | Rbool}}) {
 	library('ggplot2')
 	library('ggdendro')
-	ggdendrogram (hobj, rotate={{proc.args.rotate | str(_).upper()}})
+	ggdendrogram (hobj, rotate={{proc.args.rotate | Rbool}})
 } else {
-	plot (as.dendrogram(hobj), horiz={{proc.args.rotate | str(_).upper()}})
+	plot (as.dendrogram(hobj), horiz={{proc.args.rotate | Rbool}})
 }
 dev.off()
 orderobj = data.frame (Order=hobj$order, Labels=hobj$labels)

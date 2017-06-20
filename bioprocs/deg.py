@@ -13,7 +13,7 @@ from pyppl import proc
 """
 pExpFiles2Mat = proc()
 pExpFiles2Mat.input    = "expdir:file"
-pExpFiles2Mat.output   = "expfile:file:{{expdir.fn}}.exp.mat"
+pExpFiles2Mat.output   = "expfile:file:{{expdir | fn}}.exp.mat"
 pExpFiles2Mat.lang     = "Rscript"
 pExpFiles2Mat.args     = {"header": False}
 pExpFiles2Mat.script   = """
@@ -30,10 +30,11 @@ cbind.fill = function (x1, x2) {
 }
 exp = c()
 for (efile in list.files()) {
+	write(paste("Reading", efile, "..."), stderr())
 	sample = tools::file_path_sans_ext(basename(efile))
-	if (grepl ('.gz$', efile)) efile = gzip (efile)
+	if (grepl ('.gz$', efile)) efile = gzfile (efile)
 	tmp    = read.table (efile, sep="\\t", header=F, row.names = 1, check.names=F)
-	colnames (tmp) = tools::file_path_sans_ext(basename(efile))
+	colnames (tmp) = c(sample)
 	exp    = cbind.fill (exp, tmp)
 }
 
@@ -66,7 +67,7 @@ write.table (exp, "{{expfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 """
 pDEGByEdgeR = proc ()
 pDEGByEdgeR.input     = "expfile:file, group1, group2, group1name, group2name"
-pDEGByEdgeR.output    = "degdir:dir:{{expfile.fn}}.{{group1name}}-{{group2name}}.deg"
+pDEGByEdgeR.output    = "degdir:dir:{{expfile | fn}}.{{group1name}}-{{group2name}}.deg"
 pDEGByEdgeR.args      = {'filter': "1,2", 'pval': 0.05, 'paired': False, 'bcvplot': True, 'displot': True, 'fcplot': True}
 pDEGByEdgeR.defaultSh = "Rscript"
 pDEGByEdgeR.script    = """
@@ -82,7 +83,7 @@ pairs = vector(mode="numeric")
 group = vector(mode="character")
 ng1   = length(g1names)
 ng2   = length(g2names)
-if ({{proc.args.paired | str(_).upper()}}) {
+if ({{proc.args.paired | Rbool}}) {
 	for (i in 1:ng1) {
 		pairs = c(pairs, i, i)
 		group = c(group, "{{group1name}}", "{{group2name}}")
@@ -107,7 +108,7 @@ dobj$samples$lib.size = colSums(dobj$counts)
 # normalize
 dobj = calcNormFactors(dobj, method="TMM")
 
-if ({{proc.args.bcvplot | str(_).upper()}}) {
+if ({{proc.args.bcvplot | Rbool}}) {
 	bcvplot = file.path ("{{degdir}}", "bcvplot.png")
 	png (file=bcvplot)
 	plotMDS (dobj, method="bcv", col=as.numeric(dobj$samples$group))
@@ -116,7 +117,7 @@ if ({{proc.args.bcvplot | str(_).upper()}}) {
 }
 
 disp <- estimateDisp (dobj, design)
-if ({{proc.args.displot | str(_).upper()}}) {
+if ({{proc.args.displot | Rbool}}) {
 	displot = file.path ("{{degdir}}", "displot.png")
 	png (file=displot)
 	plotBCV (disp)
@@ -126,7 +127,7 @@ if ({{proc.args.displot | str(_).upper()}}) {
 fit    = glmFit (disp, design)
 fit    = glmLRT (fit)
 
-if ({{proc.args.fcplot | str(_).upper()}}) {
+if ({{proc.args.fcplot | Rbool}}) {
 	deg    = decideTestsDGE(fit, p.value = {{proc.args.pval}})
 	fcplot = file.path ("{{degdir}}", "fcplot.png")
 	png (file=fcplot)
@@ -171,7 +172,7 @@ write.table (out$table, file.path("{{degdir}}", "degs.txt"), quote=F, sep="\\t")
 """
 pMArrayLimma = proc()
 pMArrayLimma.input  = "expfile:file, group1, group2, group1name, group2name"
-pMArrayLimma.output = "degdir:dir:{{expfile.fn}}.{{group1name}}-{{group2name}}.deg"
+pMArrayLimma.output = "degdir:dir:{{expfile | fn}}.{{group1name}}-{{group2name}}.deg"
 pMArrayLimma.args   = {'norm': "quan", 'boxplot': True, 'paired': False, "filter": "1,2", "qval": .05, "pval": .05, "heatmap": True, "hmn": 50, "volplot": True, "hmmar": "10,7"}
 pMArrayLimma.lang   = "Rscript"
 pMArrayLimma.script = """
@@ -195,8 +196,8 @@ if ("quan" %in% unlist(strsplit("{{proc.args.norm}}", ","))) {
 	expmatrix = normalizeBetweenArrays (expmatrix)
 }
 
-if ({{proc.args.boxplot | str(_).upper()}}) {
-	png (file = file.path("{{degdir}}", "boxplot.png"), res=300, width=2000, height=2000)
+if ({{proc.args.boxplot | Rbool}}) {
+	png (file = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.boxplot.png"), res=300, width=2000, height=2000)
 	boxplot (expmatrix, las=2)
 	dev.off()	
 }
@@ -205,7 +206,7 @@ pairs = vector(mode="numeric")
 group = vector(mode="character")
 ng1   = length(g1names)
 ng2   = length(g2names)
-if ({{proc.args.paired | str(_).upper()}}) {
+if ({{proc.args.paired | Rbool}}) {
 	for (i in 1:ng1) {
 		pairs = c(pairs, i, i)
 		group = c(group, "{{group1name}}", "{{group2name}}")
@@ -224,19 +225,19 @@ fit    = eBayes(fit)
 out    = topTable (fit, number = nrow(expmatrix), sort.by="p")
 out    = out[out$adj.P.Val<{{proc.args.qval}} & out$P.Value<{{proc.args.pval}},]
 
-degfile = file.path("{{degdir}}", "degs.txt")
+degfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.degs.txt")
 write.table (out, degfile, quote=F, sep="\\t")
 
-if ({{proc.args.heatmap | str(_).upper()}}) {
+if ({{proc.args.heatmap | Rbool}}) {
 	hmn  = min (nrow(out), {{proc.args.hmn}})
 	exps = expmatrix[row.names(out[1:hmn, ]), ]
-	hmfile = file.path("{{degdir}}", "heatmap.png")
+	hmfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.heatmap.png")
 	png (file = hmfile, res=300, width=2000, height=2000)
-	heatmap(as.matrix(exps), margins = c({{proc.args.hmmar}}))
+	heatmap(as.matrix(exps), margins = c({{proc.args.hmmar}}), cexRow={{proc.args.hmn}}/100)
 	dev.off()
 }
 
-if ({{proc.args.volplot | str(_).upper()}}) {
+if ({{proc.args.volplot | Rbool}}) {
 	dat = data.frame(out, n_log10_adj_pval = -c(log10(out$adj.P.Val)), col=ifelse(abs(out$logFC)>2 & out$adj.P.Val<0.01, 'A', ifelse(abs(out$logFC)>2, 'B', 'C')))
 	a<-ggplot(dat, aes(x = logFC, y = n_log10_adj_pval, col=col))
 	a<-a+ylab("-log10(adjusted P value)\n")
@@ -246,7 +247,7 @@ if ({{proc.args.volplot | str(_).upper()}}) {
 	a<-a+geom_point()
 	a<-a+geom_vline(xintercept=c(2, -2))
 	a<-a+geom_hline(yintercept = -log10(0.01))
-	volfile = file.path("{{degdir}}", "volcano.png")
+	volfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.volcano.png")
 	png (file = volfile, res=300, width=2000, height=2000)
 	plot(a)
 	dev.off()
@@ -277,36 +278,36 @@ if ({{proc.args.volplot | str(_).upper()}}) {
 """
 pRawCounts2 = proc ()
 pRawCounts2.input     = "expfile:file"
-pRawCounts2.output    = "outfile:file:{{expfile.fn}}.{{proc.args.unit}}.txt"
+pRawCounts2.output    = "outfile:file:{{expfile | fn}}.{{proc.args.unit}}.txt"
 pRawCounts2.args      = {'transpose': False, 'unit': 'cpm', 'header': True, 'rownames': 1, 'log2': False, 'glenfile': ''}
 pRawCounts2.defaultSh = "Rscript"
 pRawCounts2.script    = """
-data  = read.table ("{{expfile}}", sep="\\t", header={{proc.args.header | str(_).upper()}}, row.names = {{proc.args.rownames}}, check.names=F)
-if ({{proc.args.transpose | str(_).upper()}}) data = t (data)
+data  = read.table ("{{expfile}}", sep="\\t", header={{proc.args.header | Rbool}}, row.names = {{proc.args.rownames}}, check.names=F)
+if ({{proc.args.transpose | Rbool}}) data = t (data)
 
 if ("{{proc.args.unit}}" == 'cpm') {
 	library('edgeR')
-	ret = cpm (data, log = {{proc.args.log2 | str(_).upper()}})
+	ret = cpm (data, log = {{proc.args.log2 | Rbool}})
 } else if ("{{proc.args.unit}}" == 'rpkm') {
 	library('edgeR')
 	genelen = read.table ("{{proc.args.glenfile}}", header=F, row.names = 1, check.names = F)
-	ret = rpkm (data, log = {{proc.args.log2 | str(_).upper()}}, gene.length = as.vector(genelen))
+	ret = rpkm (data, log = {{proc.args.log2 | Rbool}}, gene.length = as.vector(genelen))
 } else {
 	library('coseq')
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
-	if ({{proc.args.log2 | str(_).upper()}})
+	if ({{proc.args.log2 | Rbool}})
 		ret = log2(ret)
 }
 
 rnames = TRUE
 cnames = TRUE
-if ({{proc.args.transpose | str(_).upper()}}) {
-	rnames = {{proc.args.header | str(_).upper()}}
+if ({{proc.args.transpose | Rbool}}) {
+	rnames = {{proc.args.header | Rbool}}
 	cnames = {{proc.args.rownames}} == 1
 } else {
 	rnames = {{proc.args.rownames}} == 1
-	cnames = {{proc.args.header | str(_).upper()}}
+	cnames = {{proc.args.header | Rbool}}
 }
 
 write.table (ret, "{{outfile}}", quote=F, row.names=rnames, col.names=cnames, sep="\\t")

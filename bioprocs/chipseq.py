@@ -35,7 +35,7 @@ from pyppl import proc
 """
 pPeakToRegPotential = proc ()
 pPeakToRegPotential.input     = "peakfile:file, genefile:file"
-pPeakToRegPotential.output    = "outfile:file:{{peakfile.fn}}.rp"
+pPeakToRegPotential.output    = "outfile:file:{{peakfile | fn}}.rp"
 pPeakToRegPotential.args      = {'intensity': True, 'geneformat': 'ucsc+gz', 'peakformat': 'peak', 'window': 100000}
 pPeakToRegPotential.defaultSh = "python"
 pPeakToRegPotential.script    = """

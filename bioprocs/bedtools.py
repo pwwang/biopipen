@@ -13,7 +13,7 @@ from pyppl import proc
 	`infile:file`: The input bed file
 	`fafile:file`: The input fasta file
 @brings:
-	`fafile`: "{{fafile.fn}}.fa*i", The fasta index file
+	`fafile`: "{{fafile | fn}}.fa*i", The fasta index file
 @output:
 	`outfile:file`: The generated fasta file
 @args:
@@ -24,8 +24,8 @@ from pyppl import proc
 """
 pGetfasta = proc()
 pGetfasta.input  = "infile:file, fafile:file"
-pGetfasta.brings = {"fafile": "{{fafile.fn}}.fa*i"}
-pGetfasta.output = "outfile:file:{{infile.fn}}.fa"
+pGetfasta.brings = {"fafile": "{{fafile | fn}}.fa*i"}
+pGetfasta.output = "outfile:file:{{infile | fn}}.fa"
 pGetfasta.args   = { "bin": "bedtools", "params": "-name" }
 pGetfasta.script = """
 {{proc.args.bin}} getfasta {{proc.args.params}} -fi "{{fafile}}" -bed "{{infile}}" > "{{outfile}}"
@@ -49,10 +49,10 @@ pGetfasta.script = """
 """
 pClosest = proc()
 pClosest.input  = "afile:file, bfiles:files"
-pClosest.output = "outfile:file:{{afile.fn}}.bt"
+pClosest.output = "outfile:file:{{afile | fn}}.bt"
 pClosest.args   = { "bin": "bedtools", "params": "" }
 pClosest.script = """
-{{proc.args.bin}} closest {{proc.args.params}} -a "{{afile}}" -b "{{bfiles | reduce(lambda x, y: x + '" "' + y, _)}}" > "{{outfile}}"
+{{proc.args.bin}} closest {{proc.args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
 """
 
 """
@@ -73,7 +73,7 @@ pClosest.script = """
 """
 pFlank = proc()
 pFlank.input  = "infile:file, gfile:file"
-pFlank.output = "outfile:file:{{infile.fn}}.flank.bed"
+pFlank.output = "outfile:file:{{infile | fn}}.flank.bed"
 pFlank.args   = { "bin": "bedtools", "params": "" }
 pFlank.script = """
 {{proc.args.bin}} flank {{proc.args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
@@ -97,10 +97,10 @@ pFlank.script = """
 """
 pIntersect = proc()
 pIntersect.input  = "afile:file, bfiles:files"
-pIntersect.output = "outfile:file:{{afile.fn}}.intersect.bt"
+pIntersect.output = "outfile:file:{{afile|fn}}.intersect.bt"
 pIntersect.args   = { "bin": "bedtools", "params": "" }
 pIntersect.script = """
-{{proc.args.bin}} intersect -nonamecheck {{proc.args.params}} -a "{{afile}}" -b "{{bfiles | reduce(lambda x, y: x + '" "' + y, _)}}" > "{{outfile}}"
+{{proc.args.bin}} intersect -nonamecheck {{proc.args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
 """
 
 """
@@ -121,10 +121,10 @@ pIntersect.script = """
 """
 pMakewindows = proc()
 pMakewindows.input  = "infile:file"
-pMakewindows.output = "outfile:file:{{infile.fn}}.window.bed"
+pMakewindows.output = "outfile:file:{{infile | fn}}.window.bed"
 pMakewindows.args   = { "bin": "bedtools", "params": "" }
 pMakewindows.script = """
-{{proc.args.bin}} makewindows {{proc.args.params}} {{proc.args.informat | (lambda x: "-b" if x=="bed" else "-g")(_)}} "{{infile}}" > "{{outfile}}"
+{{proc.args.bin}} makewindows {{proc.args.params}} {{proc.args.informat | lambda x: "-b" if x=="bed" else "-g"}} "{{infile}}" > "{{outfile}}"
 """
 
 """
@@ -144,7 +144,7 @@ pMakewindows.script = """
 """
 pMerge = proc()
 pMerge.input  = "infile:file"
-pMerge.output = "outfile:file:{{infile.fn}}.merged.bed"
+pMerge.output = "outfile:file:{{infile | fn}}.merged.bed"
 pMerge.args   = { "bin": "bedtools", "params": "" }
 pMerge.script = """
 {{proc.args.bin}} merge {{proc.args.params}} -i "{{infile}}" > "{{outfile}}"
@@ -167,10 +167,10 @@ pMerge.script = """
 """
 pMultiinter = proc()
 pMultiinter.input  = "infiles:files"
-pMultiinter.output = "outfile:file:{{infiles.fn | [0]}}.multiinter.bt"
+pMultiinter.output = "outfile:file:{{infiles | [0] | fn}}.multiinter.bt"
 pMultiinter.args   = { "bin": "bedtools", "params": "" }
 pMultiinter.script = """
-{{proc.args.bin}} multiinter {{proc.args.params}} -i "{{infiles | reduce(lambda x, y: x + '" "' + y, _)}}" > "{{outfile}}"
+{{proc.args.bin}} multiinter {{proc.args.params}} -i {{infiles | asquote}} > "{{outfile}}"
 """
 
 """
@@ -190,7 +190,7 @@ pMultiinter.script = """
 """
 pRandom = proc()
 pRandom.input  = "gfile:file"
-pRandom.output = "outfile:file:{{gfile.fn}}.random.bed"
+pRandom.output = "outfile:file:{{gfile | fn}}.random.bed"
 pRandom.args   = { "bin": "bedtools", "params": "" }
 pRandom.script = """
 {{proc.args.bin}} random {{proc.args.params}} -g "{{gfile}}" > "{{outfile}}"
@@ -214,7 +214,7 @@ pRandom.script = """
 """
 pShift = proc()
 pShift.input  = "infile:file, gfile:file"
-pShift.output = "outfile:file:{{infile.fn}}.shifted.bed"
+pShift.output = "outfile:file:{{infile | fn}}.shifted.bed"
 pShift.args   = { "bin": "bedtools", "params": "" }
 pShift.script = """
 {{proc.args.bin}} shift {{proc.args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
@@ -238,7 +238,7 @@ pShift.script = """
 """
 pShuffle = proc()
 pShuffle.input  = "infile:file, gfile:file"
-pShuffle.output = "outfile:file:{{infile.fn}}.shuffled.bed"
+pShuffle.output = "outfile:file:{{infile | fn}}.shuffled.bed"
 pShuffle.args   = { "bin": "bedtools", "params": "" }
 pShuffle.script = """
 {{proc.args.bin}} shuffle {{proc.args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
@@ -262,10 +262,10 @@ pShuffle.script = """
 """
 pSubtract = proc()
 pSubtract.input  = "afile:file, bfile:file"
-pSubtract.output = "outfile:file:{{afile.fn}}.subtracted.bed"
+pSubtract.output = "outfile:file:{{afile | fn}}.subtracted.bed"
 pSubtract.args   = { "bin": "bedtools", "params": "" }
 pSubtract.script = """
-{{proc.args.bin}} subtract {{proc.args.params}} -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
+{{proc.args.bin}} subtract {{proc.args.params}} -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
 """
 
 """
@@ -286,7 +286,7 @@ pSubtract.script = """
 """
 pWindow = proc()
 pWindow.input  = "afile:file, bfile:file"
-pWindow.output = "outfile:file:{{afile.fn}}.window.bed"
+pWindow.output = "outfile:file:{{afile | fn}}.window.bed"
 pWindow.args   = { "bin": "bedtools", "params": "" }
 pWindow.script = """
 {{proc.args.bin}} window {{proc.args.params}} -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
@@ -311,7 +311,7 @@ pWindow.script = """
 """
 pGenomecov = proc()
 pGenomecov.input  = "infile:file"
-pGenomecov.output = "outfile:file:{{infile.fn}}.genomecov.bt"
+pGenomecov.output = "outfile:file:{{infile | fn}}.genomecov.bt"
 pGenomecov.args   = { "bin": "bedtools", "params": "-bg" }
 pGenomecov.script = """
 {{proc.args.bin}} genomecov {{proc.args.params}} -ibam "{{infile}}" > "{{outfile}}"

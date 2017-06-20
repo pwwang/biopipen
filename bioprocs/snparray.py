@@ -16,7 +16,7 @@ from pyppl import proc
 """
 pSNP6Genotype = proc ()
 pSNP6Genotype.input     = "celfile:file"
-pSNP6Genotype.output    = "outfile:file:{{celfile.fn}}.geno.txt"
+pSNP6Genotype.output    = "outfile:file:{{celfile | fn}}.geno.txt"
 pSNP6Genotype.defaultSh = "Rscript"
 pSNP6Genotype.script    = """
 require(oligoClasses)
@@ -45,7 +45,7 @@ write.table(gts, file="{{outfile}}", sep="\\t", row.names=TRUE, quote=FALSE, col
 """
 pGenoToAvInput = proc()
 pGenoToAvInput.input  = "genofile:file, annofile:file"
-pGenoToAvInput.output = "outfile:file:{{genofile.fn}}.avinput"
+pGenoToAvInput.output = "outfile:file:{{genofile | fn}}.avinput"
 pGenoToAvInput.script = """
 #!/usr/bin/env python
 from read2 import read2

@@ -15,8 +15,8 @@ from pyppl import proc
 """
 pDownload = proc ()
 pDownload.input     = "manifile:file"
-pDownload.output    = "outdir:dir:{{manifile.fn}}"
-pDownload.args      = {"params": "--no-file-md5sum -n 20", "bin-gdc": "gdc-client"}
+pDownload.output    = "outdir:dir:{{manifile | fn}}"
+pDownload.args      = {"params": " --no-file-md5sum -n 20 ", "bin-gdc": "gdc-client"}
 pDownload.script    = """
 {{proc.args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{proc.args.params}}
 """
@@ -50,7 +50,7 @@ for sam in sam_meta:
 		ext = os.path.splitext (sam['file_name'])[1]
 	sample_ids[sam['file_name']] = sam['associated_entities'][0]['entity_submitter_id'][:15]
 
-for samfile in glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*", "*" + ext)):
+for samfile in glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*" + ext)):
 	bn = os.path.basename (samfile)
 	if not sample_ids.has_key (bn): continue
 	newfile = os.path.join ("{{outdir}}", sample_ids[bn] + ext)

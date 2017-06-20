@@ -68,7 +68,7 @@ browser.quit()
 """
 pDownloadGet = proc ()
 pDownloadGet.input  = "url"
-pDownloadGet.output = "outfile:file:{{url | __import__('os').path.basename(_).replace('?', '__Q__').replace('&', '__N__')  }}"
+pDownloadGet.output = "outfile:file:{{url | bn | .replace('?', '__Q__').replace('&', '__N__')  }}"
 pDownloadGet.script = """
 #!/usr/bin/env python
 import urllib

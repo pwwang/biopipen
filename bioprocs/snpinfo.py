@@ -20,7 +20,7 @@ Get SNP information from ucsc database
 """
 pSNP2Bed = proc()
 pSNP2Bed.input  = "snpfile:file"
-pSNP2Bed.output = "outfile:file:{{snpfile.fn}}.bed"
+pSNP2Bed.output = "outfile:file:{{snpfile | fn}}.bed"
 pSNP2Bed.args   = {"genome": "hg19", "snpver": "snp147"}
 pSNP2Bed.lang   = "python"
 pSNP2Bed.script = """
@@ -78,7 +78,7 @@ fout.close()
 """
 pSNP2Avinput = proc ()
 pSNP2Avinput.input  = "snpfile:file"
-pSNP2Avinput.output = "outfile:file:{{snpfile.fn}}.avinput"
+pSNP2Avinput.output = "outfile:file:{{snpfile | fn}}.avinput"
 pSNP2Avinput.lang   = "python"
 pSNP2Avinput.args   = {"genome": "hg19", "snpver": "snp147"}
 pSNP2Avinput.script = """

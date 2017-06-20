@@ -22,12 +22,12 @@ from pyppl import proc
 """
 pSnpEff = proc()
 pSnpEff.input  = "infile:file"
-pSnpEff.output = "outdir:dir:{{infile.fn}}.snpeff"
+pSnpEff.output = "outdir:dir:{{infile | fn}}.snpeff"
 pSnpEff.args   = { "bin": "snpEff", "params": "-Xms1g -Xmx4g -v", "genome": "hg19", "informat": "vcf", "outformat": "vcf", "csvStats": True, "htmlStats": False }
 pSnpEff.script = """
-csvfile="{{outdir}}/{{infile.fn}}.csvstat"
-sumfile="{{outdir}}/{{infile.fn}}.html"
-outfile="{{outdir}}/{{infile.fn}}.snpEff.vcf"
+csvfile="{{outdir}}/{{infile | fn}}.csvstat"
+sumfile="{{outdir}}/{{infile | fn}}.html"
+outfile="{{outdir}}/{{infile | fn}}.snpEff.vcf"
 csvStats=""
 if [[ "{{proc.args.csvStats}}" == "True" ]]; then
 	csvStats="-csvStats \\"$csvfile\\""

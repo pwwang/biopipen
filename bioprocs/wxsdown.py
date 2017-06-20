@@ -32,7 +32,7 @@ pMutSig.input     = "maffile:file, cvgfile:file, cvrfile:file, mutdict:file, chr
 pMutSig.output    = "outdir:dir:mutsig.{{#}}"
 pMutSig.args      = {"bin": "mutsig", "mcr": ""}
 pMutSig.script    = """
-{{proc.args.bin}} "{{proc.args.mcr}}" "{{maffile}}" "{{cvgfile}}" "{{cvrfile}}" "{{outdir}}/{{maffile.fn}}" "{{mutdict}}" "{{chrdir}}"
+{{proc.args.bin}} "{{proc.args.mcr}}" "{{maffile}}" "{{cvgfile}}" "{{cvrfile}}" "{{outdir}}/{{maffile | fn}}" "{{mutdict}}" "{{chrdir}}"
 """
 
 """
@@ -57,7 +57,7 @@ pMutSig.script    = """
 """
 pVcf2Maf = proc()
 pVcf2Maf.input     = "infile:file"
-pVcf2Maf.output    = "outfile:file:{{infile.fn}}.maf"
+pVcf2Maf.output    = "outfile:file:{{infile | fn}}.maf"
 pVcf2Maf.args      = {"vepdata":"", "veppath": "", "vcf2maf": "vcf2maf.pl", "reffile": "", "filtervcf": "", "nthread": 1, "params": ""}
 pVcf2Maf.script    = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -110,7 +110,7 @@ fi
 """
 pMergeMafs = proc ()
 pMergeMafs.input  = "indir:file"
-pMergeMafs.output = "outfile:file:{{indir.fn}}.{{#}}.maf"
+pMergeMafs.output = "outfile:file:{{indir | fn}}.{{#}}.maf"
 pMergeMafs.script = """
 mafs=({{indir}}/*.maf)
 head -2 ${mafs[0]} > "{{outfile}}"
@@ -156,7 +156,7 @@ done
 """
 pMutsig4Plot = proc ()
 pMutsig4Plot.input   = "msdir:file"
-pMutsig4Plot.output  = "outfile:file:{{msdir.fn}}.4mutplot"
+pMutsig4Plot.output  = "outfile:file:{{msdir | fn}}.4mutplot"
 pMutsig4Plot.lang    = "python"
 pMutsig4Plot.args    = {"topn": 5E-2}
 pMutsig4Plot.script  = """
@@ -629,10 +629,10 @@ dev.off()
 """
 pCepip = proc()
 pCepip.input  = "avinput:file, cell"
-pCepip.output = "outfile:file:{{avinput.fn}}.cepip.flt.txt"
+pCepip.output = "outfile:file:{{avinput | fn}}.cepip.flt.txt"
 pCepip.args   = {"bin-cepip": "/data2/junwenwang/shared/tools/cepip/cepip.jar"}
 pCepip.script = """
-cd "{{proc.args.bin-cepip | __import__('os').path.dirname(_)}}"
-java -jar "{{proc.args.bin-cepip | __import__('os').path.basename(_)}}" --annovar-file "{{avinput}}" --regulatory-causing-predict all --cell {{cell}} --db-score dbncfp --out "{{outfile.prefix | [:-4]}}"
+cd "{{proc.args.bin-cepip | dirname}}"
+java -jar "{{proc.args.bin-cepip | bn}}" --annovar-file "{{avinput}}" --regulatory-causing-predict all --cell {{cell}} --db-score dbncfp --out "{{outfile | prefix | [:-4]}}"
 """
 

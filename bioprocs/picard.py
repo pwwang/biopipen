@@ -36,12 +36,12 @@ from pyppl import proc
 """
 pMarkDuplicates = proc()
 pMarkDuplicates.input  = "infile:file"
-pMarkDuplicates.output = "outfile:file:{{infile.fn | (lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x))(_)}}.dedup.bam"
+pMarkDuplicates.output = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x)}}.dedup.bam"
 pMarkDuplicates.args   = { "bin": "picard MarkDuplicates", "params": "" }
 pMarkDuplicates.script = """
-tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile.fn}}"
+tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
 mkdir -p "$tmpdir"
-mfile="{{proc.outdir}}/{{infile.fn}}.metrics.txt"
+mfile="{{job.outdir}}/{{infile | fn}}.metrics.txt"
 {{proc.args.bin}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" I="{{infile}}" O="{{outfile}}" M="$mfile" {{proc.args.params}}
 rm -rf "$tmpdir"
 """
@@ -69,7 +69,7 @@ rm -rf "$tmpdir"
 """
 pAddOrReplaceReadGroups = proc()
 pAddOrReplaceReadGroups.input  = "infile:file, rg"
-pAddOrReplaceReadGroups.output = "outfile:file:{{infile.fn}}.rg.bam"
+pAddOrReplaceReadGroups.output = "outfile:file:{{infile | fn}}.rg.bam"
 pAddOrReplaceReadGroups.args   = { "bin": "picard AddOrReplaceReadGroups", "params": "" }
 pAddOrReplaceReadGroups.script = """
 rg="{{rg}}"
@@ -98,10 +98,10 @@ if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
 """
 pCreateSequenceDictionary = proc()
 pCreateSequenceDictionary.input  = "infile:file"
-pCreateSequenceDictionary.output = "outfile:file:{{infile.bn}}"
+pCreateSequenceDictionary.output = "outfile:file:{{infile | bn}}"
 pCreateSequenceDictionary.args   = { "bin": "picard CreateSequenceDictionary", "params": "" }
 pCreateSequenceDictionary.script = """
-link="{{proc.outdir}}/{{infile.bn}}"
+link="{{job.outdir}}/{{infile | bn}}"
 ln -s "{{infile}}" "$link"
 {{proc.args.bin}} R="$link" {{proc.args.params}}
 """
@@ -128,7 +128,7 @@ ln -s "{{infile}}" "$link"
 """
 pCollectWgsMetrics = proc()
 pCollectWgsMetrics.input  = "infile:file"
-pCollectWgsMetrics.output = "outfile:file:{{infile.bn}}.metrics.txt"
+pCollectWgsMetrics.output = "outfile:file:{{infile | bn}}.metrics.txt"
 pCollectWgsMetrics.args   = { "bin": "picard CollectWgsMetrics", "params": "", "reffile": "" }
 pCollectWgsMetrics.script = """
 if [[ -z "{{proc.args.reffile}}" ]]; then
@@ -158,10 +158,10 @@ fi
 """
 pSortSam = proc()
 pSortSam.input  = "infile:file"
-pSortSam.output = "outfile:file:{{infile.fn}}.sorted.{{proc.args.outtype}}"
+pSortSam.output = "outfile:file:{{infile | fn}}.sorted.{{proc.args.outtype}}"
 pSortSam.args   = { "bin": "picard SortSam", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp" }
 pSortSam.script = """
-tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile.fn}}"
+tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
 mkdir -p "$tmpdir"
 {{proc.args.bin}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" {{proc.args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{proc.args.order}}
 rm -rf "$tmpdir"
@@ -184,11 +184,11 @@ rm -rf "$tmpdir"
 """
 pIndexBam = proc()
 pIndexBam.input  = "infile:file"
-pIndexBam.output = "outfile:file:{{infile.bn}}"
+pIndexBam.output = "outfile:file:{{infile | bn}}"
 pIndexBam.args   = { "bin": "picard BuildBamIndex", "params": "-Xms1g -Xmx8g" }
 pIndexBam.script = """
 ln -s "{{infile}}" "{{outfile}}"
-baifile="{{proc.outdir}}/{{infile.fn}}.bai"
+baifile="{{job.outdir}}/{{infile | fn}}.bai"
 {{proc.args.bin}} I="{{outfile}}" O="$baifile" {{proc.args.params}}
 # make sure .bai file is generated:
 if [[ ! -e $baifile ]]; then

@@ -113,7 +113,7 @@ geneTrack = UcscTrack (
     transcript      = "name",
     strand          = "strand",
 {{ proc.args | \
-  (lambda x: ",\\n".join( \
+  lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
             "col.line", "col", "fill", "fontfamily.group", "fontcolor.group", "fontcolor.item", \
@@ -122,7 +122,7 @@ geneTrack = UcscTrack (
             "lty.grid", "col.axis"] and val != "NULL" else val))  \
         for key, val in x.iteritems() \
      ] \
-  ))(_) }}
+  ) }}
 )
 saveRDS (geneTrack, "{{outfile}}")
 """
@@ -227,7 +227,7 @@ annoTrack = AnnotationTrack(
     name = "{{name}}",
     chromosome = "{{chrom}}",
 {{ proc.args | \
-  (lambda x: ",\\n".join( \
+  lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
             "col.line", "col", "fill", "fontfamily.group", "fontcolor.group", "fontcolor.item", \
@@ -236,7 +236,7 @@ annoTrack = AnnotationTrack(
             "lty.grid", "col.axis", "featureAnnotation"] and val != "NULL" else val))  \
         for key, val in x.iteritems() \
      ] \
-  ))(_) }}
+  ) }}
 )
 # the group information
 if (is.null({{proc.args.group}})) {
@@ -415,7 +415,7 @@ dataTrack = DataTrack(
     name = "{{name}}",
     chromosome = "{{chrom}}",
 {{ proc.args | \
-  (lambda x: ",\\n".join( \
+  lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
             "col.histogram", "col.sampleNames", "family", "fontcolor.legend", "type", \
@@ -424,7 +424,7 @@ dataTrack = DataTrack(
             "fontfamily.title", "fontfamily", "lty.grid", "lty"] and val != "NULL" else val))  \
         for key, val in x.iteritems() \
      ] \
-  ))(_) }}
+  ) }}
 )
 saveRDS (dataTrack, "{{outfile}}")
 """
@@ -534,7 +534,7 @@ ucscTrack = UcscTrack (
     table           = "{{table}}",
     track           = "{{ucscTrack}}",
 {{ proc.args | \
-  (lambda x: ",\\n".join( \
+  lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
             "col.line", "col", "fill", "fontfamily.group", "fontcolor.group", "fontcolor.item", \
@@ -543,7 +543,7 @@ ucscTrack = UcscTrack (
             "lty.grid", "col.axis"] and val != "NULL" else val))  \
         for key, val in x.iteritems() \
      ] \
-  ))(_) }}
+  ) }}
 )
 saveRDS (ucscTrack, "{{outfile}}")
 """
@@ -576,10 +576,10 @@ pGenomePlot.args   = {
 pGenomePlot.script = """
 library (Gviz)
 tracks = c ()
-if ({{ proc.args.showIdeo | str(_).upper() }}) {
+if ({{ proc.args.showIdeo | Rbool }}) {
     tracks = c (tracks, IdeogramTrack(genome="{{genome}}", chromosome="{{chrom}}"))
 }
-if ({{ proc.args.showAxis | str(_).upper() }}) {
+if ({{ proc.args.showAxis | Rbool }}) {
     tracks = c (tracks, GenomeAxisTrack())
 }
 for (t in noquote(unlist(strsplit("{{trkfiles | " | ".join(_)}}", " \\\\| ")))) {

@@ -17,7 +17,7 @@ from pyppl import proc
 """
 pVcf2List = proc()
 pVcf2List.input   = "vcffile:file"
-pVcf2List.output  = "outfile:file:{{vcffile.fn}}.stat"
+pVcf2List.output  = "outfile:file:{{vcffile | fn}}.stat"
 pVcf2List.lang    = "python"
 pVcf2List.args    = {"chroms": ""}
 pVcf2List.script  = """
@@ -77,10 +77,10 @@ with open ("{{outfile}}", "w") as fout:
 pCallRate = proc()
 pCallRate.input     = "infile:file"
 pCallRate.output    = [
-	"outsample:file:{{infile.fn}}.sampleCallRate.txt",
-	"figsample:file:{{infile.fn}}.sampleCallRate.png",
-	"outsnp:file:{{infile.fn}}.snpCallRate.txt",
-	"figsnp:file:{{infile.fn}}.snpCallRate.png"
+	"outsample:file:{{infile | fn}}.sampleCallRate.txt",
+	"figsample:file:{{infile | fn}}.sampleCallRate.png",
+	"outsnp:file:{{infile | fn}}.snpCallRate.txt",
+	"figsnp:file:{{infile | fn}}.snpCallRate.png"
 ]
 pCallRate.lang      = "Rscript"
 pCallRate.script    = """
@@ -130,7 +130,7 @@ plotFreq (snpcr, "{{figsnp}}", xlab="SNP call rate", "# snps")
 """
 pCoverageByBamstats = proc()
 pCoverageByBamstats.input     = "infile:file"
-pCoverageByBamstats.output    = "outfile:file:{{infile.fn}}.bamstats.txt"
+pCoverageByBamstats.output    = "outfile:file:{{infile | fn}}.bamstats.txt"
 pCoverageByBamstats.args      = { "bin": "bamstats", "params": "" }
 pCoverageByBamstats.script    = """
 {{proc.args.bin}} -i "{{infile}}" -o "{{outfile}}" {{proc.args.params}}
@@ -152,7 +152,7 @@ pCoverageByBamstats.script    = """
 """
 pPlotBamstats = proc()
 pPlotBamstats.input     = "indir:file"
-pPlotBamstats.output    = "outdir:file:{{indir.bn}}-covplots"
+pPlotBamstats.output    = "outdir:file:{{indir | bn}}-covplots"
 pPlotBamstats.args      = {"chroms": ""}
 pPlotBamstats.script    = """
 #!/usr/bin/env Rscript
@@ -243,7 +243,7 @@ dev.off()
 """
 pSnpEff2Stat = proc ()
 pSnpEff2Stat.input  = "indir:file"
-pSnpEff2Stat.output = "outdir:dir:{{indir.fn}}.{{#}}.snpEffStats"
+pSnpEff2Stat.output = "outdir:dir:{{indir | fn}}.{{#}}.snpEffStats"
 pSnpEff2Stat.args   = {"chroms": ""}
 pSnpEff2Stat.lang   = "python"
 pSnpEff2Stat.script = """
@@ -535,7 +535,7 @@ for name, sampledata in data.iteritems():
 """
 pPlotSnpEff = proc ()
 pPlotSnpEff.input  = "indir:file"
-pPlotSnpEff.output = "outdir:dir:{{indir.fn}}.snpEffPlots"
+pPlotSnpEff.output = "outdir:dir:{{indir | fn}}.snpEffPlots"
 pPlotSnpEff.lang   = "Rscript"
 pPlotSnpEff.script = """
 library(ggplot2)

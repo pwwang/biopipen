@@ -15,7 +15,7 @@ from pyppl import proc
 """
 pSort = proc ()
 pSort.input  = "infile:file"
-pSort.output = "outfile:file:{{infile.bn}}.sorted"
+pSort.output = "outfile:file:{{infile | bn}}.sorted"
 pSort.args   = {"params": "", "skip": 0}
 pSort.script = """
 #!/usr/bin/env bash
@@ -32,7 +32,7 @@ fi
 @name:
 	pFiles2Dir
 @description:
-	A helper process to convert a list of file into a directory, so that some processes can take it as input
+	A helper process to convert a list of files into a directory, so that some processes can take it as input
 @input:
 	`infiles:files`: The input files
 @output:
@@ -40,10 +40,49 @@ fi
 """
 pFiles2Dir = proc()
 pFiles2Dir.input  = "infiles:files"
-pFiles2Dir.output = "outdir:dir:{{infiles.fn | [0]}}_etc.{{#}}"
+pFiles2Dir.output = "outdir:dir:{{infiles | [0] | fn}}.etc.{{#}}"
 pFiles2Dir.script = """
-for fn in "{{infiles | ('" "').join(_)}}"; do
+for fn in {{infiles | asquote}}; do
 	ln -s "$fn" "{{outdir}}/"
+done
+"""
+
+"""
+@name:
+	pPat2Dir
+@description:
+	A helper process to convert a list of files by a pattern (wildcards) into a directory, so that some processes can take it as input
+@input:
+	`pattern:var`: The pattern
+@output:
+	`outdir:dir`:    The output directory
+"""
+pPat2Dir = proc()
+pPat2Dir.input  = "pattern:var"
+pPat2Dir.output = "outdir:dir:{{pattern | __import__('glob').glob(_) | [0] | fn }}.etc.{{#}}"
+pPat2Dir.script = """
+for fn in {{pattern}}; do
+	ln -s "$fn" "{{outdir}}/"
+done
+"""
+
+"""
+@name:
+	pMergeFile
+@description:
+	Merge files in the input directory
+@input:
+	`indir:file`: The input directory
+@output:
+	`outfile:file`: The output file
+"""
+pMergeFile = proc()
+pMergeFile.input  = "indir:file"
+pMergeFile.output = "outfile:file:{{indir | fn}}.merged"
+pMergeFile.script = """
+> "{{outfile}}"
+for infile in "{{indir}}/*"; do
+	cat $infile >> "{{outfile}}"
 done
 """
 
@@ -64,7 +103,7 @@ done
 """
 pCbindList = proc ()
 pCbindList.input  = "indir:file"
-pCbindList.output = "outfile:file:{{indir.fn}}.{{#}}.mat.txt"
+pCbindList.output = "outfile:file:{{indir | fn}}.{{#}}.mat.txt"
 pCbindList.args   = {"header": False, "na": "0"}
 pCbindList.lang   = "Rscript"
 pCbindList.script = """
@@ -81,7 +120,7 @@ cbind.fill = function (x1, x2) {
 
 setwd ("{{indir}}")
 data   = NULL
-header = {{proc.args.header | str(_).upper()}}
+header = {{proc.args.header | Rbool}}
 for (fn in list.files()) {
 	x = read.table (fn, header = header, row.names=1, check.names=F, sep="\\t")
 	if (!header) {

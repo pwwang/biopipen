@@ -39,11 +39,11 @@ All rank related utilities
 """
 pRankProduct = proc ()
 pRankProduct.input  = "infile:file"
-pRankProduct.output = "outdir:dir:{{infile.fn}}.rp"
+pRankProduct.output = "outdir:dir:{{infile | fn}}.rp"
 pRankProduct.args   = {"informat": "value", "pval": True, "header": True, "plot": 0, "cex": 0.9, "cnheight": 80, "rnwidth": 50, "width": 2000, "height": 2000}
 pRankProduct.lang   = "Rscript"
 pRankProduct.script = """
-data = read.table ("{{infile}}", header={{proc.args.header | str(_).upper()}}, row.names=1, sep="\\t", check.names = F)
+data = read.table ("{{infile}}", header={{proc.args.header | Rbool}}, row.names=1, sep="\\t", check.names = F)
 if ("{{proc.args.informat}}" == "value") {
 	for (i in 1:ncol(data)) {
 		data[, i] = length(data[, i]) + 1 - rank (data[, i])
@@ -58,7 +58,7 @@ out   = cbind (out, RP = format(round(rp, 2), scientific=F, nsmall=2))
 r     = rank(rp)
 out   = cbind (out, RP_Rank = r)
 
-if ({{proc.args.pval | str(_).upper()}}) {
+if ({{proc.args.pval | Rbool}}) {
 	# rankprodbounds
 	#
 	# Description
@@ -334,7 +334,7 @@ if ({{proc.args.pval | str(_).upper()}}) {
 	out   = cbind (out, RP_Pval = format(pvals, scientific=T, digits=3))
 }
 out = out [order(out[ncol(data) + 2]), ]
-write.table (out, file.path("{{outdir}}", "{{infile.fn}}.rp.txt"), row.names=T, col.names=T, quote=F, sep="\\t")
+write.table (out, file.path("{{outdir}}", "{{infile | fn}}.rp.txt"), row.names=T, col.names=T, quote=F, sep="\\t")
 
 nrplot = {{proc.args.plot}}
 if (nrplot > 0) {
@@ -406,7 +406,7 @@ if (nrplot > 0) {
 
 	data2plot = out[1:nrplot, c(1:ncol(data), ncol(data)+2)]
 	#size=300*480/72
-	png (file = file.path("{{outdir}}", "{{infile.fn}}.rp.png"), width = {{proc.args.width}}, height = {{proc.args.height}}, res = 300)
+	png (file = file.path("{{outdir}}", "{{infile | fn}}.rp.png"), width = {{proc.args.width}}, height = {{proc.args.height}}, res = 300)
 	plotRanks (data2plot)
 	dev.off()
 }
