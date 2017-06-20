@@ -3,9 +3,6 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Documentation for bioprocs v0.0.1](#documentation-for-bioprocs-v001)
-  - [WXS](#wxs)
-  - [WXSANNO](#wxsanno)
-    - [pSnpEff](#psnpeff)
   - [CLUSTER](#cluster)
     - [pDist2Coords](#pdist2coords)
     - [pDecideK](#pdecidek)
@@ -15,66 +12,6 @@
     - [pMClust](#pmclust)
     - [pAPCluster](#papcluster)
     - [pHClust](#phclust)
-  - [RANK](#rank)
-    - [pRankProduct](#prankproduct)
-  - [PICARD](#picard)
-    - [pMarkDuplicates](#pmarkduplicates)
-    - [pAddOrReplaceReadGroups](#paddorreplacereadgroups)
-    - [pCreateSequenceDictionary](#pcreatesequencedictionary)
-    - [pCollectWgsMetrics](#pcollectwgsmetrics)
-    - [pSortSam](#psortsam)
-    - [pIndexBam](#pindexbam)
-  - [WEB](#web)
-    - [pDownloadPost](#pdownloadpost)
-    - [pDownloadGet](#pdownloadget)
-  - [TCGA](#tcga)
-    - [pDownload](#pdownload)
-    - [pSample2SubmitterID](#psample2submitterid)
-    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
-    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
-  - [ALGORITHM](#algorithm)
-    - [pRWR](#prwr)
-  - [WXSSTAT](#wxsstat)
-    - [pVcf2List](#pvcf2list)
-    - [pCallRate](#pcallrate)
-    - [pCoverageByBamstats](#pcoveragebybamstats)
-    - [pPlotBamstats](#pplotbamstats)
-    - [pSnpEff2Stat](#psnpeff2stat)
-    - [pPlotSnpEff](#pplotsnpeff)
-  - [GATK](#gatk)
-    - [pRealignerTargetCreator](#prealignertargetcreator)
-    - [pIndelRealigner](#pindelrealigner)
-    - [pBaseRecalibrator](#pbaserecalibrator)
-    - [pPrintReads](#pprintreads)
-    - [pHaplotypeCaller](#phaplotypecaller)
-    - [pSelectVariants](#pselectvariants)
-    - [pVariantFiltration](#pvariantfiltration)
-    - [pMuTect2](#pmutect2)
-    - [pMuTect2Interval](#pmutect2interval)
-  - [GENOMEPLOT](#genomeplot)
-    - [pGeneTrack](#pgenetrack)
-    - [pAnnoTrack](#pannotrack)
-    - [pDataTrack](#pdatatrack)
-    - [pUcscTrack](#pucsctrack)
-    - [pGenomePlot](#pgenomeplot)
-  - [TFBS](#tfbs)
-    - [pMotifScanByMEME](#pmotifscanbymeme)
-    - [pMEMEMDB2Gene](#pmememdb2gene)
-  - [WXSPREP](#wxsprep)
-    - [pTrimmomaticPE](#ptrimmomaticpe)
-    - [pTrimmomaticSE](#ptrimmomaticse)
-    - [pAlignPEByBWA](#palignpebybwa)
-    - [pAlignSEByBWA](#palignsebybwa)
-    - [pAlignPEByNGM](#palignpebyngm)
-    - [pAlignSEByNGM](#palignsebyngm)
-    - [pMergeBams](#pmergebams)
-  - [COMMON](#common)
-    - [pSort](#psort)
-    - [pFiles2Dir](#pfiles2dir)
-    - [pCbindList](#pcbindlist)
-  - [PCA](#pca)
-    - [pPCA](#ppca)
-    - [pSelectPCs](#pselectpcs)
   - [WXSDOWN](#wxsdown)
     - [pMutSig](#pmutsig)
     - [pVcf2Maf](#pvcf2maf)
@@ -82,32 +19,35 @@
     - [pMutsig4Plot](#pmutsig4plot)
     - [pMutPlot](#pmutplot)
     - [pCepip](#pcepip)
-  - [CHIPSEQ](#chipseq)
-    - [pPeakToRegPotential](#ppeaktoregpotential)
+  - [WXSCALL](#wxscall)
+    - [pCNVnator](#pcnvnator)
+    - [pCNVkitTarget](#pcnvkittarget)
+    - [pCNVkitCov](#pcnvkitcov)
+    - [pCNVkitRef](#pcnvkitref)
+    - [pCNVkitFix](#pcnvkitfix)
+    - [pCNVkitSeg](#pcnvkitseg)
+    - [pCNVkitPlot](#pcnvkitplot)
+    - [pCNVkitRpt](#pcnvkitrpt)
   - [GSEA](#gsea)
     - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
     - [pIntersectGMT](#pintersectgmt)
     - [pUnionGMT](#puniongmt)
     - [pSSGSEA](#pssgsea)
     - [pEnrichr](#penrichr)
-  - [PLOT](#plot)
-    - [pBoxPlot](#pboxplot)
-  - [WXSCALL](#wxscall)
-    - [pCNVnator](#pcnvnator)
-  - [SEQ](#seq)
-    - [pConsv](#pconsv)
-    - [pGetPromoterBed](#pgetpromoterbed)
-  - [SNPARRAY](#snparray)
-    - [pSNP6Genotype](#psnp6genotype)
-    - [pGenoToAvInput](#pgenotoavinput)
-  - [DEG](#deg)
-    - [pExpFiles2Mat](#pexpfiles2mat)
-    - [pDEGByEdgeR](#pdegbyedger)
-    - [pMArrayLimma](#pmarraylimma)
-    - [pRawCounts2](#prawcounts2)
+  - [ALGORITHM](#algorithm)
+    - [pRWR](#prwr)
   - [SNPINFO](#snpinfo)
     - [pSNP2Bed](#psnp2bed)
     - [pSNP2Avinput](#psnp2avinput)
+  - [CHIPSEQ](#chipseq)
+    - [pPeakToRegPotential](#ppeaktoregpotential)
+  - [PLOT](#plot)
+    - [pBoxPlot](#pboxplot)
+  - [WXSANNO](#wxsanno)
+    - [pSnpEff](#psnpeff)
+  - [WEB](#web)
+    - [pDownloadPost](#pdownloadpost)
+    - [pDownloadGet](#pdownloadget)
   - [BEDTOOLS](#bedtools)
     - [pGetfasta](#pgetfasta)
     - [pClosest](#pclosest)
@@ -122,39 +62,81 @@
     - [pSubtract](#psubtract)
     - [pWindow](#pwindow)
     - [pGenomecov](#pgenomecov)
+  - [RANK](#rank)
+    - [pRankProduct](#prankproduct)
+  - [WXSPREP](#wxsprep)
+    - [pTrimmomaticPE](#ptrimmomaticpe)
+    - [pTrimmomaticSE](#ptrimmomaticse)
+    - [pAlignPEByBWA](#palignpebybwa)
+    - [pAlignSEByBWA](#palignsebybwa)
+    - [pAlignPEByNGM](#palignpebyngm)
+    - [pAlignSEByNGM](#palignsebyngm)
+    - [pMergeBams](#pmergebams)
+  - [DEG](#deg)
+    - [pExpFiles2Mat](#pexpfiles2mat)
+    - [pDEGByEdgeR](#pdegbyedger)
+    - [pMArrayLimma](#pmarraylimma)
+    - [pRawCounts2](#prawcounts2)
+  - [PICARD](#picard)
+    - [pMarkDuplicates](#pmarkduplicates)
+    - [pAddOrReplaceReadGroups](#paddorreplacereadgroups)
+    - [pCreateSequenceDictionary](#pcreatesequencedictionary)
+    - [pCollectWgsMetrics](#pcollectwgsmetrics)
+    - [pSortSam](#psortsam)
+    - [pIndexBam](#pindexbam)
+  - [GENOMEPLOT](#genomeplot)
+    - [pGeneTrack](#pgenetrack)
+    - [pAnnoTrack](#pannotrack)
+    - [pDataTrack](#pdatatrack)
+    - [pUcscTrack](#pucsctrack)
+    - [pGenomePlot](#pgenomeplot)
+  - [PCA](#pca)
+    - [pPCA](#ppca)
+    - [pSelectPCs](#pselectpcs)
+  - [TFBS](#tfbs)
+    - [pMotifScanByMEME](#pmotifscanbymeme)
+    - [pMEMEMDB2Gene](#pmememdb2gene)
+  - [GATK](#gatk)
+    - [pRealignerTargetCreator](#prealignertargetcreator)
+    - [pIndelRealigner](#pindelrealigner)
+    - [pBaseRecalibrator](#pbaserecalibrator)
+    - [pPrintReads](#pprintreads)
+    - [pHaplotypeCaller](#phaplotypecaller)
+    - [pSelectVariants](#pselectvariants)
+    - [pVariantFiltration](#pvariantfiltration)
+    - [pMuTect2](#pmutect2)
+    - [pMuTect2Interval](#pmutect2interval)
+  - [WXS](#wxs)
+  - [COMMON](#common)
+    - [pSort](#psort)
+    - [pFiles2Dir](#pfiles2dir)
+    - [pPat2Dir](#ppat2dir)
+    - [pMergeFile](#pmergefile)
+    - [pCbindList](#pcbindlist)
+  - [SEQ](#seq)
+    - [pConsv](#pconsv)
+    - [pGetPromoterBed](#pgetpromoterbed)
+  - [TCGA](#tcga)
+    - [pDownload](#pdownload)
+    - [pSample2SubmitterID](#psample2submitterid)
+    - [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
+    - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
+  - [WXSSTAT](#wxsstat)
+    - [pVcf2List](#pvcf2list)
+    - [pCallRate](#pcallrate)
+    - [pCoverageByBamstats](#pcoveragebybamstats)
+    - [pPlotBamstats](#pplotbamstats)
+    - [pSnpEff2Stat](#psnpeff2stat)
+    - [pPlotSnpEff](#pplotsnpeff)
+  - [SNPARRAY](#snparray)
+    - [pSNP6Genotype](#psnp6genotype)
+    - [pGenoToAvInput](#pgenotoavinput)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
 # Documentation for bioprocs v0.0.1
 A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
-
-## WXS
-
-## WXSANNO
-
-###  pSnpEff
-#### description
-- This is the default command. It is used for annotating variant filed (e.g. VCF files).
-
-#### input
-- `infile:file`:  The input file 
-
-#### output
-- `outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html
-
-#### args
-- `bin`:       The snpEff executable, default: "snpEff"
-- `params`:    Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"
-- `genome`:    The genome used for annotation, default: "hg19"
-- `informat`:  The format of input file [vcf or bed], default: "vcf"
-- `outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"
-- `csvStats`:  Whether to generate csv stats file, default: True.
-- `htmlStats`: Whether to generate the html summary file, default: False.
-
-#### requires
-- [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
-
 
 ## CLUSTER
 
@@ -368,1014 +350,6 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `proc.args.gg` is True
 
 
-## RANK
-
-###  pRankProduct
-#### description
-- Calculate the rank product of a set of ranks. Refer to [here](https://en.wikipedia.org/wiki/Rank_product)
-
-#### input
-- `infile:file`: The input file
-- - Format:
-```
-				Case1	Case2	...
-	Feature1	8.2  	10.1 	...
-	Feature2	2.3  	8.0  	...
-	...
-```
-- - Or instead of values, you can also have ranks in the input file:
-```
-				Rank1	Rank2	...
-	Feature1	2    	1    	...
-	Feature2	3    	2    	...
-	...
-```
-
-#### output
-- `outfile:file`: The output file with original ranks, rank products and p-value if required
-
-#### args
-- `informat`: The input format of the values. Whether they are real values (value) or ranks (rank). Default: value
-- `pval`:     Whether to calculate the p-value or not. Default: True
-- `header`:   Whether the input file has headers (rownames are required!). Default: True
-- `plot`:     Number of rows to plot. Default: 0 (Don't plot)
-- `cex`:      Font size for plotting. Default: 0.9
-- `cnheight`: Colname height. Default: 80
-- `rnwidth`:  Rowname width. Default: 50
-- `width`:    Width of the png file. Default: 2000
-- `height`:   height of the png file. Default: 2000
-
-
-## PICARD
-
-###  pMarkDuplicates
-#### description
-- Identifies duplicate reads.
-- This tool locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR. See also EstimateLibraryComplexity for additional notes on PCR duplication artifacts. Duplicate reads can also result from a single amplification cluster, incorrectly detected as multiple clusters by the optical sensor of the sequencing instrument. These duplication artifacts are referred to as optical duplicates.
-- The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. An BARCODE_TAG option is available to facilitate duplicate marking using molecular barcodes. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
-- The tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for each read. Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. If you are not familiar with this type of annotation, please see the following [blog post](https://www.broadinstitute.org/gatk/blog?id=7019) for additional information.
-- Although the bitwise flag annotation indicates whether a read was marked as a duplicate, it does not identify the type of duplicate. To do this, a new tag called the duplicate type (DT) tag was recently added as an optional output in the 'optional field' section of a SAM/BAM file. Invoking the TAGGING_POLICY option, you can instruct the program to mark all the duplicates (All), only the optical duplicates (OpticalOnly), or no duplicates (DontTag). The records within the output of a SAM/BAM file will have values for the 'DT' tag (depending on the invoked TAGGING_POLICY), as either library/PCR-generated duplicates (LB), or sequencing-platform artifact duplicates (SQ). This tool uses the READ_NAME_REGEX and the OPTICAL_DUPLICATE_PIXEL_DISTANCE options as the primary methods to identify and differentiate duplicate types. Set READ_NAME_REGEX to null to skip optical duplicate detection, e.g. for RNA-seq or other data where duplicate sets are extremely large and estimating library complexity is not an aim. Note that without optical duplicate counts, library size estimation will be inaccurate.
-- MarkDuplicates also produces a metrics file indicating the numbers of duplicates for both single- and paired-end reads.
-- The program can take either coordinate-sorted or query-sorted inputs, however the behavior is slightly different. When the input is coordinate-sorted, unmapped mates of mapped records and supplementary/secondary alignments are not marked as duplicates. However, when the input is query-sorted (actually query-grouped), then unmapped mates and secondary/supplementary reads are not excluded from the duplication test and can be marked as duplicate reads.
-- If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.
-
-#### input
-- `infile:file`:  The bam file 
-
-#### output
-- `outfile:file`: The marked bam file
-
-#### args
-- `bin`:     The picard executable, default: "picard MarkDuplicates"
-- `params`:  Other parameters for picard MarkDuplicates, default: ""
-- `tmpdir`:  The tmpdir to use. Default: /tmp
-
-#### requires
-- [picard](https://broadinstitute.github.io/picard/)
-
-
-###  pAddOrReplaceReadGroups
-#### description
-- Replace read groups in a BAM file.This tool enables the user to replace all read groups in the INPUT file with a single new read group and assign all reads to this read group in the OUTPUT BAM file.
-- For more information about read groups, see the [GATK Dictionary entry](https://www.broadinstitute.org/gatk/guide/article?id=6472). 
-- This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH) (see http://ga4gh.org/#/documentation).
-
-#### input
-- `infile:file`:  The bam file
-- `rg`:           The read group information. For example:
-- - "RGID=4 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=20"
-
-#### output
-- `outfile:file`: The bam file with read group added
-
-#### args
-- `bin`:     The picard executable, default: "picard AddOrReplaceReadGroups"
-- `params`:  Other parameters for picard AddOrReplaceReadGroups, default: ""
-
-#### requires
-- [picard](https://broadinstitute.github.io/picard/)
-
-
-###  pCreateSequenceDictionary
-#### description
-- Creates a sequence dictionary for a reference sequence. This tool creates a sequence dictionary file (with ".dict" extension) from a reference sequence provided in FASTA format, which is required by many processing and analysis tools. The output file contains a header but no SAMRecords, and the header contains only sequence records.
-- The reference sequence can be gzipped (both .fasta and .fasta.gz are supported).
-
-#### input
-- `infile:file`:  The fasta file 
-
-#### output
-- `outfile:file`: The same fasta file, but with dict file created
-
-#### args
-- `bin`:     The picard executable, default: "picard CreateSequenceDictionary"
-- `params`:  Other parameters for picard CreateSequenceDictionary, default: ""
-
-#### requires
-- [picard](https://broadinstitute.github.io/picard/)
-
-
-###  pCollectWgsMetrics
-#### description
-- Collect metrics about coverage and performance of whole genome sequencing (WGS) experiments.
-- This tool collects metrics about the fractions of reads that pass base- and mapping-quality filters as well as coverage (read-depth) levels for WGS analyses. Both minimum base- and mapping-quality values as well as the maximum read depths (coverage cap) are user defined.
-- Note: Metrics labeled as percentages are actually expressed as fractions!
-
-#### input
-- `infile:file`:  The bam file 
-
-#### output
-- `outfile:file`: The metrics file
-
-#### args
-- `bin`:     The picard executable, default: "picard CollectWgsMetrics"
-- `params`:  Other parameters for `picard CollectWgsMetrics`, default: ""
-- `reffile`: The reference file, default: ""
-
-#### requires
-- [picard](https://broadinstitute.github.io/picard/)
-
-
-###  pSortSam
-#### description
-- Use `picard SortSam` to sort sam or bam file
-
-#### input
-- `infile:file`:  The sam or bam file to be sorted
-
-#### output
-- `outfile:file`: The sorted sam or bam file
-
-#### args
-- `bin`:     The picard executable, default: "picard SortSam"
-- `order`:   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
-- `outtype`: The type of output file, sam or bam. Default: bam
-- `params`:  Other parameters for `picard SortSame`, default: "-Xms1g -Xmx8g"
-- `tmpdir`:  The tmpdir to use. Default: /tmp
-
-#### requires
-- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
-
-
-###  pIndexBam
-#### description
-- Use `picard BuildBamIndex` to index bam file
-
-#### input
-- `infile:file`:  The bam file 
-
-#### output
-- `outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
-
-#### args
-- `bin`:    The picard executable, default: "picard BuildBamIndex"
-- `params`:  Other parameters for picard , default: "-Xms1g -Xmx8g"
-
-#### requires
-- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
-
-
-## WEB
-
-###  pDownloadPost
-#### description
-- Download results by submitting a form, supporting pagination.
-
-#### input
-- `url`: the URL contains the form
-- `submitbtn`: the submit button to click to submit the form (use Xpath).
-- `nextbtn`: the button for next page (use Xpath)
-- `params`: the params used to fill the form (JSON string or transformed from dict by json.dumps).
-
-#### output
-- `outdir:file`: The directory saves the results
-
-#### args
-- `interval`: seconds to wait between fetching each page. Default: 1
-
-#### requires
-- [`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
-- [`Phantomjs`](http://phantomjs.org/)
-
-
-###  pDownloadGet
-#### description
-- Download results by urls.
-
-#### input
-- `url`: the URLs to download
-
-#### args
-- `keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
-
-#### output
-- `outfile:file`: The output file
-
-
-## TCGA
-
-###  pDownload
-#### description
-- Download TCGA use `gdc-client` and a manifest file
-
-#### input
-- `manifile:file`: the manifest file
-
-#### output
-- `outdir:file`:   the directory containing downloaded file
-
-#### args
-- `params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
-- `bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
-
-
-###  pSample2SubmitterID
-#### description
-- convert TCGA sample names with submitter id with metadata and sample containing folder
-
-#### input
-- `dir:file`:    the directory containing the samples
-- `mdfile:file`: the metadata file
-
-#### output
-- `outdir:file`: the directory containing submitter-id named files
-
-
-###  pConvertExpFiles2Matrix
-#### description
-- convert TCGA expression files to expression matrix, and convert sample name to submitter id
-
-#### input
-- `dir:file`:    the directory containing the samples
-- `mdfile:file`: the metadata file
-
-#### output
-- `outfile:file`:the output matrix
-
-#### requires
-- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
-
-
-###  pConvertMutFiles2Matrix
-#### description
-- convert TCGA mutation files (vcf.gz) to mut matrix, and convert sample name to submitter id
-
-#### input
-- `dir:file`:    the directory containing the samples
-- `mdfile:file`: the metadata file
-
-#### output
-- `outfile:file`:the output matrix
-
-
-## ALGORITHM
-
-###  pRWR
-#### description
-- Do random walk with restart (RWR)
-
-#### input
-- `Wfile:file`: The adjecent matrix
-- `Efile:file`: The start vector
-
-#### output
-- `outfile:file`: The output of final probabilities
-
-#### args
-- `c`:       The restart probability
-- `eps`:     The convergent cutoff || R(i+1) - R(i) ||
-- `tmax`:    Max iterations to stop
-- `Wformat`: The format of Wfile, rds or mat/txt, default: rds
-- `Eformat`: The format of Efile, rds or mat/txt, default: rds
-- `Rformat`: The format of the output file, rds or mat/txt, default: rds
-- `normW`:   Weather to normalize W or not, default False. Laplacian normalization is used (more to add).
-- `normE`:   Weather to normalize E or not, default False. E will be normalized as: E = E/sum(E)
-
-#### requires
-- if normW = True, R package `NetPreProc` is required.
-
-
-## WXSSTAT
-
-###  pVcf2List
-#### description
-- Convert vcf to stat files for pCallRate
-
-#### input
-- `vcffile:file`: The vcf file
-
-#### output
-- `outfile:file`: The stat file
-
-#### args
-- `chroms`: SNPs on chromosomes to consider, default: "" (all chroms)
-- - use "chr1-22, chrX, chrY" for chr1 to chr22, chrX and chrY
-
-#### requires
-- [`pyvcf`](https://github.com/jamescasbon/PyVCF)
-
-
-###  pCallRate
-#### description
-- Calculate sample/snp call rate from a matrix of snp-sample
-- - rows are snps, columns are samples
-
-#### input
-- `infile:file`:    The snp-sample matrix file
-
-#### output
-- `outsample:file`: The report of call rate for each sample
-- `figsample:file`: The bar chat of sample call rates
-- `outsnp:file`:    The report of call rate for each snp
-- `figsnp:file`:    The bar chat of snp call rates
-
-
-###  pCoverageByBamstats
-#### description
-- Use `bamstats` to calculate coverage for bam file
-
-#### input
-- `infile:file`:  The bam file
-
-#### output
-- `outfile:file`:    The report of coverage for the bam file
-
-#### args
-- `bin`: The `bamstats` executable, default: "bamstats"
-- `params`: Other parameters for `bamstats`, default: ""
-
-#### requires
-- [bamstats](http://bamstats.sourceforge.net/)
-
-
-###  pPlotBamstats
-#### description
-- Plot coverage use output files generated by `bamstats` or `wxs.pCoverageByBamstats`
-
-#### input
-- `indir:file`: The directory containing bamstats output files
-
-#### args
-- `chroms`: Chromosomes to plot. Default: "" (all chroms)
-- - Note: Whether to have "chr" prefix or not depends on your reference when mapping.
-- - You can do a scope assignment: "chr1-chr22, chrX, chrY"
-
-#### output
-- `outdir:file`: The directory containing output figures
-
-
-###  pSnpEff2Stat
-#### description
-- Convert csvstat file from snpEff to R-readable matrix for plotting
-
-#### input
-- `indir:file`: The directory containing the csv stat files from `snpEff ann`
-
-#### output
-- `outdir:dir`: The output directory
-
-#### args
-- `chroms`:     The chromsome filter. Default: "" (all chroms)
-- - Note: snpEff csvstat file has no "chr" prefix
-
-
-###  pPlotSnpEff
-#### description
-- Plot snpEff annotation statistics
-
-#### input
-- `indir:file`: The snpEff result directory containing matrix files generated by pSnpEff2Stat
-
-#### output
-- `outdir:dir`: The output directory
-
-#### requires
-- [`pwwang/corrplot`](https://github.com/pwwang/corrplot)
-- - use `library(devtools); install.github("pwwang/corrplot")`
-- [`ggplot2`](http://ggplot2.org/)
-
-
-## GATK
-
-###  pRealignerTargetCreator
-#### description
-- The local realignment process is designed to consume one or more BAM files and to locally realign reads such that the number of mismatching bases is minimized across all the reads. In general, a large percent of regions requiring local realignment are due to the presence of an insertion or deletion (indels) in the individual's genome with respect to the reference genome. Such alignment artifacts result in many bases mismatching the reference near the misalignment, which are easily mistaken as SNPs. Moreover, since read mapping algorithms operate on each read independently, it is impossible to place reads on the reference genome such that mismatches are minimized across all reads. Consequently, even when some reads are correctly mapped with indels, reads covering the indel near just the start or end of the read are often incorrectly mapped with respect the true indel, also requiring realignment. Local realignment serves to transform regions with misalignments due to indels into clean reads containing a consensus indel suitable for standard variant discovery approaches.
-- Note that indel realignment is no longer necessary for variant discovery if you plan to use a variant caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still required when using legacy callers such as UnifiedGenotyper or the original MuTect. There are 2 steps to the realignment process:
-- - Determining (small) suspicious intervals which are likely in need of realignment (RealignerTargetCreator)
-- - Running the realigner over those intervals (see the IndelRealigner tool)
-- For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
-
-#### input
-- `infile:file`:  The aligned bam file
-
-#### brings
-- `infile`: `{{infile.fn}}.bai` The index file of input bam file
-
-#### output
-- `outfile:file`: A list of target intervals to pass to the IndelRealigner.
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T RealignerTargetCreator"
-- `params`:  Other parameters for RealignerTargetCreator, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pIndelRealigner 
-#### description
-- The local realignment process is designed to consume one or more BAM files and to locally realign reads such that the number of mismatching bases is minimized across all the reads. In general, a large percent of regions requiring local realignment are due to the presence of an insertion or deletion (indels) in the individual's genome with respect to the reference genome. Such alignment artifacts result in many bases mismatching the reference near the misalignment, which are easily mistaken as SNPs. Moreover, since read mapping algorithms operate on each read independently, it is impossible to place reads on the reference genome such at mismatches are minimized across all reads. Consequently, even when some reads are correctly mapped with indels, reads covering the indel near just the start or end of the read are often incorrectly mapped with respect the true indel, also requiring realignment. Local realignment serves to transform regions with misalignments due to indels into clean reads containing a consensus indel suitable for standard variant discovery approaches.
-- Note that indel realignment is no longer necessary for variant discovery if you plan to use a variant caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still required when using legacy callers such as UnifiedGenotyper or the original MuTect.
-- There are 2 steps to the realignment process:
-- - Determining (small) suspicious intervals which are likely in need of realignment (see the RealignerTargetCreator tool)
-- - Running the realigner over those intervals (IndelRealigner)
-- For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
-
-#### input
-- `bamfile:file`: The aligned bam file
-- `intfile:file`: Intervals file output from RealignerTargetCreator
-
-#### brings
-- `infile`: `{{infile.fn}}.bai` The index file of input bam file
-
-#### output
-- `outfile:file`: A realigned version of input BAM file.
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T IndelRealigner"
-- `params`:  Other parameters for IndelRealigner, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pBaseRecalibrator  
-#### description
-- Variant calling algorithms rely heavily on the quality scores assigned to the individual base calls in each sequence read. These scores are per-base estimates of error emitted by the sequencing machines. Unfortunately the scores produced by the machines are subject to various sources of systematic technical error, leading to over- or under-estimated base quality scores in the data. Base quality score recalibration (BQSR) is a process in which we apply machine learning to model these errors empirically and adjust the quality scores accordingly. This allows us to get more accurate base qualities, which in turn improves the accuracy of our variant calls. The base recalibration process involves two key steps: first the program builds a model of covariation based on the data and a set of known variants (which you can bootstrap if there is none available for your organism), then it adjusts the base quality scores in the data based on the model. There is an optional but highly recommended step that involves building a second model and generating before/after plots to visualize the effects of the recalibration process. This is useful for quality control purposes. This tool performs the first step described above: it builds the model of covariation and produces the recalibration table. It operates only at sites that are not in dbSNP; we assume that all reference mismatches we see are therefore errors and indicative of poor base quality. This tool generates tables based on various user-specified covariates (such as read group, reported quality score, cycle, and context). Assuming we are working with a large amount of data, we can then calculate an empirical probability of error given the particular covariates seen at this site, where p(error) = num mismatches / num observations. The output file is a table (of the several covariate values, number of observations, number of mismatches, empirical quality score).
-
-#### input
-- `bamfile:file`: A BAM file containing data that needs to be recalibrated.
-
-#### output
-- `outfile:file`: A GATKReport file with many tables:
-- - The list of arguments
-- - The quantized qualities table
-- - The recalibration table by read group
-- - The recalibration table by quality score
-- - The recalibration table for all the optional covariates
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T BaseRecalibrator"
-- `params`:  Other parameters for BaseRecalibrator, default: ""
-- `reffile`: The reference file, required
-- `knownSites`: The known polymorphic sites to mask out, required
-- `bin-samtools`: The samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pPrintReads   
-#### description
-- PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM format. It can dynamically merge the contents of multiple input BAM files, resulting in merged output sorted in coordinate order. It can also optionally filter reads based on various read properties such as read group tags using the `--read_filter/-rf` command line argument (see documentation on read filters for more information).
-- Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
-
-#### input
-- `bamfile:file`: A BAM file.
-- `recaltable:file`: The GATKReport file
-
-#### output
-- `outfile:file`: A single processed bam file.
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T PrintReads"
-- `params`:  Other parameters for PrintReads, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pHaplotypeCaller 
-#### description
-- PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM format. It can dynamically merge the contents of multiple input BAM files, resulting in merged output sorted in coordinate order. It can also optionally filter reads based on various read properties such as read group tags using the `--read_filter/-rf` command line argument (see documentation on read filters for more information).
-- Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
-
-#### input
-- `bamfile:file`: A BAM file.
-
-#### brings
-- `bamfile`: `{{bamfile.fn}}.ba*i` The bam index file
-
-#### output
-- `outfile:file`: Either a VCF or gVCF file with raw, unfiltered SNP and indel calls.
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T HaplotypeCaller"
-- `params`:  Other parameters for HaplotypeCaller, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pSelectVariants
-#### description
-- Often, a VCF containing many samples and/or variants will need to be subset in order to facilitate certain analyses (e.g. comparing and contrasting cases vs. controls; extracting variant or non-variant loci that meet certain requirements, displaying just a few samples in a browser like IGV, etc.). SelectVariants can be used for this purpose.
-- There are many different options for selecting subsets of variants from a larger callset:
-- - Extract one or more samples from a callset based on either a complete sample name or a pattern match.
-- - Specify criteria for inclusion that place thresholds on annotation values, e.g. "DP > 1000" (depth of coverage greater than 1000x), "AF < 0.25" (sites with allele frequency less than 0.25). These - criteria are written as "JEXL expressions", which are documented in the article about using JEXL expressions.
-- - Provide concordance or discordance tracks in order to include or exclude variants that are also present in other given callsets.
-- - Select variants based on criteria like their type (e.g. INDELs only), evidence of mendelian violation, filtering status, allelicity, and so on.
-- There are also several options for recording the original values of certain annotations that are recalculated when a subsetting the new callset, trimming alleles, and so on.
-
-#### input
-- `vcffile:file`: A variant call set from which to select a subset.
-
-#### output
-- `outfile:file`: A new VCF file containing the selected subset of variants.
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T SelectVariants"
-- `params`:  Other parameters for SelectVariants, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pVariantFiltration
-#### description
-- This tool is designed for hard-filtering variant calls based on certain criteria. Records are hard-filtered by changing the value in the FILTER field to something other than PASS. Filtered records will be preserved in the output unless their removal is requested in the command line.
-- The most common way of specifying filtering criteria is by using JEXL queries. See the article on JEXL expressions in the documentation Guide for detailed information and examples.
-
-#### input
-- `vcffile:file`: A variant set to filter.
-
-#### output
-- `outfile:file`: A filtered VCF.
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T VariantFiltration"
-- `params`:  Other parameters for VariantFiltration, default: ""
-- `reffile`: The reference file
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
-
-
-###  pMuTect2
-#### description
-- MuTect2 is a somatic SNP and indel caller that combines the DREAM challenge-winning somatic genotyping engine of the original MuTect ([Cibulskis et al., 2013](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html)) with the assembly-based machinery of HaplotypeCaller. The basic operation of MuTect2 proceeds similarly to that of the HaplotypeCaller.
-- NOTE: only Tumor/Normal variant calling implemented in bioprocs
-
-#### input
-- `tumor:file`:  the tumor bam file
-- `normal:file`: the normal bam file
-
-#### brings
-- `tumor`:  `{{tumor.fn}}.bai` the index file of tumor
-- `normal`: `{{normal.fn}}.bai` the index file of normal
-
-#### output
-- `outfile:file`: The vcf file containing somatic mutations
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T MuTect2"
-- `params`:  Other parameters for MuTect2, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: the samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if index files of input files are not found
-
-
-###  pMuTect2Interval
-#### description
-- Use interval file model of MuTect2
-
-#### input
-- `tumor:file`:  the tumor bam file
-- `normal:file`: the normal bam file
-
-#### brings
-- `tumor`:  `{{tumor.fn}}.bai` the index file of tumor
-- `normal`: `{{normal.fn}}.bai` the index file of normal
-
-#### output
-- `outfile:file`: The vcf file containing somatic mutations
-
-#### args
-- `bin`:     The gatk executable, default: "gatk -T MuTect2"
-- `params`:  Other parameters for MuTect2, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: the samtools executable, default: samtools
-
-#### requires
-- [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) 
-
-
-## GENOMEPLOT
-
-###      pGeneTrack
-#### description
-- Generate the gene track using ucsc data source
-
-#### input
-- `name`:   The name of the track
-- `genome`: The genome
-- `chrom`:  The chromosome
-- `from`:   The start
-- `to`:     The end
-
-#### output
-- `outfile:file`: The file to save the track
-
-#### args
-- use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args
-
-#### requires
-- [r-Gviz](https://rdrr.io/bioc/Gviz)
-
-
-###      pAnnoTrack
-#### description
-- Generate annotation track
-
-#### input
-- `infile:file`: the file for the track
-- `name`:        the name of the track
-- `genome`:      the genome
-- `chrom`:       the chromosome
-- `from`:        the start position to display
-- `to`:          the end position to display
-
-#### output
-- `outfile:file`:the dumped track
-
-#### args
-- use `displayPars(AnnotationTrack())` to see all available args.
-
-#### requires
-- [r-Gviz](https://rdrr.io/bioc/Gviz)
-
-
-###      pDataTrack
-#### description
-- The data track of Gviz
-
-#### input
-- `infile:file`: the file for the track
-- `name`:        the name of the track
-- `genome`:      the genome
-- `chrom`:       the chromosome
-- `from`:        the start position to display
-- `to`:          the end position to display
-
-#### output
-- `outfile:file`:the rds file for the track
-- `gout`:        the genome
-- `cout`:        the chromosome
-- `fout`:        the start
-- `tout`:        the end
-
-#### args
-- See `displayPars(DataTrack())` for all available display params
-- Quote all params!
-
-#### requires
-- [r-Gviz](https://rdrr.io/bioc/Gviz/man/DataTrack-class.html)
-
-
-###      pUcscTrack
-#### description
-- Generate track from ucsc
-
-#### input
-- `ucscTrack`:   the track to fetch from ucsc. [Avialable tracks](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
-- `table`:       the table from ucsc. [Available table](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
-- `gvizTrack`:   the object track to generate. One of "AnnotationTrack", "GeneRegionTrack", "DataTrack", "GenomeAxisTrack"
-- `name`:        the name of the track
-- `genome`:      the genome
-- `chrom`:       the chromosome
-- `from`:        the start position to display
-- `to`:          the end position to display
-
-#### output
-- `outfile:file`:the dumped track
-
-#### args
-- use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args.
-
-#### requires
-- [r-Gviz](https://rdrr.io/bioc/Gviz)
-
-
-###      pGenomePlot
-#### description
-- plot the genomic features
-
-#### input
-- `trkfiles:files`: the list of track dumped files
-- `genome`:         the genome
-- `chrom`:          the chromosome
-- `from`:           the start position to display
-- `to`:             the end position to display
-
-#### output
-- `outfile:file`:   the figure
-
-#### requires
-- [r-Gviz](https://rdrr.io/bioc/Gviz)
-
-
-## TFBS
-
-###  pMotifScanByMEME
-#### input
-- `mfile:file`: The motif file
-- `sfile:file`: The sequence file
-
-#### output
-- `outdir:file`: The output dir
-
-#### args
-- `bin-fimo`: The path of `fimo` executable, default: "fimo"
-- `params`:   Other parameters for `fimo`
-
-#### requires
-- [`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
-
-
-###  pMEMEMDB2Gene
-#### input
-- `memefile:file`: The meme motif downloaded from MEME website
-- `species`:       The species, can be tax id, or common name
-- - only can be one of fruitfly, mouse, human, frog, zebrafish, thale-cress, pig, rat, nematode
-- - check them from http://http://mygene.info/v3/metadata
-
-#### output
-- `outfile:file`:  The output file containing the name pairs
-
-#### requires
-- [python-mygene](https://pypi.python.org/pypi/mygene)
-
-
-## WXSPREP
-
-###  pTrimmomaticPE
-#### description
-- Trimming Illumina NGS paired-end data
-
-#### input
-- `fqfile1:file`: The 1st fastq file (could be in .gz format)
-- `fqfile2:file`: The 2nd fastq file
-
-#### output
-- `outfile1:file`: The 1st output file
-- `outfile2:file`: The 2nd output file
-
-#### args
-- `bin`:    The trimmomatic executable, default: "trimmomatic"
-- `phred`:  "phred33" (default) or "phred64"
-- `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-- - have to replace `{adapter}` with the path of the adapter file
-- `nthread`: 1
-
-#### requires
-- [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
-
-
-###  pTrimmomaticSE
-#### description
-- Trimming Illumina NGS single-end data
-
-#### input
-- `fqfile:file`: The fastq file (could be in .gz format)
-
-#### output
-- `outfile:file`: The output file
-
-#### args
-- `bin`:    The trimmomatic executable, default: "trimmomatic"
-- `phred`:  "phred33" (default) or "phred64"
-- `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-- - have to replace `{adapter}` with the path of the adapter file
-- `nthread`: 1
-
-#### requires
-- [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
-
-
-###  pAlignPEByBWA
-#### description
-- Align paired-end reads to reference genome using bwa mem
-
-#### input
-- `infile1:file`: read file 1 (fastq, or fastq gzipped)
-- `infile2:file`: read file 2 (fastq, or fastq gzipped)
-
-#### output
-- `outfile:file`: The output sam file
-
-#### args
-- `bin`:    The bwa executable, default: bwa
-- `params`: Other params for bwa mem, default: "-M"
-- `nthread`: 1
-- `reffile`: The reference file
-
-#### requires
-- [bwa](https://github.com/lh3/bwa)
-
-
-###  pAlignSEByBWA
-#### description
-- Align paired-end reads to reference genome using bwa mem
-
-#### input
-- `infile:file`:  read file (fastq, or fastq gzipped)
-
-#### output
-- `outfile:file`: The output sam file
-
-#### args
-- `bin`:    The bwa executable, default: bwa
-- `params`: Other params for bwa mem, default: "-M"
-- `nthread`: 1
-- `reffile`: The reference file, required
-
-#### requires
-- [bwa](https://github.com/lh3/bwa)
-
-
-###  pAlignPEByNGM
-#### description
-- Align paired-end reads to reference genome using NextGenMap
-
-#### input
-- `infile1:file`: read file 1 (fastq, or fastq gzipped)
-- `infile2:file`: read file 2 (fastq, or fastq gzipped)
-
-#### output
-- `outfile:file`: The output sam/bam file
-
-#### args
-- `bin`:    The NextGenMap executable, default: ngm
-- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
-- `nthread`: 1
-- `reffile`: The reference file
-- `outtype`: sam or bam, default: bam
-
-#### requires
-- [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
-
-
-###  pAlignSEByNGM
-#### description
-- Align single-end reads to reference genome using NextGenMap
-
-#### input
-- `infile:file`: read file (fastq, or fastq gzipped)
-
-#### output
-- `outfile:file`: The output sam/bam file
-
-#### args
-- `bin`:    The NextGenMap executable, default: ngm
-- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
-- `nthread`: 1
-- `reffile`: The reference file
-- `outtype`: sam or bam, default: bam
-
-#### requires
-- [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
-
-
-###  pMergeBams
-#### description
-- Merge bam files
-
-#### input
-- `sname`:        the sample name
-- `bams:files`:   the bam files to be merged
-
-#### output
-- `outfile:file`: the merged bam file
-
-#### args
-- `bin-samtools`: the executable path of samtools, default: "samtools"
-- `nthread`:      Number of BAM/CRAM compression threads
-- `params`:       Other parameters for `samtools merge`, default: ""
-
-#### requires
-- [samtools](http://www.htslib.org/)
-
-
-## COMMON
-
-###  pSort
-#### description
-- Sort file using linux command `sort`
-
-#### input
-- `infile:file`: The input file
-
-#### output
-- `outfile:file`: The output file
-
-#### args
-- `skip`:   To skip first N lines. Default: 0
-- `params`: The arguments used by `sort`
-
-
-###  pFiles2Dir
-#### description
-- A helper process to convert a list of file into a directory, so that some processes can take it as input
-
-#### input
-- `infiles:files`: The input files
-
-#### output
-- `outdir:dir`:    The output directory
-
-
-###  pCbindList
-#### description
-- Column bind lists, fill miss rows with specific value
-
-#### input
-- `indir:file`: The directory containing the list files
-- - header can be omited, but row names are required
-
-#### output
-- `outfile:file`: The output matrix
-
-#### args
-- `header`: Whether list has header. Default: False (will use file name as header)
-- `na`:     The missing values. Default: 0
-- - If it's a string, remember the quote (i.e.: '"missing"')
-
-
-## PCA
-
-###  pPCA
-#### description
-- Perform PCA analysis
-
-#### input
-- `infile:file`: The matrix to do the analysis
-- - Note that rows are samples, columns are features, if not, use `args.transpose = True`
-
-#### output
-- `outfile:file`: The output coordinate file
-- - Columns are PCs, rows are samples
-
-#### args
-- `transpose`:  Whether to transpose the input matrix from infile. Default: False
-- `rownames`:   The `row.names` argument for `read.table`, default: 1
-- `header`:     The `header` argument for `read.table` to read the input file, default: True.
-- `screeplot`:  Whether to generate the screeplot or not. Default: True
-- `sp_ncp`:     Number of components in screeplot. Default: 0 (auto detect)
-- - if total # components (tcp) < 20: use all
-- - else if tcp > 20, use 20
-- `varplot`:    Whether to generate the variable plot or not. Default: False
-- `biplot`:     Whether to generate the variable plot or not. Default: True
-
-#### requires
-- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
-
-
-###  pSelectPCs
-#### description
-- Select a subset of PCs from pPCA results
-
-#### input
-- `indir:file`: The directory generated from pPCA
-
-#### output
-- `outfile:file`: The file containing selected PCs
-
-#### args
-- `n`: The number of PCs to select. Default: 0.9
-- - If it is < 1, used as the % variation explained from stdev.txt
-
-
 ## WXSDOWN
 
 ###  pMutSig
@@ -1509,41 +483,165 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [`cepip`](http://jjwanglab.org/cepip/)
 
 
-## CHIPSEQ
+## WXSCALL
 
-###  pPeakToRegPotential
+###  pCNVnator
 #### description
-- Convert peaks to regulatory potential score for each gene
-- The formula is:
-```
-		             -(0.5 + 4*di/d0)
-	PC = sum (pi * e                  )
-```
-- Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4489297/
+- Use `CNVnator` to call CNVs from bam file
 
 #### input
-- `peakfile:file`: The BED/peak file for peaks
-- `genefile:file`: The BED file for gene coordinates
+- `infile:file`:  The bam file 
 
 #### output
-- `outfile:file`: The regulatory potential file for each gene
+- `outfile:file`: The vcf file
 
 #### args
-- `intensity`: `pi` in the formula. Boolean value, whether use the peak intensity or not, default: `True`,
-- `geneformat`: The format for `genefile`, default: `ucsc+gz`. It could be:
-- - ucsc or ucsc+gz: typically, you can download from http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
-- - bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 4th column required as gene identity.
-- `peakformat`: The format for `peakfile`, default: `peak`. It could be:
-- - peak or peak+gz: (either [narrowPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format12) or [broadPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format13), the 7th column will be used as intensity
-- - bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 5th column will be used as intensity.
-- `window`: `2 * d0` in the formula. The window where the peaks fall in will be consided, default: `100000`. 
-```
-		|--------- window ----------|
-		|---- d0 -----|
-		|--- 50K --- TSS --- 50K ---|
-		     ^ (peak center)
-		     |-- di --|
-```
+- `bin`:      The CNVnator executable, default: "cnvnator"
+- `bin-vcf`:  The converter executable to convert CNVnator results to vcf, default: "cnvnator2VCF.pl"
+- `binsize`:  The bin_size, default: 100
+- `genome`:   The genome: default: hg19
+- `chrom`:    Chromosome names, default: "" (all chromosomes)
+- `chrdir`:   The dir contains reference sequence of chromosomes, default: "" (don't specify)
+- 
+
+#### requires
+- [CNVnator](https://github.com/abyzovlab/CNVnator)
+
+
+###  pCNVkitTarget
+#### description
+- Generate targets file for CNVkit using access file and annotate file (`cnvkit.py target`)
+
+#### input
+- `acfile:file`: The access file
+- `anfile:file`: The annotate file
+
+#### output
+- `outfile:file`: The targets file
+
+#### args
+- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitCov
+#### description
+- Calculate coverage in the given regions from BAM read depths.
+
+#### input
+- `infile:file`: The bam file
+
+#### output
+- `outfile:file`: The output cnn file
+
+#### args
+- `tgfile:file`: The target file
+- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `nthread`:     The number of threads to use. Default: 1
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitRef
+#### description
+- Compile a copy-number reference from the given files or directory (containing normal samples). If given a reference genome (-f option), also calculate the GC content and repeat-masked proportion of each region.
+
+#### input
+- `indir:file`:  The input directory containing the cnn files
+
+#### output
+- `outfile:file`: The output reference cnn file
+
+#### args
+- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitFix
+#### description
+- Combine the uncorrected target and antitarget coverage tables (.cnn) and correct for biases in regional coverage and GC content, according to the given reference. Output a table of copy number ratios (.cnr)
+
+#### input
+- `infile:file`:  The cnn file to be fixed
+- `rcfile:file`:  The reference cnn file
+
+#### output
+- `outfile:file`: The fixed cnn file
+
+#### args
+- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitSeg
+#### description
+- Infer discrete copy number segments from the given coverage table
+
+#### input
+- `infile:file`:  The cnn file to be fixed
+- `rcfile:file`:  The reference cnn file
+
+#### output
+- `outfile:file`: The fixed cnn file
+
+#### args
+- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `nthread`:     The number of threads to use. Default: 1
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitPlot
+#### description
+- Plot CNVkit results
+
+#### input
+- `cnrdir:file`:  The directory containing copy number ratio files
+- `cnsdir:file`:  The directory containing copy number segment files
+
+#### output
+- `outdir:dir`:   The output directory
+
+#### args
+- `bin-cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
+- `region`:       The region for zoom-in plots. Default: '' (don't plot zoom-in view)
+- `gene`:         The genes to be highlighted. Default: ''
+- `scatter`:      Whether to generate the scatter plot. Default: True
+- `diagram`:      Whether to generate the diagram plot. Default: True
+- `heatmap`:      Whether to generate the heatmap plot. Default: True
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitRpt
+#### description
+- Report CNVkit results
+
+#### input
+- `cnrdir:file`:  The directory containing copy number ratio files
+- `cnsdir:file`:  The directory containing copy number segment files
+
+#### output
+- `outdir:dir`:   The output directory
+
+#### args
+- `bin-cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
+- `breaks`:       Whether to report breakpoints. Default: True
+- `gainloss`:     Whether to report gainloss. Default: True
+- `metrics`:      Whether to report metrics. Default: True
+- `segmetrics`:   Whether to report segmetrics. Default: True
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
 
 
 ## GSEA
@@ -1671,228 +769,31 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `proc.args.norm` is `True`
 
 
-## PLOT
+## ALGORITHM
 
-###  pBoxPlot
+###  pRWR
 #### description
-- Generate box plot
+- Do random walk with restart (RWR)
 
 #### input
-- `datafile:file`: The data file
+- `Wfile:file`: The adjecent matrix
+- `Efile:file`: The start vector
 
 #### output
-- `outpng:file`: The output figure
+- `outfile:file`: The output of final probabilities
 
 #### args
-- `header`:    `header` parameter for `read.table`, default: True
-- `rownames`:  `row.names` parameter for `read.table`, default: 1
-- `params`:    Other parameters for `boxplot`, default: ""
-
-
-## WXSCALL
-
-###  pCNVnator
-#### description
-- Use `CNVnator` to call CNVs from bam file
-
-#### input
-- `infile:file`:  The bam file 
-
-#### output
-- `outfile:file`: The vcf file
-
-#### args
-- `bin`:      The CNVnator executable, default: "cnvnator"
-- `bin-vcf`:  The converter executable to convert CNVnator results to vcf, default: "cnvnator2VCF.pl"
-- `binsize`:  The bin_size, default: 100
-- `genome`:   The genome: default: hg19
-- `chrom`:    Chromosome names, default: "" (all chromosomes)
-- `chrdir`:   The dir contains reference sequence of chromosomes, default: "" (don't specify)
-- 
+- `c`:       The restart probability
+- `eps`:     The convergent cutoff || R(i+1) - R(i) ||
+- `tmax`:    Max iterations to stop
+- `Wformat`: The format of Wfile, rds or mat/txt, default: rds
+- `Eformat`: The format of Efile, rds or mat/txt, default: rds
+- `Rformat`: The format of the output file, rds or mat/txt, default: rds
+- `normW`:   Weather to normalize W or not, default False. Laplacian normalization is used (more to add).
+- `normE`:   Weather to normalize E or not, default False. E will be normalized as: E = E/sum(E)
 
 #### requires
-- [CNVnator](https://github.com/abyzovlab/CNVnator)
-
-
-## SEQ
-
-###  pConsv
-#### description
-- Get the conservation scores of regions.
-- It uses wigFix to find the conservation scores.
-- But first you have to convert those wigFix.gz files to bigWig files using ucsc-wigToBigWig
-
-#### input
-- `bedfile:file`: The bedfile with regions in the same chromosome
-- `bwdir:file`:   The bigwig directory, the bigwig files must be named as "chrN.*"
-- - For example: `chr1.phyloP30way.bw`
-
-#### output
-- `outdir:dir`    The output file, containing the output file, random regions and their scores if pvalue is calulated
-
-#### args
-- `bin-bwtool`:   The path of bwtool executable. Default: `bwtool`
-- `bin-bedtools`: The path of bedtools executable. Default: `bedtools`
-- `calcp`:        Whether to calculate the pvalue for not for each region.
-- `nperm`:        The number of permutations of pvalue is calcuated.
-- `seed`:         The seed to generate the random regions.
-- `gsize`:        The genome size file for generating random regions.
-- - Can be a local file or a file hosted at UCSC: http://hgdownload.cse.ucsc.edu/goldenPath/<genome>/bigZips/<genome>.chrom.sizes
-
-#### requires
-- [bwtool](https://github.com/CRG-Barcelona/bwtool)
-- [bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html) if `calcp` is `True`
-
-
-###  pGetPromoterBed
-#### description
-- Get the promoter region in bed format
-
-#### input
-- `gene`: the gene
-
-#### output
-- `outfile:file`: the bed file containing the promoter region
-
-#### args
-- `up`: the upstream to the tss, default: 2000
-- `down`: the downstream to the tss, default: 2000
-- `genome`: the genome, default: hg19
-
-#### require
-- [python-mygene](http://mygene.info/)
-
-
-## SNPARRAY
-
-###  pSNP6Genotype
-#### description
-- Call genotypes from GenomeWideSNP_6 CEL file
-
-#### input
-- `celfile:file`: the CEL file
-
-#### output
-- `outfile:file`: the outfile containing probe name and genotypes
-- - format: `<Probe name>\t<genotype>`
-- - `<genotype>` = 0: AA, 1: AB, 2: BB
-
-#### requires
-- [bioconductor-crlmm](http://bioconductor.org/packages/release/bioc/html/crlmm.html)
-
-
-###  pGenoToAvInput
-#### description
-- Convert the genotype called by pSNP6Genotype to [ANNOVAR input file](http://annovar.openbioinformatics.org/en/latest/user-guide/input/#annovar-input-file) using dbSNP identifiers.	
-
-#### input
-- `genofile:file`: the genofile generated by pSNP6Genotype, must be sorted by probe names
-- `annofile:flie`: the annotation file downloaded from http://www.affymetrix.com/support/technical/annotationfilesmain.affx
-- - Could be in .gz format
-
-#### output
-- `outfile:file`: the avinput file
-
-#### requires
-- [python-read2](https://github.com/pwwang/read2)
-
-
-## DEG
-
-###  pExpFiles2Mat
-#### description
-- Convert expression files to expression matrix
-- File names will be used as sample names (colnames)
-
-#### input
-- `expdir:file`:  the directory containing the expression files, could be gzipped
-
-#### output
-- `expfile:file`: the expression matrix
-
-
-###  pDEGByEdgeR
-#### description
-- Call DEG from expression matrix
-
-#### input
-- `expfile:file`: the expression matrix
-- `group1`:       columns of group1 (separated by comma)
-- `group2`:       columns of group2 (separated by comma)
-- `group1name`:   the name of group1
-- `group2name`:   the name of group2   
-
-#### output
-- `degdir:dir`:   the output directory containing DEGs and plots
-
-#### args
-- `filter`:  the pair (X,Y) on how to filter the data by cpm (`d <- d[rowSums(cpm(d)>X) >= Y,]`). Default: "1,2"
-- - keep genes with at least X counts per million (CPM) in at least Y samples
-- `pval`:    the cutoff of DEGs (default: .05)
-- `paired`:  whether the samples are paired, default: False
-- `bcvplot`: whether to plot biological coefficient of variation, default: True
-- `displot`: whether to plot biological coefficient of variation, default: True
-- `fcplot`:  whether to plot fold changes, default: True
-
-#### requires
-- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html)
-
-
-###  pMArrayLimma
-#### description
-- Call degs of microarray data by limma
-
-#### input
-- `expfile:file`: The expression matrix
-- `group1`:      The 1st group
-- `group2`:      The 2nd group
-- `group1name`:  The name of 1st group
-- `group2name`:  The name of 2nd group
-
-#### output
-- `degdir:dir`:   the output directory containing DEGs and plots
-
-#### args
-- `norm`:    the normalization methods, separated by comma. Support normalization methods: `quan` (quantile). Default: "quan"
-- `boxplot`: draw boxplot? Default: True
-- `paired`:  whether the samples are paired, default: False
-- `filter`:  the pair (X,Y) on how to filter the data by expression (`d <- d[rowSums(d>X) >= Y,]`). Default: "1,2"
-- - keep genes with at least X exp in at least Y samples
-- `pval`:    the pvalue cutoff of DEGs (default: .05)
-- `qval`:    the qvalue cutoff of DEGs (default: .05)
-- `heatmap`: whether to plot heatmap, default: True
-- `hmn`:     Number of gene used for heatmap, default: 50
-- `hmmar`:   Margins for heatmap, default: "10,7"
-- `volplot`: whether to plot the volcano plot, default: True
-
-#### requires
-- [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
-- [ggplot2](https://bioconductor.org/packages/release/bioc/html/ggplot2.html)
-
-
-###  pRawCounts2
-#### description
-- Convert raw counts to another unit
-
-#### input
-- `expfile:file`: the expression matrix
-- - rows are genes, columns are samples, if not use `args.transpose = True`
-
-#### output
-- `outfile:file`: the converted expression matrix
-
-#### args
-- `transpose`: transpose the input matrix? default: False
-- `log2`:      whether to take log2? default: False
-- `unit`:      convert to which unit? default: cpm (or rpkm, tmm)
-- `header`:    whether input file has header? default: True
-- `rownames`:  the index of the column as rownames. default: 1
-- `glenfile`:  the gene length file, for RPKM
-- - no head, row names are genes, have to be exact the same order and length as the rownames of expfile
-
-#### requires
-- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
-- [coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
+- if normW = True, R package `NetPreProc` is required.
 
 
 ## SNPINFO
@@ -1928,6 +829,123 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [`python-cruzdb`](https://github.com/brentp/cruzdb)
 
 
+## CHIPSEQ
+
+###  pPeakToRegPotential
+#### description
+- Convert peaks to regulatory potential score for each gene
+- The formula is:
+```
+		             -(0.5 + 4*di/d0)
+	PC = sum (pi * e                  )
+```
+- Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4489297/
+
+#### input
+- `peakfile:file`: The BED/peak file for peaks
+- `genefile:file`: The BED file for gene coordinates
+
+#### output
+- `outfile:file`: The regulatory potential file for each gene
+
+#### args
+- `intensity`: `pi` in the formula. Boolean value, whether use the peak intensity or not, default: `True`,
+- `geneformat`: The format for `genefile`, default: `ucsc+gz`. It could be:
+- - ucsc or ucsc+gz: typically, you can download from http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
+- - bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 4th column required as gene identity.
+- `peakformat`: The format for `peakfile`, default: `peak`. It could be:
+- - peak or peak+gz: (either [narrowPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format12) or [broadPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format13), the 7th column will be used as intensity
+- - bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 5th column will be used as intensity.
+- `window`: `2 * d0` in the formula. The window where the peaks fall in will be consided, default: `100000`. 
+```
+		|--------- window ----------|
+		|---- d0 -----|
+		|--- 50K --- TSS --- 50K ---|
+		     ^ (peak center)
+		     |-- di --|
+```
+
+
+## PLOT
+
+###  pBoxPlot
+#### description
+- Generate box plot
+
+#### input
+- `datafile:file`: The data file
+
+#### output
+- `outpng:file`: The output figure
+
+#### args
+- `header`:    `header` parameter for `read.table`, default: True
+- `rownames`:  `row.names` parameter for `read.table`, default: 1
+- `params`:    Other parameters for `boxplot`, default: ""
+
+
+## WXSANNO
+
+###  pSnpEff
+#### description
+- This is the default command. It is used for annotating variant filed (e.g. VCF files).
+
+#### input
+- `infile:file`:  The input file 
+
+#### output
+- `outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html
+
+#### args
+- `bin`:       The snpEff executable, default: "snpEff"
+- `params`:    Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"
+- `genome`:    The genome used for annotation, default: "hg19"
+- `informat`:  The format of input file [vcf or bed], default: "vcf"
+- `outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"
+- `csvStats`:  Whether to generate csv stats file, default: True.
+- `htmlStats`: Whether to generate the html summary file, default: False.
+
+#### requires
+- [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
+
+
+## WEB
+
+###  pDownloadPost
+#### description
+- Download results by submitting a form, supporting pagination.
+
+#### input
+- `url`: the URL contains the form
+- `submitbtn`: the submit button to click to submit the form (use Xpath).
+- `nextbtn`: the button for next page (use Xpath)
+- `params`: the params used to fill the form (JSON string or transformed from dict by json.dumps).
+
+#### output
+- `outdir:file`: The directory saves the results
+
+#### args
+- `interval`: seconds to wait between fetching each page. Default: 1
+
+#### requires
+- [`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
+- [`Phantomjs`](http://phantomjs.org/)
+
+
+###  pDownloadGet
+#### description
+- Download results by urls.
+
+#### input
+- `url`: the URLs to download
+
+#### args
+- `keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
+
+#### output
+- `outfile:file`: The output file
+
+
 ## BEDTOOLS
 
 ###  pGetfasta
@@ -1939,7 +957,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `fafile:file`: The input fasta file
 
 #### brings
-- `fafile`: "{{fafile.fn}}.fa*i", The fasta index file
+- `fafile`: "{{fafile | fn}}.fa*i", The fasta index file
 
 #### output
 - `outfile:file`: The generated fasta file
@@ -2175,4 +1193,1153 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+## RANK
+
+###  pRankProduct
+#### description
+- Calculate the rank product of a set of ranks. Refer to [here](https://en.wikipedia.org/wiki/Rank_product)
+
+#### input
+- `infile:file`: The input file
+- - Format:
+```
+				Case1	Case2	...
+	Feature1	8.2  	10.1 	...
+	Feature2	2.3  	8.0  	...
+	...
+```
+- - Or instead of values, you can also have ranks in the input file:
+```
+				Rank1	Rank2	...
+	Feature1	2    	1    	...
+	Feature2	3    	2    	...
+	...
+```
+
+#### output
+- `outfile:file`: The output file with original ranks, rank products and p-value if required
+
+#### args
+- `informat`: The input format of the values. Whether they are real values (value) or ranks (rank). Default: value
+- `pval`:     Whether to calculate the p-value or not. Default: True
+- `header`:   Whether the input file has headers (rownames are required!). Default: True
+- `plot`:     Number of rows to plot. Default: 0 (Don't plot)
+- `cex`:      Font size for plotting. Default: 0.9
+- `cnheight`: Colname height. Default: 80
+- `rnwidth`:  Rowname width. Default: 50
+- `width`:    Width of the png file. Default: 2000
+- `height`:   height of the png file. Default: 2000
+
+
+## WXSPREP
+
+###  pTrimmomaticPE
+#### description
+- Trimming Illumina NGS paired-end data
+
+#### input
+- `fqfile1:file`: The 1st fastq file (could be in .gz format)
+- `fqfile2:file`: The 2nd fastq file
+
+#### output
+- `outfile1:file`: The 1st output file
+- `outfile2:file`: The 2nd output file
+
+#### args
+- `bin`:    The trimmomatic executable, default: "trimmomatic"
+- `phred`:  "phred33" (default) or "phred64"
+- `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+- - have to replace `{adapter}` with the path of the adapter file
+- `nthread`: 1
+
+#### requires
+- [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
+
+
+###  pTrimmomaticSE
+#### description
+- Trimming Illumina NGS single-end data
+
+#### input
+- `fqfile:file`: The fastq file (could be in .gz format)
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `bin`:    The trimmomatic executable, default: "trimmomatic"
+- `phred`:  "phred33" (default) or "phred64"
+- `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+- - have to replace `{adapter}` with the path of the adapter file
+- `nthread`: 1
+
+#### requires
+- [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
+
+
+###  pAlignPEByBWA
+#### description
+- Align paired-end reads to reference genome using bwa mem
+
+#### input
+- `infile1:file`: read file 1 (fastq, or fastq gzipped)
+- `infile2:file`: read file 2 (fastq, or fastq gzipped)
+
+#### output
+- `outfile:file`: The output sam file
+
+#### args
+- `bin`:    The bwa executable, default: bwa
+- `params`: Other params for bwa mem, default: "-M"
+- `nthread`: 1
+- `reffile`: The reference file
+
+#### requires
+- [bwa](https://github.com/lh3/bwa)
+
+
+###  pAlignSEByBWA
+#### description
+- Align paired-end reads to reference genome using bwa mem
+
+#### input
+- `infile:file`:  read file (fastq, or fastq gzipped)
+
+#### output
+- `outfile:file`: The output sam file
+
+#### args
+- `bin`:    The bwa executable, default: bwa
+- `params`: Other params for bwa mem, default: "-M"
+- `nthread`: 1
+- `reffile`: The reference file, required
+
+#### requires
+- [bwa](https://github.com/lh3/bwa)
+
+
+###  pAlignPEByNGM
+#### description
+- Align paired-end reads to reference genome using NextGenMap
+
+#### input
+- `infile1:file`: read file 1 (fastq, or fastq gzipped)
+- `infile2:file`: read file 2 (fastq, or fastq gzipped)
+
+#### output
+- `outfile:file`: The output sam/bam file
+
+#### args
+- `bin`:    The NextGenMap executable, default: ngm
+- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+- `nthread`: 1
+- `reffile`: The reference file
+- `outtype`: sam or bam, default: bam
+
+#### requires
+- [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
+
+
+###  pAlignSEByNGM
+#### description
+- Align single-end reads to reference genome using NextGenMap
+
+#### input
+- `infile:file`: read file (fastq, or fastq gzipped)
+
+#### output
+- `outfile:file`: The output sam/bam file
+
+#### args
+- `bin`:    The NextGenMap executable, default: ngm
+- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+- `nthread`: 1
+- `reffile`: The reference file
+- `outtype`: sam or bam, default: bam
+
+#### requires
+- [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
+
+
+###  pMergeBams
+#### description
+- Merge bam files
+
+#### input
+- `sname`:        the sample name
+- `bams:files`:   the bam files to be merged
+
+#### output
+- `outfile:file`: the merged bam file
+
+#### args
+- `bin-samtools`: the executable path of samtools, default: "samtools"
+- `nthread`:      Number of BAM/CRAM compression threads
+- `params`:       Other parameters for `samtools merge`, default: ""
+
+#### requires
+- [samtools](http://www.htslib.org/)
+
+
+## DEG
+
+###  pExpFiles2Mat
+#### description
+- Convert expression files to expression matrix
+- File names will be used as sample names (colnames)
+
+#### input
+- `expdir:file`:  the directory containing the expression files, could be gzipped
+
+#### output
+- `expfile:file`: the expression matrix
+
+
+###  pDEGByEdgeR
+#### description
+- Call DEG from expression matrix
+
+#### input
+- `expfile:file`: the expression matrix
+- `group1`:       columns of group1 (separated by comma)
+- `group2`:       columns of group2 (separated by comma)
+- `group1name`:   the name of group1
+- `group2name`:   the name of group2   
+
+#### output
+- `degdir:dir`:   the output directory containing DEGs and plots
+
+#### args
+- `filter`:  the pair (X,Y) on how to filter the data by cpm (`d <- d[rowSums(cpm(d)>X) >= Y,]`). Default: "1,2"
+- - keep genes with at least X counts per million (CPM) in at least Y samples
+- `pval`:    the cutoff of DEGs (default: .05)
+- `paired`:  whether the samples are paired, default: False
+- `bcvplot`: whether to plot biological coefficient of variation, default: True
+- `displot`: whether to plot biological coefficient of variation, default: True
+- `fcplot`:  whether to plot fold changes, default: True
+
+#### requires
+- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html)
+
+
+###  pMArrayLimma
+#### description
+- Call degs of microarray data by limma
+
+#### input
+- `expfile:file`: The expression matrix
+- `group1`:      The 1st group
+- `group2`:      The 2nd group
+- `group1name`:  The name of 1st group
+- `group2name`:  The name of 2nd group
+
+#### output
+- `degdir:dir`:   the output directory containing DEGs and plots
+
+#### args
+- `norm`:    the normalization methods, separated by comma. Support normalization methods: `quan` (quantile). Default: "quan"
+- `boxplot`: draw boxplot? Default: True
+- `paired`:  whether the samples are paired, default: False
+- `filter`:  the pair (X,Y) on how to filter the data by expression (`d <- d[rowSums(d>X) >= Y,]`). Default: "1,2"
+- - keep genes with at least X exp in at least Y samples
+- `pval`:    the pvalue cutoff of DEGs (default: .05)
+- `qval`:    the qvalue cutoff of DEGs (default: .05)
+- `heatmap`: whether to plot heatmap, default: True
+- `hmn`:     Number of gene used for heatmap, default: 50
+- `hmmar`:   Margins for heatmap, default: "10,7"
+- `volplot`: whether to plot the volcano plot, default: True
+
+#### requires
+- [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
+- [ggplot2](https://bioconductor.org/packages/release/bioc/html/ggplot2.html)
+
+
+###  pRawCounts2
+#### description
+- Convert raw counts to another unit
+
+#### input
+- `expfile:file`: the expression matrix
+- - rows are genes, columns are samples, if not use `args.transpose = True`
+
+#### output
+- `outfile:file`: the converted expression matrix
+
+#### args
+- `transpose`: transpose the input matrix? default: False
+- `log2`:      whether to take log2? default: False
+- `unit`:      convert to which unit? default: cpm (or rpkm, tmm)
+- `header`:    whether input file has header? default: True
+- `rownames`:  the index of the column as rownames. default: 1
+- `glenfile`:  the gene length file, for RPKM
+- - no head, row names are genes, have to be exact the same order and length as the rownames of expfile
+
+#### requires
+- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
+- [coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
+
+
+## PICARD
+
+###  pMarkDuplicates
+#### description
+- Identifies duplicate reads.
+- This tool locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR. See also EstimateLibraryComplexity for additional notes on PCR duplication artifacts. Duplicate reads can also result from a single amplification cluster, incorrectly detected as multiple clusters by the optical sensor of the sequencing instrument. These duplication artifacts are referred to as optical duplicates.
+- The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. An BARCODE_TAG option is available to facilitate duplicate marking using molecular barcodes. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
+- The tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for each read. Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. If you are not familiar with this type of annotation, please see the following [blog post](https://www.broadinstitute.org/gatk/blog?id=7019) for additional information.
+- Although the bitwise flag annotation indicates whether a read was marked as a duplicate, it does not identify the type of duplicate. To do this, a new tag called the duplicate type (DT) tag was recently added as an optional output in the 'optional field' section of a SAM/BAM file. Invoking the TAGGING_POLICY option, you can instruct the program to mark all the duplicates (All), only the optical duplicates (OpticalOnly), or no duplicates (DontTag). The records within the output of a SAM/BAM file will have values for the 'DT' tag (depending on the invoked TAGGING_POLICY), as either library/PCR-generated duplicates (LB), or sequencing-platform artifact duplicates (SQ). This tool uses the READ_NAME_REGEX and the OPTICAL_DUPLICATE_PIXEL_DISTANCE options as the primary methods to identify and differentiate duplicate types. Set READ_NAME_REGEX to null to skip optical duplicate detection, e.g. for RNA-seq or other data where duplicate sets are extremely large and estimating library complexity is not an aim. Note that without optical duplicate counts, library size estimation will be inaccurate.
+- MarkDuplicates also produces a metrics file indicating the numbers of duplicates for both single- and paired-end reads.
+- The program can take either coordinate-sorted or query-sorted inputs, however the behavior is slightly different. When the input is coordinate-sorted, unmapped mates of mapped records and supplementary/secondary alignments are not marked as duplicates. However, when the input is query-sorted (actually query-grouped), then unmapped mates and secondary/supplementary reads are not excluded from the duplication test and can be marked as duplicate reads.
+- If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The marked bam file
+
+#### args
+- `bin`:     The picard executable, default: "picard MarkDuplicates"
+- `params`:  Other parameters for picard MarkDuplicates, default: ""
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pAddOrReplaceReadGroups
+#### description
+- Replace read groups in a BAM file.This tool enables the user to replace all read groups in the INPUT file with a single new read group and assign all reads to this read group in the OUTPUT BAM file.
+- For more information about read groups, see the [GATK Dictionary entry](https://www.broadinstitute.org/gatk/guide/article?id=6472). 
+- This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH) (see http://ga4gh.org/#/documentation).
+
+#### input
+- `infile:file`:  The bam file
+- `rg`:           The read group information. For example:
+- - "RGID=4 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=20"
+
+#### output
+- `outfile:file`: The bam file with read group added
+
+#### args
+- `bin`:     The picard executable, default: "picard AddOrReplaceReadGroups"
+- `params`:  Other parameters for picard AddOrReplaceReadGroups, default: ""
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pCreateSequenceDictionary
+#### description
+- Creates a sequence dictionary for a reference sequence. This tool creates a sequence dictionary file (with ".dict" extension) from a reference sequence provided in FASTA format, which is required by many processing and analysis tools. The output file contains a header but no SAMRecords, and the header contains only sequence records.
+- The reference sequence can be gzipped (both .fasta and .fasta.gz are supported).
+
+#### input
+- `infile:file`:  The fasta file 
+
+#### output
+- `outfile:file`: The same fasta file, but with dict file created
+
+#### args
+- `bin`:     The picard executable, default: "picard CreateSequenceDictionary"
+- `params`:  Other parameters for picard CreateSequenceDictionary, default: ""
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pCollectWgsMetrics
+#### description
+- Collect metrics about coverage and performance of whole genome sequencing (WGS) experiments.
+- This tool collects metrics about the fractions of reads that pass base- and mapping-quality filters as well as coverage (read-depth) levels for WGS analyses. Both minimum base- and mapping-quality values as well as the maximum read depths (coverage cap) are user defined.
+- Note: Metrics labeled as percentages are actually expressed as fractions!
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The metrics file
+
+#### args
+- `bin`:     The picard executable, default: "picard CollectWgsMetrics"
+- `params`:  Other parameters for `picard CollectWgsMetrics`, default: ""
+- `reffile`: The reference file, default: ""
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/)
+
+
+###  pSortSam
+#### description
+- Use `picard SortSam` to sort sam or bam file
+
+#### input
+- `infile:file`:  The sam or bam file to be sorted
+
+#### output
+- `outfile:file`: The sorted sam or bam file
+
+#### args
+- `bin`:     The picard executable, default: "picard SortSam"
+- `order`:   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
+- `outtype`: The type of output file, sam or bam. Default: bam
+- `params`:  Other parameters for `picard SortSame`, default: "-Xms1g -Xmx8g"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pIndexBam
+#### description
+- Use `picard BuildBamIndex` to index bam file
+
+#### input
+- `infile:file`:  The bam file 
+
+#### output
+- `outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
+
+#### args
+- `bin`:    The picard executable, default: "picard BuildBamIndex"
+- `params`:  Other parameters for picard , default: "-Xms1g -Xmx8g"
+
+#### requires
+- [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+## GENOMEPLOT
+
+###      pGeneTrack
+#### description
+- Generate the gene track using ucsc data source
+
+#### input
+- `name`:   The name of the track
+- `genome`: The genome
+- `chrom`:  The chromosome
+- `from`:   The start
+- `to`:     The end
+
+#### output
+- `outfile:file`: The file to save the track
+
+#### args
+- use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+###      pAnnoTrack
+#### description
+- Generate annotation track
+
+#### input
+- `infile:file`: the file for the track
+- `name`:        the name of the track
+- `genome`:      the genome
+- `chrom`:       the chromosome
+- `from`:        the start position to display
+- `to`:          the end position to display
+
+#### output
+- `outfile:file`:the dumped track
+
+#### args
+- use `displayPars(AnnotationTrack())` to see all available args.
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+###      pDataTrack
+#### description
+- The data track of Gviz
+
+#### input
+- `infile:file`: the file for the track
+- `name`:        the name of the track
+- `genome`:      the genome
+- `chrom`:       the chromosome
+- `from`:        the start position to display
+- `to`:          the end position to display
+
+#### output
+- `outfile:file`:the rds file for the track
+- `gout`:        the genome
+- `cout`:        the chromosome
+- `fout`:        the start
+- `tout`:        the end
+
+#### args
+- See `displayPars(DataTrack())` for all available display params
+- Quote all params!
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz/man/DataTrack-class.html)
+
+
+###      pUcscTrack
+#### description
+- Generate track from ucsc
+
+#### input
+- `ucscTrack`:   the track to fetch from ucsc. [Avialable tracks](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
+- `table`:       the table from ucsc. [Available table](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
+- `gvizTrack`:   the object track to generate. One of "AnnotationTrack", "GeneRegionTrack", "DataTrack", "GenomeAxisTrack"
+- `name`:        the name of the track
+- `genome`:      the genome
+- `chrom`:       the chromosome
+- `from`:        the start position to display
+- `to`:          the end position to display
+
+#### output
+- `outfile:file`:the dumped track
+
+#### args
+- use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args.
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+###      pGenomePlot
+#### description
+- plot the genomic features
+
+#### input
+- `trkfiles:files`: the list of track dumped files
+- `genome`:         the genome
+- `chrom`:          the chromosome
+- `from`:           the start position to display
+- `to`:             the end position to display
+
+#### output
+- `outfile:file`:   the figure
+
+#### requires
+- [r-Gviz](https://rdrr.io/bioc/Gviz)
+
+
+## PCA
+
+###  pPCA
+#### description
+- Perform PCA analysis
+
+#### input
+- `infile:file`: The matrix to do the analysis
+- - Note that rows are samples, columns are features, if not, use `args.transpose = True`
+
+#### output
+- `outfile:file`: The output coordinate file
+- - Columns are PCs, rows are samples
+
+#### args
+- `transpose`:  Whether to transpose the input matrix from infile. Default: False
+- `rownames`:   The `row.names` argument for `read.table`, default: 1
+- `header`:     The `header` argument for `read.table` to read the input file, default: True.
+- `screeplot`:  Whether to generate the screeplot or not. Default: True
+- `sp_ncp`:     Number of components in screeplot. Default: 0 (auto detect)
+- - if total # components (tcp) < 20: use all
+- - else if tcp > 20, use 20
+- `varplot`:    Whether to generate the variable plot or not. Default: False
+- `biplot`:     Whether to generate the variable plot or not. Default: True
+
+#### requires
+- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
+
+
+###  pSelectPCs
+#### description
+- Select a subset of PCs from pPCA results
+
+#### input
+- `indir:file`: The directory generated from pPCA
+
+#### output
+- `outfile:file`: The file containing selected PCs
+
+#### args
+- `n`: The number of PCs to select. Default: 0.9
+- - If it is < 1, used as the % variation explained from stdev.txt
+
+
+## TFBS
+
+###  pMotifScanByMEME
+#### input
+- `mfile:file`: The motif file
+- `sfile:file`: The sequence file
+
+#### output
+- `outdir:file`: The output dir
+
+#### args
+- `bin-fimo`: The path of `fimo` executable, default: "fimo"
+- `params`:   Other parameters for `fimo`
+
+#### requires
+- [`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
+
+
+###  pMEMEMDB2Gene
+#### input
+- `memefile:file`: The meme motif downloaded from MEME website
+- `species`:       The species, can be tax id, or common name
+- - only can be one of fruitfly, mouse, human, frog, zebrafish, thale-cress, pig, rat, nematode
+- - check them from http://http://mygene.info/v3/metadata
+
+#### output
+- `outfile:file`:  The output file containing the name pairs
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene)
+
+
+## GATK
+
+###  pRealignerTargetCreator
+#### description
+- The local realignment process is designed to consume one or more BAM files and to locally realign reads such that the number of mismatching bases is minimized across all the reads. In general, a large percent of regions requiring local realignment are due to the presence of an insertion or deletion (indels) in the individual's genome with respect to the reference genome. Such alignment artifacts result in many bases mismatching the reference near the misalignment, which are easily mistaken as SNPs. Moreover, since read mapping algorithms operate on each read independently, it is impossible to place reads on the reference genome such that mismatches are minimized across all reads. Consequently, even when some reads are correctly mapped with indels, reads covering the indel near just the start or end of the read are often incorrectly mapped with respect the true indel, also requiring realignment. Local realignment serves to transform regions with misalignments due to indels into clean reads containing a consensus indel suitable for standard variant discovery approaches.
+- Note that indel realignment is no longer necessary for variant discovery if you plan to use a variant caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still required when using legacy callers such as UnifiedGenotyper or the original MuTect. There are 2 steps to the realignment process:
+- - Determining (small) suspicious intervals which are likely in need of realignment (RealignerTargetCreator)
+- - Running the realigner over those intervals (see the IndelRealigner tool)
+- For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
+
+#### input
+- `infile:file`:  The aligned bam file
+
+#### brings
+- `infile`: `{{infile | fn}}.bai` The index file of input bam file
+
+#### output
+- `outfile:file`: A list of target intervals to pass to the IndelRealigner.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T RealignerTargetCreator"
+- `params`:  Other parameters for RealignerTargetCreator, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pIndelRealigner 
+#### description
+- The local realignment process is designed to consume one or more BAM files and to locally realign reads such that the number of mismatching bases is minimized across all the reads. In general, a large percent of regions requiring local realignment are due to the presence of an insertion or deletion (indels) in the individual's genome with respect to the reference genome. Such alignment artifacts result in many bases mismatching the reference near the misalignment, which are easily mistaken as SNPs. Moreover, since read mapping algorithms operate on each read independently, it is impossible to place reads on the reference genome such at mismatches are minimized across all reads. Consequently, even when some reads are correctly mapped with indels, reads covering the indel near just the start or end of the read are often incorrectly mapped with respect the true indel, also requiring realignment. Local realignment serves to transform regions with misalignments due to indels into clean reads containing a consensus indel suitable for standard variant discovery approaches.
+- Note that indel realignment is no longer necessary for variant discovery if you plan to use a variant caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still required when using legacy callers such as UnifiedGenotyper or the original MuTect.
+- There are 2 steps to the realignment process:
+- - Determining (small) suspicious intervals which are likely in need of realignment (see the RealignerTargetCreator tool)
+- - Running the realigner over those intervals (IndelRealigner)
+- For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
+
+#### input
+- `bamfile:file`: The aligned bam file
+- `intfile:file`: Intervals file output from RealignerTargetCreator
+
+#### brings
+- `infile`: `{{infile | fn}}.bai` The index file of input bam file
+
+#### output
+- `outfile:file`: A realigned version of input BAM file.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T IndelRealigner"
+- `params`:  Other parameters for IndelRealigner, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pBaseRecalibrator  
+#### description
+- Variant calling algorithms rely heavily on the quality scores assigned to the individual base calls in each sequence read. These scores are per-base estimates of error emitted by the sequencing machines. Unfortunately the scores produced by the machines are subject to various sources of systematic technical error, leading to over- or under-estimated base quality scores in the data. Base quality score recalibration (BQSR) is a process in which we apply machine learning to model these errors empirically and adjust the quality scores accordingly. This allows us to get more accurate base qualities, which in turn improves the accuracy of our variant calls. The base recalibration process involves two key steps: first the program builds a model of covariation based on the data and a set of known variants (which you can bootstrap if there is none available for your organism), then it adjusts the base quality scores in the data based on the model. There is an optional but highly recommended step that involves building a second model and generating before/after plots to visualize the effects of the recalibration process. This is useful for quality control purposes. This tool performs the first step described above: it builds the model of covariation and produces the recalibration table. It operates only at sites that are not in dbSNP; we assume that all reference mismatches we see are therefore errors and indicative of poor base quality. This tool generates tables based on various user-specified covariates (such as read group, reported quality score, cycle, and context). Assuming we are working with a large amount of data, we can then calculate an empirical probability of error given the particular covariates seen at this site, where p(error) = num mismatches / num observations. The output file is a table (of the several covariate values, number of observations, number of mismatches, empirical quality score).
+
+#### input
+- `bamfile:file`: A BAM file containing data that needs to be recalibrated.
+
+#### output
+- `outfile:file`: A GATKReport file with many tables:
+- - The list of arguments
+- - The quantized qualities table
+- - The recalibration table by read group
+- - The recalibration table by quality score
+- - The recalibration table for all the optional covariates
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T BaseRecalibrator"
+- `params`:  Other parameters for BaseRecalibrator, default: ""
+- `reffile`: The reference file, required
+- `knownSites`: The known polymorphic sites to mask out, required
+- `bin-samtools`: The samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pPrintReads   
+#### description
+- PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM format. It can dynamically merge the contents of multiple input BAM files, resulting in merged output sorted in coordinate order. It can also optionally filter reads based on various read properties such as read group tags using the `--read_filter/-rf` command line argument (see documentation on read filters for more information).
+- Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
+
+#### input
+- `bamfile:file`: A BAM file.
+- `recaltable:file`: The GATKReport file
+
+#### output
+- `outfile:file`: A single processed bam file.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T PrintReads"
+- `params`:  Other parameters for PrintReads, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pHaplotypeCaller 
+#### description
+- PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM format. It can dynamically merge the contents of multiple input BAM files, resulting in merged output sorted in coordinate order. It can also optionally filter reads based on various read properties such as read group tags using the `--read_filter/-rf` command line argument (see documentation on read filters for more information).
+- Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
+
+#### input
+- `bamfile:file`: A BAM file.
+
+#### brings
+- `bamfile`: `{{bamfile.fn}}.ba*i` The bam index file
+
+#### output
+- `outfile:file`: Either a VCF or gVCF file with raw, unfiltered SNP and indel calls.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T HaplotypeCaller"
+- `params`:  Other parameters for HaplotypeCaller, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pSelectVariants
+#### description
+- Often, a VCF containing many samples and/or variants will need to be subset in order to facilitate certain analyses (e.g. comparing and contrasting cases vs. controls; extracting variant or non-variant loci that meet certain requirements, displaying just a few samples in a browser like IGV, etc.). SelectVariants can be used for this purpose.
+- There are many different options for selecting subsets of variants from a larger callset:
+- - Extract one or more samples from a callset based on either a complete sample name or a pattern match.
+- - Specify criteria for inclusion that place thresholds on annotation values, e.g. "DP > 1000" (depth of coverage greater than 1000x), "AF < 0.25" (sites with allele frequency less than 0.25). These - criteria are written as "JEXL expressions", which are documented in the article about using JEXL expressions.
+- - Provide concordance or discordance tracks in order to include or exclude variants that are also present in other given callsets.
+- - Select variants based on criteria like their type (e.g. INDELs only), evidence of mendelian violation, filtering status, allelicity, and so on.
+- There are also several options for recording the original values of certain annotations that are recalculated when a subsetting the new callset, trimming alleles, and so on.
+
+#### input
+- `vcffile:file`: A variant call set from which to select a subset.
+
+#### output
+- `outfile:file`: A new VCF file containing the selected subset of variants.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T SelectVariants"
+- `params`:  Other parameters for SelectVariants, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: The samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pVariantFiltration
+#### description
+- This tool is designed for hard-filtering variant calls based on certain criteria. Records are hard-filtered by changing the value in the FILTER field to something other than PASS. Filtered records will be preserved in the output unless their removal is requested in the command line.
+- The most common way of specifying filtering criteria is by using JEXL queries. See the article on JEXL expressions in the documentation Guide for detailed information and examples.
+
+#### input
+- `vcffile:file`: A variant set to filter.
+
+#### output
+- `outfile:file`: A filtered VCF.
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T VariantFiltration"
+- `params`:  Other parameters for VariantFiltration, default: ""
+- `reffile`: The reference file
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+
+
+###  pMuTect2
+#### description
+- MuTect2 is a somatic SNP and indel caller that combines the DREAM challenge-winning somatic genotyping engine of the original MuTect ([Cibulskis et al., 2013](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html)) with the assembly-based machinery of HaplotypeCaller. The basic operation of MuTect2 proceeds similarly to that of the HaplotypeCaller.
+- NOTE: only Tumor/Normal variant calling implemented in bioprocs
+
+#### input
+- `tumor:file`:  the tumor bam file
+- `normal:file`: the normal bam file
+
+#### brings
+- `tumor`:  `{{tumor | fn}}.bai` the index file of tumor
+- `normal`: `{{normal | fn}}.bai` the index file of normal
+
+#### output
+- `outfile:file`: The vcf file containing somatic mutations
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T MuTect2"
+- `params`:  Other parameters for MuTect2, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: the samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) if index files of input files are not found
+
+
+###  pMuTect2Interval
+#### description
+- Use interval file model of MuTect2
+
+#### input
+- `tumor:file`:  the tumor bam file
+- `normal:file`: the normal bam file
+
+#### brings
+- `tumor`:  `{{tumor | fn}}.bai` the index file of tumor
+- `normal`: `{{normal | fn}}.bai` the index file of normal
+
+#### output
+- `outfile:file`: The vcf file containing somatic mutations
+
+#### args
+- `bin`:     The gatk executable, default: "gatk -T MuTect2"
+- `params`:  Other parameters for MuTect2, default: ""
+- `reffile`: The reference file
+- `bin-samtools`: the samtools executable, default: samtools
+
+#### requires
+- [GATK](https://software.broadinstitute.org/gatk)
+- [samtools](http://www.htslib.org/) 
+
+
+## WXS
+
+## COMMON
+
+###  pSort
+#### description
+- Sort file using linux command `sort`
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `skip`:   To skip first N lines. Default: 0
+- `params`: The arguments used by `sort`
+
+
+###  pFiles2Dir
+#### description
+- A helper process to convert a list of files into a directory, so that some processes can take it as input
+
+#### input
+- `infiles:files`: The input files
+
+#### output
+- `outdir:dir`:    The output directory
+
+
+###  pPat2Dir
+#### description
+- A helper process to convert a list of files by a pattern (wildcards) into a directory, so that some processes can take it as input
+
+#### input
+- `pattern:var`: The pattern
+
+#### output
+- `outdir:dir`:    The output directory
+
+
+###  pMergeFile
+#### description
+- Merge files in the input directory
+
+#### input
+- `indir:file`: The input directory
+
+#### output
+- `outfile:file`: The output file
+
+
+###  pCbindList
+#### description
+- Column bind lists, fill miss rows with specific value
+
+#### input
+- `indir:file`: The directory containing the list files
+- - header can be omited, but row names are required
+
+#### output
+- `outfile:file`: The output matrix
+
+#### args
+- `header`: Whether list has header. Default: False (will use file name as header)
+- `na`:     The missing values. Default: 0
+- - If it's a string, remember the quote (i.e.: '"missing"')
+
+
+## SEQ
+
+###  pConsv
+#### description
+- Get the conservation scores of regions.
+- It uses wigFix to find the conservation scores.
+- But first you have to convert those wigFix.gz files to bigWig files using ucsc-wigToBigWig
+
+#### input
+- `bedfile:file`: The bedfile with regions in the same chromosome
+- `bwdir:file`:   The bigwig directory, the bigwig files must be named as "chrN.*"
+- - For example: `chr1.phyloP30way.bw`
+
+#### output
+- `outdir:dir`    The output file, containing the output file, random regions and their scores if pvalue is calulated
+
+#### args
+- `bin-bwtool`:   The path of bwtool executable. Default: `bwtool`
+- `bin-bedtools`: The path of bedtools executable. Default: `bedtools`
+- `calcp`:        Whether to calculate the pvalue for not for each region.
+- `nperm`:        The number of permutations of pvalue is calcuated.
+- `seed`:         The seed to generate the random regions.
+- `gsize`:        The genome size file for generating random regions.
+- - Can be a local file or a file hosted at UCSC: http://hgdownload.cse.ucsc.edu/goldenPath/<genome>/bigZips/<genome>.chrom.sizes
+
+#### requires
+- [bwtool](https://github.com/CRG-Barcelona/bwtool)
+- [bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html) if `calcp` is `True`
+
+
+###  pGetPromoterBed
+#### description
+- Get the promoter region in bed format
+
+#### input
+- `gene`: the gene
+
+#### output
+- `outfile:file`: the bed file containing the promoter region
+
+#### args
+- `up`: the upstream to the tss, default: 2000
+- `down`: the downstream to the tss, default: 2000
+- `genome`: the genome, default: hg19
+
+#### require
+- [python-mygene](http://mygene.info/)
+
+
+## TCGA
+
+###  pDownload
+#### description
+- Download TCGA use `gdc-client` and a manifest file
+
+#### input
+- `manifile:file`: the manifest file
+
+#### output
+- `outdir:file`:   the directory containing downloaded file
+
+#### args
+- `params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
+- `bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
+
+
+###  pSample2SubmitterID
+#### description
+- convert TCGA sample names with submitter id with metadata and sample containing folder
+
+#### input
+- `dir:file`:    the directory containing the samples
+- `mdfile:file`: the metadata file
+
+#### output
+- `outdir:file`: the directory containing submitter-id named files
+
+
+###  pConvertExpFiles2Matrix
+#### description
+- convert TCGA expression files to expression matrix, and convert sample name to submitter id
+
+#### input
+- `dir:file`:    the directory containing the samples
+- `mdfile:file`: the metadata file
+
+#### output
+- `outfile:file`:the output matrix
+
+#### requires
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
+
+
+###  pConvertMutFiles2Matrix
+#### description
+- convert TCGA mutation files (vcf.gz) to mut matrix, and convert sample name to submitter id
+
+#### input
+- `dir:file`:    the directory containing the samples
+- `mdfile:file`: the metadata file
+
+#### output
+- `outfile:file`:the output matrix
+
+
+## WXSSTAT
+
+###  pVcf2List
+#### description
+- Convert vcf to stat files for pCallRate
+
+#### input
+- `vcffile:file`: The vcf file
+
+#### output
+- `outfile:file`: The stat file
+
+#### args
+- `chroms`: SNPs on chromosomes to consider, default: "" (all chroms)
+- - use "chr1-22, chrX, chrY" for chr1 to chr22, chrX and chrY
+
+#### requires
+- [`pyvcf`](https://github.com/jamescasbon/PyVCF)
+
+
+###  pCallRate
+#### description
+- Calculate sample/snp call rate from a matrix of snp-sample
+- - rows are snps, columns are samples
+
+#### input
+- `infile:file`:    The snp-sample matrix file
+
+#### output
+- `outsample:file`: The report of call rate for each sample
+- `figsample:file`: The bar chat of sample call rates
+- `outsnp:file`:    The report of call rate for each snp
+- `figsnp:file`:    The bar chat of snp call rates
+
+
+###  pCoverageByBamstats
+#### description
+- Use `bamstats` to calculate coverage for bam file
+
+#### input
+- `infile:file`:  The bam file
+
+#### output
+- `outfile:file`:    The report of coverage for the bam file
+
+#### args
+- `bin`: The `bamstats` executable, default: "bamstats"
+- `params`: Other parameters for `bamstats`, default: ""
+
+#### requires
+- [bamstats](http://bamstats.sourceforge.net/)
+
+
+###  pPlotBamstats
+#### description
+- Plot coverage use output files generated by `bamstats` or `wxs.pCoverageByBamstats`
+
+#### input
+- `indir:file`: The directory containing bamstats output files
+
+#### args
+- `chroms`: Chromosomes to plot. Default: "" (all chroms)
+- - Note: Whether to have "chr" prefix or not depends on your reference when mapping.
+- - You can do a scope assignment: "chr1-chr22, chrX, chrY"
+
+#### output
+- `outdir:file`: The directory containing output figures
+
+
+###  pSnpEff2Stat
+#### description
+- Convert csvstat file from snpEff to R-readable matrix for plotting
+
+#### input
+- `indir:file`: The directory containing the csv stat files from `snpEff ann`
+
+#### output
+- `outdir:dir`: The output directory
+
+#### args
+- `chroms`:     The chromsome filter. Default: "" (all chroms)
+- - Note: snpEff csvstat file has no "chr" prefix
+
+
+###  pPlotSnpEff
+#### description
+- Plot snpEff annotation statistics
+
+#### input
+- `indir:file`: The snpEff result directory containing matrix files generated by pSnpEff2Stat
+
+#### output
+- `outdir:dir`: The output directory
+
+#### requires
+- [`pwwang/corrplot`](https://github.com/pwwang/corrplot)
+- - use `library(devtools); install.github("pwwang/corrplot")`
+- [`ggplot2`](http://ggplot2.org/)
+
+
+## SNPARRAY
+
+###  pSNP6Genotype
+#### description
+- Call genotypes from GenomeWideSNP_6 CEL file
+
+#### input
+- `celfile:file`: the CEL file
+
+#### output
+- `outfile:file`: the outfile containing probe name and genotypes
+- - format: `<Probe name>\t<genotype>`
+- - `<genotype>` = 0: AA, 1: AB, 2: BB
+
+#### requires
+- [bioconductor-crlmm](http://bioconductor.org/packages/release/bioc/html/crlmm.html)
+
+
+###  pGenoToAvInput
+#### description
+- Convert the genotype called by pSNP6Genotype to [ANNOVAR input file](http://annovar.openbioinformatics.org/en/latest/user-guide/input/#annovar-input-file) using dbSNP identifiers.	
+
+#### input
+- `genofile:file`: the genofile generated by pSNP6Genotype, must be sorted by probe names
+- `annofile:flie`: the annotation file downloaded from http://www.affymetrix.com/support/technical/annotationfilesmain.affx
+- - Could be in .gz format
+
+#### output
+- `outfile:file`: the avinput file
+
+#### requires
+- [python-read2](https://github.com/pwwang/read2)
 
