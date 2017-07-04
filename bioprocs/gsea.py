@@ -37,7 +37,7 @@ with open ("{{mapfile}}") as f:
 			if g == 'None': continue
 			origenes.append(gene)
 
-grets = mg.getgenes (origenes, scopes=['symbol', 'alias'], fields='symbol', species='{{proc.args.species}}')
+grets = mg.getgenes (origenes, scopes=['symbol', 'alias'], fields='symbol', species='{{args.species}}')
 for gret in grets:
 	if not gret.has_key('symbol'): continue
 	genes[gret['query']] = gret['symbol']
@@ -132,14 +132,14 @@ fout.close()
 """
 pIntersectGMT = proc()
 pIntersectGMT.input  = "gmtfile1:file, gmtfile2:file"
-pIntersectGMT.output = "outfile:file:intersected.gmt{{proc.args.gz | lambda x: '.gz' if x else ''}}"
+pIntersectGMT.output = "outfile:file:intersected.gmt{{args.gz | lambda x: '.gz' if x else ''}}"
 pIntersectGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
 pIntersectGMT.script = """
 #!/usr/bin/env python
 import gzip
 from mygene import MyGeneInfo
 mg = MyGeneInfo()
-openfunc = open if not {{proc.args.gz}} else gzip.open
+openfunc = open if not {{args.gz}} else gzip.open
 def readGMT (gmtfile):
 	ret = {}
 	with openfunc (gmtfile) as f:
@@ -160,7 +160,7 @@ with openfunc ("{{outfile}}", "w") as fout:
 		comm2 = gmt2[key][0]
 		comm  = comm1+"|"+comm2 if comm1!=comm2 else comm1
 		inter = list (set(gmt1[key][1]) & set(gmt2[key][1]))
-		genes = mg.querymany (inter, scopes="{{proc.args.geneformat}}", fields="symbol", species="{{proc.args.species}}")
+		genes = mg.querymany (inter, scopes="{{args.geneformat}}", fields="symbol", species="{{args.species}}")
 		genes = [gene['symbol'] for gene in genes if gene.has_key('symbol')]
 		if not inter: continue
 		fout.write ("%s\\t%s\\t%s\\n" % (key, comm, "\\t".join(inter)))
@@ -194,14 +194,14 @@ with openfunc ("{{outfile}}", "w") as fout:
 """
 pUnionGMT = proc()
 pUnionGMT.input  = "gmtfile1:file, gmtfile2:file"
-pUnionGMT.output = "outfile:file:unioned.gmt{{proc.args.gz | lambda x: '.gz' if x else ''}}"
+pUnionGMT.output = "outfile:file:unioned.gmt{{args.gz | lambda x: '.gz' if x else ''}}"
 pUnionGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
 pUnionGMT.script = """
 #!/usr/bin/env python
 import gzip
 from mygene import MyGeneInfo
 mg = MyGeneInfo()
-openfunc = open if not {{proc.args.gz}} else gzip.open
+openfunc = open if not {{args.gz}} else gzip.open
 def readGMT (gmtfile):
 	ret = {}
 	with openfunc (gmtfile) as f:
@@ -222,7 +222,7 @@ with openfunc ("{{outfile}}", "w") as fout:
 		comm2 = gmt2[key][0]
 		comm  = comm1+"|"+comm2 if comm1!=comm2 else comm1
 		inter = list (set(gmt1[key][1]) | set(gmt2[key][1]))
-		genes = mg.querymany (inter, scopes="{{proc.args.geneformat}}", fields="symbol", species="{{proc.args.species}}")
+		genes = mg.querymany (inter, scopes="{{args.geneformat}}", fields="symbol", species="{{args.species}}")
 		genes = [gene['symbol'] for gene in genes if gene.has_key('symbol')]
 		if not inter: continue
 		fout.write ("%s\\t%s\\t%s\\n" % (key, comm, "\\t".join(inter)))
@@ -304,7 +304,7 @@ readGMT <- function (filename = "NULL") {
 }
 
 # Calculate ES score, adopted from GSEA R package (GSEA.EnrichmentScore)
-EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{proc.args.weightexp}}, correl.vector = NULL) {  
+EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{args.weightexp}}, correl.vector = NULL) {  
 	tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag) 
 	no.tag.indicator <- 1 - tag.indicator 
 	N <- length(gene.list) 
@@ -409,7 +409,7 @@ NPvalPlot = function (es, outprefix) {
 	return (NESret)
 }
 
-ESWithPerm = function (exp, gs, nperm = {{proc.args.nperm}}) {
+ESWithPerm = function (exp, gs, nperm = {{args.nperm}}) {
   exp      = exp[order(-exp[,1]),,drop=F]
   corrVec  = c (exp[,1])
   
@@ -447,7 +447,7 @@ AdjustP = function (esp) {
 		for (j in 1:length(ret[[ gset ]])) {
 			pvec[j] = ret[[ gset ]][[ j ]]$p
 		}
-		qs = p.adjust (pvec, "{{proc.args.padjust}}")
+		qs = p.adjust (pvec, "{{args.padjust}}")
 		for (j in 1:length(ret[[ gset ]])) {
 			ret[[ gset ]][[ j ]]$q = qs[j]
 		}
@@ -506,7 +506,7 @@ ExportResult (es = esq, nes=nes, outfile = "{{outdir}}/report.txt")
 	`plot`: Whether to plot the result. Default: True
 	`title`: The title for the plot. Default: "Gene enrichment: {db}"
 @requires:
-	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `proc.args.norm` is `True`
+	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
 pEnrichr = proc()
 pEnrichr.input  = "infile:file"
@@ -519,13 +519,13 @@ import json
 import requests
 import math
 genes = [line.split()[0] for line in open("{{infile}}") if line.strip()]
-if {{proc.args.norm}}:
+if {{args.norm}}:
 	from mygene import MyGeneInfo
 	mg = MyGeneInfo()
 	genes = mg.getgenes (genes, scopes=['symbol', 'alias'], fields='symbol', species='human')
 	genes = [gene['symbol'] for gene in genes if gene.has_key('symbol')]
 	
-if {{proc.args.plot}}:
+if {{args.plot}}:
 	import matplotlib
 	matplotlib.use('Agg')
 	from matplotlib import pyplot as plt
@@ -548,14 +548,14 @@ if not response.ok:
 data = json.loads(response.text)
 
 ## do enrichment
-dbs = "{{proc.args.dbs}}".split(',')
+dbs = "{{args.dbs}}".split(',')
 dbs = map (lambda s: s.strip(), dbs)
 
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
 query_string = '?userListId=%s&backgroundType=%s'
 
 head = ["#Rank", "Term name", "P-value", "Z-score", "Combined score", "Overlapping genes", "Adjusted p-value", "Old p-value", "Old adjusted p-value"]
-topn = {{proc.args.topn}}
+topn = {{args.topn}}
 for db in dbs:
 	user_list_id = data['userListId']
 	gene_set_library = db
@@ -575,18 +575,18 @@ for db in dbs:
 		fout.write ("\\t".join(['|'.join(r) if x == 5 else str(r) for x,r in enumerate(ret)]) + "\\n")
 		if topn < 1 and ret[2] >= topn: continue
 		if topn >= 1 and i > topn - 1: continue
-		if {{proc.args.rmtags}} and "_Homo sapiens_hsa" in ret[1]: ret[1] = ret[1][:-22]
+		if {{args.rmtags}} and "_Homo sapiens_hsa" in ret[1]: ret[1] = ret[1][:-22]
 		d2plot.append (ret)
 	fout.close()
 	
-	if {{proc.args.plot}}:
+	if {{args.plot}}:
 		#d2plot   = sorted (d2plot, cmp=lambda x,y: 0 if x[2] == y[2] else (-1 if x[2] < y[2] else 1))
 		plotfile = "{{outdir}}/%s.png" % db
 		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7]) 
 		rownames = [r[1] for r in d2plot]
 		rnidx    = range (len (rownames))
 		ax1 = plt.subplot(gs[0])
-		plt.title ("{{proc.args.title}}".replace("{db}", db), fontweight='bold')
+		plt.title ("{{args.title}}".replace("{db}", db), fontweight='bold')
 		
 		ax1.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
 		plt.subplots_adjust(wspace=.01, left=0.5)

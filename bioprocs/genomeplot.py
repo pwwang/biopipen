@@ -112,7 +112,7 @@ geneTrack = UcscTrack (
     symbol          = "name2",
     transcript      = "name",
     strand          = "strand",
-{{ proc.args | \
+{{ args | \
   lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
@@ -226,7 +226,7 @@ annoTrack = AnnotationTrack(
     genome = "{{genome}}",
     name = "{{name}}",
     chromosome = "{{chrom}}",
-{{ proc.args | \
+{{ args | \
   lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
@@ -239,11 +239,11 @@ annoTrack = AnnotationTrack(
   ) }}
 )
 # the group information
-if (is.null({{proc.args.group}})) {
+if (is.null({{args.group}})) {
     group (annoTrack) = as.character (seq(length(annoTrack)))
 } else {
     # a function to generate groups
-    group (annoTrack) = {{proc.args.group}} (annoTrack)
+    group (annoTrack) = {{args.group}} (annoTrack)
 }
 saveRDS (annoTrack, "{{outfile}}")
 """
@@ -414,7 +414,7 @@ dataTrack = DataTrack(
     genome = "{{genome}}",
     name = "{{name}}",
     chromosome = "{{chrom}}",
-{{ proc.args | \
+{{ args | \
   lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
@@ -533,7 +533,7 @@ ucscTrack = UcscTrack (
     trackType       = "{{gvizTrack}}",
     table           = "{{table}}",
     track           = "{{ucscTrack}}",
-{{ proc.args | \
+{{ args | \
   lambda x: ",\\n".join( \
      [ \
         "\\t%s\\t= %s" % (key, ('"'+ val +'"' if key in [ \
@@ -576,17 +576,17 @@ pGenomePlot.args   = {
 pGenomePlot.script = """
 library (Gviz)
 tracks = c ()
-if ({{ proc.args.showIdeo | Rbool }}) {
+if ({{ args.showIdeo | Rbool }}) {
     tracks = c (tracks, IdeogramTrack(genome="{{genome}}", chromosome="{{chrom}}"))
 }
-if ({{ proc.args.showAxis | Rbool }}) {
+if ({{ args.showAxis | Rbool }}) {
     tracks = c (tracks, GenomeAxisTrack())
 }
 for (t in noquote(unlist(strsplit("{{trkfiles | " | ".join(_)}}", " \\\\| ")))) {
     tracks = c (tracks, readRDS(t))
 }
-size={{proc.args.resolution}}*480/72
-png (file = "{{outfile}}", width=size, height=size, res={{proc.args.resolution}})
+size={{args.resolution}}*480/72
+png (file = "{{outfile}}", width=size, height=size, res={{args.resolution}})
 plotTracks (
     as.list(tracks),
     from                  = {{from}},

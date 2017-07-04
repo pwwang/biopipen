@@ -23,7 +23,7 @@ pMotifScanByMEME.output = "outdir:file:{{mfile | fn}}-{{sfile | fn}}.fimo"
 pMotifScanByMEME.args   = {"params": "", "bin-fimo": "fimo"}
 pMotifScanByMEME.script = """
 if [[ -e "{{outdir}}" ]]; then rm -rf "{{outdir}}"; fi
-{{proc.args.bin-fimo}} --o "{{outdir}}" {{proc.args.params}} "{{mfile}}" "{{sfile}}"
+{{args.bin-fimo}} --o "{{outdir}}" {{args.params}} "{{mfile}}" "{{sfile}}"
 """
 
 pMS2Bed = proc ()

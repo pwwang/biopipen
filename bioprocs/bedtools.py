@@ -28,7 +28,7 @@ pGetfasta.brings = {"fafile": "{{fafile | fn}}.fa*i"}
 pGetfasta.output = "outfile:file:{{infile | fn}}.fa"
 pGetfasta.args   = { "bin": "bedtools", "params": "-name" }
 pGetfasta.script = """
-{{proc.args.bin}} getfasta {{proc.args.params}} -fi "{{fafile}}" -bed "{{infile}}" > "{{outfile}}"
+{{args.bin}} getfasta {{args.params}} -fi "{{fafile}}" -bed "{{infile}}" > "{{outfile}}"
 """
 
 """
@@ -52,7 +52,7 @@ pClosest.input  = "afile:file, bfiles:files"
 pClosest.output = "outfile:file:{{afile | fn}}.bt"
 pClosest.args   = { "bin": "bedtools", "params": "" }
 pClosest.script = """
-{{proc.args.bin}} closest {{proc.args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
+{{args.bin}} closest {{args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
 """
 
 """
@@ -76,7 +76,7 @@ pFlank.input  = "infile:file, gfile:file"
 pFlank.output = "outfile:file:{{infile | fn}}.flank.bed"
 pFlank.args   = { "bin": "bedtools", "params": "" }
 pFlank.script = """
-{{proc.args.bin}} flank {{proc.args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
+{{args.bin}} flank {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
@@ -100,7 +100,7 @@ pIntersect.input  = "afile:file, bfiles:files"
 pIntersect.output = "outfile:file:{{afile|fn}}.intersect.bt"
 pIntersect.args   = { "bin": "bedtools", "params": "" }
 pIntersect.script = """
-{{proc.args.bin}} intersect -nonamecheck {{proc.args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
+{{args.bin}} intersect -nonamecheck {{args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
 """
 
 """
@@ -124,7 +124,7 @@ pMakewindows.input  = "infile:file"
 pMakewindows.output = "outfile:file:{{infile | fn}}.window.bed"
 pMakewindows.args   = { "bin": "bedtools", "params": "" }
 pMakewindows.script = """
-{{proc.args.bin}} makewindows {{proc.args.params}} {{proc.args.informat | lambda x: "-b" if x=="bed" else "-g"}} "{{infile}}" > "{{outfile}}"
+{{args.bin}} makewindows {{args.params}} {{args.informat | lambda x: "-b" if x=="bed" else "-g"}} "{{infile}}" > "{{outfile}}"
 """
 
 """
@@ -147,7 +147,7 @@ pMerge.input  = "infile:file"
 pMerge.output = "outfile:file:{{infile | fn}}.merged.bed"
 pMerge.args   = { "bin": "bedtools", "params": "" }
 pMerge.script = """
-{{proc.args.bin}} merge {{proc.args.params}} -i "{{infile}}" > "{{outfile}}"
+{{args.bin}} merge {{args.params}} -i "{{infile}}" > "{{outfile}}"
 """
 
 """
@@ -170,7 +170,7 @@ pMultiinter.input  = "infiles:files"
 pMultiinter.output = "outfile:file:{{infiles | [0] | fn}}.multiinter.bt"
 pMultiinter.args   = { "bin": "bedtools", "params": "" }
 pMultiinter.script = """
-{{proc.args.bin}} multiinter {{proc.args.params}} -i {{infiles | asquote}} > "{{outfile}}"
+{{args.bin}} multiinter {{args.params}} -i {{infiles | asquote}} > "{{outfile}}"
 """
 
 """
@@ -193,7 +193,7 @@ pRandom.input  = "gfile:file"
 pRandom.output = "outfile:file:{{gfile | fn}}.random.bed"
 pRandom.args   = { "bin": "bedtools", "params": "" }
 pRandom.script = """
-{{proc.args.bin}} random {{proc.args.params}} -g "{{gfile}}" > "{{outfile}}"
+{{args.bin}} random {{args.params}} -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
@@ -217,7 +217,7 @@ pShift.input  = "infile:file, gfile:file"
 pShift.output = "outfile:file:{{infile | fn}}.shifted.bed"
 pShift.args   = { "bin": "bedtools", "params": "" }
 pShift.script = """
-{{proc.args.bin}} shift {{proc.args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
+{{args.bin}} shift {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
@@ -241,7 +241,7 @@ pShuffle.input  = "infile:file, gfile:file"
 pShuffle.output = "outfile:file:{{infile | fn}}.shuffled.bed"
 pShuffle.args   = { "bin": "bedtools", "params": "" }
 pShuffle.script = """
-{{proc.args.bin}} shuffle {{proc.args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
+{{args.bin}} shuffle {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
@@ -265,7 +265,7 @@ pSubtract.input  = "afile:file, bfile:file"
 pSubtract.output = "outfile:file:{{afile | fn}}.subtracted.bed"
 pSubtract.args   = { "bin": "bedtools", "params": "" }
 pSubtract.script = """
-{{proc.args.bin}} subtract {{proc.args.params}} -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
+{{args.bin}} subtract {{args.params}} -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
 """
 
 """
@@ -289,7 +289,7 @@ pWindow.input  = "afile:file, bfile:file"
 pWindow.output = "outfile:file:{{afile | fn}}.window.bed"
 pWindow.args   = { "bin": "bedtools", "params": "" }
 pWindow.script = """
-{{proc.args.bin}} window {{proc.args.params}} -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
+{{args.bin}} window {{args.params}} -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
 """
 
 """
@@ -314,5 +314,5 @@ pGenomecov.input  = "infile:file"
 pGenomecov.output = "outfile:file:{{infile | fn}}.genomecov.bt"
 pGenomecov.args   = { "bin": "bedtools", "params": "-bg" }
 pGenomecov.script = """
-{{proc.args.bin}} genomecov {{proc.args.params}} -ibam "{{infile}}" > "{{outfile}}"
+{{args.bin}} genomecov {{args.params}} -ibam "{{infile}}" > "{{outfile}}"
 """

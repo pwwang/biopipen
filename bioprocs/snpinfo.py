@@ -27,8 +27,8 @@ pSNP2Bed.script = """
 from cruzdb import Genome
 import sys
 
-g     = Genome (db="{{proc.args.genome}}")
-dbsnp = g.{{proc.args.snpver}}
+g     = Genome (db="{{args.genome}}")
+dbsnp = g.{{args.snpver}}
 snps  = list(set([line.split()[0] for line in open("{{snpfile}}") if line.strip()]))
 fout  = open ("{{outfile}}", "w")
 for snp in snps:
@@ -85,8 +85,8 @@ pSNP2Avinput.script = """
 from cruzdb import Genome
 import sys
 
-g     = Genome (db="{{proc.args.genome}}")
-dbsnp = g.{{proc.args.snpver}}
+g     = Genome (db="{{args.genome}}")
+dbsnp = g.{{args.snpver}}
 snps  = list(set([line.split()[0] for line in open("{{snpfile}}") if line.strip()]))
 fout  = open ("{{outfile}}", "w")
 for snp in snps:

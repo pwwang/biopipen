@@ -22,7 +22,7 @@ Downstream analysis after mutations called
 @output:
 	`outdir:dir`: The output directory
 @args:
-	`bin`: The path to `run_MutSigCV.sh`, default: 'mutsig'
+	`mutsig`: The path to `run_MutSigCV.sh`, default: 'mutsig'
 	`mcr`: The Matlab MCR path
 @requires:
 	[MutSing](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
@@ -30,9 +30,9 @@ Downstream analysis after mutations called
 pMutSig = proc()
 pMutSig.input     = "maffile:file, cvgfile:file, cvrfile:file, mutdict:file, chrdir:file"
 pMutSig.output    = "outdir:dir:mutsig.{{#}}"
-pMutSig.args      = {"bin": "mutsig", "mcr": ""}
+pMutSig.args      = {"mutsig": "mutsig", "mcr": ""}
 pMutSig.script    = """
-{{proc.args.bin}} "{{proc.args.mcr}}" "{{maffile}}" "{{cvgfile}}" "{{cvrfile}}" "{{outdir}}/{{maffile | fn}}" "{{mutdict}}" "{{chrdir}}"
+{{args.mutsig}} "{{args.mcr}}" "{{maffile}}" "{{cvgfile}}" "{{cvrfile}}" "{{outdir}}/{{maffile | fn}}" "{{mutdict}}" "{{chrdir}}"
 """
 
 """
@@ -46,7 +46,7 @@ pMutSig.script    = """
 	`outfile:file`: The maf file
 @args:
     `vepdata`: The path of vep data. Default: "" (default data dir of vep)
-    `veppath`: The path of vep excutable. Default: "" (`dirname $(which vep)`)
+    `vep`: The path of vep excutable. Default: "vep"
     `vcf2maf`: The path of vcf2maf excutable. Default: "vcf2maf.pl"
     `reffile`: The reference fasta file.
     `nthread`: The number of threads used by vep. Default: 1
@@ -58,9 +58,9 @@ pMutSig.script    = """
 pVcf2Maf = proc()
 pVcf2Maf.input     = "infile:file"
 pVcf2Maf.output    = "outfile:file:{{infile | fn}}.maf"
-pVcf2Maf.args      = {"vepdata":"", "veppath": "", "vcf2maf": "vcf2maf.pl", "reffile": "", "filtervcf": "", "nthread": 1, "params": ""}
+pVcf2Maf.args      = {"vepdata":"", "vep": "vep", "vcf2maf": "vcf2maf.pl", "reffile": "", "filtervcf": "", "nthread": 1, "params": ""}
 pVcf2Maf.script    = """
-if [[ -z "{{proc.args.reffile}}" ]]; then
+if [[ -z "{{args.reffile}}" ]]; then
     echo "Reference file is required." 1>&2
     exit 1
 fi
@@ -90,12 +90,8 @@ else
     normal=$gnormal
 fi
 
-veppath="{{proc.args.veppath}}"
-if [[ -z "$veppath" ]]; then
-    veppath=$(dirname $(which vep))
-fi
-
-{{proc.args.vcf2maf}} --input-vcf "{{infile}}" --output-maf "{{outfile}}" --tumor-id $tumor --normal-id $normal --vcf-tumor-id $gtumor --vcf-normal-id $gnormal --vep-path $veppath --vep-data "{{proc.args.vepdata}}" --ref-fasta "{{proc.args.reffile}}" --filter-vcf "{{proc.args.filtervcf}}" --vep-forks {{proc.args.nthread}}
+veppath=$(dirname $(which "{{args.vep}}"))
+{{args.vcf2maf}} --input-vcf "{{infile}}" --output-maf "{{outfile}}" --tumor-id $tumor --normal-id $normal --vcf-tumor-id $gtumor --vcf-normal-id $gnormal --vep-path $veppath --vep-data "{{args.vepdata}}" --ref-fasta "{{args.reffile}}" --filter-vcf "{{args.filtervcf}}" --vep-forks {{args.nthread}}
 """
 
 """
@@ -184,8 +180,8 @@ with open (glob("{{msdir}}/*.sig_genes.txt")[0]) as f:
 		if not line or line.startswith("gene"): continue
 		parts = line.split("\\t")
 		i    += 1
-		if {{proc.args.topn}} < 1 and float(parts[13]) >= {{proc.args.topn}}: continue
-		if {{proc.args.topn}} >= 1 and i > {{proc.args.topn}}: continue
+		if {{args.topn}} < 1 and float(parts[13]) >= {{args.topn}}: continue
+		if {{args.topn}} >= 1 and i > {{args.topn}}: continue
 		gene  = parts[0]
 		genes.append(gene)
 
@@ -257,7 +253,7 @@ gap    = 2
 cwidth = 16
 smcex  = 0.8
 samples = c()
-lgheight = {{proc.args.snHeight}}
+lgheight = {{args.snHeight}}
 setwd ("{{indir}}")
 for (pfile in list.files()) {
 
@@ -374,8 +370,8 @@ for (pfile in list.files()) {
 if (!"ncol" %in% names(data[[panel]])) data[[panel]][["ncol"]] = c (1,1)
 
 ncols = length(samples)
-width  = {{proc.args.ftWidth}}  + ncols * (cwidth + gap) + gap + {{proc.args.lgWidth}} + {{proc.args.pnWidth}}
-height = {{proc.args.snHeight}} + nrows * (cwidth + gap) + npanel * cwidth / 2
+width  = {{args.ftWidth}}  + ncols * (cwidth + gap) + gap + {{args.lgWidth}} + {{args.pnWidth}}
+height = {{args.snHeight}} + nrows * (cwidth + gap) + npanel * cwidth / 2
 height = max (height, lgheight)
 
 m = max(width, height)
@@ -396,11 +392,11 @@ png (file="{{outfile}}", res=res, width=pngwidth, height=pngheight)
 par(mar=c(0,0,0,0))
 plot (c(0, width), c(0, height), type="n", xlab="", ylab="", axes=F)
 # plot sample names
-snx = {{proc.args.ftWidth}} + gap + (1:ncols) * (cwidth + gap) - gap - cwidth / 2
-sny = rep (height - {{proc.args.snHeight}}, ncols)
-text (snx, sny, samples, cex={{proc.args.cex}}, adj = c(0, 0.5), srt=60)
+snx = {{args.ftWidth}} + gap + (1:ncols) * (cwidth + gap) - gap - cwidth / 2
+sny = rep (height - {{args.snHeight}}, ncols)
+text (snx, sny, samples, cex={{args.cex}}, adj = c(0, 0.5), srt=60)
 
-lastheight = height - {{proc.args.snHeight}}
+lastheight = height - {{args.snHeight}}
 for (panel in names(data)) {
 	content = data[[panel]][["content"]] # matrix
 	info    = data[[panel]][["info"]]    # vector
@@ -424,17 +420,17 @@ for (panel in names(data)) {
 	cnrow   = nrow(content)
 
 	# draw hline
-	lines (c({{proc.args.ftWidth}} + gap, {{proc.args.ftWidth}} + ncols * (cwidth + gap)), rep(lastheight - cwidth/4, 2))
+	lines (c({{args.ftWidth}} + gap, {{args.ftWidth}} + ncols * (cwidth + gap)), rep(lastheight - cwidth/4, 2))
 	lastheight = lastheight - cwidth / 2
 	
 	# plot feature names
 	rnames  = rownames (content)
-	fnx     = rep({{proc.args.ftWidth}}, cnrow) - 2*gap
+	fnx     = rep({{args.ftWidth}}, cnrow) - 2*gap
 	fny     = lastheight - crows[, 1] * (cwidth + gap) + gap + cwidth/2
-	text (fnx, fny, rnames, cex={{proc.args.cex}}, adj = c(1, 0.5))
+	text (fnx, fny, rnames, cex={{args.cex}}, adj = c(1, 0.5))
 	
 	# plot cells
-	rx1     = {{proc.args.ftWidth}} + gap + (ccols - 1) * (cwidth + gap)
+	rx1     = {{args.ftWidth}} + gap + (ccols - 1) * (cwidth + gap)
 	rx1     = as.vector(rx1)
 	ry1     = lastheight - (crows - 1) * (cwidth + gap)
 	ry1     = as.vector(ry1)
@@ -543,11 +539,11 @@ for (panel in names(data)) {
 	# plot panel name
 	# draw vline
 	lines (rep(max(rx2) + 2*gap, 2), c(lastheight, min(ry2)), lwd=2)
-	text (max(rx2) + 4*gap, (lastheight + min(ry2))/2, panel, cex={{proc.args.cex}}, adj = c(0.5, 0), srt=270)
+	text (max(rx2) + 4*gap, (lastheight + min(ry2))/2, panel, cex={{args.cex}}, adj = c(0.5, 0), srt=270)
 	lastheight2 = lastheight
 	
 	# plot legends
-	lgLeft  = max(rx2) + 2*gap  + {{proc.args.pnWidth}}
+	lgLeft  = max(rx2) + 2*gap  + {{args.pnWidth}}
 	for (i in 1:len) {
 		des = desc[i]
 		t   = type[i]
@@ -556,11 +552,11 @@ for (panel in names(data)) {
 		nns = length(ns)
 		nc  = lncol[i]
 		
-		text (lgLeft, lastheight, des, cex={{proc.args.cex}}, adj = c(0, 0))
-		lines (c(lgLeft, lgLeft + {{proc.args.lgWidth}}), rep(lastheight - 3*gap, 2))
+		text (lgLeft, lastheight, des, cex={{args.cex}}, adj = c(0, 0))
+		lines (c(lgLeft, lgLeft + {{args.lgWidth}}), rep(lastheight - 3*gap, 2))
 		lastheight = lastheight - 8*gap 
 		
-		nwidth = {{proc.args.lgWidth}} / nc
+		nwidth = {{args.lgWidth}} / nc
 		nsidx  = match (nsidx, nsidx)
 		ncx    = lgLeft + ( (1:nns+1)%%nc ) * nwidth
 		ncy    = lastheight - floor((1:nns - 1) / nc) * (cwidth + 2*gap)
@@ -605,7 +601,7 @@ for (panel in names(data)) {
 		}
 		
 		ntx   = ncx + cwidth + 2*gap
-		text (ntx, ncy - cwidth/2, ns, cex = {{proc.args.cex}}, adj=c(0, 0.5))		
+		text (ntx, ncy - cwidth/2, ns, cex = {{args.cex}}, adj=c(0, 0.5))		
 		
 		lastheight = min (ncy) - 2*cwidth - 2*gap
 	}
@@ -632,7 +628,7 @@ pCepip.input  = "avinput:file, cell"
 pCepip.output = "outfile:file:{{avinput | fn}}.cepip.flt.txt"
 pCepip.args   = {"bin-cepip": "/data2/junwenwang/shared/tools/cepip/cepip.jar"}
 pCepip.script = """
-cd "{{proc.args.bin-cepip | dirname}}"
-java -jar "{{proc.args.bin-cepip | bn}}" --annovar-file "{{avinput}}" --regulatory-causing-predict all --cell {{cell}} --db-score dbncfp --out "{{outfile | prefix | [:-4]}}"
+cd "{{args.bin-cepip | dirname}}"
+java -jar "{{args.bin-cepip | bn}}" --annovar-file "{{avinput}}" --regulatory-causing-predict all --cell {{cell}} --db-score dbncfp --out "{{outfile | prefix | [:-4]}}"
 """
 

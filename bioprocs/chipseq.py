@@ -42,10 +42,10 @@ pPeakToRegPotential.script    = """
 import math, gzip
 peakfile = "{{peakfile}}"
 genefile = "{{genefile}}"
-arg_inst = {{proc.args.intensity}} == True
-arg_gf   = "{{proc.args.geneformat}}"
-arg_pf   = "{{proc.args.peakformat}}"
-arg_wd   = int({{proc.args.window}})
+arg_inst = {{args.intensity}} == True
+arg_gf   = "{{args.geneformat}}"
+arg_pf   = "{{args.peakformat}}"
+arg_wd   = int({{args.window}})
 d0       = arg_wd / 2
 
 assert (isinstance(arg_inst, bool))

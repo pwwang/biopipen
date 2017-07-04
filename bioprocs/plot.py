@@ -25,9 +25,9 @@ pBoxPlot.lang   = "Rscript"
 pBoxPlot.args   = {"header": True, "rownames": 1, "params": ""}
 pBoxPlot.script = """
 png (file = "{{outpng}}", res=300, width=2000, height=2000)
-data = read.table ("{{datafile}}", sep="\\t", header={{proc.args.header | Rbool}}, row.names={{proc.args.rownames}}, check.names=F)
+data = read.table ("{{datafile}}", sep="\\t", header={{args.header | Rbool}}, row.names={{args.rownames}}, check.names=F)
 boxplot (
-	data{{proc.args.params | lambda x: ", " + x if x else "" }}
+	data{{args.params | lambda x: ", " + x if x else "" }}
 )
 dev.off()
 """

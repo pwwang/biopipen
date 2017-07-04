@@ -16,7 +16,7 @@ Prepare WXS data, including alignment, QC,...
 	`outfile1:file`: The 1st output file
 	`outfile2:file`: The 2nd output file
 @args:
-	`bin`:    The trimmomatic executable, default: "trimmomatic"
+	`trimmomatic`:    The trimmomatic executable, default: "trimmomatic"
 	`phred`:  "phred33" (default) or "phred64"
 	`params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
 		- have to replace `{adapter}` with the path of the adapter file
@@ -31,18 +31,18 @@ pTrimmomaticPE.output  = [
 	"outfile2:file:{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz"
 ]
 pTrimmomaticPE.args    = {
-	#"bin": "java -jar trimmomatic.jar"
-	"bin":    "trimmomatic",
+	#"trimmomatic": "java -jar trimmomatic.jar"
+	"trimmomatic":    "trimmomatic",
 	"phred":  "phred33",
 	"params": "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36",
 	"nthread": 1
 }
 pTrimmomaticPE.script  = """
 #determine default adapter
-params="{{proc.args.params}}"
-bin="{{proc.args.bin}}"
+params="{{args.params}}"
+trimmomatic="{{args.trimmomatic}}"
 if [[ "$params" == *"{adapter}"* ]]; then
-	exe=($bin)
+	exe=($trimmomatic)
 	exe="${exe[${#exe[@]}-1]}"
 	trimdir=$(readlink -f $(which $exe))
 	trimdir=$(dirname $trimdir)
@@ -50,10 +50,10 @@ if [[ "$params" == *"{adapter}"* ]]; then
 	t="$trimdir/adapters/TruSeq3-PE.fa"
 	params=${params//$r/$t}
 fi
-unpaired1="{{proc.outdir}}/{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.unpaired.fq.gz"
-unpaired2="{{proc.outdir}}/{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.unpaired.fq.gz"
-logfile="{{proc.outdir}}/{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}-{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.log"
-$bin PE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{{fqfile1}}" "{{fqfile2}}" "{{outfile1}}" $unpaired1 "{{outfile2}}" $unpaired2 $params
+unpaired1="{{job.outdir}}/{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.unpaired.fq.gz"
+unpaired2="{{job.outdir}}/{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.unpaired.fq.gz"
+logfile="{{job.outdir}}/{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}-{{fqfile2 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.log"
+$trimmomatic PE -{{args.phred}} -threads {{args.nthread}} -trimlog $logfile "{{fqfile1}}" "{{fqfile2}}" "{{outfile1}}" $unpaired1 "{{outfile2}}" $unpaired2 $params
 """
 
 """
@@ -66,7 +66,7 @@ $bin PE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{
 @output:
 	`outfile:file`: The output file
 @args:
-	`bin`:    The trimmomatic executable, default: "trimmomatic"
+	`trimmomatic`:    The trimmomatic executable, default: "trimmomatic"
 	`phred`:  "phred33" (default) or "phred64"
 	`params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
 		- have to replace `{adapter}` with the path of the adapter file
@@ -78,18 +78,18 @@ pTrimmomaticSE = proc ()
 pTrimmomaticSE.input   = "fqfile:file"
 pTrimmomaticSE.output  = "outfile:file:{{fqfile | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz"
 pTrimmomaticSE.args    = {
-	#"bin": "java -jar trimmomatic.jar"
-	"bin":    "trimmomatic",
+	#"trimmomatic": "java -jar trimmomatic.jar"
+	"trimmomatic":    "trimmomatic",
 	"phred":  "phred33",
 	"params": "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36",
 	"nthread": 1
 }
 pTrimmomaticSE.script  = """
 #determine default adapter
-params="{{proc.args.params}}"
-bin="{{proc.args.bin}}"
+params="{{args.params}}"
+trimmomatic="{{args.trimmomatic}}"
 if [[ "$params" == *"{adapter}"* ]]; then
-	exe=($bin)
+	exe=($trimmomatic)
 	exe="${exe[${#exe[@]}-1]}"
 	trimdir=$(readlink -f $(which $exe))
 	trimdir=$(dirname $trimdir)
@@ -98,8 +98,8 @@ if [[ "$params" == *"{adapter}"* ]]; then
 	params=${params//$r/$t}
 fi
 
-logfile="{{proc.outdir}}/{{fqfile | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.log"
-$bin SE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{{fqfile}}" "{{outfile}}"  $params
+logfile="{{job.outdir}}/{{fqfile | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.log"
+$trimmomatic SE -{{args.phred}} -threads {{args.nthread}} -trimlog $logfile "{{fqfile}}" "{{outfile}}"  $params
 """
 
 """
@@ -110,36 +110,58 @@ $bin SE -{{proc.args.phred}} -threads {{proc.args.nthread}} -trimlog $logfile "{
 @input:
 	`infile1:file`: read file 1 (fastq, or fastq gzipped)
 	`infile2:file`: read file 2 (fastq, or fastq gzipped)
+	`reffile:file`: The reference file
+@brings:
+	`reffile#bwt`: "{{reffile | bn}}.bwt", 
+	`reffile#sa`:  "{{reffile | bn}}.sa",
+	`reffile#ann`: "{{reffile | bn}}.ann",
+	`reffile#amb`: "{{reffile | bn}}.amb",
+	`reffile#pac`: "{{reffile | bn}}.pac"
 @output:
 	`outfile:file`: The output sam file
 @args:
-	`bin`:    The bwa executable, default: bwa
+	`bwa`:    The bwa executable, default: bwa
 	`params`: Other params for bwa mem, default: "-M"
 	`nthread`: 1
-	`reffile`: The reference file
 @requires:
 	[bwa](https://github.com/lh3/bwa)
 """
 pAlignPEByBWA = proc ()
-pAlignPEByBWA.input   = "infile1:file, infile2:file"
-pAlignPEByBWA.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^\\w]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.sam"
+pAlignPEByBWA.input   = "infile1:file, infile2:file, reffile:file"
+pAlignPEByBWA.brings  = {
+	"reffile#bwt": "{{reffile | bn}}.bwt", 
+	"reffile#sa": "{{reffile | bn}}.sa",
+	"reffile#ann": "{{reffile | bn}}.ann",
+	"reffile#amb": "{{reffile | bn}}.amb",
+	"reffile#pac": "{{reffile | bn}}.pac"
+}
+pAlignPEByBWA.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]*1(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
 pAlignPEByBWA.args    = {
-	#"bin": "java -jar trimmomatic.jar"
-	"bin":     "bwa",
-	"params":  "-M -R '@RG\\tID:bwa\\tSM:sample\\tPL:ILLUMINA'", # -R makes mapping very slow
-	#"params":  "-M", # -R makes mapping very slow, use picard AddOrReplaceReadGroups
-	"nthread": 1,
-	"reffile": ""
+	"bwa":     "bwa",
+	"params":  "", 
+	"nthread": 1
 }
 pAlignPEByBWA.script  = """
-if [[ -z "{{proc.args.reffile}}" ]]; then
-	echo "Reference file not specified!" 1>&2
-	exit 1
+if [[ ! -e "{{bring.reffile#bwt}}" || ! -e "{{bring.reffile#sa}}" || ! -e "{{bring.reffile#ann}}" || ! -e "{{bring.reffile#amb}}" || ! -e "{{bring.reffile#pac}}" ]]; then
+	echo "[BioProcs] Cannot find bwt file for reference: {{reffile.orig}}, generating ..." 1>&2
+	(	{{args.bwa}} index "{{reffile.orig}}" && \\
+		ln -s "{{reffile.orig}}.bwt" "{{reffile}}.bwt" && \\
+		ln -s "{{reffile.orig}}.sa" "{{reffile}}.sa" && \\
+		ln -s "{{reffile.orig}}.ann" "{{reffile}}.ann"\\
+		ln -s "{{reffile.orig}}.amb" "{{reffile}}.amb"\\
+		ln -s "{{reffile.orig}}.pac" "{{reffile}}.pac"\\
+	) || {{args.bwa}} index "{{reffile}}"
 fi
-if [[ ! -e "{{proc.args.reffile}}.bwt" ]]; then
-	{{proc.args.bin}} index "{{proc.args.reffile}}"
+lane="L{{#}}"
+sample="{{infile1 | fnnodot | .split('_')[0]}}"
+rg="-R @RG\\tID:$lane\\tSM:$sample\\tPL:ILLUMINA"
+params="{{args.params}}"
+if [[ "$params" == *"@RG"* ]]; then
+	rg=""
+	params=${params/\{lane\}/$lane}
+	params=${params/\{sample\}/$sample}
 fi
-{{proc.args.bin}} mem {{proc.args.params}} -t {{proc.args.nthread}} "{{proc.args.reffile}}" "{{infile1}}" "{{infile2}}" > "{{outfile}}"
+{{args.bwa}} mem $rg {{args.params}} -t {{args.nthread}} "{{reffile}}" "{{infile1}}" "{{infile2}}" > "{{outfile}}"
 """
 
 """
@@ -149,10 +171,17 @@ fi
 	Align paired-end reads to reference genome using bwa mem
 @input:
 	`infile:file`:  read file (fastq, or fastq gzipped)
+	`reffile:file`: The reference file
+@brings:
+	`reffile#bwt`: "{{reffile | bn}}.bwt", 
+	`reffile#sa`:  "{{reffile | bn}}.sa",
+	`reffile#ann`: "{{reffile | bn}}.ann",
+	`reffile#amb`: "{{reffile | bn}}.amb",
+	`reffile#pac`: "{{reffile | bn}}.pac"
 @output:
 	`outfile:file`: The output sam file
 @args:
-	`bin`:    The bwa executable, default: bwa
+	`bwa`:    The bwa executable, default: bwa
 	`params`: Other params for bwa mem, default: "-M"
 	`nthread`: 1
 	`reffile`: The reference file, required
@@ -160,25 +189,41 @@ fi
 	[bwa](https://github.com/lh3/bwa)
 """
 pAlignSEByBWA = proc ()
-pAlignSEByBWA.input   = "infile:file"
-pAlignSEByBWA.output  = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.sam"
+pAlignSEByBWA.input   = "infile:file, reffile:file"
+pAlignSEByBWA.brings  = {
+	"reffile#bwt": "{{reffile | bn}}.bwt", 
+	"reffile#sa":  "{{reffile | bn}}.sa",
+	"reffile#ann": "{{reffile | bn}}.ann",
+	"reffile#amb": "{{reffile | bn}}.amb",
+	"reffile#pac": "{{reffile | bn}}.pac"
+}
+pAlignSEByBWA.output  = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
 pAlignSEByBWA.args    = {
-	#"bin": "java -jar trimmomatic.jar"
-	"bin":     "bwa",
+	"bwa":     "bwa",
 	"params":  "-M -R '@RG\\tID:bwa\\tSM:sample\\tPL:ILLUMINA'", # -R makes mapping very slow
-	#"params":  "-M", # -R makes mapping very slow, use picard AddOrReplaceReadGroups
-	"nthread": 1,
-	"reffile": ""
+	"nthread": 1
 }
 pAlignSEByBWA.script  = """
-if [[ -z "{{proc.args.reffile}}" ]]; then
-	echo "Reference file not specified!" 1>&2
-	exit 1
+if [[ ! -e "{{bring.reffile#bwt}}" || ! -e "{{bring.reffile#sa}}" || ! -e "{{bring.reffile#ann}}" || ! -e "{{bring.reffile#amb}}" || ! -e "{{bring.reffile#pac}}" ]]; then
+	echo "[BioProcs] Cannot find bwt file for reference: {{reffile.orig}}, generating ..." 1>&2
+	(	{{args.bwa}} index "{{reffile.orig}}" && \\
+		ln -s "{{reffile.orig}}.bwt" "{{reffile}}.bwt" && \\
+		ln -s "{{reffile.orig}}.sa" "{{reffile}}.sa" && \\
+		ln -s "{{reffile.orig}}.ann" "{{reffile}}.ann"\\
+		ln -s "{{reffile.orig}}.amb" "{{reffile}}.amb"\\
+		ln -s "{{reffile.orig}}.pac" "{{reffile}}.pac"\\
+	) || {{args.bwa}} index "{{reffile}}"
 fi
-if [[ ! -e "{{proc.args.reffile}}.bwt" ]]; then
-	{{proc.args.bin}} index "{{proc.args.reffile}}"
+lane="L{{#}}"
+sample="{{infile1 | fnnodot | .split('_')[0]}}"
+rg="-R @RG\\tID:$lane\\tSM:$sample\\tPL:ILLUMINA"
+params="{{args.params}}"
+if [[ "$params" == *"@RG"* ]]; then
+	rg=""
+	params=${params/\{lane\}/$lane}
+	params=${params/\{sample\}/$sample}
 fi
-{{proc.args.bin}} mem {{proc.args.params}} -t {{proc.args.nthread}} "{{proc.args.reffile}}" "{{infile}}" > "{{outfile}}"
+{{args.bwa}} mem $rg {{args.params}} -t {{args.nthread}} "{{reffile}}" "{{infile}}" > "{{outfile}}"
 """
 
 """
@@ -189,37 +234,32 @@ fi
 @input:
 	`infile1:file`: read file 1 (fastq, or fastq gzipped)
 	`infile2:file`: read file 2 (fastq, or fastq gzipped)
+	`reffile:file`: The reference file
 @output:
 	`outfile:file`: The output sam/bam file
 @args:
-	`bin`:    The NextGenMap executable, default: ngm
-	`params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+	`ngm`:    The NextGenMap executable, default: ngm
 	`nthread`: 1
-	`reffile`: The reference file
-	`outtype`: sam or bam, default: bam
+	`outtype`: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))
+	`params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
 @requires:
 	[NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 """
 pAlignPEByNGM = proc ()
-pAlignPEByNGM.input   = "infile1:file, infile2:file"
-pAlignPEByNGM.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^\\w]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.{{proc.args.outtype}}"
+pAlignPEByNGM.input   = "infile1:file, infile2:file, reffile:file"
+pAlignPEByNGM.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.{{args.outtype}}"
 pAlignPEByNGM.args    = {
-	"bin":     "ngm",
+	"ngm":     "ngm",
 	"params":  "--rg-id ngm --rg-sm sample",
 	"nthread": 1,
-	"reffile": "",
-	"outtype": "bam"
+	"outtype": "sam"
 }
 pAlignPEByNGM.script  = """
-if [[ -z "{{proc.args.reffile}}" ]]; then
-	echo "Reference file not specified!" 1>&2
-	exit 1
-fi
 bam=""
-if [[ "{{proc.args.outtype}}" == "bam" ]]; then
+if [[ "{{args.outtype}}" == "bam" ]]; then
 	bam="--bam"
 fi
-{{proc.args.bin}} {{proc.args.params}} -r "{{proc.args.reffile}}" -t {{proc.args.nthread}} -1 "{{infile1}}" -2 "{{infile2}}" -o "{{outfile}}" $bam
+{{args.ngm}} {{args.params}} -r "{{reffile}}" -t {{args.nthread}} -1 "{{infile1}}" -2 "{{infile2}}" -o "{{outfile}}" $bam
 """
 
 """
@@ -228,38 +268,34 @@ fi
 @description:
 	Align single-end reads to reference genome using NextGenMap
 @input:
-	`infile:file`: read file (fastq, or fastq gzipped)
+	`infile1:file`: read file 1 (fastq, or fastq gzipped)
+	`infile2:file`: read file 2 (fastq, or fastq gzipped)
+	`reffile:file`: The reference file
 @output:
 	`outfile:file`: The output sam/bam file
 @args:
-	`bin`:    The NextGenMap executable, default: ngm
-	`params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+	`ngm`:    The NextGenMap executable, default: ngm
 	`nthread`: 1
-	`reffile`: The reference file
-	`outtype`: sam or bam, default: bam
+	`outtype`: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))
+	`params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
 @requires:
 	[NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 """
 pAlignSEByNGM = proc ()
-pAlignSEByNGM.input   = "infile:file"
-pAlignSEByNGM.output  = "outfile:file:{{infile | fn}}.{{proc.args.outtype}}"
+pAlignSEByNGM.input   = "infile:file, reffile:file"
+pAlignSEByNGM.output  = "outfile:file:{{infile | fn}}.{{args.outtype}}"
 pAlignSEByNGM.args    = {
-	"bin":     "ngm",
+	"ngm":     "ngm",
 	"params":  "--rg-id ngm --rg-sm sample",
 	"nthread": 1,
-	"reffile": "",
-	"outtype": "bam"
+	"outtype": "sam"
 }
 pAlignSEByNGM.script  = """
-if [[ -z "{{proc.args.reffile}}" ]]; then
-	echo "Reference file not specified!" 1>&2
-	exit 1
-fi
 bam=""
-if [[ "{{proc.args.outtype}}" == "bam" ]]; then
+if [[ "{{args.outtype}}" == "bam" ]]; then
 	bam="--bam"
 fi
-{{proc.args.bin}} {{proc.args.params}} -r "{{proc.args.reffile}}" -t {{proc.args.nthread}} -q "{{infile}}" -o "{{outfile}}" $bam
+{{args.ngm}} {{args.params}} -r "{{reffile}}" -t {{args.nthread}} -q "{{infile}}" -o "{{outfile}}" $bam
 """
 
 """
@@ -268,22 +304,21 @@ fi
 @description:
 	Merge bam files
 @input:
-	`sname`:        the sample name
-	`bams:files`:   the bam files to be merged
+	`bamdir:dir`:   the dir containing bam files 
 @output:
 	`outfile:file`: the merged bam file
 @args:
-	`bin-samtools`: the executable path of samtools, default: "samtools"
+	`samtools`: the executable path of samtools, default: "samtools"
 	`nthread`:      Number of BAM/CRAM compression threads
 	`params`:       Other parameters for `samtools merge`, default: ""
 @requires:
 	[samtools](http://www.htslib.org/)
 """
 pMergeBams = proc ()
-pMergeBams.input   = "sname, bams:files"
-pMergeBams.output  = "outfile:file:{{sname}}.bam"
-pMergeBams.args    = {"bind-samtools": "samtools", "nthread": 1, "params": ""}
+pMergeBams.input   = "bamdir:dir"
+pMergeBams.output  = "outfile:file:{{bamdir | fn}}.merged.bam"
+pMergeBams.args    = {"samtools": "samtools", "nthread": 1, "params": ""}
 pMergeBams.script  = """
-{{proc.args.bin-samtools}} merge -@ {{proc.args.nthread}} {{proc.args.params}} {{outfile}} {{bams | asquote}}
+{{args.samtools}} merge -@ {{args.nthread}} {{args.params}} {{outfile}} {{bamdir}}/*.bam
 """
 

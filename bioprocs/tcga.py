@@ -18,7 +18,7 @@ pDownload.input     = "manifile:file"
 pDownload.output    = "outdir:dir:{{manifile | fn}}"
 pDownload.args      = {"params": " --no-file-md5sum -n 20 ", "bin-gdc": "gdc-client"}
 pDownload.script    = """
-{{proc.args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{proc.args.params}}
+{{args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{args.params}}
 """
 
 """
@@ -197,7 +197,7 @@ for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
 
 fout.write ("\\t".join(bns) + "\\n")
 for mut, sids in muts.iteritems():
-	if len(sids) < {{proc.args.minCount}}: continue
+	if len(sids) < {{args.minCount}}: continue
 	fout.write (mut)
 	for s in bns:
 		if sids.has_key(s):

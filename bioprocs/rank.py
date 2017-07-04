@@ -43,8 +43,8 @@ pRankProduct.output = "outdir:dir:{{infile | fn}}.rp"
 pRankProduct.args   = {"informat": "value", "pval": True, "header": True, "plot": 0, "cex": 0.9, "cnheight": 80, "rnwidth": 50, "width": 2000, "height": 2000}
 pRankProduct.lang   = "Rscript"
 pRankProduct.script = """
-data = read.table ("{{infile}}", header={{proc.args.header | Rbool}}, row.names=1, sep="\\t", check.names = F)
-if ("{{proc.args.informat}}" == "value") {
+data = read.table ("{{infile}}", header={{args.header | Rbool}}, row.names=1, sep="\\t", check.names = F)
+if ("{{args.informat}}" == "value") {
 	for (i in 1:ncol(data)) {
 		data[, i] = length(data[, i]) + 1 - rank (data[, i])
 	}
@@ -58,7 +58,7 @@ out   = cbind (out, RP = format(round(rp, 2), scientific=F, nsmall=2))
 r     = rank(rp)
 out   = cbind (out, RP_Rank = r)
 
-if ({{proc.args.pval | Rbool}}) {
+if ({{args.pval | Rbool}}) {
 	# rankprodbounds
 	#
 	# Description
@@ -336,9 +336,9 @@ if ({{proc.args.pval | Rbool}}) {
 out = out [order(out[ncol(data) + 2]), ]
 write.table (out, file.path("{{outdir}}", "{{infile | fn}}.rp.txt"), row.names=T, col.names=T, quote=F, sep="\\t")
 
-nrplot = {{proc.args.plot}}
+nrplot = {{args.plot}}
 if (nrplot > 0) {
-	plotRanks = function (data, cellwidth = 40, cellheight = 20, cnheight = {{proc.args.cnheight}}, rnwidth = {{proc.args.rnwidth}}, minwidth = 100, minheight=600) {
+	plotRanks = function (data, cellwidth = 40, cellheight = 20, cnheight = {{args.cnheight}}, rnwidth = {{args.rnwidth}}, minwidth = 100, minheight=600) {
 	  numcol = ncol(data)
 	  numrow = nrow(data)
 	  width  = numcol * (cellwidth + 1) + rnwidth
@@ -365,13 +365,13 @@ if (nrplot > 0) {
 	  cnx    = rnwidth + cellwidth/2 + (cols[1, ]-1) * (cellwidth + colgap)
 	  cnx    = as.vector(cnx)
 	  cny    = rep(height - cnheight + 4*rowgap, numcol)
-	  text (cnx, cny, cnames, srt=45, cex={{proc.args.cex}}, adj = c(0, 0))
+	  text (cnx, cny, cnames, srt=45, cex={{args.cex}}, adj = c(0, 0))
 	  
 	  # rownames
 	  rnames = rownames(data)
 	  rnx    = rep(rnwidth - 4*colgap, numrow)
 	  rny    = height - cnheight - cellheight / 2 - (rows[, 1] - 1) * (cellheight + rowgap)
-	  text (rnx, rny, rnames, cex={{proc.args.cex}}, adj = c(1, 0.5))
+	  text (rnx, rny, rnames, cex={{args.cex}}, adj = c(1, 0.5))
 	  
 	  # colors
 	  vd     = matrix (as.vector(as.matrix(data)), ncol=1)
@@ -406,7 +406,7 @@ if (nrplot > 0) {
 
 	data2plot = out[1:nrplot, c(1:ncol(data), ncol(data)+2)]
 	#size=300*480/72
-	png (file = file.path("{{outdir}}", "{{infile | fn}}.rp.png"), width = {{proc.args.width}}, height = {{proc.args.height}}, res = 300)
+	png (file = file.path("{{outdir}}", "{{infile | fn}}.rp.png"), width = {{args.width}}, height = {{args.height}}, res = 300)
 	plotRanks (data2plot)
 	dev.off()
 }

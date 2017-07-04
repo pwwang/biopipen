@@ -19,12 +19,12 @@ pSort.output = "outfile:file:{{infile | bn}}.sorted"
 pSort.args   = {"params": "", "skip": 0}
 pSort.script = """
 #!/usr/bin/env bash
-if [[ "{{proc.args.skip}}" == "0" ]]; then
-	sort {{proc.args.params}} "{{infile}}" > "{{outfile}}"
+if [[ "{{args.skip}}" == "0" ]]; then
+	sort {{args.params}} "{{infile}}" > "{{outfile}}"
 else
-	nhead={{proc.args.skip}}
+	nhead={{args.skip}}
 	ntail=$((nhead+1))
-	( head -n $nhead "{{infile}}" && tail -n +$ntail "{{infile}}" | sort {{proc.args.params}} ) > "{{outfile}}"
+	( head -n $nhead "{{infile}}" && tail -n +$ntail "{{infile}}" | sort {{args.params}} ) > "{{outfile}}"
 fi
 """
 
@@ -41,10 +41,25 @@ fi
 pFiles2Dir = proc()
 pFiles2Dir.input  = "infiles:files"
 pFiles2Dir.output = "outdir:dir:{{infiles | [0] | fn}}.etc.{{#}}"
+pFiles2Dir.lang   = "python"
 pFiles2Dir.script = """
-for fn in {{infiles | asquote}}; do
-	ln -s "$fn" "{{outdir}}/"
-done
+from glob import glob
+from os import path, symlink
+from sys import stderr
+
+for fn in [{{infiles | acquote}}]:
+	bn  = path.basename (fn)
+	dst = path.join ("{{outdir}}", bn)
+	if path.exists (dst):
+		dsts = glob (path.join("{{outdir}}", bn + "[*]"))
+		if not dsts:
+			dst2 = path.join("{{outdir}}", bn + "[1]")
+		else:
+			maxIdx = max ([int(path.basename(d)[:-1].rpartition('[')[-1]) for d in dsts])
+			dst2 = path.join("{{outdir}}", bn + "[%s]" % str(maxIdx+1))
+		stderr.write ("Warning: rename %s to %s" % (dst, dst2))
+		dst = dst2
+	symlink (fn, dst)
 """
 
 """
@@ -120,7 +135,7 @@ cbind.fill = function (x1, x2) {
 
 setwd ("{{indir}}")
 data   = NULL
-header = {{proc.args.header | Rbool}}
+header = {{args.header | Rbool}}
 for (fn in list.files()) {
 	x = read.table (fn, header = header, row.names=1, check.names=F, sep="\\t")
 	if (!header) {
@@ -132,8 +147,23 @@ for (fn in list.files()) {
 		data = cbind.fill (data, x)
 	}
 }
-if (!is.na({{proc.args.na}})) {
-	data[is.na(data)] = {{proc.args.na}}
+if (!is.na({{args.na}})) {
+	data[is.na(data)] = {{args.na}}
 }
 write.table (data, "{{outfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 """
+
+"""
+@name:
+	pFile2Proc
+@description:
+	Convert a file to a proc so it can be used as dependent
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file
+"""
+pFile2Proc = proc (desc="Convert a file to a proc so it can be used as dependent")
+pFile2Proc.input  = "infile:file"
+pFile2Proc.output = "outfile:file:{{infile | bn}}"
+pFile2Proc.script = 'ln -s "{{infile}}" "{{outfile}}"'

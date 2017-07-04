@@ -23,7 +23,7 @@ pVcf2List.args    = {"chroms": ""}
 pVcf2List.script  = """
 import vcf
 # parse chroms:
-chroms = "{{proc.args.chroms}}"
+chroms = "{{args.chroms}}"
 mychrs = []
 if chroms:
 	chroms = chroms.replace(" ", "").split(",")
@@ -133,7 +133,7 @@ pCoverageByBamstats.input     = "infile:file"
 pCoverageByBamstats.output    = "outfile:file:{{infile | fn}}.bamstats.txt"
 pCoverageByBamstats.args      = { "bin": "bamstats", "params": "" }
 pCoverageByBamstats.script    = """
-{{proc.args.bin}} -i "{{infile}}" -o "{{outfile}}" {{proc.args.params}}
+{{args.bin}} -i "{{infile}}" -o "{{outfile}}" {{args.params}}
 """
 
 """
@@ -158,7 +158,7 @@ pPlotBamstats.script    = """
 #!/usr/bin/env Rscript
 dir.create("{{outdir}}", showWarnings = F, recursive = T)
 setwd ("{{indir}}")
-chroms  = "{{proc.args.chroms}}"
+chroms  = "{{args.chroms}}"
 # remove all spaces
 chroms  = gsub("[[:blank:]]", "", chroms)
 chroms  = noquote(unlist(strsplit(chroms, ",")))
@@ -253,7 +253,7 @@ from glob import glob
 import sys
 
 chroms  = []
-chparts = "{{proc.args.chroms}}".split(',')
+chparts = "{{args.chroms}}".split(',')
 chparts = map (lambda x: x.strip(), chparts)
 for chpart in chparts:
 	if '-' not in chpart:
@@ -298,7 +298,7 @@ def handleFreq (sample, line, name, starts, ends, skips, datacol = 1):
 		for skip in skips:
 			if line.startswith (skip): return
 		
-	if line.endswith (ends):
+	if line.startswith (ends):
 		flags[name][sample] = False
 		return
 	
@@ -323,7 +323,7 @@ def handleScatters (sample, line, name, starts, ends, keys, vals, datacol = 1):
 			data[name][sample]  = {}
 		return
 		
-	if line.endswith (ends):
+	if line.startswith (ends):
 		flags[name][sample] = False
 		return
 		
@@ -346,7 +346,7 @@ def handleChangeTable (sample, line, name, starts, ends, headstr):
 			data[name][sample]  = {}
 		return
 		
-	if line.endswith (ends):
+	if line.startswith (ends):
 		flags[name][sample] = False
 		del data[name][sample]["head"]
 		return
@@ -434,7 +434,8 @@ def saveChangeTable (name, sampledata):
 	names    = []
 	for sample, sdata in sampledata.iteritems():
 		names += sdata.keys()
-		names += sdata[names[0]].keys()
+		if names:
+			names += sdata[names[0]].keys()
 	names = list(set(names))
 	names.sort(key=lambda x: float(x) if x.isdigit() else x)
 	
@@ -476,8 +477,8 @@ for i, stfile in enumerate(glob("{{indir}}/*.csvstat")):
 		line = line.strip()
 		if not line: continue
 		handleFreq    (sample, line, "Change_rate", "# Summary table", "# Change rate by chromosome", "N,G,D,S,Co,W", 1)
-		handleFreq    (sample, line, "Changes_by_chromosome", "# Change rate by chromosome", "# Effects by impact", "Chromosome", 2)
-		handleFreq    (sample, line, "Change_rate_by_chromosome", "# Change rate by chromosome", "# Effects by impact", "Chromosome", 3)
+		handleFreq    (sample, line, "Changes_by_chromosome", "# Change rate by chromosome", "# ", "Chromosome", 2)
+		handleFreq    (sample, line, "Change_rate_by_chromosome", "# Change rate by chromosome", "# ", "Chromosome", 3)
 		handleFreq    (sample, line, "Effect_count_by_impact", "# Effects by impact", "# Effects by functional class", "Type", 1)
 		handleFreq    (sample, line, "Effect_percentage_by_impact", "# Effects by impact", "# Effects by functional class", "Type", 2)
 		handleFreq    (sample, line, "Effect_count_by_functional_class", "# Effects by functional class", "# Count by effects", "Type,Missense_Silent_ratio", 1)
@@ -495,7 +496,8 @@ for i, stfile in enumerate(glob("{{indir}}/*.csvstat")):
 		handleChangeTable (sample, line, "Condon_change", "# Codon change table", "# Amino acid change table", "codons")
 		handleChangeTable (sample, line, "Amino_acid_change", "# Amino acid change table", "# Chromosome change table", "aa")
 		handleChromChange (sample, line, "Chromosome_change", "# Chromosome change table")
-
+	
+	flags["Chromosome_change"][sample] = False
 	f.close()
 
 for name, sampledata in data.iteritems():
@@ -646,30 +648,34 @@ plotChangeTable = function (fn) {
 	mats  = list()
 	sums  = NULL
 	files = list.files()
-	for (infile in files) {
-		mats[[infile]] = as.matrix(read.table (infile, header=T, row.names=1, check.names=F, sep="\\t"))
-		if (is.null(sums)) {
-			sums = mats[[infile]]
-		} else {
-			sums = sums + mats[[infile]]
+	tryCatch ({
+		for (infile in files) {
+			mats[[infile]] = as.matrix(read.table (infile, header=T, row.names=1, check.names=F, sep="\\t"))
+			if (is.null(sums)) {
+				sums = mats[[infile]]
+			} else {
+				sums = sums + mats[[infile]]
+			}
 		}
-	}
-	means = sums / length(files)
-	sdsum = NULL
-	for (infile in files) {
-		if (is.null(sdsum)) {
-			sdsum = (mats[[infile]] - means)^2
-		} else {
-			sdsum = sdsum + (mats[[infile]] - means)^2
+		means = sums / length(files)
+		sdsum = NULL
+		for (infile in files) {
+			if (is.null(sdsum)) {
+				sdsum = (mats[[infile]] - means)^2
+			} else {
+				sdsum = sdsum + (mats[[infile]] - means)^2
+			}
 		}
-	}
-	sds   = sqrt (sdsum/(length(files) - 1))
-	outfile = file.path ("{{outdir}}", paste(fn, ".png", sep=""))
-	png (outfile, res=300, width=2000, height=2000)
-	diag(means) = 0
-	diag(sds)   = 0
-	corrplot (means, sizes=sds, is.corr=F, tl.srt = 60, tl.cex=.6, tl.col="black", cl.cex=.6, main=gsub("_", " ", fn), mar=c(1,1,3,1))
-	dev.off()
+		sds   = sqrt (sdsum/(length(files) - 1))
+		outfile = file.path ("{{outdir}}", paste(fn, ".png", sep=""))
+		png (outfile, res=300, width=2000, height=2000)
+		diag(means) = 0
+		diag(sds)   = 0
+		corrplot (means, sizes=sds, is.corr=F, tl.srt = 60, tl.cex=.6, tl.col="black", cl.cex=.6, main=gsub("_", " ", fn), mar=c(1,1,3,1))
+		dev.off()
+	}, error = function (e) {
+		write(paste("Failed to plot", fn, ':', e), stderr())
+	})
 }
 
 plotChromChange = function (fn) {

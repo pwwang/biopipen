@@ -63,7 +63,7 @@ def consv4bed (bedfile, avglen = True):
 	for chrom, fh in chrbeds.iteritems():
 		fh.close()
 		bwfile = glob ("{{bwdir}}/%s.*" % chrom)[0]
-		cmd    = "{{proc.args.bin-bwtool}} summary %s %s %s -skip-median -header -fill=0" % (fh.name, bwfile, path.join("{{outdir}}", "%s.%s.consv.txt" % (fn, chrom)))	
+		cmd    = "{{args.bin-bwtool}} summary %s %s %s -skip-median -header -fill=0" % (fh.name, bwfile, path.join("{{outdir}}", "%s.%s.consv.txt" % (fn, chrom)))	
 		try:
 			Popen (cmd, shell=True).wait()
 		except Exception as ex:
@@ -75,20 +75,20 @@ def consv4bed (bedfile, avglen = True):
 def pval (score, permscores):
 	for i, pscore in enumerate (permscores):
 		if pscore < score:
-			return float (i) / float ({{proc.args.nperm}})
+			return float (i) / float ({{args.nperm}})
 	return 0.0
 
 avglen = consv4bed ("{{bedfile}}")
-if {{proc.args.calcp}}:
+if {{args.calcp}}:
 	# generate a random bed file with region width avglen
-	gsize = "{{proc.args.gsize}}"
+	gsize = "{{args.gsize}}"
 	if gsize.startswith ("http"):
 		gsizebname = path.basename (gsize)
 		gsizefile  = path.join ("{{outdir}}", gsizebname)
 		urlretrieve (gsize, gsizefile)
 		gsize      = gsizefile
 	permfile = path.join ("{{outdir}}", "permutations.bed")
-	cmd = 'bedtools random -n {{proc.args.nperm}} -l %s -g %s -seed {{proc.args.seed}} > "%s"' % (avglen, gsize, permfile)
+	cmd = 'bedtools random -n {{args.nperm}} -l %s -g %s -seed {{args.seed}} > "%s"' % (avglen, gsize, permfile)
 	try:
 		Popen (cmd, shell=True).wait()
 	except Exception as ex:
@@ -144,16 +144,17 @@ pGetPromoterBed.output = "outfile:file:{{gene}}.promoter.bed"
 pGetPromoterBed.args   = {"up": 2000, "down": 2000, "genome": "hg19"}
 pGetPromoterBed.lang   = "python"
 pGetPromoterBed.script = """
+import sys
 from mygene import MyGeneInfo
 mg = MyGeneInfo()
-ret = mg.query('{{gene}}', fields="genomic_pos_{{proc.args.genome}}", scopes="symbol", species="{{proc.args.genome}}")
+ret = mg.query('{{gene}}', fields="genomic_pos_{{args.genome}}", scopes="symbol,alias", species="{{args.genome}}")
 if not ret.has_key ('hits'):
 	print "TSS not found for gene: {{gene}}" 
 	sys.exit (1)
 pos = None
 hit = ret['hits'][0]
-if hit.has_key('genomic_pos_{{proc.args.genome}}'):
-	pos = hit['genomic_pos_{{proc.args.genome}}']
+if hit.has_key('genomic_pos_{{args.genome}}'):
+	pos = hit['genomic_pos_{{args.genome}}']
 
 if not pos:
 	print "TSS not found for gene: {{gene}}" 
@@ -161,8 +162,55 @@ if not pos:
 chr    = "chr" + str(pos['chr'])
 strand = pos['strand']
 tss    = pos['start'] if strand == 1 else pos['end']
-pstart = tss - {{proc.args.up}}
-pend   = tss + {{proc.args.down}}
+pstart = tss - {{args.up}}
+pend   = tss + {{args.down}}
 with open ("{{outfile}}", "w") as f:
 	f.write ("%s\\t%s\\t%s\\t%s\\t%s\\t%s" % (chr, pstart, pend, "{{gene}}", 0, ("+" if strand == 1 else "-")))
+"""
+
+"""
+@name:
+	pGetPromotersBed
+@description:
+	Get the promoter regions in bed format of a gene list give in genefile
+@input:
+	`genefile:file`: the gene list file
+@output:
+	`outfile:file`: the bed file containing the promoter region
+@args:
+	`up`: the upstream to the tss, default: 2000
+	`down`: the downstream to the tss, default: 2000
+	`genome`: the genome, default: hg19
+@require:
+	[python-mygene](http://mygene.info/)
+"""
+pGetPromotersBed = proc()
+pGetPromotersBed.input  = "genefile:file"
+pGetPromotersBed.output = "outfile:file:{{genefile | fn}}.promoter.bed"
+pGetPromotersBed.args   = {"up": 2000, "down": 2000, "genome": "hg19"}
+pGetPromotersBed.lang   = "python"
+pGetPromotersBed.script = """
+import sys
+from mygene import MyGeneInfo
+mg = MyGeneInfo()
+genes = [line.split()[0] for line in open({{genefile | quote}}) if line.strip()]
+genes = mg.querymany(genes, fields="genomic_pos_{{args.genome}},symbol", scopes="symbol,alias", species="{{args.genome}}")
+
+with open ("{{outfile}}", "w") as f:
+	for hit in genes:
+		if not 'genomic_pos_{{args.genome}}' in hit:
+			sys.stderr.write('Cannot find position for gene: %s\\n' % hit['query'])
+			continue
+		
+		pos = hit['genomic_pos_{{args.genome}}']
+		
+		try:
+			chr    = "chr" + str(pos['chr'])
+			strand = pos['strand']
+			tss    = pos['start'] if strand == 1 else pos['end']
+			pstart = tss - {{args.up}}
+			pend   = tss + {{args.down}}
+			f.write ("%s\\t%s\\t%s\\t%s\\t%s\\t%s" % (chr, pstart, pend, hit['symbol'], 0, ("+" if strand == 1 else "-")))
+		except TypeError:
+			sys.stderr.write('Encounter TypeError, hit is: %s\\n' % str(hit))
 """

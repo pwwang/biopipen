@@ -28,11 +28,11 @@ pRWR.output    = "outfile:file:R-{{Efile | fn}}"
 pRWR.args      = {'c': 0.1, 'eps': 1e-5, 'tmax': 10000, 'Wformat': 'rds', 'Eformat': 'rds', 'Rformat': 'rds', 'normW': False, 'normE': False}
 pRWR.defaultSh = "Rscript"
 pRWR.script    = """
-normW   = {{proc.args.normW | Rbool}}
-normE   = {{proc.args.normE | Rbool}}
-Wformat = "{{proc.args.Wformat}}"
-Eformat = "{{proc.args.Eformat}}"
-Rformat = "{{proc.args.Rformat}}"
+normW   = {{args.normW | Rbool}}
+normE   = {{args.normE | Rbool}}
+Wformat = "{{args.Wformat}}"
+Eformat = "{{args.Eformat}}"
+Rformat = "{{args.Rformat}}"
 
 if (Wformat == "rds") {
 	W = readRDS ("{{Wfile}}")
@@ -55,7 +55,7 @@ if (Eformat == "rds") {
 E = as.matrix(E)
 E = E[colnames(W), ]
 
-RWR = function (W, e, c = {{proc.args.c}}, eps = {{proc.args.eps}}, tmax={{proc.args.tmax}}) {
+RWR = function (W, e, c = {{args.c}}, eps = {{args.eps}}, tmax={{args.tmax}}) {
 	r0 = e
 	for (i in 1:tmax) {
 		r1 = ((1-c) * W) %*% r0 + c * e

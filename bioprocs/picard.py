@@ -28,7 +28,7 @@ from pyppl import proc
 @output:
 	`outfile:file`: The marked bam file
 @args:
-	`bin`:     The picard executable, default: "picard MarkDuplicates"
+	`picard`:     The picard executable, default: "picard"
 	`params`:  Other parameters for picard MarkDuplicates, default: ""
 	`tmpdir`:  The tmpdir to use. Default: /tmp
 @requires:
@@ -37,12 +37,12 @@ from pyppl import proc
 pMarkDuplicates = proc()
 pMarkDuplicates.input  = "infile:file"
 pMarkDuplicates.output = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x)}}.dedup.bam"
-pMarkDuplicates.args   = { "bin": "picard MarkDuplicates", "params": "" }
+pMarkDuplicates.args   = { "picard": "picard", "tmpdir": "/tmp", "params": "", "javamem": "-Xms1g -Xmx8g" }
 pMarkDuplicates.script = """
-tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
+tmpdir="{{args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
 mkdir -p "$tmpdir"
 mfile="{{job.outdir}}/{{infile | fn}}.metrics.txt"
-{{proc.args.bin}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" I="{{infile}}" O="{{outfile}}" M="$mfile" {{proc.args.params}}
+{{args.picard}} MarkDuplicates {{args.javamem}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" I="{{infile}}" O="{{outfile}}" M="$mfile" {{args.params}}
 rm -rf "$tmpdir"
 """
 
@@ -62,7 +62,7 @@ rm -rf "$tmpdir"
 @output:
 	`outfile:file`: The bam file with read group added
 @args:
-	`bin`:     The picard executable, default: "picard AddOrReplaceReadGroups"
+	`picard`:     The picard executable, default: "picard "
 	`params`:  Other parameters for picard AddOrReplaceReadGroups, default: ""
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
@@ -70,13 +70,13 @@ rm -rf "$tmpdir"
 pAddOrReplaceReadGroups = proc()
 pAddOrReplaceReadGroups.input  = "infile:file, rg"
 pAddOrReplaceReadGroups.output = "outfile:file:{{infile | fn}}.rg.bam"
-pAddOrReplaceReadGroups.args   = { "bin": "picard AddOrReplaceReadGroups", "params": "" }
+pAddOrReplaceReadGroups.args   = { "picard": "picard", "params": "" }
 pAddOrReplaceReadGroups.script = """
 rg="{{rg}}"
 if [[ "$rg" != *"RGPL="* ]]; then rg="$rg RGPL=illumina"; fi
 if [[ "$rg" != *"RGPU="* ]]; then rg="$rg RGPU=unit1"; fi
 if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
-{{proc.args.bin}} I="{{infile}}" O="{{outfile}}" $rg {{proc.args.params}}
+{{args.picard}} AddOrReplaceReadGroups I="{{infile}}" O="{{outfile}}" $rg {{args.params}}
 """
 
 """
@@ -91,7 +91,7 @@ if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
 @output:
 	`outfile:file`: The same fasta file, but with dict file created
 @args:
-	`bin`:     The picard executable, default: "picard CreateSequenceDictionary"
+	`picard`:     The picard executable, default: "picard"
 	`params`:  Other parameters for picard CreateSequenceDictionary, default: ""
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
@@ -99,11 +99,11 @@ if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
 pCreateSequenceDictionary = proc()
 pCreateSequenceDictionary.input  = "infile:file"
 pCreateSequenceDictionary.output = "outfile:file:{{infile | bn}}"
-pCreateSequenceDictionary.args   = { "bin": "picard CreateSequenceDictionary", "params": "" }
+pCreateSequenceDictionary.args   = { "picard": "picard", "params": "" }
 pCreateSequenceDictionary.script = """
 link="{{job.outdir}}/{{infile | bn}}"
 ln -s "{{infile}}" "$link"
-{{proc.args.bin}} R="$link" {{proc.args.params}}
+{{args.picard}} CreateSequenceDictionary R="$link" {{args.params}}
 """
 
 """
@@ -120,7 +120,7 @@ ln -s "{{infile}}" "$link"
 @output:
 	`outfile:file`: The metrics file
 @args:
-	`bin`:     The picard executable, default: "picard CollectWgsMetrics"
+	`picard`:     The picard executable, default: "picard"
 	`params`:  Other parameters for `picard CollectWgsMetrics`, default: ""
 	`reffile`: The reference file, default: ""
 @requires:
@@ -129,13 +129,13 @@ ln -s "{{infile}}" "$link"
 pCollectWgsMetrics = proc()
 pCollectWgsMetrics.input  = "infile:file"
 pCollectWgsMetrics.output = "outfile:file:{{infile | bn}}.metrics.txt"
-pCollectWgsMetrics.args   = { "bin": "picard CollectWgsMetrics", "params": "", "reffile": "" }
+pCollectWgsMetrics.args   = { "picard": "picard", "params": "", "reffile": "" }
 pCollectWgsMetrics.script = """
-if [[ -z "{{proc.args.reffile}}" ]]; then
+if [[ -z "{{args.reffile}}" ]]; then
 	echo "Reference file not specified!" 1>&2
 	exit 1
 fi
-{{proc.args.bin}} I="{{infile}}" O="{{outfile}}" R="{{proc.args.reffile}}" {{proc.args.params}}
+{{args.picard}} CollectWgsMetrics I="{{infile}}" O="{{outfile}}" R="{{args.reffile}}" {{args.params}}
 """
 
 """
@@ -148,22 +148,23 @@ fi
 @output:
 	`outfile:file`: The sorted sam or bam file
 @args:
-	`bin`:     The picard executable, default: "picard SortSam"
+	`picard`:     The picard executable, default: "picard"
 	`order`:   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
 	`outtype`: The type of output file, sam or bam. Default: bam
-	`params`:  Other parameters for `picard SortSame`, default: "-Xms1g -Xmx8g"
+	`params`:  Other parameters for `picard SortSam`, default: ""
 	`tmpdir`:  The tmpdir to use. Default: /tmp
+	`javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 @requires:
 	[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 """
 pSortSam = proc()
 pSortSam.input  = "infile:file"
-pSortSam.output = "outfile:file:{{infile | fn}}.sorted.{{proc.args.outtype}}"
-pSortSam.args   = { "bin": "picard SortSam", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp" }
+pSortSam.output = "outfile:file:{{infile | fn}}.sorted.{{args.outtype}}"
+pSortSam.args   = { "picard": "picard", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp", "javamem": "-Xms1g -Xmx8g" }
 pSortSam.script = """
-tmpdir="{{proc.args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
+tmpdir="{{args.tmpdir}}/{{proc.id}}_{{proc.tag}}_{{#}}_{{infile | fn}}"
 mkdir -p "$tmpdir"
-{{proc.args.bin}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" {{proc.args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{proc.args.order}}
+{{args.picard}} SortSam {{args.javamem}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" {{args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{args.order}}
 rm -rf "$tmpdir"
 """
 
@@ -177,19 +178,19 @@ rm -rf "$tmpdir"
 @output:
 	`outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
 @args:
-	`bin`:    The picard executable, default: "picard BuildBamIndex"
-	`params`:  Other parameters for picard , default: "-Xms1g -Xmx8g"
+	`picard`:    The picard executable, default: "picard"
+	`params`:  Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"
 @requires:
 	[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 """
 pIndexBam = proc()
 pIndexBam.input  = "infile:file"
 pIndexBam.output = "outfile:file:{{infile | bn}}"
-pIndexBam.args   = { "bin": "picard BuildBamIndex", "params": "-Xms1g -Xmx8g" }
+pIndexBam.args   = { "picard": "picard", "params": "-Xms1g -Xmx8g" }
 pIndexBam.script = """
 ln -s "{{infile}}" "{{outfile}}"
-baifile="{{job.outdir}}/{{infile | fn}}.bai"
-{{proc.args.bin}} I="{{outfile}}" O="$baifile" {{proc.args.params}}
+baifile="{{job.outdir}}/{{infile | bn}}.bai"
+{{args.picard}} BuildBamIndex I="{{outfile}}" O="$baifile" {{args.params}}
 # make sure .bai file is generated:
 if [[ ! -e $baifile ]]; then
 	echo "Index file $baifile not generated!" 1>&2

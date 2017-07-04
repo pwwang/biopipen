@@ -83,7 +83,7 @@ pairs = vector(mode="numeric")
 group = vector(mode="character")
 ng1   = length(g1names)
 ng2   = length(g2names)
-if ({{proc.args.paired | Rbool}}) {
+if ({{args.paired | Rbool}}) {
 	for (i in 1:ng1) {
 		pairs = c(pairs, i, i)
 		group = c(group, "{{group1name}}", "{{group2name}}")
@@ -99,7 +99,7 @@ if ({{proc.args.paired | Rbool}}) {
 
 # filter
 dobj   = DGEList(counts=expmatrix, group=group)
-filter = noquote(unlist(strsplit("{{proc.args.filter}}", ",")))
+filter = noquote(unlist(strsplit("{{args.filter}}", ",")))
 fX     = as.numeric (filter[1])
 fY     = as.numeric (filter[2])
 dobj   = dobj[rowSums(cpm(dobj)>fX) >= fY, ]
@@ -108,7 +108,7 @@ dobj$samples$lib.size = colSums(dobj$counts)
 # normalize
 dobj = calcNormFactors(dobj, method="TMM")
 
-if ({{proc.args.bcvplot | Rbool}}) {
+if ({{args.bcvplot | Rbool}}) {
 	bcvplot = file.path ("{{degdir}}", "bcvplot.png")
 	png (file=bcvplot)
 	plotMDS (dobj, method="bcv", col=as.numeric(dobj$samples$group))
@@ -117,7 +117,7 @@ if ({{proc.args.bcvplot | Rbool}}) {
 }
 
 disp <- estimateDisp (dobj, design)
-if ({{proc.args.displot | Rbool}}) {
+if ({{args.displot | Rbool}}) {
 	displot = file.path ("{{degdir}}", "displot.png")
 	png (file=displot)
 	plotBCV (disp)
@@ -127,8 +127,8 @@ if ({{proc.args.displot | Rbool}}) {
 fit    = glmFit (disp, design)
 fit    = glmLRT (fit)
 
-if ({{proc.args.fcplot | Rbool}}) {
-	deg    = decideTestsDGE(fit, p.value = {{proc.args.pval}})
+if ({{args.fcplot | Rbool}}) {
+	deg    = decideTestsDGE(fit, p.value = {{args.pval}})
 	fcplot = file.path ("{{degdir}}", "fcplot.png")
 	png (file=fcplot)
 	tags = rownames(disp)[as.logical(deg)]
@@ -137,7 +137,7 @@ if ({{proc.args.fcplot | Rbool}}) {
 	dev.off()
 }
 
-out    = topTags (fit, n=nrow(fit$table), p.value = {{proc.args.pval}})
+out    = topTags (fit, n=nrow(fit$table), p.value = {{args.pval}})
 write.table (out$table, file.path("{{degdir}}", "degs.txt"), quote=F, sep="\\t")
 """
 
@@ -187,16 +187,16 @@ g2names   = match (group2, colnames(expmatrix))
 expmatrix = expmatrix [, c(g1names, g2names)]
 
 # filter
-filter     = noquote(unlist(strsplit("{{proc.args.filter}}", ",")))
+filter     = noquote(unlist(strsplit("{{args.filter}}", ",")))
 fX         = as.numeric (filter[1])
 fY         = as.numeric (filter[2])
 expmatrix  = expmatrix[rowSums(expmatrix>fX) >= fY, ]
 
-if ("quan" %in% unlist(strsplit("{{proc.args.norm}}", ","))) {
+if ("quan" %in% unlist(strsplit("{{args.norm}}", ","))) {
 	expmatrix = normalizeBetweenArrays (expmatrix)
 }
 
-if ({{proc.args.boxplot | Rbool}}) {
+if ({{args.boxplot | Rbool}}) {
 	png (file = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.boxplot.png"), res=300, width=2000, height=2000)
 	boxplot (expmatrix, las=2)
 	dev.off()	
@@ -206,7 +206,7 @@ pairs = vector(mode="numeric")
 group = vector(mode="character")
 ng1   = length(g1names)
 ng2   = length(g2names)
-if ({{proc.args.paired | Rbool}}) {
+if ({{args.paired | Rbool}}) {
 	for (i in 1:ng1) {
 		pairs = c(pairs, i, i)
 		group = c(group, "{{group1name}}", "{{group2name}}")
@@ -223,21 +223,21 @@ if ({{proc.args.paired | Rbool}}) {
 fit    = lmFit (expmatrix, design)
 fit    = eBayes(fit)
 out    = topTable (fit, number = nrow(expmatrix), sort.by="p")
-out    = out[out$adj.P.Val<{{proc.args.qval}} & out$P.Value<{{proc.args.pval}},]
+out    = out[out$adj.P.Val<{{args.qval}} & out$P.Value<{{args.pval}},]
 
 degfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.degs.txt")
 write.table (out, degfile, quote=F, sep="\\t")
 
-if ({{proc.args.heatmap | Rbool}}) {
-	hmn  = min (nrow(out), {{proc.args.hmn}})
+if ({{args.heatmap | Rbool}}) {
+	hmn  = min (nrow(out), {{args.hmn}})
 	exps = expmatrix[row.names(out[1:hmn, ]), ]
 	hmfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.heatmap.png")
 	png (file = hmfile, res=300, width=2000, height=2000)
-	heatmap(as.matrix(exps), margins = c({{proc.args.hmmar}}), cexRow={{proc.args.hmn}}/100)
+	heatmap(as.matrix(exps), margins = c({{args.hmmar}}), cexRow={{args.hmn}}/100)
 	dev.off()
 }
 
-if ({{proc.args.volplot | Rbool}}) {
+if ({{args.volplot | Rbool}}) {
 	dat = data.frame(out, n_log10_adj_pval = -c(log10(out$adj.P.Val)), col=ifelse(abs(out$logFC)>2 & out$adj.P.Val<0.01, 'A', ifelse(abs(out$logFC)>2, 'B', 'C')))
 	a<-ggplot(dat, aes(x = logFC, y = n_log10_adj_pval, col=col))
 	a<-a+ylab("-log10(adjusted P value)\n")
@@ -278,36 +278,36 @@ if ({{proc.args.volplot | Rbool}}) {
 """
 pRawCounts2 = proc ()
 pRawCounts2.input     = "expfile:file"
-pRawCounts2.output    = "outfile:file:{{expfile | fn}}.{{proc.args.unit}}.txt"
+pRawCounts2.output    = "outfile:file:{{expfile | fn}}.{{args.unit}}.txt"
 pRawCounts2.args      = {'transpose': False, 'unit': 'cpm', 'header': True, 'rownames': 1, 'log2': False, 'glenfile': ''}
 pRawCounts2.defaultSh = "Rscript"
 pRawCounts2.script    = """
-data  = read.table ("{{expfile}}", sep="\\t", header={{proc.args.header | Rbool}}, row.names = {{proc.args.rownames}}, check.names=F)
-if ({{proc.args.transpose | Rbool}}) data = t (data)
+data  = read.table ("{{expfile}}", sep="\\t", header={{args.header | Rbool}}, row.names = {{args.rownames}}, check.names=F)
+if ({{args.transpose | Rbool}}) data = t (data)
 
-if ("{{proc.args.unit}}" == 'cpm') {
+if ("{{args.unit}}" == 'cpm') {
 	library('edgeR')
-	ret = cpm (data, log = {{proc.args.log2 | Rbool}})
-} else if ("{{proc.args.unit}}" == 'rpkm') {
+	ret = cpm (data, log = {{args.log2 | Rbool}})
+} else if ("{{args.unit}}" == 'rpkm') {
 	library('edgeR')
-	genelen = read.table ("{{proc.args.glenfile}}", header=F, row.names = 1, check.names = F)
-	ret = rpkm (data, log = {{proc.args.log2 | Rbool}}, gene.length = as.vector(genelen))
+	genelen = read.table ("{{args.glenfile}}", header=F, row.names = 1, check.names = F)
+	ret = rpkm (data, log = {{args.log2 | Rbool}}, gene.length = as.vector(genelen))
 } else {
 	library('coseq')
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
-	if ({{proc.args.log2 | Rbool}})
+	if ({{args.log2 | Rbool}})
 		ret = log2(ret)
 }
 
 rnames = TRUE
 cnames = TRUE
-if ({{proc.args.transpose | Rbool}}) {
-	rnames = {{proc.args.header | Rbool}}
-	cnames = {{proc.args.rownames}} == 1
+if ({{args.transpose | Rbool}}) {
+	rnames = {{args.header | Rbool}}
+	cnames = {{args.rownames}} == 1
 } else {
-	rnames = {{proc.args.rownames}} == 1
-	cnames = {{proc.args.header | Rbool}}
+	rnames = {{args.rownames}} == 1
+	cnames = {{args.header | Rbool}}
 }
 
 write.table (ret, "{{outfile}}", quote=F, row.names=rnames, col.names=cnames, sep="\\t")

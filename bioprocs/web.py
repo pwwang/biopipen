@@ -19,7 +19,7 @@ from pyppl import proc
 	[`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
 	[`Phantomjs`](http://phantomjs.org/)
 """
-pDownloadPost = proc ()
+pDownloadPost = proc (desc="Download results by submitting to a form")
 pDownloadPost.input  = "url, submitbtn, nextbtn, params"
 pDownloadPost.args   = {'interval': 1}
 pDownloadPost.output = "outdir:file:outdir-{{#}}"
@@ -46,7 +46,7 @@ while browser.is_element_present_by_xpath ('''{{nextbtn}}'''):
 	sys.stderr.write ("Fetching and saving page %s ...\\n" % (i+1))
 	open ("{{outdir}}/out-%s.html" % i, 'w').write (browser.html)
 	i += 1
-	time.sleep({{proc.args.interval}})
+	time.sleep({{args.interval}})
 	browser.find_by_xpath('''{{nextbtn}}''').click()
 
 open ("{{outdir}}/out-%s.html" % i, 'w').write (browser.html)
@@ -61,12 +61,10 @@ browser.quit()
 	Download results by urls.
 @input:
 	`url`: the URLs to download
-@args:
-	`keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
 @output:
 	`outfile:file`: The output file
 """
-pDownloadGet = proc ()
+pDownloadGet = proc (desc="Download from URLs")
 pDownloadGet.input  = "url"
 pDownloadGet.output = "outfile:file:{{url | bn | .replace('?', '__Q__').replace('&', '__N__')  }}"
 pDownloadGet.script = """

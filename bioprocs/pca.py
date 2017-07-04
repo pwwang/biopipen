@@ -39,17 +39,17 @@ pPCA.args    = {
 pPCA.lang    = "Rscript"
 pPCA.script  = """
 library("factoextra")
-rownames = {{proc.args.rownames | lambda x: x if str(x).isdigit() else "NULL" }}
-data = read.table ("{{infile}}", row.names=rownames, header={{proc.args.header | Rbool }}, check.names=F)
-if ({{ proc.args.transpose | Rbool }}) data = t(data)
+rownames = {{args.rownames | lambda x: x if str(x).isdigit() else "NULL" }}
+data = read.table ("{{infile}}", row.names=rownames, header={{args.header | Rbool }}, check.names=F)
+if ({{ args.transpose | Rbool }}) data = t(data)
 pc     = prcomp (data)
 pcfile = file.path("{{outdir}}", "pcs.txt")
 pcs    = pc$x
 tcp    = ncol (pcs)
-if ({{proc.args.screeplot | Rbool}}) {
+if ({{args.screeplot | Rbool}}) {
 	spfile = file.path ("{{outdir}}", "screeplot.png")
 	png (file = spfile)
-	ncp = {{proc.args.sp_ncp}}
+	ncp = {{args.sp_ncp}}
 	if (ncp == 0 && tcp < 20) {
 		ncp = tcp
 	} else if (ncp == 0 && tcp > 20) {
@@ -58,7 +58,7 @@ if ({{proc.args.screeplot | Rbool}}) {
 	print (fviz_screeplot (pc, ncp = ncp))
 	dev.off()
 }
-if ({{proc.args.varplot | Rbool}}) {
+if ({{args.varplot | Rbool}}) {
 	vpfile = file.path ("{{outdir}}", "varplot.png")
 	png (file = vpfile)
 	print (fviz_pca_var(pc, col.var="contrib",
@@ -67,7 +67,7 @@ if ({{proc.args.varplot | Rbool}}) {
 	))
 	dev.off()
 }
-if ({{proc.args.biplot | Rbool}}) {
+if ({{args.biplot | Rbool}}) {
 	bpfile = file.path ("{{outdir}}", "biplot.png")
 	png (file = bpfile)
 	print (fviz_pca_biplot(pc, repel = TRUE))
@@ -99,7 +99,7 @@ pSelectPCs.lang   = "python"
 pSelectPCs.script = """
 import os
 
-n = {{proc.args.n}}
+n = {{args.n}}
 if n < 1:
 	stdfile = os.path.join("{{indir}}", "stdev.txt")
 	stdevs  = open (stdfile).read().strip().split("\\n")
