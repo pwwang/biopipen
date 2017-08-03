@@ -6,7 +6,7 @@ from pyppl import proc
 
 _sReferenceFai = """
 # make sure reference index is generated
-if [[ ! -e "{{bring.reffile#fai}}" ]]; then
+if [[ ! -e "{{brings.reffile#fai}}" ]]; then
 	echo "[BioProcs] Cannot find index file for reference: {{reffile.orig}}, generating ..." 1>&2
 	({{args.samtools}} faidx "{{reffile | realpath}}" ]] && \\
 		ln -s "{{reffile | realpath}}.fai" "{{reffile}}.fai" && \\
@@ -21,7 +21,7 @@ fi
 
 _sReferenceDict = """
 # make sure reference dict is generated
-if [[ ! -e "{{bring.reffile#dict}}" ]]; then
+if [[ ! -e "{{brings.reffile#dict}}" ]]; then
 	echo "[BioProcs] Cannot find dict file for reference: {{reffile.orig}}, generating ..." 1>&2
 	({{args.picard}} CreateSequenceDictionary R="{{reffile}}" O="{{reffile | realpath | prefix}}.dict" && \\
 		ln -s "{{reffile | realpath | prefix}}.dict" "{{reffile | prefix}}.dict" && \\
@@ -36,7 +36,7 @@ fi
 
 _sBamBai = """
 # get index file of bam file
-if [[ ! -e "{{bring.bamfile}}" ]]; then
+if [[ ! -e "{{brings.bamfile}}" ]]; then
 	echo "[BioProcs] Cannot find index file for input file: {{bamfile.orig}}, generating ..." 1>&2
 	({{args.samtools}} index "{{bamfile | realpath}}" && \\
 		ln -s "{{bamfile | realpath}}.bai" "{{bamfile}}.bai" && \\
@@ -50,7 +50,7 @@ fi
 """
 
 _sTumorBai = """
-if [[ ! -e "{{bring.tumor}}" ]]; then
+if [[ ! -e "{{brings.tumor}}" ]]; then
 	echo "[BioProcs] Cannot find index file for tumor: {{tumor.orig}}, generating ..." 1>&2
 	({{args.samtools}} index "{{tumor | realpath}}" && \\
 		ln -s "{{tumor | realpath}}.bai" "{{tumor}}.bai" && \\
@@ -64,7 +64,7 @@ fi
 """
 
 _sNormalBai = """
-if [[ ! -e "{{bring.normal}}" ]]; then
+if [[ ! -e "{{brings.normal}}" ]]; then
 	echo "[BioProcs] Cannot find index file for tumor: {{tumor.orig}}, generating ..." 1>&2
 	({{args.samtools}} index "{{normal | realpath}}" && \\
 		ln -s "{{normal | realpath}}.bai" "{{normal}}.bai" && \\

@@ -111,12 +111,6 @@ $trimmomatic SE -{{args.phred}} -threads {{args.nthread}} -trimlog $logfile "{{f
 	`infile1:file`: read file 1 (fastq, or fastq gzipped)
 	`infile2:file`: read file 2 (fastq, or fastq gzipped)
 	`reffile:file`: The reference file
-@brings:
-	`reffile#bwt`: "{{reffile | bn}}.bwt", 
-	`reffile#sa`:  "{{reffile | bn}}.sa",
-	`reffile#ann`: "{{reffile | bn}}.ann",
-	`reffile#amb`: "{{reffile | bn}}.amb",
-	`reffile#pac`: "{{reffile | bn}}.pac"
 @output:
 	`outfile:file`: The output sam file
 @args:
@@ -128,32 +122,15 @@ $trimmomatic SE -{{args.phred}} -threads {{args.nthread}} -trimlog $logfile "{{f
 """
 pAlignPEByBWA = proc ()
 pAlignPEByBWA.input   = "infile1:file, infile2:file, reffile:file"
-pAlignPEByBWA.brings  = {
-	"reffile#bwt": "{{reffile | bn}}.bwt", 
-	"reffile#sa": "{{reffile | bn}}.sa",
-	"reffile#ann": "{{reffile | bn}}.ann",
-	"reffile#amb": "{{reffile | bn}}.amb",
-	"reffile#pac": "{{reffile | bn}}.pac"
-}
-pAlignPEByBWA.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]*1(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
+pAlignPEByBWA.output  = "outfile:file:{{infile1 | bn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]*1(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
 pAlignPEByBWA.args    = {
 	"bwa":     "bwa",
 	"params":  "", 
 	"nthread": 1
 }
 pAlignPEByBWA.script  = """
-if [[ ! -e "{{bring.reffile#bwt}}" || ! -e "{{bring.reffile#sa}}" || ! -e "{{bring.reffile#ann}}" || ! -e "{{bring.reffile#amb}}" || ! -e "{{bring.reffile#pac}}" ]]; then
-	echo "[BioProcs] Cannot find bwt file for reference: {{reffile.orig}}, generating ..." 1>&2
-	(	{{args.bwa}} index "{{reffile.orig}}" && \\
-		ln -s "{{reffile.orig}}.bwt" "{{reffile}}.bwt" && \\
-		ln -s "{{reffile.orig}}.sa" "{{reffile}}.sa" && \\
-		ln -s "{{reffile.orig}}.ann" "{{reffile}}.ann"\\
-		ln -s "{{reffile.orig}}.amb" "{{reffile}}.amb"\\
-		ln -s "{{reffile.orig}}.pac" "{{reffile}}.pac"\\
-	) || {{args.bwa}} index "{{reffile}}"
-fi
 lane="L{{#}}"
-sample="{{infile1 | fnnodot | .split('_')[0]}}"
+sample="{{infile1 | fn | .split('_')[0]}}"
 rg="-R @RG\\tID:$lane\\tSM:$sample\\tPL:ILLUMINA"
 params="{{args.params}}"
 if [[ "$params" == *"@RG"* ]]; then
@@ -190,13 +167,6 @@ fi
 """
 pAlignSEByBWA = proc ()
 pAlignSEByBWA.input   = "infile:file, reffile:file"
-pAlignSEByBWA.brings  = {
-	"reffile#bwt": "{{reffile | bn}}.bwt", 
-	"reffile#sa":  "{{reffile | bn}}.sa",
-	"reffile#ann": "{{reffile | bn}}.ann",
-	"reffile#amb": "{{reffile | bn}}.amb",
-	"reffile#pac": "{{reffile | bn}}.pac"
-}
 pAlignSEByBWA.output  = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
 pAlignSEByBWA.args    = {
 	"bwa":     "bwa",
@@ -204,16 +174,6 @@ pAlignSEByBWA.args    = {
 	"nthread": 1
 }
 pAlignSEByBWA.script  = """
-if [[ ! -e "{{bring.reffile#bwt}}" || ! -e "{{bring.reffile#sa}}" || ! -e "{{bring.reffile#ann}}" || ! -e "{{bring.reffile#amb}}" || ! -e "{{bring.reffile#pac}}" ]]; then
-	echo "[BioProcs] Cannot find bwt file for reference: {{reffile.orig}}, generating ..." 1>&2
-	(	{{args.bwa}} index "{{reffile.orig}}" && \\
-		ln -s "{{reffile.orig}}.bwt" "{{reffile}}.bwt" && \\
-		ln -s "{{reffile.orig}}.sa" "{{reffile}}.sa" && \\
-		ln -s "{{reffile.orig}}.ann" "{{reffile}}.ann"\\
-		ln -s "{{reffile.orig}}.amb" "{{reffile}}.amb"\\
-		ln -s "{{reffile.orig}}.pac" "{{reffile}}.pac"\\
-	) || {{args.bwa}} index "{{reffile}}"
-fi
 lane="L{{#}}"
 sample="{{infile1 | fnnodot | .split('_')[0]}}"
 rg="-R @RG\\tID:$lane\\tSM:$sample\\tPL:ILLUMINA"

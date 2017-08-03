@@ -89,6 +89,8 @@ ENV/
 .ropeproject
 
 workdir/
+data/
 
 *.dot
 *.svg
+

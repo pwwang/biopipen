@@ -15,7 +15,7 @@ from pyppl import proc
 """
 pSort = proc ()
 pSort.input  = "infile:file"
-pSort.output = "outfile:file:{{infile | bn}}.sorted"
+pSort.output = "outfile:file:{{infile | bn}}"
 pSort.args   = {"params": "", "skip": 0}
 pSort.script = """
 #!/usr/bin/env bash
@@ -40,26 +40,50 @@ fi
 """
 pFiles2Dir = proc()
 pFiles2Dir.input  = "infiles:files"
-pFiles2Dir.output = "outdir:dir:{{infiles | [0] | fn}}.etc.{{#}}"
+pFiles2Dir.output = "outdir:dir:{{infiles | [0] | fn}}.etc_{{#}}"
 pFiles2Dir.lang   = "python"
 pFiles2Dir.script = """
 from glob import glob
 from os import path, symlink
 from sys import stderr
 
-for fn in [{{infiles | acquote}}]:
-	bn  = path.basename (fn)
+for fname in {{infiles | json}}:
+	bn  = path.basename (fname)
 	dst = path.join ("{{outdir}}", bn)
 	if path.exists (dst):
-		dsts = glob (path.join("{{outdir}}", bn + "[*]"))
+		fn, _, ext = bn.rpartition('.')
+		dsts = glob (path.join("{{outdir}}", fn + "[[]*[]]." + ext))
+		print dsts
 		if not dsts:
-			dst2 = path.join("{{outdir}}", bn + "[1]")
+			dst2 = path.join("{{outdir}}", fn + "[1]." + ext)
 		else:
-			maxIdx = max ([int(path.basename(d)[:-1].rpartition('[')[-1]) for d in dsts])
-			dst2 = path.join("{{outdir}}", bn + "[%s]" % str(maxIdx+1))
-		stderr.write ("Warning: rename %s to %s" % (dst, dst2))
+			maxidx = max([int(path.basename(d)[len(fn)+1 : -len(ext)-2]) for d in dsts])
+			dst2 = path.join("{{outdir}}", fn + "[" + str(maxidx+1) + "]." + ext)
+		stderr.write ("Warning: rename %s to %s\\n" % (dst, dst2))
 		dst = dst2
-	symlink (fn, dst)
+	symlink (fname, dst)
+"""
+
+"""
+@name:
+	pFiles2List
+@description:
+	Put files to a list file
+@input:
+	`infiles:files`: The input files
+@args:
+	`delimit`: The delimit. Default: r"\n"
+@output:
+	`outfile:file`:  The output list file
+"""
+pFiles2List              = proc(desc = 'Put files to a list file.')
+pFiles2List.input        = "infiles:files"
+pFiles2List.output       = "outfile:file:{{infiles | [0] | fn}}.etc_{{#}}.list"
+pFiles2List.args.delimit = r"\n" # r is important
+pFiles2List.lang         = "python"
+pFiles2List.script       = """
+with open ("{{outfile}}", "w") as fout:
+	fout.write ("{{args.delimit}}".join({{infiles | json}}))
 """
 
 """
@@ -74,7 +98,7 @@ for fn in [{{infiles | acquote}}]:
 """
 pPat2Dir = proc()
 pPat2Dir.input  = "pattern:var"
-pPat2Dir.output = "outdir:dir:{{pattern | __import__('glob').glob(_) | [0] | fn }}.etc.{{#}}"
+pPat2Dir.output = "outdir:dir:{{pattern | __import__('glob').glob(_) | [0] | fn }}.etc_{{#}}"
 pPat2Dir.script = """
 for fn in {{pattern}}; do
 	ln -s "$fn" "{{outdir}}/"
@@ -83,7 +107,7 @@ done
 
 """
 @name:
-	pMergeFile
+	pMergeFiles
 @description:
 	Merge files in the input directory
 @input:
@@ -91,10 +115,10 @@ done
 @output:
 	`outfile:file`: The output file
 """
-pMergeFile = proc()
-pMergeFile.input  = "indir:file"
-pMergeFile.output = "outfile:file:{{indir | fn}}.merged"
-pMergeFile.script = """
+pMergeFiles = proc()
+pMergeFiles.input  = "indir:file"
+pMergeFiles.output = "outfile:file:{{indir | fn}}.merged"
+pMergeFiles.script = """
 > "{{outfile}}"
 for infile in "{{indir}}/*"; do
 	cat $infile >> "{{outfile}}"
@@ -118,7 +142,7 @@ done
 """
 pCbindList = proc ()
 pCbindList.input  = "indir:file"
-pCbindList.output = "outfile:file:{{indir | fn}}.{{#}}.mat.txt"
+pCbindList.output = "outfile:file:{{indir | fn}}.mat_{{#}}.txt"
 pCbindList.args   = {"header": False, "na": "0"}
 pCbindList.lang   = "Rscript"
 pCbindList.script = """

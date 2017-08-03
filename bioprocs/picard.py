@@ -185,15 +185,8 @@ rm -rf "$tmpdir"
 """
 pIndexBam = proc()
 pIndexBam.input  = "infile:file"
-pIndexBam.output = "outfile:file:{{infile | bn}}"
+pIndexBam.output = "outfile:file:{{infile | bn}}.bai"
 pIndexBam.args   = { "picard": "picard", "params": "-Xms1g -Xmx8g" }
 pIndexBam.script = """
-ln -s "{{infile}}" "{{outfile}}"
-baifile="{{job.outdir}}/{{infile | bn}}.bai"
-{{args.picard}} BuildBamIndex I="{{outfile}}" O="$baifile" {{args.params}}
-# make sure .bai file is generated:
-if [[ ! -e $baifile ]]; then
-	echo "Index file $baifile not generated!" 1>&2
-	exit 1
-fi
+{{args.picard}} BuildBamIndex I="{{infile}}" O="{{outfile}}" {{args.params}}
 """
