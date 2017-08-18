@@ -25,25 +25,23 @@ from pyppl import proc
 	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
 """
 pPCA = proc()
-pPCA.input   = "infile:file"
-pPCA.output  = "outdir:dir:{{infile | fn}}.pca"
-pPCA.args    = {
-	'transpose': False,
-	'rownames': 1,
-	'header': True,
-	'screeplot': True,
-	'sp_ncp': 0,
-	'varplot': False,
-	'biplot': True
-}
-pPCA.lang    = "Rscript"
-pPCA.script  = """
+pPCA.input          = "infile:file"
+pPCA.output         = "outfile:file:{{infile | fn}}.pca/pcs.txt, outdir:dir:{{infile | fn}}.pca"
+pPCA.args.transpose = False
+pPCA.args.rownames  = 1
+pPCA.args.header    = True
+pPCA.args.screeplot = True
+pPCA.args.sp_ncp    = 0
+pPCA.args.varplot   = False
+pPCA.args.biplot    = True
+pPCA.lang           = "Rscript"
+pPCA.script         = """
 library("factoextra")
 rownames = {{args.rownames | lambda x: x if str(x).isdigit() else "NULL" }}
 data = read.table ("{{infile}}", row.names=rownames, header={{args.header | Rbool }}, check.names=F)
 if ({{ args.transpose | Rbool }}) data = t(data)
 pc     = prcomp (data)
-pcfile = file.path("{{outdir}}", "pcs.txt")
+pcfile = "{{outfile}}"
 pcs    = pc$x
 tcp    = ncol (pcs)
 if ({{args.screeplot | Rbool}}) {
@@ -92,9 +90,9 @@ write.table (pcs, pcfile, col.names=T, row.names=T, quote=F, sep="\\t")
 	- If it is < 1, used as the % variation explained from stdev.txt
 """
 pSelectPCs = proc ()
-pSelectPCs.input  = "indir:file"
-pSelectPCs.output = "outfile:file:{{indir | fn}}.pcs.txt"
-pSelectPCs.args   = {"n": 0.9}
+pSelectPCs.input  = "infile:file, indir:file"
+pSelectPCs.output = "outfile:file:{{indir | fn}}.toppcs.txt"
+pSelectPCs.args.n = .9
 pSelectPCs.lang   = "python"
 pSelectPCs.script = """
 import os
@@ -112,7 +110,7 @@ if n < 1:
 			n = i + 1
 			break
 
-with open (os.path.join("{{indir}}", "pcs.txt")) as fin, open ("{{outfile}}", "w") as fout:
+with open ("{{infile}}") as fin, open ("{{outfile}}", "w") as fout:
 	i = 0
 	for line in fin:
 		line  = line.strip()

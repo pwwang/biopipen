@@ -1,44 +1,188 @@
 from pyppl import proc
+from .utils import cbindFill, plot
 
 """
 @name:
-	pExpFiles2Mat
+	pExpdirMatrix
 @description:
 	Convert expression files to expression matrix
 	File names will be used as sample names (colnames)
+	Each gene and its expression per line.
 @input:
 	`expdir:file`:  the directory containing the expression files, could be gzipped
 @output:
 	`expfile:file`: the expression matrix
 """
-pExpFiles2Mat = proc()
-pExpFiles2Mat.input    = "expdir:file"
-pExpFiles2Mat.output   = "expfile:file:{{expdir | fn}}.exp.mat"
-pExpFiles2Mat.lang     = "Rscript"
-pExpFiles2Mat.args     = {"header": False}
-pExpFiles2Mat.script   = """
+pExpdir2Matrix = proc()
+pExpdir2Matrix.input           = "expdir:file"
+pExpdir2Matrix.output          = "expfile:file:{{expdir | fn}}.matrix.txt"
+pExpdir2Matrix.lang            = "Rscript"
+pExpdir2Matrix.args.header     = False
+pExpdir2Matrix.args.excl       = ["^Sample", "^Composite", "^__"]
+pExpdir2Matrix.args._cbindFill = cbindFill.r
+pExpdir2Matrix.script          = """
 setwd("{{expdir}}")
-cbind.fill = function (x1, x2) {
-	y = merge(x1, x2, by='row.names', all=T, sort=F)
-	rownames(y) = y[, "Row.names"]
-	y = y[, -1, drop=F]
-	cnames      = c(colnames(x1), colnames(x2))
-	if (!is.null(cnames)) {
-		colnames(y) = cnames
+
+{{args._cbindFill}}
+
+isGoodRname = function(rname) {
+	for (excl in {{args.excl | Rvec}}) {
+		if (grepl(excl, rname)) {
+			return (FALSE)
+		}
 	}
-	return (y)
+	return (TRUE)
 }
+isGoodRname = Vectorize(isGoodRname)
+
 exp = c()
 for (efile in list.files()) {
-	write(paste("Reading", efile, "..."), stderr())
+	write(paste("pyppl.log: Reading", efile, "..."), stderr())
 	sample = tools::file_path_sans_ext(basename(efile))
 	if (grepl ('.gz$', efile)) efile = gzfile (efile)
 	tmp    = read.table (efile, sep="\\t", header=F, row.names = 1, check.names=F)
+	rnames = rownames(tmp)
+	rnames = rnames[isGoodRname(rnames)]
+	tmp    = tmp[rnames,,drop=F]
 	colnames (tmp) = c(sample)
-	exp    = cbind.fill (exp, tmp)
+	exp    = cbindFill (exp, tmp)
 }
 
 write.table (exp, "{{expfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
+"""
+
+"""
+	`bcvplot`: whether to plot biological coefficient of variation, default: True
+	`displot`: whether to plot biological coefficient of variation, default: True
+	`fcplot`:  whether to plot fold changes, default: True
+"""
+pRseqDEG              = proc (desc = 'Detect DEGs by RNA-seq data.')
+pRseqDEG.input        = "efile:file, group1, group2"
+pRseqDEG.output       = [
+	"outfile:file:{{group1 | .split(':', 1)[0]}}-{{group2 | .split(':', 1)[0]}}.degs/{{group1 | .split(':', 1)[0]}}-{{group2 | .split(':', 1)[0]}}.degs.txt", 
+	"outdir:dir:{{group1 | .split(':', 1)[0]}}-{{group2 | .split(':', 1)[0]}}.degs"
+]
+pRseqDEG.args.tool    = 'edger' # limma, deseq2
+pRseqDEG.args.filter  = '1,2'
+pRseqDEG.args.pval    = 0.05
+pRseqDEG.args.paired  = False
+pRseqDEG.args.bcvplot = True
+pRseqDEG.args.displot = True
+pRseqDEG.args.fcplot  = True
+pRseqDEG.args.heatmap = False
+pRseqDEG.args.listall = False
+pRseqDEG.args._plotHeatmap = plot.heatmap.r
+pRseqDEG.lang         = "Rscript"
+pRseqDEG.script       = """
+
+# get the exp data
+ematrix    = read.table ("{{efile}}",  header=T, row.names = 1, check.names=F, sep="\\t")
+cnames     = colnames(ematrix)
+
+# get group names
+groups1    = unlist(strsplit("{{group1}}", ":", fixed = TRUE))
+groups2    = unlist(strsplit("{{group2}}", ":", fixed = TRUE))
+group1name = groups1[1]
+group2name = groups2[1]
+group1     = unlist(strsplit(groups1[2], ",", fixed = TRUE))
+group2     = unlist(strsplit(groups2[2], ",", fixed = TRUE))
+group1idx  = as.integer (group1)
+group2idx  = as.integer (group2)
+if (NA %in% group1idx) {
+	group1idx = match(group1, cnames)
+} 
+if (NA %in% group2idx) {
+	group2idx = match(group2, cnames)
+} 
+
+ematrix    = ematrix[, c(group1idx, group2idx), drop=FALSE]
+n1         = length(group1idx)
+n2         = length(group2idx)
+paired     = {{args.paired | Rbool}}
+pval       = {{args.pval | lambda x: float(x)}}
+filters    = c({{args.filter}})
+tool       = {{args.tool | quote}}
+
+if (paired && n1 != n2) {
+	stop(paste("Flag paired is TRUE, but number of samples is different in two groups (", n1, n2, ").", sep=""))
+}
+
+pairs = vector(mode="numeric")
+group = vector(mode="character")
+
+if (tool == "edger") {
+	library('edgeR')
+	if (paired) {
+		for (i in 1:n1) {
+			pairs = c(pairs, i, i)
+			group = c(group1name, group2name)
+		}
+		pairs  = factor(pairs)
+		group  = factor(group)
+		design = model.matrix(~pairs + group)
+	} else {
+		group  = c(rep(group1name, n1), rep(group2name, n2))
+		group  = factor(group)
+		design = model.matrix(~group)
+	}
+	
+	dge    = DGEList(counts = ematrix, group = group)
+	dge    = dge[rowSums(cpm(dge)>filters[1]) >= filters[2], ]
+	dge$samples$lib.size = colSums(dge$counts)
+	dge    = calcNormFactors(dge, "TMM")
+	
+	disp   = estimateDisp (dge, design)
+	fit    = glmFit (disp, design)
+	fit    = glmLRT (fit)
+	
+	degs   = topTags (fit, n=nrow(fit$table), p.value = {{args.pval}})
+	write.table (degs$table, "{{outfile}}", quote=F, sep="\\t")
+	degs$names = rownames(degs$table)
+	
+	if ({{args.listall | Rbool}}) {
+		allgenes = topTags (fit, n=nrow(fit$table), p.value = 1)
+		write.table (allgenes$table, "{{outdir}}/{{outfile | fn | fn}}.all.txt", quote=F, sep="\\t")
+	}
+	
+	if ({{args.bcvplot | Rbool}}) {
+		bcvplot = file.path ("{{outdir}}", "bcvplot.png")
+		png (file=bcvplot)
+		plotMDS (dge, method="bcv", col=as.numeric(dge$samples$group))
+		legend("bottomleft", as.character(unique(dge$samples$group)), col=2:1, pch=20)
+		dev.off()
+	}
+
+	if ({{args.displot | Rbool}}) {
+		displot = file.path ("{{outdir}}", "displot.png")
+		png (file=displot)
+		plotBCV (disp)
+		dev.off()
+	}
+
+	if ({{args.fcplot | Rbool}}) {
+		deg    = decideTestsDGE(fit, p.value = {{args.pval}})
+		fcplot = file.path ("{{outdir}}", "fcplot.png")
+		png (file=fcplot)
+		tags = rownames(disp)[as.logical(deg)]
+		plotSmear (fit, de.tags=tags)
+		abline(h = c(-2, 2), col = "blue")
+		dev.off()
+	}
+}
+
+if ({{args.heatmap | Rbool}}) {
+	hmap = file.path ("{{outdir}}", "heatmap.png")
+	{{args._plotHeatmap}}
+	tmatrix    = ematrix[degs$names, 1:length(group1idx)]
+	tmatrix    = tmatrix + 1
+	nmatrix    = ematrix[degs$names, (length(group1idx)+1):ncol(ematrix)]
+	nmatrix    = rowSums(nmatrix)/ncol(nmatrix)
+	nmatrix    = nmatrix + 1
+	log2fc     = log2(apply(tmatrix, 2, function(col) col/nmatrix))
+	plotHeatmap(log2fc, list(filename=hmap, show_rownames=FALSE))
+}
+
+
 """
 
 """
@@ -271,17 +415,22 @@ if ({{args.volplot | Rbool}}) {
 	`header`:    whether input file has header? default: True
 	`rownames`:  the index of the column as rownames. default: 1
 	`glenfile`:  the gene length file, for RPKM
-	- no head, row names are genes, have to be exact the same order and length as the rownames of expfile
+		- no head, row names are genes, have to be exact the same order and length as the rownames of expfile
 @requires:
 	[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
 	[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
 """
-pRawCounts2 = proc ()
-pRawCounts2.input     = "expfile:file"
-pRawCounts2.output    = "outfile:file:{{expfile | fn}}.{{args.unit}}.txt"
-pRawCounts2.args      = {'transpose': False, 'unit': 'cpm', 'header': True, 'rownames': 1, 'log2': False, 'glenfile': ''}
-pRawCounts2.defaultSh = "Rscript"
-pRawCounts2.script    = """
+pRawCounts2                = proc (desc = 'Convert raw counts to another unit.')
+pRawCounts2.input          = "expfile:file"
+pRawCounts2.output         = "outfile:file:{{expfile | fn}}.{{args.unit}}.txt"
+pRawCounts2.args.transpose = False
+pRawCounts2.args.unit      = 'cpm'
+pRawCounts2.args.header    = True
+pRawCounts2.args.rownames  = 1
+pRawCounts2.args.log2      = False
+pRawCounts2.args.glenfile  = ''
+pRawCounts2.lang           = "Rscript"
+pRawCounts2.script         = """
 data  = read.table ("{{expfile}}", sep="\\t", header={{args.header | Rbool}}, row.names = {{args.rownames}}, check.names=F)
 if ({{args.transpose | Rbool}}) data = t (data)
 

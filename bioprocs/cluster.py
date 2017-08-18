@@ -81,235 +81,83 @@ write.table (coords, "{{outfile}}", col.names=F, row.names=F, quote=F, sep="\\t"
 
 """
 @name:
-	pDecideK
+	pCluster
 @description:
-	Decide number of clusters using different methods
+	Use `optCluster` to select the best number of clusters and cluster method, then perform the clustering
 @input:
-	`infile:file`: the coordinates file, if all you have is a distance/similarity file, convert it to coordinates file using `pDist2Coords`
+	`infile:file`: The input matrix file. Clustering will be performed against rows. If not, use `args.transpose` = True
 @output:
-	`kfile:file`: the output file with `K`
+	`outfile:file`: The output cluster file
+	`outdir:dir`:   The output directory containing the figures
 @args:
-	`method`:                         The method used to determine K
-	- `elbow:<ev.thres>:<inc.thres>`: Look for a bend or elbow in the sum of squared error (SSE) scree plot, see [ref](https://artax.karlin.mff.cuni.cz/r-help/library/GMD/html/elbow.html). Default: `elbow` = `elbow:.95:01`
-	- `pamk:<min>:<max>`:             You can do partitioning around medoids to estimate the number of clusters using the pamk function in the fpc package. Default: `pamk` = `pamk:2:15`
-	- `calinski:<min>:<max>`:         Calinski criterion. Default: `calinski` means `calinski:2:15`
-	- `mclust:<min>:<max>`:           Determine the optimal model and number of clusters according to the Bayesian Information Criterion for expectation-maximization, initialized by hierarchical clustering for parameterized Gaussian mixture models. [Ref1](http://www.stat.washington.edu/research/reports/2006/tr504.pdf
-#), [Ref2](http://www.jstatsoft.org/v18/i06/paper). Default: `mclust` = `mclust:2:15`
-	- `ap`:                           Affinity propagation (AP) clustering, see [ref](http://dx.doi.org/10.1126/science.1136800)
-	- `gap:<min>:<max>`:              Gap Statistic for Estimating the Number of Clusters. Default: `gap:2:10`
-	- `nbclust`:                      The [NbClust package](http://cran.r-project.org/web/packages/NbClust/index.html) provides 30 indices to determine the number of clusters in a dataset.
-	`rownames`:                       The `row.names` for `read.table` to read the input file, default: 1.
-	`header`:                         The `header` argument for `read.table` to read the input file, default: True.
-	`seed`:                           The seed for randomization, default: 0.
+	`transpose`:    Transpose the input matrix. Default: False
+	`header`:       Whether the input matrix contains header before transposing. Default: False
+	`rownames`:     Which column is the rownames before transposing. Default: 1
+	`plot`:         Whether plot the cluster. Default: True
+	`nc`:           Number of clusters to test. Default: "2:15"
+	`methods`:      The methods to test. Default: "all"
+		- Could be any of "agnes", "clara", "diana", "fanny", "hierarchical", "kmeans", "model", "pam", "som", "sota", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson"
+		- Multiple methods could be separated by comma (,), or put in a list
+		- By default, fanny, model and sota will be excluded because fanny causes error and the latter two are slow. You can manually include them if you want.
+		- Improper methods will be automatically excluded by `args.isCount`
+	`isCount`:      Whether the data is count data. Corresponding methods will be tested. Default: False
 @requires:
-	[`r-cluster`](https://cran.r-project.org/web/packages/cluster/index.html) if `gap` method used
-	[`r-GMD`](https://cran.r-project.org/web/packages/GMD/index.html) if `elbow` method userd
-	[`r-fpc`](https://cran.r-project.org/web/packages/fpc/index.html) if `pamk` method used
-	[`r-vegan`](https://cran.r-project.org/web/packages/vegan/index.html) if `calinski` method used
-	[`r-mclust`](https://cran.r-project.org/web/packages/mclust/index.html) if `mclust` method used
-	[`r-apcluster`](https://cran.r-project.org/web/packages/apcluster/index.html) if `ap` method used
-	[`r-NbClust`](https://cran.r-project.org/web/packages/NbClust/index.html) if `nbclust` method used
+	[`r-optCluster`](https://rdrr.io/cran/optCluster/man/optCluster.html)
+	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
 """
-pDecideK = proc()
-pDecideK.input   = "infile:file"
-pDecideK.output  = "kfile:file:{{infile | fn}}-K.txt"
-pDecideK.args    = { 'method': 'elbow', 'rownames': 1, 'header': True, 'seed': 0 }
-pDecideK.lang    = "Rscript"
-pDecideK.script  = """
-set.seed ({{args.seed}})
-library ('factoextra')
-data = read.table ("{{infile}}", row.names={{args.rownames}}, header={{args.header | Rbool }}, check.names=F)
-data = data[, apply(data, 2, sd)!=0, drop=F]
-k = 0
-parseK = function (k) {
-	parts = noquote (unlist(strsplit(k, ":")))
-	return (c(as.numeric(parts[2]), as.numeric(parts[3])))
+pCluster                = proc (desc = 'Use `optCluster` to select the best number of clusters and cluster method, then perform the clustering.')
+pCluster.input          = 'infile:file'
+pCluster.output         = 'outfile:file:{{infile | fn}}.cluster/clusters.txt, outdir:dir:{{infile | fn}}.cluster'
+pCluster.args.transpose = False
+pCluster.args.header    = False
+pCluster.args.rownames  = 1
+pCluster.args.plot      = True
+pCluster.args.nc        = "2:15"
+# "agnes", "clara", "diana", "fanny", "hierarchical", "kmeans", "model", "pam", "som", "sota", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson"
+# Note fanny reports error and the algorithm cannot go further.
+# It is excluded by default, you can add it manually
+# model and sota are excluded because they are slow
+# You can also manually add them
+pCluster.args.methods   = 'all'
+pCluster.args.isCount   = False
+pCluster.lang           = 'Rscript'
+pCluster.script         = """
+library(optCluster)
+
+d = read.table ("{{infile}}", sep="\\t", header={{args.header | Rbool}}, row.names={{args.rownames}}, check.names=F)
+if ({{args.transpose | Rbool}}) {
+	d = t(d)
 }
-argsk = "{{args.method}}"
-if (startsWith (argsk, "elbow")) {
-	library ('GMD')
-	if (argsk == "elbow") argsk = "elbow:.95:.01"
-	parts = parseK (argsk)
-	d     = dist (data)
-	cs    = css.hclust (d)
-	elb   = elbow.batch(cs, ev.thres = parts[1], inc.thres = parts[2])
-	k     = elb$k
-} else if (startsWith (argsk, "pamk")) {
-	library(fpc)
-	if (argsk == 'pamk') argsk = "pamk:2:15"
-	parts = parseK (argsk)
-	p     = pamk (data, krange=parts[1]:parts[2])
-	k     = p$nc
-} else if (startsWith (argsk, "calinski")) {
-	require(vegan)
-	if (argsk == 'calinski') argsk = "calinski:2:15"
-	parts = parseK (argsk)
-	fit   = cascadeKM(scale(data, center = TRUE,  scale = TRUE), parts[1], parts[2], iter = 1000)
-	k     = as.numeric(which.max(fit$results[2,]))
-} else if (startsWith (argsk, "mclust")) {
-	library(mclust)
-	if (argsk == 'mclust') argsk = "mclust:2:15"
-	parts = parseK (argsk)
-	d_cl  = Mclust(as.matrix(data), G=parts[1]:parts[2])
-	k     = dim(d_cl$z)[2]
-} else if (startsWith (argsk, "ap")) {
-	library(apcluster)
-	apcl  = apcluster(negDistMat(r=2), data)
-	k     = length(apcl@clusters)
-} else if (startsWith (argsk, "gap")) {
-	library (cluster)
-	if (argsk == 'gap') argsk = "gap:2:15"
-	parts = parseK (argsk)
-	tabs  = clusGap(data, kmeans, parts[2], B = mean(10*parts[2], 500))
-	tabs  = tabs$Tab
-	for (i in parts[1]:(parts[2]-1)) {
-		k = i
-		if (tabs[i+1, "gap"] - tabs[i, "gap"] < 0) break
-	}
-} else if (startsWith (argsk, "nbclust")) {
-	library(NbClust)
-	if (argsk == 'nbclust') argsk = "nbclust:2:15"
-	parts = parseK (argsk)
-	nb    = NbClust(data, diss=NULL, distance = "euclidean", 
-					min.nc=parts[1], max.nc=parts[2], method = "kmeans")
-	nb    = nb$Best.nc[1, ]
-	nb    = as.data.frame (table(nb))
-	k     = nb[which.max (nb$Freq), 1]
+names = rownames(d)
+methods = {{args.methods | lambda x: 'c("'+ '","'.join(x) +'")' if isinstance(x, list) else ('"all"' if x == 'all' else 'c("'+ '","'.join(map(lambda y: y.strip(), x.split(','))) +'")')}}
+if (methods == 'all') {
+	methods = c("agnes", "clara", "diana", "hierarchical", "kmeans", "pam", "som", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson")
+}
+if ({{args.isCount | Rbool}}) {
+	methods = intersect(c("em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson"), methods)
 } else {
-	k     = as.numeric(argsk)
+	methods = intersect(c("agnes", "clara", "diana", "hierarchical", "kmeans", "model", "pam", "som", "sota", "fanny"), methods)
 }
-k         = min (nrow(data), k)
-write (k, "{{kfile}}")
-"""
+ret = optCluster(d, {{args.nc}}, clMethods = methods, countData = {{args.isCount | Rbool}}, clVerbose = T, rankVerbose = T)
+ret = optAssign(ret)
 
-
-
-"""
-@name:
-	pKMeans
-@description:
-	Do k-means clustering
-@input:
-	`infile:file`:    The input coordinates of the points.
-	`k`:              Number of clusters, it could also be a file with the number in it.
-@output:
-	`outdir:dir`: The output of final results
-@args:
-	`rownames`:       The `row.names` for `read.table` to read the input file, default: 1.
-	`header`:         The `header` argument for `read.table` to read the input file, default: True.
-	`algorithm`:      The `algorithm` argument for `kmeans`, default "Hartigan-Wong" (could also be "Lloyd", "Forgy", "MacQueen")
-	`niter`:          The `max.iter` argument for `kmeans`, default: 10.
-	`nstart`:         The `nstart` argument for `kmeans`, default: 25.
-	`caption`:        The caption for the `fviz_cluster`, default: "K-means with K=%k%".
-@requires:
-	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-"""
-pKMeans = proc ()
-pKMeans.input   = 'infile:file, k'
-pKMeans.output  = 'outdir:dir:{{infile | fn}}.kmeans'
-pKMeans.args    = { 'rownames': 1, 'header': True, 'algorithm': 'Hartigan-Wong', 'niter': 10, 'nstart': 25, 'caption': 'K-means with K=%K%' }
-pKMeans.lang    = 'Rscript'
-pKMeans.script  = """
-library ('factoextra')
-data      = read.table ("{{infile}}", row.names={{args.rownames}}, header={{args.header | Rbool }}, check.names=F)
-data      = data[, apply(data, 2, sd)!=0, drop=F]
-k         = as.numeric ("{{k}}")
-if (is.na (k)) {
-	kf    = "{{k}}"
-	k     = as.numeric (readChar (kf, file.info(kf)$size))
+outfile = "{{outdir}}/clusters.txt"
+metfile = "{{outdir}}/method.txt"
+outfig  = "{{outdir}}/clusters.png"
+outdir  = "{{outdir}}"
+clusters = matrix(ret$cluster, ncol=1)
+rownames(clusters) = names
+write.table (clusters, outfile, row.names=T, sep="\\t", quote=F, col.names=F)
+write.table (ret$method, metfile, row.names=F, sep="\\t", quote=F, col.names=F)
+if ({{args.plot | Rbool}}) {
+	library(factoextra)
+	pdata = list()
+	pdata$data = d
+	pdata$cluster = ret$cluster
+	png (file = outfig, res=300, width=2000, height=2000)
+	print (fviz_cluster(pdata, data=d))
+	dev.off()
 }
-km        = kmeans (data, k, iter.max={{args.niter}}, nstart="{{args.nstart}}", algorithm="{{args.algorithm}}")
-clustfile = file.path ("{{outdir}}", "cluster.txt")
-write.table (km$cluster, clustfile, quote=F, col.names = F, sep="\\t")
-clustfig  = file.path ("{{outdir}}", "cluster.png")
-png (file = clustfig)
-print(fviz_cluster (km, data=data, main = gsub("%K%", k, "{{args.caption}}")))
-dev.off()
-"""
-
-"""
-@name:
-	pPamk
-@description:
-	Do clustering using [fpc::pamk](https://www.rdocumentation.org/packages/fpc/versions/2.1-10/topics/pamk)
-@input:
-	`infile:file`:  The input coordinate file
-@output:
-	`outdir:dir`:   The output directory
-@args:
-	`rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
-	`header`:       The `header` argument for `read.table` to read the input file, default: True.
-	`min`:          The min # clusters to try, default: 2
-	`max`:          The max # clusters to try, default: 15
-	`caption`:      The caption for the `fviz_cluster`, default: "Partitioning Around Medoids (K=%K%)".
-	`seed`:         The seed for randomization, default: 0.
-@requires:
-	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-	[`r-fpc`](https://cran.r-project.org/web/packages/fpc/index.html)
-"""
-pPamk = proc()
-pPamk.input    = "infile:file"
-pPamk.output   = "outdir:dir:{{infile | fn}}.pamk"
-pPamk.args     = {'rownames': 1, 'header': True, "min":2, "max":15, "seed":0, "caption": "Partitioning Around Medoids (K=%k%)"}
-pPamk.lang     = "Rscript"
-pPamk.script   = """
-library(fpc)
-library(factoextra)
-data = read.table ("{{infile}}", row.names={{args.rownames}}, header={{args.header | Rbool }}, check.names=F)
-data = data[, apply(data, 2, sd)!=0, drop=F]
-p = pamk (data, krange={{args.min}}:{{args.max}}, seed={{args.seed}})
-p$pamobject$data = data
-clustfile = file.path ("{{outdir}}", "cluster.txt")
-write.table (p$pamobject$clustering, clustfile, quote=F, col.names = F, sep="\\t")
-clustfig  = file.path ("{{outdir}}", "cluster.png")
-png (file = clustfig)
-print (fviz_cluster (p$pamobject, main = gsub("%K%", p$nc, "{{args.caption}}")))
-dev.off()
-"""
-
-"""
-@name:
-	pClara
-@description:
-	CLARA is a partitioning method used to deal with much larger data sets (more than several thousand observations) in order to reduce computing time and RAM storage problem.
-@input:
-	`infile:file`:  The input coordinate file
-	`k`:            Number of clusters, it could also be a file with the number in it.
-@output:
-	`outdir:dir`:   The output of final results
-@args:
-	`rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
-	`header`:       The `header` argument for `read.table` to read the input file, default: True.
-	`samples`:      The `samples` argument for `clara`, default: 5.
-	`caption`:      The caption for the `fviz_cluster`, default: "CLARA Clustering with K=%k%".
-@requires:
-	[`r-cluster`](https://cran.r-project.org/web/packages/cluster/index.html)
-	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-"""
-pClara  = proc()
-pClara.input   = "infile:file, k"
-pClara.output  = 'outdir:dir:{{infile | fn}}.clara'
-pClara.args    = { 'rownames': 1, 'header': True, 'samples': 5, 'caption': 'CLARA Clustering with K=%K%' }
-pClara.lang    = 'Rscript'
-pClara.script  = """
-library ('factoextra')
-library ('cluster')
-data = read.table ("{{infile}}", row.names={{args.rownames}}, header={{args.header | Rbool }}, check.names=F)
-data = data[, apply(data, 2, sd)!=0, drop=F]
-k         = as.numeric ("{{k}}")
-if (is.na (k)) {
-	kf    = "{{k}}"
-	k     = as.numeric (readChar (kf, file.info(kf)$size))
-}
-
-clr       = clara (data, k=k, samples={{args.samples}})
-clustfile = file.path ("{{outdir}}", "cluster.txt")
-write.table (clr$cluster, clustfile, quote=F, col.names = F, sep="\\t")
-clustfig  = file.path ("{{outdir}}", "cluster.png")
-png (file = clustfig)
-labels    = colnames(data)
-print (fviz_cluster (clr, main = gsub("%K%", k, "{{args.caption}}")))
-dev.off()
 """
 
 """

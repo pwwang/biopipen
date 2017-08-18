@@ -34,7 +34,7 @@ pDownload.script    = """
 """
 pSample2SubmitterID = proc ()
 pSample2SubmitterID.input     = "dir:file, mdfile:file"
-pSample2SubmitterID.output    = "outdir:dir:out-{{#}}"
+pSample2SubmitterID.output    = "outdir:dir:{{dir | fn}}"
 pSample2SubmitterID.defaultSh = "python"
 pSample2SubmitterID.script    = """
 import json, glob, os
@@ -49,8 +49,12 @@ for sam in sam_meta:
 	if not ext:
 		ext = os.path.splitext (sam['file_name'])[1]
 	sample_ids[sam['file_name']] = sam['associated_entities'][0]['entity_submitter_id'][:15]
-
-for samfile in glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*" + ext)):
+# dir is from pFiles2Dir
+samfiles = glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*" + ext))
+# or direct dir from TCGA download
+if not samfiles:
+	samfiles = glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*", "*" + ext))
+for samfile in samfiles:
 	bn = os.path.basename (samfile)
 	if not sample_ids.has_key (bn): continue
 	newfile = os.path.join ("{{outdir}}", sample_ids[bn] + ext)
