@@ -486,15 +486,17 @@ elif {{args.tool | quote}} == 'ngm':
 @description:
 	Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
 @args:
-	`tool`:   The tool used for alignment. Default: bwa (bowtie2|ngm)
-	`bwa`:    Path of bwa, default: bwa
-	`ngm`:    Path of ngm, default: ngm
-	`bowtie2`:Path of bowtie2, default: bowtie2
+	`tool`   : The tool used for alignment. Default: bwa (bowtie2, ngm, star)
+	`bwa`    : Path of bwa, default: bwa
+	`ngm`    : Path of ngm, default: ngm
+	`star`   : Path of ngm, default: STAR
+	`bowtie2`: Path of bowtie2, default: bowtie2
 	`rg`:     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
 	- `id` will be parsed from filename with "_LX_" in it if not given
 	- `sm` will be parsed from filename
-	`ref`:    Path of reference file
-	`params`: Other params for tool, default: ''
+	`ref`    : Path of reference file
+	`refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built. Default: ''
+	`params` : Other params for tool, default: ''
 """
 pFastqPE2Sam                     = proc (desc = 'Map cleaned paired fastq file to reference genome.')
 pFastqPE2Sam.input               = "fq1:file, fq2:file"
@@ -503,10 +505,12 @@ pFastqPE2Sam.args.outformat      = "sam"
 pFastqPE2Sam.args.tool           = 'bwa'
 pFastqPE2Sam.args.bwa            = 'bwa'
 pFastqPE2Sam.args.ngm            = 'ngm'
+pFastqPE2Sam.args.star           = 'STAR'
 pFastqPE2Sam.args.bowtie2        = 'bowtie2'
 pFastqPE2Sam.args.bowtie2_build  = 'bowtie2-build'
 pFastqPE2Sam.args.rg             = {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
 pFastqPE2Sam.args.ref            = ''
+pFastqPE2Sam.args.refgene        = ''
 pFastqPE2Sam.args.nthread        = 1
 pFastqPE2Sam.args.params         = ''
 pFastqPE2Sam.args._runcmd        = runcmd.python
@@ -548,7 +552,7 @@ if {{args.tool | quote}} == 'bowtie2':
 		'{{args.bowtie2_build}} --thread {{args.nthread}} "{{ job.outdir }}/{{ args.ref | bn }}" "{{ job.outdir }}/{{ args.ref | bn }}"')
 	
 	# do mapping
-	cmd = '{{args.bowtie2}} --threads {{args.nthread}} --rg-id %s %s -x "%s" -1 "{{fq1}}" -2 "{{fq2}}" -S "{{outfile}}"' % (rg['ID'], " ".join(["--rg " + k + ":" + v for k,v in rg.items() if k!='ID']), ref)
+	cmd = '{{args.bowtie2}} {{args.params}} --threads {{args.nthread}} --rg-id %s %s -x "%s" -1 "{{fq1}}" -2 "{{fq2}}" -S "{{outfile}}"' % (rg['ID'], " ".join(["--rg " + k + ":" + v for k,v in rg.items() if k!='ID']), ref)
 	runcmd (cmd)
 
 elif {{args.tool | quote}} == 'bwa':
@@ -562,7 +566,7 @@ elif {{args.tool | quote}} == 'bwa':
 		'{{args.bwa}} index "{{ job.outdir }}/{{ args.ref | bn }}"')
 			
 	# do mapping
-	cmd = '{{args.bwa}} mem -t {{args.nthread}} -R "@RG\\\\tID:%s\\\\t%s" "%s" "{{fq1}}" "{{fq2}}" > "{{outfile}}"' % (rg['ID'], "\\\\t".join([k+':'+v for k,v in rg.items() if k!='ID']), ref)
+	cmd = '{{args.bwa}} mem {{args.params}} -t {{args.nthread}} -R "@RG\\\\tID:%s\\\\t%s" "%s" "{{fq1}}" "{{fq2}}" > "{{outfile}}"' % (rg['ID'], "\\\\t".join([k+':'+v for k,v in rg.items() if k!='ID']), ref)
 	runcmd (cmd)
 
 elif {{args.tool | quote}} == 'ngm':
@@ -579,6 +583,21 @@ elif {{args.tool | quote}} == 'ngm':
 	b = ""
 	if {{args.outformat | quote}} == 'bam':
 		b = "-b"
-	cmd = '{{args.ngm}} -1 "{{fq1}}" -2 "{{fq2}}" -r "%s" -o "{{outfile}}" %s --rg-id %s --rg-sm %s --rg-lb %s --rg-pl %s --rg-pu %s -t {{args.nthread}}' % (ref, b, rg['ID'], rg['SM'], rg['LB'], rg['PL'], rg['PU'])
+	cmd = '{{args.ngm}} {{args.params}} -1 "{{fq1}}" -2 "{{fq2}}" -r "%s" -o "{{outfile}}" %s --rg-id %s --rg-sm %s --rg-lb %s --rg-pl %s --rg-pu %s -t {{args.nthread}}' % (ref, b, rg['ID'], rg['SM'], rg['LB'], rg['PL'], rg['PU'])
+	runcmd (cmd)
+
+elif {{args.tool | quote}} == 'star':
+	# check reference index
+	ref = buildArgIndex (
+		{{#}}, 
+		ref, 
+		map(lambda x: path.join("{{args.ref | prefix}}.star", x), ["chrLength.txt", "chrNameLength.txt", "chrName.txt", "chrStart.txt", "exonGeTrInfo.tab", "exonInfo.tab", "geneInfo.tab", "Genome", "genomeParameters.txt", "SA", "SAindex", "sjdbInfo.txt", "sjdbList.fromGTF.out.tab", "sjdbList.out.tab", "transcriptInfo.tab"]), 
+		'mkdir -p "{{args.ref | prefix}}.star"; {{args.star}} --runMode genomeGenerate --genomeDir "{{args.ref | prefix}}.star" --genomeFastaFiles "{{args.ref}}" --sjdbOverhang 100 --sjdbGTFfile "{{args.refgene}}" --runThreadN {{args.nthread}}',
+		"{{ proc.workdir }}",
+		'mkdir -p "{{job.outdir}}/{{args.ref | fn}}.star"; {{args.star}} --runMode genomeGenerate --genomeDir "{{job.outdir}}/{{args.ref | fn}}.star" --genomeFastaFiles "{{job.outdir}}/{{args.ref | bn}}" --sjdbOverhang 100 --sjdbGTFfile "{{args.refgene}}" --runThreadN {{args.nthread}}')
+	refDir = "{{args.ref | prefix}}.star" if ref == "{{args.ref}}" else "{{job.outdir}}/{{args.ref | fn}}.star"
+	rfcmd  = "zcat" if "{{fq1}}".endswith('.gz') else 'bzcat' if "{{fq1}}".endswith('.bz2') else 'cat'
+	
+	cmd = '{{args.star}} {{args.params}} --genomeDir "%s" --readFilesIn "{{fq1}}" "{{fq2}}" --readFilesCommand %s --readNameSeparator . --outFileNamePrefix "{{job.outdir}}/" --outSAMtype {{args.outformat | .upper()}}' % (refDir, rfcmd)
 	runcmd (cmd)
 """

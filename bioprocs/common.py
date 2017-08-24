@@ -143,7 +143,9 @@ done
 pCbindList = proc ()
 pCbindList.input  = "indir:file"
 pCbindList.output = "outfile:file:{{indir | fn}}.mat_{{#}}.txt"
-pCbindList.args   = {"header": False, "na": "0"}
+pCbindList.args.header = False
+pCbindList.args.na     = 0
+pCbindList.args.pattern= '*'
 pCbindList.lang   = "Rscript"
 pCbindList.script = """
 cbind.fill = function (x1, x2) {
@@ -160,7 +162,7 @@ cbind.fill = function (x1, x2) {
 setwd ("{{indir}}")
 data   = NULL
 header = {{args.header | Rbool}}
-for (fn in list.files()) {
+for (fn in Sys.glob({{args.pattern | quote}})) {
 	x = read.table (fn, header = header, row.names=1, check.names=F, sep="\\t")
 	if (!header) {
 		colnames(x) = c(unlist(strsplit(fn, ".", fixed=T))[1])

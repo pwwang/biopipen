@@ -2,12 +2,12 @@ import os, sys, unittest, shutil, addPath
 
 from pyppl import pyppl, channel, proc, doct
 from bioprocs.fastx import pFastqPESim, pFastqPE2Sam, pFastqSE2Sam
-from bioprocs.sambam import pSam2Bam, pBamMarkdup, pBamRecal, pBamReadGroup, pBamReorder, pBamMerge, pBam2Gmut, pBamPair2Smut, pBam2Cnv, pBamStats
+from bioprocs.sambam import pSam2Bam, pBamMarkdup, pBamRecal, pBamReadGroup, pBamReorder, pBamMerge, pBam2Gmut, pBamPair2Smut, pBam2Cnv, pBamStats, pBam2FastqPE, pBam2FastqSE
 from bioprocs.common import pFiles2List
 from bioprocs.web import pDownloadGet
 from bioaggrs import params
 
-
+params = params.toDoct()
 unittest.TestLoader.sortTestMethodsUsing = lambda _, x, y: cmp(x, y)
 class TestSambam (unittest.TestCase):
 	
@@ -35,6 +35,8 @@ class TestSambam (unittest.TestCase):
 		pyppl().starts(pDownloadGet).run()
 			
 	def test1_pFastqPE2Sam (self):
+		self.data.fqs = []
+		
 		pFastqPESimWgsim  = pFastqPESim.copy ()
 		pFastqPESimDwgsim = pFastqPESim.copy ()
 		
@@ -46,7 +48,7 @@ class TestSambam (unittest.TestCase):
 		pFastqPESimDwgsim.args.num   = 100000
 		pFastqPESimWgsim.args.tool   = 'wgsim'
 		pFastqPESimDwgsim.args.tool  = 'dwgsim'
-		pFastqPESimWgsim.callback    = lambda p: self.data.update({'fqs': p.channel})
+		pFastqPESimWgsim.callback    = lambda p: self.data.fqs.extend(p.channel)
 		pFastqPESimDwgsim.callback   = lambda p: self.data.fqs.extend(p.channel)
 		
 		pyppl().starts(pFastqPESimWgsim, pFastqPESimDwgsim).run()
@@ -322,6 +324,40 @@ class TestSambam (unittest.TestCase):
 			pBamStats1,
 		]
 		pyppl().starts(*starts).run()
+		
+	def test7_pBam2FastqPE (self):
+		
+		pBam2FastqPEBmm       = pBam2FastqPE.copy(newid = 'pBam2FastqPETest', tag = 'biobambam')
+		pBam2FastqPEBmm.input = {pBam2FastqPE.input: self.data.bams}
+		pBam2FastqPEBmm.forks = 10
+		
+		pBam2FastqPEBtl       = pBam2FastqPEBmm.copy(newid = 'pBam2FastqPETest', tag = 'bedtools')
+		pBam2FastqPEBtl.args.tool = 'bedtools'
+		
+		pBam2FastqPEStl       = pBam2FastqPEBmm.copy(newid = 'pBam2FastqPETest', tag = 'samtools')
+		pBam2FastqPEStl.args.tool = 'samtools'
+		
+		pBam2FastqPEPcd       = pBam2FastqPEBmm.copy(newid = 'pBam2FastqPETest', tag = 'picard')
+		pBam2FastqPEPcd.args.tool = 'picard'
+		
+		pyppl().start('pBam2FastqPETest').run()
+		
+	def test7_pBam2FastqSE (self):
+		
+		pBam2FastqSEBmm       = pBam2FastqSE.copy(newid = 'pBam2FastqSETest', tag = 'biobambam')
+		pBam2FastqSEBmm.input = {pBam2FastqSE.input: self.data.bams}
+		pBam2FastqSEBmm.forks = 10
+		
+		pBam2FastqSEBtl       = pBam2FastqSEBmm.copy(newid = 'pBam2FastqSETest', tag = 'bedtools')
+		pBam2FastqSEBtl.args.tool = 'bedtools'
+		
+		pBam2FastqSEStl       = pBam2FastqSEBmm.copy(newid = 'pBam2FastqSETest', tag = 'samtools')
+		pBam2FastqSEStl.args.tool = 'samtools'
+		
+		#pBam2FastqSEPcd       = pBam2FastqSEBmm.copy(newid = 'pBam2FastqSETest', tag = 'picard')
+		#pBam2FastqSEPcd.args.tool = 'picard'
+		
+		pyppl().start('pBam2FastqSETest').run()
 		
 if __name__ == '__main__':
 	unittest.main(failfast=True)

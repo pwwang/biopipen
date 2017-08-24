@@ -178,4 +178,57 @@ plotHeatmap(mat, params)
 write.table(mat, "{{outfile | prefix}}.txt", quote=F)
 rm(mat)
 """
+
+"""
+@name:
+	pVenn
+@description:
+	Venn/UpsetR plots.
+@input:
+	`infile:file`: The input matrix
+		- format:
+		```
+			category1	category2	category3
+		[e1]	0	1	1
+		[e2]	0	0	1
+		...
+		[eN]	1	0	0
+		```
+		rownames are not necessary but colnames are.
+@output:
+	`outfile:file`: The plot
+@args:
+	`tool`: Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
+	`rownames`: Whether input file has rownames. Default: False
+	`vennParams`: Other params for `venn.diagram`. Default: {}
+	`upsetParams`: Other params for `upset`. Default: {}
+@requires:
+	[`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
+	[`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
+"""
+pVenn                  = proc(desc = 'Venn plots.')
+pVenn.input            = "infile:file"
+pVenn.output           = "outfile:file:{{infile | fn}}.venn.png"
+pVenn.args.tool        = 'auto' # upsetr or auto: <=3 venn, else upsetr
+pVenn.args.rownames    = 'NULL'
+pVenn.args.vennParams  = {}
+pVenn.args.upsetParams = {}
+pVenn.args._plotVenn   = plot.venn.r
+pVenn.args._plotUpset  = plot.upset.r
+pVenn.lang             = 'Rscript'
+pVenn.script           = """
+library(UpSetR)
+mat         = read.table ("{{infile}}", sep="\\t", header = TRUE, row.names = {{args.rownames | R}}, check.names = F)
+nc          = ncol(mat)
+cnames      = colnames(mat)
+vennParams  = {{args.vennParams | Rlist}}
+upsetParams = {{args.upsetParams | Rlist}}
+if (nc<=3 && ({{args.tool | quote}} == 'auto' || {{args.tool | quote}} == 'venn')) {
+	{{args._plotVenn}}
+	plotVenn (mat, {{outfile | quote}}, vennParams)
+} else {
+	{{args._plotUpset}}
+	plotUpset(mat, {{outfile | quote}}, upsetParams)
+}
+"""
 	

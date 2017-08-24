@@ -3,7 +3,7 @@ A set of processes to generate/process sam/bam files
 """
 
 from pyppl import proc
-from .utils import mem, runcmd, buildArgIndex, checkArgsRef, buildArgsFastaFai, buildArgsFastaDict, polling0, pollingAll
+from .utils import mem, runcmd, buildArgIndex, checkArgsRef, checkArgsRefgene, buildArgsFastaFai, buildArgsFastaDict, polling0, pollingAll
 
 """
 @name:
@@ -61,7 +61,7 @@ pSam2Bam.args.informat          = ""
 pSam2Bam.args.params            = ""
 pSam2Bam.args.mem               = "16G"	
 pSam2Bam.args._mem2M            = mem.toM.python
-pSam2Bam.args._memtoJava         = mem.toJava.python
+pSam2Bam.args._memtoJava        = mem.toJava.python
 pSam2Bam.args._runcmd           = runcmd.python
 pSam2Bam.lang                   = "python"
 pSam2Bam.script                 = """
@@ -116,12 +116,6 @@ try:
 				if infile != {{infile | quote}}:
 					remove (infile)
 				infile = bamfile
-			if doIndex:
-				if doSort and path.exists (infile + '.bai'):
-					move (infile + '.bai', {{idxfile | quote}})
-				else:
-					cmd = '{{args.sambamba}} index -t {{args.nthread}} "%s" "%s"' % (infile, {{idxfile | quote}})
-					runcmd (cmd)
 			if doMarkdup:
 				rmdup = ""
 				if doRmdup:
@@ -132,9 +126,15 @@ try:
 				if infile != {{infile | quote}}:
 					remove (infile)
 				infile = bamfile
+			if doIndex:
+				if path.exists (infile + '.bai'):
+					move (infile + '.bai', {{idxfile | quote}})
+				else:
+					cmd = '{{args.sambamba}} index -t {{args.nthread}} "%s" "%s"' % (infile, {{idxfile | quote}})
+					runcmd (cmd)
 			if infile != outfile:
 				if path.exists(infile + '.bai'):
-					remove (infile + '.bai')
+					move (infile + '.bai', outfile + '.bai')
 				move (infile, outfile)
 	elif tool == 'samtools':
 		if not (doSort or doIndex or doMarkdup or doRmdup):
@@ -153,9 +153,6 @@ try:
 				if infile != {{infile | quote}}:
 					remove (infile)
 				infile = bamfile
-			if doIndex:
-				cmd = '{{args.samtools}} index "%s" "%s"' % (bamfile, {{idxfile | quote}})
-				runcmd (cmd)
 			if doMarkdup or doRmdup:
 				bamfile = "{{job.outdir}}/{{infile | fn}}.dedup.bam"
 				cmd = '{{args.samtools}} rmdup "%s" "%s"' % (infile, bamfile)
@@ -163,7 +160,12 @@ try:
 				if infile != {{infile | quote}}:
 					remove (infile)
 				infile = bamfile
+			if doIndex:
+				cmd = '{{args.samtools}} index "%s" "%s"' % (bamfile, {{idxfile | quote}})
+				runcmd (cmd)
 			if infile != outfile:
+				if path.exists(infile + '.bai'):
+					move (infile + '.bai', outfile + '.bai')
 				move (infile, outfile)
 	elif tool == 'picard':
 		mem = memtoJava({{ args.mem | quote }})
@@ -179,9 +181,6 @@ try:
 				if infile != {{infile | quote}}:
 					remove (infile)
 				infile = bamfile
-			if doIndex:
-				cmd = '{{args.picard}} BuildBamIndex %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s"' % (mem, tmpdir, tmpdir, infile, {{idxfile | quote}})
-				runcmd (cmd)
 			if doMarkdup:
 				rmdup = ""
 				if doRmdup:
@@ -193,7 +192,12 @@ try:
 				if infile != {{infile | quote}}:
 					remove (infile)
 				infile = bamfile
+			if doIndex:
+				cmd = '{{args.picard}} BuildBamIndex %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s"' % (mem, tmpdir, tmpdir, infile, {{idxfile | quote}})
+				runcmd (cmd)
 			if infile != outfile:
+				if path.exists(infile + '.bai'):
+					move (infile + '.bai', outfile + '.bai')
 				move (infile, outfile)
 	
 	if not path.exists ({{idxfile | quote}}):
@@ -1149,7 +1153,7 @@ if ({{args.plot | Rbool}}) {
 	##### start plotting
 	if ({{#}} == 0) {
 	
-		bsfiles = Sys.glob("{{proc.workdir}}/*/output/*.stat.txt")
+		bsfiles = Sys.glob("{{proc.workdir}}/*/output/*/*.stat.txt")
 		means   = matrix(ncol=1, nrow=length(bsfiles))
 		chrs    = NULL
 		
@@ -1202,4 +1206,216 @@ if ({{args.plot | Rbool}}) {
 } else {
 	runcmd (cmd)
 }
+"""
+
+"""
+@name:
+	pBam2FastqPE
+@description:
+	Convert sam/bam files to pair-end fastq files.
+@input:
+	`infile:file`: The sam/bam file. 
+		- Sam files only available for biobambam, picard
+@output:
+	`fqfile1:file`: The 1st match of paired reads
+	`fqfile2:file`: The 2nd match of paired reads
+@args:
+	`tool`                : The tool to use. Default: biobambam (bedtools, samtools, picard)
+	`biobambam_bamtofastq`: The path of bamtofastq of biobambam. Default: bamtofastq
+	`bedtools`            : The path of bedtools. Default: bedtools
+	`samtools`            : The path of samtools. Default: samtools
+	`picard`              : The path of picard. Default: picard
+	`mem`                 : The memory to be used by picard. Default: 8G
+	`gz`                  : Whether gzip the output files. Default: True
+	`params`:             : Other params for `tool`. Default: ''
+	`tmpdir`              : The tmpdir. Default: `__import__('tempfile').gettempdir()`
+@requires:
+	[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+	[biobambam](https://github.com/gt1/biobambam2)
+	[samtools](https://github.com/samtools/samtools)
+	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+"""
+pBam2FastqPE                           = proc (desc = 'Convert bam files to pair-end fastq files.')
+pBam2FastqPE.input                     = "infile:file"
+pBam2FastqPE.output                    = [
+	"fqfile1:file:{{ infile | fn | fn | fn }}_1.fq{{args.gz | lambda x: '.gz' if x else ''}}", 
+	"fqfile2:file:{{ infile | fn | fn | fn }}_2.fq{{args.gz | lambda x: '.gz' if x else ''}}"
+]
+pBam2FastqPE.args.tool                 = 'bedtools'
+pBam2FastqPE.args.biobambam_bamtofastq = 'bamtofastq'
+pBam2FastqPE.args.bedtools             = 'bedtools'
+pBam2FastqPE.args.samtools             = 'samtools'
+pBam2FastqPE.args.picard               = 'picard'
+pBam2FastqPE.args.mem                  = '8G' # only for picard
+pBam2FastqPE.args.gz                   = True
+pBam2FastqPE.args.params               = ''
+pBam2FastqPE.args.tmpdir               = __import__('tempfile').gettempdir() 
+pBam2FastqPE.args._runcmd              = runcmd.python
+pBam2FastqPE.args._memtoJava           = mem.toJava.python
+pBam2FastqPE.lang                      = 'python'
+pBam2FastqPE.script                    = """
+from os import makedirs, path
+
+tmpdir = path.join({{args.tmpdir | quote}}, "tmp.{{proc.id}}.{{proc.tag}}.{{proc.suffix}}.{{job.index}}")
+if not path.exists(tmpdir):
+	makedirs(tmpdir)
+
+infile  = {{infile | quote}}
+fqfile1 = {{fqfile1 | quote}}
+fqfile2 = {{fqfile2 | quote}}
+if {{args.gz | bool}}:
+	fqfile1 = fqfile1[:-3]
+	fqfile2 = fqfile2[:-3]
+
+{{args._runcmd}}
+{{args._memtoJava}}
+
+params  = {{args.params | quote}}
+tool    = {{args.tool | quote}}
+try:
+	if tool == 'biobambam':
+		params += ' gz=0'
+		params += ' F="%s"' % fqfile1
+		params += ' F2="%s"' % fqfile2
+		params += ' filename="%s"' % infile
+		if infile.endswith('.sam'):
+			params += ' inputformat=sam'
+		params += ' T="%s"' % path.join(tmpdir, infile + '.tmp')
+		cmd = '{{args.biobambam_bamtofastq}} %s' % params
+		runcmd (cmd)
+	elif tool == 'bedtools':
+		cmd = '{{args.bedtools}} bamtofastq %s -i "%s" -fq "%s" -fq2 "%s"' % (params, infile, fqfile1, fqfile2)
+		runcmd (cmd)
+	elif tool == 'samtools':
+		cmd = '{{args.samtools}} fastq %s -t -1 "%s" -2 "%s" "%s"' % (params, fqfile1, fqfile2, infile)
+		runcmd (cmd)
+	elif tool == 'picard':
+		mem = memtoJava({{ args.mem | quote }})
+		cmd = '{{args.picard}} SamToFastq %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" F="%s" F2="%s"' % (mem, tmpdir, tmpdir, infile, fqfile1, fqfile2)
+		runcmd (cmd)
+		
+	if {{args.gz | bool}}:
+		runcmd ('gzip "%s"' % (fqfile1))
+		runcmd ('gzip "%s"' % (fqfile2))
+except:
+	stderr.write ("Job failed: %s" % str(ex))
+	raise
+finally:
+	from shutil import rmtree
+	rmtree (tmpdir)
+"""
+
+"""
+@name:
+	pBam2FastqSE
+@description:
+	Convert sam/bam files to single-end fastq files.
+@input:
+	`infile:file`: The sam/bam file. 
+		- Sam files only available for biobambam, picard
+@output:
+	`fqfile:file`: The fastq file
+@args:
+	`tool`                : The tool to use. Default: biobambam (bedtools, samtools, picard)
+	`biobambam_bamtofastq`: The path of bamtofastq of biobambam. Default: bamtofastq
+	`bedtools`            : The path of bedtools. Default: bedtools
+	`samtools`            : The path of samtools. Default: samtools
+	`picard`              : The path of picard. Default: picard
+	`mem`                 : The memory to be used by picard. Default: 8G
+	`gz`                  : Whether gzip the output files. Default: True
+	`params`:             : Other params for `tool`. Default: ''
+	`tmpdir`              : The tmpdir. Default: `__import__('tempfile').gettempdir()`
+@requires:
+	[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+	[biobambam](https://github.com/gt1/biobambam2)
+	[samtools](https://github.com/samtools/samtools)
+	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+"""
+pBam2FastqSE                           = proc (desc = 'Convert bam files to single-end fastq files.')
+pBam2FastqSE.input                     = "infile:file"
+pBam2FastqSE.output                    = "fqfile:file:{{ infile | fn | fn | fn }}.fq{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2FastqSE.args.tool                 = 'biobambam'
+pBam2FastqSE.args.biobambam_bamtofastq = 'bamtofastq'
+pBam2FastqSE.args.bedtools             = 'bedtools'
+pBam2FastqSE.args.samtools             = 'samtools'
+pBam2FastqSE.args.picard               = 'picard'
+pBam2FastqSE.args.mem                  = '8G' # only for picard
+pBam2FastqSE.args.gz                   = True
+pBam2FastqSE.args.params               = ''
+pBam2FastqSE.args.tmpdir               = __import__('tempfile').gettempdir() 
+pBam2FastqSE.args._runcmd              = runcmd.python
+pBam2FastqSE.args._memtoJava           = mem.toJava.python
+pBam2FastqSE.lang                      = 'python'
+pBam2FastqSE.script                    = """
+from os import makedirs, path
+
+tmpdir = path.join({{args.tmpdir | quote}}, "tmp.{{proc.id}}.{{proc.tag}}.{{proc.suffix}}.{{job.index}}")
+if not path.exists(tmpdir):
+	makedirs(tmpdir)
+
+infile  = {{infile | quote}}
+fqfile  = {{fqfile | quote}}
+if {{args.gz | bool}}:
+	fqfile = fqfile[:-3]
+
+{{args._runcmd}}
+{{args._memtoJava}}
+
+params  = {{args.params | quote}}
+tool    = {{args.tool | quote}}
+try:
+	if tool == 'biobambam':
+		params += ' gz=0'
+		params += ' S="%s"' % fqfile
+		params += ' filename="%s"' % infile
+		if infile.endswith('.sam'):
+			params += ' inputformat=sam'
+		params += ' T="%s"' % path.join(tmpdir, infile + '.tmp')
+		cmd = '{{args.biobambam_bamtofastq}} %s' % params
+		runcmd (cmd)
+	elif tool == 'bedtools':
+		cmd = '{{args.bedtools}} bamtofastq %s -i "%s" -fq "%s"' % (params, infile, fqfile)
+		runcmd (cmd)
+	elif tool == 'samtools':
+		cmd = '{{args.samtools}} fastq %s -t -s "%s" "%s"' % (params, fqfile, infile)
+		runcmd (cmd)
+	elif tool == 'picard':
+		mem = memtoJava({{ args.mem | quote }})
+		cmd = '{{args.picard}} SamToFastq %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" F="%s"' % (mem, tmpdir, tmpdir, infile, fqfile)
+		runcmd (cmd)
+		
+	if {{args.gz | bool}}:
+		runcmd ('gzip "%s"' % (fqfile))
+except:
+	stderr.write ("Job failed: %s" % str(ex))
+	raise
+finally:
+	from shutil import rmtree
+	rmtree (tmpdir)
+"""
+
+"""
+@name:
+	pBam2Counts
+"""
+pBam2Counts = proc (desc = 'Extract read counts from RNA-seq bam files.')
+pBam2Counts.input = 'infile:file'
+pBam2Counts.output = 'outfile:file:{{infile | fn}}.counts'
+pBam2Counts.args.tool = 'htseq'
+pBam2Counts.args.htseq_count = 'htseq-count'
+pBam2Counts.args.params = ''
+pBam2Counts.args.refgene = ''
+pBam2Counts.args._runcmd = runcmd.python
+pBam2Counts.beforeCmd = checkArgsRefgene.bash
+pBam2Counts.lang = 'python'
+pBam2Counts.script = """
+{{args._runcmd}}
+
+tool = '{{args.tool}}'
+if tool == 'htseq':
+	samtype = ''
+	if {{infile | quote}}.endswith('.bam'):
+		samtype = '-f bam'
+	cmd = '{{args.htseq-count}} {{args.params}} -r pos %s "{{infile}}" "{{args.refgene}}" > "{{outfile}}"' % (samtype)
+	runcmd (cmd)
 """

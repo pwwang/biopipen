@@ -17,6 +17,7 @@ pExpdir2Matrix = proc()
 pExpdir2Matrix.input           = "expdir:file"
 pExpdir2Matrix.output          = "expfile:file:{{expdir | fn}}.matrix.txt"
 pExpdir2Matrix.lang            = "Rscript"
+pExpdir2Matrix.args.pattern    = '*'
 pExpdir2Matrix.args.header     = False
 pExpdir2Matrix.args.excl       = ["^Sample", "^Composite", "^__"]
 pExpdir2Matrix.args._cbindFill = cbindFill.r
@@ -36,7 +37,7 @@ isGoodRname = function(rname) {
 isGoodRname = Vectorize(isGoodRname)
 
 exp = c()
-for (efile in list.files()) {
+for (efile in Sys.glob({{args.pattern | quote}})) {
 	write(paste("pyppl.log: Reading", efile, "..."), stderr())
 	sample = tools::file_path_sans_ext(basename(efile))
 	if (grepl ('.gz$', efile)) efile = gzfile (efile)
@@ -71,10 +72,13 @@ pRseqDEG.args.displot = True
 pRseqDEG.args.fcplot  = True
 pRseqDEG.args.heatmap = False
 pRseqDEG.args.listall = False
+pRseqDEG.args.batches = False # True to be the same as the groups, otherwise, list of batches: ["s1,s2,...", "s3,s4,..."]
 pRseqDEG.args._plotHeatmap = plot.heatmap.r
 pRseqDEG.lang         = "Rscript"
 pRseqDEG.script       = """
-
+# require sva to remove batch effect
+require('sva')
+trim <- function (x) gsub("^\\\\s+|\\\\s+$", "", x)
 # get the exp data
 ematrix    = read.table ("{{efile}}",  header=T, row.names = 1, check.names=F, sep="\\t")
 cnames     = colnames(ematrix)
@@ -96,6 +100,9 @@ if (NA %in% group2idx) {
 } 
 
 ematrix    = ematrix[, c(group1idx, group2idx), drop=FALSE]
+group1idx  = 1:length(group1idx)
+group2idx  = (length(group1idx) + 1):ncol(ematrix)
+cnames     = colnames(ematrix)
 n1         = length(group1idx)
 n2         = length(group2idx)
 paired     = {{args.paired | Rbool}}
@@ -105,6 +112,26 @@ tool       = {{args.tool | quote}}
 
 if (paired && n1 != n2) {
 	stop(paste("Flag paired is TRUE, but number of samples is different in two groups (", n1, n2, ").", sep=""))
+}
+
+# get batches
+batches    = NULL
+argBatches = {{args.batches | lambda x: 'TRUE' if x is True else 'FALSE' if x is False else 'c('+ ','.join(['"'+ v +'"' for v in x]) +')'}}
+print(paste('pyppl.log:', argBatches), stderr())
+if (!is.logical(argBatches)) {
+	batches = vector(length = length(cnames))
+	for (i in 1:length(argBatches)) {
+		b     = argBatches[i]
+		bname = paste('B', i, sep='')
+		ss    = sapply(unlist(strsplit(b, ",", fixed=T)), trimws)
+		sidx  = as.integer(ss)
+		if (NA %in% sidx) {
+			sidx = match(ss, cnames)
+		}
+		batches[sidx] = bname
+	}
+} else if (argBatches) {
+	batches = c(rep(group1name, n1), rep(group2name, n2))
 }
 
 pairs = vector(mode="numeric")
@@ -129,7 +156,14 @@ if (tool == "edger") {
 	dge    = DGEList(counts = ematrix, group = group)
 	dge    = dge[rowSums(cpm(dge)>filters[1]) >= filters[2], ]
 	dge$samples$lib.size = colSums(dge$counts)
-	dge    = calcNormFactors(dge, "TMM")
+	dge    = calcNormFactors(dge)
+	
+	if (!is.null(batches)) {
+		mod1 = model.matrix(~batches)
+		mod0 = mod1[,1]
+		svas   = svaseq(cpm(dge), mod1, mod0)
+		design = cbind(design, svas$sv)
+	}
 	
 	disp   = estimateDisp (dge, design)
 	fit    = glmFit (disp, design)
@@ -173,9 +207,9 @@ if (tool == "edger") {
 if ({{args.heatmap | Rbool}}) {
 	hmap = file.path ("{{outdir}}", "heatmap.png")
 	{{args._plotHeatmap}}
-	tmatrix    = ematrix[degs$names, 1:length(group1idx)]
+	tmatrix    = ematrix[degs$names, group1idx]
 	tmatrix    = tmatrix + 1
-	nmatrix    = ematrix[degs$names, (length(group1idx)+1):ncol(ematrix)]
+	nmatrix    = ematrix[degs$names, group2idx]
 	nmatrix    = rowSums(nmatrix)/ncol(nmatrix)
 	nmatrix    = nmatrix + 1
 	log2fc     = log2(apply(tmatrix, 2, function(col) col/nmatrix))
