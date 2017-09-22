@@ -1,12 +1,13 @@
-from pyppl import proc
+from pyppl import Proc, Box
 from .utils import plot
+
 """
 Generate plot using given data
 """
 
 """
 @name:
-	pBoxPlot
+	pBoxplot
 @description:
 	Generate box plot
 @input:
@@ -18,18 +19,18 @@ Generate plot using given data
 	`rownames`:  `row.names` parameter for `read.table`, default: 1
 	`params`:    Other parameters for `boxplot`, default: ""
 """
-pBoxPlot = proc()
-pBoxPlot.input  = "datafile:file"
-pBoxPlot.output = "outpng:file:{{datafile | fn}}.png"
-pBoxPlot.lang   = "Rscript"
-pBoxPlot.args   = {"header": True, "rownames": 1, "params": ""}
-pBoxPlot.script = """
-png (file = "{{outpng}}", res=300, width=2000, height=2000)
-data = read.table ("{{datafile}}", sep="\\t", header={{args.header | Rbool}}, row.names={{args.rownames}}, check.names=F)
-boxplot (
-	data{{args.params | lambda x: ", " + x if x else "" }}
-)
-dev.off()
+pBoxplot                     = Proc(desc = 'Do boxplot.')
+pBoxplot.input               = "datafile:file"
+pBoxplot.output              = "outpng:file:{{in.datafile | fn}}.boxplot.png"
+pBoxplot.lang                = "Rscript"
+pBoxplot.args.header         = True
+pBoxplot.args.rownames       = 1
+pBoxplot.args.params         = Box()
+pBoxplot.tplenvs.plotBoxplot = plot.boxplot.r
+pBoxplot.script              = """
+{{plotBoxplot}}
+data = read.table ("{{in.datafile}}", sep="\\t", header={{args.header | Rbool}}, row.names={{args.rownames}}, check.names=F)
+plotBoxplot(data, {{out.outpng | quote}}, {{args.params | Rlist}})
 """
 
 """
@@ -66,7 +67,7 @@ dev.off()
 	`ylab`:   The labels for y axis. Default: colnames(mat)[2]
 	`text`:   Whether to show the text of the symbols (rownames). Default: TRUE
 """
-pScatterPlot = proc (desc = 'Scatter plots.')
+pScatterPlot = Proc(desc = 'Scatter plots.')
 pScatterPlot.input        = "infile:file"
 pScatterPlot.output       = "outfile:file:{{infile | fn}}.scatter.png"
 pScatterPlot.args.symbolsParams = {
@@ -110,25 +111,23 @@ if ({{args.text | Rbool}}) {
 dev.off()
 """
 
-pHeatmap                   = proc (desc = 'Plot heatmaps.')
-pHeatmap.input             = "infile:file"
-pHeatmap.output            = "outfile:file:{{infile | fn}}.heatmap.png"
-pHeatmap.args.params       = {
-	'border_color': "#FFFFFF",
-}
-pHeatmap.args.transpose    = False
-pHeatmap.args.header       = True
-pHeatmap.args.rownames     = 1
-pHeatmap.args.maxn         = 0
-pHeatmap.args.subset       = 'random-all' # top, both, bottom, random-both
-pHeatmap.args._plotHeatmap = plot.heatmap.r
-pHeatmap.lang              = "Rscript"
-pHeatmap.script            = """
-{{args._plotHeatmap}}
+pHeatmap                     = Proc(desc = 'Plot heatmaps.')
+pHeatmap.input               = "infile:file"
+pHeatmap.output              = "outfile:file:{{in.infile | fn}}.heatmap.png"
+pHeatmap.args.params         = Box({'border_color': "#FFFFFF"})
+pHeatmap.args.transpose      = False
+pHeatmap.args.header         = True
+pHeatmap.args.rownames       = 1
+pHeatmap.args.maxn           = 0
+pHeatmap.args.subset         = 'random-all' # top, both, bottom, random-both
+pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
+pHeatmap.lang                = "Rscript"
+pHeatmap.script              = """
+{{plotHeatmap}}
 params = {{args.params | Rlist}}
-params$filename = {{outfile | quote}}
+params$filename = {{out.outfile | quote}}
 print ("Reading data ...")
-mat = read.table ("{{infile}}", sep="\\t", header = {{args.header | Rbool}}, row.names = {{args.rownames}}, check.names = F)
+mat = read.table ("{{in.infile}}", sep="\\t", header = {{args.header | Rbool}}, row.names = {{args.rownames}}, check.names = F)
 if ({{args.transpose | Rbool}}) {
 	print ("Transposing data ...")
 	mat = t(mat)
@@ -175,8 +174,6 @@ if (nmax > maxn && maxn != 0) {
 }
 print ("Plotting data ...")
 plotHeatmap(mat, params)
-write.table(mat, "{{outfile | prefix}}.txt", quote=F)
-rm(mat)
 """
 
 """
@@ -206,7 +203,7 @@ rm(mat)
 	[`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
 	[`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
 """
-pVenn                  = proc(desc = 'Venn plots.')
+pVenn                  = Proc(desc = 'Venn plots.')
 pVenn.input            = "infile:file"
 pVenn.output           = "outfile:file:{{infile | fn}}.venn.png"
 pVenn.args.tool        = 'auto' # upsetr or auto: <=3 venn, else upsetr

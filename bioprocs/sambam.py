@@ -1416,6 +1416,6 @@ if tool == 'htseq':
 	samtype = ''
 	if {{infile | quote}}.endswith('.bam'):
 		samtype = '-f bam'
-	cmd = '{{args.htseq-count}} {{args.params}} -r pos %s "{{infile}}" "{{args.refgene}}" > "{{outfile}}"' % (samtype)
+	cmd = '{{args.htseq_count}} {{args.params}} -r pos %s "{{infile}}" "{{args.refgene}}" > "{{outfile}}"' % (samtype)
 	runcmd (cmd)
 """

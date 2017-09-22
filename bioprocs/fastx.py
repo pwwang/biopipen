@@ -2,8 +2,41 @@
 A set of processes to generate/process fastq/fasta files
 """
 
-from pyppl import proc
-from .utils import mem, runcmd, buildArgIndex, checkArgsRef
+from pyppl import Proc, Box
+from .utils import mem, runcmd, buildArgIndex, checkArgsRef, params2CmdArgs
+
+pFastqPE2Expr        = Proc(desc = 'Use Kallisto to get gene expression from pair-end fastq files.')
+pFastqPE2Expr.input  = "fqfile1:file, fqfile2:file"
+pFastqPE2Expr.output = [
+	"exprfile:file:{{in.fqfile1, in.fqfile2 | getCommonName}}/{{in.fqfile1, in.fqfile2 | getCommonName}}.expr", 
+	"outdir:dir:{{in.fqfile1, in.fqfile2 | getCommonName}}"
+]
+pFastqPE2Expr.args.params            = Box()
+pFastqPE2Expr.args.ref               = "" # only if idxfile not exists
+pFastqPE2Expr.args.idxfile           = ""
+pFastqPE2Expr.args.kallisto          = 'kallisto'
+pFastqPE2Expr.tplenvs.getCommonName  = lambda x, y, path = __import__('os').path: path.basename(path.commonprefix([x, y]))
+pFastqPE2Expr.tplenvs.runcmd         = runcmd.python
+pFastqPE2Expr.tplenvs.params2CmdArgs = params2CmdArgs.python
+pFastqPE2Expr.beforeCmd              = """
+if [[ -z "{{args.idxfile}}" ]]; then
+	echo 'Index file (args.idxfile) is required.' 1>&2
+	exit 1
+fi
+if [[ ! -e "{{args.idxfile}}" ]]; then
+	cmd='{{args.kallisto}} index -i "{{args.idxfile}}" "{{args.ref}}"' 
+	echo 'Generating kallisto index ...'
+	eval $cmd
+fi
+"""
+pFastqPE2Expr.lang                   = "python"
+pFastqPE2Expr.script                 = """
+{{params2CmdArgs}}
+{{runcmd}}
+
+cmd = '{{args.kallisto}} quant -i "{{args.idxfile}}" -o "{{out.outdir}}" %s "{{in.fqfile1}}" "{{in.fqfile2}}"' % (params2CmdArgs({{args.params | json}}))
+runcmd (cmd)
+"""
 
 """
 @name:
@@ -29,7 +62,7 @@ from .utils import mem, runcmd, buildArgIndex, checkArgsRef
 @requires:
 	[`wgsim`](https://github.com/lh3/wgsim)
 """
-pFastqPESim              = proc (desc = 'Simulate reads')
+pFastqPESim              = Proc(desc = 'Simulate reads')
 pFastqPESim.input        = "in"
 pFastqPESim.output       = "fq1:file:read{{in}}_1.fq{{args.gz | lambda x: '.gz' if x else ''}}, fq2:file:read{{in}}_2.fq{{args.gz | lambda x: '.gz' if x else ''}}"
 pFastqPESim.args.tool    = 'wgsim'
@@ -111,7 +144,7 @@ except Exception as ex:
 @requires:
 	[`fastqc`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 """
-pFastQC              = proc (desc = 'QC report for fastq file')
+pFastQC              = Proc(desc = 'QC report for fastq file')
 pFastQC.input        = "fq:file"
 pFastQC.output       = "outdir:dir:{{fq | fn | fn}}" # if it has .gz 
 pFastQC.args.tool    = 'fastqc'
@@ -154,7 +187,7 @@ except Exception as ex:
 @requires:
 	[`multiqc`](http://multiqc.info/)
 """
-pFastMC              = proc (desc = 'Multi-QC based on pFastQC')
+pFastMC              = Proc(desc = 'Multi-QC based on pFastQC')
 pFastMC.input        = "qcdir:file"
 pFastMC.output       = "outdir:dir:{{qcdir | fn}}_multiqc_{{#}}"
 pFastMC.args.tool    = 'multiqc'
@@ -216,7 +249,7 @@ except Exception as ex:
 	[`skewer`](https://github.com/relipmoc/skewer)
 	[`trimmomatic`](https://github.com/timflutre/trimmomatic)
 """
-pFastqPETrim                  = proc (desc = 'Trim pair-end reads in fastq file.')
+pFastqPETrim                  = Proc(desc = 'Trim pair-end reads in fastq file.')
 pFastqPETrim.input            = "fq1:file, fq2:file"
 pFastqPETrim.output           = [
 	"outfq1:file:{{fq1 | fn | lambda x: x.rpartition('.')[0] if x.endswith('fastq') or x.endswith('fq') else x}}.fq{{args.gz | lambda x: '.gz' if x else ''}}",
@@ -323,7 +356,7 @@ except Exception as ex:
 	[`skewer`](https://github.com/relipmoc/skewer)
 	[`trimmomatic`](https://github.com/timflutre/trimmomatic)
 """
-pFastqSETrim                  = proc (desc = 'Trim single-end reads in fastq file.')
+pFastqSETrim                  = Proc(desc = 'Trim single-end reads in fastq file.')
 pFastqSETrim.input            = "fq:file"
 pFastqSETrim.output           = "outfq:file:{{fq | fn | lambda x: x.rpartition('.')[0] if x.endswith('fastq') or x.endswith('fq') else x}}.fq{{args.gz | lambda x: '.gz' if x else ''}}"
 pFastqSETrim.lang             = "python"
@@ -395,7 +428,7 @@ except Exception as ex:
 	`ref`:    Path of reference file
 	`params`: Other params for tool, default: ''
 """
-pFastqSE2Sam                     = proc (desc = 'Map cleaned single-end fastq file to reference genome.')
+pFastqSE2Sam                     = Proc(desc = 'Map cleaned single-end fastq file to reference genome.')
 pFastqSE2Sam.input               = "fq:file"
 pFastqSE2Sam.output              = "outfile:file:{{fq | bn | lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.{{args.outformat}}"
 pFastqSE2Sam.args.outformat      = "sam"
@@ -498,7 +531,7 @@ elif {{args.tool | quote}} == 'ngm':
 	`refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built. Default: ''
 	`params` : Other params for tool, default: ''
 """
-pFastqPE2Sam                     = proc (desc = 'Map cleaned paired fastq file to reference genome.')
+pFastqPE2Sam                     = Proc(desc = 'Map cleaned paired fastq file to reference genome.')
 pFastqPE2Sam.input               = "fq1:file, fq2:file"
 pFastqPE2Sam.output              = "outfile:file:{{fq1 | bn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]*1(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.{{args.outformat}}"
 pFastqPE2Sam.args.outformat      = "sam"
@@ -522,6 +555,7 @@ import re
 from os import path, symlink
 from sys import stdout, stderr, exit
 from time import sleep
+from shutil import move
 
 {{ args._runcmd }}
 {{ args._buildArgIndex }}
@@ -600,4 +634,8 @@ elif {{args.tool | quote}} == 'star':
 	
 	cmd = '{{args.star}} {{args.params}} --genomeDir "%s" --readFilesIn "{{fq1}}" "{{fq2}}" --readFilesCommand %s --readNameSeparator . --outFileNamePrefix "{{job.outdir}}/" --outSAMtype {{args.outformat | .upper()}}' % (refDir, rfcmd)
 	runcmd (cmd)
+	
+	outfile = "{{job.outdir}}/Aligned.out.{{args.outformat}}"
+	if path.exists(outfile):
+		move (outfile, "{{outfile}}")
 """

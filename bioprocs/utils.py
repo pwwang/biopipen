@@ -1,6 +1,6 @@
-from pyppl import proc, doct
+from pyppl import Box
 
-mem = doct({
+mem = Box({
 	'toJava': {},
 	'toM': {},
 })
@@ -60,7 +60,7 @@ if 'memtoM' not in vars() or not callable(memtoM):
 			sys.exit (1)
 """
 
-runcmd = doct()
+runcmd = Box()
 runcmd.python = """
 from subprocess import Popen
 from sys import stderr, exit as SysExit
@@ -108,7 +108,7 @@ if (!exists('runcmd')) {
 }
 """
 
-buildArgsFastaFai = doct()
+buildArgsFastaFai = Box()
 buildArgsFastaFai.bash   = """
 ref="{{args.ref}}"
 fai="$ref.fai"
@@ -117,7 +117,7 @@ if [[ ! -e "$fai" ]]; then
 	{{args.samtools}} faidx "$ref"
 fi
 """
-buildArgsFastaDict = doct()
+buildArgsFastaDict = Box()
 buildArgsFastaDict.bash   = """
 ref="{{args.ref}}"
 dict="${ref%.*}.dict"
@@ -126,14 +126,14 @@ if [[ ! -e "$dict" ]]; then
 	{{args.picard}} CreateSequenceDictionary R="$ref" O="$dict"
 fi
 """
-checkArgsRef = doct()
+checkArgsRef = Box()
 checkArgsRef.bash = """
 if [[ ! -e "{{args.ref}}" ]]; then
 	echo "Reference file is not specfied or not exists." 1>&2
 	exit 1
 fi
 """
-checkArgsRefgene = doct()
+checkArgsRefgene = Box()
 checkArgsRefgene.bash = """
 if [[ ! -e "{{args.refgene}}" ]]; then
 	echo "Reference gene file is not specfied or not exists." 1>&2
@@ -141,7 +141,7 @@ if [[ ! -e "{{args.refgene}}" ]]; then
 fi
 """
 
-polling0 = doct()
+polling0 = Box()
 polling0.python = """
 %s
 
@@ -172,7 +172,7 @@ if 'polling0' not in vars() or not callable(polling0):
 """ % (runcmd.python)
 
 # requires all jobs run simultaneously
-pollingAll = doct()
+pollingAll = Box()
 pollingAll.python = """
 %s
 
@@ -257,7 +257,7 @@ if (!exists('pollingAll')) {
 }
 """ % (runcmd.r)
 
-buildArgIndex = doct ()
+buildArgIndex = Box ()
 buildArgIndex.python = """
 %s
 
@@ -301,7 +301,7 @@ if 'buildArgIndex' not in vars() or not callable (buildArgIndex):
 		
 """ % (polling0.python)
 
-cbindFill = doct()
+cbindFill = Box()
 cbindFill.r = """
 if (!exists('cbindFill')) {
 	cbindFill = function (x1, x2) {
@@ -317,13 +317,14 @@ if (!exists('cbindFill')) {
 }
 """
 
-plot = doct({
-	'hist':    {},
+plot = Box({
+	'hist'   : {},
+	'boxplot': {},
 	'heatmap': {},
 	'symbols': {},
-	'text':    {},
-	'venn':    {},
-	'upset':   {},
+	'text'   : {},
+	'venn'   : {},
+	'upset'  : {},
 })
 plot.hist.r = """
 require ('ggplot2')
@@ -342,6 +343,23 @@ if (!exists('plotHist')) {
 				)
 			
 		)
+		dev.off()
+	}
+}
+"""
+
+plot.boxplot.r = """
+require ('ggplot2')
+if (!exists('plotBoxplot')) {
+	plotBoxplot = function (mat, filename, params = list()) {
+		png (filename, res=300, width=2000, height=2000)
+		defaultthemes = list(
+			axis.title.x = element_blank(),
+			axis.title.y = element_blank(),
+			axis.text.x  = element_text(angle = 60, hjust = 1),
+			plot.margin  = unit(c(1,1,1,1), "cm")
+		)
+		print (ggplot(stack(as.data.frame(mat)), aes(ind, values)) + geom_boxplot() + do.call(theme, modifyList(defaultthemes, params)))
 		dev.off()
 	}
 }
@@ -505,11 +523,12 @@ if (!exists('plotUpset')) {
 }
 """
 
-txt = doct({
+txt = Box({
 	'filter': {},
 })
 txt.filter.python = """
 if 'txtFilter' not in vars() or not callable (txtFilter):
+
 	def txtFilter(infile, outfile, cols, rfilter, header = True, skip = 0, delimit = "\\t"):
 		if not isinstance(cols, list):
 			cols = map(lambda x: x.strip(), cols.split(','))
@@ -519,7 +538,9 @@ if 'txtFilter' not in vars() or not callable (txtFilter):
 			import os
 			os.rename(infile, outfile)
 		
+		import sys
 		import csv
+		csv.field_size_limit(sys.maxsize)
 		with open (infile, 'r') as f, open(outfile, 'w') as fout:
 			fcsv = csv.reader(f, delimiter = delimit)
 			for x in range(skip):
@@ -532,13 +553,12 @@ if 'txtFilter' not in vars() or not callable (txtFilter):
 					if header:
 						cols = [c if isinstance(c, int) else parts.index(c) for c in cols]
 				else:
-					if rfilter and not rfilter(parts):
-						continue
-				fout.write("\\t".join([h for i,h in enumerate(parts) if i in cols]) + "\\n")
+					if rfilter and not rfilter(parts): continue
+				fout.write("\\t".join([h for i,h in enumerate(parts) if not cols or i in cols]) + "\\n")
 		
 """
 
-download = doct({
+download = Box({
 	'curl': {},
 })
 download.curl.python = """
@@ -556,3 +576,19 @@ if 'downloadCurl' not in vars() or not callable(downloadCurl):
 		runcmd (cmd)
 		
 """ % (runcmd.python)
+
+params2CmdArgs = Box()
+params2CmdArgs.python = """
+if 'params2CmdArgs' not in vars() or not callable(params2CmdArgs):
+	def params2CmdArgs(params, dash = 'auto', equal = 'auto'):
+		ret = []
+		for key, val in params.items():
+			if isinstance(val, bool) and not val: continue
+			item = '-' if dash == 'single' or (dash == 'auto' and len(key) == 1) else '--'
+			item += key
+			if not isinstance(val, bool):
+				item += '=' if equal == 'yes' or (equal == 'auto' and len(key)>1) else ' '
+				item += '"'+ val +'"'
+			ret.append(item)
+		return ' '.join(ret)
+"""

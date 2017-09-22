@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -16,12 +16,12 @@ from pyppl import proc
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 """
-pMTarget2GTargetMat = proc ()
-pMTarget2GTargetMat.input     = "gmtfile:file, mapfile:file"
-pMTarget2GTargetMat.output    = "outfile:file:gtmat-{{#}}.txt"
-pMTarget2GTargetMat.args      = {'species': 'human'}
-pMTarget2GTargetMat.defaultSh = "python"
-pMTarget2GTargetMat.script    = """
+pMTarget2GTargetMat        = Proc ()
+pMTarget2GTargetMat.input  = "gmtfile:file, mapfile:file"
+pMTarget2GTargetMat.output = "outfile:file:gtmat-{{#}}.txt"
+pMTarget2GTargetMat.args   = {'species': 'human'}
+pMTarget2GTargetMat.lang   = "python"
+pMTarget2GTargetMat.script = """
 import mygene
 mg = mygene.MyGeneInfo()
 # Normalize gene names
@@ -130,7 +130,7 @@ fout.close()
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
 """
-pIntersectGMT = proc()
+pIntersectGMT = Proc()
 pIntersectGMT.input  = "gmtfile1:file, gmtfile2:file"
 pIntersectGMT.output = "outfile:file:intersected.gmt{{args.gz | lambda x: '.gz' if x else ''}}"
 pIntersectGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
@@ -192,7 +192,7 @@ with openfunc ("{{outfile}}", "w") as fout:
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
 """
-pUnionGMT = proc()
+pUnionGMT = Proc()
 pUnionGMT.input  = "gmtfile1:file, gmtfile2:file"
 pUnionGMT.output = "outfile:file:unioned.gmt{{args.gz | lambda x: '.gz' if x else ''}}"
 pUnionGMT.args   = {"geneformat": "symbol, alias", "gz":False, "species": "human"}
@@ -250,7 +250,7 @@ with openfunc ("{{outfile}}", "w") as fout:
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 """
-pSSGSEA = proc ()
+pSSGSEA = Proc ()
 pSSGSEA.input     = "gctfile:file, gmtfile:file"
 pSSGSEA.output    = "outdir:file:{{gctfile|fn}}_results"
 pSSGSEA.args      = {'weightexp': 0.75, 'padjust': 'bonferroni', 'nperm': 10000}
@@ -508,9 +508,9 @@ ExportResult (es = esq, nes=nes, outfile = "{{outdir}}/report.txt")
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
-pEnrichr = proc()
+pEnrichr = Proc()
 pEnrichr.input  = "infile:file"
-pEnrichr.output = "outdir:dir:{{infile | fn}}.{{#}}.enrichr"
+pEnrichr.output = "outdir:dir:{{in.infile | fn}}.enrichr"
 pEnrichr.lang   = "python"
 pEnrichr.args   = {"topn": 10, "dbs": "KEGG_2016", "norm": False, "rmtags": True, "plot": True, "title": "Gene enrichment: {db}"}
 pEnrichr.errhow = 'retry'
@@ -518,7 +518,7 @@ pEnrichr.script = """
 import json
 import requests
 import math
-genes = [line.split()[0] for line in open("{{infile}}") if line.strip()]
+genes = [line.split()[0] for line in open("{{in.infile}}") if line.strip()]
 if {{args.norm}}:
 	from mygene import MyGeneInfo
 	mg = MyGeneInfo()
@@ -535,7 +535,7 @@ if {{args.plot}}:
 ## upload
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
 genes_str   = "\\n".join(genes)
-description = '{{infile | fn}}'
+description = '{{in.infile | fn}}'
 payload = {
     'list': (None, genes_str),
     'description': (None, description)
@@ -568,7 +568,7 @@ for db in dbs:
 	data    = json.loads(response.text)
 	data    = data[db]
 	d2plot  = []
-	outfile = "{{outdir}}/%s.txt" % db
+	outfile = "{{out.outdir}}/%s.txt" % db
 	fout    = open (outfile, "w")
 	fout.write ("\\t".join(head) + "\\n")
 	for i, ret in enumerate(data):
@@ -581,7 +581,7 @@ for db in dbs:
 	
 	if {{args.plot}}:
 		#d2plot   = sorted (d2plot, cmp=lambda x,y: 0 if x[2] == y[2] else (-1 if x[2] < y[2] else 1))
-		plotfile = "{{outdir}}/%s.png" % db
+		plotfile = "{{out.outdir}}/%s.png" % db
 		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7]) 
 		rownames = [r[1] for r in d2plot]
 		rnidx    = range (len (rownames))

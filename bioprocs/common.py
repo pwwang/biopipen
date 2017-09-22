@@ -1,4 +1,5 @@
-from pyppl import proc
+from pyppl import Proc
+from .utils import txt
 
 """
 @name:
@@ -13,7 +14,7 @@ from pyppl import proc
 	`skip`:   To skip first N lines. Default: 0
 	`params`: The arguments used by `sort`
 """
-pSort = proc ()
+pSort = Proc()
 pSort.input  = "infile:file"
 pSort.output = "outfile:file:{{infile | bn}}"
 pSort.args   = {"params": "", "skip": 0}
@@ -38,7 +39,7 @@ fi
 @output:
 	`outdir:dir`:    The output directory
 """
-pFiles2Dir = proc()
+pFiles2Dir = Proc()
 pFiles2Dir.input  = "infiles:files"
 pFiles2Dir.output = "outdir:dir:{{infiles | [0] | fn}}.etc_{{#}}"
 pFiles2Dir.lang   = "python"
@@ -76,7 +77,7 @@ for fname in {{infiles | json}}:
 @output:
 	`outfile:file`:  The output list file
 """
-pFiles2List              = proc(desc = 'Put files to a list file.')
+pFiles2List              = Proc(desc = 'Put files to a list file.')
 pFiles2List.input        = "infiles:files"
 pFiles2List.output       = "outfile:file:{{infiles | [0] | fn}}.etc_{{#}}.list"
 pFiles2List.args.delimit = r"\n" # r is important
@@ -96,12 +97,12 @@ with open ("{{outfile}}", "w") as fout:
 @output:
 	`outdir:dir`:    The output directory
 """
-pPat2Dir = proc()
+pPat2Dir = Proc(desc = 'Link files matched by a pattern to a directory.')
 pPat2Dir.input  = "pattern:var"
-pPat2Dir.output = "outdir:dir:{{pattern | __import__('glob').glob(_) | [0] | fn }}.etc_{{#}}"
+pPat2Dir.output = "outdir:dir:{{in.pattern | lambda x: __import__('glob').glob(x)[0] | fn }}_etc"
 pPat2Dir.script = """
-for fn in {{pattern}}; do
-	ln -s "$fn" "{{outdir}}/"
+for fn in {{in.pattern}}; do 
+	ln -s "$fn" {{out.outdir}}/
 done
 """
 
@@ -115,7 +116,7 @@ done
 @output:
 	`outfile:file`: The output file
 """
-pMergeFiles = proc()
+pMergeFiles = Proc()
 pMergeFiles.input  = "indir:file"
 pMergeFiles.output = "outfile:file:{{indir | fn}}.merged"
 pMergeFiles.script = """
@@ -140,7 +141,7 @@ done
 	`na`:     The missing values. Default: 0
 	- If it's a string, remember the quote (i.e.: '"missing"')
 """
-pCbindList = proc ()
+pCbindList = Proc()
 pCbindList.input  = "indir:file"
 pCbindList.output = "outfile:file:{{indir | fn}}.mat_{{#}}.txt"
 pCbindList.args.header = False
@@ -179,6 +180,22 @@ if (!is.na({{args.na}})) {
 write.table (data, "{{outfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 """
 
+pTxtFilter = Proc(desc = 'Filter a txt(tsv) file by columns and rows.')
+pTxtFilter.input             = "txtfile:file"
+pTxtFilter.output            = "outfile:file:{{in.txtfile | bn}}"
+pTxtFilter.lang              = 'python'
+pTxtFilter.args.cols         = []
+pTxtFilter.args.rfilter      = 'lambda x:True'
+pTxtFilter.args.header       = True
+pTxtFilter.args.skip         = 0
+pTxtFilter.args.delimit      = "\t"
+pTxtFilter.tplenvs.txtFilter = txt.filter.python
+pTxtFilter.script            = """
+{{txtFilter}}
+
+txtFilter({{in.txtfile | quote}}, {{out.outfile | quote}}, {{args.cols | json}}, {{args.rfilter}}, {{ args.header }}, {{args.skip}}, {{args.delimit | quote}})
+"""
+
 """
 @name:
 	pFile2Proc
@@ -189,7 +206,7 @@ write.table (data, "{{outfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 @output:
 	`outfile:file`: The output file
 """
-pFile2Proc = proc (desc="Convert a file to a proc so it can be used as dependent")
+pFile2Proc = Proc(desc="Convert a file to a proc so it can be used as dependent")
 pFile2Proc.input  = "infile:file"
 pFile2Proc.output = "outfile:file:{{infile | bn}}"
 pFile2Proc.script = 'ln -s "{{infile}}" "{{outfile}}"'
