@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 # Web utils
 """
@@ -19,7 +19,7 @@ from pyppl import proc
 	[`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
 	[`Phantomjs`](http://phantomjs.org/)
 """
-pDownloadPost = proc (desc="Download results by submitting to a form")
+pDownloadPost = Proc (desc="Download results by submitting to a form")
 pDownloadPost.input  = "url, submitbtn, nextbtn, params"
 pDownloadPost.args   = {'interval': 1}
 pDownloadPost.output = "outdir:file:outdir-{{#}}"
@@ -27,14 +27,14 @@ pDownloadPost.script = """
 #!/usr/bin/env python
 from splinter import Browser
 import json, os, sys, time
-if not os.path.exists ("{{outdir}}"):
-	os.makedirs ("{{outdir}}")
+if not os.path.exists ("{{out.outdir}}"):
+	os.makedirs ("{{out.outdir}}")
 
 browser = Browser('phantomjs')
 params = json.loads('''{{params}}''')
 
-sys.stderr.write ("Visiting {{url}} ...\\n")
-browser.visit("{{url}}")
+sys.stderr.write ("Visiting {{in.url}} ...\\n")
+browser.visit("{{in.url}}")
 
 sys.stderr.write ("Filling parameters ...\\n")
 for key, val in params.iteritems():
@@ -44,12 +44,12 @@ i = 0
 browser.find_by_xpath('''{{submitbtn}}''').click()
 while browser.is_element_present_by_xpath ('''{{nextbtn}}'''):
 	sys.stderr.write ("Fetching and saving page %s ...\\n" % (i+1))
-	open ("{{outdir}}/out-%s.html" % i, 'w').write (browser.html)
+	open ("{{out.outdir}}/out-%s.html" % i, 'w').write (browser.html)
 	i += 1
 	time.sleep({{args.interval}})
 	browser.find_by_xpath('''{{nextbtn}}''').click()
 
-open ("{{outdir}}/out-%s.html" % i, 'w').write (browser.html)
+open ("{{out.outdir}}/out-%s.html" % i, 'w').write (browser.html)
 sys.stderr.write ("Qutting browser ...\\n")
 browser.quit()
 """
@@ -64,11 +64,11 @@ browser.quit()
 @output:
 	`outfile:file`: The output file
 """
-pDownloadGet = proc (desc="Download from URLs")
+pDownloadGet = Proc (desc="Download from URLs")
 pDownloadGet.input  = "url"
-pDownloadGet.output = "outfile:file:{{url | bn | .replace('?', '__Q__').replace('&', '__N__')  }}"
+pDownloadGet.output = "outfile:file:{{in.url | bn | .replace('?', '__Q__').replace('&', '__N__')  }}"
 pDownloadGet.script = """
 #!/usr/bin/env python
 import urllib
-urllib.urlretrieve ('''{{url}}''', "{{outfile}}")
+urllib.urlretrieve ('''{{in.url}}''', "{{out.outfile}}")
 """

@@ -2,7 +2,7 @@
 A set of processes to generate/process sam/bam files
 """
 
-from pyppl import proc
+from pyppl import Proc
 from .utils import mem, runcmd, buildArgIndex, checkArgsRef, checkArgsRefgene, buildArgsFastaFai, buildArgsFastaDict, polling0, pollingAll
 
 """
@@ -42,10 +42,10 @@ from .utils import mem, runcmd, buildArgIndex, checkArgsRef, checkArgsRefgene, b
 	[biobambam](https://github.com/gt1/biobambam2)
 	[samtools](https://github.com/samtools/samtools)
 """
-pSam2Bam                        = proc (desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
+pSam2Bam                        = Proc(desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
 pSam2Bam.input                  = "infile:file"
-pSam2Bam.output                 = "outfile:file:{{infile | fn}}.bam, idxfile:file:{{infile | fn}}.bam.bai"
-pSam2Bam.args.tool              = "biobambam" 
+pSam2Bam.output                 = "outfile:file:{{in.infile | fn}}.bam, idxfile:file:{{in.infile | fn}}.bam.bai"
+pSam2Bam.args.tool              = "biobambam"
 pSam2Bam.args.sambamba          = "sambamba"
 pSam2Bam.args.picard            = "picard"
 pSam2Bam.args.biobambam_bamsort = "bamsort"
@@ -54,31 +54,31 @@ pSam2Bam.args.sort              = True
 pSam2Bam.args.index             = True
 pSam2Bam.args.markdup           = False
 pSam2Bam.args.rmdup             = False
-pSam2Bam.args.tmpdir            = __import__('tempfile').gettempdir() 
-pSam2Bam.args.sortby            = "coordinate" 
+pSam2Bam.args.tmpdir            = __import__('tempfile').gettempdir()
+pSam2Bam.args.sortby            = "coordinate"
 pSam2Bam.args.nthread           = 1
 pSam2Bam.args.informat          = ""
 pSam2Bam.args.params            = ""
-pSam2Bam.args.mem               = "16G"	
-pSam2Bam.args._mem2M            = mem.toM.python
-pSam2Bam.args._memtoJava        = mem.toJava.python
-pSam2Bam.args._runcmd           = runcmd.python
+pSam2Bam.args.mem               = "16G"
+pSam2Bam.tplenvs.mem2M          = mem.toM.python
+pSam2Bam.tplenvs.memtoJava      = mem.toJava.python
+pSam2Bam.tplenvs.runcmd         = runcmd.python
 pSam2Bam.lang                   = "python"
 pSam2Bam.script                 = """
 from shutil import move, rmtree
 from os import makedirs, path, symlink, remove
 from sys import stdout, stderr, exit
 
-{{ args._runcmd }}
-{{ args._mem2M }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ mem2M }}
+{{ memtoJava }}
 
-infile    = {{ infile | quote }}
-outfile   = {{ outfile | quote }}
+infile    = {{ in.infile | quote }}
+outfile   = {{ out.outfile | quote }}
 tool      = {{ args.tool | quote }}
 informat  = {{ args.informat | quote }}
-informat  = informat if informat else {{ infile | ext | [1:] | quote}} 
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{infile | fn}}.{{#}}")
+informat  = informat if informat else {{ in.infile | ext | [1:] | quote}} 
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 doSort    = {{ args.sort }}
 doIndex   = {{ args.index }}
 doMarkdup = {{ args.markdup }}
@@ -92,7 +92,7 @@ try:
 		mem = memtoM({{ args.mem | quote }})
 		indexArg = ""
 		if doIndex:
-			indexArg = 'index=1 indexfilename="{{idxfile}}"'
+			indexArg = 'index=1 indexfilename="{{out.idxfile}}"'
 		cmd = '{{args.biobambam_bamsort}} I="%s" O="%s" SO={{args.sortby}} blockme="%s" tmpfile="%s/tmp." inputformat="%s" outformat=bam inputthreads={{args.nthread}} outputthreads={{args.nthread}} %s markduplicates=%s rmdup=%s {{args.params}}' % (infile, outfile, mem, tmpdir, informat, indexArg, str(int(doMarkdup)), str(int(doRmdup)))
 		runcmd (cmd)
 	elif tool == 'sambamba':
@@ -102,7 +102,7 @@ try:
 		else:
 			bamfile = outfile
 			if informat == 'sam':
-				bamfile = "{{job.outdir}}/{{infile | fn}}.s2b.bam"
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.s2b.bam"
 				cmd = '{{args.sambamba}} view -S -f bam -o %s -t {{args.nthread}} %s' % (bamfile, infile)
 				runcmd (cmd)
 				infile = bamfile
@@ -110,27 +110,27 @@ try:
 				sortby = ''
 				if {{args.sortby | quote}} == 'queryname':
 					sortby = '-n -N'
-				bamfile = "{{job.outdir}}/{{infile | fn}}.sorted.bam"
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam"
 				cmd = '{{args.sambamba}} sort -m {{args.mem}} --tmpdir="%s" -o "%s" %s -t {{args.nthread}} {{args.params}} "%s"' % (tmpdir, bamfile, sortby, infile)
 				runcmd (cmd)
-				if infile != {{infile | quote}}:
+				if infile != {{in.infile | quote}}:
 					remove (infile)
 				infile = bamfile
 			if doMarkdup:
 				rmdup = ""
 				if doRmdup:
 					rmdup = "-r"
-				bamfile = "{{job.outdir}}/{{infile | fn}}.dedup.bam"
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.dedup.bam"
 				cmd = '{{args.sambamba}} markdup %s -t {{args.nthread}} --tmpdir="%s" "%s" "%s"' % (rmdup, tmpdir, infile, bamfile)
 				runcmd (cmd)
-				if infile != {{infile | quote}}:
+				if infile != {{in.infile | quote}}:
 					remove (infile)
 				infile = bamfile
 			if doIndex:
 				if path.exists (infile + '.bai'):
-					move (infile + '.bai', {{idxfile | quote}})
+					move (infile + '.bai', {{out.idxfile | quote}})
 				else:
-					cmd = '{{args.sambamba}} index -t {{args.nthread}} "%s" "%s"' % (infile, {{idxfile | quote}})
+					cmd = '{{args.sambamba}} index -t {{args.nthread}} "%s" "%s"' % (infile, {{out.idxfile | quote}})
 					runcmd (cmd)
 			if infile != outfile:
 				if path.exists(infile + '.bai'):
@@ -147,21 +147,21 @@ try:
 				sortby = ''
 				if {{args.sortby | quote}} == 'queryname':
 					sortby = '-n'
-				bamfile = "{{job.outdir}}/{{infile | fn}}.sorted.bam" 
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam" 
 				cmd = '{{args.samtools}} sort -m %sM %s -o "%s" -T "%s" -@ {{args.nthread}} -O bam "%s"' % (mem, sortby, bamfile, tmpdir, infile)
 				runcmd (cmd)
-				if infile != {{infile | quote}}:
+				if infile != {{in.infile | quote}}:
 					remove (infile)
 				infile = bamfile
 			if doMarkdup or doRmdup:
-				bamfile = "{{job.outdir}}/{{infile | fn}}.dedup.bam"
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.dedup.bam"
 				cmd = '{{args.samtools}} rmdup "%s" "%s"' % (infile, bamfile)
 				runcmd (cmd)
-				if infile != {{infile | quote}}:
+				if infile != {{in.infile | quote}}:
 					remove (infile)
 				infile = bamfile
 			if doIndex:
-				cmd = '{{args.samtools}} index "%s" "%s"' % (bamfile, {{idxfile | quote}})
+				cmd = '{{args.samtools}} index "%s" "%s"' % (bamfile, {{out.idxfile | quote}})
 				runcmd (cmd)
 			if infile != outfile:
 				if path.exists(infile + '.bai'):
@@ -175,10 +175,10 @@ try:
 		else:
 			bamfile = outfile
 			if doSort:
-				bamfile = "{{job.outdir}}/{{infile | fn}}.sorted.bam" 
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam" 
 				cmd = '{{args.picard}} SortSam %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s" SO={{args.sortby}}' % (mem, tmpdir, tmpdir, infile, bamfile)
 				runcmd (cmd)
-				if infile != {{infile | quote}}:
+				if infile != {{in.infile | quote}}:
 					remove (infile)
 				infile = bamfile
 			if doMarkdup:
@@ -186,22 +186,22 @@ try:
 				if doRmdup:
 					rmdup = "REMOVE_DUPLICATES=true"
 				mfile = "/dev/null"
-				bamfile = "{{job.outdir}}/{{infile | fn}}.dedup.bam"
+				bamfile = "{{job.outdir}}/{{in.infile | fn}}.dedup.bam"
 				cmd = '{{args.picard}} MarkDuplicates %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s" M="%s" ' % (mem, tmpdir, tmpdir, infile, bamfile, mfile)
 				runcmd (cmd)
-				if infile != {{infile | quote}}:
+				if infile != {{in.infile | quote}}:
 					remove (infile)
 				infile = bamfile
 			if doIndex:
-				cmd = '{{args.picard}} BuildBamIndex %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s"' % (mem, tmpdir, tmpdir, infile, {{idxfile | quote}})
+				cmd = '{{args.picard}} BuildBamIndex %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s"' % (mem, tmpdir, tmpdir, infile, {{out.idxfile | quote}})
 				runcmd (cmd)
 			if infile != outfile:
 				if path.exists(infile + '.bai'):
 					move (infile + '.bai', outfile + '.bai')
 				move (infile, outfile)
 	
-	if not path.exists ({{idxfile | quote}}):
-		symlink (outfile, {{idxfile | quote}})
+	if not path.exists ({{out.idxfile | quote}}):
+		symlink (outfile, {{out.idxfile | quote}})
 		
 except Exception as ex:		
 	stderr.write ("Job failed: %s" % str(ex))
@@ -242,38 +242,38 @@ finally:
 	[samtools](https://github.com/samtools/samtools)
 	[bamutil](http://genome.sph.umich.edu/wiki/BamUtil#Programs)
 """
-pBamMarkdup                        = proc (desc = 'Mark/remove duplicates for bam files.')
+pBamMarkdup                        = Proc(desc = 'Mark/remove duplicates for bam files.')
 pBamMarkdup.input                  = "infile:file"
-pBamMarkdup.output                 = "outfile:file:{{infile | fn}}.bam"
-pBamMarkdup.args.tool              = "biobambam" 
+pBamMarkdup.output                 = "outfile:file:{{in.infile | fn}}.bam"
+pBamMarkdup.args.tool              = "biobambam"
 pBamMarkdup.args.sambamba          = "sambamba"
 pBamMarkdup.args.picard            = "picard"
 pBamMarkdup.args.biobambam_bamsort = "bamsort"
 pBamMarkdup.args.samtools          = "samtools"
 pBamMarkdup.args.bamutil           = "bam"
 pBamMarkdup.args.rmdup             = False
-pBamMarkdup.args.tmpdir            = __import__('tempfile').gettempdir() 
+pBamMarkdup.args.tmpdir            = __import__('tempfile').gettempdir()
 pBamMarkdup.args.nthread           = 1
 pBamMarkdup.args.params            = ""
-pBamMarkdup.args.mem               = "16G"	
-pBamMarkdup.args._mem2M            = mem.toM.python
-pBamMarkdup.args._memtoJava         = mem.toJava.python
-pBamMarkdup.args._runcmd           = runcmd.python
+pBamMarkdup.args.mem               = "16G"
+pBamMarkdup.tplenvs.mem2M          = mem.toM.python
+pBamMarkdup.tplenvs.memtoJava      = mem.toJava.python
+pBamMarkdup.tplenvs.runcmd         = runcmd.python
 pBamMarkdup.lang                   = "python"
 pBamMarkdup.script                 = """
 from shutil import move, rmtree
 from os import makedirs, path, symlink, remove
 from sys import stdout, stderr, exit
 
-{{ args._runcmd }}
-{{ args._mem2M }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ mem2M }}
+{{ memtoJava }}
 
-infile    = {{ infile | quote }}
-outfile   = {{ outfile | quote }}
+infile    = {{ in.infile | quote }}
+outfile   = {{ out.outfile | quote }}
 tool      = {{ args.tool | quote }}
 tmpdir    = {{ args.tmpdir | quote }}
-tmpdir    = path.join (tmpdir, "{{proc.id}}.{{infile | fn}}.{{#}}")
+tmpdir    = path.join (tmpdir, "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 doRmdup   = {{ args.rmdup }}
 
 if not path.exists (tmpdir):
@@ -324,7 +324,7 @@ finally:
 @input:
 	`infile:file`: The bam file
 @brings:
-	`infile`: {{infile.orig | bn}}.bai, the index file of bam
+	`infile`: {{in.infile | bn}}.bai, the index file of bam
 @output:
 	`outfile:file`: The output bam file
 @args:
@@ -347,27 +347,27 @@ finally:
 	[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
 	[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
 """
-pBamRecal                                   = proc (desc = 'Recalibrate a bam file.')
+pBamRecal                                   = Proc(desc = 'Recalibrate a bam file.')
 pBamRecal.input                             = "infile:file"
-pBamRecal.brings                            = {"infile": "{{infile.orig | bn}}.bai"}
-pBamRecal.output                            = "outfile:file:{{infile | fn}}.bam, idxfile:file:{{infile | fn}}.bam.bai"
-pBamRecal.args.tool                         = "bamutil" 
-pBamRecal.args.gatk                         = "gatk" 
-pBamRecal.args.samtools                     = "samtools" 
-pBamRecal.args.picard                       = "picard" 
-pBamRecal.args.bamutil                      = "bam" 
+pBamRecal.brings                            = {"infile": "{{in.infile | bn}}.bai"}
+pBamRecal.output                            = "outfile:file:{{in.infile | fn}}.bam, idxfile:file:{{in.infile | fn}}.bam.bai"
+pBamRecal.args.tool                         = "bamutil"
+pBamRecal.args.gatk                         = "gatk"
+pBamRecal.args.samtools                     = "samtools"
+pBamRecal.args.picard                       = "picard"
+pBamRecal.args.bamutil                      = "bam"
 pBamRecal.args.paramsRealignerTargetCreator = ""
 pBamRecal.args.paramsIndelRealigner         = ""
 pBamRecal.args.paramsBaseRecalibrator       = ""
 pBamRecal.args.paramsPrintReads             = ""
 pBamRecal.args.params                       = ""
 pBamRecal.args.ref                          = ""
-pBamRecal.args.tmpdir                       = __import__('tempfile').gettempdir() 
+pBamRecal.args.tmpdir                       = __import__('tempfile').gettempdir()
 pBamRecal.args.knownSites                   = ""
 pBamRecal.args.mem                          = "32G"
-pBamRecal.args._memtoJava                   = mem.toJava.python
-pBamRecal.args._runcmd                      = runcmd.python
-pBamRecal.args._buildArgIndex               = buildArgIndex.python
+pBamRecal.tplenvs.memtoJava                 = mem.toJava.python
+pBamRecal.tplenvs.runcmd                    = runcmd.python
+pBamRecal.tplenvs.buildArgIndex             = buildArgIndex.python
 pBamRecal.beforeCmd                         = checkArgsRef.bash + buildArgsFastaFai.bash + buildArgsFastaDict.bash
 pBamRecal.lang                              = "python"
 pBamRecal.script                            = """
@@ -377,8 +377,8 @@ from sys import stderr, exit
 from shutil import rmtree, move
 from time import sleep
 
-if not path.exists ({{brings.infile | quote}}):
-	stderr.write ("Input file '{{infile.orig}}' is not indexed.")
+if not path.exists ({{bring.infile[0] | quote}}):
+	stderr.write ("Input file '{{in._infile}}' is not indexed.")
 	exit (1)
 
 tool = {{args.tool | quote}}
@@ -386,52 +386,52 @@ if not path.exists ({{args.knownSites | quote}}) and tool == 'gatk':
 	stderr.write ("knownSites file is required by GATK but is not specified (args.knownSites) or not exists.")
 	exit (1)
 	
-{{ args._runcmd }}
-{{ args._memtoJava }}
-{{ args._buildArgIndex }}
+{{ runcmd }}
+{{ memtoJava }}
+{{ buildArgIndex }}
 
 ref = {{args.ref | quote}}
 mem = memtoJava({{ args.mem | quote }})
 
 tmpdir    = {{ args.tmpdir | quote }}
-tmpdir    = path.join (tmpdir, "{{proc.id}}.{{infile | fn}}.{{#}}")
+tmpdir    = path.join (tmpdir, "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
 try:
 	if tool == 'gatk':
-		intfile = "{{outfile | prefix}}.intervals"
-		runcmd ('{{args.gatk}} -T RealignerTargetCreator %s -Djava.io.tmpdir="%s" -R "%s" -I "{{infile}}" -o "%s" {{args.paramsRealignerTargetCreator}}' % (mem, tmpdir, ref, intfile))
-		bamfileIr = "{{outfile | prefix}}.ir.bam"
-		runcmd ('{{args.gatk}} -T IndelRealigner %s -Djava.io.tmpdir="%s" -R "%s" -I "{{infile}}" -o "%s" -targetIntervals "%s" {{args.paramsIndelRealigner}}' % (mem, tmpdir, ref, bamfileIr, intfile))
-		recaltable = "{{outfile | prefix}}.recaltable"
+		intfile = "{{out.outfile | prefix}}.intervals"
+		runcmd ('{{args.gatk}} -T RealignerTargetCreator %s -Djava.io.tmpdir="%s" -R "%s" -I "{{in.infile}}" -o "%s" {{args.paramsRealignerTargetCreator}}' % (mem, tmpdir, ref, intfile))
+		bamfileIr = "{{out.outfile | prefix}}.ir.bam"
+		runcmd ('{{args.gatk}} -T IndelRealigner %s -Djava.io.tmpdir="%s" -R "%s" -I "{{in.infile}}" -o "%s" -targetIntervals "%s" {{args.paramsIndelRealigner}}' % (mem, tmpdir, ref, bamfileIr, intfile))
+		recaltable = "{{out.outfile | prefix}}.recaltable"
 		runcmd ('{{args.gatk}} -T BaseRecalibrator %s -Djava.io.tmpdir="%s" -R "%s" -I "%s" -o "%s" -knownSites "{{args.knownSites}}" {{args.paramsBaseRecalibrator}}' % (mem, tmpdir, ref, bamfileIr, recaltable))
-		runcmd ('{{args.gatk}} -T PrintReads %s -Djava.io.tmpdir="%s" -R "%s" -I "%s" -o "{{outfile}}" -BQSR "%s" {{args.paramsPrintReads}}' % (mem, tmpdir, ref, bamfileIr, recaltable))
+		runcmd ('{{args.gatk}} -T PrintReads %s -Djava.io.tmpdir="%s" -R "%s" -I "%s" -o "{{out.outfile}}" -BQSR "%s" {{args.paramsPrintReads}}' % (mem, tmpdir, ref, bamfileIr, recaltable))
 		remove (bamfileIr)
-		move ("{{outfile | prefix}}.bai", "{{idxfile}}")
+		move ("{{out.outfile | prefix}}.bai", "{{out.idxfile}}")
 	elif tool == 'bamutil':
 		knownSites = ''
 		if "{{args.knownSites}}":
 			knownSites = '--dbsnp "{{args.knownSites}}"'
 		ref2 = "{{ proc.workdir }}/0/{{ args.ref | bn }}"
-		cmd = '{{args.bamutil}} recab --in "{{infile}}" --out "{{outfile}}" --refFile "%s" %s '
+		cmd = '{{args.bamutil}} recab --in "{{in.infile}}" --out "{{out.outfile}}" --refFile "%s" %s '
 		
 		refcache = "{{ args.ref | prefix }}-bs.umfa"
 		if path.exists (refcache):
 			runcmd (cmd % (ref, knownSites))
 		else:
 			r = buildArgIndex (
-				{{#}},
+				{{job.index}},
 				ref,
 				[refcache],
 				cmd % (ref, knownSites),
 				{{proc.workdir | quote}},
 				cmd % (ref2, knownSites)
 			)
-			if {{#}} != 0:
+			if {{job.index}} != 0:
 				runcmd (cmd % (r, knownSites))
 		
-		cmd = '{{args.samtools}} index "{{outfile}}" "{{idxfile}}"'
+		cmd = '{{args.samtools}} index "{{out.outfile}}" "{{out.idxfile}}"'
 		runcmd (cmd)
 except Exception as ex:		
 	stderr.write ("Job failed: %s" % str(ex))
@@ -466,20 +466,20 @@ finally:
 	[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
 """
-pBamReadGroup                    = proc (desc = 'Add or replace read groups of a bam file.')
-pBamReadGroup.input              = "infile:file"
-pBamReadGroup.output             = "outfile:file:{{infile | bn}}"
-pBamReadGroup.args.tool          = "bamutil" 
-pBamReadGroup.args.picard        = "picard" 
-pBamReadGroup.args.bamutil       = "bam" 
-pBamReadGroup.args.rg            = {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
-pBamReadGroup.args.params        = ""
-pBamReadGroup.args.tmpdir        = __import__('tempfile').gettempdir() 
-pBamReadGroup.args.mem           = "4G"
-pBamReadGroup.args._memtoJava    = mem.toJava.python
-pBamReadGroup.args._runcmd       = runcmd.python
-pBamReadGroup.lang               = "python"
-pBamReadGroup.script             = """
+pBamReadGroup                   = Proc(desc = 'Add or replace read groups of a bam file.')
+pBamReadGroup.input             = "infile:file"
+pBamReadGroup.output            = "outfile:file:{{in.infile | bn}}"
+pBamReadGroup.args.tool         = "bamutil"
+pBamReadGroup.args.picard       = "picard"
+pBamReadGroup.args.bamutil      = "bam"
+pBamReadGroup.args.rg           = {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
+pBamReadGroup.args.params       = ""
+pBamReadGroup.args.tmpdir       = __import__('tempfile').gettempdir()
+pBamReadGroup.args.mem          = "4G"
+pBamReadGroup.tplenvs.memtoJava = mem.toJava.python
+pBamReadGroup.tplenvs.runcmd    = runcmd.python
+pBamReadGroup.lang              = "python"
+pBamReadGroup.script            = """
 import re
 from os import makedirs, path
 from shutil import rmtree
@@ -489,26 +489,26 @@ from sys import exit, stderr
 rg = {{ args.rg | json }}
 rg = {key.upper():val for key, val in rg.items()}
 if not rg['ID']:
-	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', "{{outfile | fn}}")
-	rg['ID'] = g.group(1) if g else "{{outfile | fn}}.L{{#}}"
+	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', "{{out.outfile | fn}}")
+	rg['ID'] = g.group(1) if g else "{{out.outfile | fn}}.L{{job.index}}"
 if not rg['SM']:
-	rg['SM'] = "{{outfile | fn}}"
+	rg['SM'] = "{{out.outfile | fn}}"
 
 
-{{ args._runcmd }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ memtoJava }}
 mem = memtoJava({{ args.mem | quote }})
 
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{infile | fn}}.{{#}}")
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
 tool = {{args.tool | quote}}
 try:
 	if tool == 'picard':
-		runcmd ('{{args.picard}} AddOrReplaceReadGroups %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="{{infile}}" O="{{outfile}}" RGID=%s RGLB=%s RGPL=%s RGPU=%s RGSM=%s' % (mem, tmpdir, tmpdir, rg['ID'], rg['LB'], rg['PL'], rg['PU'], rg['SM']))
+		runcmd ('{{args.picard}} AddOrReplaceReadGroups %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="{{in.infile}}" O="{{out.outfile}}" RGID=%s RGLB=%s RGPL=%s RGPU=%s RGSM=%s' % (mem, tmpdir, tmpdir, rg['ID'], rg['LB'], rg['PL'], rg['PU'], rg['SM']))
 	elif tool == 'bamutil':
-		runcmd ('{{args.bamutil}} polishBam --RG "@RG\\tID:%s\\t%s" --in "{{infile}}" --out "{{outfile}}"' % (rg['ID'], "\\t".join([k + ":" + v for k,v in rg.items() if k!='ID'])))
+		runcmd ('{{args.bamutil}} polishBam --RG "@RG\\tID:%s\\t%s" --in "{{in.infile}}" --out "{{out.outfile}}"' % (rg['ID'], "\\t".join([k + ":" + v for k,v in rg.items() if k!='ID'])))
 except Exception as ex:		
 	stderr.write ("Job failed: %s" % str(ex))
 	raise
@@ -536,31 +536,31 @@ finally:
 @requires:
 	[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 """
-pBamReorder                     = proc (desc = 'Reorder a sam/bam file by a given reference.')
-pBamReorder.input               = "infile:file"
-pBamReorder.output              = "outfile:file:{{infile | bn}}"
-pBamReorder.args.picard         = "picard" 
-pBamReorder.args.params         = ""
-pBamReorder.args.tmpdir         = __import__('tempfile').gettempdir() 
-pBamReorder.args.mem            = "4G"
-pBamReorder.args.ref            = ""
-pBamReorder.args._memtoJava     = mem.toJava.python
-pBamReorder.args._runcmd        = runcmd.python
-pBamReorder.beforeCmd           = checkArgsRef.bash + buildArgsFastaDict.bash
-pBamReorder.lang                = "python"
-pBamReorder.script              = """
+pBamReorder                   = Proc(desc = 'Reorder a sam/bam file by a given reference.')
+pBamReorder.input             = "infile:file"
+pBamReorder.output            = "outfile:file:{{in.infile | bn}}"
+pBamReorder.args.picard       = "picard"
+pBamReorder.args.params       = ""
+pBamReorder.args.tmpdir       = __import__('tempfile').gettempdir()
+pBamReorder.args.mem          = "4G"
+pBamReorder.args.ref          = ""
+pBamReorder.tplenvs.memtoJava = mem.toJava.python
+pBamReorder.tplenvs.runcmd    = runcmd.python
+pBamReorder.beforeCmd         = checkArgsRef.bash + buildArgsFastaDict.bash
+pBamReorder.lang              = "python"
+pBamReorder.script            = """
 from os import makedirs, path
 from shutil import rmtree
 	
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{infile | fn}}.{{#}}")
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 	
-{{ args._runcmd }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ memtoJava }}
 mem = memtoJava({{ args.mem | quote }})
 ref = {{args.ref | quote}}	
 try:
-	runcmd ('{{args.picard}} ReorderSam %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="{{infile}}" O="{{outfile}}" R="%s" {{args.params}}' % (mem, tmpdir, tmpdir, ref))
+	runcmd ('{{args.picard}} ReorderSam %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="{{in.infile}}" O="{{out.outfile}}" R="%s" {{args.params}}' % (mem, tmpdir, tmpdir, ref))
 except Exception as ex:		
 	stderr.write ("Job failed: %s" % str(ex))
 	raise
@@ -593,53 +593,53 @@ finally:
 @requires:
 	[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 """
-pBamMerge                     = proc (desc = 'Merges multiple SAM and/or BAM sorted files into a single file.')
-pBamMerge.input               = "inlist:file"
-pBamMerge.output              = "outfile:file:{{inlist | fn | lambda x: x + '_merged'}}.bam"
-pBamMerge.args.tool           = "picard" 
-pBamMerge.args.picard         = "picard" 
-pBamMerge.args.bamutil        = "bam" 
-pBamMerge.args.samtools       = "samtools" 
-pBamMerge.args.sambamba       = "sambamba" 
-pBamMerge.args.params         = ""
-pBamMerge.args.tmpdir         = __import__('tempfile').gettempdir() 
-pBamMerge.args.nthread        = 1
-pBamMerge.args.mem            = "4G"
-pBamMerge.args._memtoJava     = mem.toJava.python
-pBamMerge.args._runcmd        = runcmd.python
-pBamMerge.lang                = "python"
-pBamMerge.script              = """
+pBamMerge                   = Proc(desc = 'Merges multiple SAM and/or BAM sorted files into a single file.')
+pBamMerge.input             = "inlist:file"
+pBamMerge.output            = "outfile:file:{{in.inlist | fn | lambda x: x + '_merged'}}.bam"
+pBamMerge.args.tool         = "picard"
+pBamMerge.args.picard       = "picard"
+pBamMerge.args.bamutil      = "bam"
+pBamMerge.args.samtools     = "samtools"
+pBamMerge.args.sambamba     = "sambamba"
+pBamMerge.args.params       = ""
+pBamMerge.args.tmpdir       = __import__('tempfile').gettempdir()
+pBamMerge.args.nthread      = 1
+pBamMerge.args.mem          = "4G"
+pBamMerge.tplenvs.memtoJava = mem.toJava.python
+pBamMerge.tplenvs.runcmd    = runcmd.python
+pBamMerge.lang              = "python"
+pBamMerge.script            = """
 
 from os import makedirs, path
 from shutil import rmtree
 
-tmpdir    = path.join ("{{ args.tmpdir }}", "{{proc.id}}.{{inlist | fn}}.{{#}}")
+tmpdir    = path.join ("{{ args.tmpdir }}", "{{proc.id}}.{{in.inlist | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 	
-{{ args._runcmd }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ memtoJava }}
 mem = memtoJava({{ args.mem | quote }})
 
 tool = {{args.tool | quote}}
 try:
 	if tool == 'picard':
-		infiles = {{ inlist | readlines | json }}
+		infiles = {{ in.inlist | readlines | json }}
 		infiles = " ".join(['I="%s"' % x for x in infiles])
 		thr = "USE_THREADING=true" if {{args.nthread}} > 1 else "USE_THREADING=false"
-		cmd = '{{args.picard}} MergeSamFiles %s -Djava.io.tmpdir="%s" TMP_DIR="%s" %s O="{{outfile}}" AS=true %s' % (mem, tmpdir, tmpdir, infiles, thr)
+		cmd = '{{args.picard}} MergeSamFiles %s -Djava.io.tmpdir="%s" TMP_DIR="%s" %s O="{{out.outfile}}" AS=true %s' % (mem, tmpdir, tmpdir, infiles, thr)
 		runcmd (cmd)
 	elif tool == 'bamutil':
-		infiles = {{ inlist | readlines | json }}
+		infiles = {{ in.inlist | readlines | json }}
 		infiles = " ".join(['-i "%s"' % x for x in infiles])
-		cmd = '{{args.bamutil}} mergeBam %s -o "{{outfile}}"' % (infiles)
+		cmd = '{{args.bamutil}} mergeBam %s -o "{{out.outfile}}"' % (infiles)
 		runcmd (cmd)
 	elif tool == 'samtools':
-		cmd = '{{args.samtools}} merge -@ {{args.nthread}} -O bam -b "{{inlist}}" "{{outfile}}"'
+		cmd = '{{args.samtools}} merge -@ {{args.nthread}} -O bam -b "{{in.inlist}}" "{{out.outfile}}"'
 		runcmd (cmd)
 	elif tool == 'sambamba':
-		infiles = {{ inlist | readlines | json }}
+		infiles = {{ in.inlist | readlines | json }}
 		infiles = ' '.join(['"'+infile+'"' for infile in infiles])
-		cmd = '{{args.sambamba}} merge -t {{args.nthread}} "{{outfile}}" %s' % (infiles)
+		cmd = '{{args.sambamba}} merge -t {{args.nthread}} "{{out.outfile}}" %s' % (infiles)
 		runcmd (cmd)
 except Exception as ex:		
 	stderr.write ("Job failed: %s" % str(ex))
@@ -657,7 +657,7 @@ finally:
 @input:
 	`infile:file`: The input bam file
 @brings:
-	`infile`: `{{infile | bn}}.bai`, the bam index file
+	`infile`: `{{in.infile | bn}}.bai`, the bam index file
 @output:
 	`outfile:file`: The vcf file containing the mutations
 @args:
@@ -685,73 +685,73 @@ finally:
 	[platypus](http://www.well.ox.ac.uk/platypus)
 	[strelka@2.7.1+](https://github.com/Illumina/strelka)
 """
-pBam2Gmut                     = proc (desc = 'Call germline (snps and indels) from a call-ready bam file.')
-pBam2Gmut.input               = "infile:file"
-pBam2Gmut.brings              = {"infile": "{{infile.orig | bn}}.bai"}
-pBam2Gmut.output              = "outfile:file:{{infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pBam2Gmut.lang                = "python"
-pBam2Gmut.args.tool           = "gatk"
-pBam2Gmut.args.gatk           = "gatk"
-pBam2Gmut.args.vardict        = "vardict"
-pBam2Gmut.args.snvsniffer     = "SNVSniffer"
-pBam2Gmut.args.samtools       = "samtools" # required by SNVSniffer to generate a bam header file
-pBam2Gmut.args.platypus       = "platypus"
-pBam2Gmut.args.picard         = "picard"
-pBam2Gmut.args.strelka        = "configureStrelkaGermlineWorkflow.py"
-pBam2Gmut.args.mem            = "24G"
-pBam2Gmut.args.ref            = ""
-pBam2Gmut.args.tmpdir         = __import__('tempfile').gettempdir() 
-pBam2Gmut.args.configParams   = '' # only for strelka
-pBam2Gmut.args.params         = ""
-pBam2Gmut.args.gz             = False
-pBam2Gmut.args.nthread        = 1 # for gatk and platypus
-pBam2Gmut.args._memtoJava     = mem.toJava.python
-pBam2Gmut.args._runcmd        = runcmd.python
-pBam2Gmut.beforeCmd           = checkArgsRef.bash + buildArgsFastaFai.bash + buildArgsFastaDict.bash
-pBam2Gmut.script              = """
+pBam2Gmut                   = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
+pBam2Gmut.input             = "infile:file"
+pBam2Gmut.brings            = {"infile": "{{in.infile | bn}}.bai"}
+pBam2Gmut.output            = "outfile:file:{{in.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2Gmut.lang              = "python"
+pBam2Gmut.args.tool         = "gatk"
+pBam2Gmut.args.gatk         = "gatk"
+pBam2Gmut.args.vardict      = "vardict"
+pBam2Gmut.args.snvsniffer   = "SNVSniffer"
+pBam2Gmut.args.samtools     = "samtools" # required by SNVSniffer to generate a bam header file
+pBam2Gmut.args.platypus     = "platypus"
+pBam2Gmut.args.picard       = "picard"
+pBam2Gmut.args.strelka      = "configureStrelkaGermlineWorkflow.py"
+pBam2Gmut.args.mem          = "24G"
+pBam2Gmut.args.ref          = ""
+pBam2Gmut.args.tmpdir       = __import__('tempfile').gettempdir()
+pBam2Gmut.args.configParams = '' # only for strelka
+pBam2Gmut.args.params       = ""
+pBam2Gmut.args.gz           = False
+pBam2Gmut.args.nthread      = 1 # for gatk and platypus
+pBam2Gmut.tplenvs.memtoJava = mem.toJava.python
+pBam2Gmut.tplenvs.runcmd    = runcmd.python
+pBam2Gmut.beforeCmd         = checkArgsRef.bash + buildArgsFastaFai.bash + buildArgsFastaDict.bash
+pBam2Gmut.script            = """
 from os import path, makedirs
 from shutil import rmtree
 from sys import stderr, exit
 
-if not path.exists ("{{brings.infile}}"):
-	stderr.write ("Input file '{{infile.orig}}' is not indexed.")
+if not path.exists ("{{bring.infile[0]}}"):
+	stderr.write ("Input file '{{in._infile}}' is not indexed.")
 	exit (1)
 	
-{{ args._runcmd }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ memtoJava }}
 
-tmpdir    = path.join ("{{ args.tmpdir}}", "{{proc.id}}.{{infile | fn}}.{{#}}")
+tmpdir    = path.join ("{{ args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 
 ref     = {{args.ref | quote}}
 tool    = {{args.tool | quote}}
 gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{outfile | quote}}
+outfile = {{out.outfile | quote}}
 if gz:	outfile = outfile[:-3]
 try:
 	if tool == 'gatk':
 		mem = memtoJava ({{args.mem | quote}})
-		cmd = '{{args.gatk}} -T HaplotypeCaller %s -Djava.io.tmpdir="%s" -R "%s" -I "{{infile}}" -o "%s" -nct {{args.nthread}} {{args.params}}' % (mem, tmpdir, ref, outfile)
+		cmd = '{{args.gatk}} -T HaplotypeCaller %s -Djava.io.tmpdir="%s" -R "%s" -I "{{in.infile}}" -o "%s" -nct {{args.nthread}} {{args.params}}' % (mem, tmpdir, ref, outfile)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'vardict':	
-		cmd = '{{args.vardict}} -v -G "%s" -b "{{infile}}" {{args.params}} > "%s"' % (ref, outfile)
+		cmd = '{{args.vardict}} -v -G "%s" -b "{{in.infile}}" {{args.params}} > "%s"' % (ref, outfile)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'snvsniffer':
-		hfile = "{{job.outdir}}/{{infile | bn}}.header"
-		cmd = '{{args.samtools}} view -H "{{infile}}" > "%s"' % hfile
+		hfile = "{{job.outdir}}/{{in.infile | bn}}.header"
+		cmd = '{{args.samtools}} view -H "{{in.infile}}" > "%s"' % hfile
 		runcmd (cmd)
-		cmd = '{{args.snvsniffer}} snp -g "%s" -o "%s" {{args.params}} "%s" "{{infile}}"' % (ref, outfile, hfile)
+		cmd = '{{args.snvsniffer}} snp -g "%s" -o "%s" {{args.params}} "%s" "{{in.infile}}"' % (ref, outfile, hfile)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'platypus':
-		cmd = '{{args.platypus}} callVariants --refFile="%s" --bamFiles="{{infile}}" --nCPU={{args.nthread}} --output="%s" --logFileName="%s"' % (ref, outfile, outfile + '.log')
+		cmd = '{{args.platypus}} callVariants --refFile="%s" --bamFiles="{{in.infile}}" --nCPU={{args.nthread}} --output="%s" --logFileName="%s"' % (ref, outfile, outfile + '.log')
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'strelka':
 		# config
-		cmd = '{{args.strelka}} --bam="{{infile}}" --referenceFasta="%s" --runDir="{{job.outdir}}" {{args.configParams}}' % (ref)
+		cmd = '{{args.strelka}} --bam="{{in.infile}}" --referenceFasta="%s" --runDir="{{job.outdir}}" {{args.configParams}}' % (ref)
 		runcmd (cmd)
 		# run
 		cmd = '{{job.outdir}}/runWorkflow.py -m local -j "{{args.nthread}}" -g {{args.mem | lambda x: int(x[:-1]) if x.lower().endswith("g") else int(int(x[:-1])/1024) }} {{args.params}}'
@@ -766,84 +766,84 @@ finally:
 	rmtree (tmpdir)
 """
 
-pBamPair2Smut                     = proc (desc = 'Call somatic mutations from tumor-normal bam pair.')
-pBamPair2Smut.input               = "tumor:file, normal:file"
-pBamPair2Smut.brings              = {"tumor": "{{tumor.orig | bn}}.bai", "normal": "{{normal.orig | bn}}.bai"}
-pBamPair2Smut.output              = "outfile:file:{{tumor | fn | fn}}-{{normal | fn | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pBamPair2Smut.args.tool           = 'gatk'
-pBamPair2Smut.args.gatk           = 'gatk' # required for strelka
-pBamPair2Smut.args.somaticsniper  = 'bam-somaticsniper'
-pBamPair2Smut.args.strelka        = 'configureStrelkaSomaticWorkflow.py' # @2.7.1
-pBamPair2Smut.args.snvsniffer     = 'SNVSniffer'
-pBamPair2Smut.args.virmid         = 'virmid'
-pBamPair2Smut.args.vardict        = 'vardict'
-pBamPair2Smut.args.samtools       = 'samtools'
-pBamPair2Smut.args.picard         = 'picard'
-pBamPair2Smut.args.configParams   = '' # only for strelka
-pBamPair2Smut.args.params         = '' 
-pBamPair2Smut.args.mem            = '24G'
-pBamPair2Smut.args.ref            = ''
-pBamPair2Smut.args.gz             = False
-pBamPair2Smut.args.nthread        = 1
-pBamPair2Smut.args.tmpdir         = __import__('tempfile').gettempdir() 
-pBamPair2Smut.args._memtoJava     = mem.toJava.python
-pBamPair2Smut.args._runcmd        = runcmd.python
-pBamPair2Smut.beforeCmd           = checkArgsRef.bash + buildArgsFastaFai.bash + buildArgsFastaDict.bash
-pBamPair2Smut.lang                = 'python'
-pBamPair2Smut.script              = """
+pBamPair2Smut                    = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
+pBamPair2Smut.input              = "tumor:file, normal:file"
+pBamPair2Smut.brings             = {"tumor": "{{in.tumor | bn}}.bai", "normal": "{{in.normal | bn}}.bai"}
+pBamPair2Smut.output             = "outfile:file:{{in.tumor | fn | fn}}-{{in.normal | fn | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBamPair2Smut.args.tool          = 'gatk'
+pBamPair2Smut.args.gatk          = 'gatk' # required for strelka
+pBamPair2Smut.args.somaticsniper = 'bam-somaticsniper'
+pBamPair2Smut.args.strelka       = 'configureStrelkaSomaticWorkflow.py' # @2.7.1
+pBamPair2Smut.args.snvsniffer    = 'SNVSniffer'
+pBamPair2Smut.args.virmid        = 'virmid'
+pBamPair2Smut.args.vardict       = 'vardict'
+pBamPair2Smut.args.samtools      = 'samtools'
+pBamPair2Smut.args.picard        = 'picard'
+pBamPair2Smut.args.configParams  = '' # only for strelka
+pBamPair2Smut.args.params        = ''
+pBamPair2Smut.args.mem           = '24G'
+pBamPair2Smut.args.ref           = ''
+pBamPair2Smut.args.gz            = False
+pBamPair2Smut.args.nthread       = 1
+pBamPair2Smut.args.tmpdir        = __import__('tempfile').gettempdir()
+pBamPair2Smut.tplenvs.memtoJava  = mem.toJava.python
+pBamPair2Smut.tplenvs.runcmd     = runcmd.python
+pBamPair2Smut.beforeCmd          = checkArgsRef.bash + buildArgsFastaFai.bash + buildArgsFastaDict.bash
+pBamPair2Smut.lang               = 'python'
+pBamPair2Smut.script             = """
 from os import path, makedirs
 from shutil import rmtree
 from sys import stderr, exit
 
-if not path.exists ("{{brings.tumor}}"):
-	stderr.write ("Input file '{{tumor.orig}}' is not indexed.")
+if not path.exists ("{{bring.tumor[0]}}"):
+	stderr.write ("Input file '{{in._tumor}}' is not indexed.")
 	exit (1)
-if not path.exists ("{{brings.normal}}"):
-	stderr.write ("Input file '{{normal.orig}}' is not indexed.")
+if not path.exists ("{{bring.normal[0]}}"):
+	stderr.write ("Input file '{{in._normal}}' is not indexed.")
 	exit (1)
 
 if not path.exists ({{args.ref | quote}}):
 	stderr.write ("Reference file not specified")
 	exit (1)
 
-{{ args._runcmd }}
-{{ args._memtoJava }}
+{{ runcmd }}
+{{ memtoJava }}
 
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{tumor | fn | fn}}.{{normal | fn | fn}}.{{#}}")
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.tumor | fn | fn}}.{{in.normal | fn | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
 ref     = {{args.ref | quote}}
 tool    = {{args.tool | quote}}
 gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{outfile | quote}}
+outfile = {{out.outfile | quote}}
 if gz:	outfile = outfile[:-3]
 try:
 	if tool == 'gatk':
 		intvfile = "{{job.outdir}}/interval.list"
-		cmd = '{{args.samtools}} idxstats "{{tumor}}" | head -n -1 | cut -f1 > "%s"' % (intvfile)
+		cmd = '{{args.samtools}} idxstats "{{in.tumor}}" | head -n -1 | cut -f1 > "%s"' % (intvfile)
 		runcmd (cmd)
 		mem = memtoJava ({{args.mem | quote}})
-		cmd = '{{args.gatk}} -T MuTect2 %s -Djava.io.tmpdir="%s" -R "%s" -I:tumor "{{tumor}}" -I:normal "{{normal}}" -o "%s" -nct {{args.nthread}} -L "%s" {{args.params}}' % (mem, tmpdir, ref, outfile, intvfile)
+		cmd = '{{args.gatk}} -T MuTect2 %s -Djava.io.tmpdir="%s" -R "%s" -I:tumor "{{in.tumor}}" -I:normal "{{in.normal}}" -o "%s" -nct {{args.nthread}} -L "%s" {{args.params}}' % (mem, tmpdir, ref, outfile, intvfile)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'somaticsniper':	
-		cmd = '{{args.somaticsniper}} -f "%s" -F vcf "{{tumor}}" "{{normal}}" "%s"' % (ref, outfile)
+		cmd = '{{args.somaticsniper}} -f "%s" -F vcf "{{in.tumor}}" "{{in.normal}}" "%s"' % (ref, outfile)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'snvsniffer':
-		theader = "{{job.outdir}}/{{tumor | bn}}.header"
-		cmd = '{{args.samtools}} view -H "{{tumor}}" > "%s"' % theader
+		theader = "{{job.outdir}}/{{in.tumor | bn}}.header"
+		cmd = '{{args.samtools}} view -H "{{in.tumor}}" > "%s"' % theader
 		runcmd (cmd)
-		nheader = "{{job.outdir}}/{{normal | bn}}.header"
-		cmd = '{{args.samtools}} view -H "{{normal}}" > "%s"' % nheader
+		nheader = "{{job.outdir}}/{{in.normal | bn}}.header"
+		cmd = '{{args.samtools}} view -H "{{in.normal}}" > "%s"' % nheader
 		runcmd (cmd)
-		cmd = '{{args.snvsniffer}} somatic -g "%s" -o "%s" {{args.params}} "%s" "%s" "{{tumor}}" "{{normal}}"' % (ref, outfile, theader, nheader)
+		cmd = '{{args.snvsniffer}} somatic -g "%s" -o "%s" {{args.params}} "%s" "%s" "{{in.tumor}}" "{{in.normal}}"' % (ref, outfile, theader, nheader)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'strelka':
 		# config
-		cmd = '{{args.strelka}} --normalBam="{{normal}}" --tumorBam="{{tumor}}" --referenceFasta="%s" --runDir="{{job.outdir}}" {{args.configParams}}' % (ref)
+		cmd = '{{args.strelka}} --normalBam="{{in.normal}}" --tumorBam="{{in.tumor}}" --referenceFasta="%s" --runDir="{{job.outdir}}" {{args.configParams}}' % (ref)
 		runcmd (cmd)
 		# run
 		cmd = '{{job.outdir}}/runWorkflow.py -m local -j {{args.nthread}} -g {{args.mem | lambda x: int(x[:-1]) if x.lower().endswith("g") else int(int(x[:-1])/1024) }} {{args.params}}'
@@ -855,12 +855,12 @@ try:
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'virmid':
 		mem = memtoJava ({{args.mem | quote}})
-		cmd = '{{args.virmid}} %s -Djava.io.tmpdir="%s" -R "%s" -D "{{tumor}}" -N "{{normal}}" -w "{{job.outdir}}" {{args.params}}' % (mem, tmpdir, ref)
+		cmd = '{{args.virmid}} %s -Djava.io.tmpdir="%s" -R "%s" -D "{{in.tumor}}" -N "{{in.normal}}" -w "{{job.outdir}}" {{args.params}}' % (mem, tmpdir, ref)
 		runcmd (cmd)
 		runcmd ('mv "{{job.outdir}}/*.virmid.som.passed.vcf" "%s"' % outfile)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 	elif tool == 'vardict':
-		cmd = '{{args.vardict}} -v -G "%s" -b "{{tumor}}|{{normal}}" {{args.params}} > "%s"' % (ref, outfile)
+		cmd = '{{args.vardict}} -v -G "%s" -b "{{in.tumor}}|{{in.normal}}" {{args.params}} > "%s"' % (ref, outfile)
 		runcmd (cmd)
 		if gz:	runcmd ('gzip "%s"' % (outfile))
 except Exception as ex:
@@ -878,7 +878,7 @@ finally:
 @input:
 	`input:file`: The bam file
 @brings:
-	`infile`: "{{infile | bn}}.bai" The bam index file
+	`infile`: "{{in.infile | bn}}.bai" The bam index file
 @output:
 	`outfile:file`: The output vcf file
 	`outdir`: The output directory containing other result files
@@ -918,49 +918,49 @@ finally:
 	[`cnvnator`](https://github.com/abyzovlab/CNVnator)
 	`wandy`: Inside cnv caller
 """
-pBam2Cnv = proc (desc = 'Detect copy number variation from bam files.')
-pBam2Cnv.input = 'infile:file'
-pBam2Cnv.brings = {"infile": "{{infile | bn}}.bai"}
-pBam2Cnv.output = "outfile:file:{{infile | fn}}.{{args.tool}}/{{infile | fn}}.{{args.tool}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}, outdir:dir:{{infile | fn}}.{{args.tool}}"
-pBam2Cnv.args.gz = False
-pBam2Cnv.args.tool = 'cnvkit'
-pBam2Cnv.args.cnvnator = 'cnvnator'
-pBam2Cnv.args.cnvnator2vcf = 'cnvnator2VCF.pl'
-pBam2Cnv.args.cnvkit = 'cnvkit.py'
-pBam2Cnv.args.wandy = 'Wandy'
-pBam2Cnv.args.ref = ''
-pBam2Cnv.args.cnvkitAccessParams = '-s 5000'
-pBam2Cnv.args.cnvkitTargetParams = '--split --short-names'
-pBam2Cnv.args.cnvkitCoverageParams = ''
-pBam2Cnv.args.cnvkitReferenceParams = '--no-edge'
-pBam2Cnv.args.cnvkitFixParams = '--no-edge'
-pBam2Cnv.args.cnvkitSegmentParams = ''
-pBam2Cnv.args.cnvkitCallParams = ''
-pBam2Cnv.args.cnvkitPlotParams = ''
-pBam2Cnv.args.cnvkitBreaksParams = ''
-pBam2Cnv.args.cnvkitGainlossParams = ''
-pBam2Cnv.args.cnvkitMetricsParams = ''
+pBam2Cnv                             = Proc(desc = 'Detect copy number variation from bam files.')
+pBam2Cnv.input                       = 'infile:file'
+pBam2Cnv.brings                      = {"infile": "{{in.infile | bn}}.bai"}
+pBam2Cnv.output                      = "outfile:file:{{in.infile | fn}}.{{args.tool}}/{{in.infile | fn}}.{{args.tool}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}, outdir:dir:{{in.infile | fn}}.{{args.tool}}"
+pBam2Cnv.args.gz                     = False
+pBam2Cnv.args.tool                   = 'cnvkit'
+pBam2Cnv.args.cnvnator               = 'cnvnator'
+pBam2Cnv.args.cnvnator2vcf           = 'cnvnator2VCF.pl'
+pBam2Cnv.args.cnvkit                 = 'cnvkit.py'
+pBam2Cnv.args.wandy                  = 'Wandy'
+pBam2Cnv.args.ref                    = ''
+pBam2Cnv.args.cnvkitAccessParams     = '-s 5000'
+pBam2Cnv.args.cnvkitTargetParams     = '--split --short-names'
+pBam2Cnv.args.cnvkitCoverageParams   = ''
+pBam2Cnv.args.cnvkitReferenceParams  = '--no-edge'
+pBam2Cnv.args.cnvkitFixParams        = '--no-edge'
+pBam2Cnv.args.cnvkitSegmentParams    = ''
+pBam2Cnv.args.cnvkitCallParams       = ''
+pBam2Cnv.args.cnvkitPlotParams       = ''
+pBam2Cnv.args.cnvkitBreaksParams     = ''
+pBam2Cnv.args.cnvkitGainlossParams   = ''
+pBam2Cnv.args.cnvkitMetricsParams    = ''
 pBam2Cnv.args.cnvkitSegmetricsParams = '--iqr'
-pBam2Cnv.args.cnvkitExportParams = ''
-pBam2Cnv.args.cnvkitScatterParams = [''] # multiple scatter plots
-pBam2Cnv.args.cnvkitHeatmapParams = [''] # multiple heatmap plots
-pBam2Cnv.args.cnvkitDiagramParams = ''
-pBam2Cnv.args.cnvkitReport = True
-pBam2Cnv.args.cnvkitPlot = True
-pBam2Cnv.args.cnvnatorBinsize = 100
-pBam2Cnv.args.cnvnatorGenome = 'hg19'
-pBam2Cnv.args.params = '-t 1' # wandy 1:hg19 solid cell/blood, 2:hg19 cell free/plamsa, 3:hg38 solid cell/blood, 4:hg38 cell free/plamsa
-pBam2Cnv.args.mem = '20G' # for wandy
-pBam2Cnv.args.nthread = 1 # for cnvkit
-pBam2Cnv.args._polling0 = polling0.python
-pBam2Cnv.args._pollingAll = pollingAll.python
-pBam2Cnv.args._runcmd = runcmd.python
-pBam2Cnv.beforeCmd = """
+pBam2Cnv.args.cnvkitExportParams     = ''
+pBam2Cnv.args.cnvkitScatterParams    = [''] # multiple scatter plots
+pBam2Cnv.args.cnvkitHeatmapParams    = [''] # multiple heatmap plots
+pBam2Cnv.args.cnvkitDiagramParams    = ''
+pBam2Cnv.args.cnvkitReport           = True
+pBam2Cnv.args.cnvkitPlot             = True
+pBam2Cnv.args.cnvnatorBinsize        = 100
+pBam2Cnv.args.cnvnatorGenome         = 'hg19'
+pBam2Cnv.args.params                 = '-t 1' # wandy 1:hg19 solid cell/blood, 2:hg19 cell free/plamsa, 3:hg38 solid cell/blood, 4:hg38 cell free/plamsa
+pBam2Cnv.args.mem                    = '20G' # for wandy
+pBam2Cnv.args.nthread                = 1 # for cnvkit
+pBam2Cnv.tplenvs.polling0            = polling0.python
+pBam2Cnv.tplenvs.pollingAll          = pollingAll.python
+pBam2Cnv.tplenvs.runcmd              = runcmd.python
+pBam2Cnv.beforeCmd                   = """
 if [[ ! -e "{{args.ref}}" && "{{args.tool}}" == "cnvkit" ]]; then
 	echo "No reference file specified." 1>&2
 	exit 1
 fi
-if [[ "{{args.tool}}" == "cnvkit" && {{proc.forks}} -lt {{proc.length}} ]]; then
+if [[ "{{args.tool}}" == "cnvkit" && {{proc.forks}} -lt {{proc.size}} ]]; then
 	echo "Cnvkit requires all jobs run simultaneously (proc.forks >= # jobs)." 1>&2
 	echo "Because it needs all coverage files to generate reference coverage file." 1>&2
 	exit 1
@@ -974,46 +974,46 @@ from sys import stderr, exit
 from time import sleep
 from datetime import date
 
-if not path.exists ("{{brings.infile}}"):
-	stderr.write ("Input file '{{infile.orig}}' is not indexed.")
+if not path.exists ("{{bring.infile[0]}}"):
+	stderr.write ("Input file '{{in._infile}}' is not indexed.")
 	exit (1)
 
-{{ args._runcmd }}
-{{ args._polling0 }}
-{{ args._pollingAll }}
+{{ runcmd }}
+{{ polling0 }}
+{{ pollingAll }}
 gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{outfile | quote}}
+outfile = {{out.outfile | quote}}
 if gz:	outfile = outfile[:-3]
 	
 tool = {{args.tool | quote}}
 if tool == 'cnvkit':
 	targetDone    = "{{proc.workdir}}/0/output/cnvkit_target.done"
 	referenceDone = "{{proc.workdir}}/0/output/cnvkit_reference.done"
-	targetCov     = "{{outdir}}/{{infile | fn}}.targetcov.cnn"
+	targetCov     = "{{out.outdir}}/{{in.infile | fn}}.targetcov.cnn"
 	accessfile    = '{{proc.workdir}}/0/output/cnvkit_access.bed'
 	targetfile    = '{{proc.workdir}}/0/output/cnvkit_targets.bed'
 	refcnn        = '{{proc.workdir}}/0/output/reference.cnn'
-	fixedCnr      = "{{outdir}}/{{infile | fn}}.cnr"
-	segfile       = "{{outdir}}/{{infile | fn}}.cns"
-	callfile      = "{{outdir}}/{{infile | fn}}.call.cns"
+	fixedCnr      = "{{out.outdir}}/{{in.infile | fn}}.cnr"
+	segfile       = "{{out.outdir}}/{{in.infile | fn}}.cns"
+	callfile      = "{{out.outdir}}/{{in.infile | fn}}.call.cns"
 	# report files
-	breaksfile    = "{{outdir}}/{{infile | fn}}.breaks.txt"
-	gainlossfile  = "{{outdir}}/{{infile | fn}}.gainloss.txt"
-	metricsfile   = "{{outdir}}/{{infile | fn}}.metrics.txt"
-	segmetricsfile= "{{outdir}}/{{infile | fn}}.segmetrics.txt"
+	breaksfile    = "{{out.outdir}}/{{in.infile | fn}}.breaks.txt"
+	gainlossfile  = "{{out.outdir}}/{{in.infile | fn}}.gainloss.txt"
+	metricsfile   = "{{out.outdir}}/{{in.infile | fn}}.metrics.txt"
+	segmetricsfile= "{{out.outdir}}/{{in.infile | fn}}.segmetrics.txt"
 	openblas_nthr = "export OPENBLAS_NUM_THREADS={{args.nthread}}; export OMP_NUM_THREADS={{args.nthread}}; export NUMEXPR_NUM_THREADS={{args.nthread}}; export MKL_NUM_THREADS={{args.nthread}}; "
 	
 	cmd1 = '%s {{args.cnvkit}} access "{{args.ref}}" -o "%s" {{args.cnvkitAccessParams}}' % (openblas_nthr, accessfile)
 	cmd2 = '{{args.cnvkit}} target "%s" -o "%s" {{args.cnvkitTargetParams}}' % (accessfile, targetfile)
-	polling0 ({{#}}, cmd1 + '; ' + cmd2, targetDone, t = 60)
+	polling0 ({{job.index}}, cmd1 + '; ' + cmd2, targetDone, t = 60)
 	
-	cmd = '%s {{args.cnvkit}} coverage "{{infile}}" "%s" -p {{args.nthread}} -o "%s" {{args.cnvkitCoverageParams}}' % (openblas_nthr, targetfile, targetCov)
-	pollingAll ({{proc.workdir | quote}}, {{proc.length}}, {{#}}, cmd, "cnvkit_coverage.done")
+	cmd = '%s {{args.cnvkit}} coverage "{{in.infile}}" "%s" -p {{args.nthread}} -o "%s" {{args.cnvkitCoverageParams}}' % (openblas_nthr, targetfile, targetCov)
+	pollingAll ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "cnvkit_coverage.done")
 	
 	cmd = '%s {{args.cnvkit}} reference {{proc.workdir}}/*/output/*/*.targetcov.cnn {{args.cnvkitReferenceParams}} -o "%s" -f "{{args.ref}}"' % (openblas_nthr, refcnn)
-	polling0 ({{#}}, cmd, referenceDone)
+	polling0 ({{job.index}}, cmd, referenceDone)
 	
-	mtfile = "{{outdir}}/cnvkit_mt"
+	mtfile = "{{out.outdir}}/cnvkit_mt"
 	open(mtfile, 'w').close()
 	cmd = '%s {{args.cnvkit}} fix "%s" "%s" "%s" {{args.cnvkitFixParams}} -o "%s"' % (openblas_nthr, targetCov, mtfile, refcnn, fixedCnr)
 	runcmd (cmd)
@@ -1043,15 +1043,15 @@ if tool == 'cnvkit':
 	# plots
 		#scatter plots
 		for i, param in enumerate({{args.cnvkitScatterParams | json}}):
-			cmd = '%s {{args.cnvkit}} scatter "%s" -s "%s" %s -o "{{outdir}}/{{infile | fn}}.scatter%s.pdf"' % (openblas_nthr, fixedCnr, callfile, param, str(i))
+			cmd = '%s {{args.cnvkit}} scatter "%s" -s "%s" %s -o "{{out.outdir}}/{{in.infile | fn}}.scatter%s.pdf"' % (openblas_nthr, fixedCnr, callfile, param, str(i))
 			runcmd (cmd)
-		cmd = '%s {{args.cnvkit}} diagram "%s" -s "%s" {{args.cnvkitDiagramParams}} -o {{outdir}}/{{infile | fn}}.diagram.pdf' % (openblas_nthr, fixedCnr, callfile)
+		cmd = '%s {{args.cnvkit}} diagram "%s" -s "%s" {{args.cnvkitDiagramParams}} -o {{out.outdir}}/{{in.infile | fn}}.diagram.pdf' % (openblas_nthr, fixedCnr, callfile)
 		runcmd (cmd)
 		
-		pollingAll ({{proc.workdir | quote}}, {{proc.length}}, {{#}}, 'if [[ ! -e "%s" ]]; then sleep 1; fi' % callfile, "cnvkit_call.done")
-		if {{#}} == 0:
+		pollingAll ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, 'if [[ ! -e "%s" ]]; then sleep 1; fi' % callfile, "cnvkit_call.done")
+		if {{job.index}} == 0:
 			for i, param in enumerate({{args.cnvkitHeatmapParams | json}}):
-				cmd = '%s {{args.cnvkit}} heatmap "{{proc.workdir}}"/*/output/*/*.call.cns %s -o "{{outdir}}/{{infile | fn}}.heatmap%s.pdf"' % (openblas_nthr, param, str(i))
+				cmd = '%s {{args.cnvkit}} heatmap "{{proc.workdir}}"/*/output/*/*.call.cns %s -o "{{out.outdir}}/{{in.infile | fn}}.heatmap%s.pdf"' % (openblas_nthr, param, str(i))
 				runcmd (cmd)
 	
 	# to vcf
@@ -1076,15 +1076,15 @@ if tool == 'cnvkit':
 			fout.write('##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">\\n')
 			fout.write('##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">\\n')
 			fout.write('##FORMAT=<ID=CNQ,Number=1,Type=Float,Description="Copy number genotype quality for imprecise events">\\n')
-			fout.write('#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	{{infile | fn}}\\n')
+			fout.write('#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	{{in.infile | fn}}\\n')
 	else:
 		cmd = '%s {{args.cnvkit}} export vcf "%s" -o "%s" {{args.cnvkitExportParams}}' % (openblas_nthr, callfile, outfile)
 		runcmd (cmd)
 	
 elif tool == 'cnvnator':
-	rootfile = '{{outdir}}/{{infile | fn}}.root'
-	callfile = '{{outdir}}/{{infile | fn}}.cnvnator'
-	cmd = '{{args.cnvnator}} -root "%s" -genome {{args.cnvnatorGenome}} -tree "{{infile}}" ' % (rootfile)
+	rootfile = '{{out.outdir}}/{{in.infile | fn}}.root'
+	callfile = '{{out.outdir}}/{{in.infile | fn}}.cnvnator'
+	cmd = '{{args.cnvnator}} -root "%s" -genome {{args.cnvnatorGenome}} -tree "{{in.infile}}" ' % (rootfile)
 	runcmd (cmd)
 	cmd = '{{args.cnvnator}} -root "%s" -genome {{args.cnvnatorGenome}} -his {{args.cnvnatorBinsize}}' % (rootfile)
 	runcmd (cmd)
@@ -1094,14 +1094,14 @@ elif tool == 'cnvnator':
 	runcmd (cmd)
 	cmd = '{{args.cnvnator}} -root "%s" -call {{args.cnvnatorBinsize}} > "%s"' % (rootfile, callfile)
 	runcmd (cmd)
-	cmd = 'cd "{{outdir}}"; {{args.cnvnator2vcf}} "%s" > "%s"' % (path.basename(callfile), outfile)
+	cmd = 'cd "{{out.outdir}}"; {{args.cnvnator2vcf}} "%s" > "%s"' % (path.basename(callfile), outfile)
 	runcmd (cmd)
 
 elif tool == 'wandy':
 	# get Wandy tool.info
 	from distutils.spawn import find_executable
 	toolinfo   = path.join (path.dirname(find_executable("{{args.wandy}}")), "tool.info")
-	retdir     = "{{outdir}}"
+	retdir     = "{{out.outdir}}"
 	#if not path.exists(retdir):
 	#	makedirs(retdir)
 	myToolinfo = path.join (retdir, "tool.info")
@@ -1114,44 +1114,44 @@ elif tool == 'wandy':
 		toolinfos.append ('WANDY_PARALLELED_MODE=0')
 		fout.write ("\\n".join(toolinfos) + "\\n")
 		
-	cmd = 'cd "%s"; {{args.wandy}} -i "{{infile}}" {{args.params}}' % (retdir)
+	cmd = 'cd "%s"; {{args.wandy}} -i "{{in.infile}}" {{args.params}}' % (retdir)
 	runcmd (cmd)
 	
 	# TODO: convert to vcf
-	open({{outfile | quote}}, 'w').close()
+	open({{out.outfile | quote}}, 'w').close()
 	
 if gz:	runcmd ('gzip "%s"' % (outfile))
 """
 
-pBamStats = proc (desc = 'Get read depth from bam files.')
-pBamStats.input = 'infile:file'
-pBamStats.output = 'outfile:file:{{infile | fn}}/{{infile | fn}}.stat.txt, outdir:dir:{{infile | fn}}'
-pBamStats.args.tool = 'bamstats'
-pBamStats.args.bamstats = 'bamstats'
-pBamStats.args.params = ''
-pBamStats.args.mem = '16G'
-pBamStats.args.plot = True
-pBamStats.args._runcmd = runcmd.r
-pBamStats.args._memtoJava = mem.toJava.r
-pBamStats.args._pollingAll = pollingAll.r
-pBamStats.beforeCmd = """
-if [[ "{{args.plot | Rbool}}" == "TRUE" && {{proc.forks}} -lt {{proc.length}} ]]; then
+pBamStats                    = Proc(desc = 'Get read depth from bam files.')
+pBamStats.input              = 'infile:file'
+pBamStats.output             = 'outfile:file:{{in.infile | fn}}/{{in.infile | fn}}.stat.txt, outdir:dir:{{in.infile | fn}}'
+pBamStats.args.tool          = 'bamstats'
+pBamStats.args.bamstats      = 'bamstats'
+pBamStats.args.params        = ''
+pBamStats.args.mem           = '16G'
+pBamStats.args.plot          = True
+pBamStats.tplenvs.runcmd     = runcmd.r
+pBamStats.tplenvs.memtoJava  = mem.toJava.r
+pBamStats.tplenvs.pollingAll = pollingAll.r
+pBamStats.beforeCmd          = """
+if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt {{proc.size}} ]]; then
 	echo "Plots can only be done with all jobs run simultaneously (proc.forks >= # jobs)." 1>&2
 	exit 1
 fi
 """
-pBamStats.lang = 'Rscript'
+pBamStats.lang   = 'Rscript'
 pBamStats.script = """
-{{args._memtoJava}}
+{{memtoJava}}
 
-cmd = '{{args.bamstats}} -i "{{infile}}" -o "{{outfile}}" {{args.params}}'
+cmd = '{{args.bamstats}} -i "{{in.infile}}" -o "{{out.outfile}}" {{args.params}}'
 
-if ({{args.plot | Rbool}}) {
-	{{args._pollingAll}}
-	pollingAll ({{proc.workdir | quote}}, {{proc.length}}, {{#}}, cmd, "bamstats.done")
+if ({{args.plot | R}}) {
+	{{pollingAll}}
+	pollingAll ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "bamstats.done")
 	
 	##### start plotting
-	if ({{#}} == 0) {
+	if ({{job.index}} == 0) {
 	
 		bsfiles = Sys.glob("{{proc.workdir}}/*/output/*/*.stat.txt")
 		means   = matrix(ncol=1, nrow=length(bsfiles))
@@ -1192,18 +1192,19 @@ if ({{args.plot | Rbool}}) {
 			dev.off()
 		}
 		write ("Plotting average coverages ...", stderr())
-		write.table (means, "{{outdir}}/avgCoverage.txt", quote=F, sep="\\t")
-		plotFreq (means, "{{outdir}}/avgCoverage.png", xlab="Average coverage")
+		write.table (means, "{{out.outdir}}/avgCoverage.txt", quote=F, sep="\\t")
+		plotFreq (means, "{{out.outdir}}/avgCoverage.png", xlab="Average coverage")
 
 		# plot chromosomes
 		write ("Plotting chromosome coverages ...", stderr())
-		png ("{{outdir}}/chrCoverage.png")
+		png ("{{out.outdir}}/chrCoverage.png")
 		#colnames(chrs) = NULL # just show index
 		boxplot(t(chrs), ylab="Coverage", las=2)
 		dev.off()
 	}
 	
 } else {
+	{{runcmd}}
 	runcmd (cmd)
 }
 """
@@ -1235,11 +1236,11 @@ if ({{args.plot | Rbool}}) {
 	[samtools](https://github.com/samtools/samtools)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 """
-pBam2FastqPE                           = proc (desc = 'Convert bam files to pair-end fastq files.')
+pBam2FastqPE                           = Proc(desc = 'Convert bam files to pair-end fastq files.')
 pBam2FastqPE.input                     = "infile:file"
 pBam2FastqPE.output                    = [
-	"fqfile1:file:{{ infile | fn | fn | fn }}_1.fq{{args.gz | lambda x: '.gz' if x else ''}}", 
-	"fqfile2:file:{{ infile | fn | fn | fn }}_2.fq{{args.gz | lambda x: '.gz' if x else ''}}"
+	"fqfile1:file:{{ in.infile | fn | fn | fn }}_1.fq{{args.gz | lambda x: '.gz' if x else ''}}", 
+	"fqfile2:file:{{ in.infile | fn | fn | fn }}_2.fq{{args.gz | lambda x: '.gz' if x else ''}}"
 ]
 pBam2FastqPE.args.tool                 = 'bedtools'
 pBam2FastqPE.args.biobambam_bamtofastq = 'bamtofastq'
@@ -1249,9 +1250,10 @@ pBam2FastqPE.args.picard               = 'picard'
 pBam2FastqPE.args.mem                  = '8G' # only for picard
 pBam2FastqPE.args.gz                   = True
 pBam2FastqPE.args.params               = ''
-pBam2FastqPE.args.tmpdir               = __import__('tempfile').gettempdir() 
-pBam2FastqPE.args._runcmd              = runcmd.python
-pBam2FastqPE.args._memtoJava           = mem.toJava.python
+pBam2FastqPE.args.tmpdir               = __import__('tempfile').gettempdir()
+pBam2FastqPE.tplenvs.runcmd            = runcmd.python
+pBam2FastqPE.tplenvs.memtoJava         = mem.toJava.python
+pBam2FastqPE.tplenvs.bool              = bool
 pBam2FastqPE.lang                      = 'python'
 pBam2FastqPE.script                    = """
 from os import makedirs, path
@@ -1260,15 +1262,15 @@ tmpdir = path.join({{args.tmpdir | quote}}, "tmp.{{proc.id}}.{{proc.tag}}.{{proc
 if not path.exists(tmpdir):
 	makedirs(tmpdir)
 
-infile  = {{infile | quote}}
-fqfile1 = {{fqfile1 | quote}}
-fqfile2 = {{fqfile2 | quote}}
+infile  = {{in.infile | quote}}
+fqfile1 = {{out.fqfile1 | quote}}
+fqfile2 = {{out.fqfile2 | quote}}
 if {{args.gz | bool}}:
 	fqfile1 = fqfile1[:-3]
 	fqfile2 = fqfile2[:-3]
 
-{{args._runcmd}}
-{{args._memtoJava}}
+{{runcmd}}
+{{memtoJava}}
 
 params  = {{args.params | quote}}
 tool    = {{args.tool | quote}}
@@ -1331,9 +1333,9 @@ finally:
 	[samtools](https://github.com/samtools/samtools)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 """
-pBam2FastqSE                           = proc (desc = 'Convert bam files to single-end fastq files.')
+pBam2FastqSE                           = Proc(desc = 'Convert bam files to single-end fastq files.')
 pBam2FastqSE.input                     = "infile:file"
-pBam2FastqSE.output                    = "fqfile:file:{{ infile | fn | fn | fn }}.fq{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2FastqSE.output                    = "fqfile:file:{{in.infile | fn | fn | fn }}.fq{{args.gz | lambda x: '.gz' if x else ''}}"
 pBam2FastqSE.args.tool                 = 'biobambam'
 pBam2FastqSE.args.biobambam_bamtofastq = 'bamtofastq'
 pBam2FastqSE.args.bedtools             = 'bedtools'
@@ -1342,9 +1344,10 @@ pBam2FastqSE.args.picard               = 'picard'
 pBam2FastqSE.args.mem                  = '8G' # only for picard
 pBam2FastqSE.args.gz                   = True
 pBam2FastqSE.args.params               = ''
-pBam2FastqSE.args.tmpdir               = __import__('tempfile').gettempdir() 
-pBam2FastqSE.args._runcmd              = runcmd.python
-pBam2FastqSE.args._memtoJava           = mem.toJava.python
+pBam2FastqSE.args.tmpdir               = __import__('tempfile').gettempdir()
+pBam2FastqSE.tplenvs.runcmd            = runcmd.python
+pBam2FastqSE.tplenvs.memtoJava         = mem.toJava.python
+pBam2FastqSE.tplenvs.bool              = bool
 pBam2FastqSE.lang                      = 'python'
 pBam2FastqSE.script                    = """
 from os import makedirs, path
@@ -1353,13 +1356,13 @@ tmpdir = path.join({{args.tmpdir | quote}}, "tmp.{{proc.id}}.{{proc.tag}}.{{proc
 if not path.exists(tmpdir):
 	makedirs(tmpdir)
 
-infile  = {{infile | quote}}
-fqfile  = {{fqfile | quote}}
+infile  = {{in.infile | quote}}
+fqfile  = {{out.fqfile | quote}}
 if {{args.gz | bool}}:
 	fqfile = fqfile[:-3]
 
-{{args._runcmd}}
-{{args._memtoJava}}
+{{runcmd}}
+{{memtoJava}}
 
 params  = {{args.params | quote}}
 tool    = {{args.tool | quote}}
@@ -1398,24 +1401,24 @@ finally:
 @name:
 	pBam2Counts
 """
-pBam2Counts = proc (desc = 'Extract read counts from RNA-seq bam files.')
-pBam2Counts.input = 'infile:file'
-pBam2Counts.output = 'outfile:file:{{infile | fn}}.counts'
-pBam2Counts.args.tool = 'htseq'
+pBam2Counts                  = Proc(desc = 'Extract read counts from RNA-seq bam files.')
+pBam2Counts.input            = 'infile:file'
+pBam2Counts.output           = 'outfile:file:{{in.infile | fn}}.counts'
+pBam2Counts.args.tool        = 'htseq'
 pBam2Counts.args.htseq_count = 'htseq-count'
-pBam2Counts.args.params = ''
-pBam2Counts.args.refgene = ''
-pBam2Counts.args._runcmd = runcmd.python
-pBam2Counts.beforeCmd = checkArgsRefgene.bash
-pBam2Counts.lang = 'python'
-pBam2Counts.script = """
-{{args._runcmd}}
+pBam2Counts.args.params      = ''
+pBam2Counts.args.refgene     = ''
+pBam2Counts.tplenvs.runcmd   = runcmd.python
+pBam2Counts.beforeCmd        = checkArgsRefgene.bash
+pBam2Counts.lang             = 'python'
+pBam2Counts.script           = """
+{{args.runcmd}}
 
 tool = '{{args.tool}}'
 if tool == 'htseq':
 	samtype = ''
-	if {{infile | quote}}.endswith('.bam'):
+	if {{in.infile | quote}}.endswith('.bam'):
 		samtype = '-f bam'
-	cmd = '{{args.htseq_count}} {{args.params}} -r pos %s "{{infile}}" "{{args.refgene}}" > "{{outfile}}"' % (samtype)
+	cmd = '{{args.htseq_count}} {{args.params}} -r pos %s "{{in.infile}}" "{{args.refgene}}" > "{{out.outfile}}"' % (samtype)
 	runcmd (cmd)
 """

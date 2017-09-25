@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 
 """
@@ -14,9 +14,9 @@ from pyppl import proc
 	`chroms`:     The chromsome filter. Default: "" (all chroms)
 	- Note: snpEff csvstat file has no "chr" prefix
 """
-pStats2Matrix = proc ()
+pStats2Matrix = Proc()
 pStats2Matrix.input  = "indir:file"
-pStats2Matrix.output = "outdir:dir:{{indir | fn}}.{{#}}.snpEffStats"
+pStats2Matrix.output = "outdir:dir:{{in.indir | fn}}.{{job.index}}.snpEffStats"
 pStats2Matrix.args   = {"chroms": ""}
 pStats2Matrix.lang   = "python"
 pStats2Matrix.script = """
@@ -162,7 +162,7 @@ def handleChromChange (sample, line, name, starts, datacol = 2):
 		data[name][chrom][sample][parts[1]] = parts[datacol:]
 		
 def saveFreqHist (name, sampledata):
-	outfile  = path.join("{{outdir}}", name + '.mat.txt')
+	outfile  = path.join("{{out.outdir}}", name + '.mat.txt')
 	# get keys/colnames
 	colnames = []
 	for sample, sdata in sampledata.iteritems(): colnames += sdata.keys()
@@ -176,7 +176,7 @@ def saveFreqHist (name, sampledata):
 	fout.close()
 	
 def saveScatters (name, sampledata):
-	outfile  = path.join("{{outdir}}", name + '.mat.txt')
+	outfile  = path.join("{{out.outdir}}", name + '.mat.txt')
 	sums     = {}
 	colnames = []
 	for sample, sdata in sampledata.iteritems():
@@ -202,7 +202,7 @@ def saveScatters (name, sampledata):
 	fout.close()
 	
 def saveChangeTable (name, sampledata):
-	outdir   = path.join ("{{outdir}}", name)
+	outdir   = path.join ("{{out.outdir}}", name)
 	makedirs (outdir)
 	names    = []
 	for sample, sdata in sampledata.iteritems():
@@ -226,7 +226,7 @@ def saveChangeTable (name, sampledata):
 		fout.close()
 		
 def saveChromChange (name, sampledata):
-	outdir   = path.join ("{{outdir}}", name)
+	outdir   = path.join ("{{out.outdir}}", name)
 	makedirs (outdir)
 	for chrom, sdata in sampledata.iteritems():
 		outfile = path.join (outdir, chrom + ".mat.txt")
@@ -242,7 +242,7 @@ def saveChromChange (name, sampledata):
 			fout.write (sample + "\\t" + "\\t".join(dat['Count']) + "\\n")
 		fout.close()
 
-for i, stfile in enumerate(glob("{{indir}}/*.stats.csv")):
+for i, stfile in enumerate(glob("{{in.indir}}/*.stats.csv")):
 	sample                             = path.basename(stfile).split('.')[0]
 	print "Handling %s ..." % stfile
 	f = open (stfile)
@@ -308,17 +308,17 @@ for name, sampledata in data.iteritems():
 	- use `library(devtools); install.github("pwwang/corrplot")`
 	[`ggplot2`](http://ggplot2.org/)
 """
-pPlotStats = proc ()
+pPlotStats = Proc()
 pPlotStats.input  = "indir:file"
-pPlotStats.output = "outdir:dir:{{indir | fn}}.snpEffPlots"
+pPlotStats.output = "outdir:dir:{{in.indir | fn}}.snpEffPlots"
 pPlotStats.lang   = "Rscript"
 pPlotStats.script = """
 library(ggplot2)
 library(corrplot)
 plotFreq = function (fn, xlab="", ylab="Frequency") {
-	infile  = file.path ("{{indir}}", paste(fn, ".mat.txt", sep=""))
+	infile  = file.path ("{{in.indir}}", paste(fn, ".mat.txt", sep=""))
 	tryCatch ({
-		outfile = file.path ("{{outdir}}", paste(fn, ".png", sep=""))
+		outfile = file.path ("{{out.outdir}}", paste(fn, ".png", sep=""))
 		png (outfile, res=300, width=2000, height=2000)
 		data    = read.table (infile, header=T, row.names=1, sep="\\t", check.names=F, stringsAsFactors=FALSE)
 		data    = as.matrix(data[,1])
@@ -330,9 +330,9 @@ plotFreq = function (fn, xlab="", ylab="Frequency") {
 }
 
 plotBoxPlot = function (fn, pie=TRUE, xlab="", ylab="Frequency", shortx = "", shorty = "", marbtm=8) {
-	infile  = file.path ("{{indir}}", paste(fn, ".mat.txt", sep=""))
+	infile  = file.path ("{{in.indir}}", paste(fn, ".mat.txt", sep=""))
 	tryCatch ({
-		outfile = file.path ("{{outdir}}", paste(fn, ".png", sep=""))
+		outfile = file.path ("{{out.outdir}}", paste(fn, ".png", sep=""))
 		png (outfile, res=300, width=2000, height=2000)
 		data    = read.table (infile, header=T, row.names=1, sep="\\t", check.names=F, stringsAsFactors=FALSE)
 		data    = as.matrix(data)
@@ -367,7 +367,7 @@ plotBoxPlot = function (fn, pie=TRUE, xlab="", ylab="Frequency", shortx = "", sh
 		if (pie) {
 			samples = rownames(data)
 			labels  = colnames(data)
-			sampdir = file.path ("{{outdir}}", fn)
+			sampdir = file.path ("{{out.outdir}}", fn)
 			dir.create(sampdir, showWarnings = F, recursive = T)
 			for (i in 1:nrow(data)) {
 				sample = samples[i]
@@ -383,10 +383,10 @@ plotBoxPlot = function (fn, pie=TRUE, xlab="", ylab="Frequency", shortx = "", sh
 }
 
 plotScatter = function (fn) {
-	infile  = file.path ("{{indir}}", paste(fn, ".mat.txt", sep=""))
+	infile  = file.path ("{{in.indir}}", paste(fn, ".mat.txt", sep=""))
 	tryCatch ({
 		if (file.exists(infile)) {
-			outfile = file.path ("{{outdir}}", paste(fn, ".png", sep=""))
+			outfile = file.path ("{{out.outdir}}", paste(fn, ".png", sep=""))
 			png (outfile, res=300, width=2000, height=2000)
 			data    = read.table (infile, header=T, row.names=1, sep="\\t", check.names=F, stringsAsFactors=FALSE)
 			means   = colMeans(data)
@@ -416,7 +416,7 @@ plotScatter = function (fn) {
 }
 
 plotChangeTable = function (fn) {
-	indir = file.path ("{{indir}}", fn)
+	indir = file.path ("{{in.indir}}", fn)
 	setwd (indir)
 	mats  = list()
 	sums  = NULL
@@ -440,7 +440,7 @@ plotChangeTable = function (fn) {
 			}
 		}
 		sds   = sqrt (sdsum/(length(files) - 1))
-		outfile = file.path ("{{outdir}}", paste(fn, ".png", sep=""))
+		outfile = file.path ("{{out.outdir}}", paste(fn, ".png", sep=""))
 		png (outfile, res=300, width=2000, height=2000)
 		diag(means) = 0
 		diag(sds)   = 0
@@ -452,11 +452,11 @@ plotChangeTable = function (fn) {
 }
 
 plotChromChange = function (fn) {
-	indir   = file.path ("{{indir}}", fn)
+	indir   = file.path ("{{in.indir}}", fn)
 	setwd (indir)
 	for (infile in list.files()) {
 		tryCatch ({
-			outfile = file.path ("{{outdir}}", paste(fn, "_", unlist(strsplit(infile, ".", fixed=T))[1], ".png", sep=""))
+			outfile = file.path ("{{out.outdir}}", paste(fn, "_", unlist(strsplit(infile, ".", fixed=T))[1], ".png", sep=""))
 			png (outfile, res=300, width=2000, height=2000)
 			data    = as.matrix(read.table (infile, header=T, row.names=1, sep="\\t", check.names=F, stringsAsFactors=FALSE))
 			means   = colMeans(data)

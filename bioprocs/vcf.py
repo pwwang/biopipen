@@ -2,7 +2,7 @@
 A set of processes to generate/process vcf files
 """
 
-from pyppl import proc, doct
+from pyppl import Proc, Box
 from .utils import mem, runcmd, buildArgIndex, buildArgsFastaFai, buildArgsFastaDict, checkArgsRef, cbindFill, plot
 
 """
@@ -50,28 +50,28 @@ from .utils import mem, runcmd, buildArgIndex, buildArgsFastaFai, buildArgsFasta
 	[`samtools`](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
 	[`picard`](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
 """
-pVcfFilter                       = proc (desc = 'Filter records in vcf file.')
+pVcfFilter                       = Proc(desc = 'Filter records in vcf file.')
 pVcfFilter.input                 = "infile:file"
-pVcfFilter.output                = "outfile:file:{{infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pVcfFilter.args.tool             = 'vcflib' # vcflib, gatk, snpsift
+pVcfFilter.output                = "outfile:file:{{in.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pVcfFilter.args.tool             = 'vcflib' # vcflib,    gatk, snpsift
 pVcfFilter.args.vcflib_vcffilter = 'vcffilter'
 pVcfFilter.args.gatk             = 'gatk'
 pVcfFilter.args.snpsift          = 'SnpSift'
 pVcfFilter.args.bcftools         = 'bcftools'
 pVcfFilter.args.samtools         = 'samtools'
 pVcfFilter.args.picard           = 'picard'
-pVcfFilter.args.selectors        = doct()  
-pVcfFilter.args.filters          = doct()  
+pVcfFilter.args.selectors        = Box()
+pVcfFilter.args.filters          = Box()
 pVcfFilter.args.params           = ""
 pVcfFilter.args.mem              = "4G"
 pVcfFilter.args.gz               = False
 pVcfFilter.args.keep             = True # only for gatk, snpsift at filter step
 pVcfFilter.args.ref              = "" # gatk
 pVcfFilter.args.tmpdir           = __import__('tempfile').gettempdir()
-pVcfFilter.args.nthread          = 1 
-pVcfFilter.args._memtoJava       = mem.toJava.python
-pVcfFilter.args._runcmd          = runcmd.python
-pVcfFilter.args._buildArgIndex   = buildArgIndex.python
+pVcfFilter.args.nthread          = 1
+pVcfFilter.tplenvs.memtoJava     = mem.toJava.python
+pVcfFilter.tplenvs.runcmd        = runcmd.python
+pVcfFilter.tplenvs.buildArgIndex = buildArgIndex.python
 pVcfFilter.lang                  = "python"
 pVcfFilter.script                = """
 from os import path, makedirs, remove
@@ -79,13 +79,13 @@ from shutil import rmtree, copyfile, move
 from sys import stderr, exit
 import vcf
 
-{{ args._runcmd }}
-{{ args._memtoJava }}
-{{ args._buildArgIndex }}
+{{ runcmd }}
+{{ memtoJava }}
+{{ buildArgIndex }}
 filters = {{args.filters | json}}
 selectors = {{args.selectors | json}}
 tmpdir    = {{ args.tmpdir | quote }}
-tmpdir    = path.join (tmpdir, "{{proc.id}}.{{infile | fn}}.{{#}}")
+tmpdir    = path.join (tmpdir, "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
@@ -107,9 +107,9 @@ if 'filter' in selectors:
 	if not isinstance(selectors['filter'], list):
 		selectors['filter'] = [selectors['filter']]
 	
-infile = "{{infile}}"
+infile = "{{in.infile}}"
 if selectors:
-	mdfile = "{{job.outdir}}/{{infile | fn}}.selected.vcf"
+	mdfile = "{{job.outdir}}/{{in.infile | fn}}.selected.vcf"
 	reader = vcf.Reader(filename=infile)
 	writer = vcf.Writer(open(mdfile, 'w'), reader)
 	for record in reader:
@@ -155,7 +155,7 @@ try:
 	gz      = {{args.gz | lambda x: bool(x)}}
 	tool    = {{args.tool | quote}}
 	keep    = {{args.keep | lambda x: bool(x)}}
-	outfile = {{outfile | [:-3] | quote}} if gz else {{outfile | quote}}
+	outfile = {{out.outfile | [:-3] | quote}} if gz else {{out.outfile | quote}}
 	if not filters:
 		if not selectors:
 			copyfile(infile, outfile)
@@ -164,9 +164,9 @@ try:
 	else:
 		if not isinstance(filters, dict):
 			filters = {tool: filters}
-		if tool == 'gatk':
+		{% if args.tool | lambda x: x == 'gatk' %}
 			ref = buildArgIndex (
-				{{#}}, 
+				{{job.index}}, 
 				"{{args.ref}}", 
 				["{{args.ref}}.fai", "{{ args.ref | prefix }}.dict"], 
 				'{{args.samtools}} faidx "{{args.ref}}"; {{args.picard}} CreateSequenceDictionary R="{{args.ref}}" O="{{args.ref | prefix}}.dict"',
@@ -185,7 +185,7 @@ try:
 				remove (mdoutfile)
 			else:
 				move(mdoutfile, outfile)
-		elif tool == 'snpsift':
+		{% elif args.tool | lambda x: x == 'snpsift' %}
 			# only one filter allowed
 			(key, val) = filters.items()[0]
 			mem = memtoJava({{ args.mem | quote }})
@@ -198,13 +198,14 @@ try:
 				remove (mdoutfile)
 			else:
 				move(mdoutfile, outfile)
-		elif tool == 'bcftools':
+		{% elif args.tool | lambda x: x == 'bcftools' %}
 			cmd = '{{args.bcftools}} view -O v -o "%s" -e "%s" "%s"' % (outfile, filters.values()[0], infile)
 			runcmd (cmd)
-		elif tool == 'vcflib':
+		{% elif args.tool | lambda x: x == 'vcflib' %}
 			vcffilters = ['-f "! ( %s )"' % val for key, val in filters.items()]
 			cmd = '{{args.vcflib_vcffilter}} %s "%s" > "%s"' % (' '.join(vcffilters), infile, outfile)
 			runcmd (cmd)
+		{% endif %}
 		if filters:
 			pass
 			#remove (infile)
@@ -245,9 +246,9 @@ finally:
 	[`snpeff`](http://snpeff.sourceforge.net/SnpEff_manual.html#intro)
 	[`vep`](http://www.ensembl.org/info/docs/tools/vep/script/vep_tutorial.html)
 """
-pVcfAnno                      = proc (desc = 'Annotate the variants in vcf file.')
+pVcfAnno                      = Proc(desc = 'Annotate the variants in vcf file.')
 pVcfAnno.input                = "infile:file"
-pVcfAnno.output               = "outfile:file:{{infile | fn}}.{{args.tool}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}, outdir:{{job.outdir}}"
+pVcfAnno.output               = "outfile:file:{{in.infile | fn}}.{{args.tool}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}, outdir:{{job.outdir}}"
 pVcfAnno.args.tool            = 'snpeff'
 pVcfAnno.args.snpeff          = 'snpEff'
 pVcfAnno.args.vep             = 'vep'
@@ -260,8 +261,8 @@ pVcfAnno.args.dbpath          = ''
 pVcfAnno.args.snpeffStats     = False
 pVcfAnno.args.params          = ''
 pVcfAnno.args.mem             = '4G'
-pVcfAnno.args._runcmd         = runcmd.python
-pVcfAnno.args._memtoJava      = mem.toJava.python
+pVcfAnno.tplenvs.runcmd       = runcmd.python
+pVcfAnno.tplenvs.memtoJava    = mem.toJava.python
 pVcfAnno.beforeCmd            = """
 # check dbpath
 if [[ "{{args.tool}}" != "snpeff" ]] && [[ ! -e "{{args.dbpath}}" ]]; then
@@ -279,13 +280,13 @@ from shutil import rmtree
 from sys import stderr, exit
 import vcf
 
-{{ args._runcmd }}
-{{ args._memtoJava }}
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{infile | fn}}.{{#}}")
+{{ runcmd }}
+{{ memtoJava }}
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 
 gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{outfile | [:-3] | quote}} if gz else {{outfile | quote}}
+outfile = {{out.outfile | [:-3] | quote}} if gz else {{out.outfile | quote}}
 tool    = {{args.tool | quote}}
 try:
 	if tool == 'snpeff':
@@ -293,22 +294,22 @@ try:
 		if path.exists ("{{args.dbpath}}"):
 			datadir = '-dataDir "{{args.dbpath}}"'
 		mem = memtoJava({{ args.mem | quote }})
-		stats = '-csvStats "{{job.outdir}}/{{infile | fn}}.stats.csv"'
+		stats = '-csvStats "{{job.outdir}}/{{in.infile | fn}}.stats.csv"'
 		if not {{args.snpeffStats | lambda x: bool(x)}}:
 			stats = '-noStats'
 			
-		cmd = '{{args.snpeff}} %s -Djava.io.tmpdir="%s" "%s" {{args.params}} -i vcf -o vcf %s {{args.genome}} "{{infile}}" > "%s"' % (mem, tmpdir, stats, datadir, outfile)
+		cmd = '{{args.snpeff}} %s -Djava.io.tmpdir="%s" "%s" {{args.params}} -i vcf -o vcf %s {{args.genome}} "{{in.infile}}" > "%s"' % (mem, tmpdir, stats, datadir, outfile)
 		runcmd (cmd)
 		
 	elif tool == 'vep':
-		cmd = '{{args.vep}} -i "{{infile}}" -o "%s" --format vcf --vcf --cache --dir "{{args.dbpath}}" --assembly {{args.genome}} {{args.params}}' % (outfile)
+		cmd = '{{args.vep}} -i "{{in.infile}}" -o "%s" --format vcf --vcf --cache --dir "{{args.dbpath}}" --assembly {{args.genome}} {{args.params}}' % (outfile)
 		runcmd (cmd)
 	elif tool == 'annovar':
 		# convert vcf to avinput
-		avinput = "{{job.outdir}}/{{infile | fn}}.avinput"
-		cmd = '{{args.annovar_convert}} --includeinfo --allsample --withfreq --format vcf4 "{{infile}}" --outfile "{{job.outdir}}/{{infile | fn}}.avinput"'
+		avinput = "{{job.outdir}}/{{in.infile | fn}}.avinput"
+		cmd = '{{args.annovar_convert}} --includeinfo --allsample --withfreq --format vcf4 "{{in.infile}}" --outfile "{{job.outdir}}/{{in.infile | fn}}.avinput"'
 		runcmd (cmd)
-		cmd = '{{args.annovar}} {{args.params}} --outfile "{{outfile | prefix}}" --buildver {{args.genome}} "%s" "{{args.dbpath}}"' % (avinput) 
+		cmd = '{{args.annovar}} {{args.params}} --outfile "{{out.outfile | prefix}}" --buildver {{args.genome}} "%s" "{{args.dbpath}}"' % (avinput) 
 		runcmd (cmd)
 		
 		# convert .variant_function to vcf
@@ -376,11 +377,11 @@ try:
 			record.samples = reader._parse_samples (samples, FORMAT, record)
 			return record
 			
-		reader = vcf.Reader(filename="{{infile}}")
+		reader = vcf.Reader(filename="{{in.infile}}")
 		reader.infos["ANN"] = vcf.parser._Info("ANN", 1, "String", "Annotation by ANNOVAR", "", "")
 		snames = {v:k for k,v in enumerate(reader.samples)}
 		writer = vcf.Writer(open(outfile, 'w'), reader)
-		f2conv = "{{outfile | prefix}}.variant_function"
+		f2conv = "{{out.outfile | prefix}}.variant_function"
 		lastvid= ''
 		lastr  = []
 		with open (f2conv) as f:
@@ -425,24 +426,24 @@ finally:
 	`outsnp:file`:    The report of call rate for each snp
 	`figsnp:file`:    The bar chat of snp call rates
 """
-pCallRate = proc()
-pCallRate.input     = "indir:file"
-pCallRate.output    = [
-	"outsample:file:{{indir | fn}}.sampleCallRate.txt",
-	"figsample:file:{{indir | fn}}.sampleCallRate.png",
-	"outsnp:file:{{indir | fn}}.snpCallRate.txt",
-	"figsnp:file:{{indir | fn}}.snpCallRate.png"
+pCallRate        = Proc()
+pCallRate.input  = "indir:file"
+pCallRate.output = [
+	"outsample:file:{{in.indir | fn}}.sampleCallRate.txt",
+	"figsample:file:{{in.indir | fn}}.sampleCallRate.png",
+	"outsnp:file:{{in.indir | fn}}.snpCallRate.txt",
+	"figsnp:file:{{in.indir | fn}}.snpCallRate.png"
 ]
-pCallRate.args._runcmd   = runcmd.r
-pCallRate.args._cbindFill  = cbindFill.r
-pCallRate.args._plotHist  = plot.hist.r
-pCallRate.lang      = "Rscript"
-pCallRate.script    = """
-{{args._runcmd}}
-{{args._cbindFill}}
-{{args._plotHist}}
+pCallRate.tplenvs.runcmd    = runcmd.r
+pCallRate.tplenvs.cbindFill = cbindFill.r
+pCallRate.tplenvs.plotHist  = plot.hist.r
+pCallRate.lang            = "Rscript"
+pCallRate.script          = """
+{{runcmd}}
+{{cbindFill}}
+{{plotHist}}
 
-setwd("{{indir}}")
+setwd("{{in.indir}}")
 files = list.files(pattern = "*.vcf")
 
 data  = NULL
@@ -461,8 +462,8 @@ samplecr = colSums(data) / nrow(data)
 snpcr    = rowSums(data) / ncol(data)
 
 # sample/snp call rate
-write.table (samplecr, "{{outsample}}", quote=F, sep="\\t", col.names=F)
-plotHist (samplecr, "{{figsample}}", main="Sample call rate", ylab = "# samples")
-write.table (snpcr, "{{outsnp}}", quote=F, sep="\\t", col.names=F)
-plotHist (snpcr, "{{figsnp}}", main="SNP call rate", ylab = "# snps")
+write.table (samplecr, "{{out.outsample}}", quote=F, sep="\\t", col.names=F)
+plotHist (samplecr, "{{out.figsample}}", main="Sample call rate", ylab = "# samples")
+write.table (snpcr, "{{out.outsnp}}", quote=F, sep="\\t", col.names=F)
+plotHist (snpcr, "{{out.figsnp}}", main="SNP call rate", ylab = "# snps")
 """

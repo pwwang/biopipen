@@ -16,16 +16,16 @@ from .utils import txt
 """
 pSort = Proc()
 pSort.input  = "infile:file"
-pSort.output = "outfile:file:{{infile | bn}}"
+pSort.output = "outfile:file:{{in.infile | bn}}"
 pSort.args   = {"params": "", "skip": 0}
 pSort.script = """
 #!/usr/bin/env bash
 if [[ "{{args.skip}}" == "0" ]]; then
-	sort {{args.params}} "{{infile}}" > "{{outfile}}"
+	sort {{args.params}} "{{in.infile}}" > "{{out.outfile}}"
 else
 	nhead={{args.skip}}
 	ntail=$((nhead+1))
-	( head -n $nhead "{{infile}}" && tail -n +$ntail "{{infile}}" | sort {{args.params}} ) > "{{outfile}}"
+	( head -n $nhead "{{in.infile}}" && tail -n +$ntail "{{in.infile}}" | sort {{args.params}} ) > "{{out.outfile}}"
 fi
 """
 
@@ -41,25 +41,25 @@ fi
 """
 pFiles2Dir = Proc()
 pFiles2Dir.input  = "infiles:files"
-pFiles2Dir.output = "outdir:dir:{{infiles | [0] | fn}}.etc_{{#}}"
+pFiles2Dir.output = "outdir:dir:{{in.infiles | [0] | fn}}.etc_{{job.index}}"
 pFiles2Dir.lang   = "python"
 pFiles2Dir.script = """
 from glob import glob
 from os import path, symlink
 from sys import stderr
 
-for fname in {{infiles | json}}:
+for fname in {{in.infiles | json}}:
 	bn  = path.basename (fname)
-	dst = path.join ("{{outdir}}", bn)
+	dst = path.join ("{{out.outdir}}", bn)
 	if path.exists (dst):
 		fn, _, ext = bn.rpartition('.')
-		dsts = glob (path.join("{{outdir}}", fn + "[[]*[]]." + ext))
+		dsts = glob (path.join("{{out.outdir}}", fn + "[[]*[]]." + ext))
 		print dsts
 		if not dsts:
-			dst2 = path.join("{{outdir}}", fn + "[1]." + ext)
+			dst2 = path.join("{{out.outdir}}", fn + "[1]." + ext)
 		else:
 			maxidx = max([int(path.basename(d)[len(fn)+1 : -len(ext)-2]) for d in dsts])
-			dst2 = path.join("{{outdir}}", fn + "[" + str(maxidx+1) + "]." + ext)
+			dst2 = path.join("{{out.outdir}}", fn + "[" + str(maxidx+1) + "]." + ext)
 		stderr.write ("Warning: rename %s to %s\\n" % (dst, dst2))
 		dst = dst2
 	symlink (fname, dst)
@@ -79,12 +79,12 @@ for fname in {{infiles | json}}:
 """
 pFiles2List              = Proc(desc = 'Put files to a list file.')
 pFiles2List.input        = "infiles:files"
-pFiles2List.output       = "outfile:file:{{infiles | [0] | fn}}.etc_{{#}}.list"
+pFiles2List.output       = "outfile:file:{{in.infiles | [0] | fn}}.etc_{{job.index}}.list"
 pFiles2List.args.delimit = r"\n" # r is important
 pFiles2List.lang         = "python"
 pFiles2List.script       = """
-with open ("{{outfile}}", "w") as fout:
-	fout.write ("{{args.delimit}}".join({{infiles | json}}))
+with open ("{{out.outfile}}", "w") as fout:
+	fout.write ("{{args.delimit}}".join({{in.infiles | json}}))
 """
 
 """
@@ -120,9 +120,9 @@ pMergeFiles = Proc()
 pMergeFiles.input  = "indir:file"
 pMergeFiles.output = "outfile:file:{{indir | fn}}.merged"
 pMergeFiles.script = """
-> "{{outfile}}"
+> "{{out.outfile}}"
 for infile in "{{indir}}/*"; do
-	cat $infile >> "{{outfile}}"
+	cat $infile >> "{{out.outfile}}"
 done
 """
 
@@ -143,7 +143,7 @@ done
 """
 pCbindList = Proc()
 pCbindList.input  = "indir:file"
-pCbindList.output = "outfile:file:{{indir | fn}}.mat_{{#}}.txt"
+pCbindList.output = "outfile:file:{{indir | fn}}.mat_{{job.index}}.txt"
 pCbindList.args.header = False
 pCbindList.args.na     = 0
 pCbindList.args.pattern= '*'
@@ -177,7 +177,7 @@ for (fn in Sys.glob({{args.pattern | quote}})) {
 if (!is.na({{args.na}})) {
 	data[is.na(data)] = {{args.na}}
 }
-write.table (data, "{{outfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
+write.table (data, "{{out.outfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 """
 
 pTxtFilter = Proc(desc = 'Filter a txt(tsv) file by columns and rows.')
@@ -208,5 +208,5 @@ txtFilter({{in.txtfile | quote}}, {{out.outfile | quote}}, {{args.cols | json}},
 """
 pFile2Proc = Proc(desc="Convert a file to a proc so it can be used as dependent")
 pFile2Proc.input  = "infile:file"
-pFile2Proc.output = "outfile:file:{{infile | bn}}"
-pFile2Proc.script = 'ln -s "{{infile}}" "{{outfile}}"'
+pFile2Proc.output = "outfile:file:{{in.infile | bn}}"
+pFile2Proc.script = 'ln -s "{{in.infile}}" "{{out.outfile}}"'

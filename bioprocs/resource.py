@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 from .utils import txt, download, runcmd
 
 """
@@ -20,22 +20,22 @@ from .utils import txt, download, runcmd
 @requires:
 	[`curl`](https://en.wikipedia.org/wiki/CURL)
 """
-pTxt                    = proc(desc = 'Download CSV format files.')
-pTxt.input              = "in"
-pTxt.output             = "outfile:file:{{in}}.txt{{args.gz | lambda x: '.gz' if x else ''}}"
-pTxt.args.gz            = False
-pTxt.args.delimit       = "\t"
-pTxt.args.skip          = 0
-pTxt.args.cols          = ''
-pTxt.args.header        = True
-pTxt.args.rowfilter     = ''
-pTxt.args.username      = ''
-pTxt.args.password      = ''
-pTxt.args.curl          = 'curl'
-pTxt.args._txtFilter    = txt.filter.python
-pTxt.args._downloadCurl = download.curl.python
-pTxt.args._runcmd       = runcmd.python
-pTxt.args.urls          = {
+pTxt                      = Proc(desc = 'Download CSV format files.')
+pTxt.input                = "in"
+pTxt.output               = "outfile:file:{{in}}.txt{{args.gz | lambda x: '.gz' if x else ''}}"
+pTxt.args.gz              = False
+pTxt.args.delimit         = "\t"
+pTxt.args.skip            = 0
+pTxt.args.cols            = ''
+pTxt.args.header          = True
+pTxt.args.rowfilter       = ''
+pTxt.args.username        = ''
+pTxt.args.password        = ''
+pTxt.args.curl            = 'curl'
+pTxt.tplenvs.txtFilter    = txt.filter.python
+pTxt.tplenvs.downloadCurl = download.curl.python
+pTxt.tplenvs.runcmd       = runcmd.python
+pTxt.args.urls            = {
 	'drugbank-target-all': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-all-uniprot-links',
 	'drugbank-target-approved': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-approved-uniprot-links',
 	'ccle-sample-info': 'https://data.broadinstitute.org/ccle_legacy_data/cell_line_annotations/CCLE_sample_info_file_2012-10-18.txt',
@@ -47,8 +47,8 @@ pTxt.script = """
 import os, shutil
 from subprocess import check_output
 
-{{args._downloadCurl}}
-{{args._runcmd}}
+{{downloadCurl}}
+{{runcmd}}
 
 url = {{args.urls | json}}["{{in}}"]
 tmpdir = "{{job.outdir}}/tmp"
@@ -74,7 +74,7 @@ elif 'Zip' in output:
 	downfile = glob.glob(os.path.join(zipdir, '*'))[0]
 
 outfile = "{{outfile}}"[:-3] if {{args.gz | bool}} else "{{outfile}}"
-{{args._txtFilter}}
+{{txtFilter}}
 txtFilter(downfile, "{{outfile}}", {{args.cols | lambda x: __import__('json').dumps(x) if isinstance(x, list) else '"'+ x +'"'}}, {{args.rowfilter | lambda x: 'False' if not x else x}}, {{args.header}}, {{args.skip}}, {{args.delimit | quote}})
 
 if {{args.gz | bool}}:
@@ -83,7 +83,7 @@ if {{args.gz | bool}}:
 shutil.rmtree(tmpdir)
 """
 
-pGtf = proc (desc = 'Download GTF files.')
+pGtf = Proc(desc = 'Download GTF files.')
 pGtf.input              = "in"
 pGtf.output             = "outfile:file:{{in}}.gtf{{args.gz | lambda x: '.gz' if x else ''}}"
 pGtf.args.gz            = False
@@ -91,8 +91,8 @@ pGtf.args.curl          = 'curl'
 pGtf.args.username      = ''
 pGtf.args.password      = ''
 pGtf.args.genepredtogtf = 'genePredToGtf'
-pGtf.args._runcmd       = runcmd.python
-pGtf.args._downloadCurl = download.curl.python
+pGtf.tplenvs.runcmd       = runcmd.python
+pGtf.tplenvs.downloadCurl = download.curl.python
 pGtf.args.urls          = {
 	'hg19-refgene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz',
 	'hg19-knowngene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/knownGene.txt.gz',
@@ -104,8 +104,8 @@ pGtf.script = """
 import os, shutil
 from subprocess import check_output
 
-{{args._downloadCurl}}
-{{args._runcmd}}
+{{downloadCurl}}
+{{runcmd}}
 
 url = {{args.urls | json}}["{{in}}"]
 tmpdir = "{{job.outdir}}/tmp"

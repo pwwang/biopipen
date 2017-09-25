@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 from .utils import cbindFill, plot
 
 """
@@ -13,18 +13,18 @@ from .utils import cbindFill, plot
 @output:
 	`expfile:file`: the expression matrix
 """
-pExpdir2Matrix = proc()
+pExpdir2Matrix = Proc()
 pExpdir2Matrix.input           = "expdir:file"
 pExpdir2Matrix.output          = "expfile:file:{{expdir | fn}}.matrix.txt"
 pExpdir2Matrix.lang            = "Rscript"
 pExpdir2Matrix.args.pattern    = '*'
 pExpdir2Matrix.args.header     = False
 pExpdir2Matrix.args.excl       = ["^Sample", "^Composite", "^__"]
-pExpdir2Matrix.args._cbindFill = cbindFill.r
+pExpdir2Matrix.tplenvs.cbindFill = cbindFill.r
 pExpdir2Matrix.script          = """
-setwd("{{expdir}}")
+setwd("{{in.expdir}}")
 
-{{args._cbindFill}}
+{{cbindFill}}
 
 isGoodRname = function(rname) {
 	for (excl in {{args.excl | Rvec}}) {
@@ -49,7 +49,7 @@ for (efile in Sys.glob({{args.pattern | quote}})) {
 	exp    = cbindFill (exp, tmp)
 }
 
-write.table (exp, "{{expfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
+write.table (exp, "{{out.expfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 """
 
 """
@@ -57,11 +57,11 @@ write.table (exp, "{{expfile}}", col.names=T, row.names=T, sep="\\t", quote=F)
 	`displot`: whether to plot biological coefficient of variation, default: True
 	`fcplot`:  whether to plot fold changes, default: True
 """
-pRseqDEG              = proc (desc = 'Detect DEGs by RNA-seq data.')
+pRseqDEG              = Proc(desc = 'Detect DEGs by RNA-seq data.')
 pRseqDEG.input        = "efile:file, group1, group2"
 pRseqDEG.output       = [
-	"outfile:file:{{group1 | .split(':', 1)[0]}}-{{group2 | .split(':', 1)[0]}}.degs/{{group1 | .split(':', 1)[0]}}-{{group2 | .split(':', 1)[0]}}.degs.txt", 
-	"outdir:dir:{{group1 | .split(':', 1)[0]}}-{{group2 | .split(':', 1)[0]}}.degs"
+	"outfile:file:{{in.group1 | .split(':', 1)[0]}}-{{in.group2 | .split(':', 1)[0]}}.degs/{{in.group1 | .split(':', 1)[0]}}-{{in.group2 | .split(':', 1)[0]}}.degs.txt", 
+	"outdir:dir:{{in.group1 | .split(':', 1)[0]}}-{{in.group2 | .split(':', 1)[0]}}.degs"
 ]
 pRseqDEG.args.tool    = 'edger' # limma, deseq2
 pRseqDEG.args.filter  = '1,2'
@@ -73,19 +73,19 @@ pRseqDEG.args.fcplot  = True
 pRseqDEG.args.heatmap = False
 pRseqDEG.args.listall = False
 pRseqDEG.args.batches = False # True to be the same as the groups, otherwise, list of batches: ["s1,s2,...", "s3,s4,..."]
-pRseqDEG.args._plotHeatmap = plot.heatmap.r
+pRseqDEG.tplenvs.plotHeatmap = plot.heatmap.r
 pRseqDEG.lang         = "Rscript"
 pRseqDEG.script       = """
 # require sva to remove batch effect
 require('sva')
 trim <- function (x) gsub("^\\\\s+|\\\\s+$", "", x)
 # get the exp data
-ematrix    = read.table ("{{efile}}",  header=T, row.names = 1, check.names=F, sep="\\t")
+ematrix    = read.table ("{{in.efile}}",  header=T, row.names = 1, check.names=F, sep="\\t")
 cnames     = colnames(ematrix)
 
 # get group names
-groups1    = unlist(strsplit("{{group1}}", ":", fixed = TRUE))
-groups2    = unlist(strsplit("{{group2}}", ":", fixed = TRUE))
+groups1    = unlist(strsplit("{{in.group1}}", ":", fixed = TRUE))
+groups2    = unlist(strsplit("{{in.group2}}", ":", fixed = TRUE))
 group1name = groups1[1]
 group2name = groups2[1]
 group1     = unlist(strsplit(groups1[2], ",", fixed = TRUE))
@@ -105,7 +105,7 @@ group2idx  = (length(group1idx) + 1):ncol(ematrix)
 cnames     = colnames(ematrix)
 n1         = length(group1idx)
 n2         = length(group2idx)
-paired     = {{args.paired | Rbool}}
+paired     = {{args.paired | R}}
 pval       = {{args.pval | lambda x: float(x)}}
 filters    = c({{args.filter}})
 tool       = {{args.tool | quote}}
@@ -173,29 +173,29 @@ if (tool == "edger") {
 	write.table (degs$table, "{{outfile}}", quote=F, sep="\\t")
 	degs$names = rownames(degs$table)
 	
-	if ({{args.listall | Rbool}}) {
+	if ({{args.listall | R}}) {
 		allgenes = topTags (fit, n=nrow(fit$table), p.value = 1)
-		write.table (allgenes$table, "{{outdir}}/{{outfile | fn | fn}}.all.txt", quote=F, sep="\\t")
+		write.table (allgenes$table, "{{out.outdir}}/{{outfile | fn | fn}}.all.txt", quote=F, sep="\\t")
 	}
 	
-	if ({{args.bcvplot | Rbool}}) {
-		bcvplot = file.path ("{{outdir}}", "bcvplot.png")
+	if ({{args.bcvplot | R}}) {
+		bcvplot = file.path ("{{out.outdir}}", "bcvplot.png")
 		png (file=bcvplot)
 		plotMDS (dge, method="bcv", col=as.numeric(dge$samples$group))
 		legend("bottomleft", as.character(unique(dge$samples$group)), col=2:1, pch=20)
 		dev.off()
 	}
 
-	if ({{args.displot | Rbool}}) {
-		displot = file.path ("{{outdir}}", "displot.png")
+	if ({{args.displot | R}}) {
+		displot = file.path ("{{out.outdir}}", "displot.png")
 		png (file=displot)
 		plotBCV (disp)
 		dev.off()
 	}
 
-	if ({{args.fcplot | Rbool}}) {
+	if ({{args.fcplot | R}}) {
 		deg    = decideTestsDGE(fit, p.value = {{args.pval}})
-		fcplot = file.path ("{{outdir}}", "fcplot.png")
+		fcplot = file.path ("{{out.outdir}}", "fcplot.png")
 		png (file=fcplot)
 		tags = rownames(disp)[as.logical(deg)]
 		plotSmear (fit, de.tags=tags)
@@ -204,9 +204,9 @@ if (tool == "edger") {
 	}
 }
 
-if ({{args.heatmap | Rbool}}) {
-	hmap = file.path ("{{outdir}}", "heatmap.png")
-	{{args._plotHeatmap}}
+if ({{args.heatmap | R}}) {
+	hmap = file.path ("{{out.outdir}}", "heatmap.png")
+	{{plotHeatmap}}
 	tmatrix    = ematrix[degs$names, group1idx]
 	tmatrix    = tmatrix + 1
 	nmatrix    = ematrix[degs$names, group2idx]
@@ -243,15 +243,15 @@ if ({{args.heatmap | Rbool}}) {
 @requires:
 	[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html)
 """
-pDEGByEdgeR = proc ()
+pDEGByEdgeR = Proc()
 pDEGByEdgeR.input     = "expfile:file, group1, group2, group1name, group2name"
-pDEGByEdgeR.output    = "degdir:dir:{{expfile | fn}}.{{group1name}}-{{group2name}}.deg"
+pDEGByEdgeR.output    = "degdir:dir:{{expfile | fn}}.{{in.group1name}}-{{in.group2name}}.deg"
 pDEGByEdgeR.args      = {'filter': "1,2", 'pval': 0.05, 'paired': False, 'bcvplot': True, 'displot': True, 'fcplot': True}
 pDEGByEdgeR.defaultSh = "Rscript"
 pDEGByEdgeR.script    = """
 library('edgeR')
-group1  = unlist(strsplit("{{group1}}", ","))
-group2  = unlist(strsplit("{{group2}}", ","))
+group1  = unlist(strsplit("{{in.group1}}", ","))
+group2  = unlist(strsplit("{{in.group2}}", ","))
 
 expmatrix = read.table ("{{expfile}}",  header=T, row.names = 1, check.names=F, sep="\\t")
 g1names   = match (group1, colnames(expmatrix))
@@ -261,16 +261,16 @@ pairs = vector(mode="numeric")
 group = vector(mode="character")
 ng1   = length(g1names)
 ng2   = length(g2names)
-if ({{args.paired | Rbool}}) {
+if ({{args.paired | R}}) {
 	for (i in 1:ng1) {
 		pairs = c(pairs, i, i)
-		group = c(group, "{{group1name}}", "{{group2name}}")
+		group = c(group, "{{in.group1name}}", "{{in.group2name}}")
 	}
 	pairs  = factor(pairs)
 	group  = factor(group)
 	design = model.matrix(~pairs+group)
 } else {
-	group  = c(rep("{{group1name}}", ng1), rep("{{group2name}}", ng2))
+	group  = c(rep("{{in.group1name}}", ng1), rep("{{in.group2name}}", ng2))
 	group  = factor(group)
 	design = model.matrix(~group)
 }
@@ -286,7 +286,7 @@ dobj$samples$lib.size = colSums(dobj$counts)
 # normalize
 dobj = calcNormFactors(dobj, method="TMM")
 
-if ({{args.bcvplot | Rbool}}) {
+if ({{args.bcvplot | R}}) {
 	bcvplot = file.path ("{{degdir}}", "bcvplot.png")
 	png (file=bcvplot)
 	plotMDS (dobj, method="bcv", col=as.numeric(dobj$samples$group))
@@ -295,7 +295,7 @@ if ({{args.bcvplot | Rbool}}) {
 }
 
 disp <- estimateDisp (dobj, design)
-if ({{args.displot | Rbool}}) {
+if ({{args.displot | R}}) {
 	displot = file.path ("{{degdir}}", "displot.png")
 	png (file=displot)
 	plotBCV (disp)
@@ -305,7 +305,7 @@ if ({{args.displot | Rbool}}) {
 fit    = glmFit (disp, design)
 fit    = glmLRT (fit)
 
-if ({{args.fcplot | Rbool}}) {
+if ({{args.fcplot | R}}) {
 	deg    = decideTestsDGE(fit, p.value = {{args.pval}})
 	fcplot = file.path ("{{degdir}}", "fcplot.png")
 	png (file=fcplot)
@@ -348,16 +348,16 @@ write.table (out$table, file.path("{{degdir}}", "degs.txt"), quote=F, sep="\\t")
 	[limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
 	[ggplot2](https://bioconductor.org/packages/release/bioc/html/ggplot2.html)
 """
-pMArrayLimma = proc()
+pMArrayLimma = Proc()
 pMArrayLimma.input  = "expfile:file, group1, group2, group1name, group2name"
-pMArrayLimma.output = "degdir:dir:{{expfile | fn}}.{{group1name}}-{{group2name}}.deg"
+pMArrayLimma.output = "degdir:dir:{{expfile | fn}}.{{in.group1name}}-{{in.group2name}}.deg"
 pMArrayLimma.args   = {'norm': "quan", 'boxplot': True, 'paired': False, "filter": "1,2", "qval": .05, "pval": .05, "heatmap": True, "hmn": 50, "volplot": True, "hmmar": "10,7"}
 pMArrayLimma.lang   = "Rscript"
 pMArrayLimma.script = """
 library(limma)
 library(ggplot2)
-group1  = unlist(strsplit("{{group1}}", ","))
-group2  = unlist(strsplit("{{group2}}", ","))
+group1  = unlist(strsplit("{{in.group1}}", ","))
+group2  = unlist(strsplit("{{in.group2}}", ","))
 
 expmatrix = read.table ("{{expfile}}",  header=T, row.names = 1, check.names=F, sep="\\t")
 g1names   = match (group1, colnames(expmatrix))
@@ -374,8 +374,8 @@ if ("quan" %in% unlist(strsplit("{{args.norm}}", ","))) {
 	expmatrix = normalizeBetweenArrays (expmatrix)
 }
 
-if ({{args.boxplot | Rbool}}) {
-	png (file = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.boxplot.png"), res=300, width=2000, height=2000)
+if ({{args.boxplot | R}}) {
+	png (file = file.path("{{degdir}}", "{{expfile | fn}}.{{in.group1name}}-{{in.group2name}}.boxplot.png"), res=300, width=2000, height=2000)
 	boxplot (expmatrix, las=2)
 	dev.off()	
 }
@@ -384,16 +384,16 @@ pairs = vector(mode="numeric")
 group = vector(mode="character")
 ng1   = length(g1names)
 ng2   = length(g2names)
-if ({{args.paired | Rbool}}) {
+if ({{args.paired | R}}) {
 	for (i in 1:ng1) {
 		pairs = c(pairs, i, i)
-		group = c(group, "{{group1name}}", "{{group2name}}")
+		group = c(group, "{{in.group1name}}", "{{in.group2name}}")
 	}
 	pairs  = factor(pairs)
 	group  = factor(group)
 	design = model.matrix(~pairs+group)
 } else {
-	group  = c(rep("{{group1name}}", ng1), rep("{{group2name}}", ng2))
+	group  = c(rep("{{in.group1name}}", ng1), rep("{{in.group2name}}", ng2))
 	group  = factor(group)
 	design = model.matrix(~group)
 }
@@ -403,19 +403,19 @@ fit    = eBayes(fit)
 out    = topTable (fit, number = nrow(expmatrix), sort.by="p")
 out    = out[out$adj.P.Val<{{args.qval}} & out$P.Value<{{args.pval}},]
 
-degfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.degs.txt")
+degfile = file.path("{{degdir}}", "{{expfile | fn}}.{{in.group1name}}-{{in.group2name}}.degs.txt")
 write.table (out, degfile, quote=F, sep="\\t")
 
-if ({{args.heatmap | Rbool}}) {
+if ({{args.heatmap | R}}) {
 	hmn  = min (nrow(out), {{args.hmn}})
 	exps = expmatrix[row.names(out[1:hmn, ]), ]
-	hmfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.heatmap.png")
+	hmfile = file.path("{{degdir}}", "{{expfile | fn}}.{{in.group1name}}-{{in.group2name}}.heatmap.png")
 	png (file = hmfile, res=300, width=2000, height=2000)
 	heatmap(as.matrix(exps), margins = c({{args.hmmar}}), cexRow={{args.hmn}}/100)
 	dev.off()
 }
 
-if ({{args.volplot | Rbool}}) {
+if ({{args.volplot | R}}) {
 	dat = data.frame(out, n_log10_adj_pval = -c(log10(out$adj.P.Val)), col=ifelse(abs(out$logFC)>2 & out$adj.P.Val<0.01, 'A', ifelse(abs(out$logFC)>2, 'B', 'C')))
 	a<-ggplot(dat, aes(x = logFC, y = n_log10_adj_pval, col=col))
 	a<-a+ylab("-log10(adjusted P value)\n")
@@ -425,7 +425,7 @@ if ({{args.volplot | Rbool}}) {
 	a<-a+geom_point()
 	a<-a+geom_vline(xintercept=c(2, -2))
 	a<-a+geom_hline(yintercept = -log10(0.01))
-	volfile = file.path("{{degdir}}", "{{expfile | fn}}.{{group1name}}-{{group2name}}.volcano.png")
+	volfile = file.path("{{degdir}}", "{{expfile | fn}}.{{in.group1name}}-{{in.group2name}}.volcano.png")
 	png (file = volfile, res=300, width=2000, height=2000)
 	plot(a)
 	dev.off()
@@ -454,7 +454,7 @@ if ({{args.volplot | Rbool}}) {
 	[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
 	[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
 """
-pRawCounts2                = proc (desc = 'Convert raw counts to another unit.')
+pRawCounts2                = Proc(desc = 'Convert raw counts to another unit.')
 pRawCounts2.input          = "expfile:file"
 pRawCounts2.output         = "outfile:file:{{expfile | fn}}.{{args.unit}}.txt"
 pRawCounts2.args.transpose = False
@@ -465,32 +465,32 @@ pRawCounts2.args.log2      = False
 pRawCounts2.args.glenfile  = ''
 pRawCounts2.lang           = "Rscript"
 pRawCounts2.script         = """
-data  = read.table ("{{expfile}}", sep="\\t", header={{args.header | Rbool}}, row.names = {{args.rownames}}, check.names=F)
-if ({{args.transpose | Rbool}}) data = t (data)
+data  = read.table ("{{expfile}}", sep="\\t", header={{args.header | R}}, row.names = {{args.rownames}}, check.names=F)
+if ({{args.transpose | R}}) data = t (data)
 
 if ("{{args.unit}}" == 'cpm') {
 	library('edgeR')
-	ret = cpm (data, log = {{args.log2 | Rbool}})
+	ret = cpm (data, log = {{args.log2 | R}})
 } else if ("{{args.unit}}" == 'rpkm') {
 	library('edgeR')
 	genelen = read.table ("{{args.glenfile}}", header=F, row.names = 1, check.names = F)
-	ret = rpkm (data, log = {{args.log2 | Rbool}}, gene.length = as.vector(genelen))
+	ret = rpkm (data, log = {{args.log2 | R}}, gene.length = as.vector(genelen))
 } else {
 	library('coseq')
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
-	if ({{args.log2 | Rbool}})
+	if ({{args.log2 | R}})
 		ret = log2(ret)
 }
 
 rnames = TRUE
 cnames = TRUE
-if ({{args.transpose | Rbool}}) {
-	rnames = {{args.header | Rbool}}
+if ({{args.transpose | R}}) {
+	rnames = {{args.header | R}}
 	cnames = {{args.rownames}} == 1
 } else {
 	rnames = {{args.rownames}} == 1
-	cnames = {{args.header | Rbool}}
+	cnames = {{args.header | R}}
 }
 
 write.table (ret, "{{outfile}}", quote=F, row.names=rnames, col.names=cnames, sep="\\t")
