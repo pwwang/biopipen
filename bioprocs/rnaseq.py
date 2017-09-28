@@ -85,4 +85,114 @@ pBatchEffect.tplenvs.plotHist    = plot.hist.r
 pBatchEffect.lang                = 'Rscript'
 pBatchEffect.script              = "file:scripts/rnaseq/pBatchEffect.r"
 
+"""
+@name:
+	pRawCounts2
+@description:
+	Convert raw counts to another unit
+@input:
+	`expfile:file`: the expression matrix
+		- rows are genes, columns are samples
+@output:
+	`outfile:file`: the converted expression matrix
+@args:
+	`transpose`: transpose the input matrix? default: False
+	`log2`:      whether to take log2? default: False
+	`unit`:      convert to which unit? default: cpm (or rpkm, tmm)
+	`header`:    whether input file has header? default: True
+	`rownames`:  the index of the column as rownames. default: 1
+	`glenfile`:  the gene length file, for RPKM
+		- no head, row names are genes, have to be exact the same order and length as the rownames of expfile
+	`boxplot` : Whether to plot a boxplot. Default: False
+	`heatmap` : Whether to plot a heatmap. Default: False
+	`histplot`: Whether to plot a histgram. Default: False
+	`devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
+		- See ggplot2 documentation.
+	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
+	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+@requires:
+	[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
+	[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
+"""
+pRawCounts2                     = Proc(desc = 'Convert raw counts to another unit.')
+pRawCounts2.input               = "expfile:file"
+pRawCounts2.output              = "outfile:file:{{in.expfile | fn | fn}}/{{in.expfile | fn | fn}}.expr.txt, outdir:dir:{{in.expfile | fn | fn}}"
+pRawCounts2.args.unit           = 'cpm'
+pRawCounts2.args.header         = True
+pRawCounts2.args.rownames       = 1
+pRawCounts2.args.log2           = False
+pRawCounts2.args.glenfile       = ''
+pRawCounts2.args.boxplot        = False
+pRawCounts2.args.heatmap        = False
+pRawCounts2.args.histplot       = False
+pRawCounts2.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
+pRawCounts2.args.boxplotggs     = ['r:ylab("Expression")']
+pRawCounts2.args.heatmapggs     = ['r:theme(axis.text.y = element_blank())']
+pRawCounts2.args.histplotggs    = ['r:labs(x = "Expression", y = "# Samples")']
+pRawCounts2.tplenvs.plotBoxplot = plot.boxplot.r
+pRawCounts2.tplenvs.plotHeatmap = plot.heatmap.r
+pRawCounts2.tplenvs.plotHist    = plot.hist.r
+pRawCounts2.lang                = "Rscript"
+pRawCounts2.script              = "file:scripts/rnaseq/pRawCounts2.r"
+
+
+"""
+@name:
+	pDeg
+@description:
+	Detect DEGs for RNA-seq data
+@input:
+	`efile:file`: The expression matrix
+	`gfile:file`: The group information
+		- Like:
+		```
+		Sample1	Group1
+		Sample2	Group1
+		Sample3	Group1
+		Sample4	group2
+		Sample5	group2
+		Sample6	group2
+		```
+@output:
+	`outfile:file`: The DEG list
+	`outdir:file`:  The output directory containing deg list and plots
+@args:
+	`tool`      : the tool used to detect DEGs. Default: 'edger' (deseq2)
+	`filter`    : filter out low count records. Default: `"1,2"` (At least 2 samples have at least 2 reads)
+	`mdsplot`   : whether to plot the MDS plot, default : True
+	`volplot`   : whether to plot the volcano plot, default : True
+	`maplot`    : whether to plot MA plots within each group, default : False
+	`heatmap`   : whether to plot the heatmap using DEGs. Default : False
+	`heatmapn`  : How many genes to be used for heatmap. If `heatmapn`, the number will be `heatmapn * # DEGs`. Default: 100
+	`heatmapggs`: The ggplots options for heatmap. Default : []
+	`maplotggs` : The ggplots options for maplot. Default : []
+	`volplotggs`: The ggplots options for volplot. Default : []
+	`devpars`   : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+"""
+pDeg        = Proc(desc = 'Detect DEGs by RNA-seq data.')
+pDeg.input  = "efile:file, gfile:file"
+pDeg.output = [
+	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt", 
+	"outdir:dir:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs"
+]
+pDeg.args.tool           = 'edger' # deseq2
+pDeg.args.filter         = '1,2'
+pDeg.args.pval           = 0.05
+pDeg.args.paired         = False
+pDeg.args.mdsplot        = True
+pDeg.args.volplot        = True
+pDeg.args.maplot         = False
+pDeg.args.heatmap        = False
+pDeg.args.heatmapn       = 100
+pDeg.args.heatmapggs     = []
+pDeg.args.maplotggs      = []
+pDeg.args.volplotggs     = []
+pDeg.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
+pDeg.tplenvs.plotHeatmap = plot.heatmap.r
+pDeg.tplenvs.plotMAplot  = plot.maplot.r
+pDeg.tplenvs.plotVolplot = plot.volplot.r
+pDeg.lang                = "Rscript"
+pDeg.script              = "file:scripts/rnaseq/pDeg.r"
+
 

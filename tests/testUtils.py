@@ -6,7 +6,7 @@ from tempfile import gettempdir
 from bioprocs.utils import plot
 
 tmpdir = gettempdir()
-class TestRnaseq (unittest.TestCase):
+class TestUtils (unittest.TestCase):
 
 	def testPlotHeatmapR(self):
 		scriptfile = path.join(tmpdir, 'plotHeatmap.r')
@@ -81,6 +81,22 @@ class TestRnaseq (unittest.TestCase):
 			# ylab
 			plotHist(m2, "%s", ggs=list(ylab("Values"), theme(axis.title.y = element_text(angle = 90))))
 			""" % (outfile1, outfile2))
+		rc = Popen(['Rscript', scriptfile]).wait()
+		self.assertEqual(rc, 0)
+
+	def testPlotVolPlot(self):
+		scriptfile = path.join(tmpdir, 'plotVolplot.r')
+		outfile1    = path.join(tmpdir, 'plotVolplot.png')
+		with open(scriptfile, 'w') as f:
+			f.write(plot.volplot.r)
+			f.write("""
+			logFC = rnorm(100, 0, 4)
+			FDR   = abs(rnorm(100, .01, .005))
+			logFCCut = rep(2, 100)
+			FDRCut = rep(.01, 100)
+			m = data.frame(logFC, FDR, logFCCut, FDRCut)
+			plotVolplot(m, "%s")
+			""" % (outfile1))
 		rc = Popen(['Rscript', scriptfile]).wait()
 		self.assertEqual(rc, 0)
 

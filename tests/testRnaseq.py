@@ -3,8 +3,8 @@ import unittest, addPath
 import random
 from os import makedirs, path
 from tempfile import gettempdir
-from pyppl import PyPPL, Channel, Box
-from bioprocs.rnaseq import pExpdir2Matrix, pBatchEffect
+from pyppl import PyPPL, Channel, Box, Proc
+from bioprocs.rnaseq import pExpdir2Matrix, pBatchEffect, pRawCounts2, pDeg
 
 unittest.TestLoader.sortTestMethodsUsing = lambda _, x, y: cmp(x, y)
 
@@ -18,7 +18,7 @@ class TestRnaseq (unittest.TestCase):
 	def test0genData(self):
 		nb1     = 10
 		nb2     = 10
-		genes   = ['Gene' + str(i+1) for i in range(100)]
+		genes   = ['Gene' + str(i+1) for i in range(1000)]
 		genes.extend(['Sample', 'Composite', '__unmapped__'])
 		datadir = path.join(self.wdir, 'data')
 		batfile = path.join(self.wdir, 'data', 'batch.txt')
@@ -31,7 +31,7 @@ class TestRnaseq (unittest.TestCase):
 				bf.write('%s\t%d\n' % ('Sample' + str(i*10 + s + 1), i + 1))
 				with open(datafile, 'w') as df:
 					for gene in genes:
-						df.write('%s\t%.3f\n' % (gene, random.normalvariate(10 - i * 3, 3)))
+						df.write('%s\t%.3f\n' % (gene, random.normalvariate(10 - i * 3, 7)))
 		bf.close()
 
 	def test1pExpdir2Matrix(self):
@@ -50,7 +50,32 @@ class TestRnaseq (unittest.TestCase):
 		pBatchEffect.args.heatmap  = True
 		pBatchEffect.args.histplot = True
 		PyPPL().start(pBatchEffect).run()
-		
+
+	def test3pRawCounts2(self):
+		pRawCounts2.input = [self.data['expfile']]
+		pRawCounts2.args.boxplot  = True
+		pRawCounts2.args.heatmap  = True
+		pRawCounts2.args.histplot = True
+		PyPPL().start(pRawCounts2).run()
+		self.data['expfile'] = pExpdir2Matrix.channel.outfile.flatten()[0]
+
+	def test4pDeg(self):
+		pPos = Proc(desc = 'Make values positive.')
+		pPos.input  = {"infile:file": self.data['expfile']}
+		pPos.output = "outfile:file:{{in.infile|fn}}"
+		pPos.script = "sed 's/-//g' {{in.infile}} > {{out.outfile}}"
+
+		pDegPaired        = pDeg.copy()
+		pDeg.depends      = pPos
+		pDeg.args.heatmap = True
+		pDeg.args.maplot  = True
+		pDeg.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
+
+		pDegPaired.depends      = pPos
+		pDegPaired.args.heatmap = True
+		pDegPaired.args.paired  = True
+		pDegPaired.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
+		PyPPL().start(pPos).run()
 
 
 if __name__ == '__main__':

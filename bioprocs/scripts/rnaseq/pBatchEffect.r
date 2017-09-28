@@ -30,3 +30,4 @@ plotHeatmap(newexpr, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.he
 histfile = file.path("{{out.outdir}}", "{{in.expr | fn | fn}}.hist.png")
 plotHist(newexpr, histfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.histplotggs | Rlist}})
 {% endif %}
+

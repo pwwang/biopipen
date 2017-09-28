@@ -321,6 +321,8 @@ plot = Box({
 	'hist'   : {},
 	'boxplot': {},
 	'heatmap': {},
+	'maplot' : {},
+	'volplot': {}, # volcano plot
 	'symbols': {},
 	'text'   : {},
 	'venn'   : {},
@@ -375,6 +377,97 @@ if (!exists('plotBoxplot')) {
 		print(plotout)
 		dev.off()
 	}
+}
+"""
+
+plot.maplot.r  = """
+require ('ggplot2')
+if (!exists('plotMAplot')) {
+	# requires: m$A, m$M, m$threshold
+	# A = mean
+	# M = log2fc
+	plotMAplot = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+		do.call(png, c(list(filename=filename), devpars))
+		ggplus = list(
+			theme(legend.position = "none"),
+			geom_hline(color = "blue3", yintercept=0, linetype="dashed"),
+			stat_smooth(se = FALSE, method = "loess", color = "red3")
+		)
+
+		cnames = names(m)
+		A      = if ("A" %in% cnames) m$A else m[, 1]
+		M      = if ("M" %in% cnames) m$M else m[, 2]
+		thres  = if ("threshold" %in% cnames) m$threshold else if (ncol(m) > 2) m[, 3] else NULL
+		
+		if (is.null(thres)) {
+			plotout = ggplot(m, aes(x = A, y = M)) + geom_point(size = 1.5, alpha = 1/5) 
+		} else {
+			plotout = ggplot(m, aes(x = A, y = M)) + geom_point(size = 1.5, alpha = 1/5, aes(color=factor(thres))) 
+		}
+
+		for (i in 1:length(ggplus)) {
+			plotout = plotout + ggplus[[i]]
+		}
+		if (length(ggs) > 0) {
+			for (i in 1:length(ggs)) {
+				plotout = plotout + ggs[[i]]
+			}
+		}
+		print(plotout) 
+		dev.off()
+	}
+}
+"""
+
+plot.volplot.r = """
+require('ggplot2')
+if (!exists('plotVolplot')) {
+	# m$logFC, m$FDR, m$logFCCut, m$FDRCut
+	plotVolplot = function(m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+		do.call(png, c(list(filename=filename), devpars))
+		m = as.data.frame(m)
+
+		cnames = names(m)
+		logfc  = if ("logFC" %in% cnames) m$logFC else m[, 1]
+		fdr    = if ("FDR" %in% cnames) m$FDR else m[, 2]
+		fdr    = -log10(fdr)
+
+		# cutoffs
+		logfccut    = if ("logFCCut" %in% cnames) m$logFCCut[1] else if (ncol(m) > 2) m[1,3] else 2
+		fdrcut      = if ("FDRCut" %in% cnames) m$FDRCut[1] else if (ncol(m) > 3) m[1,4] else 0.05
+		fdrcutlabel = fdrcut
+		fdrcut      = -log10(fdrcut)
+
+		threshold = as.factor(abs(logfc) > logfccut & fdr > fdrcut)
+
+		df  = data.frame(logfc, fdr)
+		plotout = ggplot(data=df, aes(x=logfc, y=fdr)) + 
+		  geom_point(alpha=0.4, size=1.75, aes(color=threshold)) +
+		  geom_hline(yintercept=fdrcut, linetype="dashed", color="blue3") + 
+		  geom_vline(xintercept=c(-logfccut, logfccut), linetype="dashed", color = "red3") +
+		  xlim(c(-10, 10)) + ylim(c(0, 15)) +
+		  geom_text(aes(10, fdrcut, label = paste("p", "=", fdrcutlabel), vjust = -1, hjust = 1), color="blue3") + 
+		  geom_text(aes(-logfccut, 15, label = paste(-logfccut, "fold"),  vjust = 1, hjust = -0.1), color="red3") +
+		  geom_text(aes(+logfccut, 15, label = paste(paste('+', logfccut, sep=""), "fold"),  vjust = 1, hjust = -0.1), color="red3") 
+
+		ggplus = list(
+			theme(legend.position = "none"),
+			xlab("log2 Fold Change"),
+			ylab("-log10(Pval)")
+		)
+
+		for (i in 1:length(ggplus)) {
+			plotout = plotout + ggplus[[i]]
+		}
+		if (length(ggs) > 0) {
+			for (i in 1:length(ggs)) {
+				plotout = plotout + ggs[[i]]
+			}
+		}
+		print(plotout) 
+		dev.off()
+	}
+
 }
 """
 

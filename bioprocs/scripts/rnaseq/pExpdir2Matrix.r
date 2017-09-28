@@ -47,3 +47,4 @@ plotHeatmap(exp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatma
 histfile = file.path("{{out.outdir}}", "{{in.expdir | fn}}.hist.png")
 plotHist(exp, histfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.histplotggs | Rlist}})
 {% endif %}
+
