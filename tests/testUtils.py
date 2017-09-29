@@ -3,7 +3,7 @@ import unittest, addPath
 from os import path
 from subprocess import Popen
 from tempfile import gettempdir
-from bioprocs.utils import plot
+from bioprocs.utils import plot, txt
 
 tmpdir = gettempdir()
 class TestUtils (unittest.TestCase):
@@ -97,6 +97,123 @@ class TestUtils (unittest.TestCase):
 			m = data.frame(logFC, FDR, logFCCut, FDRCut)
 			plotVolplot(m, "%s")
 			""" % (outfile1))
+		rc = Popen(['Rscript', scriptfile]).wait()
+		self.assertEqual(rc, 0)
+
+	def testTxtGroupPython(self):
+		scriptfile = path.join(tmpdir, 'txtGroup.py')
+		groupfileE = path.join(tmpdir, 'groupE.txt')
+		groupfile2 = path.join(tmpdir, 'group2.txt')
+		groupfile3 = path.join(tmpdir, 'group3.txt')
+		with open(groupfileE, 'w') as f:
+			f.write("a\n")
+			f.write("a\tb\n")
+		with open(groupfile2, 'w') as f:
+			f.write("Sample\tGroup\n")
+			f.write("sample1\tgroup1\n")
+			f.write("sample2\tgroup1\n")
+			f.write("sample3\tgroup1\n")
+			f.write("sample4\tgroup2\n")
+			f.write("sample5\tgroup2\n")
+			f.write("sample6\tgroup2\n")
+		with open(groupfile3, 'w') as f:
+			f.write("Patient\tGroup\tBatch\n")
+			f.write("sample1\tp1\tgroup1\tbatch1\n")
+			f.write("sample2\tp1\tgroup1\tbatch1\n")
+			f.write("sample3\tp2\tgroup1\tbatch1\n")
+			f.write("sample4\tp2\tgroup2\tbatch2\n")
+			f.write("sample5\tp3\tgroup2\tbatch2\n")
+			f.write("sample6\tp3\tgroup2\tbatch2\n")
+		with open(scriptfile, 'w') as f:
+			f.write(txt.sampleinfo.python)
+			f.write("""
+r2info, r2cols = txtSampleinfo("%s")
+assert r2info == {
+	'sample1': {'Group': 'group1'},
+	'sample2': {'Group': 'group1'},
+	'sample3': {'Group': 'group1'},
+	'sample4': {'Group': 'group2'},
+	'sample5': {'Group': 'group2'},
+	'sample6': {'Group': 'group2'},
+}
+assert r2cols == {
+	'Sample': ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6'],
+	'Group': ['group1', 'group1', 'group1', 'group2', 'group2', 'group2']
+}
+
+r3info, r3cols = txtSampleinfo("%s")
+assert r3info == {
+	'sample1': {'Group': 'group1', 'Patient': 'p1', 'Batch': 'batch1'},
+	'sample2': {'Group': 'group1', 'Patient': 'p1', 'Batch': 'batch1'},
+	'sample3': {'Group': 'group1', 'Patient': 'p2', 'Batch': 'batch1'},
+	'sample4': {'Group': 'group2', 'Patient': 'p2', 'Batch': 'batch2'},
+	'sample5': {'Group': 'group2', 'Patient': 'p3', 'Batch': 'batch2'},
+	'sample6': {'Group': 'group2', 'Patient': 'p3', 'Batch': 'batch2'},
+}
+assert r3cols == {
+	'Sample': ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6'],
+	'Patient': ['p1', 'p1', 'p2', 'p2', 'p3', 'p3'],
+	'Group': ['group1', 'group1', 'group1', 'group2', 'group2', 'group2'],
+	'Batch': ['batch1', 'batch1', 'batch1', 'batch2', 'batch2', 'batch2'],
+}
+
+try:
+	txtSampleinfo("%s")
+	raise RuntimeError()
+except ValueError:
+	pass
+
+""" % (groupfile2, groupfile3, groupfileE))
+
+		rc = Popen(['python', scriptfile]).wait()
+		self.assertEqual(rc, 0)
+
+	def testTxtGroupR(self):
+		scriptfile = path.join(tmpdir, 'txtGroup.r')
+		groupfileE = path.join(tmpdir, 'groupE.txt')
+		groupfile2 = path.join(tmpdir, 'group2.txt')
+		groupfile3 = path.join(tmpdir, 'group3.txt')
+		with open(groupfileE, 'w') as f:
+			f.write("a\n")
+			f.write("a\tb\n")
+		with open(groupfile2, 'w') as f:
+			f.write("Sample\tGroup\n")
+			f.write("sample1\tgroup1\n")
+			f.write("sample2\tgroup1\n")
+			f.write("sample3\tgroup1\n")
+			f.write("sample4\tgroup2\n")
+			f.write("sample5\tgroup2\n")
+			f.write("sample6\tgroup2\n")
+		with open(groupfile3, 'w') as f:
+			f.write("Patient\tGroup\tBatch\n")
+			f.write("sample1\tp1\tgroup1\tbatch1\n")
+			f.write("sample2\tp1\tgroup1\tbatch1\n")
+			f.write("sample3\tp2\tgroup1\tbatch1\n")
+			f.write("sample4\tp2\tgroup2\tbatch2\n")
+			f.write("sample5\tp3\tgroup2\tbatch2\n")
+			f.write("sample6\tp3\tgroup2\tbatch2\n")
+		with open(scriptfile, 'w') as f:
+			f.write(txt.sampleinfo.r)
+			f.write("""
+				r2 = txtSampleinfo("%s")
+				
+				stopifnot( rownames(r2) == c('sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6') )
+				stopifnot( r2$Group == c('group1', 'group1', 'group1', 'group2', 'group2', 'group2') )
+
+				r3 = txtSampleinfo("%s")
+				stopifnot( rownames(r3) == c('sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6') )
+				stopifnot( r3$Group == c('group1', 'group1', 'group1', 'group2', 'group2', 'group2') )
+				stopifnot( r3$Patient == c('p1', 'p1', 'p2', 'p2', 'p3', 'p3') )
+				stopifnot( r3$Batch == c('batch1', 'batch1', 'batch1', 'batch2', 'batch2', 'batch2') )
+
+				tryCatch({
+					txtSampleinfo("%s")
+					stop('Not happen')
+				}, error = function(e){
+					stopifnot(!'Not happen' %%in%% e)
+				})
+			""" % (groupfile2, groupfile3, groupfileE))
+
 		rc = Popen(['Rscript', scriptfile]).wait()
 		self.assertEqual(rc, 0)
 

@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from .utils import plot
+from .utils import plot, txt
 
 """
 @name:
@@ -36,6 +36,7 @@ pExpdir2Matrix.args.header         = False
 pExpdir2Matrix.args.exrows         = ["^Sample", "^Composite", "^__"]
 pExpdir2Matrix.args.boxplot        = False
 pExpdir2Matrix.args.heatmap        = False
+pExpdir2Matrix.args.heatmapn       = 500
 pExpdir2Matrix.args.histplot       = False
 pExpdir2Matrix.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
 pExpdir2Matrix.args.boxplotggs     = ['r:ylab("Expression")']
@@ -68,22 +69,24 @@ pExpdir2Matrix.script              = "file:scripts/rnaseq/pExpdir2Matrix.r"
 	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
 	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
 """
-pBatchEffect                     = Proc(desc = 'Try to remove batch effect of expression data.')
-pBatchEffect.input               = "expr:file, batch:file"
-pBatchEffect.output              = "outfile:file:{{in.expr | fn | fn}}/{{in.expr | fn | fn}}.expr.txt, outdir:dir:{{in.expr | fn | fn}}"
-pBatchEffect.args.tool           = 'combat' 
-pBatchEffect.args.boxplot        = False
-pBatchEffect.args.heatmap        = False
-pBatchEffect.args.histplot       = False
-pBatchEffect.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
-pBatchEffect.args.boxplotggs     = ['r:ylab("Expression")']
-pBatchEffect.args.heatmapggs     = ['r:theme(axis.text.y = element_blank())']
-pBatchEffect.args.histplotggs    = ['r:labs(x = "Expression", y = "# Samples")']
-pBatchEffect.tplenvs.plotBoxplot = plot.boxplot.r
-pBatchEffect.tplenvs.plotHeatmap = plot.heatmap.r
-pBatchEffect.tplenvs.plotHist    = plot.hist.r
-pBatchEffect.lang                = 'Rscript'
-pBatchEffect.script              = "file:scripts/rnaseq/pBatchEffect.r"
+pBatchEffect                       = Proc(desc = 'Try to remove batch effect of expression data.')
+pBatchEffect.input                 = "expr:file, batch:file"
+pBatchEffect.output                = "outfile:file:{{in.expr | fn | fn}}/{{in.expr | fn | fn}}.expr.txt, outdir:dir:{{in.expr | fn | fn}}"
+pBatchEffect.args.tool             = 'combat'
+pBatchEffect.args.boxplot          = False
+pBatchEffect.args.heatmap          = False
+pBatchEffect.args.heatmapn         = 500
+pBatchEffect.args.histplot         = False
+pBatchEffect.args.devpars          = Box({'res': 300, 'width': 2000, 'height': 2000})
+pBatchEffect.args.boxplotggs       = ['r:ylab("Expression")']
+pBatchEffect.args.heatmapggs       = ['r:theme(axis.text.y = element_blank())']
+pBatchEffect.args.histplotggs      = ['r:labs(x = "Expression", y = "# Samples")']
+pBatchEffect.tplenvs.plotBoxplot   = plot.boxplot.r
+pBatchEffect.tplenvs.plotHeatmap   = plot.heatmap.r
+pBatchEffect.tplenvs.plotHist      = plot.hist.r
+pBatchEffect.tplenvs.txtSampleinfo = txt.sampleinfo.r
+pBatchEffect.lang                  = 'Rscript'
+pBatchEffect.script                = "file:scripts/rnaseq/pBatchEffect.r"
 
 """
 @name:
@@ -125,6 +128,7 @@ pRawCounts2.args.log2           = False
 pRawCounts2.args.glenfile       = ''
 pRawCounts2.args.boxplot        = False
 pRawCounts2.args.heatmap        = False
+pRawCounts2.args.heatmapn       = 500
 pRawCounts2.args.histplot       = False
 pRawCounts2.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
 pRawCounts2.args.boxplotggs     = ['r:ylab("Expression")']
@@ -176,23 +180,23 @@ pDeg.output = [
 	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt", 
 	"outdir:dir:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs"
 ]
-pDeg.args.tool           = 'edger' # deseq2
-pDeg.args.filter         = '1,2'
-pDeg.args.pval           = 0.05
-pDeg.args.paired         = False
-pDeg.args.mdsplot        = True
-pDeg.args.volplot        = True
-pDeg.args.maplot         = False
-pDeg.args.heatmap        = False
-pDeg.args.heatmapn       = 100
-pDeg.args.heatmapggs     = []
-pDeg.args.maplotggs      = []
-pDeg.args.volplotggs     = []
-pDeg.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
-pDeg.tplenvs.plotHeatmap = plot.heatmap.r
-pDeg.tplenvs.plotMAplot  = plot.maplot.r
-pDeg.tplenvs.plotVolplot = plot.volplot.r
-pDeg.lang                = "Rscript"
-pDeg.script              = "file:scripts/rnaseq/pDeg.r"
+pDeg.args.tool             = 'edger' # deseq2
+pDeg.args.filter           = '1,2'
+pDeg.args.pval             = 0.05
+pDeg.args.mdsplot          = True
+pDeg.args.volplot          = True
+pDeg.args.maplot           = False
+pDeg.args.heatmap          = False
+pDeg.args.heatmapn         = 100
+pDeg.args.heatmapggs       = []
+pDeg.args.maplotggs        = []
+pDeg.args.volplotggs       = []
+pDeg.args.devpars          = Box({'res': 300, 'width': 2000, 'height': 2000})
+pDeg.tplenvs.plotHeatmap   = plot.heatmap.r
+pDeg.tplenvs.plotMAplot    = plot.maplot.r
+pDeg.tplenvs.plotVolplot   = plot.volplot.r
+pDeg.tplenvs.txtSampleinfo = txt.sampleinfo.r
+pDeg.lang                  = "Rscript"
+pDeg.script                = "file:scripts/rnaseq/pDeg.r"
 
 

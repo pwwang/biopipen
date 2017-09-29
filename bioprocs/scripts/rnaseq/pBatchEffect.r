@@ -1,6 +1,8 @@
 expr    = read.table ("{{in.expr}}", sep="\t", header=TRUE, row.names = 1, check.names=F)
-batch   = read.table ("{{in.batch}}", sep="\t", header=FALSE, row.names = 1, check.names=F)
-batch   = factor(batch[colnames(expr),1,drop=T])
+
+{{ txtSampleinfo }}
+sampleinfo = txtSampleinfo("{{in.batch}}")
+batch      = factor(sampleinfo[colnames(expr), 'Batch'])
 {% if args.tool | lambda x: x == 'combat' %}
 library(sva)
 newexpr   = ComBat(dat=expr, batch=batch, par.prior = TRUE, mod = NULL)
@@ -21,7 +23,8 @@ plotBoxplot(newexpr, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.bo
 {% if args.heatmap %}
 {{ plotHeatmap }}
 hmfile = file.path("{{out.outdir}}", "{{in.expr | fn | fn}}.heatmap.png")
-plotHeatmap(newexpr, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
+hmexp  = if (nrow(newexpr) > {{args.heatmapn}}) newexpr[sample(nrow(newexpr),size={{args.heatmapn}}),] else newexpr
+plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
 {% endif %}
 
 # histgram

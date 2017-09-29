@@ -721,6 +721,7 @@ if (!exists('plotUpset')) {
 
 txt = Box({
 	'filter': {},
+	'sampleinfo':  {}
 })
 txt.filter.python = """
 if 'txtFilter' not in vars() or not callable (txtFilter):
@@ -752,6 +753,59 @@ if 'txtFilter' not in vars() or not callable (txtFilter):
 					if rfilter and not rfilter(parts): continue
 				fout.write("\\t".join([h for i,h in enumerate(parts) if not cols or i in cols]) + "\\n")
 		
+"""
+
+# read sample info file
+#
+# Sample	Patient	Group	Batch
+# sample1	patient1	group1	batch1
+# sample2	patient1	group2	batch1
+# sample3	patient2	group1	batch2
+# sample4	patient2	group2	batch2
+# Remember NORMAL/CONTROL samples come last if you wanna do comparison between groups
+txt.sampleinfo.python = """
+if 'txtSampleinfo' not in vars() or not callable (txtSampleinfo):
+	
+	def txtSampleinfo(sfile):
+		info = {}
+		cols = {}
+		firstLine = True
+		headers = []
+		with open(sfile) as f:
+			for line in f:
+				line  = line.strip()
+				if not line: continue
+				parts = line.split("\\t")
+				if firstLine: 
+					headers = parts
+					if headers[0] != 'Sample':
+						headers.insert(0, 'Sample')
+					if not set(headers) & set(['Patient', 'Group', 'Batch']):
+						raise ValueError("Headers should be a subset of ['Patient', 'Group', 'Batch']")
+
+					for header in headers: cols[header] = []
+					firstLine = False
+					continue
+
+				info[parts[0]] = {}
+				for i, part in enumerate(parts):
+					cols[headers[i]].append(part)
+					if i > 0:
+						info[parts[0]][headers[i]] = part
+				
+		return info, cols
+"""
+
+txt.sampleinfo.r = """
+if (!exists('txtSampleinfo')) {
+	
+	txtSampleinfo = function(sfile) {
+		mat = read.table (sfile,  header=T, row.names = 1, check.names=F, sep="\\t")
+		if (length(intersect(c('Patient', 'Group', 'Batch'), colnames(mat))) == 0)
+			stop("Headers should be a subset of ['Patient', 'Group', 'Batch']")
+		return (mat)
+	}
+}		
 """
 
 download = Box({

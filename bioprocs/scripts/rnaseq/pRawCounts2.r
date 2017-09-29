@@ -31,7 +31,8 @@ plotBoxplot(ret, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.boxplo
 {% if args.heatmap %}
 {{ plotHeatmap }}
 hmfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.heatmap.png")
-plotHeatmap(ret, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
+hmexp  = if (nrow(ret) > {{args.heatmapn}}) ret[sample(nrow(ret),size={{args.heatmapn}}),] else ret
+plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
 {% endif %}
 
 # histgram

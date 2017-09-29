@@ -24,11 +24,12 @@ class TestRnaseq (unittest.TestCase):
 		batfile = path.join(self.wdir, 'data', 'batch.txt')
 		if not path.exists(datadir): makedirs(datadir)
 		bf = open(batfile, 'w') 
+		bf.write("Group\tBatch\n")
 		for i, si in enumerate([range(nb1), range(nb2)]):
 			for s in si:
 				random.seed(100 * i + s)
 				datafile = path.join(datadir, 'Sample' + str(i*10 + s + 1) + '.expr')
-				bf.write('%s\t%d\n' % ('Sample' + str(i*10 + s + 1), i + 1))
+				bf.write('%s\t%d\t%d\n' % ('Sample' + str(i*10 + s + 1), i + 1, i + 1))
 				with open(datafile, 'w') as df:
 					for gene in genes:
 						df.write('%s\t%.3f\n' % (gene, random.normalvariate(10 - i * 3, 7)))
@@ -65,17 +66,28 @@ class TestRnaseq (unittest.TestCase):
 		pPos.output = "outfile:file:{{in.infile|fn}}"
 		pPos.script = "sed 's/-//g' {{in.infile}} > {{out.outfile}}"
 
+		pPairfile = Proc(desc = 'Add patient to group file.')
+		pPairfile.input = {"infile:file": path.join(self.wdir, 'data', 'batch.txt')}
+		pPairfile.output = "outfile:file:{{in.infile|fn}}"
+		pPairfile.script = 'paste {{in.infile}} <(echo -e "Patient\\n$(seq 1 10)\\n$(seq 1 10)") > {{out.outfile}}'
+
+		pDegDeseq         = pDeg.copy()
 		pDegPaired        = pDeg.copy()
+		pDegDSPaired      = pDeg.copy()
 		pDeg.depends      = pPos
 		pDeg.args.heatmap = True
 		pDeg.args.maplot  = True
 		pDeg.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
 
-		pDegPaired.depends      = pPos
-		pDegPaired.args.heatmap = True
-		pDegPaired.args.paired  = True
-		pDegPaired.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
-		PyPPL().start(pPos).run()
+		pDegDeseq.depends      = pPos
+		pDegDeseq.args.heatmap = True
+		pDegDeseq.args.tool    = 'deseq2'
+		pDegDeseq.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
+
+		pDegPaired.depends = pPos, pPairfile
+		pDegDSPaired.depends = pPos, pPairfile
+		pDegDSPaired.args.tool = 'deseq2'
+		PyPPL().start(pPos, pPairfile).run()
 
 
 if __name__ == '__main__':

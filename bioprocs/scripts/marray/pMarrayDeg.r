@@ -1,7 +1,7 @@
 
 
 # get the exp data
-ematrix   = read.table ("{{in.efile}}",  header=T, row.names = 1, check.names=F, sep="\t")
+ematrix    = read.table ("{{in.efile}}",  header=T, row.names = 1, check.names=F, sep="\t")
 
 # get groups
 {{ txtSampleinfo }}
@@ -27,8 +27,8 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 	stop(paste("Paired samples indicated, but number of samples is different in two groups (", n1, n2, ").", sep=""))
 }
 
-# detect DEGs using edgeR
-{% if args.tool | lambda x: x == 'edger' %}
+# detect DEGs using limma
+{% if args.tool | lambda x: x == 'limma' %}
 	# get model
 	if ("Patient" %in% colnames(sampleinfo)) {
 		pairs  = factor(sampleinfo[samples, "Patient"])
@@ -41,56 +41,19 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 		design = model.matrix(~group)
 	}
 
-	library(edgeR)
-	dge     = DGEList(counts = ematrix, group = group)
-	dge     = dge[rowSums(cpm(dge)>filters[1]) >= filters[2], ]
-	dge$samples$lib.size = colSums(dge$counts)
-	dge     = calcNormFactors(dge)
+	library(limma)
+	fit     = lmFit(ematrix, design)
+	fit     = eBayes(fit)
 
-	disp    = estimateDisp (dge, design)
-	fit     = glmFit (disp, design)
-	fit     = glmLRT (fit)
-
-	allgene = topTags (fit, n=nrow(fit$table), p.value = 1)
-	write.table (allgene$table, allfile, quote=F, sep="\t")
-
-	degene  = allgene$table[allgene$table$PValue < pval,,drop=F]
-	write.table (degene, "{{out.outfile}}", quote=F, sep="\t")
-
-	normedCounts = dge$counts
-	alllogFC     = allgene$table$logFC
-	allPval      = allgene$table$PValue
-
-
-# detect DEGs using DESeq2
-{% elif args.tool | lambda x: x == 'deseq2' %}
-	library(DESeq2)
-	# model
-	if ("Patient" %in% colnames(sampleinfo)) {
-		coldata           = data.frame(patients = factor(sampleinfo[samples, 'Patient']), treats = factor(sampleinfo[samples, 'Group']))
-		coldata$treats    = relevel(coldata$treats, group2)
-		rownames(coldata) = samples
-		dge               = DESeqDataSetFromMatrix(round(ematrix), coldata, design = ~patients + treats)
-	} else {
-		coldata           = data.frame(treats = factor(sampleinfo[samples, 'Group']))
-		coldata$treats    = relevel(coldata$treats, group2) 
-		rownames(coldata) = samples
-		dge               = DESeqDataSetFromMatrix(round(ematrix), coldata, design = ~treats)
-	}
-
-	dge     = DESeq(dge)
-	allgene = results(dge)
+	allgene = topTable(fit, n=nrow(ematrix), adjust="BH", coef = paste("group", group1, sep=""))
 	write.table (allgene, allfile, quote=F, sep="\t")
 
-	degene  = allgene[allgene$pvalue < pval,,drop=F]
+	degene  = allgene[allgene$P.Value < pval,,drop=F]
 	write.table (degene, "{{out.outfile}}", quote=F, sep="\t")
 
-	degene$logFC  = degene$log2FoldChange
-	degene$PValue = degene$pvalue
-
-	normedCounts  = log2(assay(dge) + 1)
-	alllogFC      = allgene$log2FoldChange
-	allPval       = allgene$pvalue
+	normedCounts = ematrix
+	alllogFC     = allgene$logFC
+	allPval      = allgene$P.Value
 
 {% endif %}
 
@@ -108,7 +71,7 @@ dev.off()
 {{ plotVolplot }}
 volplot = file.path ("{{out.outdir}}", "volcano.png")
 log2fc  = degene$logFC
-fdr     = degene$PValue
+fdr     = degene$P.Value
 plotVolplot(data.frame(logFC=log2fc, FDR=fdr), volplot, ggs = {{args.heatmapggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 {% endif %}
 
@@ -124,7 +87,7 @@ if (nrow(degene) < 2) {
 	if (hmapn <= 1) hmapn = as.integer(hmapn * ngene)
 	
 	ngene = min(hmapn, nrow(degene))
-	mat   = normedCounts[1:ngene, ]
+	mat   = ematrix[1:ngene, ]
 	plotHeatmap(mat, hmap, ggs = {{args.heatmapggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 }
 {% endif %}
@@ -133,7 +96,7 @@ if (nrow(degene) < 2) {
 {% if args.maplot %}
 {{ plotMAplot }}
 maplot = file.path("{{out.outdir}}", "maplot.png")
-A = rowSums(normedCounts) / ncol(normedCounts)
+A = rowSums(ematrix) / ncol(ematrix)
 M = alllogFC
 threshold = allPval < pval
 

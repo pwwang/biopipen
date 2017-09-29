@@ -27,6 +27,7 @@ for (efile in Sys.glob({{args.pattern | quote}})) {
 
 write.table (exp, "{{out.outfile}}", col.names=T, row.names=T, sep="\t", quote=F)
 
+exp = log2(exp + 1)
 # boxplot
 {% if args.boxplot %}
 {{ plotBoxplot }}
@@ -38,7 +39,8 @@ plotBoxplot(exp, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.boxplo
 {% if args.heatmap %}
 {{ plotHeatmap }}
 hmfile = file.path("{{out.outdir}}", "{{in.expdir | fn}}.heatmap.png")
-plotHeatmap(exp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
+hmexp  = if (nrow(exp) > {{args.heatmapn}}) exp[sample(nrow(exp),size={{args.heatmapn}}),] else exp
+plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
 {% endif %}
 
 # histgram
