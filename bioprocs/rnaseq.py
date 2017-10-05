@@ -188,7 +188,7 @@ pDeg.args.volplot          = True
 pDeg.args.maplot           = False
 pDeg.args.heatmap          = False
 pDeg.args.heatmapn         = 100
-pDeg.args.heatmapggs       = []
+pDeg.args.heatmapggs       = ['r:theme(axis.text.y = element_blank())']
 pDeg.args.maplotggs        = []
 pDeg.args.volplotggs       = []
 pDeg.args.devpars          = Box({'res': 300, 'width': 2000, 'height': 2000})

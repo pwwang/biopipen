@@ -1,4 +1,7 @@
+from os import path
+from tempfile import gettempdir
 from pyppl import Proc
+from .utils import txt
 
 """
 @name:
@@ -231,10 +234,49 @@ with openfunc ("{{outfile}}", "w") as fout:
 
 """
 @name:
+	pExpmat2Gct
+@description:
+	Convert expression matrix to GCT file.
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for file format
+@input:
+	`expfile:file`: the input expression matrix file. Samples as columns, genes as rows.
+@output:
+	`outfile:file`: the gct file
+"""
+pExpmat2Gct        = Proc(desc = 'Convert expression matrix to GCT file.')
+pExpmat2Gct.input  = 'expfile:file'
+pExpmat2Gct.output = 'outfile:file:{{ in.expfile | fn }}.gct'
+pExpmat2Gct.lang   = 'python'
+pExpmat2Gct.script = "file:scripts/gsea/pExpmat2Gct.py"
+
+"""
+@name:
+	pSampleinfo2Cls
+@description:
+	Convert sample infomation to cls file.
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#CLS for file format
+	NOTE that the order of samples must be the same as in GMT file in further analysis.
+@input:
+	`sifile:file`: the sample information file.
+		- Headers are: [Sample, ]Patient, Group, Batch
+		- Rows are samples
+@output:
+	`outfile:file`: the cls file
+"""
+pSampleinfo2Cls                       = Proc(desc = 'Convert sample infomation to cls file.')
+pSampleinfo2Cls.input                 = 'sifile:file'
+pSampleinfo2Cls.output                = 'outfile:file:{{ in.sifile | fn }}.cls'
+pSampleinfo2Cls.tplenvs.txtSampleinfo = txt.sampleinfo.python
+pSampleinfo2Cls.lang                  = 'python'
+pSampleinfo2Cls.script                = "file:scripts/gsea/pSampleinfo2Cls.py"
+
+"""
+@name:
 	pSSGSEA
 @description:
 	Single sample GSEA
-	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for file format
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for GCT file format
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GMT for GMT file format
 @input:
 	`gctfile:file`: the expression file
 	`gmtfile:file`: the gmtfile for gene sets
@@ -245,245 +287,39 @@ with openfunc ("{{outfile}}", "w") as fout:
 	- `normP_<GeneSet>.png`: the norminal P value plot for <GeneSet>
 @args:
 	`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
-	`padjust`:   P value adjustment method, default 'bonferroni'. Can be "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"
 	`nperm`:     Number of permutations. Default: 10000
-@requires:
-	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 """
-pSSGSEA = Proc ()
+pSSGSEA = Proc (desc = 'Do single-sample GSEA.')
 pSSGSEA.input     = "gctfile:file, gmtfile:file"
-pSSGSEA.output    = "outdir:file:{{gctfile|fn}}_results"
-pSSGSEA.args      = {'weightexp': 0.75, 'padjust': 'bonferroni', 'nperm': 10000}
-pSSGSEA.script    = """
-#!/usr/bin/env Rscript
-# Adopted from GSEA R package (GSEA.Gct2Frame2), read the GCT file
-readGCT <- function(filename = "NULL") { 
-      content <- readLines(filename)
-      content <- content[-1]
-      content <- content[-1]
-      col.names <- noquote(unlist(strsplit(content[1], "\\t")))
-      col.names <- col.names[c(-1, -2)]
-      num.cols <- length(col.names)
-      content <- content[-1]
-      num.lines <- length(content)
-
-
-      row.nam <- vector(length=num.lines, mode="character")
-      #row.des <- vector(length=num.lines, mode="character")
-      m <- matrix(0, nrow=num.lines, ncol=num.cols)
-
-      for (i in 1:num.lines) {
-         line.list <- noquote(unlist(strsplit(content[i], "\\t")))
-         row.nam[i] <- noquote(line.list[1])
-         #row.des[i] <- noquote(line.list[2])
-         line.list <- line.list[c(-1, -2)]
-         for (j in 1:length(line.list)) {
-            m[i, j] <- as.numeric(line.list[j])
-         }
-      }
-      ds <- data.frame(m)
-      names(ds) <- col.names
-      row.names(ds) <- row.nam
-      return(ds)
-}
-
-readGMT <- function (filename = "NULL") {
-	temp = readLines (filename)
-	max.Ng <- length(temp)
-	gs = list()
-	for (i in 1:max.Ng) {
-		line = unlist(strsplit(temp[[i]], "\\t"))
-		name = make.names(line[1])
-		line = line [-1]
-		line = line [-1] # desc
-		gs[[name]] = line
-		
-	} 
-	
-	return (gs)
-}
-
-# Calculate ES score, adopted from GSEA R package (GSEA.EnrichmentScore)
-EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{args.weightexp}}, correl.vector = NULL) {  
-	tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag) 
-	no.tag.indicator <- 1 - tag.indicator 
-	N <- length(gene.list) 
-	Nh <- length(gene.set) 
-	Nm <-  N - Nh 
-	if (weighted.score.type == 0) {
-		correl.vector <- rep(1, N)
-	}
-	alpha <- weighted.score.type
-	correl.vector <- abs(correl.vector**alpha)
-	sum.correl.tag    <- sum(correl.vector[tag.indicator == 1])
-	norm.tag    <- 1.0/sum.correl.tag
-	norm.no.tag <- 1.0/Nm
-	RES <- cumsum(tag.indicator * correl.vector * norm.tag - no.tag.indicator * norm.no.tag)      
-	max.ES <- max(RES)
-	min.ES <- min(RES)
-	if (is.na(max.ES) || is.na(min.ES)) {
-		return(list(ES = 0, arg.ES = 1, RES = RES, indicator = tag.indicator))   
-	}
-	if (max.ES > - min.ES) {
-	#      ES <- max.ES
-		ES <- signif(max.ES, digits = 5)
-		arg.ES <- which.max(RES)
-	} else {
-	#      ES <- min.ES
-		ES <- signif(min.ES, digits=5)
-		arg.ES <- which.min(RES)
-	}
-	return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))    
-}
-
-ESPlot = function (es, gs, outprefix) {
-	for (gset in names(es)) {
-		png (filename = paste (outprefix, make.names(gset), ".png", sep="", collapse = ""), type="cairo")
-		esret = es [[gset]][[1]]
-		N = length(esret$indicator)
-		sub.string <- paste("Number of genes: ", N, " (in list), ", length(gs[[gset]]), " (in gene set)", sep = "", collapse="")
-
-		main.string <- paste("Gene Set: ", gset)
-		minRES = min (esret$RES)
-		maxRES = max (esret$RES)
-		if (is.na(maxRES) || maxRES < 0.3) maxRES <- 0.3
-		if (is.na(minRES) || minRES > -0.3) minRES <- -0.3
-		delta <- (maxRES - minRES)*.5
-		minplot <- minRES - delta
-		maxplot <- maxRES
-		col <- ifelse(esret$ES > 0, 2, 4)
-		plot(1:N, esret$RES, main = main.string, sub = sub.string, xlab = "Gene List Index", ylab = "Running Enrichment Score (RES)", xlim=c(1, N), ylim=c(minplot, maxplot), type = "l", lwd = 2, cex = 1, col = col)
-
-		rect (0, minplot, N, minplot + 0.5*delta, col=rgb(255, 250, 230, maxColorValue=255), border=NA, lwd=0)
-		lines(c(1, N), c(0, 0), lwd = 1, lty = 2, cex = 1, col = 1) # zero RES line
-		lines(c(esret$arg.ES, esret$arg.ES), c(minplot, maxplot), lwd = 1, lty = 3, cex = 1, col = col) # max enrichment vertical line
-		for (j in 1:N) {
-			if (esret$indicator[j] == 1) {
-				lines(c(j, j), c(minplot, minplot + 0.5*delta), lwd = 1, lty = 1, cex = 1, col = 1)  # enrichment tags
-			}
-		}
-
-
-		adjx <- ifelse(esret$ES > 0, 0, 1)
-
-		leg.txt <- paste("Peak at ", esret$arg.ES, sep="", collapse="")
-		text(x=esret$arg.ES, y=minplot + 1.8*delta, adj = c(adjx, 0), labels=leg.txt, cex = 1.0)
-		dev.off()
-	}
-}
-
-NPvalPlot = function (es, outprefix) {
-	Ns = length(es[[1]])
-	NESret = vector (length = 0, mode = "numeric")
-	for (gset in names(es)) {
-		png (filename = paste (outprefix, make.names(gset), ".png", sep="", collapse = ""), type="cairo")
-		esrets = es [[gset]]
-		nes = esrets[[1]]$ES / mean (esrets[[1]]$RES[esrets[[1]]$RES > 0])
-		NESret = c (NESret, nes)
-		if (esrets[[1]]$ES < 0) {
-			nes = - esrets[[1]]$ES / mean (esrets[[1]]$RES[esrets[[1]]$RES < 0])
-		}
-		#sub.string <- paste("ES =", signif(esrets[[1]]$ES, digits = 3), ", NES =", signif(nes, digits=3), ", Nom. p-val=", signif(esrets[[1]]$p, digits = 3), ", FDR=", signif(esrets[[1]]$q, digits = 3), sep="", collapse="")
-		sub.string <- paste("ES =", signif(esrets[[1]]$ES, digits = 3), ", NES =", signif(nes, digits=3), ", Nom. p-val=", signif(esrets[[1]]$p, digits = 3), sep="", collapse="")
-
-		phi = vector (length = Ns, mode = "numeric")
-		for (i in 1:Ns) {
-			phi[i] = esrets[[i]]$ES
-		}
-
-		temp <- density(phi, adjust=.5)
-		x.plot.range <- range(temp$x)
-		y.plot.range <- c(-0.125*max(temp$y), 1.5*max(temp$y))
-		plot(temp$x, temp$y, type = "l", sub = sub.string, xlim = x.plot.range, ylim = y.plot.range, lwd = 2, col = 2, main = "Gene Set Null Distribution", xlab = "ES", ylab="P(ES)")
-		x.loc <- which.min(abs(temp$x - esrets[[1]]$ES))
-		lines(c(esrets[[1]]$ES, esrets[[1]]$ES), c(0, temp$y[x.loc]), lwd = 2, lty = 1, cex = 1, col = 1)
-		lines(x.plot.range, c(0, 0), lwd = 1, lty = 1, cex = 1, col = 1)
-
-		leg.txt <- c("Gene Set Null Density", "Observed Gene Set ES value")
-		c.vec <- c(2, 1)
-		lty.vec <- c(1, 1)
-		lwd.vec <- c(2, 2)
-		legend(x=-0.2, y=y.plot.range[2], bty="n", bg = "white", legend=leg.txt, lty = lty.vec, lwd = lwd.vec, col = c.vec, cex = 1.0)
-		dev.off()
-	}
-	return (NESret)
-}
-
-ESWithPerm = function (exp, gs, nperm = {{args.nperm}}) {
-  exp      = exp[order(-exp[,1]),,drop=F]
-  corrVec  = c (exp[,1])
-  
-  geneList = rownames(exp)
-  ret = list()
-  for (gset in names(gs)) {
-    ess = vector (length = nperm, mode = "numeric")
-    ret[[ gset ]] = vector (length = nperm, mode = "list")
-    ret[[ gset ]][[1]] = EnrichmentScore (geneList, gs[[gset]], correl.vector = corrVec)
-    ret[[ gset ]][[1]]$hits = geneList[as.logical(ret[[ gset ]][[1]]$indicator)]
-    ess[1] = ret[[ gset ]][[1]]$ES
-    for (i in 1:(nperm-1)) {
-      geneList1 = sample(geneList)
-      ret[[ gset ]][[i+1]] = EnrichmentScore (geneList1, gs[[gset]], correl.vector = corrVec)
-      #ret[[ gset ]][[i+1]]$hits = geneList1[as.logical(ret[[ gset ]][[i+1]]$tag.indicator)]
-      ess[i+1] = ret[[ gset ]][[i+1]]$ES
-    }
-    #ess.sorted = sort (ess, index.return = T)
-    for (i in 1:nperm) {
-      if (ess[i] > 0) {
-        ret[[ gset ]][[i]]$p = sum (ess >= ess[i]) / nperm
-      } else {
-        ret[[ gset ]][[i]]$p = sum (ess <= ess[i]) / nperm
-      }
-    }
-  }
-  
-  return (ret)
-}
-
-AdjustP = function (esp) {
-	ret = esp
-	for (gset in names(ret)) {
-		pvec = vector (length = length(ret[[ gset ]]), mode="numeric")
-		for (j in 1:length(ret[[ gset ]])) {
-			pvec[j] = ret[[ gset ]][[ j ]]$p
-		}
-		qs = p.adjust (pvec, "{{args.padjust}}")
-		for (j in 1:length(ret[[ gset ]])) {
-			ret[[ gset ]][[ j ]]$q = qs[j]
-		}
-	}
-	return (ret)
-}
-
-ExportResult = function (es, nes, outfile) {
-	ES   = vector(length = 0, mode = "numeric")
-	pval = vector(length = 0, mode = "numeric")
-	fdr  = vector(length = 0, mode = "numeric")
-	maxI = integer(length = 0)
-	
-	for (gset in names(es)) {
-		esret = es[[gset]][[1]]
-		ES    = c (ES, esret$ES)
-		pval  = c (pval, esret$p)
-		fdr   = c (fdr, esret$q)
-		maxI  = c (maxI, esret$arg.ES)
-		Hits  = paste(esret$hits, collapse=",")
-	}
-	outmat = data.frame (cbind(ES = ES, NES = nes, Pval = pval, Qval = fdr, PeatAt = maxI, Hits=Hits))
-	rownames (outmat) = names(es)
-	write.table (outmat, outfile, sep= "\\t", quote=F, col.names=T, row.names=T)
-	#write.table (es, outfile, append=T, sep= "\\t", quote=F, col.names=T, row.names=T)
-}
-dir.create("{{outdir}}", showWarnings = F, recursive = T)
-exp = readGCT("{{gctfile}}")
-gs  = readGMT("{{gmtfile}}")
-ess = ESWithPerm(exp = exp, gs = gs)
-esq = AdjustP(ess)
-ESPlot(es = esq, gs = gs, outprefix = "{{outdir}}/RES.")
-nes = NPvalPlot(es = esq, outprefix = "{{outdir}}/normP.")
-ExportResult (es = esq, nes=nes, outfile = "{{outdir}}/report.txt")
+pSSGSEA.output    = "outdir:file:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-ssGSEA"
+pSSGSEA.args      = {'weightexp': 1, 'nperm': 10000}
+pSSGSEA.lang      = 'Rscript'
+pSSGSEA.script    = "file:scripts/gsea/pSSGSEA.r"
 
 """
+@name:
+	pGSEA
+@description:
+	GSEA
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for GCT file format
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GMT for GMT file format
+	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#CLS for CLS file format
+@input:
+	`gctfile:file`: the expression file
+	`clsfile:file`: the class file
+	`gmtfile:file`: the gmtfile for gene sets
+@output:
+	`outdir:file`: the output directory
+@args:
+	`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
+	`nperm`:     Number of permutations. Default: 10000
+"""
+pGSEA = Proc (desc = 'Do GSEA.')
+pGSEA.input     = "gctfile:file, clsfile:file, gmtfile:file"
+pGSEA.output    = "outdir:dir:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-GSEA"
+pGSEA.args      = {'weightexp': 1, 'nperm': 1000, 'nthread': 1}
+pGSEA.lang      = 'Rscript'
+pGSEA.script    = "file:scripts/gsea/pGSEA.r"
 
 """
 @name:
@@ -496,7 +332,6 @@ ExportResult (es = esq, nes=nes, outfile = "{{outdir}}/report.txt")
 	`outdir:dir`:  The output directory, containing the tables and figures.
 @args:
 	`topn`: Top N pathways used to plot. Default: 10
-	  - if `topn` < 1: use it as a p-value, otherwise use it as a number cutoff
 	`dbs`:  The databases to do enrichment against. Default: KEGG_2016
 	  - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
 	  - Multiple dbs separated by comma (,)
@@ -508,119 +343,68 @@ ExportResult (es = esq, nes=nes, outfile = "{{outdir}}/report.txt")
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
-pEnrichr = Proc()
-pEnrichr.input  = "infile:file"
-pEnrichr.output = "outdir:dir:{{in.infile | fn}}.enrichr"
-pEnrichr.lang   = "python"
-pEnrichr.args   = {"topn": 10, "dbs": "KEGG_2016", "norm": False, "rmtags": True, "plot": True, "title": "Gene enrichment: {db}"}
-pEnrichr.errhow = 'retry'
-pEnrichr.script = """
-import json
-import requests
-import math
-genes = [line.split()[0] for line in open("{{in.infile}}") if line.strip()]
-if {{args.norm}}:
-	from mygene import MyGeneInfo
-	mg = MyGeneInfo()
-	genes = mg.getgenes (genes, scopes=['symbol', 'alias'], fields='symbol', species='human')
-	genes = [gene['symbol'] for gene in genes if gene.has_key('symbol')]
-	
-if {{args.plot}}:
-	import matplotlib
-	matplotlib.use('Agg')
-	from matplotlib import pyplot as plt
-	from matplotlib import gridspec
-	from matplotlib import patches
+pEnrichr              = Proc()
+pEnrichr.input        = "infile:file"
+pEnrichr.output       = "outdir:dir:{{in.infile | fn}}.enrichr"
+pEnrichr.lang         = "python"
+pEnrichr.args.topn    = 10
+pEnrichr.args.dbs     = "KEGG_2016"
+pEnrichr.args.norm    = False
+pEnrichr.args.rmtags  = True
+pEnrichr.args.plot    = True
+pEnrichr.args.title   = "Gene enrichment: {db}"
+pEnrichr.args.mgcache = path.join(gettempdir(), 'mygeneinfo.cache')
+pEnrichr.beforeCmd    = 'if [[ ! -e "{{args.mgcache}}" ]]; then mkdir -p "{{args.mgcache}}"; fi'
+pEnrichr.errhow       = 'retry'
+pEnrichr.script       = "file:scripts/gsea/pEnrichr.py"
 
-## upload
-ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
-genes_str   = "\\n".join(genes)
-description = '{{in.infile | fn}}'
-payload = {
-    'list': (None, genes_str),
-    'description': (None, description)
-}
 
-response = requests.post(ENRICHR_URL, files=payload)
-if not response.ok:
-    raise Exception('Error analyzing gene list')
-
-data = json.loads(response.text)
-
-## do enrichment
-dbs = "{{args.dbs}}".split(',')
-dbs = map (lambda s: s.strip(), dbs)
-
-ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
-query_string = '?userListId=%s&backgroundType=%s'
-
-head = ["#Rank", "Term name", "P-value", "Z-score", "Combined score", "Overlapping genes", "Adjusted p-value", "Old p-value", "Old adjusted p-value"]
-topn = {{args.topn}}
-for db in dbs:
-	user_list_id = data['userListId']
-	gene_set_library = db
-	response = requests.get(
-		ENRICHR_URL + query_string % (user_list_id, gene_set_library)
-	)
-	if not response.ok:
-		raise Exception('Error fetching enrichment results against %s' % db)
-	
-	data    = json.loads(response.text)
-	data    = data[db]
-	d2plot  = []
-	outfile = "{{out.outdir}}/%s.txt" % db
-	fout    = open (outfile, "w")
-	fout.write ("\\t".join(head) + "\\n")
-	for i, ret in enumerate(data):
-		fout.write ("\\t".join(['|'.join(r) if x == 5 else str(r) for x,r in enumerate(ret)]) + "\\n")
-		if topn < 1 and ret[2] >= topn: continue
-		if topn >= 1 and i > topn - 1: continue
-		if {{args.rmtags}} and "_Homo sapiens_hsa" in ret[1]: ret[1] = ret[1][:-22]
-		d2plot.append (ret)
-	fout.close()
-	
-	if {{args.plot}}:
-		#d2plot   = sorted (d2plot, cmp=lambda x,y: 0 if x[2] == y[2] else (-1 if x[2] < y[2] else 1))
-		plotfile = "{{out.outdir}}/%s.png" % db
-		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7]) 
-		rownames = [r[1] for r in d2plot]
-		rnidx    = range (len (rownames))
-		ax1 = plt.subplot(gs[0])
-		plt.title ("{{args.title}}".replace("{db}", db), fontweight='bold')
-		
-		ax1.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
-		plt.subplots_adjust(wspace=.01, left=0.5)
-		ax1.barh(rnidx, [len(r[5]) for r in d2plot], color='blue', alpha=.6)
-		plt.yticks (rnidx, rownames)
-		ax1.yaxis.set_ticks_position('none')
-		ax1.tick_params(axis='x', colors='blue')
-		ax1.spines['top'].set_visible(False)
-		ax1.spines['left'].set_visible(False)
-		ax1.spines['right'].set_visible(False)
-		ax1.spines['bottom'].set_linewidth(1)
-		ax1.invert_xaxis()
-		ax1.invert_yaxis()
-		xticks = ax1.xaxis.get_major_ticks()
-		xticks[0].label1.set_visible(False)
-		
-		ax2 = plt.subplot(gs[1])
-		ax2.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
-		ax2.barh(rnidx, [-math.log(r[2], 10) for r in d2plot], color='red', alpha = .6)
-		for i, r in enumerate(d2plot):
-			t  = str("%.2E" % r[2])
-			tx = 0.1
-			ty = i + 0.1
-			ax2.text(tx, ty, t, fontsize=8)
-		ax2.tick_params(axis='x', colors='red')
-		ax2.spines['top'].set_visible(False)
-		ax2.spines['left'].set_visible(False)
-		ax2.spines['right'].set_visible(False)
-		ax2.spines['bottom'].set_linewidth(1)
-		ax2.invert_yaxis()
-		plt.yticks([])
-		ng_patch = patches.Patch(color='blue', alpha=.6, label='# overlapped genes')
-		pv_patch = patches.Patch(color='red', alpha = .6, label='-log(p-value)')
-		plt.figlegend(handles=[ng_patch, pv_patch], labels=['# overlapped genes', '-log(p-value)'], loc="lower center", ncol=2, edgecolor="none")
-		plt.savefig(plotfile, dpi=300)
 """
+@name:
+	pTargetEnrichr
+@description:
+	Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene list
+@input:
+	`infile:file`: The target genes with regulators
+		- Format: 
+		- Header is not required, but may specified in first line starting with `#`
+		- If only 3 columns are there, the 3rd column is anyway the relation!
+		- If only 4 columns are there, 3rd is target status, 4th is relation!
+		  ```
+		  #Regulator	Target	Regulator status	Target status	Relation
+		  has-mir-22	Gene	+	+	+
+		  ```
+@output:
+	`outdir:dir`:  The output directory, containing the tables and figures.
+@args:
+	`dbs`       : The databases to do enrichment against. Default: KEGG_2016
+	  - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
+	  - Multiple dbs separated by comma (,)
+	`rmtags`    : Remove pathway tags in the plot. Default: True
+	  - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
+	`enrplot`   : Whether to plot the result. Default: True
+	`enrn`      : Top N pathways used to plot. Default: 10
+	`netplot`   : Whether to plot the network. Default: True
+	`netn`      : Top N pathways used to plot the network. Default: 5
+		- Must <= `enrn`. If `netn` >= `enrn`, `netn` = `enrn`
+	`title`     : The title for the plot. Default: "Gene enrichment: {db}"
+@requires:
+	[`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0) 
+	[`graphviz`](https://pypi.python.org/pypi/graphviz)
+"""
+pTargetEnrichr              = Proc(desc = 'Do gene set enrichment analysis for target genes.')
+pTargetEnrichr.input        = "infile:file"
+pTargetEnrichr.output       = "outdir:dir:{{in.infile | fn}}.tenrichr"
+pTargetEnrichr.lang         = "python"
+pTargetEnrichr.args.dbs     = "KEGG_2016"
+pTargetEnrichr.args.rmtags  = True
+pTargetEnrichr.args.enrplot = True
+pTargetEnrichr.args.enrn    = 10
+pTargetEnrichr.args.netplot = True
+pTargetEnrichr.args.netn    = 5
+pTargetEnrichr.args.title   = "Gene enrichment: {db}"
+pTargetEnrichr.args.mgcache = path.join(gettempdir(), 'mygeneinfo.cache')
+pTargetEnrichr.beforeCmd    = 'if [[ ! -e "{{args.mgcache}}" ]]; then mkdir -p "{{args.mgcache}}"; fi'
+pTargetEnrichr.errhow       = 'retry'
+pTargetEnrichr.script       = "file:scripts/gsea/pTargetEnrichr.py"
 

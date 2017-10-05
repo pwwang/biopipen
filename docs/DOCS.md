@@ -2,16 +2,21 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Documentation for bioprocs v0.0.1](#documentation-for-bioprocs-v001)
+- [Documentation for bioprocs v0.0.1a](#documentation-for-bioprocs-v001a)
   - [CLUSTER](#cluster)
     - [pDist2Coords](#pdist2coords)
-    - [pDecideK](#pdecidek)
-    - [pKMeans](#pkmeans)
-    - [pPamk](#ppamk)
-    - [pClara](#pclara)
+    - [pCluster](#pcluster)
     - [pMClust](#pmclust)
     - [pAPCluster](#papcluster)
     - [pHClust](#phclust)
+  - [FASTX](#fastx)
+    - [pFastqPESim](#pfastqpesim)
+    - [pFastQC](#pfastqc)
+    - [pFastMC](#pfastmc)
+    - [pFastqPETrim](#pfastqpetrim)
+    - [pFastqSETrim](#pfastqsetrim)
+    - [pFastqSE2Sam](#pfastqse2sam)
+    - [pFastqPE2Sam](#pfastqpe2sam)
   - [WXSDOWN](#wxsdown)
     - [pMutSig](#pmutsig)
     - [pVcf2Maf](#pvcf2maf)
@@ -19,32 +24,44 @@
     - [pMutsig4Plot](#pmutsig4plot)
     - [pMutPlot](#pmutplot)
     - [pCepip](#pcepip)
+  - [VCF](#vcf)
+    - [pVcfFilter](#pvcffilter)
+    - [pVcfAnno](#pvcfanno)
+    - [pCallRate](#pcallrate)
   - [WXSCALL](#wxscall)
     - [pCNVnator](#pcnvnator)
-    - [pCNVkitTarget](#pcnvkittarget)
-    - [pCNVkitCov](#pcnvkitcov)
-    - [pCNVkitRef](#pcnvkitref)
-    - [pCNVkitFix](#pcnvkitfix)
-    - [pCNVkitSeg](#pcnvkitseg)
-    - [pCNVkitPlot](#pcnvkitplot)
-    - [pCNVkitRpt](#pcnvkitrpt)
   - [GSEA](#gsea)
     - [pMTarget2GTargetMat](#pmtarget2gtargetmat)
     - [pIntersectGMT](#pintersectgmt)
     - [pUnionGMT](#puniongmt)
+    - [pExpmat2Gct](#pexpmat2gct)
+    - [pSampleinfo2Cls](#psampleinfo2cls)
     - [pSSGSEA](#pssgsea)
+    - [pGSEA](#pgsea)
     - [pEnrichr](#penrichr)
+    - [pTargetEnrichr](#ptargetenrichr)
   - [ALGORITHM](#algorithm)
     - [pRWR](#prwr)
   - [SNPINFO](#snpinfo)
     - [pSNP2Bed](#psnp2bed)
     - [pSNP2Avinput](#psnp2avinput)
+  - [MARRAY](#marray)
+    - [pCeldir2Matrix](#pceldir2matrix)
+    - [aCelPat2Deg](#acelpat2deg)
+    - [aCelPat2DegGSEA](#acelpat2deggsea)
   - [CHIPSEQ](#chipseq)
     - [pPeakToRegPotential](#ppeaktoregpotential)
   - [PLOT](#plot)
-    - [pBoxPlot](#pboxplot)
+    - [pBoxplot](#pboxplot)
+    - [pScatterPlot](#pscatterplot)
+    - [pVenn](#pvenn)
   - [WXSANNO](#wxsanno)
     - [pSnpEff](#psnpeff)
+  - [RNASEQ](#rnaseq)
+    - [pExpdir2Matrix](#pexpdir2matrix)
+    - [pBatchEffect](#pbatcheffect)
+    - [pRawCounts2](#prawcounts2)
+    - [pDeg](#pdeg)
   - [WEB](#web)
     - [pDownloadPost](#pdownloadpost)
     - [pDownloadGet](#pdownloadget)
@@ -73,10 +90,13 @@
     - [pAlignSEByNGM](#palignsebyngm)
     - [pMergeBams](#pmergebams)
   - [DEG](#deg)
-    - [pExpFiles2Mat](#pexpfiles2mat)
+    - [pExpdirMatrix](#pexpdirmatrix)
     - [pDEGByEdgeR](#pdegbyedger)
     - [pMArrayLimma](#pmarraylimma)
-    - [pRawCounts2](#prawcounts2)
+    - [pRawCounts2](#prawcounts2-1)
+  - [VCFNEXT](#vcfnext)
+    - [pStats2Matrix](#pstats2matrix)
+    - [pPlotStats](#pplotstats)
   - [PICARD](#picard)
     - [pMarkDuplicates](#pmarkduplicates)
     - [pAddOrReplaceReadGroups](#paddorreplacereadgroups)
@@ -90,12 +110,30 @@
     - [pDataTrack](#pdatatrack)
     - [pUcscTrack](#pucsctrack)
     - [pGenomePlot](#pgenomeplot)
+  - [BED](#bed)
+    - [pBedSort](#pbedsort)
+    - [pBedIntersect](#pbedintersect)
+    - [pBedCluster](#pbedcluster)
+  - [RESOURCE](#resource)
+    - [pTxt](#ptxt)
   - [PCA](#pca)
     - [pPCA](#ppca)
     - [pSelectPCs](#pselectpcs)
   - [TFBS](#tfbs)
     - [pMotifScanByMEME](#pmotifscanbymeme)
     - [pMEMEMDB2Gene](#pmememdb2gene)
+  - [SAMBAM](#sambam)
+    - [pSam2Bam](#psam2bam)
+    - [pBamMarkdup](#pbammarkdup)
+    - [pBamRecal](#pbamrecal)
+    - [pBamReadGroup](#pbamreadgroup)
+    - [pBamReorder](#pbamreorder)
+    - [pBamMerge](#pbammerge)
+    - [pBam2Gmut](#pbam2gmut)
+    - [pBam2Cnv](#pbam2cnv)
+    - [pBam2FastqPE](#pbam2fastqpe)
+    - [pBam2FastqSE](#pbam2fastqse)
+    - [pBam2Counts](#pbam2counts)
   - [GATK](#gatk)
     - [pRealignerTargetCreator](#prealignertargetcreator)
     - [pIndelRealigner](#pindelrealigner)
@@ -106,16 +144,31 @@
     - [pVariantFiltration](#pvariantfiltration)
     - [pMuTect2](#pmutect2)
     - [pMuTect2Interval](#pmutect2interval)
+  - [UTILS](#utils)
   - [WXS](#wxs)
   - [COMMON](#common)
     - [pSort](#psort)
     - [pFiles2Dir](#pfiles2dir)
+    - [pFiles2List](#pfiles2list)
     - [pPat2Dir](#ppat2dir)
-    - [pMergeFile](#pmergefile)
+    - [pMergeFiles](#pmergefiles)
     - [pCbindList](#pcbindlist)
+    - [pFile2Proc](#pfile2proc)
+  - [CNVKIT](#cnvkit)
+    - [pCNVkitAccess](#pcnvkitaccess)
+    - [pCNVkitTarget](#pcnvkittarget)
+    - [pCNVkitCov](#pcnvkitcov)
+    - [pCNVkitRef](#pcnvkitref)
+    - [pCNVkitFix](#pcnvkitfix)
+    - [pCNVkitSeg](#pcnvkitseg)
+    - [pCNVkitCall](#pcnvkitcall)
+    - [pCNVkitPlot](#pcnvkitplot)
+    - [pCNVkitRpt](#pcnvkitrpt)
+    - [pCNVkit2Vcf](#pcnvkit2vcf)
   - [SEQ](#seq)
     - [pConsv](#pconsv)
     - [pGetPromoterBed](#pgetpromoterbed)
+    - [pGetPromotersBed](#pgetpromotersbed)
   - [TCGA](#tcga)
     - [pDownload](#pdownload)
     - [pSample2SubmitterID](#psample2submitterid)
@@ -123,7 +176,7 @@
     - [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
   - [WXSSTAT](#wxsstat)
     - [pVcf2List](#pvcf2list)
-    - [pCallRate](#pcallrate)
+    - [pCallRate](#pcallrate-1)
     - [pCoverageByBamstats](#pcoveragebybamstats)
     - [pPlotBamstats](#pplotbamstats)
     - [pSnpEff2Stat](#psnpeff2stat)
@@ -135,7 +188,7 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
-# Documentation for bioprocs v0.0.1
+# Documentation for bioprocs v0.0.1a
 A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 ## CLUSTER
@@ -166,7 +219,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 	s1	s3	1
 	s2	s3	1
 ```
-- - Both rownames and header of `full` and `triangle` can be omitted, just set `proc.args.rownames = "NULL"` and `proc.args.header = False`
+- - Both rownames and header of `full` and `triangle` can be omitted, just set `args.rownames = "NULL"` and `args.header = False`
 
 #### output
 - `outfile:file`: The output coordinate file
@@ -178,105 +231,32 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `k`:        How many dimension? Default: 2 (R^2)
 
 
-###  pDecideK
+###  pCluster
 #### description
-- Decide number of clusters using different methods
+- Use `optCluster` to select the best number of clusters and cluster method, then perform the clustering
 
 #### input
-- `infile:file`: the coordinates file, if all you have is a distance/similarity file, convert it to coordinates file using `pDist2Coords`
+- `infile:file`: The input matrix file. Clustering will be performed against rows. If not, use `args.transpose` = True
 
 #### output
-- `kfile:file`: the output file with `K`
+- `outfile:file`: The output cluster file
+- `outdir:dir`:   The output directory containing the figures
 
 #### args
-- `method`:                         The method used to determine K
-- - `elbow:<ev.thres>:<inc.thres>`: Look for a bend or elbow in the sum of squared error (SSE) scree plot, see [ref](https://artax.karlin.mff.cuni.cz/r-help/library/GMD/html/elbow.html). Default: `elbow` = `elbow:.95:01`
-- - `pamk:<min>:<max>`:             You can do partitioning around medoids to estimate the number of clusters using the pamk function in the fpc package. Default: `pamk` = `pamk:2:15`
-- - `calinski:<min>:<max>`:         Calinski criterion. Default: `calinski` means `calinski:2:15`
-- - `mclust:<min>:<max>`:           Determine the optimal model and number of clusters according to the Bayesian Information Criterion for expectation-maximization, initialized by hierarchical clustering for parameterized Gaussian mixture models. [Ref1](http://www.stat.washington.edu/research/reports/2006/tr504.pdf
-- #), [Ref2](http://www.jstatsoft.org/v18/i06/paper). Default: `mclust` = `mclust:2:15`
-- - `ap`:                           Affinity propagation (AP) clustering, see [ref](http://dx.doi.org/10.1126/science.1136800)
-- - `gap:<min>:<max>`:              Gap Statistic for Estimating the Number of Clusters. Default: `gap:2:10`
-- - `nbclust`:                      The [NbClust package](http://cran.r-project.org/web/packages/NbClust/index.html) provides 30 indices to determine the number of clusters in a dataset.
-- `rownames`:                       The `row.names` for `read.table` to read the input file, default: 1.
-- `header`:                         The `header` argument for `read.table` to read the input file, default: True.
-- `seed`:                           The seed for randomization, default: 0.
+- `transpose`:    Transpose the input matrix. Default: False
+- `header`:       Whether the input matrix contains header before transposing. Default: False
+- `rownames`:     Which column is the rownames before transposing. Default: 1
+- `plot`:         Whether plot the cluster. Default: True
+- `nc`:           Number of clusters to test. Default: "2:15"
+- `methods`:      The methods to test. Default: "all"
+- - Could be any of "agnes", "clara", "diana", "fanny", "hierarchical", "kmeans", "model", "pam", "som", "sota", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson"
+- - Multiple methods could be separated by comma (,), or put in a list
+- - By default, fanny, model and sota will be excluded because fanny causes error and the latter two are slow. You can manually include them if you want.
+- - Improper methods will be automatically excluded by `args.isCount`
+- `isCount`:      Whether the data is count data. Corresponding methods will be tested. Default: False
 
 #### requires
-- [`r-cluster`](https://cran.r-project.org/web/packages/cluster/index.html) if `gap` method used
-- [`r-GMD`](https://cran.r-project.org/web/packages/GMD/index.html) if `elbow` method userd
-- [`r-fpc`](https://cran.r-project.org/web/packages/fpc/index.html) if `pamk` method used
-- [`r-vegan`](https://cran.r-project.org/web/packages/vegan/index.html) if `calinski` method used
-- [`r-mclust`](https://cran.r-project.org/web/packages/mclust/index.html) if `mclust` method used
-- [`r-apcluster`](https://cran.r-project.org/web/packages/apcluster/index.html) if `ap` method used
-- [`r-NbClust`](https://cran.r-project.org/web/packages/NbClust/index.html) if `nbclust` method used
-
-
-###  pKMeans
-#### description
-- Do k-means clustering
-
-#### input
-- `infile:file`:    The input coordinates of the points.
-- `k`:              Number of clusters, it could also be a file with the number in it.
-
-#### output
-- `outdir:dir`: The output of final results
-
-#### args
-- `rownames`:       The `row.names` for `read.table` to read the input file, default: 1.
-- `header`:         The `header` argument for `read.table` to read the input file, default: True.
-- `algorithm`:      The `algorithm` argument for `kmeans`, default "Hartigan-Wong" (could also be "Lloyd", "Forgy", "MacQueen")
-- `niter`:          The `max.iter` argument for `kmeans`, default: 10.
-- `nstart`:         The `nstart` argument for `kmeans`, default: 25.
-- `caption`:        The caption for the `fviz_cluster`, default: "K-means with K=%k%".
-
-#### requires
-- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-
-
-###  pPamk
-#### description
-- Do clustering using [fpc::pamk](https://www.rdocumentation.org/packages/fpc/versions/2.1-10/topics/pamk)
-
-#### input
-- `infile:file`:  The input coordinate file
-
-#### output
-- `outdir:dir`:   The output directory
-
-#### args
-- `rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
-- `header`:       The `header` argument for `read.table` to read the input file, default: True.
-- `min`:          The min # clusters to try, default: 2
-- `max`:          The max # clusters to try, default: 15
-- `caption`:      The caption for the `fviz_cluster`, default: "Partitioning Around Medoids (K=%K%)".
-- `seed`:         The seed for randomization, default: 0.
-
-#### requires
-- [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-- [`r-fpc`](https://cran.r-project.org/web/packages/fpc/index.html)
-
-
-###  pClara
-#### description
-- CLARA is a partitioning method used to deal with much larger data sets (more than several thousand observations) in order to reduce computing time and RAM storage problem.
-
-#### input
-- `infile:file`:  The input coordinate file
-- `k`:            Number of clusters, it could also be a file with the number in it.
-
-#### output
-- `outdir:dir`:   The output of final results
-
-#### args
-- `rownames`:     The `row.names` for `read.table` to read the input file, default: 1.
-- `header`:       The `header` argument for `read.table` to read the input file, default: True.
-- `samples`:      The `samples` argument for `clara`, default: 5.
-- `caption`:      The caption for the `fviz_cluster`, default: "CLARA Clustering with K=%k%".
-
-#### requires
-- [`r-cluster`](https://cran.r-project.org/web/packages/cluster/index.html)
+- [`r-optCluster`](https://rdrr.io/cran/optCluster/man/optCluster.html)
 - [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
 
 
@@ -346,8 +326,183 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `transpose`:Whether to transpose the matrix before cluster. Default: False
 
 #### requires
-- [`r-fastcluster`](https://cran.r-project.org/web/packages/fastcluster/index.html) if `proc.args.fast` is True
-- [`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `proc.args.gg` is True
+- [`r-fastcluster`](https://cran.r-project.org/web/packages/fastcluster/index.html) if `args.fast` is True
+- [`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `args.gg` is True
+
+
+## FASTX
+
+###  pFastqPESim
+#### description
+- Simulate reads
+
+#### input
+- `in`: Index of the job/simulation, typically use range(10) for 10-time simulations
+
+#### output
+- `fq1:file`: The first pair read file
+- `fq2:file`: The second pair read file
+
+#### args
+- `tool`:  The tool used for simulation. Default: wgsim (dwgsim)
+- `len1`:  The length of first pair read. Default: 100
+- `len2`:  The length of second pair read. Default: 100
+- `num`:   The number of read PAIRs. Default: 1000000
+- `seed`:  The seed for randomization. Default: None
+- `gz`:    Whether generate gzipped read file. Default: True
+- `wgsim`: The path of wgsim. Default: wgsim
+- `dwgsim`:The path of wgsim. Default: dwgsim
+- `ref`:   The reference genome. Required
+- `params`:Other params for `tool`. Default: ""
+
+#### requires
+- [`wgsim`](https://github.com/lh3/wgsim)
+
+
+###  pFastQC
+#### description
+- QC report for fastq file
+
+#### input
+- `fq:file`:    The fastq file (also fine with gzipped)
+
+#### output
+- `outdir:dir`: The output direcotry
+
+#### args
+- `tool`:    The tool used for simulation. Default: fastqc 
+- `fastqc`:  The path of fastqc. Default: fastqc
+- `nthread`: Number of threads to use. Default: 1
+- `params`:Other params for `tool`. Default: ""
+
+#### requires
+- [`fastqc`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+
+
+###  pFastMC
+#### description
+- Multi-QC based on pFastQC
+
+#### input
+- `qcdir:file`:  The direcotry containing QC files
+
+#### output
+- `outdir:dir`: The output direcotry
+
+#### args
+- `tool`:    The tool used for simulation. Default: multiqc 
+- `multiqc`: The path of fastqc. Default: multiqc
+- `params`:  Other params for `tool`. Default: ""
+
+#### requires
+- [`multiqc`](http://multiqc.info/)
+
+
+###  pFastqPETrim
+#### description
+- Trim pair-end FASTQ reads
+
+#### input
+- `fq1:file`:  The input fastq file
+- `fq2:file`:  The input fastq file
+
+#### output
+- `outfq1:file`: The trimmed fastq file
+- `outfq2:file`: The trimmed fastq file
+
+#### args
+- `tool`        : The tools used for trimming. Default: trimmomatic (cutadapt|skewer)
+- `cutadapt`    : The path of seqtk. Default: cutadapt
+- `skewer`      : The path of fastx toolkit trimmer. Default: skewer
+- `trimmomatic` : The path of trimmomatic. Default: trimmomatic
+- `params`      : Other params for `tool`. Default: ""
+- `nthread`     : Number of threads to be used. Default: 1
+- - Not for cutadapt
+- `gz`          : Whether gzip output files. Default: True
+- `mem`         : The memory to be used. Default: 4G
+- - Only for trimmomatic
+- `minlen`      : Discard trimmed reads that are shorter than `minlen`. Default: 18
+- - For trimmomatic, the number will be `minlen`*2 for MINLEN, as it filters before trimming
+- `minq`        : Minimal mean qulity for 4-base window or leading/tailing reads. Default: 3
+- `cut5`        : Remove the 5'end reads if they are below qulity. Default: 3
+- `cut3`        : Remove the 3'end reads if they are below qulity. Default: 3
+- - Not for skewer
+- `adapter1`    : The adapter for sequence. Default: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+- `adapter2`    : The adapter for pair-end sequence. Default: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA
+
+#### requires
+- [`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
+- [`skewer`](https://github.com/relipmoc/skewer)
+- [`trimmomatic`](https://github.com/timflutre/trimmomatic)
+
+
+###  pFastqSETrim
+#### description
+- Trim single-end FASTQ reads
+
+#### input
+- `fq:file`:  The input fastq file
+
+#### output
+- `outfq:file`: The trimmed fastq file
+
+#### args
+- `tool`        : The tools used for trimming. Default: trimmomatic (cutadapt|skewer)
+- `cutadapt`    : The path of seqtk. Default: cutadapt
+- `skewer`      : The path of fastx toolkit trimmer. Default: skewer
+- `trimmomatic` : The path of trimmomatic. Default: trimmomatic
+- `params`      : Other params for `tool`. Default: ""
+- `nthread`     : Number of threads to be used. Default: 1
+- - Not for cutadapt
+- `gz`          : Whether gzip output files. Default: True
+- `mem`         : The memory to be used. Default: 4G
+- - Only for trimmomatic
+- `minlen`      : Discard trimmed reads that are shorter than `minlen`. Default: 18
+- - For trimmomatic, the number will be `minlen`*2 for MINLEN, as it filters before trimming
+- `minq`        : Minimal mean qulity for 4-base window or leading/tailing reads. Default: 3
+- `cut5`        : Remove the 5'end reads if they are below qulity. Default: 3
+- `cut3`        : Remove the 3'end reads if they are below qulity. Default: 3
+- - Not for skewer
+- `adapter`     : The adapter for sequence. Default: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+
+#### requires
+- [`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
+- [`skewer`](https://github.com/relipmoc/skewer)
+- [`trimmomatic`](https://github.com/timflutre/trimmomatic)
+
+
+###  pFastqSE2Sam
+#### description
+- Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
+
+#### args
+- `tool`:   The tool used for alignment. Default: bwa (bowtie2|ngm)
+- `bwa`:    Path of bwa, default: bwa
+- `ngm`:    Path of ngm, default: ngm
+- `bowtie2`:Path of bowtie2, default: bowtie2
+- `rg`:     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
+- - `id` will be parsed from filename with "_LX_" in it if not given
+- - `sm` will be parsed from filename
+- `ref`:    Path of reference file
+- `params`: Other params for tool, default: ''
+
+
+###  pFastqPE2Sam
+#### description
+- Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
+
+#### args
+- `tool`   : The tool used for alignment. Default: bwa (bowtie2, ngm, star)
+- `bwa`    : Path of bwa, default: bwa
+- `ngm`    : Path of ngm, default: ngm
+- `star`   : Path of ngm, default: STAR
+- `bowtie2`: Path of bowtie2, default: bowtie2
+- `rg`:     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
+- - `id` will be parsed from filename with "_LX_" in it if not given
+- - `sm` will be parsed from filename
+- `ref`    : Path of reference file
+- `refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built. Default: ''
+- `params` : Other params for tool, default: ''
 
 
 ## WXSDOWN
@@ -371,7 +526,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outdir:dir`: The output directory
 
 #### args
-- `bin`: The path to `run_MutSigCV.sh`, default: 'mutsig'
+- `mutsig`: The path to `run_MutSigCV.sh`, default: 'mutsig'
 - `mcr`: The Matlab MCR path
 
 #### requires
@@ -390,7 +545,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### args
 - `vepdata`: The path of vep data. Default: "" (default data dir of vep)
-- `veppath`: The path of vep excutable. Default: "" (`dirname $(which vep)`)
+- `vep`: The path of vep excutable. Default: "vep"
 - `vcf2maf`: The path of vcf2maf excutable. Default: "vcf2maf.pl"
 - `reffile`: The reference fasta file.
 - `nthread`: The number of threads used by vep. Default: 1
@@ -483,6 +638,102 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [`cepip`](http://jjwanglab.org/cepip/)
 
 
+## VCF
+
+###  pVcfFilter
+#### description
+- Filter records in vcf file.
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `tool`: Which tool to use for filtering. Default: 'vcflib'
+- `vcflib_vcffilter`: The path of vcffilter from vcflib. Default: 'vcffilter'
+- `gatk`            : The path of gatk. Default: 'gatk'
+- `snpsift`         : The path of snpsift. Default: 'SnpSift'
+- `bcftools`        : The path of bcftools. Default: 'bcftools'
+- `samtools`        : The path of samtools. Default: 'samtools' (used by gatk to generate reference index)
+- `picard`          : The path of picard. Default: 'picard' (used by picard to generate reference dict) 
+- `params`          : Other params of `tool`. Default: ""
+- `mem`             : The memory to be used. Default: "4G" (only for snpsift and gatk)
+- `gz`              : Whether to gzip the output file. Default: False
+- `keep`            : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
+- `ref`             : The path of reference. Default: "" (for gatk)
+- `tmpdir`          : The path of tmpdir. Default: <system tmpdir> (only used by gatk and snpsift)
+- `nthread`         : The path of Default: 1	
+- `selectors`:   Select records by:
+- - type (snp, indel), sample genotypes (0, 1, 2), min genotype quality, filter (PASS, .)
+- - for example:
+```
+		{"type": "snp", "genotype": {0: '0/0'}, "qual": 30}
+		to select snps and whose genotype is '0/0' in 1st sample with quality >= 30
+		{"genotype": {0: ['1/1', '0|1']}, "filter": ["PASS"]}
+		to select records with PASS and genotype in 1st sample is '1/1' or '0/1'
+```
+- `filters`:     Filters depend on the tool you use on INFO filelds
+- - format: `{"name1": "expression1", ...}`
+- - If a string is specified, will convert to `{<tool name>: <expression>}`
+- - Remember it filters OUT the records when ANY of the expression is true
+
+#### requires
+- [`pyvcf`](https://github.com/jamescasbon/PyVCF)
+- [`gatk`](https://software.broadinstitute.org/gatk)
+- [`bcftools`](http://www.htslib.org/doc/bcftools-1.2.html)
+- [`snpsift`](http://snpeff.sourceforge.net/SnpSift.version_4_0.html)
+- [`samtools`](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
+- [`picard`](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+
+
+###  pVcfAnno
+#### description
+- Annotate the variants in vcf file.
+- You have to prepare the databases for each tool.
+
+#### input
+- `infile:file`: The input vcf file
+
+#### output
+- `outfile:file`: The output file (output file of annovar will also be converted to vcf)
+- `outdir`: The output directory, used to fetch some stat/summary files
+
+#### args
+- `tool`:            The tool used to do annotation. Default: snpeff
+- `snpeff`:          The path of snpeff. Default: snpEff
+- `vep`:             The path to vep. Default: vep
+- `gz`:              Whether to gzip the result file. Default: False
+- `annovar`:         The path of annovar. Default: annotate_variation.pl
+- `annovar_convert`: The path of convert2annovar.pl, used to convert vcf to annovar input file. Default: convert2annovar.pl
+- `genome`:          The genome for annotation. Default: hg19
+- `tmpdir`:          The tmpdir, mainly used by snpeff. Default: <system tmpdir>
+- `dbpath`:          The path of database for each tool. Required by 'annovar' and 'vep'
+- `params`:          Other params for tool. Default: ''
+- `snpeffStats`:     Whether to generate stats file when use snpeff. Default: False
+- `mem`:             The memory used by snpeff. Default: '4G'
+
+#### requires
+- [`annovar`](http://doc-openbio.readthedocs.io/projects/annovar/en/latest/)
+- [`snpeff`](http://snpeff.sourceforge.net/SnpEff_manual.html#intro)
+- [`vep`](http://www.ensembl.org/info/docs/tools/vep/script/vep_tutorial.html)
+
+
+###  pCallRate
+#### description
+- Calculate sample/snp call rate from single sample vcfs
+
+#### input
+- `indir:file`:     The dir containing the vcfs
+
+#### output
+- `outsample:file`: The report of call rate for each sample
+- `figsample:file`: The bar chat of sample call rates
+- `outsnp:file`:    The report of call rate for each snp
+- `figsnp:file`:    The bar chat of snp call rates
+
+
 ## WXSCALL
 
 ###  pCNVnator
@@ -496,8 +747,8 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The vcf file
 
 #### args
-- `bin`:      The CNVnator executable, default: "cnvnator"
-- `bin-vcf`:  The converter executable to convert CNVnator results to vcf, default: "cnvnator2VCF.pl"
+- `cnvnator`:      The CNVnator executable, default: "cnvnator"
+- `cnv2vcf`:  The converter executable to convert CNVnator results to vcf, default: "cnvnator2VCF.pl"
 - `binsize`:  The bin_size, default: 100
 - `genome`:   The genome: default: hg19
 - `chrom`:    Chromosome names, default: "" (all chromosomes)
@@ -506,142 +757,6 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### requires
 - [CNVnator](https://github.com/abyzovlab/CNVnator)
-
-
-###  pCNVkitTarget
-#### description
-- Generate targets file for CNVkit using access file and annotate file (`cnvkit.py target`)
-
-#### input
-- `acfile:file`: The access file
-- `anfile:file`: The annotate file
-
-#### output
-- `outfile:file`: The targets file
-
-#### args
-- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
-
-
-###  pCNVkitCov
-#### description
-- Calculate coverage in the given regions from BAM read depths.
-
-#### input
-- `infile:file`: The bam file
-
-#### output
-- `outfile:file`: The output cnn file
-
-#### args
-- `tgfile:file`: The target file
-- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-- `nthread`:     The number of threads to use. Default: 1
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
-
-
-###  pCNVkitRef
-#### description
-- Compile a copy-number reference from the given files or directory (containing normal samples). If given a reference genome (-f option), also calculate the GC content and repeat-masked proportion of each region.
-
-#### input
-- `indir:file`:  The input directory containing the cnn files
-
-#### output
-- `outfile:file`: The output reference cnn file
-
-#### args
-- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
-
-
-###  pCNVkitFix
-#### description
-- Combine the uncorrected target and antitarget coverage tables (.cnn) and correct for biases in regional coverage and GC content, according to the given reference. Output a table of copy number ratios (.cnr)
-
-#### input
-- `infile:file`:  The cnn file to be fixed
-- `rcfile:file`:  The reference cnn file
-
-#### output
-- `outfile:file`: The fixed cnn file
-
-#### args
-- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
-
-
-###  pCNVkitSeg
-#### description
-- Infer discrete copy number segments from the given coverage table
-
-#### input
-- `infile:file`:  The cnn file to be fixed
-- `rcfile:file`:  The reference cnn file
-
-#### output
-- `outfile:file`: The fixed cnn file
-
-#### args
-- `bin-cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-- `nthread`:     The number of threads to use. Default: 1
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
-
-
-###  pCNVkitPlot
-#### description
-- Plot CNVkit results
-
-#### input
-- `cnrdir:file`:  The directory containing copy number ratio files
-- `cnsdir:file`:  The directory containing copy number segment files
-
-#### output
-- `outdir:dir`:   The output directory
-
-#### args
-- `bin-cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
-- `region`:       The region for zoom-in plots. Default: '' (don't plot zoom-in view)
-- `gene`:         The genes to be highlighted. Default: ''
-- `scatter`:      Whether to generate the scatter plot. Default: True
-- `diagram`:      Whether to generate the diagram plot. Default: True
-- `heatmap`:      Whether to generate the heatmap plot. Default: True
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
-
-
-###  pCNVkitRpt
-#### description
-- Report CNVkit results
-
-#### input
-- `cnrdir:file`:  The directory containing copy number ratio files
-- `cnsdir:file`:  The directory containing copy number segment files
-
-#### output
-- `outdir:dir`:   The output directory
-
-#### args
-- `bin-cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
-- `breaks`:       Whether to report breakpoints. Default: True
-- `gainloss`:     Whether to report gainloss. Default: True
-- `metrics`:      Whether to report metrics. Default: True
-- `segmetrics`:   Whether to report segmetrics. Default: True
-
-#### requires
-- [CNVkit](http://cnvkit.readthedocs.io/)
 
 
 ## GSEA
@@ -719,10 +834,38 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) 
 
 
+###  pExpmat2Gct
+#### description
+- Convert expression matrix to GCT file.
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for file format
+
+#### input
+- `expfile:file`: the input expression matrix file. Samples as columns, genes as rows.
+
+#### output
+- `outfile:file`: the gct file
+
+
+###  pSampleinfo2Cls
+#### description
+- Convert sample infomation to cls file.
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#CLS for file format
+- NOTE that the order of samples must be the same as in GMT file in further analysis.
+
+#### input
+- `sifile:file`: the sample information file.
+- - Headers are: [Sample, ]Patient, Group, Batch
+- - Rows are samples
+
+#### output
+- `outfile:file`: the cls file
+
+
 ###  pSSGSEA
 #### description
 - Single sample GSEA
-- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for file format
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for GCT file format
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GMT for GMT file format
 
 #### input
 - `gctfile:file`: the expression file
@@ -736,11 +879,27 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### args
 - `weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
-- `padjust`:   P value adjustment method, default 'bonferroni'. Can be "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"
 - `nperm`:     Number of permutations. Default: 10000
 
-#### requires
-- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
+
+###  pGSEA
+#### description
+- GSEA
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for GCT file format
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GMT for GMT file format
+- Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#CLS for CLS file format
+
+#### input
+- `gctfile:file`: the expression file
+- `clsfile:file`: the class file
+- `gmtfile:file`: the gmtfile for gene sets
+
+#### output
+- `outdir:file`: the output directory
+
+#### args
+- `weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
+- `nperm`:     Number of permutations. Default: 10000
 
 
 ###  pEnrichr
@@ -755,7 +914,6 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### args
 - `topn`: Top N pathways used to plot. Default: 10
-- - if `topn` < 1: use it as a p-value, otherwise use it as a number cutoff
 - `dbs`:  The databases to do enrichment against. Default: KEGG_2016
 - - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
 - - Multiple dbs separated by comma (,)
@@ -766,7 +924,43 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `title`: The title for the plot. Default: "Gene enrichment: {db}"
 
 #### requires
-- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `proc.args.norm` is `True`
+- [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
+
+
+###  pTargetEnrichr
+#### description
+- Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene list
+
+#### input
+- `infile:file`: The target genes with regulators
+- - Format: 
+- - Header is not required, but may specified in first line starting with `#`
+- - If only 3 columns are there, the 3rd column is anyway the relation!
+- - If only 4 columns are there, 3rd is target status, 4th is relation!
+```
+		  #Regulator	Target	Regulator status	Target status	Relation
+		  has-mir-22	Gene	+	+	+
+```
+
+#### output
+- `outdir:dir`:  The output directory, containing the tables and figures.
+
+#### args
+- `dbs`       : The databases to do enrichment against. Default: KEGG_2016
+- - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
+- - Multiple dbs separated by comma (,)
+- `rmtags`    : Remove pathway tags in the plot. Default: True
+- - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
+- `enrplot`   : Whether to plot the result. Default: True
+- `enrn`      : Top N pathways used to plot. Default: 10
+- `netplot`   : Whether to plot the network. Default: True
+- `netn`      : Top N pathways used to plot the network. Default: 5
+- - Must <= `enrn`. If `netn` >= `enrn`, `netn` = `enrn`
+- `title`     : The title for the plot. Default: "Gene enrichment: {db}"
+
+#### requires
+- [`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0) 
+- [`graphviz`](https://pypi.python.org/pypi/graphviz)
 
 
 ## ALGORITHM
@@ -829,6 +1023,56 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [`python-cruzdb`](https://github.com/brentp/cruzdb)
 
 
+## MARRAY
+
+###  pCeldir2Matrix
+#### description
+- Convert CEL files to expression matrix
+- File names will be used as sample names (colnames)
+
+#### input
+- `expdir:file`:  the directory containing the CEL files, could be gzipped
+
+#### output
+- `outfile:file`: the expression matrix file
+- `outdir:dir`:   the directory containing expr file and plots
+
+#### args
+- `pattern` : The pattern to filter files. Default `'*'`
+- `norm`    : The normalization method. Default: rma (mas5)
+- `gfile`   : The group file. Default: ''
+- `cdffile` : The cdffile. Default: ''
+- `annofile`: The annotation file. Default: ''
+- `exrows`  : Rows to be excluded, regular expression applied. Default: `[]`
+- `boxplot` : Whether to plot a boxplot. Default: False
+- `heatmap` : Whether to plot a heatmap. Default: False
+- `histplot`: Whether to plot a histgram. Default: False
+- `devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+- `boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
+- - See ggplot2 documentation.
+- `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
+- `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+
+
+###  aCelPat2Deg
+#### description
+- From celfils to degs with sample info file.
+
+#### input
+- `pattern`: The pattern to match the celfiles
+- `sfile`  : The sample file
+
+
+###  aCelPat2DegGSEA
+#### description
+- From celfils to degs with sample info file and do GSEA.
+
+#### input
+- `pattern`: The pattern to match the celfiles
+- `sfile`  : The sample file
+- `gmtkey` : The gmtkey to gmt file to do the GSEA. See `bioprocs.resource.pTxt`
+
+
 ## CHIPSEQ
 
 ###  pPeakToRegPotential
@@ -868,7 +1112,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 ## PLOT
 
-###  pBoxPlot
+###  pBoxplot
 #### description
 - Generate box plot
 
@@ -884,6 +1128,72 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `params`:    Other parameters for `boxplot`, default: ""
 
 
+###  pScatterPlot
+#### description
+- Scatter plots with more information
+
+#### input
+- `infile:file`: The input file.
+- - Format:
+```
+		X	Y	Size	Color
+	A	1	1	1	1
+	B	2	2	2	2
+```
+- - Column 3,4 can be omitted
+
+#### output
+- `outfile:file`: The plot
+
+#### args
+- `colfunc`: The functions to generate colors. Default: `heat.colors`
+- - Available: rainbow, heat.colors, terrain.colors, topo.colors, and cm.colors.
+- `type`:    The type of the symbols. Default: `circles`
+- - Available: circles, squares, rectangles, stars, thermometers, boxplots.
+- `inches`:  Scale the largest symbol to this size. Default: 1/3
+- `data`:    The columns for render the symbols. Default: 0 (a simple dot plot)
+- - circles:       3 (radii)
+- - squares:       3 (length of sides)
+- - rectangles:    3:4 (widths and heights)
+- - starts:        3:? (?>5, a matrix with three or more columns giving the lengths of the rays from the center of the stars.)
+- - thermometers:  3:? (?=5|6, The first two columns give the width and height of the thermometer symbols. If there are three columns, the third is taken as a proportion: the thermometers are filled (using colour fg) from their base to this proportion of their height. If there are four columns, the third and fourth columns are taken as proportions and the thermometers are filled between these two proportions of their heights. The part of the box not filled in fg will be filled in the background colour (default transparent) given by bg.) 
+- - boxplots:      3:7 (a matrix with five columns. The first two columns give the width and height of the boxes, the next two columns give the lengths of the lower and upper whiskers and the fifth the proportion (with a warning if not in [0,1]) of the way up the box that the median line is drawn.)
+- `main`:   The title of the plot. Default: NULL (the file name)
+- `xlab`:   The labels for x axis. Default: colnames(mat)[1]
+- `ylab`:   The labels for y axis. Default: colnames(mat)[2]
+- `text`:   Whether to show the text of the symbols (rownames). Default: TRUE
+
+
+###  pVenn
+#### description
+- Venn/UpsetR plots.
+
+#### input
+- `infile:file`: The input matrix
+- - format:
+```
+			category1	category2	category3
+		[e1]	0	1	1
+		[e2]	0	0	1
+		...
+		[eN]	1	0	0
+```
+- rownames are not necessary but colnames are.
+
+#### output
+- `outfile:file`: The plot
+
+#### args
+- `tool`: Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
+- `rownames`: Whether input file has rownames. Default: False
+- `vennParams`: Other params for `venn.diagram`. Default: {}
+- `upsetParams`: Other params for `upset`. Default: {}
+
+#### requires
+- [`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
+- [`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
+
+
 ## WXSANNO
 
 ###  pSnpEff
@@ -897,16 +1207,139 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html
 
 #### args
-- `bin`:       The snpEff executable, default: "snpEff"
+- `snpEff`:       The snpEff executable, default: "snpEff"
 - `params`:    Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"
 - `genome`:    The genome used for annotation, default: "hg19"
 - `informat`:  The format of input file [vcf or bed], default: "vcf"
 - `outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"
 - `csvStats`:  Whether to generate csv stats file, default: True.
 - `htmlStats`: Whether to generate the html summary file, default: False.
+- `javamem`:   The memory to use. Default: '-Xms1g -Xmx8g'
 
 #### requires
 - [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
+
+
+## RNASEQ
+
+###  pExpdir2Matrix
+#### description
+- Convert expression files to expression matrix
+- File names will be used as sample names (colnames)
+- Each gene and its expression per line.
+- Suppose each expression file has the same rownames and in the same order.
+
+#### input
+- `expdir:file`:  the directory containing the expression files, could be gzipped
+
+#### output
+- `outfile:file`: the expression matrix file
+- `outdir:dir`:   the directory containing expr file and plots
+
+#### args
+- `pattern` : The pattern to filter files. Default `'*'`
+- `header`  : Whether each expression file contains header. Default: `False`
+- `exrows`  : Rows to be excluded, regular expression applied. Default: `["^Sample", "^Composite", "^__"]`
+- `boxplot` : Whether to plot a boxplot. Default: False
+- `heatmap` : Whether to plot a heatmap. Default: False
+- `histplot`: Whether to plot a histgram. Default: False
+- `devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+- `boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
+- - See ggplot2 documentation.
+- `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
+- `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+
+
+###  pBatchEffect
+#### description
+- Remove batch effect with sva-combat.
+
+#### input
+- `expr:file`:  The expression file, generated by pExpdir2Matrix
+- `batch:file`: The batch file defines samples and batches.
+
+#### output
+- `outfile:file`: the expression matrix file
+- `outdir:dir`:   the directory containing expr file and plots
+
+#### args
+- `tool`    : The tool used to remove batch effect. Default `'combat'`
+- `boxplot` : Whether to plot a boxplot. Default: False
+- `heatmap` : Whether to plot a heatmap. Default: False
+- `histplot`: Whether to plot a histgram. Default: False
+- `devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+- `boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
+- - See ggplot2 documentation.
+- `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
+- `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+
+
+###  pRawCounts2
+#### description
+- Convert raw counts to another unit
+
+#### input
+- `expfile:file`: the expression matrix
+- - rows are genes, columns are samples
+
+#### output
+- `outfile:file`: the converted expression matrix
+
+#### args
+- `transpose`: transpose the input matrix? default: False
+- `log2`:      whether to take log2? default: False
+- `unit`:      convert to which unit? default: cpm (or rpkm, tmm)
+- `header`:    whether input file has header? default: True
+- `rownames`:  the index of the column as rownames. default: 1
+- `glenfile`:  the gene length file, for RPKM
+- - no head, row names are genes, have to be exact the same order and length as the rownames of expfile
+- `boxplot` : Whether to plot a boxplot. Default: False
+- `heatmap` : Whether to plot a heatmap. Default: False
+- `histplot`: Whether to plot a histgram. Default: False
+- `devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+- `boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
+- - See ggplot2 documentation.
+- `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
+- `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+
+#### requires
+- [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
+- [coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
+
+
+###  pDeg
+#### description
+- Detect DEGs for RNA-seq data
+
+#### input
+- `efile:file`: The expression matrix
+- `gfile:file`: The group information
+- - Like:
+```
+		Sample1	Group1
+		Sample2	Group1
+		Sample3	Group1
+		Sample4	group2
+		Sample5	group2
+		Sample6	group2
+```
+
+#### output
+- `outfile:file`: The DEG list
+- `outdir:file`:  The output directory containing deg list and plots
+
+#### args
+- `tool`      : the tool used to detect DEGs. Default: 'edger' (deseq2)
+- `filter`    : filter out low count records. Default: `"1,2"` (At least 2 samples have at least 2 reads)
+- `mdsplot`   : whether to plot the MDS plot, default : True
+- `volplot`   : whether to plot the volcano plot, default : True
+- `maplot`    : whether to plot MA plots within each group, default : False
+- `heatmap`   : whether to plot the heatmap using DEGs. Default : False
+- `heatmapn`  : How many genes to be used for heatmap. If `heatmapn`, the number will be `heatmapn * # DEGs`. Default: 100
+- `heatmapggs`: The ggplots options for heatmap. Default : []
+- `maplotggs` : The ggplots options for maplot. Default : []
+- `volplotggs`: The ggplots options for volplot. Default : []
+- `devpars`   : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
 
 
 ## WEB
@@ -938,9 +1371,6 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### input
 - `url`: the URLs to download
-
-#### args
-- `keepname`: bool, whether to keep the basename, otherwise use {{#}}.<ext>, default: True
 
 #### output
 - `outfile:file`: The output file
@@ -1248,7 +1678,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile2:file`: The 2nd output file
 
 #### args
-- `bin`:    The trimmomatic executable, default: "trimmomatic"
+- `trimmomatic`:    The trimmomatic executable, default: "trimmomatic"
 - `phred`:  "phred33" (default) or "phred64"
 - `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
 - - have to replace `{adapter}` with the path of the adapter file
@@ -1269,7 +1699,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The output file
 
 #### args
-- `bin`:    The trimmomatic executable, default: "trimmomatic"
+- `trimmomatic`:    The trimmomatic executable, default: "trimmomatic"
 - `phred`:  "phred33" (default) or "phred64"
 - `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
 - - have to replace `{adapter}` with the path of the adapter file
@@ -1286,15 +1716,15 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 #### input
 - `infile1:file`: read file 1 (fastq, or fastq gzipped)
 - `infile2:file`: read file 2 (fastq, or fastq gzipped)
+- `reffile:file`: The reference file
 
 #### output
 - `outfile:file`: The output sam file
 
 #### args
-- `bin`:    The bwa executable, default: bwa
+- `bwa`:    The bwa executable, default: bwa
 - `params`: Other params for bwa mem, default: "-M"
 - `nthread`: 1
-- `reffile`: The reference file
 
 #### requires
 - [bwa](https://github.com/lh3/bwa)
@@ -1306,12 +1736,20 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### input
 - `infile:file`:  read file (fastq, or fastq gzipped)
+- `reffile:file`: The reference file
+
+#### brings
+- `reffile#bwt`: "{{reffile | bn}}.bwt", 
+- `reffile#sa`:  "{{reffile | bn}}.sa",
+- `reffile#ann`: "{{reffile | bn}}.ann",
+- `reffile#amb`: "{{reffile | bn}}.amb",
+- `reffile#pac`: "{{reffile | bn}}.pac"
 
 #### output
 - `outfile:file`: The output sam file
 
 #### args
-- `bin`:    The bwa executable, default: bwa
+- `bwa`:    The bwa executable, default: bwa
 - `params`: Other params for bwa mem, default: "-M"
 - `nthread`: 1
 - `reffile`: The reference file, required
@@ -1327,16 +1765,16 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 #### input
 - `infile1:file`: read file 1 (fastq, or fastq gzipped)
 - `infile2:file`: read file 2 (fastq, or fastq gzipped)
+- `reffile:file`: The reference file
 
 #### output
 - `outfile:file`: The output sam/bam file
 
 #### args
-- `bin`:    The NextGenMap executable, default: ngm
-- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+- `ngm`:    The NextGenMap executable, default: ngm
 - `nthread`: 1
-- `reffile`: The reference file
-- `outtype`: sam or bam, default: bam
+- `outtype`: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))
+- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
 
 #### requires
 - [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
@@ -1347,17 +1785,18 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - Align single-end reads to reference genome using NextGenMap
 
 #### input
-- `infile:file`: read file (fastq, or fastq gzipped)
+- `infile1:file`: read file 1 (fastq, or fastq gzipped)
+- `infile2:file`: read file 2 (fastq, or fastq gzipped)
+- `reffile:file`: The reference file
 
 #### output
 - `outfile:file`: The output sam/bam file
 
 #### args
-- `bin`:    The NextGenMap executable, default: ngm
-- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
+- `ngm`:    The NextGenMap executable, default: ngm
 - `nthread`: 1
-- `reffile`: The reference file
-- `outtype`: sam or bam, default: bam
+- `outtype`: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))
+- `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"
 
 #### requires
 - [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
@@ -1368,14 +1807,13 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - Merge bam files
 
 #### input
-- `sname`:        the sample name
-- `bams:files`:   the bam files to be merged
+- `bamdir:dir`:   the dir containing bam files 
 
 #### output
 - `outfile:file`: the merged bam file
 
 #### args
-- `bin-samtools`: the executable path of samtools, default: "samtools"
+- `samtools`: the executable path of samtools, default: "samtools"
 - `nthread`:      Number of BAM/CRAM compression threads
 - `params`:       Other parameters for `samtools merge`, default: ""
 
@@ -1385,10 +1823,11 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 ## DEG
 
-###  pExpFiles2Mat
+###  pExpdirMatrix
 #### description
 - Convert expression files to expression matrix
 - File names will be used as sample names (colnames)
+- Each gene and its expression per line.
 
 #### input
 - `expdir:file`:  the directory containing the expression files, could be gzipped
@@ -1481,6 +1920,39 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
 
 
+## VCFNEXT
+
+###  pStats2Matrix
+#### description
+- Convert csvstat file from snpEff to R-readable matrix for plotting
+
+#### input
+- `indir:file`: The directory containing the csv stat files from `snpEff ann`
+
+#### output
+- `outdir:dir`: The output directory
+
+#### args
+- `chroms`:     The chromsome filter. Default: "" (all chroms)
+- - Note: snpEff csvstat file has no "chr" prefix
+
+
+###  pPlotStats
+#### description
+- Plot snpEff annotation statistics
+
+#### input
+- `indir:file`: The snpEff result directory containing matrix files generated by pSnpEff2Stat
+
+#### output
+- `outdir:dir`: The output directory
+
+#### requires
+- [`pwwang/corrplot`](https://github.com/pwwang/corrplot)
+- - use `library(devtools); install.github("pwwang/corrplot")`
+- [`ggplot2`](http://ggplot2.org/)
+
+
 ## PICARD
 
 ###  pMarkDuplicates
@@ -1501,7 +1973,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The marked bam file
 
 #### args
-- `bin`:     The picard executable, default: "picard MarkDuplicates"
+- `picard`:     The picard executable, default: "picard"
 - `params`:  Other parameters for picard MarkDuplicates, default: ""
 - `tmpdir`:  The tmpdir to use. Default: /tmp
 
@@ -1524,7 +1996,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The bam file with read group added
 
 #### args
-- `bin`:     The picard executable, default: "picard AddOrReplaceReadGroups"
+- `picard`:     The picard executable, default: "picard "
 - `params`:  Other parameters for picard AddOrReplaceReadGroups, default: ""
 
 #### requires
@@ -1543,7 +2015,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The same fasta file, but with dict file created
 
 #### args
-- `bin`:     The picard executable, default: "picard CreateSequenceDictionary"
+- `picard`:     The picard executable, default: "picard"
 - `params`:  Other parameters for picard CreateSequenceDictionary, default: ""
 
 #### requires
@@ -1563,7 +2035,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The metrics file
 
 #### args
-- `bin`:     The picard executable, default: "picard CollectWgsMetrics"
+- `picard`:     The picard executable, default: "picard"
 - `params`:  Other parameters for `picard CollectWgsMetrics`, default: ""
 - `reffile`: The reference file, default: ""
 
@@ -1582,11 +2054,12 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The sorted sam or bam file
 
 #### args
-- `bin`:     The picard executable, default: "picard SortSam"
+- `picard`:     The picard executable, default: "picard"
 - `order`:   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate
 - `outtype`: The type of output file, sam or bam. Default: bam
-- `params`:  Other parameters for `picard SortSame`, default: "-Xms1g -Xmx8g"
+- `params`:  Other parameters for `picard SortSam`, default: ""
 - `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
@@ -1603,8 +2076,8 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outfile:file`: The same bam file (link) but with .bai file in `proc.outdir`
 
 #### args
-- `bin`:    The picard executable, default: "picard BuildBamIndex"
-- `params`:  Other parameters for picard , default: "-Xms1g -Xmx8g"
+- `picard`:    The picard executable, default: "picard"
+- `params`:  Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"
 
 #### requires
 - [picard](http://broadinstitute.github.io/picard/command-line-overview.html)
@@ -1724,6 +2197,99 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [r-Gviz](https://rdrr.io/bioc/Gviz)
 
 
+## BED
+
+###  pBedSort
+#### description
+- Sort bed files
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `tool`:         The tool used to sort the file. Default: sort (bedtools, bedops)
+- `bedtools`:     The path to bedtools. Default: bedtools
+- `bedops_sort`:  The path to bedops' sort-bed. Default: sort-bed
+- `sort`:         The path to linux's sort. Default: sort
+- `mem`:          The memory to use. Default: 8G
+- `tmpdir`:       The tmpdir to use. Default: `$TMPDIR`
+- `unique`:       Remove the dupliated records? Default: True
+- `params`:       Other params for `tool`. Default: ''
+
+#### requires
+- [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
+- [`bedops`](https://github.com/bedops/bedops)
+
+
+###  pBedIntersect
+#### description
+- Find intersections of two bed files.
+- Input files must be sorted.
+
+#### input
+- `infile1:file`: The 1st input bed file
+- `infile2:file`: The 2nd input bed file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `tool`:         The tool used to sort the file. Default: bedtools (bedops)
+- `bedtools`:     The path to bedtools. Default: bedtools
+- `bedops`:  The path to bedops. Default: bedops
+- `params`:       Other params for `tool`. Default: ''
+
+#### requires
+- [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
+- [`bedops`](https://github.com/bedops/bedops)
+
+
+###  pBedCluster
+#### description
+- Assign cluster id to each record
+
+#### input
+- `infile:file`: The input bed file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `tool`:         The tool used to sort the file. Default: bedtools
+- `bedtools`:     The path to bedtools. Default: bedtools
+- `params`:       Other params for `tool`. Default: ''
+
+#### requires
+- [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
+
+
+## RESOURCE
+
+###  pTxt
+#### description
+- Download CSV format files.
+
+#### input
+- `in`: The name of the resource
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `cols`:      Select the columns to keep. Default: '' (all cols)
+- `rowfilter`: Filter rows. For example, to filter out rows not start with 'Chr':
+- - `"lambda x: not x[0].startswith('Chr')"`
+- - Note that rowfilter applied before cols filter.
+- `urls`:      Available resources and their urls.
+- `gz`:        Whether to gzip the output file.
+
+#### requires
+- [`curl`](https://en.wikipedia.org/wiki/CURL)
+
+
 ## PCA
 
 ###  pPCA
@@ -1800,6 +2366,348 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - [python-mygene](https://pypi.python.org/pypi/mygene)
 
 
+## SAMBAM
+
+###  pSam2Bam
+#### description
+- Deal with mapped sam/bam files, including sort, markdup, and/or index
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output bam file
+- `idxfile:file`: The index of the output bam file
+- - If args.index == False, it'll a link to outfile and should be never used
+
+#### args
+- `tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools)
+- `sambamba`         : The path of the sambamba. Default: sambamba 
+- `picard`           : The path of the picard. Default: picard 
+- `biobambam_bamsort`: The path of the biobambam's bamsort. Default: bamsort 
+- `samtools`         : The path of the samtools. Default: samtools 
+- `sort`             : Do sorting? Default: True 
+- - If input is sam, tool is biobambam, this should be True
+- `index`            : Do indexing? Default: True
+- `markdup`          : Do duplicates marking? Default: False
+- - `rmdup` for samtools will be called
+- `rmdup`            : Do duplicates removing? Default: False
+- `tmpdir`           : The tmp dir used to store tmp files. Default: <system default tmpdir>
+- `sortby`           : Sort by coordinate or queryname. Default: coordinate
+- `nthread`          : Default: 1
+- `informat`         : The format of input file. Default: <detect from extension> (sam|bam)
+- `params`           : Other parameters for `tool`. Defaut: ""
+- `mem`              : The max memory to use. Default: "16G"
+- - Unit could be G/g/M/m
+- - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+
+#### requires
+- [sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html) if `args.tool` == samtools or reference used but not indexed.
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+- [biobambam](https://github.com/gt1/biobambam2)
+- [samtools](https://github.com/samtools/samtools)
+
+
+###  pBamMarkdup
+#### description
+- Mark/remove duplicates for bam files
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output bam file
+
+#### args
+- `tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools|bamutil)
+- `sambamba`         : The path of sambamba. Default: sambamba 
+- `picard`           : The path of picard. Default: picard 
+- `biobambam_bamsort`: The path of biobambam's bamsort. Default: bamsort 
+- `samtools`         : The path of samtools. Default: samtools 
+- `bamutil`          : The path of bamutil. Default: bam
+- `rmdup`            : Do duplicates removing? Default: False
+- - Samtools will anyway remove the duplicates
+- `tmpdir`           : The tmp dir used to store tmp files. Default: <system default tmpdir>
+- `nthread`          : Default: 1
+- - Not available for samtools and picard
+- `params`           : Other parameters for `tool`. Defaut: ""
+- `mem`              : The max memory to use. Default: "16G"
+- - Unit could be G/g/M/m
+- - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+
+#### requires
+- [sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+- [biobambam](https://github.com/gt1/biobambam2)
+- [samtools](https://github.com/samtools/samtools)
+- [bamutil](http://genome.sph.umich.edu/wiki/BamUtil#Programs)
+
+
+###  pBamRecal
+#### description
+- Recalibrate a bam file
+
+#### input
+- `infile:file`: The bam file
+
+#### brings
+- `infile`: {{in.infile | bn}}.bai, the index file of bam
+
+#### output
+- `outfile:file`: The output bam file
+
+#### args
+- `tool`                         : The tool used to recalibrate the bam file. Default: `gatk` (gatk|bamutil)
+- `gatk`                         : The path of gatk, including java path. Default: `gatk`
+- `samtools`                     : The path of samtools. Default: `samtools`
+- `bamutil`                      : The path of bamutil. Default: `bam`
+- `picard`                       : The path of picard. Default: `picard`
+- `paramsRealignerTargetCreator` : Other parameters for `gatk RealignerTargetCreator`. Defaut: ""
+- `paramsIndelRealigner`         : Other parameters for `gatk IndelRealigner`. Defaut: ""
+- `paramsBaseRecalibrator`       : Other parameters for `gatk BaseRecalibrator`. Defaut: ""
+- `paramsPrintReads`             : Other parameters for `gatk PrintReads`. Defaut: ""
+- `params`                       : Other parameters for `bam recab`. Default: ""
+- `mem`                          : The max memory to use. Default: "32G"
+- `knownSites`                   : The known polymorphic sites to mask out. Default: "" (Required for GATK)
+- `ref`                          : The reference file. Required.
+- - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+
+#### requires
+- [gatk](https://software.broadinstitute.org/gatk)
+- [samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+
+
+###  pBamReadGroup
+#### description
+- Add or replace read groups of a bam file
+
+#### input
+- `infile:file`: The bam file
+
+#### output
+- `outfile:file`: The output bam file
+
+#### args
+- `tool`                         : The tool used. Default: `picard` (picard|bamutil)
+- `picard`                       : The path of picard. Default: `picard`
+- `bamutil`                      : The path of bamutil. Default: `bam`
+- `rg`                           : The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
+- - `id` will be parsed from filename with "_LX_" in it if not given
+- - `sm` will be parsed from filename
+- `params`                       : Other parameters for `tool`. Defaut: ""
+- `mem`                          : The max memory to use. Default: "4G"
+- - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+- `tmpdir`                       : The temporary directory. Default: <system tmpdir>
+
+#### requires
+- [gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+- [samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+
+
+###  pBamReorder
+#### description
+- Reorder a sam/bam file by a given reference file using `picard ReorderSam`
+
+#### input
+- `infile:file`: The sam/bam file
+
+#### output
+- `outfile:file`: The output bam file
+
+#### args
+- `picard`                       : The path of picard. Default: `picard`
+- `ref`                          : The reference file. Required
+- `params`                       : Other parameters for `picard ReorderSam`. Defaut: ""
+- `mem`                          : The max memory to use. Default: "4G"
+- - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+- `tmpdir`                       : The temporary directory. Default: <system tmpdir>
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pBamMerge
+#### description
+- Merges multiple SAM and/or BAM files (must be sorted by coordinate) into a single file.
+
+#### input
+- `inlist:file`: The directory containing sam/bam files to be merged
+
+#### output
+- `outfile:file`: The merged bam file
+
+#### args
+- `tool`     : The tool used to merge. Default: bamutil (picard|samtools|sambamba)
+- `picard`   : The path of picard. Default: `picard`
+- `bamutil`  : The path of bamutil. Default: `bam`
+- `samtools` : The path of samtools. Default: `samtools`
+- `sambamba` : The path of sambamba. Default: `sambamba`
+- `params`   : Other parameters for `tool`. Defaut: ""
+- `mem`      : The max memory to use. Default: "4G"
+- - Will be converted to -Xmx4G, and -Xms will be 1/8 of it, just for picard
+- `tmpdir`   : The temporary directory. Default: <system tmpdir>
+- `nthread`  : # threads to use. Default: 1
+- - For picard, if nthread>1, USE_THREADING=true, otherwise USE_THREADING=false
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+
+
+###  pBam2Gmut
+#### description
+- Call germline (snps and indels) from a call-ready bam file.
+
+#### input
+- `infile:file`: The input bam file
+
+#### brings
+- `infile`: `{{in.infile | bn}}.bai`, the bam index file
+
+#### output
+- `outfile:file`: The vcf file containing the mutations
+
+#### args
+- `tool`:         The tool used to call mutations. Default: gatk (vardict, snvsniffer, platypus, strelka)
+- `gatk`:         The path of gatk. Default: gatk
+- `vardict`:      The path of vardict. Default: vardict
+- `snvsniffer`:   The path of snvsniffer. Default: SNVSniffer
+- `samtools`:     The path of samtools. Default: samtools (used to generate reference index)
+- `platypus`:     The path of platypus. Default: platypus
+- `strelka`:      The path of strelka. Default: configureStrelkaGermlineWorkflow.py
+- `configParams`: The params for `strelka` configuration. Default: ""
+- `picard`:       The path of picard. Default: picard
+- `mem`:          The memory to be used. Default: 32G
+- - will be converted to -Xms4G -Xmx32G for java programs
+- `ref`:          The reference file. Required.
+- `gz`:           Gzip output file? Default: False
+- `tmpdir`:       The temporary directory. Default: <system tmpdir>
+- `params`:       Other params for `tool`. Default: ""
+
+#### requires
+- [gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+- [samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+- [vardict](https://github.com/AstraZeneca-NGS/VarDict)
+- [snvsniffer](http://snvsniffer.sourceforge.net/homepage.htm#latest)
+- [platypus](http://www.well.ox.ac.uk/platypus)
+- [strelka@2.7.1+](https://github.com/Illumina/strelka)
+
+
+###  pBam2Cnv
+#### description
+- Detect copy number variation from bam files.
+
+#### input
+- `input:file`: The bam file
+
+#### brings
+- `infile`: "{{in.infile | bn}}.bai" The bam index file
+
+#### output
+- `outfile:file`: The output vcf file
+- `outdir`: The output directory containing other result files
+
+#### args
+- `gz`                    : Whether to gzip the output vcf file. Default: False
+- `tool`                  : The tool used to call cnv. Default: 'cnvkit'
+- `cnvnator`              : The path of cnvnator. Default: 'cnvnator'
+- `cnvnator2vcf`          : The path of cnvnator2VCF. Default: 'cnvnator2VCF.pl'
+- `cnvkit`                : The path of cnvkit. Default: 'cnvkit.py'
+- `wandy`                 : Tha path of Wandy. Default: 'Wandy'. A `tool.info` file should be with the executable file.
+- `ref`                   : The reference file. Required by cnvkit to generate access file. Default: ''
+- `cnvkitAccessParams`    : The params for cnvkit access command. Default: '-s 5000'
+- `cnvkitTargetParams`    : The params for cnvkit target command. Default: '--split --short-names'
+- `cnvkitCoverageParams`  : The params for cnvkit coverage command. Default: ''
+- `cnvkitReferenceParams` : The params for cnvkit reference command. Default: '--no-edge'
+- `cnvkitFixParams`       : The params for cnvkit fix command. Default: '--no-edge'
+- `cnvkitSegmentParams`   : The params for cnvkit segment command. Default: ''
+- `cnvkitCallParams`      : The params for cnvkit call command. Default: ''
+- `cnvkitPlotParams`      : The params for cnvkit plot command. Default: ''
+- `cnvkitBreaksParams`    : The params for cnvkit breaks command. Default: ''
+- `cnvkitGainlossParams`  : The params for cnvkit gainloss command. Default: ''
+- `cnvkitMetricsParams`   : The params for cnvkit metrics command. Default: ''
+- `cnvkitSegmetricsParams`: The params for cnvkit segmetrics command. Default: '--iqr'
+- `cnvkitExportParams`    : The params for cnvkit export command. Default: ''
+- `cnvkitScatterParams`   : The params for cnvkit scatter command. Default: [''] # multiple scatter plots
+- `cnvkitHeatmapParams`   : The params for cnvkit heatmap command. Default: [''] # multiple heatmap plots
+- `cnvkitDiagramParams`   : The params for cnvkit diagram command. Default: ''
+- `cnvkitReport`          : Generate cnvkit reports? Default: True
+- `cnvkitPlot`            : Generate cnvkit plots? Default: True
+- `cnvnatorBinsize`       : Bin size for cnvnator. Default: 100
+- `cnvnatorGenome`        : Genome for cnvnator. Default: 'hg19'. (NCBI36, hg18, GRCh37, hg19)
+- `params`                : The params for `tool`. Default: '-t 1' # wandy 1:hg19 solid cell/blood, 2:hg19 cell free/plamsa, 3:hg38 solid cell/blood, 4:hg38 cell free/plamsa
+- `mem`                   : The memory used. Default: '20G' # only for wandy
+- `nthread`               : The # threads to use. Default: 1	 # only for cnvkit
+
+#### requires
+- [`cnvkit`](http://cnvkit.readthedocs.io/en/stable/index.html)
+- [`cnvnator`](https://github.com/abyzovlab/CNVnator)
+- `wandy`: Inside cnv caller
+
+
+###  pBam2FastqPE
+#### description
+- Convert sam/bam files to pair-end fastq files.
+
+#### input
+- `infile:file`: The sam/bam file. 
+- - Sam files only available for biobambam, picard
+
+#### output
+- `fqfile1:file`: The 1st match of paired reads
+- `fqfile2:file`: The 2nd match of paired reads
+
+#### args
+- `tool`                : The tool to use. Default: biobambam (bedtools, samtools, picard)
+- `biobambam_bamtofastq`: The path of bamtofastq of biobambam. Default: bamtofastq
+- `bedtools`            : The path of bedtools. Default: bedtools
+- `samtools`            : The path of samtools. Default: samtools
+- `picard`              : The path of picard. Default: picard
+- `mem`                 : The memory to be used by picard. Default: 8G
+- `gz`                  : Whether gzip the output files. Default: True
+- `params`:             : Other params for `tool`. Default: ''
+- `tmpdir`              : The tmpdir. Default: `__import__('tempfile').gettempdir()`
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+- [biobambam](https://github.com/gt1/biobambam2)
+- [samtools](https://github.com/samtools/samtools)
+- [bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+
+
+###  pBam2FastqSE
+#### description
+- Convert sam/bam files to single-end fastq files.
+
+#### input
+- `infile:file`: The sam/bam file. 
+- - Sam files only available for biobambam, picard
+
+#### output
+- `fqfile:file`: The fastq file
+
+#### args
+- `tool`                : The tool to use. Default: biobambam (bedtools, samtools, picard)
+- `biobambam_bamtofastq`: The path of bamtofastq of biobambam. Default: bamtofastq
+- `bedtools`            : The path of bedtools. Default: bedtools
+- `samtools`            : The path of samtools. Default: samtools
+- `picard`              : The path of picard. Default: picard
+- `mem`                 : The memory to be used by picard. Default: 8G
+- `gz`                  : Whether gzip the output files. Default: True
+- `params`:             : Other params for `tool`. Default: ''
+- `tmpdir`              : The tmpdir. Default: `__import__('tempfile').gettempdir()`
+
+#### requires
+- [picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+- [biobambam](https://github.com/gt1/biobambam2)
+- [samtools](https://github.com/samtools/samtools)
+- [bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+
+
+###  pBam2Counts 
+
 ## GATK
 
 ###  pRealignerTargetCreator
@@ -1811,23 +2719,29 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
 
 #### input
-- `infile:file`:  The aligned bam file
+- `bamfile:file`:  The aligned bam file
+- `reffile`: The reference file
 
 #### brings
-- `infile`: `{{infile | fn}}.bai` The index file of input bam file
+- `bamfile`: `{{bamfile | bn}}.bai` The index file of input bam file
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: A list of target intervals to pass to the IndelRealigner.
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T RealignerTargetCreator"
-- `params`:  Other parameters for RealignerTargetCreator, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
+- `gatk`:     The gatk executable, default: "gatk"
+- `picard`:   The picard executable, default: "picard"
+- `params`:   Other parameters for RealignerTargetCreator, default: ""
+- `samtools`: The samtools executable, default: "samtools"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pIndelRealigner 
@@ -1842,22 +2756,28 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 #### input
 - `bamfile:file`: The aligned bam file
 - `intfile:file`: Intervals file output from RealignerTargetCreator
+- `reffile:file`: The reference file
 
 #### brings
-- `infile`: `{{infile | fn}}.bai` The index file of input bam file
+- `bamfile`: `{{bamfile | bn}}.bai` The index file of input bam file
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: A realigned version of input BAM file.
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T IndelRealigner"
+- `gatk`:     The gatk executable, default: "gatk"
+- `picard`:   The picard executable, default: "picard"
 - `params`:  Other parameters for IndelRealigner, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
+- `samtools`: The samtools executable, default: samtools
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pBaseRecalibrator  
@@ -1866,6 +2786,12 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### input
 - `bamfile:file`: A BAM file containing data that needs to be recalibrated.
+- `reffile:file`: The reference file
+
+#### brings
+- `bamfile`: `{{bamfile | bn}}.bai` The index file of input bam file
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: A GATKReport file with many tables:
@@ -1876,15 +2802,18 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - - The recalibration table for all the optional covariates
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T BaseRecalibrator"
+- `gatk`:     The gatk executable, default: "gatk"
 - `params`:  Other parameters for BaseRecalibrator, default: ""
-- `reffile`: The reference file, required
 - `knownSites`: The known polymorphic sites to mask out, required
-- `bin-samtools`: The samtools executable, default: samtools
+- `samtools`: The samtools executable, default: samtools
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pPrintReads   
@@ -1893,21 +2822,30 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
 
 #### input
-- `bamfile:file`: A BAM file.
+- `bamfile:file`:    A BAM file.
 - `recaltable:file`: The GATKReport file
+- `reffile:file`:    The reference file
+
+#### brings
+- `bamfile`: `{{bamfile | bn}}.bai` The index file of input bam file
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: A single processed bam file.
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T PrintReads"
+- `gatk`:     The gatk executable, default: "gatk"
 - `params`:  Other parameters for PrintReads, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
+- `samtools`: The samtools executable, default: samtools
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
 - [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pHaplotypeCaller 
@@ -1917,22 +2855,29 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### input
 - `bamfile:file`: A BAM file.
+- `reffile:file`: The reference file
 
 #### brings
-- `bamfile`: `{{bamfile.fn}}.ba*i` The bam index file
+- `bamfile`: `{{bamfile | bn}}.bai` The index file of input bam file
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: Either a VCF or gVCF file with raw, unfiltered SNP and indel calls.
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T HaplotypeCaller"
-- `params`:  Other parameters for HaplotypeCaller, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
+- `gatk`    : The gatk executable, default: "gatk"
+- `params`  : Other parameters for HaplotypeCaller, default: ""
+- `samtools`: The samtools executable, default: samtools
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
+- `nthread`: Corresponding to -nct option
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
 - [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pSelectVariants
@@ -1947,19 +2892,27 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### input
 - `vcffile:file`: A variant call set from which to select a subset.
+- `reffile:file`: The reference file
+
+#### brings
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: A new VCF file containing the selected subset of variants.
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T SelectVariants"
+- `gatk`:     The gatk executable, default: "gatk"
 - `params`:  Other parameters for SelectVariants, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: The samtools executable, default: samtools
+- `samtools`: The samtools executable, default: samtools
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
 - [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pVariantFiltration
@@ -1968,19 +2921,28 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - The most common way of specifying filtering criteria is by using JEXL queries. See the article on JEXL expressions in the documentation Guide for detailed information and examples.
 
 #### input
-- `vcffile:file`: A variant set to filter.
+- `vcffile:file`: A variant call set from which to select a subset.
+- `reffile:file`: The reference file
+
+#### brings
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: A filtered VCF.
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T VariantFiltration"
+- `gatk`:     The gatk executable, default: "gatk -T VariantFiltration"
 - `params`:  Other parameters for VariantFiltration, default: ""
-- `reffile`: The reference file
+- `samtools`: The samtools executable, default: samtools
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
 - [samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pMuTect2
@@ -1989,25 +2951,31 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - NOTE: only Tumor/Normal variant calling implemented in bioprocs
 
 #### input
-- `tumor:file`:  the tumor bam file
-- `normal:file`: the normal bam file
+- `tumor:file`:   the tumor bam file
+- `normal:file`:  the normal bam file
+- `reffile:file`: the reference file
 
 #### brings
-- `tumor`:  `{{tumor | fn}}.bai` the index file of tumor
-- `normal`: `{{normal | fn}}.bai` the index file of normal
+- `tumor`:  `{{tumor | bn}}.bai` the index file of tumor
+- `normal`: `{{normal | bn}}.bai` the index file of normal
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: The vcf file containing somatic mutations
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T MuTect2"
-- `params`:  Other parameters for MuTect2, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: the samtools executable, default: samtools
+- `gatk`:     The gatk executable, default: "gatk"
+- `samtools`: The samtools executable, default: samtools
+- `params`:   Other parameters for MuTect2, default: ""
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
 - [samtools](http://www.htslib.org/) if index files of input files are not found
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 
 ###  pMuTect2Interval
@@ -2015,26 +2983,34 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - Use interval file model of MuTect2
 
 #### input
-- `tumor:file`:  the tumor bam file
-- `normal:file`: the normal bam file
+- `tumor:file`:   the tumor bam file
+- `normal:file`:  the normal bam file
+- `reffile:file`: the reference file
 
 #### brings
-- `tumor`:  `{{tumor | fn}}.bai` the index file of tumor
-- `normal`: `{{normal | fn}}.bai` the index file of normal
+- `tumor`:  `{{tumor | bn}}.bai` the index file of tumor
+- `normal`: `{{normal | bn}}.bai` the index file of normal
+- `reffile#fai`: `{{reffile | bn}}.fai`
+- `reffile#dict`: `{{reffile | bn}}.dict`
 
 #### output
 - `outfile:file`: The vcf file containing somatic mutations
 
 #### args
-- `bin`:     The gatk executable, default: "gatk -T MuTect2"
-- `params`:  Other parameters for MuTect2, default: ""
-- `reffile`: The reference file
-- `bin-samtools`: the samtools executable, default: samtools
+- `gatk`:     The gatk executable, default: "gatk"
+- `samtools`: The samtools executable, default: samtools
+- `params`:   Other parameters for MuTect2, default: ""
+- `picard`:   The picard executable, default: "picard"
+- `tmpdir`:  The tmpdir to use. Default: /tmp
+- `javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 
 #### requires
 - [GATK](https://software.broadinstitute.org/gatk)
-- [samtools](http://www.htslib.org/) 
+- [samtools](http://www.htslib.org/) if index files of input files are not found
+- [picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
+
+## UTILS
 
 ## WXS
 
@@ -2066,6 +3042,20 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outdir:dir`:    The output directory
 
 
+###  pFiles2List
+#### description
+- Put files to a list file
+
+#### input
+- `infiles:files`: The input files
+
+#### args
+- `delimit`: The delimit. Default: r"\n"
+
+#### output
+- `outfile:file`:  The output list file
+
+
 ###  pPat2Dir
 #### description
 - A helper process to convert a list of files by a pattern (wildcards) into a directory, so that some processes can take it as input
@@ -2077,7 +3067,7 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `outdir:dir`:    The output directory
 
 
-###  pMergeFile
+###  pMergeFiles
 #### description
 - Merge files in the input directory
 
@@ -2103,6 +3093,213 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 - `header`: Whether list has header. Default: False (will use file name as header)
 - `na`:     The missing values. Default: 0
 - - If it's a string, remember the quote (i.e.: '"missing"')
+
+
+###  pFile2Proc
+#### description
+- Convert a file to a proc so it can be used as dependent
+
+#### input
+- `infile:file`: The input file
+
+#### output
+- `outfile:file`: The output file
+
+
+## CNVKIT
+
+###  pCNVkitAccess
+#### description
+- Calculate the sequence-accessible coordinates in chromosomes from the given reference genome, output as a BED file.
+
+#### input
+- `fafile:file`: The fasta file
+
+#### output
+- `outfile:file`: The output file
+
+#### args
+- `params`: Other parameters for `cnvkit.py access`
+- `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitTarget
+#### description
+- Generate targets file for CNVkit using access file and annotate file (`cnvkit.py target`)
+
+#### input
+- `acfile:file`: The access file
+- `anfile:file`: The annotate file
+
+#### output
+- `outfile:file`: The targets file
+
+#### args
+- `cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `params`: Other parameters for `cnvkit.py target`
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitCov
+#### description
+- Calculate coverage in the given regions from BAM read depths.
+
+#### input
+- `infile:file`: The bam file
+
+#### output
+- `outfile:file`: The output cnn file
+
+#### args
+- `tgfile`:  The target file
+- `cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `nthread`: The number of threads to use. Default: 1
+- `params`:  Other parameters for `cnvkit.py coverage`
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitRef
+#### description
+- Compile a copy-number reference from the given files or directory (containing normal samples). If given a reference genome (-f option), also calculate the GC content and repeat-masked proportion of each region.
+
+#### input
+- `indir:file`:  The input directory containing the cnn files
+
+#### output
+- `outfile:file`: The output reference cnn file
+
+#### args
+- `cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `params`:  Other parameters for `cnvkit.py reference`, default: " --no-edge "
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitFix
+#### description
+- Combine the uncorrected target and antitarget coverage tables (.cnn) and correct for biases in regional coverage and GC content, according to the given reference. Output a table of copy number ratios (.cnr)
+
+#### input
+- `infile:file`:  The cnn file to be fixed
+- `rcfile:file`:  The reference cnn file
+
+#### output
+- `outfile:file`: The cnr file
+
+#### args
+- `cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `params`:  Other parameters for `cnvkit.py fix`, default: " --no-edge "
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitSeg
+#### description
+- Infer discrete copy number segments from the given coverage table
+
+#### input
+- `infile:file`:  The cnr file 
+
+#### output
+- `outfile:file`: The cns file
+
+#### args
+- `cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `nthread`: The number of threads to use. Default: 1
+- `params`:  Other parameters for `cnvkit.py segment`, default: ""
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitCall
+#### description
+- Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number 
+
+#### input
+- `infile:file`:  The cns file 
+
+#### output
+- `outfile:file`: The callcns file
+
+#### args
+- `cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+- `params`:  Other parameters for `cnvkit.py segment`, default: ""
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitPlot
+#### description
+- Plot CNVkit results
+
+#### input
+- `cnrdir:file`:  The directory containing copy number ratio files
+- `cnsdir:file`:  The directory containing copy number segment files
+
+#### output
+- `outdir:dir`:   The output directory
+
+#### args
+- `cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
+- `region`:       The region for zoom-in plots. Default: '' (don't plot zoom-in view)
+- `gene`:         The genes to be highlighted. Default: ''
+- `scatter`:      Whether to generate the scatter plot. Default: True
+- `diagram`:      Whether to generate the diagram plot. Default: True
+- `heatmap`:      Whether to generate the heatmap plot. Default: True
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkitRpt
+#### description
+- Report CNVkit results
+
+#### input
+- `cnrfile:file`:  The file containing copy number ratio
+- `cnsfile:file`:  The file containing copy number segment
+
+#### output
+- `outdir:dir`:   The output directory
+
+#### args
+- `cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
+- `breaks`:       Whether to report breakpoints. Default: True
+- `gainloss`:     Whether to report gainloss. Default: True
+- `metrics`:      Whether to report metrics. Default: True
+- `segmetrics`:   Whether to report segmetrics. Default: True
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
+
+
+###  pCNVkit2Vcf
+#### description
+- Output vcf file for cnvkit results
+
+#### input
+- `cnsfile:file`: The cns file
+
+#### output
+- `outfile:file`: The vcf file
+
+#### args
+- `cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
+- `params`:   Other params for `cnvkit.py export`
+
+#### requires
+- [CNVkit](http://cnvkit.readthedocs.io/)
 
 
 ## SEQ
@@ -2141,6 +3338,25 @@ A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
 
 #### input
 - `gene`: the gene
+
+#### output
+- `outfile:file`: the bed file containing the promoter region
+
+#### args
+- `up`: the upstream to the tss, default: 2000
+- `down`: the downstream to the tss, default: 2000
+- `genome`: the genome, default: hg19
+
+#### require
+- [python-mygene](http://mygene.info/)
+
+
+###  pGetPromotersBed
+#### description
+- Get the promoter regions in bed format of a gene list give in genefile
+
+#### input
+- `genefile:file`: the gene list file
 
 #### output
 - `outfile:file`: the bed file containing the promoter region

@@ -62,7 +62,7 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 library(limma)
 mdsplot = file.path ("{{out.outdir}}", "mdsplot.png")
 do.call(png, c(list(filename=mdsplot), {{args.devpars | Rlist}}))
-plotMDS(normedCounts)
+plotMDS(normedCounts, col=c(rep("red", n1), rep("blue", n2)))
 dev.off()
 {% endif %}
 
@@ -70,9 +70,10 @@ dev.off()
 {% if args.volplot %}
 {{ plotVolplot }}
 volplot = file.path ("{{out.outdir}}", "volcano.png")
-log2fc  = degene$logFC
-fdr     = degene$P.Value
-plotVolplot(data.frame(logFC=log2fc, FDR=fdr), volplot, ggs = {{args.heatmapggs | Rlist}}, devpars = {{args.devpars | Rlist}})
+log2fc  = alllogFC
+fdr     = allPval
+fdrcut  = rep(pval, length(allPval))
+plotVolplot(data.frame(logFC=log2fc, FDR=fdr, FDRCut=fdrcut), volplot, ggs = {{args.heatmapggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 {% endif %}
 
 # heatmap
@@ -87,7 +88,7 @@ if (nrow(degene) < 2) {
 	if (hmapn <= 1) hmapn = as.integer(hmapn * ngene)
 	
 	ngene = min(hmapn, nrow(degene))
-	mat   = ematrix[1:ngene, ]
+	mat   = ematrix[rownames(degene[1:ngene,,drop=F]), ]
 	plotHeatmap(mat, hmap, ggs = {{args.heatmapggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 }
 {% endif %}

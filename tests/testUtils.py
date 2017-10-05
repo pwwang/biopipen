@@ -1,5 +1,6 @@
 import unittest, addPath
 
+import random
 from os import path
 from subprocess import Popen
 from tempfile import gettempdir
@@ -100,7 +101,7 @@ class TestUtils (unittest.TestCase):
 		rc = Popen(['Rscript', scriptfile]).wait()
 		self.assertEqual(rc, 0)
 
-	def testTxtGroupPython(self):
+	def testTxtSampleinfoPython(self):
 		scriptfile = path.join(tmpdir, 'txtGroup.py')
 		groupfileE = path.join(tmpdir, 'groupE.txt')
 		groupfile2 = path.join(tmpdir, 'group2.txt')
@@ -168,7 +169,7 @@ except ValueError:
 		rc = Popen(['python', scriptfile]).wait()
 		self.assertEqual(rc, 0)
 
-	def testTxtGroupR(self):
+	def testTxtSampleinfoR(self):
 		scriptfile = path.join(tmpdir, 'txtGroup.r')
 		groupfileE = path.join(tmpdir, 'groupE.txt')
 		groupfile2 = path.join(tmpdir, 'group2.txt')
@@ -216,6 +217,62 @@ except ValueError:
 
 		rc = Popen(['Rscript', scriptfile]).wait()
 		self.assertEqual(rc, 0)
+
+	def testTxtFilter(self):
+		infile     = path.join(tmpdir, 'txtfilter-in.txt')
+		outfile1   = path.join(tmpdir, 'txtfilter-out1.txt')
+		outfile2   = path.join(tmpdir, 'txtfilter-out2.txt')
+		outfile3   = path.join(tmpdir, 'txtfilter-out3.txt')
+		outfile4   = path.join(tmpdir, 'txtfilter-out4.txt')
+		scriptfile = path.join(tmpdir, 'txtfilter.py')
+		colnames   = ['a', 'b', 'c', 'd', 'e']
+		rownames   = ['__r1', 'r2', 'r3']
+		with open(infile, 'w') as f:
+			f.write('\t'.join(colnames) + '\n')
+			for rname in rownames:
+				f.write(rname + '\t' + '\t'.join(random.sample(map(str, list(range(100))), 5)) + '\n')
+		with open(scriptfile, 'w') as f:
+			f.write(txt.filter.python)
+			f.write('txtFilter("%s", "%s")\n' % (infile, outfile1))
+			f.write('txtFilter("%s", "%s", [0,1,4], lambda x: True)\n' % (infile, outfile2))
+			f.write('txtFilter("%s", "%s", [], lambda x: not x[0].startswith("__"))\n' % (infile, outfile3))
+			f.write('txtFilter("%s", "%s", [], lambda x: True, False, 1)\n' % (infile, outfile4))
+
+		rc = Popen(['python', scriptfile]).wait()
+		self.assertEqual(rc, 0)
+
+		def rcnames(outfile):
+			with open(outfile) as f:
+				rownames = []
+				colnames = f.readline().strip().split('\t')
+				for line in f:
+					rownames.append(line.split('\t')[0])
+			return colnames, rownames
+		
+		self.assertEqual(rcnames(outfile1), (colnames, rownames))
+		self.assertEqual(rcnames(outfile2), (['a', 'd'], rownames))
+		self.assertEqual(rcnames(outfile3), (colnames, ['r2', 'r3']))
+		self.assertEqual(rcnames(outfile4)[1], ['r2', 'r3'])
+
+	def testTxtTransformer(self):
+		infile     = path.join(tmpdir, 'txttransformer-in.txt')
+		outfile1   = path.join(tmpdir, 'txttransformer-out1.txt')
+		scriptfile = path.join(tmpdir, 'txttransformer.py')
+		colnames   = ['a', 'b', 'c', 'd', 'e']
+		rownames   = ['__r1', 'r2', 'r3']
+		with open(infile, 'w') as f:
+			f.write('\t'.join(colnames) + '\n')
+			for rname in rownames:
+				f.write(rname + '\t' + '\t'.join(['1'] * 5) + '\n')
+		with open(scriptfile, 'w') as f:
+			f.write(txt.transform.python)
+			f.write('txtTransform("%s", "%s", lambda parts: [p if i==0 else "a"+str(p) for i,p in enumerate(parts)], True)\n' % (infile, outfile1))
+
+		rc = Popen(['python', scriptfile]).wait()
+		self.assertEqual(rc, 0)
+		with open(outfile1) as f:
+			self.assertIn('a1', f.read())
+
 
 if __name__ == '__main__':
 	unittest.main(failfast=True, verbosity = 2)

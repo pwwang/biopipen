@@ -433,22 +433,26 @@ if (!exists('plotVolplot')) {
 		fdr    = -log10(fdr)
 
 		# cutoffs
-		logfccut    = if ("logFCCut" %in% cnames) m$logFCCut[1] else if (ncol(m) > 2) m[1,3] else 2
-		fdrcut      = if ("FDRCut" %in% cnames) m$FDRCut[1] else if (ncol(m) > 3) m[1,4] else 0.05
+		logfccut    = if ("logFCCut" %in% cnames) m$logFCCut[1] else 2
+		fdrcut      = if ("FDRCut" %in% cnames) m$FDRCut[1] else 0.05
 		fdrcutlabel = fdrcut
 		fdrcut      = -log10(fdrcut)
 
 		threshold = as.factor(abs(logfc) > logfccut & fdr > fdrcut)
+
+		xm = min(max(abs(logfc)), 10)
+		ym = min(max(fdr), 15)
+		if (xm <= logfccut) logfccut = 1
 
 		df  = data.frame(logfc, fdr)
 		plotout = ggplot(data=df, aes(x=logfc, y=fdr)) + 
 		  geom_point(alpha=0.4, size=1.75, aes(color=threshold)) +
 		  geom_hline(yintercept=fdrcut, linetype="dashed", color="blue3") + 
 		  geom_vline(xintercept=c(-logfccut, logfccut), linetype="dashed", color = "red3") +
-		  xlim(c(-10, 10)) + ylim(c(0, 15)) +
-		  geom_text(aes(10, fdrcut, label = paste("p", "=", fdrcutlabel), vjust = -1, hjust = 1), color="blue3") + 
-		  geom_text(aes(-logfccut, 15, label = paste(-logfccut, "fold"),  vjust = 1, hjust = -0.1), color="red3") +
-		  geom_text(aes(+logfccut, 15, label = paste(paste('+', logfccut, sep=""), "fold"),  vjust = 1, hjust = -0.1), color="red3") 
+		  xlim(c(-xm, xm)) + ylim(c(0, ym)) +
+		  geom_text(aes(xm, fdrcut, label = paste("p", "=", fdrcutlabel), vjust = -1, hjust = 1), color="blue3") + 
+		  geom_text(aes(-logfccut, ym, label = paste(-logfccut, "fold"),  vjust = 1, hjust = -0.1), color="red3") +
+		  geom_text(aes(+logfccut, ym, label = paste(paste('+', logfccut, sep=""), "fold"),  vjust = 1, hjust = -0.1), color="red3") 
 
 		ggplus = list(
 			theme(legend.position = "none"),
@@ -721,39 +725,89 @@ if (!exists('plotUpset')) {
 
 txt = Box({
 	'filter': {},
-	'sampleinfo':  {}
+	'sampleinfo':  {},
+	'transform': {},
 })
 txt.filter.python = """
 if 'txtFilter' not in vars() or not callable (txtFilter):
-
-	def txtFilter(infile, outfile, cols, rfilter, header = True, skip = 0, delimit = "\\t"):
+	# row filter comes first
+	def txtFilter(infile, outfile, cols = [], rfilter = None, header = True, skip = 0, delimit = "\\t"):
 		if not isinstance(cols, list):
 			cols = map(lambda x: x.strip(), cols.split(','))
 			cols = [int(c) if c.isdigit() else c for c in cols]
 		
-		if not cols and not rfilter and not skip:
+		colnames = []
+		colindex = cols
+		if header:
+			with open(infile) as f:
+				colnames = f.readline().strip().split(delimit)
+				nextline = f.readline().strip("\\n").split(delimit)
+				if len(nextline) == len(colnames) + 1:
+					colnames.insert(0, '')
+			for i, col in enumerate(cols):
+				if isinstance(col, int): 
+					colindex[i] = col
+					continue
+				if not col in colnames:
+					raise ValueError('Unknown column names %s.' % col)
+				colindex[i] = colnames.index(col)
+		else:
+			if not all([isinstance(c, int) for c in cols]):
+				raise ValueError('Columns have to be indices if input file has no header: %s.' % cols)
+	
+		if not colindex and not rfilter and not skip:
 			import os
-			os.rename(infile, outfile)
-		
+			if os.path.exists(outfile):
+				os.remove(outfile)
+			os.symlink(infile, outfile)
+			return
+
 		import sys
 		import csv
 		csv.field_size_limit(sys.maxsize)
+
 		with open (infile, 'r') as f, open(outfile, 'w') as fout:
 			fcsv = csv.reader(f, delimiter = delimit)
-			for x in range(skip):
-				next(fcsv)
-				
-			i = 0
+			try:
+				for x in range(skip):
+					next(fcsv)
+				if header: 
+					fout.write("\\t".join(colnames if not colindex else [colnames[i] for i in colindex]) + "\\n")
+					next(fcsv)
+			except StopIteration:
+				pass
+			
 			for parts in fcsv:
-				if i == 0:
-					i += 1
-					if header:
-						cols = [c if isinstance(c, int) else parts.index(c) for c in cols]
-				else:
-					if rfilter and not rfilter(parts): continue
-				fout.write("\\t".join([h for i,h in enumerate(parts) if not cols or i in cols]) + "\\n")
-		
+				# do row filter
+				if callable(rfilter) and not rfilter(parts): continue
+				outs = parts if not colindex else [parts[i] for i in colindex]
+				fout.write("\\t".join(outs) + "\\n")
 """
+
+txt.transform.python = """
+if 'txtTransform' not in vars() or not callable (txtTransform):
+	def txtTransform(infile, outfile, transformer = None, header = True, delimit = "\\t"):
+
+		import sys
+		import csv
+		csv.field_size_limit(sys.maxsize)
+
+		with open (infile, 'r') as f, open(outfile, 'w') as fout:
+			fcsv = csv.reader(f, delimiter = delimit)
+			try:
+				if header: 
+					cnames = next(fcsv)
+					fout.write("\\t".join(cnames) + "\\n")
+			except StopIteration:
+				pass
+			
+			for parts in fcsv:
+				# do row filter
+				outs = parts if not callable(transformer) else transformer(parts)
+				fout.write("\\t".join(outs) + "\\n")
+"""
+
+
 
 # read sample info file
 #
@@ -765,9 +819,9 @@ if 'txtFilter' not in vars() or not callable (txtFilter):
 # Remember NORMAL/CONTROL samples come last if you wanna do comparison between groups
 txt.sampleinfo.python = """
 if 'txtSampleinfo' not in vars() or not callable (txtSampleinfo):
-	
+	from collections import OrderedDict
 	def txtSampleinfo(sfile):
-		info = {}
+		info = OrderedDict()
 		cols = {}
 		firstLine = True
 		headers = []

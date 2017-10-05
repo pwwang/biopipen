@@ -32,7 +32,7 @@ exprsout = exprs@assayData$exprs
 
 # annotate
 {% if args.annofile %}
-annos    = read.table("{{args.annofile}}", header=T, sep=",",colClasses = c("NULL", NA, "NULL", NA, "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL"), row.names = 2, check.names = F )
+annos    = read.table("{{args.annofile}}", header=F, sep="\t", row.names = 1, check.names = F )
 rnames   = intersect(rownames(exprsout), rownames(annos))
 exprsout = exprsout[rnames,,drop=F]
 rownames(exprsout) = make.unique(as.vector(annos[rnames,,drop=T]))
