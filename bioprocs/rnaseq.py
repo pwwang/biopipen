@@ -199,4 +199,83 @@ pDeg.tplenvs.txtSampleinfo = txt.sampleinfo.r
 pDeg.lang                  = "Rscript"
 pDeg.script                = "file:scripts/rnaseq/pDeg.r"
 
+################################
+#         aggregations         #
+################################
+from pyppl import Aggr
+from bioprocs.common import pPat2Dir, pFile2Proc
+from bioprocs.resource import pTxt
+from bioprocs.gsea import pExpmat2Gct, pSampleinfo2Cls, pGSEA, pEnrichr
+"""
+@name:
+	aExpPat2Deg
+@description:
+	From expfiles to degs with sample info file.
+@input:
+	`pattern`: The pattern to match the celfiles
+	`sfile`  : The sample file
+"""
+aExpPat2Deg = Aggr(
+	pPat2Dir,
+	pFile2Proc,
+	pExpdir2Matrix,
+	pDeg,
+	depends = False
+)
+# Dependences
+aExpPat2Deg.starts                 = [aExpPat2Deg.pPat2Dir, aExpPat2Deg.pFile2Proc]
+aExpPat2Deg.ends                   = [aExpPat2Deg.pDeg]
+aExpPat2Deg.pExpdir2Matrix.depends = aExpPat2Deg.pPat2Dir
+aExpPat2Deg.pDeg.depends           = aExpPat2Deg.pExpdir2Matrix, aExpPat2Deg.pFile2Proc
+# Input
+aExpPat2Deg.pDeg.input = lambda ch1, ch2: ch1.colAt(0).cbind(ch2)
+# Args
+aExpPat2Deg.pExpdir2Matrix.args.boxplot  = True
+aExpPat2Deg.pExpdir2Matrix.args.heatmap  = True
+aExpPat2Deg.pExpdir2Matrix.args.histplot = True
+aExpPat2Deg.pDeg.args.maplot             = True
+aExpPat2Deg.pDeg.args.heatmap            = True
 
+
+"""
+@name:
+	aExpPat2DegGSEA
+@description:
+	From expfiles to degs with sample info file and do GSEA.
+@input:
+	`pattern`: The pattern to match the celfiles
+	`sfile`  : The sample file
+	`gmtkey` : The gmtkey to gmt file to do the GSEA. See `bioprocs.resource.pTxt`. Default: 'KEGG_2016_gmt'
+"""
+aExpPat2DegGSEA = Aggr(
+	pPat2Dir,
+	pFile2Proc,
+	pTxt,
+	pExpdir2Matrix,
+	pExpmat2Gct,
+	pSampleinfo2Cls,
+	pGSEA,
+	pDeg,
+	pEnrichr,
+	depends = False
+)
+# Default input:
+aExpPat2DegGSEA.pTxt.input = ['KEGG_2016_gmt']
+# Dependences
+aExpPat2DegGSEA.starts                  = aExpPat2DegGSEA.pPat2Dir, aExpPat2DegGSEA.pFile2Proc,aExpPat2DegGSEA.pTxt
+aExpPat2DegGSEA.ends                    = aExpPat2DegGSEA.pGSEA, aExpPat2DegGSEA.pDeg,aExpPat2DegGSEA.pEnrichr
+aExpPat2DegGSEA.pExpdir2Matrix.depends  = aExpPat2DegGSEA.pPat2Dir
+aExpPat2DegGSEA.pExpmat2Gct.depends     = aExpPat2DegGSEA.pExpdir2Matrix
+aExpPat2DegGSEA.pSampleinfo2Cls.depends = aExpPat2DegGSEA.pFile2Proc
+aExpPat2DegGSEA.pGSEA.depends           = aExpPat2DegGSEA.pExpmat2Gct,    aExpPat2DegGSEA.pSampleinfo2Cls, aExpPat2DegGSEA.pTxt
+aExpPat2DegGSEA.pDeg.depends            = aExpPat2DegGSEA.pExpdir2Matrix, aExpPat2DegGSEA.pFile2Proc
+aExpPat2DegGSEA.pEnrichr.depends        = aExpPat2DegGSEA.pDeg
+# Input
+aExpPat2DegGSEA.pDeg.input = lambda ch1, ch2: ch1.colAt(0).cbind(ch2)
+# Args
+aExpPat2DegGSEA.pExpdir2Matrix.args.boxplot  = True
+aExpPat2DegGSEA.pExpdir2Matrix.args.heatmap  = True
+aExpPat2DegGSEA.pExpdir2Matrix.args.histplot = True
+aExpPat2DegGSEA.pDeg.args.maplot             = True
+aExpPat2DegGSEA.pDeg.args.heatmap            = True
+aExpPat2DegGSEA.pTxt.args.header             = False

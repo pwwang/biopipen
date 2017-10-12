@@ -1,13 +1,20 @@
 import unittest, addPath
 
 import random
-from os import path
-from subprocess import Popen
+from os import path, devnull, remove, makedirs
+from subprocess import Popen, check_output
 from tempfile import gettempdir
-from bioprocs.utils import plot, txt
+from bioprocs.utils import plot, txt, helpers, mem2, runcmd, polling
 
 tmpdir = gettempdir()
 class TestUtils (unittest.TestCase):
+
+	def setUp(self):
+		self.devnull = open(devnull, 'w')
+
+	def tearDown(self):
+		if self.devnull:
+			self.devnull.close()
 
 	def testPlotHeatmapR(self):
 		scriptfile = path.join(tmpdir, 'plotHeatmap.r')
@@ -50,7 +57,7 @@ class TestUtils (unittest.TestCase):
 			plotHeatmap(m4, "%s", ggs = list(theme(legend.position = "none")))
 			plotHeatmap(m5, "%s", dendro = FALSE)
 			""" % (outfile1, outfile2, outfile3, outfile4, outfile5, outfile6, outfile7, outfile8, outfile9, outfile10, outfile11))
-		rc = Popen(['Rscript', scriptfile]).wait()
+		rc = Popen(['Rscript', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 	def testPlotBoxplot(self):
@@ -66,7 +73,7 @@ class TestUtils (unittest.TestCase):
 			# ylab
 			plotBoxplot(m2, "%s", ggs=list(ylab("Values"), theme(axis.title.y = element_text(angle = 90))))
 			""" % (outfile1, outfile2))
-		rc = Popen(['Rscript', scriptfile]).wait()
+		rc = Popen(['Rscript', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 	def testPlotHist(self):
@@ -82,7 +89,7 @@ class TestUtils (unittest.TestCase):
 			# ylab
 			plotHist(m2, "%s", ggs=list(ylab("Values"), theme(axis.title.y = element_text(angle = 90))))
 			""" % (outfile1, outfile2))
-		rc = Popen(['Rscript', scriptfile]).wait()
+		rc = Popen(['Rscript', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 	def testPlotVolPlot(self):
@@ -98,7 +105,7 @@ class TestUtils (unittest.TestCase):
 			m = data.frame(logFC, FDR, logFCCut, FDRCut)
 			plotVolplot(m, "%s")
 			""" % (outfile1))
-		rc = Popen(['Rscript', scriptfile]).wait()
+		rc = Popen(['Rscript', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 	def testTxtSampleinfoPython(self):
@@ -126,7 +133,7 @@ class TestUtils (unittest.TestCase):
 			f.write("sample5\tp3\tgroup2\tbatch2\n")
 			f.write("sample6\tp3\tgroup2\tbatch2\n")
 		with open(scriptfile, 'w') as f:
-			f.write(txt.sampleinfo.python)
+			f.write(txt.sampleinfo.py)
 			f.write("""
 r2info, r2cols = txtSampleinfo("%s")
 assert r2info == {
@@ -166,7 +173,7 @@ except ValueError:
 
 """ % (groupfile2, groupfile3, groupfileE))
 
-		rc = Popen(['python', scriptfile]).wait()
+		rc = Popen(['python', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 	def testTxtSampleinfoR(self):
@@ -215,7 +222,7 @@ except ValueError:
 				})
 			""" % (groupfile2, groupfile3, groupfileE))
 
-		rc = Popen(['Rscript', scriptfile]).wait()
+		rc = Popen(['Rscript', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 	def testTxtFilter(self):
@@ -232,13 +239,13 @@ except ValueError:
 			for rname in rownames:
 				f.write(rname + '\t' + '\t'.join(random.sample(map(str, list(range(100))), 5)) + '\n')
 		with open(scriptfile, 'w') as f:
-			f.write(txt.filter.python)
+			f.write(txt.filter.py)
 			f.write('txtFilter("%s", "%s")\n' % (infile, outfile1))
 			f.write('txtFilter("%s", "%s", [0,1,4], lambda x: True)\n' % (infile, outfile2))
 			f.write('txtFilter("%s", "%s", [], lambda x: not x[0].startswith("__"))\n' % (infile, outfile3))
 			f.write('txtFilter("%s", "%s", [], lambda x: True, False, 1)\n' % (infile, outfile4))
 
-		rc = Popen(['python', scriptfile]).wait()
+		rc = Popen(['python', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 
 		def rcnames(outfile):
@@ -265,13 +272,198 @@ except ValueError:
 			for rname in rownames:
 				f.write(rname + '\t' + '\t'.join(['1'] * 5) + '\n')
 		with open(scriptfile, 'w') as f:
-			f.write(txt.transform.python)
+			f.write(txt.transform.py)
 			f.write('txtTransform("%s", "%s", lambda parts: [p if i==0 else "a"+str(p) for i,p in enumerate(parts)], True)\n' % (infile, outfile1))
 
-		rc = Popen(['python', scriptfile]).wait()
+		rc = Popen(['python', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
 		self.assertEqual(rc, 0)
 		with open(outfile1) as f:
 			self.assertIn('a1', f.read())
+
+	def testparams2CmdArgs(self):
+		scriptfile = path.join(tmpdir, 'testparams2CmdArgs.py')
+		with open(scriptfile, 'w') as f:
+			f.write('from collections import OrderedDict\n')
+			f.write(helpers.params2CmdArgs.py)
+			f.write('params = OrderedDict([\n')
+			f.write('	("a", True),\n')
+			f.write('	("b", "c"),\n')
+			f.write('	("-Xms128M -Xmx2G", True),\n')
+			f.write('	("cde", 12)\n')
+			f.write('])\n')
+			f.write('print params2CmdArgs(params)\n')
+			f.write('print params2CmdArgs(params, noq = ["cde"])\n')
+			f.write('print params2CmdArgs(params, dash = "--", equal = "=", noq = ["cde"])\n')
+			f.write('print params2CmdArgs(params, dash = "", equal = "=", noq = ["cde"])\n')
+		stdout = check_output(['python', scriptfile], stderr=self.devnull)
+		self.assertIn('-a -b "c" ---Xms128M -Xmx2G --cde="12"', stdout.splitlines())
+		self.assertIn('-a -b "c" ---Xms128M -Xmx2G --cde=12', stdout.splitlines())
+		self.assertIn('a b="c" -Xms128M -Xmx2G cde=12', stdout.splitlines())
+
+	def testMem2(self):
+		scriptfile = path.join(tmpdir, 'testmem2.py')
+		with open(scriptfile, 'w') as f:
+			f.write(mem2.py)
+			f.write('print mem2(38)\n')
+			f.write('print mem2("20g", "M")\n')
+			f.write('print mem2("2048000")\n')
+			f.write('print mem2("2048000", "java")\n')
+		stdout = check_output(['python', scriptfile], stderr=self.devnull)
+		self.assertIn('38K', stdout.splitlines())
+		self.assertIn('20480M', stdout.splitlines())
+		self.assertIn('2000M', stdout.splitlines())
+		self.assertIn('-Xms250M -Xmx2000M', stdout.splitlines())
+
+	def testMem2R(self):
+		scriptfile = path.join(tmpdir, 'testmem2.r')
+		with open(scriptfile, 'w') as f:
+			f.write(mem2.r)
+			f.write('print(mem2(38))\n')
+			f.write('print(mem2("20g", "M"))\n')
+			f.write('print(mem2("2048000"))\n')
+			f.write('print(mem2("2048000", "java"))\n')
+		stdout = check_output(['Rscript', scriptfile], stderr=self.devnull)
+		self.assertIn('[1] "38K"', stdout.splitlines())
+		self.assertIn('[1] "20480M"', stdout.splitlines())
+		self.assertIn('[1] "2000M"', stdout.splitlines())
+		self.assertIn('[1] "-Xms250M -Xmx2000M"', stdout.splitlines())
+
+	def testRuncmd(self):
+		scriptfile = path.join(tmpdir, 'testRuncmd.py')
+		with open(scriptfile, 'w') as f:
+			f.write(runcmd.py)
+			f.write('print runcmd("cmddosnotexists", quit=False)\n')
+			f.write('print runcmd("python --version")\n')
+		try:
+			stdout = check_output(['python', scriptfile], stderr=self.devnull).splitlines()
+		except Exception:
+			stdout = ''
+		self.assertEqual(['False', 'True'], stdout)
+	
+	def testRuncmdR(self):
+		scriptfile = path.join(tmpdir, 'testRuncmd.r')
+		with open(scriptfile, 'w') as f:
+			f.write(runcmd.r)
+			f.write('print(runcmd("python --version"))\n')
+			f.write('print(runcmd("nosuchcmd", quit = F))\n')
+		try:
+			stdout = check_output(['Rscript', scriptfile], stderr=self.devnull).splitlines()
+		except Exception:
+			stdout = ''
+		self.assertEqual(['[1] 0', '[1] 127'], stdout)
+
+	def testPollingFirst(self):
+		scriptfile = path.join(tmpdir, 'testPollingFirst.py')
+		flagfile   = path.join(tmpdir, 'testPollingFirst.py.flag')
+		if path.exists(flagfile): remove(flagfile)
+		if path.exists(flagfile+ '.error'): remove(flagfile + '.error')
+		with open(scriptfile, 'w') as f:
+			f.write(polling.first.py)
+			f.write('from multiprocessing import Process, JoinableQueue as Queue\n')
+			f.write('from time import time\n')
+			f.write('def worker(q):\n')
+			f.write('	while True:\n')
+			f.write('		if q.empty(): break\n')
+			f.write('		index, cmd = q.get()\n')
+			f.write('		pollingFirst(index, cmd, "%s", t = 1)\n' % flagfile)
+			f.write('		print "Process:", index, "done!"\n')
+			f.write('		q.task_done()\n')
+			f.write('\n')
+			f.write('sq = Queue()\n')
+			f.write('for i in range(5):\n')
+			f.write('	sq.put((i, "sleep 3"))\n')
+			f.write('\n')
+			f.write('t0 = time()\n')
+			f.write('for i in range(5):\n')
+			f.write('	t = Process(target = worker, args=(sq, ))\n')
+			f.write('	t.daemon = True\n')
+			f.write('	t.start ()\n')
+			f.write('sq.join()\n')
+			f.write('print int(time() - t0)\n')
+		stdout = check_output(['python', scriptfile], stderr=self.devnull).splitlines()
+		self.assertIn(stdout[-1], ['3', '4'])
+
+	def testPollingFirstR(self):
+		scriptfile = path.join(tmpdir, 'testPollingFirst.r')
+		flagfile   = path.join(tmpdir, 'testPollingFirst.r.flag')
+		if path.exists(flagfile): remove(flagfile)
+		if path.exists(flagfile+ '.error'): remove(flagfile + '.error')
+
+		with open(scriptfile, 'w') as f:
+			f.write(polling.first.r)
+			f.write('library(doParallel)\n')
+			f.write('t0 = proc.time()\n')
+			f.write('cl <- makeCluster(5)\n')
+			f.write('registerDoParallel(cl)\n')
+			f.write('foreach(i=1:5) %dopar% {\n')
+			f.write('	pollingFirst(i-1, "sleep 4", "%s", t = 1)\n' % flagfile)
+			f.write('}\n')
+			f.write('stopCluster(cl) \n')
+			f.write('cat(proc.time() - t0)\n')
+
+		stdout = check_output(['Rscript', scriptfile], stderr=self.devnull).splitlines()
+		self.assertIn(int(float(stdout[-1].split()[2])), [4, 5, 6])
+
+	def testPollingAll(self):
+		scriptfile = path.join(tmpdir, 'testPollingAll.py')
+		for i in list(range(5)):
+			odir = path.join(tmpdir, str(i), 'output')
+			if not path.exists(odir): makedirs(odir)
+			flag = path.join(odir, 'flag')
+			eflg = path.join(odir, 'flag.error')
+			if path.exists(flag): remove(flag)
+			if path.exists(eflg): remove(eflg)
+
+		with open(scriptfile, 'w') as f:
+			f.write(polling.all.py)
+			f.write('from multiprocessing import Process, JoinableQueue as Queue\n')
+			f.write('from time import time\n')
+			f.write('def worker(q):\n')
+			f.write('	while True:\n')
+			f.write('		if q.empty(): break\n')
+			f.write('		index, cmd = q.get()\n')
+			f.write('		pollingAll("%s", 5, index, cmd, "flag", t = 1)\n' % (tmpdir))
+			f.write('		print "Process:", index, "done!"\n')
+			f.write('		q.task_done()\n')
+			f.write('\n')
+			f.write('sq = Queue()\n')
+			f.write('for i in range(5):\n')
+			f.write('	sq.put((i, "sleep " + str(i)))\n')
+			f.write('\n')
+			f.write('t0 = time()\n')
+			f.write('for i in range(5):\n')
+			f.write('	t = Process(target = worker, args=(sq, ))\n')
+			f.write('	t.daemon = True\n')
+			f.write('	t.start ()\n')
+			f.write('sq.join()\n')
+			f.write('print int(time() - t0)\n')
+		stdout = check_output(['python', scriptfile], stderr=self.devnull).splitlines()
+		self.assertIn(stdout[-1], ['4', '5'])
+
+	def testPollingAllR(self):
+		scriptfile = path.join(tmpdir, 'testPollingAll.r')
+		for i in list(range(5)):
+			odir = path.join(tmpdir, str(i), 'output')
+			if not path.exists(odir): makedirs(odir)
+			flag = path.join(odir, 'flag')
+			eflg = path.join(odir, 'flag.error')
+			if path.exists(flag): remove(flag)
+			if path.exists(eflg): remove(eflg)
+
+		with open(scriptfile, 'w') as f:
+			f.write(polling.all.r)
+			f.write('library(doParallel)\n')
+			f.write('t0 = proc.time()\n')
+			f.write('cl <- makeCluster(5)\n')
+			f.write('registerDoParallel(cl)\n')
+			f.write('foreach(i=1:5) %dopar% {\n')
+			f.write('	pollingAll("%s", 5, i-1, paste("sleep", i - 1), "flag", t = .1)\n' % tmpdir)
+			f.write('}\n')
+			f.write('stopCluster(cl) \n')
+			f.write('cat(proc.time() - t0)\n')
+
+		stdout = check_output(['Rscript', scriptfile], stderr=self.devnull).splitlines()
+		self.assertIn(int(float(stdout[-1].split()[2])), [4, 5, 6])
 
 
 if __name__ == '__main__':

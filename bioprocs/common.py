@@ -189,7 +189,7 @@ pTxtFilter.args.rfilter      = 'lambda x:True'
 pTxtFilter.args.header       = True
 pTxtFilter.args.skip         = 0
 pTxtFilter.args.delimit      = "\t"
-pTxtFilter.tplenvs.txtFilter = txt.filter.python
+pTxtFilter.tplenvs.txtFilter = txt.filter.py
 pTxtFilter.script            = """
 {{txtFilter}}
 

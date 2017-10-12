@@ -1,7 +1,7 @@
-from pyppl import proc
-"""
-A set of TFBS procs
-"""
+from pyppl import Proc
+#######################
+# A set of TFBS procs #
+#######################
 
 """
 @name:
@@ -206,3 +206,8 @@ with open ("{{memefile}}", "r") as f, open ("{{outfile}}", "w") as fout:
 		if not isinstance (gene, list): gene = [gene]
 		fout.write ("%s\\t%s\\n" % (t[1], "|".join(gene)))
 """
+
+####################
+#   Aggregations   #
+####################
+from pyppl import Aggr

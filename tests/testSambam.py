@@ -1,11 +1,11 @@
 import os, sys, unittest, shutil, addPath
 
 from pyppl import PyPPL, Channel, Proc, Box
-from bioprocs.fastx import pFastqPESim, pFastqPE2Sam, pFastqSE2Sam
-from bioprocs.sambam import pSam2Bam, pBamMarkdup, pBamRecal, pBamReadGroup, pBamReorder, pBamMerge, pBam2Gmut, pBamPair2Smut, pBam2Cnv, pBamStats, pBam2FastqPE, pBam2FastqSE
+from bioprocs.fastx import pFastqSim, pFastq2Sam, pFastqSE2Sam
+from bioprocs.sambam import pSam2Bam, pBamMarkdup, pBamRecal, pBamReadGroup, pBamReorder, pBamMerge, pBam2Gmut, pBamPair2Smut, pBam2Cnv, pBamStats, pBam2Fastq, pBam2FastqSE, pBam2Counts
 from bioprocs.common import pFiles2List
 from bioprocs.web import pDownloadGet
-from bioaggrs import params
+from bioprocs import params
 
 params = params.toDict()
 unittest.TestLoader.sortTestMethodsUsing = lambda _, x, y: cmp(x, y)
@@ -34,39 +34,39 @@ class TestSambam (unittest.TestCase):
 		pChangeChrom.callback = lambda p: setattr(params, 'ref', p.channel[0][0])
 		PyPPL().start(pDownloadGet).run()
 			
-	def test1_pFastqPE2Sam (self):
+	def test1_pFastq2Sam (self):
 		self.data.fqs = []
 		
-		pFastqPESimWgsim  = pFastqPESim.copy ()
-		pFastqPESimDwgsim = pFastqPESim.copy ()
+		pFastqSimWgsim  = pFastqSim.copy ()
+		pFastqSimDwgsim = pFastqSim.copy ()
 		
-		pFastqPESimWgsim.input       = [1]
-		pFastqPESimDwgsim.input      = [1]
-		pFastqPESimWgsim.args.ref    = params.ref
-		pFastqPESimDwgsim.args.ref   = params.ref
-		pFastqPESimWgsim.args.num    = 100000
-		pFastqPESimDwgsim.args.num   = 100000
-		pFastqPESimWgsim.args.tool   = 'wgsim'
-		pFastqPESimDwgsim.args.tool  = 'dwgsim'
-		pFastqPESimWgsim.callback    = lambda p: self.data.fqs.extend(p.channel)
-		pFastqPESimDwgsim.callback   = lambda p: self.data.fqs.extend(p.channel)
+		pFastqSimWgsim.input       = [1]
+		pFastqSimDwgsim.input      = [1]
+		pFastqSimWgsim.args.ref    = params.ref
+		pFastqSimDwgsim.args.ref   = params.ref
+		pFastqSimWgsim.args.num    = 100000
+		pFastqSimDwgsim.args.num   = 100000
+		pFastqSimWgsim.args.tool   = 'wgsim'
+		pFastqSimDwgsim.args.tool  = 'dwgsim'
+		pFastqSimWgsim.callback    = lambda p: self.data.fqs.extend(p.channel)
+		pFastqSimDwgsim.callback   = lambda p: self.data.fqs.extend(p.channel)
 		
-		PyPPL().start(pFastqPESimWgsim, pFastqPESimDwgsim).run()
+		PyPPL().start(pFastqSimWgsim, pFastqSimDwgsim).run()
 		
-	def test2_pFastqPE2Sam (self):
-		pFastqPE2Sam.args.nthread     = 2
-		pFastqPE2Sam.forks            = 4
-		pFastqPE2Sam.input            = self.data.fqs
-		pFastqPE2Sam.args.ref         = params.ref
-		pFastqPE2SamBwa               = pFastqPE2Sam.copy('bwa')
-		pFastqPE2SamNgm               = pFastqPE2Sam.copy('ngm')
-		pFastqPE2SamBowtie2           = pFastqPE2Sam.copy('bowtie2')
-		pFastqPE2SamBwa.args.tool     = 'bwa'
-		pFastqPE2SamNgm.args.tool     = 'ngm'
-		pFastqPE2SamBowtie2.args.tool = 'bowtie2'
-		pFastqPE2SamBowtie2.callback  = lambda p: self.data.update({'sams': p.channel})
+	def test2_pFastq2Sam (self):
+		pFastq2Sam.args.nthread     = 2
+		pFastq2Sam.forks            = 4
+		pFastq2Sam.input            = self.data.fqs
+		pFastq2Sam.args.ref         = params.ref
+		pFastq2SamBwa               = pFastq2Sam.copy('bwa')
+		pFastq2SamNgm               = pFastq2Sam.copy('ngm')
+		pFastq2SamBowtie2           = pFastq2Sam.copy('bowtie2')
+		pFastq2SamBwa.args.tool     = 'bwa'
+		pFastq2SamNgm.args.tool     = 'ngm'
+		pFastq2SamBowtie2.args.tool = 'bowtie2'
+		pFastq2SamBowtie2.callback  = lambda p: self.data.update({'sams': p.channel})
 		
-		PyPPL().start(pFastqPE2SamBwa, pFastqPE2SamNgm, pFastqPE2SamBowtie2).run()
+		PyPPL().start(pFastq2SamBwa, pFastq2SamNgm, pFastq2SamBowtie2).run()
 	
 	def test3_Sam2BamSambamba (self):
 		pSam2BamSbb1  = pSam2Bam.copy('sambamba')
@@ -132,9 +132,9 @@ class TestSambam (unittest.TestCase):
 		pSam2BamBbb1  = pSam2Bam.copy('biobambam')
 		pSam2BamBbb2  = pSam2Bam.copy('biobambam')
 		pSam2BamBbb3  = pSam2Bam.copy('biobambam')
-		pSam2BamBbb1.args.params   = 'maxreadlen=5000'
-		pSam2BamBbb2.args.params   = 'maxreadlen=5000'
-		pSam2BamBbb3.args.params   = 'maxreadlen=5000'
+		pSam2BamBbb1.args.params.maxreadlen = 5000
+		pSam2BamBbb2.args.params.maxreadlen = 5000
+		pSam2BamBbb3.args.params.maxreadlen = 5000
 		pSam2BamBbb1.args.tool    = 'biobambam'
 		pSam2BamBbb1.args.markdup = True
 		pSam2BamBbb2.args.tool    = 'biobambam'
@@ -188,7 +188,7 @@ class TestSambam (unittest.TestCase):
 		pBamRecalTest.input = self.data.bams
 		pBamRecalTest.args.ref = params.ref
 		pBamRecalTest.args.knownSites = params.dbsnp
-		pBamRecalTest.args.paramsBaseRecalibrator = "--maximum_cycle_value 5000"
+		pBamRecalTest.args.paramsBaseRecalibrator.maximum_cycle_value = 5000
 		pBamRecalTest.forks = 2
 		
 		PyPPL().start(pBamRecalTest).run()
@@ -199,13 +199,16 @@ class TestSambam (unittest.TestCase):
 		pBamReadGroup1.input = self.data.bams
 		pBamReadGroup2.input = self.data.bams
 		pBamReadGroup2.args.tool = 'bamutil'
+		pBamReadGroup1.forks = 10
+		pBamReadGroup2.forks = 10
 		
 		PyPPL().start(pBamReadGroup1, pBamReadGroup2).run()
 	
 	def test4_BamReorder (self):
 		
-		pBamReorder.args.ref = params.ref
-		pBamReorder.input = self.data.bams
+		pBamReorder.args.ref   = params.ref
+		pBamReorder.forks = 10
+		pBamReorder.input      = self.data.bams
 		
 		PyPPL().start(pBamReorder).run()
 	
@@ -325,22 +328,22 @@ class TestSambam (unittest.TestCase):
 		]
 		PyPPL().start(*starts).run()
 		
-	def test7_pBam2FastqPE (self):
+	def test7_pBam2Fastq (self):
 		
-		pBam2FastqPEBmm       = pBam2FastqPE.copy(newid = 'pBam2FastqPETest', tag = 'biobambam')
-		pBam2FastqPEBmm.input = self.data.bams
-		pBam2FastqPEBmm.forks = 10
+		pBam2FastqBmm       = pBam2Fastq.copy(newid = 'pBam2FastqTest', tag = 'biobambam')
+		pBam2FastqBmm.input = self.data.bams
+		pBam2FastqBmm.forks = 10
 		
-		pBam2FastqPEBtl       = pBam2FastqPEBmm.copy(newid = 'pBam2FastqPETest', tag = 'bedtools')
-		pBam2FastqPEBtl.args.tool = 'bedtools'
+		pBam2FastqBtl       = pBam2FastqBmm.copy(newid = 'pBam2FastqTest', tag = 'bedtools')
+		pBam2FastqBtl.args.tool = 'bedtools'
 		
-		pBam2FastqPEStl       = pBam2FastqPEBmm.copy(newid = 'pBam2FastqPETest', tag = 'samtools')
-		pBam2FastqPEStl.args.tool = 'samtools'
+		pBam2FastqStl       = pBam2FastqBmm.copy(newid = 'pBam2FastqTest', tag = 'samtools')
+		pBam2FastqStl.args.tool = 'samtools'
 		
-		pBam2FastqPEPcd       = pBam2FastqPEBmm.copy(newid = 'pBam2FastqPETest', tag = 'picard')
-		pBam2FastqPEPcd.args.tool = 'picard'
+		pBam2FastqPcd       = pBam2FastqBmm.copy(newid = 'pBam2FastqTest', tag = 'picard')
+		pBam2FastqPcd.args.tool = 'picard'
 		
-		PyPPL().start('pBam2FastqPETest').run()
+		PyPPL().start('pBam2FastqTest').run()
 		
 	def test7_pBam2FastqSE (self):
 		
@@ -358,6 +361,33 @@ class TestSambam (unittest.TestCase):
 		#pBam2FastqSEPcd.args.tool = 'picard'
 		
 		PyPPL().start('pBam2FastqSETest').run()
+
+	def test8_pBam2Counts(self):
+		pGenerateGTF = Proc()
+		pGenerateGTF.input = {'in': 0}
+		pGenerateGTF.output = "outfile:file:gene.gtf"
+		pGenerateGTF.lang = "python"
+		pGenerateGTF.script = """#
+		## indent remove ##
+		import random
+		random.seed(0)
+		with open("{{out.outfile}}", "w") as f:
+			for i, chr in enumerate(['chr1', 'chr2']):
+				gstart = 0
+				for j in list(range(100)):
+					gene = 'GENE' + str(i*100 + j+1)
+					glen = random.randint(50, 200)
+					gap  = random.randint(100, 300)
+					tmp  = [chr, 'TEST', 'transcript', str(gstart + gap), str(gstart + gap + glen), '.', random.choice(['+', '-']), '.', 'gene_id "%s"; gene_name "%s"' % (gene, gene)]
+					f.write("\\t".join(tmp) + "\\n")
+					gstart += gap + glen
+		"""
+
+		pBam2Counts.depends = pGenerateGTF
+		pBam2Counts.input = self.data.bams
+		pBam2Counts.forks = 10
+		pBam2Counts.callfront = lambda p: p.args.update({'refgene':pGenerateGTF.channel.get()})
+		PyPPL().start(pGenerateGTF).run()
 		
 if __name__ == '__main__':
 	unittest.main(failfast=True)

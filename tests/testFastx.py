@@ -1,9 +1,9 @@
 import os, sys, unittest, addPath
 
 from pyppl import PyPPL, Channel, Box
-from bioprocs.fastx import pFastqPESim, pFastQC, pFastMC, pFastqPETrim, pFastqSETrim, pFastqSE2Sam, pFastqPE2Sam
+from bioprocs import params
+from bioprocs.fastx import pFastqSim, pFastQC, pFastMC, pFastqTrim, pFastqSETrim, pFastqSE2Sam, pFastq2Sam, pFastq2Expr
 from bioprocs.common import pFiles2Dir
-from bioaggrs import params
 
 params = params.toDict()
 
@@ -14,17 +14,17 @@ class TestFastx (unittest.TestCase):
 	data = Box()
 	def test1_FastqPESim (self):
 		
-		pFastqPESim.input      = list(range(2))
-		pFastqPESim.args.ref   = params.ref
-		pFastqPESim.args.num   = 1000
-		pFastqPESim.forks      = 2
-		pFastqPESim1           = pFastqPESim.copy()
-		pFastqPESim2           = pFastqPESim.copy()
-		pFastqPESim1.args.tool = 'wgsim'
-		pFastqPESim2.args.tool = 'dwgsim'
-		pFastqPESim1.callback  = lambda p: self.data.update({'fqs': p.channel.fold(1).flatten()})
+		pFastqSim.input      = list(range(2))
+		pFastqSim.args.ref   = params.ref
+		pFastqSim.args.num   = 1000
+		pFastqSim.forks      = 2
+		pFastqSim1           = pFastqSim.copy()
+		pFastqSim2           = pFastqSim.copy()
+		pFastqSim1.args.tool = 'wgsim'
+		pFastqSim2.args.tool = 'dwgsim'
+		pFastqSim1.callback  = lambda p: self.data.update({'fqs': p.channel.fold(1).flatten()})
 		
-		PyPPL().start(pFastqPESim1, pFastqPESim2).run()
+		PyPPL().start(pFastqSim1, pFastqSim2).run()
 		
 	def test2_FastQC (self):
 		pFastQC.input = self.data.fqs
@@ -38,18 +38,18 @@ class TestFastx (unittest.TestCase):
 		PyPPL().start(pFiles2Dir).run()
 		
 	def test4_PETrim (self):
-		pFastqPETrim.input = Channel.create(self.data.fqs).unfold(2)
-		pFastqPETrim.args.gz = False
-		pFastqPETrim.args.nthread = 2
-		pFastqPETrim.forks = 2
-		pFastqPETrim1 = pFastqPETrim.copy()
-		pFastqPETrim2 = pFastqPETrim.copy()
-		pFastqPETrim3 = pFastqPETrim.copy()
-		pFastqPETrim1.args.tool = 'trimmomatic'
-		pFastqPETrim2.args.tool = 'cutadapt'
-		pFastqPETrim3.args.tool = 'skewer'
+		pFastqTrim.input = Channel.create(self.data.fqs).unfold(2)
+		pFastqTrim.args.gz = False
+		pFastqTrim.args.nthread = 2
+		pFastqTrim.forks = 2
+		pFastqTrim1 = pFastqTrim.copy()
+		pFastqTrim2 = pFastqTrim.copy()
+		pFastqTrim3 = pFastqTrim.copy()
+		pFastqTrim1.args.tool = 'trimmomatic'
+		pFastqTrim2.args.tool = 'cutadapt'
+		pFastqTrim3.args.tool = 'skewer'
 		
-		PyPPL().start(pFastqPETrim1, pFastqPETrim2, pFastqPETrim3).run()
+		PyPPL().start(pFastqTrim1, pFastqTrim2, pFastqTrim3).run()
 		
 	def test4_SETrim (self):
 		pFastqSETrim.input = self.data.fqs
@@ -65,19 +65,19 @@ class TestFastx (unittest.TestCase):
 		
 		PyPPL().start(pFastqSETrim1, pFastqSETrim2, pFastqSETrim3).run()
 		
-	def test2_pFastqPE2Sam (self):
-		pFastqPE2Sam.args.nthread     = 2
-		pFastqPE2Sam.forks            = 4
-		pFastqPE2Sam.input            = Channel.create(self.data.fqs).unfold(2)
-		pFastqPE2Sam.args.ref         = params.ref
-		pFastqPE2SamBwa               = pFastqPE2Sam.copy('bwa')
-		pFastqPE2SamNgm               = pFastqPE2Sam.copy('ngm')
-		pFastqPE2SamBowtie2           = pFastqPE2Sam.copy('bowtie2')
-		pFastqPE2SamBwa.args.tool     = 'bwa'
-		pFastqPE2SamNgm.args.tool     = 'ngm'
-		pFastqPE2SamBowtie2.args.tool = 'bowtie2'
+	def test2_pFastq2Sam (self):
+		pFastq2Sam.args.nthread     = 2
+		pFastq2Sam.forks            = 4
+		pFastq2Sam.input            = Channel.create(self.data.fqs).unfold(2)
+		pFastq2Sam.args.ref         = params.ref
+		pFastq2SamBwa               = pFastq2Sam.copy('bwa')
+		pFastq2SamNgm               = pFastq2Sam.copy('ngm')
+		pFastq2SamBowtie2           = pFastq2Sam.copy('bowtie2')
+		pFastq2SamBwa.args.tool     = 'bwa'
+		pFastq2SamNgm.args.tool     = 'ngm'
+		pFastq2SamBowtie2.args.tool = 'bowtie2'
 		
-		PyPPL().start(pFastqPE2SamBwa, pFastqPE2SamNgm, pFastqPE2SamBowtie2).run()
+		PyPPL().start(pFastq2SamBwa, pFastq2SamNgm, pFastq2SamBowtie2).run()
 		
 	def test2_pFastqSE2Sam (self):
 		pFastqSE2Sam.args.nthread     = 2
@@ -92,6 +92,12 @@ class TestFastx (unittest.TestCase):
 		pFastqSE2SamBowtie2.args.tool = 'bowtie2'
 		
 		PyPPL().start(pFastqSE2SamBwa, pFastqSE2SamNgm, pFastqSE2SamBowtie2).run()
+
+	def test5_pFastq2Expr(self):
+		pFastq2Expr.input = Channel.create(self.data.fqs).unfold(2)
+		pFastq2Expr.forks = 10
+		pFastq2Expr.args.nthread = 10
+		PyPPL().start(pFastq2Expr).run()
 		
 	
 if __name__ == '__main__':
