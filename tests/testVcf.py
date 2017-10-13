@@ -1,12 +1,14 @@
 import os, sys, unittest, addPath
 
+from os import path
 from pyppl import PyPPL, Box, Channel, Proc
-from bioprocs.fastx import pFastqPESim
-from bioprocs.vcf import pVcfFilter, pVcfAnno, pCallRate
-from bioprocs.vcfnext import pStats2Matrix, pPlotStats
+from bioprocs.fastx import pFastqSim
+from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit
+from bioprocs.vcfnext import pVcfStatsPlot, pCallRate
 from bioprocs.web import pDownloadGet
 from bioprocs.common import pFiles2Dir
-from bioaggrs import params
+from bioprocs.tabix import pTabix
+from bioprocs import params
 
 params = params.toDict()
 
@@ -95,20 +97,18 @@ class TestVcf (unittest.TestCase):
 		PyPPL().start(*starts).run()
 	
 	def test2_pVcfAnno (self):
-		pVcfAnno.input        = self.data.vcfs
-		pVcfAnno.forks        = 2
-		pVcfAnno1             = pVcfAnno.copy()
-		pVcfAnno2             = pVcfAnno.copy()
-		pVcfAnno3             = pVcfAnno.copy()
-		pVcfAnno1.args.tool   = 'snpeff'
-		pVcfAnno2.args.tool   = 'vep'
-		pVcfAnno2.args.dbpath = '/data2/junwenwang/shared/reference/hg19/vep/cache/'
-		pVcfAnno2.args.params = '--port 3337'
-		pVcfAnno2.args.genome = 'GRCh37'
-		pVcfAnno3.args.tool   = 'annovar'
-		pVcfAnno3.args.dbpath = '/data2/junwenwang/shared/tools/annovar/humandb/'
-		pVcfAnno3.args.gz     = True
-		pVcfAnno1.callback    = lambda p: self.data.update({'vcfs': p.channel.colAt(0)})
+		pVcfAnno.input             = self.data.vcfs
+		pVcfAnno.forks             = 2
+		pVcfAnno1                  = pVcfAnno.copy()
+		pVcfAnno2                  = pVcfAnno.copy()
+		pVcfAnno3                  = pVcfAnno.copy()
+		pVcfAnno1.args.tool        = 'snpeff'
+		pVcfAnno2.args.tool        = 'vep'
+		pVcfAnno2.args.params.port = 3337
+		pVcfAnno2.args.genome      = 'GRCh37'
+		pVcfAnno3.args.tool        = 'annovar'
+		pVcfAnno3.args.gz          = True
+		pVcfAnno1.callback         = lambda p: self.data.update({'vcfs': p.channel.colAt(0)})
 		
 		starts = [
 			pVcfAnno1,
@@ -135,10 +135,64 @@ class TestVcf (unittest.TestCase):
 		pFiles2Dir2.tag = 'plotstats'
 		pFiles2Dir2.input = lambda ch: [ch.colAt(1).expand(0, '*.stats.csv').flatten()*4]
 		
-		pStats2Matrix.depends = pFiles2Dir2
-		pStats2Matrix.expect  = 'ls {{out.outdir}}/*.mat.txt'
-		pPlotStats.depends = pStats2Matrix
+		pVcfStatsPlot2 = pVcfStatsPlot.copy()
+		pVcfStatsPlot2.depends = pFiles2Dir2
+		pVcfStatsPlot2.expect  = 'ls {{out.outdir}}/mats/*.mat.txt'
 		PyPPL().start(pVcfAnno4).run()
+
+	def test5_pVcfSplit(self):
+		regfile = path.join(params.tmpdir, 'region.txt')
+		with open(regfile, 'w') as f:
+			f.write('1	39966768	39968768\n')
+			f.write('2	39966768	39968768\n')
+			f.write('3	29966768	29968768\n')
+			f.write('4	19966768	19968768\n')
+			f.write('5	9966768	9968768\n')
+			f.write('6	966768	968768\n')
+		pTabix.input = ("ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20100804/ALL.2of4intersection.20100804.genotypes.vcf.gz", regfile)
+
+		pVcfSplit1 = pVcfSplit.copy()
+		pVcfSplit1.depends = pTabix
+		pVcfSplit1.expect  = "ls -l {{out.outdir}}/HG00098.vcf {{out.outdir}}/NA20828.vcf"
+
+		pVcfSplit2 = pVcfSplit.copy()
+		pVcfSplit2.depends = pTabix
+		pVcfSplit2.input   = lambda ch: ch.cbind("NA19660,NA19917,NA20815")
+		pVcfSplit2.expect  = "ls -l {{out.outdir}}/NA19660.vcf {{out.outdir}}/NA19917.vcf {{out.outdir}}/NA20815.vcf"
+
+		pVcfSplit3 = pVcfSplit.copy()
+		pVcfSplit3.depends = pTabix
+		pVcfSplit3.input   = lambda ch: ch.cbind(','.join(['NA' + str(i) for i in range(19074, 19190)]))
+		pVcfSplit3.expect  = "ls -l {{out.outdir}}/NA19189.vcf {{out.outdir}}/NA19119.vcf {{out.outdir}}/NA19074.vcf"
+		pVcfSplit3.args.nthread = 20
+
+		'''
+		# dont have chr prefix on chromosomes!
+		pVcfSplit4 = pVcfSplit.copy()
+		pVcfSplit4.depends = pTabix
+		pVcfSplit4.input   = lambda ch: ch.cbind(','.join(['NA' + str(i) for i in range(19074, 19140)]))
+		pVcfSplit4.expect  = "ls -l {{out.outdir}}/NA19189.vcf {{out.outdir}}/NA19119.vcf"
+		pVcfSplit4.args.nthread = 20
+		pVcfSplit4.args.tool  = 'gatk'
+		'''
+		PyPPL().start(pTabix).run()
+		self.data.vcfs = pTabix.channel.outfile
+
+	def test6_pPlotStats_Real(self):
+		
+		pVcfAnno5 = pVcfAnno.copy()
+		pVcfAnno5.input = self.data.vcfs
+		pVcfAnno5.args.snpeffStats = True
+
+		pFiles2Dir3 = pFiles2Dir.copy()
+		pFiles2Dir3.depends = pVcfAnno5
+		pFiles2Dir3.input = lambda ch: [ch.colAt(1).expand(0, '*.stats*.csv').flatten()]
+
+		pVcfStatsPlot3 = pVcfStatsPlot.copy()
+		pVcfStatsPlot3.depends = pFiles2Dir3
+		pVcfStatsPlot3.expect  = 'ls {{out.outdir}}/mats/*.mat.txt'
+
+		PyPPL().start(pVcfAnno5).run()
 		
 		
 if __name__ == '__main__':

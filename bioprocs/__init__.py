@@ -7,9 +7,13 @@ from sys import modules, stderr
 from pyppl import params
 
 DEFAULTS = {
+	# constants
+	"genome"          : "hg19",
+	"genome.desc"     : "Commonly used genome assembly.",
+
 	# path
-	"tmpdir"          : gettempdir(),
-	"tmpdir.desc"     : "The temporary directory.",
+	"annovarDb"       : "",
+	"annovarDb.desc"  : "The path of database for Annovar.",
 	"dbsnp"           : "",
 	"dbsnp.desc"      : "The dbsnp in VCF format.",
 	"kallistoIdx"     : "",
@@ -18,6 +22,12 @@ DEFAULTS = {
 	"ref.desc"        : "The reference genome.",
 	"refgene"         : "",
 	"refgene.desc"    : "The reference genes in GTF format.",
+	"snpeffDb"        : "",
+	"snpeffDb.desc"   : "The path of database for snpEff.",
+	"tmpdir"          : gettempdir(),
+	"tmpdir.desc"     : "The temporary directory.",
+	"vepDb"           : "",
+	"vepDb.desc"      : "The path of database for VEP.",
 
 
 	# memoreis
@@ -33,10 +43,16 @@ DEFAULTS = {
 	"mem32G.desc": "32GB memory.",
 
 	# tools
+	"annovar"                  : "annotate_variation.pl",
+	"annovar.desc"             : "The path of annovar's annotate_variation.pl.",
+	"annovar_convert"          : "convert2annovar.pl",
+	"annovar_convert.desc"     : "The path of annovar's convert2annovar.pl.",
 	"bamstats"                 : "bamstats",
 	"bamstats.desc"            : "The path of bamstats.",
 	"bamutil"                  : "bam",
 	"bamutil.desc"             : "The path of bamutil.",
+	"bcftools"                 : "bcftools",
+	"bcftools.desc"            : "The path of bcftools.",
 	"bedtools"                 : "bedtools",
 	"bedtools.desc"            : "The path of bedtools.",
 	"biobambam_bamsort"        : "bamsort",
@@ -81,8 +97,12 @@ DEFAULTS = {
 	"samtools.desc"            : "The path of samtools.",
 	"skewer"                   : "skewer",
 	"skewer.desc"              : "The path of skewer.",
+	"snpeff"                   : "snpEff",
+	"snpeff.desc"              : "The path of snpEff.",
+	"snpsift"                  : "SnpSift",
+	"snpsift.desc"             : "The path of SnpSift.",
 	"snvsniffer"               : "SNVSniffer",
-	"snvsniffer.desc"          : "The path of snvsniffer.",
+	"snvsniffer.desc"          : "The path of SNVSniffer.",
 	"somaticsniper"            : "bam-somaticsniper",
 	"somaticsniper.desc"       : "The path of bam-somaticsniper.",
 	"star"                     : "star",
@@ -91,10 +111,18 @@ DEFAULTS = {
 	"strelka_germ.desc"        : "The path of configureStrelkaGermlineWorkflow.py.",
 	"strelka_soma"             : "configureStrelkaSomaticWorkflow.py",
 	"strelka_soma.desc"        : "The path of configureStrelkaSomaticWorkflow.py.",
+	"tabix"                    : "tabix",
+	"tabix.desc"               : "The path of tabix.",
 	"trimmomatic"              : "trimmomatic",
 	"trimmomatic.desc"         : "The path of trimmomatic.",
 	"vardict"                  : "vardict",
 	"vardict.desc"             : "The path of vardict.",
+	"vcflib_vcffilter"         : "vcffilter",
+	"vcflib_vcffilter.desc"    : "The path of vcflib vcffilter.",
+	"vcftools_subset"          : "vcf-subset",
+	"vcftools_subset.desc"     : "The path of vcftools' vcf-subset.",
+	"vep"                      : "vep",
+	"vep.desc"                 : "The path of vep.",
 	"virmid"                   : "vardict",
 	"virmid.desc"              : "The path of vardict.",
 	"wgsim"                    : "wgsim",
