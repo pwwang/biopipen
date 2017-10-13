@@ -2,7 +2,7 @@ expr    = read.table ("{{in.expr}}", sep="\t", header=TRUE, row.names = 1, check
 
 {{ txtSampleinfo }}
 sampleinfo = txtSampleinfo("{{in.batch}}")
-batch      = factor(sampleinfo[colnames(expr), 'Batch'])
+batch      = factor(sampleinfo[which(sampleinfo$row.names %in% colnames(expr)),,drop=F]$Batch)
 {% if args.tool | lambda x: x == 'combat' %}
 library(sva)
 newexpr   = ComBat(dat=expr, batch=batch, par.prior = TRUE, mod = NULL)

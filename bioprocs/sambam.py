@@ -2,7 +2,7 @@
 A set of processes to generate/process sam/bam files
 """
 from pyppl import Proc, Box
-from .utils import mem2, runcmd, buildref, checkref, polling, helpers
+from .utils import mem2, runcmd, buildref, checkref, polling, helpers, plot
 from . import params
 
 """
@@ -506,7 +506,7 @@ pBam2Cnv.args.wandyType              = 1  # wandy 1:hg19 solid cell/blood, 2:hg1
 pBam2Cnv.args.params                 = Box()
 pBam2Cnv.args.mem                    = params.mem24G.value # for wandy
 pBam2Cnv.args.nthread                = 1 # for cnvkit
-pBam2Cnv.tplenvs.pollingFirst        = polling.first.py
+pBam2Cnv.tplenvs.pollingNon1st       = polling.non1st.py
 pBam2Cnv.tplenvs.pollingAll          = polling.all.py
 pBam2Cnv.tplenvs.runcmd              = runcmd.py
 pBam2Cnv.tplenvs.params2CmdArgs      = helpers.params2CmdArgs.py
@@ -541,20 +541,26 @@ pBam2Cnv.script = "file:scripts/sambam/pBam2Cnv.py"
 	`mem`: The memory to be used. Default: 16G
 	`plot`: Whether plot the result. Default: True
 """
-pBamStats                    = Proc(desc = 'Get read depth from bam files.')
-pBamStats.input              = 'infile:file'
-pBamStats.output             = 'outfile:file:{{in.infile | fn}}/{{in.infile | fn}}.stat.txt, outdir:dir:{{in.infile | fn}}'
-pBamStats.args.tool          = 'bamstats'
-pBamStats.args.bamstats      = params.bamstats.value
-pBamStats.args.params        = Box()
-pBamStats.args.mem           = params.mem16G.value
-pBamStats.args.plot          = True
-pBamStats.tplenvs.runcmd     = runcmd.r
-pBamStats.tplenvs.mem2       = mem2.r
-pBamStats.tplenvs.pollingAll = polling.all.r
-pBamStats.beforeCmd          = """
-if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt {{proc.size}} ]]; then
-	echo "Plots can only be done with all jobs run simultaneously (proc.forks >= # jobs)." 1>&2
+pBamStats                        = Proc(desc = 'Get read depth from bam files.')
+pBamStats.input                  = 'infile:file'
+pBamStats.output                 = 'outfile:file:{{in.infile | fn}}/{{in.infile | fn}}.stat.txt, outdir:dir:{{in.infile | fn}}'
+pBamStats.args.tool              = 'bamstats'
+pBamStats.args.bamstats          = params.bamstats.value
+pBamStats.args.params            = Box()
+pBamStats.args.mem               = params.mem16G.value
+pBamStats.args.plot              = True
+pBamStats.args.histplotggs       = ['r:xlab("Read counts")', 'r:ylab("# samples")']
+pBamStats.args.boxplotggs        = ['r:ylab("Counts")']
+pBamStats.args.devpars           = Box({'res':300, 'width':2000, 'height':2000})
+pBamStats.tplenvs.runcmd         = runcmd.r
+pBamStats.tplenvs.mem2           = mem2.r
+pBamStats.tplenvs.pollingFirst   = polling.first.r
+pBamStats.tplenvs.params2CmdArgs = helpers.params2CmdArgs.r
+pBamStats.tplenvs.plotHist       = plot.hist.r
+pBamStats.tplenvs.plotBoxplot    = plot.boxplot.r
+pBamStats.beforeCmd              = """
+if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
+	echo "Plots can only be done with proc.forks >= 2." 1>&2
 	exit 1
 fi
 """

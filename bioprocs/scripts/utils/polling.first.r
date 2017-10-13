@@ -1,27 +1,41 @@
 if (!exists('pollingFirst')) {
-	pollingFirst = function (jobid, cmd, flagfile, t = 10) {
-		errorfile  = paste0(flagfile, '.error')
+	pollingFirst = function (workdir, length, jobid, cmd, flagfname, t = 10) {
+		errorfname = paste(flagfname, '.error', sep='')
+		flagfile   = file.path (workdir, jobid, 'output', flagfname)
+		errorfile  = file.path (workdir, jobid, 'output', errorfname)
 		
-		if (jobid == 0) {
-			tryCatch ({
-				runcmd (cmd)
-				file.create (flagfile)
-			}, error = function(cond) {
-				file.create (errorfile)
-			})
-		} else {
+		tryCatch ({
+			runcmd (cmd)
+			file.create (flagfile)
+		}, error = function(cond) {
+			file.create (errorfile)
+		})
 
-			while (TRUE) {
-				if (file.exists(errorfile)) {
-					stop('Error happend for job #0!')
+		if (jobid > 0) return ()
+		
+		wait = F
+		while (wait) {
+			wait = FALSE
+			for (i in 0:(length-1)) {
+				efile = file.path (workdir, i, 'output', errorfname)
+				ffile = file.path (workdir, i, 'output', flagfname)
+				
+				if (file.exists(efile)) {
+					stop (paste('Job', i, 'failed, I am also exiting ...'), stderr())
 				}
-				if (file.exists(flagfile)) {
-					return ()
+				if (!file.exists(ffile)) {
+					write (paste('file not exists:', ffile), stderr())
+					wait = TRUE
+					break
 				}
-				write('Waiting for job #0 ...', stderr())
-				Sys.sleep(t)
 			}
-
+			if (wait) {
+				write('Waiting till all other jobs (job # != 0) done ...', stderr())
+				Sys.sleep(t)
+			} else {
+				break
+			}
 		}
+		
 	}
 }

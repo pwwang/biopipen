@@ -129,41 +129,23 @@ class TestUtils (unittest.TestCase):
 			f.write("sample1\tp1\tgroup1\tbatch1\n")
 			f.write("sample2\tp1\tgroup1\tbatch1\n")
 			f.write("sample3\tp2\tgroup1\tbatch1\n")
-			f.write("sample4\tp2\tgroup2\tbatch2\n")
-			f.write("sample5\tp3\tgroup2\tbatch2\n")
-			f.write("sample6\tp3\tgroup2\tbatch2\n")
+			f.write("sample1\tp2\tgroup2\tbatch2\n")
+			f.write("sample2\tp3\tgroup2\tbatch2\n")
+			f.write("sample3\tp3\tgroup2\tbatch2\n")
 		with open(scriptfile, 'w') as f:
 			f.write(txt.sampleinfo.py)
 			f.write("""
-r2info, r2cols = txtSampleinfo("%s")
-assert r2info == {
-	'sample1': {'Group': 'group1'},
-	'sample2': {'Group': 'group1'},
-	'sample3': {'Group': 'group1'},
-	'sample4': {'Group': 'group2'},
-	'sample5': {'Group': 'group2'},
-	'sample6': {'Group': 'group2'},
-}
-assert r2cols == {
-	'Sample': ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6'],
-	'Group': ['group1', 'group1', 'group1', 'group2', 'group2', 'group2']
-}
+saminfo = txtSampleinfo("%s")
+assert saminfo.rownames == ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6']
+assert saminfo.colnames == ['Group']
+assert saminfo.ncol == 1
+assert saminfo.nrow == 6
 
-r3info, r3cols = txtSampleinfo("%s")
-assert r3info == {
-	'sample1': {'Group': 'group1', 'Patient': 'p1', 'Batch': 'batch1'},
-	'sample2': {'Group': 'group1', 'Patient': 'p1', 'Batch': 'batch1'},
-	'sample3': {'Group': 'group1', 'Patient': 'p2', 'Batch': 'batch1'},
-	'sample4': {'Group': 'group2', 'Patient': 'p2', 'Batch': 'batch2'},
-	'sample5': {'Group': 'group2', 'Patient': 'p3', 'Batch': 'batch2'},
-	'sample6': {'Group': 'group2', 'Patient': 'p3', 'Batch': 'batch2'},
-}
-assert r3cols == {
-	'Sample': ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6'],
-	'Patient': ['p1', 'p1', 'p2', 'p2', 'p3', 'p3'],
-	'Group': ['group1', 'group1', 'group1', 'group2', 'group2', 'group2'],
-	'Batch': ['batch1', 'batch1', 'batch1', 'batch2', 'batch2', 'batch2'],
-}
+saminfo = txtSampleinfo("%s")
+assert saminfo.rownames == ['sample1', 'sample2', 'sample3', 'sample1', 'sample2', 'sample3']
+assert saminfo.colnames == ['Patient', 'Group', 'Batch']
+assert saminfo.ncol == 3
+assert saminfo.nrow == 6
 
 try:
 	txtSampleinfo("%s")
@@ -205,11 +187,11 @@ except ValueError:
 			f.write("""
 				r2 = txtSampleinfo("%s")
 				
-				stopifnot( rownames(r2) == c('sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6') )
+				stopifnot( rownames(r2) != c('sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6') )
 				stopifnot( r2$Group == c('group1', 'group1', 'group1', 'group2', 'group2', 'group2') )
 
 				r3 = txtSampleinfo("%s")
-				stopifnot( rownames(r3) == c('sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6') )
+				stopifnot( rownames(r3) != c('sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6') )
 				stopifnot( r3$Group == c('group1', 'group1', 'group1', 'group2', 'group2', 'group2') )
 				stopifnot( r3$Patient == c('p1', 'p1', 'p2', 'p2', 'p3', 'p3') )
 				stopifnot( r3$Batch == c('batch1', 'batch1', 'batch1', 'batch2', 'batch2', 'batch2') )
@@ -296,9 +278,28 @@ except ValueError:
 			f.write('print params2CmdArgs(params, dash = "--", equal = "=", noq = ["cde"])\n')
 			f.write('print params2CmdArgs(params, dash = "", equal = "=", noq = ["cde"])\n')
 		stdout = check_output(['python', scriptfile], stderr=self.devnull)
-		self.assertIn('-a -b "c" ---Xms128M -Xmx2G --cde="12"', stdout.splitlines())
-		self.assertIn('-a -b "c" ---Xms128M -Xmx2G --cde=12', stdout.splitlines())
-		self.assertIn('a b="c" -Xms128M -Xmx2G cde=12', stdout.splitlines())
+		self.assertIn("-a -b c ---Xms128M -Xmx2G --cde=12", stdout.splitlines())
+		self.assertIn("-a -b c ---Xms128M -Xmx2G --cde=12", stdout.splitlines())
+		self.assertIn("a b=c -Xms128M -Xmx2G cde=12", stdout.splitlines())
+
+	def testparams2CmdArgsR(self):
+		scriptfile = path.join(tmpdir, 'testparams2CmdArgs.r')
+		with open(scriptfile, 'w') as f:
+			f.write(helpers.params2CmdArgs.r)
+			f.write('params = list(\n')
+			f.write('	a = TRUE,\n')
+			f.write('	b = "c",\n')
+			f.write('	cde = 12\n')
+			f.write(')\n')
+			f.write('params[["-Xms128M -Xmx2G"]] = T\n')
+			f.write('write(params2CmdArgs(params), stdout())\n')
+			f.write('write(params2CmdArgs(params, noq = c("cde")), stdout())\n')
+			f.write('write(params2CmdArgs(params, dash = "--", equal = "=", noq = c("cde")), stdout())\n')
+			f.write('write(params2CmdArgs(params, dash = "", equal = "=", noq = c("cde")), stdout())\n')
+		stdout = check_output(['Rscript', scriptfile], stderr=self.devnull)
+		self.assertIn("-a -b 'c' --cde='12' ---Xms128M -Xmx2G", stdout.splitlines())
+		self.assertIn("-a -b 'c' --cde=12 ---Xms128M -Xmx2G", stdout.splitlines())
+		self.assertIn("a b='c' cde=12 -Xms128M -Xmx2G", stdout.splitlines())
 
 	def testMem2(self):
 		scriptfile = path.join(tmpdir, 'testmem2.py')
@@ -352,20 +353,20 @@ except ValueError:
 			stdout = ''
 		self.assertEqual(['[1] 0', '[1] 127'], stdout)
 
-	def testPollingFirst(self):
-		scriptfile = path.join(tmpdir, 'testPollingFirst.py')
-		flagfile   = path.join(tmpdir, 'testPollingFirst.py.flag')
+	def testPollingNon1st(self):
+		scriptfile = path.join(tmpdir, 'testPollingNon1st.py')
+		flagfile   = path.join(tmpdir, 'testPollingNon1st.py.flag')
 		if path.exists(flagfile): remove(flagfile)
 		if path.exists(flagfile+ '.error'): remove(flagfile + '.error')
 		with open(scriptfile, 'w') as f:
-			f.write(polling.first.py)
+			f.write(polling.non1st.py)
 			f.write('from multiprocessing import Process, JoinableQueue as Queue\n')
 			f.write('from time import time\n')
 			f.write('def worker(q):\n')
 			f.write('	while True:\n')
 			f.write('		if q.empty(): break\n')
 			f.write('		index, cmd = q.get()\n')
-			f.write('		pollingFirst(index, cmd, "%s", t = 1)\n' % flagfile)
+			f.write('		pollingNon1st(index, cmd, "%s", t = 1)\n' % flagfile)
 			f.write('		print "Process:", index, "done!"\n')
 			f.write('		q.task_done()\n')
 			f.write('\n')
@@ -383,20 +384,20 @@ except ValueError:
 		stdout = check_output(['python', scriptfile], stderr=self.devnull).splitlines()
 		self.assertIn(stdout[-1], ['3', '4'])
 
-	def testPollingFirstR(self):
-		scriptfile = path.join(tmpdir, 'testPollingFirst.r')
-		flagfile   = path.join(tmpdir, 'testPollingFirst.r.flag')
+	def testPollingNon1stR(self):
+		scriptfile = path.join(tmpdir, 'testPollingNon1st.r')
+		flagfile   = path.join(tmpdir, 'testPollingNon1st.r.flag')
 		if path.exists(flagfile): remove(flagfile)
 		if path.exists(flagfile+ '.error'): remove(flagfile + '.error')
 
 		with open(scriptfile, 'w') as f:
-			f.write(polling.first.r)
+			f.write(polling.non1st.r)
 			f.write('library(doParallel)\n')
 			f.write('t0 = proc.time()\n')
 			f.write('cl <- makeCluster(5)\n')
 			f.write('registerDoParallel(cl)\n')
 			f.write('foreach(i=1:5) %dopar% {\n')
-			f.write('	pollingFirst(i-1, "sleep 4", "%s", t = 1)\n' % flagfile)
+			f.write('	pollingNon1st(i-1, "sleep 4", "%s", t = 1)\n' % flagfile)
 			f.write('}\n')
 			f.write('stopCluster(cl) \n')
 			f.write('cat(proc.time() - t0)\n')
@@ -458,6 +459,67 @@ except ValueError:
 			f.write('registerDoParallel(cl)\n')
 			f.write('foreach(i=1:5) %dopar% {\n')
 			f.write('	pollingAll("%s", 5, i-1, paste("sleep", i - 1), "flag", t = .1)\n' % tmpdir)
+			f.write('}\n')
+			f.write('stopCluster(cl) \n')
+			f.write('cat(proc.time() - t0)\n')
+
+		stdout = check_output(['Rscript', scriptfile], stderr=self.devnull).splitlines()
+		self.assertIn(int(float(stdout[-1].split()[2])), [7, 5, 6])
+
+	def testPollingFirst(self):
+		scriptfile = path.join(tmpdir, 'testPollingFirst.py')
+		for i in list(range(5)):
+			odir = path.join(tmpdir, str(i), 'output')
+			if not path.exists(odir): makedirs(odir)
+			flag = path.join(odir, 'flag')
+			eflg = path.join(odir, 'flag.error')
+			if path.exists(flag): remove(flag)
+			if path.exists(eflg): remove(eflg)
+
+		with open(scriptfile, 'w') as f:
+			f.write(polling.first.py)
+			f.write('from multiprocessing import Process, JoinableQueue as Queue\n')
+			f.write('from time import time\n')
+			f.write('def worker(q):\n')
+			f.write('	while True:\n')
+			f.write('		if q.empty(): break\n')
+			f.write('		index, cmd = q.get()\n')
+			f.write('		pollingFirst("%s", 5, index, cmd, "flag", t = 1)\n' % (tmpdir))
+			f.write('		print "Process:", index, "done!"\n')
+			f.write('		q.task_done()\n')
+			f.write('\n')
+			f.write('sq = Queue()\n')
+			f.write('for i in range(5):\n')
+			f.write('	sq.put((i, "sleep " + str(i)))\n')
+			f.write('\n')
+			f.write('t0 = time()\n')
+			f.write('for i in range(5):\n')
+			f.write('	t = Process(target = worker, args=(sq, ))\n')
+			f.write('	t.daemon = True\n')
+			f.write('	t.start ()\n')
+			f.write('sq.join()\n')
+			f.write('print int(time() - t0)\n')
+		stdout = check_output(['python', scriptfile], stderr=self.devnull).splitlines()
+		self.assertIn(stdout[-1], ['4', '5'])
+
+	def testPollingFirstR(self):
+		scriptfile = path.join(tmpdir, 'testPollingFirst.r')
+		for i in list(range(5)):
+			odir = path.join(tmpdir, str(i), 'output')
+			if not path.exists(odir): makedirs(odir)
+			flag = path.join(odir, 'flag')
+			eflg = path.join(odir, 'flag.error')
+			if path.exists(flag): remove(flag)
+			if path.exists(eflg): remove(eflg)
+
+		with open(scriptfile, 'w') as f:
+			f.write(polling.first.r)
+			f.write('library(doParallel)\n')
+			f.write('t0 = proc.time()\n')
+			f.write('cl <- makeCluster(5)\n')
+			f.write('registerDoParallel(cl)\n')
+			f.write('foreach(i=1:5) %dopar% {\n')
+			f.write('	pollingFirst("%s", 5, i-1, paste("sleep", i - 1), "flag", t = .1)\n' % tmpdir)
 			f.write('}\n')
 			f.write('stopCluster(cl) \n')
 			f.write('cat(proc.time() - t0)\n')

@@ -61,7 +61,7 @@ ref = buildrefIndex (
 		
 # do mapping
 params['t'] = {{args.nthread}}
-params['R'] = "@RG\\\\tID:%s\\\\t%s" % (rg['ID'], "\\\\t".join(k + ':' +v for k,v in rg.items() if k!='ID'))
+params['R'] = "@RG\\tID:%s\\t%s" % (rg['ID'], "\\t".join(k + ':' +v for k,v in rg.items() if k!='ID'))
 
 cmd = '{{args.bwa}} mem %s "%s" "{{in.fq}}" > "{{out.outfile}}"' % (params2CmdArgs(params, noq=['t']), ref)
 runcmd (cmd)

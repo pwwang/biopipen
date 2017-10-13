@@ -1,10 +1,17 @@
 {{mem2}}
+{{params2CmdArgs}}
 
-cmd = '{{args.bamstats}} -i "{{in.infile}}" -o "{{out.outfile}}" {{args.params}}'
+params = {{args.params | Rlist}}
+params$i = {{in.infile | quote}}
+params$o = {{out.outfile | quote}}
+
+cmd = paste('{{args.bamstats}}', params2CmdArgs(params), sep = ' ')
 
 {% if args.plot %}
-{{pollingAll}}
-pollingAll ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "bamstats.done")
+{{plotHist}}
+{{plotBoxplot}}
+{{pollingFirst}}
+pollingFirst ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "bamstats.done")
 
 {% if job.index | lambda x: x == 0 %}
 ##### start plotting
@@ -32,30 +39,15 @@ for (i in 1:length(bsfiles)) {
 		chrs = cbind(chrs, col2in)
 	}
 }
-# plot average coverage
-plotFreq = function (obj, figure, xlab, ylab="Frequency") {
-	png (file=figure)
-	h = hist (obj, freq=T, xlab=xlab, ylab=ylab, col="gray", main=paste(xlab, "distribution", sep=" "), axes=F)
-	minb = min(h$breaks)
-	maxb = max(h$breaks)
-	maxc = max(h$counts)
-	lenb = length(h$breaks)
-	stpb = (maxb-minb)/(lenb-1)
-	axis(1, pos=0, labels=T, at=seq(minb,maxb,stpb))
-	lab0 = floor(log10(maxc))
-	stpc = ceiling(maxc/(10**lab0)) * (10 ** (lab0-1))
-	axis(2, pos=minb, labels=T, at=seq(0, maxc, stpc))
-	dev.off()
-}
+
 write ("Plotting average coverages ...", stderr())
 write.table (means, "{{out.outdir}}/avgCoverage.txt", quote=F, sep="\\t")
-plotFreq (means, "{{out.outdir}}/avgCoverage.png", xlab="Average coverage")
+plotHist (means, "{{out.outdir}}/avgCoverage.png", ggs = {{args.histplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
 # plot chromosomes
 write ("Plotting chromosome coverages ...", stderr())
 png ("{{out.outdir}}/chrCoverage.png")
-#colnames(chrs) = NULL # just show index
-boxplot(t(chrs), ylab="Coverage", las=2)
+plotBoxplot(t(chrs), "{{out.outdir}}/chrCoverage.png", ggs = {{args.boxplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 dev.off()
 
 {% endif %}

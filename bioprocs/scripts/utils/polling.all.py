@@ -37,7 +37,7 @@ if 'pollingAll' not in vars() or not callable(pollingAll):
 					wait = True
 					break
 			if wait:
-				stderr.write('Waiting till jobs done ...\n')
+				stderr.write('Waiting till all jobs done ...\n')
 				sleep(t)
 			else:
 				break

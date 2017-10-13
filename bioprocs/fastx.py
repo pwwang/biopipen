@@ -35,7 +35,8 @@ pFastq2Expr.args.nthread           = 1
 pFastq2Expr.tplenvs.getCommonName  = _getCommonName
 pFastq2Expr.tplenvs.runcmd         = runcmd.py
 pFastq2Expr.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pFastq2Expr.tplenvs.txtFilter = txt.filter.py
+pFastq2Expr.tplenvs.txtFilter      = txt.filter.py
+pFastq2Expr.tplenvs.txtTransform   = txt.transform.py
 pFastq2Expr.beforeCmd              = """
 if [[ -z "{{args.idxfile}}" ]]; then
 	echo 'Index file (args.idxfile) is required.' 1>&2

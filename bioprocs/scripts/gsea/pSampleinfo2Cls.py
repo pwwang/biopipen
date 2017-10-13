@@ -1,11 +1,9 @@
 {{ txtSampleinfo }}
-info, cols = txtSampleinfo("{{in.sifile}}")
-groups = list(set(cols['Group']))
+saminfo = txtSampleinfo("{{in.sifile}}")
+groups = [g[0] for g in saminfo[["", "Group"]].data]
 
 with open("{{out.outfile}}", "w") as f:
-	f.write("%s\t%s\t1\n" % (len(info), len(groups)))
-	f.write("# %s\n" % (' '.join(groups)))
-	clss = []
-	for sample, sinfo in info.items():
-		clss.append(sinfo['Group'])
-	f.write(' '.join(clss) + '\n')
+	f.write("%s\t%s\t1\n" % (saminfo.nrow, len(set(groups))))
+	f.write("# %s\n" % (' '.join(list(set(groups)))))
+	
+	f.write(' '.join(groups) + '\n')

@@ -9,7 +9,7 @@ if not path.exists ("{{bring.infile[0]}}"):
 	exit (1)
 
 {{ runcmd }}
-{{ pollingFirst }}
+{{ pollingNon1st }}
 {{ pollingAll }}
 {{ params2CmdArgs }}
 
@@ -46,7 +46,7 @@ cnvkitTargetParams = {{args.cnvkitTargetParams}}
 cnvkitTargetParams['o'] = targetfile
 cmd2 = '{{args.cnvkit}} target "%s" %s' % (accessfile, params2CmdArgs(cnvkitTargetParams))
 
-pollingFirst ({{job.index}}, cmd1 + '; ' + cmd2, targetDone, t = 60)
+pollingNon1st ({{job.index}}, cmd1 + '; ' + cmd2, targetDone, t = 60)
 
 cnvkitCoverageParams = {{args.cnvkitCoverageParams}}
 cnvkitCoverageParams['p'] = {{args.nthread}}
@@ -60,7 +60,7 @@ cnvkitReferenceParams['o'] = refcnn
 cnvkitReferenceParams['f'] = {{args.ref | quote}}
 cmd = '%s {{args.cnvkit}} reference {{proc.workdir}}/*/output/*/*.targetcov.cnn %s' % (openblas_nthr, params2CmdArgs(cnvkitReferenceParams))
 
-pollingFirst ({{job.index}}, cmd, referenceDone)
+pollingNon1st ({{job.index}}, cmd, referenceDone)
 
 mtfile = "{{out.outdir}}/cnvkit_mt"
 open(mtfile, 'w').close()

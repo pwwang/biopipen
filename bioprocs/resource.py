@@ -34,10 +34,10 @@ pTxt.args.transform       = ''
 pTxt.args.username        = ''
 pTxt.args.password        = ''
 pTxt.args.curl            = params.curl.value
-pTxt.tplenvs.txtFilter    = txt.filter.python
-pTxt.tplenvs.txtTransform = txt.transform.python
-pTxt.tplenvs.downloadCurl = download.curl.python
-pTxt.tplenvs.runcmd       = runcmd.python
+pTxt.tplenvs.txtFilter    = txt.filter.py
+pTxt.tplenvs.txtTransform = txt.transform.py
+pTxt.tplenvs.downloadCurl = download.curl.py
+pTxt.tplenvs.runcmd       = runcmd.py
 pTxt.args.urls            = Box({
 	'drugbank-target-all': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-all-uniprot-links',
 	'drugbank-target-approved': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-approved-uniprot-links',
@@ -55,23 +55,23 @@ pTxt.lang   = params.python.value
 pTxt.script = "file:scripts/resource/pTxt.py"
 
 
-pGtf = Proc(desc = 'Download GTF files.')
-pGtf.input              = "in"
-pGtf.output             = "outfile:file:{{in}}.gtf{{args.gz | lambda x: '.gz' if x else ''}}"
-pGtf.args.gz            = False
-pGtf.args.curl          = 'curl'
-pGtf.args.username      = ''
-pGtf.args.password      = ''
-pGtf.args.genepredtogtf = 'genePredToGtf'
-pGtf.tplenvs.runcmd       = runcmd.python
-pGtf.tplenvs.downloadCurl = download.curl.python
-pGtf.args.urls          = {
+pGtf                      = Proc(desc = 'Download GTF files.')
+pGtf.input                = "in"
+pGtf.output               = "outfile:file:{{in}}.gtf{{args.gz | lambda x: '.gz' if x else ''}}"
+pGtf.args.gz              = False
+pGtf.args.curl            = 'curl'
+pGtf.args.username        = ''
+pGtf.args.password        = ''
+pGtf.args.genepredtogtf   = 'genePredToGtf'
+pGtf.tplenvs.runcmd       = runcmd.py
+pGtf.tplenvs.downloadCurl = download.curl.py
+pGtf.args.urls            = {
 	'hg19-refgene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz',
 	'hg19-knowngene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/knownGene.txt.gz',
 	'hg38-refgene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg38database/refGene.txt.gz',
 	'hg38-knowngene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/knownGene.txt.gz',
 }
-pGtf.lang   = 'python'
+pGtf.lang   = params.python.value
 pGtf.script = """
 import os, shutil
 from subprocess import check_output

@@ -27,13 +27,16 @@ runcmd.r  = _getsource()
 Polling helpers
 """
 polling = Box({
-	'first': {},
-	'all'  : {}
+	'non1st': {},
+	'first' : {},
+	'all'   : {}
 })
-polling.first.py = _getsource(runcmd.py)
-polling.first.r  = _getsource(runcmd.r)
-polling.all.py   = _getsource(runcmd.py)
-polling.all.r    = _getsource(runcmd.r)
+polling.non1st.py = _getsource(runcmd.py)
+polling.non1st.r  = _getsource(runcmd.r)
+polling.first.py  = _getsource(runcmd.py)
+polling.first.r   = _getsource(runcmd.r)
+polling.all.py    = _getsource(runcmd.py)
+polling.all.r     = _getsource(runcmd.r)
 
 """
 Build reference indices
@@ -47,7 +50,7 @@ buildref = Box({
 buildref.fai.bash  = _getsource()
 # args.ref: args.picard needed
 buildref.dict.bash = _getsource()
-buildref.index.py  = _getsource(polling.first.py)
+buildref.index.py  = _getsource(polling.non1st.py)
 
 """
 Check reference existence
@@ -70,6 +73,7 @@ helpers = Box({
 })
 helpers.cbindfill.r = _getsource()
 helpers.params2CmdArgs.py = _getsource()
+helpers.params2CmdArgs.r  = _getsource()
 
 plot = Box({
 	'hist'   : {},

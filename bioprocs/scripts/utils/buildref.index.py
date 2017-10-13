@@ -25,7 +25,7 @@ if 'buildrefIndex' not in vars() or not callable (buildrefIndex):
 		
 		donefile = outfiles2[0] + '.done'
 		try:
-			polling0 (jobid, cmd1, donefile)
+			pollingFirst (jobid, cmd1, donefile)
 			return infile1
 		except SystemExit:
 			if jobid == 0 and path.exists (donefile):
@@ -34,5 +34,5 @@ if 'buildrefIndex' not in vars() or not callable (buildrefIndex):
 				remove (donefile)
 			if not path.exists (infile2):
 				symlink (infile1, infile2)
-			polling0 (jobid, cmd2, donefile)
+			pollingFirst (jobid, cmd2, donefile)
 			return infile2

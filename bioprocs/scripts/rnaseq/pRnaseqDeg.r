@@ -11,8 +11,8 @@ gfactor   = factor(sampleinfo$Group)
 gfactor   = relevel(gfactor, as.vector(sampleinfo$Group[1]))
 group1    = levels(gfactor)[1]
 group2    = levels(gfactor)[2]
-samples1  = rownames(sampleinfo[which(sampleinfo$Group == group1), , drop=F])
-samples2  = rownames(sampleinfo[which(sampleinfo$Group == group2), , drop=F])
+samples1  = sampleinfo[which(sampleinfo$Group == group1), , drop=F]$row.names
+samples2  = sampleinfo[which(sampleinfo$Group == group2), , drop=F]$row.names
 samples   = c(samples1, samples2)
 ematrix   = ematrix[, samples, drop=F]
 
@@ -31,12 +31,12 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 {% if args.tool | lambda x: x == 'edger' %}
 	# get model
 	if ("Patient" %in% colnames(sampleinfo)) {
-		pairs  = factor(sampleinfo[samples, "Patient"])
-		group  = factor(sampleinfo[samples, "Group"])
+		pairs  = factor(sampleinfo[which(sampleinfo$row.names %in% samples), "Patient"])
+		group  = factor(sampleinfo[which(sampleinfo$row.names %in% samples), "Group"])
 		group  = relevel(group, group2)
 		design = model.matrix(~pairs + group)
 	} else {
-		group  = factor(sampleinfo[samples, "Group"])
+		group  = factor(sampleinfo[which(sampleinfo$row.names %in% samples), "Group"])
 		group  = relevel(group, group2)
 		design = model.matrix(~group)
 	}
