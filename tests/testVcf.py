@@ -3,11 +3,11 @@ import os, sys, unittest, addPath
 from os import path
 from pyppl import PyPPL, Box, Channel, Proc
 from bioprocs.fastx import pFastqSim
-from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit
+from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit, pVcf2Maf, pVcfMerge
 from bioprocs.vcfnext import pVcfStatsPlot, pCallRate
 from bioprocs.web import pDownloadGet
 from bioprocs.common import pFiles2Dir
-from bioprocs.tabix import pTabix
+from bioprocs.tabix import pTabix, pTabixIndex
 from bioprocs import params
 
 params = params.toDict()
@@ -157,8 +157,8 @@ class TestVcf (unittest.TestCase):
 
 		pVcfSplit2 = pVcfSplit.copy()
 		pVcfSplit2.depends = pTabix
-		pVcfSplit2.input   = lambda ch: ch.cbind("NA19660,NA19917,NA20815")
-		pVcfSplit2.expect  = "ls -l {{out.outdir}}/NA19660.vcf {{out.outdir}}/NA19917.vcf {{out.outdir}}/NA20815.vcf"
+		pVcfSplit2.input   = lambda ch: ch.cbind("NA19660,NA19917")
+		pVcfSplit2.expect  = "ls -l {{out.outdir}}/NA19660.vcf {{out.outdir}}/NA19917.vcf"
 
 		pVcfSplit3 = pVcfSplit.copy()
 		pVcfSplit3.depends = pTabix
@@ -176,12 +176,13 @@ class TestVcf (unittest.TestCase):
 		pVcfSplit4.args.tool  = 'gatk'
 		'''
 		PyPPL().start(pTabix).run()
-		self.data.vcfs = pTabix.channel.outfile
+		self.data.vcf  = pTabix.channel.outfile
+		self.data.vcfs = pVcfSplit2.channel.outdir
 
 	def test6_pPlotStats_Real(self):
 		
 		pVcfAnno5 = pVcfAnno.copy()
-		pVcfAnno5.input = self.data.vcfs
+		pVcfAnno5.input = self.data.vcf
 		pVcfAnno5.args.snpeffStats = True
 
 		pFiles2Dir3 = pFiles2Dir.copy()
@@ -193,6 +194,23 @@ class TestVcf (unittest.TestCase):
 		pVcfStatsPlot3.expect  = 'ls {{out.outdir}}/mats/*.mat.txt'
 
 		PyPPL().start(pVcfAnno5).run()
+
+	def test7_pVcf2Maf(self):
+		pFiles2Dir4 = pFiles2Dir.copy()
+
+		pTabixIndex.input      = self.data.vcfs.expand(pattern = '*.vcf')
+		pFiles2Dir4.depends    = pTabixIndex
+		pFiles2Dir4.input      = lambda ch: [ch.flatten()]
+		pVcfMerge.depends      = pFiles2Dir4
+
+		pAddChr2         = Proc()
+		pAddChr2.depends = pVcfMerge
+		pAddChr2.input   = "infile:file"
+		pAddChr2.output  = "outfile:file:{{in.infile|bn}}"
+		pAddChr2.script  = """awk '$0 ~ /^#/ {print} $0 !~ /^#/ {print "chr"$0}' {{in.infile}} > {{out.outfile}}"""
+
+		pVcf2Maf.depends       = pAddChr2
+		PyPPL().start(pTabixIndex).run()
 		
 		
 if __name__ == '__main__':

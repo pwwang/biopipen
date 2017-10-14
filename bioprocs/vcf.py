@@ -1,7 +1,8 @@
 """
 A set of processes to generate/process vcf files
 """
-
+from os import path
+from glob import glob
 from pyppl import Proc, Box
 from .utils import mem2, runcmd, buildref, checkref, helpers, plot
 from . import params
@@ -174,5 +175,71 @@ pVcfSplit.tplenvs.runcmd         = runcmd.py
 pVcfSplit.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
 pVcfSplit.lang                   = params.python.value
 pVcfSplit.script                 = "file:scripts/vcf/pVcfSplit.py"
+
+"""
+@name:
+	pVcfMerge
+@description:
+	Merge single-sample Vcf files to multi-sample Vcf file.
+@input:
+	`indir:dir`: The directory containing multiple vcf files
+@output:
+	`outfile:dir`:  The output multi-sample vcf.
+@args:
+	`pattern`:  The pattern filter for vcf files in the input directory. Default: '*'
+	`tool`:     The tool used to do extraction. Default: vcftools
+	`vcftools`: The path of vcftools' vcf-subset
+	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
+	`gatk`:     The path of gatk.
+"""
+pVcfMerge                        = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
+pVcfMerge.input                  = "indir:dir"
+pVcfMerge.output                 = "outfile:file:{{in.indir, args.pattern | fsDirname}}-merged.vcf"
+pVcfMerge.args.pattern           = '*.vcf.gz'
+pVcfMerge.args.tool              = 'vcftools'
+pVcfMerge.args.vcftools          = params.vcftools_merge.value
+pVcfMerge.args.gatk              = params.gatk.value
+pVcfMerge.args.ref               = params.ref.value # only for gatk
+pVcfMerge.args.vep               = params.vep.value
+pVcfMerge.tplenvs.runcmd         = runcmd.py
+pVcfMerge.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcfMerge.tplenvs.fsDirname      = lambda dir, pat: path.basename(glob(path.join(dir, pat))[0]).split('.')[0] + '_etc'
+pVcfMerge.lang                   = params.python.value
+pVcfMerge.script                 = "file:scripts/vcf/pVcfMerge.py"
+
+"""
+@name:
+	pVcf2Maf
+@description:
+	Convert Vcf file to Maf file
+@input:
+	`infile:file` : The input vcf file
+@output:
+	`outfile:file`: The output maf file
+@args:
+	`tool`: Which tool to use. Default: vcf2maf
+	`vcf2maf`: The path of vcf2maf.pl
+	`vep`: The path of vep
+	`vepDb`: The path of database for vep
+	`bcftools`: The path of bcftools, used to get sample names
+	`filtervcf`: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
+	`ref`: The reference genome
+	`tumor1st`: Whether tumor sample comes first in the input vcf file. Default: True
+"""
+pVcf2Maf                        = Proc(desc = 'Convert Vcf file to Maf file.')
+pVcf2Maf.input                  = 'infile:file'
+pVcf2Maf.output                 = 'outfile:file:{{in.infile | fn | fn}}.maf'
+pVcf2Maf.args.tool              = 'vcf2maf'
+pVcf2Maf.args.vcf2maf           = params.vcf2maf.value
+pVcf2Maf.args.vep               = params.vep.value
+pVcf2Maf.args.vepDb             = params.vepDb.value
+pVcf2Maf.args.bcftools          = params.bcftools.value
+pVcf2Maf.args.filtervcf         = params.vepNonTCGAVcf.value
+pVcf2Maf.args.ref               = params.ref.value
+pVcf2Maf.args.tumor1st          = True
+pVcf2Maf.tplenvs.runcmd         = runcmd.py
+pVcf2Maf.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcf2Maf.lang                   = params.python.value
+pVcf2Maf.script                 = "file:scripts/vcf/pVcf2Maf.py"
 
 
