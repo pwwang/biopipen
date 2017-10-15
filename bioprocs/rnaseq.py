@@ -2,6 +2,7 @@ from os import path
 from glob import glob
 from pyppl import Proc, Box
 from .utils import plot, txt
+from . import params
 
 """
 @name:
@@ -35,7 +36,7 @@ pExpdir2Matrix.output              = [
 	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt", 
 	"outdir:dir:{{in.expdir, args.pattern | fsDirname}}"
 ]
-pExpdir2Matrix.lang                = "Rscript"
+pExpdir2Matrix.lang                = params.Rscript.value
 pExpdir2Matrix.args.pattern        = '*'
 pExpdir2Matrix.args.header         = False
 pExpdir2Matrix.args.exrows         = ["^Sample", "^Composite", "^__"]
@@ -91,7 +92,7 @@ pBatchEffect.tplenvs.plotBoxplot   = plot.boxplot.r
 pBatchEffect.tplenvs.plotHeatmap   = plot.heatmap.r
 pBatchEffect.tplenvs.plotHist      = plot.hist.r
 pBatchEffect.tplenvs.txtSampleinfo = txt.sampleinfo.r
-pBatchEffect.lang                  = 'Rscript'
+pBatchEffect.lang                  = params.Rscript.value
 pBatchEffect.script                = "file:scripts/rnaseq/pBatchEffect.r"
 
 """
@@ -143,7 +144,7 @@ pRawCounts2.args.histplotggs    = ['r:labs(x = "Expression", y = "# Samples")']
 pRawCounts2.tplenvs.plotBoxplot = plot.boxplot.r
 pRawCounts2.tplenvs.plotHeatmap = plot.heatmap.r
 pRawCounts2.tplenvs.plotHist    = plot.hist.r
-pRawCounts2.lang                = "Rscript"
+pRawCounts2.lang                = params.Rscript.value
 pRawCounts2.script              = "file:scripts/rnaseq/pRawCounts2.r"
 
 
@@ -202,7 +203,7 @@ pRnaseqDeg.tplenvs.plotHeatmap   = plot.heatmap.r
 pRnaseqDeg.tplenvs.plotMAplot    = plot.maplot.r
 pRnaseqDeg.tplenvs.plotVolplot   = plot.volplot.r
 pRnaseqDeg.tplenvs.txtSampleinfo = txt.sampleinfo.r
-pRnaseqDeg.lang                  = "Rscript"
+pRnaseqDeg.lang                  = params.Rscript.value
 pRnaseqDeg.script                = "file:scripts/rnaseq/pRnaseqDeg.r"
 
 pCoexp             = Proc(desc = "Get co-expression of gene pairs in the expression matrix.")
