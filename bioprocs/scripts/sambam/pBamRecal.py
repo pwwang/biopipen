@@ -8,7 +8,7 @@ if not path.exists ({{bring.infile[0] | quote}}):
 	stderr.write ("Input file '{{in._infile}}' is not indexed.")
 	exit (1)
 
-if not path.exists ({{args.knownSites | quote}}) and tool == 'gatk':
+if not path.exists ({{args.knownSites | quote}}) and {{args.tool | quote}} == 'gatk':
 	stderr.write ("knownSites file is required by GATK but is not specified (args.knownSites) or not exists.")
 	exit (1)
 	

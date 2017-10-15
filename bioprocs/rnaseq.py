@@ -204,3 +204,11 @@ pRnaseqDeg.tplenvs.plotVolplot   = plot.volplot.r
 pRnaseqDeg.tplenvs.txtSampleinfo = txt.sampleinfo.r
 pRnaseqDeg.lang                  = "Rscript"
 pRnaseqDeg.script                = "file:scripts/rnaseq/pRnaseqDeg.r"
+
+pCoexp             = Proc(desc = "Get co-expression of gene pairs in the expression matrix.")
+pCoexp.input       = "infile:file"
+pCoexp.output      = "outfile:file:{{infile | fn}}.coexp, outpval:file:{{infile | fn}}.pval"
+pCoexp.args.method = 'pearson'
+pCoexp.args.pval   = False
+pCoexp.lang        = params.Rscript.value
+pCoexp.script      = "file:scripts/rnaseq/pCoexp.r"
