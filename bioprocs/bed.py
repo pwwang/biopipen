@@ -1,7 +1,5 @@
-from pyppl import proc
-"""
-Utilities for bed files.
-"""
+from pyppl import Proc
+from .bedtools import pBedGetfasta
 
 """
 @name:
@@ -25,7 +23,7 @@ Utilities for bed files.
 	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 	[`bedops`](https://github.com/bedops/bedops)
 """
-pBedSort                   = proc(desc = 'Sort bed files.')
+pBedSort                   = Proc(desc = 'Sort bed files.')
 pBedSort.input             = "infile:file"
 pBedSort.output            = "outfile:file:{{infile | bn}}"
 pBedSort.args.tool         = 'sort'
@@ -79,7 +77,7 @@ fi
 	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 	[`bedops`](https://github.com/bedops/bedops)
 """
-pBedIntersect               = proc(desc = 'Find intersections of two bed files.')
+pBedIntersect               = Proc(desc = 'Find intersections of two bed files.')
 pBedIntersect.input         = "infile1:file, infile2:file"
 pBedIntersect.output        = "outfile:file:{{infile1 | fn | fn}}-{{infile2 | fn | fn}}.intersect.bed"
 pBedIntersect.args.tool     = 'bedtools'
@@ -113,7 +111,7 @@ esac
 @requires:
 	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedCluster               = proc(desc = 'Assign cluster id to each record.')
+pBedCluster               = Proc(desc = 'Assign cluster id to each record.')
 pBedCluster.input         = "infile:file"
 pBedCluster.output        = "outfile:file:{{infile | fn}}.cluster.bed"
 pBedCluster.args.tool     = 'bedtools'

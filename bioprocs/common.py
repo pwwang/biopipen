@@ -1,5 +1,6 @@
-from pyppl import Proc
-from .utils import txt
+from pyppl import Proc, Box
+from .utils import txt, helpers, runcmd
+from . import params
 
 """
 @name:
@@ -14,20 +15,15 @@ from .utils import txt
 	`skip`:   To skip first N lines. Default: 0
 	`params`: The arguments used by `sort`
 """
-pSort = Proc()
-pSort.input  = "infile:file"
-pSort.output = "outfile:file:{{in.infile | bn}}"
-pSort.args   = {"params": "", "skip": 0}
-pSort.script = """
-#!/usr/bin/env bash
-if [[ "{{args.skip}}" == "0" ]]; then
-	sort {{args.params}} "{{in.infile}}" > "{{out.outfile}}"
-else
-	nhead={{args.skip}}
-	ntail=$((nhead+1))
-	( head -n $nhead "{{in.infile}}" && tail -n +$ntail "{{in.infile}}" | sort {{args.params}} ) > "{{out.outfile}}"
-fi
-"""
+pSort                        = Proc()
+pSort.input                  = "infile:file"
+pSort.output                 = "outfile:file:{{in.infile | bn}}"
+pSort.args.params            = Box()
+pSort.args.skip              = 0
+pSort.tplenvs.runcmd         = runcmd.py
+pSort.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pSort.lang                   = params.python.value
+pSort.script                 = "file:scripts/common/pSort.py"
 
 """
 @name:
@@ -183,18 +179,14 @@ write.table (data, "{{out.outfile}}", col.names=T, row.names=T, sep="\\t", quote
 pTxtFilter = Proc(desc = 'Filter a txt(tsv) file by columns and rows.')
 pTxtFilter.input             = "txtfile:file"
 pTxtFilter.output            = "outfile:file:{{in.txtfile | bn}}"
-pTxtFilter.lang              = 'python'
+pTxtFilter.lang              = params.python.value
 pTxtFilter.args.cols         = []
-pTxtFilter.args.rfilter      = 'lambda x:True'
+pTxtFilter.args.rfilter      = None
 pTxtFilter.args.header       = True
 pTxtFilter.args.skip         = 0
 pTxtFilter.args.delimit      = "\t"
 pTxtFilter.tplenvs.txtFilter = txt.filter.py
-pTxtFilter.script            = """
-{{txtFilter}}
-
-txtFilter({{in.txtfile | quote}}, {{out.outfile | quote}}, {{args.cols | json}}, {{args.rfilter}}, {{ args.header }}, {{args.skip}}, {{args.delimit | quote}})
-"""
+pTxtFilter.script            = "file:scripts/common/pTxtFilter.py"
 
 """
 @name:
@@ -210,3 +202,22 @@ pFile2Proc = Proc(desc="Convert a file to a proc so it can be used as dependent"
 pFile2Proc.input  = "infile:file"
 pFile2Proc.output = "outfile:file:{{in.infile | bn}}"
 pFile2Proc.script = 'ln -s "{{in.infile}}" "{{out.outfile}}"'
+
+"""
+@name:
+	pStr2File
+@description:
+	Save string to a file.
+@input:
+	`in:var`: The input string.
+@output:
+	`outfile:file`: The output file.
+"""
+pStr2File                   = Proc(desc = "Save string to a file.")
+pStr2File.input             = "in:var"
+pStr2File.output            = "outfile:file:{{in.in | encode}}.txt"
+pStr2File.args.breakOn      = ','
+pStr2File.args.trimLine     = True
+pStr2File.tplenvs.encode    = lambda x: __import__('re').sub(r'[^\w_]', '', x)[:16]
+pStr2File.lang              = params.python.value
+pStr2File.script            = "file:scripts/common/pStr2File.py"

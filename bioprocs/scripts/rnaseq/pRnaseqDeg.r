@@ -67,12 +67,12 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 	library(DESeq2)
 	# model
 	if ("Patient" %in% colnames(sampleinfo)) {
-		coldata           = data.frame(patients = factor(sampleinfo[samples, 'Patient']), treats = factor(sampleinfo[samples, 'Group']))
+		coldata           = data.frame(patients = factor(sampleinfo[which(sampleinfo$row.names %in% samples), 'Patient']), treats = factor(sampleinfo[which(sampleinfo$row.names %in% samples), 'Group']))
 		coldata$treats    = relevel(coldata$treats, group2)
 		rownames(coldata) = samples
 		dge               = DESeqDataSetFromMatrix(round(ematrix), coldata, design = ~patients + treats)
 	} else {
-		coldata           = data.frame(treats = factor(sampleinfo[samples, 'Group']))
+		coldata           = data.frame(treats = factor(sampleinfo[which(sampleinfo$row.names %in% samples), 'Group']))
 		coldata$treats    = relevel(coldata$treats, group2) 
 		rownames(coldata) = samples
 		dge               = DESeqDataSetFromMatrix(round(ematrix), coldata, design = ~treats)

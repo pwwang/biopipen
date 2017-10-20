@@ -1,4 +1,5 @@
-from pyppl import proc
+from pyppl import Proc
+from . import params
 """
 A set of procs to handle sequences
 """
@@ -28,7 +29,7 @@ A set of procs to handle sequences
 	[bwtool](https://github.com/CRG-Barcelona/bwtool)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html) if `calcp` is `True`
 """
-pConsv = proc()
+pConsv = Proc()
 pConsv.input  = "bedfile:file, bwdir:file"
 pConsv.output = "outdir:dir:{{bedfile | fn}}.consv"
 pConsv.args   = {"calcp": True, "nperm": 10000, "seed": 0, "gsize": "", "bin-bwtool": "bwtool", "bin-bedtools": "bedtools"}
@@ -122,57 +123,12 @@ if {{args.calcp}}:
 	fout.close()
 """
 
-"""
-@name:
-	pGetPromoterBed
-@description:
-	Get the promoter region in bed format
-@input:
-	`gene`: the gene
-@output:
-	`outfile:file`: the bed file containing the promoter region
-@args:
-	`up`: the upstream to the tss, default: 2000
-	`down`: the downstream to the tss, default: 2000
-	`genome`: the genome, default: hg19
-@require:
-	[python-mygene](http://mygene.info/)
-"""
-pGetPromoterBed = proc()
-pGetPromoterBed.input  = "gene"
-pGetPromoterBed.output = "outfile:file:{{gene}}.promoter.bed"
-pGetPromoterBed.args   = {"up": 2000, "down": 2000, "genome": "hg19"}
-pGetPromoterBed.lang   = "python"
-pGetPromoterBed.script = """
-import sys
-from mygene import MyGeneInfo
-mg = MyGeneInfo()
-ret = mg.query('{{gene}}', fields="genomic_pos_{{args.genome}}", scopes="symbol,alias", species="{{args.genome}}")
-if not ret.has_key ('hits'):
-	print "TSS not found for gene: {{gene}}" 
-	sys.exit (1)
-pos = None
-hit = ret['hits'][0]
-if hit.has_key('genomic_pos_{{args.genome}}'):
-	pos = hit['genomic_pos_{{args.genome}}']
-
-if not pos:
-	print "TSS not found for gene: {{gene}}" 
-	sys.exit (1)
-chr    = "chr" + str(pos['chr'])
-strand = pos['strand']
-tss    = pos['start'] if strand == 1 else pos['end']
-pstart = tss - {{args.up}}
-pend   = tss + {{args.down}}
-with open ("{{outfile}}", "w") as f:
-	f.write ("%s\\t%s\\t%s\\t%s\\t%s\\t%s" % (chr, pstart, pend, "{{gene}}", 0, ("+" if strand == 1 else "-")))
-"""
 
 """
 @name:
-	pGetPromotersBed
+	pPromoters
 @description:
-	Get the promoter regions in bed format of a gene list give in genefile
+	Get the promoter regions in bed format of a gene list give in genefile.
 @input:
 	`genefile:file`: the gene list file
 @output:
@@ -184,33 +140,12 @@ with open ("{{outfile}}", "w") as f:
 @require:
 	[python-mygene](http://mygene.info/)
 """
-pGetPromotersBed = proc()
-pGetPromotersBed.input  = "genefile:file"
-pGetPromotersBed.output = "outfile:file:{{genefile | fn}}.promoter.bed"
-pGetPromotersBed.args   = {"up": 2000, "down": 2000, "genome": "hg19"}
-pGetPromotersBed.lang   = "python"
-pGetPromotersBed.script = """
-import sys
-from mygene import MyGeneInfo
-mg = MyGeneInfo()
-genes = [line.split()[0] for line in open({{genefile | quote}}) if line.strip()]
-genes = mg.querymany(genes, fields="genomic_pos_{{args.genome}},symbol", scopes="symbol,alias", species="{{args.genome}}")
-
-with open ("{{outfile}}", "w") as f:
-	for hit in genes:
-		if not 'genomic_pos_{{args.genome}}' in hit:
-			sys.stderr.write('Cannot find position for gene: %s\\n' % hit['query'])
-			continue
-		
-		pos = hit['genomic_pos_{{args.genome}}']
-		
-		try:
-			chr    = "chr" + str(pos['chr'])
-			strand = pos['strand']
-			tss    = pos['start'] if strand == 1 else pos['end']
-			pstart = tss - {{args.up}}
-			pend   = tss + {{args.down}}
-			f.write ("%s\\t%s\\t%s\\t%s\\t%s\\t%s" % (chr, pstart, pend, hit['symbol'], 0, ("+" if strand == 1 else "-")))
-		except TypeError:
-			sys.stderr.write('Encounter TypeError, hit is: %s\\n' % str(hit))
-"""
+pPromoters              = Proc(desc = 'Get the promoter regions in bed format of a gene list give in genefile.')
+pPromoters.input        = "genefile:file"
+pPromoters.output       = "outfile:file:{{in.genefile | fn}}-promoters.bed"
+pPromoters.args.up      = 2000
+pPromoters.args.down    = 2000
+pPromoters.args.genome  = params.genome.value
+pPromoters.errhow       = 'retry'
+pPromoters.lang         = params.python.value
+pPromoters.script       = "file:scripts/seq/pPromoters.py"

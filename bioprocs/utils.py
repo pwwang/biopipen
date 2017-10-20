@@ -135,17 +135,20 @@ txt.transform.py = _getsource()
 
 # read sample info file
 #
-# Sample	Patient	Group	Batch
+# [Sample	]Patient	Group	Batch
 # sample1	patient1	group1	batch1
 # sample2	patient1	group2	batch1
 # sample3	patient2	group1	batch2
 # sample4	patient2	group2	batch2
 # Remember NORMAL/CONTROL samples come last if you wanna do comparison between groups
 txt.sampleinfo.py = _getsource()
-txt.sampleinfo.r      = _getsource()
+txt.sampleinfo.r  = _getsource()
 
 download = Box({
 	'curl': {},
 })
 download.curl.py = _getsource()
+
+parallel = Box()
+parallel.py = _getsource(runcmd.py)
 

@@ -35,66 +35,42 @@ class TestVcf (unittest.TestCase):
 		pVcfFilter.input        = self.data.vcfs
 		pVcfFilter.forks        = 2
 		
-		pVcfFilter1             = pVcfFilter.copy()
-		pVcfFilter2             = pVcfFilter.copy()
-		pVcfFilter3             = pVcfFilter.copy()
-		pVcfFilter4             = pVcfFilter.copy()
-		pVcfFilter1.args.tool   = 'gatk'
-		pVcfFilter2.args.tool   = 'bcftools'
-		pVcfFilter3.args.tool   = 'snpsift'
-		pVcfFilter4.args.tool   = 'vcflib'
-		pVcfFilter5             = pVcfFilter1.copy()
-		pVcfFilter6             = pVcfFilter2.copy()
-		pVcfFilter7             = pVcfFilter3.copy()
-		pVcfFilter8             = pVcfFilter4.copy()
-		
-		pVcfFilter1.args.ref            = params.ref
-		pVcfFilter5.args.ref            = params.ref
-		pVcfFilter1.args.selectors.type = "indel"
-		pVcfFilter1.expect              = 'grep 1230237 {{out.outfile}} && grep 1234567 {{out.outfile}} && !(grep 14370 {{out.outfile}}) && !(grep 17330 {{out.outfile}}) && !(grep 1110696 {{out.outfile}})'
-		
-		pVcfFilter2.args.selectors.filter = "PASS"
-		pVcfFilter2.expect                = 'grep 1230237 {{out.outfile}} && grep 1234567 {{out.outfile}} && grep 14370 {{out.outfile}} && !(grep 17330 {{out.outfile}}) && grep 1110696 {{out.outfile}}'
-		
-		pVcfFilter3.args.selectors.genotype = {0: '0/0'}
-		pVcfFilter3.expect                  = 'grep 1230237 {{out.outfile}} && !(grep 1234567 {{out.outfile}}) && grep 14370 {{out.outfile}} && grep 17330 {{out.outfile}} && !(grep 1110696 {{out.outfile}})'
-		
-		pVcfFilter4.args.selectors.type     = "snp"
-		pVcfFilter4.args.selectors.genotype = {2: '1/1'}
-		pVcfFilter4.expect = '!(grep 1230237 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && grep 14370 {{out.outfile}} && !(grep 17330 {{out.outfile}}) && !(grep 1110696 {{out.outfile}})'
-		
-		pVcfFilter5.args.selectors.type  = "snp"
-		pVcfFilter5.args.filters.lowQUAL = "QUAL < 10"
-		pVcfFilter5.args.filters.lowDP   = "DP < 10"
-		pVcfFilter5.args.keep            = False
-		pVcfFilter5.expect               = '!(grep 1230237 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && grep 14370 {{out.outfile}} && !(grep 17330 {{out.outfile}}) && grep 1110696 {{out.outfile}}'
-		
-		pVcfFilter6.args.selectors.type     = "snp"
-		pVcfFilter6.args.filters.lowQUAL    = "QUAL < 10 | DP < 10"
-		pVcfFilter6.expect = '!(grep 1230237 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && grep 14370 {{out.outfile}} && !(grep 17330 {{out.outfile}}) && grep 1110696 {{out.outfile}}'
-		
-		pVcfFilter7.args.selectors.type     = "snp"
-		pVcfFilter7.args.filters.lowQUAL    = "(QUAL < 10) | (DP < 10)"
-		pVcfFilter7.args.keep               = False
-		pVcfFilter7.expect = '!(grep 1230237 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && grep 14370 {{out.outfile}} && !(grep 17330 {{out.outfile}}) && grep 1110696 {{out.outfile}}'
-		
-		pVcfFilter8.args.selectors.type     = "snp"
-		pVcfFilter8.args.filters.lowQUAL    = "QUAL < 10"
-		pVcfFilter8.args.filters.lowDP      = "DP < 10"
-		pVcfFilter8.args.gz                 = True
-		pVcfFilter8.expect = '!(zcat {{out.outfile}} | grep 1230237) && !(zcat {{out.outfile}} | grep 1234567) && zcat {{out.outfile}} | grep 14370 && !(zcat {{out.outfile}} | grep 17330) && zcat {{out.outfile}} | grep 1110696'
+		pVcfFilter1              = pVcfFilter.copy()
+		pVcfFilter2              = pVcfFilter.copy()
+		pVcfFilter3              = pVcfFilter.copy()
+		pVcfFilter4              = pVcfFilter.copy()
+		pVcfFilter5              = pVcfFilter.copy()
+
+		pVcfFilter1.args.filters = 'lambda record, samples: record.ID == "rs6054257"'
+		pVcfFilter1.expect       = '(grep 14370 {{out.outfile}}) && (grep 1234567 {{out.outfile}}) && (grep 1230237 {{out.outfile}}) && (grep 17330 {{out.outfile}}) && (grep 1110696 {{out.outfile}})'
+
+		pVcfFilter2.args.filters = 'lambda record, samples: record.ID == "rs6054257"'
+		pVcfFilter2.args.keep    = False
+		pVcfFilter2.expect       = '(grep 14370 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && !(grep 1230237 {{out.outfile}}) && !(grep 17330 {{out.outfile}}) && !(grep 1110696 {{out.outfile}})'
+
+		pVcfFilter3.args.keep     = False
+		pVcfFilter3.args.filters = 'lambda record, samples: record.QUAL > 50'
+		pVcfFilter3.expect       = '!(grep 14370 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && !(grep 1230237 {{out.outfile}}) && !(grep 17330 {{out.outfile}}) && (grep 1110696 {{out.outfile}})'
+
+		pVcfFilter4.args.keep     = False
+		pVcfFilter4.args.filters = 'lambda record, samples: not record.FILTER or "PASS" in record.FILTER'
+		pVcfFilter4.expect       = '(grep 14370 {{out.outfile}}) && (grep 1234567 {{out.outfile}}) && (grep 1230237 {{out.outfile}}) && !(grep 17330 {{out.outfile}}) && (grep 1110696 {{out.outfile}})'
+
+		pVcfFilter5.args.keep     = False
+		pVcfFilter5.args.filters = 'lambda record, samples: all([sample.data.GQ >= 48 for sample in samples])'
+		pVcfFilter5.expect       = '!(grep 14370 {{out.outfile}}) && !(grep 1234567 {{out.outfile}}) && (grep 1230237 {{out.outfile}}) && !(grep 17330 {{out.outfile}}) && !(grep 1110696 {{out.outfile}})'
 		
 		starts = [
 			pVcfFilter1,
-			#pVcfFilter2,
-			#pVcfFilter3,
-			#pVcfFilter4,
-			#pVcfFilter5,
+			pVcfFilter2,
+			pVcfFilter3,
+			pVcfFilter4,
+			pVcfFilter5,
 			#pVcfFilter6,
 			#pVcfFilter7,
 			#pVcfFilter8,
 		]
-		PyPPL().start(*starts).run()
+		PyPPL().start(starts).run()
 	
 	def test2_pVcfAnno (self):
 		pVcfAnno.input             = self.data.vcfs

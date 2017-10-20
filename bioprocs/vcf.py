@@ -4,7 +4,7 @@ A set of processes to generate/process vcf files
 from os import path
 from glob import glob
 from pyppl import Proc, Box
-from .utils import mem2, runcmd, buildref, checkref, helpers, plot
+from .utils import mem2, runcmd, buildref, checkref, helpers, plot, parallel
 from . import params
 
 """
@@ -17,66 +17,40 @@ from . import params
 @output:
 	`outfile:file`: The output file
 @args:
-	`tool`: Which tool to use for filtering. Default: 'vcflib'
-	`vcflib_vcffilter`: The path of vcffilter from vcflib. Default: 'vcffilter'
-	`gatk`            : The path of gatk. Default: 'gatk'
-	`snpsift`         : The path of snpsift. Default: 'SnpSift'
-	`bcftools`        : The path of bcftools. Default: 'bcftools'
-	`samtools`        : The path of samtools. Default: 'samtools' (used by gatk to generate reference index)
-	`picard`          : The path of picard. Default: 'picard' (used by picard to generate reference dict) 
-	`params`          : Other params of `tool`. Default: ""
-	`mem`             : The memory to be used. Default: "4G" (only for snpsift and gatk)
-	`gz`              : Whether to gzip the output file. Default: False
-	`keep`            : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
-	`ref`             : The path of reference. Default: "" (for gatk)
-	`tmpdir`          : The path of tmpdir. Default: <system tmpdir> (only used by gatk and snpsift)
-	`nthread`         : The path of Default: 1	
-	`selectors`:   Select records by:
-	  - type (snp, indel), sample genotypes (0, 1, 2), min genotype quality, filter (PASS, .)
-	  - for example:
-	    ```
-		{"type": "snp", "genotype": {0: '0/0'}, "qual": 30}
-		to select snps and whose genotype is '0/0' in 1st sample with quality >= 30
-		{"genotype": {0: ['1/1', '0|1']}, "filter": ["PASS"]}
-		to select records with PASS and genotype in 1st sample is '1/1' or '0/1'
+	`filters`: The filters, should be a string of lambda function:
 		```
-	`filters`:     Filters depend on the tool you use on INFO filelds
-	  - format: `{"name1": "expression1", ...}`
-	  - If a string is specified, will convert to `{<tool name>: <expression>}`
-	  - Remember it filters OUT the records when ANY of the expression is true
+		"lambda record, samples: <expression>"
+		* ``record.CHROM`` : 'chr20'
+		* ``record.POS``   : 1234567
+		* ``record.ID``    : 'microsat1'
+		* ``record.REF``   : ''GTC''
+		* ``record.ALT``   : [G, GTCT]
+		* ``record.QUAL``  : 50
+		* ``record.FILTER``: ['PASS']
+		* ``record.INFO``  : {'AA': 'G', 'NS': 3, 'DP': 9}
+		* samples = record.samples
+		* len(samples): 3
+		* samples[0].sample: 'NA00001'
+		* samples[0]: Call(sample=NA00001, CallData(GT=0/1, GQ=35, DP=4))
+		* samples[0].data: calldata(GT='0/1', GQ=35, DP=4)
+		* samples[0].data.GT: '0/1'
+		```
+		- see here for record and samples: https://github.com/jamescasbon/PyVCF
+		- Remember if filters() returns True, record remained.
+	`gz`     : Whether to gzip the output file. Default: False
+	`keep`   : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
 @requires:
 	[`pyvcf`](https://github.com/jamescasbon/PyVCF)
-	[`gatk`](https://software.broadinstitute.org/gatk)
-	[`bcftools`](http://www.htslib.org/doc/bcftools-1.2.html)
-	[`snpsift`](http://snpeff.sourceforge.net/SnpSift.version_4_0.html)
-	[`samtools`](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
-	[`picard`](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
 """
-pVcfFilter                        = Proc(desc = 'Filter records in vcf file.')
-pVcfFilter.input                  = "infile:file"
-pVcfFilter.output                 = "outfile:file:{{in.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
-pVcfFilter.args.tool              = 'vcflib' # vcflib,    gatk, snpsift
-pVcfFilter.args.vcflib            = params.vcflib_vcffilter.value
-pVcfFilter.args.gatk              = params.gatk.value
-pVcfFilter.args.snpsift           = params.snpsift.value
-pVcfFilter.args.bcftools          = params.bcftools.value
-pVcfFilter.args.samtools          = params.samtools.value
-pVcfFilter.args.picard            = params.picard.value
-pVcfFilter.args.selectors         = Box()
-pVcfFilter.args.filters           = Box()
-pVcfFilter.args.params            = Box()
-pVcfFilter.args.mem               = params.mem4G.value
-pVcfFilter.args.gz                = False
-pVcfFilter.args.keep              = True # only for gatk, snpsift at filter step
-pVcfFilter.args.ref               = params.ref.value # gatk
-pVcfFilter.args.tmpdir            = params.tmpdir.value
-pVcfFilter.args.nthread           = 1
-pVcfFilter.tplenvs.mem2           = mem2.py
-pVcfFilter.tplenvs.runcmd         = runcmd.py
-pVcfFilter.tplenvs.buildrefIndex  = buildref.index.py
-pVcfFilter.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcfFilter.lang                   = params.python.value
-pVcfFilter.script                 = "file:scripts/vcf/pVcfFilter.py"
+pVcfFilter              = Proc(desc = 'Filter records in vcf file.')
+pVcfFilter.input        = "infile:file"
+pVcfFilter.output       = "outfile:file:{{in.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcfFilter.args.fname   = 'pVcfFilter'
+pVcfFilter.args.filters = None
+pVcfFilter.args.gz      = False
+pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
+pVcfFilter.lang         = params.python.value
+pVcfFilter.script       = "file:scripts/vcf/pVcfFilter.py"
 
 """
 @name:
@@ -201,8 +175,10 @@ pVcfMerge.args.vcftools          = params.vcftools_merge.value
 pVcfMerge.args.gatk              = params.gatk.value
 pVcfMerge.args.ref               = params.ref.value # only for gatk
 pVcfMerge.args.vep               = params.vep.value
+pVcfMerge.args.nthread           = 1
 pVcfMerge.tplenvs.runcmd         = runcmd.py
 pVcfMerge.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcfMerge.tplenvs.parallel       = parallel.py
 pVcfMerge.tplenvs.fsDirname      = lambda dir, pat: path.basename(glob(path.join(dir, pat))[0]).split('.')[0] + '_etc'
 pVcfMerge.lang                   = params.python.value
 pVcfMerge.script                 = "file:scripts/vcf/pVcfMerge.py"
@@ -221,7 +197,6 @@ pVcfMerge.script                 = "file:scripts/vcf/pVcfMerge.py"
 	`vcf2maf`: The path of vcf2maf.pl
 	`vep`: The path of vep
 	`vepDb`: The path of database for vep
-	`bcftools`: The path of bcftools, used to get sample names
 	`filtervcf`: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
 	`ref`: The reference genome
 	`tumor1st`: Whether tumor sample comes first in the input vcf file. Default: True
@@ -233,10 +208,9 @@ pVcf2Maf.args.tool              = 'vcf2maf'
 pVcf2Maf.args.vcf2maf           = params.vcf2maf.value
 pVcf2Maf.args.vep               = params.vep.value
 pVcf2Maf.args.vepDb             = params.vepDb.value
-pVcf2Maf.args.bcftools          = params.bcftools.value
 pVcf2Maf.args.filtervcf         = params.vepNonTCGAVcf.value
 pVcf2Maf.args.ref               = params.ref.value
-pVcf2Maf.args.tumor1st          = True
+pVcf2Maf.args.params            = Box()
 pVcf2Maf.tplenvs.runcmd         = runcmd.py
 pVcf2Maf.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
 pVcf2Maf.lang                   = params.python.value

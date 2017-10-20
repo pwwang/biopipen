@@ -79,6 +79,8 @@ DEFAULTS = {
 	"dwgsim.desc"              : "The path of dwgsim.",
 	"fastqc"                   : "fastqc",
 	"fastqc.desc"              : "The path of fastqc.",
+	"fimo"                     : "fimo",
+	"fimo.desc"                : "The path of fimo from MEME suite.",
 	"gatk"                     : "gatk",
 	"gatk.desc"                : "The path of gatk.",
 	"htseq_count"              : "htseq-count",

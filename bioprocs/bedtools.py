@@ -1,39 +1,40 @@
-from pyppl import proc
-
-#############################
-# bedtools utilities        #
-#############################
+from pyppl import Proc, Box
+from . import params
+from .utils import runcmd, helpers, buildref, checkref
 
 """
 @name:
-	pGetfasta
+	pBedGetfasta
 @description:
-	`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED/GFF/VCF file.
+	`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.
 @input:
 	`infile:file`: The input bed file
-	`fafile:file`: The input fasta file
-@brings:
-	`fafile`: "{{fafile | fn}}.fa*i", The fasta index file
 @output:
 	`outfile:file`: The generated fasta file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools getfasta`, default: ""
+	`ref`     : The fasta file
+	`bedtools`: The bedtools executable,                  default: "bedtools"
+	`params`  : Other parameters for `bedtools getfasta`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pGetfasta = proc()
-pGetfasta.input  = "infile:file, fafile:file"
-pGetfasta.brings = {"fafile": "{{fafile | fn}}.fa*i"}
-pGetfasta.output = "outfile:file:{{infile | fn}}.fa"
-pGetfasta.args   = { "bin": "bedtools", "params": "-name" }
-pGetfasta.script = """
-{{args.bin}} getfasta {{args.params}} -fi "{{fafile}}" -bed "{{infile}}" > "{{outfile}}"
-"""
+pBedGetfasta                        = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
+pBedGetfasta.input                  = "infile:file"
+pBedGetfasta.output                 = "outfile:file:{{in.infile | fn}}.fa"
+pBedGetfasta.args.samtools          = params.samtools.value
+pBedGetfasta.args.bedtools          = params.bedtools.value
+pBedGetfasta.args.params            = Box({'name': True})
+pBedGetfasta.args.ref               = params.ref.value
+pBedGetfasta.tplenvs.runcmd         = runcmd.py
+pBedGetfasta.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedGetfasta.beforeCmd              = checkref.fa.bash + buildref.fai.bash
+pBedGetfasta.lang                   = params.python.value
+pBedGetfasta.script                 = "file:scripts/bedtools/pBedGetfasta.py"
+
 
 """
 @name:
-	pClosest
+	pBedClosest
 @description:
 	Similar to intersect, closest searches for overlapping features in A and B. In the event that no feature in B overlaps the current feature in A, closest will report the nearest (that is, least genomic distance from the start or end of A) feature in B. For example, one might want to find which is the closest gene to a significant GWAS polymorphism. Note that closest will report an overlapping feature as the closest that is, it does not restrict to closest non-overlapping feature. The following iconic cheatsheet summarizes the funcitonality available through the various optyions provided by the closest tool.
 @input:
@@ -47,17 +48,17 @@ pGetfasta.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pClosest = proc()
-pClosest.input  = "afile:file, bfiles:files"
-pClosest.output = "outfile:file:{{afile | fn}}.bt"
-pClosest.args   = { "bin": "bedtools", "params": "" }
-pClosest.script = """
+pBedClosest = Proc()
+pBedClosest.input  = "afile:file, bfiles:files"
+pBedClosest.output = "outfile:file:{{afile | fn}}.bt"
+pBedClosest.args   = { "bin": "bedtools", "params": "" }
+pBedClosest.script = """
 {{args.bin}} closest {{args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
 """
 
 """
 @name:
-	pFlank
+	pBedFlank
 @description:
 	`bedtools flank` will create two new flanking intervals for each interval in a BED/GFF/VCF file. Note that flank will restrict the created flanking intervals to the size of the chromosome (i.e. no start < 0 and no end > chromosome size).
 @input:
@@ -71,17 +72,17 @@ pClosest.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pFlank = proc()
-pFlank.input  = "infile:file, gfile:file"
-pFlank.output = "outfile:file:{{infile | fn}}.flank.bed"
-pFlank.args   = { "bin": "bedtools", "params": "" }
-pFlank.script = """
+pBedFlank = Proc()
+pBedFlank.input  = "infile:file, gfile:file"
+pBedFlank.output = "outfile:file:{{infile | fn}}.flank.bed"
+pBedFlank.args   = { "bin": "bedtools", "params": "" }
+pBedFlank.script = """
 {{args.bin}} flank {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pIntersect
+	pBedIntersect
 @description:
 	By far, the most common question asked of two sets of genomic features is whether or not any of the features in the two sets overlap with one another. This is known as feature intersection. bedtools intersect allows one to screen for overlaps between two sets of genomic features. Moreover, it allows one to have fine control as to how the intersections are reported. bedtools intersect works with both BED/GFF/VCF and BAM files as input.
 @input:
@@ -95,17 +96,17 @@ pFlank.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pIntersect = proc()
-pIntersect.input  = "afile:file, bfiles:files"
-pIntersect.output = "outfile:file:{{afile|fn}}.intersect.bt"
-pIntersect.args   = { "bin": "bedtools", "params": "" }
-pIntersect.script = """
+pBedIntersect = Proc()
+pBedIntersect.input  = "afile:file, bfiles:files"
+pBedIntersect.output = "outfile:file:{{afile|fn}}.intersect.bt"
+pBedIntersect.args   = { "bin": "bedtools", "params": "" }
+pBedIntersect.script = """
 {{args.bin}} intersect -nonamecheck {{args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
 """
 
 """
 @name:
-	pMakewindows
+	pBedMakewindows
 @description:
 	Makes adjacent or sliding windows across a genome or BED file.
 @input:
@@ -119,17 +120,17 @@ pIntersect.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pMakewindows = proc()
-pMakewindows.input  = "infile:file"
-pMakewindows.output = "outfile:file:{{infile | fn}}.window.bed"
-pMakewindows.args   = { "bin": "bedtools", "params": "" }
-pMakewindows.script = """
+pBedMakewindows = Proc()
+pBedMakewindows.input  = "infile:file"
+pBedMakewindows.output = "outfile:file:{{infile | fn}}.window.bed"
+pBedMakewindows.args   = { "bin": "bedtools", "params": "" }
+pBedMakewindows.script = """
 {{args.bin}} makewindows {{args.params}} {{args.informat | lambda x: "-b" if x=="bed" else "-g"}} "{{infile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pMerge
+	pBedMerge
 @description:
 	`bedtools merge` combines overlapping or book-ended features in an interval file into a single feature which spans all of the combined features.
 @input:
@@ -142,17 +143,17 @@ pMakewindows.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pMerge = proc()
-pMerge.input  = "infile:file"
-pMerge.output = "outfile:file:{{infile | fn}}.merged.bed"
-pMerge.args   = { "bin": "bedtools", "params": "" }
-pMerge.script = """
+pBedMerge = Proc()
+pBedMerge.input  = "infile:file"
+pBedMerge.output = "outfile:file:{{infile | fn}}.merged.bed"
+pBedMerge.args   = { "bin": "bedtools", "params": "" }
+pBedMerge.script = """
 {{args.bin}} merge {{args.params}} -i "{{infile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pMultiinter
+	pBedMultiinter
 @description:
 	Identifies common intervals among multiple BED/GFF/VCF files.
 @input:
@@ -165,17 +166,17 @@ pMerge.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pMultiinter = proc()
-pMultiinter.input  = "infiles:files"
-pMultiinter.output = "outfile:file:{{infiles | [0] | fn}}.multiinter.bt"
-pMultiinter.args   = { "bin": "bedtools", "params": "" }
-pMultiinter.script = """
+pBedMultiinter = Proc()
+pBedMultiinter.input  = "infiles:files"
+pBedMultiinter.output = "outfile:file:{{infiles | [0] | fn}}.multiinter.bt"
+pBedMultiinter.args   = { "bin": "bedtools", "params": "" }
+pBedMultiinter.script = """
 {{args.bin}} multiinter {{args.params}} -i {{infiles | asquote}} > "{{outfile}}"
 """
 
 """
 @name:
-	pRandom
+	pBedRandom
 @description:
 	`bedtools random` will generate a random set of intervals in BED6 format. One can specify both the number (-n) and the size (-l) of the intervals that should be generated.
 @input:
@@ -188,17 +189,17 @@ pMultiinter.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pRandom = proc()
-pRandom.input  = "gfile:file"
-pRandom.output = "outfile:file:{{gfile | fn}}.random.bed"
-pRandom.args   = { "bin": "bedtools", "params": "" }
-pRandom.script = """
+pBedRandom = Proc()
+pBedRandom.input  = "gfile:file"
+pBedRandom.output = "outfile:file:{{gfile | fn}}.random.bed"
+pBedRandom.args   = { "bin": "bedtools", "params": "" }
+pBedRandom.script = """
 {{args.bin}} random {{args.params}} -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pShift
+	pBedShift
 @description:
 	`bedtools shift` will move each feature in a feature file by a user-defined number of bases. While something like this could be done with an awk '{OFS="\t" print $1,$2+<shift>,$3+<shift>}', bedtools shift will restrict the resizing to the size of the chromosome (i.e. no features before 0 or past the chromosome end).
 @input:
@@ -212,17 +213,17 @@ pRandom.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pShift = proc()
-pShift.input  = "infile:file, gfile:file"
-pShift.output = "outfile:file:{{infile | fn}}.shifted.bed"
-pShift.args   = { "bin": "bedtools", "params": "" }
-pShift.script = """
+pBedShift = Proc()
+pBedShift.input  = "infile:file, gfile:file"
+pBedShift.output = "outfile:file:{{infile | fn}}.shifted.bed"
+pBedShift.args   = { "bin": "bedtools", "params": "" }
+pBedShift.script = """
 {{args.bin}} shift {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pShuffle
+	pBedShuffle
 @description:
 	`bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file. One can also provide an exclusions BED/GFF/VCF file that lists regions where you do not want the permuted features to be placed. For example, one might want to prevent features from being placed in known genome gaps. shuffle is useful as a null basis against which to test the significance of associations of one feature with another.
 @input:
@@ -236,17 +237,17 @@ pShift.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pShuffle = proc()
-pShuffle.input  = "infile:file, gfile:file"
-pShuffle.output = "outfile:file:{{infile | fn}}.shuffled.bed"
-pShuffle.args   = { "bin": "bedtools", "params": "" }
-pShuffle.script = """
+pBedShuffle = Proc()
+pBedShuffle.input  = "infile:file, gfile:file"
+pBedShuffle.output = "outfile:file:{{infile | fn}}.shuffled.bed"
+pBedShuffle.args   = { "bin": "bedtools", "params": "" }
+pBedShuffle.script = """
 {{args.bin}} shuffle {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pSubtract
+	pBedSubtract
 @description:
 	`bedtools subtract` searches for features in B that overlap A. If an overlapping feature is found in B, the overlapping portion is removed from A and the remaining portion of A is reported. If a feature in B overlaps all of a feature in A, the A feature will not be reported.
 @input:
@@ -260,17 +261,17 @@ pShuffle.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pSubtract = proc()
-pSubtract.input  = "afile:file, bfile:file"
-pSubtract.output = "outfile:file:{{afile | fn}}.subtracted.bed"
-pSubtract.args   = { "bin": "bedtools", "params": "" }
-pSubtract.script = """
+pBedSubtract = Proc()
+pBedSubtract.input  = "afile:file, bfile:file"
+pBedSubtract.output = "outfile:file:{{afile | fn}}.subtracted.bed"
+pBedSubtract.args   = { "bin": "bedtools", "params": "" }
+pBedSubtract.script = """
 {{args.bin}} subtract {{args.params}} -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
 """
 
 """
 @name:
-	pWindow
+	pBedWindow
 @description:
 	Similar to `bedtools intersect`, `window` searches for overlapping features in A and B. However, window adds a specified number (1000, by default) of base pairs upstream and downstream of each feature in A. In effect, this allows features in B that are near features in A to be detected.
 @input:
@@ -284,17 +285,17 @@ pSubtract.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pWindow = proc()
-pWindow.input  = "afile:file, bfile:file"
-pWindow.output = "outfile:file:{{afile | fn}}.window.bed"
-pWindow.args   = { "bin": "bedtools", "params": "" }
-pWindow.script = """
+pBedWindow = Proc()
+pBedWindow.input  = "afile:file, bfile:file"
+pBedWindow.output = "outfile:file:{{afile | fn}}.window.bed"
+pBedWindow.args   = { "bin": "bedtools", "params": "" }
+pBedWindow.script = """
 {{args.bin}} window {{args.params}} -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
 """
 
 """
 @name:
-	pGenomecov
+	pBedGenomecov
 @description:
 	`bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.
 	
@@ -309,10 +310,10 @@ pWindow.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pGenomecov = proc()
-pGenomecov.input  = "infile:file"
-pGenomecov.output = "outfile:file:{{infile | fn}}.genomecov.bt"
-pGenomecov.args   = { "bin": "bedtools", "params": "-bg" }
-pGenomecov.script = """
+pBedGenomecov = Proc()
+pBedGenomecov.input  = "infile:file"
+pBedGenomecov.output = "outfile:file:{{infile | fn}}.genomecov.bt"
+pBedGenomecov.args   = { "bin": "bedtools", "params": "-bg" }
+pBedGenomecov.script = """
 {{args.bin}} genomecov {{args.params}} -ibam "{{infile}}" > "{{outfile}}"
 """

@@ -336,7 +336,7 @@ pBam2Gmut.input                  = "infile:file"
 pBam2Gmut.brings                 = {"infile": "{{in.infile | bn}}.bai"}
 pBam2Gmut.output                 = "outfile:file:{{in.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
 pBam2Gmut.lang                   = params.python.value
-pBam2Gmut.args.tool              = "gatk"
+pBam2Gmut.args.tool              = "strelka"
 pBam2Gmut.args.gatk              = params.gatk.value
 pBam2Gmut.args.vardict           = params.vardict.value
 pBam2Gmut.args.snvsniffer        = params.snvsniffer.value
@@ -397,7 +397,7 @@ pBamPair2Smut                        = Proc(desc = 'Call somatic mutations from 
 pBamPair2Smut.input                  = "tumor:file, normal:file"
 pBamPair2Smut.brings                 = {"tumor": "{{in.tumor | bn}}.bai", "normal": "{{in.normal | bn}}.bai"}
 pBamPair2Smut.output                 = "outfile:file:{{in.tumor | fn | fn}}-{{in.normal | fn | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pBamPair2Smut.args.tool              = 'gatk'
+pBamPair2Smut.args.tool              = 'strelka'
 pBamPair2Smut.args.gatk              = params.gatk.value # required for strelka
 pBamPair2Smut.args.somaticsniper     = params.somaticsniper.value
 pBamPair2Smut.args.strelka           = params.strelka_soma.value # @2.7.1

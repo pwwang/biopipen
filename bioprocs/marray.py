@@ -2,7 +2,7 @@ from os import path
 from glob import glob
 from pyppl import Proc, Box
 from .utils import plot, txt
-from .rnaseq import pBatchEffect
+from .rnaseq import pBatchEffect, pCoexp
 from . import params
 
 """

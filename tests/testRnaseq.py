@@ -4,11 +4,11 @@ import random
 from os import makedirs, path
 from tempfile import gettempdir
 from pyppl import PyPPL, Channel, Box, Proc
-from bioprocs.rnaseq import pExpdir2Matrix, pBatchEffect, pRawCounts2, pDeg
+from bioprocs.rnaseq import pExpdir2Matrix, pBatchEffect, pRawCounts2, pRnaseqDeg, pCoexp
 
 unittest.TestLoader.sortTestMethodsUsing = lambda _, x, y: cmp(x, y)
-
-
+random.seed(8525)
+tmpdir = gettempdir()
 class TestRnaseq (unittest.TestCase):
 
 	wdir = path.join(path.dirname(path.dirname(__file__)), 'workdir')
@@ -60,7 +60,7 @@ class TestRnaseq (unittest.TestCase):
 		PyPPL().start(pRawCounts2).run()
 		self.data['expfile'] = pExpdir2Matrix.channel.outfile.flatten()[0]
 
-	def test4pDeg(self):
+	def test4pRnaseqDeg(self):
 		pPos = Proc(desc = 'Make values positive.')
 		pPos.input  = {"infile:file": self.data['expfile']}
 		pPos.output = "outfile:file:{{in.infile|fn}}"
@@ -71,23 +71,40 @@ class TestRnaseq (unittest.TestCase):
 		pPairfile.output = "outfile:file:{{in.infile|fn}}"
 		pPairfile.script = 'paste {{in.infile}} <(echo -e "Patient\\n$(seq 1 10)\\n$(seq 1 10)") > {{out.outfile}}'
 
-		pDegDeseq         = pDeg.copy()
-		pDegPaired        = pDeg.copy()
-		pDegDSPaired      = pDeg.copy()
-		pDeg.depends      = pPos
-		pDeg.args.heatmap = True
-		pDeg.args.maplot  = True
-		pDeg.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
+		pRnaseqDegDeseq         = pRnaseqDeg.copy()
+		pRnaseqDegPaired        = pRnaseqDeg.copy()
+		pRnaseqDegDSPaired      = pRnaseqDeg.copy()
+		pRnaseqDeg.depends      = pPos
+		pRnaseqDeg.args.heatmap = True
+		pRnaseqDeg.args.maplot  = True
+		pRnaseqDeg.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
 
-		pDegDeseq.depends      = pPos
-		pDegDeseq.args.heatmap = True
-		pDegDeseq.args.tool    = 'deseq2'
-		pDegDeseq.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
+		pRnaseqDegDeseq.depends      = pPos
+		pRnaseqDegDeseq.args.heatmap = True
+		pRnaseqDegDeseq.args.tool    = 'deseq2'
+		pRnaseqDegDeseq.input        = lambda ch: ch.cbind([path.join(self.wdir, 'data', 'batch.txt')])
 
-		pDegPaired.depends = pPos, pPairfile
-		pDegDSPaired.depends = pPos, pPairfile
-		pDegDSPaired.args.tool = 'deseq2'
+		pRnaseqDegPaired.depends = pPos, pPairfile
+		pRnaseqDegDSPaired.depends = pPos, pPairfile
+		pRnaseqDegDSPaired.args.tool = 'deseq2'
 		PyPPL().start(pPos, pPairfile).run()
+
+	def testCoexp(self):
+		expfile = path.join(tmpdir, 'testpCoexp.expr')
+		samples = ['Sample' + str(i+1) for i in list(range(100))]
+		genes   = ['Gene' + str(i+1) for i in list(range(20))]
+		with open(expfile, 'w') as f:
+			f.write("\t".join(samples) + '\n')
+			for gene in genes:
+				f.write(gene)
+				for sample in samples:
+					f.write('\t' + str(random.normalvariate(10, 5)))
+				f.write('\n')
+		
+		pCoexp.input = [expfile]
+		pCoexp.args.pval = True
+		PyPPL().start(pCoexp).run()
+
 
 
 if __name__ == '__main__':

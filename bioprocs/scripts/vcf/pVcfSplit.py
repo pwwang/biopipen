@@ -48,7 +48,7 @@ for cmd in cmds: runcmd(cmd)
 from threading import Thread
 from Queue import Queue
 
-nthread = 1
+nthread = {{args.nthread}}
 
 def worker(sq):
 	while True:

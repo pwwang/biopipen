@@ -1,27 +1,32 @@
-import sys, os, json
-
-sys.path.insert(0, "/home/m161047/tools/pyppl")
-sys.path.insert(0, "/home/m161047/tools/bioprocs")
-
-import pyppl, unittest
-from bioprocs.bedtools import *
+import addPath, unittest
+from pyppl import PyPPL
+from os import path
+from tempfile import gettempdir
+from bioprocs.bedtools import pBedGetfasta
+from bioprocs.common import pStr2File
 
 def readFile(file):
-	return [line.strip() for line in open(file)]
+	with open(file) as f:
+		return [line.strip() for line in f if line.strip()]
 
 def readProc(proc):
-	return [line.strip() for line in open(proc.output['outfile'][0])]
+	return readFile(proc.channel.get())
 
+tmpdir = gettempdir()
 class testBedtools (unittest.TestCase):
 	
 	def testGetfasta(self):
-		infile  = os.path.join("testfiles", "bedtools", "test.getfasta.bed")
-		fafile  = os.path.join("testfiles", "bedtools", "test.getfasta.fa")
-		outfile = os.path.join("testfiles", "bedtools", "test.getfasta.ret")
-		pGetfasta.input = {pGetfasta.input: [(infile, fafile)]}
-		pGetfasta.run ()
-		self.assertEqual (readFile(outfile), readProc(pGetfasta))
-	
+		pStr2File1 = pStr2File.copy()
+		pStr2File1.input = ['chr1	5	10']
+		pStr2File2 = pStr2File.copy()
+		pStr2File2.input = ['>chr1,AAAAAAAACCCCCCCCCCCCCGCTACTGGGGGGGGGGGGGGGGGG']
+
+		pBedGetfasta.depends = pStr2File1, pStr2File2
+		pBedGetfasta.callfront = lambda p: p.args.update({'ref': pStr2File2.channel.get()})
+
+		PyPPL().start(pStr2File1, pStr2File2).run()
+		self.assertEqual(readProc(pBedGetfasta), ['>::chr1:5-10', 'AAACC'])
+	'''
 	def testClosest (self):
 		afile  = os.path.join("testfiles", "bedtools", "test.closest.a.bed")
 		bfile1 = os.path.join("testfiles", "bedtools", "test.closest.b1.bed")
@@ -114,7 +119,7 @@ class testBedtools (unittest.TestCase):
 		pWindow.input = {pWindow.input: [(afile, bfile)]}
 		pWindow.run ()
 		self.assertEqual (readFile(outfile), readProc(pWindow))
-		
+	'''
 if __name__ == '__main__':
 	unittest.main()
 		
