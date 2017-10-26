@@ -4,7 +4,7 @@ import random
 from os import path, devnull, remove, makedirs
 from subprocess import Popen, check_output
 from tempfile import gettempdir
-from bioprocs.utils import plot, txt, helpers, mem2, runcmd, polling
+from bioprocs.utils import plot, txt, helpers, mem2, runcmd, polling, genenorm
 
 tmpdir = gettempdir()
 class TestUtils (unittest.TestCase):
@@ -526,6 +526,21 @@ except ValueError:
 
 		stdout = check_output(['Rscript', scriptfile], stderr=self.devnull).splitlines()
 		self.assertIn(int(float(stdout[-1].split()[2])), [4, 5, 6])
+
+	def testGeneNorm(self):
+		scriptfile = path.join(tmpdir, 'genenorm.py')
+		genefile   = path.join(tmpdir, 'gene.txt')
+		retfile    = path.join(tmpdir, 'gene-ret.txt')
+		with open(genefile, 'w') as f:
+			f.write('CXCL1\n')
+			f.write('EMMPRIN\n')
+		with open(scriptfile, 'w') as f:
+			f.write(genenorm.py)
+			f.write("""
+genenorm("%s", "%s")
+			""" % (genefile, retfile))
+		rc = Popen(['python', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
+		self.assertEqual(rc, 0)
 
 
 if __name__ == '__main__':

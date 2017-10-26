@@ -8,36 +8,50 @@ from os import path
 from hashlib import md5
 from mygene import MyGeneInfo
 from collections import OrderedDict
+
+{% if args.norm %}
+{{genenorm}}
+infile = '{{out.outdir}}/{{in.infile | bn}}.symbol'
+igfile = '{{out.outdir}}/{{in.infile | bn}}.gnorm'
+genenorm({{in.infile | quote}}, infile, col = 1)
+with open(igfile, 'w') as f:
+	for key, val in genemap.items():
+		f.write('%s\t%s\n', (key, val))
+{% else %}
+infile = {{in.infile | quote}}
+{% endif %}
+
 genestats  = {}
 regstats   = {}
 relations  = {}
 
 # read info
-with open("{{in.infile}}") as f:
+with open(infile) as f:
 	for line in f:
 		line  = line.strip()
 		if not line or line.startswith('#'): continue
 		parts = line.split("\t")
+		reg, gene = parts[:2]
+		gene = gene.upper()
 		if len(parts) >= 5:
-			(reg, gene, rstat, gstat, rel) = parts[:5]
+			(rstat, gstat, rel) = parts[2:]
 			genestats[gene] = gstat
 			regstats [reg]  = rstat
 			if not reg in relations: relations[reg] = {}
 			relations[reg][gene] = rel
 		elif len(parts) == 4:
-			(reg, gene, gstat, rel) = parts
+			(gstat, rel) = parts[2:]
 			genestats[gene] = gstat
 			regstats [reg]  = ''
 			if not reg in relations: relations[reg] = {}
 			relations[reg][gene] = rel
 		elif len(parts) == 3:
-			(reg, gene, rel) = parts
+			rel = parts[2:]
 			genestats[gene] = ''
 			regstats [reg]  = ''
 			if not reg in relations: relations[reg] = {}
 			relations[reg][gene] = rel
 		elif len(parts) == 2:
-			(reg, gene) = parts
 			genestats[gene] = ''
 			regstats [reg]  = ''
 			if not reg in relations: relations[reg] = {}
@@ -45,35 +59,7 @@ with open("{{in.infile}}") as f:
 		else:
 			raise ValueError('Expect more than 2 lines in:\n%s\n' % line)
 
-genes    = sorted(genestats.keys())
-genes    = list(set(genes))
-scopes   = ['symbol', 'alias']
-fields   = ['symbol']
-species  = 'human'
-uid      = md5(''.join(genes + scopes + fields + [species])).hexdigest()[:8]
-igfile   = "{{args.mgcache}}/mygeneinfo.%s" % uid
-ogfile   = "{{out.outdir}}/input.genes"
-genemap  = {}
-genemap2 = {}
-if path.isfile(igfile):
-	with open(igfile) as f, open(ogfile, 'w') as fout:
-		for line in f:
-			fout.write(line)
-			(query, symbol)  = line.strip().split('\t')
-			genemap[query]   = symbol
-			genemap2[symbol] = query
-else:
-	mg       = MyGeneInfo()
-	mgret    = mg.getgenes (genes, scopes=scopes, fields=fields, species=species)
-	with open (igfile, "w") as fout, open(ogfile, 'w') as fout2:
-		for gene in mgret:
-			if not 'symbol' in gene: continue
-			genemap [gene['query']]  = gene['symbol']
-			genemap2[gene['symbol']] = gene['query']
-			fout.write("%s\t%s\n" % (gene['query'], gene['symbol']))
-			fout2.write("%s\t%s\n" % (gene['query'], gene['symbol']))
-
-if not genemap:
+if not genestats:
 	stderr.write('No genes found.')
 	exit(0)
 
@@ -86,7 +72,7 @@ if {{args.enrplot}}:
 
 ## upload
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
-genes_str   = "\n".join(genemap.values())
+genes_str   = "\n".join(genestats.keys())
 description = '{{in.infile | fn}}'
 payload = {
     'list': (None, genes_str),
@@ -132,7 +118,7 @@ for db in dbs:
 		if {{args.rmtags}} and "_" in ret[1]: ret[1] = ret[1].split('_')[0]
 		if len(path2genes) < {{args.netn}}:
 			path2genes[ret[1]] = ret[5]
-			for g in ret[5]: genestats2[g] = genestats[genemap2[g]]
+			for g in ret[5]: genestats2[g] = genestats[g]
 			path2pvals[ret[1]] = ret[2]
 		d2plot.append (ret)
 	fout.close()
@@ -148,8 +134,8 @@ for db in dbs:
 		for reg, rel in relations.items():
 			foundreg = False
 			for g, stat in rel.items():
-				if not g in genemap: continue
-				g = genemap[g]
+				#if not g in genemap: continue
+				#g = genemap[g]
 				if not g in genestats2: continue
 				foundreg = True
 				if not reg in relations2:

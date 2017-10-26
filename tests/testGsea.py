@@ -16,7 +16,7 @@ relations = {}
 for reg in reglist:
 	relations[reg] = random.sample(genelist, 30)
 
-class TestCommon (unittest.TestCase):
+class TestGSEA (unittest.TestCase):
 
 	def testpTargetEnrichrCol2 (self):
 		infile = path.join(tmpdir, 'targetEnrichrCol2.txt')
@@ -105,8 +105,9 @@ class TestCommon (unittest.TestCase):
 			with open(infile, 'w') as f:
 				f.write(filestr)
 
-		pEnrichr.input  = [infile]
-		pEnrichr.errhow = 'terminate'
+		pEnrichr.input     = [infile]
+		pEnrichr.args.norm = True
+		pEnrichr.errhow    = 'terminate'
 		PyPPL().start(pEnrichr).run()
 
 	def testpExpmat2Gct(self):

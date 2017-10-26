@@ -62,8 +62,7 @@ with open ("{{out.outfile}}", "w") as f:
 			chr    = "chr" + str(pos['chr'])
 			strand = pos['strand']
 			tss    = pos['start'] if strand == 1 else pos['end']
-			pstart = tss - {{args.up}}
-			pend   = tss + {{args.down}}
-			f.write ("%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (chr, pstart, pend, hit['symbol'], 0, ("+" if strand == 1 else "-"), hit['query']))
+			f.write ("%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (chr, tss, tss + 1, hit['symbol'], 0, ("+" if strand == 1 else "-"), hit['query']))
 		except TypeError:
 			sys.stderr.write('Encounter TypeError, hit is: %s\n' % str(hit))
+

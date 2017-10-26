@@ -8,14 +8,22 @@ from pyppl import params
 
 DEFAULTS = {
 	# constants
+	"dbsnpver"        : "150",
+	"dbsnpver.desc"   : "The dbsnp version used in cruzdb to query SNP information.",
 	"genome"          : "hg19",
 	"genome.desc"     : "Commonly used genome assembly.",
 
 	# path
 	"annovarDb"         : "",
 	"annovarDb.desc"    : "The path of database for Annovar.",
+	"consvdir"          : "",
+	"consvdir.desc"     : "The directory containing conservation scores in bigWig files.\nUse ucsc-wig2bigwig the original files are wigFix files.",
 	"dbsnp"             : "",
-	"dbsnp.desc"        : "The dbsnp in VCF format.",
+	"dbsnp.desc"        : "The dbsnp common variants in VCF format.",
+	"dbsnp_all"         : "",
+	"dbsnp_all.desc"    : "The dbsnp all variants in VCF format.",
+	"chrsizes"          : "",
+	"chrsizes.desc"     : "The chromsome size file.",
 	"kallistoIdx"       : "",
 	"kallistoIdx.desc"  : "The kallisto index file.",
 	"ref"               : "",
@@ -65,6 +73,8 @@ DEFAULTS = {
 	"bowtie2.desc"             : "The path of bamtofastq of bowtie2.",
 	"bwa"                      : "bwa",
 	"bwa.desc"                 : "The path of bamtofastq of bwa.",
+	"bwtool"                   : "bwtool",
+	"bwtool.desc"              : "The path of bwtool.",
 	"cnvkit"                   : "cnvkit.py",
 	"cnvkit.desc"              : "The path of cnvkit.py.",
 	"cnvnator"                 : "cnvnator",

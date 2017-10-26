@@ -184,18 +184,19 @@ pBedMultiinter.script = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools random`, default: ""
+	`bedtools`: The bedtools executable,    default: "bedtools"
+	`seed`    : The seed for randomization, default: None
+	`chrsizes`: The chromsize file.
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedRandom = Proc()
-pBedRandom.input  = "gfile:file"
-pBedRandom.output = "outfile:file:{{gfile | fn}}.random.bed"
-pBedRandom.args   = { "bin": "bedtools", "params": "" }
-pBedRandom.script = """
-{{args.bin}} random {{args.params}} -g "{{gfile}}" > "{{outfile}}"
-"""
+pBedRandom               = Proc(desc = 'Generate a random set of intervals in BED format.')
+pBedRandom.input         = "l, n"
+pBedRandom.output        = "outfile:file:Random-{{in.l}}-{{in.n}}.bed"
+pBedRandom.args.seed     = None
+pBedRandom.args.bedtools = params.bedtools.value
+pBedRandom.args.chrsizes = params.chrsizes.value
+pBedRandom.script        = "file:scripts/bedtools/pBedRandom.bash"
 
 """
 @name:

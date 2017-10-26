@@ -37,29 +37,9 @@ pSort.script                 = "file:scripts/common/pSort.py"
 """
 pFiles2Dir = Proc()
 pFiles2Dir.input  = "infiles:files"
-pFiles2Dir.output = "outdir:dir:{{in.infiles | [0] | fn}}.etc_{{job.index}}"
-pFiles2Dir.lang   = "python"
-pFiles2Dir.script = """
-from glob import glob
-from os import path, symlink
-from sys import stderr
-
-for fname in {{in.infiles | json}}:
-	bn  = path.basename (fname)
-	dst = path.join ("{{out.outdir}}", bn)
-	if path.exists (dst):
-		fn, _, ext = bn.rpartition('.')
-		dsts = glob (path.join("{{out.outdir}}", fn + "[[]*[]]." + ext))
-		print dsts
-		if not dsts:
-			dst2 = path.join("{{out.outdir}}", fn + "[1]." + ext)
-		else:
-			maxidx = max([int(path.basename(d)[len(fn)+1 : -len(ext)-2]) for d in dsts])
-			dst2 = path.join("{{out.outdir}}", fn + "[" + str(maxidx+1) + "]." + ext)
-		stderr.write ("Warning: rename %s to %s\\n" % (dst, dst2))
-		dst = dst2
-	symlink (fname, dst)
-"""
+pFiles2Dir.output = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}_etc"
+pFiles2Dir.lang   = params.python.value
+pFiles2Dir.script = "file:scripts/common/pFiles2Dir.py"
 
 """
 @name:
@@ -187,6 +167,18 @@ pTxtFilter.args.skip         = 0
 pTxtFilter.args.delimit      = "\t"
 pTxtFilter.tplenvs.txtFilter = txt.filter.py
 pTxtFilter.script            = "file:scripts/common/pTxtFilter.py"
+
+
+pTxtTransform                      = Proc(desc = 'Transform a txt(tsv) file.')
+pTxtTransform.input                = "txtfile:file"
+pTxtTransform.output               = "outfile:file:{{in.txtfile | bn}}"
+pTxtTransform.lang                 = params.python.value
+pTxtTransform.args.transformer     = None
+pTxtTransform.args.header          = True
+pTxtTransform.args.delimit         = "\t"
+pTxtTransform.args.comment         = "#"
+pTxtTransform.tplenvs.txtTransform = txt.transform.py
+pTxtTransform.script               = "file:scripts/common/pTxtTransform.py"
 
 """
 @name:

@@ -1,4 +1,7 @@
-data  = read.table ("{{in.expfile}}", sep="\t", header={{args.header | R}}, row.names = {{args.rownames}}, check.names=F)
+data     = read.table ("{{in.expfile}}", sep="\t", header={{args.header | R}}, row.names = NULL, check.names=F)
+rnames   = make.unique(data[,1])
+data[,1] = NULL
+rownames(data)  = rnames
 
 if ("{{args.unit}}" == 'cpm') {
 	library('edgeR')
@@ -15,10 +18,7 @@ if ("{{args.unit}}" == 'cpm') {
 		ret = log2(ret)
 }
 
-rnames = {{args.rownames}} == 1
-cnames = {{args.header | R}}
-
-write.table (ret, "{{out.outfile}}", quote=F, row.names=rnames, col.names=cnames, sep="\t")
+write.table (ret, "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
 
 # boxplot
 {% if args.boxplot %}

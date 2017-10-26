@@ -1,6 +1,6 @@
 from os import path
 from pyppl import Proc
-from .utils import txt
+from .utils import txt, genenorm
 from . import params
 
 """
@@ -120,6 +120,8 @@ pGSEA.script    = "file:scripts/gsea/pGSEA.r"
 	`outdir:dir`:  The output directory, containing the tables and figures.
 @args:
 	`topn`: Top N pathways used to plot. Default: 10
+	`col`: The columns index containing the genes. Default: 0
+	`delimit`: The delimit of input file. Default: '\\t'
 	`dbs`:  The databases to do enrichment against. Default: KEGG_2016
 	  - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
 	  - Multiple dbs separated by comma (,)
@@ -131,20 +133,22 @@ pGSEA.script    = "file:scripts/gsea/pGSEA.r"
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
-pEnrichr              = Proc()
-pEnrichr.input        = "infile:file"
-pEnrichr.output       = "outdir:dir:{{in.infile | fn}}.enrichr"
-pEnrichr.lang         = params.python.value
-pEnrichr.args.topn    = 10
-pEnrichr.args.dbs     = "KEGG_2016"
-pEnrichr.args.norm    = False
-pEnrichr.args.rmtags  = True
-pEnrichr.args.plot    = True
-pEnrichr.args.title   = "Gene enrichment: {db}"
-pEnrichr.args.mgcache = path.join(params.tmpdir.value, 'mygeneinfo.cache')
-pEnrichr.beforeCmd    = 'if [[ ! -e "{{args.mgcache}}" ]]; then mkdir -p "{{args.mgcache}}"; fi'
-pEnrichr.errhow       = 'retry'
-pEnrichr.script       = "file:scripts/gsea/pEnrichr.py"
+pEnrichr                  = Proc()
+pEnrichr.input            = "infile:file"
+pEnrichr.output           = "outdir:dir:{{in.infile | fn}}.enrichr"
+pEnrichr.lang             = params.python.value
+pEnrichr.args.topn        = 10
+pEnrichr.args.col         = 0
+pEnrichr.args.delimit     = '\t'
+pEnrichr.args.dbs         = "KEGG_2016"
+pEnrichr.args.norm        = False
+pEnrichr.args.rmtags      = True
+pEnrichr.args.plot        = True
+pEnrichr.args.title       = "Gene enrichment: {db}"
+pEnrichr.args.tmpdir      = params.tmpdir.value
+pEnrichr.tplenvs.genenorm = genenorm.py
+pEnrichr.errhow           = 'retry'
+pEnrichr.script           = "file:scripts/gsea/pEnrichr.py"
 
 
 """
@@ -180,19 +184,20 @@ pEnrichr.script       = "file:scripts/gsea/pEnrichr.py"
 	[`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0) 
 	[`graphviz`](https://pypi.python.org/pypi/graphviz)
 """
-pTargetEnrichr              = Proc(desc = 'Do gene set enrichment analysis for target genes.')
-pTargetEnrichr.input        = "infile:file"
-pTargetEnrichr.output       = "outdir:dir:{{in.infile | fn}}.tenrichr"
-pTargetEnrichr.lang         = params.python.value
-pTargetEnrichr.args.dbs     = "KEGG_2016"
-pTargetEnrichr.args.rmtags  = True
-pTargetEnrichr.args.enrplot = True
-pTargetEnrichr.args.enrn    = 10
-pTargetEnrichr.args.netplot = True
-pTargetEnrichr.args.netn    = 5
-pTargetEnrichr.args.title   = "Gene enrichment: {db}"
-pTargetEnrichr.args.mgcache = path.join(params.tmpdir.value, 'mygeneinfo.cache')
-pTargetEnrichr.beforeCmd    = 'if [[ ! -e "{{args.mgcache}}" ]]; then mkdir -p "{{args.mgcache}}"; fi'
-pTargetEnrichr.errhow       = 'retry'
-pTargetEnrichr.script       = "file:scripts/gsea/pTargetEnrichr.py"
+pTargetEnrichr                  = Proc(desc = 'Do gene set enrichment analysis for target genes.')
+pTargetEnrichr.input            = "infile:file"
+pTargetEnrichr.output           = "outdir:dir:{{in.infile | fn}}.tenrichr"
+pTargetEnrichr.lang             = params.python.value
+pTargetEnrichr.args.dbs         = "KEGG_2016"
+pTargetEnrichr.args.norm        = False
+pTargetEnrichr.args.rmtags      = True
+pTargetEnrichr.args.enrplot     = True
+pTargetEnrichr.args.enrn        = 10
+pTargetEnrichr.args.netplot     = True
+pTargetEnrichr.args.netn        = 5
+pTargetEnrichr.args.title       = "Gene enrichment: {db}"
+pTargetEnrichr.args.tmpdir      = params.tmpdir.value
+pTargetEnrichr.tplenvs.genenorm = genenorm.py
+pTargetEnrichr.errhow           = 'retry'
+pTargetEnrichr.script           = "file:scripts/gsea/pTargetEnrichr.py"
 

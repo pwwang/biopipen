@@ -2,34 +2,19 @@ import json
 import requests
 import math
 from hashlib import md5
-genes = [line.split()[0] for line in open("{{in.infile}}") if line.strip()]
-genes = list(set(genes))
 
-if {{args.norm}}:
-	genes    = sorted(genes)
-	scopes   = ['symbol', 'alias']
-	fields   = ['symbol']
-	species  = 'human'
-	uid      = md5(''.join(genes + scopes + fields + [species])).hexdigest()[:8]
-	igfile   = "{{args.mgcache}}/mygeneinfo.%s" % uid
-	ogfile   = "{{out.outdir}}/input.genes"
-
-	if path.isfile(igfile):
-		with open(igfile) as f, open(ogfile, 'w') as fout:
-			for line in f:
-				fout.write(line)
-				(query, symbol)  = line.strip().split('\t')
-				genes.append(symbol)
-	else:
-		from mygene import MyGeneInfo
-		mg       = MyGeneInfo()
-		mgret    = mg.getgenes (genes, scopes=scopes, fields=fields, species=species)
-		with open (igfile, "w") as fout, open(ogfile, 'w') as fout2:
-			for gene in mgret:
-				if not 'symbol' in gene: continue
-				genes.append(gene['symbol'])
-				fout.write("%s\t%s\n" % (gene['query'], gene['symbol']))
-				fout2.write("%s\t%s\n" % (gene['query'], gene['symbol']))
+{% if args.norm %}
+{{genenorm}}
+gmapfile = "{{out.outdir}}/{{in.infile | bn}}.gnorm"
+gmap     = genenorm({{in.infile | quote}}, delimit={{args.delimit | quote}}, col = {{args.col}}, tmpdir = {{args.tmpdir | quote}})
+genes    = gmap.values()
+with open(gmapfile, 'w') as f:
+	for key, val in gmap.items():
+		f.write('%s\t%s\n' % (key, val))
+{% else %}
+with open({{in.infile | quote}}) as f:
+	genes = [line.split({{args.delimit | quote}})[{{args.col}}] for line in f if line.strip()]
+{% endif %}
 	
 if {{args.plot}}:
 	import matplotlib

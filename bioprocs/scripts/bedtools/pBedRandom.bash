@@ -1,0 +1,1 @@
+{{args.bedtools}} random -l {{in.l}} -n {{in.n}} -seed {{args.seed}} -g {{args.chrsizes | quote}} > {{out.outfile | quote}}

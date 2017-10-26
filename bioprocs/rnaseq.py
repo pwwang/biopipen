@@ -130,7 +130,6 @@ pRawCounts2.input               = "expfile:file"
 pRawCounts2.output              = "outfile:file:{{in.expfile | fn | fn}}/{{in.expfile | fn | fn}}.expr.txt, outdir:dir:{{in.expfile | fn | fn}}"
 pRawCounts2.args.unit           = 'cpm'
 pRawCounts2.args.header         = True
-pRawCounts2.args.rownames       = 1
 pRawCounts2.args.log2           = False
 pRawCounts2.args.glenfile       = ''
 pRawCounts2.args.boxplot        = False

@@ -149,6 +149,9 @@ download = Box({
 })
 download.curl.py = _getsource()
 
-parallel = Box()
+parallel    = Box()
 parallel.py = _getsource(runcmd.py)
+
+genenorm    = Box()
+genenorm.py = _getsource()
 
