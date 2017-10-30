@@ -32,6 +32,8 @@ DEFAULTS = {
 	"refgene.desc"      : "The reference genes in GTF format.",
 	"snpeffDb"          : "",
 	"snpeffDb.desc"     : "The path of database for snpEff.",
+	"tfmotifs"          : "",
+	"tfmotifs.desc"     : "The TF motifs in MEME format.",
 	"tmpdir"            : gettempdir(),
 	"tmpdir.desc"       : "The temporary directory.",
 	"vepNonTCGAVcf"     : "",

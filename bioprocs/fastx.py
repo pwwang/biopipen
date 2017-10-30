@@ -291,11 +291,12 @@ pFastqSETrim.script                 = "file:scripts/fastx/pFastqSETrim.py"
 """
 pFastqSE2Sam                        = Proc(desc = 'Map cleaned single-end fastq file to reference genome.')
 pFastqSE2Sam.input                  = "fq:file"
-pFastqSE2Sam.output                 = "outfile:file:{{in.fq | getFastqFn }}.{{args.outformat}}"
-pFastqSE2Sam.args.outformat         = "sam"
+pFastqSE2Sam.output                 = "outfile:file:{{in.fq | getFastqFn }}.{{args.outfmt}}"
+pFastqSE2Sam.args.outfmt            = "sam"
 pFastqSE2Sam.args.tool              = 'bwa'
 pFastqSE2Sam.args.bwa               = params.bwa.value
 pFastqSE2Sam.args.ngm               = params.ngm.value
+pFastqSE2Sam.args.samtools          = params.samtools.value
 pFastqSE2Sam.args.bowtie2           = params.bowtie2.value
 pFastqSE2Sam.args.bowtie2_build     = params.bowtie2.value + '-build'
 pFastqSE2Sam.args.rg                = Box({'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''})
@@ -330,12 +331,13 @@ pFastqSE2Sam.script                 = "file:scripts/fastx/pFastqSE2Sam.py"
 """
 pFastq2Sam                        = Proc(desc = 'Map cleaned paired fastq file to reference genome.')
 pFastq2Sam.input                  = "fq1:file, fq2:file"
-pFastq2Sam.output                 = "outfile:file:{{in.fq1 | getFastqFn | lambda x: x[:-2] if x.endswith('_1') or x.endswith('_2') else x }}.{{args.outformat}}"
-pFastq2Sam.args.outformat         = "sam"
+pFastq2Sam.output                 = "outfile:file:{{in.fq1 | getFastqFn | lambda x: x[:-2] if x.endswith('_1') or x.endswith('_2') else x }}.{{args.outfmt}}"
+pFastq2Sam.args.outfmt            = "sam"
 pFastq2Sam.args.tool              = 'bwa'
 pFastq2Sam.args.bwa               = params.bwa.value
 pFastq2Sam.args.ngm               = params.ngm.value
 pFastq2Sam.args.star              = params.star.value
+pFastq2Sam.args.samtools          = params.samtools.value
 pFastq2Sam.args.bowtie2           = params.bowtie2.value
 pFastq2Sam.args.bowtie2_build     = params.bowtie2.value + '-build'
 pFastq2Sam.args.rg                = Box({'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''})

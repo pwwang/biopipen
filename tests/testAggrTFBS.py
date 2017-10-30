@@ -1,12 +1,16 @@
 import addPath, unittest
 
 from os import path
-from pyppl import PyPPL
+from pyppl import PyPPL, params
 from bioprocs.common import pStr2File
 from bioaggrs.tfbs import aTFBSOnPromoters, aTFBSOnRegions, aTFBSOnPromotersConsv, aTFBSOnRegionsConsv
 from bioprocs.bed import pBedRandom
 
-mfile = '/home/m161047/junwenwang/shared/reference/motif_databases/HUMAN/HOCOMOCOv10_HUMAN_mono_meme_format.meme'
+mfile = params.tfmotifs.value
+tffile = path.join(params.tmpdir.value, 'tffile.txt')
+with open(tffile, 'w') as fout:
+	fout.write("TEAD1_HUMAN.H10MO.D\tTEAD1\n")
+	fout.write("TEAD3_HUMAN.H10MO.D\tTEAD3\n")
 
 class testAggrTFBS (unittest.TestCase):
 
@@ -15,8 +19,7 @@ class testAggrTFBS (unittest.TestCase):
 		pStr2File.input = ['CXCL1,EMMPRIN']
 
 		aTFBSOnPromoters.pPromoters.depends = pStr2File
-		aTFBSOnPromoters.input = [[mfile]]
-		aTFBSOnPromoters.args.mids = 'TEAD1_HUMAN.H10MO.D,TEAD3_HUMAN.H10MO.D'
+		aTFBSOnPromoters.input = [[tffile]]
 		aTFBSOnPromoters.args.pval = 1e-3
 
 		PyPPL().start(pStr2File, aTFBSOnPromoters).run()
@@ -28,8 +31,7 @@ class testAggrTFBS (unittest.TestCase):
 		pStr2File2.input = ['chr19\t568135\t570239, chr9\t570035\t572139']
 
 		aTFBSOnRegions.pBedGetfasta.depends = pStr2File2
-		aTFBSOnRegions.input = [[mfile]]
-		aTFBSOnRegions.args.mids = 'TEAD1_HUMAN.H10MO.D,TEAD3_HUMAN.H10MO.D'
+		aTFBSOnRegions.input = [[tffile]]
 		aTFBSOnRegions.args.pval = 1e-3
 
 		PyPPL().start(pStr2File2, aTFBSOnRegions).run()
@@ -40,8 +42,7 @@ class testAggrTFBS (unittest.TestCase):
 		pStr2File3.input = ['CXCL1,EMMPRIN']
 
 		aTFBSOnPromotersConsv.pPromoters.depends = pStr2File3
-		aTFBSOnPromotersConsv.input = [[mfile]]
-		aTFBSOnPromotersConsv.args.mids = 'TEAD1_HUMAN.H10MO.D,TEAD3_HUMAN.H10MO.D'
+		aTFBSOnPromotersConsv.input = [[tffile]]
 		aTFBSOnPromotersConsv.args.pval = 1e-3
 
 		PyPPL().start(pStr2File3, aTFBSOnPromotersConsv).run()
@@ -52,8 +53,7 @@ class testAggrTFBS (unittest.TestCase):
 		pStr2File4.input = ['chr19\t568135\t570239, chr9\t570035\t572139']
 
 		aTFBSOnRegionsConsv.pBedGetfasta.depends = pStr2File4
-		aTFBSOnRegionsConsv.input = [[mfile]]
-		aTFBSOnRegionsConsv.args.mids = 'TEAD1_HUMAN.H10MO.D,TEAD3_HUMAN.H10MO.D'
+		aTFBSOnRegionsConsv.input = [[tffile]]
 		aTFBSOnRegionsConsv.args.pval = 1e-3
 		aTFBSOnRegionsConsv.args.threspval = 0.1
 

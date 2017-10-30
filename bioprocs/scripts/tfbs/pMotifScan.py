@@ -5,31 +5,33 @@ from shutil import rmtree
 {{ params2CmdArgs }}
 {{ parallel }}
 
-{% if args.cleanmname %}
-def cleanMotifName(mname, fn = {{in.mfile | fn | quote}}):
-	if 'HOCOMOCO' in fn:
-		return mname.split('_HUMAN')[0]
-	return mname
-{% else %}
-def cleanMotifName(mname, fn = ''):
-	return mname
-{% endif %}
-
-
 params   = {{args.params}}
 ucsclinkTpl = {{args.ucsclink | quote}}
+
+motifs = {}
+with open({{in.tffile | quote}}) as f:
+	for line in f:
+		line = line.strip("\n")
+		if not line: continue
+		parts = line.split("\t")
+		if len(parts) == 1:
+			motifs[parts[0]] = parts[0]
+		else:
+			motifs[parts[0]] = parts[1]
+
 {% if args.tool | lambda x: x == 'meme' %}
+
 cmds   = []
 
 params['thresh']    = {{args.pval | quote}}
 params['verbosity'] = 4
-mids = {{args.mids | lambda x: list(map(lambda x: x.strip(), x.split(','))) if not isinstance(x, list) else x}}
-for mid in mids:
+
+for mid in motifs.keys():
 	params['o']         = path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid))
 	params['motif']     = mid
 
 	if path.isdir(params['o']): rmtree(params['o'])
-	cmd = '{{args.meme}} %s {{in.mfile | quote}} {{in.sfile | quote}}' % params2CmdArgs(params, dash='--', equal=' ')
+	cmd = '{{args.meme}} %s {{args.tfmotifs | quote}} {{in.sfile | quote}}' % params2CmdArgs(params, dash='--', equal=' ')
 
 	cmds.append(cmd)
 
@@ -40,7 +42,7 @@ with open({{out.outfile | quote}}, 'w') as fout:
 	fout.write('\t'.join(cont) + '\n')
 	minscore = 9999
 	maxscore = -1
-	for mid in mids:
+	for mid in motifs.keys():
 		with open(path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
 			for line in f:
 				line   = line.strip()
@@ -50,7 +52,7 @@ with open({{out.outfile | quote}}, 'w') as fout:
 				minscore = min(minscore, score)
 				maxscore = max(maxscore, score)
 
-	for mid in mids:
+	for mid in motifs.keys():
 		with open(path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
 			for line in f:
 				line   = line.strip()
@@ -66,7 +68,7 @@ with open({{out.outfile | quote}}, 'w') as fout:
 				chrom  = seqs[2]
 				start  = int(seqs[3])
 				end    = int(seqs[4])
-				name   = cleanMotifName(motif) + '::' + seqs[0]
+				name   = motifs[motif] + '::' + (seqs[0] if seqs[0] else chrom + ':' + seqs[3] + '-' + seqs[4])
 				ucsclink = ucsclinkTpl.format(chrom + ':' + str(start + strt0) + '-' + str(start + end0))
 
 				cont   = [chrom, start + strt0, start + end0, name, score, strand, motif, seq, strt0, end0, parts[5], parts[6], parts[7], parts[8], ucsclink]

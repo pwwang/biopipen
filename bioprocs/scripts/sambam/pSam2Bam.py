@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 infile    = {{ in.infile | quote }}
 outfile   = {{ out.outfile | quote }}
-informat  = {{ args.informat | quote }}
+informat  = {{ args.infmt | quote }}
 informat  = informat if informat else {{ in.infile | ext | [1:] | quote}} 
 tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 doSort    = {{ args.sort }}
@@ -34,7 +34,7 @@ try:
 	params['blockme']        = mem
 	params['tmpfile']        = path.join(tmpdir, 'tmp.')
 	params['inputformat']    = informat
-	params['outformat']      = 'bam'
+	params['outfmt']         = 'bam'
 	params['inputthreads']   = {{args.nthread}}
 	params['outputthreads']  = {{args.nthread}}
 	params['markduplicates'] = int(doMarkdup)

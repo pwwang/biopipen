@@ -16,5 +16,5 @@ p = 2*pnorm(-abs(z))
 {% endif %}
 {% endif %}
 
-write.table(format(sim, digits=4), '{{out.outfile}}', sep="\t", row.names=T, col.names=T, quote=F)
-write.table(format(p, digits=4)  , '{{out.outpval}}', sep="\t", row.names=T, col.names=T, quote=F)
+write.table(format(sim, digits=4, scientific=F), '{{out.outfile}}', sep="\t", row.names=T, col.names=T, quote=F)
+write.table(format(p, digits=3, scientific=T)  , '{{out.outpval}}', sep="\t", row.names=T, col.names=T, quote=F)

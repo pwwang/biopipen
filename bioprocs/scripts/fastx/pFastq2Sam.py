@@ -26,6 +26,10 @@ if not rg['SM']:
 
 params = OrderedDict({{args.params}})
 
+def sam2bam(samfile, bamfile):
+	cmd = '{{args.samtools}} view -Sb "%s" > "%s"; rm -f "%s"' % (samfile, bamfile, samfile)
+	runcmd(cmd)
+
 ############ bowtie2
 {% if args.tool | lambda x: x == 'bowtie2' %}
 # check reference index files
@@ -48,10 +52,14 @@ for k,v in rg.items():
 params['x'] = ref
 params['1'] = {{in.fq1 | quote}}
 params['2'] = {{in.fq2 | quote}}
-params['S'] = {{out.outfile | quote}}
+params['S'] = {% if args.outfmt | lambda x: x == 'bam' %}{{out.outfile | prefix | lambda x: x + '.sam' | quote}}{% else %}{{out.outfile | quote}}{% endif %} 
 
 cmd = '{{args.bowtie2}} %s' % params2CmdArgs(params, equal = ' ', noq = ['threads'])
 runcmd (cmd)
+
+{% if args.outfmt | lambda x: x == 'bam' %}
+sam2bam(params['S'], {{out.outfile | quote}})
+{% endif %}
 
 ############ bwa
 {% elif args.tool | lambda x: x == 'bwa' %}
@@ -67,8 +75,13 @@ ref = buildrefIndex (
 # do mapping
 params['t'] = {{args.nthread}}
 params['R'] = "@RG\\tID:%s\\t%s" % (rg['ID'], "\\t".join(k + ':' +v for k,v in rg.items() if k!='ID'))
-cmd = '{{args.bwa}} mem %s "%s" "{{in.fq1}}" "{{in.fq2}}" > "{{out.outfile}}"' % (params2CmdArgs(params, noq=['t']), ref)
+outfile     = {% if args.outfmt | lambda x: x == 'bam' %}{{out.outfile | prefix | lambda x: x + '.sam' | quote}}{% else %}{{out.outfile | quote}}{% endif %} 
+cmd = '{{args.bwa}} mem %s "%s" {{in.fq1 | quote}} {{in.fq2 | quote}} > "%s"' % (params2CmdArgs(params, noq=['t']), ref, outfile)
 runcmd (cmd)
+
+{% if args.outfmt | lambda x: x == 'bam' %}
+sam2bam(outfile, {{out.outfile | quote}})
+{% endif %}
 
 {% elif args.tool | lambda x: x == 'ngm' %}
 # check reference index
@@ -85,7 +98,7 @@ params['1'] = {{in.fq1 | quote}}
 params['2'] = {{in.fq2 | quote}}
 params['r'] = ref
 params['o'] = {{out.outfile | quote}}
-params['b'] = {{ args.outformat | lambda x: x=='bam' }}
+params['b'] = {{ args.outfmt | lambda x: x=='bam' }}
 params.update({('rg-' + k.lower()):v for k,v in rg.items()})
 params['t'] = {{args.nthread}}
 cmd = '{{args.ngm}} %s' % (params2CmdArgs(params, equal = ' ', noq = ['t']))
@@ -109,11 +122,11 @@ params['readFilesIn'] = '{{in.fq1 | quote}} {{in.fq2 | quote}}'
 params['readFilesCommand'] = rfcmd
 params['readNameSeparator'] = '.'
 params['outFileNamePrefix'] = "{{job.outdir}}/"
-params['outSAMtype'] = {{args.outformat.upper() | quote}}
+params['outSAMtype'] = {{args.outfmt.upper() | quote}}
 cmd = '{{args.star}} %s' % params2CmdArgs(params, equal = ' ', noq = ['readFilesIn', 'readNameSeparator'])
 runcmd (cmd)
 
-outfile = "{{job.outdir}}/Aligned.out.{{args.outformat}}"
+outfile = "{{job.outdir}}/Aligned.out.{{args.outfmt}}"
 if path.exists(outfile):
 	move (outfile, "{{out.outfile}}")
 {% endif %}

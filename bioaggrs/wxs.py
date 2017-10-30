@@ -23,6 +23,7 @@ aEBam2Bam = Aggr(
 )
 # delegates
 aEBam2Bam.delegate('args.ref', 'pFastq2Sam, pBamRecal')
+aEBam2Bam.delegate('args.gz',  'pBam2Fastq, pFastqTrim')
 # args
 aEBam2Bam.pSam2Bam.args.markdup = True
 

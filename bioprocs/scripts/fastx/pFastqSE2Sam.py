@@ -22,6 +22,10 @@ if not rg['SM']:
 
 params = OrderedDict({{args.params}})
 
+def sam2bam(samfile, bamfile):
+	cmd = '{{args.samtools}} view -Sb "%s" > "%s"; rm -f "%s"' % (samfile, bamfile, samfile)
+	runcmd(cmd)
+
 ############# bowtie2
 {% if args.tool | lambda x: x == 'bowtie2' %}
 # check reference index files
@@ -43,10 +47,14 @@ for k,v in rg.items():
 	i += 1
 params['x'] = ref
 params['U'] = {{in.fq | quote}}
-params['S'] = {{out.outfile | quote}}
+params['S'] = {% if args.outfmt | lambda x: x == 'bam' %}{{out.outfile | prefix | lambda x: x + '.sam' | quote}}{% else %}{{out.outfile | quote}}{% endif %} 
 
 cmd = '{{args.bowtie2}} %s' % params2CmdArgs(params, equal = ' ', noq = ['threads'])
 runcmd (cmd)
+
+{% if args.outfmt | lambda x: x == 'bam' %}
+sam2bam(params['S'], {{out.outfile | quote}})
+{% endif %}
 
 ############# bwa
 {% elif args.tool | lambda x: x == 'bwa' %}
@@ -62,9 +70,15 @@ ref = buildrefIndex (
 # do mapping
 params['t'] = {{args.nthread}}
 params['R'] = "@RG\\tID:%s\\t%s" % (rg['ID'], "\\t".join(k + ':' +v for k,v in rg.items() if k!='ID'))
+outfile     = {% if args.outfmt | lambda x: x == 'bam' %}{{out.outfile | prefix | lambda x: x + '.sam' | quote}}{% else %}{{out.outfile | quote}}{% endif %} 
 
-cmd = '{{args.bwa}} mem %s "%s" "{{in.fq}}" > "{{out.outfile}}"' % (params2CmdArgs(params, noq=['t']), ref)
+cmd = '{{args.bwa}} mem %s "%s" {{in.fq | quote}} > "%s"' % (params2CmdArgs(params, noq=['t']), ref, outfile)
 runcmd (cmd)
+
+{% if args.outfmt | lambda x: x == 'bam' %}
+sam2bam(outfile, {{out.outfile | quote}})
+{% endif %}
+
 
 ############# ngm
 {% elif args.tool | lambda x: x == 'ngm' %}
@@ -81,7 +95,7 @@ ref = buildrefIndex (
 params['q'] = {{in.fq | quote}}
 params['r'] = ref
 params['o'] = {{out.outfile | quote}}
-params['b'] = {{ args.outformat | lambda x: x=='bam' }}
+params['b'] = {{ args.outfmt | lambda x: x=='bam' }}
 params.update({('rg-' + k.lower()):v for k,v in rg.items()})
 params['t'] = {{args.nthread}}
 
