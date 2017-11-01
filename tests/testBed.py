@@ -2,7 +2,7 @@ import addPath, unittest
 from pyppl import PyPPL
 from os import path
 from tempfile import gettempdir
-from bioprocs.bedtools import pBedGetfasta
+from bioprocs.bed import pBedGetfasta, pBedFlank
 from bioprocs.common import pStr2File
 
 def readFile(file):
@@ -25,7 +25,20 @@ class testBedtools (unittest.TestCase):
 		pBedGetfasta.callfront = lambda p: p.args.update({'ref': pStr2File2.channel.get()})
 
 		PyPPL().start(pStr2File1, pStr2File2).run()
-		self.assertEqual(readProc(pBedGetfasta), ['>::chr1:5-10', 'AAACC'])
+		self.assertEqual(readProc(pBedGetfasta), ['>::chr1:5-10', 'AAACC'])	
+		
+	def testFlank (self):
+		pStr2File3              = pStr2File.copy()
+		pStr2File3.input        = ['chr1	100	200, chr1	500	600']
+		pBedFlank.depends       = pStr2File3
+		pBedFlank.args.params.b = 5
+		pBedFlank2              = pBedFlank.copy()
+		pBedFlank2.depends      = pStr2File3
+		pBedFlank2.args.extend  = True
+		PyPPL().start(pStr2File3).run()
+		self.assertEqual (readProc(pBedFlank), ['chr1	95	100', 'chr1	200	205', 'chr1	495	500', 'chr1	600	605'])
+		self.assertEqual (readProc(pBedFlank2), ['chr1	95	205', 'chr1	495	605'])
+
 	'''
 	def testClosest (self):
 		afile  = os.path.join("testfiles", "bedtools", "test.closest.a.bed")
@@ -36,14 +49,7 @@ class testBedtools (unittest.TestCase):
 		pClosest.run ()
 		self.assertEqual (readFile(outfile), readProc(pClosest))
 		
-	def testFlank (self):
-		infile  = os.path.join("testfiles", "bedtools", "test.flank.bed")
-		gfile   = os.path.join("testfiles", "bedtools", "test.flank.genome")
-		outfile = os.path.join("testfiles", "bedtools", "test.flank.ret")
-		pFlank.input = {pFlank.input: [(infile, gfile)]}
-		pFlank.args.update ({"params": "-b 5"})
-		pFlank.run ()
-		self.assertEqual (readFile(outfile), readProc(pFlank))
+
 		
 	def testIntersect (self):
 		afile  = os.path.join("testfiles", "bedtools", "test.intersect.a.bed")

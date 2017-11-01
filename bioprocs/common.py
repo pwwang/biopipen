@@ -92,15 +92,14 @@ done
 @output:
 	`outfile:file`: The output file
 """
-pMergeFiles = Proc()
-pMergeFiles.input  = "indir:file"
-pMergeFiles.output = "outfile:file:{{indir | fn}}.merged"
-pMergeFiles.script = """
-> "{{out.outfile}}"
-for infile in "{{indir}}/*"; do
-	cat $infile >> "{{out.outfile}}"
-done
-"""
+pMergeFiles              = Proc(desc = 'Merge files.')
+pMergeFiles.input        = "infiles:files"
+pMergeFiles.output       = "outfile:file:{{in.infiles[0] | fn}}_etc-merged{{in.infiles[0] | ext}}"
+pMergeFiles.args.skip    = []
+pMergeFiles.args.comment = '#'
+pMergeFiles.args.header  = False
+pMergeFiles.lang         = params.python.value
+pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
 
 """
 @name:
@@ -213,3 +212,33 @@ pStr2File.args.trimLine     = True
 pStr2File.tplenvs.encode    = lambda x: __import__('re').sub(r'[^\w_]', '', x)[:16]
 pStr2File.lang              = params.python.value
 pStr2File.script            = "file:scripts/common/pStr2File.py"
+
+"""
+@name:
+	pSimRead
+@description:
+	Read files 
+@input:
+	`infiles:files`: The input files
+@output:
+	`outfile:file`: The output file
+@args:
+	`skip`: argument skip for each file
+	`delimit`: argument delimit for each file
+	`gzip`: argument gzip for each file
+	`match`: The match function. 
+	`do`: The do function. Global vaiable `fout` is available to write results to output file.
+@requires:
+	[`python-simread`](https://github.com/pwwang/simread)
+"""
+pSimRead              = Proc(desc = 'Read files simultaneously.')
+pSimRead.input        = 'infiles:files'
+pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}-etc-simread.txt'
+pSimRead.args.skip    = []
+pSimRead.args.delimit = []
+pSimRead.args.gzip    = []
+pSimRead.args.match   = None
+pSimRead.args.do      = None
+pSimRead.lang         = params.python.value
+pSimRead.script       = "file:scripts/common/pSimRead.py"
+

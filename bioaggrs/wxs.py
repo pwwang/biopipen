@@ -139,7 +139,7 @@ aBam2Mut.pBamPair2Smut.input = lambda ch1, ch2: [ \
 	[Channel.fromFile(ch2.get(), header=True)] for p in \
 	set(ch.Patient.flatten()) for c1, c2 in \
 	[ 
-		(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and x[2] == 'Tumor'), 
-		 Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and x[2] == 'Normal'))
+		(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['TUMOR', 'DISEASE', 'AFTER']])), 
+		 Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']])))
 	]
 ]

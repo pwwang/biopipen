@@ -60,7 +60,7 @@ pBedClosest.script = """
 @name:
 	pBedFlank
 @description:
-	`bedtools flank` will create two new flanking intervals for each interval in a BED/GFF/VCF file. Note that flank will restrict the created flanking intervals to the size of the chromosome (i.e. no start < 0 and no end > chromosome size).
+	`bedtools flank` will create two new flanking intervals for each interval in a BED file. Note that flank will restrict the created flanking intervals to the size of the chromosome (i.e. no start < 0 and no end > chromosome size).
 @input:
 	`infile:file`:  The input file
 	`gfile:file`:   The genome size file
@@ -72,13 +72,17 @@ pBedClosest.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedFlank = Proc()
-pBedFlank.input  = "infile:file, gfile:file"
-pBedFlank.output = "outfile:file:{{infile | fn}}.flank.bed"
-pBedFlank.args   = { "bin": "bedtools", "params": "" }
-pBedFlank.script = """
-{{args.bin}} flank {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
-"""
+pBedFlank                        = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
+pBedFlank.input                  = "infile:file"
+pBedFlank.output                 = "outfile:file:{{in.infile | fn}}-flank.bed"
+pBedFlank.args.extend            = False
+pBedFlank.args.gsize             = params.gsize.value
+pBedFlank.args.params            = Box()
+pBedFlank.args.bedtools          = params.bedtools.value
+pBedFlank.tplenvs.runcmd         = runcmd.py
+pBedFlank.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedFlank.lang                   = params.python.value
+pBedFlank.script                 = "file:scripts/bedtools/pBedFlank.py"
 
 """
 @name:
@@ -186,7 +190,7 @@ pBedMultiinter.script = """
 @args:
 	`bedtools`: The bedtools executable,    default: "bedtools"
 	`seed`    : The seed for randomization, default: None
-	`chrsizes`: The chromsize file.
+	`gsize`   : The chromsize file.
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
@@ -195,7 +199,7 @@ pBedRandom.input         = "l, n"
 pBedRandom.output        = "outfile:file:Random-{{in.l}}-{{in.n}}.bed"
 pBedRandom.args.seed     = None
 pBedRandom.args.bedtools = params.bedtools.value
-pBedRandom.args.chrsizes = params.chrsizes.value
+pBedRandom.args.gsize    = params.gsize.value
 pBedRandom.script        = "file:scripts/bedtools/pBedRandom.bash"
 
 """

@@ -3,7 +3,7 @@ import addPath, unittest
 from os import path
 from pyppl import PyPPL, params
 from bioprocs.common import pStr2File
-from bioaggrs.tfbs import aTFBSOnPromoters, aTFBSOnRegions, aTFBSOnPromotersConsv, aTFBSOnRegionsConsv
+from bioaggrs.tfbs import aTFBSOnPromoters, aTFBSOnRegions, aTFBSOnPromotersConsv, aTFBSOnRegionsConsv, aTFBSOnPromotersByTF, aTFBSOnRegionsByTF
 from bioprocs.bed import pBedRandom
 
 mfile = params.tfmotifs.value
@@ -15,6 +15,18 @@ with open(tffile, 'w') as fout:
 class testAggrTFBS (unittest.TestCase):
 
 	@unittest.skipIf(not path.isfile(mfile), 'Motif file not exists.')
+	def testTFBSOnPromotersByTF(self):
+
+		pStr2File5 = pStr2File.copy()
+		pStr2File5.input = ['TEAD1, TEAD3']
+		pStr2File6 = pStr2File.copy()
+		pStr2File6.input = ['CXCL1,EMMPRIN']
+		aTFBSOnPromotersByTF.depends2 = pStr2File5, pStr2File6
+		aTFBSOnPromotersByTF.args.pval = 1e-3
+
+		PyPPL().start(pStr2File5, pStr2File6, aTFBSOnPromotersByTF).run()
+
+	@unittest.skipIf(not path.isfile(mfile), 'Motif file not exists.')
 	def testTFBSOnPromoters(self):
 		pStr2File.input = ['CXCL1,EMMPRIN']
 
@@ -23,6 +35,18 @@ class testAggrTFBS (unittest.TestCase):
 		aTFBSOnPromoters.args.pval = 1e-3
 
 		PyPPL().start(pStr2File, aTFBSOnPromoters).run()
+
+	@unittest.skipIf(not path.isfile(mfile), 'Motif file not exists.')
+	def testTFBSOnRegionsByTF(self):
+		pStr2File7 = pStr2File.copy()
+		pStr2File7.input = ['TEAD1, TEAD3']
+		pStr2File8 = pStr2File.copy()
+		pStr2File8.input = ['chr19\t568135\t570239, chr9\t570035\t572139']
+
+		aTFBSOnRegionsByTF.depends2 = pStr2File7, pStr2File8
+		aTFBSOnRegionsByTF.args.pval = 1e-3
+
+		PyPPL().start(pStr2File7, pStr2File8, aTFBSOnRegionsByTF).run()
 
 	@unittest.skipIf(not path.isfile(mfile), 'Motif file not exists.')
 	def testTFBSOnRegions(self):

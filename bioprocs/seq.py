@@ -14,7 +14,7 @@ from . import params
 @args:
 	`len`: The length of a random region. Default: 50
 	`nperm`: Number of permutations. Default: 1000
-	`chrsizes`: The chrom size file.
+	`gsize`: The chrom size file.
 	`bedtools`: The path of bedtools.
 	`bwtool`: The path of bwtool.
 	`consvdir`: The directory containing bigwig files of conservation scores
@@ -29,7 +29,7 @@ pConsvPerm.output                 = 'outfile:file:consv-len{{args.len}}-nperm{{a
 pConsvPerm.args.len               = 50
 pConsvPerm.args.nperm             = 1000
 pConsvPerm.args.consvdir          = params.consvdir.value
-pConsvPerm.args.chrsizes          = params.chrsizes.value
+pConsvPerm.args.gsize             = params.gsize.value
 pConsvPerm.args.bedtools          = params.bedtools.value
 pConsvPerm.args.bwtool            = params.bwtool.value
 pConsvPerm.args.seed              = None

@@ -10,7 +10,7 @@ btparams = {}
 btparams['l']    = {{args.len}}
 btparams['n']    = 2*{{args.nperm}} # some regions do not have data
 btparams['seed'] = {{in.seed}}
-btparams['g']    = {{args.chrsizes | quote}}
+btparams['g']    = {{args.gsize | quote}}
 
 randregfileUnsorted = path.join({{job.outdir | quote}}, 'randregions.bed.unsorted')
 randregfile         = path.join({{job.outdir | quote}}, 'randregions.bed')

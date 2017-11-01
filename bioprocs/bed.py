@@ -1,5 +1,5 @@
 from pyppl import Proc
-from .bedtools import pBedGetfasta, pBedRandom
+from .bedtools import pBedGetfasta, pBedRandom, pBedFlank
 
 """
 @name:
