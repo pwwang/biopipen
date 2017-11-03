@@ -1,5 +1,5 @@
 data     = read.table ("{{in.expfile}}", sep="\t", header={{args.header | R}}, row.names = NULL, check.names=F)
-rnames   = make.unique(data[,1])
+rnames   = make.unique(as.vector(data[,1]))
 data[,1] = NULL
 rownames(data)  = rnames
 

@@ -146,6 +146,26 @@ pRawCounts2.tplenvs.plotHist    = plot.hist.r
 pRawCounts2.lang                = params.Rscript.value
 pRawCounts2.script              = "file:scripts/rnaseq/pRawCounts2.r"
 
+p2RawCounts                     = Proc(desc = 'Convert normalized expression back to raw counts.')
+p2RawCounts.input               = 'expfile:file'
+p2RawCounts.output              = 'outfile:file:{{in.expfile | fn | fn}}/{{in.expfile | fn | fn}}.counts.txt, outdir:dir:{{in.expfile | fn | fn}}'
+p2RawCounts.args.unit           = 'fpkm'
+p2RawCounts.args.header         = True
+p2RawCounts.args.refgene        = params.refgene.value
+p2RawCounts.args.boxplot        = False
+p2RawCounts.args.heatmap        = False
+p2RawCounts.args.heatmapn       = 500
+p2RawCounts.args.histplot       = False
+p2RawCounts.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
+p2RawCounts.args.boxplotggs     = ['r:ylab("Expression")']
+p2RawCounts.args.heatmapggs     = ['r:theme(axis.text.y = element_blank())']
+p2RawCounts.args.histplotggs    = ['r:labs(x = "Expression", y = "# Samples")']
+p2RawCounts.tplenvs.plotBoxplot = plot.boxplot.r
+p2RawCounts.tplenvs.plotHeatmap = plot.heatmap.r
+p2RawCounts.tplenvs.plotHist    = plot.hist.r
+p2RawCounts.lang                = params.Rscript.value
+p2RawCounts.script              = "file:scripts/rnaseq/p2RawCounts.r"
+
 
 """
 @name:

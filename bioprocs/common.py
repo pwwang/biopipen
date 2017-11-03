@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from pyppl import Proc, Box
 from .utils import txt, helpers, runcmd
 from . import params
@@ -15,10 +16,10 @@ from . import params
 	`skip`:   To skip first N lines. Default: 0
 	`params`: The arguments used by `sort`
 """
-pSort                        = Proc()
+pSort                        = Proc(desc = 'Sort file.')
 pSort.input                  = "infile:file"
 pSort.output                 = "outfile:file:{{in.infile | bn}}"
-pSort.args.params            = Box()
+pSort.args.params            = OrderedDict()
 pSort.args.skip              = 0
 pSort.tplenvs.runcmd         = runcmd.py
 pSort.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
@@ -35,7 +36,7 @@ pSort.script                 = "file:scripts/common/pSort.py"
 @output:
 	`outdir:dir`:    The output directory
 """
-pFiles2Dir = Proc()
+pFiles2Dir = Proc(desc = 'Put files to a directory using symbolic links.')
 pFiles2Dir.input  = "infiles:files"
 pFiles2Dir.output = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}_etc"
 pFiles2Dir.lang   = params.python.value
@@ -242,3 +243,8 @@ pSimRead.args.do      = None
 pSimRead.lang         = params.python.value
 pSimRead.script       = "file:scripts/common/pSimRead.py"
 
+pAddHeader        = Proc(desc = 'Add the header of 1st file to 2nd file.')
+pAddHeader.input  = "infile1:file, infile2:file"
+pAddHeader.output = "outfile:file:{{in.infile2 | bn}}"
+pAddHeader.args.n = 1
+pAddHeader.script = "file:scripts/common/pAddHeader.bash"

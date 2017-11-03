@@ -59,16 +59,17 @@ with open({{out.outfile | quote}}, 'w') as fout:
 				if not line or line.startswith('#'): continue
 				parts  = line.split('\t')
 				motif  = parts[0]
-				seq    = parts[1]
+				# GENE::chr1:111-222 or ::chr1:111-222 or chr1:111-222
+				seq    = parts[1] 
 				strt0  = int(parts[2])
 				end0   = int(parts[3])
 				strand = parts[4]
 				score  = int(1000 * (float(parts[5]) - minscore) / (maxscore - minscore))
 				seqs   = re.split(r'[:-]', seq)
-				chrom  = seqs[2]
-				start  = int(seqs[3])
-				end    = int(seqs[4])
-				name   = motifs[motif] + '::' + (seqs[0] if seqs[0] else chrom + ':' + seqs[3] + '-' + seqs[4])
+				chrom  = seqs[-3]
+				start  = int(seqs[-2])
+				end    = int(seqs[-1])
+				name   = motifs[motif] + '::' + (seqs[0] if len(seqs)>3 else chrom + ':' + seqs[-2] + '-' + seqs[-1])
 				ucsclink = ucsclinkTpl.format(chrom + ':' + str(start + strt0) + '-' + str(start + end0))
 
 				cont   = [chrom, start + strt0, start + end0, name, score, strand, motif, seq, strt0, end0, parts[5], parts[6], parts[7], parts[8], ucsclink]

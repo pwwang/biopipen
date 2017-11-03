@@ -1,7 +1,11 @@
 
 
 # get the exp data
-ematrix    = read.table ("{{in.efile}}",  header=T, row.names = 1, check.names=F, sep="\t")
+#ematrix    = read.table ("{{in.efile}}",  header=T, row.names = 1, check.names=F, sep="\t")
+ematrix   = read.table ("{{in.efile}}",  header=T, row.names = NULL, check.names=F, sep="\t")
+rnames    = make.unique(as.vector(ematrix[,1]))
+ematrix[,1] = NULL
+rownames(ematrix) = rnames
 
 # get groups
 {{ txtSampleinfo }}
@@ -11,9 +15,9 @@ gfactor   = factor(sampleinfo$Group)
 gfactor   = relevel(gfactor, as.vector(sampleinfo$Group[1]))
 group1    = levels(gfactor)[1]
 group2    = levels(gfactor)[2]
-samples1  = sampleinfo[which(sampleinfo$Group == group1), , drop=F]$row.names
-samples2  = sampleinfo[which(sampleinfo$Group == group2), , drop=F]$row.names
-samples   = c(samples1, samples2)
+samples1  = sampleinfo[which(sampleinfo$Group == group1), 1, drop=T]
+samples2  = sampleinfo[which(sampleinfo$Group == group2), 1, drop=T]
+samples   = c(as.vector(samples1), as.vector(samples2))
 ematrix   = ematrix[, samples, drop=F]
 
 n1      = length(samples1)
@@ -31,12 +35,12 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 {% if args.tool | lambda x: x == 'limma' %}
 	# get model
 	if ("Patient" %in% colnames(sampleinfo)) {
-		pairs  = factor(sampleinfo[which(sampleinfo$row.names %in% samples), "Patient"])
-		group  = factor(sampleinfo[which(sampleinfo$row.names %in% samples), "Group"])
+		pairs  = factor(sampleinfo[which(as.vector(sampleinfo[,1]) %in% samples), "Patient"])
+		group  = factor(sampleinfo[which(as.vector(sampleinfo[,1]) %in% samples), "Group"])
 		group  = relevel(group, group2)
 		design = model.matrix(~pairs + group)
 	} else {
-		group  = factor(sampleinfo[which(sampleinfo$row.names %in% samples), "Group"])
+		group  = factor(sampleinfo[which(as.vector(sampleinfo[,1]) %in% samples), "Group"])
 		group  = relevel(group, group2)
 		design = model.matrix(~group)
 	}

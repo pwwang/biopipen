@@ -4,7 +4,7 @@ import random
 from os import makedirs, path
 from tempfile import gettempdir
 from pyppl import PyPPL, Channel, Box, Proc
-from bioprocs.rnaseq import pExpdir2Matrix, pBatchEffect, pRawCounts2, pRnaseqDeg, pCoexp
+from bioprocs.rnaseq import pExpdir2Matrix, pBatchEffect, pRawCounts2, pRnaseqDeg, pCoexp, p2RawCounts
 
 unittest.TestLoader.sortTestMethodsUsing = lambda _, x, y: cmp(x, y)
 random.seed(8525)
@@ -105,7 +105,25 @@ class TestRnaseq (unittest.TestCase):
 		pCoexp.args.pval = True
 		PyPPL().start(pCoexp).run()
 
+	def test2RawCounts(self):
+		expfile = path.join(tmpdir, 'testp2RawCounts.expr')
+		samples = ['Sample' + str(i+1) for i in list(range(100))]
+		genes   = ['Gene' + str(i+1) for i in list(range(20))]
+		with open(expfile, 'w') as f:
+			f.write("\t".join(samples) + '\n')
+			for gene in genes:
+				f.write(gene)
+				for sample in samples:
+					f.write('\t' + str(random.normalvariate(10, 5)))
+				f.write('\n')
+		glenfile = path.join(tmpdir, 'testp2RawCounts.glen')
+		with open(glenfile, 'w') as f:
+			for i, gene in enumerate(genes):
+				f.write("chr1\ttest-gene\tGene\t%s\t%s\t.\t+\t.\tgene_id: %s\n" % (i*1000, (i+1)*1000, gene))
 
+		p2RawCounts.input = [expfile]
+		p2RawCounts.args.refgene = glenfile
+		PyPPL().start(p2RawCounts).run()
 
 if __name__ == '__main__':
 	unittest.main(failfast=True)

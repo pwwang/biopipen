@@ -70,8 +70,8 @@ aExpDir2DegGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
 aExpDir2DegGSEA.starts                  = aExpDir2DegGSEA.pExpdir2Matrix,  \
 										  aExpDir2DegGSEA.pSampleInfo,     \
 										  aExpDir2DegGSEA.pGMTFetcher
-aExpDir2DegGSEA.ends                    = aExpDir2DegGSEA.pGSEA,           \
-										  aExpDir2DegGSEA.pRnaseqDeg,      \
+aExpDir2DegGSEA.ends                    = aExpDir2DegGSEA.pRnaseqDeg,      \
+										  aExpDir2DegGSEA.pGSEA,           \
 										  aExpDir2DegGSEA.pEnrichr
 aExpDir2DegGSEA.pExpmat2Gct.depends     = aExpDir2DegGSEA.pExpdir2Matrix
 aExpDir2DegGSEA.pSampleinfo2Cls.depends = aExpDir2DegGSEA.pSampleInfo
@@ -95,6 +95,61 @@ aExpDir2DegGSEA.pExpdir2Matrix.args.histplot = True
 aExpDir2DegGSEA.pRnaseqDeg.args.maplot       = True
 aExpDir2DegGSEA.pRnaseqDeg.args.heatmap      = True
 aExpDir2DegGSEA.pGMTFetcher.args.header      = False
+
+"""
+@name:
+	aRnaseqExpMat2DegGSEA
+@description:
+	From expfiles to degs with sample info file and do GSEA.
+@depends:
+	```
+	                  /   pRnaseqDeg[!]  -> pEnrichr[!]
+	pExpMat[*]        \
+	                      pExpmat2Gct     \
+	pSampleInfo[*]     /                   \
+	                   \  pSampleinfo2Cls --  pGSEA[!]
+	pGMTFetcher[*]     ____________________/
+	```
+"""
+aRnaseqExpMat2DegGSEA = Aggr(
+	pFile2Proc.copy(newid = 'pExpMat'),
+	pFile2Proc.copy(newid = 'pSampleInfo'),
+	pTxt.copy(newid = 'pGMTFetcher'),
+	pExpmat2Gct,
+	pSampleinfo2Cls,
+	pGSEA,
+	pRnaseqDeg,
+	pEnrichr,
+	depends = False
+)
+# Default input:
+aRnaseqExpMat2DegGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
+# Dependences
+aRnaseqExpMat2DegGSEA.starts                  = aRnaseqExpMat2DegGSEA.pExpMat,  \
+												aRnaseqExpMat2DegGSEA.pSampleInfo,     \
+												aRnaseqExpMat2DegGSEA.pGMTFetcher
+aRnaseqExpMat2DegGSEA.ends                    = aRnaseqExpMat2DegGSEA.pRnaseqDeg,      \
+												aRnaseqExpMat2DegGSEA.pGSEA,           \
+												aRnaseqExpMat2DegGSEA.pEnrichr
+aRnaseqExpMat2DegGSEA.pExpmat2Gct.depends     = aRnaseqExpMat2DegGSEA.pExpMat
+aRnaseqExpMat2DegGSEA.pSampleinfo2Cls.depends = aRnaseqExpMat2DegGSEA.pSampleInfo
+aRnaseqExpMat2DegGSEA.pGSEA.depends           = aRnaseqExpMat2DegGSEA.pExpmat2Gct,     \
+												aRnaseqExpMat2DegGSEA.pSampleinfo2Cls, \
+												aRnaseqExpMat2DegGSEA.pGMTFetcher
+aRnaseqExpMat2DegGSEA.pRnaseqDeg.depends      = aRnaseqExpMat2DegGSEA.pExpMat,  \
+												aRnaseqExpMat2DegGSEA.pSampleInfo
+aRnaseqExpMat2DegGSEA.pEnrichr.depends        = aRnaseqExpMat2DegGSEA.pRnaseqDeg
+# Input
+aRnaseqExpMat2DegGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
+	ch1.repRow(ch2.length() * ch3.length())              \
+	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
+	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
+aRnaseqExpMat2DegGSEA.pRnaseqDeg.input = lambda ch1, ch2: \
+	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
+# Args
+aRnaseqExpMat2DegGSEA.pRnaseqDeg.args.maplot       = True
+aRnaseqExpMat2DegGSEA.pRnaseqDeg.args.heatmap      = True
+aRnaseqExpMat2DegGSEA.pGMTFetcher.args.header      = False
 
 """
 @name:
@@ -160,8 +215,8 @@ aCelDir2DegGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
 aCelDir2DegGSEA.starts                  = aCelDir2DegGSEA.pCeldir2Matrix, \
 										  aCelDir2DegGSEA.pSampleInfo,    \
 										  aCelDir2DegGSEA.pGMTFetcher
-aCelDir2DegGSEA.ends                    = aCelDir2DegGSEA.pGSEA,          \
-										  aCelDir2DegGSEA.pMarrayDeg,     \
+aCelDir2DegGSEA.ends                    = aCelDir2DegGSEA.pMarrayDeg,     \
+										  aCelDir2DegGSEA.pGSEA,          \
 										  aCelDir2DegGSEA.pEnrichr
 aCelDir2DegGSEA.pExpmat2Gct.depends     = aCelDir2DegGSEA.pCeldir2Matrix
 aCelDir2DegGSEA.pSampleinfo2Cls.depends = aCelDir2DegGSEA.pSampleInfo
