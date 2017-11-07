@@ -150,6 +150,7 @@ p2RawCounts                     = Proc(desc = 'Convert normalized expression bac
 p2RawCounts.input               = 'expfile:file'
 p2RawCounts.output              = 'outfile:file:{{in.expfile | fn | fn}}/{{in.expfile | fn | fn}}.counts.txt, outdir:dir:{{in.expfile | fn | fn}}'
 p2RawCounts.args.unit           = 'fpkm'
+p2RawCounts.args.nreads         = 30000000
 p2RawCounts.args.header         = True
 p2RawCounts.args.refgene        = params.refgene.value
 p2RawCounts.args.boxplot        = False

@@ -1,4 +1,5 @@
-from os import rename, remove
+from sys import stderr
+from os import rename, remove, path
 files = {{in.infiles}}
 lfile = len(files)
 
@@ -30,13 +31,20 @@ header[:len({{args.header}})] = {{args.header}}
 {% endif %}
 
 headerRow = None
+reported  = False
 with open("{{out.outfile}}.nohead", 'w') as fout:
 	for i, fn in enumerate(files):
 		with open(fn) as f:
 			for line in f:
 				for _ in range(skip[i]): continue
-				if header[i] and not headerRow:
-					headerRow = line
+				if header[i]:
+					if not headerRow: headerRow = line
+					elif line != headerRow and not reported:
+						stderr.write('pyppl.log.warning: There are different headers in input files.\n')
+						stderr.write('pyppl.log.warning: Prevous was %s.\n' % headerRow)
+						stderr.write('pyppl.log.warning: In "%s" is: %s.\n' % (path.basename(fn), line))
+						reported  = True
+					header[i] = False
 					continue
 				if line.startswith(comment[i]):
 					continue

@@ -54,3 +54,27 @@ pCallRate.tplenvs.plotHist  = plot.hist.r
 pCallRate.lang              = params.Rscript.value
 pCallRate.script            = "file:scripts/vcfnext/pCallRate.r"
 
+"""
+@name:
+	pCepip
+@input:
+	`infile:file`: The input file (vcf or avinput)
+@output:
+	`outfile:file`: The cepip result file
+@args:
+	`cepip`:    The path of cepip
+	`cell` :    The related cell line
+	`params`:   Other params for cepip
+@requires:
+	[`cepip`](http://jjwanglab.org/cepip/)
+"""
+pCepip                        = Proc(desc = 'Run cepip for input mutations.')
+pCepip.input                  = "infile:file"
+pCepip.output                 = "outfile:file:{{in.infile | fn}}.cepip.txt"
+pCepip.args.cepip             = params.cepip.value
+pCepip.args.cell              = ""
+pCepip.args.params            = Box()
+pCepip.tplenvs.runcmd         = runcmd.py
+pCepip.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
+pCepip.lang                   = params.python.value
+pCepip.script                 = "file:scripts/vcfnext/pCepip.py"

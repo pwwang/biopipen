@@ -23,15 +23,15 @@ glen = getGenelen()
 rn   = intersect(rownames(glen), rnames)
 ret  = data[rn,,drop=F] * glen[rn,,drop=F]
 ssum = colSums(ret)
-ret  = 50000000 * ret / ssum
+ret  = {{args.nreads}} * ret / ssum
 
 {% elif args.unit | lambda x: x == 'tpm' %}
 glen = getGenelen()
 rn   = intersect(rownames(glen), rnames)
 ret  = data[rn,,drop=F]
 ssum = colSums(ret)
-ret  = 10000000 * ret / ssum
-ret  = ret * glen[rn,,drop=F]
+ret  = {{args.nreads}} * ret / ssum
+ret  = ret * glen[rn,,drop=F] / sum(glen[rn,,drop=T])
 {% endif %}
 
 write.table (ret, "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")

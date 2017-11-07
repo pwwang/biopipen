@@ -6,7 +6,7 @@ from hashlib import md5
 {% if args.norm %}
 {{genenorm}}
 gmapfile = "{{out.outdir}}/{{in.infile | bn}}.gnorm"
-gmap     = genenorm({{in.infile | quote}}, delimit={{args.delimit | quote}}, col = {{args.col}}, tmpdir = {{args.tmpdir | quote}})
+gmap, _ = genenorm({{in.infile | quote}}, delimit={{args.delimit | quote}}, col = {{args.col}}, tmpdir = {{args.tmpdir | quote}})
 genes    = gmap.values()
 with open(gmapfile, 'w') as f:
 	for key, val in gmap.items():

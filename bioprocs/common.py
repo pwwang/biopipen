@@ -38,7 +38,7 @@ pSort.script                 = "file:scripts/common/pSort.py"
 """
 pFiles2Dir = Proc(desc = 'Put files to a directory using symbolic links.')
 pFiles2Dir.input  = "infiles:files"
-pFiles2Dir.output = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}_etc"
+pFiles2Dir.output = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}.etc"
 pFiles2Dir.lang   = params.python.value
 pFiles2Dir.script = "file:scripts/common/pFiles2Dir.py"
 
@@ -234,7 +234,7 @@ pStr2File.script            = "file:scripts/common/pStr2File.py"
 """
 pSimRead              = Proc(desc = 'Read files simultaneously.')
 pSimRead.input        = 'infiles:files'
-pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}-etc-simread.txt'
+pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}.etc.simread.txt'
 pSimRead.args.skip    = []
 pSimRead.args.delimit = []
 pSimRead.args.gzip    = []

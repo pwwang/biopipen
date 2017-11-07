@@ -30,8 +30,8 @@ if 'genenorm' not in vars() or not callable(genenorm):
 		if path.isfile(cache):
 			with open(cache) as f: mgret = json.load(f)
 		else:
-			mgret = MyGeneInfo().getgenes(genes, scopes = frm, fields = to, species = species)
-			with open(cache, 'w') as f:	json.dump(mgret, f)
+			mgret = MyGeneInfo().getgenes(genes, scopes = frm, fields = to, species = species, size=1)
+			with open(cache, 'w') as f:	json.dump(mgret, f, indent = 4)
 		
 		genemap = {}
 		for gene in mgret:
@@ -64,4 +64,4 @@ if 'genenorm' not in vars() or not callable(genenorm):
 						genemap[gene] = gene
 				parts[col] = genemap[gene]
 				fout.write(delimit.join(parts) + '\n')
-		return genemap
+		return genemap, cache

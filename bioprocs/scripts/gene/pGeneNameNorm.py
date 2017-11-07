@@ -1,6 +1,7 @@
+from os import path, symlink
 {{ genenorm }}
 
-genenorm(
+_, cachefile = genenorm(
 	{{in.infile | quote}}, 
 	{{out.outfile | quote}}, 
 	col      = {{args.col}},
@@ -14,3 +15,4 @@ genenorm(
 	tmpdir   = {{args.tmpdir | quote}},
 	comment  = {{args.comment | quote}}
 )
+symlink(cachefile, path.join({{job.outdir | quote}}, path.basename(cachefile)))
