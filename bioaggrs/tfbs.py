@@ -48,7 +48,7 @@ aTFBSOnPromotersByTF.starts               = aTFBSOnPromotersByTF.pSortTFs, aTFBS
 aTFBSOnPromotersByTF.ends                 = aTFBSOnPromotersByTF.pMotifScan
 aTFBSOnPromotersByTF.pMotifScan.depends   = aTFBSOnPromotersByTF.pSimRead, aTFBSOnPromotersByTF.pBedGetfasta
 aTFBSOnPromotersByTF.pBedGetfasta.depends = aTFBSOnPromotersByTF.pPromoters
-aTFBSOnPromotersByTF.pSimRead.depends     = aTFBSOnPromotersByTF.pSortTFs, aTFBSOnPromotersByTF.pSortTFList
+aTFBSOnPromotersByTF.pSimRead.depends     = aTFBSOnPromotersByTF.pSortTFList, aTFBSOnPromotersByTF.pSortTFs
 aTFBSOnPromotersByTF.pSortTFList.depends  = aTFBSOnPromotersByTF.pTFList
 # input
 aTFBSOnPromotersByTF.pTFList.input    = [params.tflist.value]
@@ -57,8 +57,8 @@ aTFBSOnPromotersByTF.pMotifScan.input = lambda ch1, ch2: [ch1.repRow(l).cbind(ch
 # args
 aTFBSOnPromotersByTF.pBedGetfasta.args.params.name = True
 aTFBSOnPromotersByTF.pSortTFList.args.params.k     = 2
-aTFBSOnPromotersByTF.pSimRead.args.match           = 'lambda line1, line2: -1 if line1[0] == line2[1] else 0 if line1[0] < line2[1] else 1'
-aTFBSOnPromotersByTF.pSimRead.args.do              = 'lambda line1, line2: fout.write("\\t".join(line2) + "\\n")'
+aTFBSOnPromotersByTF.pSimRead.args.match           = 'lambda line1, line2: -1 if line1[1] == line2[0] else 0 if line1[1] < line2[0] else 1'
+aTFBSOnPromotersByTF.pSimRead.args.do              = 'lambda line1, line2: fout.write("\\t".join(line1) + "\\n")'
 
 """
 @name:
@@ -134,7 +134,7 @@ aTFBSOnRegionsByTF.delegate('args.pval', 'pMotifScan')
 aTFBSOnRegionsByTF.starts              = aTFBSOnRegionsByTF.pSortTFs, aTFBSOnRegionsByTF.pBedGetfasta, aTFBSOnRegionsByTF.pTFList
 aTFBSOnRegionsByTF.ends                = aTFBSOnRegionsByTF.pMotifScan
 aTFBSOnRegionsByTF.pMotifScan.depends  = aTFBSOnRegionsByTF.pSimRead, aTFBSOnRegionsByTF.pBedGetfasta
-aTFBSOnRegionsByTF.pSimRead.depends    = aTFBSOnRegionsByTF.pSortTFs, aTFBSOnRegionsByTF.pSortTFList
+aTFBSOnRegionsByTF.pSimRead.depends    = aTFBSOnRegionsByTF.pSortTFList, aTFBSOnRegionsByTF.pSortTFs
 aTFBSOnRegionsByTF.pSortTFList.depends = aTFBSOnRegionsByTF.pTFList
 # input
 aTFBSOnRegionsByTF.pTFList.input    = [params.tflist.value]
@@ -143,8 +143,8 @@ aTFBSOnRegionsByTF.pMotifScan.input = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.
 # args
 aTFBSOnRegionsByTF.pBedGetfasta.args.params.name = True
 aTFBSOnRegionsByTF.pSortTFList.args.params.k     = 2
-aTFBSOnRegionsByTF.pSimRead.args.match           = 'lambda line1, line2: -1 if line1[0] == line2[1] else 0 if line1[0] < line2[1] else 1'
-aTFBSOnRegionsByTF.pSimRead.args.do              = 'lambda line1, line2: fout.write("\\t".join(line2) + "\\n")'
+aTFBSOnRegionsByTF.pSimRead.args.match           = 'lambda line1, line2: -1 if line1[1] == line2[0] else 0 if line1[1] < line2[0] else 1'
+aTFBSOnRegionsByTF.pSimRead.args.do              = 'lambda line1, line2: fout.write("\\t".join(line1) + "\\n")'
 
 
 """

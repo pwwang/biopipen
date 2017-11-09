@@ -164,8 +164,8 @@ DEFAULTS = {
 params.loadDict(DEFAULTS)
 
 cfgfiles = [
-	path.join (path.expanduser('~'), ".bioProcs"),   # values overwritten
-	path.join (path.expanduser('~'), ".bioProcs.json")
+	path.join (path.expanduser('~'), ".bioprocs.config"),   # values overwritten
+	path.join (path.expanduser('~'), ".bioprocs.json")
 ]
 for cfgfile in cfgfiles:
 	if not path.exists(cfgfile):

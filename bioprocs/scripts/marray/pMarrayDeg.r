@@ -1,5 +1,6 @@
 
 
+library(methods)
 # get the exp data
 #ematrix    = read.table ("{{in.efile}}",  header=T, row.names = 1, check.names=F, sep="\t")
 ematrix   = read.table ("{{in.efile}}",  header=T, row.names = NULL, check.names=F, sep="\t")

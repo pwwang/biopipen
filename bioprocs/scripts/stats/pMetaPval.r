@@ -30,6 +30,8 @@ for (i in 1:lenfile) {
 	}
 }
 pvals[is.na(pvals)] = 1
+pvals[pvals > 1]    = 1
+pvals[pvals <= 0]   = 1e-100
 
 ret     = apply(pvals, 1, {{args.method}})
 ret2    = matrix(unlist(ret), byrow=T, nrow=nrow(pvals))

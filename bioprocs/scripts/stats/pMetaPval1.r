@@ -7,7 +7,10 @@ if (pcol < 0) pcol = ncol(indata) + pcol + 1
 
 ret = NULL
 for (rname in rnames) {
-	pvals  = as.vector(indata[which(indata[,1] == rname), pcol])
+	pvals               = as.vector(indata[which(indata[,1] == rname), pcol])
+	pvals[is.na(pvals)] = 1
+	pvals[pvals > 1]    = 1
+	pvals[pvals <= 0]   = 1e-100
 	if(length(pvals) == 1) {
 		{% if args.method | lambda x: x == 'logitp' %}
 		mp1 = list(t = 0, df = 0, p = pvals[1], validp = pvals[1])

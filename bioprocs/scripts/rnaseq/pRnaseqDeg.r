@@ -1,5 +1,6 @@
 
 
+library(methods)
 # get the exp data
 ematrix   = read.table ("{{in.efile}}",  header=T, row.names = NULL, check.names=F, sep="\t")
 rnames    = make.unique(as.vector(ematrix[,1]))
@@ -46,7 +47,6 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 
 	library(edgeR)
 	dge     = DGEList(counts = ematrix, group = group)
-	dge     = dge[rowSums(cpm(dge)>filters[1]) >= filters[2], ]
 	dge$samples$lib.size = colSums(dge$counts)
 	dge     = calcNormFactors(dge)
 

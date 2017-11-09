@@ -27,10 +27,10 @@ params['thresh']    = {{args.pval | quote}}
 params['verbosity'] = 4
 
 for mid in motifs.keys():
-	params['o']         = path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid))
+	params['oc']        = path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid))
 	params['motif']     = mid
 
-	if path.isdir(params['o']): rmtree(params['o'])
+	#if path.isdir(params['o']): rmtree(params['o'])
 	cmd = '{{args.meme}} %s {{args.tfmotifs | quote}} {{in.sfile | quote}}' % params2CmdArgs(params, dash='--', equal=' ')
 
 	cmds.append(cmd)

@@ -9,8 +9,19 @@ from bioprocs.bed import pBedRandom
 mfile = params.tfmotifs.value
 tffile = path.join(params.tmpdir.value, 'tffile.txt')
 with open(tffile, 'w') as fout:
-	fout.write("TEAD1_HUMAN.H10MO.D\tTEAD1\n")
-	fout.write("TEAD3_HUMAN.H10MO.D\tTEAD3\n")
+	fout.write("TEAD1_full_2	TEAD1\n")
+	fout.write("M1916_1.02	TEAD1\n")
+	fout.write("M4047_1.02	TEAD1\n")
+	fout.write("M4049_1.02	TEAD1\n")
+	fout.write("M4050_1.02	TEAD1\n")
+	fout.write("M5904_1.02	TEAD1\n")
+	fout.write("M5905_1.02	TEAD1\n")
+	fout.write("TEAD3_DBD_1	TEAD3\n")
+	fout.write("TEAD3_DBD_2	TEAD3\n")
+	fout.write("M4052_1.02	TEAD3\n")
+	fout.write("M5906_1.02	TEAD3\n")
+	fout.write("M5907_1.02	TEAD3\n")
+	fout.write("M6508_1.02	TEAD3\n")
 
 class testAggrTFBS (unittest.TestCase):
 

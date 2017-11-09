@@ -14,6 +14,9 @@ from . import params
 	`outfile:file`: The output file
 @args:
 	`skip`:   To skip first N lines. Default: 0
+	`case`:   Case-sensitivity. Default: True
+		- If True, will set $LANG as C
+		- Otherwise, $LANG will be set as en_US.UTF-8
 	`params`: The arguments used by `sort`
 """
 pSort                        = Proc(desc = 'Sort file.')
@@ -21,6 +24,7 @@ pSort.input                  = "infile:file"
 pSort.output                 = "outfile:file:{{in.infile | bn}}"
 pSort.args.params            = OrderedDict()
 pSort.args.skip              = 0
+pSort.args.case              = True
 pSort.tplenvs.runcmd         = runcmd.py
 pSort.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
 pSort.lang                   = params.python.value
