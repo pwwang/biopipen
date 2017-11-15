@@ -153,6 +153,19 @@ pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
 pHeatmap.lang                = params.Rscript.value
 pHeatmap.script              = "file:scripts/plot/pHeatmap.r"
 
+
+pScatterCompare               = Proc(desc = 'Plot scatter compare plots.')
+pScatterCompare.input         = "infile:file"
+pScatterCompare.output        = "outfile:file:{{in.infile | fn}}.scattercomp.png"
+pScatterCompare.args.ggs      = Box()
+pScatterCompare.args.devpars  = Box({'res': 300, 'height': 2000, 'width': 2000})
+pScatterCompare.args.rownames = True
+pScatterCompare.args.diag     = True
+pScatterCompare.args.regr     = False
+pScatterCompare.args.corr     = 'pearson' # spearman, pearson, kendall, otherwise(don't show)
+pScatterCompare.lang          = params.Rscript.value
+pScatterCompare.script        = "file:scripts/plot/pScatterCompare.r"
+
 """
 @name:
 	pVenn
