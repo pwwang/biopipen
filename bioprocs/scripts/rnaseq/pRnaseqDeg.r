@@ -141,6 +141,6 @@ A = rowSums(normedCounts) / ncol(normedCounts)
 M = alllogFC
 threshold = allPval < pval
 
-plotMAplot(data.frame(A, M, threshold), maplot, ggs = {{args.maplotggs | Rlist}}, devpars = list(height=2000,res=300,width=2000))
+plotMAplot(data.frame(A, M, threshold), maplot, ggs = {{args.maplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 		
 {% endif %}

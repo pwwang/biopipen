@@ -252,3 +252,13 @@ pAddHeader.input  = "infile1:file, infile2:file"
 pAddHeader.output = "outfile:file:{{in.infile2 | bn}}"
 pAddHeader.args.n = 1
 pAddHeader.script = "file:scripts/common/pAddHeader.bash"
+
+pMatrix               = Proc(desc = 'Operating a matrix using R')
+pMatrix.input         = "infile:file"
+pMatrix.output        = "outfile:file:{{in.infile | bn}}"
+pMatrix.args.header   = True
+pMatrix.args.rownames = 1
+pMatrix.args.code     = []
+pMatrix.lang          = params.Rscript.value
+pMatrix.script        = "file:scripts/common/pMatrix.r"
+

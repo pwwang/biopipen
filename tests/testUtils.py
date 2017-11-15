@@ -29,6 +29,9 @@ class TestUtils (unittest.TestCase):
 		outfile9    = path.join(tmpdir, 'plotHeatmap9.png')
 		outfile10   = path.join(tmpdir, 'plotHeatmap10.png')
 		outfile11   = path.join(tmpdir, 'plotHeatmap11.png')
+		outfile12   = path.join(tmpdir, 'plotHeatmap12.png')
+		outfile13   = path.join(tmpdir, 'plotHeatmap13.png')
+		outfile14   = path.join(tmpdir, 'plotHeatmap14.png')
 		with open(scriptfile, 'w') as f:
 			f.write(plot.heatmap.r)
 			f.write("""
@@ -56,9 +59,13 @@ class TestUtils (unittest.TestCase):
 			plotHeatmap(m3, "%s", ggs = list(theme(axis.text.x = element_blank(), axis.text.y = element_blank())))
 			plotHeatmap(m4, "%s", ggs = list(theme(legend.position = "none")))
 			plotHeatmap(m5, "%s", dendro = FALSE)
-			""" % (outfile1, outfile2, outfile3, outfile4, outfile5, outfile6, outfile7, outfile8, outfile9, outfile10, outfile11))
+			plotHeatmap(m1, "%s", dendro = 'col', rows = c('ROW2', 'ROW3', 'ROW4', 'ROW5', 'ROW6'))
+			plotHeatmap(m1, "%s", dendro = 'row', cols = c('COL2', 'COL3', 'COL4', 'COL5', 'COL6', 'COL7'))
+			plotHeatmap(m1, "%s", dendro = FALSE, rows = c('ROW6', 'ROW7', 'ROW8', 'ROW9', 'ROW10'), cols = c('COL7', 'COL8', 'COL9', 'COL10'))
+			""" % (outfile1, outfile2, outfile3, outfile4, outfile5, outfile6, outfile7, outfile8, outfile9, outfile10, outfile11, outfile12, outfile13, outfile14))
 		rc = Popen(['Rscript', scriptfile], stdout=self.devnull, stderr=self.devnull).wait()
-		self.assertEqual(rc, 0)
+		if rc != 0:
+			self.fail('Script %s failed!' % scriptfile)
 
 	def testPlotBoxplot(self):
 		scriptfile = path.join(tmpdir, 'plotBoxplot.r')

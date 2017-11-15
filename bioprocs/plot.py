@@ -1,5 +1,6 @@
 from pyppl import Proc, Box
 from .utils import plot
+from . import params
 
 """
 Generate plot using given data
@@ -111,70 +112,46 @@ if ({{args.text | Rbool}}) {
 dev.off()
 """
 
+"""
+@name:
+	pHeatmap
+@description:
+	Plot heatmaps.
+@input:
+	`infile:file`: The input matrix file
+@output:
+	`outfile:file`: The heatmap
+@args:
+	`ggs`: The ggplot items for heatmap
+	`devpars`: The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+	`dendro`: The parameters for control of the dendrogram. Default: `{'dendro': True}`
+		- `dendro`: `True`: plot dendros for both rows and cols; `col`: only plot dendro for cols; `row`: only plot dendro for rows
+		- `rows`: The rownames to subset the rows and control the order of rows. Must a list. Only works when not plotting dendro for rows.
+		- `cols`: The colnames to subset the cols and control the order of cols. Must a list. Only works when not plotting dendro for cols.
+	`header`: The input file has header? Default: True
+	`rownames`: The input file has rownames? Default: 1
+	`rows`: Row selector
+		- `all`: All rows
+		- `top:N`: Top N rows (original data ordered in descending order). N defaults to 100
+		- `bottom:N`: Bottom N rows. N defaults to 100
+		- `both:N`: Top N rows and bottom N rows. N defaults to 50
+		- `random:N`: Random N rows. N defaults to 50
+		- `random-both:N`: Random N rows from top part and N rows from bottom part. N defaults to 50
+	`cols`: Col selector (see `rows`).
+"""
 pHeatmap                     = Proc(desc = 'Plot heatmaps.')
 pHeatmap.input               = "infile:file"
 pHeatmap.output              = "outfile:file:{{in.infile | fn}}.heatmap.png"
-pHeatmap.args.params         = Box({'border_color': "#FFFFFF"})
-pHeatmap.args.transpose      = False
+pHeatmap.args.ggs            = Box()
+pHeatmap.args.devpars        = Box({'res': 300, 'height': 2000, 'width': 2000})
+pHeatmap.args.dendro         = Box({'dendro': True})
 pHeatmap.args.header         = True
 pHeatmap.args.rownames       = 1
-pHeatmap.args.maxn           = 0
-pHeatmap.args.subset         = 'random-all' # top, both, bottom, random-both
+pHeatmap.args.rows           = 'all' # top:100, both:50, bottom:100, random-both:50, random:100
+pHeatmap.args.cols           = 'all' # top:100, both:50, bottom:100, random-both:50, random:100
 pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
-pHeatmap.lang                = "Rscript"
-pHeatmap.script              = """
-{{plotHeatmap}}
-params = {{args.params | Rlist}}
-params$filename = {{out.outfile | quote}}
-print ("Reading data ...")
-mat = read.table ("{{in.infile}}", sep="\\t", header = {{args.header | Rbool}}, row.names = {{args.rownames}}, check.names = F)
-if ({{args.transpose | Rbool}}) {
-	print ("Transposing data ...")
-	mat = t(mat)
-}
-maxn     = {{args.maxn}}
-halfn    = as.integer(maxn/2)
-nrows    = nrow(mat)
-ncols    = ncol(mat)
-nmax     = max(nrows, ncols)
-if (nmax > maxn && maxn != 0) {
-	if (nrows > ncols) {
-		print ("Subsetting data by rows ...")
-		if ("{{args.subset}}" == 'both') {
-			mat = mat[order(rowSums(mat), decreasing = T),][c(1:halfn, (nrows-halfn):nrows), ]
-		} else if ("{{args.subset}}" == 'top') {
-			mat = mat[order(rowSums(mat), decreasing = T),][1:maxn, ]
-		} else if ("{{args.subset}}" == 'bottom') {
-			mat = mat[order(rowSums(mat), decreasing = T),][(nrows-maxn):nrows, ]
-		} else if ("{{args.subset}}" == 'random-all') {
-			mat = mat[sample(nrows, maxn), ]
-		} else {
-			gt0 = mat[rowSums(mat)>=0, ]
-			lt0 = mat[rowSums(mat)<0, ]
-			mat = rbind(gt0[sample(nrow(gt0), halfn), ], lt0[sample(nrow(lt0), halfn), ])
-			rm(gt0, lt0)
-		}
-	} else {
-		print ("Subsetting data by columns ...")
-		if ("{{args.subset}}" == 'both') {
-			mat = mat[, order(colSums(mat), decreasing = T)][, c(1:halfn, (ncols-halfn):ncols)]
-		} else if ("{{args.subset}}" == 'top') {
-			mat = mat[, order(colSums(mat), decreasing = T)][, 1:maxn]
-		} else if ("{{args.subset}}" == 'bottom') {
-			mat = mat[, order(colSums(mat), decreasing = T)][, (ncols-maxn):ncols]
-		} else if ("{{args.subset}}" == 'random-all') {
-			mat = mat[, sample(ncols, maxn)]
-		} else {
-			gt0 = mat[, colSums(mat)>=0]
-			lt0 = mat[, colSums(mat)<0]
-			mat = cbind(gt0[, sample(ncol(gt0), halfn)], lt0[, sample(ncol(lt0), halfn)])
-			rm(gt0, lt0)
-		}
-	}
-}
-print ("Plotting data ...")
-plotHeatmap(mat, params)
-"""
+pHeatmap.lang                = params.Rscript.value
+pHeatmap.script              = "file:scripts/plot/pHeatmap.r"
 
 """
 @name:

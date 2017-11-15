@@ -5,7 +5,7 @@ string = string.replace({{b | quote}}, '\n')
 {% endfor %}
 
 {% if args.trimLine %}
-string = '\n'.join([x.strip() for x in string.splitlines()])
+string = '\n'.join([x.strip() for x in string.splitlines()]) + '\n'
 {% endif %}
 
 with open('{{out.outfile}}', 'w') as fout:
