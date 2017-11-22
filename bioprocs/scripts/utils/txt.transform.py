@@ -1,19 +1,22 @@
 if 'txtTransform' not in vars() or not callable (txtTransform):
-	def txtTransform(infile, outfile, transformer = None, header = True, delimit = "\t", comment = "#"):
+	def txtTransform(infile, outfile, cols = [], transform = None, header = True, skip = 0, delimit = "\t"):
 
-		import sys
-		import csv
+		if not isinstance(cols, list):
+			cols.strip().split(',')
+		cols = [c if isinstance(c, int) else int(c) if c.isdigit() else c for c in cols]
+		
+		import sys, csv
 		csv.field_size_limit(sys.maxsize)
-
 		with open (infile, 'r') as f, open(outfile, 'w') as fout:
+			for _ in range(skip):
+				fout.write(f.readline())
+
 			fcsv = csv.reader(f, delimiter = delimit)
-			
-			i = 0
-			for parts in fcsv:
-				# do row filter
-				if i == 0 and header: continue
-				if parts[0].startswith(comment): continue
-				outs = parts if not callable(transformer) else transformer(parts)
-				outs = [str(o) for o in outs]
-				fout.write("\t".join(outs) + "\n")
-				i += 1
+			if header:
+				headers = fcsv.next()
+				cols    = [c if isinstance(c, int) else headers.index(c) for c in cols] if cols else range(len(headers))
+				fout.write(delimit.join([headers[c] for c in cols]) + "\n")
+			for row in fcsv:
+				row = [row[c] for c in cols]
+				row = transform(row) if transform else row
+				fout.write(delimit.join(row) + "\n")

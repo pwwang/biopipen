@@ -69,9 +69,11 @@ Helpers
 """
 helpers = Box({
 	'cbindfill'     : {},
+	'rbindfill'     : {},
 	'params2CmdArgs': {}
 })
 helpers.cbindfill.r = _getsource()
+helpers.rbindfill.r = _getsource()
 helpers.params2CmdArgs.py = _getsource()
 helpers.params2CmdArgs.r  = _getsource()
 

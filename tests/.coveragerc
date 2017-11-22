@@ -1,0 +1,8 @@
+[run]
+omit = 
+	procs/test*.py
+	helpers.py
+	*/PyPPL/pyppl/*
+
+
+

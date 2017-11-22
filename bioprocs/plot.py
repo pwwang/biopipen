@@ -153,7 +153,26 @@ pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
 pHeatmap.lang                = params.Rscript.value
 pHeatmap.script              = "file:scripts/plot/pHeatmap.r"
 
-
+"""
+@name:
+	pScatterCompare
+@description:
+	Plot scatter plot to compare values of first 2 columns of input data
+@input:
+	`infile:file`: The input file containing a matrix with at least 2 columns
+		- Other columns are groups used to group the scatter points
+@output:
+	`outfile:file`: The output plot
+@args:
+	`ggs`: Extra expressions for ggplot. Note if geom_point is included, original geom_point will be ignored.
+	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+	`rownames`: Whether the input file has row names. Default: True
+	`diag`: Whether plot the diagnal line. Default: True
+	`regr`: Whether draw the regression line. Default: False
+	`corr`: The method to calculate the correlation. Default: `pearson`
+		- Could be: `pearson`, `spearman` or `kendall`
+		- If it's neither of the three, no correlations will show.
+"""
 pScatterCompare               = Proc(desc = 'Plot scatter compare plots.')
 pScatterCompare.input         = "infile:file"
 pScatterCompare.output        = "outfile:file:{{in.infile | fn}}.scattercomp.png"

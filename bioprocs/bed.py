@@ -1,5 +1,7 @@
-from pyppl import Proc
+from pyppl import Proc, Box
 from .bedtools import pBedGetfasta, pBedRandom, pBedFlank
+from . import params
+from .utils import helpers, runcmd
 
 """
 @name:
@@ -14,48 +16,28 @@ from .bedtools import pBedGetfasta, pBedRandom, pBedFlank
 	`tool`:         The tool used to sort the file. Default: sort (bedtools, bedops)
 	`bedtools`:     The path to bedtools. Default: bedtools
 	`bedops_sort`:  The path to bedops' sort-bed. Default: sort-bed
-	`sort`:         The path to linux's sort. Default: sort
 	`mem`:          The memory to use. Default: 8G
 	`tmpdir`:       The tmpdir to use. Default: `$TMPDIR`
 	`unique`:       Remove the dupliated records? Default: True
-	`params`:       Other params for `tool`. Default: ''
+	`params`:       Other params for `tool`. Default: {}
 @requires:
 	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 	[`bedops`](https://github.com/bedops/bedops)
 """
-pBedSort                   = Proc(desc = 'Sort bed files.')
-pBedSort.input             = "infile:file"
-pBedSort.output            = "outfile:file:{{infile | bn}}"
-pBedSort.args.tool         = 'sort'
-pBedSort.args.bedtools     = 'bedtools'
-pBedSort.args.bedops_sort  = 'bedops'
-pBedSort.args.sort         = 'sort'
-pBedSort.args.mem          = '8G'
-pBedSort.args.unique       = True
-pBedSort.args.params       = ''
-pBedSort.args.tmpdir       = __import__('tempfile').gettempdir()
-
-pBedSort.script            = """
-export TMPDIR="{{args.tmpdir}}"
-uq=""
-
-case {{args.tool | quote}} in 
-	sort)
-		cmd="{{args.sort}} -k1,1 -k2,2n {{args.params}} \"{{infile}}\""
-		;;
-	bedtools)
-		cmd="{{args.bedtools}} sort -i \"{{infile}}\" {{args.params}}"
-		;;
-	bedops)
-		cmd="{{args.bedops_sort}} --max-mem {{args.mem}} --tmpdir \"{{args.tmpdir}}\" {{args.params}} \"{{infile}}\""
-		;;
-esac
-if [[ "{{args.unique | Rbool}}" == "TRUE" ]]; then
-	exec $cmd | uniq > "{{outfile}}"
-else
-	exec $cmd > "{{outfile}}"
-fi
-"""
+pBedSort                     = Proc(desc = 'Sort bed files.')
+pBedSort.input               = "infile:file"
+pBedSort.output              = "outfile:file:{{in.infile | bn}}"
+pBedSort.args.tool           = 'sort'
+pBedSort.args.bedtools       = params.bedtools.value
+pBedSort.args.bedops         = params.bedops_sort.value
+pBedSort.args.mem            = '8G'
+pBedSort.args.unique         = True
+pBedSort.args.params         = Box()
+pBedSort.args.tmpdir         = params.tmpdir.value
+pBedSort.lang                = params.python.value
+pBedSort.envs.runcmd         = runcmd.py
+pBedSort.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedSort.script              = "file:scripts/bed/pBedSort.py"
 
 """
 @name:

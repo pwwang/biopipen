@@ -67,6 +67,8 @@ DEFAULTS = {
 	"bamutil.desc"             : "The path of bamutil.",
 	"bcftools"                 : "bcftools",
 	"bcftools.desc"            : "The path of bcftools.",
+	"bedops_sort"              : "sort-bed",
+	"bedops_sort.desc"         : "The path of sort-bed of bedops.",
 	"bedtools"                 : "bedtools",
 	"bedtools.desc"            : "The path of bedtools.",
 	"biobambam_bamsort"        : "bamsort",
@@ -162,7 +164,6 @@ DEFAULTS = {
 }
 
 params.loadDict(DEFAULTS)
-
 cfgfiles = [
 	path.join (path.expanduser('~'), ".bioprocs.config"),   # values overwritten
 	path.join (path.expanduser('~'), ".bioprocs.json")

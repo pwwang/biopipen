@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+from pyppl import PyPPL
+from bioprocs import params
+from bioaggrs.tfbs import aTFBSOnPromotersByTF, aTFBSOnRegionsByTF
+
+params.prefix('-')
+
+params.tflist.show     = True
+params.tfmotifs.show   = True
+params.consvdir.show   = True
+
+params.input           = "tf"
+params.input.desc      = "The input content. tf or motif."
+
+params.infile.required = True
+params.infile.desc     = "The input file. Whether TF or motif list."
+
+params.target          = 'gene'
+params.target.desc     = "What's the target. gene or region"
+
+params.tfile.required  = True
+params.tfile.desc      = 'The target file. If target is region, using BED format.'
+
+params.consv           = False
+params.consv.desc      = "Also calculate conservation score?"
+
+params.pval            = 1e-4
+params.pval.desc       = "The p-value cutoff for PWM scan."
+
+params.consvp          = 5e-2
+params.consvp.desc     = "The conservation p-value cutoff."
+
+params.outdir.required = True
+params.outdir.desc     = "The output directory."
+
+params = params.parse().toDict()
+
+# check params
+if not params.input in ['tf', 'motif']:
+	raise ValueError('Unexpected "input" type, should be one of ["tf", "motif"]')
+
+if not params.target in ['gene', 'region']:
+	raise ValueError('Unexpected "target" type, should be one of ["gene", "region"]')
+
+
+

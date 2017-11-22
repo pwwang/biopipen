@@ -56,7 +56,7 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 	degene  = allgene[allgene$P.Value < pval,,drop=F]
 	write.table (degene, "{{out.outfile}}", quote=F, sep="\t")
 
-	normedCounts = ematrix
+	normedCounts = log2(ematrix + 1)
 	alllogFC     = allgene$logFC
 	allPval      = allgene$P.Value
 
@@ -93,7 +93,7 @@ if (nrow(degene) < 2) {
 	if (hmapn <= 1) hmapn = as.integer(hmapn * ngene)
 	
 	ngene = min(hmapn, nrow(degene))
-	mat   = ematrix[rownames(degene[1:ngene,,drop=F]), ]
+	mat   = normedCounts[rownames(degene[1:ngene,,drop=F]), ]
 	plotHeatmap(mat, hmap, ggs = {{args.heatmapggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 }
 {% endif %}
@@ -102,7 +102,7 @@ if (nrow(degene) < 2) {
 {% if args.maplot %}
 {{ plotMAplot }}
 maplot = file.path("{{out.outdir}}", "maplot.png")
-A = rowSums(ematrix) / ncol(ematrix)
+A = rowSums(normedCounts) / ncol(normedCounts)
 M = alllogFC
 threshold = allPval < pval
 

@@ -1,5 +1,6 @@
 from pyppl import Aggr
-from bioprocs.common import pSort, pSimRead
+from bioprocs.common import pSort
+from bioprocs.matrix import pSimRead
 
 
 """
