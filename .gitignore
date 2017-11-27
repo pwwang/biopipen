@@ -94,3 +94,17 @@ data/
 *.dot
 *.svg
 
+# microarray files
+*.CEL
+*.annotations*.csv
+*.cdf
+
+# big fastq files
+*_nogit_*.fastq
+*_nogit_*.fastq.gz
+
+# fa indexes
+*.fa.*
+*.fa-*
+*-bs.umfa
+*.dict

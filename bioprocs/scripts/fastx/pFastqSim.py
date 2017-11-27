@@ -21,7 +21,7 @@ try:
 	params['N'] = {{args.num}}
 	params['1'] = {{args.len1}}
 	params['2'] = {{args.len2}}
-	params['S'] = {{args.seed | lambda x: -1 if x is None else x}}
+	params['S'] = {{in.seed | lambda x: -1 if x is None else x}}
 	cmd = '{{args.wgsim}} %s "%s" "%s" "%s"' % (params2CmdArgs(params, noq = ['N', '1', '2', 'S']), ref, fq1, fq2)
 	runcmd (cmd)
 
@@ -41,10 +41,8 @@ try:
 	params['N'] = {{args.num}}
 	params['1'] = {{args.len1}}
 	params['2'] = {{args.len2}}
-	{% if args.seed | lambda x: x is not None %}
-	params['z'] = {{args.seed}}
-	{% endif %}
-	params['S'] = {{args.seed | lambda x: 0 if x is None else x}}
+	params['z'] = {{in.seed | lambda x: -1 if x is None else x}}
+	params['S'] = 2
 	cmd = '{{args.dwgsim}} %s "%s" "%s"' % (params2CmdArgs(params, noq = ['N', '1', '2', 'S']), ref, prefix)
 	runcmd (cmd)
 

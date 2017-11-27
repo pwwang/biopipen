@@ -1,3 +1,4 @@
+import re
 from os import path
 from pyppl import Box, utils
 
@@ -8,6 +9,16 @@ def _getsource(prepend = ''):
 	with open(path.join(cwd, 'scripts', 'utils', fn)) as f:
 		ret += ''.join(f.readlines()) + '\n'
 	return ret
+
+def dirnameFiles(files):
+	file0 = sorted(files)[0]
+	file0 = path.basename(file0).split('.')[0]
+	return re.sub('[^A-Za-z0-9]*\([^)]+?\)|[^A-Za-z0-9]+$', '', file0) + '_etc'
+
+def dirnamePattern(dir, pattern = '*'):
+	from glob import glob
+	files = glob(path.join(dir, pattern))
+	return dirnameFiles(files)
 
 """
 Convert memories

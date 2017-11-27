@@ -43,7 +43,7 @@ cnames   = gsub("\\.gz$", "", cnames)
 cnames   = gsub("\\.CEL$", "", cnames)
 cnames   = gsub("\\.cel$", "", cnames)
 colnames(exprsout) = cnames
-write.table(exprsout, "{{out.outfile}}", quote=F, sep="\t")
+write.table(round(exprsout, 3), "{{out.outfile}}", quote=F, sep="\t")
 
 exprsout = log2(exprsout + 1)
 # boxplot

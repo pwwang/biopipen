@@ -3,7 +3,7 @@ if (!exists('rbindfill')) {
 		if (is.null(x1)) return(x2)
 		if (is.null(x2)) return(x1)
 		y = merge(x1, x2, all=T, sort=F)
-		rownames(y) = c(rownames(x1), rownames(x2))
+		rownames(y) = make.unique(c(rownames(x1), rownames(x2)))
 		return (y)
 	}
 }

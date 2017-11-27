@@ -1,0 +1,9 @@
+Group	Batch
+20131118_Human-Brain-AM7962-130ng_rep1_(miRNA-4_0)	Brain	Batch1
+20131118_Human-Brain-AM7962-130ng_rep2_(miRNA-4_0)	Brain	Batch1
+20131118_Human-Brain-AM7962-130ng_rep3_(miRNA-4_0)	Brain	Batch1
+20131118_Human-Brain-AM7962-130ng_rep4_(miRNA-4_0)	Brain	Batch1
+20131118_Human-Lung-AM7968-130ng_rep1_(miRNA-4_0)	Lung	Batch2
+20131118_Human-Lung-AM7968-130ng_rep2_(miRNA-4_0)	Lung	Batch2
+20131118_Human-Lung-AM7968-130ng_rep3_(miRNA-4_0)	Lung	Batch2
+20131118_Human-Lung-AM7968-130ng_rep4_(miRNA-4_0)	Lung	Batch2

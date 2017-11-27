@@ -24,23 +24,23 @@ pGenePromoters = pPromoters.copy()
 	`to`: the output gene name format. Default: 'symbol'
 	`genome`: the genome. Default: 'hg19'
 """
-pGeneNameNorm                  = Proc(desc = 'Normalize gene names using MyGeneinfo.')
-pGeneNameNorm.input            = 'infile:file'
-pGeneNameNorm.output           = 'outfile:file:{{in.infile | bn}}'
-pGeneNameNorm.errhow           = 'retry'
-pGeneNameNorm.args.notfound    = 'ignore'
-pGeneNameNorm.args.header      = False
-pGeneNameNorm.args.skip        = 0
-pGeneNameNorm.args.comment     = '#'
-pGeneNameNorm.args.delimit     = '\t'
-pGeneNameNorm.args.col         = 0
-pGeneNameNorm.args.frm         = 'symbol, alias'
-pGeneNameNorm.args.to          = 'symbol'
-pGeneNameNorm.args.tmpdir      = params.tmpdir.value
-pGeneNameNorm.args.genome      = params.genome.value
-pGeneNameNorm.tplenvs.genenorm = genenorm.py
-pGeneNameNorm.lang             = params.python.value
-pGeneNameNorm.script           = "file:scripts/gene/pGeneNameNorm.py"
+pGeneNameNorm               = Proc(desc = 'Normalize gene names using MyGeneinfo.')
+pGeneNameNorm.input         = 'infile:file'
+pGeneNameNorm.output        = 'outfile:file:{{in.infile | bn}}'
+pGeneNameNorm.errhow        = 'retry'
+pGeneNameNorm.args.notfound = 'ignore'
+pGeneNameNorm.args.header   = False
+pGeneNameNorm.args.skip     = 0
+pGeneNameNorm.args.comment  = '#'
+pGeneNameNorm.args.delimit  = '\t'
+pGeneNameNorm.args.col      = 0
+pGeneNameNorm.args.frm      = 'symbol, alias'
+pGeneNameNorm.args.to       = 'symbol'
+pGeneNameNorm.args.tmpdir   = params.tmpdir.value
+pGeneNameNorm.args.genome   = params.genome.value
+pGeneNameNorm.envs.genenorm = genenorm.py
+pGeneNameNorm.lang          = params.python.value
+pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 
 """
 @name:
@@ -77,5 +77,6 @@ pGeneTss.args.col      = 0
 pGeneTss.args.frm      = 'symbol, alias'
 pGeneTss.args.tmpdir   = params.tmpdir.value
 pGeneTss.args.genome   = params.genome.value
+pGeneTss.envs.genenorm = genenorm.py
 pGeneTss.lang          = params.python.value
 pGeneTss.script        = "file:scripts/gene/pGeneTss.py"

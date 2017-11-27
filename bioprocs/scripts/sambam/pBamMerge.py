@@ -2,7 +2,7 @@
 from os import makedirs, path
 from shutil import rmtree
 
-tmpdir    = path.join ("{{ args.tmpdir }}", "{{proc.id}}.{{in.inlist | fn}}.{{job.index}}")
+tmpdir    = path.join ({{ args.tmpdir | quote}}, "{{proc.id}}.{{in.infiles | fsDirname}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 	
 {{ runcmd }}
@@ -14,7 +14,7 @@ try:
 	############# picard
 	{% if args.tool | lambda x: x == 'picard' %}
 	mem = mem2({{ args.mem | quote }}, 'java')
-	infiles = {{ in.inlist | readlines }}
+	infiles = {{ in.infiles }}
 	for i, infile in enumerate(infiles):
 		params['I' + ' ' * i] = infile
 	{% if args.nthread | lambda x: x>1 %}
@@ -31,7 +31,7 @@ try:
 
 	############# bamutil
 	{% elif args.tool | lambda x: x == 'bamutil' %}
-	infiles = {{ in.inlist | readlines }}
+	infiles = {{ in.infiles }}
 	for i, infile in enumerate(infiles):
 		params['i' + ' ' * i] = infile
 	params['o'] = {{out.outfile | quote}}
@@ -41,17 +41,20 @@ try:
 	
 	############# samtools
 	{% elif args.tool | lambda x: x == 'samtools' %}
+	inlist = path.join({{job.outdir | quote}}, 'bamlist.txt')
+	with open(inlist, 'w') as f:
+		f.write('\n'.join({{in.infiles}}) + '\n')
 	params['@'] = {{args.nthread}}
 	params['O'] = 'bam'
-	params['b'] = {{in.inlist | quote}}
+	params['b'] = inlist
 
-	cmd = '{{args.samtools}} merge %s "{{out.outfile}}"' % params2CmdArgs(params)
+	cmd = '{{args.samtools}} merge %s {{out.outfile | quote}}' % params2CmdArgs(params)
 	runcmd (cmd)
 
 	############# sambamba
 	{% elif args.tool | lambda x: x == 'sambamba' %}
 	params['t'] = {{args.nthread}}
-	cmd = '{{args.sambamba}} merge %s "{{out.outfile}}" {{ in.inlist | readlines | asquote }}' % params2CmdArgs(params)
+	cmd = '{{args.sambamba}} merge %s {{out.outfile | quote}} {{ in.infiles | asquote }}' % params2CmdArgs(params)
 	runcmd (cmd)
 
 	{% endif %}

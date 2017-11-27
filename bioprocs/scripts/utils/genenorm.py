@@ -23,16 +23,18 @@ if 'genenorm' not in vars() or not callable(genenorm):
 
 		skip += int(header)
 		with open(infile) as f:
-			genes   = sorted(set([line.split(delimit)[col] for i, line in enumerate(f.read().splitlines()) if i >= skip and line.strip() and not line.startswith(comment)]))
+			genes   = sorted(set([line.split(delimit)[col].strip() for i, line in enumerate(f.read().splitlines()) if i >= skip and line.strip() and not line.startswith(comment)]))
 		
-		to2   = frm if isinstance(frm, list) else [f.strip() for f in frm.split(',')]
-		if to not in to2: to2.append(to)
+		to2 = frm if isinstance(frm, list) else [f.strip() for f in frm.split(',')]
+		tos = to if isinstance(to, list) else [t.strip() for t in to.split(',')]
+		to2 = sorted(list(set(to2) | set(tos)))
+
 		uid   = md5(''.join(genes) + str(frm) + str(to) + str(species)).hexdigest()
 		cache = path.join(cachedir, 'mygeneinfo.%s' % uid)
 		if path.isfile(cache):
 			with open(cache) as f: mgret = json.load(f)
 		else:
-			mgret = MyGeneInfo().getgenes(genes, scopes = frm, fields = to2, species = species)
+			mgret = MyGeneInfo().querymany(genes, scopes = frm, fields = to2, species = species)
 			with open(cache, 'w') as f:	json.dump(mgret, f, indent = 4)
 		
 		genetmp = {}
@@ -42,23 +44,28 @@ if 'genenorm' not in vars() or not callable(genenorm):
 			genetmp[gene['query']].append(gene)
 		
 		genemap = {}
+		toarray = 1
 		for query, gene in genetmp.items():
 			# re-score the items if query is entirely matched
 			for g in gene:
-				if to in g:
-					if g[to] == query: g['_score'] += 10000
-					elif g[to].upper() == query.upper(): g['_score'] += 5000
-					else:
-						for t in to2:
-							if t in g and query.upper() in [u.upper() for u in list(g[t])]:
-								g['_score'] += 1000
-								break
-			gene = sorted([g for g in gene if to in g], key = lambda x: x['_score'], reverse = True)
-			if gene: genemap[query] = gene[0][to]
+				if not all([x in g for x in tos]): continue
+				
+				if any([g[x] == query for x in tos]):
+					g['_score'] += 10000
+				elif any([str(g[x]).upper() == query.upper() for x in tos]):
+					g['_score'] += 5000
+				elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x]) for x in tos]]):
+					g['_score'] += 1000
+			gene = sorted([g for g in gene if any([x in g for x in tos])], key = lambda x: x['_score'], reverse = True)
+			if not gene: continue
+			if len(tos) == 1:
+				genemap[query] = gene[0][tos[0]]
+			else:
+				genemap[query] = {x: (gene[0][x] if x in gene[0] else None) for x in tos}
 
 		del genetmp
 
-		if not outfile: return genemap
+		if not outfile: return genemap, None
 
 		with open(infile) as f, open(outfile, 'w') as fout:
 			i = 0

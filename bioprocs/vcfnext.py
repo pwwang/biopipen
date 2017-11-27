@@ -16,19 +16,19 @@ from . import params
 	`chroms`:     The chromsome filter. Default: "" (all chroms)
 	- Note: snpEff csvstat file has no "chr" prefix
 """
-pVcfStatsPlot                     = Proc(desc = 'Convert csvstat file from snpEff to R-readable matrix and plot them.')
-pVcfStatsPlot.input               = "indir:file"
-pVcfStatsPlot.output              = "outdir:dir:{{in.indir | fn}}-{{job.index}}.statplots"
-pVcfStatsPlot.args.chroms         = ""
-pVcfStatsPlot.args.Rscript        = params.Rscript.value
-pVcfStatsPlot.args.devpars        = Box({'res':300, 'width':2000, 'height':2000})
-pVcfStatsPlot.args.histplotggs    = []
-pVcfStatsPlot.args.boxplotggs     = []
-pVcfStatsPlot.tplenvs.runcmd      = runcmd.py
-pVcfStatsPlot.tplenvs.plotHist    = plot.hist.r
-pVcfStatsPlot.tplenvs.plotBoxplot = plot.boxplot.r
-pVcfStatsPlot.lang                = params.python.value
-pVcfStatsPlot.script              = "file:scripts/vcfnext/pVcfStatsPlot.py"
+pVcfStatsPlot                  = Proc(desc = 'Convert csvstat file from snpEff to R-readable matrix and plot them.')
+pVcfStatsPlot.input            = "indir:file"
+pVcfStatsPlot.output           = "outdir:dir:{{in.indir | fn}}-{{job.index}}.statplots"
+pVcfStatsPlot.args.chroms      = ""
+pVcfStatsPlot.args.Rscript     = params.Rscript.value
+pVcfStatsPlot.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
+pVcfStatsPlot.args.histplotggs = []
+pVcfStatsPlot.args.boxplotggs  = []
+pVcfStatsPlot.envs.runcmd      = runcmd.py
+pVcfStatsPlot.envs.plotHist    = plot.hist.r
+pVcfStatsPlot.envs.plotBoxplot = plot.boxplot.r
+pVcfStatsPlot.lang             = params.python.value
+pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 
 """
 @name:
@@ -48,11 +48,11 @@ pCallRate.input            = "indir:file"
 pCallRate.output           = "outdir:dir:{{ in.indir | fn }}.callrate"
 pCallRate.args.histplotggs = []
 pCallRate.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
-pCallRate.tplenvs.runcmd    = runcmd.r
-pCallRate.tplenvs.cbindfill = helpers.cbindfill.r
-pCallRate.tplenvs.plotHist  = plot.hist.r
-pCallRate.lang              = params.Rscript.value
-pCallRate.script            = "file:scripts/vcfnext/pCallRate.r"
+pCallRate.envs.runcmd      = runcmd.r
+pCallRate.envs.cbindfill   = helpers.cbindfill.r
+pCallRate.envs.plotHist    = plot.hist.r
+pCallRate.lang             = params.Rscript.value
+pCallRate.script           = "file:scripts/vcfnext/pCallRate.r"
 
 """
 @name:
@@ -68,13 +68,13 @@ pCallRate.script            = "file:scripts/vcfnext/pCallRate.r"
 @requires:
 	[`cepip`](http://jjwanglab.org/cepip/)
 """
-pCepip                        = Proc(desc = 'Run cepip for input mutations.')
-pCepip.input                  = "infile:file"
-pCepip.output                 = "outfile:file:{{in.infile | fn}}.cepip.txt"
-pCepip.args.cepip             = params.cepip.value
-pCepip.args.cell              = ""
-pCepip.args.params            = Box()
-pCepip.tplenvs.runcmd         = runcmd.py
-pCepip.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pCepip.lang                   = params.python.value
-pCepip.script                 = "file:scripts/vcfnext/pCepip.py"
+pCepip                     = Proc(desc = 'Run cepip for input mutations.')
+pCepip.input               = "infile:file"
+pCepip.output              = "outfile:file:{{in.infile | fn}}.cepip.txt"
+pCepip.args.cepip          = params.cepip.value
+pCepip.args.cell           = ""
+pCepip.args.params         = Box()
+pCepip.envs.runcmd         = runcmd.py
+pCepip.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pCepip.lang                = params.python.value
+pCepip.script              = "file:scripts/vcfnext/pCepip.py"

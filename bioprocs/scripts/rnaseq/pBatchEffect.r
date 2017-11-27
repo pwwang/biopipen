@@ -6,7 +6,7 @@ batch      = factor(sampleinfo[which(sampleinfo$row.names %in% colnames(expr)),,
 {% if args.tool | lambda x: x == 'combat' %}
 library(sva)
 newexpr   = ComBat(dat=expr, batch=batch, par.prior = TRUE, mod = NULL)
-write.table (newexpr, "{{out.outfile}}", col.names=T, row.names=T, sep="\t", quote=F)
+write.table (round(newexpr, 3), "{{out.outfile}}", col.names=T, row.names=T, sep="\t", quote=F)
 {% else %}
 stop('Unsupported tool: {{args.tool}}.')
 {% endif %}

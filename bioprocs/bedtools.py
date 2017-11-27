@@ -18,18 +18,18 @@ from .utils import runcmd, helpers, buildref, checkref
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedGetfasta                        = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
-pBedGetfasta.input                  = "infile:file"
-pBedGetfasta.output                 = "outfile:file:{{in.infile | fn}}.fa"
-pBedGetfasta.args.samtools          = params.samtools.value
-pBedGetfasta.args.bedtools          = params.bedtools.value
-pBedGetfasta.args.params            = Box({'name': True})
-pBedGetfasta.args.ref               = params.ref.value
-pBedGetfasta.tplenvs.runcmd         = runcmd.py
-pBedGetfasta.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pBedGetfasta.beforeCmd              = checkref.fa.bash + buildref.fai.bash
-pBedGetfasta.lang                   = params.python.value
-pBedGetfasta.script                 = "file:scripts/bedtools/pBedGetfasta.py"
+pBedGetfasta                     = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
+pBedGetfasta.input               = "infile:file"
+pBedGetfasta.output              = "outfile:file:{{in.infile | fn}}.fa"
+pBedGetfasta.args.samtools       = params.samtools.value
+pBedGetfasta.args.bedtools       = params.bedtools.value
+pBedGetfasta.args.params         = Box({'name': True})
+pBedGetfasta.args.ref            = params.ref.value
+pBedGetfasta.envs.runcmd         = runcmd.py
+pBedGetfasta.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedGetfasta.beforeCmd           = checkref.fa.bash + buildref.fai.bash
+pBedGetfasta.lang                = params.python.value
+pBedGetfasta.script              = "file:scripts/bedtools/pBedGetfasta.py"
 
 
 """
@@ -72,17 +72,17 @@ pBedClosest.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedFlank                        = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
-pBedFlank.input                  = "infile:file"
-pBedFlank.output                 = "outfile:file:{{in.infile | fn}}-flank.bed"
-pBedFlank.args.extend            = False
-pBedFlank.args.gsize             = params.gsize.value
-pBedFlank.args.params            = Box()
-pBedFlank.args.bedtools          = params.bedtools.value
-pBedFlank.tplenvs.runcmd         = runcmd.py
-pBedFlank.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pBedFlank.lang                   = params.python.value
-pBedFlank.script                 = "file:scripts/bedtools/pBedFlank.py"
+pBedFlank                     = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
+pBedFlank.input               = "infile:file"
+pBedFlank.output              = "outfile:file:{{in.infile | fn}}-flank.bed"
+pBedFlank.args.extend         = False
+pBedFlank.args.gsize          = params.gsize.value
+pBedFlank.args.params         = Box()
+pBedFlank.args.bedtools       = params.bedtools.value
+pBedFlank.envs.runcmd         = runcmd.py
+pBedFlank.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedFlank.lang                = params.python.value
+pBedFlank.script              = "file:scripts/bedtools/pBedFlank.py"
 
 """
 @name:

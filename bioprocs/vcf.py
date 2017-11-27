@@ -100,13 +100,13 @@ pVcfAnno.args.dbpath          = Box({
 	'annovar': params.annovarDb.value,
 	'vep'    : params.vepDb.value
 })
-pVcfAnno.args.snpeffStats       = False
-pVcfAnno.args.params            = Box()
-pVcfAnno.args.mem               = params.mem8G.value
-pVcfAnno.tplenvs.runcmd         = runcmd.py
-pVcfAnno.tplenvs.mem2           = mem2.py
-pVcfAnno.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcfAnno.beforeCmd              = """
+pVcfAnno.args.snpeffStats    = False
+pVcfAnno.args.params         = Box()
+pVcfAnno.args.mem            = params.mem8G.value
+pVcfAnno.envs.runcmd         = runcmd.py
+pVcfAnno.envs.mem2           = mem2.py
+pVcfAnno.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcfAnno.beforeCmd           = """
 # check dbpath
 dbpath=$({{proc.lang}} -c "print {{args.dbpath}}['{{args.tool}}']")
 if [[ ! -e "$dbpath" ]]; then
@@ -136,19 +136,19 @@ pVcfAnno.script               = "file:scripts/vcf/pVcfAnno.py"
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
 """
-pVcfSplit                        = Proc(desc = "Split multi-sample Vcf to single-sample Vcf files.")
-pVcfSplit.input                  = "infile:file, samples"
-pVcfSplit.output                 = "outdir:dir:{{in.infile | fn}}-individuals"
-pVcfSplit.args.tool              = 'vcftools'
-pVcfSplit.args.vcftools          = params.vcftools_subset.value
-pVcfSplit.args.bcftools          = params.bcftools.value # used to extract samples
-pVcfSplit.args.gatk              = params.gatk.value
-pVcfSplit.args.ref               = params.ref.value # only for gatk
-pVcfSplit.args.nthread           = 1
-pVcfSplit.tplenvs.runcmd         = runcmd.py
-pVcfSplit.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcfSplit.lang                   = params.python.value
-pVcfSplit.script                 = "file:scripts/vcf/pVcfSplit.py"
+pVcfSplit                     = Proc(desc = "Split multi-sample Vcf to single-sample Vcf files.")
+pVcfSplit.input               = "infile:file, samples"
+pVcfSplit.output              = "outdir:dir:{{in.infile | fn}}-individuals"
+pVcfSplit.args.tool           = 'vcftools'
+pVcfSplit.args.vcftools       = params.vcftools_subset.value
+pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
+pVcfSplit.args.gatk           = params.gatk.value
+pVcfSplit.args.ref            = params.ref.value # only for gatk
+pVcfSplit.args.nthread        = 1
+pVcfSplit.envs.runcmd         = runcmd.py
+pVcfSplit.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcfSplit.lang                = params.python.value
+pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 
 """
 @name:
@@ -166,22 +166,22 @@ pVcfSplit.script                 = "file:scripts/vcf/pVcfSplit.py"
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
 """
-pVcfMerge                        = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
-pVcfMerge.input                  = "indir:dir"
-pVcfMerge.output                 = "outfile:file:{{in.indir, args.pattern | fsDirname}}-merged.vcf"
-pVcfMerge.args.pattern           = '*.vcf.gz'
-pVcfMerge.args.tool              = 'vcftools'
-pVcfMerge.args.vcftools          = params.vcftools_merge.value
-pVcfMerge.args.gatk              = params.gatk.value
-pVcfMerge.args.ref               = params.ref.value # only for gatk
-pVcfMerge.args.vep               = params.vep.value
-pVcfMerge.args.nthread           = 1
-pVcfMerge.tplenvs.runcmd         = runcmd.py
-pVcfMerge.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcfMerge.tplenvs.parallel       = parallel.py
-pVcfMerge.tplenvs.fsDirname      = lambda dir, pat: path.basename(glob(path.join(dir, pat))[0]).split('.')[0] + '_etc'
-pVcfMerge.lang                   = params.python.value
-pVcfMerge.script                 = "file:scripts/vcf/pVcfMerge.py"
+pVcfMerge                     = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
+pVcfMerge.input               = "indir:dir"
+pVcfMerge.output              = "outfile:file:{{in.indir, args.pattern | fsDirname}}-merged.vcf"
+pVcfMerge.args.pattern        = '*.vcf.gz'
+pVcfMerge.args.tool           = 'vcftools'
+pVcfMerge.args.vcftools       = params.vcftools_merge.value
+pVcfMerge.args.gatk           = params.gatk.value
+pVcfMerge.args.ref            = params.ref.value # only for gatk
+pVcfMerge.args.vep            = params.vep.value
+pVcfMerge.args.nthread        = 1
+pVcfMerge.envs.runcmd         = runcmd.py
+pVcfMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcfMerge.envs.parallel       = parallel.py
+pVcfMerge.envs.fsDirname      = lambda dir, pat: path.basename(glob(path.join(dir, pat))[0]).split('.')[0] + '_etc'
+pVcfMerge.lang                = params.python.value
+pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
 
 """
 @name:
@@ -201,19 +201,19 @@ pVcfMerge.script                 = "file:scripts/vcf/pVcfMerge.py"
 	`ref`: The reference genome
 	`tumor1st`: Whether tumor sample comes first in the input vcf file. Default: True
 """
-pVcf2Maf                        = Proc(desc = 'Convert Vcf file to Maf file.')
-pVcf2Maf.input                  = 'infile:file'
-pVcf2Maf.output                 = 'outfile:file:{{in.infile | fn | fn}}.maf'
-pVcf2Maf.args.tool              = 'vcf2maf'
-pVcf2Maf.args.vcf2maf           = params.vcf2maf.value
-pVcf2Maf.args.vep               = params.vep.value
-pVcf2Maf.args.vepDb             = params.vepDb.value
-pVcf2Maf.args.filtervcf         = params.vepNonTCGAVcf.value
-pVcf2Maf.args.ref               = params.ref.value
-pVcf2Maf.args.params            = Box()
-pVcf2Maf.tplenvs.runcmd         = runcmd.py
-pVcf2Maf.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcf2Maf.lang                   = params.python.value
-pVcf2Maf.script                 = "file:scripts/vcf/pVcf2Maf.py"
+pVcf2Maf                     = Proc(desc = 'Convert Vcf file to Maf file.')
+pVcf2Maf.input               = 'infile:file'
+pVcf2Maf.output              = 'outfile:file:{{in.infile | fn | fn}}.maf'
+pVcf2Maf.args.tool           = 'vcf2maf'
+pVcf2Maf.args.vcf2maf        = params.vcf2maf.value
+pVcf2Maf.args.vep            = params.vep.value
+pVcf2Maf.args.vepDb          = params.vepDb.value
+pVcf2Maf.args.filtervcf      = params.vepNonTCGAVcf.value
+pVcf2Maf.args.ref            = params.ref.value
+pVcf2Maf.args.params         = Box()
+pVcf2Maf.envs.runcmd         = runcmd.py
+pVcf2Maf.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pVcf2Maf.lang                = params.python.value
+pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 
 

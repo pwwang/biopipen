@@ -14,5 +14,5 @@ cmd = '{{args.kallisto}} quant %s "{{in.fqfile1}}" "{{in.fqfile2}}"' % (params2C
 runcmd (cmd)
 
 retfile = "{{out.outdir}}/abundance.tsv"
-txtFilter(retfile, "{{out.outfile}}.dec", cols=[0,3], header=False, skip=1)
-txtTransform("{{out.outfile}}.dec", "{{out.outfile}}", transformer = lambda parts: [parts[0], str(int(float(parts[1])))], header=False)
+txtFilter(retfile, "{{out.outfile}}.dec", cols=[0,3], header=True)
+txtTransform("{{out.outfile}}.dec", "{{out.outfile}}", transform = lambda parts: [parts[0].split('::')[0], str(int(float(parts[1])))], header=True)

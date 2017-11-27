@@ -19,13 +19,14 @@ try:
 	############# biobambam
 	{% if args.tool | lambda x: x == 'biobambam' %}
 	params['gz']       = 0
-	params['S']        = fqfile
+	#bug
+	#params['S']        = fqfile
 	params['filename'] = infile
 	params['T']        = path.join(tmpdir, infile + '.tmp')
 	if infile.endswith('.sam'):
 		params['inputformat'] = 'sam'
 	
-	cmd = '{{args.biobambam_bamtofastq}} %s' % params2CmdArgs(params, dash = '', equal = '=')
+	cmd = '{{args.biobambam}} %s > "%s"' % (params2CmdArgs(params, dash = '', equal = '='), fqfile)
 	runcmd (cmd)
 
 	############# bedtools

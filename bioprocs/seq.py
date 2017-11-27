@@ -1,5 +1,5 @@
 from pyppl import Proc
-from .utils import runcmd, helpers
+from .utils import runcmd, helpers, genenorm
 from . import params
 
 """
@@ -23,20 +23,20 @@ from . import params
 	[bwtool](https://github.com/CRG-Barcelona/bwtool)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 """
-pConsvPerm                        = Proc(desc = 'Generate a null distribution of conservation scores.')
-pConsvPerm.input                  = 'seed'
-pConsvPerm.output                 = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{in.seed}}.txt'
-pConsvPerm.args.len               = 50
-pConsvPerm.args.nperm             = 1000
-pConsvPerm.args.consvdir          = params.consvdir.value
-pConsvPerm.args.gsize             = params.gsize.value
-pConsvPerm.args.bedtools          = params.bedtools.value
-pConsvPerm.args.bwtool            = params.bwtool.value
-pConsvPerm.args.seed              = None
-pConsvPerm.tplenvs.runcmd         = runcmd.py
-pConsvPerm.tplenvs.params2CmdArgs = helpers.params2CmdArgs.py
-pConsvPerm.lang                   = params.python.value
-pConsvPerm.script                 = "file:scripts/seq/pConsvPerm.py"
+pConsvPerm                     = Proc(desc = 'Generate a null distribution of conservation scores.')
+pConsvPerm.input               = 'seed'
+pConsvPerm.output              = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{in.seed}}.txt'
+pConsvPerm.args.len            = 50
+pConsvPerm.args.nperm          = 1000
+pConsvPerm.args.consvdir       = params.consvdir.value
+pConsvPerm.args.gsize          = params.gsize.value
+pConsvPerm.args.bedtools       = params.bedtools.value
+pConsvPerm.args.bwtool         = params.bwtool.value
+pConsvPerm.args.seed           = None
+pConsvPerm.envs.runcmd         = runcmd.py
+pConsvPerm.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pConsvPerm.lang                = params.python.value
+pConsvPerm.script              = "file:scripts/seq/pConsvPerm.py"
 
 
 """
@@ -69,7 +69,7 @@ pConsv.args.bwtool    = params.bwtool.value
 pConsv.args.consvdir  = params.consvdir.value
 pConsv.args.pval      = False
 pConsv.args.threspval = .05
-pConsv.tplenvs.runcmd = runcmd.py
+pConsv.envs.runcmd    = runcmd.py
 pConsv.lang           = params.python.value
 pConsv.script         = "file:scripts/seq/pConsv.py"
 
@@ -105,5 +105,6 @@ pPromoters.args.col      = 0
 pPromoters.args.frm      = 'symbol, alias'
 pPromoters.args.tmpdir   = params.tmpdir.value
 pPromoters.args.genome   = params.genome.value
+pPromoters.envs.genenorm = genenorm.py
 pPromoters.lang          = params.python.value
 pPromoters.script        = "file:scripts/seq/pPromoters.py"

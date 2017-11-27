@@ -7,5 +7,6 @@ txtFilter(
 	rfilter = {{args.rfilter}},
 	header  = {{ args.header }},
 	skip    = {{args.skip}},
-	delimit = {{args.delimit | quote}}
+	delimit = {{args.delimit | quote}},
+	outdelimit = {{args.outdelimit | quote}}
 )

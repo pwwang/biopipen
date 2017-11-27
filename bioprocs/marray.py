@@ -1,7 +1,7 @@
 from os import path
 from glob import glob
 from pyppl import Proc, Box
-from .utils import plot, txt
+from .utils import plot, txt, dirnamePattern
 from .rnaseq import pBatchEffect, pCoexp
 from . import params
 
@@ -38,25 +38,25 @@ pCeldir2Matrix.output              = [
 	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt", 
 	"outdir:dir:{{in.expdir, args.pattern | fsDirname}}"
 ]
-pCeldir2Matrix.lang                = params.Rscript.value
-pCeldir2Matrix.args.pattern        = '*'
-pCeldir2Matrix.args.norm           = 'rma' # mas5
-pCeldir2Matrix.args.gfile          = ''
-pCeldir2Matrix.args.cdffile        = ''
-pCeldir2Matrix.args.annofile       = ''
-pCeldir2Matrix.args.boxplot        = False
-pCeldir2Matrix.args.heatmap        = False
-pCeldir2Matrix.args.heatmapn       = 500
-pCeldir2Matrix.args.histplot       = False
-pCeldir2Matrix.args.devpars        = Box({'res': 300, 'width': 2000, 'height': 2000})
-pCeldir2Matrix.args.boxplotggs     = ['r:ylab("Log2 Intensity")']
-pCeldir2Matrix.args.heatmapggs     = ['r:theme(axis.text.y = element_blank())']
-pCeldir2Matrix.args.histplotggs    = ['r:labs(x = "Log2 Intensity", y = "Density")']
-pCeldir2Matrix.tplenvs.plotBoxplot = plot.boxplot.r
-pCeldir2Matrix.tplenvs.plotHeatmap = plot.heatmap.r
-pCeldir2Matrix.tplenvs.plotHist    = plot.hist.r
-pCeldir2Matrix.tplenvs.fsDirname   = lambda dir, pat: path.splitext(path.basename(glob(path.join(dir, pat))[0]))[0] + '_etc'
-pCeldir2Matrix.script              = "file:scripts/marray/pCeldir2Matrix.r"
+pCeldir2Matrix.lang             = params.Rscript.value
+pCeldir2Matrix.args.pattern     = '*'
+pCeldir2Matrix.args.norm        = 'rma' # mas5
+pCeldir2Matrix.args.gfile       = ''
+pCeldir2Matrix.args.cdffile     = ''
+pCeldir2Matrix.args.annofile    = ''
+pCeldir2Matrix.args.boxplot     = False
+pCeldir2Matrix.args.heatmap     = False
+pCeldir2Matrix.args.heatmapn    = 500
+pCeldir2Matrix.args.histplot    = False
+pCeldir2Matrix.args.devpars     = Box({'res': 300, 'width': 2000, 'height': 2000})
+pCeldir2Matrix.args.boxplotggs  = ['r:ylab("Log2 Intensity")']
+pCeldir2Matrix.args.heatmapggs  = ['r:theme(axis.text.y = element_blank())']
+pCeldir2Matrix.args.histplotggs = ['r:labs(x = "Log2 Intensity", y = "Density")']
+pCeldir2Matrix.envs.plotBoxplot = plot.boxplot.r
+pCeldir2Matrix.envs.plotHeatmap = plot.heatmap.r
+pCeldir2Matrix.envs.plotHist    = plot.hist.r
+pCeldir2Matrix.envs.fsDirname   = dirnamePattern
+pCeldir2Matrix.script           = "file:scripts/marray/pCeldir2Matrix.r"
 
 
 
@@ -66,21 +66,21 @@ pMarrayDeg.output = [
 	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt", 
 	"outdir:dir:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs"
 ]
-pMarrayDeg.args.tool             = 'limma'
-pMarrayDeg.args.filter           = '1,2'
-pMarrayDeg.args.pval             = 0.05
-pMarrayDeg.args.mdsplot          = True
-pMarrayDeg.args.volplot          = True
-pMarrayDeg.args.maplot           = False
-pMarrayDeg.args.heatmap          = False
-pMarrayDeg.args.heatmapn         = 100
-pMarrayDeg.args.heatmapggs       = ['r:theme(axis.text.y = element_blank())']
-pMarrayDeg.args.maplotggs        = []
-pMarrayDeg.args.volplotggs       = []
-pMarrayDeg.args.devpars          = Box({'res': 300, 'width': 2000, 'height': 2000})
-pMarrayDeg.tplenvs.plotHeatmap   = plot.heatmap.r
-pMarrayDeg.tplenvs.plotMAplot    = plot.maplot.r
-pMarrayDeg.tplenvs.plotVolplot   = plot.volplot.r
-pMarrayDeg.tplenvs.txtSampleinfo = txt.sampleinfo.r
-pMarrayDeg.lang                  = params.Rscript.value
-pMarrayDeg.script                = "file:scripts/marray/pMarrayDeg.r"
+pMarrayDeg.args.tool          = 'limma'
+pMarrayDeg.args.filter        = '1,2'
+pMarrayDeg.args.pval          = 0.05
+pMarrayDeg.args.mdsplot       = True
+pMarrayDeg.args.volplot       = True
+pMarrayDeg.args.maplot        = False
+pMarrayDeg.args.heatmap       = False
+pMarrayDeg.args.heatmapn      = 100
+pMarrayDeg.args.heatmapggs    = ['r:theme(axis.text.y = element_blank())']
+pMarrayDeg.args.maplotggs     = []
+pMarrayDeg.args.volplotggs    = []
+pMarrayDeg.args.devpars       = Box({'res': 300, 'width': 2000, 'height': 2000})
+pMarrayDeg.envs.plotHeatmap   = plot.heatmap.r
+pMarrayDeg.envs.plotMAplot    = plot.maplot.r
+pMarrayDeg.envs.plotVolplot   = plot.volplot.r
+pMarrayDeg.envs.txtSampleinfo = txt.sampleinfo.r
+pMarrayDeg.lang               = params.Rscript.value
+pMarrayDeg.script             = "file:scripts/marray/pMarrayDeg.r"

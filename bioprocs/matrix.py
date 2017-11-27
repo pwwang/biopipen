@@ -138,17 +138,18 @@ pRsplit.script        = "file:scripts/matrix/pRsplit.r"
 	`skip`:    Skip first serveral lines. Default: 0
 	`delimit`: The delimit. Default: `\t`
 """
-pTxtFilter                = Proc(desc = 'Filter a txt(tsv) file by columns and rows.')
-pTxtFilter.input          = "infile:file"
-pTxtFilter.output         = "outfile:file:{{in.infile | bn}}"
-pTxtFilter.lang           = params.python.value
-pTxtFilter.args.cols      = []
-pTxtFilter.args.rfilter   = None
-pTxtFilter.args.header    = True
-pTxtFilter.args.skip      = 0
-pTxtFilter.args.delimit   = "\t"
-pTxtFilter.envs.txtFilter = txt.filter.py
-pTxtFilter.script         = "file:scripts/matrix/pTxtFilter.py"
+pTxtFilter                 = Proc(desc = 'Filter a txt(tsv) file by columns and rows.')
+pTxtFilter.input           = "infile:file"
+pTxtFilter.output          = "outfile:file:{{in.infile | bn}}"
+pTxtFilter.lang            = params.python.value
+pTxtFilter.args.cols       = []
+pTxtFilter.args.rfilter    = None
+pTxtFilter.args.header     = True
+pTxtFilter.args.skip       = 0
+pTxtFilter.args.delimit    = "\t"
+pTxtFilter.args.outdelimit = "\t"
+pTxtFilter.envs.txtFilter  = txt.filter.py
+pTxtFilter.script          = "file:scripts/matrix/pTxtFilter.py"
 
 """
 @name:
@@ -178,6 +179,7 @@ pTxtTransform.args.transform    = None
 pTxtTransform.args.header       = True
 pTxtTransform.args.skip         = 0
 pTxtTransform.args.delimit      = "\t"
+pTxtTransform.args.outdelimit   = "\t"
 pTxtTransform.envs.txtTransform = txt.transform.py
 pTxtTransform.script            = "file:scripts/matrix/pTxtTransform.py"
 

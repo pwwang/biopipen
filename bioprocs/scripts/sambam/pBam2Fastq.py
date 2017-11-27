@@ -26,7 +26,7 @@ try:
 	params['filename'] = infile
 	if infile.endswith('.sam'):
 		params['inputformat'] = 'sam'
-	cmd = '{{args.biobambam_bamtofastq}} %s' % params2CmdArgs(params, dash = '', equal = '=', noq = 'gz')
+	cmd = '{{args.biobambam}} %s' % params2CmdArgs(params, dash = '', equal = '=', noq = 'gz')
 	runcmd (cmd)
 {% elif args.tool | lambda x: x == 'bedtools' %}
 	params['i']   = infile

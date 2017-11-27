@@ -18,7 +18,7 @@ if ("{{args.unit}}" == 'cpm') {
 		ret = log2(ret)
 }
 
-write.table (ret, "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
+write.table (round(ret, 3), "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
 
 # boxplot
 {% if args.boxplot %}

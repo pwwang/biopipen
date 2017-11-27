@@ -34,7 +34,11 @@ payload = {
 
 response = requests.post(ENRICHR_URL, files=payload)
 if not response.ok:
-    raise Exception('Error analyzing gene list')
+	import re
+	msg = re.sub('<[^<]+?>', '', response.text).splitlines()
+	msg = [line for line in msg if line.strip()]
+	msg = '\n'.join(msg)
+	raise Exception('Error analyzing gene list: %s' % msg)
 
 data = json.loads(response.text)
 
@@ -54,7 +58,11 @@ for db in dbs:
 		ENRICHR_URL + query_string % (user_list_id, gene_set_library)
 	)
 	if not response.ok:
-		raise Exception('Error fetching enrichment results against %s' % db)
+		import re
+		msg = re.sub('<[^<]+?>', '', response.text).splitlines()
+		msg = [line for line in msg if line.strip()]
+		msg = '\n'.join(msg)
+		raise Exception('Error fetching enrichment results against %s: %s' % (db, msg))
 	
 	data    = json.loads(response.text)
 	data    = data[db]

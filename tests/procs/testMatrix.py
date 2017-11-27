@@ -68,6 +68,7 @@ class testMatrix (unittest.TestCase):
 		pTxtFilter.args.rfilter = 'lambda row: float(row[1]) > 2 and float(row[2]) > 2'
 		pTxtFilter.args.skip    = 2
 		pTxtFilter.args.delimit = '|'
+		pTxtFilter.args.outdelimit = '|'
 		PyPPL(config).start(pTxtFilter).run()
 		procOK(pTxtFilter, 'txtfilter.txt', self)
 
@@ -77,6 +78,7 @@ class testMatrix (unittest.TestCase):
 		pTxtTransform.args.transform = 'lambda row: [str(float(r) + 1) if i == 1 else r for i, r in enumerate(row)]'
 		pTxtTransform.args.skip      = 2
 		pTxtTransform.args.delimit   = '|'
+		pTxtTransform.args.outdelimit   = '|'
 		PyPPL(config).start(pTxtTransform).run()
 		procOK(pTxtTransform, 'txttransform.txt', self)
 

@@ -34,7 +34,7 @@ ret  = {{args.nreads}} * ret / ssum
 ret  = ret * glen[rn,,drop=F] / sum(glen[rn,,drop=T])
 {% endif %}
 
-write.table (ret, "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
+write.table (round(ret), "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
 
 # boxplot
 {% if args.boxplot %}

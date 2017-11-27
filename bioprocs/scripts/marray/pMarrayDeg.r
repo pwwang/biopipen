@@ -45,7 +45,7 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 		group  = relevel(group, group2)
 		design = model.matrix(~group)
 	}
-
+	print(design)
 	library(limma)
 	fit     = lmFit(ematrix, design)
 	fit     = eBayes(fit)

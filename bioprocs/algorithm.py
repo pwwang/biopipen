@@ -1,5 +1,5 @@
-from pyppl import proc
-
+from pyppl import Proc
+from . import params
 """
 @name:
 	pRWR
@@ -11,72 +11,26 @@ from pyppl import proc
 @output:
 	`outfile:file`: The output of final probabilities
 @args:
-	`c`:       The restart probability
-	`eps`:     The convergent cutoff || R(i+1) - R(i) ||
-	`tmax`:    Max iterations to stop
-	`Wformat`: The format of Wfile, rds or mat/txt, default: rds
-	`Eformat`: The format of Efile, rds or mat/txt, default: rds
-	`Rformat`: The format of the output file, rds or mat/txt, default: rds
-	`normW`:   Weather to normalize W or not, default False. Laplacian normalization is used (more to add).
-	`normE`:   Weather to normalize E or not, default False. E will be normalized as: E = E/sum(E)
+	`c`:       The restart probability. Default: 0.1
+	`eps`:     The convergent cutoff || R(i+1) - R(i) ||. Default: 1e-5
+	`niter`:   Max iterations to stop. Default: 10000
+	`normW`:   Weather to normalize W or not, default True. 
+		- Laplacian normalization is used (more to add).
+	`normE`:   Weather to normalize E or not, default True. 
+		- E will be normalized as: E = E/sum(E)
 @requires:
 	if normW = True, R package `NetPreProc` is required.
 """
-pRWR = proc ()
-pRWR.input     = "Wfile:file, Efile:file"
-pRWR.output    = "outfile:file:R-{{Efile | fn}}"
-pRWR.args      = {'c': 0.1, 'eps': 1e-5, 'tmax': 10000, 'Wformat': 'rds', 'Eformat': 'rds', 'Rformat': 'rds', 'normW': False, 'normE': False}
-pRWR.defaultSh = "Rscript"
-pRWR.script    = """
-normW   = {{args.normW | Rbool}}
-normE   = {{args.normE | Rbool}}
-Wformat = "{{args.Wformat}}"
-Eformat = "{{args.Eformat}}"
-Rformat = "{{args.Rformat}}"
-
-if (Wformat == "rds") {
-	W = readRDS ("{{Wfile}}")
-} else {
-	W = read.table ("{{Wfile}}", sep="\\t", header=T, row.names=1, check.names=F, strip.white=T)
-	W = as.matrix(W)
-}
-
-if (normW) {
-	library(NetPreProc)
-	W = abs(W)
-	W = Laplacian.norm(W)
-}
-
-if (Eformat == "rds") {
-	E = readRDS ("{{Efile}}")
-} else {
-	E = read.table ("{{Efile}}", header=F, row.names=1, check.names=F, strip.white=T)
-}
-E = as.matrix(E)
-E = E[colnames(W), ]
-
-RWR = function (W, e, c = {{args.c}}, eps = {{args.eps}}, tmax={{args.tmax}}) {
-	r0 = e
-	for (i in 1:tmax) {
-		r1 = ((1-c) * W) %*% r0 + c * e
-		diff = norm (r1 - r0, 'f')
-		if (diff < eps) break
-		r0 = r1
-	}
-
-	return (list(r=r1, eps=diff, tmax=i))
-}
-
-r = RWR (W, E)
-print (paste("eps: ", r$eps))
-print (paste("tmax:", r$tmax))
-
-if (Rformat == 'rds') {
-	saveRDS (r$r, "{{outfile}}")
-} else {
-	write.table (format(r$r, digits=3), "{{outfile}}", quote=F, col.names=F, row.names = T, sep="\\t")
-}
-"""
+pRWR            = Proc (desc = 'Do random walk with restart (RWR).')
+pRWR.input      = "Wfile:file, Efile:file"
+pRWR.output     = "outfile:file:{{in.Wfile | fn}}-{{in.Efile | fn}}.rwr"
+pRWR.args.c     = 0.1
+pRWR.args.eps   = 1e-5
+pRWR.args.niter = 10000
+pRWR.args.normW = True
+pRWR.args.normE = True
+pRWR.lang       = params.Rscript.value
+pRWR.script     = "file:scripts/algorithm/pRWR.r"
 
 
 

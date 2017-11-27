@@ -1,6 +1,6 @@
-import inspect
+import inspect, gzip
 from pyppl import PyPPL, Proc
-from os import path, walk
+from os import path, listdir
 
 filedir = None
 config  = {'log': {'level': 'basic', 'lvldiff': "-DEBUG"}}
@@ -14,22 +14,37 @@ def _getFiledir():
 
 _getFiledir()
 
-def getfile (name, input = True):
+def getfile (name = '', input = True):
 	return path.join(filedir, 'input' if input else 'expect', name)
 
-def procOK(proc, name, test):
+def procOK(proc, name, test, order = True):
 	predfile = proc.channel.get()
 	exptfile = getfile(name, False)
 	if path.isfile(predfile):
-		with open(predfile) as fpred, open(exptfile) as fexpt:
-			test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
+		openfunc = gzip.open if exptfile.endswith('.gz') else open
+		with openfunc(predfile) as fpred, openfunc(exptfile) as fexpt:
+			if order:
+				test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
+			else:
+				test.assertEqual(sorted(fpred.read().splitlines()), sorted(fexpt.read().splitlines()))
 	else:
-		for root, _, files in walk(predfile):
-			for name in files:
-				pfile = path.join(root, name)
-				efile = path.join(exptfile, name)
-				with open(pfile) as fpred, open(efile) as fexpt:
-					test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
+		for item in listdir(predfile):
+			pfile = path.join(predfile, item)
+			efile = path.join(exptfile, item)
+			if not path.isfile(pfile): continue
+			openfunc = gzip.open if efile.endswith('.gz') else open
+			with openfunc(pfile) as fpred, openfunc(efile) as fexpt:
+				test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
+
+def procOKIn(proc, msg, test):
+	test.maxDiff = 1000
+	predfile = proc.channel.get()
+	if not isinstance(msg, list):
+		msg = [msg]
+	with open(predfile) as f:
+		content = f.read()
+		for m in msg:
+			test.assertIn(m, content)
 
 def utilTest(input, script, name, tplenvs, test, args = None):
 	ends = {
