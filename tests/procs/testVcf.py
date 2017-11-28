@@ -1,5 +1,5 @@
 import unittest
-from pyppl import PyPPL
+from pyppl import PyPPL, Proc
 from helpers import getfile, procOK, config
 from bioprocs.fastx import pFastqSim
 from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit, pVcf2Maf, pVcfMerge
@@ -78,6 +78,7 @@ class TestVcf (unittest.TestCase):
 		pCallRate1.depends =  pFiles2Dir1
 		
 		PyPPL().start(pFiles2Dir1).run()
+		procOK(pCallRate1, 'callrate', self)
 		
 	def test4_pPlotStats(self):
 
@@ -95,26 +96,15 @@ class TestVcf (unittest.TestCase):
 		pVcfStatsPlot2.expect  = 'ls {{out.outdir}}/mats/*.mat.txt'
 		PyPPL().start(pVcfAnno4).run()
 
-	"""
 	def test5_pVcfSplit(self):
-		regfile = path.join(params.tmpdir, 'region.txt')
-		with open(regfile, 'w') as f:
-			f.write('1	39966768	39968768\n')
-			f.write('2	39966768	39968768\n')
-			f.write('3	29966768	29968768\n')
-			f.write('4	19966768	19968768\n')
-			f.write('5	9966768	9968768\n')
-			f.write('6	966768	968768\n')
-		pTabix.input = ("ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20100804/ALL.2of4intersection.20100804.genotypes.vcf.gz", regfile)
+		pTabix.input = (
+			"ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20100804/ALL.2of4intersection.20100804.genotypes.vcf.gz", 
+			getfile('region.txt')
+		)
 
 		pVcfSplit1 = pVcfSplit.copy()
 		pVcfSplit1.depends = pTabix
 		pVcfSplit1.expect  = "ls -l {{out.outdir}}/HG00098.vcf {{out.outdir}}/NA20828.vcf"
-
-		pVcfSplit2 = pVcfSplit.copy()
-		pVcfSplit2.depends = pTabix
-		pVcfSplit2.input   = lambda ch: ch.cbind("NA19660,NA19917")
-		pVcfSplit2.expect  = "ls -l {{out.outdir}}/NA19660.vcf {{out.outdir}}/NA19917.vcf"
 
 		pVcfSplit3 = pVcfSplit.copy()
 		pVcfSplit3.depends = pTabix
@@ -122,23 +112,26 @@ class TestVcf (unittest.TestCase):
 		pVcfSplit3.expect  = "ls -l {{out.outdir}}/NA19189.vcf {{out.outdir}}/NA19119.vcf {{out.outdir}}/NA19074.vcf"
 		pVcfSplit3.args.nthread = 20
 
-		'''
 		# dont have chr prefix on chromosomes!
 		pVcfSplit4 = pVcfSplit.copy()
-		pVcfSplit4.depends = pTabix
+		# gatk is toooooo slow for test
+		#pVcfSplit4.depends = pTabix 
 		pVcfSplit4.input   = lambda ch: ch.cbind(','.join(['NA' + str(i) for i in range(19074, 19140)]))
 		pVcfSplit4.expect  = "ls -l {{out.outdir}}/NA19189.vcf {{out.outdir}}/NA19119.vcf"
 		pVcfSplit4.args.nthread = 20
 		pVcfSplit4.args.tool  = 'gatk'
-		'''
+
+		pVcfSplit.tag = 'sample'
+		pVcfSplit.depends = pTabix
+		pVcfSplit.input   = lambda ch: ch.cbind("NA19660,NA19917")
+		pVcfSplit.expect  = "ls -l {{out.outdir}}/NA19660.vcf {{out.outdir}}/NA19917.vcf"
+
 		PyPPL().start(pTabix).run()
-		self.data.vcf  = pTabix.channel.outfile
-		self.data.vcfs = pVcfSplit2.channel.outdir
 
 	def test6_pPlotStats_Real(self):
 		
 		pVcfAnno5 = pVcfAnno.copy()
-		pVcfAnno5.input = self.data.vcf
+		pVcfAnno5.input = [getfile('example.vcf')]
 		pVcfAnno5.args.snpeffStats = True
 
 		pFiles2Dir3 = pFiles2Dir.copy()
@@ -154,7 +147,8 @@ class TestVcf (unittest.TestCase):
 	def test7_pVcf2Maf(self):
 		pFiles2Dir4 = pFiles2Dir.copy()
 
-		pTabixIndex.input      = self.data.vcfs.expand(pattern = '*.vcf')
+		pTabixIndex.input      = pVcfSplit.channel.outdir.expand(pattern = '*.vcf')
+		pTabixIndex.forks      = 10
 		pFiles2Dir4.depends    = pTabixIndex
 		pFiles2Dir4.input      = lambda ch: [ch.flatten()]
 		pVcfMerge.depends      = pFiles2Dir4
@@ -163,11 +157,11 @@ class TestVcf (unittest.TestCase):
 		pAddChr2.depends = pVcfMerge
 		pAddChr2.input   = "infile:file"
 		pAddChr2.output  = "outfile:file:{{in.infile|bn}}"
-		pAddChr2.script  = " ""awk '$0 ~ /^#/ {print} $0 !~ /^#/ {print "chr"$0}' {{in.infile}} > {{out.outfile}}"" "
+		pAddChr2.script  = """awk '$0 ~ /^#/ {print} $0 !~ /^#/ {print "chr"$0}' {{in.infile}} > {{out.outfile}}"""
 
 		pVcf2Maf.depends       = pAddChr2
 		PyPPL().start(pTabixIndex).run()
-	"""
+		procOK(pVcf2Maf, 'vcf2maf.maf', self)
 		
 if __name__ == '__main__':
 	unittest.main(failfast=True)
