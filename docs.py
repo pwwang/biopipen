@@ -39,6 +39,9 @@ def eachfile(infile):
 	name   = path.basename(infile)[:-3]
 	mdfile = path.join(dstdir, path.basename(infile)[:-3] + '.md')
 	with open(infile) as f, open(mdfile, 'w') as fout:
+		fout.write('# %s\n' % name)
+		fout.write('<!-- toc -->\n')
+
 		fout.write('{% raw %}\n')
 		content = f.read()
 		# docs for module?
@@ -60,8 +63,7 @@ def eachfile(infile):
 				else:
 					section.append(line)
 		fout.write('{% endraw %}\n')
-	# implemeted with gitbook plugins			
-	#doctoc(mdfile)
+
 
 def fmtSection(lines, mod = False):
 	title = lines.pop(0).strip()
@@ -75,15 +77,10 @@ def fmtSection(lines, mod = False):
 		if secname:
 			secname = secname.group(1)
 			ret += '%s## %s\n' % (basepunk, secname)
-			ret += line[len(secname)+1:] + '  \n'
+			ret += line[len(secname)+1:].lstrip() + '  \n'
 		else:
-			ret += line + '\n'
+			ret += line[1:] + '\n'
 	return ret
-
-def doctoc (mdfile):
-	from subprocess import Popen
-	with open(devnull, 'w') as fnull:
-		Popen (['doctoc', mdfile, '--maxlevel', '2'], stderr=fnull, stdout=fnull).wait()
 
 if __name__ == "__main__":
 	summary()
