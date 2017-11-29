@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pBoxplot
 
@@ -90,3 +91,4 @@
  Other params for `venn.diagram`. Default: {}  
 #### `upsetParams`:
  Other params for `upset`. Default: {}  
+{% endraw %}

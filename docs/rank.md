@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pRankProduct
 
@@ -25,3 +26,4 @@
 ### output
 #### `outfile:file`:
  The output file with original ranks, rank products and p-value if required  
+{% endraw %}

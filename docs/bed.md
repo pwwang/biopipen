@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pBedSort
 
@@ -74,3 +75,4 @@
      The path to bedtools. Default: bedtools  
 #### `params`:
        Other params for `tool`. Default: ''  
+{% endraw %}

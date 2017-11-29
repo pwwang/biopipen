@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pSNP6Genotype
 
@@ -29,3 +30,4 @@
 ### output
 #### `outfile:file`:
  the avinput file  
+{% endraw %}

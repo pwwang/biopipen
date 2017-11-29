@@ -39,6 +39,7 @@ def eachfile(infile):
 	name   = path.basename(infile)[:-3]
 	mdfile = path.join(dstdir, path.basename(infile)[:-3] + '.md')
 	with open(infile) as f, open(mdfile, 'w') as fout:
+		fout.write('{% raw %}\n')
 		content = f.read()
 		# docs for module?
 		moddocs = re.match(r'^(\"\"\"|\'\'\')\s*\n(@\w+:[\s\S]+?)\1', content)
@@ -58,6 +59,7 @@ def eachfile(infile):
 					section = [line]
 				else:
 					section.append(line)
+		fout.write('{% endraw %}\n')
 	# implemeted with gitbook plugins			
 	#doctoc(mdfile)
 

@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pMatrix
 
@@ -129,3 +130,4 @@
  The match function.   
 #### `do`:
  The do function. Global vaiable `fout` is available to write results to output file.  
+{% endraw %}

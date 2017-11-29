@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pSam2Bam
 
@@ -516,3 +517,4 @@
  Other params for main program.  
 #### `refgene`:
  The reference gene in GTF format.  
+{% endraw %}

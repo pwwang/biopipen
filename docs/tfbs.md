@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pMotifScan
 
@@ -29,3 +30,4 @@
  Number of threads used to scan, only available when you have multiple mids. Default: 1  
 #### `params`  :
  Other parameters for `fimo`  
+{% endraw %}

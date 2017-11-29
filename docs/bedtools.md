@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pBedGetfasta
 
@@ -267,3 +268,4 @@ The format of input file, whether is a "bed" file or "genome" size file. Default
      The bedtools executable, default: "bedtools"  
 #### `params`:
   Other parameters for `bedtools genomecov`, default: "-bg"  
+{% endraw %}

@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pSnpEff
 
@@ -29,3 +30,4 @@
  Whether to generate the html summary file, default: False.  
 #### `javamem`:
    The memory to use. Default: '-Xms1g -Xmx8g'  
+{% endraw %}

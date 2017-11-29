@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pTxt
 
@@ -23,3 +24,4 @@
       Available resources and their urls.  
 #### `gz`:
         Whether to gzip the output file.  
+{% endraw %}

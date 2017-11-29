@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pVcfFilter
 
@@ -121,3 +122,4 @@
 ### output
 #### `outfile:file`:
  The output maf file  
+{% endraw %}

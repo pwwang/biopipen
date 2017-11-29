@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pDist2Coords
 
@@ -153,3 +154,4 @@
    Which to rotate the plot or not. Default: False  
 #### `transpose`:
 Whether to transpose the matrix before cluster. Default: False  
+{% endraw %}

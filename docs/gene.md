@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pGeneNameNorm
 
@@ -24,3 +25,4 @@
 ### output
 #### `outfile:file`:
  The output BED file  
+{% endraw %}

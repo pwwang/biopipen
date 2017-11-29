@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pGMT2Mat
 
@@ -146,3 +147,4 @@
 		- Must <= `enrn`. If `netn` >= `enrn`, `netn` = `enrn`
 #### `title`     :
  The title for the plot. Default: "Gene enrichment: {db}"  
+{% endraw %}

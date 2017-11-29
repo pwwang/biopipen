@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pMarkDuplicates
 
@@ -151,3 +152,4 @@
     The picard executable, default: "picard"  
 #### `params`:
   Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"  
+{% endraw %}

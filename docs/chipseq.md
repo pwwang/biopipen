@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pPeakToRegPotential
 
@@ -19,3 +20,4 @@
 ### output
 #### `outfile:file`:
  The regulatory potential file for each gene  
+{% endraw %}

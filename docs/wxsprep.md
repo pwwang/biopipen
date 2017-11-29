@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pTrimmomaticPE
 
@@ -187,3 +188,4 @@
       Number of BAM/CRAM compression threads  
 #### `params`:
        Other parameters for `samtools merge`, default: ""  
+{% endraw %}

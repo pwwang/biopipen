@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pCeldir2Matrix
 
@@ -14,3 +15,4 @@
  the expression matrix file  
 #### `outdir:dir`:
    the directory containing expr file and plots  
+{% endraw %}

@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pRWR
 
@@ -27,3 +28,4 @@
 #### `normE`:
    Weather to normalize E or not, default True.   
 		- E will be normalized as: E = E/sum(E)
+{% endraw %}

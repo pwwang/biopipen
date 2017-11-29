@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pSnp2Bed
 
@@ -37,3 +38,4 @@
  default: hg19  
 #### `snpver`:
  default: snp147  
+{% endraw %}

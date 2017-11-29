@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pPCA
 
@@ -44,3 +45,4 @@
 ### output
 #### `outfile:file`:
  The file containing selected PCs  
+{% endraw %}

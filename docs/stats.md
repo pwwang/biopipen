@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pMetaPval
 
@@ -56,3 +57,4 @@
  The method used to calculate the meta-pvalue. Default: sumlog (Fisher's method)  
 		- Other available methods: logitp, sumz, votep, sump, meanp and wilkinsonp
 		- See: https://www.rdocumentation.org/packages/metap/versions/0.8
+{% endraw %}

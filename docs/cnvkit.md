@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pCNVkitAccess
 
@@ -216,3 +217,4 @@
    The executable of cnvkit. Default: 'cnvkit.py'  
 #### `params`:
    Other params for `cnvkit.py export`  
+{% endraw %}

@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pExpdir2Matrix
 
@@ -118,3 +119,4 @@
  The DEG list  
 #### `outdir:file`:
   The output directory containing deg list and plots  
+{% endraw %}

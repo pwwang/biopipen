@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pFastqSim
 
@@ -184,3 +185,4 @@ Other params for `tool`. Default: ""
 
 ### description
 	Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
+{% endraw %}

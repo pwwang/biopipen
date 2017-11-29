@@ -1,3 +1,4 @@
+{% raw %}
 
 ## pCNVnator
 
@@ -26,3 +27,4 @@
 #### `chrdir`:
    The dir contains reference sequence of chromosomes, default: "" (don't specify)  
 	
+{% endraw %}
