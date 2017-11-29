@@ -1,14 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [pDownload](#pdownload)
-- [pSample2SubmitterID](#psample2submitterid)
-- [pConvertExpFiles2Matrix](#pconvertexpfiles2matrix)
-- [pConvertMutFiles2Matrix](#pconvertmutfiles2matrix)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pDownload
 

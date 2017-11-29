@@ -1,19 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [pRealignerTargetCreator](#prealignertargetcreator)
-- [pIndelRealigner](#pindelrealigner)
-- [pBaseRecalibrator](#pbaserecalibrator)
-- [pPrintReads](#pprintreads)
-- [pHaplotypeCaller](#phaplotypecaller)
-- [pSelectVariants](#pselectvariants)
-- [pVariantFiltration](#pvariantfiltration)
-- [pMuTect2](#pmutect2)
-- [pMuTect2Interval](#pmutect2interval)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pRealignerTargetCreator
 

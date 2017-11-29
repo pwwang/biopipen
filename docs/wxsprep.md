@@ -1,17 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [pTrimmomaticPE](#ptrimmomaticpe)
-- [pTrimmomaticSE](#ptrimmomaticse)
-- [pAlignPEByBWA](#palignpebybwa)
-- [pAlignSEByBWA](#palignsebybwa)
-- [pAlignPEByNGM](#palignpebyngm)
-- [pAlignSEByNGM](#palignsebyngm)
-- [pMergeBams](#pmergebams)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pTrimmomaticPE
 

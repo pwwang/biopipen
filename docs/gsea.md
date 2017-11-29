@@ -1,17 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [pGMT2Mat](#pgmt2mat)
-- [pExpmat2Gct](#pexpmat2gct)
-- [pSampleinfo2Cls](#psampleinfo2cls)
-- [pSSGSEA](#pssgsea)
-- [pGSEA](#pgsea)
-- [pEnrichr](#penrichr)
-- [pTargetEnrichr](#ptargetenrichr)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pGMT2Mat
 

@@ -58,8 +58,8 @@ def eachfile(infile):
 					section = [line]
 				else:
 					section.append(line)
-				
-	doctoc(mdfile)
+	# implemeted with gitbook plugins			
+	#doctoc(mdfile)
 
 def fmtSection(lines, mod = False):
 	title = lines.pop(0).strip()

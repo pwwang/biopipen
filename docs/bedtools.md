@@ -1,23 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [pBedGetfasta](#pbedgetfasta)
-- [pBedClosest](#pbedclosest)
-- [pBedFlank](#pbedflank)
-- [pBedIntersect](#pbedintersect)
-- [pBedMakewindows](#pbedmakewindows)
-- [pBedMerge](#pbedmerge)
-- [pBedMultiinter](#pbedmultiinter)
-- [pBedRandom](#pbedrandom)
-- [pBedShift](#pbedshift)
-- [pBedShuffle](#pbedshuffle)
-- [pBedSubtract](#pbedsubtract)
-- [pBedWindow](#pbedwindow)
-- [pBedGenomecov](#pbedgenomecov)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pBedGetfasta
 

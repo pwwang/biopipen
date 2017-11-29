@@ -1,24 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-  - [pSam2Bam](#psam2bam)
-  - [pBamMarkdup](#pbammarkdup)
-  - [pBamRecal](#pbamrecal)
-  - [pBamReadGroup](#pbamreadgroup)
-  - [pBamReorder](#pbamreorder)
-  - [pBamMerge](#pbammerge)
-- [threads to use. Default: 1](#threads-to-use-default-1)
-  - [pBam2Gmut](#pbam2gmut)
-  - [pBamPair2Smut](#pbampair2smut)
-  - [pBam2Cnv](#pbam2cnv)
-  - [pBamStats](#pbamstats)
-  - [pBam2Fastq](#pbam2fastq)
-  - [pBam2FastqSE](#pbam2fastqse)
-  - [pBam2Counts](#pbam2counts)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pSam2Bam
 

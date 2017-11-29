@@ -1,16 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [pMutSig](#pmutsig)
-- [pVcf2Maf](#pvcf2maf)
-- [pMergeMafs](#pmergemafs)
-- [pMutsig4Plot](#pmutsig4plot)
-- [pMutPlot](#pmutplot)
-- [pCepip](#pcepip)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## pMutSig
 
