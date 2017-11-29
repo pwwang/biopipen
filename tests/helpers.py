@@ -1,4 +1,5 @@
 import inspect, gzip
+from subprocess import Popen, PIPE
 from pyppl import PyPPL, Proc
 from os import path, listdir
 
@@ -20,34 +21,54 @@ def getfile (name = '', input = True):
 def getbin (name = ''):
 	return path.join(path.dirname(path.dirname(path.dirname(filedir))), 'bin', name)
 
+def fileOK(predfile, exptfile, test, order=True):
+	openfunc = gzip.open if exptfile.endswith('.gz') else open
+	with openfunc(predfile) as fpred, openfunc(exptfile) as fexpt:
+		if order:
+			test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
+		else:
+			test.assertEqual(sorted(fpred.read().splitlines()), sorted(fexpt.read().splitlines()))
+
+def fileOKIn(exptfile, msg, test):
+	openfunc = gzip.open if exptfile.endswith('.gz') else open
+	if not isinstance(msg, list):
+		msg = [msg]
+	with openfunc(exptfile) as f:
+		content = f.read()
+		for m in msg:
+			test.assertIn(m, content)
+
 def procOK(proc, name, test, order = True):
 	predfile = proc.channel.get()
 	exptfile = getfile(name, False)
 	if path.isfile(predfile):
-		openfunc = gzip.open if exptfile.endswith('.gz') else open
-		with openfunc(predfile) as fpred, openfunc(exptfile) as fexpt:
-			if order:
-				test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
-			else:
-				test.assertEqual(sorted(fpred.read().splitlines()), sorted(fexpt.read().splitlines()))
+		fileOK(predfile, exptfile, test, order)
 	else:
 		for item in listdir(predfile):
 			pfile = path.join(predfile, item)
 			efile = path.join(exptfile, item)
 			if not path.isfile(pfile): continue
-			openfunc = gzip.open if efile.endswith('.gz') else open
-			with openfunc(pfile) as fpred, openfunc(efile) as fexpt:
-				test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
-
+			fileOK(pfile, efile, test, order)
+			
 def procOKIn(proc, msg, test):
-	test.maxDiff = 1000
-	predfile = proc.channel.get()
-	if not isinstance(msg, list):
-		msg = [msg]
-	with open(predfile) as f:
-		content = f.read()
-		for m in msg:
-			test.assertIn(m, content)
+	fileOKIn(proc.channel.get(), msg, test)
+
+def cmdOK(cmd, test, inout = None, inerr = None, testrc = True):
+	p = Popen(cmd, stdout = PIPE, stderr = PIPE)
+	out, err = p.communicate()
+	if inout:
+		if not isinstance(inout, list):
+			inout = [inout]
+		for ino in inout:
+			test.assertIn(ino, out)
+	if inerr:
+		if not isinstance(inerr, list):
+			inerr = [inerr]
+		for ine in inerr:
+			test.assertIn(ine, err)
+	if testrc:
+		rc = p.returncode
+		test.assertEqual(rc, 0)
 
 def utilTest(input, script, name, tplenvs, test, args = None):
 	ends = {
