@@ -71,7 +71,7 @@ with open({{in.bedfile | quote}}) as f, open({{out.outfile | quote}}, 'w') as fo
 		consv = outs['\t'.join(parts[:3])]
 		{% if args.pval %}
 		pval  = getPval(consv, nulldist)
-		if pval >= {{args.threspval}}: continue
+		if pval >= {{args.pval}}: continue
 		fout.write(line + '\t%.3f\t%.2E\n' % (consv, pval))
 		{% else %}
 		fout.write(line + '\t%.3f\n' % (consv))

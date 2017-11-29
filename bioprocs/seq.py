@@ -68,7 +68,6 @@ pConsv.output         = "outfile:file:{{in.bedfile | fn}}-consv.bed"
 pConsv.args.bwtool    = params.bwtool.value
 pConsv.args.consvdir  = params.consvdir.value
 pConsv.args.pval      = False
-pConsv.args.threspval = .05
 pConsv.envs.runcmd    = runcmd.py
 pConsv.lang           = params.python.value
 pConsv.script         = "file:scripts/seq/pConsv.py"

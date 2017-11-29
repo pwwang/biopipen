@@ -17,6 +17,9 @@ _getFiledir()
 def getfile (name = '', input = True):
 	return path.join(filedir, 'input' if input else 'expect', name)
 
+def getbin (name = ''):
+	return path.join(path.dirname(path.dirname(path.dirname(filedir))), 'bin', name)
+
 def procOK(proc, name, test, order = True):
 	predfile = proc.channel.get()
 	exptfile = getfile(name, False)

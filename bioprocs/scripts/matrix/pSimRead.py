@@ -27,7 +27,7 @@ with uhopen(uhfile) as f:
 		fout.write(f.readline())
 {% endif %}
 
-r       = SimRead(*files, skip = skip, delimit = {{args.delimit}}, gzip = gzip)
+r       = SimRead(*files, skip = skip, delimit = {{args.delimit | quote}}, gzip = gzip)
 r.do    = {{args.do}}
 {% if args.match %}
 r.match = {{args.match}}

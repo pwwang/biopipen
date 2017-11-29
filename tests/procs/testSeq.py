@@ -24,7 +24,7 @@ class TestSeq (unittest.TestCase):
 		pConsv.depends    = pBedRandom, pConsvPerm
 		pConsv2           = pConsv.copy()
 		pConsv2.depends   = pBedRandom, pConsvPerm
-		pConsv2.args.pval = True
+		pConsv2.args.pval = 0.05
 		PyPPL(config).start(pBedRandom, pConsvPerm).run()
 		procOK(pConsv2, 'consv.bed', self)
 
