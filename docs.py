@@ -24,13 +24,10 @@ infiles = [f for f in glob(path.join(srcdir, '*.py')) if path.basename(f) != "__
 
 def summary():
 	summaryfile = path.join(dstdir, 'SUMMARY.md')
-	readmefile  = path.join(dstdir, 'README.md')
-	if not path.exists(readmefile):
-		symlink(path.join(path.dirname(dstdir), 'README.md'), readmefile)
 
 	with open(summaryfile, 'w') as fout:
 		fout.write('# Summary\n\n')
-		fout.write('* [Introduction](README.md)\n')
+		fout.write('* [Introduction](../README.md)\n')
 		for infile in infiles:
 			title = path.basename(infile)[:-3]
 			fout.write('* [%s](%s.md)\n' % (title, title))

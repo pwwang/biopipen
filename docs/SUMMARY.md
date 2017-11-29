@@ -1,6 +1,6 @@
 # Summary
 
-* [Introduction](README.md)
+* [Introduction](../README.md)
 * [cluster](cluster.md)
 * [fastx](fastx.md)
 * [wxsdown](wxsdown.md)
