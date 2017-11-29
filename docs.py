@@ -4,7 +4,7 @@
 @sources:
 	bioprocs/*.py (__init__.py not included)
 @destination:
-	docs/DOCS.md
+	docs/*.md
 @fields:
 	- name: required, the name of the process (must follow \""" or ''')
 	- description: description of the process
@@ -13,89 +13,80 @@
 	- args: args could be set when call the process
 	- requires: tools required by this process
 """
-import re, glob, os, bioprocs
+import re, bioprocs
+from sys import stdout
+from glob import glob
+from os import path, symlink, devnull
 
-srcdir  = os.path.join (  os.path.dirname (os.path.realpath(__file__)), 'bioprocs')
-dstfile = os.path.join (  os.path.dirname (os.path.realpath(__file__)), 'docs', 'DOCS.md')
-infiles = [sfile for sfile in glob.glob(os.path.join(srcdir, '*.py')) if os.path.basename (sfile) != "__init__.py" ]
+srcdir  = path.join (path.dirname (path.realpath(__file__)), 'bioprocs')
+dstdir  = path.join (path.dirname (path.realpath(__file__)), 'docs')
+infiles = [f for f in glob(path.join(srcdir, '*.py')) if path.basename(f) != "__init__.py" ]
 
-fout    = open (dstfile, 'w')
+def summary():
+	summaryfile = path.join(dstdir, 'SUMMARY.md')
+	readmefile  = path.join(dstdir, 'README.md')
+	if not path.exists(readmefile):
+		symlink(path.join(path.dirname(dstdir), 'README.md'), readmefile)
 
-def header():
-	fout.write ("""
-# Documentation for bioprocs v%s
-A set of procs for bioinformatics using [pyppl](https://github.com/pwwang/pyppl)
-""" % bioprocs.VERSION)
+	with open(summaryfile, 'w') as fout:
+		fout.write('# Summary\n\n')
+		fout.write('* [Introduction](README.md)\n')
+		for infile in infiles:
+			title = path.basename(infile)[:-3]
+			fout.write('* [%s](%s.md)\n' % (title, title))
 
-def each (infile):
-	name = os.path.basename(infile)[:-3].upper()
-	fout.write ("\n## %s\n" % name)
-	blocks = re.findall (r'((\"\"\"|\'\'\')\s*\n@name:[\s\S]+?\2)', open(infile).read())
-	code = False
-	for block in blocks:
-		block = block[0][3:-3]
-		lines = block.split("\n")
-		fieldname = ''
-		content   = ''
-		lines.append ('@')
-		for i in range(len(lines)):
-			line = lines[i]
-			if line.startswith ("@"):
-				if fieldname == 'name':
-					fout.write ("\n### %s\n" % content)
-				elif fieldname:
-					fout.write ("#### %s\n" % fieldname)
-					fout.write ("%s\n" % content)
-
-				fields    = line[1:].split(':')
-				fieldname = fields[0].strip()
-
-				if len(fields) > 1:
-					c = ''.join(fields[1:]).strip()
-					if not c:
-						content = ''
-					else:
-						if fieldname == 'name':
-							content = ''.join(fields[1:])
-						else:
-							content = '-' + ''.join (fields[1:]) + '\n'
-			else:
-				if fieldname == 'name':
-					content += ' ' + line.lstrip("\t")
+def eachfile(infile):
+	name   = path.basename(infile)[:-3]
+	mdfile = path.join(dstdir, path.basename(infile)[:-3] + '.md')
+	with open(infile) as f, open(mdfile, 'w') as fout:
+		content = f.read()
+		# docs for module?
+		moddocs = re.match(r'^(\"\"\"|\'\'\')\s*\n(@\w+:[\s\S]+?)\1', content)
+		if moddocs:
+			modsec = moddocs.group(1)
+			fout.write(fmtSection(modsec, True))
+			content = content[len(modsec):]
+		
+		blocks = re.findall (r'(\"\"\"|\'\'\')\s*\n(@name:[\s\S]+?)\1', content)
+		for block in blocks:
+			block   = block[1].splitlines()
+			section = []
+			for line in block:
+				if line.startswith('@'):
+					if section:
+						fout.write(fmtSection(section))
+					section = [line]
 				else:
-					l = line.lstrip(" \t")
-					if not l: continue
-					if l.startswith ("```"):
-						if not code:
-							code = True
-							content += l + '\n'
-						else:
-							code = False
-							content += l + '\n'
-					else:
-						if code:
-							content += line+ '\n'
-						else:
-							content += '- ' + l + '\n'
+					section.append(line)
+				
+	doctoc(mdfile)
 
+def fmtSection(lines, mod = False):
+	title = lines.pop(0).strip()
+	basepunk = '#' * (1 if mod else 2)
+	if title.startswith('@name'):
+		return '\n%s %s\n' % (basepunk, lines[0].strip())
+	
+	ret = '\n%s# %s\n' % (basepunk, title.strip('@:'))
+	for line in lines:
+		secname =  re.match('^\t(`.+?`\s*:)', line)
+		if secname:
+			secname = secname.group(1)
+			ret += '%s## %s\n' % (basepunk, secname)
+			ret += line[len(secname)+1:] + '  \n'
+		else:
+			ret += line + '\n'
+	return ret
 
-def doctoc ():
-	from subprocess import Popen, PIPE
-	try:
-		Popen (['doctoc', dstfile, '--maxlevel', '3'], stdin=PIPE, stderr=PIPE, stdout=PIPE)
-	except:
-		pass
-
-def main ():
-	header()
-	for infile in infiles:
-		each (infile)
-
-	fout.close()
-	doctoc()
-
+def doctoc (mdfile):
+	from subprocess import Popen
+	with open(devnull, 'w') as fnull:
+		Popen (['doctoc', mdfile, '--maxlevel', '2'], stderr=fnull, stdout=fnull).wait()
 
 if __name__ == "__main__":
-	main ()
-
+	summary()
+	for infile in infiles:
+		stdout.write('- Compiling %s\n' % infile)
+		eachfile (infile)
+	stdout.write('Done!\n')
 
