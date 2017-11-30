@@ -1,7 +1,7 @@
 import unittest
 from os import path
 from pyppl import PyPPL
-from bioprocs.common import pSort, pFiles2Dir, pStr2File, pAddHeader
+from bioprocs.common import pSort, pFiles2Dir, pStr2File, pAddHeader, pMergeFiles
 from helpers import getfile, procOK, config
 
 class testCommon (unittest.TestCase):
@@ -84,6 +84,13 @@ class testCommon (unittest.TestCase):
 		pAddHeader.input = (getfile('sort.txt'), getfile('sort.txt'))
 		PyPPL(config).start(pAddHeader).run()
 		procOK(pAddHeader, 'addheader.txt', self)
+
+	def testMergeFiles(self):
+		pMergeFiles.input = [[getfile('sort.txt'), getfile('sort.txt')]]
+		pMergeFiles.args.skip = [0, 2]
+		pMergeFiles.args.comment = ''
+		PyPPL(config).start(pMergeFiles).run()
+		procOK(pMergeFiles, 'mergefiles.txt', self)
 	
 if __name__ == '__main__':
 	unittest.main(failfast = True)

@@ -37,12 +37,12 @@ def transformer(parts):
 	return [ p.replace('/', '-') if i == 0 else p[:-4] if p.endswith(',1.0') else p for i,p in enumerate(parts) ]
 
 tmpfile = outfile + '.kegg'
-txtTransform(outfile + '.filtered', tmpfile, transformer, {{args.header}}, {{args.delimit | quote}})
+txtTransform(outfile + '.filtered', tmpfile, transform = transformer, header = {{args.header}}, delimit = {{args.delimit | quote}})
 os.rename(tmpfile, outfile + '.filtered')
 {% endif %}
 
 {% if args.transform %}
-txtTransform(outfile + '.filtered', outfile, {{args.transform}}, {{args.header}}, {{args.delimit | quote}})
+txtTransform(outfile + '.filtered', outfile, transform = {{args.transform}}, header = {{args.header}}, delimit = {{args.delimit | quote}})
 {% else %}
 os.rename(outfile + '.filtered', outfile)
 {% endif %}

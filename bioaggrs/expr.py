@@ -50,7 +50,7 @@ aExpDir2Deg.pRnaseqDeg.args.heatmap      = True
 	                      pExpmat2Gct     \
 	pSampleInfo[*]     /                   \
 	                   \  pSampleinfo2Cls --  pGSEA[!]
-	pGMTFetcher        ____________________/
+	pGMTFetcher[*]     ____________________/
 	```
 """
 aExpDir2DegGSEA = Aggr(

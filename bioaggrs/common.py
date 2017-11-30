@@ -21,6 +21,9 @@ aSimRead2 = Aggr(
 )
 aSimRead2.starts = aSimRead2.pSort1, aSimRead2.pSort2
 aSimRead2.ends   = aSimRead2.pSimRead
+# defaults
+aSimRead2.pSort1.args.noeline = True
+aSimRead2.pSort2.args.noeline = True
 # depends 
 aSimRead2.pSimRead.depends = aSimRead2.pSort1, aSimRead2.pSort2
 # delegates

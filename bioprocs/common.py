@@ -110,4 +110,21 @@ pAddHeader.args.n = 1
 pAddHeader.script = "file:scripts/common/pAddHeader.bash"
 
 
-
+"""
+@name:
+	pMergeFiles
+@description:
+	Merge files in the input directory
+@input:
+	`indir:file`: The input directory
+@output:
+	`outfile:file`: The output file
+"""
+pMergeFiles              = Proc(desc = 'Merge files.')
+pMergeFiles.input        = "infiles:files"
+pMergeFiles.output       = "outfile:file:{{in.infiles[0] | fn}}_etc{{in.infiles[0] | ext}}"
+pMergeFiles.args.skip    = 0
+pMergeFiles.args.comment = '#'
+pMergeFiles.args.header  = False
+pMergeFiles.lang         = params.python.value
+pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
