@@ -86,8 +86,8 @@ class testMatrix (unittest.TestCase):
 		pSimRead.input        = [[getfile('simread1.txt.gz'), getfile('simread2.txt')]]
 		pSimRead.args.skip    = [3]
 		pSimRead.args.usehead = 0
-		pSimRead.args.match   = 'lambda r1, r2: -1 if r1[0] == r2[1] else 0 if r1[0] < r2[1] else 1'
-		pSimRead.args.do      = 'lambda r1, r2: fout.write("\\t".join(r1) + "\\n")'
+		pSimRead.args.match   = 'lambda r1, r2: compare(r1[0], r2[1])'
+		pSimRead.args.do      = 'lambda r1, r2: writelist(r1)'
 		pSimRead.args.delimit = ["\t", "|"]
 		PyPPL(config).start(pSimRead).run()
 		procOK(pSimRead, 'simread.txt', self)

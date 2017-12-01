@@ -1,0 +1,6 @@
+var	group1	group2	pval
+sex	Male	Female	1.31e-03
+age	[55, 70)	(, 55)	6.60e-01
+age	[70, )	(, 55)	1.10e-01
+age	[70, )	[55, 70)	1.10e-01
+smoke	yes	no	6.71e-02

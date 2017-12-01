@@ -4,7 +4,7 @@ from pyppl import PyPPL, Proc
 from os import path, listdir
 
 filedir = None
-config  = {'log': {'level': 'basic', 'lvldiff': "-DEBUG"}}
+config  = {'log': {'level': 'basic', 'lvldiff': ["+P.ARGS", "-DEBUG"]}}
 
 def _getFiledir():
 	global filedir

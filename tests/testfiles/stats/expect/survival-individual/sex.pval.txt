@@ -1,0 +1,2 @@
+var	group1	group2	pval
+sex	Male	Female	1.31e-03

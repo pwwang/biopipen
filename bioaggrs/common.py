@@ -32,5 +32,6 @@ aSimRead2.delegate('args.delimit', 'pSimRead')
 aSimRead2.delegate('args.gzip', 'pSimRead')
 aSimRead2.delegate('args.match', 'pSimRead')
 aSimRead2.delegate('args.do', 'pSimRead')
+aSimRead2.delegate('args.usehead', 'pSimRead')
 # input
 aSimRead2.pSimRead.input = lambda ch1, ch2: [list(r) for r in ch1.cbind(ch2)]

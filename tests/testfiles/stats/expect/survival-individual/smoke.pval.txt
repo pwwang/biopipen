@@ -1,0 +1,2 @@
+var	group1	group2	pval
+smoke	yes	no	6.71e-02

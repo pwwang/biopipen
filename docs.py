@@ -76,8 +76,8 @@ def fmtSection(lines, mod = False):
 		secname =  re.match('^\t(`.+?`\s*:)', line)
 		if secname:
 			secname = secname.group(1)
-			ret += '%s## %s\n' % (basepunk, secname)
-			ret += line[len(secname)+1:].lstrip() + '  \n'
+			ret += '%s## %s' % (basepunk, secname)
+			ret += line[len(secname):].lstrip() + '  \n'
 		else:
 			ret += line[1:] + '\n'
 	return ret
