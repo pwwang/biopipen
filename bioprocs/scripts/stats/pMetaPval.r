@@ -1,7 +1,7 @@
 library("metap")
 {{cbindfill}}
 
-infiles = list.files(path={{in.indir | quote}}, pattern = {{args.pattern | quote}}, full.names=T)
+infiles = Sys.glob(file.path({{in.indir | quote}}, {{args.pattern | quote}}))
 lenfile = length(infiles)
 header  = {{args.header | R}}
 pcol    = {{args.pcol | R}}

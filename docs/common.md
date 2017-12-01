@@ -56,4 +56,13 @@ The second file with the body.
 ### output
 #### `outfile:file`:
 The output file with the header from 1st input file, body from 2nd file.  
+
+## pMergeFiles
+
+### description
+Merge files in the input directory
+
+### input
+#### `indir:file`:
+The input directory  
 {% endraw %}

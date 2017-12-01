@@ -59,4 +59,43 @@ Whether output the header. Default: True
 The method used to calculate the meta-pvalue. Default: sumlog (Fisher's method)  
 	- Other available methods: logitp, sumz, votep, sump, meanp and wilkinsonp
 	- See: https://www.rdocumentation.org/packages/metap/versions/0.8
+
+## pSurvival
+
+### description
+Survival analysis
+
+### input
+#### `infile:file`:
+The input file (header is required).  
+	- col1: rownames if args.rnames = True
+	- col2: the survival time
+	- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
+	- col4: group1.
+	- ... other groups
+
+### output
+#### `outdir:dir`:
+The output directory containing the pval files and plots  
+
+### args
+#### `inunit`    :
+The time unit in input file. Default: days  
+#### `outunit`   :
+The output unit for plots. Default: days  
+#### `nthread`   :
+Number of threads used to perform analysis for groups. Default: 1  
+#### `rnames`    :
+Whether input file has row names. Default: True  
+#### `combine`   :
+Whether combine groups in the same plot. Default: True  
+#### `devpars`   :
+The device parameters for png. Default: `{res:300, height:2000, width:2000}`  
+	- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(gridParams.ncol, gridParams.nrow)`
+#### `plotParams`:
+The parameters for `ggsurvplot`. Default: `{risk.table: True, conf.int = True}`  
+#### `gridParams`:
+The parameters for `arrange_ggsurvplots`.  
+#### `pval`      :
+Whether print pvalue on the plot. Default: True  
 {% endraw %}
