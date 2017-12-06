@@ -33,7 +33,7 @@ for snp in snps:
 		strand  = s.strand
 		ref     = s.refUCSC
 		func    = list(s.func) # intron
-		alleles = [a for a in s.alleles.split(',') if a and a!=ref]
+		alleles = [a for a in s.alleles.split(',') if a and a!=ref] or ['N']
 
 		#         chr pos pos ref all snp comm
 		fout.write ("%s %s %s %s %s %s %s\n" % (

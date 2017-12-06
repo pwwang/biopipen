@@ -6,20 +6,29 @@ survivalOne = function(dat, var) {
 	fmula = as.formula(fmula)
 	sfit  = do.call(survfit, list(formula = fmula, data = dat))
 	diff  = pairwise_survdiff(fmula, data=dat)
-	#pvals = diff$p.value
+	
 	rns   = rownames(diff$p.value)
-	cns   = colnames(diff$p.value)
-	lenrs = length(rns)
-	lencs = length(cns)
-	pvals = NULL
-	for (i in 1:lenrs) {
-		for (j in 1:lencs) {
-			if (i < j) next
-			pvals = rbind(pvals, c(var = var, group1 = rns[i], group2 = cns[j], pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2)))
+	if (length(rns) == 0) {
+		pvals   = data.frame(var = var, group1 = "", group2 = "", pval = 1)
+		globalp = 1
+	} else {
+		cns   = colnames(diff$p.value)
+		lenrs = length(rns)
+		lencs = length(cns)
+		pvals = NULL
+		for (i in 1:lenrs) {
+			for (j in 1:lencs) {
+				if (i < j) next
+				pvals = rbind(pvals, c(var = var, group1 = rns[i], group2 = cns[j], pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2)))
+			}
 		}
+
+		globaldiff = survdiff(fmula, data = dat)
+		globalp    = 1 - pchisq(globaldiff$chisq, length(globaldiff$n) - 1)
 	}
+
 	psurv = do.call(ggsurvplot, c(list(fit = sfit, pval = {{args.pval | R}}, legend.title = var, legend.labs = levels(dat[,var]), xlab = "Time ({{args.outunit}})"), {{args.plotParams | Rlist}}))
-	return(list(ret = list(pvals = pvals, psurv = psurv, var = var)))
+	return(list(ret = list(pvals = pvals, psurv = psurv, var = var, globalp = globalp)))
 }
 
 rnames = {% if args.rnames %}1{% else %}NULL{% endif %}
@@ -79,13 +88,16 @@ maxdim         = max(gridParams$ncol, gridParams$nrow)
 devpars$height = maxdim * devpars$height
 devpars$width  = maxdim * devpars$width
 
+glbpval = file.path({{out.outdir | quote}}, 'global.pval.txt') 
 outpval = file.path({{out.outdir | quote}}, 'survival.pval.txt') 
 pvals   = NULL
+glbpv   = NULL
 {% if args.combine %}
 outplot = file.path({{out.outdir | quote}}, 'survival.png')
 psurvs  = NULL
 for (ret in rets) {
 	pvals = rbind(pvals, ret$pvals)
+	glbpv = rbind(glbpv, c(ret$var, ret$globalp))
 	psurvs = c(psurvs, list(ret$psurv))
 }
 do.call (png, c(outplot, devpars))
@@ -94,6 +106,7 @@ dev.off()
 {% else %}
 for (ret in rets) {
 	pvals   = rbind(pvals, ret$pvals)
+	glbpv = rbind(glbpv, c(ret$var, ret$globalp))
 	outpv   = file.path({{out.outdir | quote}}, paste0(ret$var, '.pval.txt'))
 	outplot = file.path({{out.outdir | quote}}, paste0(ret$var, '.png'))
 	write.table(ret$pvals, outpv, sep="\t", quote=F, col.names = T, row.names = F)
@@ -102,4 +115,6 @@ for (ret in rets) {
 	dev.off()
 }
 {% endif %}
+colnames(glbpv) = c('var', 'globalp')
 write.table(pvals, outpval, sep="\t", quote=F, col.names = T, row.names = F)
+write.table(glbpv, glbpval, sep="\t", quote=F, col.names = T, row.names = F)
