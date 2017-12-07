@@ -33,5 +33,73 @@ pRWR.lang       = params.Rscript.value
 pRWR.script     = "file:scripts/algorithm/pRWR.r"
 
 
+"""
+@name:
+	pAR
+@description:
+	Affinity Regression.
+	Ref: https://www.nature.com/articles/nbt.3343
+	```
+			b           c        d          d  
+	    _________    _______    ____       ____
+		|       |    |  W  |    |  |       |  |
+	  a |   D   |  b |_____|  c |Pt|  =  a |Y |   <=>
+		|_______|               |__|       |  |
+	                                       |__|
+	
+	kronecker(P, YtD)*vec(W) = vec(YtY)             <=>
+	X*vec(W) = vec(YtY)
+	WPt:
+	       c        d              d  
+	    _______    ____          _____
+		|  W  |    |  |          |   |
+	  b |_____|  c |Pt|  --->  b |___|
+                   |__|
+
+	YtDW:
+	WtDtY:
+	     b           a        d               d    
+	  _______    _________   ____           _____  
+	  |  Wt |    |       |   |  |           |   |  
+	c |_____|  b |   Dt  | a |Y |    ---> c |___|  
+	             |_______|   |  |                 
+	                         |__|                  
+	```
+@input:
+	`D:file` : The D matrix
+	`Pt:file`: The Pt matrix
+	`Y:file`:  The Y matrix
+		- All input files could be gzipped
+@output:
+	`W:file`:  The interaction matrix
+	`outdir:dir`: The output directory
+@args:
+	`seed`:  The seed for sampling the training set.
+	`tfrac`: The fraction of samples used for training.
+	``
+"""
+pAR            = Proc(desc =  'Affinity Regression.')
+pAR.input      = 'D:file, Pt:file, Y:file'
+pAR.output     = [
+	'W:file:{{in.D | fn}}-{{in.Pt | fn}}-{{in.Y | fn}}.AR/W.txt', 
+	'outdir:dir:{{in.D | fn}}-{{in.Pt | fn}}-{{in.Y | fn}}.AR'
+]
+pAR.args.seed     = -1
+pAR.args.tfrac    = .5
+pAR.args.normD    = 'L2'
+pAR.args.normPt   = 'meanCenter'
+pAR.args.normY    = 'meanCenter'
+pAR.args.svdP     = 0
+pAR.args.predY    = True
+pAR.args.WPt      = True
+pAR.args.WtDtY    = True
+pAR.args.nfolds   = 3
+pAR.args.parallel = False
+pAR.args.method   = 'glmnet' # admm
+pAR.lang          = params.Rscript.value
+pAR.script        = "file:scripts/algorithm/pAR.r"
+
+
+
 
 

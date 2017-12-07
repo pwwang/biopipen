@@ -187,6 +187,33 @@ pScatterCompare.script        = "file:scripts/plot/pScatterCompare.r"
 
 """
 @name:
+	pROC
+@description:
+	Generate ROC curves and output AUC.
+@input:
+	`infile:file`: The input matrix file.
+		- Col1: rownames if args.rnames is True else label (0, 1 class)
+		- Col2: prediction values from model1
+		- ...
+"""
+pROC              = Proc(desc = 'Generate ROC curves.')
+pROC.input        = 'infile:file'
+pROC.output       = 'outdir:dir:{{in.infile | fn}}.roc'
+pROC.args.cnames  = True
+pROC.args.rnames  = True
+pROC.args.combine = True
+pROC.args.showauc = True
+pROC.args.params  = Box(labels = False)
+pROC.args.ggs     = [
+	'r:style_roc()', 
+	'r:theme(legend.position = c(1,0), legend.justification = c(1,0))', # show legend at bottom right corner
+]
+pROC.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pROC.lang         = params.Rscript.value
+pROC.script       = "file:scripts/plot/pROC.r"
+
+"""
+@name:
 	pVenn
 @description:
 	Venn/UpsetR plots.

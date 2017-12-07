@@ -1,0 +1,3 @@
+AUC
+Method1	0.872
+Method2	0.657
