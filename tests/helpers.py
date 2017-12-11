@@ -21,13 +21,15 @@ def getfile (name = '', input = True):
 def getbin (name = ''):
 	return path.join(path.dirname(path.dirname(path.dirname(filedir))), 'bin', name)
 
-def fileOK(predfile, exptfile, test, order=True):
+def fileOK(predfile, exptfile, test, order=True, comment=None):
 	openfunc = gzip.open if exptfile.endswith('.gz') else open
 	with openfunc(predfile) as fpred, openfunc(exptfile) as fexpt:
+		predlines = [line for line in fpred.read().splitlines() if not comment or not line.startswith(str(comment))]
+		exptlines = [line for line in fexpt.read().splitlines() if not comment or not line.startswith(str(comment))]
 		if order:
-			test.assertEqual(fpred.read().splitlines(), fexpt.read().splitlines())
+			test.assertEqual(predlines, exptlines)
 		else:
-			test.assertEqual(sorted(fpred.read().splitlines()), sorted(fexpt.read().splitlines()))
+			test.assertEqual(sorted(predlines), sorted(exptlines))
 
 def fileOKIn(exptfile, msg, test):
 	openfunc = gzip.open if exptfile.endswith('.gz') else open
@@ -38,17 +40,17 @@ def fileOKIn(exptfile, msg, test):
 		for m in msg:
 			test.assertIn(m, content)
 
-def procOK(proc, name, test, order = True):
+def procOK(proc, name, test, order = True, comment = None):
 	predfile = proc.channel.get()
 	exptfile = getfile(name, False)
 	if path.isfile(predfile):
-		fileOK(predfile, exptfile, test, order)
+		fileOK(predfile, exptfile, test, order, comment)
 	else:
 		for item in listdir(predfile):
 			pfile = path.join(predfile, item)
 			efile = path.join(exptfile, item)
 			if not path.isfile(pfile): continue
-			fileOK(pfile, efile, test, order)
+			fileOK(pfile, efile, test, order, comment)
 			
 def procOKIn(proc, msg, test):
 	fileOKIn(proc.channel.get(), msg, test)

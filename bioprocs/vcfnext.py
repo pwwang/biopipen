@@ -78,3 +78,70 @@ pCepip.envs.runcmd         = runcmd.py
 pCepip.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pCepip.lang                = params.python.value
 pCepip.script              = "file:scripts/vcfnext/pCepip.py"
+
+"""
+@name:
+	pMutSig
+@description:
+	MutSig stands for "Mutation Significance".  MutSig analyzes lists of mutations discovered in DNA sequencing, to identify genes that were mutated more often than expected by chance given background mutation processes.
+	For more information, see Lawrence, M. et al. Mutational heterogeneity in cancer and the search for new cancer-associated genes. Nature 499, 214-218 (2013).
+	
+	See [dcumentation](http://archive.broadinstitute.org/cancer/cga/mutsig_run)
+@input:
+	`infile:file`: mutation table
+@output:
+	`outdir:dir`: The output directory
+@args:
+	`mutsig` : The path to `run_MutSigCV.sh`, default: 'mutsig'
+	`mcr`    : The Matlab MCR path
+	`cvrg`   : coverage table
+	`cvrt`   : covariates table
+	`mutdict`: mutation_type_dictionary_file
+	`chrdir` : chr_files_hg18 or chr_files_hg19
+@requires:
+	[MutSig](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
+"""
+pMutSig              = Proc(desc = 'Run MutSig.')
+pMutSig.input        = 'infile:file'
+pMutSig.output       = "outdir:dir:{{in.infile | fn}}.mutsig"
+pMutSig.args.cvrg    = params.mutsig_cvrg.value
+pMutSig.args.cvrt    = params.mutsig_cvrt.value
+pMutSig.args.mutdict = params.mutsig_mutdict.value
+pMutSig.args.chrdir  = params.mutsig_chrdir.value
+pMutSig.args.mutsig  = params.mutsig.value
+pMutSig.args.mcr     = params.mcr.value
+pMutSig.script       = "file:scripts/vcfnext/pMutSig.bash"
+
+"""
+@name:
+	pMafMerge
+@description:
+	Merge maf files.
+@input:
+	`indir:dir`: The directory containing the maf files
+@output:
+	`outfile:file`: The merged maf file
+@args:
+	`excols`: How to deal with extra columns other than 34 standard columns from TCGA.
+		- merge(default): Merge the columns, if one not exists, fill with an empty string.
+		- discard: Just discard the extra columns, with only 34 columns left. So you can also put just one maf file in the indir with some columns missed to fill it with standard columns.
+"""
+pMafMerge             = Proc(desc = 'Merge maf files.')
+pMafMerge.input       = 'indir:dir'
+pMafMerge.output      = 'outfile:file:{{in.indir | fn}}.maf'
+pMafMerge.args.excols = 'merge' # discard
+pMafMerge.lang        = params.python.value
+pMafMerge.script      = "file:scripts/vcfnext/pMafMerge.py"
+
+"""
+@name:
+	pMaftools
+@args:
+	`genes`: 
+"""
+pMaftools            = Proc(desc = 'Use maftools to draw plots.')
+pMaftools.input      = 'infile:file'
+pMaftools.output     = 'outdir:dir:{{in.infile | fn}}.maftools'
+pMaftools.args.genes = 'mutsig:10'
+pMaftools.lang       = params.Rscript.value
+pMaftools.script     = "file:scripts/vcfnext/pMaftools.r"

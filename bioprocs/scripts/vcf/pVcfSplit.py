@@ -44,39 +44,6 @@ for sample in samples:
 {% if args.nthread | lambda x: x == 1 %}
 for cmd in cmds: runcmd(cmd)
 {% else %}
-
-from threading import Thread
-from Queue import Queue
-
-nthread = {{args.nthread}}
-
-def worker(sq):
-	while True:
-		if sq.empty(): 
-			sq.task_done()
-			break
-		try:
-			cmd2 = sq.get()
-		except Exception:
-			sq.task_done()
-			break
-		if not cmd2: 
-			sq.task_done()
-			break
-
-		runcmd(cmd2)
-		sq.task_done()
-
-q = Queue()
-for cmd in cmds:
-	q.put(cmd)
-for i in range(nthread):
-	q.put(None)
-
-for i in range(nthread):
-	t = Thread(target = worker, args=(q, ))
-	t.setDaemon(True)
-	t.start()
-q.join()
-
+{{parallel}}
+parallel(cmds, {{args.nthread}})
 {% endif %}

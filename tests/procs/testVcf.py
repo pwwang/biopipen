@@ -1,9 +1,10 @@
 import unittest
+from os import path
 from pyppl import PyPPL, Proc
-from helpers import getfile, procOK, config
+from helpers import getfile, procOK, config, fileOKIn
 from bioprocs.fastx import pFastqSim
 from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit, pVcf2Maf, pVcfMerge
-from bioprocs.vcfnext import pVcfStatsPlot, pCallRate
+from bioprocs.vcfnext import pVcfStatsPlot, pCallRate, pMutSig, pMafMerge
 from bioprocs.web import pDownloadGet
 from bioprocs.common import pFiles2Dir
 from bioprocs.tabix import pTabix, pTabixIndex
@@ -67,9 +68,9 @@ class TestVcf (unittest.TestCase):
 			pVcfAnno2,
 			pVcfAnno3
 		]).run()
-		procOK(pVcfAnno1, 'example.snpeff.vcf', self)
-		procOK(pVcfAnno2, 'example.vep.vcf', self)
-		procOK(pVcfAnno3, 'example.annovar.vcf.gz', self)
+		procOK(pVcfAnno1, 'example.snpeff.vcf', self, comment = '##')
+		procOK(pVcfAnno2, 'example.vep.vcf', self, comment = '##')
+		procOK(pVcfAnno3, 'example.annovar.vcf.gz', self, comment = '##')
 		
 	def test3_pCallRate (self):
 		pFiles2Dir1 = pFiles2Dir.copy('vcfstats')
@@ -159,9 +160,31 @@ class TestVcf (unittest.TestCase):
 		pAddChr2.output  = "outfile:file:{{in.infile|bn}}"
 		pAddChr2.script  = """awk '$0 ~ /^#/ {print} $0 !~ /^#/ {print "chr"$0}' {{in.infile}} > {{out.outfile}}"""
 
-		pVcf2Maf.depends       = pAddChr2
+		pVcf2Maf1             = pVcf2Maf.copy()
+		pVcf2Maf1.depends      = pAddChr2
+		pVcf2Maf1.args.nthread = 2
+
+		pVcf2Maf2              = pVcf2Maf.copy()
+		pVcf2Maf2.depends      = pAddChr2
+		pVcf2Maf2.args.somatic = True
+
 		PyPPL().start(pTabixIndex).run()
-		procOK(pVcf2Maf, 'vcf2maf.maf', self)
+		procOK(pVcf2Maf1, 'vcf2maf.maf', self)
+		procOK(pVcf2Maf2, 'vcf2maf-somatic.maf', self)
+
+	def test8_pMutSig(self):
+		pMutSig.input = [getfile('sample.maf')]
+		PyPPL().start(pMutSig).run()
+		fileOKIn(path.join(pMutSig.channel.get(), 'sample.mutcateg_discovery.txt'), '                 transver   n   446 N 5471797760  rate 8.15e-08 (0.425x)', self)
+
+	def test9_pMafMerge(self):
+		pFiles2DirMafMerge = pFiles2Dir.copy()
+		pFiles2DirMafMerge.input = [[getfile('sample.maf'), getfile('vcf2maf.maf', False), getfile('vcf2maf-somatic.maf', False)]]
+		
+		pMafMerge.depends = pFiles2DirMafMerge
+		PyPPL().start(pFiles2DirMafMerge).run()
+		procOK(pMafMerge, 'mafmerge.maf', self)
+
 		
 if __name__ == '__main__':
 	unittest.main(failfast=True)
