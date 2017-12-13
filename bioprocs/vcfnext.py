@@ -137,11 +137,62 @@ pMafMerge.script      = "file:scripts/vcfnext/pMafMerge.py"
 @name:
 	pMaftools
 @args:
-	`genes`: 
+	`ngenes`: 
+@requires:
+	[``]
 """
-pMaftools            = Proc(desc = 'Use maftools to draw plots.')
-pMaftools.input      = 'infile:file'
-pMaftools.output     = 'outdir:dir:{{in.infile | fn}}.maftools'
-pMaftools.args.genes = 'mutsig:10'
-pMaftools.lang       = params.Rscript.value
-pMaftools.script     = "file:scripts/vcfnext/pMaftools.r"
+pMaftools             = Proc(desc = 'Use maftools to draw plots.')
+pMaftools.input       = 'indir:dir'
+pMaftools.output      = 'outdir:dir:{{in.indir | fn}}.maftools'
+pMaftools.args.ngenes = 10
+pMaftools.args.isTCGA = False
+pMaftools.args.ref    = params.ref.value # for signature
+pMaftools.args.plots  = Box(
+	summary        = True,
+	oncoplot       = True,
+	oncostrip      = True,
+	titv           = True,
+	lollipop       = True,
+	cbsseg         = True,
+	rainfall       = True,
+	tcgacomp       = True,
+	vaf            = True,
+	genecloud      = True,
+	gisticGenome   = True,
+	gisticBubble   = True,
+	gisticOncoplot = True,
+	somInteraction = True,
+	oncodrive      = True,
+	pfam           = True,
+	pancan         = True,
+	survival       = True,
+	heterogeneity  = True,
+	signature      = True,
+)
+pMaftools.args.params  = Box(
+	summary        = Box(rmOutlier = True, addStat = 'median', dashboard = True),
+	oncoplot       = Box(),
+	oncostrip      = Box(),
+	titv           = Box(),
+	lollipop       = Box(AACol = 'Protein_Change'),
+	cbsseg         = Box(labelAll = True),
+	rainfall       = Box(detectChangePoints = True),
+	tcgacomp       = Box(),
+	vaf            = Box(flip = True),
+	genecloud      = Box(minMut = 3),
+	gisticGenome   = Box(markBands = 'all'),
+	gisticBubble   = Box(),
+	gisticOncoplot = Box(),
+	somInteraction = Box(),
+	oncodrive      = Box(AACol = 'Protein_Change', minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
+	pfam           = Box(AACol = 'Protein_Change'),
+	pancan         = Box(qval = 0.1, label = 1, normSampleSize = True),
+	survival       = Box(),
+	heterogeneity  = Box(),
+	signature      = Box(nTry = 6, plotBestFitRes = False),
+)
+pMaftools.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pMaftools.args.nthread = 1
+pMaftools.envs.heatmap = plot.heatmap.r
+pMaftools.lang         = params.Rscript.value
+pMaftools.script       = "file:scripts/vcfnext/pMaftools.r"

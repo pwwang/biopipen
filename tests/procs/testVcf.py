@@ -4,7 +4,7 @@ from pyppl import PyPPL, Proc
 from helpers import getfile, procOK, config, fileOKIn
 from bioprocs.fastx import pFastqSim
 from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit, pVcf2Maf, pVcfMerge
-from bioprocs.vcfnext import pVcfStatsPlot, pCallRate, pMutSig, pMafMerge
+from bioprocs.vcfnext import pVcfStatsPlot, pCallRate, pMutSig, pMafMerge, pMaftools
 from bioprocs.web import pDownloadGet
 from bioprocs.common import pFiles2Dir
 from bioprocs.tabix import pTabix, pTabixIndex
@@ -184,6 +184,21 @@ class TestVcf (unittest.TestCase):
 		pMafMerge.depends = pFiles2DirMafMerge
 		PyPPL().start(pFiles2DirMafMerge).run()
 		procOK(pMafMerge, 'mafmerge.maf', self)
+
+	@unittest.skipIf(not path.isfile('/data2/junwenwang/shared/tools/miniconda2/envs/r3.4.1/bin/R'), 'Cannot find R3.4.1')
+	def test91_pMaftools(self):
+		pMaftools.input = ['/data2/junwenwang/shared/tools/miniconda2/envs/r3.4.1/lib/R/library/maftools/extdata/']
+		pMaftools.lang  = '/data2/junwenwang/shared/tools/miniconda2/envs/r3.4.1/bin/Rscript'
+		pMaftools.args.params.vaf.vafCol = 'i_TumorVAF_WU'
+		pMaftools.args.params.heterogeneity.vafCol = 'i_TumorVAF_WU'
+		pMaftools.args.params.survival.time = 'days_to_last_followup'
+		pMaftools.args.params.survival.Status = 'Overall_Survival_Status'
+		pMaftools.args.params.signature.prefix = 'chr'
+		pMaftools.args.params.signature.ignoreChr = '23'
+		pMaftools.args.params.oncoplot.clinicalFeatures = 'FAB_classification'
+		pMaftools.args.params.gisticOncoplot.clinicalFeatures = 'FAB_classification'
+		pMaftools.args.nthread = 20
+		PyPPL().start(pMaftools).run()
 
 		
 if __name__ == '__main__':
