@@ -1,7 +1,12 @@
 library(survival)
 library(survminer)
 
-survivalOne = function(dat, var) {
+survivalOne = function(dat, var, vname) {
+	if (length(levels(dat[, var])) == 1) {
+		cat(paste0("pyppl.log.warnning: Cannot do survival analysis for '",var,"' with one level.\n"), file=stderr())
+		return(NULL)
+	}
+
 	fmula = paste0('Surv({{args.outunit}}, status) ~ ', var)
 	fmula = as.formula(fmula)
 	sfit  = do.call(survfit, list(formula = fmula, data = dat))
@@ -9,7 +14,7 @@ survivalOne = function(dat, var) {
 	
 	rns   = rownames(diff$p.value)
 	if (length(rns) == 0) {
-		pvals   = data.frame(var = var, group1 = "", group2 = "", pval = 1)
+		pvals   = data.frame(var = vname, group1 = "", group2 = "", pval = 1)
 		globalp = 1
 	} else {
 		cns   = colnames(diff$p.value)
@@ -19,7 +24,7 @@ survivalOne = function(dat, var) {
 		for (i in 1:lenrs) {
 			for (j in 1:lencs) {
 				if (i < j) next
-				pvals = rbind(pvals, c(var = var, group1 = rns[i], group2 = cns[j], pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2)))
+				pvals = rbind(pvals, c(var = vname, group1 = rns[i], group2 = cns[j], pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2)))
 			}
 		}
 
@@ -27,8 +32,8 @@ survivalOne = function(dat, var) {
 		globalp    = 1 - pchisq(globaldiff$chisq, length(globaldiff$n) - 1)
 	}
 
-	psurv = do.call(ggsurvplot, c(list(fit = sfit, pval = {{args.pval | R}}, legend.title = var, legend.labs = levels(dat[,var]), xlab = "Time ({{args.outunit}})"), {{args.plotParams | Rlist}}))
-	return(list(ret = list(pvals = pvals, psurv = psurv, var = var, globalp = globalp)))
+	psurv = do.call(ggsurvplot, c(list(fit = sfit, pval = {{args.pval | R}}, legend.title = vname, legend.labs = levels(dat[,var]), xlab = "Time ({{args.outunit}})"), {{args.plotParams | Rlist}}))
+	return(list(ret = list(pvals = pvals, psurv = psurv, var = vname, globalp = globalp)))
 }
 
 rnames = {% if args.rnames %}1{% else %}NULL{% endif %}
@@ -56,6 +61,8 @@ fct = 12
 {% endif %}
 
 cnames = colnames(df)
+vnames = cnames[3:length(cnames)]
+cnames    = make.names(cnames)
 cnames[1] = {{args.outunit | quote}}
 cnames[2] = 'status'
 colnames(df) = cnames
@@ -66,8 +73,8 @@ if (fct != 1) {
 vars = cnames[3:length(cnames)]
 if (length(vars) == 1 || {{args.nthread}} == 1) {
 	rets = NULL
-	for (var in vars)  {
-		rets  = c(rets, survivalOne(df, var))
+	for (i in 1:length(vars))  {
+		rets  = c(rets, survivalOne(df, vars[i], vnames[i]))
 	}
 } else {
 	library(doParallel)
@@ -75,7 +82,7 @@ if (length(vars) == 1 || {{args.nthread}} == 1) {
     registerDoParallel(cl)
 
 	rets = foreach (i = 1:length(vars), .verbose = T, .combine = c, .packages = c('survival', 'survminer')) %dopar% {
-		survivalOne(df, vars[i])
+		survivalOne(df, vars[i], vnames[i])
 	}
 	stopCluster(cl) 
 }

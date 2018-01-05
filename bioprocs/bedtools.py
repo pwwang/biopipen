@@ -90,23 +90,51 @@ pBedFlank.script              = "file:scripts/bedtools/pBedFlank.py"
 @description:
 	By far, the most common question asked of two sets of genomic features is whether or not any of the features in the two sets overlap with one another. This is known as feature intersection. bedtools intersect allows one to screen for overlaps between two sets of genomic features. Moreover, it allows one to have fine control as to how the intersections are reported. bedtools intersect works with both BED/GFF/VCF and BAM files as input.
 @input:
-	`afile:file`:   The a file
+	`afile:file` : The a file
+	`bfile:file`: The b file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`:   Other parameters for `bedtools intersect`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""
+pBedIntersect                     = Proc(desc = 'The wrapper of "bedtools intersect" with single input b file.')
+pBedIntersect.input               = "afile:file, bfile:file"
+pBedIntersect.output              = "outfile:file:{{in.afile | fn}}.intersect.bt"
+pBedIntersect.args.bedtools       = params.bedtools.value
+pBedIntersect.args.params         = Box()
+pBedIntersect.envs.runcmd         = runcmd.py
+pBedIntersect.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedIntersect.lang                = params.python.value
+pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
+
+"""
+@name:
+	pBedIntersect2
+@description:
+	By far, the most common question asked of two sets of genomic features is whether or not any of the features in the two sets overlap with one another. This is known as feature intersection. bedtools intersect allows one to screen for overlaps between two sets of genomic features. Moreover, it allows one to have fine control as to how the intersections are reported. bedtools intersect works with both BED/GFF/VCF and BAM files as input.
+@input:
+	`afile:file` : The a file
 	`bfiles:files`: The b files
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools intersect`, default: ""
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`:   Other parameters for `bedtools intersect`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedIntersect = Proc()
-pBedIntersect.input  = "afile:file, bfiles:files"
-pBedIntersect.output = "outfile:file:{{afile|fn}}.intersect.bt"
-pBedIntersect.args   = { "bin": "bedtools", "params": "" }
-pBedIntersect.script = """
-{{args.bin}} intersect -nonamecheck {{args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
-"""
+pBedIntersect2                     = Proc(desc = 'The wrapper of "bedtools intersect" with multiple input b files.')
+pBedIntersect2.input               = "afile:file, bfiles:files"
+pBedIntersect2.output              = "outfile:file:{{in.afile | fn}}.intersect2.bt"
+pBedIntersect2.args.bedtools       = params.bedtools.value
+pBedIntersect2.args.params         = Box()
+pBedIntersect2.envs.runcmd         = runcmd.py
+pBedIntersect2.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedIntersect2.lang                = params.python.value
+pBedIntersect2.script              = 'file:scripts/bedtools/pBedIntersect2.py'
 
 """
 @name:

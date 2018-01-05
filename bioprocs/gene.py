@@ -80,3 +80,20 @@ pGeneTss.args.genome   = params.genome.value
 pGeneTss.envs.genenorm = genenorm.py
 pGeneTss.lang          = params.python.value
 pGeneTss.script        = "file:scripts/gene/pGeneTss.py"
+
+pGeneBody               = Proc(desc = 'Get geen body in BED format')
+pGeneBody.input         = 'infile:file'
+pGeneBody.output        = 'outfile:file:{{in.infile | fn}}-body.bed'
+pGeneBody.errhow        = 'retry'
+pGeneBody.args.notfound = 'skip' # error
+pGeneBody.args.header   = False
+pGeneBody.args.skip     = 0
+pGeneBody.args.comment  = '#'
+pGeneBody.args.delimit  = '\t'
+pGeneBody.args.col      = 0
+pGeneBody.args.frm      = 'symbol, alias'
+pGeneBody.args.tmpdir   = params.tmpdir.value
+pGeneBody.args.genome   = params.genome.value
+pGeneBody.envs.genenorm = genenorm.py
+pGeneBody.lang          = params.python.value
+pGeneBody.script        = "file:scripts/gene/pGeneBody.py"

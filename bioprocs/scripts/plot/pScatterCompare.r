@@ -1,10 +1,13 @@
 library(ggplot2)
 
-mat = read.table({{in.infile | quote}}, header = T, check.names = F, sep = "\t", row.names = as.integer({{args.rownames | R}}))
-if (ncol(mat) < 2) {
+m = read.table({{in.infile | quote}}, header = T, check.names = F, sep = "\t", row.names = as.integer({{args.rownames | R}}))
+if (ncol(m) < 2) {
 	stop('Cannot plot scattercompare with less than columns.')
 }
-
+mat = m[complete.cases(m), , drop=F]
+if (nrow(mat) < nrow(m)) {
+	cat(paste0("pyppl.log.warning: ", nrow(m) - nrow(mat), " cases with NA values are ignored.\n"), file = stderr())
+}
 cnames = colnames(mat)
 maxy   = max(mat[, 1])
 miny   = min(mat[, 1])

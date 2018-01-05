@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from .bedtools import pBedGetfasta, pBedRandom, pBedFlank
+from .bedtools import pBedGetfasta, pBedRandom, pBedFlank, pBedIntersect, pBedIntersect2
 from . import params
 from .utils import helpers, runcmd
 
@@ -38,44 +38,6 @@ pBedSort.lang                = params.python.value
 pBedSort.envs.runcmd         = runcmd.py
 pBedSort.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedSort.script              = "file:scripts/bed/pBedSort.py"
-
-"""
-@name:
-	pBedIntersect
-@description:
-	Find intersections of two bed files.
-	Input files must be sorted.
-@input:
-	`infile1:file`: The 1st input bed file
-	`infile2:file`: The 2nd input bed file
-@output:
-	`outfile:file`: The output file
-@args:
-	`tool`:         The tool used to sort the file. Default: bedtools (bedops)
-	`bedtools`:     The path to bedtools. Default: bedtools
-	`bedops`:  The path to bedops. Default: bedops
-	`params`:       Other params for `tool`. Default: ''
-@requires:
-	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
-	[`bedops`](https://github.com/bedops/bedops)
-"""
-pBedIntersect               = Proc(desc = 'Find intersections of two bed files.')
-pBedIntersect.input         = "infile1:file, infile2:file"
-pBedIntersect.output        = "outfile:file:{{infile1 | fn | fn}}-{{infile2 | fn | fn}}.intersect.bed"
-pBedIntersect.args.tool     = 'bedtools'
-pBedIntersect.args.bedtools = 'bedtools'
-pBedIntersect.args.bedops   = 'bedops'
-pBedIntersect.args.params   = ''
-pBedIntersect.script        = """
-case {{args.tool | quote}} in 
-	bedtools)
-		{{args.bedtools}} intersect -a "{{infile1}}" -b "{{infile2}}" {{args.params}} > "{{outfile}}"
-		;;
-	bedops)
-		{{args.bedops}} --intersect "{{infile1}}" "{{infile2}}" {{args.params}} > "{{outfile}}"
-		;;
-esac
-"""
 
 """
 @name:

@@ -1,4 +1,4 @@
-from pyppl import Proc
+from pyppl import Proc, Box
 from . import params
 from .utils import helpers, txt
 
@@ -146,6 +146,7 @@ pTxtFilter.args.cols       = []
 pTxtFilter.args.rfilter    = None
 pTxtFilter.args.header     = True
 pTxtFilter.args.skip       = 0
+pTxtFilter.args.data       = {}
 pTxtFilter.args.delimit    = "\t"
 pTxtFilter.args.outdelimit = "\t"
 pTxtFilter.envs.txtFilter  = txt.filter.py
@@ -175,6 +176,7 @@ pTxtTransform.input             = "infile:file"
 pTxtTransform.output            = "outfile:file:{{in.infile | bn}}"
 pTxtTransform.lang              = params.python.value
 pTxtTransform.args.cols         = []
+pTxtTransform.args.data         = {}
 pTxtTransform.args.transform    = None
 pTxtTransform.args.header       = True
 pTxtTransform.args.skip         = 0
@@ -224,5 +226,6 @@ pSimRead.args.delimit = '\t'
 pSimRead.args.gzip    = 'auto'
 pSimRead.args.match   = None
 pSimRead.args.do      = None
+pSimRead.args.data    = {}
 pSimRead.lang         = params.python.value
 pSimRead.script       = "file:scripts/matrix/pSimRead.py"

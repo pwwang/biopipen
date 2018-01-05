@@ -1,5 +1,5 @@
 {{txtFilter}}
-
+data = {{args.data}}
 txtFilter(
 	infile  = {{in.infile | quote}},
 	outfile = {{out.outfile | quote}},

@@ -25,6 +25,10 @@ rownames(means) = rnames
 colnames(means) = c("Average coverage")
 for (i in 1:length(bsfiles)) {
 	bsfile = bsfiles[i]
+	if (file.info(bsfile)$size == 0) { 
+		cat(paste0('pyppl.log.warning: No content in file ', bsfile, '\n'), file = stderr())
+		next 
+	}
 	write (paste("Reading", bsfile, "...", sep=" "), stderr())
 	sample = rnames[i]
 	stat   = read.table (bsfile, sep="", header=T, check.names=F, row.names=1)

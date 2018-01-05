@@ -1,5 +1,6 @@
 {{txtTransform}}
 
+data = {{args.data}}
 txtTransform(
 	infile    = {{in.infile | quote}},
 	outfile   = {{out.outfile | quote}},
