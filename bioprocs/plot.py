@@ -231,37 +231,25 @@ pROC.script       = "file:scripts/plot/pROC.r"
 @output:
 	`outfile:file`: The plot
 @args:
-	`tool`: Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
-	`rownames`: Whether input file has rownames. Default: False
-	`vennParams`: Other params for `venn.diagram`. Default: {}
+	`tool`       : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
+	`rnames`     : Whether input file has rownames. Default: False
+	`vennParams` : Other params for `venn.diagram`. Default: {}
 	`upsetParams`: Other params for `upset`. Default: {}
+	`devpars`    : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 @requires:
 	[`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
 	[`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
 """
 pVenn                  = Proc(desc = 'Venn plots.')
 pVenn.input            = "infile:file"
-pVenn.output           = "outfile:file:{{infile | fn}}.venn.png"
-pVenn.args.tool        = 'auto' # upsetr or auto: <=3 venn, else upsetr
-pVenn.args.rownames    = 'NULL'
+pVenn.output           = "outfile:file:{{in.infile | fn}}.venn.png"
+pVenn.args.tool        = 'auto' # upsetr or auto: < = 3 venn, else upsetr
+pVenn.args.rnames      = False
 pVenn.args.vennParams  = {}
 pVenn.args.upsetParams = {}
-pVenn.args._plotVenn   = plot.venn.r
-pVenn.args._plotUpset  = plot.upset.r
-pVenn.lang             = 'Rscript'
-pVenn.script           = """
-library(UpSetR)
-mat         = read.table ("{{infile}}", sep="\\t", header = TRUE, row.names = {{args.rownames | R}}, check.names = F)
-nc          = ncol(mat)
-cnames      = colnames(mat)
-vennParams  = {{args.vennParams | Rlist}}
-upsetParams = {{args.upsetParams | Rlist}}
-if (nc<=3 && ({{args.tool | quote}} == 'auto' || {{args.tool | quote}} == 'venn')) {
-	{{args._plotVenn}}
-	plotVenn (mat, {{outfile | quote}}, vennParams)
-} else {
-	{{args._plotUpset}}
-	plotUpset(mat, {{outfile | quote}}, upsetParams)
-}
-"""
+pVenn.args.devpars     = Box(res = 300, height = 2000, width = 2000)
+pVenn.envs.plotVenn    = plot.venn.r
+pVenn.envs.plotUpset   = plot.upset.r
+pVenn.lang             = params.Rscript.value
+pVenn.script           = "file:scripts/plot/pVenn.r"
 	

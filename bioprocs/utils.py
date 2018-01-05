@@ -121,22 +121,8 @@ if (!exists('plotText')) {
 }
 """
 
-plot.venn.r = _getsource()
-
-plot.upset.r = """
-if (!exists('plotUpset')) {
-	plotUpset = function(mat, filename, params) {
-		library(UpSetR)
-		png (filename, res=300, width=2000, height=2000)
-		if (! "nintersects" %in% names(params)) {
-			params$nintersects = NA
-		}
-		v = do.call (upset, c(list(data = mat, sets = colnames(mat)), params))
-		print (v)
-		dev.off()
-	}
-}
-"""
+plot.venn.r  = _getsource()
+plot.upset.r = _getsource()
 
 txt = Box({
 	'filter'    : {},

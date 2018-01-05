@@ -42,7 +42,7 @@ pMatrix.script      = "file:scripts/matrix/pMatrix.r"
 """
 pCbind                = Proc(desc = 'Cbind the rest of files to the first file.')
 pCbind.input          = 'infiles:files'
-pCbind.output         = 'outfile:file:{{in.infiles[0] | bn}}'
+pCbind.output         = 'outfile:file:{{in.infiles[0] | fn2}}.cbound.txt'
 pCbind.args.cnames    = True # or [True, True, False] corresponding to the file order
 pCbind.args.rnames    = True
 pCbind.args.na        = 'NA'

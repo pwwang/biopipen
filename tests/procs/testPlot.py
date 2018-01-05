@@ -1,9 +1,9 @@
 import unittest
 from pyppl import PyPPL
 from helpers import getfile, procOK, config
-from bioprocs.plot import pHeatmap, pScatterCompare, pROC
+from bioprocs.plot import pHeatmap, pScatterCompare, pROC, pVenn
 
-class testPlot (unittest.TestCase):
+class TestPlot (unittest.TestCase):
 	
 	def testpHeatmap(self):
 		pHeatmap.input = [getfile('heatmap.txt')]
@@ -41,10 +41,23 @@ class testPlot (unittest.TestCase):
 		PyPPL(config).start(pROC3).run()
 		procOK(pROC3, 'roc-multi-nocombine', self)
 
+	def testVennVenn(self):
+		pVennVenn             = pVenn.copy()
+		pVennVenn.input       = [getfile('venn-venn.txt')]
+		pVennVenn.args.rnames = True
+		PyPPL(config).start(pVennVenn).run()
+		procOK(pVennVenn, 'venn-venn.venn.png', self)
+	
+	def testVennUpset(self):
+		pVennUpset             = pVenn.copy()
+		pVennUpset.input       = [getfile('venn-upset.txt')]
+		pVennUpset.args.rnames = True
+		PyPPL(config).start(pVennUpset).run()
+		procOK(pVennUpset, 'venn-upset.venn.png', self)
+
 	# TODO:
 	# - boxplot
 	# - scatter plot
-	# - venn plot
 
 if __name__ == '__main__':
 	unittest.main(failfast = True)
