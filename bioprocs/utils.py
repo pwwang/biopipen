@@ -37,15 +37,16 @@ runcmd.r  = _getsource()
 """
 Polling helpers
 """
-polling = Box({
-	'non1st': {},
-	'first' : {},
-	'all'   : {}
-})
+polling = Box(
+	non1st = {},
+	first  = {},
+	last   = {},
+	all    = {}
+)
 polling.non1st.py = _getsource(runcmd.py)
 polling.non1st.r  = _getsource(runcmd.r)
 polling.first.py  = _getsource(runcmd.py)
-polling.first.r   = _getsource(runcmd.r)
+polling.last.r    = _getsource(runcmd.r)
 polling.all.py    = _getsource(runcmd.py)
 polling.all.r     = _getsource(runcmd.r)
 

@@ -1,5 +1,5 @@
-if (!exists('pollingFirst')) {
-	pollingFirst = function (workdir, length, jobid, cmd, flagfname, t = 10) {
+if (!exists('pollingLast')) {
+	pollingLast = function (workdir, length, jobid, cmd, flagfname, t = 10) {
 		errorfname = paste(flagfname, '.error', sep='')
 		flagfile   = file.path (workdir, jobid, 'output', flagfname)
 		errorfile  = file.path (workdir, jobid, 'output', errorfname)
@@ -9,11 +9,12 @@ if (!exists('pollingFirst')) {
 			file.create (flagfile)
 		}, error = function(cond) {
 			file.create (errorfile)
+			q(save = "no", status = 1)
 		})
 
-		if (jobid > 0) return ()
+		if (jobid < length - 1) return ()
 		
-		wait = F
+		wait = T
 		while (wait) {
 			wait = FALSE
 			for (i in 0:(length-1)) {
@@ -30,7 +31,7 @@ if (!exists('pollingFirst')) {
 				}
 			}
 			if (wait) {
-				write('Waiting till all other jobs (job # != 0) done ...', stderr())
+				write(paste('Waiting till all other jobs (job # <', length - 1 ,') done ...'), stderr())
 				Sys.sleep(t)
 			} else {
 				break

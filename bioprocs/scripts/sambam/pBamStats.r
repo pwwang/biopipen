@@ -5,15 +5,15 @@ params = {{args.params | Rlist}}
 params$i = {{in.infile | quote}}
 params$o = {{out.outfile | quote}}
 
-cmd = paste('{{args.bamstats}}', params2CmdArgs(params), sep = ' ')
+cmd = paste('{{args.bamstats}}', mem2({{args.mem | quote}}, 'java'), params2CmdArgs(params), sep = ' ')
 
 {% if args.plot %}
 {{plotHist}}
 {{plotBoxplot}}
-{{pollingFirst}}
-pollingFirst ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "bamstats.done")
+{{pollingLast}}
+pollingLast ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "bamstats.done")
 
-{% if job.index | lambda x: x == 0 %}
+{% if job.index, proc.size | lambda x, y: x == y - 1 %}
 ##### start plotting
 
 bsfiles = Sys.glob("{{proc.workdir}}/*/output/*/*.stat.txt")
