@@ -5,41 +5,56 @@ chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
 start  = as.numeric(region[1])
 end    = as.numeric(region[2])
-if ({{ args.showIdeo | R }}) {
-    tracks = c (tracks, IdeogramTrack(genome={{args.genome | quote}}, chromosome=chrom))
+if ({{ args.ideoTrack | R }} != F) {
+{% if args.ideoTrack | R | lambda x: x == 'TRUE' %}
+	tracks = c (tracks, IdeogramTrack(genome={{args.genome | quote}}, chromosome=chrom))
+{% else %}
+	tracks = c (tracks, IdeogramTrack(genome={{args.genome | quote}}, chromosome=chrom, bands = {{args.ideoTrack | R}}))
+{% endif %}
 }
-if ({{ args.showAxis | R }}) {
+if ({{ args.axisTrack | R }}) {
     tracks = c (tracks, GenomeAxisTrack())
 }
-if ({{args.showGenes | R}}) {
+
+
+extracks = NULL
+if ({{args.geneTrack | R}} != F) {
+	# should be a gtf file
+	data(geneModels)
 	geneParams = list(
-		genome     = {{args.genome | quote}},
-		chromosome = chrom,
-		from       = start,
-		to         = end,
-		name       = 'refGene',
-		trackType  = 'GeneRegionTrack',
-		table      = 'refGene',
-		track      = 'refGene',
-		rstarts    = 'exonStarts',
-		rends      = 'exonEnds',
-		gene       = "name",
-		symbol     = "name2",
-		transcript = "name",
-		strand     = "strand"
+		range = {{args.geneTrack | quote}},
+		name  = 'Gene',
+		chromosome = chrom
 	)
 	geneParams = c(geneParams, {{args.params.geneTrack | Rlist}})
-	geneTrack  = do.call(UcscTrack, geneParams)
-	tracks     = c(tracks, geneTrack)
+	geneTrack  = do.call(GeneRegionTrack, geneParams)
+	extracks   = c(extracks, geneTrack)
 }
 for (t in c({{in.trkfiles | acquote}})) {
 	if (dir.exists(t)) next  # allow empty track file list
-    tracks = c (tracks, readRDS(t))
+    extracks = c (extracks, readRDS(t))
 }
 
-do.call(png, c(list(file = {{out.outfile | quote}}), {{args.devpars | Rlist}}))
+tracks2plot = as.list(tracks)
+highlights  = {{in.highlight | R}}
+if (nchar(highlights) > 0) {
+	hregs   = unlist(strsplit(highlights, ';', fixed = T))
+	hstarts = NULL
+	hends   = NULL
+	for (hreg in hregs) {
+		reg = unlist(strsplit(hreg, '-', fixed = T))
+		hstarts = c(hstarts, as.numeric(reg[1]))
+		hends   = c(hends  , as.numeric(reg[2]))
+	}
+	hltrack = HighlightTrack(trackList = as.list(extracks), start = hstarts, end = hends, chromosome = chrom)
+	tracks2plot = c(tracks2plot, hltrack)
+} else {
+	tracks2plot = c(tracks2plot, as.list(extracks))
+}
+
+do.call(png, c(list(filename = {{out.outfile | quote}}), {{args.devpars | Rlist}}))
 params = list(
-	trackList = as.list(tracks),
+	trackList = tracks2plot,
 	from      = start,
 	to        = end
 )

@@ -1,9 +1,13 @@
 {{mem2}}
 {{params2CmdArgs}}
+{{cbindfill}}
 
 params = {{args.params | Rlist}}
 params$i = {{in.infile | quote}}
 params$o = {{out.outfile | quote}}
+{% if args.feature | lambda x: x != 'wgs' %}
+params$f = {{args.feature | quote}}
+{% endif %}
 
 cmd = paste('{{args.bamstats}}', mem2({{args.mem | quote}}, 'java'), params2CmdArgs(params), sep = ' ')
 
@@ -33,26 +37,28 @@ for (i in 1:length(bsfiles)) {
 	sample = rnames[i]
 	stat   = read.table (bsfile, sep="", header=T, check.names=F, row.names=1)
 	#stat   = stat[chrs2, ]
-	stat[, "N"] = as.numeric(gsub(",", "", stat[, "N"]))
-	means[sample, 1] = sum(stat[, "N"] * stat[, "mean"])/sum(stat[, "N"])
-	col2in = stat[, "mean", drop=F]
+	#stat[, "N"] = as.numeric(gsub(",", "", stat[, "N"]))
+	m      = stat[which(stat[, "mean"] > {{args.cutoff}} & stat[, "mean"] < {{args.cap}}), "mean", drop=F]
+	#N      = stat[rownames(m), "N", drop = F]
+	#means[sample, 1] = sum(N * m)/sum(N)
+	means[sample, 1] = mean(m[, "mean", drop=T])
+	col2in = m[order(m[, "mean"], decreasing = T), "mean", drop=F][1:(2*{{args.nfeats}}), , drop=F]
 	colnames(col2in) = sample
 	if (is.null(chrs)) {
 		chrs = col2in
 	} else {
-		chrs = cbind(chrs, col2in)
+		chrs = cbindfill(chrs, col2in)
 	}
 }
+chrs = chrs[order(rowMeans(chrs), decreasing = T),,drop=F][1:min({{args.nfeats}}, nrow(chrs)),,drop=F]
 
 write ("Plotting average coverages ...", stderr())
-write.table (means, "{{out.outdir}}/avgCoverage.txt", quote=F, sep="\\t")
+write.table (means, "{{out.outdir}}/avgCoverage.txt", quote=F, sep="\t")
 plotHist (means, "{{out.outdir}}/avgCoverage.png", ggs = {{args.histplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
 # plot chromosomes
-write ("Plotting chromosome coverages ...", stderr())
-png ("{{out.outdir}}/chrCoverage.png")
-plotBoxplot(t(chrs), "{{out.outdir}}/chrCoverage.png", ggs = {{args.boxplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
-dev.off()
+write ("Plotting feature coverages ...", stderr())
+plotBoxplot(t(chrs), "{{out.outdir}}/featureCoverage.png", ggs = {{args.boxplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
 {% endif %}
 

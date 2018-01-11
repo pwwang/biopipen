@@ -17,6 +17,6 @@ if 'txtTransform' not in vars() or not callable (txtTransform):
 				cols    = [c if isinstance(c, int) else headers.index(c) for c in cols] if cols else range(len(headers))
 				fout.write(outdelimit.join([headers[c] for c in cols]) + "\n")
 			for row in fcsv:
-				row = [row[c] for c in cols]
+				row = [row[c] for c in cols] if cols else row
 				row = transform(row) if transform else row
 				fout.write(outdelimit.join(row) + "\n")

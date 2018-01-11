@@ -6,9 +6,9 @@ from bioprocs.genomeplot import pInteractionTrack, pAnnoTrack, pDataTrack, pUcsc
 
 params.prefix('-')
 
-params.ideo       = True
+params.ideo       = 'True'
 params.ideo.desc  = 'Show ideogram track?'
-params.genes      = True
+params.genes      = params.refgene.value
 params.genes.desc = 'Show gene track?'
 params.axis       = True
 params.axis.desc  = 'Show axis?'
@@ -37,6 +37,10 @@ params.splitlen        = 1000000
 params.splitlen.desc   = 'Split the plot into 2 if the region is longer then splitlen.'
 params.forks           = 2
 params.forks.desc      = 'Number of cores used to plot if split.'
+
+# highlist
+params.highlights      = []
+params.highlights.desc = 'The highlight regions in format of "start-end"'
 
 params = params.parse().toDict()
 
@@ -82,30 +86,36 @@ if end - start > params.splitlen:
 	pGenomePlot.tag            = uuid
 	pGenomePlot.forks          = params.forks
 	pGenomePlot.exdir          = params.outdir
-	pGenomePlot.args.showIdeo  = params.ideo
-	pGenomePlot.args.showAxis  = params.axis
-	pGenomePlot.args.showGenes = params.genes
+	pGenomePlot.args.ideoTrack = params.ideo
+	pGenomePlot.args.axisTrack = params.axis
+	pGenomePlot.args.geneTrack = params.genes
 	if params.devpars:
 		pGenomePlot.args.devpars.update(json.loads(params.devpars))
 	if params.plotparams:
 		pGenomePlot.args.params.update(json.loads(params.plotparams))
+	if len(params.highlights) == 2:
+		h1 = params.highlights[0]
+		h2 = params.highlights[1]
+	else:
+		h1 = ';'.join(params.highlights)
+		h2 = h1
 	pGenomePlot.input   = lambda *chs: [
-		([ch.get() for ch in chs], "%s:%s-%s" % (chrom, start, start + 10000)),
-		([ch.get() for ch in chs], "%s:%s-%s" % (chrom, end - 100000, end)),
+		([ch.get() for ch in chs], "%s:%s-%s" % (chrom, start, start + 10000), h1),
+		([ch.get() for ch in chs], "%s:%s-%s" % (chrom, end - 100000, end), h2),
 	]
 
 else:
 	pGenomePlot.depends        = trackProcs
 	pGenomePlot.tag            = uuid
 	pGenomePlot.exdir          = params.outdir
-	pGenomePlot.args.showIdeo  = params.ideo
-	pGenomePlot.args.showAxis  = params.axis
-	pGenomePlot.args.showGenes = params.genes
+	pGenomePlot.args.ideoTrack = params.ideo
+	pGenomePlot.args.axisTrack = params.axis
+	pGenomePlot.args.geneTrack = params.genes
 	if params.devpars:
 		pGenomePlot.args.devpars.update(json.loads(params.devpars))
 	if params.plotparams:
 		pGenomePlot.args.params.update(json.loads(params.plotparams))
-	pGenomePlot.input   = lambda *chs: [([ch.get() for ch in chs], params.region)]
+	pGenomePlot.input   = lambda *chs: [([ch.get() for ch in chs], params.region, ';'.join(params.highlights))]
 
 PyPPL().start(trackProcs).run()
 

@@ -2,12 +2,14 @@
 {{params2CmdArgs}}
 
 from collections import OrderedDict
-params = {{args.params}}
-params = OrderedDict(sorted(params.items()))
+
+params = {}
 params['T'] = {{args.tmpdir | quote}}
 params['S'] = {{args.mem | quote}}
 params['u'] = {{args.unique}}
 params['t'] = {{args.delimit | quote}}
+params.update({{args.params}})
+params = OrderedDict(sorted(params.items()))
 
 {% if args.case %}
 case = "LANG=C"

@@ -21,6 +21,11 @@ pMatrix.input       = "infile:file"
 pMatrix.output      = "outfile:file:{{in.infile | bn}}"
 pMatrix.args.cnames = True
 pMatrix.args.rnames = True
+pMatrix.args.params = Box({
+	"sep"        : "\t",
+	"check.names": "FALSE",
+	"quote"      : ""
+})
 pMatrix.args.code   = []
 pMatrix.lang        = params.Rscript.value
 pMatrix.script      = "file:scripts/matrix/pMatrix.r"

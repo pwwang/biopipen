@@ -1,7 +1,12 @@
 cnames = as.logical({{args.cnames | R}})
 rnames = as.logical({{args.rnames | R}})
 
-mat      = read.table ("{{in.infile}}", sep="\t", header = cnames, row.names = NULL, check.names = F)
+infile           = {{in.infile | quote}}
+params           = {{args.params | Rlist}}
+params$file      = infile
+params$header    = cnames
+params$row.names = if (rnames) 1 else NULL
+mat              = do.call(read.table, params)
 if (rnames) {
 	rns = make.unique(as.vector(mat[,1]))
 	mat[,1] = NULL
@@ -14,4 +19,4 @@ if (rnames) {
 {% else %}
 {{args.code}}
 {% endif %}
-write.table (mat, {{out.outfile | quote}}, sep="\t", quote=F, col.names = cnames, row.names = rnames)
+write.table (mat, {{out.outfile | quote}}, sep=params$sep, quote=F, col.names = cnames, row.names = rnames)

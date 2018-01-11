@@ -1,7 +1,7 @@
 import unittest
 from pyppl import PyPPL
 from helpers import getfile, procOK, config
-from bioprocs.plot import pHeatmap, pScatterCompare, pROC, pVenn
+from bioprocs.plot import pHeatmap, pScatterCompare, pROC, pVenn, pPie
 
 class TestPlot (unittest.TestCase):
 	
@@ -54,6 +54,20 @@ class TestPlot (unittest.TestCase):
 		pVennUpset.args.rnames = True
 		PyPPL(config).start(pVennUpset).run()
 		procOK(pVennUpset, 'venn-upset.venn.png', self)
+
+	def testPieDirectNumbers(self):
+		pPie1 = pPie.copy()
+		pPie1.input = [getfile('pie-direct-num.txt')]
+		PyPPL(config).start(pPie1).run()
+		procOK(pPie1, 'pie-direct-num.pie.png', self)
+
+	def testPieItemPresence(self):
+		pPie2 = pPie.copy()
+		pPie2.input = [getfile('pie-item-presence.txt')]
+		pPie2.args.rnames = True
+		PyPPL(config).start(pPie2).run()
+		procOK(pPie2, 'pie-item-presence.pie.png', self)
+		
 
 	# TODO:
 	# - boxplot

@@ -99,6 +99,7 @@ plot = Box({
 	'text'   : {},
 	'venn'   : {},
 	'upset'  : {},
+	'pie'    : {}
 })
 plot.hist.r    = _getsource()
 plot.boxplot.r = _getsource()
@@ -124,6 +125,7 @@ if (!exists('plotText')) {
 
 plot.venn.r  = _getsource()
 plot.upset.r = _getsource()
+plot.pie.r   = _getsource()
 
 txt = Box({
 	'filter'    : {},
@@ -155,3 +157,9 @@ parallel.py = _getsource(runcmd.py)
 genenorm    = Box()
 genenorm.py = _getsource()
 
+sql = Box(
+	dsnparse    = {},
+	schemaparse = {}
+)
+sql.dsnparse.py    = _getsource()
+sql.schemaparse.py = _getsource()

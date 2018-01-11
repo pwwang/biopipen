@@ -252,4 +252,48 @@ pVenn.envs.plotVenn    = plot.venn.r
 pVenn.envs.plotUpset   = plot.upset.r
 pVenn.lang             = params.Rscript.value
 pVenn.script           = "file:scripts/plot/pVenn.r"
+
+"""
+@name:
+	pPie
+@description:
+	Plot piechart
+@input:
+	`infile:file`: The input file. Could be either:
+		- Direct numbers of each category.
+		```
+		Group1	Group2
+		50	50
+		```
+		- Presence of each items in the category.
+		```
+			Group1	Group2
+		Item1	1	0
+		Item2	0	1
+		...
+		```
+@output:
+	`outfile:file`: the output plot
+@args:
+	`rnames` : Whether the input file has row names. Default: `False`
+	`ggs`    : Extra expressions for ggplot. 
+	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+"""
+pPie              = Proc(desc = 'Pie chart.')
+pPie.input        = "infile:file"
+pPie.output       = "outfile:file:{{in.infile | fn}}.pie.png"
+pPie.args.rnames  = False
+pPie.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pPie.args.ggs     = [
+	"r:theme(axis.title.x = element_blank())",
+	"r:theme(axis.title.y = element_blank())",
+	"r:theme(panel.border = element_blank())",
+	"r:theme(panel.grid=element_blank())",
+	"r:theme(axis.ticks = element_blank())",
+	"r:theme(panel.background = element_blank())",
+	"r:theme(axis.text.x = element_blank())"
+]
+pPie.envs.plotPie = plot.pie.r
+pPie.lang         = params.Rscript.value
+pPie.script       = "file:scripts/plot/pPie.r"
 	

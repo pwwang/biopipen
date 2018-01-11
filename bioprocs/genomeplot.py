@@ -29,7 +29,10 @@ pInteractionTrack             = Proc(desc = 'Gererate genomic interaction track 
 pInteractionTrack.input       = "name, infile:file, region"
 pInteractionTrack.output      = "outfile:file:geneTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.rds"
 pInteractionTrack.args.intype = "bed12" 
-pInteractionTrack.args.params = Box()
+pInteractionTrack.args.params = Box({
+    'col.outside': "lightblue",
+    'anchor.height': 0.06
+})
 pInteractionTrack.lang        = params.Rscript.value
 pInteractionTrack.script      = "file:scripts/genomeplot/pInteractionTrack.r"
 
@@ -146,6 +149,7 @@ pUcscTrack.script      = "file:scripts/genomeplot/pUcscTrack.r"
 @input:
     `trkfiles:files`: the list of track dumped files
     `region`:         the region, in format of `chr1:1-1000`
+    `highlight`:      the highlight regions, informat of start1-end1; start2-end2; ...
 @output:
     `outfile:file`:   the figure
 @args:
@@ -160,12 +164,12 @@ pUcscTrack.script      = "file:scripts/genomeplot/pUcscTrack.r"
     [r-Gviz](https://rdrr.io/bioc/Gviz)
 """
 pGenomePlot                = Proc(desc = 'Plot genome elements.')
-pGenomePlot.input          = "trkfiles:files, region"
+pGenomePlot.input          = "trkfiles:files, region, highlight"
 pGenomePlot.output         = "outfile:file:genomeplot_{{in.region | lambda x: x.replace(':', '-')}}.png"
 pGenomePlot.args.genome    = params.genome.value
-pGenomePlot.args.showIdeo  = True
-pGenomePlot.args.showAxis  = True
-pGenomePlot.args.showGenes = True
+pGenomePlot.args.ideoTrack = True # or cytoband file from ucsc (http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz)
+pGenomePlot.args.axisTrack = True
+pGenomePlot.args.geneTrack = params.refgene.value # or false to disable
 pGenomePlot.args.params    = Box(
     general   = Box(
         
