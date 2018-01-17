@@ -15,6 +15,14 @@ if dsn.scheme in ['sqlite', 'sqlite3']:
 	import sqlite3
 	conn = sqlite3.connect(dsn.file)
 	conn.text_factory = str
+
+	# drop table
+	{% if args.drop %}
+	dropsql = 'DROP TABLE IF EXISTS "%s"' % name
+	conn.execute(dropsql)
+	conn.commit()
+	{% endif %}
+
 	# create table
 	createsql  = 'CREATE TABLE IF NOT EXISTS "%s" (\n' % name
 	for i, field in enumerate(fields):

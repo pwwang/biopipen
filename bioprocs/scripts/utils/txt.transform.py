@@ -19,4 +19,5 @@ if 'txtTransform' not in vars() or not callable (txtTransform):
 			for row in fcsv:
 				row = [row[c] for c in cols] if cols else row
 				row = transform(row) if transform else row
+				if not row: continue
 				fout.write(outdelimit.join(row) + "\n")

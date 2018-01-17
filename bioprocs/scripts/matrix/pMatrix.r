@@ -5,8 +5,7 @@ infile           = {{in.infile | quote}}
 params           = {{args.params | Rlist}}
 params$file      = infile
 params$header    = cnames
-params$row.names = if (rnames) 1 else NULL
-mat              = do.call(read.table, params)
+mat              = do.call(read.table, c(list(row.names = NULL), params))
 if (rnames) {
 	rns = make.unique(as.vector(mat[,1]))
 	mat[,1] = NULL

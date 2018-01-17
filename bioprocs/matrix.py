@@ -96,9 +96,10 @@ pRbind.script         = "file:scripts/matrix/pRbind.r"
 """
 pCsplit             = Proc(desc = 'Split the columns of input file into different files.')
 pCsplit.input       = 'infile:file'
-pCsplit.output      = 'outdir:dir:{{in.infile | fn}}.splits'
+pCsplit.output      = 'outdir:dir:{{in.infile | fn}}.csplits'
 pCsplit.args.cnames = True
 pCsplit.args.rnames = True
+pCsplit.args.n      = 1
 pCsplit.lang        = params.Rscript.value
 pCsplit.script      = "file:scripts/matrix/pCsplit.r"
 
@@ -118,9 +119,10 @@ pCsplit.script      = "file:scripts/matrix/pCsplit.r"
 """
 pRsplit               = Proc(desc = 'Rbind the rest of files to the first file.')
 pRsplit.input         = 'infile:file'
-pRsplit.output        = 'outdir:dir:{{in.infile | fn}}.splits'
+pRsplit.output        = 'outdir:dir:{{in.infile | fn}}.rsplits'
 pRsplit.args.cnames   = True
 pRsplit.args.rnames   = True
+pRsplit.args.n        = 1
 pRsplit.lang          = params.Rscript.value
 pRsplit.script        = "file:scripts/matrix/pRsplit.r"
 

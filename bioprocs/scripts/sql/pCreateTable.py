@@ -13,7 +13,7 @@ if dsn.scheme in ['sqlite', 'sqlite3']:
 	import sqlite3
 	conn = sqlite3.connect(dsn.file)
 	{# Drop the existing table first #}
-	{% if args.force %}
+	{% if args.drop %}
 	dropsql = 'DROP TABLE IF EXISTS "%s"' % name
 	conn.execute(dropsql)
 	{% endif %}

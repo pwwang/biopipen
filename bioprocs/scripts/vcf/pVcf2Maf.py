@@ -14,8 +14,12 @@ vep = check_output(['which', {{args.vep | quote}}]).strip()
 params = {{args.params}}
 
 # get samples
+{% if args.samfunc %}
+samples = ({{args.samfunc}})({{in.infile | quote}})
+{% else %}
 samples = check_output([{{args.bcftools | quote}}, 'query', '-l', {{in.infile | quote}}]).splitlines()
 samples = list(filter(None, [x.strip() for x in samples]))
+{% endif %}
 
 {% 	if args.somatic %}
 params['input-vcf']  = {{in.infile | quote}}

@@ -141,13 +141,14 @@ pMafMerge.script      = "file:scripts/vcfnext/pMafMerge.py"
 @requires:
 	[``]
 """
-pMaftools             = Proc(desc = 'Use maftools to draw plots.')
-pMaftools.input       = 'indir:dir'
-pMaftools.output      = 'outdir:dir:{{in.indir | fn}}.maftools'
-pMaftools.args.ngenes = 10
-pMaftools.args.isTCGA = False
-pMaftools.args.ref    = params.ref.value # for signature
-pMaftools.args.plots  = Box(
+pMaftools              = Proc(desc = 'Use maftools to draw plots.')
+pMaftools.input        = 'indir:dir'
+pMaftools.output       = 'outdir:dir:{{in.indir | fn}}.maftools'
+pMaftools.args.ngenes  = 10
+pMaftools.args.isTCGA  = False
+pMaftools.args.ref     = params.ref.value # for signature
+pMaftools.args.mutypes = ["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]
+pMaftools.args.plots   = Box(
 	summary        = True,
 	oncoplot       = True,
 	oncostrip      = True,

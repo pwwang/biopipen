@@ -80,7 +80,8 @@ laml    = read.maf(
 	gisticDelGenesFile   = delgene,
 	gisticScoresFile     = gisscore,
 	cnTable              = cntable,
-	isTCGA               = {{args.isTCGA | R}}
+	isTCGA               = {{args.isTCGA | R}},
+	vc_nonSyn            = {% if args.mutypes %}{{args.mutypes | Rvec}}{% else %}NULL{% endif %}
 )
 
 genesum = getGeneSummary(laml)
@@ -97,7 +98,11 @@ devpars2$width = devpars2$width * 2
 cat('## Plotting summary ...\n', file = stderr())
 summaryplot = file.path({{out.outdir | quote}}, 'summary.png')
 do.call(png, c(list(filename = summaryplot), devpars2))
-do.call(plotmafSummary, c(list(maf = laml), {{args.params.summary | Rlist}}))
+tryCatch({
+	do.call(plotmafSummary, c(list(maf = laml), {{args.params.summary | Rlist}}))
+}, error = function(e) {
+	cat('pyppl.log.warning: Failed to plot summary:', e, '\n', file = stderr())	
+})
 dev.off()
 {% endif %}
 
@@ -114,7 +119,11 @@ if (!'top' %in% names(params) && !'genes' %in% names(params)){
 if (!is.null(annofile)) {
 	params$sortByAnnotation = TRUE
 }
-do.call(oncoplot, params)
+tryCatch({
+	do.call(oncoplot, params)
+}, error = function(e) {
+	cat('pyppl.log.warning: Failed to plot oncoplot:', e, '\n', file = stderr())	
+})
 dev.off()
 {% endif %}
 
@@ -128,7 +137,11 @@ if (!'genes' %in% names(params)) {
 	params$genes = genes
 }
 do.call(png, c(list(filename = oncostripfile), devpars2))
-do.call(oncostrip, params)
+tryCatch({
+	do.call(oncostrip, params)
+}, error = function(e) {
+	cat('pyppl.log.warning: Failed to plot oncostrip:', e, '\n', file = stderr())	
+})
 dev.off()
 {% endif %}
 
@@ -140,7 +153,11 @@ titvobj  = titv(maf = laml, plot = FALSE, useSyn = TRUE)
 params   = {{args.params.titv | Rlist}}
 params$res = titvobj
 do.call(png, c(list(filename = titvplot), devpars))
-do.call(plotTiTv, params)
+tryCatch({
+	do.call(plotTiTv, params)
+}, error = function(e) {
+	cat('pyppl.log.warning: Failed to plot titv:', e, '\n', file = stderr())	
+})
 dev.off()
 {% endif %}
 
@@ -168,7 +185,11 @@ lollipopPlotSingle = function(gene) {
 	dir.create(lpdir, showWarnings = F)
 	lpplot = file.path(lpdir, paste0(ps$gene, '.lollipop.png'))
 	do.call(png, c(list(filename = lpplot), devpars2))
-	do.call(lollipopPlot, ps)
+	tryCatch({
+		do.call(lollipopPlot, ps)
+	}, error = function(e) {
+		cat(paste('pyppl.log.warning: Failed to plot lollipop for', gene ,':', e, '\n'), file = stderr())	
+	})
 	dev.off()
 }
 {% 	if args.nthread | lambda x: x == 1 %}
@@ -199,13 +220,17 @@ cbssegSingle = function(sam) {
 		Sys.glob(file.path({{in.indir | quote}}, paste0(gsub('_', '.', sam), '*.seg.txt')))
 	)
 	if (length(segfiles) == 0) {
-		cat(paste0('No seg file found for sample:', sam ,', skip.\n'), file = stderr())
+		cat(paste('No seg file found for sample:', sam ,', skip.\n'), file = stderr())
 	} else {
 		segdir  = file.path({{out.outdir | quote}}, 'cbssegs')
 		dir.create(segdir, showWarnings = F)
 		segplot = file.path(segdir, paste0(sam, '.cbsseg.png'))
 		do.call(png, c(list(filename = segplot), devpars2))
-		do.call(plotCBSsegments, c(list(cbsFile = segfiles[1]), params))
+		tryCatch({
+			do.call(plotCBSsegments, c(list(cbsFile = segfiles[1]), params))
+		}, error = function(e) {
+			cat(paste('pyppl.log.warning: Failed to plot cbsseg:', e, '\n'), file = stderr())	
+		})
 		dev.off()
 	}
 }
@@ -244,12 +269,12 @@ rainfallSingle = function(sam) {
 		do.call(rainfallPlot, c(list(tsb = sam), params))
 	}, error = function(e){
 		if (!params$detectChangePoints) {
-			cat('pyppl.log.warning: Failed to plot rainfall without detecting change points for sample:', sam, '\n', file = stderr())
+			cat(paste('pyppl.log.warning: Failed to plot rainfall without detecting change points for sample:', sam, '\n'), file = stderr())
 		} else {
 			tryCatch({
 				do.call(rainfallPlot, c(list(tsb = sam, detectChangePoints = F), params))
 			}, error = function(e){
-				cat('pyppl.log.warning: Failed to plot rainfall without detecting change points for sample:', sam, '\n', file = stderr())
+				cat(paste('pyppl.log.warning: Failed to plot rainfall without detecting change points for sample', sam, ':', e, '\n'), file = stderr())
 			})
 		}
 	})
@@ -279,7 +304,11 @@ params = c(list(maf = laml), {{args.params.tcgacomp | Rlist}})
 if (!'cohortName' %in% names(params)) {
 	params$cohortName = unlist(strsplit(basename(maffile), '.', fixed = T))[1]
 }
-do.call(tcgaCompare, params)
+tryCatch({
+	do.call(tcgaCompare, params)
+}, error = function(e){
+	cat(paste('pyppl.log.warning: Failed to plot tcgacomp:', e, '\n'), file = stderr())
+})
 dev.off()
 {% endif %}
 
@@ -292,7 +321,11 @@ if (!'vafCol' %in% names(params)) {
 } else {
 	vafplot = file.path({{out.outdir | quote}}, 'vaf.png')
 	do.call(png, c(list(filename = vafplot), devpars))
-	do.call(plotVaf, params)
+	tryCatch({
+		do.call(plotVaf, params)
+	}, error = function(e){
+		cat(paste('pyppl.log.warning: Failed to plot vaf:', e, '\n'), file = stderr())
+	})
 	dev.off()
 }
 {% endif %}
@@ -303,7 +336,11 @@ cat('## Plotting genecloud ... \n', file = stderr())
 gcplot = file.path({{out.outdir | quote}}, 'genecloud.png')
 do.call(png, c(list(filename = gcplot), devpars))
 params = c(list(input = laml), {{args.params.genecloud | Rlist}})
-do.call(geneCloud, params)
+tryCatch({
+	do.call(geneCloud, params)
+}, error = function(e){
+	cat(paste('pyppl.log.warning: Failed to plot genecloud:', e, '\n'), file = stderr())
+})
 dev.off()
 {% endif %}
 
@@ -317,7 +354,11 @@ if (!hasGistic) {
 	gisgplot = file.path({{out.outdir | quote}}, 'gisticGenome.png')
 	do.call(png, c(list(filename = gisgplot), devpars2))
 	params = c(list(gistic = lamlGistic), {{args.params.gisticGenome | Rlist}})
-	do.call(gisticChromPlot, params)
+	tryCatch({
+		do.call(gisticChromPlot, params)
+	}, error = function(e){
+		cat(paste('pyppl.log.warning: Failed to plot gisticGenome:', e, '\n'), file = stderr())
+	})
 	dev.off()
 }
 {% endif %}
@@ -331,7 +372,11 @@ if (!hasGistic) {
 	gisbplot = file.path({{out.outdir | quote}}, 'gisticBubble.png')
 	do.call(png, c(list(filename = gisbplot), devpars))
 	params = c(list(gistic = lamlGistic), {{args.params.gisticBubble | Rlist}})
-	do.call(gisticBubblePlot, params)
+	tryCatch({
+		do.call(gisticBubblePlot, params)
+	}, error = function(e){
+		cat(paste('pyppl.log.warning: Failed to plot gisticBubble:', e, '\n'), file = stderr())
+	})
 	dev.off()
 }
 {% endif %}
@@ -355,13 +400,13 @@ if (!hasGistic) {
 		do.call(gisticOncoPlot, params)
 	}, error = function(e) {
 		if (is.null(annofile)) {
-			cat(paste0('pyppl.log.warning: Cannot generate gisticOncoplot without clinic features, skip.\n'), file = stderr())
+			cat('pyppl.log.warning: Cannot generate gisticOncoplot without clinic features, skip.\n', file = stderr())
 		} else {
 			tryCatch({
 				params$clinicalFeatures = NULL
 				do.call(gisticOncoPlot, params)
 			}, error = function(e) {
-				cat(paste0('pyppl.log.warning: Cannot generate gisticOncoplot even without clinic features, skip.\n'), file = stderr())
+				cat('pyppl.log.warning: Cannot generate gisticOncoplot even without clinic features, skip.\n', file = stderr())
 			})
 		}
 	})
@@ -377,7 +422,13 @@ params = c(list(maf = laml), {{args.params.somInteraction | Rlist}})
 if (!'top' %in% names(params)) 
 	params$top = {{args.ngenes}}
 do.call(png, c(list(filename = somInteractionfile), devpars))
-do.call(somaticInteractions, params)
+tryCatch(
+	{
+		do.call(somaticInteractions, params)
+	}, error = function(e) {
+		cat(paste('-  Unable to plot somaticInteractions, with error:', e,'\n'), file = stderr())
+	}
+)
 dev.off()
 {% endif %}
 
@@ -392,17 +443,23 @@ for (name in names(params)) {
 	if (name %in% names(OcParams))
 		OcParams[[name]] = params[[name]]
 }
-sig = do.call(oncodrive, OcParams)
+tryCatch(
+	{
+		sig = do.call(oncodrive, OcParams)
 
-PocParams = list(res = sig, fdrCutOff = 0.05, useFraction = FALSE,
-  				 colCode = NULL, labelSize = 2)
-for (name in names(params)) {
-	if (name %in% names(PocParams))
-		PocParams[[name]] = params[[name]]
-}
-do.call(png, c(list(filename = oncodrivefile), devpars))
-do.call(plotOncodrive, PocParams)
-dev.off()
+		PocParams = list(res = sig, fdrCutOff = 0.05, useFraction = FALSE,
+						colCode = NULL, labelSize = 2)
+		for (name in names(params)) {
+			if (name %in% names(PocParams))
+				PocParams[[name]] = params[[name]]
+		}
+		do.call(png, c(list(filename = oncodrivefile), devpars))
+		do.call(plotOncodrive, PocParams)
+		dev.off()
+	}, error = function(e) {
+		cat(paste('-  Unable to plot oncodrive, with error:', e,'\n'), file = stderr())	
+	}
+)
 {% endif %}
 
 #### pfam
@@ -413,7 +470,13 @@ params = c(list(maf = laml), {{args.params.pfam | Rlist}})
 if (!'top' %in% names(params)) 
 	params$top = {{args.ngenes}}
 do.call(png, c(list(filename = pfamfile), devpars))
-do.call(pfamDomains, params)
+tryCatch(
+	{
+		do.call(pfamDomains, params)
+	}, error = function(e) {
+		cat(paste('-  Unable to plot pfam, with error:', e,'\n'), file = stderr())	
+	}
+)
 dev.off()
 {% endif %}
 
@@ -435,7 +498,11 @@ if (length(siggenes) > 0) {
 	}
 	pancanfile = file.path({{out.outdir | quote}}, 'pancan.png')
 	do.call(png, c(list(filename = pancanfile), devpars))
-	do.call(pancanComparison, params)
+	tryCatch({
+		do.call(pancanComparison, params)
+	}, error = function(e){
+		cat(paste('pyppl.log.warning: Failed to plot pancan:', e, '\n'), file = stderr())
+	})
 	dev.off()
 }
 {% endif %}
@@ -447,41 +514,43 @@ cat('## Plotting survivals ...\n', file = stderr())
 params        = {{args.params.survival | Rlist}}
 params$maf    = laml
 params$isTCGA = {{args.isTCGA | R}}
-if (!'time' %in% names(params)) {
-	stop('No time column specified for survival analysis!')
-}
-if (!'Status' %in% names(params)) {
-	stop('No Status column specified for survival analysis!')
-}
-survivalSingle = function(gene) {
-	ps = params
-	ps$genes = gene
-	svdir  = file.path({{out.outdir | quote}}, 'survivals')
-	dir.create(svdir, showWarnings = F)
-	svplot = file.path(svdir, paste0(ps$genes, '.survival.png'))
-	do.call(png, c(list(filename = svplot), devpars))
-	do.call(mafSurvival, ps)
-	dev.off()
-}
-if ('genes' %in% names(params)) {
-	svgenes = params$genes
-	params$genes = NULL
+if (!'time' %in% names(params) || !'Status' %in% names(params)) {
+	cat('-  No time/Status column specified for survival analysis!', file = stderr())
 } else {
-	svgenes = genes
+	survivalSingle = function(gene) {
+		ps = params
+		ps$genes = gene
+		svdir  = file.path({{out.outdir | quote}}, 'survivals')
+		dir.create(svdir, showWarnings = F)
+		svplot = file.path(svdir, paste0(ps$genes, '.survival.png'))
+		do.call(png, c(list(filename = svplot), devpars))
+		tryCatch({
+			do.call(mafSurvival, ps)
+		}, error = function(e){
+			cat(paste('pyppl.log.warning: Failed to plot survival for gene', gene ,':', e, '\n'), file = stderr())
+		})
+		dev.off()
+	}
+	if ('genes' %in% names(params)) {
+		svgenes = params$genes
+		params$genes = NULL
+	} else {
+		svgenes = genes
+	}
+	{% 	if args.nthread | lambda x: x == 1 %}
+	for (gene in svgenes) {
+		survivalSingle(gene)
+	}
+	{% 	else %}
+	library(doParallel)
+	cl = makeCluster({{args.nthread}})
+	registerDoParallel(cl)
+	foreach(i=1:length(svgenes), .verbose = T, .packages=c('maftools')) %dopar% {
+		survivalSingle(svgenes[i])
+	}
+	stopCluster(cl)
+	{% 	endif %}
 }
-{% 	if args.nthread | lambda x: x == 1 %}
-for (gene in svgenes) {
-	survivalSingle(gene)
-}
-{% 	else %}
-library(doParallel)
-cl = makeCluster({{args.nthread}})
-registerDoParallel(cl)
-foreach(i=1:length(svgenes), .verbose = T, .packages=c('maftools')) %dopar% {
-	survivalSingle(svgenes[i])
-}
-stopCluster(cl)
-{% 	endif %}
 {% endif %}
 
 #### heterogeneity
@@ -570,7 +639,13 @@ tm = do.call(trinucleotideMatrix, tmParams)
 # apobec
 apobecfile = file.path({{out.outdir | quote}}, 'apobec.png')
 do.call(png, c(list(filename = apobecfile), devpars))
-plotApobecDiff(tnm = tm, maf = laml)
+tryCatch(
+	{
+		plotApobecDiff(tnm = tm, maf = laml)
+	}, error = function(e) {
+		cat(paste('-  Unable to plot apobec signature:', e), file = stderr())
+	}
+)
 dev.off()
 
 # sigs

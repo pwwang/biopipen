@@ -27,14 +27,14 @@ from .utils import sql
 	`dsn`: The dsn
 @args:
 	`intype`: The input file schema file or a data file. Default: `schema`
-	`force`:  Force creating the table (drop the pre-existing table)
+	`drop`:  Force creating the table (drop the pre-existing table)
 	`delimit`:The delimit of input file. Default: `\\t`
 """
 pCreateTable                  = Proc(desc = 'Create tables in the database.')
 pCreateTable.input            = "dsn, schema:file"
 pCreateTable.output           = "dsn:var:{{in.dsn}}"
 pCreateTable.args.intype      = 'schema'
-pCreateTable.args.force       = False
+pCreateTable.args.drop        = False
 pCreateTable.args.delimit     = "\t"
 pCreateTable.envs.dsnparse    = sql.dsnparse.py
 pCreateTable.envs.schemaparse = sql.schemaparse.py
@@ -60,6 +60,7 @@ pImportData                  = Proc(desc = 'Create tables and import the data')
 pImportData.input            = "dsn, datafile:file"
 pImportData.output           = "dsn:var:{{in.dsn}}"
 pImportData.args.delimit     = "\t"
+pImportData.args.drop        = False
 pImportData.envs.dsnparse    = sql.dsnparse.py
 pImportData.envs.schemaparse = sql.schemaparse.py
 pImportData.envs.tablename   = lambda fn: __import__('os').path.basename(fn).split('.')[0]

@@ -204,6 +204,7 @@ pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
 	`nthread`  : Number of threads used to extract samples. Default: 1
 	`bcftools` : Path to bcftools used to extract sample names.
 	`vcftools` : Path to vcftools used to split vcf.
+	`samfunc`  : A lambda function used to deduce sample names from file name.
 	`somatic`  : Whether input vcf file is a somatic mutation file. Default: False
 		- somatic mutation vcf file can only have one sample TUMOR, or two samples, TUMOR and NORMAL, but will be considered as single sample.
 		- otherwise, multiple samples are supported in the input vcf file. Tumor id will be sample name for each sample, normal id will be NORMAL.
@@ -219,6 +220,7 @@ pVcf2Maf.args.filtervcf      = params.vepNonTCGAVcf.value
 pVcf2Maf.args.ref            = params.ref.value
 pVcf2Maf.args.bcftools       = params.bcftools.value
 pVcf2Maf.args.vcftools       = params.vcftools_subset.value
+pVcf2Maf.args.samfunc        = None
 pVcf2Maf.args.somatic        = False
 pVcf2Maf.args.nthread        = 1
 pVcf2Maf.args.params         = Box()

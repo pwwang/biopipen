@@ -98,7 +98,7 @@ devpars$width  = maxdim * devpars$width
 glbpval = file.path({{out.outdir | quote}}, 'global.pval.txt') 
 outpval = file.path({{out.outdir | quote}}, 'survival.pval.txt') 
 pvals   = NULL
-glbpv   = NULL
+glbpv   = matrix(, ncol=2, nrow = 0)
 {% if args.combine %}
 outplot = file.path({{out.outdir | quote}}, 'survival.png')
 psurvs  = NULL

@@ -60,7 +60,23 @@ class testMatrix (unittest.TestCase):
 		name1 = 'matrix-rbind-2.txt'
 		pRsplit.input = [getfile(name1)]
 		PyPPL(config).start(pRsplit).run()
-		procOK(pRsplit, 'matrix-rbind-2.splits', self)
+		procOK(pRsplit, 'matrix-rbind-2.rsplits', self)
+
+	def testRsplitN(self):
+		name1 = 'matrix-rsplit.txt'
+		pRsplitN = pRsplit.copy()
+		pRsplitN.input = [getfile(name1)]
+		pRsplitN.args.n = 3
+		PyPPL(config).start(pRsplitN).run()
+		procOK(pRsplitN, 'matrix-rsplit.rsplits', self)
+
+	def testCsplitN(self):
+		name1 = 'matrix-csplit.txt'
+		pCsplitN = pCsplit.copy()
+		pCsplitN.input = [getfile(name1)]
+		pCsplitN.args.n = 3
+		PyPPL(config).start(pCsplitN).run()
+		procOK(pCsplitN, 'matrix-csplit.csplits', self)
 
 	def testTxtFilter(self):
 		pTxtFilter.input        = [getfile('txtfilter.txt')]
