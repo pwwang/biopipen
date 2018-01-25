@@ -26,7 +26,7 @@ from . import params
 		* ``record.REF``   : ''GTC''
 		* ``record.ALT``   : [G, GTCT]
 		* ``record.QUAL``  : 50
-		* ``record.FILTER``: ['PASS']
+		* ``record.FILTER``: ['PASS'] # NO!, PASS should be []
 		* ``record.INFO``  : {'AA': 'G', 'NS': 3, 'DP': 9}
 		* samples = record.samples
 		* len(samples): 3
@@ -51,6 +51,32 @@ pVcfFilter.args.gz      = False
 pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
 pVcfFilter.lang         = params.python.value
 pVcfFilter.script       = "file:scripts/vcf/pVcfFilter.py"
+
+"""
+@name:
+	pVcf
+@description:
+	Use pyvcf to manipulate vcf file
+@input:
+	`infile:file`: The input vcf file
+@output:
+	`outfile:file`: The output vcf file
+@args:
+	`helper`: The helper code injected to script
+		- Since lambda function can't do assignment and manipulation so you can write some help function here
+	`readerops`: A lambda function (must be quoted) to manipulate the reader (vcf.Reader instance)
+	`recordops`: A lambda function (must be quoted) to manipulate the record (vcf.Record instance)
+	`gz`: Gzip the ouput file
+"""
+pVcf                = Proc(desc = 'Motify vcf file using pyvcf')
+pVcf.input          = "infile:file"
+pVcf.output         = "outfile:file:{{in.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcf.args.helper    = ''
+pVcf.args.readerops = 'lambda x: None'
+pVcf.args.recordops = 'lambda x, y = None: None'
+pVcf.args.gz        = False
+pVcf.lang           = params.python.value
+pVcf.script         = "file:scripts/vcf/pVcf.py"
 
 """
 @name:
@@ -144,6 +170,7 @@ pVcfSplit.args.vcftools       = params.vcftools_subset.value
 pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
 pVcfSplit.args.gatk           = params.gatk.value
 pVcfSplit.args.ref            = params.ref.value # only for gatk
+pVcfSplit.args.params         = Box()
 pVcfSplit.args.nthread        = 1
 pVcfSplit.envs.runcmd         = runcmd.py
 pVcfSplit.envs.params2CmdArgs = helpers.params2CmdArgs.py
@@ -157,20 +184,18 @@ pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 @description:
 	Merge single-sample Vcf files to multi-sample Vcf file.
 @input:
-	`indir:dir`: The directory containing multiple vcf files
-@output:
+	`infiles:files`: The input vcf files
 	`outfile:dir`:  The output multi-sample vcf.
 @args:
-	`pattern`:  The pattern filter for vcf files in the input directory. Default: '*'
 	`tool`:     The tool used to do extraction. Default: vcftools
 	`vcftools`: The path of vcftools' vcf-subset
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
 """
 pVcfMerge                     = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
-pVcfMerge.input               = "indir:dir"
-pVcfMerge.output              = "outfile:file:{{in.indir, args.pattern | fsDirname}}-merged.vcf"
-pVcfMerge.args.pattern        = '*.vcf.gz'
+pVcfMerge.input               = "infiles:files"
+pVcfMerge.output              = "outfile:file:{{in.infiles[0] | fn}}_etc.vcf"
+
 pVcfMerge.args.tool           = 'vcftools'
 pVcfMerge.args.vcftools       = params.vcftools_merge.value
 pVcfMerge.args.gatk           = params.gatk.value
@@ -180,7 +205,6 @@ pVcfMerge.args.nthread        = 1
 pVcfMerge.envs.runcmd         = runcmd.py
 pVcfMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pVcfMerge.envs.parallel       = parallel.py
-pVcfMerge.envs.fsDirname      = lambda dir, pat: path.basename(glob(path.join(dir, pat))[0]).split('.')[0] + '_etc'
 pVcfMerge.lang                = params.python.value
 pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
 
@@ -202,6 +226,7 @@ pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
 	`filtervcf`: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
 	`ref`      : The reference genome
 	`nthread`  : Number of threads used to extract samples. Default: 1
+	`tumor1st` : Whether tumor sample comes first. Default: `True`
 	`bcftools` : Path to bcftools used to extract sample names.
 	`vcftools` : Path to vcftools used to split vcf.
 	`samfunc`  : A lambda function used to deduce sample names from file name.
@@ -221,10 +246,10 @@ pVcf2Maf.args.ref            = params.ref.value
 pVcf2Maf.args.bcftools       = params.bcftools.value
 pVcf2Maf.args.vcftools       = params.vcftools_subset.value
 pVcf2Maf.args.samfunc        = None
+pVcf2Maf.args.tumor1st       = True
 pVcf2Maf.args.somatic        = False
 pVcf2Maf.args.nthread        = 1
 pVcf2Maf.args.params         = Box()
-pVcf2Maf.envs.runcmd         = runcmd.py
 pVcf2Maf.envs.runcmd         = runcmd.py
 pVcf2Maf.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pVcf2Maf.envs.parallel       = parallel.py

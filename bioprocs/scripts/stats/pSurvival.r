@@ -38,6 +38,9 @@ survivalOne = function(dat, var, vname) {
 
 rnames = {% if args.rnames %}1{% else %}NULL{% endif %}
 df = read.table({{in.infile | quote}}, sep = "\t", header = T, row.names = rnames, check.names = F)
+if (nrow(df) == 0) {
+	cat ('pyppl.log.warning: No survival data found.\n', file=stderr())
+}
 
 fct = 1
 {% if args.inunit, args.outunit | lambda x,y: x == 'days' and y == 'weeks' %}
@@ -124,4 +127,4 @@ for (ret in rets) {
 {% endif %}
 colnames(glbpv) = c('var', 'globalp')
 write.table(pvals, outpval, sep="\t", quote=F, col.names = T, row.names = F)
-write.table(glbpv, glbpval, sep="\t", quote=F, col.names = T, row.names = F)
+write.table(glbpv[order(as.numeric(glbpv[,"globalp"])), , drop = F], glbpval, sep="\t", quote=F, col.names = T, row.names = F)

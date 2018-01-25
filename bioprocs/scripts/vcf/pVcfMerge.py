@@ -6,7 +6,7 @@ from glob import glob
 {{params2CmdArgs}}
 {{parallel}}
 
-invcfs = glob(path.join({{in.indir | quote}}, {{args.pattern | quote}}))
+invcfs = {{in.infiles}}
 
 cmds     = []
 invcfgzs = []

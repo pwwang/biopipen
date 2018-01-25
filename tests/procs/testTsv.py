@@ -1,36 +1,36 @@
 import unittest
 from os import path
 from pyppl import PyPPL
-from bioprocs.matrix import pMatrix, pCbind, pRbind, pCsplit, pRsplit, pTxtFilter, pTxtTransform, pSimRead
+from bioprocs.tsv import pMatrixR, pCbind, pRbind, pCsplit, pRsplit, pTxtFilter, pTxtTransform, pSimRead, pTsv
 from helpers import getfile, procOK, config
 
 class testMatrix (unittest.TestCase):
 	
 	def testMatrix(self):
 		name               = 'matrix.txt'
-		pMatrix1           = pMatrix.copy()
-		pMatrix1.input     = [getfile(name)]
-		pMatrix1.args.code = "mat = log(mat + 1, 2)"
-		PyPPL(config).start(pMatrix1).run()
-		procOK(pMatrix1, name, self)
+		pMatrixR1           = pMatrixR.copy()
+		pMatrixR1.input     = [getfile(name)]
+		pMatrixR1.args.code = "mat = log(mat + 1, 2)"
+		PyPPL(config).start(pMatrixR1).run()
+		procOK(pMatrixR1, name, self)
 
 	def testMatrixNoHead(self):
 		name                 = 'matrix-nohead.txt'
-		pMatrix2             = pMatrix.copy()
-		pMatrix2.input       = [getfile(name)]
-		pMatrix2.args.code   = "mat = log(mat + 1, 2)"
-		pMatrix2.args.cnames = False
-		PyPPL(config).start(pMatrix2).run()
-		procOK(pMatrix2, name, self)
+		pMatrixR2             = pMatrixR.copy()
+		pMatrixR2.input       = [getfile(name)]
+		pMatrixR2.args.code   = "mat = log(mat + 1, 2)"
+		pMatrixR2.args.cnames = False
+		PyPPL(config).start(pMatrixR2).run()
+		procOK(pMatrixR2, name, self)
 
 	def testMatrixNoRn(self):
 		name                 = 'matrix-norn.txt'
-		pMatrix3             = pMatrix.copy()
-		pMatrix3.input       = [getfile(name)]
-		pMatrix3.args.code   = "mat = log(mat + 1, 2)"
-		pMatrix3.args.rnames = False
-		PyPPL(config).start(pMatrix3).run()
-		procOK(pMatrix3, name, self)
+		pMatrixR3             = pMatrixR.copy()
+		pMatrixR3.input       = [getfile(name)]
+		pMatrixR3.args.code   = "mat = log(mat + 1, 2)"
+		pMatrixR3.args.rnames = False
+		PyPPL(config).start(pMatrixR3).run()
+		procOK(pMatrixR3, name, self)
 
 	def testCbind(self):
 		name1 = 'matrix-cbind-1.txt'
@@ -107,6 +107,27 @@ class testMatrix (unittest.TestCase):
 		pSimRead.args.delimit = ["\t", "|"]
 		PyPPL(config).start(pSimRead).run()
 		procOK(pSimRead, 'simread.txt', self)
+
+	def testpTsv(self):
+		pTsvInmeta = pTsv.copy()
+		pTsvInmeta.input = [getfile('matrix-nohead.txt')]
+		pTsvInmeta.args.inmeta = [('NAME', 'Row name'), ('COL1', 'Column 1'), ('COL2', 'Column 2'), ('COL3', 'Column 3')]
+		PyPPL(config).start(pTsvInmeta).run()
+		procOK(pTsvInmeta, 'matrix-nohead.tsv', self)
+
+	def testpTsvFilter(self):
+		pTsvFilter = pTsv.copy()
+		pTsvFilter.input = [getfile('matrix-nohead.txt')]
+		pTsvFilter.output = "outfile:file:{{in.infile | fn}}.filtered"
+		pTsvFilter.args.inmeta = [('NAME', 'Row name'), ('COL1', 'Column 1'), ('COL2', 'Column 2'), ('COL3', 'Column 3')]
+		pTsvFilter.args.outmeta = ['NAME', 'COL2']
+		pTsvFilter.args.writemeta = False
+		pTsvFilter.args.ops = 'lambda r: None if int(r.COL1) >=7 else r'
+		PyPPL(config).start(pTsvFilter).run()
+		procOK(pTsvFilter, 'matrix-nohead.filtered', self)
+
+	# TODO:
+	# test predefined read/write classes for pTsv
 
 if __name__ == '__main__':
 	unittest.main()

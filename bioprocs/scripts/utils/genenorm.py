@@ -10,27 +10,39 @@ if 'genenorm' not in vars() or not callable(genenorm):
 		- ignore: use the original name;
 		- error : report erro
 	"""
-	def genenorm(infile, outfile = None, col = 0, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', header = False, genome = 'human', skip = 0, delimit = '\t', tmpdir = gettempdir(), comment = '#'):
+	def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'human', inopts = None, outopts = None, inmeta = ['GENE'], tmpdir = gettempdir()):
 		species = {
 			'hg19': 'human',
 			'hg38': 'human',
 			'mm9' : 'mouse',
 			'mm10': 'mouse'
 		}
+		inopts1  = inopts or {}
+		inopts   = {'skip': 0, 'comment': '#', 'delimit': '\t'}
+		inopts.update(inopts1)
+		outopts1 = outopts or {}
+		outopts  = {'headprefix': '#', 'delimit': '\t', 'meta': False, 'head': True, 'metaprefix': '##META/'}
+		outopts.update(outopts1)
+
 		species  = species[genome] if genome in species else genome
 		cachedir = path.join(tmpdir, 'mygene-cache')
 		if not path.isdir(cachedir): makedirs(cachedir)
 
-		skip += int(header)
-		with open(infile) as f:
-			genes   = sorted(set([line.split(delimit)[col].strip() for i, line in enumerate(f.read().splitlines()) if i >= skip and line.strip() and not line.startswith(comment)]))
-		
-		to2 = frm if isinstance(frm, list) else [f.strip() for f in frm.split(',')]
-		tos = to if isinstance(to, list) else [t.strip() for t in to.split(',')]
-		to2 = sorted(list(set(to2) | set(tos)))
+		genes   = []
+		greader = readBase(infile, **inopts)
+		greader.meta.add(*inmeta)
+		for r in greader:
+			if not r.GENE in genes:
+				genes.append(r.GENE)
 
-		uid   = md5(''.join(genes) + str(frm) + str(to) + str(species)).hexdigest()
-		cache = path.join(cachedir, 'mygeneinfo.%s' % uid)
+		genes      = sorted(genes)
+		alwaysList = lambda x: x if isinstance(x, list) else [y.strip() for y in x.split(',')]
+		frm        = alwaysList(frm)
+		to         = alwaysList(to)
+		to2        = sorted(list(set(frm) | set(to)))
+		uid        = md5(''.join(genes) + str(frm) + str(to) + str(species)).hexdigest()
+		cache      = path.join(cachedir, 'mygeneinfo.%s' % uid)
+
 		if path.isfile(cache):
 			with open(cache) as f: mgret = json.load(f)
 		else:
@@ -44,51 +56,46 @@ if 'genenorm' not in vars() or not callable(genenorm):
 			genetmp[gene['query']].append(gene)
 		
 		genemap = {}
-		toarray = 1
 		for query, gene in genetmp.items():
 			# re-score the items if query is entirely matched
 			for g in gene:
-				if not all([x in g for x in tos]): continue
+				if not all([x in g for x in to]): continue
 				
-				if any([g[x] == query for x in tos]):
+				if any([g[x] == query for x in to]):
 					g['_score'] += 10000
-				elif any([str(g[x]).upper() == query.upper() for x in tos]):
+				elif any([str(g[x]).upper() == query.upper() for x in to]):
 					g['_score'] += 5000
-				elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x]) for x in tos]]):
+				elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x]) for x in to]]):
 					g['_score'] += 1000
-			gene = sorted([g for g in gene if any([x in g for x in tos])], key = lambda x: x['_score'], reverse = True)
+			gene = sorted([g for g in gene if any([x in g for x in to])], key = lambda x: x['_score'], reverse = True)
 			if not gene: continue
-			if len(tos) == 1:
-				genemap[query] = gene[0][tos[0]]
+			if len(to) == 1:
+				genemap[query] = gene[0][to[0]]
 			else:
-				genemap[query] = {x: (gene[0][x] if x in gene[0] else None) for x in tos}
+				genemap[query] = {x: (gene[0][x] if x in gene[0] else None) for x in to}
 
 		del genetmp
 
 		if not outfile: return genemap, None
+		greader.rewind()
+		gwriter = writerBase(outfile)
+		gwriter.meta.borrow(greader.meta)
 
-		with open(infile) as f, open(outfile, 'w') as fout:
-			i = 0
-			for line in f:
-				if i < skip:
-					fout.write(line)
-					i += 1
+		if outopts['meta']:
+			gwriter.writeMeta(metaprefix = outopts['metaprefix'])
+		if outopts['head']:
+			gwriter.writeHead(headprefix = outopts['headprefix'], delimit = outopts['delimit'])
+
+		for r in greader:
+			if r.GENE not in genemap:
+				if notfound == 'error':
+					raise ValueError('Cannot convert %s to %s.' % (r.GENE, to))
+				elif notfound == 'skip':
 					continue
+				#else: # ignore, don't change r.GENE
+				#	pass
+			else:
+				r.GENE = genemap[r.GENE]
+			gwriter.write(r, delimit = outopts['delimit'])
 
-				line2 = line.strip()
-				if not line2 or line2.startswith(comment):
-					fout.write(line)
-					continue
-
-				parts = line2.split(delimit)
-				gene  = parts[col]
-				if not gene in genemap:
-					if notfound == 'error':
-						raise ValueError('Cannot convert %s to %s.' % (gene, to))
-					if notfound == 'skip':
-						continue
-					if notfound == 'ignore':
-						genemap[gene] = gene
-				parts[col] = genemap[gene]
-				fout.write(delimit.join(parts) + '\n')
 		return genemap, cache

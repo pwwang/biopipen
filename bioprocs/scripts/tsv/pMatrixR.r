@@ -7,9 +7,12 @@ params$file      = infile
 params$header    = cnames
 mat              = do.call(read.table, c(list(row.names = NULL), params))
 if (rnames) {
-	rns = make.unique(as.vector(mat[,1]))
-	mat[,1] = NULL
-	rownames(mat) = rns
+	rns = as.vector(mat[,1])
+	if (length(rns) > 0) {
+		rns = make.unique(rns)
+		mat[,1] = NULL
+		rownames(mat) = rns
+	}
 }
 {% if args.code | lambda x: isinstance(x, list) %}
 {% for c in args.code %}

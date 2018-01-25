@@ -3,7 +3,9 @@ from os import path
 from pyppl import Aggr, Channel
 from bioprocs.fastx import pFastqTrim, pFastq2Sam, pFastQC, pFastMC
 from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBam2Counts, pBamRecal, pBam2Gmut, pBamPair2Smut
-from bioprocs.common import pFile2Proc
+from bioprocs.common import pFile2Proc, pFiles2Dir
+from bioprocs.vcf import pVcf2Maf
+from bioprocs.vcfnext import pMafMerge
 """
 @name:
 	aEBam2Bam
@@ -143,3 +145,12 @@ aBam2Mut.pBamPair2Smut.input = lambda ch1, ch2: [ \
 		 Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']])))
 	]
 ]
+
+
+aVcfs2Maf = Aggr(
+	pVcf2Maf,
+	pFiles2Dir,
+	pMafMerge
+)
+aVcfs2Maf.pFiles2Dir.input     = lambda ch: [ch.flatten()]
+

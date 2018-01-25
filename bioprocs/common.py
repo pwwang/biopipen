@@ -92,6 +92,22 @@ pStr2File.script        = "file:scripts/common/pStr2File.py"
 
 """
 @name:
+	pPrepend
+@description:
+	Prepend a string to a file
+@input:
+	`in:var`: The input string.
+	`infile:file`: The input file.
+@output:
+	`outfile:file`: The output file.
+"""
+pPrepend               = Proc(desc = "Save string to a file.")
+pPrepend.input         = "in:var, infile:file"
+pPrepend.output        = "outfile:file:{{in.infile | fn}}.prepend.txt"
+pPrepend.script        = "file:scripts/common/pPrepend.bash"
+
+"""
+@name:
 	pAddHeader
 @description:
 	Add the header of 1st file to 2nd file.

@@ -1,11 +1,12 @@
-from pyppl import Proc
+from pyppl import Proc, Box
 from . import params
+from .utils import read, write
 
 """
 @name:
-	pSnp2Bed
+	pSnp2Bedx
 @description:
-	Find coordinates for SNPs in BED format.
+	Find coordinates for SNPs in BEDX format.
 @input:
 	`snpfile:file`: the snp file, each snp per line
 @output:
@@ -14,23 +15,29 @@ from . import params
 @args:
 	`genome`: default: hg19
 	`snpver`: default: snp147
+	`notfound`: What to do if the snp is not found. Default: skip
+	`inmeta`: The metadata for input file to determine which column is rsID
+	`xcols`: The extra columns to extract and output to extra columns in output file.
+	`indem`: The input delimit. Default: '\\t'
+	`incom`: The input comment. Default: '#'
+	`skip`: The lines to skip for input file. Default: 0
 @requires:
 	[`python-cruzdb`](https://github.com/brentp/cruzdb)
 """
-pSnp2Bed               = Proc(desc = 'Find coordinates for SNPs in BED format.')
-pSnp2Bed.input         = "snpfile:file"
-pSnp2Bed.output        = "outfile:file:{{in.snpfile | fn}}.bed"
-pSnp2Bed.args.genome   = params.genome.value
-pSnp2Bed.args.dbsnpver = params.dbsnpver.value
-pSnp2Bed.errhow        = 'retry'
-pSnp2Bed.args.notfound = 'skip' # error
-pSnp2Bed.args.header   = False
-pSnp2Bed.args.skip     = 0
-pSnp2Bed.args.comment  = '#'
-pSnp2Bed.args.delimit  = '\t'
-pSnp2Bed.args.col      = 0
-pSnp2Bed.lang          = params.python.value
-pSnp2Bed.script        = "file:scripts/snp/pSnp2Bed.py"
+pSnp2Bedx               = Proc(desc = 'Find coordinates for SNPs in BED format.')
+pSnp2Bedx.input         = "snpfile:file"
+pSnp2Bedx.output        = "outfile:file:{{in.snpfile | fn}}.bed"
+pSnp2Bedx.args.genome   = params.genome.value
+pSnp2Bedx.args.dbsnpver = params.dbsnpver.value
+pSnp2Bedx.errhow        = 'retry'
+pSnp2Bedx.args.notfound = 'skip' # error
+pSnp2Bedx.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+pSnp2Bedx.args.inmeta   = ['SNP']
+pSnp2Bedx.args.xcols    = ['refUCSC', 'alleles', 'alleleFreqs', 'alleleFreqCount']
+pSnp2Bedx.envs.read     = read
+pSnp2Bedx.envs.write    = write
+pSnp2Bedx.lang          = params.python.value
+pSnp2Bedx.script        = "file:scripts/snp/pSnp2Bedx.py"
 
 """
 @name:

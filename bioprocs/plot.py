@@ -30,7 +30,7 @@ pBoxplot.args.params         = Box()
 pBoxplot.tplenvs.plotBoxplot = plot.boxplot.r
 pBoxplot.script              = """
 {{plotBoxplot}}
-data = read.table ("{{in.datafile}}", sep="\\t", header={{args.header | Rbool}}, row.names={{args.rownames}}, check.names=F)
+data = read.table ("{{in.datafile}}", sep="\\t", header={{args.header | R}}, row.names={{args.rownames}}, check.names=F)
 plotBoxplot(data, {{out.outpng | quote}}, {{args.params | Rlist}})
 """
 

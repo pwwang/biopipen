@@ -170,18 +170,45 @@ pBedMakewindows.script = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools merge`, default: ""
+	`bedtools`: The bedtools executable,               default: "bedtools"
+	`params`  : Other parameters for `bedtools merge`, default: {}
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMerge = Proc()
-pBedMerge.input  = "infile:file"
-pBedMerge.output = "outfile:file:{{infile | fn}}.merged.bed"
-pBedMerge.args   = { "bin": "bedtools", "params": "" }
-pBedMerge.script = """
-{{args.bin}} merge {{args.params}} -i "{{infile}}" > "{{outfile}}"
+pBedMerge                     = Proc(desc = 'Merge regions in a bed file using `bedtools merge`.')
+pBedMerge.input               = "infile:file"
+pBedMerge.output              = "outfile:file:{{in.infile | fn}}.merged.bed"
+pBedMerge.args.bedtools       = params.bedtools.value
+pBedMerge.args.params         = Box()
+pBedMerge.envs.runcmd         = runcmd.py
+pBedMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedMerge.lang                = params.python.value
+pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
+
 """
+@name:
+	pBedsMerge
+@description:
+	A multi-input file model of pBedMerge: Merge multiple input files.
+@input:
+	`infiles:files`: The input files
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable,               default: "bedtools"
+	`params`  : Other parameters for `bedtools merge`, default: {}
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""
+pBedsMerge                     = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
+pBedsMerge.input               = "infiles:files"
+pBedsMerge.output              = "outfile:file:{{in.infiles[0] | fn}}.merged.bed"
+pBedsMerge.args.bedtools       = params.bedtools.value
+pBedsMerge.args.params         = Box()
+pBedsMerge.envs.runcmd         = runcmd.py
+pBedsMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBedsMerge.lang                = params.python.value
+pBedsMerge.script              = "file:scripts/bedtools/pBedsMerge.py"
 
 """
 @name:

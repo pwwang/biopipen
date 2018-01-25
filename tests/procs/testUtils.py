@@ -1,8 +1,9 @@
 import unittest
 from os import path
 from pyppl import PyPPL
-from bioprocs.utils import plot, txt, helpers, mem2, runcmd, polling, genenorm
-from helpers import getfile, procOK, config, utilTest
+from bioprocs.utils import plot, txt, helpers, mem2, runcmd, polling, genenorm, read, write
+from helpers import getfile, procOK, config, utilTest, cmdOK, fileOK
+from bioprocs import params
 
 # utilTest(input, script, name, tplenvs, test, args = None)
 class TestUtils (unittest.TestCase):
@@ -164,6 +165,50 @@ class TestUtils (unittest.TestCase):
 			{'pollingLast': polling.last.r},
 			self
 		)
+	
+	def testReadMetaPy(self):
+		cmdOK([getfile('testReadMetaPy.py')], self)
+	
+	def testReadRecordPy(self):
+		cmdOK([getfile('testReadRecordPy.py')], self)
+
+	def testReadBasePy(self):
+		cmdOK([getfile('testReadBasePy.py'), getfile('testReadBasePy.txt')], self)
+
+	def testWriteBasePy(self):
+		cmdOK([
+			getfile('testWriteBasePy.py'), 
+			getfile('testReadBasePy.txt'), 
+			path.join(params.tmpdir.value, 'testWriteBasePy.txt')
+		], self)
+		fileOK(
+			getfile('testWriteBasePy.txt', False), 
+			path.join(params.tmpdir.value, 'testWriteBasePy.txt'), self)
+
+	def testReadBed12Py(self):
+		cmdOK([getfile('testReadBed12Py.py'), getfile('testReadBed12Py.bed12')], self)
+
+	def testReadBedpePy(self):
+		cmdOK([getfile('testReadBedpePy.py'), getfile('testReadBedpePy.bedpe')], self)
+
+	def testReadBedxPy(self):
+		print ' '.join([getfile('testReadBedxPy.py'), getfile('testReadBedxPy.bedx')])
+		cmdOK([getfile('testReadBedxPy.py'), getfile('testReadBedxPy.bedx')], self)
+
+	def testReadBedPy(self):
+		cmdOK([getfile('testReadBedPy.py'), getfile('testReadBedxPy.bedx')], self)
+
+
+	def testWriteBedxPy(self):
+		cmdOK([
+			getfile('testWriteBedxPy.py'), 
+			getfile('testReadBedxPy.bedx'), 
+			path.join(params.tmpdir.value, 'testWriteBedxPy.txt')
+		], self)
+		fileOK(
+			getfile('testWriteBedxPy.txt', False), 
+			path.join(params.tmpdir.value, 'testWriteBedxPy.txt'), self)		
+
 
 if __name__ == '__main__':
 	unittest.main()#failfast=True)

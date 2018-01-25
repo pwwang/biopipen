@@ -1,5 +1,5 @@
-from pyppl import Proc
-from .utils import runcmd, helpers, genenorm
+from pyppl import Proc, Box
+from .utils import runcmd, helpers, genenorm, write
 from . import params
 
 """
@@ -96,14 +96,13 @@ pPromoters.args.up       = 2000
 pPromoters.args.down     = 2000
 pPromoters.errhow        = 'retry'
 pPromoters.args.notfound = 'skip' # error
-pPromoters.args.header   = False
-pPromoters.args.skip     = 0
-pPromoters.args.comment  = '#'
-pPromoters.args.delimit  = '\t'
-pPromoters.args.col      = 0
+pPromoters.args.incbody  = False
+pPromoters.args.inmeta   = ['GENE']
+pPromoters.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pPromoters.args.frm      = 'symbol, alias'
 pPromoters.args.tmpdir   = params.tmpdir.value
 pPromoters.args.genome   = params.genome.value
 pPromoters.envs.genenorm = genenorm.py
+pPromoters.envs.write    = write
 pPromoters.lang          = params.python.value
 pPromoters.script        = "file:scripts/seq/pPromoters.py"

@@ -78,7 +78,7 @@ pExpdir2Matrix.script           = "file:scripts/rnaseq/pExpdir2Matrix.r"
 """
 pBatchEffect                    = Proc(desc = 'Try to remove batch effect of expression data.')
 pBatchEffect.input              = "expr:file, batch:file"
-pBatchEffect.output             = "outfile:file:{{in.expr | fn | fn}}/{{in.expr | fn | fn}}.expr.txt, outdir:dir:{{in.expr | fn | fn}}"
+pBatchEffect.output             = "outfile:file:{{in.expr | fn2}}/{{in.expr | fn2}}.expr.txt, outdir:dir:{{in.expr | fn2}}"
 pBatchEffect.args.tool          = 'combat'
 pBatchEffect.args.boxplot       = False
 pBatchEffect.args.heatmap       = False
@@ -127,11 +127,11 @@ pBatchEffect.script             = "file:scripts/rnaseq/pBatchEffect.r"
 """
 pRawCounts2                  = Proc(desc = 'Convert raw counts to another unit.')
 pRawCounts2.input            = "expfile:file"
-pRawCounts2.output           = "outfile:file:{{in.expfile | fn | fn}}/{{in.expfile | fn | fn}}.expr.txt, outdir:dir:{{in.expfile | fn | fn}}"
+pRawCounts2.output           = "outfile:file:{{in.expfile | fn2}}/{{in.expfile | fn2}}.expr.txt, outdir:dir:{{in.expfile | fn2}}"
 pRawCounts2.args.unit        = 'cpm'
 pRawCounts2.args.header      = True
 pRawCounts2.args.log2        = False
-pRawCounts2.args.glenfile    = ''
+pRawCounts2.args.refgene     = params.refgene.value
 pRawCounts2.args.boxplot     = False
 pRawCounts2.args.heatmap     = False
 pRawCounts2.args.heatmapn    = 500
@@ -173,7 +173,7 @@ pRawCounts2.script           = "file:scripts/rnaseq/pRawCounts2.r"
 """
 p2RawCounts                  = Proc(desc = 'Convert normalized expression back to raw counts.')
 p2RawCounts.input            = 'expfile:file'
-p2RawCounts.output           = 'outfile:file:{{in.expfile | fn | fn}}/{{in.expfile | fn | fn}}.counts.txt, outdir:dir:{{in.expfile | fn | fn}}'
+p2RawCounts.output           = 'outfile:file:{{in.expfile | fn2}}/{{in.expfile | fn2}}.counts.txt, outdir:dir:{{in.expfile | fn2}}'
 p2RawCounts.args.unit        = 'fpkm'
 p2RawCounts.args.nreads      = 30000000
 p2RawCounts.args.header      = True
@@ -229,8 +229,8 @@ p2RawCounts.script           = "file:scripts/rnaseq/p2RawCounts.r"
 pRnaseqDeg        = Proc(desc = 'Detect DEGs by RNA-seq data.')
 pRnaseqDeg.input  = "efile:file, gfile:file"
 pRnaseqDeg.output = [
-	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt", 
-	"outdir:dir:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs"
+	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt", 
+	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs"
 ]
 pRnaseqDeg.args.tool          = 'edger' # deseq2
 pRnaseqDeg.args.filter        = '1,2'

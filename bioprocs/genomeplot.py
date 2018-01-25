@@ -18,7 +18,8 @@ https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
 @output:
     `outfile:file`: The dumped track data
 @args:
-    `intype`: Input file type. Default: bed12
+    `intype`: Input file type. Default: auto
+        - Identified by extension
         - One of "chiapet.tool", "bed12", "bedpe", "hiclib", "homer", "bam", "two.bams".
     `params`: The display params
 @requires:
@@ -28,7 +29,7 @@ https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
 pInteractionTrack             = Proc(desc = 'Gererate genomic interaction track for Gviz.')
 pInteractionTrack.input       = "name, infile:file, region"
 pInteractionTrack.output      = "outfile:file:geneTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.rds"
-pInteractionTrack.args.intype = "bed12" 
+pInteractionTrack.args.intype = "auto" 
 pInteractionTrack.args.params = Box({
     'col.outside': "lightblue",
     'anchor.height': 0.06

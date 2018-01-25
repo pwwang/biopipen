@@ -3,20 +3,29 @@ rnames   = make.unique(as.vector(data[,1]))
 data[,1] = NULL
 rownames(data)  = rnames
 
-if ("{{args.unit}}" == 'cpm') {
+{% if args.unit | lambda x: x == 'cpm' %}
 	library('edgeR')
 	ret = cpm (data, log = {{args.log2 | R}})
-} else if ("{{args.unit}}" == 'rpkm') {
+{% elif args.unit | lambda x: x == 'fpkm' or x == 'rpkm' %}
 	library('edgeR')
-	genelen = read.table ("{{args.glenfile}}", header=F, row.names = 1, check.names = F)
-	ret = rpkm (data, log = {{args.log2 | R}}, gene.length = as.vector(genelen))
-} else {
+	genelen = read.table ({{args.refgene | quote}}, header=F, row.names = NULL, check.names = F, sep = "\t")
+	genelen = apply(genelen, 1, function(row) {
+		gene = unlist(strsplit(row[9], ' ', fixed=T))[2]
+		gene = substr(gene, 1, nchar(gene) - 1)
+		len  = as.numeric(row[5]) - as.numeric(row[4])
+		c(gene, len)
+	})
+	genelen = t(genelen)
+	genelen = as.vector(genelen[which(genelen[,1] %in% rnames),2,drop=T])
+	ret = rpkm (data, log = {{args.log2 | R}}, gene.length = as.numeric(genelen))
+{% else %}
 	library('coseq')
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
-	if ({{args.log2 | R}})
-		ret = log2(ret)
-}
+	{% if args.log2 %}
+	ret = log2(ret)
+	{% endif %}
+{% endif %}
 
 write.table (round(ret, 3), "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
 

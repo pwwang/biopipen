@@ -22,7 +22,8 @@ for sample in samples:
 	params['a'] = True
 	params['c'] = sample
 	params['e'] = True
-	cmd = '{{args.vcftools}} %s "{{in.infile}}" > "{{out.outdir}}/%s.vcf"' % (params2CmdArgs(params), sample)
+	params.update({{args.params}})
+	cmd = '{{args.vcftools}} %s "{{in.infile}}" > "{{out.outdir}}/{{in.infile | fn}}-%s.vcf"' % (params2CmdArgs(params), sample)
 	cmds.append(cmd)
 
 ########### gatk
@@ -31,11 +32,11 @@ for sample in samples:
 	params                       = {}
 	params['R']                  = {{args.ref | quote}}
 	params['V']                  = {{in.infile | quote}}
-	params['o']                  = "{{out.outdir}}/%s.vcf" % sample
+	params['o']                  = "{{out.outdir}}/{{in.infile | fn}}-%s.vcf" % sample
 	params['sample_name']        = sample
 	params['excludeFiltered']    = True
 	params['excludeNonVariants'] = True
-
+	params.update({{args.params}})
 	cmd = '{{args.gatk}} -T SelectVariants %s' % (params2CmdArgs(params, equal=' '))
 	cmds.append(cmd)
 

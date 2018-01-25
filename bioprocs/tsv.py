@@ -1,10 +1,10 @@
 from pyppl import Proc, Box
 from . import params
-from .utils import helpers, txt
+from .utils import helpers, txt, read, write
 
 """
 @name:
-	pMatrix
+	pMatrixR
 @description:
 	Operate a matrix and save the new matrix to file.
 @input:
@@ -16,19 +16,19 @@ from .utils import helpers, txt
 	`rnames  `: Whether the input file has rnames  . Default: 1
 	`code`: The R code to operating the matrix. (the matrix is read in variable `mat`)
 """
-pMatrix             = Proc(desc = 'Operate a matrix and save the new matrix to file.')
-pMatrix.input       = "infile:file"
-pMatrix.output      = "outfile:file:{{in.infile | bn}}"
-pMatrix.args.cnames = True
-pMatrix.args.rnames = True
-pMatrix.args.params = Box({
+pMatrixR             = Proc(desc = 'Operate a matrix and save the new matrix to file.')
+pMatrixR.input       = "infile:file"
+pMatrixR.output      = "outfile:file:{{in.infile | bn}}"
+pMatrixR.args.cnames = True
+pMatrixR.args.rnames = True
+pMatrixR.args.params = Box({
 	"sep"        : "\t",
 	"check.names": "FALSE",
 	"quote"      : ""
 })
-pMatrix.args.code   = []
-pMatrix.lang        = params.Rscript.value
-pMatrix.script      = "file:scripts/matrix/pMatrix.r"
+pMatrixR.args.code   = []
+pMatrixR.lang        = params.Rscript.value
+pMatrixR.script      = "file:scripts/tsv/pMatrixR.r"
 
 """
 @name:
@@ -53,7 +53,7 @@ pCbind.args.rnames    = True
 pCbind.args.na        = 'NA'
 pCbind.envs.cbindfill = helpers.cbindfill.r
 pCbind.lang           = params.Rscript.value
-pCbind.script         = "file:scripts/matrix/pCbind.r"
+pCbind.script         = "file:scripts/tsv/pCbind.r"
 
 """
 @name:
@@ -78,7 +78,7 @@ pRbind.args.rnames    = True
 pRbind.args.na        = 'NA'
 pRbind.envs.rbindfill = helpers.rbindfill.r
 pRbind.lang           = params.Rscript.value
-pRbind.script         = "file:scripts/matrix/pRbind.r"
+pRbind.script         = "file:scripts/tsv/pRbind.r"
 
 """
 @name:
@@ -101,7 +101,7 @@ pCsplit.args.cnames = True
 pCsplit.args.rnames = True
 pCsplit.args.n      = 1
 pCsplit.lang        = params.Rscript.value
-pCsplit.script      = "file:scripts/matrix/pCsplit.r"
+pCsplit.script      = "file:scripts/tsv/pCsplit.r"
 
 """
 @name:
@@ -124,73 +124,48 @@ pRsplit.args.cnames   = True
 pRsplit.args.rnames   = True
 pRsplit.args.n        = 1
 pRsplit.lang          = params.Rscript.value
-pRsplit.script        = "file:scripts/matrix/pRsplit.r"
+pRsplit.script        = "file:scripts/tsv/pRsplit.r"
 
 """
 @name:
-	pTxtFilter
+	pTsv
 @description:
-	Filter a tab-delimit file (txt/tsv file)
+	Read, Transform, filter a TSV file.
 @input:
 	`infile:file`: The input file
 @output:
 	`outfile:file`: The output file
 @args:
-	`cols`:    The cols to remain. Could be either index or column name. Default: `[] (all columns)`
-	`rfilter`: The row filter. Default: `None` (don`t filter)
-		- Should be a string of a lambda function with parameter of a list of fields.
-		- Note that the fields should be the ones remained after column filtering.
-		- Rows remained when this function returns `True`.
-	`header`:  Whether input file has a header. Default: `True`
-	`skip`:    Skip first serveral lines. Default: 0
-	`delimit`: The delimit. Default: `\t`
+	`inmeta`: The meta data for input file. Could be:
+		- A list of columns names,
+		- A list of OrderedDict items with column name and its description
+		- An OrderedDict (no dict (won't be checked!!), because key order won't keep)
+		- A string for predefined reader classes. For example, bed, bed12, bedpe, bedx, etc.
+	`outmeta`: The meta data for output file. Same as inmeta, but you can specify part of them to just keep some columns. You may also use a different column name, but you have to specify values for each row in `args.ops` function
+	`ops`: A ops function to transform the row. Argument is an instance of `readRecord`
+	`opshelper`: A helper function for `args.ops`
+	`inopts`: The options for reader. Default: `Box(delimit = '\\t', comment = '#', skip = 0)`
+	`outdem`: The output delimiter. It won't work if it is a predefined write class
+	`incom`: The prefix of comments. It won't work if it is a predefined read class
+	`outdem`: The prefix of comments. It won't work if it is a predefined write class
+	`omprefix`: The prefix for output metadata. Defualt: '##META/'
+	`hdprefix`: The prefix for output header. Default: '#'
+	`writemeta`: Whether report meta to the output file. Default: True
+	`writehead`: Whether report header to the output file. Default: True
 """
-pTxtFilter                 = Proc(desc = 'Filter a txt(tsv) file by columns and rows.')
-pTxtFilter.input           = "infile:file"
-pTxtFilter.output          = "outfile:file:{{in.infile | bn}}"
-pTxtFilter.lang            = params.python.value
-pTxtFilter.args.cols       = []
-pTxtFilter.args.rfilter    = None
-pTxtFilter.args.header     = True
-pTxtFilter.args.skip       = 0
-pTxtFilter.args.data       = {}
-pTxtFilter.args.delimit    = "\t"
-pTxtFilter.args.outdelimit = "\t"
-pTxtFilter.envs.txtFilter  = txt.filter.py
-pTxtFilter.script          = "file:scripts/matrix/pTxtFilter.py"
-
-"""
-@name:
-	pTxtTransform
-@description:
-	Transform a tab-delimit file (txt/tsv file)
-@input:
-	`infile:file`: The input file
-@output:
-	`outfile:file`: The output file
-@args:
-	`cols`:    The cols to remain. Could be either index or column name. Default: `[] (all columns)`
-	`transform`: The row transformer. Default: `None` (don`t transform)
-		- Should be a string of a lambda function with parameter of a list of fields.
-		- Note that the fields should be the ones remained after column filtering.
-		- Must return a list of strings(fields).
-	`header`:  Whether input file has a header. Default: `True`
-	`skip`:    Skip first serveral lines. Default: 0
-	`delimit`: The delimit. Default: `\t`
-"""
-pTxtTransform                   = Proc(desc = 'Transform a txt(tsv) file.')
-pTxtTransform.input             = "infile:file"
-pTxtTransform.output            = "outfile:file:{{in.infile | bn}}"
-pTxtTransform.lang              = params.python.value
-pTxtTransform.args.cols         = []
-pTxtTransform.args.data         = {}
-pTxtTransform.args.transform    = None
-pTxtTransform.args.header       = True
-pTxtTransform.args.skip         = 0
-pTxtTransform.args.delimit      = "\t"
-pTxtTransform.args.outdelimit   = "\t"
-pTxtTransform.envs.txtTransform = txt.transform.py
-pTxtTransform.script            = "file:scripts/matrix/pTxtTransform.py"
+pTsv                = Proc(desc = 'Read, Transform, filter a TSV file.')
+pTsv.input          = "infile:file"
+pTsv.output         = "outfile:file:{{in.infile | fn}}.tsv"
+pTsv.lang           = params.python.value
+pTsv.args.inmeta    = None
+pTsv.args.outmeta   = None
+pTsv.args.opshelper = ''
+pTsv.args.ops       = None
+pTsv.args.inopts    = Box(delimit = '\t', comment = '#', skip = 0)
+pTsv.args.outopts   = Box(delimit = '\t', metaprefix = '##META/', headprefix = '#', meta = True, head = True)
+pTsv.envs.read      = read
+pTsv.envs.write     = write
+pTsv.script         = "file:scripts/tsv/pTsv.py"
 
 """
 @name:
@@ -235,4 +210,4 @@ pSimRead.args.match   = None
 pSimRead.args.do      = None
 pSimRead.args.data    = {}
 pSimRead.lang         = params.python.value
-pSimRead.script       = "file:scripts/matrix/pSimRead.py"
+pSimRead.script       = "file:scripts/tsv/pSimRead.py"

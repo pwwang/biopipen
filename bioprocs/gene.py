@@ -1,7 +1,7 @@
-from pyppl import Proc
+from pyppl import Proc, Box
 from . import params
 from .seq import pPromoters
-from .utils import genenorm
+from .utils import genenorm, write
 
 pGenePromoters = pPromoters.copy()
 
@@ -64,33 +64,28 @@ pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 	`tmpdir`: The tmpdir used to store mygene cache files. 
 	`genome`: In which genome to fetch the coordinates. Default: hg19
 """
-pGeneTss               = Proc(desc = 'Get gene TSS in BED format')
-pGeneTss.input         = 'infile:file'
-pGeneTss.output        = 'outfile:file:{{in.infile | fn}}-tss.bed'
-pGeneTss.errhow        = 'retry'
-pGeneTss.args.notfound = 'skip' # error
-pGeneTss.args.header   = False
-pGeneTss.args.skip     = 0
-pGeneTss.args.comment  = '#'
-pGeneTss.args.delimit  = '\t'
-pGeneTss.args.col      = 0
-pGeneTss.args.frm      = 'symbol, alias'
-pGeneTss.args.tmpdir   = params.tmpdir.value
-pGeneTss.args.genome   = params.genome.value
-pGeneTss.envs.genenorm = genenorm.py
-pGeneTss.lang          = params.python.value
-pGeneTss.script        = "file:scripts/gene/pGeneTss.py"
+pGeneTss                = Proc(desc = 'Get gene TSS in BED format')
+pGeneTss.input          = 'infile:file'
+pGeneTss.output         = 'outfile:file:{{in.infile | fn}}-tss.bedx'
+pGeneTss.errhow         = 'retry'
+pGeneTss.args.notfound  = 'skip' # error
+pGeneTss.args.inmeta    = ['GENE']
+pGeneTss.args.inopts    = Box(skip = 0, comment = '#', delimit = '\t')
+pGeneTss.args.frm       = 'symbol, alias'
+pGeneTss.args.tmpdir    = params.tmpdir.value
+pGeneTss.args.genome    = params.genome.value
+pGeneTss.envs.genenorm  = genenorm.py
+pGeneTss.envs.writeBedx = write.bedx.py
+pGeneTss.lang           = params.python.value
+pGeneTss.script         = "file:scripts/gene/pGeneTss.py"
 
 pGeneBody               = Proc(desc = 'Get geen body in BED format')
 pGeneBody.input         = 'infile:file'
-pGeneBody.output        = 'outfile:file:{{in.infile | fn}}-body.bed'
+pGeneBody.output        = 'outfile:file:{{in.infile | fn}}-body.bedx'
 pGeneBody.errhow        = 'retry'
 pGeneBody.args.notfound = 'skip' # error
-pGeneBody.args.header   = False
-pGeneBody.args.skip     = 0
-pGeneBody.args.comment  = '#'
-pGeneBody.args.delimit  = '\t'
-pGeneBody.args.col      = 0
+pGeneBody.args.inmeta    = ['GENE']
+pGeneBody.args.inopts    = Box(skip = 0, comment = '#', delimit = '\t')
 pGeneBody.args.frm      = 'symbol, alias'
 pGeneBody.args.tmpdir   = params.tmpdir.value
 pGeneBody.args.genome   = params.genome.value

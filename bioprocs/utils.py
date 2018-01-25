@@ -154,12 +154,41 @@ download.curl.py = _getsource()
 parallel    = Box()
 parallel.py = _getsource(runcmd.py)
 
-genenorm    = Box()
-genenorm.py = _getsource()
-
 sql = Box(
 	dsnparse    = {},
 	schemaparse = {}
 )
 sql.dsnparse.py    = _getsource()
 sql.schemaparse.py = _getsource()
+
+read = Box(
+	record = Box(),
+	meta   = Box(),
+	base   = Box(),
+	head   = Box(),
+	bed12  = Box(),
+	bedpe  = Box(),
+	bedx   = Box(),
+	bed    = Box(),
+)
+read.meta.py   = _getsource()
+read.record.py = _getsource()
+read.base.py   = _getsource(read.meta.py + '\n' + read.record.py)
+read.head.py   = _getsource(read.base.py)
+read.bed12.py  = _getsource(read.base.py)
+read.bedpe.py  = _getsource(read.base.py)
+read.bedx.py   = _getsource(read.base.py)
+read.bed.py    = _getsource(read.base.py)
+
+write = Box(
+	base = Box(),
+	bed  = Box(),
+	bedx = Box()
+)
+write.base.py = _getsource(read.meta.py)
+write.bed.py  = _getsource(read.bed.py + '\n' + write.base.py)
+write.bedx.py = _getsource(read.bedx.py + '\n' + write.base.py)
+
+
+genenorm    = Box()
+genenorm.py = _getsource(read.base.py)

@@ -25,11 +25,17 @@ samples = list(filter(None, [x.strip() for x in samples]))
 params['input-vcf']  = {{in.infile | quote}}
 params['output-maf'] = {{out.outfile | quote}}
 params['vep-data']   = {{args.vepDb | quote}}
+params['vep-forks']  = {{args.nthread}}
 params['filter-vcf'] = {{args.filtervcf | quote}}
 params['ref-fasta']  = {{args.ref | quote}}
 params['vep-path']   = path.dirname(vep)
+{% if args.tumor1st %}
 params['tumor-id']   = samples.pop(0)
 params['normal-id']  = samples[0] if samples else 'NORMAL'
+{% else %}
+params['normal-id']  = samples.pop(0)
+params['tumor-id']   = samples[0] if samples else 'NORMAL'
+{% endif %}
 
 cmd = '{{args.vcf2maf}} %s' % (params2CmdArgs(params, equal=' '))
 runcmd(cmd)
@@ -48,6 +54,7 @@ for sample in samples:
 	params['input-vcf']  = samplevcf
 	params['output-maf'] = "{{job.outdir}}/{{in.infile | fn}}-%s.maf" % sample
 	params['vep-data']   = {{args.vepDb | quote}}
+	params['vep-forks']  = {{args.nthread}}
 	params['filter-vcf'] = {{args.filtervcf | quote}}
 	params['ref-fasta']  = {{args.ref | quote}}
 	params['vep-path']   = path.dirname(vep)
