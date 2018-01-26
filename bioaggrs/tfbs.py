@@ -1,6 +1,6 @@
 from pyppl import Aggr
 from bioprocs.common import pStr2File, pFile2Proc, pSort
-from bioprocs.matrix import pSimRead
+from bioprocs.tsv import pSimRead
 from bioprocs.seq import pPromoters, pConsv, pConsvPerm
 from bioprocs.bed import pBedGetfasta
 from bioprocs.tfbs import pMotifScan

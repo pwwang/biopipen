@@ -20,19 +20,16 @@ Generate plot using given data
 	`rownames`:  `row.names` parameter for `read.table`, default: 1
 	`params`:    Other parameters for `boxplot`, default: ""
 """
-pBoxplot                     = Proc(desc = 'Do boxplot.')
-pBoxplot.input               = "datafile:file"
-pBoxplot.output              = "outpng:file:{{in.datafile | fn}}.boxplot.png"
-pBoxplot.lang                = "Rscript"
-pBoxplot.args.header         = True
-pBoxplot.args.rownames       = 1
-pBoxplot.args.params         = Box()
-pBoxplot.tplenvs.plotBoxplot = plot.boxplot.r
-pBoxplot.script              = """
-{{plotBoxplot}}
-data = read.table ("{{in.datafile}}", sep="\\t", header={{args.header | R}}, row.names={{args.rownames}}, check.names=F)
-plotBoxplot(data, {{out.outpng | quote}}, {{args.params | Rlist}})
-"""
+pBoxplot              = Proc(desc = 'Do boxplot.')
+pBoxplot.input        = "datafile:file"
+pBoxplot.output       = "outpng:file:{{in.datafile | fn}}.boxplot.png"
+pBoxplot.lang         = "Rscript"
+pBoxplot.args.cnames  = True
+pBoxplot.args.rnames  = True
+pBoxplot.args.ggs     = Box()
+pBoxplot.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pBoxplot.envs.plot    = plot
+pBoxplot.script       = "file:scripts/plot/pBoxplot.r"
 
 """
 @name:

@@ -134,7 +134,7 @@ aBam2Mut.pBamPair2Smut.depends = aBam2Mut.pBamDir,   aBam2Mut.pSampleInfo
 # input
 aBam2Mut.pBam2Gmut.input     = lambda ch1, ch2: [ 
 	path.join(ch1.get(), s + '.bam') for s in     \
-	set(Channel.fromFile(ch2.get(), header=True).colAt(0).flatten())
+	set(Channel.fromFile(ch2.get(), header=True).colAt(0).unique().flatten())
 ]
 aBam2Mut.pBamPair2Smut.input = lambda ch1, ch2: [ \
 	(path.join(ch1.get(), c1.get() + '.bam'), path.join(ch1.get(), c2.get() + '.bam')) for ch in \
