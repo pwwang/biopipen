@@ -65,6 +65,7 @@ if 'germ' in params.muts and 'soma' in params.muts:
 	aBam2Mut.pSampleInfo.input   = [params.saminfo]
 	aBam2Mut.pBam2Gmut.exdir     = path.join(params.exdir, 'germline')
 	aBam2Mut.pBamPair2Smut.exdir = path.join(params.exdir, 'somatic')
+	starts.append(aBam2Mut)
 elif 'germ' in params.muts:
 	pBam2Gmut.depends = pBamDir
 	pBam2Gmut.input   = lambda ch: ch.expand("*.bam")

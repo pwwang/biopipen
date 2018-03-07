@@ -1,10 +1,5 @@
 {# Load the classes #}
-{% for k, v in read.items() %}
-{{v.py}}
-{% endfor %}
-{% for k, v in write.items() %}
-{{v.py}}
-{% endfor %}
+{{ read, write | lambda x, y: '\n'.join([v.py for v in x.values()] + [v.py for v in y.values()]) | norepeats }}
 
 inopts  = {{args.inopts}}
 outopts = {{args.outopts}}
@@ -43,7 +38,7 @@ if 'meta' in outopts:
 	writemeta = outopts['meta']
 	del outopts['meta']
 if 'head' in outopts:
-	writemeta = outopts['head']
+	writehead = outopts['head']
 	del outopts['head']
 if metaprefix in outopts:
 	metaprefix = outopts['metaprefix']

@@ -1,18 +1,17 @@
 from os import path, symlink
-{{ genenorm }}
+{{ genenorm | norepeats }}
 
 _, cachefile = genenorm(
 	{{in.infile | quote}}, 
-	{{out.outfile | quote}}, 
-	col      = {{args.col}},
+	outfile  = {{out.outfile | quote}}, 
 	notfound = {{args.notfound | quote}},
 	frm      = {{args.frm | quote}},
-	to       = {{args.to | quote}},
-	header   = {{args.header}},
+	to       = {{args.to  | quote}},
 	genome   = {{args.genome | quote}},
-	skip     = {{args.skip}},
-	delimit  = {{args.delimit | quote}},
 	tmpdir   = {{args.tmpdir | quote}},
-	comment  = {{args.comment | quote}}
+	inopts   = {{args.inopts}},
+	inmeta   = {{args.inmeta | lambda x: x if isinstance(x, list) or isinstance(x, dict) else '"' + x + '"'}},
+	genecol  = {{args.genecol | quote}}
 )
+
 symlink(cachefile, path.join({{job.outdir | quote}}, path.basename(cachefile)))

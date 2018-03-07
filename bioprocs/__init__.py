@@ -18,6 +18,8 @@ DEFAULTS = {
 	"annovarDb.desc"     : "The path of database for Annovar.",
 	"consvdir"           : "",
 	"consvdir.desc"      : "The directory containing conservation scores in bigWig files.\nUse ucsc-wig2bigwig the original files are wigFix files.",
+	"cytoband"           : "",
+	"cytoband.desc"      : "The cytoband file from ucsc database.",
 	"dbsnp"              : "",
 	"dbsnp.desc"         : "The dbsnp common variants in VCF format.",
 	"dbsnp_all"          : "",

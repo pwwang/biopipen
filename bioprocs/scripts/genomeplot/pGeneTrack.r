@@ -1,4 +1,4 @@
-library (Gviz)
+#library (Gviz)
 region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
 chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
@@ -21,5 +21,9 @@ geneParams = list(
 	strand     = "strand"
 )
 geneParams = c(geneParams, {{args.params | Rlist}})
-geneTrack  = do.call(UcscTrack, geneParams)
-saveRDS (geneTrack, {{out.outfile | quote}})
+
+ret             = list()
+ret$trackType   = 'UcscTrack'
+ret$trackParams = geneParams
+
+saveRDS (ret, {{out.outfile | quote}})

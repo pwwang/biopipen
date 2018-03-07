@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: readBed12
 if 'readBed12' not in vars() or not callable(readBed12):
 	class readBed12(readBase):
 		META = [
@@ -20,3 +21,4 @@ if 'readBed12' not in vars() or not callable(readBed12):
 			self.meta = readMeta(
 				*readBed12.META
 			)
+# PYPPL REPEAT END: readBed12

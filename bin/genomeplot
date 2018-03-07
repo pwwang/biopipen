@@ -31,7 +31,7 @@ params.inputs.desc     = 'The input of the tracks.\n"<ucscTrack>:<gvizTrack>" fo
 params.params.type     = list
 params.params.desc     = 'The params for each track'
 params.plotparams.desc = 'The params for pGenomePlot.'
-params.devpars         = '{"res": 300, "height": 2000, "width": 4000}'
+params.devpars         = '{"res": 300, "height": 1000, "width": 4000}'
 params.devpars.desc    = 'The device parameters for plotting.'
 params.splitlen        = 1000000
 params.splitlen.desc   = 'Split the plot into 2 if the region is longer then splitlen.'
@@ -51,29 +51,29 @@ start, end       = startend.split('-')
 start      = int(start)
 end        = int(end)
 trackProcs = []
-uuid       = utils.uid(str(sys.argv))
+#uuid       = utils.uid(str(sys.argv))
 for i,tt in enumerate(params.tracks):
 	if tt == 'data':
-		datatrackproc = pDataTrack.copy(tag = params.names[i].replace(' ', '') + '-' + uuid)
+		datatrackproc = pDataTrack.copy(tag = params.names[i])
 		datatrackproc.input = (params.names[i], params.inputs[i], chrom)
 		if params.params:
 			datatrackproc.args.params.update(json.loads(params.params[i]))
 		trackProcs.append(datatrackproc)
 	elif tt == 'anno':
-		annotrackproc = pAnnoTrack.copy(tag = params.names[i].replace(' ', '') + '-' + uuid)
+		annotrackproc = pAnnoTrack.copy(tag = params.names[i])
 		annotrackproc.input = (params.names[i], params.inputs[i], chrom)
 		if params.params:
 			annotrackproc.args.params.update(json.loads(params.params[i]))
 		trackProcs.append(annotrackproc)
 	elif tt == 'ucsc':
-		ucsctrackproc = pUcscTrack.copy(tag = params.names[i].replace(' ', '') + '-' + uuid)
+		ucsctrackproc = pUcscTrack.copy(tag = params.names[i])
 		ucsctrack, gviztrack = params.inputs[i].split(':')
 		ucsctrackproc.input = (params.names[i], ucsctrack, gviztrack, params.region)
 		if params.params:
 			ucsctrackproc.args.params.update(json.loads(params.params[i]))
 		trackProcs.append(ucsctrackproc)
 	else:
-		intertrackproc = pInteractionTrack.copy(tag = params.names[i].replace(' ', '') + '-' + uuid)
+		intertrackproc = pInteractionTrack.copy(tag = params.names[i])
 		infile, intype = params.inputs[i].split(':')
 		intertrackproc.input = (params.names[i], infile, params.region)
 		intertrackproc.args.intype = intype
@@ -83,7 +83,7 @@ for i,tt in enumerate(params.tracks):
 
 if end - start > params.splitlen:
 	pGenomePlot.depends        = trackProcs
-	pGenomePlot.tag            = uuid
+	#pGenomePlot.tag            = uuid
 	pGenomePlot.forks          = params.forks
 	pGenomePlot.exdir          = params.outdir
 	pGenomePlot.args.ideoTrack = params.ideo
@@ -106,7 +106,7 @@ if end - start > params.splitlen:
 
 else:
 	pGenomePlot.depends        = trackProcs
-	pGenomePlot.tag            = uuid
+	#pGenomePlot.tag            = uuid
 	pGenomePlot.exdir          = params.outdir
 	pGenomePlot.args.ideoTrack = params.ideo
 	pGenomePlot.args.axisTrack = params.axis

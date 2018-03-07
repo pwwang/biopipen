@@ -13,7 +13,7 @@ class TestGenomePlot (unittest.TestCase):
 		cmd = [
 			genomeplot, 
 			'-tracks', 'anno', '-inputs', getfile('test.bam'), '-region', 'chr1:189891484-190087516', '-names', 'Anno', '-outdir', path.join(params.tmpdir.value, 'genomeplot')]
-		print ' '.join(cmd)
+		#print ' '.join(cmd)
 		cmdOK(cmd, self)
 
 	def testNormal(self):

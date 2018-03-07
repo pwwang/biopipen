@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: readBedx
 if 'readBedx' not in vars() or not callable(readBedx):
 	class readBedx(readBase):
 		META = [
@@ -30,3 +31,4 @@ if 'readBedx' not in vars() or not callable(readBedx):
 				if skip > 0:
 					for _ in range(skip):
 						self.opener.readline()
+# PYPPL REPEAT END: readBedx

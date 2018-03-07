@@ -14,12 +14,9 @@ PC = sum (pi * e                  )
 Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4489297/
 
 ### input
-#### `peakfile:file`:
-The BED/peak file for peaks  
-#### `genefile:file`:
-The BED file for gene coordinates  
+#### `peakfile:file`:: The BED/peak file for peaks  
+#### `genefile:file`:: The BED file for gene coordinates  
 
 ### output
-#### `outfile:file`:
-The regulatory potential file for each gene  
+#### `outfile:file`:: The regulatory potential file for each gene  
 {% endraw %}

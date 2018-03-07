@@ -8,8 +8,7 @@
 Calculate the rank product of a set of ranks. Refer to [here](https://en.wikipedia.org/wiki/Rank_product)
 
 ### input
-#### `infile:file`:
-The input file  
+#### `infile:file`:: The input file  
 - Format:
 ```
 			Case1	Case2	...
@@ -26,6 +25,5 @@ Feature2	3    	2    	...
 ```
 
 ### output
-#### `outfile:file`:
-The output file with original ranks, rank products and p-value if required  
+#### `outfile:file`:: The output file with original ranks, rank products and p-value if required  
 {% endraw %}

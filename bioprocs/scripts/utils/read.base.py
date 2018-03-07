@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: readBase
 if 'readBase' not in vars() or not callable(readBase):
 	class readBase(object):
 		def __init__(self, infile, delimit = '\t', comment = '#', skip = 0):
@@ -8,11 +9,13 @@ if 'readBase' not in vars() or not callable(readBase):
 				'meta'   : readMeta(),
 				'opener' : gzip.open(infile) if infile.endswith('.gz') else open(infile),
 				'delimit': delimit,
-				'comment': comment
+				'comment': comment,
+				'tell'   : 0
 			}
 			if skip > 0:
 				for _ in range(skip):
 					self.opener.readline()
+			self.tell = self.opener.tell()
 
 		def _parse(self, line):
 			ret = {}
@@ -31,7 +34,7 @@ if 'readBase' not in vars() or not callable(readBase):
 			return [r for r in self]
 
 		def rewind(self):
-			self.opener.seek(0)
+			self.opener.seek(self.tell)
 
 		def __iter__(self):
 			return self
@@ -39,3 +42,4 @@ if 'readBase' not in vars() or not callable(readBase):
 		def __del__(self):
 			if self.opener:
 				self.opener.close()
+# PYPPL REPEAT END: readBase

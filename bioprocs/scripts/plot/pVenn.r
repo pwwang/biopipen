@@ -1,4 +1,11 @@
-mat         = read.table ({{in.infile | quote}}, sep="\t", header = TRUE, row.names = {{args.rnames | lambda x: '1' if x else 'NULL'}}, check.names = F)
+mat         = read.table ({{in.infile | quote}}, sep="\t", header = TRUE, row.names = NULL, check.names = F)
+
+{% if args.rnames %}
+rns = make.unique(as.character(as.vector(mat[,1])))
+mat[,1] = NULL
+rownames(mat) = rns
+{% endif %}
+
 nc          = ncol(mat)
 cnames      = colnames(mat)
 vennParams  = {{args.vennParams  | Rlist}}

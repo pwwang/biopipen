@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: writeBase
 if 'writeBase' not in vars() or not callable(writeBase):
 	class writeBase(object):
 		def __init__(self, outfile):
@@ -8,8 +9,10 @@ if 'writeBase' not in vars() or not callable(writeBase):
 			for key in self.meta.keys():
 				self.opener.write(prefix + key + ': %s' % getattr(self.meta, key) + '\n')
 		
-		def writeHead(self, prefix = '#', delimit = '\t'):
-			self.opener.write(prefix + delimit.join(self.meta.keys()) + '\n')
+		def writeHead(self, prefix = '#', delimit = '\t', transform = None):
+			keys = self.meta.keys()
+			if callable(transform): keys = transform(keys)
+			self.opener.write(prefix + delimit.join(keys) + '\n')
 
 		def write(self, x, delimit = '\t'):
 			outs = []
@@ -20,3 +23,4 @@ if 'writeBase' not in vars() or not callable(writeBase):
 		def __del__(self):
 			if self.opener:
 				self.opener.close()
+# PYPPL REPEAT END: writeBase

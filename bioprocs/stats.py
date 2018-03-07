@@ -94,6 +94,7 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 	`plotParams`: The parameters for `ggsurvplot`. Default: `{risk.table: True, conf.int = True}`
 	`gridParams`: The parameters for `arrange_ggsurvplots`.
 	`pval`      : Whether print pvalue on the plot. Default: True
+	`noerror`   : Do not report error if error happens. Generate ouput file anyway.
 @requires:
 	[`r-survival`](https://rdrr.io/cran/survival/)
 	[`r-survminer`](https://rdrr.io/cran/survminer/)
@@ -105,6 +106,7 @@ pSurvival.args.inunit     = 'days' # months, weeks, years
 pSurvival.args.outunit    = 'days'
 pSurvival.args.nthread    = 1
 pSurvival.args.rnames     = True
+pSurvival.args.noerror    = False
 pSurvival.args.combine    = True
 pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
 pSurvival.args.plotParams = Box({'risk.table': True, 'conf.int': True})

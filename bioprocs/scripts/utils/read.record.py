@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: readRecord
 if 'readRecord' not in vars() or not callable(readRecord):
 	class readRecord(object):
 
@@ -14,6 +15,12 @@ if 'readRecord' not in vars() or not callable(readRecord):
 		def __getattr__(self, name):
 			if name == '__data': return self.__dict__['__data']
 			return self.__dict__['__data'][name]
+
+		def __getitem__(self, name):
+			return self.__getattr__(name)
+
+		def __setitem__(self, name, val):
+			self.__setattr__(name, val)
 			
 		def __setattr__(self, name, val):
 			self.__dict__['__data'][name] = val
@@ -23,3 +30,4 @@ if 'readRecord' not in vars() or not callable(readRecord):
 
 		def haskey(self, key):
 			return key in self.__dict__['__data']
+# PYPPL REPEAT END: readRecord

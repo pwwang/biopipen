@@ -1,8 +1,8 @@
 import sys
 
 
-{{ genenorm }}
-{{ write.bedx.py }}
+{{ genenorm | norepeats }}
+{{ write.bedx.py | norepeats }}
 
 # get the genes
 genes, _ = genenorm(
@@ -20,7 +20,16 @@ writer = writeBedx({{out.outfile | quote}})
 writer.meta.add(QUERY = 'The query gene name')
 writer.writeHead()
 for gene, hit in genes.items():
+	# TODO: log those genes not found.
+	if 'genomic_pos_{{args.genome}}' not in hit:
+		continue
 	pos      = hit['genomic_pos_{{args.genome}}']
+	if not pos:
+		continue 
+	if not pos: continue 
+	# TODO: have to figure out this (when a gene has isoforms)
+	if isinstance(pos, list):
+		pos = pos[0]
 	r        = readRecord()
 	r.CHR    = 'chr' + str(pos['chr'])
 	if pos['strand'] == 1:

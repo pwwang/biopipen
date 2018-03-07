@@ -8,12 +8,10 @@
 Generate box plot
 
 ### input
-#### `datafile:file`:
-The data file  
+#### `datafile:file`:: The data file  
 
 ### output
-#### `outpng:file`:
-The output figure  
+#### `outpng:file`:: The output figure  
 
 ## pScatterPlot
 
@@ -21,8 +19,7 @@ The output figure
 Scatter plots with more information
 
 ### input
-#### `infile:file`:
-The input file.  
+#### `infile:file`:: The input file.  
 - Format:
 ```
 	X	Y	Size	Color
@@ -32,8 +29,7 @@ B	2	2	2	2
 - Column 3,4 can be omitted
 
 ### output
-#### `outfile:file`:
-The plot  
+#### `outfile:file`:: The plot  
 
 ## pHeatmap
 
@@ -41,12 +37,10 @@ The plot
 Plot heatmaps.
 
 ### input
-#### `infile:file`:
-The input matrix file  
+#### `infile:file`:: The input matrix file  
 
 ### output
-#### `outfile:file`:
-The heatmap  
+#### `outfile:file`:: The heatmap  
 
 ## pScatterCompare
 
@@ -54,13 +48,16 @@ The heatmap
 Plot scatter plot to compare values of first 2 columns of input data
 
 ### input
-#### `infile:file`:
-The input file containing a matrix with at least 2 columns  
+#### `infile:file`:: The input file containing a matrix with at least 2 columns  
 	- Other columns are groups used to group the scatter points
 
 ### output
-#### `outfile:file`:
-The output plot  
+#### `outfile:file`:: The output plot  
+
+## pROC
+
+### description
+Generate ROC curves and output AUC.
 
 ## pVenn
 
@@ -68,8 +65,7 @@ The output plot
 Venn/UpsetR plots.
 
 ### input
-#### `infile:file`:
-The input matrix  
+#### `infile:file`:: The input matrix  
 	- format:
 	```
 		category1	category2	category3
@@ -81,16 +77,35 @@ The input matrix
 	rownames are not necessary but colnames are.
 
 ### output
-#### `outfile:file`:
-The plot  
+#### `outfile:file`:: The plot  
 
 ### args
-#### `tool`:
-Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))  
-#### `rownames`:
-Whether input file has rownames. Default: False  
-#### `vennParams`:
-Other params for `venn.diagram`. Default: {}  
-#### `upsetParams`:
-Other params for `upset`. Default: {}  
+#### `tool`       :: Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))  
+#### `rnames`     :: Whether input file has rownames. Default: False  
+#### `vennParams` :: Other params for `venn.diagram`. Default: {}  
+#### `upsetParams`:: Other params for `upset`. Default: {}  
+#### `devpars`    :: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+
+## pPie
+
+### description
+Plot piechart
+
+### input
+#### `infile:file`:: The input file. Could be either:  
+	- Direct numbers of each category.
+	```
+	Group1	Group2
+	50	50
+	```
+	- Presence of each items in the category.
+	```
+		Group1	Group2
+	Item1	1	0
+	Item2	0	1
+	...
+	```
+
+### output
+#### `outfile:file`:: the output plot  
 {% endraw %}

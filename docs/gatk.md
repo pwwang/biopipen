@@ -12,36 +12,24 @@ Note that indel realignment is no longer necessary for variant discovery if you 
 For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
 
 ### input
-#### `bamfile:file`:
-The aligned bam file  
-#### `reffile`:
-The reference file  
+#### `bamfile:file`::  The aligned bam file  
+#### `reffile`:: The reference file  
 
 ### brings
-#### `bamfile`:
-`{{bamfile | bn}}.bai` The index file of input bam file  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `bamfile`:: `{{bamfile | bn}}.bai` The index file of input bam file  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-A list of target intervals to pass to the IndelRealigner.  
+#### `outfile:file`:: A list of target intervals to pass to the IndelRealigner.  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `params`:
-Other parameters for RealignerTargetCreator, default: ""  
-#### `samtools`:
-The samtools executable, default: "samtools"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `picard`::   The picard executable, default: "picard"  
+#### `params`::   Other parameters for RealignerTargetCreator, default: ""  
+#### `samtools`:: The samtools executable, default: "samtools"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pIndelRealigner
 
@@ -54,38 +42,25 @@ There are 2 steps to the realignment process:
 For more details, see [the indel realignment method documentation](http://www.broadinstitute.org/gatk/guide/article?id=38).
 
 ### input
-#### `bamfile:file`:
-The aligned bam file  
-#### `intfile:file`:
-Intervals file output from RealignerTargetCreator  
-#### `reffile:file`:
-The reference file  
+#### `bamfile:file`:: The aligned bam file  
+#### `intfile:file`:: Intervals file output from RealignerTargetCreator  
+#### `reffile:file`:: The reference file  
 
 ### brings
-#### `bamfile`:
-`{{bamfile | bn}}.bai` The index file of input bam file  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `bamfile`:: `{{bamfile | bn}}.bai` The index file of input bam file  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-A realigned version of input BAM file.  
+#### `outfile:file`:: A realigned version of input BAM file.  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `params`:
-Other parameters for IndelRealigner, default: ""  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `picard`::   The picard executable, default: "picard"  
+#### `params`::  Other parameters for IndelRealigner, default: ""  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pBaseRecalibrator
 
@@ -93,22 +68,16 @@ The memory for java vm. Default: "-Xms1g -Xmx8g"
 Variant calling algorithms rely heavily on the quality scores assigned to the individual base calls in each sequence read. These scores are per-base estimates of error emitted by the sequencing machines. Unfortunately the scores produced by the machines are subject to various sources of systematic technical error, leading to over- or under-estimated base quality scores in the data. Base quality score recalibration (BQSR) is a process in which we apply machine learning to model these errors empirically and adjust the quality scores accordingly. This allows us to get more accurate base qualities, which in turn improves the accuracy of our variant calls. The base recalibration process involves two key steps: first the program builds a model of covariation based on the data and a set of known variants (which you can bootstrap if there is none available for your organism), then it adjusts the base quality scores in the data based on the model. There is an optional but highly recommended step that involves building a second model and generating before/after plots to visualize the effects of the recalibration process. This is useful for quality control purposes. This tool performs the first step described above: it builds the model of covariation and produces the recalibration table. It operates only at sites that are not in dbSNP; we assume that all reference mismatches we see are therefore errors and indicative of poor base quality. This tool generates tables based on various user-specified covariates (such as read group, reported quality score, cycle, and context). Assuming we are working with a large amount of data, we can then calculate an empirical probability of error given the particular covariates seen at this site, where p(error) = num mismatches / num observations. The output file is a table (of the several covariate values, number of observations, number of mismatches, empirical quality score).
 
 ### input
-#### `bamfile:file`:
-A BAM file containing data that needs to be recalibrated.  
-#### `reffile:file`:
-The reference file  
+#### `bamfile:file`:: A BAM file containing data that needs to be recalibrated.  
+#### `reffile:file`:: The reference file  
 
 ### brings
-#### `bamfile`:
-`{{bamfile | bn}}.bai` The index file of input bam file  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `bamfile`:: `{{bamfile | bn}}.bai` The index file of input bam file  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-A GATKReport file with many tables:  
+#### `outfile:file`:: A GATKReport file with many tables:  
 	- The list of arguments
 	- The quantized qualities table
 	- The recalibration table by read group
@@ -116,20 +85,13 @@ A GATKReport file with many tables:
 	- The recalibration table for all the optional covariates
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `params`:
-Other parameters for BaseRecalibrator, default: ""  
-#### `knownSites`:
-The known polymorphic sites to mask out, required  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `params`::  Other parameters for BaseRecalibrator, default: ""  
+#### `knownSites`:: The known polymorphic sites to mask out, required  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pPrintReads
 
@@ -138,38 +100,25 @@ PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM
 Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
 
 ### input
-#### `bamfile:file`:
-A BAM file.  
-#### `recaltable:file`:
-The GATKReport file  
-#### `reffile:file`:
-The reference file  
+#### `bamfile:file`::    A BAM file.  
+#### `recaltable:file`:: The GATKReport file  
+#### `reffile:file`::    The reference file  
 
 ### brings
-#### `bamfile`:
-`{{bamfile | bn}}.bai` The index file of input bam file  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `bamfile`:: `{{bamfile | bn}}.bai` The index file of input bam file  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-A single processed bam file.  
+#### `outfile:file`:: A single processed bam file.  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `params`:
-Other parameters for PrintReads, default: ""  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `params`::  Other parameters for PrintReads, default: ""  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pHaplotypeCaller
 
@@ -178,38 +127,25 @@ PrintReads is a generic utility tool for manipulating sequencing data in SAM/BAM
 Note that when PrintReads is used as part of the Base Quality Score Recalibration workflow, it takes the `--BQSR` engine argument, which is listed under Inherited Arguments > CommandLineGATK below.
 
 ### input
-#### `bamfile:file`:
-A BAM file.  
-#### `reffile:file`:
-The reference file  
+#### `bamfile:file`:: A BAM file.  
+#### `reffile:file`:: The reference file  
 
 ### brings
-#### `bamfile`:
-`{{bamfile | bn}}.bai` The index file of input bam file  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `bamfile`:: `{{bamfile | bn}}.bai` The index file of input bam file  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-Either a VCF or gVCF file with raw, unfiltered SNP and indel calls.  
+#### `outfile:file`:: Either a VCF or gVCF file with raw, unfiltered SNP and indel calls.  
 
 ### args
-#### `gatk`    :
-The gatk executable, default: "gatk"  
-#### `params`  :
-Other parameters for HaplotypeCaller, default: ""  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
-#### `nthread`:
-Corresponding to -nct option  
+#### `gatk`    :: The gatk executable, default: "gatk"  
+#### `params`  :: Other parameters for HaplotypeCaller, default: ""  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `nthread`:: Corresponding to -nct option  
 
 ## pSelectVariants
 
@@ -223,34 +159,23 @@ There are many different options for selecting subsets of variants from a larger
 There are also several options for recording the original values of certain annotations that are recalculated when a subsetting the new callset, trimming alleles, and so on.
 
 ### input
-#### `vcffile:file`:
-A variant call set from which to select a subset.  
-#### `reffile:file`:
-The reference file  
+#### `vcffile:file`:: A variant call set from which to select a subset.  
+#### `reffile:file`:: The reference file  
 
 ### brings
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-A new VCF file containing the selected subset of variants.  
+#### `outfile:file`:: A new VCF file containing the selected subset of variants.  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `params`:
-Other parameters for SelectVariants, default: ""  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `params`::  Other parameters for SelectVariants, default: ""  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pVariantFiltration
 
@@ -259,34 +184,23 @@ This tool is designed for hard-filtering variant calls based on certain criteria
 The most common way of specifying filtering criteria is by using JEXL queries. See the article on JEXL expressions in the documentation Guide for detailed information and examples.
 
 ### input
-#### `vcffile:file`:
-A variant call set from which to select a subset.  
-#### `reffile:file`:
-The reference file  
+#### `vcffile:file`:: A variant call set from which to select a subset.  
+#### `reffile:file`:: The reference file  
 
 ### brings
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-A filtered VCF.  
+#### `outfile:file`:: A filtered VCF.  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk -T VariantFiltration"  
-#### `params`:
-Other parameters for VariantFiltration, default: ""  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk -T VariantFiltration"  
+#### `params`::  Other parameters for VariantFiltration, default: ""  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pMuTect2
 
@@ -295,40 +209,26 @@ MuTect2 is a somatic SNP and indel caller that combines the DREAM challenge-winn
 NOTE: only Tumor/Normal variant calling implemented in bioprocs
 
 ### input
-#### `tumor:file`:
-the tumor bam file  
-#### `normal:file`:
-the normal bam file  
-#### `reffile:file`:
-the reference file  
+#### `tumor:file`::   the tumor bam file  
+#### `normal:file`::  the normal bam file  
+#### `reffile:file`:: the reference file  
 
 ### brings
-#### `tumor`:
-`{{tumor | bn}}.bai` the index file of tumor  
-#### `normal`:
-`{{normal | bn}}.bai` the index file of normal  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `tumor`::  `{{tumor | bn}}.bai` the index file of tumor  
+#### `normal`:: `{{normal | bn}}.bai` the index file of normal  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-The vcf file containing somatic mutations  
+#### `outfile:file`:: The vcf file containing somatic mutations  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `params`:
-Other parameters for MuTect2, default: ""  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `params`::   Other parameters for MuTect2, default: ""  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pMuTect2Interval
 
@@ -336,38 +236,24 @@ The memory for java vm. Default: "-Xms1g -Xmx8g"
 Use interval file model of MuTect2
 
 ### input
-#### `tumor:file`:
-the tumor bam file  
-#### `normal:file`:
-the normal bam file  
-#### `reffile:file`:
-the reference file  
+#### `tumor:file`::   the tumor bam file  
+#### `normal:file`::  the normal bam file  
+#### `reffile:file`:: the reference file  
 
 ### brings
-#### `tumor`:
-`{{tumor | bn}}.bai` the index file of tumor  
-#### `normal`:
-`{{normal | bn}}.bai` the index file of normal  
-#### `reffile#fai`:
-`{{reffile | bn}}.fai`  
-#### `reffile#dict`:
-`{{reffile | bn}}.dict`  
+#### `tumor`::  `{{tumor | bn}}.bai` the index file of tumor  
+#### `normal`:: `{{normal | bn}}.bai` the index file of normal  
+#### `reffile#fai`:: `{{reffile | bn}}.fai`  
+#### `reffile#dict`:: `{{reffile | bn}}.dict`  
 
 ### output
-#### `outfile:file`:
-The vcf file containing somatic mutations  
+#### `outfile:file`:: The vcf file containing somatic mutations  
 
 ### args
-#### `gatk`:
-The gatk executable, default: "gatk"  
-#### `samtools`:
-The samtools executable, default: samtools  
-#### `params`:
-Other parameters for MuTect2, default: ""  
-#### `picard`:
-The picard executable, default: "picard"  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `gatk`::     The gatk executable, default: "gatk"  
+#### `samtools`:: The samtools executable, default: samtools  
+#### `params`::   Other parameters for MuTect2, default: ""  
+#### `picard`::   The picard executable, default: "picard"  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 {% endraw %}

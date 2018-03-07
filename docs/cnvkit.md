@@ -8,18 +8,14 @@
 Calculate the sequence-accessible coordinates in chromosomes from the given reference genome, output as a BED file.
 
 ### input
-#### `fafile:file`:
-The fasta file  
+#### `fafile:file`:: The fasta file  
 
 ### output
-#### `outfile:file`:
-The output file  
+#### `outfile:file`:: The output file  
 
 ### args
-#### `params`:
-Other parameters for `cnvkit.py access`  
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
+#### `params`:: Other parameters for `cnvkit.py access`  
+#### `cnvkit`:: The executable of cnvkit. Default: 'cnvkit.py'  
 
 ## pCNVkitTarget
 
@@ -27,20 +23,15 @@ The executable of cnvkit. Default: 'cnvkit.py'
 Generate targets file for CNVkit using access file and annotate file (`cnvkit.py target`)
 
 ### input
-#### `acfile:file`:
-The access file  
-#### `anfile:file`:
-The annotate file  
+#### `acfile:file`:: The access file  
+#### `anfile:file`:: The annotate file  
 
 ### output
-#### `outfile:file`:
-The targets file  
+#### `outfile:file`:: The targets file  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `params`:
-Other parameters for `cnvkit.py target`  
+#### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
+#### `params`:: Other parameters for `cnvkit.py target`  
 
 ## pCNVkitCov
 
@@ -48,22 +39,16 @@ Other parameters for `cnvkit.py target`
 Calculate coverage in the given regions from BAM read depths.
 
 ### input
-#### `infile:file`:
-The bam file  
+#### `infile:file`:: The bam file  
 
 ### output
-#### `outfile:file`:
-The output cnn file  
+#### `outfile:file`:: The output cnn file  
 
 ### args
-#### `tgfile`:
-The target file  
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `nthread`:
-The number of threads to use. Default: 1  
-#### `params`:
-Other parameters for `cnvkit.py coverage`  
+#### `tgfile`::  The target file  
+#### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
+#### `nthread`:: The number of threads to use. Default: 1  
+#### `params`::  Other parameters for `cnvkit.py coverage`  
 
 ## pCNVkitRef
 
@@ -71,18 +56,14 @@ Other parameters for `cnvkit.py coverage`
 Compile a copy-number reference from the given files or directory (containing normal samples). If given a reference genome (-f option), also calculate the GC content and repeat-masked proportion of each region.
 
 ### input
-#### `indir:file`:
-The input directory containing the cnn files  
+#### `indir:file`::  The input directory containing the cnn files  
 
 ### output
-#### `outfile:file`:
-The output reference cnn file  
+#### `outfile:file`:: The output reference cnn file  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `params`:
-Other parameters for `cnvkit.py reference`, default: " --no-edge "  
+#### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
+#### `params`::  Other parameters for `cnvkit.py reference`, default: " --no-edge "  
 
 ## pCNVkitFix
 
@@ -90,20 +71,15 @@ Other parameters for `cnvkit.py reference`, default: " --no-edge "
 Combine the uncorrected target and antitarget coverage tables (.cnn) and correct for biases in regional coverage and GC content, according to the given reference. Output a table of copy number ratios (.cnr)
 
 ### input
-#### `infile:file`:
-The cnn file to be fixed  
-#### `rcfile:file`:
-The reference cnn file  
+#### `infile:file`::  The cnn file to be fixed  
+#### `rcfile:file`::  The reference cnn file  
 
 ### output
-#### `outfile:file`:
-The cnr file  
+#### `outfile:file`:: The cnr file  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `params`:
-Other parameters for `cnvkit.py fix`, default: " --no-edge "  
+#### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
+#### `params`::  Other parameters for `cnvkit.py fix`, default: " --no-edge "  
 
 ## pCNVkitSeg
 
@@ -111,20 +87,15 @@ Other parameters for `cnvkit.py fix`, default: " --no-edge "
 Infer discrete copy number segments from the given coverage table
 
 ### input
-#### `infile:file`:
-The cnr file   
+#### `infile:file`::  The cnr file   
 
 ### output
-#### `outfile:file`:
-The cns file  
+#### `outfile:file`:: The cns file  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `nthread`:
-The number of threads to use. Default: 1  
-#### `params`:
-Other parameters for `cnvkit.py segment`, default: ""  
+#### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
+#### `nthread`:: The number of threads to use. Default: 1  
+#### `params`::  Other parameters for `cnvkit.py segment`, default: ""  
 
 ## pCNVkitCall
 
@@ -132,18 +103,14 @@ Other parameters for `cnvkit.py segment`, default: ""
 Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number 
 
 ### input
-#### `infile:file`:
-The cns file   
+#### `infile:file`::  The cns file   
 
 ### output
-#### `outfile:file`:
-The callcns file  
+#### `outfile:file`:: The callcns file  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `params`:
-Other parameters for `cnvkit.py segment`, default: ""  
+#### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
+#### `params`::  Other parameters for `cnvkit.py segment`, default: ""  
 
 ## pCNVkitPlot
 
@@ -151,28 +118,19 @@ Other parameters for `cnvkit.py segment`, default: ""
 Plot CNVkit results
 
 ### input
-#### `cnrdir:file`:
-The directory containing copy number ratio files  
-#### `cnsdir:file`:
-The directory containing copy number segment files  
+#### `cnrdir:file`::  The directory containing copy number ratio files  
+#### `cnsdir:file`::  The directory containing copy number segment files  
 
 ### output
-#### `outdir:dir`:
-The output directory  
+#### `outdir:dir`::   The output directory  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `region`:
-The region for zoom-in plots. Default: '' (don't plot zoom-in view)  
-#### `gene`:
-The genes to be highlighted. Default: ''  
-#### `scatter`:
-Whether to generate the scatter plot. Default: True  
-#### `diagram`:
-Whether to generate the diagram plot. Default: True  
-#### `heatmap`:
-Whether to generate the heatmap plot. Default: True  
+#### `cnvkit`::   The executable of cnvkit. Default: 'cnvkit.py'  
+#### `region`::       The region for zoom-in plots. Default: '' (don't plot zoom-in view)  
+#### `gene`::         The genes to be highlighted. Default: ''  
+#### `scatter`::      Whether to generate the scatter plot. Default: True  
+#### `diagram`::      Whether to generate the diagram plot. Default: True  
+#### `heatmap`::      Whether to generate the heatmap plot. Default: True  
 
 ## pCNVkitRpt
 
@@ -180,26 +138,18 @@ Whether to generate the heatmap plot. Default: True
 Report CNVkit results
 
 ### input
-#### `cnrfile:file`:
-The file containing copy number ratio  
-#### `cnsfile:file`:
-The file containing copy number segment  
+#### `cnrfile:file`::  The file containing copy number ratio  
+#### `cnsfile:file`::  The file containing copy number segment  
 
 ### output
-#### `outdir:dir`:
-The output directory  
+#### `outdir:dir`::   The output directory  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `breaks`:
-Whether to report breakpoints. Default: True  
-#### `gainloss`:
-Whether to report gainloss. Default: True  
-#### `metrics`:
-Whether to report metrics. Default: True  
-#### `segmetrics`:
-Whether to report segmetrics. Default: True  
+#### `cnvkit`::   The executable of cnvkit. Default: 'cnvkit.py'  
+#### `breaks`::       Whether to report breakpoints. Default: True  
+#### `gainloss`::     Whether to report gainloss. Default: True  
+#### `metrics`::      Whether to report metrics. Default: True  
+#### `segmetrics`::   Whether to report segmetrics. Default: True  
 
 ## pCNVkit2Vcf
 
@@ -207,16 +157,12 @@ Whether to report segmetrics. Default: True
 Output vcf file for cnvkit results
 
 ### input
-#### `cnsfile:file`:
-The cns file  
+#### `cnsfile:file`:: The cns file  
 
 ### output
-#### `outfile:file`:
-The vcf file  
+#### `outfile:file`:: The vcf file  
 
 ### args
-#### `cnvkit`:
-The executable of cnvkit. Default: 'cnvkit.py'  
-#### `params`:
-Other params for `cnvkit.py export`  
+#### `cnvkit`::   The executable of cnvkit. Default: 'cnvkit.py'  
+#### `params`::   Other params for `cnvkit.py export`  
 {% endraw %}

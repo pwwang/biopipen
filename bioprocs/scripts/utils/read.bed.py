@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: readBed
 if 'readBed' not in vars() or not callable(readBed):
 	class readBed(readBase):
 		META = [
@@ -24,3 +25,4 @@ if 'readBed' not in vars() or not callable(readBed):
 			if not r.SCORE: r.SCORE   = '0'
 			if not r.STRAND: r.STRAND = '+'
 			return r
+# PYPPL REPEAT START: readBed

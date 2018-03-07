@@ -6,14 +6,18 @@ region = unlist(strsplit(region[2], '-', fixed = T))
 start  = as.numeric(region[1])
 end    = as.numeric(region[2])
 if ({{ args.ideoTrack | R }} != F) {
-{% if args.ideoTrack | R | lambda x: x == 'TRUE' %}
-	tracks = c (tracks, IdeogramTrack(genome={{args.genome | quote}}, chromosome=chrom))
-{% else %}
-	tracks = c (tracks, IdeogramTrack(genome={{args.genome | quote}}, chromosome=chrom, bands = {{args.ideoTrack | R}}))
-{% endif %}
+	iparams = {{args.params.ideoTrack | Rlist}}
+	iparams$chromosome = chrom
+	iparams$genome     = {{args.genome | quote}}
+	{% if args.ideoTrack | R | lambda x: x != 'TRUE' %}
+	iparams$bands      = read.table({{args.ideoTrack | lambda x: 'r:gzfile("%s")' % x if x.endswith('.gz') else x | R}})
+	colnames(iparams$bands) = c('chrom', 'chromStart', 'chromEnd', 'name', 'gieStain')
+	{% endif %}
+	tracks = c(tracks, do.call(IdeogramTrack, iparams))
 }
 if ({{ args.axisTrack | R }}) {
-    tracks = c (tracks, GenomeAxisTrack())
+	aparams = {{args.params.axisTrack | Rlist}}
+    tracks  = c(tracks, do.call(GenomeAxisTrack, aparams))
 }
 
 
@@ -31,8 +35,29 @@ if ({{args.geneTrack | R}} != F) {
 	extracks   = c(extracks, geneTrack)
 }
 for (t in c({{in.trkfiles | acquote}})) {
-	if (dir.exists(t)) next  # allow empty track file list
-    extracks = c (extracks, readRDS(t))
+	#if (dir.exists(t)) next  # allow empty track file list
+	tdata = readRDS(t)
+	if (tdata$trackType == 'InteractionTrack') {
+		library(GenomicInteractions)
+		irdata              = do.call(makeGenomicInteractionsFromFile, tdata$interactionParams)
+		tdata$trackParams$x = irdata
+		irtrackParams       = list(
+			x          = '',
+			chromosome = "",
+			name       = NULL,
+			start      = NULL,
+  			end        = NULL
+		)
+		for (name in names(irtrackParams)) {
+			irtrackParams    [[name]] = tdata$trackParams[[name]]
+			tdata$trackParams[[name]] = NULL
+		}
+		track               = do.call(InteractionTrack, irtrackParams)
+		displayPars(track)  = tdata$trackParams
+	} else {
+		track = do.call(tdata$trackType, tdata$trackParams)
+	} 
+    extracks = c (extracks, track)
 }
 
 tracks2plot = as.list(tracks)
@@ -46,13 +71,17 @@ if (nchar(highlights) > 0) {
 		hstarts = c(hstarts, as.numeric(reg[1]))
 		hends   = c(hends  , as.numeric(reg[2]))
 	}
+	hstarts = sapply(hstarts, function(x) max(x, start))
+	hends   = sapply(hends, function(x) min(x, end))
 	hltrack = HighlightTrack(trackList = as.list(extracks), start = hstarts, end = hends, chromosome = chrom)
 	tracks2plot = c(tracks2plot, hltrack)
 } else {
 	tracks2plot = c(tracks2plot, as.list(extracks))
 }
 
-do.call(png, c(list(filename = {{out.outfile | quote}}), {{args.devpars | Rlist}}))
+devpars = {{args.devpars | Rlist}}
+devpars$height = length(extracks) * devpars$height + 500 * as.integer(as.logical(length(tracks)))
+do.call(png, c(list(filename = {{out.outfile | quote}}), devpars))
 params = list(
 	trackList = tracks2plot,
 	from      = start,

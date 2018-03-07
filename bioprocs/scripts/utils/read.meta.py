@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: readMeta
 if 'readMeta' not in vars() or not callable(readMeta):
 	from collections import OrderedDict
 	class readMeta(object):
@@ -23,6 +24,7 @@ if 'readMeta' not in vars() or not callable(readMeta):
 			self.__dict__['__data'][name] = val
 		
 		def borrow(self, x):
+			assert isinstance(x, readMeta)
 			self.__dict__['__data'].update(x.__dict__['__data'])
 		
 		def add(self, *args, **kwargs):
@@ -47,4 +49,4 @@ if 'readMeta' not in vars() or not callable(readMeta):
 		
 		def remove(self, key):
 			del self.__dict__['__data'][key]
-
+# PYPPL REPEAT END: readMeta

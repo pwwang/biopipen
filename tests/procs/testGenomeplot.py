@@ -52,7 +52,7 @@ class TestGenomePlot (unittest.TestCase):
 	def testInteractionTrack(self):
 		pInteractionTrack.input = ('HiC', getfile('chiapet.tool.txt'), "chr10")
 		pInteractionTrack.args.intype = "chiapet.tool"
-		pInteractionTrack.args.params = {
+		pInteractionTrack.args.params.update({
 			'col.interactions'      : "red",
 			'col.anchors.fill'      : "blue",
 			'col.anchors.line'      : "black",
@@ -62,11 +62,11 @@ class TestGenomePlot (unittest.TestCase):
 			'plot.outside'          : True,
 			'col.outside'           : "lightblue",
 			'anchor.height'         : 0.1
-		}
+		})
 
 		pGenomePlot5         = pGenomePlot.copy()
 		pGenomePlot5.depends = pInteractionTrack
-		pGenomePlot5.input   = lambda ch: [([ch.get()], "chr10:103449060-103918049")]
+		pGenomePlot5.input   = lambda ch: [([ch.get()], "chr10:103449060-103918049", '103600000-103650000')]
 		pGenomePlot5.args.params.general.sizes = 'R:c(1, 1, 2, 4)'
 		PyPPL(config).start(pInteractionTrack).run()
 

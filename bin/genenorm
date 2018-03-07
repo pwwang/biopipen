@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+from pyppl import PyPPL, Channel
+from bioprocs import params
+from bioprocs.gene import pGeneNameNorm
+
+params.prefix('-')
+params.input.required = True
+params.input.desc     = 'The input file'
+params.notfound       = 'ignore'
+params.notfound.desc  = '''What if a symbol is not found. 
+- skip  : skip the record(don't write it to output file)
+- ignore: use the original name;
+- error : report error
+'''
+params.inmeta       = ['GENE']
+params.inmeta.desc  = 'The meta data of input file.'
+params.skip         = 0
+params.skip.desc    = 'Lines to skip for the input file.'
+params.comment      = '#'
+params.comment.desc = 'Character to mark comment lines.'
+params.delimit      = '\t'
+params.delimit.desc = 'The delimit to separate columns.'
+params.genecol      = ''
+params.genecol.desc = 'The column name of the gene if inmeta does not indicate it.'
+params.frm          = 'symbol, alias'
+params.frm.desc     = 'The format of the gene in input file.'
+params.to           = 'symbol'
+params.to.desc      = 'The format of the gene to output file.'
+params.exdir        = './genenorm'
+params.exdir.desc   = 'The output directory.'
+params.tmpdir.show  = True
+params.genome.show  = True
+
+params = params.parse().toDict()
+
+pGeneNameNorm.input               = [params.infile]
+pGeneNameNorm.exdir               = params.exdir
+pGeneNameNorm.args.notfound       = params.notfound
+pGeneNameNorm.args.inmeta         = params.inmeta
+pGeneNameNorm.args.inopts.skip    = params.skip
+pGeneNameNorm.args.inopts.comment = params.comment
+pGeneNameNorm.args.inopts.delimit = params.delimit
+pGeneNameNorm.args.frm            = params.frm
+pGeneNameNorm.args.to             = params.to
+
+PyPPL().start(pGeneNameNorm).run()

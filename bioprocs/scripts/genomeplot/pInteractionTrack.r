@@ -1,5 +1,5 @@
-library(Gviz)
-library(GenomicInteractions)
+#library(Gviz)
+#library(GenomicInteractions)
 
 region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
 chrom  = region[1]
@@ -37,7 +37,10 @@ if (intype == 'bedpe') {
 		lines2 = c(lines2, paste0(paste(parts, collapse = '\t'), '\n'))
 	}
 	rm(lines)
-	infile = textConnection(lines2)
+	#infile = textConnection(lines2)
+	infile = "{{job.outdir}}/{{in.infile | fn}}.bedpe"
+	writeLines(lines2, infile)
+	rm(lines2)
 } else if (intype == 'bedx') {
 	lines = readLines(infile)
 	lines2 = NULL
@@ -65,17 +68,25 @@ if (intype == 'bedpe') {
 		lines2  = c(lines2, paste0(paste(c(parts[1:3], parts[chr2index], parts[start2index], parts[end2index], name, max(as.character(parts[5]), 1), parts[6], strand2), collapse = '\t'), '\n'))
 	}
 	rm(lines)
-	infile = textConnection(lines2)
+	infile = "{{job.outdir}}/{{in.infile | fn}}.bedpe"
+	writeLines(lines2, infile)
+	rm(lines2)
 	intype = 'bedpe'
 }
 
-irdata = makeGenomicInteractionsFromFile(infile, type = intype, experiment_name = {{in.infile | fn | quote}}, description = "Data for {{in.infile | fn}}")
-
-params = list(
-	x          = irdata,
+ret = list()
+ret$trackType = 'InteractionTrack'
+ret$interactionParams = list(
+	fn   = infile,
+	type = intype,
+	experiment_name = {{in.infile | fn | quote}},
+	description = "Interaction data for {{in.infile | fn}}"
+)
+ret$trackParams = list(
+	x          = '',
 	chromosome = chrom,
 	name       = {{in.name | quote}}
 )
-track = do.call(InteractionTrack, params)
-displayPars(track) = {{args.params | Rlist}}
-saveRDS (track, {{out.outfile | quote}})
+ret$trackParams = c(ret$trackParams, {{args.params | Rlist}})
+
+saveRDS (ret, {{out.outfile | quote}})

@@ -2,12 +2,14 @@ import re
 from os import path
 from pyppl import Box, utils
 
-def _getsource(prepend = ''):
+def _getsource(*prepends):
 	fn  = utils.varname(1, incldot = True)
 	cwd = path.dirname(path.realpath(__file__))
-	ret = prepend
+	ret = ''
+	for prepend in prepends:
+		ret += prepend + '\n'
 	with open(path.join(cwd, 'scripts', 'utils', fn)) as f:
-		ret += ''.join(f.readlines()) + '\n'
+		ret += f.read()
 	return ret
 
 def dirnameFiles(files):
@@ -173,7 +175,7 @@ read = Box(
 )
 read.meta.py   = _getsource()
 read.record.py = _getsource()
-read.base.py   = _getsource(read.meta.py + '\n' + read.record.py)
+read.base.py   = _getsource(read.meta.py, read.record.py)
 read.head.py   = _getsource(read.base.py)
 read.bed12.py  = _getsource(read.base.py)
 read.bedpe.py  = _getsource(read.base.py)
@@ -186,9 +188,9 @@ write = Box(
 	bedx = Box()
 )
 write.base.py = _getsource(read.meta.py)
-write.bed.py  = _getsource(read.bed.py + '\n' + write.base.py)
-write.bedx.py = _getsource(read.bedx.py + '\n' + write.base.py)
+write.bed.py  = _getsource(read.bed.py, write.base.py)
+write.bedx.py = _getsource(read.bedx.py, write.base.py)
 
 
 genenorm    = Box()
-genenorm.py = _getsource(read.base.py)
+genenorm.py = _getsource(read.head.py, read.bed12.py, read.bedpe.py, read.bedx.py, read.bed.py, write.base.py)

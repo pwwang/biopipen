@@ -1,4 +1,4 @@
-library (Gviz)
+#library (Gviz)
 region = unlist(strsplit({{in.chrom | quote}}, ':', fixed = T))
 chrom  = region[1]
 params = list(
@@ -7,6 +7,10 @@ params = list(
 	chromosome = chrom,
 	name       = {{in.name | quote}}
 )
-params = c(params, {{args.params | Rlist}})
-dataTrack  = do.call(DataTrack, params)
-saveRDS (dataTrack, {{out.outfile | quote}})
+params          = c(params, {{args.params | Rlist}})
+
+ret             = list()
+ret$trackType   = 'DataTrack'
+ret$trackParams = params
+
+saveRDS (ret, {{out.outfile | quote}})

@@ -22,17 +22,19 @@ https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
         - Identified by extension
         - One of "chiapet.tool", "bed12", "bedpe", "hiclib", "homer", "bam", "two.bams".
     `params`: The display params
-@requires:
-    [r-Gviz](https://rdrr.io/bioc/Gviz)
-    [r-GenomicsInteractions](https://bioconductor.org/packages/release/bioc/vignettes/GenomicInteractions/inst/doc/hic_vignette.html)
 """
 pInteractionTrack             = Proc(desc = 'Gererate genomic interaction track for Gviz.')
 pInteractionTrack.input       = "name, infile:file, region"
-pInteractionTrack.output      = "outfile:file:geneTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.rds"
-pInteractionTrack.args.intype = "auto" 
+pInteractionTrack.output      = "outfile:file:interactionTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.gviztrack"
+pInteractionTrack.args.intype = "auto"
 pInteractionTrack.args.params = Box({
-    'col.outside': "lightblue",
-    'anchor.height': 0.06
+    'background.title': "brown",
+    'col'             : 'NULL',
+    'fill'            : '#FFD58A',
+    'col.outside'     : "lightblue",
+    'anchor.height'   : 0.06,
+    'col.anchors.fill': 'lightblue',
+	'col.anchors.line': '#AAAAAA'
 })
 pInteractionTrack.lang        = params.Rscript.value
 pInteractionTrack.script      = "file:scripts/genomeplot/pInteractionTrack.r"
@@ -54,13 +56,16 @@ pInteractionTrack.script      = "file:scripts/genomeplot/pInteractionTrack.r"
 """
 pGeneTrack             = Proc(desc = 'Generate gene track data for pGenomePlot.')
 pGeneTrack.input       = "name, region"
-pGeneTrack.output      = "outfile:file:geneTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.rds"
+pGeneTrack.output      = "outfile:file:geneTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.gviztrack"
 pGeneTrack.args.genome = params.genome.value
 pGeneTrack.args.params = Box({
     "arrowHeadWidth"   : 30,
     "arrowHeadMaxWidth": 40,
     "shape"            : "arrow",
-    "showId"           : True
+    "showId"           : True,
+    'background.title' : "brown",
+    'col'              : 'NULL',
+    'fill'             : '#FFD58A'
 })
 pGeneTrack.lang   = params.Rscript.value
 pGeneTrack.script = "file:scripts/genomeplot/pGeneTrack.r"
@@ -85,9 +90,13 @@ pGeneTrack.script = "file:scripts/genomeplot/pGeneTrack.r"
 pAnnoTrack             = Proc(desc = 'Generate annotation track for pGenomePlot.')
 pAnnoTrack.input       = "name, infile:file, chrom"
 pAnnoTrack.brings      = {"infile": ["{{in.infile | fn}}.bai", "{{in.infile | bn}}.bai", "{{in.infile | bn}}"]}
-pAnnoTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.rds"
+pAnnoTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.gviztrack"
 pAnnoTrack.args.genome = params.genome.value
-pAnnoTrack.args.params = Box()
+pAnnoTrack.args.params = Box({
+    'background.title': "brown",
+    'col'             : 'NULL',
+    'fill'            : '#FFD58A'
+})
 pAnnoTrack.lang        = params.Rscript.value
 pAnnoTrack.script      = "file:scripts/genomeplot/pAnnoTrack.r"
 
@@ -111,9 +120,13 @@ pAnnoTrack.script      = "file:scripts/genomeplot/pAnnoTrack.r"
 pDataTrack             = Proc(desc = 'Generate data track for pGenomePlot.')
 pDataTrack.input       = "name, infile:file, chrom"
 pDataTrack.brings      = {"infile": ["{{in.infile | fn}}.bai", "{{in.infile | bn}}.bai", "{{in.infile | bn}}"]}
-pDataTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.rds"
+pDataTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.gviztrack"
 pDataTrack.args.genome = params.genome.value
-pDataTrack.args.params = Box()
+pDataTrack.args.params = Box({
+    'background.title': "brown",
+    'col'             : 'NULL',
+    'fill'            : '#FFD58A'
+})
 pDataTrack.lang        = params.Rscript.value
 pDataTrack.script      = "file:scripts/genomeplot/pDataTrack.r"
 
@@ -136,10 +149,14 @@ pDataTrack.script      = "file:scripts/genomeplot/pDataTrack.r"
 """
 pUcscTrack             = Proc(desc = "Generate track from UCSC data.")
 pUcscTrack.input       = "name, track, trackType, region"
-pUcscTrack.output      = "outfile:file:ucscTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.rds"
+pUcscTrack.output      = "outfile:file:ucscTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.gviztrack"
 pUcscTrack.lang        = params.Rscript.value
 pUcscTrack.args.genome = params.genome.value
-pUcscTrack.args.params = Box()
+pUcscTrack.args.params = Box({
+    'background.title': "brown",
+    'col'             : 'NULL',
+    'fill'            : '#FFD58A'
+})
 pUcscTrack.script      = "file:scripts/genomeplot/pUcscTrack.r"
 
 """
@@ -168,21 +185,27 @@ pGenomePlot                = Proc(desc = 'Plot genome elements.')
 pGenomePlot.input          = "trkfiles:files, region, highlight"
 pGenomePlot.output         = "outfile:file:genomeplot_{{in.region | lambda x: x.replace(':', '-')}}.png"
 pGenomePlot.args.genome    = params.genome.value
-pGenomePlot.args.ideoTrack = True # or cytoband file from ucsc (http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz)
+pGenomePlot.args.ideoTrack = params.cytoband.value # a file from ucsc (http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz) or True to download it in runtime
 pGenomePlot.args.axisTrack = True
 pGenomePlot.args.geneTrack = params.refgene.value # or false to disable
 pGenomePlot.args.params    = Box(
-    general   = Box(
-        
+    general   = Box(),
+    axisTrack = Box(
+
+    ),
+    ideoTrack = Box(
+
     ),
     geneTrack = Box({
-        "arrowHeadWidth"   : 30,
-        "arrowHeadMaxWidth": 40,
         "shape"            : "arrow",
-        "showId"           : True
+        "showId"           : True,
+        'background.title' : "brown",
+        'col'              : 'NULL',
+        'fill'             : '#FFD58A'
     })
 )
-pGenomePlot.args.devpars   = Box(res = 300, height = 2000, width = 4000)
+pGenomePlot.args.devpars   = Box(res = 300, height = 1000, width = 4000)
 pGenomePlot.lang           = params.Rscript.value
 pGenomePlot.script         = "file:scripts/genomeplot/pGenomePlot.r"
+
 

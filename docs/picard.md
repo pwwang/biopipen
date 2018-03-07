@@ -22,20 +22,15 @@ The program can take either coordinate-sorted or query-sorted inputs, however th
 If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.
 
 ### input
-#### `infile:file`:
-The bam file   
+#### `infile:file`::  The bam file   
 
 ### output
-#### `outfile:file`:
-The marked bam file  
+#### `outfile:file`:: The marked bam file  
 
 ### args
-#### `picard`:
-The picard executable, default: "picard"  
-#### `params`:
-Other parameters for picard MarkDuplicates, default: ""  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
+#### `picard`::     The picard executable, default: "picard"  
+#### `params`::  Other parameters for picard MarkDuplicates, default: ""  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
 
 ## pAddOrReplaceReadGroups
 
@@ -47,21 +42,16 @@ For more information about read groups, see the [GATK Dictionary entry](https://
 This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH) (see http://ga4gh.org/#/documentation).
 
 ### input
-#### `infile:file`:
-The bam file  
-#### `rg`:
-The read group information. For example:  
+#### `infile:file`::  The bam file  
+#### `rg`::           The read group information. For example:  
 	- "RGID=4 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=20"
 
 ### output
-#### `outfile:file`:
-The bam file with read group added  
+#### `outfile:file`:: The bam file with read group added  
 
 ### args
-#### `picard`:
-The picard executable, default: "picard "  
-#### `params`:
-Other parameters for picard AddOrReplaceReadGroups, default: ""  
+#### `picard`::     The picard executable, default: "picard "  
+#### `params`::  Other parameters for picard AddOrReplaceReadGroups, default: ""  
 
 ## pCreateSequenceDictionary
 
@@ -71,18 +61,14 @@ Creates a sequence dictionary for a reference sequence. This tool creates a sequ
 The reference sequence can be gzipped (both .fasta and .fasta.gz are supported).
 
 ### input
-#### `infile:file`:
-The fasta file   
+#### `infile:file`::  The fasta file   
 
 ### output
-#### `outfile:file`:
-The same fasta file, but with dict file created  
+#### `outfile:file`:: The same fasta file, but with dict file created  
 
 ### args
-#### `picard`:
-The picard executable, default: "picard"  
-#### `params`:
-Other parameters for picard CreateSequenceDictionary, default: ""  
+#### `picard`::     The picard executable, default: "picard"  
+#### `params`::  Other parameters for picard CreateSequenceDictionary, default: ""  
 
 ## pCollectWgsMetrics
 
@@ -94,20 +80,15 @@ This tool collects metrics about the fractions of reads that pass base- and mapp
 Note: Metrics labeled as percentages are actually expressed as fractions!
 
 ### input
-#### `infile:file`:
-The bam file   
+#### `infile:file`::  The bam file   
 
 ### output
-#### `outfile:file`:
-The metrics file  
+#### `outfile:file`:: The metrics file  
 
 ### args
-#### `picard`:
-The picard executable, default: "picard"  
-#### `params`:
-Other parameters for `picard CollectWgsMetrics`, default: ""  
-#### `reffile`:
-The reference file, default: ""  
+#### `picard`::     The picard executable, default: "picard"  
+#### `params`::  Other parameters for `picard CollectWgsMetrics`, default: ""  
+#### `reffile`:: The reference file, default: ""  
 
 ## pSortSam
 
@@ -115,26 +96,18 @@ The reference file, default: ""
 Use `picard SortSam` to sort sam or bam file
 
 ### input
-#### `infile:file`:
-The sam or bam file to be sorted  
+#### `infile:file`::  The sam or bam file to be sorted  
 
 ### output
-#### `outfile:file`:
-The sorted sam or bam file  
+#### `outfile:file`:: The sorted sam or bam file  
 
 ### args
-#### `picard`:
-The picard executable, default: "picard"  
-#### `order`:
-The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate  
-#### `outtype`:
-The type of output file, sam or bam. Default: bam  
-#### `params`:
-Other parameters for `picard SortSam`, default: ""  
-#### `tmpdir`:
-The tmpdir to use. Default: /tmp  
-#### `javamem`:
-The memory for java vm. Default: "-Xms1g -Xmx8g"  
+#### `picard`::     The picard executable, default: "picard"  
+#### `order`::   The sort order, default: coordinate. Possible: unsorted, queryname, coordinate, duplicate  
+#### `outtype`:: The type of output file, sam or bam. Default: bam  
+#### `params`::  Other parameters for `picard SortSam`, default: ""  
+#### `tmpdir`::  The tmpdir to use. Default: /tmp  
+#### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
 ## pIndexBam
 
@@ -142,16 +115,12 @@ The memory for java vm. Default: "-Xms1g -Xmx8g"
 Use `picard BuildBamIndex` to index bam file
 
 ### input
-#### `infile:file`:
-The bam file   
+#### `infile:file`::  The bam file   
 
 ### output
-#### `outfile:file`:
-The same bam file (link) but with .bai file in `proc.outdir`  
+#### `outfile:file`:: The same bam file (link) but with .bai file in `proc.outdir`  
 
 ### args
-#### `picard`:
-The picard executable, default: "picard"  
-#### `params`:
-Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"  
+#### `picard`::    The picard executable, default: "picard"  
+#### `params`::  Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"  
 {% endraw %}

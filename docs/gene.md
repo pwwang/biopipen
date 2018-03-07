@@ -8,12 +8,10 @@
 Normalize gene names using MyGeneinfo.
 
 ### input
-#### `infile:file`:
-The input file  
+#### `infile:file`:: The input file  
 
 ### output
-#### `outfile:file`:
-The output file  
+#### `outfile:file`:: The output file  
 
 ## pGeneTss
 
@@ -21,10 +19,19 @@ The output file
 Get gene TSS in BEd format.
 
 ### input
-#### `infile:file`:
-The input file containing genes  
+#### `infile:file`:: The input file containing genes  
 
 ### output
-#### `outfile:file`:
-The output BED file  
+#### `outfile:file`:: The output BED file  
+
+## pGeneBody
+
+### description
+Get gene body region in BED format
+
+### input
+#### `infile:file`:: The input file containing genes  
+
+### output
+#### `outfile:file`:: The gene body region  
 {% endraw %}

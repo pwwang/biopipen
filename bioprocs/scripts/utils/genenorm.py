@@ -1,3 +1,4 @@
+# PYPPL REPEAT START: genenorm
 if 'genenorm' not in vars() or not callable(genenorm):
 	from os import path, makedirs
 	from tempfile import gettempdir
@@ -10,7 +11,7 @@ if 'genenorm' not in vars() or not callable(genenorm):
 		- ignore: use the original name;
 		- error : report erro
 	"""
-	def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'human', inopts = None, outopts = None, inmeta = ['GENE'], tmpdir = gettempdir()):
+	def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'human', inopts = None, outopts = None, inmeta = ['GENE'], genecol = None, tmpdir = gettempdir()):
 		species = {
 			'hg19': 'human',
 			'hg38': 'human',
@@ -29,11 +30,18 @@ if 'genenorm' not in vars() or not callable(genenorm):
 		if not path.isdir(cachedir): makedirs(cachedir)
 
 		genes   = []
-		greader = readBase(infile, **inopts)
-		greader.meta.add(*inmeta)
+		if isinstance(inmeta, list):
+			greader = readBase(infile, **inopts)
+			greader.meta.add(*inmeta)
+		else:
+			greader = globals()['read' + inmeta[0].upper() + inmeta[1:]](infile, **inopts)
+
+		genecol = genecol or 'GENE'
+
 		for r in greader:
-			if not r.GENE in genes:
-				genes.append(r.GENE)
+			g = r[genecol]
+			if not g in genes:
+				genes.append(g)
 
 		genes      = sorted(genes)
 		alwaysList = lambda x: x if isinstance(x, list) else [y.strip() for y in x.split(',')]
@@ -78,24 +86,39 @@ if 'genenorm' not in vars() or not callable(genenorm):
 
 		if not outfile: return genemap, None
 		greader.rewind()
-		gwriter = writerBase(outfile)
+		gwriter = writeBase(outfile)
 		gwriter.meta.borrow(greader.meta)
+		if len(to) > 0:
+			gwriter.meta.add(*to)
 
 		if outopts['meta']:
-			gwriter.writeMeta(metaprefix = outopts['metaprefix'])
+			gwriter.writeMeta(prefix = outopts['metaprefix'])
 		if outopts['head']:
-			gwriter.writeHead(headprefix = outopts['headprefix'], delimit = outopts['delimit'])
+			gwriter.writeHead(prefix = outopts['headprefix'], delimit = outopts['delimit'])
 
 		for r in greader:
-			if r.GENE not in genemap:
+			g = r[genecol]
+			for t in to: 
+				if t == genecol: continue
+				r[t] = ''
+
+			if g not in genemap:
 				if notfound == 'error':
-					raise ValueError('Cannot convert %s to %s.' % (r.GENE, to))
+					raise ValueError('Cannot convert %s to %s.' % (g, to))
 				elif notfound == 'skip':
 					continue
 				#else: # ignore, don't change r.GENE
 				#	pass
 			else:
-				r.GENE = genemap[r.GENE]
+				newg = genemap[g]
+				if isinstance(newg, dict):
+					for k,v in newg.items():
+						r[k] = v
+					r[genecol] = newg[to[0]]
+				else:
+					r[to[0]] = newg
+					r[genecol] = newg
 			gwriter.write(r, delimit = outopts['delimit'])
 
 		return genemap, cache
+# PYPPL REPEAT END: genenorm

@@ -1,4 +1,4 @@
-library (Gviz)
+#library (Gviz)
 region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
 chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
@@ -14,5 +14,9 @@ params = list(
 	track      = {{in.track | quote}}
 )
 params = c(params, {{args.params | Rlist}})
-track  = do.call(UcscTrack, params)
-saveRDS (track, {{out.outfile | quote}})
+
+ret = list()
+ret$trackType = 'UcscTrack'
+ret$trackParams = params
+
+saveRDS (ret, {{out.outfile | quote}})

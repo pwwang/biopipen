@@ -2,42 +2,57 @@
 <!-- toc -->
 {% raw %}
 
+## pInteractionTrack
+
+### description
+   Gererate genomic interaction track for Gviz
+
+### input
+   `name`: The name of the track
+   `infile:file`: The input file. 
+       - See the `type` argument for `makeGenomicInteractionsFromFile` from `GenomicInteractions` r-package
+   `region`: the region, just chromosome!
+
+### output
+   `outfile:file`: The dumped track data
+
+### args
+   `intype`: Input file type. Default: auto
+       - Identified by extension
+       - One of "chiapet.tool", "bed12", "bedpe", "hiclib", "homer", "bam", "two.bams".
+   `params`: The display params
+
 ## pGeneTrack
 
 ### description
-   Generate the gene track using ucsc data source
+   Generate gene track using ucsc data source
 
 ### input
    `name`:   The name of the track
-   `genome`: The genome
-   `chrom`:  The chromosome
-   `from`:   The start
-   `to`:     The end
 
 ### output
    `outfile:file`: The file to save the track
 
 ### args
-   use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args
+   `genome`: The genome
+   `params`: use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args
 
 ## pAnnoTrack
 
 ### description
-   Generate annotation track
+   The annotation track of Gviz
 
 ### input
-   `infile:file`: the file for the track
    `name`:        the name of the track
-   `genome`:      the genome
-   `chrom`:       the chromosome
-   `from`:        the start position to display
-   `to`:          the end position to display
+   `infile:file`: the file for the track. (wig, bigWig or bedGraph, bam, need to be indexed!)
+   `chrom`:       the chrom
 
 ### output
-   `outfile:file`:the dumped track
+   `outfile:file`:the rds file for the track
 
 ### args
-   use `displayPars(AnnotationTrack())` to see all available args.
+   `genome`: The genome
+   `params`:  See `displayPars(DataTrack())` for all available display params
 
 ## pDataTrack
 
@@ -45,23 +60,16 @@
    The data track of Gviz
 
 ### input
-   `infile:file`: the file for the track
    `name`:        the name of the track
-   `genome`:      the genome
-   `chrom`:       the chromosome
-   `from`:        the start position to display
-   `to`:          the end position to display
+   `infile:file`: the file for the track. (wig, bigWig or bedGraph, bam, need to be indexed!)
+   `chrom`:       the chrom
 
 ### output
    `outfile:file`:the rds file for the track
-   `gout`:        the genome
-   `cout`:        the chromosome
-   `fout`:        the start
-   `tout`:        the end
 
 ### args
-   See `displayPars(DataTrack())` for all available display params
-   Quote all params!
+   `genome`: The genome
+   `params`:  See `displayPars(DataTrack())` for all available display params
 
 ## pUcscTrack
 
@@ -69,14 +77,10 @@
    Generate track from ucsc
 
 ### input
-   `ucscTrack`:   the track to fetch from ucsc. [Avialable tracks](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
-   `table`:       the table from ucsc. [Available table](http://genome.ucsc.edu/cgi-bin/hgTables?command=start)
-   `gvizTrack`:   the object track to generate. One of "AnnotationTrack", "GeneRegionTrack", "DataTrack", "GenomeAxisTrack"
-   `name`:        the name of the track
-   `genome`:      the genome
-   `chrom`:       the chromosome
-   `from`:        the start position to display
-   `to`:          the end position to display
+   `name`     : the name of the track
+   `track`    : the UCSC track
+   `trackType`: the Gviz track
+   `region`   : the region
 
 ### output
    `outfile:file`:the dumped track
@@ -91,11 +95,18 @@
 
 ### input
    `trkfiles:files`: the list of track dumped files
-   `genome`:         the genome
-   `chrom`:          the chromosome
-   `from`:           the start position to display
-   `to`:             the end position to display
+   `region`:         the region, in format of `chr1:1-1000`
+   `highlight`:      the highlight regions, informat of start1-end1; start2-end2; ...
 
 ### output
    `outfile:file`:   the figure
+
+### args
+   `genome`  : The genome
+   `showIdeo`: Show ideogram track? Default: True
+   `showAxis`: Show axis? Default: True
+   `showGenes`: Show geneTrack? Default: True
+   `params`:   The params
+       - `genneral`:  General params for plotTracks
+       - `geneTrack`: The params for geneTrack
 {% endraw %}
