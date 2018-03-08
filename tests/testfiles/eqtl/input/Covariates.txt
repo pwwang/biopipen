@@ -1,0 +1,3 @@
+id	Sam_01	Sam_02	Sam_03	Sam_04	Sam_05	Sam_06	Sam_07	Sam_08	Sam_09	Sam_10	Sam_11	Sam_12	Sam_13	Sam_14	Sam_15	Sam_16
+gender	0	0	0	0	0	0	0	0	1	1	1	1	1	1	1	1
+age	36	40	46	65	69	43	40	54	44	70	24	34	55	62	48	40

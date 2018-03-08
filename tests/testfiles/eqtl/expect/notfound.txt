@@ -1,0 +1,2 @@
+SNP	gene	beta	t-stat	p-value	FDR
+No significant associations were found.

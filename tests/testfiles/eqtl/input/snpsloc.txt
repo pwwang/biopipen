@@ -1,0 +1,16 @@
+snpid	chr	pos
+Snp_01	chr1	721289
+Snp_02	chr1	752565
+Snp_03	chr1	777121
+Snp_04	chr1	785988
+Snp_05	chr1	792479
+Snp_06	chr1	798958
+Snp_07	chr1	888658
+Snp_08	chr1	918572
+Snp_09	chr1	926430
+Snp_10	chr1	947033
+Snp_11	chr2	721289
+Snp_12	chr2	752565
+Snp_13	chr2	777121
+Snp_14	chr2	785988
+Snp_15	chr2	792479
