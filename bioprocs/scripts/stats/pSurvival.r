@@ -2,11 +2,14 @@ library(survival)
 library(survminer)
 
 survivalOne = function(dat, var, vname) {
-	if (length(levels(dat[, var])) == 1) {
+	# remove NAs
+	dat  = dat[!is.na(dat[,var]), ,drop=F]
+	lvls = levels(factor(dat[,var]))
+	if (length(lvls) == 1) {
 		cat(paste0("pyppl.log.warnning: Cannot do survival analysis for '",var,"' with one level.\n"), file=stderr())
 		return(NULL)
 	}
-
+	freqs = as.data.frame(table(dat[,var]))
 	fmula = paste0('Surv({{args.outunit}}, status) ~ ', var)
 	fmula = as.formula(fmula)
 	sfit  = do.call(survfit, list(formula = fmula, data = dat))
@@ -14,7 +17,7 @@ survivalOne = function(dat, var, vname) {
 	
 	rns   = rownames(diff$p.value)
 	if (length(rns) == 0) {
-		pvals   = data.frame(var = vname, group1 = "", group2 = "", pval = 1)
+		pvals   = data.frame(var = vname, group1 = "", group2 = "", pval = 1, n1 = "", n2 = "")
 		globalp = 1
 	} else {
 		cns   = colnames(diff$p.value)
@@ -24,15 +27,22 @@ survivalOne = function(dat, var, vname) {
 		for (i in 1:lenrs) {
 			for (j in 1:lencs) {
 				if (i < j) next
-				pvals = rbind(pvals, c(var = vname, group1 = rns[i], group2 = cns[j], pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2)))
+				pvals = rbind(pvals, c(
+					var = vname, 
+					group1 = rns[i], 
+					group2 = cns[j], 
+					pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2),
+					n1 = freqs[freqs[,1] == rns[i], "Freq"],
+					n2 = freqs[freqs[,1] == rns[j], "Freq"]
+				))
 			}
 		}
 
 		globaldiff = survdiff(fmula, data = dat)
 		globalp    = 1 - pchisq(globaldiff$chisq, length(globaldiff$n) - 1)
 	}
-
-	psurv = do.call(ggsurvplot, c(list(fit = sfit, pval = {{args.pval | R}}, legend.title = vname, legend.labs = levels(dat[,var]), xlab = "Time ({{args.outunit}})"), {{args.plotParams | Rlist}}))
+	labs = unlist(lapply(lvls, function(x) paste0(x, ' (n=', freqs[freqs[,1] == x, "Freq"], ')')))
+	psurv = do.call(ggsurvplot, c(list(fit = sfit, pval = {{args.pval | R}}, legend.title = vname, legend.labs = labs, xlab = "Time ({{args.outunit}})"), {{args.plotParams | Rlist}}))
 	return(list(ret = list(pvals = pvals, psurv = psurv, var = vname, globalp = globalp)))
 }
 
@@ -74,12 +84,13 @@ if (nrow(df) == 0 && {{args.noerror | R}}) {
 	if (fct != 1) {
 		df[,1] = df[,1]*fct
 	}
-
+	
+	survdat = df[, c(1,2), drop=F]
 	vars = cnames[3:length(cnames)]
 	if (length(vars) == 1 || {{args.nthread}} == 1) {
 		rets = NULL
 		for (i in 1:length(vars))  {
-			rets  = c(rets, survivalOne(df, vars[i], vnames[i]))
+			rets  = c(rets, survivalOne(cbind(survdat, df[, vars[i], drop=F]), vars[i], vnames[i]))
 		}
 	} else {
 		library(doParallel)
@@ -87,7 +98,7 @@ if (nrow(df) == 0 && {{args.noerror | R}}) {
 		registerDoParallel(cl)
 
 		rets = foreach (i = 1:length(vars), .verbose = T, .combine = c, .export = "survivalOne", .packages = c('survival', 'survminer')) %dopar% {
-			survivalOne(df, vars[i], vnames[i])
+			survivalOne(cbind(survdat, df[, vars[i], drop=F]), vars[i], vnames[i])
 		}
 		stopCluster(cl) 
 	}

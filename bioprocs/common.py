@@ -50,11 +50,11 @@ pSort.script              = "file:scripts/common/pSort.py"
 @output:
 	`outdir:dir`:    The output directory
 """
-pFiles2Dir        = Proc(desc = 'Put files to a directory using symbolic links.')
-pFiles2Dir.input  = "infiles:files"
-pFiles2Dir.output = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}.dir"
-pFiles2Dir.lang   = params.python.value
-pFiles2Dir.script = "file:scripts/common/pFiles2Dir.py"
+pFiles2Dir                = Proc(desc = 'Put files to a directory using symbolic links.')
+pFiles2Dir.input          = "infiles:files"
+pFiles2Dir.output         = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}.dir"
+pFiles2Dir.lang           = params.python.value
+pFiles2Dir.script         = "file:scripts/common/pFiles2Dir.py"
 
 """
 @name:
@@ -66,10 +66,10 @@ pFiles2Dir.script = "file:scripts/common/pFiles2Dir.py"
 @output:
 	`outfile:file`: The output file
 """
-pFile2Proc = Proc(desc="Convert a file to a proc so it can be used as dependent")
-pFile2Proc.input  = "infile:file"
-pFile2Proc.output = "outfile:file:{{in.infile | bn}}"
-pFile2Proc.script = 'ln -s "{{in.infile}}" "{{out.outfile}}"'
+pFile2Proc                = Proc(desc="Convert a file to a proc so it can be used as dependent")
+pFile2Proc.input          = "infile:file"
+pFile2Proc.output         = "outfile:file:{{in.infile | bn}}"
+pFile2Proc.script         = 'ln -s "{{in.infile}}" "{{out.outfile}}"'
 
 """
 @name:
@@ -81,14 +81,14 @@ pFile2Proc.script = 'ln -s "{{in.infile}}" "{{out.outfile}}"'
 @output:
 	`outfile:file`: The output file.
 """
-pStr2File               = Proc(desc = "Save string to a file.")
-pStr2File.input         = "in:var"
-pStr2File.output        = "outfile:file:{{in.in | encode}}.txt"
-pStr2File.args.breakOn  = ','
-pStr2File.args.trimLine = True
-pStr2File.envs.encode   = lambda x: __import__('re').sub(r'[^\w_]', '', x)[:16]
-pStr2File.lang          = params.python.value
-pStr2File.script        = "file:scripts/common/pStr2File.py"
+pStr2File                 = Proc(desc = "Save string to a file.")
+pStr2File.input           = "in:var"
+pStr2File.output          = "outfile:file:{{in.in | encode}}.txt"
+pStr2File.args.breakOn    = ','
+pStr2File.args.trimLine   = True
+pStr2File.envs.encode     = lambda x: __import__('re').sub(r'[^\w_]', '', x)[:16]
+pStr2File.lang            = params.python.value
+pStr2File.script          = "file:scripts/common/pStr2File.py"
 
 """
 @name:
@@ -101,10 +101,10 @@ pStr2File.script        = "file:scripts/common/pStr2File.py"
 @output:
 	`outfile:file`: The output file.
 """
-pPrepend               = Proc(desc = "Save string to a file.")
-pPrepend.input         = "in:var, infile:file"
-pPrepend.output        = "outfile:file:{{in.infile | fn}}.prepend.txt"
-pPrepend.script        = "file:scripts/common/pPrepend.bash"
+pPrepend                  = Proc(desc = "Save string to a file.")
+pPrepend.input            = "in:var, infile:file"
+pPrepend.output           = "outfile:file:{{in.infile | fn}}.prepend.txt"
+pPrepend.script           = "file:scripts/common/pPrepend.bash"
 
 """
 @name:
@@ -119,11 +119,11 @@ pPrepend.script        = "file:scripts/common/pPrepend.bash"
 @args:
 	`n`: The number of header lines.
 """
-pAddHeader        = Proc(desc = 'Add the header of 1st file to 2nd file.')
-pAddHeader.input  = "infile1:file, infile2:file"
-pAddHeader.output = "outfile:file:{{in.infile2 | bn}}"
-pAddHeader.args.n = 1
-pAddHeader.script = "file:scripts/common/pAddHeader.bash"
+pAddHeader                = Proc(desc = 'Add the header of 1st file to 2nd file.')
+pAddHeader.input          = "infile1:file, infile2:file"
+pAddHeader.output         = "outfile:file:{{in.infile2 | bn}}"
+pAddHeader.args.n         = 1
+pAddHeader.script         = "file:scripts/common/pAddHeader.bash"
 
 
 """
@@ -136,11 +136,21 @@ pAddHeader.script = "file:scripts/common/pAddHeader.bash"
 @output:
 	`outfile:file`: The output file
 """
-pMergeFiles              = Proc(desc = 'Merge files.')
-pMergeFiles.input        = "infiles:files"
-pMergeFiles.output       = "outfile:file:{{in.infiles[0] | fn}}_etc{{in.infiles[0] | ext}}"
-pMergeFiles.args.skip    = 0
-pMergeFiles.args.comment = '#'
-pMergeFiles.args.header  = False
-pMergeFiles.lang         = params.python.value
-pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
+pMergeFiles               = Proc(desc = 'Merge files.')
+pMergeFiles.input         = "infiles:files"
+pMergeFiles.output        = "outfile:file:{{in.infiles[0] | fn}}_etc{{in.infiles[0] | ext}}"
+pMergeFiles.args.skip     = 0
+pMergeFiles.args.comment  = '#'
+pMergeFiles.args.header   = False
+pMergeFiles.lang          = params.python.value
+pMergeFiles.script        = "file:scripts/common/pMergeFiles.py"
+
+pSplitRows                = Proc(desc = 'Split a file by rows.')
+pSplitRows.input          = 'infile:file'
+pSplitRows.output         = 'outdir:dir:{{in.infile | bn}}-rows'
+pSplitRows.args.skip      = 0
+pSplitRows.args.cnames    = True
+pSplitRows.args.n         = 8
+pSplitRows.lang           = params.python.value
+pSplitRows.script         = "file:scripts/common/pSplitRows.py"
+

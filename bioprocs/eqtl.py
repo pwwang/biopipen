@@ -32,7 +32,7 @@ pMatrixeQTL.args.pval    = 1e-5
 pMatrixeQTL.args.fdr     = True
 pMatrixeQTL.args.cisopts = Box(
 	snppos  = '', 
-	genepos = '', 
+	genepos = params.refgene.value, 
 	dist    = 0,    # 0 don't do cis-, trans- calls
 	cispv   = 1e-3
 )

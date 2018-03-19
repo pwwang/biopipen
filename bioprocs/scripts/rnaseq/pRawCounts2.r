@@ -23,7 +23,7 @@ rownames(data)  = rnames
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
 	{% if args.log2 %}
-	ret = log2(ret)
+	ret = log2(ret + 1)
 	{% endif %}
 {% endif %}
 

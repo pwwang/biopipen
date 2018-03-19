@@ -5,6 +5,7 @@ from gzip import open as gzopen
 fout = open({{out.outfile | quote}}, 'w')
 files   = {{in.infiles}}
 skip    = {{args.skip}}
+skip    = list(skip) if isinstance(skip, tuple) else skip
 gzip    = {{args.gzip | lambda x: '"auto"' if x == 'auto' else x}}
 # get header before run
 {% if args.usehead | lambda x: isinstance(x, int) %}

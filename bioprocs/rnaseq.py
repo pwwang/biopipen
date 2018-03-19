@@ -19,6 +19,7 @@ from . import params
 	`outdir:dir`:   the directory containing expr file and plots
 @args:
 	`pattern` : The pattern to filter files. Default `'*'`
+	`namefunc`: Transform filename (no extension) as column name. Default: "function(fn) fn"
 	`header`  : Whether each expression file contains header. Default: `False`
 	`exrows`  : Rows to be excluded, regular expression applied. Default: `["^Sample", "^Composite", "^__"]`
 	`boxplot` : Whether to plot a boxplot. Default: False
@@ -38,6 +39,7 @@ pExpdir2Matrix.output = [
 ]
 pExpdir2Matrix.lang             = params.Rscript.value
 pExpdir2Matrix.args.pattern     = '*'
+pExpdir2Matrix.args.namefunc    = 'function(fn) fn'
 pExpdir2Matrix.args.header      = False
 pExpdir2Matrix.args.exrows      = ["^Sample", "^Composite", "^__"]
 pExpdir2Matrix.args.boxplot     = False

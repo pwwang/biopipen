@@ -6,24 +6,29 @@ snps = []
 readopts = {{args.inopts}}
 {% if args.inmeta | lambda x: isinstance(x, list) %}
 {{read.base.py | norepeats}}
-reader = readBase({{in.snpfile | quote}}, **readopts)
+reader = readBase({{in.infile | quote}}, **readopts)
 reader.meta.add(*{{args.inmeta}})
 {% elif args.inmeta | lambda x: isinstance(x, dict) %}
 {{read.base.py | norepeats}}
-reader = readBase({{in.snpfile | quote}}, **readopts)
+reader = readBase({{in.infile | quote}}, **readopts)
 reader.meta.add(*{{args.inmeta}}.items())
 {% elif args.inmeta %}
 {{read, args.inmeta | lambda x, y: x[y]['py'] | norepeats}}
-reader = locals()['read{{args.inmeta | lambda x: x[0].upper() + x[1:]}}']({{in.snpfile | quote}}, **readopts)
+reader = locals()['read{{args.inmeta | lambda x: x[0].upper() + x[1:]}}']({{in.infile | quote}}, **readopts)
 {% else %}
-ext = {{in.snpfile | ext | [1:] | quote}}
+ext = {{in.infile | ext | [1:] | quote}}
 ext = ext[0].upper() + ext[1:]
-reader = locals()['read' + ext]({{in.snpfile | quote}}, **readopts)
+reader = locals()['read' + ext]({{in.infile | quote}}, **readopts)
 {% endif %}
 
 for r in reader:
-	if r.SNP not in snps:
-		snps.append(r.SNP)
+	r.START = int(r.START)
+	r.END   = int(r.END)
+	if r.START == r.END:
+		r.END = r.START + 1
+	snp = (r.CHR, r.START, r.END)
+	if snp not in snps:
+		snps.append(snp)
 
 genome = {{args.genome | quote}}
 g     = Genome (db=genome)
@@ -35,7 +40,8 @@ writer.meta.add(*{{args.xcols}})
 #writer.writeMeta()
 writer.writeHead()
 for snp in snps:
-	s = dbsnp.filter_by(name=snp).first()
+	chr, start, end = snp
+	s = dbsnp.filter_by(chrom=chr, chromStart = start, chromEnd = end).first()
 	'''
 	snp147(
 		bin=1566,
@@ -67,15 +73,16 @@ for snp in snps:
 	)
 	'''
 	if not s:
-		sys.stderr.write('pyppl.log.warning: Cannot find coordinates for SNP: %s\n' % snp)
+		sys.stderr.write('pyppl.log.warning: Cannot find snp at: %s\n' % str(snp))
 	else:
 		r        = readRecord()
 		r.CHR    = s.chrom
 		r.START  = str(s.chromStart)
 		r.END    = str(s.chromEnd)
-		r.NAME   = snp
+		r.NAME   = s.name
 		r.SCORE  = str(s.score)
 		r.STRAND = s.strand
 		for xcol in {{args.xcols}}:
 			setattr(r, xcol, str(getattr(s, xcol)))
 		writer.write(r)
+		

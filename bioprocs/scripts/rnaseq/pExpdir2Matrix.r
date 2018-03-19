@@ -10,10 +10,13 @@ isGoodRname = function(rname) {
 }
 isGoodRname = Vectorize(isGoodRname)
 
+namefunc = {{args.namefunc}}
+
 exp = NULL
 for (efile in Sys.glob({{args.pattern | quote}})) {
 	cat("pyppl.log: Reading", efile, "...\n", file = stderr())
 	sample = tools::file_path_sans_ext(basename(efile))
+	sample = namefunc(sample)
 	if (grepl ('.gz$', efile)) efile = gzfile (efile)
 	tmp    = read.table (efile, sep="\t", header={{args.header | R}}, row.names = 1, check.names=F)
 	rnames = rownames(tmp)
