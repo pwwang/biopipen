@@ -1,0 +1,3 @@
+Disease	Healthy
+Mut	12.5	7.5
+Non	12.5	7.5

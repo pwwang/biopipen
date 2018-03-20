@@ -1,0 +1,7 @@
+confInt1	confInt2	oddsRatio	pval	qval	alternative	method
+A.vs.B	0.00363965859041724	2.5858310604703	0.209973358830271	0.328534571723426	1	two.sided	Fisher's Exact Test for Count Data
+A.vs.C	0.0369478678060841	4.53958545147562	0.420193353872754	0.612616099071207	1	two.sided	Fisher's Exact Test for Count Data
+A.vs.D	0.0618581012530465	6.20610860058763	0.608781862505458	0.651354489164087	1	two.sided	Fisher's Exact Test for Count Data
+B.vs.C	0.105888180601943	16.4050968011408	1.10528106905409	1	1	two.sided	Fisher's Exact Test for Count Data
+B.vs.D	0.158054786592718	22.05756602191	1.52861838033727	1	1	two.sided	Fisher's Exact Test for Count Data
+C.vs.D	0.0609566656095844	9.44392466010179	0.904747243030059	1	1	two.sided	Fisher's Exact Test for Count Data

@@ -114,3 +114,137 @@ pSurvival.args.gridParams = Box() # ncol, nrow
 pSurvival.args.pval       = True
 pSurvival.lang            = params.Rscript.value
 pSurvival.script          = "file:scripts/stats/pSurvival.r"
+
+"""
+@name:
+	pChiSquare
+@description:
+	Do chi-square test.
+@input:
+	`infile:file`: The input file.
+@output:
+	`outfile:file` : The output file containing Xsquare, df, pval and method
+	`obsvfile:file`: The observation matrix
+	`exptfile:file`: The expectation matrix
+@args:
+	`intype`: The type of the input file:
+		- `count` (default): The contingency table
+		```
+		#         | Disease | Healthy |
+		# --------+---------+---------+
+		#   mut   |   40    |   12    |
+		# non-mut |   23    |   98    |
+		# --------+---------+---------+
+		```
+		- `raw`: The raw values:
+		```
+		# Contingency table rows: Mut, Non
+		# Contingency table cols: Disease, Healthy
+		# 
+		#         | S1 | S2 | ... | Sn |
+		# --------+----+----+-----+----+
+		# Disease | 1  | 0  | ... | 1  |
+		# Healthy | 0  | 1  | ... | 0  |
+		# --------+----+----+-----+----+
+		# Mut     | 1  | 0  | ... | 1  |
+		# Non     | 0  | 1  | ... | 0  |
+		```
+	`ctcols`: The colnames of contingency table if input file is raw values
+		- You may also specify them in the head of the input file
+"""
+pChiSquare = Proc(desc = "Do chi-square test.")
+pChiSquare.input = "infile:file"
+pChiSquare.output = "outfile:file:{{in.infile | fn2}}.chi2.txt, obsvfile:file:{{in.infile | fn2}}.obsv.txt, exptfile:file:{{in.infile | fn2}}.expt.txt"
+pChiSquare.args.intype = 'cont' # raw
+pChiSquare.args.ctcols = ''
+pChiSquare.lang = params.Rscript.value
+pChiSquare.script = "file:scripts/stats/pChiSquare.r"
+
+"""
+@name:
+	pFisherExact
+@description:
+	Do fisher exact test.
+@input:
+	`infile:file`: The input file.
+@output:
+	`outfile:file` : The output file containing confInt1, confInt2, oddsRatio, pval, alternative and method.
+@args:
+	`intype`: The type of the input file:
+		- `count` (default): The contingency table
+		```
+		#         | Disease | Healthy |
+		# --------+---------+---------+
+		#   mut   |   40    |   12    |
+		# non-mut |   23    |   98    |
+		# --------+---------+---------+
+		```
+		- `raw`: The raw values:
+		```
+		# Contingency table rows: Mut, Non
+		# Contingency table cols: Disease, Healthy
+		# 
+		#         | S1 | S2 | ... | Sn |
+		# --------+----+----+-----+----+
+		# Disease | 1  | 0  | ... | 1  |
+		# Healthy | 0  | 1  | ... | 0  |
+		# --------+----+----+-----+----+
+		# Mut     | 1  | 0  | ... | 1  |
+		# Non     | 0  | 1  | ... | 0  |
+		```
+	`ctcols`: The colnames of contingency table if input file is raw values
+		- You may also specify them in the head of the input file
+"""
+pFisherExact = Proc(desc = "Do fisher exact test.")
+pFisherExact.input = "infile:file"
+pFisherExact.output = "outfile:file:{{in.infile | fn2}}.fexact.txt"
+pFisherExact.args.intype = 'cont' # raw
+pFisherExact.args.ctcols = ''
+pFisherExact.lang = params.Rscript.value
+pFisherExact.script = "file:scripts/stats/pFisherExact.r"
+
+"""
+@name:
+	pPWFisherExact
+@description:
+	Do pair-wise fisher exact test.
+	Commonly used for co-occurrence/mutual-exclusivity analysis.
+	P-value indicates if the pairs are significantly co-occurred or mutually exclusive.
+	Co-occurrence: Odds ratio > 1 
+	Mutual-exclusivity: Odds ratio < 1
+@input:
+	`infile:file`: The input file.
+@output:
+	`outfile:file` : The output file containing confInt1, confInt2, oddsRatio, pval, qval, alternative and method.
+@args:
+	`intype`: The type of the input file:
+		- `pairs`: The contingency table
+		```
+		#
+		# A+	B+	4
+		# A-	B-	175 
+		# A+	B-	12
+		# A-	B+	1
+		#
+		```
+		- `raw` (default): The raw values:
+		```
+		# 
+		#         | S1 | S2 | ... | Sn |
+		# --------+----+----+-----+----+
+		# A       | 1  | 0  | ... | 1  |
+		# B       | 0  | 1  | ... | 0  |
+		# ...     |           ...      |
+		# X       | 0  | 1  | ... | 0  |
+		# --------+----+----+-----+----+
+		#
+		```
+	`padj`: The p-value adjustment method, see `p.adjust.methods` in R. Default: `BH`
+"""
+pPWFisherExact = Proc(desc = "Do pair-wise fisher exact test.")
+pPWFisherExact.input = "infile:file"
+pPWFisherExact.output = "outfile:file:{{in.infile | fn2}}.pwfexact.txt"
+pPWFisherExact.args.intype = 'raw' # pairs
+pPWFisherExact.args.padj = 'BH'
+pPWFisherExact.lang = params.Rscript.value
+pPWFisherExact.script = "file:scripts/stats/pPWFisherExact.r"

@@ -1,0 +1,3 @@
+Disease	Healthy
+Mut	15	5
+Non	10	10

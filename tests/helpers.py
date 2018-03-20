@@ -1,5 +1,7 @@
-import unittest, tempfile, shutil, re
+import unittest, tempfile, shutil, re, mimetypes
+from glob import glob
 from os import makedirs
+from hashlib import md5
 from pyppl import Box
 from six import with_metaclass, assertRaisesRegex as sixAssertRaisesRegex
 
@@ -93,6 +95,14 @@ def utilTest(input, script, name, tplenvs, test, args = None):
 	procOK(pTest, name, test)
 	
 ######
+
+def md5sum(fn):
+	ret = md5()
+	with open(fn, "rb") as f:
+		#for chunk in iter(lambda: f.read(4096), b""):
+		#	ret.update(chunk)
+		ret.update(f.read())
+	return ret.hexdigest()
 
 def testingOrder (_, x, y):
 	if not re.search(r'_\d+$', x):
@@ -226,10 +236,31 @@ class TestCase(with_metaclass(DataProviderSupport, unittest.TestCase)):
 			self.fail(msg)
 	
 	def assertFileEqual(self, first, second, msg = None):
-		with open(first) as f1, open(second) as f2:
-			first  = f1.read().splitlines()
-			second = f2.read().splitlines()
-		self.assertListEqual(first, second, msg)
+		t1, _ = mimetypes.guess_type(first)
+		t2, _ = mimetypes.guess_type(second)
+		if t1 != t2:
+			self.fail(msg = msg or 'First file is "%s", but second is "%s"' % (t1, t2))
+		if t1.startswith('text/'):
+			with open(first) as f1, open(second) as f2:
+				first  = f1.read().splitlines()
+				second = f2.read().splitlines()
+			self.assertListEqual(first, second, msg)
+		else:
+			md5sum1 = md5sum(first)
+			md5sum2 = md5sum(second)
+			self.assertEqual(md5sum(first), md5sum(second), msg or 'Md5sums of two testing files are different:\n- %s %s\n- %s %s' % (md5sum1, first, md5sum2, second))
+	
+	def assertDirEqual(self, first, second, msg = None):
+		if not path.isdir(first):
+			self.fail('The first file is not a directory.')
+		if not path.isdir(second):
+			self.fail('The second file is not a directory.')
+		for fn in glob(path.join(first, '*')):
+			bn = path.basename(fn)
+			if path.isdir(fn):
+				self.assertDirEqual(fn, path.join(second, bn))
+			else:
+				self.assertFileEqual(fn, path.join(second, bn))
 
 	def assertTextEqual(self, first, second, msg = None):
 		if not isinstance(first, list):
