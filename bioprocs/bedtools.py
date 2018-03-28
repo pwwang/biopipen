@@ -1,6 +1,5 @@
 from pyppl import Proc, Box
 from . import params
-from .utils import runcmd, helpers, buildref, checkref
 
 """
 @name:
@@ -25,9 +24,7 @@ pBedGetfasta.args.samtools       = params.samtools.value
 pBedGetfasta.args.bedtools       = params.bedtools.value
 pBedGetfasta.args.params         = Box({'name': True})
 pBedGetfasta.args.ref            = params.ref.value
-pBedGetfasta.envs.runcmd         = runcmd.py
-pBedGetfasta.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBedGetfasta.beforeCmd           = checkref.fa.bash + buildref.fai.bash
+#pBedGetfasta.beforeCmd           = checkref.fa.bash + buildref.fai.bash
 pBedGetfasta.lang                = params.python.value
 pBedGetfasta.script              = "file:scripts/bedtools/pBedGetfasta.py"
 
@@ -79,8 +76,6 @@ pBedFlank.args.extend         = False
 pBedFlank.args.gsize          = params.gsize.value
 pBedFlank.args.params         = Box()
 pBedFlank.args.bedtools       = params.bedtools.value
-pBedFlank.envs.runcmd         = runcmd.py
-pBedFlank.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedFlank.lang                = params.python.value
 pBedFlank.script              = "file:scripts/bedtools/pBedFlank.py"
 
@@ -105,8 +100,6 @@ pBedIntersect.input               = "afile:file, bfile:file"
 pBedIntersect.output              = "outfile:file:{{in.afile | fn}}.intersect.bt"
 pBedIntersect.args.bedtools       = params.bedtools.value
 pBedIntersect.args.params         = Box()
-pBedIntersect.envs.runcmd         = runcmd.py
-pBedIntersect.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedIntersect.lang                = params.python.value
 pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
 
@@ -131,8 +124,6 @@ pBedIntersect2.input               = "afile:file, bfiles:files"
 pBedIntersect2.output              = "outfile:file:{{in.afile | fn}}.intersect2.bt"
 pBedIntersect2.args.bedtools       = params.bedtools.value
 pBedIntersect2.args.params         = Box()
-pBedIntersect2.envs.runcmd         = runcmd.py
-pBedIntersect2.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedIntersect2.lang                = params.python.value
 pBedIntersect2.script              = 'file:scripts/bedtools/pBedIntersect2.py'
 
@@ -180,8 +171,6 @@ pBedMerge.input               = "infile:file"
 pBedMerge.output              = "outfile:file:{{in.infile | fn}}.merged.bed"
 pBedMerge.args.bedtools       = params.bedtools.value
 pBedMerge.args.params         = Box()
-pBedMerge.envs.runcmd         = runcmd.py
-pBedMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedMerge.lang                = params.python.value
 pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
 
@@ -205,8 +194,6 @@ pBedsMerge.input               = "infiles:files"
 pBedsMerge.output              = "outfile:file:{{in.infiles[0] | fn}}.merged.bed"
 pBedsMerge.args.bedtools       = params.bedtools.value
 pBedsMerge.args.params         = Box()
-pBedsMerge.envs.runcmd         = runcmd.py
-pBedsMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedsMerge.lang                = params.python.value
 pBedsMerge.script              = "file:scripts/bedtools/pBedsMerge.py"
 

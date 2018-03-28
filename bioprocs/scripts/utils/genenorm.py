@@ -22,7 +22,7 @@ if 'genenorm' not in vars() or not callable(genenorm):
 		inopts   = {'skip': 0, 'comment': '#', 'delimit': '\t'}
 		inopts.update(inopts1)
 		outopts1 = outopts or {}
-		outopts  = {'headprefix': '#', 'delimit': '\t', 'meta': False, 'head': True, 'metaprefix': '##META/'}
+		outopts  = {'headprefix': '#', 'delimit': '\t', 'meta': False, 'head': True, 'metaprefix': '##META/', 'origin': True}
 		outopts.update(outopts1)
 
 		species  = species[genome] if genome in species else genome
@@ -88,8 +88,10 @@ if 'genenorm' not in vars() or not callable(genenorm):
 		greader.rewind()
 		gwriter = writeBase(outfile)
 		gwriter.meta.borrow(greader.meta)
-		if len(to) > 0:
-			gwriter.meta.add(*to)
+		#if len(to) > 0:
+		#	gwriter.meta.add(*to)
+		if outopts['origin']:
+			gwriter.meta.add('_origin')
 
 		if outopts['meta']:
 			gwriter.writeMeta(prefix = outopts['metaprefix'])
@@ -98,6 +100,8 @@ if 'genenorm' not in vars() or not callable(genenorm):
 
 		for r in greader:
 			g = r[genecol]
+			if outopts['origin']:
+				r._origin = g
 			for t in to: 
 				if t == genecol: continue
 				r[t] = ''
@@ -116,7 +120,7 @@ if 'genenorm' not in vars() or not callable(genenorm):
 						r[k] = v
 					r[genecol] = newg[to[0]]
 				else:
-					r[to[0]] = newg
+					#r[to[0]] = newg
 					r[genecol] = newg
 			gwriter.write(r, delimit = outopts['delimit'])
 

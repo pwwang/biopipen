@@ -65,6 +65,7 @@ for sample in samples:
 {% 		if args.nthread | lambda x: x == 1 %}
 for cmd in cmds: runcmd(cmd)
 {% 		else %}
+# Note the threads may be hanging on here.
 parallel(cmds, {{args.nthread}})
 {% 		endif %}
 

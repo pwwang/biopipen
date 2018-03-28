@@ -83,9 +83,11 @@ if ("Patient" %in% colnames(sampleinfo) && n1 != n2) {
 
 	dge     = DESeq(dge)
 	allgene = results(dge)
+	allgene = allgene[order(allgene$pvalue),,drop=F]
 	write.table (allgene, allfile, quote=F, sep="\t")
 
-	degene  = allgene[allgene$pvalue < pval,,drop=F]
+	degene  = allgene[!is.na(allgene$pvalue),,drop=F]
+	degene  = degene[degene$pvalue < pval,,drop=F]
 	write.table (degene, "{{out.outfile}}", quote=F, sep="\t")
 
 	degene$logFC  = degene$log2FoldChange

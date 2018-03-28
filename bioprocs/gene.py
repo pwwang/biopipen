@@ -31,6 +31,7 @@ pGeneNameNorm.errhow        = 'retry'
 pGeneNameNorm.args.notfound = 'ignore'
 pGeneNameNorm.args.inmeta   = ['GENE']
 pGeneNameNorm.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
+pGeneNameNorm.args.outopts  = Box(delimit = '\t', metaprefix = '##META/', headprefix = '#', meta = False, head = True, origin = True)
 pGeneNameNorm.args.genecol  = ''
 pGeneNameNorm.args.frm      = 'symbol, alias'
 pGeneNameNorm.args.to       = 'symbol'

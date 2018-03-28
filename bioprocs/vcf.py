@@ -4,7 +4,6 @@ A set of processes to generate/process vcf files
 from os import path
 from glob import glob
 from pyppl import Proc, Box
-from .utils import mem2, runcmd, buildref, checkref, helpers, plot, parallel
 from . import params
 
 """
@@ -129,9 +128,6 @@ pVcfAnno.args.dbpath          = Box({
 pVcfAnno.args.snpeffStats    = False
 pVcfAnno.args.params         = Box()
 pVcfAnno.args.mem            = params.mem8G.value
-pVcfAnno.envs.runcmd         = runcmd.py
-pVcfAnno.envs.mem2           = mem2.py
-pVcfAnno.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pVcfAnno.beforeCmd           = """
 # check dbpath
 dbpath=$({{proc.lang}} -c "print {{args.dbpath}}['{{args.tool}}']")
@@ -172,9 +168,6 @@ pVcfSplit.args.gatk           = params.gatk.value
 pVcfSplit.args.ref            = params.ref.value # only for gatk
 pVcfSplit.args.params         = Box()
 pVcfSplit.args.nthread        = 1
-pVcfSplit.envs.runcmd         = runcmd.py
-pVcfSplit.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcfSplit.envs.parallel       = parallel.py
 pVcfSplit.lang                = params.python.value
 pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 
@@ -202,9 +195,6 @@ pVcfMerge.args.gatk           = params.gatk.value
 pVcfMerge.args.ref            = params.ref.value # only for gatk
 pVcfMerge.args.vep            = params.vep.value
 pVcfMerge.args.nthread        = 1
-pVcfMerge.envs.runcmd         = runcmd.py
-pVcfMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcfMerge.envs.parallel       = parallel.py
 pVcfMerge.lang                = params.python.value
 pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
 
@@ -250,10 +240,15 @@ pVcf2Maf.args.tumor1st       = True
 pVcf2Maf.args.somatic        = False
 pVcf2Maf.args.nthread        = 1
 pVcf2Maf.args.params         = Box()
-pVcf2Maf.envs.runcmd         = runcmd.py
-pVcf2Maf.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pVcf2Maf.envs.parallel       = parallel.py
 pVcf2Maf.lang                = params.python.value
 pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
+
+pVcf2GTMat = Proc(desc = 'Convert Vcf file to genotype matrix')
+pVcf2GTMat.input = 'infile:file'
+pVcf2GTMat.output = 'outfile:file:{{in.infile | fn2}}.gtmat'
+pVcf2GTMat.args.rnames = 'coord' # name
+pVcf2GTMat.args.na = 'NA'
+pVcf2GTMat.lang = params.python.value
+pVcf2GTMat.script = "file:scripts/vcf/pVcf2GTMat.py"
 
 

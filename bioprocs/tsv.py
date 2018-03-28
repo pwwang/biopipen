@@ -1,6 +1,5 @@
 from pyppl import Proc, Box
 from . import params
-from .utils import helpers, txt, read, write
 
 """
 @name:
@@ -51,7 +50,6 @@ pCbind.output         = 'outfile:file:{{in.infiles[0] | fn2}}.cbound.txt'
 pCbind.args.cnames    = True # or [True, True, False] corresponding to the file order
 pCbind.args.rnames    = True
 pCbind.args.na        = 'NA'
-pCbind.envs.cbindfill = helpers.cbindfill.r
 pCbind.lang           = params.Rscript.value
 pCbind.script         = "file:scripts/tsv/pCbind.r"
 
@@ -76,7 +74,6 @@ pRbind.output         = 'outfile:file:{{in.infiles[0] | bn}}'
 pRbind.args.cnames    = True # or [True, True, False] corresponding to the file order
 pRbind.args.rnames    = True
 pRbind.args.na        = 'NA'
-pRbind.envs.rbindfill = helpers.rbindfill.r
 pRbind.lang           = params.Rscript.value
 pRbind.script         = "file:scripts/tsv/pRbind.r"
 
@@ -163,8 +160,6 @@ pTsv.args.opshelper = ''
 pTsv.args.ops       = None
 pTsv.args.inopts    = Box(delimit = '\t', comment = '#', skip = 0)
 pTsv.args.outopts   = Box(delimit = '\t', metaprefix = '##META/', headprefix = '#', meta = True, head = True)
-pTsv.envs.read      = read
-pTsv.envs.write     = write
 pTsv.script         = "file:scripts/tsv/pTsv.py"
 
 """

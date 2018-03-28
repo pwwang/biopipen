@@ -1,7 +1,6 @@
 from pyppl import Proc, Box
 from .bedtools import pBedGetfasta, pBedRandom, pBedFlank, pBedIntersect, pBedIntersect2, pBedMerge, pBedsMerge
 from . import params
-from .utils import helpers, runcmd
 
 """
 @name:
@@ -35,8 +34,6 @@ pBedSort.args.unique         = True
 pBedSort.args.params         = Box()
 pBedSort.args.tmpdir         = params.tmpdir.value
 pBedSort.lang                = params.python.value
-pBedSort.envs.runcmd         = runcmd.py
-pBedSort.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBedSort.script              = "file:scripts/bed/pBedSort.py"
 
 """

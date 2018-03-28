@@ -1,6 +1,4 @@
-from collections import OrderedDict
 from pyppl import Proc, Box
-from .utils import txt, helpers, runcmd
 from . import params
 
 """
@@ -21,22 +19,17 @@ from . import params
 	`tmpdir` : The tmpdir.
 	`unique` : Just keep the unique lines. Default: False
 	`delimit`: The delimit to separate the fields. Default: '\t'
-	`noeline`: Remove empty lines. Default: False
 	`params` : The arguments used by `sort`
 """
 pSort                     = Proc(desc = 'Sort file.')
 pSort.input               = "infile:file"
 pSort.output              = "outfile:file:{{in.infile | bn}}"
-pSort.args.params         = OrderedDict()
-pSort.args.skip           = 0
+pSort.args.params         = Box()
+pSort.args.inopts         = Box(skip = 0, delimit = '\t', comment = '#')
 pSort.args.case           = True
 pSort.args.mem            = params.mem4G.value
 pSort.args.tmpdir         = params.tmpdir.value
 pSort.args.unique         = False
-pSort.args.delimit        = "\t"
-pSort.args.noeline        = False
-pSort.envs.runcmd         = runcmd.py
-pSort.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pSort.lang                = params.python.value
 pSort.script              = "file:scripts/common/pSort.py"
 
@@ -92,6 +85,42 @@ pStr2File.script          = "file:scripts/common/pStr2File.py"
 
 """
 @name:
+	pHead
+@description:
+	Get the top N lines from a file
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file
+@args:
+	`n`: Top n lines. You may use '-n' to skip last n lines.
+"""
+pHead = Proc(desc = "Like linux's head command")
+pHead.input  = "infile:file"
+pHead.output = "outfile:file:{{in.infile | fn}}.head.txt"
+pHead.args.n = 10
+pHead.script = 'head -n {{args.n}} {{in.infile | squote}} > {{out.outfile | squote}}'
+
+"""
+@name:
+	pTail
+@description:
+	Get the bottom N lines from a file
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file
+@args:
+	`n`: Bottom n lines. You may use '+n' to skip first n lines.
+"""
+pTail = Proc(desc = "Like linux's tail command")
+pTail.input  = "infile:file"
+pTail.output = "outfile:file:{{in.infile | fn}}.tail.txt"
+pTail.args.n = 10
+pTail.script = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x.startswith("+") else x}} {{in.infile | squote}} > {{out.outfile | squote}}'
+
+"""
+@name:
 	pPrepend
 @description:
 	Prepend a string to a file
@@ -101,10 +130,18 @@ pStr2File.script          = "file:scripts/common/pStr2File.py"
 @output:
 	`outfile:file`: The output file.
 """
-pPrepend                  = Proc(desc = "Save string to a file.")
+pPrepend                  = Proc(desc = "Prepend string to a file.")
 pPrepend.input            = "in:var, infile:file"
 pPrepend.output           = "outfile:file:{{in.infile | fn}}.prepend.txt"
-pPrepend.script           = "file:scripts/common/pPrepend.bash"
+pPrepend.script           = '''
+printf {{in.in | squote}} > {{out.outfile | squote}}
+cat {{in.infile | squote}} >> {{out.outfile | squote}}
+'''
+
+pAppend = Proc(desc = "Append string to a file")
+pAppend.input = "in:var, infile:file"
+pAppend.output = "outfile:file:{{in.infile | fn}}.append.txt"
+pAppend.script = 'cat {{in.infile | squote}} > {{out.outfile | squote}}; printf {{in.in | squote}} >> {{out.outfile | squote}}'
 
 """
 @name:
@@ -123,8 +160,10 @@ pAddHeader                = Proc(desc = 'Add the header of 1st file to 2nd file.
 pAddHeader.input          = "infile1:file, infile2:file"
 pAddHeader.output         = "outfile:file:{{in.infile2 | bn}}"
 pAddHeader.args.n         = 1
-pAddHeader.script         = "file:scripts/common/pAddHeader.bash"
-
+pAddHeader.script         = '''
+head -n {{args.n}} {{in.infile1 | squote}} > {{out.outfile | squote}}
+cat {{in.infile2 | squote}} >> {{out.outfile | squote}}
+'''
 
 """
 @name:
@@ -135,19 +174,41 @@ pAddHeader.script         = "file:scripts/common/pAddHeader.bash"
 	`indir:file`: The input directory
 @output:
 	`outfile:file`: The output file
+@args:
+	`inopts`: The options for input file.
+		- defaults: skip: 0, comment: #, delimit '\\t'
+	`outopts`: The options for output file. Defaults:
+		- head: False (not output head line)
+		- headPrefix: `#` (The prefix for head line)
+		- headDelimit: `\\t` (The delimit for head line)
+		- headTransform: `None` (The callback for head line)
+		- delimit: `\\t` (The delimit for output line)
 """
 pMergeFiles               = Proc(desc = 'Merge files.')
 pMergeFiles.input         = "infiles:files"
-pMergeFiles.output        = "outfile:file:{{in.infiles[0] | fn}}_etc{{in.infiles[0] | ext}}"
-pMergeFiles.args.skip     = 0
-pMergeFiles.args.comment  = '#'
-pMergeFiles.args.header   = False
+pMergeFiles.output        = "outfile:file:{{in.infiles.0 | fn}}.etc{{in.infiles.0 | ext}}"
+pMergeFiles.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
+pMergeFiles.args.outopts  = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
 pMergeFiles.lang          = params.python.value
 pMergeFiles.script        = "file:scripts/common/pMergeFiles.py"
 
+"""
+@name:
+	pSplitRows
+@description:
+	Split a file by rows, specially usefull to split a job into multithreads/multiprocesses.
+@input:
+	`infile:file`: The input file
+@output:
+	`outdir:dir`: The output directory including the split files
+@args:
+	`skip`: The skip first n lines. Default: `0`
+	`cnames`: The column names. If True, the column names will be added to each split file. Default: `True`
+	`n`: Number of files to split. Default: `8`
+"""
 pSplitRows                = Proc(desc = 'Split a file by rows.')
 pSplitRows.input          = 'infile:file'
-pSplitRows.output         = 'outdir:dir:{{in.infile | bn}}-rows'
+pSplitRows.output         = 'outdir:dir:{{in.infile | bn}}.rows'
 pSplitRows.args.skip      = 0
 pSplitRows.args.cnames    = True
 pSplitRows.args.n         = 8

@@ -10,6 +10,7 @@ _, cachefile = genenorm(
 	genome   = {{args.genome | quote}},
 	tmpdir   = {{args.tmpdir | quote}},
 	inopts   = {{args.inopts}},
+	outopts  = {{args.outopts}},
 	inmeta   = {{args.inmeta | lambda x: x if isinstance(x, list) or isinstance(x, dict) else '"' + x + '"'}},
 	genecol  = {{args.genecol | quote}}
 )

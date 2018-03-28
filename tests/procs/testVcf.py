@@ -1,16 +1,16 @@
-import unittest
-from os import path
+import unittest, helpers
+from os import path, symlink
 from pyppl import PyPPL, Proc
 from helpers import getfile, procOK, config, fileOKIn
 from bioprocs.fastx import pFastqSim
-from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit, pVcf2Maf, pVcfMerge
+from bioprocs.vcf import pVcfFilter, pVcfAnno, pVcfSplit, pVcf2Maf, pVcfMerge, pVcf2GTMat
 from bioprocs.vcfnext import pVcfStatsPlot, pCallRate, pMutSig, pMafMerge, pMaftools
 from bioprocs.web import pDownloadGet
 from bioprocs.common import pFiles2Dir
 from bioprocs.tabix import pTabix, pTabixIndex
 
 
-class TestVcf (unittest.TestCase):
+class TestVcf (helpers.TestCase):
 	
 	def test2_pVcfFilter (self):
 		
@@ -105,12 +105,12 @@ class TestVcf (unittest.TestCase):
 
 		pVcfSplit1 = pVcfSplit.copy()
 		pVcfSplit1.depends = pTabix
-		pVcfSplit1.expect  = "ls -l {{out.outdir}}/HG00098.vcf {{out.outdir}}/NA20828.vcf"
+		pVcfSplit1.expect  = "ls -l {{out.outdir}}/*-HG00098.vcf {{out.outdir}}/*-NA20828.vcf"
 
 		pVcfSplit3 = pVcfSplit.copy()
 		pVcfSplit3.depends = pTabix
 		pVcfSplit3.input   = lambda ch: ch.cbind(','.join(['NA' + str(i) for i in range(19074, 19190)]))
-		pVcfSplit3.expect  = "ls -l {{out.outdir}}/NA19189.vcf {{out.outdir}}/NA19119.vcf {{out.outdir}}/NA19074.vcf"
+		pVcfSplit3.expect  = "ls -l {{out.outdir}}/*-NA19189.vcf {{out.outdir}}/*-NA19119.vcf {{out.outdir}}/*-NA19074.vcf"
 		pVcfSplit3.args.nthread = 20
 
 		# dont have chr prefix on chromosomes!
@@ -118,14 +118,14 @@ class TestVcf (unittest.TestCase):
 		# gatk is toooooo slow for test
 		#pVcfSplit4.depends = pTabix 
 		pVcfSplit4.input   = lambda ch: ch.cbind(','.join(['NA' + str(i) for i in range(19074, 19140)]))
-		pVcfSplit4.expect  = "ls -l {{out.outdir}}/NA19189.vcf {{out.outdir}}/NA19119.vcf"
+		pVcfSplit4.expect  = "ls -l {{out.outdir}}/*-NA19189.vcf {{out.outdir}}/*-NA19119.vcf"
 		pVcfSplit4.args.nthread = 20
 		pVcfSplit4.args.tool  = 'gatk'
 
 		pVcfSplit.tag = 'sample'
 		pVcfSplit.depends = pTabix
 		pVcfSplit.input   = lambda ch: ch.cbind("NA19660,NA19917")
-		pVcfSplit.expect  = "ls -l {{out.outdir}}/NA19660.vcf {{out.outdir}}/NA19917.vcf"
+		pVcfSplit.expect  = "ls -l {{out.outdir}}/*-NA19660.vcf {{out.outdir}}/*-NA19917.vcf"
 
 		PyPPL().start(pTabix).run()
 
@@ -153,7 +153,9 @@ class TestVcf (unittest.TestCase):
 		pFiles2Dir4.depends    = pTabixIndex
 		pFiles2Dir4.input      = lambda ch: [ch.flatten()]
 		pVcfMerge.depends      = pFiles2Dir4
-
+		pVcfMerge.input = lambda ch: [ch.expand(pattern = '*.vcf.gz').flatten()]
+		pVcfMerge.callfront = lambda p: [symlink(x + '.tbi', path.join(p.workdir, '1', 'input')) for x in p.input['data']['infiles'] ]
+		
 		pAddChr2         = Proc()
 		pAddChr2.depends = pVcfMerge
 		pAddChr2.input   = "infile:file"
@@ -185,7 +187,6 @@ class TestVcf (unittest.TestCase):
 		PyPPL().start(pFiles2DirMafMerge).run()
 		procOK(pMafMerge, 'mafmerge.maf', self)
 
-	@unittest.skipIf(not path.isfile('/data2/junwenwang/shared/tools/miniconda2/envs/r3.4.1/bin/R'), 'Cannot find R3.4.1')
 	def test91_pMaftools(self):
 		pMaftools.input = ['/data2/junwenwang/shared/tools/miniconda2/envs/r3.4.1/lib/R/library/maftools/extdata/']
 		pMaftools.lang  = '/data2/junwenwang/shared/tools/miniconda2/envs/r3.4.1/bin/Rscript'
@@ -199,6 +200,16 @@ class TestVcf (unittest.TestCase):
 		pMaftools.args.params.gisticOncoplot.clinicalFeatures = 'FAB_classification'
 		pMaftools.args.nthread = 20
 		PyPPL().start(pMaftools).run()
+		
+	def dataProvider_testVcf2GTMat(self, testdir, indir, outdir):
+		infile = path.join(indir, 'example.vcf')
+		outfile = path.join(outdir, 'example.gtmat')
+		yield infile, outfile
+		
+	def testVcf2GTMat(self, infile, outfile):
+		pVcf2GTMatTest = pVcf2GTMat.copy()
+		pVcf2GTMatTest.input = [infile]
+		PyPPL().start(pVcf2GTMatTest).run()
 
 		
 if __name__ == '__main__':

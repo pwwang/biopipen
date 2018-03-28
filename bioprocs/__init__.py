@@ -6,6 +6,8 @@ from tempfile import gettempdir
 from sys import modules, stderr
 from pyppl import params
 
+# open to R (reticulate) to get the path of r util scripts
+UTILS    = path.join(path.realpath(path.dirname(__file__)), 'utils')
 DEFAULTS = {
 	# constants
 	"dbsnpver"        : "150",
@@ -188,3 +190,11 @@ for cfgfile in cfgfiles:
 	if not path.exists(cfgfile):
 		continue
 	params.loadFile (cfgfile)
+	
+
+rimport  = """
+(function(rfile) {
+	library(reticulate)
+	bioprocs = import('bioprocs')
+	source(file.path(bioprocs$UTILS, rfile))
+})"""

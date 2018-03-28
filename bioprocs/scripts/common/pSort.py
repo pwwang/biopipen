@@ -1,43 +1,47 @@
-{{runcmd}}
-{{params2CmdArgs}}
-
+from pyppl import Box
 from collections import OrderedDict
+from bioprocs.utils.helpers import runcmd, cmdargs
+from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
-params = {}
+params = Box()
 params['T'] = {{args.tmpdir | quote}}
 params['S'] = {{args.mem | quote}}
 params['u'] = {{args.unique}}
-params['t'] = {{args.delimit | quote}}
+params['t'] = {{args.inopts.delimit | quote}}
 params.update({{args.params}})
-params = OrderedDict(sorted(params.items()))
 
+infile   = {{in.infile | quote}}
+outfile  = {{out.outfile | quote}}
+tmpfile  = outfile + '.tmp'
+skip     = {{args.inopts | lambda x: x.skip if 'skip' in x else 0}}
+delimit  = {{args.inopts | lambda x: x.delimit if 'delimit' in x else '\t' | quote}}
+comment  = {{args.inopts | lambda x: x.comment if 'comment' in x else '#' | quote}}
+
+if not skip and not comment:
+	tmpfile = infile
+else:
+	readerSkip = TsvReader(infile, delimit = delimit, comment = '', skip = 0)
+	readerSkip.autoMeta()
+	writerSkip = TsvWriter(outfile, delimit = delimit)
+	writerSkip.meta.update(readerSkip.meta)
+	for i, r in enumerate(readerSkip):
+		if i < skip:
+			writerSkip.write(r)
+	writerSkip.close()
+	readerSkip.close()
+	readerTmp = TsvReader(infile, delimit = delimit, comment = comment, skip = skip)
+	readerTmp.autoMeta()
+	writerTmp = TsvWriter(tmpfile, delimit = delimit)
+	writerTmp.meta.update(readerTmp.meta)
+	for r in readerTmp:
+		writerTmp.write(r)
+	writerTmp.close()
+	
 {% if args.case %}
 case = "LANG=C"
 {% else %}
 case = "LANG=en_US.UTF-8"
 {% endif %}
 
-infile = {{in.infile | quote}}
-{% if args.noeline %}
-noelinefile = '{{out.outfile}}.noeline'
-with open(infile) as f, open(noelinefile, 'w') as fout:
-	for line in f:
-		if not line.strip(): continue
-		fout.write(line)
-infile = noelinefile
-{% endif %}
-
-{% if args.skip %}
-inskipfile = '{{out.outfile}}.skip'
-with open(infile) as f, \
-	open(inskipfile, 'w') as fin, \
-	open({{out.outfile | quote}}, 'w') as fout:
-	for _ in range({{args.skip}}):
-		fout.write(f.readline())
-	for line in f:
-		fin.write(line)
-infile = inskipfile
-{% endif %}
-
-cmd = '%s sort %s "%s" >> {{out.outfile | quote}}' % (case, params2CmdArgs(params), infile)
+cmd = '%s sort %s "%s" >> {{out.outfile | quote}}' % (case, cmdargs(params), tmpfile)
 runcmd(cmd)

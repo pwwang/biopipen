@@ -1,14 +1,14 @@
-import unittest, tempfile, shutil, re, mimetypes
+import unittest, tempfile, shutil, re, mimetypes, sys
 from glob import glob
 from os import makedirs
 from hashlib import md5
 from pyppl import Box
-from six import with_metaclass, assertRaisesRegex as sixAssertRaisesRegex
-
+from six import StringIO, with_metaclass, assertRaisesRegex as sixAssertRaisesRegex
 import inspect, gzip
 from subprocess import Popen, PIPE
 from pyppl import PyPPL, Proc
 from os import path, listdir
+from contextlib import contextmanager
 
 filedir = None
 config  = {'log': {'level': 'basic', 'lvldiff': ["+P.ARGS", "-DEBUG"]}}
@@ -95,6 +95,16 @@ def utilTest(input, script, name, tplenvs, test, args = None):
 	procOK(pTest, name, test)
 	
 ######
+
+@contextmanager
+def captured_output():
+	new_out, new_err = StringIO(), StringIO()
+	old_out, old_err = sys.stdout, sys.stderr
+	try:
+		sys.stdout, sys.stderr = new_out, new_err
+		yield sys.stdout, sys.stderr
+	finally:
+		sys.stdout, sys.stderr = old_out, old_err
 
 def md5sum(fn):
 	ret = md5()

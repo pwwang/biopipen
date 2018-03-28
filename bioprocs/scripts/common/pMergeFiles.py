@@ -1,58 +1,57 @@
-from sys import stderr
-from os import rename, remove, path
-files = {{in.infiles}}
-lfile = len(files)
+from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
-{% if args.skip | lambda x: not x %}
-skip = [0] * lfile
-{% elif args.skip | lambda x: not isinstance(x, list) %}
-skip = [{{args.skip}}] * lfile
-{% else %}
-skip = [0] * lfile
-skip[:len({{args.skip}})] = {{args.skip}}
-{% endif %}
+files   = {{in.infiles}}
+lenfs   = len(files)
+inopts  = {{args.inopts}}
+outfile = {{out.outfile | quote}}
+inopts_each = []
+for i in range(lenfs):
+	skip = 0
+	if 'skip' in inopts:
+		if not isinstance(inopts['skip'], list):
+			skip = inopts['skip']
+		elif i < len(inopts['skip']):
+			skip = inopts['skip'][i]
+	delimit = '\t'
+	if 'delimit' in inopts:
+		if not isinstance(inopts['delimit'], list):
+			delimit = inopts['delimit']
+		elif i < len(inopts['delimit']):
+			delimit = inopts['delimit'][i]
+	comment = '#'
+	if 'comment' in inopts:
+		if not isinstance(inopts['comment'], list):
+			comment = inopts['comment']
+		elif i < len(inopts['comment']):
+			comment = inopts['comment'][i]
+	ftype = ''
+	if 'ftype' in inopts:
+		if not isinstance(inopts['ftype'], list):
+			ftype = inopts['ftype']
+		elif i < len(inopts['ftype']):
+			ftype = inopts['ftype'][i]
+	inopts_each.append({'skip': skip, 'delimit': delimit, 'comment': comment, 'ftype': ftype})
+	
+readers = []
+for i,infile in enumerate(files):
+	reader = TsvReader(infile, **inopts_each[i])
+	if not reader.meta:
+		reader.autoMeta()
+	readers.append(reader)
 
-{% if args.comment | lambda x: not x %}
-comment = [''] * lfile
-{% elif args.comment | lambda x: not isinstance(x, list) %}
-comment = [{{args.comment | quote}}] * lfile
-{% else %}
-comment = ['#'] * lfile
-comment[:len({{args.comment | quote}})] = {{args.comment | quote}}
-{% endif %}
-
-{% if args.header | lambda x: x is None %}
-header = [False] * lfile
-{% elif args.header | lambda x: not isinstance(x, list) %}
-header = [{{args.header}}] * lfile
-{% else %}
-header = [False] * lfile
-header[:len({{args.header}})] = {{args.header}}
-{% endif %}
-
-headerRow = None
-reported  = False
-with open("{{out.outfile}}.nohead", 'w') as fout:
-	for i, fn in enumerate(files):
-		with open(fn) as f:
-			for _ in range(skip[i]): f.readline()
-			for line in f:
-				if header[i]:
-					if not headerRow: headerRow = line
-					elif line != headerRow and not reported:
-						stderr.write('pyppl.log.warning: There are different headers in input files.\n')
-						stderr.write('pyppl.log.warning: Prevous was %s.\n' % headerRow)
-						stderr.write('pyppl.log.warning: In "%s" is: %s.\n' % (path.basename(fn), line))
-						reported  = True
-					header[i] = False
-					continue
-				if comment[i] and line.startswith(comment[i]):
-					continue
-				fout.write(line)
-if not headerRow:
-	rename("{{out.outfile}}.nohead", {{out.outfile | quote}})
-else:
-	with open("{{out.outfile}}.nohead") as f, open({{out.outfile | quote}}, 'w') as fout:
-		fout.write(headerRow)
-		fout.write(f.read())
-	remove("{{out.outfile}}.nohead")
+outopts = {
+	'head'         : False, 
+	'headPrefix'   : '', 
+	'headDelimit'  : '\t', 
+	'headTransform': None, 
+	'delimit'      : '\t'
+}
+outopts.update({{args.outopts}})
+writer = TsvWriter(outfile, delimit = outopts['delimit'])
+writer.meta.update(readers[0].meta)
+if outopts['head']:
+	writer.writeHead(prefix = outopts['headPrefix'], delimit = outopts['headDelimit'], transform = outopts['headTransform'])
+	
+for reader in readers:
+	for r in reader:
+		writer.write(r)

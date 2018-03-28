@@ -19,7 +19,7 @@ from bioprocs.gsea import pExpmat2Gct, pSampleinfo2Cls, pGSEA, pEnrichr
 """
 aExpDir2Deg = Aggr(
 	pExpdir2Matrix,
-	pFile2Proc.copy(newid = 'pSampleInfo'),
+	pFile2Proc.copy(id = 'pSampleInfo'),
 	pRnaseqDeg,
 	depends = False
 )
@@ -55,8 +55,8 @@ aExpDir2Deg.pRnaseqDeg.args.heatmap      = True
 """
 aExpDir2DegGSEA = Aggr(
 	pExpdir2Matrix,
-	pFile2Proc.copy(newid = 'pSampleInfo'),
-	pTxt.copy(newid = 'pGMTFetcher'),
+	pFile2Proc.copy(id = 'pSampleInfo'),
+	pTxt.copy(id = 'pGMTFetcher'),
 	pExpmat2Gct,
 	pSampleinfo2Cls,
 	pGSEA,
@@ -112,9 +112,9 @@ aExpDir2DegGSEA.pGMTFetcher.args.header      = False
 	```
 """
 aRnaseqExpMat2DegGSEA = Aggr(
-	pFile2Proc.copy(newid = 'pExpMat'),
-	pFile2Proc.copy(newid = 'pSampleInfo'),
-	pTxt.copy(newid = 'pGMTFetcher'),
+	pFile2Proc.copy(id = 'pExpMat'),
+	pFile2Proc.copy(id = 'pSampleInfo'),
+	pTxt.copy(id = 'pGMTFetcher'),
 	pExpmat2Gct,
 	pSampleinfo2Cls,
 	pGSEA,
@@ -165,7 +165,7 @@ aRnaseqExpMat2DegGSEA.pGMTFetcher.args.header      = False
 """
 aCelDir2Deg = Aggr(
 	pCeldir2Matrix,
-	pFile2Proc.copy(newid = 'pSampleInfo'),
+	pFile2Proc.copy(id = 'pSampleInfo'),
 	pMarrayDeg,
 	depends = False
 )
@@ -200,8 +200,8 @@ aCelDir2Deg.pMarrayDeg.args.heatmap      = True
 """
 aCelDir2DegGSEA = Aggr(
 	pCeldir2Matrix,
-	pFile2Proc.copy(newid = 'pSampleInfo'),
-	pTxt.copy(newid = 'pGMTFetcher'),
+	pFile2Proc.copy(id = 'pSampleInfo'),
+	pTxt.copy(id = 'pGMTFetcher'),
 	pExpmat2Gct,
 	pSampleinfo2Cls,
 	pGSEA,
