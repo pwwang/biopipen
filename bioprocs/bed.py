@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from .bedtools import pBedGetfasta, pBedRandom, pBedFlank, pBedIntersect, pBedIntersect2, pBedMerge, pBedsMerge
+from .bedtools import *
 from . import params
 
 """

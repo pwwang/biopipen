@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from . import params
+from . import params, bashimport
 
 """
 @name:
@@ -22,9 +22,17 @@ pBedGetfasta.input               = "infile:file"
 pBedGetfasta.output              = "outfile:file:{{in.infile | fn}}.fa"
 pBedGetfasta.args.samtools       = params.samtools.value
 pBedGetfasta.args.bedtools       = params.bedtools.value
-pBedGetfasta.args.params         = Box({'name': True})
+pBedGetfasta.args.params         = Box(name = True)
 pBedGetfasta.args.ref            = params.ref.value
+pBedGetfasta.envs.refname        = lambda x: x + '.fai'
+pBedGetfasta.envs.bashimport     = bashimport
 #pBedGetfasta.beforeCmd           = checkref.fa.bash + buildref.fai.bash
+pBedGetfasta.beforeCmd           = '''
+{{bashimport}} 'reference.bash'
+if [[ $(reffai_check {{args.ref | refname | squote}}) -ne 0 ]]; then
+	reffai_do {{args.ref | squote}} {{args.ref | refname | squote}} {{args.samtools | squote}}
+fi
+'''
 pBedGetfasta.lang                = params.python.value
 pBedGetfasta.script              = "file:scripts/bedtools/pBedGetfasta.py"
 
@@ -35,23 +43,53 @@ pBedGetfasta.script              = "file:scripts/bedtools/pBedGetfasta.py"
 @description:
 	Similar to intersect, closest searches for overlapping features in A and B. In the event that no feature in B overlaps the current feature in A, closest will report the nearest (that is, least genomic distance from the start or end of A) feature in B. For example, one might want to find which is the closest gene to a significant GWAS polymorphism. Note that closest will report an overlapping feature as the closest that is, it does not restrict to closest non-overlapping feature. The following iconic cheatsheet summarizes the funcitonality available through the various optyions provided by the closest tool.
 @input:
+	`afile:file`: The -a file
+	`bfile:file`: The -b file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`:   Other parameters for `bedtools closest`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""
+pBedClosest                 = Proc(desc = 'Find the closest elements')
+pBedClosest.input           = "afile:file, bfile:file"
+pBedClosest.output          = "outfile:file:{{in.afile | fn}}.closest.bt"
+pBedClosest.args.bedtools   = params.bedtools.value
+pBedClosest.args.params     = Box()
+pBedClosest.envs.bashimport = bashimport
+pBedClosest.script = '''
+{{bashimport}} 'helpers.bash'
+{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfile | squote}} > {{out.outfile | squote}}
+'''
+
+"""
+@name:
+	pBedClosest2
+@description:
+	Multiple b-file version of pBedClosest
+@input:
 	`afile:file`:   The -a file
 	`bfiles:files`: The -b files
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools closest`, default: ""
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`:   Other parameters for `bedtools closest`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedClosest = Proc()
-pBedClosest.input  = "afile:file, bfiles:files"
-pBedClosest.output = "outfile:file:{{afile | fn}}.bt"
-pBedClosest.args   = { "bin": "bedtools", "params": "" }
-pBedClosest.script = """
-{{args.bin}} closest {{args.params}} -a "{{afile}}" -b {{bfiles | asquote}} > "{{outfile}}"
-"""
+pBedClosest2                 = Proc(desc = 'Find the closest elements')
+pBedClosest2.input           = "afile:file, bfiles:files"
+pBedClosest2.output          = "outfile:file:{{in.afile | fn}}.closest.bt"
+pBedClosest2.args.bedtools   = params.bedtools.value
+pBedClosest2.args.params     = Box()
+pBedClosest2.envs.bashimport = bashimport
+pBedClosest2.script = '''
+{{bashimport}} 'helpers.bash'
+{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfiles | asquote}} > {{out.outfile | squote}}
+'''
 
 """
 @name:
@@ -71,7 +109,7 @@ pBedClosest.script = """
 """
 pBedFlank                     = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
 pBedFlank.input               = "infile:file"
-pBedFlank.output              = "outfile:file:{{in.infile | fn}}-flank.bed"
+pBedFlank.output              = "outfile:file:{{in.infile | fn}}.flank.bed"
 pBedFlank.args.extend         = False
 pBedFlank.args.gsize          = params.gsize.value
 pBedFlank.args.params         = Box()
@@ -107,7 +145,7 @@ pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
 @name:
 	pBedIntersect2
 @description:
-	By far, the most common question asked of two sets of genomic features is whether or not any of the features in the two sets overlap with one another. This is known as feature intersection. bedtools intersect allows one to screen for overlaps between two sets of genomic features. Moreover, it allows one to have fine control as to how the intersections are reported. bedtools intersect works with both BED/GFF/VCF and BAM files as input.
+	Multiple b-file version of pBedIntersect
 @input:
 	`afile:file` : The a file
 	`bfiles:files`: The b files
@@ -143,13 +181,17 @@ pBedIntersect2.script              = 'file:scripts/bedtools/pBedIntersect2.py'
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMakewindows = Proc()
-pBedMakewindows.input  = "infile:file"
-pBedMakewindows.output = "outfile:file:{{infile | fn}}.window.bed"
-pBedMakewindows.args   = { "bin": "bedtools", "params": "" }
-pBedMakewindows.script = """
-{{args.bin}} makewindows {{args.params}} {{args.informat | lambda x: "-b" if x=="bed" else "-g"}} "{{infile}}" > "{{outfile}}"
-"""
+pBedMakewindows = Proc(desc = 'Makes adjacent or sliding windows across a genome or BED file.')
+pBedMakewindows.input         = "infile:file"
+pBedMakewindows.output        = "outfile:file:{{in.infile | fn}}.window.bed"
+pBedMakewindows.args.params   = Box()
+pBedMakewindows.args.bedtools = params.bedtools.value
+pBedMakewindows.args.intype   = 'bed'
+pBedMakewindows.envs.bashimport = bashimport
+pBedMakewindows.script = '''
+{{bashimport}} 'helpers.bash'
+{{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{in.infile | squote}} > {{out.outfile | squote}}
+'''
 
 """
 @name:
@@ -176,7 +218,7 @@ pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
 
 """
 @name:
-	pBedsMerge
+	pBedMerge2
 @description:
 	A multi-input file model of pBedMerge: Merge multiple input files.
 @input:
@@ -189,13 +231,13 @@ pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedsMerge                     = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
-pBedsMerge.input               = "infiles:files"
-pBedsMerge.output              = "outfile:file:{{in.infiles[0] | fn}}.merged.bed"
-pBedsMerge.args.bedtools       = params.bedtools.value
-pBedsMerge.args.params         = Box()
-pBedsMerge.lang                = params.python.value
-pBedsMerge.script              = "file:scripts/bedtools/pBedsMerge.py"
+pBedMerge2                     = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
+pBedMerge2.input               = "infiles:files"
+pBedMerge2.output              = "outfile:file:{{in.infiles[0] | fn}}.merged.bed"
+pBedMerge2.args.bedtools       = params.bedtools.value
+pBedMerge2.args.params         = Box()
+pBedMerge2.lang                = params.python.value
+pBedMerge2.script              = "file:scripts/bedtools/pBedMerge2.py"
 
 """
 @name:
@@ -238,7 +280,7 @@ pBedMultiinter.script = """
 """
 pBedRandom               = Proc(desc = 'Generate a random set of intervals in BED format.')
 pBedRandom.input         = "l, n"
-pBedRandom.output        = "outfile:file:Random-{{in.l}}-{{in.n}}.bed"
+pBedRandom.output        = "outfile:file:random.L{{in.l}}.N{{in.n}}.S{{args.seed}}.bed"
 pBedRandom.args.seed     = None
 pBedRandom.args.bedtools = params.bedtools.value
 pBedRandom.args.gsize    = params.gsize.value

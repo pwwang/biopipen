@@ -1,36 +1,38 @@
-import sys
+import sys, json
 
+from bioprocs.utils.tsvio import TsvWriter, TsvReader, TsvRecord
+from bioprocs.utils.gene import genenorm
 
-{{ genenorm | norepeats }}
-{{ write.bedx.py | norepeats }}
+infile  = {{in.infile   | quote}}
+outfile = {{out.outfile | quote}}
+inopts  = {{args.inopts}}
+genome  = {{args.genome | quote}}
+poscol  = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
 
 # get the genes
-genes, _ = genenorm(
-	{{in.infile | quote}}, 
+genes = genenorm(
+	infile, 
 	notfound = {{args.notfound | quote}},
 	frm      = {{args.frm | quote}},
-	to       = "genomic_pos_{{args.genome}},symbol",
-	genome   = {{args.genome | quote}},
-	tmpdir   = {{args.tmpdir | quote}},
-	inopts   = {{args.inopts}},
-	inmeta   = {{args.inmeta | lambda x: x if isinstance(x, list) or isinstance(x, dict) else '"' + x + '"'}}
+	to       = "symbol, genomic_pos_{{args.genome}}",
+	genome   = genome,
+	cachedir = {{args.cachedir | quote}},
+	inopts   = inopts
 )
 
-writer = writeBedx({{out.outfile | quote}})
-writer.meta.add(QUERY = 'The query gene name')
-writer.writeHead()
+reader = TsvReader(infile, **inopts)
+writer = TsvWriter(outfile, ftype = 'bed')
 for gene, hit in genes.items():
+	
 	# TODO: log those genes not found.
-	if 'genomic_pos_{{args.genome}}' not in hit:
-		continue
-	pos      = hit['genomic_pos_{{args.genome}}']
-	if not pos:
-		continue 
+	if poscol not in hit: continue
+	
+	pos      = json.loads(hit[poscol])
 	if not pos: continue 
 	# TODO: have to figure out this (when a gene has isoforms)
-	if isinstance(pos, list):
-		pos = pos[0]
-	r        = readRecord()
+	if isinstance(pos, list): pos = pos[0]
+	
+	r        = TsvRecord()
 	r.CHR    = 'chr' + str(pos['chr'])
 	if pos['strand'] == 1:
 		r.STRAND = '+'
@@ -45,5 +47,4 @@ for gene, hit in genes.items():
 	
 	r.NAME   = hit['symbol']
 	r.SCORE  = '0'
-	r.QUERY  = gene
 	writer.write(r)

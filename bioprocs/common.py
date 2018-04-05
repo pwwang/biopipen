@@ -95,11 +95,11 @@ pStr2File.script          = "file:scripts/common/pStr2File.py"
 @args:
 	`n`: Top n lines. You may use '-n' to skip last n lines.
 """
-pHead = Proc(desc = "Like linux's head command")
-pHead.input  = "infile:file"
-pHead.output = "outfile:file:{{in.infile | fn}}.head.txt"
-pHead.args.n = 10
-pHead.script = 'head -n {{args.n}} {{in.infile | squote}} > {{out.outfile | squote}}'
+pHead                     = Proc(desc = "Like linux's head command")
+pHead.input               = "infile:file"
+pHead.output              = "outfile:file:{{in.infile | fn}}.head.txt"
+pHead.args.n              = 10
+pHead.script              = 'head -n {{args.n}} {{in.infile | squote}} > {{out.outfile | squote}}'
 
 """
 @name:
@@ -113,11 +113,11 @@ pHead.script = 'head -n {{args.n}} {{in.infile | squote}} > {{out.outfile | squo
 @args:
 	`n`: Bottom n lines. You may use '+n' to skip first n lines.
 """
-pTail = Proc(desc = "Like linux's tail command")
-pTail.input  = "infile:file"
-pTail.output = "outfile:file:{{in.infile | fn}}.tail.txt"
-pTail.args.n = 10
-pTail.script = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x.startswith("+") else x}} {{in.infile | squote}} > {{out.outfile | squote}}'
+pTail                     = Proc(desc = "Like linux's tail command")
+pTail.input               = "infile:file"
+pTail.output              = "outfile:file:{{in.infile | fn}}.tail.txt"
+pTail.args.n              = 10
+pTail.script              = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x.startswith("+") else x}} {{in.infile | squote}} > {{out.outfile | squote}}'
 
 """
 @name:
@@ -132,16 +132,26 @@ pTail.script = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x.startswith("
 """
 pPrepend                  = Proc(desc = "Prepend string to a file.")
 pPrepend.input            = "in:var, infile:file"
-pPrepend.output           = "outfile:file:{{in.infile | fn}}.prepend.txt"
+pPrepend.output           = "outfile:file:{{in.infile | fn2}}.prepend{{in.infile | ext}}"
 pPrepend.script           = '''
 printf {{in.in | squote}} > {{out.outfile | squote}}
 cat {{in.infile | squote}} >> {{out.outfile | squote}}
 '''
 
-pAppend = Proc(desc = "Append string to a file")
-pAppend.input = "in:var, infile:file"
-pAppend.output = "outfile:file:{{in.infile | fn}}.append.txt"
-pAppend.script = 'cat {{in.infile | squote}} > {{out.outfile | squote}}; printf {{in.in | squote}} >> {{out.outfile | squote}}'
+pAppend                   = Proc(desc = "Append string to a file")
+pAppend.input             = "in:var, infile:file"
+pAppend.output            = "outfile:file:{{in.infile | fn2}}.append{{in.infile | ext}}"
+pAppend.script            = 'cat {{in.infile | squote}} > {{out.outfile | squote}}; printf {{in.in | squote}} >> {{out.outfile | squote}}'
+
+pUnique                   = Proc(desc = "Make the input file unique")
+pUnique.input             = "infile:file"
+pUnique.output            = "outfile:file:{{in.infile | fn2}}.unique{{in.infile | ext}}"
+pUnique.args.inopts       = Box(delimit = "\t", skip = 0, comment = "#")
+pUnique.args.outopts      = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
+pUnique.args.col          = '*'
+pUnique.args.sorted       = False
+pUnique.lang              = params.python.value
+pUnique.script            = "file:scripts/common/pUnique.py"
 
 """
 @name:

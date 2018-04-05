@@ -1,9 +1,9 @@
 VERSION = "0.0.1a"
 
 import json
-from os import path
+from os import path, makedirs
 from tempfile import gettempdir
-from sys import modules, stderr
+from sys import modules, stderr, executable
 from pyppl import params
 
 # open to R (reticulate) to get the path of r util scripts
@@ -18,6 +18,8 @@ DEFAULTS = {
 	# path
 	"annovarDb"          : "",
 	"annovarDb.desc"     : "The path of database for Annovar.",
+	"cachedir"           : path.expanduser("~/.bioprocs/cache"),
+	"cachedir.desc"      : "The directory to cache query data.",
 	"consvdir"           : "",
 	"consvdir.desc"      : "The directory containing conservation scores in bigWig files.\nUse ucsc-wig2bigwig the original files are wigFix files.",
 	"cytoband"           : "",
@@ -191,10 +193,19 @@ for cfgfile in cfgfiles:
 		continue
 	params.loadFile (cfgfile)
 	
-
+if not path.exists(params.cachedir.value):
+	makedirs(params.cachedir.value)
+	
 rimport  = """
 (function(rfile) {
 	library(reticulate)
 	bioprocs = import('bioprocs')
 	source(file.path(bioprocs$UTILS, rfile))
 })"""
+
+bashimport = """
+function __bashimport__ () {
+	source %s/$1
+}
+__python__='%s'
+__bashimport__""" % (UTILS, executable)

@@ -23,7 +23,7 @@ from . import params
 """
 pRWR            = Proc (desc = 'Do random walk with restart (RWR).')
 pRWR.input      = "Wfile:file, Efile:file"
-pRWR.output     = "outfile:file:{{in.Wfile | fn}}-{{in.Efile | fn}}.rwr"
+pRWR.output     = "outfile:file:{{in.Wfile | fn2}}.rwr.txt"
 pRWR.args.c     = 0.1
 pRWR.args.eps   = 1e-5
 pRWR.args.niter = 10000

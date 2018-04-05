@@ -1,7 +1,7 @@
 from pyppl import Proc, Box
 from . import params
 from .seq import pPromoters
-from .utils import genenorm, write
+#from .utils import genenorm, write
 
 pGenePromoters = pPromoters.copy()
 
@@ -29,15 +29,15 @@ pGeneNameNorm.input         = 'infile:file'
 pGeneNameNorm.output        = 'outfile:file:{{in.infile | bn}}'
 pGeneNameNorm.errhow        = 'retry'
 pGeneNameNorm.args.notfound = 'ignore'
-pGeneNameNorm.args.inmeta   = ['GENE']
 pGeneNameNorm.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-pGeneNameNorm.args.outopts  = Box(delimit = '\t', metaprefix = '##META/', headprefix = '#', meta = False, head = True, origin = True)
+pGeneNameNorm.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
 pGeneNameNorm.args.genecol  = ''
 pGeneNameNorm.args.frm      = 'symbol, alias'
 pGeneNameNorm.args.to       = 'symbol'
 pGeneNameNorm.args.tmpdir   = params.tmpdir.value
 pGeneNameNorm.args.genome   = params.genome.value
-pGeneNameNorm.envs.genenorm = genenorm.py
+pGeneNameNorm.args.cachedir = params.cachedir.value
+#pGeneNameNorm.envs.genenorm = genenorm.py
 pGeneNameNorm.lang          = params.python.value
 pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 
@@ -73,8 +73,8 @@ pGeneTss.args.inopts    = Box(skip = 0, comment = '#', delimit = '\t')
 pGeneTss.args.frm       = 'symbol, alias'
 pGeneTss.args.tmpdir    = params.tmpdir.value
 pGeneTss.args.genome    = params.genome.value
-pGeneTss.envs.genenorm  = genenorm.py
-pGeneTss.envs.writeBedx = write.bedx.py
+#pGeneTss.envs.genenorm  = genenorm.py
+#pGeneTss.envs.writeBedx = write.bedx.py
 pGeneTss.lang           = params.python.value
 pGeneTss.script         = "file:scripts/gene/pGeneTss.py"
 
@@ -110,6 +110,6 @@ pGeneBody.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pGeneBody.args.frm      = 'symbol, alias'
 pGeneBody.args.tmpdir   = params.tmpdir.value
 pGeneBody.args.genome   = params.genome.value
-pGeneBody.envs.genenorm = genenorm.py
+#pGeneBody.envs.genenorm = genenorm.py
 pGeneBody.lang          = params.python.value
 pGeneBody.script        = "file:scripts/gene/pGeneBody.py"

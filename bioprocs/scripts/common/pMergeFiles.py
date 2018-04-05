@@ -30,7 +30,13 @@ for i in range(lenfs):
 			ftype = inopts['ftype']
 		elif i < len(inopts['ftype']):
 			ftype = inopts['ftype'][i]
-	inopts_each.append({'skip': skip, 'delimit': delimit, 'comment': comment, 'ftype': ftype})
+	cnames = ''
+	if 'cnames' in inopts:
+		if not isinstance(inopts['cnames'], list):
+			cnames = inopts['cnames']
+		elif i < len(inopts['cnames']):
+			cnames = inopts['cnames'][i]
+	inopts_each.append({'skip': skip, 'delimit': delimit, 'comment': comment, 'ftype': ftype, 'cnames': cnames})
 	
 readers = []
 for i,infile in enumerate(files):

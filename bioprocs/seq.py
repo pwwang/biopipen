@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from .utils import runcmd, helpers, genenorm, write
+#from .utils import runcmd, helpers, genenorm, write
 from . import params
 
 """
@@ -33,8 +33,6 @@ pConsvPerm.args.gsize          = params.gsize.value
 pConsvPerm.args.bedtools       = params.bedtools.value
 pConsvPerm.args.bwtool         = params.bwtool.value
 pConsvPerm.args.seed           = None
-pConsvPerm.envs.runcmd         = runcmd.py
-pConsvPerm.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pConsvPerm.lang                = params.python.value
 pConsvPerm.script              = "file:scripts/seq/pConsvPerm.py"
 
@@ -68,7 +66,6 @@ pConsv.output         = "outfile:file:{{in.bedfile | fn}}-consv.bed"
 pConsv.args.bwtool    = params.bwtool.value
 pConsv.args.consvdir  = params.consvdir.value
 pConsv.args.pval      = False
-pConsv.envs.runcmd    = runcmd.py
 pConsv.lang           = params.python.value
 pConsv.script         = "file:scripts/seq/pConsv.py"
 
@@ -97,12 +94,9 @@ pPromoters.args.down     = 2000
 pPromoters.errhow        = 'retry'
 pPromoters.args.notfound = 'skip' # error
 pPromoters.args.incbody  = False
-pPromoters.args.inmeta   = ['GENE']
 pPromoters.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pPromoters.args.frm      = 'symbol, alias'
-pPromoters.args.tmpdir   = params.tmpdir.value
+pPromoters.args.cachedir = params.cachedir.value
 pPromoters.args.genome   = params.genome.value
-pPromoters.envs.genenorm = genenorm.py
-pPromoters.envs.write    = write
 pPromoters.lang          = params.python.value
 pPromoters.script        = "file:scripts/seq/pPromoters.py"

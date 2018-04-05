@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from .utils import helpers, runcmd
+#from .utils import helpers, runcmd
 from . import params
 
 """
@@ -21,8 +21,8 @@ pTabix.input               = "infile, region"
 pTabix.output              = "outfile:file:{{in.infile | fn | fn}}-{{job.index}}{% if in.infile.endswith('.gz') %}{{in.infile | fn | ext}}{% else %}{{in.infile | ext}}{% endif %}"
 pTabix.args.tabix          = params.tabix.value
 pTabix.args.params         = Box({'h': True})
-pTabix.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pTabix.envs.runcmd         = runcmd.py
+#pTabix.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pTabix.envs.runcmd         = runcmd.py
 pTabix.lang                = params.python.value
 pTabix.script              = "file:scripts/tabix/pTabix.py"
 
@@ -51,5 +51,5 @@ pTabixIndex.output                 = [
 pTabixIndex.args.tabix          = params.tabix.value
 pTabixIndex.args.python         = params.python.value
 pTabixIndex.args.params         = Box()
-pTabixIndex.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pTabixIndex.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pTabixIndex.script              = "file:scripts/tabix/pTabixIndex.bash"

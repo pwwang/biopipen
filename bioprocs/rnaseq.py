@@ -1,8 +1,8 @@
 from os import path
 from glob import glob
 from pyppl import Proc, Box
-from .utils import plot, txt, dirnamePattern
-from . import params
+#from .utils import plot, txt, dirnamePattern
+from . import params, rimport
 
 """
 @name:
@@ -50,10 +50,10 @@ pExpdir2Matrix.args.devpars     = Box({'res': 300, 'width': 2000, 'height': 2000
 pExpdir2Matrix.args.boxplotggs  = ['r:ylab("Expression")']
 pExpdir2Matrix.args.heatmapggs  = ['r:theme(axis.text.y = element_blank())']
 pExpdir2Matrix.args.histplotggs = ['r:labs(x = "Expression", y = "# Samples")']
-pExpdir2Matrix.envs.plotBoxplot = plot.boxplot.r
-pExpdir2Matrix.envs.plotHeatmap = plot.heatmap.r
-pExpdir2Matrix.envs.plotHist    = plot.hist.r
-pExpdir2Matrix.envs.fsDirname   = dirnamePattern
+#pExpdir2Matrix.envs.plotBoxplot = plot.boxplot.r
+#pExpdir2Matrix.envs.plotHeatmap = plot.heatmap.r
+#pExpdir2Matrix.envs.plotHist    = plot.hist.r
+#pExpdir2Matrix.envs.fsDirname   = dirnamePattern
 pExpdir2Matrix.script           = "file:scripts/rnaseq/pExpdir2Matrix.r"
 
 """
@@ -90,10 +90,10 @@ pBatchEffect.args.devpars       = Box({'res': 300, 'width': 2000, 'height': 2000
 pBatchEffect.args.boxplotggs    = ['r:ylab("Expression")']
 pBatchEffect.args.heatmapggs    = ['r:theme(axis.text.y = element_blank())']
 pBatchEffect.args.histplotggs   = ['r:labs(x = "Expression", y = "# Samples")']
-pBatchEffect.envs.plotBoxplot   = plot.boxplot.r
-pBatchEffect.envs.plotHeatmap   = plot.heatmap.r
-pBatchEffect.envs.plotHist      = plot.hist.r
-pBatchEffect.envs.txtSampleinfo = txt.sampleinfo.r
+#pBatchEffect.envs.plotBoxplot   = plot.boxplot.r
+#pBatchEffect.envs.plotHeatmap   = plot.heatmap.r
+#pBatchEffect.envs.plotHist      = plot.hist.r
+#pBatchEffect.envs.txtSampleinfo = txt.sampleinfo.r
 pBatchEffect.lang               = params.Rscript.value
 pBatchEffect.script             = "file:scripts/rnaseq/pBatchEffect.r"
 
@@ -142,9 +142,10 @@ pRawCounts2.args.devpars     = Box({'res': 300, 'width': 2000, 'height': 2000})
 pRawCounts2.args.boxplotggs  = ['r:ylab("Expression")']
 pRawCounts2.args.heatmapggs  = ['r:theme(axis.text.y = element_blank())']
 pRawCounts2.args.histplotggs = ['r:labs(x = "Expression", y = "# Samples")']
-pRawCounts2.envs.plotBoxplot = plot.boxplot.r
-pRawCounts2.envs.plotHeatmap = plot.heatmap.r
-pRawCounts2.envs.plotHist    = plot.hist.r
+#pRawCounts2.envs.plotBoxplot = plot.boxplot.r
+#pRawCounts2.envs.plotHeatmap = plot.heatmap.r
+#pRawCounts2.envs.plotHist    = plot.hist.r
+pRawCounts2.envs.rimport    = rimport
 pRawCounts2.lang             = params.Rscript.value
 pRawCounts2.script           = "file:scripts/rnaseq/pRawCounts2.r"
 
@@ -188,9 +189,9 @@ p2RawCounts.args.devpars     = Box({'res': 300, 'width': 2000, 'height': 2000})
 p2RawCounts.args.boxplotggs  = ['r:ylab("Expression")']
 p2RawCounts.args.heatmapggs  = ['r:theme(axis.text.y = element_blank())']
 p2RawCounts.args.histplotggs = ['r:labs(x = "Expression", y = "# Samples")']
-p2RawCounts.envs.plotBoxplot = plot.boxplot.r
-p2RawCounts.envs.plotHeatmap = plot.heatmap.r
-p2RawCounts.envs.plotHist    = plot.hist.r
+#p2RawCounts.envs.plotBoxplot = plot.boxplot.r
+#p2RawCounts.envs.plotHeatmap = plot.heatmap.r
+#p2RawCounts.envs.plotHist    = plot.hist.r
 p2RawCounts.lang             = params.Rscript.value
 p2RawCounts.script           = "file:scripts/rnaseq/p2RawCounts.r"
 
@@ -246,10 +247,10 @@ pRnaseqDeg.args.heatmapggs    = ['r:theme(axis.text.y = element_blank())']
 pRnaseqDeg.args.maplotggs     = []
 pRnaseqDeg.args.volplotggs    = []
 pRnaseqDeg.args.devpars       = Box({'res': 300, 'width': 2000, 'height': 2000})
-pRnaseqDeg.envs.plotHeatmap   = plot.heatmap.r
-pRnaseqDeg.envs.plotMAplot    = plot.maplot.r
-pRnaseqDeg.envs.plotVolplot   = plot.volplot.r
-pRnaseqDeg.envs.txtSampleinfo = txt.sampleinfo.r
+#pRnaseqDeg.envs.plotHeatmap   = plot.heatmap.r
+#pRnaseqDeg.envs.plotMAplot    = plot.maplot.r
+#pRnaseqDeg.envs.plotVolplot   = plot.volplot.r
+#pRnaseqDeg.envs.txtSampleinfo = txt.sampleinfo.r
 pRnaseqDeg.lang               = params.Rscript.value
 pRnaseqDeg.script             = "file:scripts/rnaseq/pRnaseqDeg.r"
 

@@ -133,33 +133,29 @@ pRsplit.script        = "file:scripts/tsv/pRsplit.r"
 @output:
 	`outfile:file`: The output file
 @args:
-	`inmeta`: The meta data for input file. Could be:
-		- A list of columns names,
-		- A list of OrderedDict items with column name and its description
-		- An OrderedDict (no dict (won't be checked!!), because key order won't keep)
-		- A string for predefined reader classes. For example, bed, bed12, bedpe, bedx, etc.
-	`outmeta`: The meta data for output file. Same as inmeta, but you can specify part of them to just keep some columns. You may also use a different column name, but you have to specify values for each row in `args.ops` function
+	`inopts`: The input options for infile:
+		- `delimit`: The delimit. Default: `\\t`
+		- `comment`: The comment sign. Default: `#`
+		- `skip`: First N lines to skip. Default: `0`
+		- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict). If not specified, metadata will be generated automatically.
+	`outopts`: The output options for outfile:
+		- `delimit`: The delimit for records. Default: `\\t`
+		- `head`: Output header or not. Default: `False`
+		- `headDelimit`: The delimit for header. Default: `\\t`
+		- `headPrefix`: The prefix for header. Default: ``
+		- `headTransform`: The transformer for header. Default: `None`
+		- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict, '+' as an element or key is allowed to indicate extra meta from the reader). If not specified, metadata will be borrowed from the reader. 
 	`ops`: A ops function to transform the row. Argument is an instance of `readRecord`
 	`opshelper`: A helper function for `args.ops`
-	`inopts`: The options for reader. Default: `Box(delimit = '\\t', comment = '#', skip = 0)`
-	`outdem`: The output delimiter. It won't work if it is a predefined write class
-	`incom`: The prefix of comments. It won't work if it is a predefined read class
-	`outdem`: The prefix of comments. It won't work if it is a predefined write class
-	`omprefix`: The prefix for output metadata. Defualt: '##META/'
-	`hdprefix`: The prefix for output header. Default: '#'
-	`writemeta`: Whether report meta to the output file. Default: True
-	`writehead`: Whether report header to the output file. Default: True
 """
 pTsv                = Proc(desc = 'Read, Transform, filter a TSV file.')
 pTsv.input          = "infile:file"
 pTsv.output         = "outfile:file:{{in.infile | fn}}.tsv"
 pTsv.lang           = params.python.value
-pTsv.args.inmeta    = None
-pTsv.args.outmeta   = None
 pTsv.args.opshelper = ''
 pTsv.args.ops       = None
-pTsv.args.inopts    = Box(delimit = '\t', comment = '#', skip = 0)
-pTsv.args.outopts   = Box(delimit = '\t', metaprefix = '##META/', headprefix = '#', meta = True, head = True)
+pTsv.args.inopts    = Box(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = [])
+pTsv.args.outopts   = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = False, ftype = '', cnames = [])
 pTsv.script         = "file:scripts/tsv/pTsv.py"
 
 """
@@ -197,12 +193,11 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 pSimRead              = Proc(desc = 'Read files simultaneously.')
 pSimRead.input        = 'infiles:files'
 pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}.etc.simread.txt'
-pSimRead.args.skip    = 0
-pSimRead.args.usehead = None
-pSimRead.args.delimit = '\t'
-pSimRead.args.gzip    = 'auto'
+pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#')
+pSimRead.args.outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = False, ftype = '', cnames = [])
+pSimRead.args.usemeta = None
 pSimRead.args.match   = None
 pSimRead.args.do      = None
-pSimRead.args.data    = {}
+pSimRead.args.helper  = ''
 pSimRead.lang         = params.python.value
 pSimRead.script       = "file:scripts/tsv/pSimRead.py"

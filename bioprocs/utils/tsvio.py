@@ -1,10 +1,18 @@
 """
 Reader and writer for tsv file.
 """
+import sys
+from pyppl import Box
 from bioprocs.utils import alwaysList
 from collections import OrderedDict
 
-__all__ = ['TsvMeta', 'TsvRecord', 'TsvReader', 'TsvWriter', 'tsvOps', 'TsvioFiletypeException']
+__all__ = ['TsvMeta', 'TsvRecord', 'TsvReader', 'TsvWriter', 'tsvops']
+
+class NoSuchReader(Exception):
+	pass
+
+class NoSuchWriter(Exception):
+	pass
 
 class TsvMeta(OrderedDict):
 	"""
@@ -41,7 +49,27 @@ class TsvMeta(OrderedDict):
 					raise TypeError('Expect callable for meta value.')
 				self[arg[0]] = arg[1]
 			else:
-				self[arg] = None	
+				self[arg] = None
+	
+	def append(self, *args):
+		self.add(*args)
+		
+	def prepend(self, *args):
+		preps = []
+		for arg in args:
+			if isinstance(arg, list):
+				for a in arg: preps.append((a, None))
+			elif isinstance(arg, tuple):
+				if arg[1] and not callable(arg[1]):
+					raise TypeError('Expect callable for meta value.')
+				preps.append(arg)
+			else:
+				preps.append((arg, None))
+				
+		preps += self.items()
+		self.clear()
+		for k, v in preps:
+			self[k] = v
 		
 class TsvRecord(dict):
 		
@@ -241,7 +269,7 @@ class TsvWriterBase(object):
 		if callable(transform): 
 			keys = transform(keys)
 		elif isinstance(transform, dict):
-			keys = [key if not key in transform or not callable(transform[key]) else transform[key](key)]
+			keys = [key if not key in transform or not callable(transform[key]) else transform[key](key) for key in keys]
 		self.file.write(prefix + delimit.join(keys) + '\n')
 
 	def write(self, record, delimit = None):
@@ -260,81 +288,218 @@ class TsvWriterBase(object):
 		
 class TsvWriterBed(TsvWriterBase):
 		
-	def __init__(self, outfile):
+	def __init__(self, outfile, delimit = '\t'):
 		super(TsvWriterBed, self).__init__(outfile)
 		self.meta = TsvMeta(*TsvReaderBed.META)
 		
-def TsvReader(infile, **inopts):
-	if not 'ftype' in inopts or not inopts['ftype']:
-		if 'ftype' in inopts: del inopts['ftype']
-		return TsvReaderBase(infile, **inopts)
-	else:
-		ftype = inopts['ftype']
+class TsvReader(object):
+	# inopts: 
+	# - delimit, comment, skip
+	# - ftype
+	# - cnames
+	def __new__(cls, infile, **inopts):
+		inopts2 = {'delimit': '\t', 'comment': '#', 'skip': 0, 'ftype': '', 'cnames': ''}
+		inopts2.update(inopts)
+		inopts = inopts2
+		ftype  = inopts['ftype']
+		cnames = inopts['cnames']
+		if not isinstance(cnames, dict):
+			cnames = alwaysList(cnames)
 		del inopts['ftype']
-		ftype = ftype[0].upper() + ftype[1:].lower()
-		klass = globals()['TsvReader' + ftype]
-		return klass(infile, **inopts)
+		del inopts['cnames']
 		
-
-def TsvWriter(outfile, **outopts):
-	if not 'ftype' in outopts:
-		return TsvWriterBase(outfile, delimit = outopts['delimit'] if 'delimit' in outopts else '\t')
-	else:
-		ftype = outopts['ftype']
-		del outopts['ftype']
-		ftype = ftype[0].upper() + ftype[1:].lower()
-		klass = globals()['TsvWriter' + ftype]
-		return klass(outfile, **outopts)
-	
-
-class TsvioFiletypeException(Exception):
-	pass
-
-def tsvOps(infile, outfile, inopts, outopts, transform = None):
-	if 'ftype' not in inopts:
-		raise TsvioFiletypeException('No file type specified.')
-	try:
-		reader = TsvReader(infile, **inopts)
-	except (KeyError, TypeError):
-		ftype = inopts['ftype']
-		del inopts['ftype']
-		reader = TsvReader(infile, **inopts)
-		reader.meta.add(*alwaysList(ftype))
-	
-	try:
-		writer = TsvWriter(outfile, **outopts)
-		writer.meta.update(reader.meta)
-	except (KeyError, TypeError, AttributeError):
-		ftype = outopts['ftype']
-		del outopts['ftype']
-		writer = TsvWriter(outfile, **outopts)
-		writer.meta.add(*alwaysList(ftype))
-	
-	if 'head' in outopts and outopts['head']:
-		del outopts['head']
-		if 'headPrefix' in outopts:
-			headPrefix    = outopts['headPrefix']
-			del outopts['headPrefix']
+		if not ftype:
+			reader = TsvReaderBase(infile, **inopts)
 		else:
-			headPrefix    = ''
-		
-		if 'headDelimit' in outopts:
-			headDelimit   = outopts['headDelimit']
-			del outopts['headDelimit']
-		else:
-			headDelimit   = None
+			klass = 'TsvReader' + ftype[0].upper() + ftype[1:].lower()
+			if not klass in globals():
+				raise NoSuchReader(klass)
+			reader = globals()[klass](infile, **inopts)
+		if cnames:
+			metas = cnames if isinstance(cnames, list) else cnames.items()
+			reader.meta.add(*metas)
+		return reader
+				
 			
-		if 'headTransform' in outopts:
-			headTransform = outopts['headTransform']
-			del outopts['headTransform']
+class TsvWriter(object):
+	def __new__(cls, outfile, **outopts):
+		outopts2 = {'delimit': '\t', 'ftype': '', 'cnames': ''}
+		outopts2.update(outopts)
+		outopts  = outopts2
+		ftype    = outopts['ftype']
+		cnames   = outopts['cnames']
+		if not isinstance(cnames, dict):
+			cnames = alwaysList(cnames)
+		del outopts['ftype']
+		del outopts['cnames']
+		
+		if not ftype:
+			writer = TsvWriterBase(outfile, **outopts)
 		else:
-			headTransform = None
-		writer.writeHead(headPrefix, headDelimit, headTransform)
+			klass = 'TsvWriter' + ftype[0].upper() + ftype[1:].lower()
+			if not klass in globals():
+				raise NoSuchWriter(klass)
+			writer = globals()[klass](outfile, **outopts)
+		if cnames:
+			metas = cnames if isinstance(cnames, list) else cnames.items()
+			writer.meta.add(*metas)
+		return writer
+		
+class SimRead (object):
+	
+	def __init__(self, *files, **kwargs):
+
+		length = len(files)
+		
+		self.match   = SimRead._defaultMatch
+		self.do      = None
+		self.comment = ["#"] * length
+		self.delimit = ["\t"] * length
+		self.skip    = [0] * length
+		self.debug   = kwargs['debug'] if 'debug' in kwargs else False
+		self.ftype   = [''] * length
+		self.cnames  = [''] * length
+
+		if 'match' in kwargs:
+			self.match = kwargs['match']
+		if 'do' in kwargs:
+			self.do    = kwargs['do']
+		if 'delimit' in kwargs and kwargs['delimit']:
+			if not isinstance(kwargs['delimit'], (tuple, list)):
+				self.delimit = [kwargs['delimit']] * length
+			else:
+				self.delimit[:len(kwargs['delimit'])] = list(kwargs['delimit'])
+		if 'skip' in kwargs and kwargs['skip']:
+			if not isinstance(kwargs['skip'], (tuple, list)):
+				self.skip = [kwargs['skip']] * length
+			else:
+				self.skip[:len(kwargs['skip'])] = list(kwargs['skip'])
+		if 'comment' in kwargs and kwargs['comment']:
+			if not isinstance(kwargs['comment'], (tuple, list)):
+				self.comment = [kwargs['comment']] * length
+			else:
+				self.comment[:len(kwargs['comment'])] = list(kwargs['comment'])
+		if 'ftype' in kwargs and kwargs['ftype']:
+			if not isinstance(kwargs['ftype'], (tuple, list)):
+				self.ftype = [kwargs['ftype']] * length
+			else:
+				self.ftype[:len(kwargs['ftype'])] = list(kwargs['ftype'])
+		if 'cnames' in kwargs and kwargs['cnames']:
+			if not isinstance(kwargs['cnames'], (tuple, list)):
+				self.cnames = [kwargs['cnames']] * length
+			else:
+				self.cnames[:len(kwargs['cnames'])] = list(kwargs['cnames'])
+
+		self.readers = []
+		for i, fn in enumerate(files):
+			inopts = {
+				'ftype'  : self.ftype[i],
+				'cnames' : self.cnames[i],
+				'delimit': self.delimit[i],
+				'skip'   : self.skip[i],
+				'comment': self.comment[i]
+			}
+			reader = TsvReader(fn, **inopts)
+			if not reader.meta: reader.autoMeta()
+			self.readers.append(reader)
+			
+	@staticmethod
+	def compare(a, b, reverse = False):
+		if not reverse:
+			return 0 if a < b else 1 if a > b else -1
+		else:
+			return 0 if a > b else 1 if a < b else -1
+			
+	@staticmethod
+	def _defaultMatch(*lines):
+		data = [line.COL1 for line in lines]
+		mind = min(data)
+		if data.count(mind) == len(lines):
+			return -1
+		else:
+			return data.index(mind)
+
+	def run (self):
+		if not self.do:
+			raise AttributeError('You would like to do something when lines are matched.')
+
+		lines = [next(reader) for reader in self.readers]
+		if self.debug:
+			sys.stderr.write('- Lines initiated ...\n')
+			
+		while True:
+			if self.debug:
+				sys.stderr.write('\n'.join([('  > FILE %s: [' % (i+1)) + str(line) + ']' for i, line in enumerate(lines)]) + '\n')
+			if not all(lines): break
+			
+			try:
+				m = self.match(*lines)
+			except Exception as ex:
+				msgs = [str(ex) + ' in MATCH function:']
+				for k, line in enumerate(lines):
+					msgs.append('File %s: %s' % (k+1, line))
+				raise type(ex)('\n'.join(msgs) + '\n')
+			if self.debug:
+				sys.stderr.write('  Match returns: %s\n' % m)
+			if m < 0:
+				if self.debug:
+					sys.stderr.write('  All lines matched, do stuff.\n')
+				try:
+					self.do(*lines)
+				except Exception as ex:
+					msgs = [str(ex) + ' in DO function:']
+					for k, line in enumerate(lines):
+						msgs.append('File %s: %s' % (k+1, line))
+					raise type(ex)('\n'.join(msgs) + '\n')
+				m = 0
+			if self.debug:
+				sys.stderr.write('- File %s is behind, read it ...\n' % (m+1))
+			try:
+				lines[m] = next(self.readers[m])			
+			except StopIteration:
+				break
+
+def tsvops(infile, outfile, inopts, outopts, ops = None):
+
+	inopts2 = Box(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = '')
+	inopts2.update(inopts)
+	inopts = inopts2
+	
+	outopts2 = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = '', cnames = '')
+	outopts2.update(outopts)
+	outopts = outopts2
+	
+	inftype       = inopts['ftype']
+	outftype      = outopts['ftype']
+	head          = outopts['head']
+	headPrefix    = outopts['headPrefix']
+	headDelimit   = outopts['headDelimit']
+	headTransform = outopts['headTransform']
+	del outopts['head']
+	del outopts['headPrefix']
+	del outopts['headDelimit']
+	del outopts['headTransform']
+	
+	reader = TsvReader(infile, **inopts)
+	if not reader.meta: reader.autoMeta()
+	
+	if not outftype and not outopts['cnames']:
+		outftype = 'reader'
+		
+	if outftype == 'reader':
+		del outopts['ftype']
+		writer = TsvWriter(outfile, **outopts)
+		writer.meta.prepend(*reader.meta.items())
+	else:
+		writer = TsvWriter(outfile, **outopts)
+		
+	if head:
+		writer.writeHead(prefix = headPrefix, delimit = headDelimit, transform = headTransform)
 	
 	for r in reader:
-		if callable(transform):
-			r2 = transform(r)
-			if not r2: continue
-			writer.write(r2)
-		else:
-			writer.write(r)
+		if callable(ops):
+			r = ops(r)
+			if not r: continue
+		writer.write(r)
+
+	

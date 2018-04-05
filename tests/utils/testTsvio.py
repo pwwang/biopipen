@@ -1,7 +1,7 @@
 import helpers, unittest
 from os import path
 from collections import OrderedDict
-from bioprocs.utils.tsvio import TsvMeta, TsvRecord, TsvReader, TsvWriter, tsvOps, TsvioFiletypeException
+from bioprocs.utils.tsvio import TsvMeta, TsvRecord, TsvReader, TsvWriter, SimRead, tsvops
 
 class TestTsvMeta(helpers.TestCase):
 	
@@ -406,31 +406,156 @@ class TestTsvWriterBed(helpers.TestCase):
 		writer.close()
 		self.assertFileEqual(infile, outfile)
 
-class TestTsvOps(helpers.TestCase):
+class TestTsvops(helpers.TestCase):
 	
-	def dataProvider_testTsvOps(self, testdir, indir, outdir):
+	def dataProvider_testTsvops(self, testdir, indir, outdir):
 		infile  = path.join(indir, 'tsvops.txt')
 		outfile = path.join(testdir, 'tsvops.txt')
 		exptfile  = path.join(outdir, 'tsvops1.txt')
 		exptfile2  = path.join(outdir, 'tsvops2.txt')
 		
-		yield infile, outfile, {}, {}, None, exptfile, TsvioFiletypeException
-		yield infile, outfile, {'ftype': 'bed'}, {}, None, infile
-		yield infile, outfile, {'ftype': 'c1,c2,c3,c4,c5,c6'}, {}, None, infile
-		yield infile, outfile, {'ftype': 'c1,c2,c3,c4,c5,c6'}, {'head': True, 'headTransform': lambda cols: [c if c!='c2' else c.upper() for c in cols]}, None, exptfile
-		yield infile, outfile, {'ftype': 'c1,c2,c3,c4,c5,c6', 'skip': 8}, {
+		#yield infile, outfile, {}, {}, None, exptfile, None
+		yield infile, outfile, {'ftype': 'bed'}, {'ftype': 'reader', 'head': False}, None, infile
+		yield infile, outfile, {}, {'ftype': 'reader', 'head': False}, None, infile
+		yield infile, outfile, {'cnames': 'c1,c2,c3,c4,c5,c6'.split(',')}, {'ftype': 'reader', 'head': True, 'headTransform': lambda cols: [c if c!='c2' else c.upper() for c in cols]}, None, exptfile
+		yield infile, outfile, {'cnames': 'c1,c2,c3,c4,c5,c6'.split(','), 'skip': 8}, {
 			'head': True, 
 			'headPrefix': '##', 
-			'ftype': ['c1', 'c2', 'c3'], 
+			'cnames': ['c1', 'c2', 'c3'], 
 			'headTransform': lambda cols: ['Chr' if c == 'c1' else 'Start' if c == 'c2' else 'End' for c in cols]
 		}, lambda row: setattr(row, 'c3', int(row.c3) + 1) or row, exptfile2
 	
-	def testTsvOps(self, infile, outfile, inopts, outopts, transform, exptfile, exception = None):
+	def testTsvops(self, infile, outfile, inopts, outopts, transform, exptfile, exception = None):
 		if exception:
-			self.assertRaises(exception, tsvOps, infile, outfile, inopts, outopts, transform)
+			self.assertRaises(exception, tsvops, infile, outfile, inopts, outopts, transform)
 		else:
-			tsvOps(infile, outfile, inopts, outopts, transform)
+			tsvops(infile, outfile, inopts, outopts, transform)
 			self.assertFileEqual(outfile, exptfile)
+
+class TestSimRead(helpers.TestCase):
 	
+	def dataProvider_testComplicated(self, testdir, indir):
+		file1   = path.join (indir, 'test-complicated-file1.txt')
+		file2   = path.join (indir, 'test-complicated-file2.txt')
+		file3   = path.join (indir, 'test-complicated-file3.txt.gz')
+		inopts  = {
+			'delimit': ['\t', '\t', ','],
+			'skip': [1, 2]
+		}
+		yield file1, file2, file3, inopts, ['m3', 'm4']
+	
+	def testComplicated(self, file1, file2, file3, inopts, out):
+		r = SimRead(file1, file2, file3, **inopts)
+		def match (line1, line2, line3):
+			data = [line1.COL1, line2.COL1, line3.COL3]
+			mind = min(data)
+			if data.count(mind) == 3: return -1
+			return data.index(mind)
+		r.match = match
+		ret = []
+		r.do    = lambda line1, line2, line3: ret.append(line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+
+	def dataProvider_test1stCol(self, testdir, indir):
+		file1   = path.join (indir, 'test-1st-col-file1.txt')
+		file2   = path.join (indir, 'test-1st-col-file2.txt')
+		yield file1, file2, [['m1', '1', '4'], ['m2', '2', '5'], ['m3', '3', '6']]
+		
+	def test1stCol (self, file1, file2, out):
+		r       = SimRead (file1, file2)
+		#r.debug = True
+		ret     = []
+		r.do    = lambda line1, line2: ret.append ([line1.COL1, line1.COL2, line2.COL2])
+		r.run()		
+		self.assertListEqual (ret, out)
+	
+	def dataProvider_testDiffCol(self, testdir, indir):
+		file1 = path.join (indir, 'test-diff-col-file1.txt')
+		file2 = path.join (indir, 'test-diff-col-file2.txt')
+		yield file1, file2, ['m1', 'm2', 'm3']
+	
+	def testDiffCol (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		r.match = lambda line1, line2: SimRead.compare(line1.COL1, line2.COL2)
+
+		ret   = []
+		r.do  = lambda line1, line2: ret.append(line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+	
+	def dataProvider_testLeftEndFirst(self, testdir, indir):
+		file1 = path.join (indir, 'test-left-end-first-file1.txt')
+		file2 = path.join (indir, 'test-left-end-first-file2.txt')
+		yield file1, file2, ['m1', 'm2', 'm3']
+		
+	
+	def testLeftEndFirst (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		ret   = []
+		r.do  = lambda line1, line2: ret.append (line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+		
+	def dataProvider_testLeftMatchFirst(self, testdir, indir):
+		file1 = path.join (indir, 'test-left-match-first-file1.txt')
+		file2 = path.join (indir, 'test-left-match-first-file2.txt')
+		yield file1, file2, ['m1', 'm2', 'm3']
+		
+	def testLeftMatchFirst (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		ret   = []
+		r.do  = lambda line1, line2: ret.append (line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+	
+	def dataProvider_testRightEndFirst(self, testdir, indir):
+		file1 = path.join (indir, 'test-right-end-first-file1.txt')
+		file2 = path.join (indir, 'test-right-end-first-file2.txt')
+		yield file1, file2, ['m1', 'm2', 'm3']
+	
+	def testRightEndFirst (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		ret   = []
+		r.do  = lambda line1, line2: ret.append (line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+	
+	def dataProvider_testRightMatchFirst(self, testdir, indir):
+		file1 = path.join (indir, 'test-right-match-first-file1.txt')
+		file2 = path.join (indir, 'test-right-match-first-file2.txt')
+		yield file1, file2, ['m1', 'm2', 'm3']
+	
+	def testRightMatchFirst (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		ret   = []
+		r.do  = lambda line1, line2: ret.append (line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+		
+	def dataProvider_testNoMatch(self, testdir, indir):
+		file1 = path.join (indir, 'test-no-match-file1.txt')
+		file2 = path.join (indir, 'test-no-match-file2.txt')
+		yield file1, file2, []
+	
+	def testNoMatch (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		ret   = []
+		r.do  = lambda line1, line2: ret.append (line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+		
+	def dataProvider_testGapped(self, testdir, indir):
+		file1 = path.join (indir, 'test-gapped-file1.txt')
+		file2 = path.join (indir, 'test-gapped-file2.txt')
+		yield file1, file2, ['m2', 'm4', 'm6']		
+		
+	def testGapped (self, file1, file2, out):
+		r     = SimRead (file1, file2)
+		ret   = []
+		r.do  = lambda line1, line2: ret.append (line1.COL1)
+		r.run()
+		self.assertListEqual (ret, out)
+			
 if __name__ == '__main__':
 	unittest.main(verbosity = 2)

@@ -1,6 +1,3 @@
-# to be skipped1
-# to be skipped2
-COL1	COL2
 ROW2	2
 ROW2	3
 ROW4	6

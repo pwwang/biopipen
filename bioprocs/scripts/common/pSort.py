@@ -1,6 +1,6 @@
 from pyppl import Box
 from collections import OrderedDict
-from bioprocs.utils.helpers import runcmd, cmdargs
+from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 params = Box()

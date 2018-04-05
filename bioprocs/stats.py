@@ -1,6 +1,6 @@
 from pyppl import Proc, Box
 from . import params
-from .utils import helpers
+#from .utils import helpers
 
 """
 @name:
@@ -34,7 +34,7 @@ pMetaPval.args.pcol         = -1
 pMetaPval.args.poutonly     = False
 pMetaPval.args.outheader    = True
 pMetaPval.args.method       = 'sumlog' # fisher's method
-pMetaPval.tplenvs.cbindfill = helpers.cbindfill.r
+#pMetaPval.tplenvs.cbindfill = helpers.cbindfill.r
 pMetaPval.lang              = params.Rscript.value
 pMetaPval.script            = "file:scripts/stats/pMetaPval.r"
 

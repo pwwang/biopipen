@@ -5,7 +5,7 @@ rownames(data)  = rnames
 
 {% if args.unit | lambda x: x == 'cpm' %}
 	library('edgeR')
-	ret = cpm (data, log = {{args.log2 | R}})
+	ret = cpm (data, log = F)
 {% elif args.unit | lambda x: x == 'fpkm' or x == 'rpkm' %}
 	library('edgeR')
 	genelen = read.table ({{args.refgene | quote}}, header=F, row.names = NULL, check.names = F, sep = "\t")
@@ -17,28 +17,28 @@ rownames(data)  = rnames
 	})
 	genelen = t(genelen)
 	genelen = as.vector(genelen[which(genelen[,1] %in% rnames),2,drop=T])
-	ret = rpkm (data, log = {{args.log2 | R}}, gene.length = as.numeric(genelen))
+	ret = rpkm (data, log = F, gene.length = as.numeric(genelen))
 {% else %}
 	library('coseq')
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
-	{% if args.log2 %}
-	ret = log2(ret + 1)
-	{% endif %}
+{% endif %}
+
+{% if args.log2 %}
+ret = log2(ret + 1)
 {% endif %}
 
 write.table (round(ret, 3), "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
 
 # boxplot
+{{rimport}}('plot.r')
 {% if args.boxplot %}
-{{ plotBoxplot }}
 bpfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.boxplot.png")
 plotBoxplot(ret, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.boxplotggs | Rlist}})
 {% endif %}
 
 # heatmap
 {% if args.heatmap %}
-{{ plotHeatmap }}
 hmfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.heatmap.png")
 hmexp  = if (nrow(ret) > {{args.heatmapn}}) ret[sample(nrow(ret),size={{args.heatmapn}}),] else ret
 plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
@@ -46,7 +46,6 @@ plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heat
 
 # histgram
 {% if args.histplot %}
-{{ plotHist }}
 histfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.hist.png")
 plotHist(ret, histfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.histplotggs | Rlist}})
 {% endif %}

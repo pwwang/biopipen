@@ -250,7 +250,7 @@ class TestCase(with_metaclass(DataProviderSupport, unittest.TestCase)):
 		t2, _ = mimetypes.guess_type(second)
 		if t1 != t2:
 			self.fail(msg = msg or 'First file is "%s", but second is "%s"' % (t1, t2))
-		if t1.startswith('text/'):
+		if t1 and t1.startswith('text/'):
 			with open(first) as f1, open(second) as f2:
 				first  = f1.read().splitlines()
 				second = f2.read().splitlines()

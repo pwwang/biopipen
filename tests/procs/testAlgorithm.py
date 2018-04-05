@@ -1,42 +1,42 @@
-import unittest
+import helpers, unittest
+from os import path
 from pyppl import PyPPL
 from helpers import getfile, procOK, config
 from bioprocs.algorithm import pRWR, pAR
 
-class testAlgorithm (unittest.TestCase):
+class testAlgorithm (helpers.TestCase):
 	
-	def testRWR (self):
+	def dataProvider_testRWR(self, testdir, indir, outdir):
+		wfile = path.join(indir, 'test.rwr.w.txt')
+		efile = path.join(indir, 'test.rwr.e.txt')
+		outfile = path.join(outdir, 'test.rwr.txt')
+		yield 't1', wfile, efile, outfile
+	
+	def testRWR (self, tag, wfile, efile, outfile):
 		self.maxDiff = None
-
-		pRWR.input = (getfile("test.rwr.w.txt"), getfile("test.rwr.e.txt"))
-		PyPPL(config).start(pRWR).run()
-		procOK(pRWR, "test.rwr.ret", self)
-
-	def testAR(self):
-		pAR1 = pAR.copy()
-		pAR1.input         = (
-			getfile('ar.d.txt.gz'), 
-			getfile('ar.pt.txt.gz'), 
-			getfile('ar.y.txt.gz')
-		)
-		pAR1.args.parallel = True
-		pAR1.args.svdP     = 25
-		PyPPL(config).start(pAR1).run()
-		procOK(pAR1, "ar.w.txt", self)
-	
-	@unittest.skip('ADMM takes too long.')
-	def testARADMM(self):
-		pAR2 = pAR.copy()
-		pAR2.input         = (
-			getfile('ar.d.txt.gz'), 
-			getfile('ar.pt.txt.gz'), 
-			getfile('ar.y.txt.gz')
-		)
-		pAR2.args.parallel = False
-		pAR2.args.method   = 'admm'
-		PyPPL(config).start(pAR2).run()
-
+		pRWRTest = pRWR.copy(tag = tag)
+		pRWRTest.input = wfile, efile
+		PyPPL(config).start(pRWRTest).run()
+		self.assertFileEqual(pRWRTest.channel.get(), outfile)
 		
+	def dataProvider_testAR(self, testdir, indir, outdir):
+		dfile  = path.join(indir, 'ar.d.txt.gz')
+		ptfile = path.join(indir, 'ar.pt.txt.gz')
+		yfile  = path.join(indir, 'ar.y.txt.gz')
+		wfile  = path.join(outdir, 'ar.w.txt')
+		args   = {'parallel': True, 'svdP': 25}
+		yield 't1', dfile, ptfile, yfile, args, wfile
+		args1  = {'parallel': True, 'svdP': 25, 'method': 'admm'}
+		#ADMM take too long
+		#yield 't2', dfile, ptfile, yfile, args1, wfile
+
+	def testAR(self, tag, dfile, ptfile, yfile, args, wfile):
+		pARTest = pAR.copy(tag = tag)
+		pARTest.input = dfile, ptfile, yfile
+		pARTest.args.update(args)
+		PyPPL(config).start(pARTest).run()
+		self.assertFileEqual(pARTest.channel.get(), wfile)
+	
 if __name__ == '__main__':
 	unittest.main()
 		

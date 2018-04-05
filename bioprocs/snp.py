@@ -1,6 +1,6 @@
 from pyppl import Proc, Box
 from . import params
-from .utils import read, write
+#from .utils import read, write
 
 """
 @name:
@@ -34,8 +34,8 @@ pSnp2Bedx.args.notfound      = 'skip' # error
 pSnp2Bedx.args.inopts        = Box(delimit = '\t', skip = 0, comment = '#')
 pSnp2Bedx.args.inmeta        = ['SNP']
 pSnp2Bedx.args.xcols         = ['refUCSC', 'alleles', 'alleleFreqs', 'alleleFreqCount']
-pSnp2Bedx.envs.read          = read
-pSnp2Bedx.envs.write         = write
+#pSnp2Bedx.envs.read          = read
+#pSnp2Bedx.envs.write         = write
 pSnp2Bedx.lang               = params.python.value
 pSnp2Bedx.script             = "file:scripts/snp/pSnp2Bedx.py"
 
@@ -49,8 +49,8 @@ pCoord2SnpBedx.args.notfound = 'skip' # error
 pCoord2SnpBedx.args.inmeta   = ['CHR', 'START', 'END']
 pCoord2SnpBedx.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
 pCoord2SnpBedx.args.xcols    = ['refUCSC', 'alleles', 'alleleFreqs', 'alleleFreqCount']
-pCoord2SnpBedx.envs.read     = read
-pCoord2SnpBedx.envs.write    = write
+#pCoord2SnpBedx.envs.read     = read
+#pCoord2SnpBedx.envs.write    = write
 pCoord2SnpBedx.lang          = params.python.value
 pCoord2SnpBedx.script        = "file:scripts/snp/pCoord2SnpBedx.py"
 
