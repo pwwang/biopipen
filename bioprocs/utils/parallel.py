@@ -1,4 +1,4 @@
-from bioprocs.utils.helpers import runcmd
+from bioprocs.utils import runcmd
 
 def parallel(func, args, nthread, method = 'thread'):
 	"""

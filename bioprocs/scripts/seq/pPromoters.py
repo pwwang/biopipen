@@ -26,8 +26,11 @@ for gene, hit in genes.items():
 	
 	# TODO: log those genes not found.
 	if poscol not in hit: continue
-	
-	pos      = json.loads(hit[poscol])
+	if not hit[poscol]: continue
+	try:
+		pos      = json.loads(hit[poscol])
+	except Exception:
+		continue
 	if not pos: continue 
 	# TODO: have to figure out this (when a gene has isoforms)
 	if isinstance(pos, list): pos = pos[0]

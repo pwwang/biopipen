@@ -1,6 +1,6 @@
 from os import remove
 from pyppl import Box
-from bioprocs.utils.helpers import runcmd, cmdargs
+from bioprocs.utils import runcmd, cmdargs
 
 mergedtmp       = '{{job.outdir}}/mergedtmp.bed'
 mergedtmpsorted = '{{job.outdir}}/mergedtmp.sorted.bed'

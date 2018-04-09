@@ -1,5 +1,5 @@
 from pyppl import Box
-from bioprocs.utils.helpers import runcmd, cmdargs
+from bioprocs.utils import runcmd, cmdargs
 
 params = Box()
 params['g'] = {{args.gsize | quote}}

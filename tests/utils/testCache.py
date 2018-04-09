@@ -134,8 +134,8 @@ class TestCache(helpers.TestCase):
 			
 	def testSave(self, cache, data, factory, datall):
 		cache.save(data, factory)
-		rs = cache.medoo.select(cache.table, None, '*')
-		self.assertListEqual(rs.all(), datall)
+		rs = cache.medoo.select(cache.table, '*')
+		self.assertListEqual(rs.fetchall(), datall)
 	
 if __name__ == '__main__':
 	unittest.main(verbosity = 2)

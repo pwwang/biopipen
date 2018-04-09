@@ -14,7 +14,7 @@ class Cache(object):
 		)
 		self.table = table
 		self.pkey  = pkey
-		self.medoo.createTable(table, schema, drop = False)
+		self.medoo.create(table, schema)
 	
 	@staticmethod
 	def _item2where(key, val, where):
@@ -65,8 +65,8 @@ class Cache(object):
 			columns = [c.strip() for c in columns.split(',')]
 		columns += data.keys() + [self.pkey]
 		columns = list(set(columns))
-		rs = self.medoo.select(self.table, None, columns, where)
-		datall = rs.all() if rs else []
+		rs = self.medoo.select(self.table, columns, where)
+		datall = rs.fetchall() if rs else []
 		datafound = {}
 		for key, val in data.items():
 			foundfunc = found[key] if key in found else lambda v, d: v == d
@@ -98,8 +98,8 @@ class Cache(object):
 	def save(self, data, factory = None):
 		factory = factory or {}
 		pkdata  = data[self.pkey]
-		rs      = self.medoo.select(self.table, None, self.pkey, {self.pkey: pkdata})
-		rsall   = rs.all() if rs else []
+		rs      = self.medoo.select(self.table, self.pkey, {self.pkey: pkdata})
+		rsall   = rs.fetchall() if rs else []
 		dtidxs  = []
 		funcup  = {}
 		funcin  = {}

@@ -1,12 +1,13 @@
 from os import path
-{{runcmd}}
-{{params2CmdArgs}}
+from bioprocs.utils import runcmd, cmdargs
 
-params = {{args.params}}
+params = {}
 
 if path.isfile({{in.region | quote}}):
 	params['R'] = {{in.region | quote}}
-	cmd = '{{args.tabix}} %s "{{in.infile}}" > "{{out.outfile}}"' % params2CmdArgs(params, equal=' ')
+	params.update({{args.params}})
+	cmd = '{{args.tabix}} %s "{{in.infile}}" > "{{out.outfile}}"' % cmdargs(params, equal=' ')
 else:
-	cmd = '{{args.tabix}} %s "{{in.infile}}" {{in.region}} > "{{out.outfile}}"' % params2CmdArgs(params, equal=' ')
+	params.update({{args.params}})
+	cmd = '{{args.tabix}} %s "{{in.infile}}" {{in.region}} > "{{out.outfile}}"' % cmdargs(params, equal=' ')
 runcmd(cmd)

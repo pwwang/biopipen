@@ -199,6 +199,8 @@ pMergeFiles.input         = "infiles:files"
 pMergeFiles.output        = "outfile:file:{{in.infiles.0 | fn}}.etc{{in.infiles.0 | ext}}"
 pMergeFiles.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pMergeFiles.args.outopts  = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
+# IOError: [Errno 24] Too many open files
+pMergeFiles.args.maxopen  = 100
 pMergeFiles.lang          = params.python.value
 pMergeFiles.script        = "file:scripts/common/pMergeFiles.py"
 

@@ -66,11 +66,13 @@ class TestCommon (helpers.TestCase):
 		files   = [path.join(indir, 'sort.txt')] * 2
 		inopts  = {'skip': [0, 2], 'comment': ''}
 		outfile = path.join(outdir, 'mergefiles.txt')
-		yield 't1', files, inopts, outfile
+		yield 't1', files, inopts, 1000, outfile
+		yield 't2', files, inopts, 1, outfile
 	
-	def testMergeFiles(self, tag, files, inopts, outfile):
+	def testMergeFiles(self, tag, files, inopts, maxopen, outfile):
 		pMergeFilesTest = pMergeFiles.copy(tag = tag)
 		pMergeFilesTest.input = [files]
+		pMergeFilesTest.args.maxopen = maxopen
 		pMergeFilesTest.args.inopts.update(inopts)
 		PyPPL(config).start(pMergeFilesTest).run()
 		self.assertFileEqual(pMergeFilesTest.channel.get(), outfile)

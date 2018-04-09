@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from pyppl import Box
-from bioprocs.utils.helpers import runcmd, cmdargs
+from bioprocs.utils import runcmd, cmdargs
 params = Box()
 
 ####### sort

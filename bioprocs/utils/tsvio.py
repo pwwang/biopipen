@@ -142,7 +142,7 @@ class TsvReaderBase(object):
 	def close(self):
 		if self.file:
 			self.file.close()
-			
+
 class TsvReaderBed(TsvReaderBase):
 	META = [
 		('CHR'   , None),
@@ -251,6 +251,15 @@ class TsvReaderHead(TsvReaderBase):
 		self.meta.add(*metatype.items())
 		
 		self.rewind()
+
+class TsvReaderNometa(TsvReaderHead):
+
+	def __init__(self, infile, comment = '#', delimit = '\t', skip = 0, head = True, tmeta = None):
+		if head:
+			super(TsvReaderNometa, self).__init__(infile, skip = skip, comment = comment, delimit = delimit, tmeta = tmeta)
+	
+	def _parse(self, line):
+		return line
 		
 class TsvWriterBase(object):
 	def __init__(self, outfile, delimit = '\t'):
@@ -285,6 +294,16 @@ class TsvWriterBase(object):
 	def close(self):
 		if self.file:
 			self.file.close()
+			
+class TsvWriterNometa(TsvWriterBase):
+	
+	def writeHead(self, prefix = '', delimit = None, transform = None):
+		transform = transform or (lambda keys: [str(key) for key in keys])
+		super(TsvWriterNometa, self).writeHead(prefix, delimit, transform)
+		
+	def write(self, record, delimit = None):
+		delimit = delimit or self.delimit
+		self.file.write(delimit.join([str(r) for r in record]) + '\n')
 		
 class TsvWriterBed(TsvWriterBase):
 		
@@ -412,7 +431,7 @@ class SimRead (object):
 			
 	@staticmethod
 	def _defaultMatch(*lines):
-		data = [line.COL1 for line in lines]
+		data = [line[0] for line in lines]
 		mind = min(data)
 		if data.count(mind) == len(lines):
 			return -1
@@ -422,8 +441,10 @@ class SimRead (object):
 	def run (self):
 		if not self.do:
 			raise AttributeError('You would like to do something when lines are matched.')
-
-		lines = [next(reader) for reader in self.readers]
+		try:
+			lines = [next(reader) for reader in self.readers]
+		except StopIteration:
+			return
 		if self.debug:
 			sys.stderr.write('- Lines initiated ...\n')
 			

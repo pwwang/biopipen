@@ -5,6 +5,7 @@ lenfs   = len(files)
 inopts  = {{args.inopts}}
 outfile = {{out.outfile | quote}}
 inopts_each = []
+maxopen = {{args.maxopen}}
 for i in range(lenfs):
 	skip = 0
 	if 'skip' in inopts:
@@ -37,14 +38,16 @@ for i in range(lenfs):
 		elif i < len(inopts['cnames']):
 			cnames = inopts['cnames'][i]
 	inopts_each.append({'skip': skip, 'delimit': delimit, 'comment': comment, 'ftype': ftype, 'cnames': cnames})
-	
-readers = []
-for i,infile in enumerate(files):
-	reader = TsvReader(infile, **inopts_each[i])
-	if not reader.meta:
-		reader.autoMeta()
-	readers.append(reader)
 
+def getReaders(fs, baseidx):
+	readers = []
+	for i,infile in enumerate(fs):
+		reader = TsvReader(infile, **inopts_each[i + baseidx])
+		if not reader.meta:
+			reader.autoMeta()
+		readers.append(reader)
+	return readers
+	
 outopts = {
 	'head'         : False, 
 	'headPrefix'   : '', 
@@ -54,10 +57,22 @@ outopts = {
 }
 outopts.update({{args.outopts}})
 writer = TsvWriter(outfile, delimit = outopts['delimit'])
-writer.meta.update(readers[0].meta)
-if outopts['head']:
-	writer.writeHead(prefix = outopts['headPrefix'], delimit = outopts['headDelimit'], transform = outopts['headTransform'])
+
+metaUpdated = False
+for i in xrange(0, len(files), maxopen):
+	fs = files[i:i + maxopen]
+	readers = getReaders(fs, i)
 	
-for reader in readers:
-	for r in reader:
-		writer.write(r)
+	# empty file has no meta
+	reader = [reader for reader in readers if reader.meta and not (len(reader.meta) == 1 and reader.meta.items() == [('', None)])]
+	if not reader: continue
+	reader = reader[0]
+	if not metaUpdated:
+		metaUpdated = True
+		writer.meta.update(reader.meta)
+		if outopts['head']:
+			writer.writeHead(prefix = outopts['headPrefix'], delimit = outopts['headDelimit'], transform = outopts['headTransform'])
+		
+	for reader in readers:
+		for r in reader:
+			writer.write(r)

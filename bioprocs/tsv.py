@@ -193,7 +193,7 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 pSimRead              = Proc(desc = 'Read files simultaneously.')
 pSimRead.input        = 'infiles:files'
 pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}.etc.simread.txt'
-pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#')
+pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'nometa')
 pSimRead.args.outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = False, ftype = '', cnames = [])
 pSimRead.args.usemeta = None
 pSimRead.args.match   = None

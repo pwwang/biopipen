@@ -32,10 +32,17 @@ pSnp2Bedx.args.dbsnpver      = params.dbsnpver.value
 pSnp2Bedx.errhow             = 'retry'
 pSnp2Bedx.args.notfound      = 'skip' # error
 pSnp2Bedx.args.inopts        = Box(delimit = '\t', skip = 0, comment = '#')
-pSnp2Bedx.args.inmeta        = ['SNP']
-pSnp2Bedx.args.xcols         = ['refUCSC', 'alleles', 'alleleFreqs', 'alleleFreqCount']
-#pSnp2Bedx.envs.read          = read
-#pSnp2Bedx.envs.write         = write
+pSnp2Bedx.args.snpcol        = ''
+pSnp2Bedx.args.outopts       = Box(
+	delimit = '\t', 
+	head = True, 
+	headPrefix = '', 
+	headDelimit = '\t', 
+	headTransform = None,
+	ftype = 'bed',
+	cnames = 'refUCSC, alleles, alleleFreqs, alleleFreqCount'
+)
+pSnp2Bedx.args.cachedir      = params.cachedir.value
 pSnp2Bedx.lang               = params.python.value
 pSnp2Bedx.script             = "file:scripts/snp/pSnp2Bedx.py"
 

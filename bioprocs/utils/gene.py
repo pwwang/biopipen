@@ -101,7 +101,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 				allrest = set(val)
 			else:
 				allrest &= set(val)
-		
+
 	# query from api
 	allrest = list(allrest)
 	mgret = MyGeneInfo().querymany(allrest, scopes = frmcols, fields = columns, species = SPECIES[genome])
@@ -145,7 +145,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 			else:
 				genemap[query][x] = gene[x]
 	del genetmp	
-	
+
 	# cache genemap
 	cachedata = {}
 	querys    = genemap.keys()
@@ -154,6 +154,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 			if not k in cachedata:
 				cachedata[k] = []
 			cachedata[k].append(v)
+			
 	if cachedata:
 		cache.save(cachedata, cachefactory)
 		del cachedata
