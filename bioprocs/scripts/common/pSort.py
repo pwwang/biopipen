@@ -3,12 +3,20 @@ from collections import OrderedDict
 from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
+{% if args.sorted %}
+cmd = "ln -s {{in.infile | squote}} {{out.outfile | squote}}"
+
+{% else %}
 params = Box()
 params['T'] = {{args.tmpdir | quote}}
 params['S'] = {{args.mem | quote}}
 params['u'] = {{args.unique}}
 params['t'] = {{args.inopts.delimit | quote}}
 params.update({{args.params}})
+kopts = {k:v for k,v in params.items() if k.startswith('k')}
+for k in sorted(kopts.keys()):
+	del params[k]
+	params['k'] = kopts[k]
 
 infile   = {{in.infile | quote}}
 outfile  = {{out.outfile | quote}}
@@ -44,4 +52,6 @@ case = "LANG=en_US.UTF-8"
 {% endif %}
 
 cmd = '%s sort %s "%s" >> {{out.outfile | quote}}' % (case, cmdargs(params), tmpfile)
+{% endif %}
+
 runcmd(cmd)

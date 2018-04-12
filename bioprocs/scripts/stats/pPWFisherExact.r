@@ -59,11 +59,25 @@ cont.tables = list()
 for (name1 in it.names) {
 	for (name2 in it.names) {
 		if (name1 >= name2) next
+		
+		name1plus  = paste0(name1, '+')
+		name1minus = paste0(name1, '-')
+		name2plus  = paste0(name2, '+')
+		name2minus = paste0(name2, '-')
+		name1plus.cols  = colnames(indata[, which(indata[name1,]==1), drop = F])
+		name1minus.cols = colnames(indata[, which(indata[name1,]==0), drop = F])
+		name2plus.cols  = colnames(indata[, which(indata[name2,]==1), drop = F])
+		name2minus.cols = colnames(indata[, which(indata[name2,]==0), drop = F])
+		cont.table = matrix(0, ncol = 2, nrow = 2)
+		rownames(cont.table) = c(name1plus, name1minus)
+		colnames(cont.table) = c(name2plus, name2minus)
+		
+		cont.table[name1plus, name2plus]   = length(intersect(name1plus.cols, name2plus.cols))
+		cont.table[name1plus, name2minus]  = length(intersect(name1plus.cols, name2minus.cols))
+		cont.table[name1minus, name2plus]  = length(intersect(name1minus.cols, name2plus.cols))
+		cont.table[name1minus, name2minus] = length(intersect(name1minus.cols, name2minus.cols))
+		
 		name = paste(name1, name2, sep = '.vs.')
-		cont.table = table(unlist(indata[name1,,drop=T]), unlist(indata[name2,,drop=T]))
-		cont.table = cont.table[c("1","0"),c("1","0")]
-		colnames(cont.table) = c(paste0(name1, '+'), paste0(name1, '-'))
-		rownames(cont.table) = c(paste0(name2, '+'), paste0(name2, '-'))
 		cont.tables[[name]] = cont.table
 	}
 }
@@ -86,20 +100,23 @@ for (i in 1:length(ct.names)) {
 	name = ct.names[i]
 	qval = qvals[i]
 	ret  = rets[[name]]
+	items = unlist(strsplit(name, '.vs.', fixed = T))
 	tmp  = data.frame(
-		confInt1    = ret$conf.int[1],
-		confInt2    = ret$conf.int[2],
-		oddsRatio   = ret$estimate,
-		pval        = ret$p.value,
-		qval        = qval,
+		Name1       = items[1],
+		Name2       = items[2],
+		confInt1    = round(ret$conf.int[1], 3),
+		confInt2    = round(ret$conf.int[2], 3),
+		oddsRatio   = round(ret$estimate, 3),
+		pval        = round(ret$p.value, 3),
+		qval        = round(qval, 3),
 		alternative = ret$alternative,
 		method      = ret$method
 	)
-	rownames(tmp) = name
+	#rownames(tmp) = name
 	out = rbind(out, tmp)
 }
 
-write.table(out, outfile, col.names = T, row.names = T, sep = "\t", quote = F)
+write.table(out, outfile, col.names = T, row.names = F, sep = "\t", quote = F)
 
 
 

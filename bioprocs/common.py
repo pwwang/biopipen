@@ -30,6 +30,7 @@ pSort.args.case           = True
 pSort.args.mem            = params.mem4G.value
 pSort.args.tmpdir         = params.tmpdir.value
 pSort.args.unique         = False
+pSort.args.sorted         = False
 pSort.lang                = params.python.value
 pSort.script              = "file:scripts/common/pSort.py"
 

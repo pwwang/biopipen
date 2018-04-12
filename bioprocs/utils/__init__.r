@@ -1,9 +1,9 @@
 library(reticulate)
-helpers_  = import('bioprocs')$utils$helpers
-runcmd    = helpers_$runcmd
-mem2      = helpers_$mem2
+utils     = import('bioprocs')$utils
+runcmd    = utils$runcmd
+mem2      = utils$mem2
 # key orders not kept!
-cmdargs   = helpers_$cmdargs
+cmdargs   = utils$cmdargs
 
 cbindfill = function (x1, x2) {
 	y = merge(x1, x2, by='row.names', all=T, sort=F)

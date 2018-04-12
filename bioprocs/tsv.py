@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from . import params
+from . import params, rimport
 
 """
 @name:
@@ -71,9 +71,12 @@ pCbind.script         = "file:scripts/tsv/pCbind.r"
 pRbind                = Proc(desc = 'Rbind the rest of files to the first file.')
 pRbind.input          = 'infiles:files'
 pRbind.output         = 'outfile:file:{{in.infiles[0] | bn}}'
-pRbind.args.cnames    = True # or [True, True, False] corresponding to the file order
-pRbind.args.rnames    = True
+pRbind.args.inopts    = Box(
+	cnames = True, # or [True, True, False] corresponding to the file order
+	rnames = True
+)
 pRbind.args.na        = 'NA'
+pRbind.envs.rimport   = rimport
 pRbind.lang           = params.Rscript.value
 pRbind.script         = "file:scripts/tsv/pRbind.r"
 

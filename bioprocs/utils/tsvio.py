@@ -1,10 +1,14 @@
 """
 Reader and writer for tsv file.
 """
-import sys
+import sys, inspect
 from pyppl import Box
 from bioprocs.utils import alwaysList
 from collections import OrderedDict
+
+def _getargs(args, func):
+	argnames = inspect.getargspec(func).args
+	return {k:v for k, v in args.items() if k in argnames}
 
 __all__ = ['TsvMeta', 'TsvRecord', 'TsvReader', 'TsvWriter', 'tsvops']
 
@@ -257,6 +261,8 @@ class TsvReaderNometa(TsvReaderHead):
 	def __init__(self, infile, comment = '#', delimit = '\t', skip = 0, head = True, tmeta = None):
 		if head:
 			super(TsvReaderNometa, self).__init__(infile, skip = skip, comment = comment, delimit = delimit, tmeta = tmeta)
+		else:
+			super(TsvReaderHead, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
 	
 	def _parse(self, line):
 		return line
@@ -328,12 +334,15 @@ class TsvReader(object):
 		del inopts['cnames']
 		
 		if not ftype:
+			inopts = _getargs(inopts, TsvReaderBase.__init__)
 			reader = TsvReaderBase(infile, **inopts)
 		else:
 			klass = 'TsvReader' + ftype[0].upper() + ftype[1:].lower()
 			if not klass in globals():
 				raise NoSuchReader(klass)
-			reader = globals()[klass](infile, **inopts)
+			klass  = globals()[klass]
+			inopts = _getargs(inopts, klass.__init__)
+			reader = klass(infile, **inopts)
 		if cnames:
 			metas = cnames if isinstance(cnames, list) else cnames.items()
 			reader.meta.add(*metas)
@@ -353,12 +362,15 @@ class TsvWriter(object):
 		del outopts['cnames']
 		
 		if not ftype:
+			outopts = _getargs(outopts, TsvWriterBase.__init__)
 			writer = TsvWriterBase(outfile, **outopts)
 		else:
 			klass = 'TsvWriter' + ftype[0].upper() + ftype[1:].lower()
 			if not klass in globals():
 				raise NoSuchWriter(klass)
-			writer = globals()[klass](outfile, **outopts)
+			klass = globals()[klass]
+			outopts = _getargs(outopts, klass.__init__)
+			writer = klass(outfile, **outopts)
 		if cnames:
 			metas = cnames if isinstance(cnames, list) else cnames.items()
 			writer.meta.add(*metas)
@@ -424,6 +436,7 @@ class SimRead (object):
 			
 	@staticmethod
 	def compare(a, b, reverse = False):
+		print a, b
 		if not reverse:
 			return 0 if a < b else 1 if a > b else -1
 		else:

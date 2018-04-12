@@ -1,6 +1,5 @@
 from pyppl import Proc, Box
-from . import params
-#from .utils import helpers
+from . import params, rimport
 
 """
 @name:
@@ -29,12 +28,16 @@ pMetaPval                   = Proc(desc = "Combine p-values.")
 pMetaPval.input             = "indir:dir"
 pMetaPval.output            = "outfile:file:{{in.indir | fn}}.metapval.txt"
 pMetaPval.args.pattern      = "*"
-pMetaPval.args.header       = True
-pMetaPval.args.pcol         = -1
-pMetaPval.args.poutonly     = False
-pMetaPval.args.outheader    = True
+pMetaPval.args.inopts       = Box(
+	cnames = True,
+	pcol   = -1
+)
+pMetaPval.args.outopts      = Box(
+	ponly  = False,
+	head   = True
+)
 pMetaPval.args.method       = 'sumlog' # fisher's method
-#pMetaPval.tplenvs.cbindfill = helpers.cbindfill.r
+pMetaPval.envs.rimport      = rimport
 pMetaPval.lang              = params.Rscript.value
 pMetaPval.script            = "file:scripts/stats/pMetaPval.r"
 
@@ -61,10 +64,14 @@ pMetaPval.script            = "file:scripts/stats/pMetaPval.r"
 pMetaPval1 = Proc(desc = "Combine p-values in a single file by rows.")
 pMetaPval1.input             = "infile:file"
 pMetaPval1.output            = "outfile:file:{{in.infile | fn}}.metapval.txt"
-pMetaPval1.args.header       = True
-pMetaPval1.args.pcol         = -1
-pMetaPval1.args.poutonly     = False
-pMetaPval1.args.outheader    = True
+pMetaPval1.args.inopts       = Box(
+	cnames = True,
+	pcol   = -1
+)
+pMetaPval1.args.outopts      = Box(
+	ponly  = False,
+	head   = True
+)
 pMetaPval1.args.method       = 'sumlog' # fisher's method
 pMetaPval1.lang              = params.Rscript.value
 pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
@@ -248,3 +255,21 @@ pPWFisherExact.args.intype = 'raw' # pairs
 pPWFisherExact.args.padj = 'BH'
 pPWFisherExact.lang = params.Rscript.value
 pPWFisherExact.script = "file:scripts/stats/pPWFisherExact.r"
+
+pMediation = Proc(desc = "Do mediation analysis.")
+pMediation.input  = 'infile:file'
+pMediation.output = 'outfile:file:{{in.infile | fn2}}.mediation.txt'
+pMediation.args.inopts = Box(
+	cnames   = True,
+	rnames   = True
+)
+pMediation.args.medopts = Box(
+	modelm   = 'lm(M ~ X)',
+	modely   = 'lm(Y ~ X + M)',
+	mediator = 'M',
+	treat    = 'X',
+	boot     = True,
+	sims     = 500,
+)
+pMediation.lang = params.Rscript.value
+pMediation.script = "file:scripts/stats/pMediation.r"

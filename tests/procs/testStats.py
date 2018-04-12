@@ -2,7 +2,7 @@ import helpers, unittest
 from os import path
 from pyppl import PyPPL
 from helpers import getfile, procOK, config
-from bioprocs.stats import pMetaPval, pMetaPval1, pSurvival, pChiSquare, pFisherExact, pPWFisherExact
+from bioprocs.stats import pMetaPval, pMetaPval1, pSurvival, pChiSquare, pFisherExact, pPWFisherExact, pMediation
 from bioprocs.common import pFiles2Dir
 from bioprocs.tsv import pRbind
 
@@ -20,8 +20,8 @@ class testStats (helpers.TestCase):
 
 	def test2MetaPval1(self):
 		pRbind.input = [[getfile('testMetaPval%s.txt' % i) for i in range(10)]]
-		pRbind.args.rnames = [False] * 10
-		pRbind.args.header = True
+		pRbind.args.inopts.rnames = False
+		pRbind.args.inopts.cnames = True
 
 		pMetaPval1.depends = pRbind
 		
@@ -104,6 +104,20 @@ class testStats (helpers.TestCase):
 		pPWFisherExactTest.args.update(args)
 		PyPPL(config).start(pPWFisherExactTest).run()
 		self.assertFileEqual(pPWFisherExactTest.channel.get(0), outfile)
+	
+	def dataProvider_testMediation(self, testdir, indir, outdir):
+		infile = path.join(indir, 'mediation.txt')
+		exptfile = path.join(outdir, 'mediation.txt')
+		args = {
+			'inopts': {'rnames': False}
+		}
+		yield infile, args, exptfile
+	
+	def testMediation(self, infile, args, exptfile):
+		pMediation.input = [infile]
+		pMediation.args.update(args)
+		PyPPL(config).start(pMediation).run()
+		self.assertFileEqual(pMediation.channel.get(0), exptfile)
 		
 
 if __name__ == '__main__':

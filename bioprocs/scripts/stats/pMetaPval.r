@@ -1,21 +1,41 @@
+library("methods")
 library("metap")
-{{cbindfill}}
+{{rimport}}('__init__.r')
 
 infiles = Sys.glob(file.path({{in.indir | quote}}, {{args.pattern | quote}}))
 lenfile = length(infiles)
-header  = {{args.header | R}}
-pcol    = {{args.pcol | R}}
-if (length(header) < lenfile) {
-	header = c(header, rep(T, lenfile - length(header)))
+
+outfile = {{out.outfile | quote}}
+
+inopts.cnames = {{args.inopts.cnames | lambda x: x if isinstance(x, list) else [x] | Rvec}}
+inopts.pcol   = {{args.inopts.pcol   | lambda x: x if isinstance(x, list) else [x] | Rvec}}
+inopts.cnames = as.logical(inopts.cnames)
+
+outopts.head  = {{args.outopts.head | R}}
+outopts.ponly = {{args.outopts.ponly | R}}
+
+if (length(inopts.cnames) == 1) {
+	cnames = rep(inopts.cnames, lenfile)
+} else {
+	cnames = rep(T, lenfile)
+	for (i in 1:length(inopts.cnames)) {
+		cnames[i] = inopts.cnames[i]
+	}
 }
-if (length(pcol) < lenfile) {
-	pcol = c(pcol, rep(-1, lenfile - length(pcol)))
+
+if (length(inopts.pcol) == 1) {
+	pcol = rep(inopts.pcol, lenfile)
+} else {
+	cnames = rep(-1, lenfile)
+	for (i in 1:length(inopts.pcol)) {
+		cnames[i] = inopts.pcol[i]
+	}
 }
 
 pvals = NULL
 for (i in 1:lenfile) {
 	infile = infiles[i]
-	indata = read.table(infile, sep="\t", header=header[i], row.names=NULL, check.names=F)
+	indata = read.table(infile, sep="\t", header=cnames[i], row.names=NULL, check.names=F)
 	rnames = make.unique(as.vector(indata[,1]))
 	indata[,1] = NULL
 	rownames(indata) = rnames
@@ -42,5 +62,9 @@ rnames2 = if ("weights" %in% rnames) rnames2[1:length(rnames2)-2] else rnames2[1
 rownames(ret2) = rnames
 colnames(ret2) = c(rnames2, cnames)
 
-ret2 = {% if args.poutonly %}ret2[order(ret2[, 'p']), 'p', drop=F]{% else %}ret2[order(ret2[, 'p']),,drop=F]{% endif %}
-write.table(ret2, {{out.outfile | quote}}, sep="\t", quote=F, col.names={{args.outheader | R}})
+if (outopts.ponly) {
+	ret2 = ret2[order(ret2[, 'p']), 'p', drop=F]
+} else {
+	ret2 = ret2[order(ret2[, 'p']),,drop=F]
+}
+write.table(ret2, outfile, sep="\t", quote=F, col.names=outopts.head)

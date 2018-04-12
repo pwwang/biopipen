@@ -37,7 +37,13 @@ for i in range(lenfs):
 			cnames = inopts['cnames']
 		elif i < len(inopts['cnames']):
 			cnames = inopts['cnames'][i]
-	inopts_each.append({'skip': skip, 'delimit': delimit, 'comment': comment, 'ftype': ftype, 'cnames': cnames})
+	head = ''
+	if 'head' in inopts:
+		if not isinstance(inopts['head'], list):
+			head = inopts['head']
+		elif i < len(inopts['head']):
+			head = inopts['head'][i]
+	inopts_each.append({'skip': skip, 'delimit': delimit, 'comment': comment, 'ftype': ftype, 'cnames': cnames, 'head': head})
 
 def getReaders(fs, baseidx):
 	readers = []
@@ -49,6 +55,7 @@ def getReaders(fs, baseidx):
 	return readers
 	
 outopts = {
+	'ftype':         '',
 	'head'         : False, 
 	'headPrefix'   : '', 
 	'headDelimit'  : '\t', 
@@ -56,7 +63,7 @@ outopts = {
 	'delimit'      : '\t'
 }
 outopts.update({{args.outopts}})
-writer = TsvWriter(outfile, delimit = outopts['delimit'])
+writer = TsvWriter(outfile, ftype = outopts['ftype'], delimit = outopts['delimit'])
 
 metaUpdated = False
 for i in xrange(0, len(files), maxopen):

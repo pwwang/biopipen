@@ -1,30 +1,33 @@
+library("methods")
 library("metap")
 
-indata = read.table({{in.infile | quote}}, header = {{args.header | R}}, row.names = NULL, check.names = F)
+infile  = {{in.infile | quote}}
+outfile = {{out.outfile | quote}}
+
+inopts.cnames = {{args.inopts.cnames | R}}
+inopts.pcol   = {{args.inopts.pcol | R}}
+outopts.head  = {{args.outopts.head | R}}
+outopts.ponly = {{args.outopts.ponly | R}}
+method = {{args.method | quote}}
+
+indata = read.table(infile, header = inopts.cnames, row.names = NULL, check.names = F)
 rnames = unique(as.vector(indata[, 1]))
-pcol   = {{args.pcol}}
-if (pcol < 0) pcol = ncol(indata) + pcol + 1
+if (inopts.pcol < 0) inopts.pcol = ncol(indata) + inopts.pcol + 1
 
 ret = NULL
 for (rname in rnames) {
-	pvals               = as.vector(indata[which(indata[,1] == rname), pcol])
+	pvals               = as.vector(indata[which(indata[,1] == rname), inopts.pcol])
 	pvals[is.na(pvals)] = 1
 	pvals[pvals > 1]    = 1
 	pvals[pvals <= 0]   = 1e-100
 	if(length(pvals) == 1) {
-		{% if args.method | lambda x: x == 'logitp' %}
-		mp1 = list(t = 0, df = 0, p = pvals[1], validp = pvals[1])
-		{% elif args.method | lambda x: x == 'sumz' %}
-		mp1 = list(z = 0, p = pvals[1], validp = pvals[1])
-		{% elif args.method | lambda x: x == 'votep' %}
-		mp1 = list(p = pvals[1], pos = 0, neg = 0, alpha = 0, validp = pvals[1])
-		{% elif args.method | lambda x: x == 'sump' %}
-		mp1 = list(p = pvals[1], conservativep = pvals[1], validp = pvals[1])
-		{% elif args.method | lambda x: x == 'meanp' %}
-		mp1 = list(z = 0, p = pvals[1], validp = pvals[1])
-		{% elif args.method | lambda x: x == 'wilkinsonp' %}
-		mp1 = list(p = pvals[1], pr = 0, r = 0, critp = pvals[1], alpha = 0, validp = pvals[1])
-		{% endif %}
+		mp1 = if (method == 'logitp')
+			list(t = 0, df = 0, p = pvals[1], validp = pvals[1]) else if (method == 'sumz')
+			list(z = 0, p = pvals[1], validp = pvals[1]) else if (method == 'votep')
+			list(p = pvals[1], pos = 0, neg = 0, alpha = 0, validp = pvals[1]) else if (method == 'sump')
+			list(p = pvals[1], conservativep = pvals[1], validp = pvals[1]) else if (method == 'meanp')
+			list(z = 0, p = pvals[1], validp = pvals[1]) else if (method == 'wilkinsonp')
+			list(p = pvals[1], pr = 0, r = 0, critp = pvals[1], alpha = 0, validp = pvals[1])
 	} else {
 		mp1 = {{args.method}}(pvals)
 	}
@@ -35,12 +38,7 @@ for (rname in rnames) {
 	rownames(mmp) = rname
 	colnames(mmp) = mnames
 	mmp    = cbind(mmp, validp = paste(mp1$validp, collapse=';'))
-	if (is.null(ret)) {
-		ret = mmp
-	} else {
-
-		ret = rbind(ret, mmp)
-	}
+	ret    = if (is.null(ret)) mmp else rbind(ret, mmp)
 }
-ret = {% if args.poutonly %}ret[order(as.numeric(ret[, 'p'])), 'p', drop=F]{% else %}ret[order(as.numeric(ret[, 'p'])),,drop=F]{% endif %}
-write.table(ret, {{out.outfile | quote}}, sep="\t", quote=F, col.names={{args.outheader | R}})
+ret = if (outopts.ponly) ret[order(as.numeric(ret[, 'p'])), 'p', drop=F] else ret[order(as.numeric(ret[, 'p'])),,drop=F]
+write.table(ret, outfile, sep="\t", quote=F, col.names=outopts.head)

@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from .utils import runcmd, plot, helpers
+#from .utils import runcmd, plot, helpers
 from . import params
 
 
@@ -24,9 +24,9 @@ pVcfStatsPlot.args.Rscript     = params.Rscript.value
 pVcfStatsPlot.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
 pVcfStatsPlot.args.histplotggs = []
 pVcfStatsPlot.args.boxplotggs  = []
-pVcfStatsPlot.envs.runcmd      = runcmd.py
-pVcfStatsPlot.envs.plotHist    = plot.hist.r
-pVcfStatsPlot.envs.plotBoxplot = plot.boxplot.r
+#pVcfStatsPlot.envs.runcmd      = runcmd.py
+#pVcfStatsPlot.envs.plotHist    = plot.hist.r
+#pVcfStatsPlot.envs.plotBoxplot = plot.boxplot.r
 pVcfStatsPlot.lang             = params.python.value
 pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 
@@ -48,9 +48,9 @@ pCallRate.input            = "indir:file"
 pCallRate.output           = "outdir:dir:{{ in.indir | fn }}.callrate"
 pCallRate.args.histplotggs = []
 pCallRate.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
-pCallRate.envs.runcmd      = runcmd.r
-pCallRate.envs.cbindfill   = helpers.cbindfill.r
-pCallRate.envs.plotHist    = plot.hist.r
+#pCallRate.envs.runcmd      = runcmd.r
+#pCallRate.envs.cbindfill   = helpers.cbindfill.r
+#pCallRate.envs.plotHist    = plot.hist.r
 pCallRate.lang             = params.Rscript.value
 pCallRate.script           = "file:scripts/vcfnext/pCallRate.r"
 
@@ -74,8 +74,8 @@ pCepip.output              = "outfile:file:{{in.infile | fn}}.cepip.txt"
 pCepip.args.cepip          = params.cepip.value
 pCepip.args.cell           = ""
 pCepip.args.params         = Box()
-pCepip.envs.runcmd         = runcmd.py
-pCepip.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pCepip.envs.runcmd         = runcmd.py
+#pCepip.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pCepip.lang                = params.python.value
 pCepip.script              = "file:scripts/vcfnext/pCepip.py"
 
@@ -194,6 +194,6 @@ pMaftools.args.params  = Box(
 )
 pMaftools.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pMaftools.args.nthread = 1
-pMaftools.envs.heatmap = plot.heatmap.r
+#pMaftools.envs.heatmap = plot.heatmap.r
 pMaftools.lang         = params.Rscript.value
 pMaftools.script       = "file:scripts/vcfnext/pMaftools.r"
