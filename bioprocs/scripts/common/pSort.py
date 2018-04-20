@@ -14,9 +14,9 @@ params['u'] = {{args.unique}}
 params['t'] = {{args.inopts.delimit | quote}}
 params.update({{args.params}})
 kopts = {k:v for k,v in params.items() if k.startswith('k')}
-for k in sorted(kopts.keys()):
+for i, k in enumerate(sorted(kopts.keys())):
 	del params[k]
-	params['k'] = kopts[k]
+	params['k%s' % (' '*i)] = kopts[k]
 
 infile   = {{in.infile | quote}}
 outfile  = {{out.outfile | quote}}

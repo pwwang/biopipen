@@ -89,7 +89,6 @@ pGeneTrack.script = "file:scripts/genomeplot/pGeneTrack.r"
 """
 pAnnoTrack             = Proc(desc = 'Generate annotation track for pGenomePlot.')
 pAnnoTrack.input       = "name, infile:file, chrom"
-pAnnoTrack.brings      = {"infile": ["{{in.infile | fn}}.bai", "{{in.infile | bn}}.bai", "{{in.infile | bn}}"]}
 pAnnoTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.gviztrack"
 pAnnoTrack.args.genome = params.genome.value
 pAnnoTrack.args.params = Box({
@@ -119,7 +118,6 @@ pAnnoTrack.script      = "file:scripts/genomeplot/pAnnoTrack.r"
 """
 pDataTrack             = Proc(desc = 'Generate data track for pGenomePlot.')
 pDataTrack.input       = "name, infile:file, chrom"
-pDataTrack.brings      = {"infile": ["{{in.infile | fn}}.bai", "{{in.infile | bn}}.bai", "{{in.infile | bn}}"]}
 pDataTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.gviztrack"
 pDataTrack.args.genome = params.genome.value
 pDataTrack.args.params = Box({

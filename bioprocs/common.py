@@ -197,7 +197,7 @@ cat {{in.infile2 | squote}} >> {{out.outfile | squote}}
 """
 pMergeFiles               = Proc(desc = 'Merge files.')
 pMergeFiles.input         = "infiles:files"
-pMergeFiles.output        = "outfile:file:{{in.infiles.0 | fn}}.etc{{in.infiles.0 | ext}}"
+pMergeFiles.output        = "outfile:file:{{in.infiles | lambda x: x[0] if x else 'nothing' |  fn}}.etc{{in.infiles | lambda x: x[0] if x else '' | ext}}"
 pMergeFiles.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pMergeFiles.args.outopts  = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
 # IOError: [Errno 24] Too many open files

@@ -99,29 +99,30 @@ def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpv
 			writer.write(r)
 		
 	cached = []
-	for snp in allrest['name']:
-		s = dbsnp.filter_by(name=snp).first()
-		if not s:
-			if notfound == 'error':
-				raise RecordNotFound('Record not found: %s' % snp)
-			elif notfound == 'skip':
-				continue
-			else:
-				stderr.write('Record not found: %s \n' % snp)
-				continue
-		cached.append(s)
-		if writer:
-			r = TsvRecord()
-			r.CHR    = s.chrom
-			r.START  = s.chromStart
-			r.END    = s.chromEnd
-			r.NAME   = s.name
-			r.SCORE  = s.score
-			r.STRAND = s.strand
-			for cname in cnames:
-				setattr(r, cname, getattr(s, cname))
-			print r ,writer.meta
-			writer.write(r)
+	if allrest:
+		for snp in allrest['name']:
+			s = dbsnp.filter_by(name=snp).first()
+			if not s:
+				if notfound == 'error':
+					raise RecordNotFound('Record not found: %s' % snp)
+				elif notfound == 'skip':
+					continue
+				else:
+					stderr.write('Record not found: %s \n' % snp)
+					continue
+			cached.append(s)
+			if writer:
+				r = TsvRecord()
+				r.CHR    = s.chrom
+				r.START  = s.chromStart
+				r.END    = s.chromEnd
+				r.NAME   = s.name
+				r.SCORE  = s.score
+				r.STRAND = s.strand
+				for cname in cnames:
+					setattr(r, cname, getattr(s, cname))
+				print r ,writer.meta
+				writer.write(r)
 	
 	# save cached data
 	cachedata = {}

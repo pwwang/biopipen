@@ -52,7 +52,7 @@ if (intype == 'bedpe') {
 	for (line in lines) {
 		parts = unlist(strsplit(line, '\t', fixed = T))
 		if (startsWith(parts[1], "##")) { next }
-		if (startsWith(parts[1], "#CHR")) { # header
+		if (startsWith(parts[1], "#CHR") || startsWith(parts[1], "CHR")) { # header
 			chr2index    = match("CHR2", parts)
 			start2index  = match("START2", parts)
 			end2index    = match("END2", parts)

@@ -436,7 +436,6 @@ class SimRead (object):
 			
 	@staticmethod
 	def compare(a, b, reverse = False):
-		print a, b
 		if not reverse:
 			return 0 if a < b else 1 if a > b else -1
 		else:
