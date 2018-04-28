@@ -145,7 +145,7 @@ DEFAULTS = {
 	"snvsniffer.desc"          : "The path of SNVSniffer.",
 	"somaticsniper"            : "bam-somaticsniper",
 	"somaticsniper.desc"       : "The path of bam-somaticsniper.",
-	"star"                     : "star",
+	"star"                     : "STAR",
 	"star.desc"                : "The path of star.",
 	"strelka_germ"             : "configureStrelkaGermlineWorkflow.py",
 	"strelka_germ.desc"        : "The path of configureStrelkaGermlineWorkflow.py.",
@@ -192,20 +192,24 @@ for cfgfile in cfgfiles:
 	if not path.exists(cfgfile):
 		continue
 	params.loadFile (cfgfile)
-	
+
 if not path.exists(params.cachedir.value):
 	makedirs(params.cachedir.value)
-	
+
 rimport  = """
-(function(rfile) {
+(function(...) {
 	library(reticulate)
 	bioprocs = import('bioprocs')
-	source(file.path(bioprocs$UTILS, rfile))
+	for (rfile in list(...)) {
+		source(file.path(bioprocs$UTILS, rfile))
+	}
 })"""
 
 bashimport = """
 function __bashimport__ () {
-	source %s/$1
+	for src in "$@"; do
+		source "%s/$src"
+	done
 }
 __python__='%s'
 __bashimport__""" % (UTILS, executable)

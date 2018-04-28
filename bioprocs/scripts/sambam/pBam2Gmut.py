@@ -1,14 +1,8 @@
 from os import path, makedirs
 from shutil import rmtree
 from sys import stderr, exit
-
-if not path.exists ("{{bring.infile[0]}}"):
-	stderr.write ("Input file '{{in._infile}}' is not indexed.")
-	exit (1)
-	
-{{ runcmd }}
-{{ mem2 }}
-{{ params2CmdArgs }}
+from pyppl import Box
+from bioprocs.utils import runcmd, cmdargs, mem2
 
 tmpdir    = path.join ("{{ args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
@@ -29,7 +23,7 @@ try:
 	params['o']   = outfile
 	params['nct'] = {{args.nthread}}
 
-	cmd = '{{args.gatk}} -T HaplotypeCaller %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, params2CmdArgs(params, dash = '-', equal = ' '))
+	cmd = '{{args.gatk}} -T HaplotypeCaller %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params, dash = '-', equal = ' '))
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
@@ -39,7 +33,7 @@ try:
 	params['G'] = ref
 	params['b'] = {{in.infile | quote}}
 
-	cmd = '{{args.vardict}} %s > "%s"' % (params2CmdArgs(params), outfile)
+	cmd = '{{args.vardict}} %s > "%s"' % (cmdargs(params), outfile)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
@@ -52,7 +46,7 @@ try:
 	params['g'] = ref
 	params['o'] = outfile
 
-	cmd = '{{args.snvsniffer}} snp %s "%s" "{{in.infile}}"' % (params2CmdArgs(params), hfile)
+	cmd = '{{args.snvsniffer}} snp %s "%s" "{{in.infile}}"' % (cmdargs(params), hfile)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
@@ -64,7 +58,7 @@ try:
 	params['output']      = outfile
 	params['logFileName'] = outfile + '.log'
 
-	cmd = '{{args.platypus}} callVariants %s' % params2CmdArgs(params)
+	cmd = '{{args.platypus}} callVariants %s' % cmdargs(params)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
@@ -76,7 +70,7 @@ try:
 		configParams['referenceFasta'] = ref
 		configParams['runDir']         = {{job.outdir | quote}}
 
-		cmd = '{{args.strelka}} %s' % params2CmdArgs(configParams)
+		cmd = '{{args.strelka}} %s' % cmdargs(configParams)
 		runcmd (cmd)
 
 		# run
@@ -84,7 +78,7 @@ try:
 		params['j'] = {{args.nthread}}
 		params['g'] = mem2({{args.mem | quote}}, 'G')[:-1]
 
-		cmd = '{{job.outdir}}/runWorkflow.py %s' % params2CmdArgs(params)
+		cmd = '{{job.outdir}}/runWorkflow.py %s' % cmdargs(params)
 		runcmd (cmd)
 		ofile = "{{job.outdir}}/results/variants/genome.S1.vcf.gz"
 		runcmd ('mv "%s" "%s.gz"' % (ofile, outfile))

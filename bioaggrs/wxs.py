@@ -115,8 +115,8 @@ aFastq2Bam.pSam2Bam.args.markdup = True
 	pSampleInfo
 """
 aBam2Mut = Aggr(
-	pFile2Proc.copy(newid = 'pBamDir'),
-	pFile2Proc.copy(newid = 'pSampleInfo'),
+	pFile2Proc.copy(id = 'pBamDir'),
+	pFile2Proc.copy(id = 'pSampleInfo'),
 	pBam2Gmut,
 	pBamPair2Smut,
 	depends = False
@@ -132,16 +132,16 @@ aBam2Mut.ends                  = aBam2Mut.pBam2Gmut, aBam2Mut.pBamPair2Smut
 aBam2Mut.pBam2Gmut.depends     = aBam2Mut.pBamDir,   aBam2Mut.pSampleInfo
 aBam2Mut.pBamPair2Smut.depends = aBam2Mut.pBamDir,   aBam2Mut.pSampleInfo
 # input
-aBam2Mut.pBam2Gmut.input     = lambda ch1, ch2: [ 
-	path.join(ch1.get(), s + '.bam') for s in     \
+aBam2Mut.pBam2Gmut.input     = lambda ch1, ch2: [
+	path.join(ch1.get(), s) for s in     \
 	set(Channel.fromFile(ch2.get(), header=True).colAt(0).unique().flatten())
 ]
 aBam2Mut.pBamPair2Smut.input = lambda ch1, ch2: [ \
-	(path.join(ch1.get(), c1.get() + '.bam'), path.join(ch1.get(), c2.get() + '.bam')) for ch in \
+	(path.join(ch1.get(), c1.get()), path.join(ch1.get(), c2.get())) for ch in \
 	[Channel.fromFile(ch2.get(), header=True)] for p in \
 	set(ch.Patient.flatten()) for c1, c2 in \
-	[ 
-		(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['TUMOR', 'DISEASE', 'AFTER']])), 
+	[
+		(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['TUMOR', 'DISEASE', 'AFTER']])),
 		 Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']])))
 	]
 ]
@@ -153,4 +153,3 @@ aVcfs2Maf = Aggr(
 	pMafMerge
 )
 aVcfs2Maf.pFiles2Dir.input     = lambda ch: [ch.flatten()]
-

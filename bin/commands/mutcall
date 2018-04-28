@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # Call mutations from sequencing data.
 from os import path
-from pyppl import PyPPL, Channel
+from pyppl import PyPPL, Channel, Box
 from bioprocs import params
 from bioprocs.common import pFiles2Dir
 from bioprocs.sambam import pBam2Gmut, pBamPair2Smut
+from bioprocs.utils.tsvio import TsvReader
 from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aBam2Mut
 
 params.prefix('-')
@@ -33,15 +34,27 @@ params.runner         = 'local'
 params.runner.desc    = 'The runner to run the processes.'
 params.forks          = 1
 params.forks.desc     = 'How many jobs to run simultanuously.'
+params.logfile        = ''
+params.logfile.desc   = 'Where to save the logs.'
+params.compress = True
+params.compress.desc = 'Use gzip and bam file to save space.'
 
 params = params.parse().toDict()
 
 starts = []
 
+reader  = TsvReader(params.saminfo, ftype = 'head')
+samples = {r.Sample for r in reader}
+
+aEBam2Bam.pFastq2Sam.args.tool    = 'bowtie2'
+
 pBamDir         = pFiles2Dir
 pBamDir.runner  = 'local'
 if params.intype == 'ebam':
 	aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
+	if params.compress:
+		aEBam2Bam.args.gz = True
+		aEBam2Bam.pFastq2Sam.args.outfmt = 'bam'
 
 	pBamDir.depends = aEBam2Bam
 	pBamDir.input   = lambda ch: [ch.flatten(0)]
@@ -72,7 +85,7 @@ elif 'germ' in params.muts:
 elif 'soma' in params.muts:
 	pBamPair2Smut.depends = pBamDir
 	pBamPair2Smut.input = lambda ch1: [ \
-		(path.join(ch1.get(), c1.get() + '.bam'), path.join(ch1.get(), c2.get() + '.bam')) for ch in \
+		(path.join(ch1.get(), c1.get()), path.join(ch1.get(), c2.get())) for ch in \
 		[Channel.fromFile(params.saminfo, header=True)] for p in \
 		set(ch.Patient.flatten()) for c1, c2 in \
 		[
@@ -81,8 +94,11 @@ elif 'soma' in params.muts:
 		]
 	]
 
-PyPPL({
-	'proc': {
-		'forks': params.forks
-	}
-}).start(starts).run(params.runner)
+PyPPL(Box(
+	proc = Box(
+		forks = params.forks
+	),
+	log = Box(
+		file = params.logfile
+	)
+)).start(starts).run(params.runner)

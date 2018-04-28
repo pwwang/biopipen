@@ -1,11 +1,14 @@
 import helpers, unittest
 from collections import OrderedDict
 from os import path
+from helpers import testdirs
 from subprocess import check_output
-from bioprocs.utils.helpers import runcmd, cmdargs, RuncmdException, mem2, Mem2Exception
+from bioprocs.utils import runcmd, cmdargs, RuncmdException, mem2, Mem2Exception
 
 
-class TestHelpers(helpers.TestCase):
+class TestInit(helpers.TestCase):
+
+	testdir, indir, outdir = testdirs('TestInit')
 	
 	def dataProvider_testRuncmd(self):
 		yield 'ls', True, False
@@ -29,10 +32,10 @@ class TestHelpers(helpers.TestCase):
 			self.assertIn(cmd, errvalue)
 			self.assertIn('Return code: ', errvalue)
 	
-	def dataProvider_testRuncmdR(self, testdir, indir):
-		srcfile = path.join(indir, 'runcmd1.r')
+	def dataProvider_testRuncmdR(self):
+		srcfile = path.join(self.indir, 'runcmd1.r')
 		yield srcfile, True
-		srcfile = path.join(indir, 'runcmd2.r')
+		srcfile = path.join(self.indir, 'runcmd2.r')
 		yield srcfile, False
 	
 	def testRuncmdR(self, srcfile, ret):
@@ -65,11 +68,11 @@ class TestHelpers(helpers.TestCase):
 		r = cmdargs(params, dash = dash, equal = equal, )
 		self.assertEqual(r, ret)
 		
-	def dataProvider_testCmdargsR(self, testdir, indir):
-		yield path.join(indir, 'cmdargs1.r'), ''
-		yield path.join(indir, 'cmdargs2.r'), "-a 1.0 -c --de='de fg' -b 2.0"
-		yield path.join(indir, 'cmdargs3.r'), "--a 1.0 --c --de='de fg' --b 2.0"
-		yield path.join(indir, 'cmdargs4.r'), "--a 1.0 --c --de 'de fg' --b 2.0"
+	def dataProvider_testCmdargsR(self):
+		yield path.join(self.indir, 'cmdargs1.r'), ''
+		yield path.join(self.indir, 'cmdargs2.r'), "-a 1.0 -c --de='de fg' -b 2.0"
+		yield path.join(self.indir, 'cmdargs3.r'), "--a 1.0 --c --de='de fg' --b 2.0"
+		yield path.join(self.indir, 'cmdargs4.r'), "--a 1.0 --c --de 'de fg' --b 2.0"
 		
 	def testCmdargsR(self, rfile, ret):
 		out = check_output(['Rscript', rfile])
@@ -90,8 +93,8 @@ class TestHelpers(helpers.TestCase):
 			m = mem2(mem, unit)
 			self.assertEqual(m, ret)
 	
-	def dataProvider_testMem2R(self, testdir, indir):
-		rfile = path.join(indir, 'mem2.r')
+	def dataProvider_testMem2R(self):
+		rfile = path.join(self.indir, 'mem2.r')
 		yield rfile, '123k', 'auto', '123K'
 		yield rfile, '100M', 'auto', '100M'
 		yield rfile, '100M', 'K', '102400K'
@@ -102,12 +105,12 @@ class TestHelpers(helpers.TestCase):
 		out = check_output(['Rscript', rfile, mem, unit])
 		self.assertEqual(out, ret)
 		
-	def dataProvider_testCbindfill(self, testdir, indir, outdir):
-		rfile    = path.join(indir, 'cbindfill.r')
-		infile1  = path.join(indir, 'cbindfill1_1.txt')
-		infile2  = path.join(indir, 'cbindfill1_2.txt')
-		outfile  = path.join(testdir, 'cbindfill1.txt')
-		exptfile = path.join(outdir, 'cbindfill1.txt')
+	def dataProvider_testCbindfill(self):
+		rfile    = path.join(self.indir, 'cbindfill.r')
+		infile1  = path.join(self.indir, 'cbindfill1_1.txt')
+		infile2  = path.join(self.indir, 'cbindfill1_2.txt')
+		outfile  = path.join(self.testdir, 'cbindfill1.txt')
+		exptfile = path.join(self.outdir, 'cbindfill1.txt')
 		yield rfile, infile1, infile2, outfile, exptfile
 		
 	def testCbindfill(self, rfile, infile1, infile2, outfile, exptfile):
@@ -115,12 +118,12 @@ class TestHelpers(helpers.TestCase):
 			runcmd(['Rscript', rfile, infile1, infile2, outfile])
 		self.assertFileEqual(outfile, exptfile)
 	
-	def dataProvider_testRbindfill(self, testdir, indir, outdir):
-		rfile    = path.join(indir, 'rbindfill.r')
-		infile1  = path.join(indir, 'rbindfill1_1.txt')
-		infile2  = path.join(indir, 'rbindfill1_2.txt')
-		outfile  = path.join(testdir, 'rbindfill1.txt')
-		exptfile = path.join(outdir, 'rbindfill1.txt')
+	def dataProvider_testRbindfill(self):
+		rfile    = path.join(self.indir, 'rbindfill.r')
+		infile1  = path.join(self.indir, 'rbindfill1_1.txt')
+		infile2  = path.join(self.indir, 'rbindfill1_2.txt')
+		outfile  = path.join(self.testdir, 'rbindfill1.txt')
+		exptfile = path.join(self.outdir, 'rbindfill1.txt')
 		yield rfile, infile1, infile2, outfile, exptfile
 	
 	def testRbindfill(self, rfile, infile1, infile2, outfile, exptfile):

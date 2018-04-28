@@ -24,6 +24,10 @@ rbindfill = function (x1, x2) {
 	return (y)
 }
 
+logger = function(..., level = 'INFO') {
+	cat(paste0(level, ': ', paste(...), '\n'), file = stderr())		
+}
+
 # avoid typos
 cbind.fill = cbindfill
 rbind.fill = rbindfill

@@ -1,51 +1,38 @@
+from concurrent.futures import ThreadPoolExecutor
+from loky import ProcessPoolExecutor
 from bioprocs.utils import runcmd
+from traceback import format_exc
 
-def parallel(func, args, nthread, method = 'thread'):
-	"""
-	Call functions in a parallel way.
-	If nthread == 1, will be running in single-threading manner.
-	@params:
-		`func`: The function
-		`args`: The arguments, in list. Each element should be the arguments for the function in one thread.
-		`nthread`: Number of threads
-		`method`: use multithreading (thread) or multiprocessing (process)
-	"""
-	if method == 'thread':
-		Queue = moves.queue.Queue
-		Unit  = Thread
-	else:
-		Queue = JoinableQueue
-		Unit  = Process
+class Parallel(object):
 
-	def _parallelWorker(q):
-		while True:
-			if q.empty(): # pragma: no cover
-				q.task_done()
-				break
-			arg = q.get()
-			if arg is None:
-				q.task_done()
-				break
-			
+	def __init__(self, nthread = 1, backend = 'process', raiseExc = False):
+		PoolExecutor   = ProcessPoolExecutor if backend.lower() in 'multiprocessing' else ThreadPoolExecutor
+		self.executor  = PoolExecutor(max_workers = nthread)
+		self.raiseExc  = raiseExc
+
+	def run(self, func, args):
+		def _func(arg):
+			if callable(func):
+				return func(*arg)
+			else:
+				runcmd(func.format(*arg))
+
+		submits   = []
+		results   = []
+		exception = None
+		excno     = 0
+		for arg in args:
+			submits.append(self.executor.submit(_func, arg))
+
+		for submit in submits:
 			try:
-				func(*arg)
-			except Exception: # pragma: no cover
-				raise
-			finally:
-				q.task_done()
+				results.append(submit.result())
+			except Exception as ex:
+				#results.append(None)
+				exception = type(ex), format_exc()
+				excno    += 1
 
-	nworkers = min(len(args), nthread)
-	q = Queue()
+		if excno > 0 and self.raiseExc:
+			raise exception[0](exception[1])
 
-	for arg in args: q.put(arg)
-	for _ in range(nworkers): q.put(None)
-
-	for _ in range(nworkers):
-		t = Unit(target = _parallelWorker, args=(q, ))
-		t.daemon = True
-		t.start()
-	
-	q.join()
-	
-def parallelCmd(cmds, nthread, method = 'thread'):
-	parallel(runcmd, [(cmd,) for cmd in cmds], nthread, method)
+		return results

@@ -1,5 +1,5 @@
-{{runcmd}}
-{{params2CmdArgs}}
+from pyppl import Box
+from bioprocs.utils import runcmd, cmdargs
 
 params = {{args.params}}
 
@@ -10,7 +10,7 @@ params = {{args.params}}
 params['f'] = 'bam'
 {% endif %}
 
-cmd = '{{args.htseq}} %s "{{in.infile}}" "{{args.refgene}}" > "{{out.outfile}}"' % (params2CmdArgs(params))
+cmd = '{{args.htseq}} %s "{{in.infile}}" "{{args.refgene}}" > "{{out.outfile}}"' % (cmdargs(params))
 runcmd (cmd)
 
 {% endif %}

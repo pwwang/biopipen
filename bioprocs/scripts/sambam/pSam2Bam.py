@@ -1,22 +1,19 @@
 from shutil import move, rmtree
 from os import makedirs, path, symlink, remove
-from sys import stdout, stderr
-from collections import OrderedDict
-
-{{ runcmd }}
-{{ mem2 }}
-{{ params2CmdArgs }}
+from sys import stderr
+from pyppl import Box
+from bioprocs.utils import runcmd, mem2, cmdargs
 
 infile    = {{ in.infile | quote }}
 outfile   = {{ out.outfile | quote }}
 informat  = {{ args.infmt | quote }}
-informat  = informat if informat else {{ in.infile | ext | [1:] | quote}} 
+informat  = informat if informat else {{ in.infile | ext | [1:] | quote}}
 tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 doSort    = {{ args.sort }}
 doIndex   = {{ args.index }}
 doMarkdup = {{ args.markdup }}
 doRmdup   = {{ args.rmdup }}
-params    = OrderedDict({{ args.params }})
+params    = {{ args.params }}
 if doRmdup:
 	doMarkdup = True
 if not path.exists (tmpdir):
@@ -39,9 +36,9 @@ try:
 	params['outputthreads']  = {{args.nthread}}
 	params['markduplicates'] = int(doMarkdup)
 	params['rmdup']          = int(doRmdup)
-	
 
-	cmd = '{{args.biobambam_bamsort}} %s' % params2CmdArgs(params, dash = '', equal = '=', noq = ['index', 'inputthreads', 'outputthreads', 'markduplicates', 'rmdup'])
+
+	cmd = '{{args.biobambam_bamsort}} %s' % cmdargs(params, dash = '', equal = '=')
 	runcmd (cmd)
 
 	############### sambamba
@@ -66,7 +63,7 @@ try:
 			params['tmpdir'] = tmpdir
 			params['o'] = bamfile
 			params['t'] = {{args.nthread}}
-			cmd = '{{args.sambamba}} sort %s "%s"' % (params2CmdArgs(params, noq = ['t']), infile)
+			cmd = '{{args.sambamba}} sort %s "%s"' % (cmdargs(params), infile)
 			runcmd (cmd)
 			if infile != {{in.infile | quote}}:
 				remove (infile)
@@ -104,7 +101,7 @@ try:
 			sortby = ''
 			if {{args.sortby | quote}} == 'queryname':
 				sortby = '-n'
-			bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam" 
+			bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam"
 			cmd = '{{args.samtools}} sort -m %sM %s -o "%s" -T "%s" -@ {{args.nthread}} -O bam "%s"' % (mem, sortby, bamfile, tmpdir, infile)
 			runcmd (cmd)
 			if infile != {{in.infile | quote}}:
@@ -134,7 +131,7 @@ try:
 	else:
 		bamfile = outfile
 		if doSort:
-			bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam" 
+			bamfile = "{{job.outdir}}/{{in.infile | fn}}.sorted.bam"
 			cmd = '{{args.picard}} SortSam %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s" SO={{args.sortby}}' % (mem, tmpdir, tmpdir, infile, bamfile)
 			runcmd (cmd)
 			if infile != {{in.infile | quote}}:
@@ -162,8 +159,8 @@ try:
 
 	if not path.exists ({{out.idxfile | quote}}):
 		symlink (outfile, {{out.idxfile | quote}})
-		
-except Exception as ex:		
+
+except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise
 finally:

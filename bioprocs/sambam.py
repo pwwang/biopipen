@@ -2,8 +2,8 @@
 A set of processes to generate/process sam/bam files
 """
 from pyppl import Proc, Box
-from .utils import mem2, runcmd, buildref, checkref, polling, helpers, plot, dirnameFiles
-from . import params
+#from .utils import mem2, runcmd, buildref, checkref, polling, helpers, plot, dirnameFiles
+from . import params, bashimport, rimport
 
 """
 @name:
@@ -18,11 +18,11 @@ from . import params
 	- If args.index == False, it'll a link to outfile and should be never used
 @args:
 	`tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools)
-	`sambamba`         : The path of the sambamba. Default: sambamba 
-	`picard`           : The path of the picard. Default: picard 
-	`biobambam_bamsort`: The path of the biobambam's bamsort. Default: bamsort 
-	`samtools`         : The path of the samtools. Default: samtools 
-	`sort`             : Do sorting? Default: True 
+	`sambamba`         : The path of the sambamba. Default: sambamba
+	`picard`           : The path of the picard. Default: picard
+	`biobambam_bamsort`: The path of the biobambam's bamsort. Default: bamsort
+	`samtools`         : The path of the samtools. Default: samtools
+	`sort`             : Do sorting? Default: True
 	- If input is sam, tool is biobambam, this should be True
 	`index`            : Do indexing? Default: True
 	`markdup`          : Do duplicates marking? Default: False
@@ -60,9 +60,9 @@ pSam2Bam.args.nthread           = 1
 pSam2Bam.args.infmt             = ""
 pSam2Bam.args.params            = Box()
 pSam2Bam.args.mem               = params.mem16G.value
-pSam2Bam.envs.mem2              = mem2.py
-pSam2Bam.envs.runcmd            = runcmd.py
-pSam2Bam.envs.params2CmdArgs    = helpers.params2CmdArgs.py
+#pSam2Bam.envs.mem2              = mem2.py
+#pSam2Bam.envs.runcmd            = runcmd.py
+#pSam2Bam.envs.params2CmdArgs    = helpers.params2CmdArgs.py
 pSam2Bam.lang                   = params.python.value
 pSam2Bam.script                 = "file:scripts/sambam/pSam2Bam.py"
 
@@ -77,10 +77,10 @@ pSam2Bam.script                 = "file:scripts/sambam/pSam2Bam.py"
 	`outfile:file`: The output bam file
 @args:
 	`tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools|bamutil)
-	`sambamba`         : The path of sambamba. Default: sambamba 
-	`picard`           : The path of picard. Default: picard 
-	`biobambam_bamsort`: The path of biobambam's bamsort. Default: bamsort 
-	`samtools`         : The path of samtools. Default: samtools 
+	`sambamba`         : The path of sambamba. Default: sambamba
+	`picard`           : The path of picard. Default: picard
+	`biobambam_bamsort`: The path of biobambam's bamsort. Default: bamsort
+	`samtools`         : The path of samtools. Default: samtools
 	`bamutil`          : The path of bamutil. Default: bam
 	`rmdup`            : Do duplicates removing? Default: False
 	- Samtools will anyway remove the duplicates
@@ -112,9 +112,9 @@ pBamMarkdup.args.tmpdir            = params.tmpdir.value
 pBamMarkdup.args.nthread           = 1
 pBamMarkdup.args.params            = Box()
 pBamMarkdup.args.mem               = params.mem16G.value
-pBamMarkdup.envs.mem2              = mem2.py
-pBamMarkdup.envs.runcmd            = runcmd.py
-pBamMarkdup.envs.params2CmdArgs    = helpers.params2CmdArgs.py
+#pBamMarkdup.envs.mem2              = mem2.py
+#pBamMarkdup.envs.runcmd            = runcmd.py
+#pBamMarkdup.envs.params2CmdArgs    = helpers.params2CmdArgs.py
 pBamMarkdup.lang                   = params.python.value
 pBamMarkdup.script                 = "file:scripts/sambam/pBamMarkdup.py"
 
@@ -125,8 +125,6 @@ pBamMarkdup.script                 = "file:scripts/sambam/pBamMarkdup.py"
 	Recalibrate a bam file
 @input:
 	`infile:file`: The bam file
-@brings:
-	`infile`: {{in.infile | bn}}.bai, the index file of bam
 @output:
 	`outfile:file`: The output bam file
 @args:
@@ -151,7 +149,6 @@ pBamMarkdup.script                 = "file:scripts/sambam/pBamMarkdup.py"
 """
 pBamRecal                                   = Proc(desc = 'Recalibrate a bam file.')
 pBamRecal.input                             = "infile:file"
-pBamRecal.brings                            = {"infile": "{{in.infile | bn}}.bai"}
 pBamRecal.output                            = "outfile:file:{{in.infile | fn}}.bam, idxfile:file:{{in.infile | fn}}.bam.bai"
 pBamRecal.args.tool                         = "bamutil"
 pBamRecal.args.gatk                         = params.gatk.value
@@ -167,11 +164,11 @@ pBamRecal.args.ref                          = params.ref.value
 pBamRecal.args.tmpdir                       = params.tmpdir.value
 pBamRecal.args.knownSites                   = ""
 pBamRecal.args.mem                          = params.mem32G.value
-pBamRecal.envs.mem2                         = mem2.py
-pBamRecal.envs.runcmd                       = runcmd.py
-pBamRecal.envs.buildrefIndex                = buildref.index.py
-pBamRecal.envs.params2CmdArgs               = helpers.params2CmdArgs.py
-pBamRecal.beforeCmd                         = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
+#pBamRecal.envs.mem2                         = mem2.py
+#pBamRecal.envs.runcmd                       = runcmd.py
+#pBamRecal.envs.buildrefIndex                = buildref.index.py
+#pBamRecal.envs.params2CmdArgs               = helpers.params2CmdArgs.py
+#pBamRecal.beforeCmd                         = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
 pBamRecal.lang                              = params.python.value
 pBamRecal.script                            = "file:scripts/sambam/pBamRecal.py"
 
@@ -210,9 +207,9 @@ pBamReadGroup.args.rg             = Box({'id': '', 'pl': 'Illumina', 'pu': 'unit
 pBamReadGroup.args.params         = Box()
 pBamReadGroup.args.tmpdir         = params.tmpdir.value
 pBamReadGroup.args.mem            = params.mem4G.value
-pBamReadGroup.envs.mem2           = mem2.py
-pBamReadGroup.envs.runcmd         = runcmd.py
-pBamReadGroup.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBamReadGroup.envs.mem2           = mem2.py
+#pBamReadGroup.envs.runcmd         = runcmd.py
+#pBamReadGroup.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBamReadGroup.lang                = params.python.value
 pBamReadGroup.script              = "file:scripts/sambam/pBamReadGroup.py"
 
@@ -244,10 +241,10 @@ pBamReorder.args.params         = Box()
 pBamReorder.args.tmpdir         = params.tmpdir.value
 pBamReorder.args.mem            = params.mem4G.value
 pBamReorder.args.ref            = params.ref.value
-pBamReorder.envs.mem2           = mem2.py
-pBamReorder.envs.runcmd         = runcmd.py
-pBamReorder.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBamReorder.beforeCmd           = checkref.fa.bash + buildref.dict.bash
+#pBamReorder.envs.mem2           = mem2.py
+#pBamReorder.envs.runcmd         = runcmd.py
+#pBamReorder.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBamReorder.beforeCmd           = checkref.fa.bash + buildref.dict.bash
 pBamReorder.lang                = params.python.value
 pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
 
@@ -278,7 +275,7 @@ pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
 """
 pBamMerge                     = Proc(desc = 'Merges multiple SAM and/or BAM sorted files into a single file.')
 pBamMerge.input               = "infiles:files"
-pBamMerge.output              = "outfile:file:{{in.infiles | fsDirname}}.bam"
+pBamMerge.output              = "outfile:file:{{in.infiles.0 | fn}}.etc.bam"
 pBamMerge.args.tool           = "picard"
 pBamMerge.args.picard         = params.picard.value
 pBamMerge.args.bamutil        = params.bamutil.value
@@ -288,10 +285,10 @@ pBamMerge.args.params         = Box()
 pBamMerge.args.tmpdir         = params.tmpdir.value
 pBamMerge.args.nthread        = 1
 pBamMerge.args.mem            = params.mem4G.value
-pBamMerge.envs.mem2           = mem2.py
-pBamMerge.envs.runcmd         = runcmd.py
-pBamMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBamMerge.envs.fsDirname      = dirnameFiles
+#pBamMerge.envs.mem2           = mem2.py
+#pBamMerge.envs.runcmd         = runcmd.py
+#pBamMerge.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBamMerge.envs.fsDirname      = dirnameFiles
 pBamMerge.lang                = params.python.value
 pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 
@@ -303,8 +300,6 @@ pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 	Call germline (snps and indels) from a call-ready bam file.
 @input:
 	`infile:file`: The input bam file
-@brings:
-	`infile`: `{{in.infile | bn}}.bai`, the bam index file
 @output:
 	`outfile:file`: The vcf file containing the mutations
 @args:
@@ -332,31 +327,42 @@ pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 	[platypus](http://www.well.ox.ac.uk/platypus)
 	[strelka@2.7.1+](https://github.com/Illumina/strelka)
 """
-pBam2Gmut                     = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
-pBam2Gmut.input               = "infile:file"
-pBam2Gmut.brings              = {"infile": "{{in.infile | bn}}.bai"}
-pBam2Gmut.output              = "outfile:file:{{in.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pBam2Gmut.lang                = params.python.value
-pBam2Gmut.args.tool           = "strelka"
-pBam2Gmut.args.gatk           = params.gatk.value
-pBam2Gmut.args.vardict        = params.vardict.value
-pBam2Gmut.args.snvsniffer     = params.snvsniffer.value
-pBam2Gmut.args.samtools       = params.samtools.value # required by SNVSniffer to generate a bam header file
-pBam2Gmut.args.platypus       = params.platypus.value
-pBam2Gmut.args.picard         = params.picard.value
-pBam2Gmut.args.strelka        = params.strelka_germ.value
-pBam2Gmut.args.mem            = params.mem24G.value
-pBam2Gmut.args.ref            = params.ref.value
-pBam2Gmut.args.tmpdir         = params.tmpdir.value
-pBam2Gmut.args.configParams   = Box() # only for strelka
-pBam2Gmut.args.params         = Box()
-pBam2Gmut.args.gz             = False
-pBam2Gmut.args.nthread        = 1 # for gatk and platypus
-pBam2Gmut.envs.mem2           = mem2.py
-pBam2Gmut.envs.runcmd         = runcmd.py
-pBam2Gmut.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBam2Gmut.beforeCmd           = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
-pBam2Gmut.script              = "file:scripts/sambam/pBam2Gmut.py"
+pBam2Gmut                      = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
+pBam2Gmut.input                = "infile:file"
+pBam2Gmut.output               = "outfile:file:{{in.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2Gmut.lang                 = params.python.value
+pBam2Gmut.args.tool            = "strelka"
+pBam2Gmut.args.gatk            = params.gatk.value
+pBam2Gmut.args.vardict         = params.vardict.value
+pBam2Gmut.args.snvsniffer      = params.snvsniffer.value
+pBam2Gmut.args.samtools        = params.samtools.value # required by SNVSniffer to generate a bam header file
+pBam2Gmut.args.platypus        = params.platypus.value
+pBam2Gmut.args.picard          = params.picard.value
+pBam2Gmut.args.strelka         = params.strelka_germ.value
+pBam2Gmut.args.mem             = params.mem24G.value
+pBam2Gmut.args.ref             = params.ref.value
+pBam2Gmut.args.tmpdir          = params.tmpdir.value
+pBam2Gmut.args.configParams    = Box() # only for strelka
+pBam2Gmut.args.params          = Box()
+pBam2Gmut.args.gz              = False
+pBam2Gmut.args.nthread         = 1 # for gatk and platypus
+#pBam2Gmut.envs.mem2           = mem2.py
+#pBam2Gmut.envs.runcmd         = runcmd.py
+#pBam2Gmut.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBam2Gmut.beforeCmd           = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
+pBam2Gmut.envs.bashimport      = bashimport
+pBam2Gmut.beforeCmd            = """
+{{bashimport}} reference.bash __init__.bash
+if ! reffai_check '{{args.ref}}.fai'; then
+	logger "Reference not indexed, indexing it ..."
+	reffai_do '{{args.ref}}' '{{args.ref}}.fai' '{{args.samtools}}'
+fi
+if ! refdict_check '{{args.ref | prefix}}.dict'; then
+	logger "Reference not dicted, dicting it ..."
+	refdict_do '{{args.ref}}' '{{args.ref | prefix}}.dict' '{{args.picard}}'
+fi
+"""
+pBam2Gmut.script               = "file:scripts/sambam/pBam2Gmut.py"
 
 """
 @name:
@@ -396,8 +402,7 @@ pBam2Gmut.script              = "file:scripts/sambam/pBam2Gmut.py"
 """
 pBamPair2Smut                     = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
 pBamPair2Smut.input               = "tumor:file, normal:file"
-pBamPair2Smut.brings              = {"tumor": "{{in.tumor | bn}}.bai", "normal": "{{in.normal | bn}}.bai"}
-pBamPair2Smut.output              = "outfile:file:{{in.tumor | fn | fn}}-{{in.normal | fn | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBamPair2Smut.output              = "outfile:file:{{in.tumor | fn}}-{{in.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
 pBamPair2Smut.args.tool           = 'strelka'
 pBamPair2Smut.args.gatk           = params.gatk.value # required for strelka
 pBamPair2Smut.args.somaticsniper  = params.somaticsniper.value
@@ -414,10 +419,22 @@ pBamPair2Smut.args.ref            = params.ref.value
 pBamPair2Smut.args.gz             = False
 pBamPair2Smut.args.nthread        = 1
 pBamPair2Smut.args.tmpdir         = params.tmpdir.value
-pBamPair2Smut.envs.mem2           = mem2.py
-pBamPair2Smut.envs.runcmd         = runcmd.py
-pBamPair2Smut.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBamPair2Smut.beforeCmd           = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
+pBamPair2Smut.envs.bashimport      = bashimport
+#pBamPair2Smut.envs.mem2           = mem2.py
+#pBamPair2Smut.envs.runcmd         = runcmd.py
+#pBamPair2Smut.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBamPair2Smut.beforeCmd           = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
+pBamPair2Smut.beforeCmd            = """
+{{bashimport}} reference.bash __init__.bash
+if ! reffai_check '{{args.ref}}.fai'; then
+	logger "Reference not indexed, indexing it ..."
+	reffai_do '{{args.ref}}' '{{args.ref}}.fai' '{{args.samtools}}'
+fi
+if ! refdict_check '{{args.ref | prefix}}.dict'; then
+	logger "Reference not dicted, dicting it ..."
+	refdict_do '{{args.ref}}' '{{args.ref | prefix}}.dict' '{{args.picard}}'
+fi
+"""
 pBamPair2Smut.lang                = params.python.value
 pBamPair2Smut.script              = "file:scripts/sambam/pBamPair2Smut.py"
 
@@ -428,8 +445,6 @@ pBamPair2Smut.script              = "file:scripts/sambam/pBamPair2Smut.py"
 	Detect copy number variation from bam files.
 @input:
 	`input:file`: The bam file
-@brings:
-	`infile`: "{{in.infile | bn}}.bai" The bam index file
 @output:
 	`outfile:file`: The output vcf file
 	`outdir`: The output directory containing other result files
@@ -471,9 +486,8 @@ pBamPair2Smut.script              = "file:scripts/sambam/pBamPair2Smut.py"
 """
 pBam2Cnv                             = Proc(desc = 'Detect copy number variation from bam files.')
 pBam2Cnv.input                       = 'infile:file'
-pBam2Cnv.brings                      = {"infile": "{{in.infile | bn}}.bai"}
 pBam2Cnv.output                      = [
-	"outfile:file:{{in.infile | fn}}.{{args.tool}}/{{in.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}", 
+	"outfile:file:{{in.infile | fn}}.{{args.tool}}/{{in.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}",
 	"outdir:dir:{{in.infile | fn}}.{{args.tool}}"
 ]
 pBam2Cnv.args.gz                     = False
@@ -507,10 +521,10 @@ pBam2Cnv.args.wandyType              = 1  # wandy 1:hg19 solid cell/blood, 2:hg1
 pBam2Cnv.args.params                 = Box()
 pBam2Cnv.args.mem                    = params.mem24G.value # for wandy
 pBam2Cnv.args.nthread                = 1 # for cnvkit
-pBam2Cnv.envs.pollingNon1st          = polling.non1st.py
-pBam2Cnv.envs.pollingAll             = polling.all.py
-pBam2Cnv.envs.runcmd                 = runcmd.py
-pBam2Cnv.envs.params2CmdArgs         = helpers.params2CmdArgs.py
+#pBam2Cnv.envs.pollingNon1st          = polling.non1st.py
+#pBam2Cnv.envs.pollingAll             = polling.all.py
+#pBam2Cnv.envs.runcmd                 = runcmd.py
+#pBam2Cnv.envs.params2CmdArgs         = helpers.params2CmdArgs.py
 pBam2Cnv.beforeCmd                   = """
 if [[ ! -e "{{args.ref}}" && "{{args.tool}}" == "cnvkit" ]]; then
 	echo "No reference file specified." 1>&2
@@ -557,13 +571,14 @@ pBamStats.args.cap            = 500
 pBamStats.args.cutoff         = 0
 pBamStats.args.nfeats         = 40
 pBamStats.args.feature        = 'wgs'
-pBamStats.envs.runcmd         = runcmd.r
-pBamStats.envs.mem2           = mem2.r
-pBamStats.envs.pollingLast    = polling.last.r
-pBamStats.envs.params2CmdArgs = helpers.params2CmdArgs.r
-pBamStats.envs.cbindfill      = helpers.cbindfill.r
-pBamStats.envs.plotHist       = plot.hist.r
-pBamStats.envs.plotBoxplot    = plot.boxplot.r
+#pBamStats.envs.runcmd         = runcmd.r
+#pBamStats.envs.mem2           = mem2.r
+#pBamStats.envs.pollingLast    = polling.last.r
+#pBamStats.envs.params2CmdArgs = helpers.params2CmdArgs.r
+#pBamStats.envs.cbindfill      = helpers.cbindfill.r
+#pBamStats.envs.plotHist       = plot.hist.r
+#pBamStats.envs.plotBoxplot    = plot.boxplot.r
+pBamStats.envs.rimport        = rimport
 pBamStats.beforeCmd           = """
 if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
 	echo "Plots can only be done with proc.forks >= 2." 1>&2
@@ -579,7 +594,7 @@ pBamStats.script = "file:scripts/sambam/pBamStats.r"
 @description:
 	Convert sam/bam files to pair-end fastq files.
 @input:
-	`infile:file`: The sam/bam file. 
+	`infile:file`: The sam/bam file.
 		- Sam files only available for biobambam, picard
 @output:
 	`fqfile1:file`: The 1st match of paired reads
@@ -603,8 +618,8 @@ pBamStats.script = "file:scripts/sambam/pBamStats.r"
 pBam2Fastq        = Proc(desc = 'Convert bam files to pair-end fastq files.')
 pBam2Fastq.input  = "infile:file"
 pBam2Fastq.output = [
-	"fqfile1:file:{{ in.infile | fn | fn | fn }}_1.fastq{% if args.gz %}.gz{% endif %}", 
-	"fqfile2:file:{{ in.infile | fn | fn | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
+	"fqfile1:file:{{ in.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
+	"fqfile2:file:{{ in.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
 ]
 pBam2Fastq.args.tool           = 'biobambam'
 pBam2Fastq.args.biobambam      = params.biobambam_bamtofastq.value
@@ -615,9 +630,9 @@ pBam2Fastq.args.mem            = params.mem8G.value # only for picard
 pBam2Fastq.args.gz             = False
 pBam2Fastq.args.params         = Box()
 pBam2Fastq.args.tmpdir         = params.tmpdir.value
-pBam2Fastq.envs.runcmd         = runcmd.py
-pBam2Fastq.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBam2Fastq.envs.mem2           = mem2.py
+#pBam2Fastq.envs.runcmd         = runcmd.py
+#pBam2Fastq.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBam2Fastq.envs.mem2           = mem2.py
 pBam2Fastq.lang                = params.python.value
 pBam2Fastq.script              = "file:./scripts/sambam/pBam2Fastq.py"
 
@@ -627,7 +642,7 @@ pBam2Fastq.script              = "file:./scripts/sambam/pBam2Fastq.py"
 @description:
 	Convert sam/bam files to single-end fastq files.
 @input:
-	`infile:file`: The sam/bam file. 
+	`infile:file`: The sam/bam file.
 		- Sam files only available for biobambam, picard
 @output:
 	`fqfile:file`: The fastq file
@@ -649,7 +664,7 @@ pBam2Fastq.script              = "file:./scripts/sambam/pBam2Fastq.py"
 """
 pBam2FastqSE                     = Proc(desc = 'Convert bam files to single-end fastq files.')
 pBam2FastqSE.input               = "infile:file"
-pBam2FastqSE.output              = "fqfile:file:{{in.infile | fn | fn | fn }}.fq{% if args.gz %}.gz{% endif %}"
+pBam2FastqSE.output              = "fqfile:file:{{in.infile | fn }}.fq{% if args.gz %}.gz{% endif %}"
 pBam2FastqSE.args.tool           = 'biobambam'
 pBam2FastqSE.args.biobambam      = params.biobambam_bamtofastq.value
 pBam2FastqSE.args.bedtools       = params.bedtools.value
@@ -659,9 +674,9 @@ pBam2FastqSE.args.mem            = params.mem8G.value # only for picard
 pBam2FastqSE.args.gz             = False
 pBam2FastqSE.args.params         = Box()
 pBam2FastqSE.args.tmpdir         = params.tmpdir.value
-pBam2FastqSE.envs.runcmd         = runcmd.py
-pBam2FastqSE.envs.mem2           = mem2.py
-pBam2FastqSE.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBam2FastqSE.envs.runcmd         = runcmd.py
+#pBam2FastqSE.envs.mem2           = mem2.py
+#pBam2FastqSE.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pBam2FastqSE.lang                = params.python.value
 pBam2FastqSE.script              = "file:scripts/sambam/pBam2FastqSE.py"
 
@@ -689,9 +704,8 @@ pBam2Counts.args.tool           = 'htseq'
 pBam2Counts.args.htseq          = params.htseq_count.value
 pBam2Counts.args.params         = Box()
 pBam2Counts.args.refgene        = params.refgene.value
-pBam2Counts.envs.runcmd         = runcmd.py
-pBam2Counts.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pBam2Counts.beforeCmd           = checkref.gene.bash
+#pBam2Counts.envs.runcmd         = runcmd.py
+#pBam2Counts.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pBam2Counts.beforeCmd           = checkref.gene.bash
 pBam2Counts.lang                = params.python.value
 pBam2Counts.script              = "file:scripts/sambam/pBam2Counts.py"
-

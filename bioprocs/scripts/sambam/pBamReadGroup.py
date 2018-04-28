@@ -2,6 +2,8 @@ import re
 from os import makedirs, path
 from shutil import rmtree
 from sys import stderr
+from pyppl import Box
+from bioprocs.utils import cmdargs, runcmd, mem2
 
 # detemine default read group
 rg = {{ args.rg }}
@@ -11,11 +13,6 @@ if not rg['ID']:
 	rg['ID'] = g.group(1) if g else "{{out.outfile | fn}}.L{{job.index}}"
 if not rg['SM']:
 	rg['SM'] = "{{out.outfile | fn}}"
-
-
-{{ runcmd }}
-{{ mem2 }}
-{{ params2CmdArgs }}
 
 tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
@@ -33,7 +30,7 @@ try:
 	for k,v in rg.items():
 		params['RG' + k] = v
 
-	runcmd ('{{args.picard}} AddOrReplaceReadGroups %s %s' % (mem, params2CmdArgs(params, dash='', equal='=')))
+	runcmd ('{{args.picard}} AddOrReplaceReadGroups %s %s' % (mem, cmdargs(params, dash='', equal='=')))
 
 	############## bamutil
 	{% elif args.tool | lambda x: x == 'bamutil' %}
@@ -41,10 +38,10 @@ try:
 	params['in'] = {{in.infile | quote}}
 	params['out'] = {{out.outfile | quote}}
 
-	runcmd ('{{args.bamutil}} polishBam %s' % params2CmdArgs(params, equal = ' '))
+	runcmd ('{{args.bamutil}} polishBam %s' % cmdargs(params, equal = ' '))
 
 	{% endif %}
-except Exception as ex:		
+except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise
 finally:

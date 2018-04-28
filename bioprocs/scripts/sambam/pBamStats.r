@@ -1,6 +1,4 @@
-{{mem2}}
-{{params2CmdArgs}}
-{{cbindfill}}
+{{rimport}}('__init__.r', 'poll.r')
 
 params = {{args.params | Rlist}}
 params$i = {{in.infile | quote}}
@@ -9,15 +7,18 @@ params$o = {{out.outfile | quote}}
 params$f = {{args.feature | quote}}
 {% endif %}
 
-cmd = paste('{{args.bamstats}}', mem2({{args.mem | quote}}, 'java'), params2CmdArgs(params), sep = ' ')
+cmd = paste('{{args.bamstats}}', mem2({{args.mem | quote}}, 'java'), cmdargs(params), sep = ' ')
+poll = Poll({{proc.workdir | quote}}, {{proc.size}}, {{job.index}})
 
 {% if args.plot %}
-{{plotHist}}
-{{plotBoxplot}}
-{{pollingLast}}
-pollingLast ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "bamstats.done")
+{{rimport}}('plot.r')
 
-{% if job.index, proc.size | lambda x, y: x == y - 1 %}
+{% if job.index | lambda x: x == 0 %}
+runcmd(cmd)
+{% endif %}
+poll$non1st(cmd)
+
+{% if job.index | lambda x: x == 0 %}
 ##### start plotting
 
 bsfiles = Sys.glob("{{proc.workdir}}/*/output/*/*.stat.txt")
@@ -29,11 +30,11 @@ rownames(means) = rnames
 colnames(means) = c("Average coverage")
 for (i in 1:length(bsfiles)) {
 	bsfile = bsfiles[i]
-	if (file.info(bsfile)$size == 0) { 
-		cat(paste0('pyppl.log.warning: No content in file ', bsfile, '\n'), file = stderr())
-		next 
+	if (file.info(bsfile)$size == 0) {
+		logger ('No content in file:', bsfile)
+		next
 	}
-	write (paste("Reading", bsfile, "...", sep=" "), stderr())
+	logger ("Reading", bsfile, "...")
 	sample = rnames[i]
 	stat   = read.table (bsfile, sep="", header=T, check.names=F, row.names=1)
 	#stat   = stat[chrs2, ]
@@ -52,18 +53,16 @@ for (i in 1:length(bsfiles)) {
 }
 chrs = chrs[order(rowMeans(chrs), decreasing = T),,drop=F][1:min({{args.nfeats}}, nrow(chrs)),,drop=F]
 
-write ("Plotting average coverages ...", stderr())
+logger("Plotting average coverages ...")
 write.table (means, "{{out.outdir}}/avgCoverage.txt", quote=F, sep="\t")
 plotHist (means, "{{out.outdir}}/avgCoverage.png", ggs = {{args.histplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
 # plot chromosomes
-write ("Plotting feature coverages ...", stderr())
+logger ("Plotting feature coverages ...")
 plotBoxplot(t(chrs), "{{out.outdir}}/featureCoverage.png", ggs = {{args.boxplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
-{% endif %}
+{% endif %} # end if job.index
 
 {% else %}
-{{runcmd}}
 runcmd (cmd)
-{% endif %}
-
+{% endif %} # end if args.plot

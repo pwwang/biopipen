@@ -1,13 +1,11 @@
 
 from os import makedirs, path
 from shutil import rmtree
+from pyppl import Box
+from bioprocs.utils import cmdargs, runcmd, mem2
 
-tmpdir    = path.join ({{ args.tmpdir | quote}}, "{{proc.id}}.{{in.infiles | fsDirname}}.{{job.index}}")
+tmpdir    = path.join ({{ args.tmpdir | quote}}, "{{proc.id}}.{{in.infiles.0 | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
-	
-{{ runcmd }}
-{{ mem2 }}
-{{ params2CmdArgs }}
 
 params = {{args.params}}
 try:
@@ -26,7 +24,7 @@ try:
 	params['O']       = {{out.outfile | quote}}
 	params['AS']      = 'true'
 
-	cmd = '{{args.picard}} MergeSamFiles %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, params2CmdArgs(params, dash = '', equal = '='))
+	cmd = '{{args.picard}} MergeSamFiles %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params, dash = '', equal = '='))
 	runcmd (cmd)
 
 	############# bamutil
@@ -36,9 +34,9 @@ try:
 		params['i' + ' ' * i] = infile
 	params['o'] = {{out.outfile | quote}}
 
-	cmd = '{{args.bamutil}} mergeBam %s' % params2CmdArgs(params)
+	cmd = '{{args.bamutil}} mergeBam %s' % cmdargs(params)
 	runcmd (cmd)
-	
+
 	############# samtools
 	{% elif args.tool | lambda x: x == 'samtools' %}
 	inlist = path.join({{job.outdir | quote}}, 'bamlist.txt')
@@ -48,17 +46,17 @@ try:
 	params['O'] = 'bam'
 	params['b'] = inlist
 
-	cmd = '{{args.samtools}} merge %s {{out.outfile | quote}}' % params2CmdArgs(params)
+	cmd = '{{args.samtools}} merge %s {{out.outfile | quote}}' % cmdargs(params)
 	runcmd (cmd)
 
 	############# sambamba
 	{% elif args.tool | lambda x: x == 'sambamba' %}
 	params['t'] = {{args.nthread}}
-	cmd = '{{args.sambamba}} merge %s {{out.outfile | quote}} {{ in.infiles | asquote }}' % params2CmdArgs(params)
+	cmd = '{{args.sambamba}} merge %s {{out.outfile | quote}} {{ in.infiles | asquote }}' % cmdargs(params)
 	runcmd (cmd)
 
 	{% endif %}
-except Exception as ex:		
+except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise
 finally:

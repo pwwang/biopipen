@@ -1,8 +1,6 @@
-from sys import stderr
+from bioprocs.utils import logger, runcmd, cmdargs
+from pyppl import Box
 
-	
-{{runcmd}}
-{{params2CmdArgs}}
 params = {{args.params}}
 
 qcdir = {{in.qcdir | quote}}
@@ -10,7 +8,7 @@ try:
 	{% if args.tool | lambda x: x == 'multiqc' %}
 	params['o'] = {{out.outdir | quote}}
 	params['p'] = True
-	cmd = '{{args.multiqc}} "{{in.qcdir}}" %s' % params2CmdArgs(params)
+	cmd = '{{args.multiqc}} "{{in.qcdir}}" %s' % cmdargs(params)
 	runcmd(cmd)
 
 	{% else %}
@@ -18,5 +16,5 @@ try:
 
 	{% endif %}
 except Exception as ex:
-	stderr.write ("Job failed: %s" % str(ex))
+	logger.error("Job failed: %s" % str(ex))
 	raise

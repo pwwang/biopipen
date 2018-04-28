@@ -1,18 +1,25 @@
-from collections import OrderedDict
+from pyppl import Box
+from bioprocs.utils import cmdargs, runcmd
+from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
-{{params2CmdArgs}}
-{{runcmd}}
-{{txtFilter}}
-{{txtTransform}}
-
-params = OrderedDict({{args.params}})
+params = {{args.params}}
 params['i'] = {{args.idxfile | quote}}
 params['o'] = {{out.outdir | quote}}
 params['t'] = {{args.nthread}}
 
-cmd = '{{args.kallisto}} quant %s "{{in.fqfile1}}" "{{in.fqfile2}}"' % (params2CmdArgs(params))
+cmd = '{{args.kallisto}} quant %s "{{in.fqfile1}}" "{{in.fqfile2}}"' % (cmdargs(params))
 runcmd (cmd)
 
-retfile = "{{out.outdir}}/abundance.tsv"
-txtFilter(retfile, "{{out.outfile}}.dec", cols=[0,3], header=True)
-txtTransform("{{out.outfile}}.dec", "{{out.outfile}}", transform = lambda parts: [parts[0].split('::')[0], str(int(float(parts[1])))], header=True)
+imfile  = "{{out.outdir}}/abundance.tsv"
+outfile = {{out.outfile | quote}}
+reader  = TsvReader(imfile, ftype = 'head')
+writer  = TsvWriter(outfile)
+writer.meta.add('target_id', 'est_counts')
+writer.writeHead()
+for r in reader:
+    r.target_id  = r.target_id.split('::')[0]
+    try:
+        r.est_counts = int(round(float(r.est_counts)))
+    except TypeError:
+        r.est_counts = 0
+    writer.write(r)

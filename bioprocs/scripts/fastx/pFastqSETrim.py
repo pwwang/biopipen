@@ -1,9 +1,8 @@
 from sys import stderr
 from shutil import move
 
-{{runcmd}}
-{{mem2}}
-{{params2CmdArgs}}
+from pyppl import Box
+from bioprocs.utils import runcmd, mem2, cmdargs
 
 params = {{args.params}}
 try:
@@ -16,7 +15,7 @@ try:
 		ad.write ({{args.adapter | quote}} + "\n")
 
 	params['threads'] = {{args.nthread}}
-	cmd    = '{{args.trimmomatic}} %s SE %s "{{in.fq}}" "{{out.outfq}}" ILLUMINACLIP:%s:2:30:10 LEADING:{{args.cut5}} TRAILING:{{args.cut3}} SLIDINGWINDOW:4:{{args.minq}} MINLEN:%s' % (mem, params2CmdArgs(params, dash = '-', equal = ' ', noq = ['threads']), adfile, minlen)
+	cmd    = '{{args.trimmomatic}} %s SE %s "{{in.fq}}" "{{out.outfq}}" ILLUMINACLIP:%s:2:30:10 LEADING:{{args.cut5}} TRAILING:{{args.cut3}} SLIDINGWINDOW:4:{{args.minq}} MINLEN:%s' % (mem, cmdargs(params, dash = '-', equal = ' '), adfile, minlen)
 	runcmd (cmd)
 
 	{% elif args.tool | lambda x: x=='cutadapt' %}
@@ -26,7 +25,7 @@ try:
 	params['m'] = {{args.minlen}}
 	params['q'] = "{{args.minq}},{{args.minq}}"
 	params['o'] = {{out.outfq | quote}}
-	cmd = '{{args.cutadapt}} %s "{{in.fq}}"' % params2CmdArgs(params, dash = '-', equal = ' ', noq = ['-u', '-m'])
+	cmd = '{{args.cutadapt}} %s "{{in.fq}}"' % cmdargs(params, dash = '-', equal = ' ')
 	runcmd (cmd)
 
 	{% elif args.tool | lambda x: x=='skewer' %}
@@ -37,14 +36,14 @@ try:
 	params['l'] = {{args.minlen}}
 	params['z'] = {{args.gz}}
 	params['o'] = "{{job.outdir}}/tmp"
-	cmd = '{{args.skewer}} %s "{{in.fq}}"' % params2CmdArgs(params, dash = '-', equal = ' ', noq = ['m', 't', 'x', 'Q', 'l'])
+	cmd = '{{args.skewer}} %s "{{in.fq}}"' % cmdargs(params, dash = '-', equal = ' ')
 	runcmd (cmd)
 	outfq = "{{job.outdir}}/tmp-trimmed.fastq"
 	{% if args.gz %}
 	outfq += ".gz"
 	{% endif %}
 	move (outfq, "{{out.outfq}}")
-			
+
 	{% else %}
 	raise Exception ('Tool {{args.tool}} not supported')
 	{% endif %}

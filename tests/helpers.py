@@ -1,4 +1,4 @@
-import unittest, tempfile, shutil, re, mimetypes, sys
+import unittest, tempfile, shutil, re, mimetypes, sys, testly
 from glob import glob
 from os import makedirs
 from hashlib import md5
@@ -11,7 +11,7 @@ from os import path, listdir
 from contextlib import contextmanager
 
 filedir = None
-config  = {'log': {'level': 'basic', 'lvldiff': ["+P.ARGS", "-DEBUG"]}}
+config  = {'log': {'file': None, 'level': 'basic', 'lvldiff': ["+P.ARGS", "-DEBUG"]}}
 
 def _getFiledir():
 	global filedir
@@ -58,7 +58,7 @@ def procOK(proc, name, test, order = True, comment = None):
 			efile = path.join(exptfile, item)
 			if not path.isfile(pfile): continue
 			fileOK(pfile, efile, test, order, comment)
-			
+
 def procOKIn(proc, msg, test):
 	fileOKIn(proc.channel.get(), msg, test)
 
@@ -93,7 +93,7 @@ def utilTest(input, script, name, tplenvs, test, args = None):
 	pTest.script  = 'file:' + script
 	PyPPL(config).start(pTest).run()
 	procOK(pTest, name, test)
-	
+
 ######
 
 @contextmanager
@@ -114,97 +114,7 @@ def md5sum(fn):
 		ret.update(f.read())
 	return ret.hexdigest()
 
-def testingOrder (_, x, y):
-	if not re.search(r'_\d+$', x):
-		x += '_0'
-	if not re.search(r'_\d+$', y):
-		y += '_0'
-	return -1 if x<y else 1 if x>y else 0
-	
-unittest.TestLoader.sortTestMethodsUsing = testingOrder
-class DataProviderSupport(type):
-	def __new__(meta, classname, bases, classDict):
-		# method for creating our test methods
-		def create_test_method(testFunc, args):
-			return lambda self: testFunc(self, *args)
-
-		def create_setup_method(stfunc):
-			def stFunc(self):
-				if not re.search(r'_\d+$', self._testMethodName):
-					stfunc(self)
-			return stFunc
-			
-		def create_teardown_method(tdfunc):			
-			def tdFunc(self):
-				call = True
-				if re.search(r'_\d+$', self._testMethodName):
-					base, _, idx = self._testMethodName.rpartition('_')
-					idx = int(idx)
-					for key in classDict.keys():
-						if not key.startswith(base + '_'): continue
-						_, _, idx2 = key.rpartition('_')
-						if int(idx2) > idx:
-							call = False
-							break
-				else:
-					for key in classDict.keys():
-						if key.startswith(self._testMethodName + '_'): 
-							call = False
-							break
-				if call: tdfunc(self)
-			return tdFunc
-
-		parentDir = path.join(tempfile.gettempdir(), 'bioprocs_unittest', classname)
-		tfilesDir = path.join(path.dirname(path.dirname(__file__)), 'testfiles', classname[4].lower() + classname[5:])
-		indir     = path.join(tfilesDir, 'input')
-		outdir    = path.join(tfilesDir, 'expect')
-		if path.isdir(parentDir):
-			shutil.rmtree(parentDir)
-		# look for data provider functions
-		
-		for attrName in list(classDict.keys()):
-
-			attr = classDict[attrName]
-			if attrName == 'setUp':
-				classDict['setUp'] = create_setup_method(attr)
-				continue
-			if attrName == 'tearDown':
-				classDict['tearDown'] = create_teardown_method(attr)
-				continue
-
-			if not attrName.startswith("dataProvider_"):
-				continue
-
-			# find out the corresponding test method
-			testName = attrName[13:]
-			testFunc = classDict[testName]
-			testdir  = path.join(parentDir, testName)
-			if not path.isdir(testdir):
-				makedirs(testdir)
-
-			# the test method is no longer needed
-			#del classDict[testName]
-			# in case if there is no data provided
-			classDict[testName] = lambda self: None
-
-			# generate test method variants based on
-			# data from the data porovider function
-			lenargs = len(inspect.getargspec(attr).args)
-			data    = attr(Box(classDict), testdir, indir, outdir) if lenargs == 4 else \
-					  attr(Box(classDict), testdir, indir) if lenargs == 3 else \
-					  attr(Box(classDict), testdir) if lenargs == 2 else \
-					  attr(Box(classDict)) if lenargs == 1 else \
-					  attr()
-			if data:
-				for i, arg in enumerate(data):
-					key = testName if i == 0 else testName + '_' + str(i)
-					classDict[key] = create_test_method(testFunc, arg)
-
-		# create the type
-		return type.__new__(meta, classname, bases, classDict)
-
-
-class TestCase(with_metaclass(DataProviderSupport, unittest.TestCase)):
+class TestCase(testly.TestCase):
 
 	def assertItemEqual(self, first, second, msg = None):
 		first          = [repr(x) for x in first]
@@ -229,8 +139,8 @@ class TestCase(with_metaclass(DataProviderSupport, unittest.TestCase)):
 					self.assertSequenceEqual(v1, v2)
 				except AssertionError:
 					self.assertEqual(v1, v2)
-				
-				
+
+
 
 	def assertDictNotIn(self, first, second, msg = 'all k-v pairs in 1st element are in the second.'):
 		assert isinstance(first, dict)
@@ -244,22 +154,41 @@ class TestCase(with_metaclass(DataProviderSupport, unittest.TestCase)):
 				ret = True
 		if not ret:
 			self.fail(msg)
-	
+
 	def assertFileEqual(self, first, second, msg = None):
-		t1, _ = mimetypes.guess_type(first)
-		t2, _ = mimetypes.guess_type(second)
-		if t1 != t2:
-			self.fail(msg = msg or 'First file is "%s", but second is "%s"' % (t1, t2))
-		if t1 and t1.startswith('text/'):
-			with open(first) as f1, open(second) as f2:
-				first  = f1.read().splitlines()
-				second = f2.read().splitlines()
-			self.assertListEqual(first, second, msg)
-		else:
-			md5sum1 = md5sum(first)
-			md5sum2 = md5sum(second)
-			self.assertEqual(md5sum(first), md5sum(second), msg or 'Md5sums of two testing files are different:\n- %s %s\n- %s %s' % (md5sum1, first, md5sum2, second))
-	
+		import icdiff
+		import filecmp
+		import sys
+		if not filecmp.cmp(first, second, shallow=False):
+			maxdiff = self.maxDiff or 0
+			origargv = [arg for arg in sys.argv]
+			sys.argv[1:] = ['-L', bam1, '-L', bam2, '-U', '1', '--head', str(int(self.maxDiff))]
+			options = icdiff.get_options()[0]
+			sys.argv = origargv
+			icdiff.diff(first, second, options)
+			msg = msg or ''
+			self.fail('%s\nSet self.maxDiff = None to see all diff.' % msg)
+
+	def assertFileCountEqual(self, first, second, sort = 'sort', msg = None):
+		tmpdir = tempfile.gettempdir()
+		firstsorted  = path.join(tmpdir, path.splitext(first)[0] + '.sorted')
+		secondsorted = path.join(tmpdir, path.splitext(second)[0] + '.sorted')
+		Popen([sort, 'sort', '-o', firstsorted, first]).wait()
+		Popen([sort, 'sort', '-o', secondsorted, second]).wait()
+		import icdiff
+		import filecmp
+		import sys
+		if not filecmp.cmp(firstsorted, secondsorted, shallow=False):
+			maxdiff = self.maxDiff or 0
+			origargv = [arg for arg in sys.argv]
+			sys.argv[1:] = ['-L', first, '-L', second, '-U', '1', '--head', str(int(self.maxDiff))]
+			options = icdiff.get_options()[0]
+			sys.argv = origargv
+			icdiff.diff(firstsorted, secondsorted, options)
+			msg = msg or ''
+			self.fail('%s\nSet self.maxDiff = None to see all diff.' % msg)
+
+
 	def assertDirEqual(self, first, second, msg = None):
 		if not path.isdir(first):
 			self.fail('The first file is not a directory.')
@@ -290,8 +219,51 @@ class TestCase(with_metaclass(DataProviderSupport, unittest.TestCase)):
 	def assertInFile(self, s, f):
 		sf = readFile(f, str)
 		self.assertIn(s, sf)
-	
-	def index(self):
-		from builtins import str as text
-		_, _, x = self.id().rpartition('_')
-		return '0' if not text(x).isnumeric() else text(x)
+
+	def assertBamEqual(self, bam1, bam2, samtools = 'samtools', msg = None):
+		tmpdir = tempfile.gettempdir()
+		sam1   = path.join(tmpdir, path.splitext(bam1)[0] + '.sam')
+		sam2   = path.join(tmpdir, path.splitext(bam2)[0] + '.sam')
+		Popen([samtools, 'view', '-h', '-o', sam1, bam1]).wait()
+		Popen([samtools, 'view', '-h', '-o', sam2, bam2]).wait()
+		import icdiff
+		import filecmp
+		import sys
+		if not filecmp.cmp(sam1, sam2, shallow=False):
+			maxdiff = self.maxDiff or 0
+			origargv = [arg for arg in sys.argv]
+			sys.argv[1:] = ['-L', bam1, '-L', bam2, '-U', '1', '--head', str(int(self.maxDiff))]
+			options = icdiff.get_options()[0]
+			sys.argv = origargv
+			icdiff.diff(sam1, sam2, options)
+			msg = msg or ''
+			self.fail('%s\nSet self.maxDiff = None to see all diff.' % msg)
+
+	def assertBamCountEqual(self, bam1, bam2, samtools = 'samtools', msg = None):
+		tmpdir = tempfile.gettempdir()
+		sam1   = path.join(tmpdir, path.splitext(bam1)[0] + '.sam')
+		sam2   = path.join(tmpdir, path.splitext(bam2)[0] + '.sam')
+		Popen([samtools, 'sort', '-n', '-o', sam1, bam1]).wait()
+		Popen([samtools, 'sort', '-n', '-o', sam2, bam2]).wait()
+		import icdiff
+		import filecmp
+		import sys
+		if not filecmp.cmp(sam1, sam2, shallow=False):
+			maxdiff = self.maxDiff or 0
+			origargv = [arg for arg in sys.argv]
+			sys.argv[1:] = ['-L', bam1, '-L', bam2, '-U', '1', '--head', str(int(self.maxDiff))]
+			options = icdiff.get_options()[0]
+			sys.argv = origargv
+			icdiff.diff(sam1, sam2, options)
+			msg = msg or ''
+			self.fail('%s\nSet self.maxDiff = None to see all diff.' % msg)
+
+def testdirs(classname):
+	testdir   = path.join(tempfile.gettempdir(), 'bioprocs_unittest', classname)
+	if path.exists(testdir):
+		shutil.rmtree(testdir)
+	makedirs(testdir)
+	parentdir = path.join(path.dirname(path.dirname(__file__)), 'testfiles', classname[4].lower() + classname[5:])
+	indir     = path.join(parentdir, 'input')
+	outdir    = path.join(parentdir, 'expect')
+	return testdir, indir, outdir

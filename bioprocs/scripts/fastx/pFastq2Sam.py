@@ -3,130 +3,200 @@ from os import path, symlink
 from sys import stdout, stderr
 from time import sleep
 from shutil import move
-from collections import OrderedDict
+from pyppl import Box
+from bioprocs.utils import runcmd, cmdargs, reference, logger
+from bioprocs.utils.poll import Poll
 
-{{ runcmd }}
-{{ buildrefIndex }}
-{{ params2CmdArgs }}
-		
+# variables
+infile1  = {{in.fq1 | quote}}
+infile2  = {{in.fq2 | quote}}
+outfile  = {{out.outfile | quote}}
+outfmt   = {{args.outfmt | quote}}
+outdir   = {{job.outdir | quote}}
+ref      = {{args.ref | quote}}
+refgene  = {{args.refgene | quote}}
+ref2     = path.join(outdir, path.basename(ref))
+workdir  = {{proc.workdir | quote}}
+rg       = {{args.rg}}
+params   = {{args.params}}
+samtools = {{args.samtools | quote}}
+bowtie2  = {{args.bowtie2 | quote}}
+bwa      = {{args.bwa | quote}}
+ngm      = {{args.ngm | quote}}
+star     = {{args.star | quote}}
+nthread  = {{args.nthread}}
+joblen   = {{proc.size}}
+jobindex = {{job.index}}
+bowtie2_build  = {{args.bowtie2_build | quote}}
+poll     = Poll(workdir, joblen, jobindex)
+
 # determine whether the reference file is specified
-ref = "{{args.ref}}"
-if not ref or not path.exists (ref):
-	stderr.write ('No reference specified or found.')
-	exit (1)
+logger.info('Checking if reference exists: %s' % ref)
+reference.check(ref)
 
 # detemine default read group
-rg = {{ args.rg }}
 rg = {key.upper():val for key, val in rg.items()}
 if not rg['ID']:
-	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', "{{out.outfile | fn}}")
+	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', {{out.outfile | fn | quote}})
 	rg['ID'] = g.group(1) if g else "{{out.outfile | fn}}.L{{job.index}}"
 if not rg['SM']:
-	rg['SM'] = "{{out.outfile | fn}}"
-
-params = OrderedDict({{args.params}})
+	rg['SM'] = {{out.outfile | fn | quote}}
 
 def sam2bam(samfile, bamfile):
-	cmd = '{{args.samtools}} view -Sb "%s" > "%s"; rm -f "%s"' % (samfile, bamfile, samfile)
+	logger.info('Converting sam to bam: ')
+	logger.info('- %s' % samfile)
+	logger.info('- %s' % bamfile)
+	cmd = '%s view -Sb "%s" > "%s"; rm -f "%s"' % (samtools, samfile, bamfile, samfile)
 	runcmd(cmd)
+
+def checkAndBuildIndex(indexes, buildcmd, buildcmd2):
+	def todo(indexes, ref, buildcmd, ref2, buildcmd2):
+		logger.info('Checking if reference file is indexed.')
+		if not reference.checkIndex(indexes):
+			logger.info('No, trying to build index at the first job.')
+			reference.buildIndex(ref, buildcmd, ref2, buildcmd2)
+	poll.first(todo, indexes, ref, buildcmd, ref2, buildcmd2)
+	return ref2 if path.exists(ref2) else ref
 
 ############ bowtie2
 {% if args.tool | lambda x: x == 'bowtie2' %}
 # check reference index files
-ref = buildrefIndex (
-	{{job.index}}, 
-	ref, 
-	["{{ args.ref }}.1.bt2", "{{ args.ref }}.2.bt2", "{{ args.ref }}.3.bt2", "{{ args.ref }}.4.bt2", "{{ args.ref }}.rev.1.bt2", "{{ args.ref }}.rev.2.bt2"], 
-	'{{args.bowtie2_build}} --thread {{args.nthread}} "{{args.ref}}" "{{args.ref}}"',
-	"{{ proc.workdir }}",
-	'{{args.bowtie2_build}} --thread {{args.nthread}} "{{ job.outdir }}/{{ args.ref | bn }}" "{{ job.outdir }}/{{ args.ref | bn }}"')
+indexes = [
+	"%s.1.bt2" % ref,
+	"%s.2.bt2" % ref,
+	"%s.3.bt2" % ref,
+	"%s.4.bt2" % ref,
+	"%s.rev.1.bt2" % ref,
+	"%s.rev.2.bt2" % ref
+]
+buildcmdbase = "{bowtie2_build} --thread {nthread} '{ref}' '{ref}'"
+buildcmd     = buildcmdbase.format(
+	bowtie2_build = bowtie2_build, nthread = nthread, ref = ref
+)
+buildcmd2    = buildcmdbase.format(
+	bowtie2_build = bowtie2_build, nthread = nthread, ref = ref2
+)
+ref = checkAndBuildIndex(indexes, buildcmd, buildcmd2)
 
 # do mapping
-params['threads'] = {{args.nthread}}
-params['rg-id'] = rg['ID']
+params['threads'] = nthread
+params['rg-id']   = rg['ID']
 i = 0
 for k,v in rg.items():
 	if k == 'ID': continue
 	params['rg' + ' '*i] = k + ':' + v
 	i += 1
 params['x'] = ref
-params['1'] = {{in.fq1 | quote}}
-params['2'] = {{in.fq2 | quote}}
-params['S'] = {% if args.outfmt | lambda x: x == 'bam' %}{{out.outfile | prefix | lambda x: x + '.sam' | quote}}{% else %}{{out.outfile | quote}}{% endif %} 
+params['1'] = infile1
+params['2'] = infile2
+params['S'] = path.splitext(outfile)[0] + '.sam'
 
-cmd = '{{args.bowtie2}} %s' % params2CmdArgs(params, equal = ' ', noq = ['threads'])
+cmd = '{bowtie2} {args}'.format(bowtie2 = bowtie2, args = cmdargs(params, equal = ' '))
+logger.info('Do mapping ...')
 runcmd (cmd)
-
-{% if args.outfmt | lambda x: x == 'bam' %}
-sam2bam(params['S'], {{out.outfile | quote}})
-{% endif %}
+if outfmt == 'bam':	sam2bam(params['S'], outfile)
 
 ############ bwa
 {% elif args.tool | lambda x: x == 'bwa' %}
-# check reference index
-ref = buildrefIndex (
-	{{job.index}}, 
-	ref, 
-	["{{ args.ref }}.bwt", "{{ args.ref }}.amb", "{{ args.ref }}.ann", "{{ args.ref }}.pac", "{{ args.ref }}.sa"], 
-	'{{args.bwa}} index "{{args.ref}}"',
-	"{{ proc.workdir }}",
-	'{{args.bwa}} index "{{ job.outdir }}/{{ args.ref | bn }}"')
-		
-# do mapping
-params['t'] = {{args.nthread}}
-params['R'] = "@RG\\tID:%s\\t%s" % (rg['ID'], "\\t".join(k + ':' +v for k,v in rg.items() if k!='ID'))
-outfile     = {% if args.outfmt | lambda x: x == 'bam' %}{{out.outfile | prefix | lambda x: x + '.sam' | quote}}{% else %}{{out.outfile | quote}}{% endif %} 
-cmd = '{{args.bwa}} mem %s "%s" {{in.fq1 | quote}} {{in.fq2 | quote}} > "%s"' % (params2CmdArgs(params, noq=['t']), ref, outfile)
-runcmd (cmd)
+indexes = [
+	"%s.bwt" % ref,
+	"%s.amb" % ref,
+	"%s.ann" % ref,
+	"%s.pac" % ref,
+	"%s.sa" % ref,
+]
+buildcmdbase = "{bwa} index '{ref}'"
+buildcmd     = buildcmdbase.format(bwa = bwa, ref = ref)
+buildcmd2    = buildcmdbase.format(bwa = bwa, ref = ref2)
+ref = checkAndBuildIndex(indexes, buildcmd, buildcmd2)
 
-{% if args.outfmt | lambda x: x == 'bam' %}
-sam2bam(outfile, {{out.outfile | quote}})
-{% endif %}
+# do mapping
+params['t'] = nthread
+params['R'] = "@RG\\tID:%s\\t%s" % (rg['ID'], "\\t".join(k + ':' +v for k,v in rg.items() if k!='ID'))
+outfile2    = path.splitext(outfile)[0] + '.sam'
+cmd         = "{bwa} mem {args} '{ref}' '{infile1}' '{infile2}' > '{outfile}'".format(
+	bwa     = bwa,
+	args    = cmdargs(params),
+	ref     = ref,
+	infile1 = infile1,
+	infile2 = infile2,
+	outfile = outfile2
+)
+logger.info('Do mapping ...')
+runcmd (cmd)
+if outfmt == 'bam':	sam2bam(outfile2, outfile)
 
 {% elif args.tool | lambda x: x == 'ngm' %}
-# check reference index
-ref = buildrefIndex (
-	{{job.index}}, 
-	ref, 
-	["{{ args.ref }}-enc.2.ngm", "{{ args.ref }}-ht-13-2.3.ngm"], 
-	'{{args.ngm}} -r "{{args.ref}}" -t {{args.nthread}}',
-	"{{ proc.workdir }}",
-	'{{args.ngm}} -r "{{ job.outdir }}/{{ args.ref | bn }}" -t {{args.nthread}}')
-	
+indexes = [
+	"%s-enc.2.ngm" % ref,
+	"%s-ht-13-2.3.ngm" % ref
+]
+buildcmdbase = "{ngm} -r '{ref}' -t {nthread}"
+buildcmd     = buildcmdbase.format(ngm = ngm, ref = ref, nthread = nthread)
+buildcmd2    = buildcmdbase.format(ngm = ngm, ref = ref2, nthread = nthread)
+ref = checkAndBuildIndex(indexes, buildcmd, buildcmd2)
+
 # do mapping
-params['1'] = {{in.fq1 | quote}}
-params['2'] = {{in.fq2 | quote}}
+params['1'] = infile1
+params['2'] = infile2
 params['r'] = ref
-params['o'] = {{out.outfile | quote}}
+params['o'] = outfile
 params['b'] = {{ args.outfmt | lambda x: x=='bam' }}
 params.update({('rg-' + k.lower()):v for k,v in rg.items()})
-params['t'] = {{args.nthread}}
-cmd = '{{args.ngm}} %s' % (params2CmdArgs(params, equal = ' ', noq = ['t']))
+params['t'] = nthread
+cmd = '%s %s' % (ngm, cmdargs(params, equal = ' '))
+logger.info('Do mapping ...')
 runcmd (cmd)
 
 ############ star
 {% elif args.tool | lambda x: x=='star' %}
-# check reference index
-ref = buildrefIndex (
-	{{job.index}}, 
-	ref, 
-	map(lambda x: path.join("{{args.ref | prefix}}.star", x), ["chrLength.txt", "chrNameLength.txt", "chrName.txt", "chrStart.txt", "exonGeTrInfo.tab", "exonInfo.tab", "geneInfo.tab", "Genome", "genomeParameters.txt", "SA", "SAindex", "sjdbInfo.txt", "sjdbList.fromGTF.out.tab", "sjdbList.out.tab", "transcriptInfo.tab"]), 
-	'mkdir -p "{{args.ref | prefix}}.star"; {{args.star}} --runMode genomeGenerate --genomeDir "{{args.ref | prefix}}.star" --genomeFastaFiles "{{args.ref}}" --sjdbOverhang 100 --sjdbGTFfile "{{args.refgene}}" --runThreadN {{args.nthread}}',
-	"{{ proc.workdir }}",
-	'mkdir -p "{{job.outdir}}/{{args.ref | fn}}.star"; {{args.star}} --runMode genomeGenerate --genomeDir "{{job.outdir}}/{{args.ref | fn}}.star" --genomeFastaFiles "{{job.outdir}}/{{args.ref | bn}}" --sjdbOverhang 100 --sjdbGTFfile "{{args.refgene}}" --runThreadN {{args.nthread}}')
-refDir = "{{args.ref | prefix}}.star" if ref == "{{args.ref}}" else "{{job.outdir}}/{{args.ref | fn}}.star"
-rfcmd  = "zcat" if "{{in.fq1}}".endswith('.gz') else 'bzcat' if "{{in.fq1}}".endswith('.bz2') else 'cat'
+indexes = [path.join(path.splitext(ref)[0] + '.star', x) for x in [
+	"chrLength.txt",
+	"chrNameLength.txt",
+	"chrName.txt",
+	"chrStart.txt",
+	"exonGeTrInfo.tab",
+	"exonInfo.tab",
+	"geneInfo.tab",
+	"Genome",
+	"genomeParameters.txt",
+	"SA",
+	"SAindex",
+	"sjdbInfo.txt",
+	"sjdbList.fromGTF.out.tab",
+	"sjdbList.out.tab",
+	"transcriptInfo.tab"
+]]
+buildcmdbase = "mkdir -p '{stardir}'; {star} --runMode genomeGenerate --genomeDir '{stardir}' --genomeFastaFiles " \
+               + "'{ref}' --sjdbOverhang 100 --sjdbGTFfile '{refgene}' --runThreadN {nthread}"
+buildcmd = buildcmdbase.format(
+	stardir = path.splitext(ref)[0] + '.star',
+	star    = star,
+	ref     = ref,
+	refgene = refgene,
+	nthread = nthread
+)
+buildcmd2 = buildcmdbase.format(
+	stardir = path.splitext(ref2)[0] + '.star',
+	star    = star,
+	ref     = ref2,
+	refgene = refgene,
+	nthread = nthread
+)
+ref = checkAndBuildIndex(indexes, buildcmd, buildcmd2)
+refDir = path.splitext(ref)[0] + '.star'
+rfcmd  = "zcat" if infile1.endswith('.gz') else 'bzcat' if infile1.endswith('.bz2') else 'cat'
 
-params['genomeDir'] = refDir
-params['readFilesIn'] = '{{in.fq1 | quote}} {{in.fq2 | quote}}'
-params['readFilesCommand'] = rfcmd
+params['genomeDir']         = refDir
+params['readFilesIn']       = [infile1, infile2]
+params['readFilesCommand']  = rfcmd
 params['readNameSeparator'] = '.'
-params['outFileNamePrefix'] = "{{job.outdir}}/"
-params['outSAMtype'] = {{args.outfmt.upper() | quote}}
-cmd = '{{args.star}} %s' % params2CmdArgs(params, equal = ' ', noq = ['readFilesIn', 'readNameSeparator'])
+params['outFileNamePrefix'] = outdir + '/'
+params['outSAMtype']        = [outfmt.upper(), 'Unsorted']
+cmd                         = '%s %s' % (star, cmdargs(params, equal = ' '))
+logger.info('Do mapping ...')
 runcmd (cmd)
 
-outfile = "{{job.outdir}}/Aligned.out.{{args.outfmt}}"
-if path.exists(outfile):
-	move (outfile, "{{out.outfile}}")
+outfile2 = "{outdir}/Aligned.out.{outfmt}".format(outdir = outdir, outfmt = outfmt)
+if path.exists(outfile2): move(outfile2, outfile)
 {% endif %}

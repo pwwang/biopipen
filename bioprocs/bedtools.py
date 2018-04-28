@@ -28,8 +28,8 @@ pBedGetfasta.envs.refname        = lambda x: x + '.fai'
 pBedGetfasta.envs.bashimport     = bashimport
 #pBedGetfasta.beforeCmd           = checkref.fa.bash + buildref.fai.bash
 pBedGetfasta.beforeCmd           = '''
-{{bashimport}} 'reference.bash'
-if [[ $(reffai_check {{args.ref | refname | squote}}) -ne 0 ]]; then
+{{bashimport}} reference.bash
+if reffai_check {{args.ref | refname | squote}}; then
 	reffai_do {{args.ref | squote}} {{args.ref | refname | squote}} {{args.samtools | squote}}
 fi
 '''
@@ -60,7 +60,7 @@ pBedClosest.args.bedtools   = params.bedtools.value
 pBedClosest.args.params     = Box()
 pBedClosest.envs.bashimport = bashimport
 pBedClosest.script = '''
-{{bashimport}} 'helpers.bash'
+{{bashimport}} helpers.bash
 {{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfile | squote}} > {{out.outfile | squote}}
 '''
 
@@ -87,7 +87,7 @@ pBedClosest2.args.bedtools   = params.bedtools.value
 pBedClosest2.args.params     = Box()
 pBedClosest2.envs.bashimport = bashimport
 pBedClosest2.script = '''
-{{bashimport}} 'helpers.bash'
+{{bashimport}} helpers.bash
 {{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfiles | asquote}} > {{out.outfile | squote}}
 '''
 
@@ -189,7 +189,7 @@ pBedMakewindows.args.bedtools = params.bedtools.value
 pBedMakewindows.args.intype   = 'bed'
 pBedMakewindows.envs.bashimport = bashimport
 pBedMakewindows.script = '''
-{{bashimport}} 'helpers.bash'
+{{bashimport}} helpers.bash
 {{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{in.infile | squote}} > {{out.outfile | squote}}
 '''
 
@@ -387,7 +387,7 @@ pBedWindow.script = """
 	pBedGenomecov
 @description:
 	`bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.
-	
+
 	NOTE: only bam file input implemented here.
 @input:
 	`infile:file`: The bam file

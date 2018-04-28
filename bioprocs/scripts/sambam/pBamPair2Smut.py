@@ -1,21 +1,12 @@
 from os import path, makedirs
 from shutil import rmtree
 from sys import stderr
-
-if not path.exists ("{{bring.tumor[0]}}"):
-	stderr.write ("Input file '{{in._tumor}}' is not indexed.")
-	exit (1)
-if not path.exists ("{{bring.normal[0]}}"):
-	stderr.write ("Input file '{{in._normal}}' is not indexed.")
-	exit (1)
+from pyppl import Box
+from bioprocs.utils import cmdargs, runcmd, mem2
 
 if not path.exists ({{args.ref | quote}}):
 	stderr.write ("Reference file not specified")
 	exit (1)
-
-{{ runcmd }}
-{{ mem2 }}
-{{ params2CmdArgs }}
 
 tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.tumor | fn | fn}}.{{in.normal | fn | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
@@ -30,7 +21,7 @@ if gz:	outfile = outfile[:-3]
 try:
 	############## gatk
 	{% if args.tool | lambda x: x == 'gatk' %}
-	
+
 	intvfile = "{{job.outdir}}/interval.list"
 	cmd      = '{{args.samtools}} idxstats "{{in.tumor}}" | head -n -1 | cut -f1 > "%s"' % (intvfile)
 	runcmd (cmd)
@@ -44,7 +35,7 @@ try:
 	params['nct']      = {{args.nthread}}
 	params['L']        = intvfile
 
-	cmd = '{{args.gatk}} -T MuTect2 %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, params2CmdArgs(params, dash = '-', equal = ' '))
+	cmd = '{{args.gatk}} -T MuTect2 %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params, dash = '-', equal = ' '))
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
@@ -52,11 +43,11 @@ try:
 	{% elif args.tool | lambda x: x == 'somaticsniper' %}
 	params['f'] = ref
 	params['F'] = 'vcf'
-	
-	cmd = '{{args.somaticsniper}} %s "{{in.tumor}}" "{{in.normal}}" "%s"' % (params2CmdArgs(params), outfile)
+
+	cmd = '{{args.somaticsniper}} %s "{{in.tumor}}" "{{in.normal}}" "%s"' % (cmdargs(params), outfile)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
-	
+
 	############## snvsniffer
 	{% elif args.tool | lambda x: x == 'snvsniffer' %}
 	theader = "{{job.outdir}}/{{in.tumor | bn}}.header"
@@ -69,10 +60,10 @@ try:
 	params['g'] = ref
 	params['o'] = outfile
 
-	cmd = '{{args.snvsniffer}} somatic %s "%s" "%s" "{{in.tumor}}" "{{in.normal}}"' % (params2CmdArgs(params), theader, nheader)
+	cmd = '{{args.snvsniffer}} somatic %s "%s" "%s" "{{in.tumor}}" "{{in.normal}}"' % (cmdargs(params), theader, nheader)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
-	
+
 	############## strelka
 	{% elif args.tool | lambda x: x == 'strelka' %}
 	# config
@@ -83,14 +74,14 @@ try:
 	configParams['referenceFasta'] = ref
 	configParams['runDir']         = {{job.outdir | quote}}
 
-	cmd = '{{args.strelka}} %s' % params2CmdArgs(configParams)
+	cmd = '{{args.strelka}} %s' % cmdargs(configParams)
 	runcmd (cmd)
-	
+
 	# run
 	params['m'] = 'local'
 	params['g'] = mem2({{args.mem | quote}}, 'G')[:-1]
 	params['j'] = {{args.nthread}}
-	cmd = '{{job.outdir}}/runWorkflow.py %s' % params2CmdArgs(params)
+	cmd = '{{job.outdir}}/runWorkflow.py %s' % cmdargs(params)
 	runcmd (cmd)
 	# merge
 	mem = mem2 ({{args.mem | quote}}, 'java')
@@ -102,7 +93,7 @@ try:
 		'genotypeMergeOptions': 'UNIQUIFY'
 	}
 
-	cmd = '{{args.gatk}} -T CombineVariants %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, params2CmdArgs(mergeparams, dash = '-', equal = ' '))
+	cmd = '{{args.gatk}} -T CombineVariants %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(mergeparams, dash = '-', equal = ' '))
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
@@ -113,7 +104,7 @@ try:
 	params['D'] = {{in.tumor | quote}}
 	params['N'] = {{in.normal | quote}}
 	params['w'] = {{job.outdir | quote}}
-	cmd = '{{args.virmid}} %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, params2CmdArgs(params))
+	cmd = '{{args.virmid}} %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params))
 	runcmd (cmd)
 	runcmd ('mv "{{job.outdir}}/*.virmid.som.passed.vcf" "%s"' % outfile)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
@@ -123,8 +114,8 @@ try:
 	params['v'] = True
 	params['G'] = ref
 	params['b'] = "{{in.tumor}}|{{in.normal}}"
-	
-	cmd = '{{args.vardict}} %s > "%s"' % (params2CmdArgs(params), outfile)
+
+	cmd = '{{args.vardict}} %s > "%s"' % (cmdargs(params), outfile)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
