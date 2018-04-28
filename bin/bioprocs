@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+"""
+The main program entrance for bioprocs binaries.
+Usage:
+> bioprocs <subcommand> <options>
+"""
+
+# find subcommands
+import sys
+from glob import glob
+from os import path
+from subprocess import Popen
+
+def getDesc(file):
+	with open(file, 'r') as f:
+		for line in f:
+			if line.startswith('#!'): continue
+			if line.startswith('#'):
+				return line[1:].strip()
+	return '[ Function not described ]'
+
+def getSubcommands():
+	ret = {
+		path.basename(file):getDesc(file) for file in \
+		glob(path.realpath(path.join(path.dirname(__file__), 'commands', '*')))
+	}
+	ret['help'] = 'Print this help information.\nUse \'bioporocs help <command> to show help of the command.\''
+	return ret
+
+def help(commands, error = ''):
+	ret = '\n'
+	if error:
+		ret += 'Error: %s\n\n' % error
+	ret += 'Usage: bioprocs <command> [options ...]\n\n'
+	ret += 'Available commands:\n'
+	keylen = max(30, max([len(key) for key in commands.keys()]))
+	fmtstr = '  %-' + str(keylen) + 's%s\n'
+	for key in sorted(commands.keys()):
+		if key == 'help': continue
+		ret += fmtstr % (key, commands[key])
+	for i, line in enumerate(commands['help'].splitlines()):
+		if i == 0:
+			ret += fmtstr % ('help', line)
+		else:
+			ret += fmtstr % ('', line)
+	ret += '\n'
+	return ret
+
+if __name__ == '__main__':
+	commands = getSubcommands()
+
+	# parse arguments
+	command = None
+	if len(sys.argv) > 1:
+		command = sys.argv[1]
+
+	error = None
+	if (not command or command == 'help') and len(sys.argv) < 2:
+		error = ''
+
+	if not command in commands:
+		error = 'Command [%s] not found.' % command
+
+	if error is None:
+		cmdfile = path.realpath(path.join(path.dirname(__file__), 'commands', command))
+		cmds = [cmdfile] + sys.argv[2:]
+		Popen(cmds).wait()
+	else:
+		sys.stderr.write(help(commands, error))

@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+# Split a file by rows.
+from pyppl import PyPPL, Box
+from bioprocs import params
+from bioprocs.common import pSplitRows
+
+params.prefix('-')
+params.infile.required = True
+params.infile.desc     = 'The input file.'
+params.outdir.required = True
+params.outdir.desc     = 'The output direcotry.'
+params.skip            = 0
+params.skip.desc       = 'Skip first N lines of input file.'
+params.cnames          = False
+params.cnames.desc     = 'Whether the input file contains header and keep them in the split file.'
+params.n               = 8
+params.n.desc          = 'How many files the input file should split to?'
+params                 = params.parse().toDict()
+
+pSplitRows.input = [params.infile]
+pSplitRows.exdir = params.outdir
+pSplitRows.args.skip = params.skip
+pSplitRows.args.cnames = params.cnames
+pSplitRows.args.n = params.n
+
+config = Box(log = Box())
+config.log.file = None
+PyPPL(config).start(pSplitRows).run()

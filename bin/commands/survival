@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+# Do survival analysis.
+
+from pyppl import PyPPL, Box
+from bioprocs import params
+from bioprocs.stats import pSurvival
+
+params.prefix('-')
+params.infile.required = True
+params.infile.desc     = 'The input file (see bioprocs.stats.pSurvival).'
+params.outdir.required = True
+params.outdir.desc     = 'The output directory.'
+params.inunit          = 'days'
+params.inunit.desc     = 'The input unit of survival time. \nCould be days, months, weeks and years.'
+params.outunit         = 'days'
+params.outunit.desc    = 'The unit of survival time to be used during the analysis.'
+params.nthread         = 1
+params.nthread.desc    = 'Number of threads to use.'
+params.rnames          = False
+params.rnames.desc     = 'Whether the input file has row names.'
+params.combine         = False
+params.combine.desc    = 'Whether to combine all the variables in the same plot.'
+params                 = params.parse().toDict()
+
+pSurvival.input        = [params.infile]
+pSurvival.exdir        = params.outdir
+pSurvival.cclean       = True
+pSurvival.args.inunit  = params.inunit
+pSurvival.args.outunit = params.outunit
+pSurvival.args.nthread = params.nthread
+pSurvival.args.rnames  = params.rnames
+pSurvival.args.combine = params.combine
+
+PyPPL({'log': {'file': None}}).start(pSurvival).run()

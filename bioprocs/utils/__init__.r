@@ -24,3 +24,20 @@ rbindfill = function (x1, x2) {
 	return (y)
 }
 
+# avoid typos
+cbind.fill = cbindfill
+rbind.fill = rbindfill
+
+read.table.nodup = function(...) {
+	args = list(...)
+	if (!'row.names' %in% names(args) || is.null(args$row.names)) {
+		return(read.table(...))
+	} else {
+		args$row.names = NULL
+		mat = do.call(read.table, args)
+		rnames = make.unique(as.character(as.vector(mat[,1,drop = T])))
+		mat = mat[,-1,drop=F]
+		row.names(mat)  = rnames
+		return(mat)
+	}
+}

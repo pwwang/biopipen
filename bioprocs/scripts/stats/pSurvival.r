@@ -1,5 +1,6 @@
 library(survival)
 library(survminer)
+{{rimport}}('__init__.r')
 
 survivalOne = function(dat, var, vname) {
 	# remove NAs
@@ -14,7 +15,7 @@ survivalOne = function(dat, var, vname) {
 	fmula = as.formula(fmula)
 	sfit  = do.call(survfit, list(formula = fmula, data = dat))
 	diff  = pairwise_survdiff(fmula, data=dat)
-	
+
 	rns   = rownames(diff$p.value)
 	if (length(rns) == 0) {
 		pvals   = data.frame(var = vname, group1 = "", group2 = "", pval = 1, n1 = "", n2 = "")
@@ -28,9 +29,9 @@ survivalOne = function(dat, var, vname) {
 			for (j in 1:lencs) {
 				if (i < j) next
 				pvals = rbind(pvals, c(
-					var = vname, 
-					group1 = rns[i], 
-					group2 = cns[j], 
+					var = vname,
+					group1 = rns[i],
+					group2 = cns[j],
 					pval = formatC(diff$p.value[rns[i], cns[j]], format='e', digits = 2),
 					n1 = freqs[freqs[,1] == rns[i], "Freq"],
 					n2 = freqs[freqs[,1] == rns[j], "Freq"]
@@ -47,7 +48,7 @@ survivalOne = function(dat, var, vname) {
 }
 
 rnames = {% if args.rnames %}1{% else %}NULL{% endif %}
-df = read.table({{in.infile | quote}}, sep = "\t", header = T, row.names = rnames, check.names = F)
+df = read.table.nodup({{in.infile | quote}}, sep = "\t", header = T, row.names = rnames, check.names = F)
 
 if (nrow(df) == 0 && {{args.noerror | R}}) {
 	cat ('pyppl.log.warning: No survival data found.\n', file=stderr())
@@ -84,7 +85,7 @@ if (nrow(df) == 0 && {{args.noerror | R}}) {
 	if (fct != 1) {
 		df[,1] = df[,1]*fct
 	}
-	
+
 	survdat = df[, c(1,2), drop=F]
 	vars = cnames[3:length(cnames)]
 	if (length(vars) == 1 || {{args.nthread}} == 1) {
@@ -94,13 +95,13 @@ if (nrow(df) == 0 && {{args.noerror | R}}) {
 		}
 	} else {
 		library(doParallel)
-		cl <- makeCluster({{args.nthread}})  
+		cl <- makeCluster({{args.nthread}})
 		registerDoParallel(cl)
 
 		rets = foreach (i = 1:length(vars), .verbose = T, .combine = c, .export = "survivalOne", .packages = c('survival', 'survminer')) %dopar% {
 			survivalOne(cbind(survdat, df[, vars[i], drop=F]), vars[i], vnames[i])
 		}
-		stopCluster(cl) 
+		stopCluster(cl)
 	}
 
 	devpars    = {{args.devpars | Rlist}}
@@ -111,8 +112,8 @@ if (nrow(df) == 0 && {{args.noerror | R}}) {
 	devpars$height = maxdim * devpars$height
 	devpars$width  = maxdim * devpars$width
 
-	glbpval = file.path({{out.outdir | quote}}, 'global.pval.txt') 
-	outpval = file.path({{out.outdir | quote}}, 'survival.pval.txt') 
+	glbpval = file.path({{out.outdir | quote}}, 'global.pval.txt')
+	outpval = file.path({{out.outdir | quote}}, 'survival.pval.txt')
 	pvals   = NULL
 	glbpv   = matrix(, ncol=2, nrow = 0)
 	{% if args.combine %}

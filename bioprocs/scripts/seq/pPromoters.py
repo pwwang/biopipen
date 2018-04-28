@@ -1,5 +1,7 @@
 import sys, json
 
+from pyppl import Box
+
 from bioprocs.utils.tsvio import TsvWriter, TsvReader, TsvRecord
 from bioprocs.utils.gene import genenorm
 
@@ -11,7 +13,7 @@ poscol  = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
 
 # get the genes
 genes = genenorm(
-	infile, 
+	infile,
 	notfound = {{args.notfound | quote}},
 	frm      = {{args.frm | quote}},
 	to       = "symbol, genomic_pos_{{args.genome}}",
@@ -23,7 +25,7 @@ genes = genenorm(
 reader = TsvReader(infile, **inopts)
 writer = TsvWriter(outfile, ftype = 'bed')
 for gene, hit in genes.items():
-	
+
 	# TODO: log those genes not found.
 	if poscol not in hit: continue
 	if not hit[poscol]: continue
@@ -31,10 +33,10 @@ for gene, hit in genes.items():
 		pos      = json.loads(hit[poscol])
 	except Exception:
 		continue
-	if not pos: continue 
+	if not pos: continue
 	# TODO: have to figure out this (when a gene has isoforms)
 	if isinstance(pos, list): pos = pos[0]
-	
+
 	r        = TsvRecord()
 	r.CHR    = 'chr' + str(pos['chr'])
 	if pos['strand'] == 1:
@@ -47,7 +49,7 @@ for gene, hit in genes.items():
 		r.END    = pos['end'] + {{args.up}}
 		r.START  = pos['end'] - {{args.down}}
 		r.START  = {% if args.incbody %}min(r.START, pos['start']){% endif %}
-	
+
 	r.NAME   = hit['symbol']
 	r.SCORE  = '0'
 	writer.write(r)

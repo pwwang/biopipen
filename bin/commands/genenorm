@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Convert the gene names in a file.
 
 from pyppl import PyPPL, Channel
 from bioprocs import params
@@ -8,7 +9,7 @@ params.prefix('-')
 params.input.required = True
 params.input.desc     = 'The input file'
 params.notfound       = 'ignore'
-params.notfound.desc  = '''What if a symbol is not found. 
+params.notfound.desc  = '''What if a symbol is not found.
 - skip  : skip the record(don't write it to output file)
 - ignore: use the original name;
 - error : report error

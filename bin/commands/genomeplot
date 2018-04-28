@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Plot genomic elements.
 import json, sys
 from pyppl import PyPPL, utils
 from bioprocs import params
@@ -118,6 +119,3 @@ else:
 	pGenomePlot.input   = lambda *chs: [([ch.get() for ch in chs], params.region, ';'.join(params.highlights))]
 
 PyPPL().start(trackProcs).run()
-
-
-

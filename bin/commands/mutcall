@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# Call mutations from sequencing data.
 from os import path
 from pyppl import PyPPL, Channel
 from bioprocs import params
@@ -42,7 +42,7 @@ pBamDir         = pFiles2Dir
 pBamDir.runner  = 'local'
 if params.intype == 'ebam':
 	aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
-	
+
 	pBamDir.depends = aEBam2Bam
 	pBamDir.input   = lambda ch: [ch.flatten(0)]
 
@@ -75,8 +75,8 @@ elif 'soma' in params.muts:
 		(path.join(ch1.get(), c1.get() + '.bam'), path.join(ch1.get(), c2.get() + '.bam')) for ch in \
 		[Channel.fromFile(params.saminfo, header=True)] for p in \
 		set(ch.Patient.flatten()) for c1, c2 in \
-		[ 
-			(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['TUMOR', 'DISEASE', 'AFTER']])), 
+		[
+			(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['TUMOR', 'DISEASE', 'AFTER']])),
 			Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']])))
 		]
 	]

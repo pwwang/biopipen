@@ -1,3 +1,4 @@
+from pyppl import Box
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 files   = {{in.infiles}}
@@ -53,13 +54,13 @@ def getReaders(fs, baseidx):
 			reader.autoMeta()
 		readers.append(reader)
 	return readers
-	
+
 outopts = {
 	'ftype':         '',
-	'head'         : False, 
-	'headPrefix'   : '', 
-	'headDelimit'  : '\t', 
-	'headTransform': None, 
+	'head'         : False,
+	'headPrefix'   : '',
+	'headDelimit'  : '\t',
+	'headTransform': None,
 	'delimit'      : '\t'
 }
 outopts.update({{args.outopts}})
@@ -69,7 +70,7 @@ metaUpdated = False
 for i in xrange(0, len(files), maxopen):
 	fs = files[i:i + maxopen]
 	readers = getReaders(fs, i)
-	
+
 	# empty file has no meta
 	reader = [reader for reader in readers if reader.meta and not (len(reader.meta) == 1 and reader.meta.items() == [('', None)])]
 	if not reader: continue
@@ -79,7 +80,7 @@ for i in xrange(0, len(files), maxopen):
 		writer.meta.update(reader.meta)
 		if outopts['head']:
 			writer.writeHead(prefix = outopts['headPrefix'], delimit = outopts['headDelimit'], transform = outopts['headTransform'])
-		
+
 	for reader in readers:
 		for r in reader:
 			writer.write(r)

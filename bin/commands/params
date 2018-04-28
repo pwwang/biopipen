@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-
+# Show params item in bioprocs.
 from sys import stdout, argv
 from bioprocs import params
 
 if len(argv) < 2:
 	stdout.write('USAGE: params <pname1>[ pname2 pname3 ...]\n')
-	
+
 names = argv[1:]
 
 stdout.write('-' * 100 + '\n')

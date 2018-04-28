@@ -1,4 +1,5 @@
 from os import path
+from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 params = {}

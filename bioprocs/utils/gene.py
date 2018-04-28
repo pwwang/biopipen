@@ -30,22 +30,22 @@ class RecordNotFound(Exception):
 	pass
 
 def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'hg19', inopts = None, outopts = None, genecol = None, cachedir = gettempdir()):
-	
+
 	_inopts = Box(skip = 0, comment = '#', delimit = '\t')
 	_inopts.update(inopts or {})
 	inopts  = _inopts
-	
+
 	_outopts = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
-	_outopts.update(outopts)
+	_outopts.update(outopts or {})
 	outopts  = _outopts
-	
-	reader   = TsvReader(infile, **inopts)	
+
+	reader   = TsvReader(infile, **inopts)
 	if not reader.meta: reader.autoMeta()
 	genecol  = genecol or reader.meta.keys()[0]
-	
+
 	genes    = list(set([r[genecol] for r in reader]))
 	reader.rewind()
-	
+
 	dbfile   = path.join(cachedir, 'geneinfo.db')
 	cache    = Cache(dbfile, 'geneinfo', {
 		'_id': 'int primary key',
@@ -61,7 +61,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		'taxid': 'int',
 		'uniprot': 'text'
 	}, '_id')
-	
+
 	wherelike = lambda x: ['|{}'.format(x), '|{}|%'.format(x), '%|{}'.format(x), '%|{}|%'.format(x)]
 	foundfunc = lambda v, data: re.search(r'\|%s($|\|)' % v, data)
 	factoryin = lambda v: ''.join(['|' + x for x in v]) if v and isinstance(v, list) else v if v else ''
@@ -85,7 +85,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		'genomic_pos'     : [lambda x: json.dumps(x) if isinstance(x, (list, dict)) else str(x)] * 2,
 		'genomic_pos_hg19': [lambda x: json.dumps(x) if isinstance(x, (list, dict)) else str(x)] * 2,
 	}
-	
+
 	# query from cache
 	tocols   = alwaysList(to)
 	frmcols  = alwaysList(frm)
@@ -105,7 +105,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	# query from api
 	allrest = list(allrest)
 	mgret = MyGeneInfo().querymany(allrest, scopes = frmcols, fields = columns, species = SPECIES[genome])
-	
+
 	# get all result for each query
 	genetmp = {}
 	for gene in mgret:
@@ -115,12 +115,12 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 	genemap = {}
 	for query, gene in genetmp.items():
-		
+
 		# re-score the items if query is entirely matched
 		for g in gene:
 			# not all result returned
 			if not all([x in g for x in tocols]): continue
-			
+
 			if any([g[x] == query for x in tocols]):
 				g['_score'] += 10000
 			elif any([str(g[x]).upper() == query.upper() for x in tocols]):
@@ -128,8 +128,8 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 			elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x]) for x in tocols]]):
 				g['_score'] += 1000
 		gene = sorted(
-			[g for g in gene if '_score' in g], 
-			key = lambda x: x['_score'], 
+			[g for g in gene if '_score' in g],
+			key = lambda x: x['_score'],
 			reverse = True
 		)
 		if not gene: continue
@@ -144,7 +144,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 				genemap[query][x] = cachefactory[x][1](gene[x])
 			else:
 				genemap[query][x] = gene[x]
-	del genetmp	
+	del genetmp
 
 	# cache genemap
 	cachedata = {}
@@ -154,11 +154,11 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 			if not k in cachedata:
 				cachedata[k] = []
 			cachedata[k].append(v)
-			
+
 	if cachedata:
 		cache.save(cachedata, cachefactory)
 		del cachedata
-	
+
 	# restore cached data
 	for gene in genes:
 		# gene not cached
@@ -176,7 +176,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 			if datarow: break
 		if not datarow: continue
 		genemap[gene] = datarow
-	
+
 	if outfile:
 		writer   = TsvWriter(outfile, delimit = outopts['delimit'])
 		writer.meta.update(reader.meta)

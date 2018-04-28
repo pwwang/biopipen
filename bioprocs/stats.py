@@ -119,6 +119,7 @@ pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
 pSurvival.args.plotParams = Box({'risk.table': True, 'conf.int': True})
 pSurvival.args.gridParams = Box() # ncol, nrow
 pSurvival.args.pval       = True
+pSurvival.envs.rimport    = rimport
 pSurvival.lang            = params.Rscript.value
 pSurvival.script          = "file:scripts/stats/pSurvival.r"
 
@@ -147,7 +148,7 @@ pSurvival.script          = "file:scripts/stats/pSurvival.r"
 		```
 		# Contingency table rows: Mut, Non
 		# Contingency table cols: Disease, Healthy
-		# 
+		#
 		#         | S1 | S2 | ... | Sn |
 		# --------+----+----+-----+----+
 		# Disease | 1  | 0  | ... | 1  |
@@ -190,7 +191,7 @@ pChiSquare.script = "file:scripts/stats/pChiSquare.r"
 		```
 		# Contingency table rows: Mut, Non
 		# Contingency table cols: Disease, Healthy
-		# 
+		#
 		#         | S1 | S2 | ... | Sn |
 		# --------+----+----+-----+----+
 		# Disease | 1  | 0  | ... | 1  |
@@ -217,7 +218,7 @@ pFisherExact.script = "file:scripts/stats/pFisherExact.r"
 	Do pair-wise fisher exact test.
 	Commonly used for co-occurrence/mutual-exclusivity analysis.
 	P-value indicates if the pairs are significantly co-occurred or mutually exclusive.
-	Co-occurrence: Odds ratio > 1 
+	Co-occurrence: Odds ratio > 1
 	Mutual-exclusivity: Odds ratio < 1
 @input:
 	`infile:file`: The input file.
@@ -229,14 +230,14 @@ pFisherExact.script = "file:scripts/stats/pFisherExact.r"
 		```
 		#
 		# A+	B+	4
-		# A-	B-	175 
+		# A-	B-	175
 		# A+	B-	12
 		# A-	B+	1
 		#
 		```
 		- `raw` (default): The raw values:
 		```
-		# 
+		#
 		#         | S1 | S2 | ... | Sn |
 		# --------+----+----+-----+----+
 		# A       | 1  | 0  | ... | 1  |
