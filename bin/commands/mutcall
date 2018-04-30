@@ -51,7 +51,8 @@ aEBam2Bam.pFastq2Sam.args.tool    = 'bowtie2'
 pBamDir         = pFiles2Dir
 pBamDir.runner  = 'local'
 if params.intype == 'ebam':
-	aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
+	#aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
+	aEBam2Bam.input = [[path.join(params.indir, sample) for sample in samples]]
 	if params.compress:
 		aEBam2Bam.args.gz = True
 		aEBam2Bam.pFastq2Sam.args.outfmt = 'bam'
@@ -63,6 +64,7 @@ if params.intype == 'ebam':
 
 elif params.intype == 'fastq':
 	# *.fq, *.fq.gz *.fastq, *.fastq.gz
+	# TODO: fix the input files with samples
 	aFastq2Bam.input = [Channel.fromPairs(path.join(params.indir, '*.f*q*'))]
 
 	pBamDir.depends = aEBam2Bam
@@ -70,6 +72,7 @@ elif params.intype == 'fastq':
 
 	starts.append(aFastq2Bam)
 else:
+	# TODO: fix the input files with samples
 	pBamDir.input = Channel.fromPattern(path.join(params.indir, '*.bam'))
 	starts.append(pBamDir)
 
