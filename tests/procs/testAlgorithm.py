@@ -1,30 +1,32 @@
-import helpers, unittest
+import helpers, unittest, testly
 from os import path
 from pyppl import PyPPL
 from helpers import getfile, procOK, config
 from bioprocs.algorithm import pRWR, pAR
 
-class testAlgorithm (helpers.TestCase):
-	
-	def dataProvider_testRWR(self, testdir, indir, outdir):
-		wfile = path.join(indir, 'test.rwr.w.txt')
-		efile = path.join(indir, 'test.rwr.e.txt')
-		outfile = path.join(outdir, 'test.rwr.txt')
+class TestAlgorithm (helpers.TestCase):
+
+	testdir, indir, outdir = helpers.testdirs('TestAlgorithm')
+
+	def dataProvider_testRWR(self):
+		wfile = path.join(self.indir, 'test.rwr.w.txt')
+		efile = path.join(self.indir, 'test.rwr.e.txt')
+		outfile = path.join(self.outdir, 'test.rwr.txt')
 		yield 't1', wfile, efile, outfile
-	
+
 	def testRWR (self, tag, wfile, efile, outfile):
 		self.maxDiff = None
 		pRWRTest = pRWR.copy(tag = tag)
 		pRWRTest.input = wfile, efile
 		PyPPL(config).start(pRWRTest).run()
 		self.assertFileEqual(pRWRTest.channel.get(), outfile)
-		
-	def dataProvider_testAR(self, testdir, indir, outdir):
-		dfile  = path.join(indir, 'ar.d.txt.gz')
-		ptfile = path.join(indir, 'ar.pt.txt.gz')
-		yfile  = path.join(indir, 'ar.y.txt.gz')
-		wfile  = path.join(outdir, 'ar.w.txt')
-		args   = {'parallel': True, 'svdP': 25}
+
+	def dataProvider_testAR(self):
+		dfile  = path.join(self.indir, 'ar.d.txt.gz')
+		ptfile = path.join(self.indir, 'ar.pt.txt.gz')
+		yfile  = path.join(self.indir, 'ar.y.txt.gz')
+		wfile  = path.join(self.outdir, 'ar.w.txt')
+		args   = {'parallel': True, 'svdP': 25, 'seed': 8525}
 		yield 't1', dfile, ptfile, yfile, args, wfile
 		args1  = {'parallel': True, 'svdP': 25, 'method': 'admm'}
 		#ADMM take too long
@@ -36,7 +38,6 @@ class testAlgorithm (helpers.TestCase):
 		pARTest.args.update(args)
 		PyPPL(config).start(pARTest).run()
 		self.assertFileEqual(pARTest.channel.get(), wfile)
-	
+
 if __name__ == '__main__':
-	unittest.main()
-		
+	testly.main()

@@ -1,19 +1,20 @@
+from pyppl import Box
 from os import path
 
 def dsnparse(dsn):
-	ret = lambda: None
+	ret = Box()
 	scheme, args = dsn.split(':', 1)
-	setattr(ret, 'scheme', scheme)
+	ret.scheme = scheme
 	args = args.split(';')
 	for arg in args:
 		arg = arg.strip()
 		if not arg: continue
 		argname, argval = arg.split('=')
-		setattr(ret, argname, argval)
+		ret[argname] = argval
 	if not hasattr(ret, 'after'):
-		setattr(ret, 'after', '')
+		ret.after = ''
 	return ret
-	
+
 def schemaparse(schemafile, type = 'schema', scheme = 'sqlite', delimit = '\t'):
 	name, fields = None, []
 	name = path.basename(schemafile).split('.')[0]

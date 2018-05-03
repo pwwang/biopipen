@@ -162,7 +162,7 @@ class TestCase(testly.TestCase):
 		if not filecmp.cmp(first, second, shallow=False):
 			maxdiff = self.maxDiff or 0
 			origargv = [arg for arg in sys.argv]
-			sys.argv[1:] = ['-L', bam1, '-L', bam2, '-U', '1', '--head', str(int(self.maxDiff))]
+			sys.argv[1:] = ['-L', first, '-L', second, '-U', '1', '--head', str(int(maxdiff))]
 			options = icdiff.get_options()[0]
 			sys.argv = origargv
 			icdiff.diff(first, second, options)
@@ -173,15 +173,15 @@ class TestCase(testly.TestCase):
 		tmpdir = tempfile.gettempdir()
 		firstsorted  = path.join(tmpdir, path.splitext(first)[0] + '.sorted')
 		secondsorted = path.join(tmpdir, path.splitext(second)[0] + '.sorted')
-		Popen([sort, 'sort', '-o', firstsorted, first]).wait()
-		Popen([sort, 'sort', '-o', secondsorted, second]).wait()
+		Popen([sort, '-o', firstsorted, first]).wait()
+		Popen([sort, '-o', secondsorted, second]).wait()
 		import icdiff
 		import filecmp
 		import sys
 		if not filecmp.cmp(firstsorted, secondsorted, shallow=False):
 			maxdiff = self.maxDiff or 0
 			origargv = [arg for arg in sys.argv]
-			sys.argv[1:] = ['-L', first, '-L', second, '-U', '1', '--head', str(int(self.maxDiff))]
+			sys.argv[1:] = ['-L', first, '-L', second, '-U', '1', '--head', str(int(maxdiff))]
 			options = icdiff.get_options()[0]
 			sys.argv = origargv
 			icdiff.diff(firstsorted, secondsorted, options)

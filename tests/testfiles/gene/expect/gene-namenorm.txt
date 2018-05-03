@@ -1,5 +1,3 @@
-to be skipped
-# skip again
 1	NSUN3
 2	POLRMT
 3	NLRX1

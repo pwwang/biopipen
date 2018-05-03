@@ -1,18 +1,16 @@
+from pyppl import Box
 from os import path, symlink
-{{ genenorm | norepeats }}
+from bioprocs.utils.gene import genenorm
 
-_, cachefile = genenorm(
-	{{in.infile | quote}}, 
-	outfile  = {{out.outfile | quote}}, 
+genenorm(
+	infile   = {{in.infile | quote}},
+	outfile  = {{out.outfile | quote}},
 	notfound = {{args.notfound | quote}},
 	frm      = {{args.frm | quote}},
 	to       = {{args.to  | quote}},
 	genome   = {{args.genome | quote}},
-	tmpdir   = {{args.tmpdir | quote}},
 	inopts   = {{args.inopts}},
 	outopts  = {{args.outopts}},
-	inmeta   = {{args.inmeta | lambda x: x if isinstance(x, list) or isinstance(x, dict) else '"' + x + '"'}},
-	genecol  = {{args.genecol | quote}}
+	genecol  = {{args.genecol | quote}},
+	cachedir = {{args.cachedir | quote}}
 )
-
-symlink(cachefile, path.join({{job.outdir | quote}}, path.basename(cachefile)))

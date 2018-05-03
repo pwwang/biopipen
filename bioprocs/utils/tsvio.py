@@ -37,13 +37,13 @@ class TsvMeta(OrderedDict):
 		if not name.startswith('_OrderedDict'):
 			return self[name]
 		super(TsvMeta, self).__getattr__(name)
-		
+
 	def __setattr__(self, name, val):
 		if not name.startswith('_OrderedDict'):
 			self[name] = val
 		else:
 			super(TsvMeta, self).__setattr__(name, val)
-	
+
 	def add(self, *args):
 		for arg in args:
 			if isinstance(arg, list):
@@ -54,10 +54,10 @@ class TsvMeta(OrderedDict):
 				self[arg[0]] = arg[1]
 			else:
 				self[arg] = None
-	
+
 	def append(self, *args):
 		self.add(*args)
-		
+
 	def prepend(self, *args):
 		preps = []
 		for arg in args:
@@ -69,23 +69,23 @@ class TsvMeta(OrderedDict):
 				preps.append(arg)
 			else:
 				preps.append((arg, None))
-				
+
 		preps += self.items()
 		self.clear()
 		for k, v in preps:
 			self[k] = v
-		
+
 class TsvRecord(dict):
-		
+
 	def __repr__(self):
 		return 'TsvRecord(%s)' % (', '.join([k + '=' + repr(v) for k, v in self.items()]))
-	
+
 	def __getattr__(self, name):
 		return self[name]
 
 	def __setattr__(self, name, val):
 		self[name] = val
-		
+
 class TsvReaderBase(object):
 	def __init__(self, infile, delimit = '\t', comment = '#', skip = 0):
 		openfunc = open
@@ -98,12 +98,12 @@ class TsvReaderBase(object):
 		self.delimit = delimit
 		self.comment = comment
 		self.tell    = 0
-		
+
 		if skip > 0:
 			for _ in range(skip):
 				self.file.readline()
 		self.tell = self.file.tell()
-		
+
 	def autoMeta(self, prefix = 'COL'):
 		line = self.file.readline()
 		while self.comment and line.startswith(self.comment):
@@ -142,7 +142,7 @@ class TsvReaderBase(object):
 
 	def __del__(self):
 		self.close()
-			
+
 	def close(self):
 		if self.file:
 			self.file.close()
@@ -164,13 +164,13 @@ class TsvReaderBed(TsvReaderBase):
 
 	def _parse(self, line):
 		r = super(TsvReaderBed, self)._parse(line)
-		if not r.NAME: 
+		if not r.NAME:
 			r.NAME = 'BED' + str(self.index)
 			self.index += 1
 		if not r.SCORE: r.SCORE   = 0.0
 		if not r.STRAND: r.STRAND = '+'
 		return r
-		
+
 class TsvReaderBed12(TsvReaderBase):
 	META = [
 		('CHR'         , None),
@@ -190,7 +190,7 @@ class TsvReaderBed12(TsvReaderBase):
 	def __init__(self, infile, skip = 0, comment = '#', delimit = '\t'):
 		super(TsvReaderBed12, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
 		self.meta = TsvMeta(*TsvReaderBed12.META)
-		
+
 class TsvReaderBedpe(TsvReaderBase):
 	META = [
 		('CHR1'    , None),
@@ -222,7 +222,7 @@ class TsvReaderBedx(TsvReaderBase):
 	def __init__(self, infile, skip = 0, comment = '#', delimit = '\t', xcols = None, headprefix = ''):
 		super(TsvReaderBedx, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
 		self.meta = TsvMeta(*TsvReaderBedx.META)
-		
+
 		xmeta = OrderedDict()
 		if not xcols:
 			pass
@@ -237,13 +237,13 @@ class TsvReaderBedx(TsvReaderBase):
 		else:
 			xmeta[xcols] = None
 		self.meta.add(*xmeta.items())
-		
+
 class TsvReaderHead(TsvReaderBase):
 
 	def __init__(self, infile, comment = '#', delimit = '\t', skip = 0, tmeta = None):
 		super(TsvReaderHead, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
 		self.meta = TsvMeta()
-		
+
 		header = self.file.readline().strip('#\t\n ').split(delimit)
 		self.tell = self.file.tell()
 		row1   = self.file.readline().strip().split(delimit)
@@ -253,7 +253,7 @@ class TsvReaderHead(TsvReaderBase):
 		for head in header:
 			metatype[head] = None if not tmeta or not isinstance(tmeta, dict) or not head in tmeta or not callable(tmeta[head]) else tmeta[head]
 		self.meta.add(*metatype.items())
-		
+
 		self.rewind()
 
 class TsvReaderNometa(TsvReaderHead):
@@ -263,25 +263,25 @@ class TsvReaderNometa(TsvReaderHead):
 			super(TsvReaderNometa, self).__init__(infile, skip = skip, comment = comment, delimit = delimit, tmeta = tmeta)
 		else:
 			super(TsvReaderHead, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-	
+
 	def _parse(self, line):
 		return line
-		
+
 class TsvWriterBase(object):
 	def __init__(self, outfile, delimit = '\t'):
 		openfunc = open
 		if outfile.endswith('.gz'):
 			import gzip
 			openfunc = gzip.open
-		
+
 		self.delimit = delimit
 		self.meta    = TsvMeta()
 		self.file    = open(outfile, 'w')
-	
+
 	def writeHead(self, prefix = '', delimit = None, transform = None):
 		delimit = delimit or self.delimit
 		keys = self.meta.keys()
-		if callable(transform): 
+		if callable(transform):
 			keys = transform(keys)
 		elif isinstance(transform, dict):
 			keys = [key if not key in transform or not callable(transform[key]) else transform[key](key) for key in keys]
@@ -296,29 +296,29 @@ class TsvWriterBase(object):
 
 	def __del__(self):
 		self.close()
-			
+
 	def close(self):
 		if self.file:
 			self.file.close()
-			
+
 class TsvWriterNometa(TsvWriterBase):
-	
+
 	def writeHead(self, prefix = '', delimit = None, transform = None):
 		transform = transform or (lambda keys: [str(key) for key in keys])
 		super(TsvWriterNometa, self).writeHead(prefix, delimit, transform)
-		
+
 	def write(self, record, delimit = None):
 		delimit = delimit or self.delimit
 		self.file.write(delimit.join([str(r) for r in record]) + '\n')
-		
+
 class TsvWriterBed(TsvWriterBase):
-		
+
 	def __init__(self, outfile, delimit = '\t'):
 		super(TsvWriterBed, self).__init__(outfile)
 		self.meta = TsvMeta(*TsvReaderBed.META)
-		
+
 class TsvReader(object):
-	# inopts: 
+	# inopts:
 	# - delimit, comment, skip
 	# - ftype
 	# - cnames
@@ -332,7 +332,7 @@ class TsvReader(object):
 			cnames = alwaysList(cnames)
 		del inopts['ftype']
 		del inopts['cnames']
-		
+
 		if not ftype:
 			inopts = _getargs(inopts, TsvReaderBase.__init__)
 			reader = TsvReaderBase(infile, **inopts)
@@ -347,8 +347,8 @@ class TsvReader(object):
 			metas = cnames if isinstance(cnames, list) else cnames.items()
 			reader.meta.add(*metas)
 		return reader
-				
-			
+
+
 class TsvWriter(object):
 	def __new__(cls, outfile, **outopts):
 		outopts2 = {'delimit': '\t', 'ftype': '', 'cnames': ''}
@@ -360,7 +360,7 @@ class TsvWriter(object):
 			cnames = alwaysList(cnames)
 		del outopts['ftype']
 		del outopts['cnames']
-		
+
 		if not ftype:
 			outopts = _getargs(outopts, TsvWriterBase.__init__)
 			writer = TsvWriterBase(outfile, **outopts)
@@ -375,14 +375,13 @@ class TsvWriter(object):
 			metas = cnames if isinstance(cnames, list) else cnames.items()
 			writer.meta.add(*metas)
 		return writer
-		
+
 class SimRead (object):
-	
+
 	def __init__(self, *files, **kwargs):
 
 		length = len(files)
-		
-		self.match   = SimRead._defaultMatch
+
 		self.do      = None
 		self.comment = ["#"] * length
 		self.delimit = ["\t"] * length
@@ -421,6 +420,9 @@ class SimRead (object):
 			else:
 				self.cnames[:len(kwargs['cnames'])] = list(kwargs['cnames'])
 
+		self.match = SimRead._defaultMatchIndex if all([ftype == 'nometa' for ftype in self.ftype]) \
+					 else SimRead._defaultMatchKey
+
 		self.readers = []
 		for i, fn in enumerate(files):
 			inopts = {
@@ -433,17 +435,26 @@ class SimRead (object):
 			reader = TsvReader(fn, **inopts)
 			if not reader.meta: reader.autoMeta()
 			self.readers.append(reader)
-			
+
 	@staticmethod
 	def compare(a, b, reverse = False):
 		if not reverse:
 			return 0 if a < b else 1 if a > b else -1
 		else:
 			return 0 if a > b else 1 if a < b else -1
-			
+
 	@staticmethod
-	def _defaultMatch(*lines):
+	def _defaultMatchIndex(*lines):
 		data = [line[0] for line in lines]
+		mind = min(data)
+		if data.count(mind) == len(lines):
+			return -1
+		else:
+			return data.index(mind)
+
+	@staticmethod
+	def _defaultMatchKey(*lines):
+		data = [line.COL1 for line in lines]
 		mind = min(data)
 		if data.count(mind) == len(lines):
 			return -1
@@ -459,12 +470,12 @@ class SimRead (object):
 			return
 		if self.debug:
 			sys.stderr.write('- Lines initiated ...\n')
-			
+
 		while True:
 			if self.debug:
 				sys.stderr.write('\n'.join([('  > FILE %s: [' % (i+1)) + str(line) + ']' for i, line in enumerate(lines)]) + '\n')
 			if not all(lines): break
-			
+
 			try:
 				m = self.match(*lines)
 			except Exception as ex:
@@ -488,7 +499,7 @@ class SimRead (object):
 			if self.debug:
 				sys.stderr.write('- File %s is behind, read it ...\n' % (m+1))
 			try:
-				lines[m] = next(self.readers[m])			
+				lines[m] = next(self.readers[m])
 			except StopIteration:
 				break
 
@@ -497,11 +508,11 @@ def tsvops(infile, outfile, inopts, outopts, ops = None):
 	inopts2 = Box(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = '')
 	inopts2.update(inopts)
 	inopts = inopts2
-	
+
 	outopts2 = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = '', cnames = '')
 	outopts2.update(outopts)
 	outopts = outopts2
-	
+
 	inftype       = inopts['ftype']
 	outftype      = outopts['ftype']
 	head          = outopts['head']
@@ -512,27 +523,25 @@ def tsvops(infile, outfile, inopts, outopts, ops = None):
 	del outopts['headPrefix']
 	del outopts['headDelimit']
 	del outopts['headTransform']
-	
+
 	reader = TsvReader(infile, **inopts)
 	if not reader.meta: reader.autoMeta()
-	
+
 	if not outftype and not outopts['cnames']:
 		outftype = 'reader'
-		
+
 	if outftype == 'reader':
 		del outopts['ftype']
 		writer = TsvWriter(outfile, **outopts)
 		writer.meta.prepend(*reader.meta.items())
 	else:
 		writer = TsvWriter(outfile, **outopts)
-		
+
 	if head:
 		writer.writeHead(prefix = headPrefix, delimit = headDelimit, transform = headTransform)
-	
+
 	for r in reader:
 		if callable(ops):
 			r = ops(r)
 			if not r: continue
 		writer.write(r)
-
-	

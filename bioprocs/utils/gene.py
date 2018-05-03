@@ -43,12 +43,12 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	if not reader.meta: reader.autoMeta()
 	genecol  = genecol or reader.meta.keys()[0]
 
-	genes    = list(set([r[genecol] for r in reader]))
+	genes    = list(set([r[genecol].strip() for r in reader]))
 	reader.rewind()
 
 	dbfile   = path.join(cachedir, 'geneinfo.db')
 	cache    = Cache(dbfile, 'geneinfo', {
-		'_id': 'int primary key',
+		'_id': 'text primary key',
 		'symbol': 'text',
 		'HGNC': 'int',
 		'alias': 'text',
@@ -62,120 +62,83 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		'uniprot': 'text'
 	}, '_id')
 
-	wherelike = lambda x: ['|{}'.format(x), '|{}|%'.format(x), '%|{}'.format(x), '%|{}|%'.format(x)]
-	foundfunc = lambda v, data: re.search(r'\|%s($|\|)' % v, data)
-	factoryin = lambda v: ''.join(['|' + x for x in v]) if v and isinstance(v, list) else v if v else ''
-	wherekeys = {
-		'alias'          : ('alias[~~]', wherelike),
-		'ensembl_protein': ('alias[~]', wherelike),
-		'pfam'           : ('pfam[~]', wherelike),
-		'uniprot'        : ('uniprot[~]', wherelike)
-	}
-	foundkeys = {
-		'alias'          : foundfunc,
-		'ensembl_protein': foundfunc,
-		'pfam'           : foundfunc,
-		'uniprot'        : foundfunc
-	}
-	cachefactory = {
-		'alias'           : [factoryin] * 2,
-		'ensembl_protein' : [factoryin] * 2,
-		'pfam'            : [factoryin] * 2,
-		'uniprot'         : [factoryin] * 2,
-		'genomic_pos'     : [lambda x: json.dumps(x) if isinstance(x, (list, dict)) else str(x)] * 2,
-		'genomic_pos_hg19': [lambda x: json.dumps(x) if isinstance(x, (list, dict)) else str(x)] * 2,
+	dummies = {
+		'symbol' : 'iplain',
+		'alias'  : 'iarray',
+		'pfam'   : 'iarray',
+		'uniprot': 'iarray',
 	}
 
 	# query from cache
 	tocols   = alwaysList(to)
 	frmcols  = alwaysList(frm)
-	columns  = list(set(tocols + frmcols))
-	allfound = []
-	allrest  = None
-	for frm in alwaysList(frm):
-		datafound, retrest = cache.query(columns, {frm: genes, 'taxid': [TAXIDS[genome]]*len(genes)}, wherekeys, foundkeys)
-		allfound += datafound
-		for key, val in retrest.items():
-			if key == 'taxid': continue
-			if allrest is None:
-				allrest = set(val)
-			else:
-				allrest &= set(val)
+	frmkeys  = ','.join(frmcols)
+	columns  = list(set(tocols + frmcols + ['taxid']))
+	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
 
 	# query from api
-	allrest = list(allrest)
-	mgret = MyGeneInfo().querymany(allrest, scopes = frmcols, fields = columns, species = SPECIES[genome])
-
+	mgret = MyGeneInfo().querymany(allrest[frmkeys], scopes = frmcols, fields = columns, species = SPECIES[genome])
 	# get all result for each query
 	genetmp = {}
-	for gene in mgret:
-		if not gene['query'] in genetmp:
-			genetmp[gene['query']] = []
-		genetmp[gene['query']].append(gene)
+	for gret in mgret:
+		if not gret['query'] in genetmp:
+			genetmp[gret['query']] = []
+		genetmp[gret['query']].append(gret)
 
-	genemap = {}
-	for query, gene in genetmp.items():
-
+	genemap   = {}
+	data2save = {}
+	for query, gret in genetmp.items():
 		# re-score the items if query is entirely matched
-		for g in gene:
+		score = 0
+		gr    = None
+		for g in gret:
 			# not all result returned
 			if not all([x in g for x in tocols]): continue
 
 			if any([g[x] == query for x in tocols]):
-				g['_score'] += 10000
+				thescore = g['_score'] + 10000
 			elif any([str(g[x]).upper() == query.upper() for x in tocols]):
-				g['_score'] += 5000
+				thescore = g['_score'] + 5000
 			elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x]) for x in tocols]]):
-				g['_score'] += 1000
-		gene = sorted(
-			[g for g in gene if '_score' in g],
-			key = lambda x: x['_score'],
-			reverse = True
-		)
-		if not gene: continue
-		gene = gene[0]
-		genemap[query] = {}
-		for x in columns:
-			if not x in gene:
-				genemap[query][x] = None
-			elif x in cachefactory \
-				and isinstance(cachefactory[x], (tuple, list)) \
-				and len(cachefactory[x]) > 1:
-				genemap[query][x] = cachefactory[x][1](gene[x])
+				thescore = g['_score'] + 1000
 			else:
-				genemap[query][x] = gene[x]
-	del genetmp
+				thescore = g['_score']
+			if thescore > score:
+				score = thescore
+				gr    = g
+
+		if not gr: continue
+		del gr['_score']
+		del gr['query']
+
+		gr = Cache._result({x:(gr[x] if x in gr else '') for x in set(columns + gr.keys())}, dummies)
+		for x, val in gr.items():
+			if not x in data2save:
+				data2save[x] = []
+			data2save[x].append(val)
+		genemap[query] = gr
+
+	# add cached data
+	for i, ret in allfound.items():
+		query = genes[i]
+		genemap[query] = ret
+	#del genetmp
+	#print genemap
 
 	# cache genemap
-	cachedata = {}
-	querys    = genemap.keys()
-	for query in querys:
-		for k, v in genemap[query].items():
-			if not k in cachedata:
-				cachedata[k] = []
-			cachedata[k].append(v)
+	#cachedata = {}
+	#querys    = genemap.keys()
+	#for query in querys:
+	#	for k, v in genemap[query].items():
+	#		if not k in cachedata:
+	#			cachedata[k] = []
+	#		cachedata[k].append(v)
 
-	if cachedata:
-		cache.save(cachedata, cachefactory)
-		del cachedata
-
-	# restore cached data
-	for gene in genes:
-		# gene not cached
-		if gene in allrest: continue
-		# check if gene is the query
-		datarow = None
-		for row in allfound:
-			for frmcol in frmcols:
-				if frmcol in foundkeys and foundkeys[frmcol](gene, row[frmcol]):
-					datarow = row
-					break
-				elif frmcol not in foundkeys and gene == row[frmcol]:
-					datarow = row
-					break
-			if datarow: break
-		if not datarow: continue
-		genemap[gene] = datarow
+	#if cachedata:
+	#	cache.save(cachedata, cachefactory)
+	#	del cachedata
+	if data2save:
+		cache.save(data2save, dummies)
 
 	if outfile:
 		writer   = TsvWriter(outfile, delimit = outopts['delimit'])
@@ -191,7 +154,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		if outopts['head']:
 			writer.writeHead(outopts['headPrefix'], outopts['headDelimit'], outopts['headTransform'])
 		for r in reader:
-			query = r[genecol]
+			query = r[genecol].strip()
 			if query not in genemap:
 				if notfound == 'error':
 					raise RecordNotFound('Record not found: %s' % query)

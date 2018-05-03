@@ -6,7 +6,6 @@ from bioprocs.utils.poll import Poll
 from bioprocs.utils.parallel import Parallel
 from helpers import testdirs
 from os import path, makedirs
-logger.getLogger().setLevel(logger.CRITICAL)
 
 class TestPoll(helpers.TestCase):
 	testdir, indir, outdir = testdirs('TestPoll')

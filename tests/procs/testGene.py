@@ -1,16 +1,20 @@
-import unittest
+import helpers, testly
+from os import path
 from pyppl import PyPPL
 from helpers import getfile, procOK, config
 from bioprocs.gene import pGeneNameNorm, pGeneTss, pGenePromoters
 
-class TestGene (unittest.TestCase):
+class TestGene (helpers.TestCase):
+
+	testdir, indir, outdir = helpers.testdirs('TestGene')
 	def testGeneNameNorm(self):
-		pGeneNameNorm.input     = [getfile('genes.txt')]
+		pGeneNameNorm.input     = [path.join(self.indir, 'genes.txt')]
 		pGeneNameNorm.errhow    = 'terminate'
-		pGeneNameNorm.args.skip = 1
-		pGeneNameNorm.args.col  = 1
+		pGeneNameNorm.args.inopts.skip = 1
+		pGeneNameNorm.args.outopts.head = False
+		pGeneNameNorm.args.genecol = 'COL2'
 		PyPPL(config).start(pGeneNameNorm).run()
-		procOK(pGeneNameNorm, 'gene-namenorm.txt', self)
+		self.assertFileEqual(pGeneNameNorm.channel.get(), path.join(self.outdir, 'gene-namenorm.txt'))
 
 	def testGeneTss(self):
 		pGeneTss.input = [getfile('genes.txt')]
@@ -30,4 +34,4 @@ class TestGene (unittest.TestCase):
 
 
 if __name__ == '__main__':
-	unittest.main(failfast=True)
+	testly.main(failfast=True)

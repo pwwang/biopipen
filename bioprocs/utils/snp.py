@@ -14,19 +14,19 @@ def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpv
 	_inopts = Box(skip = 0, comment = '#', delimit = '\t')
 	_inopts.update(inopts or {})
 	inopts  = _inopts
-	
+
 	_outopts = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, ftype = 'bed', cnames = 'refUCSC, alleles, alleleFreqs, alleleFreqCount')
 	_outopts.update(outopts)
 	outopts  = _outopts
 	cnames   = alwaysList(outopts['cnames'])
-	
+
 	reader = TsvReader(infile, **inopts)
 	if not reader.meta: reader.autoMeta()
 	snpcol = snpcol or reader.meta.keys()[0]
-	
+
 	snps = list(set([r[snpcol] for r in reader]))
 	reader.rewind()
-	
+
 	dbfile = path.join(cachedir, 'snpinfo_%s_%s.db' % (genome, dbsnpver))
 	schema = {
 		'chrom'          : 'text',              # chr8
@@ -49,31 +49,24 @@ def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpv
 		'alleleNs'       : 'text',              # 2634.000000,2374.000000,
 		'alleleFreqs'    : 'text',              # 0.525958,0.474042,
 	}
-	cache  = Cache(dbfile, 'snpinfo', schema, 'name')
-	
-	wherelike = lambda x: ['|{}'.format(x), '|{}|%'.format(x), '%|{}'.format(x), '%|{}|%'.format(x)]
-	foundfunc = lambda v, data: v in data.split('|')
-	factoryin = lambda v: ''.join(['|' + x for x in v]) if v and isinstance(v, (set, list)) else v if v else ''
-	wherekeys = {
-		'func': ('func[~~]', wherelike)
-	}
-	foundkeys = {
-		'func': foundfunc
-	}
-	cachefactory = {
-		'func': [factoryin] * 2
+	cache   = Cache(dbfile, 'snpinfo', schema, 'name')
+	dummies = {
+		'func': dict(
+			query  = Cache.DUMMY['array']['query'],
+			find   = Cache.DUMMY['array']['find'],
+			insert = lambda col, data: (col, ' // ' + ' // '.join(Cache._uniqueData(list(data), True))),
+			update = lambda col, data: (col, Function.concat(Field(col), value = ' // ' + ' // '.join(Cache._uniqueData(list(d), True)))),
+			result = lambda data: data if isinstance(data, list) else list(filter(None, data.split(' // ')))
+		)
 	}
 	columns = [
 		'chrom', 'name', 'chromStart', 'chromEnd', 'score', 'strand'
 	] + cnames
-	
-	ret = []
-	allrest  = None
-	ret, allrest = cache.query(columns, {'name': snps}, wherekeys, foundkeys)
+	ret, allrest = cache.query(columns, {'name': snps}, dummies)
 
 	dbsnp = Genome(db = genome)
 	dbsnp = getattr(dbsnp, "snp%s" % dbsnpver)
-	
+
 	writer = None
 	if outfile:
 		head          = outopts['head']
@@ -87,9 +80,9 @@ def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpv
 		writer = TsvWriter(outfile, **outopts)
 		if head:
 			writer.writeHead(prefix = headPrefix, delimit = headDelimit, transform = headTransform)
-			
-	if writer: 
-		for r in ret: 
+
+	if writer:
+		for r in ret.values():
 			r.CHR    = r.chrom
 			r.START  = r.chromStart
 			r.END    = r.chromEnd
@@ -97,7 +90,7 @@ def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpv
 			r.SCORE  = r.score
 			r.STRAND = r.strand
 			writer.write(r)
-		
+
 	cached = []
 	if allrest:
 		for snp in allrest['name']:
@@ -121,22 +114,15 @@ def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpv
 				r.STRAND = s.strand
 				for cname in cnames:
 					setattr(r, cname, getattr(s, cname))
-				print r ,writer.meta
 				writer.write(r)
-	
+
 	# save cached data
 	cachedata = {}
 	for c in cached:
 		for k in schema.keys():
-			if k in cachefactory:
-				if isinstance(cachefactory[k], (list, tuple)) and len(cachefactory[k]) > 1:
-					setattr(c, k, cachefactory[k][1](getattr(c, k)))
 			if not k in cachedata:
 				cachedata[k] = []
 			cachedata[k].append(getattr(c, k))
 	if cachedata:
-		cache.save(cachedata, cachefactory)
-	
-	return {r.name: r for r in ret + cached}
-
-	
+		cache.save(cachedata, dummies)
+	return {r.name: r for r in ret.values() + cached}

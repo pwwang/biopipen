@@ -34,7 +34,7 @@ pGeneNameNorm.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix
 pGeneNameNorm.args.genecol  = ''
 pGeneNameNorm.args.frm      = 'symbol, alias'
 pGeneNameNorm.args.to       = 'symbol'
-pGeneNameNorm.args.tmpdir   = params.tmpdir.value
+pGeneNameNorm.args.cachedir = params.cachedir.value
 pGeneNameNorm.args.genome   = params.genome.value
 pGeneNameNorm.args.cachedir = params.cachedir.value
 #pGeneNameNorm.envs.genenorm = genenorm.py
@@ -54,13 +54,13 @@ pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 	`notfound`: What if the gene is not found. Default: skip.
 		- error: report error
 	`header`: Whether the input file contains header. Default: False
-	`skip`: Skip N lines of input file. Default: 0 
+	`skip`: Skip N lines of input file. Default: 0
 		- This has highest priority of header and comment
 	`comment`: The comment line start sign. Default: #
 	`delimit`: The delimit of input file if it has multiple column. Default: `\\t`
 	`col`: The column index contains the genes. Default: 0
 	`frm`: The format of the genes. Default: `symbol, alias`
-	`tmpdir`: The tmpdir used to store mygene cache files. 
+	`tmpdir`: The tmpdir used to store mygene cache files.
 	`genome`: In which genome to fetch the coordinates. Default: hg19
 """
 pGeneTss                = Proc(desc = 'Get gene TSS in BED format')

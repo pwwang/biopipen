@@ -60,7 +60,7 @@ pBedClosest.args.bedtools   = params.bedtools.value
 pBedClosest.args.params     = Box()
 pBedClosest.envs.bashimport = bashimport
 pBedClosest.script = '''
-{{bashimport}} helpers.bash
+{{bashimport}} __init__.bash
 {{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfile | squote}} > {{out.outfile | squote}}
 '''
 
@@ -87,7 +87,7 @@ pBedClosest2.args.bedtools   = params.bedtools.value
 pBedClosest2.args.params     = Box()
 pBedClosest2.envs.bashimport = bashimport
 pBedClosest2.script = '''
-{{bashimport}} helpers.bash
+{{bashimport}} __init__.bash
 {{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfiles | asquote}} > {{out.outfile | squote}}
 '''
 
@@ -189,7 +189,7 @@ pBedMakewindows.args.bedtools = params.bedtools.value
 pBedMakewindows.args.intype   = 'bed'
 pBedMakewindows.envs.bashimport = bashimport
 pBedMakewindows.script = '''
-{{bashimport}} helpers.bash
+{{bashimport}} __init__.bash
 {{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{in.infile | squote}} > {{out.outfile | squote}}
 '''
 
