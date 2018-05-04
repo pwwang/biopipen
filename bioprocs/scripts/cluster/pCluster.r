@@ -23,7 +23,7 @@ if ({{args.isCount | R}}) {
 minc = max({{args.minc}}, 2)
 maxc = min({{args.maxc}}, nrow(d) - 1)
 
-ret = optCluster(d, minc:maxc, clMethods = methods, countData = {{args.isCount | R}}, clVerbose = T, rankVerbose = T)
+ret = optCluster(d, minc:maxc, clMethods = methods, countData = {{args.isCount | R}}, clVerbose = T, rankVerbose = F)
 
 
 ret = optAssign(ret)

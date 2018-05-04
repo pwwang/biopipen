@@ -1,55 +1,57 @@
-import sys, json
+import sys
 
 from pyppl import Box
-
-from bioprocs.utils.tsvio import TsvWriter, TsvReader, TsvRecord
+from bioprocs.utils.tsvio import TsvWriter, TsvRecord
 from bioprocs.utils.gene import genenorm
+from bioprocs.utils import logger
 
-infile  = {{in.infile   | quote}}
-outfile = {{out.outfile | quote}}
-inopts  = {{args.inopts}}
-genome  = {{args.genome | quote}}
-poscol  = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
-
+genome   = {{args.genome | quote}}
+poscol   = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
+notfound = {{args.notfound | quote}}
 # get the genes
 genes = genenorm(
-	infile,
-	notfound = {{args.notfound | quote}},
+	{{in.infile | quote}},
+	notfound = notfound,
 	frm      = {{args.frm | quote}},
-	to       = "symbol, genomic_pos_{{args.genome}}",
+	to       = "%s,symbol" % poscol,
 	genome   = genome,
 	cachedir = {{args.cachedir | quote}},
-	inopts   = inopts
+	inopts   = {{args.inopts}},
+	genecol  = {{args.genecol | quote}}
 )
-
-reader = TsvReader(infile, **inopts)
-writer = TsvWriter(outfile, ftype = 'bed')
+outopts = {{args.outopts}}
+writer = TsvWriter({{out.outfile | quote}}, **outopts)
+if outopts['query']:
+	writer.meta.add('QUERY')
+if outopts['head']:
+	writer.writeHead(delimit = outopts['headDelimit'], prefix = outopts['headPrefix'], transform = outopts['headTransform'])
 for gene, hit in genes.items():
+	if not poscol in hit or not hit[poscol]:
+		if notfound == 'skip':
+			logger.warn('Gene not found: %s' % gene)
+			continue
+		else:
+			raise ValueError('Gene not found: %s' % gene)
 
-	# TODO: log those genes not found.
-	if poscol not in hit: continue
-	if not hit[poscol]: continue
-	try:
-		pos      = json.loads(hit[poscol])
-	except Exception:
-		continue
-	if not pos: continue
-	# TODO: have to figure out this (when a gene has isoforms)
+	pos      = hit[poscol]
 	if isinstance(pos, list): pos = pos[0]
-
 	r        = TsvRecord()
 	r.CHR    = 'chr' + str(pos['chr'])
 	if pos['strand'] == 1:
 		r.STRAND = '+'
 		r.START  = pos['start'] - {{args.up}}
 		r.END    = pos['start'] + {{args.down}}
-		r.END    = {% if args.incbody %}max(r.END, pos['end']){% endif %}
+		{% if args.incbody %}
+		r.END    = max(r.END, pos['end'])
+		{% endif %}
 	else:
 		r.STRAND = '-'
 		r.END    = pos['end'] + {{args.up}}
 		r.START  = pos['end'] - {{args.down}}
-		r.START  = {% if args.incbody %}min(r.START, pos['start']){% endif %}
-
+		{% if args.incbody %}
+		r.START  = min(r.START, pos['start'])
+		{% endif %}
 	r.NAME   = hit['symbol']
 	r.SCORE  = '0'
+	r.QUERY  = gene
 	writer.write(r)

@@ -171,8 +171,8 @@ class TestCase(testly.TestCase):
 
 	def assertFileCountEqual(self, first, second, sort = 'sort', msg = None):
 		tmpdir = tempfile.gettempdir()
-		firstsorted  = path.join(tmpdir, path.splitext(first)[0] + '.sorted')
-		secondsorted = path.join(tmpdir, path.splitext(second)[0] + '.sorted')
+		firstsorted  = path.join(tmpdir, path.splitext(path.basename(first))[0] + '.sorted')
+		secondsorted = path.join(tmpdir, path.splitext(path.basename(second))[0] + '.sorted')
 		Popen([sort, '-o', firstsorted, first]).wait()
 		Popen([sort, '-o', secondsorted, second]).wait()
 		import icdiff

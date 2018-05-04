@@ -1,10 +1,13 @@
-import unittest
+import unittest, helpers
+from os import path
 from pyppl import PyPPL
-from helpers import getfile, procOK, config
+from helpers import getfile, procOK, config, testdirs
 from bioprocs.gsea import pTargetEnrichr, pEnrichr, pExpmat2Gct, pSSGSEA, pGSEA, pSampleinfo2Cls, pGMT2Mat
 
 
-class TestGSEA (unittest.TestCase):
+class TestGsea (helpers.TestCase):
+
+	testdir, indir, outdir = testdirs('TestGsea')
 
 	def testpTargetEnrichrCol2 (self):
 		pTargetEnrichrCol2        = pTargetEnrichr.copy()
@@ -12,7 +15,7 @@ class TestGSEA (unittest.TestCase):
 		pTargetEnrichrCol2.errhow = 'terminate'
 		PyPPL(config).start(pTargetEnrichrCol2).run()
 		procOK(pTargetEnrichrCol2, 'tenrich-col2', self)
-	
+
 	def testpTargetEnrichrCol3 (self):
 		pTargetEnrichrCol3        = pTargetEnrichr.copy()
 		pTargetEnrichrCol3.input  = [getfile('tenrich-col3.txt')]
@@ -26,7 +29,7 @@ class TestGSEA (unittest.TestCase):
 		pTargetEnrichrCol4.errhow = 'terminate'
 		PyPPL(config).start(pTargetEnrichrCol4).run()
 		procOK(pTargetEnrichrCol4, 'tenrich-col4', self)
-	
+
 	def testpTargetEnrichrCol5 (self):
 		pTargetEnrichrCol5        = pTargetEnrichr.copy()
 		pTargetEnrichrCol5.input  = [getfile('tenrich-col5.txt')]
@@ -35,11 +38,12 @@ class TestGSEA (unittest.TestCase):
 		procOK(pTargetEnrichrCol5, 'tenrich-col5', self)
 
 	def testpEnrichr(self):
+		self.maxDiff = None
 		pEnrichr.input     = [getfile('enrichr.txt')]
 		pEnrichr.args.norm = True
 		pEnrichr.errhow    = 'terminate'
 		PyPPL(config).start(pEnrichr).run()
-		procOK(pEnrichr, 'enrichr-out', self)
+		self.assertFileEqual(path.join(pEnrichr.channel.get(), 'enrichr-KEGG_2016.txt'), path.join(self.outdir, 'enrichr-KEGG_2016.txt'))
 
 	def testpExpmat2Gct(self):
 		pExpmat2GctCopy   = pExpmat2Gct.copy()
@@ -70,6 +74,6 @@ class TestGSEA (unittest.TestCase):
 		pGMT2Mat.input = [getfile('gmt2mat.txt')]
 		PyPPL(config).start(pGMT2Mat).run()
 		procOK(pGMT2Mat, 'gmt2mat.txt', self)
-		
+
 if __name__ == '__main__':
 	unittest.main(failfast=True)

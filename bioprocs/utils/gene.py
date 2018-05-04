@@ -42,7 +42,6 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	reader   = TsvReader(infile, **inopts)
 	if not reader.meta: reader.autoMeta()
 	genecol  = genecol or reader.meta.keys()[0]
-
 	genes    = list(set([r[genecol].strip() for r in reader]))
 	reader.rewind()
 
@@ -67,6 +66,8 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		'alias'  : 'iarray',
 		'pfam'   : 'iarray',
 		'uniprot': 'iarray',
+		'genomic_pos': 'json',
+		'genomic_pos_hg19': 'json',
 	}
 
 	# query from cache

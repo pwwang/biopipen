@@ -68,10 +68,11 @@ pGeneTss.input          = 'infile:file'
 pGeneTss.output         = 'outfile:file:{{in.infile | fn}}-tss.bedx'
 pGeneTss.errhow         = 'retry'
 pGeneTss.args.notfound  = 'skip' # error
-pGeneTss.args.inmeta    = ['GENE']
+pGeneTss.args.genecol   = ''
 pGeneTss.args.inopts    = Box(skip = 0, comment = '#', delimit = '\t')
+pGeneTss.args.outopts   = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
 pGeneTss.args.frm       = 'symbol, alias'
-pGeneTss.args.tmpdir    = params.tmpdir.value
+pGeneTss.args.cachedir  = params.cachedir.value
 pGeneTss.args.genome    = params.genome.value
 #pGeneTss.envs.genenorm  = genenorm.py
 #pGeneTss.envs.writeBedx = write.bedx.py
@@ -105,10 +106,11 @@ pGeneBody.input         = 'infile:file'
 pGeneBody.output        = 'outfile:file:{{in.infile | fn}}-body.bedx'
 pGeneBody.errhow        = 'retry'
 pGeneBody.args.notfound = 'skip' # error
-pGeneBody.args.inmeta   = ['GENE']
+pGeneBody.args.genecol  = ''
 pGeneBody.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
+pGeneBody.args.outopts   = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
 pGeneBody.args.frm      = 'symbol, alias'
-pGeneBody.args.tmpdir   = params.tmpdir.value
+pGeneBody.args.cachedir  = params.cachedir.value
 pGeneBody.args.genome   = params.genome.value
 #pGeneBody.envs.genenorm = genenorm.py
 pGeneBody.lang          = params.python.value

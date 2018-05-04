@@ -2,26 +2,42 @@ import json
 import requests
 import math
 from hashlib import md5
+from pyppl import Box
+from bioprocs.utils.gene import genenorm
+from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
+{% if args.plot %}
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
+from matplotlib import gridspec
+from matplotlib import patches
+{% endif %}
+
+infile   = {{in.infile | quote}}
+inopts   = {{args.inopts}}
+genecol  = {{args.genecol | quote}}
+cachedir = {{args.cachedir | quote}}
+topn     = {{args.topn}}
 
 {% if args.norm %}
-{{genenorm}}
+
 gmapfile = "{{out.outdir}}/{{in.infile | bn}}.gnorm"
-gmap, _ = genenorm({{in.infile | quote}}, delimit={{args.delimit | quote}}, col = {{args.col}}, tmpdir = {{args.tmpdir | quote}})
-genes    = gmap.values()
-with open(gmapfile, 'w') as f:
-	for key, val in gmap.items():
-		f.write('%s\t%s\n' % (key, val))
+gmap = genenorm(
+	infile   = infile,
+	outfile  = gmapfile,
+	inopts   = inopts,
+	outopts  = {'head': False},
+	genecol  = genecol,
+	cachedir = cachedir
+)
+genes = [g.symbol for g in gmap.values()]
+
 {% else %}
-with open({{in.infile | quote}}) as f:
-	genes = [line.split({{args.delimit | quote}})[{{args.col}}] for line in f if line.strip()]
+
+reader = TsvReader(infile, **inopts)
+genes  = [r[genecol] for r in reader]
+
 {% endif %}
-	
-if {{args.plot}}:
-	import matplotlib
-	matplotlib.use('Agg')
-	from matplotlib import pyplot as plt
-	from matplotlib import gridspec
-	from matplotlib import patches
 
 ## upload
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
@@ -49,8 +65,8 @@ dbs = map (lambda s: s.strip(), dbs)
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
 query_string = '?userListId=%s&backgroundType=%s'
 
-head = ["#Rank", "Term name", "P-value", "Z-score", "Combined score", "Overlapping genes", "Adjusted p-value", "Old p-value", "Old adjusted p-value"]
-topn = {{args.topn}}
+head = ["Rank", "Term", "Pval", "Zscore", "CombinedScore", "OverlappingGenes", "AdjustedPval", "OldPval", "OldAdjustedPval"]
+
 for db in dbs:
 	user_list_id = data['userListId']
 	gene_set_library = db
@@ -63,30 +79,41 @@ for db in dbs:
 		msg = [line for line in msg if line.strip()]
 		msg = '\n'.join(msg)
 		raise Exception('Error fetching enrichment results against %s: %s' % (db, msg))
-	
+
 	data    = json.loads(response.text)
 	data    = data[db]
 	d2plot  = []
-	outfile = "{{out.outdir}}/%s.txt" % db
-	fout    = open (outfile, "w")
-	fout.write ("\t".join(head) + "\n")
+	outfile = "{{out.outdir}}/{{in.infile | fn}}-%s.txt" % db
+	writer  = TsvWriter(outfile)
+	writer.meta.add(*head)
+	writer.writeHead()
 	for i, ret in enumerate(data):
-		fout.write ("\t".join(['|'.join(r) if x == 5 else str(r) for x,r in enumerate(ret)]) + "\n")
+		r = TsvRecord()
+		r.Rank             = ret[0]
+		r.Term             = ret[1]
+		r.Pval             = ret[2]
+		r.Zscore           = ret[3]
+		r.CombinedScore    = ret[4]
+		r.OverlappingGenes = '|'.join(ret[5])
+		r.AdjustedPval     = ret[6]
+		r.OldPval          = ret[7]
+		r.OldAdjustedPval  = ret[8]
+		writer.write(r)
 		if topn < 1 and ret[2] >= topn: continue
 		if topn >= 1 and i > topn - 1: continue
 		if {{args.rmtags}} and "_Homo sapiens_hsa" in ret[1]: ret[1] = ret[1][:-22]
 		d2plot.append (ret)
-	fout.close()
-	
+	writer.close()
+
 	if {{args.plot}}:
 		#d2plot   = sorted (d2plot, cmp=lambda x,y: 0 if x[2] == y[2] else (-1 if x[2] < y[2] else 1))
-		plotfile = "{{out.outdir}}/%s.png" % db
-		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7]) 
+		plotfile = "{{out.outdir}}/{{in.infile | fn}}-%s.png" % db
+		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7])
 		rownames = [r[1] if len(r[1])<=40 else r[1][:40] + ' ...' for r in d2plot]
 		rnidx    = range (len (rownames))
 		ax1 = plt.subplot(gs[0])
 		plt.title ("{{args.title}}".replace("{db}", db), fontweight='bold')
-		
+
 		ax1.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
 		plt.subplots_adjust(wspace=.01, left=0.5)
 		ax1.barh(rnidx, [len(r[5]) for r in d2plot], color='blue', alpha=.6)
@@ -101,7 +128,7 @@ for db in dbs:
 		ax1.invert_yaxis()
 		xticks = ax1.xaxis.get_major_ticks()
 		xticks[0].label1.set_visible(False)
-		
+
 		ax2 = plt.subplot(gs[1])
 		ax2.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
 		ax2.barh(rnidx, [-math.log(r[2], 10) for r in d2plot], color='red', alpha = .6)

@@ -8,7 +8,7 @@ from . import params
 @description:
 	Generate a null distribution of conservation scores.
 @input:
-	`seed`: The seed to generate the random regions. Default: None 
+	`seed`: The seed to generate the random regions. Default: None
 @output:
 	`outfile:file`: A file with mean conservation scores sorted descendingly.
 @args:
@@ -95,6 +95,7 @@ pPromoters.errhow        = 'retry'
 pPromoters.args.notfound = 'skip' # error
 pPromoters.args.incbody  = False
 pPromoters.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
+pPromoters.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
 pPromoters.args.frm      = 'symbol, alias'
 pPromoters.args.cachedir = params.cachedir.value
 pPromoters.args.genome   = params.genome.value

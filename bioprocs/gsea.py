@@ -1,6 +1,5 @@
 from os import path
-from pyppl import Proc
-from .utils import txt, genenorm
+from pyppl import Proc, Box
 from . import params
 
 """
@@ -54,7 +53,7 @@ pExpmat2Gct.script = "file:scripts/gsea/pExpmat2Gct.py"
 pSampleinfo2Cls                    = Proc(desc = 'Convert sample infomation to cls file.')
 pSampleinfo2Cls.input              = 'sifile:file'
 pSampleinfo2Cls.output             = 'outfile:file:{{ in.sifile | fn }}.cls'
-pSampleinfo2Cls.envs.txtSampleinfo = txt.sampleinfo.py
+#pSampleinfo2Cls.envs.txtSampleinfo = txt.sampleinfo.py
 pSampleinfo2Cls.lang               = params.python.value
 pSampleinfo2Cls.script             = "file:scripts/gsea/pSampleinfo2Cls.py"
 
@@ -133,22 +132,22 @@ pGSEA.script    = "file:scripts/gsea/pGSEA.r"
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
-pEnrichr               = Proc()
-pEnrichr.input         = "infile:file"
-pEnrichr.output        = "outdir:dir:{{in.infile | fn}}.enrichr"
-pEnrichr.lang          = params.python.value
-pEnrichr.args.topn     = 10
-pEnrichr.args.col      = 0
-pEnrichr.args.delimit  = '\t'
-pEnrichr.args.dbs      = "KEGG_2016"
-pEnrichr.args.norm     = False
-pEnrichr.args.rmtags   = True
-pEnrichr.args.plot     = True
-pEnrichr.args.title    = "Gene enrichment: {db}"
-pEnrichr.args.tmpdir   = params.tmpdir.value
-pEnrichr.envs.genenorm = genenorm.py
-pEnrichr.errhow        = 'retry'
-pEnrichr.script        = "file:scripts/gsea/pEnrichr.py"
+pEnrichr                = Proc()
+pEnrichr.input          = "infile:file"
+pEnrichr.output         = "outdir:dir:{{in.infile | fn}}.enrichr"
+pEnrichr.lang           = params.python.value
+pEnrichr.args.inopts    = Box(delimit = '\t', skip = 0, comment = '#')
+pEnrichr.args.topn      = 10
+pEnrichr.args.genecol   = ''
+pEnrichr.args.dbs       = "KEGG_2016"
+pEnrichr.args.norm      = False
+pEnrichr.args.rmtags    = True
+pEnrichr.args.plot      = True
+pEnrichr.args.title     = "Gene enrichment: {db}"
+pEnrichr.args.cachedir  = params.cachedir.value
+#pEnrichr.envs.genenorm = genenorm.py
+pEnrichr.errhow         = 'retry'
+pEnrichr.script         = "file:scripts/gsea/pEnrichr.py"
 
 
 """
@@ -158,7 +157,7 @@ pEnrichr.script        = "file:scripts/gsea/pEnrichr.py"
 	Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene list
 @input:
 	`infile:file`: The target genes with regulators
-		- Format: 
+		- Format:
 		- Header is not required, but may specified in first line starting with `#`
 		- If only 3 columns are there, the 3rd column is anyway the relation!
 		- If only 4 columns are there, 3rd is target status, 4th is relation!
@@ -181,7 +180,7 @@ pEnrichr.script        = "file:scripts/gsea/pEnrichr.py"
 		- Must <= `enrn`. If `netn` >= `enrn`, `netn` = `enrn`
 	`title`     : The title for the plot. Default: "Gene enrichment: {db}"
 @requires:
-	[`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0) 
+	[`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0)
 	[`graphviz`](https://pypi.python.org/pypi/graphviz)
 """
 pTargetEnrichr               = Proc(desc = 'Do gene set enrichment analysis for target genes.')
@@ -197,7 +196,6 @@ pTargetEnrichr.args.netplot  = True
 pTargetEnrichr.args.netn     = 5
 pTargetEnrichr.args.title    = "Gene enrichment: {db}"
 pTargetEnrichr.args.tmpdir   = params.tmpdir.value
-pTargetEnrichr.envs.genenorm = genenorm.py
+#pTargetEnrichr.envs.genenorm = genenorm.py
 pTargetEnrichr.errhow        = 'retry'
 pTargetEnrichr.script        = "file:scripts/gsea/pTargetEnrichr.py"
-

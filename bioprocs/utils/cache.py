@@ -1,6 +1,11 @@
+import json
 from pyppl import Box
 from medoo import Medoo, Function, Field
 from . import alwaysList
+try:
+	string_types = (str, unicode)
+except NameError:
+	string_types = (str, )
 
 class Cache(object):
 
@@ -46,6 +51,13 @@ class Cache(object):
 					set(Cache._uniqueData(data, True)) - set(orig)
 				))),
 			result = lambda data: data if isinstance(data, list) or data is None else list(filter(None, data.split(Cache.ARRAY_DELIMIT)))
+		),
+		json = dict(
+			query  = lambda col, data: (col, [json.dumps(d, sort_keys = True) for d in set(data)]),
+			find   = lambda col, qitem, results: Cache._jsonFinder(col, qitem, results),
+			insert = lambda col, data: (col, json.dumps(data, sort_keys = True)),
+			update = lambda col, data, orig: (col, json.dumps(data, sort_keys = True)),
+			result = lambda data: data if not isinstance(data, string_types) else json.loads(data)
 		)
 	)
 
@@ -72,6 +84,14 @@ class Cache(object):
 			return ''
 
 	@staticmethod
+	def _jsonFinder(col, qitem, results):
+		ret = []
+		for result in results:
+			if qitem == result[col]:
+				ret.append(result)
+		return ret
+
+	@staticmethod
 	def _plainFinder(col, qitem, results, case = False):
 		ret = []
 		if case: qitem = qitem.upper()
@@ -94,7 +114,10 @@ class Cache(object):
 	@staticmethod
 	def _uniqueData(data, forceList = False):
 		if isinstance(data, list):
-			return list(set(data))
+			try:
+				return list(set(data))
+			except TypeError:
+				return data
 		elif forceList:
 			return [data]
 		else:
@@ -163,7 +186,11 @@ class Cache(object):
 		for key, val in data.items():
 			dummy = Cache._getDummy(key, dummies)
 			if 'result' in dummy:
-				data[key] = dummy['result'](val)
+				try:
+					data[key] = dummy['result'](val)
+				except TypeError:
+					print key, val
+					raise
 		return data
 
 	def _queryN(self, columns, data, dummies = None):

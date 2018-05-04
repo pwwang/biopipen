@@ -2,6 +2,7 @@
 # or pip install delegator.py
 import delegator
 import logging
+import sys
 from subprocess import list2cmdline
 
 class RuncmdException(Exception):
@@ -22,6 +23,10 @@ def getLogger(name = 'bioprocs', logfmt = "[%(asctime)s][%(levelname)7s] %(messa
 
 	logger.setLevel(level)
 	return logger
+
+def log2pyppl(msg, level = None):
+	level = '.' + level if level else ''
+	sys.stderr.write('pyppl.log%s:%s\n' % (level, msg))
 
 def alwaysList(l):
 	ret = []
