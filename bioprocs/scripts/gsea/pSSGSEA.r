@@ -1,5 +1,5 @@
 # Adopted from GSEA R package (GSEA.Gct2Frame2), read the GCT file
-readGCT <- function(filename = "NULL") { 
+readGCT <- function(filename = "NULL") {
       content <- readLines(filename)
       content <- content[-1]
       content <- content[-1]
@@ -39,19 +39,19 @@ readGMT <- function (filename = "NULL") {
 		line = line [-1]
 		line = line [-1] # desc
 		gs[[name]] = line
-		
-	} 
-	
+
+	}
+
 	return (gs)
 }
 
 # Calculate ES score, adopted from GSEA R package (GSEA.EnrichmentScore)
-EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{args.weightexp}}, correl.vector = NULL) {  
-	tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag) 
-	no.tag.indicator <- 1 - tag.indicator 
-	N <- length(gene.list) 
-	Nh <- length(gene.set) 
-	Nm <-  N - Nh 
+EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{args.weightexp}}, correl.vector = NULL) {
+	tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag)
+	no.tag.indicator <- 1 - tag.indicator
+	N <- length(gene.list)
+	Nh <- length(gene.set)
+	Nm <-  N - Nh
 	if (weighted.score.type == 0) {
 		correl.vector <- rep(1, N)
 	}
@@ -60,11 +60,11 @@ EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{args.we
 	sum.correl.tag    <- sum(correl.vector[tag.indicator == 1])
 	norm.tag    <- 1.0/sum.correl.tag
 	norm.no.tag <- 1.0/Nm
-	RES <- cumsum(tag.indicator * correl.vector * norm.tag - no.tag.indicator * norm.no.tag)      
+	RES <- cumsum(tag.indicator * correl.vector * norm.tag - no.tag.indicator * norm.no.tag)
 	max.ES <- max(RES)
 	min.ES <- min(RES)
 	if (is.na(max.ES) || is.na(min.ES)) {
-		return(list(ES = 0, arg.ES = 1, RES = RES, indicator = tag.indicator))   
+		return(list(ES = 0, arg.ES = 1, RES = RES, indicator = tag.indicator))
 	}
 	if (max.ES > - min.ES) {
 	#      ES <- max.ES
@@ -75,7 +75,7 @@ EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = {{args.we
 		ES <- signif(min.ES, digits=5)
 		arg.ES <- which.min(RES)
 	}
-	return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))    
+	return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
 }
 
 ESPlot = function (es, gs, outprefix) {
@@ -154,7 +154,7 @@ NPvalPlot = function (es, outprefix) {
 ESWithPerm = function (exp, gs, nperm = {{args.nperm}}) {
   exp      = exp[order(-exp[,1]),,drop=F]
   corrVec  = c (exp[,1])
-  
+
   geneList = rownames(exp)
   ret = list()
   for (gset in names(gs)) {
@@ -178,7 +178,7 @@ ESWithPerm = function (exp, gs, nperm = {{args.nperm}}) {
       }
     }
   }
-  
+
   return (ret)
 }
 
@@ -202,7 +202,7 @@ ExportResult = function (es, nes, outfile) {
 	pval = vector(length = 0, mode = "numeric")
 	fdr  = vector(length = 0, mode = "numeric")
 	maxI = integer(length = 0)
-	
+
 	for (gset in names(es)) {
 		esret = es[[gset]][[1]]
 		ES    = c (ES, esret$ES)
@@ -216,6 +216,8 @@ ExportResult = function (es, nes, outfile) {
 	write.table (outmat, outfile, sep= "\t", quote=F, col.names=T, row.names=T)
 	#write.table (es, outfile, append=T, sep= "\t", quote=F, col.names=T, row.names=T)
 }
+seed = {{args.seed}}
+if (seed > -1) set.seed(seed)
 dir.create("{{out.outdir}}", showWarnings = F, recursive = T)
 exp = readGCT("{{in.gctfile}}")
 gs  = readGMT("{{in.gmtfile}}")

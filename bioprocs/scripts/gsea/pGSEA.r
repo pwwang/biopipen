@@ -11,31 +11,31 @@
 
 # G S E A -- Gene Set Enrichment Analysis
 
-# Auxiliary functions and definitions 
+# Auxiliary functions and definitions
 
-GSEA.GeneRanking <- function(A, class.labels, gene.labels, nperm, permutation.type = 0, sigma.correction = "GeneCluster", fraction=1.0, replace=F, reverse.sign= F) { 
+GSEA.GeneRanking <- function(A, class.labels, gene.labels, nperm, permutation.type = 0, sigma.correction = "GeneCluster", fraction=1.0, replace=F, reverse.sign= F) {
 
-# This function ranks the genes according to the signal to noise ratio for the actual phenotype and also random permutations and bootstrap  
-# subsamples of both the observed and random phenotypes. It uses matrix operations to implement the signal to noise calculation 
-# in stages and achieves fast execution speed. It supports two types of permutations: random (unbalanced) and balanced. 
+# This function ranks the genes according to the signal to noise ratio for the actual phenotype and also random permutations and bootstrap
+# subsamples of both the observed and random phenotypes. It uses matrix operations to implement the signal to noise calculation
+# in stages and achieves fast execution speed. It supports two types of permutations: random (unbalanced) and balanced.
 # It also supports subsampling and bootstrap by using masking and multiple-count variables.  When "fraction" is set to 1 (default)
-# the there is no subsampling or boostrapping and the matrix of observed signal to noise ratios will have the same value for 
-# all permutations. This is wasteful but allows to support all the multiple options with the same code. Notice that the second 
-# matrix for the null distribution will still have the values for the random permutations 
+# the there is no subsampling or boostrapping and the matrix of observed signal to noise ratios will have the same value for
+# all permutations. This is wasteful but allows to support all the multiple options with the same code. Notice that the second
+# matrix for the null distribution will still have the values for the random permutations
 # (null distribution). This mode (fraction = 1.0) is the defaults, the recommended one and the one used in the examples.
-# It is also the one that has be tested more thoroughly. The resampling and boostrapping options are intersting to obtain 
-# smooth estimates of the observed distribution but its is left for the expert user who may want to perform some sanity 
+# It is also the one that has be tested more thoroughly. The resampling and boostrapping options are intersting to obtain
+# smooth estimates of the observed distribution but its is left for the expert user who may want to perform some sanity
 # checks before trusting the code.
 #
 # Inputs:
-#   A: Matrix of gene expression values (rows are genes, columns are samples) 
-#   class.labels: Phenotype of class disticntion of interest. A vector of binary labels having first the 1's and then the 0's 
-#   gene.labels: gene labels. Vector of probe ids or accession numbers for the rows of the expression matrix 
-#   nperm: Number of random permutations/bootstraps to perform 
-#   permutation.type: Permutation type: 0 = unbalanced, 1 = balanced. For experts only (default: 0) 
-#   sigma.correction: Correction to the signal to noise ratio (Default = GeneCluster, a choice to support the way it was handled in a previous package) 
-#   fraction: Subsampling fraction. Set to 1.0 (no resampling). For experts only (default: 1.0) 
-#   replace: Resampling mode (replacement or not replacement). For experts only (default: F) 
+#   A: Matrix of gene expression values (rows are genes, columns are samples)
+#   class.labels: Phenotype of class disticntion of interest. A vector of binary labels having first the 1's and then the 0's
+#   gene.labels: gene labels. Vector of probe ids or accession numbers for the rows of the expression matrix
+#   nperm: Number of random permutations/bootstraps to perform
+#   permutation.type: Permutation type: 0 = unbalanced, 1 = balanced. For experts only (default: 0)
+#   sigma.correction: Correction to the signal to noise ratio (Default = GeneCluster, a choice to support the way it was handled in a previous package)
+#   fraction: Subsampling fraction. Set to 1.0 (no resampling). For experts only (default: 1.0)
+#   replace: Resampling mode (replacement or not replacement). For experts only (default: F)
 #   reverse.sign: Reverse direction of gene list (default = F)
 #
 # Outputs:
@@ -158,25 +158,25 @@ GSEA.GeneRanking <- function(A, class.labels, gene.labels, nperm, permutation.ty
     }
 
 # compute S2N for the random permutation matrix
-     
+
      P <- reshuffled.class.labels1 * subset.mask
-     n1 <- sum(P[,1])         
+     n1 <- sum(P[,1])
      M1 <- A %*% P
-     M1 <- M1/n1      
+     M1 <- M1/n1
      gc()
-     A2 <- A*A        
-     S1 <- A2 %*% P   
-     S1 <- S1/n1 - M1*M1    
-     S1 <- sqrt(abs((n1/(n1-1)) * S1))   
+     A2 <- A*A
+     S1 <- A2 %*% P
+     S1 <- S1/n1 - M1*M1
+     S1 <- sqrt(abs((n1/(n1-1)) * S1))
      gc()
      P <- reshuffled.class.labels2 * subset.mask
-     n2 <- sum(P[,1])           
-     M2 <- A %*% P           
-     M2 <- M2/n2          
+     n2 <- sum(P[,1])
+     M2 <- A %*% P
+     M2 <- M2/n2
      gc()
-     A2 <- A*A           
-     S2 <- A2 %*% P      
-     S2 <- S2/n2 - M2*M2 
+     A2 <- A*A
+     S2 <- A2 %*% P
+     S2 <- S2/n2 - M2*M2
      S2 <- sqrt(abs((n2/(n2-1)) * S2))
      rm(P)
      rm(A2)
@@ -205,29 +205,29 @@ GSEA.GeneRanking <- function(A, class.labels, gene.labels, nperm, permutation.ty
      gc()
 
      for (r in 1:nperm) {
-        order.matrix[, r] <- order(s2n.matrix[, r], decreasing=T)            
+        order.matrix[, r] <- order(s2n.matrix[, r], decreasing=T)
      }
 
 # compute S2N for the "observed" permutation matrix
 
      P <- class.labels1 * subset.mask
-     n1 <- sum(P[,1])         
+     n1 <- sum(P[,1])
      M1 <- A %*% P
-     M1 <- M1/n1      
+     M1 <- M1/n1
      gc()
-     A2 <- A*A        
-     S1 <- A2 %*% P   
-     S1 <- S1/n1 - M1*M1    
-     S1 <- sqrt(abs((n1/(n1-1)) * S1))   
+     A2 <- A*A
+     S1 <- A2 %*% P
+     S1 <- S1/n1 - M1*M1
+     S1 <- sqrt(abs((n1/(n1-1)) * S1))
      gc()
      P <- class.labels2 * subset.mask
-     n2 <- sum(P[,1])           
-     M2 <- A %*% P           
-     M2 <- M2/n2          
+     n2 <- sum(P[,1])
+     M2 <- A %*% P
+     M2 <- M2/n2
      gc()
-     A2 <- A*A           
-     S2 <- A2 %*% P      
-     S2 <- S2/n2 - M2*M2 
+     A2 <- A*A
+     S2 <- A2 %*% P
+     S2 <- S2/n2 - M2*M2
      S2 <- sqrt(abs((n2/(n2-1)) * S2))
      rm(P)
      rm(A2)
@@ -239,7 +239,7 @@ GSEA.GeneRanking <- function(A, class.labels, gene.labels, nperm, permutation.ty
          S1 <- ifelse(0.2*abs(M1) < S1, S1, 0.2*abs(M1))
          S1 <- ifelse(S1 == 0, 0.2, S1)
          gc()
-     } 
+     }
 
      M1 <- M1 - M2
      rm(M2)
@@ -256,33 +256,33 @@ GSEA.GeneRanking <- function(A, class.labels, gene.labels, nperm, permutation.ty
      }
 
      for (r in 1:nperm) {
-        obs.order.matrix[,r] <- order(obs.s2n.matrix[,r], decreasing=T)            
+        obs.order.matrix[,r] <- order(obs.s2n.matrix[,r], decreasing=T)
      }
 
-     return(list(s2n.matrix = s2n.matrix, 
-                 obs.s2n.matrix = obs.s2n.matrix, 
+     return(list(s2n.matrix = s2n.matrix,
+                 obs.s2n.matrix = obs.s2n.matrix,
                  order.matrix = order.matrix,
                  obs.order.matrix = obs.order.matrix))
 }
 
-GSEA.EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = 1, correl.vector = NULL) {  
+GSEA.EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = 1, correl.vector = NULL) {
 #
-# Computes the weighted GSEA score of gene.set in gene.list. 
-# The weighted score type is the exponent of the correlation 
-# weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted). When the score type is 1 or 2 it is 
+# Computes the weighted GSEA score of gene.set in gene.list.
+# The weighted score type is the exponent of the correlation
+# weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted). When the score type is 1 or 2 it is
 # necessary to input the correlation vector with the values in the same order as in the gene list.
 #
 # Inputs:
-#   gene.list: The ordered gene list (e.g. integers indicating the original position in the input dataset)  
-#   gene.set: A gene set (e.g. integers indicating the location of those genes in the input dataset) 
-#   weighted.score.type: Type of score: weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted)  
-#  correl.vector: A vector with the coorelations (e.g. signal to noise scores) corresponding to the genes in the gene list 
+#   gene.list: The ordered gene list (e.g. integers indicating the original position in the input dataset)
+#   gene.set: A gene set (e.g. integers indicating the location of those genes in the input dataset)
+#   weighted.score.type: Type of score: weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted)
+#  correl.vector: A vector with the coorelations (e.g. signal to noise scores) corresponding to the genes in the gene list
 #
 # Outputs:
-#   ES: Enrichment score (real number between -1 and +1) 
-#   arg.ES: Location in gene.list where the peak running enrichment occurs (peak of the "mountain") 
-#   RES: Numerical vector containing the running enrichment score for all locations in the gene list 
-#   tag.indicator: Binary vector indicating the location of the gene sets (1's) in the gene list 
+#   ES: Enrichment score (real number between -1 and +1)
+#   arg.ES: Location in gene.list where the peak running enrichment occurs (peak of the "mountain")
+#   RES: Numerical vector containing the running enrichment score for all locations in the gene list
+#   tag.indicator: Binary vector indicating the location of the gene sets (1's) in the gene list
 #
 # The Broad Institute
 # SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -294,11 +294,11 @@ GSEA.EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = 1, c
 # whatsoever. Neither the Broad Institute nor MIT can be responsible for
 # its use, misuse, or functionality.
 
-   tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag) 
-   no.tag.indicator <- 1 - tag.indicator 
-   N <- length(gene.list) 
-   Nh <- length(gene.set) 
-   Nm <-  N - Nh 
+   tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag)
+   no.tag.indicator <- 1 - tag.indicator
+   N <- length(gene.list)
+   Nh <- length(gene.set)
+   Nm <-  N - Nh
    if (weighted.score.type == 0) {
       correl.vector <- rep(1, N)
    }
@@ -307,7 +307,7 @@ GSEA.EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = 1, c
    sum.correl.tag    <- sum(correl.vector[tag.indicator == 1])
    norm.tag    <- 1.0/sum.correl.tag
    norm.no.tag <- 1.0/Nm
-   RES <- cumsum(tag.indicator * correl.vector * norm.tag - no.tag.indicator * norm.no.tag)      
+   RES <- cumsum(tag.indicator * correl.vector * norm.tag - no.tag.indicator * norm.no.tag)
    max.ES <- max(RES)
    min.ES <- min(RES)
    if (max.ES > -min.ES) {
@@ -319,23 +319,23 @@ GSEA.EnrichmentScore <- function(gene.list, gene.set, weighted.score.type = 1, c
       ES <- signif(min.ES, digits=5)
       arg.ES <- which.min(RES)
    }
-   return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))    
+   return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
 }
 
 
-OLD.GSEA.EnrichmentScore <- function(gene.list, gene.set) {  
+OLD.GSEA.EnrichmentScore <- function(gene.list, gene.set) {
 #
-# Computes the original GSEA score from Mootha et al 2003 of gene.set in gene.list 
+# Computes the original GSEA score from Mootha et al 2003 of gene.set in gene.list
 #
 # Inputs:
-#   gene.list: The ordered gene list (e.g. integers indicating the original position in the input dataset)  
-#   gene.set: A gene set (e.g. integers indicating the location of those genes in the input dataset) 
+#   gene.list: The ordered gene list (e.g. integers indicating the original position in the input dataset)
+#   gene.set: A gene set (e.g. integers indicating the location of those genes in the input dataset)
 #
 # Outputs:
-#   ES: Enrichment score (real number between -1 and +1) 
-#   arg.ES: Location in gene.list where the peak running enrichment occurs (peak of the "mountain") 
-#   RES: Numerical vector containing the running enrichment score for all locations in the gene list 
-#   tag.indicator: Binary vector indicating the location of the gene sets (1's) in the gene list 
+#   ES: Enrichment score (real number between -1 and +1)
+#   arg.ES: Location in gene.list where the peak running enrichment occurs (peak of the "mountain")
+#   RES: Numerical vector containing the running enrichment score for all locations in the gene list
+#   tag.indicator: Binary vector indicating the location of the gene sets (1's) in the gene list
 #
 # The Broad Institute
 # SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -347,16 +347,16 @@ OLD.GSEA.EnrichmentScore <- function(gene.list, gene.set) {
 # whatsoever. Neither the Broad Institute nor MIT can be responsible for
 # its use, misuse, or functionality.
 
-   tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag) 
-   no.tag.indicator <- 1 - tag.indicator 
-   N <- length(gene.list) 
-   Nh <- length(gene.set) 
-   Nm <-  N - Nh 
+   tag.indicator <- sign(match(gene.list, gene.set, nomatch=0))    # notice that the sign is 0 (no tag) or 1 (tag)
+   no.tag.indicator <- 1 - tag.indicator
+   N <- length(gene.list)
+   Nh <- length(gene.set)
+   Nm <-  N - Nh
 
    norm.tag    <- sqrt((N - Nh)/Nh)
    norm.no.tag <- sqrt(Nh/(N - Nh))
 
-   RES <- cumsum(tag.indicator * norm.tag - no.tag.indicator * norm.no.tag)      
+   RES <- cumsum(tag.indicator * norm.tag - no.tag.indicator * norm.no.tag)
    max.ES <- max(RES)
    min.ES <- min(RES)
    if (max.ES > - min.ES) {
@@ -366,27 +366,27 @@ OLD.GSEA.EnrichmentScore <- function(gene.list, gene.set) {
       ES <- signif(min.ES, digits=5)
       arg.ES <- which.min(RES)
    }
-   return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))    
+   return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
 }
 
-GSEA.EnrichmentScore2 <- function(gene.list, gene.set, weighted.score.type = 1, correl.vector = NULL) {  
+GSEA.EnrichmentScore2 <- function(gene.list, gene.set, weighted.score.type = 1, correl.vector = NULL) {
 #
-# Computes the weighted GSEA score of gene.set in gene.list. It is the same calculation as in 
+# Computes the weighted GSEA score of gene.set in gene.list. It is the same calculation as in
 # GSEA.EnrichmentScore but faster (x8) without producing the RES, arg.RES and tag.indicator outputs.
-# This call is intended to be used to asses the enrichment of random permutations rather than the 
+# This call is intended to be used to asses the enrichment of random permutations rather than the
 # observed one.
-# The weighted score type is the exponent of the correlation 
-# weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted). When the score type is 1 or 2 it is 
+# The weighted score type is the exponent of the correlation
+# weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted). When the score type is 1 or 2 it is
 # necessary to input the correlation vector with the values in the same order as in the gene list.
 #
 # Inputs:
-#   gene.list: The ordered gene list (e.g. integers indicating the original position in the input dataset)  
-#   gene.set: A gene set (e.g. integers indicating the location of those genes in the input dataset) 
-#   weighted.score.type: Type of score: weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted)  
-#  correl.vector: A vector with the coorelations (e.g. signal to noise scores) corresponding to the genes in the gene list 
+#   gene.list: The ordered gene list (e.g. integers indicating the original position in the input dataset)
+#   gene.set: A gene set (e.g. integers indicating the location of those genes in the input dataset)
+#   weighted.score.type: Type of score: weight: 0 (unweighted = Kolmogorov-Smirnov), 1 (weighted), and 2 (over-weighted)
+#  correl.vector: A vector with the coorelations (e.g. signal to noise scores) corresponding to the genes in the gene list
 #
 # Outputs:
-#   ES: Enrichment score (real number between -1 and +1) 
+#   ES: Enrichment score (real number between -1 and +1)
 #
 # The Broad Institute
 # SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -398,9 +398,9 @@ GSEA.EnrichmentScore2 <- function(gene.list, gene.set, weighted.score.type = 1, 
 # whatsoever. Neither the Broad Institute nor MIT can be responsible for
 # its use, misuse, or functionality.
 
-   N <- length(gene.list) 
-   Nh <- length(gene.set) 
-   Nm <-  N - Nh 
+   N <- length(gene.list)
+   Nh <- length(gene.set)
+   Nm <-  N - Nh
 
    loc.vector <- vector(length=N, mode="numeric")
    peak.res.vector <- vector(length=Nh, mode="numeric")
@@ -430,7 +430,7 @@ GSEA.EnrichmentScore2 <- function(gene.list, gene.set, weighted.score.type = 1, 
    norm.tag <- 1.0/sum(tag.correl.vector)
    tag.correl.vector <- tag.correl.vector * norm.tag
    norm.no.tag <- 1.0/Nm
-   tag.diff.vector[1] <- (tag.loc.vector[1] - 1) 
+   tag.diff.vector[1] <- (tag.loc.vector[1] - 1)
    tag.diff.vector[2:Nh] <- tag.loc.vector[2:Nh] - tag.loc.vector[1:(Nh - 1)] - 1
    tag.diff.vector <- tag.diff.vector * norm.no.tag
    peak.res.vector <- cumsum(tag.correl.vector - tag.diff.vector)
@@ -504,7 +504,7 @@ GSEA.HeatMapPlot <- function(V, row.names = F, col.labels, col.classes, col.name
 	return()
 }
 
-GSEA.Res2Frame <- function(filename = "NULL") { 
+GSEA.Res2Frame <- function(filename = "NULL") {
 #
 # Reads a gene expression dataset in RES format and converts it into an R data frame
 #
@@ -533,7 +533,7 @@ GSEA.Res2Frame <- function(filename = "NULL") {
    return(table1)
 }
 
-GSEA.Gct2Frame <- function(filename = "NULL") { 
+GSEA.Gct2Frame <- function(filename = "NULL") {
 #
 # Reads a gene expression dataset in GCT format and converts it into an R data frame
 #
@@ -551,7 +551,7 @@ GSEA.Gct2Frame <- function(filename = "NULL") {
    return(ds)
 }
 
-GSEA.Gct2Frame2 <- function(filename = "NULL") { 
+GSEA.Gct2Frame2 <- function(filename = "NULL") {
 #
 # Reads a gene expression dataset in GCT format and converts it into an R data frame
 #
@@ -593,7 +593,7 @@ GSEA.Gct2Frame2 <- function(filename = "NULL") {
       return(ds)
 }
 
-GSEA.ReadClsFile <- function(file = "NULL") { 
+GSEA.ReadClsFile <- function(file = "NULL") {
 #
 # Reads a class vector CLS file and defines phenotype and class labels vectors for the samples in a gene expression file (RES or GCT format)
 #
@@ -630,7 +630,7 @@ GSEA.ReadClsFile <- function(file = "NULL") {
       return(list(phen = phen, class.v = class.v))
 }
 
-GSEA.Threshold <- function(V, thres, ceil) { 
+GSEA.Threshold <- function(V, thres, ceil) {
 #
 # Threshold and ceiling pre-processing for gene expression matrix
 #
@@ -649,7 +649,7 @@ GSEA.Threshold <- function(V, thres, ceil) {
         return(V)
 }
 
-GSEA.VarFilter <- function(V, fold, delta, gene.names = "NULL") { 
+GSEA.VarFilter <- function(V, fold, delta, gene.names = "NULL") {
 #
 # Variation filter pre-processing for gene expression matrix
 #
@@ -693,7 +693,7 @@ GSEA.VarFilter <- function(V, fold, delta, gene.names = "NULL") {
         }
 }
 
-GSEA.NormalizeRows <- function(V) { 
+GSEA.NormalizeRows <- function(V) {
 #
 # Stardardize rows of a gene expression matrix
 #
@@ -720,7 +720,7 @@ GSEA.NormalizeRows <- function(V) {
         return(V)
 }
 
-GSEA.NormalizeCols <- function(V) { 
+GSEA.NormalizeCols <- function(V) {
 #
 # Stardardize columns of a gene expression matrix
 #
@@ -753,83 +753,83 @@ GSEA.NormalizeCols <- function(V) {
 # Main GSEA Analysis Function that implements the entire methodology
 
 GSEA <- function(
-input.ds, 
-input.cls, 
-gene.ann = "", 
-gs.db, 
+input.ds,
+input.cls,
+gene.ann = "",
+gs.db,
 gs.ann = "",
-output.directory = "", 
-doc.string = "GSEA.analysis", 
-non.interactive.run = F, 
-reshuffling.type = "sample.labels", 
-nperm = 1000, 
-weighted.score.type = 1, 
-nom.p.val.threshold = -1, 
-fwer.p.val.threshold = -1, 
-fdr.q.val.threshold = 0.25, 
+output.directory = "",
+doc.string = "GSEA.analysis",
+non.interactive.run = F,
+reshuffling.type = "sample.labels",
+nperm = 1000,
+weighted.score.type = 1,
+nom.p.val.threshold = -1,
+fwer.p.val.threshold = -1,
+fdr.q.val.threshold = 0.25,
 topgs = 10,
-adjust.FDR.q.val = F, 
-gs.size.threshold.min = 25, 
-gs.size.threshold.max = 500, 
-reverse.sign = F, 
-preproc.type = 0, 
-random.seed = 123456, 
-perm.type = 0, 
-fraction = 1.0, 
+adjust.FDR.q.val = F,
+gs.size.threshold.min = 25,
+gs.size.threshold.max = 500,
+reverse.sign = F,
+preproc.type = 0,
+random.seed = 123456,
+perm.type = 0,
+fraction = 1.0,
 replace = F,
 save.intermediate.results = F,
 OLD.GSEA = F,
 use.fast.enrichment.routine = T) {
 
-# This is a methodology for the analysis of global molecular profiles called Gene Set Enrichment Analysis (GSEA). It determines 
-# whether an a priori defined set of genes shows statistically significant, concordant differences between two biological 
-# states (e.g. phenotypes). GSEA operates on all genes from an experiment, rank ordered by the signal to noise ratio and 
-# determines whether members of an a priori defined gene set are nonrandomly distributed towards the top or bottom of the 
-# list and thus may correspond to an important biological process. To assess significance the program uses an empirical 
-# permutation procedure to test deviation from random that preserves correlations between genes. 
+# This is a methodology for the analysis of global molecular profiles called Gene Set Enrichment Analysis (GSEA). It determines
+# whether an a priori defined set of genes shows statistically significant, concordant differences between two biological
+# states (e.g. phenotypes). GSEA operates on all genes from an experiment, rank ordered by the signal to noise ratio and
+# determines whether members of an a priori defined gene set are nonrandomly distributed towards the top or bottom of the
+# list and thus may correspond to an important biological process. To assess significance the program uses an empirical
+# permutation procedure to test deviation from random that preserves correlations between genes.
 #
 # For details see Subramanian et al 2005
 #
 # Inputs:
-#   input.ds: Input gene expression Affymetrix dataset file in RES or GCT format 
-#   input.cls:  Input class vector (phenotype) file in CLS format 
-#   gene.ann.file: Gene microarray annotation file (Affymetrix Netaffyx *.csv format) (default: none) 
-#   gs.file: Gene set database in GMT format 
-#   output.directory: Directory where to store output and results (default: .) 
-#   doc.string:  Documentation string used as a prefix to name result files (default: "GSEA.analysis") 
-#   non.interactive.run: Run in interactive (i.e. R GUI) or batch (R command line) mode (default: F) 
-#   reshuffling.type: Type of permutation reshuffling: "sample.labels" or "gene.labels" (default: "sample.labels") 
-#   nperm: Number of random permutations (default: 1000) 
-#   weighted.score.type: Enrichment correlation-based weighting: 0=no weight (KS), 1=standard weigth, 2 = over-weigth (default: 1) 
-#   nom.p.val.threshold: Significance threshold for nominal p-vals for gene sets (default: -1, no thres) 
-#   fwer.p.val.threshold: Significance threshold for FWER p-vals for gene sets (default: -1, no thres) 
-#   fdr.q.val.threshold: Significance threshold for FDR q-vals for gene sets (default: 0.25) 
-#   topgs: Besides those passing test, number of top scoring gene sets used for detailed reports (default: 10) 
-#   adjust.FDR.q.val: Adjust the FDR q-vals (default: F) 
-#   gs.size.threshold.min: Minimum size (in genes) for database gene sets to be considered (default: 25) 
-#   gs.size.threshold.max: Maximum size (in genes) for database gene sets to be considered (default: 500) 
-#   reverse.sign: Reverse direction of gene list (pos. enrichment becomes negative, etc.) (default: F) 
-#   preproc.type: Preprocessing normalization: 0=none, 1=col(z-score)., 2=col(rank) and row(z-score)., 3=col(rank). (default: 0) 
-#   random.seed: Random number generator seed. (default: 123456) 
-#   perm.type: Permutation type: 0 = unbalanced, 1 = balanced. For experts only (default: 0) 
-#   fraction: Subsampling fraction. Set to 1.0 (no resampling). For experts only (default: 1.0) 
-#   replace: Resampling mode (replacement or not replacement). For experts only (default: F) 
+#   input.ds: Input gene expression Affymetrix dataset file in RES or GCT format
+#   input.cls:  Input class vector (phenotype) file in CLS format
+#   gene.ann.file: Gene microarray annotation file (Affymetrix Netaffyx *.csv format) (default: none)
+#   gs.file: Gene set database in GMT format
+#   output.directory: Directory where to store output and results (default: .)
+#   doc.string:  Documentation string used as a prefix to name result files (default: "GSEA.analysis")
+#   non.interactive.run: Run in interactive (i.e. R GUI) or batch (R command line) mode (default: F)
+#   reshuffling.type: Type of permutation reshuffling: "sample.labels" or "gene.labels" (default: "sample.labels")
+#   nperm: Number of random permutations (default: 1000)
+#   weighted.score.type: Enrichment correlation-based weighting: 0=no weight (KS), 1=standard weigth, 2 = over-weigth (default: 1)
+#   nom.p.val.threshold: Significance threshold for nominal p-vals for gene sets (default: -1, no thres)
+#   fwer.p.val.threshold: Significance threshold for FWER p-vals for gene sets (default: -1, no thres)
+#   fdr.q.val.threshold: Significance threshold for FDR q-vals for gene sets (default: 0.25)
+#   topgs: Besides those passing test, number of top scoring gene sets used for detailed reports (default: 10)
+#   adjust.FDR.q.val: Adjust the FDR q-vals (default: F)
+#   gs.size.threshold.min: Minimum size (in genes) for database gene sets to be considered (default: 25)
+#   gs.size.threshold.max: Maximum size (in genes) for database gene sets to be considered (default: 500)
+#   reverse.sign: Reverse direction of gene list (pos. enrichment becomes negative, etc.) (default: F)
+#   preproc.type: Preprocessing normalization: 0=none, 1=col(z-score)., 2=col(rank) and row(z-score)., 3=col(rank). (default: 0)
+#   random.seed: Random number generator seed. (default: 123456)
+#   perm.type: Permutation type: 0 = unbalanced, 1 = balanced. For experts only (default: 0)
+#   fraction: Subsampling fraction. Set to 1.0 (no resampling). For experts only (default: 1.0)
+#   replace: Resampling mode (replacement or not replacement). For experts only (default: F)
 #   OLD.GSEA: if TRUE compute the OLD GSEA of Mootha et al 2003
-#   use.fast.enrichment.routine: if true it uses a faster version to compute random perm. enrichment "GSEA.EnrichmentScore2"  
+#   use.fast.enrichment.routine: if true it uses a faster version to compute random perm. enrichment "GSEA.EnrichmentScore2"
 #
 #   Output:
-#    The results of the method are stored in the "output.directory" specified by the user as part of the input parameters. 
+#    The results of the method are stored in the "output.directory" specified by the user as part of the input parameters.
 #      The results files are:
-#    - Two tab-separated global result text files (one for each phenotype). These files are labeled according to the doc 
+#    - Two tab-separated global result text files (one for each phenotype). These files are labeled according to the doc
 #      string prefix and the phenotype name from the CLS file: <doc.string>.SUMMARY.RESULTS.REPORT.<phenotype>.txt
-#    - One set of global plots. They include a.- gene list correlation profile, b.- global observed and null densities, c.- heat map 
-#      for the entire sorted dataset, and d.- p-values vs. NES plot. These plots are in a single JPEG file named 
+#    - One set of global plots. They include a.- gene list correlation profile, b.- global observed and null densities, c.- heat map
+#      for the entire sorted dataset, and d.- p-values vs. NES plot. These plots are in a single JPEG file named
 #      <doc.string>.global.plots.<phenotype>.jpg. When the program is run interactively these plots appear on a window in the R GUI.
-#    - A variable number of tab-separated gene result text files according to how many sets pass any of the significance thresholds 
-#      ("nom.p.val.threshold," "fwer.p.val.threshold," and "fdr.q.val.threshold") and how many are specified in the "topgs" 
-#      parameter. These files are named: <doc.string>.<gene set name>.report.txt. 
+#    - A variable number of tab-separated gene result text files according to how many sets pass any of the significance thresholds
+#      ("nom.p.val.threshold," "fwer.p.val.threshold," and "fdr.q.val.threshold") and how many are specified in the "topgs"
+#      parameter. These files are named: <doc.string>.<gene set name>.report.txt.
 #   - A variable number of gene set plots (one for each gene set report file). These plots include a.- Gene set running enrichment
-#      "mountain" plot, b.- gene set null distribution and c.- heat map for genes in the gene set. These plots are stored in a 
+#      "mountain" plot, b.- gene set null distribution and c.- heat map for genes in the gene set. These plots are stored in a
 #      single JPEG file named <doc.string>.<gene set name>.jpg.
 #  The format (columns) for the global result files is as follows.
 #  GS : Gene set name.
@@ -845,11 +845,11 @@ use.fast.enrichment.routine = T) {
 # Signal : enrichment signal strength.
 # FDR (median): FDR q-values from the median of the null distributions.
 # glob.p.val: P-value using a global statistic (number of sets above the set's NES).
-# 
+#
 # The rows are sorted by the NES values (from maximum positive or negative NES to minimum)
-# 
+#
 # The format (columns) for the gene set result files is as follows.
-# 
+#
 # #: Gene number in the (sorted) gene set
 # GENE : gene name. For example the probe accession number, gene symbol or the gene identifier gin the dataset.
 # SYMBOL : gene symbol from the gene annotation file.
@@ -858,11 +858,11 @@ use.fast.enrichment.routine = T) {
 # S2N : signal to noise ratio (correlation) of the gene in the gene list.
 # RES : value of the running enrichment score at the gene location.
 # CORE_ENRICHMENT: is this gene is the "core enrichment" section of the list? Yes or No variable specifying in the gene location is before (positive ES) or after (negative ES) the running enrichment peak.
-# 
+#
 # The rows are sorted by the gene location in the gene list.
 # The function call to GSEA returns a  two element list containing the two global result reports as data frames ($report1, $report2).
-# 
-# results1: Global output report for first phenotype 
+#
+# results1: Global output report for first phenotype
 # result2:  Global putput report for second phenotype
 #
 # The Broad Institute
@@ -885,7 +885,7 @@ if (OLD.GSEA == T) {
 
 if (output.directory != "")  {
 
-filename <- paste(output.directory, doc.string, "_params.txt", sep="", collapse="")  
+filename <- paste(output.directory, doc.string, "_params.txt", sep="", collapse="")
 
 time.string <- as.character(as.POSIXlt(Sys.time(),"GMT"))
 write(paste("Run of GSEA on ", time.string), file=filename)
@@ -896,47 +896,47 @@ if (is.data.frame(input.ds)) {
       write(paste("input.ds=", input.ds, sep=" "), file=filename, append=T)
 }
 if (is.list(input.cls)) {
-#      write(paste("input.cls=", input.cls, sep=" "), file=filename, append=T) 
+#      write(paste("input.cls=", input.cls, sep=" "), file=filename, append=T)
 } else {
-      write(paste("input.cls=", input.cls, sep=" "), file=filename, append=T) 
+      write(paste("input.cls=", input.cls, sep=" "), file=filename, append=T)
 }
 if (is.data.frame(gene.ann)) {
-#    write(paste("gene.ann =", gene.ann, sep=" "), file=filename, append=T) 
+#    write(paste("gene.ann =", gene.ann, sep=" "), file=filename, append=T)
 } else {
-    write(paste("gene.ann =", gene.ann, sep=" "), file=filename, append=T) 
+    write(paste("gene.ann =", gene.ann, sep=" "), file=filename, append=T)
 }
  if (regexpr(pattern=".gmt", gs.db[1]) == -1) {
-#   write(paste("gs.db=", gs.db, sep=" "), file=filename, append=T) 
+#   write(paste("gs.db=", gs.db, sep=" "), file=filename, append=T)
 } else {
-   write(paste("gs.db=", gs.db, sep=" "), file=filename, append=T) 
+   write(paste("gs.db=", gs.db, sep=" "), file=filename, append=T)
 }
 if (is.data.frame(gs.ann)) {
-#    write(paste("gene.ann =", gene.ann, sep=" "), file=filename, append=T) 
+#    write(paste("gene.ann =", gene.ann, sep=" "), file=filename, append=T)
 } else {
-    write(paste("gs.ann =", gs.ann, sep=" "), file=filename, append=T) 
+    write(paste("gs.ann =", gs.ann, sep=" "), file=filename, append=T)
 }
-write(paste("output.directory =", output.directory, sep=" "), file=filename, append=T) 
-write(paste("doc.string = ", doc.string, sep=" "), file=filename, append=T) 
-write(paste("non.interactive.run =", non.interactive.run, sep=" "), file=filename, append=T) 
-write(paste("reshuffling.type =", reshuffling.type, sep=" "), file=filename, append=T) 
-write(paste("nperm =", nperm, sep=" "), file=filename, append=T) 
-write(paste("weighted.score.type =", weighted.score.type, sep=" "), file=filename, append=T) 
-write(paste("nom.p.val.threshold =", nom.p.val.threshold, sep=" "), file=filename, append=T) 
-write(paste("fwer.p.val.threshold =", fwer.p.val.threshold, sep=" "), file=filename, append=T) 
-write(paste("fdr.q.val.threshold =", fdr.q.val.threshold, sep=" "), file=filename, append=T) 
+write(paste("output.directory =", output.directory, sep=" "), file=filename, append=T)
+write(paste("doc.string = ", doc.string, sep=" "), file=filename, append=T)
+write(paste("non.interactive.run =", non.interactive.run, sep=" "), file=filename, append=T)
+write(paste("reshuffling.type =", reshuffling.type, sep=" "), file=filename, append=T)
+write(paste("nperm =", nperm, sep=" "), file=filename, append=T)
+write(paste("weighted.score.type =", weighted.score.type, sep=" "), file=filename, append=T)
+write(paste("nom.p.val.threshold =", nom.p.val.threshold, sep=" "), file=filename, append=T)
+write(paste("fwer.p.val.threshold =", fwer.p.val.threshold, sep=" "), file=filename, append=T)
+write(paste("fdr.q.val.threshold =", fdr.q.val.threshold, sep=" "), file=filename, append=T)
 write(paste("topgs =", topgs, sep=" "), file=filename, append=T)
-write(paste("adjust.FDR.q.val =", adjust.FDR.q.val, sep=" "), file=filename, append=T) 
-write(paste("gs.size.threshold.min =", gs.size.threshold.min, sep=" "), file=filename, append=T) 
-write(paste("gs.size.threshold.max =", gs.size.threshold.max, sep=" "), file=filename, append=T) 
-write(paste("reverse.sign =", reverse.sign, sep=" "), file=filename, append=T) 
-write(paste("preproc.type =", preproc.type, sep=" "), file=filename, append=T) 
-write(paste("random.seed =", random.seed, sep=" "), file=filename, append=T) 
-write(paste("perm.type =", perm.type, sep=" "), file=filename, append=T) 
-write(paste("fraction =", fraction, sep=" "), file=filename, append=T) 
+write(paste("adjust.FDR.q.val =", adjust.FDR.q.val, sep=" "), file=filename, append=T)
+write(paste("gs.size.threshold.min =", gs.size.threshold.min, sep=" "), file=filename, append=T)
+write(paste("gs.size.threshold.max =", gs.size.threshold.max, sep=" "), file=filename, append=T)
+write(paste("reverse.sign =", reverse.sign, sep=" "), file=filename, append=T)
+write(paste("preproc.type =", preproc.type, sep=" "), file=filename, append=T)
+write(paste("random.seed =", random.seed, sep=" "), file=filename, append=T)
+write(paste("perm.type =", perm.type, sep=" "), file=filename, append=T)
+write(paste("fraction =", fraction, sep=" "), file=filename, append=T)
 write(paste("replace =", replace, sep=" "), file=filename, append=T)
 }
 
-# Start of GSEA methodology 
+# Start of GSEA methodology
 
   if (.Platform$OS.type == "windows") {
       memory.limit(6000000000)
@@ -966,7 +966,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
   gene.labels <- row.names(dataset)
   sample.names <- names(dataset)
   A <- data.matrix(dataset)
-  dim(A) 
+  dim(A)
   cols <- length(A[1,])
   rows <- length(A[,1])
 
@@ -974,7 +974,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
 
  if (preproc.type == 1) {  # Column normalize (Z-score)
     A <- GSEA.NormalizeCols(A)
- } else if (preproc.type == 2) { # Column (rank) and row (Z-score) normalize 
+ } else if (preproc.type == 2) { # Column (rank) and row (Z-score) normalize
     for (j in 1:cols) {  # column rank normalization
         A[,j] <- rank(A[,j])
     }
@@ -1004,7 +1004,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
   }
 
   # sort samples according to phenotype
- 
+
  col.index <- order(class.labels, decreasing=F)
  class.labels <- class.labels[col.index]
  sample.names <- sample.names[col.index]
@@ -1012,7 +1012,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
     A[j, ] <- A[j, col.index]
  }
  names(A) <- sample.names
- 
+
   # Read input gene set database
 
  if (regexpr(pattern=".gmt", gs.db[1]) == -1) {
@@ -1022,12 +1022,12 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
  }
 
       max.Ng <- length(temp)
-      temp.size.G <- vector(length = max.Ng, mode = "numeric") 
+      temp.size.G <- vector(length = max.Ng, mode = "numeric")
       for (i in 1:max.Ng) {
           temp.size.G[i] <- length(unlist(strsplit(temp[[i]], "\t"))) - 2
       }
 
-      max.size.G <- max(temp.size.G)      
+      max.size.G <- max(temp.size.G)
       gs <- matrix(rep("null", max.Ng*max.size.G), nrow=max.Ng, ncol= max.size.G)
       temp.names <- vector(length = max.Ng, mode = "character")
       temp.desc <- vector(length = max.Ng, mode = "character")
@@ -1035,12 +1035,12 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
       for (i in 1:max.Ng) {
           gene.set.size <- length(unlist(strsplit(temp[[i]], "\t"))) - 2
           gs.line <- noquote(unlist(strsplit(temp[[i]], "\t")))
-          gene.set.name <- gs.line[1] 
-          gene.set.desc <- gs.line[2] 
+          gene.set.name <- gs.line[1]
+          gene.set.desc <- gs.line[2]
           gene.set.tags <- vector(length = gene.set.size, mode = "character")
           for (j in 1:gene.set.size) {
               gene.set.tags[j] <- gs.line[j + 2]
-          } 
+          }
           existing.set <- is.element(gene.set.tags, gene.labels)
           set.size <- length(existing.set[existing.set == T])
           if ((set.size < gs.size.threshold.min) || (set.size > gs.size.threshold.max)) next
@@ -1049,13 +1049,13 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
           temp.names[gs.count] <- gene.set.name
           temp.desc[gs.count] <- gene.set.desc
           gs.count <- gs.count + 1
-      } 
+      }
       Ng <- gs.count - 1
       gs.names <- vector(length = Ng, mode = "character")
       gs.desc <- vector(length = Ng, mode = "character")
-      size.G <- vector(length = Ng, mode = "numeric") 
+      size.G <- vector(length = Ng, mode = "numeric")
       gs.names <- temp.names[1:Ng]
-      gs.desc <- temp.desc[1:Ng] 
+      gs.desc <- temp.desc[1:Ng]
       size.G <- temp.size.G[1:Ng]
 
   N <- length(A[,1])
@@ -1069,14 +1069,14 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
 
 # Read gene and gene set annotations if gene annotation file was provided
 
-  all.gene.descs <- vector(length = N, mode ="character") 
-  all.gene.symbols <- vector(length = N, mode ="character") 
-  all.gs.descs <- vector(length = Ng, mode ="character") 
+  all.gene.descs <- vector(length = N, mode ="character")
+  all.gene.symbols <- vector(length = N, mode ="character")
+  all.gs.descs <- vector(length = Ng, mode ="character")
 
   if (is.data.frame(gene.ann)) {
      temp <- gene.ann
      a.size <- length(temp[,1])
-     print(c("Number of gene annotation file entries:", a.size))  
+     print(c("Number of gene annotation file entries:", a.size))
      accs <- as.character(temp[,1])
      locs <- match(gene.labels, accs)
      all.gene.descs <- as.character(temp[locs, "Gene.Title"])
@@ -1090,7 +1090,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
   } else {
      temp <- read.delim(gene.ann, header=T, sep=",", comment.char="", as.is=T)
      a.size <- length(temp[,1])
-     print(c("Number of gene annotation file entries:", a.size))  
+     print(c("Number of gene annotation file entries:", a.size))
      accs <- as.character(temp[,1])
      locs <- match(gene.labels, accs)
      all.gene.descs <- as.character(temp[locs, "Gene.Title"])
@@ -1101,7 +1101,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
   if (is.data.frame(gs.ann)) {
      temp <- gs.ann
      a.size <- length(temp[,1])
-     print(c("Number of gene set annotation file entries:", a.size))  
+     print(c("Number of gene set annotation file entries:", a.size))
      accs <- as.character(temp[,1])
      locs <- match(gs.names, accs)
      all.gs.descs <- as.character(temp[locs, "SOURCE"])
@@ -1113,14 +1113,14 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
   } else {
      temp <- read.delim(gs.ann, header=T, sep="\t", comment.char="", as.is=T)
      a.size <- length(temp[,1])
-     print(c("Number of gene set annotation file entries:", a.size))  
+     print(c("Number of gene set annotation file entries:", a.size))
      accs <- as.character(temp[,1])
      locs <- match(gs.names, accs)
      all.gs.descs <- as.character(temp[locs, "SOURCE"])
      rm(temp)
   }
 
-  
+
   Obs.indicator <- matrix(nrow= Ng, ncol=N)
   Obs.RES <- matrix(nrow= Ng, ncol=N)
 
@@ -1174,12 +1174,12 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
  }
 
   obs.s2n <- apply(obs.correl.matrix, 1, median)  # using median to assign enrichment scores
-  obs.index <- order(obs.s2n, decreasing=T)            
-  obs.s2n   <- sort(obs.s2n, decreasing=T)            
+  obs.index <- order(obs.s2n, decreasing=T)
+  obs.s2n   <- sort(obs.s2n, decreasing=T)
 
-  obs.gene.labels <- gene.labels[obs.index]       
-  obs.gene.descs <- all.gene.descs[obs.index]       
-  obs.gene.symbols <- all.gene.symbols[obs.index]       
+  obs.gene.labels <- gene.labels[obs.index]
+  obs.gene.descs <- all.gene.descs[obs.index]
+  obs.gene.symbols <- all.gene.symbols[obs.index]
 
   for (r in 1:nperm) {
       correl.matrix[, r] <- correl.matrix[order.matrix[,r], r]
@@ -1190,7 +1190,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
 
   gene.list2 <- obs.index
   for (i in 1:Ng) {
-       print(paste("Computing observed enrichment for gene set:", i, gs.names[i], sep=" ")) 
+       print(paste("Computing observed enrichment for gene set:", i, gs.names[i], sep=" "))
        gene.set <- gs[i,gs[i,] != "null"]
        gene.set2 <- vector(length=length(gene.set), mode = "numeric")
        gene.set2 <- match(gene.set, gene.labels)
@@ -1213,7 +1213,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
        signal.strength[i] <- tag.frac[i] * (1 - gene.frac[i]) * (N / (N - size.G[i]))
    }
 
-# Compute enrichment for random permutations 
+# Compute enrichment for random permutations
 
    phi <- matrix(nrow = Ng, ncol = nperm)
    phi.norm <- matrix(nrow = Ng, ncol = nperm)
@@ -1221,16 +1221,16 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
 
    if (reshuffling.type == "sample.labels") { # reshuffling phenotype labels
       for (i in 1:Ng) {
-        print(paste("Computing random permutations' enrichment for gene set:", i, gs.names[i], sep=" ")) 
+        print(paste("Computing random permutations' enrichment for gene set:", i, gs.names[i], sep=" "))
         gene.set <- gs[i,gs[i,] != "null"]
         gene.set2 <- vector(length=length(gene.set), mode = "numeric")
         gene.set2 <- match(gene.set, gene.labels)
         for (r in 1:nperm) {
             gene.list2 <- order.matrix[,r]
             if (use.fast.enrichment.routine == F) {
-               GSEA.results <- GSEA.EnrichmentScore(gene.list=gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=correl.matrix[, r])   
+               GSEA.results <- GSEA.EnrichmentScore(gene.list=gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=correl.matrix[, r])
             } else {
-               GSEA.results <- GSEA.EnrichmentScore2(gene.list=gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=correl.matrix[, r])   
+               GSEA.results <- GSEA.EnrichmentScore2(gene.list=gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=correl.matrix[, r])
             }
             phi[i, r] <- GSEA.results$ES
         }
@@ -1238,7 +1238,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
             for (r in 1:nperm) {
                 obs.gene.list2 <- obs.order.matrix[,r]
                 if (use.fast.enrichment.routine == F) {
-                   GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r]) 
+                   GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
                 } else {
                    GSEA.results <- GSEA.EnrichmentScore2(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
                 }
@@ -1247,7 +1247,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
         } else { # if no resampling then compute only one column (and fill the others with the same value)
              obs.gene.list2 <- obs.order.matrix[,1]
             if (use.fast.enrichment.routine == F) {
-               GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r]) 
+               GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
             } else {
                GSEA.results <- GSEA.EnrichmentScore2(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
             }
@@ -1267,9 +1267,9 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
         for (r in 1:nperm) {
             reshuffled.gene.labels <- sample(1:rows)
             if (use.fast.enrichment.routine == F) {
-               GSEA.results <- GSEA.EnrichmentScore(gene.list=reshuffled.gene.labels, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.s2n)   
+               GSEA.results <- GSEA.EnrichmentScore(gene.list=reshuffled.gene.labels, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.s2n)
             } else {
-               GSEA.results <- GSEA.EnrichmentScore2(gene.list=reshuffled.gene.labels, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.s2n)   
+               GSEA.results <- GSEA.EnrichmentScore2(gene.list=reshuffled.gene.labels, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.s2n)
             }
             phi[i, r] <- GSEA.results$ES
         }
@@ -1277,18 +1277,18 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
            for (r in 1:nperm) {
               obs.gene.list2 <- obs.order.matrix[,r]
               if (use.fast.enrichment.routine == F) {
-                 GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])   
+                 GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
               } else {
-                 GSEA.results <- GSEA.EnrichmentScore2(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])   
+                 GSEA.results <- GSEA.EnrichmentScore2(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
               }
               obs.phi[i, r] <- GSEA.results$ES
            }
         } else { # if no resampling then compute only one column (and fill the others with the same value)
            obs.gene.list2 <- obs.order.matrix[,1]
            if (use.fast.enrichment.routine == F) {
-              GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])   
+              GSEA.results <- GSEA.EnrichmentScore(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
            } else {
-              GSEA.results <- GSEA.EnrichmentScore2(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])   
+              GSEA.results <- GSEA.EnrichmentScore2(gene.list=obs.gene.list2, gene.set=gene.set2, weighted.score.type=weighted.score.type, correl.vector=obs.correl.matrix[, r])
            }
            obs.phi[i, 1] <- GSEA.results$ES
            for (r in 2:nperm) {
@@ -1301,7 +1301,7 @@ write(paste("replace =", replace, sep=" "), file=filename, append=T)
 
 # Compute 3 types of p-values
 
-# Find nominal p-values       
+# Find nominal p-values
 
 print("Computing nominal p-values...")
 
@@ -1313,9 +1313,9 @@ if (OLD.GSEA == F) {
       neg.phi <- NULL
       for (j in 1:nperm) {
          if (phi[i, j] >= 0) {
-            pos.phi <- c(pos.phi, phi[i, j]) 
+            pos.phi <- c(pos.phi, phi[i, j])
          } else {
-            neg.phi <- c(neg.phi, phi[i, j]) 
+            neg.phi <- c(neg.phi, phi[i, j])
          }
       }
       ES.value <- Obs.ES[i]
@@ -1337,9 +1337,9 @@ if (OLD.GSEA == F) {
    }
 }
 
-# Find effective size 
+# Find effective size
 
- erf <- function (x) 
+ erf <- function (x)
  {
     2 * pnorm(sqrt(2) * x)
  }
@@ -1371,9 +1371,9 @@ if (OLD.GSEA == F) {
          neg.phi <- NULL
          for (j in 1:nperm) {
             if (phi[i, j] >= 0) {
-               pos.phi <- c(pos.phi, phi[i, j]) 
+               pos.phi <- c(pos.phi, phi[i, j])
             } else {
-               neg.phi <- c(neg.phi, phi[i, j]) 
+               neg.phi <- c(neg.phi, phi[i, j])
             }
          }
          pos.m <- mean(pos.phi)
@@ -1407,7 +1407,7 @@ if (OLD.GSEA == F) {
              Obs.ES.norm[i] <- Obs.ES[i]/neg.m
           }
    }
-} else {  # For OLD GSEA does not normalize using empirical scaling 
+} else {  # For OLD GSEA does not normalize using empirical scaling
    for (i in 1:Ng) {
       for (j in 1:nperm) {
           phi.norm[i, j] <- phi[i, j]/400
@@ -1454,9 +1454,9 @@ if (OLD.GSEA == F) {
        neg.phi <- NULL
        for (i in 1:Ng) {
           if (phi.norm[i, j] >= 0) {
-             pos.phi <- c(pos.phi, phi.norm[i, j]) 
+             pos.phi <- c(pos.phi, phi.norm[i, j])
           } else {
-             neg.phi <- c(neg.phi, phi.norm[i, j]) 
+             neg.phi <- c(neg.phi, phi.norm[i, j])
           }
        }
        if (length(pos.phi) > 0) {
@@ -1496,7 +1496,7 @@ if (OLD.GSEA == F) {
      }
 }
 
-# Compute FDRs 
+# Compute FDRs
 
       print("Computing FDR q-values...")
 
@@ -1590,7 +1590,7 @@ if (OLD.GSEA == F) {
       NES[k] <- Obs.ES.norm.sorted[k]
       if (NES[k] >= 0) {
          for (i in 1:nperm) {
-             NULL.pos <- sum(phi.norm[,i] >= 0)            
+             NULL.pos <- sum(phi.norm[,i] >= 0)
              NULL.pass[i] <- ifelse(NULL.pos > 0, sum(phi.norm[,i] >= NES[k])/NULL.pos, 0)
              OBS.pos <- sum(obs.phi.norm[,i] >= 0)
              OBS.pass[i] <- ifelse(OBS.pos > 0, sum(obs.phi.norm[,i] >= NES[k])/OBS.pos, 0)
@@ -1628,12 +1628,12 @@ if (OLD.GSEA == F) {
        report.index2 <- order(Obs.ES.norm, decreasing=T)
        for (i in 1:Ng) {
            report2[i,] <- report[report.index2[i],]
-       }   
+       }
        report3 <- report
        report.index3 <- order(Obs.ES.norm, decreasing=F)
        for (i in 1:Ng) {
            report3[i,] <- report[report.index3[i],]
-       }   
+       }
        phen1.rows <- length(Obs.ES.norm[Obs.ES.norm >= 0])
        phen2.rows <- length(Obs.ES.norm[Obs.ES.norm < 0])
        report.phen1 <- report2[1:phen1.rows,]
@@ -1680,11 +1680,11 @@ if (output.directory != "")  {
      max.corr <- max(obs.s2n)
      min.corr <- min(obs.s2n)
 
-     x <- plot(location, obs.s2n, ylab = "Signal to Noise Ratio (S2N)", xlab = "Gene List Location", main = "Gene List Correlation (S2N) Profile", type = "l", lwd = 2, cex = 0.9, col = 1)            
+     x <- plot(location, obs.s2n, ylab = "Signal to Noise Ratio (S2N)", xlab = "Gene List Location", main = "Gene List Correlation (S2N) Profile", type = "l", lwd = 2, cex = 0.9, col = 1)
      for (i in seq(1, N, 20)) {
        lines(c(i, i), c(0, obs.s2n[i]), lwd = 3, cex = 0.9, col = colors()[12]) # shading of correlation plot
      }
-     x <- points(location, obs.s2n, type = "l", lwd = 2, cex = 0.9, col = 1)            
+     x <- points(location, obs.s2n, type = "l", lwd = 2, cex = 0.9, col = 1)
      lines(c(1, N), c(0, 0), lwd = 2, lty = 1, cex = 0.9, col = 1) # zero correlation horizontal line
      temp <- order(abs(obs.s2n), decreasing=T)
      arg.correl <- temp[N]
@@ -1759,7 +1759,7 @@ if (output.directory != "")  {
          obs.phi.densities.pos[, i] <- obs.phi.densities.pos[, i]/norm.factor
 
          neg.phi <- obs.phi.norm[obs.phi.norm[, i] < 0, i]
-         if (length(neg.phi)> 2) {  
+         if (length(neg.phi)> 2) {
             temp <- density(neg.phi, adjust=adjust.param, n = 512, from=-3.5, to=0)
          } else {
             temp <- list(x = 3.5*(seq(1, 512) - 1)/512, y = rep(0.001, 512))
@@ -1767,7 +1767,7 @@ if (output.directory != "")  {
          obs.phi.densities.neg[, i] <- temp$y
          norm.factor <- sum(obs.phi.densities.neg[, i])
          obs.phi.densities.neg[, i] <- obs.phi.densities.neg[, i]/norm.factor
-         
+
       }
       phi.density.mean.pos <- apply(phi.densities.pos, 1, mean)
       phi.density.mean.neg <- apply(phi.densities.neg, 1, mean)
@@ -1797,18 +1797,18 @@ if (output.directory != "")  {
      x2.point <- x[seq(2, length(x), 2)]
 
 #     for (i in 1:length(x1.point)) {
-#       lines(c(x1.point[i], x1.point[i]), c(0, y1.point[i]), lwd = 3, cex = 0.9, col = colors()[555]) # shading 
+#       lines(c(x1.point[i], x1.point[i]), c(0, y1.point[i]), lwd = 3, cex = 0.9, col = colors()[555]) # shading
 #     }
 #
 #     for (i in 1:length(x2.point)) {
-#       lines(c(x2.point[i], x2.point[i]), c(0, y2.point[i]), lwd = 3, cex = 0.9, col = colors()[29]) # shading 
+#       lines(c(x2.point[i], x2.point[i]), c(0, y2.point[i]), lwd = 3, cex = 0.9, col = colors()[29]) # shading
 #     }
 
       points(x, y1, type = "l", lwd = 2, col = colors()[555])
       points(x, y2, type = "l", lwd = 2, col = colors()[29])
 
       for (i in 1:Ng) {
-         col <- ifelse(Obs.ES.norm[i] > 0, 2, 3) 
+         col <- ifelse(Obs.ES.norm[i] > 0, 2, 3)
          lines(c(Obs.ES.norm[i], Obs.ES.norm[i]), c(-0.2*max(c(y1, y2)), 0), lwd = 1, lty = 1, col = 1)
       }
       leg.txt <- paste("Neg. ES: \"", phen2, " \" ", sep="", collapse="")
@@ -1843,11 +1843,11 @@ if (output.directory != "")  {
       c.vec <- c(2, colors()[577], 1)
       pch.vec <- c(22, 22, 22)
       legend(x=-0.5, y=0.5, bty="n", bg = "white", legend=leg.txt, pch = pch.vec, col = c.vec, pt.bg = c.vec, cex = 0.9)
-      lines(c(min(NES), max(NES)), c(nom.p.val.threshold, nom.p.val.threshold), lwd = 1, lty = 2, col = 2) 
-      lines(c(min(NES), max(NES)), c(fwer.p.val.threshold, fwer.p.val.threshold), lwd = 1, lty = 2, col = colors()[577]) 
-      lines(c(min(NES), max(NES)), c(fdr.q.val.threshold, fdr.q.val.threshold), lwd = 1, lty = 2, col = 1) 
+      lines(c(min(NES), max(NES)), c(nom.p.val.threshold, nom.p.val.threshold), lwd = 1, lty = 2, col = 2)
+      lines(c(min(NES), max(NES)), c(fwer.p.val.threshold, fwer.p.val.threshold), lwd = 1, lty = 2, col = colors()[577])
+      lines(c(min(NES), max(NES)), c(fdr.q.val.threshold, fdr.q.val.threshold), lwd = 1, lty = 2, col = 1)
 
-      if (non.interactive.run == F) {  
+      if (non.interactive.run == F) {
            if (.Platform$OS.type == "windows") {
                savePlot(filename = glob.filename, type ="jpeg", device = dev.cur())
            } else if (.Platform$OS.type == "unix") {
@@ -1869,7 +1869,7 @@ if (output.directory != "")  {
       for (i in 1:Ng) {
           if ((p.vals[i, 1] <= nom.p.val.threshold) ||
               (p.vals[i, 2] <= fwer.p.val.threshold) ||
-              (FDR.mean.sorted[i] <= fdr.q.val.threshold) || 
+              (FDR.mean.sorted[i] <= fdr.q.val.threshold) ||
               (is.element(i, c(Obs.ES.index[1:topgs], Obs.ES.index[(Ng - topgs + 1): Ng])))) {
 
 #  produce report per gene set
@@ -1959,9 +1959,9 @@ if (output.directory != "")  {
             col <- ifelse(Obs.ES[i] > 0, 2, 4)
 
             # Running enrichment plot
-    
+
             sub.string <- paste("Number of genes: ", N, " (in list), ", size.G[i], " (in gene set)", sep = "", collapse="")
-            
+
             main.string <- paste("Gene Set ", i, ":", gs.names[i])
             plot(ind, Obs.RES[i,], main = main.string, sub = sub.string, xlab = "Gene List Index", ylab = "Running Enrichment Score (RES)", xlim=c(1, N), ylim=c(min.plot, max.plot), type = "l", lwd = 2, cex = 1, col = col)
             for (j in seq(1, N, 20)) {
@@ -1987,7 +1987,7 @@ if (output.directory != "")  {
             text(x=N, y=min.plot, adj = c(1, 0), labels=leg.txt, cex = 1.0)
 
             adjx <- ifelse(Obs.ES[i] > 0, 0, 1)
-           
+
             leg.txt <- paste("Peak at ", Obs.arg.ES[i], sep="", collapse="")
             text(x=Obs.arg.ES[i], y=min.plot + 1.8*delta, adj = c(adjx, 0), labels=leg.txt, cex = 1.0)
 
@@ -2031,7 +2031,7 @@ if (output.directory != "")  {
             }
             GSEA.HeatMapPlot(V = pinko, row.names = pinko.gene.names, col.labels = class.labels, col.classes = class.phen, col.names = sample.names, main =" Heat Map for Genes in Gene Set", xlab=" ", ylab=" ")
 
-      if (non.interactive.run == F) {  
+      if (non.interactive.run == F) {
            if (.Platform$OS.type == "windows") {
                savePlot(filename = gs.filename, type ="jpeg", device = dev.cur())
            } else if (.Platform$OS.type == "unix") {
@@ -2051,7 +2051,7 @@ if (output.directory != "")  {
 }  # end of definition of GSEA.analysis
 
 
-GSEA.write.gct <- function (gct, filename) 
+GSEA.write.gct <- function (gct, filename)
 {
     f <- file(filename, "w")
     cat("#1.2", "\n", file = f, append = TRUE, sep = "")
@@ -2095,7 +2095,7 @@ GSEA.ConsPlot <- function(V, col.names, main = " ", sub = " ", xlab=" ", ylab=" 
           }
      }
 
- 
+
 
 #     col.map <- c(rainbow(100, s = 1.0, v = 0.75, start = 0.0, end = 0.75, gamma = 1.5), "#BBBBBB", "#333333", "#FFFFFF")
      col.map <- rev(c("#0000FF", "#4040FF", "#7070FF", "#8888FF", "#A9A9FF", "#D5D5FF", "#EEE5EE", "#FFAADA", "#FF9DB0", "#FF7080", "#FF5A5A", "#FF4040", "#FF0D1D"))
@@ -2184,7 +2184,7 @@ GSEA.Analyze.Sets <- function(
       set.table[i, 5] <- dataset
 
 #      set.table[i, 2] <- paste(set.name, dataset, sep ="", collapse="")
-      set.table[i, 2] <- substr(set.name, 1, 20) 
+      set.table[i, 2] <- substr(set.name, 1, 20)
    }
 
    print(c("set name=", prefix.name))
@@ -2197,7 +2197,7 @@ GSEA.Analyze.Sets <- function(
    phen2 <- names(table(set.table[,3]))[2]
    set.table.phen1 <- set.table[set.table[,3] == phen1,]
    set.table.phen2 <- set.table[set.table[,3] == phen2,]
- 
+
    seq.order <- order(as.numeric(set.table.phen1[, 4]), decreasing = F)
    set.table.phen1 <- set.table.phen1[seq.order,]
    seq.order <- order(as.numeric(set.table.phen2[, 4]), decreasing = F)
@@ -2210,7 +2210,7 @@ GSEA.Analyze.Sets <- function(
       max.sets.phen1 <- length(set.table.phen1[,1])
       max.sets.phen2 <- length(set.table.phen2[,1])
    } else {
-      max.sets.phen1 <- ifelse(topgs > length(set.table.phen1[,1]), length(set.table.phen1[,1]), topgs) 
+      max.sets.phen1 <- ifelse(topgs > length(set.table.phen1[,1]), length(set.table.phen1[,1]), topgs)
       max.sets.phen2 <- ifelse(topgs > length(set.table.phen2[,1]), length(set.table.phen2[,1]), topgs)
    }
 
@@ -2223,7 +2223,7 @@ GSEA.Analyze.Sets <- function(
       leading.set <- as.vector(gene.set[gene.set[,"CORE_ENRICHMENT"] == "YES", "SYMBOL"])
       leading.lists <- c(leading.lists, list(leading.set))
       if (i == 1) {
-         all.leading.genes <- leading.set 
+         all.leading.genes <- leading.set
       } else{
          all.leading.genes <- union(all.leading.genes, leading.set)
       }
@@ -2231,7 +2231,7 @@ GSEA.Analyze.Sets <- function(
    max.genes <- length(all.leading.genes)
    M <- matrix(0, nrow=max.sets.phen1, ncol=max.genes)
    for (i in 1:max.sets.phen1) {
-      M[i,] <- sign(match(all.leading.genes, as.vector(leading.lists[[i]]), nomatch=0))   # notice that the sign is 0 (no tag) or 1 (tag) 
+      M[i,] <- sign(match(all.leading.genes, as.vector(leading.lists[[i]]), nomatch=0))   # notice that the sign is 0 (no tag) or 1 (tag)
    }
 
    Inter <- matrix(0, nrow=max.sets.phen1, ncol=max.sets.phen1)
@@ -2265,7 +2265,7 @@ GSEA.Analyze.Sets <- function(
 
    GSEA.ConsPlot(Itable, col.names = set.table.phen1[1:max.sets.phen1, 2], main = " ", sub=paste("Leading Subsets Overlap ", doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ")
 
-   if (non.interactive.run == F) {  
+   if (non.interactive.run == F) {
         if (.Platform$OS.type == "windows") {
             savePlot(filename = filename, type ="jpeg", device = dev.cur())
         } else if (.Platform$OS.type == "unix") {
@@ -2310,9 +2310,9 @@ GSEA.Analyze.Sets <- function(
    }
 
    cmap <-  c("#AAAAFF", "#111166")
-   GSEA.HeatMapPlot2(V = data.matrix(D.phen1), row.names = row.names(D.phen1), col.names = names(D.phen1), main = "Leading Subsets Assignment", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap) 
+   GSEA.HeatMapPlot2(V = data.matrix(D.phen1), row.names = row.names(D.phen1), col.names = names(D.phen1), main = "Leading Subsets Assignment", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap)
 
-   if (non.interactive.run == F) {  
+   if (non.interactive.run == F) {
         if (.Platform$OS.type == "windows") {
             savePlot(filename = filename, type ="jpeg", device = dev.cur())
         } else if (.Platform$OS.type == "unix") {
@@ -2337,7 +2337,7 @@ GSEA.Analyze.Sets <- function(
       leading.set <- as.vector(gene.set[gene.set[,"CORE_ENRICHMENT"] == "YES", "SYMBOL"])
       leading.lists <- c(leading.lists, list(leading.set))
       if (i == 1) {
-         all.leading.genes <- leading.set 
+         all.leading.genes <- leading.set
       } else{
          all.leading.genes <- union(all.leading.genes, leading.set)
       }
@@ -2345,7 +2345,7 @@ GSEA.Analyze.Sets <- function(
    max.genes <- length(all.leading.genes)
    M <- matrix(0, nrow=max.sets.phen2, ncol=max.genes)
    for (i in 1:max.sets.phen2) {
-      M[i,] <- sign(match(all.leading.genes, as.vector(leading.lists[[i]]), nomatch=0))   # notice that the sign is 0 (no tag) or 1 (tag) 
+      M[i,] <- sign(match(all.leading.genes, as.vector(leading.lists[[i]]), nomatch=0))   # notice that the sign is 0 (no tag) or 1 (tag)
    }
 
    Inter <- matrix(0, nrow=max.sets.phen2, ncol=max.sets.phen2)
@@ -2379,7 +2379,7 @@ GSEA.Analyze.Sets <- function(
 
    GSEA.ConsPlot(Itable, col.names = set.table.phen2[1:max.sets.phen2, 2], main = " ", sub=paste("Leading Subsets Overlap ", doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ")
 
-   if (non.interactive.run == F) {  
+   if (non.interactive.run == F) {
         if (.Platform$OS.type == "windows") {
             savePlot(filename = filename, type ="jpeg", device = dev.cur())
         } else if (.Platform$OS.type == "unix") {
@@ -2424,9 +2424,9 @@ GSEA.Analyze.Sets <- function(
    }
 
    cmap <-  c("#AAAAFF", "#111166")
-   GSEA.HeatMapPlot2(V = data.matrix(D.phen2), row.names = row.names(D.phen2), col.names = names(D.phen2), main = "Leading Subsets Assignment", sub = paste(doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ", color.map = cmap) 
+   GSEA.HeatMapPlot2(V = data.matrix(D.phen2), row.names = row.names(D.phen2), col.names = names(D.phen2), main = "Leading Subsets Assignment", sub = paste(doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ", color.map = cmap)
 
-   if (non.interactive.run == F) {  
+   if (non.interactive.run == F) {
         if (.Platform$OS.type == "windows") {
             savePlot(filename = filename, type ="jpeg", device = dev.cur())
         } else if (.Platform$OS.type == "unix") {
@@ -2451,7 +2451,7 @@ GSEA.Analyze.Sets <- function(
    # Max.genes
 
 #   init <- 1
-#   for (k in 1:max.sets.phen1) { 
+#   for (k in 1:max.sets.phen1) {
 #      end <- which.max(cumsum(A[k,]))
 #      if (end - init > 1) {
 #         B <- A[,init:end]
@@ -2459,7 +2459,7 @@ GSEA.Analyze.Sets <- function(
 #        dist.matrix <- dist(t(B))
 #         HC <- hclust(dist.matrix, method="average")
 ##         B <- B[,HC$order] + 0.2*(k %% 2)
-#        B <- B[,HC$order] 
+#        B <- B[,HC$order]
 #         A[,init:end] <- B
 #         A.names[init:end] <- B.names[HC$order]
 #         init <- end + 1
@@ -2467,7 +2467,7 @@ GSEA.Analyze.Sets <- function(
 #   }
 
 #   windows(width=14, height=10)
-#   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, sub = "  ", main = paste("Primary Sets Assignment - ", doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ") 
+#   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, sub = "  ", main = paste("Primary Sets Assignment - ", doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ")
 
    dist.matrix <- dist(t(A))
    HC <- hclust(dist.matrix, method="average")
@@ -2500,9 +2500,9 @@ GSEA.Analyze.Sets <- function(
 
 
    cmap <-  c("#AAAAFF", "#111166")
-#   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap) 
+#   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap)
 
-   GSEA.HeatMapPlot2(V = t(A), row.names = A.names, col.names = A.row.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap) 
+   GSEA.HeatMapPlot2(V = t(A), row.names = A.names, col.names = A.row.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap)
 
     text.filename <- paste(directory, doc.string, ".leading.assignment.clustered.", phen1, ".txt", sep="", collapse="")
     line.list <- c("Gene", A.row.names)
@@ -2511,7 +2511,7 @@ GSEA.Analyze.Sets <- function(
     write(line.header, file = text.filename, ncolumns = line.length)
     write.table(t(A), file=text.filename, append = T, quote=F, col.names= F, row.names=T, sep = "\t")
 
-   if (non.interactive.run == F) {  
+   if (non.interactive.run == F) {
         if (.Platform$OS.type == "windows") {
             savePlot(filename = filename, type ="jpeg", device = dev.cur())
         } else if (.Platform$OS.type == "unix") {
@@ -2535,7 +2535,7 @@ GSEA.Analyze.Sets <- function(
    # Max.genes
 
 #   init <- 1
-#   for (k in 1:max.sets.phen2) { 
+#   for (k in 1:max.sets.phen2) {
 #      end <- which.max(cumsum(A[k,]))
 #      if (end - init > 1) {
 #         B <- A[,init:end]
@@ -2543,7 +2543,7 @@ GSEA.Analyze.Sets <- function(
 #         dist.matrix <- dist(t(B))
 #         HC <- hclust(dist.matrix, method="average")
 ##         B <- B[,HC$order] + 0.2*(k %% 2)
-#        B <- B[,HC$order] 
+#        B <- B[,HC$order]
 #         A[,init:end] <- B
 #         A.names[init:end] <- B.names[HC$order]
 #         init <- end + 1
@@ -2551,7 +2551,7 @@ GSEA.Analyze.Sets <- function(
 #   }
 
 #  windows(width=14, height=10)
-#  GESA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, sub = "  ", main = paste("Primary Sets Assignment - ", doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ") 
+#  GESA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, sub = "  ", main = paste("Primary Sets Assignment - ", doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ")
 
    dist.matrix <- dist(t(A))
    HC <- hclust(dist.matrix, method="average")
@@ -2583,8 +2583,8 @@ GSEA.Analyze.Sets <- function(
 
    cmap <-  c("#AAAAFF", "#111166")
 
-#   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ", color.map = cmap) 
-   GSEA.HeatMapPlot2(V = t(A), row.names =A.names , col.names = A.row.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ", color.map = cmap) 
+#   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ", color.map = cmap)
+   GSEA.HeatMapPlot2(V = t(A), row.names =A.names , col.names = A.row.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen2, sep=""), xlab=" ", ylab=" ", color.map = cmap)
 
     text.filename <- paste(directory, doc.string, ".leading.assignment.clustered.", phen2, ".txt", sep="", collapse="")
     line.list <- c("Gene", A.row.names)
@@ -2593,7 +2593,7 @@ GSEA.Analyze.Sets <- function(
     write(line.header, file = text.filename, ncolumns = line.length)
     write.table(t(A), file=text.filename, append = T, quote=F, col.names= F, row.names=T, sep = "\t")
 
-   if (non.interactive.run == F) {  
+   if (non.interactive.run == F) {
         if (.Platform$OS.type == "windows") {
             savePlot(filename = filename, type ="jpeg", device = dev.cur())
         } else if (.Platform$OS.type == "unix") {
@@ -2607,13 +2607,15 @@ GSEA.Analyze.Sets <- function(
 
 #################### GSEA funcitons loaded ######################
 
-# GSEA 1.0 -- Gene Set Enrichment Analysis / Broad Institute 
+# GSEA 1.0 -- Gene Set Enrichment Analysis / Broad Institute
 #
 # R script to run GSEA Analysis of the Gender vs C1 example (cut and paste into R console)
 
 # Paralleling
 options(error = dump.frames)
 nthread  = {{args.nthread}}
+seed     = {{args.seed}}
+if (seed > -1) set.seed(seed)
 
 if (nthread > 1) {
     library(doParallel)
@@ -2633,8 +2635,8 @@ if (nthread > 1) {
         close(gmtconn)
     }
 
-    cl <- makeCluster(nthread)  
-    registerDoParallel(cl) 
+    cl <- makeCluster(nthread)
+    registerDoParallel(cl)
     foreach(i=1:nthread, .verbose=T) %dopar% capture.output({
         options(error = dump.frames)
         GSEA(                                     # Input/Output Files :-------------------------------------------
@@ -2645,7 +2647,7 @@ if (nthread > 1) {
             #  Program parameters :----------------------------------------------------------------------------------------------------------------------------
             doc.string            = "GSEA",     # Documentation string used as a prefix to name result files (default: "GSEA.analysis")
             non.interactive.run   = F,               # Run in interactive (i.e. R GUI) or batch (R command line) mode (default: F)
-            reshuffling.type      = "sample.labels", # Type of permutation reshuffling: "sample.labels" or "gene.labels" (default: "sample.labels" 
+            reshuffling.type      = "sample.labels", # Type of permutation reshuffling: "sample.labels" or "gene.labels" (default: "sample.labels"
             nperm                 = {{args.nperm}},  # Number of random permutations (default: 1000)
             weighted.score.type   = {{args.weightexp}}, # Enrichment correlation-based weighting: 0=no weight (KS), 1= weigthed, 2 = over-weigthed (default: 1)
             nom.p.val.threshold   = -1,              # Significance threshold for nominal p-vals for gene sets (default: -1, no thres)
@@ -2664,7 +2666,7 @@ if (nthread > 1) {
             save.intermediate.results = F,           # For experts only, save intermediate results (e.g. matrix of random perm. scores) (default: F)
             OLD.GSEA              = F,               # Use original (old) version of GSEA (default: F)
             use.fast.enrichment.routine = T          # Use faster routine to compute enrichment for random permutations (default: T)
-        ) 
+        )
         #--------------------------------------------------------------------------------------------------------------------------------------------------
         # Overlap and leading gene subset assignment analysis of the GSEA results
 
@@ -2675,7 +2677,7 @@ if (nthread > 1) {
             width = 16
         )
     }, file = file.path(outdirs[i], "log.txt"))
-    stopCluster(cl) 
+    stopCluster(cl)
 } else {
     GSEA(                                     # Input/Output Files :-------------------------------------------
         input.ds =  "{{in.gctfile}}",            # Input gene expression Affy dataset file in RES or GCT format
@@ -2685,7 +2687,7 @@ if (nthread > 1) {
         #  Program parameters :----------------------------------------------------------------------------------------------------------------------------
         doc.string            = "GSEA",     # Documentation string used as a prefix to name result files (default: "GSEA.analysis")
         non.interactive.run   = F,               # Run in interactive (i.e. R GUI) or batch (R command line) mode (default: F)
-        reshuffling.type      = "sample.labels", # Type of permutation reshuffling: "sample.labels" or "gene.labels" (default: "sample.labels" 
+        reshuffling.type      = "sample.labels", # Type of permutation reshuffling: "sample.labels" or "gene.labels" (default: "sample.labels"
         nperm                 = {{args.nperm}},  # Number of random permutations (default: 1000)
         weighted.score.type   = {{args.weightexp}}, # Enrichment correlation-based weighting: 0=no weight (KS), 1= weigthed, 2 = over-weigthed (default: 1)
         nom.p.val.threshold   = -1,              # Significance threshold for nominal p-vals for gene sets (default: -1, no thres)
@@ -2715,11 +2717,3 @@ if (nthread > 1) {
         width = 16
     )
 }
-
-
-
-
-
-
-
-

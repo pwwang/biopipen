@@ -77,11 +77,13 @@ pSampleinfo2Cls.script             = "file:scripts/gsea/pSampleinfo2Cls.py"
 	`nperm`:     Number of permutations. Default: 10000
 """
 pSSGSEA = Proc (desc = 'Do single-sample GSEA.')
-pSSGSEA.input     = "gctfile:file, gmtfile:file"
-pSSGSEA.output    = "outdir:file:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-ssGSEA"
-pSSGSEA.args      = {'weightexp': 1, 'nperm': 10000}
-pSSGSEA.lang      = params.Rscript.value
-pSSGSEA.script    = "file:scripts/gsea/pSSGSEA.r"
+pSSGSEA.input          = "gctfile:file, gmtfile:file"
+pSSGSEA.output         = "outdir:file:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-ssGSEA"
+pSSGSEA.args.weightexp = 1
+pSSGSEA.args.nperm     = 1000
+pSSGSEA.args.seed      = -1
+pSSGSEA.lang           = params.Rscript.value
+pSSGSEA.script         = "file:scripts/gsea/pSSGSEA.r"
 
 """
 @name:
@@ -101,12 +103,15 @@ pSSGSEA.script    = "file:scripts/gsea/pSSGSEA.r"
 	`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
 	`nperm`:     Number of permutations. Default: 10000
 """
-pGSEA = Proc (desc = 'Do GSEA.')
-pGSEA.input     = "gctfile:file, clsfile:file, gmtfile:file"
-pGSEA.output    = "outdir:dir:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-GSEA"
-pGSEA.args      = {'weightexp': 1, 'nperm': 1000, 'nthread': 1}
-pGSEA.lang      = params.Rscript.value
-pGSEA.script    = "file:scripts/gsea/pGSEA.r"
+pGSEA                = Proc (desc = 'Do GSEA.')
+pGSEA.input          = "gctfile:file, clsfile:file, gmtfile:file"
+pGSEA.output         = "outdir:dir:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-GSEA"
+pGSEA.args.weightexp = 1
+pGSEA.args.nperm     = 1000
+pGSEA.args.nthread   = 1
+pGSEA.args.seed      = -1
+pGSEA.lang           = params.Rscript.value
+pGSEA.script         = "file:scripts/gsea/pGSEA.r"
 
 """
 @name:
@@ -187,6 +192,8 @@ pTargetEnrichr               = Proc(desc = 'Do gene set enrichment analysis for 
 pTargetEnrichr.input         = "infile:file"
 pTargetEnrichr.output        = "outdir:dir:{{in.infile | fn}}.tenrichr"
 pTargetEnrichr.lang          = params.python.value
+pTargetEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+pTargetEnrichr.args.genecol  = "COL2"
 pTargetEnrichr.args.dbs      = "KEGG_2016"
 pTargetEnrichr.args.norm     = False
 pTargetEnrichr.args.rmtags   = True
@@ -195,7 +202,7 @@ pTargetEnrichr.args.enrn     = 10
 pTargetEnrichr.args.netplot  = True
 pTargetEnrichr.args.netn     = 5
 pTargetEnrichr.args.title    = "Gene enrichment: {db}"
-pTargetEnrichr.args.tmpdir   = params.tmpdir.value
+pTargetEnrichr.args.cachedir = params.cachedir.value
 #pTargetEnrichr.envs.genenorm = genenorm.py
 pTargetEnrichr.errhow        = 'retry'
 pTargetEnrichr.script        = "file:scripts/gsea/pTargetEnrichr.py"

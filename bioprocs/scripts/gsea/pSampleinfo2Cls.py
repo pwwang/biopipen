@@ -1,9 +1,13 @@
-{{ txtSampleinfo }}
-saminfo = txtSampleinfo("{{in.sifile}}")
-groups = [g[0] for g in saminfo[["", "Group"]].data]
 
-with open("{{out.outfile}}", "w") as f:
-	f.write("%s\t%s\t1\n" % (saminfo.nrow, len(set(groups))))
-	f.write("# %s\n" % (' '.join(list(set(groups)))))
-	
+from bioprocs.utils.sampleinfo import SampleInfo
+
+infile    = {{in.sifile | quote}}
+outfile    = {{out.outfile | quote}}
+saminfo   = SampleInfo(infile)
+groups    = saminfo.select(get = 'Group')
+unigroups = list(set(groups))
+
+with open(outfile, "w") as f:
+	f.write("%s\t%s\t1\n" % (saminfo.nrow, len(unigroups)))
+	f.write("# %s\n" % (' '.join(unigroups)))
 	f.write(' '.join(groups) + '\n')

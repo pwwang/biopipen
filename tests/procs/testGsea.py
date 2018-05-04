@@ -14,28 +14,28 @@ class TestGsea (helpers.TestCase):
 		pTargetEnrichrCol2.input  = [getfile('tenrich-col2.txt')]
 		pTargetEnrichrCol2.errhow = 'terminate'
 		PyPPL(config).start(pTargetEnrichrCol2).run()
-		procOK(pTargetEnrichrCol2, 'tenrich-col2', self)
+		self.assertFileEqual(path.join(pTargetEnrichrCol2.channel.get(), 'tenrich-col2-KEGG_2016.txt'), path.join(self.outdir, 'tenrich-col2-KEGG_2016.txt'))
 
 	def testpTargetEnrichrCol3 (self):
 		pTargetEnrichrCol3        = pTargetEnrichr.copy()
 		pTargetEnrichrCol3.input  = [getfile('tenrich-col3.txt')]
 		pTargetEnrichrCol3.errhow = 'terminate'
 		PyPPL(config).start(pTargetEnrichrCol3).run()
-		procOK(pTargetEnrichrCol3, 'tenrich-col3', self)
+		self.assertFileEqual(path.join(pTargetEnrichrCol3.channel.get(), 'tenrich-col3-KEGG_2016.txt'), path.join(self.outdir, 'tenrich-col3-KEGG_2016.txt'))
 
 	def testpTargetEnrichrCol4 (self):
 		pTargetEnrichrCol4        = pTargetEnrichr.copy()
 		pTargetEnrichrCol4.input  = [getfile('tenrich-col4.txt')]
 		pTargetEnrichrCol4.errhow = 'terminate'
 		PyPPL(config).start(pTargetEnrichrCol4).run()
-		procOK(pTargetEnrichrCol4, 'tenrich-col4', self)
+		self.assertFileEqual(path.join(pTargetEnrichrCol4.channel.get(), 'tenrich-col4-KEGG_2016.txt'), path.join(self.outdir, 'tenrich-col4-KEGG_2016.txt'))
 
 	def testpTargetEnrichrCol5 (self):
 		pTargetEnrichrCol5        = pTargetEnrichr.copy()
 		pTargetEnrichrCol5.input  = [getfile('tenrich-col5.txt')]
 		pTargetEnrichrCol5.errhow = 'terminate'
 		PyPPL(config).start(pTargetEnrichrCol5).run()
-		procOK(pTargetEnrichrCol5, 'tenrich-col5', self)
+		self.assertFileEqual(path.join(pTargetEnrichrCol5.channel.get(), 'tenrich-col5-KEGG_2016.txt'), path.join(self.outdir, 'tenrich-col5-KEGG_2016.txt'))
 
 	def testpEnrichr(self):
 		self.maxDiff = None
@@ -52,12 +52,14 @@ class TestGsea (helpers.TestCase):
 		procOK(pExpmat2GctCopy, 'expmat.txt', self)
 
 	def testpSSGSEA(self):
+		self.maxDiff = None
 		pExpmat2GctCopy2       = pExpmat2Gct.copy()
 		pExpmat2GctCopy2.input = [getfile('ssgct.txt')]
 		pSSGSEA.depends        = pExpmat2GctCopy2
 		pSSGSEA.input          = lambda ch: ch.cbind(getfile('ssgmt.txt'))
+		pSSGSEA.args.seed      = 8525
 		PyPPL(config).start(pExpmat2GctCopy2).run()
-		procOK(pSSGSEA, 'ssgsea', self)
+		self.assertFileEqual(path.join(pSSGSEA.channel.get(), 'report.txt'), path.join(self.outdir, 'ssgsea-report.txt'))
 
 	def testpGSEA(self):
 		pSampleinfo2Cls.input  = [getfile('saminfo.txt')]

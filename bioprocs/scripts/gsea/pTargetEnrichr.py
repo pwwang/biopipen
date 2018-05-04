@@ -1,74 +1,75 @@
-import json
-import requests
-import math
-import re
-import random
+import json, requests, math, re, random
 from sys import stderr
 from os import path
 from hashlib import md5
 from mygene import MyGeneInfo
 from collections import OrderedDict
+{% if args.enrplot %}
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
+from matplotlib import gridspec
+from matplotlib import patches
+{% endif %}
+from pyppl import Box
+from bioprocs.utils import alwaysList, logger
+from bioprocs.utils.gene import genenorm
+from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
+
+infile   = {{in.infile | quote}}
+inopts   = {{args.inopts}}
+genecol  = {{args.genecol | quote}}
+cachedir = {{args.cachedir | quote}}
 
 {% if args.norm %}
-{{genenorm}}
-infile = '{{out.outdir}}/{{in.infile | bn}}.symbol'
-igfile = '{{out.outdir}}/{{in.infile | bn}}.gnorm'
-genenorm({{in.infile | quote}}, infile, col = 1)
-with open(igfile, 'w') as f:
-	for key, val in genemap.items():
-		f.write('%s\t%s\n', (key, val))
-{% else %}
-infile = {{in.infile | quote}}
+symfile = '{{out.outdir}}/{{in.infile | bn}}.symbol'
+
+genenorm(
+	infile   = infile,
+	outfile  = symfile,
+	inopts   = inopts,
+	outopts  = {'head': True, 'query': False},
+	genecol  = genecol,
+	cachedir = cachedir
+)
+
+infile = symfile
 {% endif %}
 
 genestats  = {}
 regstats   = {}
 relations  = {}
 
-# read info
-with open(infile) as f:
-	for line in f:
-		line  = line.strip()
-		if not line or line.startswith('#'): continue
-		parts = line.split("\t")
-		reg, gene = parts[:2]
-		gene = gene.upper()
-		if len(parts) >= 5:
-			(rstat, gstat, rel) = parts[2:]
-			genestats[gene] = gstat
-			regstats [reg]  = rstat
-			if not reg in relations: relations[reg] = {}
-			relations[reg][gene] = rel
-		elif len(parts) == 4:
-			(gstat, rel) = parts[2:]
-			genestats[gene] = gstat
-			regstats [reg]  = ''
-			if not reg in relations: relations[reg] = {}
-			relations[reg][gene] = rel
-		elif len(parts) == 3:
-			rel = parts[2:]
-			genestats[gene] = ''
-			regstats [reg]  = ''
-			if not reg in relations: relations[reg] = {}
-			relations[reg][gene] = rel
-		elif len(parts) == 2:
-			genestats[gene] = ''
-			regstats [reg]  = ''
-			if not reg in relations: relations[reg] = {}
-			relations[reg][gene] = '+'
-		else:
-			raise ValueError('Expect more than 2 lines in:\n%s\n' % line)
+reader = TsvReader(infile, **inopts)
+reader.autoMeta()
+ncol = len(reader.meta)
+reader.meta.clear()
+reader.meta.add('Regulator', 'Target')
+if ncol == 2:
+	pass
+elif ncol == 3:
+	reader.meta.add('Relation')
+elif ncol == 4:
+	reader.meta.add('RegStatus', 'Relation')
+elif ncol == 5:
+	reader.meta.add('RegStatus', 'TarStatus', 'Relation')
+else:
+	raise ValueError('Expect 3 ~ 5 columns in input file but got %s' % ncol)
 
+for r in reader:
+	if not r.Regulator in relations:
+		relations[r.Regulator] = {}
+	genestats[r.Target]   = ''
+	regstats[r.Regulator] = ''
+	relations[r.Regulator][r.Target] = '+'
+	if 'TarStatus' in r:
+		genestats[r.Target] = r.TarStatus
+	if 'RegStatus' in r:
+		regstats[r.Regulator] = r.RegStatus
+	if 'Relation' in r:
+		relations[r.Regulator][r.Target] = r.Relation
 if not genestats:
-	stderr.write('No genes found.')
-	exit(0)
-
-if {{args.enrplot}}:
-	import matplotlib
-	matplotlib.use('Agg')
-	from matplotlib import pyplot as plt
-	from matplotlib import gridspec
-	from matplotlib import patches
+	raise ValueError('No genes found.')
 
 ## upload
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
@@ -86,13 +87,13 @@ if not response.ok:
 data = json.loads(response.text)
 
 ## do enrichment
-dbs = "{{args.dbs}}".split(',')
-dbs = map (lambda s: s.strip(), dbs)
+dbs = alwaysList({{args.dbs | quote}})
 
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
 query_string = '?userListId=%s&backgroundType=%s'
 
-head = ["#Rank", "Term name", "P-value", "Z-score", "Combined score", "Overlapping genes", "Adjusted p-value", "Old p-value", "Old adjusted p-value"]
+head = ["Rank", "Term", "Pval", "Zscore", "CombinedScore", "OverlappingGenes", "AdjustedPval", "OldPval", "OldAdjustedPval"]
+
 enrn = {{args.enrn}}
 for db in dbs:
 	user_list_id = data['userListId']
@@ -102,26 +103,43 @@ for db in dbs:
 	)
 	if not response.ok:
 		raise Exception('Error fetching enrichment results against %s' % db)
-	
-	data       = json.loads(response.text)
-	data       = data[db]
-	d2plot     = []
-	outfile    = "{{out.outdir}}/%s.txt" % db
-	fout       = open (outfile, "w")
+
+	data    = json.loads(response.text)
+	data    = data[db]
+	d2plot  = []
+	outfile = "{{out.outdir}}/{{in.infile | fn}}-%s.txt" % db
+	writer  = TsvWriter(outfile)
+	writer.meta.add(*head)
+	writer.writeHead()
 	# for network plot
 	path2genes = {}
 	path2pvals = {}
 	genestats2 = {}
-	fout.write ("\t".join(head) + "\n")
 	for ret in data[:enrn]:
-		fout.write ("\t".join(['|'.join(r) if x == 5 else str(r) for x,r in enumerate(ret)]) + "\n")
+		r = TsvRecord()
+		r.Rank             = ret[0]
+		r.Term             = ret[1]
+		r.Pval             = ret[2]
+		r.Zscore           = ret[3]
+		r.CombinedScore    = ret[4]
+		r.OverlappingGenes = '|'.join(ret[5])
+		r.AdjustedPval     = ret[6]
+		r.OldPval          = ret[7]
+		r.OldAdjustedPval  = ret[8]
+		writer.write(r)
+
 		if {{args.rmtags}} and "_" in ret[1]: ret[1] = ret[1].split('_')[0]
 		if len(path2genes) < {{args.netn}}:
-			path2genes[ret[1]] = ret[5]
-			for g in ret[5]: genestats2[g] = genestats[g]
-			path2pvals[ret[1]] = ret[2]
+			path2genes[r.Term] = r.OverlappingGenes.split('|')
+			for g in path2genes[r.Term]:
+				if g in genestats:
+					genestats2[g] = genestats[g]
+				else:
+					genestats2[g] = ''
+					logger.warn('{gene} not found in query set, you probably need to normalize the gene names.'.format(gene = g))
+			path2pvals[r.Term] = r.Pval
 		d2plot.append (ret)
-	fout.close()
+	writer.close()
 
 	if {{args.netplot}}:
 		# cleanup data
@@ -141,9 +159,9 @@ for db in dbs:
 				if not reg in relations2:
 					relations2[reg] = {}
 				relations2[reg][g] = stat
-			if foundreg: 
+			if foundreg:
 				regstats2[reg] = regstats[reg]
-		
+
 		genemarks  = {g:0 for g in genestats2.keys()}
 		plainlinks = []
 		for pathw, genes in path2genes.items():
@@ -191,29 +209,29 @@ for db in dbs:
 		for pathw, genes in path2genes.items():
 			dotstr.append('  subgraph cluster_%s { ' % re.sub(r'[^\w]', '', pathw))
 			if path2pvals[pathw] < 0.05:
-				dotstr.append('    style = filled;')	
-				dotstr.append('    color = "#FFCCCC";')	
+				dotstr.append('    style = filled;')
+				dotstr.append('    color = "#FFCCCC";')
 			dotstr.append('    fontsize = 60;')
 			dotstr.append('    label = "%s (p=%.2E)";' % (pathw, path2pvals[pathw]))
 			for g in genes:
 				dotstr.append('    "%s";' % g)
 			dotstr.append('  }')
 		dotstr.append('}')
-	
+
 		from graphviz import Source
 		dotfile = '{{out.outdir}}/%s.net.dot' % db
 		src = Source('\n'.join(dotstr), filename = dotfile, format = 'svg', engine = 'fdp')
 		src.render()
-	
+
 	if {{args.enrplot}}:
 		#d2plot   = sorted (d2plot, cmp=lambda x,y: 0 if x[2] == y[2] else (-1 if x[2] < y[2] else 1))
-		plotfile = "{{out.outdir}}/%s.png" % db
-		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7]) 
+		plotfile = "{{out.outdir}}/{{in.infile | fn}}-%s.png" % db
+		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7])
 		rownames = [r[1] if len(r[1])<=40 else r[1][:40] + ' ...' for r in d2plot]
 		rnidx    = range (len (rownames))
 		ax1 = plt.subplot(gs[0])
 		plt.title ("{{args.title}}".replace("{db}", db), fontweight='bold')
-		
+
 		ax1.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
 		plt.subplots_adjust(wspace=.01, left=0.5)
 		ax1.barh(rnidx, [len(r[5]) for r in d2plot], color='blue', alpha=.6)
@@ -228,7 +246,7 @@ for db in dbs:
 		ax1.invert_yaxis()
 		xticks = ax1.xaxis.get_major_ticks()
 		xticks[0].label1.set_visible(False)
-		
+
 		ax2 = plt.subplot(gs[1])
 		ax2.xaxis.grid(alpha=.6, ls = '--', zorder = -99)
 		ax2.barh(rnidx, [-math.log(r[2], 10) for r in d2plot], color='red', alpha = .6)
@@ -248,4 +266,3 @@ for db in dbs:
 		pv_patch = patches.Patch(color='red', alpha = .6, label='-log(p-value)')
 		plt.figlegend(handles=[ng_patch, pv_patch], labels=['# overlapped genes', '-log(p-value)'], loc="lower center", ncol=2, edgecolor="none")
 		plt.savefig(plotfile, dpi=300)
-

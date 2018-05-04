@@ -3,6 +3,7 @@ import requests
 import math
 from hashlib import md5
 from pyppl import Box
+from bioprocs.utils import alwaysList
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 {% if args.plot %}
@@ -59,8 +60,7 @@ if not response.ok:
 data = json.loads(response.text)
 
 ## do enrichment
-dbs = "{{args.dbs}}".split(',')
-dbs = map (lambda s: s.strip(), dbs)
+dbs = alwaysList({{args.dbs | quote}})
 
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
 query_string = '?userListId=%s&backgroundType=%s'
@@ -101,7 +101,7 @@ for db in dbs:
 		writer.write(r)
 		if topn < 1 and ret[2] >= topn: continue
 		if topn >= 1 and i > topn - 1: continue
-		if {{args.rmtags}} and "_Homo sapiens_hsa" in ret[1]: ret[1] = ret[1][:-22]
+		if {{args.rmtags}} and "_" in ret[1]: ret[1] = ret[1].split('_')[0]
 		d2plot.append (ret)
 	writer.close()
 
