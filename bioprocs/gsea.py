@@ -142,13 +142,13 @@ pEnrichr.input          = "infile:file"
 pEnrichr.output         = "outdir:dir:{{in.infile | fn}}.enrichr"
 pEnrichr.lang           = params.python.value
 pEnrichr.args.inopts    = Box(delimit = '\t', skip = 0, comment = '#')
-pEnrichr.args.topn      = 10
+pEnrichr.args.top       = 10
 pEnrichr.args.genecol   = ''
-pEnrichr.args.dbs       = "KEGG_2016"
+pEnrichr.args.libs      = "KEGG_2016"
 pEnrichr.args.norm      = False
 pEnrichr.args.rmtags    = True
 pEnrichr.args.plot      = True
-pEnrichr.args.title     = "Gene enrichment: {db}"
+pEnrichr.args.title     = "Gene enrichment: {library}"
 pEnrichr.args.cachedir  = params.cachedir.value
 #pEnrichr.envs.genenorm = genenorm.py
 pEnrichr.errhow         = 'retry'

@@ -1,7 +1,7 @@
 from os import path
 from glob import glob
 from pyppl import Proc, Box
-from .utils import plot, txt, dirnamePattern
+#from .utils import plot, txt, dirnamePattern
 from .rnaseq import pBatchEffect, pCoexp
 from . import params
 
@@ -30,12 +30,12 @@ from . import params
 	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
 		- See ggplot2 documentation.
 	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
-	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`
 """
 pCeldir2Matrix                     = Proc(desc = 'Merge expression files to a matrix.')
 pCeldir2Matrix.input               = "expdir:file"
 pCeldir2Matrix.output              = [
-	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt", 
+	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt",
 	"outdir:dir:{{in.expdir, args.pattern | fsDirname}}"
 ]
 pCeldir2Matrix.lang             = params.Rscript.value
@@ -52,10 +52,11 @@ pCeldir2Matrix.args.devpars     = Box({'res': 300, 'width': 2000, 'height': 2000
 pCeldir2Matrix.args.boxplotggs  = ['r:ylab("Log2 Intensity")']
 pCeldir2Matrix.args.heatmapggs  = ['r:theme(axis.text.y = element_blank())']
 pCeldir2Matrix.args.histplotggs = ['r:labs(x = "Log2 Intensity", y = "Density")']
-pCeldir2Matrix.envs.plotBoxplot = plot.boxplot.r
-pCeldir2Matrix.envs.plotHeatmap = plot.heatmap.r
-pCeldir2Matrix.envs.plotHist    = plot.hist.r
-pCeldir2Matrix.envs.fsDirname   = dirnamePattern
+#pCeldir2Matrix.envs.plotBoxplot = plot.boxplot.r
+#pCeldir2Matrix.envs.plotHeatmap = plot.heatmap.r
+#pCeldir2Matrix.envs.plotHist    = plot.hist.r
+#pCeldir2Matrix.envs.fsDirname   = dirnamePattern
+pCeldir2Matrix.envs.fsDirname   = lambda d, pat: path.splitext(path.basename((glob(path.join(d, pat)) or ['nothing.txt'])[0]))[0] + '.dir'
 pCeldir2Matrix.script           = "file:scripts/marray/pCeldir2Matrix.r"
 
 
@@ -63,7 +64,7 @@ pCeldir2Matrix.script           = "file:scripts/marray/pCeldir2Matrix.r"
 pMarrayDeg        = Proc(desc = 'Detect DEGs by microarray data.')
 pMarrayDeg.input  = "efile:file, gfile:file"
 pMarrayDeg.output = [
-	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt", 
+	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt",
 	"outdir:dir:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs"
 ]
 pMarrayDeg.args.tool          = 'limma'
