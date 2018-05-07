@@ -14,6 +14,7 @@ class TestSeq (unittest.TestCase):
 	def testpPromoters(self):
 		pStr2File.input = ['TP53']
 		pPromoters.depends = pStr2File
+		pPromoters.args.outopts.query = True
 		PyPPL(config).start(pStr2File).run()
 		procOK(pPromoters, 'promoters.bed', self)
 

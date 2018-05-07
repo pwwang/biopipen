@@ -97,6 +97,7 @@ pPromoters.args.incbody  = False
 pPromoters.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pPromoters.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
 pPromoters.args.frm      = 'symbol, alias'
+pPromoters.args.genecol  = ''
 pPromoters.args.cachedir = params.cachedir.value
 pPromoters.args.genome   = params.genome.value
 pPromoters.lang          = params.python.value
