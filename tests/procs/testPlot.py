@@ -19,7 +19,7 @@ class TestPlot (helpers.TestCase):
 			'add.params': dict(color = "blue", fill = "lightgray"),
 			'conf.int': True, # Add confidence interval
 			'cor.coef': True, # Add correlation coefficient. see ?stat_cor
-			'cor.coeff.args': {'method': "pearson", 'label.x': .5, 'label.sep': ", "}
+			'cor.coeff.args': {'method': "pearson", 'label.sep': ", "}
 		}
 
 	def testScatter(self, tag, infile, outfile, x, y, cnames, rnames, params = {}, devpars = Box(res = 48, height = 300, width =300)):

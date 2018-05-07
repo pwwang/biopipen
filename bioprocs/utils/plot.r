@@ -13,6 +13,9 @@ scatter = function(data, plotfile, x = 1, y = 2, params = list(), devpars = list
 	params$data = data
 	params$x    = x
 	params$y    = y
+	# put cor.coeff label in the center if cor.coeff.args$label.x is not given
+	if ('cor.coeff.args' %in% names(params) && !'label.x' %in% names(params$cor.coeff.args))
+		params$cor.coeff.args$label.x = (max(data[,x]) + min(data[,x])) / 2
 	print(do.call(ggscatter, params))
 	dev.off()
 }
