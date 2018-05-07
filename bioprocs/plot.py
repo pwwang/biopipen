@@ -1,10 +1,22 @@
-from pyppl import Proc, Box
-from .utils import plot
-from . import params
-
 """
 Generate plot using given data
 """
+from pyppl import Proc, Box
+#from .utils import plot
+from . import params, rimport
+
+pScatter = Proc(desc = 'Generate scatter plot.')
+pScatter.input  = 'infile:file'
+pScatter.output = 'outfile:file:{{in.infile | fn}}.scatter.png'
+pScatter.args.cnames  = True
+pScatter.args.rnames  = False
+pScatter.args.x       = 1
+pScatter.args.y       = 2
+pScatter.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pScatter.args.params  = Box()
+pScatter.envs.rimport = rimport
+pScatter.lang   = 'Rscript'
+pScatter.script = 'file:scripts/plot/pScatter.r'
 
 """
 @name:
@@ -28,7 +40,7 @@ pBoxplot.args.cnames  = True
 pBoxplot.args.rnames  = True
 pBoxplot.args.ggs     = Box()
 pBoxplot.args.devpars = Box(res = 300, height = 2000, width = 2000)
-pBoxplot.envs.plot    = plot
+#pBoxplot.envs.plot    = plot
 pBoxplot.script       = "file:scripts/plot/pBoxplot.r"
 
 """
@@ -58,7 +70,7 @@ pBoxplot.script       = "file:scripts/plot/pBoxplot.r"
 		- squares:       3 (length of sides)
 		- rectangles:    3:4 (widths and heights)
 		- starts:        3:? (?>5, a matrix with three or more columns giving the lengths of the rays from the center of the stars.)
-		- thermometers:  3:? (?=5|6, The first two columns give the width and height of the thermometer symbols. If there are three columns, the third is taken as a proportion: the thermometers are filled (using colour fg) from their base to this proportion of their height. If there are four columns, the third and fourth columns are taken as proportions and the thermometers are filled between these two proportions of their heights. The part of the box not filled in fg will be filled in the background colour (default transparent) given by bg.) 
+		- thermometers:  3:? (?=5|6, The first two columns give the width and height of the thermometer symbols. If there are three columns, the third is taken as a proportion: the thermometers are filled (using colour fg) from their base to this proportion of their height. If there are four columns, the third and fourth columns are taken as proportions and the thermometers are filled between these two proportions of their heights. The part of the box not filled in fg will be filled in the background colour (default transparent) given by bg.)
 		- boxplots:      3:7 (a matrix with five columns. The first two columns give the width and height of the boxes, the next two columns give the lengths of the lower and upper whiskers and the fifth the proportion (with a warning if not in [0,1]) of the way up the box that the median line is drawn.)
 	`main`:   The title of the plot. Default: NULL (the file name)
 	`xlab`:   The labels for x axis. Default: colnames(mat)[1]
@@ -80,8 +92,8 @@ pScatterPlot.args.textParams = {
 	'cex': 0.6
 }
 pScatterPlot.args.text    = "TRUE"
-pScatterPlot.args._plotSymbols = plot.symbols.r
-pScatterPlot.args._plotText    = plot.text.r
+#pScatterPlot.args._plotSymbols = plot.symbols.r
+#pScatterPlot.args._plotText    = plot.text.r
 pScatterPlot.lang         = "Rscript"
 pScatterPlot.script       = """
 {{args._plotSymbols}}
@@ -146,7 +158,7 @@ pHeatmap.args.header         = True
 pHeatmap.args.rownames       = 1
 pHeatmap.args.rows           = 'all' # top:100, both:50, bottom:100, random-both:50, random:100
 pHeatmap.args.cols           = 'all' # top:100, both:50, bottom:100, random-both:50, random:100
-pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
+#pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
 pHeatmap.lang                = params.Rscript.value
 pHeatmap.script              = "file:scripts/plot/pHeatmap.r"
 
@@ -202,7 +214,7 @@ pROC.args.combine = True
 pROC.args.showauc = True
 pROC.args.params  = Box(labels = False)
 pROC.args.ggs     = [
-	'r:style_roc()', 
+	'r:style_roc()',
 	'r:theme(legend.position = c(1,0), legend.justification = c(1,0))', # show legend at bottom right corner
 ]
 pROC.args.devpars = Box(res = 300, height = 2000, width = 2000)
@@ -245,8 +257,8 @@ pVenn.args.rnames      = False
 pVenn.args.vennParams  = {}
 pVenn.args.upsetParams = {}
 pVenn.args.devpars     = Box(res = 300, height = 2000, width = 2000)
-pVenn.envs.plotVenn    = plot.venn.r
-pVenn.envs.plotUpset   = plot.upset.r
+#pVenn.envs.plotVenn    = plot.venn.r
+#pVenn.envs.plotUpset   = plot.upset.r
 pVenn.lang             = params.Rscript.value
 pVenn.script           = "file:scripts/plot/pVenn.r"
 
@@ -273,7 +285,7 @@ pVenn.script           = "file:scripts/plot/pVenn.r"
 	`outfile:file`: the output plot
 @args:
 	`rnames` : Whether the input file has row names. Default: `False`
-	`ggs`    : Extra expressions for ggplot. 
+	`ggs`    : Extra expressions for ggplot.
 	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 """
 pPie              = Proc(desc = 'Pie chart.')
@@ -290,7 +302,6 @@ pPie.args.ggs     = [
 	"r:theme(panel.background = element_blank())",
 	"r:theme(axis.text.x = element_blank())"
 ]
-pPie.envs.plotPie = plot.pie.r
+#pPie.envs.plotPie = plot.pie.r
 pPie.lang         = params.Rscript.value
 pPie.script       = "file:scripts/plot/pPie.r"
-	

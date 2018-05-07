@@ -1,10 +1,40 @@
-import unittest
-from pyppl import PyPPL
-from helpers import getfile, procOK, config
-from bioprocs.plot import pHeatmap, pScatterCompare, pROC, pVenn, pPie
+import unittest, helpers, testly
+from os import path
+from pyppl import PyPPL, Box
+from helpers import testdirs, config
+from bioprocs.plot import pScatter
+#from bioprocs.plot import pHeatmap, pScatterCompare, pROC, pVenn, pPie
 
-class TestPlot (unittest.TestCase):
-	
+class TestPlot (helpers.TestCase):
+
+	testdir, indir, outdir = testdirs('TestPlot')
+
+	def dataProvider_testScatter(self):
+		infile = path.join(self.indir, 'scattercompare.txt')
+		outfile = path.join(self.outdir, 'scatter1.png')
+		outfile2 = path.join(self.outdir, 'scatter2.png')
+		yield 't1', infile, outfile, 'Method1', 'Method2', True, True
+		yield 't2', infile, outfile2, 1, 2, True, True, {
+			'add': 'reg.line',
+			'add.params': dict(color = "blue", fill = "lightgray"),
+			'conf.int': True, # Add confidence interval
+			'cor.coef': True, # Add correlation coefficient. see ?stat_cor
+			'cor.coeff.args': {'method': "pearson", 'label.x': .5, 'label.sep': ", "}
+		}
+
+	def testScatter(self, tag, infile, outfile, x, y, cnames, rnames, params = {}, devpars = Box(res = 48, height = 300, width =300)):
+		pScatterTest = pScatter.copy(tag = tag)
+		pScatterTest.input = [infile]
+		pScatterTest.args.cnames = cnames
+		pScatterTest.args.rnames = rnames
+		pScatterTest.args.x = x
+		pScatterTest.args.y = y
+		pScatterTest.args.devpars = devpars
+		pScatterTest.args.params = params
+		PyPPL(config).start(pScatterTest).run()
+		self.assertFileEqual(pScatterTest.channel.get(), outfile)
+
+	'''
 	def testpHeatmap(self):
 		pHeatmap.input = [getfile('heatmap.txt')]
 		PyPPL(config).start(pHeatmap).run()
@@ -47,7 +77,7 @@ class TestPlot (unittest.TestCase):
 		pVennVenn.args.rnames = True
 		PyPPL(config).start(pVennVenn).run()
 		procOK(pVennVenn, 'venn-venn.venn.png', self)
-	
+
 	def testVennUpset(self):
 		pVennUpset             = pVenn.copy()
 		pVennUpset.input       = [getfile('venn-upset.txt')]
@@ -67,12 +97,11 @@ class TestPlot (unittest.TestCase):
 		pPie2.args.rnames = True
 		PyPPL(config).start(pPie2).run()
 		procOK(pPie2, 'pie-item-presence.pie.png', self)
-		
+	'''
 
 	# TODO:
 	# - boxplot
 	# - scatter plot
 
 if __name__ == '__main__':
-	unittest.main(failfast = True)
-		
+	testly.main(failfast = True)

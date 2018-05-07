@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+# Generate plots with input data.
+import json, yaml
+from pyppl import PyPPL, Box
+from bioprocs import params
+
+params.prefix('-')
+params.type.required   = True
+params.type.desc       = 'The type of the plot. One of scatter, ...' # to add more
+params.infile.required = True
+params.infile.desc     = 'The input data'
+params.outdir          = './'
+params.outdir.desc     = 'The output directory'
+params.noheader        = False
+params.noheader.desc   = 'Whether the input data has header'
+params.rnames          = False
+params.rnames.desc     = 'Where the input data has row names'
+params.x               = 1
+params.x.desc          = 'The column name (index) of data for x axis.'
+params.y               = 2
+params.y.desc          = 'The column name (index) of data for y axis.'
+params.devpars         = json.dumps(Box(res = 300, height = 2000, width = 2000))
+params.devpars.desc    = 'The parameters for the device (figure)'
+params.params          = '{}'
+params.params.desc     = 'The parameters for ggpubr functions.'
+
+params = params.parse().toDict()
+if params.type == 'scatter':
+	from bioprocs.plot import pScatter
+	proc              = pScatter
+	proc.input        = [params.infile]
+	proc.args.cnames  = not params.noheader
+	proc.args.rnames  = params.rnames
+	proc.args.x       = params.x
+	proc.args.y       = params.y
+	proc.args.devpars = yaml.safe_load(params.devpars)
+	proc.args.params  = yaml.safe_load(params.params)
+	proc.exdir        = params.outdir
+
+
+config = Box(log = Box())
+config.log.file = None
+PyPPL(config).start(proc).run()
