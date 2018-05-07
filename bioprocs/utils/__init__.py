@@ -3,6 +3,8 @@
 import delegator
 import logging
 import sys
+import shlex
+from os import path
 from subprocess import list2cmdline
 
 class RuncmdException(Exception):
@@ -51,6 +53,13 @@ def runcmd(cmd, quit = True):
 	if quit and c.return_code != 0:
 		raise RuncmdException('Command failed to run:\n%s' % cmd)
 	return c.return_code == 0
+
+def call(command, args, quit = True):
+	bioprocs = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'bioprocs')
+	if not isinstance(args, list):
+		args = shlex.split(args)
+	args = [bioprocs, command] + args
+	return runcmd(args, quit)
 
 def cmdargs(params, dash = 'auto', equal = 'auto'):
 	if not params: return ''
