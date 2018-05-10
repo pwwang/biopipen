@@ -18,11 +18,121 @@ class NoSuchReader(Exception):
 class NoSuchWriter(Exception):
 	pass
 
-class TsvMeta(OrderedDict):
+class TsvRecord(object):
+	__slots__ = ('__keys', '__vals')
+
+	def __init__(self, *items, **kwargs):
+		self.__keys = []
+		self.__vals = []
+		self.fromItems(*(list(items) + kwargs.items()))
+
+	def fromKeyVals(self, keys = None, values = None):
+		keys = keys or []
+		vals = values or [None] * len(keys)
+		if not isinstance(vals, list):
+			vals = [vals] * len(keys)
+		# avoid TsvRecord operation change original keys
+		self.__keys = keys[:]
+		self.__vals = vals
+
+		for key in self.__keys:
+			if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
+				raise KeyError('No keys startswith underscore(__) allowed.')
+		# Ensure that lengths match properly.
+		assert len(self.__keys) == len(self.__vals)
+		# Ensure the keys are unique
+		assert len(set(self.__keys)) == len(self.__keys)
+
+	def fromItems(self, *items):
+		for item in items:
+			if isinstance(item, list):
+				self.fromItems(*item)
+			elif isinstance(item, (dict, TsvRecord)):
+				self.fromItems(*item.items())
+			else:
+				assert isinstance(item, tuple)
+				self.__setattr__(*item)
+
+	def keys(self):
+		"""Returns the list of column names from the query."""
+		return self.__keys
+
+	def values(self):
+		"""Returns the list of values from the query."""
+		return self.__vals
+
+	def __repr__(self):
+		return 'TsvRecord({})'.format(list(self.items()))
+
+	def items(self):
+		return ((key, val) for key, val in zip(self.__keys, self.__vals))
+
+	def __getitem__(self, key):
+		# Support for index-based lookup.
+		if isinstance(key, int):
+			return self.__vals[key]
+
+		# Support for string-based lookup.
+		if key in self.__keys:
+			i = self.__keys.index(key)
+			return self.__vals[i]
+
+		raise KeyError("Record contains no '{}' field.".format(key))
+
+	def __getattr__(self, key):
+		if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
+			return super(TsvRecord, self).__getattr__(key)
+		return self[key]
+
+	def __setitem__(self, key, value):
+		if key in self.__keys:
+			i = self.__keys.index(key)
+			self.__vals[i] = value
+		else:
+			self.__keys.append(key)
+			self.__vals.append(value)
+
+	def __setattr__(self, key, value):
+		if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
+			super(TsvRecord, self).__setattr__(key, value)
+		else:
+		  self[key] = value
+
+	def __len__(self):
+		return len(self.__keys)
+
+	def get(self, key, default=None):
+		"""Returns the value for a given key, or default."""
+		try:
+			return self[key]
+		except KeyError:
+			return default
+
+	def asDict(self, ordered=False):
+		"""Returns the row as a dictionary, as ordered."""
+		items = zip(self.__keys, self.__vals)
+
+		return OrderedDict(items) if ordered else dict(items)
+
+	def update(self, *others, **kwargs):
+		self.fromItems(*(list(others) + kwargs.items()))
+
+	def __contains__(self, key):
+		return key in self.__keys
+
+	def __index__(self, key):
+		return self.__keys.index(key)
+
+	def __delitem__(self, key):
+		i = self.__keys.index(key)
+		del self.__keys[i]
+		del self.__vals[i]
+
+class TsvMeta(TsvRecord):
 	"""
 	Tsv meta data
 	"""
-	def __init__(self, *args):
+	def __init__(self, *args, **kwargs):
 		"""
 		arg could be a string, a tuple or a list:
 		'a', ('b': int) or ['c', 'd']
@@ -31,27 +141,21 @@ class TsvMeta(OrderedDict):
 		self.add(*args)
 
 	def __repr__(self):
-		return 'TsvMeta(%s)' % ', '.join([k if not v else '%s=%s'%(k,v.__name__) for k,v in self.items()])
-
-	def __getattr__(self, name):
-		if not name.startswith('_OrderedDict'):
-			return self[name]
-		super(TsvMeta, self).__getattr__(name)
-
-	def __setattr__(self, name, val):
-		if not name.startswith('_OrderedDict'):
-			self[name] = val
-		else:
-			super(TsvMeta, self).__setattr__(name, val)
+		return 'TsvMeta(%s)' % ', '.join(['%s=%s'%(k,v.__name__ if v else v) for k,v in self.items()])
 
 	def add(self, *args):
 		for arg in args:
-			if isinstance(arg, list):
-				for a in arg: self[a] = None
-			elif isinstance(arg, tuple):
+			if isinstance(arg, tuple):
 				if arg[1] and not callable(arg[1]):
-					raise TypeError('Expect callable for meta value.')
-				self[arg[0]] = arg[1]
+					raise ValueError('Expect callable as meta value.')
+				self.__setattr__(*arg)
+			elif isinstance(arg, list):
+				for a in arg:
+					if a[1] and not callable(a[1]):
+						raise ValueError('Expect callable as meta value.')
+						self.__setattr__(*a)
+					else:
+						self[a] = None
 			else:
 				self[arg] = None
 
@@ -59,32 +163,27 @@ class TsvMeta(OrderedDict):
 		self.add(*args)
 
 	def prepend(self, *args):
-		preps = []
+		keys = []
+		vals = []
 		for arg in args:
-			if isinstance(arg, list):
-				for a in arg: preps.append((a, None))
-			elif isinstance(arg, tuple):
+			if isinstance(arg, tuple):
 				if arg[1] and not callable(arg[1]):
-					raise TypeError('Expect callable for meta value.')
-				preps.append(arg)
+					raise ValueError('Expect callable as meta value.')
+				keys.append(arg[0])
+				vals.append(arg[1])
+			elif isinstance(arg, list):
+				for a in arg:
+					if a[1] and not callable(a[1]):
+						raise ValueError('Expect callable as meta value.')
+						keys.append(a[0])
+						vals.append(a[1])
+					else:
+						keys.append(a)
+						vals.append(None)
 			else:
-				preps.append((arg, None))
-
-		preps += self.items()
-		self.clear()
-		for k, v in preps:
-			self[k] = v
-
-class TsvRecord(dict):
-
-	def __repr__(self):
-		return 'TsvRecord(%s)' % (', '.join([k + '=' + repr(v) for k, v in self.items()]))
-
-	def __getattr__(self, name):
-		return self[name]
-
-	def __setattr__(self, name, val):
-		self[name] = val
+				keys.append(arg)
+				vals.append(None)
+		self.fromKeyVals(keys, vals)
 
 class TsvReaderBase(object):
 	def __init__(self, infile, delimit = '\t', comment = '#', skip = 0):
@@ -115,11 +214,9 @@ class TsvReaderBase(object):
 
 	def _parse(self, line):
 		record = TsvRecord()
-		for i, key in enumerate(self.meta.keys()):
-			try:
-				record[key] = self.meta[key](line[i]) if self.meta[key] else line[i]
-			except IndexError:
-				record[key] = ''
+		record.fromKeyVals(self.meta.keys(), [
+			self.meta[i](item) if self.meta[i] else item for i, item in enumerate(line)
+		])
 		return record
 
 	def next(self):
@@ -420,8 +517,7 @@ class SimRead (object):
 			else:
 				self.cnames[:len(kwargs['cnames'])] = list(kwargs['cnames'])
 
-		self.match = SimRead._defaultMatchIndex if all([ftype == 'nometa' for ftype in self.ftype]) \
-					 else SimRead._defaultMatchKey
+		self.match = SimRead._defaultMatch
 
 		self.readers = []
 		for i, fn in enumerate(files):
@@ -444,17 +540,8 @@ class SimRead (object):
 			return 0 if a > b else 1 if a < b else -1
 
 	@staticmethod
-	def _defaultMatchIndex(*lines):
+	def _defaultMatch(*lines):
 		data = [line[0] for line in lines]
-		mind = min(data)
-		if data.count(mind) == len(lines):
-			return -1
-		else:
-			return data.index(mind)
-
-	@staticmethod
-	def _defaultMatchKey(*lines):
-		data = [line.COL1 for line in lines]
 		mind = min(data)
 		if data.count(mind) == len(lines):
 			return -1

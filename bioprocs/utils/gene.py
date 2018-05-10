@@ -152,6 +152,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 			writer.meta.add(*items)
 		if outopts['query']:
 			writer.meta.add('_QUERY')
+
 		if outopts['head']:
 			writer.writeHead(outopts['headPrefix'], outopts['headDelimit'], outopts['headTransform'])
 		for r in reader:
@@ -169,6 +170,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 				if len(tocols) > 1:
 					for tocol in tocols[1:]:
 						r[tocol] = genemap[query][tocol]
+
 			if outopts['query']:
 				r._QUERY = query
 			writer.write(r)

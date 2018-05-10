@@ -10,19 +10,18 @@ class TestTsvMeta(helpers.TestCase):
 
 	def testInit(self, meta):
 		self.assertIsInstance(meta, TsvMeta)
-		self.assertIsInstance(meta, OrderedDict)
-		self.assertDictEqual(meta, {})
+		self.assertIsInstance(meta, TsvRecord)
+		self.assertDictEqual(meta.asDict(), {})
 
 	def dataProvider_testAdd(self):
 		yield ['a'], {}, {'a': None}
 		yield ['a', 'b'], {}, {'a': None, 'b': None}
 		yield [], {'a': None}, {'a': None}
 		yield [], {'a': 'b'}, {}, TypeError
-		yield ['a', 'b', ['c', 'd']], {'e': int, 'f': str}, {
+		yield ['a', 'b', ('c', int)], {'e': int, 'f': str}, {
 			'a': None,
 			'b': None,
-			'c': None,
-			'd': None,
+			'c': int,
 			'e': int,
 			'f': str,
 		}
@@ -33,10 +32,10 @@ class TestTsvMeta(helpers.TestCase):
 			self.assertRaises(exception, meta.add, *args, **kwargs)
 		else:
 			meta.add(*args + kwargs.items())
-			self.assertDictEqual(meta, data)
+			self.assertDictEqual(meta.asDict(), data)
 
 	def dataProvider_testKeys(self):
-		yield ['a', 'b', ['c', 'd']], {'e': int, 'f': str}, ['a', 'b', 'c', 'd', 'e', 'f']
+		yield ['a', 'b', ('c', int)], {'e': int, 'f': str}, ['a', 'b', 'c', 'e', 'f']
 
 	def testKeys(self, args, kwargs, keys):
 		meta = TsvMeta(*args + kwargs.items())
@@ -44,8 +43,8 @@ class TestTsvMeta(helpers.TestCase):
 
 	def dataProvider_testRepr(self):
 		yield TsvMeta(), 'TsvMeta()'
-		yield TsvMeta('a', 'b', ('c', int)), 'TsvMeta(a, b, c=int)'
-		yield TsvMeta('a', 'b', ('c', lambda x: int(x))), 'TsvMeta(a, b, c=<lambda>)'
+		yield TsvMeta('a', 'b', ('c', int)), 'TsvMeta(a=None, b=None, c=int)'
+		yield TsvMeta('a', 'b', ('c', lambda x: int(x))), 'TsvMeta(a=None, b=None, c=<lambda>)'
 
 	def testRepr(self, meta, reprstr):
 		self.assertEqual(repr(meta), reprstr)
@@ -79,7 +78,7 @@ class TestTsvMeta(helpers.TestCase):
 
 	def testBorrow(self, meta1, meta2, data):
 		meta1.update(meta2)
-		self.assertDictEqual(meta1, data)
+		self.assertDictEqual(meta1.asDict(), data)
 
 class TestTsvRecord(helpers.TestCase):
 
@@ -88,7 +87,7 @@ class TestTsvRecord(helpers.TestCase):
 
 	def testInit(self, kwargs, data):
 		record = TsvRecord(**kwargs)
-		self.assertDictEqual(record, data)
+		self.assertDictEqual(record.asDict(), data)
 
 	def dataProvider_testAdd(self):
 		yield {'a':1, 'b':2, 'c':3}, {'a':1, 'b':2, 'c':3}
@@ -96,7 +95,7 @@ class TestTsvRecord(helpers.TestCase):
 	def testAdd(self, kwargs, data):
 		record = TsvRecord()
 		record.update(**kwargs)
-		self.assertDictEqual(record, data)
+		self.assertDictEqual(record.asDict(), data)
 
 	def dataProvider_testKeys(self):
 		yield {'a':1, 'b':2, 'c':3}, ['a', 'b', 'c']
@@ -170,7 +169,7 @@ class TestTsvReaderBase(helpers.TestCase):
 
 	def testParse(self, reader, line, record):
 		r = reader._parse(line)
-		self.assertDictEqual(r, record)
+		self.assertDictEqual(r.asDict(), record.asDict())
 
 	def dataProvider_testNext(self):
 		infile = path.join(self.indir, 'readerbase1.txt')
@@ -186,7 +185,7 @@ class TestTsvReaderBase(helpers.TestCase):
 			self.assertRaises(exception, reader.next)
 		else:
 			r = reader.next()
-			self.assertDictEqual(r, record)
+			self.assertDictEqual(r.asDict(), record)
 
 	def dataProvider_testDump(self):
 		infile = path.join(self.indir, 'readerbase2.txt')
@@ -196,7 +195,7 @@ class TestTsvReaderBase(helpers.TestCase):
 
 	def testDump(self, reader, records):
 		for i, r in enumerate(reader.dump()):
-			self.assertDictEqual(r, records[i])
+			self.assertDictEqual(r.asDict(), records[i])
 
 	def dataProvider_testRewind(self):
 		infile = path.join(self.indir, 'readerbase2.txt')
@@ -207,7 +206,7 @@ class TestTsvReaderBase(helpers.TestCase):
 
 	def testRewind(self, reader, recaw):
 		reader.rewind()
-		self.assertDictEqual(reader.next(), recaw)
+		self.assertDictEqual(reader.next().asDict(), recaw)
 
 	def dataProvider_testAutoMeta(self):
 		yield path.join(self.indir, 'readerbase1.txt'), ['COL1']
@@ -228,7 +227,7 @@ class TestTsvReaderBed(helpers.TestCase):
 
 	def testInit(self, infile):
 		reader = TsvReader(infile, ftype = 'bed')
-		self.assertDictEqual(reader.meta, {
+		self.assertDictEqual(reader.meta.asDict(), {
 			'CHR'   : None,
 			'START' : int,
 			'END'   : int,
@@ -262,7 +261,7 @@ class TestTsvReaderBed12(helpers.TestCase):
 
 	def testInit(self, infile):
 		reader = TsvReader(infile, ftype = 'bed12')
-		self.assertDictEqual(reader.meta, {
+		self.assertDictEqual(reader.meta.asDict(), {
 			'CHR'         : None,
 			'START'       : int,
 			'END'         : int,
@@ -307,7 +306,7 @@ class TestTsvReaderBedpe(helpers.TestCase):
 
 	def testInit(self, infile):
 		reader = TsvReader(infile, ftype = 'bedpe')
-		self.assertDictEqual(reader.meta, {
+		self.assertDictEqual(reader.meta.asDict(), {
 			'CHR1'    : None,
 			'START1'  : int,
 			'END1'    : int,
@@ -348,7 +347,7 @@ class TestTsvReaderBedx(helpers.TestCase):
 
 	def testInit(self, infile):
 		reader = TsvReader(infile, ftype = 'bedx')
-		self.assertDictEqual(reader.meta, {
+		self.assertDictEqual(reader.meta.asDict(), {
 			'CHR'   : None,
 			'START' : int,
 			'END'   : int,
@@ -383,9 +382,9 @@ class TestTsvReaderHead(helpers.TestCase):
 
 	def testInit(self, infile, inopts, meta, record):
 		reader = TsvReader(infile, ftype = 'head', **inopts)
-		self.assertDictEqual(reader.meta, meta)
+		self.assertDictEqual(reader.meta.asDict(), meta)
 		r = reader.next()
-		self.assertDictEqual(r, record)
+		self.assertDictEqual(r.asDict(), record)
 
 class TestTsvWriterBase(helpers.TestCase):
 
