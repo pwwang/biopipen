@@ -1,50 +1,195 @@
 require('ggplot2')
-require('ggdendro')
-require('gtable')
-require('grid')
-require('ggpubr')
 
-# see http://www.sthda.com/english/rpkgs/ggpubr/reference/ggscatter.html for all parameters
-scatter = function(data, plotfile, x = 1, y = 2, params = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
-	do.call(png, c(list(filename=plotfile), devpars))
-	cnames = colnames(data)
-	if (is.integer(x)) x = cnames[x]
-	if (is.integer(y)) y = cnames[y]
-	params$data = data
-	params$x    = x
-	params$y    = y
-	# put cor.coeff label in the center if cor.coeff.args$label.x is not given
-	if ('cor.coeff.args' %in% names(params) && !'label.x' %in% names(params$cor.coeff.args))
-		params$cor.coeff.args$label.x = (max(data[,x]) + min(data[,x])) / 2
-	print(do.call(ggscatter, params))
-	dev.off()
-}
-
-
-plotBoxplot = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	do.call(png, c(list(filename=filename), devpars))
-
-	ggplus = list(
-		ylab("Value"),
-		theme(axis.title.x = element_blank()),
-		theme(axis.text.x  = element_text(angle = 60, hjust = 1)),
-		theme(plot.margin  = unit(c(1,1,1,1), "cm"))
-	)
-	plotout = ggplot(stack(as.data.frame(m)), aes(ind, values)) + geom_boxplot()
-	for (i in 1:length(ggplus)) {
-		plotout = plotout + ggplus[[i]]
-	}
-	if (length(ggs) > 0) {
-		for (i in 1:length(ggs)) {
-			plotout = plotout + ggs[[i]]
+.script.file = function() {
+	for (i in 1:length(sys.frames())) {
+		ofile = sys.frame(i)$ofile
+		if (!is.null(ofile)) {
+			return (ofile)
 		}
 	}
-	print(plotout)
+}
+source(file.path(dirname(.script.file()), '__init__.r'))
+
+# Update an aes in alist (named "mapping") for ggplot2 functions
+# namesbefore = c('data')
+update.aes = function(alist, newaes, namesbefore = c()) {
+	alnames = names(alist)
+	if ('mapping' %in% alnames) {
+		alist$mapping = update.list(alist$mapping, newaes)
+	} else {
+		delidx = NULL
+		if (length(namesbefore) > 0) {
+			for (i in 1:length(namesbefore)) {
+				if (namesbefore[i] %in% alnames)
+					delidx = c(delidx, i)
+			}
+		}
+		if (!is.null(delidx)) namesbefore = namesbefore[-delidx]
+		pos = length(namesbefore) + 1
+		if (is.null(alnames)) {
+			alist[[pos]] = update.list(alist[[pos]], newaes)
+		} else {
+			x = 0
+			if (length(alnames) > 0) {
+				for (i in 1:length(alnames)) {
+					if (alnames[i] != "") next
+					x = x + 1
+					if (x == pos) {
+						alist[[i]] = update.list(alist[[i]], newaes)
+						break
+					}
+				}
+			}
+			if (x == 0) {
+				alist$mapping = newaes
+			}
+		}
+	}
+	return (alist)
+}
+
+plot.no = function(data, plotfile, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	do.call(png, c(list(filename=plotfile), devpars))
+	params$data = data
+	p = do.call(ggplot, params)
+	for (ggfunc in names(ggs)) {
+		p = p + do.call(ggfunc, ggs[[ggfunc]])
+	}
+	print(p)
 	dev.off()
 }
 
-plotHeatmap = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000), dendro = TRUE, rows = NULL, cols = NULL) {
-	do.call(png, c(list(filename=filename), devpars))
+plot.xy = function(data, plotfile, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	cnames = colnames(data)
+	if (is.numeric(x)) x = cnames[x]
+	if (is.numeric(y)) y = cnames[y]
+	params = list(mapping = aes_string(x = x, y = y))
+	plot.no(data, plotfile, params, ggs, devpars)
+}
+
+plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	cnames = colnames(data)
+	if (is.numeric(x)) x = cnames[x]
+	params = list(mapping = aes_string(x = x))
+	plot.no(data, plotfile, params, ggs, devpars)
+}
+
+plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	require('plotROC')
+
+	cnames = colnames(data)
+	if (is.null(cnames)) {
+		cnames = c('D', paste0('M', 1:(ncol(data)-1)))
+		colnames(data) = cnames
+	}
+
+	if (length(cnames) < 2) {
+		stop('Only 1 column found in data!')
+	} else if (length(cnames) == 2) {
+		D = cnames[1]
+		M = cnames[2]
+		data$name = rep(M, nrow(data))
+	} else {
+		data = melt_roc(data, 1, 2:length(cnames))
+		D = 'D'
+		M = 'M'
+	}
+
+	returnAUC = params$returnAUC
+	if (is.null(returnAUC)) returnAUC = T
+
+	showAUC   = params$showAUC
+	if (is.null(showAUC)) showAUC = T
+
+	combine   = params$combine
+	if (is.null(combine)) combine = T
+
+	params$returnAUC = NULL
+	params$showAUC   = NULL
+	params$combine   = NULL
+
+	params = update.aes(params, aes_string(d = D, m = M, color = 'name'))
+	if (combine) {
+		do.call(png, c(list(filename=plotfile), devpars))
+
+		p = ggplot(data) + do.call(geom_roc, params)
+		if (returnAUC || showAUC) {
+			aucs = matrix(round(calc_auc(p)$AUC, 3), ncol = 1, nrow = length(cnames) - 1)
+			rownames(aucs)  = cnames[-1]
+			colnames(aucs)  = 'AUC'
+		}
+		if (showAUC) {
+			if (length(cnames) > 2) {
+				auclabels = NULL
+				for (i in 1:length(cnames[-1])) {
+					auclabels = c(auclabels, paste(cnames[-1][i], aucs[i, 1], sep = ': '))
+				}
+				p = p + scale_color_discrete(name = "AUC", breaks = cnames[-1], labels = auclabels)
+			} else {
+				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', aucs, sep = ': '))
+				p = p + scale_color_discrete(guide = F)
+			}
+		}
+		for (ggfunc in names(ggs)) {
+			p = p + do.call(ggfunc, ggs[[ggfunc]])
+		}
+		print(p)
+		dev.off()
+		if (returnAUC) return(aucs)
+	} else {
+		aucs = matrix(NA, ncol = 1, nrow = length(cnames) - 1)
+		rownames(aucs)  = cnames[-1]
+		colnames(aucs)  = 'AUC'
+		for (cname in cnames[-1]) {
+			prefix = tools::file_path_sans_ext(plotfile)
+			do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
+			p = ggplot(data[which(data$name == cname), , drop=F]) + do.call(geom_roc, params)
+			if (returnAUC || showAUC) {
+				aucs[cname, 1] = round(calc_auc(p)$AUC, 3)
+			}
+			if (showAUC) {
+				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', aucs[cname, 1], sep = ': '))
+				p = p + scale_color_discrete(guide = F)
+			}
+			for (ggfunc in names(ggs)) {
+				p = p + do.call(ggfunc, ggs[[ggfunc]])
+			}
+			print(p)
+			dev.off()
+		}
+		if (returnAUC) return(aucs)
+	}
+}
+
+plot.scatter = function(data, plotfile, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	ggs = c(list(geom_point = params), ggs)
+	plot.xy(data, plotfile, x, y, ggs, devpars)
+}
+
+# alias
+plot.points = plot.scatter
+
+plot.boxplot = function(data, plotfile, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	if (is.numeric(x)) {
+		cnames = colnames(data)
+		x = cnames[x]
+	}
+	params = update.aes(params, aes_string(group = x))
+
+	ggs = c(
+		list(geom_boxplot = params),
+		list(theme = list(axis.text.x = element_text(angle = -60, hjust = 0))),
+		ggs
+	)
+	plot.xy(data, plotfile, x, y, ggs, devpars)
+}
+
+plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	require('ggdendro')
+	require('gtable')
+	require('grid')
+
+	do.call(png, c(list(filename=plotfile), devpars))
 
 	theme_none <- theme(
 		panel.grid.major = element_blank(),
@@ -68,16 +213,22 @@ plotHeatmap = function (m, filename, ggs = list(), devpars = list(res=300, width
 		theme(legend.title = element_blank())
 	)
 
-	x      = as.matrix(m)
-	rnames = rownames(m)
-	cnames = colnames(m)
-	if (is.null(rnames)) rnames = paste('ROW', 1:nrow(m), sep='')
-	if (is.null(cnames)) cnames = paste('COL', 1:ncol(m), sep='')
-	rownames(m) = rnames
-	colnames(m) = cnames
+	dendro = params$dendro
+	if (is.null(dendro)) dendro = T
+
+	rnames = rownames(data)
+	cnames = colnames(data)
+	if (is.null(rnames)) {
+		rnames = paste('ROW', 1:nrow(m), sep='')
+		rownames(data) = rnames
+	}
+	if (is.null(cnames)) {
+		cnames = paste('COL', 1:ncol(m), sep='')
+		colnames(data) = cnames
+	}
 	# Dendrogram 1
 	if (dendro == TRUE || dendro == 'both' || dendro == 'row') {
-		ddrleft   = hclust(dist(x))
+		ddrleft   = hclust(dist(data))
 		plotdleft = ggplot(segment(dendro_data(as.dendrogram(ddrleft)))) +
 		geom_segment(aes(x=x, y=y, xend=xend, yend=yend)) +
 		theme_none + theme(plot.margin = margin(r=-5, l = 10)) +
@@ -87,13 +238,13 @@ plotHeatmap = function (m, filename, ggs = list(), devpars = list(res=300, width
 		rowidx  = ddrleft$order
 	} else {
 		plotdleft = NULL
-		rowidx    = if (!is.null(rows)) match(rows, rnames) else 1:length(rnames)
+		rowidx    = 1:length(rnames)
 		rowidx    = rev(rowidx)
 	}
 
 	# Dendrogram 2
 	if (dendro == TRUE || dendro == 'both' || dendro == 'col') {
-		ddrtop   = hclust(dist(t(x)))
+		ddrtop   = hclust(dist(t(data)))
 		plotdtop = ggplot(segment(dendro_data(as.dendrogram(ddrtop)))) +
 		geom_segment(aes(x=x, y=y, xend=xend, yend=yend)) +
 		theme_none + theme(plot.margin = margin(b=-15, t = 10)) +
@@ -102,10 +253,10 @@ plotHeatmap = function (m, filename, ggs = list(), devpars = list(res=300, width
 		colidx  = ddrtop$order
 	} else {
 		plotdtop = NULL
-		colidx   = if (!is.null(cols)) match(cols, cnames) else 1:length(cnames)
+		colidx   = 1:length(cnames)
 	}
 
-	mm        = stack(as.data.frame(m[rowidx, colidx]))
+	mm        = stack(data[rowidx, colidx])
 	mm$rnames = rnames
 	plothm    = ggplot(mm, aes(ind, rnames)) + geom_tile(aes(fill=values)) +
 	xlim(unique(as.vector(mm$ind))) + scale_y_discrete(position="right", limits=rnames)
@@ -170,25 +321,16 @@ plotHeatmap = function (m, filename, ggs = list(), devpars = list(res=300, width
 	dev.off()
 }
 
-plotHist = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	do.call(png, c(list(filename=filename), devpars))
-
-	ggplus  = list(
-		xlab("Value"),
-		ylab("Count")
-	)
-	plotout = ggplot(stack(as.data.frame(t(m)))) + geom_histogram(aes(values))
-	for (i in 1:length(ggplus)) {
-		plotout = plotout + ggplus[[i]]
-	}
-	if (length(ggs) > 0) {
-		for (i in 1:length(ggs)) {
-			plotout = plotout + ggs[[i]]
-		}
-	}
-	print(plotout)
-	dev.off()
+plot.histo = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	ggs = c(list(geom_histogram = params), ggs)
+	plot.x(data, plotfile, x, ggs, devpars)
 }
+
+plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	ggs = c(list(geom_freqpoly = params), ggs)
+	plot.x(data, plotfile, x, ggs, devpars)
+}
+
 
 plotMAplot = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	do.call(png, c(list(filename=filename), devpars))
@@ -221,66 +363,55 @@ plotMAplot = function (m, filename, ggs = list(), devpars = list(res=300, width=
 	dev.off()
 }
 
-plotPie = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	percent = function(x) paste0(format(round(x*100, 1), nsmall = 1), "%")
-	do.call(png, c(list(filename=filename), devpars))
-	N         = nrow(m)
-	Group     = colnames(m)
-	oValue    = if (N == 1) m[1,] else colSums(m)
-	oValue    = as.vector(as.matrix(oValue))
-	GroupName = paste0(Group, " (", oValue, ")")
-	Value     = 100*oValue/sum(oValue)
-	Labels    = percent(Value / 100)
-	df        = data.frame (Group = Group, Value = Value)
-	df$Group  = factor(df$Group, levels = df$Group)
-	#if (length(Group) == 2) {
-	#	ytext = 100 - cumsum(rev(Value)) + rev(Value) / 2
-	#} else {
-		ytext = cumsum(rev(Value)) - rev(Value) / 2
-	#}
-	pie =   ggplot(df, aes(x="", y=Value, fill=Group)) +
-			geom_bar(width = 1, stat = "identity") +
-			geom_text(aes(y = ytext), label = rev(Labels)) +
-			coord_polar("y") +
-			scale_fill_discrete(labels = GroupName, breaks = Group)
-
-	if (length(ggs) > 0) {
-		for (i in 1:length(ggs)) {
-			pie = pie + ggs[[i]]
-		}
-	}
-	print(pie)
-	dev.off()
-}
-
-plotUpset = function(mat, filename, params, devpars) {
-	library(UpSetR)
-	do.call(png, c(list(filename = filename), devpars))
-	png (filename, res=300, width=2000, height=2000)
-	if (! "nintersects" %in% names(params)) {
-		params$nintersects = NA
-	}
-	v = do.call (upset, c(list(data = mat, sets = colnames(mat)), params))
-	print (v)
-	dev.off()
-}
-
-plotVenn = function(mat, filename, params, devpars) {
+plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
 	library(VennDiagram)
-	rnames = rownames(mat)
+	rnames = rownames(data)
 	if (is.null(rnames)) {
-		rnames = paste('ROW', 1:nrow(mat), sep = '')
-		rownames(mat) = rnames
+		rnames = paste0('ROW', 1:nrow(data))
+		rownames(data) = rnames
 	}
 	x = list()
-	for (cname in colnames(mat)) {
-		x[[cname]] = rownames(mat[which(mat[, cname] == 1), cname, drop=F])
+	for (cname in colnames(data)) {
+		x[[cname]] = rownames(data[which(data[, cname] == 1), cname, drop=F])
 	}
-	ps = list(x = x, filename = filename, height = devpars$height, width = devpars$width, resolution = devpars$res, imagetype = "png", alpha = .5, fill = rainbow(ncol(mat)))
-
-	do.call(venn.diagram, c(ps, params))
-
+	default.params = list(x = x, filename = plotfile, height = devpars$height, width = devpars$width, resolution = devpars$res, imagetype = "png", alpha = .5, fill = rainbow(ncol(data)))
+	params = update.list(default.params, params)
+	do.call(venn.diagram, params)
 }
+
+plot.upset = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+	library(UpSetR)
+	do.call(png, c(list(filename = plotfile), devpars))
+	default.params = list(data = data, sets = colnames(data))
+	params = update.list(default.params, params)
+	p = do.call(upset, params)
+	print(p)
+	dev.off()
+}
+
+plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	percent    = function(x) paste0(format(round(x*100, 1), nsmall = 1), "%")
+	N          = nrow(data)
+	Group      = colnames(data)
+	oValue     = if (N == 1) data[1,] else colSums(data)
+	oValue     = as.vector(as.matrix(oValue))
+	GroupName  = paste0(Group, " (", oValue, ")")
+	Value      = 100*oValue/sum(oValue)
+	Labels     = percent(Value / 100)
+	data       = data.frame (Group = Group, Value = Value)
+	data$Group = factor(data$Group, levels = data$Group)
+	ytext      = cumsum(rev(Value)) - rev(Value) / 2
+
+	default.ggs = list(
+		geom_bar            = list(aes(fill = Group), width = 1, stat = 'identity'),
+		geom_text           = list(y = ytext, label = rev(Labels)),
+		coord_polar         = list('y'),
+		scale_fill_discrete = list(labels = GroupName, breaks = Group)
+	)
+	ggs = c(default.ggs, ggs)
+	plot.xy(data, plotfile, x = '""', y = 'Value', ggs, devpars)
+}
+
 
 plotVolplot = function(m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	do.call(png, c(list(filename=filename), devpars))

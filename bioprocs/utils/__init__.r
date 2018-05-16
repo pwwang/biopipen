@@ -25,7 +25,7 @@ rbindfill = function (x1, x2) {
 }
 
 logger = function(..., level = 'INFO') {
-	cat(paste0(level, ': ', paste(...), '\n'), file = stderr())		
+	cat(paste0(level, ': ', paste(...), '\n'), file = stderr())
 }
 
 # avoid typos
@@ -44,4 +44,13 @@ read.table.nodup = function(...) {
 		row.names(mat)  = rnames
 		return(mat)
 	}
+}
+
+update.list = function (list1, list2) {
+	names1 = names(list1)
+	names2 = names(list2)
+	for (name in names2) {
+		list1[[name]] = list2[[name]]
+	}
+	return (list1)
 }

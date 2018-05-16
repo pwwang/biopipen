@@ -11,12 +11,20 @@ require('jsonlite')
 args = commandArgs(trailingOnly=TRUE)
 data = read.table(args[1], head = T, row.names = NULL, sep = '\t', check.names = F)
 x    = args[3]
-y    = args[4]
 if (!is.na(as.numeric(x))) x = as.integer(x)
-if (!is.na(as.numeric(y))) y = as.integer(y)
+
+params = list()
+ggs = list()
 tryCatch({
-	params = fromJSON(args[5])
-}, error = function(){
+	params = fromJSON(args[4])
+}, error = function(e){
 	params = list()
 })
-scatter(data, args[2], x, y, params, devpars = list(res = 48, width = 200, height = 200))
+
+tryCatch({
+	ggs = fromJSON(args[5])
+}, error = function(e){
+	ggs = list()
+})
+#	ggs    = list()
+plot.freqpoly(data, args[2], x, params, ggs, devpars = list(res = 48, width = 200, height = 200))

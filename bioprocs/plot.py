@@ -5,18 +5,143 @@ from pyppl import Proc, Box
 #from .utils import plot
 from . import params, rimport
 
-pScatter = Proc(desc = 'Generate scatter plot.')
-pScatter.input  = 'infile:file'
-pScatter.output = 'outfile:file:{{in.infile | fn}}.scatter.png'
+"""
+@name:
+	pPlot
+@description:
+	Use ggplot2 to generate plots
+@infile:
+	`infile:file`: The input data file
+@outfile:
+	`outfile:file`: The output file
+@args:
+	`cnames` : Whether the input file has colnames. Default: True
+	`rnames` : Whether the input file has rownames. Default: False
+	`aes`    : The default aes. Default: {'x':1, 'y':2} (corresponding to colnames)
+	`helper` : Some helper codes to generate `params` and `ggs`
+	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
+	`ggs`    : The extra ggplot elements.
+"""
+pPlot = Proc(desc = 'Generate plot using ggplot2')
+pPlot.input  = 'infile:file'
+pPlot.output = 'outfile:file:{{in.infile | fn}}.png'
+pPlot.args.cnames  = True
+pPlot.args.rnames  = False
+pPlot.args.aes     = Box(x = 1, y = 2) # only allow x, y
+pPlot.args.helper  = ''
+pPlot.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pPlot.args.params  = Box()
+pPlot.args.ggs     = Box()
+pPlot.envs.rimport = rimport
+pPlot.lang   = params.Rscript.value
+pPlot.script = 'file:scripts/plot/pPlot.r'
+
+"""
+@name:
+	pScatter
+@description:
+	Use ggplot2 geom_point to generate plots
+@infile:
+	`infile:file`: The input data file
+@outfile:
+	`outfile:file`: The output file
+@args:
+	`cnames` : Whether the input file has colnames. Default: True
+	`rnames` : Whether the input file has rownames. Default: False
+	`x`      : The x aes. Default: 1 (corresponding to colnames)
+	`y`      : The y aes. Default: 2 (corresponding to colnames)
+	`helper` : Some helper codes to generate `params` and `ggs`
+	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
+	`params` : The extra params for `geom_point`
+	`ggs`    : The extra ggplot elements.
+"""
+pScatter              = Proc(desc = 'Generate scatter plot.')
+pScatter.input        = 'infile:file'
+pScatter.output       = 'outfile:file:{{in.infile | fn}}.scatter.png'
 pScatter.args.cnames  = True
 pScatter.args.rnames  = False
 pScatter.args.x       = 1
 pScatter.args.y       = 2
+pScatter.args.helper  = ''
 pScatter.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pScatter.args.params  = Box()
+pScatter.args.ggs     = Box()
 pScatter.envs.rimport = rimport
-pScatter.lang   = 'Rscript'
-pScatter.script = 'file:scripts/plot/pScatter.r'
+pScatter.lang         = params.Rscript.value
+pScatter.script       = 'file:scripts/plot/pScatter.r'
+
+"""
+@name:
+	pPoints
+@description:
+	Alias for pScatter
+"""
+pPoints = pScatter.copy()
+
+"""
+@name:
+	pHisto
+@description:
+	Use ggplot2 geom_histogram to generate histograms
+@infile:
+	`infile:file`: The input data file
+@outfile:
+	`outfile:file`: The output file
+@args:
+	`cnames` : Whether the input file has colnames. Default: True
+	`rnames` : Whether the input file has rownames. Default: False
+	`x`      : The x aes. Default: 1 (corresponding to colnames)
+	`helper` : Some helper codes to generate `params` and `ggs`
+	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
+	`params` : The extra params for `geom_point`
+	`ggs`    : The extra ggplot elements.
+"""
+pHisto              = Proc(desc = 'Generate histogram.')
+pHisto.input        = 'infile:file'
+pHisto.output       = 'outfile:file:{{in.infile | fn}}.histo.png'
+pHisto.args.cnames  = True
+pHisto.args.rnames  = False
+pHisto.args.x       = 1
+pHisto.args.helper  = ''
+pHisto.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pHisto.args.params  = Box()
+pHisto.args.ggs     = Box()
+pHisto.envs.rimport = rimport
+pHisto.lang         = params.Rscript.value
+pHisto.script       = 'file:scripts/plot/pHisto.r'
+
+"""
+@name:
+	pFreqpoly
+@description:
+	Use ggplot2 geom_freqpoly to generate frequency polygon plot.
+@infile:
+	`infile:file`: The input data file
+@outfile:
+	`outfile:file`: The output file
+@args:
+	`cnames` : Whether the input file has colnames. Default: True
+	`rnames` : Whether the input file has rownames. Default: False
+	`x`      : The x aes. Default: 1 (corresponding to colnames)
+	`helper` : Some helper codes to generate `params` and `ggs`
+	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
+	`params` : The extra params for `geom_point`
+	`ggs`    : The extra ggplot elements.
+"""
+pFreqpoly = Proc(desc = 'Generate frequency polygon plot.')
+pFreqpoly.input  = 'infile:file'
+pFreqpoly.output = 'outfile:file:{{in.infile | fn}}.freqpoly.png'
+pFreqpoly.args.cnames  = True
+pFreqpoly.args.rnames  = False
+pFreqpoly.args.x       = 1
+pFreqpoly.args.helper  = ''
+pFreqpoly.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pFreqpoly.args.params  = Box()
+pFreqpoly.args.ggs     = Box()
+pFreqpoly.envs.rimport = rimport
+pFreqpoly.lang   = params.Rscript.value
+pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
+
 
 """
 @name:
@@ -32,94 +157,20 @@ pScatter.script = 'file:scripts/plot/pScatter.r'
 	`rownames`:  `row.names` parameter for `read.table`, default: 1
 	`params`:    Other parameters for `boxplot`, default: ""
 """
-pBoxplot              = Proc(desc = 'Do boxplot.')
-pBoxplot.input        = "datafile:file"
-pBoxplot.output       = "outpng:file:{{in.datafile | fn}}.boxplot.png"
-pBoxplot.lang         = "Rscript"
+pBoxplot = Proc(desc = 'Generate boxplot plot.')
+pBoxplot.input  = 'infile:file'
+pBoxplot.output = 'outfile:file:{{in.infile | fn}}.boxplot.png'
 pBoxplot.args.cnames  = True
-pBoxplot.args.rnames  = True
-pBoxplot.args.ggs     = Box()
+pBoxplot.args.rnames  = False
+pBoxplot.args.x       = 1
+pBoxplot.args.y       = 2
+pBoxplot.args.helper  = ''
 pBoxplot.args.devpars = Box(res = 300, height = 2000, width = 2000)
-#pBoxplot.envs.plot    = plot
-pBoxplot.script       = "file:scripts/plot/pBoxplot.r"
-
-"""
-@name:
-	pScatterPlot
-@description:
-	Scatter plots with more information
-@input:
-	`infile:file`: The input file.
-	- Format:
-	```
-		X	Y	Size	Color
-	A	1	1	1	1
-	B	2	2	2	2
-	```
-	- Column 3,4 can be omitted
-@output:
-	`outfile:file`: The plot
-@args:
-	`colfunc`: The functions to generate colors. Default: `heat.colors`
-		- Available: rainbow, heat.colors, terrain.colors, topo.colors, and cm.colors.
-	`type`:    The type of the symbols. Default: `circles`
-		- Available: circles, squares, rectangles, stars, thermometers, boxplots.
-	`inches`:  Scale the largest symbol to this size. Default: 1/3
-	`data`:    The columns for render the symbols. Default: 0 (a simple dot plot)
-		- circles:       3 (radii)
-		- squares:       3 (length of sides)
-		- rectangles:    3:4 (widths and heights)
-		- starts:        3:? (?>5, a matrix with three or more columns giving the lengths of the rays from the center of the stars.)
-		- thermometers:  3:? (?=5|6, The first two columns give the width and height of the thermometer symbols. If there are three columns, the third is taken as a proportion: the thermometers are filled (using colour fg) from their base to this proportion of their height. If there are four columns, the third and fourth columns are taken as proportions and the thermometers are filled between these two proportions of their heights. The part of the box not filled in fg will be filled in the background colour (default transparent) given by bg.)
-		- boxplots:      3:7 (a matrix with five columns. The first two columns give the width and height of the boxes, the next two columns give the lengths of the lower and upper whiskers and the fifth the proportion (with a warning if not in [0,1]) of the way up the box that the median line is drawn.)
-	`main`:   The title of the plot. Default: NULL (the file name)
-	`xlab`:   The labels for x axis. Default: colnames(mat)[1]
-	`ylab`:   The labels for y axis. Default: colnames(mat)[2]
-	`text`:   Whether to show the text of the symbols (rownames). Default: TRUE
-"""
-pScatterPlot = Proc(desc = 'Scatter plots.')
-pScatterPlot.input        = "infile:file"
-pScatterPlot.output       = "outfile:file:{{infile | fn}}.scatter.png"
-pScatterPlot.args.symbolsParams = {
-	'inches':   0.33,
-	'bg':       '#000000',
-	'circles':  'r:data[,ncol(data)]',
-	'main':     'NULL',
-	'xlab':     'NULL',
-	'ylab':     'NULL'
-}
-pScatterPlot.args.textParams = {
-	'cex': 0.6
-}
-pScatterPlot.args.text    = "TRUE"
-#pScatterPlot.args._plotSymbols = plot.symbols.r
-#pScatterPlot.args._plotText    = plot.text.r
-pScatterPlot.lang         = "Rscript"
-pScatterPlot.script       = """
-{{args._plotSymbols}}
-png (file = "{{outfile}}", res=300, width=2000, height=2000)
-data = read.table ("{{infile}}", sep="\\t", header = T, row.names = 1, check.names = F)
-cnames        = colnames(data)
-rnames        = rownames(data)
-symbolsParams = {{args.symbolsParams | Rlist}}
-textParams    = {{args.textParams | Rlist}}
-if (is.null(symbolsParams$main)) {
-	symbolsParams$main = "{{infile | fn}}"
-}
-if (is.null(symbolsParams$xlab)) {
-	xlab = cnames[1]
-}
-if (is.null(symbolsParams$ylab)) {
-	ylab = cnames[2]
-}
-plotSymbols(data[,1], data[,2], symbolsParams)
-if ({{args.text | Rbool}}) {
-	{{args._plotText}}
-	textParams$labels = rnames
-	plotText(data[,1], data[,2], textParams)
-}
-dev.off()
-"""
+pBoxplot.args.params  = Box()
+pBoxplot.args.ggs     = Box()
+pBoxplot.envs.rimport = rimport
+pBoxplot.lang   = params.Rscript.value
+pBoxplot.script = 'file:scripts/plot/pBoxplot.r'
 
 """
 @name:
@@ -148,19 +199,18 @@ dev.off()
 		- `random-both:N`: Random N rows from top part and N rows from bottom part. N defaults to 50
 	`cols`: Col selector (see `rows`).
 """
-pHeatmap                     = Proc(desc = 'Plot heatmaps.')
-pHeatmap.input               = "infile:file"
-pHeatmap.output              = "outfile:file:{{in.infile | fn}}.heatmap.png"
-pHeatmap.args.ggs            = Box()
-pHeatmap.args.devpars        = Box({'res': 300, 'height': 2000, 'width': 2000})
-pHeatmap.args.dendro         = Box({'dendro': True})
-pHeatmap.args.header         = True
-pHeatmap.args.rownames       = 1
-pHeatmap.args.rows           = 'all' # top:100, both:50, bottom:100, random-both:50, random:100
-pHeatmap.args.cols           = 'all' # top:100, both:50, bottom:100, random-both:50, random:100
-#pHeatmap.tplenvs.plotHeatmap = plot.heatmap.r
-pHeatmap.lang                = params.Rscript.value
-pHeatmap.script              = "file:scripts/plot/pHeatmap.r"
+pHeatmap              = Proc(desc  = 'Plot heatmaps.')
+pHeatmap.input        = "infile:file"
+pHeatmap.output       = "outfile:file:{{in.infile | fn}}.heatmap.png"
+pHeatmap.args.ggs     = Box()
+pHeatmap.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pHeatmap.args.params  = Box(dendro = True)
+pHeatmap.args.cnames  = True
+pHeatmap.args.rnames  = True
+pHeatmap.args.helper  = ''
+pHeatmap.envs.rimport = rimport
+pHeatmap.lang         = params.Rscript.value
+pHeatmap.script       = "file:scripts/plot/pHeatmap.r"
 
 """
 @name:
@@ -170,29 +220,32 @@ pHeatmap.script              = "file:scripts/plot/pHeatmap.r"
 @input:
 	`infile:file`: The input file containing a matrix with at least 2 columns
 		- Other columns are groups used to group the scatter points
+		- Data must be normalized to [0, 1]
 @output:
 	`outfile:file`: The output plot
 @args:
 	`ggs`: Extra expressions for ggplot. Note if geom_point is included, original geom_point will be ignored.
 	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 	`rownames`: Whether the input file has row names. Default: True
-	`diag`: Whether plot the diagnal line. Default: True
 	`regr`: Whether draw the regression line. Default: False
 	`corr`: The method to calculate the correlation. Default: `pearson`
 		- Could be: `pearson`, `spearman` or `kendall`
 		- If it's neither of the three, no correlations will show.
 """
-pScatterCompare               = Proc(desc = 'Plot scatter compare plots.')
-pScatterCompare.input         = "infile:file"
-pScatterCompare.output        = "outfile:file:{{in.infile | fn}}.scattercomp.png"
-pScatterCompare.args.ggs      = Box()
-pScatterCompare.args.devpars  = Box({'res': 300, 'height': 2000, 'width': 2000})
-pScatterCompare.args.rownames = True
-pScatterCompare.args.diag     = True
-pScatterCompare.args.regr     = False
-pScatterCompare.args.corr     = 'pearson' # spearman, pearson, kendall, otherwise(don't show)
-pScatterCompare.lang          = params.Rscript.value
-pScatterCompare.script        = "file:scripts/plot/pScatterCompare.r"
+pScatterCompare              = Proc(desc = 'Plot scatter compare plots.')
+pScatterCompare.input        = "infile:file"
+pScatterCompare.output       = "outfile:file:{{in.infile | fn}}.scattercomp.png"
+pScatterCompare.args.ggs     = Box()
+pScatterCompare.args.params  = Box()
+pScatterCompare.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pScatterCompare.args.x       = 1
+pScatterCompare.args.y       = 2
+pScatterCompare.args.rnames  = True
+pScatterCompare.args.cnames  = True
+pScatterCompare.args.helper  = ''
+pScatterCompare.envs.rimport = rimport
+pScatterCompare.lang         = params.Rscript.value
+pScatterCompare.script       = "file:scripts/plot/pScatterCompare.r"
 
 """
 @name:
@@ -210,14 +263,13 @@ pROC.input        = 'infile:file'
 pROC.output       = 'outdir:dir:{{in.infile | fn}}.roc'
 pROC.args.cnames  = True
 pROC.args.rnames  = True
-pROC.args.combine = True
-pROC.args.showauc = True
-pROC.args.params  = Box(labels = False)
-pROC.args.ggs     = [
-	'r:style_roc()',
-	'r:theme(legend.position = c(1,0), legend.justification = c(1,0))', # show legend at bottom right corner
-]
+pROC.args.params  = Box(labels = False, showAUC = True, combine = True)
+pROC.args.ggs     = Box({
+	'style_roc': {},
+	'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} # show legend at bottom right corner
+})
 pROC.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pROC.envs.rimport = rimport
 pROC.lang         = params.Rscript.value
 pROC.script       = "file:scripts/plot/pROC.r"
 
@@ -240,27 +292,24 @@ pROC.script       = "file:scripts/plot/pROC.r"
 @output:
 	`outfile:file`: The plot
 @args:
-	`tool`       : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
-	`rnames`     : Whether input file has rownames. Default: False
-	`vennParams` : Other params for `venn.diagram`. Default: {}
-	`upsetParams`: Other params for `upset`. Default: {}
-	`devpars`    : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+	`tool`    : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
+	`rnames`  : Whether input file has rownames. Default: False
+	`params`  : Other params for `venn.diagram` or `upset`. Default: {}
+	`devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 @requires:
 	[`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
 	[`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
 """
-pVenn                  = Proc(desc = 'Venn plots.')
-pVenn.input            = "infile:file"
-pVenn.output           = "outfile:file:{{in.infile | fn}}.venn.png"
-pVenn.args.tool        = 'auto' # upsetr or auto: < = 3 venn, else upsetr
-pVenn.args.rnames      = False
-pVenn.args.vennParams  = {}
-pVenn.args.upsetParams = {}
-pVenn.args.devpars     = Box(res = 300, height = 2000, width = 2000)
-#pVenn.envs.plotVenn    = plot.venn.r
-#pVenn.envs.plotUpset   = plot.upset.r
-pVenn.lang             = params.Rscript.value
-pVenn.script           = "file:scripts/plot/pVenn.r"
+pVenn              = Proc(desc = 'Venn plots.')
+pVenn.input        = "infile:file"
+pVenn.output       = "outfile:file:{{in.infile | fn}}.venn.png"
+pVenn.args.tool    = 'auto' # upsetr or auto: < = 3 venn, else upsetr
+pVenn.args.rnames  = False
+pVenn.args.params  = Box()
+pVenn.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pVenn.envs.rimport = rimport
+pVenn.lang         = params.Rscript.value
+pVenn.script       = "file:scripts/plot/pVenn.r"
 
 """
 @name:
@@ -293,15 +342,17 @@ pPie.input        = "infile:file"
 pPie.output       = "outfile:file:{{in.infile | fn}}.pie.png"
 pPie.args.rnames  = False
 pPie.args.devpars = Box(res = 300, height = 2000, width = 2000)
-pPie.args.ggs     = [
-	"r:theme(axis.title.x = element_blank())",
-	"r:theme(axis.title.y = element_blank())",
-	"r:theme(panel.border = element_blank())",
-	"r:theme(panel.grid=element_blank())",
-	"r:theme(axis.ticks = element_blank())",
-	"r:theme(panel.background = element_blank())",
-	"r:theme(axis.text.x = element_blank())"
-]
-#pPie.envs.plotPie = plot.pie.r
+pPie.args.ggs     = Box(
+	theme = {
+		'axis.title.x'    : 'r:element_blank()',
+		'axis.title.y'    : 'r:element_blank()',
+		'panel.border'    : 'r:element_blank()',
+		'panel.grid'      : 'r:element_blank()',
+		'axis.ticks'      : 'r:element_blank()',
+		'panel.background': 'r:element_blank()',
+		'axis.text.x'     : 'r:element_blank()',
+	}
+)
+pPie.envs.rimport = rimport
 pPie.lang         = params.Rscript.value
 pPie.script       = "file:scripts/plot/pPie.r"

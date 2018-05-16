@@ -1,9 +1,9 @@
 import unittest, helpers, testly
 from os import path
+from glob import glob
 from pyppl import PyPPL, Box
 from helpers import testdirs, config
-from bioprocs.plot import pScatter
-#from bioprocs.plot import pHeatmap, pScatterCompare, pROC, pVenn, pPie
+from bioprocs.plot import pScatter, pHeatmap, pBoxplot, pHisto, pFreqpoly, pScatterCompare, pROC, pVenn, pPie
 
 class TestPlot (helpers.TestCase):
 
@@ -14,94 +14,202 @@ class TestPlot (helpers.TestCase):
 		outfile = path.join(self.outdir, 'scatter1.png')
 		outfile2 = path.join(self.outdir, 'scatter2.png')
 		yield 't1', infile, outfile, 'Method1', 'Method2', True, True
-		yield 't2', infile, outfile2, 1, 2, True, True, {
-			'add': 'reg.line',
-			'add.params': dict(color = "blue", fill = "lightgray"),
-			'conf.int': True, # Add confidence interval
-			'cor.coef': True, # Add correlation coefficient. see ?stat_cor
-			'cor.coeff.args': {'method': "pearson", 'label.sep': ", "}
-		}
+		yield 't2', infile, outfile2, 1, 2, True, True, {}, {
+			'geom_smooth': {'method': 'lm'},
+			'geom_label': {'label': 'r:corr', 'x': .5, 'y': .2}
+		}, 'corr = round(cor(data[,1], data[,2]), 3)'
 
-	def testScatter(self, tag, infile, outfile, x, y, cnames, rnames, params = {}, devpars = Box(res = 48, height = 300, width =300)):
-		pScatterTest = pScatter.copy(tag = tag)
-		pScatterTest.input = [infile]
-		pScatterTest.args.cnames = cnames
-		pScatterTest.args.rnames = rnames
-		pScatterTest.args.x = x
-		pScatterTest.args.y = y
+	def testScatter(self, tag, infile, outfile, x, y, cnames, rnames, params = {}, ggs = {}, helper = '', devpars = Box(res = 48, height = 300, width =300)):
+		pScatterTest              = pScatter.copy(tag = tag)
+		pScatterTest.input        = [infile]
+		pScatterTest.args.cnames  = cnames
+		pScatterTest.args.rnames  = rnames
+		pScatterTest.args.x       = x
+		pScatterTest.args.y       = y
 		pScatterTest.args.devpars = devpars
-		pScatterTest.args.params = params
+		pScatterTest.args.params  = params
+		pScatterTest.args.ggs     = ggs
+		pScatterTest.args.helper  = helper
+
 		PyPPL(config).start(pScatterTest).run()
 		self.assertFileEqual(pScatterTest.channel.get(), outfile)
 
-	'''
-	def testpHeatmap(self):
-		pHeatmap.input = [getfile('heatmap.txt')]
-		PyPPL(config).start(pHeatmap).run()
-		procOK(pHeatmap, 'heatmap.png', self)
+	def dataProvider_testpHeatmap(self):
+		datafile = path.join(self.indir, 'heatmap.txt')
+		outfile  = path.join(self.outdir, 'heatmap.png')
+		yield testly.Data(
+			tag      = 't1',
+			datafile = datafile,
+			outfile  = outfile
+		)
 
-	def testpScatterCompare(self):
-		pScatterCompare.input    = [getfile('scattercompare.txt')]
-		PyPPL(config).start(pScatterCompare).run()
-		procOK(pScatterCompare, 'scattercompare.png', self)
+	def testpHeatmap(self, tag, datafile, params = {}, ggs = {}, outfile = '', devpars = Box(res = 48, height = 300, width =300)):
+		pHeatmapTest              = pHeatmap.copy(tag = tag)
+		pHeatmapTest.input        = [datafile]
+		pHeatmapTest.args.params  = params
+		pHeatmapTest.args.devpars = devpars
+		pHeatmapTest.args.ggs     = ggs
+		PyPPL(config).start(pHeatmapTest).run()
+		self.assertFileEqual(pHeatmapTest.channel.get(), outfile)
 
-	def testpROCsingle(self):
-		pROC1 = pROC.copy()
-		pROC1.input = [getfile('roc-single.txt')]
-		pROC1.args.cnames = False
-		pROC1.args.rnames = False
-		PyPPL(config).start(pROC1).run()
-		procOK(pROC1, 'roc-single', self)
+	def dataProvider_testpBoxplot(self):
+		datafile = path.join(self.indir, 'boxplot.txt')
+		outfile  = path.join(self.outdir, 'boxplot.png')
+		yield testly.Data(
+			tag      = 't1',
+			x        = 3,
+			y        = 2,
+			datafile = datafile,
+			outfile  = outfile
+		)
 
-	def testpROCmulti_combine(self):
-		pROC2              = pROC.copy()
-		pROC2.input        = [getfile('roc-multi.txt')]
-		pROC2.args.cnames  = True
-		pROC2.args.rnames  = False
-		pROC2.args.combine = True
-		PyPPL(config).start(pROC2).run()
-		procOK(pROC2, 'roc-multi-combine', self)
+	def testpBoxplot(self, tag, datafile, x, y, params = {}, ggs = {}, outfile = '', devpars = Box(res = 48, height = 300, width =300)):
+		pBoxplotTest              = pBoxplot.copy(tag = tag)
+		pBoxplotTest.input        = [datafile]
+		pBoxplotTest.args.params  = params
+		pBoxplotTest.args.devpars = devpars
+		pBoxplotTest.args.x       = x
+		pBoxplotTest.args.y       = y
+		pBoxplotTest.args.ggs     = ggs
+		PyPPL(config).start(pBoxplotTest).run()
+		self.assertFileEqual(pBoxplotTest.channel.get(), outfile)
 
-	def testpROCmulti_nocombine(self):
-		pROC3              = pROC.copy()
-		pROC3.input        = [getfile('roc-multi.txt')]
-		pROC3.args.cnames  = True
-		pROC3.args.rnames  = False
-		pROC3.args.combine = False
-		PyPPL(config).start(pROC3).run()
-		procOK(pROC3, 'roc-multi-nocombine', self)
+	def dataProvider_testpHisto(self):
+		datafile = path.join(self.indir, 'boxplot.txt')
+		outfile  = path.join(self.outdir, 'histo.png')
+		yield testly.Data(
+			tag      = 't1',
+			x        = 2,
+			datafile = datafile,
+			outfile  = outfile
+		)
 
-	def testVennVenn(self):
-		pVennVenn             = pVenn.copy()
-		pVennVenn.input       = [getfile('venn-venn.txt')]
-		pVennVenn.args.rnames = True
-		PyPPL(config).start(pVennVenn).run()
-		procOK(pVennVenn, 'venn-venn.venn.png', self)
+	def testpHisto(self, tag, datafile, x, params = {}, ggs = {}, outfile = '', devpars = Box(res = 48, height = 300, width =300)):
+		pHistoTest              = pHisto.copy(tag = tag)
+		pHistoTest.input        = [datafile]
+		pHistoTest.args.params  = params
+		pHistoTest.args.devpars = devpars
+		pHistoTest.args.x       = x
+		pHistoTest.args.ggs     = ggs
+		PyPPL(config).start(pHistoTest).run()
+		self.assertFileEqual(pHistoTest.channel.get(), outfile)
 
-	def testVennUpset(self):
-		pVennUpset             = pVenn.copy()
-		pVennUpset.input       = [getfile('venn-upset.txt')]
-		pVennUpset.args.rnames = True
-		PyPPL(config).start(pVennUpset).run()
-		procOK(pVennUpset, 'venn-upset.venn.png', self)
+	def dataProvider_testpFreqpoly(self):
+		datafile = path.join(self.indir, 'boxplot.txt')
+		outfile  = path.join(self.outdir, 'freqpoly.png')
+		yield testly.Data(
+			tag      = 't1',
+			x        = 3,
+			datafile = datafile,
+			outfile  = outfile
+		)
 
-	def testPieDirectNumbers(self):
-		pPie1 = pPie.copy()
-		pPie1.input = [getfile('pie-direct-num.txt')]
-		PyPPL(config).start(pPie1).run()
-		procOK(pPie1, 'pie-direct-num.pie.png', self)
+	def testpFreqpoly(self, tag, datafile, x, params = {}, ggs = {}, outfile = '', devpars = Box(res = 48, height = 300, width =300)):
+		pFreqpolyTest              = pFreqpoly.copy(tag = tag)
+		pFreqpolyTest.input        = [datafile]
+		pFreqpolyTest.args.params  = params
+		pFreqpolyTest.args.devpars = devpars
+		pFreqpolyTest.args.x       = x
+		pFreqpolyTest.args.ggs     = ggs
+		PyPPL(config).start(pFreqpolyTest).run()
+		self.assertFileEqual(pFreqpolyTest.channel.get(), outfile)
 
-	def testPieItemPresence(self):
-		pPie2 = pPie.copy()
-		pPie2.input = [getfile('pie-item-presence.txt')]
-		pPie2.args.rnames = True
-		PyPPL(config).start(pPie2).run()
-		procOK(pPie2, 'pie-item-presence.pie.png', self)
-	'''
+	def dataProvider_testpScatterCompare(self):
+		datafile = path.join(self.indir, 'scattercompare.txt')
+		outfile  = path.join(self.outdir, 'scattercompare.png')
+		yield testly.Data(
+			tag = 't1',
+			datafile = datafile,
+			outfile = outfile
+		)
 
-	# TODO:
-	# - boxplot
-	# - scatter plot
+	def testpScatterCompare(self, tag, datafile, x = 1, y = 2, params = {}, ggs = {}, outfile = '', devpars = Box(res = 48, height = 300, width =300)):
+		pScatterCompareTest = pScatterCompare.copy(tag = tag)
+		pScatterCompareTest.input = [datafile]
+		pScatterCompareTest.args.x = x
+		pScatterCompareTest.args.y = y
+		pScatterCompareTest.args.params = params
+		pScatterCompareTest.args.ggs = ggs
+		pScatterCompareTest.args.devpars = devpars
+		PyPPL(config).start(pScatterCompareTest).run()
+		self.assertFileEqual(pScatterCompareTest.channel.get(), outfile)
+
+	def dataProvider_testpROC(self):
+		datafile1 = path.join(self.indir, 'roc-single.txt')
+		outauc1   = path.join(self.outdir, 'roc-single/auc.txt')
+		outpng1   = path.join(self.outdir, 'roc-single/roc.png')
+		datafile2 = path.join(self.indir, 'roc-multi.txt')
+		outauc2   = path.join(self.outdir, 'roc-multi-combine/auc.txt')
+		outpng2   = path.join(self.outdir, 'roc-multi-combine/roc.png')
+		datafile3 = datafile2
+		outauc3   = path.join(self.outdir, 'roc-multi-nocombine/auc.txt')
+		outpng3   = path.join(self.outdir, 'roc-multi-nocombine/Method1.roc.png')
+		yield 'single', datafile1, outauc1, outpng1, {
+			'cnames': False,
+			'rnames': False
+		}
+		yield 'mcombine', datafile2, outauc2, outpng2, {
+			'cnames': True,
+			'rnames': False,
+			'params': {'combine': True}
+		}
+		yield 'nocombine', datafile3, outauc3, outpng3, {
+			'cnames': True,
+			'rnames': False,
+			'params': {'combine': False},
+		}
+
+	def testpROC(self, tag, datafile, outauc, outpng, args = None):
+		pROCTest = pROC.copy(tag = tag)
+		args = args or {}
+		if 'params' not in args: args['params'] = {}
+		params = {}
+		params.update(pROCTest.args.params)
+		params.update(args['params'])
+		pROCTest.args.update(args)
+		pROCTest.args.params.update(params)
+		pROCTest.args.devpars = {'res': 96, 'width': 200, 'height': 200}
+		pROCTest.input = [datafile]
+		PyPPL(config).start(pROCTest).run()
+		self.assertFileEqual(glob(path.join(pROCTest.channel.get(), '*.txt'))[0], outauc)
+		self.assertFileEqual(glob(path.join(pROCTest.channel.get(), '*.png'))[0], outpng)
+
+	def dataProvider_testpVenn(self):
+		datafile1 = path.join(self.indir, 'venn-venn.txt')
+		datafile2 = path.join(self.indir, 'venn-upset.txt')
+		outfile1  = path.join(self.outdir, 'venn-venn.venn.png')
+		outfile2  = path.join(self.outdir, 'venn-upset.venn.png')
+		args1     = {'rnames': True}
+		args2     = args1
+		yield 'venn', datafile1, outfile1, args1
+		yield 'upset', datafile2, outfile2, args2
+
+	def testpVenn(self, tag, datafile, outfile, args):
+		pVennTest = pVenn.copy(tag = tag)
+		pVennTest.input = [datafile]
+		pVennTest.args.update(args)
+		pVennTest.args.devpars = {'res': 96, 'width': 200, 'height': 200}
+		PyPPL(config).start(pVennTest).run()
+		self.assertFileEqual(pVennTest.channel.get(), outfile)
+
+	def dataProvider_testpPie(self):
+		datafile1 = path.join(self.indir, 'pie-direct-num.txt')
+		datafile2 = path.join(self.indir, 'pie-item-presence.txt')
+		args1 = {}
+		args2 = {'rnames': True}
+		outfile1 = path.join(self.outdir, 'pie-direct-num.pie.png')
+		outfile2 = path.join(self.outdir, 'pie-item-presence.pie.png')
+		yield 't1', datafile1, args1, outfile1
+		yield 't2', datafile2, args2, outfile2
+
+	def testpPie(self, tag, datafile, args, outfile):
+		pPieTest = pPie.copy(tag = tag)
+		pPieTest.input = [datafile]
+		pPieTest.args.update(args)
+		pPieTest.args.devpars = {'res': 96, 'width': 200, 'height': 200}
+		PyPPL(config).start(pPieTest).run()
+		self.assertFileEqual(pPieTest.channel.get(), outfile)
+
 
 if __name__ == '__main__':
 	testly.main(failfast = True)

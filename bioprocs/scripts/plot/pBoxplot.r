@@ -1,11 +1,21 @@
+{{rimport}}('plot.r')
 
-{{plot.boxplot.r}}
-cnames = {{args.cnames | R}}
-rnames = {{args.rnames | R}}
-data = read.table ("{{in.datafile}}", sep="\t", header=cnames, row.names=NULL, check.names=F)
-if (rnames) {
-	rns   = make.unique(as.vector(data[,1]))
-	data[,1] = NULL
-	rownames(data)  = rns
-}
-plotBoxplot(data, {{out.outpng | quote}}, {{args.ggs | Rlist}}, {{args.devpars | Rlist}})
+library(ggplot2) # make aes available
+
+infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
+cnames  = {{args.cnames | R }}
+rnames  = {{args.rnames | R }}
+devpars = {{args.devpars | R}}
+x       = {{args.x | repr}}
+y       = {{args.y | repr}}
+
+data = read.table(infile, header = cnames, row.names = if (rnames) 1 else NULL, sep = '\t', check.names = F)
+if (!is.na(as.numeric(x))) x = as.integer(x)
+if (!is.na(as.numeric(y))) y = as.integer(y)
+
+eval(parse(text = {{args.helper | repr}}))
+params  = {{args.params | R}}
+ggs     = {{args.ggs | R}}
+
+plot.boxplot(data, outfile, x, y, params, ggs, devpars = devpars)

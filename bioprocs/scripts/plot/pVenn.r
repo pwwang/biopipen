@@ -1,23 +1,19 @@
-mat         = read.table ({{in.infile | quote}}, sep="\t", header = TRUE, row.names = NULL, check.names = F)
+{{rimport}}('plot.r', '__init__.r')
 
-{% if args.rnames %}
-rns = make.unique(as.character(as.vector(mat[,1])))
-mat[,1] = NULL
-rownames(mat) = rns
-{% endif %}
+rnames  = {{args.rnames | R}}
+infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
 
-nc          = ncol(mat)
-cnames      = colnames(mat)
-vennParams  = {{args.vennParams  | Rlist}}
-upsetParams = {{args.upsetParams | Rlist}}
-devpars     = {{args.devpars     | Rlist}}
-# use real venn plot 
-if (nc<=3 && ({{args.tool | quote}} == 'auto' || {{args.tool | quote}} == 'venn')) {
-	{{plotVenn}}
-	plotVenn (mat, {{out.outfile | quote}}, vennParams, devpars)
+data = read.table.nodup ({{in.infile | quote}}, sep="\t", header = TRUE, row.names = rnames, check.names = F)
 
-# use upset plot #
+tool    = {{args.tool | R}}
+ncols   = ncol(data)
+cnames  = colnames(data)
+params  = {{args.params | R}}
+devpars = {{args.devpars | R}}
+# use real venn plot
+if ((ncols <= 3 && tool == 'auto') || tool == 'venn') {
+	plot.venn(data, outfile, params, devpars)
 } else {
-	{{plotUpset}}
-	plotUpset(mat, {{out.outfile | quote}}, upsetParams, devpars)
+	plot.upset(data, outfile, params, devpars)
 }

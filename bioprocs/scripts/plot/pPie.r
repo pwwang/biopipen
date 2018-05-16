@@ -1,10 +1,11 @@
-{{plotPie}}
+{{rimport}}('plot.r')
 
-ggs = {{args.ggs | Rlist}}
-mat = read.table({{in.infile | quote}}, sep = "\t", header = T, row.names = NULL)
-{% if args.rnames %}
-rns = make.unique(as.character(as.vector(mat[,1])))
-mat[,1] = NULL
-rownames(mat) = rns
-{% endif %}
-plotPie(mat, filename = {{out.outfile | quote}}, ggs = ggs, devpars = {{args.devpars | Rlist}})
+ggs     = {{args.ggs | R}}
+infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
+rnames  = {{args.rnames | R}}
+ggs     = {{args.ggs | R}}
+devpars = {{args.devpars | R}}
+data    = read.table.nodup(infile, sep = "\t", header = T, row.names = rnames)
+
+plot.pie(data, outfile, ggs, devpars)
