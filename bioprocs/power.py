@@ -3,6 +3,8 @@ from . import params, rimport
 
 """
 @name:
+	pSurvivalPower
+@description:
 	Do power analysis for survival analysis.
 	See http://www.sample-size.net/sample-size-survival-analysis/
 @input:

@@ -8,7 +8,7 @@
 Generate a null distribution of conservation scores.
 
 ### input
-#### `seed`:: The seed to generate the random regions. Default: None   
+#### `seed`:: The seed to generate the random regions. Default: None  
 
 ### output
 #### `outfile:file`:: A file with mean conservation scores sorted descendingly.  

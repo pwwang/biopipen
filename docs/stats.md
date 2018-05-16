@@ -72,4 +72,44 @@ Survival analysis
 #### `plotParams`:: The parameters for `ggsurvplot`. Default: `{risk.table: True, conf.int = True}`  
 #### `gridParams`:: The parameters for `arrange_ggsurvplots`.  
 #### `pval`      :: Whether print pvalue on the plot. Default: True  
+#### `noerror`   :: Do not report error if error happens. Generate ouput file anyway.  
+
+## pChiSquare
+
+### description
+Do chi-square test.
+
+### input
+#### `infile:file`:: The input file.  
+
+### output
+#### `outfile:file` :: The output file containing Xsquare, df, pval and method  
+#### `obsvfile:file`:: The observation matrix  
+#### `exptfile:file`:: The expectation matrix  
+
+## pFisherExact
+
+### description
+Do fisher exact test.
+
+### input
+#### `infile:file`:: The input file.  
+
+### output
+#### `outfile:file` :: The output file containing confInt1, confInt2, oddsRatio, pval, alternative and method.  
+
+## pPWFisherExact
+
+### description
+Do pair-wise fisher exact test.
+Commonly used for co-occurrence/mutual-exclusivity analysis.
+P-value indicates if the pairs are significantly co-occurred or mutually exclusive.
+Co-occurrence: Odds ratio > 1
+Mutual-exclusivity: Odds ratio < 1
+
+### input
+#### `infile:file`:: The input file.  
+
+### output
+#### `outfile:file` :: The output file containing confInt1, confInt2, oddsRatio, pval, qval, alternative and method.  
 {% endraw %}

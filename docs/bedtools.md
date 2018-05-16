@@ -24,6 +24,22 @@
 Similar to intersect, closest searches for overlapping features in A and B. In the event that no feature in B overlaps the current feature in A, closest will report the nearest (that is, least genomic distance from the start or end of A) feature in B. For example, one might want to find which is the closest gene to a significant GWAS polymorphism. Note that closest will report an overlapping feature as the closest that is, it does not restrict to closest non-overlapping feature. The following iconic cheatsheet summarizes the funcitonality available through the various optyions provided by the closest tool.
 
 ### input
+#### `afile:file`:: The -a file  
+#### `bfile:file`:: The -b file  
+
+### output
+#### `outfile:file`:: The result file  
+
+### args
+#### `bedtools`:: The bedtools executable, default: "bedtools"  
+#### `params`::   Other parameters for `bedtools closest`, default: ""  
+
+## pBedClosest2
+
+### description
+Multiple b-file version of pBedClosest
+
+### input
 #### `afile:file`::   The -a file  
 #### `bfiles:files`:: The -b files  
 
@@ -31,8 +47,8 @@ Similar to intersect, closest searches for overlapping features in A and B. In t
 #### `outfile:file`:: The result file  
 
 ### args
-#### `bin`::     The bedtools executable, default: "bedtools"  
-#### `params`::  Other parameters for `bedtools closest`, default: ""  
+#### `bedtools`:: The bedtools executable, default: "bedtools"  
+#### `params`::   Other parameters for `bedtools closest`, default: ""  
 
 ## pBedFlank
 
@@ -69,7 +85,7 @@ By far, the most common question asked of two sets of genomic features is whethe
 ## pBedIntersect2
 
 ### description
-By far, the most common question asked of two sets of genomic features is whether or not any of the features in the two sets overlap with one another. This is known as feature intersection. bedtools intersect allows one to screen for overlaps between two sets of genomic features. Moreover, it allows one to have fine control as to how the intersections are reported. bedtools intersect works with both BED/GFF/VCF and BAM files as input.
+Multiple b-file version of pBedIntersect
 
 ### input
 #### `afile:file` :: The a file  
@@ -113,7 +129,7 @@ Makes adjacent or sliding windows across a genome or BED file.
 #### `bedtools`:: The bedtools executable,               default: "bedtools"  
 #### `params`  :: Other parameters for `bedtools merge`, default: {}  
 
-## pBedsMerge
+## pBedMerge2
 
 ### description
 A multi-input file model of pBedMerge: Merge multiple input files.

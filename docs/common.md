@@ -37,6 +37,28 @@ Save string to a file.
 ### input
 #### `in:var`:: The input string.  
 
+## pHead
+
+### description
+Get the top N lines from a file
+
+### input
+#### `infile:file`:: The input file  
+
+### output
+#### `outfile:file`:: The output file  
+
+## pTail
+
+### description
+Get the bottom N lines from a file
+
+### input
+#### `infile:file`:: The input file  
+
+### output
+#### `outfile:file`:: The output file  
+
 ## pPrepend
 
 ### description
@@ -65,4 +87,18 @@ Merge files in the input directory
 
 ### input
 #### `indir:file`:: The input directory  
+
+### output
+#### `outfile:file`:: The output file  
+
+## pSplitRows
+
+### description
+Split a file by rows, specially usefull to split a job into multithreads/multiprocesses.
+
+### input
+#### `infile:file`:: The input file  
+
+### output
+#### `outdir:dir`:: The output directory including the split files  
 {% endraw %}

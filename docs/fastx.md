@@ -38,7 +38,7 @@ QC report for fastq file
 #### `outdir:dir`:: The output direcotry  
 
 ### args
-#### `tool`::    The tool used for simulation. Default: fastqc   
+#### `tool`::    The tool used for simulation. Default: fastqc  
 #### `fastqc`::  The path of fastqc. Default: fastqc  
 #### `nthread`:: Number of threads to use. Default: 1  
 #### `params`::Other params for `tool`. Default: ""  
@@ -55,7 +55,7 @@ Multi-QC based on pFastQC
 #### `outdir:dir`:: The output direcotry  
 
 ### args
-#### `tool`::    The tool used for simulation. Default: multiqc   
+#### `tool`::    The tool used for simulation. Default: multiqc  
 #### `multiqc`:: The path of fastqc. Default: multiqc  
 #### `params`::  Other params for `tool`. Default: ""  
 

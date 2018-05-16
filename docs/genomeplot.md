@@ -16,12 +16,6 @@
 ### output
    `outfile:file`: The dumped track data
 
-### args
-   `intype`: Input file type. Default: auto
-       - Identified by extension
-       - One of "chiapet.tool", "bed12", "bedpe", "hiclib", "homer", "bam", "two.bams".
-   `params`: The display params
-
 ## pGeneTrack
 
 ### description

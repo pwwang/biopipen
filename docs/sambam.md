@@ -17,11 +17,11 @@ Deal with mapped sam/bam files, including sort, markdup, and/or index
 
 ### args
 #### `tool`             :: The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools)  
-#### `sambamba`         :: The path of the sambamba. Default: sambamba   
-#### `picard`           :: The path of the picard. Default: picard   
-#### `biobambam_bamsort`:: The path of the biobambam's bamsort. Default: bamsort   
-#### `samtools`         :: The path of the samtools. Default: samtools   
-#### `sort`             :: Do sorting? Default: True   
+#### `sambamba`         :: The path of the sambamba. Default: sambamba  
+#### `picard`           :: The path of the picard. Default: picard  
+#### `biobambam_bamsort`:: The path of the biobambam's bamsort. Default: bamsort  
+#### `samtools`         :: The path of the samtools. Default: samtools  
+#### `sort`             :: Do sorting? Default: True  
 - If input is sam, tool is biobambam, this should be True
 #### `index`            :: Do indexing? Default: True  
 #### `markdup`          :: Do duplicates marking? Default: False  
@@ -49,10 +49,10 @@ Mark/remove duplicates for bam files
 
 ### args
 #### `tool`             :: The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools|bamutil)  
-#### `sambamba`         :: The path of sambamba. Default: sambamba   
-#### `picard`           :: The path of picard. Default: picard   
-#### `biobambam_bamsort`:: The path of biobambam's bamsort. Default: bamsort   
-#### `samtools`         :: The path of samtools. Default: samtools   
+#### `sambamba`         :: The path of sambamba. Default: sambamba  
+#### `picard`           :: The path of picard. Default: picard  
+#### `biobambam_bamsort`:: The path of biobambam's bamsort. Default: bamsort  
+#### `samtools`         :: The path of samtools. Default: samtools  
 #### `bamutil`          :: The path of bamutil. Default: bam  
 #### `rmdup`            :: Do duplicates removing? Default: False  
 - Samtools will anyway remove the duplicates
@@ -71,9 +71,6 @@ Recalibrate a bam file
 
 ### input
 #### `infile:file`:: The bam file  
-
-### brings
-#### `infile`:: {{in.infile | bn}}.bai, the index file of bam  
 
 ### output
 #### `outfile:file`:: The output bam file  
@@ -168,9 +165,6 @@ Call germline (snps and indels) from a call-ready bam file.
 ### input
 #### `infile:file`:: The input bam file  
 
-### brings
-#### `infile`:: `{{in.infile | bn}}.bai`, the bam index file  
-
 ### output
 #### `outfile:file`:: The vcf file containing the mutations  
 
@@ -229,9 +223,6 @@ Detect copy number variation from bam files.
 ### input
 #### `input:file`:: The bam file  
 
-### brings
-#### `infile`:: "{{in.infile | bn}}.bai" The bam index file  
-
 ### output
 #### `outfile:file`:: The output vcf file  
 #### `outdir`:: The output directory containing other result files  
@@ -286,7 +277,7 @@ Get read depth from bam files.
 Convert sam/bam files to pair-end fastq files.
 
 ### input
-#### `infile:file`:: The sam/bam file.   
+#### `infile:file`:: The sam/bam file.  
 	- Sam files only available for biobambam, picard
 
 ### output
@@ -310,7 +301,7 @@ Convert sam/bam files to pair-end fastq files.
 Convert sam/bam files to single-end fastq files.
 
 ### input
-#### `infile:file`:: The sam/bam file.   
+#### `infile:file`:: The sam/bam file.  
 	- Sam files only available for biobambam, picard
 
 ### output
