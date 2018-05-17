@@ -1,87 +1,89 @@
+import re
 from os import path
 from glob import glob
 from pyppl import Proc, Box
 #from .utils import plot, txt, dirnamePattern
 from .rnaseq import pBatchEffect, pCoexp
-from . import params
+from .utils import dirpat2name
+from . import params, rimport
 
 """
 @name:
-	pCeldir2Matrix
+	pCELdir2Matrix
 @description:
 	Convert CEL files to expression matrix
 	File names will be used as sample names (colnames)
 @input:
-	`expdir:file`:  the directory containing the CEL files, could be gzipped
+	`indir:file`:  the directory containing the CEL files, could be gzipped
+		- If you have files, then use `pFiles2Dir` first
 @output:
 	`outfile:file`: the expression matrix file
 	`outdir:dir`:   the directory containing expr file and plots
 @args:
-	`pattern` : The pattern to filter files. Default `'*'`
-	`norm`    : The normalization method. Default: rma (mas5)
-	`gfile`   : The group file. Default: ''
-	`cdffile` : The cdffile. Default: ''
-	`annofile`: The annotation file. Default: ''
-	`exrows`  : Rows to be excluded, regular expression applied. Default: `[]`
-	`boxplot` : Whether to plot a boxplot. Default: False
-	`heatmap` : Whether to plot a heatmap. Default: False
-	`histplot`: Whether to plot a histgram. Default: False
-	`devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
-		- See ggplot2 documentation.
-	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
-	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`
+	`pattern`  : The pattern to filter files. Default `'*'`
+	`norm`     : The normalization method. Default: rma (mas5)
+	`gfile`    : The group file. Default: ''
+	`cdffile`  : The cdffile. Default: ''
+	`annofile` : The annotation file. Default: ''
+	`hmrows`   : How many rows to be used to plot heatmap
+	`plot`: Whether to plot
+		- `boxplot`   : Whether to plot a boxplot. Default: False
+		- `heatmap`   : Whether to plot a heatmap. Default: False
+		- `histogram` : Whether to plot a histgram. Default: False
+	`devpars`    : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+	`ggs`: The ggplot parameters
+		- `boxplot`  : The ggplot parameters for boxplot. Default: `Box(ylab = {0: "Log2 Intensity"})`
+		- `heatmap`  : The ggplot parameters for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+		- `histogram`: The ggplot parameters for histgram. Default: `Box(labs = {'x': "Log2 Intensity", "y": "Density"})`
 """
-pCeldir2Matrix                     = Proc(desc = 'Merge expression files to a matrix.')
-pCeldir2Matrix.input               = "expdir:file"
-pCeldir2Matrix.output              = [
-	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt",
-	"outdir:dir:{{in.expdir, args.pattern | fsDirname}}"
+pCELdir2Matrix               = Proc(desc = 'Merge expression files to a matrix.')
+pCELdir2Matrix.input         = "indir:file"
+pCELdir2Matrix.output        = [
+	"outfile:file:{{in.indir, args.pattern | dirpat2name}}.dir/{{in.indir, args.pattern | dirpat2name}}.expr.txt",
+	"outdir:dir:{{in.indir, args.pattern | dirpat2name}}.dir"
 ]
-pCeldir2Matrix.lang             = params.Rscript.value
-pCeldir2Matrix.args.pattern     = '*'
-pCeldir2Matrix.args.norm        = 'rma' # mas5
-pCeldir2Matrix.args.gfile       = ''
-pCeldir2Matrix.args.cdffile     = ''
-pCeldir2Matrix.args.annofile    = ''
-pCeldir2Matrix.args.boxplot     = False
-pCeldir2Matrix.args.heatmap     = False
-pCeldir2Matrix.args.heatmapn    = 500
-pCeldir2Matrix.args.histplot    = False
-pCeldir2Matrix.args.devpars     = Box({'res': 300, 'width': 2000, 'height': 2000})
-pCeldir2Matrix.args.boxplotggs  = ['r:ylab("Log2 Intensity")']
-pCeldir2Matrix.args.heatmapggs  = ['r:theme(axis.text.y = element_blank())']
-pCeldir2Matrix.args.histplotggs = ['r:labs(x = "Log2 Intensity", y = "Density")']
-#pCeldir2Matrix.envs.plotBoxplot = plot.boxplot.r
-#pCeldir2Matrix.envs.plotHeatmap = plot.heatmap.r
-#pCeldir2Matrix.envs.plotHist    = plot.hist.r
-#pCeldir2Matrix.envs.fsDirname   = dirnamePattern
-pCeldir2Matrix.envs.fsDirname   = lambda d, pat: path.splitext(path.basename((glob(path.join(d, pat)) or ['nothing.txt'])[0]))[0] + '.dir'
-pCeldir2Matrix.script           = "file:scripts/marray/pCeldir2Matrix.r"
+pCELdir2Matrix.lang          = params.Rscript.value
+pCELdir2Matrix.args.pattern  = '*'
+pCELdir2Matrix.args.norm     = 'rma' # mas5
+pCELdir2Matrix.args.gfile    = ''
+pCELdir2Matrix.args.cdffile  = ''
+pCELdir2Matrix.args.annofile = ''
+pCELdir2Matrix.args.hmrows   = 500
+pCELdir2Matrix.args.plot     = Box(boxplot = False, heatmap = False, histogram = False)
+pCELdir2Matrix.args.ggs      = Box(
+	boxplot   = Box(ylab  = {0: "Log2 Intensity"}),
+	heatmap   = Box(theme = {'axis.text.y': 'r:element_blank()'}),
+	histogram = Box(labs  = {'x': "Log2 Intensity", "y": "Density"})
+)
+pCELdir2Matrix.args.devpars     = Box(res = 300, width = 2000, height = 2000)
+pCELdir2Matrix.envs.rimport     = rimport
+pCELdir2Matrix.envs.dirpat2name = dirpat2name
+pCELdir2Matrix.script           = "file:scripts/marray/pCELdir2Matrix.r"
 
 
 
-pMarrayDeg        = Proc(desc = 'Detect DEGs by microarray data.')
-pMarrayDeg.input  = "efile:file, gfile:file"
-pMarrayDeg.output = [
-	"outfile:file:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs/{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}.degs.txt",
-	"outdir:dir:{{in.efile | fn | fn}}-{{in.gfile | fn | fn}}-DEGs"
+pMArrayDEG        = Proc(desc = 'Detect DEGs by microarray data.')
+pMArrayDEG.input  = "efile:file, gfile:file"
+pMArrayDEG.output = [
+	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt",
+	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs"
 ]
-pMarrayDeg.args.tool          = 'limma'
-pMarrayDeg.args.filter        = '1,2'
-pMarrayDeg.args.pval          = 0.05
-pMarrayDeg.args.mdsplot       = True
-pMarrayDeg.args.volplot       = True
-pMarrayDeg.args.maplot        = False
-pMarrayDeg.args.heatmap       = False
-pMarrayDeg.args.heatmapn      = 100
-pMarrayDeg.args.heatmapggs    = ['r:theme(axis.text.y = element_blank())']
-pMarrayDeg.args.maplotggs     = []
-pMarrayDeg.args.volplotggs    = []
-pMarrayDeg.args.devpars       = Box({'res': 300, 'width': 2000, 'height': 2000})
-pMarrayDeg.envs.plotHeatmap   = plot.heatmap.r
-pMarrayDeg.envs.plotMAplot    = plot.maplot.r
-pMarrayDeg.envs.plotVolplot   = plot.volplot.r
-pMarrayDeg.envs.txtSampleinfo = txt.sampleinfo.r
-pMarrayDeg.lang               = params.Rscript.value
-pMarrayDeg.script             = "file:scripts/marray/pMarrayDeg.r"
+pMArrayDEG.args.tool   = 'limma'
+pMArrayDEG.args.filter = '1,2'
+pMArrayDEG.args.pval   = 0.05
+pMArrayDEG.args.hmrows = 100
+pMArrayDEG.args.plot   = Box(
+	mdsplot = True,
+	volplot = True,
+	maplot  = False,
+	heatmap = False
+)
+pMArrayDEG.args.ggs = Box(
+	maplot  = Box(),
+	heatmap = Box(theme = {'axis.text.y': 'r:element_blank()'}),
+	volplot = Box()
+)
+pMArrayDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pMArrayDEG.envs.rimport = rimport
+pMArrayDEG.lang         = params.Rscript.value
+pMArrayDEG.script       = "file:scripts/marray/pMArrayDEG.r"

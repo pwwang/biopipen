@@ -84,7 +84,7 @@ if 'germ' in params.muts and 'soma' in params.muts:
 	starts.append(aBam2Mut)
 elif 'germ' in params.muts:
 	pBam2Gmut.depends = pBamDir
-	pBam2Gmut.input   = lambda ch: ch.expand("*.bam")
+	pBam2Gmut.input   = lambda ch: ch.expand(0, "*.bam")
 elif 'soma' in params.muts:
 	pBamPair2Smut.depends = pBamDir
 	pBamPair2Smut.input = lambda ch1: [ \

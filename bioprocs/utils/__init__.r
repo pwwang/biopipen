@@ -37,7 +37,10 @@ read.table.nodup = function(...) {
 	if (!'row.names' %in% names(args) || is.null(args$row.names)) {
 		return(read.table(...))
 	} else {
+		# 'row.names' removed
 		args$row.names = NULL
+		# get it back
+		args = c(args, list(row.names = NULL))
 		mat = do.call(read.table, args)
 		rnames = make.unique(as.character(as.vector(mat[,1,drop = T])))
 		mat = mat[,-1,drop=F]

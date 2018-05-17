@@ -4,6 +4,8 @@ import delegator
 import logging
 import sys
 import shlex
+import re
+from glob import glob
 from os import path
 from subprocess import list2cmdline
 
@@ -12,6 +14,19 @@ class RuncmdException(Exception):
 
 class Mem2Exception(Exception):
 	pass
+
+def fs2name(files):
+	if not files: return 'nothing.etc'
+	bnames  = [path.basename(f).split('.')[0] for f in files]
+	compfix = path.commonprefix(bnames)
+	compfix = re.sub(r'[^a-zA-Z0-9]$', '', compfix)
+	if len(compfix) < 3:
+		return bnames[0] + '.etc'
+	else:
+		return compfix + '.etc'
+
+def dirpat2name(directory, pattern = '*'):
+	return fs2name(glob(path.join(directory, pattern)))
 
 def getLogger(name = 'bioprocs', logfmt = "[%(asctime)s][%(levelname)7s] %(message)s", level = logging.INFO):
 	logger = logging.getLogger(name)

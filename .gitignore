@@ -97,6 +97,7 @@ data/
 # microarray files
 *.CEL
 *.annotations*.csv
+*.annotations*.tsv
 *.cdf
 
 # big fastq files

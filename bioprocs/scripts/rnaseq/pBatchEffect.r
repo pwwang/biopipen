@@ -1,36 +1,47 @@
-expr    = read.table ("{{in.expr}}", sep="\t", header=TRUE, row.names = 1, check.names=F)
 
-{{ txtSampleinfo }}
-sampleinfo = txtSampleinfo("{{in.batch}}")
-batch      = factor(sampleinfo[which(sampleinfo$row.names %in% colnames(expr)),,drop=F]$Batch)
-{% if args.tool | lambda x: x == 'combat' %}
-library(sva)
-newexpr   = ComBat(dat=expr, batch=batch, par.prior = TRUE, mod = NULL)
-write.table (round(newexpr, 3), "{{out.outfile}}", col.names=T, row.names=T, sep="\t", quote=F)
-{% else %}
-stop('Unsupported tool: {{args.tool}}.')
-{% endif %}
+{{rimport}}('plot.r', '__init__.r', 'sampleinfo.r')
 
+exprfile  = {{in.expr      | R}}
+batchfile = {{in.batch     | R}}
+tool      = {{args.tool    | R}}
+outfile   = {{out.outfile  | R}}
+outdir    = {{out.outdir   | R}}
+plot      = {{args.plot    | R}}
+ggs       = {{args.ggs     | R}}
+devpars   = {{args.devpars | R}}
+hmrows    = {{args.hmrows  | R}}
+
+expr    = read.table.nodup (exprfile, sep = "\t", header = TRUE, row.names = 1, check.names = F)
+
+samples    = colnames(expr)
+sampleinfo = SampleInfo(batchfile)
+batch      = sampleinfo$dataframe(sampleinfo$select(sample = samples, get = c('Sample', 'Batch')))
+
+batch      = factor(batch[samples, 'Batch'])
+
+if (tool == 'combat') {
+	library(sva)
+	newexpr   = ComBat(dat=expr, batch=batch, par.prior = TRUE, mod = NULL)
+	write.table (round(newexpr, 3), outfile, col.names=T, row.names=T, sep="\t", quote=F)
+} else { # leave it for further tools
+	stop('Unsupported tool: {{args.tool}}.')
+}
 
 # boxplot
-{% if args.boxplot %}
-{{ plotBoxplot }}
-bpfile = file.path("{{out.outdir}}", "{{in.expr | fn | fn}}.boxplot.png")
-plotBoxplot(newexpr, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.boxplotggs | Rlist}})
-{% endif %}
+if (plot$boxplot) {
+	bpfile = file.path(outdir, "{{in.expr | fn2}}.boxplot.png")
+	plot.boxplot(newexpr, bpfile, stack = T, devpars = devpars, ggs = ggs$boxplot)
+}
 
 # heatmap
-{% if args.heatmap %}
-{{ plotHeatmap }}
-hmfile = file.path("{{out.outdir}}", "{{in.expr | fn | fn}}.heatmap.png")
-hmexp  = if (nrow(newexpr) > {{args.heatmapn}}) newexpr[sample(nrow(newexpr),size={{args.heatmapn}}),] else newexpr
-plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
-{% endif %}
+if (plot$heatmap) {
+	hmfile = file.path(outdir, "{{in.expr | fn2}}.heatmap.png")
+	hmexp  = if (nrow(newexpr) > hmrows) newexpr[sample(nrow(newexpr),size=hmrows),] else newexpr
+	plot.heatmap(hmexp, hmfile, devpars = devpars, ggs = ggs$heatmap)
+}
 
 # histgram
-{% if args.histplot %}
-{{ plotHist }}
-histfile = file.path("{{out.outdir}}", "{{in.expr | fn | fn}}.hist.png")
-plotHist(newexpr, histfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.histplotggs | Rlist}})
-{% endif %}
-
+if (plot$histogram) {
+	histfile = file.path(outdir, "{{in.expr | fn2}}.histo.png")
+	plot.histo(as.data.frame(newexpr), histfile, devpars = devpars, ggs = ggs$histogram)
+}

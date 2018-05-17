@@ -29,12 +29,12 @@ from . import params, rimport
 	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
 		- See ggplot2 documentation.
 	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
-	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`
 """
 pExpdir2Matrix        = Proc(desc = 'Merge expression files to a matrix.')
 pExpdir2Matrix.input  = "expdir:file"
 pExpdir2Matrix.output = [
-	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt", 
+	"outfile:file:{{in.expdir, args.pattern | fsDirname}}/{{in.expdir, args.pattern | fsDirname}}.expr.txt",
 	"outdir:dir:{{in.expdir, args.pattern | fsDirname}}"
 ]
 pExpdir2Matrix.lang             = params.Rscript.value
@@ -69,33 +69,32 @@ pExpdir2Matrix.script           = "file:scripts/rnaseq/pExpdir2Matrix.r"
 	`outdir:dir`:   the directory containing expr file and plots
 @args:
 	`tool`    : The tool used to remove batch effect. Default `'combat'`
-	`boxplot` : Whether to plot a boxplot. Default: False
-	`heatmap` : Whether to plot a heatmap. Default: False
-	`histplot`: Whether to plot a histgram. Default: False
-	`devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
-		- See ggplot2 documentation.
-	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
-	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+	`hmrows`  : How many rows to be used to plot heatmap
+	`plot`: Whether to plot
+		- `boxplot`   : Whether to plot a boxplot. Default: False
+		- `heatmap`   : Whether to plot a heatmap. Default: False
+		- `histogram` : Whether to plot a histgram. Default: False
+	`devpars`    : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+	`ggs`: The ggplot parameters
+		- `boxplot`  : The ggplot parameters for boxplot. Default: `Box(ylab = {0: "Log2 Intensity"})`
+		- `heatmap`  : The ggplot parameters for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+		- `histogram`: The ggplot parameters for histgram. Default: `Box(labs = {'x': "Log2 Intensity", "y": "Density"})`
 """
-pBatchEffect                    = Proc(desc = 'Try to remove batch effect of expression data.')
-pBatchEffect.input              = "expr:file, batch:file"
-pBatchEffect.output             = "outfile:file:{{in.expr | fn2}}/{{in.expr | fn2}}.expr.txt, outdir:dir:{{in.expr | fn2}}"
-pBatchEffect.args.tool          = 'combat'
-pBatchEffect.args.boxplot       = False
-pBatchEffect.args.heatmap       = False
-pBatchEffect.args.heatmapn      = 500
-pBatchEffect.args.histplot      = False
-pBatchEffect.args.devpars       = Box({'res': 300, 'width': 2000, 'height': 2000})
-pBatchEffect.args.boxplotggs    = ['r:ylab("Expression")']
-pBatchEffect.args.heatmapggs    = ['r:theme(axis.text.y = element_blank())']
-pBatchEffect.args.histplotggs   = ['r:labs(x = "Expression", y = "# Samples")']
-#pBatchEffect.envs.plotBoxplot   = plot.boxplot.r
-#pBatchEffect.envs.plotHeatmap   = plot.heatmap.r
-#pBatchEffect.envs.plotHist      = plot.hist.r
-#pBatchEffect.envs.txtSampleinfo = txt.sampleinfo.r
-pBatchEffect.lang               = params.Rscript.value
-pBatchEffect.script             = "file:scripts/rnaseq/pBatchEffect.r"
+pBatchEffect              = Proc(desc = 'Try to remove batch effect of expression data.')
+pBatchEffect.input        = "expr:file, batch:file"
+pBatchEffect.output       = "outfile:file:{{in.expr | fn2}}/{{in.expr | fn2}}.expr.txt, outdir:dir:{{in.expr | fn2}}"
+pBatchEffect.args.tool    = 'combat'
+pBatchEffect.args.plot    = Box(boxplot = False, heatmap = False, histogram = False)
+pBatchEffect.args.hmrows  = 500
+pBatchEffect.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pBatchEffect.args.ggs     = Box(
+	boxplot   = Box(ylab = {0: "Expression"}),
+	heatmap   = Box(theme = {'axis.text.y': 'r:element_blank()'}),
+	histogram = Box(labs  = {'x': "Expression", "y": "Frequency"})
+)
+pBatchEffect.envs.rimport = rimport
+pBatchEffect.lang   = params.Rscript.value
+pBatchEffect.script = "file:scripts/rnaseq/pBatchEffect.r"
 
 """
 @name:
@@ -122,7 +121,7 @@ pBatchEffect.script             = "file:scripts/rnaseq/pBatchEffect.r"
 	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
 		- See ggplot2 documentation.
 	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
-	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`	
+	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`
 @requires:
 	[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
 	[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
@@ -232,7 +231,7 @@ p2RawCounts.script           = "file:scripts/rnaseq/p2RawCounts.r"
 pRnaseqDeg        = Proc(desc = 'Detect DEGs by RNA-seq data.')
 pRnaseqDeg.input  = "efile:file, gfile:file"
 pRnaseqDeg.output = [
-	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt", 
+	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt",
 	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs"
 ]
 pRnaseqDeg.args.tool          = 'edger' # deseq2

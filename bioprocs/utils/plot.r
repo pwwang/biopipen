@@ -27,7 +27,8 @@ update.aes = function(alist, newaes, namesbefore = c()) {
 		if (!is.null(delidx)) namesbefore = namesbefore[-delidx]
 		pos = length(namesbefore) + 1
 		if (is.null(alnames)) {
-			alist[[pos]] = update.list(alist[[pos]], newaes)
+			if (length(alist) < pos) alist$mapping = newaes
+			else alist[[pos]] = update.list(alist[[pos]], newaes)
 		} else {
 			x = 0
 			if (length(alnames) > 0) {
@@ -48,19 +49,26 @@ update.aes = function(alist, newaes, namesbefore = c()) {
 	return (alist)
 }
 
+apply.ggs = function(p, ggs) {
+	funcs = names(ggs)
+	for (i in 1:length(funcs)) {
+		p = p + do.call(funcs[i], ggs[[i]])
+	}
+	return (p)
+}
+
 plot.no = function(data, plotfile, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	do.call(png, c(list(filename=plotfile), devpars))
-	params$data = data
+	params$data = as.data.frame(data)
 	p = do.call(ggplot, params)
-	for (ggfunc in names(ggs)) {
-		p = p + do.call(ggfunc, ggs[[ggfunc]])
-	}
-	print(p)
+	print(apply.ggs(p, ggs))
 	dev.off()
 }
 
 plot.xy = function(data, plotfile, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	cnames = colnames(data)
+	cnames = make.names(cnames)
+	colnames(data) = cnames
 	if (is.numeric(x)) x = cnames[x]
 	if (is.numeric(y)) y = cnames[y]
 	params = list(mapping = aes_string(x = x, y = y))
@@ -69,9 +77,16 @@ plot.xy = function(data, plotfile, x = 1, y = 2, ggs = list(), devpars = list(re
 
 plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	cnames = colnames(data)
+	cnames = make.names(cnames)
+	colnames(data) = cnames
 	if (is.numeric(x)) x = cnames[x]
 	params = list(mapping = aes_string(x = x))
 	plot.no(data, plotfile, params, ggs, devpars)
+}
+
+plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	data = stack(as.data.frame(data))
+	plot.xy(data, plotfile, x = x, y = y, ggs = ggs, devpars = devpars)
 }
 
 plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
@@ -130,10 +145,7 @@ plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, co
 				p = p + scale_color_discrete(guide = F)
 			}
 		}
-		for (ggfunc in names(ggs)) {
-			p = p + do.call(ggfunc, ggs[[ggfunc]])
-		}
-		print(p)
+		print(apply.ggs(p, ggs))
 		dev.off()
 		if (returnAUC) return(aucs)
 	} else {
@@ -151,10 +163,7 @@ plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, co
 				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', aucs[cname, 1], sep = ': '))
 				p = p + scale_color_discrete(guide = F)
 			}
-			for (ggfunc in names(ggs)) {
-				p = p + do.call(ggfunc, ggs[[ggfunc]])
-			}
-			print(p)
+			print(apply.ggs(p, ggs))
 			dev.off()
 		}
 		if (returnAUC) return(aucs)
@@ -169,19 +178,30 @@ plot.scatter = function(data, plotfile, x = 1, y = 2, params = list(), ggs = lis
 # alias
 plot.points = plot.scatter
 
-plot.boxplot = function(data, plotfile, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	if (is.numeric(x)) {
+plot.boxplot = function(data, plotfile, x = 1, y = 2, stack = F, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	if (!stack) {
 		cnames = colnames(data)
-		x = cnames[x]
-	}
-	params = update.aes(params, aes_string(group = x))
+		cnames = make.names(cnames)
+		colnames(data) = cnames
+		if (is.numeric(x)) {
+			x = cnames[x]
+		}
+		params = update.aes(params, aes_string(group = x))
 
-	ggs = c(
-		list(geom_boxplot = params),
-		list(theme = list(axis.text.x = element_text(angle = -60, hjust = 0))),
-		ggs
-	)
-	plot.xy(data, plotfile, x, y, ggs, devpars)
+		ggs = c(
+			list(geom_boxplot = params),
+			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+			ggs
+		)
+		plot.xy(data, plotfile, x, y, ggs, devpars)
+	} else {
+		ggs = c(
+			list(geom_boxplot = params),
+			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+			ggs
+		)
+		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+	}
 }
 
 plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
@@ -191,7 +211,7 @@ plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(),
 
 	do.call(png, c(list(filename=plotfile), devpars))
 
-	theme_none <- theme(
+	theme_none = theme(
 		panel.grid.major = element_blank(),
 		panel.grid.minor = element_blank(),
 		panel.background = element_blank(),
@@ -204,13 +224,14 @@ plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(),
 	)
 
 	ggplus = list(
-		theme(axis.ticks = element_blank()),
-		scale_fill_gradient2(),
-		theme(axis.title.x = element_blank()),
-		theme(axis.title.y = element_blank()),
-		theme(axis.text.x  = element_text(angle = -60, hjust = 0)),
-		#scale_y_discrete(position="right"),
-		theme(legend.title = element_blank())
+		scale_fill_gradient2 = list(),
+		theme = list(
+			axis.ticks  = element_blank(),
+			axis.title.x = element_blank(),
+			axis.title.y = element_blank(),
+			axis.text.x  = element_text(angle = 60, hjust = 1),
+			legend.title = element_blank()
+		)
 	)
 
 	dendro = params$dendro
@@ -256,19 +277,13 @@ plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(),
 		colidx   = 1:length(cnames)
 	}
 
-	mm        = stack(data[rowidx, colidx])
-	mm$rnames = rnames
+	mm        = stack(as.data.frame(data[rowidx, colidx]))
+	mm$rnames = rnames[rowidx]
 	plothm    = ggplot(mm, aes(ind, rnames)) + geom_tile(aes(fill=values)) +
 	xlim(unique(as.vector(mm$ind))) + scale_y_discrete(position="right", limits=rnames)
 
-	for (i in 1:length(ggplus)) {
-		plothm = plothm + ggplus[[i]]
-	}
-	if (length(ggs) > 0) {
-		for (i in 1:length(ggs)) {
-			plothm = plothm + ggs[[i]]
-		}
-	}
+	ggs = c(ggplus, ggs)
+	plothm = apply.ggs(plothm, ggs)
 
 	if (dendro == TRUE || dendro == 'both') {
 		ghm = ggplotGrob(plothm)
@@ -331,36 +346,25 @@ plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), d
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
+plot.maplot = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	data = as.data.frame(data)
+	cnames = colnames(data)
+	A      = if ("A" %in% cnames) data$A else data[, 1]
+	M      = if ("M" %in% cnames) data$M else data[, 2]
+	thres  = if ("threshold" %in% cnames) data$threshold else if (length(cnames) > 2) data[, 3] else NULL
+	data = data.frame(A, M, thres)
 
-plotMAplot = function (m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	do.call(png, c(list(filename=filename), devpars))
-	ggplus = list(
-		theme(legend.position = "none"),
-		geom_hline(color = "blue3", yintercept=0, linetype="dashed"),
-		stat_smooth(se = FALSE, method = "loess", color = "red3")
-	)
+	ggs = c(list(
+		theme       = list(legend.position = 'none'),
+		geom_hline  = list(color = 'blue3', yintercept = 0, linetype = 'dashed'),
+		stat_smooth = list(se = F, method = 'loess', color = 'red3')
+	), ggs)
 
-	cnames = names(m)
-	A      = if ("A" %in% cnames) m$A else m[, 1]
-	M      = if ("M" %in% cnames) m$M else m[, 2]
-	thres  = if ("threshold" %in% cnames) m$threshold else if (ncol(m) > 2) m[, 3] else NULL
-
-	if (is.null(thres)) {
-		plotout = ggplot(m, aes(x = A, y = M)) + geom_point(size = 1.5, alpha = 1/5)
-	} else {
-		plotout = ggplot(m, aes(x = A, y = M)) + geom_point(size = 1.5, alpha = 1/5, aes(color=factor(thres)))
+	params = list(size = 1.5, alpha = 1/5)
+	if (!is.null(thres)) {
+		params$mapping = aes(color = factor(thres))
 	}
-
-	for (i in 1:length(ggplus)) {
-		plotout = plotout + ggplus[[i]]
-	}
-	if (length(ggs) > 0) {
-		for (i in 1:length(ggs)) {
-			plotout = plotout + ggs[[i]]
-		}
-	}
-	print(plotout)
-	dev.off()
+	plot.scatter(data, plotfile, x = 'A', y = 'M', params = params, ggs = ggs, devpars = devpars)
 }
 
 plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
@@ -412,20 +416,17 @@ plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=
 	plot.xy(data, plotfile, x = '""', y = 'Value', ggs, devpars)
 }
 
-
-plotVolplot = function(m, filename, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	do.call(png, c(list(filename=filename), devpars))
-	m = as.data.frame(m)
-
-	cnames = names(m)
-	logfc  = if ("logFC" %in% cnames) m$logFC else m[, 1]
-	fdr    = if ("FDR" %in% cnames) m$FDR else m[, 2]
+plot.volplot = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	data   = as.data.frame(data)
+	cnames = names(data)
+	logfc  = if ("logFC" %in% cnames) data$logFC else data[, 1]
+	fdr    = if ("FDR" %in% cnames) data$FDR else data[, 2]
 	fdr    = -log10(fdr)
 
 	# cutoffs
-	logfccut    = if ("logFCCut" %in% cnames) m$logFCCut[1] else 2
-	fdrcut      = if ("FDRCut" %in% cnames) m$FDRCut[1] else 0.05
-	fdrcutlabel = fdrcut
+	logfccut    = if ("logFCCut" %in% cnames) data$logFCCut[1] else 2
+	fdrcut      = if ("FDRCut" %in% cnames) data$FDRCut[1] else 0.05
+	fdrcutlabel = round(fdrcut, 3)
 	fdrcut      = -log10(fdrcut)
 
 	threshold = as.factor(abs(logfc) > logfccut & fdr > fdrcut)
@@ -434,30 +435,21 @@ plotVolplot = function(m, filename, ggs = list(), devpars = list(res=300, width=
 	ym = min(max(fdr), 15)
 	if (xm <= logfccut) logfccut = 1
 
-	df  = data.frame(logfc, fdr)
-	plotout = ggplot(data=df, aes(x=logfc, y=fdr)) +
-	  geom_point(alpha=0.4, size=1.75, aes(color=threshold)) +
-	  geom_hline(yintercept=fdrcut, linetype="dashed", color="blue3") +
-	  geom_vline(xintercept=c(-logfccut, logfccut), linetype="dashed", color = "red3") +
-	  xlim(c(-xm, xm)) + ylim(c(0, ym)) +
-	  geom_text(aes(xm, fdrcut, label = paste("p", "=", fdrcutlabel), vjust = -1, hjust = 1), color="blue3") +
-	  geom_text(aes(-logfccut, ym, label = paste(-logfccut, "fold"),  vjust = 1, hjust = -0.1), color="red3") +
-	  geom_text(aes(+logfccut, ym, label = paste(paste('+', logfccut, sep=""), "fold"),  vjust = 1, hjust = -0.1), color="red3")
+	data = data.frame(logfc, fdr, threshold)
 
-	ggplus = list(
-		theme(legend.position = "none"),
-		xlab("log2 Fold Change"),
-		ylab("-log10(Pval)")
-	)
+	ggs = c(list(
+		geom_point = list(alpha = .4, size = 1.75, aes(color = threshold)),
+		geom_hline = list(yintercept = fdrcut, linetype = 'dashed', color = 'blue3'),
+		geom_vline = list(xintercept = c(-logfccut, logfccut), linetype = 'dashed', color = 'red3'),
+		xlim       = list(c(-xm, xm)),
+		ylim       = list(c(0, ym)),
+		geom_text  = list(x = xm, y = fdrcut, label = paste('p', '=', fdrcutlabel), vjust = -1, hjust = 1, color = 'blue3'),
+		geom_text  = list(x = -logfccut, y = ym, label = paste(-logfccut, 'fold'),  vjust = 1, hjust = -0.1, color='red3'),
+		geom_text  = list(x = +logfccut, y = ym, label = paste0('+', logfccut, ' ', 'fold'),  vjust = 1, hjust = -0.1, color="red3"),
+		theme      = list(legend.position = "none"),
+		xlab       = list('log2 Fold Change'),
+		ylab       = list('-log10(Pvalue)')
+	), ggs)
 
-	for (i in 1:length(ggplus)) {
-		plotout = plotout + ggplus[[i]]
-	}
-	if (length(ggs) > 0) {
-		for (i in 1:length(ggs)) {
-			plotout = plotout + ggs[[i]]
-		}
-	}
-	print(plotout)
-	dev.off()
+	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
 }

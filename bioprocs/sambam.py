@@ -556,30 +556,23 @@ pBam2Cnv.script = "file:scripts/sambam/pBam2Cnv.py"
 	`mem`: The memory to be used. Default: 16G
 	`plot`: Whether plot the result. Default: True
 """
-pBamStats                     = Proc(desc = 'Get read depth from bam files.')
-pBamStats.input               = 'infile:file'
-pBamStats.output              = 'outfile:file:{{in.infile | fn}}/{{in.infile | fn}}.stat.txt, outdir:dir:{{in.infile | fn}}'
-pBamStats.args.tool           = 'bamstats'
-pBamStats.args.bamstats       = params.bamstats.value
-pBamStats.args.params         = Box()
-pBamStats.args.mem            = params.mem16G.value
-pBamStats.args.plot           = True
-pBamStats.args.histplotggs    = ['r:xlab("Read depth")', 'r:ylab("# samples")']
-pBamStats.args.boxplotggs     = ['r:ylab("Counts")']
-pBamStats.args.devpars        = Box({'res':300, 'width':2000, 'height':2000})
-pBamStats.args.cap            = 500
-pBamStats.args.cutoff         = 0
-pBamStats.args.nfeats         = 40
-pBamStats.args.feature        = 'wgs'
-#pBamStats.envs.runcmd         = runcmd.r
-#pBamStats.envs.mem2           = mem2.r
-#pBamStats.envs.pollingLast    = polling.last.r
-#pBamStats.envs.params2CmdArgs = helpers.params2CmdArgs.r
-#pBamStats.envs.cbindfill      = helpers.cbindfill.r
-#pBamStats.envs.plotHist       = plot.hist.r
-#pBamStats.envs.plotBoxplot    = plot.boxplot.r
-pBamStats.envs.rimport        = rimport
-pBamStats.beforeCmd           = """
+pBamStats                  = Proc(desc = 'Get read depth from bam files.')
+pBamStats.input            = 'infile:file'
+pBamStats.output           = 'outfile:file:{{in.infile | fn}}/{{in.infile | fn}}.stat.txt, outdir:dir:{{in.infile | fn}}'
+pBamStats.args.tool        = 'bamstats'
+pBamStats.args.bamstats    = params.bamstats.value
+pBamStats.args.params      = Box()
+pBamStats.args.mem         = params.mem16G.value
+pBamStats.args.plot        = True
+pBamStats.args.histplotggs = Box(xlab = {0: 'Read depth'}, ylab = {0: '# samples'})
+pBamStats.args.boxplotggs  = Box(xlab = {0: 'Counts'})
+pBamStats.args.devpars     = Box(res = 300, width = 2000, height = 2000)
+pBamStats.args.cap         = 500
+pBamStats.args.cutoff      = 0
+pBamStats.args.nfeats      = 40
+pBamStats.args.feature     = 'wgs'
+pBamStats.envs.rimport     = rimport
+pBamStats.beforeCmd        = """
 if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
 	echo "Plots can only be done with proc.forks >= 2." 1>&2
 	exit 1

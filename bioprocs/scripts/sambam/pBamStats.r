@@ -27,7 +27,7 @@ chrs    = NULL
 
 rnames  = make.unique(unlist(lapply(bsfiles, function(x){ x=basename(x); return (substr(x, 1, nchar(x)-9)) })), sep='_')
 rownames(means) = rnames
-colnames(means) = c("Average coverage")
+colnames(means) = c("Average_coverage")
 for (i in 1:length(bsfiles)) {
 	bsfile = bsfiles[i]
 	if (file.info(bsfile)$size == 0) {
@@ -55,11 +55,11 @@ chrs = chrs[order(rowMeans(chrs), decreasing = T),,drop=F][1:min({{args.nfeats}}
 
 logger("Plotting average coverages ...")
 write.table (means, "{{out.outdir}}/avgCoverage.txt", quote=F, sep="\t")
-plotHist (means, "{{out.outdir}}/avgCoverage.png", ggs = {{args.histplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
+plot.histo (means, "{{out.outdir}}/avgCoverage.png", ggs = {{args.histplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
 # plot chromosomes
 logger ("Plotting feature coverages ...")
-plotBoxplot(t(chrs), "{{out.outdir}}/featureCoverage.png", ggs = {{args.boxplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
+plot.boxplot(t(chrs), "{{out.outdir}}/featureCoverage.png", ggs = {{args.boxplotggs | Rlist}}, devpars = {{args.devpars | Rlist}})
 
 {% endif %} # end if job.index
 
