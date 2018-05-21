@@ -42,8 +42,8 @@ if ("Patient" %in% sicols && n1 != n2) {
 	stop(paste0("Paired samples indicated, but number of samples is different in two groups (", n1, n2, ")."))
 }
 
-# detect DEGs using limma
-if (tool == 'limma') {
+# detect DEGs using edgeR
+if (tool == 'edger') {
 	# get model
 	if ("Patient" %in% sicols) {
 		pairs  = factor(sampleinfo[which(sirows %in% samples), "Patient"])
@@ -55,21 +55,62 @@ if (tool == 'limma') {
 		group  = relevel(group, group2)
 		design = model.matrix(~group)
 	}
-	#print(design)
-	library(limma)
-	fit     = lmFit(ematrix, design)
-	fit     = eBayes(fit)
 
-	allgene = topTable(fit, n=nrow(ematrix), adjust="BH", coef = paste("group", group1, sep=""))
-	write.table (pretty.numbers(allgene, list(P.Value..adj.P.Val = '%.2E', . = '%.3f')), allfile, quote=F, sep="\t")
+	library(edgeR)
+	dge     = DGEList(counts = ematrix, group = group)
+	dge$samples$lib.size = colSums(dge$counts)
+	dge     = calcNormFactors(dge)
 
-	degene  = allgene[allgene$P.Value < pval,,drop=F]
-	write.table (pretty.numbers(degene, list(P.Value..adj.P.Val = '%.2E', . = '%.3f')), outfile, quote=F, sep="\t")
+	disp    = estimateDisp (dge, design)
+	fit     = glmFit (disp, design)
+	fit     = glmLRT (fit)
 
-	normedCounts = log2(ematrix + 1)
+	allgene = topTags (fit, n=nrow(fit$table), p.value = 1)
+	allgene = allgene$table
+	write.table (pretty.numbers(allgene, list(PValue..FDR='%.2E', .='%.3f')), allfile, quote=F, sep="\t")
+
+	degene  = allgene[as.numeric(allgene$PValue) < pval,,drop=F]
+	write.table (pretty.numbers(degene, list(PValue..FDR='%.2E', .='%.3f')), outfile, quote=F, sep="\t")
+
+	normedCounts = log2(dge$counts + 1)
 	alllogFC     = allgene$logFC
-	allPval      = allgene$P.Value
+	allPval      = allgene$PValue
 
+} else if (tool == 'deseq2') {
+	# detect DEGs using DESeq2
+
+	library(DESeq2)
+	# model
+	if ("Patient" %in% sicols) {
+		coldata           = data.frame(
+			patients = factor(sampleinfo[which(sirows %in% samples), 'Patient']), 
+			treats   = factor(sampleinfo[which(sirows %in% samples), 'Group'])
+		)
+		coldata$treats    = relevel(coldata$treats, group2)
+		rownames(coldata) = samples
+		dge               = DESeqDataSetFromMatrix(round(ematrix), coldata, design = ~patients + treats)
+	} else {
+		coldata           = data.frame(treats = factor(sampleinfo[which(sirows %in% samples), 'Group']))
+		coldata$treats    = relevel(coldata$treats, group2) 
+		rownames(coldata) = samples
+		dge               = DESeqDataSetFromMatrix(round(ematrix), coldata, design = ~treats)
+	}
+
+	dge     = DESeq(dge)
+	allgene = results(dge)
+	allgene = allgene[order(allgene$pvalue),,drop=F]
+	write.table (pretty.numbers(allgene, list(pvalue..padj='%.2E', .='%.3f')), allfile, quote=F, sep="\t")
+
+	degene  = allgene[!is.na(allgene$pvalue),,drop=F]
+	degene  = degene[degene$pvalue < pval,,drop=F]
+	write.table (pretty.numbers(degene, list(pvalue..padj='%.2E', .='%.3f')), outfile, quote=F, sep="\t")
+
+	degene$logFC  = degene$log2FoldChange
+	degene$PValue = degene$pvalue
+
+	normedCounts  = log2(assay(dge) + 1)
+	alllogFC      = allgene$log2FoldChange
+	allPval       = allgene$pvalue
 } else {
 	stop(paste('Unsupported tool:', tool))
 }

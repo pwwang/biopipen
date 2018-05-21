@@ -1,10 +1,22 @@
-data     = read.table ("{{in.expfile}}", sep="\t", header={{args.header | R}}, row.names = NULL, check.names=F)
-rnames   = make.unique(as.vector(data[,1]))
-data[,1] = NULL
-rownames(data)  = rnames
+{{rimport}}('plot.r')
+
+infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
+outdir  = {{out.outdir | R}}
+prefix  = {{in.infile | fn2 | R}}
+unit    = {{args.unit | R}}
+refgene = {{args.refgene | R}}
+nreads  = {{args.nreads | R}}
+hmrows  = {{args.hmrows | R}}
+plot    = {{args.plot | R}}
+ggs     = {{args.ggs | R}}
+devpars = {{args.devpars | R}}
+
+data    = read.table.nodup (infile, sep="\t", header=T, row.names=1, check.names=F)
+rnames  = rownames(data)
 
 getGenelen = function() {
-	gdata  = read.table({{args.refgene | quote}}, sep="\t", header=F, row.names=NULL, check.names=F)
+	gdata  = read.table(refgene, sep="\t", header=F, row.names=NULL, check.names=F)
 	gnames = strsplit(as.vector(gdata[, ncol(gdata)]), ";", fixed=T)
 	gnames = matrix(unlist(gnames), nrow=length(gnames[[1]]))[1,]
 	gnames = strsplit(gnames, " ", fixed=T)
@@ -17,43 +29,39 @@ getGenelen = function() {
 	return (glen)
 }
 
-{% if args.unit | lambda x: x == 'fpkm' or x == 'rpkm' %}
-# convert to total 50,000,000 reads per sample
-glen = getGenelen()
-rn   = intersect(rownames(glen), rnames)
-ret  = data[rn,,drop=F] * glen[rn,,drop=F]
-ssum = colSums(ret)
-ret  = {{args.nreads}} * ret / ssum
+if (unit == 'fpkm' || unit == 'rpkm') {
+	# convert to total 50,000,000 reads per sample
+	glen = getGenelen()
+	rn   = intersect(rownames(glen), rnames)
+	ret  = data[rn,,drop=F] * glen[rn,,drop=F]
+	ssum = colSums(ret)
+	ret  = nreads * ret / ssum
+} else if (unit == 'tpm') {
+	glen = getGenelen()
+	rn   = intersect(rownames(glen), rnames)
+	ret  = data[rn,,drop=F]
+	ssum = colSums(ret)
+	ret  = nreads * ret / ssum
+	ret  = ret * glen[rn,,drop=F] / sum(glen[rn,,drop=T])
+}
 
-{% elif args.unit | lambda x: x == 'tpm' %}
-glen = getGenelen()
-rn   = intersect(rownames(glen), rnames)
-ret  = data[rn,,drop=F]
-ssum = colSums(ret)
-ret  = {{args.nreads}} * ret / ssum
-ret  = ret * glen[rn,,drop=F] / sum(glen[rn,,drop=T])
-{% endif %}
+write.table (round(ret), outfile, quote=F, row.names=T, col.names=T, sep="\t")
 
-write.table (round(ret), "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
+exp = log2(ret + 1)
 
-# boxplot
-{% if args.boxplot %}
-{{ plotBoxplot }}
-bpfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.boxplot.png")
-plotBoxplot(ret, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.boxplotggs | Rlist}})
-{% endif %}
+if (plot$boxplot) {
+	bpfile = file.path(outdir, paste0(prefix, '.boxplot.png'))
+	plot.boxplot(exp, bpfile, stack = T, devpars = devpars, ggs = ggs$boxplot)
+}
 
-# heatmap
-{% if args.heatmap %}
-{{ plotHeatmap }}
-hmfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.heatmap.png")
-hmexp  = if (nrow(ret) > {{args.heatmapn}}) ret[sample(nrow(ret),size={{args.heatmapn}}),] else ret
-plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
-{% endif %}
+if (plot$heatmap) {
+	hmfile = file.path(outdir, paste0(prefix, ".heatmap.png"))
+	hmexp  = if (nrow(exp) > hmrows) exp[sample(nrow(exp),size=hmrows),] else exp
+	plot.heatmap(hmexp, hmfile, devpars = devpars, ggs = ggs$heatmap)
+}
 
-# histgram
-{% if args.histplot %}
-{{ plotHist }}
-histfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.hist.png")
-plotHist(ret, histfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.histplotggs | Rlist}})
-{% endif %}
+if (plot$histogram) {
+	histfile = file.path(outdir, paste0(prefix, ".histo.png"))
+	plot.histo(stack(as.data.frame(exp)), histfile, devpars = devpars, ggs = ggs$histogram)
+}
+

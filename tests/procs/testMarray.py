@@ -50,6 +50,7 @@ class TestMarray (helpers.TestCase):
 		pCELdir2Matrix.args.plot.boxplot   = True
 		pCELdir2Matrix.args.plot.heatmap   = True
 		pCELdir2Matrix.args.plot.histogram = True
+		pCELdir2Matrix.args.fn2sample      = 'function(fn) unlist(strsplit(fn, "_(", fixed=T))[1]'
 		pCELdir2Matrix.args.norm           = 'rma'
 
 		PyPPL(config).start(pCELdir2Matrix).run()

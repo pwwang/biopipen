@@ -3,20 +3,21 @@
 library(methods)
 library(simpleaffy)
 
-indir    = {{in.indir | R}}
-pattern  = {{args.pattern | R}}
-norm     = {{args.norm | R}}
-gfile    = {{args.gfile | R}}
-cdffile  = {{args.cdffile | R}}
-annofile = {{args.annofile | R}}
+indir     = {{in.indir | R}}
+pattern   = {{args.pattern | R}}
+norm      = {{args.norm | R}}
+gfile     = {{args.gfile | R}}
+cdffile   = {{args.cdffile | R}}
+annofile  = {{args.annofile | R}}
 hmrows    = {{args.hmrows | R}}
-plot     = {{args.plot | R}}
-ggs      = {{args.ggs | R}}
-devpars  = {{args.devpars | R}}
-outdir   = {{out.outdir | R}}
-outfile  = {{out.outfile | R}}
-celdir   = file.path(outdir, 'CELs')
-prefix   = {{in.indir, args.pattern | dirpat2name | R}}
+plot      = {{args.plot | R}}
+ggs       = {{args.ggs | R}}
+devpars   = {{args.devpars | R}}
+outdir    = {{out.outdir | R}}
+outfile   = {{out.outfile | R}}
+celdir    = file.path(outdir, 'CELs')
+prefix    = {{in.indir, args.pattern | dirpat2name | R}}
+fn2sample = Vectorize({{args.fn2sample}})
 
 dir.create(celdir, F)
 for (celfile in Sys.glob(file.path(indir, pattern))) {
@@ -46,7 +47,7 @@ if (cdffile != '') {
 }
 exprs    = call.exprs(affydata, algorithm = norm)
 exprsout = exprs@assayData$exprs
-
+colnames(exprsout) = fn2sample(colnames(exprsout))
 # annotate
 if (annofile != '') {
 	annos    = read.table(annofile, header=F, sep="\t", row.names = 1, check.names = F )

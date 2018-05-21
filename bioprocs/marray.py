@@ -42,15 +42,16 @@ pCELdir2Matrix.output        = [
 	"outfile:file:{{in.indir, args.pattern | dirpat2name}}.dir/{{in.indir, args.pattern | dirpat2name}}.expr.txt",
 	"outdir:dir:{{in.indir, args.pattern | dirpat2name}}.dir"
 ]
-pCELdir2Matrix.lang          = params.Rscript.value
-pCELdir2Matrix.args.pattern  = '*'
-pCELdir2Matrix.args.norm     = 'rma' # mas5
-pCELdir2Matrix.args.gfile    = ''
-pCELdir2Matrix.args.cdffile  = ''
-pCELdir2Matrix.args.annofile = ''
-pCELdir2Matrix.args.hmrows   = 500
-pCELdir2Matrix.args.plot     = Box(boxplot = False, heatmap = False, histogram = False)
-pCELdir2Matrix.args.ggs      = Box(
+pCELdir2Matrix.lang           = params.Rscript.value
+pCELdir2Matrix.args.fn2sample = 'function(fn) fn'
+pCELdir2Matrix.args.pattern   = '*'
+pCELdir2Matrix.args.norm      = 'rma' # mas5
+pCELdir2Matrix.args.gfile     = ''
+pCELdir2Matrix.args.cdffile   = ''
+pCELdir2Matrix.args.annofile  = ''
+pCELdir2Matrix.args.hmrows    = 500
+pCELdir2Matrix.args.plot      = Box(boxplot = False, heatmap = False, histogram = False)
+pCELdir2Matrix.args.ggs       = Box(
 	boxplot   = Box(ylab  = {0: "Log2 Intensity"}),
 	heatmap   = Box(theme = {'axis.text.y': 'r:element_blank()'}),
 	histogram = Box(labs  = {'x': "Log2 Intensity", "y": "Density"})

@@ -1,14 +1,25 @@
-data     = read.table ("{{in.expfile}}", sep="\t", header={{args.header | R}}, row.names = NULL, check.names=F)
-rnames   = make.unique(as.vector(data[,1]))
-data[,1] = NULL
-rownames(data)  = rnames
+{{rimport}}('plot.r')
 
-{% if args.unit | lambda x: x == 'cpm' %}
+infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
+outdir  = {{out.outdir | R}}
+prefix  = {{in.infile | fn2 | R}}
+unit    = {{args.unit | R}}
+refgene = {{args.refgene | R}}
+hmrows  = {{args.hmrows | R}}
+plot    = {{args.plot | R}}
+ggs     = {{args.ggs | R}}
+devpars = {{args.devpars | R}}
+
+data    = read.table.nodup (infile, sep="\t", header=T, row.names=1, check.names=F)
+rnames  = rownames(data)
+
+if (unit == 'cpm') {
 	library('edgeR')
-	ret = cpm (data, log = F)
-{% elif args.unit | lambda x: x == 'fpkm' or x == 'rpkm' %}
+	ret = cpm(data, log = F)
+} else if (unit == 'fpkm' || unit == 'rpkm') {
 	library('edgeR')
-	genelen = read.table ({{args.refgene | quote}}, header=F, row.names = NULL, check.names = F, sep = "\t")
+	genelen = read.table (refgene, header=F, row.names = NULL, check.names = F, sep = "\t")
 	genelen = apply(genelen, 1, function(row) {
 		gene = unlist(strsplit(row[9], ' ', fixed=T))[2]
 		gene = substr(gene, 1, nchar(gene) - 1)
@@ -18,34 +29,30 @@ rownames(data)  = rnames
 	genelen = t(genelen)
 	genelen = as.vector(genelen[which(genelen[,1] %in% rnames),2,drop=T])
 	ret = rpkm (data, log = F, gene.length = as.numeric(genelen))
-{% else %}
+} else if (unit == 'tmm') {
 	library('coseq')
 	ret = transform_RNAseq(data, norm="TMM")
 	ret = ret$normCounts
-{% endif %}
+} else {
+	stop(paste('Unknown expression unit:', unit))
+}
 
-{% if args.log2 %}
-ret = log2(ret + 1)
-{% endif %}
+write.table (round(ret, 3), outfile, quote=F, row.names=T, col.names=T, sep="\t")
 
-write.table (round(ret, 3), "{{out.outfile}}", quote=F, row.names=T, col.names={{args.header | R}}, sep="\t")
+exp = log2(ret + 1)
 
-# boxplot
-{{rimport}}('plot.r')
-{% if args.boxplot %}
-bpfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.boxplot.png")
-plotBoxplot(ret, bpfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.boxplotggs | Rlist}})
-{% endif %}
+if (plot$boxplot) {
+	bpfile = file.path(outdir, paste0(prefix, '.boxplot.png'))
+	plot.boxplot(exp, bpfile, stack = T, devpars = devpars, ggs = ggs$boxplot)
+}
 
-# heatmap
-{% if args.heatmap %}
-hmfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.heatmap.png")
-hmexp  = if (nrow(ret) > {{args.heatmapn}}) ret[sample(nrow(ret),size={{args.heatmapn}}),] else ret
-plotHeatmap(hmexp, hmfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.heatmapggs | Rlist}})
-{% endif %}
+if (plot$heatmap) {
+	hmfile = file.path(outdir, paste0(prefix, ".heatmap.png"))
+	hmexp  = if (nrow(exp) > hmrows) exp[sample(nrow(exp),size=hmrows),] else exp
+	plot.heatmap(hmexp, hmfile, devpars = devpars, ggs = ggs$heatmap)
+}
 
-# histgram
-{% if args.histplot %}
-histfile = file.path("{{out.outdir}}", "{{in.expfile | fn | fn}}.hist.png")
-plotHist(ret, histfile, devpars = {{args.devpars | Rlist}}, ggs = {{args.histplotggs | Rlist}})
-{% endif %}
+if (plot$histogram) {
+	histfile = file.path(outdir, paste0(prefix, ".histo.png"))
+	plot.histo(stack(as.data.frame(exp)), histfile, devpars = devpars, ggs = ggs$histogram)
+}

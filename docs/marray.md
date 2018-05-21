@@ -2,14 +2,15 @@
 <!-- toc -->
 {% raw %}
 
-## pCeldir2Matrix
+## pCELdir2Matrix
 
 ### description
 Convert CEL files to expression matrix
 File names will be used as sample names (colnames)
 
 ### input
-#### `expdir:file`::  the directory containing the CEL files, could be gzipped  
+#### `indir:file`::  the directory containing the CEL files, could be gzipped  
+	- If you have files, then use `pFiles2Dir` first
 
 ### output
 #### `outfile:file`:: the expression matrix file  

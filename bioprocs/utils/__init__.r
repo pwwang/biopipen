@@ -57,3 +57,20 @@ update.list = function (list1, list2) {
 	}
 	return (list1)
 }
+
+# format data.frame to output
+pretty.numbers = function(df, formats) {
+	df           = as.matrix(df)
+	formatedCols = c()
+	allCols      = colnames(df)
+	for (fcols in names(formats)) {
+		if (fcols == '.') {
+			cols = which(!allCols %in% formatedCols)
+		} else {
+			cols = unlist(strsplit(fcols, '..', fixed = T))
+			formatedCols = c(formatedCols, cols)
+		}
+		df[, cols] = sprintf(formats[[fcols]], as.numeric(df[, cols]))
+	}
+	return (df)
+}
