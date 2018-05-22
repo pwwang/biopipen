@@ -1,3 +1,5 @@
+{{rimport}}('__init__.r')
+
 infile   = {{in.infile    | quote}}
 outfile  = {{out.outfile  | quote}}
 
@@ -84,8 +86,8 @@ for (name1 in it.names) {
 
 {% endif %}
 
-out = matrix(NA, ncol = 7, nrow = 0)
-colnames(out) = c('confInt1', 'confInt2', 'oddsRatio', 'pval', 'qval', 'alternative', 'method')
+out = matrix(NA, ncol = 11, nrow = 0)
+colnames(out) = c('ApBp', 'ApBa', 'AaBp', 'AaBa', 'confInt1', 'confInt2', 'oddsRatio', 'pval', 'qval', 'alternative', 'method')
 
 rets  = list()
 pvals = c()
@@ -97,18 +99,23 @@ for (name in ct.names) {
 qvals = p.adjust(pvals, method = {{args.padj | quote}})
 rm (pvals)
 for (i in 1:length(ct.names)) {
-	name = ct.names[i]
-	qval = qvals[i]
-	ret  = rets[[name]]
-	items = unlist(strsplit(name, '.vs.', fixed = T))
-	tmp  = data.frame(
+	name       = ct.names[i]
+	qval       = qvals[i]
+	ret        = rets[[name]]
+	cont.table = cont.tables[[name]]
+	items      = unlist(strsplit(name, '.vs.', fixed = T))
+	tmp   = data.frame(
 		Name1       = items[1],
 		Name2       = items[2],
-		confInt1    = round(ret$conf.int[1], 3),
-		confInt2    = round(ret$conf.int[2], 3),
-		oddsRatio   = round(ret$estimate, 3),
-		pval        = round(ret$p.value, 3),
-		qval        = round(qval, 3),
+		ApBp        = cont.table[1,1],
+		ApBa        = cont.table[1,2],
+		AaBp        = cont.table[2,1],
+		AaBa        = cont.table[2,2],
+		confInt1    = ret$conf.int[1], 
+		confInt2    = ret$conf.int[2], 
+		oddsRatio   = ret$estimate, 
+		pval        = ret$p.value,
+		qval        = qval,
 		alternative = ret$alternative,
 		method      = ret$method
 	)
@@ -116,7 +123,7 @@ for (i in 1:length(ct.names)) {
 	out = rbind(out, tmp)
 }
 
-write.table(out, outfile, col.names = T, row.names = F, sep = "\t", quote = F)
+write.table(pretty.numbers(out, formats = list(pval..qval = '%.2E', ApBp..ApBa..AaBp..AaBa = '%d', confInt1..confInt2..oddsRatio = '%.3f')), outfile, col.names = T, row.names = F, sep = "\t", quote = F)
 
 
 

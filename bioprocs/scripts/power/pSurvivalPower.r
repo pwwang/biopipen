@@ -116,7 +116,7 @@ for (var in names(data)) {
 	plotfile = file.path(outdir, paste0(gsub("[[:punct:]]", "_", var), '.png'))
 	vldata   = data.frame(x = -log(alphas), y=-Inf, pval = alphas, label = paste('p = ', alphas))
 	ggs = list(
-		xlab = list("-log(p-value)"),
+		xlab = list("-ln(p-value)"),
 		ylab = list("Sample size"),
 		labs = list(color = 'Power'),
 		geom_smooth = list(aes(color = factor(power)), method = lm, se = F),
@@ -146,7 +146,7 @@ for (var in names(data)) {
 			hjust = 1.1
 		)
 	)
-	points(
+	plot.points(
 		as.data.frame(plot_data),
 		plotfile,
 		params = list(mapping = aes(color = factor(power))),

@@ -1,7 +1,7 @@
-confInt1	confInt2	oddsRatio	pval	qval	alternative	method
-A.vs.B	0.00363965859041724	2.5858310604703	0.209973358830271	0.328534571723426	1	two.sided	Fisher's Exact Test for Count Data
-A.vs.C	0.0369478678060841	4.53958545147562	0.420193353872754	0.612616099071207	1	two.sided	Fisher's Exact Test for Count Data
-A.vs.D	0.0618581012530465	6.20610860058763	0.608781862505458	0.651354489164087	1	two.sided	Fisher's Exact Test for Count Data
-B.vs.C	0.105888180601943	16.4050968011408	1.10528106905409	1	1	two.sided	Fisher's Exact Test for Count Data
-B.vs.D	0.158054786592718	22.05756602191	1.52861838033727	1	1	two.sided	Fisher's Exact Test for Count Data
-C.vs.D	0.0609566656095844	9.44392466010179	0.904747243030059	1	1	two.sided	Fisher's Exact Test for Count Data
+Name1	Name2	ApBp	ApBa	AaBp	AaBa	confInt1	confInt2	oddsRatio	pval	qval	alternative	method
+A	B	1	6	6	7	0.004	2.586	0.210	3.29E-01	1.00E+00	two.sided	Fisher's Exact Test for Count Data
+A	C	4	3	10	3	0.037	4.540	0.420	6.13E-01	1.00E+00	two.sided	Fisher's Exact Test for Count Data
+A	D	4	3	9	4	0.062	6.206	0.609	6.51E-01	1.00E+00	two.sided	Fisher's Exact Test for Count Data
+B	C	5	2	9	4	0.106	16.405	1.105	1.00E+00	1.00E+00	two.sided	Fisher's Exact Test for Count Data
+B	D	5	2	8	5	0.158	22.058	1.529	1.00E+00	1.00E+00	two.sided	Fisher's Exact Test for Count Data
+C	D	9	5	4	2	0.061	9.444	0.905	1.00E+00	1.00E+00	two.sided	Fisher's Exact Test for Count Data

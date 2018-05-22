@@ -1,8 +1,10 @@
 library(methods)
 library(mediation)
 
-inopts.cnames = {{args.inopts.cnames | R}}
-inopts.rnames = {{args.inopts.rnames | R}}
+set.seed(8525)
+
+inopts.cnames = {{args.inopts | lambda x: x.get('cnames', True) | R}}
+inopts.rnames = {{args.inopts | lambda x: x.get('rnames', True) | R}}
 
 infile  = {{in.infile | quote}}
 outfile = {{out.outfile | quote}}

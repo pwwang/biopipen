@@ -249,13 +249,14 @@ pFisherExact.script = "file:scripts/stats/pFisherExact.r"
 		```
 	`padj`: The p-value adjustment method, see `p.adjust.methods` in R. Default: `BH`
 """
-pPWFisherExact = Proc(desc = "Do pair-wise fisher exact test.")
-pPWFisherExact.input = "infile:file"
-pPWFisherExact.output = "outfile:file:{{in.infile | fn2}}.pwfexact.txt"
-pPWFisherExact.args.intype = 'raw' # pairs
-pPWFisherExact.args.padj = 'BH'
-pPWFisherExact.lang = params.Rscript.value
-pPWFisherExact.script = "file:scripts/stats/pPWFisherExact.r"
+pPWFisherExact              = Proc(desc = "Do pair-wise fisher exact test.")
+pPWFisherExact.input        = "infile:file"
+pPWFisherExact.output       = "outfile:file:{{in.infile | fn2}}.pwfexact.txt"
+pPWFisherExact.args.intype  = 'raw' # pairs
+pPWFisherExact.args.padj    = 'BH'
+pPWFisherExact.envs.rimport = rimport
+pPWFisherExact.lang         = params.Rscript.value
+pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
 
 pMediation = Proc(desc = "Do mediation analysis.")
 pMediation.input  = 'infile:file'
@@ -274,3 +275,16 @@ pMediation.args.medopts = Box(
 )
 pMediation.lang = params.Rscript.value
 pMediation.script = "file:scripts/stats/pMediation.r"
+
+pHypergeom             = Proc(desc = "Do hypergeometric test.")
+pHypergeom.input       = 'infile:file'
+pHypergeom.output      = 'outfile:file:{{in.infile | fn2}}.hypergeom.txt'
+pHypergeom.args.intype = 'raw' # numbers
+pHypergeom.args.inopts = Box(
+	cnames = True,
+	rnames = True
+)
+pHypergeom.args.N       = None
+pHypergeom.envs.rimport = rimport
+pHypergeom.lang         = params.Rscript.value
+pHypergeom.script       = "file:scripts/stats/pHypergeom.r"

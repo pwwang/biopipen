@@ -24,7 +24,7 @@ class TestPower (helpers.TestCase):
 			't3',
 			path.join(self.indir, 'survpower3.txt'),
 			path.join(self.outdir, 'survpower3.txt'),
-			{'intype': 'detailed', 'plot': True}
+			{'intype': 'detailed', 'plot': True, 'betas': [.05, .1, .2]}
 		)
 
 	def testSurvivalPower(self, tag, infile, outfile, args = None):
