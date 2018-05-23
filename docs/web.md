@@ -19,6 +19,10 @@ Download results by submitting a form, supporting pagination.
 ### args
 #### `interval`:: seconds to wait between fetching each page. Default: 1  
 
+### requires
+[`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
+[`Phantomjs`](http://phantomjs.org/)
+
 ## pDownloadGet
 
 ### description
@@ -26,6 +30,9 @@ Download results by urls.
 
 ### input
 #### `url`:: the URLs to download  
+
+### output
+#### `outfile:file`:: The output file  
 
 ## pDownloadPost
 
@@ -35,4 +42,7 @@ Download results by POST.
 ### input
 #### `url` :: the URLs to download  
 #### `data`:: the POST data.  
+
+### output
+#### `outfile:file`:: The output file  
 {% endraw %}

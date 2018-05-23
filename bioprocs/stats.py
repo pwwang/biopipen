@@ -83,25 +83,33 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 	Survival analysis
 @input:
 	`infile:file`: The input file (header is required).
-		- col1: rownames if args.rnames = True
+		- col1: rownames if args.inopts.rnames = True
 		- col2: the survival time
 		- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
-		- col4: group1.
-		- ... other groups
+		- col4: var1.
+		- ... other variables
 @output:
-	`outdir:dir`: The output directory containing the pval files and plots
+	`outfile:file`: The outfile containing the pvalues
+	`outdir:dir`  : The output directory containing the pval files and plots
 @args:
 	`inunit`    : The time unit in input file. Default: days
 	`outunit`   : The output unit for plots. Default: days
 	`nthread`   : Number of threads used to perform analysis for groups. Default: 1
-	`rnames`    : Whether input file has row names. Default: True
+	`inopts`    : The options for input file
+		- `rnames`: Whether input file has row names. Default: True
 	`combine`   : Whether combine groups in the same plot. Default: True
 	`devpars`   : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
 		- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
-	`plotParams`: The parameters for `ggsurvplot`. Default: `{risk.table: True, conf.int = True}`
-	`arrange`: The parameters for `arrange_ggsurvplots`.
-	`pval`      : Whether print pvalue on the plot. Default: True
-	`noerror`   : Do not report error if error happens. Generate ouput file anyway.
+	`covfile`   : The covariant file. Require rownames in both this file and input file.
+	`plot`      : The params for plot.
+		- `ncurves`: Number of curves to plot (the continuous number will divided into `ncurves` groups.
+		- `params` : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
+		- `arrange`: How to arrange multiple survival plots in one if `args.combine = True`.
+			- `nrow`: The number of rows. Default: 1
+			- `ncol`: The number of cols. Default: 1
+	`ggs`       : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
+	`pval`      : The method to calculate the pvalue shown on the plot. Default: True (logrank)
+		- Could also be `waldtest`, `likeratio` (Likelihoold ratio test)
 @requires:
 	[`r-survival`](https://rdrr.io/cran/survival/)
 	[`r-survminer`](https://rdrr.io/cran/survminer/)
@@ -120,7 +128,6 @@ pSurvival.args.inopts     = Box(rnames = True)
 pSurvival.args.combine    = True
 pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
 pSurvival.args.plot = Box(
-	var     = 1, # which variable to plot (starts with the 3rd column, excluding time, status. or use the column name, e.g. sex)
 	ncurves = 2, # how many curves to plot, typically 2. The values will divided into <ncurves> groups for the var
 	params  = Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'}), # params for ggsurvplot
 	arrange = Box() # params for arrange_ggsurvplots if args.combine = T. Typically nrow or ncol is set. If args.plot.arrange.ncol = 3, that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1.
@@ -266,6 +273,27 @@ pPWFisherExact.envs.rimport = rimport
 pPWFisherExact.lang         = params.Rscript.value
 pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
 
+"""
+@name:
+	pMediation
+@description:
+	Do mediation analysis
+@input:
+	`infile:file`: The input file (a matrix or data.frame).
+@output:
+	`outfile:file`: The result file.
+@args:
+	`inopts`: The options for input file.
+		- `cnames`: Whether the input file has column names
+		- `rnames`: Whether the input file has row names
+	`medopts`: The options for mediation analysis.
+		- `modelm`: The model for M ~ X. Default: `lm(M ~ X)`
+		- `modely`: The model for Y ~ X + M. Default: `lm(Y ~ X + M)`
+		- `mediator`: Tell the model which column is the mediator
+		- `treat`: Tell the model which column is the variable
+		- `boot`: Use bootstrap?
+		- `sims`: How many time simulations?
+"""
 pMediation = Proc(desc = "Do mediation analysis.")
 pMediation.input  = 'infile:file'
 pMediation.output = 'outfile:file:{{in.infile | fn2}}.mediation.txt'
@@ -284,6 +312,24 @@ pMediation.args.medopts = Box(
 pMediation.lang = params.Rscript.value
 pMediation.script = "file:scripts/stats/pMediation.r"
 
+"""
+@name:
+	pHypergeom
+@description:
+	Do hypergeometric test.
+@input:
+	`infile:file`: The input file, could be raw data (presence (1) and absence (0) of elements) or number of overlapped elements and elements in each category.
+		- Set `args.intype` as `raw` if it is raw data. The population size `args.N` is required
+		- Set `args.intype` as `numbers` (or any string except `raw`) if it is numbers. You can specified explicit header: `k` = overlapped elements, `m` = size of set 1, `n` = size of set 2 and `N` = the population size. If `N` not included, then `args.N` is required
+@output:
+	`outfile:file`: The output file
+@args:
+	`intype`: the type of input file. Default: `raw`. See `infile:file`
+	`inopts`: The options for input file.
+		- `cnames`: Whether the input file has column names
+		- `rnames`: Whether the input file has row names
+	`N`: The population size. Default: `None`
+"""
 pHypergeom             = Proc(desc = "Do hypergeometric test.")
 pHypergeom.input       = 'infile:file'
 pHypergeom.output      = 'outfile:file:{{in.infile | fn2}}.hypergeom.txt'

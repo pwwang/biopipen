@@ -22,6 +22,10 @@ Sort bed files
 #### `unique`::       Remove the dupliated records? Default: True  
 #### `params`::       Other params for `tool`. Default: {}  
 
+### requires
+[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
+[`bedops`](https://github.com/bedops/bedops)
+
 ## pBedCluster
 
 ### description
@@ -37,4 +41,7 @@ Assign cluster id to each record
 #### `tool`::         The tool used to sort the file. Default: bedtools  
 #### `bedtools`::     The path to bedtools. Default: bedtools  
 #### `params`::       Other params for `tool`. Default: ''  
+
+### requires
+[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 {% endraw %}

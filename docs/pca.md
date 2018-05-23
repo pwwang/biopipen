@@ -26,6 +26,9 @@ Perform PCA analysis
 #### `varplot`::    Whether to generate the variable plot or not. Default: False  
 #### `biplot`::     Whether to generate the variable plot or not. Default: True  
 
+### requires
+[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
+
 ## pSelectPCs
 
 ### description
@@ -36,4 +39,8 @@ Select a subset of PCs from pPCA results
 
 ### output
 #### `outfile:file`:: The file containing selected PCs  
+
+### args
+#### `n`:: The number of PCs to select. Default: 0.9  
+- If it is < 1, used as the % variation explained from stdev.txt
 {% endraw %}

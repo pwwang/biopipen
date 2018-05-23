@@ -20,4 +20,7 @@ Download CSV format files.
 	- Note that rowfilter applied before cols filter.
 #### `urls`::      Available resources and their urls.  
 #### `gz`::        Whether to gzip the output file.  
+
+### requires
+[`curl`](https://en.wikipedia.org/wiki/CURL)
 {% endraw %}

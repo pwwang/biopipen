@@ -22,6 +22,9 @@ Trimming Illumina NGS paired-end data
 	- have to replace `{adapter}` with the path of the adapter file
 #### `nthread`:: 1  
 
+### requires
+[trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
+
 ## pTrimmomaticSE
 
 ### description
@@ -40,6 +43,9 @@ Trimming Illumina NGS single-end data
 	- have to replace `{adapter}` with the path of the adapter file
 #### `nthread`:: 1  
 
+### requires
+[trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
+
 ## pAlignPEByBWA
 
 ### description
@@ -57,6 +63,9 @@ Align paired-end reads to reference genome using bwa mem
 #### `bwa`::    The bwa executable, default: bwa  
 #### `params`:: Other params for bwa mem, default: "-M"  
 #### `nthread`:: 1  
+
+### requires
+[bwa](https://github.com/lh3/bwa)
 
 ## pAlignSEByBWA
 
@@ -83,6 +92,9 @@ Align paired-end reads to reference genome using bwa mem
 #### `nthread`:: 1  
 #### `reffile`:: The reference file, required  
 
+### requires
+[bwa](https://github.com/lh3/bwa)
+
 ## pAlignPEByNGM
 
 ### description
@@ -101,6 +113,9 @@ Align paired-end reads to reference genome using NextGenMap
 #### `nthread`:: 1  
 #### `outtype`:: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))  
 #### `params`:: Other params for ngm, default: "--rg-id ngm --rg-sm sample"  
+
+### requires
+[NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 
 ## pAlignSEByNGM
 
@@ -121,6 +136,9 @@ Align single-end reads to reference genome using NextGenMap
 #### `outtype`:: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))  
 #### `params`:: Other params for ngm, default: "--rg-id ngm --rg-sm sample"  
 
+### requires
+[NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
+
 ## pMergeBams
 
 ### description
@@ -136,4 +154,7 @@ Merge bam files
 #### `samtools`:: the executable path of samtools, default: "samtools"  
 #### `nthread`::      Number of BAM/CRAM compression threads  
 #### `params`::       Other parameters for `samtools merge`, default: ""  
+
+### requires
+[samtools](http://www.htslib.org/)
 {% endraw %}

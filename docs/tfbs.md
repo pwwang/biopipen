@@ -22,4 +22,7 @@
 #### `ucsclink`:: The ucsc link template. Default: `https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}`  
 #### `nthread` :: Number of threads used to scan, only available when you have multiple mids. Default: 1  
 #### `params`  :: Other parameters for `fimo`  
+
+### requires
+[`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
 {% endraw %}

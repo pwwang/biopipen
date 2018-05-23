@@ -31,6 +31,11 @@ For more details, see [the indel realignment method documentation](http://www.br
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
+
 ## pIndelRealigner
 
 ### description
@@ -61,6 +66,11 @@ For more details, see [the indel realignment method documentation](http://www.br
 #### `samtools`:: The samtools executable, default: samtools  
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
+
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 ## pBaseRecalibrator
 
@@ -93,6 +103,11 @@ Variant calling algorithms rely heavily on the quality scores assigned to the in
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
+
 ## pPrintReads
 
 ### description
@@ -120,6 +135,11 @@ Note that when PrintReads is used as part of the Base Quality Score Recalibratio
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
+
 ## pHaplotypeCaller
 
 ### description
@@ -146,6 +166,11 @@ Note that when PrintReads is used as part of the Base Quality Score Recalibratio
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 #### `nthread`:: Corresponding to -nct option  
+
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 ## pSelectVariants
 
@@ -177,6 +202,11 @@ There are also several options for recording the original values of certain anno
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
+
 ## pVariantFiltration
 
 ### description
@@ -201,6 +231,11 @@ The most common way of specifying filtering criteria is by using JEXL queries. S
 #### `picard`::   The picard executable, default: "picard"  
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
+
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 
 ## pMuTect2
 
@@ -230,6 +265,11 @@ NOTE: only Tumor/Normal variant calling implemented in bioprocs
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if index files of input files are not found
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
+
 ## pMuTect2Interval
 
 ### description
@@ -256,4 +296,9 @@ Use interval file model of MuTect2
 #### `picard`::   The picard executable, default: "picard"  
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
+
+### requires
+[GATK](https://software.broadinstitute.org/gatk)
+[samtools](http://www.htslib.org/) if index files of input files are not found
+[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 {% endraw %}

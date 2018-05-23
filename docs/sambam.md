@@ -36,6 +36,12 @@ Deal with mapped sam/bam files, including sort, markdup, and/or index
 - Unit could be G/g/M/m
 - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 
+### requires
+[sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html) if `args.tool` == samtools or reference used but not indexed.
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+[biobambam](https://github.com/gt1/biobambam2)
+[samtools](https://github.com/samtools/samtools)
+
 ## pBamMarkdup
 
 ### description
@@ -64,6 +70,13 @@ Mark/remove duplicates for bam files
 - Unit could be G/g/M/m
 - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 
+### requires
+[sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+[biobambam](https://github.com/gt1/biobambam2)
+[samtools](https://github.com/samtools/samtools)
+[bamutil](http://genome.sph.umich.edu/wiki/BamUtil#Programs)
+
 ## pBamRecal
 
 ### description
@@ -91,6 +104,11 @@ Recalibrate a bam file
 #### `ref`                          :: The reference file. Required.  
 - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 
+### requires
+[gatk](https://software.broadinstitute.org/gatk)
+[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+
 ## pBamReadGroup
 
 ### description
@@ -114,6 +132,11 @@ Add or replace read groups of a bam file
 - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 #### `tmpdir`                       :: The temporary directory. Default: <system tmpdir>  
 
+### requires
+[gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+
 ## pBamReorder
 
 ### description
@@ -132,6 +155,9 @@ Reorder a sam/bam file by a given reference file using `picard ReorderSam`
 #### `mem`                          :: The max memory to use. Default: "4G"  
 - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 #### `tmpdir`                       :: The temporary directory. Default: <system tmpdir>  
+
+### requires
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 
 ## pBamMerge
 
@@ -156,6 +182,9 @@ Merges multiple SAM and/or BAM files (must be sorted by coordinate) into a singl
 #### `tmpdir`   :: The temporary directory. Default: <system tmpdir>  
 #### `nthread`  :: # threads to use. Default: 1  
 - For picard, if nthread>1, USE_THREADING=true, otherwise USE_THREADING=false
+
+### requires
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 
 ## pBam2Gmut
 
@@ -184,6 +213,15 @@ Call germline (snps and indels) from a call-ready bam file.
 #### `gz`::           Gzip output file? Default: False  
 #### `tmpdir`::       The temporary directory. Default: <system tmpdir>  
 #### `params`::       Other params for `tool`. Default: ""  
+
+### requires
+[gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+[vardict](https://github.com/AstraZeneca-NGS/VarDict)
+[snvsniffer](http://snvsniffer.sourceforge.net/homepage.htm#latest)
+[platypus](http://www.well.ox.ac.uk/platypus)
+[strelka@2.7.1+](https://github.com/Illumina/strelka)
 
 ## pBamPair2Smut
 
@@ -214,6 +252,15 @@ Call somatic mutations from tumor-normal bam pair.
 #### `gz`:: Whether gzip the output vcf file. Default: False  
 #### `nthread`:: The number of threads to use. Default: 1  
 #### `tmpdir`:: The temporary directory. Default: `params.tmpdir.value`  
+
+### requires
+[gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
+[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
+[vardict](https://github.com/AstraZeneca-NGS/VarDict)
+[snvsniffer](http://snvsniffer.sourceforge.net/homepage.htm#latest)
+[platypus](http://www.well.ox.ac.uk/platypus)
+[strelka@2.7.1+](https://github.com/Illumina/strelka)
 
 ## pBam2Cnv
 
@@ -259,6 +306,11 @@ Detect copy number variation from bam files.
 #### `mem`                   :: The memory used. Default: '20G' # only for wandy  
 #### `nthread`               :: The # threads to use. Default: 1	 # only for cnvkit  
 
+### requires
+[`cnvkit`](http://cnvkit.readthedocs.io/en/stable/index.html)
+[`cnvnator`](https://github.com/abyzovlab/CNVnator)
+#### `wandy`:: Inside cnv caller  
+
 ## pBamStats
 
 ### description
@@ -270,6 +322,13 @@ Get read depth from bam files.
 ### output
 #### `outfile:file`:: The output statistic file  
 #### `outdir:dir`::   The directory containing result files and figures.  
+
+### args
+#### `tool`:: The tool used to do the job. Default: bamstats  
+#### `bamstats`:: The path to bamstats. Default: bamstats  
+#### `params`:: Other params to main program. Default: `{}`  
+#### `mem`:: The memory to be used. Default: 16G  
+#### `plot`:: Whether plot the result. Default: True  
 
 ## pBam2Fastq
 
@@ -295,6 +354,12 @@ Convert sam/bam files to pair-end fastq files.
 #### `params`::  : Other params for `tool`. Default: ''  
 #### `tmpdir`   :: The tmpdir. Default: `__import__('tempfile').gettempdir()`  
 
+### requires
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+[biobambam](https://github.com/gt1/biobambam2)
+[samtools](https://github.com/samtools/samtools)
+[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+
 ## pBam2FastqSE
 
 ### description
@@ -318,6 +383,12 @@ Convert sam/bam files to single-end fastq files.
 #### `params`::  : Other params for `tool`. Default: ''  
 #### `tmpdir`   :: The tmpdir. Default: `__import__('tempfile').gettempdir()`  
 
+### requires
+[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
+[biobambam](https://github.com/gt1/biobambam2)
+[samtools](https://github.com/samtools/samtools)
+[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+
 ## pBam2Counts
 
 ### description
@@ -334,4 +405,7 @@ Extract read counts from RNA-seq bam files.
 #### `htseq`:: The path of htseq-count.  
 #### `params`:: Other params for main program.  
 #### `refgene`:: The reference gene in GTF format.  
+
+### requires
+[`htseq`](https://htseq.readthedocs.io/)
 {% endraw %}

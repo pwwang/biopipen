@@ -17,6 +17,20 @@ Suppose each expression file has the same rownames and in the same order.
 #### `outfile:file`:: the expression matrix file  
 #### `outdir:dir`::   the directory containing expr file and plots  
 
+### args
+#### `pattern` :: The pattern to filter files. Default `'*'`  
+#### `namefunc`:: Transform filename (no extension) as column name. Default: "function(fn) fn"  
+#### `header`  :: Whether each expression file contains header. Default: `False`  
+#### `exrows`  :: Rows to be excluded, regular expression applied. Default: `["^Sample", "^Composite", "^__"]`  
+#### `boxplot` :: Whether to plot a boxplot. Default: False  
+#### `heatmap` :: Whether to plot a heatmap. Default: False  
+#### `histplot`:: Whether to plot a histgram. Default: False  
+#### `devpars` :: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
+#### `boxplotggs`:: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`  
+	- See ggplot2 documentation.
+#### `heatmapggs`:: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`  
+#### `histplotggs`:: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`  
+
 ## pBatchEffect
 
 ### description
@@ -29,6 +43,19 @@ Remove batch effect with sva-combat.
 ### output
 #### `outfile:file`:: the expression matrix file  
 #### `outdir:dir`::   the directory containing expr file and plots  
+
+### args
+#### `tool`    :: The tool used to remove batch effect. Default `'combat'`  
+#### `hmrows`  :: How many rows to be used to plot heatmap  
+#### `plot`:: Whether to plot  
+	- `boxplot`   : Whether to plot a boxplot. Default: False
+	- `heatmap`   : Whether to plot a heatmap. Default: False
+	- `histogram` : Whether to plot a histgram. Default: False
+#### `devpars`    :: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
+#### `ggs`:: The ggplot parameters  
+	- `boxplot`  : The ggplot parameters for boxplot. Default: `Box(ylab = {0: "Log2 Intensity"})`
+	- `heatmap`  : The ggplot parameters for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+	- `histogram`: The ggplot parameters for histgram. Default: `Box(labs = {'x': "Log2 Intensity", "y": "Density"})`
 
 ## pRawCounts2
 
@@ -59,6 +86,10 @@ Convert raw counts to another unit
 #### `heatmapggs`:: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`  
 #### `histplotggs`:: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`  
 
+### requires
+[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
+[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
+
 ## p2RawCounts
 
 ### description
@@ -70,6 +101,20 @@ Convert gene expression to raw counts.
 ### output
 #### `outfile:file`:: The output file  
 #### `outdir:dir`::   The output directory, may contain the figures.  
+
+### args
+#### `unit`:: The unit of input gene expression. Default: fpkm  
+	- Could also be rpkm, tpm
+#### `nreads`     :: Total reads approximately. Default: 30, 000, 000  
+#### `refgene`    :: The refgene file for gene length.  
+#### `boxplot`    :: Whether to plot boxplot after transformation. Default: False  
+#### `heatmap`    :: Whether to plot heatmap after transformation. Default: False  
+#### `heatmapn`   :: How many genes used to plot heatmap. Default: 500  
+#### `histplot`   :: Whether to plot histgram after transformation. Default: False  
+#### `devpars`    :: The device parameters for plotting. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
+#### `boxplotggs` :: The ggplot statement for boxplot.  
+#### `heatmapggs` :: The ggplot statement for heatmap.  
+#### `histplotggs`:: The ggplot statement for histgram.  
 
 ## pRNAseqDEG
 
@@ -92,4 +137,17 @@ Detect DEGs for RNA-seq data
 ### output
 #### `outfile:file`:: The DEG list  
 #### `outdir:file`::  The output directory containing deg list and plots  
+
+### args
+#### `tool`      :: the tool used to detect DEGs. Default: 'edger' (deseq2)  
+#### `filter`    :: filter out low count records. Default: `"1,2"` (At least 2 samples have at least 2 reads)  
+#### `mdsplot`   :: whether to plot the MDS plot, default : True  
+#### `volplot`   :: whether to plot the volcano plot, default : True  
+#### `maplot`    :: whether to plot MA plots within each group, default : False  
+#### `heatmap`   :: whether to plot the heatmap using DEGs. Default : False  
+#### `heatmapn`  :: How many genes to be used for heatmap. If `heatmapn`, the number will be `heatmapn * # DEGs`. Default: 100  
+#### `heatmapggs`:: The ggplots options for heatmap. Default : []  
+#### `maplotggs` :: The ggplots options for maplot. Default : []  
+#### `volplotggs`:: The ggplots options for volplot. Default : []  
+#### `devpars`   :: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
 {% endraw %}

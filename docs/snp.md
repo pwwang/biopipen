@@ -24,6 +24,9 @@ Find coordinates for SNPs in BEDX format.
 #### `incom`:: The input comment. Default: '#'  
 #### `skip`:: The lines to skip for input file. Default: 0  
 
+### requires
+[`python-cruzdb`](https://github.com/brentp/cruzdb)
+
 ## pSnp2Avinput
 
 ### description
@@ -38,4 +41,7 @@ Convert SNP list to avinput to ANNOVAR.
 ### args
 #### `genome`:: default: hg19  
 #### `snpver`:: default: snp147  
+
+### requires
+[`python-cruzdb`](https://github.com/brentp/cruzdb)
 {% endraw %}

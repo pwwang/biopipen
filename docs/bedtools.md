@@ -18,6 +18,9 @@
 #### `bedtools`:: The bedtools executable,                  default: "bedtools"  
 #### `params`  :: Other parameters for `bedtools getfasta`, default: ""  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedClosest
 
 ### description
@@ -33,6 +36,9 @@ Similar to intersect, closest searches for overlapping features in A and B. In t
 ### args
 #### `bedtools`:: The bedtools executable, default: "bedtools"  
 #### `params`::   Other parameters for `bedtools closest`, default: ""  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedClosest2
 
@@ -50,6 +56,9 @@ Multiple b-file version of pBedClosest
 #### `bedtools`:: The bedtools executable, default: "bedtools"  
 #### `params`::   Other parameters for `bedtools closest`, default: ""  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedFlank
 
 ### description
@@ -65,6 +74,9 @@ Multiple b-file version of pBedClosest
 ### args
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools flank`, default: ""  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedIntersect
 
@@ -82,6 +94,9 @@ By far, the most common question asked of two sets of genomic features is whethe
 #### `bedtools`:: The bedtools executable, default: "bedtools"  
 #### `params`::   Other parameters for `bedtools intersect`, default: ""  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedIntersect2
 
 ### description
@@ -97,6 +112,9 @@ Multiple b-file version of pBedIntersect
 ### args
 #### `bedtools`:: The bedtools executable, default: "bedtools"  
 #### `params`::   Other parameters for `bedtools intersect`, default: ""  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedMakewindows
 
@@ -114,6 +132,9 @@ Makes adjacent or sliding windows across a genome or BED file.
 #### `informat`::The format of input file, whether is a "bed" file or "genome" size file. Default: "bed"  
 #### `params`::  Other parameters for `bedtools makewindows`, default: ""  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedMerge
 
 ### description
@@ -128,6 +149,9 @@ Makes adjacent or sliding windows across a genome or BED file.
 ### args
 #### `bedtools`:: The bedtools executable,               default: "bedtools"  
 #### `params`  :: Other parameters for `bedtools merge`, default: {}  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedMerge2
 
@@ -144,6 +168,9 @@ A multi-input file model of pBedMerge: Merge multiple input files.
 #### `bedtools`:: The bedtools executable,               default: "bedtools"  
 #### `params`  :: Other parameters for `bedtools merge`, default: {}  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedMultiinter
 
 ### description
@@ -158,6 +185,9 @@ Identifies common intervals among multiple BED/GFF/VCF files.
 ### args
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools multiinter`, default: ""  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedRandom
 
@@ -175,6 +205,9 @@ Identifies common intervals among multiple BED/GFF/VCF files.
 #### `seed`    :: The seed for randomization, default: None  
 #### `gsize`   :: The chromsize file.  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedShift
 
 ### description
@@ -190,6 +223,9 @@ Identifies common intervals among multiple BED/GFF/VCF files.
 ### args
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools shift`, default: ""  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedShuffle
 
@@ -207,6 +243,9 @@ Identifies common intervals among multiple BED/GFF/VCF files.
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools shuffle`, default: ""  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedSubtract
 
 ### description
@@ -222,6 +261,9 @@ Identifies common intervals among multiple BED/GFF/VCF files.
 ### args
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools subtract`, default: ""  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 
 ## pBedWindow
 
@@ -239,6 +281,9 @@ Similar to `bedtools intersect`, `window` searches for overlapping features in A
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools window`, default: ""  
 
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
 ## pBedGenomecov
 
 ### description
@@ -255,4 +300,7 @@ NOTE: only bam file input implemented here.
 ### args
 #### `bin`::     The bedtools executable, default: "bedtools"  
 #### `params`::  Other parameters for `bedtools genomecov`, default: "-bg"  
+
+### requires
+[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 {% endraw %}

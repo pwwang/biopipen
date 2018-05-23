@@ -31,8 +31,8 @@ def summary():
 	with open(summaryfile, 'w') as fout:
 		fout.write('# Summary\n\n')
 		fout.write('* [Introduction](README.md)\n')
-		for infile in infiles:
-			title = path.basename(infile)[:-3]
+		titles = [path.basename(infile)[:-3] for infile in infiles]
+		for title in sorted(titles):
 			fout.write('* [%s](%s.md)\n' % (title, title))
 
 def eachfile(infile):
@@ -52,6 +52,7 @@ def eachfile(infile):
 			content = content[len(modsec):]
 		
 		blocks = re.findall (r'(\"\"\"|\'\'\')\s*\n(@name:[\s\S]+?)\1', content)
+
 		for block in blocks:
 			block   = block[1].splitlines()
 			section = []
@@ -62,6 +63,7 @@ def eachfile(infile):
 					section = [line]
 				else:
 					section.append(line)
+			fout.write(fmtSection(section))
 		fout.write('{% endraw %}\n')
 
 

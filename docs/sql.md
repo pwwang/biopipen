@@ -22,6 +22,11 @@ Create tables in the database
 ### output
 #### `dsn`:: The dsn  
 
+### args
+#### `intype`:: The input file schema file or a data file. Default: `schema`  
+#### `drop`::  Force creating the table (drop the pre-existing table)  
+#### `delimit`::The delimit of input file. Default: `\\t`  
+
 ## pImportData
 
 ### description
@@ -36,6 +41,9 @@ Create tables and import the data
 ### output
 #### `dsn`:: The dsn  
 
+### args
+#### `delimit`::The delimit of input file. Default: `\\t`  
+
 ## pUpdateTable
 
 ### description
@@ -48,6 +56,9 @@ Update table using sql.
 ### output
 #### `dsn`:: The dsn  
 
+### args
+#### `sql`:: The sql to update the table (list)  
+
 ## pSelectTable
 
 ### description
@@ -59,4 +70,7 @@ Select data from table and dump it.
 
 ### output
 #### `outfile:file`:: The dumped file  
+
+### args
+#### `sql`:: The sql to select data from the table (list)  
 {% endraw %}

@@ -22,6 +22,10 @@ Generate a null distribution of conservation scores.
 #### `consvdir`:: The directory containing bigwig files of conservation scores  
 	- The bigwig file should start with chr name: chrN.*
 
+### requires
+[bwtool](https://github.com/CRG-Barcelona/bwtool)
+[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+
 ## pConsv
 
 ### description
@@ -44,6 +48,10 @@ But first you have to convert those wigFix.gz files to bigWig files using ucsc-w
 #### `pval`::     Whether calculate pvalue of each region. Default: False  
 	- In this case, the `in.permfile` can be ignored.
 
+### requires
+[bwtool](https://github.com/CRG-Barcelona/bwtool)
+[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
+
 ## pPromoters
 
 ### description
@@ -59,4 +67,7 @@ Get the promoter regions in bed format of a gene list give in infile.
 #### `up`:: the upstream to the tss, default: 2000  
 #### `down`:: the downstream to the tss, default: 2000  
 #### `genome`:: the genome, default: hg19  
+
+### require
+[python-mygene](http://mygene.info/)
 {% endraw %}

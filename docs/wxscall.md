@@ -21,4 +21,7 @@ Use `CNVnator` to call CNVs from bam file
 #### `chrom`::    Chromosome names, default: "" (all chromosomes)  
 #### `chrdir`::   The dir contains reference sequence of chromosomes, default: "" (don't specify)  
 
+
+### requires
+[CNVnator](https://github.com/abyzovlab/CNVnator)
 {% endraw %}

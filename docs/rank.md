@@ -26,4 +26,15 @@ Feature2	3    	2    	...
 
 ### output
 #### `outfile:file`:: The output file with original ranks, rank products and p-value if required  
+
+### args
+#### `informat`:: The input format of the values. Whether they are real values (value) or ranks (rank). Default: value  
+#### `pval`::     Whether to calculate the p-value or not. Default: True  
+#### `header`::   Whether the input file has headers (rownames are required!). Default: True  
+#### `plot`::     Number of rows to plot. Default: 0 (Don't plot)  
+#### `cex`::      Font size for plotting. Default: 0.9  
+#### `cnheight`:: Colname height. Default: 80  
+#### `rnwidth`::  Rowname width. Default: 50  
+#### `width`::    Width of the png file. Default: 2000  
+#### `height`::   height of the png file. Default: 2000  
 {% endraw %}

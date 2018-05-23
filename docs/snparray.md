@@ -22,6 +22,12 @@ see: ftp://ftp.broadinstitute.org/pub/GISTIC2.0/GISTICDocumentation_standalone.h
 	- Gistic Scores File (scores.gistic)
 	- Segmented Copy Number (raw_copy_number.pdf)
 
+### args
+#### `gistic`:: The path to gistic.  
+#### `genome`:: The genome used to select refgene file from refgenefiles.  
+#### `mcr`::    The mcr path  
+#### `params`:: Other params for gistic  
+
 ## pSNP6Genotype
 
 ### description
@@ -35,6 +41,9 @@ Call genotypes from GenomeWideSNP_6 CEL file
 - format: `<Probe name>\t<genotype>`
 - `<genotype>` = 0: AA, 1: AB, 2: BB
 
+### requires
+[bioconductor-crlmm](http://bioconductor.org/packages/release/bioc/html/crlmm.html)
+
 ## pGenoToAvInput
 
 ### description
@@ -47,4 +56,7 @@ Convert the genotype called by pSNP6Genotype to [ANNOVAR input file](http://anno
 
 ### output
 #### `outfile:file`:: the avinput file  
+
+### requires
+[python-read2](https://github.com/pwwang/read2)
 {% endraw %}

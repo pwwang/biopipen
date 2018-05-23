@@ -11,6 +11,9 @@ Rownames of GMT file will be the column names of output matrix.
 ### input
 #### `infile:file`:: The input file in GMT format.  
 
+### output
+#### `outfile:file`:: output matrix file  
+
 ## pExpmat2Gct
 
 ### description
@@ -19,6 +22,9 @@ Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-for
 
 ### input
 #### `expfile:file`:: the input expression matrix file. Samples as columns, genes as rows.  
+
+### output
+#### `outfile:file`:: the gct file  
 
 ## pSampleinfo2Cls
 
@@ -31,6 +37,9 @@ NOTE that the order of samples must be the same as in GMT file in further analys
 #### `sifile:file`:: the sample information file.  
 	- Headers are: [Sample, ]Patient, Group, Batch
 	- Rows are samples
+
+### output
+#### `outfile:file`:: the cls file  
 
 ## pSSGSEA
 
@@ -49,6 +58,10 @@ Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-for
 - `RES_<GeneSet>.png`: the running ES plot for <GeneSet>
 - `normP_<GeneSet>.png`: the norminal P value plot for <GeneSet>
 
+### args
+#### `weightexp`:: Exponential weight employed in calculation of enrichment scores. Default: 0.75  
+#### `nperm`::     Number of permutations. Default: 10000  
+
 ## pGSEA
 
 ### description
@@ -64,6 +77,10 @@ Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-for
 
 ### output
 #### `outdir:file`:: the output directory  
+
+### args
+#### `weightexp`:: Exponential weight employed in calculation of enrichment scores. Default: 0.75  
+#### `nperm`::     Number of permutations. Default: 10000  
 
 ## pEnrichr
 
@@ -88,6 +105,9 @@ Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene l
   - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
 #### `plot`:: Whether to plot the result. Default: True  
 #### `title`:: The title for the plot. Default: "Gene enrichment: {db}"  
+
+### requires
+[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 
 ## pTargetEnrichr
 
@@ -120,4 +140,8 @@ Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene l
 #### `netn`      :: Top N pathways used to plot the network. Default: 5  
 	- Must <= `enrn`. If `netn` >= `enrn`, `netn` = `enrn`
 #### `title`     :: The title for the plot. Default: "Gene enrichment: {db}"  
+
+### requires
+[`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0)
+[`graphviz`](https://pypi.python.org/pypi/graphviz)
 {% endraw %}

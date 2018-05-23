@@ -37,6 +37,9 @@ Filter records in vcf file.
 #### `gz`     :: Whether to gzip the output file. Default: False  
 #### `keep`   :: Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)  
 
+### requires
+[`pyvcf`](https://github.com/jamescasbon/PyVCF)
+
 ## pVcf
 
 ### description
@@ -47,6 +50,13 @@ Use pyvcf to manipulate vcf file
 
 ### output
 #### `outfile:file`:: The output vcf file  
+
+### args
+#### `helper`:: The helper code injected to script  
+	- Since lambda function can't do assignment and manipulation so you can write some help function here
+#### `readerops`:: A lambda function (must be quoted) to manipulate the reader (vcf.Reader instance)  
+#### `recordops`:: A lambda function (must be quoted) to manipulate the record (vcf.Record instance)  
+#### `gz`:: Gzip the ouput file  
 
 ## pVcfAnno
 
@@ -75,6 +85,11 @@ You have to prepare the databases for each tool.
 #### `snpeffStats`::     Whether to generate stats file when use snpeff. Default: False  
 #### `mem`::             The memory used by snpeff. Default: '4G'  
 
+### requires
+[`annovar`](http://doc-openbio.readthedocs.io/projects/annovar/en/latest/)
+[`snpeff`](http://snpeff.sourceforge.net/SnpEff_manual.html#intro)
+[`vep`](http://www.ensembl.org/info/docs/tools/vep/script/vep_tutorial.html)
+
 ## pVcfSplit
 
 ### description
@@ -87,6 +102,12 @@ Split multi-sample Vcf to single-sample Vcf files.
 ### output
 #### `outdir:dir`::  The output directory containing the extracted vcfs  
 
+### args
+#### `tool`::     The tool used to do extraction. Default: vcftools  
+#### `vcftools`:: The path of vcftools' vcf-subset  
+#### `bcftools`:: The path of bcftools, used to extract the sample names from input vcf file.  
+#### `gatk`::     The path of gatk.  
+
 ## pVcfMerge
 
 ### description
@@ -95,6 +116,12 @@ Merge single-sample Vcf files to multi-sample Vcf file.
 ### input
 #### `infiles:files`:: The input vcf files  
 #### `outfile:dir`::  The output multi-sample vcf.  
+
+### args
+#### `tool`::     The tool used to do extraction. Default: vcftools  
+#### `vcftools`:: The path of vcftools' vcf-subset  
+#### `bcftools`:: The path of bcftools, used to extract the sample names from input vcf file.  
+#### `gatk`::     The path of gatk.  
 
 ## pVcf2Maf
 
@@ -107,4 +134,20 @@ Convert Vcf file to Maf file
 
 ### output
 #### `outfile:file`:: The output maf file  
+
+### args
+#### `tool`     :: Which tool to use. Default: vcf2maf  
+#### `vcf2maf`  :: The path of vcf2maf.pl  
+#### `vep`      :: The path of vep  
+#### `vepDb`    :: The path of database for vep  
+#### `filtervcf`:: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz  
+#### `ref`      :: The reference genome  
+#### `nthread`  :: Number of threads used to extract samples. Default: 1  
+#### `tumor1st` :: Whether tumor sample comes first. Default: `True`  
+#### `bcftools` :: Path to bcftools used to extract sample names.  
+#### `vcftools` :: Path to vcftools used to split vcf.  
+#### `samfunc`  :: A lambda function used to deduce sample names from file name.  
+#### `somatic`  :: Whether input vcf file is a somatic mutation file. Default: False  
+	- somatic mutation vcf file can only have one sample TUMOR, or two samples, TUMOR and NORMAL, but will be considered as single sample.
+	- otherwise, multiple samples are supported in the input vcf file. Tumor id will be sample name for each sample, normal id will be NORMAL.
 {% endraw %}

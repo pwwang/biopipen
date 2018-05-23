@@ -22,4 +22,7 @@ This is the default command. It is used for annotating variant filed (e.g. VCF f
 #### `csvStats`::  Whether to generate csv stats file, default: True.  
 #### `htmlStats`:: Whether to generate the html summary file, default: False.  
 #### `javamem`::   The memory to use. Default: '-Xms1g -Xmx8g'  
+
+### requires
+[snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
 {% endraw %}

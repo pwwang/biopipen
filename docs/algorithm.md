@@ -23,6 +23,9 @@ Do random walk with restart (RWR)
 #### `normE`::   Weather to normalize E or not, default True.   
 	- E will be normalized as: E = E/sum(E)
 
+### requires
+if normW = True, R package `NetPreProc` is required.
+
 ## pAR
 
 ### description
@@ -64,4 +67,9 @@ c |_____|  b |   Dt  | a |Y |    ---> c |___|
 ### output
 #### `W:file`::  The interaction matrix  
 #### `outdir:dir`:: The output directory  
+
+### args
+#### `seed`::  The seed for sampling the training set.  
+#### `tfrac`:: The fraction of samples used for training.  
+``
 {% endraw %}

@@ -24,4 +24,7 @@ Call eQTLs using Matrix eQTL
 	- `genepos`: The gene position file (columns are: gene, chr, start, end)
 	- `dist`   : The distance to define cis-eQTL. (default: 0 (don't do cis-, trans- calling)
 	- `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work)
+
+### requires
+[`Matrix-eQTL (R)`](http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/)		
 {% endraw %}

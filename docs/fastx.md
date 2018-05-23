@@ -26,6 +26,9 @@ Simulate reads
 #### `ref`::   The reference genome. Required  
 #### `params`::Other params for `tool`. Default: ""  
 
+### requires
+[`wgsim`](https://github.com/lh3/wgsim)
+
 ## pFastQC
 
 ### description
@@ -43,6 +46,9 @@ QC report for fastq file
 #### `nthread`:: Number of threads to use. Default: 1  
 #### `params`::Other params for `tool`. Default: ""  
 
+### requires
+[`fastqc`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+
 ## pFastMC
 
 ### description
@@ -58,6 +64,9 @@ Multi-QC based on pFastQC
 #### `tool`::    The tool used for simulation. Default: multiqc  
 #### `multiqc`:: The path of fastqc. Default: multiqc  
 #### `params`::  Other params for `tool`. Default: ""  
+
+### requires
+[`multiqc`](http://multiqc.info/)
 
 ## pFastqTrim
 
@@ -92,6 +101,11 @@ Trim pair-end FASTQ reads
 #### `adapter1`    :: The adapter for sequence. Default: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC  
 #### `adapter2`    :: The adapter for pair-end sequence. Default: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA  
 
+### requires
+[`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
+[`skewer`](https://github.com/relipmoc/skewer)
+[`trimmomatic`](https://github.com/timflutre/trimmomatic)
+
 ## pFastqSETrim
 
 ### description
@@ -122,13 +136,42 @@ Trim single-end FASTQ reads
 - Not for skewer
 #### `adapter`     :: The adapter for sequence. Default: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC  
 
+### requires
+[`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
+[`skewer`](https://github.com/relipmoc/skewer)
+[`trimmomatic`](https://github.com/timflutre/trimmomatic)
+
 ## pFastqSE2Sam
 
 ### description
 Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
 
+### args
+#### `tool`::   The tool used for alignment. Default: bwa (bowtie2|ngm)  
+#### `bwa`::    Path of bwa, default: bwa  
+#### `ngm`::    Path of ngm, default: ngm  
+#### `bowtie2`::Path of bowtie2, default: bowtie2  
+#### `rg`::     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}  
+- `id` will be parsed from filename with "_LX_" in it if not given
+- `sm` will be parsed from filename
+#### `ref`::    Path of reference file  
+#### `params`:: Other params for tool, default: ''  
+
 ## pFastq2Sam
 
 ### description
 Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
+
+### args
+#### `tool`   :: The tool used for alignment. Default: bwa (bowtie2, ngm, star)  
+#### `bwa`    :: Path of bwa, default: bwa  
+#### `ngm`    :: Path of ngm, default: ngm  
+#### `star`   :: Path of ngm, default: STAR  
+#### `bowtie2`:: Path of bowtie2, default: bowtie2  
+#### `rg`::     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}  
+- `id` will be parsed from filename with "_LX_" in it if not given
+- `sm` will be parsed from filename
+#### `ref`    :: Path of reference file  
+#### `refgene`:: The GTF file for STAR to build index. It's not neccessary if index is already been built. Default: ''  
+#### `params` :: Other params for tool, default: ''  
 {% endraw %}

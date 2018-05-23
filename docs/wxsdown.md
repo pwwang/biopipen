@@ -25,6 +25,9 @@ See [dcumentation](http://archive.broadinstitute.org/cancer/cga/mutsig_run)
 #### `mutsig`:: The path to `run_MutSigCV.sh`, default: 'mutsig'  
 #### `mcr`:: The Matlab MCR path  
 
+### requires
+[MutSing](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
+
 ## pVcf2Maf
 
 ### description
@@ -45,6 +48,9 @@ Convert a snpEff-annotated somatic mutation vcf file (with normal and tumor samp
    `filtervcf`: The filter vcf
 #### `params`:: Other parameters for `vcf2maf.pl`, default: ""  
 
+### requires
+[vcf2maf.py](https://github.com/mskcc/vcf2maf)
+
 ## pMergeMafs
 
 ### description
@@ -52,6 +58,9 @@ Merge MAF files
 
 ### input
 #### `indir:file`:: The directory containing MAF files to be merged  
+
+### output
+#### `outfile:file`:: The merged MAF file  
 
 ## pMutsig4Plot
 
@@ -88,6 +97,9 @@ ABC	missense_variant|HIGH	missense_variant|HIGH	...
 ### args
 #### `topn`::     the cutoff to select genes. If it is >= 1, top N genes will be selected, otherwise, it will be used as pvalue cutoff. Default: .05  
 
+### requires
+[`pyvcf`](https://github.com/jamescasbon/PyVCF)
+
 ## pMutPlot
 
 ### description
@@ -103,6 +115,9 @@ Plot mutations
 ### input
 #### `indir:file`::    The input directory containing plot files  
 
+### output
+#### `outfile:file`::  The plot png file  
+
 ## pCepip
 
 ### input
@@ -114,4 +129,7 @@ Plot mutations
 
 ### args
 #### `bin-cepip`::    The jar file path of cepip, default: /data2/junwenwang/shared/tools/cepip/cepip.jar  
+
+### requires
+[`cepip`](http://jjwanglab.org/cepip/)
 {% endraw %}

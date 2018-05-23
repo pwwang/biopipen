@@ -32,6 +32,9 @@ If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQU
 #### `params`::  Other parameters for picard MarkDuplicates, default: ""  
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 
+### requires
+[picard](https://broadinstitute.github.io/picard/)
+
 ## pAddOrReplaceReadGroups
 
 ### description
@@ -53,6 +56,9 @@ This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for G
 #### `picard`::     The picard executable, default: "picard "  
 #### `params`::  Other parameters for picard AddOrReplaceReadGroups, default: ""  
 
+### requires
+[picard](https://broadinstitute.github.io/picard/)
+
 ## pCreateSequenceDictionary
 
 ### description
@@ -69,6 +75,9 @@ The reference sequence can be gzipped (both .fasta and .fasta.gz are supported).
 ### args
 #### `picard`::     The picard executable, default: "picard"  
 #### `params`::  Other parameters for picard CreateSequenceDictionary, default: ""  
+
+### requires
+[picard](https://broadinstitute.github.io/picard/)
 
 ## pCollectWgsMetrics
 
@@ -90,6 +99,9 @@ Note: Metrics labeled as percentages are actually expressed as fractions!
 #### `params`::  Other parameters for `picard CollectWgsMetrics`, default: ""  
 #### `reffile`:: The reference file, default: ""  
 
+### requires
+[picard](https://broadinstitute.github.io/picard/)
+
 ## pSortSam
 
 ### description
@@ -109,6 +121,9 @@ Use `picard SortSam` to sort sam or bam file
 #### `tmpdir`::  The tmpdir to use. Default: /tmp  
 #### `javamem`:: The memory for java vm. Default: "-Xms1g -Xmx8g"  
 
+### requires
+[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
+
 ## pIndexBam
 
 ### description
@@ -123,4 +138,7 @@ Use `picard BuildBamIndex` to index bam file
 ### args
 #### `picard`::    The picard executable, default: "picard"  
 #### `params`::  Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"  
+
+### requires
+[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 {% endraw %}

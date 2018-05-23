@@ -17,6 +17,9 @@ Calculate the sequence-accessible coordinates in chromosomes from the given refe
 #### `params`:: Other parameters for `cnvkit.py access`  
 #### `cnvkit`:: The executable of cnvkit. Default: 'cnvkit.py'  
 
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
+
 ## pCNVkitTarget
 
 ### description
@@ -32,6 +35,9 @@ Generate targets file for CNVkit using access file and annotate file (`cnvkit.py
 ### args
 #### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
 #### `params`:: Other parameters for `cnvkit.py target`  
+
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
 
 ## pCNVkitCov
 
@@ -50,6 +56,9 @@ Calculate coverage in the given regions from BAM read depths.
 #### `nthread`:: The number of threads to use. Default: 1  
 #### `params`::  Other parameters for `cnvkit.py coverage`  
 
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
+
 ## pCNVkitRef
 
 ### description
@@ -64,6 +73,9 @@ Compile a copy-number reference from the given files or directory (containing no
 ### args
 #### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
 #### `params`::  Other parameters for `cnvkit.py reference`, default: " --no-edge "  
+
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
 
 ## pCNVkitFix
 
@@ -81,6 +93,9 @@ Combine the uncorrected target and antitarget coverage tables (.cnn) and correct
 #### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
 #### `params`::  Other parameters for `cnvkit.py fix`, default: " --no-edge "  
 
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
+
 ## pCNVkitSeg
 
 ### description
@@ -97,6 +112,9 @@ Infer discrete copy number segments from the given coverage table
 #### `nthread`:: The number of threads to use. Default: 1  
 #### `params`::  Other parameters for `cnvkit.py segment`, default: ""  
 
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
+
 ## pCNVkitCall
 
 ### description
@@ -111,6 +129,9 @@ Given segmented log2 ratio estimates (.cns), derive each segment's absolute inte
 ### args
 #### `cnvkit`::  The executable of cnvkit. Default: 'cnvkit.py'  
 #### `params`::  Other parameters for `cnvkit.py segment`, default: ""  
+
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
 
 ## pCNVkitPlot
 
@@ -132,6 +153,9 @@ Plot CNVkit results
 #### `diagram`::      Whether to generate the diagram plot. Default: True  
 #### `heatmap`::      Whether to generate the heatmap plot. Default: True  
 
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
+
 ## pCNVkitRpt
 
 ### description
@@ -151,6 +175,9 @@ Report CNVkit results
 #### `metrics`::      Whether to report metrics. Default: True  
 #### `segmetrics`::   Whether to report segmetrics. Default: True  
 
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
+
 ## pCNVkit2Vcf
 
 ### description
@@ -165,4 +192,7 @@ Output vcf file for cnvkit results
 ### args
 #### `cnvkit`::   The executable of cnvkit. Default: 'cnvkit.py'  
 #### `params`::   Other params for `cnvkit.py export`  
+
+### requires
+[CNVkit](http://cnvkit.readthedocs.io/)
 {% endraw %}

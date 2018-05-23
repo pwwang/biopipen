@@ -34,6 +34,11 @@ Convert a distance matrix to coordinates, using multidimensional scaling.
 ### output
 #### `outfile:file`:: The output coordinate file  
 
+### args
+#### `informat`:: The format of the input file: full, triangle or pair. Default: full  
+	- Could also be upper, lower, pair
+#### `k`::        How many dimensions? Default: 2 (R^2)  
+
 ## pCluster
 
 ### description
@@ -61,6 +66,10 @@ Use `optCluster` to select the best number of clusters and cluster method, then 
 	- Improper methods will be automatically excluded by `args.isCount`
 #### `isCount`::      Whether the data is count data. Corresponding methods will be tested. Default: False  
 
+### requires
+[`r-optCluster`](https://rdrr.io/cran/optCluster/man/optCluster.html)
+[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+
 ## pMCluster
 
 ### description
@@ -80,6 +89,10 @@ Use `r-mclust` to do clustering. Current just do simple clustering with the pack
 #### `minc`::    The min # clusters to try, default: 2  
 #### `maxc`::    The max # clusters to try, default: 15  
 
+### requires
+[`r-mclust`](https://cran.r-project.org/web/packages/mclust/index.html)
+[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
+
 ## pAPCluster
 
 ### description
@@ -96,6 +109,10 @@ Use `r-apcluster` to do clustering.
 #### `rownames`::     The `row.names` for `read.table` to read the input file, default: 1.  
 #### `header`::       The `header` argument for `read.table` to read the input file, default: True.  
 #### `caption`::      The caption for the `fviz_cluster`, default: "APClustering".  
+
+### requires
+[`r-apcluster`](https://cran.r-project.org/web/packages/apcluster/index.html)
+[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
 
 ## pHCluster
 
@@ -120,4 +137,8 @@ Do hierarchical clustering.
 #### `method`::   Which method to use for `hclust`. Default: "complete" (use `?hclust` to check all availables)  
 #### `rotate`::   Which to rotate the plot or not. Default: False  
 #### `transpose`::Whether to transpose the matrix before cluster. Default: False  
+
+### requires
+[`r-fastcluster`](https://cran.r-project.org/web/packages/fastcluster/index.html) if `args.fast` is True
+[`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `args.gg` is True
 {% endraw %}

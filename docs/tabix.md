@@ -14,6 +14,10 @@ Use tabix to extract information.
 ### output
 #### `outfile:file`:: The information extracted from the input file  
 
+### args
+#### `tabix`:: The path to `tabix`  
+#### `params`:: Other params for `tabix`  
+
 ## pTabixIndex
 
 ### description
@@ -26,4 +30,9 @@ Generate tabix index file.
 ### output
 #### `outfile:file`:: The bgzipped file  
 #### `outidx:file`::  The tabix index file  
+
+### args
+#### `tabix`:: The path to `tabix`  
+#### `params`:: Other params for `tabix`  
+#### `python`:: Will be used to generate command line arguments.  
 {% endraw %}

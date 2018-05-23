@@ -16,6 +16,12 @@
 ### output
    `outfile:file`: The dumped track data
 
+### args
+   `intype`: Input file type. Default: auto
+       - Identified by extension
+       - One of "chiapet.tool", "bed12", "bedpe", "hiclib", "homer", "bam", "two.bams".
+   `params`: The display params
+
 ## pGeneTrack
 
 ### description
@@ -30,6 +36,9 @@
 ### args
    `genome`: The genome
    `params`: use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args
+
+### requires
+   [r-Gviz](https://rdrr.io/bioc/Gviz)
 
 ## pAnnoTrack
 
@@ -48,6 +57,9 @@
    `genome`: The genome
    `params`:  See `displayPars(DataTrack())` for all available display params
 
+### requires
+   [r-Gviz](https://rdrr.io/bioc/Gviz/man/DataTrack-class.html)
+
 ## pDataTrack
 
 ### description
@@ -65,6 +77,9 @@
    `genome`: The genome
    `params`:  See `displayPars(DataTrack())` for all available display params
 
+### requires
+   [r-Gviz](https://rdrr.io/bioc/Gviz/man/DataTrack-class.html)
+
 ## pUcscTrack
 
 ### description
@@ -81,6 +96,9 @@
 
 ### args
    use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args.
+
+### requires
+   [r-Gviz](https://rdrr.io/bioc/Gviz)
 
 ## pGenomePlot
 
@@ -103,4 +121,7 @@
    `params`:   The params
        - `genneral`:  General params for plotTracks
        - `geneTrack`: The params for geneTrack
+
+### requires
+   [r-Gviz](https://rdrr.io/bioc/Gviz)
 {% endraw %}
