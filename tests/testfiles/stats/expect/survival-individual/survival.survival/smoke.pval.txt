@@ -1,2 +1,0 @@
-var	group1	group2	pval	n1	n2
-smoke	yes	no	6.71e-02	113	113

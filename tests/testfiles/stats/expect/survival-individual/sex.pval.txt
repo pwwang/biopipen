@@ -1,2 +1,0 @@
-var	group1	group2	pval	n1	n2
-sex	Male	Female	1.31e-03	138	138

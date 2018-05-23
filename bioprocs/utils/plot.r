@@ -50,6 +50,8 @@ update.aes = function(alist, newaes, namesbefore = c()) {
 }
 
 apply.ggs = function(p, ggs) {
+	if (is.null(ggs) || length(ggs) == 0)
+		return(p)
 	funcs = names(ggs)
 	for (i in 1:length(funcs)) {
 		p = p + do.call(funcs[i], ggs[[i]])

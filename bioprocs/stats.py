@@ -97,9 +97,9 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 	`rnames`    : Whether input file has row names. Default: True
 	`combine`   : Whether combine groups in the same plot. Default: True
 	`devpars`   : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
-		- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(gridParams.ncol, gridParams.nrow)`
+		- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
 	`plotParams`: The parameters for `ggsurvplot`. Default: `{risk.table: True, conf.int = True}`
-	`gridParams`: The parameters for `arrange_ggsurvplots`.
+	`arrange`: The parameters for `arrange_ggsurvplots`.
 	`pval`      : Whether print pvalue on the plot. Default: True
 	`noerror`   : Do not report error if error happens. Generate ouput file anyway.
 @requires:
@@ -108,17 +108,25 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 """
 pSurvival                 = Proc(desc = "Survival analysis.")
 pSurvival.input           = 'infile:file'
-pSurvival.output          = 'outdir:dir:{{in.infile | fn}}.survival'
+pSurvival.output          = [
+	'outfile:file:{{in.infile | fn2}}.dir/{{in.infile | fn2}}.survival.txt', 
+	'outdir:dir:{{in.infile | fn2}}.dir'
+]
 pSurvival.args.inunit     = 'days' # months, weeks, years
 pSurvival.args.outunit    = 'days'
+pSurvival.args.covfile    = None
 pSurvival.args.nthread    = 1
-pSurvival.args.rnames     = True
-pSurvival.args.noerror    = False
+pSurvival.args.inopts     = Box(rnames = True)
 pSurvival.args.combine    = True
 pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
-pSurvival.args.plotParams = Box({'risk.table': True, 'conf.int': True})
-pSurvival.args.gridParams = Box() # ncol, nrow
-pSurvival.args.pval       = True
+pSurvival.args.plot = Box(
+	var     = 1, # which variable to plot (starts with the 3rd column, excluding time, status. or use the column name, e.g. sex)
+	ncurves = 2, # how many curves to plot, typically 2. The values will divided into <ncurves> groups for the var
+	params  = Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'}), # params for ggsurvplot
+	arrange = Box() # params for arrange_ggsurvplots if args.combine = T. Typically nrow or ncol is set. If args.plot.arrange.ncol = 3, that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1.
+)
+pSurvival.args.ggs        = Box(table = Box())
+pSurvival.args.pval       = True # 'logrank', 'waldtest', 'likeratio'
 pSurvival.envs.rimport    = rimport
 pSurvival.lang            = params.Rscript.value
 pSurvival.script          = "file:scripts/stats/pSurvival.r"

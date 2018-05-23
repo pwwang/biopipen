@@ -1,0 +1,4 @@
+var	method	test	df	pvalue
+Gene	logrank	2.127	3	5.46E-01
+Gene	waldtest	2.120	3	5.47E-01
+Gene	likeratio	2.128	3	5.46E-01

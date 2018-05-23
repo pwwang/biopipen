@@ -30,29 +30,32 @@ class TestStats (helpers.TestCase):
 		PyPPL(config).start(pRbind).run()
 		procOK(pMetaPval1, 'metapval2.txt', self)
 
-	def testSurvival(self):
-		pSurvival1 = pSurvival.copy()
-		pSurvival1.input                = [getfile('survival.txt')]
-		pSurvival1.args.rnames          = False
-		pSurvival1.args.nthread         = 3
-		pSurvival1.args.gridParams.nrow = 2
-		pSurvival1.args.gridParams.ncol = 2
-		PyPPL(config).start(pSurvival1).run()
-		procOK(pSurvival1, 'survival-combine', self)
+	def dataProvider_testSurvival(self):
+		infile1  = path.join(self.indir, 'survival1.txt')
+		outfile1 = path.join(self.outdir, 'survival1.txt')
+		yield 'combine', infile1, False, True, True, dict(arrange = dict(nrow=2, ncol=2)), None, 3, outfile1
+		yield 'nc', infile1, False, False, True, dict(params = dict(pval = 'p = {pval}')), None, 3, outfile1
+		infile3  = path.join(self.indir, 'survival2.txt')
+		cvfile3  = path.join(self.indir, 'survival.cv.txt')
+		outfile3 = path.join(self.outdir, 'survival2.txt')
+		yield 'cv', infile3, True, False, True, {}, cvfile3, 1, outfile3
+		yield 'nop', infile3, True, False, True, False, cvfile3, 1, outfile3
 
-	def dataProvider_testSurvivalNoCombine(self):
-		infile  = path.join(self.indir, 'survival.txt')
-		outfile = path.join(self.outdir, 'survival-individual')
-		yield 't1', infile, outfile
-	
-	def testSurvivalNoCombine(self, tag, infile, outfile):
-		pSurvival2              = pSurvival.copy(tag = tag)
-		pSurvival2.input        = [infile]
-		pSurvival2.args.rnames  = False
-		pSurvival2.args.nthread = 1
-		pSurvival2.args.combine = False
-		PyPPL(config).start(pSurvival2).run()
-		self.assertDirEqual(pSurvival2.channel.get(), outfile)
+	def testSurvival(self, tag, infile, rnames, combine, pval, plot, covfile, nthread, outfile, devpars = dict(res = 100, height = 300, width = 300)):
+		pSurvivalTest                    = pSurvival.copy(tag = tag)
+		pSurvivalTest.input              = [infile]
+		pSurvivalTest.args.covfile       = covfile
+		pSurvivalTest.args.nthread       = nthread
+		pSurvivalTest.args.inopts.rnames = rnames
+		pSurvivalTest.args.combine       = combine
+		#pSurvivalTest.args.devpars       = devpars
+		pSurvivalTest.args.pval          = pval
+		if isinstance(plot, dict):
+			pSurvivalTest.args.plot.update(plot)
+		else:
+			pSurvivalTest.args.plot = plot
+		PyPPL(config).start(pSurvivalTest).run()
+		self.assertFileEqual(pSurvivalTest.channel.get(0), outfile)
 		
 	def dataProvider_testChiSquare(self):
 		infile   = path.join(self.indir, 'chisquare1.conttable.txt')
