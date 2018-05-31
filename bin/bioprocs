@@ -24,6 +24,7 @@ def getSubcommands():
 		path.basename(file):getDesc(file) for file in \
 		glob(path.realpath(path.join(path.dirname(__file__), 'commands', '*')))
 	}
+	ret['<module.proc>'] = 'Run the process.'
 	ret['help'] = 'Print this help information.\nUse \'bioporocs help <command> to show help of the command.\''
 	return ret
 
@@ -58,10 +59,23 @@ if __name__ == '__main__':
 	if (not command or command == 'help') and len(sys.argv) < 2:
 		error = ''
 
-	if not command in commands:
+	if '.' not in command and command not in commands:
 		error = 'Command [%s] not found.' % command
 
 	if error is None:
+		if '.' in command:
+			cmdfile = path.realpath(path.join(path.dirname(__file__), 'proc'))
+			cmds = [cmdfile] + sys.argv[1:]
+			Popen(cmds).wait()
+			exit(0)
+		if command == 'help':
+			if len(sys.argv) == 2:
+				sys.stderr.write(help(commands))
+				sys.exit(1)
+			else:
+				command  = sys.argv[2]
+				sys.argv = sys.argv[:1]
+
 		cmdfile = path.realpath(path.join(path.dirname(__file__), 'commands', command))
 		cmds = [cmdfile] + sys.argv[2:]
 		Popen(cmds).wait()

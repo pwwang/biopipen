@@ -101,15 +101,17 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 	`devpars`   : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
 		- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
 	`covfile`   : The covariant file. Require rownames in both this file and input file.
+	`ngroups`   : Number of curves to plot (the continuous number will divided into `ngroups` groups.
 	`plot`      : The params for plot.
-		- `ncurves`: Number of curves to plot (the continuous number will divided into `ncurves` groups.
 		- `params` : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
+			- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
 		- `arrange`: How to arrange multiple survival plots in one if `args.combine = True`.
 			- `nrow`: The number of rows. Default: 1
 			- `ncol`: The number of cols. Default: 1
 	`ggs`       : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
 	`pval`      : The method to calculate the pvalue shown on the plot. Default: True (logrank)
 		- Could also be `waldtest`, `likeratio` (Likelihoold ratio test)
+	`method`    : The method to do survival analysis. 
 @requires:
 	[`r-survival`](https://rdrr.io/cran/survival/)
 	[`r-survminer`](https://rdrr.io/cran/survminer/)
@@ -122,14 +124,15 @@ pSurvival.output          = [
 ]
 pSurvival.args.inunit     = 'days' # months, weeks, years
 pSurvival.args.outunit    = 'days'
+pSurvival.args.method     = 'cox' # tm or auto 
 pSurvival.args.covfile    = None
 pSurvival.args.nthread    = 1
 pSurvival.args.inopts     = Box(rnames = True)
-pSurvival.args.combine    = True
+pSurvival.args.combine    = True # only available for cox method
 pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
+pSurvival.args.ngroups    = 2 # how many curves to plot, typically 2. The values will divided into <ngroups> groups for the var
 pSurvival.args.plot = Box(
-	ncurves = 2, # how many curves to plot, typically 2. The values will divided into <ncurves> groups for the var
-	params  = Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'}), # params for ggsurvplot
+	params  = Box({'font.legend': 13, 'pval': '{method}\np = {pval}'}), # params for ggsurvplot
 	arrange = Box() # params for arrange_ggsurvplots if args.combine = T. Typically nrow or ncol is set. If args.plot.arrange.ncol = 3, that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1.
 )
 pSurvival.args.ggs        = Box(table = Box())

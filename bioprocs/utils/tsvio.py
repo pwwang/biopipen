@@ -183,7 +183,7 @@ class TsvMeta(TsvRecord):
 			else:
 				keys.append(arg)
 				vals.append(None)
-		self.fromKeyVals(keys, vals)
+		self.fromKeyVals(keys + self.keys(), vals + self.values())
 
 class TsvReaderBase(object):
 	def __init__(self, infile, delimit = '\t', comment = '#', skip = 0):
@@ -214,8 +214,9 @@ class TsvReaderBase(object):
 
 	def _parse(self, line):
 		record = TsvRecord()
-		record.fromKeyVals(self.meta.keys(), [
-			self.meta[i](item) if self.meta[i] else item for i, item in enumerate(line)
+		keys = self.meta.keys()
+		record.fromKeyVals(keys, [
+			'' if i >= len(line) else self.meta[key](line[i]) if self.meta[key] else line[i] for i, key in enumerate(keys)
 		])
 		return record
 

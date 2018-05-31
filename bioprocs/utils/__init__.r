@@ -74,3 +74,4 @@ pretty.numbers = function(df, formats) {
 	}
 	return (df)
 }
+

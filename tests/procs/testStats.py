@@ -17,6 +17,7 @@ class TestStats (helpers.TestCase):
 		pMetaPvalTest = pMetaPval.copy(tag = tag)
 		pMetaPvalTest.input = [infile]
 		pMetaPvalTest.args.update(args or {})
+
 		PyPPL(config).start(pMetaPvalTest).run()
 		self.assertFileEqual(pMetaPvalTest.channel.get(), outfile)
 
@@ -33,22 +34,34 @@ class TestStats (helpers.TestCase):
 	def dataProvider_testSurvival(self):
 		infile1  = path.join(self.indir, 'survival1.txt')
 		outfile1 = path.join(self.outdir, 'survival1.txt')
+		outfile2 = path.join(self.outdir, 'survival-nc.txt')
 		yield 'combine', infile1, False, True, True, dict(arrange = dict(nrow=2, ncol=2)), None, 3, outfile1
-		yield 'nc', infile1, False, False, True, dict(params = dict(pval = 'p = {pval}')), None, 3, outfile1
-		infile3  = path.join(self.indir, 'survival2.txt')
-		cvfile3  = path.join(self.indir, 'survival.cv.txt')
-		outfile3 = path.join(self.outdir, 'survival2.txt')
+		#yield '4curv', infile1, False, True, True, dict(ncurves = 4, arrange = dict(nrow=2, ncol=2)), None, 3, outfile1
+		yield 'nc', infile1, False, False, True, dict(params = dict(pval = 'p = {pval}')), None, 3, outfile2
+		infile3    = path.join(self.indir, 'survival2.txt')
+		cvfile3    = path.join(self.indir, 'survival.cv.txt')
+		outfile3   = path.join(self.outdir, 'survival2.txt')
+		outfilelv4 = path.join(self.outdir, 'survivallv4.txt')
+		outfilenop = path.join(self.outdir, 'survivalnop.txt')
 		yield 'cv', infile3, True, False, True, {}, cvfile3, 1, outfile3
-		yield 'nop', infile3, True, False, True, False, cvfile3, 1, outfile3
+		yield 'lv4', infile3, True, False, True, dict(params = dict(pval = 'Logrank p = {pval}\nHazard ratio = {hr} (95% CI: {ci95L} ~ {ci95U})')), cvfile3, 1, outfilelv4, 4
+		yield 'nop', infile3, True, False, True, False, cvfile3, 1, outfilenop
+		infile4  = path.join(self.indir, 'survival-1lvl.txt')
+		outfile4 = path.join(self.outdir, 'survival-1lvl.txt')
+		yield '1lvl', infile4, False, False, False, True, None, 1, outfile4, 2, 'auto'
+		infile5  = path.join(self.indir, 'survival-bias.txt')
+		outfile5 = path.join(self.outdir, 'survival-bias.txt')
+		yield 'bias', infile5, False, False, False, {}, None, 1, outfile5, 2, 'km'
 
-	def testSurvival(self, tag, infile, rnames, combine, pval, plot, covfile, nthread, outfile, devpars = dict(res = 100, height = 300, width = 300)):
+	def testSurvival(self, tag, infile, rnames, combine, pval, plot, covfile, nthread, outfile, ngroups = 2, method = 'cox', devpars = dict(res = 100, height = 300, width = 300)):
 		pSurvivalTest                    = pSurvival.copy(tag = tag)
 		pSurvivalTest.input              = [infile]
 		pSurvivalTest.args.covfile       = covfile
 		pSurvivalTest.args.nthread       = nthread
 		pSurvivalTest.args.inopts.rnames = rnames
 		pSurvivalTest.args.combine       = combine
-		#pSurvivalTest.args.devpars       = devpars
+		pSurvivalTest.args.ngroups       = ngroups
+		pSurvivalTest.args.method        = method
 		pSurvivalTest.args.pval          = pval
 		if isinstance(plot, dict):
 			pSurvivalTest.args.plot.update(plot)

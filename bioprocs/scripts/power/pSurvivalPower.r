@@ -4,8 +4,18 @@ infile  = {{in.infile | R}}
 outdir  = {{out.outdir | R}}
 intype  = {{args.intype | R}}
 rnames  = {{args.rnames | lambda x: 1 if x else 'NULL' | R}}
-alphas  = {{args.alphas | lambda x: x if isinstance(x, list) else [x] | R}}
-betas   = {{args.betas | lambda x: x if isinstance(x, list) else [x] | R}}
+ngroup  = as.integer({{args.ngroup | R}})
+alphas  = {{args.alphas | lambda x: x if isinstance(x, list) else [float(a.strip()) for a in x.split(',')] if isinstance(x, str) else [x] | R}}
+betas   = {{args.betas | lambda x: x if isinstance(x, list) else [float(a.strip()) for a in x.split(',')] if isinstance(x, str) else [x] | R}}
+
+ncut = function(dat, n, prefix = 'q') {
+	diffdata = max(dat) - min(dat)
+	if (diffdata == 0) diffdata = 1e-2
+	diffdata = diffdata * 1e-8
+	fakedata = dat + runif(length(dat), diffdata/10, diffdata)
+	q = quantile(fakedata, probs = seq(0, 1, 1/n), include.lowest = T)
+	return(cut(fakedata, q, labels = paste0(prefix, 1:n)))
+}
 
 data = list()
 if (intype == 'detail' || intype == 'detailed') {
@@ -20,7 +30,12 @@ if (intype == 'detail' || intype == 'detailed') {
 		if (lengroup < 2) {
 			logger('Variable', var, 'skipped, as only one ground found.', level = 'WARN')
 			next
+		} else if (lengroup > ngroup) {
+			detailed[, var] = ncut(detailed[, var], ngroup)
+			lengroup = ngroup
+			groups   = levels(factor(detailed[, var, drop = T]))
 		}
+
 		for (i in 1:(lengroup-1)) {
 			for (j in (i+1):lengroup) {
 				group1 = groups[i]
@@ -32,7 +47,7 @@ if (intype == 'detail' || intype == 'detailed') {
 				nrow2  = nrow(data2)
 				data[[variable]] = list(
 					survrate1 = nrow(data1[which(data1[, 2] == alive), var, drop = F]) / nrow1,
-					survrate2 = nrow(data2[which(data1[, 2] == alive), var, drop = F]) / nrow2,
+					survrate2 = nrow(data2[which(data2[, 2] == alive), var, drop = F]) / nrow2,
 					ssratio   = nrow1 / nrow2
 				)
 			}
@@ -91,7 +106,7 @@ for (var in names(data)) {
 			ret = samsize(data[[var]]$survrate1, data[[var]]$survrate2, data[[var]]$ssratio, a, b)
 			plot_hr   = ret$hr
 			plot_data = rbind(plot_data, c(
-				mlogp = -log(a),
+				mlogp = -log2(a),
 				ssize = ret$total,
 				power = 1-b
 			))
@@ -114,9 +129,9 @@ for (var in names(data)) {
 	}
 	{% if args.plot %}
 	plotfile = file.path(outdir, paste0(gsub("[[:punct:]]", "_", var), '.png'))
-	vldata   = data.frame(x = -log(alphas), y=-Inf, pval = alphas, label = paste('p = ', alphas))
+	vldata   = data.frame(x = -log2(alphas), y=-Inf, pval = alphas, label = paste('p = ', alphas))
 	ggs = list(
-		xlab = list("-ln(p-value)"),
+		xlab = list("-log2(p-value)"),
 		ylab = list("Sample size"),
 		labs = list(color = 'Power'),
 		geom_smooth = list(aes(color = factor(power)), method = lm, se = F),

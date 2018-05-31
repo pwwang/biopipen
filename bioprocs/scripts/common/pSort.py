@@ -21,26 +21,22 @@ for i, k in enumerate(sorted(kopts.keys())):
 infile   = {{in.infile | quote}}
 outfile  = {{out.outfile | quote}}
 tmpfile  = outfile + '.tmp'
-skip     = {{args.inopts | lambda x: x.skip if 'skip' in x else 0}}
-delimit  = {{args.inopts | lambda x: x.delimit if 'delimit' in x else '\t' | quote}}
-comment  = {{args.inopts | lambda x: x.comment if 'comment' in x else '#' | quote}}
+skip     = {{args.inopts | lambda x: x.get('skip', 0)}}
+delimit  = {{args.inopts | lambda x: x.get('delimit', '\t') | quote}}
+comment  = {{args.inopts | lambda x: x.get('comment', '#') | quote}}
 
 if not skip and not comment:
 	tmpfile = infile
 else:
-	readerSkip = TsvReader(infile, delimit = delimit, comment = '', skip = 0)
-	readerSkip.autoMeta()
-	writerSkip = TsvWriter(outfile, delimit = delimit)
-	writerSkip.meta.update(readerSkip.meta)
-	for i, r in enumerate(readerSkip):
-		if i < skip:
-			writerSkip.write(r)
-	writerSkip.close()
-	readerSkip.close()
-	readerTmp = TsvReader(infile, delimit = delimit, comment = comment, skip = skip)
-	readerTmp.autoMeta()
-	writerTmp = TsvWriter(tmpfile, delimit = delimit)
-	writerTmp.meta.update(readerTmp.meta)
+	with open(infile) as readerSkip, open(outfile, 'w') as writerSkip:
+		for i, line in enumerate(readerSkip):
+			if i >= skip: break
+			writerSkip.write(line)
+
+	readerTmp = TsvReader(infile, delimit = delimit, comment = comment, skip = skip, ftype = 'nometa', head = False)
+	#readerTmp.autoMeta()
+	writerTmp = TsvWriter(tmpfile, delimit = delimit, ftype = 'nometa')
+	#writerTmp.meta.update(readerTmp.meta)
 	for r in readerTmp:
 		writerTmp.write(r)
 	writerTmp.close()

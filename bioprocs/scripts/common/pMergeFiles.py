@@ -72,7 +72,7 @@ for i in xrange(0, len(files), maxopen):
 	readers = getReaders(fs, i)
 
 	# empty file has no meta
-	reader = [reader for reader in readers if reader.meta and not (len(reader.meta) == 1 and reader.meta.items() == [('', None)])]
+	reader = [reader for reader in readers if reader.meta and not (len(reader.meta) == 1 and '' in reader.meta)]
 	if not reader: continue
 	reader = reader[0]
 	if not metaUpdated:

@@ -27,13 +27,12 @@ ret    = matrix(nrow = 0, ncol = 5)
 colnames(ret) = c('k', 'm', 'n', 'N', 'pval')
 
 if (intype == 'raw') {
-	if (is.null(N))
-		stop ('N is not specified.')
-	
 	rn     = if (inopts$rnames) 1 else NULL
 	data   = read.table(infile, row.names = rn, header = inopts$cnames, sep = "\t", check.names = F)
 	cnames = colnames(data)
 	ncols  = ncol(data)
+	if (is.null(N))
+		N = nrow(data)
 	if (ncols < 2)
 		stop ('Need at least 2 columns.') 
 	if (!inopts$cnames) {

@@ -1,4 +1,4 @@
-	time	status	Gene
+	time	status	Ge-ne
 ROW1	306	2	12
 ROW2	455	2	33
 ROW3	1010	1	24

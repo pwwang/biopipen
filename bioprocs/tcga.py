@@ -1,4 +1,5 @@
-from pyppl import proc
+from pyppl import Proc
+from bioprocs import params
 
 """
 @name:
@@ -13,7 +14,7 @@ from pyppl import proc
 	`params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
 	`bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
 """
-pDownload = proc ()
+pDownload = Proc ()
 pDownload.input     = "manifile:file"
 pDownload.output    = "outdir:dir:{{manifile | fn}}"
 pDownload.args      = {"params": " --no-file-md5sum -n 20 ", "bin-gdc": "gdc-client"}
@@ -27,41 +28,17 @@ pDownload.script    = """
 @description:
 	convert TCGA sample names with submitter id with metadata and sample containing folder
 @input:
-	`dir:file`:    the directory containing the samples
+	`indir:file`:    the directory containing the samples
 	`mdfile:file`: the metadata file
 @output:
 	`outdir:file`: the directory containing submitter-id named files
 """
-pSample2SubmitterID = proc ()
-pSample2SubmitterID.input     = "dir:file, mdfile:file"
-pSample2SubmitterID.output    = "outdir:dir:{{dir | fn}}"
-pSample2SubmitterID.defaultSh = "python"
-pSample2SubmitterID.script    = """
-import json, glob, os
-
-sam_meta = None
-sample_ids = {}
-with open ("{{mdfile}}") as f:
-	sam_meta = json.load (f)
-
-ext = ''
-for sam in sam_meta:
-	if not ext:
-		ext = os.path.splitext (sam['file_name'])[1]
-	sample_ids[sam['file_name']] = sam['associated_entities'][0]['entity_submitter_id'][:15]
-# dir is from pFiles2Dir
-samfiles = glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*" + ext))
-# or direct dir from TCGA download
-if not samfiles:
-	samfiles = glob.glob (os.path.join(os.path.abspath("{{dir}}"), "*", "*" + ext))
-for samfile in samfiles:
-	bn = os.path.basename (samfile)
-	if not sample_ids.has_key (bn): continue
-	newfile = os.path.join ("{{outdir}}", sample_ids[bn] + ext)
-	if os.path.exists (newfile):
-		os.remove(newfile)
-	os.symlink (samfile, newfile)
-"""
+pSample2SubmitterID              = Proc ()
+pSample2SubmitterID.input        = "indir:file, mdfile:file"
+pSample2SubmitterID.output       = "outdir:dir:{{in.indir | fn}}"
+pSample2SubmitterID.args.nthread = 1
+pSample2SubmitterID.lang         = params.python.value
+pSample2SubmitterID.script       = "file:scripts/tcga/pSample2SubmitterID.py"
 
 """
 @name:
@@ -76,10 +53,10 @@ for samfile in samfiles:
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
 """
-pConvertExpFiles2Matrix = proc()
+pConvertExpFiles2Matrix = Proc()
 pConvertExpFiles2Matrix.input     = "dir:file, mdfile:file"
 pConvertExpFiles2Matrix.output    = "outfile:file:expmat-{{#}}.txt"
-pConvertExpFiles2Matrix.defaultSh = "python"
+pConvertExpFiles2Matrix.lang = "python"
 pConvertExpFiles2Matrix.script    = """
 import json, glob, os
 import gzip
@@ -148,10 +125,10 @@ fout.close()
 @output:
 	`outfile:file`:the output matrix
 """
-pConvertMutFiles2Matrix = proc()
+pConvertMutFiles2Matrix = Proc()
 pConvertMutFiles2Matrix.input     = "dir:file, mdfile:file"
 pConvertMutFiles2Matrix.output    = "outfile:file:mutmat-{{#}}.txt"
-pConvertMutFiles2Matrix.defaultSh = "python"
+pConvertMutFiles2Matrix.lang = "python"
 pConvertMutFiles2Matrix.args      = {'minCount': 2}
 pConvertMutFiles2Matrix.script    = """
 import json, glob, os
