@@ -128,7 +128,7 @@ pSurvival.args.method     = 'cox' # tm or auto
 pSurvival.args.covfile    = None
 pSurvival.args.nthread    = 1
 pSurvival.args.inopts     = Box(rnames = True)
-pSurvival.args.combine    = True # only available for cox method
+pSurvival.args.combine    = False
 pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
 pSurvival.args.ngroups    = 2 # how many curves to plot, typically 2. The values will divided into <ngroups> groups for the var
 pSurvival.args.plot = Box(

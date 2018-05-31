@@ -21,8 +21,11 @@ def help(error = None, quit = True):
 
 def arg2PyVar(var):
 	# TODO: python3 compatibility
-	if isinstance(var, str) and var.startswith('repr:'):
-		var = eval(var[5:])
+	if isinstance(var, str):
+		if var.startswith('repr:'):
+			var = eval(var[5:])
+		var = var.replace('\\n', '\n')
+		var = var.replace('\\t', '\t')
 	return var
 
 def arbitraryArgs():
@@ -82,6 +85,8 @@ def composeProc(args):
 			aval = proc.args
 			for k in kparts:
 				aval = aval[k]
+			if lastpart not in aval:
+				lastpart = lastpart.replace('-', '.')
 			aval[lastpart] = val
 		elif t == 'proc':
 			lastpart = kparts.pop(-1)

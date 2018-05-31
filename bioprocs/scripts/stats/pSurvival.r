@@ -19,7 +19,7 @@ devpars = {{args.devpars | R}}
 plot    = {{args.plot | R}}
 pval    = {{args.pval | R}}
 mainggs = {{args.ggs | R}}
-ngroups = {{args.ngroups | R}}
+ngroups = as.numeric({{args.ngroups | R}})
 
 if (pval == T) {
 	pval = 'logrank'
