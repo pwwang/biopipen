@@ -49,11 +49,14 @@ read.table.nodup = function(...) {
 	}
 }
 
-update.list = function (list1, list2) {
-	names1 = names(list1)
+update.list = function (list1, list2, recursive = F) {
 	names2 = names(list2)
 	for (name in names2) {
-		list1[[name]] = list2[[name]]
+		if (is.list(list1[[name]]) && is.list(list2[[name]]) && recursive) {
+			list1[[name]] = update.list(list1[[name]], list2[[name]], recursive = recursive)
+		} else {
+			list1[[name]] = list2[[name]]
+		}
 	}
 	return (list1)
 }

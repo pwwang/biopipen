@@ -1,19 +1,20 @@
-cnames = as.logical({{args.cnames | R}})
-rnames = as.logical({{args.rnames | R}})
+{{rimport}}('__init__.r')
 
-infile           = {{in.infile | quote}}
-params           = {{args.params | Rlist}}
-params$file      = infile
-params$header    = cnames
-mat              = do.call(read.table, c(list(row.names = NULL), params))
-if (rnames) {
-	rns = as.vector(mat[,1])
-	if (length(rns) > 0) {
-		rns = make.unique(rns)
-		mat[,1] = NULL
-		rownames(mat) = rns
-	}
-}
+infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
+params  = {{args.params | R}}
+inopts  = {{args.inopts | R}}
+
+inparams = list(
+	file      = infile,
+	header    = as.logical(inopts$cnames),
+	row.names = if (as.logical(inopts$rnames)) 1 else NULL,
+	skip      = if (is.null(inopts$skip)) 0 else as.numeric(inopts$skip),
+	sep       = inopts$delimit
+)
+
+mat = do.call(read.table.nodup, c(inparams, params))
+
 {% if args.code | lambda x: isinstance(x, list) %}
 {% for c in args.code %}
 {{c}}
@@ -21,4 +22,14 @@ if (rnames) {
 {% else %}
 {{args.code}}
 {% endif %}
-write.table (mat, {{out.outfile | quote}}, sep=params$sep, quote=F, col.names = cnames, row.names = rnames)
+
+outparams = list(
+	x         = mat,
+	file      = outfile,
+	sep       = inopts$delimit,
+	quote     = F,
+	col.names = as.logical(inopts$cnames),
+	row.names = as.logical(inopts$rnames)
+)
+
+do.call(write.table, outparams)

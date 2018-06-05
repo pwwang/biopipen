@@ -1,19 +1,35 @@
-cnames = as.logical({{args.cnames | R}})
-rnames = as.logical({{args.rnames | R}})
+{{rimport}}('__init__.r')
 
-mat    = read.table ({{in.infile | quote}}, sep="\t", header = cnames, row.names = if (rnames) 1 else NULL, check.names = F)
-if (rnames) {
-	rns = rownames(mat)
-} else {
-	rns = paste("ROW", 1:nrow(mat), sep="")
-	rownames(mat) = rns
-}
-n = {{args.n}}
-chunkfunc = function(d) split(d, ceiling(seq_along(d)/n))
-chunks = chunkfunc(1:nrow(mat))
-for (chunk in chunks) {
-	rname = rns[chunk]
-	m     = mat[rname, , drop=F]
-	ofile = file.path({{out.outdir | quote}}, paste({{in.infile | fn | quote}}, "-", gsub('[^a-zA-Z0-9]', '', rname[1]), {{in.infile | ext | quote}}, sep=""))
-	write.table(m, ofile, sep = "\t", quote=F, row.names = rnames, col.names = cnames)
+infile  = {{in.infile | R}}
+outdir  = {{out.outdir | R}}
+params  = {{args.params | R}}
+inopts  = {{args.inopts | R}}
+size    = as.numeric({{args.size | R}})
+
+inparams = list(
+	file      = infile,
+	header    = as.logical(inopts$cnames),
+	row.names = if (as.logical(inopts$rnames)) 1 else NULL,
+	skip      = if (is.null(inopts$skip)) 0 else as.numeric(inopts$skip),
+	sep       = inopts$delimit
+)
+
+mat       = do.call(read.table.nodup, c(inparams, params))
+allrnames = if (as.logical(inopts$rnames)) rownames(mat) else paste0("ROW", 1:nrow(mat))
+
+for ( chunk in split(1:length(allrnames), ceiling(seq_along(1:length(allrnames))/size)) ) {
+	rnames    = allrnames[chunk]
+	m         = mat[rnames, , drop = F]
+	fn        = paste(gsub("[[:punct:]]", "_", rnames), collapse='-')
+	fn        = paste0({{in.infile | fn2 | quote}}, '_', fn, {{in.infile | ext | quote}})
+	outfile   = file.path(outdir, fn)
+	outparams = list(
+		x         = m,
+		file      = outfile,
+		sep       = inopts$delimit,
+		quote     = F,
+		col.names = as.logical(inopts$cnames),
+		row.names = as.logical(inopts$rnames)
+	)
+	do.call(write.table, outparams)
 }

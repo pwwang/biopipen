@@ -1,5 +1,6 @@
 from pyppl import Proc, Box
 from . import params, rimport
+from .utils import fs2name
 
 """
 @name:
@@ -18,16 +19,15 @@ from . import params, rimport
 pMatrixR             = Proc(desc = 'Operate a matrix and save the new matrix to file.')
 pMatrixR.input       = "infile:file"
 pMatrixR.output      = "outfile:file:{{in.infile | bn}}"
-pMatrixR.args.cnames = True
-pMatrixR.args.rnames = True
+pMatrixR.args.inopts = Box(cnames = True, rnames = True, delimit = "\t", skip = 0)
 pMatrixR.args.params = Box({
-	"sep"        : "\t",
 	"check.names": "FALSE",
 	"quote"      : ""
 })
-pMatrixR.args.code   = []
-pMatrixR.lang        = params.Rscript.value
-pMatrixR.script      = "file:scripts/tsv/pMatrixR.r"
+pMatrixR.args.code    = []
+pMatrixR.envs.rimport = rimport
+pMatrixR.lang         = params.Rscript.value
+pMatrixR.script       = "file:scripts/tsv/pMatrixR.r"
 
 """
 @name:
@@ -44,14 +44,26 @@ pMatrixR.script      = "file:scripts/tsv/pMatrixR.r"
 	`rnames  `: Whether the input file has rnames  . Default: 1
 	`miss`: Replacement for missing values. Default: `NA`
 """
-pCbind                = Proc(desc = 'Cbind the rest of files to the first file.')
-pCbind.input          = 'infiles:files'
-pCbind.output         = 'outfile:file:{{in.infiles[0] | fn2}}.cbound.txt'
-pCbind.args.cnames    = True # or [True, True, False] corresponding to the file order
-pCbind.args.rnames    = True
-pCbind.args.na        = 'NA'
-pCbind.lang           = params.Rscript.value
-pCbind.script         = "file:scripts/tsv/pCbind.r"
+pCbind             = Proc(desc = 'Cbind the rest of files to the first file.')
+pCbind.input       = 'infiles:files'
+pCbind.output      = 'outfile:file:{{in.infiles | fs2name}}.cbound.txt'
+pCbind.args.inopts = Box(
+	cnames  = True, # or [True, True, False] corresponding to the file order
+	rnames  = True,
+	delimit = "\t",
+	skip    = 0
+)
+pCbind.args.params = Box({
+	"check.names": "FALSE",
+	"quote"      : ""
+})
+pCbind.args.na       = 'NA'
+pCbind.args.fn2cname = 'function(fn) fn'
+pCbind.args.fill     = True
+pCbind.envs.fs2name  = fs2name
+pCbind.envs.rimport  = rimport
+pCbind.lang          = params.Rscript.value
+pCbind.script        = "file:scripts/tsv/pCbind.r"
 
 """
 @name:
@@ -72,13 +84,22 @@ pRbind                = Proc(desc = 'Rbind the rest of files to the first file.'
 pRbind.input          = 'infiles:files'
 pRbind.output         = 'outfile:file:{{in.infiles[0] | bn}}'
 pRbind.args.inopts    = Box(
-	cnames = True, # or [True, True, False] corresponding to the file order
-	rnames = True
+	cnames  = True, # or [True, True, False] corresponding to the file order
+	rnames  = True,
+	delimit = "\t",
+	skip    = 0
 )
-pRbind.args.na        = 'NA'
-pRbind.envs.rimport   = rimport
-pRbind.lang           = params.Rscript.value
-pRbind.script         = "file:scripts/tsv/pRbind.r"
+pRbind.args.params = Box({
+	"check.names": "FALSE",
+	"quote"      : ""
+})
+pRbind.args.na       = 'NA'
+pRbind.args.fn2rname = 'function(fn) fn'
+pRbind.args.fill     = True
+pRbind.envs.fs2name  = fs2name
+pRbind.envs.rimport  = rimport
+pRbind.lang          = params.Rscript.value
+pRbind.script        = "file:scripts/tsv/pRbind.r"
 
 """
 @name:
@@ -97,11 +118,20 @@ pRbind.script         = "file:scripts/tsv/pRbind.r"
 pCsplit             = Proc(desc = 'Split the columns of input file into different files.')
 pCsplit.input       = 'infile:file'
 pCsplit.output      = 'outdir:dir:{{in.infile | fn}}.csplits'
-pCsplit.args.cnames = True
-pCsplit.args.rnames = True
-pCsplit.args.n      = 1
-pCsplit.lang        = params.Rscript.value
-pCsplit.script      = "file:scripts/tsv/pCsplit.r"
+pCsplit.args.inopts = Box(
+	cnames  = True,
+	rnames  = True,
+	delimit = "\t",
+	skip    = 0
+)
+pCsplit.args.params = Box({
+	"check.names": "FALSE",
+	"quote"      : ""
+})
+pCsplit.args.size    = 1
+pCsplit.envs.rimport = rimport
+pCsplit.lang         = params.Rscript.value
+pCsplit.script       = "file:scripts/tsv/pCsplit.r"
 
 """
 @name:
@@ -117,14 +147,23 @@ pCsplit.script      = "file:scripts/tsv/pCsplit.r"
 		- or [True, True, False] corresponding to the file order
 	`rnames  `: Whether the input file has rnames  . Default: 1
 """
-pRsplit               = Proc(desc = 'Rbind the rest of files to the first file.')
-pRsplit.input         = 'infile:file'
-pRsplit.output        = 'outdir:dir:{{in.infile | fn}}.rsplits'
-pRsplit.args.cnames   = True
-pRsplit.args.rnames   = True
-pRsplit.args.n        = 1
-pRsplit.lang          = params.Rscript.value
-pRsplit.script        = "file:scripts/tsv/pRsplit.r"
+pRsplit             = Proc(desc = 'Rbind the rest of files to the first file.')
+pRsplit.input       = 'infile:file'
+pRsplit.output      = 'outdir:dir:{{in.infile | fn}}.rsplits'
+pRsplit.args.inopts = Box(
+	cnames  = True,
+	rnames  = True,
+	delimit = "\t",
+	skip    = 0
+)
+pRsplit.args.params = Box({
+	"check.names": "FALSE",
+	"quote"      : ""
+})
+pRsplit.args.size    = 1
+pRsplit.envs.rimport = rimport
+pRsplit.lang         = params.Rscript.value
+pRsplit.script       = "file:scripts/tsv/pRsplit.r"
 
 """
 @name:

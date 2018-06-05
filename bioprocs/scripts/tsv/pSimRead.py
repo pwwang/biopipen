@@ -18,7 +18,7 @@ del outopts['head']
 del outopts['headPrefix']
 del outopts['headDelimit']
 del outopts['headTransform']
-head = head if usemeta is None else True
+#head = head if usemeta is None else True
 
 writer  = TsvWriter(outfile, **outopts)
 sm = SimRead(*infiles, **inopts)

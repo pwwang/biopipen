@@ -1,30 +1,37 @@
 {{rimport}}('__init__.r')
 
+infiles  = {{in.infiles | R}}
+outfile  = {{out.outfile | R}}
+inopts   = {{args.inopts, in.infiles | lambda x, files: (x, len(files)) | lambda x: {k:(v if isinstance(v, list) and len(v) > 1 else v*x[1] if isinstance(x, list) and len(v) == 1 else [v]*x[1]) for k, v in x[0].items()} | R}}
+params   = {{args.params | R}}
+na       = {{args.na | R}}
+fn2rname = {{args.fn2rname}}
+fill     = as.logical({{args.fill | R}})
 
-inopts.cnames = {{args.inopts.cnames | lambda x: x if isinstance(x, list) else [x] | Rvec}}
-inopts.rnames = {{args.inopts.rnames | lambda x: x if isinstance(x, list) else [x] | Rvec}}
-inopts.cnames = as.logical(inopts.cnames)
-inopts.rnames = as.logical(inopts.rnames)
-
-infiles = {{in.infiles | Rvec}}
-outfile = {{out.outfile | quote}}
-na      = {{args.na | R}}
+bindfunc = if(fill) rbind.fill else rbind
 
 mat = NULL
-inlen   = length(infiles)
-cnames  = if (length(inopts.cnames) == 1) rep(inopts.cnames, inlen) else c(inopts.cnames, rep(TRUE, inlen - length(inopts.cnames)))
-rnames  = if (length(inopts.rnames) == 1) rep(inopts.rnames, inlen) else c(inopts.rnames, rep(TRUE, inlen - length(inopts.rnames)))
-for (i in 1:inlen) {
-	infile = infiles[i]
-	mat2 = read.table (infile, sep="\t", header = cnames[i], row.names = if (rnames[i]) 1 else NULL, check.names = F)
-	mat  = rbindfill(mat, mat2)
+for (i in 1:length(infiles)) {
+	inparams = c(list(
+		file      = infiles[i],
+		header    = if(is.null(inopts$cnames[i])) T else as.logical(inopts$cnames[i]),
+		row.names = if(is.null(inopts$cnames[i]) || inopts$cnames[i]) 1 else NULL,
+		sep       = if(is.null(inopts$delimit[i])) "\t" else inopts$delimit[i]
+	), params)
+	.mat  = do.call(read.table, inparams)
+	if (is.null(inparams$row.names))
+		rownames(mat) = fn2rname(.mat)
+	mat   = if(is.null(mat)) .mat else bindfunc(mat, .mat)
 }
+
 mat[is.na(mat)] = na
 
-write.table (mat, 
-	outfile, 
-	sep="\t", 
-	quote=F, 
-	col.names = any(cnames), 
-	row.names = any(rnames)
+outparams = list(
+	x         = mat,
+	file      = outfile,
+	sep       = if(is.null(inopts$delimit[1])) "\t" else inopts$delimit[1],
+	quote     = F,
+	col.names = if(is.null(inopts$cnames[1])) T else as.logical(inopts$cnames[1]),
+	row.names = T
 )
+do.call(write.table, outparams)

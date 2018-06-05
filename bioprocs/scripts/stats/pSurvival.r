@@ -67,22 +67,14 @@ allTypeMedian = function(dat) {
 	return(dat[median(1:length(dat))])
 }
 
-# convert group names to numeric
-to.numeric = function(dat) {
-	return(as.numeric(gsub('[^0-9.+-]', '', dat)))
-}
-
 # apply survival analysis method (cox or km)
 useCox = function(dat, varname) {
 	cnames  = colnames(dat)
 	var     = cnames[3]
 	vars    = cnames[3:length(cnames)]
 	varlvls = levels(factor(dat[, var]))
-	if (!is.numeric(varlvls)) {
-		dat[, var] = to.numeric(dat[, var])
-	}
 	fmula.str = paste('Surv(time, status) ~', paste(vars, collapse = ' + '))
-	modcox    = coxph(as.formula(fmula.str), data = dat)
+	modcox    = coxph(as.formula(fmula.str), data = as.data.frame(data.matrix(dat)))
 
 	ret = list(summary = matrix(ncol = 8, nrow = 0), cov = matrix(ncol = 7, nrow = 0), plot = NULL)
 	colnames(ret$summary) = c('var', 'method', 'test', 'df', 'pvalue', 'hr', 'ci95_lower', 'ci95_upper')
@@ -166,7 +158,8 @@ useCox = function(dat, varname) {
 			params$ylim          = c(ylim.min, 1)
 			params$pval.coord[2] = params$pval.coord[2] + ylim.min
 		}
-		params$fit     = survfit(modcox, newdata = newdata)
+		params$legend.title = gsub('{var}', varname, params$legend.title, fixed = T)
+		params$fit     = survfit(modcox, newdata = as.data.frame(data.matrix(newdata)))
 		params$data    = newdata
 		if (!is.logical(pval)) {
 			params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
@@ -184,7 +177,7 @@ useCox = function(dat, varname) {
 		if (params$risk.table) {
 			tableggs.one = list(
 				xlab             = list(paste0("Time (", outunit ,")")),
-				ylab             = list(paste0('Strata(', varname, ')')),
+				ylab             = list(params$legend.title),
 				scale_y_discrete = list(labels = rev(varlvls))
 			)
 			tableggs.one   = update.list(tableggs.one, tableggs)

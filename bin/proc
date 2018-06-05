@@ -22,10 +22,10 @@ def help(error = None, quit = True):
 def arg2PyVar(var):
 	# TODO: python3 compatibility
 	if isinstance(var, str):
-		if var.startswith('repr:'):
-			var = eval(var[5:])
 		var = var.replace('\\n', '\n')
 		var = var.replace('\\t', '\t')
+		if var.startswith('repr:'):
+			var = eval(var[5:])
 	return var
 
 def arbitraryArgs():
