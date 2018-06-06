@@ -34,23 +34,70 @@ class TestTsv (helpers.TestCase):
 		PyPPL(config).start(pMatrixR3).run()
 		self.assertFileEqual(pMatrixR3.channel.get(), path.join(self.outdir, name))
 
-	def testCbind(self):
-		name1 = 'matrix-cbind-1.txt'
-		name2 = 'matrix-cbind-2.txt'
-		name0 = 'matrix-cbind.txt'
-		pCbind1 = pCbind.copy()
-		pCbind1.input = [[getfile(name1), getfile(name2)]]
-		PyPPL(config).start(pCbind1).run()
-		self.assertFileEqual(pCbind1.channel.get(), path.join(self.outdir, name0))
+	def dataProvider_testCbind(self):
+		infiles1 = [path.join(self.indir, infile) for infile in ['matrix-cbind-1.txt', 'matrix-cbind-2.txt']]
+		outfile1 = path.join(self.outdir, 'matrix-cbind.txt')
+		outfile2 = path.join(self.outdir, 'matrix-cbind2.txt')
+		infiles2 = [path.join(self.indir, infile) for infile in ['matrix-cbind-1.txt', 'matrix-cbind-3.txt']]
+		infiles2 = [path.join(self.indir, infile) for infile in ['matrix-cbind-1.txt', 'matrix-cbind-3.txt']]
+		infiles3 = [path.join(self.indir, infile) for infile in ['matrix-cbind-1.txt', 'matrix-cbind-4.txt']]
+		outfile3 = path.join(self.outdir, 'matrix-cbind3.txt')
+		outfile4 = path.join(self.outdir, 'matrix-cbind4.txt')
+		# default with fill
+		yield 't1', infiles1, outfile1, {}
+		# no rownames and skip the first line
+		yield 't2', infiles1, outfile2, {'fill': True, 'inopts': {'rnames': False, 'skip': 1}}
+		# different delimit
+		yield 't3', infiles2, outfile2, {'fill': True, 'inopts': {'rnames': False, 'skip': 1, 'delimit': ['\t', ';']}}
+		# no fill with rownames (at the same order)
+		yield 't4', infiles3, outfile3, {'fill': False, 'inopts': {'rnames': True}}
+		# use file name as column name
+		yield 't5', infiles1, outfile4, {'fill': True, 'inopts': {'cnames': False, 'skip': 1}}
 
-	def testRbind(self):
-		name1 = 'matrix-rbind-1.txt'
-		name2 = 'matrix-rbind-2.txt'
-		name0 = 'matrix-rbind.txt'
-		pRbind1 = pRbind.copy()
-		pRbind1.input = [[getfile(name1), getfile(name2)]]
-		PyPPL(config).start(pRbind1).run()
-		procOK(pRbind1, name0, self)
+	def testCbind(self, tag, infiles, outfile, args):
+		pCbindTest = pCbind.copy(tag = tag)
+		if 'inopts' in args:
+			pCbindTest.args.inopts.update(args['inopts'])
+			del args['inopts']
+		if 'params' in args:
+			pCbindTest.args.params.update(args['params'])
+			del args['params']
+		pCbindTest.args.update(args)
+		pCbindTest.input = [infiles]
+		PyPPL(config).start(pCbindTest).run()
+		self.assertFileEqual(pCbindTest.channel.get(), outfile)
+
+	def dataProvider_testRbind(self):
+		infiles1 = [path.join(self.indir, infile) for infile in ['matrix-rbind-1.txt', 'matrix-rbind-2.txt']]
+		outfile1 = path.join(self.outdir, 'matrix-rbind.txt')
+		outfile2 = path.join(self.outdir, 'matrix-rbind2.txt')
+		infiles2 = [path.join(self.indir, infile) for infile in ['matrix-rbind-1.txt', 'matrix-rbind-3.txt']]
+		infiles2 = [path.join(self.indir, infile) for infile in ['matrix-rbind-1.txt', 'matrix-rbind-3.txt']]
+		infiles3 = [path.join(self.indir, infile) for infile in ['matrix-rbind-1.txt', 'matrix-rbind-4.txt']]
+		outfile3 = path.join(self.outdir, 'matrix-rbind3.txt')
+		outfile4 = path.join(self.outdir, 'matrix-rbind4.txt')
+		# default with fill
+		yield 't1', infiles1, outfile1, {}
+		# no colnames and skip the first line
+		yield 't2', infiles1, outfile2, {'fill': True, 'inopts': {'cnames': False, 'skip': 1}}
+		# different delimit
+		yield 't3', infiles2, outfile2, {'fill': True, 'inopts': {'cnames': False, 'skip': 1, 'delimit': ['\t', ';']}}
+		# no fill with colnames (at the same order)
+		yield 't4', infiles3, outfile3, {'fill': False, 'inopts': {'cnames': True}}
+		yield 't5', infiles1, outfile4, {'fill': True, 'inopts': {'rnames': False}}
+
+	def testRbind(self, tag, infiles, outfile, args):
+		pRbindTest = pRbind.copy(tag = tag)
+		if 'inopts' in args:
+			pRbindTest.args.inopts.update(args['inopts'])
+			del args['inopts']
+		if 'params' in args:
+			pRbindTest.args.params.update(args['params'])
+			del args['params']
+		pRbindTest.args.update(args)
+		pRbindTest.input = [infiles]
+		PyPPL(config).start(pRbindTest).run()
+		self.assertFileEqual(pRbindTest.channel.get(), outfile)
 
 	def testCsplit(self):
 		name1 = 'matrix-rbind-1.txt'

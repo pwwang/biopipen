@@ -58,7 +58,7 @@ pCbind.args.params = Box({
 	"quote"      : ""
 })
 pCbind.args.na       = 'NA'
-pCbind.args.fn2cname = 'function(fn) fn'
+pCbind.args.fn2cname = 'function(fn) fn' # if 
 pCbind.args.fill     = True
 pCbind.envs.fs2name  = fs2name
 pCbind.envs.rimport  = rimport

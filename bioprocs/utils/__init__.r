@@ -5,23 +5,30 @@ mem2      = utils$mem2
 # key orders not kept!
 cmdargs   = utils$cmdargs
 
-cbindfill = function (x1, x2) {
-	y = merge(x1, x2, by='row.names', all=T, sort=F)
-	rownames(y) = y[, "Row.names"]
-	y = y[, -1, drop=F]
-	cnames      = c(colnames(x1), colnames(x2))
-	if (!is.null(cnames)) {
-		colnames(y) = cnames
+cbindfill = function (...) {
+	dfs = list(...)
+	ret = Reduce(function(...) {
+		ret = merge(..., by='row.names', all=T, sort = F)
+		rownames(ret) = ret[, "Row.names"]
+		ret = ret[, -1, drop=F]
+		ret
+	}, dfs)
+	cnames = unlist(lapply(dfs, colnames))
+	if (length(cnames) > 0) {
+		colnames(ret) = make.unique(cnames)
 	}
-	return (y)
+	return (ret)
 }
 
-rbindfill = function (x1, x2) {
-	if (is.null(x1)) return(x2)
-	if (is.null(x2)) return(x1)
-	y = merge(x1, x2, all=T, sort=F)
-	rownames(y) = make.unique(c(rownames(x1), rownames(x2)))
-	return (y)
+rbindfill = function (...) {
+	library(data.table)
+	dfs = lapply(list(...), as.data.frame)
+	ret = as.data.frame(rbindlist(dfs, fill = T, use.names = T))
+	rnames = unlist(lapply(dfs, rownames))
+	if (length(rnames) > 0) {
+		rownames(ret) = make.unique(rnames)
+	}
+	return (ret)
 }
 
 logger = function(..., level = 'INFO') {
@@ -76,5 +83,11 @@ pretty.numbers = function(df, formats) {
 		df[, cols] = sprintf(formats[[fcols]], as.numeric(df[, cols]))
 	}
 	return (df)
+}
+
+# allow ifelse to return NULL
+ifelse = function(condition, true, false) {
+	if(condition) return(true)
+	return(false)
 }
 
