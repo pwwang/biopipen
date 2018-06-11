@@ -84,6 +84,8 @@ def composeProc(args):
 			lastpart = kparts.pop(-1)
 			aval = proc.args
 			for k in kparts:
+				if k not in aval:
+					aval[k] = {}
 				aval = aval[k]
 			if lastpart not in aval:
 				lastpart = lastpart.replace('-', '.')

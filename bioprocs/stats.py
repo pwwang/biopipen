@@ -131,6 +131,7 @@ pSurvival.args.inopts     = Box(rnames = True)
 pSurvival.args.combine    = False
 pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
 pSurvival.args.ngroups    = 2 # how many curves to plot, typically 2. The values will divided into <ngroups> groups for the var
+pSurvival.args.autogroup  = True # False to use median, else find the best binary split spot, only applicable when args.ngroup = 2
 pSurvival.args.plot = Box(
 	params  = Box({'font.legend': 13, 'pval': '{method}\np = {pval}', 'risk.table': True}), # params for ggsurvplot
 	arrange = Box() # params for arrange_ggsurvplots if args.combine = T. Typically nrow or ncol is set. If args.plot.arrange.ncol = 3, that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1.

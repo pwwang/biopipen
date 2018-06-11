@@ -1,2 +1,2 @@
 var	method	test	df	pvalue
-Gene	logrank	NA	1	8.76E-01
+Gene	logrank	NA	1	NA

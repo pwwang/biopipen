@@ -52,6 +52,10 @@ class TestStats (helpers.TestCase):
 		infile5  = path.join(self.indir, 'survival-bias.txt')
 		outfile5 = path.join(self.outdir, 'survival-bias.txt')
 		yield 'bias', infile5, False, False, False, {}, None, 1, outfile5, 2, 'km'
+		infile6  = path.join(self.indir, 'survival-coxplot.txt')
+		outfile6 = path.join(self.outdir, 'survival-coxplot.txt')
+		# check the plot when one group has less samples
+		yield 'coxp', infile6, True, False, True, {}, cvfile3, 1, outfile6, 4
 
 	def testSurvival(self, tag, infile, rnames, combine, pval, plot, covfile, nthread, outfile, ngroups = 2, method = 'cox', devpars = dict(res = 100, height = 300, width = 300)):
 		pSurvivalTest                    = pSurvival.copy(tag = tag)

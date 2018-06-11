@@ -5,21 +5,22 @@ library(survminer)
 set.seed(8525)
 
 # load parameters
-infile  = {{in.infile | R}}
-outfile = {{out.outfile | R}}
-outdir  = {{out.outdir | R}}
-inunit  = {{args.inunit | R}}
-outunit = {{args.outunit | R}}
-covfile = {{args.covfile | R}}
-nthread = {{args.nthread | R}}
-rnames  = {{args.inopts | lambda x: x.get('rnames', True) | R}}
-combine = {{args.combine | R}}
-method  = {{args.method | R}}
-devpars = {{args.devpars | R}}
-plot    = {{args.plot | R}}
-pval    = {{args.pval | R}}
-mainggs = {{args.ggs | R}}
-ngroups = as.numeric({{args.ngroups | R}})
+infile    = {{in.infile | R}}
+outfile   = {{out.outfile | R}}
+outdir    = {{out.outdir | R}}
+inunit    = {{args.inunit | R}}
+outunit   = {{args.outunit | R}}
+covfile   = {{args.covfile | R}}
+nthread   = {{args.nthread | R}}
+rnames    = {{args.inopts | lambda x: x.get('rnames', True) | R}}
+combine   = {{args.combine | R}}
+method    = {{args.method | R}}
+devpars   = {{args.devpars | R}}
+plot      = {{args.plot | R}}
+pval      = {{args.pval | R}}
+mainggs   = {{args.ggs | R}}
+ngroups   = as.numeric({{args.ngroups | R}})
+autogroup = as.logical({{args.autogroup | R}})
 
 if (pval == T) {
 	pval = 'logrank'
@@ -43,7 +44,7 @@ if (is.list(plot)) {
 	params = list(
 		pval             = '{method}\np = {pval}',
 		risk.table       = T,
-		surv.median.line = 'hv',
+		#surv.median.line = 'hv',
 		conf.int         = T
 	)
 	plot$params = update.list(params, plot$params)
@@ -71,11 +72,18 @@ allTypeMedian = function(dat) {
 useCox = function(dat, varname) {
 	cnames  = colnames(dat)
 	var     = cnames[3]
+	# all variables
 	vars    = cnames[3:length(cnames)]
+	# levels of the variable
 	varlvls = levels(factor(dat[, var]))
+	# apply the model
 	fmula.str = paste('Surv(time, status) ~', paste(vars, collapse = ' + '))
 	modcox    = coxph(as.formula(fmula.str), data = as.data.frame(data.matrix(dat)))
 
+	# the results
+	#   - summary: The result table of the main variable
+	#   - cov:  The result of the covariates
+	#   - plot: The survival plot
 	ret = list(summary = matrix(ncol = 8, nrow = 0), cov = matrix(ncol = 7, nrow = 0), plot = NULL)
 	colnames(ret$summary) = c('var', 'method', 'test', 'df', 'pvalue', 'hr', 'ci95_lower', 'ci95_upper')
 	colnames(ret$cov) = c('mainvar', 'covar', 'hr', 'ci95_lower', 'ci95_upper', 'z', 'pvalue')
@@ -96,6 +104,8 @@ useCox = function(dat, varname) {
 		hr..ci95_lower..ci95_upper..z = '%.3f',
 		pvalue = '%.2E'
 	))
+
+	# the pvaldata used to replace the place holders in args.plot.params.pval
 	if (!is.logical(pval)) {
 		pvaldata = list(
 			method = test.names[[pval]],
@@ -106,42 +116,11 @@ useCox = function(dat, varname) {
 		)
 	}
 
+	# plot the result out
 	if (is.list(plot)) {
-		nvlvls  = length(varlvls)
-		kmdata = dat
-		if (nvlvls > ngroups) {
-			kmdata[, var] = ncut(kmdata[, var], ngroups)
-		}
-		kmfmula.str = paste('Surv(time, status) ~', var)
-		kmfmula     = as.formula(kmfmula.str)
-		# survfit leads to an error
-		# see: https://github.com/kassambara/survminer/issues/283
-		kmfit       = surv_fit(kmfmula, data = kmdata)
-
-		if (nvlvls <= ngroups) {
-			newdata = data.frame(.var = levels(factor(dat[, var])))
-			colnames(newdata) = var
-			for (v in vars) {
-				if (var == v) next
-				tmp = data.frame(.v = allTypeMedian(dat[, v]))
-				colnames(tmp) = v
-				newdata = cbind(newdata, tmp)
-			}
-		} else {
-			newvars = ncut(dat[, var], ngroups)
-			varlvls = levels(factor(newvars))
-			newdata = data.frame(.var = unlist(lapply(varlvls, function(x) mean(dat[which(newvars == x), var]))))
-			colnames(newdata) = var
-			for (v in vars) {
-				if (var == v) next
-				tmp = data.frame(.v = allTypeMedian(dat[, v]))
-				colnames(tmp) = v
-				newdata = cbind(newdata, tmp)
-			}
-		}
 		params.default = list(
 			legend.title = paste0('Strata(', varname, ')'),
-			legend.labs  = varlvls,
+			legend.labs  = ifelse(length(varlvls)<=ngroups, varlvls, paste0('q', 1:ngroups)),
 			xlab         = paste0("Time (", outunit ,")"),
 			ylim.min     = 0.0,
 			pval.coord   = c(0, 0.1)
@@ -159,8 +138,6 @@ useCox = function(dat, varname) {
 			params$pval.coord[2] = params$pval.coord[2] + ylim.min
 		}
 		params$legend.title = gsub('{var}', varname, params$legend.title, fixed = T)
-		params$fit     = survfit(modcox, newdata = as.data.frame(data.matrix(newdata)))
-		params$data    = newdata
 		if (!is.logical(pval)) {
 			params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
 			params$pval = gsub('{pval}',   pvaldata$pval,   params$pval, fixed = T)
@@ -170,87 +147,134 @@ useCox = function(dat, varname) {
 		} else {
 			params$pval = FALSE
 		}
-		ret$plot       = do.call(ggsurvplot, params)
-		ret$plot$plot  = apply.ggs(ret$plot$plot, mainggs)
-
-		# hack the table
-		if (params$risk.table) {
-			tableggs.one = list(
-				xlab             = list(paste0("Time (", outunit ,")")),
-				ylab             = list(params$legend.title),
-				scale_y_discrete = list(labels = rev(varlvls))
-			)
-			tableggs.one   = update.list(tableggs.one, tableggs)
-			ret$plot$table = apply.ggs(ggsurvplot(kmfit, data = kmdata, risk.table = TRUE)$table, tableggs.one)
-		}
+		# use Kaplan Merier to plot
+		km            = useKM(dat, varname, params)
+		ret$plot      = km$plot
+		ret$quantdata = km$quantdata
 	}
 
 	return(ret)
 }
 
-useKM = function(dat, varname) {
+
+useKM = function(dat, varname, params = NULL) {
+	# @description:
+	#   Use Kaplan Merier to do survival analysis
+	# @params:
+	#   dat: The data frame, where:
+	#     - 1st col is time
+	#     - 2nd col is status (censoring)
+	#     - 3rd col is the varialbe (var)
+	#   varname: The variable name to display instead of var (3rd colname)
+	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
+
+	# get the variable name
 	cnames  = colnames(dat)
 	var     = cnames[3]
+
+	# get the levels of the values of the variable
 	varlvls = levels(factor(dat[, var]))
-	nvlvls  = length(varlvls)
+	# how many levels are there?
+	nvlvls = length(varlvls)
+
+	fmula = as.formula(paste('Surv(time, status) ~', var))
+	# the result: 
+	#   - summary: The result table
+	#   - plot:    The survival plot
+	#   - quantdata: The data to determine the quantile percentage
+	ret   = list(summary = matrix(ncol = 5, nrow = 0), plot = NULL, quantdata = NULL)
+
+	# if there are way more levels than expected number of groups, do the cut
 	if (nvlvls > ngroups) {
-		dat[, var] = ncut(dat[, var], ngroups)
-		varlvls = levels(factor(dat[, var]))
+		if (ngroups == 2 && autogroup) {
+			quantsteps = seq(0.05, 0.95, by = 0.005)
+			survscores = sapply(quantsteps, function(x){
+				newdata = dat
+				newdata[, var] = paste0(
+					"q", 
+					c(1, 2)[as.numeric(dat[, var] >= quantile(dat[, var], x)) + 1]
+				)
+				tryCatch({
+					coxph(fmula, data = newdata)$score
+				}, error = function(x) 1)
+			})
+			if (is.list(plot)) {
+				ret$quantdata = data.frame(step = quantsteps, survscore = survscores)
+			}
+			idxmax = which(survscores == max(survscores))[1]
+			quant  = quantsteps[idxmax]
+			dat[, var] = paste0(
+				"q", 
+				c(1, 2)[as.numeric(dat[, var] >= quantile(dat[, var], quant)) + 1]
+			)
+			varlvls = levels(factor(dat[, var]))
+			rm(quantsteps, survscore)
+		} else {
+			dat[, var] = ncut(dat[, var], ngroups)
+			varlvls = levels(factor(dat[, var]))
+		}
 	}
-	fmula.str = paste('Surv(time, status) ~', var)
-	modkm     = surv_fit(as.formula(fmula.str), data = dat)
+	# apply the model
+	modkm     = surv_fit(fmula, data = dat)
 
-	survpval  = surv_pvalue(modkm)
-	pval      = 'logrank'
-	if (!is.logical(pval)) {
-		pvaldata  = list(
-			method = test.names[[pval]],
-			pval   = sprintf('%.2E', survpval$pval)
-		)
-	}
+	# called directly
+	if (is.null(params)) {
+		# get the pvalue
+		survpval  = surv_pvalue(modkm)
+		pval      = 'logrank'
+		# format the pvalue
+		if (!is.logical(pval)) {
+			pvaldata  = list(
+				method = test.names[[pval]],
+				pval   = sprintf('%.2E', survpval$pval)
+			)
+		}
 
-	ret = list(summary = matrix(ncol = 5, nrow = 0), plot = NULL)
-	colnames(ret$summary) = c('var', 'method', 'test', 'df', 'pvalue')
-	if (nvlvls == 1) {
-		ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', 1, '1.00E+00'))
-		return (ret)
-	} else {
-		ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', 1, survpval$pval))
-		ret$summary = pretty.numbers(ret$summary, list(
-			pvalue = '%.2E'
-		))
+		colnames(ret$summary) = c('var', 'method', 'test', 'df', 'pvalue')
+		if (nvlvls == 1) {
+			ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', 1, '1.00E+00'))
+			return (ret)
+		} else {
+			ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', 1, survpval$pval))
+			ret$summary = pretty.numbers(ret$summary, list(
+				pvalue = '%.2E'
+			))
+		}
 	}
 
 	if (is.list(plot)) {
-		params.default = list(
-			legend.title = varname,
-			legend.labs  = varlvls,
-			xlab         = paste0("Time (", outunit ,")"),
-			ylim.min     = 0.0,
-			pval.coord   = c(0, 0.1)
-		)
-		params          = update.list(params.default, plot$params)
-		ylim.min        = params$ylim.min
-		params$ylim.min = NULL
-		if (!is.numeric(ylim.min)) { # auto
-			ylim.min = min(modkm$lower) - .2
-			ylim.min = max(ylim.min, 0)
-			params$ylim          = c(ylim.min, 1)
-			params$pval.coord[2] = params$pval.coord[2] + ylim.min
-		} else if (ylim.min > 0) {
-			params$ylim          = c(ylim.min, 1)
-			params$pval.coord[2] = params$pval.coord[2] + ylim.min
+		if (is.null(params)) {
+			params.default = list(
+				legend.title = varname,
+				legend.labs  = varlvls,
+				xlab         = paste0("Time (", outunit ,")"),
+				ylim.min     = 0.0,
+				pval.coord   = c(0, 0.1)
+			)
+			params          = update.list(params.default, plot$params)
+			ylim.min        = params$ylim.min
+			params$ylim.min = NULL
+			if (!is.numeric(ylim.min)) { # auto
+				ylim.min = min(modkm$lower) - .2
+				ylim.min = max(ylim.min, 0)
+				params$ylim          = c(ylim.min, 1)
+				params$pval.coord[2] = params$pval.coord[2] + ylim.min
+			} else if (ylim.min > 0) {
+				params$ylim          = c(ylim.min, 1)
+				params$pval.coord[2] = params$pval.coord[2] + ylim.min
+			}
+			if (!is.logical(pval)) {
+				params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
+				params$pval = gsub('{pval}',   pvaldata$pval,   params$pval, fixed = T)
+			} else {
+				params$pval = FALSE
+			}
 		}
 		params$fit     = modkm
 		params$data    = dat
-		if (!is.logical(pval)) {
-			params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
-			params$pval = gsub('{pval}',   pvaldata$pval,   params$pval, fixed = T)
-		} else {
-			params$pval = FALSE
-		}
-		ret$plot       = do.call(ggsurvplot, params)
-		ret$plot$plot  = apply.ggs(ret$plot$plot, mainggs)
+	
+		ret$plot      = do.call(ggsurvplot, params)
+		ret$plot$plot = apply.ggs(ret$plot$plot, mainggs)
 
 		# hack the table
 		if (params$risk.table) {
@@ -375,6 +399,10 @@ if (combine) {
 			allcovs = rbind(allcovs, ret$cov)
 		if (!is.null(ret$plot))
 			survplots  = c(survplots, list(ret$plot))
+		if (!is.null(ret$quantdata)) {
+			plotfile = file.path(outdir, paste0(ret$summary[1, 'var'], '.quant.png'))
+			plot.scatter(ret$quantdata, plotfile, ggs = list(geom_line = list()), devpars = devpars)
+		}
 	}
 	if (!is.null(survplots)) {
 		if (!'ncol' %in% names(plot$arrange)) plot$arrange$ncol = 1
@@ -397,6 +425,10 @@ if (combine) {
 			do.call(png, c(plotfile, devpars))
 			print (ret$plot)
 			dev.off()
+		}
+		if (!is.null(ret$quantdata)) {
+			plotfile = file.path(outdir, paste0(ret$summary[1, 'var'], '.quant.png'))
+			plot.scatter(ret$quantdata, plotfile, ggs = list(geom_line = list()), devpars = devpars)
 		}
 	}
 }
