@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -21,7 +21,7 @@ from pyppl import proc
 @requires:
 	[snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
 """
-pSnpEff = proc()
+pSnpEff = Proc()
 pSnpEff.input  = "infile:file"
 pSnpEff.output = "outdir:dir:{{infile | fn}}.snpeff"
 pSnpEff.args   = { "snpEff": "snpEff", "javamem": "-Xms1g -Xmx8g", "genome": "hg19", "informat": "vcf", "outformat": "vcf", "csvStats": True, "htmlStats": False, "params": "" }

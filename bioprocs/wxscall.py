@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -20,7 +20,7 @@ from pyppl import proc
 @requires:
 	[CNVnator](https://github.com/abyzovlab/CNVnator)
 """
-pCNVnator = proc()
+pCNVnator = Proc()
 pCNVnator.input  = "infile:file"
 pCNVnator.output = "outfile:file:{{infile | fn}}.cnv.vcf"
 pCNVnator.args   = { "cnvnator": "cnvnator", "cnv2vcf": "cnvnator2VCF.pl", "binsize": 100, "genome": "hg19", "chrom": "", "chrdir": "" }

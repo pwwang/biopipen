@@ -256,7 +256,12 @@ pRNAseqDEG.envs.rimport = rimport
 pRNAseqDEG.lang         = params.Rscript.value
 pRNAseqDEG.script       = "file:scripts/rnaseq/pRNAseqDEG.r"
 
-
+"""
+@name:
+	pCoexp
+@description:
+	Get co-expression of gene pairs in the expression matrix.
+"""
 pCoexp             = Proc(desc = "Get co-expression of gene pairs in the expression matrix.")
 pCoexp.input       = "infile:file"
 pCoexp.output      = "outfile:file:{{in.infile | fn}}.coexp, outpval:file:{{in.infile | fn}}.pval"

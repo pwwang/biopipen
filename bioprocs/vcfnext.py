@@ -57,6 +57,8 @@ pCallRate.script           = "file:scripts/vcfnext/pCallRate.r"
 """
 @name:
 	pCepip
+@description:
+	Run CEPIP.
 @input:
 	`infile:file`: The input file (vcf or avinput)
 @output:
@@ -136,6 +138,8 @@ pMafMerge.script      = "file:scripts/vcfnext/pMafMerge.py"
 """
 @name:
 	pMaftools
+@description:
+	Use maftools to draw plots.
 @args:
 	`ngenes`: 
 @requires:

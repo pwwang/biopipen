@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -24,7 +24,7 @@ from pyppl import proc
 @requires:
 	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
 """
-pPCA = proc()
+pPCA = Proc()
 pPCA.input          = "infile:file"
 pPCA.output         = "outfile:file:{{infile | fn}}.pca/pcs.txt, outdir:dir:{{infile | fn}}.pca"
 pPCA.args.transpose = False
@@ -89,7 +89,7 @@ write.table (pcs, pcfile, col.names=T, row.names=T, quote=F, sep="\\t")
 	`n`: The number of PCs to select. Default: 0.9
 	- If it is < 1, used as the % variation explained from stdev.txt
 """
-pSelectPCs = proc ()
+pSelectPCs = Proc ()
 pSelectPCs.input  = "infile:file, indir:file"
 pSelectPCs.output = "outfile:file:{{indir | fn}}.toppcs.txt"
 pSelectPCs.args.n = .9

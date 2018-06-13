@@ -43,7 +43,12 @@ pDownloadGet.output = "outfile:file:{{in.url | bn | lambda x: x if x else 'outfi
 pDownloadGet.lang   = params.python.value
 pDownloadGet.script = "file:scripts/web/pDownloadGet.py"
 
-# alias
+"""
+@name:
+	pDownload
+@description:
+	Alias of `pDownloadGet`
+"""
 pDownload = pDownloadGet.copy()
 
 """

@@ -1,6 +1,6 @@
 from pyppl import Proc, Box
 from . import params
-from .utils import txt, download, runcmd
+#from .utils import txt, download, runcmd
 
 """
 @name:
@@ -34,10 +34,10 @@ pTxt.args.transform       = ''
 pTxt.args.username        = ''
 pTxt.args.password        = ''
 pTxt.args.curl            = params.curl.value
-pTxt.tplenvs.txtFilter    = txt.filter.py
-pTxt.tplenvs.txtTransform = txt.transform.py
-pTxt.tplenvs.downloadCurl = download.curl.py
-pTxt.tplenvs.runcmd       = runcmd.py
+# pTxt.tplenvs.txtFilter    = txt.filter.py
+# pTxt.tplenvs.txtTransform = txt.transform.py
+# pTxt.tplenvs.downloadCurl = download.curl.py
+# pTxt.tplenvs.runcmd       = runcmd.py
 pTxt.args.urls            = Box({
 	'drugbank-target-all': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-all-uniprot-links',
 	'drugbank-target-approved': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-approved-uniprot-links',
@@ -63,8 +63,8 @@ pGtf.args.curl            = 'curl'
 pGtf.args.username        = ''
 pGtf.args.password        = ''
 pGtf.args.genepredtogtf   = 'genePredToGtf'
-pGtf.tplenvs.runcmd       = runcmd.py
-pGtf.tplenvs.downloadCurl = download.curl.py
+# pGtf.tplenvs.runcmd       = runcmd.py
+# pGtf.tplenvs.downloadCurl = download.curl.py
 pGtf.args.urls            = {
 	'hg19-refgene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz',
 	'hg19-knowngene': 'http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/knownGene.txt.gz',

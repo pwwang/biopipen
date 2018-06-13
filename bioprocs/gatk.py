@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 #############################
 # GATK utilities            #
@@ -107,9 +107,9 @@ fi
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pRealignerTargetCreator = proc()
+pRealignerTargetCreator = Proc()
 pRealignerTargetCreator.input  = "bamfile:file, reffile:file"
-pRealignerTargetCreator.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
+# pRealignerTargetCreator.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
 pRealignerTargetCreator.output = "outfile:file:{{bamfile | fn}}.indelRealigner.intervals"
 pRealignerTargetCreator.args   = { "gatk": "gatk", "picard": "picard", "samtools": "samtools", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": "" }
 pRealignerTargetCreator.script = """
@@ -150,9 +150,9 @@ pRealignerTargetCreator.script = """
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pIndelRealigner = proc()
+pIndelRealigner = Proc()
 pIndelRealigner.input  = "bamfile:file, intfile:file, reffile:file"
-pIndelRealigner.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
+# pIndelRealigner.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
 pIndelRealigner.output = "outfile:file:{{bamfile | fn | lambda x: __import__('re').sub(r'(\\.dedup)?$', '', x)}}.realigned.bam"
 pIndelRealigner.args   = { "gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": "" }
 pIndelRealigner.script = """
@@ -193,9 +193,9 @@ pIndelRealigner.script = """
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `bamfile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pBaseRecalibrator = proc()
+pBaseRecalibrator = Proc()
 pBaseRecalibrator.input  = "bamfile:file, reffile:file"
-pBaseRecalibrator.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
+# pBaseRecalibrator.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
 pBaseRecalibrator.output = "outfile:file:{{bamfile | fn}}.recal.table"
 pBaseRecalibrator.args   = { "gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "knownSites": "", "params": "" }
 pBaseRecalibrator.script = """
@@ -237,9 +237,9 @@ fi
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pPrintReads = proc()
+pPrintReads = Proc()
 pPrintReads.input  = "bamfile:file, recaltable:file, reffile:file"
-pPrintReads.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
+# pPrintReads.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
 pPrintReads.output = "outfile:file:{{bamfile | fn | lambda x: __import__('re').sub(r'(\\.realigned)?$', '', x)}}.bam"
 pPrintReads.args   = { "gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": "" }
 pPrintReads.script = """
@@ -276,9 +276,9 @@ pPrintReads.script = """
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pHaplotypeCaller = proc()
+pHaplotypeCaller = Proc()
 pHaplotypeCaller.input  = "bamfile:file, reffile:file"
-pHaplotypeCaller.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
+# pHaplotypeCaller.brings = {"bamfile": "{{bamfile | bn}}.bai", "reffile#dict": "{{reffile | fn}}.dict", "reffile#fai": "{{reffile | bn}}.fai"}
 pHaplotypeCaller.output = "outfile:file:{{bamfile | fn}}.vcf"
 pHaplotypeCaller.args   = { "gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "nthread": 1, "params": "" }
 pHaplotypeCaller.script = """
@@ -318,9 +318,9 @@ pHaplotypeCaller.script = """
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pSelectVariants = proc()
+pSelectVariants = Proc()
 pSelectVariants.input  = "vcffile:file, reffile:file"
-pSelectVariants.brings = {"reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
+# pSelectVariants.brings = {"reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
 pSelectVariants.output = "outfile:file:{{vcffile | fn}}.selected.vcf"
 pSelectVariants.args   = {"gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": ""}
 pSelectVariants.script = """
@@ -355,9 +355,9 @@ pSelectVariants.script = """
 	[samtools](http://www.htslib.org/) if `reffile` is not indexed or `infile` is not indexed.
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pVariantFiltration = proc()
+pVariantFiltration = Proc()
 pVariantFiltration.input  = "vcffile:file, reffile:file"
-pVariantFiltration.brings = {"reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
+# pVariantFiltration.brings = {"reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
 pVariantFiltration.output = "outfile:file:{{vcffile | fn | lambda x: __import__('re').sub(r'(\\.selected)?$', '', x)}}.filtered.vcf"
 pVariantFiltration.args   = { "gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": "" }
 pVariantFiltration.script = """
@@ -395,9 +395,9 @@ pVariantFiltration.script = """
 	[samtools](http://www.htslib.org/) if index files of input files are not found
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pMuTect2 = proc()
+pMuTect2 = Proc()
 pMuTect2.input  = "tumor:file, normal:file, reffile:file"
-pMuTect2.brings = {"tumor": "{{tumor | bn}}.bai", "normal": "{{normal | bn}}.bai", "reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
+#pMuTect2.brings = {"tumor": "{{tumor | bn}}.bai", "normal": "{{normal | bn}}.bai", "reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
 pMuTect2.output = "outfile:file:{{tumor | fn}}-{{normal | fn}}.vcf"
 pMuTect2.args   = { "gatk": "gatk", "samtools": "samtools", "picard": "picard", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": "" }
 pMuTect2.script = """
@@ -434,9 +434,9 @@ pMuTect2.script = """
 	[samtools](http://www.htslib.org/) if index files of input files are not found
 	[picard](https://broadinstitute.github.io/picard/) if `reffile` is not dicted.
 """
-pMuTect2Interval = proc()
+pMuTect2Interval = Proc()
 pMuTect2Interval.input  = "tumor:file, normal:file, reffile:file"
-pMuTect2Interval.brings = {"tumor": "{{tumor | bn}}.bai", "normal": "{{normal | bn}}.bai", "reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
+#pMuTect2Interval.brings = {"tumor": "{{tumor | bn}}.bai", "normal": "{{normal | bn}}.bai", "reffile#fai": "{{reffile | bn}}.fai", "reffile#dict": "{{reffile | fn}}.dict"}
 pMuTect2Interval.output = "outfile:file:{{tumor | fn}}-{{normal | fn}}.vcf"
 pMuTect2Interval.args   = { "gatk": "gatk", "picard": "picard", "samtools": "samtools", "javamem": "-Xms1g -Xmx8g", "tmpdir": "/tmp", "params": "" }
 pMuTect2Interval.script = """

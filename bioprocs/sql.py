@@ -36,8 +36,8 @@ pCreateTable.output           = "dsn:var:{{in.dsn}}"
 pCreateTable.args.intype      = 'schema'
 pCreateTable.args.drop        = False
 pCreateTable.args.delimit     = "\t"
-pCreateTable.envs.dsnparse    = sql.dsnparse.py
-pCreateTable.envs.schemaparse = sql.schemaparse.py
+pCreateTable.envs.dsnparse    = sql.dsnparse
+pCreateTable.envs.schemaparse = sql.schemaparse
 pCreateTable.lang             = params.python.value
 pCreateTable.script           = 'file:scripts/sql/pCreateTable.py'
 
@@ -61,8 +61,8 @@ pImportData.input            = "dsn, datafile:file"
 pImportData.output           = "dsn:var:{{in.dsn}}"
 pImportData.args.delimit     = "\t"
 pImportData.args.drop        = False
-pImportData.envs.dsnparse    = sql.dsnparse.py
-pImportData.envs.schemaparse = sql.schemaparse.py
+pImportData.envs.dsnparse    = sql.dsnparse
+pImportData.envs.schemaparse = sql.schemaparse
 pImportData.envs.tablename   = lambda fn: __import__('os').path.basename(fn).split('.')[0]
 pImportData.lang             = params.python.value
 pImportData.script           = 'file:scripts/sql/pImportData.py'
@@ -84,7 +84,7 @@ pUpdateTable               = Proc(desc = 'Update table using sql.')
 pUpdateTable.input         = 'dsn'
 pUpdateTable.output        = 'dsn:var:{{in.dsn}}'
 pUpdateTable.args.sql      = []
-pUpdateTable.envs.dsnparse = sql.dsnparse.py
+pUpdateTable.envs.dsnparse = sql.dsnparse
 pUpdateTable.lang          = params.python.value
 pUpdateTable.script        = 'file:scripts/sql/pUpdateTable.py'
 
@@ -105,6 +105,6 @@ pSelectTable               = Proc(desc = 'Select data from table and dump it.')
 pSelectTable.input         = 'dsn'
 pSelectTable.output        = 'outfile:file:sqlSelectTable-{{in.dsn, args.sql | lambda x,y: __import__("hashlib").md5(str(x) + str(y)).hexdigest()[:16]}}.dumped.txt'
 pSelectTable.args.sql      = []
-pSelectTable.envs.dsnparse = sql.dsnparse.py
+pSelectTable.envs.dsnparse = sql.dsnparse
 pSelectTable.lang          = params.python.value
 pSelectTable.script        = 'file:scripts/sql/pSelectTable.py'

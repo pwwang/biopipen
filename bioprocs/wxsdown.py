@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 Downstream analysis after mutations called
@@ -27,7 +27,7 @@ Downstream analysis after mutations called
 @requires:
 	[MutSing](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
 """
-pMutSig = proc()
+pMutSig = Proc()
 pMutSig.input     = "maffile:file, cvgfile:file, cvrfile:file, mutdict:file, chrdir:file"
 pMutSig.output    = "outdir:dir:mutsig.{{#}}"
 pMutSig.args      = {"mutsig": "mutsig", "mcr": ""}
@@ -55,7 +55,7 @@ pMutSig.script    = """
 @requires:
 	[vcf2maf.py](https://github.com/mskcc/vcf2maf)
 """
-pVcf2Maf = proc()
+pVcf2Maf = Proc()
 pVcf2Maf.input     = "infile:file"
 pVcf2Maf.output    = "outfile:file:{{infile | fn}}.maf"
 pVcf2Maf.args      = {"vepdata":"", "vep": "vep", "vcf2maf": "vcf2maf.pl", "reffile": "", "filtervcf": "", "nthread": 1, "params": ""}
@@ -104,7 +104,7 @@ veppath=$(dirname $(which "{{args.vep}}"))
 @output:
 	`outfile:file`: The merged MAF file
 """
-pMergeMafs = proc ()
+pMergeMafs = Proc ()
 pMergeMafs.input  = "indir:file"
 pMergeMafs.output = "outfile:file:{{indir | fn}}.{{#}}.maf"
 pMergeMafs.script = """
@@ -150,7 +150,7 @@ done
 @requires:
 	[`pyvcf`](https://github.com/jamescasbon/PyVCF)
 """
-pMutsig4Plot = proc ()
+pMutsig4Plot = Proc ()
 pMutsig4Plot.input   = "msdir:file"
 pMutsig4Plot.output  = "outfile:file:{{msdir | fn}}.4mutplot"
 pMutsig4Plot.lang    = "python"
@@ -240,7 +240,7 @@ fout.close()
 @output:
 	`outfile:file`:  The plot png file
 """
-pMutPlot = proc ()
+pMutPlot = Proc ()
 pMutPlot.input  = "indir:file"
 pMutPlot.output = "outfile:file:mutplot.{{#}}.png"
 pMutPlot.args   = {"snHeight": 40, "ftWidth": 40, "pnWidth": 40, "lgWidth": 160, "cex": 1}
@@ -613,6 +613,8 @@ dev.off()
 """
 @name:
 	pCepip
+@description:
+	run CEPIP.
 @input:
 	`avinput:file`: The avinput file
 	`cell`:         The cell
@@ -623,7 +625,7 @@ dev.off()
 @requires:
 	[`cepip`](http://jjwanglab.org/cepip/)
 """
-pCepip = proc()
+pCepip = Proc()
 pCepip.input  = "avinput:file, cell"
 pCepip.output = "outfile:file:{{avinput | fn}}.cepip.flt.txt"
 pCepip.args   = {"bin-cepip": "/data2/junwenwang/shared/tools/cepip/cepip.jar"}

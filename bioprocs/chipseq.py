@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -33,12 +33,12 @@ from pyppl import proc
 		     |-- di --|
 ```
 """
-pPeakToRegPotential = proc ()
-pPeakToRegPotential.input     = "peakfile:file, genefile:file"
-pPeakToRegPotential.output    = "outfile:file:{{peakfile | fn}}.rp"
-pPeakToRegPotential.args      = {'intensity': True, 'geneformat': 'ucsc+gz', 'peakformat': 'peak', 'window': 100000}
-pPeakToRegPotential.defaultSh = "python"
-pPeakToRegPotential.script    = """
+pPeakToRegPotential        = Proc ()
+pPeakToRegPotential.input  = "peakfile:file, genefile:file"
+pPeakToRegPotential.output = "outfile:file:{{peakfile | fn}}.rp"
+pPeakToRegPotential.args   = {'intensity': True, 'geneformat': 'ucsc+gz', 'peakformat': 'peak', 'window': 100000}
+pPeakToRegPotential.lang   = "python"
+pPeakToRegPotential.script = """
 import math, gzip
 peakfile = "{{peakfile}}"
 genefile = "{{genefile}}"

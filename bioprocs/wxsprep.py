@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 Prepare WXS data, including alignment, QC,...
@@ -24,7 +24,7 @@ Prepare WXS data, including alignment, QC,...
 @requires:
 	[trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
 """
-pTrimmomaticPE = proc ()
+pTrimmomaticPE = Proc ()
 pTrimmomaticPE.input   = "fqfile1:file, fqfile2:file"
 pTrimmomaticPE.output  = [
 	"outfile1:file:{{fqfile1 | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz",
@@ -74,7 +74,7 @@ $trimmomatic PE -{{args.phred}} -threads {{args.nthread}} -trimlog $logfile "{{f
 @requires:
 	[trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
 """
-pTrimmomaticSE = proc ()
+pTrimmomaticSE = Proc ()
 pTrimmomaticSE.input   = "fqfile:file"
 pTrimmomaticSE.output  = "outfile:file:{{fqfile | fn | lambda x: __import__('re').sub(r'(\\.fq|\\.fastq)$', '', x)}}.clean.fq.gz"
 pTrimmomaticSE.args    = {
@@ -120,7 +120,7 @@ $trimmomatic SE -{{args.phred}} -threads {{args.nthread}} -trimlog $logfile "{{f
 @requires:
 	[bwa](https://github.com/lh3/bwa)
 """
-pAlignPEByBWA = proc ()
+pAlignPEByBWA = Proc ()
 pAlignPEByBWA.input   = "infile1:file, infile2:file, reffile:file"
 pAlignPEByBWA.output  = "outfile:file:{{infile1 | bn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]*1(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
 pAlignPEByBWA.args    = {
@@ -165,7 +165,7 @@ fi
 @requires:
 	[bwa](https://github.com/lh3/bwa)
 """
-pAlignSEByBWA = proc ()
+pAlignSEByBWA = Proc ()
 pAlignSEByBWA.input   = "infile:file, reffile:file"
 pAlignSEByBWA.output  = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.clean)?(\\.fq|\\.fastq)(\\.gz)?$', '', x)}}.sam"
 pAlignSEByBWA.args    = {
@@ -205,7 +205,7 @@ fi
 @requires:
 	[NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 """
-pAlignPEByNGM = proc ()
+pAlignPEByNGM = Proc ()
 pAlignPEByNGM.input   = "infile1:file, infile2:file, reffile:file"
 pAlignPEByNGM.output  = "outfile:file:{{infile1 | fn | lambda x: __import__('re').sub(r'[^a-zA-Z0-9]?1(\\.clean)?(\\.fq|\\.fastq)?$', '', x)}}.{{args.outtype}}"
 pAlignPEByNGM.args    = {
@@ -241,7 +241,7 @@ fi
 @requires:
 	[NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
 """
-pAlignSEByNGM = proc ()
+pAlignSEByNGM = Proc ()
 pAlignSEByNGM.input   = "infile:file, reffile:file"
 pAlignSEByNGM.output  = "outfile:file:{{infile | fn}}.{{args.outtype}}"
 pAlignSEByNGM.args    = {
@@ -274,7 +274,7 @@ fi
 @requires:
 	[samtools](http://www.htslib.org/)
 """
-pMergeBams = proc ()
+pMergeBams = Proc ()
 pMergeBams.input   = "bamdir:dir"
 pMergeBams.output  = "outfile:file:{{bamdir | fn}}.merged.bam"
 pMergeBams.args    = {"samtools": "samtools", "nthread": 1, "params": ""}

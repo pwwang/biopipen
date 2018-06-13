@@ -29,6 +29,32 @@ TAXIDS  = {
 class RecordNotFound(Exception):
 	pass
 
+def replaceList(l, search, replace):
+	if not isinstance(search, list):
+		search = [search]
+	ret = l[:]
+	for i, e in enumerate(ret):
+		if e in search:
+			ret[i] = replace
+	return ret
+
+def querygene(*args, **kwargs):
+	# change ensg to ensemblgene
+	kwargs['scopes'] = replaceList(kwargs['scopes'], ['ensg', 'ensembl.gene', 'ensembl'], 'ensemblgene')
+	kwargs['fields'] = replaceList(kwargs['fields'], ['ensg', 'ensemblgene', 'ensembl'], 'ensembl.gene')
+	
+	if 'ensemblgene' in kwargs['scopes'] and not 'ensembl.gene' in kwargs['fields']:
+		kwargs['fields'].append('ensembl.gene')
+	mgret = MyGeneInfo().querymany(*args, **kwargs)
+	for ret in mgret:
+		if 'ensembl' in ret:
+			if 'gene' in ret['ensembl']:
+				ret['ensembl'] = ret['ensembl']['gene']
+			# more than one ensembl gene mapped, take the first one
+			elif isinstance(ret['ensembl'], list) and len(ret['ensembl']) > 0 and 'gene' in ret['ensembl'][-1]:
+				ret['ensembl'] = ret['ensembl'][-1]['gene']
+	return mgret
+
 def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'hg19', inopts = None, outopts = None, genecol = None, cachedir = gettempdir()):
 
 	_inopts = Box(skip = 0, comment = '#', delimit = '\t')
@@ -72,13 +98,15 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 	# query from cache
 	tocols   = alwaysList(to)
+	tocols   = replaceList(tocols, ['ensg', 'ensemblgene', 'ensembl.gene'], 'ensembl')
 	frmcols  = alwaysList(frm)
+	frmcols  = replaceList(frmcols, ['ensg', 'ensemblgene', 'ensembl.gene'], 'ensembl')
 	frmkeys  = ','.join(frmcols)
 	columns  = list(set(tocols + frmcols + ['taxid']))
 	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
 
 	# query from api
-	mgret = MyGeneInfo().querymany(allrest[frmkeys], scopes = frmcols, fields = columns, species = SPECIES[genome])
+	mgret = querygene(allrest[frmkeys], scopes = frmcols, fields = columns, species = SPECIES[genome])
 	# get all result for each query
 	genetmp = {}
 	for gret in mgret:
@@ -111,7 +139,6 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		if not gr: continue
 		del gr['_score']
 		del gr['query']
-
 		gr = Cache._result({x:(gr[x] if x in gr else '') for x in set(columns + gr.keys())}, dummies)
 		for x, val in gr.items():
 			if not x in data2save:

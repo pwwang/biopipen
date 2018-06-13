@@ -243,6 +243,12 @@ pVcf2Maf.args.params         = Box()
 pVcf2Maf.lang                = params.python.value
 pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 
+"""
+@name:
+	pVcf2GTMat
+@description:
+	Convert Vcf file to genotype matrix.
+"""
 pVcf2GTMat = Proc(desc = 'Convert Vcf file to genotype matrix')
 pVcf2GTMat.input = 'infile:file'
 pVcf2GTMat.output = 'outfile:file:{{in.infile | fn2}}.gtmat'

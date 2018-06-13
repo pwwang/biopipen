@@ -3,6 +3,12 @@ from . import params
 from .seq import pPromoters
 #from .utils import genenorm, write
 
+"""
+@name:
+	pGenePromoters
+@description:
+	Alias of `seq.pPromoters`.
+"""
 pGenePromoters = pPromoters.copy()
 
 """

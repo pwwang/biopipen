@@ -20,6 +20,12 @@ def _getCommonName(f1, f2):
 	while not ret[-1].isalnum(): ret = ret[:-1]
 	return ret
 
+"""
+@name:
+	pFastq2Expr
+@description:
+	Use Kallisto to get gene expression from pair-end fastq files.
+"""
 pFastq2Expr        = Proc(desc = 'Use Kallisto to get gene expression from pair-end fastq files.')
 pFastq2Expr.input  = "fqfile1:file, fqfile2:file"
 pFastq2Expr.output = [

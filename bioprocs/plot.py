@@ -10,9 +10,9 @@ from . import params, rimport
 	pPlot
 @description:
 	Use ggplot2 to generate plots
-@infile:
+@input:
 	`infile:file`: The input data file
-@outfile:
+@output:
 	`outfile:file`: The output file
 @args:
 	`cnames` : Whether the input file has colnames. Default: True

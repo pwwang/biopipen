@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 """
 All rank related utilities
 """
@@ -37,7 +37,7 @@ All rank related utilities
 	`width`:    Width of the png file. Default: 2000
 	`height`:   height of the png file. Default: 2000
 """
-pRankProduct = proc ()
+pRankProduct = Proc ()
 pRankProduct.input  = "infile:file"
 pRankProduct.output = "outdir:dir:{{infile | fn}}.rp"
 pRankProduct.args   = {"informat": "value", "pval": True, "header": True, "plot": 0, "cex": 0.9, "cnheight": 80, "rnwidth": 50, "width": 2000, "height": 2000}

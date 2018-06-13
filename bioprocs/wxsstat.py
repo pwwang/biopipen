@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -15,7 +15,7 @@ from pyppl import proc
 @requires:
 	[`pyvcf`](https://github.com/jamescasbon/PyVCF)
 """
-pVcf2List = proc()
+pVcf2List = Proc()
 pVcf2List.input   = "vcffile:file"
 pVcf2List.output  = "outfile:file:{{vcffile | fn}}.stat"
 pVcf2List.lang    = "python"
@@ -74,7 +74,7 @@ with open ("{{outfile}}", "w") as fout:
 	`outsnp:file`:    The report of call rate for each snp
 	`figsnp:file`:    The bar chat of snp call rates
 """
-pCallRate = proc()
+pCallRate = Proc()
 pCallRate.input     = "infile:file"
 pCallRate.output    = [
 	"outsample:file:{{infile | fn}}.sampleCallRate.txt",
@@ -128,7 +128,7 @@ plotFreq (snpcr, "{{figsnp}}", xlab="SNP call rate", "# snps")
 @requires:
 	[bamstats](http://bamstats.sourceforge.net/)
 """
-pCoverageByBamstats = proc()
+pCoverageByBamstats = Proc()
 pCoverageByBamstats.input     = "infile:file"
 pCoverageByBamstats.output    = "outfile:file:{{infile | fn}}.bamstats.txt"
 pCoverageByBamstats.args      = { "bin": "bamstats", "params": "" }
@@ -150,7 +150,7 @@ pCoverageByBamstats.script    = """
 @output:
 	`outdir:file`: The directory containing output figures
 """
-pPlotBamstats = proc()
+pPlotBamstats = Proc()
 pPlotBamstats.input     = "indir:file"
 pPlotBamstats.output    = "outdir:file:{{indir | bn}}-covplots"
 pPlotBamstats.args      = {"chroms": ""}
@@ -241,7 +241,7 @@ dev.off()
 	`chroms`:     The chromsome filter. Default: "" (all chroms)
 	- Note: snpEff csvstat file has no "chr" prefix
 """
-pSnpEff2Stat = proc ()
+pSnpEff2Stat = Proc ()
 pSnpEff2Stat.input  = "indir:file"
 pSnpEff2Stat.output = "outdir:dir:{{indir | fn}}.{{#}}.snpEffStats"
 pSnpEff2Stat.args   = {"chroms": ""}
@@ -535,7 +535,7 @@ for name, sampledata in data.iteritems():
 	- use `library(devtools); install.github("pwwang/corrplot")`
 	[`ggplot2`](http://ggplot2.org/)
 """
-pPlotSnpEff = proc ()
+pPlotSnpEff = Proc ()
 pPlotSnpEff.input  = "indir:file"
 pPlotSnpEff.output = "outdir:dir:{{indir | fn}}.snpEffPlots"
 pPlotSnpEff.lang   = "Rscript"

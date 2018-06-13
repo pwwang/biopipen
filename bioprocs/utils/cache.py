@@ -264,9 +264,14 @@ class Cache(object):
 		'c2': ((lambda v: Raw('"c2" || \'|%s\'' % v)), lambda v:v)
 	}
 	"""
-	def save(self, data, dummies = None):
+	def save(self, data, dummies = None, chunk = 1000):
 
-		Cache._checkData(data)
+		datalen = Cache._checkData(data)
+		for i in xrange(0, datalen, chunk):
+			datai = {key:val[i:i+chunk] for key, val in data.items()}
+			self.saveN(datai, dummies)
+
+	def saveN(self, data, dummies):
 		# see whether we should update or insert
 		pkdata     = data[self.pkey]
 		rs         = self.medoo.select(self.table, '*', {self.pkey: pkdata})

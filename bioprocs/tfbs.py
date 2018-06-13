@@ -1,10 +1,12 @@
 import re
 from pyppl import Proc, Box
-from .utils import runcmd, helpers, parallel
+#from .utils import runcmd, helpers, parallel
 from . import params
 """
 @name:
 	pMotifScan
+@description:
+	Scan motif along the given sequences.
 @input:
 	`tffile:file`: The infile containing TF name and motif name.
 		- If only one column is give, will be used as both TF and motif name
@@ -37,9 +39,9 @@ pMotifScan.args.tfmotifs       = params.tfmotifs.value
 pMotifScan.args.pval           = 1e-4
 pMotifScan.args.ucsclink       = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}'
 pMotifScan.args.nthread        = 1
-pMotifScan.envs.runcmd         = runcmd.py
-pMotifScan.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pMotifScan.envs.parallel       = parallel.py
+#pMotifScan.envs.runcmd         = runcmd.py
+#pMotifScan.envs.params2CmdArgs = helpers.params2CmdArgs.py
+#pMotifScan.envs.parallel       = parallel.py
 pMotifScan.lang                = params.python.value
 pMotifScan.script              = "file:scripts/tfbs/pMotifScan.py"
 

@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 """
 @name:
@@ -15,7 +15,7 @@ from pyppl import proc
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitAccess = proc ()
+pCNVkitAccess = Proc ()
 pCNVkitAccess.input  = "fafile:file"
 pCNVkitAccess.args   = {"params": "", "cnvkit": "cnvkit.py"}
 pCNVkitAccess.output = "outfile:file:{{fafile | fn}}.access.bed"
@@ -39,7 +39,7 @@ pCNVkitAccess.script = """
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitTarget = proc ()
+pCNVkitTarget = Proc ()
 pCNVkitTarget.input  = "acfile:file, anfile:file"
 pCNVkitTarget.output = "outfile:file:{{acfile | fn}}-{{anfile | fn}}.targets"
 pCNVkitTarget.args   = {"cnvkit": "cnvkit.py", "params": ""}
@@ -64,7 +64,7 @@ pCNVkitTarget.script = """
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitCov = proc ()
+pCNVkitCov = Proc ()
 pCNVkitCov.input  = "infile:file"
 pCNVkitCov.output = "outfile:file:{{infile | fn}}.covcnn"
 pCNVkitCov.args   = {"cnvkit": "cnvkit.py", "nthread": 1, "tgfile": "", "params": ""}
@@ -91,7 +91,7 @@ fi
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitRef = proc ()
+pCNVkitRef = Proc ()
 pCNVkitRef.input  = "indir:file"
 pCNVkitRef.output = "outfile:file:{{indir | fn}}.refcnn"
 pCNVkitRef.args   = {"cnvkit": "cnvkit.py", "params": " --no-edge "}
@@ -115,7 +115,7 @@ pCNVkitRef.script = """
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitFix = proc ()
+pCNVkitFix = Proc ()
 pCNVkitFix.input  = "infile:file, rcfile:file"
 pCNVkitFix.output = "outfile:file:{{infile | fn}}.cnr"
 pCNVkitFix.args   = {"cnvkit": "cnvkit.py", "params": " --no-edge "}
@@ -139,7 +139,7 @@ pCNVkitFix.script = """
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitSeg = proc ()
+pCNVkitSeg = Proc ()
 pCNVkitSeg.input  = "infile:file"
 pCNVkitSeg.output = "outfile:file:{{infile | fn}}.cns"
 pCNVkitSeg.args   = {"cnvkit": "cnvkit.py", "nthread": 1, "params": ""}
@@ -162,7 +162,7 @@ pCNVkitSeg.script = """
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitCall = proc (desc="Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number")
+pCNVkitCall = Proc (desc="Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number")
 pCNVkitCall.input  = "infile:file"
 pCNVkitCall.output = "outfile:file:{{infile | fn}}.callcns"
 pCNVkitCall.args   = {"cnvkit": "cnvkit.py", "params": ""}
@@ -190,7 +190,7 @@ pCNVkitCall.script = """
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitPlot = proc ()
+pCNVkitPlot = Proc ()
 pCNVkitPlot.input  = "cnrdir:file, cnsdir:file"
 pCNVkitPlot.output = "outdir:dir:{{cnrdir | fn}}.cnvkit.plots"
 pCNVkitPlot.args   = {"cnvkit": "cnvkit.py", "region": "", "gene": "", "scatter": True, "diagram": True, "heatmap": True}
@@ -252,7 +252,7 @@ if [[ "{{args.heatmap}}" == "True" ]]; then
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitRpt = proc ()
+pCNVkitRpt = Proc ()
 pCNVkitRpt.input  = "cnrfile:file, cnsfile:file"
 pCNVkitRpt.output = "outdir:dir:{{cnrfile | fn}}.cnvkit.reports"
 pCNVkitRpt.args   = {"cnvkit": "cnvkit.py", "breaks": True, "gainloss": True, "metrics": True, "segmetrics": True}
@@ -290,7 +290,7 @@ fi
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkit2Vcf = proc ()
+pCNVkit2Vcf = Proc ()
 pCNVkit2Vcf.input  = "cnsfile:file"
 pCNVkit2Vcf.output = "outfile:file:{{cnsfile | fn}}.cnvkit.vcf"
 pCNVkit2Vcf.args   = {"cnvkit": "cnvkit.py", "params": ""}

@@ -1,9 +1,8 @@
 from pyppl import Proc, Box
 from . import params, rimport
-"""
-Plot genomic features using Gviz R package
-https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
-"""
+
+# Plot genomic features using Gviz R package
+# https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
 
 """
 @name:
@@ -126,7 +125,7 @@ pDataTrack.script      = "file:scripts/genomeplot/pDataTrack.r"
 @output:
 	`outfile:file`:the dumped track
 @args:
-	use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args.
+	`params`: use `displayPars(UcscTrack(genome="mm9", chromosome="chrM", track="knownGene"))` to see all available args.
 @requires:
 	[r-Gviz](https://rdrr.io/bioc/Gviz)
 """

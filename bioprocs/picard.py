@@ -1,4 +1,4 @@
-from pyppl import proc
+from pyppl import Proc
 
 #############################
 # picard utilities          #
@@ -34,7 +34,7 @@ from pyppl import proc
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
 """
-pMarkDuplicates = proc()
+pMarkDuplicates = Proc()
 pMarkDuplicates.input  = "infile:file"
 pMarkDuplicates.output = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x)}}.dedup.bam"
 pMarkDuplicates.args   = { "picard": "picard", "tmpdir": "/tmp", "params": "", "javamem": "-Xms1g -Xmx8g" }
@@ -67,7 +67,7 @@ rm -rf "$tmpdir"
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
 """
-pAddOrReplaceReadGroups = proc()
+pAddOrReplaceReadGroups = Proc()
 pAddOrReplaceReadGroups.input  = "infile:file, rg"
 pAddOrReplaceReadGroups.output = "outfile:file:{{infile | fn}}.rg.bam"
 pAddOrReplaceReadGroups.args   = { "picard": "picard", "params": "" }
@@ -96,7 +96,7 @@ if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
 """
-pCreateSequenceDictionary = proc()
+pCreateSequenceDictionary = Proc()
 pCreateSequenceDictionary.input  = "infile:file"
 pCreateSequenceDictionary.output = "outfile:file:{{infile | bn}}"
 pCreateSequenceDictionary.args   = { "picard": "picard", "params": "" }
@@ -126,7 +126,7 @@ ln -s "{{infile}}" "$link"
 @requires:
 	[picard](https://broadinstitute.github.io/picard/)
 """
-pCollectWgsMetrics = proc()
+pCollectWgsMetrics = Proc()
 pCollectWgsMetrics.input  = "infile:file"
 pCollectWgsMetrics.output = "outfile:file:{{infile | bn}}.metrics.txt"
 pCollectWgsMetrics.args   = { "picard": "picard", "params": "", "reffile": "" }
@@ -157,7 +157,7 @@ fi
 @requires:
 	[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 """
-pSortSam = proc()
+pSortSam = Proc()
 pSortSam.input  = "infile:file"
 pSortSam.output = "outfile:file:{{infile | fn}}.sorted.{{args.outtype}}"
 pSortSam.args   = { "picard": "picard", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp", "javamem": "-Xms1g -Xmx8g" }
@@ -183,7 +183,7 @@ rm -rf "$tmpdir"
 @requires:
 	[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
 """
-pIndexBam = proc()
+pIndexBam = Proc()
 pIndexBam.input  = "infile:file"
 pIndexBam.output = "outfile:file:{{infile | bn}}.bai"
 pIndexBam.args   = { "picard": "picard", "params": "-Xms1g -Xmx8g" }

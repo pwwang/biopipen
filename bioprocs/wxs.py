@@ -1,4 +1,3 @@
-from pyppl import proc
 from wxsprep import *
 from wxscall import *
 from wxsstat import *
