@@ -116,31 +116,28 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 	[`r-survival`](https://rdrr.io/cran/survival/)
 	[`r-survminer`](https://rdrr.io/cran/survminer/)
 """
-pSurvival                 = Proc(desc = "Survival analysis.")
-pSurvival.input           = 'infile:file'
-pSurvival.output          = [
+pSurvival        = Proc(desc = "Survival analysis.")
+pSurvival.input  = 'infile:file'
+pSurvival.output = [
 	'outfile:file:{{in.infile | fn2}}.dir/{{in.infile | fn2}}.survival.txt', 
 	'outdir:dir:{{in.infile | fn2}}.dir'
 ]
-pSurvival.args.inunit     = 'days' # months, weeks, years
-pSurvival.args.outunit    = 'days'
-pSurvival.args.method     = 'cox' # tm or auto 
-pSurvival.args.covfile    = None
-pSurvival.args.nthread    = 1
-pSurvival.args.inopts     = Box(rnames = True)
-pSurvival.args.combine    = False
-pSurvival.args.devpars    = Box(res = 300, height = 2000, width = 2000)
-pSurvival.args.ngroups    = 2 # how many curves to plot, typically 2. The values will divided into <ngroups> groups for the var
-pSurvival.args.autogroup  = True # False to use median, else find the best binary split spot, only applicable when args.ngroup = 2
-pSurvival.args.plot = Box(
-	params  = Box({'font.legend': 13, 'pval': '{method}\np = {pval}', 'risk.table': True}), # params for ggsurvplot
-	arrange = Box() # params for arrange_ggsurvplots if args.combine = T. Typically nrow or ncol is set. If args.plot.arrange.ncol = 3, that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1.
-)
-pSurvival.args.ggs        = Box(table = Box())
-pSurvival.args.pval       = True # 'logrank', 'waldtest', 'likeratio'
-pSurvival.envs.rimport    = rimport
-pSurvival.lang            = params.Rscript.value
-pSurvival.script          = "file:scripts/stats/pSurvival.r"
+pSurvival.args.inunit    = 'days' # months,                                                                                  weeks,                                years
+pSurvival.args.outunit   = 'days'
+pSurvival.args.method    = 'cox' # tm or auto
+pSurvival.args.covfile   = None
+pSurvival.args.nthread   = 1
+pSurvival.args.inopts    = Box(rnames = True)
+pSurvival.args.combine   = Box() # params for arrange_ggsurvplots. Typically nrow or ncol is set. If args.plot.arrange.ncol = 3,                                   that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1. If empty, the figures will not be combined
+pSurvival.args.devpars   = Box(res = 300, height = 2000, width = 2000)
+pSurvival.args.ngroups   = 2 # how many curves to plot,                                                                      typically 2. The values will divided into <ngroups> groups for the var
+pSurvival.args.autogroup = True # False to use median,                                                                       else find the best binary split spot, only applicable when args.ngroup                  = 2
+pSurvival.args.params    = Box({'font.legend': 13, 'pval': '{method}\np = {pval}', 'risk.table': True}) # params for ggsurvplot
+pSurvival.args.ggs       = Box(table = Box())
+pSurvival.args.pval      = True # 'logrank',                                                                                 'waldtest',                           'likeratio'
+pSurvival.envs.rimport   = rimport
+pSurvival.lang           = params.Rscript.value
+pSurvival.script         = "file:scripts/stats/pSurvival.r"
 
 """
 @name:

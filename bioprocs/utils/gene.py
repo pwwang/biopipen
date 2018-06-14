@@ -51,8 +51,8 @@ def querygene(*args, **kwargs):
 			if 'gene' in ret['ensembl']:
 				ret['ensembl'] = ret['ensembl']['gene']
 			# more than one ensembl gene mapped, take the first one
-			elif isinstance(ret['ensembl'], list) and len(ret['ensembl']) > 0 and 'gene' in ret['ensembl'][-1]:
-				ret['ensembl'] = ret['ensembl'][-1]['gene']
+			elif isinstance(ret['ensembl'], list) and len(ret['ensembl']) > 0 and 'gene' in ret['ensembl'][0]:
+				ret['ensembl'] = ret['ensembl'][0]['gene']
 	return mgret
 
 def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'hg19', inopts = None, outopts = None, genecol = None, cachedir = gettempdir()):
@@ -76,15 +76,15 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		'_id': 'text primary key',
 		'symbol': 'text',
 		'HGNC': 'int',
-		'alias': 'text',
+		'alias': "text default ''",
 		'ensembl': 'text',
 		'ensembl_protein': 'text',
 		'entrezgene': 'int',
 		'genomic_pos': 'text',
 		'genomic_pos_hg19': 'text',
-		'pfam': 'text',
+		'pfam': "text default ''",
 		'taxid': 'int',
-		'uniprot': 'text'
+		'uniprot': "text default ''",
 	}, '_id')
 
 	dummies = {
@@ -104,7 +104,6 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	frmkeys  = ','.join(frmcols)
 	columns  = list(set(tocols + frmcols + ['taxid']))
 	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
-
 	# query from api
 	mgret = querygene(allrest[frmkeys], scopes = frmcols, fields = columns, species = SPECIES[genome])
 	# get all result for each query
@@ -145,7 +144,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 				data2save[x] = []
 			data2save[x].append(val)
 		genemap[query] = gr
-
+	
 	# add cached data
 	for i, ret in allfound.items():
 		query = genes[i]

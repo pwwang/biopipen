@@ -5,22 +5,22 @@ library(survminer)
 set.seed(8525)
 
 # load parameters
-infile    = {{in.infile | R}}
-outfile   = {{out.outfile | R}}
-outdir    = {{out.outdir | R}}
-inunit    = {{args.inunit | R}}
-outunit   = {{args.outunit | R}}
-covfile   = {{args.covfile | R}}
-nthread   = {{args.nthread | R}}
-rnames    = {{args.inopts | lambda x: x.get('rnames', True) | R}}
-combine   = {{args.combine | R}}
-method    = {{args.method | R}}
-devpars   = {{args.devpars | R}}
-plot      = {{args.plot | R}}
-pval      = {{args.pval | R}}
-mainggs   = {{args.ggs | R}}
-ngroups   = as.numeric({{args.ngroups | R}})
-autogroup = as.logical({{args.autogroup | R}})
+infile      = {{in.infile | R}}
+outfile     = {{out.outfile | R}}
+outdir      = {{out.outdir | R}}
+inunit      = {{args.inunit | R}}
+outunit     = {{args.outunit | R}}
+covfile     = {{args.covfile | R}}
+nthread     = {{args.nthread | R}}
+rnames      = {{args.inopts | lambda x: x.get('rnames', True) | R}}
+combine     = {{args.combine | R}}
+method      = {{args.method | R}}
+devpars     = {{args.devpars | R}}
+params.plot = {{args.params | R}}
+pval        = {{args.pval | R}}
+mainggs     = {{args.ggs | R}}
+ngroups     = as.numeric({{args.ngroups | R}})
+autogroup   = as.logical({{args.autogroup | R}})
 
 if (pval == T) {
 	pval = 'logrank'
@@ -40,14 +40,14 @@ test.coxes = list(
 	likeratio = 'logtest'
 )
 
-if (is.list(plot)) {
-	params = list(
+if (is.list(params.plot) && length(params.plot) > 0) {
+	params.default = list(
 		pval             = '{method}\np = {pval}',
 		risk.table       = T,
 		#surv.median.line = 'hv',
 		conf.int         = T
 	)
-	plot$params = update.list(params, plot$params)
+	params.plot = update.list(params.default, params.plot)
 }
 
 # cut the data in to n parts using quantile
@@ -117,7 +117,7 @@ useCox = function(dat, varname) {
 	}
 
 	# plot the result out
-	if (is.list(plot)) {
+	if (is.list(params.plot) && length(params.plot) > 0) {
 		params.default = list(
 			legend.title = paste0('Strata(', varname, ')'),
 			legend.labs  = ifelse(length(varlvls)<=ngroups, varlvls, paste0('q', 1:ngroups)),
@@ -125,18 +125,8 @@ useCox = function(dat, varname) {
 			ylim.min     = 0.0,
 			pval.coord   = c(0, 0.1)
 		)
-		params          = update.list(params.default, plot$params)
-		ylim.min        = params$ylim.min
-		params$ylim.min = NULL
-		if (!is.numeric(ylim.min)) { # auto
-			ylim.min = min(kmfit$lower) - .2
-			ylim.min = max(ylim.min, 0)
-			params$ylim          = c(ylim.min, 1)
-			params$pval.coord[2] = params$pval.coord[2] + ylim.min
-		} else if (ylim.min > 0) {
-			params$ylim          = c(ylim.min, 1)
-			params$pval.coord[2] = params$pval.coord[2] + ylim.min
-		}
+		params          = update.list(params.default, params.plot)
+		
 		params$legend.title = gsub('{var}', varname, params$legend.title, fixed = T)
 		if (!is.logical(pval)) {
 			params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
@@ -242,7 +232,7 @@ useKM = function(dat, varname, params = NULL) {
 		}
 	}
 
-	if (is.list(plot)) {
+	if (is.list(params.plot) && length(params.plot) > 0) {
 		if (is.null(params)) {
 			params.default = list(
 				legend.title = varname,
@@ -251,24 +241,25 @@ useKM = function(dat, varname, params = NULL) {
 				ylim.min     = 0.0,
 				pval.coord   = c(0, 0.1)
 			)
-			params          = update.list(params.default, plot$params)
-			ylim.min        = params$ylim.min
-			params$ylim.min = NULL
-			if (!is.numeric(ylim.min)) { # auto
-				ylim.min = min(modkm$lower) - .2
-				ylim.min = max(ylim.min, 0)
-				params$ylim          = c(ylim.min, 1)
-				params$pval.coord[2] = params$pval.coord[2] + ylim.min
-			} else if (ylim.min > 0) {
-				params$ylim          = c(ylim.min, 1)
-				params$pval.coord[2] = params$pval.coord[2] + ylim.min
-			}
+			params          = update.list(params.default, params.plot)
+			
 			if (!is.logical(pval)) {
 				params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
 				params$pval = gsub('{pval}',   pvaldata$pval,   params$pval, fixed = T)
 			} else {
 				params$pval = FALSE
 			}
+		}
+		ylim.min        = params$ylim.min
+		params$ylim.min = NULL
+		if (!is.numeric(ylim.min)) { # auto
+			ylim.min = min(modkm$lower[!is.na(modkm$lower)]) - .2
+			ylim.min = max(ylim.min, 0)
+			params$ylim          = c(ylim.min, 1)
+			params$pval.coord[2] = params$pval.coord[2] + ylim.min
+		} else if (ylim.min > 0) {
+			params$ylim          = c(ylim.min, 1)
+			params$pval.coord[2] = params$pval.coord[2] + ylim.min
 		}
 		params$fit     = modkm
 		params$data    = dat
@@ -391,7 +382,7 @@ if (length(vars) == 1 || nthread == 1) {
 
 allsums = NULL
 allcovs = NULL
-if (combine) {
+if (is.list(combine) && length(combine) > 0) {
 	survplots   = NULL
 	for (ret in rets) {
 		allsums = rbind(allsums, ret$summary)
@@ -405,14 +396,14 @@ if (combine) {
 		}
 	}
 	if (!is.null(survplots)) {
-		if (!'ncol' %in% names(plot$arrange)) plot$arrange$ncol = 1
-		if (!'nrow' %in% names(plot$arrange)) plot$arrange$nrow = 1
-		maxdim         = max(plot$arrange$ncol, plot$arrange$nrow)
+		if (!'ncol' %in% names(combine)) combine$ncol = 1
+		if (!'nrow' %in% names(combine)) combine$nrow = 1
+		maxdim         = max(combine$ncol, combine$nrow)
 		devpars$height = maxdim * devpars$height
 		devpars$width  = maxdim * devpars$width
 		plotfile = file.path(outdir, '{{in.infile | fn2}}.survival.png')
 		do.call(png, c(plotfile, devpars))
-		do.call(arrange_ggsurvplots, c(list(x = survplots, print = T), plot$arrange))
+		do.call(arrange_ggsurvplots, c(list(x = survplots, print = T), combine))
 		dev.off()
 	}
 } else {

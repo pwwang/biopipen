@@ -37,7 +37,7 @@ class Cache(object):
 			update = lambda col, data, orig: (col, Function.concat(
 				Field(col),
 				value = Cache._arrayJoiner(
-					set(Cache._uniqueData(data, True)) - set(orig)
+					set(Cache._uniqueData(data, True)) - set(orig or [])
 				))),
 			result = lambda data: data if isinstance(data, list) or data is None else list(filter(None, data.split(Cache.ARRAY_DELIMIT)))
 		),
@@ -48,7 +48,7 @@ class Cache(object):
 			update = lambda col, data, orig: (col, Function.concat(
 				Field(col),
 				value = Cache._arrayJoiner(
-					set(Cache._uniqueData(data, True)) - set(orig)
+					set(Cache._uniqueData(data, True)) - set(orig or [])
 				))),
 			result = lambda data: data if isinstance(data, list) or data is None else list(filter(None, data.split(Cache.ARRAY_DELIMIT)))
 		),
@@ -280,13 +280,15 @@ class Cache(object):
 		pks        = [r[self.pkey] for r in rsall]
 		idxinserts = [i for i, pk in enumerate(pkdata) if pk not in pks]
 		idxupdates = [(i, Cache._result(rsall[pks.index(pk)], dummies)) for i, pk in enumerate(pkdata) if pk in pks]
+
 		dataInsert = [
-			Box([Cache._getDummy(key, dummies)['insert'](key, val[i]) for key, val in data.items()]) \
+			Box([Cache._getDummy(key, dummies)['insert'](key, val[i]) for key, val in data.items()]) 
 			for i in idxinserts
 		]
 		dataUpdate = [
 			(data[self.pkey][i], Box([
-				Cache._getDummy(key, dummies)['update'](key, val[i], r[key]) for key, val in data.items() \
+				Cache._getDummy(key, dummies)['update'](key, val[i], r[key]) 
+				for key, val in data.items() 
 				if key != self.pkey
 			]))	for i, r in idxupdates
 		]
