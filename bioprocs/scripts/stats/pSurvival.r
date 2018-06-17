@@ -188,10 +188,10 @@ useKM = function(dat, varname, params = NULL) {
 					coxph(fmula, data = newdata)$score
 				}, error = function(x) 1)
 			})
-			if (is.list(plot)) {
+			if (is.list(params.plot)) {
 				ret$quantdata = data.frame(step = quantsteps, survscore = survscores)
 			}
-			idxmax = which(survscores == max(survscores))[1]
+			idxmax = sample(which(survscores == max(survscores)), 1)
 			quant  = quantsteps[idxmax]
 			dat[, var] = paste0(
 				"q", 
@@ -263,7 +263,11 @@ useKM = function(dat, varname, params = NULL) {
 		}
 		params$fit     = modkm
 		params$data    = dat
-	
+
+		varlvls = levels(factor(dat[, var]))
+		if (length(varlvls) <= length(params$legend.labs))
+			params$legend.labs = varlvls
+
 		ret$plot      = do.call(ggsurvplot, params)
 		ret$plot$plot = apply.ggs(ret$plot$plot, mainggs)
 
