@@ -6,7 +6,7 @@
 @destination:
 	docs/*.md
 @fields:
-	- name: required, the name of the process (must follow \""" or ''')
+	- name: required, the name of the process (must follow \"\"\" or ''')
 	- description: description of the process
 	- input: input of the process
 	- output: output of the process
@@ -20,8 +20,10 @@ from os import path, symlink, devnull
 
 srcdir  = path.join (path.dirname (path.realpath(__file__)), 'bioprocs')
 dstdir  = path.join (path.dirname (path.realpath(__file__)), 'docs')
+dstfile = path.join (dstdir, 'processes.md')
 infiles = [f for f in glob(path.join(srcdir, '*.py')) if path.basename(f) != "__init__.py" ]
 
+'''
 def summary():
 	summaryfile = path.join(dstdir, 'SUMMARY.md')
 	readmefile  = path.join(dstdir, 'README.md')
@@ -34,15 +36,16 @@ def summary():
 		titles = [path.basename(infile)[:-3] for infile in infiles]
 		for title in sorted(titles):
 			fout.write('* [%s](%s.md)\n' % (title, title))
+'''
 
 def eachfile(infile):
 	name   = path.basename(infile)[:-3]
-	mdfile = path.join(dstdir, path.basename(infile)[:-3] + '.md')
-	with open(infile) as f, open(mdfile, 'w') as fout:
-		fout.write('# %s\n' % name)
-		fout.write('<!-- toc -->\n')
+	#mdfile = path.join(dstdir, path.basename(infile)[:-3] + '.md')
+	with open(infile) as f, open(dstfile, 'a') as fout:
+		fout.write('## %s\n' % name)
+		# fout.write('<!-- toc -->\n')
 
-		fout.write('{% raw %}\n')
+		# fout.write('{% raw %}\n')
 		content = f.read()
 		# docs for module?
 		moddocs = re.match(r'^(\"\"\"|\'\'\')\s*\n(@\w+:[\s\S]+?)\1', content)
@@ -64,29 +67,33 @@ def eachfile(infile):
 				else:
 					section.append(line)
 			fout.write(fmtSection(section))
-		fout.write('{% endraw %}\n')
+		#fout.write('{% endraw %}\n')
 
 
 def fmtSection(lines, mod = False):
 	title = lines.pop(0).strip()
-	basepunk = '#' * (1 if mod else 2)
+	# basepunk = '#' * (2 if mod else 3)
 	if title.startswith('@name'):
-		return '\n%s %s\n' % (basepunk, lines[0].strip())
+		return '\n!!! hint "%s"\n' % (lines[0].strip())
+		#return '\n%s %s\n' % (basepunk, lines[0].strip())
 	
-	ret = '\n%s# %s\n' % (basepunk, title.strip('@:'))
+	# ret = '\n%s# %s\n' % (basepunk, title.strip('@:'))
+	ret = '\n    - **%s**  \n' % title.strip('@:')
 	for line in lines:
 		secname =  re.match('^\t(`.+?`\s*:)', line)
 		if secname:
 			secname = secname.group(1)
-			ret += '%s## %s' % (basepunk, secname)
-			ret += line[len(secname):].lstrip() + '  \n'
+			ret += '        - %s ' % (secname)
+			#ret += '%s## %s' % (basepunk, secname)
+			ret += line[(len(secname)+1):].lstrip() + '  \n'
 		else:
-			ret += line[1:] + '\n'
+			ret += '        ' + line[1:] + '\n'
 	return ret
 
 if __name__ == "__main__":
-	summary()
-	for infile in infiles:
+	#summary()
+	open(dstfile, 'w').close()
+	for infile in sorted(infiles):
 		stdout.write('- Compiling %s\n' % infile)
 		eachfile (infile)
 	stdout.write('Done!\n')

@@ -109,3 +109,6 @@ data/
 *.fa-*
 *-bs.umfa
 *.dict
+
+# docs
+site/

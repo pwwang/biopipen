@@ -1,4 +1,0 @@
-# wxs
-<!-- toc -->
-{% raw %}
-{% endraw %}

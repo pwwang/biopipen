@@ -40,11 +40,11 @@ pRWR.script     = "file:scripts/algorithm/pRWR.r"
 	Affinity Regression.
 	Ref: https://www.nature.com/articles/nbt.3343
 	```
-			b           c        d          d  
+	        b           c        d          d  
 	    _________    _______    ____       ____
-		|       |    |  W  |    |  |       |  |
+	    |       |    |  W  |    |  |       |  |
 	  a |   D   |  b |_____|  c |Pt|  =  a |Y |   <=>
-		|_______|               |__|       |  |
+	    |_______|               |__|       |  |
 	                                       |__|
 	
 	kronecker(P, YtD)*vec(W) = vec(YtY)             <=>
@@ -52,7 +52,7 @@ pRWR.script     = "file:scripts/algorithm/pRWR.r"
 	WPt:
 	       c        d              d  
 	    _______    ____          _____
-		|  W  |    |  |          |   |
+	    |  W  |    |  |          |   |
 	  b |_____|  c |Pt|  --->  b |___|
                    |__|
 

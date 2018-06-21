@@ -1,4 +1,0 @@
-# hic
-<!-- toc -->
-{% raw %}
-{% endraw %}
