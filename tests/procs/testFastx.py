@@ -1,14 +1,14 @@
 import unittest, testly, helpers
 from os import path
 from pyppl import PyPPL
-from helpers import getfile, procOK, config, testdirs
+from helpers import getfile, procOK, config
 from bioprocs.fastx import pFastqSim, pFastQC, pFastMC, pFastqTrim, pFastqSETrim, pFastqSE2Sam, pFastq2Sam, pFastq2Expr
 from bioprocs.common import pFiles2Dir
 from bioprocs import params
 
-class TestFastx (helpers.TestCase):
+class TestFastx (testly.TestCase):
 
-	testdir, indir, outdir = testdirs('TestFastx')
+	testdir, indir, outdir = helpers.testdirs('TestFastx')
 
 	def dataProvider_test1_FastqPESim(self):
 		yield 't1', 'wgsim', path.join(self.outdir, 'fastqsim_wgsim_1.fastq')
@@ -22,7 +22,7 @@ class TestFastx (helpers.TestCase):
 		pFastqSimTest.args.gz    = False
 		pFastqSimTest.args.tool  = tool
 		PyPPL(config).start(pFastqSimTest).run()
-		self.assertFileEqual(pFastqSimTest.channel.get(), outfile)
+		helpers.assertFileEqual(self, pFastqSimTest.channel.get(), outfile)
 
 	def dataProvider_test2_FastQC(self):
 		infile = path.join(self.outdir, 'fastqsim_dwgsim_1.fastq')
@@ -45,6 +45,7 @@ class TestFastx (helpers.TestCase):
 		yield 't4', infile1, infile2, 'star', path.join(self.outdir, 'fastq2sam_star.bam')
 
 	def test2_pFastq2Sam (self, tag, infile1, infile2, tool, outfile):
+		self.maxDiff = None
 		pFastq2SamTest = pFastq2Sam.copy(tag = tag)
 		pFastq2SamTest.args.nthread = 2
 		pFastq2SamTest.input        = (infile1, infile2)
@@ -52,7 +53,7 @@ class TestFastx (helpers.TestCase):
 		pFastq2SamTest.args.ref     = params.ref.value
 		pFastq2SamTest.args.tool    = tool
 		PyPPL(config).start(pFastq2SamTest).run()
-		self.assertBamCountEqual(pFastq2SamTest.channel.get(), outfile)
+		helpers.assertBamCountEqual(self, pFastq2SamTest.channel.get(), outfile)
 
 	def dataProvider_test2_pFastqSE2Sam(self):
 		infile = path.join(self.outdir, 'fastqsim_dwgsim_1.fastq')
@@ -69,7 +70,7 @@ class TestFastx (helpers.TestCase):
 		pFastqSE2SamTest.args.ref     = params.ref.value
 		pFastqSE2SamTest.args.tool    = tool
 		PyPPL(config).start(pFastqSE2SamTest).run()
-		self.assertBamCountEqual(pFastqSE2SamTest.channel.get(), outfile)
+		helpers.assertBamCountEqual(self, pFastqSE2SamTest.channel.get(), outfile)
 
 	def dataProvider_test3_MultiQC(self):
 		infiles = [
@@ -103,7 +104,7 @@ class TestFastx (helpers.TestCase):
 		pFastqTrimTest.args.nthread = 2
 
 		PyPPL(config).start(pFastqTrimTest).run()
-		self.assertFileEqual(pFastqTrimTest.channel.get(), outfile)
+		helpers.assertGzFileEqual(self, pFastqTrimTest.channel.get(), outfile)
 
 	def dataProvider_test4_SETrim(self):
 		infile = path.join(self.outdir, 'fastqsim_dwgsim_1.fastq')
@@ -119,7 +120,7 @@ class TestFastx (helpers.TestCase):
 		pFastqSETrimTest.args.tool = tool
 
 		PyPPL(config).start(pFastqSETrimTest).run()
-		self.assertFileEqual(pFastqSETrimTest.channel.get(), outfile)
+		helpers.assertGzFileEqual(self, pFastqSETrimTest.channel.get(), outfile)
 
 	def dataProvider_test5_pFastq2Expr(self):
 		infile1 = path.join(self.outdir, 'fastqsim_dwgsim_1.fastq')
@@ -132,7 +133,7 @@ class TestFastx (helpers.TestCase):
 		pFastq2ExprTest.input = infile1, infile2
 		pFastq2ExprTest.args.nthread = 10
 		PyPPL(config).start(pFastq2ExprTest).run()
-		self.assertFileEqual(pFastq2ExprTest.channel.outfile.get(), outfile)
+		helpers.assertFileEqual(self, pFastq2ExprTest.channel.outfile.get(), outfile)
 
 if __name__ == '__main__':
 	testly.main(failfast=True)

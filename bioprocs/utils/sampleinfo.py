@@ -7,18 +7,26 @@ class SampleInfoException(Exception):
 class SampleInfo (object):
 	def __init__(self, sfile):
 		reader    = TsvReader(sfile, ftype = 'head')
+		self.samcol = reader.meta.keys()[0]
+		if self.samcol == 'ROWNAMES':
+			self.samcol = 'Sample'
+			del reader.meta['ROWNAMES']
+			reader.meta.prepend('Sample')
+
 		self.data = reader.dump()
 		self.nrow = len(self.data)
 		self.ncol = len(reader.meta)
 		self.colnames = reader.meta.keys()
-		self.samcol   = self.colnames[0]
 		self.rownames = [row[self.samcol] for row in self.data]
 
-		expectColnames = ['ROWNAMES', 'Sample', 'Patient', 'Group', 'Batch']
+		expectColnames = ['Sample', 'Patient', 'Group', 'Batch']
 		if not set(expectColnames) & set(self.colnames):
 			raise SampleInfoException('Unexpected column names: %s.' % str(self.colnames))
 
 	def select(self, sample = None, patient = None, group = None, batch = None, get = None):
+		"""
+		Select records by different standards
+		"""
 		ret = []
 		for row in self.data:
 			if sample and isinstance(sample, list) and row[self.samcol] not in sample:
@@ -51,6 +59,29 @@ class SampleInfo (object):
 				ret.append(r)
 		return ret
 
+	def toChannel(self, datadir, paired = False):
+		from os import path
+		if not paired:
+			samples = self.select(get = 'Sample')
+			return [path.join(datadir, r.Sample) for r in samples]
+		else:
+			data     = self.select(get = ['Sample', 'Patient'])
+			patients = [r.Patient for r in data]
+			patients = sorted(set(patients), key = patients.index)
+			ret      = []
+			for patient in patients:
+				records = self.select(patient = patient, get = ['Sample', 'Group'])
+				if len(records) != 2:
+					raise SampleInfoException('Expect 2 samples for paired channel for patient: %s' % patient)
+				record1, record2 = records
+				common = path.commonprefix([record1.Sample, record2.Sample])
+				if common and record1.Sample < record2.Sample:
+					record1, record2 = record2, record1
+				elif not common and record2.Group.upper() not in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']:
+					record1, record2 = record2, record1
+				ret.append((path.join(datadir, record1.Sample), path.join(datadir, record2.Sample)))
+			return ret
+
 	def dataframe(self, data = None):
 		data = data or self.data
 		from pandas import DataFrame
@@ -65,3 +96,5 @@ class SampleInfo (object):
 				else:
 					dataframe[key] = [val]
 		return DataFrame(data = dataframe, index = rownames)
+
+

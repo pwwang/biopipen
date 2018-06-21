@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 # Call mutations from sequencing data.
+import sys
 from os import path
 from pyppl import PyPPL, Channel, Box
 from bioprocs import params
 from bioprocs.common import pFiles2Dir
-from bioprocs.sambam import pBam2Gmut, pBamPair2Smut
+from bioprocs.sambam import pBam2Gmut, pBamPair2Smut, pBam2Cnv
 from bioprocs.utils.tsvio import TsvReader
-from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aBam2Mut
+from bioprocs.utils.sampleinfo import SampleInfo
+from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aFastqSE2Bam, aBam2Mut, aBam2MutCnv
 
 params.prefix('-')
 params.intype         = 'bam' # ebam, fastq
 params.intype.desc    = 'The input file types. Either bam, ebam or fastq.\nEbam means the bam files need to reformatted into fastq files.'
-params.muts           = ['germ'] # or ['germ', 'soma'] cnv will be supported later
+params.muts           = ['germ'] # or ['germ', 'soma', 'cnv']
 params.muts.desc      = 'What kind of mutations to call.\nNote: soma need paired information'
 params.indir.required = True
 params.indir.desc     = 'The input directory containing input files.'
@@ -39,69 +41,139 @@ params.logfile.desc   = 'Where to save the logs.'
 params.compress = True
 params.compress.desc = 'Use gzip and bam file to save space.'
 
-params = params.parse().toDict()
+def _procconfig(kwargs = None):
+	params = _getparams(kwargs or {})
 
-starts = []
+	starts = []
+	
+	saminfo = SampleInfo(params.saminfo)
 
-reader  = TsvReader(params.saminfo, ftype = 'head')
-samples = {r.Sample for r in reader}
+	aEBam2Bam.pFastq2Sam.args.tool    = 'bowtie2'
 
-aEBam2Bam.pFastq2Sam.args.tool    = 'bowtie2'
+	pBamDir         = pFiles2Dir
+	pBamDir.runner  = 'local'
+	if params.intype == 'ebam':
+		#aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
+		aEBam2Bam.input = [saminfo.toChannel(params.indir)]
+		if params.compress:
+			aEBam2Bam.args.gz = True
+			aEBam2Bam.pFastq2Sam.args.outfmt = 'bam'
 
-pBamDir         = pFiles2Dir
-pBamDir.runner  = 'local'
-if params.intype == 'ebam':
-	#aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
-	aEBam2Bam.input = [[path.join(params.indir, sample) for sample in samples]]
-	if params.compress:
-		aEBam2Bam.args.gz = True
-		aEBam2Bam.pFastq2Sam.args.outfmt = 'bam'
+		pBamDir.depends = aEBam2Bam
+		pBamDir.input   = lambda ch: [ch.flatten(0)]
 
-	pBamDir.depends = aEBam2Bam
-	pBamDir.input   = lambda ch: [ch.flatten(0)]
+		starts.append(aEBam2Bam)
 
-	starts.append(aEBam2Bam)
+	elif params.intype == 'sfq' or params.intype == 'sfastq':
+		# single-end fastq files
+		# *.fq, *.fq.gz *.fastq, *.fastq.gz
+		# sample info should be:
+		# +--------------+----------+---------+
+		# | Sample	     | Patient  | Group   |
+		# | x_Tumor.bam	 | x        | TUMOR	  |
+		# | x_Normal.bam | x        | NORMAL  |
+		# | ...          | ...      | ...     |
+		# +--------------+----------+---------+
+		# corresponding fastq files would be:
+		# x_Tumor.fq  / x_Tumor.fastq  / x_Tumor.fq.gz  / x_Tumor.fastq.gz
+		# x_Normal.fq / x_Normal.fastq / x_Normal.fq.gz / x_Normal.fastq.gz
+		def bam2fq(fq):
+			fqdir   = path.dirname(fq)
+			bname   = path.splitext(path.basename(fq))[0]
+			exts    = ['.fq', '.fq.gz', '.fq.gz', '.fastq.gz']
+			fqfiles = [path.join(fqdir, bname + ext) for ext in exts]
+			return [fqfile for fqfile in fqfiles if path.isfile(fqfile)][0]
+			
+		aFastqSE2Bam.input = [bam2fq(fq) for fq in saminfo.toChannel(params.indir)]
 
-elif params.intype == 'fastq':
-	# *.fq, *.fq.gz *.fastq, *.fastq.gz
-	# TODO: fix the input files with samples
-	aFastq2Bam.input = [Channel.fromPairs(path.join(params.indir, '*.f*q*'))]
+		pBamDir.depends = aFastqSE2Bam.pBamRecal
+		pBamDir.input   = lambda ch: [ch.flatten(0)]
 
-	pBamDir.depends = aEBam2Bam
-	pBamDir.input   = lambda ch: [ch.flatten(0)]
+		starts.append(aFastqSE2Bam)
+	elif params.intype == 'fq' or params.intype == 'fastq':
+		# pair-end fastq files
+		# *.fq, *.fq.gz *.fastq, *.fastq.gz
+		# sample info should be:
+		# +--------------+----------+---------+
+		# | Sample	     | Patient  | Group   |
+		# | x_Tumor.bam	 | x        | TUMOR	  |
+		# | x_Normal.bam | x        | NORMAL  |
+		# | ...          | ...      | ...     |
+		# +--------------+----------+---------+
+		# corresponding fastq files would be:
+		# x_Tumor_1.fq  / x_Tumor_1.fastq  / x_Tumor_1.fq.gz  / x_Tumor_1.fastq.gz
+		# x_Tumor_2.fq  / x_Tumor_2.fastq  / x_Tumor_2.fq.gz  / x_Tumor_2.fastq.gz
+		# x_Normal_1.fq / x_Normal_1.fastq / x_Normal_1.fq.gz / x_Normal_1.fastq.gz
+		# x_Normal_2.fq / x_Normal_2.fastq / x_Normal_2.fq.gz / x_Normal_2.fastq.gz
+		def bam2fqpair(fq):
+			fqdir    = path.dirname(fq)
+			bname    = path.splitext(path.basename(fq))[0]
+			exts1    = ['_1.fq', '_1.fq.gz', '_1.fq.gz', '_1.fastq.gz']
+			exts2    = ['_2.fq', '_2.fq.gz', '_2.fq.gz', '_2.fastq.gz']
+			fqfiles1 = [path.join(fqdir, bname + ext) for ext in exts1]
+			fqfile1  = [fqfile for fqfile in fqfiles1 if path.isfile(fqfile)][0]
+			fqfiles2 = [path.join(fqdir, bname + ext) for ext in exts2]
+			fqfile2  = [fqfile for fqfile in fqfiles2 if path.isfile(fqfile)][0]
+			return fqfile1, fqfile2
+			
+		aFastqSE2Bam.input = [bam2fqpair(fq) for fq in saminfo.toChannel(params.indir)]
 
-	starts.append(aFastq2Bam)
-else:
-	# TODO: fix the input files with samples
-	pBamDir.input = Channel.fromPattern(path.join(params.indir, '*.bam'))
-	starts.append(pBamDir)
+		pBamDir.depends = aFastqSE2Bam.pBamRecal
+		pBamDir.input   = lambda ch: [ch.flatten(0)]
 
-if 'germ' in params.muts and 'soma' in params.muts:
-	aBam2Mut.pBamDir.depends     = pBamDir
-	aBam2Mut.pSampleInfo.input   = [params.saminfo]
-	aBam2Mut.pBam2Gmut.exdir     = path.join(params.exdir, 'germline')
-	aBam2Mut.pBamPair2Smut.exdir = path.join(params.exdir, 'somatic')
-	starts.append(aBam2Mut)
-elif 'germ' in params.muts:
-	pBam2Gmut.depends = pBamDir
-	pBam2Gmut.input   = lambda ch: ch.expand(0, "*.bam")
-elif 'soma' in params.muts:
-	pBamPair2Smut.depends = pBamDir
-	pBamPair2Smut.input = lambda ch1: [ \
-		(path.join(ch1.get(), c1.get()), path.join(ch1.get(), c2.get())) for ch in \
-		[Channel.fromFile(params.saminfo, header=True)] for p in \
-		set(ch.Patient.flatten()) for c1, c2 in \
-		[
-			(Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['TUMOR', 'DISEASE', 'AFTER']])),
-			Channel.fromChannels(ch.colAt(0), ch.Patient, ch.Group).filter(lambda x: x[1] == p and any([k in x[2].upper() for k in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']])))
-		]
-	]
+		starts.append(aFastqSE2Bam)
+	else:
+		# TODO: fix the input files with samples
+		pBamDir.input = [saminfo.toChannel(params.indir)]
+		starts.append(pBamDir)
 
-PyPPL(Box(
-	proc = Box(
-		forks = params.forks
-	),
-	log = Box(
-		file = params.logfile
-	)
-)).start(starts).run(params.runner)
+	if 'germ' in params.muts and 'soma' in params.muts and 'cnv' in params.muts:
+		aBam2MutCnv.pBamDir.depends     = pBamDir
+		aBam2MutCnv.pSampleInfo.input   = [params.saminfo]
+		aBam2MutCnv.pBam2Gmut.exdir     = path.join(params.exdir, 'germline')
+		aBam2MutCnv.pBamPair2Smut.exdir = path.join(params.exdir, 'somatic')
+		aBam2MutCnv.pBam2Cnv.exdir      = path.join(params.exdir, 'cnv')
+		starts.append(aBam2MutCnv)
+	if 'germ' in params.muts and 'soma' in params.muts:
+		aBam2Mut.pBamDir.depends     = pBamDir
+		aBam2Mut.pSampleInfo.input   = [params.saminfo]
+		aBam2Mut.pBam2Gmut.exdir     = path.join(params.exdir, 'germline')
+		aBam2Mut.pBamPair2Smut.exdir = path.join(params.exdir, 'somatic')
+		starts.append(aBam2Mut)
+	elif 'germ' in params.muts:
+		pBam2Gmut.depends = pBamDir
+		pBam2Gmut.input   = lambda ch: ch.expand(0, "*.bam")
+	elif 'soma' in params.muts:
+		pBamPair2Smut.depends = pBamDir
+		pBamPair2Smut.input   = lambda ch: saminfo.toChannel(ch.get(), paired = True)
+	elif 'cnv' in params.muts:
+		pBam2Cnv.depends = pBamDir
+		pBam2Cnv.input   = lambda ch: saminfo.toChannel(ch.get())
+		
+	config = {
+		'default': {'forks': params.forks},
+		'_log' : {'file': params.logfile}
+	}
+	return starts, config, params.runner
+
+def _getparams(kwargs):
+	global params
+	
+	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
+		# called from api
+		if '' in params._props['hopts']:
+			del params._props['hopts'][params._props['hopts'].index('')]
+		for key, val in kwargs.items():
+			setattr(params, key, val)
+		return params.parse(args = []).asDict()
+	else:
+		# called directly
+		return params.parse().asDict()
+
+def run(*args, **kwargs):
+	proc, config, runner = _procconfig(kwargs)
+	PyPPL(config).start(proc).run(runner)
+
+if __name__ == '__main__':
+	run()
+

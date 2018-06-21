@@ -101,6 +101,12 @@ class TsvRecord(object):
 	def __len__(self):
 		return len(self.__keys)
 
+	def __eq__(self, other):
+		return self.keys() == other.keys() and self.values() == other.values()
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
+
 	def get(self, key, default=None):
 		"""Returns the value for a given key, or default."""
 		try:

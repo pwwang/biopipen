@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Plot genomic elements.
 import json, sys
+from os import path
 from pyppl import PyPPL, utils, Box
 from bioprocs import params
 from bioprocs.genomeplot import pInteractionTrack, pAnnoTrack, pDataTrack, pUcscTrack, pGenomePlot
@@ -43,17 +44,9 @@ params.forks.desc      = 'Number of cores used to plot if split.'
 params.highlights      = []
 params.highlights.desc = 'The highlight regions in format of "start-end"'
 
-def _proc(kwargs = None):
-	global params
+def _procconfig(kwargs = None):
+	params = _getparams(kwargs or {})
 
-	kwargs = kwargs or {}
-	if kwargs and '' in params._props['hopts']:
-		del params._props['hopts'][params._props['hopts'].index('')]
-		
-	for key, val in kwargs.items():
-		setattr(params, key, val)
-
-	params = params.parse(raiseExc = bool(kwargs), args = [] if kwargs else sys.argv[1:]).asDict()
 	chrom, startend  = params.region.split(':')
 	start, end       = startend.split('-')
 	start      = int(start)
@@ -124,11 +117,27 @@ def _proc(kwargs = None):
 		if params.plotparams:
 			pGenomePlot.args.params.update(json.loads(params.plotparams))
 		pGenomePlot.input   = lambda *chs: [([ch.get() for ch in chs], params.region, ';'.join(params.highlights))]
-	return trackProcs
+	
+	config = {'proc': {'file': None}}
+	return trackProcs, config
+
+def _getparams(kwargs):
+	global params
+	
+	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
+		# called from api
+		if '' in params._props['hopts']:
+			del params._props['hopts'][params._props['hopts'].index('')]
+		for key, val in kwargs.items():
+			setattr(params, key, val)
+		return params.parse(args = []).asDict()
+	else:
+		# called directly
+		return params.parse().asDict()
 
 def run(*args, **kwargs):
-	proc = _proc(kwargs)
-	PyPPL({'log':{'file':None}}).start(proc).run()
+	proc, config = _procconfig(kwargs)
+	PyPPL(config).start(proc).run()
 
 if __name__ == '__main__':
 	run()

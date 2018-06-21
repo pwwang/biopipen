@@ -7,7 +7,7 @@ if not path.exists(tmpdir):
 	makedirs(tmpdir)
 
 # bam2fastq will create {in.infile}.tmp, use file in indir in case of permission issue
-infile  = {{in._infile | quote}}
+infile  = {{in.IN_infile | quote}}
 fqfile1 = {{out.fqfile1 | quote}}
 fqfile2 = {{out.fqfile2 | quote}}
 {% if args.gz %}

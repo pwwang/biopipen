@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """
 The main program entrance for bioprocs binaries.
-Usage:
-> bioprocs <subcommand> <options>
 """
 
 import re, textwrap, imp
@@ -16,6 +14,7 @@ import bioprocs
 
 KEYLEN_MIN = 30
 DOCLEN_MAX = 100
+
 
 class Command(object):
 
@@ -191,24 +190,10 @@ class Method(Command):
 
 class Script(Command):
 
-	def __init__(self, name, prog = path.basename(sys.argv[0])):
-		super(Script, self).__init__(name, prog)
+	def help(self):
 		sfile = path.join(path.dirname(__file__), 'commands', self.name + '.py')
-		if not self.opts:
-			regex_req  = re.compile(r'(?:^|\s+)params\.(\w+)\.required\s*=\s*True')
-			regex_desc = re.compile(r'(?:^|\s+)params\.(\w+)\.desc\s*=\s*(\'|\")([\w\W]+?)\2')
-			regex_def  = re.compile(r'(?:^|\s+)params\.(\w+)\s*=\s*(\'|\")([\w\W]+?)\2')
-			with open(sfile) as f:
-				content = f.read()
-			reqs  = regex_req.findall(content)
-			descs = regex_desc.findall(content)
-			defs  = regex_def.findall(content)
-			for req in reqs:
-				self.opts = (req, 'REQUIRED.')
-			for desc in descs:
-				self.opts = (desc[0], desc[2])
-			for deft in defs:
-				self.opts = (deft[0], 'DEFAULT: ' + deft[2])
+		script = imp.load_source('_script', sfile)
+		return script.params.help()
 
 	def _getDocString(self):
 		sfile = path.join(path.dirname(__file__), 'commands', self.name + '.py')

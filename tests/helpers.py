@@ -240,11 +240,7 @@ class TestCase(testly.TestCase):
 			self.fail('%s\nSet self.maxDiff = None to see all diff.' % msg)
 
 	def assertBamCountEqual(self, bam1, bam2, samtools = 'samtools', msg = None):
-		tmpdir = tempfile.gettempdir()
-		sam1   = path.join(tmpdir, path.splitext(bam1)[0] + '.sam')
-		sam2   = path.join(tmpdir, path.splitext(bam2)[0] + '.sam')
-		Popen([samtools, 'sort', '-n', '-o', sam1, bam1]).wait()
-		Popen([samtools, 'sort', '-n', '-o', sam2, bam2]).wait()
+		
 		import icdiff
 		import filecmp
 		import sys
@@ -257,6 +253,49 @@ class TestCase(testly.TestCase):
 			icdiff.diff(sam1, sam2, options)
 			msg = msg or ''
 			self.fail('%s\nSet self.maxDiff = None to see all diff.' % msg)
+
+def assertFileEqual(test, first, second, msg = None):
+	test.longMessage = True
+	if not msg:
+		msg  = '\nFile content not equal: \n'
+		msg += ' - %s\n' % (first) 
+		msg += ' - %s\n' % (second)
+	with open(first) as f1, open(second) as f2:
+		lines1 = f1.read().splitlines()
+		lines2 = f2.read().splitlines()
+	test.assertListEqual(lines1, lines2, msg)
+
+def assertGzFileEqual(test, first, second, msg = None):
+	import gzip 
+	test.longMessage = True
+	if not msg:
+		msg  = '\nFile content not equal: \n'
+		msg += ' - %s\n' % (first) 
+		msg += ' - %s\n' % (second)
+	with gzip.open(first, 'rb') as f1, gzip.open(second, 'rb') as f2:
+		lines1 = f1.read().splitlines()
+		lines2 = f2.read().splitlines()
+	test.assertListEqual(lines1, lines2, msg)
+			
+def assertBamCountEqual(test, first, second, msg = None, ignoreHead = True, samtools = 'samtools'):
+	test.longMessage = True
+	tmpdir = tempfile.gettempdir()
+	sam1   = path.join(tmpdir, path.splitext(first)[0] + '.sam')
+	sam2   = path.join(tmpdir, path.splitext(second)[0] + '.sam')
+	Popen([samtools, 'sort', '-n', '-o', sam1, first]).wait()
+	Popen([samtools, 'sort', '-n', '-o', sam2, second]).wait()
+	
+	if not msg:
+		msg  = '\nBam content not equal: \n'
+		msg += ' - %s\n' % (sam1) 
+		msg += ' - %s\n' % (sam2)
+	with open(sam1) as f1, open(sam2) as f2:
+		lines1 = f1.read().splitlines()
+		lines2 = f2.read().splitlines()
+	if ignoreHead:
+		lines1 = [line for line in lines1 if not line.startswith('@')]
+		lines2 = [line for line in lines2 if not line.startswith('@')]
+	test.assertCountEqual(lines1, lines2, msg)
 
 def testdirs(classname):
 	testdir   = path.join(tempfile.gettempdir(), 'bioprocs_unittest', classname)

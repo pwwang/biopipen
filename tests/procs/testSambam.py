@@ -244,6 +244,9 @@ class TestSambam (unittest.TestCase):
 		pBam2Gmut3         = pBam2Gmut.copy()
 		pBam2Gmut4         = pBam2Gmut.copy()
 		pBam2Gmut5         = pBam2Gmut.copy()
+		
+		pBam2Gmut3.infile = 'origin'
+		pBam2Gmut5.infile = 'origin'
 
 		pBam2Gmut1.args.tool = 'gatk'
 		pBam2Gmut2.args.tool = 'snvsniffer'
@@ -283,7 +286,8 @@ class TestSambam (unittest.TestCase):
 		pBamPair2Smut5.args.tool = 'virmid'
 		pBamPair2Smut6.args.tool = 'vardict'
 		pBamPair2Smut4.args.gz   = True
-
+		
+		pBamPair2Smut4.infile = 'origin'
 		PyPPL(config).start([
 			pBamPair2Smut1,
 			pBamPair2Smut2,
@@ -297,12 +301,13 @@ class TestSambam (unittest.TestCase):
 		procOKIn(pBamPair2Smut3, 'chr1\t44446\t.\tG\tTG\t.\tPASS', self)
 
 	def test5_pBam2Cnv (self):
-		pBam2Cnv.input = pBamMarkdup.channel
+		pBam2Cnv.input = pBamMarkdup.channel * 5
 
 		pBam2Cnv1           = pBam2Cnv.copy()
 		pBam2Cnv1.forks     = 10
 		pBam2Cnv1.args.tool = 'cnvkit'
 		pBam2Cnv1.args.ref  = getfile('ref.fa')
+		pBam2Cnv1.echo = {'jobs': range(10), 'type': ''}
 
 		'''
 		#until cnvnator is fixed

@@ -1,7 +1,7 @@
 import filelock
 from os import path
 from time import sleep
-from bioprocs.utils import runcmd
+from bioprocs.utils import runcmd, log2pyppl
 
 class Poll(object):
 	"""

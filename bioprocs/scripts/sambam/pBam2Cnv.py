@@ -5,142 +5,171 @@ from time import sleep
 from datetime import date
 
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import runcmd, cmdargs, log2pyppl
 from bioprocs.utils.poll import Poll
 
-gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{out.outfile | quote}}
+gz       = {{args.gz | lambda x: bool(x)}}
+infile   = {{in.infile | quote}}
+infn     = {{in.infile | fn | quote}}
+outfile  = {{out.outfile | quote}}
+outdir   = {{out.outdir | quote}}
+workdir  = {{proc.workdir | quote}}
+nthread  = {{args.nthread | repr}}
+cnvnator = {{args.cnvnator | repr}}
+cnvkit   = {{args.cnvkit | quote}}
+wandy    = {{args.wandy | quote}}
+ref      = {{args.ref | quote}}
+genome   = {{args.genome | quote}}
+params   = {{args.params}}
+
+def log2log(*args, **kwargs):
+	# debug = False
+	pass 
+	#log2pyppl(*args, **kwargs)
+
+cnvkitParamsKeys = [
+	'access', 'target', 'coverage', 'reference', 'fix', 'segment', 'call', 'plot', 'breaks',
+	'gainloss', 'metrics', 'segmetrics', 'export', 'scatter', 'heatmap', 'diagram'
+]
+
 if gz:	outfile = outfile[:-3]
 
-poll = Poll({{proc.workdir | quote}}, {{proc.size}}, {{job.index}})
-
-params = {{args.params}}
+poll = Poll(workdir, {{proc.size}}, {{job.index}})
 
 ############## cnvkit
 {% if args.tool | lambda x: x=='cnvkit' %}
 
-targetDone    = "{{proc.workdir}}/1/output/cnvkit_target.done"
-referenceDone = "{{proc.workdir}}/1/output/cnvkit_reference.done"
-targetCov     = "{{out.outdir}}/{{in.infile | fn}}.targetcov.cnn"
-accessfile    = '{{proc.workdir}}/1/output/cnvkit_access.bed'
-targetfile    = '{{proc.workdir}}/1/output/cnvkit_targets.bed'
-refcnn        = '{{proc.workdir}}/1/output/reference.cnn'
-fixedCnr      = "{{out.outdir}}/{{in.infile | fn}}.cnr"
-segfile       = "{{out.outdir}}/{{in.infile | fn}}.cns"
-callfile      = "{{out.outdir}}/{{in.infile | fn}}.call.cns"
+log2log('CNVkit: Initialize ...')
+
+targetCov     = "{outdir}/{infn}.targetcov.cnn".format(outdir = outdir, infn = infn)
+accessfile    = "{workdir}/1/output/cnvkit_access.bed".format(workdir = workdir)
+targetfile    = "{workdir}/1/output/cnvkit_targets.bed".format(workdir = workdir)
+refcnn        = "{workdir}/1/output/reference.cnn".format(workdir = workdir)
+fixedCnr      = "{outdir}/{infn}.cnr".format(outdir = outdir, infn = infn)
+segfile       = "{outdir}/{infn}.cns".format(outdir = outdir, infn = infn)
+callfile      = "{outdir}/{infn}.call.cns".format(outdir = outdir, infn = infn)
 # report files
-breaksfile    = "{{out.outdir}}/{{in.infile | fn}}.breaks.txt"
-gainlossfile  = "{{out.outdir}}/{{in.infile | fn}}.gainloss.txt"
-metricsfile   = "{{out.outdir}}/{{in.infile | fn}}.metrics.txt"
-segmetricsfile= "{{out.outdir}}/{{in.infile | fn}}.segmetrics.txt"
-openblas_nthr = "export OPENBLAS_NUM_THREADS={{args.nthread}}; export OMP_NUM_THREADS={{args.nthread}}; export NUMEXPR_NUM_THREADS={{args.nthread}}; export MKL_NUM_THREADS={{args.nthread}}; "
+breaksfile    = "{outdir}/{infn}.breaks.txt".format(outdir = outdir, infn = infn)
+gainlossfile  = "{outdir}/{infn}.gainloss.txt".format(outdir = outdir, infn = infn)
+metricsfile   = "{outdir}/{infn}.metrics.txt".format(outdir = outdir, infn = infn)
+segmetricsfile= "{outdir}/{infn}.segmetrics.txt".format(outdir = outdir, infn = infn)
+openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}; ".format(nthread = nthread)
 
-cnvkitAccessParams = {{args.cnvkitAccessParams}}
+cnvkitAccessParams      = params.access
 cnvkitAccessParams['o'] = accessfile
-cmd1 = '%s {{args.cnvkit}} access "{{args.ref}}" %s' % (openblas_nthr, cmdargs(cnvkitAccessParams))
+cmd1 = openblas_nthr + '{cnvkit} access {ref} {args}'.format(cnvkit = cnvkit, ref = repr(ref), args = cmdargs(cnvkitAccessParams))
 
-cnvkitTargetParams = {{args.cnvkitTargetParams}}
+cnvkitTargetParams = params.target
 cnvkitTargetParams['o'] = targetfile
-cmd2 = '{{args.cnvkit}} target "%s" %s' % (accessfile, cmdargs(cnvkitTargetParams))
+cmd2 = '{cnvkit} target {accessfile} {args}'.format(cnvkit = cnvkit, accessfile = repr(accessfile), args = cmdargs(cnvkitTargetParams))
 
-poll.first(cmd1 + '; ' + cmd2)
+log2log('CNVkit: Run access and target at job #0 ...')
+poll.first(cmd1 + '; ' + cmd2, lockfile = 'access.poll.lock')
+log2log('CNVkit: Run access and target at job #0 ... done')
 
-#pollingNon1st ({{job.index}}, cmd1 + '; ' + cmd2, targetDone, t = 60)
-
-cnvkitCoverageParams = {{args.cnvkitCoverageParams}}
-cnvkitCoverageParams['p'] = {{args.nthread}}
+cnvkitCoverageParams = params.coverage
+cnvkitCoverageParams['p'] = nthread
 cnvkitCoverageParams['o'] = targetCov
-cmd = '%s {{args.cnvkit}} coverage "{{in.infile}}" "%s" %s' % (openblas_nthr, targetfile, cmdargs(cnvkitCoverageParams))
+cmd = openblas_nthr + '{cnvkit} coverage {infile} {targetfile} {args}'.format(cnvkit = cnvkit, infile = repr(infile), targetfile = repr(targetfile), args = cmdargs(cnvkitCoverageParams))
 
-poll.all(cmd)
-#pollingAll ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, cmd, "cnvkit_coverage.done")
+log2log('CNVkit: Run coverage at all jobs ...')
+poll.all(cmd, lockfile = 'coverage.poll.lock')
+log2log('CNVkit: Run coverage at all jobs ... done')
 
-cnvkitReferenceParams = {{args.cnvkitReferenceParams}}
+cnvkitReferenceParams = params.reference
 cnvkitReferenceParams['o'] = refcnn
-cnvkitReferenceParams['f'] = {{args.ref | quote}}
-cmd = '%s {{args.cnvkit}} reference {{proc.workdir}}/*/output/*/*.targetcov.cnn %s' % (openblas_nthr, cmdargs(cnvkitReferenceParams))
+cnvkitReferenceParams['f'] = ref
+cmd = openblas_nthr + '{cnvkit} reference {workdir}/*/output/*/*.targetcov.cnn {args}'.format(cnvkit = cnvkit, workdir = repr(workdir), args = cmdargs(cnvkitReferenceParams))
 
-poll.first(cmd)
-#pollingNon1st ({{job.index}}, cmd, referenceDone)
+log2log('CNVkit: Run reference at job #0 ...')
+poll.first(cmd, lockfile = 'reference.poll.lock')
+log2log('CNVkit: Run reference at job #0 ... done')
 
-mtfile = "{{out.outdir}}/cnvkit_mt"
+mtfile = "{outdir}/cnvkit_mt".format(outdir = outdir)
 open(mtfile, 'w').close()
 
-cnvkitFixParams = {{args.cnvkitFixParams}}
+cnvkitFixParams      = params.fix
 cnvkitFixParams['o'] = fixedCnr
-cmd = '%s {{args.cnvkit}} fix "%s" "%s" "%s" %s' % (openblas_nthr, targetCov, mtfile, refcnn, cmdargs(cnvkitFixParams))
+cmd = openblas_nthr + '{cnvkit} fix {targetCov} {mtfile} {refcnn} {args}'.format(cnvkit = cnvkit, targetCov = repr(targetCov), mtfile = repr(mtfile), refcnn = repr(refcnn), args = cmdargs(cnvkitFixParams))
+
+log2log('CNVkit: Run fix at all jobs ...')
 runcmd (cmd)
+log2log('CNVkit: Run fix at all jobs ... done')
 
 if path.getsize(fixedCnr) < 60:
 	open(segfile, 'w').write('chromosome	start	end	gene	log2	depth	probes	weight\\n')
 else:
-	cnvkitSegmentParams = {{args.cnvkitSegmentParams}}
+	cnvkitSegmentParams = params.segment
 	cnvkitSegmentParams['o'] = segfile
-	cnvkitSegmentParams['p'] = {{args.nthread}}
+	cnvkitSegmentParams['p'] = nthread
 
-	cmd = '%s {{args.cnvkit}} segment %s "%s"' % (openblas_nthr, cmdargs(cnvkitSegmentParams), fixedCnr)
+	cmd = openblas_nthr + '{cnvkit} segment {args} {fixedCnr}'.format(cnvkit = cnvkit, args = cmdargs(cnvkitSegmentParams), fixedCnr = repr(fixedCnr))
+	log2log('CNVkit: Run segment at all jobs ...')
 	runcmd (cmd)
+	log2log('CNVkit: Run segment at all jobs ... done')
 
 if path.getsize(segfile) < 60:
 	open(callfile, 'w').write('chromosome	start	end	gene	log2	cn	depth	probes	weight\\n')
 else:
-	cnvkitCallParams = {{args.cnvkitCallParams}}
+	cnvkitCallParams = params.call
 	cnvkitCallParams['o'] = callfile
-	cmd = '%s {{args.cnvkit}} call %s "%s"' % (openblas_nthr, cmdargs(cnvkitCallParams), segfile)
+	cmd = openblas_nthr + '{cnvkit} call {args} {segfile}'.format(cnvkit = cnvkit, args = cmdargs(cnvkitCallParams), segfile = repr(segfile))
+	log2log('CNVkit: Run call at all jobs ...')
 	runcmd (cmd)
+	log2log('CNVkit: Run call at all jobs ... done')
 
 # reports
-{% if args.cnvkitReport %}
-cnvkitBreaksParams = {{args.cnvkitBreaksParams}}
+{% if args.report %}
+cnvkitBreaksParams = params.breaks
 cnvkitBreaksParams['o'] = breaksfile
-cmd = '%s {{args.cnvkit}} breaks "%s" "%s" %s' % (openblas_nthr, fixedCnr, callfile, cmdargs(cnvkitBreaksParams))
+cmd = openblas_nthr + '{cnvkit} breaks {fixedCnr} {callfile} {args}'.format(cnvkit = cnvkit, fixedCnr = repr(fixedCnr), callfile = repr(callfile), args = cmdargs(cnvkitBreaksParams))
 runcmd (cmd)
 
-cnvkitGainlossParams = {{args.cnvkitGainlossParams}}
+cnvkitGainlossParams = params.gainloss
 cnvkitGainlossParams['s'] = callfile
 cnvkitGainlossParams['o'] = gainlossfile
-cmd = '%s {{args.cnvkit}} gainloss "%s" %s' % (openblas_nthr, fixedCnr, cmdargs(cnvkitGainlossParams))
+cmd = openblas_nthr + '{cnvkit} gainloss {fixedCnr} {args}'.format(cnvkit = cnvkit, fixedCnr = repr(fixedCnr), args = cmdargs(cnvkitGainlossParams))
 runcmd (cmd)
 
-cnvkitMetricsParams = {{args.cnvkitMetricsParams}}
+cnvkitMetricsParams = params.metrics
 cnvkitMetricsParams['s'] = callfile
 cnvkitMetricsParams['o'] = metricsfile
-cmd = '%s {{args.cnvkit}} metrics "%s" %s' % (openblas_nthr, fixedCnr, cmdargs(cnvkitMetricsParams))
+cmd = openblas_nthr + '{cnvkit} metrics {fixedCnr} {args}'.format(cnvkit = cnvkit, fixedCnr = repr(fixedCnr), args = cmdargs(cnvkitMetricsParams))
 runcmd (cmd)
 
-cnvkitSegmetricsParams = {{args.cnvkitSegmetricsParams}}
+cnvkitSegmetricsParams = params.segmetrics
 cnvkitSegmetricsParams['s'] = callfile
 cnvkitSegmetricsParams['o'] = segmetricsfile
-cmd = '%s {{args.cnvkit}} segmetrics "%s" %s' % (openblas_nthr, fixedCnr, cmdargs(cnvkitSegmetricsParams))
+cmd = openblas_nthr + '{cnvkit} segmetrics {fixedCnr} {args}'.format(cnvkit = cnvkit, fixedCnr = repr(fixedCnr), args = cmdargs(cnvkitSegmetricsParams))
 runcmd (cmd)
 {% endif %}
 
 # plots
-{% if args.cnvkitPlot %}
-{% for i, param in args.cnvkitScatterParams | lambda x: enumerate(x) %}
-param = {{param}}
-param['s'] = callfile
-param['o'] = "{{out.outdir}}/{{in.infile | fn}}.scatter{{i | lambda x: x+1}}.pdf"
-cmd = '%s {{args.cnvkit}} scatter "%s" %s' % (openblas_nthr, fixedCnr, cmdargs(param))
-runcmd (cmd)
-{% endfor %}
+{% if args.plot %}
+# require job.index == 0?
+if not isinstance(params.scatter, list):
+	params.scatter = [params.scatter]
+for i, param in enumerate(params.scatter):
+	param['s'] = callfile
+	param['o'] = "{outdir}/{infn}.scatter{i}.pdf".format(outdir = outdir, infn = infn, i = i+1)
+	cmd = openblas_nthr + '{cnvkit} scatter {fixedCnr} {args}'.format(cnvkit = cnvkit, fixedCnr = repr(fixedCnr), args = cmdargs(param))
+	runcmd (cmd)
 
-cnvkitDiagramParams = {{args.cnvkitDiagramParams}}
+cnvkitDiagramParams = params.diagram
 cnvkitDiagramParams['s'] = callfile
-cnvkitDiagramParams['o'] = "{{out.outdir}}/{{in.infile | fn}}.diagram.pdf"
-cmd = '%s {{args.cnvkit}} diagram "%s" %s' % (openblas_nthr, fixedCnr, cmdargs(cnvkitDiagramParams))
+cnvkitDiagramParams['o'] = "{outdir}/{infn}.diagram.pdf".format(outdir = outdir, infn = infn)
+cmd = openblas_nthr + '{cnvkit} diagram {fixedCnr} {args}'.format(cnvkit = cnvkit, fixedCnr = repr(fixedCnr), args = cmdargs(cnvkitDiagramParams))
 runcmd (cmd)
 
-poll.all(lambda x: not path.exists(x), callfile)
-#pollingAll ({{proc.workdir | quote}}, {{proc.size}}, {{job.index}}, 'if [[ ! -e "%s" ]]; then sleep 1; fi' % callfile, "cnvkit_call.done")
+poll.all(lambda x: not path.exists(x), callfile, lockfile = 'callfile.poll.lock')
 
 {% if job.index | lambda x: x == 0 %}
-{% for i, param in args.cnvkitHeatmapParams | lambda x: enumerate(x) %}
-param = {{param}}
-param['o'] = "{{out.outdir}}/{{in.infile | fn}}.heatmap{{i | lambda x: x+1}}.pdf"
-cmd = '%s {{args.cnvkit}} heatmap "{{proc.workdir}}"/*/output/*/*.call.cns %s' % (openblas_nthr, cmdargs(param))
-runcmd (cmd)
-{% endfor %}
+if not isinstance(params.heatmap, list):
+	params.heatmap = [params.heatmap]
+for i, param in enumerate(params.heatmap):
+	param['o'] = "{outdir}/{infn}.heatmap{i}.pdf".format(outdir = outdir, infn = infn, i = i+1)
+	cmd = openblas_nthr + '{cnvkit} heatmap {workdir}/*/output/*/*.call.cns {args}'.format(cnvkit = cnvkit, workdir = repr(workdir), args = cmdargs(param))
+	runcmd (cmd)
 {% endif %}
 {% endif %}
 
@@ -166,36 +195,43 @@ if path.getsize(callfile) < 60: # no data generated
 		fout.write('##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">\\n')
 		fout.write('##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">\\n')
 		fout.write('##FORMAT=<ID=CNQ,Number=1,Type=Float,Description="Copy number genotype quality for imprecise events">\\n')
-		fout.write('#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	{{in.infile | fn}}\\n')
+		fout.write('#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	{infn}\\n'.format(infn = infn))
 else:
-	cnvkitExportParams = {{args.cnvkitExportParams}}
+	cnvkitExportParams = params.export
 	cnvkitExportParams['o'] = outfile
-	cmd = '%s {{args.cnvkit}} export vcf "%s" %s' % (openblas_nthr, callfile, cmdargs(cnvkitExportParams))
+	cmd = openblas_nthr + '{cnvkit} export vcf {callfile} {args}'.format(cnvkit = cnvkit, callfile = repr(callfile), args = cmdargs(cnvkitExportParams))
 	runcmd (cmd)
 
 ############## cnvnator
 {% elif args.tool | lambda x: x=='cnvnator' %}
-rootfile = '{{out.outdir}}/{{in.infile | fn}}.root'
-callfile = '{{out.outdir}}/{{in.infile | fn}}.cnvnator'
-cmd = '{{args.cnvnator}} -root "%s" -genome {{args.cnvnatorGenome}} -tree "{{in.infile}}" ' % (rootfile)
+rootfile = '{outdir}/{infn}.root'.format(outdir = outdir, infn = infn)
+callfile = '{outdir}/{infn}}.cnvnator'.format(outdir = outdir, infn = infn)
+binsize  = {{args.binsize | repr}}
+
+cmd = '{cnvnator} -root {rootfile} -genome {genome} -tree {infile}'.format(cnvnator = cnvnator, rootfile = repr(rootfile), genome = genome, infile = repr(infile))
 runcmd (cmd)
-cmd = '{{args.cnvnator}} -root "%s" -genome {{args.cnvnatorGenome}} -his {{args.cnvnatorBinsize}}' % (rootfile)
+
+cmd = '{cnvnator} -root {rootfile} -genome {genome} -his {binsize}'.format(cnvnator = cnvnator, rootfile = repr(rootfile), genome = genome, binsize = binsize)
 runcmd (cmd)
-cmd = '{{args.cnvnator}} -root "%s" -stat {{args.cnvnatorBinsize}}' % (rootfile)
+
+cmd = '{cnvnator} -root {rootfile} -stat {binsize}'.format(cnvnator = cnvnator, rootfile = repr(rootfile), binsize = binsize)
 runcmd (cmd)
-cmd = '{{args.cnvnator}} -root "%s" -partition {{args.cnvnatorBinsize}}' % (rootfile)
+
+cmd = '{cnvnator} -root {rootfile} -partition {binsize}'.format(cnvnator = cnvnator, rootfile = repr(rootfile), binsize = binsize)
 runcmd (cmd)
-cmd = '{{args.cnvnator}} -root "%s" -call {{args.cnvnatorBinsize}} > "%s"' % (rootfile, callfile)
+
+cmd = '{cnvnator} -root {rootfile} -call {binsize}'.format(cnvnator = cnvnator, rootfile = repr(rootfile), binsize = binsize)
 runcmd (cmd)
-cmd = 'cd "{{out.outdir}}"; {{args.cnvnator2vcf}} "%s" > "%s"' % (path.basename(callfile), outfile)
+
+cmd = 'cd {outdir}; {cnvnator2vcf} {callfile} > {outfile}'.format(outdir = repr(outdir), cnvnator2vcf = cnvnator2vcf, callfile = repr(path.basename(callfile)), outfile = repr(outfile))
 runcmd (cmd)
 
 ############## wandy
 {% elif args.tool | lambda x: x=='wandy' %}
 # get Wandy tool.info
 from distutils.spawn import find_executable
-toolinfo   = path.join (path.dirname(find_executable("{{args.wandy}}")), "tool.info")
-retdir     = "{{out.outdir}}"
+toolinfo   = path.join (path.dirname(find_executable(wandy)), "tool.info")
+retdir     = outdir
 #if not path.exists(retdir):
 #	makedirs(retdir)
 myToolinfo = path.join (retdir, "tool.info")
@@ -208,13 +244,14 @@ with open (toolinfo) as fin, open(myToolinfo, 'w') as fout:
 	toolinfos.append ('WANDY_PARALLELED_MODE=0')
 	fout.write ("\n".join(toolinfos) + "\n")
 
-params['i'] = {{in.infile | quote}}
-params['t'] = {{args.wandyType}}
-cmd = 'cd "%s"; {{args.wandy}} %s' % (retdir, cmdargs(params))
+params      = {key: val for key, val in  params if key not in cnvkitParamsKeys}
+params['i'] = infile
+params['t'] = {{args.type | repr}}
+cmd = 'cd {retdir}; {wandy} {args}'.format(retdir = repr(retdir), wandy = wandy, args = cmdargs(params))
 runcmd (cmd)
 
 # TODO: convert to vcf
-open({{out.outfile | quote}}, 'w').close()
+open(outfile, 'w').close()
 {% endif %}
 
 if gz:	runcmd ('gzip "%s"' % (outfile))
