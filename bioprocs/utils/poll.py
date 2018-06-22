@@ -44,16 +44,21 @@ class Poll(object):
 			del kwargs['lockfile']
 		# make sure it's cleaned when job reset
 		lockfilename = path.join(self.workdir, '1', 'output', lockfilename)
-		lockfile     = filelock.FileLock(lockfilename)
+		lockfile     = filelock.SoftFileLock(lockfilename)
 		if self.jobindex == 0:
+			#log2pyppl('JOB #0: DOING stuff ... ')
 			with lockfile:
 				if callable(todo):
 					todo(*args, **kwargs)
 				else:
 					runcmd(todo.format(*args, **kwargs))
+			#log2pyppl('JOB #0: DOING stuff ... done')
 		else:
+			#log2pyppl('JOB #x: waiting ... for flag file')
 			Poll.wait(lambda x: not path.exists(x), lockfilename)
+			#log2pyppl('JOB #x: waiting ... for job #0')
 			with lockfile: pass
+			#log2pyppl('JOB #x: waiting ... done')
 
 	"""
 	Poll jobs other than the first job to do stuff, first job just wait.
@@ -69,7 +74,7 @@ class Poll(object):
 			path.join(self.workdir, str(jobindex + 1), 'output', lockfilename) \
 			for jobindex in range(self.joblen)
 		]
-		lockfiles = [filelock.FileLock(f) for f in lockfilenames]
+		lockfiles = [filelock.SoftFileLock(f) for f in lockfilenames]
 		if self.jobindex == 0:
 			for i, lockfilename in enumerate(lockfilenames):
 				if i == 0: continue
@@ -95,7 +100,7 @@ class Poll(object):
 			path.join(self.workdir, str(jobindex + 1), 'output', lockfilename) \
 			for jobindex in range(self.joblen)
 		]
-		lockfiles = [filelock.FileLock(f) for f in lockfilenames]
+		lockfiles = [filelock.SoftFileLock(f) for f in lockfilenames]
 
 		with lockfiles[self.jobindex]:
 			if callable(todo):
