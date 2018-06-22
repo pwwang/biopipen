@@ -180,13 +180,16 @@ plot.scatter = function(data, plotfile, x = 1, y = 2, params = list(), ggs = lis
 # alias
 plot.points = plot.scatter
 
-plot.boxplot = function(data, plotfile, x = 1, y = 2, stack = F, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	if (!stack) {
+plot.boxplot = function(data, plotfile, x = 1, y = 2, stacked = T, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
 		colnames(data) = cnames
 		if (is.numeric(x)) {
 			x = cnames[x]
+		}
+		if (is.numeric(y)) {
+			y = cnames[y]
 		}
 		params = update.aes(params, aes_string(group = x))
 

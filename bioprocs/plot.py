@@ -153,24 +153,53 @@ pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
 @output:
 	`outpng:file`: The output figure
 @args:
-	`header`:    `header` parameter for `read.table`, default: True
-	`rownames`:  `row.names` parameter for `read.table`, default: 1
-	`params`:    Other parameters for `boxplot`, default: ""
+	`inopts` :   Input options to read the input file
+		- `cnames` :   Whether the input file has header. Default: `True`
+		- `rnames` :   Whether the input file has row names. Default: `False`
+		- `delimit`:   The seperator. Defualt: `\\t`
+	`x`      :   The `ind` (index) column. Only for `args.stacked = True`. Default: `2`
+	`y`      :   The `values` column. Only for `args.stacked = True`. Default: `1`
+	`helper` :   Some raw codes to help to construct the matrix and arguments.
+	`stacked`:   Whether the input file is stacked
+		- Stacked file looks like:
+		  ```
+		  values	ind
+		  1.1	col1
+		  1.2	col1
+		  ...
+		  .8	col2
+		  .9	col2
+		  ...
+		  3.2	col3
+		  ...
+		  ```
+		- Unstacked file looks like:
+		  ```
+		  col1	col2	col3
+		  1.1	.8	3.2
+		  1.2	.9	2.2
+		  ```
+	`params`:    Other parameters for `boxplot`, default: `""`
+	`ggs`   :    Extra ggplot2 statements
 """
-pBoxplot = Proc(desc = 'Generate boxplot plot.')
-pBoxplot.input  = 'infile:file'
-pBoxplot.output = 'outfile:file:{{in.infile | fn}}.boxplot.png'
-pBoxplot.args.cnames  = True
-pBoxplot.args.rnames  = False
-pBoxplot.args.x       = 1
-pBoxplot.args.y       = 2
+pBoxplot             = Proc(desc = 'Generate boxplot plot.')
+pBoxplot.input       = 'infile:file'
+pBoxplot.output      = 'outfile:file:{{in.infile | fn}}.boxplot.png'
+pBoxplot.args.inopts = Box(
+	cnames  = True,
+	rnames  = False,
+	delimit = '\t'
+)
+pBoxplot.args.x       = 2
+pBoxplot.args.y       = 1
 pBoxplot.args.helper  = ''
+pBoxplot.args.stacked = False
 pBoxplot.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pBoxplot.args.params  = Box()
 pBoxplot.args.ggs     = Box()
 pBoxplot.envs.rimport = rimport
-pBoxplot.lang   = params.Rscript.value
-pBoxplot.script = 'file:scripts/plot/pBoxplot.r'
+pBoxplot.lang         = params.Rscript.value
+pBoxplot.script       = 'file:scripts/plot/pBoxplot.r'
 
 """
 @name:
