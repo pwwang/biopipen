@@ -2109,9 +2109,34 @@
         - `outpng:file`: The output figure  
 
     - **args**  
-        - `header`: `header` parameter for `read.table`, default: True  
-        - `rownames`: `row.names` parameter for `read.table`, default: 1  
-        - `params`: Other parameters for `boxplot`, default: ""  
+        - `inopts` : Input options to read the input file  
+        	- `cnames` :   Whether the input file has header. Default: `True`
+        	- `rnames` :   Whether the input file has row names. Default: `False`
+        	- `delimit`:   The seperator. Defualt: `\\t`
+        - `x`      : The `ind` (index) column. Only for `args.stacked = True`. Default: `2`  
+        - `y`      : The `values` column. Only for `args.stacked = True`. Default: `1`  
+        - `helper` : Some raw codes to help to construct the matrix and arguments.  
+        - `stacked`: Whether the input file is stacked  
+        	- Stacked file looks like:
+        	  ```
+        	  values	ind
+        	  1.1	col1
+        	  1.2	col1
+        	  ...
+        	  .8	col2
+        	  .9	col2
+        	  ...
+        	  3.2	col3
+        	  ...
+        	  ```
+        	- Unstacked file looks like:
+        	  ```
+        	  col1	col2	col3
+        	  1.1	.8	3.2
+        	  1.2	.9	2.2
+        	  ```
+        - `params`: Other parameters for `boxplot`, default: `""`  
+        - `ggs`   : Extra ggplot2 statements  
 
 !!! hint "pHeatmap"
 
