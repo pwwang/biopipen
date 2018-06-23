@@ -3,6 +3,26 @@ from os import path
 from time import sleep
 from bioprocs.utils import runcmd, log2pyppl
 
+class HardFileLock(filelock.BaseFileLock):
+	"""
+	The reverse of SortFileLock.
+	With HardFileLock, if file exists, wait
+	Here we do it reversely, it file does not exists, wait, until it's created.
+	Note that the lockfile in <outdir> will always be removed as job re-created.
+	"""
+	def _acquire(self):
+		try:
+			fd = open(self._lock_file, 'r')
+		except (IOError, OSError):
+			# wait
+			self._lock_file_fd = None
+		else:
+			self._lock_file_fd = fd
+		
+	def _release(self):
+		self._lock_file_fd = None
+
+
 class Poll(object):
 	"""
 	Initiate a polling isinstance
@@ -18,7 +38,7 @@ class Poll(object):
 		self.workdir  = workdir
 		self.joblen   = joblen
 		self.jobindex = jobindex
-
+		
 	"""
 	A helper function to poll `func`, if it is true, then wait
 	@params:
@@ -34,6 +54,7 @@ class Poll(object):
 		while func(*args, **kwargs):
 			sleep(interval)
 
+
 	"""
 	Poll and do stuff at the first job, other jobs just wait
 	"""
@@ -44,18 +65,24 @@ class Poll(object):
 			del kwargs['lockfile']
 		# make sure it's cleaned when job reset
 		lockfilename = path.join(self.workdir, '1', 'output', lockfilename)
-		lockfile     = filelock.SoftFileLock(lockfilename)
+		lockfile     = HardFileLock(lockfilename)
 		if self.jobindex == 0:
 			#log2pyppl('JOB #0: DOING stuff ... ')
-			with lockfile:
+			#with lockfile:
+			#lockfile.acquire()
+			try:
 				if callable(todo):
 					todo(*args, **kwargs)
 				else:
 					runcmd(todo.format(*args, **kwargs))
+			except:
+				raise
+			finally:
+				open(lockfilename, 'w').close()
 			#log2pyppl('JOB #0: DOING stuff ... done')
 		else:
 			#log2pyppl('JOB #x: waiting ... for flag file')
-			Poll.wait(lambda x: not path.exists(x), lockfilename)
+			#Poll.wait(lambda x: not path.exists(x), lockfilename)
 			#log2pyppl('JOB #x: waiting ... for job #0')
 			with lockfile: pass
 			#log2pyppl('JOB #x: waiting ... done')
@@ -74,18 +101,25 @@ class Poll(object):
 			path.join(self.workdir, str(jobindex + 1), 'output', lockfilename) \
 			for jobindex in range(self.joblen)
 		]
-		lockfiles = [filelock.SoftFileLock(f) for f in lockfilenames]
+		lockfiles = [HardFileLock(f) for f in lockfilenames]
 		if self.jobindex == 0:
 			for i, lockfilename in enumerate(lockfilenames):
 				if i == 0: continue
-				Poll.wait(lambda x: not path.exists(x), lockfilename)
+				#Poll.wait(lambda x: not path.exists(x), lockfilename)
 				with lockfiles[i]: pass
 		else:
-			with lockfiles[self.jobindex]:
+			#with lockfiles[self.jobindex]:
+			#lockfiles[self.jobindex].acquire()
+			try:
 				if callable(todo):
 					todo(*args, **kwargs)
 				else:
 					runcmd(todo.format(*args, **kwargs))
+			except:
+				raise
+			finally:
+				open(lockfilename[self.jobindex], 'w').close()
+				#lockfiles[self.jobindex].release()
 
 	"""
 	You have to have all jobs running
@@ -100,15 +134,27 @@ class Poll(object):
 			path.join(self.workdir, str(jobindex + 1), 'output', lockfilename) \
 			for jobindex in range(self.joblen)
 		]
-		lockfiles = [filelock.SoftFileLock(f) for f in lockfilenames]
-
-		with lockfiles[self.jobindex]:
+		lockfiles = [HardFileLock(f) for f in lockfilenames]
+		
+		#log2pyppl('Doing stuff at job #%s ... ' % self.jobindex)
+		# with lockfiles[self.jobindex]:
+		#lockfiles[self.jobindex].acquire()
+		try:
 			if callable(todo):
 				todo(*args, **kwargs)
 			else:
 				runcmd(todo.format(*args, **kwargs))
+		except:
+			raise
+		finally:
+			open(lockfilenames[self.jobindex], 'w').close()
+			#lockfiles[self.jobindex].release()
+		#log2pyppl('Doing stuff at job #%s ... done ' % self.jobindex)
 
 		for i, lockfile in enumerate(lockfiles):
 			if i == self.jobindex: continue
-			Poll.wait(lambda x: not path.exists(x), lockfilenames[i])
+			#log2pyppl('Waiting for lock file: %s ... ' % self.jobindex)
+			#Poll.wait(lambda x: not path.exists(x), lockfilenames[i])
+			#log2pyppl('Waiting for job: %s ... ' % self.jobindex)
 			with lockfile: pass
+			#log2pyppl('Waiting for job: %s ... done ' % self.jobindex)

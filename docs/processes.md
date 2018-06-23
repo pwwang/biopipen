@@ -1826,6 +1826,21 @@
 
     - **description**  
         Calculate GEP70 scores for multiple mylenoma 70-gene-signatures
+
+    - **input**  
+        - `infile:file`: The input file with expression matrix  
+        	- Columns are samples, rows are genes
+
+    - **output**  
+        - `outfile:file`: The output files with gep70 scores for each sample.  
+        	- Samples become rows, just one column is in the file.
+
+    - **args**  
+        - `inopts`: The input options.  
+        	- `cnames`: Whether the input file has column names. Default: `True`
+        - `gep70`: The GEP70 genes.   
+        	- Column 1: up-regulated genes (51)
+        	- Column 2: down-regulated genes (19)
 ## pca
 
 !!! hint "pPCA"

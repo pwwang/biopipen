@@ -301,10 +301,11 @@ class TestSambam (unittest.TestCase):
 		procOKIn(pBamPair2Smut3, 'chr1\t44446\t.\tG\tTG\t.\tPASS', self)
 
 	def test5_pBam2Cnv (self):
-		pBam2Cnv.input = pBamMarkdup.channel * 5
+		pBam2Cnv.input = pBamMarkdup.channel * 3
 
 		pBam2Cnv1           = pBam2Cnv.copy()
 		pBam2Cnv1.forks     = 10
+		pBam2Cnv1.runner    = 'sge4d'
 		pBam2Cnv1.args.tool = 'cnvkit'
 		pBam2Cnv1.args.ref  = getfile('ref.fa')
 		pBam2Cnv1.echo = {'jobs': range(10), 'type': ''}

@@ -39,7 +39,7 @@ poll = Poll(workdir, {{proc.size}}, {{job.index}})
 ############## cnvkit
 {% if args.tool | lambda x: x=='cnvkit' %}
 
-log2log('CNVkit: Initialize ...')
+#log2log('CNVkit: Initialize ...')
 
 targetCov     = "{outdir}/{infn}.targetcov.cnn".format(outdir = outdir, infn = infn)
 accessfile    = "{workdir}/1/output/cnvkit_access.bed".format(workdir = workdir)

@@ -225,7 +225,7 @@ class Process(Command):
 
 	def __init__(self, name, prog = path.basename(sys.argv[0])):
 		super(Process, self).__init__(name, prog)
-		self.opts = ('proc.xxx', ['The common config of all processes.'])
+		self.opts = OrderedDict([('exdir', 'The output directory.'), ('proc.xxx', ['The common config of all processes.'])])
 
 	def _getDocString(self):
 		module, procname = self.name.split('.', 1)
