@@ -305,7 +305,7 @@ class TestSambam (unittest.TestCase):
 
 		pBam2Cnv1           = pBam2Cnv.copy()
 		pBam2Cnv1.forks     = 10
-		pBam2Cnv1.runner    = 'sge4d'
+		#pBam2Cnv1.runner    = 'sge4d'
 		pBam2Cnv1.args.tool = 'cnvkit'
 		pBam2Cnv1.args.ref  = getfile('ref.fa')
 		pBam2Cnv1.echo = {'jobs': range(10), 'type': ''}
