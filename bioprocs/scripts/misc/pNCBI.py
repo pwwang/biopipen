@@ -1,14 +1,16 @@
 from eutils import Client
 from bioprocs.utils.tsvio import TsvWriter, TsvRecord
+from time import sleep
 
-term    = {{in.term | repr}}
-outfile = {{out.outfile | quote}}
-prog    = {{args.prog | quote}}
-apikey  = {{args.apikey | quote}} or None
-db      = {{args.db | quote}}
-joiner  = {{args.joiner | quote}}
-record  = {{args.record}}
-writer  = TsvWriter(outfile)
+term     = {{in.term | repr}}
+outfile  = {{out.outfile | quote}}
+prog     = {{args.prog | quote}}
+apikey   = {{args.apikey | quote}} or None
+db       = {{args.db | quote}}
+joiner   = {{args.joiner | quote}}
+record   = {{args.record}}
+writer   = TsvWriter(outfile)
+sleepsec = {{args.sleep | repr}}
 
 def writerResults(rets):
 	keys = []
@@ -45,8 +47,12 @@ def writerResults(rets):
 client = Client(api_key = apikey)
 if prog == 'esearch':
 	sret = client.esearch(db = db, term = term)
-	rets = client.efetch(db = db, id = sret.ids)
-	rets = list(iter(rets))
+	print sret.count
+	if not sret.ids:
+		rets = []
+	else:
+		rets = client.efetch(db = db, id = sret.ids)
+		rets = list(iter(rets))
 	writerResults(rets)
 
 else:
@@ -54,4 +60,5 @@ else:
 	key     = [key for key in dir(fetches) if not key.startswith('_')][0]
 	rets    = getattr(fetches, key)
 	writerResults(rets)
-	
+
+sleep (sleepsec)

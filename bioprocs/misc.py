@@ -42,6 +42,9 @@ pGEP70.script       = "file:scripts/misc/pGEP70.r"
 	`apikey` : The api key for E-utils
 		- Without API key, we can only query 3 time in a second
 		- With it, we can do 10.
+	`sleep`  : Sleep sometime after job done. Default: `0.15`
+		- Because of the limit of # queries/sec, we need to sleep sometime after the job is done
+		- At the same time, we also have to limit # jobs to run at the same time. typically: `pNCBI.forks = 10`
 	`db`     : The database to query. Default: `pubmed`. Available databases:
 		- annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books, 
 		- cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr, 
@@ -56,8 +59,10 @@ pGEP70.script       = "file:scripts/misc/pGEP70.r"
 pNCBI             = Proc(desc = 'The NCBI E-Utils')
 pNCBI.input       = 'term'
 pNCBI.output      = 'outfile:file:{{in.term | lambda x: __import__("re").sub(r"[^\\w_]", "", x)[:20]}}.{{args.prog}}.txt'
+pNCBI.errhow      = 'retry'
 pNCBI.args.prog   = 'esearch'
 pNCBI.args.apikey = params.ncbikey.value
+pNCBI.args.sleep  = .15
 # annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books, 
 # cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr, 
 # homologene, ipg, medgen, mesh, ncbisearch, nlmcatalog, nuccore, nucest, nucgss, nucleotide, 
