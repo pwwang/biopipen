@@ -12,12 +12,10 @@ class HardFileLock(filelock.BaseFileLock):
 	"""
 	def _acquire(self):
 		try:
-			fd = open(self._lock_file, 'r')
+			self._lock_file_fd = open(self._lock_file, 'r')
 		except (IOError, OSError):
 			# wait
 			self._lock_file_fd = None
-		else:
-			self._lock_file_fd = fd
 		
 	def _release(self):
 		self._lock_file_fd = None

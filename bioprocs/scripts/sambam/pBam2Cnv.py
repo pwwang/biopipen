@@ -5,7 +5,7 @@ from time import sleep
 from datetime import date
 
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs, log2pyppl
+from bioprocs.utils import runcmd, cmdargs, log2pyppl, logger
 from bioprocs.utils.poll import Poll
 
 gz       = {{args.gz | lambda x: bool(x)}}
@@ -24,8 +24,9 @@ params   = {{args.params}}
 
 def log2log(*args, **kwargs):
 	# debug = False
-	pass 
-	#log2pyppl(*args, **kwargs)
+	# pass 
+	logger.info(*args, **kwargs)
+	# log2pyppl(*args, **kwargs)
 
 cnvkitParamsKeys = [
 	'access', 'target', 'coverage', 'reference', 'fix', 'segment', 'call', 'plot', 'breaks',
