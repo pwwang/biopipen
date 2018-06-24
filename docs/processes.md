@@ -1841,6 +1841,34 @@
         - `gep70`: The GEP70 genes.   
         	- Column 1: up-regulated genes (51)
         	- Column 2: down-regulated genes (19)
+
+!!! hint "pNCBI"
+
+    - **description**  
+        The NCBI E-Utils
+
+    - **input**  
+        - `term`: The term or the id argument for esearch or efetch  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `prog`   : The program to use, esearch (Default) or efetch  
+        - `apikey` : The api key for E-utils  
+        	- Without API key, we can only query 3 time in a second
+        	- With it, we can do 10.
+        - `db`     : The database to query. Default: `pubmed`. Available databases:  
+        	- annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books, 
+        	- cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr, 
+        	- homologene, ipg, medgen, mesh, ncbisearch, nlmcatalog, nuccore, nucest, nucgss, nucleotide, 
+        	- omim, orgtrack, pcassay, pccompound, pcsubstance, pmc, popset, probe, protein, proteinclusters, 
+        	- pubmed, pubmedhealth, seqannot, snp, sparcle, sra, structure, taxonomy, unigene
+        - `joiner` : The delimit to use if the field is a list  
+        - `record` : A function to transform the record.  
+
+    - **requires**  
+        [python-eutils](https://github.com/biocommons/eutils)
 ## pca
 
 !!! hint "pPCA"

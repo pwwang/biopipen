@@ -27,3 +27,44 @@ pGEP70.args.inopts  = Box(cnames = True)
 pGEP70.args.lang    = 'Rscript'
 pGEP70.envs.rimport = rimport
 pGEP70.script       = "file:scripts/misc/pGEP70.r"
+
+"""
+@name:
+	pNCBI
+@description:
+	The NCBI E-Utils
+@input:
+	`term`: The term or the id argument for esearch or efetch
+@output:
+	`outfile:file`: The output file
+@args:
+	`prog`   : The program to use, esearch (Default) or efetch
+	`apikey` : The api key for E-utils
+		- Without API key, we can only query 3 time in a second
+		- With it, we can do 10.
+	`db`     : The database to query. Default: `pubmed`. Available databases:
+		- annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books, 
+		- cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr, 
+		- homologene, ipg, medgen, mesh, ncbisearch, nlmcatalog, nuccore, nucest, nucgss, nucleotide, 
+		- omim, orgtrack, pcassay, pccompound, pcsubstance, pmc, popset, probe, protein, proteinclusters, 
+		- pubmed, pubmedhealth, seqannot, snp, sparcle, sra, structure, taxonomy, unigene
+	`joiner` : The delimit to use if the field is a list
+	`record` : A function to transform the record.
+@requires:
+	[python-eutils](https://github.com/biocommons/eutils)
+"""
+pNCBI             = Proc(desc = 'The NCBI E-Utils')
+pNCBI.input       = 'term'
+pNCBI.output      = 'outfile:file:{{in.term | lambda x: __import__("re").sub(r"[^\\w_]", "", x)[:20]}}.{{args.prog}}.txt'
+pNCBI.args.prog   = 'esearch'
+pNCBI.args.apikey = params.ncbikey.value
+# annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books, 
+# cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr, 
+# homologene, ipg, medgen, mesh, ncbisearch, nlmcatalog, nuccore, nucest, nucgss, nucleotide, 
+# omim, orgtrack, pcassay, pccompound, pcsubstance, pmc, popset, probe, protein, proteinclusters, 
+# pubmed, pubmedhealth, seqannot, snp, sparcle, sra, structure, taxonomy, unigene
+pNCBI.args.db     = 'pubmed'
+pNCBI.args.joiner = '|'
+pNCBI.args.record = None
+pNCBI.lang        = params.python.value
+pNCBI.script      = 'file:scripts/misc/pNCBI.py'

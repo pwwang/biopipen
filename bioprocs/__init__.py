@@ -14,6 +14,8 @@ DEFAULTS = {
 	"dbsnpver.desc"   : "The dbsnp version used in cruzdb to query SNP information.",
 	"genome"          : "hg19",
 	"genome.desc"     : "Commonly used genome assembly.",
+	"ncbikey"         : "",
+	"ncbikey.desc"    : "The NCBI API Key for E-Utils.",
 
 	# path
 	"annovarDb"          : "",
