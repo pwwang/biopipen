@@ -58,7 +58,7 @@ pGEP70.script       = "file:scripts/misc/pGEP70.r"
 """
 pNCBI             = Proc(desc = 'The NCBI E-Utils')
 pNCBI.input       = 'term'
-pNCBI.output      = 'outfile:file:{{in.term | lambda x: __import__("re").sub(r"[^\\w_]", "", x)[:20]}}.{{args.prog}}.txt'
+pNCBI.output      = 'outfile:file:{{in.term | lambda x: __import__("re").sub(r"[^\\w_]", "_", x)[:255]}}.{{args.prog}}.txt'
 pNCBI.errhow      = 'retry'
 pNCBI.args.prog   = 'esearch'
 pNCBI.args.apikey = params.ncbikey.value

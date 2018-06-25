@@ -331,7 +331,7 @@ class Process(Command):
 				procconf[lastpart] = val
 			else:
 				self._error('Unknown argument: %s' % key)
-		if not ''.join(input):
+		if not any([bool(it) for it in input]):
 			self._error('No input specified.')
 		setattr(proc, 'input', input)
 		return proc, config

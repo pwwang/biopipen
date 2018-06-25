@@ -46,8 +46,12 @@ def writerResults(rets):
 
 client = Client(api_key = apikey)
 if prog == 'esearch':
-	sret = client.esearch(db = db, term = term)
-	print sret.count
+	sret  = client.esearch(db = db, term = term)
+	try:
+		error = list(sret._xml_root.find('ErrorList').iterchildren())
+		print sret.count if not error else 0
+	except:
+		print 0
 	if not sret.ids:
 		rets = []
 	else:

@@ -2,11 +2,11 @@ from os import path
 from sys import stderr
 from glob import glob
 
-{{runcmd}}
-{{params2CmdArgs}}
-{{parallel}}
+from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils.parallel import Parallel
 
-invcfs = {{in.infiles}}
+invcfs  = {{in.infiles | repr}}
+nthread = int({{args.nthread | repr}})
 
 cmds     = []
 invcfgzs = []
@@ -20,18 +20,19 @@ for invcf in invcfs:
 	cmds.append(cmd)
 invcfs = invcfgzs
 
-{% if args.nthread | lambda x: x > 1 %}
-parallel(cmds, {{args.nthread}})
-{% else %}
-for cmd in cmds: runcmd(cmd)
-{% endif %}
+if nthread > 1:
+	#parallel(cmds, {{args.nthread}})
+	p = Parallel(nthread, raiseExc = True)
+	p.run('{}', [(cmd, ) for cmd in cmds])
+else:
+	for cmd in cmds: runcmd(cmd)
 
 ########### vcftools
 {% if args.tool | lambda x: x == 'vcftools' %}
 params = {}
 params['d'] = True
 params['t'] = True
-cmd = '{{args.vcftools}} %s %s > "{{out.outfile}}"' % (params2CmdArgs(params, equal=' '), ' '.join(invcfs))
+cmd = '{{args.vcftools}} %s %s > "{{out.outfile}}"' % (cmdargs(params, equal=' '), ' '.join(invcfs))
 runcmd(cmd)
 
 ########### gatk
@@ -44,7 +45,7 @@ for i, invcf in enumerate(invcfs):
 	params[key] = invcf
 params['genotypemergeoption'] = 'UNIQUIFY'
 
-cmd = '{{args.gatk}} -T CombineVariants %s' % (params2CmdArgs(params, equal=' '))
+cmd = '{{args.gatk}} -T CombineVariants %s' % (cmdargs(params, equal=' '))
 runcmd(cmd)
 
 {% endif %}
