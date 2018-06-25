@@ -49,9 +49,11 @@ if prog == 'esearch':
 	sret  = client.esearch(db = db, term = term)
 	try:
 		error = list(sret._xml_root.find('ErrorList').iterchildren())
-		print sret.count if not error else 0
 	except:
-		print 0
+		error = None
+	
+	print sret.count if not error else 0
+	
 	if not sret.ids:
 		rets = []
 	else:
