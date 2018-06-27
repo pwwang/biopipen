@@ -5,6 +5,10 @@ class SampleInfoException(Exception):
 	pass
 
 class SampleInfo (object):
+
+	NORMAL_GROUP = ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD', 'CONTROL']
+	TUMOR_GROUP  = ['TUMOR', 'DISEASE', 'AFTER', 'TISSUE', 'TREATMENT']
+
 	def __init__(self, sfile):
 		reader    = TsvReader(sfile, ftype = 'head')
 		self.samcol = reader.meta.keys()[0]
@@ -59,7 +63,7 @@ class SampleInfo (object):
 				ret.append(r)
 		return ret
 
-	def toChannel(self, datadir, paired = False):
+	def toChannel(self, datadir, paired = False, raiseExc = True):
 		from os import path
 		if not paired:
 			samples = self.select(get = 'Sample')
@@ -72,13 +76,20 @@ class SampleInfo (object):
 			for patient in patients:
 				records = self.select(patient = patient, get = ['Sample', 'Group'])
 				if len(records) != 2:
-					raise SampleInfoException('Expect 2 samples for paired channel for patient: %s' % patient)
+					if raiseExc:
+						raise SampleInfoException('Expect 2 samples for paired channel for patient: %s' % patient)
+					else:
+						continue
 				record1, record2 = records
-				common = path.commonprefix([record1.Sample, record2.Sample])
-				if common and record1.Sample < record2.Sample:
-					record1, record2 = record2, record1
-				elif not common and record2.Group.upper() not in ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD']:
-					record1, record2 = record2, record1
+				# make sure record1 is tumor and record2 is normal
+				if  record1.Group.upper() in SampleInfo.TUMOR_GROUP + SampleInfo.NORMAL_GROUP and \
+					record2.Group.upper() in SampleInfo.TUMOR_GROUP + SampleInfo.NORMAL_GROUP:
+					if record1.Group.upper() in SampleInfo.NORMAL_GROUP:
+						record1, record2 = record2, record1
+				else:
+					common = path.commonprefix([record1.Sample, record2.Sample])
+					if common and record1.Sample < record2.Sample:
+						record1, record2 = record2, record1
 				ret.append((path.join(datadir, record1.Sample), path.join(datadir, record2.Sample)))
 			return ret
 

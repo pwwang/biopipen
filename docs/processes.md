@@ -602,7 +602,7 @@
         Calculate the sequence-accessible coordinates in chromosomes from the given reference genome, output as a BED file.
 
     - **input**  
-        - `fafile:file`: The fasta file  
+        - `index`: The index of the job  
 
     - **output**  
         - `outfile:file`: The output file  
@@ -610,6 +610,7 @@
     - **args**  
         - `params`: Other parameters for `cnvkit.py access`  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `ref`: The reference file. Required.  
 
     - **requires**  
         [CNVkit](http://cnvkit.readthedocs.io/)
@@ -621,7 +622,6 @@
 
     - **input**  
         - `acfile:file`: The access file  
-        - `anfile:file`: The annotate file  
 
     - **output**  
         - `outfile:file`: The targets file  
@@ -640,12 +640,12 @@
 
     - **input**  
         - `infile:file`: The bam file  
+        - `tgfile:file`: The target file  
 
     - **output**  
         - `outfile:file`: The output cnn file  
 
     - **args**  
-        - `tgfile`: The target file  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
         - `nthread`: The number of threads to use. Default: 1  
         - `params`: Other parameters for `cnvkit.py coverage`  
@@ -659,14 +659,34 @@
         Compile a copy-number reference from the given files or directory (containing normal samples). If given a reference genome (-f option), also calculate the GC content and repeat-masked proportion of each region.
 
     - **input**  
-        - `indir:file`: The input directory containing the cnn files  
+        - `infiles:files`: The input reference coverage files  
 
     - **output**  
         - `outfile:file`: The output reference cnn file  
 
     - **args**  
+        - `ref`   : The reference file.  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
         - `params`: Other parameters for `cnvkit.py reference`, default: " --no-edge "  
+
+    - **requires**  
+        [CNVkit](http://cnvkit.readthedocs.io/)
+
+!!! hint "pCNVkitFlatRef"
+
+    - **description**  
+        Generate reference coverage if there are no normal samples.
+
+    - **input**  
+        - `tgfile:file`: The target file  
+
+    - **output**  
+        - `outfile:file`: The output reference cnn file  
+
+    - **args**  
+        - `ref`   : The reference file.  
+        - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `params`: Other parameters for `cnvkit.py reference`, default: `{}`  
 
     - **requires**  
         [CNVkit](http://cnvkit.readthedocs.io/)
@@ -727,30 +747,60 @@
     - **requires**  
         [CNVkit](http://cnvkit.readthedocs.io/)
 
-!!! hint "pCNVkitPlot"
+!!! hint "pCNVkitScatter"
 
     - **description**  
-        Plot CNVkit results
+        Generate scatter plot for CNVkit results.
 
     - **input**  
-        - `cnrdir:file`: The directory containing copy number ratio files  
-        - `cnsdir:file`: The directory containing copy number segment files  
+        - `cnrfile:file`: The cnr file  
+        - `cnsfile:file`: The cns file from call  
 
     - **output**  
         - `outdir:dir`: The output directory  
 
     - **args**  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
-        - `region`: The region for zoom-in plots. Default: '' (don't plot zoom-in view)  
-        - `gene`: The genes to be highlighted. Default: ''  
-        - `scatter`: Whether to generate the scatter plot. Default: True  
-        - `diagram`: Whether to generate the diagram plot. Default: True  
-        - `heatmap`: Whether to generate the heatmap plot. Default: True  
+        - `params`: Other parameters for `cnvkit.py scatter`  
+        - `regions`: The regoins to plot. Default: `['']`  
+        	- You can have extra specific regions, format:
+        	- `chr5:100-50000000:TERT` or `chr7:BRAF,MET` (genes are used to highlight)
 
-    - **requires**  
-        [CNVkit](http://cnvkit.readthedocs.io/)
+!!! hint "pCNVkitDiagram"
 
-!!! hint "pCNVkitRpt"
+    - **description**  
+        Generate diagram plot for CNVkit results.
+
+    - **input**  
+        - `cnrfile:file`: The cnr file  
+        - `cnsfile:file`: The cns file from call  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `params`: Other parameters for `cnvkit.py scatter`  
+
+!!! hint "pCNVkitHeatmap"
+
+    - **description**  
+        Generate heatmap plot for CNVkit results.
+
+    - **input**  
+        - `cnfiles:files`: The cnr or cns files.  
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `params`: Other parameters for `cnvkit.py scatter`  
+        - `regions`: The regoins to plot. Default: `['']`  
+        	- You can have extra specific regions, format:
+        	- `chr5:100-50000000` or `chr7` (genes are used to highlight)
+
+!!! hint "pCNVkitReport"
 
     - **description**  
         Report CNVkit results
@@ -1858,6 +1908,9 @@
         - `apikey` : The api key for E-utils  
         	- Without API key, we can only query 3 time in a second
         	- With it, we can do 10.
+        - `sleep`  : Sleep sometime after job done. Default: `0.15`  
+        	- Because of the limit of # queries/sec, we need to sleep sometime after the job is done
+        	- At the same time, we also have to limit # jobs to run at the same time. typically: `pNCBI.forks = 10`
         - `db`     : The database to query. Default: `pubmed`. Available databases:  
         	- annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books, 
         	- cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr, 
@@ -2803,51 +2856,7 @@
 !!! hint "pBam2Cnv"
 
     - **description**  
-        Detect copy number variation from bam files.
-
-    - **input**  
-        - `input:file`: The bam file  
-
-    - **output**  
-        - `outfile:file`: The output vcf file  
-        - `outdir`: The output directory containing other result files  
-
-    - **args**  
-        - `gz`                    : Whether to gzip the output vcf file. Default: False  
-        - `tool`                  : The tool used to call cnv. Default: 'cnvkit'  
-        - `cnvnator`              : The path of cnvnator. Default: 'cnvnator'  
-        - `cnvnator2vcf`          : The path of cnvnator2VCF. Default: 'cnvnator2VCF.pl'  
-        - `cnvkit`                : The path of cnvkit. Default: 'cnvkit.py'  
-        - `wandy`                 : Tha path of Wandy. Default: 'Wandy'. A `tool.info` file should be with the executable file.  
-        - `ref`                   : The reference file. Required by cnvkit to generate access file. Default: ''  
-        - `cnvkitAccessParams`    : The params for cnvkit access command. Default: '-s 5000'  
-        - `cnvkitTargetParams`    : The params for cnvkit target command. Default: '--split --short-names'  
-        - `cnvkitCoverageParams`  : The params for cnvkit coverage command. Default: ''  
-        - `cnvkitReferenceParams` : The params for cnvkit reference command. Default: '--no-edge'  
-        - `cnvkitFixParams`       : The params for cnvkit fix command. Default: '--no-edge'  
-        - `cnvkitSegmentParams`   : The params for cnvkit segment command. Default: ''  
-        - `cnvkitCallParams`      : The params for cnvkit call command. Default: ''  
-        - `cnvkitPlotParams`      : The params for cnvkit plot command. Default: ''  
-        - `cnvkitBreaksParams`    : The params for cnvkit breaks command. Default: ''  
-        - `cnvkitGainlossParams`  : The params for cnvkit gainloss command. Default: ''  
-        - `cnvkitMetricsParams`   : The params for cnvkit metrics command. Default: ''  
-        - `cnvkitSegmetricsParams`: The params for cnvkit segmetrics command. Default: '--iqr'  
-        - `cnvkitExportParams`    : The params for cnvkit export command. Default: ''  
-        - `cnvkitScatterParams`   : The params for cnvkit scatter command. Default: [''] # multiple scatter plots  
-        - `cnvkitHeatmapParams`   : The params for cnvkit heatmap command. Default: [''] # multiple heatmap plots  
-        - `cnvkitDiagramParams`   : The params for cnvkit diagram command. Default: ''  
-        - `cnvkitReport`          : Generate cnvkit reports? Default: True  
-        - `cnvkitPlot`            : Generate cnvkit plots? Default: True  
-        - `cnvnatorBinsize`       : Bin size for cnvnator. Default: 100  
-        - `cnvnatorGenome`        : Genome for cnvnator. Default: 'hg19'. (NCBI36, hg18, GRCh37, hg19)  
-        - `params`                : The params for `tool`. Default: '-t 1' # wandy 1:hg19 solid cell/blood, 2:hg19 cell free/plamsa, 3:hg38 solid cell/blood, 4:hg38 cell free/plamsa  
-        - `mem`                   : The memory used. Default: '20G' # only for wandy  
-        - `nthread`               : The # threads to use. Default: 1	 # only for cnvkit  
-
-    - **requires**  
-        [`cnvkit`](http://cnvkit.readthedocs.io/en/stable/index.html)
-        [`cnvnator`](https://github.com/abyzovlab/CNVnator)
-        - `wandy`: Inside cnv caller  
+        see `bioaggr.wxs.aBam2SCnv` and `bioaggr.wxs.aBam2GCnv`
 
 !!! hint "pBamStats"
 

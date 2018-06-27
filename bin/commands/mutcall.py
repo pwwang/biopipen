@@ -5,15 +5,16 @@ from os import path
 from pyppl import PyPPL, Channel, Box
 from bioprocs import params
 from bioprocs.common import pFiles2Dir
-from bioprocs.sambam import pBam2Gmut, pBamPair2Smut, pBam2Cnv
+from bioprocs.sambam import pBam2Gmut, pBamPair2Smut
 from bioprocs.utils.tsvio import TsvReader
 from bioprocs.utils.sampleinfo import SampleInfo
-from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aFastqSE2Bam, aBam2Mut, aBam2MutCnv
+from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aFastqSE2Bam, aBam2SCnv, aBam2GCnv
 
 params.prefix('-')
 params.intype         = 'bam' # ebam, fastq
 params.intype.desc    = 'The input file types. Either bam, ebam or fastq.\nEbam means the bam files need to reformatted into fastq files.'
-params.muts           = ['germ'] # or ['germ', 'soma', 'cnv']
+params.muts           = ['germ'] # or ['germ', 'soma', 'scnv', 'gcnv']
+params.muts.type      = list
 params.muts.desc      = 'What kind of mutations to call.\nNote: soma need paired information'
 params.indir.required = True
 params.indir.desc     = 'The input directory containing input files.'
@@ -38,8 +39,8 @@ params.forks          = 1
 params.forks.desc     = 'How many jobs to run simultanuously.'
 params.logfile        = ''
 params.logfile.desc   = 'Where to save the logs.'
-params.compress = True
-params.compress.desc = 'Use gzip and bam file to save space.'
+params.compress       = True
+params.compress.desc  = 'Use gzip and bam file to save space.'
 
 def _procconfig(kwargs = None):
 	params = _getparams(kwargs or {})
@@ -54,13 +55,13 @@ def _procconfig(kwargs = None):
 	pBamDir.runner  = 'local'
 	if params.intype == 'ebam':
 		#aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
-		aEBam2Bam.input = [saminfo.toChannel(params.indir)]
+		aEBam2Bam.input = [Channel.create(saminfo.toChannel(params.indir)).unique()]
 		if params.compress:
 			aEBam2Bam.args.gz = True
 			aEBam2Bam.pFastq2Sam.args.outfmt = 'bam'
 
 		pBamDir.depends = aEBam2Bam
-		pBamDir.input   = lambda ch: [ch.flatten(0)]
+		pBamDir.input   = lambda ch: [ch.flatten()]
 
 		starts.append(aEBam2Bam)
 
@@ -84,10 +85,10 @@ def _procconfig(kwargs = None):
 			fqfiles = [path.join(fqdir, bname + ext) for ext in exts]
 			return [fqfile for fqfile in fqfiles if path.isfile(fqfile)][0]
 			
-		aFastqSE2Bam.input = [bam2fq(fq) for fq in saminfo.toChannel(params.indir)]
+		aFastqSE2Bam.input = [bam2fq(fq) for fq in Channel.create(saminfo.toChannel(params.indir)).unique()]
 
 		pBamDir.depends = aFastqSE2Bam.pBamRecal
-		pBamDir.input   = lambda ch: [ch.flatten(0)]
+		pBamDir.input   = lambda ch: [ch.flatten()]
 
 		starts.append(aFastqSE2Bam)
 	elif params.intype == 'fq' or params.intype == 'fastq':
@@ -119,36 +120,31 @@ def _procconfig(kwargs = None):
 		aFastqSE2Bam.input = [bam2fqpair(fq) for fq in saminfo.toChannel(params.indir)]
 
 		pBamDir.depends = aFastqSE2Bam.pBamRecal
-		pBamDir.input   = lambda ch: [ch.flatten(0)]
+		pBamDir.input   = lambda ch: [ch.flatten()]
 
 		starts.append(aFastqSE2Bam)
 	else:
-		# TODO: fix the input files with samples
 		pBamDir.input = [saminfo.toChannel(params.indir)]
 		starts.append(pBamDir)
 
-	if 'germ' in params.muts and 'soma' in params.muts and 'cnv' in params.muts:
-		aBam2MutCnv.pBamDir.depends     = pBamDir
-		aBam2MutCnv.pSampleInfo.input   = [params.saminfo]
-		aBam2MutCnv.pBam2Gmut.exdir     = path.join(params.exdir, 'germline')
-		aBam2MutCnv.pBamPair2Smut.exdir = path.join(params.exdir, 'somatic')
-		aBam2MutCnv.pBam2Cnv.exdir      = path.join(params.exdir, 'cnv')
-		starts.append(aBam2MutCnv)
-	if 'germ' in params.muts and 'soma' in params.muts:
-		aBam2Mut.pBamDir.depends     = pBamDir
-		aBam2Mut.pSampleInfo.input   = [params.saminfo]
-		aBam2Mut.pBam2Gmut.exdir     = path.join(params.exdir, 'germline')
-		aBam2Mut.pBamPair2Smut.exdir = path.join(params.exdir, 'somatic')
-		starts.append(aBam2Mut)
-	elif 'germ' in params.muts:
+	if 'germ' in params.muts:
 		pBam2Gmut.depends = pBamDir
 		pBam2Gmut.input   = lambda ch: ch.expand(0, "*.bam")
-	elif 'soma' in params.muts:
+		pBam2Gmut.exdir   = path.join(params.exdir, 'germline')
+	if 'soma' in params.muts:
 		pBamPair2Smut.depends = pBamDir
 		pBamPair2Smut.input   = lambda ch: saminfo.toChannel(ch.get(), paired = True)
-	elif 'cnv' in params.muts:
-		pBam2Cnv.depends = pBamDir
-		pBam2Cnv.input   = lambda ch: saminfo.toChannel(ch.get())
+		pBamPair2Smut.exdir   = path.join(params.exdir, 'somatic')
+	if 'scnv' in params.muts:
+		aBam2SCnv.pBamDir.depends   = pBamDir
+		aBam2SCnv.pSampleInfo.input = [params.saminfo]
+		aBam2SCnv.exdir             = path.join(params.exdir, 'scnv')
+		starts.append(aBam2SCnv)
+	if 'gcnv' in params.muts:
+		aBam2GCnv.pBamDir.depends   = pBamDir
+		aBam2GCnv.pSampleInfo.input = [params.saminfo]
+		aBam2GCnv.exdir             = path.join(params.exdir, 'gcnv')
+		starts.append(aBam2GCnv)
 		
 	config = {
 		'default': {'forks': params.forks},

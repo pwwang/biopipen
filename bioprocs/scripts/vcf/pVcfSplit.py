@@ -1,7 +1,8 @@
 from sys import stderr
+from pyppl import Box
 from subprocess import check_output
-{{runcmd}}
-{{params2CmdArgs}}
+from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils.parallel import Parallel
 
 allsamples = check_output([{{args.bcftools | quote}}, 'query', '-l', {{in.infile | quote}}]).splitlines()
 allsamples = list(filter(None, [x.strip() for x in allsamples]))
@@ -23,7 +24,7 @@ for sample in samples:
 	params['c'] = sample
 	params['e'] = True
 	params.update({{args.params}})
-	cmd = '{{args.vcftools}} %s "{{in.infile}}" > "{{out.outdir}}/{{in.infile | fn}}-%s.vcf"' % (params2CmdArgs(params), sample)
+	cmd = '{{args.vcftools}} %s "{{in.infile}}" > "{{out.outdir}}/{{in.infile | fn}}-%s.vcf"' % (cmdargs(params), sample)
 	cmds.append(cmd)
 
 ########### gatk
@@ -37,7 +38,7 @@ for sample in samples:
 	params['excludeFiltered']    = True
 	params['excludeNonVariants'] = True
 	params.update({{args.params}})
-	cmd = '{{args.gatk}} -T SelectVariants %s' % (params2CmdArgs(params, equal=' '))
+	cmd = '{{args.gatk}} -T SelectVariants %s' % (cmdargs(params, equal=' '))
 	cmds.append(cmd)
 
 {% endif %}
@@ -45,6 +46,6 @@ for sample in samples:
 {% if args.nthread | lambda x: x == 1 %}
 for cmd in cmds: runcmd(cmd)
 {% else %}
-{{parallel}}
-parallel(cmds, {{args.nthread}})
+p = Parallel({{args.nthread}})
+p.run('{}', [(cmd,) for cmd in cmds])
 {% endif %}

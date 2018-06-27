@@ -2,10 +2,11 @@
 from os import path
 from pyppl import Aggr, Channel
 from bioprocs.fastx import pFastqTrim, pFastq2Sam, pFastQC, pFastMC, pFastqSETrim, pFastqSE2Sam
-from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBam2Counts, pBamRecal, pBam2Gmut, pBamPair2Smut, pBam2Cnv
+from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBam2Counts, pBamRecal, pBam2Gmut, pBamPair2Smut
 from bioprocs.common import pFile2Proc, pFiles2Dir
 from bioprocs.vcf import pVcf2Maf
 from bioprocs.vcfnext import pMafMerge
+from bioprocs.cnvkit import pCNVkit2Vcf, pCNVkitCall, pCNVkitRef, pCNVkitFlatRef, pCNVkitAccess, pCNVkitTarget, pCNVkitFix, pCNVkitCov, pCNVkitHeatmap, pCNVkitDiagram, pCNVkitReport, pCNVkitScatter, pCNVkitSeg
 from bioprocs.utils.sampleinfo import SampleInfo
 
 """
@@ -156,66 +157,102 @@ aFastqSE2BamQC.pFastqSE2Sam.depends = aFastqSE2Bam.pFastqSETrim
 # args
 aFastqSE2BamQC.pSam2Bam.args.markdup = True
 
-"""
-@name:
-	aBam2MutCnv
-@description:
-	Call germline, somatic mutations and CNV from call-read bams
-@depends:
-	pSampleInfo
-"""
-aBam2MutCnv = Aggr(
+aBam2SCnv = Aggr(
 	pFile2Proc.copy(id = 'pBamDir'),     # single job
 	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	pBam2Gmut,
-	pBamPair2Smut,
-	pBam2Cnv,
+	pCNVkitAccess,    # single job        , in: index/tag  , out: access file
+	pCNVkitTarget,    # single job        , in: access file, out: target file 
+	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
+	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
+	pCNVkitRef,       # all normal samples, in: all normal cnn files      , out: refcnn
+	pCNVkitFix,       # each tumor sample , in: tumor cnn, refcnn         , out: cnr
+	pCNVkitSeg,       # each tumor sample , in: cnr                       , out: cns
+	pCNVkitCall,      # each tumor sample , in: cns                       , out: callcns
+	pCNVkitScatter,   # each tumor sample , in: cnr, cns                  , out: plots
+	pCNVkitDiagram,   # each tumor sample , in: cnr, cns                  , out: plots
+	pCNVkitHeatmap,   # all tumor samples , in: cnfiles                   , out: plots
+	pCNVkitReport,    # each tumor sample , in: cnr, cns                  , out: reports
+	pCNVkit2Vcf,      # each tumor sample , in: callcns                   , out: vcf,
 	depends = False
 )
 # defaults
-aBam2MutCnv.pBamDir.runner     = 'local'
-aBam2MutCnv.pSampleInfo.runner = 'local'
+aBam2SCnv.pBamDir.runner     = 'local'
+aBam2SCnv.pSampleInfo.runner = 'local'
 # delegates
-aBam2MutCnv.delegate('args.ref', 'pBam2Gmut, pBamPair2Smut, pBam2Cnv')
+aBam2SCnv.delegate('args.ref', 'pCNVkitAccess, pCNVkitRef')
+aBam2SCnv.delegate('args.cnvkit')
+aBam2SCnv.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
 # depends
-aBam2MutCnv.starts                = aBam2MutCnv.pBamDir,   aBam2MutCnv.pSampleInfo
-aBam2MutCnv.ends                  = aBam2MutCnv.pBam2Gmut, aBam2MutCnv.pBamPair2Smut, aBam2MutCnv.pBam2Cnv
-aBam2MutCnv.pBam2Gmut.depends     = aBam2MutCnv.pBamDir,   aBam2MutCnv.pSampleInfo
-aBam2MutCnv.pBamPair2Smut.depends = aBam2MutCnv.pBamDir,   aBam2MutCnv.pSampleInfo
-aBam2MutCnv.pBam2Cnv.depends      = aBam2MutCnv.pBamDir,   aBam2MutCnv.pSampleInfo
+aBam2SCnv.starts                 = aBam2SCnv.pBamDir,        aBam2SCnv.pSampleInfo
+aBam2SCnv.ends                   = aBam2SCnv.pCNVkitScatter, aBam2SCnv.pCNVkitDiagram, aBam2SCnv.pCNVkitHeatmap, aBam2SCnv.pCNVkitReport, aBam2SCnv.pCNVkit2Vcf
+aBam2SCnv.pCNVkitAccess.depends  = aBam2SCnv.pSampleInfo
+aBam2SCnv.pCNVkitTarget.depends  = aBam2SCnv.pCNVkitAccess
+aBam2SCnv.pCNVkitCov.depends     = aBam2SCnv.pBamDir,        aBam2SCnv.pSampleInfo,    aBam2SCnv.pCNVkitTarget
+aBam2SCnv.pCNNDir.depends        = aBam2SCnv.pCNVkitCov
+aBam2SCnv.pCNVkitRef.depends     = aBam2SCnv.pCNNDir,        aBam2SCnv.pSampleInfo
+aBam2SCnv.pCNVkitFix.depends     = aBam2SCnv.pCNNDir,        aBam2SCnv.pSampleInfo,    aBam2SCnv.pCNVkitRef
+aBam2SCnv.pCNVkitSeg.depends     = aBam2SCnv.pCNVkitFix
+aBam2SCnv.pCNVkitCall.depends    = aBam2SCnv.pCNVkitSeg
+aBam2SCnv.pCNVkitScatter.depends = aBam2SCnv.pCNVkitFix, aBam2SCnv.pCNVkitSeg
+aBam2SCnv.pCNVkitDiagram.depends = aBam2SCnv.pCNVkitFix, aBam2SCnv.pCNVkitSeg
+aBam2SCnv.pCNVkitHeatmap.depends = aBam2SCnv.pCNVkitSeg
+aBam2SCnv.pCNVkitReport.depends  = aBam2SCnv.pCNVkitFix, aBam2SCnv.pCNVkitSeg
+aBam2SCnv.pCNVkit2Vcf.depends    = aBam2SCnv.pCNVkitCall
 # input
-aBam2MutCnv.pBam2Gmut.input     = lambda ch1, ch2: SampleInfo(ch2.get()).toChannel(ch1.get())
-aBam2MutCnv.pBam2Cnv.input      = lambda ch1, ch2: SampleInfo(ch2.get()).toChannel(ch1.get())
-aBam2MutCnv.pBamPair2Smut.input = lambda ch1, ch2: SampleInfo(ch2.get()).toChannel(ch1.get(), paired = True)
+aBam2SCnv.pCNVkitAccess.input  = lambda ch: path.basename(ch.get()).split('.')[:1]
+aBam2SCnv.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
+aBam2SCnv.pCNNDir.input        = lambda ch: [ch.flatten()]
+aBam2SCnv.pCNVkitRef.input     = lambda ch_covs, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True, raiseExc = False)).colAt(1).unique().mapCol(lambda x: x.rpartition('.')[0] + '.covcnn').flatten()]
+aBam2SCnv.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True)).colAt(0).unique().mapCol(lambda x: x.rpartition('.')[0] + '.covcnn').cbind(ch_ref)
+aBam2SCnv.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 
-"""
-@name:
-	aBam2Mut
-@description:
-	Call germline and somatic mutations from call-read bams
-@depends:
-	pSampleInfo
-"""
-aBam2Mut = Aggr(
+aBam2GCnv = Aggr(
 	pFile2Proc.copy(id = 'pBamDir'),     # single job
 	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	pBam2Gmut,
-	pBamPair2Smut,
+	pCNVkitAccess,    # single job        , in: index/tag  , out: access file
+	pCNVkitTarget,    # single job        , in: access file, out: target file 
+	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
+	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
+	pCNVkitFlatRef,   # flat reference    , in: target file               , out: refcnn
+	pCNVkitFix,       # each tumor sample , in: tumor cnn, refcnn         , out: cnr
+	pCNVkitSeg,       # each tumor sample , in: cnr                       , out: cns
+	pCNVkitCall,      # each tumor sample , in: cns                       , out: callcns
+	pCNVkitScatter,   # each tumor sample , in: cnr, cns                  , out: plots
+	pCNVkitDiagram,   # each tumor sample , in: cnr, cns                  , out: plots
+	pCNVkitHeatmap,   # all tumor samples , in: cnfiles                   , out: plots
+	pCNVkitReport,    # each tumor sample , in: cnr, cns                  , out: reports
+	pCNVkit2Vcf,      # each tumor sample , in: callcns                   , out: vcf,
 	depends = False
 )
 # defaults
-aBam2Mut.pBamDir.runner     = 'local'
-aBam2Mut.pSampleInfo.runner = 'local'
+aBam2GCnv.pBamDir.runner     = 'local'
+aBam2GCnv.pSampleInfo.runner = 'local'
 # delegates
-aBam2Mut.delegate('args.ref', 'pBam2Gmut, pBamPair2Smut')
+aBam2GCnv.delegate('args.ref', 'pCNVkitAccess, pCNVkitFlatRef')
+aBam2GCnv.delegate('args.cnvkit')
+aBam2GCnv.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
 # depends
-aBam2Mut.starts                = aBam2Mut.pBamDir,   aBam2Mut.pSampleInfo
-aBam2Mut.ends                  = aBam2Mut.pBam2Gmut, aBam2Mut.pBamPair2Smut, aBam2Mut.pBam2Cnv
-aBam2Mut.pBam2Gmut.depends     = aBam2Mut.pBamDir,   aBam2Mut.pSampleInfo
-aBam2Mut.pBamPair2Smut.depends = aBam2Mut.pBamDir,   aBam2Mut.pSampleInfo
+aBam2GCnv.starts                 = aBam2GCnv.pBamDir,        aBam2GCnv.pSampleInfo
+aBam2GCnv.ends                   = aBam2GCnv.pCNVkitScatter, aBam2GCnv.pCNVkitDiagram, aBam2GCnv.pCNVkitHeatmap, aBam2GCnv.pCNVkitReport, aBam2GCnv.pCNVkit2Vcf
+aBam2GCnv.pCNVkitAccess.depends  = aBam2GCnv.pSampleInfo
+aBam2GCnv.pCNVkitTarget.depends  = aBam2GCnv.pCNVkitAccess
+aBam2GCnv.pCNVkitCov.depends     = aBam2GCnv.pBamDir,        aBam2GCnv.pSampleInfo,    aBam2GCnv.pCNVkitTarget
+aBam2GCnv.pCNNDir.depends        = aBam2GCnv.pCNVkitCov
+aBam2GCnv.pCNVkitFlatRef.depends = aBam2GCnv.pCNVkitTarget
+aBam2GCnv.pCNVkitFix.depends     = aBam2GCnv.pCNNDir,        aBam2GCnv.pSampleInfo,    aBam2GCnv.pCNVkitFlatRef
+aBam2GCnv.pCNVkitSeg.depends     = aBam2GCnv.pCNVkitFix
+aBam2GCnv.pCNVkitCall.depends    = aBam2GCnv.pCNVkitSeg
+aBam2GCnv.pCNVkitScatter.depends = aBam2GCnv.pCNVkitFix, aBam2GCnv.pCNVkitSeg
+aBam2GCnv.pCNVkitDiagram.depends = aBam2GCnv.pCNVkitFix, aBam2GCnv.pCNVkitSeg
+aBam2GCnv.pCNVkitHeatmap.depends = aBam2GCnv.pCNVkitSeg
+aBam2GCnv.pCNVkitReport.depends  = aBam2GCnv.pCNVkitFix, aBam2GCnv.pCNVkitSeg
+aBam2GCnv.pCNVkit2Vcf.depends    = aBam2GCnv.pCNVkitCall
 # input
-aBam2Mut.pBam2Gmut.input     = lambda ch1, ch2: SampleInfo(ch2.get()).toChannel(ch1.get())
-aBam2Mut.pBamPair2Smut.input = lambda ch1, ch2: SampleInfo(ch2.get()).toChannel(ch1.get(), paired = True)
+aBam2GCnv.pCNVkitAccess.input  = lambda ch: path.basename(ch.get()).split('.')[:1]
+aBam2GCnv.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
+aBam2GCnv.pCNNDir.input        = lambda ch: [ch.flatten()]
+aBam2GCnv.pCNVkitFix.input     = lambda ch_covs,   ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get())).colAt(0).unique().mapCol(lambda x: x.rpartition('.')[0] + '.covcnn').cbind(ch_ref)
+aBam2GCnv.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 
 
 aVcfs2Maf = Aggr(

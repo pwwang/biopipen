@@ -8,11 +8,11 @@ import inspect
 import sys
 from os import path, listdir
 from collections import OrderedDict
-from pyppl import PyPPL, utils
+from pyppl import PyPPL, utils, Channel
 import six
 import bioprocs
 
-KEYLEN_MIN = 30
+KEYLEN_MIN = 42
 DOCLEN_MAX = 100
 
 
@@ -160,7 +160,10 @@ class Command(object):
 		keylen = max(KEYLEN_MIN, keylen)
 		fmtstr = '  %-' + str(keylen) + 's%s\n'
 		for optname, optdoc in self.opts.items():
-			ret += fmtstr % (optname, Command.printDocs(optdoc, keylen + 2))
+			ret += fmtstr % (
+				optname if optname.startswith('-') else '-' + optname, 
+				Command.printDocs(optdoc, keylen + 2)
+			)
 		ret += '\n'
 		return ret
 	
@@ -225,7 +228,7 @@ class Process(Command):
 
 	def __init__(self, name, prog = path.basename(sys.argv[0])):
 		super(Process, self).__init__(name, prog)
-		self.opts = OrderedDict([('exdir', 'The output directory.'), ('proc.xxx', ['The common config of all processes.'])])
+		self.opts = OrderedDict([('proc.exdir', 'The output directory.'), ('proc.xxx', ['The common config of all processes.'])])
 
 	def _getDocString(self):
 		module, procname = self.name.split('.', 1)
@@ -289,7 +292,7 @@ class Process(Command):
 		module, pname = self.name.split('.', 1)
 
 		proc   = getattr(__import__('bioprocs.' + module, fromlist = ['bioprocs']), pname)
-		config = {'proc': {'log': {'file': None}}}
+		config = {'default': {'_log': {'file': None}}}
 		
 		# get input keys
 		if isinstance(proc.config['input'], dict):
@@ -297,8 +300,13 @@ class Process(Command):
 		else:
 			inkeys = utils.split(proc.config['input'], ',')
 
-		inkeys = [inkey.split(':')[0] for inkey in inkeys]
-		input  = [''] * len(inkeys)
+		inkeys = {
+			inkey.split(':')[0]: (
+				inkey.split(':')[1] if ':' in inkey else 'var'
+			)
+			for inkey in inkeys
+		}
+		indata  = {}
 
 		for key, val in kwargs.items():
 			if '.' not in key:
@@ -309,7 +317,7 @@ class Process(Command):
 				inkey = kparts[0]
 				if not inkey in inkeys:
 					self._error('Unknown input key ({}) for ({}.{}), expect [{}]'.format(inkey, module, pname, ', '.join(inkeys)))
-				input[inkeys.index(inkey)] = val
+				indata[inkey + ':' + inkeys[inkey]] = Channel.create(val)
 			elif t == 'args':
 				lastpart = kparts.pop(-1)
 				aval = proc.args
@@ -322,18 +330,21 @@ class Process(Command):
 				aval[lastpart] = val
 			elif t == 'proc':
 				lastpart = kparts.pop(-1)
-				procconf = config['proc']
+				procconf = config['default']
 				for k in kparts:
 					if k not in procconf:
 						procconf[k] = {}
 					else:
 						procconf = procconf[k]
+				if lastpart == 'forks':
+					val = int(val)
 				procconf[lastpart] = val
 			else:
 				self._error('Unknown argument: %s' % key)
-		if not any([bool(it) for it in input]):
+		if not any([bool(it) for it in indata]):
 			self._error('No input specified.')
-		setattr(proc, 'input', input)
+		
+		setattr(proc, 'input', indata)
 		return proc, config
 
 	def run(self, *args, **kwargs):
