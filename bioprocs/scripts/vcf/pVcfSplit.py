@@ -27,6 +27,35 @@ for sample in samples:
 	cmd = '{{args.vcftools}} %s "{{in.infile}}" > "{{out.outdir}}/{{in.infile | fn}}-%s.vcf"' % (cmdargs(params), sample)
 	cmds.append(cmd)
 
+########### awk
+{% elif args.tool | lambda x: x == 'awk' %}
+# write the awk script
+awkfile = '{{job.outdir}}/vcfsample.awk'
+awkfh   = open(awkfile, 'w')
+awkfh.write("""
+BEGIN {
+	OFS="\\t"
+} 
+$0 ~ "^##" {
+	print
+} 
+$0 ~ "^#CHROM" {
+	print "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\t"sample
+}	
+$0 !~ "^#" {
+	print $1,$2,$3,$4,$5,$6,$7,$8,$9,$index
+}
+""")
+awkfh.close()
+for i, sample in enumerate(samples):
+	cmd = '{{args.awk}} -v sample="{sample}" index={index} -f {awkfile} {infile}'.format(
+		sample = sample,
+		index  = 10 + i,
+		awk    = str(repr(awkfile)),
+		infile = str(repr(infile))
+	)
+	cmds.append(cmd)
+
 ########### gatk
 {% elif args.tool | lambda x: x == 'gatk' %}
 for sample in samples:

@@ -153,7 +153,7 @@ pVcfAnno.script               = "file:scripts/vcf/pVcfAnno.py"
 @output:
 	`outdir:dir`:  The output directory containing the extracted vcfs
 @args:
-	`tool`:     The tool used to do extraction. Default: vcftools
+	`tool`:     The tool used to do extraction. Default: vcftools (gatk, awk)
 	`vcftools`: The path of vcftools' vcf-subset
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
@@ -165,6 +165,7 @@ pVcfSplit.args.tool           = 'vcftools'
 pVcfSplit.args.vcftools       = params.vcftools_subset.value
 pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
 pVcfSplit.args.gatk           = params.gatk.value
+pVcfSplit.args.awk            = params.awk.value
 pVcfSplit.args.ref            = params.ref.value # only for gatk
 pVcfSplit.args.params         = Box()
 pVcfSplit.args.nthread        = 1

@@ -81,6 +81,8 @@ DEFAULTS = {
 	"annovar.desc"             : "The path of annovar's annotate_variation.pl.",
 	"annovar_convert"          : "convert2annovar.pl",
 	"annovar_convert.desc"     : "The path of annovar's convert2annovar.pl.",
+	"awk"                      : "awk",
+	"awk.desc"                 : "The awk program.",
 	"bamstats"                 : "bamstats",
 	"bamstats.desc"            : "The path of bamstats.",
 	"bamutil"                  : "bam",

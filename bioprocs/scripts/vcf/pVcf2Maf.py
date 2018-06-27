@@ -50,7 +50,7 @@ for sample in samples:
 	samplevcf     = "{{job.outdir}}/{{in.infile | fn}}-%s.vcf" % sample
 	cmd = '{{args.vcftools}} %s {{in.infile | quote}} > "%s"' % (cmdargs(vtparams), samplevcf)
 
-	# vcf2maf.pl --input-vcf ZYYP-ZYYB.vcf  --output-maf ZYYP-ZYYB.snpEff.maf --tumor-id ZXLT-ZXLB_TUMOR --normal-id ZXLT-ZXLB_NORMAL --vep-data /data2/junwenwang/shared/reference/hg19/vep/cache/ --filter-vcf /data2/junwenwang/shared/reference/hg19/vep/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz --ref-fasta /data2/junwenwang/shared/reference/hs37d5/phase2_reference_assembly_sequence/hs37d5.fa --vep-path /data2/junwenwang/shared/tools/miniconda2/bin
+	# vcf2maf.pl --input-vcf ZYYP-ZYYB.vcf  --output-maf ZYYP-ZYYB.snpEff.maf --tumor-id ZXLT-ZXLB_TUMOR --normal-id ZXLT-ZXLB_NORMAL --vep-data /path/to/vep/cache/ --filter-vcf /path/to/vep/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz --ref-fasta /path/to/hs37d5/phase2_reference_assembly_sequence/hs37d5.fa --vep-path /path/to/miniconda2/bin
 	params['input-vcf']  = samplevcf
 	params['output-maf'] = "{{job.outdir}}/{{in.infile | fn}}-%s.maf" % sample
 	params['vep-data']   = {{args.vepDb | quote}}
