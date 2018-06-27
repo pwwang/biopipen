@@ -1,7 +1,7 @@
 import shlex
-{{ runcmd }}
-{{ params2CmdArgs }}
-{{ parallel }}
+from pyppl import Box
+from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils.parallel import Parallel
 
 # vcf2maf doesn't support multiple samples
 # so we have to split multi-sample vcf to single-sample vcfs
@@ -37,7 +37,7 @@ params['normal-id']  = samples.pop(0)
 params['tumor-id']   = samples[0] if samples else 'NORMAL'
 {% endif %}
 
-cmd = '{{args.vcf2maf}} %s' % (params2CmdArgs(params, equal=' '))
+cmd = '{{args.vcf2maf}} %s' % (cmdargs(params, equal=' '))
 runcmd(cmd)
 
 {% 	else %}
@@ -48,7 +48,7 @@ for sample in samples:
 	vtparams['c'] = sample
 	vtparams['e'] = True
 	samplevcf     = "{{job.outdir}}/{{in.infile | fn}}-%s.vcf" % sample
-	cmd = '{{args.vcftools}} %s {{in.infile | quote}} > "%s"' % (params2CmdArgs(vtparams), samplevcf)
+	cmd = '{{args.vcftools}} %s {{in.infile | quote}} > "%s"' % (cmdargs(vtparams), samplevcf)
 
 	# vcf2maf.pl --input-vcf ZYYP-ZYYB.vcf  --output-maf ZYYP-ZYYB.snpEff.maf --tumor-id ZXLT-ZXLB_TUMOR --normal-id ZXLT-ZXLB_NORMAL --vep-data /data2/junwenwang/shared/reference/hg19/vep/cache/ --filter-vcf /data2/junwenwang/shared/reference/hg19/vep/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz --ref-fasta /data2/junwenwang/shared/reference/hs37d5/phase2_reference_assembly_sequence/hs37d5.fa --vep-path /data2/junwenwang/shared/tools/miniconda2/bin
 	params['input-vcf']  = samplevcf
@@ -59,14 +59,15 @@ for sample in samples:
 	params['ref-fasta']  = {{args.ref | quote}}
 	params['vep-path']   = path.dirname(vep)
 
-	cmd = cmd + '; {{args.vcf2maf}} --tumor-id %s %s' % (sample, params2CmdArgs(params, equal=' '))
+	cmd = cmd + '; {{args.vcf2maf}} --tumor-id %s %s' % (sample, cmdargs(params, equal=' '))
 	cmds.append(cmd)
 
 {% 		if args.nthread | lambda x: x == 1 %}
 for cmd in cmds: runcmd(cmd)
 {% 		else %}
 # Note the threads may be hanging on here.
-parallel(cmds, {{args.nthread}})
+p = Parallel({{args.nthread}})
+p.run('{}', [(cmd,) for cmd in cmds])
 {% 		endif %}
 
 for i, sample in enumerate(samples):
