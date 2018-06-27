@@ -310,7 +310,10 @@ class Process(Command):
 
 		for key, val in kwargs.items():
 			if '.' not in key:
+				if key == 'forks':
+					val = int(val)
 				setattr(proc, key, val)
+				continue
 			kparts = key.split('.')
 			t = kparts.pop(0)
 			if t == 'input' or t == 'in':
