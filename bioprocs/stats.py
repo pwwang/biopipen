@@ -343,3 +343,47 @@ pHypergeom.args.N       = None
 pHypergeom.envs.rimport = rimport
 pHypergeom.lang         = params.Rscript.value
 pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
+
+"""
+@name:
+	pCorr
+@description:
+	Calculate the correlation coefficient for the input matrix
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file containing the correlation coefficients
+	`outdir:dir`  : The output directory containing the outfile and the plot
+@args:
+	`outfmt`: The output format. Could be `matrix` or `pairs` (default)
+	`metohd`: The method used to calculate the correlation coefficient. Default: `pearson`. Could also be `spearman` or `kendall`
+	`byrow`:  Calculate the correlation coefficient by row or by col. Default: `True`
+	`inopts`: The input options:
+		- `cnames`: Whether the input file has header. Default: `True`
+		- `rnames`: Whether the input file has row names. Default: `True`
+		- `delimit`: The separator of columns. Default: `\t`
+	`plot`:   Whether output a correlation plot. Default: `False`
+	`params`: The params for `plot.heatmap` in `utils/plot.r`
+	`ggs`:    The extra ggplot2 statements.
+	`devpars`:The parameters for the plot device. Default: `Box(height = 2000, width = 2000, res = 300)`
+@requires:
+	R packages: `ggplot2` and `reshape`
+"""
+pCorr             = Proc(desc = "Calculate the Correlation Coefficient.")
+pCorr.input       = 'infile:file'
+pCorr.output      = 'outfile:file:{{in.infile | fn}}.{{args.method}}/{{in.infile | fn}}.{{args.method}}.txt, outdir:dir:{{in.infile | fn}}.{{args.method}}'
+pCorr.args.outfmt = 'pairs' # matrix
+pCorr.args.method = 'pearson' # spearman, kendall
+pCorr.args.byrow  = True # else by column
+pCorr.args.inopts = Box(
+	cnames  = True,
+	rnames  = True,
+	delimit = "\t"
+)
+pCorr.args.plot    = False
+pCorr.args.params  = Box() # the parameters for plot.heatmap
+pCorr.args.ggs     = Box() # extra ggplot statements
+pCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)
+pCorr.envs.rimport = rimport
+pCorr.lang         = params.Rscript.value
+pCorr.script       = "file:scripts/stats/pCorr.r"
