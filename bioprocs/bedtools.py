@@ -438,7 +438,7 @@ pBedGenomecov.script          = """
 @name:
 	pBedCluster
 @description:
-	Similar to merge, cluster report each set of overlapping or “book-ended” features in an interval file. In contrast to merge, cluster does not flatten the cluster of intervals into a new meta-interval; instead, it assigns an unique cluster ID to each record in each cluster. This is useful for having fine control over how sets of overlapping intervals in a single interval file are combined.
+	Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file. In contrast to merge, cluster does not flatten the cluster of intervals into a new meta-interval; instead, it assigns an unique cluster ID to each record in each cluster. This is useful for having fine control over how sets of overlapping intervals in a single interval file are combined.
 @input:
 	`infile:file`: The input file
 @output:
@@ -449,7 +449,7 @@ pBedGenomecov.script          = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedCluster = Proc(desc = 'Similar to merge, cluster report each set of overlapping or “book-ended” features in an interval file.')
+pBedCluster = Proc(desc = 'Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file.')
 pBedCluster.input           = "infile:file"
 pBedCluster.output          = "outfile:file:{{infile | fn}}.clustered.bt"
 pBedCluster.args.bedtools   = params.bedtools.value

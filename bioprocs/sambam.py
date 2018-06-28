@@ -45,6 +45,7 @@ from . import params, bashimport, rimport
 pSam2Bam                        = Proc(desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
 pSam2Bam.input                  = "infile:file"
 pSam2Bam.output                 = "outfile:file:{{in.infile | fn}}.bam, idxfile:file:{{in.infile | fn}}.bam.bai"
+pSam2Bam.errhow                 = 'retry'
 pSam2Bam.args.tool              = "biobambam"
 pSam2Bam.args.sambamba          = params.sambamba.value
 pSam2Bam.args.picard            = params.picard.value
