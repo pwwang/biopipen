@@ -95,25 +95,6 @@
     - **requires**  
         [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
         [`bedops`](https://github.com/bedops/bedops)
-
-!!! hint "pBedCluster"
-
-    - **description**  
-        Assign cluster id to each record
-
-    - **input**  
-        - `infile:file`: The input bed file  
-
-    - **output**  
-        - `outfile:file`: The output file  
-
-    - **args**  
-        - `tool`: The tool used to sort the file. Default: bedtools  
-        - `bedtools`: The path to bedtools. Default: bedtools  
-        - `params`: Other params for `tool`. Default: ''  
-
-    - **requires**  
-        [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 ## bedtools
 
 !!! hint "pBedGetfasta"
@@ -412,8 +393,26 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
-        - `params`: Other parameters for `bedtools genomecov`, default: "-bg"  
+        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `params`: Other parameters for `bedtools genomecov`, default: `Box(bg = True)`  
+
+    - **requires**  
+        [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+
+!!! hint "pBedCluster"
+
+    - **description**  
+        Similar to merge, cluster report each set of overlapping or “book-ended” features in an interval file. In contrast to merge, cluster does not flatten the cluster of intervals into a new meta-interval; instead, it assigns an unique cluster ID to each record in each cluster. This is useful for having fine control over how sets of overlapping intervals in a single interval file are combined.
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file with cluster id for each record  
+
+    - **args**  
+        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `params`: Other parameters for `bedtools cluster`, default: `Box()`  
 
     - **requires**  
         [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -424,10 +423,10 @@
     - **description**  
         Convert peaks to regulatory potential score for each gene
         The formula is:
-        ``
-        	             -(0.5 + 4*di/d0)
+        ```
+                         -(0.5 + 4*di/d0)
         PC = sum (pi * e                  )
-        ``
+        ```
         Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4489297/
 
     - **input**  
@@ -438,21 +437,21 @@
         - `outfile:file`: The regulatory potential file for each gene  
 
     - **args**  
-        - `intensity`: `pi` in the formula. Boolean value, whether use the peak intensity or not, default: `True`,  
-        - `geneformat`: The format for `genefile`, default: `ucsc+gz`. It could be:  
+        - `signal`: `pi` in the formula. Boolean value, whether use the peak intensity signale or not, default: `True`,  
+        - `genefmt`: The format for `genefile`, default: `ucsc+gz`. It could be:  
         	- ucsc or ucsc+gz: typically, you can download from http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
         	- bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 4th column required as gene identity.
-        - `peakformat`: The format for `peakfile`, default: `peak`. It could be:  
+        - `peakfmt`: The format for `peakfile`, default: `peak`. It could be:  
         	- peak or peak+gz: (either [narrowPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format12) or [broadPeak](https://genome.ucsc.edu/FAQ/FAQformat.html#format13), the 7th column will be used as intensity
         	- bed or bed+gz: [format](https://genome.ucsc.edu/FAQ/FAQformat#format1), 5th column will be used as intensity.
         - `window`: `2 * d0` in the formula. The window where the peaks fall in will be consided, default: `100000`.   
-        ``
-        	|--------- window ----------|
-        	|---- d0 -----|
-        	|--- 50K --- TSS --- 50K ---|
-        	     ^ (peak center)
-        	     |-- di --|
-        ``
+        	```
+        			|--------- window ----------|
+        			|---- d0 -----|
+        			|--- 50K --- TSS --- 50K ---|
+        				^ (peak center)
+        				|-- di --|
+        	```
 ## cluster
 
 !!! hint "pDist2Coords"
@@ -1838,6 +1837,24 @@
         [`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0)
         [`graphviz`](https://pypi.python.org/pypi/graphviz)
 ## hic
+
+!!! hint "pPartners"
+
+    - **description**  
+        Find the interaction partners of the regions in input file.
+
+    - **input**  
+        - `regfile:file`: The region file for the regions to find partners for.  
+        - `intfile:file`: The interaction file  
+
+    - **output**  
+        - `outfile:file`: The regions with partners.  
+
+    - **args**  
+        - `regtype`: The type of region file. Default: `auto` (tell from file extension)  
+        	- Could also be `bed` or `bedx`
+        - `inttype`: The type of interaction file. Default: `auto`  
+        	- Could also be `bedpe`, `chiapet.tool`, `hiclib` and `bed12`
 ## marray
 
 !!! hint "pCELdir2Matrix"
@@ -3778,7 +3795,6 @@
 
     - **requires**  
         [`python-simread`](https://github.com/pwwang/simread)
-## utils
 ## vcf
 
 !!! hint "pVcfFilter"
@@ -3882,7 +3898,7 @@
         - `outdir:dir`: The output directory containing the extracted vcfs  
 
     - **args**  
-        - `tool`: The tool used to do extraction. Default: vcftools  
+        - `tool`: The tool used to do extraction. Default: vcftools (gatk, awk)  
         - `vcftools`: The path of vcftools' vcf-subset  
         - `bcftools`: The path of bcftools, used to extract the sample names from input vcf file.  
         - `gatk`: The path of gatk.  
@@ -4035,6 +4051,30 @@
 
     - **requires**  
         [``]
+
+!!! hint "pSnpEff"
+
+    - **description**  
+        This is the default command. It is used for annotating variant filed (e.g. VCF files).
+
+    - **input**  
+        - `infile:file`: The input file   
+
+    - **output**  
+        - `outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html  
+
+    - **args**  
+        - `snpEff`: The snpEff executable, default: "snpEff"  
+        - `params`: Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"  
+        - `genome`: The genome used for annotation, default: "hg19"  
+        - `informat`: The format of input file [vcf or bed], default: "vcf"  
+        - `outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"  
+        - `csvStats`: Whether to generate csv stats file, default: True.  
+        - `htmlStats`: Whether to generate the html summary file, default: False.  
+        - `javamem`: The memory to use. Default: '-Xms1g -Xmx8g'  
+
+    - **requires**  
+        [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
 ## web
 
 !!! hint "pDownloadForm"
@@ -4085,444 +4125,3 @@
 
     - **output**  
         - `outfile:file`: The output file  
-## wxs
-## wxsanno
-
-!!! hint "pSnpEff"
-
-    - **description**  
-        This is the default command. It is used for annotating variant filed (e.g. VCF files).
-
-    - **input**  
-        - `infile:file`: The input file   
-
-    - **output**  
-        - `outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html  
-
-    - **args**  
-        - `snpEff`: The snpEff executable, default: "snpEff"  
-        - `params`: Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"  
-        - `genome`: The genome used for annotation, default: "hg19"  
-        - `informat`: The format of input file [vcf or bed], default: "vcf"  
-        - `outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"  
-        - `csvStats`: Whether to generate csv stats file, default: True.  
-        - `htmlStats`: Whether to generate the html summary file, default: False.  
-        - `javamem`: The memory to use. Default: '-Xms1g -Xmx8g'  
-
-    - **requires**  
-        [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
-## wxscall
-
-!!! hint "pCNVnator"
-
-    - **description**  
-        Use `CNVnator` to call CNVs from bam file
-
-    - **input**  
-        - `infile:file`: The bam file   
-
-    - **output**  
-        - `outfile:file`: The vcf file  
-
-    - **args**  
-        - `cnvnator`: The CNVnator executable, default: "cnvnator"  
-        - `cnv2vcf`: The converter executable to convert CNVnator results to vcf, default: "cnvnator2VCF.pl"  
-        - `binsize`: The bin_size, default: 100  
-        - `genome`: The genome: default: hg19  
-        - `chrom`: Chromosome names, default: "" (all chromosomes)  
-        - `chrdir`: The dir contains reference sequence of chromosomes, default: "" (don't specify)  
-        
-
-    - **requires**  
-        [CNVnator](https://github.com/abyzovlab/CNVnator)
-## wxsdown
-
-!!! hint "pMutSig"
-
-    - **description**  
-        MutSig stands for "Mutation Significance".  MutSig analyzes lists of mutations discovered in DNA sequencing, to identify genes that were mutated more often than expected by chance given background mutation processes.
-        
-        For more information, see Lawrence, M. et al. Mutational heterogeneity in cancer and the search for new cancer-associated genes. Nature 499, 214-218 (2013).
-        
-        See [dcumentation](http://archive.broadinstitute.org/cancer/cga/mutsig_run)
-
-    - **input**  
-        - `maffile:file`: mutation table  
-        - `cvgfile:file`: coverage table  
-        - `cvrfile:file`: covariates table  
-        - `mutdict:file`: mutation_type_dictionary_file  
-        - `chrdir:file`: chr_files_hg18 or chr_files_hg19   
-
-    - **output**  
-        - `outdir:dir`: The output directory  
-
-    - **args**  
-        - `mutsig`: The path to `run_MutSigCV.sh`, default: 'mutsig'  
-        - `mcr`: The Matlab MCR path  
-
-    - **requires**  
-        [MutSing](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
-
-!!! hint "pVcf2Maf"
-
-    - **description**  
-        Convert a snpEff-annotated somatic mutation vcf file (with normal and tumor samples) to [maf](https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+(MAF)+Specification) file
-
-    - **input**  
-        - `infile:file`: vcf file  
-
-    - **output**  
-        - `outfile:file`: The maf file  
-
-    - **args**  
-           `vepdata`: The path of vep data. Default: "" (default data dir of vep)
-           `vep`: The path of vep excutable. Default: "vep"
-           `vcf2maf`: The path of vcf2maf excutable. Default: "vcf2maf.pl"
-           `reffile`: The reference fasta file.
-           `nthread`: The number of threads used by vep. Default: 1
-           `filtervcf`: The filter vcf
-        - `params`: Other parameters for `vcf2maf.pl`, default: ""  
-
-    - **requires**  
-        [vcf2maf.py](https://github.com/mskcc/vcf2maf)
-
-!!! hint "pMergeMafs"
-
-    - **description**  
-        Merge MAF files
-
-    - **input**  
-        - `indir:file`: The directory containing MAF files to be merged  
-
-    - **output**  
-        - `outfile:file`: The merged MAF file  
-
-!!! hint "pMutsig4Plot"
-
-    - **description**  
-        Prepare somatic mutations for  plotting
-
-    - **input**  
-        - `msdir:file`: The mutsig output directory  
-
-    - **output**  
-        - `outfile:file`: The file for plotting  
-        ```
-        #PANEL: Somatic mutations
-        #INFO: MT|PI
-        #DESC: Mutation type|Putative impact
-        # could also be bordercolor, you can have up to 4 shape features
-        #TYPE: shape|bgcolor
-        # could also be continuous
-        # expressions for set: a,b,c
-        #                 norminal: no
-        #                 continuous: [0,1]
-        #DATA: set|norminal
-        #NCOL: 2|2
-        #NAME_MT: Frameshift|Missense|Nonsense|Silent|Splice_site|TSS|Nonstop
-        #NAME_PI: HIGH|MODERATE|LOW|MODIFIER
-        #VALUE_MT: 0|1|20|13|4|17|14
-        #EXP_MT: frameshift_variant,inframe_deletion,inframe_insertion|missense_variant,initiator_codon_variant,stop_retained_variant,rare_amino_acid_variant|stop_gained|synonymous_variant|splice_acceptor_variant,splice_donor_variant|start_lost,start_retained|stop_lost
-        #
-        Sample1	Sample2	Sample3	Sample4	Sample5
-        ABC	missense_variant|HIGH	missense_variant|HIGH	...
-        ...
-        ```
-
-    - **args**  
-        - `topn`: the cutoff to select genes. If it is >= 1, top N genes will be selected, otherwise, it will be used as pvalue cutoff. Default: .05  
-
-    - **requires**  
-        [`pyvcf`](https://github.com/jamescasbon/PyVCF)
-
-!!! hint "pMutPlot"
-
-    - **description**  
-        Plot mutations
-        ```
-        |           |             |           |           |---
-        |- ftWidth -|  s   s   s  |- pnWidth -|- lgWidth -| snHeight
-        |           |             |           |           |---
-            feature1
-        	feature2
-        ```
-
-    - **input**  
-        - `indir:file`: The input directory containing plot files  
-
-    - **output**  
-        - `outfile:file`: The plot png file  
-
-!!! hint "pCepip"
-
-    - **description**  
-        run CEPIP.
-
-    - **input**  
-        - `avinput:file`: The avinput file  
-        - `cell`: The cell  
-
-    - **output**  
-        - `outfile:file`: The cepip result file  
-
-    - **args**  
-        - `bin-cepip`: The jar file path of cepip, default: /data2/junwenwang/shared/tools/cepip/cepip.jar  
-
-    - **requires**  
-        [`cepip`](http://jjwanglab.org/cepip/)
-## wxsprep
-
-!!! hint "pTrimmomaticPE"
-
-    - **description**  
-        Trimming Illumina NGS paired-end data
-
-    - **input**  
-        - `fqfile1:file`: The 1st fastq file (could be in .gz format)  
-        - `fqfile2:file`: The 2nd fastq file  
-
-    - **output**  
-        - `outfile1:file`: The 1st output file  
-        - `outfile2:file`: The 2nd output file  
-
-    - **args**  
-        - `trimmomatic`: The trimmomatic executable, default: "trimmomatic"  
-        - `phred`: "phred33" (default) or "phred64"  
-        - `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"  
-        	- have to replace `{adapter}` with the path of the adapter file
-        - `nthread`: 1  
-
-    - **requires**  
-        [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
-
-!!! hint "pTrimmomaticSE"
-
-    - **description**  
-        Trimming Illumina NGS single-end data
-
-    - **input**  
-        - `fqfile:file`: The fastq file (could be in .gz format)  
-
-    - **output**  
-        - `outfile:file`: The output file  
-
-    - **args**  
-        - `trimmomatic`: The trimmomatic executable, default: "trimmomatic"  
-        - `phred`: "phred33" (default) or "phred64"  
-        - `params`: Other params for trimmomatric, default: "ILLUMINACLIP:{adapter}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"  
-        	- have to replace `{adapter}` with the path of the adapter file
-        - `nthread`: 1  
-
-    - **requires**  
-        [trimmomatic](http://www.usadellab.org/cms/index.php?page=trimmomatic)
-
-!!! hint "pAlignPEByBWA"
-
-    - **description**  
-        Align paired-end reads to reference genome using bwa mem
-
-    - **input**  
-        - `infile1:file`: read file 1 (fastq, or fastq gzipped)  
-        - `infile2:file`: read file 2 (fastq, or fastq gzipped)  
-        - `reffile:file`: The reference file  
-
-    - **output**  
-        - `outfile:file`: The output sam file  
-
-    - **args**  
-        - `bwa`: The bwa executable, default: bwa  
-        - `params`: Other params for bwa mem, default: "-M"  
-        - `nthread`: 1  
-
-    - **requires**  
-        [bwa](https://github.com/lh3/bwa)
-
-!!! hint "pAlignSEByBWA"
-
-    - **description**  
-        Align paired-end reads to reference genome using bwa mem
-
-    - **input**  
-        - `infile:file`: read file (fastq, or fastq gzipped)  
-        - `reffile:file`: The reference file  
-
-    - **brings**  
-        - `reffile#bwt`: "{{reffile | bn}}.bwt",   
-        - `reffile#sa`: "{{reffile | bn}}.sa",  
-        - `reffile#ann`: "{{reffile | bn}}.ann",  
-        - `reffile#amb`: "{{reffile | bn}}.amb",  
-        - `reffile#pac`: "{{reffile | bn}}.pac"  
-
-    - **output**  
-        - `outfile:file`: The output sam file  
-
-    - **args**  
-        - `bwa`: The bwa executable, default: bwa  
-        - `params`: Other params for bwa mem, default: "-M"  
-        - `nthread`: 1  
-        - `reffile`: The reference file, required  
-
-    - **requires**  
-        [bwa](https://github.com/lh3/bwa)
-
-!!! hint "pAlignPEByNGM"
-
-    - **description**  
-        Align paired-end reads to reference genome using NextGenMap
-
-    - **input**  
-        - `infile1:file`: read file 1 (fastq, or fastq gzipped)  
-        - `infile2:file`: read file 2 (fastq, or fastq gzipped)  
-        - `reffile:file`: The reference file  
-
-    - **output**  
-        - `outfile:file`: The output sam/bam file  
-
-    - **args**  
-        - `ngm`: The NextGenMap executable, default: ngm  
-        - `nthread`: 1  
-        - `outtype`: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))  
-        - `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"  
-
-    - **requires**  
-        [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
-
-!!! hint "pAlignSEByNGM"
-
-    - **description**  
-        Align single-end reads to reference genome using NextGenMap
-
-    - **input**  
-        - `infile1:file`: read file 1 (fastq, or fastq gzipped)  
-        - `infile2:file`: read file 2 (fastq, or fastq gzipped)  
-        - `reffile:file`: The reference file  
-
-    - **output**  
-        - `outfile:file`: The output sam/bam file  
-
-    - **args**  
-        - `ngm`: The NextGenMap executable, default: ngm  
-        - `nthread`: 1  
-        - `outtype`: sam or bam, default: sam (only sam for now, due to bug of ngm 0.5.3 (fixed in 0.5.4))  
-        - `params`: Other params for ngm, default: "--rg-id ngm --rg-sm sample"  
-
-    - **requires**  
-        [NextGenMap](https://github.com/Cibiv/NextGenMap/wiki)
-
-!!! hint "pMergeBams"
-
-    - **description**  
-        Merge bam files
-
-    - **input**  
-        - `bamdir:dir`: the dir containing bam files   
-
-    - **output**  
-        - `outfile:file`: the merged bam file  
-
-    - **args**  
-        - `samtools`: the executable path of samtools, default: "samtools"  
-        - `nthread`: Number of BAM/CRAM compression threads  
-        - `params`: Other parameters for `samtools merge`, default: ""  
-
-    - **requires**  
-        [samtools](http://www.htslib.org/)
-## wxsstat
-
-!!! hint "pVcf2List"
-
-    - **description**  
-        Convert vcf to stat files for pCallRate
-
-    - **input**  
-        - `vcffile:file`: The vcf file  
-
-    - **output**  
-        - `outfile:file`: The stat file  
-
-    - **args**  
-        - `chroms`: SNPs on chromosomes to consider, default: "" (all chroms)  
-        - use "chr1-22, chrX, chrY" for chr1 to chr22, chrX and chrY
-
-    - **requires**  
-        [`pyvcf`](https://github.com/jamescasbon/PyVCF)
-
-!!! hint "pCallRate"
-
-    - **description**  
-        Calculate sample/snp call rate from a matrix of snp-sample
-        - rows are snps, columns are samples
-
-    - **input**  
-        - `infile:file`: The snp-sample matrix file  
-
-    - **output**  
-        - `outsample:file`: The report of call rate for each sample  
-        - `figsample:file`: The bar chat of sample call rates  
-        - `outsnp:file`: The report of call rate for each snp  
-        - `figsnp:file`: The bar chat of snp call rates  
-
-!!! hint "pCoverageByBamstats"
-
-    - **description**  
-        Use `bamstats` to calculate coverage for bam file
-
-    - **input**  
-        - `infile:file`: The bam file  
-
-    - **output**  
-        - `outfile:file`: The report of coverage for the bam file  
-
-    - **args**  
-        - `bin`: The `bamstats` executable, default: "bamstats"  
-        - `params`: Other parameters for `bamstats`, default: ""  
-
-    - **requires**  
-        [bamstats](http://bamstats.sourceforge.net/)
-
-!!! hint "pPlotBamstats"
-
-    - **description**  
-        Plot coverage use output files generated by `bamstats` or `wxs.pCoverageByBamstats`
-
-    - **input**  
-        - `indir:file`: The directory containing bamstats output files  
-
-    - **args**  
-        - `chroms`: Chromosomes to plot. Default: "" (all chroms)  
-        - Note: Whether to have "chr" prefix or not depends on your reference when mapping.
-        - You can do a scope assignment: "chr1-chr22, chrX, chrY"
-
-    - **output**  
-        - `outdir:file`: The directory containing output figures  
-
-!!! hint "pSnpEff2Stat"
-
-    - **description**  
-        Convert csvstat file from snpEff to R-readable matrix for plotting
-
-    - **input**  
-        - `indir:file`: The directory containing the csv stat files from `snpEff ann`  
-
-    - **output**  
-        - `outdir:dir`: The output directory  
-
-    - **args**  
-        - `chroms`: The chromsome filter. Default: "" (all chroms)  
-        - Note: snpEff csvstat file has no "chr" prefix
-
-!!! hint "pPlotSnpEff"
-
-    - **description**  
-        Plot snpEff annotation statistics
-
-    - **input**  
-        - `indir:file`: The snpEff result directory containing matrix files generated by pSnpEff2Stat  
-
-    - **output**  
-        - `outdir:dir`: The output directory  
-
-    - **requires**  
-        [`pwwang/corrplot`](https://github.com/pwwang/corrplot)
-        - use `library(devtools); install.github("pwwang/corrplot")`
-        [`ggplot2`](http://ggplot2.org/)

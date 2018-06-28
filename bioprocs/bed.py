@@ -35,32 +35,3 @@ pBedSort.args.params         = Box()
 pBedSort.args.tmpdir         = params.tmpdir.value
 pBedSort.lang                = params.python.value
 pBedSort.script              = "file:scripts/bed/pBedSort.py"
-
-"""
-@name:
-	pBedCluster
-@description:
-	Assign cluster id to each record
-@input:
-	`infile:file`: The input bed file
-@output:
-	`outfile:file`: The output file
-@args:
-	`tool`:         The tool used to sort the file. Default: bedtools
-	`bedtools`:     The path to bedtools. Default: bedtools
-	`params`:       Other params for `tool`. Default: ''
-@requires:
-	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
-"""
-pBedCluster               = Proc(desc = 'Assign cluster id to each record.')
-pBedCluster.input         = "infile:file"
-pBedCluster.output        = "outfile:file:{{infile | fn}}.cluster.bed"
-pBedCluster.args.tool     = 'bedtools'
-pBedCluster.args.bedtools = 'bedtools'
-pBedCluster.args.params   = ''
-pBedCluster.script        = """
-case {{args.tool | quote}} in 
-	bedtools)
-		{{args.bedtools}} cluster -i "{{infile}}" {{args.params}} > "{{outfile}}"
-esac
-"""

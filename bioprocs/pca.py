@@ -1,4 +1,5 @@
 from pyppl import Proc
+from . import params
 
 """
 @name:

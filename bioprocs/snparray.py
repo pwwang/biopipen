@@ -26,17 +26,15 @@ from . import params
 	`mcr`:    The mcr path
 	`params`: Other params for gistic
 """
-pGistic                     = Proc(desc = 'Runing GISTIC to get CNV results.')
-pGistic.input               = 'segfile:file, mkfile:file, alfile:file, cnvfile:file'
-pGistic.output              = 'outdir:dir:{{in.segfile | fn}}.gistic'
-pGistic.args.gistic         = params.gistic.value
-pGistic.args.genome         = params.genome.value
-pGistic.args.mcr            = params.mcr # 2.0 requires r2014a
-pGistic.args.params         = Box()
-#pGistic.envs.runcmd         = runcmd.py
-#pGistic.envs.params2CmdArgs = helpers.params2CmdArgs.py
-pGistic.lang                = params.python.value
-pGistic.script              = "file:scripts/snparray/pGistic.py"
+pGistic             = Proc(desc = 'Runing GISTIC to get CNV results.')
+pGistic.input       = 'segfile:file, mkfile:file, alfile:file, cnvfile:file'
+pGistic.output      = 'outdir:dir:{{in.segfile | fn}}.gistic'
+pGistic.args.gistic = params.gistic.value
+pGistic.args.genome = params.genome.value
+pGistic.args.mcr    = params.mcr # 2.0 requires r2014a
+pGistic.args.params = Box()
+pGistic.lang        = params.python.value
+pGistic.script      = "file:scripts/snparray/pGistic.py"
 
 """
 @name:

@@ -32,17 +32,14 @@ pMotifScan.output                 = [
 	"outfile:file:{{in.sfile | fn}}-{{in.tffile | fn}}.fimo/{{in.sfile | fn}}-{{in.tffile | fn}}.bed", 
 	"outdir:dir:{{in.sfile | fn}}-{{in.tffile | fn}}.fimo"
 ]
-pMotifScan.args.tool           = 'meme'
-pMotifScan.args.meme           = params.fimo.value
-pMotifScan.args.params         = Box()
-pMotifScan.args.tfmotifs       = params.tfmotifs.value
-pMotifScan.args.pval           = 1e-4
-pMotifScan.args.ucsclink       = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}'
-pMotifScan.args.nthread        = 1
-#pMotifScan.envs.runcmd         = runcmd.py
-#pMotifScan.envs.params2CmdArgs = helpers.params2CmdArgs.py
-#pMotifScan.envs.parallel       = parallel.py
-pMotifScan.lang                = params.python.value
-pMotifScan.script              = "file:scripts/tfbs/pMotifScan.py"
+pMotifScan.args.tool     = 'meme'
+pMotifScan.args.meme     = params.fimo.value
+pMotifScan.args.params   = Box()
+pMotifScan.args.tfmotifs = params.tfmotifs.value
+pMotifScan.args.pval     = 1e-4
+pMotifScan.args.ucsclink = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}'
+pMotifScan.args.nthread  = 1
+pMotifScan.lang          = params.python.value
+pMotifScan.script        = "file:scripts/tfbs/pMotifScan.py"
 
 

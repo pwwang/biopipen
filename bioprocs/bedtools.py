@@ -1,5 +1,6 @@
 from pyppl import Proc, Box
 from . import params, bashimport
+from .utils import fs2name
 
 """
 @name:
@@ -193,6 +194,7 @@ pBedMakewindows.script = '''
 {{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{in.infile | squote}} > {{out.outfile | squote}}
 '''
 
+# region pBedMerge2
 """
 @name:
 	pBedMerge
@@ -215,7 +217,9 @@ pBedMerge.args.bedtools       = params.bedtools.value
 pBedMerge.args.params         = Box()
 pBedMerge.lang                = params.python.value
 pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
+# endregion
 
+# region pBedMerge2
 """
 @name:
 	pBedMerge2
@@ -231,13 +235,15 @@ pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMerge2                     = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
-pBedMerge2.input               = "infiles:files"
-pBedMerge2.output              = "outfile:file:{{in.infiles[0] | fn}}.merged.bed"
-pBedMerge2.args.bedtools       = params.bedtools.value
-pBedMerge2.args.params         = Box()
-pBedMerge2.lang                = params.python.value
-pBedMerge2.script              = "file:scripts/bedtools/pBedMerge2.py"
+pBedMerge2               = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
+pBedMerge2.input         = "infiles:files"
+pBedMerge2.output        = "outfile:file:{{in.infiles | fs2name}}.merged.bed"
+pBedMerge2.args.bedtools = params.bedtools.value
+pBedMerge2.args.params   = Box()
+pBedMerge2.envs.fs2name  = fs2name
+pBedMerge2.lang          = params.python.value
+pBedMerge2.script        = "file:scripts/bedtools/pBedMerge2.py"
+# endregion
 
 """
 @name:
@@ -254,14 +260,19 @@ pBedMerge2.script              = "file:scripts/bedtools/pBedMerge2.py"
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMultiinter = Proc()
-pBedMultiinter.input  = "infiles:files"
-pBedMultiinter.output = "outfile:file:{{infiles | [0] | fn}}.multiinter.bt"
-pBedMultiinter.args   = { "bin": "bedtools", "params": "" }
-pBedMultiinter.script = """
-{{args.bin}} multiinter {{args.params}} -i {{infiles | asquote}} > "{{outfile}}"
+pBedMultiinter                 = Proc(desc = 'Identifies common intervals among multiple BED/GFF/VCF files.')
+pBedMultiinter.input           = "infiles:files"
+pBedMultiinter.output          = "outfile:file:{{in.infiles | fs2name}}.multiinter.bt"
+pBedMultiinter.args.bedtools   = params.bedtools.value
+pBedMultiinter.args.params     = Box()
+pBedMultiinter.envs.fs2name    = fs2name
+pBedMultiinter.envs.bashimport = bashimport
+pBedMultiinter.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} multiinter $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i {{infiles | asquote}} > "{{outfile}}"
 """
 
+# region pBedRandom
 """
 @name:
 	pBedRandom
@@ -285,6 +296,7 @@ pBedRandom.args.seed     = None
 pBedRandom.args.bedtools = params.bedtools.value
 pBedRandom.args.gsize    = params.gsize.value
 pBedRandom.script        = "file:scripts/bedtools/pBedRandom.bash"
+# endregion
 
 """
 @name:
@@ -302,12 +314,15 @@ pBedRandom.script        = "file:scripts/bedtools/pBedRandom.bash"
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedShift = Proc()
-pBedShift.input  = "infile:file, gfile:file"
-pBedShift.output = "outfile:file:{{infile | fn}}.shifted.bed"
-pBedShift.args   = { "bin": "bedtools", "params": "" }
-pBedShift.script = """
-{{args.bin}} shift {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
+pBedShift                 = Proc(desc = '`bedtools shift` will move each feature in a feature file by a user-defined number of bases.')
+pBedShift.input           = "infile:file, gfile:file"
+pBedShift.output          = "outfile:file:{{infile | fn}}.shifted.bed"
+pBedShift.args.bedtools   = params.bedtools.value
+pBedShift.args.params     = Box()
+pBedShift.envs.bashimport = bashimport
+pBedShift.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} shift $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
@@ -326,12 +341,15 @@ pBedShift.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedShuffle = Proc()
-pBedShuffle.input  = "infile:file, gfile:file"
-pBedShuffle.output = "outfile:file:{{infile | fn}}.shuffled.bed"
-pBedShuffle.args   = { "bin": "bedtools", "params": "" }
-pBedShuffle.script = """
-{{args.bin}} shuffle {{args.params}} -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
+pBedShuffle                 = Proc(desc = '`bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file.')
+pBedShuffle.input           = "infile:file, gfile:file"
+pBedShuffle.output          = "outfile:file:{{infile | fn}}.shuffled.bed"
+pBedShuffle.args.bedtools   = params.bedtools.value
+pBedShuffle.args.params     = Box()
+pBedShuffle.envs.bashimport = bashimport
+pBedShuffle.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} shuffle $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
 """
 
 """
@@ -350,12 +368,15 @@ pBedShuffle.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedSubtract = Proc()
-pBedSubtract.input  = "afile:file, bfile:file"
-pBedSubtract.output = "outfile:file:{{afile | fn}}.subtracted.bed"
-pBedSubtract.args   = { "bin": "bedtools", "params": "" }
-pBedSubtract.script = """
-{{args.bin}} subtract {{args.params}} -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
+pBedSubtract                 = Proc(desc = '`bedtools subtract` searches for features in B that overlap A.')
+pBedSubtract.input           = "afile:file, bfile:file"
+pBedSubtract.output          = "outfile:file:{{afile | fn}}.subtracted.bed"
+pBedSubtract.args.bedtools   = params.bedtools.value
+pBedSubtract.args.params     = Box()
+pBedSubtract.envs.bashimport = bashimport
+pBedSubtract.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} subtract $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
 """
 
 """
@@ -374,12 +395,15 @@ pBedSubtract.script = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedWindow = Proc()
-pBedWindow.input  = "afile:file, bfile:file"
-pBedWindow.output = "outfile:file:{{afile | fn}}.window.bed"
-pBedWindow.args   = { "bin": "bedtools", "params": "" }
-pBedWindow.script = """
-{{args.bin}} window {{args.params}} -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
+pBedWindow                 = Proc(desc = 'Similar to `bedtools intersect`, `window` searches for overlapping features in A and B.')
+pBedWindow.input           = "afile:file, bfile:file"
+pBedWindow.output          = "outfile:file:{{afile | fn}}.window.bed"
+pBedWindow.args.bedtools   = params.bedtools.value
+pBedWindow.args.params     = Box()
+pBedWindow.envs.bashimport = bashimport
+pBedWindow.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} window $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
 """
 
 """
@@ -394,15 +418,45 @@ pBedWindow.script = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools genomecov`, default: "-bg"
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`:   Other parameters for `bedtools genomecov`, default: `Box(bg = True)`
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedGenomecov = Proc()
-pBedGenomecov.input  = "infile:file"
-pBedGenomecov.output = "outfile:file:{{infile | fn}}.genomecov.bt"
-pBedGenomecov.args   = { "bin": "bedtools", "params": "-bg" }
-pBedGenomecov.script = """
-{{args.bin}} genomecov {{args.params}} -ibam "{{infile}}" > "{{outfile}}"
+pBedGenomecov                 = Proc(desc = '`bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.')
+pBedGenomecov.input           = "infile:file"
+pBedGenomecov.output          = "outfile:file:{{infile | fn}}.genomecov.bt"
+pBedGenomecov.args.bedtools   = params.bedtools.value
+pBedGenomecov.args.params     = Box(bg = True)
+pBedGenomecov.envs.bashimport = bashimport
+pBedGenomecov.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} genomecov $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -ibam "{{infile}}" > "{{outfile}}"
 """
+
+"""
+@name:
+	pBedCluster
+@description:
+	Similar to merge, cluster report each set of overlapping or “book-ended” features in an interval file. In contrast to merge, cluster does not flatten the cluster of intervals into a new meta-interval; instead, it assigns an unique cluster ID to each record in each cluster. This is useful for having fine control over how sets of overlapping intervals in a single interval file are combined.
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file with cluster id for each record
+@args:
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`:   Other parameters for `bedtools cluster`, default: `Box()`
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""
+pBedCluster = Proc(desc = 'Similar to merge, cluster report each set of overlapping or “book-ended” features in an interval file.')
+pBedCluster.input           = "infile:file"
+pBedCluster.output          = "outfile:file:{{infile | fn}}.clustered.bt"
+pBedCluster.args.bedtools   = params.bedtools.value
+pBedCluster.args.params     = Box()
+pBedCluster.envs.bashimport = bashimport
+pBedCluster.script          = """
+{{bashimport}} __init__.bash
+{{args.bedtools}} cluster $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i "{{infile}}" > "{{outfile}}"
+"""
+

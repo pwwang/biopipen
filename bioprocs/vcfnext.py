@@ -24,9 +24,6 @@ pVcfStatsPlot.args.Rscript     = params.Rscript.value
 pVcfStatsPlot.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
 pVcfStatsPlot.args.histplotggs = []
 pVcfStatsPlot.args.boxplotggs  = []
-#pVcfStatsPlot.envs.runcmd      = runcmd.py
-#pVcfStatsPlot.envs.plotHist    = plot.hist.r
-#pVcfStatsPlot.envs.plotBoxplot = plot.boxplot.r
 pVcfStatsPlot.lang             = params.python.value
 pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 
@@ -48,9 +45,6 @@ pCallRate.input            = "indir:file"
 pCallRate.output           = "outdir:dir:{{ in.indir | fn }}.callrate"
 pCallRate.args.histplotggs = []
 pCallRate.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
-#pCallRate.envs.runcmd      = runcmd.r
-#pCallRate.envs.cbindfill   = helpers.cbindfill.r
-#pCallRate.envs.plotHist    = plot.hist.r
 pCallRate.lang             = params.Rscript.value
 pCallRate.script           = "file:scripts/vcfnext/pCallRate.r"
 
@@ -76,8 +70,6 @@ pCepip.output              = "outfile:file:{{in.infile | fn}}.cepip.txt"
 pCepip.args.cepip          = params.cepip.value
 pCepip.args.cell           = ""
 pCepip.args.params         = Box()
-#pCepip.envs.runcmd         = runcmd.py
-#pCepip.envs.params2CmdArgs = helpers.params2CmdArgs.py
 pCepip.lang                = params.python.value
 pCepip.script              = "file:scripts/vcfnext/pCepip.py"
 
@@ -201,3 +193,44 @@ pMaftools.args.nthread = 1
 #pMaftools.envs.heatmap = plot.heatmap.r
 pMaftools.lang         = params.Rscript.value
 pMaftools.script       = "file:scripts/vcfnext/pMaftools.r"
+
+"""
+@name:
+	pSnpEff
+@description:
+	This is the default command. It is used for annotating variant filed (e.g. VCF files).
+@input:
+	`infile:file`:  The input file 
+@output:
+	`outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html
+@args:
+	`snpEff`:       The snpEff executable, default: "snpEff"
+	`params`:    Other parameters for `snpEff`, default: "-Xms1g -Xmx4g -v"
+	`genome`:    The genome used for annotation, default: "hg19"
+	`informat`:  The format of input file [vcf or bed], default: "vcf"
+	`outformat`: The format of output file [vcf, gatk, bed, bedAnn], default: "vcf"
+	`csvStats`:  Whether to generate csv stats file, default: True.
+	`htmlStats`: Whether to generate the html summary file, default: False.
+	`javamem`:   The memory to use. Default: '-Xms1g -Xmx8g'
+@requires:
+	[snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
+"""
+pSnpEff = Proc()
+pSnpEff.input  = "infile:file"
+pSnpEff.output = "outdir:dir:{{infile | fn}}.snpeff"
+pSnpEff.args   = { "snpEff": "snpEff", "javamem": "-Xms1g -Xmx8g", "genome": "hg19", "informat": "vcf", "outformat": "vcf", "csvStats": True, "htmlStats": False, "params": "" }
+pSnpEff.script = """
+csvfile="{{outdir}}/{{infile | fn}}.csvstat"
+sumfile="{{outdir}}/{{infile | fn}}.html"
+outfile="{{outdir}}/{{infile | fn}}.snpEff.vcf"
+csvStats=""
+if [[ "{{args.csvStats}}" == "True" ]]; then
+	csvStats="-csvStats \\"$csvfile\\""
+fi
+stats=""
+if [[ "{{args.htmlStats}}" == "True" ]]; then
+	stats="-stats \\"$sumfile\\""
+fi
+echo {{args.snpEff}} {{args.javamem}} -i {{args.informat}} -o {{args.outformat}} $csvStats $stats {{args.params}} {{args.genome}} "{{infile}}"
+{{args.snpEff}} {{args.javamem}} -i {{args.informat}} -o {{args.outformat}} $csvStats $stats {{args.params}} {{args.genome}} "{{infile}}" > "$outfile"
+"""

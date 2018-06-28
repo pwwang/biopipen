@@ -23,18 +23,18 @@ from . import params
 	[bwtool](https://github.com/CRG-Barcelona/bwtool)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 """
-pConsvPerm                     = Proc(desc = 'Generate a null distribution of conservation scores.')
-pConsvPerm.input               = 'seed'
-pConsvPerm.output              = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{in.seed}}.txt'
-pConsvPerm.args.len            = 50
-pConsvPerm.args.nperm          = 1000
-pConsvPerm.args.consvdir       = params.consvdir.value
-pConsvPerm.args.gsize          = params.gsize.value
-pConsvPerm.args.bedtools       = params.bedtools.value
-pConsvPerm.args.bwtool         = params.bwtool.value
-pConsvPerm.args.seed           = None
-pConsvPerm.lang                = params.python.value
-pConsvPerm.script              = "file:scripts/seq/pConsvPerm.py"
+pConsvPerm               = Proc(desc = 'Generate a null distribution of conservation scores.')
+pConsvPerm.input         = 'seed'
+pConsvPerm.output        = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{in.seed}}.txt'
+pConsvPerm.args.len      = 50
+pConsvPerm.args.nperm    = 1000
+pConsvPerm.args.consvdir = params.consvdir.value
+pConsvPerm.args.gsize    = params.gsize.value
+pConsvPerm.args.bedtools = params.bedtools.value
+pConsvPerm.args.bwtool   = params.bwtool.value
+pConsvPerm.args.seed     = None
+pConsvPerm.lang          = params.python.value
+pConsvPerm.script        = "file:scripts/seq/pConsvPerm.py"
 
 
 """
@@ -60,14 +60,14 @@ pConsvPerm.script              = "file:scripts/seq/pConsvPerm.py"
 	[bwtool](https://github.com/CRG-Barcelona/bwtool)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 """
-pConsv                = Proc(desc = 'Get the conservation scores of regions.')
-pConsv.input          = "bedfile:file, permfile:file"
-pConsv.output         = "outfile:file:{{in.bedfile | fn}}-consv.bed"
-pConsv.args.bwtool    = params.bwtool.value
-pConsv.args.consvdir  = params.consvdir.value
-pConsv.args.pval      = False
-pConsv.lang           = params.python.value
-pConsv.script         = "file:scripts/seq/pConsv.py"
+pConsv               = Proc(desc = 'Get the conservation scores of regions.')
+pConsv.input         = "bedfile:file, permfile:file"
+pConsv.output        = "outfile:file:{{in.bedfile | fn}}-consv.bed"
+pConsv.args.bwtool   = params.bwtool.value
+pConsv.args.consvdir = params.consvdir.value
+pConsv.args.pval     = False
+pConsv.lang          = params.python.value
+pConsv.script        = "file:scripts/seq/pConsv.py"
 
 
 """
