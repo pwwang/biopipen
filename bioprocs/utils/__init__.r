@@ -35,6 +35,12 @@ logger = function(..., level = 'INFO') {
 	cat(paste0(level, ': ', paste(...), '\n'), file = stderr())
 }
 
+log2pyppl = function(..., level = 'LOG') {
+	msg = paste(...)
+	if (!endsWith(msg, "\n")) msg = paste0(msg, "\n")
+	cat(paste0('pyppl.log.', level, ': ', msg), file = stderr())
+}
+
 # avoid typos
 cbind.fill = cbindfill
 rbind.fill = rbindfill

@@ -1,6 +1,7 @@
 from pyppl import Proc, Box
 #from .utils import runcmd, plot, helpers
-from . import params
+from . import params, rimport
+from .utils import fs2name
 
 
 """
@@ -112,7 +113,7 @@ pMutSig.script       = "file:scripts/vcfnext/pMutSig.bash"
 @description:
 	Merge maf files.
 @input:
-	`indir:dir`: The directory containing the maf files
+	`infiles:files`: The maf files
 @output:
 	`outfile:file`: The merged maf file
 @args:
@@ -120,22 +121,92 @@ pMutSig.script       = "file:scripts/vcfnext/pMutSig.bash"
 		- merge(default): Merge the columns, if one not exists, fill with an empty string.
 		- discard: Just discard the extra columns, with only 34 columns left. So you can also put just one maf file in the indir with some columns missed to fill it with standard columns.
 """
-pMafMerge             = Proc(desc = 'Merge maf files.')
-pMafMerge.input       = 'indir:dir'
-pMafMerge.output      = 'outfile:file:{{in.indir | fn}}.maf'
-pMafMerge.args.excols = 'merge' # discard
-pMafMerge.lang        = params.python.value
-pMafMerge.script      = "file:scripts/vcfnext/pMafMerge.py"
+pMafMerge              = Proc(desc = 'Merge maf files.')
+pMafMerge.input        = 'infiles:files'
+pMafMerge.output       = 'outfile:file:{{in.infiles | fs2name}}.maf'
+pMafMerge.args.excols  = 'merge' # discard
+pMafMerge.envs.fs2name = fs2name
+pMafMerge.lang         = params.python.value
+pMafMerge.script       = "file:scripts/vcfnext/pMafMerge.py"
 
 """
 @name:
 	pMaftools
 @description:
 	Use maftools to draw plots.
+@input:
+	`indir:dir`: The input directory. Could contain:
+		- `*.maf` or `*.maf.gz` file (required)
+		- `*.annot.tsv` or `*.annot.txt` file (see: https://github.com/PoisonAlien/maftools/blob/master/inst/extdata/tcga_laml_annot.tsv)
+		- `all_lesions.conf_*.txt`: Gistic cnv data
+		- `amp_genes.conf_*.txt`: Gistic cnv data
+		- `del_genes.conf_*.txt`: Gistic cnv data
+		- `scores.gistic`: Gistic cnv data
+		- `*.seg.txt`: CBS segments data
+		- `*sig_genes.txt` or `*sig_genes.txt.gz`: Mutsig results, to do pancancer somparison.
+@output:
+	`outdir:dir`: The output directory
 @args:
-	`ngenes`: 
+	`ngenes` : Top number of genes to plot for some plots. Default: `10`
+	`mutypes`: Provide manual list of variant classifications to be considered as non-synonymous. Rest will be considered as silent variants. Default: `["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]`
+	`isTCGA`:  If the maf file is from TCGA? Default: `False`
+	`ref`   :  The reference file for signature plot.
+	`plot`  :  Which plots to plot. 
+		- Default:
+		  ```python
+		  Box(
+		  	summary        = True,
+		  	oncoplot       = True,
+		  	oncostrip      = True,
+		  	titv           = True,
+		  	lollipop       = True,
+		  	cbsseg         = True,
+		  	rainfall       = True,
+		  	tcgacomp       = True,
+		  	vaf            = True,
+		  	genecloud      = True,
+		  	gisticGenome   = True,
+		  	gisticBubble   = True,
+		  	gisticOncoplot = True,
+		  	somInteraction = True,
+		  	oncodrive      = True,
+		  	pfam           = True,
+		  	pancan         = True,
+		  	survival       = True,
+		  	heterogeneity  = True,
+		  	signature      = True,
+		  )
+		  ```
+	`params`:  The extra parameters for each plot function.
+		- Default:
+		  ```python
+		  Box(
+		  	summary        = Box(rmOutlier = True, addStat = 'median', dashboard = True),
+		  	oncoplot       = Box(),
+		  	oncostrip      = Box(),
+		  	titv           = Box(),
+		  	lollipop       = Box(AACol = 'Protein_Change'),
+		  	cbsseg         = Box(labelAll = True),
+		  	rainfall       = Box(detectChangePoints = True),
+		  	tcgacomp       = Box(),
+		  	vaf            = Box(flip = True),
+		  	genecloud      = Box(minMut = 3),
+		  	gisticGenome   = Box(markBands = 'all'),
+		  	gisticBubble   = Box(),
+		  	gisticOncoplot = Box(),
+		  	somInteraction = Box(),
+		  	oncodrive      = Box(AACol = 'Protein_Change', minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
+		  	pfam           = Box(AACol = 'Protein_Change'),
+		  	pancan         = Box(qval = 0.1, label = 1, normSampleSize = True),
+		  	survival       = Box(),
+		  	heterogeneity  = Box(),
+		  	signature      = Box(nTry = 6, plotBestFitRes = False),
+		  )
+		  ```
+	`devpars`:  The parameters for plot device. Default: `Box(res = 300, height = 2000, width = 2000)`
+	`nthread`:  Number of threads used for multiple plot of one type. Default: `1`
 @requires:
-	[``]
+	[Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
 """
 pMaftools              = Proc(desc = 'Use maftools to draw plots.')
 pMaftools.input        = 'indir:dir'
@@ -144,7 +215,7 @@ pMaftools.args.ngenes  = 10
 pMaftools.args.isTCGA  = False
 pMaftools.args.ref     = params.ref.value # for signature
 pMaftools.args.mutypes = ["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]
-pMaftools.args.plots   = Box(
+pMaftools.args.plot    = Box(
 	summary        = True,
 	oncoplot       = True,
 	oncostrip      = True,
@@ -171,7 +242,7 @@ pMaftools.args.params  = Box(
 	oncoplot       = Box(),
 	oncostrip      = Box(),
 	titv           = Box(),
-	lollipop       = Box(AACol = 'Protein_Change'),
+	lollipop       = Box(),
 	cbsseg         = Box(labelAll = True),
 	rainfall       = Box(detectChangePoints = True),
 	tcgacomp       = Box(),
@@ -181,8 +252,8 @@ pMaftools.args.params  = Box(
 	gisticBubble   = Box(),
 	gisticOncoplot = Box(),
 	somInteraction = Box(),
-	oncodrive      = Box(AACol = 'Protein_Change', minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
-	pfam           = Box(AACol = 'Protein_Change'),
+	oncodrive      = Box(minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
+	pfam           = Box(),
 	pancan         = Box(qval = 0.1, label = 1, normSampleSize = True),
 	survival       = Box(),
 	heterogeneity  = Box(),
@@ -190,7 +261,7 @@ pMaftools.args.params  = Box(
 )
 pMaftools.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pMaftools.args.nthread = 1
-#pMaftools.envs.heatmap = plot.heatmap.r
+pMaftools.envs.rimport = rimport
 pMaftools.lang         = params.Rscript.value
 pMaftools.script       = "file:scripts/vcfnext/pMaftools.r"
 
