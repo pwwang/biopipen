@@ -29,5 +29,7 @@ aSimRead2.delegate('args.params2', 'pSort2', 'args.params')
 aSimRead2.delegate('args.inopts1', 'pSort1', 'args.inopts')
 aSimRead2.delegate('args.inopts2', 'pSort2', 'args.inopts')
 aSimRead2.delegate('args', 'pSimRead', 'args')
+aSimRead2.delegate('args1', 'pSort1', 'args')
+aSimRead2.delegate('args2', 'pSort2', 'args')
 # input
 aSimRead2.pSimRead.input = lambda ch1, ch2: [list(row) for row in ch1.cbind(ch2)]

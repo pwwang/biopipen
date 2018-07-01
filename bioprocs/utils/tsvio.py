@@ -493,6 +493,7 @@ class SimRead (object):
 		self.debug   = kwargs['debug'] if 'debug' in kwargs else False
 		self.ftype   = [''] * length
 		self.cnames  = [''] * length
+		self.head    = [None] * length # for nometa
 
 		if 'match' in kwargs:
 			self.match = kwargs['match']
@@ -523,18 +524,33 @@ class SimRead (object):
 				self.cnames = [kwargs['cnames']] * length
 			else:
 				self.cnames[:len(kwargs['cnames'])] = list(kwargs['cnames'])
+		if 'head' in kwargs and kwargs['head']:
+			if not isinstance(kwargs['head'], (tuple, list)):
+				self.head = [kwargs['head']] * length
+			else:
+				self.head[:len(kwargs['head'])] = list(kwargs['head'])
 
 		self.match = SimRead._defaultMatch
 
 		self.readers = []
 		for i, fn in enumerate(files):
-			inopts = {
-				'ftype'  : self.ftype[i],
-				'cnames' : self.cnames[i],
-				'delimit': self.delimit[i],
-				'skip'   : self.skip[i],
-				'comment': self.comment[i]
-			}
+			if self.ftype[i] == 'nometa':
+				inopts = {
+					'ftype'  : self.ftype[i],
+					'cnames' : self.cnames[i],
+					'delimit': self.delimit[i],
+					'skip'   : self.skip[i],
+					'comment': self.comment[i],
+					'head'   : self.head[i]
+				}
+			else:
+				inopts = {
+					'ftype'  : self.ftype[i],
+					'cnames' : self.cnames[i],
+					'delimit': self.delimit[i],
+					'skip'   : self.skip[i],
+					'comment': self.comment[i]
+				}
 			reader = TsvReader(fn, **inopts)
 			if not reader.meta: reader.autoMeta()
 			self.readers.append(reader)
