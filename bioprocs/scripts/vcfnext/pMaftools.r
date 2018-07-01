@@ -680,6 +680,9 @@ if (plots$signature) {
 	}
 	sgParams$mat = tm
 	tryCatch({
+		cophenfile = file.path(outdir, 'signature-cophen.png')
+		do.call(png, c(list(filename = cophenfile), devpars))
+		dev.off()
 		sigs  = do.call(extractSignatures, sgParams)
 		sigfile = file.path(outdir, 'signature.png')
 		do.call(png, c(list(filename = sigfile), devpars))

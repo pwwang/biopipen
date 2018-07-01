@@ -147,7 +147,7 @@ def _procconfig(kwargs = None):
 		starts.append(aBam2GCnv)
 		
 	config = {
-		'default': {'forks': params.forks},
+		'default': {'forks': int(params.forks)},
 		'_log' : {'file': params.logfile}
 	}
 	return starts, config, params.runner

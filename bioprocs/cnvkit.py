@@ -4,55 +4,48 @@ from .utils import fs2name
 
 """
 @name:
-	pCNVkitAccess
+	pCNVkitPrepare
 @description:
-	Calculate the sequence-accessible coordinates in chromosomes from the given reference genome, output as a BED file.
+	Generate target files for cnvkit, using probably cnvkit's access, target, autobin commands.
 @input:
-	`index`: The index of the job
+	`infiles:files`: The bam files. Indexes are necessary.
+		- Hint: if indexes are not with the input files, you probably need `pCNVkitPrepare.infile = 'origin'`
 @output:
-	`outfile:file`: The output file
-@args:
-	`params`: Other parameters for `cnvkit.py access`
-	`cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'
-	`ref`:    The reference file. Required.
-@requires:
-	[CNVkit](http://cnvkit.readthedocs.io/)
-"""
-pCNVkitAccess             = Proc (desc = 'Calculate the sequence-accessible coordinates in chromosomes from the given reference genome, output as a BED file.')
-pCNVkitAccess.input       = "index"
-pCNVkitAccess.output      = "outfile:file:{{args.ref | fn}}-{{in.index}}.access.bed"
-pCNVkitAccess.args.cnvkit = params.cnvkit.value
-pCNVkitAccess.args.ref    = params.ref.value
-pCNVkitAccess.args.params = Box()
-pCNVkitAccess.lang        = params.python.value
-pCNVkitAccess.script      = "file:scripts/cnvkit/pCNVkitAccess.py"
-
-"""
-@name:
-	pCNVkitTarget
-@description:
-	Generate targets file for CNVkit using access file and annotate file (`cnvkit.py target`)
-@input:
-	`acfile:file`: The access file
-@output:
-	`outfile:file`: The targets file
+	`target:file`:     The (autobinned) target file
+	`antitarget:file`: The (autobinned) target file
 @args:
 	`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-	`params`: Other parameters for `cnvkit.py target`
+	`exbaits`: The bait file for exome-sequencing data.
+		- See https://github.com/AstraZeneca-NGS/reference_data/tree/master/hg19/bed
+	`accfile`: Directly use the access file. Default: generating from the reference file.
+		- See https://github.com/etal/cnvkit/tree/master/data
+	`ref`    : The reference genome.
+	`params` : The extra parameters for cnvkit's `access`, `target` and `autobin` command. Default: 
+		```python
+		Box(
+			target  = Box({'short-name': True, 'split': True}),
+			access  = Box(s = '5000'),
+			autobin = Box()
+		)
+		```
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitTarget             = Proc (desc = 'Generate targets file for CNVkit using access file and annotate file')
-pCNVkitTarget.input       = "acfile:file"
-pCNVkitTarget.output      = "outfile:file:{{in.acfile | fn}}.target.bed"
-pCNVkitTarget.args.cnvkit = params.cnvkit.value
-pCNVkitTarget.args.params = Box({
-	'split'      : True,
-	'short-names': True,
-	# 'annotate': Your annotation file, see https://cnvkit.readthedocs.io/en/stable/quickstart.html?highlight=refFlat#download-the-reference-genome
-})
-pCNVkitTarget.lang   = params.python.value
-pCNVkitTarget.script = "file:scripts/cnvkit/pCNVkitTarget.py"
+pCNVkitPrepare = Proc(desc = 'Generate target files for cnvkit.')
+pCNVkitPrepare.input = 'infiles:files'
+pCNVkitPrepare.output = 'target:file:{{in.infiles | fs2name}}.target.bed, antitarget:file:{{in.infiles | fs2name}}.antitarget.bed'
+pCNVkitPrepare.args.cnvkit  = params.cnvkit.value
+pCNVkitPrepare.args.exbaits = params.exbaits.value
+pCNVkitPrepare.args.accfile = ''
+pCNVkitPrepare.args.ref     = params.ref.value
+pCNVkitPrepare.args.params  = Box(
+	target  = Box({'short-name': True, 'split': True}),
+	access  = Box(s = '5000'),
+	autobin = Box()
+)
+pCNVkitPrepare.envs.fs2name = fs2name
+pCNVkitPrepare.lang         = params.python.value
+pCNVkitPrepare.script       = 'file:scripts/cnvkit/pCNVkitPrepare.py'
 
 """
 @name:
@@ -60,8 +53,9 @@ pCNVkitTarget.script = "file:scripts/cnvkit/pCNVkitTarget.py"
 @description:
 	Calculate coverage in the given regions from BAM read depths.
 @input:
-	`infile:file`: The bam file
-	`tgfile:file`: The target file
+	`infile:file`:  The bam file
+	`tgfile:file`:  The target file
+	`atgfile:file`: The antitarget file
 @output:
 	`outfile:file`: The output cnn file
 @args:
@@ -72,8 +66,8 @@ pCNVkitTarget.script = "file:scripts/cnvkit/pCNVkitTarget.py"
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
 pCNVkitCov              = Proc (desc = 'Calculate coverage in the given regions from BAM read depths.')
-pCNVkitCov.input        = "infile:file, tgfile:file"
-pCNVkitCov.output       = "outfile:file:{{in.infile | fn}}.covcnn"
+pCNVkitCov.input        = "infile:file, tgfile:file, atgfile:file"
+pCNVkitCov.output       = "outfile:file:{{in.infile | fn}}.target.cnn, antifile:file:{{in.infile | fn}}.antitarget.cnn"
 pCNVkitCov.args.cnvkit  = params.cnvkit.value
 pCNVkitCov.args.nthread = 1
 pCNVkitCov.args.params  = Box()
@@ -98,7 +92,7 @@ pCNVkitCov.script       = "file:scripts/cnvkit/pCNVkitCov.py"
 """
 pCNVkitRef              = Proc (desc = 'Compile a copy-number reference from the given files or directory')
 pCNVkitRef.input        = "infiles:files"
-pCNVkitRef.output       = "outfile:file:{{in.infiles | fs2name}}.refcnn"
+pCNVkitRef.output       = "outfile:file:{{in.infiles | fs2name}}.reference.cnn"
 pCNVkitRef.args.cnvkit  = params.cnvkit.value
 pCNVkitRef.args.ref     = params.ref.value
 pCNVkitRef.args.params  = Box({'no-edge': True})
@@ -113,6 +107,7 @@ pCNVkitRef.script       = "file:scripts/cnvkit/pCNVkitRef.py"
 	Generate reference coverage if there are no normal samples.
 @input:
 	`tgfile:file`:  The target file
+	`atgfile:file`: The antitarget file
 @output:
 	`outfile:file`: The output reference cnn file
 @args:
@@ -123,8 +118,8 @@ pCNVkitRef.script       = "file:scripts/cnvkit/pCNVkitRef.py"
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
 pCNVkitFlatRef              = Proc (desc = 'Compile a copy-number flat reference without normal samples')
-pCNVkitFlatRef.input        = "tgfile:file"
-pCNVkitFlatRef.output       = "outfile:file:{{in.tgfile | fn}}.refcnn"
+pCNVkitFlatRef.input        = "tgfile:file, atgfile:file"
+pCNVkitFlatRef.output       = "outfile:file:{{in.tgfile | fn}}.reference.cnn"
 pCNVkitFlatRef.args.cnvkit  = params.cnvkit.value
 pCNVkitFlatRef.args.ref     = params.ref.value
 pCNVkitFlatRef.args.params  = Box()
@@ -138,23 +133,26 @@ pCNVkitFlatRef.script       = "file:scripts/cnvkit/pCNVkitFlatRef.py"
 @description:
 	Combine the uncorrected target and antitarget coverage tables (.cnn) and correct for biases in regional coverage and GC content, according to the given reference. Output a table of copy number ratios (.cnr)
 @input:
-	`infile:file`:  The cnn file to be fixed
+	`tgfile:file`:  The target coverage file
+	`atgfile:file`: The antitarget coverage file
 	`rcfile:file`:  The reference cnn file
 @output:
 	`outfile:file`: The cnr file
 @args:
+	`nthread`: The number of threads to use. Default: 1
 	`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
 	`params`:  Other parameters for `cnvkit.py fix`, default: " --no-edge "
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitFix             = Proc (desc = 'Combine the uncorrected target and antitarget coverage tables and correct them.')
-pCNVkitFix.input       = "infile:file, rcfile:file"
-pCNVkitFix.output      = "outfile:file:{{in.infile | fn}}.cnr"
-pCNVkitFix.args.cnvkit = params.cnvkit.value
-pCNVkitFix.args.params = Box({'no-edge': True})
-pCNVkitFix.lang   = params.python.value
-pCNVkitFix.script      = "file:scripts/cnvkit/pCNVkitFix.py"
+pCNVkitFix              = Proc (desc = 'Combine the uncorrected target and antitarget coverage tables and correct them.')
+pCNVkitFix.input        = "tgfile:file, atgfile:file, rcfile:file"
+pCNVkitFix.output       = "outfile:file:{{in.tgfile | fn}}.cnr"
+pCNVkitFix.args.cnvkit  = params.cnvkit.value
+pCNVkitFix.args.params  = Box({'no-edge': True})
+pCNVkitFix.args.nthread = 1
+pCNVkitFix.lang         = params.python.value
+pCNVkitFix.script       = "file:scripts/cnvkit/pCNVkitFix.py"
 
 """
 @name:
@@ -216,6 +214,7 @@ pCNVkitCall.script      = "file:scripts/cnvkit/pCNVkitCall.py"
 	`outdir:dir`: The output directory
 @args:
 	`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+	`nthread`: The number of threads to use. Default: 1
 	`params`:  Other parameters for `cnvkit.py scatter`
 	`regions`: The regoins to plot. Default: `['']`
 		- You can have extra specific regions, format:
@@ -225,6 +224,7 @@ pCNVkitScatter              = Proc(desc = 'Generate scatter plot for CNVkit resu
 pCNVkitScatter.input        = 'cnrfile:file, cnsfile:file'
 pCNVkitScatter.output       = 'outdir:dir:{{in.cnrfile | fn}}.scatters'
 pCNVkitScatter.args.cnvkit  = params.cnvkit.value
+pCNVkitScatter.args.nthread = 1
 pCNVkitScatter.args.params  = Box()
 pCNVkitScatter.args.regions = [
 	'', # plot whole genome
@@ -246,12 +246,14 @@ pCNVkitScatter.script = "file:scripts/cnvkit/pCNVkitScatter.py"
 	`outfile:file`: The output file
 @args:
 	`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+	`nthread`: The number of threads to use. Default: 1
 	`params`:  Other parameters for `cnvkit.py scatter`
 """
 pCNVkitDiagram             = Proc(desc = 'Generate diagram plot for CNVkit results.')
 pCNVkitDiagram.input       = 'cnrfile:file, cnsfile:file'
 pCNVkitDiagram.output      = 'outfile:file:{{in.cnrfile | fn}}.diagram.pdf'
 pCNVkitDiagram.args.cnvkit = params.cnvkit.value
+pCNVkitDiagram.args.nthread = 1
 pCNVkitDiagram.args.params = Box()
 pCNVkitDiagram.lang        = params.python.value
 pCNVkitDiagram.script      = "file:scripts/cnvkit/pCNVkitDiagram.py"
@@ -297,25 +299,28 @@ pCNVkitHeatmap.script       = "file:scripts/cnvkit/pCNVkitHeatmap.py"
 @output:
 	`outdir:dir`:   The output directory
 @args:
-	`cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
-	`breaks`:       Whether to report breakpoints. Default: True
-	`gainloss`:     Whether to report gainloss. Default: True
-	`metrics`:      Whether to report metrics. Default: True
-	`segmetrics`:   Whether to report segmetrics. Default: True
+	`cnvkit` : The executable of cnvkit. Default: 'cnvkit.py'
+	`nthread`: The number of threads to use. Default: 1
+	`params` : Extra parameters to the commands.
+		- `breaks`:       Whether to report breakpoints. Default: True
+		- `gainloss`:     Whether to report gainloss. Default: True
+		- `metrics`:      Whether to report metrics. Default: True
+		- `segmetrics`:   Whether to report segmetrics. Default: True
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitReport = Proc (desc = 'Report CNVkit results')
-pCNVkitReport.input  = "cnrfile:file, cnsfile:file"
-pCNVkitReport.output = "outdir:dir:{{in.cnrfile | fn}}.cnvkit.reports"
-pCNVkitReport.args.cnvkit = params.cnvkit.value
-pCNVkitReport.args.params = Box(
+pCNVkitReport              = Proc (desc = 'Report CNVkit results')
+pCNVkitReport.input        = "cnrfile:file, cnsfile:file"
+pCNVkitReport.output       = "outdir:dir:{{in.cnrfile | fn}}.cnvkit.reports"
+pCNVkitReport.args.cnvkit  = params.cnvkit.value
+pCNVkitReport.args.nthread = 1
+pCNVkitReport.args.params  = Box(
 	breaks     = True, # None to disable
 	gainloss   = True,
 	metrics    = True,
 	segmetrics = Box(iqr = True)
 )
-pCNVkitReport.lang = params.python.value
+pCNVkitReport.lang   = params.python.value
 pCNVkitReport.script = 'file:scripts/cnvkit/pCNVkitReport.py'
 
 """

@@ -402,7 +402,7 @@
 !!! hint "pBedCluster"
 
     - **description**  
-        Similar to merge, cluster report each set of overlapping or “book-ended” features in an interval file. In contrast to merge, cluster does not flatten the cluster of intervals into a new meta-interval; instead, it assigns an unique cluster ID to each record in each cluster. This is useful for having fine control over how sets of overlapping intervals in a single interval file are combined.
+        Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file. In contrast to merge, cluster does not flatten the cluster of intervals into a new meta-interval; instead, it assigns an unique cluster ID to each record in each cluster. This is useful for having fine control over how sets of overlapping intervals in a single interval file are combined.
 
     - **input**  
         - `infile:file`: The input file  
@@ -595,39 +595,34 @@
         [`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `args.gg` is True
 ## cnvkit
 
-!!! hint "pCNVkitAccess"
+!!! hint "pCNVkitPrepare"
 
     - **description**  
-        Calculate the sequence-accessible coordinates in chromosomes from the given reference genome, output as a BED file.
+        Generate target files for cnvkit, using probably cnvkit's access, target, autobin commands.
 
     - **input**  
-        - `index`: The index of the job  
+        - `infiles:files`: The bam files. Indexes are necessary.  
+        	- Hint: if indexes are not with the input files, you probably need `pCNVkitPrepare.infile = 'origin'`
 
     - **output**  
-        - `outfile:file`: The output file  
-
-    - **args**  
-        - `params`: Other parameters for `cnvkit.py access`  
-        - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
-        - `ref`: The reference file. Required.  
-
-    - **requires**  
-        [CNVkit](http://cnvkit.readthedocs.io/)
-
-!!! hint "pCNVkitTarget"
-
-    - **description**  
-        Generate targets file for CNVkit using access file and annotate file (`cnvkit.py target`)
-
-    - **input**  
-        - `acfile:file`: The access file  
-
-    - **output**  
-        - `outfile:file`: The targets file  
+        - `target:file`: The (autobinned) target file  
+        - `antitarget:file`: The (autobinned) target file  
 
     - **args**  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
-        - `params`: Other parameters for `cnvkit.py target`  
+        - `exbaits`: The bait file for exome-sequencing data.  
+        	- See https://github.com/AstraZeneca-NGS/reference_data/tree/master/hg19/bed
+        - `accfile`: Directly use the access file. Default: generating from the reference file.  
+        	- See https://github.com/etal/cnvkit/tree/master/data
+        - `ref`    : The reference genome.  
+        - `params` : The extra parameters for cnvkit's `access`, `target` and `autobin` command. Default:   
+        	```python
+        	Box(
+        		target  = Box({'short-name': True, 'split': True}),
+        		access  = Box(s = '5000'),
+        		autobin = Box()
+        	)
+        	```
 
     - **requires**  
         [CNVkit](http://cnvkit.readthedocs.io/)
@@ -640,6 +635,7 @@
     - **input**  
         - `infile:file`: The bam file  
         - `tgfile:file`: The target file  
+        - `atgfile:file`: The antitarget file  
 
     - **output**  
         - `outfile:file`: The output cnn file  
@@ -678,6 +674,7 @@
 
     - **input**  
         - `tgfile:file`: The target file  
+        - `atgfile:file`: The antitarget file  
 
     - **output**  
         - `outfile:file`: The output reference cnn file  
@@ -696,13 +693,15 @@
         Combine the uncorrected target and antitarget coverage tables (.cnn) and correct for biases in regional coverage and GC content, according to the given reference. Output a table of copy number ratios (.cnr)
 
     - **input**  
-        - `infile:file`: The cnn file to be fixed  
+        - `tgfile:file`: The target coverage file  
+        - `atgfile:file`: The antitarget coverage file  
         - `rcfile:file`: The reference cnn file  
 
     - **output**  
         - `outfile:file`: The cnr file  
 
     - **args**  
+        - `nthread`: The number of threads to use. Default: 1  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
         - `params`: Other parameters for `cnvkit.py fix`, default: " --no-edge "  
 
@@ -760,6 +759,7 @@
 
     - **args**  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `nthread`: The number of threads to use. Default: 1  
         - `params`: Other parameters for `cnvkit.py scatter`  
         - `regions`: The regoins to plot. Default: `['']`  
         	- You can have extra specific regions, format:
@@ -779,6 +779,7 @@
 
     - **args**  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `nthread`: The number of threads to use. Default: 1  
         - `params`: Other parameters for `cnvkit.py scatter`  
 
 !!! hint "pCNVkitHeatmap"
@@ -812,11 +813,13 @@
         - `outdir:dir`: The output directory  
 
     - **args**  
-        - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
-        - `breaks`: Whether to report breakpoints. Default: True  
-        - `gainloss`: Whether to report gainloss. Default: True  
-        - `metrics`: Whether to report metrics. Default: True  
-        - `segmetrics`: Whether to report segmetrics. Default: True  
+        - `cnvkit` : The executable of cnvkit. Default: 'cnvkit.py'  
+        - `nthread`: The number of threads to use. Default: 1  
+        - `params` : Extra parameters to the commands.  
+        	- `breaks`:       Whether to report breakpoints. Default: True
+        	- `gainloss`:     Whether to report gainloss. Default: True
+        	- `metrics`:      Whether to report metrics. Default: True
+        	- `segmetrics`:   Whether to report segmetrics. Default: True
 
     - **requires**  
         [CNVkit](http://cnvkit.readthedocs.io/)
@@ -4031,7 +4034,7 @@
         Merge maf files.
 
     - **input**  
-        - `indir:dir`: The directory containing the maf files  
+        - `infiles:files`: The maf files  
 
     - **output**  
         - `outfile:file`: The merged maf file  
@@ -4046,11 +4049,82 @@
     - **description**  
         Use maftools to draw plots.
 
+    - **input**  
+        - `indir:dir`: The input directory. Could contain:  
+        	- `*.maf` or `*.maf.gz` file (required)
+        	- `*.annot.tsv` or `*.annot.txt` file (see: https://github.com/PoisonAlien/maftools/blob/master/inst/extdata/tcga_laml_annot.tsv)
+        	- `all_lesions.conf_*.txt`: Gistic cnv data
+        	- `amp_genes.conf_*.txt`: Gistic cnv data
+        	- `del_genes.conf_*.txt`: Gistic cnv data
+        	- `scores.gistic`: Gistic cnv data
+        	- `*.seg.txt`: CBS segments data
+        	- `*sig_genes.txt` or `*sig_genes.txt.gz`: Mutsig results, to do pancancer somparison.
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
     - **args**  
-        - `ngenes`:   
+        - `ngenes` : Top number of genes to plot for some plots. Default: `10`  
+        - `mutypes`: Provide manual list of variant classifications to be considered as non-synonymous. Rest will be considered as silent variants. Default: `["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]`  
+        - `isTCGA`: If the maf file is from TCGA? Default: `False`  
+        - `ref`   : The reference file for signature plot.  
+        - `plot`  : Which plots to plot.   
+        	- Default:
+        	  ```python
+        	  Box(
+        	  	summary        = True,
+        	  	oncoplot       = True,
+        	  	oncostrip      = True,
+        	  	titv           = True,
+        	  	lollipop       = True,
+        	  	cbsseg         = True,
+        	  	rainfall       = True,
+        	  	tcgacomp       = True,
+        	  	vaf            = True,
+        	  	genecloud      = True,
+        	  	gisticGenome   = True,
+        	  	gisticBubble   = True,
+        	  	gisticOncoplot = True,
+        	  	somInteraction = True,
+        	  	oncodrive      = True,
+        	  	pfam           = True,
+        	  	pancan         = True,
+        	  	survival       = True,
+        	  	heterogeneity  = True,
+        	  	signature      = True,
+        	  )
+        	  ```
+        - `params`: The extra parameters for each plot function.  
+        	- Default:
+        	  ```python
+        	  Box(
+        	  	summary        = Box(rmOutlier = True, addStat = 'median', dashboard = True),
+        	  	oncoplot       = Box(),
+        	  	oncostrip      = Box(),
+        	  	titv           = Box(),
+        	  	lollipop       = Box(AACol = 'Protein_Change'),
+        	  	cbsseg         = Box(labelAll = True),
+        	  	rainfall       = Box(detectChangePoints = True),
+        	  	tcgacomp       = Box(),
+        	  	vaf            = Box(flip = True),
+        	  	genecloud      = Box(minMut = 3),
+        	  	gisticGenome   = Box(markBands = 'all'),
+        	  	gisticBubble   = Box(),
+        	  	gisticOncoplot = Box(),
+        	  	somInteraction = Box(),
+        	  	oncodrive      = Box(AACol = 'Protein_Change', minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
+        	  	pfam           = Box(AACol = 'Protein_Change'),
+        	  	pancan         = Box(qval = 0.1, label = 1, normSampleSize = True),
+        	  	survival       = Box(),
+        	  	heterogeneity  = Box(),
+        	  	signature      = Box(nTry = 6, plotBestFitRes = False),
+        	  )
+        	  ```
+        - `devpars`: The parameters for plot device. Default: `Box(res = 300, height = 2000, width = 2000)`  
+        - `nthread`: Number of threads used for multiple plot of one type. Default: `1`  
 
     - **requires**  
-        [``]
+        [Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
 
 !!! hint "pSnpEff"
 

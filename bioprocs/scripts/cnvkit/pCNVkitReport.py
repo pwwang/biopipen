@@ -7,15 +7,19 @@ cnrfile  = {{in.cnrfile | quote}}
 cnsfile  = {{in.cnsfile | quote}}
 stem     = {{in.cnrfile | bn | quote}}
 outdir   = {{out.outdir | quote}}
+nthread  = {{args.nthread | repr}}
 
 params   = {{args.params}}
+
+openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
 
 if params.breaks:
 	if params.breaks is True:
 		params.breaks = Box()
 	params.breaks.o = path.join(outdir, stem + '.breaks.txt')
-	cmd = '{cnvkit} breaks \'{cnrfile}\' \'{cnsfile}\' {params}'
+	cmd = '{openblas}; {cnvkit} breaks \'{cnrfile}\' \'{cnsfile}\' {params}'
 	runcmd(cmd.format(**Box(
+		openblas = openblas_nthr,
 		cnvkit   = cnvkit,
 		params   = cmdargs(params.breaks, equal = ' '),
 		cnrfile  = cnrfile,
@@ -27,8 +31,9 @@ if params.gainloss:
 		params.gainloss = Box()
 	params.gainloss.o = path.join(outdir, stem + '.gainloss.txt')
 	params.gainloss.s = cnsfile
-	cmd = '{cnvkit} gainloss \'{cnrfile}\' {params}'
+	cmd = '{openblas}; {cnvkit} gainloss \'{cnrfile}\' {params}'
 	runcmd(cmd.format(**Box(
+		openblas = openblas_nthr,
 		cnvkit   = cnvkit,
 		params   = cmdargs(params.gainloss, equal = ' '),
 		cnrfile  = cnrfile,
@@ -39,8 +44,9 @@ if params.metrics:
 		params.metrics = Box()
 	params.metrics.o = path.join(outdir, stem + '.metrics.txt')
 	params.metrics.s = cnsfile
-	cmd = '{cnvkit} metrics \'{cnrfile}\' {params}'
+	cmd = '{openblas}; {cnvkit} metrics \'{cnrfile}\' {params}'
 	runcmd(cmd.format(**Box(
+		openblas = openblas_nthr,
 		cnvkit   = cnvkit,
 		params   = cmdargs(params.metrics, equal = ' '),
 		cnrfile  = cnrfile,
@@ -51,8 +57,9 @@ if params.segmetrics:
 		params.segmetrics = Box()
 	params.segmetrics.o = path.join(outdir, stem + '.segmetrics.txt')
 	params.segmetrics.s = cnsfile
-	cmd = '{cnvkit} segmetrics \'{cnrfile}\' {params}'
+	cmd = '{openblas}; {cnvkit} segmetrics \'{cnrfile}\' {params}'
 	runcmd(cmd.format(**Box(
+		openblas = openblas_nthr,
 		cnvkit   = cnvkit,
 		params   = cmdargs(params.segmetrics, equal = ' '),
 		cnrfile  = cnrfile,

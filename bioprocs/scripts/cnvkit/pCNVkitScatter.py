@@ -8,7 +8,10 @@ cnrfile  = {{in.cnrfile | quote}}
 cnsfile  = {{in.cnsfile | quote}}
 outdir   = {{out.outdir | quote}}
 regions  = {{args.regions | repr}}
+nthread  = {{args.nthread | repr}}
 params   = {{args.params}}
+
+openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
 
 for region in regions:
 	if not region:
@@ -46,8 +49,9 @@ for region in regions:
 	if genes:
 		iparams.g = genes
 
-	cmd = '{cnvkit} scatter \'{cnrfile}\' {params}'
+	cmd = '{openblas}; {cnvkit} scatter \'{cnrfile}\' {params}'
 	runcmd(cmd.format(**Box(
+		openblas = openblas_nthr,
 		cnvkit   = cnvkit,
 		params   = cmdargs(iparams, equal = ' '),
 		cnrfile  = cnrfile

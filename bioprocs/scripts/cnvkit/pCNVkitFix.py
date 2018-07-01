@@ -2,21 +2,25 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-infile   = {{in.infile | quote}}
+tgfile   = {{in.tgfile | quote}}
+atgfile  = {{in.atgfile | quote}}
 rcfile   = {{in.rcfile | quote}}
 outfile  = {{out.outfile | quote}}
 params   = {{args.params}}
+nthread  = {{args.nthread | repr}}
+sample   = {{in.tgfile | fn | quote}}
 
-mtfile   = '{{job.outdir}}/cnvkit_mt'
-open(mtfile, 'w').close()
+openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
 
 params.o = outfile
-cmd      = '{cnvkit} fix \'{infile}\' \'{mtfile}\' \'{rcfile}\' {params}'
+params.i = sample # sample id
+cmd      = '{openblas}; {cnvkit} fix {tgfile} {atgfile} {rcfile} {params}'
 
 runcmd(cmd.format(**Box(
+	openblas = openblas_nthr,
 	cnvkit   = cnvkit,
-	mtfile   = mtfile,
-	params   = cmdargs(params, equal = ' '),
-	infile   = infile,
-	rcfile   = rcfile
+	tgfile   = str(repr(tgfile)),
+	atgfile  = str(repr(atgfile)),
+	rcfile   = str(repr(rcfile)),
+	params   = cmdargs(params, equal = ' ')
 )))
