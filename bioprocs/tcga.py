@@ -32,10 +32,15 @@ pDownload.script    = """
 	`mdfile:file`: the metadata file
 @output:
 	`outdir:file`: the directory containing submitter-id named files
+@args:
+	`method`: How the deal with the files. Default: `symlink`
+		- We can also do `copy`
+	`nthread`: Number threads to use. Default: `1`
 """
 pSample2SubmitterID              = Proc ()
 pSample2SubmitterID.input        = "indir:file, mdfile:file"
 pSample2SubmitterID.output       = "outdir:dir:{{in.indir | fn}}"
+pSample2SubmitterID.args.method  = 'symlink' # or copy
 pSample2SubmitterID.args.nthread = 1
 pSample2SubmitterID.lang         = params.python.value
 pSample2SubmitterID.script       = "file:scripts/tcga/pSample2SubmitterID.py"
