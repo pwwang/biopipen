@@ -10,6 +10,8 @@ params.cmds.required = True
 params.cmds.desc     = 'The cmd list. If not provided, STDIN will be used.'
 params.runner        = 'local'
 params.runner.desc   = 'The runner.'
+params.intype        = 'cmds' # or file
+params.intype.desc   = 'Type of option `cmds`, cmds or file?'
 params.forks         = 1
 params.forks.desc    = 'How many jobs to run simultaneously.'
 
@@ -17,7 +19,11 @@ def _procconfig(kwargs = None):
 	params = _getparams(kwargs or {})
 
 	if not isinstance(params['cmds'], list):
-		params['cmds'] = params['cmds'].splitlines()
+		if params.intype == 'cmds':
+			params['cmds'] = params['cmds'].splitlines()
+		else:
+			with open(params.cmds) as f:
+				params.cmds = f.read().splitlines()
 
 	pCmdRunner = Proc(desc = 'Using PyPPL to distribute and run commands.')
 	pCmdRunner.runner = params.get('runner', 'local')
@@ -26,7 +32,7 @@ def _procconfig(kwargs = None):
 	pCmdRunner.input  = {'cmd': params['cmds']}
 	pCmdRunner.script = '{{in.cmd}}'
 
-	config = {'proc': {'file': None}}
+	config = {'_log': {'file': None}}
 	return pCmdRunner, config
 
 def _getparams(kwargs):
