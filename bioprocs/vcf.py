@@ -246,16 +246,73 @@ pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 
 """
 @name:
+	pVcfLiftover
+@description:
+	Lift over vcf files.
+@args:
+	`tool`:    Which tool to use. Default: `picard`
+	`picard`:  The path to picard
+	`lochain`: The liftover chain file
+	`ref`:     The reference genome
+	`mem`:     The memory to use
+	`tmpdir`:  The temporary directory
+	`params`:  The extra params.
+"""
+pVcfLiftover              = Proc(desc = 'Lift over vcf files.')
+pVcfLiftover.input        = 'infile:file'
+pVcfLiftover.output       = 'outfile:file:{{in.infile | fn}}.vcf, umfile:file:{{in.infile | fn}}.unmapped.vcf'
+pVcfLiftover.args.tool    = 'picard'
+pVcfLiftover.args.picard  = params.picard.value
+pVcfLiftover.args.lochain = params.lochain.value
+pVcfLiftover.args.ref     = params.ref.value
+pVcfLiftover.args.mem     = params.mem8G.value
+pVcfLiftover.args.tmpdir  = params.tmpdir.value
+pVcfLiftover.args.params  = Box()
+pVcfLiftover.lang         = params.python.value
+pVcfLiftover.script       = "file:scripts/vcf/pVcfLiftover.py"
+
+"""
+@name:
+	pVcfAddChr
+@description:
+	Add `chr` to records of vcf files.
+@args:
+	`chr`: The prefix to add to each record.
+"""
+pVcfAddChr          = Proc(desc = 'Add `chr` to records of vcf files.')
+pVcfAddChr.input    = 'infile:file'
+pVcfAddChr.output   = 'outfile:file:{{in.infile | fn}}.vcf'
+pVcfAddChr.args.chr = 'chr'
+pVcfAddChr.lang     = params.python.value
+pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
+
+"""
+@name:
+	pVcfCleanup
+@description:
+	Remove configs from vcf file according to the given reference.
+@args:
+	`ref`: The reference file
+"""
+pVcfCleanup          = Proc(desc = 'Remove configs from vcf file according to the given reference.')
+pVcfCleanup.input    = 'infile:file'
+pVcfCleanup.output   = 'outfile:file:{{in.infile | fn}}.vcf'
+pVcfCleanup.args.ref = params.ref.value # required dict or fai file with it
+pVcfCleanup.lang     = params.python.value
+pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.vcf"
+
+"""
+@name:
 	pVcf2GTMat
 @description:
 	Convert Vcf file to genotype matrix.
 """
-pVcf2GTMat = Proc(desc = 'Convert Vcf file to genotype matrix')
-pVcf2GTMat.input = 'infile:file'
-pVcf2GTMat.output = 'outfile:file:{{in.infile | fn2}}.gtmat'
+pVcf2GTMat             = Proc(desc = 'Convert Vcf file to genotype matrix')
+pVcf2GTMat.input       = 'infile:file'
+pVcf2GTMat.output      = 'outfile:file:{{in.infile | fn2}}.gtmat'
 pVcf2GTMat.args.rnames = 'coord' # name
-pVcf2GTMat.args.na = 'NA'
-pVcf2GTMat.lang = params.python.value
-pVcf2GTMat.script = "file:scripts/vcf/pVcf2GTMat.py"
+pVcf2GTMat.args.na     = 'NA'
+pVcf2GTMat.lang        = params.python.value
+pVcf2GTMat.script      = "file:scripts/vcf/pVcf2GTMat.py"
 
 

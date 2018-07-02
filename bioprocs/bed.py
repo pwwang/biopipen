@@ -35,3 +35,12 @@ pBedSort.args.params         = Box()
 pBedSort.args.tmpdir         = params.tmpdir.value
 pBedSort.lang                = params.python.value
 pBedSort.script              = "file:scripts/bed/pBedSort.py"
+
+pBedLiftover               = Proc(desc = 'Lift over bed files.')
+pBedLiftover.input         = 'infile:file'
+pBedLiftover.output        = 'outfile:file:{{in.infile | bn}}, umfile:file:{{in.infile | fn}}.unmapped{{in.infile | ext}}'
+pBedLiftover.args.liftover = params.liftover.value
+pBedLiftover.args.lochain  = params.lochain.value
+pBedLiftover.args.params   = Box()
+pBedLiftover.lang          = params.python.value
+pBedLiftover.script        = "file:scripts/bed/pBedLiftover.py"

@@ -3599,6 +3599,11 @@
     - **output**  
         - `outdir:file`: the directory containing submitter-id named files  
 
+    - **args**  
+        - `method`: How the deal with the files. Default: `symlink`  
+        	- We can also do `copy`
+        - `nthread`: Number threads to use. Default: `1`  
+
 !!! hint "pConvertExpFiles2Matrix"
 
     - **description**  
@@ -3948,6 +3953,36 @@
         - `somatic`  : Whether input vcf file is a somatic mutation file. Default: False  
         	- somatic mutation vcf file can only have one sample TUMOR, or two samples, TUMOR and NORMAL, but will be considered as single sample.
         	- otherwise, multiple samples are supported in the input vcf file. Tumor id will be sample name for each sample, normal id will be NORMAL.
+
+!!! hint "pVcfLiftover"
+
+    - **description**  
+        Lift over vcf files.
+
+    - **args**  
+        - `tool`: Which tool to use. Default: `picard`  
+        - `picard`: The path to picard  
+        - `lochain`: The liftover chain file  
+        - `ref`: The reference genome  
+        - `mem`: The memory to use  
+        - `tmpdir`: The temporary directory  
+        - `params`: The extra params.  
+
+!!! hint "pVcfAddChr"
+
+    - **description**  
+        Add `chr` to records of vcf files.
+
+    - **args**  
+        - `chr`: The prefix to add to each record.  
+
+!!! hint "pVcfCleanup"
+
+    - **description**  
+        Remove configs from vcf file according to the given reference.
+
+    - **args**  
+        - `ref`: The reference file  
 
 !!! hint "pVcf2GTMat"
 
