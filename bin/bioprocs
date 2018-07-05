@@ -353,34 +353,116 @@ class Process(Command):
 	def run(self, *args, **kwargs):
 		proc, config = self._createProc(*args, **kwargs)
 		PyPPL(config).start(proc).run()
+
+class ArgParser(object):
+
+	ARG_TYPES = dict(
+		a       = 'auto',
+		auto    = 'auto',
+		i       = 'int',
+		int     = 'int',
+		integer = 'int',
+		f       = 'float',
+		float   = 'float',
+		b       = 'bool',
+		bool    = 'bool',
+		boolean = 'bool',
+		s       = 'str',
+		str     = 'str',
+		string  = 'str',
+		l       = 'list',
+		list    = 'list',
+		array   = 'list',
+		p       = 'py',
+		py      = 'py',
+		python  = 'py'
+	)
+
+	ARG_NAME_PATTERN     = r'^-([a-zA-Z][\w\._-]*)(?::(a|auto|i|int|integer|f|float|b|bool|boolean|s|str|string|l|list|array|p|py|python))?$'
+	ARG_VALINT_PATTERN   = r'^[+-]?\d+$'
+	ARG_VALFLOAT_PATTERN = r'^[+-]?(?:\d*\.)?\d+(?:[Ee][+-]\d+)?$'
+	ARG_VALBOOL_PATTERN  = r'^(t|T|True|TRUE|true|1|Y|y|Yes|YES|yes|on|ON|On|f|F|False|FALSE|false|0|N|n|No|NO|off|Off|OFF)$'
+	ARG_VALPY_PATTERN    = r'^(?:py|expr):(.+)$'
+
+	@staticmethod
+	def coerceValue(value, t = 'auto'):
+		if t == 'int':
+			return int(value)
+		elif t == 'float':
+			return float(value)
+		elif t == 'bool':
+			return value in ['t', 'T', 'True', 'TRUE', 'true', '1', 'Y', 'y', 'Yes', 'YES', 'yes', 'on', 'ON', 'On']
+		elif t == 'py':
+			return eval(value)
+		elif t == 'auto':
+			if re.match(ArgParser.ARG_VALINT_PATTERN, value):
+				t = 'int'
+			elif re.match(ArgParser.ARG_VALFLOAT_PATTERN, value):
+				t = 'float'
+			elif re.match(ArgParser.ARG_VALBOOL_PATTERN, value):
+				t = 'bool'
+			else:
+				t = None
+				m = re.match(ArgParser.ARG_VALPY_PATTERN, value)
+				if m: 
+					t = 'py'
+					value = m.group(1)
+			return ArgParser.coerceValue(value, t)
+		else:
+			return value
+
+	@staticmethod
+	def parseName(argname):
+		m = re.match(ArgParser.ARG_NAME_PATTERN, argname)
+		if not m: return None, None
+		n = m.group(1)
+		t = m.group(2) or 'auto'
+		if t not in ArgParser.ARG_TYPES:
+			raise ValueError('Unknown argument type "%s" for option: "-%s"' % (t, n))
+		return n, ArgParser.ARG_TYPES[t]
+
+	def __init__(self, argv = None):
+		self.argv = argv or sys.argv[1:]
+	
+	def parse(self):
+		# positional arguments
+		ret = {'': []}
+		argname = None
+		argtype = 'auto'
+		for arg in self.argv:
+			argname2, argtype2 = ArgParser.parseName(arg)
+			if not argname:
+				if argname2:
+					argname, argtype = argname2, argtype2
+				else:
+					ret[''].append(arg)
+			else:
+				if argname2: # it's argname
+					# type 'list' hasn't closed
+					if argtype != 'list':
+						ret[argname] = ArgParser.coerceValue('True', argtype)
+					argname = argname2
+					argtype = argtype2
+				else: # it's value
+					if argtype == 'list':
+						if not argname in ret:
+							ret[argname] = []
+						if not isinstance(ret[argname], list):
+							ret[argname] = [ret[argname]]
+						ret[argname].append(ArgParser.coerceValue(arg))
+					else:
+						ret[argname] = ArgParser.coerceValue(arg, argtype)
+						argname = None
+						argtype = 'auto'
+		if argname and argtype != 'list':
+			ret[argname] = ArgParser.coerceValue('True', argtype)
+		return ret
     
 class Bioprocs(object):
 
 	@staticmethod
 	def _isProcess(procname):
 		return procname[0] == 'p' and (procname[1].isdigit() or procname[1].isupper())
-
-	@staticmethod
-	def _parseArgs(argv = sys.argv):
-		ret = {'': []} # positional arguments
-		argname = None
-		for arg in argv:
-			# if previous argument has no value, it should be regarded as bool True
-			if argname and arg.startswith('-'):
-				ret[argname] = True
-				argname = arg[1:]
-			elif argname and not arg.startswith('-'):
-				if isinstance(arg, six.string_types):
-					arg = arg.replace("\\n", "\n").replace("\\t", "\t")
-					if arg.startswith('repr:'): arg = eval(arg[5:])
-					if arg.startswith('py:'):   arg = eval(arg[3:])
-				ret[argname] = arg
-				argname = None
-			elif not argname and arg.startswith('-'):
-				argname = arg[1:]
-			else:
-				ret[''].append(arg)
-		return ret
 
 	@staticmethod
 	def _getFileDoc(sfile, doc = '[ Module not documented ]'):
@@ -453,11 +535,11 @@ class Bioprocs(object):
 					sys.stderr.write('Error: no such method or script "%s"\n\n' % cmd)
 					sys.exit(1)
 
-	def __init__(self, argv = sys.argv):
-		argv         = argv[:]
+	def __init__(self, argv = None):
+		argv         = argv and argv[:] or sys.argv[:]
 		self.prog    = path.basename(argv.pop(0))
 		self.command = argv.pop(0) if argv else 'help'
-		self.args    = Bioprocs._parseArgs(argv)
+		self.args    = ArgParser(argv).parse()
 
 	def run(self):
 		command = Bioprocs._getCommand(self.command)
