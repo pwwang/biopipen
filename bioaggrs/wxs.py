@@ -6,7 +6,7 @@ from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBam2Counts, pBamRecal, pBam2G
 from bioprocs.common import pFile2Proc, pFiles2Dir
 from bioprocs.vcf import pVcf2Maf
 from bioprocs.vcfnext import pMafMerge
-from bioprocs.cnvkit import pCNVkit2Vcf, pCNVkitCall, pCNVkitRef, pCNVkitFlatRef, pCNVkitAccess, pCNVkitTarget, pCNVkitFix, pCNVkitCov, pCNVkitHeatmap, pCNVkitDiagram, pCNVkitReport, pCNVkitScatter, pCNVkitSeg, pCNVkitPrepare
+from bioprocs.cnvkit import pCNVkit2Vcf, pCNVkitCall, pCNVkitRef, pCNVkitFlatRef, pCNVkitFix, pCNVkitCov, pCNVkitHeatmap, pCNVkitDiagram, pCNVkitReport, pCNVkitScatter, pCNVkitSeg, pCNVkitPrepare
 from bioprocs.utils.sampleinfo import SampleInfo
 
 """
