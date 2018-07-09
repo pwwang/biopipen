@@ -5,7 +5,7 @@ from os import path
 from pyppl import PyPPL, Proc
 from bioprocs import params
 
-params.prefix('-')
+#params.prefix('-')
 params.cmds.required = True
 params.cmds.desc     = 'The cmd list. If not provided, STDIN will be used.'
 params.runner        = 'local'
@@ -40,8 +40,9 @@ def _getparams(kwargs):
 	
 	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
 		# called from api
-		if '' in params._props['hopts']:
-			del params._props['hopts'][params._props['hopts'].index('')]
+		#if '' in params._props['hopts']:
+		#	del params._props['hopts'][params._props['hopts'].index('')]
+		params('hopts', '', True)
 		for key, val in kwargs.items():
 			setattr(params, key, val)
 		return params.parse(args = []).asDict()

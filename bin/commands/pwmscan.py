@@ -4,7 +4,7 @@ from bioprocs import params
 from bioprocs.gene import pGeneNameNorm
 from bioaggrs.tfbs import aTfbsTfPC, aTfbsTfRC, aTfbsTfP, aTfbsTfR, aTfbsPC, aTfbsRC, aTfbsP, aTfbsR
 
-params.prefix('-')
+#params.prefix('-')
 
 params.tflist.show     = True
 params.tfmotifs.show   = True

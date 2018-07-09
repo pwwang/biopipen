@@ -6,7 +6,7 @@ from pyppl import PyPPL, utils, Box
 from bioprocs import params
 from bioprocs.genomeplot import pInteractionTrack, pAnnoTrack, pDataTrack, pUcscTrack, pGenomePlot
 
-params.prefix('-')
+#params.prefix('-')
 
 params.ideo       = 'True'
 params.ideo.desc  = 'Show ideogram track?'
@@ -126,8 +126,9 @@ def _getparams(kwargs):
 	
 	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
 		# called from api
-		if '' in params._props['hopts']:
-			del params._props['hopts'][params._props['hopts'].index('')]
+		#if '' in params._props['hopts']:
+		#	del params._props['hopts'][params._props['hopts'].index('')]
+		params('hopts', '', True)
 		for key, val in kwargs.items():
 			setattr(params, key, val)
 		return params.parse(args = []).asDict()

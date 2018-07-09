@@ -361,15 +361,12 @@ class ArgParser(object):
 		auto    = 'auto',
 		i       = 'int',
 		int     = 'int',
-		integer = 'int',
 		f       = 'float',
 		float   = 'float',
 		b       = 'bool',
 		bool    = 'bool',
-		boolean = 'bool',
 		s       = 'str',
 		str     = 'str',
-		string  = 'str',
 		l       = 'list',
 		list    = 'list',
 		array   = 'list',
@@ -378,7 +375,7 @@ class ArgParser(object):
 		python  = 'py'
 	)
 
-	ARG_NAME_PATTERN     = r'^-([a-zA-Z][\w\._-]*)(?::(a|auto|i|int|integer|f|float|b|bool|boolean|s|str|string|l|list|array|p|py|python))?$'
+	ARG_NAME_PATTERN     = r'^-([a-zA-Z][\w\._-]*)(?::(a|auto|i|int|f|float|b|bool|s|str|l|list|array|l:i|l:int|l:f|l:float|l:b|l:bool|l:s|l:str|list:i|list:int|list:f|list:float|list:b|list:bool|list:s|list:str|array:i|array:int|array:f|array:float|array:b|array:bool|array:s|array:str|p|py|python))?(?:=(.+))?$'
 	ARG_VALINT_PATTERN   = r'^[+-]?\d+$'
 	ARG_VALFLOAT_PATTERN = r'^[+-]?(?:\d*\.)?\d+(?:[Ee][+-]\d+)?$'
 	ARG_VALBOOL_PATTERN  = r'^(t|T|True|TRUE|true|1|Y|y|Yes|YES|yes|on|ON|On|f|F|False|FALSE|false|0|N|n|No|NO|off|Off|OFF)$'
@@ -391,7 +388,13 @@ class ArgParser(object):
 		elif t == 'float':
 			return float(value)
 		elif t == 'bool':
-			return value in ['t', 'T', 'True', 'TRUE', 'true', '1', 'Y', 'y', 'Yes', 'YES', 'yes', 'on', 'ON', 'On']
+			if value in ['t', 'T', 'True', 'TRUE', 'true', '1', 'Y', 'y', 'Yes', 'YES', 'yes', 'on', 'ON', 'On']:
+				return True
+			elif value in ['f', 'F', 'False', 'FALSE', 'false', '0', 'N', 'n', 'No', 'NO', 'no', 'off', 'Off', 'OFF']:
+				return False
+			else:
+				sys.stderr.write('WARNING: Unknown bool value, use True instead of {}.\n'.format(value))
+				return True
 		elif t == 'py':
 			return eval(value)
 		elif t == 'auto':
@@ -413,48 +416,70 @@ class ArgParser(object):
 
 	@staticmethod
 	def parseName(argname):
+		an, at, av = None, 'auto', None
 		m = re.match(ArgParser.ARG_NAME_PATTERN, argname)
-		if not m: return None, None
-		n = m.group(1)
-		t = m.group(2) or 'auto'
-		if t not in ArgParser.ARG_TYPES:
-			raise ValueError('Unknown argument type "%s" for option: "-%s"' % (t, n))
-		return n, ArgParser.ARG_TYPES[t]
+		if not m: return an, at, av
+		an = m.group(1)
+		at = m.group(2) or 'auto'
+		av = m.group(3)
+		if ':' in at:
+			at, att = at.split(':')
+			at = ArgParser.ARG_TYPES[at] + ':' + ArgParser.ARG_TYPES[att]
+		else:
+			at = ArgParser.ARG_TYPES[at]
+		return an, at, av
+
+	@staticmethod
+	def listValue(ret, argname, argtype, argval):
+		if not argname in ret:
+			ret[argname] = []
+		if not isinstance(ret[argname], list):
+			ret[argname] = [ret[argname]]
+		if ':' not in argtype: argtype += ':auto'
+		_, argtype = argtype.split(':')
+		ret[argname].append(ArgParser.coerceValue(argval, argtype))
 
 	def __init__(self, argv = None):
-		self.argv = argv or sys.argv[1:]
+		self.argv = argv is None and sys.argv[1:] or argv
 	
 	def parse(self):
 		# positional arguments
-		ret = {'': []}
-		argname = None
-		argtype = 'auto'
+		ret = {'_': []}
+		argname, argtype = None, 'auto'
 		for arg in self.argv:
-			argname2, argtype2 = ArgParser.parseName(arg)
-			if not argname:
-				if argname2:
-					argname, argtype = argname2, argtype2
-				else:
-					ret[''].append(arg)
-			else:
+			argname2, argtype2, argvalue = ArgParser.parseName(arg)
+			if not argname: # argname not reached yet
+				if argname2: # I am the first argname
+					if argvalue is None: # it's not -a=1 format, just -a
+						argname, argtype = argname2, argtype2
+					else: # it's -a=1 format
+						if argtype2.startswith('list'): # it's -a:list:int=1 format
+							ArgParser.listValue(ret, argname2, argtype2, argvalue)
+						else: 
+							ret[argname2] = ArgParser.coerceValue(argvalue, argtype2)
+				else: # argname not reached yet and I am not an argname, so I am positional
+					ret['_'].append(arg)
+			else: # argname reached
 				if argname2: # it's argname
-					# type 'list' hasn't closed
-					if argtype != 'list':
+					# type 'list' hasn't closed, so it should not be bool
+					if not argtype.startswith('list'):
 						ret[argname] = ArgParser.coerceValue('True', argtype)
-					argname = argname2
-					argtype = argtype2
+					if argvalue is None:
+						argname, argtype = argname2, argtype2
+					else:
+						if argtype2.startswith('list'): # it's -a:list:int=1 format
+							ArgParser.listValue(ret, argname2, argtype2, argvalue)
+							argname, argtype = argname2, argtype2
+						else: 
+							ret[argname2] = ArgParser.coerceValue(argvalue, argtype2)
+							argname, argtype = None, 'auto'
 				else: # it's value
-					if argtype == 'list':
-						if not argname in ret:
-							ret[argname] = []
-						if not isinstance(ret[argname], list):
-							ret[argname] = [ret[argname]]
-						ret[argname].append(ArgParser.coerceValue(arg))
+					if argtype.startswith('list'):
+						ArgParser.listValue(ret, argname, argtype, arg)
 					else:
 						ret[argname] = ArgParser.coerceValue(arg, argtype)
-						argname = None
-						argtype = 'auto'
-		if argname and argtype != 'list':
+						argname, argtype = None, 'auto'
+		if argname and not argtype.startswith('list'):
 			ret[argname] = ArgParser.coerceValue('True', argtype)
 		return ret
     
@@ -543,10 +568,9 @@ class Bioprocs(object):
 
 	def run(self):
 		command = Bioprocs._getCommand(self.command)
-
 		args = self.args.copy()
-		del args['']
-		command.run(*self.args[''], **args)
+		del args['_']
+		command.run(*self.args['_'], **args)
 
 	def _listSingleModule(self, module):
 		moddoc, procs = Bioprocs._getProcesses(module)
@@ -598,9 +622,9 @@ class Bioprocs(object):
 			param = getattr(bioprocs.params, arg)
 			ret += '%s:\n' % (arg)
 			ret += '-' * (len(arg) + 1) + '\n'
-			ret += '- desc:  %s\n' % Command.printDocs([param.desc], 9, hyphen = False)
+			ret += '- desc:  %s\n' % Command.printDocs(param.desc, 9, hyphen = False)
 			ret += '- value: %s\n' % repr(param.value)
-			ret += '- type:  %s\n' % param.type.__name__
+			ret += '- type:  %s\n' % param.type
 			ret += '\n'
 		sys.stdout.write(ret)
 

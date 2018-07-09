@@ -10,7 +10,7 @@ from bioprocs.utils.tsvio import TsvReader
 from bioprocs.utils.sampleinfo import SampleInfo
 from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aFastqSE2Bam, aBam2SCnv, aBam2GCnv
 
-params.prefix('-')
+#params.prefix('-')
 params.intype         = 'bam' # ebam, fastq
 params.intype.desc    = 'The input file types. Either bam, ebam or fastq.\nEbam means the bam files need to reformatted into fastq files.'
 params.muts           = ['germ'] # or ['germ', 'soma', 'scnv', 'gcnv']
@@ -157,8 +157,7 @@ def _getparams(kwargs):
 	
 	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
 		# called from api
-		if '' in params._props['hopts']:
-			del params._props['hopts'][params._props['hopts'].index('')]
+		params('hopts', '', True)
 		for key, val in kwargs.items():
 			setattr(params, key, val)
 		return params.parse(args = []).asDict()
