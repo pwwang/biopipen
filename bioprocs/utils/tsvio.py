@@ -204,6 +204,14 @@ class TsvReaderBase(object):
 		self.comment = comment
 		self.tell    = 0
 
+		while True:
+			tell = self.file.tell()
+			line = self.file.readline()
+			if self.comment and line.startswith(self.comment):
+				continue
+			self.file.seek(tell)
+			break
+
 		if skip > 0:
 			for _ in range(skip):
 				self.file.readline()

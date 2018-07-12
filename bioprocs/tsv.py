@@ -12,8 +12,12 @@ from .utils import fs2name
 @output:
 	`outfile:file`: The output matrix
 @args:
-	`cnames`: Whether the input file has cnames. Default: True
-	`rnames  `: Whether the input file has rnames  . Default: 1
+	`inopts`: The input options for infile:
+		- `cnames`: Whether the input file has cnames. Default: True
+		- `rnames  `: Whether the input file has rnames. Default: True
+		- `delimit`: The delimit. Default: `\t`
+		- `skip`: First N lines to skip. Default: `0`
+	`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
 	`code`: The R code to operating the matrix. (the matrix is read in variable `mat`)
 """
 pMatrixR             = Proc(desc = 'Operate a matrix and save the new matrix to file.')
@@ -39,10 +43,17 @@ pMatrixR.script       = "file:scripts/tsv/pMatrixR.r"
 @output:
 	`outfile:file`: The output matrix
 @args:
-	`cnames`: Whether the input file has cnames. Default: True
-		- or [True, True, False] corresponding to the file order
-	`rnames  `: Whether the input file has rnames  . Default: 1
-	`miss`: Replacement for missing values. Default: `NA`
+	`inopts`: The input options for infile:
+		- `cnames`: Whether the input file has cnames. Default: True
+		   - or [True, True, False] corresponding to the file order
+		- `rnames  `: Whether the input file has rnames. Default: True
+		- `delimit`: The delimit. Default: `\t`
+		- `skip`: First N lines to skip. Default: `0`
+	`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
+	`fn2cname`: The function (r) used to convert file name to column name.
+	`fill`: Do `cbind.fill` instead of `cbind`. Default: `True`
+		- Set it to `False` if the row names are in the same order
+	`na`: Replacement for missing values. Default: `NA`
 """
 pCbind             = Proc(desc = 'Cbind the rest of files to the first file.')
 pCbind.input       = 'infiles:files'
@@ -75,10 +86,18 @@ pCbind.script        = "file:scripts/tsv/pCbind.r"
 @output:
 	`outfile:file`: The output matrix
 @args:
-	`cnames`: Whether the input file has cnames. Default: True
-		- or [True, True, False] corresponding to the file order
-	`rnames  `: Whether the input file has rnames  . Default: 1
-	`miss`: Replacement for missing values. Default: `NA`
+	`inopts`: The input options for infile:
+		- `cnames`: Whether the input file has cnames. Default: True
+		   - or [True, True, False] corresponding to the file order
+		- `rnames  `: Whether the input file has rnames. Default: True
+		- `delimit`: The delimit. Default: `\t`
+		- `skip`: First N lines to skip. Default: `0`
+	`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
+	`na`: Replacement for missing values. Default: `NA`
+	`fn2rname`: The function (r) used to convert file name to row name.
+	`fill`: Do `rbind.fill` instead of `rbind`. Default: `True`
+		- Set it to `False` if the row names are in the same order
+	`na`: Replacement for missing values. Default: `NA`
 """
 pRbind                = Proc(desc = 'Rbind the rest of files to the first file.')
 pRbind.input          = 'infiles:files'
@@ -111,9 +130,13 @@ pRbind.script        = "file:scripts/tsv/pRbind.r"
 @output:
 	`outdir:dir`: The directory containing the output column files
 @args:
-	`cnames`: Whether the input file has cnames. Default: True
-		- or [True, True, False] corresponding to the file order
-	`rnames  `: Whether the input file has rnames  . Default: 1
+	`inopts`: The input options for infile:
+		- `cnames`: Whether the input file has cnames. Default: True
+		- `rnames  `: Whether the input file has rnames. Default: True
+		- `delimit`: The delimit. Default: `\t`
+		- `skip`: First N lines to skip. Default: `0`
+	`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
+	`size`: The chunk size (how many columns to split into one file). Default: `1`
 """
 pCsplit             = Proc(desc = 'Split the columns of input file into different files.')
 pCsplit.input       = 'infile:file'
@@ -143,9 +166,13 @@ pCsplit.script       = "file:scripts/tsv/pCsplit.r"
 @output:
 	`outdir:dir`: The directory containing the output row files
 @args:
-	`cnames`: Whether the input file has cnames. Default: True
-		- or [True, True, False] corresponding to the file order
-	`rnames  `: Whether the input file has rnames  . Default: 1
+	`inopts`: The input options for infile:
+		- `cnames`: Whether the input file has cnames. Default: True
+		- `rnames  `: Whether the input file has rnames. Default: True
+		- `delimit`: The delimit. Default: `\t`
+		- `skip`: First N lines to skip. Default: `0`
+	`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
+	`size`: The chunk size (how many rows to split into one file). Default: `1`
 """
 pRsplit             = Proc(desc = 'Rbind the rest of files to the first file.')
 pRsplit.input       = 'infile:file'

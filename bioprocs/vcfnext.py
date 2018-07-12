@@ -109,6 +109,32 @@ pMutSig.script       = "file:scripts/vcfnext/pMutSig.bash"
 
 """
 @name:
+	pMafLiftover
+@description:
+	Liftover maf file from one assembly to another
+@input:
+	`infile:file`: The input maf file
+@output:
+	`outfile:file`: The output maf file
+@args:
+	`liftover`: The liftOver program.
+	`lochain`:  The liftOver chain file.
+	`genome`:   The target genome.
+@requires:
+	liftOver from UCSC
+"""
+pMafLiftover               = Proc(desc = 'Liftover a maf file from one assembly to another')
+pMafLiftover.input         = 'infile:file'
+pMafLiftover.output        = 'outfile:file:{{in.infile | fn | lambda x: x if x.endswith(".maf") else x + ".maf"}}'
+pMafLiftover.args.liftover = params.liftover.value
+pMafLiftover.args.lochain  = params.lochain.value
+pMafLiftover.args.genome   = params.genome.value
+pMafLiftover.lang          = params.python.value
+pMafLiftover.script        = "file:scripts/vcfnext/pMafLiftOver.py"
+
+
+"""
+@name:
 	pMafMerge
 @description:
 	Merge maf files.
@@ -128,6 +154,31 @@ pMafMerge.args.excols  = 'merge' # discard
 pMafMerge.envs.fs2name = fs2name
 pMafMerge.lang         = params.python.value
 pMafMerge.script       = "file:scripts/vcfnext/pMafMerge.py"
+
+"""
+@name:
+	pMaf2Mat
+@description:
+	Convert maf file to a gene(row)-sample(column) matrix
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output matrix
+@args:
+	`mutypes`: Provide manual list of variant classifications to be counted, only effective when `args.binary = False`. Default: `None` (all counted)
+	`binary` : Just generate a binary matrix instead of a count matrix. Default: `False`
+	`na`: What value to use for no mutations reported on a gene. Default: `0`
+	`samfn`  : A function (in r) to transform the sample names. Default: `function(sample) sample`
+"""
+pMaf2Mat              = Proc(desc = 'Convert maf file to a gene-based mutation matrix')
+pMaf2Mat.input        = 'infile:file'
+pMaf2Mat.output       = 'outfile:file:{{in.infile | fn}}.mat.txt'
+pMaf2Mat.args.binary  = False
+pMaf2Mat.args.mutypes = None
+pMaf2Mat.args.na      = 0
+pMaf2Mat.args.samfn   = 'function(sample) sample'
+pMaf2Mat.lang         = params.Rscript.value
+pMaf2Mat.script       = "file:scripts/vcfnext/pMaf2Mat.r"
 
 """
 @name:

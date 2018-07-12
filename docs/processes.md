@@ -3672,8 +3672,12 @@
         - `outfile:file`: The output matrix  
 
     - **args**  
-        - `cnames`: Whether the input file has cnames. Default: True  
-        - `rnames  `: Whether the input file has rnames  . Default: 1  
+        - `inopts`: The input options for infile:  
+        	- `cnames`: Whether the input file has cnames. Default: True
+        	- `rnames  `: Whether the input file has rnames. Default: True
+        	- `delimit`: The delimit. Default: `\t`
+        	- `skip`: First N lines to skip. Default: `0`
+        - `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`  
         - `code`: The R code to operating the matrix. (the matrix is read in variable `mat`)  
 
 !!! hint "pCbind"
@@ -3688,10 +3692,17 @@
         - `outfile:file`: The output matrix  
 
     - **args**  
-        - `cnames`: Whether the input file has cnames. Default: True  
-        	- or [True, True, False] corresponding to the file order
-        - `rnames  `: Whether the input file has rnames  . Default: 1  
-        - `miss`: Replacement for missing values. Default: `NA`  
+        - `inopts`: The input options for infile:  
+        	- `cnames`: Whether the input file has cnames. Default: True
+        	   - or [True, True, False] corresponding to the file order
+        	- `rnames  `: Whether the input file has rnames. Default: True
+        	- `delimit`: The delimit. Default: `\t`
+        	- `skip`: First N lines to skip. Default: `0`
+        - `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`  
+        - `fn2cname`: The function (r) used to convert file name to column name.  
+        - `fill`: Do `cbind.fill` instead of `cbind`. Default: `True`  
+        	- Set it to `False` if the row names are in the same order
+        - `na`: Replacement for missing values. Default: `NA`  
 
 !!! hint "pRbind"
 
@@ -3705,10 +3716,18 @@
         - `outfile:file`: The output matrix  
 
     - **args**  
-        - `cnames`: Whether the input file has cnames. Default: True  
-        	- or [True, True, False] corresponding to the file order
-        - `rnames  `: Whether the input file has rnames  . Default: 1  
-        - `miss`: Replacement for missing values. Default: `NA`  
+        - `inopts`: The input options for infile:  
+        	- `cnames`: Whether the input file has cnames. Default: True
+        	   - or [True, True, False] corresponding to the file order
+        	- `rnames  `: Whether the input file has rnames. Default: True
+        	- `delimit`: The delimit. Default: `\t`
+        	- `skip`: First N lines to skip. Default: `0`
+        - `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`  
+        - `na`: Replacement for missing values. Default: `NA`  
+        - `fn2rname`: The function (r) used to convert file name to row name.  
+        - `fill`: Do `rbind.fill` instead of `rbind`. Default: `True`  
+        	- Set it to `False` if the row names are in the same order
+        - `na`: Replacement for missing values. Default: `NA`  
 
 !!! hint "pCsplit"
 
@@ -3722,9 +3741,13 @@
         - `outdir:dir`: The directory containing the output column files  
 
     - **args**  
-        - `cnames`: Whether the input file has cnames. Default: True  
-        	- or [True, True, False] corresponding to the file order
-        - `rnames  `: Whether the input file has rnames  . Default: 1  
+        - `inopts`: The input options for infile:  
+        	- `cnames`: Whether the input file has cnames. Default: True
+        	- `rnames  `: Whether the input file has rnames. Default: True
+        	- `delimit`: The delimit. Default: `\t`
+        	- `skip`: First N lines to skip. Default: `0`
+        - `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`  
+        - `size`: The chunk size (how many columns to split into one file). Default: `1`  
 
 !!! hint "pRsplit"
 
@@ -3738,9 +3761,13 @@
         - `outdir:dir`: The directory containing the output row files  
 
     - **args**  
-        - `cnames`: Whether the input file has cnames. Default: True  
-        	- or [True, True, False] corresponding to the file order
-        - `rnames  `: Whether the input file has rnames  . Default: 1  
+        - `inopts`: The input options for infile:  
+        	- `cnames`: Whether the input file has cnames. Default: True
+        	- `rnames  `: Whether the input file has rnames. Default: True
+        	- `delimit`: The delimit. Default: `\t`
+        	- `skip`: First N lines to skip. Default: `0`
+        - `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`  
+        - `size`: The chunk size (how many rows to split into one file). Default: `1`  
 
 !!! hint "pTsv"
 
@@ -4063,6 +4090,25 @@
     - **requires**  
         [MutSig](http://archive.broadinstitute.org/cancer/cga/mutsig_download)
 
+!!! hint "pMafLiftover"
+
+    - **description**  
+        Liftover maf file from one assembly to another
+
+    - **input**  
+        - `infile:file`: The input maf file  
+
+    - **output**  
+        - `outfile:file`: The output maf file  
+
+    - **args**  
+        - `liftover`: The liftOver program.  
+        - `lochain`: The liftOver chain file.  
+        - `genome`: The target genome.  
+
+    - **requires**  
+        liftOver from UCSC
+
 !!! hint "pMafMerge"
 
     - **description**  
@@ -4078,6 +4124,23 @@
         - `excols`: How to deal with extra columns other than 34 standard columns from TCGA.  
         	- merge(default): Merge the columns, if one not exists, fill with an empty string.
         	- discard: Just discard the extra columns, with only 34 columns left. So you can also put just one maf file in the indir with some columns missed to fill it with standard columns.
+
+!!! hint "pMaf2Mat"
+
+    - **description**  
+        Convert maf file to a gene(row)-sample(column) matrix
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output matrix  
+
+    - **args**  
+        - `mutypes`: Provide manual list of variant classifications to be counted, only effective when `args.binary = False`. Default: `None` (all counted)  
+        - `binary` : Just generate a binary matrix instead of a count matrix. Default: `False`  
+        - `na`: What value to use for no mutations reported on a gene. Default: `0`  
+        - `samfn`  : A function (in r) to transform the sample names. Default: `function(sample) sample`  
 
 !!! hint "pMaftools"
 
