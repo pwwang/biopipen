@@ -249,21 +249,34 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 @output:
 	`outfile:file`: The output file
 @args:
-	`skip`: argument skip for each file
-	`delimit`: argument delimit for each file
-	`usehead`: The header from which input file will be used for output file.
+	`inopts`: The input options for infile:
+		- `skip`   : First N lines to skip. Default: `0`
+		- `delimit`: The delimit. Default          : `\t`
+		- `comment`: The comment line mark. Default: `#`
+		- `ftype  `: The type of the file. Default : `nometa`
+		- `head`: Whether input file has head, only for `nometa`. Default: `True`
+	`outputs`:
+		- `delimit`      : The delimit. Default                    : `\t`
+		- `headPrefix`   : The prefix for the head line. Default   : ``
+		- `headDelimit`  : The delimiter for the head line. Default: `\t`
+		- `headTransform`: The transformer for the head line.
+		- `head`         : Whether to output the head? Default     : `False`
+		- `ftype`        : The type of the output. Default         : `nometa`
+		- `cnames`       : The extra column names. Default         : `[]`
+	`usemeta`: The header from which input file will be used for output file.
 		- Default: None (Don't write header)
-	`gzip`: argument gzip for each file
+		- 1-based.
 	`match`: The match function. 
 	`do`: The do function. Global vaiable `fout` is available to write results to output file.
+	`helper`: Some helper codes.
 @requires:
 	[`python-simread`](https://github.com/pwwang/simread)
 """
 pSimRead              = Proc(desc = 'Read files simultaneously.')
 pSimRead.input        = 'infiles:files'
 pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}.etc.simread.txt'
-pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'nometa')
-pSimRead.args.outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = False, ftype = '', cnames = [])
+pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'nometa', head = True)
+pSimRead.args.outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = 'nometa', cnames = [])
 pSimRead.args.usemeta = None
 pSimRead.args.match   = None
 pSimRead.args.do      = None

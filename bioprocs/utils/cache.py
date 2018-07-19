@@ -1,11 +1,29 @@
 import json
 from pyppl import Box
-from medoo import Medoo, Function, Field
+from medoo import Medoo, Raw, Field, Dialect
 from . import alwaysList
 try:
 	string_types = (str, unicode)
 except NameError:
 	string_types = (str, )
+
+class DialectCache(Dialect):
+
+	OPERATOR_MAP = {'~~': 'ilike'}
+
+	@classmethod
+	def ilike(klass, field, value):
+		field = Raw('UPPER({})'.format(field))
+		if not isinstance(value, (tuple, list)):
+			value = [value]
+
+		value = [Raw('UPPER({})'.format(klass.value(v))) for v in value]
+		return klass.like(field, value, addperct = False)
+
+	@classmethod
+	def concat(klass, field, value):
+		return '{} = {} || {}'.format(field, field, klass.value(value))
+
 
 class Cache(object):
 
@@ -24,7 +42,7 @@ class Cache(object):
 		),
 		iplain = dict(
 			# UPPER(name) in ('ABC', 'DEF', 'GHI')
-			query  = lambda col, data: (Function.upper(col + '[ IN ]'), [d.upper() for d in Cache._uniqueData(data)]),
+			query  = lambda col, data:(col + '[~~]', Cache._expandLike(data)),
 			# name.upper() in
 			find   = lambda col, qitem, results: Cache._plainFinder(col, qitem, results, case = True),
 			insert = lambda col, data: (col, Cache._uniqueData(data)),
@@ -34,22 +52,18 @@ class Cache(object):
 			query  = lambda col, data: (col + '[~]', Cache._expandLike(data)),
 			find   = lambda col, qitem, results: Cache._arrayFinder(col, qitem, results),
 			insert = lambda col, data: (col, Cache._arrayJoiner(Cache._uniqueData(data, True))),
-			update = lambda col, data, orig: (col, Function.concat(
-				Field(col),
-				value = Cache._arrayJoiner(
-					set(Cache._uniqueData(data, True)) - set(orig or [])
-				))),
+			update = lambda col, data, orig: (col + '[concat]', Cache._arrayJoiner(
+				set(Cache._uniqueData(data, True)) - set(orig or [])
+			)),
 			result = lambda data: data if isinstance(data, list) or data is None else list(filter(None, data.split(Cache.ARRAY_DELIMIT)))
 		),
 		iarray = dict(
 			query = lambda col, data: (col + '[~~]', Cache._expandLike(data)),
 			find  = lambda col, qitem, results: Cache._arrayFinder(col, qitem, results, case = True),
 			insert = lambda col, data: (col, Cache._arrayJoiner(Cache._uniqueData(data, True))),
-			update = lambda col, data, orig: (col, Function.concat(
-				Field(col),
-				value = Cache._arrayJoiner(
-					set(Cache._uniqueData(data, True)) - set(orig or [])
-				))),
+			update = lambda col, data, orig: (col + '[concat]', Cache._arrayJoiner(
+				set(Cache._uniqueData(data, True)) - set(orig or [])
+			)),
 			result = lambda data: data if isinstance(data, list) or data is None else list(filter(None, data.split(Cache.ARRAY_DELIMIT)))
 		),
 		json = dict(
@@ -66,20 +80,25 @@ class Cache(object):
 		# else create the table
 
 		self.medoo = Medoo(
-			database_type = 'sqlite',
-			database_file = dbfile,
+			dbtype = 'sqlite',
+			database = dbfile,
 			check_same_thread = True,
 			logging = True
 		)
+		self.medoo.dialect(DialectCache)
 		self.table = table
 		self.pkey  = pkey
-		self.medoo.create(table, schema)
+		self.medoo.query("""
+		CREATE TABLE IF NOT EXISTS {} (
+			{}
+		)
+		""".format(table, ',\n'.join(['{} {}'.format(k,v) for k,v in schema.items()])))
 
 	@staticmethod
 	def _arrayJoiner(array, delimit = None):
 		delimit = delimit or Cache.ARRAY_DELIMIT
 		if array:
-			return delimit + delimit.join(array)
+			return delimit + delimit.join([str(a) for a in array])
 		else:
 			return ''
 
@@ -188,9 +207,8 @@ class Cache(object):
 			if 'result' in dummy:
 				try:
 					data[key] = dummy['result'](val)
-				except TypeError:
-					print key, val
-					raise
+				except TypeError as ex:
+					raise type(ex)(str(ex) + ':\n%s: %s\n' % (key, val))
 		return data
 
 	def _queryN(self, columns, data, dummies = None):
@@ -227,10 +245,9 @@ class Cache(object):
 			for c in conditions:
 				where['AND'].update(c)
 
-		rs = self.medoo.select(self.table, list(set(columns)), where)
-
-		results2 = rs.fetchall() if rs else []
-		results3  = [Cache._result(result, dummies) for result in results2 if not any([val is None for val in result.values()])]
+		rs = self.medoo.select(self.table, list(set(columns)), where, readonly = False)
+		results2 = rs.all() if rs else []
+		results3 = [Cache._result(result, dummies) for result in results2 if not any([val is None for val in result.values()])]
 		del results2[:]
 
 		results = {}
@@ -274,8 +291,8 @@ class Cache(object):
 	def saveN(self, data, dummies):
 		# see whether we should update or insert
 		pkdata     = data[self.pkey]
-		rs         = self.medoo.select(self.table, '*', {self.pkey: pkdata})
-		rsall      = rs.fetchall() if rs else []
+		rs         = self.medoo.select(self.table, '*', {self.pkey: pkdata}, readonly = False)
+		rsall      = rs.all() if rs else []
 		# existing pkeys
 		pks        = [r[self.pkey] for r in rsall]
 		idxinserts = [i for i, pk in enumerate(pkdata) if pk not in pks]

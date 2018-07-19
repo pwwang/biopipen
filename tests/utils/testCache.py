@@ -1,7 +1,7 @@
 import helpers, unittest, testly
 from os import path
 from bioprocs.utils.cache import Cache
-from medoo import Medoo, MedooSqlite, Raw, Function
+from medoo import Medoo, Raw
 
 class TestCache(helpers.TestCase):
 
@@ -14,9 +14,9 @@ class TestCache(helpers.TestCase):
 	def testInit(self, dbfile, table, schema, pkey):
 		c = Cache(dbfile, table, schema, pkey)
 		self.assertIsInstance(c, Cache)
-		self.assertIsInstance(c.medoo, MedooSqlite)
+		#self.assertIsInstance(c.medoo, MedooSqlite)
 		self.assertEqual(c.table, table)
-		self.assertTrue(c.medoo.tableExists(table))
+		#self.assertTrue(c.medoo.tableExists(table))
 
 	def dataProvider_testDummy(self):
 		# 0
@@ -26,7 +26,7 @@ class TestCache(helpers.TestCase):
 		yield 'plain', 'insert', ('col', 'data'), 'col', 'data'
 		yield 'plain', 'update', ('col', 'data'), 'col', 'data', ''
 		# 5
-		yield 'iplain', 'query', (Function.upper('col[ IN ]'), ['DATA1', 'DATA2']), 'col', ['data1', 'data2']
+		yield 'iplain', 'query', ('col[~~]', ['% // data1', '% // data1 // %', '% // data2', '% // data2 // %']), 'col', ['data1', 'data2']
 		yield 'iplain', 'find', [{'col': 'qitem'}], 'col', 'qitem', [{'col': 'qitem'}]
 		yield 'iplain', 'find', [{'col': 'Qitem'}], 'col', 'qitem', [{'col': 'Qitem'}]
 		yield 'iplain', 'insert', ('col', 'data'), 'col', 'data'
@@ -36,13 +36,13 @@ class TestCache(helpers.TestCase):
 		yield 'array', 'find', [{'col': ['qitem', 'item2']}], 'col', 'qitem', [{'col': ['qitem', 'item2']}]
 		yield 'array', 'find', [], 'col', 'qitem', [{'col': ' // Qitem // item2'}]
 		yield 'array', 'insert', ('col', ' // data1 // data2'), 'col', ['data1', 'data2']
-		yield 'array', 'update', ('col', '"col"||\' // data1 // data2\''), 'col', ['data1', 'data2'], ''
+		yield 'array', 'update', ('col[concat]', ' // data1 // data2'), 'col', ['data1', 'data2'], ''
 		# 15
 		yield 'iarray', 'query', ('col[~~]', ['% // data', '% // data // %']), 'col', ['data']
 		yield 'iarray', 'find', [{'col': ['qitem', 'item2']}], 'col', 'qitem', [{'col': ['qitem', 'item2']}]
 		yield 'iarray', 'find', [{'col': ['Qitem', 'item2']}], 'col', 'qitem', [{'col': ['Qitem', 'item2']}]
 		yield 'iarray', 'insert', ('col', ' // data1 // data2'), 'col', ['data1', 'data2']
-		yield 'iarray', 'update', ('col', '"col"||\' // data1 // data2\''), 'col', ['data1', 'data2'], ''
+		yield 'iarray', 'update', ('col[concat]', ' // data1 // data2'), 'col', ['data1', 'data2'], ''
 
 	def testDummy(self, key, func, output, *args, **kwargs):
 		if not isinstance(output, tuple):
@@ -216,7 +216,7 @@ class TestCache(helpers.TestCase):
 		self.maxDiff = None
 		cache.save(data, dummies)
 		rs = cache.medoo.select(cache.table, '*')
-		self.assertListEqual(rs.fetchall(), datall)
+		self.assertListEqual(rs.all(asdict = True), datall)
 
 if __name__ == '__main__':
 	testly.main(verbosity = 2)

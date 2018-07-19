@@ -11,7 +11,10 @@ from . import params
 @output:
 	`outfile:file`: The output file
 @args:
-	`skip`:   To skip first N lines. Default: 0
+	`inopts`: The input options for infile:
+		- `skip`   : First N lines to skip. Default: `0`
+		- `delimit`: The delimit. Default          : `\t`
+		- `comment`: The comment line mark. Default: `#`
 	`case`:   Case-sensitivity. Default: True
 		- If True, will set $LANG as C
 		- Otherwise, $LANG will be set as en_US.UTF-8

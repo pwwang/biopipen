@@ -468,6 +468,7 @@ class TsvWriter(object):
 		outopts  = outopts2
 		ftype    = outopts['ftype']
 		cnames   = outopts['cnames']
+		#print cnames, '3242342'
 		if not isinstance(cnames, dict):
 			cnames = alwaysList(cnames)
 		del outopts['ftype']

@@ -100,101 +100,58 @@ pBatchEffect.script = "file:scripts/rnaseq/pBatchEffect.r"
 
 """
 @name:
-	pRawCounts2
+	pUnitConversion
 @description:
-	Convert raw counts to another unit
+	Convert expression between units  
+	See here: https://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/ and  
+	https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/#fpkm  
+	Available converstions:
+	- `count -> cpm, fpkm/rpkm, fpkm-uq/rpkm-rq, tpm, tmm`
+	- `fpkm/rpkm -> count, tpm, cpm`
+	- `tpm -> count, fpkm/rpkm, cpm`
+	- `cpm -> count, fpkm/rpkm, tpm`
+	NOTE that during some conversions, `sum(counts/effLen)` is approximated to `sum(counts)/sum(effLen) * length(effLen))`
 @input:
 	`infile:file`: the expression matrix
 		- rows are genes, columns are samples
 @output:
 	`outfile:file`: the converted expression matrix
 @args:
-	`transpose`: transpose the input matrix? default: False
-	`log2`:      whether to take log2? default: False
-	`unit`:      convert to which unit? default: cpm (or rpkm, tmm)
-	`header`:    whether input file has header? default: True
-	`rownames`:  the index of the column as rownames. default: 1
-	`glenfile`:  the gene length file, for RPKM
-		- no head, row names are genes, have to be exact the same order and length as the rownames of infile
-	`boxplot` : Whether to plot a boxplot. Default: False
-	`heatmap` : Whether to plot a heatmap. Default: False
-	`histplot`: Whether to plot a histgram. Default: False
-	`devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-	`boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`
-		- See ggplot2 documentation.
-	`heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`
-	`histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`
+	`inunit`:    The unit of input expression values. Default: `count`
+	`outunit`:   The unit of output expression values. Default: `tpm`
+	`meanfl`:    A file containing the mean fragment length for each sample by rows, without header.
+		- Or a fixed universal estimated number. Default: `1` (used by TCGA)
+	`nreads`:    The estimatied total number of reads for each sample. Default: `30000000`
+		- Or you can pass a file with the number for each sample by rows, without header.
+		- In converting `fpkm/rpkm -> count`: it should be total reads of that sample
+		- In converting `cpm -> count`: it should be total reads of that sample
+		- In converting `tpm -> count`: it should be total reads of that sample
+		- In converting `tpm -> cpm`: it should be total reads of that sample
+		- In converting `tpm -> fpkm/rpkm`: it should be `sum(fpkm)` of that sample
+	`inform`:    Transform the input to the unit specified. (sometimes the values are log transformed)
+		- For example, if the `inunit` is `tpm`, but it's actually `log2(expr+1)` transformed,
+		- Then this should be `function(expr) 2^(expr - 1)`.
+		- Default: `None` (No transformation has been done)
+	`outform`:   Transform to be done on the output expression values. Default: `None`
+	`refexon`:   the exome gff file, for RPKM/FPKM
+		- `gene_id` is required for gene names
 @requires:
 	[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
 	[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
 """
-pRawCounts2              = Proc(desc = 'Convert raw counts to another unit.')
-pRawCounts2.input        = "infile:file"
-pRawCounts2.output       = "outfile:file:{{in.infile | fn2}}.dir/{{in.infile | fn2}}.expr.txt, outdir:dir:{{in.infile | fn2}}.dir"
-pRawCounts2.args.unit    = 'cpm'
-pRawCounts2.args.refgene = params.refgene.value
-pRawCounts2.args.hmrows  = 500
-pRawCounts2.args.plot    = Box(
-	boxplot   = False,
-	heatmap   = False,
-	histogram = False
-)
-pRawCounts2.args.ggs = Box(
-	boxplot   = Box(ylab = {0: 'Expression'}),
-	heatmap   = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-	histogram = Box(labs = {'x': 'Expression', 'y': '# Genes'})
-)
-pRawCounts2.args.devpars = Box(res = 300, width = 2000, height = 2000)
-pRawCounts2.envs.rimport = rimport
-pRawCounts2.lang         = params.Rscript.value
-pRawCounts2.script       = "file:scripts/rnaseq/pRawCounts2.r"
-
-"""
-@name:
-	p2RawCounts
-@description:
-	Convert gene expression to raw counts.
-@input:
-	`infile:file`: The expression matrix file
-@output:
-	`outfile:file`: The output file
-	`outdir:dir`:   The output directory, may contain the figures.
-@args:
-	`unit`: The unit of input gene expression. Default: fpkm
-		- Could also be rpkm, tpm
-	`nreads`     : Total reads approximately. Default: 30, 000, 000
-	`refgene`    : The refgene file for gene length.
-	`boxplot`    : Whether to plot boxplot after transformation. Default: False
-	`heatmap`    : Whether to plot heatmap after transformation. Default: False
-	`heatmapn`   : How many genes used to plot heatmap. Default: 500
-	`histplot`   : Whether to plot histgram after transformation. Default: False
-	`devpars`    : The device parameters for plotting. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-	`boxplotggs` : The ggplot statement for boxplot.
-	`heatmapggs` : The ggplot statement for heatmap.
-	`histplotggs`: The ggplot statement for histgram.
-"""
-p2RawCounts              = Proc(desc = 'Convert normalized expression back to raw counts.')
-p2RawCounts.input        = 'infile:file'
-p2RawCounts.output       = 'outfile:file:{{in.infile | fn2}}.dir/{{in.infile | fn2}}.counts.txt, outdir:dir:{{in.infile | fn2}}.dir'
-p2RawCounts.args.unit    = 'fpkm'
-p2RawCounts.args.nreads  = 30000000
-p2RawCounts.args.refgene = params.refgene.value
-p2RawCounts.args.hmrows  = 500
-p2RawCounts.args.plot    = Box(
-	boxplot   = False,
-	heatmap   = False,
-	histogram = False
-)
-p2RawCounts.args.ggs = Box(
-	boxplot   = Box(ylab = {0: 'Expression'}),
-	heatmap   = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-	histogram = Box(labs = {'x': 'Expression', 'y': '# Genes'})
-)
-p2RawCounts.args.devpars = Box(res = 300, width = 2000, height = 2000)
-p2RawCounts.envs.rimport = rimport
-p2RawCounts.lang         = params.Rscript.value
-p2RawCounts.script       = "file:scripts/rnaseq/p2RawCounts.r"
-
+pUnitConversion              = Proc(desc = 'Convert raw counts to another unit.')
+pUnitConversion.input        = "infile:file"
+pUnitConversion.output       = "outfile:file:{{in.infile | fn2}}.{{args.outunit}}{{args.outform | lambda x: '_t' if x else ''}}.txt"
+pUnitConversion.args.inunit  = 'count'
+pUnitConversion.args.outunit = 'tpm'
+pUnitConversion.args.meanfl  = 1
+pUnitConversion.args.nreads  = 30000000
+pUnitConversion.args.refexon = params.refexon.value
+pUnitConversion.args.inform  = None
+pUnitConversion.args.outform = None
+pUnitConversion.envs.rimport = rimport
+pUnitConversion.lang         = params.Rscript.value
+pUnitConversion.script       = "file:scripts/rnaseq/pUnitConversion.r"
 
 """
 @name:

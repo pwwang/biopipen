@@ -265,7 +265,7 @@ useKM = function(dat, varname, params = NULL) {
 		params$data    = dat
 
 		varlvls = levels(factor(dat[, var]))
-		if (length(varlvls) <= length(params$legend.labs))
+		if (length(varlvls) < length(params$legend.labs))
 			params$legend.labs = varlvls
 
 		ret$plot      = do.call(ggsurvplot, params)
@@ -276,7 +276,7 @@ useKM = function(dat, varname, params = NULL) {
 			tableggs.one = list(
 				ylab             = list(varname),
 				xlab             = list(paste0("Time (", outunit ,")")),
-				scale_y_discrete = list(labels = rev(varlvls))
+				scale_y_discrete = list(labels = rev(params$legend.labs))
 			)
 			tableggs.one   = update.list(tableggs.one, tableggs)
 			ret$plot$table = apply.ggs(ret$plot$table, tableggs.one)

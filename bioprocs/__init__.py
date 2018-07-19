@@ -56,6 +56,8 @@ DEFAULTS = {
 	"ref.desc"           : "The reference genome.",
 	"refgene"            : "",
 	"refgene.desc"       : "The reference genes in GTF format.",
+	"refexon"            : "",
+	"refexon.desc"       : "The exons of reference genes in GTF format.",
 	"snpeffDb"           : "",
 	"snpeffDb.desc"      : "The path of database for snpEff.",
 	"tflist"             : "",

@@ -181,7 +181,12 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 		if outopts['head']:
 			writer.writeHead(outopts['headPrefix'], outopts['headDelimit'], outopts['headTransform'])
+
+		#i = 0
 		for r in reader:
+			i += 1
+
+			#if (i <= 10): print r
 			query = r[genecol].strip()
 			if query not in genemap:
 				if notfound == 'error':
@@ -199,6 +204,8 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 			if outopts['query']:
 				r._QUERY = query
+
+			#if (i <= 10): print r
 			writer.write(r)
 
 	return genemap
