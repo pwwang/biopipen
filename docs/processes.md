@@ -855,7 +855,10 @@
         - `outfile:file`: The output file  
 
     - **args**  
-        - `skip`: To skip first N lines. Default: 0  
+        - `inopts`: The input options for infile:  
+        	- `skip`   : First N lines to skip. Default: `0`
+        	- `delimit`: The delimit. Default          : `\t`
+        	- `comment`: The comment line mark. Default: `#`
         - `case`: Case-sensitivity. Default: True  
         	- If True, will set $LANG as C
         	- Otherwise, $LANG will be set as en_US.UTF-8
@@ -2547,10 +2550,18 @@
         	- `heatmap`  : The ggplot parameters for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
         	- `histogram`: The ggplot parameters for histgram. Default: `Box(labs = {'x': "Log2 Intensity", "y": "Density"})`
 
-!!! hint "pRawCounts2"
+!!! hint "pUnitConversion"
 
     - **description**  
-        Convert raw counts to another unit
+        Convert expression between units  
+        See here: https://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/ and  
+        https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/#fpkm  
+        Available converstions:
+        - `count -> cpm, fpkm/rpkm, fpkm-uq/rpkm-rq, tpm, tmm`
+        - `fpkm/rpkm -> count, tpm, cpm`
+        - `tpm -> count, fpkm/rpkm, cpm`
+        - `cpm -> count, fpkm/rpkm, tpm`
+        NOTE that during some conversions, `sum(counts/effLen)` is approximated to `sum(counts)/sum(effLen) * length(effLen))`
 
     - **input**  
         - `infile:file`: the expression matrix  
@@ -2560,51 +2571,28 @@
         - `outfile:file`: the converted expression matrix  
 
     - **args**  
-        - `transpose`: transpose the input matrix? default: False  
-        - `log2`: whether to take log2? default: False  
-        - `unit`: convert to which unit? default: cpm (or rpkm, tmm)  
-        - `header`: whether input file has header? default: True  
-        - `rownames`: the index of the column as rownames. default: 1  
-        - `glenfile`: the gene length file, for RPKM  
-        	- no head, row names are genes, have to be exact the same order and length as the rownames of infile
-        - `boxplot` : Whether to plot a boxplot. Default: False  
-        - `heatmap` : Whether to plot a heatmap. Default: False  
-        - `histplot`: Whether to plot a histgram. Default: False  
-        - `devpars` : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
-        - `boxplotggs`: The ggplot parameters for boxplot. Default: `['r:ylab("Expression")']`  
-        	- See ggplot2 documentation.
-        - `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`  
-        - `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`  
+        - `inunit`: The unit of input expression values. Default: `count`  
+        - `outunit`: The unit of output expression values. Default: `tpm`  
+        - `meanfl`: A file containing the mean fragment length for each sample by rows, without header.  
+        	- Or a fixed universal estimated number. Default: `1` (used by TCGA)
+        - `nreads`: The estimatied total number of reads for each sample. Default: `30000000`  
+        	- Or you can pass a file with the number for each sample by rows, without header.
+        	- In converting `fpkm/rpkm -> count`: it should be total reads of that sample
+        	- In converting `cpm -> count`: it should be total reads of that sample
+        	- In converting `tpm -> count`: it should be total reads of that sample
+        	- In converting `tpm -> cpm`: it should be total reads of that sample
+        	- In converting `tpm -> fpkm/rpkm`: it should be `sum(fpkm)` of that sample
+        - `inform`: Transform the input to the unit specified. (sometimes the values are log transformed)  
+        	- For example, if the `inunit` is `tpm`, but it's actually `log2(expr+1)` transformed,
+        	- Then this should be `function(expr) 2^(expr - 1)`.
+        	- Default: `None` (No transformation has been done)
+        - `outform`: Transform to be done on the output expression values. Default: `None`  
+        - `refexon`: the exome gff file, for RPKM/FPKM  
+        	- `gene_id` is required for gene names
 
     - **requires**  
         [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
         [coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
-
-!!! hint "p2RawCounts"
-
-    - **description**  
-        Convert gene expression to raw counts.
-
-    - **input**  
-        - `infile:file`: The expression matrix file  
-
-    - **output**  
-        - `outfile:file`: The output file  
-        - `outdir:dir`: The output directory, may contain the figures.  
-
-    - **args**  
-        - `unit`: The unit of input gene expression. Default: fpkm  
-        	- Could also be rpkm, tpm
-        - `nreads`     : Total reads approximately. Default: 30, 000, 000  
-        - `refgene`    : The refgene file for gene length.  
-        - `boxplot`    : Whether to plot boxplot after transformation. Default: False  
-        - `heatmap`    : Whether to plot heatmap after transformation. Default: False  
-        - `heatmapn`   : How many genes used to plot heatmap. Default: 500  
-        - `histplot`   : Whether to plot histgram after transformation. Default: False  
-        - `devpars`    : The device parameters for plotting. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
-        - `boxplotggs` : The ggplot statement for boxplot.  
-        - `heatmapggs` : The ggplot statement for heatmap.  
-        - `histplotggs`: The ggplot statement for histgram.  
 
 !!! hint "pRNAseqDEG"
 
@@ -3329,17 +3317,15 @@
         - `nthread`   : Number of threads used to perform analysis for groups. Default: 1  
         - `inopts`    : The options for input file  
         	- `rnames`: Whether input file has row names. Default: True
-        - `combine`   : Whether combine groups in the same plot. Default: True  
+        - `combine`   : Whether combine groups in the same plot. Default: `Box()`  
+        	- `nrow`: The number of rows. Default: 1
+        	- `ncol`: The number of cols. Default: 1
         - `devpars`   : The device parameters for png. Default: `{res:300, height:2000, width:2000}`  
         	- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
         - `covfile`   : The covariant file. Require rownames in both this file and input file.  
         - `ngroups`   : Number of curves to plot (the continuous number will divided into `ngroups` groups.  
-        - `plot`      : The params for plot.  
-        	- `params` : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
-        		- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
-        	- `arrange`: How to arrange multiple survival plots in one if `args.combine = True`.
-        		- `nrow`: The number of rows. Default: 1
-        		- `ncol`: The number of cols. Default: 1
+        - `params` : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
+        	- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
         - `ggs`       : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.  
         - `pval`      : The method to calculate the pvalue shown on the plot. Default: True (logrank)  
         	- Could also be `waldtest`, `likeratio` (Likelihoold ratio test)
@@ -3820,13 +3806,26 @@
         - `outfile:file`: The output file  
 
     - **args**  
-        - `skip`: argument skip for each file  
-        - `delimit`: argument delimit for each file  
-        - `usehead`: The header from which input file will be used for output file.  
+        - `inopts`: The input options for infile:  
+        	- `skip`   : First N lines to skip. Default: `0`
+        	- `delimit`: The delimit. Default          : `\t`
+        	- `comment`: The comment line mark. Default: `#`
+        	- `ftype  `: The type of the file. Default : `nometa`
+        	- `head`: Whether input file has head, only for `nometa`. Default: `True`
+        - `outputs`:   
+        	- `delimit`      : The delimit. Default                    : `\t`
+        	- `headPrefix`   : The prefix for the head line. Default   : ``
+        	- `headDelimit`  : The delimiter for the head line. Default: `\t`
+        	- `headTransform`: The transformer for the head line.
+        	- `head`         : Whether to output the head? Default     : `False`
+        	- `ftype`        : The type of the output. Default         : `nometa`
+        	- `cnames`       : The extra column names. Default         : `[]`
+        - `usemeta`: The header from which input file will be used for output file.  
         	- Default: None (Don't write header)
-        - `gzip`: argument gzip for each file  
+        	- 1-based.
         - `match`: The match function.   
         - `do`: The do function. Global vaiable `fout` is available to write results to output file.  
+        - `helper`: Some helper codes.  
 
     - **requires**  
         [`python-simread`](https://github.com/pwwang/simread)
