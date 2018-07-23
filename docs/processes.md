@@ -3829,6 +3829,11 @@
 
     - **requires**  
         [`python-simread`](https://github.com/pwwang/simread)
+
+!!! hint "pTsvJoin"
+
+    - **description**  
+        Alias of pSimRead
 ## vcf
 
 !!! hint "pVcfFilter"
