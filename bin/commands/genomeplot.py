@@ -131,10 +131,10 @@ def _getparams(kwargs):
 		params('hopts', '', True)
 		for key, val in kwargs.items():
 			setattr(params, key, val)
-		return params.parse(args = []).asDict()
+		return params.parse(args = [])
 	else:
 		# called directly
-		return params.parse().asDict()
+		return params.parse()
 
 def run(*args, **kwargs):
 	proc, config = _procconfig(kwargs)

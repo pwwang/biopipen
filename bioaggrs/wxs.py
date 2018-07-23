@@ -233,7 +233,6 @@ aBam2GCnv.pBamDir.runner     = 'local'
 aBam2GCnv.pSampleInfo.runner = 'local'
 # delegates
 aBam2GCnv.delegate('args.ref', 'pCNVkitPrepare, pCNVkitFlatRef')
-aBam2GCnv.delegate('args.cnvkit')
 aBam2GCnv.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
 # depends
 aBam2GCnv.starts                 = aBam2GCnv.pBamDir,        aBam2GCnv.pSampleInfo

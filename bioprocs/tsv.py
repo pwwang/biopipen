@@ -283,3 +283,11 @@ pSimRead.args.do      = None
 pSimRead.args.helper  = ''
 pSimRead.lang         = params.python.value
 pSimRead.script       = "file:scripts/tsv/pSimRead.py"
+
+"""
+@name:
+	pTsvJoin
+@description:
+	Alias of pSimRead
+"""
+pTsvJoin = pSimRead.copy()
