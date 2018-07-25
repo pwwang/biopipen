@@ -4070,6 +4070,40 @@
 
     - **description**  
         Convert Vcf file to genotype matrix.
+
+!!! hint "pVcfSort"
+
+    - **description**  
+        Sort the vcf records
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `header`: Output header? Default: `True`  
+        - `by`    : Sort by what, Coordinates (coord) or names (name)? Default: `coord`  
+        - `tool`  : The tool used to do the sort. Default: `sort` (linux command)  
+
+!!! hint "pVcfSubtract"
+
+    - **description**  
+        Subtract one vcf file from another
+
+    - **input**  
+        - `infile1:file`: The vcf file to be subtracted  
+        - `infile2:file`: The background vcf file  
+
+    - **output**  
+        - `outfile:file`: The subtracted vcf file.  
+
+    - **args**  
+        - `header`  : Output header? Default: `True`  
+        - `tool`    : The tool to be used. Default: `bedtools`  
+        - `bedtools`: The path to bedtools.  
+        - `any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`  
 ## vcfnext
 
 !!! hint "pVcfStatsPlot"
