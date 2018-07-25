@@ -6,7 +6,9 @@ set.seed(8525)
 
 exprfile  = {{in.efile | R}}
 groupfile = {{in.gfile | R}}
-pval      = {{args.pval | R}}
+annofile  = {{args.annofile | R}}
+cutoffway = {{args.pval | lambda x: str(x).split(':')[0] == 'q' and 'q' or 'p' | quote}}
+cutoffval = {{args.pval | lambda x: str(x).split(':')[-1] | R}}
 filters   = {{args.filter | lambda x: x if isinstance(x, (list, tuple)) else [int(y.strip()) for y in x.split(',')] | R}}
 outdir    = {{out.outdir | R}}
 allfile   = file.path(outdir, '{{in.efile | fn2}}-{{in.gfile | fn2}}.all.txt')
@@ -63,12 +65,26 @@ if (tool == 'limma') {
 	allgene = topTable(fit, n=nrow(ematrix), adjust="BH", coef = paste("group", group1, sep=""))
 	write.table (pretty.numbers(allgene, list(P.Value..adj.P.Val = '%.2E', . = '%.3f')), allfile, quote=F, sep="\t")
 
-	degene  = allgene[allgene$P.Value < pval,,drop=F]
-	write.table (pretty.numbers(degene, list(P.Value..adj.P.Val = '%.2E', . = '%.3f')), outfile, quote=F, sep="\t")
+	if (cutoffway == 'p') {
+		degene  = allgene[allgene$P.Value < cutoffval,,drop=F]
+	} else {
+		degene  = allgene[allgene$adj.P.Val < cutoffval,,drop=F]
+	}
 
-	normedCounts = log2(ematrix + 1)
-	alllogFC     = allgene$logFC
-	allPval      = allgene$P.Value
+	alllogFC = allgene$logFC
+	allPval  = allgene$P.Value
+	allQval  = allgene$adj.P.Val
+
+	annodegs = NULL
+	# add annotation
+	if (annofile != '') {
+		annos = read.table(annofile, header=F, sep="\t", row.names = 1, check.names = F )
+		genes = data.frame(Gene = annos[rownames(degene), ])
+		annodegs = cbind(genes, degene)
+		write.table (pretty.numbers(annodegs, list(P.Value..adj.P.Val = '%.2E', logFC..AveExpr..t..B = '%.3f')), outfile, quote=F, sep="\t")
+	} else {
+		write.table (pretty.numbers(degene, list(P.Value..adj.P.Val = '%.2E', . = '%.3f')), outfile, quote=F, sep="\t")
+	}
 
 } else {
 	stop(paste('Unsupported tool:', tool))
@@ -79,21 +95,22 @@ if (plot$mdsplot) {
 	library(limma)
 	mdsplot = file.path (outdir, "mdsplot.png")
 	do.call(png, c(list(filename=mdsplot), devpars))
-	plotMDS(normedCounts, col=c(rep("red", n1), rep("blue", n2)))
+	plotMDS(ematrix, col=c(rep("red2", n1), rep("blue2", n2)))
 	dev.off()
 }
 
 # Volcano
-if (plot$volplot) {
+if (plot$volplot != F) {
 	volplot = file.path (outdir, "volcano.png")
 	log2fc  = alllogFC
-	fdr     = allPval
-	fdrcut  = rep(pval, length(allPval))
+	fdr     = ifelse(cutoffway == 'p', allPval, allQval)
 	plot.volplot(
-		data.frame(logFC = log2fc, FDR = fdr, FDRCut = fdrcut),
+		data.frame(logFC = log2fc, FDR = fdr),
 		plotfile = volplot,
-		ggs = ggs$volplot,
-		devpars = devpars
+		fccut    = plot$volplot$fccut,
+		pcut     = plot$volplot$pcut,
+		ggs      = ggs$volplot,
+		devpars  = devpars
 	)
 }
 
@@ -107,7 +124,10 @@ if (plot$heatmap) {
 		if (hmrows <= 1) hmrows = as.integer(hmrows * ngene)
 
 		ngene = min(hmrows, nrow(degene))
-		mat   = normedCounts[rownames(degene[1:ngene, , drop=F]), ]
+		mat = ematrix[rownames(degene)[1:ngene], ]
+		if (!is.null(annodegs)) {
+			rownames(mat) = make.unique(as.character(as.vector(degene[1:ngene, 1])))
+		}
 		plot.heatmap(mat, hmap, ggs = ggs$heatmap, devpars = devpars)
 	}
 }
@@ -115,12 +135,13 @@ if (plot$heatmap) {
 # maplots
 if (plot$maplot) {
 	maplot = file.path(outdir, "maplot.png")
-	A = rowSums(normedCounts) / ncol(normedCounts)
+	A = rowSums(ematrix) / ncol(ematrix)
 	M = alllogFC
-	threshold = allPval < pval
+	threshold = ifelse(cutoffway == 'p', allPval < cutoffval, allQval < cutoffval)
 	plot.maplot(
-		data.frame(A, M, threshold),
+		data.frame(A, M),
 		maplot,
+		threshold,
 		ggs = ggs$maplot,
 		devpars = devpars
 	)

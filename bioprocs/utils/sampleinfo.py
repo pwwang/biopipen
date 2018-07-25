@@ -6,8 +6,8 @@ class SampleInfoException(Exception):
 
 class SampleInfo (object):
 
-	NORMAL_GROUP = ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD', 'CONTROL']
-	TUMOR_GROUP  = ['TUMOR', 'DISEASE', 'AFTER', 'TISSUE', 'TREATMENT']
+	NORMAL_GROUP = ['NORMAL', 'HEALTH', 'BEFORE', 'BLOOD', 'PRE', 'CONTROL']
+	TUMOR_GROUP  = ['TUMOR', 'DISEASE', 'AFTER', 'TISSUE', 'POST', 'TREATMENT']
 
 	def __init__(self, sfile):
 		reader    = TsvReader(sfile, ftype = 'head')

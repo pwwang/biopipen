@@ -123,10 +123,14 @@ pGSEA.script         = "file:scripts/gsea/pGSEA.r"
 @output:
 	`outdir:dir`:  The output directory, containing the tables and figures.
 @args:
-	`topn`: Top N pathways used to plot. Default: 10
-	`col`: The columns index containing the genes. Default: 0
-	`delimit`: The delimit of input file. Default: '\\t'
-	`dbs`:  The databases to do enrichment against. Default: KEGG_2016
+	`top`:     Top N pathways used to plot. Default: 10
+	`genecol`: The columns index containing the genes. Default: 0
+	`inopts`:  The input options.
+		- `delimit`: The delimit of input file. Default: `\t`
+		- `skip`:    Skip first N lines. Default: `0`
+		- `comment`: Line comment mark. Default: `#`
+		- Other parameters fit `bioprocs.utils.tsvio.TsvReader`
+	`libs`:  The databases to do enrichment against. Default: KEGG_2016
 	  - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
 	  - Multiple dbs separated by comma (,)
 	`norm`: Normalize the gene list use [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
@@ -134,6 +138,7 @@ pGSEA.script         = "file:scripts/gsea/pGSEA.r"
 	  - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
 	`plot`: Whether to plot the result. Default: True
 	`title`: The title for the plot. Default: "Gene enrichment: {db}"
+	`cachedir`: The cachedir for gene name normalization.
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """

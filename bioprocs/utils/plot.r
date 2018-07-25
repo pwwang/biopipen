@@ -351,12 +351,12 @@ plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), d
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
-plot.maplot = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	data = as.data.frame(data)
 	cnames = colnames(data)
 	A      = if ("A" %in% cnames) data$A else data[, 1]
 	M      = if ("M" %in% cnames) data$M else data[, 2]
-	thres  = if ("threshold" %in% cnames) data$threshold else if (length(cnames) > 2) data[, 3] else NULL
+	thres  = threshold
 	data = data.frame(A, M, thres)
 
 	ggs = c(list(
@@ -421,7 +421,7 @@ plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=
 	plot.xy(data, plotfile, x = '""', y = 'Value', ggs, devpars)
 }
 
-plot.volplot = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	data   = as.data.frame(data)
 	cnames = names(data)
 	logfc  = if ("logFC" %in% cnames) data$logFC else data[, 1]
@@ -429,8 +429,8 @@ plot.volplot = function(data, plotfile, ggs = list(), devpars = list(res=300, wi
 	fdr    = -log10(fdr)
 
 	# cutoffs
-	logfccut    = if ("logFCCut" %in% cnames) data$logFCCut[1] else 2
-	fdrcut      = if ("FDRCut" %in% cnames) data$FDRCut[1] else 0.05
+	logfccut    = fccut
+	fdrcut      = pcut
 	fdrcutlabel = round(fdrcut, 3)
 	fdrcut      = -log10(fdrcut)
 

@@ -1,7 +1,7 @@
 from pyppl import Aggr
 from bioprocs.common import pFile2Proc
-from bioprocs.rnaseq import pExpdir2Matrix, pRnaseqDeg
-from bioprocs.marray import pCeldir2Matrix, pMarrayDeg
+from bioprocs.rnaseq import pExprDir2Matrix, pRNAseqDEG
+from bioprocs.marray import pCELDir2Matrix, pMArrayDEG
 from bioprocs.resource import pTxt
 from bioprocs.gsea import pExpmat2Gct, pSampleinfo2Cls, pGSEA, pEnrichr
 
@@ -12,30 +12,30 @@ from bioprocs.gsea import pExpmat2Gct, pSampleinfo2Cls, pGSEA, pEnrichr
 	From expfiles to degs with sample info file.
 @depends:
 	```
-	pExpdir2Matrix[*] \
-	                      pRnaseqDeg[!]
+	pExprDir2Matrix[*] \
+	                      pRNAseqDEG[!]
 	pSampleInfo[*]     /
 	```
 """
 aExpDir2Deg = Aggr(
-	pExpdir2Matrix,
+	pExprDir2Matrix,
 	pFile2Proc.copy(id = 'pSampleInfo'),
-	pRnaseqDeg,
+	pRNAseqDEG,
 	depends = False
 )
 # Dependences
-aExpDir2Deg.starts             = aExpDir2Deg.pExpdir2Matrix, aExpDir2Deg.pSampleInfo
-aExpDir2Deg.ends               = aExpDir2Deg.pRnaseqDeg
-aExpDir2Deg.pRnaseqDeg.depends = aExpDir2Deg.pExpdir2Matrix, aExpDir2Deg.pSampleInfo
+aExpDir2Deg.starts             = aExpDir2Deg.pExprDir2Matrix, aExpDir2Deg.pSampleInfo
+aExpDir2Deg.ends               = aExpDir2Deg.pRNAseqDEG
+aExpDir2Deg.pRNAseqDEG.depends = aExpDir2Deg.pExprDir2Matrix, aExpDir2Deg.pSampleInfo
 # Input
-aExpDir2Deg.pRnaseqDeg.input = lambda ch1, ch2: \
+aExpDir2Deg.pRNAseqDEG.input = lambda ch1, ch2: \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
-aExpDir2Deg.pExpdir2Matrix.args.boxplot  = True
-aExpDir2Deg.pExpdir2Matrix.args.heatmap  = True
-aExpDir2Deg.pExpdir2Matrix.args.histplot = True
-aExpDir2Deg.pRnaseqDeg.args.maplot       = True
-aExpDir2Deg.pRnaseqDeg.args.heatmap      = True
+aExpDir2Deg.pExprDir2Matrix.args.boxplot  = True
+aExpDir2Deg.pExprDir2Matrix.args.heatmap  = True
+aExpDir2Deg.pExprDir2Matrix.args.histplot = True
+aExpDir2Deg.pRNAseqDEG.args.maplot       = True
+aExpDir2Deg.pRNAseqDEG.args.heatmap      = True
 
 
 """
@@ -45,8 +45,8 @@ aExpDir2Deg.pRnaseqDeg.args.heatmap      = True
 	From expfiles to degs with sample info file and do GSEA.
 @depends:
 	```
-	                  /   pRnaseqDeg[!]  -> pEnrichr[!]
-	pExpdir2Matrix[*] \
+	                  /   pRNAseqDEG[!]  -> pEnrichr[!]
+	pExprDir2Matrix[*] \
 	                      pExpmat2Gct     \
 	pSampleInfo[*]     /                   \
 	                   \  pSampleinfo2Cls --  pGSEA[!]
@@ -54,46 +54,46 @@ aExpDir2Deg.pRnaseqDeg.args.heatmap      = True
 	```
 """
 aExpDir2DegGSEA = Aggr(
-	pExpdir2Matrix,
+	pExprDir2Matrix,
 	pFile2Proc.copy(id = 'pSampleInfo'),
 	pTxt.copy(id = 'pGMTFetcher'),
 	pExpmat2Gct,
 	pSampleinfo2Cls,
 	pGSEA,
-	pRnaseqDeg,
+	pRNAseqDEG,
 	pEnrichr,
 	depends = False
 )
 # Default input:
 aExpDir2DegGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
 # Dependences
-aExpDir2DegGSEA.starts                  = aExpDir2DegGSEA.pExpdir2Matrix,  \
+aExpDir2DegGSEA.starts                  = aExpDir2DegGSEA.pExprDir2Matrix,  \
 										  aExpDir2DegGSEA.pSampleInfo,     \
 										  aExpDir2DegGSEA.pGMTFetcher
-aExpDir2DegGSEA.ends                    = aExpDir2DegGSEA.pRnaseqDeg,      \
+aExpDir2DegGSEA.ends                    = aExpDir2DegGSEA.pRNAseqDEG,      \
 										  aExpDir2DegGSEA.pGSEA,           \
 										  aExpDir2DegGSEA.pEnrichr
-aExpDir2DegGSEA.pExpmat2Gct.depends     = aExpDir2DegGSEA.pExpdir2Matrix
+aExpDir2DegGSEA.pExpmat2Gct.depends     = aExpDir2DegGSEA.pExprDir2Matrix
 aExpDir2DegGSEA.pSampleinfo2Cls.depends = aExpDir2DegGSEA.pSampleInfo
 aExpDir2DegGSEA.pGSEA.depends           = aExpDir2DegGSEA.pExpmat2Gct,     \
 										  aExpDir2DegGSEA.pSampleinfo2Cls, \
 										  aExpDir2DegGSEA.pGMTFetcher
-aExpDir2DegGSEA.pRnaseqDeg.depends      = aExpDir2DegGSEA.pExpdir2Matrix,  \
+aExpDir2DegGSEA.pRNAseqDEG.depends      = aExpDir2DegGSEA.pExprDir2Matrix,  \
 										  aExpDir2DegGSEA.pSampleInfo
-aExpDir2DegGSEA.pEnrichr.depends        = aExpDir2DegGSEA.pRnaseqDeg
+aExpDir2DegGSEA.pEnrichr.depends        = aExpDir2DegGSEA.pRNAseqDEG
 # Input
 aExpDir2DegGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
 	ch1.repRow(ch2.length() * ch3.length())              \
 	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
 	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
-aExpDir2DegGSEA.pRnaseqDeg.input = lambda ch1, ch2: \
+aExpDir2DegGSEA.pRNAseqDEG.input = lambda ch1, ch2: \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
-aExpDir2DegGSEA.pExpdir2Matrix.args.boxplot  = True
-aExpDir2DegGSEA.pExpdir2Matrix.args.heatmap  = True
-aExpDir2DegGSEA.pExpdir2Matrix.args.histplot = True
-aExpDir2DegGSEA.pRnaseqDeg.args.maplot       = True
-aExpDir2DegGSEA.pRnaseqDeg.args.heatmap      = True
+aExpDir2DegGSEA.pExprDir2Matrix.args.boxplot  = True
+aExpDir2DegGSEA.pExprDir2Matrix.args.heatmap  = True
+aExpDir2DegGSEA.pExprDir2Matrix.args.histplot = True
+aExpDir2DegGSEA.pRNAseqDEG.args.maplot       = True
+aExpDir2DegGSEA.pRNAseqDEG.args.heatmap      = True
 aExpDir2DegGSEA.pGMTFetcher.args.header      = False
 
 """
@@ -103,7 +103,7 @@ aExpDir2DegGSEA.pGMTFetcher.args.header      = False
 	From expfiles to degs with sample info file and do GSEA.
 @depends:
 	```
-	                  /   pRnaseqDeg[!]  -> pEnrichr[!]
+	                  /   pRNAseqDEG[!]  -> pEnrichr[!]
 	pExpMat[*]        \
 	                      pExpmat2Gct     \
 	pSampleInfo[*]     /                   \
@@ -118,7 +118,7 @@ aRnaseqExpMat2DegGSEA = Aggr(
 	pExpmat2Gct,
 	pSampleinfo2Cls,
 	pGSEA,
-	pRnaseqDeg,
+	pRNAseqDEG,
 	pEnrichr,
 	depends = False
 )
@@ -128,7 +128,7 @@ aRnaseqExpMat2DegGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
 aRnaseqExpMat2DegGSEA.starts                  = aRnaseqExpMat2DegGSEA.pExpMat,  \
 												aRnaseqExpMat2DegGSEA.pSampleInfo,     \
 												aRnaseqExpMat2DegGSEA.pGMTFetcher
-aRnaseqExpMat2DegGSEA.ends                    = aRnaseqExpMat2DegGSEA.pRnaseqDeg,      \
+aRnaseqExpMat2DegGSEA.ends                    = aRnaseqExpMat2DegGSEA.pRNAseqDEG,      \
 												aRnaseqExpMat2DegGSEA.pGSEA,           \
 												aRnaseqExpMat2DegGSEA.pEnrichr
 aRnaseqExpMat2DegGSEA.pExpmat2Gct.depends     = aRnaseqExpMat2DegGSEA.pExpMat
@@ -136,107 +136,109 @@ aRnaseqExpMat2DegGSEA.pSampleinfo2Cls.depends = aRnaseqExpMat2DegGSEA.pSampleInf
 aRnaseqExpMat2DegGSEA.pGSEA.depends           = aRnaseqExpMat2DegGSEA.pExpmat2Gct,     \
 												aRnaseqExpMat2DegGSEA.pSampleinfo2Cls, \
 												aRnaseqExpMat2DegGSEA.pGMTFetcher
-aRnaseqExpMat2DegGSEA.pRnaseqDeg.depends      = aRnaseqExpMat2DegGSEA.pExpMat,  \
+aRnaseqExpMat2DegGSEA.pRNAseqDEG.depends      = aRnaseqExpMat2DegGSEA.pExpMat,  \
 												aRnaseqExpMat2DegGSEA.pSampleInfo
-aRnaseqExpMat2DegGSEA.pEnrichr.depends        = aRnaseqExpMat2DegGSEA.pRnaseqDeg
+aRnaseqExpMat2DegGSEA.pEnrichr.depends        = aRnaseqExpMat2DegGSEA.pRNAseqDEG
 # Input
 aRnaseqExpMat2DegGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
 	ch1.repRow(ch2.length() * ch3.length())              \
 	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
 	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
-aRnaseqExpMat2DegGSEA.pRnaseqDeg.input = lambda ch1, ch2: \
+aRnaseqExpMat2DegGSEA.pRNAseqDEG.input = lambda ch1, ch2: \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
-aRnaseqExpMat2DegGSEA.pRnaseqDeg.args.maplot       = True
-aRnaseqExpMat2DegGSEA.pRnaseqDeg.args.heatmap      = True
+aRnaseqExpMat2DegGSEA.pRNAseqDEG.args.maplot       = True
+aRnaseqExpMat2DegGSEA.pRNAseqDEG.args.heatmap      = True
 aRnaseqExpMat2DegGSEA.pGMTFetcher.args.header      = False
 
 """
 @name:
-	aCelDir2Deg
+	aCELDir2DEG
 @description:
 	From CEL files to degs with sample info file.
 @depends:
 	```
-	pCeldir2Matrix[*] \
-	                      pMarrayDeg[!]
+	pCELDir2Matrix[*] \
+	                      pMArrayDEG[!]
 	pSampleInfo[*]     /
 	```
 """
-aCelDir2Deg = Aggr(
-	pCeldir2Matrix,
+aCELDir2DEG = Aggr(
+	pCELDir2Matrix,
 	pFile2Proc.copy(id = 'pSampleInfo'),
-	pMarrayDeg,
+	pMArrayDEG,
 	depends = False
 )
 # Dependences
-aCelDir2Deg.starts             = aCelDir2Deg.pCeldir2Matrix, aCelDir2Deg.pSampleInfo
-aCelDir2Deg.ends               = aCelDir2Deg.pMarrayDeg
-aCelDir2Deg.pMarrayDeg.depends = aCelDir2Deg.pCeldir2Matrix, aCelDir2Deg.pSampleInfo
+aCELDir2DEG.starts             = aCELDir2DEG.pCELDir2Matrix, aCELDir2DEG.pSampleInfo
+aCELDir2DEG.ends               = aCELDir2DEG.pMArrayDEG
+aCELDir2DEG.pMArrayDEG.depends = aCELDir2DEG.pCELDir2Matrix, aCELDir2DEG.pSampleInfo
+# Delegates
+aCELDir2DEG.delegate('args', 'pMArrayDEG')
 # Input
-aCelDir2Deg.pMarrayDeg.input = lambda ch1, ch2: \
+aCELDir2DEG.pMArrayDEG.input = lambda ch1, ch2: \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
-aCelDir2Deg.pCeldir2Matrix.args.boxplot  = True
-aCelDir2Deg.pCeldir2Matrix.args.heatmap  = True
-aCelDir2Deg.pCeldir2Matrix.args.histplot = True
-aCelDir2Deg.pMarrayDeg.args.maplot       = True
-aCelDir2Deg.pMarrayDeg.args.heatmap      = True
+aCELDir2DEG.pCELDir2Matrix.args.boxplot  = True
+aCELDir2DEG.pCELDir2Matrix.args.heatmap  = True
+aCELDir2DEG.pCELDir2Matrix.args.histplot = True
+aCELDir2DEG.pMArrayDEG.args.maplot       = True
+aCELDir2DEG.pMArrayDEG.args.heatmap      = True
 
 """
 @name:
-	aCelDir2DegGSEA
+	aCELDir2DEGGSEA
 @description:
 	From celfils to degs with sample info file and do GSEA.
 @depends:
 	```
-	                  /   pMarrayDeg[!]  -> pEnrichr[!]
-	pCeldir2Matrix[*] \
+	                  /   pMArrayDEG[!]  -> pEnrichr[!]
+	pCELDir2Matrix[*] \
 	                      pExpmat2Gct     \
 	pSampleInfo[*]     /                   \
 	                   \  pSampleinfo2Cls --  pGSEA[!]
 	pGMTFetcher        ____________________/
 	```
 """
-aCelDir2DegGSEA = Aggr(
-	pCeldir2Matrix,
+aCELDir2DEGGSEA = Aggr(
+	pCELDir2Matrix,
 	pFile2Proc.copy(id = 'pSampleInfo'),
 	pTxt.copy(id = 'pGMTFetcher'),
 	pExpmat2Gct,
 	pSampleinfo2Cls,
 	pGSEA,
-	pMarrayDeg,
+	pMArrayDEG,
 	pEnrichr,
 	depends = False
 )
 # Default input:
-aCelDir2DegGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
+aCELDir2DEGGSEA.pGMTFetcher.input = ['KEGG_2016_gmt']
 # Dependences
-aCelDir2DegGSEA.starts                  = aCelDir2DegGSEA.pCeldir2Matrix, \
-										  aCelDir2DegGSEA.pSampleInfo,    \
-										  aCelDir2DegGSEA.pGMTFetcher
-aCelDir2DegGSEA.ends                    = aCelDir2DegGSEA.pMarrayDeg,     \
-										  aCelDir2DegGSEA.pGSEA,          \
-										  aCelDir2DegGSEA.pEnrichr
-aCelDir2DegGSEA.pExpmat2Gct.depends     = aCelDir2DegGSEA.pCeldir2Matrix
-aCelDir2DegGSEA.pSampleinfo2Cls.depends = aCelDir2DegGSEA.pSampleInfo
-aCelDir2DegGSEA.pGSEA.depends           = aCelDir2DegGSEA.pExpmat2Gct,    \
-										  aCelDir2DegGSEA.pSampleinfo2Cls,\
-										  aCelDir2DegGSEA.pGMTFetcher
-aCelDir2DegGSEA.pMarrayDeg.depends      = aCelDir2DegGSEA.pCeldir2Matrix, \
-										  aCelDir2DegGSEA.pSampleInfo
-aCelDir2DegGSEA.pEnrichr.depends        = aCelDir2DegGSEA.pMarrayDeg
+aCELDir2DEGGSEA.starts                  = aCELDir2DEGGSEA.pCELDir2Matrix, \
+										  aCELDir2DEGGSEA.pSampleInfo,    \
+										  aCELDir2DEGGSEA.pGMTFetcher
+aCELDir2DEGGSEA.ends                    = aCELDir2DEGGSEA.pMArrayDEG,     \
+										  aCELDir2DEGGSEA.pGSEA,          \
+										  aCELDir2DEGGSEA.pEnrichr
+aCELDir2DEGGSEA.pExpmat2Gct.depends     = aCELDir2DEGGSEA.pCELDir2Matrix
+aCELDir2DEGGSEA.pSampleinfo2Cls.depends = aCELDir2DEGGSEA.pSampleInfo
+aCELDir2DEGGSEA.pGSEA.depends           = aCELDir2DEGGSEA.pExpmat2Gct,    \
+										  aCELDir2DEGGSEA.pSampleinfo2Cls,\
+										  aCELDir2DEGGSEA.pGMTFetcher
+aCELDir2DEGGSEA.pMArrayDEG.depends      = aCELDir2DEGGSEA.pCELDir2Matrix, \
+										  aCELDir2DEGGSEA.pSampleInfo
+aCELDir2DEGGSEA.pEnrichr.depends        = aCELDir2DEGGSEA.pMArrayDEG
 # Input
-aCelDir2DegGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
+aCELDir2DEGGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
 	ch1.repRow(ch2.length() * ch3.length())              \
 	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
 	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
-aCelDir2DegGSEA.pMarrayDeg.input = lambda ch1, ch2:      \
+aCELDir2DEGGSEA.pMArrayDEG.input = lambda ch1, ch2:      \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
-aCelDir2DegGSEA.pCeldir2Matrix.args.boxplot  = True
-aCelDir2DegGSEA.pCeldir2Matrix.args.heatmap  = True
-aCelDir2DegGSEA.pCeldir2Matrix.args.histplot = True
-aCelDir2DegGSEA.pMarrayDeg.args.maplot       = True
-aCelDir2DegGSEA.pMarrayDeg.args.heatmap      = True
-aCelDir2DegGSEA.pGMTFetcher.args.header      = False
+aCELDir2DEGGSEA.pCELDir2Matrix.args.boxplot  = True
+aCELDir2DEGGSEA.pCELDir2Matrix.args.heatmap  = True
+aCELDir2DEGGSEA.pCELDir2Matrix.args.histplot = True
+aCELDir2DEGGSEA.pMArrayDEG.args.maplot       = True
+aCELDir2DEGGSEA.pMArrayDEG.args.heatmap      = True
+aCELDir2DEGGSEA.pGMTFetcher.args.header      = False

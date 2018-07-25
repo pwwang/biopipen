@@ -9,80 +9,97 @@ from . import params, rimport
 
 """
 @name:
-	pCELdir2Matrix
+	pCELDir2Matrix
 @description:
 	Convert CEL files to expression matrix
 	File names will be used as sample names (colnames)
 @input:
 	`indir:file`:  the directory containing the CEL files, could be gzipped
 		- If you have files, then use `pFiles2Dir` first
+	`sifile:File`: the sample infor file, extensions for samples are not necessary.
+		- So that it can be also used by `pMArrayDEG`
 @output:
 	`outfile:file`: the expression matrix file
 	`outdir:dir`:   the directory containing expr file and plots
 @args:
 	`pattern`  : The pattern to filter files. Default `'*'`
 	`norm`     : The normalization method. Default: rma (mas5)
-	`gfile`    : The group file. Default: ''
+	`transfm`  : The extra tranformer for the expression values after the nomralization.
+		- `Note the expression values have been done with log`
 	`cdffile`  : The cdffile. Default: ''
-	`annofile` : The annotation file. Default: ''
-	`hmrows`   : How many rows to be used to plot heatmap
-	`plot`: Whether to plot
-		- `boxplot`   : Whether to plot a boxplot. Default: False
-		- `heatmap`   : Whether to plot a heatmap. Default: False
-		- `histogram` : Whether to plot a histgram. Default: False
-	`devpars`    : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-	`ggs`: The ggplot parameters
-		- `boxplot`  : The ggplot parameters for boxplot. Default: `Box(ylab = {0: "Log2 Intensity"})`
-		- `heatmap`  : The ggplot parameters for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
-		- `histogram`: The ggplot parameters for histgram. Default: `Box(labs = {'x': "Log2 Intensity", "y": "Density"})`
+	`fn2sample`: The transformer to transform file name
 """
-pCELdir2Matrix               = Proc(desc = 'Merge expression files to a matrix.')
-pCELdir2Matrix.input         = "indir:file"
-pCELdir2Matrix.output        = [
-	"outfile:file:{{in.indir, args.pattern | dirpat2name}}.dir/{{in.indir, args.pattern | dirpat2name}}.expr.txt",
-	"outdir:dir:{{in.indir, args.pattern | dirpat2name}}.dir"
-]
-pCELdir2Matrix.lang           = params.Rscript.value
-pCELdir2Matrix.args.fn2sample = 'function(fn) fn'
-pCELdir2Matrix.args.pattern   = '*'
-pCELdir2Matrix.args.norm      = 'rma' # mas5
-pCELdir2Matrix.args.gfile     = ''
-pCELdir2Matrix.args.cdffile   = ''
-pCELdir2Matrix.args.annofile  = ''
-pCELdir2Matrix.args.hmrows    = 500
-pCELdir2Matrix.args.plot      = Box(boxplot = False, heatmap = False, histogram = False)
-pCELdir2Matrix.args.ggs       = Box(
-	boxplot   = Box(ylab  = {0: "Log2 Intensity"}),
-	heatmap   = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-	histogram = Box(labs  = {'x': "Log2 Intensity", "y": "Density"})
-)
-pCELdir2Matrix.args.devpars     = Box(res = 300, width = 2000, height = 2000)
-pCELdir2Matrix.envs.rimport     = rimport
-pCELdir2Matrix.envs.dirpat2name = dirpat2name
-pCELdir2Matrix.script           = "file:scripts/marray/pCELdir2Matrix.r"
+pCELDir2Matrix                  = Proc(desc = 'Merge expression files to a matrix.')
+pCELDir2Matrix.input            = "indir:file, sifile:file"
+pCELDir2Matrix.output           = "outfile:file:{{in.indir, args.pattern | dirpat2name}}.expr.txt"
+pCELDir2Matrix.lang             = params.Rscript.value
+pCELDir2Matrix.args.fn2sample   = 'function(fn) unlist(strsplit(fn, ".", fixed = T))[1]'
+pCELDir2Matrix.args.pattern     = '*'
+pCELDir2Matrix.args.norm        = 'rma' # mas5
+pCELDir2Matrix.args.transfm     = None # mas5
+pCELDir2Matrix.args.cdffile     = ''
+pCELDir2Matrix.envs.rimport     = rimport
+pCELDir2Matrix.envs.dirpat2name = dirpat2name
+pCELDir2Matrix.script           = "file:scripts/marray/pCELDir2Matrix.r"
 
+"""
+@name:
+	pMArrayDEG
+@description:
+	Detect DEGs from microarray data.
+@input:
+	`efile:file`: The expression matrix file
+	`gfile:file`: The sample information file
+@output:
+	`outfile:file`: The file with DEGs
+	`outdir:dir`  : The directory containing files and plots
+@args:
+	`tool`    : The tool to use. Default: `limma`
+	`annofile`: The annotation file for the probes. Default: ``
+		- If not provided, raw probe name will be used.
+	`filter`: The filter of the data. Default: `[0, 0]`
+		- 1st element: the `rowSums` of the expression matrix
+		- 2nd element: how many samples(columns) have to reach the `rowSums` given by the 1st element
+	`pval`  : The pval cutoff for DEGs. Default: `0.05`
+		- You may specify which kind of measurement to use
+		- `p:0.05`: using cutoff 0.05 for pvalue
+		- `q:0.05`: using cutoff 0.05 for qvalue(fdr)
+		- If no prefix is used, then it defaults to pvalue
+	`plot`  : What kind of plots to generate. 
+		- `mdsplot` : The MDS plot
+		- `volplot` : The volcano plot
+		- `maplot`  : The MA plot
+		- `heatmap` : The heatmap. (use `args.hmrows` to determine how many genes to plot)
+	`ggs`   : The extra ggplot element for each plot (should be able to concatenate by `+`).
+		- `maplot`  : for MA plot
+		- `heatmap` : for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+		- `volplot` : for volcano plot
+	`devpars`: The parameters for plotting device. Default: `Box(res = 300, width = 2000, height = 2000)`
+@requires:
+	`r-limma`
+"""
 
-
-pMArrayDEG        = Proc(desc = 'Detect DEGs by microarray data.')
+pMArrayDEG        = Proc(desc = 'Detect DEGs from microarray data.')
 pMArrayDEG.input  = "efile:file, gfile:file"
 pMArrayDEG.output = [
 	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt",
 	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs"
 ]
-pMArrayDEG.args.tool   = 'limma'
-pMArrayDEG.args.filter = '1,2'
-pMArrayDEG.args.pval   = 0.05
-pMArrayDEG.args.hmrows = 100
-pMArrayDEG.args.plot   = Box(
+pMArrayDEG.args.tool     = 'limma'
+pMArrayDEG.args.annofile = ''
+pMArrayDEG.args.filter   = [0, 0]
+pMArrayDEG.args.pval     = 0.05
+pMArrayDEG.args.hmrows   = 100
+pMArrayDEG.args.plot     = Box(
 	mdsplot = True,
-	volplot = True,
+	volplot = Box(fccut = 2, pcut = 0.05),
 	maplot  = False,
 	heatmap = False
 )
 pMArrayDEG.args.ggs = Box(
 	maplot  = Box(),
 	heatmap = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-	volplot = Box()
+	volplot = Box(ylab = {0: '-log10(p-value)'})
 )
 pMArrayDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
 pMArrayDEG.envs.rimport = rimport
