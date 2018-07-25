@@ -8,6 +8,7 @@ import re
 from glob import glob
 from os import path
 from subprocess import list2cmdline
+from collections import OrderedDict
 
 class RuncmdException(Exception):
 	pass
@@ -83,8 +84,11 @@ def cmdargs(params, dash = 'auto', equal = 'auto'):
 	except ImportError:  # py2
 		from pipes import quote
 	ret = []
+	if not isinstance(params, OrderedDict):
+		params = OrderedDict([(key, params[key]) for key in sorted(params.keys())])
+
 	for key, val in params.items():
-		key = key.strip()
+		key = key.split('#')[0].strip()
 		if isinstance(val, bool) and not val: continue
 		item = '--' if (dash == 'auto' and len(key) > 1) else '-' if dash == 'auto' else dash
 		item += key

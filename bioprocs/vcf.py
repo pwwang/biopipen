@@ -315,4 +315,51 @@ pVcf2GTMat.args.na     = 'NA'
 pVcf2GTMat.lang        = params.python.value
 pVcf2GTMat.script      = "file:scripts/vcf/pVcf2GTMat.py"
 
+"""
+@name:
+	pVcfSort
+@description:
+	Sort the vcf records
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file
+@args:
+	`header`: Output header? Default: `True`
+	`by`    : Sort by what, Coordinates (coord) or names (name)? Default: `coord`
+	`tool`  : The tool used to do the sort. Default: `sort` (linux command)
+"""
+pVcfSort               = Proc(desc = 'Sort the vcf records')
+pVcfSort.input         = 'infile:file'
+pVcfSort.output        = 'outfile:file:{{in.infile | fn2}}.vcf'
+pVcfSort.args.header   = True
+pVcfSort.args.by       = 'coord' # or name
+pVcfSort.args.tool     = 'sort' # or bedtools
+pVcfSort.lang          = params.python.value
+pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
 
+"""
+@name:
+	pVcfSubtract
+@description:
+	Subtract one vcf file from another
+@input:
+	`infile1:file`: The vcf file to be subtracted
+	`infile2:file`: The background vcf file
+@output:
+	`outfile:file`: The subtracted vcf file.
+@args:
+	`header`  : Output header? Default: `True`
+	`tool`    : The tool to be used. Default: `bedtools`
+	`bedtools`: The path to bedtools.
+	`any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`
+"""
+pVcfSubtract               = Proc(desc = 'Subtract one vcf file from another')
+pVcfSubtract.input         = 'infile1:file, infile2:file'
+pVcfSubtract.output        = 'outfile:file:{{in.infile1 | fn2}}.subtracted.vcf'
+pVcfSubtract.args.header   = True
+pVcfSubtract.args.any      = True
+pVcfSubtract.args.tool     = 'bedtools'
+pVcfSubtract.args.bedtools = params.bedtools.value
+pVcfSubtract.lang          = params.python.value
+pVcfSubtract.script        = "file:scripts/vcf/pVcfSubtract.py"
