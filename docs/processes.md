@@ -1792,10 +1792,14 @@
         - `outdir:dir`: The output directory, containing the tables and figures.  
 
     - **args**  
-        - `topn`: Top N pathways used to plot. Default: 10  
-        - `col`: The columns index containing the genes. Default: 0  
-        - `delimit`: The delimit of input file. Default: '\\t'  
-        - `dbs`: The databases to do enrichment against. Default: KEGG_2016  
+        - `top`: Top N pathways used to plot. Default: 10  
+        - `genecol`: The columns index containing the genes. Default: 0  
+        - `inopts`: The input options.  
+        	- `delimit`: The delimit of input file. Default: `\t`
+        	- `skip`:    Skip first N lines. Default: `0`
+        	- `comment`: Line comment mark. Default: `#`
+        	- Other parameters fit `bioprocs.utils.tsvio.TsvReader`
+        - `libs`: The databases to do enrichment against. Default: KEGG_2016  
           - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
           - Multiple dbs separated by comma (,)
         - `norm`: Normalize the gene list use [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)  
@@ -1803,6 +1807,7 @@
           - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
         - `plot`: Whether to plot the result. Default: True  
         - `title`: The title for the plot. Default: "Gene enrichment: {db}"  
+        - `cachedir`: The cachedir for gene name normalization.  
 
     - **requires**  
         [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
@@ -1863,7 +1868,7 @@
         	- Could also be `bedpe`, `chiapet.tool`, `hiclib` and `bed12`
 ## marray
 
-!!! hint "pCELdir2Matrix"
+!!! hint "pCELDir2Matrix"
 
     - **description**  
         Convert CEL files to expression matrix
@@ -1872,6 +1877,8 @@
     - **input**  
         - `indir:file`: the directory containing the CEL files, could be gzipped  
         	- If you have files, then use `pFiles2Dir` first
+        - `sifile:File`: the sample infor file, extensions for samples are not necessary.  
+        	- So that it can be also used by `pMArrayDEG`
 
     - **output**  
         - `outfile:file`: the expression matrix file  
@@ -1880,19 +1887,49 @@
     - **args**  
         - `pattern`  : The pattern to filter files. Default `'*'`  
         - `norm`     : The normalization method. Default: rma (mas5)  
-        - `gfile`    : The group file. Default: ''  
+        - `transfm`  : The extra tranformer for the expression values after the nomralization.  
+        	- `Note the expression values have been done with log`
         - `cdffile`  : The cdffile. Default: ''  
-        - `annofile` : The annotation file. Default: ''  
-        - `hmrows`   : How many rows to be used to plot heatmap  
-        - `plot`: Whether to plot  
-        	- `boxplot`   : Whether to plot a boxplot. Default: False
-        	- `heatmap`   : Whether to plot a heatmap. Default: False
-        	- `histogram` : Whether to plot a histgram. Default: False
-        - `devpars`    : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
-        - `ggs`: The ggplot parameters  
-        	- `boxplot`  : The ggplot parameters for boxplot. Default: `Box(ylab = {0: "Log2 Intensity"})`
-        	- `heatmap`  : The ggplot parameters for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
-        	- `histogram`: The ggplot parameters for histgram. Default: `Box(labs = {'x': "Log2 Intensity", "y": "Density"})`
+        - `fn2sample`: The transformer to transform file name  
+
+!!! hint "pMArrayDEG"
+
+    - **description**  
+        Detect DEGs from microarray data.
+
+    - **input**  
+        - `efile:file`: The expression matrix file  
+        - `gfile:file`: The sample information file  
+
+    - **output**  
+        - `outfile:file`: The file with DEGs  
+        - `outdir:dir`  : The directory containing files and plots  
+
+    - **args**  
+        - `tool`    : The tool to use. Default: `limma`  
+        - `annofile`: The annotation file for the probes. Default: ``  
+        	- If not provided, raw probe name will be used.
+        - `filter`: The filter of the data. Default: `[0, 0]`  
+        	- 1st element: the `rowSums` of the expression matrix
+        	- 2nd element: how many samples(columns) have to reach the `rowSums` given by the 1st element
+        - `pval`  : The pval cutoff for DEGs. Default: `0.05`  
+        	- You may specify which kind of measurement to use
+        	- `p:0.05`: using cutoff 0.05 for pvalue
+        	- `q:0.05`: using cutoff 0.05 for qvalue(fdr)
+        	- If no prefix is used, then it defaults to pvalue
+        - `plot`  : What kind of plots to generate.   
+        	- `mdsplot` : The MDS plot
+        	- `volplot` : The volcano plot
+        	- `maplot`  : The MA plot
+        	- `heatmap` : The heatmap. (use `args.hmrows` to determine how many genes to plot)
+        - `ggs`   : The extra ggplot element for each plot (should be able to concatenate by `+`).  
+        	- `maplot`  : for MA plot
+        	- `heatmap` : for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+        	- `volplot` : for volcano plot
+        - `devpars`: The parameters for plotting device. Default: `Box(res = 300, width = 2000, height = 2000)`  
+
+    - **requires**  
+        `r-limma`
 ## math
 
 !!! hint "pRank"
@@ -2495,7 +2532,7 @@
         [`curl`](https://en.wikipedia.org/wiki/CURL)
 ## rnaseq
 
-!!! hint "pEXPRdir2Matrix"
+!!! hint "pExprDir2Matrix"
 
     - **description**  
         Convert expression files to expression matrix
@@ -2524,13 +2561,27 @@
         - `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`  
         - `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`  
 
+!!! hint "pExprPlot"
+
+    - **description**  
+        Plot the expression out.
+
+    - **input**  
+        - `infile:file`: The expression matrix (rows are genes and columns are samples).  
+
+    - **output**  
+        - `outdir:dir`: The directory containing the plots  
+
+    - **args**  
+        
+
 !!! hint "pBatchEffect"
 
     - **description**  
         Remove batch effect with sva-combat.
 
     - **input**  
-        - `expr:file`: The expression file, generated by pEXPRdir2Matrix  
+        - `expr:file`: The expression file, generated by pExprDir2Matrix  
         - `batch:file`: The batch file defines samples and batches.  
 
     - **output**  
