@@ -21,7 +21,7 @@ pGMT2Mat.script = "file:scripts/gsea/pGMT2Mat.py"
 
 """
 @name:
-	pExpmat2Gct
+	pExprMat2GCT
 @description:
 	Convert expression matrix to GCT file.
 	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for file format
@@ -30,15 +30,15 @@ pGMT2Mat.script = "file:scripts/gsea/pGMT2Mat.py"
 @output:
 	`outfile:file`: the gct file
 """
-pExpmat2Gct        = Proc(desc = 'Convert expression matrix to GCT file.')
-pExpmat2Gct.input  = 'expfile:file'
-pExpmat2Gct.output = 'outfile:file:{{ in.expfile | fn }}.gct'
-pExpmat2Gct.lang   = params.python.value
-pExpmat2Gct.script = "file:scripts/gsea/pExpmat2Gct.py"
+pExprMat2GCT        = Proc(desc = 'Convert expression matrix to GCT file.')
+pExprMat2GCT.input  = 'expfile:file'
+pExprMat2GCT.output = 'outfile:file:{{ in.expfile | fn }}.gct'
+pExprMat2GCT.lang   = params.python.value
+pExprMat2GCT.script = "file:scripts/gsea/pExprMat2GCT.py"
 
 """
 @name:
-	pSampleinfo2Cls
+	pSampleinfo2CLS
 @description:
 	Convert sample infomation to cls file.
 	Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#CLS for file format
@@ -50,12 +50,12 @@ pExpmat2Gct.script = "file:scripts/gsea/pExpmat2Gct.py"
 @output:
 	`outfile:file`: the cls file
 """
-pSampleinfo2Cls                    = Proc(desc = 'Convert sample infomation to cls file.')
-pSampleinfo2Cls.input              = 'sifile:file'
-pSampleinfo2Cls.output             = 'outfile:file:{{ in.sifile | fn }}.cls'
-#pSampleinfo2Cls.envs.txtSampleinfo = txt.sampleinfo.py
-pSampleinfo2Cls.lang               = params.python.value
-pSampleinfo2Cls.script             = "file:scripts/gsea/pSampleinfo2Cls.py"
+pSampleinfo2CLS                    = Proc(desc = 'Convert sample infomation to cls file.')
+pSampleinfo2CLS.input              = 'sifile:file'
+pSampleinfo2CLS.output             = 'outfile:file:{{ in.sifile | fn }}.cls'
+#pSampleinfo2CLS.envs.txtSampleinfo = txt.sampleinfo.py
+pSampleinfo2CLS.lang               = params.python.value
+pSampleinfo2CLS.script             = "file:scripts/gsea/pSampleinfo2CLS.py"
 
 """
 @name:

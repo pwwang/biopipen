@@ -3,7 +3,7 @@ from os import path
 from glob import glob
 from pyppl import Proc, Box
 #from .utils import plot, txt, dirnamePattern
-from .rnaseq import pBatchEffect, pCoexp
+from .rnaseq import pBatchEffect, pCoexp, pExprPlot
 from .utils import dirpat2name
 from . import params, rimport
 

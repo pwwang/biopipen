@@ -184,7 +184,7 @@ pUnitConversion.script       = "file:scripts/rnaseq/pUnitConversion.r"
 
 """
 @name:
-	pRNAseqDEG
+	pRNASeqDEG
 @description:
 	Detect DEGs for RNA-seq data
 @input:
@@ -215,32 +215,32 @@ pUnitConversion.script       = "file:scripts/rnaseq/pUnitConversion.r"
 	`volplotggs`: The ggplots options for volplot. Default : []
 	`devpars`   : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
 """
-pRNAseqDEG        = Proc(desc = 'Detect DEGs by RNA-seq data.')
-pRNAseqDEG.input  = "efile:file, gfile:file"
-pRNAseqDEG.output = [
+pRNASeqDEG        = Proc(desc = 'Detect DEGs by RNA-seq data.')
+pRNASeqDEG.input  = "efile:file, gfile:file"
+pRNASeqDEG.output = [
 	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}.DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt",
 	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}.DEGs"
 ]
-pRNAseqDEG.args.tool   = 'edger' # deseq2
-pRNAseqDEG.args.filter = '1,2'
-pRNAseqDEG.args.pval   = 0.05
-pRNAseqDEG.args.hmrows = 100
-pRNAseqDEG.args.plot = Box(
+pRNASeqDEG.args.tool   = 'edger' # deseq2
+pRNASeqDEG.args.filter = '1,2'
+pRNASeqDEG.args.pval   = 0.05
+pRNASeqDEG.args.hmrows = 100
+pRNASeqDEG.args.plot = Box(
 	mdsplot = True,
 	volplot = True,
 	maplot  = False,
 	heatmap = False
 )
-pRNAseqDEG.args.ggs = Box(
+pRNASeqDEG.args.ggs = Box(
 	maplot  = Box(),
 	heatmap = Box(theme = {'axis.text.y': 'r:element_blank()'}),
 	volplot = Box()
 )
 
-pRNAseqDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
-pRNAseqDEG.envs.rimport = rimport
-pRNAseqDEG.lang         = params.Rscript.value
-pRNAseqDEG.script       = "file:scripts/rnaseq/pRNAseqDEG.r"
+pRNASeqDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pRNASeqDEG.envs.rimport = rimport
+pRNASeqDEG.lang         = params.Rscript.value
+pRNASeqDEG.script       = "file:scripts/rnaseq/pRNASeqDEG.r"
 
 """
 @name:
