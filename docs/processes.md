@@ -1712,7 +1712,7 @@
     - **output**  
         - `outfile:file`: output matrix file  
 
-!!! hint "pExpmat2Gct"
+!!! hint "pExprMat2GCT"
 
     - **description**  
         Convert expression matrix to GCT file.
@@ -1724,7 +1724,7 @@
     - **output**  
         - `outfile:file`: the gct file  
 
-!!! hint "pSampleinfo2Cls"
+!!! hint "pSampleinfo2CLS"
 
     - **description**  
         Convert sample infomation to cls file.
@@ -2645,7 +2645,7 @@
         [edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
         [coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
 
-!!! hint "pRNAseqDEG"
+!!! hint "pRNASeqDEG"
 
     - **description**  
         Detect DEGs for RNA-seq data
