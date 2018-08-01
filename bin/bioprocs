@@ -9,6 +9,7 @@ import sys
 from os import path, listdir
 from collections import OrderedDict
 from pyppl import PyPPL, utils, Channel
+from tempfile import gettempdir
 import six
 import bioprocs
 
@@ -292,7 +293,7 @@ class Process(Command):
 		module, pname = self.name.split('.', 1)
 
 		proc   = getattr(__import__('bioprocs.' + module, fromlist = ['bioprocs']), pname)
-		config = {'default': {'_log': {'file': None}}}
+		config = {'_log': {'file': None}, 'default': {'ppldir': path.join(gettempdir(), 'bioprocs.workdir')}}
 		
 		# get input keys
 		if isinstance(proc.config['input'], dict):

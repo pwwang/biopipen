@@ -4,6 +4,7 @@ import sys
 from os import path
 from pyppl import PyPPL, Proc
 from bioprocs import params
+from tempfile import gettempdir
 
 #params.prefix('-')
 params.cmds.required = True
@@ -12,6 +13,8 @@ params.runner        = 'local'
 params.runner.desc   = 'The runner.'
 params.intype        = 'stdin' # or file, stdin, or cmds (pass cmds directly)
 params.intype.desc   = 'Type of option `cmds`, cmds or file?'
+params.cache         = False
+params.cache.desc    = 'Cache the jobs or not?'
 params.forks         = 1
 params.forks.desc    = 'How many jobs to run simultaneously.'
 
@@ -31,13 +34,13 @@ def _procconfig(kwargs = None):
 
 	pCmdRunner        = Proc(desc = 'Using PyPPL to distribute and run commands.')
 	pCmdRunner.runner = params.get('runner', 'local')
-	pCmdRunner.cache  = False
+	pCmdRunner.cache  = params.cache
 	pCmdRunner.errhow = 'halt'
 	pCmdRunner.forks  = int(params.get('forks', 1))
 	pCmdRunner.input  = {'cmd': params['cmds']}
 	pCmdRunner.script = '{{in.cmd}}'
 
-	config = {'_log': {'file': None}}
+	config = {'_log': {'file': None}, 'default': {'ppldir': path.join(gettempdir(), 'bioprocs.workdir')}}
 	return pCmdRunner, config
 
 def _getparams(kwargs):
