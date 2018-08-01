@@ -10,7 +10,7 @@ params.cmds.required = True
 params.cmds.desc     = 'The cmd list. If not provided, STDIN will be used.'
 params.runner        = 'local'
 params.runner.desc   = 'The runner.'
-params.intype        = 'cmds' # or file
+params.intype        = 'stdin' # or file, stdin, or cmds (pass cmds directly)
 params.intype.desc   = 'Type of option `cmds`, cmds or file?'
 params.forks         = 1
 params.forks.desc    = 'How many jobs to run simultaneously.'
@@ -21,13 +21,18 @@ def _procconfig(kwargs = None):
 	if not isinstance(params['cmds'], list):
 		if params.intype == 'cmds':
 			params['cmds'] = params['cmds'].splitlines()
-		else:
+		elif params.intype == 'file':
 			with open(params.cmds) as f:
 				params.cmds = f.read().splitlines()
+		else:
+			params.cmds = []
+			for line in sys.stdin:
+				params.cmds.append(line.strip())
 
-	pCmdRunner = Proc(desc = 'Using PyPPL to distribute and run commands.')
+	pCmdRunner        = Proc(desc = 'Using PyPPL to distribute and run commands.')
 	pCmdRunner.runner = params.get('runner', 'local')
 	pCmdRunner.cache  = False
+	pCmdRunner.errhow = 'halt'
 	pCmdRunner.forks  = int(params.get('forks', 1))
 	pCmdRunner.input  = {'cmd': params['cmds']}
 	pCmdRunner.script = '{{in.cmd}}'
@@ -45,10 +50,10 @@ def _getparams(kwargs):
 		params('hopts', '', True)
 		for key, val in kwargs.items():
 			setattr(params, key, val)
-		return params.parse(args = []).asDict()
+		return params.parse(args = [])
 	else:
 		# called directly
-		return params.parse().asDict()
+		return params.parse()
 
 def run(*args, **kwargs):
 	proc, config = _procconfig(kwargs)
