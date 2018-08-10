@@ -1,6 +1,4 @@
-"""
-A set of processes to generate/process vcf files
-"""
+# A set of processes to generate/process vcf files
 from os import path
 from glob import glob
 from pyppl import Proc, Box
@@ -43,7 +41,7 @@ from . import params
 """
 pVcfFilter              = Proc(desc = 'Filter records in vcf file.')
 pVcfFilter.input        = "infile:file"
-pVcfFilter.output       = "outfile:file:{{in.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcfFilter.output       = "outfile:file:{{in.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
 pVcfFilter.args.fname   = 'pVcfFilter'
 pVcfFilter.args.filters = None
 pVcfFilter.args.gz      = False
@@ -350,16 +348,24 @@ pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
 	`outfile:file`: The subtracted vcf file.
 @args:
 	`header`  : Output header? Default: `True`
+	`bychrom` : Split the vcf file by chromosomes, do subtraction and then merge them. Default: `False`
+		- In case the vcf file is too big. 
+		- Requires both vcf files indexed (.tbi). If not they will be indexed there.
+	`nthread` : # threads to use, only when `bychrom` is True. Default: `1`
 	`tool`    : The tool to be used. Default: `bedtools`
 	`bedtools`: The path to bedtools.
+	`tabix`   : The path to tabix.
 	`any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`
 """
 pVcfSubtract               = Proc(desc = 'Subtract one vcf file from another')
 pVcfSubtract.input         = 'infile1:file, infile2:file'
 pVcfSubtract.output        = 'outfile:file:{{in.infile1 | fn2}}.subtracted.vcf'
+pVcfSubtract.args.bychrom  = False
+pVcfSubtract.args.nthread  = 1
 pVcfSubtract.args.header   = True
 pVcfSubtract.args.any      = True
 pVcfSubtract.args.tool     = 'bedtools'
+pVcfSubtract.args.tabix    = params.tabix.value
 pVcfSubtract.args.bedtools = params.bedtools.value
 pVcfSubtract.lang          = params.python.value
 pVcfSubtract.script        = "file:scripts/vcf/pVcfSubtract.py"

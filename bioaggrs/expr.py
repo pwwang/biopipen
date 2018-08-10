@@ -168,7 +168,7 @@ aRnaseqExpMat2DegGSEA.pGMTFetcher.args.header      = False
 	`pGSEA[!]`         : Do GSEA
 	`pMArrayDEG[!]`    : Call DEGs
 	`pEnrichr[!]`      : Do enrichment with DEGs
-@funcs
+@modules
 	`exprplot`: Plot expression distributions from expression matrix
 		- `pCELDir2Matrix[*]` -> `pExprPlot[!]`
 	`gsea`: Do GSEA
@@ -199,7 +199,7 @@ aCELDir2DEG['pMArrayDEG'].args.maplot   = True
 aCELDir2DEG['pMArrayDEG'].args.heatmap  = True
 aCELDir2DEG['pGMTFetcher'].args .header = False
 # Depends
-aCELDir2DEG['pMArrayDEG'].depends = aCELDir2DEG.pCELDir2Matrix, aCELDir2DEG.pSampleInfo
+aCELDir2DEG['pMArrayDEG', ].depends = ['pCELDir2Matrix, pSampleInfo']
 # Input adjustments
 aCELDir2DEG['pGSEA'].input = lambda ch1, ch2, ch3:       \
 	ch1.repRow(ch2.length() * ch3.length())              \

@@ -371,15 +371,17 @@ class ArgParser(object):
 		l       = 'list',
 		list    = 'list',
 		array   = 'list',
+		o       = 'one',
+		one     = 'one',
 		p       = 'py',
 		py      = 'py',
 		python  = 'py'
 	)
 
-	ARG_NAME_PATTERN     = r'^-([a-zA-Z][\w\._-]*)(?::(a|auto|i|int|f|float|b|bool|s|str|l|list|array|l:i|l:int|l:f|l:float|l:b|l:bool|l:s|l:str|list:i|list:int|list:f|list:float|list:b|list:bool|list:s|list:str|array:i|array:int|array:f|array:float|array:b|array:bool|array:s|array:str|p|py|python))?(?:=(.+))?$'
+	ARG_NAME_PATTERN     = r'^-([a-zA-Z][\w\._-]*)(?::(p(?:y|ython)?|a(?:uto)?|i(?:nt)?|f(?:loat)?|b(?:ool)?|s(?:tr)?|l(?:ist)?|array|(?:a(?:rray)?|l(?:ist)?):(?:i(?:nt)?|f(?:loat)?|b(?:ool)?|s(?:tr)?|o(?:ne)?)))?(?:=(.+))?$'
 	ARG_VALINT_PATTERN   = r'^[+-]?\d+$'
 	ARG_VALFLOAT_PATTERN = r'^[+-]?(?:\d*\.)?\d+(?:[Ee][+-]\d+)?$'
-	ARG_VALBOOL_PATTERN  = r'^(t|T|True|TRUE|true|1|Y|y|Yes|YES|yes|on|ON|On|f|F|False|FALSE|false|0|N|n|No|NO|off|Off|OFF)$'
+	ARG_VALBOOL_PATTERN  = r'^(0|1|t(?:rue)?|T(?:rue|RUE)?|y(?:es)?|Y(?:ES|es)?|o(?:n|ff)|O(?:N|n|ff|FF)|f(?:alse)?|F(?:alse|ALSE)?)$'
 	ARG_VALPY_PATTERN    = r'^(?:py|expr):(.+)$'
 
 	@staticmethod
@@ -438,7 +440,12 @@ class ArgParser(object):
 			ret[argname] = [ret[argname]]
 		if ':' not in argtype: argtype += ':auto'
 		_, argtype = argtype.split(':')
-		ret[argname].append(ArgParser.coerceValue(argval, argtype))
+		if argtype == 'one':
+			if not ret[argname]:
+				ret[argname].append([])
+			ret[argname][0].append(argval)
+		else:
+			ret[argname].append(ArgParser.coerceValue(argval, argtype))
 
 	def __init__(self, argv = None):
 		self.argv = argv is None and sys.argv[1:] or argv

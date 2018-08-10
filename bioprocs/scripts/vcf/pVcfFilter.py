@@ -3,12 +3,16 @@ from shutil import rmtree, copyfile, move
 from sys import stderr
 import vcf
 from vcf.model import _Call
+from bioprocs.utils import runcmd
 
-
-filters   = {{args.filters}}
+filters = {{args.filters}}
+gz      = {{args.gz | repr}}
+outfile = {{out.outfile | quote}}
+if gz:
+	outfile = outfile[:-3]
 
 reader = vcf.Reader(filename='{{in.infile}}')
-writer = vcf.Writer(open('{{out.outfile}}', 'w'), reader)
+writer = vcf.Writer(open(outfile, 'w'), reader)
 for record in reader:
 	if filters(record, record.samples):
 		record.FILTER = ['PASS']
@@ -21,3 +25,8 @@ for record in reader:
 		pass
 		{% endif %}
 writer.close()
+
+if gz:
+	runcmd(['bgzip', outfile])
+
+

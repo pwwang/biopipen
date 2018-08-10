@@ -8,7 +8,7 @@ from bioprocs.common import pFiles2Dir
 from bioprocs.sambam import pBam2Gmut, pBamPair2Smut
 from bioprocs.utils.tsvio import TsvReader
 from bioprocs.utils.sampleinfo import SampleInfo
-from bioaggrs.wxs import aEBam2Bam, aFastq2Bam, aFastqSE2Bam, aBam2SCnv, aBam2GCnv
+from bioaggrs.wxs import aPrepareBam, aBam2SCNV, aBam2GCNV
 
 #params.prefix('-')
 params.intype         = 'bam' # ebam, fastq
@@ -49,48 +49,25 @@ def _procconfig(kwargs = None):
 	
 	saminfo = SampleInfo(params.saminfo)
 
-	aEBam2Bam.pFastq2Sam.args.tool    = 'bowtie2'
+	aPrepareBam.pFastq2Sam.args.tool    = 'bowtie2'
+	aPrepareBam.off('qc')
 
 	pBamDir         = pFiles2Dir
 	pBamDir.runner  = 'local'
 	if params.intype == 'ebam':
-		#aEBam2Bam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
-		aEBam2Bam.input = [Channel.create(saminfo.toChannel(params.indir)).unique()]
+		#aPrepareBam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
+		aPrepareBam.on('ebam')
+		aPrepareBam.off('fastq')
+		aPrepareBam.input = [Channel.create(saminfo.toChannel(params.indir)).unique()]
 		if params.compress:
-			aEBam2Bam.args.gz = True
-			aEBam2Bam.pFastq2Sam.args.outfmt = 'bam'
+			aPrepareBam.args.gz = True
+			aPrepareBam.pFastq2Sam.args.outfmt = 'bam'
 
-		pBamDir.depends = aEBam2Bam
+		pBamDir.depends = aPrepareBam
 		pBamDir.input   = lambda ch: [ch.flatten()]
 
-		starts.append(aEBam2Bam)
+		starts.append(aPrepareBam)
 
-	elif params.intype == 'sfq' or params.intype == 'sfastq':
-		# single-end fastq files
-		# *.fq, *.fq.gz *.fastq, *.fastq.gz
-		# sample info should be:
-		# +--------------+----------+---------+
-		# | Sample	     | Patient  | Group   |
-		# | x_Tumor.bam	 | x        | TUMOR	  |
-		# | x_Normal.bam | x        | NORMAL  |
-		# | ...          | ...      | ...     |
-		# +--------------+----------+---------+
-		# corresponding fastq files would be:
-		# x_Tumor.fq  / x_Tumor.fastq  / x_Tumor.fq.gz  / x_Tumor.fastq.gz
-		# x_Normal.fq / x_Normal.fastq / x_Normal.fq.gz / x_Normal.fastq.gz
-		def bam2fq(fq):
-			fqdir   = path.dirname(fq)
-			bname   = path.splitext(path.basename(fq))[0]
-			exts    = ['.fq', '.fq.gz', '.fq.gz', '.fastq.gz']
-			fqfiles = [path.join(fqdir, bname + ext) for ext in exts]
-			return [fqfile for fqfile in fqfiles if path.isfile(fqfile)][0]
-			
-		aFastqSE2Bam.input = [bam2fq(fq) for fq in Channel.create(saminfo.toChannel(params.indir)).unique()]
-
-		pBamDir.depends = aFastqSE2Bam.pBamRecal
-		pBamDir.input   = lambda ch: [ch.flatten()]
-
-		starts.append(aFastqSE2Bam)
 	elif params.intype == 'fq' or params.intype == 'fastq':
 		# pair-end fastq files
 		# *.fq, *.fq.gz *.fastq, *.fastq.gz
@@ -116,13 +93,15 @@ def _procconfig(kwargs = None):
 			fqfiles2 = [path.join(fqdir, bname + ext) for ext in exts2]
 			fqfile2  = [fqfile for fqfile in fqfiles2 if path.isfile(fqfile)][0]
 			return fqfile1, fqfile2
-			
-		aFastqSE2Bam.input = [bam2fqpair(fq) for fq in saminfo.toChannel(params.indir)]
+		
+		aPrepareBam.off('ebam')
+		aPrepareBam.on('fastq')
+		aPrepareBam.input = [bam2fqpair(fq) for fq in saminfo.toChannel(params.indir)]
 
-		pBamDir.depends = aFastqSE2Bam.pBamRecal
+		pBamDir.depends = aPrepareBam.pBamRecal
 		pBamDir.input   = lambda ch: [ch.flatten()]
 
-		starts.append(aFastqSE2Bam)
+		starts.append(aPrepareBam)
 	else:
 		pBamDir.input = [saminfo.toChannel(params.indir)]
 		starts.append(pBamDir)
@@ -136,15 +115,17 @@ def _procconfig(kwargs = None):
 		pBamPair2Smut.input   = lambda ch: saminfo.toChannel(ch.get(), paired = True)
 		pBamPair2Smut.exdir   = path.join(params.exdir, 'somatic')
 	if 'scnv' in params.muts:
-		aBam2SCnv.pBamDir.depends   = pBamDir
-		aBam2SCnv.pSampleInfo.input = [params.saminfo]
-		aBam2SCnv.exdir             = path.join(params.exdir, 'scnv')
-		starts.append(aBam2SCnv)
+		aBam2SCNV.on('plots')
+		aBam2SCNV.pBamDir.depends   = pBamDir
+		aBam2SCNV.pSampleInfo.input = [params.saminfo]
+		aBam2SCNV.exdir             = path.join(params.exdir, 'scnv')
+		starts.append(aBam2SCNV)
 	if 'gcnv' in params.muts:
-		aBam2GCnv.pBamDir.depends   = pBamDir
-		aBam2GCnv.pSampleInfo.input = [params.saminfo]
-		aBam2GCnv.exdir             = path.join(params.exdir, 'gcnv')
-		starts.append(aBam2GCnv)
+		aBam2GCNV.on('plots')
+		aBam2GCNV.pBamDir.depends   = pBamDir
+		aBam2GCNV.pSampleInfo.input = [params.saminfo]
+		aBam2GCNV.exdir             = path.join(params.exdir, 'gcnv')
+		starts.append(aBam2GCNV)
 		
 	config = {
 		'default': {'forks': int(params.forks)},
@@ -160,10 +141,10 @@ def _getparams(kwargs):
 		params('hopts', '', True)
 		for key, val in kwargs.items():
 			setattr(params, key, val)
-		return params.parse(args = []).asDict()
+		return params.parse(args = [])
 	else:
 		# called directly
-		return params.parse().asDict()
+		return params.parse()
 
 def run(*args, **kwargs):
 	proc, config, runner = _procconfig(kwargs)

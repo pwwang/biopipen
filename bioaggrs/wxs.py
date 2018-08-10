@@ -11,157 +11,80 @@ from bioprocs.utils.sampleinfo import SampleInfo
 
 """
 @name:
-	aEBam2Bam
+	aPrepareBam
 @description:
-	Convert external bam to pair-end fastq and then call-ready bam file.
-@depends:
-	```
-	pBam2Fastq[*] -> pFastqTrim -> pFastq2Sam -> pSam2Bam -> pBamRecal[!]
-	```
+	Prepare call-ready bam files from external bams or fastq files
+@procs:
+	`pBam2Fastq`: Convert external bam files into fastq files
+	`pFastqTrim`: Trim fastq reads.
+	`pFastQC`   : Run fastqc
+	`pFastMC`   : Run multiqc
+	`pFastq2Sam`: Convert fastq files into sam/bam files.
+	`pSam2Bam`  : Convert sam files into bam files and do some cleaning (sort, markdup)
+	`pBamRecal` : Recalibrate bam file.
+@modules
+	`ebam` : The aggregation starts with external bam files (off by default)
+		- `pBam2Fastq[*]` -> `pFastqTrim` -> ...
+	`fastq`: The aggregation starts with external fastq files (on by default, mutually exclusive with `ebam`)
+		- `pFastqTrim[*]` -> ...
+	`qc`   : Do qc for the fastq files (off by default)
+		- `pFastqTrim` -> `pFastQC, pFastMC`
 """
-aEBam2Bam = Aggr(
-	pBam2Fastq,
-	pFastqTrim,
-	pFastq2Sam,
-	pSam2Bam,
-	pBamRecal
-)
-# delegates
-aEBam2Bam.delegate('args.ref', 'pFastq2Sam, pBamRecal')
-aEBam2Bam.delegate('args.gz',  'pBam2Fastq, pFastqTrim')
-# args
-aEBam2Bam.pSam2Bam.args.markdup = True
-
-"""
-@name:
-	aEBam2BamQC
-@description:
-	Convert external bam to pair-end fastq and then call-ready bam file with QC for fastq files.
-@depends:
-	```
-	pBam2Fastq[*] -> pFastqTrim -> pFastq2Sam -> pSam2Bam -> pBamRecal[!]
-	                     \
-	                        pFastQC -> pFastMC[!]
-	```
-"""
-aEBam2BamQC = Aggr(
+aPrepareBam = Aggr(
 	pBam2Fastq,
 	pFastqTrim,
 	pFastQC,
 	pFastMC,
 	pFastq2Sam,
 	pSam2Bam,
-	pBamRecal
+	pBamRecal,
+	depends = False
 )
+# starts and ends
+aPrepareBam.ends = 'pBamRecal'
 # depends
-aEBam2BamQC.ends               = aEBam2BamQC.pFastMC, aEBam2BamQC.pSam2Bam
-aEBam2BamQC.pFastq2Sam.depends = aEBam2BamQC.pFastqTrim
+aPrepareBam['pFastq2Sam',].depends = ['pFastqTrim']
+aPrepareBam['pSam2Bam',].depends   = ['pFastq2Sam']
+aPrepareBam['pBamRecal',].depends  = ['pSam2Bam']
 # delegates
-aEBam2BamQC.delegate('args.ref', 'pFastq2Sam, pBamRecal')
+aPrepareBam.delegate('args.ref', 'pFastq2Sam, pBamRecal')
 # args
-aEBam2BamQC.pSam2Bam.args.markdup = True
+aPrepareBam.pSam2Bam.args.markdup = True
+# modules
+aPrepareBam.module('ebam', starts = 'pBam2Fastq', depends = {'pFastqTrim': 'pBam2Fastq'})
+aPrepareBam.module('fastq', starts = 'pFastqTrim')
+aPrepareBam.module('qc', ends = 'pFastQC, pFastMC', depends = {'pFastQC, pFastMC': ['pFastqTrim'] * 2})
+# inital modules
+aPrepareBam.on('fastq')
+
 
 """
 @name:
-	aFastq2Bam
+	aBam2SCNV
 @description:
-	Convert fastq pair-end files to call-ready bam files.
-@depends:
-	```
-	pFastqTrim[*] -> pFastq2Sam -> pSam2Bam -> pBamRecal[!]
-	```
+	Call CNV with paired control samples
+@procs:
+	`pBamDir`       : The directory with the bam files
+	`pSampleInfo`   : The sample information
+	`pCNVkitPrepare`: Prepare the region/coverage file for CNV calling
+	`pCNVkitCov`    : Get the coverage file for each bam file.
+	`pCNNDir`       : Put all coverage file into a directory.
+	`pCNVkitRef`    : Aggregate the reference cnn file from controls.
+	`pCNVkitFix`    : Fix the coverage for each sample using the reference cnn file.
+	`pCNVkitSeg`    : Segment the regions
+	`pCNVkitCall`   : Call CNVs.
+	`pCNVkitScatter`: Draw scatter plot for CNVs.
+	`pCNVkitDiagram`: Draw diagram plot for CNVs.
+	`pCNVkitHeatmap`: Draw heatmap for CNVs.
+	`pCNVkitReport` : Generate a report for the results.
+	`pCNVkit2Vcf`   : Export the results to VCF file.
+@modules
+	`plots`: Draw plots
+		- ... -> `pCNVkitFix, pCNVkitSeg` -> `pCNVkitScatter[!], pCNVkitDiagram[!], pCNVkitHeatmap[!], pCNVkitReport[!]`
 """
-aFastq2Bam = Aggr(
-	pFastqTrim,
-	pFastq2Sam,
-	pSam2Bam,
-	pBamRecal
-)
-# delegates
-aFastq2Bam.delegate('args.ref', 'pFastq2Sam, pBamRecal')
-# args
-aFastq2Bam.pSam2Bam.args.markdup = True
-
-"""
-@name:
-	aFastqSE2Bam
-@description:
-	Convert fastq single-end files to call-ready bam files.
-@depends:
-	```
-	pFastqSETrim[*] -> pFastqSE2Sam -> pSam2Bam -> pBamRecal[!]
-	```
-"""
-aFastqSE2Bam = Aggr(
-	pFastqSETrim,
-	pFastqSE2Sam,
-	pSam2Bam,
-	pBamRecal
-)
-# delegates
-aFastqSE2Bam.delegate('args.ref', 'pFastqSE2Sam, pBamRecal')
-# args
-aFastqSE2Bam.pSam2Bam.args.markdup = True
-
-"""
-@name:
-	aFastq2BamQC
-@description:
-	Convert fastq pair-end files to call-ready bam files and do QC for fastq files.
-@depends:
-	```
-	pFastqTrim[*] -> pFastq2Sam -> pSam2Bam -> pBamRecal[!]
-	    \
-	       pFastQC -> pFastMC[!]
-	```
-"""
-aFastq2BamQC = Aggr(
-	pFastqTrim,
-	pFastQC,
-	pFastMC,
-	pFastq2Sam,
-	pSam2Bam,
-	pBamRecal
-)
-# delegates
-aFastq2Bam.delegate('args.ref', 'pFastq2Sam, pBamRecal')
-# depends
-aFastq2Bam.pFastq2Sam.depends = aFastq2Bam.pFastqTrim
-# args
-aFastq2Bam.pSam2Bam.args.markdup = True
-
-"""
-@name:
-	aFastqSE2BamQC
-@description:
-	Convert fastq single-end files to call-ready bam files and do QC for fastq files.
-@depends:
-	```
-	pFastqSETrim[*] -> pFastqSE2Sam -> pSam2Bam -> pBamRecal[!]
-	    \
-	       pFastQC -> pFastMC[!]
-	```
-"""
-aFastqSE2BamQC = Aggr(
-	pFastqSETrim,
-	pFastQC,
-	pFastMC,
-	pFastqSE2Sam,
-	pSam2Bam,
-	pBamRecal
-)
-# delegates
-aFastqSE2BamQC.delegate('args.ref', 'pFastqSE2Sam, pBamRecal')
-# depends
-aFastqSE2BamQC.pFastqSE2Sam.depends = aFastqSE2Bam.pFastqSETrim
-# args
-aFastqSE2BamQC.pSam2Bam.args.markdup = True
-
-aBam2SCnv = Aggr(
+aBam2SCNV = Aggr(
 	pFile2Proc.copy(id = 'pBamDir'),     # single job
 	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	#pCNVkitAccess,    # single job        , in: index/tag  , out: access file
-	#pCNVkitTarget,    # single job        , in: access file, out: target file 
 	pCNVkitPrepare,    # prepare files 
 	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
 	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
@@ -177,43 +100,65 @@ aBam2SCnv = Aggr(
 	depends = False
 )
 # defaults
-aBam2SCnv.pBamDir.runner     = 'local'
-aBam2SCnv.pSampleInfo.runner = 'local'
+aBam2SCNV.pBamDir.runner     = 'local'
+aBam2SCNV.pSampleInfo.runner = 'local'
 # delegates
-aBam2SCnv.delegate('args.ref', 'pCNVkitPrepare, pCNVkitRef')
-aBam2SCnv.delegate('args.cnvkit')
-aBam2SCnv.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
+aBam2SCNV.delegate('args.ref', 'pCNVkitPrepare, pCNVkitRef')
+aBam2SCNV.delegate('args.cnvkit', 'pCNVkitRef, pCNVkitFix, pCNVkitSeg, pCNVkitCall, pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport, pCNVkit2Vcf')
+aBam2SCNV.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
 # depends
-aBam2SCnv.starts                 = aBam2SCnv.pBamDir,        aBam2SCnv.pSampleInfo
-aBam2SCnv.ends                   = aBam2SCnv.pCNVkitScatter, aBam2SCnv.pCNVkitDiagram, aBam2SCnv.pCNVkitHeatmap, aBam2SCnv.pCNVkitReport, aBam2SCnv.pCNVkit2Vcf
-#aBam2SCnv.pCNVkitAccess.depends  = aBam2SCnv.pSampleInfo
-#aBam2SCnv.pCNVkitTarget.depends  = aBam2SCnv.pCNVkitAccess
-aBam2SCnv.pCNVkitPrepare.depends = aBam2SCnv.pBamDir,        aBam2SCnv.pSampleInfo
-aBam2SCnv.pCNVkitCov.depends     = aBam2SCnv.pBamDir,        aBam2SCnv.pSampleInfo,    aBam2SCnv.pCNVkitPrepare
-aBam2SCnv.pCNNDir.depends        = aBam2SCnv.pCNVkitCov
-aBam2SCnv.pCNVkitRef.depends     = aBam2SCnv.pCNNDir,        aBam2SCnv.pSampleInfo
-aBam2SCnv.pCNVkitFix.depends     = aBam2SCnv.pCNNDir,        aBam2SCnv.pSampleInfo,    aBam2SCnv.pCNVkitRef
-aBam2SCnv.pCNVkitSeg.depends     = aBam2SCnv.pCNVkitFix
-aBam2SCnv.pCNVkitCall.depends    = aBam2SCnv.pCNVkitSeg
-aBam2SCnv.pCNVkitScatter.depends = aBam2SCnv.pCNVkitFix, aBam2SCnv.pCNVkitSeg
-aBam2SCnv.pCNVkitDiagram.depends = aBam2SCnv.pCNVkitFix, aBam2SCnv.pCNVkitSeg
-aBam2SCnv.pCNVkitHeatmap.depends = aBam2SCnv.pCNVkitSeg
-aBam2SCnv.pCNVkitReport.depends  = aBam2SCnv.pCNVkitFix, aBam2SCnv.pCNVkitSeg
-aBam2SCnv.pCNVkit2Vcf.depends    = aBam2SCnv.pCNVkitCall
+aBam2SCNV.starts                 = aBam2SCNV.pBamDir,        aBam2SCNV.pSampleInfo
+aBam2SCNV.ends                   = aBam2SCNV.pCNVkit2Vcf
+aBam2SCNV.pCNVkitPrepare.depends = aBam2SCNV.pBamDir,        aBam2SCNV.pSampleInfo
+aBam2SCNV.pCNVkitCov.depends     = aBam2SCNV.pBamDir,        aBam2SCNV.pSampleInfo,    aBam2SCNV.pCNVkitPrepare
+aBam2SCNV.pCNNDir.depends        = aBam2SCNV.pCNVkitCov
+aBam2SCNV.pCNVkitRef.depends     = aBam2SCNV.pCNNDir,        aBam2SCNV.pSampleInfo
+aBam2SCNV.pCNVkitFix.depends     = aBam2SCNV.pCNNDir,        aBam2SCNV.pSampleInfo,    aBam2SCNV.pCNVkitRef
+aBam2SCNV.pCNVkitSeg.depends     = aBam2SCNV.pCNVkitFix
+aBam2SCNV.pCNVkitCall.depends    = aBam2SCNV.pCNVkitSeg
+aBam2SCNV.pCNVkit2Vcf.depends    = aBam2SCNV.pCNVkitCall
 # input
-#aBam2SCnv.pCNVkitAccess.input  = lambda ch: path.basename(ch.get()).split('.')[:1]
-aBam2SCnv.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().flatten()]
-aBam2SCnv.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
-aBam2SCnv.pCNNDir.input        = lambda ch: [ch.flatten()]
-aBam2SCnv.pCNVkitRef.input     = lambda ch_covs, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True, raiseExc = False)).colAt(1).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).flatten()]
-aBam2SCnv.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True)).colAt(0).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).cbind(ch_ref)
-aBam2SCnv.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
+aBam2SCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().flatten()]
+aBam2SCNV.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
+aBam2SCNV.pCNNDir.input        = lambda ch: [ch.flatten()]
+aBam2SCNV.pCNVkitRef.input     = lambda ch_covs, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True, raiseExc = False)).colAt(1).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).flatten()]
+aBam2SCNV.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True)).colAt(0).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).cbind(ch_ref)
+aBam2SCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
+# module
+aBam2SCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport', depends = {
+	'pCNVkitScatter': 'pCNVkitFix, pCNVkitSeg',
+	'pCNVkitDiagram': 'pCNVkitFix, pCNVkitSeg',
+	'pCNVkitHeatmap': 'pCNVkitSeg',
+	'pCNVkitReport' : 'pCNVkitFix, pCNVkitSeg',
+})
 
-aBam2GCnv = Aggr(
+"""
+@name:
+	aBam2GCNV
+@description:
+	Call CNV with a flat reference coverage file.
+@procs:
+	`pBamDir`       : The directory with the bam files
+	`pSampleInfo`   : The sample information
+	`pCNVkitPrepare`: Prepare the region/coverage file for CNV calling
+	`pCNVkitCov`    : Get the coverage file for each bam file.
+	`pCNNDir`       : Put all coverage file into a directory.
+	`pCNVkitFlatRef`: Generate a flat reference coverage file.
+	`pCNVkitFix`    : Fix the coverage for each sample using the reference cnn file.
+	`pCNVkitSeg`    : Segment the regions
+	`pCNVkitCall`   : Call CNVs.
+	`pCNVkitScatter`: Draw scatter plot for CNVs.
+	`pCNVkitDiagram`: Draw diagram plot for CNVs.
+	`pCNVkitHeatmap`: Draw heatmap for CNVs.
+	`pCNVkitReport` : Generate a report for the results.
+	`pCNVkit2Vcf`   : Export the results to VCF file.
+@modules
+	`plots`: Draw plots
+		- ... -> `pCNVkitFix, pCNVkitSeg` -> `pCNVkitScatter[!], pCNVkitDiagram[!], pCNVkitHeatmap[!], pCNVkitReport[!]`
+"""
+aBam2GCNV = Aggr(
 	pFile2Proc.copy(id = 'pBamDir'),     # single job
 	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	#pCNVkitAccess,    # single job        , in: index/tag  , out: access file
-	#pCNVkitTarget,    # single job        , in: access file, out: target file 
 	pCNVkitPrepare,    # prepare files 
 	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
 	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
@@ -229,40 +174,51 @@ aBam2GCnv = Aggr(
 	depends = False
 )
 # defaults
-aBam2GCnv.pBamDir.runner     = 'local'
-aBam2GCnv.pSampleInfo.runner = 'local'
+aBam2GCNV.pBamDir.runner     = 'local'
+aBam2GCNV.pSampleInfo.runner = 'local'
 # delegates
-aBam2GCnv.delegate('args.ref', 'pCNVkitPrepare, pCNVkitFlatRef')
-aBam2GCnv.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
+aBam2GCNV.delegate('args.ref', 'pCNVkitPrepare, pCNVkitFlatRef')
+aBam2GCNV.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
+aBam2GCNV.delegate('args.cnvkit', 'pCNVkitFlatRef, pCNVkitFix, pCNVkitSeg, pCNVkitCall, pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport, pCNVkit2Vcf')
 # depends
-aBam2GCnv.starts                 = aBam2GCnv.pBamDir,        aBam2GCnv.pSampleInfo
-aBam2GCnv.ends                   = aBam2GCnv.pCNVkitScatter, aBam2GCnv.pCNVkitDiagram, aBam2GCnv.pCNVkitHeatmap, aBam2GCnv.pCNVkitReport, aBam2GCnv.pCNVkit2Vcf
-#aBam2GCnv.pCNVkitAccess.depends  = aBam2GCnv.pSampleInfo
-#aBam2GCnv.pCNVkitTarget.depends  = aBam2GCnv.pCNVkitAccess
-aBam2GCnv.pCNVkitPrepare.depends = aBam2GCnv.pBamDir,        aBam2GCnv.pSampleInfo
-aBam2GCnv.pCNVkitCov.depends     = aBam2GCnv.pBamDir,        aBam2GCnv.pSampleInfo,    aBam2GCnv.pCNVkitPrepare
-aBam2GCnv.pCNNDir.depends        = aBam2GCnv.pCNVkitCov
-aBam2GCnv.pCNVkitFlatRef.depends = aBam2GCnv.pCNVkitPrepare
-aBam2GCnv.pCNVkitFix.depends     = aBam2GCnv.pCNNDir,        aBam2GCnv.pSampleInfo,    aBam2GCnv.pCNVkitFlatRef
-aBam2GCnv.pCNVkitSeg.depends     = aBam2GCnv.pCNVkitFix
-aBam2GCnv.pCNVkitCall.depends    = aBam2GCnv.pCNVkitSeg
-aBam2GCnv.pCNVkitScatter.depends = aBam2GCnv.pCNVkitFix, aBam2GCnv.pCNVkitSeg
-aBam2GCnv.pCNVkitDiagram.depends = aBam2GCnv.pCNVkitFix, aBam2GCnv.pCNVkitSeg
-aBam2GCnv.pCNVkitHeatmap.depends = aBam2GCnv.pCNVkitSeg
-aBam2GCnv.pCNVkitReport.depends  = aBam2GCnv.pCNVkitFix, aBam2GCnv.pCNVkitSeg
-aBam2GCnv.pCNVkit2Vcf.depends    = aBam2GCnv.pCNVkitCall
+aBam2GCNV.starts                 = aBam2GCNV.pBamDir,        aBam2GCNV.pSampleInfo
+aBam2GCNV.ends                   = aBam2GCNV.pCNVkit2Vcf
+aBam2GCNV.pCNVkitPrepare.depends = aBam2GCNV.pBamDir,        aBam2GCNV.pSampleInfo
+aBam2GCNV.pCNVkitCov.depends     = aBam2GCNV.pBamDir,        aBam2GCNV.pSampleInfo,    aBam2GCNV.pCNVkitPrepare
+aBam2GCNV.pCNNDir.depends        = aBam2GCNV.pCNVkitCov
+aBam2GCNV.pCNVkitFlatRef.depends = aBam2GCNV.pCNVkitPrepare
+aBam2GCNV.pCNVkitFix.depends     = aBam2GCNV.pCNNDir,        aBam2GCNV.pSampleInfo,    aBam2GCNV.pCNVkitFlatRef
+aBam2GCNV.pCNVkitSeg.depends     = aBam2GCNV.pCNVkitFix
+aBam2GCNV.pCNVkitCall.depends    = aBam2GCNV.pCNVkitSeg
+aBam2GCNV.pCNVkit2Vcf.depends    = aBam2GCNV.pCNVkitCall
 # input
-#aBam2GCnv.pCNVkitAccess.input  = lambda ch: path.basename(ch.get()).split('.')[:1]
-aBam2GCnv.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().flatten()]
-aBam2GCnv.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
-aBam2GCnv.pCNNDir.input        = lambda ch: [ch.flatten()]
-aBam2GCnv.pCNVkitFix.input     = lambda ch_covs,   ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get())).colAt(0).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).cbind(ch_ref)
-aBam2GCnv.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
+#aBam2GCNV.pCNVkitAccess.input  = lambda ch: path.basename(ch.get()).split('.')[:1]
+aBam2GCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().flatten()]
+aBam2GCNV.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
+aBam2GCNV.pCNNDir.input        = lambda ch: [ch.flatten()]
+aBam2GCNV.pCNVkitFix.input     = lambda ch_covs,   ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get())).colAt(0).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).cbind(ch_ref)
+aBam2GCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
+# module
+aBam2GCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport', depends = {
+	'pCNVkitScatter': 'pCNVkitFix, pCNVkitSeg',
+	'pCNVkitDiagram': 'pCNVkitFix, pCNVkitSeg',
+	'pCNVkitHeatmap': 'pCNVkitSeg',
+	'pCNVkitReport' : 'pCNVkitFix, pCNVkitSeg',
+})
 
-
+"""
+@name:
+	aVcfs2Maf
+@description:
+	Convert vcf files to maf files and merge them.
+@procs:
+	`pVcf2Maf`  : Convert single vcf file to maf file
+	`pFiles2Dir`: Put the maf files into a directory
+	`pMafMerge` : Merge the maf files.
+"""
 aVcfs2Maf = Aggr(
 	pVcf2Maf,
 	pFiles2Dir,
 	pMafMerge
 )
-aVcfs2Maf.pFiles2Dir.input     = lambda ch: [ch.flatten()]
+aVcfs2Maf.pFiles2Dir.input = lambda ch: [ch.flatten()]
