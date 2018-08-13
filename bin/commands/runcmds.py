@@ -15,6 +15,8 @@ params.intype        = 'stdin' # or file, stdin, or cmds (pass cmds directly)
 params.intype.desc   = 'Type of option `cmds`, cmds or file?'
 params.cache         = False
 params.cache.desc    = 'Cache the jobs or not?'
+params.ppldir        = path.join(gettempdir(), 'bioprocs.workdir')
+params.ppldir.desc   = 'The ppldir to save the pipeline data.'
 params.forks         = 1
 params.forks.desc    = 'How many jobs to run simultaneously.'
 
@@ -40,7 +42,7 @@ def _procconfig(kwargs = None):
 	pCmdRunner.input  = {'cmd': params['cmds']}
 	pCmdRunner.script = '{{in.cmd}}'
 
-	config = {'_log': {'file': None}, 'default': {'ppldir': path.join(gettempdir(), 'bioprocs.workdir')}}
+	config = {'_log': {'file': None}, 'default': {'ppldir': params.ppldir}}
 	return pCmdRunner, config
 
 def _getparams(kwargs):
