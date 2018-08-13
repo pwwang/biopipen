@@ -992,6 +992,65 @@
         - `skip`: The skip first n lines. Default: `0`  
         - `cnames`: The column names. If True, the column names will be added to each split file. Default: `True`  
         - `n`: Number of files to split. Default: `8`  
+## docx
+
+!!! hint "pDocx"
+
+    - **description**  
+        Operating .docx file
+
+    - **input**  
+        - `infile`: A input docx file or a string that used as Heading 0 of a new file  
+        - `codes:files`: A set of files containing python codes operating the docs file.  
+        	- Variable `doc` is used to pass across files.
+
+    - **output**  
+        - `outfile:file`: The output docx file  
+
+    - **args**  
+        - `code`: Some extra code  
+
+    - **requires**  
+        [`python-docx`](http://python-docx.readthedocs.io/en/latest)
+
+!!! hint "pTable2DocxCode"
+
+    - **description**  
+        Convert a table to docx code
+
+    - **input**  
+        - `infile`: The table data file  
+
+    - **output**  
+        - `outfile:file`: The code file  
+
+    - **args**  
+        - `style`: The style of the table  
+        - `bcode`: Some extra BEFORE the table is inserted.  
+        - `acode`: Some extra AFTER the table is inserted.  
+
+    - **requires**  
+        [`python-docx`](http://python-docx.readthedocs.io/en/latest)
+
+!!! hint "pImage2DocxCode"
+
+    - **description**  
+        Convert an image to docx code
+
+    - **input**  
+        - `infile`: The image  
+
+    - **output**  
+        - `outfile:file`: The code file  
+
+    - **args**  
+        - `scale`: The scale of the image. Default: `Box()`  
+        	- With keys `width` and/or `height` in inches.
+        - `bcode`: Some extra BEFORE the table is inserted.  
+        - `acode`: Some extra AFTER the table is inserted.  
+
+    - **requires**  
+        [`python-docx`](http://python-docx.readthedocs.io/en/latest)
 ## eqtl
 
 !!! hint "pMatrixeQTL"
@@ -4101,8 +4160,13 @@
 
     - **args**  
         - `header`  : Output header? Default: `True`  
+        - `bychrom` : Split the vcf file by chromosomes, do subtraction and then merge them. Default: `False`  
+        	- In case the vcf file is too big. 
+        	- Requires both vcf files indexed (.tbi). If not they will be indexed there.
+        - `nthread` : # threads to use, only when `bychrom` is True. Default: `1`  
         - `tool`    : The tool to be used. Default: `bedtools`  
         - `bedtools`: The path to bedtools.  
+        - `tabix`   : The path to tabix.  
         - `any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`  
 ## vcfnext
 
