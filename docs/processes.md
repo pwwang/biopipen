@@ -88,6 +88,8 @@
         - `bedtools`: The path to bedtools. Default: bedtools  
         - `bedops_sort`: The path to bedops' sort-bed. Default: sort-bed  
         - `mem`: The memory to use. Default: 8G  
+        - `by`: Sort by coordinates("coord", default) or name("name")  
+        	- Only available when use tool `sort`
         - `tmpdir`: The tmpdir to use. Default: `$TMPDIR`  
         - `unique`: Remove the dupliated records? Default: True  
         - `params`: Other params for `tool`. Default: {}  
@@ -95,6 +97,39 @@
     - **requires**  
         [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
         [`bedops`](https://github.com/bedops/bedops)
+
+!!! hint "pBedLiftover"
+
+    - **description**  
+        Lift over bed files.
+
+    - **input**  
+        - `infile:file`: The input bed file  
+
+    - **output**  
+        - `outfile:file`: The output file  
+        - `umfile:file` : The unmapped file  
+
+    - **args**  
+        - `liftover`: The liftover program  
+        - `lochain` : the liftover chain file  
+
+    - **require**  
+        `liftover` from UCSC
+
+!!! hint "pGff2Bed"
+
+    - **description**  
+        Convert GTF/GFF file to BED file
+
+    - **input**  
+        - `infile:file`: The input gtf/gff file  
+
+    - **output**  
+        - `outfile:file`: The converted bed file  
+
+    - **args**  
+        - `attr2name`: The function used to convert attributes from GTF/GFF file to BED field 'name'  
 ## bedtools
 
 !!! hint "pBedGetfasta"
@@ -1008,7 +1043,10 @@
         - `outfile:file`: The output docx file  
 
     - **args**  
-        - `code`: Some extra code  
+        - `bcode`: Some extra BEFORE the content is inserted.  
+        - `acode`: Some extra AFTER the content is inserted.  
+        - `error`: What to do when error happens. Default: `exit`  
+        	- `ignore` to add nothing to the document
 
     - **requires**  
         [`python-docx`](http://python-docx.readthedocs.io/en/latest)
@@ -2028,22 +2066,37 @@
 !!! hint "pGEP70"
 
     - **description**  
-        Calculate GEP70 scores for multiple mylenoma 70-gene-signatures
+        Calculate GEP70 scores for multiple mylenoma 70-gene-signatures and do survival plot.
+        Or add one gene to it to see the survival plot.
+        see: https://www.ncbi.nlm.nih.gov/pubmed/17105813
 
     - **input**  
-        - `infile:file`: The input file with expression matrix  
+        - `exprfile:file`: The input file with expression matrix  
         	- Columns are samples, rows are genes
+        	- make sure the expression values are log2-scale normalized
+        - `survfile:file`: The survival data file (header is required).  
+        	- col1: rownames
+        	- col2: the survival time
+        	- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
+        - `gene`: An extra gene to be added to the plot.  
+        	- If not provided, only do the GEP70 plot.
 
     - **output**  
-        - `outfile:file`: The output files with gep70 scores for each sample.  
-        	- Samples become rows, just one column is in the file.
+        - `outdir:file`: The output directory, containing:  
+        	- The survival data file.
+        	- The GEP70 plot and results
+        	- The GEP70 + gene plot and results if `in.gene` is provided.
 
     - **args**  
-        - `inopts`: The input options.  
-        	- `cnames`: Whether the input file has column names. Default: `True`
         - `gep70`: The GEP70 genes.   
         	- Column 1: up-regulated genes (51)
         	- Column 2: down-regulated genes (19)
+        - `inunit`  : The time unit in input file. Default: days  
+        - `outunit` : The output unit for plots. Default: days  
+        - `params`  : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': 'Log-rank p = {pval}'})`  
+        	- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
+        - `ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.  
+        - `devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`  
 
 !!! hint "pNCBI"
 
@@ -2520,6 +2573,10 @@
         	- ratios with `variable`, `survrate1`, `survrate2`, `ssratio`, where `survrate1` and
         		`survrate2` are survival rates in group1 and group2, respectively,
         		and `ssratio` is sample size ratio in group1/group2
+        - `ngroup1`: The size of 1st group, for detailed input file  
+        - `ngroup2`: The size of 2nd group, for detailed input file  
+        - `ngroup3`: The size of 3rd group, for detailed input file  
+        - `ngroup4`: The size of 4th group, for detailed input file  
 
     - **output**  
         - `outfile:file`: The output file with columns:  
@@ -2529,6 +2586,15 @@
         	- SSize1: the sample size for group1
         	- SSize2: the sample size for group2
         	- Total: the total sample size
+
+    - **args**  
+        - `rnames`: Whether the detailed input file has row names. Default: `True`  
+        - `plot`  : Plot the results? Default: `False`  
+        - `ngroup`: Number of groups to divide into for detailed input file. Default: `2`  
+        - `intype`: The input file type. Either `detailed` (default) or `ratio`  
+        - `alphas`: The alpha values (two-sided). You need to *2 for one-sided. Default:  
+        	- `[.005, .01, .05, .1]`
+        - `betas` : 1-power. Default: `[.05, .1, .2]`  
 ## rank
 
 !!! hint "pRankProduct"
@@ -3434,7 +3500,7 @@
         	- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
         - `covfile`   : The covariant file. Require rownames in both this file and input file.  
         - `ngroups`   : Number of curves to plot (the continuous number will divided into `ngroups` groups.  
-        - `params` : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
+        - `params`    : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`  
         	- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
         - `ggs`       : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.  
         - `pval`      : The method to calculate the pvalue shown on the plot. Default: True (logrank)  
@@ -3507,16 +3573,16 @@
         	```
         	- `raw`: The raw values:
         	```
-        	# Contingency table rows: Mut, Non
-        	# Contingency table cols: Disease, Healthy
+        	# Contingency table rows: Disease, Healthy
+        	# Contingency table cols: Mut, Non
         	#
-        	#         | S1 | S2 | ... | Sn |
-        	# --------+----+----+-----+----+
-        	# Disease | 1  | 0  | ... | 1  |
-        	# Healthy | 0  | 1  | ... | 0  |
-        	# --------+----+----+-----+----+
-        	# Mut     | 1  | 0  | ... | 1  |
-        	# Non     | 0  | 1  | ... | 0  |
+        	#    | Disease Healthy | Mut  Non  |
+        	# ---+--------+--------+-----+-----+
+        	# S1 |    1   |    0   |  0  |  1  |
+        	# S2 |    0   |    1   |  1  |  0  |
+        	# .. |   ...  |   ...  | ... | ... |
+        	# Sn |    0   |    1   |  0  |  1  |
+        	#
         	```
         - `ctcols`: The colnames of contingency table if input file is raw values  
         	- You may also specify them in the head of the input file
@@ -3550,16 +3616,16 @@
         	- `raw` (default): The raw values:
         	```
         	#
-        	#         | S1 | S2 | ... | Sn |
-        	# --------+----+----+-----+----+
-        	# A       | 1  | 0  | ... | 1  |
-        	# B       | 0  | 1  | ... | 0  |
-        	# ...     |           ...      |
-        	# X       | 0  | 1  | ... | 0  |
-        	# --------+----+----+-----+----+
+        	#    | A | B | ... | X |
+        	# ---+---+---+-----+---+
+        	# S1 | 1 | 0 | ... | 1 |
+        	# S2 | 0 | 1 | ... | 0 |
+        	# .. | 0 | 0 | ... | 1 |
+        	# Sn | 0 | 1 | ... | 1 |
         	#
         	```
         - `padj`: The p-value adjustment method, see `p.adjust.methods` in R. Default: `BH`  
+        - `rnames`: If the input file has rownames for `raw` input type.  
 
 !!! hint "pMediation"
 
