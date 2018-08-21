@@ -104,7 +104,7 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 		- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
 	`covfile`   : The covariant file. Require rownames in both this file and input file.
 	`ngroups`   : Number of curves to plot (the continuous number will divided into `ngroups` groups.
-	- `params` : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
+	`params`    : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
 		- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
 	`ggs`       : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
 	`pval`      : The method to calculate the pvalue shown on the plot. Default: True (logrank)
@@ -120,7 +120,7 @@ pSurvival.output = [
 	'outfile:file:{{in.infile | fn2}}.dir/{{in.infile | fn2}}.survival.txt', 
 	'outdir:dir:{{in.infile | fn2}}.dir'
 ]
-pSurvival.args.inunit    = 'days' # months,                                                                                  weeks,                                years
+pSurvival.args.inunit    = 'days' # months, weeks, years
 pSurvival.args.outunit   = 'days'
 pSurvival.args.method    = 'cox' # tm or auto
 pSurvival.args.covfile   = None
@@ -203,27 +203,27 @@ pChiSquare.script = "file:scripts/stats/pChiSquare.r"
 		```
 		- `raw`: The raw values:
 		```
-		# Contingency table rows: Mut, Non
-		# Contingency table cols: Disease, Healthy
+		# Contingency table rows: Disease, Healthy
+		# Contingency table cols: Mut, Non
 		#
-		#         | S1 | S2 | ... | Sn |
-		# --------+----+----+-----+----+
-		# Disease | 1  | 0  | ... | 1  |
-		# Healthy | 0  | 1  | ... | 0  |
-		# --------+----+----+-----+----+
-		# Mut     | 1  | 0  | ... | 1  |
-		# Non     | 0  | 1  | ... | 0  |
+		#    | Disease Healthy | Mut  Non  |
+		# ---+--------+--------+-----+-----+
+		# S1 |    1   |    0   |  0  |  1  |
+		# S2 |    0   |    1   |  1  |  0  |
+		# .. |   ...  |   ...  | ... | ... |
+		# Sn |    0   |    1   |  0  |  1  |
+		#
 		```
 	`ctcols`: The colnames of contingency table if input file is raw values
 		- You may also specify them in the head of the input file
 """
-pFisherExact = Proc(desc = "Do fisher exact test.")
-pFisherExact.input = "infile:file"
-pFisherExact.output = "outfile:file:{{in.infile | fn2}}.fexact.txt"
+pFisherExact             = Proc(desc = "Do fisher exact test.")
+pFisherExact.input       = "infile:file"
+pFisherExact.output      = "outfile:file:{{in.infile | fn2}}.fexact.txt"
 pFisherExact.args.intype = 'cont' # raw
-pFisherExact.args.ctcols = ''
-pFisherExact.lang = params.Rscript.value
-pFisherExact.script = "file:scripts/stats/pFisherExact.r"
+pFisherExact.args.ctcols = []
+pFisherExact.lang        = params.Rscript.value
+pFisherExact.script      = "file:scripts/stats/pFisherExact.r"
 
 """
 @name:
@@ -252,20 +252,21 @@ pFisherExact.script = "file:scripts/stats/pFisherExact.r"
 		- `raw` (default): The raw values:
 		```
 		#
-		#         | S1 | S2 | ... | Sn |
-		# --------+----+----+-----+----+
-		# A       | 1  | 0  | ... | 1  |
-		# B       | 0  | 1  | ... | 0  |
-		# ...     |           ...      |
-		# X       | 0  | 1  | ... | 0  |
-		# --------+----+----+-----+----+
+		#    | A | B | ... | X |
+		# ---+---+---+-----+---+
+		# S1 | 1 | 0 | ... | 1 |
+		# S2 | 0 | 1 | ... | 0 |
+		# .. | 0 | 0 | ... | 1 |
+		# Sn | 0 | 1 | ... | 1 |
 		#
 		```
 	`padj`: The p-value adjustment method, see `p.adjust.methods` in R. Default: `BH`
+	`rnames`: If the input file has rownames for `raw` input type.
 """
 pPWFisherExact              = Proc(desc = "Do pair-wise fisher exact test.")
 pPWFisherExact.input        = "infile:file"
 pPWFisherExact.output       = "outfile:file:{{in.infile | fn2}}.pwfexact.txt"
+pPWFisherExact.args.rnames  = True
 pPWFisherExact.args.intype  = 'raw' # pairs
 pPWFisherExact.args.padj    = 'BH'
 pPWFisherExact.envs.rimport = rimport

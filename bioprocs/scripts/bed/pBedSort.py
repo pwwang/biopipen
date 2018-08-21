@@ -3,13 +3,18 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 params = Box()
 
+by = {{args.by | quote}}
+
 ####### sort
 {% if args.tool | lambda x: x == 'sort' %}
 params['T']  = {{args.tmpdir | quote}}
 params['S']  = {{args.mem | quote}}
 params['u']  = {{args.unique}}
-params['k']  = '1,1'
-params[' k'] = '2,2n'
+if by == 'coord':
+	params['k']  = '1,1'
+	params[' k'] = '2,2n'
+else:
+	params['k'] = '4'
 params.update({{args.params}})
 cmd = 'grep "^#" {{in.infile | quote}} > {{out.outfile | quote}}; grep -v "^#" {{in.infile | quote}} | sort %s >> {{out.outfile | quote}}' % cmdargs(params)
 

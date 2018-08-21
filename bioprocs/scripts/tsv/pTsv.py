@@ -1,15 +1,16 @@
 from pyppl import Box
-from bioprocs.utils.tsvio import tsvops
+from bioprocs.utils.tsvio import tsvops, TsvRecord
 
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
-inopts  = {{args.inopts}}
-outopts = {{args.outopts}}
+infile    = {{in.infile | quote}}
+outfile   = {{out.outfile | quote}}
+inopts    = {{args.inopts}}
+outopts   = {{args.outopts}}
+opshelper = {{args.opshelper | repr}}
+if not isinstance(opshelper, list):
+	opshelper = [opshelper]
 
-opshelper = [line for line in {{args.opshelper | quote}}.splitlines() if line]
-while opshelper and (all([line and line[0] == ' ' for line in opshelper]) or all([line and line[0] == '\t' for line in opshelper])):
-	opshelper = [line[1:] for line in opshelper]
-exec('\n'.join(opshelper))
+opshelper = [line for line in opshelper if line]
+exec('\n'.join(opshelper), globals())
 
 ops = {{args.ops}}
 

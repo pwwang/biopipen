@@ -47,16 +47,20 @@ for (name in names(cont.tables)) {
 
 #
 # 
-#         | S1 | S2 | ... | Sn |
-# --------+----+----+-----+----+
-# A       | 1  | 0  | ... | 1  |
-# B       | 0  | 1  | ... | 0  |
-# ...     |           ...      |
-# X       | 0  | 1  | ... | 0  |
-# --------+----+----+-----+----+
+#    | A | B | ... | X |
+# ---+---+---+-----+---+
+# S1 | 1 | 0 | ... | 1 |
+# S2 | 0 | 1 | ... | 0 |
+# .. | 0 | 0 | ... | 1 |
+# Sn | 0 | 1 | ... | 1 |
 #
-indata   = read.table(infile, sep = "\t", header = T, row.names = 1, check.names = F)
-it.names = rownames(indata)
+inopts.rnames = {{args.rnames | R}}
+indata = read.table(infile, sep = "\t", header = T, row.names = if (inopts.rnames) 1 else NULL, check.names = F)
+indata = indata[complete.cases(indata), , drop = F]
+if (!inopts.rnames) {
+	rownames(indata) = paste0('ROW', 1:nrow(indata))
+}
+it.names = colnames(indata)
 cont.tables = list()
 for (name1 in it.names) {
 	for (name2 in it.names) {
@@ -66,10 +70,10 @@ for (name1 in it.names) {
 		name1minus = paste0(name1, '-')
 		name2plus  = paste0(name2, '+')
 		name2minus = paste0(name2, '-')
-		name1plus.cols  = colnames(indata[, which(indata[name1,]==1), drop = F])
-		name1minus.cols = colnames(indata[, which(indata[name1,]==0), drop = F])
-		name2plus.cols  = colnames(indata[, which(indata[name2,]==1), drop = F])
-		name2minus.cols = colnames(indata[, which(indata[name2,]==0), drop = F])
+		name1plus.cols  = rownames(indata[indata[,name1]==1, , drop = F])
+		name1minus.cols = rownames(indata[indata[,name1]==0, , drop = F])
+		name2plus.cols  = rownames(indata[indata[,name2]==1, , drop = F])
+		name2minus.cols = rownames(indata[indata[,name2]==0, , drop = F])
 		cont.table = matrix(0, ncol = 2, nrow = 2)
 		rownames(cont.table) = c(name1plus, name1minus)
 		colnames(cont.table) = c(name2plus, name2minus)

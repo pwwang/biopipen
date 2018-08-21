@@ -5,27 +5,46 @@ from bioprocs import params, rimport
 @name:
 	pGEP70
 @description:
-	Calculate GEP70 scores for multiple mylenoma 70-gene-signatures
+	Calculate GEP70 scores for multiple mylenoma 70-gene-signatures and do survival plot.
+	Or add one gene to it to see the survival plot.
+	see: https://www.ncbi.nlm.nih.gov/pubmed/17105813
 @input:
-	`infile:file`: The input file with expression matrix
+	`exprfile:file`: The input file with expression matrix
 		- Columns are samples, rows are genes
+		- make sure the expression values are log2-scale normalized
+	`survfile:file`: The survival data file (header is required).
+		- col1: rownames
+		- col2: the survival time
+		- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
+	`gene`: An extra gene to be added to the plot.
+		- If not provided, only do the GEP70 plot.
 @output:
-	`outfile:file`: The output files with gep70 scores for each sample.
-		- Samples become rows, just one column is in the file.
+	`outdir:file`: The output directory, containing:
+		- The survival data file.
+		- The GEP70 plot and results
+		- The GEP70 + gene plot and results if `in.gene` is provided.
 @args:
-	`inopts`: The input options.
-		- `cnames`: Whether the input file has column names. Default: `True`
 	`gep70`: The GEP70 genes. 
 		- Column 1: up-regulated genes (51)
 		- Column 2: down-regulated genes (19)
+	`inunit`  : The time unit in input file. Default: days
+	`outunit` : The output unit for plots. Default: days
+	`params`  : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': 'Log-rank p = {pval}'})`
+		- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
+	`ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
+	`devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
 """
-pGEP70              = Proc(desc = 'Calculate GEP70 scores for multiple mylenoma 70-gene-signatures')
-pGEP70.input        = 'infile:file' # make sure the expression values are log2-scale normalized
-pGEP70.output       = 'outfile:file:{{in.infile | fn2}}.gep70.txt'
+pGEP70              = Proc(desc = 'Do GEP70 plot for multiple mylenoma 70-gene-signatures')
+pGEP70.input        = 'exprfile:file, survfile:file, gene'
+pGEP70.output       = 'outdir:dir:{{in.survfile | fn2}}.gep70{{in.gene}}'
 pGEP70.args.gep70   = params.gep70.value
-pGEP70.args.inopts  = Box(cnames = True)
-pGEP70.args.lang    = 'Rscript'
+pGEP70.args.inunit  = 'days' # months, weeks, years
+pGEP70.args.outunit = 'days'
+pGEP70.args.params  = Box({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
+pGEP70.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pGEP70.args.ggs     = Box(table = Box())
 pGEP70.envs.rimport = rimport
+pGEP70.lang         = 'Rscript'
 pGEP70.script       = "file:scripts/misc/pGEP70.r"
 
 """

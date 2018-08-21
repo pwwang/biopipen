@@ -1,12 +1,19 @@
 {{rimport}}('plot.r', '__init__.r')
 
+set.seed(8525)
+
 infile  = {{in.infile | R}}
+outfile = {{out.outfile | R}}
 outdir  = {{out.outdir | R}}
 intype  = {{args.intype | R}}
 rnames  = {{args.rnames | lambda x: 1 if x else 'NULL' | R}}
 ngroup  = as.integer({{args.ngroup | R}})
 alphas  = {{args.alphas | lambda x: x if isinstance(x, list) else [float(a.strip()) for a in x.split(',')] if isinstance(x, str) else [x] | R}}
 betas   = {{args.betas | lambda x: x if isinstance(x, list) else [float(a.strip()) for a in x.split(',')] if isinstance(x, str) else [x] | R}}
+ngroup1 = {{in.ngroup1 | : int(v1) if v1 else 0}}
+ngroup2 = {{in.ngroup2 | : int(v1) if v1 else 0}}
+ngroup3 = {{in.ngroup3 | : int(v1) if v1 else 0}}
+ngroup4 = {{in.ngroup4 | : int(v1) if v1 else 0}}
 
 ncut = function(dat, n, prefix = 'q') {
 	diffdata = max(dat) - min(dat)
@@ -14,7 +21,17 @@ ncut = function(dat, n, prefix = 'q') {
 	diffdata = diffdata * 1e-8
 	fakedata = dat + runif(length(dat), diffdata/10, diffdata)
 	q = quantile(fakedata, probs = seq(0, 1, 1/n), include.lowest = T)
-	return(cut(fakedata, q, labels = paste0(prefix, 1:n)))
+	return(cut(fakedata, q, labels = paste0(prefix, 1:n), include.lowest = T))
+}
+
+assignGroup = function(dat, ngroups, prefix = 'q') {
+	r = rank(dat, ties.method = 'first')
+	b = 0
+	for (i in 1:length(ngroups)) {
+		dat[r > b & r <= b + ngroups[i]] = paste0(prefix, i)
+		b = b + ngroups[i]
+	}
+	return(dat)
 }
 
 data = list()
@@ -31,9 +48,20 @@ if (intype == 'detail' || intype == 'detailed') {
 			logger('Variable', var, 'skipped, as only one ground found.', level = 'WARN')
 			next
 		} else if (lengroup > ngroup) {
-			detailed[, var] = ncut(detailed[, var], ngroup)
-			lengroup = ngroup
-			groups   = levels(factor(detailed[, var, drop = T]))
+			if (ngroup1 == 0) {
+				detailed[, var] = ncut(detailed[, var], ngroup)
+				lengroup = ngroup
+				groups   = levels(factor(detailed[, var, drop = T]))
+			} else {
+				ngroups = c()
+				if (ngroup1 > 0) ngroups = c(ngroups, ngroup1)
+				if (ngroup2 > 0) ngroups = c(ngroups, ngroup2)
+				if (ngroup3 > 0) ngroups = c(ngroups, ngroup3)
+				if (ngroup4 > 0) ngroups = c(ngroups, ngroup4)
+				detailed[, var] = assignGroup(detailed[, var], ngroups)
+				lengroup = length(ngroups)
+				groups   = levels(factor(detailed[, var, drop = T]))
+			}
 		}
 
 		for (i in 1:(lengroup-1)) {
@@ -170,5 +198,4 @@ for (var in names(data)) {
 	{% endif %}
 }
 
-outfile = file.path(outdir, '{{out.outdir | fn}}.ssizes')
 write.table(outs, outfile, sep = '\t', row.names = F, col.names = T, quote = F)

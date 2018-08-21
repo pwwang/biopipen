@@ -43,11 +43,11 @@ if (inopts$cnames) {
 	if (inopts$rnames) {
 		codes = c(codes, "header[0].text = ''")
 		for (i in 1:ncols) {
-			codes = c(codes, sprintf("header[%s].text = '%s'", i, cnames[i]))
+			codes = c(codes, sprintf("header[%s].text = '''%s'''", i, cnames[i]))
 		}
 	} else {
 		for (i in 1:ncols) {
-			codes = c(codes, sprintf("header[%s].text = '%s'", i-1, cnames[i]))
+			codes = c(codes, sprintf("header[%s].text = '''%s'''", i-1, cnames[i]))
 		}
 	}
 }
@@ -55,16 +55,16 @@ rnames = rownames(mat)
 for (i in 1:nrows) {
 	rindex = if (inopts$cnames) i else i-1
 	rname  = rnames[i]
-	rdata  = mat[i,]
+	rdata  = mat[i,,drop=T]
 	codes = c(codes, sprintf("row = table.rows[%d].cells", rindex))
 	if (inopts$rnames) {
-		codes = c(codes, sprintf("row[0].text = '%s'", rname))
+		codes = c(codes, sprintf("row[0].text = '''%s'''", rname))
 		for (j in 1:ncols) {
-			codes = c(codes, sprintf("row[%d].text = '%s'", j, rdata[j]))
+			codes = c(codes, sprintf("row[%d].text = '''%s'''", j, unlist(rdata[j])))
 		}
 	} else {
 		for (j in 1:ncols) {
-			codes = c(codes, sprintf("row[%d].text = '%s'", j-1, rdata[j]))
+			codes = c(codes, sprintf("row[%d].text = '''%s'''", j-1, unlist(rdata[j])))
 		}
 	}
 }

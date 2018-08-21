@@ -275,11 +275,12 @@ class TsvReaderBed(TsvReaderBase):
 		self.index = 1
 
 	def _parse(self, line):
+		self.meta.SCORE = str
 		r = super(TsvReaderBed, self)._parse(line)
 		if not r.NAME:
 			r.NAME = 'BED' + str(self.index)
 			self.index += 1
-		if not r.SCORE: r.SCORE   = 0.0
+		if not r.SCORE or r.SCORE == '.': r.SCORE   = 0.0
 		if not r.STRAND: r.STRAND = '+'
 		return r
 

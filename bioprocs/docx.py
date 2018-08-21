@@ -13,14 +13,19 @@ from . import params
 @output:
 	`outfile:file`: The output docx file
 @args:
-	`code`: Some extra code
+	`bcode`: Some extra BEFORE the content is inserted.
+	`acode`: Some extra AFTER the content is inserted.
+	`error`: What to do when error happens. Default: `exit`
+		- `ignore` to add nothing to the document
 @requires:
 	[`python-docx`](http://python-docx.readthedocs.io/en/latest)
 """
 pDocx             = Proc(desc = 'Operating .docx file')
 pDocx.input       = 'infile, codes:files'
 pDocx.output      = 'outfile:file:{{in.infile | lambda f, path = __import__("os").path: bn(f) if path.isfile(f) else str2fn(f) + ".docx"}}'
-pDocx.args.code   = []
+pDocx.args.bcode  = []
+pDocx.args.acode  = []
+pDocx.args.error  = 'exit' # or ignore
 pDocx.envs.str2fn = lambda s, re = __import__('re'): re.sub(r'[^\w\-_\.]', '_', s)[:32]
 pDocx.lang        = params.python.value
 pDocx.script      = "file:scripts/docx/pDocx.py"

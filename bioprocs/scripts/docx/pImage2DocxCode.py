@@ -7,7 +7,7 @@ scale   = {{args.scale | dict}}
 with open(outfile, 'w') as f:
 	if not isinstance(bcode, list):
 		bcode = [bcode]
-	f.write('# Before image inserted:')
+	f.write('# Before image inserted:\n')
 	for bc in bcode:
 		f.write(bc + '\n')
 	f.write('\n')

@@ -141,6 +141,8 @@ useCox = function(dat, varname) {
 		km            = useKM(dat, varname, params)
 		ret$plot      = km$plot
 		ret$quantdata = km$quantdata
+
+		ret$summary = cbind(ret$summary, groups = rep(km$groups, nrow(ret$summary)))
 	}
 
 	return(ret)
@@ -172,18 +174,15 @@ useKM = function(dat, varname, params = NULL) {
 	#   - summary: The result table
 	#   - plot:    The survival plot
 	#   - quantdata: The data to determine the quantile percentage
-	ret   = list(summary = matrix(ncol = 5, nrow = 0), plot = NULL, quantdata = NULL)
+	ret   = list(summary = matrix(ncol = 6, nrow = 0), plot = NULL, quantdata = NULL)
 
 	# if there are way more levels than expected number of groups, do the cut
 	if (nvlvls > ngroups) {
 		if (ngroups == 2 && autogroup) {
-			quantsteps = seq(0.05, 0.95, by = 0.005)
+			quantsteps = seq(0.15, 0.85, by = 0.005)
 			survscores = sapply(quantsteps, function(x){
 				newdata = dat
-				newdata[, var] = paste0(
-					"q", 
-					c(1, 2)[as.numeric(dat[, var] >= quantile(dat[, var], x)) + 1]
-				)
+				newdata[, var] = as.numeric(dat[, var] >= quantile(dat[, var], x))
 				tryCatch({
 					coxph(fmula, data = newdata)$score
 				}, error = function(x) 1)
@@ -220,12 +219,12 @@ useKM = function(dat, varname, params = NULL) {
 			)
 		}
 
-		colnames(ret$summary) = c('var', 'method', 'test', 'df', 'pvalue')
+		colnames(ret$summary) = c('var', 'method', 'test', 'groups', 'df', 'pvalue')
 		if (nvlvls == 1) {
-			ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', 1, '1.00E+00'))
+			ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', nrow(dat), 1, '1.00E+00'))
 			return (ret)
 		} else {
-			ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', 1, survpval$pval))
+			ret$summary = rbind(ret$summary, c(varname, 'logrank', 'NA', paste(table(dat[, var]), collapse = ','), 1, survpval$pval))
 			ret$summary = pretty.numbers(ret$summary, list(
 				pvalue = '%.2E'
 			))
@@ -268,6 +267,7 @@ useKM = function(dat, varname, params = NULL) {
 		if (length(varlvls) < length(params$legend.labs))
 			params$legend.labs = varlvls
 
+		ret$groups    = paste(table(dat[, var]), collapse = ',')
 		ret$plot      = do.call(ggsurvplot, params)
 		ret$plot$plot = apply.ggs(ret$plot$plot, mainggs)
 

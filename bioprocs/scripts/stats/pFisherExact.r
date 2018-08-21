@@ -15,17 +15,19 @@ cont.table = read.table(infile, sep = "\t", header = T, row.names = 1, check.nam
 {% else %}
 
 #
-# Contingency table rows: Mut, Non
-# Contingency table cols: Disease, Healthy
+# Contingency table rows: Disease, Healthy
+# Contingency table cols: Mut, Non
 # 
-#         | S1 | S2 | ... | Sn |
-# --------+----+----+-----+----+
-# Disease | 1  | 0  | ... | 1  |
-# Healthy | 0  | 1  | ... | 0  |
-# --------+----+----+-----+----+
-# Mut     | 1  | 0  | ... | 1  |
-# Non     | 0  | 1  | ... | 0  |
-#
+#    | Disease Healthy | Mut  Non  |
+# ---+--------+--------+-----+-----+
+# S1 |    1   |    0   |  0  |  1  |
+# S2 |    0   |    1   |  1  |  0  |
+# .. |   ...  |   ...  | ... | ... |
+# Sn |    0   |    1   |  0  |  1  |
+
+# NOTE: now it should the transpose of it
+
+
 ct.cnames = c()
 ct.rnames = c()
 {% if args.ctcols | lambda x: x and isinstance(x, list) %}
@@ -52,10 +54,10 @@ if (length(ct.rnames) == 0 && length(ct.cnames) == 0) {
 	stop('No row names and col names specified for contingency table.')
 }
 if (length(ct.rnames) == 0) {
-	ct.rnames = setdiff(rownames(raw.data), ct.cnames)
+	ct.rnames = setdiff(colnames(raw.data), ct.cnames)
 }
 if (length(ct.cnames) == 0) {
-	ct.cnames = setdiff(rownames(raw.data), ct.rnames)
+	ct.cnames = setdiff(colnames(raw.data), ct.rnames)
 }
 
 # transposed cont.table
@@ -65,8 +67,8 @@ rownames(cont.table) = ct.rnames
 # get the number of each contingency cell
 for (rname in ct.rnames) {
 	for (cname in ct.cnames) {
-		tmp1 = raw.data[rname, ] == 1
-		tmp2 = raw.data[cname, ] == 1
+		tmp1 = raw.data[, rname] == 1
+		tmp2 = raw.data[, cname] == 1
 		tmp  = tmp1 & tmp2
 		cont.table[rname, cname] = length(tmp[tmp])
 	}
