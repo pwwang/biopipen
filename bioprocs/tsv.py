@@ -291,3 +291,32 @@ pSimRead.script       = "file:scripts/tsv/pSimRead.py"
 	Alias of pSimRead
 """
 pTsvJoin = pSimRead.copy()
+
+"""
+@name:
+	pMergeFiles
+@description:
+	Merge files in the input directory
+@input:
+	`indir:file`: The input directory
+@output:
+	`outfile:file`: The output file
+@args:
+	`inopts`: The options for input file.
+		- defaults: skip: 0, comment: #, delimit '\\t'
+	`outopts`: The options for output file. Defaults:
+		- head: False (not output head line)
+		- headPrefix: `#` (The prefix for head line)
+		- headDelimit: `\\t` (The delimit for head line)
+		- headTransform: `None` (The callback for head line)
+		- delimit: `\\t` (The delimit for output line)
+"""
+pMergeFiles               = Proc(desc = 'Merge files.')
+pMergeFiles.input         = "infiles:files"
+pMergeFiles.output        = "outfile:file:{{in.infiles | lambda x: x[0] if x else 'nothing' |  fn}}.etc{{in.infiles | lambda x: x[0] if x else '' | ext}}"
+pMergeFiles.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
+pMergeFiles.args.outopts  = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
+# IOError: [Errno 24] Too many open files
+pMergeFiles.args.maxopen  = 100
+pMergeFiles.lang          = params.python.value
+pMergeFiles.script        = "file:scripts/tsv/pMergeFiles.py"

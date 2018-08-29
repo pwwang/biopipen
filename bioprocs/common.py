@@ -1,5 +1,6 @@
 from pyppl import Proc, Box
 from . import params
+from .utils import fs2name
 
 """
 @name:
@@ -183,30 +184,22 @@ cat {{in.infile2 | squote}} >> {{out.outfile | squote}}
 @name:
 	pMergeFiles
 @description:
-	Merge files in the input directory
+	Merge files.
 @input:
-	`indir:file`: The input directory
+	`infiles:files`: The input files
 @output:
 	`outfile:file`: The output file
 @args:
-	`inopts`: The options for input file.
-		- defaults: skip: 0, comment: #, delimit '\\t'
-	`outopts`: The options for output file. Defaults:
-		- head: False (not output head line)
-		- headPrefix: `#` (The prefix for head line)
-		- headDelimit: `\\t` (The delimit for head line)
-		- headTransform: `None` (The callback for head line)
-		- delimit: `\\t` (The delimit for output line)
+	`header`: Whether the input files have header. Default: `False`
+		- If `True`, input files must have the same header line.
 """
-pMergeFiles               = Proc(desc = 'Merge files.')
-pMergeFiles.input         = "infiles:files"
-pMergeFiles.output        = "outfile:file:{{in.infiles | lambda x: x[0] if x else 'nothing' |  fn}}.etc{{in.infiles | lambda x: x[0] if x else '' | ext}}"
-pMergeFiles.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-pMergeFiles.args.outopts  = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
-# IOError: [Errno 24] Too many open files
-pMergeFiles.args.maxopen  = 100
-pMergeFiles.lang          = params.python.value
-pMergeFiles.script        = "file:scripts/common/pMergeFiles.py"
+pMergeFiles              = Proc(desc = 'Merge files.')
+pMergeFiles.input        = "infiles:files"
+pMergeFiles.output       = "outfile:file:{{in.infiles | fs2name}}{{in.infiles | :v1[0] if v1 else '' | ext }}"
+pMergeFiles.args.header  = False
+pMergeFiles.envs.fs2name = fs2name
+pMergeFiles.lang         = params.python.value
+pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
 
 """
 @name:

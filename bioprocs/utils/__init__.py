@@ -1,13 +1,11 @@
-# https://github.com/kennethreitz/delegator.py
-# or pip install delegator.py
-import delegator
+
 import logging
 import sys
 import shlex
 import re
+from pyppl.utils import cmd
 from glob import glob
 from os import path
-from subprocess import list2cmdline
 from collections import OrderedDict
 
 class RuncmdException(Exception):
@@ -55,20 +53,19 @@ def alwaysList(l):
 		ret = [x.strip() for x in l.split(',') if x.strip()]
 	return ret
 
-def runcmd(cmd, quit = True):
-	if isinstance(cmd, list):
-		cmd = list2cmdline([str(c) for c in cmd])
-	c = delegator.run(cmd)
+def runcmd(cmd2run, shell = True, quit = True):
+	c = cmd.Cmd(cmd2run, shell = shell)
+	cmdstr = ' '.join(c.cmd) if isinstance(c.cmd, list) else c.cmd
 	logger.info('Running command at PID: %s' % c.pid)
-	logger.info(cmd)
-	c.block()
-	for line in c.err.splitlines():
-		logger.error(line)
-	logger.info('Return code: %s' % c.return_code)
+	logger.info(cmdstr)
+	c.run()
+	for line in c.stderr.splitlines():
+		logger.error('STDERR: {}'.format(line))
+	logger.info('Return code: %s' % c.rc)
 	logger.info('-'*80)
-	if quit and c.return_code != 0:
-		raise RuncmdException('Command failed to run:\n%s' % cmd)
-	return c.return_code == 0
+	if quit and c.rc != 0:
+		raise RuncmdException('Command failed to run:\n{}\n'.format(cmdstr))
+	return c.rc == 0
 
 def call(command, args, quit = True):
 	bioprocs = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'bioprocs')

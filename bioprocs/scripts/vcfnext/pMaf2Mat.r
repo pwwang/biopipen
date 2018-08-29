@@ -11,7 +11,8 @@ maf  = read.table(
 	header      = T,
 	row.names   = NULL,
 	check.names = F,
-	sep         = "\t"
+	sep         = "\t",
+	quote       = ''
 )
 
 # select mutations with the give mutation types

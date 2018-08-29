@@ -1,5 +1,5 @@
-from pyppl import Proc
-from bioprocs import params
+from pyppl import Proc, Box
+from . import params
 
 """
 @name:
@@ -11,16 +11,20 @@ from bioprocs import params
 @output:
 	`outdir:file`:   the directory containing downloaded file
 @args:
-	`params`:        other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"
-	`bin-gdc`:       the executable file of `gdc-client`, default: "gdc-client"
+	`params`    : other params for `gdc-client download`, default: `{'no-file-md5sum': True}`
+	`gdc_client`: the executable file of `gdc-client`,    default: "gdc-client"
+	`nthread`   : Number of threads to use. Default     : `1`
+	`token`     : The token file if needed.
 """
-pDownload = Proc ()
-pDownload.input     = "manifile:file"
-pDownload.output    = "outdir:dir:{{manifile | fn}}"
-pDownload.args      = {"params": " --no-file-md5sum -n 20 ", "bin-gdc": "gdc-client"}
-pDownload.script    = """
-{{args.bin-gdc}} download -m "{{manifile}}" -d "{{outdir}}" {{args.params}}
-"""
+pDownload                 = Proc (desc = 'Download data with gdc-client and a menifest file.')
+pDownload.input           = "manifile:file"
+pDownload.output          = "outdir:dir:{{in.manifile | fn}}"
+pDownload.args.params     = Box({'no-file-md5sum': True})
+pDownload.args.nthread    = 1
+pDownload.args.token      = None
+pDownload.args.gdc_client = params.gdc_client.value
+pDownload.lang            = params.python.value
+pDownload.script          = "file:scripts/tcga/pDownload.py"
 
 """
 @name:
@@ -37,13 +41,70 @@ pDownload.script    = """
 		- We can also do `copy`
 	`nthread`: Number threads to use. Default: `1`
 """
-pSample2SubmitterID              = Proc ()
+pSample2SubmitterID              = Proc(desc = 'convert TCGA sample names with submitter id with metadata and sample containing folder')
 pSample2SubmitterID.input        = "indir:file, mdfile:file"
 pSample2SubmitterID.output       = "outdir:dir:{{in.indir | fn}}"
 pSample2SubmitterID.args.method  = 'symlink' # or copy
 pSample2SubmitterID.args.nthread = 1
 pSample2SubmitterID.lang         = params.python.value
 pSample2SubmitterID.script       = "file:scripts/tcga/pSample2SubmitterID.py"
+
+"""
+@name:
+	pGtFiles2Mat
+@description:
+	Convert TCGA genotype files to a matrix.
+@input:
+	`infiles:files`: The input genotypes files
+@output:
+	`outfile:file`: The output matrix file
+@args:
+	`rsmap`  : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.
+	`fn2sam` : How to convert filename(without extension) to sample name. Default: `None`
+"""
+pGtFiles2Mat              = Proc(desc = 'Convert genotype files to a matrix.')
+pGtFiles2Mat.input        = 'infiles:files'
+pGtFiles2Mat.output       = 'outfile:file'
+pGtFiles2Mat.args.rsmap   = params.rsmap_gwsnp6.value
+pGtFiles2Mat.args.fn2sam  = None
+pGtFiles2Mat.lang         = params.python.value
+pGtFiles2Mat.script       = "file:scripts/tcga/pGtFiles2Mat.py"
+
+"""
+@name:
+	pClinic2Survival
+@description:
+	Convert TCGA clinic data to survival data
+	The clinic data should be downloaded as "BCR Biotab" format
+@input:
+	`infile:file`: The clinic data file downloaded from TCGA
+@output:
+	`outfile:file`: The output file
+	`covfile:file`: The covariate file
+@args:
+	`cols`: The column names:
+		- `time_lastfollow`: The column names of last follow up. Default: `['days_to_last_followup']`
+		- `time_death`: The column names of time to death. Default: `['days_to_death']`
+		- `status`: The columns of vital status. Default: `['vital_status']`
+		- `age`: The columns of days to birth. Default: `['days_to_birth']`
+	`covs`: The covariates to output. Default:
+		- `gender`, `race`, `ethnicity`, `age`
+	`mat`: An expression or genotype matrix with samples as column names, used to get sample names for patient instead of short ones. Default: `None`
+"""
+pClinic2Survival           = Proc(desc = 'Convert TCGA clinic data to survival data.')
+pClinic2Survival.input     = 'infile:file'
+pClinic2Survival.output    = 'outfile:file:{{in.infile | stem}}.survdata.txt, covfile:file:{{in.infile | stem}}.survcov.txt'
+pClinic2Survival.args.cols = Box(
+	time_lastfollow = ['days_to_last_followup'],
+	time_death      = ['days_to_death'],
+	status          = ['vital_status'],
+	age             = ['days_to_birth'],
+	patient         = ['bcr_patient_barcode']
+)
+pClinic2Survival.args.covs = ['gender', 'race', 'ethnicity', 'age']
+pClinic2Survival.args.mat  = None
+pClinic2Survival.lang      = params.python.value
+pClinic2Survival.script    = "file:scripts/tcga/pClinic2Survival.py"
 
 """
 @name:

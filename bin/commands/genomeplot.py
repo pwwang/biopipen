@@ -35,7 +35,7 @@ params.params.desc     = 'The params for each track'
 params.plotparams.desc = 'The params for pGenomePlot.'
 params.devpars         = '{"res": 300, "height": 300, "width": 2000}'
 params.devpars.desc    = 'The device parameters for plotting.'
-params.splitlen        = 1000000
+params.splitlen        = 5000000
 params.splitlen.desc   = 'Split the plot into 2 if the region is longer then splitlen.'
 params.forks           = 2
 params.forks.desc      = 'Number of cores used to plot if split.'
@@ -94,7 +94,7 @@ def _procconfig(kwargs = None):
 			pGenomePlot.args.devpars.update(json.loads(params.devpars))
 		if params.plotparams:
 			pGenomePlot.args.params.update(json.loads(params.plotparams))
-		if len(params.highlights) == 2:
+		if len(params.highlights) == 2 and '-' not in params.highlist[0]:
 			h1 = params.highlights[0]
 			h2 = params.highlights[1]
 		else:
