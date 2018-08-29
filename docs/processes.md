@@ -994,23 +994,17 @@
 !!! hint "pMergeFiles"
 
     - **description**  
-        Merge files in the input directory
+        Merge files.
 
     - **input**  
-        - `indir:file`: The input directory  
+        - `infiles:files`: The input files  
 
     - **output**  
         - `outfile:file`: The output file  
 
     - **args**  
-        - `inopts`: The options for input file.  
-        	- defaults: skip: 0, comment: #, delimit '\\t'
-        - `outopts`: The options for output file. Defaults:  
-        	- head: False (not output head line)
-        	- headPrefix: `#` (The prefix for head line)
-        	- headDelimit: `\\t` (The delimit for head line)
-        	- headTransform: `None` (The callback for head line)
-        	- delimit: `\\t` (The delimit for output line)
+        - `header`: Whether the input files have header. Default: `False`  
+        	- If `True`, input files must have the same header line.
 
 !!! hint "pSplitRows"
 
@@ -3746,8 +3740,10 @@
         - `outdir:file`: the directory containing downloaded file  
 
     - **args**  
-        - `params`: other params for `gdc-client`, default: "--no-related-files --no-file-md5sum -n 20"  
-        - `bin-gdc`: the executable file of `gdc-client`, default: "gdc-client"  
+        - `params`    : other params for `gdc-client download`, default: `{'no-file-md5sum': True}`  
+        - `gdc_client`: the executable file of `gdc-client`,    default: "gdc-client"  
+        - `nthread`   : Number of threads to use. Default     : `1`  
+        - `token`     : The token file if needed.  
 
 !!! hint "pSample2SubmitterID"
 
@@ -3765,6 +3761,44 @@
         - `method`: How the deal with the files. Default: `symlink`  
         	- We can also do `copy`
         - `nthread`: Number threads to use. Default: `1`  
+
+!!! hint "pGtFiles2Mat"
+
+    - **description**  
+        Convert TCGA genotype files to a matrix.
+
+    - **input**  
+        - `infiles:files`: The input genotypes files  
+
+    - **output**  
+        - `outfile:file`: The output matrix file  
+
+    - **args**  
+        - `rsmap`  : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.  
+        - `fn2sam` : How to convert filename(without extension) to sample name. Default: `None`  
+
+!!! hint "pClinic2Survival"
+
+    - **description**  
+        Convert TCGA clinic data to survival data
+        The clinic data should be downloaded as "BCR Biotab" format
+
+    - **input**  
+        - `infile:file`: The clinic data file downloaded from TCGA  
+
+    - **output**  
+        - `outfile:file`: The output file  
+        - `covfile:file`: The covariate file  
+
+    - **args**  
+        - `cols`: The column names:  
+        	- `time_lastfollow`: The column names of last follow up. Default: `['days_to_last_followup']`
+        	- `time_death`: The column names of time to death. Default: `['days_to_death']`
+        	- `status`: The columns of vital status. Default: `['vital_status']`
+        	- `age`: The columns of days to birth. Default: `['days_to_birth']`
+        - `covs`: The covariates to output. Default:  
+        	- `gender`, `race`, `ethnicity`, `age`
+        - `mat`: An expression or genotype matrix with samples as column names, used to get sample names for patient instead of short ones. Default: `None`  
 
 !!! hint "pConvertExpFiles2Matrix"
 
@@ -4010,6 +4044,27 @@
 
     - **description**  
         Alias of pSimRead
+
+!!! hint "pMergeFiles"
+
+    - **description**  
+        Merge files in the input directory
+
+    - **input**  
+        - `indir:file`: The input directory  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `inopts`: The options for input file.  
+        	- defaults: skip: 0, comment: #, delimit '\\t'
+        - `outopts`: The options for output file. Defaults:  
+        	- head: False (not output head line)
+        	- headPrefix: `#` (The prefix for head line)
+        	- headDelimit: `\\t` (The delimit for head line)
+        	- headTransform: `None` (The callback for head line)
+        	- delimit: `\\t` (The delimit for output line)
 ## vcf
 
 !!! hint "pVcfFilter"
@@ -4516,3 +4571,21 @@
 
     - **output**  
         - `outfile:file`: The output file  
+## xlsx
+
+!!! hint "pTsvs2Xlsx"
+
+    - **description**  
+        Save tsv files to xlsx sheets.
+
+    - **input**  
+        - `infiles:files`: The input tsv files  
+
+    - **output**  
+        - `outfile:file`: The output xlsx file  
+
+    - **args**  
+        - `fn2sheet`: How to convert filename(without extension) to sheet name  
+
+    - **requires**  
+        python packages: `csv` and `openpyxl`
