@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from glob import glob
 # get version
 from os import path
 verfile = path.join(path.dirname(__file__), 'bioprocs', '__init__.py')
@@ -14,7 +15,7 @@ setup (
 	author_email     = "pwwang@pwwang.com",
 	license          = "Apache License Version 2.0",
 	packages         = find_packages(),
-	scripts          = ['bin/bioprocs', 'bin/commands'],
+	scripts          = ['bin/bioprocs'] + glob('bin/bioprocs_*.py'),
 	install_requires = [
 		'PyPPL'
 	],

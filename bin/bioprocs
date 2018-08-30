@@ -7,6 +7,7 @@ import re, textwrap, imp
 import inspect
 import sys
 from os import path, listdir
+from glob import glob
 from collections import OrderedDict
 from pyppl import PyPPL, utils, Channel
 from tempfile import gettempdir
@@ -195,14 +196,14 @@ class Method(Command):
 class Script(Command):
 
 	def help(self):
-		sfile = path.join(path.dirname(__file__), 'commands', self.name + '.py')
+		sfile = path.join(path.dirname(__file__), 'bioprocs_' + self.name + '.py')
 		script = imp.load_source('_script', sfile)
 		return script.params.help()
 
 	def _getDocString(self):
-		sfile = path.join(path.dirname(__file__), 'commands', self.name + '.py')
+		sfile = path.join(path.dirname(__file__), 'bioprocs_' + self.name + '.py')
 		if not path.isfile(sfile):
-			raise OSError('Directory "commands" has no such script: %s' % self.name)
+			raise OSError('No such script: bioprocs_%s' % self.name)
 
 		docstr = ''
 		with open(sfile, 'r') as f:
@@ -217,7 +218,7 @@ class Script(Command):
 		return docstr
 
 	def run(self, *args, **kwargs):
-		sfile = path.join(path.dirname(__file__), 'commands', self.name + '.py')
+		sfile = path.join(path.dirname(__file__), 'bioprocs_' + self.name + '.py')
 		script = imp.load_source('_script', sfile)
 		try:
 			script.run(*args, **kwargs)
@@ -522,8 +523,8 @@ class Bioprocs(object):
 
 	@staticmethod
 	def _getScripts():
-		sdir    = path.join(path.dirname(__file__), 'commands')
-		scnames = [path.splitext(script)[0] for script in listdir(sdir)]
+		sglob   = path.join(path.dirname(__file__), 'bioprocs_*.py')
+		scnames = [path.basename(script)[9:-3] for script in glob(sglob)]
 		return {scname: Script(scname) for scname in scnames}
 
 	@staticmethod
