@@ -7,7 +7,7 @@ with open(verfile) as vf:
 
 setup (
 	name             = 'bioprocs',
-	version          = bioprocs.VERSION,
+	version          = VERSION,
 	description      = "A set of procs for bioinformatics using PyPPL",
 	url              = "https://github.com/pwwang/bioprocs",
 	author           = "pwwang",
@@ -18,7 +18,8 @@ setup (
 	install_requires = [
 		'PyPPL'
 	],
-	classifiers      = [
+	include_package_data = True,
+	classifiers          = [
 		"Intended Audience :: Developers",
 		"Natural Language :: English",
 		"Operating System :: MacOS :: MacOS X",

@@ -1,0 +1,5 @@
+recursive-include bin/commands *
+recursive-include bioprocs/scripts */*
+recursive-include bioprocs/utils *
+
+global-exclude *.pyc
