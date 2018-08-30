@@ -2512,6 +2512,15 @@
         	[eN]	1	0	0
         	```
         	rownames are not necessary but colnames are.
+        - `metafile:file`: The metadata file for each category for upset plot.  
+        	- format:
+        	```
+        		col1	col2	...	colN
+        	category1	x1	y1	...	z1
+        	category2	x2	y2	...	z2
+        	...	...
+        	categoryN	xN	yN	...	zN
+        	```
 
     - **output**  
         - `outfile:file`: The plot  
