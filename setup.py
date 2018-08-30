@@ -15,7 +15,7 @@ setup (
 	author_email     = "pwwang@pwwang.com",
 	license          = "Apache License Version 2.0",
 	packages         = find_packages(),
-	scripts          = ['bin/bioprocs'] + glob('bin/bioprocs_*.py'),
+	scripts          = ['bin/bioprocs'] + glob('bin/bioprocs-*.py'),
 	install_requires = [
 		'PyPPL'
 	],

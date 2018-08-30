@@ -196,14 +196,14 @@ class Method(Command):
 class Script(Command):
 
 	def help(self):
-		sfile = path.join(path.dirname(__file__), 'bioprocs_' + self.name + '.py')
+		sfile = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
 		script = imp.load_source('_script', sfile)
 		return script.params.help()
 
 	def _getDocString(self):
-		sfile = path.join(path.dirname(__file__), 'bioprocs_' + self.name + '.py')
+		sfile = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
 		if not path.isfile(sfile):
-			raise OSError('No such script: bioprocs_%s' % self.name)
+			raise OSError('No such script: bioprocs-%s' % self.name)
 
 		docstr = ''
 		with open(sfile, 'r') as f:
@@ -218,7 +218,7 @@ class Script(Command):
 		return docstr
 
 	def run(self, *args, **kwargs):
-		sfile = path.join(path.dirname(__file__), 'bioprocs_' + self.name + '.py')
+		sfile = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
 		script = imp.load_source('_script', sfile)
 		try:
 			script.run(*args, **kwargs)
@@ -523,7 +523,7 @@ class Bioprocs(object):
 
 	@staticmethod
 	def _getScripts():
-		sglob   = path.join(path.dirname(__file__), 'bioprocs_*.py')
+		sglob   = path.join(path.dirname(__file__), 'bioprocs-*.py')
 		scnames = [path.basename(script)[9:-3] for script in glob(sglob)]
 		return {scname: Script(scname) for scname in scnames}
 
