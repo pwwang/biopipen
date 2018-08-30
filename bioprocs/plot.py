@@ -318,6 +318,15 @@ pROC.script       = "file:scripts/plot/pROC.r"
 		[eN]	1	0	0
 		```
 		rownames are not necessary but colnames are.
+	`metafile:file`: The metadata file for each category for upset plot.
+		- format:
+		```
+			col1	col2	...	colN
+		category1	x1	y1	...	z1
+		category2	x2	y2	...	z2
+		...	...
+		categoryN	xN	yN	...	zN
+		```
 @output:
 	`outfile:file`: The plot
 @args:
@@ -330,7 +339,7 @@ pROC.script       = "file:scripts/plot/pROC.r"
 	[`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
 """
 pVenn              = Proc(desc = 'Venn plots.')
-pVenn.input        = "infile:file"
+pVenn.input        = "infile:file, metafile:file"
 pVenn.output       = "outfile:file:{{in.infile | fn}}.venn.png"
 pVenn.args.tool    = 'auto' # upsetr or auto: < = 3 venn, else upsetr
 pVenn.args.rnames  = False
