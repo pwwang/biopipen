@@ -48,7 +48,7 @@ if (fct != 1) {
 # read all expression data
 # rows: genes
 # cols: samples
-exprdata = read.table(exprfile, header = T, row.names = 1, sep = "\t", check.names = F)
+exprdata = read.table.nodup(exprfile, header = T, row.names = 1, sep = "\t", check.names = F)
 allgenes = rownames(exprdata)
 
 # read the 70 genes

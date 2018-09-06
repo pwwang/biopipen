@@ -16,11 +16,12 @@ if ((ncols <= 3 && tool == 'auto') || tool == 'venn') {
 	params = {{args.params | R}}
 	plot.venn(data, outfile, params, devpars)
 } else {
-	metadata = data.frame(counts = colSums(data))
+	metadata = data.frame(counts = colSums(data), ratio = colSums(data)/nrow(data))
 	if (metafile != "") {
 		exmeta   = read.table(metafile, sep = "\t", header = TRUE, row.names = 1, check.names = F)
 		metadata = cbind.fill(metadata, exmeta)
 	}
+	metadata = cbind(metadata, sets = rownames(metadata))
 	params = {{args.params | R}}
 	plot.upset(data, outfile, params, devpars)
 }
