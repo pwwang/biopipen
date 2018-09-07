@@ -3,55 +3,141 @@
 The main program entrance for bioprocs binaries.
 """
 
-import re, textwrap, imp
+import re, imp
 import inspect
 import sys
+import bioprocs
 from os import path, listdir
 from glob import glob
 from collections import OrderedDict
 from pyppl import PyPPL, utils, Channel
+from pyppl.parameters import commands, HelpAssembler
 from tempfile import gettempdir
-import six
-import bioprocs
 
-KEYLEN_MIN = 42
-DOCLEN_MAX = 100
+METHODS   = None
+SCRIPTS   = None
+PROCESSES = None
+MAIN      = None
+
+class Methods(object):
+
+	@staticmethod
+	def help(*cmds):
+		"""
+		Print help information of the command.
+		"""
+		main = Main.getMain()
+		if not cmds:
+			main.help(printNexit = True)
+		
+		obj = None
+		cmd = cmds[0]
+		if '.' in cmd:
+			try:
+				obj = Process(cmd)
+			except ValueError:
+				main.help(error = 'No such process: {!r}'.format(cmd), printNexit = True)
+			obj.help(printNexit = True)
+		else:
+			methods = Main.getMethods()
+			scripts = Main.getScripts()
+			if cmd == 'help':
+				main.help(printNexit = True)
+			elif cmd in Main.getMethods():
+				methods[cmd].help(printNexit = True)
+			elif cmd in Main.getScripts():
+				scripts[cmd].help(printNexit = True)
+			else:
+				main.help(error = 'No such method or script: {!r}'.format(cmd), printNexit = True)
+
+	@staticmethod
+	def list(*args, **kwargs):
+		"""
+		List available processes.
+		Use "{prog} <module>" to list all processes of a module.
+		@usage:
+			{prog} [POSITIONAL ...]
+		@params:
+			`POSITIONAL`: The module names
+		"""
+		mod = args[0] if args else None
+		if mod:
+			procs = {mod: Main._getProcesses(mod)}
+		else:
+			procs = Main._getProcesses()
+		
+		assembler = HelpAssembler()
+		ret = []
+		for module, ps in procs.items():
+			moddoc = Main.getModuleDoc(module)
+			if not moddoc:
+				moddoc = ['[ Module not documented. ]']
+			seplen = 0
+			for i, mdoc in enumerate(moddoc):
+				if i == 0:
+					ret.append(
+						assembler.title('module') + ' ' + \
+						assembler.prog(module) + ' - ' +   \
+						assembler.optdesc(mdoc)
+					)
+				else:
+					ret.append(
+						' ' * (11 + len(module)) + \
+						assembler.optdesc(mdoc)
+					)
+				seplen = max(seplen, 11 + len(module) + len(mdoc))
+			ret.append('-' * seplen)
+
+			pnlen = max([len(pname) for pname in ps.keys()]) + len(module) + 1
+			for pname, proc in ps.items():
+				ret.append(
+					assembler.prog('- ' + (module + '.' + pname).ljust(pnlen) + ': ') + \
+					assembler.optdesc(proc.proc.desc)
+				)
+			ret.append('')
+
+		sys.stdout.write('\n'.join(ret) + '\n')
+
+	@staticmethod
+	def params(*args, **kwargs):
+		"""
+		Show bioprocs.params items.
+		@usage:
+			{prog} <POSITIONAL ...>
+		@params:
+			`POSITIONAL`: The parameter names
+		"""
+		if not args:
+			args = bioprocs.params.asDict().keys()
+		
+		assembler = HelpAssembler()
+		ret = []
+		for arg in sorted(args):
+			ret.append(assembler.title('parameter') + ' ' + assembler.prog(arg))
+			if not arg in bioprocs.params._params:
+				ret.append(assembler.error('  No such parameter: {}'.format(arg)))
+			else:
+				param = bioprocs.params[arg]
+				for i, desc in enumerate(param.desc):
+					if desc.startswith('DEFAULT: '):
+						continue
+					if i == 0:
+						ret.append(assembler.prog('- desc : ') + assembler.optdesc(desc))
+					else:
+						ret.append(' ' * 11 + assembler.optdesc(desc))
+				ret.append(assembler.prog('- type : ') + param.type)
+				ret.append(assembler.prog('- value: ') + repr(param.value))
+			ret.append('')
+		sys.stdout.write('\n'.join(ret) + '\n')
 
 
 class Command(object):
 
-	@staticmethod
-	def printDocs(docs, preflen = 0, maxlen = DOCLEN_MAX, hyphen = True):
-		newlines = []
-		for line in docs:
-			if len(line) <= maxlen:
-				newlines.append(line)
-			else:
-				newlines.extend(textwrap.wrap(line, maxlen))
-		prefix1 = '- ' if hyphen else ''
-		prefix2 = '  ' if hyphen else ''
-		return '\n'.join([
-			prefix1 + line if i == 0 else prefix2 + (' ' * preflen) + line
-			for i, line in enumerate(newlines)
-		])
-
-	@staticmethod	
-	def getitems(optstr):
-		ret = OrderedDict()
-		optlines = optstr.splitlines()
-		for optline in optlines:
-			optline = optline.lstrip()
-			nmatch  = re.match(r'(`)([:\.\w]+)\1\s*:\s*(.+)', optline)
-			if nmatch:
-				optname = nmatch.group(2).split(':')[0]
-				optdoc1 = nmatch.group(3)
-				if not optname in ret:
-					ret[optname] = [optdoc1]
-			elif ret:
-				optname = list(ret.keys())[-1]
-				ret[optname].append(optline)
-		return ret
-
+	def __init__(self, name, prog = path.basename(sys.argv[0])):
+		self.prog      = prog
+		self.name      = name
+		self.assembler = HelpAssembler(prog)
+	
 	@staticmethod
 	def getblocks(docstr):
 		lines = docstr.splitlines()
@@ -59,273 +145,349 @@ class Command(object):
 		ret = {}
 		for line in lines:
 			if not line.strip(): continue
-			line = line.lstrip('\t')
-			namematch = re.match(r'^@(\w+):', line)
+			namematch = re.match(r'^\s*@(\w+):', line)
 			if not namematch and not blockname:
 				blockname = 'doc'
-				ret[blockname] = line + '\n'
+				continue
 			elif namematch:
 				blockname = namematch.group(1)
-				ret[blockname] = ''
-			else:
-				ret[blockname] += line + '\n'
+				continue
+			if not blockname in ret:
+				ret[blockname] = []
+			ret[blockname].append(line)
 		return ret
 
-	def __init__(self, name, prog = path.basename(sys.argv[0])):
-		self.prog   = prog
-		self.name   = name
-		self._doc   = []
-		self._usage = []
-		self._opts  = OrderedDict()
+	@staticmethod	
+	def getitems(lines):
+		ret = []
+		for optline in lines:
+			optline = optline.lstrip()
+			nmatch  = re.match(r'(`)([:\.\w]+)\1\s*:\s*(.+)', optline)
+			if nmatch:
+				option  = nmatch.group(2)
+				if ':' not in option:
+					optname, opttype = option, ''
+				else:
+					optname, opttype = option.split(':', 1)
+				optdoc1 = nmatch.group(3)
+				if optname != 'POSITIONAL':
+					optname = bioprocs.params._props['prefix'] + optname
+				ret.append((optname, opttype, [optdoc1]))
+			elif ret:
+				ret[-1][-1].append(optline)
+		return ret
 
-		docstr = self._getDocString()
-		self._fromDocstr(docstr)
-
-	def _fromDocstr(self, docstr):
-		blocks     = Command.getblocks(docstr)
-		self.doc   = blocks.get('doc', '')
-		self.usage = blocks.get('usage', '')
-		self.opts  = Command.getitems(blocks.get('params', ''))
-
-	def _getDocString(self):
+	def getDocstr(self):
 		raise NotImplementedError()
 
-	def _replaceholders(self, s):
-		return s.replace('{prog}', self.prog).replace('{name}', self.name)
-
-	def _error(self, error = '', help = True, exit = True):
-		ret = '\n'
+	def helpitems(self, blocks):
+		raise NotImplementedError()
+	
+	def help(self, error = '', printNexit = False):
+		ret = []
 		if error:
 			if not isinstance(error, list):
-				error = error.splitlines()
-			ret += 'Error: ' + Command.printDocs(error, 7, hyphen = False) + '\n'
-		if help:
-			ret += self.help()
-		sys.stderr.write(ret)
-		if exit:
+				error = [error]
+			ret = [self.assembler.error(err.strip()) for err in error]
+		ret += self.assembler.assemble(
+			self.helpitems(Command.getblocks(self.getDocstr())), 
+			self.prog
+		)
+
+		out = '\n'.join(ret) + '\n'
+		if printNexit:
+			sys.stderr.write(out)
 			sys.exit(1)
-
-	@property
-	def doc(self):
-		return self._doc
-
-	@doc.setter
-	def doc(self, docs):
-		if not isinstance(docs, list):
-			docs = docs.splitlines()
-		for d in docs:
-			if not d.strip(): continue
-			self._doc.append(self._replaceholders(d.lstrip('\t')))
-	
-	@property
-	def usage(self):
-		return self._usage
-	
-	@usage.setter
-	def usage(self, usages):
-		if not isinstance(usages, list):
-			usages = usages.splitlines()
-		for u in usages:
-			if not u.strip(): continue
-			self._usage.append(self._replaceholders(u.lstrip('\t')))
-
-	@property
-	def opts(self):
-		return self._opts
-	
-	@opts.setter
-	def opts(self, argitem):
-		if isinstance(argitem, dict):
-			for item in argitem.items():
-				self.opts = item
 		else:
-			argname, argvalue = argitem
-			if not argname in self._opts:
-				self._opts[argname] = []
-			if not isinstance(argvalue, list):
-				argvalue = argvalue.splitlines()
-			for av in argvalue:
-				if not av.strip(): continue
-				self._opts[argname].append(self._replaceholders(av.lstrip('\t')))
-	
-	def help(self):
-		ret  = '\n'
-		ret += '%s\n\n' % Command.printDocs(self.doc, hyphen = False)
-
-		if self.usage:
-			ret += 'Usage:\n'
-			ret += '  %s\n' % Command.printDocs(self.usage, 2, hyphen = False)
-			ret += '\n'
-
-		ret += 'Options:\n'
-		keylen = max([len(key) for key in self.opts.keys()]) if self.opts else 0
-		keylen = max(KEYLEN_MIN, keylen)
-		fmtstr = '  %-' + str(keylen) + 's%s\n'
-		for optname, optdoc in self.opts.items():
-			ret += fmtstr % (
-				optname if optname.startswith('-') else '-' + optname, 
-				Command.printDocs(optdoc, keylen + 2)
-			)
-		ret += '\n'
-		return ret
-	
-	def helpInList(self, keylen = None):
-		keylen = keylen or len(self.name)
-		keylen = max(KEYLEN_MIN, keylen)
-		fmtstr = '  %-' + str(keylen) + 's%s\n'
-		return fmtstr % (self.name, Command.printDocs(self.doc, keylen + 2))
+			return out
 
 	def run(self, *args, **kwargs):
 		raise NotImplementedError()
 
 class Method(Command):
 
-	def _getDocString(self):
-		if not hasattr(Bioprocs, self.name):
-			raise AttributeError('"%s" has no attribute "%s"' % (Bioprocs.__name__, self.name))
-
-		method = getattr(Bioprocs, self.name)
+	def getDocstr(self):
+		method = getattr(Methods, self.name)
 		docstr = ''
 		if hasattr(method, '__doc__'):
 			docstr = method.__doc__.strip()
 		return docstr
 
+	def helpitems(self, blocks):
+		ret = OrderedDict()
+		ret['description'] = ''
+		for bname, blines in blocks.items():
+			blines = [bline.strip() for bline in blines]
+			if bname == 'doc':
+				ret['description'] = blines
+			elif bname == 'params':
+				ret['options'] = self.getitems(blines)
+			else:
+				ret[bname] = blines
+		return ret
+
 	def run(self, *args, **kwargs):
-		getattr(Bioprocs(), self.name)(*args, **kwargs)
+		getattr(Methods, self.name)(*args, **kwargs)
 
 class Script(Command):
 
-	def help(self):
-		sfile = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
-		script = imp.load_source('_script', sfile)
-		return script.params.help()
+	def __init__(self, name, prog = None):
+		prog = prog or path.basename(sys.argv[0]) + ' ' + name
+		super(Script, self).__init__(name, prog)
+		self.script = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
 
-	def _getDocString(self):
-		sfile = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
-		if not path.isfile(sfile):
-			raise OSError('No such script: bioprocs-%s' % self.name)
+	def help(self, error = '', printNexit = False):
+		c = utils.cmd.run([sys.executable, self.script, '--help'])
+		h = c.stderr
 
-		docstr = ''
-		with open(sfile, 'r') as f:
-			docstarted = None
-			for line in f:
-				if line.startswith('#!'): continue
-				if line.startswith('#') and (docstarted or docstarted is None):
-					docstarted = True
-					docstr += line[1:].lstrip()
-				else:
-					docstarted = False
-		return docstr
+		ret = []
+		if error:
+			if not isinstance(error, list):
+				error = [error]
+			ret = [self.assembler.error(err.strip()) for err in error]
+		ret.extend(h.splitlines())
+		out = '\n'.join(ret) + '\n'
+		if printNexit:
+			sys.stderr.write(out)
+			sys.exit(1)
+		else:
+			return out
+
+	def getDocstr(self):
+		return ''
+
+	def helpitems(self, blocks):
+		return {}
 
 	def run(self, *args, **kwargs):
-		sfile = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
-		script = imp.load_source('_script', sfile)
-		try:
-			script.run(*args, **kwargs)
-		except Exception as ex:
-			raise
-			self._error(str(ex))
+		utils.cmd.run(
+			[sys.executable, self.script] + sys.argv[2:], 
+			stdout = sys.stdout, 
+			stderr = sys.stderr,
+			stdin  = sys.stdin
+		)
 
 class Process(Command):
 
-	def __init__(self, name, prog = path.basename(sys.argv[0])):
+	def __init__(self, name, prog = None):
+		prog = prog or path.basename(sys.argv[0]) + ' ' + name
 		super(Process, self).__init__(name, prog)
-		self.opts = OrderedDict([('proc.exdir', 'The output directory.'), ('proc.xxx', ['The common config of all processes.'])])
+		self.module, self.procname = self.name.split('.', 1)
+		self.procfile = path.join(path.dirname(bioprocs.__file__), self.module + '.py')
+		if not path.isfile(self.procfile):
+			raise ValueError('No such module: {}'.format(self.module))
 
-	def _getDocString(self):
-		module, procname = self.name.split('.', 1)
-		pfile = path.join(path.dirname(bioprocs.__file__), module + '.py')
+		self.proc = getattr(
+			__import__('bioprocs.' + self.module, fromlist = ['bioprocs']), 
+			self.procname
+		)
 
-		if not path.isfile(pfile):
-			raise ValueError('Module bioprocs has no such process: %s' % name)
-
-		with open(pfile) as f:
+	def getDocstr(self):
+		with open(self.procfile) as f:
 			content = f.read()
 
-		regex  = re.compile(r'(\"\"\"|\'\'\')\s+@name:\s+'+ procname +r'\s+@description:\s+([\s\S]+?)\1')
+		regex  = re.compile(
+			r'(\"\"\"|\'\'\')\s+@name:\s+' + self.procname + r'\s+@description:\s+([\s\S]+?)\1'
+		)
 		docstr = regex.search(content)
 
-		if not docstr:
-			# try to look for it by its definition
-			# pABC = Proc(desc = 'abc')
-			regex2 = re.compile(procname + r'\s*=\s*Proc\s*\(.*?desc\s*=\s*(\'|\")(.+?)\1')
-			docstr = regex2.search(content)
-			if not docstr:
-				# if it is an alias
-				regex3 = re.compile(r'from \.(\w+) import .*?\b' + procname + r'\b')
-				imatch = regex3.search(content)
-				
-				raiseOrNot = False
-				if not imatch:
-					regex4 = re.compile(r'from \.(\w+) import \*')
-					imatch = regex4.search(content)
-				
-				if imatch:
-					asmod  = imatch.group(1)
-					pfile  = path.join(path.dirname(bioprocs.__file__), asmod + '.py')
-					with open(pfile) as f:
-						content = f.read()
-					docstr = regex.search(content)
-					if not docstr:
-						raiseOrNot = True
+		if not docstr or 'Alias of' in docstr.group(2):
+			docstr = ''
+			docstr += '@name:\n'
+			docstr += '	{}\n'.format(self.procname)
+			docstr += '@description:\n'
+			docstr += '	{}\n'.format(self.proc.desc)
+			docstr += '@input:\n'
+			
+			inputs = self.proc.config['input']
+			if isinstance(inputs, dict):
+				inputs = inputs.keys()
+			elif not isinstance(inputs, list):
+				inputs = utils.split(inputs, ',')
+			for inkey in inputs:
+				if ':' in inkey:
+					inname, intype = inkey.split(':', 1)
 				else:
-					raiseOrNot = True
+					inname, intype = inkey, ''
+				docstr += '\t`{}{}`: [ No description. ]\n'.format(
+					inname, ':' + intype if intype else ''
+				)
+			docstr += '@output:\n'
 
-				if raiseOrNot:
-					raise ValueError('Process not defined or docstring missing: %s' % self.name)
+			outputs = self.proc.config['output']
+			if isinstance(outputs, dict):
+				outputs = ['{}:{}'.format(k, v) for k, v in outputs.items()]
+			elif not isinstance(outputs, list):
+				outputs = utils.split(outputs, ',')
+			for outkey in outputs:
+				outname, outtype, outval = outkey.split(':', 2)
+				docstr += '\t`{}{}`: Default: {}\n'.format(
+					outname,
+					':' + outtype if outtype else '',
+					outval
+				)
+
+			if self.proc.args:
+				docstr += '@args:\n'
+				for key, val in self.proc.args.items():
+					docstr += '	`{}`: Default: {!r}\n'.format(key, val)
+		else:
+			docstr = docstr.group(0)
 		
-		blocks = Command.getblocks(docstr.group(2))
-
-		docstr = blocks.get('doc', '')
-		inputs = Command.getitems(blocks.get('input', ''))
-		docstr += '@params:\n'
-		for inkey, indoc in inputs.items():
-			docstr += '`in.%s`: [input.%s] %s\n' % (inkey, inkey, '\n'.join(indoc).lstrip())
-		outputs = Command.getitems(blocks.get('output', ''))
-		for outkey, outdoc in outputs.items():
-			docstr += '`out.%s`: [output.%s] %s\n' % (outkey, outkey, '\n'.join(outdoc).lstrip())
-		args = Command.getitems(blocks.get('args', ''))
-		for argskey, argsdoc in args.items():
-			docstr += '`args.%s`: %s\n' % (argskey, '\n'.join(argsdoc).lstrip())
-
 		return docstr
 
-	def _createProc(self, *args, **kwargs):
-		module, pname = self.name.split('.', 1)
+	def helpitems(self, blocks):
+		
+		def tokendefault(desc, token):
+			rets = desc.split(token, 1)
+			rets[-1] = token + rets[-1]
+			return list(filter(None, rets))
 
-		proc   = getattr(__import__('bioprocs.' + module, fromlist = ['bioprocs']), pname)
-		config = {'_log': {'file': None}, 'default': {'ppldir': path.join(gettempdir(), 'bioprocs.workdir')}}
+		def sepdefault(desc):
+			defaults = ['Default:', 'DEFAULT:']
+			if defaults[0] in desc:
+				return tokendefault(desc, defaults[0])
+			elif defaults[1] in desc:
+				return tokendefault(desc, defaults[1])
+			else:
+				return [stripL(desc)]
+
+		def stripL(line):
+			if line.startswith('    '):
+				return line[4:]
+			elif line.startswith('\t'):
+				return line[1:]
+			return line.lstrip()
+
+		def splitNameLine(line):
+			_, name, desc = line.rstrip().split('`', 2)
+			name, t = name.strip(), ''
+			if ':' in name:
+				name, t = name.split(':', 1)
+			return name, t, sepdefault(desc.lstrip(': '))
+
+		ret    = OrderedDict()
+		prefix = bioprocs.params._props['prefix']
+		ret['name']        = [n.strip() for n in blocks.get('name', [self.name])]
+		ret['description'] = [desc.strip() for desc in blocks.get('description', [])]
+
+		# inputs
+		inputs = blocks.get('input', [])
+		retins = []
+		for iline in inputs:
+			iline = stripL(iline)
+			if iline.startswith('`'):
+				name, t, desc = splitNameLine(iline)
+				retins.append(('{}in.{}'.format(prefix, name), t, desc))
+			else:
+				retins[-1][-1].extend(sepdefault(iline.rstrip()))
+		ret['input'] = retins
+
+		# outputs
+		outputs = blocks.get('output', [])
+		retouts = []
+		for oline in outputs:
+			oline = stripL(oline)
+			if oline.startswith('`'):
+				name, t, desc = splitNameLine(oline)
+				retouts.append(('{}out.{}'.format(prefix, name), t, desc))
+			else:
+				retouts[-1][-1].extend(sepdefault(oline.rstrip()))
+				
+		ret['output (basename only, template applied)'] = retouts
+		
+		# args
+		args = blocks.get('args')
+		if args:
+			retargs = []
+			argname = None
+			for argline in args:
+				argline = stripL(argline)
+				if argline.startswith('`'):					
+					argname, _, argdesc = splitNameLine(argline)
+					retargs.append(('{}args.{}'.format(prefix, argname), '', argdesc))
+				else:
+					retargs[-1][-1].extend(sepdefault(argline.rstrip()))
+			ret['args'] = retargs
+
+		ret['process attributes'] = [
+			(
+				'{}<xxx>'.format(prefix), 
+				'', 
+				'Such as {prefix}forks, {prefix}exdir, {prefix}cache, etc.'.format(prefix = prefix)
+			)
+		]
+
+		ret['pipeline configuration'] = [
+			(
+				'{}config.<subconfig>[.subconfig]'.format(prefix), 
+				'', 
+				'Such as {prefix}config._log.file'.format(prefix = prefix)
+			)
+		]
+		return ret
+
+	def createPipeline(self, **kwargs):
+
+		config = {
+			'_log': {'file': None}, 
+			'default': {
+				'ppldir': path.join(gettempdir(), 'bioprocs.workdir')
+			}
+		}
 		
 		# get input keys
-		if isinstance(proc.config['input'], dict):
+		inkeys = self.proc.config['input']
+		if isinstance(inkeys, dict):
 			inkeys = inkeys.keys()
-		else:
-			inkeys = utils.split(proc.config['input'], ',')
+		elif not isinstance(inkeys, list):
+			inkeys = utils.split(inkeys, ',')
 
 		inkeys = {
 			inkey.split(':')[0]: (
 				inkey.split(':')[1] if ':' in inkey else 'var'
-			)
-			for inkey in inkeys
+			) for inkey in inkeys
 		}
-		indata  = {}
+		indata  = {
+			'{}:{}'.format(inkey, intype): ''
+			for inkey, intype in inkeys.items()
+		}
+
+		outdata = OrderedDict()
+		outputs = self.proc.config['output']
+		if isinstance(outputs, dict):
+			outputs = ['{}:{}'.format(k, v) for k, v in outputs.items()]
+		elif not isinstance(outputs, list):
+			outputs = utils.split(outputs, ',')
+		
+		for outkey in outputs:
+			parts = utils.split(outkey, ':')
+			if len(parts) == 2:
+				parts.insert(1, 'var')
+			outdata['{}:{}'.format(parts[0], parts[1])] = parts[2]
+		outkeys = {outkey.split(':')[0]:outkey.split(':')[1] for outkey in outdata.keys()}
 
 		for key, val in kwargs.items():
+			# proc attributes
 			if '.' not in key:
-				if key == 'forks':
-					val = int(val)
-				setattr(proc, key, val)
+				setattr(self.proc, key, val)
 				continue
+
 			kparts = key.split('.')
 			t = kparts.pop(0)
-			if t == 'input' or t == 'in':
+			if t == 'in':
 				inkey = kparts[0]
 				if not inkey in inkeys:
-					self._error('Unknown input key ({}) for ({}.{}), expect [{}]'.format(inkey, module, pname, ', '.join(inkeys)))
+					self.help('Unknown input key "{}" for "{}", expect [{}]'.format(inkey, self.name, ', '.join(inkeys)), printNexit = True)
 				indata[inkey + ':' + inkeys[inkey]] = Channel.create(val)
-			elif t == 'args':
+			elif t == 'out':
+				outkey = kparts[0]
+				if not outkey in outkeys:
+					self.help('Unknown output key "{}" for "{}", expect [{}]'.format(outkey, self.name, ', '.join(outkeys)), printNexit = True)
+				outdata[outkey + ':' + outkeys[outkey]] = val
+			elif t == 'args' or t == 'config':
 				lastpart = kparts.pop(-1)
-				aval = proc.args
+				aval = self.proc.args if t == 'args' else config
 				for k in kparts:
 					if k not in aval:
 						aval[k] = {}
@@ -333,175 +495,28 @@ class Process(Command):
 				if lastpart not in aval:
 					lastpart = lastpart.replace('-', '.')
 				aval[lastpart] = val
-			elif t == 'proc':
-				lastpart = kparts.pop(-1)
-				procconf = config['default']
-				for k in kparts:
-					if k not in procconf:
-						procconf[k] = {}
-					else:
-						procconf = procconf[k]
-				if lastpart == 'forks':
-					val = int(val)
-				procconf[lastpart] = val
 			else:
-				self._error('Unknown argument: %s' % key)
-		if not any([bool(it) for it in indata]):
-			self._error('No input specified.')
+				self.help('Unknown argument: %s' % key, printNexit = True)
+
+		if not any([bool(it) for it in indata.values()]):
+			self.help('No input specified.', printNexit = True)
 		
-		setattr(proc, 'input', indata)
-		return proc, config
+		self.proc.input  = indata
+		self.proc.output = outdata
+		return config
 
 	def run(self, *args, **kwargs):
-		proc, config = self._createProc(*args, **kwargs)
-		PyPPL(config).start(proc).run()
+		config = self.createPipeline(**kwargs)
+		PyPPL(config).start(self.proc).run()
 
-class ArgParser(object):
-
-	ARG_TYPES = dict(
-		a       = 'auto',
-		auto    = 'auto',
-		i       = 'int',
-		int     = 'int',
-		f       = 'float',
-		float   = 'float',
-		b       = 'bool',
-		bool    = 'bool',
-		s       = 'str',
-		str     = 'str',
-		l       = 'list',
-		list    = 'list',
-		array   = 'list',
-		o       = 'one',
-		one     = 'one',
-		p       = 'py',
-		py      = 'py',
-		python  = 'py'
-	)
-
-	ARG_NAME_PATTERN     = r'^-([a-zA-Z][\w\._-]*)(?::(p(?:y|ython)?|a(?:uto)?|i(?:nt)?|f(?:loat)?|b(?:ool)?|s(?:tr)?|l(?:ist)?|array|(?:a(?:rray)?|l(?:ist)?):(?:i(?:nt)?|f(?:loat)?|b(?:ool)?|s(?:tr)?|o(?:ne)?)))?(?:=(.+))?$'
-	ARG_VALINT_PATTERN   = r'^[+-]?\d+$'
-	ARG_VALFLOAT_PATTERN = r'^[+-]?(?:\d*\.)?\d+(?:[Ee][+-]\d+)?$'
-	ARG_VALBOOL_PATTERN  = r'^(0|1|t(?:rue)?|T(?:rue|RUE)?|y(?:es)?|Y(?:ES|es)?|o(?:n|ff)|O(?:N|n|ff|FF)|f(?:alse)?|F(?:alse|ALSE)?)$'
-	ARG_VALPY_PATTERN    = r'^(?:py|expr):(.+)$'
+class Main(object):
 
 	@staticmethod
-	def coerceValue(value, t = 'auto'):
-		if t == 'int':
-			return int(value)
-		elif t == 'float':
-			return float(value)
-		elif t == 'bool':
-			if value in ['t', 'T', 'True', 'TRUE', 'true', '1', 'Y', 'y', 'Yes', 'YES', 'yes', 'on', 'ON', 'On']:
-				return True
-			elif value in ['f', 'F', 'False', 'FALSE', 'false', '0', 'N', 'n', 'No', 'NO', 'no', 'off', 'Off', 'OFF']:
-				return False
-			else:
-				sys.stderr.write('WARNING: Unknown bool value, use True instead of {}.\n'.format(value))
-				return True
-		elif t == 'py':
-			return eval(value)
-		elif t == 'auto':
-			if re.match(ArgParser.ARG_VALINT_PATTERN, value):
-				t = 'int'
-			elif re.match(ArgParser.ARG_VALFLOAT_PATTERN, value):
-				t = 'float'
-			elif re.match(ArgParser.ARG_VALBOOL_PATTERN, value):
-				t = 'bool'
-			else:
-				t = None
-				m = re.match(ArgParser.ARG_VALPY_PATTERN, value)
-				if m: 
-					t = 'py'
-					value = m.group(1)
-			return ArgParser.coerceValue(value, t)
-		else:
-			return value
-
-	@staticmethod
-	def parseName(argname):
-		an, at, av = None, 'auto', None
-		m = re.match(ArgParser.ARG_NAME_PATTERN, argname)
-		if not m: return an, at, av
-		an = m.group(1)
-		at = m.group(2) or 'auto'
-		av = m.group(3)
-		if ':' in at:
-			at, att = at.split(':')
-			at = ArgParser.ARG_TYPES[at] + ':' + ArgParser.ARG_TYPES[att]
-		else:
-			at = ArgParser.ARG_TYPES[at]
-		return an, at, av
-
-	@staticmethod
-	def listValue(ret, argname, argtype, argval):
-		if not argname in ret:
-			ret[argname] = []
-		if not isinstance(ret[argname], list):
-			ret[argname] = [ret[argname]]
-		if ':' not in argtype: argtype += ':auto'
-		_, argtype = argtype.split(':')
-		if argtype == 'one':
-			if not ret[argname]:
-				ret[argname].append([])
-			ret[argname][0].append(argval)
-		else:
-			ret[argname].append(ArgParser.coerceValue(argval, argtype))
-
-	def __init__(self, argv = None):
-		self.argv = argv is None and sys.argv[1:] or argv
-	
-	def parse(self):
-		# positional arguments
-		ret = {'_': []}
-		argname, argtype = None, 'auto'
-		for arg in self.argv:
-			argname2, argtype2, argvalue = ArgParser.parseName(arg)
-			if not argname: # argname not reached yet
-				if argname2: # I am the first argname
-					if argvalue is None: # it's not -a=1 format, just -a
-						argname, argtype = argname2, argtype2
-					else: # it's -a=1 format
-						if argtype2.startswith('list'): # it's -a:list:int=1 format
-							ArgParser.listValue(ret, argname2, argtype2, argvalue)
-						else: 
-							ret[argname2] = ArgParser.coerceValue(argvalue, argtype2)
-				else: # argname not reached yet and I am not an argname, so I am positional
-					ret['_'].append(arg)
-			else: # argname reached
-				if argname2: # it's argname
-					# type 'list' hasn't closed, so it should not be bool
-					if not argtype.startswith('list'):
-						ret[argname] = ArgParser.coerceValue('True', argtype)
-					if argvalue is None:
-						argname, argtype = argname2, argtype2
-					else:
-						if argtype2.startswith('list'): # it's -a:list:int=1 format
-							ArgParser.listValue(ret, argname2, argtype2, argvalue)
-							argname, argtype = argname2, argtype2
-						else: 
-							ret[argname2] = ArgParser.coerceValue(argvalue, argtype2)
-							argname, argtype = None, 'auto'
-				else: # it's value
-					if argtype.startswith('list'):
-						ArgParser.listValue(ret, argname, argtype, arg)
-					else:
-						ret[argname] = ArgParser.coerceValue(arg, argtype)
-						argname, argtype = None, 'auto'
-		if argname and not argtype.startswith('list'):
-			ret[argname] = ArgParser.coerceValue('True', argtype)
-		return ret
-    
-class Bioprocs(object):
-
-	@staticmethod
-	def _isProcess(procname):
-		return procname[0] == 'p' and (procname[1].isdigit() or procname[1].isupper())
-
-	@staticmethod
-	def _getFileDoc(sfile, doc = '[ Module not documented ]'):
-		ret = []
-		with open(sfile, 'r') as f:
+	def getModuleDoc(module):
+		ret     = []
+		pdir    = path.dirname(bioprocs.__file__)
+		modfile = path.join(pdir, module + '.py')
+		with open(modfile, 'r') as f:
 			docstarted = None
 			for line in f:
 				if line.startswith('#!'): continue
@@ -514,21 +529,31 @@ class Bioprocs(object):
 		return ret
 
 	@staticmethod
-	def _getMethods():
-		metname = [
-			key for key, _ in inspect.getmembers(Bioprocs, predicate = inspect.ismethod)
-			if not key.startswith('_') and key != 'run'
-		]
-		return {mname: Method(mname) for mname in metname}
+	def getMethods():
+		global METHODS
+		if METHODS: return METHODS
+		METHODS = {
+			mname: Method(mname, path.basename(sys.argv[0]) + ' ' + mname)
+			for mname, _ in inspect.getmembers(
+				Methods, 
+				predicate = inspect.isfunction
+			)
+			if not mname.startswith('_')
+		}
+		return METHODS
 
 	@staticmethod
-	def _getScripts():
+	def getScripts():
+		global SCRIPTS
+		if SCRIPTS: return SCRIPTS
 		sglob   = path.join(path.dirname(__file__), 'bioprocs-*.py')
 		scnames = [path.basename(script)[9:-3] for script in glob(sglob)]
-		return {scname: Script(scname) for scname in scnames}
+		SCRIPTS = {scname: Script(scname) for scname in scnames}
+		return SCRIPTS
 
 	@staticmethod
 	def _getProcesses(module = None):
+		global PROCESSES
 		pdir = path.dirname(bioprocs.__file__)
 		if module:
 			modfile = path.join(pdir, module + '.py')
@@ -536,149 +561,81 @@ class Bioprocs(object):
 				raise ImportError('No such module: %s' % module)
 
 			pymodule = __import__('bioprocs.%s' % module, fromlist = ['bioprocs'])
-			procs    = {proc: Process(module + '.' + proc) for proc in dir(pymodule) if Bioprocs._isProcess(proc)}
+			procs    = {
+				proc: Process(module + '.' + proc) 
+				for proc in dir(pymodule) 
+				if proc[0] == 'p' and (proc[1].isdigit() or proc[1].isupper())
+			}
 
-			moddoc = Bioprocs._getFileDoc(modfile)
-			return moddoc, procs
+			return procs
 		else:
+			if PROCESSES: return PROCESSES
 			modules = set([path.splitext(mfile)[0] for mfile in listdir(pdir)])
-			modules = [mod for mod in modules if not mod.startswith('_') and mod not in ['utils', 'scripts', 'wxs']]
-			mods    = {}
-			procs   = {}
-			for module in modules:
-				moddoc, ps = Bioprocs._getProcesses(module)
-				mods[module]  = moddoc
-				procs[module] = ps
-			return mods, procs
-
-	@staticmethod
-	def _getCommand(cmd):
-		if '.' in cmd:
-			try:
-				return Process(cmd)
-			except ValueError:
-				sys.stderr.write('Error: no such process "%s"\n\n' % cmd)
-				sys.exit(1)
-		else:
-			try:
-				return Method(cmd)
-			except AttributeError:
-				try:
-					return Script(cmd)
-				except OSError:
-					sys.stderr.write('Error: no such method or script "%s"\n\n' % cmd)
-					sys.exit(1)
+			modules = [
+				mod for mod in modules 
+				if not mod.startswith('_') and mod not in ['utils', 'scripts', 'wxs']
+			]
+			PROCESSES   = {
+				mod: Main._getProcesses(mod)
+				for mod in modules
+			}
+			return PROCESSES
 
 	def __init__(self, argv = None):
-		argv         = argv and argv[:] or sys.argv[:]
-		self.prog    = path.basename(argv.pop(0))
-		self.command = argv.pop(0) if argv else 'help'
-		self.args    = ArgParser(argv).parse()
+		self.command, self.args = commands.parse(arbi = True)
 
 	def run(self):
-		command = Bioprocs._getCommand(self.command)
+
+		obj = None
+		if '.' in self.command:
+			try:
+				obj = Process(self.command)
+			except ValueError:
+				self.help(error = 'No such process: {!r}'.format(self.command), printNexit = True)
+		else:
+			methods = Main.getMethods()
+			scripts = Main.getScripts()
+			if self.command in methods:
+				obj = methods[self.command]
+			elif self.command in scripts:
+				obj = scripts[self.command]
+			else:
+				error = '' if not self.command else 'No such method or script: {!r}'.format(self.command)
+				self.help(error = error, printNexit = True)
+
 		args = self.args.copy()
 		del args['_']
-		command.run(*self.args['_'], **args)
+		obj.run(*self.args['_'], **args)
 
-	def _listSingleModule(self, module):
-		moddoc, procs = Bioprocs._getProcesses(module)
-		modlen = max([len(md) for md in moddoc]) if moddoc else 0
+	def help(self, error = '', printNexit = False):
+		commands.help(error, printNexit)
 
-		ret  = '%s: %s\n' % (module, Command.printDocs(moddoc, len(module) + 2, hyphen = False))
-		ret += '-' * (len(module) + 2 + min(DOCLEN_MAX, modlen)) + '\n'
-		keylen = max([len(key) for key in procs.keys()])
-		keylen = max(KEYLEN_MIN, keylen)
-		for proc in procs.values():
-			ret += proc.helpInList(keylen)
-		ret += '\n'
-		return ret
+	@staticmethod
+	def helpx(helpitems):
+		del helpitems['commands']
+		getdesc = lambda docstr: [
+			line.lstrip('\t') for line in docstr.strip().split('@')[0].split('\n') if line.strip()
+		]
+		helpitems['methods'] = [
+			(key, '' if key != 'help' else 'command', getdesc(val.getDocstr())) for key, val in Main.getMethods().items()
+		]
+		helpitems['scripts'] = [
+			(key, '', getdesc(val.getDocstr())) for key, val in Main.getScripts().items()
+		]
+		helpitems['processes'] = [
+			('<module.proc>', '', 'Run process as a command line tool.')
+		]
+		return helpitems
 
-	def list(self, mod = None):
-		"""
-		List the process
-		Use "{prog} list <MOD>" to list all processes of a module.
-		@usage:
-			{prog} list
-			{prog} list [MOD]
-			{prog} list [-mod MOD]
-		@params:
-			`mod`: The name of the module.
-		"""
-		if mod:
-			sys.stdout.write(self._listSingleModule(mod))
-		else:
-			mods, _ = Bioprocs._getProcesses()
-			for mod in mods.keys():
-				sys.stdout.write(self._listSingleModule(mod))
-
-	def params(self, *args, **kwargs):
-		"""
-		Show bioprocs.params items.
-		@usage:
-			{prog} params
-			{prog} params [PARAM1] [PARAM2 ...]
-			{prog} params [-param PARAM1 PARAM2 ...]
-		@params:
-			`param`: The parameter names
-		"""
-		if 'param' in kwargs and kwargs['param']:
-			args.append(kwargs['param'])
-		if not args:
-			args = bioprocs.params.asDict().keys()
-		ret = '\n'
-		for arg in sorted(args):
-			param = getattr(bioprocs.params, arg)
-			ret += '%s:\n' % (arg)
-			ret += '-' * (len(arg) + 1) + '\n'
-			ret += '- desc:  %s\n' % Command.printDocs(param.desc, 9, hyphen = False)
-			ret += '- value: %s\n' % repr(param.value)
-			ret += '- type:  %s\n' % param.type
-			ret += '\n'
-		sys.stdout.write(ret)
-
-	def help(self, cmd = None):
-		"""
-		Print this help information.
-		Use "{prog} help <CMD>" to show help for commands.
-		@usage:
-			{prog} help
-			{prog} help [CMD]
-			{prog} help [-cmd CMD]
-		@params:
-			`cmd`: The command of the help information to show.
-		"""
-		if not cmd:
-			methods = Bioprocs._getMethods()
-			scripts = Bioprocs._getScripts()
-			
-			ret = '\n'
-			ret += 'Usage: %s <command> [options ...]\n\n' % self.prog
-
-			ret       += 'Method commands:\n'
-			metkeylen  = max([len(m) for m in methods.keys()])
-			sckeylen   = max([len(s) for s in scripts.keys()])
-			keylen     = max(metkeylen, sckeylen, KEYLEN_MIN)
-			for met in methods.values():
-				ret += met.helpInList(keylen)
-			
-			ret += '\n'
-			ret += 'Script commands:\n'
-			for sc in scripts.values():
-				ret += sc.helpInList(keylen)
-			
-			ret += '\n'
-			ret += 'Process commands:\n'
-			ret += ('  %-' + str(keylen) + 's%s\n') % ('<module.proc>', Command.printDocs([
-				'Use "{prog} list" to show all processes, or', 
-				'use "{prog} list <module>" to show processes of a module.'
-			], keylen + 2))
-
-			ret += '\n'
-			sys.stdout.write(ret)
-		else:
-			sys.stdout.write(Bioprocs._getCommand(cmd).help())
+	@staticmethod
+	def getMain():
+		global MAIN
+		if MAIN: return MAIN
+		MAIN = Main()
+		return MAIN
 	
 if __name__ == '__main__':
-	Bioprocs().run()
+	commands._desc  = 'Command line utilities of bioprocs.'
+	commands._helpx = Main.helpx
+	Main.getMain().run()
 

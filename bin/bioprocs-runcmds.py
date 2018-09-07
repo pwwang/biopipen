@@ -20,49 +20,26 @@ params.ppldir.desc   = 'The ppldir to save the pipeline data.'
 params.forks         = 1
 params.forks.desc    = 'How many jobs to run simultaneously.'
 
-def _procconfig(kwargs = None):
-	params = _getparams(kwargs or {})
+params = params.parse()
 
-	if not isinstance(params['cmds'], list):
-		if params.intype == 'cmds':
-			params['cmds'] = params['cmds'].splitlines()
-		elif params.intype == 'file':
-			with open(params.cmds) as f:
-				params.cmds = f.read().splitlines()
-		else:
-			params.cmds = []
-			for line in sys.stdin:
-				params.cmds.append(line.strip())
-
-	pCmdRunner        = Proc(desc = 'Using PyPPL to distribute and run commands.')
-	pCmdRunner.runner = params.get('runner', 'local')
-	pCmdRunner.cache  = params.cache
-	pCmdRunner.errhow = 'halt'
-	pCmdRunner.forks  = int(params.get('forks', 1))
-	pCmdRunner.input  = {'cmd': params['cmds']}
-	pCmdRunner.script = '{{in.cmd}}'
-
-	config = {'_log': {'file': None}, 'default': {'ppldir': params.ppldir}}
-	return pCmdRunner, config
-
-def _getparams(kwargs):
-	global params
-	
-	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
-		# called from api
-		#if '' in params._props['hopts']:
-		#	del params._props['hopts'][params._props['hopts'].index('')]
-		params('hopts', '', True)
-		for key, val in kwargs.items():
-			setattr(params, key, val)
-		return params.parse(args = [])
+if not isinstance(params.cmds, list):
+	if params.intype == 'cmds':
+		params.cmds = params.cmds.splitlines()
+	elif params.intype == 'file':
+		with open(params.cmds) as f:
+			params.cmds = f.read().splitlines()
 	else:
-		# called directly
-		return params.parse()
+		params.cmds = []
+		for line in sys.stdin:
+			params.cmds.append(line.strip())
 
-def run(*args, **kwargs):
-	proc, config = _procconfig(kwargs)
-	PyPPL(config).start(proc).run()
+pCmdRunner        = Proc(desc = 'Using PyPPL to distribute and run commands.')
+pCmdRunner.runner = params.get('runner', 'local')
+pCmdRunner.cache  = params.cache
+pCmdRunner.errhow = 'halt'
+pCmdRunner.forks  = int(params.get('forks', 1))
+pCmdRunner.input  = {'cmd': params.cmds}
+pCmdRunner.script = '{{in.cmd}}'
 
-if __name__ == '__main__':
-	run()
+config = {'_log': {'file': None}, 'default': {'ppldir': params.ppldir}}
+PyPPL(config).start(pCmdRunner).run()

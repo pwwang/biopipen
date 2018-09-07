@@ -44,101 +44,78 @@ params.forks.desc      = 'Number of cores used to plot if split.'
 params.highlights      = []
 params.highlights.desc = 'The highlight regions in format of "start-end"'
 
-def _procconfig(kwargs = None):
-	params = _getparams(kwargs or {})
+params = params.parse()
 
-	chrom, startend  = params.region.split(':')
-	start, end       = startend.split('-')
-	start      = int(start)
-	end        = int(end)
-	trackProcs = []
-	#uuid       = utils.uid(str(sys.argv))
-	for i, tt in enumerate(params.tracks):
-		if tt == 'data':
-			datatrackproc = pDataTrack.copy(tag = params.names[i])
-			datatrackproc.input = (params.names[i], params.inputs[i], chrom)
-			if params.params:
-				datatrackproc.args.params.update(json.loads(params.params[i]))
-			trackProcs.append(datatrackproc)
-		elif tt == 'anno':
-			annotrackproc = pAnnoTrack.copy(tag = params.names[i])
-			annotrackproc.input = (params.names[i], params.inputs[i], chrom)
-			if params.params:
-				annotrackproc.args.params.update(json.loads(params.params[i]))
-			trackProcs.append(annotrackproc)
-		elif tt == 'ucsc':
-			ucsctrackproc = pUcscTrack.copy(tag = params.names[i])
-			ucsctrack, gviztrack = params.inputs[i].split(':')
-			ucsctrackproc.input = (params.names[i], ucsctrack, gviztrack, params.region)
-			if params.params:
-				ucsctrackproc.args.params.update(json.loads(params.params[i]))
-			trackProcs.append(ucsctrackproc)
-		else:
-			intertrackproc = pInteractionTrack.copy(tag = params.names[i])
-			infile, intype = params.inputs[i].split(':')
-			intertrackproc.input = (params.names[i], infile, params.region)
-			intertrackproc.args.intype = intype
-			if params.params:
-				intertrackproc.args.params.update(json.loads(params.params[i]))
-			trackProcs.append(intertrackproc)
-
-	if end - start > params.splitlen:
-		pGenomePlot.depends        = trackProcs
-		#pGenomePlot.tag            = uuid
-		pGenomePlot.forks          = params.forks
-		pGenomePlot.exdir          = params.outdir
-		pGenomePlot.args.ideoTrack = params.ideo
-		pGenomePlot.args.axisTrack = params.axis
-		pGenomePlot.args.geneTrack = params.genes
-		if params.devpars:
-			pGenomePlot.args.devpars.update(json.loads(params.devpars))
-		if params.plotparams:
-			pGenomePlot.args.params.update(json.loads(params.plotparams))
-		if len(params.highlights) == 2 and '-' not in params.highlist[0]:
-			h1 = params.highlights[0]
-			h2 = params.highlights[1]
-		else:
-			h1 = ';'.join(params.highlights)
-			h2 = h1
-		pGenomePlot.input   = lambda *chs: [
-			([ch.get() for ch in chs], "%s:%s-%s" % (chrom, start, start + 10000), h1),
-			([ch.get() for ch in chs], "%s:%s-%s" % (chrom, end - 100000, end), h2),
-		]
-
+chrom, startend  = params.region.split(':')
+start, end       = startend.split('-')
+start      = int(start)
+end        = int(end)
+trackProcs = []
+#uuid       = utils.uid(str(sys.argv))
+for i, tt in enumerate(params.tracks):
+	if tt == 'data':
+		datatrackproc = pDataTrack.copy(tag = params.names[i])
+		datatrackproc.input = (params.names[i], params.inputs[i], chrom)
+		if params.params:
+			datatrackproc.args.params.update(json.loads(params.params[i]))
+		trackProcs.append(datatrackproc)
+	elif tt == 'anno':
+		annotrackproc = pAnnoTrack.copy(tag = params.names[i])
+		annotrackproc.input = (params.names[i], params.inputs[i], chrom)
+		if params.params:
+			annotrackproc.args.params.update(json.loads(params.params[i]))
+		trackProcs.append(annotrackproc)
+	elif tt == 'ucsc':
+		ucsctrackproc = pUcscTrack.copy(tag = params.names[i])
+		ucsctrack, gviztrack = params.inputs[i].split(':')
+		ucsctrackproc.input = (params.names[i], ucsctrack, gviztrack, params.region)
+		if params.params:
+			ucsctrackproc.args.params.update(json.loads(params.params[i]))
+		trackProcs.append(ucsctrackproc)
 	else:
-		pGenomePlot.depends        = trackProcs
-		#pGenomePlot.tag            = uuid
-		pGenomePlot.exdir          = params.outdir
-		pGenomePlot.args.ideoTrack = params.ideo
-		pGenomePlot.args.axisTrack = params.axis
-		pGenomePlot.args.geneTrack = params.genes
-		if params.devpars:
-			pGenomePlot.args.devpars.update(json.loads(params.devpars))
-		if params.plotparams:
-			pGenomePlot.args.params.update(json.loads(params.plotparams))
-		pGenomePlot.input   = lambda *chs: [([ch.get() for ch in chs], params.region, ';'.join(params.highlights))]
-	
-	config = {'proc': {'file': None}}
-	return trackProcs, config
+		intertrackproc = pInteractionTrack.copy(tag = params.names[i])
+		infile, intype = params.inputs[i].split(':')
+		intertrackproc.input = (params.names[i], infile, params.region)
+		intertrackproc.args.intype = intype
+		if params.params:
+			intertrackproc.args.params.update(json.loads(params.params[i]))
+		trackProcs.append(intertrackproc)
 
-def _getparams(kwargs):
-	global params
-	
-	if len(sys.argv) > 1 and sys.argv[1] == path.splitext(path.basename(__file__))[0]:
-		# called from api
-		#if '' in params._props['hopts']:
-		#	del params._props['hopts'][params._props['hopts'].index('')]
-		params('hopts', '', True)
-		for key, val in kwargs.items():
-			setattr(params, key, val)
-		return params.parse(args = [])
+if end - start > params.splitlen:
+	pGenomePlot.depends        = trackProcs
+	#pGenomePlot.tag            = uuid
+	pGenomePlot.forks          = params.forks
+	pGenomePlot.exdir          = params.outdir
+	pGenomePlot.args.ideoTrack = params.ideo
+	pGenomePlot.args.axisTrack = params.axis
+	pGenomePlot.args.geneTrack = params.genes
+	if params.devpars:
+		pGenomePlot.args.devpars.update(json.loads(params.devpars))
+	if params.plotparams:
+		pGenomePlot.args.params.update(json.loads(params.plotparams))
+	if len(params.highlights) == 2 and '-' not in params.highlist[0]:
+		h1 = params.highlights[0]
+		h2 = params.highlights[1]
 	else:
-		# called directly
-		return params.parse()
+		h1 = ';'.join(params.highlights)
+		h2 = h1
+	pGenomePlot.input   = lambda *chs: [
+		([ch.get() for ch in chs], "%s:%s-%s" % (chrom, start, start + 10000), h1),
+		([ch.get() for ch in chs], "%s:%s-%s" % (chrom, end - 100000, end), h2),
+	]
 
-def run(*args, **kwargs):
-	proc, config = _procconfig(kwargs)
-	PyPPL(config).start(proc).run()
-
-if __name__ == '__main__':
-	run()
+else:
+	pGenomePlot.depends        = trackProcs
+	#pGenomePlot.tag            = uuid
+	pGenomePlot.exdir          = params.outdir
+	pGenomePlot.args.ideoTrack = params.ideo
+	pGenomePlot.args.axisTrack = params.axis
+	pGenomePlot.args.geneTrack = params.genes
+	if params.devpars:
+		pGenomePlot.args.devpars.update(json.loads(params.devpars))
+	if params.plotparams:
+		pGenomePlot.args.params.update(json.loads(params.plotparams))
+	pGenomePlot.input   = lambda *chs: [([ch.get() for ch in chs], params.region, ';'.join(params.highlights))]
+	
+config = {'proc': {'file': None}}
+PyPPL(config).start(trackProcs).run()
