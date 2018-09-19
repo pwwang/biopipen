@@ -44,7 +44,7 @@ from . import params, bashimport, rimport
 """
 pSam2Bam                        = Proc(desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
 pSam2Bam.input                  = "infile:file"
-pSam2Bam.output                 = "outfile:file:{{in.infile | fn}}.bam, idxfile:file:{{in.infile | fn}}.bam.bai"
+pSam2Bam.output                 = "outfile:file:{{i.infile | fn}}.bam, idxfile:file:{{i.infile | fn}}.bam.bai"
 pSam2Bam.errhow                 = 'retry'
 pSam2Bam.args.tool              = "biobambam"
 pSam2Bam.args.sambamba          = params.sambamba.value
@@ -98,7 +98,7 @@ pSam2Bam.script                 = "file:scripts/sambam/pSam2Bam.py"
 """
 pBamMarkdup                        = Proc(desc = 'Mark/remove duplicates for bam files.')
 pBamMarkdup.input                  = "infile:file"
-pBamMarkdup.output                 = "outfile:file:{{in.infile | fn}}.bam"
+pBamMarkdup.output                 = "outfile:file:{{i.infile | fn}}.bam"
 pBamMarkdup.args.tool              = "biobambam"
 pBamMarkdup.args.sambamba          = params.sambamba.value
 pBamMarkdup.args.picard            = params.picard.value
@@ -147,7 +147,7 @@ pBamMarkdup.script                 = "file:scripts/sambam/pBamMarkdup.py"
 """
 pBamRecal                                   = Proc(desc = 'Recalibrate a bam file.')
 pBamRecal.input                             = "infile:file"
-pBamRecal.output                            = "outfile:file:{{in.infile | fn}}.bam, idxfile:file:{{in.infile | fn}}.bam.bai"
+pBamRecal.output                            = "outfile:file:{{i.infile | fn}}.bam, idxfile:file:{{i.infile | fn}}.bam.bai"
 pBamRecal.args.tool                         = "bamutil"
 pBamRecal.args.gatk                         = params.gatk.value
 pBamRecal.args.samtools                     = params.samtools.value
@@ -193,7 +193,7 @@ pBamRecal.script                            = "file:scripts/sambam/pBamRecal.py"
 """
 pBamReadGroup                     = Proc(desc = 'Add or replace read groups of a bam file.')
 pBamReadGroup.input               = "infile:file"
-pBamReadGroup.output              = "outfile:file:{{in.infile | bn}}"
+pBamReadGroup.output              = "outfile:file:{{i.infile | bn}}"
 pBamReadGroup.args.tool           = "bamutil"
 pBamReadGroup.args.picard         = params.picard.value
 pBamReadGroup.args.bamutil        = params.bamutil.value
@@ -227,7 +227,7 @@ pBamReadGroup.script              = "file:scripts/sambam/pBamReadGroup.py"
 """
 pBamReorder                     = Proc(desc = 'Reorder a sam/bam file by a given reference.')
 pBamReorder.input               = "infile:file"
-pBamReorder.output              = "outfile:file:{{in.infile | bn}}"
+pBamReorder.output              = "outfile:file:{{i.infile | bn}}"
 pBamReorder.args.picard         = params.picard.value
 pBamReorder.args.params         = Box()
 pBamReorder.args.tmpdir         = params.tmpdir.value
@@ -264,7 +264,7 @@ pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
 """
 pBamMerge                     = Proc(desc = 'Merges multiple SAM and/or BAM sorted files into a single file.')
 pBamMerge.input               = "infiles:files"
-pBamMerge.output              = "outfile:file:{{in.infiles.0 | fn}}.etc.bam"
+pBamMerge.output              = "outfile:file:{{i.infiles.0 | fn}}.etc.bam"
 pBamMerge.args.tool           = "picard"
 pBamMerge.args.picard         = params.picard.value
 pBamMerge.args.bamutil        = params.bamutil.value
@@ -316,7 +316,7 @@ pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 pBam2Gmut                      = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
 pBam2Gmut.input                = "infile:file"
 pBam2Gmut.infile               = 'origin' # the index file should be with the original file
-pBam2Gmut.output               = "outfile:file:{{in.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2Gmut.output               = "outfile:file:{{i.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
 pBam2Gmut.lang                 = params.python.value
 pBam2Gmut.args.tool            = "strelka"
 pBam2Gmut.args.gatk            = params.gatk.value
@@ -387,7 +387,7 @@ pBam2Gmut.script               = "file:scripts/sambam/pBam2Gmut.py"
 pBamPair2Smut                     = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
 pBamPair2Smut.input               = "tumor:file, normal:file"
 pBamPair2Smut.infile              = 'origin'
-pBamPair2Smut.output              = "outfile:file:{{in.tumor | fn}}-{{in.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBamPair2Smut.output              = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
 pBamPair2Smut.args.tool           = 'strelka'
 pBamPair2Smut.args.gatk           = params.gatk.value # required for strelka
 pBamPair2Smut.args.somaticsniper  = params.somaticsniper.value
@@ -446,7 +446,7 @@ pBamPair2Smut.script              = "file:scripts/sambam/pBamPair2Smut.py"
 """
 pBamStats                  = Proc(desc = 'Get read depth from bam files.')
 pBamStats.input            = 'infile:file'
-pBamStats.output           = 'outfile:file:{{in.infile | fn}}/{{in.infile | fn}}.stat.txt, outdir:dir:{{in.infile | fn}}'
+pBamStats.output           = 'outfile:file:{{i.infile | fn}}/{{i.infile | fn}}.stat.txt, outdir:dir:{{i.infile | fn}}'
 pBamStats.args.tool        = 'bamstats'
 pBamStats.args.bamstats    = params.bamstats.value
 pBamStats.args.params      = Box()
@@ -499,8 +499,8 @@ pBamStats.script = "file:scripts/sambam/pBamStats.r"
 pBam2Fastq        = Proc(desc = 'Convert bam files to pair-end fastq files.')
 pBam2Fastq.input  = "infile:file"
 pBam2Fastq.output = [
-	"fqfile1:file:{{ in.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
-	"fqfile2:file:{{ in.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
+	"fqfile1:file:{{ i.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
+	"fqfile2:file:{{ i.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
 ]
 pBam2Fastq.args.tool           = 'biobambam'
 pBam2Fastq.args.biobambam      = params.biobambam_bamtofastq.value
@@ -545,7 +545,7 @@ pBam2Fastq.script              = "file:./scripts/sambam/pBam2Fastq.py"
 """
 pBam2FastqSE                     = Proc(desc = 'Convert bam files to single-end fastq files.')
 pBam2FastqSE.input               = "infile:file"
-pBam2FastqSE.output              = "fqfile:file:{{in.infile | fn }}.fq{% if args.gz %}.gz{% endif %}"
+pBam2FastqSE.output              = "fqfile:file:{{i.infile | fn }}.fq{% if args.gz %}.gz{% endif %}"
 pBam2FastqSE.args.tool           = 'biobambam'
 pBam2FastqSE.args.biobambam      = params.biobambam_bamtofastq.value
 pBam2FastqSE.args.bedtools       = params.bedtools.value
@@ -580,7 +580,7 @@ pBam2FastqSE.script              = "file:scripts/sambam/pBam2FastqSE.py"
 """
 pBam2Counts                     = Proc(desc = 'Extract read counts from RNA-seq bam files.')
 pBam2Counts.input               = 'infile:file'
-pBam2Counts.output              = 'outfile:file:{{in.infile | fn}}.counts'
+pBam2Counts.output              = 'outfile:file:{{i.infile | fn}}.counts'
 pBam2Counts.args.tool           = 'htseq'
 pBam2Counts.args.htseq          = params.htseq_count.value
 pBam2Counts.args.params         = Box()

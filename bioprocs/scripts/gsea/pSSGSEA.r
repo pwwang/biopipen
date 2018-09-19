@@ -218,11 +218,11 @@ ExportResult = function (es, nes, outfile) {
 }
 seed = {{args.seed}}
 if (seed > -1) set.seed(seed)
-dir.create("{{out.outdir}}", showWarnings = F, recursive = T)
-exp = readGCT("{{in.gctfile}}")
-gs  = readGMT("{{in.gmtfile}}")
+dir.create("{{o.outdir}}", showWarnings = F, recursive = T)
+exp = readGCT("{{i.gctfile}}")
+gs  = readGMT("{{i.gmtfile}}")
 ess = ESWithPerm(exp = exp, gs = gs)
 esq = AdjustP(ess)
-ESPlot(es = esq, gs = gs, outprefix = "{{out.outdir}}/RES.")
-nes = NPvalPlot(es = esq, outprefix = "{{out.outdir}}/normP.")
-ExportResult (es = esq, nes=nes, outfile = "{{out.outdir}}/report.txt")
+ESPlot(es = esq, gs = gs, outprefix = "{{o.outdir}}/RES.")
+nes = NPvalPlot(es = esq, outprefix = "{{o.outdir}}/normP.")
+ExportResult (es = esq, nes=nes, outfile = "{{o.outdir}}/report.txt")

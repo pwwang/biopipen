@@ -1,7 +1,7 @@
 {{rimport}}('__init__.r')
 
-infile   = {{in.infile    | quote}}
-outfile  = {{out.outfile  | quote}}
+infile   = {{i.infile    | quote}}
+outfile  = {{o.outfile  | quote}}
 byrow    = {{args.byrow   | R}}
 inopts   = {{args.inopts  | R}}
 method   = {{args.tie     | quote}}

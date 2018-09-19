@@ -10,7 +10,7 @@ poscol   = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
 notfound = {{args.notfound | quote}}
 # get the genes
 genes = genenorm(
-	{{in.infile | quote}},
+	{{i.infile | quote}},
 	notfound = notfound,
 	frm      = {{args.frm | quote}},
 	to       = "%s,symbol" % poscol,
@@ -20,7 +20,7 @@ genes = genenorm(
 	genecol  = {{args.genecol | quote}}
 )
 outopts = {{args.outopts}}
-writer = TsvWriter({{out.outfile | quote}}, **outopts)
+writer = TsvWriter({{o.outfile | quote}}, **outopts)
 if outopts['query']:
 	writer.meta.add('QUERY')
 if outopts['head']:

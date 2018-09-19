@@ -2,13 +2,13 @@
 {{schemaparse}}
 
 from sys import stderr
-dsn = dsnparse({{in.dsn | quote}})
+dsn = dsnparse({{i.dsn | quote}})
 if not hasattr(dsn, 'scheme'):
 	raise Exception('Cannot determine the scheme from DSN string.')
 
 # maybe needed for other scheme
-name, fields = schemaparse({{in.datafile | quote}}, type = 'data', scheme = dsn.scheme, delimit = {{args.delimit | quote}})
-name = {{in.datafile | tablename | quote}}
+name, fields = schemaparse({{i.datafile | quote}}, type = 'data', scheme = dsn.scheme, delimit = {{args.delimit | quote}})
+name = {{i.datafile | tablename | quote}}
 
 if dsn.scheme in ['sqlite', 'sqlite3']:
 	assert hasattr(dsn, 'file') and dsn.file != ':memory:'
@@ -42,7 +42,7 @@ if dsn.scheme in ['sqlite', 'sqlite3']:
 		field[0] for field in fields
 	]), ', '.join(['?' for _ in fields]))
 	data = []
-	with open({{in.datafile | quote}}, 'r') as f:
+	with open({{i.datafile | quote}}, 'r') as f:
 		f.readline() # skip header
 		for line in f:
 			line = line.strip('\n')

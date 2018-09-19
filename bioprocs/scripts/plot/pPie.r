@@ -1,8 +1,8 @@
 {{rimport}}('plot.r')
 
 ggs     = {{args.ggs | R}}
-infile  = {{in.infile | R}}
-outfile = {{out.outfile | R}}
+infile  = {{i.infile | R}}
+outfile = {{o.outfile | R}}
 rnames  = {{args.rnames | R}}
 ggs     = {{args.ggs | R}}
 devpars = {{args.devpars | R}}

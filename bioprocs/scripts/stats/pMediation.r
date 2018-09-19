@@ -6,8 +6,8 @@ set.seed(8525)
 inopts.cnames = {{args.inopts | lambda x: x.get('cnames', True) | R}}
 inopts.rnames = {{args.inopts | lambda x: x.get('rnames', True) | R}}
 
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 
 indata  = read.table(infile, header = inopts.cnames, row.names = if(inopts.rnames) 1 else NULL, check.names = F, sep = "\t")
 

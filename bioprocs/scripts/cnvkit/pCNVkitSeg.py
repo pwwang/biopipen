@@ -2,8 +2,8 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-infile   = {{in.infile | quote}}
-outfile  = {{out.outfile | quote}}
+infile   = {{i.infile | quote}}
+outfile  = {{o.outfile | quote}}
 nthread  = {{args.nthread | repr}}
 params   = {{args.params}}
 

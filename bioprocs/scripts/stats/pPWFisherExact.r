@@ -1,9 +1,9 @@
 {{rimport}}('__init__.r')
 
-infile   = {{in.infile    | quote}}
-outfile  = {{out.outfile  | quote}}
+infile   = {{i.infile    | quote}}
+outfile  = {{o.outfile  | quote}}
 
-{% if args.intype | lambda x: x == 'pair' or x == 'pairs' %}
+{% if args.intype == 'pair' or args.intype == 'pairs' %}
 
 #
 # A+	B+	4

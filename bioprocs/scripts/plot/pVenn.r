@@ -1,9 +1,9 @@
 {{rimport}}('plot.r', '__init__.r')
 
 rnames   = {{args.rnames | R}}
-infile   = {{in.infile | R}}
-metafile = {{in.metafile | R}}
-outfile  = {{out.outfile | R}}
+infile   = {{i.infile | R}}
+metafile = {{i.metafile | R}}
+outfile  = {{o.outfile | R}}
 
 data = read.table.nodup (infile, sep="\t", header = TRUE, row.names = rnames, check.names = F)
 

@@ -2,8 +2,8 @@ require('maftools')
 
 {{rimport}}('__init__.r', 'plot.r')
 
-indir    = {{in.indir | quote}}
-outdir   = {{out.outdir | quote}}
+indir    = {{i.indir | quote}}
+outdir   = {{o.outdir | quote}}
 isTCGA   = {{args.isTCGA | R}}
 mutypes  = {{args.mutypes | R}}
 devpars  = {{args.devpars | R}}

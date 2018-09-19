@@ -1,8 +1,8 @@
 from bioprocs.utils.tsvio import TsvWriter, TsvRecord
 from gff import Gff
 
-infile    = {{in.infile | quote}}
-outfile   = {{out.outfile | quote}}
+infile    = {{i.infile | quote}}
+outfile   = {{o.outfile | quote}}
 attr2name = {{args.attr2name | lambda a: 'None' if a is None else a}}
 keepinfo  = {{args.keepinfo | repr}}
 

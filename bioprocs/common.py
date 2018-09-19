@@ -27,7 +27,7 @@ from .utils import fs2name
 """
 pSort                     = Proc(desc = 'Sort file.')
 pSort.input               = "infile:file"
-pSort.output              = "outfile:file:{{in.infile | bn}}"
+pSort.output              = "outfile:file:{{i.infile | bn}}"
 pSort.args.params         = Box()
 pSort.args.inopts         = Box(skip = 0, delimit = '\t', comment = '#')
 pSort.args.case           = True
@@ -50,7 +50,7 @@ pSort.script              = "file:scripts/common/pSort.py"
 """
 pFiles2Dir                = Proc(desc = 'Put files to a directory using symbolic links.')
 pFiles2Dir.input          = "infiles:files"
-pFiles2Dir.output         = "outdir:dir:{{in.infiles | lambda x: sorted(x) | [0] | fn}}.dir"
+pFiles2Dir.output         = "outdir:dir:{{i.infiles | lambda x: sorted(x) | [0] | fn}}.dir"
 pFiles2Dir.lang           = params.python.value
 pFiles2Dir.script         = "file:scripts/common/pFiles2Dir.py"
 
@@ -66,8 +66,8 @@ pFiles2Dir.script         = "file:scripts/common/pFiles2Dir.py"
 """
 pFile2Proc                = Proc(desc="Convert a file to a proc so it can be used as dependent")
 pFile2Proc.input          = "infile:file"
-pFile2Proc.output         = "outfile:file:{{in.infile | bn}}"
-pFile2Proc.script         = 'ln -s "{{in.infile}}" "{{out.outfile}}"'
+pFile2Proc.output         = "outfile:file:{{i.infile | bn}}"
+pFile2Proc.script         = 'ln -s "{{i.infile}}" "{{out.outfile}}"'
 
 """
 @name:
@@ -81,7 +81,7 @@ pFile2Proc.script         = 'ln -s "{{in.infile}}" "{{out.outfile}}"'
 """
 pStr2File                 = Proc(desc = "Save string to a file.")
 pStr2File.input           = "in:var"
-pStr2File.output          = "outfile:file:{{in.in | encode}}.txt"
+pStr2File.output          = "outfile:file:{{i.in | encode}}.txt"
 pStr2File.args.breakOn    = ','
 pStr2File.args.trimLine   = True
 pStr2File.envs.encode     = lambda x: __import__('re').sub(r'[^\w_]', '', x)[:16]
@@ -102,9 +102,9 @@ pStr2File.script          = "file:scripts/common/pStr2File.py"
 """
 pHead                     = Proc(desc = "Like linux's head command")
 pHead.input               = "infile:file"
-pHead.output              = "outfile:file:{{in.infile | fn}}.head.txt"
+pHead.output              = "outfile:file:{{i.infile | fn}}.head.txt"
 pHead.args.n              = 10
-pHead.script              = 'head -n {{args.n}} {{in.infile | squote}} > {{out.outfile | squote}}'
+pHead.script              = 'head -n {{args.n}} {{i.infile | squote}} > {{out.outfile | squote}}'
 
 """
 @name:
@@ -120,9 +120,9 @@ pHead.script              = 'head -n {{args.n}} {{in.infile | squote}} > {{out.o
 """
 pTail                     = Proc(desc = "Like linux's tail command")
 pTail.input               = "infile:file"
-pTail.output              = "outfile:file:{{in.infile | fn}}.tail.txt"
+pTail.output              = "outfile:file:{{i.infile | fn}}.tail.txt"
 pTail.args.n              = 10
-pTail.script              = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x.startswith("+") else x}} {{in.infile | squote}} > {{out.outfile | squote}}'
+pTail.script              = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x.startswith("+") else x}} {{i.infile | squote}} > {{out.outfile | squote}}'
 
 """
 @name:
@@ -137,20 +137,20 @@ pTail.script              = 'tail -n {{args.n | lambda x: "+"+str(int(x)+1) if x
 """
 pPrepend                  = Proc(desc = "Prepend string to a file.")
 pPrepend.input            = "in:var, infile:file"
-pPrepend.output           = "outfile:file:{{in.infile | fn2}}.prepend{{in.infile | ext}}"
+pPrepend.output           = "outfile:file:{{i.infile | fn2}}.prepend{{i.infile | ext}}"
 pPrepend.script           = '''
-printf {{in.in | squote}} > {{out.outfile | squote}}
-cat {{in.infile | squote}} >> {{out.outfile | squote}}
+printf {{i.in | squote}} > {{out.outfile | squote}}
+cat {{i.infile | squote}} >> {{out.outfile | squote}}
 '''
 
 pAppend                   = Proc(desc = "Append string to a file")
 pAppend.input             = "in:var, infile:file"
-pAppend.output            = "outfile:file:{{in.infile | fn2}}.append{{in.infile | ext}}"
-pAppend.script            = 'cat {{in.infile | squote}} > {{out.outfile | squote}}; printf {{in.in | squote}} >> {{out.outfile | squote}}'
+pAppend.output            = "outfile:file:{{i.infile | fn2}}.append{{i.infile | ext}}"
+pAppend.script            = 'cat {{i.infile | squote}} > {{out.outfile | squote}}; printf {{i.in | squote}} >> {{out.outfile | squote}}'
 
 pUnique                   = Proc(desc = "Make the input file unique")
 pUnique.input             = "infile:file"
-pUnique.output            = "outfile:file:{{in.infile | fn2}}.unique{{in.infile | ext}}"
+pUnique.output            = "outfile:file:{{i.infile | fn2}}.unique{{i.infile | ext}}"
 pUnique.args.inopts       = Box(delimit = "\t", skip = 0, comment = "#")
 pUnique.args.outopts      = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
 pUnique.args.col          = '*'
@@ -173,11 +173,11 @@ pUnique.script            = "file:scripts/common/pUnique.py"
 """
 pAddHeader                = Proc(desc = 'Add the header of 1st file to 2nd file.')
 pAddHeader.input          = "infile1:file, infile2:file"
-pAddHeader.output         = "outfile:file:{{in.infile2 | bn}}"
+pAddHeader.output         = "outfile:file:{{i.infile2 | bn}}"
 pAddHeader.args.n         = 1
 pAddHeader.script         = '''
-head -n {{args.n}} {{in.infile1 | squote}} > {{out.outfile | squote}}
-cat {{in.infile2 | squote}} >> {{out.outfile | squote}}
+head -n {{args.n}} {{i.infile1 | squote}} > {{out.outfile | squote}}
+cat {{i.infile2 | squote}} >> {{out.outfile | squote}}
 '''
 
 """
@@ -195,7 +195,7 @@ cat {{in.infile2 | squote}} >> {{out.outfile | squote}}
 """
 pMergeFiles              = Proc(desc = 'Merge files.')
 pMergeFiles.input        = "infiles:files"
-pMergeFiles.output       = "outfile:file:{{in.infiles | fs2name}}{{in.infiles | :v1[0] if v1 else '' | ext }}"
+pMergeFiles.output       = "outfile:file:{{i.infiles | fs2name}}{{i.infiles | :v1[0] if v1 else '' | ext }}"
 pMergeFiles.args.header  = False
 pMergeFiles.envs.fs2name = fs2name
 pMergeFiles.lang         = params.python.value
@@ -217,7 +217,7 @@ pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
 """
 pSplitRows                = Proc(desc = 'Split a file by rows.')
 pSplitRows.input          = 'infile:file'
-pSplitRows.output         = 'outdir:dir:{{in.infile | bn}}.rows'
+pSplitRows.output         = 'outdir:dir:{{i.infile | bn}}.rows'
 pSplitRows.args.skip      = 0
 pSplitRows.args.cnames    = True
 pSplitRows.args.n         = 8

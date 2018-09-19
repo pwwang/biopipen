@@ -2497,8 +2497,6 @@ GSEA.Analyze.Sets <- function(
         }
    }
 
-
-
    cmap <-  c("#AAAAFF", "#111166")
 #   GSEA.HeatMapPlot2(V = A, row.names = A.row.names, col.names = A.names, main = "Leading Subsets Assignment (clustered)", sub = paste(doc.string, " - ", phen1, sep=""), xlab=" ", ylab=" ", color.map = cmap)
 
@@ -2520,10 +2518,6 @@ GSEA.Analyze.Sets <- function(
    } else {
         dev.off()
    }
-
-
-
-
 
 
 # resort columns and rows for phen2
@@ -2620,12 +2614,12 @@ if (seed > -1) set.seed(seed)
 if (nthread > 1) {
     library(doParallel)
     # split gmt file
-    gmtlines = readLines("{{in.gmtfile}}")
+    gmtlines = readLines("{{i.gmtfile}}")
     gmtsize  = ceiling(length(gmtlines) / nthread)
     outdirs  = c()
     gmtfiles = c()
     for (i in 1:nthread) {
-        outdir   = paste(file.path("{{out.outdir}}", paste("Thread-", i, sep="")), '/', sep="")
+        outdir   = paste(file.path("{{o.outdir}}", paste("Thread-", i, sep="")), '/', sep="")
         dir.create(outdir, showWarnings=F)
         gmtfile  = file.path(outdir, paste('Thread-', i, '.gmt', sep=""))
         outdirs  = c(outdirs, outdir)
@@ -2640,8 +2634,8 @@ if (nthread > 1) {
     foreach(i=1:nthread, .verbose=T) %dopar% capture.output({
         options(error = dump.frames)
         GSEA(                                     # Input/Output Files :-------------------------------------------
-            input.ds =  "{{in.gctfile}}",            # Input gene expression Affy dataset file in RES or GCT format
-            input.cls = "{{in.clsfile}}",            # Input class vector (phenotype) file in CLS format
+            input.ds =  "{{i.gctfile}}",            # Input gene expression Affy dataset file in RES or GCT format
+            input.cls = "{{i.clsfile}}",            # Input class vector (phenotype) file in CLS format
             gs.db =     gmtfiles[i],            # Gene set database in GMT format
             output.directory      = outdirs[i],            # Directory where to store output and results (default: "")
             #  Program parameters :----------------------------------------------------------------------------------------------------------------------------
@@ -2680,10 +2674,10 @@ if (nthread > 1) {
     stopCluster(cl)
 } else {
     GSEA(                                     # Input/Output Files :-------------------------------------------
-        input.ds =  "{{in.gctfile}}",            # Input gene expression Affy dataset file in RES or GCT format
-        input.cls = "{{in.clsfile}}",            # Input class vector (phenotype) file in CLS format
-        gs.db =     "{{in.gmtfile}}",            # Gene set database in GMT format
-        output.directory      = "{{out.outdir}}/",            # Directory where to store output and results (default: "")
+        input.ds =  "{{i.gctfile}}",            # Input gene expression Affy dataset file in RES or GCT format
+        input.cls = "{{i.clsfile}}",            # Input class vector (phenotype) file in CLS format
+        gs.db =     "{{i.gmtfile}}",            # Gene set database in GMT format
+        output.directory      = "{{o.outdir}}/",            # Directory where to store output and results (default: "")
         #  Program parameters :----------------------------------------------------------------------------------------------------------------------------
         doc.string            = "GSEA",     # Documentation string used as a prefix to name result files (default: "GSEA.analysis")
         non.interactive.run   = F,               # Run in interactive (i.e. R GUI) or batch (R command line) mode (default: F)
@@ -2711,7 +2705,7 @@ if (nthread > 1) {
     # Overlap and leading gene subset assignment analysis of the GSEA results
 
     GSEA.Analyze.Sets(
-        directory           = "{{out.outdir}}/",        # Directory where to store output and results (default: "")
+        directory           = "{{o.outdir}}/",        # Directory where to store output and results (default: "")
         topgs = 20,                                    # number of top scoring gene sets used for analysis
         height = 16,
         width = 16

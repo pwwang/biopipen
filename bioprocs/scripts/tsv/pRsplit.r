@@ -1,7 +1,7 @@
 {{rimport}}('__init__.r')
 
-infile  = {{in.infile | R}}
-outdir  = {{out.outdir | R}}
+infile  = {{i.infile | R}}
+outdir  = {{o.outdir | R}}
 params  = {{args.params | R}}
 inopts  = {{args.inopts | R}}
 size    = as.numeric({{args.size | R}})
@@ -21,7 +21,7 @@ for ( chunk in split(1:length(allrnames), ceiling(seq_along(1:length(allrnames))
 	rnames    = allrnames[chunk]
 	m         = mat[rnames, , drop = F]
 	fn        = paste(gsub("[[:punct:]]", "_", rnames), collapse='-')
-	fn        = paste0({{in.infile | fn2 | quote}}, '_', fn, {{in.infile | ext | quote}})
+	fn        = paste0({{i.infile | fn2 | quote}}, '_', fn, {{i.infile | ext | quote}})
 	outfile   = file.path(outdir, fn)
 	outparams = list(
 		x         = m,

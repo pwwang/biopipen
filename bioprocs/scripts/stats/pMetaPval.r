@@ -2,10 +2,10 @@ library("methods")
 library("metap")
 {{rimport}}('__init__.r')
 
-infiles = Sys.glob(file.path({{in.indir | quote}}, {{args.pattern | quote}}))
+infiles = Sys.glob(file.path({{i.indir | quote}}, {{args.pattern | quote}}))
 lenfile = length(infiles)
 
-outfile = {{out.outfile | quote}}
+outfile = {{o.outfile | quote}}
 
 inopts.cnames = {{args.inopts.cnames | lambda x: x if isinstance(x, list) else [x] | Rvec}}
 inopts.pcol   = {{args.inopts.pcol   | lambda x: x if isinstance(x, list) else [x] | Rvec}}

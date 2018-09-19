@@ -4,9 +4,9 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-cnrfile  = {{in.cnrfile | quote}}
-cnsfile  = {{in.cnsfile | quote}}
-outdir   = {{out.outdir | quote}}
+cnrfile  = {{i.cnrfile | quote}}
+cnsfile  = {{i.cnsfile | quote}}
+outdir   = {{o.outdir | quote}}
 regions  = {{args.regions | repr}}
 nthread  = {{args.nthread | repr}}
 params   = {{args.params}}

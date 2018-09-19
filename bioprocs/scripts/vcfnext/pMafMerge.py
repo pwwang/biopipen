@@ -2,7 +2,7 @@ from os import path
 
 # first 34 columns are TCGA standard columns
 headers = ["Hugo_Symbol", "Entrez_Gene_Id", "Center", "NCBI_Build", "Chromosome", "Start_Position", "End_Position", "Strand", "Variant_Classification", "Variant_Type", "Reference_Allele", "Tumor_Seq_Allele1", "Tumor_Seq_Allele2", "dbSNP_RS", "dbSNP_Val_Status", "Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode", "Match_Norm_Seq_Allele1", "Match_Norm_Seq_Allele2", "Tumor_Validation_Allele1", "Tumor_Validation_Allele2", "Match_Norm_Validation_Allele1", "Match_Norm_Validation_Allele2", "Verification_Status", "Validation_Status", "Mutation_Status", "Sequencing_Phase", "Sequence_Source", "Validation_Method", "Score", "BAM_File", "Sequencer", "Tumor_Sample_UUID", "Matched_Norm_Sample_UUID"]
-maffiles = {{in.infiles | repr}}
+maffiles = {{i.infiles | repr}}
 
 # get all headers
 mafver = ''
@@ -18,11 +18,11 @@ for maffile in maffiles:
 				excols = [col for col in header if col not in headers]
 				headers += excols
 
-{% if args.excols | lambda x: x == 'discard' %}
+{% if args.excols == 'discard' %}
 headers = headers[:34]
 {% endif %}
 
-with open({{out.outfile | quote}}, 'w') as fout:
+with open({{o.outfile | quote}}, 'w') as fout:
 	fout.write(mafver)
 	fout.write('\t'.join(headers) + '\n')
 	for i, maffile in enumerate(maffiles):

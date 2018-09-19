@@ -1,9 +1,9 @@
 from pyppl import Box
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
-covfile = {{out.covfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
+covfile = {{o.covfile | quote}}
 cols    = {{args.cols}}
 covs    = {{args.covs}}
 mat     = {{args.mat | repr}}

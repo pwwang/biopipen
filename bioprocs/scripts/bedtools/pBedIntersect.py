@@ -2,12 +2,12 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 params = Box()
-params['a']           = {{in.afile | quote}}
-params['b']           = {{in.bfile | quote}}
+params['a']           = {{i.afile | quote}}
+params['b']           = {{i.bfile | quote}}
 params['wao']         = True
 params['nonamecheck'] = True
        
 params.update({{args.params}})
 
-cmd = '{{args.bedtools}} intersect %s > {{out.outfile | quote}}' % cmdargs(params, dash='-', equal=' ')
+cmd = '{{args.bedtools}} intersect %s > {{o.outfile | quote}}' % cmdargs(params, dash='-', equal=' ')
 runcmd(cmd)

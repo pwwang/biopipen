@@ -29,8 +29,8 @@ def _getCommonName(f1, f2):
 pFastq2Expr        = Proc(desc = 'Use Kallisto to get gene expression from pair-end fastq files.')
 pFastq2Expr.input  = "fqfile1:file, fqfile2:file"
 pFastq2Expr.output = [
-	"outfile:file:{{in.fqfile1, in.fqfile2 | getCommonName}}/{{in.fqfile1, in.fqfile2 | getCommonName}}.expr",
-	"outdir:dir:{{in.fqfile1, in.fqfile2 | getCommonName}}"
+	"outfile:file:{{i.fqfile1, i.fqfile2 | getCommonName}}/{{i.fqfile1, i.fqfile2 | getCommonName}}.expr",
+	"outdir:dir:{{i.fqfile1, i.fqfile2 | getCommonName}}"
 ]
 pFastq2Expr.args.params = Box()
 pFastq2Expr.args.ref    = '' # don't give the whole genome sequence! takes long time!
@@ -74,7 +74,7 @@ pFastq2Expr.script                 = "file:scripts/fastx/pFastq2Expr.py"
 """
 pFastqSim             = Proc(desc = 'Simulate pair-end reads.')
 pFastqSim.input       = "seed"
-pFastqSim.output      = "fq1:file:read{{in.seed}}_1.fastq{% if args.gz %}.gz{% endif %}, fq2:file:read{{in.seed}}_2.fastq{% if args.gz %}.gz{% endif %}"
+pFastqSim.output      = "fq1:file:read{{i.seed}}_1.fastq{% if args.gz %}.gz{% endif %}, fq2:file:read{{i.seed}}_2.fastq{% if args.gz %}.gz{% endif %}"
 pFastqSim.args.tool   = 'wgsim'
 pFastqSim.args.wgsim  = params.wgsim.value
 pFastqSim.args.dwgsim = params.dwgsim.value
@@ -106,7 +106,7 @@ pFastqSim.script      = "file:scripts/fastx/pFastqSim.py"
 """
 pFastQC                 = Proc(desc = 'QC report for fastq file.')
 pFastQC.input           = "fq:file"
-pFastQC.output          = "outdir:dir:{{in.fq | getFastqFn}}.fastqc"
+pFastQC.output          = "outdir:dir:{{i.fq | getFastqFn}}.fastqc"
 pFastQC.args.tool       = 'fastqc'
 pFastQC.args.fastqc     = params.fastqc.value
 pFastQC.args.nthread    = 1
@@ -133,7 +133,7 @@ pFastQC.script          = "file:scripts/fastx/pFastQC.py"
 """
 pFastMC              = Proc(desc = 'Multi-QC based on pFastQC.')
 pFastMC.input        = "qcdir:file"
-pFastMC.output       = "outdir:dir:{{in.qcdir | fn}}.multiqc"
+pFastMC.output       = "outdir:dir:{{i.qcdir | fn}}.multiqc"
 pFastMC.args.tool    = 'multiqc'
 pFastMC.args.multiqc = params.multiqc.value
 pFastMC.args.params  = Box()
@@ -178,8 +178,8 @@ pFastMC.script       = "file:scripts/fastx/pFastMC.py"
 pFastqTrim        = Proc(desc = 'Trim pair-end reads in fastq file.')
 pFastqTrim.input  = "fq1:file, fq2:file"
 pFastqTrim.output = [
-	"outfq1:file:{{in.fq1 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}",
-	"outfq2:file:{{in.fq2 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}"
+	"outfq1:file:{{i.fq1 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}",
+	"outfq2:file:{{i.fq2 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}"
 ]
 pFastqTrim.lang             = params.python.value
 pFastqTrim.args.tool        = 'skewer'
@@ -233,7 +233,7 @@ pFastqTrim.script           = "file:scripts/fastx/pFastqTrim.py"
 """
 pFastqSETrim                  = Proc(desc = 'Trim single-end reads in fastq file.')
 pFastqSETrim.input            = "fq:file"
-pFastqSETrim.output           = "outfq:file:{{in.fq | getFastqFn }}.fastq{% if args.gz %}.gz{% endif %}"
+pFastqSETrim.output           = "outfq:file:{{i.fq | getFastqFn }}.fastq{% if args.gz %}.gz{% endif %}"
 pFastqSETrim.lang             = params.python.value
 pFastqSETrim.args.tool        = 'skewer'
 pFastqSETrim.args.cutadapt    = params.cutadapt.value
@@ -270,7 +270,7 @@ pFastqSETrim.script           = "file:scripts/fastx/pFastqSETrim.py"
 """
 pFastqSE2Sam                    = Proc(desc = 'Map cleaned single-end fastq file to reference genome.')
 pFastqSE2Sam.input              = "fq:file"
-pFastqSE2Sam.output             = "outfile:file:{{in.fq | getFastqFn }}.{{args.outfmt}}"
+pFastqSE2Sam.output             = "outfile:file:{{i.fq | getFastqFn }}.{{args.outfmt}}"
 pFastqSE2Sam.args.outfmt        = "sam"
 pFastqSE2Sam.args.tool          = 'bwa'
 pFastqSE2Sam.args.bwa           = params.bwa.value
@@ -308,7 +308,7 @@ pFastqSE2Sam.script             = "file:scripts/fastx/pFastqSE2Sam.py"
 """
 pFastq2Sam                    = Proc(desc = 'Map cleaned paired fastq file to reference genome.')
 pFastq2Sam.input              = "fq1:file, fq2:file"
-pFastq2Sam.output             = "outfile:file:{{in.fq1 | getFastqFn | lambda x: x[:-2] if x.endswith('_1') or x.endswith('_2') else x }}.{{args.outfmt}}"
+pFastq2Sam.output             = "outfile:file:{{i.fq1 | getFastqFn | lambda x: x[:-2] if x.endswith('_1') or x.endswith('_2') else x }}.{{args.outfmt}}"
 pFastq2Sam.args.outfmt        = "sam"
 pFastq2Sam.args.tool          = 'bwa'
 pFastq2Sam.args.bwa           = params.bwa.value

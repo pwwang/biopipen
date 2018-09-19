@@ -23,7 +23,7 @@ from . import params
 """
 pTxt                      = Proc(desc = 'Download CSV format files.')
 pTxt.input                = "in"
-pTxt.output               = "outfile:file:{{in.in}}.txt{{args.gz | lambda x: '.gz' if x else ''}}"
+pTxt.output               = "outfile:file:{{i.in}}.txt{{args.gz | lambda x: '.gz' if x else ''}}"
 pTxt.args.gz              = False
 pTxt.args.delimit         = "\t"
 pTxt.args.skip            = 0

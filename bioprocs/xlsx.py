@@ -20,7 +20,7 @@ from .utils import fs2name
 """
 pTsvs2Xlsx               = Proc(desc = 'Save tsv files to xlsx sheets.')
 pTsvs2Xlsx.input         = 'infiles:files'
-pTsvs2Xlsx.output        = 'outfile:file:{{in.infiles | fs2name}}.xlsx'
+pTsvs2Xlsx.output        = 'outfile:file:{{i.infiles | fs2name}}.xlsx'
 pTsvs2Xlsx.args.fn2sheet = None
 pTsvs2Xlsx.envs.fs2name  = fs2name
 pTsvs2Xlsx.lang          = params.python.value

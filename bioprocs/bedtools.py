@@ -20,7 +20,7 @@ from .utils import fs2name
 """
 pBedGetfasta                     = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
 pBedGetfasta.input               = "infile:file"
-pBedGetfasta.output              = "outfile:file:{{in.infile | fn}}.fa"
+pBedGetfasta.output              = "outfile:file:{{i.infile | fn}}.fa"
 pBedGetfasta.args.samtools       = params.samtools.value
 pBedGetfasta.args.bedtools       = params.bedtools.value
 pBedGetfasta.args.params         = Box(name = True)
@@ -56,13 +56,13 @@ pBedGetfasta.script              = "file:scripts/bedtools/pBedGetfasta.py"
 """
 pBedClosest                 = Proc(desc = 'Find the closest elements')
 pBedClosest.input           = "afile:file, bfile:file"
-pBedClosest.output          = "outfile:file:{{in.afile | fn}}.closest.bt"
+pBedClosest.output          = "outfile:file:{{i.afile | fn}}.closest.bt"
 pBedClosest.args.bedtools   = params.bedtools.value
 pBedClosest.args.params     = Box()
 pBedClosest.envs.bashimport = bashimport
 pBedClosest.script = '''
 {{bashimport}} __init__.bash
-{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfile | squote}} > {{out.outfile | squote}}
+{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{i.afile | squote}} -b {{i.bfile | squote}} > {{out.outfile | squote}}
 '''
 
 """
@@ -83,13 +83,13 @@ pBedClosest.script = '''
 """
 pBedClosest2                 = Proc(desc = 'Find the closest elements')
 pBedClosest2.input           = "afile:file, bfiles:files"
-pBedClosest2.output          = "outfile:file:{{in.afile | fn}}.closest.bt"
+pBedClosest2.output          = "outfile:file:{{i.afile | fn}}.closest.bt"
 pBedClosest2.args.bedtools   = params.bedtools.value
 pBedClosest2.args.params     = Box()
 pBedClosest2.envs.bashimport = bashimport
 pBedClosest2.script = '''
 {{bashimport}} __init__.bash
-{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{in.afile | squote}} -b {{in.bfiles | asquote}} > {{out.outfile | squote}}
+{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{i.afile | squote}} -b {{i.bfiles | asquote}} > {{out.outfile | squote}}
 '''
 
 """
@@ -110,7 +110,7 @@ pBedClosest2.script = '''
 """
 pBedFlank                     = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
 pBedFlank.input               = "infile:file"
-pBedFlank.output              = "outfile:file:{{in.infile | fn}}.flank.bed"
+pBedFlank.output              = "outfile:file:{{i.infile | fn}}.flank.bed"
 pBedFlank.args.extend         = False
 pBedFlank.args.gsize          = params.gsize.value
 pBedFlank.args.params         = Box()
@@ -136,7 +136,7 @@ pBedFlank.script              = "file:scripts/bedtools/pBedFlank.py"
 """
 pBedIntersect                     = Proc(desc = 'The wrapper of "bedtools intersect" with single input b file.')
 pBedIntersect.input               = "afile:file, bfile:file"
-pBedIntersect.output              = "outfile:file:{{in.afile | fn}}.intersect.bt"
+pBedIntersect.output              = "outfile:file:{{i.afile | fn}}.intersect.bt"
 pBedIntersect.args.bedtools       = params.bedtools.value
 pBedIntersect.args.params         = Box()
 pBedIntersect.lang                = params.python.value
@@ -160,7 +160,7 @@ pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
 """
 pBedIntersect2                     = Proc(desc = 'The wrapper of "bedtools intersect" with multiple input b files.')
 pBedIntersect2.input               = "afile:file, bfiles:files"
-pBedIntersect2.output              = "outfile:file:{{in.afile | fn}}.intersect2.bt"
+pBedIntersect2.output              = "outfile:file:{{i.afile | fn}}.intersect2.bt"
 pBedIntersect2.args.bedtools       = params.bedtools.value
 pBedIntersect2.args.params         = Box()
 pBedIntersect2.lang                = params.python.value
@@ -184,14 +184,14 @@ pBedIntersect2.script              = 'file:scripts/bedtools/pBedIntersect2.py'
 """
 pBedMakewindows = Proc(desc = 'Makes adjacent or sliding windows across a genome or BED file.')
 pBedMakewindows.input         = "infile:file"
-pBedMakewindows.output        = "outfile:file:{{in.infile | fn}}.window.bed"
+pBedMakewindows.output        = "outfile:file:{{i.infile | fn}}.window.bed"
 pBedMakewindows.args.params   = Box()
 pBedMakewindows.args.bedtools = params.bedtools.value
 pBedMakewindows.args.intype   = 'bed'
 pBedMakewindows.envs.bashimport = bashimport
 pBedMakewindows.script = '''
 {{bashimport}} __init__.bash
-{{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{in.infile | squote}} > {{out.outfile | squote}}
+{{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{i.infile | squote}} > {{out.outfile | squote}}
 '''
 
 # region pBedMerge2
@@ -212,7 +212,7 @@ pBedMakewindows.script = '''
 """
 pBedMerge                     = Proc(desc = 'Merge regions in a bed file using `bedtools merge`.')
 pBedMerge.input               = "infile:file"
-pBedMerge.output              = "outfile:file:{{in.infile | fn}}.merged.bed"
+pBedMerge.output              = "outfile:file:{{i.infile | fn}}.merged.bed"
 pBedMerge.args.bedtools       = params.bedtools.value
 pBedMerge.args.params         = Box()
 pBedMerge.lang                = params.python.value
@@ -237,7 +237,7 @@ pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
 """
 pBedMerge2               = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
 pBedMerge2.input         = "infiles:files"
-pBedMerge2.output        = "outfile:file:{{in.infiles | fs2name}}.merged.bed"
+pBedMerge2.output        = "outfile:file:{{i.infiles | fs2name}}.merged.bed"
 pBedMerge2.args.bedtools = params.bedtools.value
 pBedMerge2.args.params   = Box()
 pBedMerge2.envs.fs2name  = fs2name
@@ -262,7 +262,7 @@ pBedMerge2.script        = "file:scripts/bedtools/pBedMerge2.py"
 """
 pBedMultiinter                 = Proc(desc = 'Identifies common intervals among multiple BED/GFF/VCF files.')
 pBedMultiinter.input           = "infiles:files"
-pBedMultiinter.output          = "outfile:file:{{in.infiles | fs2name}}.multiinter.bt"
+pBedMultiinter.output          = "outfile:file:{{i.infiles | fs2name}}.multiinter.bt"
 pBedMultiinter.args.bedtools   = params.bedtools.value
 pBedMultiinter.args.params     = Box()
 pBedMultiinter.envs.fs2name    = fs2name
@@ -291,7 +291,7 @@ pBedMultiinter.script          = """
 """
 pBedRandom               = Proc(desc = 'Generate a random set of intervals in BED format.')
 pBedRandom.input         = "l, n"
-pBedRandom.output        = "outfile:file:random.L{{in.l}}.N{{in.n}}.S{{args.seed}}.bed"
+pBedRandom.output        = "outfile:file:random.L{{i.l}}.N{{i.n}}.S{{args.seed}}.bed"
 pBedRandom.args.seed     = None
 pBedRandom.args.bedtools = params.bedtools.value
 pBedRandom.args.gsize    = params.gsize.value

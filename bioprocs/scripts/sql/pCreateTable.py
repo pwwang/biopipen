@@ -2,11 +2,11 @@
 {{dsnparse}}
 {{schemaparse}}
 
-dsn = dsnparse({{in.dsn | quote}})
+dsn = dsnparse({{i.dsn | quote}})
 if not hasattr(dsn, 'scheme'):
 	raise Exception('Cannot determine the scheme from DSN string.')
 
-name, fields = schemaparse({{in.schema | quote}}, type = {{args.intype | quote}}, scheme = dsn.scheme, delimit = {{args.delimit | quote}})
+name, fields = schemaparse({{i.schema | quote}}, type = {{args.intype | quote}}, scheme = dsn.scheme, delimit = {{args.delimit | quote}})
 
 if dsn.scheme in ['sqlite', 'sqlite3']:
 	assert hasattr(dsn, 'file') and dsn.file != ':memory:'

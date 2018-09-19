@@ -4,8 +4,8 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-cnfiles  = {{in.cnfiles | asquote | quote}}
-outdir   = {{out.outdir | quote}}
+cnfiles  = {{i.cnfiles | asquote | quote}}
+outdir   = {{o.outdir | quote}}
 regions  = {{args.regions | repr}}
 params   = {{args.params}}
 

@@ -33,7 +33,7 @@ from .utils import fs2name
 """
 pCNVkitPrepare = Proc(desc = 'Generate target files for cnvkit.')
 pCNVkitPrepare.input = 'infiles:files'
-pCNVkitPrepare.output = 'target:file:{{in.infiles | fs2name}}.target.bed, antitarget:file:{{in.infiles | fs2name}}.antitarget.bed'
+pCNVkitPrepare.output = 'target:file:{{i.infiles | fs2name}}.target.bed, antitarget:file:{{i.infiles | fs2name}}.antitarget.bed'
 pCNVkitPrepare.args.cnvkit  = params.cnvkit.value
 pCNVkitPrepare.args.exbaits = params.exbaits.value
 pCNVkitPrepare.args.accfile = ''
@@ -67,7 +67,7 @@ pCNVkitPrepare.script       = 'file:scripts/cnvkit/pCNVkitPrepare.py'
 """
 pCNVkitCov              = Proc (desc = 'Calculate coverage in the given regions from BAM read depths.')
 pCNVkitCov.input        = "infile:file, tgfile:file, atgfile:file"
-pCNVkitCov.output       = "outfile:file:{{in.infile | fn}}.target.cnn, antifile:file:{{in.infile | fn}}.antitarget.cnn"
+pCNVkitCov.output       = "outfile:file:{{i.infile | fn}}.target.cnn, antifile:file:{{i.infile | fn}}.antitarget.cnn"
 pCNVkitCov.args.cnvkit  = params.cnvkit.value
 pCNVkitCov.args.nthread = 1
 pCNVkitCov.args.params  = Box()
@@ -92,7 +92,7 @@ pCNVkitCov.script       = "file:scripts/cnvkit/pCNVkitCov.py"
 """
 pCNVkitRef              = Proc (desc = 'Compile a copy-number reference from the given files or directory')
 pCNVkitRef.input        = "infiles:files"
-pCNVkitRef.output       = "outfile:file:{{in.infiles | fs2name}}.reference.cnn"
+pCNVkitRef.output       = "outfile:file:{{i.infiles | fs2name}}.reference.cnn"
 pCNVkitRef.args.cnvkit  = params.cnvkit.value
 pCNVkitRef.args.ref     = params.ref.value
 pCNVkitRef.args.params  = Box({'no-edge': True})
@@ -119,7 +119,7 @@ pCNVkitRef.script       = "file:scripts/cnvkit/pCNVkitRef.py"
 """
 pCNVkitFlatRef              = Proc (desc = 'Compile a copy-number flat reference without normal samples')
 pCNVkitFlatRef.input        = "tgfile:file, atgfile:file"
-pCNVkitFlatRef.output       = "outfile:file:{{in.tgfile | fn}}.reference.cnn"
+pCNVkitFlatRef.output       = "outfile:file:{{i.tgfile | fn}}.reference.cnn"
 pCNVkitFlatRef.args.cnvkit  = params.cnvkit.value
 pCNVkitFlatRef.args.ref     = params.ref.value
 pCNVkitFlatRef.args.params  = Box()
@@ -147,7 +147,7 @@ pCNVkitFlatRef.script       = "file:scripts/cnvkit/pCNVkitFlatRef.py"
 """
 pCNVkitFix              = Proc (desc = 'Combine the uncorrected target and antitarget coverage tables and correct them.')
 pCNVkitFix.input        = "tgfile:file, atgfile:file, rcfile:file"
-pCNVkitFix.output       = "outfile:file:{{in.tgfile | fn}}.cnr"
+pCNVkitFix.output       = "outfile:file:{{i.tgfile | fn}}.cnr"
 pCNVkitFix.args.cnvkit  = params.cnvkit.value
 pCNVkitFix.args.params  = Box({'no-edge': True})
 pCNVkitFix.args.nthread = 1
@@ -172,7 +172,7 @@ pCNVkitFix.script       = "file:scripts/cnvkit/pCNVkitFix.py"
 """
 pCNVkitSeg              = Proc (desc = 'Infer discrete copy number segments from the given coverage table.')
 pCNVkitSeg.input        = "infile:file"
-pCNVkitSeg.output       = "outfile:file:{{in.infile | fn}}.cns"
+pCNVkitSeg.output       = "outfile:file:{{i.infile | fn}}.cns"
 pCNVkitSeg.args.cnvkit  = params.cnvkit.value
 pCNVkitSeg.args.nthread = 1
 pCNVkitSeg.args.params  = Box()
@@ -196,7 +196,7 @@ pCNVkitSeg.script       = "file:scripts/cnvkit/pCNVkitSeg.py"
 """
 pCNVkitCall             = Proc (desc="Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number")
 pCNVkitCall.input       = "infile:file"
-pCNVkitCall.output      = "outfile:file:{{in.infile | fn}}.callcns"
+pCNVkitCall.output      = "outfile:file:{{i.infile | fn}}.callcns"
 pCNVkitCall.args.cnvkit = params.cnvkit.value
 pCNVkitCall.args.params = Box()
 pCNVkitCall.lang        = params.python.value
@@ -222,7 +222,7 @@ pCNVkitCall.script      = "file:scripts/cnvkit/pCNVkitCall.py"
 """
 pCNVkitScatter              = Proc(desc = 'Generate scatter plot for CNVkit results.')
 pCNVkitScatter.input        = 'cnrfile:file, cnsfile:file'
-pCNVkitScatter.output       = 'outdir:dir:{{in.cnrfile | fn}}.scatters'
+pCNVkitScatter.output       = 'outdir:dir:{{i.cnrfile | fn}}.scatters'
 pCNVkitScatter.args.cnvkit  = params.cnvkit.value
 pCNVkitScatter.args.nthread = 1
 pCNVkitScatter.args.params  = Box()
@@ -251,7 +251,7 @@ pCNVkitScatter.script = "file:scripts/cnvkit/pCNVkitScatter.py"
 """
 pCNVkitDiagram             = Proc(desc = 'Generate diagram plot for CNVkit results.')
 pCNVkitDiagram.input       = 'cnrfile:file, cnsfile:file'
-pCNVkitDiagram.output      = 'outfile:file:{{in.cnrfile | fn}}.diagram.pdf'
+pCNVkitDiagram.output      = 'outfile:file:{{i.cnrfile | fn}}.diagram.pdf'
 pCNVkitDiagram.args.cnvkit = params.cnvkit.value
 pCNVkitDiagram.args.nthread = 1
 pCNVkitDiagram.args.params = Box()
@@ -276,7 +276,7 @@ pCNVkitDiagram.script      = "file:scripts/cnvkit/pCNVkitDiagram.py"
 """
 pCNVkitHeatmap              = Proc(desc = 'Generate heatmap plot for CNVkit results.')
 pCNVkitHeatmap.input        = 'cnfiles:files'
-pCNVkitHeatmap.output       = 'outdir:dir:{{in.cnfiles | fs2name}}.heatmaps'
+pCNVkitHeatmap.output       = 'outdir:dir:{{i.cnfiles | fs2name}}.heatmaps'
 pCNVkitHeatmap.args.cnvkit  = params.cnvkit.value
 pCNVkitHeatmap.args.params  = Box()
 pCNVkitHeatmap.args.regions = [
@@ -311,7 +311,7 @@ pCNVkitHeatmap.script       = "file:scripts/cnvkit/pCNVkitHeatmap.py"
 """
 pCNVkitReport              = Proc (desc = 'Report CNVkit results')
 pCNVkitReport.input        = "cnrfile:file, cnsfile:file"
-pCNVkitReport.output       = "outdir:dir:{{in.cnrfile | fn}}.cnvkit.reports"
+pCNVkitReport.output       = "outdir:dir:{{i.cnrfile | fn}}.cnvkit.reports"
 pCNVkitReport.args.cnvkit  = params.cnvkit.value
 pCNVkitReport.args.nthread = 1
 pCNVkitReport.args.params  = Box(
@@ -340,7 +340,7 @@ pCNVkitReport.script = 'file:scripts/cnvkit/pCNVkitReport.py'
 """
 pCNVkit2Vcf             = Proc (desc = 'Output vcf file for cnvkit results')
 pCNVkit2Vcf.input       = "cnsfile:file"
-pCNVkit2Vcf.output      = "outfile:file:{{in.cnsfile | fn}}.cnvkit.vcf"
+pCNVkit2Vcf.output      = "outfile:file:{{i.cnsfile | fn}}.cnvkit.vcf"
 pCNVkit2Vcf.args.cnvkit = params.cnvkit.value
 pCNVkit2Vcf.args.params = Box()
 pCNVkit2Vcf.lang        = params.python.value

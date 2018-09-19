@@ -22,7 +22,7 @@ from .utils import fs2name
 """
 pMatrixR             = Proc(desc = 'Operate a matrix and save the new matrix to file.')
 pMatrixR.input       = "infile:file"
-pMatrixR.output      = "outfile:file:{{in.infile | bn}}"
+pMatrixR.output      = "outfile:file:{{i.infile | bn}}"
 pMatrixR.args.inopts = Box(cnames = True, rnames = True, delimit = "\t", skip = 0)
 pMatrixR.args.params = Box({
 	"check.names": "FALSE",
@@ -57,7 +57,7 @@ pMatrixR.script       = "file:scripts/tsv/pMatrixR.r"
 """
 pCbind             = Proc(desc = 'Cbind the rest of files to the first file.')
 pCbind.input       = 'infiles:files'
-pCbind.output      = 'outfile:file:{{in.infiles | fs2name}}.cbound.txt'
+pCbind.output      = 'outfile:file:{{i.infiles | fs2name}}.cbound.txt'
 pCbind.args.inopts = Box(
 	cnames  = True, # or [True, True, False] corresponding to the file order
 	rnames  = True,
@@ -101,7 +101,7 @@ pCbind.script        = "file:scripts/tsv/pCbind.r"
 """
 pRbind                = Proc(desc = 'Rbind the rest of files to the first file.')
 pRbind.input          = 'infiles:files'
-pRbind.output         = 'outfile:file:{{in.infiles[0] | bn}}'
+pRbind.output         = 'outfile:file:{{i.infiles[0] | bn}}'
 pRbind.args.inopts    = Box(
 	cnames  = True, # or [True, True, False] corresponding to the file order
 	rnames  = True,
@@ -140,7 +140,7 @@ pRbind.script        = "file:scripts/tsv/pRbind.r"
 """
 pCsplit             = Proc(desc = 'Split the columns of input file into different files.')
 pCsplit.input       = 'infile:file'
-pCsplit.output      = 'outdir:dir:{{in.infile | fn}}.csplits'
+pCsplit.output      = 'outdir:dir:{{i.infile | fn}}.csplits'
 pCsplit.args.inopts = Box(
 	cnames  = True,
 	rnames  = True,
@@ -176,7 +176,7 @@ pCsplit.script       = "file:scripts/tsv/pCsplit.r"
 """
 pRsplit             = Proc(desc = 'Rbind the rest of files to the first file.')
 pRsplit.input       = 'infile:file'
-pRsplit.output      = 'outdir:dir:{{in.infile | fn}}.rsplits'
+pRsplit.output      = 'outdir:dir:{{i.infile | fn}}.rsplits'
 pRsplit.args.inopts = Box(
 	cnames  = True,
 	rnames  = True,
@@ -219,7 +219,7 @@ pRsplit.script       = "file:scripts/tsv/pRsplit.r"
 """
 pTsv                = Proc(desc = 'Read, Transform, filter a TSV file.')
 pTsv.input          = "infile:file"
-pTsv.output         = "outfile:file:{{in.infile | fn}}.tsv"
+pTsv.output         = "outfile:file:{{i.infile | fn}}.tsv"
 pTsv.lang           = params.python.value
 pTsv.args.opshelper = ''
 pTsv.args.ops       = None
@@ -274,7 +274,7 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 """
 pSimRead              = Proc(desc = 'Read files simultaneously.')
 pSimRead.input        = 'infiles:files'
-pSimRead.output       = 'outfile:file:{{in.infiles[0] | fn}}.etc.simread.txt'
+pSimRead.output       = 'outfile:file:{{i.infiles[0] | fn}}.etc.simread.txt'
 pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'nometa', head = True)
 pSimRead.args.outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = 'nometa', cnames = [])
 pSimRead.args.usemeta = None
@@ -313,7 +313,7 @@ pTsvJoin = pSimRead.copy()
 """
 pMergeFiles               = Proc(desc = 'Merge files.')
 pMergeFiles.input         = "infiles:files"
-pMergeFiles.output        = "outfile:file:{{in.infiles | lambda x: x[0] if x else 'nothing' |  fn}}.etc{{in.infiles | lambda x: x[0] if x else '' | ext}}"
+pMergeFiles.output        = "outfile:file:{{i.infiles | lambda x: x[0] if x else 'nothing' |  fn}}.etc{{i.infiles | lambda x: x[0] if x else '' | ext}}"
 pMergeFiles.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
 pMergeFiles.args.outopts  = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
 # IOError: [Errno 24] Too many open files

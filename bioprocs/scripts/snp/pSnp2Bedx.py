@@ -1,8 +1,8 @@
 from pyppl import Box
 from bioprocs.utils.snp import snpinfo
 
-infile   = {{in.snpfile | quote}}
-outfile  = {{out.outfile | quote}}
+infile   = {{i.snpfile | quote}}
+outfile  = {{o.outfile | quote}}
 genome   = {{args.genome | quote}}
 dbsnpver = {{args.dbsnpver | quote}}
 notfound = {{args.notfound | quote}}

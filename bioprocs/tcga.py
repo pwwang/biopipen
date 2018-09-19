@@ -18,7 +18,7 @@ from . import params
 """
 pDownload                 = Proc (desc = 'Download data with gdc-client and a menifest file.')
 pDownload.input           = "manifile:file"
-pDownload.output          = "outdir:dir:{{in.manifile | fn}}"
+pDownload.output          = "outdir:dir:{{i.manifile | fn}}"
 pDownload.args.params     = Box({'no-file-md5sum': True})
 pDownload.args.nthread    = 1
 pDownload.args.token      = None
@@ -43,7 +43,7 @@ pDownload.script          = "file:scripts/tcga/pDownload.py"
 """
 pSample2SubmitterID              = Proc(desc = 'convert TCGA sample names with submitter id with metadata and sample containing folder')
 pSample2SubmitterID.input        = "indir:file, mdfile:file"
-pSample2SubmitterID.output       = "outdir:dir:{{in.indir | fn}}"
+pSample2SubmitterID.output       = "outdir:dir:{{i.indir | fn}}"
 pSample2SubmitterID.args.method  = 'symlink' # or copy
 pSample2SubmitterID.args.nthread = 1
 pSample2SubmitterID.lang         = params.python.value
@@ -93,7 +93,7 @@ pGtFiles2Mat.script       = "file:scripts/tcga/pGtFiles2Mat.py"
 """
 pClinic2Survival           = Proc(desc = 'Convert TCGA clinic data to survival data.')
 pClinic2Survival.input     = 'infile:file'
-pClinic2Survival.output    = 'outfile:file:{{in.infile | stem}}.survdata.txt, covfile:file:{{in.infile | stem}}.survcov.txt'
+pClinic2Survival.output    = 'outfile:file:{{i.infile | stem}}.survdata.txt, covfile:file:{{i.infile | stem}}.survcov.txt'
 pClinic2Survival.args.cols = Box(
 	time_lastfollow = ['days_to_last_followup'],
 	time_death      = ['days_to_death'],

@@ -32,7 +32,7 @@ pGenePromoters = pPromoters.copy()
 """
 pGeneNameNorm               = Proc(desc = 'Normalize gene names using MyGeneinfo.')
 pGeneNameNorm.input         = 'infile:file'
-pGeneNameNorm.output        = 'outfile:file:{{in.infile | bn}}'
+pGeneNameNorm.output        = 'outfile:file:{{i.infile | bn}}'
 pGeneNameNorm.errhow        = 'retry'
 pGeneNameNorm.args.notfound = 'ignore'
 pGeneNameNorm.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
@@ -71,7 +71,7 @@ pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 """
 pGeneTss                = Proc(desc = 'Get gene TSS in BED format')
 pGeneTss.input          = 'infile:file'
-pGeneTss.output         = 'outfile:file:{{in.infile | fn}}-tss.bedx'
+pGeneTss.output         = 'outfile:file:{{i.infile | fn}}-tss.bedx'
 pGeneTss.errhow         = 'retry'
 pGeneTss.args.notfound  = 'skip' # error
 pGeneTss.args.genecol   = ''
@@ -109,7 +109,7 @@ pGeneTss.script         = "file:scripts/gene/pGeneTss.py"
 """
 pGeneBody               = Proc(desc = 'Get gene body in BED format')
 pGeneBody.input         = 'infile:file'
-pGeneBody.output        = 'outfile:file:{{in.infile | fn}}-body.bedx'
+pGeneBody.output        = 'outfile:file:{{i.infile | fn}}-body.bedx'
 pGeneBody.errhow        = 'retry'
 pGeneBody.args.notfound = 'skip' # error
 pGeneBody.args.genecol  = ''

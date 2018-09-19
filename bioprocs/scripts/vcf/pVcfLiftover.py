@@ -1,9 +1,9 @@
 from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs, mem2
 
-infile  = {{in.infile | repr}}
-outfile = {{out.outfile | repr}}
-umfile  = {{out.umfile | repr}}
+infile  = {{i.infile | repr}}
+outfile = {{o.outfile | repr}}
+umfile  = {{o.umfile | repr}}
 tool    = {{args.tool | repr}}
 picard  = {{args.picard | repr}}
 chain   = {{args.lochain | repr}}

@@ -1,7 +1,7 @@
 {{dsnparse}}
 
 from sys import stderr
-dsn = dsnparse({{in.dsn | quote}})
+dsn = dsnparse({{i.dsn | quote}})
 if not hasattr(dsn, 'scheme'):
 	raise Exception('Cannot determine the scheme from DSN string.')
 

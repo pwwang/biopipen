@@ -1,15 +1,15 @@
 
 library(optCluster)
 
-d = read.table ({{in.infile | quote}}, sep="\t", header={{args.cnames | R}}, row.names={{args.rnames | lambda x: 'NULL' if not x else int(x)}}, check.names=F)
+d = read.table ({{i.infile | quote}}, sep="\t", header={{args.cnames | R}}, row.names={{args.rnames | lambda x: 'NULL' if not x else int(x)}}, check.names=F)
 if ({{args.transpose | R}}) {
 	d = t(d)
 }
 names = rownames(d)
-{% if args.methods | lambda x: x == 'all' %}
+{% if args.methods == 'all' %}
 #methods = c("agnes", "clara", "diana", "hierarchical", "kmeans", "pam", "som", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson")
 methods = c("agnes", "clara", "diana", "hierarchical", "pam", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson")
-{% elif args.methods | lambda x: isinstance(x, list) %}
+{% elif isinstance(args.methods, list) %}
 methods = {{args.methods | Rvec}}
 {% else %}
 methods = unlist(strsplit({{args.methods | .replace(' ', '') | quote}}, ',', fixed = T))
@@ -28,10 +28,10 @@ ret = optCluster(d, minc:maxc, clMethods = methods, countData = {{args.isCount |
 
 ret = optAssign(ret)
 
-outfile = "{{out.outdir}}/clusters.txt"
-metfile = "{{out.outdir}}/method.txt"
-outfig  = "{{out.outdir}}/clusters.png"
-outdir  = "{{out.outdir}}"
+outfile = "{{o.outdir}}/clusters.txt"
+metfile = "{{o.outdir}}/method.txt"
+outfig  = "{{o.outdir}}/clusters.png"
+outdir  = "{{o.outdir}}"
 clusters = matrix(ret$cluster, ncol=1)
 rownames(clusters) = names
 write.table (clusters, outfile, row.names=T, sep="\t", quote=F, col.names=F)

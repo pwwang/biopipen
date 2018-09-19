@@ -1,21 +1,22 @@
 
+{% case args.infmt %}
 # full
-{% if args.infmt | lambda x: x == 'full' %}
-mat = read.table({{in.infile | quote}}, row.names = 1, header = T, check.names = F, sep = "\t")
+{% when 'full' %}
+mat = read.table({{i.infile | quote}}, row.names = 1, header = T, check.names = F, sep = "\t")
 
 # upper
-{% elif args.infmt | lambda x: x == 'upper' %}
-mat = read.table({{in.infile | quote}}, row.names = 1, header = T, check.names = F, sep = "\t", fill = T)
+{% elwhen 'upper' %}
+mat = read.table({{i.infile | quote}}, row.names = 1, header = T, check.names = F, sep = "\t", fill = T)
 mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
 
 # lower
-{% elif args.infmt | lambda x: x == 'lower' %}
-mat = read.table({{in.infile | quote}}, row.names = 1, header = T, check.names = F, sep = "\t", fill = T)
+{% elwhen 'lower' %}
+mat = read.table({{i.infile | quote}}, row.names = 1, header = T, check.names = F, sep = "\t", fill = T)
 mat[upper.tri(mat)] <- t(mat)[upper.tri(mat)]
 
 # pair
-{% elif args.infmt | lambda x: x == 'pair' %}
-mat0 <- read.table({{in.infile | quote}}, header=F, row.names=NULL, stringsAsFactor=F, check.names=F)
+{% elwhen 'pair' %}
+mat0 <- read.table({{i.infile | quote}}, header=F, row.names=NULL, stringsAsFactor=F, check.names=F)
 name1 = as.character (mat0[, 1])
 name2 = as.character (mat0[, 2])
 names = unique(union(name1, name2))
@@ -41,8 +42,8 @@ ltdata[is.na(ltdata)] = lttdata[!is.na(lttdata)]
 mat[ut] = utdata
 mat[lt] = ltdata
 
-{% endif %}
+{% endcase %}
 
 coords = cmdscale(mat, k={{args.k}})
 coords = round(coords, 3)
-write.table (coords, {{out.outfile | quote}}, col.names=T, row.names=T, quote=F, sep="\t", na="")
+write.table (coords, {{o.outfile | quote}}, col.names=T, row.names=T, quote=F, sep="\t", na="")

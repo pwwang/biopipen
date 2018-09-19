@@ -1,8 +1,8 @@
 
 from bioprocs.utils.sampleinfo import SampleInfo
 
-infile    = {{in.sifile | quote}}
-outfile    = {{out.outfile | quote}}
+infile    = {{i.sifile | quote}}
+outfile   = {{o.outfile | quote}}
 saminfo   = SampleInfo(infile)
 groups    = saminfo.select(get = 'Group')
 unigroups = list(set(groups))

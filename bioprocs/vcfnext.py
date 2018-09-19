@@ -19,7 +19,7 @@ from .utils import fs2name
 """
 pVcfStatsPlot                  = Proc(desc = 'Convert csvstat file from snpEff to R-readable matrix and plot them.')
 pVcfStatsPlot.input            = "indir:file"
-pVcfStatsPlot.output           = "outdir:dir:{{in.indir | fn}}-{{job.index}}.statplots"
+pVcfStatsPlot.output           = "outdir:dir:{{i.indir | fn}}-{{job.index}}.statplots"
 pVcfStatsPlot.args.chroms      = ""
 pVcfStatsPlot.args.Rscript     = params.Rscript.value
 pVcfStatsPlot.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
@@ -43,7 +43,7 @@ pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 """
 pCallRate                  = Proc()
 pCallRate.input            = "indir:file"
-pCallRate.output           = "outdir:dir:{{ in.indir | fn }}.callrate"
+pCallRate.output           = "outdir:dir:{{ i.indir | fn }}.callrate"
 pCallRate.args.histplotggs = []
 pCallRate.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
 pCallRate.lang             = params.Rscript.value
@@ -67,7 +67,7 @@ pCallRate.script           = "file:scripts/vcfnext/pCallRate.r"
 """
 pCepip                     = Proc(desc = 'Run cepip for input mutations.')
 pCepip.input               = "infile:file"
-pCepip.output              = "outfile:file:{{in.infile | fn}}.cepip.txt"
+pCepip.output              = "outfile:file:{{i.infile | fn}}.cepip.txt"
 pCepip.args.cepip          = params.cepip.value
 pCepip.args.cell           = ""
 pCepip.args.params         = Box()
@@ -98,7 +98,7 @@ pCepip.script              = "file:scripts/vcfnext/pCepip.py"
 """
 pMutSig              = Proc(desc = 'Run MutSig.')
 pMutSig.input        = 'infile:file'
-pMutSig.output       = "outdir:dir:{{in.infile | fn}}.mutsig"
+pMutSig.output       = "outdir:dir:{{i.infile | fn}}.mutsig"
 pMutSig.args.cvrg    = params.mutsig_cvrg.value
 pMutSig.args.cvrt    = params.mutsig_cvrt.value
 pMutSig.args.mutdict = params.mutsig_mutdict.value
@@ -125,9 +125,9 @@ pMutSig.script       = "file:scripts/vcfnext/pMutSig.bash"
 """
 pMafLiftover               = Proc(desc = 'Liftover a maf file from one assembly to another')
 pMafLiftover.input         = 'infile:file'
-pMafLiftover.output        = 'outfile:file:{{in.infile | fn | lambda x: x if x.endswith(".maf") else x + ".maf"}}'
+pMafLiftover.output        = 'outfile:file:{{i.infile | fn | lambda x: x if x.endswith(".maf") else x + ".maf"}}'
 pMafLiftover.args.liftover = params.liftover.value
-pMafLiftover.args.lochain  = params.lochain.value
+pMafLiftover.args.lochain  = params.lochai.value
 pMafLiftover.args.genome   = params.genome.value
 pMafLiftover.lang          = params.python.value
 pMafLiftover.script        = "file:scripts/vcfnext/pMafLiftOver.py"
@@ -149,7 +149,7 @@ pMafLiftover.script        = "file:scripts/vcfnext/pMafLiftOver.py"
 """
 pMafMerge              = Proc(desc = 'Merge maf files.')
 pMafMerge.input        = 'infiles:files'
-pMafMerge.output       = 'outfile:file:{{in.infiles | fs2name}}.maf'
+pMafMerge.output       = 'outfile:file:{{i.infiles | fs2name}}.maf'
 pMafMerge.args.excols  = 'merge' # discard
 pMafMerge.envs.fs2name = fs2name
 pMafMerge.lang         = params.python.value
@@ -172,7 +172,7 @@ pMafMerge.script       = "file:scripts/vcfnext/pMafMerge.py"
 """
 pMaf2Mat              = Proc(desc = 'Convert maf file to a gene-based mutation matrix')
 pMaf2Mat.input        = 'infile:file'
-pMaf2Mat.output       = 'outfile:file:{{in.infile | fn}}.mat.txt'
+pMaf2Mat.output       = 'outfile:file:{{i.infile | fn}}.mat.txt'
 pMaf2Mat.args.binary  = False
 pMaf2Mat.args.mutypes = None
 pMaf2Mat.args.na      = 0
@@ -261,7 +261,7 @@ pMaf2Mat.script       = "file:scripts/vcfnext/pMaf2Mat.r"
 """
 pMaftools              = Proc(desc = 'Use maftools to draw plots.')
 pMaftools.input        = 'indir:dir'
-pMaftools.output       = 'outdir:dir:{{in.indir | fn}}.maftools'
+pMaftools.output       = 'outdir:dir:{{i.indir | fn}}.maftools'
 pMaftools.args.ngenes  = 10
 pMaftools.args.isTCGA  = False
 pMaftools.args.ref     = params.ref.value # for signature

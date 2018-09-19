@@ -16,8 +16,8 @@
 {{rimport}}('__init__.r')
 library(methods)
 
-infile  = {{in.infile | R}}
-outfile = {{out.outfile | R}}
+infile  = {{i.infile | R}}
+outfile = {{o.outfile | R}}
 intype  = {{args.intype | R}}
 N       = {{args.N | R}}
 inopts  = update.list(list(rnames=T, cnames=T), {{args.inopts | R}})

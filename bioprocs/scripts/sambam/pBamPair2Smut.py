@@ -8,29 +8,30 @@ if not path.exists ({{args.ref | quote}}):
 	stderr.write ("Reference file not specified")
 	exit (1)
 
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.tumor | fn | fn}}.{{in.normal | fn | fn}}.{{job.index}}")
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{i.tumor | fn | fn}}.{{i.normal | fn | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
 ref     = {{args.ref | quote}}
 tool    = {{args.tool | quote}}
 gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{out.outfile | quote}}
+outfile = {{o.outfile | quote}}
 params  = {{args.params}}
 if gz:	outfile = outfile[:-3]
 try:
+{% case args.tool %}
 	############## gatk
-	{% if args.tool | lambda x: x == 'gatk' %}
+	{% if when 'gatk' %}
 
 	intvfile = "{{job.outdir}}/interval.list"
-	cmd      = '{{args.samtools}} idxstats "{{in.tumor}}" | head -n -1 | cut -f1 > "%s"' % (intvfile)
+	cmd      = '{{args.samtools}} idxstats "{{i.tumor}}" | head -n -1 | cut -f1 > "%s"' % (intvfile)
 	runcmd (cmd)
 
 	mem = mem2 ({{args.mem | quote}}, 'java')
 
 	params['R']        = ref
-	params['I:tumor']  = {{in.tumor | quote}}
-	params['I:normal'] = {{in.normal | quote}}
+	params['I:tumor']  = {{i.tumor | quote}}
+	params['I:normal'] = {{i.normal | quote}}
 	params['o']        = outfile
 	params['nct']      = {{args.nthread}}
 	params['L']        = intvfile
@@ -40,37 +41,37 @@ try:
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
 	############## somaticsniper
-	{% elif args.tool | lambda x: x == 'somaticsniper' %}
+	{% when 'somaticsniper' %}
 	params['f'] = ref
 	params['F'] = 'vcf'
 
-	cmd = '{{args.somaticsniper}} %s "{{in.tumor}}" "{{in.normal}}" "%s"' % (cmdargs(params), outfile)
+	cmd = '{{args.somaticsniper}} %s "{{i.tumor}}" "{{i.normal}}" "%s"' % (cmdargs(params), outfile)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
 	############## snvsniffer
-	{% elif args.tool | lambda x: x == 'snvsniffer' %}
-	theader = "{{job.outdir}}/{{in.tumor | bn}}.header"
-	cmd = '{{args.samtools}} view -H "{{in.tumor}}" > "%s"' % theader
+	{% when 'snvsniffer' %}
+	theader = "{{job.outdir}}/{{i.tumor | bn}}.header"
+	cmd = '{{args.samtools}} view -H "{{i.tumor}}" > "%s"' % theader
 	runcmd (cmd)
-	nheader = "{{job.outdir}}/{{in.normal | bn}}.header"
-	cmd = '{{args.samtools}} view -H "{{in.normal}}" > "%s"' % nheader
+	nheader = "{{job.outdir}}/{{i.normal | bn}}.header"
+	cmd = '{{args.samtools}} view -H "{{i.normal}}" > "%s"' % nheader
 	runcmd (cmd)
 
 	params['g'] = ref
 	params['o'] = outfile
 
-	cmd = '{{args.snvsniffer}} somatic %s "%s" "%s" "{{in.tumor}}" "{{in.normal}}"' % (cmdargs(params), theader, nheader)
+	cmd = '{{args.snvsniffer}} somatic %s "%s" "%s" "{{i.tumor}}" "{{i.normal}}"' % (cmdargs(params), theader, nheader)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
 	############## strelka
-	{% elif args.tool | lambda x: x == 'strelka' %}
+	{% when 'strelka' %}
 	# config
 	configParams = {{args.configParams}}
 
-	configParams['normalBam']      = {{in.normal | quote}}
-	configParams['tumorBam']       = {{in.tumor | quote}}
+	configParams['normalBam']      = {{i.normal | quote}}
+	configParams['tumorBam']       = {{i.tumor | quote}}
 	configParams['referenceFasta'] = ref
 	configParams['runDir']         = {{job.outdir | quote}}
 
@@ -98,11 +99,11 @@ try:
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
 	############## virmid
-	{% elif args.tool | lambda x: x == 'virmid' %}
+	{% when 'virmid' %}
 	mem = mem2 ({{args.mem | quote}}, 'java')
 	params['R'] = ref
-	params['D'] = {{in.tumor | quote}}
-	params['N'] = {{in.normal | quote}}
+	params['D'] = {{i.tumor | quote}}
+	params['N'] = {{i.normal | quote}}
 	params['w'] = {{job.outdir | quote}}
 	cmd = '{{args.virmid}} %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params))
 	runcmd (cmd)
@@ -110,16 +111,16 @@ try:
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
 	############## vardict
-	{% elif args.tool | lambda x: x == 'vardict' %}
+	{% when 'vardict' %}
 	params['v'] = True
 	params['G'] = ref
-	params['b'] = "{{in.tumor}}|{{in.normal}}"
+	params['b'] = "{{i.tumor}}|{{i.normal}}"
 
 	cmd = '{{args.vardict}} %s > "%s"' % (cmdargs(params), outfile)
 	runcmd (cmd)
 	if gz:	runcmd ('gzip "%s"' % (outfile))
 
-	{% endif %}
+{% endcase %}
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise

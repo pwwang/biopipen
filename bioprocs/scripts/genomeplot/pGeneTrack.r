@@ -1,5 +1,5 @@
 #library (Gviz)
-region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
+region = unlist(strsplit({{i.region | quote}}, ':', fixed = T))
 chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
 start  = as.numeric(region[1])
@@ -9,7 +9,7 @@ geneParams = list(
 	chromosome = chrom,
 	from       = start,
 	to         = end,
-	name       = {{in.name | quote}},
+	name       = {{i.name | quote}},
 	trackType  = 'GeneRegionTrack',
 	table      = 'knownGene',
 	track      = 'UCSC Genes',
@@ -26,4 +26,4 @@ ret             = list()
 ret$trackType   = 'UcscTrack'
 ret$trackParams = geneParams
 
-saveRDS (ret, {{out.outfile | quote}})
+saveRDS (ret, {{o.outfile | quote}})

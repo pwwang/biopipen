@@ -26,7 +26,7 @@ from . import params
 """
 pMatrixeQTL              = Proc(desc = 'Use matrix eQTL to call eQTLs')
 pMatrixeQTL.input        = 'snpfile:file, expfile:file, covfile:file'
-pMatrixeQTL.output       = 'outfile:file:{{in.snpfile | fn}}-{{in.expfile | fn}}.eqtl.txt, cisfile:file:{{in.snpfile | fn}}-{{in.expfile | fn}}.ciseqtl.txt'
+pMatrixeQTL.output       = 'outfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.eqtl.txt, cisfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.ciseqtl.txt'
 pMatrixeQTL.args.model   = 'modelLINEAR' # or modelANOVA
 pMatrixeQTL.args.pval    = 1e-5
 pMatrixeQTL.args.fdr     = True

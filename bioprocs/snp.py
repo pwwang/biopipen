@@ -25,7 +25,7 @@ from . import params
 """
 pSnp2Bedx                    = Proc(desc = 'Find coordinates for SNPs in BED format.')
 pSnp2Bedx.input              = "snpfile:file"
-pSnp2Bedx.output             = "outfile:file:{{in.snpfile | fn}}.bed"
+pSnp2Bedx.output             = "outfile:file:{{i.snpfile | fn}}.bed"
 pSnp2Bedx.args.genome        = params.genome.value
 pSnp2Bedx.args.dbsnpver      = params.dbsnpver.value
 pSnp2Bedx.errhow             = 'retry'
@@ -47,7 +47,7 @@ pSnp2Bedx.script             = "file:scripts/snp/pSnp2Bedx.py"
 
 pCoord2SnpBedx               = Proc(desc = 'Find snps with coordinates.')
 pCoord2SnpBedx.input         = 'infile:file'
-pCoord2SnpBedx.output        = 'outfile:file:{{in.infile | fn}}-snps.bed'
+pCoord2SnpBedx.output        = 'outfile:file:{{i.infile | fn}}-snps.bed'
 pCoord2SnpBedx.args.genome   = params.genome.value
 pCoord2SnpBedx.args.dbsnpver = params.dbsnpver.value
 pCoord2SnpBedx.errhow        = 'retry'
@@ -77,7 +77,7 @@ pCoord2SnpBedx.script        = "file:scripts/snp/pCoord2SnpBedx.py"
 """
 pSnp2Avinput               = Proc (desc = 'Convert SNP list to avinput to ANNOVAR.')
 pSnp2Avinput.input         = "snpfile:file"
-pSnp2Avinput.output        = "outfile:file:{{in.snpfile | fn}}.avinput"
+pSnp2Avinput.output        = "outfile:file:{{i.snpfile | fn}}.avinput"
 pSnp2Avinput.lang          = params.python.value
 pSnp2Avinput.args.genome   = params.genome.value
 pSnp2Avinput.args.dbsnpver = params.dbsnpver.value

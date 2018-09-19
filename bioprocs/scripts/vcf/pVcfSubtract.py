@@ -4,9 +4,9 @@ from bioprocs.utils import runcmd, cmdargs
 from subprocess import check_output
 from bioprocs.utils.parallel import Parallel
 
-infile1  = {{in.infile1 | quote}}
-infile2  = {{in.infile2 | quote}}
-outfile  = {{out.outfile | quote}}
+infile1  = {{i.infile1 | quote}}
+infile2  = {{i.infile2 | quote}}
+outfile  = {{o.outfile | quote}}
 rmany    = {{args.any | repr}}
 tool     = {{args.tool | quote}}
 header   = {{args.header | repr}}

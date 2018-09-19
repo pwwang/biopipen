@@ -23,7 +23,7 @@ from . import params
 """
 pRWR            = Proc (desc = 'Do random walk with restart (RWR).')
 pRWR.input      = "Wfile:file, Efile:file"
-pRWR.output     = "outfile:file:{{in.Wfile | fn2}}.rwr.txt"
+pRWR.output     = "outfile:file:{{i.Wfile | fn2}}.rwr.txt"
 pRWR.args.c     = 0.1
 pRWR.args.eps   = 1e-5
 pRWR.args.niter = 10000
@@ -81,8 +81,8 @@ pRWR.script     = "file:scripts/algorithm/pRWR.r"
 pAR            = Proc(desc =  'Affinity Regression.')
 pAR.input      = 'D:file, Pt:file, Y:file'
 pAR.output     = [
-	'W:file:{{in.D | fn}}-{{in.Pt | fn}}-{{in.Y | fn}}.AR/W.txt', 
-	'outdir:dir:{{in.D | fn}}-{{in.Pt | fn}}-{{in.Y | fn}}.AR'
+	'W:file:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR/W.txt', 
+	'outdir:dir:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR'
 ]
 pAR.args.seed     = -1
 pAR.args.tfrac    = .5

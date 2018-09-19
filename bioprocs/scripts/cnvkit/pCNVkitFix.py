@@ -2,13 +2,13 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-tgfile   = {{in.tgfile | quote}}
-atgfile  = {{in.atgfile | quote}}
-rcfile   = {{in.rcfile | quote}}
-outfile  = {{out.outfile | quote}}
+tgfile   = {{i.tgfile | quote}}
+atgfile  = {{i.atgfile | quote}}
+rcfile   = {{i.rcfile | quote}}
+outfile  = {{o.outfile | quote}}
 params   = {{args.params}}
 nthread  = {{args.nthread | repr}}
-sample   = {{in.tgfile | fn | quote}}
+sample   = {{i.tgfile | fn | quote}}
 
 openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
 

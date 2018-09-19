@@ -2,12 +2,12 @@
 {{cbindfill}}
 {{plotHist}}
 
-outsample = file.path("{{out.outdir}}", "{{in.indir | fn}}.sampleCallRate.txt")
-figsample = file.path("{{out.outdir}}", "{{in.indir | fn}}.sampleCallRate.png")
-outsnp    = file.path("{{out.outdir}}", "{{in.indir | fn}}.snpCallRate.txt")
-figsnp    = file.path("{{out.outdir}}", "{{in.indir | fn}}.snpCallRate.png")
+outsample = file.path("{{o.outdir}}", "{{i.indir | fn}}.sampleCallRate.txt")
+figsample = file.path("{{o.outdir}}", "{{i.indir | fn}}.sampleCallRate.png")
+outsnp    = file.path("{{o.outdir}}", "{{i.indir | fn}}.snpCallRate.txt")
+figsnp    = file.path("{{o.outdir}}", "{{i.indir | fn}}.snpCallRate.png")
 
-setwd("{{in.indir}}")
+setwd("{{i.indir}}")
 files = list.files(pattern = "*.vcf")
 
 data  = NULL

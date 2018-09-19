@@ -6,33 +6,34 @@ import vcf
 {{ runcmd }}
 {{ mem2 }}
 {{ params2CmdArgs }}
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 
 gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{out.outfile | [:-3] | quote}} if gz else {{out.outfile | quote}}
+outfile = {{o.outfile | [:-3] | quote}} if gz else {{o.outfile | quote}}
 tool    = {{args.tool | quote}}
 dbpath  = {{args.dbpath}}[tool]
 params  = {{args.params}}
 try:
+{% case args.tool %}
 	###### snpeff
-	{% if args.tool | lambda x: x == 'snpeff' %}
+	{% when'snpeff' %}
 	mem = mem2({{args.mem | quote}}, 'java')
 	params['dataDir'] = dbpath
 	{% if args.snpeffStats %}
-	params['csvStats'] = "{{out.outdir}}/{{in.infile | fn}}.stats.csv"
+	params['csvStats'] = "{{o.outdir}}/{{i.infile | fn}}.stats.csv"
 	{% else %}
 	params['noStats'] = True
 	{% endif %}
 	params['i'] = 'vcf'
 	params['o'] = 'vcf'
 		
-	cmd = '{{args.snpeff}} %s -Djava.io.tmpdir="%s" %s {{args.genome}} "{{in.infile}}" > "%s"' % (mem, tmpdir, params2CmdArgs(params, dash='-', equal=' '), outfile)
+	cmd = '{{args.snpeff}} %s -Djava.io.tmpdir="%s" %s {{args.genome}} "{{i.infile}}" > "%s"' % (mem, tmpdir, params2CmdArgs(params, dash='-', equal=' '), outfile)
 	runcmd (cmd)
 	
 	###### vep
-	{% elif args.tool | lambda x: x == 'vep' %}
-	params['i']        = {{in.infile | quote}}
+	{% when 'vep' %}
+	params['i']        = {{i.infile | quote}}
 	params['o']        = outfile
 	params['format']   = 'vcf'
 	params['vcf']      = True
@@ -43,9 +44,9 @@ try:
 	runcmd (cmd)
 
 	###### annovar
-	{% elif args.tool | lambda x: x == 'annovar' %}
+	{% when 'annovar' %}
 	# convert vcf to avinput
-	avinput  = "{{out.outdir}}/{{in.infile | fn}}.avinput"
+	avinput  = "{{o.outdir}}/{{i.infile | fn}}.avinput"
 	avparams = {}
 
 	avparams['includeinfo'] = True
@@ -54,10 +55,10 @@ try:
 	avparams['format']      = 'vcf4'
 	avparams['outfile']     = avinput
 
-	cmd = '{{args.annovar_convert}} %s "{{in.infile}}"' % params2CmdArgs(avparams, equal=' ')
+	cmd = '{{args.annovar_convert}} %s "{{i.infile}}"' % params2CmdArgs(avparams, equal=' ')
 	runcmd (cmd)
 
-	params['outfile']  = {{out.outfile | prefix | quote}}
+	params['outfile']  = {{o.outfile | prefix | quote}}
 	params['buildver'] = {{args.genome | quote}}
 
 	cmd = '{{args.annovar}} %s "%s" "%s"' % (params2CmdArgs(params, equal=' '), avinput, dbpath) 
@@ -128,11 +129,11 @@ try:
 		record.samples = reader._parse_samples (samples, FORMAT, record)
 		return record
 			
-	reader = vcf.Reader(filename="{{in.infile}}")
+	reader = vcf.Reader(filename="{{i.infile}}")
 	reader.infos["ANN"] = vcf.parser._Info("ANN", 1, "String", "Annotation by ANNOVAR", "", "")
 	snames = {v:k for k,v in enumerate(reader.samples)}
 	writer = vcf.Writer(open(outfile, 'w'), reader)
-	f2conv = "{{out.outfile | prefix}}.variant_function"
+	f2conv = "{{o.outfile | prefix}}.variant_function"
 	lastvid= ''
 	lastr  = []
 	with open (f2conv) as f:
@@ -155,7 +156,7 @@ try:
 	record  = rs2record(lastr)
 	writer.write_record(record)		
 	writer.close()
-	{% endif %}
+{% endcase %}
 
 	if gz: runcmd ('gzip "%s"' % outfile)
 except Exception as ex:

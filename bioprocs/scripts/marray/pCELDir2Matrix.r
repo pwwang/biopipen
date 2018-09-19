@@ -3,14 +3,14 @@
 library(methods)
 library(simpleaffy)
 
-indir     = {{in.indir | R}}
-saminfo   = {{in.sifile | R}}
+indir     = {{i.indir | R}}
+saminfo   = {{i.sifile | R}}
 pattern   = {{args.pattern | R}}
 norm      = {{args.norm | R}}
 cdffile   = {{args.cdffile | R}}
-outfile   = {{out.outfile | R}}
+outfile   = {{o.outfile | R}}
 celdir    = file.path({{job.outdir | quote}}, 'CELs')
-prefix    = {{in.indir, args.pattern | dirpat2name | R}}
+prefix    = {{i.indir, args.pattern | dirpat2name | R}}
 transfm   = {{args.transfm | lambda x: x or 'NULL'}}
 fn2sample = Vectorize({{args.fn2sample}})
 

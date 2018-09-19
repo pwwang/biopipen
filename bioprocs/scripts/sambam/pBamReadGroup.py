@@ -9,38 +9,39 @@ from bioprocs.utils import cmdargs, runcmd, mem2
 rg = {{ args.rg }}
 rg = {key.upper():val for key, val in rg.items()}
 if not rg['ID']:
-	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', "{{out.outfile | fn}}")
-	rg['ID'] = g.group(1) if g else "{{out.outfile | fn}}.L{{job.index}}"
+	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', "{{o.outfile | fn}}")
+	rg['ID'] = g.group(1) if g else "{{o.outfile | fn}}.L{{job.index}}"
 if not rg['SM']:
-	rg['SM'] = "{{out.outfile | fn}}"
+	rg['SM'] = "{{o.outfile | fn}}"
 
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
+tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
 params = {{args.params}}
 try:
+{% case args.tool %}
 	############## picard
-	{% if args.tool | lambda x: x == 'picard' %}
+	{% when 'picard' %}
 	mem = mem2({{ args.mem | quote }})
 	params['-Djava.io.tmpdir'] = tmpdir
 	params['TMP_DIR'] = tmpdir
-	params['I'] = {{in.infile | quote}}
-	params['O'] = {{out.outfile | quote}}
+	params['I'] = {{i.infile | quote}}
+	params['O'] = {{o.outfile | quote}}
 	for k,v in rg.items():
 		params['RG' + k] = v
 
 	runcmd ('{{args.picard}} AddOrReplaceReadGroups %s %s' % (mem, cmdargs(params, dash='', equal='=')))
 
 	############## bamutil
-	{% elif args.tool | lambda x: x == 'bamutil' %}
+	{% when 'bamutil' %}
 	params['RG'] = "@RG\\tID:%s\\t%s" % (rg['ID'], "\\t".join([k + ":" + v for k,v in rg.items() if k!='ID']))
-	params['in'] = {{in.infile | quote}}
-	params['out'] = {{out.outfile | quote}}
+	params['in'] = {{i.infile | quote}}
+	params['out'] = {{o.outfile | quote}}
 
 	runcmd ('{{args.bamutil}} polishBam %s' % cmdargs(params, equal = ' '))
 
-	{% endif %}
+{% endcase %}
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise

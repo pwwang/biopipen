@@ -1,9 +1,9 @@
 {{rimport}}('__init__.r', 'poll.r')
 
 params = {{args.params | Rlist}}
-params$i = {{in.infile | quote}}
-params$o = {{out.outfile | quote}}
-{% if args.feature | lambda x: x != 'wgs' %}
+params$i = {{i.infile | quote}}
+params$o = {{o.outfile | quote}}
+{% if args.feature != 'wgs' %}
 params$f = {{args.feature | quote}}
 {% endif %}
 
@@ -13,12 +13,12 @@ poll = Poll({{proc.workdir | quote}}, {{proc.size}}, {{job.index}})
 {% if args.plot %}
 {{rimport}}('plot.r')
 
-{% if job.index | lambda x: x == 0 %}
+{% if job.index == 0 %}
 runcmd(cmd)
 {% endif %}
 poll$non1st(cmd)
 
-{% if job.index | lambda x: x == 0 %}
+{% if job.index == 0 %}
 ##### start plotting
 
 bsfiles = Sys.glob("{{proc.workdir}}/*/output/*/*.stat.txt")

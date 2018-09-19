@@ -32,7 +32,7 @@ from .utils import sql
 """
 pCreateTable                  = Proc(desc = 'Create tables in the database.')
 pCreateTable.input            = "dsn, schema:file"
-pCreateTable.output           = "dsn:var:{{in.dsn}}"
+pCreateTable.output           = "dsn:var:{{i.dsn}}"
 pCreateTable.args.intype      = 'schema'
 pCreateTable.args.drop        = False
 pCreateTable.args.delimit     = "\t"
@@ -58,7 +58,7 @@ pCreateTable.script           = 'file:scripts/sql/pCreateTable.py'
 """
 pImportData                  = Proc(desc = 'Create tables and import the data')
 pImportData.input            = "dsn, datafile:file"
-pImportData.output           = "dsn:var:{{in.dsn}}"
+pImportData.output           = "dsn:var:{{i.dsn}}"
 pImportData.args.delimit     = "\t"
 pImportData.args.drop        = False
 pImportData.envs.dsnparse    = sql.dsnparse
@@ -82,7 +82,7 @@ pImportData.script           = 'file:scripts/sql/pImportData.py'
 """
 pUpdateTable               = Proc(desc = 'Update table using sql.')
 pUpdateTable.input         = 'dsn'
-pUpdateTable.output        = 'dsn:var:{{in.dsn}}'
+pUpdateTable.output        = 'dsn:var:{{i.dsn}}'
 pUpdateTable.args.sql      = []
 pUpdateTable.envs.dsnparse = sql.dsnparse
 pUpdateTable.lang          = params.python.value
@@ -103,7 +103,7 @@ pUpdateTable.script        = 'file:scripts/sql/pUpdateTable.py'
 """
 pSelectTable               = Proc(desc = 'Select data from table and dump it.')
 pSelectTable.input         = 'dsn'
-pSelectTable.output        = 'outfile:file:sqlSelectTable-{{in.dsn, args.sql | lambda x,y: __import__("hashlib").md5(str(x) + str(y)).hexdigest()[:16]}}.dumped.txt'
+pSelectTable.output        = 'outfile:file:sqlSelectTable-{{i.dsn, args.sql | lambda x,y: __import__("hashlib").md5(str(x) + str(y)).hexdigest()[:16]}}.dumped.txt'
 pSelectTable.args.sql      = []
 pSelectTable.envs.dsnparse = sql.dsnparse
 pSelectTable.lang          = params.python.value

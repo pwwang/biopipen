@@ -1,13 +1,13 @@
 samples = []
 ngenes  = 0
-with open("{{in.expfile}}") as f:
+with open("{{i.expfile}}") as f:
 	for line in f:
 		if not samples:
 			samples = line.strip().split('\t')
 		elif line.strip():
 			ngenes += 1
 
-with open("{{in.expfile}}") as f, open("{{out.outfile}}", "w") as fout:
+with open("{{i.expfile}}") as f, open("{{o.outfile}}", "w") as fout:
 	fout.write("#1.2\n")
 	fout.write("%s\t%s\n" % (ngenes, len(samples)))
 	fout.write("NAME\tDescription\t%s\n" % ('\t'.join(samples)))

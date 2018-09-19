@@ -4,21 +4,22 @@ from cruzdb import Genome
 # get the snps
 snps = []
 readopts = {{args.inopts}}
-{% if args.inmeta | lambda x: isinstance(x, list) %}
+{% case True %}
+{% when args.inmeta | isinstance: list %}
 {{read.base.py | norepeats}}
-reader = readBase({{in.infile | quote}}, **readopts)
+reader = readBase({{i.infile | quote}}, **readopts)
 reader.meta.add(*{{args.inmeta}})
-{% elif args.inmeta | lambda x: isinstance(x, dict) %}
+{% when args.inmeta | isinstance: dict %}
 {{read.base.py | norepeats}}
-reader = readBase({{in.infile | quote}}, **readopts)
+reader = readBase({{i.infile | quote}}, **readopts)
 reader.meta.add(*{{args.inmeta}}.items())
-{% elif args.inmeta %}
+{% when args.inmeta | bool %}
 {{read, args.inmeta | lambda x, y: x[y]['py'] | norepeats}}
-reader = locals()['read{{args.inmeta | lambda x: x[0].upper() + x[1:]}}']({{in.infile | quote}}, **readopts)
+reader = locals()['read{{args.inmeta | @capitalize}}']({{i.infile | quote}}, **readopts)
 {% else %}
-ext = {{in.infile | ext | [1:] | quote}}
+ext = {{i.infile | ext | [1:] | quote}}
 ext = ext[0].upper() + ext[1:]
-reader = locals()['read' + ext]({{in.infile | quote}}, **readopts)
+reader = locals()['read' + ext]({{i.infile | quote}}, **readopts)
 {% endif %}
 
 for r in reader:
@@ -35,7 +36,7 @@ g     = Genome (db=genome)
 dbsnp = g.snp{{args.dbsnpver}}
 
 {{write.bedx.py | norepeats}}
-writer = writeBedx({{out.outfile | quote}})
+writer = writeBedx({{o.outfile | quote}})
 writer.meta.add(*{{args.xcols}})
 #writer.writeMeta()
 writer.writeHead()

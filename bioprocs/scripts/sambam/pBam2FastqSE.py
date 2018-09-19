@@ -6,16 +6,17 @@ tmpdir = path.join({{args.tmpdir | quote}}, "tmp.{{proc.id}}.{{proc.tag}}.{{proc
 if not path.exists(tmpdir):
 	makedirs(tmpdir)
 
-infile  = {{in.infile | quote}}
-fqfile  = {{out.fqfile | quote}}
+infile  = {{i.infile | quote}}
+fqfile  = {{o.fqfile | quote}}
 {% if args.gz %}
 fqfile = fqfile[:-3]
 {% endif %}
 
 params  = {{args.params}}
 try:
+{% case args.tool %}
 	############# biobambam
-	{% if args.tool | lambda x: x == 'biobambam' %}
+	{% when 'biobambam' %}
 	params['gz']       = 0
 	#bug
 	#params['S']        = fqfile
@@ -28,7 +29,7 @@ try:
 	runcmd (cmd)
 
 	############# bedtools
-	{% elif args.tool | lambda x: x == 'bedtools' %}
+	{% when 'bedtools' %}
 	params['i']  = infile
 	params['fq'] = fqfile
 
@@ -36,7 +37,7 @@ try:
 	runcmd (cmd)
 
 	############# samtools
-	{% elif args.tool | lambda x: x == 'samtools' %}
+	{% when 'samtools' %}
 	params['t'] = True
 	params['s'] = fqfile
 
@@ -44,14 +45,14 @@ try:
 	runcmd (cmd)
 
 	############# picard
-	{% elif args.tool | lambda x: x == 'picard' %}
+	{% when 'picard' %}
 	mem = mem2({{ args.mem | quote }}, 'java')
 	params['TMP_DIR'] = tmpdir
 	params['I'] = infile
 	params['F'] = fqfile
 	cmd = '{{args.picard}} SamToFastq %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params, dash = '', equal = '='))
 	runcmd (cmd)
-	{% endif %}
+{% endcase %}
 
 	{% if args.gz %}
 	runcmd ('gzip "%s"' % (fqfile))

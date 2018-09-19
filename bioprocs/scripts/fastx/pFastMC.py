@@ -3,12 +3,12 @@ from pyppl import Box
 
 params = {{args.params}}
 
-qcdir = {{in.qcdir | quote}}
+qcdir = {{i.qcdir | quote}}
 try:
-	{% if args.tool | lambda x: x == 'multiqc' %}
-	params['o'] = {{out.outdir | quote}}
+	{% if args.tool == 'multiqc' %}
+	params['o'] = {{o.outdir | quote}}
 	params['p'] = True
-	cmd = '{{args.multiqc}} "{{in.qcdir}}" %s' % cmdargs(params)
+	cmd = '{{args.multiqc}} "{{i.qcdir}}" %s' % cmdargs(params)
 	runcmd(cmd)
 
 	{% else %}

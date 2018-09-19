@@ -16,9 +16,9 @@ def secOri(s, ori):
 	s.page_width  = new_width
 	s.page_height = new_height
 
-infile    = {{in.infile | quote}}
-outfile   = {{out.outfile | quote}}
-codefiles = {{in.codes | repr}}
+infile    = {{i.infile | quote}}
+outfile   = {{o.outfile | quote}}
+codefiles = {{i.codes | repr}}
 error     = {{args.error | repr}}
 bcode     = {{args.bcode | repr}}
 if not isinstance(bcode, list):

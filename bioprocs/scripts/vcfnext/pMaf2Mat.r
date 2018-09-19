@@ -1,5 +1,5 @@
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 mutypes = {{args.mutypes | R}}
 binary  = {{args.binary | R}}
 na      = {{args.na | R}}

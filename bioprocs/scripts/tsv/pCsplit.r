@@ -1,7 +1,7 @@
 {{rimport}}('__init__.r')
 
-infile  = {{in.infile | R}}
-outdir  = {{out.outdir | R}}
+infile  = {{i.infile | R}}
+outdir  = {{o.outdir | R}}
 params  = {{args.params | R}}
 inopts  = {{args.inopts | R}}
 size    = as.numeric({{args.size | R}})
@@ -21,7 +21,7 @@ for ( chunk in split(1:length(heads), ceiling(seq_along(1:length(heads))/size)) 
 	cnames    = heads[chunk]
 	m         = mat[, cnames, drop = F]
 	fn        = paste(gsub("[[:punct:]]", "_", cnames), collapse='-')
-	fn        = paste0({{in.infile | fn2 | quote}}, '.', fn, {{in.infile | ext | quote}})
+	fn        = paste0({{i.infile | fn2 | quote}}, '.', fn, {{i.infile | ext | quote}})
 	outfile   = file.path(outdir, fn)
 	outparams = list(
 		x         = m,

@@ -2,12 +2,12 @@ from os import path
 from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
-infiles = {{in.infiles | repr}}
+infiles = {{i.infiles | repr}}
 exbaits = {{args.exbaits | repr}}
 accfile = {{args.accfile | repr}}
 ref     = {{args.ref | repr}}
 params  = {{args.params | repr}}
-prefix  = {{in.infiles | fs2name | quote}}
+prefix  = {{i.infiles | fs2name | quote}}
 outdir  = {{job.outdir | quote}}
 cnvkit  = {{args.cnvkit | quote}}
 

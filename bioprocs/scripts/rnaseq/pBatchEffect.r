@@ -1,11 +1,11 @@
 
 {{rimport}}('plot.r', '__init__.r', 'sampleinfo.r')
 
-exprfile  = {{in.expr      | R}}
-batchfile = {{in.batch     | R}}
+exprfile  = {{i.expr      | R}}
+batchfile = {{i.batch     | R}}
 tool      = {{args.tool    | R}}
-outfile   = {{out.outfile  | R}}
-outdir    = {{out.outdir   | R}}
+outfile   = {{o.outfile  | R}}
+outdir    = {{o.outdir   | R}}
 plot      = {{args.plot    | R}}
 ggs       = {{args.ggs     | R}}
 devpars   = {{args.devpars | R}}
@@ -29,19 +29,19 @@ if (tool == 'combat') {
 
 # boxplot
 if (plot$boxplot) {
-	bpfile = file.path(outdir, "{{in.expr | fn2}}.boxplot.png")
+	bpfile = file.path(outdir, "{{i.expr | fn2}}.boxplot.png")
 	plot.boxplot(newexpr, bpfile, stack = T, devpars = devpars, ggs = ggs$boxplot)
 }
 
 # heatmap
 if (plot$heatmap) {
-	hmfile = file.path(outdir, "{{in.expr | fn2}}.heatmap.png")
+	hmfile = file.path(outdir, "{{i.expr | fn2}}.heatmap.png")
 	hmexp  = if (nrow(newexpr) > hmrows) newexpr[sample(nrow(newexpr),size=hmrows),] else newexpr
 	plot.heatmap(hmexp, hmfile, devpars = devpars, ggs = ggs$heatmap)
 }
 
 # histgram
 if (plot$histogram) {
-	histfile = file.path(outdir, "{{in.expr | fn2}}.histo.png")
+	histfile = file.path(outdir, "{{i.expr | fn2}}.histo.png")
 	plot.histo(as.data.frame(newexpr), histfile, devpars = devpars, ggs = ggs$histogram)
 }

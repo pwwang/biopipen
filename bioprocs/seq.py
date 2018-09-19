@@ -25,7 +25,7 @@ from . import params
 """
 pConsvPerm               = Proc(desc = 'Generate a null distribution of conservation scores.')
 pConsvPerm.input         = 'seed'
-pConsvPerm.output        = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{in.seed}}.txt'
+pConsvPerm.output        = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{i.seed}}.txt'
 pConsvPerm.args.len      = 50
 pConsvPerm.args.nperm    = 1000
 pConsvPerm.args.consvdir = params.consvdir.value
@@ -55,14 +55,14 @@ pConsvPerm.script        = "file:scripts/seq/pConsvPerm.py"
 	`bwtool`:   The path of bwtool executable. Default: `bwtool`
 	`bedtools`: The path of bedtools executable. Default: `bedtools`
 	`pval`:     Whether calculate pvalue of each region. Default: False
-		- In this case, the `in.permfile` can be ignored.
+		- In this case, the `i.permfile` can be ignored.
 @requires:
 	[bwtool](https://github.com/CRG-Barcelona/bwtool)
 	[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 """
 pConsv               = Proc(desc = 'Get the conservation scores of regions.')
 pConsv.input         = "bedfile:file, permfile:file"
-pConsv.output        = "outfile:file:{{in.bedfile | fn}}-consv.bed"
+pConsv.output        = "outfile:file:{{i.bedfile | fn}}-consv.bed"
 pConsv.args.bwtool   = params.bwtool.value
 pConsv.args.consvdir = params.consvdir.value
 pConsv.args.pval     = False
@@ -88,7 +88,7 @@ pConsv.script        = "file:scripts/seq/pConsv.py"
 """
 pPromoters               = Proc(desc = 'Get the promoter regions in bed format of a gene list give in infile.')
 pPromoters.input         = "infile:file"
-pPromoters.output        = "outfile:file:{{in.infile | fn}}-promoters.bed"
+pPromoters.output        = "outfile:file:{{i.infile | fn}}-promoters.bed"
 pPromoters.args.up       = 2000
 pPromoters.args.down     = 2000
 pPromoters.errhow        = 'retry'

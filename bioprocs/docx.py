@@ -22,7 +22,7 @@ from . import params
 """
 pDocx             = Proc(desc = 'Operating .docx file')
 pDocx.input       = 'infile, codes:files'
-pDocx.output      = 'outfile:file:{{in.infile | lambda f, path = __import__("os").path: bn(f) if path.isfile(f) else str2fn(f) + ".docx"}}'
+pDocx.output      = 'outfile:file:{{i.infile | lambda f, path = __import__("os").path: bn(f) if path.isfile(f) else str2fn(f) + ".docx"}}'
 pDocx.args.bcode  = []
 pDocx.args.acode  = []
 pDocx.args.error  = 'exit' # or ignore
@@ -48,7 +48,7 @@ pDocx.script      = "file:scripts/docx/pDocx.py"
 """
 pTable2DocxCode             = Proc(desc = 'Convert a table to docx code')
 pTable2DocxCode.input       = 'infile:file'
-pTable2DocxCode.output      = 'outfile:file:{{in.infile | fn2}}.docxcode.py'
+pTable2DocxCode.output      = 'outfile:file:{{i.infile | fn2}}.docxcode.py'
 pTable2DocxCode.args.style  = None
 pTable2DocxCode.args.inopts = Box(rnames = True, cnames = True, skip = 0, delimit = "\t")
 pTable2DocxCode.args.bcode  = []
@@ -75,7 +75,7 @@ pTable2DocxCode.script      = "file:scripts/docx/pTable2DocxCode.r"
 """
 pImage2DocxCode            = Proc(desc = 'Convert an image to docx code')
 pImage2DocxCode.input      = 'infile:file'
-pImage2DocxCode.output     = 'outfile:file:{{in.infile | fn2}}.docxcode.py'
+pImage2DocxCode.output     = 'outfile:file:{{i.infile | fn2}}.docxcode.py'
 pImage2DocxCode.args.scale = Box() # width and/or height in inches
 pImage2DocxCode.args.bcode = []
 pImage2DocxCode.args.acode = []

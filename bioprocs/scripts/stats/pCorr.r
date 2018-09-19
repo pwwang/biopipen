@@ -1,9 +1,9 @@
 library(reshape2)
 {{rimport}}('__init__.r', 'plot.r')
 
-infile   = {{in.infile    | quote}}
-outdir   = {{out.outdir   | quote}}
-outfile  = {{out.outfile  | quote}}
+infile   = {{i.infile    | quote}}
+outdir   = {{o.outdir   | quote}}
+outfile  = {{o.outfile  | quote}}
 byrow    = {{args.byrow   | R}}
 inopts   = {{args.inopts  | R}}
 doplot   = {{args.plot    | R}}

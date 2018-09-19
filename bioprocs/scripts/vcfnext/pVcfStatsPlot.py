@@ -19,11 +19,11 @@ for chpart in chparts:
 	chroms += map(str, list (range(ch1, ch2+1)))
 chroms = filter(None, chroms)
 
-matxdir = "{{out.outdir}}/mats"
+matxdir = "{{o.outdir}}/mats"
 if not path.isdir(matxdir): makedirs(matxdir)
-plotdir = "{{out.outdir}}/plots"
+plotdir = "{{o.outdir}}/plots"
 if not path.isdir(plotdir): makedirs(plotdir)
-plotsrc = "{{out.outdir}}/plot.r"
+plotsrc = "{{o.outdir}}/plot.r"
 
 flags  = {}
 data   = {}
@@ -229,7 +229,7 @@ def saveChromChange (name, sampledata):
 			fout.write (sample + "\t" + "\t".join(dat['Count']) + "\n")
 		fout.close()
 
-for i, stfile in enumerate(glob("{{in.indir}}/*.stats*.csv")):
+for i, stfile in enumerate(glob("{{i.indir}}/*.stats*.csv")):
 	sample                             = path.basename(stfile).split('.')[0]
 	print "Handling %s ..." % stfile
 	f = open (stfile)

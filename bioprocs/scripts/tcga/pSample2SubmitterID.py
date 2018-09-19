@@ -4,9 +4,9 @@ from bioprocs.utils.parallel import Parallel
 from threading import Lock
 
 # load varialbes
-indir   = {{in.indir | quote}}
-mdfile  = {{in.mdfile | quote}}
-outdir  = {{out.outdir | quote}}
+indir   = {{i.indir | quote}}
+mdfile  = {{i.mdfile | quote}}
+outdir  = {{o.outdir | quote}}
 nthread = {{args.nthread | repr}}
 method  = {{args.method | quote}}
 

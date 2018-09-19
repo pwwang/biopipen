@@ -4,15 +4,15 @@ library(methods)
 
 set.seed(8525)
 
-exprfile  = {{in.efile | R}}
-groupfile = {{in.gfile | R}}
+exprfile  = {{i.efile | R}}
+groupfile = {{i.gfile | R}}
 annofile  = {{args.annofile | R}}
 cutoffway = {{args.pval | lambda x: str(x).split(':')[0] == 'q' and 'q' or 'p' | quote}}
 cutoffval = {{args.pval | lambda x: str(x).split(':')[-1] | R}}
 filters   = {{args.filter | lambda x: x if isinstance(x, (list, tuple)) else [int(y.strip()) for y in x.split(',')] | R}}
-outdir    = {{out.outdir | R}}
-allfile   = file.path(outdir, '{{in.efile | fn2}}-{{in.gfile | fn2}}.all.txt')
-outfile   = {{out.outfile | R}}
+outdir    = {{o.outdir | R}}
+allfile   = file.path(outdir, '{{i.efile | fn2}}-{{i.gfile | fn2}}.all.txt')
+outfile   = {{o.outfile | R}}
 tool      = {{args.tool | R}}
 plot      = {{args.plot | R}}
 ggs       = {{args.ggs | R}}

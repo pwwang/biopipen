@@ -3,8 +3,8 @@ from os import path, symlink
 from bioprocs.utils.gene import genenorm
 
 genenorm(
-	infile   = {{in.infile | quote}},
-	outfile  = {{out.outfile | quote}},
+	infile   = {{i.infile | quote}},
+	outfile  = {{o.outfile | quote}},
 	notfound = {{args.notfound | quote}},
 	frm      = {{args.frm | quote}},
 	to       = {{args.to  | quote}},

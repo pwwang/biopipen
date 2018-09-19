@@ -2,8 +2,8 @@
 
 library(ggplot2) # make aes available
 
-infile  = {{in.infile | R}}
-outfile = {{out.outfile | R}}
+infile  = {{i.infile | R}}
+outfile = {{o.outfile | R}}
 inopts  = {{args.inopts | R}}
 devpars = {{args.devpars | R}}
 x       = {{args.x | repr}}

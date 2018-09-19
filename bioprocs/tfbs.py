@@ -29,8 +29,8 @@ from . import params
 pMotifScan                        = Proc(desc = 'Scan motif along the given sequences.')
 pMotifScan.input                  = "tffile:file, sfile:file"
 pMotifScan.output                 = [
-	"outfile:file:{{in.sfile | fn}}-{{in.tffile | fn}}.fimo/{{in.sfile | fn}}-{{in.tffile | fn}}.bed", 
-	"outdir:dir:{{in.sfile | fn}}-{{in.tffile | fn}}.fimo"
+	"outfile:file:{{i.sfile | fn}}-{{i.tffile | fn}}.fimo/{{i.sfile | fn}}-{{i.tffile | fn}}.bed", 
+	"outdir:dir:{{i.sfile | fn}}-{{i.tffile | fn}}.fimo"
 ]
 pMotifScan.args.tool     = 'meme'
 pMotifScan.args.meme     = params.fimo.value

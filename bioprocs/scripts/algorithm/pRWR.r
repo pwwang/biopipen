@@ -2,7 +2,7 @@
 normW   = {{args.normW | R}}
 normE   = {{args.normE | R}}
 
-W = read.table ({{in.Wfile | quote}}, sep="\t", header=T, row.names=1, check.names=F, strip.white=T)
+W = read.table ({{i.Wfile | quote}}, sep="\t", header=T, row.names=1, check.names=F, strip.white=T)
 W = as.matrix(W)
 
 if (normW) {
@@ -11,7 +11,7 @@ if (normW) {
 	W = Laplacian.norm(W)
 }
 
-E = read.table ({{in.Efile | quote}}, header=F, row.names=1, check.names=F, strip.white=T)
+E = read.table ({{i.Efile | quote}}, header=F, row.names=1, check.names=F, strip.white=T)
 E = as.matrix(E)
 E = E[colnames(W), ]
 
@@ -31,4 +31,4 @@ r = RWR (W, E)
 print (paste("eps: ", r$eps))
 print (paste("tmax:", r$tmax))
 
-write.table (round(r$r, 3), {{out.outfile | quote}}, quote=F, col.names=F, row.names = T, sep="\t")
+write.table (round(r$r, 3), {{o.outfile | quote}}, quote=F, col.names=F, row.names = T, sep="\t")

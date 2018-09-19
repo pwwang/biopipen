@@ -11,7 +11,7 @@ skip = {{args.skip}}
 delimit = {{args.delimit | quote}}
 comment = {{args.comment | quote}}
 col     = {{args.col}}
-with open({{in.snpfile | quote}}) as f:
+with open({{i.snpfile | quote}}) as f:
 	snps = sorted(set([line.split(delimit)[col] for i, line in enumerate(f.read().splitlines()) if i >= skip and line.strip() and not line.startswith(comment)]))
 
 genome = {{args.genome | quote}}
@@ -19,7 +19,7 @@ genome = {{args.genome | quote}}
 g     = Genome (db=genome)
 dbsnp = g.snp{{args.dbsnpver}}
 
-fout  = open ("{{out.outfile}}", "w")
+fout  = open ("{{o.outfile}}", "w")
 for snp in snps:
 	s = dbsnp.filter_by(name=snp).first()
 	if not s:

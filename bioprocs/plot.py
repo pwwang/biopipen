@@ -24,7 +24,7 @@ from . import params, rimport
 """
 pPlot = Proc(desc = 'Generate plot using ggplot2')
 pPlot.input  = 'infile:file'
-pPlot.output = 'outfile:file:{{in.infile | fn}}.png'
+pPlot.output = 'outfile:file:{{i.infile | fn}}.png'
 pPlot.args.cnames  = True
 pPlot.args.rnames  = False
 pPlot.args.aes     = Box(x = 1, y = 2) # only allow x, y
@@ -57,7 +57,7 @@ pPlot.script = 'file:scripts/plot/pPlot.r'
 """
 pScatter              = Proc(desc = 'Generate scatter plot.')
 pScatter.input        = 'infile:file'
-pScatter.output       = 'outfile:file:{{in.infile | fn}}.scatter.png'
+pScatter.output       = 'outfile:file:{{i.infile | fn}}.scatter.png'
 pScatter.args.cnames  = True
 pScatter.args.rnames  = False
 pScatter.args.x       = 1
@@ -98,7 +98,7 @@ pPoints = pScatter.copy()
 """
 pHisto              = Proc(desc = 'Generate histogram.')
 pHisto.input        = 'infile:file'
-pHisto.output       = 'outfile:file:{{in.infile | fn}}.histo.png'
+pHisto.output       = 'outfile:file:{{i.infile | fn}}.histo.png'
 pHisto.args.cnames  = True
 pHisto.args.rnames  = False
 pHisto.args.x       = 1
@@ -130,7 +130,7 @@ pHisto.script       = 'file:scripts/plot/pHisto.r'
 """
 pFreqpoly = Proc(desc = 'Generate frequency polygon plot.')
 pFreqpoly.input  = 'infile:file'
-pFreqpoly.output = 'outfile:file:{{in.infile | fn}}.freqpoly.png'
+pFreqpoly.output = 'outfile:file:{{i.infile | fn}}.freqpoly.png'
 pFreqpoly.args.cnames  = True
 pFreqpoly.args.rnames  = False
 pFreqpoly.args.x       = 1
@@ -184,7 +184,7 @@ pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
 """
 pBoxplot             = Proc(desc = 'Generate boxplot plot.')
 pBoxplot.input       = 'infile:file'
-pBoxplot.output      = 'outfile:file:{{in.infile | fn}}.boxplot.png'
+pBoxplot.output      = 'outfile:file:{{i.infile | fn}}.boxplot.png'
 pBoxplot.args.inopts = Box(
 	cnames  = True,
 	rnames  = False,
@@ -230,7 +230,7 @@ pBoxplot.script       = 'file:scripts/plot/pBoxplot.r'
 """
 pHeatmap              = Proc(desc  = 'Plot heatmaps.')
 pHeatmap.input        = "infile:file"
-pHeatmap.output       = "outfile:file:{{in.infile | fn}}.heatmap.png"
+pHeatmap.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
 pHeatmap.args.ggs     = Box()
 pHeatmap.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pHeatmap.args.params  = Box(dendro = True)
@@ -263,7 +263,7 @@ pHeatmap.script       = "file:scripts/plot/pHeatmap.r"
 """
 pScatterCompare              = Proc(desc = 'Plot scatter compare plots.')
 pScatterCompare.input        = "infile:file"
-pScatterCompare.output       = "outfile:file:{{in.infile | fn}}.scattercomp.png"
+pScatterCompare.output       = "outfile:file:{{i.infile | fn}}.scattercomp.png"
 pScatterCompare.args.ggs     = Box()
 pScatterCompare.args.params  = Box()
 pScatterCompare.args.devpars = Box(res = 300, height = 2000, width = 2000)
@@ -289,7 +289,7 @@ pScatterCompare.script       = "file:scripts/plot/pScatterCompare.r"
 """
 pROC              = Proc(desc = 'Generate ROC curves.')
 pROC.input        = 'infile:file'
-pROC.output       = 'outdir:dir:{{in.infile | fn}}.roc'
+pROC.output       = 'outdir:dir:{{i.infile | fn}}.roc'
 pROC.args.cnames  = True
 pROC.args.rnames  = True
 pROC.args.params  = Box(labels = False, showAUC = True, combine = True)
@@ -340,7 +340,7 @@ pROC.script       = "file:scripts/plot/pROC.r"
 """
 pVenn              = Proc(desc = 'Venn plots.')
 pVenn.input        = "infile:file, metafile:file"
-pVenn.output       = "outfile:file:{{in.infile | fn}}.venn.png"
+pVenn.output       = "outfile:file:{{i.infile | fn}}.venn.png"
 pVenn.args.tool    = 'auto' # upsetr or auto: < = 3 venn, else upsetr
 pVenn.args.rnames  = False
 pVenn.args.params  = Box()
@@ -377,7 +377,7 @@ pVenn.script       = "file:scripts/plot/pVenn.r"
 """
 pPie              = Proc(desc = 'Pie chart.')
 pPie.input        = "infile:file"
-pPie.output       = "outfile:file:{{in.infile | fn}}.pie.png"
+pPie.output       = "outfile:file:{{i.infile | fn}}.pie.png"
 pPie.args.rnames  = False
 pPie.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pPie.args.ggs     = Box(

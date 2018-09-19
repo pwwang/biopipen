@@ -1,7 +1,7 @@
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 inopts  = {{args.inopts}}
 col     = {{args.col | pyvar}}
 outopts  = {

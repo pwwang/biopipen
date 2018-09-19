@@ -1,8 +1,8 @@
 from pyppl import Box
 from bioprocs.utils.tsvio import tsvops, TsvRecord
 
-infile    = {{in.infile | quote}}
-outfile   = {{out.outfile | quote}}
+infile    = {{i.infile | quote}}
+outfile   = {{o.outfile | quote}}
 inopts    = {{args.inopts}}
 outopts   = {{args.outopts}}
 opshelper = {{args.opshelper | repr}}

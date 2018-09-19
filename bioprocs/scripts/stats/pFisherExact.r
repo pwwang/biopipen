@@ -1,7 +1,7 @@
-infile   = {{in.infile    | quote}}
-outfile  = {{out.outfile  | quote}}
+infile   = {{i.infile    | quote}}
+outfile  = {{o.outfile  | quote}}
 
-{% if args.intype | lambda x: x == 'cont' %}
+{% if args.intype == 'cont' %}
 
 #
 #         | Disease | Healthy |
@@ -30,7 +30,7 @@ cont.table = read.table(infile, sep = "\t", header = T, row.names = 1, check.nam
 
 ct.cnames = c()
 ct.rnames = c()
-{% if args.ctcols | lambda x: x and isinstance(x, list) %}
+{% if isinstance(args.ctcols, list) %}
 ct.cnames = {{args.ctcols}}
 {% elif args.ctcols %}
 ct.cnames = {{args.ctcols | lambda x: [y.strip() for y in x.split(',') if y.strip()]}}

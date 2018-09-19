@@ -18,7 +18,7 @@ from . import params
 """
 pTabix             = Proc(desc = 'Use tabix to extract information.')
 pTabix.input       = "infile, region"
-pTabix.output      = "outfile:file:{{in.infile | fn | fn}}-{{job.index}}{% if in.infile.endswith('.gz') %}{{in.infile | fn | ext}}{% else %}{{in.infile | ext}}{% endif %}"
+pTabix.output      = "outfile:file:{{i.infile | fn | fn}}-{{job.index}}{% if i.infile.endswith('.gz') %}{{i.infile | fn | ext}}{% else %}{{i.infile | ext}}{% endif %}"
 pTabix.args.tabix  = params.tabix.value
 pTabix.args.params = Box(h = True)
 pTabix.lang        = params.python.value
@@ -43,8 +43,8 @@ pTabix.script      = "file:scripts/tabix/pTabix.py"
 pTabixIndex        = Proc(desc = 'Generate tabix index file')
 pTabixIndex.input  = "infile:file"
 pTabixIndex.output = [
-	"outfile:file:{{in.infile | bn}}{% if in.infile.endswith('.gz') | lambda x: not x %}.gz{% endif %}", 
-	"outidx:file:{{in.infile | bn}}{% if in.infile.endswith('.gz') | lambda x: not x %}.gz{% endif %}.tbi"
+	"outfile:file:{{i.infile | bn}}{% unless i.infile.endswith('.gz') %}.gz{% endunless %}", 
+	"outidx:file:{{i.infile | bn}}{% unless i.infile.endswith('.gz') %}.gz{% endunless %}.tbi"
 ]
 pTabixIndex.args.tabix  = params.tabix.value
 pTabixIndex.args.python = params.python.value

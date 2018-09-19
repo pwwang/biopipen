@@ -38,7 +38,7 @@ from . import params
 """
 pDist2Coords            = Proc(desc = 'Convert a distance matrix to coordinates, using multidimensional scaling.')
 pDist2Coords.input      = "infile:file"
-pDist2Coords.output     = "outfile:file:{{in.infile | fn}}.xyz"
+pDist2Coords.output     = "outfile:file:{{i.infile | fn}}.xyz"
 pDist2Coords.args.infmt = 'full'
 pDist2Coords.args.k     = 2
 pDist2Coords.lang       = params.Rscript.value
@@ -75,7 +75,7 @@ pDist2Coords.script     = "file:scripts/cluster/pDist2Coords.r"
 """
 pCluster                = Proc (desc = 'Use `optCluster` to select the best number of clusters and cluster method, then perform the clustering.')
 pCluster.input          = 'infile:file'
-pCluster.output         = 'outfile:file:{{in.infile | fn}}.cluster/clusters.txt, outdir:dir:{{in.infile | fn}}.cluster'
+pCluster.output         = 'outfile:file:{{i.infile | fn}}.cluster/clusters.txt, outdir:dir:{{i.infile | fn}}.cluster'
 pCluster.args.transpose = False
 pCluster.args.cnames    = True
 pCluster.args.rnames    = True
@@ -116,7 +116,7 @@ pCluster.script         = "file:scripts/cluster/pCluster.r"
 """
 pMCluster                = Proc(desc = 'Use `r-mclust` to do clustering. Current just do simple clustering with the package.')
 pMCluster.input          = "infile:file"
-pMCluster.output         = 'outfile:file:{{in.infile | fn}}.mclust/clusters.txt, outdir:dir:{{in.infile | fn}}.mclust'
+pMCluster.output         = 'outfile:file:{{i.infile | fn}}.mclust/clusters.txt, outdir:dir:{{i.infile | fn}}.mclust'
 pMCluster.args.transpose = False
 pMCluster.args.rnames    = True
 pMCluster.args.cnames    = True
@@ -147,7 +147,7 @@ pMCluster.script         = "file:scripts/cluster/pMCluster.r"
 """
 pAPCluster                = Proc(desc = 'Use `r-apcluster` to do clustering.')
 pAPCluster.input          = "infile:file"
-pAPCluster.output         = 'outfile:file:{{in.infile | fn}}.apclust/clusters.txt, outdir:dir:{{in.infile | fn}}.apclust'
+pAPCluster.output         = 'outfile:file:{{i.infile | fn}}.apclust/clusters.txt, outdir:dir:{{i.infile | fn}}.apclust'
 pAPCluster.args.transpose = False
 pAPCluster.args.rnames    = True
 pAPCluster.args.cnames    = True
@@ -183,9 +183,9 @@ pAPCluster.script         = "file:scripts/cluster/pAPCluster.r"
 pHCluster = Proc(desc = 'Do hierarchical clustering.')
 pHCluster.input  = "infile:file"
 pHCluster.output = [
-	"outmerge:file:{{in.infile | fn}}.hclust/merge.txt", 
-	"outorder:file:{{in.infile | fn}}.hclust/order.txt",
-	"outdir:dir:{{in.infile | fn}}.hclust"
+	"outmerge:file:{{i.infile | fn}}.hclust/merge.txt", 
+	"outorder:file:{{i.infile | fn}}.hclust/order.txt",
+	"outdir:dir:{{i.infile | fn}}.hclust"
 ]
 pHCluster.args.transpose = False
 pHCluster.args.cnames    = True

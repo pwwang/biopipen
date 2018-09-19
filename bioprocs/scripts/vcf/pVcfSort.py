@@ -1,7 +1,7 @@
 from bioprocs.utils import runcmd, cmdargs
 
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 header  = {{args.header | repr}}
 by      = {{args.by | quote}}
 tool    = {{args.tool | quote}}

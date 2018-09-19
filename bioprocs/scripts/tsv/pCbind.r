@@ -1,8 +1,8 @@
 {{rimport}}('__init__.r')
 
-infiles  = {{in.infiles | R}}
-outfile  = {{out.outfile | R}}
-inopts   = {{args.inopts, in.infiles | lambda x, files: (x, len(files)) | lambda x: {k:(v if isinstance(v, list) and len(v) > 1 else v*x[1] if isinstance(x, list) and len(v) == 1 else [v]*x[1]) for k, v in x[0].items()} | R}}
+infiles  = {{i.infiles | R}}
+outfile  = {{o.outfile | R}}
+inopts   = {{args.inopts, i.infiles | lambda x, files: (x, len(files)) | lambda x: {k:(v if isinstance(v, list) and len(v) > 1 else v*x[1] if isinstance(x, list) and len(v) == 1 else [v]*x[1]) for k, v in x[0].items()} | R}}
 params   = {{args.params | R}}
 na       = {{args.na | R}}
 fn2cname = {{args.fn2cname}}

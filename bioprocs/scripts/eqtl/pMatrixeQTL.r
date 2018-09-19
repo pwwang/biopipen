@@ -1,7 +1,8 @@
+{% python from os import path %}
 library("MatrixEQTL");
 
-snpmatrix = read.table({{in.snpfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
-expmatrix = read.table({{in.expfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
+snpmatrix = read.table({{i.snpfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
+expmatrix = read.table({{i.expfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
 cnames    = intersect(colnames(snpmatrix), colnames(expmatrix))
 snpmatrix = snpmatrix[, cnames, drop = F]
 expmatrix = expmatrix[, cnames, drop = F]
@@ -23,8 +24,8 @@ gene$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
 gene$CreateFromMatrix( as.matrix(expmatrix) );
 
 cvrt = SlicedData$new();
-{% if in.covfile | lambda x: x and __import__("os").path.isfile(x) %}
-covmatrix = read.table({{in.covfile | quote}}, header = T, row.names = 1, check.names = F)
+{% if path.isfile(i.covfile) %}
+covmatrix = read.table({{i.covfile | quote}}, header = T, row.names = 1, check.names = F)
 covmatrix = covmatrix[, cnames, drop = F]
 #cvrt$fileDelimiter = "\t";       # the TAB character
 #cvrt$fileOmitCharacters = "NA";  # denote missing values;

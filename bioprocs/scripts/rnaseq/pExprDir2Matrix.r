@@ -1,13 +1,13 @@
 {{rimport}}('__init__.r', 'plot.r')
 
-indir     = {{in.indir | R}}
+indir     = {{i.indir | R}}
 exrows    = {{args.exrows | R}}
 fn2sample = Vectorize({{args.fn2sample}})
 pattern   = {{args.pattern | R}}
-outfile   = {{out.outfile | R}}
-outdir    = {{out.outdir | R}}
+outfile   = {{o.outfile | R}}
+outdir    = {{o.outdir | R}}
 plot      = {{args.plot | R}}
-prefix    = {{in.indir, args.pattern | dirpat2name | R}}
+prefix    = {{i.indir, args.pattern | dirpat2name | R}}
 devpars   = {{args.devpars | R}}
 hmrows    = {{args.hmrows | R}}
 ggs       = {{args.ggs | R}}

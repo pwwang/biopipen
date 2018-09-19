@@ -36,7 +36,7 @@ from . import params, rimport
 """
 pSurvivalPower              = Proc(desc = "Survival analysis.")
 pSurvivalPower.input        = 'infile:file, ngroup1, ngroup2, ngroup3, ngroup4'
-pSurvivalPower.output       = 'outfile:file:{{in.infile | fn}}.power/{{in.infile | fn}}.ssize.txt, outdir:dir:{{in.infile | fn}}.power'
+pSurvivalPower.output       = 'outfile:file:{{i.infile | fn}}.power/{{i.infile | fn}}.ssize.txt, outdir:dir:{{i.infile | fn}}.power'
 pSurvivalPower.args.rnames  = True
 pSurvivalPower.args.plot    = False
 pSurvivalPower.args.ngroup  = 2

@@ -9,7 +9,7 @@ params   = {{args.params}}
 ucsclinkTpl = {{args.ucsclink | quote}}
 
 motifs = {}
-with open({{in.tffile | quote}}) as f:
+with open({{i.tffile | quote}}) as f:
 	for line in f:
 		line = line.strip("\n")
 		if not line: continue
@@ -19,7 +19,7 @@ with open({{in.tffile | quote}}) as f:
 		else:
 			motifs[parts[0]] = parts[1]
 
-{% if args.tool | lambda x: x == 'meme' %}
+{% if args.tool == 'meme' %}
 
 cmds   = []
 
@@ -31,19 +31,19 @@ for mid in motifs.keys():
 	params['motif']     = mid
 
 	#if path.isdir(params['o']): rmtree(params['o'])
-	cmd = '{{args.meme}} %s {{args.tfmotifs | quote}} {{in.sfile | quote}}' % params2CmdArgs(params, dash='--', equal=' ')
+	cmd = '{{args.meme}} %s {{args.tfmotifs | quote}} {{i.sfile | quote}}' % params2CmdArgs(params, dash='--', equal=' ')
 
 	cmds.append(cmd)
 
 parallel(cmds, {{args.nthread}})
 
-with open({{out.outfile | quote}}, 'w') as fout:
+with open({{o.outfile | quote}}, 'w') as fout:
 	cont = ['#Chr', 'Start', 'End', 'Name', 'NormedScore', 'Strand', 'Motif', 'Sequence', 'StartOnSeq', 'StopOnSeq', 'Score', 'PValue', 'QValue', 'MatchedSeq', 'UCSCLink']
 	fout.write('\t'.join(cont) + '\n')
 	minscore = 9999
 	maxscore = -1
 	for mid in motifs.keys():
-		with open(path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
+		with open(path.join({{o.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
 			for line in f:
 				line   = line.strip()
 				if not line or line.startswith('#'): continue
@@ -53,7 +53,7 @@ with open({{out.outfile | quote}}, 'w') as fout:
 				maxscore = max(maxscore, score)
 
 	for mid in motifs.keys():
-		with open(path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
+		with open(path.join({{o.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
 			for line in f:
 				line   = line.strip()
 				if not line or line.startswith('#'): continue

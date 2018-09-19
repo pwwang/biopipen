@@ -6,7 +6,7 @@ from subprocess import check_output
 {{txtFilter}}
 {{txtTransform}}
 
-url = {{args.urls | json}}["{{in.in}}"]
+url = {{args.urls | json}}["{{i.in}}"]
 tmpdir = "{{job.outdir}}/tmp"
 if not os.path.exists(tmpdir):
 	os.makedirs(tmpdir)
@@ -29,10 +29,10 @@ elif 'Zip' in output:
 	zipref.close()
 	downfile = glob.glob(os.path.join(zipdir, '*'))[0]
 
-outfile = "{{out.outfile}}"[:-3] if {{args.gz | lambda x: bool(x)}} else "{{out.outfile}}"
+outfile = "{{o.outfile}}"[:-3] if {{args.gz | lambda x: bool(x)}} else "{{o.outfile}}"
 txtFilter(downfile, outfile + '.filtered', {{args.cols | lambda x: [] if not x else __import__('json').dumps(x) if isinstance(x, list) else '"'+ x +'"'}}, {{args.rowfilter | lambda x: 'False' if not x else x}}, {{args.header}}, {{args.skip}}, {{args.delimit | quote}})
 
-{% if in.in | lambda x: x == 'KEGG_2016_gmt' %}
+{% if i['in'] == 'KEGG_2016_gmt' %}
 def transformer(parts):
 	return [ p.replace('/', '-') if i == 0 else p[:-4] if p.endswith(',1.0') else p for i,p in enumerate(parts) ]
 
@@ -47,7 +47,7 @@ txtTransform(outfile + '.filtered', outfile, transform = {{args.transform}}, hea
 os.rename(outfile + '.filtered', outfile)
 {% endif %}
 
-if {{args.gz | lambda x: bool(x)}}:
+if {{args.gz | bool}}:
 	runcmd ('gz "%s"' % outfile)
 
 #shutil.rmtree(tmpdir)

@@ -8,9 +8,9 @@ from bioprocs.utils import runcmd, cmdargs, reference, logger
 from bioprocs.utils.poll import Poll
 
 # variables
-infile1  = {{in.fq1 | quote}}
-infile2  = {{in.fq2 | quote}}
-outfile  = {{out.outfile | quote}}
+infile1  = {{i.fq1 | quote}}
+infile2  = {{i.fq2 | quote}}
+outfile  = {{o.outfile | quote}}
 outfmt   = {{args.outfmt | quote}}
 outdir   = {{job.outdir | quote}}
 ref      = {{args.ref | quote}}
@@ -37,10 +37,10 @@ reference.check(ref)
 # detemine default read group
 rg = {key.upper():val for key, val in rg.items()}
 if not rg['ID']:
-	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', {{out.outfile | fn | quote}})
-	rg['ID'] = g.group(1) if g else "{{out.outfile | fn}}.L{{job.index}}"
+	g = re.search (r'[^a-zA-Z0-9]+(L\\d+)[^a-zA-Z0-9]+', {{o.outfile | fn | quote}})
+	rg['ID'] = g.group(1) if g else "{{o.outfile | fn}}.L{{job.index}}"
 if not rg['SM']:
-	rg['SM'] = {{out.outfile | fn | quote}}
+	rg['SM'] = {{o.outfile | fn | quote}}
 
 def sam2bam(samfile, bamfile):
 	logger.info('Converting sam to bam: ')
@@ -59,7 +59,8 @@ def checkAndBuildIndex(indexes, buildcmd, buildcmd2):
 	return ref2 if path.exists(ref2) else ref
 
 ############ bowtie2
-{% if args.tool | lambda x: x == 'bowtie2' %}
+{% case args.tool %}
+{% when 'bowtie2' %}
 # check reference index files
 indexes = [
 	"%s.1.bt2" % ref,
@@ -97,7 +98,7 @@ runcmd (cmd)
 if outfmt == 'bam':	sam2bam(params['S'], outfile)
 
 ############ bwa
-{% elif args.tool | lambda x: x == 'bwa' %}
+{% when 'bwa' %}
 indexes = [
 	"%s.bwt" % ref,
 	"%s.amb" % ref,
@@ -126,7 +127,7 @@ logger.info('Do mapping ...')
 runcmd (cmd)
 if outfmt == 'bam':	sam2bam(outfile2, outfile)
 
-{% elif args.tool | lambda x: x == 'ngm' %}
+{% when 'ngm' %}
 indexes = [
 	"%s-enc.2.ngm" % ref,
 	"%s-ht-13-2.3.ngm" % ref
@@ -149,7 +150,7 @@ logger.info('Do mapping ...')
 runcmd (cmd)
 
 ############ star
-{% elif args.tool | lambda x: x=='star' %}
+{% when 'star' %}
 indexes = [path.join(path.splitext(ref)[0] + '.star', x) for x in [
 	"chrLength.txt",
 	"chrNameLength.txt",
@@ -199,4 +200,4 @@ runcmd (cmd)
 
 outfile2 = "{outdir}/Aligned.out.{outfmt}".format(outdir = outdir, outfmt = outfmt)
 if path.exists(outfile2): move(outfile2, outfile)
-{% endif %}
+{% endcase %}

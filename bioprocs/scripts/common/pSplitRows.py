@@ -1,7 +1,7 @@
 from os import path
 
-infile = {{in.infile | quote}}
-outdir = {{out.outdir | quote}}
+infile = {{i.infile | quote}}
+outdir = {{o.outdir | quote}}
 n      = {{args.n}}
 header = {{args.cnames}}
 nskip  = {{args.skip}}
@@ -26,7 +26,7 @@ with open(infile) as f:
 	for _ in range(nskip): f.readline()
 	if header: f.readline()
 	for i in range(n):
-		subfile = path.join(outdir, "{{in.infile | fn}}-%s{{in.infile | ext}}" % (i+1))
+		subfile = path.join(outdir, "{{i.infile | fn}}-%s{{i.infile | ext}}" % (i+1))
 		with open(subfile, 'w') as fout:
 			if header: fout.write(headerow)
 			for _ in range(nrows[i]):

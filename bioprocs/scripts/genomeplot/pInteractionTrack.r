@@ -1,14 +1,14 @@
 #library(Gviz)
 #library(GenomicInteractions)
 
-region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
+region = unlist(strsplit({{i.region | quote}}, ':', fixed = T))
 chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
 start  = as.numeric(region[1])
 end    = as.numeric(region[2])
 
-infile = {{in.infile | quote}}
-intype = {% if args.intype | lambda x: x == 'auto' %}{{in.infile | ext | [1:] | quote}}{% else %}{{args.intype | quote}}{% endif %}
+infile = {{i.infile | quote}}
+intype = {% if args.intype == 'auto' %}{{i.infile | ext | [1:] | quote}}{% else %}{{args.intype | quote}}{% endif %}
 
 if (intype == 'bedpe') {
 	# check bedpe format
@@ -38,7 +38,7 @@ if (intype == 'bedpe') {
 	}
 	rm(lines)
 	#infile = textConnection(lines2)
-	infile = "{{job.outdir}}/{{in.infile | fn}}.bedpe"
+	infile = "{{job.outdir}}/{{i.infile | fn}}.bedpe"
 	writeLines(lines2, infile)
 	rm(lines2)
 } else if (intype == 'bedx') {
@@ -68,7 +68,7 @@ if (intype == 'bedpe') {
 		lines2  = c(lines2, paste0(paste(c(parts[1:3], parts[chr2index], parts[start2index], parts[end2index], name, max(as.character(parts[5]), 1), parts[6], strand2), collapse = '\t'), '\n'))
 	}
 	rm(lines)
-	infile = "{{job.outdir}}/{{in.infile | fn}}.bedpe"
+	infile = "{{job.outdir}}/{{i.infile | fn}}.bedpe"
 	writeLines(lines2, infile)
 	rm(lines2)
 	intype = 'bedpe'
@@ -79,14 +79,14 @@ ret$trackType = 'InteractionTrack'
 ret$interactionParams = list(
 	fn   = infile,
 	type = intype,
-	experiment_name = {{in.infile | fn | quote}},
-	description = "Interaction data for {{in.infile | fn}}"
+	experiment_name = {{i.infile | fn | quote}},
+	description = "Interaction data for {{i.infile | fn}}"
 )
 ret$trackParams = list(
 	x          = '',
 	chromosome = chrom,
-	name       = {{in.name | quote}}
+	name       = {{i.name | quote}}
 )
 ret$trackParams = c(ret$trackParams, {{args.params | Rlist}})
 
-saveRDS (ret, {{out.outfile | quote}})
+saveRDS (ret, {{o.outfile | quote}})

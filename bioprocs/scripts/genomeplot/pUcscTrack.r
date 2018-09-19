@@ -1,5 +1,5 @@
 #library (Gviz)
-region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
+region = unlist(strsplit({{i.region | quote}}, ':', fixed = T))
 chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
 start  = as.numeric(region[1])
@@ -9,9 +9,9 @@ params = list(
 	chromosome = chrom,
 	from       = start,
 	to         = end,
-	name       = {{in.name | quote}},
-	trackType  = {{in.trackType | quote}},
-	track      = {{in.track | quote}}
+	name       = {{i.name | quote}},
+	trackType  = {{i.trackType | quote}},
+	track      = {{i.track | quote}}
 )
 params = c(params, {{args.params | Rlist}})
 
@@ -19,4 +19,4 @@ ret = list()
 ret$trackType = 'UcscTrack'
 ret$trackParams = params
 
-saveRDS (ret, {{out.outfile | quote}})
+saveRDS (ret, {{o.outfile | quote}})

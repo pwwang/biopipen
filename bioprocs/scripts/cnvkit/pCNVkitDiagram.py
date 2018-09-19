@@ -2,9 +2,9 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-cnrfile  = {{in.cnrfile | quote}}
-cnsfile  = {{in.cnsfile | quote}}
-outfile  = {{out.outfile | quote}}
+cnrfile  = {{i.cnrfile | quote}}
+cnsfile  = {{i.cnsfile | quote}}
+outfile  = {{o.outfile | quote}}
 params   = {{args.params}}
 nthread  = {{args.nthread | repr}}
 

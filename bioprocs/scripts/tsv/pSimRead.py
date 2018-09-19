@@ -3,10 +3,10 @@ from pyppl import Box
 from bioprocs.utils import regionOverlap
 from bioprocs.utils.tsvio import SimRead, TsvWriter
 
-infiles = {{in.infiles}}
+infiles = {{i.infiles}}
 inopts  = {{args.inopts}}
 usemeta = {{args.usemeta}} # int only
-outfile = {{out.outfile | quote}}
+outfile = {{o.outfile | quote}}
 
 outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = False, ftype = '', cnames = [])
 outopts.update({{args.outopts}})

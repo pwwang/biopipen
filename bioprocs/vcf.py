@@ -41,7 +41,7 @@ from . import params
 """
 pVcfFilter              = Proc(desc = 'Filter records in vcf file.')
 pVcfFilter.input        = "infile:file"
-pVcfFilter.output       = "outfile:file:{{in.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcfFilter.output       = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
 pVcfFilter.args.fname   = 'pVcfFilter'
 pVcfFilter.args.filters = None
 pVcfFilter.args.gz      = False
@@ -67,7 +67,7 @@ pVcfFilter.script       = "file:scripts/vcf/pVcfFilter.py"
 """
 pVcf                = Proc(desc = 'Motify vcf file using pyvcf')
 pVcf.input          = "infile:file"
-pVcf.output         = "outfile:file:{{in.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcf.output         = "outfile:file:{{i.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
 pVcf.args.helper    = ''
 pVcf.args.readerops = 'lambda x: None'
 pVcf.args.recordops = 'lambda x, y = None: None'
@@ -107,8 +107,8 @@ pVcf.script         = "file:scripts/vcf/pVcf.py"
 pVcfAnno                      = Proc(desc = 'Annotate the variants in vcf file.')
 pVcfAnno.input                = "infile:file"
 pVcfAnno.output               = [
-	"outfile:file:{{in.infile | fn}}.{{args.tool}}/{{in.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}", 
-	"outdir:dir:{{in.infile | fn}}.{{args.tool}}"
+	"outfile:file:{{i.infile | fn}}.{{args.tool}}/{{i.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}", 
+	"outdir:dir:{{i.infile | fn}}.{{args.tool}}"
 ]
 pVcfAnno.args.tool            = 'snpeff'
 pVcfAnno.args.snpeff          = params.snpeff.value
@@ -158,7 +158,7 @@ pVcfAnno.script               = "file:scripts/vcf/pVcfAnno.py"
 """
 pVcfSplit                     = Proc(desc = "Split multi-sample Vcf to single-sample Vcf files.")
 pVcfSplit.input               = "infile:file, samples"
-pVcfSplit.output              = "outdir:dir:{{in.infile | fn}}-individuals"
+pVcfSplit.output              = "outdir:dir:{{i.infile | fn}}-individuals"
 pVcfSplit.args.tool           = 'vcftools'
 pVcfSplit.args.vcftools       = params.vcftools_subset.value
 pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
@@ -186,7 +186,7 @@ pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 """
 pVcfMerge                     = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
 pVcfMerge.input               = "infiles:files"
-pVcfMerge.output              = "outfile:file:{{in.infiles[0] | fn}}_etc.vcf"
+pVcfMerge.output              = "outfile:file:{{i.infiles[0] | fn}}_etc.vcf"
 
 pVcfMerge.args.tool           = 'vcftools'
 pVcfMerge.args.vcftools       = params.vcftools_merge.value
@@ -225,7 +225,7 @@ pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
 """
 pVcf2Maf                     = Proc(desc = 'Convert Vcf file to Maf file.')
 pVcf2Maf.input               = 'infile:file'
-pVcf2Maf.output              = 'outfile:file:{{in.infile | fn | fn}}.maf'
+pVcf2Maf.output              = 'outfile:file:{{i.infile | fn | fn}}.maf'
 pVcf2Maf.args.tool           = 'vcf2maf'
 pVcf2Maf.args.vcf2maf        = params.vcf2maf.value
 pVcf2Maf.args.vep            = params.vep.value
@@ -258,10 +258,10 @@ pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 """
 pVcfLiftover              = Proc(desc = 'Lift over vcf files.')
 pVcfLiftover.input        = 'infile:file'
-pVcfLiftover.output       = 'outfile:file:{{in.infile | fn}}.vcf, umfile:file:{{in.infile | fn}}.unmapped.vcf'
+pVcfLiftover.output       = 'outfile:file:{{i.infile | fn}}.vcf, umfile:file:{{i.infile | fn}}.unmapped.vcf'
 pVcfLiftover.args.tool    = 'picard'
 pVcfLiftover.args.picard  = params.picard.value
-pVcfLiftover.args.lochain = params.lochain.value
+pVcfLiftover.args.lochain = params.lochai.value
 pVcfLiftover.args.ref     = params.ref.value
 pVcfLiftover.args.mem     = params.mem8G.value
 pVcfLiftover.args.tmpdir  = params.tmpdir.value
@@ -279,7 +279,7 @@ pVcfLiftover.script       = "file:scripts/vcf/pVcfLiftover.py"
 """
 pVcfAddChr          = Proc(desc = 'Add `chr` to records of vcf files.')
 pVcfAddChr.input    = 'infile:file'
-pVcfAddChr.output   = 'outfile:file:{{in.infile | fn}}.vcf'
+pVcfAddChr.output   = 'outfile:file:{{i.infile | fn}}.vcf'
 pVcfAddChr.args.chr = 'chr'
 pVcfAddChr.lang     = params.python.value
 pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
@@ -294,7 +294,7 @@ pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
 """
 pVcfCleanup          = Proc(desc = 'Remove configs from vcf file according to the given reference.')
 pVcfCleanup.input    = 'infile:file'
-pVcfCleanup.output   = 'outfile:file:{{in.infile | fn}}.vcf'
+pVcfCleanup.output   = 'outfile:file:{{i.infile | fn}}.vcf'
 pVcfCleanup.args.ref = params.ref.value # required dict or fai file with it
 pVcfCleanup.lang     = params.python.value
 pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.vcf"
@@ -307,7 +307,7 @@ pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.vcf"
 """
 pVcf2GTMat             = Proc(desc = 'Convert Vcf file to genotype matrix')
 pVcf2GTMat.input       = 'infile:file'
-pVcf2GTMat.output      = 'outfile:file:{{in.infile | fn2}}.gtmat'
+pVcf2GTMat.output      = 'outfile:file:{{i.infile | fn2}}.gtmat'
 pVcf2GTMat.args.rnames = 'coord' # name
 pVcf2GTMat.args.na     = 'NA'
 pVcf2GTMat.lang        = params.python.value
@@ -329,7 +329,7 @@ pVcf2GTMat.script      = "file:scripts/vcf/pVcf2GTMat.py"
 """
 pVcfSort               = Proc(desc = 'Sort the vcf records')
 pVcfSort.input         = 'infile:file'
-pVcfSort.output        = 'outfile:file:{{in.infile | fn2}}.vcf'
+pVcfSort.output        = 'outfile:file:{{i.infile | fn2}}.vcf'
 pVcfSort.args.header   = True
 pVcfSort.args.by       = 'coord' # or name
 pVcfSort.args.tool     = 'sort' # or bedtools
@@ -359,7 +359,7 @@ pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
 """
 pVcfSubtract               = Proc(desc = 'Subtract one vcf file from another')
 pVcfSubtract.input         = 'infile1:file, infile2:file'
-pVcfSubtract.output        = 'outfile:file:{{in.infile1 | fn2}}.subtracted.vcf'
+pVcfSubtract.output        = 'outfile:file:{{i.infile1 | fn2}}.subtracted.vcf'
 pVcfSubtract.args.bychrom  = False
 pVcfSubtract.args.nthread  = 1
 pVcfSubtract.args.header   = True

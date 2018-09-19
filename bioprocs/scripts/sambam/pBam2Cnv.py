@@ -9,10 +9,10 @@ from bioprocs.utils import runcmd, cmdargs, log2pyppl, logger
 from bioprocs.utils.poll import Poll
 
 gz       = {{args.gz | lambda x: bool(x)}}
-infile   = {{in.infile | quote}}
-infn     = {{in.infile | fn | quote}}
-outfile  = {{out.outfile | quote}}
-outdir   = {{out.outdir | quote}}
+infile   = {{i.infile | quote}}
+infn     = {{i.infile | fn | quote}}
+outfile  = {{o.outfile | quote}}
+outdir   = {{o.outdir | quote}}
 workdir  = {{proc.workdir | quote}}
 nthread  = {{args.nthread | repr}}
 cnvnator = {{args.cnvnator | repr}}
@@ -38,7 +38,7 @@ if gz:	outfile = outfile[:-3]
 poll = Poll(workdir, {{proc.size}}, {{job.index}})
 
 ############## cnvkit
-{% if args.tool | lambda x: x=='cnvkit' %}
+{% if args.tool == 'cnvkit' %}
 
 #log2log('CNVkit: Initialize ...')
 
@@ -164,7 +164,7 @@ runcmd (cmd)
 
 poll.all(lambda x: not path.exists(x), callfile, lockfile = 'callfile.poll.lock')
 
-{% if job.index | lambda x: x == 0 %}
+{% if job.index == 0 %}
 if not isinstance(params.heatmap, list):
 	params.heatmap = [params.heatmap]
 for i, param in enumerate(params.heatmap):
@@ -204,7 +204,7 @@ else:
 	runcmd (cmd)
 
 ############## cnvnator
-{% elif args.tool | lambda x: x=='cnvnator' %}
+{% elif args.tool == 'cnvnator' %}
 rootfile = '{outdir}/{infn}.root'.format(outdir = outdir, infn = infn)
 callfile = '{outdir}/{infn}}.cnvnator'.format(outdir = outdir, infn = infn)
 binsize  = {{args.binsize | repr}}
@@ -228,7 +228,7 @@ cmd = 'cd {outdir}; {cnvnator2vcf} {callfile} > {outfile}'.format(outdir = repr(
 runcmd (cmd)
 
 ############## wandy
-{% elif args.tool | lambda x: x=='wandy' %}
+{% elif args.tool == 'wandy' %}
 # get Wandy tool.info
 from distutils.spawn import find_executable
 toolinfo   = path.join (path.dirname(find_executable(wandy)), "tool.info")

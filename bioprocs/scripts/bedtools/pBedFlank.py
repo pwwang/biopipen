@@ -3,7 +3,7 @@ from bioprocs.utils import runcmd, cmdargs
 
 params = Box()
 params['g'] = {{args.gsize | quote}}
-params['i'] = {{in.infile | quote}}
+params['i'] = {{i.infile | quote}}
 params['pct'] = False
 params.update({{args.params}})
 
@@ -15,8 +15,8 @@ left  = params['l'] if 'l' in params else params['b'] if 'b' in params else 0
 right = params['r'] if 'r' in params else params['b'] if 'b' in params else 0
 stdns = params['s'] if 's' in params else False # strandness
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
-reader = TsvReader({{in.infile | quote}}, ftype = 'bed')
-writer = TsvWriter({{out.outfile | quote}})
+reader = TsvReader({{i.infile | quote}}, ftype = 'bed')
+writer = TsvWriter({{o.outfile | quote}})
 writer.meta.update(reader.meta)
 for r in reader:
 	if not stdns or r.STRAND == '+':
@@ -32,6 +32,6 @@ for r in reader:
 		r.END   += right2
 	writer.write(r)
 {% else %}
-cmd = '{{args.bedtools}} flank %s > {{out.outfile | quote}}' % cmdargs(params, dash='-', equal=' ')
+cmd = '{{args.bedtools}} flank %s > {{o.outfile | quote}}' % cmdargs(params, dash='-', equal=' ')
 runcmd(cmd)
 {% endif %}

@@ -6,7 +6,8 @@ from bioprocs.utils import runcmd, mem2, cmdargs
 
 params = {{args.params}}
 try:
-	{% if args.tool | lambda x: x=='trimmomatic' %}
+{% case args.tool %}
+	{% when 'trimmomatic' %}
 	mem    = mem2 ({{args.mem | quote}}, "java")
 	minlen = str({{args.minlen}} * 2)
 	adfile = "{{job.outdir}}/adapters.fa"
@@ -18,7 +19,7 @@ try:
 	cmd    = '{{args.trimmomatic}} %s SE %s "{{in.fq}}" "{{out.outfq}}" ILLUMINACLIP:%s:2:30:10 LEADING:{{args.cut5}} TRAILING:{{args.cut3}} SLIDINGWINDOW:4:{{args.minq}} MINLEN:%s' % (mem, cmdargs(params, dash = '-', equal = ' '), adfile, minlen)
 	runcmd (cmd)
 
-	{% elif args.tool | lambda x: x=='cutadapt' %}
+	{% when 'cutadapt' %}
 	params['a'] = {{args.adapter | quote}}
 	params['u'] = "{{args.cut5}}"
 	params['u'] = "-{{args.cut3}}"
@@ -28,7 +29,7 @@ try:
 	cmd = '{{args.cutadapt}} %s "{{in.fq}}"' % cmdargs(params, dash = '-', equal = ' ')
 	runcmd (cmd)
 
-	{% elif args.tool | lambda x: x=='skewer' %}
+	{% when 'skewer' %}
 	params['m'] = 'any'
 	params['t'] = {{args.nthread}}
 	params['x'] = {{args.adapter | quote}}
@@ -46,7 +47,7 @@ try:
 
 	{% else %}
 	raise Exception ('Tool {{args.tool}} not supported')
-	{% endif %}
+{% endcase %}
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise

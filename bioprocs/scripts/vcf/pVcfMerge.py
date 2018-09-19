@@ -5,7 +5,7 @@ from glob import glob
 from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.parallel import Parallel
 
-invcfs  = {{in.infiles | repr}}
+invcfs  = {{i.infiles | repr}}
 nthread = int({{args.nthread | repr}})
 
 cmds     = []
@@ -28,17 +28,17 @@ else:
 	for cmd in cmds: runcmd(cmd)
 
 ########### vcftools
-{% if args.tool | lambda x: x == 'vcftools' %}
+{% if args.tool == 'vcftools' %}
 params = {}
 params['d'] = True
 params['t'] = True
-cmd = '{{args.vcftools}} %s %s > "{{out.outfile}}"' % (cmdargs(params, equal=' '), ' '.join(invcfs))
+cmd = '{{args.vcftools}} %s %s > "{{o.outfile}}"' % (cmdargs(params, equal=' '), ' '.join(invcfs))
 runcmd(cmd)
 
 ########### gatk
-{% elif args.tool | lambda x: x == 'gatk' %}
+{% elif args.tool == 'gatk' %}
 params = {}
-params['o'] = {{out.outfile | quote}}
+params['o'] = {{o.outfile | quote}}
 params['R'] = {{args.ref | quote}}
 for i, invcf in enumerate(invcfs):
 	key = 'variant' + ' '*i

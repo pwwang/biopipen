@@ -27,7 +27,7 @@ from . import params
 """
 pBedSort                     = Proc(desc = 'Sort bed files.')
 pBedSort.input               = "infile:file"
-pBedSort.output              = "outfile:file:{{in.infile | bn}}"
+pBedSort.output              = "outfile:file:{{i.infile | bn}}"
 pBedSort.args.tool           = 'sort'
 pBedSort.args.bedtools       = params.bedtools.value
 pBedSort.args.bedops         = params.bedops_sort.value
@@ -57,9 +57,9 @@ pBedSort.script              = "file:scripts/bed/pBedSort.py"
 """
 pBedLiftover               = Proc(desc = 'Lift over bed files.')
 pBedLiftover.input         = 'infile:file'
-pBedLiftover.output        = 'outfile:file:{{in.infile | bn}}, umfile:file:{{in.infile | fn}}.unmapped{{in.infile | ext}}'
+pBedLiftover.output        = 'outfile:file:{{i.infile | bn}}, umfile:file:{{i.infile | fn}}.unmapped{{i.infile | ext}}'
 pBedLiftover.args.liftover = params.liftover.value
-pBedLiftover.args.lochain  = params.lochain.value
+pBedLiftover.args.lochain  = params.lochai.value
 pBedLiftover.args.params   = Box()
 pBedLiftover.lang          = params.python.value
 pBedLiftover.script        = "file:scripts/bed/pBedLiftover.py"
@@ -78,7 +78,7 @@ pBedLiftover.script        = "file:scripts/bed/pBedLiftover.py"
 """
 pGff2Bed                = Proc(desc = 'Convert GTF/GFF file to BED file')
 pGff2Bed.input          = 'infile:file'
-pGff2Bed.output         = 'outfile:file:{{in.infile | fn}}.bed'
+pGff2Bed.output         = 'outfile:file:{{i.infile | fn}}.bed'
 pGff2Bed.args.attr2name = None
 pGff2Bed.args.keepinfo  = True
 pGff2Bed.lang           = params.python.value

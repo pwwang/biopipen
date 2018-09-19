@@ -2,12 +2,12 @@ from sys import stderr
 from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
-fq   = {{in.fq | quote}}
+fq   = {{i.fq | quote}}
 params = {{args.params}}
 try:
-	{% if args.tool | lambda x: x == 'fastqc' %}
-	params['o'] = {{out.outdir | quote}}
-	cmd = '{{args.fastqc}} %s "{{in.fq}}"' % cmdargs(params)
+	{% if args.tool == 'fastqc' %}
+	params['o'] = {{o.outdir | quote}}
+	cmd = '{{args.fastqc}} %s "{{i.fq}}"' % cmdargs(params)
 	runcmd(cmd)
 
 	{% else %}

@@ -31,7 +31,7 @@ from . import params, rimport
 """
 pCELDir2Matrix                  = Proc(desc = 'Merge expression files to a matrix.')
 pCELDir2Matrix.input            = "indir:file, sifile:file"
-pCELDir2Matrix.output           = "outfile:file:{{in.indir, args.pattern | dirpat2name}}.expr.txt"
+pCELDir2Matrix.output           = "outfile:file:{{i.indir, args.pattern | dirpat2name}}.expr.txt"
 pCELDir2Matrix.lang             = params.Rscript.value
 pCELDir2Matrix.args.fn2sample   = 'function(fn) unlist(strsplit(fn, ".", fixed = T))[1]'
 pCELDir2Matrix.args.pattern     = '*'
@@ -82,8 +82,8 @@ pCELDir2Matrix.script           = "file:scripts/marray/pCELDir2Matrix.r"
 pMArrayDEG        = Proc(desc = 'Detect DEGs from microarray data.')
 pMArrayDEG.input  = "efile:file, gfile:file"
 pMArrayDEG.output = [
-	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt",
-	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}-DEGs"
+	"outfile:file:{{i.efile | fn2}}-{{i.gfile | fn2}}-DEGs/{{i.efile | fn2}}-{{i.gfile | fn2}}.degs.txt",
+	"outdir:dir:{{i.efile | fn2}}-{{i.gfile | fn2}}-DEGs"
 ]
 pMArrayDEG.args.tool     = 'limma'
 pMArrayDEG.args.annofile = ''

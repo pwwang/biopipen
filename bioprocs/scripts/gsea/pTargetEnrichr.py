@@ -16,13 +16,13 @@ from bioprocs.utils import alwaysList, logger
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
-infile   = {{in.infile | quote}}
+infile   = {{i.infile | quote}}
 inopts   = {{args.inopts}}
 genecol  = {{args.genecol | quote}}
 cachedir = {{args.cachedir | quote}}
 
 {% if args.norm %}
-symfile = '{{out.outdir}}/{{in.infile | bn}}.symbol'
+symfile = '{{o.outdir}}/{{i.infile | bn}}.symbol'
 
 genenorm(
 	infile   = infile,
@@ -74,7 +74,7 @@ if not genestats:
 ## upload
 ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
 genes_str   = "\n".join(genestats.keys())
-description = '{{in.infile | fn}}'
+description = '{{i.infile | fn}}'
 payload = {
     'list': (None, genes_str),
     'description': (None, description)
@@ -107,7 +107,7 @@ for db in dbs:
 	data    = json.loads(response.text)
 	data    = data[db]
 	d2plot  = []
-	outfile = "{{out.outdir}}/{{in.infile | fn}}-%s.txt" % db
+	outfile = "{{o.outdir}}/{{i.infile | fn}}-%s.txt" % db
 	writer  = TsvWriter(outfile)
 	writer.meta.add(*head)
 	writer.writeHead()
@@ -219,13 +219,13 @@ for db in dbs:
 		dotstr.append('}')
 
 		from graphviz import Source
-		dotfile = '{{out.outdir}}/%s.net.dot' % db
+		dotfile = '{{o.outdir}}/%s.net.dot' % db
 		src = Source('\n'.join(dotstr), filename = dotfile, format = 'svg', engine = 'fdp')
 		src.render()
 
 	if {{args.enrplot}}:
 		#d2plot   = sorted (d2plot, cmp=lambda x,y: 0 if x[2] == y[2] else (-1 if x[2] < y[2] else 1))
-		plotfile = "{{out.outdir}}/{{in.infile | fn}}-%s.png" % db
+		plotfile = "{{o.outdir}}/{{i.infile | fn}}-%s.png" % db
 		gs = gridspec.GridSpec(1, 2, width_ratios=[3, 7])
 		rownames = [r[1] if len(r[1])<=40 else r[1][:40] + ' ...' for r in d2plot]
 		rnidx    = range (len (rownames))

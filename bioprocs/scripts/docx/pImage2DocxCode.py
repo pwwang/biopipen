@@ -1,7 +1,7 @@
 bcode   = {{args.bcode | repr}}
 acode   = {{args.acode | repr}}
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 scale   = {{args.scale | dict}}
 
 with open(outfile, 'w') as f:

@@ -15,7 +15,7 @@ from . import params
 """
 pGMT2Mat        = Proc(desc = 'Convert a GMT file to a matrix.')
 pGMT2Mat.input  = "infile:file"
-pGMT2Mat.output = "outfile:file:{{in.infile | fn}}.gmat"
+pGMT2Mat.output = "outfile:file:{{i.infile | fn}}.gmat"
 pGMT2Mat.lang   = params.python.value
 pGMT2Mat.script = "file:scripts/gsea/pGMT2Mat.py"
 
@@ -32,7 +32,7 @@ pGMT2Mat.script = "file:scripts/gsea/pGMT2Mat.py"
 """
 pExprMat2GCT        = Proc(desc = 'Convert expression matrix to GCT file.')
 pExprMat2GCT.input  = 'expfile:file'
-pExprMat2GCT.output = 'outfile:file:{{ in.expfile | fn }}.gct'
+pExprMat2GCT.output = 'outfile:file:{{ i.expfile | fn }}.gct'
 pExprMat2GCT.lang   = params.python.value
 pExprMat2GCT.script = "file:scripts/gsea/pExprMat2GCT.py"
 
@@ -52,7 +52,7 @@ pExprMat2GCT.script = "file:scripts/gsea/pExprMat2GCT.py"
 """
 pSampleinfo2CLS                    = Proc(desc = 'Convert sample infomation to cls file.')
 pSampleinfo2CLS.input              = 'sifile:file'
-pSampleinfo2CLS.output             = 'outfile:file:{{ in.sifile | fn }}.cls'
+pSampleinfo2CLS.output             = 'outfile:file:{{ i.sifile | fn }}.cls'
 #pSampleinfo2CLS.envs.txtSampleinfo = txt.sampleinfo.py
 pSampleinfo2CLS.lang               = params.python.value
 pSampleinfo2CLS.script             = "file:scripts/gsea/pSampleinfo2CLS.py"
@@ -78,7 +78,7 @@ pSampleinfo2CLS.script             = "file:scripts/gsea/pSampleinfo2CLS.py"
 """
 pSSGSEA = Proc (desc = 'Do single-sample GSEA.')
 pSSGSEA.input          = "gctfile:file, gmtfile:file"
-pSSGSEA.output         = "outdir:file:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-ssGSEA"
+pSSGSEA.output         = "outdir:file:{{i.gctfile | fn}}-{{i.gmtfile | fn}}-ssGSEA"
 pSSGSEA.args.weightexp = 1
 pSSGSEA.args.nperm     = 1000
 pSSGSEA.args.seed      = -1
@@ -105,7 +105,7 @@ pSSGSEA.script         = "file:scripts/gsea/pSSGSEA.r"
 """
 pGSEA                = Proc (desc = 'Do GSEA.')
 pGSEA.input          = "gctfile:file, clsfile:file, gmtfile:file"
-pGSEA.output         = "outdir:dir:{{in.gctfile | fn}}-{{in.gmtfile | fn}}-GSEA"
+pGSEA.output         = "outdir:dir:{{i.gctfile | fn}}-{{i.gmtfile | fn}}-GSEA"
 pGSEA.args.weightexp = 1
 pGSEA.args.nperm     = 1000
 pGSEA.args.nthread   = 1
@@ -144,7 +144,7 @@ pGSEA.script         = "file:scripts/gsea/pGSEA.r"
 """
 pEnrichr                = Proc()
 pEnrichr.input          = "infile:file"
-pEnrichr.output         = "outdir:dir:{{in.infile | fn}}.enrichr"
+pEnrichr.output         = "outdir:dir:{{i.infile | fn}}.enrichr"
 pEnrichr.lang           = params.python.value
 pEnrichr.args.inopts    = Box(delimit = '\t', skip = 0, comment = '#')
 pEnrichr.args.top       = 10
@@ -195,7 +195,7 @@ pEnrichr.script         = "file:scripts/gsea/pEnrichr.py"
 """
 pTargetEnrichr               = Proc(desc = 'Do gene set enrichment analysis for target genes.')
 pTargetEnrichr.input         = "infile:file"
-pTargetEnrichr.output        = "outdir:dir:{{in.infile | fn}}.tenrichr"
+pTargetEnrichr.output        = "outdir:dir:{{i.infile | fn}}.tenrichr"
 pTargetEnrichr.lang          = params.python.value
 pTargetEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
 pTargetEnrichr.args.genecol  = "COL2"

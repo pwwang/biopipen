@@ -1,8 +1,8 @@
 library("methods")
 library("metap")
 
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 
 inopts.cnames = {{args.inopts.cnames | R}}
 inopts.pcol   = {{args.inopts.pcol | R}}

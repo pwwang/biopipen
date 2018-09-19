@@ -1,9 +1,9 @@
 
 {{rimport}}('__init__.r', 'plot.r')
 
-infile  = {{in.infile | quote}}
-prefix  = {{in.infile | fn2}}
-outdir  = {{out.outdir | quote}}
+infile  = {{i.infile | quote}}
+prefix  = {{i.infile | fn2}}
+outdir  = {{o.outdir | quote}}
 transfm = {{args.transfm | lambda x: x or 'NULL'}}
 plots   = {{args.plot | R}}
 ggs     = {{args.ggs | R}}

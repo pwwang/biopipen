@@ -1,4 +1,4 @@
-string = {{in.in | quote}}
+string = {{i.in | quote}}
 
 {% for b in args.breakOn %}
 string = string.replace({{b | quote}}, '\n')
@@ -8,5 +8,5 @@ string = string.replace({{b | quote}}, '\n')
 string = '\n'.join([x.strip() for x in string.splitlines()]) + '\n'
 {% endif %}
 
-with open('{{out.outfile}}', 'w') as fout:
+with open('{{o.outfile}}', 'w') as fout:
 	fout.write(string)

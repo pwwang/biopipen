@@ -7,11 +7,11 @@ from bioprocs.utils import runcmd
 
 filters = {{args.filters}}
 gz      = {{args.gz | repr}}
-outfile = {{out.outfile | quote}}
+outfile = {{o.outfile | quote}}
 if gz:
 	outfile = outfile[:-3]
 
-reader = vcf.Reader(filename='{{in.infile}}')
+reader = vcf.Reader(filename='{{i.infile}}')
 writer = vcf.Writer(open(outfile, 'w'), reader)
 for record in reader:
 	if filters(record, record.samples):

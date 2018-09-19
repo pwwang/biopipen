@@ -22,7 +22,7 @@ from . import params
 """
 pPartners                = Proc(desc = 'Find the interaction partners of the regions in input file.')
 pPartners.input          = "regfile:file, intfile:file"
-pPartners.output         = "outfile:file:{{in.regfile | fn2}}-{{in.intfile | fn2}}.partners.bedx"
+pPartners.output         = "outfile:file:{{i.regfile | fn2}}-{{i.intfile | fn2}}.partners.bedx"
 pPartners.args.regopts   = Box(ftype = "auto") # bed,   bedx
 pPartners.args.intopts   = Box(ftype = "auto") # bedpe, chiapet.tool, hiclib, bed12
 pPartners.lang           = params.python.value

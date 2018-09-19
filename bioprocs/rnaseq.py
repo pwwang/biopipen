@@ -35,8 +35,8 @@ from .utils import dirpat2name
 pExprDir2Matrix        = Proc(desc = 'Merge expression files to a matrix.')
 pExprDir2Matrix.input  = "indir:file"
 pExprDir2Matrix.output = [
-	"outfile:file:{{in.indir, args.pattern | dirpat2name}}.dir/{{in.indir, args.pattern | dirpat2name}}.expr.txt",
-	"outdir:dir:{{in.indir, args.pattern | dirpat2name}}.dir"
+	"outfile:file:{{i.indir, args.pattern | dirpat2name}}.dir/{{i.indir, args.pattern | dirpat2name}}.expr.txt",
+	"outdir:dir:{{i.indir, args.pattern | dirpat2name}}.dir"
 ]
 pExprDir2Matrix.lang           = params.Rscript.value
 pExprDir2Matrix.args.pattern   = '*'
@@ -72,7 +72,7 @@ pExprDir2Matrix.script       = "file:scripts/rnaseq/pExprDir2Matrix.r"
 """
 pExprPlot              = Proc(desc = 'Plot the expression values out.')
 pExprPlot.input        = 'infile:file'
-pExprPlot.output       = 'outdir:dir:{{in.infile | fn2}}.plots'
+pExprPlot.output       = 'outdir:dir:{{i.infile | fn2}}.plots'
 pExprPlot.args.transfm = None
 pExprPlot.args.plot    = Box(
 	boxplot = True,
@@ -113,7 +113,7 @@ pExprPlot.script       = "file:scripts/rnaseq/pExprPlot.r"
 """
 pBatchEffect              = Proc(desc = 'Try to remove batch effect of expression data.')
 pBatchEffect.input        = "expr:file, batch:file"
-pBatchEffect.output       = "outfile:file:{{in.expr | fn2}}/{{in.expr | fn2}}.expr.txt, outdir:dir:{{in.expr | fn2}}"
+pBatchEffect.output       = "outfile:file:{{i.expr | fn2}}/{{i.expr | fn2}}.expr.txt, outdir:dir:{{i.expr | fn2}}"
 pBatchEffect.args.tool    = 'combat'
 pBatchEffect.args.plot    = Box(boxplot = False, heatmap = False, histogram = False)
 pBatchEffect.args.hmrows  = 500
@@ -170,7 +170,7 @@ pBatchEffect.script = "file:scripts/rnaseq/pBatchEffect.r"
 """
 pUnitConversion              = Proc(desc = 'Convert raw counts to another unit.')
 pUnitConversion.input        = "infile:file"
-pUnitConversion.output       = "outfile:file:{{in.infile | fn2}}.{{args.outunit}}{{args.outform | lambda x: '_t' if x else ''}}.txt"
+pUnitConversion.output       = "outfile:file:{{i.infile | fn2}}.{{args.outunit}}{{args.outform | lambda x: '_t' if x else ''}}.txt"
 pUnitConversion.args.inunit  = 'count'
 pUnitConversion.args.outunit = 'tpm'
 pUnitConversion.args.meanfl  = 1
@@ -218,8 +218,8 @@ pUnitConversion.script       = "file:scripts/rnaseq/pUnitConversion.r"
 pRNASeqDEG        = Proc(desc = 'Detect DEGs by RNA-seq data.')
 pRNASeqDEG.input  = "efile:file, gfile:file"
 pRNASeqDEG.output = [
-	"outfile:file:{{in.efile | fn2}}-{{in.gfile | fn2}}.DEGs/{{in.efile | fn2}}-{{in.gfile | fn2}}.degs.txt",
-	"outdir:dir:{{in.efile | fn2}}-{{in.gfile | fn2}}.DEGs"
+	"outfile:file:{{i.efile | fn2}}-{{i.gfile | fn2}}.DEGs/{{i.efile | fn2}}-{{i.gfile | fn2}}.degs.txt",
+	"outdir:dir:{{i.efile | fn2}}-{{i.gfile | fn2}}.DEGs"
 ]
 pRNASeqDEG.args.tool   = 'edger' # deseq2
 pRNASeqDEG.args.filter = '1,2'
@@ -250,7 +250,7 @@ pRNASeqDEG.script       = "file:scripts/rnaseq/pRNASeqDEG.r"
 """
 pCoexp             = Proc(desc = "Get co-expression of gene pairs in the expression matrix.")
 pCoexp.input       = "infile:file"
-pCoexp.output      = "outfile:file:{{in.infile | fn}}.coexp, outpval:file:{{in.infile | fn}}.pval"
+pCoexp.output      = "outfile:file:{{i.infile | fn}}.coexp, outpval:file:{{i.infile | fn}}.pval"
 pCoexp.args.method = 'pearson'
 pCoexp.args.pval   = False
 pCoexp.lang        = params.Rscript.value

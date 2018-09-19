@@ -9,7 +9,7 @@ btparams = {}
 
 btparams['l']    = {{args.len}}
 btparams['n']    = 2*{{args.nperm}} # some regions do not have data
-btparams['seed'] = {{in.seed}}
+btparams['seed'] = {{i.seed}}
 btparams['g']    = {{args.gsize | quote}}
 
 randregfileUnsorted = path.join({{job.outdir | quote}}, 'randregions.bed.unsorted')
@@ -44,8 +44,8 @@ with open(randregfile) as f:
 bwparams = {}
 bwparams['skip-median'] = True
 
-outfileUnsorted   = "{{out.outfile}}.unsorted"
-outfileUnfiltered = "{{out.outfile}}.unfiltered"
+outfileUnsorted   = "{{o.outfile}}.unsorted"
+outfileUnfiltered = "{{o.outfile}}.unfiltered"
 for i, chrom in enumerate(chroms):
 	regfile = path.join(randregdir, chrom + '.bed')
 	bwfile  = glob(path.join({{args.consvdir | quote}}, chrom + '.*'))[0]

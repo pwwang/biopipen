@@ -1,10 +1,10 @@
 from pyppl import Box
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
-files   = {{in.infiles}}
+files   = {{i.infiles}}
 lenfs   = len(files)
 inopts  = {{args.inopts}}
-outfile = {{out.outfile | quote}}
+outfile = {{o.outfile | quote}}
 inopts_each = []
 maxopen = {{args.maxopen}}
 for i in range(lenfs):

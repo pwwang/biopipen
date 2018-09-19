@@ -2,8 +2,8 @@ from eutils import Client
 from bioprocs.utils.tsvio import TsvWriter, TsvRecord
 from time import sleep
 
-term     = {{in.term | repr}}
-outfile  = {{out.outfile | quote}}
+term     = {{i.term | repr}}
+outfile  = {{o.outfile | quote}}
 prog     = {{args.prog | quote}}
 apikey   = {{args.apikey | quote}} or None
 db       = {{args.db | quote}}

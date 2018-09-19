@@ -1,7 +1,7 @@
 colnames = []
 rownames = set()
 data     = {}
-with open('{{in.infile}}') as f:
+with open('{{i.infile}}') as f:
 	for line in f:
 		line  = line.strip()
 		if not line: continue
@@ -12,7 +12,7 @@ with open('{{in.infile}}') as f:
 		data[rname] = parts
 		rownames = rownames | set(parts)
 
-with open('{{out.outfile}}', 'w') as f:
+with open('{{o.outfile}}', 'w') as f:
 	f.write("\t" + "\t".join(colnames) + "\n")
 	for rname in rownames:
 		tmp = ['1' if rname in data[cname] else '0' for cname in colnames]

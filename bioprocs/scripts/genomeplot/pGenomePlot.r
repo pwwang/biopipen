@@ -2,14 +2,14 @@
 library (Gviz)
 
 tracks = NULL
-region = unlist(strsplit({{in.region | quote}}, ':', fixed = T))
+region = unlist(strsplit({{i.region | quote}}, ':', fixed = T))
 chrom  = region[1]
 region = unlist(strsplit(region[2], '-', fixed = T))
 start  = as.numeric(region[1])
 end    = as.numeric(region[2])
 
-trackFiles = {{in.trkfiles | R}}
-highlights = {{in.highlight | R}}
+trackFiles = {{i.trkfiles | R}}
+highlights = {{i.highlight | R}}
 genome     = {{args.genome | R}}
 ideoTrack  = {{args.ideoTrack | R}}
 axisTrack  = {{args.axisTrack | R}}
@@ -17,7 +17,7 @@ geneTrack  = {{args.geneTrack | R}}
 params     = {{args.params | R}}
 scheme     = {{args.scheme | R}}
 devpars    = {{args.devpars | R}}
-outfile    = {{out.outfile | R}}
+outfile    = {{o.outfile | R}}
 
 scheme.default = getScheme()
 scheme         = update.list(scheme.default, scheme, recursive = T)

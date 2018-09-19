@@ -26,7 +26,7 @@ from . import params, rimport
 """
 pMetaPval                   = Proc(desc = "Combine p-values.")
 pMetaPval.input             = "indir:dir"
-pMetaPval.output            = "outfile:file:{{in.indir | fn}}.metapval.txt"
+pMetaPval.output            = "outfile:file:{{i.indir | fn}}.metapval.txt"
 pMetaPval.args.pattern      = "*"
 pMetaPval.args.inopts       = Box(
 	cnames = True,
@@ -63,7 +63,7 @@ pMetaPval.script            = "file:scripts/stats/pMetaPval.r"
 """
 pMetaPval1 = Proc(desc = "Combine p-values in a single file by rows.")
 pMetaPval1.input             = "infile:file"
-pMetaPval1.output            = "outfile:file:{{in.infile | fn}}.metapval.txt"
+pMetaPval1.output            = "outfile:file:{{i.infile | fn}}.metapval.txt"
 pMetaPval1.args.inopts       = Box(
 	cnames = True,
 	pcol   = -1
@@ -117,8 +117,8 @@ pMetaPval1.script            = "file:scripts/stats/pMetaPval1.r"
 pSurvival        = Proc(desc = "Survival analysis.")
 pSurvival.input  = 'infile:file'
 pSurvival.output = [
-	'outfile:file:{{in.infile | fn2}}.dir/{{in.infile | fn2}}.survival.txt', 
-	'outdir:dir:{{in.infile | fn2}}.dir'
+	'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt', 
+	'outdir:dir:{{i.infile | fn2}}.dir'
 ]
 pSurvival.args.inunit    = 'days' # months, weeks, years
 pSurvival.args.outunit   = 'days'
@@ -176,7 +176,7 @@ pSurvival.script         = "file:scripts/stats/pSurvival.r"
 """
 pChiSquare = Proc(desc = "Do chi-square test.")
 pChiSquare.input = "infile:file"
-pChiSquare.output = "outfile:file:{{in.infile | fn2}}.chi2.txt, obsvfile:file:{{in.infile | fn2}}.obsv.txt, exptfile:file:{{in.infile | fn2}}.expt.txt"
+pChiSquare.output = "outfile:file:{{i.infile | fn2}}.chi2.txt, obsvfile:file:{{i.infile | fn2}}.obsv.txt, exptfile:file:{{i.infile | fn2}}.expt.txt"
 pChiSquare.args.intype = 'cont' # raw
 pChiSquare.args.ctcols = ''
 pChiSquare.lang = params.Rscript.value
@@ -219,7 +219,7 @@ pChiSquare.script = "file:scripts/stats/pChiSquare.r"
 """
 pFisherExact             = Proc(desc = "Do fisher exact test.")
 pFisherExact.input       = "infile:file"
-pFisherExact.output      = "outfile:file:{{in.infile | fn2}}.fexact.txt"
+pFisherExact.output      = "outfile:file:{{i.infile | fn2}}.fexact.txt"
 pFisherExact.args.intype = 'cont' # raw
 pFisherExact.args.ctcols = []
 pFisherExact.lang        = params.Rscript.value
@@ -265,7 +265,7 @@ pFisherExact.script      = "file:scripts/stats/pFisherExact.r"
 """
 pPWFisherExact              = Proc(desc = "Do pair-wise fisher exact test.")
 pPWFisherExact.input        = "infile:file"
-pPWFisherExact.output       = "outfile:file:{{in.infile | fn2}}.pwfexact.txt"
+pPWFisherExact.output       = "outfile:file:{{i.infile | fn2}}.pwfexact.txt"
 pPWFisherExact.args.rnames  = True
 pPWFisherExact.args.intype  = 'raw' # pairs
 pPWFisherExact.args.padj    = 'BH'
@@ -296,7 +296,7 @@ pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
 """
 pMediation = Proc(desc = "Do mediation analysis.")
 pMediation.input  = 'infile:file'
-pMediation.output = 'outfile:file:{{in.infile | fn2}}.mediation.txt'
+pMediation.output = 'outfile:file:{{i.infile | fn2}}.mediation.txt'
 pMediation.args.inopts = Box(
 	cnames   = True,
 	rnames   = True
@@ -332,7 +332,7 @@ pMediation.script = "file:scripts/stats/pMediation.r"
 """
 pHypergeom             = Proc(desc = "Do hypergeometric test.")
 pHypergeom.input       = 'infile:file'
-pHypergeom.output      = 'outfile:file:{{in.infile | fn2}}.hypergeom.txt'
+pHypergeom.output      = 'outfile:file:{{i.infile | fn2}}.hypergeom.txt'
 pHypergeom.args.intype = 'raw' # numbers
 pHypergeom.args.inopts = Box(
 	cnames = True,
@@ -370,7 +370,7 @@ pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
 """
 pCorr             = Proc(desc = "Calculate the Correlation Coefficient.")
 pCorr.input       = 'infile:file'
-pCorr.output      = 'outfile:file:{{in.infile | fn}}.{{args.method}}/{{in.infile | fn}}.{{args.method}}.txt, outdir:dir:{{in.infile | fn}}.{{args.method}}'
+pCorr.output      = 'outfile:file:{{i.infile | fn}}.{{args.method}}/{{i.infile | fn}}.{{args.method}}.txt, outdir:dir:{{i.infile | fn}}.{{args.method}}'
 pCorr.args.outfmt = 'pairs' # matrix
 pCorr.args.method = 'pearson' # spearman, kendall
 pCorr.args.byrow  = True # else by column

@@ -3,11 +3,11 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-infile   = {{in.infile | quote}}
-outfile  = {{out.outfile | quote}}
-antifile = {{out.antifile | quote}}
-target   = {{in.tgfile | quote}}
-atarget  = {{in.atgfile | quote}}
+infile   = {{i.infile | quote}}
+outfile  = {{o.outfile | quote}}
+antifile = {{o.antifile | quote}}
+target   = {{i.tgfile | quote}}
+atarget  = {{i.atgfile | quote}}
 nthread  = {{args.nthread | repr}}
 params   = {{args.params}}
 

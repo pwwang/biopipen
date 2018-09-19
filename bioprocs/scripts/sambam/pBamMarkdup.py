@@ -4,10 +4,10 @@ from sys import stdout, stderr
 from pyppl import Box
 from bioprocs.utils import runcmd, mem2, cmdargs
 
-infile    = {{ in.infile | quote }}
-outfile   = {{ out.outfile | quote }}
+infile    = {{ i.infile | quote }}
+outfile   = {{ o.outfile | quote }}
 tmpdir    = {{ args.tmpdir | quote }}
-tmpdir    = path.join (tmpdir, "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
+tmpdir    = path.join (tmpdir, "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
 doRmdup   = {{ args.rmdup }}
 
 if not path.exists (tmpdir):
@@ -15,8 +15,9 @@ if not path.exists (tmpdir):
 
 params = {{args.params}}
 try:
+{% case args.tool %}
 	########### biobambam
-	{% if args.tool | lambda x: x == 'biobambam'%}
+	{% when 'biobambam'%}
 	if doRmdup:
 		params['rmdup'] = 1
 		params['D']     = "/dev/null"
@@ -29,7 +30,7 @@ try:
 	runcmd (cmd)
 
 	########### sambamba
-	{% elif args.tool | lambda x: x == 'sambamba' %}
+	{% when 'sambamba' %}
 	if doRmdup:
 		params['r'] = True
 	params['t'] = {{args.nthread}}
@@ -39,12 +40,12 @@ try:
 	runcmd (cmd)
 
 	########### samtools
-	{% elif args.tool | lambda x: x == 'samtools' %}
+	{% when 'samtools' %}
 	cmd = '{{args.samtools}} rmdup "%s" "%s"' % (infile, outfile)
 	runcmd (cmd)
 
 	########### picard
-	{% elif args.tool | lambda x: x == 'picard' %}
+	{% when 'picard' %}
 	mem = mem2({{ args.mem | quote }}, 'java')
 
 	params['-Djava.io.tmpdir'] = tmpdir
@@ -60,15 +61,15 @@ try:
 	runcmd (cmd)
 
 	########### bamutil
-	{% elif args.tool | lambda x: x == 'bamutil' %}
-		if doRmdup:
-			params['rmDups'] = True
-		params['in']  = infile
-		params['out'] = outfile
-		cmd = '{{args.bamutil}} dedup %s' % cmdargs(params, equal = ' ')
-		runcmd (cmd)
+	{% when 'bamutil' %}
+	if doRmdup:
+		params['rmDups'] = True
+	params['in']  = infile
+	params['out'] = outfile
+	cmd = '{{args.bamutil}} dedup %s' % cmdargs(params, equal = ' ')
+	runcmd (cmd)
 
-	{% endif %}
+{% endcase %}
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise

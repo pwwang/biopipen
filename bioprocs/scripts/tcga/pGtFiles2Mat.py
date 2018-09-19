@@ -1,8 +1,8 @@
 from os import path
 from bioprocs.utils import logger
 
-infiles = {{in.infiles | repr}}
-outfile = {{out.outfile | quote}}
+infiles = {{i.infiles | repr}}
+outfile = {{o.outfile | quote}}
 rsmap   = {{args.rsmap | : None if not v1 else v1 | repr}}
 fn2sam  = {{args.fn2sam}}
 

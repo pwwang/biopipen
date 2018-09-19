@@ -4,10 +4,10 @@ from subprocess import check_output
 from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.parallel import Parallel
 
-allsamples = check_output([{{args.bcftools | quote}}, 'query', '-l', {{in.infile | quote}}]).splitlines()
+allsamples = check_output([{{args.bcftools | quote}}, 'query', '-l', {{i.infile | quote}}]).splitlines()
 allsamples = list(filter(None, [x.strip() for x in allsamples]))
 
-samples = {{in.samples | lambda x: list(filter(None, [x.strip() for x in x.split(',')]))}}
+samples = {{i.samples | lambda x: list(filter(None, [x.strip() for x in x.split(',')]))}}
 if not samples: samples = allsamples
 
 nonexists = [sample for sample in samples if sample not in allsamples]
@@ -17,18 +17,18 @@ if nonexists:
 
 cmds = []
 ########### vcftools
-{% if args.tool | lambda x: x == 'vcftools' %}
+{% if args.tool == 'vcftools' %}
 for sample in samples:
 	params = {}
 	params['a'] = True
 	params['c'] = sample
 	params['e'] = True
 	params.update({{args.params}})
-	cmd = '{{args.vcftools}} %s "{{in.infile}}" > "{{out.outdir}}/{{in.infile | fn}}-%s.vcf"' % (cmdargs(params), sample)
+	cmd = '{{args.vcftools}} %s "{{i.infile}}" > "{{o.outdir}}/{{i.infile | fn}}-%s.vcf"' % (cmdargs(params), sample)
 	cmds.append(cmd)
 
 ########### awk
-{% elif args.tool | lambda x: x == 'awk' %}
+{% elif args.tool == 'awk' %}
 # write the awk script
 awkfile = '{{job.outdir}}/vcfsample.awk'
 awkfh   = open(awkfile, 'w')
@@ -57,12 +57,12 @@ for i, sample in enumerate(samples):
 	cmds.append(cmd)
 
 ########### gatk
-{% elif args.tool | lambda x: x == 'gatk' %}
+{% elif args.tool == 'gatk' %}
 for sample in samples:
 	params                       = {}
 	params['R']                  = {{args.ref | quote}}
-	params['V']                  = {{in.infile | quote}}
-	params['o']                  = "{{out.outdir}}/{{in.infile | fn}}-%s.vcf" % sample
+	params['V']                  = {{i.infile | quote}}
+	params['o']                  = "{{o.outdir}}/{{i.infile | fn}}-%s.vcf" % sample
 	params['sample_name']        = sample
 	params['excludeFiltered']    = True
 	params['excludeNonVariants'] = True
@@ -72,7 +72,7 @@ for sample in samples:
 
 {% endif %}
 
-{% if args.nthread | lambda x: x == 1 %}
+{% if args.nthread == 1 %}
 for cmd in cmds: runcmd(cmd)
 {% else %}
 p = Parallel({{args.nthread}})

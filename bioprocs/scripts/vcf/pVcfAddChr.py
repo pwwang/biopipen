@@ -1,6 +1,6 @@
 
-infile  = {{in.infile | repr}}
-outfile = {{out.outfile | repr}}
+infile  = {{i.infile | repr}}
+outfile = {{o.outfile | repr}}
 
 chrom = {{args.chr | quote}}
 

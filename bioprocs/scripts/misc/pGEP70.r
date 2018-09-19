@@ -1,17 +1,19 @@
 {{rimport}}('__init__.r', 'plot.r')
+
+{% python from os import path %}
 library(methods)
 library(survival)
 library(survminer)
 
 inunit   = {{args.inunit | R}}
 outunit  = {{args.outunit | R}}
-exprfile = {{in.exprfile | R}}
-survfile = {{in.survfile | R}}
-gene     = {{in.gene | quote}}
+exprfile = {{i.exprfile | R}}
+survfile = {{i.survfile | R}}
+gene     = {{i.gene | quote}}
 gep70    = {{args.gep70 | R}}
 devpars  = {{args.devpars | R}}
 params   = {{args.params | R}}
-prefix   = {{in.survfile, in.gene, out.outdir | : __import__('os').path.join(v3, '{}.GEP70-{}.'.format(fn2(v1), v2) if v2 else '{}.GEP70.'.format(fn2(v1))) | quote }}
+prefix   = {{fn2(i.survfile), i.gene, o.outdir | lambda v1, v2, v3, path = path: path.join(v3, '{}.GEP70-{}.'.format(v1, v2) if v2 else '{}.GEP70.'.format(v1)) | quote }}
 
 mainggs       = {{args.ggs | R}}
 tableggs      = mainggs$table
@@ -19,25 +21,26 @@ mainggs$table = NULL
 
 # read raw survival data
 fct = 1
-{% if args.inunit, args.outunit | : v1 == 'days' and v2 == 'weeks' %}
-fct = 1 / 7
-{% elif args.inunit, args.outunit | : v1 == 'days' and v2 == 'months' %}
-fct = 1 / 30
-{% elif args.inunit, args.outunit | : v1 == 'days' and v2 == 'years' %}
-fct = 1 / 365 # 365.25?
-{% elif args.inunit, args.outunit | : v1 == 'weeks' and v2 == 'days' %}
-fct = 7
-{% elif args.inunit, args.outunit | : v1 == 'weeks' and v2 == 'months' %}
-fct = 7*12/365
-{% elif args.inunit, args.outunit | : v1 == 'weeks' and v2 == 'years' %}
-fct = 7/365
-{% elif args.inunit, args.outunit | : v1 == 'years' and v2 == 'days' %}
-fct = 365
-{% elif args.inunit, args.outunit | : v1 == 'years' and v2 == 'weeks' %}
-fct = 365/7
-{% elif args.inunit, args.outunit | : v1 == 'years' and v2 == 'months' %}
-fct = 12
-{% endif %}
+{% case args.inunit, args.outunit %}
+	{% when 'days', 'weeks' %}
+	fct = 1 / 7
+	{% when 'days', 'months' %}
+	fct = 1 / 30
+	{% when 'days', 'years' %}
+	fct = 1 / 365 # 365.25?
+	{% when 'weeks', 'days' %}
+	fct = 7
+	{% when 'weeks', 'months' %}
+	fct = 7*12/365
+	{% when 'weeks', 'years' %}
+	fct = 7/365
+	{% when 'years', 'days' %}
+	fct = 365
+	{% when 'years', 'weeks' %}
+	fct = 365/7
+	{% when 'years', 'months' %}
+	fct = 12
+{% endcase %}
 # rows: samples
 # cols: patients, time, status
 survdata = read.table(survfile, header = T, row.names = 1, sep = "\t", check.names = F)

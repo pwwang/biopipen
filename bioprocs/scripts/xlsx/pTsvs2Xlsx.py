@@ -3,8 +3,8 @@ from os import path
 from openpyxl import Workbook
 from bioprocs.utils import log2pyppl
 
-infiles  = {{in.infiles | repr}}
-outfile  = {{out.outfile | quote}}
+infiles  = {{i.infiles | repr}}
+outfile  = {{o.outfile | quote}}
 fn2sheet = {{args.fn2sheet}}
 
 def tsv2sheet(wb, tsvfile):

@@ -11,7 +11,7 @@ from bioprocs.utils.poll import Poll
 # check index
 '''
 if not path.exists ({ {bring.infile[0] | quote}}):
-	stderr.write ("Input file '{ {in._infile}}' is not indexed.")
+	stderr.write ("Input file '{ {i._infile}}' is not indexed.")
 	exit (1)
 '''
 
@@ -26,7 +26,7 @@ ref2     = path.join(outdir, path.basename(ref))
 joblen   = {{proc.size}}
 jobindex = {{job.index}}
 tmpdir   = {{ args.tmpdir | quote }}
-tmpdir   = path.join (tmpdir, "{{proc.id}}.{{in.infile | fn}}.{{job.index}}")
+tmpdir   = path.join (tmpdir, "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir):
 	makedirs (tmpdir)
 
@@ -43,29 +43,30 @@ def checkAndBuildIndex(indexes, buildcmd, buildcmd2):
 
 params = {{args.params}}
 try:
+{% case args.tool %}
 	########## gatk
-	{% if args.tool | lambda x: x == 'gatk' %}
+	{% when 'gatk' %}
 	mem                          = mem2({{ args.mem | quote }}, 'java')
-	intfile                      = "{{out.outfile | prefix}}.intervals"
+	intfile                      = "{{o.outfile | prefix}}.intervals"
 	paramsRealignerTargetCreator = {{args.paramsRealignerTargetCreator}}
 
 	paramsRealignerTargetCreator['R'] = ref
-	paramsRealignerTargetCreator['I'] = {{in.infile | quote}}
+	paramsRealignerTargetCreator['I'] = {{i.infile | quote}}
 	paramsRealignerTargetCreator['o'] = intfile
 
 	runcmd ('{{args.gatk}} -T RealignerTargetCreator %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsRealignerTargetCreator, dash = '-', equal = ' ')))
 
-	bamfileIr            = "{{out.outfile | prefix}}.ir.bam"
+	bamfileIr            = "{{o.outfile | prefix}}.ir.bam"
 	paramsIndelRealigner = {{args.paramsIndelRealigner}}
 
 	paramsIndelRealigner['R']               = ref
-	paramsIndelRealigner['I']               = {{in.infile | quote}}
+	paramsIndelRealigner['I']               = {{i.infile | quote}}
 	paramsIndelRealigner['o']               = bamfileIr
 	paramsIndelRealigner['targetIntervals'] = intfile
 
 	runcmd ('{{args.gatk}} -T IndelRealigner %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsIndelRealigner, dash = '-', equal = ' ')))
 
-	recaltable             = "{{out.outfile | prefix}}.recaltable"
+	recaltable             = "{{o.outfile | prefix}}.recaltable"
 	paramsBaseRecalibrator = {{args.paramsBaseRecalibrator}}
 
 	paramsBaseRecalibrator['R']          = ref
@@ -79,20 +80,20 @@ try:
 
 	paramsPrintReads['R']    = ref
 	paramsPrintReads['I']    = bamfileIr
-	paramsPrintReads['o']    = {{out.outfile | quote}}
+	paramsPrintReads['o']    = {{o.outfile | quote}}
 	paramsPrintReads['BQSR'] = recaltable
 
 	runcmd ('{{args.gatk}} -T PrintReads %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsPrintReads, dash = '-', equal = ' ')))
 	remove (bamfileIr)
-	move ("{{out.outfile | prefix}}.bai", "{{out.idxfile}}")
+	move ("{{o.outfile | prefix}}.bai", "{{o.idxfile}}")
 
 	########## bamutil
-	{% elif args.tool | lambda x: x == 'bamutil' %}
+	{% when 'bamutil' %}
 	{% if args.knownSites %}
 	params['dbsnp'] = {{args.knownSites | quote}}
 	{% endif %}
-	params['in']      = {{in.infile | quote}}
-	params['out']     = {{out.outfile | quote}}
+	params['in']      = {{i.infile | quote}}
+	params['out']     = {{o.outfile | quote}}
 	params['refFile'] = ref
 
 	cmd     = '{{args.bamutil}} recab %s'
@@ -111,14 +112,14 @@ try:
 		r = checkAndBuildIndex([refcache], cmd1, cmd2)
 
 		params2['refFile'] = r
-		{% if job.index | lambda x: x > 0 %}
+		{% if job.index > 0 %}
 		runcmd(cmd % cmdargs(params2, equal = ' '))
 		{% endif %}
 
-	cmd = '{{args.samtools}} index "{{out.outfile}}" "{{out.idxfile}}"'
+	cmd = '{{args.samtools}} index "{{o.outfile}}" "{{o.idxfile}}"'
 	runcmd (cmd)
 
-	{% endif %}
+{% endcase %}
 
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))

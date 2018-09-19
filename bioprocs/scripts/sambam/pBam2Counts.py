@@ -4,13 +4,13 @@ from bioprocs.utils import runcmd, cmdargs
 params = {{args.params}}
 
 ####### htseq
-{% if args.tool | lambda x: x == 'htseq' %}
+{% if args.tool == 'htseq' %}
 
-{% if in.infile.endswith('.bam') %}
+{% if i.infile.endswith('.bam') %}
 params['f'] = 'bam'
 {% endif %}
 
-cmd = '{{args.htseq}} %s "{{in.infile}}" "{{args.refgene}}" > "{{out.outfile}}"' % (cmdargs(params))
+cmd = '{{args.htseq}} %s "{{i.infile}}" "{{args.refgene}}" > "{{o.outfile}}"' % (cmdargs(params))
 runcmd (cmd)
 
 {% endif %}

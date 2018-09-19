@@ -1,5 +1,5 @@
 
-data = read.table ({{in.infile | quote}}, sep="\t", header={{args.cnames | R}}, row.names={{args.rnames | lambda x: 'NULL' if not x else int(x)}}, check.names=F)
+data = read.table ({{i.infile | quote}}, sep="\t", header={{args.cnames | R}}, row.names={{args.rnames | lambda x: 'NULL' if not x else int(x)}}, check.names=F)
 if ({{args.transpose | R}}) {
 	data = t(data)
 }
@@ -9,9 +9,9 @@ dmat = dist(data)
 if ({{args.fast | R}}) {
 	library('fastcluster')
 }
-orderfile = file.path ({{out.outdir | quote}}, "order.txt")
-mergefile = file.path ({{out.outdir | quote}}, "merge.txt")
-clustfig  = file.path ({{out.outdir | quote}}, "hclust.png")
+orderfile = file.path ({{o.outdir | quote}}, "order.txt")
+mergefile = file.path ({{o.outdir | quote}}, "merge.txt")
+clustfig  = file.path ({{o.outdir | quote}}, "hclust.png")
 hobj = hclust (dmat, method={{args.method | quote}})
 
 do.call(png, c(list(file = clustfig), {{args.devpars | Rlist}}))

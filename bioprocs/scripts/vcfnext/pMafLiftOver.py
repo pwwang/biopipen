@@ -1,15 +1,15 @@
 from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
-infile   = {{in.infile | quote}}
-outfile  = {{out.outfile | quote}}
+infile   = {{i.infile | quote}}
+outfile  = {{o.outfile | quote}}
 liftover = {{args.liftover | quote}}
 lochain  = {{args.lochain | quote}}
 genome   = {{args.genome | quote}} # target genome
 
-bedfile      = "{{job.outdir}}/{{in.infile | fn}}.bed"
-mappedfile   = "{{job.outdir}}/{{in.infile | fn}}.mapped.bed"
-unmappedfile = "{{job.outdir}}/{{in.infile | fn}}.unmapped.bed"
+bedfile      = "{{job.outdir}}/{{i.infile | fn}}.bed"
+mappedfile   = "{{job.outdir}}/{{i.infile | fn}}.mapped.bed"
+unmappedfile = "{{job.outdir}}/{{i.infile | fn}}.unmapped.bed"
 
 # get a bed file from maf file
 reader = TsvReader(infile, ftype = 'head')

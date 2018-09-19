@@ -2,8 +2,8 @@ from pyppl import Box
 from os import path, rename, rmdir
 from bioprocs.utils import runcmd, cmdargs, logger
 
-infile     = {{in.manifile | quote}}
-outdir     = {{out.outdir | quote}}
+infile     = {{i.manifile | quote}}
+outdir     = {{o.outdir | quote}}
 params     = {{args.params}}
 nthread    = {{args.nthread | int}}
 token      = {{args.token | repr}}

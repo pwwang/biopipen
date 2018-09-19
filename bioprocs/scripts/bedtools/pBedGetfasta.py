@@ -6,8 +6,8 @@ params = Box()
 params.fi = {{args.ref | quote}}
 params.update({{args.params}})
 
-infile  = {{in.infile | quote}}
-infile2 = {{in._infile | quote}} + '.names'
+infile  = {{i.infile | quote}}
+infile2 = {{i._infile | quote}} + '.names'
 reader  = TsvReader(infile, ftype = 'bed')
 writer  = TsvWriter(infile2)
 writer.meta.update(reader.meta)
@@ -20,6 +20,6 @@ writer.close()
 params.name = True
 params.bed  = infile2
 
-cmd = "{{args.bedtools}} getfasta %s > {{out.outfile | squote}}" % cmdargs(params, dash='-', equal=' ')
+cmd = "{{args.bedtools}} getfasta %s > {{o.outfile | squote}}" % cmdargs(params, dash='-', equal=' ')
 print cmd
 runcmd(cmd)

@@ -2,8 +2,8 @@
 from os import path
 from bioprocs.utils.tsvio import TsvReader
 
-infile  = {{in.infile | repr}}
-outfile = {{out.outfile | repr}}
+infile  = {{i.infile | repr}}
+outfile = {{o.outfile | repr}}
 ref     = {{args.ref | repr}}
 refdict = {{args.ref | prefix | quote}} + '.dict'
 reffai  = {{args.ref | quote}} + '.dict'

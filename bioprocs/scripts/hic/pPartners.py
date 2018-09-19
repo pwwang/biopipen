@@ -3,9 +3,9 @@ from bioprocs.utils import regionOverlap
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 # read input file
-regfile = {{in.regfile | quote}}
-outfile = {{out.outfile | quote}}
-ext     = {{in.regfile | ext | [1:] | quote}}
+regfile = {{i.regfile | quote}}
+outfile = {{o.outfile | quote}}
+ext     = {{i.regfile | ext | [1:] | quote}}
 regopts = {{args.regopts}}
 regions = None
 
@@ -14,8 +14,8 @@ if regopts.ftype == 'auto':
 reader  = TsvReader(regfile, **regopts)
 regions = reader.dump()
 
-intfile = {{in.intfile | quote}}
-ext     = {{in.intfile | ext | [1:] | quote}}
+intfile = {{i.intfile | quote}}
+ext     = {{i.intfile | ext | [1:] | quote}}
 intopts = {{args.intopts}}
 
 writer  = TsvWriter(outfile, ftype = 'bed')

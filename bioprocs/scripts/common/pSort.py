@@ -4,7 +4,7 @@ from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 {% if args.sorted %}
-cmd = "ln -s {{in.infile | squote}} {{out.outfile | squote}}"
+cmd = "ln -s {{i.infile | squote}} {{out.outfile | squote}}"
 
 {% else %}
 params = Box()
@@ -18,8 +18,8 @@ for i, k in enumerate(sorted(kopts.keys())):
 	del params[k]
 	params['k%s' % (' '*i)] = kopts[k]
 
-infile   = {{in.infile | quote}}
-outfile  = {{out.outfile | quote}}
+infile   = {{i.infile | quote}}
+outfile  = {{o.outfile | quote}}
 tmpfile  = outfile + '.tmp'
 skip     = {{args.inopts | lambda x: x.get('skip', 0)}}
 delimit  = {{args.inopts | lambda x: x.get('delimit', '\t') | quote}}

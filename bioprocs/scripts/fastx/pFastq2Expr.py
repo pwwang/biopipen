@@ -4,14 +4,14 @@ from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 params = {{args.params}}
 params['i'] = {{args.idxfile | quote}}
-params['o'] = {{out.outdir | quote}}
+params['o'] = {{o.outdir | quote}}
 params['t'] = {{args.nthread}}
 
-cmd = '{{args.kallisto}} quant %s "{{in.fqfile1}}" "{{in.fqfile2}}"' % (cmdargs(params))
+cmd = '{{args.kallisto}} quant %s "{{i.fqfile1}}" "{{i.fqfile2}}"' % (cmdargs(params))
 runcmd (cmd)
 
-imfile  = "{{out.outdir}}/abundance.tsv"
-outfile = {{out.outfile | quote}}
+imfile  = "{{o.outdir}}/abundance.tsv"
+outfile = {{o.outfile | quote}}
 reader  = TsvReader(imfile, ftype = 'head')
 writer  = TsvWriter(outfile)
 writer.meta.add('target_id', 'est_counts')

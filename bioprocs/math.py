@@ -34,7 +34,7 @@ from . import params, rimport
 """
 pRank              = Proc(desc = 'Convert values to ranks')
 pRank.input        = 'infile:file'
-pRank.output       = 'outfile:file:{{in.infile | fn}}.rank.txt'
+pRank.output       = 'outfile:file:{{i.infile | fn}}.rank.txt'
 pRank.args.na      = 'last' # keep,         first,   remove
 pRank.args.tie     = 'average' # "average", "first", "last", "random", "max", "min"
 pRank.args.byrow   = True # else by column

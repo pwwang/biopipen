@@ -22,7 +22,7 @@ from bioprocs import params, rimport
 	`outdir:file`: The output directory, containing:
 		- The survival data file.
 		- The GEP70 plot and results
-		- The GEP70 + gene plot and results if `in.gene` is provided.
+		- The GEP70 + gene plot and results if `i.gene` is provided.
 @args:
 	`gep70`: The GEP70 genes. 
 		- Column 1: up-regulated genes (51)
@@ -36,7 +36,7 @@ from bioprocs import params, rimport
 """
 pGEP70              = Proc(desc = 'Do GEP70 plot for multiple mylenoma 70-gene-signatures')
 pGEP70.input        = 'exprfile:file, survfile:file, gene'
-pGEP70.output       = 'outdir:dir:{{in.survfile | fn2}}.gep70{{in.gene}}'
+pGEP70.output       = 'outdir:dir:{{i.survfile | fn2}}.gep70{{i.gene}}'
 pGEP70.args.gep70   = params.gep70.value
 pGEP70.args.inunit  = 'days' # months, weeks, years
 pGEP70.args.outunit = 'days'
@@ -77,7 +77,7 @@ pGEP70.script       = "file:scripts/misc/pGEP70.r"
 """
 pNCBI             = Proc(desc = 'The NCBI E-Utils')
 pNCBI.input       = 'term'
-pNCBI.output      = 'outfile:file:{{in.term | lambda x: __import__("re").sub(r"[^\\w_]", "_", x)[:255]}}.{{args.prog}}.txt'
+pNCBI.output      = 'outfile:file:{{i.term | lambda x: __import__("re").sub(r"[^\\w_]", "_", x)[:255]}}.{{args.prog}}.txt'
 pNCBI.errhow      = 'retry'
 pNCBI.args.prog   = 'esearch'
 pNCBI.args.apikey = params.ncbikey.value

@@ -24,7 +24,7 @@ from . import params, rimport
 """
 pInteractionTrack             = Proc(desc = 'Gererate genomic interaction track for Gviz.')
 pInteractionTrack.input       = "name, infile:file, region"
-pInteractionTrack.output      = "outfile:file:interactionTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.gviztrack"
+pInteractionTrack.output      = "outfile:file:interactionTrack_{{i.name}}_{{i.region | lambda x: x.replace(':', '-')}}.gviztrack"
 pInteractionTrack.args.intype = "auto"
 pInteractionTrack.args.params = Box({
 	'background.title': "#333333",
@@ -56,7 +56,7 @@ pInteractionTrack.script      = "file:scripts/genomeplot/pInteractionTrack.r"
 """
 pGeneTrack             = Proc(desc = 'Generate gene track data for pGenomePlot.')
 pGeneTrack.input       = "name, region"
-pGeneTrack.output      = "outfile:file:geneTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.gviztrack"
+pGeneTrack.output      = "outfile:file:geneTrack_{{i.name}}_{{i.region | lambda x: x.replace(':', '-')}}.gviztrack"
 pGeneTrack.args.genome = params.genome.value
 pGeneTrack.args.params = Box()
 pGeneTrack.lang        = params.Rscript.value
@@ -81,7 +81,7 @@ pGeneTrack.script      = "file:scripts/genomeplot/pGeneTrack.r"
 """
 pAnnoTrack             = Proc(desc = 'Generate annotation track for pGenomePlot.')
 pAnnoTrack.input       = "name, infile:file, chrom"
-pAnnoTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.gviztrack"
+pAnnoTrack.output      = "outfile:file:dataTrack_{{i.name}}_{{i.chrom}}.gviztrack"
 pAnnoTrack.args.genome = params.genome.value
 pAnnoTrack.args.params = Box()
 pAnnoTrack.lang        = params.Rscript.value
@@ -106,7 +106,7 @@ pAnnoTrack.script      = "file:scripts/genomeplot/pAnnoTrack.r"
 """
 pDataTrack             = Proc(desc = 'Generate data track for pGenomePlot.')
 pDataTrack.input       = "name, infile:file, chrom"
-pDataTrack.output      = "outfile:file:dataTrack_{{in.name}}_{{in.chrom}}.gviztrack"
+pDataTrack.output      = "outfile:file:dataTrack_{{i.name}}_{{i.chrom}}.gviztrack"
 pDataTrack.args.genome = params.genome.value
 pDataTrack.args.params = Box()
 pDataTrack.lang        = params.Rscript.value
@@ -131,7 +131,7 @@ pDataTrack.script      = "file:scripts/genomeplot/pDataTrack.r"
 """
 pUcscTrack             = Proc(desc = "Generate track from UCSC data.")
 pUcscTrack.input       = "name, track, trackType, region"
-pUcscTrack.output      = "outfile:file:ucscTrack_{{in.name}}_{{in.region | lambda x: x.replace(':', '-')}}.gviztrack"
+pUcscTrack.output      = "outfile:file:ucscTrack_{{i.name}}_{{i.region | lambda x: x.replace(':', '-')}}.gviztrack"
 pUcscTrack.lang        = params.Rscript.value
 pUcscTrack.args.genome = params.genome.value
 pUcscTrack.args.params = Box()
@@ -161,7 +161,7 @@ pUcscTrack.script      = "file:scripts/genomeplot/pUcscTrack.r"
 """
 pGenomePlot                = Proc(desc = 'Plot genome elements.')
 pGenomePlot.input          = "trkfiles:files, region, highlight"
-pGenomePlot.output         = "outfile:file:genomeplot_{{in.region | lambda x: x.replace(':', '-')}}.png"
+pGenomePlot.output         = "outfile:file:genomeplot_{{i.region | lambda x: x.replace(':', '-')}}.png"
 pGenomePlot.args.genome    = params.genome.value
 pGenomePlot.args.ideoTrack = params.cytoband.value # a file from ucsc (http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz); or True to download it in runtime; or False to disable it
 pGenomePlot.args.axisTrack = True

@@ -22,7 +22,7 @@ from . import params
 """
 pDownloadForm               = Proc (desc="Download results by submitting to a form")
 pDownloadForm.input         = "url, data, submit, next"
-pDownloadForm.output        = "outdir:dir:{{in.url | bn | lambda x: x if x else 'outdir'}}"
+pDownloadForm.output        = "outdir:dir:{{i.url | bn | lambda x: x if x else 'outdir'}}"
 pDownloadForm.args.interval = 1
 pDownloadForm.lang          = params.python.value
 pDownloadForm.script        = "file:scripts/web/pDownloadForm.py"
@@ -39,7 +39,7 @@ pDownloadForm.script        = "file:scripts/web/pDownloadForm.py"
 """
 pDownloadGet = Proc (desc="Download from URLs")
 pDownloadGet.input  = "url"
-pDownloadGet.output = "outfile:file:{{in.url | bn | lambda x: x if x else 'outfile' | .replace('?', '__Q__').replace('&', '__N__')}}"
+pDownloadGet.output = "outfile:file:{{i.url | bn | lambda x: x if x else 'outfile' | .replace('?', '__Q__').replace('&', '__N__')}}"
 pDownloadGet.lang   = params.python.value
 pDownloadGet.script = "file:scripts/web/pDownloadGet.py"
 
@@ -64,6 +64,6 @@ pDownload = pDownloadGet.copy()
 """
 pDownloadPost = Proc (desc="Download from URLs")
 pDownloadPost.input  = "url, data"
-pDownloadPost.output = "outfile:file:{{in.url | bn | lambda x: x if x else 'outfile'}}"
+pDownloadPost.output = "outfile:file:{{i.url | bn | lambda x: x if x else 'outfile'}}"
 pDownloadPost.lang   = params.python.value
 pDownloadPost.script = "file:scripts/web/pDownloadPost.py"

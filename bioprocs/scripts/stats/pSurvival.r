@@ -5,9 +5,9 @@ library(survminer)
 set.seed(8525)
 
 # load parameters
-infile      = {{in.infile | R}}
-outfile     = {{out.outfile | R}}
-outdir      = {{out.outdir | R}}
+infile      = {{i.infile | R}}
+outfile     = {{o.outfile | R}}
+outdir      = {{o.outdir | R}}
 inunit      = {{args.inunit | R}}
 outunit     = {{args.outunit | R}}
 covfile     = {{args.covfile | R}}
@@ -333,25 +333,26 @@ if (!is.null(covfile) && covfile != '') {
 }
 
 fct = 1
-{% if args.inunit, args.outunit | lambda x,y: x == 'days' and y == 'weeks' %}
-fct = 1 / 7
-{% elif args.inunit, args.outunit | lambda x,y: x == 'days' and y == 'months' %}
-fct = 1 / 30
-{% elif args.inunit, args.outunit | lambda x,y: x == 'days' and y == 'years' %}
-fct = 1 / 365
-{% elif args.inunit, args.outunit | lambda x,y: x == 'weeks' and y == 'days' %}
-fct = 7
-{% elif args.inunit, args.outunit | lambda x,y: x == 'weeks' and y == 'months' %}
-fct = 7*12/365
-{% elif args.inunit, args.outunit | lambda x,y: x == 'weeks' and y == 'years' %}
-fct = 7/365
-{% elif args.inunit, args.outunit | lambda x,y: x == 'years' and y == 'days' %}
-fct = 365
-{% elif args.inunit, args.outunit | lambda x,y: x == 'years' and y == 'weeks' %}
-fct = 365/7
-{% elif args.inunit, args.outunit | lambda x,y: x == 'years' and y == 'months' %}
-fct = 12
-{% endif %}
+{% case args.inunit, args.outunit %}
+	{% when 'days', 'weeks' %}
+	fct = 1 / 7
+	{% when 'days' ,'months' %}
+	fct = 1 / 30
+	{% when 'days' ,'years' %}
+	fct = 1 / 365
+	{% when 'weeks', 'days' %}
+	fct = 7
+	{% when 'weeks', 'months' %}
+	fct = 7*12/365
+	{% when 'weeks', 'years' %}
+	fct = 7/365
+	{% when 'years', 'days' %}
+	fct = 365
+	{% when 'years', 'weeks' %}
+	fct = 365/7
+	{% when 'years', 'months' %}
+	fct = 12
+{% endcase %}
 
 cnames = colnames(data)
 vars   = cnames[3:length(cnames)]
@@ -405,7 +406,7 @@ if (is.list(combine) && length(combine) > 0) {
 		maxdim         = max(combine$ncol, combine$nrow)
 		devpars$height = maxdim * devpars$height
 		devpars$width  = maxdim * devpars$width
-		plotfile = file.path(outdir, '{{in.infile | fn2}}.survival.png')
+		plotfile = file.path(outdir, '{{i.infile | fn2}}.survival.png')
 		do.call(png, c(plotfile, devpars))
 		do.call(arrange_ggsurvplots, c(list(x = survplots, print = T), combine))
 		dev.off()

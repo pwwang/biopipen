@@ -17,17 +17,17 @@ refgene   = path.join(gisticdir, 'refgenefiles', {{args.genome | quote}} + ".mat
 
 params = {{args.params}}
 
-params['b']       = {{out.outdir | quote}}
-params['seg']     = {{in.segfile | quote}}
+params['b']       = {{o.outdir | quote}}
+params['seg']     = {{i.segfile | quote}}
 params['refgene'] = refgene
-{% if in.mkfile %}
-params['mk']      = {{in.mkfile | quote}}
+{% if i.mkfile %}
+params['mk']      = {{i.mkfile | quote}}
 {% endif %}
-{% if in.alfile %}
-params['alf']      = {{in.alfile | quote}}
+{% if i.alfile %}
+params['alf']      = {{i.alfile | quote}}
 {% endif %}
-{% if in.cnvfile %}
-params['cnv']      = {{in.cnvfile | quote}}
+{% if i.cnvfile %}
+params['cnv']      = {{i.cnvfile | quote}}
 {% endif %}
 
 cmd = "%s %s" % (gisticbin, params2CmdArgs(params, dash = '-', equal = ' '))

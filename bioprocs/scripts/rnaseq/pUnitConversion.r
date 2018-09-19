@@ -1,7 +1,7 @@
 {{rimport}}('plot.r')
 
-infile  = {{in.infile | R}}
-outfile = {{out.outfile | R}}
+infile  = {{i.infile | R}}
+outfile = {{o.outfile | R}}
 inunit  = {{args.inunit | R}}
 outunit = {{args.outunit | R}}
 meanfl  = {{args.meanfl | R}}

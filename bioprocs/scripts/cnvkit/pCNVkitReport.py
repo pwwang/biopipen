@@ -3,10 +3,10 @@ from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
-cnrfile  = {{in.cnrfile | quote}}
-cnsfile  = {{in.cnsfile | quote}}
-stem     = {{in.cnrfile | bn | quote}}
-outdir   = {{out.outdir | quote}}
+cnrfile  = {{i.cnrfile | quote}}
+cnsfile  = {{i.cnsfile | quote}}
+stem     = {{i.cnrfile | bn | quote}}
+outdir   = {{o.outdir | quote}}
 nthread  = {{args.nthread | repr}}
 
 params   = {{args.params}}

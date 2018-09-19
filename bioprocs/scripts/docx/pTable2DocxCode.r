@@ -1,5 +1,5 @@
-infile  = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
 style   = {{args.style | R}}
 inopts  = {{args.inopts | R}}
 acode   = {{args.acode | R}}

@@ -1,7 +1,7 @@
 {{rimport}}('__init__.r')
 
-infile  = {{in.infile | R}}
-outfile = {{out.outfile | R}}
+infile  = {{i.infile | R}}
+outfile = {{o.outfile | R}}
 params  = {{args.params | R}}
 inopts  = {{args.inopts | R}}
 
@@ -15,7 +15,7 @@ inparams = list(
 
 mat = do.call(read.table.nodup, c(inparams, params))
 
-{% if args.code | lambda x: isinstance(x, list) %}
+{% if isinstance(args.code, list) %}
 {% for c in args.code %}
 {{c}}
 {% endfor %}

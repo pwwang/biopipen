@@ -1,8 +1,8 @@
 from pysam import VariantFile as Vcf
 from bioprocs.utils.tsvio import TsvWriter, TsvRecord
 
-infile  = {{in.infile   | quote}}
-outfile = {{out.outfile | quote}}
+infile  = {{i.infile   | quote}}
+outfile = {{o.outfile | quote}}
 rnames  = {{args.rnames | quote}}
 na      = {{args.na     | quote}}
 writer  = TsvWriter(outfile)
