@@ -386,7 +386,7 @@ class Process(Command):
 			iline = stripL(iline)
 			if iline.startswith('`'):
 				name, t, desc = splitNameLine(iline)
-				retins.append(('{}in.{}'.format(prefix, name), t, desc))
+				retins.append(('{}i.{}'.format(prefix, name), t, desc))
 			else:
 				retins[-1][-1].extend(sepdefault(iline.rstrip()))
 		ret['input'] = retins
@@ -398,7 +398,7 @@ class Process(Command):
 			oline = stripL(oline)
 			if oline.startswith('`'):
 				name, t, desc = splitNameLine(oline)
-				retouts.append(('{}out.{}'.format(prefix, name), t, desc))
+				retouts.append(('{}o.{}'.format(prefix, name), t, desc))
 			else:
 				retouts[-1][-1].extend(sepdefault(oline.rstrip()))
 				
@@ -483,12 +483,12 @@ class Process(Command):
 
 			kparts = key.split('.')
 			t = kparts.pop(0)
-			if t == 'in':
+			if t == 'in' or t == 'i': # in will be deprecated
 				inkey = kparts[0]
 				if not inkey in inkeys:
 					self.help('Unknown input key "{}" for "{}", expect [{}]'.format(inkey, self.name, ', '.join(inkeys)), printNexit = True)
 				indata[inkey + ':' + inkeys[inkey]] = Channel.create(val)
-			elif t == 'out':
+			elif t == 'out' or t == 'o': # in will be deprecated
 				outkey = kparts[0]
 				if not outkey in outkeys:
 					self.help('Unknown output key "{}" for "{}", expect [{}]'.format(outkey, self.name, ', '.join(outkeys)), printNexit = True)
