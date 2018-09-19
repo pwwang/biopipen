@@ -254,7 +254,15 @@ class Script(Command):
 			return out
 
 	def getDocstr(self):
-		return ''
+		docstr = ''
+		with open(self.script) as f:
+			for line in f:
+				if line.startswith('#!'):
+					continue
+				if line.startswith('#'):
+					docstr = line[1:].strip()
+					break
+		return docstr
 
 	def helpitems(self, blocks):
 		return {}

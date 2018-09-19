@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Do PWM scan
 from pyppl import PyPPL
 from bioprocs import params
 from bioprocs.gene import pGeneNameNorm
