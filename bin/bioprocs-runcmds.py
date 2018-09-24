@@ -39,7 +39,7 @@ pCmdRunner.cache  = params.cache
 pCmdRunner.errhow = 'halt'
 pCmdRunner.forks  = int(params.get('forks', 1))
 pCmdRunner.input  = {'cmd': params.cmds}
-pCmdRunner.script = '{{in.cmd}}'
+pCmdRunner.script = '{{i.cmd}}'
 
 config = {'_log': {'file': None}, 'default': {'ppldir': params.ppldir}}
 PyPPL(config).start(pCmdRunner).run()
