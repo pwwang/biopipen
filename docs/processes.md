@@ -2092,6 +2092,11 @@
         - `ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.  
         - `devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`  
 
+!!! hint "pLungCancerGeneSig"
+
+    - **description**  
+        https://www.ncbi.nlm.nih.gov/pubmed/19118056
+
 !!! hint "pNCBI"
 
     - **description**  
@@ -4229,6 +4234,13 @@
 
     - **description**  
         Lift over vcf files.
+
+    - **input**  
+        - `infile:file`: The input vcf file.  
+
+    - **output**  
+        - `outfile:file`: The output vcf file.  
+        - `umfile:file`: The unmapped records  
 
     - **args**  
         - `tool`: Which tool to use. Default: `picard`  
