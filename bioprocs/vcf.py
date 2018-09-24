@@ -247,6 +247,11 @@ pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 	pVcfLiftover
 @description:
 	Lift over vcf files.
+@input:
+	`infile:file`: The input vcf file.
+@output:
+	`outfile:file`: The output vcf file.
+	`umfile:file`:  The unmapped records
 @args:
 	`tool`:    Which tool to use. Default: `picard`
 	`picard`:  The path to picard

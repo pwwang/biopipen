@@ -23,7 +23,7 @@ if tool == 'picard':
 	params.R      = ref
 
 	javamem = mem2(mem, 'java')
-	for jm in javamem.split()
+	for jm in javamem.split():
 		params[jm[1:]] = True
 
 	params['Djava.io.tmpdir'] = tmpdir

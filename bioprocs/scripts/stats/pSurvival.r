@@ -333,24 +333,24 @@ if (!is.null(covfile) && covfile != '') {
 }
 
 fct = 1
-{% case args.inunit, args.outunit %}
-	{% when 'days', 'weeks' %}
+{% case (args.inunit, args.outunit) %}
+	{% when ('days', 'weeks') %}
 	fct = 1 / 7
-	{% when 'days' ,'months' %}
+	{% when ('days' ,'months') %}
 	fct = 1 / 30
-	{% when 'days' ,'years' %}
+	{% when ('days' ,'years') %}
 	fct = 1 / 365
-	{% when 'weeks', 'days' %}
+	{% when ('weeks', 'days') %}
 	fct = 7
-	{% when 'weeks', 'months' %}
+	{% when ('weeks', 'months') %}
 	fct = 7*12/365
-	{% when 'weeks', 'years' %}
+	{% when ('weeks', 'years') %}
 	fct = 7/365
-	{% when 'years', 'days' %}
+	{% when ('years', 'days') %}
 	fct = 365
-	{% when 'years', 'weeks' %}
+	{% when ('years', 'weeks') %}
 	fct = 365/7
-	{% when 'years', 'months' %}
+	{% when ('years', 'months') %}
 	fct = 12
 {% endcase %}
 
@@ -431,4 +431,4 @@ if (is.list(combine) && length(combine) > 0) {
 write.table(allsums, outfile, sep="\t", quote=F, col.names = T, row.names = F)
 
 if (!is.null(allcovs))
-	write.table(allcovs, '{{out.outfile | prefix | prefix}}.covariants.txt', sep="\t", quote=F, col.names = T, row.names = F)
+	write.table(allcovs, '{{o.outfile | prefix | prefix}}.covariants.txt', sep="\t", quote=F, col.names = T, row.names = F)

@@ -49,6 +49,25 @@ pGEP70.script       = "file:scripts/misc/pGEP70.r"
 
 """
 @name:
+	pLungCancerGeneSig
+@description:
+	https://www.ncbi.nlm.nih.gov/pubmed/19118056
+"""
+pLungCancerGeneSig              = Proc(desc = 'Do a GEP70-like signature analysis for NSCLC')
+pLungCancerGeneSig.input        = 'exprfile:file, survfile:file, gene'
+pLungCancerGeneSig.output       = 'outdir:dir:{{i.survfile | fn2}}.lungcancersig{{i.gene}}'
+pLungCancerGeneSig.args.lcsig   = params.lcsig.value
+pLungCancerGeneSig.args.inunit  = 'days' # months, weeks, years
+pLungCancerGeneSig.args.outunit = 'days'
+pLungCancerGeneSig.args.params  = Box({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
+pLungCancerGeneSig.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pLungCancerGeneSig.args.ggs     = Box(table = Box())
+pLungCancerGeneSig.envs.rimport = rimport
+pLungCancerGeneSig.lang         = 'Rscript'
+pLungCancerGeneSig.script       = "file:scripts/misc/pLungCancerGeneSig.r"
+
+"""
+@name:
 	pNCBI
 @description:
 	The NCBI E-Utils

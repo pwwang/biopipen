@@ -38,6 +38,8 @@ DEFAULTS = {
 	"gsize.desc"         : "The chromsome size file.",
 	"kallistoIdx"        : "",
 	"kallistoIdx.desc"   : "The kallisto index file.",
+	"lcsig"              : "",
+	"lcsig.desc"         : "Lung cancer gene signature (see https://www.ncbi.nlm.nih.gov/pubmed/19118056)",
 	"liftover"           : "liftOver",
 	"liftover.desc"      : "The liftover binary file.",
 	"lochain"            : "",
