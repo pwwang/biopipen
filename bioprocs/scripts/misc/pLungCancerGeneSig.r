@@ -5,18 +5,20 @@ library(methods)
 library(survival)
 library(survminer)
 
-inunit   = {{args.inunit | R}}
-outunit  = {{args.outunit | R}}
-exprfile = {{i.exprfile | R}}
-survfile = {{i.survfile | R}}
+exprfile = {{i.exprfile | quote}}
+survfile = {{i.survfile | quote}}
 gene     = {{i.gene | quote}}
-gep70    = {{args.gep70 | R}}
-devpars  = {{args.devpars | R}}
+outdir   = {{o.outdir | quote}}
+lcsig    = {{args.lcsig | quote}}
+inunit   = {{args.inunit | quote}}
+outunit  = {{args.outunit | quote}}
 params   = {{args.params | R}}
-prefix   = {{fn2(i.survfile), i.gene, o.outdir | lambda v1, v2, v3, path = path: path.join(v3, '{}.GEP70-{}.'.format(v1, v2) if v2 else '{}.GEP70.'.format(v1)) | quote }}
+devpars  = {{args.devpars | R}}
+mainggs  = {{args.ggs | R}}
 
-mainggs       = {{args.ggs | R}}
-tableggs      = mainggs$table
+prefix   = {{fn2(i.survfile), i.gene, o.outdir | lambda v1, v2, v3, path = path: path.join(v3, '{}.LCSIG{}.'.format(v1, '-' + v2 if v2 else '')) | quote }}
+
+tableggs = mainggs$table
 mainggs$table = NULL
 
 # read raw survival data
@@ -41,36 +43,38 @@ fct = 1
 	{% when ('years', 'months') %}
 	fct = 12
 {% endcase %}
+
 # rows: samples
 # cols: patients, time, status
 survdata = read.table(survfile, header = T, row.names = 1, sep = "\t", check.names = F)
-if (fct != 1) {
-	survdata[, 1] = survdata[, 1] * fct
-}
+survsamples = rownames(survdata)
 
 # read all expression data
 # rows: genes
 # cols: samples
 exprdata = read.table.nodup(exprfile, header = T, row.names = 1, sep = "\t", check.names = F)
 allgenes = rownames(exprdata)
+exprsamples = colnames(exprdata)
 
-# read the 70 genes
-gene70 = read.table(gep70, row.names = 1, header = T, sep = "\t", check.names = F)
+samples = intersect(survsamples, exprsamples)
+survdata = survdata[samples,, drop=F]
+exprdata = exprdata[,samples, drop=F]
+if (fct != 1) {
+	survdata[, 1] = survdata[, 1] * fct
+}
 
-gene51   = intersect(allgenes, rownames(gene70[which(gene70[,1] == 'up'),,drop=F]))
-gene19   = intersect(allgenes, rownames(gene70[which(gene70[,1] == 'down'),,drop=F]))	
-exp51    = as.matrix(colMeans(exprdata[gene51, , drop = F]))
-exp19    = as.matrix(colMeans(exprdata[gene19, , drop = F]))
-gep70val = exp51 - exp19
-colnames(gep70val) = 'GEP70'
+# read signature
+sigenes = read.table(lcsig, header = T, row.names = 1, sep = "\t", check.names = F)
+sigenes = intersect(allgenes, rownames(sigenes))
 
-samples  = intersect(rownames(gep70val), rownames(survdata))
-gep70val = gep70val[samples, , drop=F]
+sigexpr = as.matrix(colMeans(exprdata[sigenes,, drop=F]))
+colnames(sigexpr) = 'LCSIG'
+
 if (gene != "") {
-	gexpr = exprdata[gene, samples, drop = F]
-	survdata = cbind(survdata[samples, ], gep70val, t(gexpr))
+	gexpr = exprdata[gene, samples, drop=F]
+	survdata = cbind(survdata[samples,], sigexpr, t(gexpr))
 } else {
-	survdata = cbind(survdata[samples, ], gep70val)
+	survdata = cbind(survdata[samples,], sigexpr)
 }
 
 write.table(
@@ -101,10 +105,11 @@ autogroup = function(survdata, var) {
 	quantsteps[which.max(survscores)][1]
 }
 
-survdata[, 'GEP70'] = c('low', 'high')[as.numeric(survdata[, 'GEP70'] > quantile(
-	survdata[, 'GEP70'], 
-	autogroup(survdata, 'GEP70')
+survdata[, 'LCSIG'] = c('low', 'high')[as.numeric(survdata[, 'LCSIG'] > quantile(
+	survdata[, 'LCSIG'], 
+	autogroup(survdata, 'LCSIG')
 )) + 1]
+
 
 if (gene != "") {
 	survdata[, gene] = c('low', 'high')[as.numeric(survdata[, gene] > quantile(
@@ -113,7 +118,7 @@ if (gene != "") {
 	)) + 1]
 	Group = apply(survdata, 1, function(row) paste(row[3], row[4], sep = ':'))
 	Group = matrix(Group, ncol = 1)
-	colnames(Group) = paste('GEP70', gene, sep = ':')
+	colnames(Group) = paste('LCSIG', gene, sep = ':')
 	survdata = cbind(survdata, Group)
 }
 
@@ -188,8 +193,7 @@ plot.survival = function(data, v) {
 	write.table(ret.summary, paste0(prefix, var, '.survival.txt'), row.names = F, col.names = T, sep = "\t", quote = F)
 }
 
-plot.survival(survdata, 'GEP70')
+plot.survival(survdata, 'LCSIG')
 if (gene != "") {
-	plot.survival(survdata, paste('GEP70', gene, sep = ':'))
+	plot.survival(survdata, paste('LCSIG', gene, sep = ':'))
 }
-
