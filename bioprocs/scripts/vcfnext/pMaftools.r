@@ -13,6 +13,7 @@ ngenes   = {{args.ngenes | R}}
 nthread  = {{args.nthread | R}}
 ref      = {{args.ref | quote}}
 
+setwd(outdir)
 # you probably have multiple maf files
 maffiles = c(Sys.glob(file.path(indir, "*.maf")), Sys.glob(file.path(indir, "*.maf.gz")))
 
@@ -107,6 +108,19 @@ genesum = getGeneSummary(laml)
 samsum  = getSampleSummary(laml)
 genes   = genesum$Hugo_Symbol[1:ngenes]
 nsample = nrow(samsum)
+
+siggenes = c(Sys.glob(file.path(indir, '*sig_genes.txt.gz')), Sys.glob(file.path(indir, '*sig_genes.txt')))
+siggene  = NULL
+if (length(siggenes) > 0) {
+	siggene = siggenes[1]
+	if (length(siggenes) > 1) {
+		log2pyppl('You multiple mutsig files in input directory, using the first one:', siggene, level = 'warning')
+	} else {
+		msdata = read.table(if(endsWith(siggene, '.gz')) gzfile(siggene) else siggene, header = T, row.names = 1, sep = "\t", check.names = F)
+		genes = rownames(msdata)[1:ngenes]
+	}
+}
+
 samples = samsum$Tumor_Sample_Barcode
 
 devpars2       = devpars
@@ -131,7 +145,10 @@ if (plots$oncoplot) {
 	do.call(png, c(list(filename = oncoplotfile), devpars2))
 	params = c(list(maf = laml), mtparams$oncoplot)
 	if (!'top' %in% names(params) && !'genes' %in% names(params)){
-		params$top = ngenes
+		#params$top = ngenes
+		params$genes = genes
+	} else if ('top' %in% names(params)) {
+		params$genes = genes[1:params$top]
 	}
 
 	if (!is.null(annofile)) {
@@ -439,8 +456,12 @@ if (plots$somInteraction) {
 	logger('## Plotting somInteraction ...')
 	somInteractionfile = file.path(outdir, 'somInteraction.png')
 	params = c(list(maf = laml), mtparams$somInteraction)
-	if (!'top' %in% names(params)) 
-		params$top = ngenes
+	if (!'top' %in% names(params) && !'genes' %in% names(params)){
+		#params$top = ngenes
+		params$genes = genes
+	} else if ('top' %in% names(params)) {
+		params$genes = genes[1:params$top]
+	}
 	do.call(png, c(list(filename = somInteractionfile), devpars))
 	tryCatch(
 		{
@@ -502,12 +523,7 @@ if (plots$pfam) {
 
 #### pancan
 if (plots$pancan) {
-	siggenes = c(Sys.glob(file.path(indir, '*sig_genes.txt.gz')), Sys.glob(file.path(indir, '*sig_genes.txt')))
-	if (length(siggenes) > 0) {
-		siggene = siggenes[1]
-		if (length(siggenes) > 1) {
-			log2pyppl('You multiple mutsig files in input directory, using the first one:', siggene, level = 'warning')
-		}
+	if (!is.null(siggene)) {
 		params  = mtparams$pancan
 		params$mutsigResults = siggene
 		if (!'cohortName' %in% names(params)) {
