@@ -11,13 +11,15 @@ from os import path, listdir
 from glob import glob
 from collections import OrderedDict
 from pyppl import PyPPL, utils, Channel
-from pyppl.parameters import commands, HelpAssembler
+from pyppl.parameters import commands, HelpAssembler, COLORS
 from tempfile import gettempdir
 
 METHODS   = None
 SCRIPTS   = None
 PROCESSES = None
 MAIN      = None
+
+ASSEMBLER = HelpAssembler(theme = 'default')
 
 class Methods(object):
 
@@ -66,7 +68,6 @@ class Methods(object):
 		else:
 			procs = Main._getProcesses()
 		
-		assembler = HelpAssembler()
 		ret = []
 		for module, ps in procs.items():
 			moddoc = Main.getModuleDoc(module)
@@ -76,14 +77,14 @@ class Methods(object):
 			for i, mdoc in enumerate(moddoc):
 				if i == 0:
 					ret.append(
-						assembler.title('module') + ' ' + \
-						assembler.prog(module) + ' - ' +   \
-						assembler.optdesc(mdoc)
+						ASSEMBLER.title('module') + ' ' + \
+						ASSEMBLER.prog(module) + ' - ' +   \
+						ASSEMBLER.optdesc(mdoc)
 					)
 				else:
 					ret.append(
 						' ' * (11 + len(module)) + \
-						assembler.optdesc(mdoc)
+						ASSEMBLER.optdesc(mdoc)
 					)
 				seplen = max(seplen, 11 + len(module) + len(mdoc))
 			ret.append('-' * seplen)
@@ -91,8 +92,8 @@ class Methods(object):
 			pnlen = max([len(pname) for pname in ps.keys()]) + len(module) + 1
 			for pname, proc in ps.items():
 				ret.append(
-					assembler.prog('- ' + (module + '.' + pname).ljust(pnlen) + ': ') + \
-					assembler.optdesc(proc.proc.desc)
+					ASSEMBLER.prog('- ' + (module + '.' + pname).ljust(pnlen) + ': ') + \
+					ASSEMBLER.optdesc(proc.proc.desc)
 				)
 			ret.append('')
 
@@ -110,23 +111,22 @@ class Methods(object):
 		if not args:
 			args = bioprocs.params.asDict().keys()
 		
-		assembler = HelpAssembler()
 		ret = []
 		for arg in sorted(args):
-			ret.append(assembler.title('parameter') + ' ' + assembler.prog(arg))
+			ret.append(ASSEMBLER.title('parameter') + ' ' + ASSEMBLER.prog(arg))
 			if not arg in bioprocs.params._params:
-				ret.append(assembler.error('  No such parameter: {}'.format(arg)))
+				ret.append(ASSEMBLER.error('  No such parameter: {}'.format(arg)))
 			else:
 				param = bioprocs.params[arg]
 				for i, desc in enumerate(param.desc):
 					if desc.startswith('DEFAULT: '):
 						continue
 					if i == 0:
-						ret.append(assembler.prog('- desc : ') + assembler.optdesc(desc))
+						ret.append(ASSEMBLER.prog('- desc : ') + ASSEMBLER.optdesc(desc))
 					else:
-						ret.append(' ' * 11 + assembler.optdesc(desc))
-				ret.append(assembler.prog('- type : ') + param.type)
-				ret.append(assembler.prog('- value: ') + repr(param.value))
+						ret.append(' ' * 11 + ASSEMBLER.optdesc(desc))
+				ret.append(ASSEMBLER.prog('- type : ') + param.type)
+				ret.append(ASSEMBLER.prog('- value: ') + repr(param.value))
 			ret.append('')
 		sys.stdout.write('\n'.join(ret) + '\n')
 
@@ -136,7 +136,7 @@ class Command(object):
 	def __init__(self, name, prog = path.basename(sys.argv[0])):
 		self.prog      = prog
 		self.name      = name
-		self.assembler = HelpAssembler(prog)
+		self.assembler = HelpAssembler(prog, theme = ASSEMBLER.theme)
 	
 	@staticmethod
 	def getblocks(docstr):
@@ -300,11 +300,14 @@ class Process(Command):
 		docstr = regex.search(content)
 
 		if not docstr or 'Alias of' in docstr.group(2):
+			alias = docstr.group(2)
 			docstr = ''
 			docstr += '@name:\n'
 			docstr += '	{}\n'.format(self.procname)
 			docstr += '@description:\n'
 			docstr += '	{}\n'.format(self.proc.desc)
+			if alias is not None:
+				docstr += '	' + alias.strip() + ' (of module {})\n'.format(self.module)
 			docstr += '@input:\n'
 			
 			inputs = self.proc.config['input']
@@ -340,25 +343,24 @@ class Process(Command):
 				for key, val in self.proc.args.items():
 					docstr += '	`{}`: Default: {!r}\n'.format(key, val)
 		else:
-			docstr = docstr.group(0)
-		
+			docstr = docstr.group(0)[3:-3]
+
 		return docstr
 
 	def helpitems(self, blocks):
 		
 		def tokendefault(desc, token):
-			rets = desc.split(token, 1)
-			rets[-1] = token + rets[-1]
-			return list(filter(None, rets))
+			return [desc[:desc.index(token)] + HelpAssembler().theme['default'] + desc[desc.index(token):] + COLORS.end]
 
 		def sepdefault(desc):
+			desc = desc.replace('    ', '  ').replace('\t', '  ')
 			defaults = ['Default:', 'DEFAULT:']
 			if defaults[0] in desc:
 				return tokendefault(desc, defaults[0])
 			elif defaults[1] in desc:
 				return tokendefault(desc, defaults[1])
 			else:
-				return [stripL(desc)]
+				return [desc]
 
 		def stripL(line):
 			if line.startswith('    '):
