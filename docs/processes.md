@@ -3519,6 +3519,62 @@
         [`r-survival`](https://rdrr.io/cran/survival/)
         [`r-survminer`](https://rdrr.io/cran/survminer/)
 
+!!! hint "pPostSurvival"
+
+    - **description**  
+        Statistic comparison between groups after survival analysis.
+
+    - **input**  
+        - `infile:file`: The result file from `pSurvival`  
+        - `survfile:file`: The survival data. See format of infile of `pSurvival`  
+
+    - **output**  
+        - `outdir`: The output directory containing the output files and plots  
+
+    - **args**  
+        - `covfile`: The covariant file. Require rownames in both this file and input file.  
+        - `methods`: A list of testing methods  
+        	- `wilcox`: Wilcox rank sum test
+        	- `t`: t-test
+        	- `chisq`: chisquare-test
+        - `inopts`: The input options for `i.survfile`.  
+        	- `rnames`: whether the file has row names. This has to be True if `args.covfile` provided.
+
+!!! hint "pBin"
+
+    - **description**  
+        Bin the data in columns.
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file. Default: `{{i.infile | stem}}.binned{{i.infile | ext}}`  
+
+    - **args**  
+        - `inopts`: The input options.  
+        	- `delimit`: The delimiter. Default: `\t`
+        	- `rnames`: Whether input file has row names. Default: `False`
+        	- `cnames`: Whether input file has column names. Default: `True`
+        	- Other arguments available for `read.table`
+        - `binopts`: The default bin options:  
+        	- `nbin`: Number of bins.
+        	- `step`: The step of binning.
+        	- `nan`:  What to do if the value is not a number. Default: `skip`
+        		- `skip/keep`: Keep it
+        		- `as0`: Treat it as 0
+        	- `out`: The out value. Default: `step`
+        		- `step`: Use the step breaks
+        		- `lower/min`: Use the min value of the records in the bin
+        		- `upper/max`: Use the max value of the records in the bin
+        		- `mean`: Use the mean value of the records in the bin
+        		- `median`: Use the median value of the records in the bin
+        		- `binno`: Use the bin number (empty bins will be skipped).
+        - `cols`: The detailed bin options for each column.   
+        	- If not provided (`None`), all columns will use `binopts`. 
+        	- If column specified, only the specified column will be binned.
+        	- Column indices can be used. It's 1-based.
+
 !!! hint "pChiSquare"
 
     - **description**  
@@ -3992,14 +4048,14 @@
 
     - **args**  
         - `inopts`: The input options for infile:  
-        	- `delimit`: The delimit. Default: `\\t`
+        	- `delimit`: The delimit. Default: `\t`
         	- `comment`: The comment sign. Default: `#`
         	- `skip`: First N lines to skip. Default: `0`
         	- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict). If not specified, metadata will be generated automatically.
         - `outopts`: The output options for outfile:  
-        	- `delimit`: The delimit for records. Default: `\\t`
+        	- `delimit`: The delimit for records. Default: `\t`
         	- `head`: Output header or not. Default: `False`
-        	- `headDelimit`: The delimit for header. Default: `\\t`
+        	- `headDelimit`: The delimit for header. Default: `\t`
         	- `headPrefix`: The prefix for header. Default: ``
         	- `headTransform`: The transformer for header. Default: `None`
         	- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict, '+' as an element or key is allowed to indicate extra meta from the reader). If not specified, metadata will be borrowed from the reader. 
