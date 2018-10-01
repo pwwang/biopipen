@@ -67,12 +67,12 @@ Matrix_eQTL_main(
 	snps = snps, 
 	gene = gene, 
 	cvrt = cvrt, 
-	output_file_name = {{out.outfile | quote}}, 
+	output_file_name = {{o.outfile | quote}}, 
 	pvOutputThreshold = {{args.pval}},
 	useModel = {{args.model | lambda x: 'r:' + x | R}}, 
 	errorCovariance = numeric(), 
 	verbose=T, 
-	output_file_name.cis  = {{out.cisfile | quote}},
+	output_file_name.cis  = {{o.cisfile | quote}},
 	pvOutputThreshold.cis = {{args.cisopts.cispv}},
 	snpspos = snpspos, 
 	genepos = genepos,
@@ -84,12 +84,12 @@ Matrix_eQTL_engine(
 	snps = snps, 
 	gene = gene, 
 	cvrt = cvrt, 
-	output_file_name = {{out.outfile | quote}}, 
+	output_file_name = {{o.outfile | quote}}, 
 	pvOutputThreshold = {{args.pval}}, 
 	useModel = {{args.model | lambda x: 'r:' + x | R}}, 
 	errorCovariance = numeric(), 
 	verbose = T,
 	noFDRsaveMemory = !{{args.fdr | R}}
 )
-file.create({{out.cisfile | quote}})
+file.create({{o.cisfile | quote}})
 {% endif %}

@@ -102,33 +102,48 @@ class Methods(object):
 	@staticmethod
 	def params(*args, **kwargs):
 		"""
-		Show bioprocs.params items.
+		Show bioprocs.params items. 
 		@usage:
-			{prog} <POSITIONAL ...>
+			# Show all parameters
+			{prog}
+			# Show parameter details
+			{prog} [param1][ param2][ param3 ...]
+			# Get the value of a single parameter
+			{prog} -get <param>
 		@params:
+			`get:PARAM`: Get the value of the parameter
 			`POSITIONAL`: The parameter names
 		"""
-		if not args:
-			args = bioprocs.params.asDict().keys()
-		
-		ret = []
-		for arg in sorted(args):
-			ret.append(ASSEMBLER.title('parameter') + ' ' + ASSEMBLER.prog(arg))
-			if not arg in bioprocs.params._params:
-				ret.append(ASSEMBLER.error('  No such parameter: {}'.format(arg)))
-			else:
-				param = bioprocs.params[arg]
-				for i, desc in enumerate(param.desc):
-					if desc.startswith('DEFAULT: '):
-						continue
-					if i == 0:
-						ret.append(ASSEMBLER.prog('- desc : ') + ASSEMBLER.optdesc(desc))
-					else:
-						ret.append(' ' * 11 + ASSEMBLER.optdesc(desc))
-				ret.append(ASSEMBLER.prog('- type : ') + param.type)
-				ret.append(ASSEMBLER.prog('- value: ') + repr(param.value))
-			ret.append('')
-		sys.stdout.write('\n'.join(ret) + '\n')
+		commands.params._hbald = False
+		if commands.params._shouldPrintHelp(list(args) + list([
+			commands.params._props['prefix'] + k for k in kwargs.keys()])):
+			METHODS['params'].help(printNexit = True)
+
+		if kwargs and 'get' in kwargs:
+			arg = kwargs['get']
+			sys.stdout.write(bioprocs.params[arg].value)
+		else:
+			if not args:
+				args = bioprocs.params.asDict().keys()
+			
+			ret = []
+			for arg in sorted(args):
+				ret.append(ASSEMBLER.title('parameter') + ' ' + ASSEMBLER.prog(arg))
+				if not arg in bioprocs.params._params:
+					ret.append(ASSEMBLER.error('  No such parameter: {}'.format(arg)))
+				else:
+					param = bioprocs.params[arg]
+					for i, desc in enumerate(param.desc):
+						if desc.upper().startswith('DEFAULT: '):
+							continue
+						if i == 0:
+							ret.append(ASSEMBLER.prog('- desc : ') + ASSEMBLER.optdesc(desc))
+						else:
+							ret.append(' ' * 11 + ASSEMBLER.optdesc(desc))
+					ret.append(ASSEMBLER.prog('- type : ') + param.type)
+					ret.append(ASSEMBLER.prog('- value: ') + repr(param.value))
+				ret.append('')
+			sys.stdout.write('\n'.join(ret) + '\n')
 
 
 class Command(object):
@@ -148,7 +163,6 @@ class Command(object):
 			namematch = re.match(r'^\s*@(\w+):', line)
 			if not namematch and not blockname:
 				blockname = 'doc'
-				continue
 			elif namematch:
 				blockname = namematch.group(1)
 				continue

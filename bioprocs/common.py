@@ -67,7 +67,7 @@ pFiles2Dir.script         = "file:scripts/common/pFiles2Dir.py"
 pFile2Proc                = Proc(desc="Convert a file to a proc so it can be used as dependent")
 pFile2Proc.input          = "infile:file"
 pFile2Proc.output         = "outfile:file:{{i.infile | bn}}"
-pFile2Proc.script         = 'ln -s "{{i.infile}}" "{{out.outfile}}"'
+pFile2Proc.script         = 'ln -s "{{i.infile}}" "{{o.outfile}}"'
 
 """
 @name:
@@ -80,8 +80,8 @@ pFile2Proc.script         = 'ln -s "{{i.infile}}" "{{out.outfile}}"'
 	`outfile:file`: The output file.
 """
 pStr2File                 = Proc(desc = "Save string to a file.")
-pStr2File.input           = "in:var"
-pStr2File.output          = "outfile:file:{{i.in | encode}}.txt"
+pStr2File.input           = "instr:var"
+pStr2File.output          = "outfile:file:{{i.instr | encode}}.txt"
 pStr2File.args.breakOn    = ','
 pStr2File.args.trimLine   = True
 pStr2File.envs.encode     = lambda x: __import__('re').sub(r'[^\w_]', '', x)[:16]
@@ -195,7 +195,7 @@ cat {{i.infile2 | squote}} >> {{out.outfile | squote}}
 """
 pMergeFiles              = Proc(desc = 'Merge files.')
 pMergeFiles.input        = "infiles:files"
-pMergeFiles.output       = "outfile:file:{{i.infiles | fs2name}}{{i.infiles | :v1[0] if v1 else '' | ext }}"
+pMergeFiles.output       = "outfile:file:{{i.infiles | fs2name}}{{i.infiles | :a[0] if a else '' | ext }}"
 pMergeFiles.args.header  = False
 pMergeFiles.envs.fs2name = fs2name
 pMergeFiles.lang         = params.python.value

@@ -22,6 +22,12 @@ if ((ncols <= 3 && tool == 'auto') || tool == 'venn') {
 		metadata = cbind.fill(metadata, exmeta)
 	}
 	metadata = cbind(metadata, sets = rownames(metadata))
+	missingcols = rownames(metadata[metadata$counts == 0,,drop=F])
+	if (length(missingcols) > 0) {
+		log2pyppl('No data in columns:', missingcols)
+	}
+	metadata = metadata[metadata$counts>0, , drop = F]
+	data = data[, rownames(metadata), drop = F]
 	params = {{args.params | R}}
 	plot.upset(data, outfile, params, devpars)
 }

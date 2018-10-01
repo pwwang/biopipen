@@ -22,11 +22,12 @@ from . import params
 """
 pDocx             = Proc(desc = 'Operating .docx file')
 pDocx.input       = 'infile, codes:files'
-pDocx.output      = 'outfile:file:{{i.infile | lambda f, path = __import__("os").path: bn(f) if path.isfile(f) else str2fn(f) + ".docx"}}'
+pDocx.output      = 'outfile:file:{{bn(i.infile) if path.isfile(i.infile) else str2fn(i.infile) + ".docx"}}'
 pDocx.args.bcode  = []
 pDocx.args.acode  = []
 pDocx.args.error  = 'exit' # or ignore
 pDocx.envs.str2fn = lambda s, re = __import__('re'): re.sub(r'[^\w\-_\.]', '_', s)[:32]
+pDocx.envs.path   = __import__("os").path
 pDocx.lang        = params.python.value
 pDocx.script      = "file:scripts/docx/pDocx.py"
 

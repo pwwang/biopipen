@@ -15,7 +15,7 @@ infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
 inopts  = {{default_inopts | R}}
 binopts = {{default_binopts | R}}
-cols    = {{args.cols | R}}
+cols    = {{args.cols | R: False}}
 
 inopts = c(infile, inopts)
 data   = do.call(read.table, inopts)

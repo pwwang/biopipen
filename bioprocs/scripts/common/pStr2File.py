@@ -1,4 +1,4 @@
-string = {{i.in | quote}}
+string = {{i.instr | quote}}
 
 {% for b in args.breakOn %}
 string = string.replace({{b | quote}}, '\n')

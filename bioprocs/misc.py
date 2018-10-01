@@ -50,50 +50,6 @@ pGEP70.script       = "file:scripts/misc/pGEP70.r"
 
 """
 @name:
-	pLungCancerGeneSig
-@description:
-	https://www.ncbi.nlm.nih.gov/pubmed/19118056
-@input:
-	`exprfile:file`: The input file with expression matrix
-		- Columns are samples, rows are genes
-		- make sure the expression values are log2-scale normalized
-	`survfile:file`: The survival data file (header is required).
-		- col1: rownames
-		- col2: the survival time
-		- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
-	`gene`: An extra gene to be added to the plot.
-		- If not provided, only do the lungcancersig plot.
-@output:
-	`outdir:file`: The output directory, containing:
-		- The survival data file.
-		- The lungcancersig plot and results
-		- The lungcancersig + gene plot and results if `i.gene` is provided.
-@args:
-	`lcsig`: The lungcancersig genes. 
-		- Column 1: gene
-		- Other columns: other information of the gene (not necessary)
-	`inunit`  : The time unit in input file. Default: days
-	`outunit` : The output unit for plots. Default: days
-	`params`  : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': 'Log-rank p = {pval}'})`
-		- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
-	`ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
-	`devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
-"""
-pLungCancerGeneSig              = Proc(desc = 'Do a GEP70-like signature analysis for NSCLC')
-pLungCancerGeneSig.input        = 'exprfile:file, survfile:file, gene'
-pLungCancerGeneSig.output       = 'outdir:dir:{{i.survfile | fn2}}.lungcancersig{{i.gene}}'
-pLungCancerGeneSig.args.lcsig   = params.lcsig.value
-pLungCancerGeneSig.args.inunit  = 'days' # months, weeks, years
-pLungCancerGeneSig.args.outunit = 'days'
-pLungCancerGeneSig.args.params  = Box({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
-pLungCancerGeneSig.args.devpars = Box(res = 300, height = 2000, width = 2000)
-pLungCancerGeneSig.args.ggs     = Box(table = Box())
-pLungCancerGeneSig.envs.rimport = rimport
-pLungCancerGeneSig.lang         = 'Rscript'
-pLungCancerGeneSig.script       = "file:scripts/misc/pLungCancerGeneSig.r"
-
-"""
-@name:
 	pNCBI
 @description:
 	The NCBI E-Utils

@@ -391,7 +391,7 @@ plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, wi
 plot.upset = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
 	library(UpSetR)
 	do.call(png, c(list(filename = plotfile), devpars))
-	default.params = list(data = data, sets = colnames(data))
+	default.params = list(data = data, nsets = ncol(data))
 	params = update.list(default.params, params)
 	p = do.call(upset, params)
 	print(p)

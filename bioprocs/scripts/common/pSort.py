@@ -4,7 +4,7 @@ from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 {% if args.sorted %}
-cmd = "ln -s {{i.infile | squote}} {{out.outfile | squote}}"
+cmd = "ln -s {{i.infile | squote}} {{o.outfile | squote}}"
 
 {% else %}
 params = Box()
@@ -47,7 +47,7 @@ case = "LANG=C"
 case = "LANG=en_US.UTF-8"
 {% endif %}
 
-cmd = '%s sort %s "%s" >> {{out.outfile | quote}}' % (case, cmdargs(params), tmpfile)
+cmd = '%s sort %s "%s" >> {{o.outfile | quote}}' % (case, cmdargs(params), tmpfile)
 {% endif %}
 
 runcmd(cmd)

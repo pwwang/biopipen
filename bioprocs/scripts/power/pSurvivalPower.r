@@ -10,10 +10,10 @@ rnames  = {{args.rnames | lambda x: 1 if x else 'NULL' | R}}
 ngroup  = as.integer({{args.ngroup | R}})
 alphas  = {{args.alphas | lambda x: x if isinstance(x, list) else [float(a.strip()) for a in x.split(',')] if isinstance(x, str) else [x] | R}}
 betas   = {{args.betas | lambda x: x if isinstance(x, list) else [float(a.strip()) for a in x.split(',')] if isinstance(x, str) else [x] | R}}
-ngroup1 = {{i.ngroup1 | : int(v1) if v1 else 0}}
-ngroup2 = {{i.ngroup2 | : int(v1) if v1 else 0}}
-ngroup3 = {{i.ngroup3 | : int(v1) if v1 else 0}}
-ngroup4 = {{i.ngroup4 | : int(v1) if v1 else 0}}
+ngroup1 = {{i.ngroup1 | : int(a) if a else 0}}
+ngroup2 = {{i.ngroup2 | : int(a) if a else 0}}
+ngroup3 = {{i.ngroup3 | : int(a) if a else 0}}
+ngroup4 = {{i.ngroup4 | : int(a) if a else 0}}
 
 ncut = function(dat, n, prefix = 'q') {
 	diffdata = max(dat) - min(dat)
