@@ -2092,39 +2092,6 @@
         - `ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.  
         - `devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`  
 
-!!! hint "pLungCancerGeneSig"
-
-    - **description**  
-        https://www.ncbi.nlm.nih.gov/pubmed/19118056
-
-    - **input**  
-        - `exprfile:file`: The input file with expression matrix  
-        	- Columns are samples, rows are genes
-        	- make sure the expression values are log2-scale normalized
-        - `survfile:file`: The survival data file (header is required).  
-        	- col1: rownames
-        	- col2: the survival time
-        	- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
-        - `gene`: An extra gene to be added to the plot.  
-        	- If not provided, only do the lungcancersig plot.
-
-    - **output**  
-        - `outdir:file`: The output directory, containing:  
-        	- The survival data file.
-        	- The lungcancersig plot and results
-        	- The lungcancersig + gene plot and results if `i.gene` is provided.
-
-    - **args**  
-        - `lcsig`: The lungcancersig genes.   
-        	- Column 1: gene
-        	- Other columns: other information of the gene (not necessary)
-        - `inunit`  : The time unit in input file. Default: days  
-        - `outunit` : The output unit for plots. Default: days  
-        - `params`  : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': 'Log-rank p = {pval}'})`  
-        	- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0. 
-        - `ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.  
-        - `devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`  
-
 !!! hint "pNCBI"
 
     - **description**  
