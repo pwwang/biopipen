@@ -37,7 +37,8 @@ from bioprocs import params, rimport
 """
 pGEP70              = Proc(desc = 'Do GEP70 plot for multiple mylenoma 70-gene-signatures')
 pGEP70.input        = 'exprfile:file, survfile:file, gene'
-pGEP70.output       = 'outdir:dir:{{i.survfile | fn2}}.gep70{{i.gene}}'
+pGEP70.output       = 'outdir:dir:{{i.survfile | fn2}}.{{args.name}}{{i.gene}}'
+pGEP70.args.name    = 'GEP70'
 pGEP70.args.gep70   = params.gep70.value
 pGEP70.args.inunit  = 'days' # months, weeks, years
 pGEP70.args.outunit = 'days'

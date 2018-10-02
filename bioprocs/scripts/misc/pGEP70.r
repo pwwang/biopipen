@@ -13,7 +13,8 @@ gene     = {{i.gene | quote}}
 gep70    = {{args.gep70 | R}}
 devpars  = {{args.devpars | R}}
 params   = {{args.params | R}}
-prefix   = {{fn2(i.survfile), i.gene, o.outdir | lambda v1, v2, v3, path = path: path.join(v3, '{}.GEP70-{}.'.format(v1, v2) if v2 else '{}.GEP70.'.format(v1)) | quote }}
+name     = {{args.name | R}}
+prefix   = {{fn2(i.survfile), i.gene, o.outdir, args.name | lambda v1, v2, v3, v4, path = path: path.join(v3, '{}.{}-{}.'.format(v1, v4, v2) if v2 else '{}.{}.'.format(v1, v4)) | quote }}
 
 mainggs       = {{args.ggs | R}}
 tableggs      = mainggs$table
@@ -62,7 +63,7 @@ gene19   = intersect(allgenes, rownames(gene70[which(gene70[,1] == 'down'),,drop
 exp51    = as.matrix(colMeans(exprdata[gene51, , drop = F]))
 exp19    = as.matrix(colMeans(exprdata[gene19, , drop = F]))
 gep70val = exp51 - exp19
-colnames(gep70val) = 'GEP70'
+colnames(gep70val) = name
 
 samples  = intersect(rownames(gep70val), rownames(survdata))
 gep70val = gep70val[samples, , drop=F]
@@ -101,9 +102,9 @@ autogroup = function(survdata, var) {
 	quantsteps[which.max(survscores)][1]
 }
 
-survdata[, 'GEP70'] = c('low', 'high')[as.numeric(survdata[, 'GEP70'] > quantile(
-	survdata[, 'GEP70'], 
-	autogroup(survdata, 'GEP70')
+survdata[, name] = c('low', 'high')[as.numeric(survdata[, name] > quantile(
+	survdata[, name], 
+	autogroup(survdata, name)
 )) + 1]
 
 if (gene != "") {
@@ -113,7 +114,7 @@ if (gene != "") {
 	)) + 1]
 	Group = apply(survdata, 1, function(row) paste(row[3], row[4], sep = ':'))
 	Group = matrix(Group, ncol = 1)
-	colnames(Group) = paste('GEP70', gene, sep = ':')
+	colnames(Group) = paste(name, gene, sep = ':')
 	survdata = cbind(survdata, Group)
 }
 
@@ -188,8 +189,8 @@ plot.survival = function(data, v) {
 	write.table(ret.summary, paste0(prefix, var, '.survival.txt'), row.names = F, col.names = T, sep = "\t", quote = F)
 }
 
-plot.survival(survdata, 'GEP70')
+plot.survival(survdata, name)
 if (gene != "") {
-	plot.survival(survdata, paste('GEP70', gene, sep = ':'))
+	plot.survival(survdata, paste(name, gene, sep = ':'))
 }
 
