@@ -261,7 +261,7 @@ class Cache(object):
 
 		return {k:r for k,r in results.items() if r}, rest
 
-	def query(self, columns, data, dummies = None, chunk = 1000):
+	def query(self, columns, data, dummies = None, chunk = 200):
 		retall, retrest = {}, {}
 		datalen = Cache._checkData(data)
 		for i in xrange(0, datalen, chunk):

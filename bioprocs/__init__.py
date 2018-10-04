@@ -36,6 +36,8 @@ DEFAULTS = {
 	"gep70.desc"         : "The GEP70 genes (col1: 51up, col2:19down).",
 	"gsize"              : "",
 	"gsize.desc"         : "The chromsome size file.",
+	"ipidb"              : "",
+	"ipidb.desc"         : "The IPI xref database file.",
 	"kallistoIdx"        : "",
 	"kallistoIdx.desc"   : "The kallisto index file.",
 	"lcsig"              : "",

@@ -403,8 +403,12 @@ class TsvWriterBase(object):
 	def write(self, record, delimit = None):
 		delimit = delimit or self.delimit
 		outs = []
-		for key in self.meta.keys():
-			outs.append(str(record[key]))
+		for i, key in enumerate(self.meta.keys()):
+			try:
+				outs.append(str(record[key]))
+			except TypeError:
+				outs.append(str(record[i]))
+
 		self.file.write(delimit.join(outs) + '\n')
 
 	def __del__(self):

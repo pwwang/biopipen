@@ -25,10 +25,11 @@ pGenePromoters = pPromoters.copy()
 		- skip  : skip the record(don't write it to output file)
 		- ignore: use the original name;
 		- error : report error
-	`col`: the column index containing the gene names
-	`from`: the original format. Default: 'symbol, alias'
-	`to`: the output gene name format. Default: 'symbol'
-	`genome`: the genome. Default: 'hg19'
+	`genecol` : the column index containing the gene names
+	`frm`     : the original format. Default: 'symbol, alias'
+	`to`      : the output gene name format. Default: 'symbol'
+	`genome`  : the genome. Default: 'hg19'
+	`cachedir`: The cache directory
 """
 pGeneNameNorm               = Proc(desc = 'Normalize gene names using MyGeneinfo.')
 pGeneNameNorm.input         = 'infile:file'
@@ -40,18 +41,47 @@ pGeneNameNorm.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix
 pGeneNameNorm.args.genecol  = ''
 pGeneNameNorm.args.frm      = 'symbol, alias'
 pGeneNameNorm.args.to       = 'symbol'
-pGeneNameNorm.args.cachedir = params.cachedir.value
 pGeneNameNorm.args.genome   = params.genome.value
 pGeneNameNorm.args.cachedir = params.cachedir.value
-#pGeneNameNorm.envs.genenorm = genenorm.py
 pGeneNameNorm.lang          = params.python.value
 pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 
 """
 @name:
+	pIPI
+@description:
+	Convert gene symbol to IPI protein accession and vice versa.
+	One gene symbol could map to multiple IPIs, which will be separated by pipe (|)
+@input:
+	`infile:file` : The input file
+@output:
+	`outfile:file`: The output file
+@args:
+	`notfound`: What if a record is not found: Default: `ignore`
+		- `skip`  : skip the record(don't write it to output file)
+		- `ignore`: use the original name;
+		- `error` : report error
+	`genecol`: The column index containing the gene/protein record
+	`ipidb`: The IPI xref database (see http://ftp.ebi.ac.uk/pub/databases/IPI/last_release/current/).
+"""
+pIPI               = Proc(desc = 'Convert gene symbol to IPI protein accession and vice versa.')
+pIPI.input         = 'infile:file'
+pIPI.output        = 'outfile:file:{{i.infile | bn}}'
+pIPI.errhow        = 'retry'
+pIPI.args.notfound = 'ignore'
+pIPI.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
+pIPI.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
+pIPI.args.genecol  = None
+pIPI.args.fromipi  = True
+pIPI.args.ipidb    = params.ipidb.value
+pIPI.lang          = params.python.value
+pIPI.script        = "file:scripts/gene/pIPI.py"
+
+"""
+@name:
 	pGeneTss
 @description:
-	Get gene TSS in BEd format.
+	Get gene TSS in BED format.
 @input:
 	`infile:file`: The input file containing genes
 @output:

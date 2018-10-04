@@ -1613,15 +1613,36 @@
         	- skip  : skip the record(don't write it to output file)
         	- ignore: use the original name;
         	- error : report error
-        - `col`: the column index containing the gene names  
-        - `from`: the original format. Default: 'symbol, alias'  
-        - `to`: the output gene name format. Default: 'symbol'  
-        - `genome`: the genome. Default: 'hg19'  
+        - `genecol` : the column index containing the gene names  
+        - `frm`     : the original format. Default: 'symbol, alias'  
+        - `to`      : the output gene name format. Default: 'symbol'  
+        - `genome`  : the genome. Default: 'hg19'  
+        - `cachedir`: The cache directory  
+
+!!! hint "pIPI"
+
+    - **description**  
+        Convert gene symbol to IPI protein accession and vice versa.
+        One gene symbol could map to multiple IPIs, which will be separated by pipe (|)
+
+    - **input**  
+        - `infile:file` : The input file  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `notfound`: What if a record is not found: Default: `ignore`  
+        	- `skip`  : skip the record(don't write it to output file)
+        	- `ignore`: use the original name;
+        	- `error` : report error
+        - `genecol`: The column index containing the gene/protein record  
+        - `ipidb`: The IPI xref database (see http://ftp.ebi.ac.uk/pub/databases/IPI/last_release/current/).  
 
 !!! hint "pGeneTss"
 
     - **description**  
-        Get gene TSS in BEd format.
+        Get gene TSS in BED format.
 
     - **input**  
         - `infile:file`: The input file containing genes  
@@ -4569,6 +4590,25 @@
 
     - **requires**  
         [Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
+
+!!! hint "pMutationSigs"
+
+    - **description**  
+        Find similar COSMIC mutation signatures for MAF file 
+        using https://github.com/pwwang/deconstruct_sigs_py
+
+    - **input**  
+        - `infile:file`: The input maf file.  
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `font_family`: Font family for plotting.   
+        - `font_weight`: Font weight for plotting.   
+        - `sig_cutoff` : Significance cutoff for signatures.   
+        - `err_thres`  : The threshold to top the iteration.  
+        - `ref`        : The reference genome.  
 
 !!! hint "pSnpEff"
 

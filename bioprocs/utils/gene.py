@@ -67,7 +67,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 	reader   = TsvReader(infile, **inopts)
 	if not reader.meta: reader.autoMeta()
-	genecol  = genecol or reader.meta.keys()[0]
+	genecol  = genecol or 0
 	genes    = list(set([r[genecol].strip() for r in reader]))
 	reader.rewind()
 
@@ -165,7 +165,18 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	#	cache.save(cachedata, cachefactory)
 	#	del cachedata
 	if data2save:
-		cache.save(data2save, dummies)
+		# make it unique
+		ds_keys = list(data2save.keys())
+		data2save_uniq = {k:[] for k in ds_keys}
+		tmp_container  = []
+		for i in range(len(data2save[ds_keys[0]])):
+			tmp = {k:data2save[k][i] for k in ds_keys}
+			if not tmp in tmp_container:
+				tmp_container.append(tmp)
+				for k in ds_keys:
+					data2save_uniq[k].append(data2save[k][i])
+
+		cache.save(data2save_uniq, dummies)
 
 	if outfile:
 		writer   = TsvWriter(outfile, delimit = outopts['delimit'])

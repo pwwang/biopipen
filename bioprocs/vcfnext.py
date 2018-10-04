@@ -318,6 +318,34 @@ pMaftools.script       = "file:scripts/vcfnext/pMaftools.r"
 
 """
 @name:
+	pMutationSigs
+@description:
+	Find similar COSMIC mutation signatures for MAF file 
+	using https://github.com/pwwang/deconstruct_sigs_py
+@input:
+	`infile:file`: The input maf file.
+@output:
+	`outdir:dir`: The output directory
+@args:
+	`font_family`: Font family for plotting. 
+	`font_weight`: Font weight for plotting. 
+	`sig_cutoff` : Significance cutoff for signatures. 
+	`err_thres`  : The threshold to top the iteration.
+	`ref`        : The reference genome.
+"""
+pMutationSigs                  = Proc(desc = 'Find similar COSMIC mutation signatures for MAF file.')
+pMutationSigs.input            = 'infile:file'
+pMutationSigs.output           = 'outdir:dir:{{i.infile | fn2}}.signature'
+pMutationSigs.args.font_family = 'Arial'
+pMutationSigs.args.font_weight = 'bold'
+pMutationSigs.args.sig_cutoff  = 0.05
+pMutationSigs.args.err_thres   = 1e-3
+pMutationSigs.args.ref         = params.ref.value
+pMutationSigs.lang             = params.python.value
+pMutationSigs.script           = "file:scripts/vcfnext/pMutationSigs.py"
+
+"""
+@name:
 	pSnpEff
 @description:
 	This is the default command. It is used for annotating variant filed (e.g. VCF files).
