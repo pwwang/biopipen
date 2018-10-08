@@ -214,7 +214,10 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 						r[tocol] = genemap[query][tocol]
 
 			if outopts['query']:
-				r._QUERY = query
+				if isinstance(r, list):
+					r.append(query)
+				else:
+					r._QUERY = query
 
 			#if (i <= 10): print r
 			writer.write(r)

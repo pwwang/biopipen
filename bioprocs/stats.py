@@ -146,7 +146,7 @@ pSurvival.script         = "file:scripts/stats/pSurvival.r"
 	`infile:file`: The result file from `pSurvival`
 	`survfile:file`: The survival data. See format of infile of `pSurvival`
 @output:
-	`outdir`: The output directory containing the output files and plots
+	`outfile:file`: The output excel file.
 @args:
 	`covfile`: The covariant file. Require rownames in both this file and input file.
 	`methods`: A list of testing methods
@@ -158,8 +158,8 @@ pSurvival.script         = "file:scripts/stats/pSurvival.r"
 """
 pPostSurvival              = Proc(desc = "Post survival analysis: statistics on variables in different groups")
 pPostSurvival.input        = 'infile:file, survfile:file'
-pPostSurvival.output       = 'outdir:dir:{{i.infile | fn2}}.postsurvival'
-pPostSurvival.args.methods = ['t', 'wilcox', 'chisq:10']
+pPostSurvival.output       = 'outfile:file:{{i.infile | fn2}}.stats.xlsx'
+pPostSurvival.args.chi2n   = 10
 pPostSurvival.args.inopts  = Box(rnames = True)
 pPostSurvival.args.covfile = None
 pPostSurvival.envs.rimport = rimport

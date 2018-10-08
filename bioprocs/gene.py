@@ -63,6 +63,9 @@ pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
 		- `error` : report error
 	`genecol`: The column index containing the gene/protein record
 	`ipidb`: The IPI xref database (see http://ftp.ebi.ac.uk/pub/databases/IPI/last_release/current/).
+	`fromipi`: Whether the input is IPI or genes
+	`inopts`: The options for input file
+	`outopts`: The options for output file
 """
 pIPI               = Proc(desc = 'Convert gene symbol to IPI protein accession and vice versa.')
 pIPI.input         = 'infile:file'

@@ -7,7 +7,7 @@ from bioprocs.utils.tsvio import TsvReader
 
 infile   = {{i.infile | quote}}
 inopts   = {{args.inopts}}
-genecol  = {{args.genecol | repr}}
+genecol  = {{args.genecol | repr}} or 0
 cachedir = {{args.cachedir | quote}}
 top      = {{args.top}}
 title    = {{args.title | quote}}

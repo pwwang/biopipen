@@ -1638,6 +1638,9 @@
         	- `error` : report error
         - `genecol`: The column index containing the gene/protein record  
         - `ipidb`: The IPI xref database (see http://ftp.ebi.ac.uk/pub/databases/IPI/last_release/current/).  
+        - `fromipi`: Whether the input is IPI or genes  
+        - `inopts`: The options for input file  
+        - `outopts`: The options for output file  
 
 !!! hint "pGeneTss"
 
@@ -2042,40 +2045,6 @@
 
     - **requires**  
         `r-limma`
-## math
-
-!!! hint "pRank"
-
-    - **description**  
-        Convert values to ranks.
-
-    - **input**  
-        - `infile:file`: The input file  
-
-    - **output**  
-        - `outfile:file`: The output file with ranks.  
-
-    - **args**  
-        - `na`: Where to put the `NA` values.  
-        	- `"first"` : Put `NA` first
-        	- `"last"`  : Put `NA` last (default)
-        	- `"remove"`: Remove `NA` values
-        	- `"keep"`  : keep `NA` values
-        - `tie`: How to deal with ties  
-        	- `"average"` : Use average ranks (default)
-        	- `"first"`   : Use the ranks come first
-        	- `"last"`    : Use the ranks come last
-        	- `"random"`  : Use the random ranks
-        	- `"max"`     : Use the max ranks
-        	- `"min"`     : Use the min ranks
-        - `byrow`: Calculate ranks by row (instead of by column)? Default: `True`  
-        - `reverse`: Take the reverse rank? Default: `True`  
-        	- Large number gets higher rank (smaller rank index)
-        	- `args.na` remains the same.
-        - `inopts`: The input options:  
-        	- `cnames`: Whether the input file has header. Default: `True`
-        	- `rnames`: Whether the input file has row names. Default: `True`
-        	- `delimit`: The separator of columns. Default: `\t`
 ## misc
 
 !!! hint "pGEP70"
@@ -2143,6 +2112,82 @@
 
     - **requires**  
         [python-eutils](https://github.com/biocommons/eutils)
+## mlearn
+
+!!! hint "pLinearRegTrain"
+
+    - **description**  
+        Train a linear regression model
+
+    - **input**  
+        - `infile:file`: The input file (Last column as Y)  
+
+    - **output**  
+        - `outmodel:file`: The output model (RData file)  
+        - `outdir:dir`   : The output directory containing model, plots and other files  
+
+    - **args**  
+        - `plot`   : Whether plot the lm probability. Default: `True`  
+        - `formula`: The formula to perform the regression. Default: `None`.  
+        	- If `None`, will use all first N-1 columns as features.
+        - `inopts` : The input options.  
+        - `yval`   : The type of y values. Default: `categ`  
+        	- `categ`  : categorical values
+        	- `numeric`: numeric values
+
+!!! hint "pLinearRegPredict"
+
+    - **description**  
+        Use a trained linear regression model to predict
+
+    - **input**  
+        - `infile:file`: The input file   
+        - `model:file` : The trained model by `pLinearRegTrain`  
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `inopts` : The input options.  
+        - `outprob`: Also output probabilities? Default: True  
+
+!!! hint "pLogitRegTrain"
+
+    - **description**  
+        Train a linear regression model
+
+    - **input**  
+        - `infile:file`: The input file (Last column as Y)  
+
+    - **output**  
+        - `outmodel:file`: The output model (RData file)  
+        - `outdir:dir`   : The output directory containing model, plots and other files  
+
+    - **args**  
+        - `plot`   : Whether plot the glm probability. Default: `True`  
+        - `formula`: The formula to perform the regression. Default: `None`.  
+        	- If `None`, will use all first N-1 columns as features.
+        - `inopts` : The input options.  
+        - `yval`   : The type of y values. Default: `categ`  
+        	- `categ`  : categorical values
+        	- `prob`   : probabilities
+        	- `numeric`: numeric values
+
+!!! hint "pLogitRegPredict"
+
+    - **description**  
+        Use a trained linear regression model to predict
+
+    - **input**  
+        - `infile:file`: The input file   
+        - `model:file` : The trained model by `pLogitRegTrain`  
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `inopts` : The input options.  
+        - `outprob`: Also output probabilities? Default: True  
 ## pca
 
 !!! hint "pPCA"
@@ -2621,6 +2666,39 @@
         - `betas` : 1-power. Default: `[.05, .1, .2]`  
 ## rank
 
+!!! hint "pRank"
+
+    - **description**  
+        Convert values to ranks.
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file with ranks.  
+
+    - **args**  
+        - `na`: Where to put the `NA` values.  
+        	- `"first"` : Put `NA` first
+        	- `"last"`  : Put `NA` last (default)
+        	- `"remove"`: Remove `NA` values
+        	- `"keep"`  : keep `NA` values
+        - `tie`: How to deal with ties  
+        	- `"average"` : Use average ranks (default)
+        	- `"first"`   : Use the ranks come first
+        	- `"last"`    : Use the ranks come last
+        	- `"random"`  : Use the random ranks
+        	- `"max"`     : Use the max ranks
+        	- `"min"`     : Use the min ranks
+        - `byrow`: Calculate ranks by row (instead of by column)? Default: `True`  
+        - `reverse`: Take the reverse rank? Default: `True`  
+        	- Large number gets higher rank (smaller rank index)
+        	- `args.na` remains the same.
+        - `inopts`: The input options:  
+        	- `cnames`: Whether the input file has header. Default: `True`
+        	- `rnames`: Whether the input file has row names. Default: `True`
+        	- `delimit`: The separator of columns. Default: `\t`
+
 !!! hint "pRankProduct"
 
     - **description**  
@@ -2628,20 +2706,20 @@
 
     - **input**  
         - `infile:file`: The input file  
-        - Format:
-        ```
-        			Case1	Case2	...
-        Feature1	8.2  	10.1 	...
-        Feature2	2.3  	8.0  	...
-        ...
-        ```
-        - Or instead of values, you can also have ranks in the input file:
-        ```
-        			Rank1	Rank2	...
-        Feature1	2    	1    	...
-        Feature2	3    	2    	...
-        ...
-        ```
+        	- Format:
+        	```
+        				Case1	Case2	...
+        	Feature1	8.2  	10.1 	...
+        	Feature2	2.3  	8.0  	...
+        	...
+        	```
+        	- Or instead of values, you can also have ranks in the input file:
+        	```
+        				Rank1	Rank2	...
+        	Feature1	2    	1    	...
+        	Feature2	3    	2    	...
+        	...
+        	```
 
     - **output**  
         - `outfile:file`: The output file with original ranks, rank products and p-value if required  
@@ -3545,7 +3623,7 @@
         - `survfile:file`: The survival data. See format of infile of `pSurvival`  
 
     - **output**  
-        - `outdir`: The output directory containing the output files and plots  
+        - `outfile:file`: The output excel file.  
 
     - **args**  
         - `covfile`: The covariant file. Require rownames in both this file and input file.  
