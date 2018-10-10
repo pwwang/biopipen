@@ -2,11 +2,23 @@
 
 infiles  = {{i.infiles | R}}
 outfile  = {{o.outfile | R}}
-inopts   = {{args.inopts, i.infiles | lambda x, files: (x, len(files)) | lambda x: {k:(v if isinstance(v, list) and len(v) > 1 else v*x[1] if isinstance(x, list) and len(v) == 1 else [v]*x[1]) for k, v in x[0].items()} | R}}
 params   = {{args.params | R}}
 na       = {{args.na | R}}
 fn2cname = {{args.fn2cname}}
 fill     = as.logical({{args.fill | R}})
+{% assign inopts = {} %}
+{% for key, val in args.inopts.items() %}
+	{% if isinstance(val, list) %}
+		{% if len(val) == 1 %}
+			{% python inopts[key] = val * len(i.infiles) %}
+		{% else %}
+			{% python inopts[key] = val %}
+		{% endif %}
+	{% else %}
+		{% python inopts[key] = [val] * len(i.infiles) %}
+	{% endif %}
+{% endfor %}
+inopts = {{inopts | R}}
 
 mats = list()
 for (i in 1:length(infiles)) {

@@ -25,8 +25,9 @@ if (is.null(cnames)) {
 }
 
 if (is.null(args.formula)) {
+	backtick = function(x) sprintf('`%s`', x)
 	ycol = cnames[ncol(indata)]
-	args.formula = as.formula(paste(cnames[ncol(indata)], '~', paste(cnames[1:(ncol(indata)-1)], sep = '+')))
+	args.formula = as.formula(paste(cnames[ncol(indata)], '~', paste(backtick(cnames[1:(ncol(indata)-1)]), sep = '+')))
 } else {
 	ycol = unlist(strsplit(args.formula, '\\s*~\\s*'))[1]
 	args.formula = as.formula(args.formula)
@@ -67,6 +68,14 @@ colnames(OR) = 'OR'
 ret = cbind(ret, exp(OR), exp(conf.int))
 ret[, c(1:3, 5:7)] = round(ret[, c(1:3, 5:7)], 3)
 ret[, 4] = formatC(ret[, 4], format = "E", digits = 2)
+
+nobacktick = function(x) {
+	if (!startsWith(x, '`') || !endsWith(x, '`'))
+		return(x)
+	return (substring(x, 2, nchar(x) - 1))
+}
+nobacktick = Vectorize(nobacktick)
+rownames(ret) = nobacktick(rownames(ret))
 write.table(ret, file.path(outdir, paste0(prefix, '.features.txt')), row.names = T, col.names = T, sep = "\t", quote = F)
 
 {% if args.plot %}

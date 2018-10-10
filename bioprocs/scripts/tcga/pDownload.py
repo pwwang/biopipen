@@ -1,5 +1,5 @@
 from pyppl import Box
-from os import path, rename, rmdir
+from os import path, rename, rmdir, system
 from bioprocs.utils import runcmd, cmdargs, logger
 
 infile     = {{i.manifile | quote}}
@@ -11,17 +11,20 @@ gdc_client = {{args.gdc_client | repr}}
 
 # run gdc-client to download the data
 gdc  = '{} download '.format(gdc_client)
-args = Box(
-	m = infile,
-	n = nthread,
-	d = outdir
-)
+args = Box({
+	'm': infile,
+	'n': nthread,
+	'd': outdir,
+	'retry-amount': '3',
+	'debug': True,
+	'log-file': path.join(outdir, 'gdc-client.log')
+})
 if token:
 	args.t = token
 
 args.update(params)
 cmd2run = gdc + cmdargs(args, equal = ' ')
-runcmd(cmd2run)
+system(cmd2run)
 
 # check if all the data sucessfully downloaded
 with open(infile) as fin:

@@ -53,6 +53,14 @@ if (model$yval == 'prob') {
 		out = cbind(indata, Predict.Result = value)
 	}
 }
+if (outprob) {
+	preds = predict.glm(model, newdata = indata, type = "link", se.fit = TRUE)
+	# 2.5% CI
+	ci025 = model$family$linkinv(preds$fit - 1.96*preds$se.fit)
+	# 97.5% CI
+	ci975 = model$family$linkinv(preds$fit + 1.96*preds$se.fit)
+	out = cbind(out, Predict.ProbCI025 = round(ci025, 3), Predict.ProbCI975 = round(ci975, 3))
+}
 
 ycol = model$ycol
 if (outauc) {
