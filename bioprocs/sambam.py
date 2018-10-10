@@ -244,7 +244,7 @@ pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
 @description:
 	Merges multiple SAM and/or BAM files (must be sorted by coordinate) into a single file.
 @input:
-	`infiles:file`: Input sam/bam files to be merged
+	`infiles:files`: Input sam/bam files to be merged
 @output:
 	`outfile:file`: The merged bam file
 @args:
@@ -264,7 +264,7 @@ pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
 """
 pBamMerge                     = Proc(desc = 'Merges multiple SAM and/or BAM sorted files into a single file.')
 pBamMerge.input               = "infiles:files"
-pBamMerge.output              = "outfile:file:{{i.infiles.0 | fn}}.etc.bam"
+pBamMerge.output              = "outfile:file:{{i.infiles[0] | fn2}}.etc.bam"
 pBamMerge.args.tool           = "picard"
 pBamMerge.args.picard         = params.picard.value
 pBamMerge.args.bamutil        = params.bamutil.value
