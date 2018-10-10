@@ -4,7 +4,7 @@ from shutil import rmtree
 from pyppl import Box
 from bioprocs.utils import cmdargs, runcmd, mem2
 
-tmpdir    = path.join ({{ args.tmpdir | quote}}, "{{proc.id}}.{{i.infiles.0 | fn}}.{{job.index}}")
+tmpdir    = path.join ({{ args.tmpdir | quote}}, "{{proc.id}}.{{i.infiles[0] | fn2}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)
 
 params = {{args.params}}
