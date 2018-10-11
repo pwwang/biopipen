@@ -3,7 +3,7 @@ from bioprocs.utils import logger
 
 infiles = {{i.infiles | repr}}
 outfile = {{o.outfile | quote}}
-rsmap   = {{args.rsmap | : None if not v1 else v1 | repr}}
+rsmap   = {{args.rsmap | : None if not a else a | repr}}
 fn2sam  = {{args.fn2sam}}
 
 def readone(infile, getsnps = True):

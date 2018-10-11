@@ -3076,7 +3076,7 @@
         Merges multiple SAM and/or BAM files (must be sorted by coordinate) into a single file.
 
     - **input**  
-        - `infiles:file`: Input sam/bam files to be merged  
+        - `infiles:files`: Input sam/bam files to be merged  
 
     - **output**  
         - `outfile:file`: The merged bam file  

@@ -53,7 +53,7 @@ if (tool == 'edger') {
 	} else {
 		group  = factor(sampleinfo[which(sirows %in% samples), "Group"])
 		group  = relevel(group, group2)
-		design = model.matrix(~group)
+		design = model.matrix(~0 + group)
 	}
 
 	library(edgeR)
