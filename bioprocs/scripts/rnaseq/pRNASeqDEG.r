@@ -62,8 +62,8 @@ if (tool == 'edger') {
 	dge     = calcNormFactors(dge)
 
 	disp    = estimateDisp (dge, design)
-	fit     = glmFit (disp, design)
-	fit     = glmLRT (fit)
+	fit     = glmQLFit (disp, design)
+	fit     = glmQLFTest (fit, contrast = c(-1, 1))
 
 	allgene = topTags (fit, n=nrow(fit$table), p.value = 1)
 	allgene = allgene$table
