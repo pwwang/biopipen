@@ -41,20 +41,6 @@ regstats   = {}
 relations  = {}
 
 reader = TsvReader(infile, **inopts)
-reader.autoMeta()
-ncol = len(reader.meta)
-reader.meta.clear()
-reader.meta.add('Regulator', 'Target')
-if ncol == 2:
-	pass
-elif ncol == 3:
-	reader.meta.add('Relation')
-elif ncol == 4:
-	reader.meta.add('RegStatus', 'Relation')
-elif ncol == 5:
-	reader.meta.add('RegStatus', 'TarStatus', 'Relation')
-else:
-	raise ValueError('Expect 3 ~ 5 columns in input file but got %s' % ncol)
 
 for r in reader:
 	if not r.Regulator in relations:
@@ -62,10 +48,10 @@ for r in reader:
 	genestats[r.Target]   = ''
 	regstats[r.Regulator] = ''
 	relations[r.Regulator][r.Target] = '+'
-	if 'TarStatus' in r:
-		genestats[r.Target] = r.TarStatus
-	if 'RegStatus' in r:
-		regstats[r.Regulator] = r.RegStatus
+	if 'TargetStatus' in r:
+		genestats[r.Target] = r.TargetStatus
+	if 'RegulatorStatus' in r:
+		regstats[r.Regulator] = r.RegulatorStatus
 	if 'Relation' in r:
 		relations[r.Regulator][r.Target] = r.Relation
 if not genestats:

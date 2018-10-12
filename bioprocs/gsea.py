@@ -167,12 +167,9 @@ pEnrichr.script         = "file:scripts/gsea/pEnrichr.py"
 	Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene list
 @input:
 	`infile:file`: The target genes with regulators
-		- Format:
-		- Header is not required, but may specified in first line starting with `#`
-		- If only 3 columns are there, the 3rd column is anyway the relation!
-		- If only 4 columns are there, 3rd is target status, 4th is relation!
+		- Format (RegulatorStatus and TargetStatus are optional):
 		  ```
-		  #Regulator	Target	Regulator status	Target status	Relation
+		  Regulator	Target	RegulatorStatus	TargetStatus	Relation
 		  has-mir-22	Gene	+	+	+
 		  ```
 @output:
@@ -197,7 +194,7 @@ pTargetEnrichr               = Proc(desc = 'Do gene set enrichment analysis for 
 pTargetEnrichr.input         = "infile:file"
 pTargetEnrichr.output        = "outdir:dir:{{i.infile | fn}}.tenrichr"
 pTargetEnrichr.lang          = params.python.value
-pTargetEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+pTargetEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'head')
 pTargetEnrichr.args.genecol  = "COL2"
 pTargetEnrichr.args.dbs      = "KEGG_2016"
 pTargetEnrichr.args.norm     = False
