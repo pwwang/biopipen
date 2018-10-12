@@ -85,7 +85,11 @@ class TsvRecord(object):
 		return self[key]
 
 	def __setitem__(self, key, value):
-		if key in self.__keys:
+		if isinstance(key, int):
+			if key >= len(self):
+				raise IndexError('Index out of range: {}'.format(key))
+			self.__vals[key] = value
+		elif key in self.__keys:
 			i = self.__keys.index(key)
 			self.__vals[i] = value
 		else:
