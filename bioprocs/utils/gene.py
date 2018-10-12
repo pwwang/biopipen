@@ -26,6 +26,26 @@ TAXIDS  = {
 	'mm9' : 10090,
 	'mm10': 10090
 }
+# local to remote
+FIELD_L2M = {
+	'ensembl_gene'      : 'ensembl.gene',
+	'ensembl_protein'   : 'ensembl.protein',
+	'ensembl_transcript': 'ensembl.transcript',
+	'refseq_genomic'    : 'refseq.genomic',
+	'refseq_rna'        : 'refseq.rna',
+	'refseq_protein'    : 'refseq.protein',
+	'uniprot_Swiss_Prot': 'uniprot.Swiss-Prot',
+}
+# remote to local
+FIELD_M2L = {
+	'ensembl.gene'      : 'ensembl_gene',
+	'ensembl.protein'   : 'ensembl_protein',
+	'ensembl.transcript': 'ensembl_transcript',
+	'refseq.genomic'    : 'refseq_genomic',
+	'refseq.rna'        : 'refseq_rna',
+	'refseq.protein'    : 'refseq_protein',
+	'uniprot.Swiss-Prot': 'uniprot_Swiss_Prot'
+}
 class RecordNotFound(Exception):
 	pass
 
@@ -39,21 +59,31 @@ def replaceList(l, search, replace):
 	return ret
 
 def querygene(*args, **kwargs):
-	# change ensg to ensemblgene
-	kwargs['scopes'] = replaceList(kwargs['scopes'], ['ensg', 'ensembl.gene', 'ensembl'], 'ensemblgene')
-	kwargs['fields'] = replaceList(kwargs['fields'], ['ensg', 'ensemblgene', 'ensembl'], 'ensembl.gene')
-	
-	if 'ensemblgene' in kwargs['scopes'] and not 'ensembl.gene' in kwargs['fields']:
-		kwargs['fields'].append('ensembl.gene')
 	mgret = MyGeneInfo().querymany(*args, **kwargs)
+	rets  = []
 	for ret in mgret:
-		if 'ensembl' in ret:
-			if 'gene' in ret['ensembl']:
-				ret['ensembl'] = ret['ensembl']['gene']
-			# more than one ensembl gene mapped, take the first one
-			elif isinstance(ret['ensembl'], list) and len(ret['ensembl']) > 0 and 'gene' in ret['ensembl'][0]:
-				ret['ensembl'] = ret['ensembl'][0]['gene']
-	return mgret
+		out = {}
+		rets.append(out)
+		for key, val in ret.items():
+			if 'ensembl' == key:
+				ensembl = val[0] if isinstance(val, list) else (val or {})
+				out['ensembl_gene']       = ensembl.get('gene', '')
+				out['ensembl_protein']    = ensembl.get('protein', [])
+				out['ensembl_transcript'] = ensembl.get('transcript', [])
+			elif 'refseq' == key:
+				refseq = val[0] if isinstance(val, list) else (val or {})
+				out['refseq_genomic'] = refseq.get('genomic', [])
+				out['refseq_rna']     = refseq.get('rna', [])
+				out['refseq_protein'] = refseq.get('protein', [])
+			elif 'uniprot' == key:
+				uniprot = val[0] if isinstance(val, list) else (val or {})
+				out['uniprot_Swiss_Prot'] = uniprot.get('Swiss-Prot', [])
+			else:
+				out[key] = val
+	return rets
+
+fields2local  = lambda keys: [FIELD_M2L.get(key, key) for key in keys]
+fields2remote = lambda keys: [FIELD_L2M.get(key, key) for key in keys]
 
 def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'hg19', inopts = None, outopts = None, genecol = None, cachedir = gettempdir()):
 
@@ -73,39 +103,65 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 	dbfile   = path.join(cachedir, 'geneinfo.db')
 	cache    = Cache(dbfile, 'geneinfo', {
-		'_id': 'text primary key',
-		'symbol': 'text',
-		'HGNC': 'int',
-		'alias': "text default ''",
-		'ensembl': 'text',
-		'ensembl_protein': 'text',
-		'entrezgene': 'int',
-		'genomic_pos': 'text',
-		'genomic_pos_hg19': 'text',
-		'pfam': "text default ''",
-		'taxid': 'int',
-		'uniprot': "text default ''",
+		'_id'               : 'text primary key',
+		'symbol'            : 'text',
+		'HGNC'              : 'int',
+		'alias'             : "text default ''",
+		'ensembl_gene'      : 'text',
+		'ensembl_protein'   : 'text',
+		'ensembl_transcript': 'text',
+		'refseq_genomic'    : 'text',
+		'refseq_rna'        : 'text',
+		'refseq_protein'    : 'text',
+		'entrezgene'        : 'int',
+		'genomic_pos'       : 'text',
+		'genomic_pos_hg19'  : 'text',
+		'genomic_pos_mm9'   : 'text',
+		'ipi'               : 'text',
+		'pfam'              : "text default ''",
+		'pdb'               : 'text',
+		'type_of_gene'      : 'text',
+		'taxid'             : 'int',
+		'uniprot_Swiss_Prot': "text default ''",
 	}, '_id')
 
 	dummies = {
-		'symbol' : 'iplain',
-		'alias'  : 'iarray',
-		'pfam'   : 'iarray',
-		'uniprot': 'iarray',
-		'genomic_pos': 'json',
-		'genomic_pos_hg19': 'json',
+		'symbol'            : 'iplain',
+		'alias'             : 'iarray',
+		'pfam'              : 'iarray',
+		'uniprot'           : 'iarray',
+		'genomic_pos'       : 'json',
+		'genomic_pos_hg19'  : 'json',
+		'genomic_pos_mm9'   : 'json',
+		'ipi'               : 'iarray',
+		'pdb'               : 'iarray',
+		'refseq_genomic'    : 'iarray',
+		'refseq_protein'    : 'iarray',
+		'refseq_rna'        : 'iarray',
+		'ensembl_protein'   : 'iarray',
+		'ensembl_transcript': 'iarray',
+		'uniprot_Swiss_Prot': 'iarray',
 	}
 
 	# query from cache
-	tocols   = alwaysList(to)
-	tocols   = replaceList(tocols, ['ensg', 'ensemblgene', 'ensembl.gene'], 'ensembl')
-	frmcols  = alwaysList(frm)
-	frmcols  = replaceList(frmcols, ['ensg', 'ensemblgene', 'ensembl.gene'], 'ensembl')
-	frmkeys  = ','.join(frmcols)
+	tocols = alwaysList(to)
+	# alias
+	tocols = replaceList(tocols, ['ensg', 'ensemblgene', 'ensembl'], 'ensembl.gene')
+	tocols = replaceList(tocols, ['uniprot'], 'uniprot.Swiss-Prot')
+	tocols = replaceList(tocols, ['refseq'], 'refseq.rna')
+	tocols = fields2local(tocols)
+
+	frmcols = alwaysList(frm)
+	frmcols = replaceList(frmcols, ['ensg', 'ensemblgene', 'ensembl'], 'ensembl.gene')
+	frmcols = replaceList(frmcols, ['uniprot'], 'uniprot.Swiss-Prot')
+	frmcols = replaceList(frmcols, ['refseq'], 'refseq.rna')
+	frmcols = fields2local(frmcols)
+
 	columns  = list(set(tocols + frmcols + ['taxid']))
+	frmkeys  = ','.join(frmcols)
 	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
 	# query from api
-	mgret = querygene(allrest[frmkeys], scopes = frmcols, fields = columns, species = SPECIES[genome])
+	mgret = querygene(allrest[frmkeys], scopes = fields2remote(frmcols), fields = fields2remote(columns), species = SPECIES[genome])
 	# get all result for each query
 	genetmp = {}
 	for gret in mgret:
@@ -195,7 +251,6 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 		#i = 0
 		for r in reader:
-			i += 1
 
 			#if (i <= 10): print r
 			query = r[genecol].strip()

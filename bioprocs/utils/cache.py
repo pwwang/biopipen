@@ -27,7 +27,7 @@ class DialectCache(Dialect):
 
 class Cache(object):
 
-	ARRAY_DELIMIT = ' // '
+	ARRAY_DELIMIT = '|'
 
 	DUMMY = dict(
 		plain = dict(
@@ -92,13 +92,13 @@ class Cache(object):
 		CREATE TABLE IF NOT EXISTS {} (
 			{}
 		)
-		""".format(table, ',\n'.join(['{} {}'.format(k,v) for k,v in schema.items()])))
+		""".format(table, ',\n'.join(['{} {}'.format(DialectCache.quote(k),v) for k,v in schema.items()])))
 
 	@staticmethod
 	def _arrayJoiner(array, delimit = None):
 		delimit = delimit or Cache.ARRAY_DELIMIT
 		if array:
-			return delimit + delimit.join([str(a) for a in array])
+			return delimit + delimit.join([str(a) for a in array]) + delimit
 		else:
 			return ''
 
@@ -144,6 +144,7 @@ class Cache(object):
 
 	@staticmethod
 	def _expandLike(data):
+		'''
 		def expand(d):
 			return [
 				# // abc
@@ -151,9 +152,11 @@ class Cache(object):
 				# // abc // def
 				'%{delimit}{data}{delimit}%'.format(data = d, delimit = Cache.ARRAY_DELIMIT),
 			]
+		'''
 		ret = []
 		for d in Cache._uniqueData(data, True):
-			ret += expand(d)
+			#ret += expand(d)
+			ret.append('%{delimit}{data}{delimit}%'.format(data = d, delimit = Cache.ARRAY_DELIMIT))
 		return ret
 
 	@staticmethod
@@ -261,7 +264,7 @@ class Cache(object):
 
 		return {k:r for k,r in results.items() if r}, rest
 
-	def query(self, columns, data, dummies = None, chunk = 200):
+	def query(self, columns, data, dummies = None, chunk = 500):
 		retall, retrest = {}, {}
 		datalen = Cache._checkData(data)
 		for i in xrange(0, datalen, chunk):
