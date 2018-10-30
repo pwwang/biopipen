@@ -28,6 +28,22 @@ lighten = function(color, factor = 1.5){
 	col = rgb(t(col), maxColorValue=255)
 	col
 }
+# 	A	B
+# R1: 1 (6.67%, 1.82%)	6 (15.00%, 10.91%)
+# R2: 2 (13.33%, 3.64%)	7 (17.50%, 12.73%)
+# R3: 3 (20.00%, 5.45%)	8 (20.00%, 14.55%)
+# R4: 4 (26.67%, 7.27%)	9 (22.50%, 16.36%)
+# R5: 5 (33.33%, 9.09%)	10 (25.00%, 18.18%)
+ctable.summary = function(ctable) {
+	lines  = paste(colnames(ctable), collapse = "; ")
+	rnames = rownames(ctable)
+	for (i in 1:nrow(ctable)) {
+        vals = sapply(1:length(ctable[i,]), function(x)  sprintf("%d (%.2f%%, %.2f%%)", ctable[i,x], 100*ctable[i,x]/sum(ctable[,x]), 100*ctable[i,x]/sum(ctable)))
+        #vals = sapply(ctable[i,], function(x) sprintf("%d (%.2f%%, %.2f%%)", x, 100*x/sum(ctable[,1]), 100*x/sum(ctable)))
+		lines = c(lines, paste0(paste0(rnames[i], ": "), paste(vals, collapse="; ")))
+	}
+	paste(lines, collapse = "\n")
+}
 
 wb = createWorkbook()
 for (i in 1:nrow(survret)) {
@@ -181,7 +197,7 @@ for (i in 1:nrow(survret)) {
 			ctest  = chisq.test(ctable)
 			out[paste0(v, '_Min'), 'Chi2_P_AvsD']    = formatC(ctest$p.value, format = "E", digits = 2)
 			out[paste0(v, '_Min'), 'Chi2_Chi2_AvsD'] = as.character(round(ctest$statistic, 2))
-			out[paste0(v, '_Min'), 'Chi2_Obs_AvsD']  = paste(apply(round(ctest$observed, 2), 1, function(r) paste(r, collapse = ',')), collapse = '; ')
+			out[paste0(v, '_Min'), 'Chi2_Obs_AvsD']  = ctable.summary(ctest$observed)
 			out[paste0(v, '_Min'), 'Chi2_Exp_AvsD']  = paste(apply(round(ctest$expected, 2), 1, function(r) paste(r, collapse = ',')), collapse = '; ')
 		}, error = function(e) {
 			out[paste0(v, '_Min'), 'Chi2_P_AvsD']    = 'NA'
@@ -201,7 +217,7 @@ for (i in 1:nrow(survret)) {
 		ctest  = chisq.test(ctable)
 			out[paste0(v, '_Min'), 'Chi2_P_Groups']    = formatC(ctest$p.value, format = "E", digits = 2)
 			out[paste0(v, '_Min'), 'Chi2_Chi2_Groups'] = as.character(round(ctest$statistic, 2))
-			out[paste0(v, '_Min'), 'Chi2_Obs_Groups']  = paste(apply(round(ctest$observed, 2), 1, function(r) paste(r, collapse = ',')), collapse = '; ')
+			out[paste0(v, '_Min'), 'Chi2_Obs_Groups']  = ctable.summary(ctest$observed)
 			out[paste0(v, '_Min'), 'Chi2_Exp_Groups']  = paste(apply(round(ctest$expected, 2), 1, function(r) paste(r, collapse = ',')), collapse = '; ')
 		}, error = function(e){
 			out[paste0(v, '_Min'), 'Chi2_P_Groups']    = 'NA'

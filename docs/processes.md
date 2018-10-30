@@ -1934,12 +1934,9 @@
 
     - **input**  
         - `infile:file`: The target genes with regulators  
-        	- Format:
-        	- Header is not required, but may specified in first line starting with `#`
-        	- If only 3 columns are there, the 3rd column is anyway the relation!
-        	- If only 4 columns are there, 3rd is target status, 4th is relation!
+        	- Format (RegulatorStatus and TargetStatus are optional):
         	  ```
-        	  #Regulator	Target	Regulator status	Target status	Relation
+        	  Regulator	Target	RegulatorStatus	TargetStatus	Relation
         	  has-mir-22	Gene	+	+	+
         	  ```
 
@@ -4229,6 +4226,29 @@
         	- headDelimit: `\\t` (The delimit for head line)
         	- headTransform: `None` (The callback for head line)
         	- delimit: `\\t` (The delimit for output line)
+
+!!! hint "pMergeRows"
+
+    - **description**  
+        Merge repeated rows
+
+    - **input**  
+        - `infile:file`: The input file (has to be sorted by the repeated columns)  
+
+    - **output**  
+        - `outfile:file`: The output file. Default: `{{i.infile | bn}}`  
+
+    - **args**  
+        - `inopts`: The options for input file.  
+        	- defaults: skip: 0, comment: #, delimit '\\t'
+        - `outopts`: The options for output file. Defaults:  
+        	- head: False (not output head line)
+        	- headPrefix: `#` (The prefix for head line)
+        	- headDelimit: `\\t` (The delimit for head line)
+        	- headTransform: `None` (The callback for head line)
+        	- delimit: `\\t` (The delimit for output line)
+        - `match`: The function to return a value to decide whether the row is repeated, argument is a `TsvRecord`.  
+        - `do`   : The merge function in python, argument is a list of `TsvRecord`s or `list`s if `args.inopts.ftype` is `nometa`  
 ## vcf
 
 !!! hint "pVcfFilter"

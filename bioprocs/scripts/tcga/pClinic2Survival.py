@@ -56,7 +56,7 @@ for r in reader:
 		time = r[realcols.get('time_death', 'time_death')]
 	else:
 		time = r[realcols.get('time_lastfollow', 'time_lastfollow')]
-	if time == '[Not Available]' or time == '0':
+	if time == '[Not Available]' or time == '[Completed]' or time == '0':
 		continue
 	
 	for pat in patients:
