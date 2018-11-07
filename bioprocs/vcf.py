@@ -309,14 +309,31 @@ pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.vcf"
 	pVcf2GTMat
 @description:
 	Convert Vcf file to genotype matrix.
+	Rownames are in the format of '<chr>_<pos>_<rs>_<ref>_<alt>'
+@input:
+	`infile:file`: The input vcf file
+@output:
+	`outfile:file`: the output filename. Default: `{{i.infile | fn2}}.gtmat`
+@args:
+	`novel`: The snp name used if not mapped to any rsid. Default: `NOVEL`
+	`useid`: Use the id in vcf file is possible. Default: `True`
+	`dbsnp`: The dbsnp vcf file used to get the rsid. If not provided, will use `novel`
+	`na`   : The value to replace missing genotypes.
+	`bialt`: bi-allelic snps only. Default: `True`
+@requires:
+	`pytabix`
+	`pysam`
 """
-pVcf2GTMat             = Proc(desc = 'Convert Vcf file to genotype matrix')
-pVcf2GTMat.input       = 'infile:file'
-pVcf2GTMat.output      = 'outfile:file:{{i.infile | fn2}}.gtmat'
-pVcf2GTMat.args.rnames = 'coord' # name
-pVcf2GTMat.args.na     = 'NA'
-pVcf2GTMat.lang        = params.python.value
-pVcf2GTMat.script      = "file:scripts/vcf/pVcf2GTMat.py"
+pVcf2GTMat            = Proc(desc = 'Convert Vcf file to genotype matrix')
+pVcf2GTMat.input      = 'infile:file'
+pVcf2GTMat.output     = 'outfile:file:{{i.infile | fn2}}.gtmat'
+pVcf2GTMat.args.novel = 'NOVEL' # name
+pVcf2GTMat.args.useid = True # use id in vcf file as possible
+pVcf2GTMat.args.dbsnp = params.dbsnp_all.value
+pVcf2GTMat.args.bialt = True # bi-allelic snps only
+pVcf2GTMat.args.na    = 'NA'
+pVcf2GTMat.lang       = params.python.value
+pVcf2GTMat.script     = "file:scripts/vcf/pVcf2GTMat.py"
 
 """
 @name:

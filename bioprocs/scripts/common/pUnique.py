@@ -1,9 +1,10 @@
+from pyppl import Box
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
 inopts  = {{args.inopts}}
-col     = {{args.col | pyvar}}
+col     = {{args.col | repr}}
 outopts  = {
 	'head': False, 
 	'headPrefix': '', 

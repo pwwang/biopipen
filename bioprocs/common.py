@@ -148,6 +148,29 @@ pAppend.input             = "in:var, infile:file"
 pAppend.output            = "outfile:file:{{i.infile | fn2}}.append{{i.infile | ext}}"
 pAppend.script            = 'cat {{i.infile | squote}} > {{out.outfile | squote}}; printf {{i.in | squote}} >> {{out.outfile | squote}}'
 
+"""
+@name:
+	pUnique
+@description:
+	Make the input file with unique rows (at certain column)
+@input:
+	`infile:file`: The input file.
+@output:
+	`outfile:file`: The output file.
+@args:
+	`inopts`: The options for input file
+		- `delimit`: delimit for columns 
+		- `skip`: skip first lines
+		- `comment`: signs for treating lines as comments
+	`outopts`: The output options
+		- `head`: Output head or not. Default: `False`
+		- `headPrefix`: The prefix for the head
+		- `headDelimit`: The delimit for the head
+		- `headTransform`: The transform function for the head
+		- `delimit`: The delimit for the data.
+	`col`: The column to compare. Default: `*` (all columns)
+	`sorted`: Whether the input file is sorted. Default: `False`
+"""
 pUnique                   = Proc(desc = "Make the input file unique")
 pUnique.input             = "infile:file"
 pUnique.output            = "outfile:file:{{i.infile | fn2}}.unique{{i.infile | ext}}"
