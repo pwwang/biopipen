@@ -41,6 +41,8 @@ params.logfile        = ''
 params.logfile.desc   = 'Where to save the logs.'
 params.compress       = True
 params.compress.desc  = 'Use gzip and bam file to save space.'
+params.ppldir         = './workdir'
+params.ppldir.desc    = 'The pipeline directory.'
 
 params = params.parse()
 
@@ -127,7 +129,7 @@ if 'gcnv' in params.muts:
 	starts.append(aBam2GCNV)
 	
 config = {
-	'default': {'forks': int(params.forks)},
+	'default': {'forks': int(params.forks), 'ppldir': params.ppldir},
 	'_log' : {'file': params.logfile}
 }
 

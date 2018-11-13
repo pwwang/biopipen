@@ -247,8 +247,8 @@ class TsvReaderBase(object):
 		if not line: raise StopIteration()
 		return self._parse(line.split(self.delimit))
 
-	def dump(self):
-		return [r for r in self]
+	def dump(self, col = None):
+		return [r if not col else r[col] for r in self]
 
 	def rewind(self):
 		self.file.seek(self.tell)

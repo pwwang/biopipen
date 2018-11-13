@@ -14,7 +14,7 @@ from . import params
 @output:
 	`outfile:file`: The output file
 @args:
-	`filters`: The filters, should be a string of lambda function:
+	`filters`: A dict of filters like `{<filtername>: <filter>}`. `<filter>` should be a string of lambda function:
 		```
 		"lambda record, samples: <expression>"
 		* ``record.CHROM`` : 'chr20'
@@ -33,7 +33,13 @@ from . import params
 		* samples[0].data.GT: '0/1'
 		```
 		- see here for record and samples: https://github.com/jamescasbon/PyVCF
-		- Remember if filters() returns True, record remained.
+		- Remember if filters() returns True, record filtered.
+		- For builtin filters, you may specify them as `{<filter>: <param>}`
+		- You can also use `!` to specify a negative builtin filter: `{!<filter>: <param>}`
+		- Bulitin filters: 
+			- SNPONLY: keeps only SNPs (`{"!SNPONLY": None}` means filtering SNPs out)
+			- BIALTONLY: keeps only mutations with bi-allele
+			- QUAL: keeps only site quality >= param (`{'QUAL': 30}`)
 	`gz`     : Whether to gzip the output file. Default: False
 	`keep`   : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
 @requires:
@@ -42,12 +48,46 @@ from . import params
 pVcfFilter              = Proc(desc = 'Filter records in vcf file.')
 pVcfFilter.input        = "infile:file"
 pVcfFilter.output       = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
-pVcfFilter.args.fname   = 'pVcfFilter'
-pVcfFilter.args.filters = None
+pVcfFilter.args.filters = Box()
 pVcfFilter.args.gz      = False
 pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
 pVcfFilter.lang         = params.python.value
 pVcfFilter.script       = "file:scripts/vcf/pVcfFilter.py"
+
+"""
+@name:
+	pVcfUnique
+@description:
+	Remove duplicate mutations from a VCF file.
+	Because in most case where we want to remove the duplicate mutations, it might be 
+	because other program not accepting them. In this case, we don't put a filter on 
+	the records, but just remove them instead.
+@input:
+	`infile:file`: The input vcf file.
+@output:
+	`outfile:file`: The output vcf file. Default: `{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}`
+@args:
+	`upart`: The unique parts. Could be part of: `['CHROM', 'POS', 'ID', 'REF', 'ALT']`
+	`keep` : Which record to keep.
+		- `bisnp` : Snp with bi-allele
+		- `snp`   : Snps
+		- `bialt` : Bi-allele mutations
+		- `first` : The first record (default)
+		- `last`  : The last record
+		- `random`: A random record
+		- Multiple ways can be used: `first, snp` is to select first snp (in case multiple snps duplicated)
+	`gz`: Bgzip the output vcf file or not. Default: `False`
+@requires:
+	`pyvcf`
+"""
+pVcfUnique            = Proc(desc = 'Remove duplicate mutations from a VCF file.')
+pVcfUnique.input      = 'infile:file'
+pVcfUnique.output     = 'outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}'
+pVcfUnique.args.upart = ['CHROM', 'POS', 'ID', 'REF', 'ALT']
+pVcfUnique.args.keep  = 'first' # last, random, snp, bisnp, bialt
+pVcfUnique.args.gz    = False
+pVcfUnique.lang       = params.python.value
+pVcfUnique.script     = "file:scripts/vcf/pVcfUnique.py"
 
 """
 @name:
@@ -187,7 +227,6 @@ pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 pVcfMerge                     = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
 pVcfMerge.input               = "infiles:files"
 pVcfMerge.output              = "outfile:file:{{i.infiles[0] | fn}}_etc.vcf"
-
 pVcfMerge.args.tool           = 'vcftools'
 pVcfMerge.args.vcftools       = params.vcftools_merge.value
 pVcfMerge.args.gatk           = params.gatk.value
@@ -241,6 +280,42 @@ pVcf2Maf.args.nthread        = 1
 pVcf2Maf.args.params         = Box()
 pVcf2Maf.lang                = params.python.value
 pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
+
+"""
+@name:
+	pVcf2Plink
+@description:
+	Convert vcf to plink binary files (.bed/.bim/.fam)
+@input:
+	`infile:file`: The input vcf file, needs to be tabix indexed.
+		- `iftype = origin`, `i.infile` will point to the original file
+@output:
+	`outdir:dir`: The output directory containing the plink binary files
+@args:
+	`plink` : The path to plink
+	`params`: Command arguments for `plink`. Some pre-settings:
+		- `vcf-half-call`      : `m`
+		- `double-id`          : `True`
+		- `vcf-filter`         : `True`
+		- `vcf-idspace-to`     : `_`
+		- `set-missing-var-ids`: `@_#`    # make sure no duplicate vars
+		- `biallelic-only`     : `strict`
+"""
+pVcf2Plink             = Proc(desc = 'Convert vcf to plink binary files (.bed/.bim/.fam)')
+pVcf2Plink.input       = 'infile:file'
+pVcf2Plink.output      = 'outdir:dir:{{i.infile | fn2}}.plink'
+pVcf2Plink.iftype      = 'origin'
+pVcf2Plink.args.plink  = params.plink.value
+pVcf2Plink.args.params = Box({
+	'vcf-half-call'      : 'm',
+	'double-id'          : True,
+	'vcf-filter'         : True,
+	'vcf-idspace-to'     : '_',
+	'set-missing-var-ids': '@_#', # may generate duplicate vars!
+	'biallelic-only'     : 'strict'
+})
+pVcf2Plink.lang   = params.python.value
+pVcf2Plink.script = "file:scripts/vcf/pVcf2Plink.py"
 
 """
 @name:

@@ -1,29 +1,71 @@
 from os import path, makedirs, remove
 from shutil import rmtree, copyfile, move
 from sys import stderr
-import vcf
-from vcf.model import _Call
+from pyppl import Box
 from bioprocs.utils import runcmd
+import vcf
 
+infile  = {{i.infile | quote}}
 filters = {{args.filters}}
+fname   = {{args.filters | quote}}
 gz      = {{args.gz | repr}}
 outfile = {{o.outfile | quote}}
+keep    = {{args.keep | repr}}
 if gz:
 	outfile = outfile[:-3]
 
-reader = vcf.Reader(filename='{{i.infile}}')
-writer = vcf.Writer(open(outfile, 'w'), reader)
-for record in reader:
-	if filters(record, record.samples):
-		record.FILTER = ['PASS']
-		writer.write_record(record)
+"""
+Builtin filters
+"""
+builtin_filters = Box(
+	SNPONLY   = lambda r, s: len(r.REF) != 1 or any(len(a) != 1 for a in r.ALT),
+	BIALTONLY = lambda r, s: len(r.ALT) != 1,
+	QUAL      = lambda r, s, q: r.QUAL < q
+)
+builtin_descs = Box(
+	SNPONLY   = lambda x: 'keep SNPs only',
+	BIALTONLY = lambda x: 'keep bi-allelic mutations only',
+	QUAL      = lambda x: 'keep sites with QUAL >= %s' % x
+)
+desc_prefix = 'Created by bioprocs.vcf.pVcfFilter: '
+
+filters     = filters or {}
+realfilters = {}
+descs       = {}
+for fname, ffunc in filters.items():
+	if fname.startswith('!') and fname[1:] in builtin_filters:
+		key = ['NOT' + fname[1:], 'NOT' + fname[1:] + str(ffunc)][int(ffunc or 0)]
+		realfilters[key] = lambda r, s, fname = fname, ffunc = ffunc: ffunc and \
+			not builtin_filters[fname](r, s, ffunc) or not builtin_filters[fname](r, s)
+		descs[key] = desc_prefix + builtin_descs[fname[1:]](ffunc)
+	elif fname in builtin_filters:
+		key = [fname, fname + str(ffunc)][int(ffunc or 0)]
+		realfilters[key] = lambda r, s, fname = fname, ffunc = ffunc: ffunc and \
+			builtin_filters[fname](r, s, ffunc) or builtin_filters[fname](r, s)
+		descs[key] = desc_prefix + builtin_descs[fname](ffunc)
 	else:
-		{% if args.keep %}
-		record.FILTER  = ['{{args.fname}}']
-		writer.write_record(record)
-		{% else %}
-		pass
-		{% endif %}
+		realfilters[fname] = ffunc
+		descs[fname] = desc_prefix + fname
+
+reader = vcf.Reader(filename=infile)
+for fname, fdesc in descs.items():
+	reader.filters[fname] = vcf.parser._Filter(id = fname, desc = fdesc)
+writer = vcf.Writer(open(outfile, 'w'), reader)
+
+while True:
+	try:
+		record = reader.next()
+		for fname, ffunc in realfilters.items():
+			if ffunc(record, record.samples):
+				record.FILTER = record.FILTER or []
+				record.FILTER.append(fname)
+		if keep or not record.FILTER:
+			writer.write_record(record)
+	except StopIteration:
+		break
+	except ValueError:
+		continue
+
 writer.close()
 
 if gz:

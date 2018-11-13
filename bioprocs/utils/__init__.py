@@ -54,7 +54,6 @@ def alwaysList(l):
 	return ret
 
 def runcmd(cmd2run, shell = True, quit = True):
-	import subprocess
 	c = cmd.Cmd(cmd2run, shell = shell)
 	cmdstr = ' '.join(c.cmd) if isinstance(c.cmd, list) else c.cmd
 	logger.info('Running command at PID: %s' % c.pid)

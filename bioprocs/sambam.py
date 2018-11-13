@@ -315,7 +315,7 @@ pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 """
 pBam2Gmut                      = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
 pBam2Gmut.input                = "infile:file"
-pBam2Gmut.infile               = 'origin' # the index file should be with the original file
+pBam2Gmut.iftype               = 'origin' # the index file should be with the original file
 pBam2Gmut.output               = "outfile:file:{{i.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
 pBam2Gmut.lang                 = params.python.value
 pBam2Gmut.args.tool            = "strelka"
@@ -386,7 +386,7 @@ pBam2Gmut.script               = "file:scripts/sambam/pBam2Gmut.py"
 """
 pBamPair2Smut                     = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
 pBamPair2Smut.input               = "tumor:file, normal:file"
-pBamPair2Smut.infile              = 'origin'
+pBamPair2Smut.iftype              = 'origin'
 pBamPair2Smut.output              = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
 pBamPair2Smut.args.tool           = 'strelka'
 pBamPair2Smut.args.gatk           = params.gatk.value # required for strelka
