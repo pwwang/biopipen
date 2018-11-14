@@ -449,7 +449,7 @@ pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
 		- In case the vcf file is too big. 
 		- Requires both vcf files indexed (.tbi). If not they will be indexed there.
 	`nthread` : # threads to use, only when `bychrom` is True. Default: `1`
-	`tool`    : The tool to be used. Default: `bedtools`
+	`tool`    : The tool to be used. Default: `mem` (or pyvcf/bedtools)
 	`bedtools`: The path to bedtools.
 	`tabix`   : The path to tabix.
 	`any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`
@@ -461,7 +461,7 @@ pVcfSubtract.args.bychrom  = False
 pVcfSubtract.args.nthread  = 1
 pVcfSubtract.args.header   = True
 pVcfSubtract.args.any      = True
-pVcfSubtract.args.tool     = 'bedtools'
+pVcfSubtract.args.tool     = 'mem'
 pVcfSubtract.args.tabix    = params.tabix.value
 pVcfSubtract.args.bedtools = params.bedtools.value
 pVcfSubtract.lang          = params.python.value

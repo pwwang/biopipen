@@ -125,6 +125,71 @@ if tool == 'bedtools':
 				with open(of) as f:
 					fout.write(f.read())
 		
-
+elif tool == 'pyvcf':
+	import vcf
+	v1  = vcf.Reader(filename = infile1)
+	v2  = vcf.Reader(filename = infile2)
+	out = vcf.Writer(open(outfile, 'w'), v1)
+	r1  = r2 = None
+	while True:
+		try:
+			r1 = r1 or v1.next()
+			r2 = r2 or v2.next()
+			if r1.CHROM < r2.CHROM:
+				out.write_record(r1)
+				r1 = None
+				continue
+			if r1.CHROM > r2.CHROM:
+				r2 = None
+				continue
+			if r1.POS < r2.POS:
+				out.write_record(r1)
+				r1 = None
+				continue
+			if r1.POS > r2.POS:
+				r2 = None
+				continue
+			r1 = None
+		except StopIteration:
+			break
+		except:
+			continue
+else:
+	import gzip
+	with open(infile1) if not infile1.endswith('.gz') else gzip.open(infile1) as f1, \
+		 open(infile2) if not infile2.endswith('.gz') else gzip.open(infile2) as f2, \
+		 open(outfile, 'w') as fout:
+		line1 = line2 = None
+		for line in f1:
+			if line.startswith('#'):
+				fout.write(line)
+			else:
+				line1 = line.split('\t')
+				break
 		
+		while True:
+			try:
+				line1 = line1 or f1.next().split('\t')
+				line2 = line2 or f2.next().split('\t')
+				if line1[0] < line2[0]:
+					fout.write('\t'.join(line1))
+					line1 = None
+					continue
+				if line1[0] > line2[0]:
+					line2 = None
+					continue
+				if int(line1[1]) < int(line2[1]):
+					fout.write('\t'.join(line1))
+					line1 = None
+					continue
+				if int(line1[1]) > int(line2[1]):
+					line2 = None
+					continue
+				line1 = None
+			except StopIteration:
+				break
+			except:
+				continue
+			
+
 

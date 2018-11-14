@@ -44,7 +44,7 @@ for fname, ffunc in filters.items():
 			builtin_filters[fname](r, s, ffunc) or builtin_filters[fname](r, s)
 		descs[key] = desc_prefix + builtin_descs[fname](ffunc)
 	else:
-		realfilters[fname] = ffunc
+		realfilters[fname] = ffunc if callable(ffunc) else eval(ffunc)
 		descs[fname] = desc_prefix + fname
 
 reader = vcf.Reader(filename=infile)

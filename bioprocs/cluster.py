@@ -3,7 +3,7 @@ from . import params
 
 """
 @name:
-	pDist2Coords
+	pDist2Feats
 @description:
 	Convert a distance matrix to coordinates, using multidimensional scaling.
 @input:
@@ -36,14 +36,51 @@ from . import params
 		- Could also be upper, lower, pair
 	`k`:        How many dimensions? Default: 2 (R^2)
 """
-pDist2Coords            = Proc(desc = 'Convert a distance matrix to coordinates, using multidimensional scaling.')
-pDist2Coords.input      = "infile:file"
-pDist2Coords.output     = "outfile:file:{{i.infile | fn}}.xyz"
-pDist2Coords.args.infmt = 'full'
-pDist2Coords.args.k     = 2
-pDist2Coords.lang       = params.Rscript.value
-pDist2Coords.script     = "file:scripts/cluster/pDist2Coords.r"
+pDist2Feats            = Proc(desc = 'Convert a distance matrix to coordinates, using multidimensional scaling.')
+pDist2Feats.input      = "infile:file"
+pDist2Feats.output     = "outfile:file:{{i.infile | fn}}.xyz"
+pDist2Feats.args.infmt = 'full'
+pDist2Feats.args.k     = 2
+pDist2Feats.lang       = params.Rscript.value
+pDist2Feats.script     = "file:scripts/cluster/pDist2Feats.r"
 
+"""
+@name:
+	pFeats2Dist
+@description:
+	Calculate the distance of pairs of instances
+@input:
+	`infile:file`: The input file. Rows are instances, columns are features.
+@output:
+	`outfile:file`: The output distance matrix
+@args:
+	`inopts`: the options for input file
+		- `cnames`: Whether input file has column names
+		- `rnames`: Whether input file has row names
+	`sim`: Output similarity instead of distance? Default: `False`
+	`method`: Method used to calculate the distance. See available below. Default: `euclidean`
+		- euclidean, manhattan, minkowski, chebyshev, sorensen, gower, soergel, kulczynski_d, 
+		- canberra, lorentzian, intersection, non-intersection, wavehedges, czekanowski, motyka, 
+		- kulczynski_s, tanimoto, ruzicka, inner_product, harmonic_mean, cosine, hassebrook, 
+		- jaccard, dice, fidelity, bhattacharyya, hellinger, matusita, squared_chord, 
+		- quared_euclidean, pearson, neyman, squared_chi, prob_symm, divergence, clark, 
+		- additive_symm, kullback-leibler, jeffreys, k_divergence, topsoe, jensen-shannon, 
+		- jensen_difference, taneja, kumar-johnson, avg
+		- see: https://cran.r-project.org/web/packages/philentropy/vignettes/Distances.html
+@requires:
+	`r-philentropy`
+"""
+pFeats2Dist             = Proc(desc = 'Calculate the distance between each pair of rows')
+pFeats2Dist.input       = 'infile:file'
+pFeats2Dist.output      = 'outfile:file:{{i.infile | quote}}.dist.txt'
+pFeats2Dist.args.inopts = Box(
+	cnames = True,
+	rnames = True
+)
+pFeats2Dist.args.sim    = False
+pFeats2Dist.args.method = 'euclidean'
+pFeats2Dist.lang        = params.Rscript.value
+pFeats2Dist.script      = "file:scripts/cluster/pFeats2Dist.r"
 
 """
 @name:
