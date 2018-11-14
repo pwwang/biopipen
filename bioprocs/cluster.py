@@ -72,7 +72,7 @@ pDist2Feats.script     = "file:scripts/cluster/pDist2Feats.r"
 """
 pFeats2Dist             = Proc(desc = 'Calculate the distance between each pair of rows')
 pFeats2Dist.input       = 'infile:file'
-pFeats2Dist.output      = 'outfile:file:{{i.infile | quote}}.dist.txt'
+pFeats2Dist.output      = 'outfile:file:{{i.infile | fn}}.dist.txt'
 pFeats2Dist.args.inopts = Box(
 	cnames = True,
 	rnames = True
