@@ -417,6 +417,41 @@ pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
 
 """
 @name:
+	pChow
+@description:
+	Do Chow-Test
+@input:
+	`infile:file`: The input file, the last column must be groups, 2nd last the Y value. The first columns are variables.
+@output:
+	`outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`
+	`outdir:dir`: The output directory, containing the output file, results of regressions and plots.
+@args:
+	`inopts`: The options for input file.
+		- `cnames`: Whether the input file has column names
+		- `rnames`: Whether the input file has row names
+	`cov`: The covariate file. `inopts.rnames` required and this file should have row names too. Default: `''`
+	`plot`: When to plot the results. Default: `0.05`
+		- `<pcutoff>`: When `pval < <pcutoff>`
+		- `True`: plot anyway
+		- `False`: Do not plot anyway
+	`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
+"""
+pChow              = Proc(desc = "Do Chow-Test")
+pChow.input        = 'infile:file'
+pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
+pChow.args.inopts  = Box(
+	cnames = True,
+	rnames = True
+)
+pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
+pChow.args.plot    = 0.05 # False, True
+pChow.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pChow.envs.rimport = rimport
+pChow.lang         = params.Rscript.value
+pChow.script       = "file:scripts/stats/pChow.r"
+
+"""
+@name:
 	pCorr
 @description:
 	Calculate the correlation coefficient for the input matrix
