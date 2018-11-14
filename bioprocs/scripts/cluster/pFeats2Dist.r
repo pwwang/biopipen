@@ -5,7 +5,7 @@ inopts  = {{args.inopts | R}}
 method  = {{args.method | R}}
 sim     = {{args.sim | R}}
 
-indata = read.table(infile, header = inopts$cnames, row.names = if(inopts$cnames) 1 else NULL, sep = "\t", check.names = F)
+indata = read.table(infile, header = inopts$cnames, row.names = if(inopts$rnames) 1 else NULL, sep = "\t", check.names = F)
 
 d = as.matrix(dist(indata, method = method))
 if (sim) d = 1 - d
