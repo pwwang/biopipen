@@ -6,7 +6,7 @@ markdown_extensions:
         preserve_tabs: true
     - toc:
         baselevel: 2
-pages:
+nav:
     - 'Introduction': 'index.md'
     - 'Processes': 'processes.md'
     - 'Aggregations': 'aggregations.md'
