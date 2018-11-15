@@ -33,6 +33,14 @@ pMatrixR.envs.rimport = rimport
 pMatrixR.lang         = params.Rscript.value
 pMatrixR.script       = "file:scripts/tsv/pMatrixR.r"
 
+pTranspose              = Proc(desc = 'Transpose a matrix')
+pTranspose.input        = 'infile:file'
+pTranspose.output       = 'outfile:file:{{i.infile | bn}}'
+pTranspose.args.inopts  = Box(cnames = True, rnames = True)
+pTranspose.envs.rimport = rimport
+pTranspose.lang         = params.Rscript.value
+pTranspose.script       = "file:scripts/tsv/pTranspose.r"
+
 """
 @name:
 	pCbind

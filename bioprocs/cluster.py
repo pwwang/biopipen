@@ -58,6 +58,7 @@ pDist2Feats.script     = "file:scripts/cluster/pDist2Feats.r"
 		- `cnames`: Whether input file has column names
 		- `rnames`: Whether input file has row names
 	`sim`: Output similarity instead of distance? Default: `False`
+	`na` : Replace NAs with? Default: `0`
 	`method`: Method used to calculate the distance. See available below. Default: `euclidean`
 		- euclidean, manhattan, minkowski, chebyshev, sorensen, gower, soergel, kulczynski_d, 
 		- canberra, lorentzian, intersection, non-intersection, wavehedges, czekanowski, motyka, 
@@ -77,10 +78,11 @@ pFeats2Dist.args.inopts = Box(
 	cnames = True,
 	rnames = True
 )
-pFeats2Dist.args.sim    = False
-pFeats2Dist.args.method = 'euclidean'
-pFeats2Dist.lang        = params.Rscript.value
-pFeats2Dist.script      = "file:scripts/cluster/pFeats2Dist.r"
+pFeats2Dist.args.sim     = False # only for distance between [0,1]
+pFeats2Dist.args.na      = 0
+pFeats2Dist.args.method  = 'euclidean'
+pFeats2Dist.lang         = params.Rscript.value
+pFeats2Dist.script       = "file:scripts/cluster/pFeats2Dist.r"
 
 """
 @name:

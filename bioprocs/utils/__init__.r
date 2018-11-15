@@ -74,6 +74,32 @@ update.list = function (list1, list2, recursive = F) {
 	return (list1)
 }
 
+# allow ifelse to return NULL
+ifelse = function(condition, true, false) {
+	if(condition) return(true)
+	return(false)
+}
+
+read.table.inopts = function(infile, inopts, nodup = T) {
+	opts = names(inopts)
+	optrnames = ifelse('rnames' %in% opts, ifelse(inopts$rnames, 1, NULL), 1)
+	params = list(
+		infile,
+		header      = ifelse('cnames' %in% opts, inopts$cnames, T),
+		row.names   = ifelse(nodup, NULL, optrnames),
+		sep         = ifelse('delimit' %in% opts, inopts$delimit, "\t"),
+		check.names = F,
+		skip        = ifelse('skip' %in% opts, inopts$skip, 0)
+	)
+	d = do.call(read.table, params)
+	if (nodup && !is.null(optrnames)) {
+		rnames = make.unique(as.character(as.vector(d[,1,drop = T])))
+		d = d[, -1, drop = F]
+		rownames(d) = rnames
+	}
+	d
+}
+
 # format data.frame to output
 pretty.numbers = function(df, formats) {
 	df           = as.matrix(df)
@@ -91,9 +117,4 @@ pretty.numbers = function(df, formats) {
 	return (df)
 }
 
-# allow ifelse to return NULL
-ifelse = function(condition, true, false) {
-	if(condition) return(true)
-	return(false)
-}
 
