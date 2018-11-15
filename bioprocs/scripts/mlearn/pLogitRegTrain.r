@@ -27,7 +27,7 @@ if (is.null(cnames)) {
 if (is.null(args.formula)) {
 	backtick = function(x) sprintf('`%s`', x)
 	ycol = cnames[ncol(indata)]
-	args.formula = as.formula(paste(cnames[ncol(indata)], '~', paste(backtick(cnames[1:(ncol(indata)-1)]), sep = '+')))
+	args.formula = as.formula(paste(cnames[ncol(indata)], '~', paste(backtick(cnames[1:(ncol(indata)-1)]), collapse = '+')))
 } else {
 	ycol = unlist(strsplit(args.formula, '\\s*~\\s*'))[1]
 	args.formula = as.formula(args.formula)
