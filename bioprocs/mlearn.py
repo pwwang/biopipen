@@ -161,3 +161,81 @@ pLogitRegPredict.args.inopts  = Box(
 pLogitRegPredict.envs.rimport = rimport
 pLogitRegPredict.lang         = params.Rscript.value
 pLogitRegPredict.script       = "file:scripts/mlearn/pLogitRegPredict.r"
+
+"""
+@name:
+	pRandomForestTrain
+@description:
+	Train a random forest model
+@input:
+	`infile:file`: The input file (Last column as Y)
+@output:
+	`outmodel:file`: The output model (RData file)
+	`outdir:dir`   : The output directory containing model, plots and other files
+@args:
+	`plot`   : Whether plot the feature importance. Default: `True`
+	`formula`: The formula to perform the regression. Default: `None`.
+		- If `None`, will use all first N-1 columns as features.
+	`inopts` : The input options.
+	`na`     : Replace NAs with? Default: `0`
+	`devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`
+@requires:
+	`r-randomForst`
+"""
+pRandomForestTrain = Proc(desc = "Train a random forest model.")
+pRandomForestTrain.input = 'infile:file'
+pRandomForestTrain.output = [
+	'outmodel:file:{{i.infile | stem}}.rforest/{{i.infile | stem}}.rforest.rds', 
+	'outdir:dir:{{i.infile | stem}}.rforest'
+]
+pRandomForestTrain.args.plot    = True
+pRandomForestTrain.args.formula = None
+pRandomForestTrain.args.na      = 0
+pRandomForestTrain.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pRandomForestTrain.args.inopts  = Box(
+	cnames  = True,
+	rnames  = True,
+	delimit = "\t"
+)
+pRandomForestTrain.envs.rimport = rimport
+pRandomForestTrain.lang         = params.Rscript.value
+pRandomForestTrain.script       = "file:scripts/mlearn/pRandomForestTrain.r"
+
+"""
+@name:
+	pDecisionTreeTrain
+@description:
+	Train a decision tree model
+@input:
+	`infile:file`: The input file (Last column as Y)
+@output:
+	`outmodel:file`: The output model (RData file)
+	`outdir:dir`   : The output directory containing model, plots and other files
+@args:
+	`plot`   : Whether plot the feature importance. Default: `True`
+	`formula`: The formula to perform the regression. Default: `None`.
+		- If `None`, will use all first N-1 columns as features.
+	`inopts` : The input options.
+	`na`     : Replace NAs with? Default: `0`
+	`devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`
+@requires:
+	`r-rpart`
+"""
+pDecisionTreeTrain = Proc(desc = "Train a decision tree model")
+pDecisionTreeTrain.input = 'infile:file'
+pDecisionTreeTrain.output = [
+	'outmodel:file:{{i.infile | stem}}.dtree/{{i.infile | stem}}.dtree.rds', 
+	'outdir:dir:{{i.infile | stem}}.dtree'
+]
+pDecisionTreeTrain.args.plot    = True
+pDecisionTreeTrain.args.formula = None
+pDecisionTreeTrain.args.na      = 0
+pDecisionTreeTrain.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pDecisionTreeTrain.args.inopts  = Box(
+	cnames  = True,
+	rnames  = True,
+	delimit = "\t"
+)
+pDecisionTreeTrain.envs.rimport = rimport
+pDecisionTreeTrain.lang         = params.Rscript.value
+pDecisionTreeTrain.script       = "file:scripts/mlearn/pDecisionTreeTrain.r"

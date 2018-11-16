@@ -33,10 +33,11 @@ for (i in 1:length(infiles)) {
 
 	if (!inparams$header && !is.null(fn2cname)) {
 		cname = fn2cname(tools::file_path_sans_ext(basename(infiles[i])))
-		if (ncol(mats[[i]]) == 1)
-			colnames(mats[[i]]) = cname
-		else
-			colnames(mats[[i]]) = paste(cname, 1:ncol(mats[[i]]), sep='_c')
+		#if (ncol(mats[[i]]) == 1)
+		#	colnames(mats[[i]]) = cname
+		#else
+		#	colnames(mats[[i]]) = paste(cname, 1:ncol(mats[[i]]), sep='_c')
+		colnames(mats[[i]]) = cname
 	}
 }
 mat = ifelse(fill, do.call(cbind.fill, mats), do.call(cbind, mats))

@@ -177,6 +177,11 @@ plot.scatter = function(data, plotfile, x = 1, y = 2, params = list(), ggs = lis
 	plot.xy(data, plotfile, x, y, ggs, devpars)
 }
 
+plot.col = function(data, plotfile, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	ggs = c(list(geom_col = params), ggs)
+	plot.xy(data, plotfile, x, y, ggs, devpars)
+}
+
 # alias
 plot.points = plot.scatter
 
@@ -345,6 +350,8 @@ plot.histo = function(data, plotfile, x = 1, params = list(), ggs = list(), devp
 	ggs = c(list(geom_histogram = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
+
+
 
 plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	ggs = c(list(geom_freqpoly = params), ggs)
