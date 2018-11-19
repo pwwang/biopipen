@@ -1,5 +1,5 @@
 from pyppl import Box
-from bioprocs.utils.tsvio import TsvReader, TsvWriter
+from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

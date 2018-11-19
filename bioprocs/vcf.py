@@ -466,3 +466,10 @@ pVcfSubtract.args.tabix    = params.tabix.value
 pVcfSubtract.args.bedtools = params.bedtools.value
 pVcfSubtract.lang          = params.python.value
 pVcfSubtract.script        = "file:scripts/vcf/pVcfSubtract.py"
+
+pVcf2Pyclone        = Proc(desc = 'Generate PyClone input file for non-CN mutations')
+pVcf2Pyclone.input  = 'infile:file'
+pVcf2Pyclone.output = 'outfile:file:{{i.infile | bn}}.pyclone.txt'
+pVcf2Pyclone.lang   = params.python.value
+pVcf2Pyclone.script = "file:scripts/vcf/pVcf2Pyclone.py"
+

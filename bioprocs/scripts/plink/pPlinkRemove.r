@@ -24,18 +24,27 @@ isSampleFail = function(fail) {
 
 isSNPFail = function(fail) {
 	endsWith(fail, '.snpcr.fail') ||
-	endsWith(fail, '.hwe.fail')
+	endsWith(fail, '.hwe.fail') ||
+	endsWith(fail, '.hardy.fail')
 }
 
 for (i in c('.bed', '.bim', '.fam'))
 	file.symlink(paste0(input, i), paste0(output, i))
 
 for (fail in fails) {
-	write(sprintf('Working on %s ...', fail), stderr())
 	if (isSampleFail(fail)) {
 		params = list(
 			bfile      = output,
 			remove     = fail,
+			out        = output,
+			`make-bed` = T
+		)
+		cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
+		runcmd(cmd)
+	} else if (isSNPFail(fail)) {
+		params = list(
+			bfile      = output,
+			exclude    = fail,
 			out        = output,
 			`make-bed` = T
 		)

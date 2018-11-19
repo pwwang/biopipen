@@ -1,37 +1,40 @@
 {% python from os import path %}
 library("MatrixEQTL");
 
-snpmatrix = read.table({{i.snpfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
-expmatrix = read.table({{i.expfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
-cnames    = intersect(colnames(snpmatrix), colnames(expmatrix))
-snpmatrix = snpmatrix[, cnames, drop = F]
-expmatrix = expmatrix[, cnames, drop = F]
+#snpmatrix = read.table({{i.snpfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
+#expmatrix = read.table({{i.expfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
+#cnames    = intersect(colnames(snpmatrix), colnames(expmatrix))
+#cnames = colnames(expmatrix)
+#snpmatrix = snpmatrix[, cnames, drop = F]
+#expmatrix = expmatrix[, cnames, drop = F]
 
 snps = SlicedData$new();
-#snps$fileDelimiter = "\t";       # the TAB character
-#snps$fileOmitCharacters = "NA";  # denote missing values;
-#snps$fileSkipRows = 1;           # one row of column labels
-#snps$fileSkipColumns = 1;        # one column of row labels
+snps$fileDelimiter = "\t";       # the TAB character
+snps$fileOmitCharacters = "NA";  # denote missing values;
+snps$fileSkipRows = 1;           # one row of column labels
+snps$fileSkipColumns = 1;        # one column of row labels
 snps$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
-snps$CreateFromMatrix( as.matrix(snpmatrix) );
+#snps$CreateFromMatrix( as.matrix(snpmatrix) );
+snps$LoadFile( {{i.snpfile | quote}} );
 
 gene = SlicedData$new();
-#gene$fileDelimiter = "\t";       # the TAB character
-#gene$fileOmitCharacters = "NA";  # denote missing values;
-#gene$fileSkipRows = 1;           # one row of column labels
-#gene$fileSkipColumns = 1;        # one column of row labels
+gene$fileDelimiter = "\t";       # the TAB character
+gene$fileOmitCharacters = "NA";  # denote missing values;
+gene$fileSkipRows = 1;           # one row of column labels
+gene$fileSkipColumns = 1;        # one column of row labels
 gene$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
-gene$CreateFromMatrix( as.matrix(expmatrix) );
+#gene$CreateFromMatrix( as.matrix(expmatrix) );
+gene$LoadFile( {{i.expfile | quote}} );
 
 cvrt = SlicedData$new();
 {% if path.isfile(i.covfile) %}
 covmatrix = read.table({{i.covfile | quote}}, header = T, row.names = 1, check.names = F)
-covmatrix = covmatrix[, cnames, drop = F]
+#covmatrix = covmatrix[, cnames, drop = F]
 #cvrt$fileDelimiter = "\t";       # the TAB character
 #cvrt$fileOmitCharacters = "NA";  # denote missing values;
 #cvrt$fileSkipRows = 1;           # one row of column labels
 #cvrt$fileSkipColumns = 1;        # one column of row labels
-cvrt$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
+#cvrt$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
 cvrt$CreateFromMatrix( as.matrix(covmatrix) );
 {% endif %}
 

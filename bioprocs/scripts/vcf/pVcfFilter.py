@@ -20,12 +20,14 @@ Builtin filters
 builtin_filters = Box(
 	SNPONLY   = lambda r, s: len(r.REF) != 1 or any(len(a) != 1 for a in r.ALT),
 	BIALTONLY = lambda r, s: len(r.ALT) != 1,
-	QUAL      = lambda r, s, q: r.QUAL < q
+	QUAL      = lambda r, s, q: r.QUAL < q,
+	AF        = lambda r, s, q: r.INFO['AF'][0] < q
 )
 builtin_descs = Box(
 	SNPONLY   = lambda x: 'keep SNPs only',
 	BIALTONLY = lambda x: 'keep bi-allelic mutations only',
-	QUAL      = lambda x: 'keep sites with QUAL >= %s' % x
+	QUAL      = lambda x: 'keep sites with QUAL >= %s' % x,
+	AF        = lambda x: 'keep sites with AF >= %s' % x
 )
 desc_prefix = 'Created by bioprocs.vcf.pVcfFilter: '
 
@@ -34,14 +36,16 @@ realfilters = {}
 descs       = {}
 for fname, ffunc in filters.items():
 	if fname.startswith('!') and fname[1:] in builtin_filters:
-		key = ['NOT' + fname[1:], 'NOT' + fname[1:] + str(ffunc)][int(ffunc or 0)]
-		realfilters[key] = lambda r, s, fname = fname, ffunc = ffunc: ffunc and \
-			not builtin_filters[fname](r, s, ffunc) or not builtin_filters[fname](r, s)
+		key = 'NOT' + fname[1:] + ['', str(ffunc)][int(bool(ffunc) or 0)]
+		realfilters[key] = lambda r, s, fname = fname, ffunc = ffunc: \
+			not builtin_filters[fname](r, s, ffunc) if ffunc not in [None, False] \
+				else not builtin_filters[fname](r, s)
 		descs[key] = desc_prefix + builtin_descs[fname[1:]](ffunc)
 	elif fname in builtin_filters:
-		key = [fname, fname + str(ffunc)][int(ffunc or 0)]
-		realfilters[key] = lambda r, s, fname = fname, ffunc = ffunc: ffunc and \
-			builtin_filters[fname](r, s, ffunc) or builtin_filters[fname](r, s)
+		key = [fname, fname + str(ffunc)][int(bool(ffunc) or 0)]
+		realfilters[key] = lambda r, s, fname = fname, ffunc = ffunc: \
+			builtin_filters[fname](r, s, ffunc) if ffunc not in [None, False] \
+				else builtin_filters[fname](r, s)
 		descs[key] = desc_prefix + builtin_descs[fname](ffunc)
 	else:
 		realfilters[fname] = ffunc if callable(ffunc) else eval(ffunc)
@@ -63,7 +67,7 @@ while True:
 			writer.write_record(record)
 	except StopIteration:
 		break
-	except ValueError:
+	except:
 		continue
 
 writer.close()

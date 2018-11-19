@@ -21,6 +21,9 @@ pGenePromoters = pPromoters.copy()
 @output:
 	`outfile:file`: The output file
 @args:
+	`inopts`: options for reading input file.
+	`outopts`: options for writing output file.
+		- `query`: Output the original query column? Default: `False`
 	`notfound`: What if a symbol is not found. Default: ignore
 		- skip  : skip the record(don't write it to output file)
 		- ignore: use the original name;

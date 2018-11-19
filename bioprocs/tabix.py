@@ -38,15 +38,15 @@ pTabix.script      = "file:scripts/tabix/pTabix.py"
 @args:
 	`tabix`: The path to `tabix`
 	`params`: Other params for `tabix`
-	`python`: Will be used to generate command line arguments.
 """
 pTabixIndex        = Proc(desc = 'Generate tabix index file')
 pTabixIndex.input  = "infile:file"
 pTabixIndex.output = [
-	"outfile:file:{{i.infile | bn}}{% unless i.infile.endswith('.gz') %}.gz{% endunless %}", 
-	"outidx:file:{{i.infile | bn}}{% unless i.infile.endswith('.gz') %}.gz{% endunless %}.tbi"
+	"outfile:file:{{i.infile | bn}}{% if args.gz %}.gz{% endif %}", 
+	"outidx:file:{{i.infile  | bn}}{% if args.gz %}.gz{% endif %}.tbi"
 ]
+pTabixIndex.args.gz     = True
 pTabixIndex.args.tabix  = params.tabix.value
-pTabixIndex.args.python = params.python.value
 pTabixIndex.args.params = Box()
-pTabixIndex.script      = "file:scripts/tabix/pTabixIndex.bash"
+pTabixIndex.lang        = params.python.value
+pTabixIndex.script      = "file:scripts/tabix/pTabixIndex.py"
