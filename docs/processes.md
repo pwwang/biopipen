@@ -489,7 +489,7 @@
         	```
 ## cluster
 
-!!! hint "pDist2Coords"
+!!! hint "pDist2Feats"
 
     - **description**  
         Convert a distance matrix to coordinates, using multidimensional scaling.
@@ -525,6 +525,36 @@
         - `informat`: The format of the input file: full, triangle or pair. Default: full  
         	- Could also be upper, lower, pair
         - `k`: How many dimensions? Default: 2 (R^2)  
+
+!!! hint "pFeats2Dist"
+
+    - **description**  
+        Calculate the distance of pairs of instances
+
+    - **input**  
+        - `infile:file`: The input file. Rows are instances, columns are features.  
+
+    - **output**  
+        - `outfile:file`: The output distance matrix  
+
+    - **args**  
+        - `inopts`: the options for input file  
+        	- `cnames`: Whether input file has column names
+        	- `rnames`: Whether input file has row names
+        - `sim`: Output similarity instead of distance? Default: `False`  
+        - `na` : Replace NAs with? Default: `0`  
+        - `method`: Method used to calculate the distance. See available below. Default: `euclidean`  
+        	- euclidean, manhattan, minkowski, chebyshev, sorensen, gower, soergel, kulczynski_d, 
+        	- canberra, lorentzian, intersection, non-intersection, wavehedges, czekanowski, motyka, 
+        	- kulczynski_s, tanimoto, ruzicka, inner_product, harmonic_mean, cosine, hassebrook, 
+        	- jaccard, dice, fidelity, bhattacharyya, hellinger, matusita, squared_chord, 
+        	- quared_euclidean, pearson, neyman, squared_chi, prob_symm, divergence, clark, 
+        	- additive_symm, kullback-leibler, jeffreys, k_divergence, topsoe, jensen-shannon, 
+        	- jensen_difference, taneja, kumar-johnson, avg
+        	- see: https://cran.r-project.org/web/packages/philentropy/vignettes/Distances.html
+
+    - **requires**  
+        `r-philentropy`
 
 !!! hint "pCluster"
 
@@ -1634,6 +1664,9 @@
         - `outfile:file`: The output file  
 
     - **args**  
+        - `inopts`: options for reading input file.  
+        - `outopts`: options for writing output file.  
+        	- `query`: Output the original query column? Default: `False`
         - `notfound`: What if a symbol is not found. Default: ignore  
         	- skip  : skip the record(don't write it to output file)
         	- ignore: use the original name;
@@ -2210,6 +2243,52 @@
     - **args**  
         - `inopts` : The input options.  
         - `outprob`: Also output probabilities? Default: True  
+
+!!! hint "pRandomForestTrain"
+
+    - **description**  
+        Train a random forest model
+
+    - **input**  
+        - `infile:file`: The input file (Last column as Y)  
+
+    - **output**  
+        - `outmodel:file`: The output model (RData file)  
+        - `outdir:dir`   : The output directory containing model, plots and other files  
+
+    - **args**  
+        - `plot`   : Whether plot the feature importance. Default: `True`  
+        - `formula`: The formula to perform the regression. Default: `None`.  
+        	- If `None`, will use all first N-1 columns as features.
+        - `inopts` : The input options.  
+        - `na`     : Replace NAs with? Default: `0`  
+        - `devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`  
+
+    - **requires**  
+        `r-randomForst`
+
+!!! hint "pDecisionTreeTrain"
+
+    - **description**  
+        Train a decision tree model
+
+    - **input**  
+        - `infile:file`: The input file (Last column as Y)  
+
+    - **output**  
+        - `outmodel:file`: The output model (RData file)  
+        - `outdir:dir`   : The output directory containing model, plots and other files  
+
+    - **args**  
+        - `plot`   : Whether plot the feature importance. Default: `True`  
+        - `formula`: The formula to perform the regression. Default: `None`.  
+        	- If `None`, will use all first N-1 columns as features.
+        - `inopts` : The input options.  
+        - `na`     : Replace NAs with? Default: `0`  
+        - `devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`  
+
+    - **requires**  
+        `r-rpart`
 ## pca
 
 !!! hint "pPCA"
@@ -4071,7 +4150,6 @@
     - **args**  
         - `tabix`: The path to `tabix`  
         - `params`: Other params for `tabix`  
-        - `python`: Will be used to generate command line arguments.  
 ## tcga
 
 !!! hint "pDownload"
@@ -4736,7 +4814,7 @@
         	- In case the vcf file is too big. 
         	- Requires both vcf files indexed (.tbi). If not they will be indexed there.
         - `nthread` : # threads to use, only when `bychrom` is True. Default: `1`  
-        - `tool`    : The tool to be used. Default: `bedtools`  
+        - `tool`    : The tool to be used. Default: `mem` (or pyvcf/bedtools)  
         - `bedtools`: The path to bedtools.  
         - `tabix`   : The path to tabix.  
         - `any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`  
@@ -4756,6 +4834,23 @@
     - **args**  
         - `chroms`: The chromsome filter. Default: "" (all chroms)  
         - Note: snpEff csvstat file has no "chr" prefix
+
+!!! hint "pGTMatAddRs"
+
+    - **description**  
+        Add rs id to a genotype matrix
+
+    - **input**  
+        - `infile:file`: The input genotype matrix, columns are samples, rows are mutations in format:  
+        	- `<chr>_<pos>_<ref>_<alt>`
+        	- have to sorted by coordinates
+
+    - **output**  
+        - `outfile:file`: The output genotype matrix. Row names will turn into:  
+        	- `<chr>_<pos>_<rs>_<ref>_<alt>`
+
+    - **args**  
+        - `dbsnp`: the dbsnp vcf file used to annotation the snps (assume sorted by coordinates).  
 
 !!! hint "pGTMat2Plink"
 

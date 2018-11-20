@@ -30,6 +30,29 @@ pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 
 """
 @name:
+	pGTMatAddRs
+@description:
+	Add rs id to a genotype matrix
+@input:
+	`infile:file`: The input genotype matrix, columns are samples, rows are mutations in format:
+		- `<chr>_<pos>_<ref>_<alt>`
+		- have to sorted by coordinates
+@output:
+	`outfile:file`: The output genotype matrix. Row names will turn into:
+		- `<chr>_<pos>_<rs>_<ref>_<alt>`
+@args:
+	`dbsnp`: the dbsnp vcf file used to annotation the snps (assume sorted by coordinates).
+"""
+pGTMatAddRs               = Proc(desc = "Add rs id to a genotype matrix")
+pGTMatAddRs.input         = 'infile:file'
+pGTMatAddRs.output        = 'outfile:file:{{i.infile | bn}}'
+pGTMatAddRs.args.dbsnp    = params.dbsnp_all.value
+pGTMatAddRs.args.notfound = 'NOVEL'
+pGTMatAddRs.lang          = params.python.value
+pGTMatAddRs.script        = "file:scripts/vcfnext/pGTMatAddRs.py"
+
+"""
+@name:
 	pGTMat2Plink
 @description:
 	Convert a genotype matrix to plink binary files
