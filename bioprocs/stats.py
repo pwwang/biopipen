@@ -211,6 +211,24 @@ pBin.script       = "file:scripts/stats/pBin.r"
 
 """
 @name:
+	pQuantileNorm
+@description:
+	Do quantile normalization
+@input:
+	`infile:file`: The input matrix
+@output:
+	`outfile:file`: The output matrix. Default: `{{i.infile | bn}}`
+"""
+pQuantileNorm              = Proc(desc = 'Do quantile normalization')
+pQuantileNorm.input        = 'infile:file'
+pQuantileNorm.output       = 'outfile:file:{{i.infile | bn}}'
+pQuantileNorm.args.inopts  = Box(rnames = True, cnames = True, delimit = "\t", skip = 0)
+pQuantileNorm.envs.rimport = rimport
+pQuantileNorm.lang         = params.Rscript.value
+pQuantileNorm.script       = "file:scripts/stats/pQuantileNorm.r"
+
+"""
+@name:
 	pChiSquare
 @description:
 	Do chi-square test.
@@ -452,6 +470,43 @@ pChow.script       = "file:scripts/stats/pChow.r"
 
 """
 @name:
+	pChow2
+@description:
+	Do multiple Chow-Tests
+@input:
+	`infile:file`: The input file. Beyond the input file of `pChow`, it must contain a column `Case` (last column) to distinguish different cases.
+		- It may also contain a column called `Sample` instead of rownames, because samples may duplicate. That's why the default `args.inopts.rnames` is `False`
+@output:
+	`outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`
+	`outdir:dir`: The output directory, containing the output file, results of regressions and plots.
+@args:
+	`inopts`: The options for input file.
+		- `cnames`: Whether the input file has column names. Default: `True`
+		- `rnames`: Whether the input file has row names. Default: `False`
+	`cov`: The covariate file. `inopts.rnames` required and this file should have row names too. Default: `''`
+	`plot`: When to plot the results. Default: `0.05`
+		- `<pcutoff>`: When `pval < <pcutoff>`
+		- `True`: plot anyway
+		- `False`: Do not plot anyway
+	`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
+"""
+pChow2 = Proc(desc = "Do multiple Chow-Tests")
+pChow2.input        = 'infile:file'
+pChow2.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
+pChow2.args.inopts  = Box(
+	cnames = True,
+	rnames = False
+)
+pChow2.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
+pChow2.args.plot    = 0.05 # False, True
+pChow2.args.fdr     = True # methods
+pChow2.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pChow2.envs.rimport = rimport
+pChow2.lang         = params.Rscript.value
+pChow2.script       = "file:scripts/stats/pChow2.r"
+
+"""
+@name:
 	pCorr
 @description:
 	Calculate the correlation coefficient for the input matrix
@@ -493,3 +548,63 @@ pCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)
 pCorr.envs.rimport = rimport
 pCorr.lang         = params.Rscript.value
 pCorr.script       = "file:scripts/stats/pCorr.r"
+
+"""
+@name:
+	pCorr2
+@description:
+	Calculate correlation coefficient between instances of two files
+	Don't do it between instances within the same file.
+@input:
+	`infile1:file`: The first file. See input of `pCorr`
+	`infile2:file`: The second file.
+		- must have same number of columns with `infile1`
+@output:
+	`outfile:file`: The output file.
+	`outdir:dir`  : The output directory containing output file and other files:
+		- pvalues/fdr file and plots
+@args:
+	`pval`  : Whether output pvalue. Default: `False`
+	`fdr`   : Whether output qvalue. Default: `False`
+	`outfmt`: The output format. `pairs` (default) or `matrix`
+	`plot`  : Whether plot a heatmap or not. Default: `False`
+	`params`: The params for `plot.heatmap` in `utils/plot.r`
+	`ggs`:    The extra ggplot2 statements.
+	`devpars`:The parameters for the plot device. Default: `Box(height = 2000, width = 2000, res = 300)`
+"""
+pCorr2        = Proc(desc = 'Calculate correlation coefficient between instances of two files')
+pCorr2.input  = 'infile1:file, infile2:file'
+pCorr2.output = [
+	'outfile:file:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr/{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr.txt', 
+	'outdir:dir:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr'
+]
+pCorr2.args.inopts1 = Box()
+pCorr2.args.inopts2 = Box()
+pCorr2.args.method  = 'pearson' # spearman, kendall
+pCorr2.args.pval    = False
+pCorr2.args.fdr     = False # method: 'BH'
+pCorr2.args.outfmt  = 'pairs' # matrix
+pCorr2.args.plot    = False
+pCorr2.args.params  = Box() # the parameters for plot.heatmap
+pCorr2.args.ggs     = Box() # extra ggplot statements
+pCorr2.args.devpars = Box(height = 2000, width = 2000, res = 300)
+pCorr2.envs.rimport = rimport
+pCorr2.lang         = params.Rscript.value
+pCorr2.script       = "file:scripts/stats/pCorr2.r"
+
+pDiffCorr = Proc()
+pDiffCorr.input  = 'infile:file, samfile:file, casefile:file, groupfile:file'
+pDiffCorr.output = [
+	'outfile:file:{{i.infile | fn2}}.diffcorr/{{i.infile | fn2}}.diffcorr.txt',
+	'outdir:dir:{{i.infile | fn2}}.diffcorr'
+]
+pDiffCorr.args.inopts  = Box(cnames = True, rnames = True)
+pDiffCorr.args.method  = 'pearson' # spearman
+pDiffCorr.args.pval    = 0.05
+pDiffCorr.args.fdr     = True # BH
+pDiffCorr.args.plot    = False
+pDiffCorr.args.ggs     = Box() # extra ggplot statements
+pDiffCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)
+pDiffCorr.envs.rimport = rimport
+pDiffCorr.lang         = params.Rscript.value
+pDiffCorr.script       = "file:scripts/stats/pDiffCorr.r"

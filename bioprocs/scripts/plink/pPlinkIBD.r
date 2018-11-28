@@ -1,4 +1,5 @@
 library(methods)
+library(data.table)
 {{rimport}}('__init__.r', 'plot.r')
 
 indir  = {{i.indir | R}}
@@ -40,42 +41,37 @@ genome = read.table(paste0(output, '.genome'), row.names = NULL, header = T, che
 # s1   s1   s2   s2   UN NA 1.0000 0.0000 0.0000 0.0000 -1  0.866584 0.0000 0.9194
 # s1   s1   s2   s2   UN NA 0.4846 0.3724 0.1431 0.3293 -1  0.913945 0.7236 2.0375
 # s1   s1   s3   s3   UN NA 1.0000 0.0000 0.0000 0.0000 -1  0.867186 0.0000 1.0791
-samples = unique(c(
-	paste(genome$FID1, genome$IID1, sep = '\t'), 
-	paste(genome$FID2, genome$IID2, sep = '\t')
-))
-rownames(genome) = paste(
-	paste(genome$FID1, genome$IID1, sep = '\t'), 
-	paste(genome$FID2, genome$IID2, sep = '\t'), 
-	sep = ' / '
-)
+genome$SAMPLE1 = paste(genome$FID1, genome$IID1, sep = "\t")
+genome$SAMPLE2 = paste(genome$FID2, genome$IID2, sep = "\t")
 
-similarity = matrix(NA, ncol = length(samples), nrow = length(samples))
-rownames(similarity) = samples
-colnames(similarity) = samples
-# marks for PI_HAT >= pihat cutoff
-marks = data.frame(x = NULL, y = NULL)
-
-nsams = length(samples)
-for (i in 1:nsams) {
-	for (j in 1:nsams) {
-		sam1 = samples[i]
-		sam2 = samples[j]
-		if (j >= i) next
-		sim1 = genome[paste(sam1, sam2, sep = ' / '), 'PI_HAT']
-		sim2 = genome[paste(sam2, sam1, sep = ' / '), 'PI_HAT']
-		sim  = if (is.na(sim1)) sim2 else sim1
-		similarity[sam2, sam1] = sim
-		similarity[sam1, sam2] = sim
-		if (sim >= pihat) {
-			marks = rbind(marks, list(x = j, y = i))
-			marks = rbind(marks, list(x = i, y = j))
-		}
-	}
-	similarity[sam1, sam1] = 1
-}
-similarity[is.na(similarity)] = 0
+# get all samples
+samples    = unique(c(genome$SAMPLE1, genome$SAMPLE2))
+# make paired into a distance-like matrix
+similarity = dcast(genome, SAMPLE1 ~ SAMPLE2, value.var = "PI_HAT")
 rm(genome)
+# get the rownames back
+rownames(similarity) = similarity[, 1]
+similarity = similarity[, -1, drop = F]
+# get samples that didn't involved
+missedrow  = setdiff(samples, rownames(similarity))
+missedcol  = setdiff(samples, colnames(similarity))
+similarity[missedrow, ] = NA
+similarity[, missedcol] = NA
+# order the matrix
+similarity = similarity[samples, samples, drop = F]
+# transpose the matrix to get the symmetric values
+sim2 = t(similarity)
+isna = is.na(similarity)
+# fill the na's with their symmetric values
+similarity[isna] = sim2[isna]
+rm(sim2)
+# still missing: keep them
+similarity[is.na(similarity)] = 0
+# get the marks (samples that fail the pihat cutoff)
+nsams = length(samples)
+fails = which(similarity > pihat)
+marks = data.frame(x = (fails - 1)%%nsams + 1, y = ceiling(fails/nsams))
+diag(similarity) = 1
 
 failflags = rep(F, nrow(marks))
 freqs     = as.data.frame(table(factor(as.matrix(marks))))

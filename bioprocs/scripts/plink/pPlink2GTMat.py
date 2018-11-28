@@ -7,12 +7,14 @@ from bioprocs.utils.tsvio import TsvReader, TsvWriter
 # plink -bfile x --recode A-transpose --out x.txt 
 # x.txt.traw
 
-indir      = {{i.indir | quote}}
-outfile    = {{o.outfile | quote}}
-plink      = {{args.plink | quote}}
-samid      = {{args.samid | quote}}
-nors       = {{args.nors | quote}}
-chroms     = {{args.chroms | repr}}
+indir   = {{i.indir | quote}}
+outfile = {{o.outfile | quote}}
+plink   = {{args.plink | quote}}
+samid   = {{args.samid | quote}}
+snpid   = {{args.snpid | quote}}
+addchr  = {{args.addchr | repr}}
+nors    = {{args.nors | quote}}
+chroms  = {{args.chroms | repr}}
 
 bedfile = glob(path.join(indir, '*.bed'))[0]
 input   = path.splitext(bedfile)[0]
@@ -41,19 +43,22 @@ gts = TsvReader(output + '.traw', ftype = 'nometa', skip = 1, head = False)
 with open(outfile, 'w') as fout:
 	fout.write(header)
 	for gtline in gts:
-		if gtline[0] in chroms:
-			gtline[0] = chroms[gtline[0]]
-		elif 'chr' + gtline[0] in chroms:
-			gtline[0] = chroms[gtline[0]][3:] if chroms[gtline[0]].startswith('chr') else chroms[gtline[0]]
-		if '_' in gtline[1]:
-			gtline[1] = nors
-		gtline[0] = '{chr}_{pos}_{rs}_{ref}_{alt}'.format(
-			chr = gtline[0],
-			pos = gtline[3],
-			rs  = gtline[1],
-			ref = gtline[4],
-			alt = gtline[5]
-		)
+		if snpid == 'raw':
+			gtline[0] = gtline[1]
+		else:
+			if gtline[0] in chroms:
+				gtline[0] = chroms[gtline[0]]
+			elif 'chr' + gtline[0] in chroms:
+				gtline[0] = chroms['chr' + gtline[0]]
+			if addchr and not gtline[0].startswith('chr'):
+				gtline[0] = 'chr' + gtline[0]
+			gtline[0] = snpid.format(
+				chr = gtline[0],
+				pos = gtline[3],
+				rs  = gtline[1] if not 'rs' in gtline[1] else nors,
+				ref = gtline[4],
+				alt = gtline[5]
+			)
 		del gtline[1:6]
 		fout.write('\t'.join(gtline) + '\n')
 

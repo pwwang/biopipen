@@ -17,9 +17,13 @@ with open(infile) as fin, \
 			if rdb.startswith('#'):
 				rdb = None
 				continue
-			inparts                     = rin.split('\t')
-			(chr_in, pos_in, ref, alt)  = inparts[0].split('_')
-			(chr_db, pos_db, rs_db)     = rdb.split('\t')[:3]
+			inparts                 = rin.split('\t')
+			names                    = inparts[0].split('_')
+			if len(names) == 4:
+				(chr_in, pos_in, ref, alt) = names
+			else:
+				(chr_in, pos_in, _, ref, alt) = names
+			(chr_db, pos_db, rs_db) = rdb.split('\t')[:3]
 			if (chr_in, int(pos_in)) < (chr_db, int(pos_db)):
 				inparts[0] = '_'.join((chr_in, pos_in, notfound, ref, alt))
 				fout.write('\t'.join(inparts))
@@ -34,4 +38,5 @@ with open(infile) as fin, \
 		except StopIteration:
 			break
 		except:
+			rin = rdb = None
 			continue

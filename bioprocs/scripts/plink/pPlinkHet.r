@@ -23,9 +23,9 @@ runcmd(cmd)
 phet = read.table(paste0(output, '.het'), header = T, row.names = NULL, check.names = F)
 het = data.frame(Het = 1 - phet[, "O(HOM)"]/phet[, "N(NM)"])
 rownames(het) = paste(phet$FID, phet$IID, sep = "\t")
-het.mean = mean(het$Het)
-het.sd   = sd(het$Het)
-het.fail = rownames(het[het$Het < het.mean-cutoff*het.sd | het$Het > het.mean+cutoff*het.sd,, drop = F])
+het.mean = mean(het$Het, na.rm = T)
+het.sd   = sd(het$Het, na.rm = T)
+het.fail = rownames(het[!is.na(het$Het) & (het$Het < het.mean-cutoff*het.sd | het$Het > het.mean+cutoff*het.sd),, drop = F])
 writeLines(het.fail, con = file(paste0(output, '.het.fail')))
 
 {% if args.plot %}

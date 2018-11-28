@@ -19,7 +19,8 @@ if (dir.exists(pdir)) {
 isSampleFail = function(fail) {
 	endsWith(fail, '.samplecr.fail') ||
 	endsWith(fail, '.het.fail') ||
-	endsWith(fail, '.ibd.fail')
+	endsWith(fail, '.ibd.fail') ||
+	endsWith(fail, '.sex.fail')
 }
 
 isSNPFail = function(fail) {

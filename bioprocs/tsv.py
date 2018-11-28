@@ -33,6 +33,18 @@ pMatrixR.envs.rimport = rimport
 pMatrixR.lang         = params.Rscript.value
 pMatrixR.script       = "file:scripts/tsv/pMatrixR.r"
 
+"""
+@name:
+	pTranspose
+@description:
+	Transpose a matrix
+@input:
+	`infile:file`: The input matrix file
+@output:
+	`outfile:file`: The Transposed matrix file. Default: `{{i.infile | bn}}`
+@args:
+	`inopts`: Input options for input file.
+"""
 pTranspose              = Proc(desc = 'Transpose a matrix')
 pTranspose.input        = 'infile:file'
 pTranspose.output       = 'outfile:file:{{i.infile | bn}}'
@@ -40,6 +52,33 @@ pTranspose.args.inopts  = Box(cnames = True, rnames = True)
 pTranspose.envs.rimport = rimport
 pTranspose.lang         = params.Rscript.value
 pTranspose.script       = "file:scripts/tsv/pTranspose.r"
+
+"""
+@name:
+	pPaired
+@description:
+	Subset each input file and make sure they have paired columns.
+@input:
+	`infile1:file`: The first file
+	`infile2:file`: The second file
+@outfile:
+	`outfile1:file`: The paired file for infile1. Default: `{{i.infile1 | fn}}.paired{{i.infile1 | ext}}`
+	`outfile2:file`: The paired file for infile2. Default: `{{i.infile2 | fn}}.paired{{i.infile2 | ext}}`
+@args:
+	`inopts1`: reading options for input file1
+	`inopts2`: reading options for input file2
+"""
+pPaired        = Proc(desc = "Subset each input file and make sure they have paired columns.")
+pPaired.input  = 'infile1:file, infile2:file'
+pPaired.output = [
+	'outfile1:file:{{i.infile1 | fn}}.paired{{i.infile1 | ext}}',
+	'outfile2:file:{{i.infile2 | fn}}.paired{{i.infile2 | ext}}'
+]
+pPaired.args.inopts1 = Box(head = True, headCallback = None)
+pPaired.args.inopts2 = Box(head = True, headCallback = None)
+pPaired.lang         = params.python.value
+pPaired.script       = "file:scripts/tsv/pPaired.py"
+
 
 """
 @name:
@@ -237,7 +276,7 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 
 """
 @name:
-	pSimRead
+	pTsvJoin
 @description:
 	Read files simultaneously.
 	NOTE: only one file allows multiple lines with same value to compare, and that file should be the first one. For example: 
@@ -261,44 +300,26 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 		- `skip`   : First N lines to skip. Default: `0`
 		- `delimit`: The delimit. Default          : `\t`
 		- `comment`: The comment line mark. Default: `#`
-		- `ftype  `: The type of the file. Default : `nometa`
-		- `head`: Whether input file has head, only for `nometa`. Default: `True`
-	`outputs`:
-		- `delimit`      : The delimit. Default                    : `\t`
-		- `headPrefix`   : The prefix for the head line. Default   : ``
-		- `headDelimit`  : The delimiter for the head line. Default: `\t`
-		- `headTransform`: The transformer for the head line.
-		- `head`         : Whether to output the head? Default     : `False`
-		- `ftype`        : The type of the output. Default         : `nometa`
-		- `cnames`       : The extra column names. Default         : `[]`
-	`usemeta`: The header from which input file will be used for output file.
-		- Default: None (Don't write header)
-		- 1-based.
+		- `cnames`   : Whether input file has head. Default: `True`
+	`outopts`:
+		- `delimit`      : The delimit. Default: `\t`
+		- `cnames`         : Whether to output the head? Default: `False`
 	`match`: The match function. 
 	`do`: The do function. Global vaiable `fout` is available to write results to output file.
 	`helper`: Some helper codes.
 @requires:
 	[`python-simread`](https://github.com/pwwang/simread)
 """
-pSimRead              = Proc(desc = 'Read files simultaneously.')
-pSimRead.input        = 'infiles:files'
-pSimRead.output       = 'outfile:file:{{i.infiles[0] | fn}}.etc.simread.txt'
-pSimRead.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'nometa', head = True)
-pSimRead.args.outopts = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = 'nometa', cnames = [])
-pSimRead.args.usemeta = None
-pSimRead.args.match   = None
-pSimRead.args.do      = None
-pSimRead.args.helper  = ''
-pSimRead.lang         = params.python.value
-pSimRead.script       = "file:scripts/tsv/pSimRead.py"
-
-"""
-@name:
-	pTsvJoin
-@description:
-	Alias of pSimRead
-"""
-pTsvJoin = pSimRead.copy()
+pTsvJoin              = Proc(desc = 'Read files simultaneously.')
+pTsvJoin.input        = 'infiles:files'
+pTsvJoin.output       = 'outfile:file:{{i.infiles[0] | fn}}.etc.joined.txt'
+pTsvJoin.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', cnames = True)
+pTsvJoin.args.outopts = Box(delimit = '\t', cnames = False)
+pTsvJoin.args.match   = None
+pTsvJoin.args.do      = None
+pTsvJoin.args.helper  = ''
+pTsvJoin.lang         = params.python.value
+pTsvJoin.script       = "file:scripts/tsv/pTsvJoin.py"
 
 """
 @name:

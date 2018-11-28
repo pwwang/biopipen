@@ -153,6 +153,7 @@ elif tool == 'pyvcf':
 		except StopIteration:
 			break
 		except:
+			r1 = r2 = None
 			continue
 else:
 	import gzip
@@ -189,6 +190,7 @@ else:
 			except StopIteration:
 				break
 			except:
+				line1 = line2 = None
 				continue
 			
 

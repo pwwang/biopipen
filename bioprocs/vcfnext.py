@@ -74,8 +74,17 @@ pGTMat2Plink.input        = 'infile:file, metafile:file'
 pGTMat2Plink.output       = 'outdir:dir:{{i.infile | fn}}.plink'
 pGTMat2Plink.args.plink   = params.plink.value
 pGTMat2Plink.args.keeptxt = False
-pGTMat2Plink.lang         = params.Rscript.value
-pGTMat2Plink.script       = "file:scripts/vcfnext/pGTMat2Plink.r"
+pGTMat2Plink.args.chrmaps = {'X': 23, 'Y': 24, 'XY': 25, 'M': 26, 'MT': 26}
+pGTMat2Plink.lang         = params.python.value
+pGTMat2Plink.script       = "file:scripts/vcfnext/pGTMat2Plink.py"
+
+pGTMat2Bed           = Proc(desc = 'Convert a genotype matrix to bed file')
+pGTMat2Bed.input     = 'infile:file'
+pGTMat2Bed.output    = 'outfile:file:{{i.infile | fn}}.bed'
+pGTMat2Bed.args.ncol = 6 # 3, 8
+pGTMat2Bed.args.name = 'neat' # full
+pGTMat2Bed.lang      = params.python.value
+pGTMat2Bed.script    = "file:scripts/vcfnext/pGTMat2Bed.py"
 
 """
 @name:

@@ -38,6 +38,28 @@ pPlinkMiss.script        = "file:scripts/plink/pPlinkMiss.r"
 
 """
 @name:
+	pPlinkSexcheck
+@description:
+	Check inconsistency between sex denoted and from genotypes.
+@input:
+	`indir:dir`: The input directory containing .bed/.bim/.fam files
+@output:
+	`outdir:dir`: The output directory. Default: `{{i.indir | fn}}.sexcheck`
+		- `.sexcheck`: The orginal sex check report from `plink`
+		- `.sex.fail`: The samples that fail sex check.
+@args:
+	`plink`: The path to plink.
+"""
+pPlinkSexcheck               = Proc(desc = 'Check inconsistency between sex denoted and from genotypes.')
+pPlinkSexcheck.input         = 'indir:dir'
+pPlinkSexcheck.output        = 'outdir:dir:{{i.indir | fn}}.sexcheck'
+pPlinkSexcheck.args.plink    = params.plink.value
+pPlinkSexcheck.envs.rimport  = rimport
+pPlinkSexcheck.lang          = params.Rscript.value
+pPlinkSexcheck.script        = "file:scripts/plink/pPlinkSexcheck.r"
+
+"""
+@name:
 	pPlinkHet
 @description:
 	Calculate the heterozygosity of each sample.
@@ -196,6 +218,8 @@ pPlink2GTMat.input       = 'indir:dir'
 pPlink2GTMat.output      = 'outfile:file:{{i.indir | bn}}.gtmat.txt'
 pPlink2GTMat.args.plink  = params.plink.value
 pPlink2GTMat.args.samid  = 'both' # fid, iid
+pPlink2GTMat.args.addchr = True
+pPlink2GTMat.args.snpid  = '{chr}_{pos}_{rs}_{ref}_{alt}' # or raw
 pPlink2GTMat.args.chroms = {"23": "X", "24": "Y", "25": "XY", "26": "M"}
 pPlink2GTMat.args.nors   = "NOVEL"
 pPlink2GTMat.lang        = params.python.value

@@ -117,4 +117,6 @@ pretty.numbers = function(df, formats) {
 	return (df)
 }
 
-
+bQuote = function(s) {
+	paste0('`', s, '`')
+}

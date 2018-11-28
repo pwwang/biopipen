@@ -20,14 +20,14 @@ params = list(
 cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
 runcmd(cmd)
 
-hardy = read.table(paste0(output, '.hwe'), header = T, row.names = 2, check.names = F)
-hardy.fail = rownames(hardy[hardy$P < cutoff, , drop = F])
-writeLines(hardy.fail, con = file(paste0(output, '.hardy.fail')))
+hardy = read.table(paste0(output, '.hwe'), header = T, row.names = NULL, check.names = F)
+hardy.fail = hardy[which(hardy$P < cutoff), 'SNP', drop = F]
+write.table(hardy.fail, paste0(output, '.hardy.fail'), col.names = F, row.names = F, sep = "\t", quote = F)
 
 {% if args.plot %}
 hardy$Pval   = -log10(hardy$P)
 hardy$Status = "Pass"
-hardy[hardy.fail, "Status"] = "Fail"
+hardy[which(hardy$SNP %in% hardy.fail$SNP), "Status"] = "Fail"
 
 plot.histo(
 	data     = hardy,

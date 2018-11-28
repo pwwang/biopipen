@@ -47,18 +47,18 @@ plot.histo(
 )
 {% endif %}
 
-lmiss = read.table(paste0(output, '.lmiss'), header = T, row.names = 2, check.names = F)
-callrate.snp = data.frame(Callrate = 1-lmiss$F_MISS)
-rownames(callrate.snp) = rownames(lmiss)
-callrate.snp.fail = rownames(callrate.snp[callrate.snp$Callrate < snpcr, , drop = F])
-writeLines(callrate.snp.fail, con = file(paste0(output, '.snpcr.fail')))
+lmiss = read.table(paste0(output, '.lmiss'), header = T, row.names = NULL, check.names = F)
+lmiss$Callrate = 1-lmiss$F_MISS
+callrate.snp.fail = lmiss[which(lmiss$Callrate < snpcr), 'SNP', drop = F]
+write.table(callrate.snp.fail, paste0(output, '.snpcr.fail'), row.names = F, col.names = F, sep = "\t", quote = F)
 
 {% if args.plot %}
-callrate.snp$Status = "Pass"
-callrate.snp[callrate.snp.fail, "Status"] = "Fail"
+lmiss$Status = "Pass"
+lmiss[which(lmiss$Callrate < snpcr), "Status"] = "Fail"
 plot.histo(
-	data     = callrate.snp,
+	data     = lmiss,
 	plotfile = paste0(output, '.snpcr.png'),
+	x        = 'Callrate',
 	params   = list(aes(fill=Status), bins = 50),
 	ggs      = list(
 		xlab       = list("SNP Call Rate"),

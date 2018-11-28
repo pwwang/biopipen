@@ -2497,6 +2497,22 @@
         - `plot`: Whether plot the distribution of the call rates? Default: `True`  
         - `devpars`: The device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`  
 
+!!! hint "pPlinkSexcheck"
+
+    - **description**  
+        Check inconsistency between sex denoted and from genotypes.
+
+    - **input**  
+        - `indir:dir`: The input directory containing .bed/.bim/.fam files  
+
+    - **output**  
+        - `outdir:dir`: The output directory. Default: `{{i.indir | fn}}.sexcheck`  
+        	- `.sexcheck`: The orginal sex check report from `plink`
+        	- `.sex.fail`: The samples that fail sex check.
+
+    - **args**  
+        - `plink`: The path to plink.  
+
 !!! hint "pPlinkHet"
 
     - **description**  
@@ -3907,6 +3923,17 @@
         	- If column specified, only the specified column will be binned.
         	- Column indices can be used. It's 1-based.
 
+!!! hint "pQuantileNorm"
+
+    - **description**  
+        Do quantile normalization
+
+    - **input**  
+        - `infile:file`: The input matrix  
+
+    - **output**  
+        - `outfile:file`: The output matrix. Default: `{{i.infile | bn}}`  
+
 !!! hint "pChiSquare"
 
     - **description**  
@@ -4089,6 +4116,30 @@
         	- `False`: Do not plot anyway
         - `devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`  
 
+!!! hint "pChow2"
+
+    - **description**  
+        Do multiple Chow-Tests
+
+    - **input**  
+        - `infile:file`: The input file. Beyond the input file of `pChow`, it must contain a column `Case` (last column) to distinguish different cases.  
+        	- It may also contain a column called `Sample` instead of rownames, because samples may duplicate. That's why the default `args.inopts.rnames` is `False`
+
+    - **output**  
+        - `outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`  
+        - `outdir:dir`: The output directory, containing the output file, results of regressions and plots.  
+
+    - **args**  
+        - `inopts`: The options for input file.  
+        	- `cnames`: Whether the input file has column names. Default: `True`
+        	- `rnames`: Whether the input file has row names. Default: `False`
+        - `cov`: The covariate file. `inopts.rnames` required and this file should have row names too. Default: `''`  
+        - `plot`: When to plot the results. Default: `0.05`  
+        	- `<pcutoff>`: When `pval < <pcutoff>`
+        	- `True`: plot anyway
+        	- `False`: Do not plot anyway
+        - `devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`  
+
 !!! hint "pCorr"
 
     - **description**  
@@ -4116,6 +4167,31 @@
 
     - **requires**  
         R packages: `ggplot2` and `reshape`
+
+!!! hint "pCorr2"
+
+    - **description**  
+        Calculate correlation coefficient between instances of two files
+        Don't do it between instances within the same file.
+
+    - **input**  
+        - `infile1:file`: The first file. See input of `pCorr`  
+        - `infile2:file`: The second file.  
+        	- must have same number of columns with `infile1`
+
+    - **output**  
+        - `outfile:file`: The output file.  
+        - `outdir:dir`  : The output directory containing output file and other files:  
+        	- pvalues/fdr file and plots
+
+    - **args**  
+        - `pval`  : Whether output pvalue. Default: `False`  
+        - `fdr`   : Whether output qvalue. Default: `False`  
+        - `outfmt`: The output format. `pairs` (default) or `matrix`  
+        - `plot`  : Whether plot a heatmap or not. Default: `False`  
+        - `params`: The params for `plot.heatmap` in `utils/plot.r`  
+        - `ggs`: The extra ggplot2 statements.  
+        - `devpars`: The parameters for the plot device. Default: `Box(height = 2000, width = 2000, res = 300)`  
 ## tabix
 
 !!! hint "pTabix"
@@ -4300,6 +4376,37 @@
         - `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`  
         - `code`: The R code to operating the matrix. (the matrix is read in variable `mat`)  
 
+!!! hint "pTranspose"
+
+    - **description**  
+        Transpose a matrix
+
+    - **input**  
+        - `infile:file`: The input matrix file  
+
+    - **output**  
+        - `outfile:file`: The Transposed matrix file. Default: `{{i.infile | bn}}`  
+
+    - **args**  
+        - `inopts`: Input options for input file.  
+
+!!! hint "pPaired"
+
+    - **description**  
+        Subset each input file and make sure they have paired columns.
+
+    - **input**  
+        - `infile1:file`: The first file  
+        - `infile2:file`: The second file  
+
+    - **outfile**  
+        - `outfile1:file`: The paired file for infile1. Default: `{{i.infile1 | fn}}.paired{{i.infile1 | ext}}`  
+        - `outfile2:file`: The paired file for infile2. Default: `{{i.infile2 | fn}}.paired{{i.infile2 | ext}}`  
+
+    - **args**  
+        - `inopts1`: reading options for input file1  
+        - `inopts2`: reading options for input file2  
+
 !!! hint "pCbind"
 
     - **description**  
@@ -4416,7 +4523,7 @@
         - `ops`: A ops function to transform the row. Argument is an instance of `readRecord`  
         - `opshelper`: A helper function for `args.ops`  
 
-!!! hint "pSimRead"
+!!! hint "pTsvJoin"
 
     - **description**  
         Read files simultaneously.
@@ -4444,30 +4551,16 @@
         	- `skip`   : First N lines to skip. Default: `0`
         	- `delimit`: The delimit. Default          : `\t`
         	- `comment`: The comment line mark. Default: `#`
-        	- `ftype  `: The type of the file. Default : `nometa`
-        	- `head`: Whether input file has head, only for `nometa`. Default: `True`
-        - `outputs`:   
-        	- `delimit`      : The delimit. Default                    : `\t`
-        	- `headPrefix`   : The prefix for the head line. Default   : ``
-        	- `headDelimit`  : The delimiter for the head line. Default: `\t`
-        	- `headTransform`: The transformer for the head line.
-        	- `head`         : Whether to output the head? Default     : `False`
-        	- `ftype`        : The type of the output. Default         : `nometa`
-        	- `cnames`       : The extra column names. Default         : `[]`
-        - `usemeta`: The header from which input file will be used for output file.  
-        	- Default: None (Don't write header)
-        	- 1-based.
+        	- `cnames`   : Whether input file has head. Default: `True`
+        - `outopts`:   
+        	- `delimit`      : The delimit. Default: `\t`
+        	- `cnames`         : Whether to output the head? Default: `False`
         - `match`: The match function.   
         - `do`: The do function. Global vaiable `fout` is available to write results to output file.  
         - `helper`: Some helper codes.  
 
     - **requires**  
         [`python-simread`](https://github.com/pwwang/simread)
-
-!!! hint "pTsvJoin"
-
-    - **description**  
-        Alias of pSimRead
 
 !!! hint "pMergeFiles"
 
