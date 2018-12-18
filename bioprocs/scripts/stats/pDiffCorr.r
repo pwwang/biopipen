@@ -1,6 +1,7 @@
 library(methods)
 library(data.table)
 {{rimport}}('__init__.r', 'plot.r')
+options(stringsAsFactors = FALSE)
 
 infile   = {{i.infile     | quote}}
 samfile  = {{i.samfile    | quote}}
@@ -11,6 +12,7 @@ outfile  = {{o.outfile    | quote}}
 inopts   = {{args.inopts  | R}}
 pcut     = {{args.pval    | R}}
 dofdr    = {{args.fdr     | R}}
+fdrfor   = {{args.fdrfor  | R}}
 doplot   = {{args.plot    | R}}
 method   = {{args.method  | quote}}
 ggs      = {{args.ggs     | R}}
@@ -33,12 +35,17 @@ getCorr = function(gname1, mat1, gname2, mat2) {
 	corr = data.frame(corr = apply(mat, 1, function(row) cor(
 		row[1:halfcol],
 		row[(halfcol+1):(2*halfcol)],
-		method = method
-	)), stringsAsFactors=F)
-	corr = cbind(rnames1, rnames2, corr)
+		method = method,
+		use = "pairwise.complete.obs"
+	)))
+	corr = cbind(merge(rnames1, rnames2, by = c()), corr)
 	colnames(corr) = c(gname1, gname2, 'Corr')
 	
-	list(corr = corr, n = halfcol)
+	lvl1 = levels(corr[,1])
+	lvl2 = levels(corr[,2])
+	levels(corr[,1]) = union(lvl1, lvl2)
+	levels(corr[,2]) = union(lvl1, lvl2)
+	list(corr = corr[which(corr[,1] != corr[,2]),, drop = F], n = halfcol)
 }
 
 diffCorr = function(corr1, corr2) {
@@ -61,10 +68,6 @@ diffCorr = function(corr1, corr2) {
 	})
 	pval = 2*pnorm(abs(dzcor), lower.tail = F)
 	ret = cbind(corr1$corr, Corr2 = corr2$corr$Corr2, N1 = n1, N2 = n2, Z = dzcor, Pval = pval)
-	if (dofdr != F) {
-		ret = cbind(ret, Qval = p.adjust(pval, method = dofdr))
-	}
-	ret[which(ret$Pval < pcut),, drop = F]
 }
 
 indata  = read.table.inopts(infile, inopts)
@@ -116,7 +119,8 @@ if (gfile != '') {
 corrs = list()
 for (samgrp in samgrps) {
 	sams = samdata[which(samdata[,2] == samgrp), 1]
-	corrs[[samgrp]] = getCorr(rgname1, indata[rgroup1, sams], rgname2, indata[rgroup2, sams])
+	if (length(sams) < 3) next # not able to do correlation
+	corrs[[samgrp]] = getCorr(rgname1, indata[rgroup1, sams, drop=F], rgname2, indata[rgroup2, sams,drop=F])
 	# $corr
 	# 	G1	G2	Corr
 	# 	A	Z	.9
@@ -134,6 +138,10 @@ if (casefile != '') {
 	# G2    G3
 } else {
 	cases = merge(samgrps, samgrps, by = c())
+	lvlx  = levels(cases$x)
+	lvly  = levels(cases$y)
+	levels(cases$x) = union(lvlx, lvly)
+	levels(cases$y) = union(lvlx, lvly)
 	cases = cases[which(cases$x != cases$y),, drop = F]
 	# x     y
 	# G1    G3
@@ -142,11 +150,13 @@ if (casefile != '') {
 
 results = NULL
 # returns:
-# 	Case1   Case2  TF Gene Corr1 Corr2 N1 N2 Z     Pval  Qva
+# 	Case1   Case2  TF Gene Corr1 Corr2 N1 N2 Z     Pval  Qval
 # 	G1      G3     A  B    .9    .3    10 20 1.435 .001  .01
 for (i in 1:nrow(cases)) {
 	x = as.vector(cases[i, 1])
 	y = as.vector(cases[i, 2])
+	if (is.null(corrs[[x]]) || is.null(corrs[[y]])) 
+		next
 	dc = diffCorr(corrs[[x]], corrs[[y]])
 	if (nrow(dc) == 0)
 		dc = cbind(Case1 = NULL, Case2 = NULL, dc)
@@ -154,21 +164,46 @@ for (i in 1:nrow(cases)) {
 		dc = cbind(Case1 = x, Case2 = y, dc)
 	results = if(is.null(results)) dc else rbind(results, dc)
 }
-write.table(results, outfile, col.names = T, row.names = F, sep = "\t", quote = F)
+if (dofdr != F && !is.null(results)) {
+	results$Qval = NA
+	if (fdrfor == 'all') {
+		results$Qval = p.adjust(results$Pval, method = dofdr)
+	} else {
+		for (i in 1:nrow(cases)) {
+			x = as.vector(cases[i, 1])
+			y = as.vector(cases[i, 2])
+			rows = which(results$Case1 == x & results$Case2 == y)
+			if (length(rows)>0)
+				results[rows, 'Qval'] = p.adjust(results[rows, 'Pval'], method = dofdr)
+		}
+	}
+}
+if (is.null(results)) {
+	if (dofdr == F) {
+		results = data.frame(Case1 = character(), Case2 = character(), rgname1 = character(), rgname2 = character(), Corr1 = double(), Corr2 = double(), N1 = integer(), N2 = integer(), Z = double(), Pval = double())
+	} else {
+		results = data.frame(Case1 = character(), Case2 = character(), rgname1 = character(), rgname2 = character(), Corr1 = double(), Corr2 = double(), N1 = integer(), N2 = integer(), Z = double(), Pval =double(), Qval = double())
+	}
+	colnames(results)[3:4] = c(rgname1, rgname2)
+} else { 
+	results = results[results$Pval < pcut,,drop = F]
+}
+write.table(pretty.numbers(results, list(Corr1..Corr2..Z = '%.3f', Pval..Qval = '%.2E')), 
+	outfile, col.names = T, row.names = F, sep = "\t", quote = F)
 
 # indata:
 #    S1   S2   S3 ...
 # A  1    2    1
 # B  3    9    8
 # ...
-if (doplot) {
+if (doplot && nrow(results)>0) {
 	for (i in 1:nrow(results)) {
 		row = results[i,]
 		case1 = as.vector(unlist(row[1]))
 		case2 = as.vector(unlist(row[2]))
 		sam1  = as.vector(unlist(samdata[which(samdata[,2] == case1),1]))
 		sam2  = as.vector(unlist(samdata[which(samdata[,2] == case2),1]))
-		plotdata = as.data.frame(t(indata[unlist(row[3:4]), c(sam1,sam2),drop=F]), stringsAsFactors = F)
+		plotdata = as.data.frame(t(indata[unlist(row[3:4]), c(sam1,sam2),drop=F]))
 		plotdata$Case = ""
 		plotdata[sam1, 'Case'] = case1
 		plotdata[sam2, 'Case'] = case2

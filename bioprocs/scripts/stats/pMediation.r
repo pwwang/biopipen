@@ -1,102 +1,99 @@
 library(methods)
 library(mediation)
+{{rimport}}('__init__.r')
 
 set.seed(8525)
 
-inopts.cnames = {{args.inopts | lambda x: x.get('cnames', True) | R}}
-inopts.rnames = {{args.inopts | lambda x: x.get('rnames', True) | R}}
+infile   = {{i.infile | R}}
+outfile  = {{o.outfile | R}}
+outdir   = {{o.outdir | R}}
+medfile  = {{i.medfile | R}}
+casefile = {{i.casefile | R}}
+covfile  = {{args.cov | R}}
+medopts  = {{args.medopts | R}}
+inopts   = {{args.inopts | R}}
+plotmed  = {{args.plot | R}}
+pval     = {{args.pval | R}}
+dofdr    = {{args.fdr | R}}
+devpars  = {{args.devpars | R}}
 
-infile  = {{i.infile | quote}}
-outfile = {{o.outfile | quote}}
+if (!is.list(plotmed) && plotmed == T) plotmed = list()
+if (dofdr == T) dofdr = 'BH'
 
-indata  = read.table(infile, header = inopts.cnames, row.names = if(inopts.rnames) 1 else NULL, check.names = F, sep = "\t")
+getfmula = function(Y, feats) {
+	sprintf("%s ~ %s", bQuote(Y), paste(sapply(feats, bQuote), collapse = "+"))
+}
 
-attach(indata)
+medanalysis = function(idata, mediator, treat, outcome, modelm, modely, fmulam, fmulay) {
+	covs   = setdiff(colnames(idata), c(mediator, treat, outcome))
+	modelm = eval(parse(text = modelm))
+	modely = eval(parse(text = modely))
+	fmulam = paste(c(fmulam, covs), collapse = ' + ')
+	fmulay = paste(c(fmulay, covs), collapse = ' + ')
+	mm     = modelm(as.formula(fmulam), data = idata)
+	my     = modely(as.formula(fmulay), data = idata)
+	mediate(mm, my, treat = treat, mediator = mediator, outcome = outcome, boot = medopts$boot, sims = medopts$sims)
+}
 
-modelm   = {{args.medopts.modelm | lambda x: 'r:' + x | R}}
-modely   = {{args.medopts.modely | lambda x: 'r:' + x | R}}
-mediator = {{args.medopts.mediator | quote}}
-treat    = {{args.medopts.treat | quote}}
-boot     = {{args.medopts.boot | R}}
-sims     = {{args.medopts.sims | R}}
+indata = read.table.inopts(infile, inopts)
+# Case	Mediator	Treat	Outcome	MedelM	ModelY	FmulaM	FmulaY
+medata = read.table(medfile, header = T, row.names = NULL, sep = "\t", check.names = F, stringsAsFactors = F)
 
-output   = matrix(NA, ncol = 2, nrow = 16)
-colnames(output) = c("Treatment", "Control")
-rownames(output) = c(
-	"ACME", "ACME_CI1", "ACME_CI2", "ACME_PVAL", 
-	"ADE" , "ADE_CI1" , "ADE_CI2" , "ADE_PVAL", 
-	"TE"  , "TE_CI1"  , "TE_CI2"  , "TE_PVAL", 
-	"PM"  , "PM_CI1"  , "PM_CI2"  , "PM_PVAL" 
-)
-tryCatch({
-	results  = mediate(modelm, modely, treat = treat, mediator = mediator, boot = boot, sims = sims)
-	output["ACME",      "Treatment"] = results$d1
-	output["ACME_CI1",  "Treatment"] = results$d1.ci[1]
-	output["ACME_CI2",  "Treatment"] = results$d1.ci[2]
-	output["ACME_PVAL", "Treatment"] = results$d1.p
-	output["ACME",      "Control"]   = results$d0
-	output["ACME_CI1",  "Control"]   = results$d0.ci[1]
-	output["ACME_CI2",  "Control"]   = results$d0.ci[2]
-	output["ACME_PVAL", "Control"]   = results$d0.p
-	output["ADE",       "Treatment"] = results$z1
-	output["ADE_CI1",   "Treatment"] = results$z1.ci[1]
-	output["ADE_CI2",   "Treatment"] = results$z1.ci[2]
-	output["ADE_PVAL",  "Treatment"] = results$z1.p
-	output["ADE",       "Control"]   = results$z0
-	output["ADE_CI1",   "Control"]   = results$z0.ci[1]
-	output["ADE_CI2",   "Control"]   = results$z0.ci[2]
-	output["ADE_PVAL",  "Control"]   = results$z0.p
-	output["TE",        "Treatment"] = results$tau.coef
-	output["TE_CI1",    "Treatment"] = results$tau.ci[1]
-	output["TE_CI2",    "Treatment"] = results$tau.ci[2]
-	output["TE_PVAL",   "Treatment"] = results$tau.p
-	output["TE",        "Control"]   = results$tau.coef
-	output["TE_CI1",    "Control"]   = results$tau.ci[1]
-	output["TE_CI2",    "Control"]   = results$tau.ci[2]
-	output["TE_PVAL",   "Control"]   = results$tau.p
-	output["PM",        "Treatment"] = results$n1
-	output["PM_CI1",    "Treatment"] = results$n1.ci[1]
-	output["PM_CI2",    "Treatment"] = results$n1.ci[2]
-	output["PM_PVAL",   "Treatment"] = results$n1.p
-	output["PM",        "Control"]   = results$n0
-	output["PM_CI1",    "Control"]   = results$n0.ci[1]
-	output["PM_CI2",    "Control"]   = results$n0.ci[2]
-	output["PM_PVAL",   "Control"]   = results$n0.p
-}, error = function(e){
-	output["ACME",      "Treatment"] = 0
-	output["ACME_CI1",  "Treatment"] = 0
-	output["ACME_CI2",  "Treatment"] = 0
-	output["ACME_PVAL", "Treatment"] = 1
-	output["ACME",      "Control"]   = 0
-	output["ACME_CI1",  "Control"]   = 0
-	output["ACME_CI2",  "Control"]   = 0
-	output["ACME_PVAL", "Control"]   = 1
-	output["ADE",       "Treatment"] = 0
-	output["ADE_CI1",   "Treatment"] = 0
-	output["ADE_CI2",   "Treatment"] = 0
-	output["ADE_PVAL",  "Treatment"] = 1
-	output["ADE",       "Control"]   = 0
-	output["ADE_CI1",   "Control"]   = 0
-	output["ADE_CI2",   "Control"]   = 0
-	output["ADE_PVAL",  "Control"]   = 1
-	output["TE",        "Treatment"] = 0
-	output["TE_CI1",    "Treatment"] = 0
-	output["TE_CI2",    "Treatment"] = 0
-	output["TE_PVAL",   "Treatment"] = 1
-	output["TE",        "Control"]   = 0
-	output["TE_CI1",    "Control"]   = 0
-	output["TE_CI2",    "Control"]   = 0
-	output["TE_PVAL",   "Control"]   = 1
-	output["PM",        "Treatment"] = 0
-	output["PM_CI1",    "Treatment"] = 0
-	output["PM_CI2",    "Treatment"] = 0
-	output["PM_PVAL",   "Treatment"] = 1
-	output["PM",        "Control"]   = 0
-	output["PM_CI1",    "Control"]   = 0
-	output["PM_CI2",    "Control"]   = 0
-	output["PM_PVAL",   "Control"]   = 1
+medcols = colnames(medata)
+insts   = rownames(indata)
+#if ('Case' %in% medcols && casefile == '') {
+#	stop('No casefile provided with "Case" specified in medfile.')
+#}
 
-})
+if (covfile != '') {
+	covdata = read.table(covfile, header = T, row.names = 1, sep = "\t", check.names = F)
+	indata  = cbind(indata, covdata[rownames(indata)])
+}
 
+specases = NULL
+if (casefile != '') {
+	specases = read.table(casefile, header = F, row.names = NULL, check.names = F, sep = "\t")
+}
 
-write.table(round(output, 3), outfile, col.names = T, row.names = T, sep = "\t", quote = F)
+rownames(medata) = paste0('Case', 1:nrow(medata))
+if ('Case' %in% medcols) {
+	rownames(medata) = medata$Case
+	medata = medata[, -which('Case' %in% medcols), drop = F]
+}
+
+ret = data.frame(
+	Case             = character(),
+	ACME             = double(),
+	ACME95CI1        = double(),
+	ACME95CI2        = double(),
+	TotalE           = double(),
+	ADE              = double(),
+	PropMed          = double(),
+	Pval             = double(),
+	stringsAsFactors = F)
+for (case in rownames(medata)) {
+	rows    = if(is.null(specases)) insts else specases[which(specases[,2] == case), 1]
+	medinfo = medata[case,,drop = F]
+	med     = medanalysis(indata[rows,, drop = F], medinfo$Mediator, medinfo$Treat, medinfo$Outcome, medinfo$ModelM, medinfo$ModelY, medinfo$FmulaM, medinfo$FmulaY)
+	ret = rbind(ret, list(
+		Case      = case,
+		ACME      = med$d1,
+		ACME95CI1 = med$d1.ci[1],
+		ACME95CI2 = med$d1.ci[2],
+		TotalE    = med$tau.coef,
+		ADE       = med$z1,
+		PropMed   = med$n1,
+		Pval      = med$d1.p
+	), stringsAsFactors = F)
+	if (is.na(med$d1.p) || med$d1.p >= pval || is.na(med$n1) || med$n1 <= 0) next
+	if (is.list(plotmed)) {
+		do.call(png, c(list(file.path(outdir, paste0(case, '.png'))), devpars))
+		do.call(plot.mediate, c(list(med), plotmed))
+		dev.off()
+	}
+}
+if (dofdr != F && nrow(ret) > 0) {
+	ret$Qval = p.adjust(ret$Pval, method = dofdr)
+}
+
+write.table(pretty.numbers(ret, list(ACME..ACME95CI1..ACME95CI2..PropMed..TotalE..ADE = '%.3f', Pval..Qval = '%.2E')), outfile, col.names = T, row.names = F, sep = "\t", quote = F)

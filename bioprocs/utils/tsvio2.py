@@ -3,13 +3,13 @@ import types
 class TsvRecord(object):
 	__slots__ = ('__keys', '__vals')
 
-	def __init__(self, vals, keys = None):
+	def __init__(self, vals = None, keys = None):
 		"""
 		r = TsvRecord([1,2,3,4,5])
 		r.__vals == [1,2,3,4,5]
 		r.__keys == None
 		"""
-		self.__vals = vals
+		self.__vals = vals or []
 		if keys:
 			assert len(keys) == len(vals)
 			self.__keys = dict(zip(keys, range(len(keys))))
@@ -31,13 +31,13 @@ class TsvRecord(object):
 	def items(self):
 		if not self.__keys:
 			return enumerate(self.__vals)
-		return zip(list(self.__keys.keys()), list(self.__vals))
+		return zip(list(self.keys()), list(self.__vals))
 	
 	def __repr__(self):
 		return '<TsvRecord: {!r}>'.format(dict(self.items()))
 
 	def __getitem__(self, key):
-		if isinstance(key, int):
+		if isinstance(key, (slice, int)):
 			return self.__vals[key]
 		
 		if key in self.__keys:
@@ -57,6 +57,7 @@ class TsvRecord(object):
 		elif self.__keys and key in self.__keys:
 			self.__vals[self.__keys[key]] = value
 		else:
+			self.__keys = self.__keys or {}
 			self.__keys[key] = len(self)
 			self.__vals.append(value)
 	
@@ -143,11 +144,12 @@ class TsvReader(object):
 			self.cnames = []
 		# try to add "cname0" as column name 
 		tell  = self.file.tell()
-		ncols = len(self.file.readline().rstrip('\n').split(delimit))
+		firstline = self.file.readline().rstrip('\n')
+		ncols = len(firstline.split(delimit))
 
-		if self.cnames and len(self.cnames) == ncols - 1:
+		if firstline and self.cnames and len(self.cnames) == ncols - 1:
 			self.cnames.insert(0, cname0)
-		if self.cnames and len(self.cnames) != ncols:
+		if firstline and self.cnames and len(self.cnames) != ncols:
 			raise ValueError('Not a valid tsv file. Head has %s columns, while first line has %s.' % (len(self.cnames), ncols))
 		
 		self.file.seek(tell)
@@ -213,7 +215,10 @@ class TsvWriter(object):
 		if isinstance(record, list) or isinstance(record, types.GeneratorType):
 			self.file.write(self.delimit.join(str(v) for v in record) + '\n')
 		elif isinstance(record, TsvRecord):
-			self.file.write(self.delimit.join(str(v) for v in record.values()) + '\n')
+			if not self.cnames:
+				self.write(record.values())
+			else:
+				self.write(record[n] for n in self.cnames)
 		else:
 			self.file.write(str(record))
 

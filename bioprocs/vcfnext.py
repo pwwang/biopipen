@@ -35,18 +35,26 @@ pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 	Add rs id to a genotype matrix
 @input:
 	`infile:file`: The input genotype matrix, columns are samples, rows are mutations in format:
-		- `<chr>_<pos>_<ref>_<alt>`
-		- have to sorted by coordinates
+		- `<chr>_<pos>_<ref>_<alt>` or `<chr>_<pos>_<name>_<ref>_<alt>`
+		- has to be sorted (see `args.chrsort`)
 @output:
 	`outfile:file`: The output genotype matrix. Row names will turn into:
 		- `<chr>_<pos>_<rs>_<ref>_<alt>`
 @args:
-	`dbsnp`: the dbsnp vcf file used to annotation the snps (assume sorted by coordinates).
+	`dbsnp`: the dbsnp vcf file used to annotation the snps.
+		- assume sorted by coordinates
+		- see `args.chrsort` for chromsome sorting
+	`notfound`: What to used if RS id not found. Default: `NOVEL`
+	`chrsort`: How chromsome is sorted. Default: `version`
+		- version sort: chr1, chr2, chr3, ..., chr10, chr11, ... chr20, ..., chrM(T), chrX, chrY
+		- natural sort: chr1, chr10, chr11, ..., chr19, chr2, chr21, chr22, chr3, ..., chrM(T), chrX, chrY
+		- or a list of chromsome order: e.g: `["chr1", "chr2", ..., "chrM", "chrX", "chrY"]`
 """
 pGTMatAddRs               = Proc(desc = "Add rs id to a genotype matrix")
 pGTMatAddRs.input         = 'infile:file'
 pGTMatAddRs.output        = 'outfile:file:{{i.infile | bn}}'
 pGTMatAddRs.args.dbsnp    = params.dbsnp_all.value
+pGTMatAddRs.args.chrsort  = 'version' 
 pGTMatAddRs.args.notfound = 'NOVEL'
 pGTMatAddRs.lang          = params.python.value
 pGTMatAddRs.script        = "file:scripts/vcfnext/pGTMatAddRs.py"

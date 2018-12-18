@@ -102,19 +102,23 @@ read.table.inopts = function(infile, inopts, nodup = T) {
 
 # format data.frame to output
 pretty.numbers = function(df, formats) {
-	df           = as.matrix(df)
-	formatedCols = c()
+	# remember set stringsAsFactors as FALSE for the dataframe!!
+	if (nrow(df) == 0) {
+		return(df)
+	}
 	allCols      = colnames(df)
+	formatedCols = c()
 	for (fcols in names(formats)) {
-		if (fcols == '.') {
+		if (fcols == '.') { # must be last element of formats
 			cols = which(!allCols %in% formatedCols)
 		} else {
 			cols = unlist(strsplit(fcols, '..', fixed = T))
 			formatedCols = c(formatedCols, cols)
 		}
-		df[, cols] = sprintf(formats[[fcols]], as.numeric(df[, cols]))
+		cols = intersect(cols, allCols)
+		df[, cols] = sprintf(formats[[fcols]], as.numeric(unlist(df[, cols])))
 	}
-	return (df)
+	df
 }
 
 bQuote = function(s) {

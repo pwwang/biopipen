@@ -369,38 +369,129 @@ pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
 @description:
 	Do mediation analysis
 @input:
-	`infile:file`: The input file (a matrix or data.frame).
+	`infile:file`: The input file (a matrix or data.frame). Example:
+		```
+		     V1   V2   V3
+		S1   1    2    3
+		S2   4    1    8
+		... ...
+		Sn   3    3    1
+		```
+	`medfile:file`: The mediation options. Example:
+		```
+		[Case   ]Mediator	Treat	Outcome	ModelM	ModelY	FmulaM	FmulaY
+		[Case1  ]V1         V2      V3      lm      glm     V1 ~ V2 V3 ~ V1 + V2
+		[Case2  ]V2         V1      V3      lm      glm     V2 ~ V1 V3 ~ V2 + V1
+		```
+	`casefile:file`: Defining cases using different rows in infile. If this is specified, then `Case` in `medfile` is required. Example:
+		```
+		S1   Case1
+		S2   Case1
+		... ...
+		Sm   Case1
+		Sm   Case2
+		Sm+1 Case2
+		... ...
+		Sn   Case2
+		```
+		- Rows can be reused for different cases (`Sm` in the example).
 @output:
 	`outfile:file`: The result file.
+	`outdir:dir`  : The output directory containing output file and plots.
 @args:
 	`inopts`: The options for input file.
 		- `cnames`: Whether the input file has column names
 		- `rnames`: Whether the input file has row names
 	`medopts`: The options for mediation analysis.
-		- `modelm`: The model for M ~ X. Default: `lm(M ~ X)`
-		- `modely`: The model for Y ~ X + M. Default: `lm(Y ~ X + M)`
-		- `mediator`: Tell the model which column is the mediator
-		- `treat`: Tell the model which column is the variable
 		- `boot`: Use bootstrap?
 		- `sims`: How many time simulations?
+	`cov`: The covariate file. Default: ``
+	`pval`: The pvalue cutoff. Default: `0.05`
+	`fdr` : Method to calculate fdr. Use `False` to disable. Default: `True` (`BH`)
+	`plot`: Parameters for `plot.mediate`? Use `False` to disable plotting. Default: `Box()`
+	`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
 """
 pMediation = Proc(desc = "Do mediation analysis.")
-pMediation.input  = 'infile:file'
-pMediation.output = 'outfile:file:{{i.infile | fn2}}.mediation.txt'
+pMediation.input  = 'infile:file, medfile:file, casefile:file'
+pMediation.output = [
+	'outfile:file:{{i.infile | fn2}}.mediation/{{i.infile | fn2}}.mediation.txt',
+	'outdir:dir:{{i.infile | fn2}}.mediation'
+]
 pMediation.args.inopts = Box(
 	cnames   = True,
 	rnames   = True
 )
 pMediation.args.medopts = Box(
-	modelm   = 'lm(M ~ X)',
-	modely   = 'lm(Y ~ X + M)',
-	mediator = 'M',
-	treat    = 'X',
 	boot     = True,
-	sims     = 500,
+	sims     = 500
 )
-pMediation.lang = params.Rscript.value
-pMediation.script = "file:scripts/stats/pMediation.r"
+pMediation.args.cov     = ''
+pMediation.args.pval    = 0.05
+pMediation.args.fdr     = True # BH, or other methods for p.adjust
+pMediation.args.plot    = Box()
+pMediation.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pMediation.envs.rimport = rimport
+pMediation.lang         = params.Rscript.value
+pMediation.script       = "file:scripts/stats/pMediation.r"
+
+"""
+@name:
+	pLiquidAssoc
+@description:
+	Do liquid association analysis
+@input:
+	`infile:file`: The input file with input data, where LA will be done on rows.
+		```
+		     S1   S2 ... ... Sn
+		G1   1    2  ... ... 9
+		G2   3    1  ... ... 1
+		... ...
+		Gm   9    2  ... ... 3
+		```
+	`casefile:file`: Defining the groups (X, Y, Z) and the cases. If case (3rd col) is not provided, all will be treated as one case.
+		- Group "Z" is required. You can also specify group "X", then the rest will be group "Y"
+		```
+		G1   X   Case1
+		G2   X   Case1
+		Gx   Z   Case1
+		Gy   Z   Case1
+		```
+@output:
+	`outfile:file`: The results of the analysis
+	`outdir:dir`  : The output directory containing the result file and plots.
+@args:
+	`inopts` : The options for reading input file
+	`zcat`   : Whether the group "Z" is categorical. Default: `False`
+		- If it is, then `stein lemma` is not suitable, we will calculate LA manually (`E(g'(z)`)
+	`pval`   : The pval cutoff. Default: `0.05`
+	`fdr`    : The method to calculate FDR. Use `False` to disable. Default: `True` (BH)
+	`nthread`: The number of threads to use. Default: `1` (WCGNA requires)
+	`plot`   : Whether do plotting or not. Default: `False`
+	`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
+@requires:
+	[r-fastLiquidAssociation](https://github.com/pwwang/fastLiquidAssociation)
+"""
+pLiquidAssoc        = Proc()
+pLiquidAssoc.input  = 'infile:file, casefile:file'
+pLiquidAssoc.output = [
+	'outfile:file:{{i.infile | fn2}}.la/{{i.infile | fn2}}.la.txt',
+	'outdir:dir:{{i.infile | fn2}}.la'
+]
+pLiquidAssoc.args.inopts = Box(
+	cnames   = True,
+	rnames   = True
+)
+pLiquidAssoc.args.zcat    = False
+pLiquidAssoc.args.pval    = 0.05
+pLiquidAssoc.args.fdr     = True # BH, or other methods for p.adjust
+pLiquidAssoc.args.fdrfor  = 'case' # all
+pLiquidAssoc.args.nthread = 1
+pLiquidAssoc.args.plot    = False
+pLiquidAssoc.args.ggs     = Box()
+pLiquidAssoc.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pLiquidAssoc.envs.rimport = rimport
+pLiquidAssoc.lang         = params.Rscript.value
+pLiquidAssoc.script       = "file:scripts/stats/pLiquidAssoc.r"
 
 """
 @name:
@@ -439,71 +530,65 @@ pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
 @description:
 	Do Chow-Test
 @input:
-	`infile:file`: The input file, the last column must be groups, 2nd last the Y value. The first columns are variables.
-@output:
-	`outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`
-	`outdir:dir`: The output directory, containing the output file, results of regressions and plots.
-@args:
-	`inopts`: The options for input file.
-		- `cnames`: Whether the input file has column names
-		- `rnames`: Whether the input file has row names
-	`cov`: The covariate file. `inopts.rnames` required and this file should have row names too. Default: `''`
-	`plot`: When to plot the results. Default: `0.05`
-		- `<pcutoff>`: When `pval < <pcutoff>`
-		- `True`: plot anyway
-		- `False`: Do not plot anyway
-	`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
-"""
-pChow              = Proc(desc = "Do Chow-Test")
-pChow.input        = 'infile:file'
-pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
-pChow.args.inopts  = Box(
-	cnames = True,
-	rnames = True
-)
-pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
-pChow.args.plot    = 0.05 # False, True
-pChow.args.devpars = Box(res = 300, width = 2000, height = 2000)
-pChow.envs.rimport = rimport
-pChow.lang         = params.Rscript.value
-pChow.script       = "file:scripts/stats/pChow.r"
-
-"""
-@name:
-	pChow2
-@description:
-	Do multiple Chow-Tests
-@input:
-	`infile:file`: The input file. Beyond the input file of `pChow`, it must contain a column `Case` (last column) to distinguish different cases.
-		- It may also contain a column called `Sample` instead of rownames, because samples may duplicate. That's why the default `args.inopts.rnames` is `False`
+	`infile:file`: The input file for data to do the regressions. Example:
+		```
+			    X1  X2  X3  X4 ... Y
+			G1  1   2   1   4  ... 9
+			G2  2   3   1   1  ... 3
+			... ...
+			Gm  3   9   1   7  ... 8
+		```
+	`groupfile:file`: Specify the groups to compare. You may also specify the cases. The Chow-Test will be done between the group for each case. Example:
+		```
+			G1	Group1	Case1
+			G2	Group1	Case1
+			... ...
+			Gs	Group2	Case1
+			Gt	Group2	Case1
+			Gt	Group1	Case2
+			... ...
+			Gu	Group1	Case2
+			... ...
+			Gz	Group2	Case2
+		```
+		- In such case, the test will be done between Group1 and Group2 for Case1 and Case2, respectively.
+		- Instances can be resued (Gt in the example)
+		- If cases not provided, all will be treated as one case.
+	`casefile:file`: Define the formula (which columns to use for each case). Example:
+		```
+		Case1	Y ~ X1
+		Case2	Y ~ X2
+		```
 @output:
 	`outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`
 	`outdir:dir`: The output directory, containing the output file, results of regressions and plots.
 @args:
 	`inopts`: The options for input file.
 		- `cnames`: Whether the input file has column names. Default: `True`
-		- `rnames`: Whether the input file has row names. Default: `False`
+		- `rnames`: Whether the input file has row names. Default: `True`
 	`cov`: The covariate file. `inopts.rnames` required and this file should have row names too. Default: `''`
-	`plot`: When to plot the results. Default: `0.05`
-		- `<pcutoff>`: When `pval < <pcutoff>`
-		- `True`: plot anyway
-		- `False`: Do not plot anyway
+	`fdr`   : Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
+	`pval`: The pvalue cutoff. Default: `0.05`
+	`plot`: Whether plot the regressions. Default: `False`
+	`ggs` : The extra ggs for the plot.
 	`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
 """
-pChow2 = Proc(desc = "Do multiple Chow-Tests")
-pChow2.input        = 'infile:file'
-pChow2.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
-pChow2.args.inopts  = Box(
+pChow              = Proc(desc = "Do Chow-Test")
+pChow.input        = 'infile:file, groupfile:file, casefile:file'
+pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
+pChow.args.inopts  = Box(
 	cnames = True,
-	rnames = False
+	rnames = True
 )
-pChow2.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
-pChow2.args.plot    = 0.05 # False, True
-pChow2.args.fdr     = True # methods
-pChow2.args.devpars = Box(res = 300, width = 2000, height = 2000)
-pChow2.envs.rimport = rimport
-pChow2.lang         = params.Rscript.value
-pChow2.script       = "file:scripts/stats/pChow2.r"
+pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
+pChow.args.pval    = 0.05
+pChow.args.fdr     = True
+pChow.args.plot    = False
+pChow.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pChow.args.ggs     = Box()
+pChow.envs.rimport = rimport
+pChow.lang         = params.Rscript.value
+pChow.script       = "file:scripts/stats/pChow.r"
 
 """
 @name:
@@ -511,7 +596,7 @@ pChow2.script       = "file:scripts/stats/pChow2.r"
 @description:
 	Calculate the correlation coefficient for the input matrix
 @input:
-	`infile:file`: The input file
+	`infile:file`: The input file of data to calculate correlations.
 @output:
 	`outfile:file`: The output file containing the correlation coefficients
 	`outdir:dir`  : The output directory containing the outfile and the plot
@@ -592,7 +677,53 @@ pCorr2.envs.rimport = rimport
 pCorr2.lang         = params.Rscript.value
 pCorr2.script       = "file:scripts/stats/pCorr2.r"
 
-pDiffCorr = Proc()
+"""
+@name:
+	pDiffCorr
+@description:
+	Test correlation differences using Fisher Z method.
+@input:
+	`infile:file`: The entire dataset used to calculate correlations. Rownames and colnames are required. Example:
+		```
+			    S1  S2  S3  S4 ... Sn
+			G1  1   2   1   4  ... 9
+			G2  2   3   1   1  ... 3
+			... ...
+			Gm  3   9   1   7  ... 8
+		```
+	`samfile:file`: The sample groups, between which you want to compare the correlations. You can also specify one sample to multiple groups, and assign with different cases. Example:
+		```
+			S1	Healthy
+			S2	Healthy
+			S3	Disease
+			... ...
+			Sn	Disease
+		```
+	`casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination. Example:
+		```
+			Healthy	Disease
+		```
+	`groupfile:file`: Specify groups for rows, then the correlation will be only done within the pairs, each of which is from different groups (only 2 allowed). If not provided, it will investigate for every possible row pairs. Example:
+		```
+			G1	Kinase
+			G2	Kinase
+			... ...
+			Gm	TF
+		```
+@output:
+	`outfile:file`: The pairs under different cases that their correlations have been changed significantly
+	`outdir:dir`: The output directory containing plots and other output files.
+@args:
+	`inopts`: The input options for `infile`. `cnames` and `rnames` have to be `True`
+	`method`: The method to calculate the correlation. Default: `pearson`
+	`pval`  : The pvalue cutoff to define correlation change significance. Default: `0.05`
+	`fdr`   : Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
+	`fdrfor`: Do FDR calculation for each case (`case`) or all instances (`all`). Default: `case`
+	`plot`  : Plot the correlation for cases? Default: `False`
+	`ggs`   : `ggs` items for the plot.
+	`devpars`: The device parameters for the plot.
+"""
+pDiffCorr = Proc(desc = 'Test correlation differences.')
 pDiffCorr.input  = 'infile:file, samfile:file, casefile:file, groupfile:file'
 pDiffCorr.output = [
 	'outfile:file:{{i.infile | fn2}}.diffcorr/{{i.infile | fn2}}.diffcorr.txt',
@@ -602,6 +733,7 @@ pDiffCorr.args.inopts  = Box(cnames = True, rnames = True)
 pDiffCorr.args.method  = 'pearson' # spearman
 pDiffCorr.args.pval    = 0.05
 pDiffCorr.args.fdr     = True # BH
+pDiffCorr.args.fdrfor  = 'case'
 pDiffCorr.args.plot    = False
 pDiffCorr.args.ggs     = Box() # extra ggplot statements
 pDiffCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)

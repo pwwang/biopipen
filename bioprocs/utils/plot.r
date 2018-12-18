@@ -60,19 +60,23 @@ apply.ggs = function(p, ggs) {
 }
 
 plot.no = function(data, plotfile, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
-	do.call(png, c(list(filename=plotfile), devpars))
+	if (!is.null(plotfile)) {
+		do.call(png, c(list(filename=plotfile), devpars))
+	}
 	params$data = as.data.frame(data)
 	p = do.call(ggplot, params)
 	print(apply.ggs(p, ggs))
-	dev.off()
+	if (!is.null(plotfile)) {
+		dev.off()
+	}
 }
 
 plot.xy = function(data, plotfile, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	cnames = colnames(data)
 	cnames = make.names(cnames)
 	colnames(data) = cnames
-	if (is.numeric(x)) x = cnames[x]
-	if (is.numeric(y)) y = cnames[y]
+	if (is.numeric(x)) x = sprintf("`%s`", cnames[x])
+	if (is.numeric(y)) y = sprintf("`%s`", cnames[y])
 	params = list(mapping = aes_string(x = x, y = y))
 	plot.no(data, plotfile, params, ggs, devpars)
 }
@@ -91,26 +95,32 @@ plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), dev
 	plot.xy(data, plotfile, x = x, y = y, ggs = ggs, devpars = devpars)
 }
 
-plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+# plot the ROC curve
+# see: https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html
+# @params:
+#	`data`: The data for plotting.
+#		- If stacked, then there should be only 3 columns: D, M, name
+#		- Else the 1st column should be D, and rest are `<M1>, <M2>, ...`
+#		- D must be binary.
+#	`plotfile`: The file to save the plot.
+#	`stacked` : Whether the data is stacked(melt). See `data`
+#	`params`  : The parameters for plotting. 
+#		- `returnAUC`: Return list of AUC values of this function
+#		- `showAUC`  : Show AUC on the plot
+#		- `combine`  : Combine the ROC in one plot?
+#		- `labels`   : Show some values on the curve for some sutting points
+plot.roc = function(data, plotfile, stacked = T, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	require('plotROC')
 
-	cnames = colnames(data)
-	if (is.null(cnames)) {
-		cnames = c('D', paste0('M', 1:(ncol(data)-1)))
-		colnames(data) = cnames
-	}
-
-	if (length(cnames) < 2) {
-		stop('Only 1 column found in data!')
-	} else if (length(cnames) == 2) {
-		D = cnames[1]
-		M = cnames[2]
-		data$name = rep(M, nrow(data))
+	if (stacked) {
+		if (ncol(data) != 3)
+			stop('Expect 3 columns (D, M, name) in stacked data to plot ROC.')
+		colnames(data) = c('D', 'M', 'name')
 	} else {
-		data = melt_roc(data, 1, 2:length(cnames))
-		D = 'D'
-		M = 'M'
+		data = melt_roc(data, 1, 2:ncol(data))
+		colnames(data) = c('D', 'M', 'name')
 	}
+	cnames = levels(factor(data$name))
 
 	returnAUC = params$returnAUC
 	if (is.null(returnAUC)) returnAUC = T
@@ -125,25 +135,23 @@ plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, co
 	params$showAUC   = NULL
 	params$combine   = NULL
 
-	params = update.aes(params, aes_string(d = D, m = M, color = 'name'))
+	params = update.aes(params, aes(d = D, m = M, color = name))
 	if (combine) {
 		do.call(png, c(list(filename=plotfile), devpars))
 
 		p = ggplot(data) + do.call(geom_roc, params)
 		if (returnAUC || showAUC) {
-			aucs = matrix(round(calc_auc(p)$AUC, 3), ncol = 1, nrow = length(cnames) - 1)
-			rownames(aucs)  = cnames[-1]
-			colnames(aucs)  = 'AUC'
+			aucs = as.list(calc_auc(p)$AUC)
+			names(aucs) = cnames
 		}
 		if (showAUC) {
+			auclabels = sapply(cnames, function(n) {
+				sprintf('AUC(%s) = %.3f', n, aucs[[n]])
+			})
 			if (length(cnames) > 2) {
-				auclabels = NULL
-				for (i in 1:length(cnames[-1])) {
-					auclabels = c(auclabels, paste(cnames[-1][i], aucs[i, 1], sep = ': '))
-				}
-				p = p + scale_color_discrete(name = "AUC", breaks = cnames[-1], labels = auclabels)
+				p = p + scale_color_discrete(name = "", breaks = cnames, labels = auclabels)
 			} else {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', aucs, sep = ': '))
+				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', unlist(aucs), sep = ' = '))
 				p = p + scale_color_discrete(guide = F)
 			}
 		}
@@ -151,18 +159,16 @@ plot.roc = function(data, plotfile, params = list(returnAUC = T, showAUC = T, co
 		dev.off()
 		if (returnAUC) return(aucs)
 	} else {
-		aucs = matrix(NA, ncol = 1, nrow = length(cnames) - 1)
-		rownames(aucs)  = cnames[-1]
-		colnames(aucs)  = 'AUC'
-		for (cname in cnames[-1]) {
+		aucs = list()
+		for (cname in cnames) {
 			prefix = tools::file_path_sans_ext(plotfile)
 			do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
 			p = ggplot(data[which(data$name == cname), , drop=F]) + do.call(geom_roc, params)
 			if (returnAUC || showAUC) {
-				aucs[cname, 1] = round(calc_auc(p)$AUC, 3)
+				aucs[[cname]]= calc_auc(p)$AUC
 			}
 			if (showAUC) {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', aucs[cname, 1], sep = ': '))
+				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(aucs[[cname]], 3), sep = ' = '))
 				p = p + scale_color_discrete(guide = F)
 			}
 			print(apply.ggs(p, ggs))

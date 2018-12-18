@@ -3,36 +3,29 @@ from . import params
 
 """
 @name:
-	pSnp2Bedx
+	pRs2Bed
 @description:
-	Find coordinates for SNPs in BEDX format.
+	Find coordinates for SNPs in BED format.
 @input:
 	`snpfile:file`: the snp file, each snp per line
 @output:
-	`outfile:file`: the result file, columns are:
-		- chrom, start(0-based), end, name, score, strand, ref, allele
+	`outfile:file`: the result file, could be a 3 or 6-col bed file.
 @args:
-	`genome`: default: hg19
-	`snpver`: default: snp147
+	`dbsnp`: The dbsnp vcf file
 	`notfound`: What to do if the snp is not found. Default: skip
-	`inmeta`: The metadata for input file to determine which column is rsID
-	`xcols`: The extra columns to extract and output to extra columns in output file.
-	`indem`: The input delimit. Default: '\\t'
-	`incom`: The input comment. Default: '#'
-	`skip`: The lines to skip for input file. Default: 0
-@requires:
-	[`python-cruzdb`](https://github.com/brentp/cruzdb)
+	`inopts`: The input options for input file
+	``
 """
-pSnp2Bedx                    = Proc(desc = 'Find coordinates for SNPs in BED format.')
-pSnp2Bedx.input              = "snpfile:file"
-pSnp2Bedx.output             = "outfile:file:{{i.snpfile | fn}}.bed"
-pSnp2Bedx.args.genome        = params.genome.value
-pSnp2Bedx.args.dbsnpver      = params.dbsnpver.value
-pSnp2Bedx.errhow             = 'retry'
-pSnp2Bedx.args.notfound      = 'skip' # error
-pSnp2Bedx.args.inopts        = Box(delimit = '\t', skip = 0, comment = '#')
-pSnp2Bedx.args.snpcol        = ''
-pSnp2Bedx.args.outopts       = Box(
+pRs2Bed                    = Proc(desc = 'Find coordinates for SNPs in BED format.')
+pRs2Bed.input              = "snpfile:file"
+pRs2Bed.output             = "outfile:file:{{i.snpfile | fn}}.bed"
+pRs2Bed.args.genome        = params.genome.value
+pRs2Bed.args.dbsnpver      = params.dbsnpver.value
+pRs2Bed.errhow             = 'retry'
+pRs2Bed.args.notfound      = 'skip' # error
+pRs2Bed.args.inopts        = Box(delimit = '\t', skip = 0, comment = '#')
+pRs2Bed.args.snpcol        = ''
+pRs2Bed.args.outopts       = Box(
 	delimit = '\t', 
 	head = True, 
 	headPrefix = '', 
@@ -41,9 +34,9 @@ pSnp2Bedx.args.outopts       = Box(
 	ftype = 'bed',
 	cnames = 'refUCSC, alleles, alleleFreqs, alleleFreqCount'
 )
-pSnp2Bedx.args.cachedir      = params.cachedir.value
-pSnp2Bedx.lang               = params.python.value
-pSnp2Bedx.script             = "file:scripts/snp/pSnp2Bedx.py"
+pRs2Bed.args.cachedir      = params.cachedir.value
+pRs2Bed.lang               = params.python.value
+pRs2Bed.script             = "file:scripts/snp/pRs2Bed.py"
 
 pCoord2SnpBedx               = Proc(desc = 'Find snps with coordinates.')
 pCoord2SnpBedx.input         = 'infile:file'
