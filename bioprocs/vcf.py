@@ -369,6 +369,10 @@ pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
 	pVcfCleanup
 @description:
 	Remove configs from vcf file according to the given reference.
+@input:
+	`infile:file`: The input vcf file
+@output:
+	`outfile:file`: The output vcf file. Default: `{{i.infile | fn}}.vcf`
 @args:
 	`ref`: The reference file
 """

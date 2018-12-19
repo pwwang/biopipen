@@ -3809,48 +3809,45 @@
 !!! hint "pMetaPval"
 
     - **description**  
-        Combine p-values in the files from input directory
+        Calculate a meta-pvalue using different methods
 
     - **input**  
-        - `indir:dir`: The directory containing the input files  
+        - `infile:file`: The infile containing multiple pvalues for each entries.   
+        	- Could be two types (see `args.intype`)
+        	- `matrix`: A matrix with rows as entries (rownames are optional), columns as cases
+        		```
+        		        Case1   Case2   ...  CaseN
+        		Entry1  1.33e-2 NA      ...  1.77e-10
+        		Entry2  2.66e-2 4.22e-5 ...  1.71e-3
+        		... ...
+        		EntryM  NA      0.00013 ...  4.11e-3
+        		```
+        	- `melt`: Rows are entries from each case 
+        	  `args.rnames` should be `False`, but entry names are required in the first column,
+        	  column names are optional (have to be 3 columns)
+        		```
+        		Entry   Pvalue   Case
+        		Entry1  1.33e-2  Case1
+        		Entry1  1.77e-10 CaseN
+        		Entry2  2.66e-2  Case1
+        		Entry2  4.22e-5  Case2
+        		Entry2  1.71e-3  CaseN
+        		... ...
+        		EntryM  0.00013  Case2
+        		EntryM  4.11e-3  CaseN
+        		```
 
     - **output**  
-        - `outfile:file`: The output file containing the meta-pvalues  
+        - `outfile:file`: The output file containing the meta-pvalues. Default: `{{i.infile | fn}}.meta{{i.infile | ext}}`  
 
     - **args**  
-        - `args.pattern`: The pattern used to filter the input files. Default: '*'  
-        - `args.header`: Whether the input files contains a header. Default: True  
-        	- Could be a list to specify it for each file.
-        	- The order should be concordant with the file names
-        - `args.pcol`: Which column is the p-value. Default: -1 (last column)  
-        - `args.poutonly`: Only output pvalues. Default: False (output all possible information)  
-        - `args.outheader`: Whether output the header. Default: True  
-        - `args.method`: The method used to calculate the meta-pvalue. Default: sumlog (Fisher's method)  
+        - `intype`: The type of the input file. Default: `matrix` (see `i.infile`)  
+        - `inopts`: The input options to read the input file. Default: `Box(rnames = True, cnames = True)`  
+        - `method`: The method used to calculate the meta-pvalue. Default: sumlog (Fisher's method, aka `fisher`)  
         	- Other available methods: logitp, sumz, votep, sump, meanp and wilkinsonp
         	- See: https://www.rdocumentation.org/packages/metap/versions/0.8
-
-    - **requires**  
-        [`r-matep`](https://www.rdocumentation.org/packages/metap/)
-
-!!! hint "pMetaPval1"
-
-    - **description**  
-        Combine p-values in a single file by rows.
-
-    - **input**  
-        - `infile:file`: The input file  
-
-    - **output**  
-        - `outfile:file`: The output file containing the meta-pvalues  
-
-    - **args**  
-        - `args.header`: Whether the input files contains a header. Default: True  
-        - `args.pcol`: Which column is the p-value. Default: -1 (last column)  
-        - `args.poutonly`: Only output pvalues. Default: False (output all possible information)  
-        - `args.outheader`: Whether output the header. Default: True  
-        - `args.method`: The method used to calculate the meta-pvalue. Default: sumlog (Fisher's method)  
-        	- Other available methods: logitp, sumz, votep, sump, meanp and wilkinsonp
-        	- See: https://www.rdocumentation.org/packages/metap/versions/0.8
+        - `na`    : How to deal with `NA` p-values. Default: `skip` (just don't count it)  
+        	- Or a numeric value to replace it with (e.g.: `1`).
 
     - **requires**  
         [`r-matep`](https://www.rdocumentation.org/packages/metap/)
@@ -4093,31 +4090,22 @@
         	... ...
         	Sn   3    3    1
         	```
-        - `medfile:file`: The mediation options. Example:  
+        - `casefile:file`: The mediation options. Example:  
         	```
-        	[Case   ]Mediator	Treat	Outcome	ModelM	ModelY	FmulaM	FmulaY
-        	[Case1  ]V1         V2      V3      lm      glm     V1 ~ V2 V3 ~ V1 + V2
-        	[Case2  ]V2         V1      V3      lm      glm     V2 ~ V1 V3 ~ V2 + V1
+        	Case1   lm      V3~V2|V1
+        	Case2   lm,glm  V3~V1|V2
         	```
-        - `casefile:file`: Defining cases using different rows in infile. If this is specified, then `Case` in `medfile` is required. Example:  
-        	```
-        	S1   Case1
-        	S2   Case1
-        	... ...
-        	Sm   Case1
-        	Sm   Case2
-        	Sm+1 Case2
-        	... ...
-        	Sn   Case2
-        	```
-        	- Rows can be reused for different cases (`Sm` in the example).
+        	- No column names, but implies `Case`, 'Model' and `Formua`.
+        	- `\t` as delimiter.
+        	- This file is optional. If it is not provided, `args.case` is required.
+        	- If this file is provided, `args.case` is ignored
 
     - **output**  
         - `outfile:file`: The result file.  
         - `outdir:dir`  : The output directory containing output file and plots.  
 
     - **args**  
-        - `inopts`: The options for input file.  
+        - `inopts`: The options for input file. Default: `Box(cnames = True, rnames = True)`  
         	- `cnames`: Whether the input file has column names
         	- `rnames`: Whether the input file has row names
         - `medopts`: The options for mediation analysis.  
@@ -4127,7 +4115,15 @@
         - `pval`: The pvalue cutoff. Default: `0.05`  
         - `fdr` : Method to calculate fdr. Use `False` to disable. Default: `True` (`BH`)  
         - `plot`: Parameters for `plot.mediate`? Use `False` to disable plotting. Default: `Box()`  
+        	- Only case with pvalue < `args.pval` will be plotted.
+        	- To plot all cases, use `args.pval = 1`
+        - `nthread`: Number of threads to use for different cases. Default: `1`  
         - `devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`  
+        - `case`   : Define cases, each case should have `model` and `fmula`.  
+        	- If you only have one case, then it could be: `Box(model = 'lm', fmula = 'Y~X|M')`
+        	  In this case, `{{i.infile | fn2}}` will be used as case name
+        	- For multiple cases, this should be a dict of cases: 
+        	  `Box(Case1 = Box(model='lm', fmula='Y~X|M'), Case2 = ...)`
 
 !!! hint "pLiquidAssoc"
 
@@ -4994,6 +4990,12 @@
 
     - **description**  
         Remove configs from vcf file according to the given reference.
+
+    - **input**  
+        - `infile:file`: The input vcf file  
+
+    - **output**  
+        - `outfile:file`: The output vcf file. Default: `{{i.infile | fn}}.vcf`  
 
     - **args**  
         - `ref`: The reference file  

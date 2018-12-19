@@ -1,14 +1,17 @@
 library(methods)
 library(mediation)
+library(parallel)
 {{rimport}}('__init__.r')
-
+options(stringsAsFactors = FALSE)
 set.seed(8525)
 
+# inputs/outputs/arguments
 infile   = {{i.infile | R}}
+case0    = {{i.infile | fn2 | R}}
 outfile  = {{o.outfile | R}}
 outdir   = {{o.outdir | R}}
-medfile  = {{i.medfile | R}}
 casefile = {{i.casefile | R}}
+argscase = {{args.case | R}}
 covfile  = {{args.cov | R}}
 medopts  = {{args.medopts | R}}
 inopts   = {{args.inopts | R}}
@@ -16,50 +19,80 @@ plotmed  = {{args.plot | R}}
 pval     = {{args.pval | R}}
 dofdr    = {{args.fdr | R}}
 devpars  = {{args.devpars | R}}
+nthread  = {{args.nthread | R}}
 
 if (!is.list(plotmed) && plotmed == T) plotmed = list()
 if (dofdr == T) dofdr = 'BH'
 
-getfmula = function(Y, feats) {
-	sprintf("%s ~ %s", bQuote(Y), paste(sapply(feats, bQuote), collapse = "+"))
-}
-
-medanalysis = function(idata, mediator, treat, outcome, modelm, modely, fmulam, fmulay) {
-	covs   = setdiff(colnames(idata), c(mediator, treat, outcome))
-	modelm = eval(parse(text = modelm))
-	modely = eval(parse(text = modely))
-	fmulam = paste(c(fmulam, covs), collapse = ' + ')
-	fmulay = paste(c(fmulay, covs), collapse = ' + ')
-	mm     = modelm(as.formula(fmulam), data = idata)
-	my     = modely(as.formula(fmulay), data = idata)
-	mediate(mm, my, treat = treat, mediator = mediator, outcome = outcome, boot = medopts$boot, sims = medopts$sims)
-}
-
 indata = read.table.inopts(infile, inopts)
-# Case	Mediator	Treat	Outcome	MedelM	ModelY	FmulaM	FmulaY
-medata = read.table(medfile, header = T, row.names = NULL, sep = "\t", check.names = F, stringsAsFactors = F)
+if (casefile != "") {
+	csdata = read.table(casefile, header = T, row.names = NULL, sep = "\t", check.names = F)
+	colnames(csdata) = c('Case', 'Model', 'Fmula')
+} else {
+	if ('model' %in% names(argscase)) {
+		argscase = list(argscase)
+		names(argscase) = case0
+	}
+	csdata = as.data.frame(t(sapply(names(argscase), function(r) list(Case = r, Model = argscase[[r]]$model, Fmula = argscase[[r]]$fmula))))
+}
 
-medcols = colnames(medata)
-insts   = rownames(indata)
-#if ('Case' %in% medcols && casefile == '') {
-#	stop('No casefile provided with "Case" specified in medfile.')
-#}
-
+covs = c()
 if (covfile != '') {
 	covdata = read.table(covfile, header = T, row.names = 1, sep = "\t", check.names = F)
+	covs    = paste(bQuote(colnames(covdata)), collapse = '+')
 	indata  = cbind(indata, covdata[rownames(indata)])
 }
 
-specases = NULL
-if (casefile != '') {
-	specases = read.table(casefile, header = F, row.names = NULL, check.names = F, sep = "\t")
+medanalysis = function(i) {
+	tryCatch({
+		# Case, Model, Fmula
+		row = csdata[i,,drop = FALSE]
+		if (grepl(',', row$Model, fixed = TRUE)) {
+			models = trimws(unlist(strsplit(row$Model, ',', fixed = T)))
+			modelm = match.fun(models[1])
+			modely = match.fun(models[2])
+		} else {
+			modelm = match.fun(row$Model)
+			modely = match.fun(row$Model)
+		}
+		vars     = all.vars(as.formula(row$Fmula))
+		outcome  = vars[1]
+		treat    = vars[2]
+		mediator = vars[3]
+		fmulam   = as.formula(sprintf('%s ~ %s'), bQuote(mediator), bQuote(treat))
+		fmulay   = as.formula(sprintf('%s ~ %s + %s'), bQuote(outcome), bQuote(mediator), bQuote(treat))
+		if (length(covs) > 0) {
+			fmulam = update.formula(fmulam, paste('. ~ +', covs))
+			fmulay = update.formula(fmulay, paste('. ~ +', covs))
+		}
+		mm  = modelm(fmulam, data = indata)
+		my  = modely(fmulay, data = indata)
+		med = mediate(mm, my, treat = treat, mediator = mediator, outcome = outcome, boot = medopts$boot, sims = medopts$sims)
+		if (is.na(med$d1.p) || is.na(med$n1)) {
+			NULL
+		} else {
+			if (is.list(plotmed)) {
+				do.call(png, c(list(file.path(outdir, paste0(case, '.png'))), devpars))
+				do.call(plot.mediate, c(list(med), plotmed))
+				dev.off()
+			}
+			list(
+				Case      = row$Case,
+				ACME      = med$d1,
+				ACME95CI1 = med$d1.ci[1],
+				ACME95CI2 = med$d1.ci[2],
+				TotalE    = med$tau.coef,
+				ADE       = med$z1,
+				PropMed   = med$n1,
+				Pval      = med$d1.p
+			)
+		}
+	}, error = function(e) {
+		logger(row$Case, ':', e, level = 'ERROR')
+		NULL
+	})
 }
 
-rownames(medata) = paste0('Case', 1:nrow(medata))
-if ('Case' %in% medcols) {
-	rownames(medata) = medata$Case
-	medata = medata[, -which('Case' %in% medcols), drop = F]
-}
 
 ret = data.frame(
 	Case             = character(),
@@ -69,12 +102,15 @@ ret = data.frame(
 	TotalE           = double(),
 	ADE              = double(),
 	PropMed          = double(),
-	Pval             = double(),
-	stringsAsFactors = F)
+	Pval             = double()
+)
+
 for (case in rownames(medata)) {
+	logger('Dealing with case:', case, '...')
 	rows    = if(is.null(specases)) insts else specases[which(specases[,2] == case), 1]
 	medinfo = medata[case,,drop = F]
 	med     = medanalysis(indata[rows,, drop = F], medinfo$Mediator, medinfo$Treat, medinfo$Outcome, medinfo$ModelM, medinfo$ModelY, medinfo$FmulaM, medinfo$FmulaY)
+	if (is.na(med$d1.p) || is.na(med$n1)) next
 	ret = rbind(ret, list(
 		Case      = case,
 		ACME      = med$d1,
@@ -84,8 +120,8 @@ for (case in rownames(medata)) {
 		ADE       = med$z1,
 		PropMed   = med$n1,
 		Pval      = med$d1.p
-	), stringsAsFactors = F)
-	if (is.na(med$d1.p) || med$d1.p >= pval || is.na(med$n1) || med$n1 <= 0) next
+	))
+	if (med$d1.p >= pval || med$n1 <= 0) next
 	if (is.list(plotmed)) {
 		do.call(png, c(list(file.path(outdir, paste0(case, '.png'))), devpars))
 		do.call(plot.mediate, c(list(med), plotmed))
@@ -94,6 +130,9 @@ for (case in rownames(medata)) {
 }
 if (dofdr != F && nrow(ret) > 0) {
 	ret$Qval = p.adjust(ret$Pval, method = dofdr)
+}
+if (nrow(ret)>0) {
+	ret = ret[ret$Pval < pval,,drop=F]
 }
 
 write.table(pretty.numbers(ret, list(ACME..ACME95CI1..ACME95CI2..PropMed..TotalE..ADE = '%.3f', Pval..Qval = '%.2E')), outfile, col.names = T, row.names = F, sep = "\t", quote = F)
