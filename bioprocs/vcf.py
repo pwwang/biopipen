@@ -381,7 +381,7 @@ pVcfCleanup.input    = 'infile:file'
 pVcfCleanup.output   = 'outfile:file:{{i.infile | fn}}.vcf'
 pVcfCleanup.args.ref = params.ref.value # required dict or fai file with it
 pVcfCleanup.lang     = params.python.value
-pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.vcf"
+pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.py"
 
 """
 @name:

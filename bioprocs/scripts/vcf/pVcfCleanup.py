@@ -6,7 +6,7 @@ infile  = {{i.infile | repr}}
 outfile = {{o.outfile | repr}}
 ref     = {{args.ref | repr}}
 refdict = {{args.ref | prefix | quote}} + '.dict'
-reffai  = {{args.ref | quote}} + '.dict'
+reffai  = {{args.ref | quote}} + '.fai'
 
 if not path.isfile(refdict) and not path.isfile(reffai):
 	raise OSError('A dict file or fai file not exists for the reference file.')
