@@ -121,6 +121,35 @@ pretty.numbers = function(df, formats) {
 	df
 }
 
+# format data.frame to output
+pretty.numbers2 = function(df, ...) {
+	formats = list(...)
+	options(stringsAsFactors = FALSE)
+	if (nrow(df) == 0) 
+		return(df)
+
+	allCols      = colnames(df)
+	if (is.null(allCols))
+		allCols = 1:ncol(df)
+	formatedCols = c()
+	for (fcols in names(formats)) {
+		if (fcols == '.') { # must be last element of formats
+			if (length(formatedCols) == 0) {
+				cols = allCols
+			} else {
+				cols = which(!allCols %in% formatedCols)
+			}
+		} else {
+			cols = unlist(strsplit(fcols, '..', fixed = T))
+			formatedCols = c(formatedCols, cols)
+		}
+		cols = intersect(cols, allCols)
+		df[, cols] = sprintf(formats[[fcols]], as.numeric(unlist(df[, cols])))
+	}
+	df
+}
+
+
 bQuote = function(s) {
 	paste0('`', s, '`')
 }

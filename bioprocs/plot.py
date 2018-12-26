@@ -234,8 +234,7 @@ pHeatmap.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
 pHeatmap.args.ggs     = Box()
 pHeatmap.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pHeatmap.args.params  = Box(dendro = True)
-pHeatmap.args.cnames  = True
-pHeatmap.args.rnames  = True
+pHeatmap.args.inopts  = Box(rnames = True, cnames = True)
 pHeatmap.args.helper  = ''
 pHeatmap.envs.rimport = rimport
 pHeatmap.lang         = params.Rscript.value
@@ -286,16 +285,33 @@ pScatterCompare.script       = "file:scripts/plot/pScatterCompare.r"
 		- Col1: rownames if args.rnames is True else label (0, 1 class)
 		- Col2: prediction values from model1
 		- ...
+@output:
+	`outdir:dir`: The output directory
+@args:
+	`inopts`: The options for input file. Default: `Box(rnames = True, cnames = True)`
+	`params`: The parameters for `plot.roc` from `utils/plot.r`
+	`ggs`   : Additaional ggplot terms. Default: 
+		```python
+		Box({
+		    'style_roc': {},
+		    # show legend at bottom right corner
+		    'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} 
+		})
+		```
+	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 """
 pROC              = Proc(desc = 'Generate ROC curves.')
 pROC.input        = 'infile:file'
-pROC.output       = 'outdir:dir:{{i.infile | fn}}.roc'
-pROC.args.cnames  = True
-pROC.args.rnames  = True
+pROC.output       = [
+	'outfile:file:{{i.infile | fn}}.roc/{{i.infile | fn}}.auc.txt', 
+	'outdir:dir:{{i.infile | fn}}.roc'
+]
+pROC.args.inopts  = Box(rnames = True, cnames = True)
 pROC.args.params  = Box(labels = False, showAUC = True, combine = True)
 pROC.args.ggs     = Box({
 	'style_roc': {},
-	'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} # show legend at bottom right corner
+	# show legend at bottom right corner
+	'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} 
 })
 pROC.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pROC.envs.rimport = rimport

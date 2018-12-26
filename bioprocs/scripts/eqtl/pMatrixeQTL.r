@@ -1,6 +1,16 @@
 {% python from os import path %}
 library("MatrixEQTL");
 
+{# check if dist is wrongly assign at `args.dist` instead of `args.cisopts.dist`  #}
+args = {{args | R}}
+if (!is.null(args$dist) && args$cisopts$dist == 0) {
+	stop('Set "args.cisopts.dist" instead of "args.dist" to perform cis-eQTL analysis.')
+}
+snpfile = {{i.snpfile | R}}
+expfile = {{i.expfile | R}}
+outfile = {{o.outfile | R}}
+cisfile = {{o.cisfile | R}}
+
 #snpmatrix = read.table({{i.snpfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
 #expmatrix = read.table({{i.expfile | quote}}, sep = "\t", header = T, row.names = 1, check.names = F)
 #cnames    = intersect(colnames(snpmatrix), colnames(expmatrix))
@@ -15,7 +25,7 @@ snps$fileSkipRows = 1;           # one row of column labels
 snps$fileSkipColumns = 1;        # one column of row labels
 snps$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
 #snps$CreateFromMatrix( as.matrix(snpmatrix) );
-snps$LoadFile( {{i.snpfile | quote}} );
+snps$LoadFile( snpfile );
 
 gene = SlicedData$new();
 gene$fileDelimiter = "\t";       # the TAB character
@@ -24,7 +34,7 @@ gene$fileSkipRows = 1;           # one row of column labels
 gene$fileSkipColumns = 1;        # one column of row labels
 gene$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
 #gene$CreateFromMatrix( as.matrix(expmatrix) );
-gene$LoadFile( {{i.expfile | quote}} );
+gene$LoadFile( expfile );
 
 cvrt = SlicedData$new();
 {% if path.isfile(i.covfile) %}
@@ -70,29 +80,32 @@ Matrix_eQTL_main(
 	snps = snps, 
 	gene = gene, 
 	cvrt = cvrt, 
-	output_file_name = {{o.outfile | quote}}, 
+	output_file_name = outfile, 
 	pvOutputThreshold = {{args.pval}},
 	useModel = {{args.model | lambda x: 'r:' + x | R}}, 
 	errorCovariance = numeric(), 
 	verbose=T, 
-	output_file_name.cis  = {{o.cisfile | quote}},
+	output_file_name.cis  = cisfile,
 	pvOutputThreshold.cis = {{args.cisopts.cispv}},
 	snpspos = snpspos, 
 	genepos = genepos,
 	cisDist = {{args.cisopts.dist}},
 	noFDRsaveMemory = !{{args.fdr | R}}
 )
+# if trans-eqtl analysis is not done (args.pval = 0)
+if (file.exists(outfile))
+	file.create(outfile)
 {% else %}
 Matrix_eQTL_engine(
 	snps = snps, 
 	gene = gene, 
 	cvrt = cvrt, 
-	output_file_name = {{o.outfile | quote}}, 
+	output_file_name = outfile, 
 	pvOutputThreshold = {{args.pval}}, 
 	useModel = {{args.model | lambda x: 'r:' + x | R}}, 
 	errorCovariance = numeric(), 
 	verbose = T,
 	noFDRsaveMemory = !{{args.fdr | R}}
 )
-file.create({{o.cisfile | quote}})
+file.create(cisfile)
 {% endif %}

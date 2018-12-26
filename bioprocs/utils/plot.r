@@ -108,8 +108,8 @@ plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), dev
 #		- `returnAUC`: Return list of AUC values of this function
 #		- `showAUC`  : Show AUC on the plot
 #		- `combine`  : Combine the ROC in one plot?
-#		- `labels`   : Show some values on the curve for some sutting points
-plot.roc = function(data, plotfile, stacked = T, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+#		- `labels`   : Show some values on the curve for some cutting points
+plot.roc = function(data, plotfile, stacked = F, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	require('plotROC')
 
 	if (stacked) {
@@ -137,8 +137,8 @@ plot.roc = function(data, plotfile, stacked = T, params = list(returnAUC = T, sh
 
 	params = update.aes(params, aes(d = D, m = M, color = name))
 	if (combine) {
-		do.call(png, c(list(filename=plotfile), devpars))
-
+		if (!is.null(plotfile))
+			do.call(png, c(list(filename=plotfile), devpars))
 		p = ggplot(data) + do.call(geom_roc, params)
 		if (returnAUC || showAUC) {
 			aucs = as.list(calc_auc(p)$AUC)
@@ -148,7 +148,7 @@ plot.roc = function(data, plotfile, stacked = T, params = list(returnAUC = T, sh
 			auclabels = sapply(cnames, function(n) {
 				sprintf('AUC(%s) = %.3f', n, aucs[[n]])
 			})
-			if (length(cnames) > 2) {
+			if (length(cnames) >= 2) {
 				p = p + scale_color_discrete(name = "", breaks = cnames, labels = auclabels)
 			} else {
 				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', unlist(aucs), sep = ' = '))
@@ -156,13 +156,16 @@ plot.roc = function(data, plotfile, stacked = T, params = list(returnAUC = T, sh
 			}
 		}
 		print(apply.ggs(p, ggs))
-		dev.off()
+		if (!is.null(plotfile))
+			dev.off()
 		if (returnAUC) return(aucs)
 	} else {
 		aucs = list()
 		for (cname in cnames) {
-			prefix = tools::file_path_sans_ext(plotfile)
-			do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
+			if (!is.null(plotfile)) {
+				prefix = tools::file_path_sans_ext(plotfile)
+				do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
+			}
 			p = ggplot(data[which(data$name == cname), , drop=F]) + do.call(geom_roc, params)
 			if (returnAUC || showAUC) {
 				aucs[[cname]]= calc_auc(p)$AUC
@@ -172,7 +175,8 @@ plot.roc = function(data, plotfile, stacked = T, params = list(returnAUC = T, sh
 				p = p + scale_color_discrete(guide = F)
 			}
 			print(apply.ggs(p, ggs))
-			dev.off()
+			if (!is.null(plotfile))
+				dev.off()
 		}
 		if (returnAUC) return(aucs)
 	}

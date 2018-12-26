@@ -47,10 +47,11 @@ medanalysis = function(i) {
 	tryCatch({
 		# Case, Model, Fmula
 		row = csdata[i,,drop = FALSE]
+		logger('Dealing with case:', row$Case, '...')
 		if (grepl(',', row$Model, fixed = TRUE)) {
 			models = trimws(unlist(strsplit(row$Model, ',', fixed = T)))
-			modelm = match.fun(models[1])
-			modely = match.fun(models[2])
+			modelm = match.fun(models[2])
+			modely = match.fun(models[1])
 		} else {
 			modelm = match.fun(row$Model)
 			modely = match.fun(row$Model)
@@ -59,8 +60,8 @@ medanalysis = function(i) {
 		outcome  = vars[1]
 		treat    = vars[2]
 		mediator = vars[3]
-		fmulam   = as.formula(sprintf('%s ~ %s'), bQuote(mediator), bQuote(treat))
-		fmulay   = as.formula(sprintf('%s ~ %s + %s'), bQuote(outcome), bQuote(mediator), bQuote(treat))
+		fmulam   = as.formula(sprintf('%s ~ %s', bQuote(mediator), bQuote(treat)))
+		fmulay   = as.formula(sprintf('%s ~ %s + %s', bQuote(outcome), bQuote(mediator), bQuote(treat)))
 		if (length(covs) > 0) {
 			fmulam = update.formula(fmulam, paste('. ~ +', covs))
 			fmulay = update.formula(fmulay, paste('. ~ +', covs))
@@ -71,12 +72,12 @@ medanalysis = function(i) {
 		if (is.na(med$d1.p) || is.na(med$n1)) {
 			NULL
 		} else {
-			if (is.list(plotmed)) {
+			if (is.list(plotmed) && med$d1.p < pval && med$n1 > 0) {
 				do.call(png, c(list(file.path(outdir, paste0(case, '.png'))), devpars))
 				do.call(plot.mediate, c(list(med), plotmed))
 				dev.off()
 			}
-			list(
+			data.frame(
 				Case      = row$Case,
 				ACME      = med$d1,
 				ACME95CI1 = med$d1.ci[1],
@@ -93,46 +94,26 @@ medanalysis = function(i) {
 	})
 }
 
+ret = do.call(rbind, mclapply(1:nrow(csdata), medanalysis, mc.cores = nthread))
 
-ret = data.frame(
-	Case             = character(),
-	ACME             = double(),
-	ACME95CI1        = double(),
-	ACME95CI2        = double(),
-	TotalE           = double(),
-	ADE              = double(),
-	PropMed          = double(),
-	Pval             = double()
-)
-
-for (case in rownames(medata)) {
-	logger('Dealing with case:', case, '...')
-	rows    = if(is.null(specases)) insts else specases[which(specases[,2] == case), 1]
-	medinfo = medata[case,,drop = F]
-	med     = medanalysis(indata[rows,, drop = F], medinfo$Mediator, medinfo$Treat, medinfo$Outcome, medinfo$ModelM, medinfo$ModelY, medinfo$FmulaM, medinfo$FmulaY)
-	if (is.na(med$d1.p) || is.na(med$n1)) next
-	ret = rbind(ret, list(
-		Case      = case,
-		ACME      = med$d1,
-		ACME95CI1 = med$d1.ci[1],
-		ACME95CI2 = med$d1.ci[2],
-		TotalE    = med$tau.coef,
-		ADE       = med$z1,
-		PropMed   = med$n1,
-		Pval      = med$d1.p
-	))
-	if (med$d1.p >= pval || med$n1 <= 0) next
-	if (is.list(plotmed)) {
-		do.call(png, c(list(file.path(outdir, paste0(case, '.png'))), devpars))
-		do.call(plot.mediate, c(list(med), plotmed))
-		dev.off()
-	}
+if (is.null(ret)) {
+	ret = data.frame(
+		Case             = character(),
+		ACME             = double(),
+		ACME95CI1        = double(),
+		ACME95CI2        = double(),
+		TotalE           = double(),
+		ADE              = double(),
+		PropMed          = double(),
+		Pval             = double()
+	)
 }
+
 if (dofdr != F && nrow(ret) > 0) {
 	ret$Qval = p.adjust(ret$Pval, method = dofdr)
 }
 if (nrow(ret)>0) {
-	ret = ret[ret$Pval < pval,,drop=F]
+	ret = ret[ret$Pval < pval & ret$PropMed > 0,,drop=F]
 }
 
 write.table(pretty.numbers(ret, list(ACME..ACME95CI1..ACME95CI2..PropMed..TotalE..ADE = '%.3f', Pval..Qval = '%.2E')), outfile, col.names = T, row.names = F, sep = "\t", quote = F)

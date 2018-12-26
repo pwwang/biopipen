@@ -365,6 +365,8 @@ pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
 		- `\t` as delimiter.
 		- This file is optional. If it is not provided, `args.case` is required.
 		- If this file is provided, `args.case` is ignored
+		- For different models, model for Mediator comes last. For Case2, the models will be:
+			- lm(V3 ~ V2 + V1) and glm(V2 ~ V1)
 @output:
 	`outfile:file`: The result file.
 	`outdir:dir`  : The output directory containing output file and plots.
@@ -451,10 +453,7 @@ pLiquidAssoc.output = [
 	'outfile:file:{{i.infile | fn2}}.la/{{i.infile | fn2}}.la.txt',
 	'outdir:dir:{{i.infile | fn2}}.la'
 ]
-pLiquidAssoc.args.inopts = Box(
-	cnames   = True,
-	rnames   = True
-)
+pLiquidAssoc.args.inopts = Box(cnames = True, rnames = True)
 pLiquidAssoc.args.zcat    = False
 pLiquidAssoc.args.pval    = 0.05
 pLiquidAssoc.args.fdr     = True # BH, or other methods for p.adjust
@@ -485,14 +484,11 @@ pLiquidAssoc.script       = "file:scripts/stats/pLiquidAssoc.r"
 		- `rnames`: Whether the input file has row names
 	`N`: The population size. Default: `None`
 """
-pHypergeom             = Proc(desc = "Do hypergeometric test.")
-pHypergeom.input       = 'infile:file'
-pHypergeom.output      = 'outfile:file:{{i.infile | fn2}}.hypergeom.txt'
-pHypergeom.args.intype = 'raw' # numbers
-pHypergeom.args.inopts = Box(
-	cnames = True,
-	rnames = True
-)
+pHypergeom              = Proc(desc = "Do hypergeometric test.")
+pHypergeom.input        = 'infile:file'
+pHypergeom.output       = 'outfile:file:{{i.infile | fn2}}.hypergeom.txt'
+pHypergeom.args.intype  = 'raw' # numbers
+pHypergeom.args.inopts  = Box(cnames = True, rnames = True)
 pHypergeom.args.N       = None
 pHypergeom.envs.rimport = rimport
 pHypergeom.lang         = params.Rscript.value
@@ -589,17 +585,13 @@ pChow.script       = "file:scripts/stats/pChow.r"
 @requires:
 	R packages: `ggplot2` and `reshape`
 """
-pCorr             = Proc(desc = "Calculate the Correlation Coefficient.")
-pCorr.input       = 'infile:file'
-pCorr.output      = 'outfile:file:{{i.infile | fn}}.{{args.method}}/{{i.infile | fn}}.{{args.method}}.txt, outdir:dir:{{i.infile | fn}}.{{args.method}}'
-pCorr.args.outfmt = 'pairs' # matrix
-pCorr.args.method = 'pearson' # spearman, kendall
-pCorr.args.byrow  = True # else by column
-pCorr.args.inopts = Box(
-	cnames  = True,
-	rnames  = True,
-	delimit = "\t"
-)
+pCorr              = Proc(desc = "Calculate the Correlation Coefficient.")
+pCorr.input        = 'infile:file'
+pCorr.output       = 'outfile:file:{{i.infile | fn}}.{{args.method}}/{{i.infile | fn}}.{{args.method}}.txt, outdir:dir:{{i.infile | fn}}.{{args.method}}'
+pCorr.args.outfmt  = 'pairs' # matrix
+pCorr.args.method  = 'pearson' # spearman, kendall
+pCorr.args.byrow   = True # else by column
+pCorr.args.inopts  = Box(cnames = True,	rnames = True,	delimit = "\t")
 pCorr.args.plot    = False
 pCorr.args.params  = Box() # the parameters for plot.heatmap
 pCorr.args.ggs     = Box() # extra ggplot statements

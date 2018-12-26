@@ -15,12 +15,13 @@ from . import params
 @args:
 	`model`: The model to use, either modelLINEAR(default) or modelANOVA
 	`pval` : The pvalue cutoff (if `cisopts.dist` > 0, will be used as pval for trans-eQTL)
+		- Set this to 0 and `cisopts.cispv` to do ciseqtl analysis only.
 	`fdr`  : Calculate FDR or not (default: True)
 	`cisopts`: Options for calling cis-, trans-eQTL
 		- `snppos` : The snp position file (columns are: snp, chr, pos)
 		- `genepos`: The gene position file (columns are: gene, chr, start, end)
 		- `dist`   : The distance to define cis-eQTL. (default: 0 (don't do cis-, trans- calling)
-		- `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work)
+		- `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work). Default: `1e-3` 
 @requires:
 	[`Matrix-eQTL (R)`](http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/)		
 """

@@ -323,6 +323,42 @@ pTsvJoin.script       = "file:scripts/tsv/pTsvJoin.py"
 
 """
 @name:
+	pTsvSql
+@description:
+	Query tsv file using SQL. (see: http://harelba.github.io/q/examples.html)
+@input:
+	`infile:file` : The input tsv file
+	`sqlfile:file`: The file containing the SQLs. If provided, `args.sql` will be ignored. 
+@output:
+	`outfile:file`: The output file
+@args:
+	`sql`: If SQL to execute. Use `-` for table name
+	`inopts`: Options for input file.
+		- `cnames`: Input file has header? Default: `True`
+		- `delimit`: The delimit of input file. Default: `\t`
+		- `encoding`: Encoding of input file. Default: `UTF-8`
+		- `gz`: Whether input file is gzipped. Default: `auto` (detected from file extension)
+	`outopts`: Output options.
+		- `cnames`: Inherited from `args.inopts`
+		- `delimit`: Inherited from `args.inopts`
+		- `encoding`: Inherited from `args.inopts`
+@requires:
+	[`q`](http://harelba.github.io/q/index.html)
+	This process is built on `q 1.7.1`
+"""
+pTsvSql             = Proc(desc = 'Query tsv file using SQL')
+pTsvSql.input       = 'infile:file, sqlfile:file'
+pTsvSql.output      = 'outfile:file:{{i.infile | fn}}.bysql{{i.infile | ext}}'
+pTsvSql.args.sql    = ''
+pTsvSql.args.inopts = Box(
+	cnames = True, delimit = "\t", encoding = 'UTF-8', gz = 'auto')
+pTsvSql.args.outopts = Box(
+	cnames = None, delimit = None, encoding = None) 
+pTsvSql.lang   = params.python.value
+pTsvSql.script = "file:scripts/tsv/pTsvSql.py"
+
+"""
+@name:
 	pMergeFiles
 @description:
 	Merge files in the input directory

@@ -1156,12 +1156,13 @@
     - **args**  
         - `model`: The model to use, either modelLINEAR(default) or modelANOVA  
         - `pval` : The pvalue cutoff (if `cisopts.dist` > 0, will be used as pval for trans-eQTL)  
+        	- Set this to 0 and `cisopts.cispv` to do ciseqtl analysis only.
         - `fdr`  : Calculate FDR or not (default: True)  
         - `cisopts`: Options for calling cis-, trans-eQTL  
         	- `snppos` : The snp position file (columns are: snp, chr, pos)
         	- `genepos`: The gene position file (columns are: gene, chr, start, end)
         	- `dist`   : The distance to define cis-eQTL. (default: 0 (don't do cis-, trans- calling)
-        	- `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work)
+        	- `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work). Default: `1e-3` 
 
     - **requires**  
         [`Matrix-eQTL (R)`](http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/)		
@@ -2853,6 +2854,22 @@
         	- Col2: prediction values from model1
         	- ...
 
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `inopts`: The options for input file. Default: `Box(rnames = True, cnames = True)`  
+        - `params`: The parameters for `plot.roc` from `utils/plot.r`  
+        - `ggs`   : Additaional ggplot terms. Default:   
+        	```python
+        	Box({
+        	    'style_roc': {},
+        	    # show legend at bottom right corner
+        	    'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} 
+        	})
+        	```
+        - `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+
 !!! hint "pVenn"
 
     - **description**  
@@ -4099,6 +4116,8 @@
         	- `\t` as delimiter.
         	- This file is optional. If it is not provided, `args.case` is required.
         	- If this file is provided, `args.case` is ignored
+        	- For different models, model for Mediator comes last. For Case2, the models will be:
+        		- lm(V3 ~ V2 + V1) and glm(V2 ~ V1)
 
     - **output**  
         - `outfile:file`: The result file.  
@@ -4706,6 +4725,34 @@
     - **requires**  
         [`python-simread`](https://github.com/pwwang/simread)
 
+!!! hint "pTsvSql"
+
+    - **description**  
+        Query tsv file using SQL. (see: http://harelba.github.io/q/examples.html)
+
+    - **input**  
+        - `infile:file` : The input tsv file  
+        - `sqlfile:file`: The file containing the SQLs. If provided, `args.sql` will be ignored.   
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `sql`: If SQL to execute. Use `-` for table name  
+        - `inopts`: Options for input file.  
+        	- `cnames`: Input file has header? Default: `True`
+        	- `delimit`: The delimit of input file. Default: `\t`
+        	- `encoding`: Encoding of input file. Default: `UTF-8`
+        	- `gz`: Whether input file is gzipped. Default: `auto` (detected from file extension)
+        - `outopts`: Output options.  
+        	- `cnames`: Inherited from `args.inopts`
+        	- `delimit`: Inherited from `args.inopts`
+        	- `encoding`: Inherited from `args.inopts`
+
+    - **requires**  
+        [`q`](http://harelba.github.io/q/index.html)
+        This process is built on `q 1.7.1`
+
 !!! hint "pMergeFiles"
 
     - **description**  
@@ -5122,6 +5169,21 @@
 
     - **requires**  
         `plink 1.x`
+
+!!! hint "pGTMat2Bed"
+
+    - **description**  
+        Convert a genotype matrix to a bed file containing the coordinates of the mutations
+
+    - **input**  
+        - `infile:file`: The genotype matrix. Row names must follow `<chr>_<pos>_<rsid>_<ref>_<alt>`  
+
+    - **output**  
+        - `outfile:file`: The output bed file. Default: `outfile:file:{{i.infile | fn}}.bed`  
+
+    - **args**  
+        - `ncol`: How many columns of bed to output. Default: `6`. Possible values: 3, 6 and 8  
+        - `name`: Use the neat name (usually rsid) or full name (row names). Default: `neat`  
 
 !!! hint "pCallRate"
 
