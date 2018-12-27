@@ -21,6 +21,33 @@ MAIN      = None
 
 ASSEMBLER = HelpAssembler(theme = 'default')
 
+def substr_replace(s, starts, lengths, replace):
+	if not isinstance(starts, (tuple, list)):
+		starts = [starts]
+	if not isinstance(lengths, (tuple, list)):
+		lengths = [lengths]
+	assert len(starts) == len(lengths)
+	if not isinstance(replace, (tuple, list)):
+		replace = [replace] * len(starts)
+
+	delta = 0
+	for i, start in enumerate(starts):
+		# adjust starts
+		s = s[:start + delta] + replace[i] + s[start + lengths[i] + delta:]
+		delta += len(replace[i]) - lengths[i]
+	return s
+
+def highlight(origin, q, incase = True):
+	# get all occurrences of q
+	if incase:
+		occurs = [m.start() for m in re.finditer(q.lower(), origin.lower())]
+	else:
+		occurs = [m.start() for m in re.finditer(q, origin)]
+	lengths = [len(q)] * len(occurs)
+	return substr_replace(origin, occurs, lengths, [
+		'{}{}{}'.format(COLORS.red + COLORS.bold, origin[occur:occur+length], COLORS.end)
+		for occur, length in zip(occurs, lengths)])
+
 class Methods(object):
 
 	@staticmethod
@@ -112,6 +139,7 @@ class Methods(object):
 			{prog} -get <param>
 		@params:
 			`get:PARAM`: Get the value of the parameter
+			`query:KEYWORD`: Query parameters using the KEYWORD.
 			`POSITIONAL`: The parameter names
 		"""
 		commands.params._hbald = False
@@ -122,6 +150,29 @@ class Methods(object):
 		if kwargs and 'get' in kwargs:
 			arg = kwargs['get']
 			sys.stdout.write(bioprocs.params[arg].value)
+		elif kwargs and ('query' in kwargs or 'q' in kwargs):
+			q = kwargs.get('query', kwargs.get('q')).lower()
+			args = bioprocs.params.asDict().keys()
+			ret = []
+			for arg in sorted(args):
+				param = bioprocs.params[arg]
+				if  q not in arg.lower() and \
+					not any(q in d.lower() for d in param.desc) and \
+					q not in str(param.value):
+					continue
+				ret.append(ASSEMBLER.title('parameter') + ' ' + highlight(ASSEMBLER.prog(arg), q))
+				for i, desc in enumerate(param.desc):
+					if desc.upper().startswith('DEFAULT: '):
+						continue
+					if i == 0:
+						ret.append(ASSEMBLER.prog('- desc : ') + highlight(ASSEMBLER.optdesc(desc), q))
+					else:
+						ret.append(' ' * 11 + ASSEMBLER.optdesc(desc))
+				ret.append(ASSEMBLER.prog('- type : ') + param.type)
+				ret.append(ASSEMBLER.prog('- value: ') + highlight(repr(param.value), q))
+				ret.append('')
+
+			sys.stdout.write('\n'.join(ret) + '\n')
 		else:
 			if not args:
 				args = bioprocs.params.asDict().keys()
@@ -144,7 +195,6 @@ class Methods(object):
 					ret.append(ASSEMBLER.prog('- value: ') + repr(param.value))
 				ret.append('')
 			sys.stdout.write('\n'.join(ret) + '\n')
-
 
 class Command(object):
 

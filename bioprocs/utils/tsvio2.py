@@ -283,7 +283,7 @@ class TsvJoin(object):
 			del outopts['cnames']
 			
 		out = TsvWriter(outfile, **outopts)
-		out.cnames = sum((reader.cnames for reader in self.readers), [])
+		out.cnames = sum((reader.cnames for reader in self.readers if reader.cnames), [])
 		out.writeHead(cnames)
 
 		match = match or self._defaultMatch

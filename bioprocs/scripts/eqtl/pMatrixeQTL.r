@@ -93,7 +93,7 @@ Matrix_eQTL_main(
 	noFDRsaveMemory = !{{args.fdr | R}}
 )
 # if trans-eqtl analysis is not done (args.pval = 0)
-if (file.exists(outfile))
+if (!file.exists(outfile))
 	file.create(outfile)
 {% else %}
 Matrix_eQTL_engine(

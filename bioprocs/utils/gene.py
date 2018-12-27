@@ -1,6 +1,6 @@
 import re, json
 from os import path
-from mygene import MyGeneInfo
+from mygene import MyGeneInfo, requests
 from medoo import Raw, Field
 from pyppl import Box
 from bioprocs.utils import alwaysList
@@ -59,8 +59,11 @@ def replaceList(l, search, replace):
 	return ret
 
 def querygene(*args, **kwargs):
-	mgret = MyGeneInfo().querymany(*args, **kwargs)
 	rets  = []
+	try:
+		mgret = MyGeneInfo().querymany(*args, **kwargs)
+	except requests.exceptions.ConnectionError:
+		return rets
 	for ret in mgret:
 		out = {}
 		rets.append(out)
