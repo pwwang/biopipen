@@ -75,30 +75,33 @@ pConsv.script        = "file:scripts/seq/pConsv.py"
 	pPromoters
 @description:
 	Get the promoter regions in bed format of a gene list give in infile.
+	Gene names are supposed to be normalized by `gene.pGeneNameNorm`
 @input:
 	`infile:file`: the gene list file
 @output:
 	`outfile:file`: the bed file containing the promoter region
 @args:
-	`up`: the upstream to the tss, default: 2000
-	`down`: the downstream to the tss, default: 2000
-	`genome`: the genome, default: hg19
-@require:
-	[python-mygene](http://mygene.info/)
+	`region`: The region to output. Default: `Box(up = 2000, down = None, withbody = False)`
+		- `up`: The upstream distance to TSS.
+		- `down`: The downstream distance to TSS. Defaults to `args.region.up` if `None`
+		- `withbody`: Include gene body in the output region? Default: `False`
+	`notfound`: How to deal with records can't be found. Default: `skip`
+		- `skip` : Skip the record
+		- `error`: Report error and exit
+	`refgene`: The ref gene file. Default: `@params.refgene`
+	`inopts` : The options for input file. Default: `Box(cnames = False, genecol = 0, delimit = "\t")`
+		- `cnames`: Whether the input file has header
+		- `genecol`: The 0-based index or the colname of gene column.
+		- `delimit`: The delimit of the input file.
+	`outopts`:  The options for output file. Default: `Box(cnames = False)`
 """
 pPromoters               = Proc(desc = 'Get the promoter regions in bed format of a gene list give in infile.')
 pPromoters.input         = "infile:file"
 pPromoters.output        = "outfile:file:{{i.infile | fn}}-promoters.bed"
-pPromoters.args.up       = 2000
-pPromoters.args.down     = 2000
-pPromoters.errhow        = 'retry'
+pPromoters.args.region   = Box(up = 2000, down = None, withbody = False)
 pPromoters.args.notfound = 'skip' # error
-pPromoters.args.incbody  = False
-pPromoters.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-pPromoters.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
-pPromoters.args.frm      = 'symbol, alias'
-pPromoters.args.genecol  = ''
-pPromoters.args.cachedir = params.cachedir.value
-pPromoters.args.genome   = params.genome.value
+pPromoters.args.inopts   = Box(cnames = False, genecol = 0)
+pPromoters.args.outopts  = Box(cnames = False)
+pPromoters.args.refgene  = params.refgene.value
 pPromoters.lang          = params.python.value
 pPromoters.script        = "file:scripts/seq/pPromoters.py"

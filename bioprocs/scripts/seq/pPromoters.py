@@ -1,57 +1,58 @@
 import sys
 
+from os import path
 from pyppl import Box
-from bioprocs.utils.tsvio import TsvWriter, TsvRecord
-from bioprocs.utils.gene import genenorm
-from bioprocs.utils import logger
+from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from bioprocs.utils import log2pyppl
 
-genome   = {{args.genome | quote}}
-poscol   = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
+infile   = {{i.infile | quote}}
+outfile  = {{o.outfile | quote}}
+region   = {{args.region | repr}}
 notfound = {{args.notfound | quote}}
-# get the genes
-genes = genenorm(
-	{{i.infile | quote}},
-	notfound = notfound,
-	frm      = {{args.frm | quote}},
-	to       = "%s,symbol" % poscol,
-	genome   = genome,
-	cachedir = {{args.cachedir | quote}},
-	inopts   = {{args.inopts}},
-	genecol  = {{args.genecol | quote}}
-)
-outopts = {{args.outopts}}
-writer = TsvWriter({{o.outfile | quote}}, **outopts)
-if outopts['query']:
-	writer.meta.add('QUERY')
-if outopts['head']:
-	writer.writeHead(delimit = outopts['headDelimit'], prefix = outopts['headPrefix'], transform = outopts['headTransform'])
-for gene, hit in genes.items():
-	if not poscol in hit or not hit[poscol]:
-		if notfound == 'skip':
-			logger.warn('Gene not found: %s' % gene)
-			continue
-		else:
-			raise ValueError('Gene not found: %s' % gene)
+inopts   = {{args.inopts | repr}}
+outopts  = {{args.outopts | repr}}
+refgene  = {{args.refgene | quote}}
+genecol  = {{args.inopts.genecol | repr}}
+ocnames  = {{args.outopts.cnames | repr}}
+del inopts['genecol']
+del outopts['cnames']
+if region.down is None:
+	region.down = region.up
 
-	pos      = hit[poscol]
-	if isinstance(pos, list): pos = pos[0]
-	r        = TsvRecord()
-	r.CHR    = 'chr' + str(pos['chr'])
-	if pos['strand'] == 1:
-		r.STRAND = '+'
-		r.START  = pos['start'] - {{args.up}}
-		r.END    = pos['start'] + {{args.down}}
-		{% if args.incbody %}
-		r.END    = max(r.END, pos['end'])
-		{% endif %}
+# get all genes' TSS and strand
+reader = TsvReader(refgene, cnames = False, delimit = '"')
+genes  = {r[1]:r[0].split("\t")[:7] for r in reader}
+
+reader = TsvReader(infile, **inopts)
+writer = TsvWriter(outfile, **outopts)
+if ocnames:
+	writer.cnames = ['CHROM', 'START', 'END', 'NAME', 'SCORE', 'STRAND']
+	writer.writeHead()
+for r in reader:
+	gene = r[genecol]
+	if gene not in genes:
+		msg = 'Gene does not exist: {}'.format(gene)
+		if notfound == 'error':
+			raise ValueError(msg)
+		else:
+			log2pyppl('Gene does not exist: {msg}', 'warning')
+			continue
+	chrom, _, _, start, end, _, strand = genes[gene]
+	start, end = int(start), int(end)
+	if strand == '-':
+		record = [
+			chrom, 
+			min(start, end - region.down) if region.withbody else end - region.down, 
+			end + region.up, 
+			gene, 0, strand
+		]
 	else:
-		r.STRAND = '-'
-		r.END    = pos['end'] + {{args.up}}
-		r.START  = pos['end'] - {{args.down}}
-		{% if args.incbody %}
-		r.START  = min(r.START, pos['start'])
-		{% endif %}
-	r.NAME   = hit['symbol']
-	r.SCORE  = '0'
-	r.QUERY  = gene
-	writer.write(r)
+		record = [
+			chrom, 
+			start - region.up, 
+			max(end, start + region.down) if region.withbody else start + region.down, 
+			gene, 0, strand
+		]
+	writer.write(record)
+writer.close()
+
