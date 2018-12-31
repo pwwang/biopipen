@@ -104,7 +104,7 @@ pHead                     = Proc(desc = "Like linux's head command")
 pHead.input               = "infile:file"
 pHead.output              = "outfile:file:{{i.infile | fn}}.head.txt"
 pHead.args.n              = 10
-pHead.script              = 'head -n {{args.n}} {{i.infile | squote}} > {{out.outfile | squote}}'
+pHead.script              = 'head -n {{args.n}} {{i.infile | squote}} > {{o.outfile | squote}}'
 
 """
 @name:

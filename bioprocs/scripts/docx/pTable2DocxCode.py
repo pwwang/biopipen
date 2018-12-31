@@ -1,12 +1,10 @@
 from pyppl import Box
+from bioprocs.utils.tsvio2 import TsvReader
 
-bcode   = {{args.bcode | repr}}
-acode   = {{args.acode | repr}}
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
-scale   = {{args.scale | repr}}
+font    = {{args.font | repr}}
 section = {{args.section | repr}}
-legend  = {{args.legend | render | repr}}
 {% case True %}
 {% when isinstance(args.title, (tuple, list)) %}
 title = {{args.title | lambda a, render = render: (render(a[0]), a[1])}}
@@ -15,7 +13,11 @@ title = {{args.title | lambda a, render = render: (render(a), 1)}}
 {% else %}
 title = {{args.title | repr}}
 {% endcase %}
-align   = {{args.align | repr}}
+caption = {{args.caption | render | repr}}
+style   = {{args.style | repr}}
+inopts  = {{args.inopts | repr}}
+acode   = {{args.acode | repr}}
+bcode   = {{args.bcode | repr}}
 
 # fix parameters
 if section:
@@ -37,11 +39,8 @@ if not isinstance(acode, (tuple, list)):
 	acode = [acode]
 acode = "\n".join(acode)
 
-scale = ', '.join('{} = Pt({})'.format(k, v) for k, v in scale.items())
-scale = ', ' + scale if scale else ''
-
-if legend:
-	legend = legend.split('.', 1) if legend.startswith('Figure ') and '.' in legend else ['', legend]
+if caption:
+	caption = caption.split('.', 1) if caption.startswith('Table ') and '.' in caption else ['', caption]
 
 # region template
 template = """
@@ -51,16 +50,16 @@ template = """
 # Add heading
 {heading_code}
 
-# Interpolation code before image
+# Interpolation code before table
 {bcode_code}
 
-# Insert the image
-{image_code}
+# Add caption
+{caption_code}
 
-# Add legend
-{legend_code}
+# Insert the table
+{table_code}
 
-# Interpolation code after image
+# Interpolation code after table
 {acode_code}
 """
 # endregion
@@ -92,27 +91,38 @@ doc.add_heading('''{}''', {})
 
 bcode_code = bcode
 
-image_code = """
-para = doc.add_paragraph()
+caption_code = """
+_cap_para = doc.add_paragraph()
 {alignment}
-run = para.add_run()
-run.add_picture({pic!r}{scale})
+_cap_para.add_run({caption0!r}).font.bold = True
+_cap_para.add_run({caption1!r})
 """.format(
-	alignment = "para.alignment = WD_ALIGN_PARAGRAPH.{}\n".format(align.upper()) if align else '',
-	pic       = infile,
-	scale     = scale
-)
+	alignment = "_cap_para.alignment = WD_ALIGN_PARAGRAPH.{}\n".format(align.upper()) if align else '',
+	caption0   = caption[0],
+	caption1   = caption[1]
+) if caption else ''
 
-legend_code = """
-_legend_para = doc.add_paragraph()
-{alignment}
-_legend_para.add_run({legend0!r}).font.bold = True
-_legend_para.add_run({legend1!r})
+inopts['cname0'] = inopts.get('cname0', '')
+reader = TsvReader(infile, **inopts)
+table_code = """
+cnames = {cnames!r}
+data   = {data!r}
+if cnames:
+	data.insert(0, cnames)
+table = doc.add_table(rows = len(data), cols = len(cnames))
+table.style = {style!r}
+for i, row in enumerate(data):
+	for j, r in enumerate(row):
+		table.rows[i].cells[j].text = r
+		table.rows[i].cells[j].paragraphs[0].runs[0].font.name = {family!r}
+		table.rows[i].cells[j].paragraphs[0].runs[0].font.size = Pt({size!r})
 """.format(
-	alignment = "_legend_para.alignment = WD_ALIGN_PARAGRAPH.{}\n".format(align.upper()) if align else '',
-	legend0   = legend[0],
-	legend1   = legend[1]
-) if legend else ''
+	cnames = reader.cnames,
+	data   = [r.values() for r in reader],
+	family = font['family'],
+	size   = font['size'],
+	style  = style
+)
 
 acode_code = acode
 
@@ -121,8 +131,8 @@ with open(outfile, 'w') as f:
 		section_code = section_code,
 		heading_code = heading_code,
 		bcode_code   = bcode_code,
-		image_code   = image_code,
-		legend_code  = legend_code,
+		caption_code = caption_code,
+		table_code   = table_code,
 		acode_code   = acode_code
 	))
 
