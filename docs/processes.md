@@ -906,6 +906,26 @@
 
     - **requires**  
         [CNVkit](http://cnvkit.readthedocs.io/)
+
+!!! hint "pCNVkit2Theta"
+
+    - **description**  
+        Conver the results to THetA2 input and run THetA2.
+
+    - **input**  
+        - `cnsfile:file`: The cns file  
+        - `cnnfile:file`: The reference cnn file or the cnr file for paired Normal sample. Could be empty.  
+        - `snvfile:file`: The VCF file of somatic mutations call from paired samples. Could be empty.  
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `nthread` : Number threads to use. Default: `1`  
+        - `cnvkit`  : The executable of cnvkit. Default: `cnvkit.py`  
+        - `theta`   : The executable of THetA2. Default: `RunTHetA.py`  
+        - `ckparams`: Other params for `cnvkit.py export theta`  
+        - `ttparams`: Other params for `RunTHetA.py`. Default: `Box(BAF=True, FORCE=True, n=2)`  
 ## common
 
 !!! hint "pSort"

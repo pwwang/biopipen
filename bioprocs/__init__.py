@@ -179,6 +179,8 @@ DEFAULTS = {
 	"strelka_soma.desc"        : "The path of configureStrelkaSomaticWorkflow.py.",
 	"tabix"                    : "tabix",
 	"tabix.desc"               : "The path of tabix.",
+	"theta2"                   : "RunTHetA.py",
+	"theta2.desc"              : "The path of THetA2 executable.",
 	"trimmomatic"              : "trimmomatic",
 	"trimmomatic.desc"         : "The path of trimmomatic.",
 	"vardict"                  : "vardict",

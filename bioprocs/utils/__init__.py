@@ -79,35 +79,73 @@ def call(command, args, quit = True):
 	args = [bioprocs, command] + args
 	return runcmd(args, quit)
 
-def cmdargs(params, dash = 'auto', equal = 'auto'):
+def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefalse = True):
+	"""
+	Convert a dict of parameters into a command line parameter
+	@params:
+		`params`: The dict of parameters
+		`dash`  : The dash prefix of each parameter key.
+			- `auto`: A single dash for single-char key, otherwise double dashes
+			- Otherwise use whatever being passed.
+		`equal` : The separater between the key and the value.
+			- `auto`: Space for single-char key, otherwise equal sign `=`
+			- Otherwise use whatever being passed.
+		`duplistkey`: Whether duplicate keys for list values. Default: `False`
+			- For example for `params = {'a': [1,2,3]}`,
+			- if `duplistkey = True`, it will be: `-a 1 -a 2 -a 3`,
+			- otherwise it will be `-a 1 2 3`
+		`ignorefalse`: Ignore boolean False parameter? Default: `True`
+	"""
 	if not params: return ''
 	try:  # py3
 		from shlex import quote
 	except ImportError:  # py2
 		from pipes import quote
+
 	ret = []
+	# decide the order
 	if not isinstance(params, OrderedDict):
 		params = OrderedDict([(key, params[key]) for key in sorted(params.keys())])
-
+	
+	# positional parameters
+	positional = None
+	if "" in params:
+		positional = params[""]
+		del params[""]
+	
 	for key, val in params.items():
+		# allow comments for parameters for the same key
 		key = key.split('#')[0].strip()
-		if isinstance(val, bool) and not val: continue
-		item = '--' if (dash == 'auto' and len(key) > 1) else '-' if dash == 'auto' else dash
+		item = dash if dash != 'auto' else '--' if len(key) > 1 else '-'
 		item += key
 		if isinstance(val, (tuple, list)):
-			item += '=' if (equal == 'auto' and len(key)>1) else ' ' if equal == 'auto' else equal
-			for i, v in enumerate(val):
-				if i == 0:
-					item += quote(str(v))
-					ret.append(item)
-				else:
-					ret.append(quote(str(v)))
-		elif not isinstance(val, bool):
-			item += '=' if (equal == 'auto' and len(key)>1) else ' ' if equal == 'auto' else equal
+			# ignore keys with no values
+			if not val: continue
+			item += equal if equal != 'auto' else '=' if len(key)>1 else ' '
+			if duplistkey:
+				ret.extend([item + quote(str(v)) for v in val])
+			else:
+				ret.append(item + quote(str(val[0])))
+				ret.extend([quote(str(v)) for v in val[1:]])
+		elif isinstance(val, bool):
+			if not val and ignorefalse:
+				continue
+			if val:
+				ret.append(item)
+			else:
+				item += equal if equal != 'auto' else '=' if len(key)>1 else ' '
+				item += '0'
+				ret.append(item)
+		else:
+			item += equal if equal != 'auto' else '=' if len(key)>1 else ' '
 			item += quote(str(val))
 			ret.append(item)
-		else:
-			ret.append(item)
+
+	if positional:
+		if not isinstance(positional, (tuple, list)):
+			positional = [positional]
+		ret.extend([quote(str(pos)) for pos in positional])
+
 	return ' '.join(ret)
 
 def _autoUnit(num):
