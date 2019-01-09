@@ -27,6 +27,8 @@ formlm = function(model, k, withname = T) {
 	lencoef = length(model$model$coefficients)
 	coefns  = c(names(model$model$coefficients)[(lencoef-k+2):lencoef], '_')
 	coeffs  = as.numeric(c(model$model$coefficients[(lencoef-k+2):lencoef], model$model$coefficients[1]))
+	coefns  = c(coefns, "N")
+	coeffs  = c(coeffs, model$n)
 	if (withname) {
 		paste0(model$name, ': ', paste(coefns, round(coeffs, 3), sep = '=', collapse = ' '))
 	} else {
@@ -101,7 +103,8 @@ results = data.frame(
 for (case in cases) {
 	caserows  = if(ncol(gdata) > 2) gdata[which(gdata$Case == case),,drop = F] else gdata
 	fmula     = fmulas[case,]
-	K         = ifelse(is.null(fmula), ncol(indata), length(unlist(strsplit(fmula, "\\s*(\\~|\\+)\\s*"))))
+	allvars   = all.vars(as.formula(fmula))
+	K         = ifelse(is.null(fmula), ncol(indata), length(allvars))
 	pooled_lm = regress(indata[caserows[,1],,drop = F], name = 'Pooled', fmula = fmulas[case,])
 	subgroups = levels(factor(caserows[,2]))
 	subgrp_lm = lapply(subgroups, function(sgroup) {
@@ -123,7 +126,14 @@ for (case in cases) {
 		rcase = make.names(case)
 		colnames(plotdata)[incol + 1] = rcase
 
-		labels = sapply(c(subgrp_lm, list(pooled_lm)), function(m) paste0(m$name, ': ', model2eq(m$model)))
+		labels = sapply(c(subgrp_lm, list(pooled_lm)), function(m) paste0(m$name, ': ', model2eq(m$model), ' (N=', m$n, ')'))
+		if (!is.null(ggs$scale_color_manual) && !is.null(ggs$scale_color_manual$labels)) {
+			if (is.function(ggs$scale_color_manual$labels)) {
+				labels = ggs$scale_color_manual$labels(labels)
+			} else {
+				labels = ggs$scale_color_manual$labels
+			}
+		}
 		ggs1 = c(ggs, list(
 			geom_smooth = list(
 				aes(color = 'Pooled'),
@@ -153,8 +163,8 @@ for (case in cases) {
 		plot.scatter(
 			plotdata, 
 			file.path(outdir, paste0(case, '.png')), 
-			x      = incol - 1,
-			y      = incol,
+			x      = which(allvars[2] == colnames(plotdata)),
+			y      = which(allvars[1] == colnames(plotdata)),
 			ggs    = ggs1,
 			params = list(aes_string(shape = rcase, color = rcase))
 		)

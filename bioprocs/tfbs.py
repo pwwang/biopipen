@@ -1,6 +1,8 @@
 from pyppl import Proc, Box
 #from .utils import runcmd, helpers, parallel
 from . import params
+from .utils import fs2name
+
 """
 @name:
 	pMotifScan
@@ -9,14 +11,14 @@ from . import params
 @input:
 	`tffile:file`: The infile containing TF name and motif name.
 		- If only one column is give, will be used as both TF and motif name
-		- If there are 2 columns, 1st column will be motif name, 2nd column will be TF name
+		- If there are 2+ columns, 1st column will be motif name, 2nd column will be TF name
 	`sfile:file`: The sequence file
 @output:
 	`outdir:file`: The output dir
 @args:
 	`tools`   : The tool used to scan the motif. Default: 'meme'
 	`meme`    : The path of MEME's fimo. Default: 'fimo'
-	`motifs   : The motif database in MEME format.
+	`motifs`  : The motif database in MEME format.
 	`pval`    : The pvalue cutoff. Default: 1e-4
 	`cleanmname`: Whether to clean motif name. Default: True
 	`ucsclink`: The ucsc link template. Default: `https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}`
@@ -40,6 +42,38 @@ pMotifScan.args.ucsclink = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&pos
 pMotifScan.args.nthread  = 1
 pMotifScan.lang          = params.python.value
 pMotifScan.script        = "file:scripts/tfbs/pMotifScan.py"
+
+pMotifSimilarity        = Proc(desc = 'Compare the similarity between motifs.')
+pMotifSimilarity.input  = 'mfile1:file, mfile2:file'
+pMotifSimilarity.output = [
+	'outfile:file:{{i.mfile1, i.mfile2, args.tool, fn2, path.join | *&odfn | *:e(f, c+".txt") }}',
+	'outdir:dir:{{i.mfile1, i.mfile2, args.tool, fn2 | *odfn }}'
+]
+pMotifSimilarity.args.tool   = 'tomtom'
+pMotifSimilarity.args.qval   = 0.5
+pMotifSimilarity.args.tomtom = params.tomtom.value
+pMotifSimilarity.args.params = Box({
+	'xalph': True, 'no-ssc': True, 'dist': 'pearson', 'min-overlap': 1, 'motif-pseudo': .1, 'verbosity': 4
+})
+pMotifSimilarity.args.nthread = 1
+pMotifSimilarity.envs.path    = __import__('os').path
+pMotifSimilarity.envs.odfn    = lambda f1, f2, tool, fn2, p = None: (fn2(f1) + "-" + fn2(f2) if f2 else fn2(f1)) + "." + tool
+pMotifSimilarity.lang         = params.python.value
+pMotifSimilarity.script       = "file:scripts/tfbs/pMotifSimilarity.py"
+
+pMotifMerge              = Proc(desc = 'Merge motif files in MEME format')
+pMotifMerge.input        = 'infiles:files'
+pMotifMerge.output       = 'outfile:file:{{i.infiles | fs2name}}.meme.txt'
+pMotifMerge.envs.fs2name = fs2name
+pMotifMerge.lang         = params.python.value
+pMotifMerge.script       = "file:scripts/tfbs/pMotifMerge.py"
+
+pMotifFilter             = Proc(desc = 'Filter motifs from a meme file.')
+pMotifFilter.input       = 'infile:file'
+pMotifFilter.output      = 'outfile:file:{{i.infile | bn}}'
+pMotifFilter.args.filter = None
+pMotifFilter.lang        = params.python.value
+pMotifFilter.script      = "file:scripts/tfbs/pMotifFilter.py"
 
 """
 @name:

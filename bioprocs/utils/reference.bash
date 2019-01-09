@@ -1,8 +1,8 @@
 function reffai_check() {
 	if [[ -e "$1" ]]; then
-		return 0
+		echo 0
 	else
-		return 1
+		echo 1
 	fi
 }
 
@@ -26,9 +26,9 @@ function reffai_do() {
 
 function refdict_check() {
 	if [[ -e "$1" ]]; then
-		return 0
+		echo 0
 	else
-		return 1
+		echo 1
 	fi
 }
 
@@ -49,9 +49,9 @@ function refdict_do() {
 
 function refkallisto_check() {
 	if [[ -e "$1" ]]; then
-		return 0
+		echo 0
 	else
-		return 1
+		echo 1
 	fi
 }
 

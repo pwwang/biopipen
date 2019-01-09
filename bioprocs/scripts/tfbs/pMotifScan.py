@@ -1,82 +1,116 @@
 import re
 from os import path
-from shutil import rmtree
-{{ runcmd }}
-{{ params2CmdArgs }}
-{{ parallel }}
+from pyppl import Box
+from bioprocs.utils import runcmd, cmdargs, logger
+from bioprocs.utils.meme import MemeReader
+from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from bioprocs.utils.parallel import Parallel
 
-params   = {{args.params}}
-ucsclinkTpl = {{args.ucsclink | quote}}
+tffile   = {{i.tffile | quote}}
+sfile    = {{i.sfile | quote}}
+outfile  = {{o.outfile | quote}}
+outdir   = {{o.outdir | quote}}
+tool     = {{args.tool | quote}}
+meme     = {{args.meme | quote}}
+params   = {{args.params | repr}}
+tfmotifs = {{args.tfmotifs | quote}}
+pval     = {{args.pval | repr}}
+ucsclink = {{args.ucsclink | quote}}
+nthread  = {{args.nthread | repr}}
 
-motifs = {}
-with open({{i.tffile | quote}}) as f:
-	for line in f:
-		line = line.strip("\n")
-		if not line: continue
-		parts = line.split("\t")
-		if len(parts) == 1:
-			motifs[parts[0]] = parts[0]
+# get all motifs
+logger.info('Loading motif names ...')
+reader = TsvReader(tffile, cnames = False)
+ncol   = len(next(reader))
+reader.rewind()
+if ncol == 1:
+	motifns = {r[0]:r[0] for r in reader}
+else:
+	motifns = {r[0]:r[1] for r in reader}
+logger.info('%s motif names read.', len(motifns))
+
+# match motifs
+logger.info('Matching motifs in database ...')
+mnames = [m.name for m in MemeReader(tfmotifs)]
+motifs = {k:v for k, v in motifns.items() if k in mnames}
+logger.info('%s motifs loaded', len(motifs))
+
+if tool == 'meme':
+	cmdparams        = []
+	params.thresh    = pval
+	params.verbosity = 4
+	for motif, name in motifs.items():
+		params.oc    = path.join(outdir, name + '.' + re.sub(r'[^\w_]', '', motif))
+		params.motif = motif
+		params[""]   = [tfmotifs, sfile]
+		cmdparams.append((meme, cmdargs(params, dash = '--', equal = ' ')))
+	Parallel(nthread, raiseExc = True).run('{} {}', cmdparams)
+
+	writer = TsvWriter(outfile)
+	writer.cnames = [
+		"CHR", "START", "END", "NAME", "SCORE", "STRAND", "MOTIF", "SEQ", "STARTONSEQ",
+		"STOPONSEQ", "RAWSCORE", "PVAL", "QVAL", "MATCHEDSEQ", "UCSCLINK"
+	]
+	writer.writeHead(callback = lambda cnames: "#" + "\t".join(cnames))
+
+	def rowfactory(r):
+		r.PVAL       = float(r['p-value'])
+		if r.PVAL >= pval:
+			return None
+		r.RAWSCORE = r.score
+		try:
+			r.SCORE = int(float(r.score) * 10)
+		except TypeError:
+			r.SCORE = 0
+		r.STRAND   = r.strand
+		r.MOTIF    = r.motif_id
+		# split motif_alt_id
+		# GENE or GENE::chr1:111-222 or ::chr1:111-222 or chr1:111-222
+		r.SEQ = r.sequence_name
+		if '::' in r.SEQ:
+			seqname, seqcoord = r.SEQ.split('::', 1)
+			r.CHR, start, end = re.split(r'[:-]', seqcoord)
+			start = int(start)
+			end   = int(end)
+		elif ':' in r.SEQ:
+			seqname, seqcoord = r.SEQ, r.SEQ
+			r.CHR, start, end = re.split(r'[:-]', seqcoord)
+			start = int(start)
+			end   = int(end)
 		else:
-			motifs[parts[0]] = parts[1]
+			seqname, seqcoord = r.SEQ, ''
+			r.CHR, start, end = '-', 0, 0
+		r.NAME       = seqname
+		r.STARTONSEQ = r.start
+		r.STOPONSEQ  = r.stop
+		r.START      = start + int(r.start)
+		r.END        = start + int(r.stop)
+		r.QVAL       = r['q-value']
+		r.MATCHEDSEQ = r.matched_sequence
+		r.UCSCLINK   = ucsclink.format('{chrom}:{start}:{end}'.format(
+			chrom = r.CHR,
+			start = start,
+			end   = end
+		))
+		return r
 
-{% if args.tool == 'meme' %}
+	for motif, name in motifs.items():
+		retfile = path.join(outdir, name + '.' + re.sub(r'[^\w_]', '', motif), 'fimo.txt')
+		# motif_id	motif_alt_id	sequence_name	start	stop	strand	score	p-value	q-value	matched_sequence
+		reader = TsvReader(
+			retfile, 
+			cnames  = lambda header: header[1:].strip().split('\t'),
+			row     = rowfactory,
+			comment = None)
+		for r in reader:
+			if not r:
+				continue
+			r.NAME   = name + '::' + r.NAME
+			writer.write(r)
+	writer.close()
+else:
+	raise ValueError('Unsupported tool: {}'.format(tool))
 
-cmds   = []
-
-params['thresh']    = {{args.pval | quote}}
-params['verbosity'] = 4
-
-for mid in motifs.keys():
-	params['oc']        = path.join({{out.outdir | quote}}, re.sub(r'[^\w_]', '', mid))
-	params['motif']     = mid
-
-	#if path.isdir(params['o']): rmtree(params['o'])
-	cmd = '{{args.meme}} %s {{args.tfmotifs | quote}} {{i.sfile | quote}}' % params2CmdArgs(params, dash='--', equal=' ')
-
-	cmds.append(cmd)
-
-parallel(cmds, {{args.nthread}})
-
-with open({{o.outfile | quote}}, 'w') as fout:
-	cont = ['#Chr', 'Start', 'End', 'Name', 'NormedScore', 'Strand', 'Motif', 'Sequence', 'StartOnSeq', 'StopOnSeq', 'Score', 'PValue', 'QValue', 'MatchedSeq', 'UCSCLink']
-	fout.write('\t'.join(cont) + '\n')
-	minscore = 9999
-	maxscore = -1
-	for mid in motifs.keys():
-		with open(path.join({{o.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
-			for line in f:
-				line   = line.strip()
-				if not line or line.startswith('#'): continue
-				parts  = line.split('\t')
-				score  = float(parts[5])
-				minscore = min(minscore, score)
-				maxscore = max(maxscore, score)
-
-	for mid in motifs.keys():
-		with open(path.join({{o.outdir | quote}}, re.sub(r'[^\w_]', '', mid), 'fimo.txt')) as f:
-			for line in f:
-				line   = line.strip()
-				if not line or line.startswith('#'): continue
-				parts  = line.split('\t')
-				motif  = parts[0]
-				# GENE::chr1:111-222 or ::chr1:111-222 or chr1:111-222
-				seq    = parts[1] 
-				strt0  = int(parts[2])
-				end0   = int(parts[3])
-				strand = parts[4]
-				score  = int(1000 * (float(parts[5]) - minscore) / (maxscore - minscore))
-				seqs   = re.split(r'[:-]', seq)
-				chrom  = seqs[-3]
-				start  = int(seqs[-2])
-				end    = int(seqs[-1])
-				name   = motifs[motif] + '::' + (seqs[0] if len(seqs)>3 else chrom + ':' + seqs[-2] + '-' + seqs[-1])
-				ucsclink = ucsclinkTpl.format(chrom + ':' + str(start + strt0) + '-' + str(start + end0))
-
-				cont   = [chrom, start + strt0, start + end0, name, score, strand, motif, seq, strt0, end0, parts[5], parts[6], parts[7], parts[8], ucsclink]
-				cont   = [str(c) for c in cont]
-				fout.write('\t'.join(cont) + '\n')
-
-{% endif %}
 
 
 

@@ -18,24 +18,22 @@ from .utils import fs2name
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedGetfasta                     = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
-pBedGetfasta.input               = "infile:file"
-pBedGetfasta.output              = "outfile:file:{{i.infile | fn}}.fa"
-pBedGetfasta.args.samtools       = params.samtools.value
-pBedGetfasta.args.bedtools       = params.bedtools.value
-pBedGetfasta.args.params         = Box(name = True)
-pBedGetfasta.args.ref            = params.ref.value
-pBedGetfasta.envs.refname        = lambda x: x + '.fai'
-pBedGetfasta.envs.bashimport     = bashimport
-#pBedGetfasta.beforeCmd           = checkref.fa.bash + buildref.fai.bash
-pBedGetfasta.beforeCmd           = '''
+pBedGetfasta                 = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
+pBedGetfasta.input           = "infile:file"
+pBedGetfasta.output          = "outfile:file:{{i.infile | fn}}.fa"
+pBedGetfasta.args.samtools   = params.samtools.value
+pBedGetfasta.args.bedtools   = params.bedtools.value
+pBedGetfasta.args.params     = Box(name = True)
+pBedGetfasta.args.ref        = params.ref.value
+pBedGetfasta.envs.bashimport = bashimport
+pBedGetfasta.beforeCmd       = '''
 {{bashimport}} reference.bash
-if reffai_check {{args.ref | refname | squote}}; then
-	reffai_do {{args.ref | squote}} {{args.ref | refname | squote}} {{args.samtools | squote}}
+if [[ $(reffai_check {{args.ref | @append: ".fai" | squote}}) -eq 1 ]]; then
+	reffai_do {{args.ref | squote}} {{args.ref | @append: ".fai" | squote}} {{args.samtools | squote}}
 fi
 '''
-pBedGetfasta.lang                = params.python.value
-pBedGetfasta.script              = "file:scripts/bedtools/pBedGetfasta.py"
+pBedGetfasta.lang   = params.python.value
+pBedGetfasta.script = "file:scripts/bedtools/pBedGetfasta.py"
 
 
 """

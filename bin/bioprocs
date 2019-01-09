@@ -434,7 +434,10 @@ class Process(Command):
 			return line.lstrip()
 
 		def splitNameLine(line):
-			_, name, desc = line.rstrip().split('`', 2)
+			try:
+				_, name, desc = line.rstrip().split('`', 2)
+			except ValueError:
+				raise ValueError('Malformat documentation, name has to be wrapped by "`":\n{}'.format(line))
 			name, t = name.strip(), ''
 			if ':' in name:
 				name, t = name.split(':', 1)

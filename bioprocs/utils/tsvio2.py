@@ -130,7 +130,7 @@ class TsvReader(object):
 		while True:
 			tell = self.file.tell()
 			line = self.file.readline()
-			if self.comment and line.startswith(self.comment):
+			if comment and line.startswith(comment):
 				continue
 			self.file.seek(tell)
 			break
@@ -139,6 +139,8 @@ class TsvReader(object):
 		if callable(cnames):
 			self.cnames = cnames(headline)
 		elif headline:
+			if comment and headline.startswith(comment):
+				headline = headline[1:].lstrip()
 			self.cnames = headline.rstrip('\n').split(delimit)
 		else:
 			self.cnames = []
