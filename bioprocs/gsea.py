@@ -101,11 +101,11 @@ pSSGSEA.script         = "file:scripts/gsea/pSSGSEA.r"
 	`outdir:file`: the output directory
 @args:
 	`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
-	`nperm`:     Number of permutations. Default: 10000
+	`nperm`:     Number of permutations. Default: 1000
 """
 pGSEA                = Proc (desc = 'Do GSEA.')
 pGSEA.input          = "gctfile:file, clsfile:file, gmtfile:file"
-pGSEA.output         = "outdir:dir:{{i.gctfile | fn}}-{{i.gmtfile | fn}}-GSEA"
+pGSEA.output         = "outdir:dir:{{i.gctfile | fn}}-{{i.gmtfile | fn}}.GSEA"
 pGSEA.args.weightexp = 1
 pGSEA.args.nperm     = 1000
 pGSEA.args.nthread   = 1
@@ -133,31 +133,24 @@ pGSEA.script         = "file:scripts/gsea/pGSEA.r"
 	`libs`:  The databases to do enrichment against. Default: KEGG_2016
 	  - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
 	  - Multiple dbs separated by comma (,)
-	`norm`: Normalize the gene list use [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
-	`rmtags`: Remove pathway tags in the plot. Default: True
-	  - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
 	`plot`: Whether to plot the result. Default: True
-	`title`: The title for the plot. Default: "Gene enrichment: {db}"
-	`cachedir`: The cachedir for gene name normalization.
+	`devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
 @requires:
 	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
-pEnrichr                = Proc()
-pEnrichr.input          = "infile:file"
-pEnrichr.output         = "outdir:dir:{{i.infile | fn}}.enrichr"
-pEnrichr.lang           = params.python.value
-pEnrichr.args.inopts    = Box(delimit = '\t', skip = 0, comment = '#')
-pEnrichr.args.top       = 10
-pEnrichr.args.genecol   = ''
-pEnrichr.args.libs      = "KEGG_2016"
-pEnrichr.args.norm      = False
-pEnrichr.args.rmtags    = True
-pEnrichr.args.plot      = True
-pEnrichr.args.title     = "Gene enrichment: {library}"
-pEnrichr.args.cachedir  = params.cachedir.value
-#pEnrichr.envs.genenorm = genenorm.py
-pEnrichr.errhow         = 'retry'
-pEnrichr.script         = "file:scripts/gsea/pEnrichr.py"
+pEnrichr              = Proc()
+pEnrichr.input        = "infile:file"
+pEnrichr.output       = "outdir:dir:{{i.infile | fn}}.enrichr"
+pEnrichr.lang         = params.python.value
+pEnrichr.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#')
+pEnrichr.args.top     = 20
+pEnrichr.args.cutoff  = 1
+pEnrichr.args.genecol = ''
+pEnrichr.args.libs    = "KEGG_2016"
+pEnrichr.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pEnrichr.args.plot    = True
+pEnrichr.errhow       = 'retry'
+pEnrichr.script       = "file:scripts/gsea/pEnrichr.py"
 
 
 """

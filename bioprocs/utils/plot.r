@@ -389,6 +389,33 @@ plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(r
 	plot.scatter(data, plotfile, x = 'A', y = 'M', params = params, ggs = ggs, devpars = devpars)
 }
 
+plot.qq = function(data, plotfile, x = NULL, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list()) {
+	if (!stacked) {
+		data = stack(as.data.frame(data))
+	}
+	if (!is.null(plotfile)) {
+		do.call(png, c(list(filename=plotfile), devpars))
+	}
+	cnames = colnames(data)
+	cnames = make.names(cnames)
+	colnames(data) = cnames
+	if (is.numeric(x)) x = sprintf("`%s`", cnames[x])
+	if (is.numeric(y)) y = sprintf("`%s`", cnames[y])
+	if (!is.null(x)) {
+		params = list(mapping = aes_string(theoretical = x, sample = y))
+	} else {
+		params = list(mapping = aes_string(sample = y))
+	}
+
+	p = ggplot(data)
+	p = p + do.call(geom_qq, params)
+	p = p + do.call(geom_qq_line, params)
+	print(apply.ggs(p, ggs))
+	if (!is.null(plotfile)) {
+		dev.off()
+	}
+}
+
 plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
 	library(VennDiagram)
 	rnames = rownames(data)
@@ -470,8 +497,71 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 		geom_text  = list(x = +logfccut, y = ym, label = paste0('+', logfccut, ' ', 'fold'),  vjust = 1, hjust = -0.1, color="red3"),
 		theme      = list(legend.position = "none"),
 		xlab       = list('log2 Fold Change'),
-		ylab       = list('-log10(Pvalue)')
+		ylab       = list('-log10(p-value)')
 	), ggs)
 
 	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
+}
+
+plot.man = function(data, plotfile = NULL, hilights = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	# manhattan plot
+	# data is a data frame of
+	# Chr, Pos, P[, Region]
+	# Rownames should be snp name
+	# The region is used to divide the plot, in case
+	# all snps are on the same chromosome
+
+	library(data.table)
+	data = as.data.table(data)
+	if (ncol(data) == 4) {
+		colnames(data) = c('Snp', 'Chr', 'Pos', 'P')
+		data$Region = data$Chr
+	} else if (ncol(data) == 5) {
+		colnames(data) = c('Snp', 'Chr', 'Pos', 'P', 'Region')
+	} else {
+		stop('Expect a data frame of 4 or 5 columns to do manhattan plot.')
+	}
+	# calculate the x axis for each snp, position on each chromsome should be accumulated.
+	# min and max pos for each chr
+	chrlen = data[, .(minPos = min(Pos), maxPos = max(Pos)), by = Chr][, .(Chr, minPos, maxPos, cumPos = shift(cumsum(maxPos), 1, fill = 0))]
+	# add it back to data
+	data = merge(data, chrlen, by = "Chr")
+	data[, X:= Pos + cumPos][, Y:=-log10(P)]
+	# get region centers
+	rdata = data[, .(Region, centerPos = (min(X) + max(X))/2), by = Region]
+
+	# get region centers
+	rdata = data[, .(Region, centerPos = (min(X) + max(X))/2), by = Region]
+	# fix the order
+	data$Region = factor(data$Region, levels = unique(data$Region))
+	# hilight
+	# 1. rows, color, ... or
+	# 2. chr, start, end, color
+	ggs_hilight = list()
+	hinames = names(hilights)
+	if (!is.null(hinames)) {
+		hilights = list(hilights)
+	}
+	for (hilight in hilights) {
+		if ('snps' %in% names(hilight)) {
+			hdata = data[Snp %in% hilight$snps]
+			color = ifelse(is.null(hilight$color), "red", hilight$color)
+			ggs_hilight = c(ggs_hilight, list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = color, data = hdata, inherit.aes = FALSE)))
+		} else if ('chr' %in% names(hilight)) {
+			hdata = data[Chr == hilight$chr & Pos >= as.numeric(hilight$start) & Pos <= as.numeric(hilight$end)]
+			color = ifelse(is.null(hilight$color), "red", hilight$color)
+			ggs_hilight = c(ggs_hilight, list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = color, data = hdata, inherit.aes = FALSE)))
+		} 
+	}
+	ggs = c(list(
+		geom_point         = list(aes_string(color = 'Region'), alpha = .8),
+		guides             = list(color = FALSE),
+		scale_color_manual = list(values = rep(c("grey", "skyblue"), nrow(chrlen))),
+		scale_y_continuous = list(expand = c(0, 0)),
+		scale_x_continuous = list(expand = expand_scale(mult = c(0.01, 0.01)), label = rdata$Region, breaks= rdata$centerPos),
+		theme_bw           = list(),
+		theme              = list(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank()),
+		labs               = list(x = "", y = "-log10(p-value)")
+		), ggs_hilight, ggs)
+	plot.xy (data, plotfile, x = 'X', y = 'Y', ggs = ggs, devpars = devpars)
 }

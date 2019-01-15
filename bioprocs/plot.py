@@ -410,3 +410,14 @@ pPie.args.ggs     = Box(
 pPie.envs.rimport = rimport
 pPie.lang         = params.Rscript.value
 pPie.script       = "file:scripts/plot/pPie.r"
+
+pManhattan              = Proc(desc = 'Manhattan plot.')
+pManhattan.input        = 'infile:file, hifile:file'
+pManhattan.output       = 'outfile:file:{{i.infile | fn}}.manht.png'
+pManhattan.args.inopts  = Box(cnames = False, rnames = False)
+pManhattan.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pManhattan.args.ggs     = Box()
+pManhattan.envs.rimport = rimport
+pManhattan.lang         = params.Rscript.value
+pManhattan.script       = "file:scripts/plot/pManhattan.r"
+

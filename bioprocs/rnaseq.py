@@ -60,32 +60,49 @@ pExprDir2Matrix.script       = "file:scripts/rnaseq/pExprDir2Matrix.r"
 
 """
 @name:
-	pExprPlot
+	pExprStats
 @description:
 	Plot the expression out.
 @input:
 	`infile:file`: The expression matrix (rows are genes and columns are samples).
+	`gfile:file` : The sample information file. Determines whether to do subgroup stats or not.
+		- If not provided, not do for all samples
 @output:
 	`outdir:dir`: The directory containing the plots
+		- If `args.filter` is given, a filtered expression matrix will be generated in `outdir`.
 @args:
-
+	`inopts`: Options to read `infile`. Default: `Box(cnames = True, rnames = True)`
+	`tsform`: An R function in string to transform the expression matrix (i.e take log).
+	`filter`: An R function in string to filter the expression data.
+	`plot`  : Which plot to do? Default: `Box(boxplot = True, histogram = True, qqplot = True)`
+	`ggs`   : The ggs for each plot. Default:
+		- `boxplot   = Box(ylab = {0: "Expression"})`,
+		- `histogram = Box(labs = {'x': 'Expression', 'y': '# Genes'})`,
+		- `qqplot    = Box()`
+	`params` : The params for each ggplot function.
+	`devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
 """
-pExprPlot              = Proc(desc = 'Plot the expression values out.')
-pExprPlot.input        = 'infile:file'
-pExprPlot.output       = 'outdir:dir:{{i.infile | fn2}}.plots'
-pExprPlot.args.transfm = None
-pExprPlot.args.plot    = Box(
-	boxplot = True,
-	histogram = True
-	# qqplot: coming soon
+pExprStats             = Proc(desc = 'Plot the expression values out.')
+pExprStats.input       = 'infile:file, gfile:file'
+pExprStats.output      = 'outdir:dir:{{i.infile | fn2}}.plots'
+pExprStats.args.inopts = Box(cnames = True, rnames = True)
+pExprStats.args.tsform = None
+pExprStats.args.filter = None
+pExprStats.args.plot   = Box(boxplot = True, histogram = True, qqplot = True)
+pExprStats.args.ggs    = Box(
+	boxplot   = Box(ylab = {0: "Expression"}),
+	histogram = Box(labs = {'x': 'Expression', 'y': '# Genes'}),
+	qqplot    = Box()
 )
-pExprPlot.args.ggs = Box(
-	boxplot = Box(ylab = {0: "Expression"}),
-	histogram = Box(labs = {'x': 'Expression', 'y': '# Genes'})
+pExprStats.args.params   = Box(
+	boxplot   = Box(),
+	histogram = Box(),
+	qqplot    = Box()
 )
-pExprPlot.args.devpars = Box(res = 300, width = 2000, height = 2000)
-pExprPlot.envs.rimport = rimport
-pExprPlot.script       = "file:scripts/rnaseq/pExprPlot.r"
+pExprStats.args.devpars = Box(res = 300, width = 2000, height = 2000)
+pExprStats.envs.rimport = rimport
+pExprStats.lang         = params.Rscript.value
+pExprStats.script       = "file:scripts/rnaseq/pExprStats.r"
 
 """
 @name:
@@ -192,28 +209,37 @@ pUnitConversion.script       = "file:scripts/rnaseq/pUnitConversion.r"
 	`gfile:file`: The group information
 		- Like:
 		```
-		Sample1	Group1
-		Sample2	Group1
-		Sample3	Group1
-		Sample4	group2
-		Sample5	group2
-		Sample6	group2
+		Sample	[Patient	]Group
+		sample1	[patient1	]group1
+		sample2	[patient1	]group1
+		sample3	[patient2	]group1
+		sample4	[patient2	]group2
+		sample5	[patient3	]group2
+		sample6	[patient3	]group2
 		```
 @output:
 	`outfile:file`: The DEG list
 	`outdir:file`:  The output directory containing deg list and plots
 @args:
-	`tool`      : the tool used to detect DEGs. Default: 'edger' (deseq2)
-	`filter`    : filter out low count records. Default: `"1,2"` (At least 2 samples have at least 2 reads)
-	`mdsplot`   : whether to plot the MDS plot, default : True
-	`volplot`   : whether to plot the volcano plot, default : True
-	`maplot`    : whether to plot MA plots within each group, default : False
-	`heatmap`   : whether to plot the heatmap using DEGs. Default : False
-	`heatmapn`  : How many genes to be used for heatmap. If `heatmapn`, the number will be `heatmapn * # DEGs`. Default: 100
-	`heatmapggs`: The ggplots options for heatmap. Default : []
-	`maplotggs` : The ggplots options for maplot. Default : []
-	`volplotggs`: The ggplots options for volplot. Default : []
-	`devpars`   : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+	`tool`  : The tool used to detect DEGs. Default: 'deseq2' (edger is also available).
+	`inopts`: Options to read `infile`. Default: `Box(cnames = True, rnames = True)`
+	`cutoff`: The cutoff used to filter the results. Default: `0.05`
+		- `0.05` implies `{"by": "p", "value": "0.05", "sign": "<"}`
+	`plot`  : The plots to do. Default: 
+		- `mdsplot`: True, MDS plot
+		- `volplot`: True, volcano plot
+		- `maplot `: True, MA plot
+		- `heatmap`: True, heatmap for DEGs
+		- `qqplot `: True, The QQplot for pvalues
+	`ggs`   : The ggs for each plot. Default:
+		- `heatmap`: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+		- Not available for `mdsplot`.
+		- Others are empty `Box()`s
+	`params`: Parameters for each plot. Default: 
+		- `volplot`: `Box(pcut = 0.05, fccut = 2)`
+		- `maplot` : `Box(pcut = 0.05)`
+	`devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+	`mapfile`: Probe to gene mapping file. If not provided, assume genes are used as rownames.
 """
 pRNASeqDEG        = Proc(desc = 'Detect DEGs by RNA-seq data.')
 pRNASeqDEG.input  = "efile:file, gfile:file"
@@ -221,22 +247,27 @@ pRNASeqDEG.output = [
 	"outfile:file:{{i.efile | fn2}}-{{i.gfile | fn2}}.DEGs/{{i.efile | fn2}}-{{i.gfile | fn2}}.degs.txt",
 	"outdir:dir:{{i.efile | fn2}}-{{i.gfile | fn2}}.DEGs"
 ]
-pRNASeqDEG.args.tool   = 'edger' # deseq2
-pRNASeqDEG.args.filter = '1,2'
-pRNASeqDEG.args.pval   = 0.05
-pRNASeqDEG.args.hmrows = 100
-pRNASeqDEG.args.plot = Box(
+pRNASeqDEG.args.tool    = 'deseq2' # edger
+pRNASeqDEG.args.inopts  = Box(cnames = True, rnames = True)
+pRNASeqDEG.args.mapfile = ""
+pRNASeqDEG.args.cutoff  = 0.05
+pRNASeqDEG.args.plot    = Box(
 	mdsplot = True,
 	volplot = True,
-	maplot  = False,
-	heatmap = False
+	maplot  = True,
+	heatmap = True,
+	qqplot  = True
 )
 pRNASeqDEG.args.ggs = Box(
 	maplot  = Box(),
 	heatmap = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-	volplot = Box()
+	volplot = Box(),
+	qqplot  = Box(labs = {'x': 'Expected(-log10(p-value))', 'y': 'Observed(-log10(p-value))'})
 )
-
+pRNASeqDEG.args.params = Box(
+	volplot = Box(pcut = 0.05, fccut = 2),
+	maplot  = Box(pcut = 0.05)
+)
 pRNASeqDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
 pRNASeqDEG.envs.rimport = rimport
 pRNASeqDEG.lang         = params.Rscript.value

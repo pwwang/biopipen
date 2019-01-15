@@ -125,6 +125,7 @@ pretty.numbers = function(df, formats) {
 pretty.numbers2 = function(df, ...) {
 	formats = list(...)
 	options(stringsAsFactors = FALSE)
+	df = as.data.frame(df)
 	if (nrow(df) == 0) 
 		return(df)
 

@@ -1,46 +1,36 @@
 from os import path
 from enrichr import Enrichr
 from pyppl import Box
-from bioprocs.utils import alwaysList
 from bioprocs.utils.gene import genenorm
-from bioprocs.utils.tsvio import TsvReader
+from bioprocs.utils.tsvio2 import TsvReader
 
+{% python from bioprocs.utils import alwaysList %}
 infile   = {{i.infile | quote}}
+prefix   = {{i.infile | fn2 | quote}}
+outdir   = {{o.outdir | quote}}
 inopts   = {{args.inopts}}
-genecol  = {{args.genecol | repr}} or 0
-cachedir = {{args.cachedir | quote}}
+genecol  = {{args.genecol or 0 | repr}}
 top      = {{args.top}}
-title    = {{args.title | quote}}
-
-{% if args.norm %}
-
-gmapfile = "{{o.outdir}}/{{i.infile | bn}}.gnorm"
-gmap = genenorm(
-	infile   = infile,
-	outfile  = gmapfile,
-	inopts   = inopts,
-	outopts  = {'head': False},
-	genecol  = genecol,
-	cachedir = cachedir
-)
-genes = [g.symbol for g in gmap.values()]
-
-{% else %}
+dbs      = {{args.libs | alwaysList | repr}}
+plot     = {{args.plot | repr}}
+devpars  = {{args.devpars | repr}}
+cutoff   = {{args.cutoff | repr}}
+if isinstance(cutoff, dict):
+	if cutoff['by'] == 'p':
+		cutoff['by'] = 'Pval'
+	if cutoff['by'] == 'q':
+		cutoff['by'] = 'AdjPval'
 
 reader = TsvReader(infile, **inopts)
 genes  = [r[genecol] for r in reader]
 
-{% endif %}
-
-en = Enrichr()
+en = Enrichr(cutoff = cutoff, top = top)
 en.addList(genes, description = path.basename(infile))
 
-dbs = alwaysList({{args.libs | quote}})
 for db in dbs:
-	outfile  = "{{o.outdir}}/{{i.infile | fn}}-%s.txt" % db
+	outfile = path.join(outdir, prefix + '.' + db + '.txt')
 	en.enrich(db)
-	en.export(outfile)
-	{% if args.plot %}
-	plotfile = "{{o.outdir}}/{{i.infile | fn}}-%s.png" % db
-	en.plot(plotfile, title = title.format(library = db), top = top)
-	{% endif %}
+	en.export(outfile, top = 100)
+	if plot:
+		plotfile = path.join(outdir, prefix + '.' + db + '.png')
+		en.plot(plotfile, res = devpars.res, width = devpars.width, height = devpars.height)
