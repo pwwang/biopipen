@@ -706,3 +706,46 @@ pDiffCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)
 pDiffCorr.envs.rimport = rimport
 pDiffCorr.lang         = params.Rscript.value
 pDiffCorr.script       = "file:scripts/stats/pDiffCorr.r"
+
+"""
+@name:
+	pBootstrap
+@description:
+	Do bootstrapping resampling
+@input:
+	`infile:file`: The input data file
+@output:
+	`outfile:file`: The output file with the bootstrapped statistics values
+		- depends on the `args.stats` function
+	`outdir:dir`: The directory to save the outfile and figures.
+@args:
+	`inopts`:  The options to read the input file. Default: `Box(cnames = True, rnames = True)`
+	`params`:  Other parameters for `boot` function from R `boot` package
+	`nthread`: # of threads(cores) to use. Default: `1`
+	`n`: Sampling how many times? Default: `1000`
+	`stats`: The function to generate statistics for output. Default: `function(x) x`
+		- Default to use all data
+		- This function can return a multiple statistics in a vector
+		- The argument `x` is the data generate for each sampling. 
+		- Unlink the `statistic` argument from `boot`, to make it convenient, we don't put the `index` here.
+	`plot`: Plot the statistics? Default: `all` (plot all statistics)
+		- You may also specify indices. For example: `[1, 2]` to plot the 1st and 2nd statistics
+		- Use `False` or `None` to disable plotting
+	`devpars`: The device parameters for the plot.
+"""
+pBootstrap        = Proc(desc = 'Do bootstrapping')
+pBootstrap.input  = 'infile:file'
+pBootstrap.output = [
+	'outfile:file:{{i.infile | fn2}}.boot/{{i.infile | fn2}}.boot.txt',
+	'outdir:dir:{{i.infile | fn2}}.boot'
+]
+pBootstrap.args.inopts  = Box(cnames = True, rnames = True)
+pBootstrap.args.params  = Box()
+pBootstrap.args.nthread = 1
+pBootstrap.args.n       = 1000
+pBootstrap.args.stats   = 'function(x) x'
+pBootstrap.args.plot    = 'all'
+pBootstrap.args.devpars = Box(height = 2000, width = 2000, res = 300)
+pBootstrap.envs.rimport = rimport
+pBootstrap.lang         = params.Rscript.value
+pBootstrap.script       = "file:scripts/stats/pBootstrap.r"

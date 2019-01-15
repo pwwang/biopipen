@@ -1,4 +1,4 @@
-from pyppl import Proc
+from pyppl import Proc, Box
 from . import params, rimport
 
 """

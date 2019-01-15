@@ -114,13 +114,12 @@ class Methods(object):
 						ASSEMBLER.optdesc(mdoc)
 					)
 				seplen = max(seplen, 11 + len(module) + len(mdoc))
-			ret.append('-' * seplen)
-
-			pnlen = max([len(pname) for pname in ps.keys()]) + len(module) + 1
+			ret.append('~' * seplen)
+			
 			for pname, proc in ps.items():
+				pnname = ASSEMBLER.progname + ' ' + (module + '.' + pname) + ': '
 				ret.append(
-					ASSEMBLER.prog('- ' + (module + '.' + pname).ljust(pnlen) + ': ') + \
-					ASSEMBLER.optdesc(proc.proc.desc)
+					ASSEMBLER.prog(pnname) + "\n    " + ASSEMBLER.optdesc(proc.proc.desc)
 				)
 			ret.append('')
 
@@ -341,6 +340,8 @@ class Script(Command):
 
 class Process(Command):
 
+	HELPOPTS = ['h', 'H']
+
 	def __init__(self, name, prog = None):
 		prog = prog or path.basename(sys.argv[0]) + ' ' + name
 		super(Process, self).__init__(name, prog)
@@ -362,9 +363,9 @@ class Process(Command):
 			r'(\"\"\"|\'\'\')\s+@name:\s+' + self.procname + r'\s+@description:\s+([\s\S]+?)\1'
 		)
 		docstr = regex.search(content)
-
+		
 		if not docstr or 'Alias of' in docstr.group(2):
-			alias = docstr.group(2)
+			alias = docstr.group(2) if docstr else None
 			docstr = ''
 			docstr += '@name:\n'
 			docstr += '	{}\n'.format(self.procname)
@@ -502,6 +503,9 @@ class Process(Command):
 				'Such as {prefix}config._log.file'.format(prefix = prefix)
 			)
 		]
+		ret['other arguments'] = [
+			(', '.join(prefix + h for h in Process.HELPOPTS), '', 'Print this help page.')
+		]
 		return ret
 
 	def createPipeline(self, **kwargs):
@@ -545,6 +549,9 @@ class Process(Command):
 		outkeys = {outkey.split(':')[0]:outkey.split(':')[1] for outkey in outdata.keys()}
 
 		for key, val in kwargs.items():
+			if key in Process.HELPOPTS:
+				self.help(printNexit = True)
+
 			# proc attributes
 			if '.' not in key:
 				setattr(self.proc, key, val)
