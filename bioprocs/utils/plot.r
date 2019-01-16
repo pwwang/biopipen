@@ -416,6 +416,13 @@ plot.qq = function(data, plotfile, x = NULL, y = 1, stacked = TRUE, params = lis
 	}
 }
 
+# data:
+# 		cat1	cat2	cat3
+# item1	1		0		1
+# item2	1		1		0
+# item3	0		1		1
+# item4	1		0		0
+# item5	1		0		1
 plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
 	library(VennDiagram)
 	rnames = rownames(data)
