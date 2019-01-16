@@ -2050,7 +2050,7 @@
 
     - **args**  
         - `weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75  
-        - `nperm`: Number of permutations. Default: 10000  
+        - `nperm`: Number of permutations. Default: 1000  
 
 !!! hint "pEnrichr"
 
@@ -2074,12 +2074,8 @@
         - `libs`: The databases to do enrichment against. Default: KEGG_2016  
           - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
           - Multiple dbs separated by comma (,)
-        - `norm`: Normalize the gene list use [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)  
-        - `rmtags`: Remove pathway tags in the plot. Default: True  
-          - For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
         - `plot`: Whether to plot the result. Default: True  
-        - `title`: The title for the plot. Default: "Gene enrichment: {db}"  
-        - `cachedir`: The cachedir for gene name normalization.  
+        - `devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
 
     - **requires**  
         [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
@@ -3195,19 +3191,31 @@
         - `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`  
         - `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`  
 
-!!! hint "pExprPlot"
+!!! hint "pExprStats"
 
     - **description**  
         Plot the expression out.
 
     - **input**  
         - `infile:file`: The expression matrix (rows are genes and columns are samples).  
+        - `gfile:file` : The sample information file. Determines whether to do subgroup stats or not.  
+        	- If not provided, not do for all samples
 
     - **output**  
         - `outdir:dir`: The directory containing the plots  
+        	- If `args.filter` is given, a filtered expression matrix will be generated in `outdir`.
 
     - **args**  
-        
+        - `inopts`: Options to read `infile`. Default: `Box(cnames = True, rnames = True)`  
+        - `tsform`: An R function in string to transform the expression matrix (i.e take log).  
+        - `filter`: An R function in string to filter the expression data.  
+        - `plot`  : Which plot to do? Default: `Box(boxplot = True, histogram = True, qqplot = True)`  
+        - `ggs`   : The ggs for each plot. Default:  
+        	- `boxplot   = Box(ylab = {0: "Expression"})`,
+        	- `histogram = Box(labs = {'x': 'Expression', 'y': '# Genes'})`,
+        	- `qqplot    = Box()`
+        - `params` : The params for each ggplot function.  
+        - `devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
 
 !!! hint "pBatchEffect"
 
@@ -3289,12 +3297,13 @@
         - `gfile:file`: The group information  
         	- Like:
         	```
-        	Sample1	Group1
-        	Sample2	Group1
-        	Sample3	Group1
-        	Sample4	group2
-        	Sample5	group2
-        	Sample6	group2
+        	Sample	[Patient	]Group
+        	sample1	[patient1	]group1
+        	sample2	[patient1	]group1
+        	sample3	[patient2	]group1
+        	sample4	[patient2	]group2
+        	sample5	[patient3	]group2
+        	sample6	[patient3	]group2
         	```
 
     - **output**  
@@ -3302,17 +3311,25 @@
         - `outdir:file`: The output directory containing deg list and plots  
 
     - **args**  
-        - `tool`      : the tool used to detect DEGs. Default: 'edger' (deseq2)  
-        - `filter`    : filter out low count records. Default: `"1,2"` (At least 2 samples have at least 2 reads)  
-        - `mdsplot`   : whether to plot the MDS plot, default : True  
-        - `volplot`   : whether to plot the volcano plot, default : True  
-        - `maplot`    : whether to plot MA plots within each group, default : False  
-        - `heatmap`   : whether to plot the heatmap using DEGs. Default : False  
-        - `heatmapn`  : How many genes to be used for heatmap. If `heatmapn`, the number will be `heatmapn * # DEGs`. Default: 100  
-        - `heatmapggs`: The ggplots options for heatmap. Default : []  
-        - `maplotggs` : The ggplots options for maplot. Default : []  
-        - `volplotggs`: The ggplots options for volplot. Default : []  
-        - `devpars`   : Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
+        - `tool`  : The tool used to detect DEGs. Default: 'deseq2' (edger is also available).  
+        - `inopts`: Options to read `infile`. Default: `Box(cnames = True, rnames = True)`  
+        - `cutoff`: The cutoff used to filter the results. Default: `0.05`  
+        	- `0.05` implies `{"by": "p", "value": "0.05", "sign": "<"}`
+        - `plot`  : The plots to do. Default:   
+        	- `mdsplot`: True, MDS plot
+        	- `volplot`: True, volcano plot
+        	- `maplot `: True, MA plot
+        	- `heatmap`: True, heatmap for DEGs
+        	- `qqplot `: True, The QQplot for pvalues
+        - `ggs`   : The ggs for each plot. Default:  
+        	- `heatmap`: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+        	- Not available for `mdsplot`.
+        	- Others are empty `Box()`s
+        - `params`: Parameters for each plot. Default:   
+        	- `volplot`: `Box(pcut = 0.05, fccut = 2)`
+        	- `maplot` : `Box(pcut = 0.05)`
+        - `devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
+        - `mapfile`: Probe to gene mapping file. If not provided, assume genes are used as rownames.  
 
 !!! hint "pCoexp"
 
@@ -4461,6 +4478,34 @@
         - `fdrfor`: Do FDR calculation for each case (`case`) or all instances (`all`). Default: `case`  
         - `plot`  : Plot the correlation for cases? Default: `False`  
         - `ggs`   : `ggs` items for the plot.  
+        - `devpars`: The device parameters for the plot.  
+
+!!! hint "pBootstrap"
+
+    - **description**  
+        Do bootstrapping resampling
+
+    - **input**  
+        - `infile:file`: The input data file  
+
+    - **output**  
+        - `outfile:file`: The output file with the bootstrapped statistics values  
+        	- depends on the `args.stats` function
+        - `outdir:dir`: The directory to save the outfile and figures.  
+
+    - **args**  
+        - `inopts`: The options to read the input file. Default: `Box(cnames = True, rnames = True)`  
+        - `params`: Other parameters for `boot` function from R `boot` package  
+        - `nthread`: # of threads(cores) to use. Default: `1`  
+        - `n`: Sampling how many times? Default: `1000`  
+        - `stats`: The function to generate statistics for output. Default: `function(x) x`  
+        	- Default to use all data
+        	- This function can return a multiple statistics in a vector
+        	- The argument `x` is the data generate for each sampling. 
+        	- Unlink the `statistic` argument from `boot`, to make it convenient, we don't put the `index` here.
+        - `plot`: Plot the statistics? Default: `all` (plot all statistics)  
+        	- You may also specify indices. For example: `[1, 2]` to plot the 1st and 2nd statistics
+        	- Use `False` or `None` to disable plotting
         - `devpars`: The device parameters for the plot.  
 ## tabix
 

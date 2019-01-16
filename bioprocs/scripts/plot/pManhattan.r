@@ -12,9 +12,9 @@ ggs     = {{ args.ggs | R}}
 # Use region to color the snps if the snps are from the same chromosome
 # chr, start, end, name, score, strand, pvalue, region
 indata = read.table.inopts(infile, inopts)
-indata = data.frame(Snp = indata[,4], Chr = indata[,1], Pos = indata[,3], P = indata[,7])
+pdata = data.frame(Snp = indata[,4], Chr = indata[,1], Pos = indata[,3], P = indata[,7])
 if (ncol(indata) > 7)
-	indata$Region = indata[,8]
+	pdata$Region = indata[,8]
 
 hidata = list()
 if (hifile != '') {
@@ -37,4 +37,4 @@ if (hifile != '') {
 	hidata = apply(hidata, 1, as.list)
 }
 
-plot.man(indata, plotfile = outfile, hilights = hidata, ggs = ggs, devpars = devpars)
+plot.man(pdata, plotfile = outfile, hilights = hidata, ggs = ggs, devpars = devpars)

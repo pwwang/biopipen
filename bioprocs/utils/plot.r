@@ -527,8 +527,6 @@ plot.man = function(data, plotfile = NULL, hilights = list(), ggs = list(), devp
 	# add it back to data
 	data = merge(data, chrlen, by = "Chr")
 	data[, X:= Pos + cumPos][, Y:=-log10(P)]
-	# get region centers
-	rdata = data[, .(Region, centerPos = (min(X) + max(X))/2), by = Region]
 
 	# get region centers
 	rdata = data[, .(Region, centerPos = (min(X) + max(X))/2), by = Region]
@@ -556,7 +554,7 @@ plot.man = function(data, plotfile = NULL, hilights = list(), ggs = list(), devp
 	ggs = c(list(
 		geom_point         = list(aes_string(color = 'Region'), alpha = .8),
 		guides             = list(color = FALSE),
-		scale_color_manual = list(values = rep(c("grey", "skyblue"), nrow(chrlen))),
+		scale_color_manual = list(values = rep(c("grey", "skyblue"), nrow(rdata))),
 		scale_y_continuous = list(expand = c(0, 0)),
 		scale_x_continuous = list(expand = expand_scale(mult = c(0.01, 0.01)), label = rdata$Region, breaks= rdata$centerPos),
 		theme_bw           = list(),
