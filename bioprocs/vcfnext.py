@@ -1,7 +1,7 @@
 from pyppl import Proc, Box
-#from .utils import runcmd, plot, helpers
 from . import params, rimport
 from .utils import fs2name
+# Next-step processing after VCF file being generated.
 
 
 """

@@ -18,6 +18,10 @@ METHODS   = None
 SCRIPTS   = None
 PROCESSES = None
 MAIN      = None
+# the length of process names in listing them
+PROCLEN   = 50
+# the length of the separator of each module in listing them
+SEPLEN    = 86
 
 ASSEMBLER = HelpAssembler(theme = 'default')
 
@@ -95,33 +99,22 @@ class Methods(object):
 		else:
 			procs = Main._getProcesses()
 		
-		ret = []
+		ret = ['']
 		for module, ps in procs.items():
+			ret.append('-' * SEPLEN)
 			moddoc = Main.getModuleDoc(module)
 			if not moddoc:
 				moddoc = ['[ Module not documented. ]']
 			seplen = 0
 			for i, mdoc in enumerate(moddoc):
-				if i == 0:
-					ret.append(
-						ASSEMBLER.title('module') + ' ' + \
-						ASSEMBLER.prog(module) + ' - ' +   \
-						ASSEMBLER.optdesc(mdoc)
-					)
-				else:
-					ret.append(
-						' ' * (11 + len(module)) + \
-						ASSEMBLER.optdesc(mdoc)
-					)
-				seplen = max(seplen, 11 + len(module) + len(mdoc))
-			ret.append('~' * seplen)
+				msg = module.ljust(PROCLEN) + mdoc if i == 0 else ' ' * PROCLEN + mdoc
+				ret.append(ASSEMBLER.error(msg, withPrefix = False))
 			
 			for pname, proc in ps.items():
-				pnname = ASSEMBLER.progname + ' ' + (module + '.' + pname) + ': '
-				ret.append(
-					ASSEMBLER.prog(pnname) + "\n    " + ASSEMBLER.optdesc(proc.proc.desc)
-				)
+				pnname = ('    ' + module + '.' + pname + ': ').ljust(PROCLEN)
+				ret.append(ASSEMBLER.prog(pnname) + ASSEMBLER.optdesc(proc.proc.desc))
 			ret.append('')
+		ret.append('-' * SEPLEN)
 
 		sys.stdout.write('\n'.join(ret) + '\n')
 
@@ -679,13 +672,23 @@ class Main(object):
 		else:
 			methods = Main.getMethods()
 			scripts = Main.getScripts()
-			if self.command in methods:
+			if not self.command:
+				self.help(printNexit = True)
+			elif self.command in methods:
 				obj = methods[self.command]
 			elif self.command in scripts:
 				obj = scripts[self.command]
 			else:
-				error = '' if not self.command else 'No such method or script: {!r}'.format(self.command)
-				self.help(error = error, printNexit = True)
+				try:
+					processes = Main._getProcesses(self.command)
+					msg  = 'No such method or script: {!r}. \n'.format(self.command)
+					msg += '    I guess it\'s a module, listing its processes:\n'
+					sys.stderr.write(ASSEMBLER.warning(msg))
+					obj = methods['list']
+					self.args['_'] = [self.command]
+				except ImportError:
+					msg  = 'No such method, script or module: {!r}. \n         '.format(self.command)
+					self.help(error = msg, printNexit = True)
 
 		args = self.args.copy()
 		del args['_']
