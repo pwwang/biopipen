@@ -1,5 +1,6 @@
 from os import path
 from pyppl import Box
+from shutil import copyfile
 from bioprocs.utils import runcmd, cmdargs
 
 cnvkit   = {{args.cnvkit | quote}}
@@ -8,6 +9,10 @@ cnsfile  = {{i.cnsfile | quote}}
 stem     = {{i.cnrfile | bn | quote}}
 outdir   = {{o.outdir | quote}}
 nthread  = {{args.nthread | repr}}
+
+# also report cnr, cns files
+copyfile(cnrfile, path.join(outdir, path.basename(cnrfile)))
+copyfile(cnsfile, path.join(outdir, path.basename(cnsfile)))
 
 params   = {{args.params}}
 

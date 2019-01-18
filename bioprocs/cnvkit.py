@@ -19,6 +19,7 @@ from .utils import fs2name
 		- See https://github.com/AstraZeneca-NGS/reference_data/tree/master/hg19/bed
 	`accfile`: Directly use the access file. Default: generating from the reference file.
 		- See https://github.com/etal/cnvkit/tree/master/data
+	`nthread`: The number of threads to use. Default: 1
 	`ref`    : The reference genome.
 	`params` : The extra parameters for cnvkit's `access`, `target` and `autobin` command. Default: 
 		```python
@@ -37,6 +38,7 @@ pCNVkitPrepare.output = 'target:file:{{i.infiles | fs2name}}.target.bed, antitar
 pCNVkitPrepare.args.cnvkit  = params.cnvkit.value
 pCNVkitPrepare.args.exbaits = params.exbaits.value
 pCNVkitPrepare.args.accfile = ''
+pCNVkitPrepare.args.nthread = 1
 pCNVkitPrepare.args.ref     = params.ref.value
 pCNVkitPrepare.args.params  = Box(
 	target  = Box({'short-name': True, 'split': True}),
@@ -86,6 +88,7 @@ pCNVkitCov.script       = "file:scripts/cnvkit/pCNVkitCov.py"
 @args:
 	`ref`   :  The reference file.
 	`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
+	`nthread`: The number of threads to use. Default: 1
 	`params`:  Other parameters for `cnvkit.py reference`, default: " --no-edge "
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
@@ -95,6 +98,7 @@ pCNVkitRef.input        = "infiles:files"
 pCNVkitRef.output       = "outfile:file:{{i.infiles | fs2name}}.reference.cnn"
 pCNVkitRef.args.cnvkit  = params.cnvkit.value
 pCNVkitRef.args.ref     = params.ref.value
+pCNVkitRef.args.nthread = 1
 pCNVkitRef.args.params  = Box({'no-edge': True})
 pCNVkitRef.envs.fs2name = fs2name
 pCNVkitRef.lang         = params.python.value
@@ -279,6 +283,7 @@ pCNVkitHeatmap.input        = 'cnfiles:files'
 pCNVkitHeatmap.output       = 'outdir:dir:{{i.cnfiles | fs2name}}.heatmaps'
 pCNVkitHeatmap.args.cnvkit  = params.cnvkit.value
 pCNVkitHeatmap.args.params  = Box()
+pCNVkitHeatmap.args.nthread = 1
 pCNVkitHeatmap.args.regions = [
 	'', # plot whole genome
 	# extra regions, format: chr5:100-50000000
@@ -334,17 +339,19 @@ pCNVkitReport.script = 'file:scripts/cnvkit/pCNVkitReport.py'
 	`outfile:file`: The vcf file
 @args:
 	`cnvkit`:   The executable of cnvkit. Default: 'cnvkit.py'
+	`nthread`: The number of threads to use. Default: 1
 	`params`:   Other params for `cnvkit.py export`
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkit2Vcf             = Proc (desc = 'Output vcf file for cnvkit results')
-pCNVkit2Vcf.input       = "cnsfile:file"
-pCNVkit2Vcf.output      = "outfile:file:{{i.cnsfile | fn}}.cnvkit.vcf"
-pCNVkit2Vcf.args.cnvkit = params.cnvkit.value
-pCNVkit2Vcf.args.params = Box()
-pCNVkit2Vcf.lang        = params.python.value
-pCNVkit2Vcf.script      = 'file:scripts/cnvkit/pCNVkit2Vcf.py'
+pCNVkit2Vcf              = Proc (desc = 'Output vcf file for cnvkit results')
+pCNVkit2Vcf.input        = "cnsfile:file"
+pCNVkit2Vcf.output       = "outfile:file:{{i.cnsfile | fn}}.cnvkit.vcf"
+pCNVkit2Vcf.args.cnvkit  = params.cnvkit.value
+pCNVkit2Vcf.args.nthread = 1
+pCNVkit2Vcf.args.params  = Box()
+pCNVkit2Vcf.lang         = params.python.value
+pCNVkit2Vcf.script       = 'file:scripts/cnvkit/pCNVkit2Vcf.py'
 
 """
 @name:

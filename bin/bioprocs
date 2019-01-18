@@ -3,7 +3,7 @@
 The main program entrance for bioprocs binaries.
 """
 
-import re, imp
+import re
 import inspect
 import sys
 import bioprocs

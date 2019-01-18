@@ -24,7 +24,7 @@ class TsvRecord(object):
 	def __init__(self, *items, **kwargs):
 		self.__keys = []
 		self.__vals = []
-		self.fromItems(*(list(items) + kwargs.items()))
+		self.fromItems(*(list(items) + list(kwargs.items())))
 
 	def fromKeyVals(self, keys = None, values = None):
 		keys = keys or []
@@ -246,9 +246,12 @@ class TsvReaderBase(object):
 		# empty lines not allowed
 		if not line: raise StopIteration()
 		return self._parse(line.split(self.delimit))
+	
+	def __next__(self):
+		self.next()
 
 	def dump(self, col = None):
-		return [r if not col else r[col] for r in self]
+		return [r if not col else r[col] for r in iter(self)]
 
 	def rewind(self):
 		self.file.seek(self.tell)

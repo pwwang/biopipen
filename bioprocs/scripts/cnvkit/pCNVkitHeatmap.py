@@ -8,6 +8,7 @@ cnfiles  = {{i.cnfiles | asquote | quote}}
 outdir   = {{o.outdir | quote}}
 regions  = {{args.regions | repr}}
 params   = {{args.params}}
+nthread  = {{args.nthread | repr}}
 
 for region in regions:
 	if not region:
@@ -35,8 +36,9 @@ for region in regions:
 	if rgion:
 		iparams.c = rgion
 
-	cmd = '{cnvkit} heatmap {cnfiles} {params}'
+	cmd = '{nthr}; {cnvkit} heatmap {cnfiles} {params}'
 	runcmd(cmd.format(**Box(
+		nthr     = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread),
 		cnvkit   = cnvkit,
 		params   = cmdargs(iparams, equal = ' '),
 		cnfiles  = cnfiles

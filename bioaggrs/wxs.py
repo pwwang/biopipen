@@ -85,7 +85,7 @@ aPrepareBam.on('fastq')
 aBam2SCNV = Aggr(
 	pFile2Proc.copy(id = 'pBamDir'),     # single job
 	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	pCNVkitPrepare,    # prepare files 
+	pCNVkitPrepare,   # prepare files 
 	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
 	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
 	pCNVkitRef,       # all normal samples, in: all normal cnn files      , out: refcnn
@@ -118,11 +118,27 @@ aBam2SCNV.pCNVkitSeg.depends     = aBam2SCNV.pCNVkitFix
 aBam2SCNV.pCNVkitCall.depends    = aBam2SCNV.pCNVkitSeg
 aBam2SCNV.pCNVkit2Vcf.depends    = aBam2SCNV.pCNVkitCall
 # input
-aBam2SCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().flatten()]
-aBam2SCNV.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
+aBam2SCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())
+	).unique().flatten()]
+aBam2SCNV.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: \
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())
+	).unique().cbind(ch_target)
 aBam2SCNV.pCNNDir.input        = lambda ch: [ch.flatten()]
-aBam2SCNV.pCNVkitRef.input     = lambda ch_covs, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True, raiseExc = False)).colAt(1).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).flatten()]
-aBam2SCNV.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True)).colAt(0).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).cbind(ch_ref)
+aBam2SCNV.pCNVkitRef.input     = lambda ch_covs, ch_saminfo: [
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True, raiseExc = False)
+	).colAt(1).unique().map(
+		lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')
+	).flatten()]
+aBam2SCNV.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: \
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired = True)
+	).colAt(0).unique().map(
+		lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')
+	).cbind(ch_ref)
 aBam2SCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 # module
 aBam2SCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport', depends = {
@@ -193,10 +209,21 @@ aBam2GCNV.pCNVkitCall.depends    = aBam2GCNV.pCNVkitSeg
 aBam2GCNV.pCNVkit2Vcf.depends    = aBam2GCNV.pCNVkitCall
 # input
 #aBam2GCNV.pCNVkitAccess.input  = lambda ch: path.basename(ch.get()).split('.')[:1]
-aBam2GCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().flatten()]
-aBam2GCNV.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).unique().cbind(ch_target)
+aBam2GCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())
+	).unique().flatten()]
+aBam2GCNV.pCNVkitCov.input     = lambda ch_bamdir, ch_saminfo, ch_target: \
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())
+	).unique().cbind(ch_target)
 aBam2GCNV.pCNNDir.input        = lambda ch: [ch.flatten()]
-aBam2GCNV.pCNVkitFix.input     = lambda ch_covs,   ch_saminfo, ch_ref: Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get())).colAt(0).unique().map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')).cbind(ch_ref)
+aBam2GCNV.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: \
+	Channel.create(
+		SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get())
+	).colAt(0).unique().map(
+		lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].rpartition('.')[0] + '.antitarget.cnn')
+	).cbind(ch_ref)
 aBam2GCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 # module
 aBam2GCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport', depends = {

@@ -10,6 +10,7 @@ params  = {{args.params | repr}}
 prefix  = {{i.infiles | fs2name | quote}}
 outdir  = {{job.outdir | quote}}
 cnvkit  = {{args.cnvkit | quote}}
+nthread = {{args.nthread | repr}}
 
 # generate target file
 cmd        = '{cnvkit} target {baitfile} {params}'
@@ -34,13 +35,15 @@ if not accfile:
 	))
 
 # autobin
-cmd = 'cd {outdir}; {cnvkit} autobin {bams} {params}'
+openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
+cmd = 'cd {outdir}; {nthr}; {cnvkit} autobin {bams} {params}'
 params_b = params.autobin
 params_b.t = params_t.o
 params_b.g = accfile
 runcmd(cmd.format(
 	outdir = str(repr(outdir)),
 	cnvkit = cnvkit,
+	nthr   = openblas_nthr,
 	bams   = ' '.join([str(repr(infile)) for infile in infiles]),
 	params = cmdargs(params_b, equal = ' ')
 ))

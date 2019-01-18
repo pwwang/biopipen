@@ -1,5 +1,5 @@
 from bioprocs.utils import alwaysList
-from bioprocs.utils.tsvio import TsvReader, TsvRecord
+from bioprocs.utils.tsvio2 import TsvReader, TsvRecord
 
 class SampleInfoException(Exception):
 	pass
@@ -10,17 +10,16 @@ class SampleInfo (object):
 	TUMOR_GROUP  = ['TUMOR', 'DISEASE', 'AFTER', 'TISSUE', 'POST', 'TREATMENT']
 
 	def __init__(self, sfile):
-		reader    = TsvReader(sfile, ftype = 'head')
-		self.samcol = reader.meta.keys()[0]
+		reader    = TsvReader(sfile)
+		self.samcol = reader.cnames[0]
 		if self.samcol == 'ROWNAMES':
 			self.samcol = 'Sample'
-			del reader.meta['ROWNAMES']
-			reader.meta.prepend('Sample')
+			reader.cnames[0] = 'Sample'
 
 		self.data = reader.dump()
 		self.nrow = len(self.data)
-		self.ncol = len(reader.meta)
-		self.colnames = reader.meta.keys()
+		self.ncol = len(reader.cnames)
+		self.colnames = reader.cnames
 		self.rownames = [row[self.samcol] for row in self.data]
 
 		expectColnames = ['Sample', 'Patient', 'Group', 'Batch']
