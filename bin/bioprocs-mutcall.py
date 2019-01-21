@@ -30,7 +30,8 @@ A2.bam	NORMAL	A
 B1.bam	TUMOR	A
 B2.bam	NORMAL	A
 """
-
+params.nthread        = 1
+params.nthread.desc   = 'Use multithreading if possible.'
 params.exdir.required = True
 params.exdir.desc     = 'Where to export the result files.'
 params.runner         = 'local'
@@ -112,9 +113,10 @@ if 'germ' in params.muts:
 	pBam2Gmut.input   = lambda ch: ch.expand(0, "*.bam")
 	pBam2Gmut.exdir   = path.join(params.exdir, 'germline')
 if 'soma' in params.muts:
-	pBamPair2Smut.depends = pBamDir
-	pBamPair2Smut.input   = lambda ch: saminfo.toChannel(ch.get(), paired = True)
-	pBamPair2Smut.exdir   = path.join(params.exdir, 'somatic')
+	pBamPair2Smut.depends      = pBamDir
+	pBamPair2Smut.args.nthread = params.nthread
+	pBamPair2Smut.input        = lambda ch: saminfo.toChannel(ch.get(), paired = True)
+	pBamPair2Smut.exdir        = path.join(params.exdir, 'somatic')
 if 'scnv' in params.muts:
 	aBam2SCNV.on('plots')
 	aBam2SCNV.pBamDir.depends   = pBamDir
