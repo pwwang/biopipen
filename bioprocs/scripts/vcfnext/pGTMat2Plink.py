@@ -18,7 +18,7 @@ if metafile:
 	logger.info('Reading metafile ...')
 	metadata = dict(TsvReader(
 		metafile, 
-		head        = True,
+		cnames      = True,
 		rowCallback = lambda r: tuple((r.IID, r))
 	).dump())
 else:
@@ -26,7 +26,7 @@ else:
 
 logger.info('Reading genotype matrix ...')
 # snp1 gt1s1 gt1s2 ...
-inreader = TsvReader(infile, head = True)
+inreader = TsvReader(infile, cnames = True)
 samples  = inreader.meta[1:]
 
 logger.info('Writing tfam file ...')
