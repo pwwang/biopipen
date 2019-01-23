@@ -156,6 +156,7 @@ class TsvReader(object):
 		
 		self.file.seek(tell)
 		self.tell = tell
+		self.meta = self.cnames
 
 	def next(self):
 		line = self.file.readline()
