@@ -157,6 +157,8 @@ DEFAULTS = {
 	"platypus.desc"            : "The path of platypus.",
 	"plink"                    : "plink",
 	"plink.desc"               : "Executable of plink.",
+	"pyclone"                  : "PyClone",
+	"pyclone.desc"             : "The path of PyClone",
 	"sambamba"                 : "sambamba",
 	"sambamba.desc"            : "The path of sambamba.",
 	"samtools"                 : "samtools",

@@ -23,46 +23,31 @@ devpars   = {{args.devpars | R}}
 ematrix   = read.table.nodup (exprfile,  header=T, row.names = 1, check.names=F, sep="\t")
 
 # get groups
-sampleinfo = SampleInfo(groupfile)$dataframe()
+sampleinfo = SampleInfo2$new(groupfile)
 
-gfactor   = factor(sampleinfo$Group)
-gfactor   = relevel(gfactor, as.vector(sampleinfo$Group[1]))
+gfactor   = factor(sampleinfo$all.groups())
 group1    = levels(gfactor)[1]
 group2    = levels(gfactor)[2]
-samples1  = row.names(sampleinfo[which(sampleinfo$Group == group1), 1, drop=F])
-samples2  = row.names(sampleinfo[which(sampleinfo$Group == group2), 1, drop=F])
-samples   = c(as.vector(samples1), as.vector(samples2))
+samples1  = sampleinfo$get.samples(by = 'Group', value = group1)
+samples2  = sampleinfo$get.samples(by = 'Group', value = group2)
+samples   = c(samples1, samples2)
 ematrix   = ematrix[, samples, drop=F]
 
 n1      = length(samples1)
 n2      = length(samples2)
 
 ematrix = ematrix[rowSums(ematrix > filters[1]) >= filters[2], , drop=F]
-sicols  = colnames(sampleinfo)
-sirows  = rownames(sampleinfo)
-if ("Patient" %in% sicols && n1 != n2) {
-	stop(paste0("Paired samples indicated, but number of samples is different in two groups (", n1, n2, ")."))
-}
 
 # detect DEGs using limma
 if (tool == 'limma') {
 	# get model
-	if ("Patient" %in% sicols) {
-		pairs  = factor(sampleinfo[which(sirows %in% samples), "Patient"])
-		group  = factor(sampleinfo[which(sirows %in% samples), "Group"])
-		group  = relevel(group, group2)
-		design = model.matrix(~pairs + group)
-	} else {
-		group  = factor(sampleinfo[which(sirows %in% samples), "Group"])
-		group  = relevel(group, group2)
-		design = model.matrix(~group)
-	}
+	design = sampleinfo$as.edger.design()
 	#print(design)
 	library(limma)
 	fit     = lmFit(ematrix, design)
 	fit     = eBayes(fit)
 
-	allgene = topTable(fit, n=nrow(ematrix), adjust="BH", coef = paste("group", group1, sep=""))
+	allgene = topTable(fit, n=nrow(ematrix), adjust="BH", coef = 2)
 	write.table (pretty.numbers(allgene, list(P.Value..adj.P.Val = '%.2E', . = '%.3f')), allfile, quote=F, sep="\t")
 
 	if (cutoffway == 'p') {

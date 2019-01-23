@@ -154,3 +154,22 @@ pretty.numbers2 = function(df, ...) {
 bQuote = function(s) {
 	paste0('`', s, '`')
 }
+
+list.get = function(l, key, default = NULL, check.names = FALSE) {
+	# get the value of a key in list with default
+	# @params:
+	#	`l`: The list
+	#	`key`: The key
+	#	`default`: The default value. Default: `NULL`
+	#	`check.names`: Check whetheer the name exists, even with value `NULL`. Default: `FALSE`
+	#		- `list.get(list(a = NULL), 'a', default = 1, check.names = TRUE) == NULL`
+	#		- `list.get(list(a = NULL), 'a', default = 1, check.names = FALSE) == 1`
+	if (!check.names) {
+		ifelse(is.null(l[[key]]), default, l[[key]])
+	} else {
+		ns = names(l)
+		if (key %in% ns)
+			return (l[[key]])
+		return (default)
+	}
+}

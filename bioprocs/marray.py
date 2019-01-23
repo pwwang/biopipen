@@ -31,7 +31,7 @@ from . import params, rimport
 """
 pCELDir2Matrix                  = Proc(desc = 'Merge expression files to a matrix.')
 pCELDir2Matrix.input            = "indir:file, sifile:file"
-pCELDir2Matrix.output           = "outfile:file:{{i.indir, args.pattern | dirpat2name}}.expr.txt"
+pCELDir2Matrix.output           = "outfile:file:{{i.indir, args.pattern | *dirpat2name}}.expr.txt"
 pCELDir2Matrix.lang             = params.Rscript.value
 pCELDir2Matrix.args.fn2sample   = 'function(fn) unlist(strsplit(fn, ".", fixed = T))[1]'
 pCELDir2Matrix.args.pattern     = '*'

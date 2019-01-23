@@ -199,4 +199,14 @@ def regionOverlap(CHR1, START1, END1, CHR2, START2, END2):
 	if int(END2) < int(START1): return False
 	return True
 
+def funcargs(func):
+	if not callable(func):
+		raise ValueError('Expect a callable.')
+	try:
+		from inspect import signature
+		return list(signature(func).parameters.keys())
+	except ImportError:
+		from inspect import getargspec
+		return getargspec(func).args
+
 logger = getLogger()

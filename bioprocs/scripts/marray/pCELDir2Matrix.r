@@ -10,7 +10,7 @@ norm      = {{args.norm | R}}
 cdffile   = {{args.cdffile | R}}
 outfile   = {{o.outfile | R}}
 celdir    = file.path({{job.outdir | quote}}, 'CELs')
-prefix    = {{i.indir, args.pattern | dirpat2name | R}}
+prefix    = {{i.indir, args.pattern | *dirpat2name | R}}
 transfm   = {{args.transfm | lambda x: x or 'NULL'}}
 fn2sample = Vectorize({{args.fn2sample}})
 
@@ -18,7 +18,13 @@ dir.create(celdir, showWarnings = TRUE, recursive = TRUE)
 setwd(celdir)
 files = Sys.glob(file.path(indir, pattern))
 for (celfile in files) {
-	file.link(celfile, file.path(celdir, basename(celfile)))
+	tryCatch({
+		file.link(celfile, file.path(celdir, basename(celfile)))
+	}, error = function(e){
+		file.copy(celfile, file.path(celdir, basename(celfile)), overwrite = TRUE)
+	}, warning = function(w){
+		file.copy(celfile, file.path(celdir, basename(celfile)), overwrite = TRUE)
+	})
 }
 
 files = basename(files)
