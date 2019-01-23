@@ -18,8 +18,8 @@ if metafile:
 	logger.info('Reading metafile ...')
 	metadata = dict(TsvReader(
 		metafile, 
-		cnames      = True,
-		rowCallback = lambda r: tuple((r.IID, r))
+		cnames = True,
+		row    = lambda r: tuple((r.IID, r))
 	).dump())
 else:
 	metadata = None
