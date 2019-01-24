@@ -74,34 +74,23 @@ pRank.script       = "file:scripts/rank/pRank.r"
 @args:
 	`informat`: The input format of the values. Whether they are real values (value) or ranks (rank). Default: value
 	`pval`:     Whether to calculate the p-value or not. Default: True
-	`header`:   Whether the input file has headers (rownames are required!). Default: True
 	`plot`:     Number of rows to plot. Default: 0 (Don't plot)
 	`cex`:      Font size for plotting. Default: 0.9
 	`cnheight`: Colname height. Default: 80
 	`rnwidth`:  Rowname width. Default: 50
-	`width`:    Width of the png file. Default: 2000
-	`height`:   height of the png file. Default: 2000
+	`devpars`:  device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`
+	`inopts`:   Options for reading the input file. Default: `Box(cnames=True, rnames=True, delimit="\t")`
 """
-pRankProduct = Proc(desc = 'Calculate the rank product of a set of ranks.')
-pRankProduct.input  = "infile:file"
-pRankProduct.output = "outdir:dir:{{i.infile | fn}}.rp"
-pRankProduct.args   = Box(
-	informat = "value",
-	pval     = True,
-	plot     = 0,
-	cex      = 0.9,
-	cnheight = 80,
-	rnwidth  = 50,
-)
-pRankProduct.args.inopts = Box(
-	cnames  = True,
-	rnames  = True,
-	delimit = '\t'
-)
-pRankProduct.args.devpars = Box(
-	res    = 300,
-	width  = 2000,
-	height = 2000
-)
-pRankProduct.lang   = params.Rscript.value
-pRankProduct.script = "file:scripts/rank/pRankProduct.r"
+pRankProduct               = Proc(desc = 'Calculate the rank product of a set of ranks.')
+pRankProduct.input         = "infile:file"
+pRankProduct.output        = "outdir:dir:{{i.infile | fn}}.rp"
+pRankProduct.envs.rimport  = rimport
+pRankProduct.args.informat = "value"
+pRankProduct.args.pval     = True
+pRankProduct.args.cex      = .9
+pRankProduct.args.cnheight = 80
+pRankProduct.args.rnwidth  = 50
+pRankProduct.args.inopts   = Box(cnames  = True, rnames  = True, delimit = '\t')
+pRankProduct.args.devpars  = Box(res = 300, width = 2000, height = 2000)
+pRankProduct.lang          = params.Rscript.value
+pRankProduct.script        = "file:scripts/rank/pRankProduct.r"

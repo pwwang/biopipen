@@ -1,4 +1,11 @@
-data = read.table ("{{i.infile}}", header={{args.cnames | R}}, row.names={{1 if args.rnames else 'NULL'}}, sep={{args.delimit | R}}, check.names = F)
+{{rimport}}('__init__.r')
+options(stringsAsFactors = TRUE)
+
+infile = {{i.infile | quote}}
+inopts = {{args.inopts | R}}
+outdir = {{o.outdir | R}}
+
+data = read.table.inopts(infile, inopts)
 if ("{{args.informat}}" == "value") {
 	for (i in 1:ncol(data)) {
 		data[, i] = length(data[, i]) + 1 - rank (data[, i])
@@ -362,7 +369,9 @@ if (nrplot > 0) {
 
 	data2plot = out[1:nrplot, c(1:ncol(data), ncol(data)+2)]
 	#size=300*480/72
-	png (file = file.path("{{o.outdir}}", "{{i.infile | fn}}.rp.png"), width = {{devpars.width}}, height = {{devpars.height}}, res = {{devpars.res}})
+	plotfile = file.path(outdir, paste0(basename(infile), '.png'))
+	params = c(list(file = plotfile), devpars)
+	do.call(png, params)
 	plotRanks (data2plot)
 	dev.off()
 }
