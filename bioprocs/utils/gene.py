@@ -1,6 +1,6 @@
-import re, json
+import re, json, requests
 from os import path
-from mygene import MyGeneInfo, requests
+from mygene import MyGeneInfo
 from medoo import Raw, Field
 from pyppl import Box
 from bioprocs.utils import alwaysList
