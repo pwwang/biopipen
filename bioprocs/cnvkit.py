@@ -358,27 +358,22 @@ pCNVkit2Vcf.script       = 'file:scripts/cnvkit/pCNVkit2Vcf.py'
 @name:
 	pCNVkit2Theta
 @description:
-	Conver the results to THetA2 input and run THetA2.
+	Convert the results to THetA2 interval input.
 @input:
 	`cnsfile:file`: The cns file
 	`cnnfile:file`: The reference cnn file or the cnr file for paired Normal sample. Could be empty.
-	`snvfile:file`: The VCF file of somatic mutations call from paired samples. Could be empty.
 @output:
-	`outdir:dir`: The output directory
+	`outfile:file`: The interval file for THetA2
 @args:
 	`nthread` : Number threads to use. Default: `1`
 	`cnvkit`  : The executable of cnvkit. Default: `cnvkit.py`
-	`theta`   : The executable of THetA2. Default: `RunTHetA.py`
-	`ckparams`: Other params for `cnvkit.py export theta`
-	`ttparams`: Other params for `RunTHetA.py`. Default: `Box(BAF=True, FORCE=True, n=2)`
+	`params`  : Other params for `cnvkit.py export theta`
 """
-pCNVkit2Theta               = Proc(desc = 'Conver the results to THetA2 input and run THetA2.')
-pCNVkit2Theta.input         = 'cnsfile:file, cnnfile:file, snvfile:file'
-pCNVkit2Theta.output        = 'outdir:dir:{{i.cnsfile | fn2}}.theta'
-pCNVkit2Theta.args.nthread  = 1
-pCNVkit2Theta.args.ckparams = Box()
-pCNVkit2Theta.args.ttparams = Box(BAF = True, FORCE = True, n = 2)
-pCNVkit2Theta.args.cnvkit   = params.cnvkit.value
-pCNVkit2Theta.args.theta    = params.theta2.value
-pCNVkit2Theta.lang          = params.python.value
-pCNVkit2Theta.script        = 'file:scripts/cnvkit/pCNVkit2Theta.py'
+pCNVkit2Theta              = Proc(desc = 'Convert the results to THetA2 interval input.')
+pCNVkit2Theta.input        = 'cnsfile:file, cnnfile:file'
+pCNVkit2Theta.output       = 'outfile:file:{{i.cnsfile | fn2}}.interval.txt'
+pCNVkit2Theta.args.nthread = 1
+pCNVkit2Theta.args.params  = Box()
+pCNVkit2Theta.args.cnvkit  = params.cnvkit.value
+pCNVkit2Theta.lang         = params.python.value
+pCNVkit2Theta.script       = 'file:scripts/cnvkit/pCNVkit2Theta.py'

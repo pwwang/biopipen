@@ -59,16 +59,18 @@ def combineVafAndCn(vafs, outfile, cns = None, contigs = None):
 	# write header
 	out = open(outfile, 'w')
 	out.write('mutation_id\tref_counts\tvar_counts\tnormal_cn\tminor_cn\tmajor_cn\n')
+	def writeRec(rec):
+		out.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+			rec['mutation_id'],
+			rec['ref_counts'],
+			rec['var_counts'],
+			rec['normal_cn'],
+			rec['minor_cn'],
+			rec['major_cn']
+		))
 	if not cns:
 		for vaf in vafs:
-			out.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(
-				vaf['mutation_id'],
-				vaf['ref_counts'],
-				vaf['var_counts'],
-				vaf['normal_cn'],
-				vaf['minor_cn'],
-				vaf['major_cn']
-			))
+			writeRec(vaf)
 		out.close()
 		return
 	for cn in cns:
@@ -78,38 +80,17 @@ def combineVafAndCn(vafs, outfile, cns = None, contigs = None):
 				vaf  = next(vafs)
 				if vaf['chrom'] == cn['chrom']:
 					if vaf['pos'] < cn['start']:
-						out.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(
-							vaf['mutation_id'],
-							vaf['ref_counts'],
-							vaf['var_counts'],
-							vaf['normal_cn'],
-							vaf['minor_cn'],
-							vaf['major_cn']
-						))
+						writeRec(vaf)
 						continue
 					elif vaf['pos'] > cn['end']:
 						flag = 'continue'
 						break
 					else:
 						vaf['major_cn'] = cn['cn']
-						out.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(
-							vaf['mutation_id'],
-							vaf['ref_counts'],
-							vaf['var_counts'],
-							vaf['normal_cn'],
-							vaf['minor_cn'],
-							vaf['major_cn']
-						))
+						writeRec(vaf)
 						continue
 				elif contigs.index(vaf['chrom']) < contigs.index(cn['chrom']):
-					out.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(
-						vaf['mutation_id'],
-						vaf['ref_counts'],
-						vaf['var_counts'],
-						vaf['normal_cn'],
-						vaf['minor_cn'],
-						vaf['major_cn']
-					))
+					writeRec(vaf)
 					continue
 				else:
 					flag = 'continue'

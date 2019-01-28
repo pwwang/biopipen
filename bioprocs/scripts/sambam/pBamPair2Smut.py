@@ -3,6 +3,7 @@ from shutil import rmtree
 from sys import stderr
 from pyppl import Box
 from bioprocs.utils import cmdargs, runcmd, mem2
+from bioprocs.utils.reference import bamIndex
 
 {% python from os import path %}
 
@@ -10,9 +11,9 @@ ref       = {{args.ref | quote}}
 jobindex  = {{job.index | repr}}
 tmpdir    = {{args.tmpdir | quote}}
 procid    = {{proc.id | quote}}
-tumor     = {{i.tumor | @append: '.bai' | path.isfile | lambda x, i=i: (i.RL_tumor, i.tumor)[int(x)] | quote}}
+tumor     = {{i.tumor | quote}}
 tprefix   = {{i.tumor | fn2 | quote}}
-normal    = {{i.normal | @append: '.bai' | path.isfile | lambda x, i=i: (i.RL_normal, i.normal)[int(x)] | quote}}
+normal    = {{i.normal | quote}}
 nprefix   = {{i.normal | fn2 | quote}}
 tool      = {{args.tool | quote}}
 gz        = {{args.gz | bool}}
@@ -28,6 +29,9 @@ strelka   = {{args.strelka | quote}}
 virmid    = {{ args.virmid | quote}}
 vardict   = {{ args.vardict | quote}}
 joboutdir = {{job.outdir | quote}}
+bamIndex(tumor,  samtools = None, nthread = nthread)
+bamIndex(normal, samtools = None, nthread = nthread)
+
 if tprefix == nprefix:
 	tprefix = tprefix + '_TUMOR'
 	nprefix = nprefix + '_NORMAL'

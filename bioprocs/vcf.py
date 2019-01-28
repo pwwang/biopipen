@@ -288,7 +288,6 @@ pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 	Convert vcf to plink binary files (.bed/.bim/.fam)
 @input:
 	`infile:file`: The input vcf file, needs to be tabix indexed.
-		- `iftype = origin`, `i.infile` will point to the original file
 @output:
 	`outdir:dir`: The output directory containing the plink binary files
 @args:
@@ -304,7 +303,6 @@ pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 pVcf2Plink             = Proc(desc = 'Convert vcf to plink binary files (.bed/.bim/.fam)')
 pVcf2Plink.input       = 'infile:file'
 pVcf2Plink.output      = 'outdir:dir:{{i.infile | fn2}}.plink'
-pVcf2Plink.iftype      = 'origin'
 pVcf2Plink.args.plink  = params.plink.value
 pVcf2Plink.args.params = Box({
 	'vcf-half-call'      : 'm',

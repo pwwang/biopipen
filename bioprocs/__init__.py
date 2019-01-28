@@ -18,6 +18,8 @@ DEFAULTS = {
 	"ncbikey.desc"    : "The NCBI API Key for E-Utils.",
 
 	# path
+	"affysnps"           : "",
+	"affysnps.desc"      : "Affymetrix SNP 6.0 Positions, used for THetA2 mostly.",
 	"annovarDb"          : "",
 	"annovarDb.desc"     : "The path of database for Annovar.",
 	"cachedir"           : path.expanduser("~/.bioprocs/cache"),
@@ -99,6 +101,8 @@ DEFAULTS = {
 	"annovar_convert.desc"     : "The path of annovar's convert2annovar.pl.",
 	"awk"                      : "awk",
 	"awk.desc"                 : "The awk program.",
+	"bam_readcount"            : "bam-readcount",
+	"bam_readcount.desc"       : "Program to generate metrics at single nucleotide positions",
 	"bamstats"                 : "bamstats",
 	"bamstats.desc"            : "The path of bamstats.",
 	"bamutil"                  : "bam",

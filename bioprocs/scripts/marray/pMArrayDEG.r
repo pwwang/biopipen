@@ -33,8 +33,8 @@ samples2  = sampleinfo$get.samples(by = 'Group', value = group2)
 samples   = c(samples1, samples2)
 ematrix   = ematrix[, samples, drop=F]
 
-n1      = length(samples1)
-n2      = length(samples2)
+n1 = length(samples1)
+n2 = length(samples2)
 
 ematrix = ematrix[rowSums(ematrix > filters[1]) >= filters[2], , drop=F]
 

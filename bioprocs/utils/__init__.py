@@ -53,24 +53,34 @@ def alwaysList(l):
 		ret = [x.strip() for x in l.split(',') if x.strip()]
 	return ret
 
-def runcmd(cmd2run, shell = True, quit = True):
+def runcmd(cmd2run, shell = True, quit = True, ret = 'rc'):
 	c = cmd.Cmd(cmd2run, shell = shell)
 	cmdstr = ' '.join(c.cmd) if isinstance(c.cmd, list) else c.cmd
 	logger.info('Running command at PID: %s' % c.pid)
 	logger.info(cmdstr)
 	#c.run()
 	#for line in c.stderr.splitlines():
-	while c.p.poll() is None:
-		line = c.p.stderr.readline()
-		if not line:
-			continue
+	
+	# while c.p.poll() is None:
+	# 	# blocking!!!
+	# 	line = c.p.stderr.readline()
+	# 	if not line:
+	# 		continue
+	# 	logger.error('STDERR: {}'.format(line.rstrip()))
+	(stdout, stderr) = c.p.communicate()
+	if ret == 'rc':
+		# don't output if it's returned
+		for line in stdout.splitlines():
+			sys.stdout.write(line)
+	for line in stderr.splitlines():
 		logger.error('STDERR: {}'.format(line.rstrip()))
-	c.rc = c.p.poll()
+
+	c.rc = c.p.returncode
 	logger.info('-'*80)
 	logger.info('Return code: %s' % c.rc)
 	if quit and c.rc != 0:
 		raise RuncmdException('Command failed to run:\n{}\n'.format(cmdstr))
-	return c.rc == 0
+	return c.rc == 0 if ret == 'rc' else stdout
 
 def call(command, args, quit = True):
 	bioprocs = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'bioprocs')

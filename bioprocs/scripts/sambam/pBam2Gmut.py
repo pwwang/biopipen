@@ -1,93 +1,136 @@
-from os import path, makedirs
+from os import path, makedirs, rename
 from shutil import rmtree
 from sys import stderr, exit
 from pyppl import Box
 from bioprocs.utils import runcmd, cmdargs, mem2
+from bioprocs.utils.reference import bamIndex
 
-tmpdir    = path.join ("{{ args.tmpdir}}", "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
-if not path.exists (tmpdir): makedirs (tmpdir)
+{% python from os import path %}
 
-ref     = {{args.ref | quote}}
-gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{o.outfile | quote}}
-if gz:	outfile = outfile[:-3]
+ref       = {{args.ref | quote}}
+jobindex  = {{job.index | repr}}
+tmpdir    = {{args.tmpdir | quote}}
+procid    = {{proc.id | quote}}
+infile    = {{i.infile | quote}}
+prefix    = {{i.infile | fn2 | quote}}
+tool      = {{args.tool | quote}}
+gz        = {{args.gz | bool}}
+outfile   = {{o.outfile | quote}}
+params    = {{args.params | repr}}
+samtools  = {{args.samtools | quote}}
+mem       = {{args.mem | quote}}
+nthread   = {{args.nthread | repr}}
+gatk      = {{args.gatk | quote}}
+cfgParams = {{args.cfgParams | quote}}
+platypus  = {{args.platypus | quote}}
+ssniffer  = {{args.snvsniffer | quote}}
+strelka   = {{args.strelka | quote}}
+vardict   = {{ args.vardict | quote}}
+joboutdir = {{job.outdir | quote}}
+bamIndex(infile,  samtools = None, nthread = nthread)
 
-params = {{args.params}}
-try:
-{% case args.tool %}
-	############ gatk
-	{% when 'gatk' %}
-	mem = mem2({{args.mem | quote}}, 'java')
+if not path.exists (ref):
+	stderr.write ("Reference file not specified")
+	exit (1)
 
-	params['R']   = ref
-	params['I']   = {{i.infile | quote}}
-	params['o']   = outfile
-	params['nct'] = {{args.nthread}}
+tmpdir = path.join(tmpdir, "{procid}.{prefix}.{jobindex}".format(
+	jobindex = jobindex,
+	procid   = procid,
+	prefix  = prefix
+))
+if not path.exists (tmpdir):
+	makedirs (tmpdir)
 
-	cmd = '{{args.gatk}} -T HaplotypeCaller %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(params, dash = '-', equal = ' '))
-	runcmd (cmd)
-	if gz:	runcmd ('gzip "%s"' % (outfile))
+if gz:	
+	outfile = outfile[:-3]
 
-	############ vardict
-	{% when 'vardict' %}
-	params['v'] = True
-	params['G'] = ref
-	params['b'] = {{i.infile | quote}}
+def run_gatk():
+	params.R = ref
+	params.I = infile
+	params.o = outfile
+	params.nct = nthread
+	cmd = '{gatk} -T HaplotypeCaller {mem} -Djava.io.tmpdir={tmpdir!r} {args}'.format(
+		gatk   = gatk,
+		mem    = mem2(mem, 'java'),
+		tmpdir = tmpdir,
+		args   = cmdargs(params, dash = '-', equal = ' ')
+	)
+	runcmd(cmd)
+	if gz: runcmd(['gzip', outfile])
 
-	cmd = '{{args.vardict}} %s > "%s"' % (cmdargs(params), outfile)
-	runcmd (cmd)
-	if gz:	runcmd ('gzip "%s"' % (outfile))
+def run_vardict():
+	params.v = True
+	params.G = ref
+	params.b = infile
+	cmd = '{vardict} {args} > {outfile!r}'.format(
+		vardict = vardict,
+		args    = cmdargs(params),
+		outfile = outfile
+	)
+	runcmd(cmd)
+	if gz: runcmd(['gzip', outfile])
 
-	############ snvsniffer
-	{% when 'snvsniffer' %}
-	hfile = "{{job.outdir}}/{{i.infile | bn}}.header"
-	cmd   = '{{args.samtools}} view -H "{{i.infile}}" > "%s"' % hfile
-	runcmd (cmd)
+def run_snvsniffer():
+	hfile = path.join(joboutdir, prefix + '.header')
+	runcmd('{samtools} view -H {infile!r} > {hfile!r}'.format(
+		samtools = samtools,
+		infile   = infile,
+		hfile    = hfile
+	))
 
-	params['g'] = ref
-	params['o'] = outfile
+	params.g   = ref
+	params.o   = outfile
+	params[''] = [hfile, infile]
+	cmd = '{ssniffer} snp {args}'.format(ssniffer = ssniffer, args = cmdargs(params))
+	runcmd(cmd)
+	if gz: runcmd(['gzip', outfile])
 
-	cmd = '{{args.snvsniffer}} snp %s "%s" "{{i.infile}}"' % (cmdargs(params), hfile)
-	runcmd (cmd)
-	if gz:	runcmd ('gzip "%s"' % (outfile))
+def run_platypus():
+	params.refFile     = ref
+	params.bamFiles    = infile
+	params.nCPU        = nthread
+	params.output      = outfile
+	params.logFileName = outfile + '.platypus.log'
+	cmd = '{platypus} callVariants {args}'.format(platypus = platypus, args = cmdargs(params))
+	runcmd(cmd)
+	if gz: runcmd(['gzip', outfile])
 
-	############ platypus
-	{% when 'platypus' %}
-	params['refFile']     = ref
-	params['bamFiles']    = {{i.infile | quote}}
-	params['nCPU']        = {{args.nthread}}
-	params['output']      = outfile
-	params['logFileName'] = outfile + '.log'
-
-	cmd = '{{args.platypus}} callVariants %s' % cmdargs(params)
-	runcmd (cmd)
-	if gz:	runcmd ('gzip "%s"' % (outfile))
-
-	############ strelka
-	{% when 'strelka' %}
+def run_strelka():
 	# config
-	configParams = {{args.configParams}}
-	configParams['bam']            = {{i.infile | quote}}
-	configParams['referenceFasta'] = ref
-	configParams['runDir']         = {{job.outdir | quote}}
+	cfgParams.bam            = infile
+	cfgParams.referenceFasta = ref
+	cfgParams.runDir         = joboutdir
+	runcmd('{strelka} {args}'.format(strelka = strelka, args = cmdargs(cfgParams)))
 
-	cmd = '{{args.strelka}} %s' % cmdargs(configParams)
-	runcmd (cmd)
+	# run the pipeline
+	params.m = 'local'
+	params.j = nthread
+	params.g = mem2(mem, 'G')[:-1]
+	cmd = '{runWorkflow} {args}'.format(
+		runWorkflow = path.join(joboutdir, 'runWorkflow.py'),
+		args        = cmdargs(params)
+	)
+	runcmd(cmd)
 
-	# run
-	params['m'] = 'local'
-	params['j'] = {{args.nthread}}
-	params['g'] = mem2({{args.mem | quote}}, 'G')[:-1]
+	# mv output file to desired outfile
+	ofile = path.join(joboutdir, 'results', 'variants', 'genome.S1.vcf.gz')
+	rename(ofile, outfile + '.gz')
+	if not gz:
+		runcmd(['gunzip', outfile + '.gz'])
 
-	cmd = '{{job.outdir}}/runWorkflow.py %s' % cmdargs(params)
-	runcmd (cmd)
-	ofile = "{{job.outdir}}/results/variants/genome.S1.vcf.gz"
-	runcmd ('mv "%s" "%s.gz"' % (ofile, outfile))
-	if not gz: runcmd ('gunzip "%s.gz"' % outfile)
 
-{% endcase %}
-except Exception as ex:
-	stderr.write ("Job failed: %s" % str(ex))
+tools = {
+	'gatk'      : run_gatk,
+	'snvsniffer': run_snvsniffer,
+	'strelka'   : run_strelka,
+	'platypus'  : run_platypus,
+	'vardict'   : run_vardict
+}
+
+try:
+	tools[tool]()
+except Exception:
 	raise
 finally:
 	rmtree (tmpdir)
+

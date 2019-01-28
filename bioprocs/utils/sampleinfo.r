@@ -76,6 +76,9 @@ SampleInfo2 = R6Class("SampleInfo2", public = list(
 	},
 
 	sample.info = function(sample, info = NULL) {
+		"""
+		Get the information of a given sample
+		"""
 		ret = self$mat[which(self$mat$Sample == sample), , drop = FALSE]
 		if (is.null(info))
 			return (ret)

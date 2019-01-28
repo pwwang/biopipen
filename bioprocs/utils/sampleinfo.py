@@ -108,3 +108,72 @@ class SampleInfo (object):
 		return DataFrame(data = dataframe, index = rownames)
 
 
+class SampleInfo2(object):
+
+	def _read(self, sifile):
+		standard_cnames = ["", "Sample", "Patient", "Group", "Batch"]
+		reader          = TsvReader(sifile)
+		
+		self.cnames     = reader.cnames
+		if not self.cnames:
+			raise SampleInfoException('Headers for sample information file is required.')
+		
+		if any(cname not in standard_cnames for cname in  self.cnames):
+			raise SampleInfoException('Headers should be a subset of {!r}'.format(', '.join(standard_cnames)))
+
+		if "" in self.cnames:
+			self.cnames[self.cnames.index("")] = "Sample"
+		
+		self.mat = reader.dump()
+
+	def __init__(self, sifile, checkPaired = False):
+		self.mat    = None
+		self.cnames = []
+		self._read(sifile)
+		if checkPaired and "Patient" in self.cnames:
+			for patient in self.allPatients():
+				if len(self.getSamples(by = 'Patient', value = patient)) != 2:
+					raise SampleInfoException('Expect paired comparisons, but Patient {!r} has # samples other than 2.'.format(patient))
+
+	def allPatients(self):
+		if 'Patient' not in self.cnames:
+			return None
+		return list(set([r.Patient for r in self.mat]))
+
+	def allGroups(self):
+		allgroups = [r.Group for r in self.mat]
+		group0    = self.mat[0].Group
+		return [group0] + [group for group in allgroups if group != group0]
+
+	def getSamples(self, by = None, value = None):
+		if by and by not in self.cnames:
+			raise SampleInfoException('{!r} is not a valid column name.'.format(by))
+		if not by:
+			return [r.Sample for r in self.mat]
+		return [r.Sample for r in self.mat if r[by] == value]
+
+	def sampleInfo(self, sample, info = None):
+		if not info:
+			return [r for r in self.mat if r.Sample == sample]
+		if info not in self.cnames:
+			raise SampleInfoException('{!r} is not a valid column name.'.format(info))
+		return [r[info] for r in self.mat if r.Sample == sample]
+
+	def select(self, samples):
+		self.mat = [r for r in self.mat if r.Sample in samples]
+
+	def isPaired(self):
+		allpatients = self.allPatients()
+		if not allpatients:
+			return False
+		for patient in allpatients:
+			if len(self.getSamples(by = 'Patient', value = patient)) != 2:
+				return False
+		return True
+
+	def getPairedSample(self, sample):
+		patient = self.sampleInfo(sample, info = 'Patient')[0]
+		samples = self.getSamples(by = 'Patient', value = patient)
+		return samples[1 - samples.index(sample)]
+
+

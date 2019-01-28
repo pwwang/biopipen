@@ -679,6 +679,7 @@
         	- See https://github.com/AstraZeneca-NGS/reference_data/tree/master/hg19/bed
         - `accfile`: Directly use the access file. Default: generating from the reference file.  
         	- See https://github.com/etal/cnvkit/tree/master/data
+        - `nthread`: The number of threads to use. Default: 1  
         - `ref`    : The reference genome.  
         - `params` : The extra parameters for cnvkit's `access`, `target` and `autobin` command. Default:   
         	```python
@@ -727,6 +728,7 @@
     - **args**  
         - `ref`   : The reference file.  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `nthread`: The number of threads to use. Default: 1  
         - `params`: Other parameters for `cnvkit.py reference`, default: " --no-edge "  
 
     - **requires**  
@@ -902,6 +904,7 @@
 
     - **args**  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
+        - `nthread`: The number of threads to use. Default: 1  
         - `params`: Other params for `cnvkit.py export`  
 
     - **requires**  
@@ -910,22 +913,19 @@
 !!! hint "pCNVkit2Theta"
 
     - **description**  
-        Conver the results to THetA2 input and run THetA2.
+        Convert the results to THetA2 interval input.
 
     - **input**  
         - `cnsfile:file`: The cns file  
         - `cnnfile:file`: The reference cnn file or the cnr file for paired Normal sample. Could be empty.  
-        - `snvfile:file`: The VCF file of somatic mutations call from paired samples. Could be empty.  
 
     - **output**  
-        - `outdir:dir`: The output directory  
+        - `outfile:file`: The interval file for THetA2  
 
     - **args**  
         - `nthread` : Number threads to use. Default: `1`  
         - `cnvkit`  : The executable of cnvkit. Default: `cnvkit.py`  
-        - `theta`   : The executable of THetA2. Default: `RunTHetA.py`  
-        - `ckparams`: Other params for `cnvkit.py export theta`  
-        - `ttparams`: Other params for `RunTHetA.py`. Default: `Box(BAF=True, FORCE=True, n=2)`  
+        - `params`  : Other params for `cnvkit.py export theta`  
 ## common
 
 !!! hint "pSort"
@@ -3129,14 +3129,14 @@
 
     - **args**  
         - `informat`: The input format of the values. Whether they are real values (value) or ranks (rank). Default: value  
+        	- Records will be ordered descendingly by value (Larger value has higher rank (lower rank index)).
         - `pval`: Whether to calculate the p-value or not. Default: True  
-        - `header`: Whether the input file has headers (rownames are required!). Default: True  
         - `plot`: Number of rows to plot. Default: 0 (Don't plot)  
         - `cex`: Font size for plotting. Default: 0.9  
         - `cnheight`: Colname height. Default: 80  
         - `rnwidth`: Rowname width. Default: 50  
-        - `width`: Width of the png file. Default: 2000  
-        - `height`: height of the png file. Default: 2000  
+        - `devpars`: device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`  
+        - `inopts`: Options for reading the input file. Default: `Box(cnames=True, rnames=True, delimit="\t")`  
 ## resource
 
 !!! hint "pTxt"
@@ -4977,6 +4977,85 @@
         	- delimit: `\\t` (The delimit for output line)
         - `match`: The function to return a value to decide whether the row is repeated, argument is a `TsvRecord`.  
         - `do`   : The merge function in python, argument is a list of `TsvRecord`s or `list`s if `args.inopts.ftype` is `nometa`  
+## tumhet
+
+!!! hint "pSciClone"
+
+    - **description**  
+        Run sciClone for subclonal analysis.
+
+    - **input**  
+        - `vfvcfs:files`: The VCF files of mutations of each sample  
+        - `cnvcfs:files`: The VCF files of copy number variations of each sample  
+
+    - **output**  
+        - `outdir:dir`: The output directory.  
+
+    - **args**  
+        - `params`  : Other parameters for original `sciClone` function. Default: `Box()`  
+        - `exfile`  : The regions to be excluded. In BED3 format  
+        - `vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`  
+        - `cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`  
+        - `varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) fmt$AD`  
+        	- If this function returns `NULL`, record will be skipped.
+        	- It can use the sample calls (`fmt`) and also the record info (`info`)
+        	- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
+        	- Don't include `info` if not necessary. This saves time.
+        	- This function can return the variant count directly, or 
+        	- an R `list` like: `list(count = <var count>, depth = <depth>)`.
+        	- By default, the `depth` will be read from `fmt$DP`
+        - `cncount` : An R function string to define how to get the copy number. Default: `function(fmt) fmt$CN`  
+        	- Similar as `varcount`
+        	- Returns copy number directly, or
+        	- an R `list` like: `list(cn = <copy number>, end = <end>, probes = <probes>)`
+        	- `end` defines where the copy number variation stops
+        	- `probes` defines how many probes cover this copy number variantion.
+
+!!! hint "pPyClone"
+
+    - **description**  
+        Run PyClone for subclonal analysis
+
+    - **input**  
+        - `vfvcfs:files`: The VCF files of mutations of each sample  
+        - `cnvcfs:files`: The VCF files of copy number variations of each sample  
+
+    - **output**  
+        - `outdir:dir`: The output directory.  
+
+    - **args**  
+        - `params`  : Other parameters for original `PyClone run_analysis_pipeline` function. Default: `Box()`  
+        - `vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`  
+        - `cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`  
+        - `varcount`: A python lambda string to define how to get the variant allele count. Default: `lambda fmt: fmt.get("AD")`  
+        	- If this function returns `None`, record will be skipped.
+        	- It can use the sample calls (`fmt`) and also the record info (`info`)
+        	- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
+        	- This function can return the variant count directly, or 
+        	- a `dict` like: `dict(count = <var count>, depth = <depth>)`.
+        	- By default, the `depth` will be read from `fmt.DP`
+        - `cncount` : An python lambda string to define how to get the copy number. Default: `lambda fmt: fmt.get("CN")`  
+        	- Similar as `varcount`
+        	- Returns copy number directly, or
+        	- a `dict` like: `dict(cn = <copy number>, end = <end>)`
+        	- `end` defines where the copy number variation stops
+
+!!! hint "pTheta"
+
+    - **description**  
+        Run THetA2 for tumor purity calculation
+        Set lower MIN_FRAC if interval is not enough and NO_CLUSTERING if it raises 
+        "No valid Copy Number Profiles exist", but have to pay attention to the results. 
+        (see: https://groups.google.com/forum/#!topic/theta-users/igrEUol3sZo)
+
+    - **args**  
+        - `affysnps`: The affymetrix Array snps, or other candidate snp list, in BED6-like format  
+        	- The first 6 columns should be in BED6 format
+        	- The 7th column is reference allele, and 8th column is mutation allele.
+
+    - **install**  
+        `conda install -c bioconda theta2`
+        `conda install -c bioconda bam-readcount`
 ## vcf
 
 !!! hint "pVcfFilter"
@@ -5170,7 +5249,6 @@
 
     - **input**  
         - `infile:file`: The input vcf file, needs to be tabix indexed.  
-        	- `iftype = origin`, `i.infile` will point to the original file
 
     - **output**  
         - `outdir:dir`: The output directory containing the plink binary files  

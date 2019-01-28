@@ -1,4 +1,4 @@
-# A set of processes for Cancer Evolution analysis
+# A set of processes for Tumor heterogeneity analysis
 from pyppl import Box, Proc
 from . import rimport, params
 from .utils import fs2name
@@ -45,7 +45,7 @@ pSciClone.args.cnsamcol = 1 # the first sample is the target sample in copy numb
 pSciClone.args.varcount = 'function(fmt) fmt$AD' # how to get the var count
 pSciClone.args.cncount  = 'function(fmt) fmt$CN' # how to get the copy number 
 pSciClone.lang          = params.Rscript.value
-pSciClone.script        = "file:scripts/canev/pSciClone.r"
+pSciClone.script        = "file:scripts/tumhet/pSciClone.r"
 
 """
 @name:
@@ -85,4 +85,32 @@ pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")'
 pPyClone.args.cncount  = 'lambda fmt: fmt.get("CN")'
 pPyClone.args.pyclone  = params.pyclone.value
 pPyClone.lang          = params.python.value
-pPyClone.script        = "file:scripts/canev/pPyClone.py"
+pPyClone.script        = "file:scripts/tumhet/pPyClone.py"
+
+"""
+@name:
+	pTheta
+@description:
+	Run THetA2 for tumor purity calculation
+	Set lower MIN_FRAC if interval is not enough and NO_CLUSTERING if it raises 
+	"No valid Copy Number Profiles exist", but have to pay attention to the results. 
+	(see: https://groups.google.com/forum/#!topic/theta-users/igrEUol3sZo)
+@args:
+	`affysnps`: The affymetrix Array snps, or other candidate snp list, in BED6-like format
+		- The first 6 columns should be in BED6 format
+		- The 7th column is reference allele, and 8th column is mutation allele.
+@install:
+	`conda install -c bioconda theta2`
+	`conda install -c bioconda bam-readcount`
+"""
+pTheta                    = Proc(desc = "Run THetA2 for tumor purity calculation")
+pTheta.input              = 'itvfile:file, tumbam:file, normbam:file'
+pTheta.output             = 'outdir:dir:{{i.itvfile | fn2}}.theta'
+pTheta.args.params        = Box(BAF = True, FORCE = True, n = 2)
+pTheta.args.bam_readcount = params.bam_readcount.value
+pTheta.args.ref           = params.ref.value
+pTheta.args.theta         = params.theta2.value
+pTheta.args.nthread       = 1
+pTheta.args.affysnps      = params.affysnps.value
+pTheta.lang               = params.python.value
+pTheta.script             = "file:scripts/tumhet/pTheta.py"
