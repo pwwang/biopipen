@@ -1,166 +1,204 @@
 from shutil import move, rmtree
-from os import makedirs, path, symlink, remove
+from os import path, symlink, remove
 from sys import stderr
 from pyppl import Box
-from bioprocs.utils import runcmd, mem2, cmdargs
+from bioprocs.utils import shell, mem2, cmdargs
+from bioprocs.utils.shell import runcmd2, RuncmdException, Shell
 
-infile    = {{ i.infile | quote }}
-outfile   = {{ o.outfile | quote }}
-informat  = {{ args.infmt | quote }}
-informat  = informat if informat else {{ i.infile | ext | [1:] | quote}}
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
-doSort    = {{ args.sort }}
-doIndex   = {{ args.index }}
-doMarkdup = {{ args.markdup }}
-doRmdup   = {{ args.rmdup }}
-params    = {{ args.params }}
-if doRmdup:
-	doMarkdup = True
-if not path.exists (tmpdir):
-	makedirs (tmpdir)
-try:
-{% case args.tool %}
-	############### biobambam
-	{% when 'biobambam' %}
-	mem = mem2({{ args.mem | quote }}, 'M')
-	if doIndex:
-		params['index'] = 1
-		params['indexfilename'] = {{o.idxfile | quote}}
-	params['I']              = infile
-	params['O']              = outfile
-	params['SO']             = {{args.sortby | quote}}
-	params['blockme']        = mem
-	params['tmpfile']        = path.join(tmpdir, 'tmp.')
-	params['inputformat']    = informat
-	params['outfmt']         = 'bam'
-	params['inputthreads']   = {{args.nthread}}
-	params['outputthreads']  = {{args.nthread}}
-	params['markduplicates'] = int(doMarkdup)
-	params['rmdup']          = int(doRmdup)
+infile     = {{ i.infile | quote }}
+inprefix   = {{ i.infile | fn | quote}}
+outfile    = {{ o.outfile | quote }}
+joboutdir  = {{job.outdir | quote}}
+infmt      = {{ i.infile | ext | [1:] | quote}}
+tmpdir     = {{ args.tmpdir | quote}}
+tmpdir     = path.join (tmpdir, {{proc.id, fn(i.infile), str(job.index+1) | : '.'.join(a) | quote }})
+steps      = {{ args.steps | repr }}
+params     = {{ args.params | repr }}
+argsmem    = {{ args.mem | repr}}
+sortby     = {{ args.sortby | quote}}
+nthread    = {{ args.nthread | repr}}
+ref        = {{ args.ref | repr}}
+knownSites = {{ args.knownSites | repr}}
+biobambam  = {{ args.biobambam | quote }}
+elprep     = {{ args.elprep | quote}}
+sambamba   = {{ args.sambamba | quote}}
+samtools   = {{ args.samtools | quote}}
+picard     = {{ args.picard | quote}}
+tool       = {{ args.tool | quote }}
+shell.TOOLS.update(dict(
+	biobambam = biobambam,
+	sambamba  = sambamba,
+	samtools  = samtools,
+	picard    = picard,
+	elprep    = elprep
+))
 
+if steps.rmdup:
+	steps.markdup = True
+if not path.exists(tmpdir):
+	shell.mkdir(tmpdir, p = True)
+if steps.recal and tool != 'elprep':
+	raise ValueError('Step "recal" is only enabled by "elprep", use pBamRecal for other tools.')
 
-	cmd = '{{args.biobambam_bamsort}} %s' % cmdargs(params, dash = '', equal = '=')
-	runcmd (cmd)
+subshell = Shell(subcmd = True)
 
-	############### sambamba
-	{% when 'sambamba' %}
-	if not (doSort or doIndex or doMarkdup or doRmdup):
-		cmd = '{{args.sambamba}} view -S -f bam -o %s -t {{args.nthread}} %s' % (outfile, infile)
-		runcmd (cmd)
+def run_biobambam():
+	mem = mem2(argsmem, 'M')
+	if steps.index:
+		params.index         = 1
+		params.indexfilename = outfile + '.bai'
+
+	params.I              = infile
+	params.O              = outfile
+	params.SO             = sortby
+	params.blockme        = mem
+	params.tmpfile        = path.join(tmpdir, 'biobambam.tmp')
+	params.inputformat    = infmt
+	params.outfmt         = 'bam'
+	params.inputthreads   = nthread
+	params.outputthreads  = nthread
+	params.markduplicates = int(steps.markdup)
+	params.rmdup          = int(steps.rmdup)
+
+	Shell(dash = '', equal = '=').biobambam(**params).run()
+
+def run_sambamba():
+	global infile
+	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
+		subshell.sambamba.view(S = True, f = 'bam', o = outfile, t = nthread, _ = infile).run()
 	else:
 		bamfile = outfile
-		if informat == 'sam':
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.s2b.bam"
-			cmd = '{{args.sambamba}} view -S -f bam -o %s -t {{args.nthread}} %s' % (bamfile, infile)
-			runcmd (cmd)
+		if infmt == 'sam':
+			bamfile = path.join(joboutdir, inprefix + '.s2b.bam')
+			subshell.sambamba.view(S = True, f = 'bam', o = bamfile, t = nthread, _ = infile).run()
 			infile = bamfile
-		if doSort:
-			{% if args.sortby == 'queryname' %}
-			params['n'] = True
-			params['N'] = True
-			{% endif %}
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.sorted.bam"
-			params['m'] = {{args.mem | quote}}
-			params['tmpdir'] = tmpdir
-			params['o'] = bamfile
-			params['t'] = {{args.nthread}}
-			cmd = '{{args.sambamba}} sort %s "%s"' % (cmdargs(params), infile)
-			runcmd (cmd)
+		if steps.sort:
+			if sortby == 'queryname':
+				params.n = True
+				params.N = True
+			bamfile       = path.join(joboutdir, inprefix + '.sorted.bam')
+			params.m      = argsmem
+			params.tmpdir = tmpdir
+			params.o      = bamfile
+			params.t      = nthread
+			params._      = infile
+			subshell.sambamba.sort(**params).run()
 			if infile != {{i.infile | quote}}:
-				remove (infile)
+				shell.rm(f = True, _ = infile)
 			infile = bamfile
-		if doMarkdup:
-			rmdup = ""
-			if doRmdup:
-				rmdup = "-r"
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.dedup.bam"
-			cmd = '{{args.sambamba}} markdup %s -t {{args.nthread}} --tmpdir="%s" "%s" "%s"' % (rmdup, tmpdir, infile, bamfile)
-			runcmd (cmd)
+		if steps.markdup:
+			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
+			subshell.sambamba.markdup(r = steps.rmdup, t = nthread, tmpdir = tmpdir, _ = [infile, bamfile]).run()
 			if infile != {{i.infile | quote}}:
-				remove (infile)
+				shell.rm(f = True, _ = infile)
 			infile = bamfile
-		if doIndex:
-			if path.exists (infile + '.bai'):
-				move (infile + '.bai', {{o.idxfile | quote}})
+		if steps.index:
+			if path.exists(infile + '.bai'):
+				shell.mv(infile + '.bai', outfile + '.bai')
 			else:
-				cmd = '{{args.sambamba}} index -t {{args.nthread}} "%s" "%s"' % (infile, {{o.idxfile | quote}})
-				runcmd (cmd)
+				subshell.sambamba.index(t = nthread, _ = [infile, infile + '.bai'])
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
-				move (infile + '.bai', outfile + '.bai')
-			move (infile, outfile)
+				shell.mv(infile + '.bai', outfile + '.bai')
+			shell.mv(infile, outfile)
 
-	############### samtools
-	{% when 'samtools' %}
-	if not (doSort or doIndex or doMarkdup or doRmdup):
-		cmd = '{{args.samtools}} view -b -o "%s" -O bam "%s"' % (outfile, infile)
-		runcmd (cmd)
+def run_samtools():
+	global infile
+	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
+		subshell.samtools.view(b = True, o = outfile, O = 'bam', _ = infile).run()
 	else:
 		bamfile = outfile
-		if doSort:
-			mem = mem2({{ args.mem | quote }}, 'M')
-			sortby = ''
-			if {{args.sortby | quote}} == 'queryname':
-				sortby = '-n'
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.sorted.bam"
-			cmd = '{{args.samtools}} sort -m %sM %s -o "%s" -T "%s" -@ {{args.nthread}} -O bam "%s"' % (mem, sortby, bamfile, tmpdir, infile)
-			runcmd (cmd)
+		if steps.sort:
+			mem = mem2(argsmem, 'M')
+			bamfile = path.join(joboutdir, inprefix + '.sorted.bam')
+			subshell.samtools.sort(
+				m = mem + 'M', 
+				n = sortby == 'queryname',
+				o = bamfile,
+				T = tmpdir,
+				O = 'bam',
+				_ = infile,
+				**{'@': nthread}
+			).run()
 			if infile != {{i.infile | quote}}:
-				remove (infile)
+				shell.rm(infile, f = True)
 			infile = bamfile
-		if doMarkdup or doRmdup:
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.dedup.bam"
-			cmd = '{{args.samtools}} rmdup "%s" "%s"' % (infile, bamfile)
-			runcmd (cmd)
+		if steps.markdup or steps.rmdup:
+			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
+			subshell.rmdup(infile, bamfile).run()
 			if infile != {{i.infile | quote}}:
-				remove (infile)
+				shell.rm(infile, f = True)
 			infile = bamfile
-		if doIndex:
-			cmd = '{{args.samtools}} index "%s" "%s"' % (bamfile, {{o.idxfile | quote}})
-			runcmd (cmd)
+		if steps.index:
+			subshell.samtools.index(bamfile, outfile + '.bai')
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
-				move (infile + '.bai', outfile + '.bai')
-			move (infile, outfile)
+				shell.mv(infile + '.bai', outfile + '.bai')
+			shell.mv(infile, outfile)
 
-	############### picard
-	{% when 'picard' %}
-	mem = mem2({{ args.mem | quote }}, 'java')
-	if not (doSort or doIndex or doMarkdup or doRmdup):
-		cmd = '{{args.picard}} SamFormatConverter %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s"' % (mem, tmpdir, tmpdir, infile, outfile)
-		runcmd (cmd)
+def run_picard():
+	global infile
+	mem = mem2(argsmem, '-jdict')
+	mem['-Djava.io.tmpdir'] = tmpdir
+	shellpicard = Shell(subcmd = True, dash = '', equal = '=').picard(**mem)
+	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
+		shellpicard.SamFormatConverter(TMP_DIR = tmpdir, I = infile, O = outfile).run()
 	else:
 		bamfile = outfile
-		if doSort:
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.sorted.bam"
-			cmd = '{{args.picard}} SortSam %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s" SO={{args.sortby}}' % (mem, tmpdir, tmpdir, infile, bamfile)
-			runcmd (cmd)
+		if steps.sort:
+			bamfile = path.join(joboutdir, inprefix + '.sorted.bam')
+			shellpicard.ShortSam(TMP_DIR = tmpdir, I = infile, O = bamfile, SO = sortby).run()
 			if infile != {{i.infile | quote}}:
-				remove (infile)
+				shell.rm(f = True, _ = infile)
 			infile = bamfile
-		if doMarkdup:
-			rmdup = ""
-			if doRmdup:
-				rmdup = "REMOVE_DUPLICATES=true"
+		if steps.markdup:
 			mfile = "/dev/null"
-			bamfile = "{{job.outdir}}/{{i.infile | fn}}.dedup.bam"
-			cmd = '{{args.picard}} MarkDuplicates %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s" M="%s" ' % (mem, tmpdir, tmpdir, infile, bamfile, mfile)
-			runcmd (cmd)
+			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
+			shellpicard.MarkDuplicates(REMOVE_DUPLICATES = 'true' if steps.rmdup else 'false', TMP_DIR = tmpdir, I = infile, O = bamfile, M = mfile).run()
 			if infile != {{i.infile | quote}}:
-				remove (infile)
+				shell.rm(f = True, _ = infile)
 			infile = bamfile
-		if doIndex:
-			cmd = '{{args.picard}} BuildBamIndex %s -Djava.io.tmpdir="%s" TMP_DIR="%s" I="%s" O="%s"' % (mem, tmpdir, tmpdir, infile, {{o.idxfile | quote}})
-			runcmd (cmd)
+		if steps.index:
+			shellpicard.BuildBamIndex(TMP_DIR = tmpdir, I = infile, O = outfile + '.bai').run()
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
-				move (infile + '.bai', outfile + '.bai')
-			move (infile, outfile)
-{% endcase %}
+				shell.mv(infile + '.bai', outfile + '.bai')
+			shell.mv(infile, outfile)
 
-	if not path.exists ({{o.idxfile | quote}}):
-		symlink (outfile, {{o.idxfile | quote}})
+def run_elprep():
+	elpsh = Shell(subcmd = True, equal = ' ').elprep
 
+	params['log-path']          = joboutdir
+	params['nr-of-threads']     = nthread
+	params['sorting-order']     = sortby if steps.sort else 'keep'
+	params['mark-duplicates']   = steps.markdup
+	params['remove-duplicates'] = steps.rmdup
+	params['']                  = [infile, outfile]
+	if steps.markdup:
+		params['mark-optical-duplicates'] = path.join(joboutdir, inprefix + '.opticaldups.txt')
+	if steps.recal:
+		params['bqsr']           = path.join(joboutdir, inprefix + '.bqsr.txt')
+		params['bqsr-reference'] = ref + '.elprep'
+		if knownSites:
+			params['known-sites'] = knownSites
+	
+	elpsh.filter(**params).run()
+	if steps.index:
+		subshell
+	
+
+tools = {
+	'biobambam': run_biobambam,
+	'sambamba' : run_sambamba,
+	'samtools' : run_sambamba,
+	'picard'   : run_picard,
+	'elprep'   : run_elprep
+}
+
+try:
+	tools[tool]()
+except KeyError:
+	raise KeyError('Tool {!r} not supported.'.format(tool))
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise

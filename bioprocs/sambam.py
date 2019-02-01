@@ -14,55 +14,66 @@ from . import params, bashimport, rimport
 	`infile:file`: The input file
 @output:
 	`outfile:file`: The output bam file
-	`idxfile:file`: The index of the output bam file
-	- If args.index == False, it'll a link to outfile and should be never used
 @args:
 	`tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools)
 	`sambamba`         : The path of the sambamba. Default: sambamba
 	`picard`           : The path of the picard. Default: picard
 	`biobambam_bamsort`: The path of the biobambam's bamsort. Default: bamsort
-	`samtools`         : The path of the samtools. Default: samtools
-	`sort`             : Do sorting? Default: True
-	- If input is sam, tool is biobambam, this should be True
-	`index`            : Do indexing? Default: True
-	`markdup`          : Do duplicates marking? Default: False
-	- `rmdup` for samtools will be called
-	`rmdup`            : Do duplicates removing? Default: False
-	`tmpdir`           : The tmp dir used to store tmp files. Default: <system default tmpdir>
-	`sortby`           : Sort by coordinate or queryname. Default: coordinate
-	`nthread`          : Default: 1
-	`informat`         : The format of input file. Default: <detect from extension> (sam|bam)
-	`params`           : Other parameters for `tool`. Defaut: ""
-	`mem`              : The max memory to use. Default: "16G"
-	- Unit could be G/g/M/m
-	- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+	`samtools`: The path of the samtools. Default: samtools
+	`sort`    : Do sorting? Default: True
+		- If input is sam, tool is biobambam, this should be True
+	`index`  : Do indexing? Default: True
+	`markdup`: Do duplicates marking? Default: False
+		- `rmdup` for samtools will be called
+	`rmdup`  : Do duplicates removing? Default: False
+	`tmpdir` : The tmp dir used to store tmp files. Default: <system default tmpdir>
+	`sortby` : Sort by coordinate or queryname. Default: coordinate
+	`nthread`: Default: 1
+	`infmt`  : The format of input file. Default: <detect from extension> (sam|bam)
+	`params` : Other parameters for `tool`. Defaut: ""
+	`mem`    : The max memory to use. Default: "16G"
+		- Unit could be G/g/M/m
+		- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 @requires:
 	[sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html) if `args.tool` == samtools or reference used but not indexed.
 	[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 	[biobambam](https://github.com/gt1/biobambam2)
 	[samtools](https://github.com/samtools/samtools)
 """
-pSam2Bam                        = Proc(desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
-pSam2Bam.input                  = "infile:file"
-pSam2Bam.output                 = "outfile:file:{{i.infile | fn}}.bam, idxfile:file:{{i.infile | fn}}.bam.bai"
-pSam2Bam.errhow                 = 'retry'
-pSam2Bam.args.tool              = "biobambam"
-pSam2Bam.args.sambamba          = params.sambamba.value
-pSam2Bam.args.picard            = params.picard.value
-pSam2Bam.args.biobambam_bamsort = params.biobambam_bamsort.value
-pSam2Bam.args.samtools          = params.samtools.value
-pSam2Bam.args.sort              = True
-pSam2Bam.args.index             = True
-pSam2Bam.args.markdup           = False
-pSam2Bam.args.rmdup             = False
-pSam2Bam.args.tmpdir            = params.tmpdir.value
-pSam2Bam.args.sortby            = "coordinate"
-pSam2Bam.args.nthread           = 1
-pSam2Bam.args.infmt             = ""
-pSam2Bam.args.params            = Box()
-pSam2Bam.args.mem               = params.mem16G.value
-pSam2Bam.lang                   = params.python.value
-pSam2Bam.script                 = "file:scripts/sambam/pSam2Bam.py"
+pSam2Bam                = Proc(desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
+pSam2Bam.input          = "infile:file"
+pSam2Bam.output         = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai"
+pSam2Bam.errhow         = 'retry'
+pSam2Bam.args.tool      = "elprep"
+pSam2Bam.args.sambamba  = params.sambamba.value
+pSam2Bam.args.picard    = params.picard.value
+pSam2Bam.args.biobambam = params.biobambam_bamsort.value
+pSam2Bam.args.samtools  = params.samtools.value
+pSam2Bam.args.elprep    = params.elprep.value
+pSam2Bam.args.steps     = Box(
+	sort    = True,
+	index   = True,
+	markdup = True,
+	rmdup   = True,
+	recal   = True
+)
+pSam2Bam.args.tmpdir     = params.tmpdir.value
+pSam2Bam.args.sortby     = "coordinate"
+pSam2Bam.args.nthread    = 1
+pSam2Bam.args.params     = Box()
+pSam2Bam.args.mem        = params.mem16G.value
+pSam2Bam.args.ref        = params.ref.value
+pSam2Bam.args.knownSites = ''
+pSam2Bam.preCmd       = """
+{{bashimport}} reference.bash
+export elprep={{args.elprep | quote}}
+if [[ {{args.tool | quote}} == "elprep" ]]; then
+	reference elprep {{args.ref | squote}}
+fi
+"""
+pSam2Bam.envs.bashimport = bashimport
+pSam2Bam.lang            = params.python.value
+pSam2Bam.script          = "file:scripts/sambam/pSam2Bam.py"
 
 """
 @name:
@@ -126,45 +137,53 @@ pBamMarkdup.script                 = "file:scripts/sambam/pBamMarkdup.py"
 @output:
 	`outfile:file`: The output bam file
 @args:
-	`tool`                         : The tool used to recalibrate the bam file. Default: `gatk` (gatk|bamutil)
-	`gatk`                         : The path of gatk, including java path. Default: `gatk`
-	`samtools`                     : The path of samtools. Default: `samtools`
-	`bamutil`                      : The path of bamutil. Default: `bam`
-	`picard`                       : The path of picard. Default: `picard`
-	`paramsRealignerTargetCreator` : Other parameters for `gatk RealignerTargetCreator`. Defaut: ""
-	`paramsIndelRealigner`         : Other parameters for `gatk IndelRealigner`. Defaut: ""
-	`paramsBaseRecalibrator`       : Other parameters for `gatk BaseRecalibrator`. Defaut: ""
-	`paramsPrintReads`             : Other parameters for `gatk PrintReads`. Defaut: ""
-	`params`                       : Other parameters for `bam recab`. Default: ""
-	`mem`                          : The max memory to use. Default: "32G"
-	`knownSites`                   : The known polymorphic sites to mask out. Default: "" (Required for GATK)
-	`ref`                          : The reference file. Required.
-	- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+	`tool`    : The tool used to recalibrate the bam file. Default: `gatk` (gatk|bamutil)
+	`gatk`    : The path of gatk, including java path. Default: `gatk`
+	`samtools`: The path of samtools. Default: `samtools`
+	`bamutil` : The path of bamutil. Default: `bam`
+	`picard`  : The path of picard. Default: `picard`
+	`params`  : Other parameters for `bam recab`. Default         : ""
+		`RealignerTargetCreator` : Other parameters for `gatk RealignerTargetCreator`. Defaut: ""
+		`IndelRealigner`         : Other parameters for `gatk IndelRealigner`. Defaut: ""
+		`BaseRecalibrator`       : Other parameters for `gatk BaseRecalibrator`. Defaut: ""
+		`PrintReads`             : Other parameters for `gatk PrintReads`. Defaut: ""
+	`mem`: The max memory to use. Default: "32G"
+	`knownSites`: The known polymorphic sites to mask out. Default: "" (Required for GATK)
+	`ref`: The reference file. Required.
+		- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 @requires:
 	[gatk](https://software.broadinstitute.org/gatk)
 	[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
 	[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
 """
-pBamRecal                                   = Proc(desc = 'Recalibrate a bam file.')
-pBamRecal.input                             = "infile:file"
-pBamRecal.output                            = "outfile:file:{{i.infile | fn}}.bam, idxfile:file:{{i.infile | fn}}.bam.bai"
-pBamRecal.args.tool                         = "bamutil"
-pBamRecal.args.gatk                         = params.gatk.value
-pBamRecal.args.samtools                     = params.samtools.value
-pBamRecal.args.picard                       = params.picard.value
-pBamRecal.args.bamutil                      = params.bamutil.value
-pBamRecal.args.paramsRealignerTargetCreator = Box()
-pBamRecal.args.paramsIndelRealigner         = Box()
-pBamRecal.args.paramsBaseRecalibrator       = Box()
-pBamRecal.args.paramsPrintReads             = Box()
-pBamRecal.args.params                       = Box()
-pBamRecal.args.ref                          = params.ref.value
-pBamRecal.args.tmpdir                       = params.tmpdir.value
-pBamRecal.args.knownSites                   = ""
-pBamRecal.args.mem                          = params.mem32G.value
-#pBamRecal.beforeCmd                         = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
-pBamRecal.lang                              = params.python.value
-pBamRecal.script                            = "file:scripts/sambam/pBamRecal.py"
+pBamRecal               = Proc(desc = 'Recalibrate a bam file.')
+pBamRecal.input         = "infile:file"
+pBamRecal.output        = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai"
+pBamRecal.args.tool     = "bamutil"
+pBamRecal.args.gatk     = params.gatk.value
+pBamRecal.args.samtools = params.samtools.value
+pBamRecal.args.picard   = params.picard.value
+pBamRecal.args.bamutil  = params.bamutil.value
+pBamRecal.args.params   = Box(
+	# For GATK
+	# RealignerTargetCreator = Box(),
+	# IndelRealigner         = Box(),
+	# BaseRecalibrator       = Box(),
+	# PrintReads             = Box()
+)
+pBamRecal.args.ref        = params.ref.value
+pBamRecal.args.tmpdir     = params.tmpdir.value
+pBamRecal.args.knownSites = params.dbsnp.value
+pBamRecal.args.nthread    = 1
+pBamRecal.args.mem        = params.mem32G.value
+pBamRecal.envs.bashimport = bashimport
+pBamRecal.preCmd          = """
+{{bashimport}} reference.bash
+export samtools={{args.samtools | squote}}
+reference fasta {{args.ref | squote}}
+"""
+pBamRecal.lang   = params.python.value
+pBamRecal.script = "file:scripts/sambam/pBamRecal.py"
 
 """
 @name:
@@ -233,7 +252,6 @@ pBamReorder.args.params         = Box()
 pBamReorder.args.tmpdir         = params.tmpdir.value
 pBamReorder.args.mem            = params.mem4G.value
 pBamReorder.args.ref            = params.ref.value
-#pBamReorder.beforeCmd           = checkref.fa.bash + buildref.dict.bash
 pBamReorder.lang                = params.python.value
 pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
 
@@ -289,17 +307,17 @@ pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 @output:
 	`outfile:file`: The vcf file containing the mutations
 @args:
-	`tool`:         The tool used to call mutations. Default: gatk (vardict, snvsniffer, platypus, strelka)
-	`gatk`:         The path of gatk. Default: gatk
-	`vardict`:      The path of vardict. Default: vardict
-	`snvsniffer`:   The path of snvsniffer. Default: SNVSniffer
-	`samtools`:     The path of samtools. Default: samtools (used to generate reference index)
-	`platypus`:     The path of platypus. Default: platypus
-	`strelka`:      The path of strelka. Default: configureStrelkaGermlineWorkflow.py
-	`configParams`: The params for `strelka` configuration. Default: ""
-	`picard`:       The path of picard. Default: picard
-	`mem`:          The memory to be used. Default: 32G
-	- will be converted to -Xms4G -Xmx32G for java programs
+	`tool`      : The tool used to call mutations. Default: gatk (vardict, snvsniffer, platypus, strelka)
+	`gatk`      : The path of gatk. Default: gatk
+	`vardict`   : The path of vardict. Default: vardict
+	`snvsniffer`: The path of snvsniffer. Default: SNVSniffer
+	`samtools`  : The path of samtools. Default: samtools (used to generate reference index)
+	`platypus`  : The path of platypus. Default: platypus
+	`strelka`   : The path of strelka. Default: configureStrelkaGermlineWorkflow.py
+	`cfgParams` : The params for `strelka` configuration. Default: ""
+	`picard`    : The path of picard. Default: picard
+	`mem`       : The memory to be used. Default: 32G
+		- will be converted to -Xms4G -Xmx32G for java programs
 	`ref`:          The reference file. Required.
 	`gz`:           Gzip output file? Default: False
 	`tmpdir`:       The temporary directory. Default: <system tmpdir>
@@ -313,39 +331,34 @@ pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
 	[platypus](http://www.well.ox.ac.uk/platypus)
 	[strelka@2.7.1+](https://github.com/Illumina/strelka)
 """
-pBam2Gmut                      = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
-pBam2Gmut.input                = "infile:file"
-pBam2Gmut.output               = "outfile:file:{{i.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pBam2Gmut.lang                 = params.python.value
-pBam2Gmut.args.tool            = "strelka"
-pBam2Gmut.args.gatk            = params.gatk.value
-pBam2Gmut.args.vardict         = params.vardict.value
-pBam2Gmut.args.snvsniffer      = params.snvsniffer.value
-pBam2Gmut.args.samtools        = params.samtools.value # required by SNVSniffer to generate a bam header file
-pBam2Gmut.args.platypus        = params.platypus.value
-pBam2Gmut.args.picard          = params.picard.value
-pBam2Gmut.args.strelka         = params.strelka_germ.value
-pBam2Gmut.args.mem             = params.mem24G.value
-pBam2Gmut.args.ref             = params.ref.value
-pBam2Gmut.args.tmpdir          = params.tmpdir.value
-pBam2Gmut.args.configParams    = Box() # only for strelka
-pBam2Gmut.args.params          = Box()
-pBam2Gmut.args.gz              = False
-pBam2Gmut.args.nthread         = 1 # for gatk and platypus
-#pBam2Gmut.beforeCmd           = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
-pBam2Gmut.envs.bashimport      = bashimport
-pBam2Gmut.beforeCmd            = """
-{{bashimport}} reference.bash __init__.bash
-if ! reffai_check '{{args.ref}}.fai'; then
-	logger "Reference not indexed, indexing it ..."
-	reffai_do '{{args.ref}}' '{{args.ref}}.fai' '{{args.samtools}}'
-fi
-if ! refdict_check '{{args.ref | prefix}}.dict'; then
-	logger "Reference not dicted, dicting it ..."
-	refdict_do '{{args.ref}}' '{{args.ref | prefix}}.dict' '{{args.picard}}'
-fi
+pBam2Gmut                 = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
+pBam2Gmut.input           = "infile:file"
+pBam2Gmut.output          = "outfile:file:{{i.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2Gmut.args.tool       = "strelka"
+pBam2Gmut.args.gatk       = params.gatk.value
+pBam2Gmut.args.vardict    = params.vardict.value
+pBam2Gmut.args.snvsniffer = params.snvsniffer.value
+pBam2Gmut.args.samtools   = params.samtools.value # required by SNVSniffer to generate a bam header file
+pBam2Gmut.args.platypus   = params.platypus.value
+pBam2Gmut.args.picard     = params.picard.value
+pBam2Gmut.args.strelka    = params.strelka_germ.value
+pBam2Gmut.args.mem        = params.mem24G.value
+pBam2Gmut.args.ref        = params.ref.value
+pBam2Gmut.args.tmpdir     = params.tmpdir.value
+pBam2Gmut.args.cfgParams  = Box() # only for strelka
+pBam2Gmut.args.params     = Box()
+pBam2Gmut.args.gz         = False
+pBam2Gmut.args.nthread    = 1 # for gatk and platypus
+pBam2Gmut.envs.bashimport = bashimport
+pBam2Gmut.preCmd          = """
+{{bashimport}} reference.bash
+export samtools={{args.samtools | squote}}
+export picard={{args.picard | squote}}
+reference fasta {{args.ref | squote}}
+reference picard {{args.ref | squote}}
 """
-pBam2Gmut.script               = "file:scripts/sambam/pBam2Gmut.py"
+pBam2Gmut.lang   = params.python.value
+pBam2Gmut.script = "file:scripts/sambam/pBam2Gmut.py"
 
 """
 @name:
@@ -383,40 +396,35 @@ pBam2Gmut.script               = "file:scripts/sambam/pBam2Gmut.py"
 	[platypus](http://www.well.ox.ac.uk/platypus)
 	[strelka@2.7.1+](https://github.com/Illumina/strelka)
 """
-pBamPair2Smut                     = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
-pBamPair2Smut.input               = "tumor:file, normal:file"
-pBamPair2Smut.output              = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-pBamPair2Smut.args.tool           = 'strelka'
-pBamPair2Smut.args.gatk           = params.gatk.value # required for strelka
-pBamPair2Smut.args.somaticsniper  = params.somaticsniper.value
-pBamPair2Smut.args.strelka        = params.strelka_soma.value # @2.7.1
-pBamPair2Smut.args.snvsniffer     = params.snvsniffer.value
-pBamPair2Smut.args.virmid         = params.virmid.value
-pBamPair2Smut.args.vardict        = params.vardict.value
-pBamPair2Smut.args.samtools       = params.samtools.value
-pBamPair2Smut.args.picard         = params.picard.value
-pBamPair2Smut.args.configParams   = Box() # only for strelka
-pBamPair2Smut.args.params         = Box()
-pBamPair2Smut.args.mem            = params.mem24G.value
-pBamPair2Smut.args.ref            = params.ref.value
-pBamPair2Smut.args.gz             = False
-pBamPair2Smut.args.nthread        = 1
-pBamPair2Smut.args.tmpdir         = params.tmpdir.value
-pBamPair2Smut.envs.bashimport      = bashimport
-#pBamPair2Smut.beforeCmd           = checkref.fa.bash + buildref.fai.bash + buildref.dict.bash
-pBamPair2Smut.beforeCmd            = """
-{{bashimport}} reference.bash __init__.bash
-if ! reffai_check '{{args.ref}}.fai'; then
-	logger "Reference not indexed, indexing it ..."
-	reffai_do '{{args.ref}}' '{{args.ref}}.fai' '{{args.samtools}}'
-fi
-if ! refdict_check '{{args.ref | prefix}}.dict'; then
-	logger "Reference not dicted, dicting it ..."
-	refdict_do '{{args.ref}}' '{{args.ref | prefix}}.dict' '{{args.picard}}'
-fi
+pBamPair2Smut                    = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
+pBamPair2Smut.input              = "tumor:file, normal:file"
+pBamPair2Smut.output             = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBamPair2Smut.args.tool          = 'strelka'
+pBamPair2Smut.args.gatk          = params.gatk.value # required for strelka
+pBamPair2Smut.args.somaticsniper = params.somaticsniper.value
+pBamPair2Smut.args.strelka       = params.strelka_soma.value # @2.7.1
+pBamPair2Smut.args.snvsniffer    = params.snvsniffer.value
+pBamPair2Smut.args.virmid        = params.virmid.value
+pBamPair2Smut.args.vardict       = params.vardict.value
+pBamPair2Smut.args.samtools      = params.samtools.value
+pBamPair2Smut.args.picard        = params.picard.value
+pBamPair2Smut.args.configParams  = Box() # only for strelka
+pBamPair2Smut.args.params        = Box()
+pBamPair2Smut.args.mem           = params.mem24G.value
+pBamPair2Smut.args.ref           = params.ref.value
+pBamPair2Smut.args.gz            = False
+pBamPair2Smut.args.nthread       = 1
+pBamPair2Smut.args.tmpdir        = params.tmpdir.value
+pBamPair2Smut.envs.bashimport    = bashimport
+pBamPair2Smut.preCmd             = """
+{{bashimport}} reference.bash
+export samtools={{args.samtools | squote}}
+export picard={{args.picard | squote}}
+reference fasta {{args.ref | squote}}
+reference picard {{args.ref | squote}}
 """
-pBamPair2Smut.lang                = params.python.value
-pBamPair2Smut.script              = "file:scripts/sambam/pBamPair2Smut.py"
+pBamPair2Smut.lang   = params.python.value
+pBamPair2Smut.script = "file:scripts/sambam/pBamPair2Smut.py"
 
 """
 @name:
@@ -458,7 +466,7 @@ pBamStats.args.cutoff      = 0
 pBamStats.args.nfeats      = 40
 pBamStats.args.feature     = 'wgs'
 pBamStats.envs.rimport     = rimport
-pBamStats.beforeCmd        = """
+pBamStats.preCmd        = """
 if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
 	echo "Plots can only be done with proc.forks >= 2." 1>&2
 	exit 1
@@ -583,8 +591,15 @@ pBam2Counts.args.tool           = 'htseq'
 pBam2Counts.args.htseq          = params.htseq_count.value
 pBam2Counts.args.params         = Box()
 pBam2Counts.args.refgene        = params.refexon.value
-#pBam2Counts.envs.runcmd         = runcmd.py
-#pBam2Counts.envs.params2CmdArgs = helpers.params2CmdArgs.py
-#pBam2Counts.beforeCmd           = checkref.gene.bash
 pBam2Counts.lang                = params.python.value
 pBam2Counts.script              = "file:scripts/sambam/pBam2Counts.py"
+
+pBamIndex               = Proc(desc = 'Index bam files')
+pBamIndex.input         = 'infile:file'
+pBamIndex.output        = 'outfile:file:{{i.infile | bn}}, outidx:file:{{i.infile | bn}}.bai'
+pBamIndex.args.tool     = 'samtools'
+pBamIndex.args.samtools = params.samtools.value
+pBamIndex.args.params   = Box(b = True)
+pBamIndex.args.nthread  = 1
+pBamIndex.lang          = params.python.value
+pBamIndex.script        = "file:scripts/sambam/pBamIndex.py"

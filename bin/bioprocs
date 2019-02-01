@@ -11,7 +11,7 @@ from os import path, listdir
 from glob import glob
 from collections import OrderedDict
 from pyppl import PyPPL, utils, Channel
-from pyppl.parameters import commands, HelpAssembler, COLORS
+from pyppl.parameters import commands, HelpAssembler, Fore, Back, Style
 from tempfile import gettempdir
 
 METHODS   = None
@@ -49,7 +49,7 @@ def highlight(origin, q, incase = True):
 		occurs = [m.start() for m in re.finditer(q, origin)]
 	lengths = [len(q)] * len(occurs)
 	return substr_replace(origin, occurs, lengths, [
-		'{}{}{}'.format(COLORS.red + COLORS.bold, origin[occur:occur+length], COLORS.end)
+		'{}{}{}'.format(Fore.RED + Style.BRIGHT, origin[occur:occur+length], Style.RESET_ALL)
 		for occur, length in zip(occurs, lengths)])
 
 class Methods(object):
@@ -342,11 +342,14 @@ class Process(Command):
 		self.procfile = path.join(path.dirname(bioprocs.__file__), self.module + '.py')
 		if not path.isfile(self.procfile):
 			raise ValueError('No such module: {}'.format(self.module))
-
-		self.proc = getattr(
-			__import__('bioprocs.' + self.module, fromlist = ['bioprocs']), 
-			self.procname
-		)
+		
+		try:
+			self.proc = getattr(
+				__import__('bioprocs.' + self.module, fromlist = ['bioprocs']), 
+				self.procname
+			)
+		except AttributeError:
+			raise AttributeError('Module {!r} does not have such process: {!r}'.format(self.module, self.procname))
 
 	def getDocstr(self):
 		with open(self.procfile) as f:
@@ -408,7 +411,7 @@ class Process(Command):
 	def helpitems(self, blocks):
 		
 		def tokendefault(desc, token):
-			return [desc[:desc.index(token)] + HelpAssembler().theme['default'] + desc[desc.index(token):] + COLORS.end]
+			return [desc[:desc.index(token)] + HelpAssembler().theme['default'] + desc[desc.index(token):] + Style.RESET_ALL]
 
 		def sepdefault(desc):
 			desc = desc.replace('    ', '  ').replace('\t', '  ')

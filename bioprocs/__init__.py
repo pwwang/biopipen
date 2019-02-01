@@ -135,6 +135,8 @@ DEFAULTS = {
 	"cutadapt.desc"            : "The path of cutadapt.",
 	"dwgsim"                   : "dwgsim",
 	"dwgsim.desc"              : "The path of dwgsim.",
+	"elprep"                   : "elprep",
+	"elprep.desc"              : "The path of elprep.",
 	"fastqc"                   : "fastqc",
 	"fastqc.desc"              : "The path of fastqc.",
 	"fimo"                     : "fimo",

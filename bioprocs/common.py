@@ -224,6 +224,14 @@ pMergeFiles.envs.fs2name = fs2name
 pMergeFiles.lang         = params.python.value
 pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
 
+pGrep              = Proc(desc = 'Filter a file using linux grep')
+pGrep.input        = 'infile:file'
+pGrep.output       = 'outfile:file:{{i.infile | bn}}'
+pGrep.args.params  = Box()
+pGrep.args.keyword = ''
+pGrep.lang         = params.python.value
+pGrep.script       = "file:scripts/common/pGrep.py"
+
 """
 @name:
 	pSplitRows

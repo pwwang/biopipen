@@ -95,21 +95,22 @@ plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), dev
 	plot.xy(data, plotfile, x = x, y = y, ggs = ggs, devpars = devpars)
 }
 
-# plot the ROC curve
-# see: https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html
-# @params:
-#	`data`: The data for plotting.
-#		- If stacked, then there should be only 3 columns: D, M, name
-#		- Else the 1st column should be D, and rest are `<M1>, <M2>, ...`
-#		- D must be binary.
-#	`plotfile`: The file to save the plot.
-#	`stacked` : Whether the data is stacked(melt). See `data`
-#	`params`  : The parameters for plotting. 
-#		- `returnAUC`: Return list of AUC values of this function
-#		- `showAUC`  : Show AUC on the plot
-#		- `combine`  : Combine the ROC in one plot?
-#		- `labels`   : Show some values on the curve for some cutting points
-plot.roc = function(data, plotfile, stacked = F, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+
+plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	# plot the ROC curve
+	# see: https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html
+	# @params:
+	#	`data`: The data for plotting.
+	#		- If stacked, then there should be only 3 columns: D, M, name
+	#		- Else the 1st column should be D, and rest are `<M1>, <M2>, ...`
+	#		- D must be binary.
+	#	`plotfile`: The file to save the plot.
+	#	`stacked` : Whether the data is stacked(melt). See `data`
+	#	`params`  : The parameters for plotting. 
+	#		- `returnAUC`: Return list of AUC values of this function
+	#		- `showAUC`  : Show AUC on the plot
+	#		- `combine`  : Combine the ROC in one plot?
+	#		- `labels`   : Show some values on the curve for some cutting points
 	require('plotROC')
 
 	if (stacked) {

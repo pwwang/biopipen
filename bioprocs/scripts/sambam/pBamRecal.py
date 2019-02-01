@@ -1,128 +1,122 @@
-
-from os import path, makedirs, remove, symlink
 from sys import stderr
-from shutil import rmtree, move
-from time import sleep
-
 from pyppl import Box
-from bioprocs.utils import runcmd, mem2, cmdargs, logger, reference
+from os import path
+from bioprocs.utils import shell, mem2
 from bioprocs.utils.poll import Poll
+from bioprocs.utils.shell import Shell
+from bioprocs.utils.reference import bamIndex
 
-# check index
-'''
-if not path.exists ({ {bring.infile[0] | quote}}):
-	stderr.write ("Input file '{ {i._infile}}' is not indexed.")
-	exit (1)
-'''
-
-if not path.exists ({{args.knownSites | quote}}) and {{args.tool | quote}} == 'gatk':
-	stderr.write ("knownSites file is required by GATK but is not specified (args.knownSites) or not exists.")
-	exit (1)
-
-workdir  = {{proc.workdir | quote}}
-outdir   = {{job.outdir | quote}}
-ref      = {{args.ref | quote}}
-ref2     = path.join(outdir, path.basename(ref))
-joblen   = {{proc.size}}
-jobindex = {{job.index}}
-tmpdir   = {{ args.tmpdir | quote }}
-tmpdir   = path.join (tmpdir, "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
+infile     = {{ i.infile | quote}}
+bamIndex(infile, samtools = None)
+outfile    = {{ o.outfile | quote}}
+outprefix  = {{ o.outfile | prefix | quote}}
+tool       = {{ args.tool | quote}}
+gatk       = {{ args.gatk | quote}}
+samtools   = {{ args.samtools | quote}}
+picard     = {{ args.picard | quote}}
+bamutil    = {{ args.bamutil | quote}}
+params     = {{ args.params | repr}}
+ref        = {{ args.ref | quote}}
+tmpdir     = {{ args.tmpdir | quote}}
+knownSites = {{ args.knownSites | quote}}
+argsmem    = {{ args.mem | quote}}
+nthread    = {{ args.nthread | quote}}
+joboutdir  = {{ job.outdir | quote}}
+joblen     = {{ proc.size | repr}}
+jobindex   = {{ job.index | repr}}
+workdir    = {{ proc.workdir | quote}}
+tmpdir     = path.join (tmpdir, "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
+# pass the index file
+shell.ln_s(infile + '.bai', outfile + '.bai')
 if not path.exists (tmpdir):
-	makedirs (tmpdir)
+	shell.mkdir (tmpdir, p = True)
+shell.TOOLS.update(dict(
+	gatk     =  gatk,
+	samtools = samtools,
+	bamutil  = bamutil
+))
 
-poll = Poll(workdir, joblen, jobindex)
+# checks
+if tool == 'gatk' and not path.isfile(knownSites):
+	raise ValueError("knownSites file is required by GATK but is not specified (args.knownSites) or not exists.")
 
-def checkAndBuildIndex(indexes, buildcmd, buildcmd2):
-	def todo(indexes, ref, buildcmd, ref2, buildcmd2):
-		logger.info('Checking if reference file is indexed.')
-		if not reference.checkIndex(indexes):
-			logger.info('No, trying to build index at the first job.')
-			reference.buildIndex(ref, buildcmd, ref2, buildcmd2)
-	poll.first(todo, indexes, ref, buildcmd, ref2, buildcmd2)
-	return ref2 if path.exists(ref2) else ref
+def run_gatk():
+	mem = mem2(argsmem, '-jdict')
+	intfile = path.join(joboutdir, outprefix + '.intervals')
 
-params = {{args.params}}
-try:
-{% case args.tool %}
-	########## gatk
-	{% when 'gatk' %}
-	mem                          = mem2({{ args.mem | quote }}, 'java')
-	intfile                      = "{{o.outfile | prefix}}.intervals"
-	paramsRealignerTargetCreator = {{args.paramsRealignerTargetCreator}}
+	mem['-Djava.io.tmpdir={}'.format(shell.shquote(tmpdir))] = True
+	gatksh = Shell(equal = ' ', dash = '-').gatk
 
-	paramsRealignerTargetCreator['R'] = ref
-	paramsRealignerTargetCreator['I'] = {{i.infile | quote}}
-	paramsRealignerTargetCreator['o'] = intfile
+	rtcparams    = params.get('RealignerTargetCreator', Box())
+	rtcparams.T  = 'RealignerTargetCreator'
+	rtcparams.R  = ref
+	rtcparams.I  = infile
+	rtcparams.o  = intfile
+	rtcparams.nt = nthread
+	rtcparams._  = list(mem.keys())
+	gatksh(**rtcparams).run()
 
-	runcmd ('{{args.gatk}} -T RealignerTargetCreator %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsRealignerTargetCreator, dash = '-', equal = ' ')))
+	bamfileir    = path.join(joboutdir, outprefix + '.ir.bam')
+	irparams     = params.get('IndelRealigner', Box())
+	irparams.T   = 'IndelRealigner'
+	irparams.R   = ref
+	irparams.I   = infile
+	irparams.o   = bamfileir
+	irparams._   = list(mem.keys())
 
-	bamfileIr            = "{{o.outfile | prefix}}.ir.bam"
-	paramsIndelRealigner = {{args.paramsIndelRealigner}}
+	irparams.targetIntervals = intfile
+	gatksh(**irparams).run()
 
-	paramsIndelRealigner['R']               = ref
-	paramsIndelRealigner['I']               = {{i.infile | quote}}
-	paramsIndelRealigner['o']               = bamfileIr
-	paramsIndelRealigner['targetIntervals'] = intfile
+	recaltable   = path.join(joboutdir, outprefix + '.recaltable')
+	brparams     = params.get('BaseRecalibrator', Box())
+	brparams.T   = 'BaseRecalibrator'
+	brparams.R   = ref
+	brparams.I   = bamfileir
+	brparams.o   = recaltable
+	brparams.nct = nthread
+	brparams._   = list(mem.keys())
 
-	runcmd ('{{args.gatk}} -T IndelRealigner %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsIndelRealigner, dash = '-', equal = ' ')))
+	brparams.knownSites = knownSites
+	gatksh(**brparams).run()
 
-	recaltable             = "{{o.outfile | prefix}}.recaltable"
-	paramsBaseRecalibrator = {{args.paramsBaseRecalibrator}}
+	prparams     = params.get('PrintReads', Box())
+	prparams.T   = 'PrintReads'
+	prparams.R   = ref
+	prparams.I   = bamfileir
+	prparams.o   = outfile
+	prparams.nct = nthread
+	prparams._   = list(mem.keys())
+	gatksh(**prparams).run()
 
-	paramsBaseRecalibrator['R']          = ref
-	paramsBaseRecalibrator['I']          = bamfileIr
-	paramsBaseRecalibrator['o']          = recaltable
-	paramsBaseRecalibrator['knownSites'] = {{args.knownSites}}
+	shell.rm(bamfileir, f = True)
+	shell.mv(outprefix + '.bai', outfile + '.bai')
 
-	runcmd ('{{args.gatk}} -T BaseRecalibrator %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsBaseRecalibrator, dash = '-', equal = ' ')))
+def run_bamutil():
+	bush = Shell(subcmd = True, equal = ' ').bamutil
+	if knownSites:
+		params.dbsnp = knownSites
+	params['in'] = infile
 
-	paramsPrintReads = {{args.paramsPrintReads}}
-
-	paramsPrintReads['R']    = ref
-	paramsPrintReads['I']    = bamfileIr
-	paramsPrintReads['o']    = {{o.outfile | quote}}
-	paramsPrintReads['BQSR'] = recaltable
-
-	runcmd ('{{args.gatk}} -T PrintReads %s -Djava.io.tmpdir="%s" %s' % (mem, tmpdir, cmdargs(paramsPrintReads, dash = '-', equal = ' ')))
-	remove (bamfileIr)
-	move ("{{o.outfile | prefix}}.bai", "{{o.idxfile}}")
-
-	########## bamutil
-	{% when 'bamutil' %}
-	{% if args.knownSites %}
-	params['dbsnp'] = {{args.knownSites | quote}}
-	{% endif %}
-	params['in']      = {{i.infile | quote}}
-	params['out']     = {{o.outfile | quote}}
-	params['refFile'] = ref
-
-	cmd     = '{{args.bamutil}} recab %s'
-	ref2    = "{{ proc.workdir }}/0/{{ args.ref | bn }}"
-	params2 = {k:v for k,v in params.items()}
-
-	params2['refFile'] = ref2
-
-	cmd1 = cmd % cmdargs(params, equal = ' ')
-	cmd2 = cmd % cmdargs(params2, equal = ' ')
-	refcache = "{{ args.ref | prefix }}-bs.umfa"
-
-	if path.exists(refcache):
-		runcmd(cmd1)
+	params.out     = outfile
+	params.refFile = ref
+	params.verbose = True
+	refcache       = path.splitext(ref)[0] + '-bs.umfa'
+	if not path.isfile(refcache):
+		poll = Poll(workdir, joblen, jobindex)
+		poll.first(lambda **kwargs: bush.recal(**kwargs).run(), **params)
 	else:
-		r = checkAndBuildIndex([refcache], cmd1, cmd2)
+		bush.recab(**params).run()
 
-		params2['refFile'] = r
-		{% if job.index > 0 %}
-		runcmd(cmd % cmdargs(params2, equal = ' '))
-		{% endif %}
-
-	cmd = '{{args.samtools}} index "{{o.outfile}}" "{{o.idxfile}}"'
-	runcmd (cmd)
-
-{% endcase %}
-
+tools = dict(
+	gatk    = run_gatk,
+	bamutil = run_bamutil
+)
+try:
+	tools[tool]()
+except KeyError:
+	raise KeyError('Tool {!r} not supported.'.format(tool))
 except Exception as ex:
 	stderr.write ("Job failed: %s" % str(ex))
 	raise
 finally:
-	rmtree (tmpdir)
+	shell.rm(tmpdir, r = True, f = True)

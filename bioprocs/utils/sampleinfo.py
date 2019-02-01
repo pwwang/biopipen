@@ -1,3 +1,4 @@
+from os import path
 from bioprocs.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvRecord
 
@@ -145,12 +146,12 @@ class SampleInfo2(object):
 		group0    = self.mat[0].Group
 		return [group0] + [group for group in allgroups if group != group0]
 
-	def getSamples(self, by = None, value = None):
+	def getSamples(self, by = None, value = None, returnAll = False):
 		if by and by not in self.cnames:
 			raise SampleInfoException('{!r} is not a valid column name.'.format(by))
 		if not by:
-			return [r.Sample for r in self.mat]
-		return [r.Sample for r in self.mat if r[by] == value]
+			return [r if returnAll else r.Sample for r in self.mat]
+		return [r if returnAll else r.Sample for r in self.mat if r[by] == value]
 
 	def sampleInfo(self, sample, info = None):
 		if not info:
@@ -175,5 +176,19 @@ class SampleInfo2(object):
 		patient = self.sampleInfo(sample, info = 'Patient')[0]
 		samples = self.getSamples(by = 'Patient', value = patient)
 		return samples[1 - samples.index(sample)]
+
+	def getPairedSamples(self, datadir = None):
+		patients = self.allPatients()
+		groups   = self.allGroups()
+		ret = []
+		for patient in patients:
+			samples = self.getSamples(by = 'Patient', value = patient, returnAll = True)
+			s1 = path.join(datadir, samples[0].Sample) if datadir else samples[0].Sample
+			s2 = path.join(datadir, samples[1].Sample) if datadir else samples[1].Sample
+			if samples[0].Group == groups[0]:
+				ret.append((s1, s2))
+			else:
+				ret.append((s2, s1))
+		return ret
 
 

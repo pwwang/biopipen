@@ -306,22 +306,32 @@ pFastqSE2Sam.script             = "file:scripts/fastx/pFastqSE2Sam.py"
 	`refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built. Default: ''
 	`params` : Other params for tool, default: ''
 """
-pFastq2Sam                    = Proc(desc = 'Map cleaned paired fastq file to reference genome.')
-pFastq2Sam.input              = "fq1:file, fq2:file"
-pFastq2Sam.output             = "outfile:file:{{i.fq1 | getFastqFn | lambda x: x[:-2] if x.endswith('_1') or x.endswith('_2') else x }}.{{args.outfmt}}"
-pFastq2Sam.args.outfmt        = "sam"
-pFastq2Sam.args.tool          = 'bwa'
-pFastq2Sam.args.bwa           = params.bwa.value
-pFastq2Sam.args.ngm           = params.ngm.value
-pFastq2Sam.args.star          = params.star.value
-pFastq2Sam.args.samtools      = params.samtools.value
-pFastq2Sam.args.bowtie2       = params.bowtie2.value
-pFastq2Sam.args.bowtie2_build = params.bowtie2.value + '-build'
-pFastq2Sam.args.rg            = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = '')
-pFastq2Sam.args.ref           = params.ref.value
-pFastq2Sam.args.refgene       = params.refgene.value
-pFastq2Sam.args.nthread       = 1
-pFastq2Sam.args.params        = Box()
-pFastq2Sam.envs.getFastqFn    = _getFastqFn
+pFastq2Sam                 = Proc(desc = 'Map cleaned paired fastq file to reference genome.')
+pFastq2Sam.input           = "fq1:file, fq2:file"
+pFastq2Sam.output          = "outfile:file:{{i.fq1, i.fq2 | path.commonprefix | path.basename | .rstrip: '_. ,[]' }}.sam"
+pFastq2Sam.args.tool       = 'bwa'
+pFastq2Sam.args.bwa        = params.bwa.value
+pFastq2Sam.args.ngm        = params.ngm.value
+pFastq2Sam.args.star       = params.star.value
+pFastq2Sam.args.samtools   = params.samtools.value
+pFastq2Sam.args.bowtie2    = params.bowtie2.value
+pFastq2Sam.args.rg         = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = '')
+pFastq2Sam.args.ref        = params.ref.value
+pFastq2Sam.args.refgene    = params.refgene.value
+pFastq2Sam.args.nthread    = 1
+pFastq2Sam.args.params     = Box()
+pFastq2Sam.envs.path       = path
+pFastq2Sam.envs.bashimport = bashimport
+pFastq2Sam.preCmd          = """
+{{bashimport}} reference.bash
+export bwa={{args.bwa | squote}}
+export ngm={{args.ngm | squote}}
+export star={{args.star | squote}}
+export samtools={{args.samtools | squote}}
+export bowtie2={{args.bowtie2 | squote}}
+export nthread={{args.nthread}}
+export refgene={{args.refgene | squote}}
+reference {{args.tool | squote}} {{args.ref | squote}}
+"""
 pFastq2Sam.lang               = 'python'
 pFastq2Sam.script             = "file:scripts/fastx/pFastq2Sam.py"
