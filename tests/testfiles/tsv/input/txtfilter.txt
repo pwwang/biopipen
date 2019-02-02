@@ -1,1 +1,0 @@
-../../utils/input/txtfilter.txt

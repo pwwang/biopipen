@@ -1,2 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Merc 450SE	275.8	180	3.07	4.07	17.4	0	0	3

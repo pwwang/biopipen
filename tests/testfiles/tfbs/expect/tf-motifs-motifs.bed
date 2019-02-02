@@ -1,8 +1,0 @@
-#Chr	Start	End	Name	NormedScore	Strand	Motif	Sequence	StartOnSeq	StopOnSeq	Score	PValue	QValue	MatchedSeq	UCSCLink
-chr4	74734027	74734043	TEAD1::CXCL1	771	+	TEAD1_full_2	CXCL1::chr4:74733110-74737110	917	933	12.74	1.27e-05	0.202	GAATACCAGGAAGTCCT	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr4:74734027-74734043
-chr4	74735022	74735038	TEAD1::CXCL1	455	-	TEAD1_full_2	CXCL1::chr4:74733110-74737110	1912	1928	11.04	2.93e-05	0.234	AAATTCCCGGAGTTCCA	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr4:74735022-74735038
-chr4	74734052	74734059	TEAD3::CXCL1	855	-	TEAD3_DBD_2	CXCL1::chr4:74733110-74737110	942	949	13.1939	1.79e-05	0.286	ACATTCCA	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr4:74734052-74734059
-chr19	571292	571299	TEAD3::BSG	736	+	TEAD3_DBD_2	BSG::chr19:569297-573297	1995	2002	12.551	5.04e-05	0.403	acattcct	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr19:571292-571299
-chr19	571291	571305	TEAD3::BSG	1000	+	M6508_1.02	BSG::chr19:569297-573297	1994	2008	13.9709	2.5e-06	0.0399	cacattcctgcccct	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr19:571291-571305
-chr4	74735022	74735038	TEAD3::CXCL1	608	-	TEAD3_DBD_1	CXCL1::chr4:74733110-74737110	1912	1928	11.8636	1.94e-05	0.31	AAATTCCCGGAGTTCCA	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr4:74735022-74735038
-chr4	74733962	74733978	TEAD3::CXCL1	0	+	TEAD3_DBD_1	CXCL1::chr4:74733110-74737110	852	868	8.59091	9.02e-05	0.719	AAATGACTGAAATTCCT	https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=chr4:74733962-74733978

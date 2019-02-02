@@ -1,7 +1,0 @@
-##META/A: 
-##META/B: 
-##META/D: 
-##META/E: 
-#A	B	D	E
-a1	b1	d1	e1
-a2	b2	d2	e2

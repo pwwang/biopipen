@@ -1,7 +1,0 @@
-variable	survrate1	suvrate2	ssratio
-v1	0.4	0.6	1
-v2	0.4	0.6	2
-v3	0.4	0.6	0.5
-v4	0.3	0.5	1
-v5	0.3	0.5	2
-v6	0.3	0.5	0.5

@@ -1,4 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Chrysler Imperial	440	230	3.23	5.345	17.42	0	0	3
-Fiat 128	78.7	66	4.08	2.2	19.47	1	1	4
-Honda Civic	75.7	52	4.93	1.615	18.52	1	1	4

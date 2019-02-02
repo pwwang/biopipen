@@ -1,4 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Merc 450SLC	275.8	180	3.07	3.78	18	0	0	3
-Cadillac Fleetwood	472	205	2.93	5.25	17.98	0	0	3
-Lincoln Continental	460	215	3	5.424	17.82	0	0	3

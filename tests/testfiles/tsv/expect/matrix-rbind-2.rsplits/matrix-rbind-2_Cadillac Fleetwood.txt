@@ -1,2 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Cadillac Fleetwood	472	205	2.93	5.25	17.98	0	0	3

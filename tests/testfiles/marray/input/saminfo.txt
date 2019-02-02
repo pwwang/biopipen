@@ -1,9 +1,0 @@
-Group	Batch
-20131118_Human-Brain-AM7962-130ng_rep1	Brain	Batch1
-20131118_Human-Brain-AM7962-130ng_rep2	Brain	Batch1
-20131118_Human-Brain-AM7962-130ng_rep3	Brain	Batch1
-20131118_Human-Brain-AM7962-130ng_rep4	Brain	Batch1
-20131118_Human-Lung-AM7968-130ng_rep1	Lung	Batch2
-20131118_Human-Lung-AM7968-130ng_rep2	Lung	Batch2
-20131118_Human-Lung-AM7968-130ng_rep3	Lung	Batch2
-20131118_Human-Lung-AM7968-130ng_rep4	Lung	Batch2

@@ -1,7 +1,0 @@
-# to be skipped
-# Another line skipped
-m2	2
-m3	3
-m4	4
-m5	5
-m6	6

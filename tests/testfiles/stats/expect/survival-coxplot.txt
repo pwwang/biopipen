@@ -1,4 +1,0 @@
-var	method	test	df	pvalue	hr	ci95_lower	ci95_upper
-Ge-ne	logrank	2.268	3	5.19E-01	0.951	0.785	1.152
-Ge-ne	waldtest	2.270	3	5.19E-01	0.951	0.785	1.152
-Ge-ne	likeratio	2.268	3	5.19E-01	0.951	0.785	1.152

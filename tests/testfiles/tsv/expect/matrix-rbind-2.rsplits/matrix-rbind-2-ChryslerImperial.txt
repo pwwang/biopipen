@@ -1,2 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Chrysler Imperial	440	230	3.23	5.345	17.42	0	0	3

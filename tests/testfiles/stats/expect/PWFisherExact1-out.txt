@@ -1,7 +1,0 @@
-Name1	Name2	ApBp	ApBa	AaBp	AaBa	confInt1	confInt2	oddsRatio	pval	qval	alternative	method
-A	B	1	6	6	7	0.004	2.586	0.210	3.29E-01	1.00E+00	two.sided	Fisher's Exact Test for Count Data
-A	C	4	3	10	3	0.037	4.540	0.420	6.13E-01	1.00E+00	two.sided	Fisher's Exact Test for Count Data
-A	D	4	3	9	4	0.062	6.206	0.609	6.51E-01	1.00E+00	two.sided	Fisher's Exact Test for Count Data
-B	C	5	2	9	4	0.106	16.405	1.105	1.00E+00	1.00E+00	two.sided	Fisher's Exact Test for Count Data
-B	D	5	2	8	5	0.158	22.058	1.529	1.00E+00	1.00E+00	two.sided	Fisher's Exact Test for Count Data
-C	D	9	5	4	2	0.061	9.444	0.905	1.00E+00	1.00E+00	two.sided	Fisher's Exact Test for Count Data

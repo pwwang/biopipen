@@ -1,4 +1,0 @@
-ROW2	2
-ROW2	3
-ROW4	6
-ROW5	7

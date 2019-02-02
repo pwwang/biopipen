@@ -1,2 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Lincoln Continental	460	215	3	5.424	17.82	0	0	3

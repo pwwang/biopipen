@@ -1,6 +1,0 @@
-confInt1	0.6613959
-confInt2	14.49973
-oddsRatio	2.915714
-pval	0.1907926
-alternative	two.sided
-method	Fisher's Exact Test for Count Data

@@ -1,2 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Honda Civic	75.7	52	4.93	1.615	18.52	1	1	4

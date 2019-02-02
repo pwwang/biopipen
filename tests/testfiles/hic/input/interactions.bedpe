@@ -1,9 +1,0 @@
-chr1	1	100	chrM	1	100	Interaction1	100	+	-
-chr2	1	100	chr1	1	100	Interaction2	100	+	-
-chr3	1	100	chr2	1	100	Interaction3	100	+	-
-chr4	200	400	chr3	200	400	Interaction4	100	+	-
-chr5	200	400	chr4	200	400	Interaction5	100	+	-
-chr6	200	400	chr5	200	400	Interaction6	100	+	-
-chr7	600	800	chr6	600	800	Interaction7	100	+	-
-chr8	600	800	chr7	600	800	Interaction8	100	+	-
-chr9	600	800	chr8	600	800	Interaction9	100	+	-

@@ -1,9 +1,0 @@
-#Col1	Col2
-3	C|6
-2	B|2
-1	A|4
-4	c|3
-4	c|3
-5	b|5
-6	a|1
-#whatever to be appended

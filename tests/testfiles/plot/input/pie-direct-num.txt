@@ -1,2 +1,0 @@
-Group1	Group2	Group3
-25	26	43

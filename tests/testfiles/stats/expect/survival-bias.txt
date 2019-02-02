@@ -1,2 +1,0 @@
-var	method	test	df	pvalue
-Gene	logrank	NA	1	NA

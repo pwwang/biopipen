@@ -1,4 +1,0 @@
-Xsquare	1.706667
-df	1
-pval	0.1914184
-method	Pearson's Chi-squared test with Yates' continuity correction

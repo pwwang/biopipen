@@ -1,2 +1,0 @@
-disp	hp	drat	wt	qsec	vs	am	gear
-Toyota Corolla	71.1	65	4.22	1.835	19.9	1	1	4

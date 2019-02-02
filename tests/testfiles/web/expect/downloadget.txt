@@ -1,9 +1,0 @@
-dcc3ea27079aa6dc3f9deccd7275e0f8  hg38.2bit
-1d97953254e25acd112a94895f01c039  hg38.agp.gz
-1c9dcaddfa41027f17cd8f7a82c7293b  hg38.fa.gz
-435423b167c13a2388d5691dc10a4750  hg38.fa.masked.gz
-820796b72974d077281b3386c4fb8295  hg38.fa.out.gz
-7645bc6e919eeb19bfc62451afc3c248  hg38.trf.bed.gz
-a5aa5da14ccf3d259c4308f7b2c18cb0  hg38.chromFa.tar.gz
-e9fddcb1663dd303f1f5d6cbb71d6a82  hg38.chromFaMasked.tar.gz
-92910523b903753216ac18945c788d81  hg38.fa.align.gz
