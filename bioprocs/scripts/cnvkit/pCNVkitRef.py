@@ -1,21 +1,22 @@
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
 cnvkit   = {{args.cnvkit | quote}}
-infiles  = {{i.infiles | asquote | quote}}
+infiles  = {{i.infiles | repr}}
 ref      = {{args.ref | quote}}
 outfile  = {{o.outfile | quote}}
 params   = {{args.params}}
 nthread  = {{args.nthread | repr}}
 
+shell.TOOLS['cnvkit'] = cnvkit
+envs = dict(
+	OPENBLAS_NUM_THREADS = nthread,
+	OMP_NUM_THREADS      = nthread,
+	NUMEXPR_NUM_THREADS  = nthread,
+	MKL_NUM_THREADS      = nthread
+)
+ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs).cnvkit
+
 params.o = outfile
 params.f = ref
-openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
-cmd      = '{nthr}; {cnvkit} reference {infiles} {params}'
-
-runcmd(cmd.format(**Box(
-	nthr     = openblas_nthr,
-	cnvkit   = cnvkit,
-	params   = cmdargs(params, equal = ' '),
-	infiles  = infiles
-)))
+ckshell.reference(*infiles, **params).run()

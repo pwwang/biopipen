@@ -1,5 +1,5 @@
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
 cnvkit   = {{args.cnvkit | quote}}
 infile   = {{i.tgfile | quote}}
@@ -8,13 +8,11 @@ ref      = {{args.ref | quote}}
 outfile  = {{o.outfile | quote}}
 params   = {{args.params}}
 
+shell.TOOLS['cnvkit'] = cnvkit
+ckshell = shell.Shell(subcmd = True, equal = ' ').cnvkit
+
 params.o = outfile
 params.f = ref
 params.t = infile
 params.a = atgfile
-cmd      = '{cnvkit} reference {params}'
-
-runcmd(cmd.format(**Box(
-	cnvkit   = cnvkit,
-	params   = cmdargs(params, equal = ' ')
-)))
+ckshell.reference(**params).run()

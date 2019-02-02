@@ -1,10 +1,10 @@
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
-params = Box()
-params['i'] = {{i.infile | quote}}
+params = {{args.params | repr}}
+params.i = {{i.infile | quote}}
+params._stdout = {{o.outfile | quote}}
 
-params.update({{args.params}})
+shell.TOOLS.bedtools = {{args.bedtools | quote}}
+shell.Shell(subcmd = True, dash = '-', equal = '=').bedtools.merge(**params).run()
 
-cmd  = "{{args.bedtools}} merge %s > {{o.outfile | squote}}" % cmdargs(params, dash = '-', equal = ' ')
-runcmd(cmd)

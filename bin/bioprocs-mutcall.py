@@ -110,12 +110,10 @@ else:
 
 if 'germ' in params.muts:
 	pBam2Gmut.depends      = pBamDir
-	pBam2Gmut.args.nthread = params.nthread
 	pBam2Gmut.input        = lambda ch: ch.expand(0, "*.bam")
 	pBam2Gmut.exdir        = path.join(params.exdir, 'germline')
 if 'soma' in params.muts:
 	pBamPair2Smut.depends      = pBamDir
-	pBamPair2Smut.args.nthread = params.nthread
 	pBamPair2Smut.input        = lambda ch: saminfo.toChannel(ch.get(), paired = True)
 	pBamPair2Smut.exdir        = path.join(params.exdir, 'somatic')
 if 'scnv' in params.muts:
@@ -123,18 +121,20 @@ if 'scnv' in params.muts:
 	aBam2SCNV.pBamDir.depends   = pBamDir
 	aBam2SCNV.pSampleInfo.input = [params.saminfo]
 	aBam2SCNV.exdir             = path.join(params.exdir, 'scnv')
-	aBam2SCNV.args.nthread      = params.nthread
 	starts.append(aBam2SCNV)
 if 'gcnv' in params.muts:
 	aBam2GCNV.on('plots')
 	aBam2GCNV.pBamDir.depends   = pBamDir
 	aBam2GCNV.pSampleInfo.input = [params.saminfo]
 	aBam2GCNV.exdir             = path.join(params.exdir, 'gcnv')
-	aBam2GCNV.args.nthread      = params.nthread
 	starts.append(aBam2GCNV)
 	
 config = {
-	'default': {'forks': int(params.forks), 'ppldir': params.ppldir},
+	'default': {
+		'forks' : int(params.forks),
+		'ppldir': params.ppldir,
+		'args'  : {'nthread': params.nthread}
+	},
 	'_log' : {'file': params.logfile}
 }
 

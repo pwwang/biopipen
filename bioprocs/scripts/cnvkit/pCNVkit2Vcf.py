@@ -1,5 +1,5 @@
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
 cnvkit  = {{args.cnvkit | quote}}
 infile  = {{i.cnsfile | quote}}
@@ -7,13 +7,14 @@ outfile = {{o.outfile | quote}}
 params  = {{args.params}}
 nthread = {{args.nthread | repr}}
 
-params.o = outfile
-openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
-cmd      = '{nthr}; {cnvkit} export vcf \'{infile}\' {params}'
+shell.TOOLS['cnvkit'] = cnvkit
+envs = dict(
+	OPENBLAS_NUM_THREADS = nthread,
+	OMP_NUM_THREADS      = nthread,
+	NUMEXPR_NUM_THREADS  = nthread,
+	MKL_NUM_THREADS      = nthread
+)
+ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs).cnvkit
 
-runcmd(cmd.format(**Box(
-	nthr     = openblas_nthr,
-	cnvkit   = cnvkit,
-	params   = cmdargs(params, equal = ' '),
-	infile   = infile
-)))
+params.o = outfile
+ckshell.export('vcf', infile, **params).run()

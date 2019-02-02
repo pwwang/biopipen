@@ -1,13 +1,14 @@
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
-params = Box()
+params = {{args.params | repr}}
+
 params['a']           = {{i.afile | quote}}
 params['b']           = {{i.bfile | quote}}
-params['wao']         = True
-params['nonamecheck'] = True
-       
-params.update({{args.params}})
+params['wao']         = params.get('wao', True)
+params['nonamecheck'] = params.get('nonamecheck', True)
+params['_stdout']     = {{o.outfile | quote}}
 
-cmd = '{{args.bedtools}} intersect %s > {{o.outfile | quote}}' % cmdargs(params, dash='-', equal=' ')
-runcmd(cmd)
+shell.TOOLS.bedtools = {{ args.bedtools | quote}}
+shell.Shell(subcmd = True, dash = '-', equal = ' ').bedtools.intersect(**params).run()
+

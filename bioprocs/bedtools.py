@@ -106,15 +106,15 @@ pBedClosest2.script = '''
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedFlank                     = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
-pBedFlank.input               = "infile:file"
-pBedFlank.output              = "outfile:file:{{i.infile | fn}}.flank.bed"
-pBedFlank.args.extend         = False
-pBedFlank.args.gsize          = params.gsize.value
-pBedFlank.args.params         = Box()
-pBedFlank.args.bedtools       = params.bedtools.value
-pBedFlank.lang                = params.python.value
-pBedFlank.script              = "file:scripts/bedtools/pBedFlank.py"
+pBedFlank               = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
+pBedFlank.input         = "infile:file"
+pBedFlank.output        = "outfile:file:{{i.infile | fn}}.flank.bed"
+pBedFlank.args.extend   = False
+pBedFlank.args.gsize    = params.gsize.value
+pBedFlank.args.params   = Box()
+pBedFlank.args.bedtools = params.bedtools.value
+pBedFlank.lang          = params.python.value
+pBedFlank.script        = "file:scripts/bedtools/pBedFlank.py"
 
 """
 @name:
@@ -293,7 +293,8 @@ pBedRandom.output        = "outfile:file:random.L{{i.l}}.N{{i.n}}.S{{args.seed}}
 pBedRandom.args.seed     = None
 pBedRandom.args.bedtools = params.bedtools.value
 pBedRandom.args.gsize    = params.gsize.value
-pBedRandom.script        = "file:scripts/bedtools/pBedRandom.bash"
+pBedRandom.lang          = params.python.value
+pBedRandom.script        = "file:scripts/bedtools/pBedRandom.py"
 # endregion
 
 """

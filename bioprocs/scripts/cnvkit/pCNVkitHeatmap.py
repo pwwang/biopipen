@@ -1,14 +1,23 @@
 from os import path
 from copy import deepcopy
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
 cnvkit   = {{args.cnvkit | quote}}
-cnfiles  = {{i.cnfiles | asquote | quote}}
+cnfiles  = {{i.cnfiles | repr}}
 outdir   = {{o.outdir | quote}}
 regions  = {{args.regions | repr}}
 params   = {{args.params}}
 nthread  = {{args.nthread | repr}}
+
+shell.TOOLS['cnvkit'] = cnvkit
+envs = dict(
+	OPENBLAS_NUM_THREADS = nthread,
+	OMP_NUM_THREADS      = nthread,
+	NUMEXPR_NUM_THREADS  = nthread,
+	MKL_NUM_THREADS      = nthread
+)
+ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
 
 for region in regions:
 	if not region:
@@ -36,12 +45,5 @@ for region in regions:
 	if rgion:
 		iparams.c = rgion
 
-	cmd = '{nthr}; {cnvkit} heatmap {cnfiles} {params}'
-	runcmd(cmd.format(**Box(
-		nthr     = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread),
-		cnvkit   = cnvkit,
-		params   = cmdargs(iparams, equal = ' '),
-		cnfiles  = cnfiles
-	)))
-
+	ckshell.heatmap(*cnfiles, **iparams)
 

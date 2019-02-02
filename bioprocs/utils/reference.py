@@ -49,7 +49,7 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	# [1]some -> some
 	rname = fname.split(']', 1)[1] if fname.startswith('[') else fname
 	
-	samtools = Shell({'samtools': samtools}, subcommand = True).samtools if samtools else None
+	samtools = shell.Shell({'samtools': samtools}, subcmd = True).samtools if samtools else None
 	# /path/to/some.bam.bai 
 	expectedIndex = path.join(dname, rname + ext)
 	if path.isfile(expectedIndex):

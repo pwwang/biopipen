@@ -1,3 +1,5 @@
+from os import getcwd
+from pyppl import Box
 from pyppl.utils import cmd
 from collections import OrderedDict
 
@@ -6,7 +8,7 @@ try:  # py3
 except ImportError:  # py2
 	from pipes import quote as shquote
 
-TOOLS = dict()
+TOOLS = Box()
 
 class RuncmdException(Exception):
 	pass
@@ -60,11 +62,17 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 	if '_stdout' in params:
 		outfile = params['_stdout']
 		del params['_stdout']
+	aoutfile = None
+	if '__stdout' in params:
+		aoutfile = params['__stdout']
+		del params['__stdout']
+	if outfile and aoutfile:
+		raise ValueError('Cannot have both out files to write and append to.')
 	for key, val in params.items():
 		if key in ['', '_']:
 			if not isinstance(val, (list, tuple)):
 				val = [val]
-			ret.extend([shquote(v) for v in val])
+			ret.extend([shquote(str(v)) for v in val])
 			continue
 		# allow comments for parameters for the same key
 		key = key.split('#')[0].strip()
@@ -96,6 +104,9 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 	if outfile:
 		ret.append('>')
 		ret.append(shquote(outfile))
+	elif aoutfile:
+		ret.append('>>')
+		ret.append(shquote(aoutfile))
 	return ' '.join(ret)
 
 def runcmd(cmd2run, shell = True, quit = True):
@@ -215,6 +226,9 @@ class Shell(object):
 		ignorefalse = True,
 		base        = None,
 		stdin       = None,
+		envs        = None,
+		env         = None,
+		cwd         = None,
 		prevcmd     = None):
 		self.dash          = dash
 		self.equal         = equal
@@ -224,6 +238,8 @@ class Shell(object):
 		self.tools         = TOOLS
 		self.base          = base
 		self.stdin         = stdin
+		self.cwd           = cwd or getcwd()
+		self.envs          = envs or env or {}
 		self.prevcmd       = prevcmd
 		self.targs         = {'': []}
 		self._subcmdCalled = False
@@ -243,7 +259,8 @@ class Shell(object):
 			cmdargs(
 				kwargs, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, ignorefalse = self.ignorefalse)
 		)
-		cmdobj = cmd.Cmd(cmd2run, stdin = self.stdin, shell = True)
+		
+		cmdobj = cmd.Cmd(cmd2run, stdin = self.stdin, shell = True, env = self.envs, cwd = self.cwd)
 		
 		if self.prevcmd:
 			cmdobj.cmd = '{} | {}'.format(self.prevcmd, cmdobj.cmd)
@@ -284,9 +301,12 @@ mkdir = lambda *args,  **kwargs: Shell().mkdir(*args, **kwargs).run()
 ln    = lambda *args,  **kwargs: Shell().ln(*args, **kwargs).run()
 ln_s  = lambda source, dest: ln(source, dest, s = True)
 
-head = lambda *args, **kwargs: Shell().head(*args, **kwargs).run()
-tail = lambda *args, **kwargs: Shell().tail(*args, **kwargs).run()
-grep = lambda *args, **kwargs: Shell().grep(*args, **kwargs).run()
+head  = lambda *args, **kwargs: Shell().head(*args, **kwargs).run()
+tail  = lambda *args, **kwargs: Shell().tail(*args, **kwargs).run()
+grep  = lambda *args, **kwargs: Shell().grep(*args, **kwargs).run()
+sort  = lambda *args, **kwargs: Shell(dash = '-', equal = ' ').grep(*args, **kwargs).run()
+uniq  = lambda *args, **kwargs: Shell().uniq(*args, **kwargs).run()
+touch = lambda *args, **kwargs: Shell().touch(*args, **kwargs).run()
 
 kill  = lambda *args, **kwargs: Shell().kill(*args, **kwargs).run()
 kill9 = lambda *procids: kill(**{'9': True, '': procids})

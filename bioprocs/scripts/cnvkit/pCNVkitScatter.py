@@ -1,7 +1,7 @@
 from os import path
 from copy import deepcopy
 from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
+from bioprocs.utils import shell
 
 cnvkit   = {{args.cnvkit | quote}}
 cnrfile  = {{i.cnrfile | quote}}
@@ -11,7 +11,14 @@ regions  = {{args.regions | repr}}
 nthread  = {{args.nthread | repr}}
 params   = {{args.params}}
 
-openblas_nthr = "export OPENBLAS_NUM_THREADS={nthread}; export OMP_NUM_THREADS={nthread}; export NUMEXPR_NUM_THREADS={nthread}; export MKL_NUM_THREADS={nthread}".format(nthread = nthread)
+shell.TOOLS['cnvkit'] = cnvkit
+envs = dict(
+	OPENBLAS_NUM_THREADS = nthread,
+	OMP_NUM_THREADS      = nthread,
+	NUMEXPR_NUM_THREADS  = nthread,
+	MKL_NUM_THREADS      = nthread
+)
+ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
 
 for region in regions:
 	if not region:
@@ -49,12 +56,6 @@ for region in regions:
 	if genes:
 		iparams.g = genes
 
-	cmd = '{openblas}; {cnvkit} scatter \'{cnrfile}\' {params}'
-	runcmd(cmd.format(**Box(
-		openblas = openblas_nthr,
-		cnvkit   = cnvkit,
-		params   = cmdargs(iparams, equal = ' '),
-		cnrfile  = cnrfile
-	)))
+	ckshell.scatter(cnrfile, **iparams).run()
 
 

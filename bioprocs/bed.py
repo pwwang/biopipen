@@ -25,19 +25,19 @@ from . import params
 	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 	[`bedops`](https://github.com/bedops/bedops)
 """
-pBedSort                     = Proc(desc = 'Sort bed files.')
-pBedSort.input               = "infile:file"
-pBedSort.output              = "outfile:file:{{i.infile | bn}}"
-pBedSort.args.tool           = 'sort'
-pBedSort.args.bedtools       = params.bedtools.value
-pBedSort.args.bedops         = params.bedops_sort.value
-pBedSort.args.mem            = '8G'
-pBedSort.args.by             = 'coord'
-pBedSort.args.unique         = True
-pBedSort.args.params         = Box()
-pBedSort.args.tmpdir         = params.tmpdir.value
-pBedSort.lang                = params.python.value
-pBedSort.script              = "file:scripts/bed/pBedSort.py"
+pBedSort               = Proc(desc = 'Sort bed files.')
+pBedSort.input         = "infile:file"
+pBedSort.output        = "outfile:file:{{i.infile | bn}}"
+pBedSort.args.tool     = 'sort'
+pBedSort.args.bedtools = params.bedtools.value
+pBedSort.args.bedops   = params.bedops_sort.value
+pBedSort.args.mem      = '8G'
+pBedSort.args.by       = 'coord'
+pBedSort.args.unique   = True
+pBedSort.args.params   = Box()
+pBedSort.args.tmpdir   = params.tmpdir.value
+pBedSort.lang          = params.python.value
+pBedSort.script        = "file:scripts/bed/pBedSort.py"
 
 """
 @name:
