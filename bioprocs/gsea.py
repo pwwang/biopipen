@@ -135,22 +135,23 @@ pGSEA.script         = "file:scripts/gsea/pGSEA.r"
 	  - Multiple dbs separated by comma (,)
 	`plot`: Whether to plot the result. Default: True
 	`devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-@requires:
-	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
 """
-pEnrichr              = Proc()
-pEnrichr.input        = "infile:file"
-pEnrichr.output       = "outdir:dir:{{i.infile | fn}}.enrichr"
-pEnrichr.lang         = params.python.value
-pEnrichr.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#')
-pEnrichr.args.top     = 20
-pEnrichr.args.cutoff  = 1
-pEnrichr.args.genecol = ''
-pEnrichr.args.libs    = "KEGG_2016"
-pEnrichr.args.devpars = Box(res = 300, width = 2000, height = 2000)
-pEnrichr.args.plot    = True
-pEnrichr.errhow       = 'retry'
-pEnrichr.script       = "file:scripts/gsea/pEnrichr.py"
+pEnrichr               = Proc()
+pEnrichr.input         = "infile:file"
+pEnrichr.output        = "outdir:dir:{{i.infile | fn}}.enrichr"
+pEnrichr.lang          = params.python.value
+pEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+pEnrichr.args.top      = 20
+pEnrichr.args.cutoff   = 1
+pEnrichr.args.genecol  = ''
+pEnrichr.args.nthread  = 1
+pEnrichr.args.Rscript  = params.Rscript.value
+pEnrichr.args.pathview = Box() # Box(fccol = 2)
+pEnrichr.args.libs     = "KEGG_2016"
+pEnrichr.args.devpars  = Box(res = 300, width = 2000, height = 2000)
+pEnrichr.args.plot     = True
+pEnrichr.errhow        = 'retry'
+pEnrichr.script        = "file:scripts/gsea/pEnrichr.py"
 
 
 """
