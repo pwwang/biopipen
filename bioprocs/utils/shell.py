@@ -254,6 +254,9 @@ class Shell(object):
 			cmdobj.cmd = '{} | {}'.format(self.prevcmd, cmdobj.cmd)
 		return ShellResult(cmdobj, self.tools)
 
+	def __getitem__(self, tool):
+		return getattr(self, tool)
+
 	def __getattr__(self, tool):
 		tool = self.tools.get(tool, tool)
 		# there is not subcommand or now it's already in subcommand

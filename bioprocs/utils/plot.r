@@ -118,8 +118,12 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 			stop('Expect 3 columns (D, M, name) in stacked data to plot ROC.')
 		colnames(data) = c('D', 'M', 'name')
 	} else {
-		data = melt_roc(data, 1, 2:ncol(data))
-		colnames(data) = c('D', 'M', 'name')
+		if (ncol(data) > 2) {
+			data = melt_roc(data, 1, 2:ncol(data))
+			colnames(data) = c('D', 'M', 'name')
+		} else {
+			data = data.frame(D = data[, 1], M = data[, 2], name = colnames(data)[2])
+		}
 	}
 	cnames = levels(factor(data$name))
 
