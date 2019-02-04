@@ -9,10 +9,10 @@ params   = {{args.params}}
 
 shell.TOOLS['cnvkit'] = cnvkit
 envs = dict(
-	OPENBLAS_NUM_THREADS = nthread,
-	OMP_NUM_THREADS      = nthread,
-	NUMEXPR_NUM_THREADS  = nthread,
-	MKL_NUM_THREADS      = nthread
+	OPENBLAS_NUM_THREADS = 1,
+	OMP_NUM_THREADS      = 1,
+	NUMEXPR_NUM_THREADS  = 1,
+	MKL_NUM_THREADS      = 1
 )
 ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs).cnvkit
 

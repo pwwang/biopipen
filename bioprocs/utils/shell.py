@@ -1,12 +1,14 @@
-from os import getcwd
 from pyppl import Box
 from pyppl.utils import cmd
 from collections import OrderedDict
+from subprocess import list2cmdline
 
 try:  # py3
-	from shlex import quote as shquote
+	from shlex import quote
 except ImportError:  # py2
-	from pipes import quote as shquote
+	from pipes import quote
+
+shquote = lambda x: quote(str(x))
 
 TOOLS = Box()
 
@@ -72,7 +74,7 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 		if key in ['', '_']:
 			if not isinstance(val, (list, tuple)):
 				val = [val]
-			ret.extend([shquote(str(v)) for v in val])
+			ret.extend([shquote(v) for v in val])
 			continue
 		# allow comments for parameters for the same key
 		key = key.split('#')[0].strip()
@@ -83,7 +85,7 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 			if not val: continue
 			item += equal if equal != 'auto' else '=' if len(key)>1 else ' '
 			if duplistkey:
-				ret.extend([item + shquote(str(v)) for v in val])
+				ret.extend([item + shquote(v) for v in val])
 			else:
 				ret.append(item + shquote(str(val[0])))
 				ret.extend([shquote(str(v)) for v in val[1:]])
@@ -98,7 +100,7 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 				ret.append(item)
 		else:
 			item += equal if equal != 'auto' else '=' if len(key)>1 else ' '
-			item += shquote(str(val))
+			item += shquote(val)
 			ret.append(item)
 
 	if outfile:
@@ -109,28 +111,22 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 		ret.append(shquote(aoutfile))
 	return ' '.join(ret)
 
-def runcmd(cmd2run, shell = True, quit = True):
+def runcmd(cmd2run, raiseExc = True, **kwargs):
 	from . import logger
+	logger.info('RUNNING: %s', list2cmdline(cmd2run) if isinstance(cmd2run, list) else cmd2run)
 	# stdin to avoid blocking
-	c = cmd.Cmd(cmd2run, shell = shell, stdin = None)
-	cmdstr = ' '.join(c.cmd) if isinstance(c.cmd, list) else c.cmd
-	logger.info('Running command at PID: %s' % c.pid)
-	logger.info(cmdstr)
+	kwargs['shell'] = kwargs.get('shell', True)
+	c = cmd.Cmd(cmd2run, stdin = None, **kwargs)
+	logger.info('- PID: %s', c.pid)
 
-	while c.p.poll() is None:
-		line = c.p.stderr.readline()
-		if not line:
-			continue
-		logger.info('STDERR: {}'.format(line.rstrip()))
-	for line in c.p.stderr:
-		logger.info('STDERR: {}'.format(line.rstrip()))
+	for line in c.readline():
+		logger.info('- STDERR: %s', line.rstrip())
 
-	c.rc = c.p.wait()
-	logger.info('-'*80)
-	logger.info('Return code: %s' % c.rc)
-	if quit and c.rc != 0:
-		raise RuncmdException(cmdstr)
-	return c.rc == 0
+	logger.info('- RETURNCODE: %s', c.rc)
+	logger.info('-' * 80)
+	if raiseExc and c.rc != 0:
+		raise RuncmdException(c.cmd)
+	return c
 
 def runcmd2(tool, params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefalse = True, quit = True):
 	s = Shell(tools = {'tool': tool}, dash = dash, equal = equal, duplistkey = duplistkey, ignorefalse = ignorefalse)
@@ -139,12 +135,12 @@ def runcmd2(tool, params, dash = 'auto', equal = 'auto', duplistkey = False, ign
 		raise RuncmdException(r.cmd)
 	return r
 
-def call(command, args, quit = True):
-	bioprocs = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'bioprocs')
-	if not isinstance(args, list):
-		args = shlex.split(args)
-	args = [bioprocs, command] + args
-	return runcmd(args, quit)
+# def call(command, args, quit = True):
+# 	bioprocs = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'bioprocs')
+# 	if not isinstance(args, list):
+# 		args = shlex.split(args)
+# 	args = [bioprocs, command] + args
+# 	return runcmd(args, quit)
 
 class ShellResult(object):
 
@@ -159,25 +155,18 @@ class ShellResult(object):
 	def __repr__(self):
 		return '<ShellResult {!r}>'.format(self.cmdobj)
 
-	def run(self, quit = True):
+	def run(self, raiseExc = True):
 		if not self.done:
 			from . import logger
-			logger.info('Running command at PID: %s' % self.cmdobj.pid)
-			logger.info(self.cmdobj.cmd)
-			while self.cmdobj.p.poll() is None:
-				line = self.cmdobj.p.stderr.readline()
-				if not line:
-					break
-				logger.info('STDERR: {}'.format(line.rstrip()))
-			# if there are still something
-			for line in self.cmdobj.p.stderr:
-				logger.info('STDERR: {}'.format(line.rstrip()))
-			self.cmdobj.rc     = self.cmdobj.p.wait()
-			self.cmdobj.stdout = self.cmdobj.p.stdout.read()
-			self.done          = True
-			logger.info('Return code: %s' % self.cmdobj.rc)
+			logger.info('RUNNING: %s', self.cmdobj.cmd)
+			logger.info('- PID: %s', self.cmdobj.pid)
+
+			for line in self.cmdobj.readline(saveother = True):
+				logger.info('- STDERR: %s', line.rstrip())
+			self.done = True
+			logger.info('- RETURNCODE: %s', self.cmdobj.rc)
 			logger.info('-' * 80)
-		if quit and self.cmdobj.rc != 0:
+		if raiseExc and self.cmdobj.rc != 0:
 			raise RuncmdException(self.cmdobj.cmd)
 		return self
 
@@ -201,7 +190,10 @@ class ShellResult(object):
 	def rc(self):
 		return self.returncode
 
-	def pipe(self, tools = None, subcmd = False, dash = 'auto', equal = 'auto', duplistkey  = False, ignorefalse = True, base = None):
+	def pipe(self, 
+		tools = None,   subcmd = False,
+		dash  = 'auto', equal  = 'auto', duplistkey = False, ignorefalse = True,
+		base  = None,   **pargs):
 		tools = tools or {}
 		tools.update(self.tools)
 		return Shell(
@@ -213,37 +205,32 @@ class ShellResult(object):
 			ignorefalse = ignorefalse,
 			base        = None,
 			stdin       = self.cmdobj.p.stdout,
-			prevcmd     = self.cmd
+			prevcmd     = self.cmd,
+			**pargs
 		)
 
 class Shell(object):
 	def __init__(self, 
-		tools       = None,
-		subcmd      = False,
-		dash        = 'auto',
-		equal       = 'auto',
-		duplistkey  = False,
-		ignorefalse = True,
-		base        = None,
-		stdin       = None,
-		envs        = None,
-		env         = None,
-		cwd         = None,
-		prevcmd     = None):
-		self.dash          = dash
-		self.equal         = equal
-		self.duplistkey    = duplistkey
-		self.ignorefalse   = ignorefalse
-		self.subcmd        = subcmd
-		self.tools         = TOOLS
-		self.base          = base
-		self.stdin         = stdin
-		self.cwd           = cwd or getcwd()
-		self.envs          = envs or env or {}
-		self.prevcmd       = prevcmd
+		tools = None,   subcmd  = False,
+		dash  = 'auto', equal   = 'auto', duplistkey = False, ignorefalse = True,
+		base  = None,   prevcmd = None,   **pargs):
+		self.dash        = dash
+		self.equal       = equal
+		self.duplistkey  = duplistkey
+		self.ignorefalse = ignorefalse
+		self.subcmd      = subcmd
+		self.tools       = TOOLS
+		self.base        = base
+		self.prevcmd     = prevcmd
+
+		self.tools.update(tools or {})
+		# common args for tools with subcommand
 		self.targs         = {'': []}
 		self._subcmdCalled = False
-		self.tools.update(tools or {})
+
+		self.pargs = pargs.copy()
+		self.pargs['stdin'] = self.pargs.get('stdin')
+		self.pargs['shell'] = True
 
 	def __call__(self, *args, **kwargs):
 		self.targs.update(kwargs)
@@ -260,7 +247,7 @@ class Shell(object):
 				kwargs, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, ignorefalse = self.ignorefalse)
 		)
 		
-		cmdobj = cmd.Cmd(cmd2run, stdin = self.stdin, shell = True, env = self.envs, cwd = self.cwd)
+		cmdobj = cmd.Cmd(cmd2run, **self.pargs)
 		
 		if self.prevcmd:
 			cmdobj.cmd = '{} | {}'.format(self.prevcmd, cmdobj.cmd)
@@ -282,7 +269,9 @@ class Shell(object):
 			else:
 				self.base = shquote(tool)
 			return self._run
-		return Shell({}, subcmd = False, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, ignorefalse = self.ignorefalse, base = tool)
+		return Shell(
+			subcmd = False, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, 
+			ignorefalse = self.ignorefalse, base = tool, **self.pargs)
 
 wc   = lambda *args, **kwargs: Shell().wc(*args, **kwargs).run()
 wc_l = lambda filename: int(wc(l = filename).stdout.split()[0])

@@ -1,6 +1,6 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell, runcmd
+from bioprocs.utils import shell, runcmd, cmdargs
 from bioprocs.utils.reference import bamIndex
 
 infiles = {{i.infiles | repr}}
@@ -18,10 +18,10 @@ for infile in infiles:
 
 shell.TOOLS['cnvkit'] = cnvkit
 envs = dict(
-	OPENBLAS_NUM_THREADS = nthread,
-	OMP_NUM_THREADS      = nthread,
-	NUMEXPR_NUM_THREADS  = nthread,
-	MKL_NUM_THREADS      = nthread
+	OPENBLAS_NUM_THREADS = str(nthread),
+	OMP_NUM_THREADS      = str(nthread),
+	NUMEXPR_NUM_THREADS  = str(nthread),
+	MKL_NUM_THREADS      = str(nthread)
 )
 ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
 
@@ -41,7 +41,9 @@ if not accfile:
 params_b = params.autobin
 params_b.t = params_t.o
 params_b.g = accfile
-runcmd('cd {}; {}'.format(
-	shell.shquote(outdir),
-	ckshell.autobin(*infiles, **params_b).cmd
-))
+params_b[''] = infiles
+runcmd('cd {wdir}; {cnvkit} autobin {args}'.format(
+	wdir   = shell.shquote(outdir),
+	cnvkit = shell.shquote(cnvkit),
+	args   = cmdargs(params_b, equal = ' ')
+), env = envs)

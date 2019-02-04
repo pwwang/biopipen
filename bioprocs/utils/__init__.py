@@ -7,7 +7,7 @@ from glob import glob
 from os import path
 # deprecate, will be removed later
 # use "from bioprocs.utils.shell import ..."
-from .shell import RuncmdException, runcmd, cmdargs, call
+from .shell import RuncmdException, runcmd, cmdargs
 
 class Mem2Exception(Exception):
 	pass

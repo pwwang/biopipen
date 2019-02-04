@@ -1,3 +1,4 @@
+options(stringsAsFactors = FALSE)
 
 inD  = {% if i.D.endswith('.gz') %}gzfile({{i.D  | quote}}){% else %}{{i.D  | quote}}{% endif %}
 inPt = {% if i.Pt.endswith('.gz') %}gzfile({{i.Pt | quote}}){% else %}{{i.Pt | quote}}{% endif %}
