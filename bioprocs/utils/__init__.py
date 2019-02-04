@@ -125,4 +125,15 @@ def funcargs(func):
 		from inspect import getargspec
 		return getargspec(func).args
 
+def gztype(gzfile):
+	import binascii
+	with open(gzfile, 'rb') as f:
+		flag = binascii.hexlify(f.read(4))
+	if flag == b'1f8b0804':
+		return 'bgzip'
+	if flag == b'1f8b0808':
+		return 'gzip'
+	return 'flat'
+
+
 logger = getLogger()

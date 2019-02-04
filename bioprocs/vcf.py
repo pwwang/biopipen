@@ -3,6 +3,7 @@ from os import path
 from glob import glob
 from pyppl import Proc, Box
 from . import params
+from .utils import fs2name
 
 """
 @name:
@@ -88,6 +89,26 @@ pVcfUnique.args.keep  = 'first' # last, random, snp, bisnp, bialt
 pVcfUnique.args.gz    = False
 pVcfUnique.lang       = params.python.value
 pVcfUnique.script     = "file:scripts/vcf/pVcfUnique.py"
+
+"""
+@name:
+	pVcfRemoveFilter
+@description:
+	Remove one or more filters in vcf files
+@input:
+	`infile:file`: The input vcf file
+@output:
+	`outfile:file`: The output file
+@args:
+	`rmfilter`: The filters to remove. If None, ALL filters will be removed!
+		- A `list` of filter names.
+"""
+pVcfRemoveFilter               = Proc(desc = 'Remove one or more filters in vcf files')
+pVcfRemoveFilter.input         = 'infile:file'
+pVcfRemoveFilter.output        = 'outfile:file:{{i.infile | bn}}'
+pVcfRemoveFilter.args.rmfilter = None # remove all filters
+pVcfRemoveFilter.lang          = params.python.value
+pVcfRemoveFilter.script        = "file:scripts/vcf/pVcfRemoveFilter.py"
 
 """
 @name:
@@ -224,17 +245,19 @@ pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
 """
-pVcfMerge                     = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
-pVcfMerge.input               = "infiles:files"
-pVcfMerge.output              = "outfile:file:{{i.infiles[0] | fn}}_etc.vcf"
-pVcfMerge.args.tool           = 'vcftools'
-pVcfMerge.args.vcftools       = params.vcftools_merge.value
-pVcfMerge.args.gatk           = params.gatk.value
-pVcfMerge.args.ref            = params.ref.value # only for gatk
-pVcfMerge.args.vep            = params.vep.value
-pVcfMerge.args.nthread        = 1
-pVcfMerge.lang                = params.python.value
-pVcfMerge.script              = "file:scripts/vcf/pVcfMerge.py"
+pVcfMerge               = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
+pVcfMerge.input         = "infiles:files"
+pVcfMerge.output        = "outfile:file:{{i.infiles | fs2name}}.vcf"
+pVcfMerge.args.tool     = 'vcftools'
+pVcfMerge.args.vcftools = params.vcftools_merge.value
+pVcfMerge.args.gatk     = params.gatk.value
+pVcfMerge.args.params   = Box()
+pVcfMerge.args.tabix    = params.tabix.value
+pVcfMerge.args.ref      = params.ref.value # only for gatk
+pVcfMerge.args.nthread  = 1
+pVcfMerge.envs.fs2name  = fs2name
+pVcfMerge.lang          = params.python.value
+pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 
 """
 @name:

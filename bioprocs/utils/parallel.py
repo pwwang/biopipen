@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from loky import ProcessPoolExecutor
-from bioprocs.utils import runcmd
+from bioprocs.utils.shell import runcmd, ShellResult
 from traceback import format_exc
 
 def distribute(total, nthread):
@@ -29,19 +29,26 @@ class Parallel(object):
 		self.executor  = PoolExecutor(max_workers = nthread)
 		self.raiseExc  = raiseExc
 
-	def run(self, func, args):
-		def _func(arg):
-			if callable(func):
-				return func(*arg)
-			else:
-				runcmd(func.format(*arg))
+	@staticmethod
+	def _run(func, arg):
+		print 3234, repr(func)
+		if isinstance(func, ShellResult):
+			return func(*arg).run()
+		elif callable(func):
+			print 999
+			ret = func(*arg)
+			print ret
+			return ret
+		else:
+			return runcmd(func.format(*arg))
 
+	def run(self, func, args):
 		submits   = []
 		results   = []
 		exception = None
 		excno     = 0
 		for arg in args:
-			submits.append(self.executor.submit(_func, arg))
+			submits.append(self.executor.submit(Parallel._run, func, arg))
 
 		for submit in submits:
 			try:

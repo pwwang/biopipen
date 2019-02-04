@@ -1,6 +1,6 @@
-from os import path, symlink, readlink
-from bioprocs.utils import runcmd, cmdargs
-from bioprocs.utils import shell
+from os import path, readlink
+from bioprocs.utils.shell import runcmd, cmdargs
+from bioprocs.utils import shell, gztype
 
 def check(ref):
 	if not ref or not path.exists(ref):
@@ -18,7 +18,7 @@ def buildIndex(ref, cmd, ref2 = None, cmd2 = None):
 	except Exception:
 		try:
 			if not path.exists(ref2):
-				symlink(ref, ref2)
+				shell.ln_s(ref, ref2)
 			runcmd(cmd2)
 			return ref2
 		except Exception:
@@ -65,13 +65,13 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	origbam   = readlink(bam)
 	origIndex = path.splitext(origbam)[0] + ext
 	if path.isfile(origIndex):
-		symlink(origIndex, expectedIndex)
+		shell.ln_s(origIndex, expectedIndex)
 		return
 	# find the index in realpath directory
 	realbam   = path.realpath(bam)
 	realIndex = path.splitext(realbam)[0] + ext
 	if path.isfile(realIndex):
-		symlink(realIndex, expectedIndex)
+		shell.ln_s(realIndex, expectedIndex)
 		return
 	# if all failed, create it
 	if samtools:
@@ -79,8 +79,49 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	else:
 		raise ValueError('Index not found: {}'.format(bam))
 
+def vcfIndex(vcf, tabix = 'tabix', nthread = 1):
+	
+	# /path/to/some.vcf -> some.vcf
+	# /path/to/some.vcf.gz -> some.vcf
+	bname = path.basename(vcf[:-3]) if vcf.endswith('.gz') else path.basename(vcf)
+	# /path/to/some.bam -> /path/to/
+	dname = path.dirname(vcf)
+	# some.vcf -> some
+	# some.vcf.gz -> some
+	fname = path.splitext(bname)[0]
+	# some -> some
+	# [1]some -> some
+	rname = fname.split(']', 1)[1] if fname.startswith('[') else fname
 
-
+	expectedIndex = path.join(dname, rname + '.vcf.gz.tbi')
+	if path.isfile(expectedIndex):
+		return vcf
+	
+	# if vcf is not a link, there is nowhere else to find index, create it using tabix
+	tabix = shell.Shell({'tabix': tabix}).tabix
+	gt    = gztype(vcf)
+	if gt == 'bgzip':
+		if path.islink(vcf):
+			linkvcf = path.readlink(vcf)
+			if path.isfile(linkvcf + '.tbi'):
+				shell.ln_s(linkvcf + '.tbi', expectedIndex)
+				return vcf
+			realvcf = path.realpath(vcf)
+			if path.isfile(realvcf + '.tbi'):
+				shell.ln_s(realvcf + '.tbi', expectedIndex)
+				return vcf
+		tabix(p = 'vcf', _ = vcf).run()
+		return vcf
+	if gt == 'gzip':
+		tmpvcf = path.join(dname, bname + '.tmp.vcf')
+		shell.gunzip_to(vcf, tmpvcf)
+		shell.bgzip(tmpvcf, threads = nthread)
+		tabix(p = 'vcf', _ = tmpvcf + '.gz').run()
+		shell.mv(tmpvcf + '.gz.tbi', expectedIndex)
+		return vcf
+	shell.bgzip(vcf, c = True, _stdout = vcf + '.gz', threads = nthread)
+	tabix(p = 'vcf', _ = vcf + '.gz').run()
+	return vcf + '.gz'
 	
 	
 

@@ -225,7 +225,7 @@ class Shell(object):
 
 		self.tools.update(tools or {})
 		# common args for tools with subcommand
-		self.targs         = {'': []}
+		self.targs         = {}
 		self._subcmdCalled = False
 
 		self.pargs = pargs.copy()
@@ -234,20 +234,21 @@ class Shell(object):
 
 	def __call__(self, *args, **kwargs):
 		self.targs.update(kwargs)
-		self.targs[''] = list(args) + self.targs['']
+		self.targs[''] = list(args) + self.targs.get('', [])
 		return self
 
 	def _run(self, *args, **kwargs):
 		kwargs[''] = list(args) + kwargs.get('', []) 
-		cmd2run = '{}{} {} '.format(
-			self.base, 
-			'' if not self.targs else ' ' + cmdargs(
-				self.targs, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, ignorefalse = self.ignorefalse),
-			cmdargs(
-				kwargs, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, ignorefalse = self.ignorefalse)
+		targs = '' if not self.targs else ' ' + cmdargs(
+			self.targs, dash = self.dash, equal = self.equal, 
+			duplistkey = self.duplistkey, ignorefalse = self.ignorefalse
 		)
-		
-		cmdobj = cmd.Cmd(cmd2run, **self.pargs)
+		cargs = cmdargs(
+			kwargs,     dash = self.dash, equal = self.equal, 
+			duplistkey = self.duplistkey, ignorefalse = self.ignorefalse
+		)
+		cmd2run = '{0}{1} {2}'.format(self.base, targs, cargs)
+		cmdobj  = cmd.Cmd(cmd2run, **self.pargs)
 		
 		if self.prevcmd:
 			cmdobj.cmd = '{} | {}'.format(self.prevcmd, cmdobj.cmd)
@@ -278,8 +279,10 @@ wc_l = lambda filename: int(wc(l = filename).stdout.split()[0])
 wcl  = wc_l
 
 gzip      = lambda *args,  **kwargs: Shell().gzip(*args, **kwargs).run()
+bgzip     = lambda *args,  **kwargs: Shell(equal = ' ').bgzip(*args, **kwargs).run()
 gunzip    = lambda *args,  **kwargs: Shell().gunzip(*args, **kwargs).run()
 gzip_to   = lambda source, dest: gzip(_ = source, c = True, _stdout = dest)
+bgzip_to  = lambda source, dest: bgzip(_ = source, c = True, _stdout = dest)
 gunzip_to = lambda source, dest: gunzip(_ = source, c = True, _stdout = dest)
 
 mv    = lambda *args,  **kwargs: Shell().mv(*args, **kwargs).run()
