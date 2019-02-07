@@ -184,13 +184,12 @@ def run_elprep():
 	
 	elpsh.filter(**params).run()
 	if steps.index:
-		subshell
-	
+		subshell.samtools.index(outfile, outfile + '.bai')
 
 tools = {
 	'biobambam': run_biobambam,
 	'sambamba' : run_sambamba,
-	'samtools' : run_sambamba,
+	'samtools' : run_samtools,
 	'picard'   : run_picard,
 	'elprep'   : run_elprep
 }

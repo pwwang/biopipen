@@ -1,5 +1,7 @@
-from pyppl import Proc
-from . import params
+# A set of algorithms or models
+from pyppl import Proc, Box
+from . import params, rimport
+
 """
 @name:
 	pRWR
@@ -76,7 +78,6 @@ pRWR.script     = "file:scripts/algorithm/pRWR.r"
 @args:
 	`seed`:  The seed for sampling the training set.
 	`tfrac`: The fraction of samples used for training.
-	``
 """
 pAR            = Proc(desc =  'Affinity Regression.')
 pAR.input      = 'D:file, Pt:file, Y:file'
@@ -84,20 +85,19 @@ pAR.output     = [
 	'W:file:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR/W.txt', 
 	'outdir:dir:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR'
 ]
-pAR.args.seed     = -1
-pAR.args.tfrac    = .5
-pAR.args.normD    = 'L2'
-pAR.args.normPt   = 'meanCenter'
-pAR.args.normY    = 'meanCenter'
-pAR.args.svdP     = 0
-pAR.args.predY    = True
-pAR.args.WPt      = True
-pAR.args.WtDtY    = True
-pAR.args.nfolds   = 3
-pAR.args.parallel = False
-pAR.args.method   = 'glmnet' # admm
-pAR.lang          = params.Rscript.value
-pAR.script        = "file:scripts/algorithm/pAR.r"
+pAR.args.seed    = None
+pAR.args.tfrac   = .5
+pAR.args.inopts  = Box(cnames = True, rnames = True)
+pAR.args.svdP    = 0
+pAR.args.predY   = True
+pAR.args.WPt     = True
+pAR.args.WtDtY   = True
+pAR.args.nfold   = 3
+pAR.args.nthread = 1
+pAR.args.method  = 'glmnet' # admm
+pAR.envs.rimport = rimport
+pAR.lang         = params.Rscript.value
+pAR.script       = "file:scripts/algorithm/pAR.r"
 
 
 

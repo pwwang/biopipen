@@ -137,6 +137,17 @@ function reference_elprep() {
 	fi
 }
 
+function reference_kallisto() {
+	ref=$1
+	if [[ ! -e "$ref" ]]; then
+		logger "Kallisto index does not exist, please create it before run this process."
+		logger "Check: kallisto index ..."
+		logger "  Please use a reference with gene sequences only!"
+		logger "  Whole genome sequence reference will take forever!"
+		exit 1
+	fi
+}
+
 function reference() {
 	tool="reference_$1"
 	shift;

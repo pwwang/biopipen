@@ -33,6 +33,8 @@ params.runner           = 'local'
 params.runner.desc      = 'The runner to run the processes.'
 params.mapping          = ''
 params.mapping.desc     = 'Probe to gene mapping'
+params.nthread          = 1
+params.nthread.desc     = '# threads to use.'
 params.enlibs           = ['KEGG_2016']
 params.enlibs.desc      = 'The enrichment analysis libraries'
 params.cutoff           = 0.05
@@ -93,15 +95,18 @@ if 'gsea' in params.steps:
 if 'enrich' in params.steps:
 	if 'call' not in params.steps:
 		raise ValueError('"enrich" step requires "call" step.')
-	pEnrichr.depends = pRNASeqDEG
-	pEnrichrUp = pEnrichr.copy()
-	pEnrichrUp.exdir = path.join(params.exdir, '3.Enrichment', 'UpDEGs')
-	pEnrichrUp.depends = pRNASeqDEG
-	pEnrichrUp.input = lambda ch: ch.outdir.expand(pattern = '*.up.txt')
-	pEnrichrDown = pEnrichr.copy()
-	pEnrichrDown.exdir = path.join(params.exdir, '3.Enrichment', 'DownDEGs')
-	pEnrichrDown.depends = pRNASeqDEG
-	pEnrichrDown.input = lambda ch: ch.outdir.expand(pattern = '*.down.txt')
+	pEnrichr.depends             = pRNASeqDEG
+	pEnrichr.args.pathview.fccol = int(params.caller == 'deseq2') + int(bool(params.mapping)) + 2
+	pEnrichr.args.nthread        = params.nthread
+	pEnrichr.args.genecol        = int(bool(params.mapping))
+	pEnrichrUp                   = pEnrichr.copy()
+	pEnrichrUp.exdir             = path.join(params.exdir, '3.Enrichment', 'UpDEGs')
+	pEnrichrUp.depends           = pRNASeqDEG
+	pEnrichrUp.input             = lambda ch: ch.outdir.expand(pattern = '*.up.txt')
+	pEnrichrDown                 = pEnrichr.copy()
+	pEnrichrDown.exdir           = path.join(params.exdir, '3.Enrichment', 'DownDEGs')
+	pEnrichrDown.depends         = pRNASeqDEG
+	pEnrichrDown.input           = lambda ch: ch.outdir.expand(pattern = '*.down.txt')
 
 config = {
 	'default': {'ppldir': params.ppldir, 'acache': True}

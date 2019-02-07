@@ -18,7 +18,7 @@ from .utils import fs2name
 	`exfile`  : The regions to be excluded. In BED3 format
 	`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
 	`cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`
-	`varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) fmt$AD`
+	`varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ",")[2]))`
 		- If this function returns `NULL`, record will be skipped.
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
@@ -42,7 +42,7 @@ pSciClone.args.params   = Box()
 pSciClone.args.exfile   = ""
 pSciClone.args.vfsamcol = 1 # the first sample is the target sample in variant vcf
 pSciClone.args.cnsamcol = 1 # the first sample is the target sample in copy number vcf
-pSciClone.args.varcount = 'function(fmt) fmt$AD' # how to get the var count
+pSciClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ",")[2]))' # how to get the var count
 pSciClone.args.cncount  = 'function(fmt) fmt$CN' # how to get the copy number 
 pSciClone.lang          = params.Rscript.value
 pSciClone.script        = "file:scripts/tumhet/pSciClone.r"
@@ -61,7 +61,7 @@ pSciClone.script        = "file:scripts/tumhet/pSciClone.r"
 	`params`  : Other parameters for original `PyClone run_analysis_pipeline` function. Default: `Box()`
 	`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
 	`cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`
-	`varcount`: A python lambda string to define how to get the variant allele count. Default: `lambda fmt: fmt.get("AD")`
+	`varcount`: A python lambda string to define how to get the variant allele count. Default: `lambda fmt: fmt.get("AD") and fmt.get("AD")[1]`
 		- If this function returns `None`, record will be skipped.
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
@@ -81,11 +81,45 @@ pPyClone.envs.fs2name  = fs2name
 pPyClone.args.params   = Box()
 pPyClone.args.vfsamcol = 1 # 1-based
 pPyClone.args.cnsamcol = 1
-pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")'
+pPyClone.args.varcount = 'lambda fmt: fmt.get("AD") and fmt.get("AD")[1]'
 pPyClone.args.cncount  = 'lambda fmt: fmt.get("CN")'
 pPyClone.args.pyclone  = params.pyclone.value
 pPyClone.lang          = params.python.value
 pPyClone.script        = "file:scripts/tumhet/pPyClone.py"
+
+"""
+@name:
+	pQuantumClone
+@description:
+	Run QuantumClone: https://academic.oup.com/bioinformatics/article/34/11/1808/4802225
+@input:
+	`vfvcfs:files`: The input vcf files with mutations
+@output:
+	`outdir:dir`: The output directory
+@args:
+	`params`  : other parameters for `QuantumClone`'s `One_step_clustering`
+	`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
+	`varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])`
+		- If this function returns `NULL`, record will be skipped.
+		- It can use the sample calls (`fmt`) and also the record info (`info`)
+		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
+		- Don't include `info` if not necessary. This saves time.
+		- This function can return the variant count directly, or 
+		- an R `list` like: `list(count = <var count>, depth = <depth>)`.
+		- By default, the `depth` will be read from `fmt$DP`
+	`nthread` : # threads to use. Default: `1`
+"""
+pQuantumClone               = Proc(desc = "Run QuantumClone")
+pQuantumClone.input         = 'vfvcfs:files'
+pQuantumClone.output        = "outdir:dir:{{i.vfvcfs | fs2name}}.qclone"
+pQuantumClone.envs.fs2name  = fs2name
+pQuantumClone.envs.rimport  = rimport
+pQuantumClone.args.params   = Box()
+pQuantumClone.args.vfsamcol = 1 # 1-based
+pQuantumClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])'
+pQuantumClone.args.nthread  = 1
+pQuantumClone.lang          = params.Rscript.value
+pQuantumClone.script        = "file:scripts/tumhet/pQuantumClone.r"
 
 """
 @name:

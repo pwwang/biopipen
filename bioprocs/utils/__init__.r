@@ -150,9 +150,16 @@ pretty.numbers2 = function(df, ...) {
 	df
 }
 
+is.installed = function(pkg) {
+	is.element(pkg, installed.packages()[,1])
+}
 
 bQuote = function(s) {
-	paste0('`', s, '`')
+	if (startsWith(s, '`') && endsWith(s, '`')) {
+		return (s)
+	} else {
+		paste0('`', s, '`')
+	}
 }
 
 list.get = function(l, key, default = NULL, check.names = FALSE) {

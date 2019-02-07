@@ -96,7 +96,7 @@ if (tool == 'edger') {
 	# for plots
 	normedCounts = log2(dge$counts[rownames(allgene),, drop=FALSE] + 1)
 	alllogFC     = allgene$logFC
-	allPval      = allgene$PValue
+	allPval      = ifelse(cutoff$by == 'q', allgene$FDR, allgene$PValue)
 
 } else if (tool == 'deseq2') {
 	# detect DEGs using DESeq2
@@ -146,7 +146,7 @@ if (tool == 'edger') {
 	# for plots
 	normedCounts  = log2(assay(dge)[rownames(allgene),, drop=FALSE] + 1)
 	alllogFC      = allgene$log2FoldChange
-	allPval       = allgene$pvalue
+	allPval       = ifelse(cutoff$by == 'q', allgene$padj, allgene$pvalue)
 } else {
 	stop(paste('Unsupported tool:', tool))
 }
@@ -168,7 +168,7 @@ if (plots$volplot) {
 	plot.volplot(
 		data.frame(logFC = log2fc, FDR = fdr),
 		fccut    = params$volplot$fccut,
-		pcut     = params$volplot$pcut,
+		pcut     = cutoff$value,
 		plotfile = volplot,
 		ggs      = ggs$volplot,
 		devpars  = devpars
@@ -192,7 +192,7 @@ if (plots$maplot) {
 	maplot = file.path(outdir, "maplot.png")
 	A = rowSums(normedCounts) / ncol(normedCounts)
 	M = alllogFC
-	threshold = allPval < params$maplot$pcut
+	threshold = allPval < cutoff$value
 	plot.maplot(
 		data.frame(A, M),
 		maplot,

@@ -13,7 +13,7 @@ cnsamcol = {{ args.cnsamcol | repr}} - 1
 varcount = {{ args.varcount}}
 cncount  = {{ args.cncount}}
 if not callable(varcount):
-	varcount = lambda fmt: fmt.get('AD')
+	varcount = lambda fmt: fmt.get('AD') and fmt.get("AD")[1]
 if not callable(cncount):
 	cncount = lambda fmt: fmt.get('CN')
 
@@ -128,7 +128,7 @@ for i, vfvcf in enumerate(vfvcfs):
 with open(path.join(outdir, 'matplotlibrc'), 'w') as f:
 	f.write('backend: Agg\n')
 params.working_dir = outdir
-params.prior = True
+params.prior = 'total_copy_number'
 cmd = 'cd {outdir}; {pyclone} run_analysis_pipeline {args}'.format(outdir = outdir, pyclone = pyclone, args = cmdargs(params, equal = ' '))
 runcmd(cmd)
 

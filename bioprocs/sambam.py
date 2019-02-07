@@ -594,6 +594,21 @@ pBam2Counts.args.refgene        = params.refexon.value
 pBam2Counts.lang                = params.python.value
 pBam2Counts.script              = "file:scripts/sambam/pBam2Counts.py"
 
+"""
+@name:
+	pBamIndex
+@description:
+	Index bam files.
+@input:
+	`infile:file`: The input bam file
+@output:
+	`outfile:file`: The symbolic link to the input file
+	`outidx:file` : The index file
+@args:
+	`samtools`: Path to samtools. Default: `params.samtools`
+	`params`  : Other parameters for samtools. Default: `Box(b = True)`
+	`nthread` : # threads to use. Default: `1`
+"""
 pBamIndex               = Proc(desc = 'Index bam files')
 pBamIndex.input         = 'infile:file'
 pBamIndex.output        = 'outfile:file:{{i.infile | bn}}, outidx:file:{{i.infile | bn}}.bai'

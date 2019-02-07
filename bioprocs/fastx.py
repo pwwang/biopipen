@@ -25,28 +25,36 @@ def _getCommonName(f1, f2):
 	pFastq2Expr
 @description:
 	Use Kallisto to get gene expression from pair-end fastq files.
+@input:
+	`fqfile1:file`: The fastq file1.
+	`fqfile2:file`: The fastq file2.
+@output:
+	`outfile:file`: The expression file
+	`outdir:dir`  : Output direcotry with expression and other output files
+@args:
+	`params`  : Other parameters for `kallisto quant`. Default: `Box()`
+	`idxfile` : The kallisto index file. Default: `params.kallistoIdx`
+	`kallisto`: The path to `kallisto`. Default: `params.kallisto`
+	`nthread` : # threads to use. Default: `1`
 """
 pFastq2Expr        = Proc(desc = 'Use Kallisto to get gene expression from pair-end fastq files.')
 pFastq2Expr.input  = "fqfile1:file, fqfile2:file"
 pFastq2Expr.output = [
-	"outfile:file:{{i.fqfile1, i.fqfile2 | getCommonName}}/{{i.fqfile1, i.fqfile2 | getCommonName}}.expr",
-	"outdir:dir:{{i.fqfile1, i.fqfile2 | getCommonName}}"
+	"outfile:file:{{i.fqfile1, i.fqfile2 | *commonname}}/{{i.fqfile1, i.fqfile2 | *commonname}}.expr.txt",
+	"outdir:dir:{{i.fqfile1, i.fqfile2 | *commonname}}"
 ]
-pFastq2Expr.args.params = Box()
-pFastq2Expr.args.ref    = '' # don't give the whole genome sequence! takes long time!
-pFastq2Expr.args.idxfile       = params.kallistoIdx.value
-pFastq2Expr.args.kallisto      = params.kallisto.value
-pFastq2Expr.args.nthread       = 1
-pFastq2Expr.envs.getCommonName = _getCommonName
-pFastq2Expr.envs.bashimport    = bashimport
-pFastq2Expr.beforeCmd          = """
+pFastq2Expr.args.params     = Box()
+pFastq2Expr.args.idxfile    = params.kallistoIdx.value
+pFastq2Expr.args.kallisto   = params.kallisto.value
+pFastq2Expr.args.nthread    = 1
+pFastq2Expr.envs.commonname = lambda f1, f2, path = __import__('os').path: path.basename(path.commonprefix([f1, f2])).rstrip('_. ,[]')
+pFastq2Expr.envs.bashimport = bashimport
+pFastq2Expr.preCmd          = """
 {{bashimport}} reference.bash
-if ! refkallisto_check {{args.idxfile | squote}}; then
-	refkallisto_do {{args.ref | squote}} {{args.idxfile | squote}} {{args.kallisto | squote}}
-fi
+reference kallisto {{args.idxfile | squote}}
 """
-pFastq2Expr.lang                   = params.python.value
-pFastq2Expr.script                 = "file:scripts/fastx/pFastq2Expr.py"
+pFastq2Expr.lang   = params.python.value
+pFastq2Expr.script = "file:scripts/fastx/pFastq2Expr.py"
 
 """
 @name:

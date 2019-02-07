@@ -490,12 +490,11 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 	fdrcutlabel = round(fdrcut, 3)
 	fdrcut      = -log10(fdrcut)
 
-	threshold = as.factor(abs(logfc) > logfccut & fdr > fdrcut)
-
 	xm = min(max(abs(logfc)), 10)
 	ym = min(max(fdr), 15)
 	if (xm <= logfccut) logfccut = 1
 
+	threshold = as.factor(abs(logfc) > logfccut & fdr > fdrcut)
 	data = data.frame(logfc, fdr, threshold)
 
 	ggs = c(list(

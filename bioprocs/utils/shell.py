@@ -155,17 +155,22 @@ class ShellResult(object):
 	def __repr__(self):
 		return '<ShellResult {!r}>'.format(self.cmdobj)
 
-	def run(self, raiseExc = True):
+	def run(self, raiseExc = True, save = None, uselogger = True):
 		if not self.done:
-			from . import logger
-			logger.info('RUNNING: %s', self.cmdobj.cmd)
-			logger.info('- PID: %s', self.cmdobj.pid)
+			if uselogger:
+				from . import logger
+				logit = lambda *args: logger.info(*args)
+			else:
+				from sys import stderr
+				logit = lambda *args: stderr.write((args[0] + '\n') % args[1:])
+			logit('RUNNING: %s', self.cmdobj.cmd)
+			logit('- PID: %s', self.cmdobj.pid)
 
-			for line in self.cmdobj.readline(saveother = True):
-				logger.info('- STDERR: %s', line.rstrip())
+			for line in self.cmdobj.readline(save = save):
+				logit('- STDERR: %s', line.rstrip())
 			self.done = True
-			logger.info('- RETURNCODE: %s', self.cmdobj.rc)
-			logger.info('-' * 80)
+			logit('- RETURNCODE: %s', self.cmdobj.rc)
+			logit('-' * 80)
 		if raiseExc and self.cmdobj.rc != 0:
 			raise RuncmdException(self.cmdobj.cmd)
 		return self

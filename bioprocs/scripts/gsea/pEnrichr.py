@@ -55,7 +55,6 @@ for db in dbs:
 			args = commandArgs(trailingOnly = TRUE)
 			setwd({pathviewRDir!r})
 			inopts = {{args.inopts | R}}
-			inopts$cnames = FALSE
 			inopts$rnames = FALSE
 			indata = read.table.inopts({infile!r}, inopts)
 			genes  = as.vector(indata[, {genecol}, drop = TRUE])
@@ -67,7 +66,7 @@ for db in dbs:
 				genes = fcdata
 			}}
 			{% endraw %}
-			pathview(gene.data = genes, pathway.id = args[1], species = 'hsa')
+			pathview(gene.data = genes, pathway.id = args[1], species = 'hsa', gene.idtype="SYMBOL")
 			""".format(
 				rimport = rimport, genecol = genecol + 1 if isinstance(genecol, int) else genecol, 
 				infile = infile, pathviewRDir = pathviewRDir)

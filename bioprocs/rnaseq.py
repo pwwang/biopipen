@@ -1,9 +1,9 @@
+# Analysis of expression data from RNA-seq
 from os import path
 from glob import glob
 from pyppl import Proc, Box
-#from .utils import plot, txt, dirnamePattern
 from . import params, rimport
-from .utils import dirpat2name
+from .utils import dirpat2name, fs2name
 
 """
 @name:
@@ -57,6 +57,29 @@ pExprDir2Matrix.envs.dirpat2name = dirpat2name
 pExprDir2Matrix.envs.rimport = rimport
 pExprDir2Matrix.args.devpars = Box(res = 300, width = 2000, height = 2000)
 pExprDir2Matrix.script       = "file:scripts/rnaseq/pExprDir2Matrix.r"
+
+"""
+@name:
+	pExprFiles2Mat
+@description:
+	Merge expression to a matrix from single samples.
+@input:
+	`infiles:files`: The expression file from single samples, typically with 2 columns: gene and expression value
+@output:
+	`outfile:file`: the expression matrix file
+@args:
+	`fn2sample`: Transform filename (no extension) as column name. Default: "function(fn) fn"
+	`inopts`   : Options to read input files. Default: `Box(rname = True, cnames = True)`
+"""
+pExprFiles2Mat                = Proc(desc = 'Merge expression to a matrix from single samples.')
+pExprFiles2Mat.input          = 'infiles:files'
+pExprFiles2Mat.output         = 'outfile:file:{{i.infiles | fs2name}}.expr.txt'
+pExprFiles2Mat.args.inopts    = Box(cnames = True, rnames = True)
+pExprFiles2Mat.args.fn2sample = 'function(fn) fn'
+pExprFiles2Mat.envs.fs2name   = fs2name
+pExprFiles2Mat.envs.rimport   = rimport
+pExprFiles2Mat.lang           = params.Rscript.value
+pExprFiles2Mat.script         = "file:scripts/rnaseq/pExprFiles2Mat.r"
 
 """
 @name:
@@ -265,8 +288,8 @@ pRNASeqDEG.args.ggs = Box(
 	qqplot  = Box(labs = {'x': 'Expected(-log10(p-value))', 'y': 'Observed(-log10(p-value))'})
 )
 pRNASeqDEG.args.params = Box(
-	volplot = Box(pcut = 0.05, fccut = 2),
-	maplot  = Box(pcut = 0.05)
+	volplot = Box(fccut = 2),
+	maplot  = Box()
 )
 pRNASeqDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
 pRNASeqDEG.envs.rimport = rimport
