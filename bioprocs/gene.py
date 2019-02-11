@@ -145,15 +145,10 @@ pGeneTss.script         = "file:scripts/gene/pGeneTss.py"
 """
 pGeneBody               = Proc(desc = 'Get gene body in BED format')
 pGeneBody.input         = 'infile:file'
-pGeneBody.output        = 'outfile:file:{{i.infile | fn}}-body.bedx'
-pGeneBody.errhow        = 'retry'
+pGeneBody.output        = 'outfile:file:{{i.infile | fn}}-body.bed'
+pGeneBody.args.inopts   = Box(cnames = False)
 pGeneBody.args.notfound = 'skip' # error
 pGeneBody.args.genecol  = ''
-pGeneBody.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-pGeneBody.args.outopts   = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
-pGeneBody.args.frm      = 'symbol, alias'
-pGeneBody.args.cachedir  = params.cachedir.value
-pGeneBody.args.genome   = params.genome.value
-#pGeneBody.envs.genenorm = genenorm.py
+pGeneBody.args.refgene  = params.refgene.value
 pGeneBody.lang          = params.python.value
 pGeneBody.script        = "file:scripts/gene/pGeneBody.py"

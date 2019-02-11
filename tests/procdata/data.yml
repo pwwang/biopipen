@@ -1,0 +1,20 @@
+algorithm.pAR.default: 
+  tag : default
+  i.D : ar.d.txt.gz
+  i.Pt: ar.pt.txt.gz
+  i.Y : ar.y.txt.gz
+  e.W : default.W.txt
+algorithm.pAR.paper: 
+  tag : paper
+  i.D : motif_hits.txt
+  i.Pt: protein_expression_t.txt
+  i.Y : gene_expression.txt
+  e.W : paper.W.txt
+snp.pRs2Bed.default:
+  tag: default
+  i.snpfile: snps.txt
+  e.outfile: snps.bed
+mlearn.pCrossValid.default:
+  tag: default
+  i.infile: crossvalid.txt
+  e.{outdir}/crossvalid.aucs.txt: crossvalid.aucs.txt

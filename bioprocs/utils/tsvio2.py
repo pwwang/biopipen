@@ -171,7 +171,7 @@ class TsvReader(object):
 		return record
 
 	def dump(self, col = None):
-		if not col:
+		if col is None:
 			return list(self)
 		if not isinstance(col, list):
 			return [r[col] for r in self]

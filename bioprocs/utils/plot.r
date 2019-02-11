@@ -156,7 +156,7 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 			if (length(cnames) >= 2) {
 				p = p + scale_color_discrete(name = "", breaks = cnames, labels = auclabels)
 			} else {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', unlist(aucs), sep = ' = '))
+				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(unlist(aucs), 3), sep = ' = '))
 				p = p + scale_color_discrete(guide = F)
 			}
 		}
@@ -187,20 +187,14 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 	}
 }
 
-plot.scatter = function(data, plotfile, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	ggs = c(list(geom_point = params), ggs)
 	plot.xy(data, plotfile, x, y, ggs, devpars)
 }
-
-plot.col = function(data, plotfile, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
-	ggs = c(list(geom_col = params), ggs)
-	plot.xy(data, plotfile, x, y, ggs, devpars)
-}
-
 # alias
 plot.points = plot.scatter
 
-plot.boxplot = function(data, plotfile, x = 1, y = 2, stacked = T, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
@@ -211,7 +205,38 @@ plot.boxplot = function(data, plotfile, x = 1, y = 2, stacked = T, params = list
 		if (is.numeric(y)) {
 			y = cnames[y]
 		}
-		params = update.aes(params, aes_string(group = x))
+		params$stat = list.get(params, 'stat', 'identity')
+
+		ggs = c(
+			list(geom_bar = params),
+			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+			ggs
+		)
+		plot.xy(data, plotfile, x, y, ggs, devpars)
+	} else {
+		ggs = c(
+			list(geom_bar = params),
+			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+			ggs
+		)
+		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+	}
+}
+# alias
+plot.bar = plot.col
+
+plot.boxplot = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	if (stacked) {
+		cnames = colnames(data)
+		cnames = make.names(cnames)
+		colnames(data) = cnames
+		if (is.numeric(x)) {
+			x = cnames[x]
+		}
+		if (is.numeric(y)) {
+			y = cnames[y]
+		}
+		#params = update.aes(params, aes_string(group = x))
 
 		ggs = c(
 			list(geom_boxplot = params),

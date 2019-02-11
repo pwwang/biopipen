@@ -1,46 +1,40 @@
-import sys
-
+from os import path
 from pyppl import Box
-from bioprocs.utils.tsvio import TsvWriter, TsvRecord
-from bioprocs.utils.gene import genenorm
+from gff import Gff
+from bioprocs.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
 from bioprocs.utils import logger
 
-genome   = {{args.genome | quote}}
-poscol   = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'
-notfound = {{args.notfound | quote}}
-# get the genes
-genes = genenorm(
-	{{i.infile | quote}},
-	notfound = notfound,
-	frm      = {{args.frm | quote}},
-	to       = "%s,symbol" % poscol,
-	genome   = genome,
-	cachedir = {{args.cachedir | quote}},
-	inopts   = {{args.inopts}},
-	genecol  = {{args.genecol | quote}}
-)
-outopts = {{args.outopts}}
-writer = TsvWriter({{o.outfile | quote}}, **outopts)
-if outopts['query']:
-	writer.meta.add('QUERY')
-if outopts['head']:
-	writer.writeHead(delimit = outopts['headDelimit'], prefix = outopts['headPrefix'], transform = outopts['headTransform'])
-for gene, hit in genes.items():
-	if not poscol in hit or not hit[poscol]:
-		if notfound == 'skip':
-			logger.warn('Gene not found: %s' % gene)
-			continue
-		else:
-			raise ValueError('Gene not found: %s' % gene)
+infile   = {{ i.infile | quote}}
+outfile  = {{ o.outfile | quote}}
+notfound = {{ args.notfound | quote}}
+genecol  = {{ args.genecol or 0 | repr}}
+inopts   = {{ args.inopts | repr}}
+refgene  = {{ args.refgene | quote}}
 
-	pos      = hit[poscol]
-	if isinstance(pos, list): pos = pos[0]
+if not path.isfile(refgene):
+	raise OSError('Refgene file does not exists: {}'.format(refgene))
+
+# get genes
+genes  = TsvReader(infile, **inopts).dump(genecol)
+genes  = dict(zip(genes, [False] * len(genes)))
+writer = TsvWriter(outfile)
+writer.cnames = ['CHR', 'START', 'END', 'NAME', 'SCORE', 'STRAND']
+
+gff    = Gff(refgene)
+for g in gff:
+	attrs = g['attributes']
+	if attrs['gene_id'] not in genes:
+		continue
 	r        = TsvRecord()
-	r.CHR    = 'chr' + str(pos['chr'])
-	r.START  = pos['start']
-	r.END    = pos['end']
-	r.NAME   = hit['symbol']
-	r.STRAND = '+' if pos['strand'] == 1 else '-'
-	r.SCORE  = '0'
-	r.QUERY  = gene
+	r.CHR    = g['seqid']
+	r.START  = g['start']
+	r.END    = g['end']
+	r.SCORE  = g['score']
+	r.STRAND = g['strand']
+	r.NAME   = attrs['gene_id']
 	writer.write(r)
+writer.close()
+
+for g, v in genes.items():
+	if not v:
+		logger.warning('Gene: {!r} not found.'.format(g))

@@ -269,3 +269,43 @@ pDecisionTreeTrain.args.inopts  = Box(
 pDecisionTreeTrain.envs.rimport = rimport
 pDecisionTreeTrain.lang         = params.Rscript.value
 pDecisionTreeTrain.script       = "file:scripts/mlearn/pDecisionTreeTrain.r"
+
+"""
+@name:
+	pCrossValid
+@description:
+	Do cross validation on a model using R carent package.
+@input:
+	`infile:file`: The input data file.
+@output:
+	`outmodel:file`: The trained model in RDS format
+	`outdir:dir`   : The output directory containing output model and plots.
+@args:
+	`inopts` : The options to read the input file.
+	`ctrl`   : Arguments for `trainControl`. See `?trainControl`. Default: `Box(method = '', savePredictions = True, classProbs = True)`
+	`train`  : Arguments for `train` other than `data` and `trControl`. Default: `Box(form = None, method = '', metric = 'ROC')`
+		- see `?train`
+	`seed`   : The seed. Default: `None`
+	`nthread`: # threads to use. Default: `1`
+	`plots`  : Do types of plots. Default: `['model', 'roc']`
+		- `varimp` also available
+		- You can also concatenate them using comma (`,`)
+@requires:
+	`r-caret`
+"""
+pCrossValid        = Proc(desc = 'Do cross validation on a model.')
+pCrossValid.input  = 'infile:file'
+pCrossValid.output = [
+	'outmodel:file:{{i.infile | fn2}}.{{args.train.method}}/{{i.infile | fn2}}.{{args.train.method}}.rds',
+	'outdir:dir:{{i.infile | fn2}}.{{args.train.method}}'
+]
+pCrossValid.args.inopts  = Box(cnames = True, rnames = True)
+pCrossValid.args.ctrl    = Box(method = '', savePredictions = True, classProbs = True)
+pCrossValid.args.train   = Box(form = None, method = '', metric = 'ROC')
+pCrossValid.args.seed    = None
+pCrossValid.args.nthread = 1
+pCrossValid.args.plots   = ['model', 'roc'] # varimp
+pCrossValid.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pCrossValid.envs.rimport = rimport
+pCrossValid.lang         = params.Rscript.value
+pCrossValid.script       = "file:scripts/mlearn/pCrossValid.r"

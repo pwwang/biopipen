@@ -18,7 +18,7 @@ from .utils import fs2name
 	`exfile`  : The regions to be excluded. In BED3 format
 	`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
 	`cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`
-	`varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ",")[2]))`
+	`varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])`
 		- If this function returns `NULL`, record will be skipped.
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
@@ -42,7 +42,7 @@ pSciClone.args.params   = Box()
 pSciClone.args.exfile   = ""
 pSciClone.args.vfsamcol = 1 # the first sample is the target sample in variant vcf
 pSciClone.args.cnsamcol = 1 # the first sample is the target sample in copy number vcf
-pSciClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ",")[2]))' # how to get the var count
+pSciClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])' # how to get the var count
 pSciClone.args.cncount  = 'function(fmt) fmt$CN' # how to get the copy number 
 pSciClone.lang          = params.Rscript.value
 pSciClone.script        = "file:scripts/tumhet/pSciClone.r"

@@ -304,7 +304,7 @@ ln_s  = lambda source, dest: ln(source, dest, s = True)
 head  = lambda *args, **kwargs: Shell().head(*args, **kwargs).run()
 tail  = lambda *args, **kwargs: Shell().tail(*args, **kwargs).run()
 grep  = lambda *args, **kwargs: Shell().grep(*args, **kwargs).run()
-sort  = lambda *args, **kwargs: Shell(dash = '-', equal = ' ').grep(*args, **kwargs).run()
+sort  = lambda *args, **kwargs: Shell(dash = '-', equal = ' ', duplistkey = True).sort(*args, **kwargs).run()
 uniq  = lambda *args, **kwargs: Shell().uniq(*args, **kwargs).run()
 touch = lambda *args, **kwargs: Shell().touch(*args, **kwargs).run()
 

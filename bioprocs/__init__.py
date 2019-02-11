@@ -199,6 +199,8 @@ DEFAULTS = {
 	"vcf2maf.desc"             : "The path of vcf2maf.pl.",
 	"vcflib_vcffilter"         : "vcffilter",
 	"vcflib_vcffilter.desc"    : "The path of vcflib vcffilter.",
+	"vcftools"                 : "vcftools",
+	"vcftools.desc"            : "The path of vcftools.",
 	"vcftools_merge"           : "vcf-merge",
 	"vcftools_merge.desc"      : "The path of vcftools' vcf-merge.",
 	"vcftools_subset"          : "vcf-subset",

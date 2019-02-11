@@ -492,6 +492,25 @@ pVcfSubtract.args.bedtools = params.bedtools.value
 pVcfSubtract.lang          = params.python.value
 pVcfSubtract.script        = "file:scripts/vcf/pVcfSubtract.py"
 
+"""
+@name:
+	pVcfExtract
+@description:
+	Extract variants from a VCF file by given regions
+@args:
+	`tabix` : The path to tabix.
+	`params`: Other parameters for `tabix`. Default: `Box(h = True, B = True)`
+		- See `tabix --help`
+"""
+pVcfExtract              = Proc(desc = "Extract variants from a VCF file by given regions")
+pVcfExtract.input        = 'vcffile:file, regfile:file'
+pVcfExtract.output       = 'outfile:file:{{i.vcffile | fn2}}.extracted.vcf'
+pVcfExtract.args.tabix   = params.tabix.value
+pVcfExtract.args.params  = Box(h = True, B = True)
+pVcfExtract.lang         = params.python.value
+pVcfExtract.script       = "file:scripts/vcf/pVcfExtract.py"
+
+
 pVcf2Pyclone        = Proc(desc = 'Generate PyClone input file for non-CN mutations')
 pVcf2Pyclone.input  = 'infile:file'
 pVcf2Pyclone.output = 'outfile:file:{{i.infile | bn}}.pyclone.txt'

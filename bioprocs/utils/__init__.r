@@ -82,17 +82,21 @@ ifelse = function(condition, true, false) {
 
 read.table.inopts = function(infile, inopts, nodup = T) {
 	opts = names(inopts)
-	optrnames = ifelse('rnames' %in% opts, ifelse(inopts$rnames, 1, NULL), 1)
+	inopts.default = function(key, default) list.get(inopts, key, default, check.names = TRUE)
+	optrnames = inopts.default('rnames', 1)
+	#optrnames = ifelse('rnames' %in% opts, ifelse(inopts$rnames, 1, NULL), 1)
 	params = list(
 		infile,
-		header      = ifelse('cnames' %in% opts, inopts$cnames, T),
+		#header      = ifelse('cnames' %in% opts, inopts$cnames, T),
+		header      = inopts.default('cnames', TRUE),
 		row.names   = ifelse(nodup, NULL, optrnames),
-		sep         = ifelse('delimit' %in% opts, inopts$delimit, "\t"),
+		sep         = inopts.default('delimit', "\t"),
 		check.names = F,
-		skip        = ifelse('skip' %in% opts, inopts$skip, 0)
+		quote       = inopts.default('quote', ""),
+		skip        = inopts.default('skip', 0)
 	)
 	d = do.call(read.table, params)
-	if (nodup && !is.null(optrnames)) {
+	if (nodup && !is.null(params$row.names)) {
 		rnames = make.unique(as.character(as.vector(d[,1,drop = T])))
 		d = d[, -1, drop = F]
 		rownames(d) = rnames

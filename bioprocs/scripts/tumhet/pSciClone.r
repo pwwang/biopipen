@@ -13,7 +13,7 @@ cnsamcol = {{args.cnsamcol | R}}
 varcount = {{args.varcount | :a if a else 'NULL'}}
 cncount  = {{args.cncount | :a if a else 'NULL'}}
 if (!is.function(varcount)){
-	varcount = function(fmt) fmt$AD
+	varcount = function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])
 }
 if (!is.function(cncount)) {
 	cncount = function(fmt) fmt$CN
@@ -142,12 +142,13 @@ if (length(cnvcfs) > 0) {
 } else {
 	cns = NULL
 }
-sc = sciClone(
-	vafs             = vafs,
-	copyNumberCalls  = cns,
-	sampleNames      = sams,
-	regionsToExclude = exreg
-)
+
+params$vafs             = vafs
+params$copyNumberCalls  = cns
+params$sampleNames      = sams
+params$regionsToExclude = exreg
+
+sc = do.call(sciClone, params)
 clustfile = file.path(outdir, paste0(paste(sams, collapse = '-'), '.cluster.txt'))
 plotfile1 = file.path(outdir, paste0(paste(sams, collapse = '-'), '.plot1d.pdf'))
 plotfile2 = file.path(outdir, paste0(paste(sams, collapse = '-'), '.plot2d.pdf'))

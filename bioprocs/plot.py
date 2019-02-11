@@ -1,8 +1,6 @@
-"""
-Generate plot using given data
-"""
+# Generate plots using given data
+
 from pyppl import Proc, Box
-#from .utils import plot
 from . import params, rimport
 
 """
@@ -149,7 +147,7 @@ pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
 @description:
 	Generate box plot
 @input:
-	`datafile:file`: The data file
+	`infile:file`: The data file
 @output:
 	`outpng:file`: The output figure
 @args:
@@ -179,7 +177,7 @@ pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
 		  1.1	.8	3.2
 		  1.2	.9	2.2
 		  ```
-	`params`:    Other parameters for `boxplot`, default: `""`
+	`params`:    Other parameters for `geom_boxplot`, default: `Box()`
 	`ggs`   :    Extra ggplot2 statements
 """
 pBoxplot             = Proc(desc = 'Generate boxplot plot.')
@@ -200,6 +198,49 @@ pBoxplot.args.ggs     = Box()
 pBoxplot.envs.rimport = rimport
 pBoxplot.lang         = params.Rscript.value
 pBoxplot.script       = 'file:scripts/plot/pBoxplot.r'
+
+"""
+@name:
+	pBar
+@description:
+	Generate bar/col plot
+@input:
+	`infile:file`: The data file
+@output:
+	`outpng:file`: The output figure
+@args:
+	`inopts` :   Input options to read the input file
+		- `cnames` :   Whether the input file has header. Default: `True`
+		- `rnames` :   Whether the input file has row names. Default: `False`
+		- `delimit`:   The seperator. Defualt: `\\t`
+	`x`      :   The `ind` (index) column. Only for `args.stacked = True`. Default: `2`
+	`y`      :   The `values` column. Only for `args.stacked = True`. Default: `1`
+	`helper` :   Some raw codes to help to construct the matrix and arguments.
+	`stacked`:   Whether the input file is stacked
+		- see `pBoxplot.args.stacked`
+	`params`:    Other parameters for `geom_bar`, default: `Box()`
+	`ggs`   :    Extra ggplot2 statements
+"""
+pBar             = Proc(desc = 'Generate bar/col plot.')
+pBar.input       = 'infile:file'
+pBar.output      = 'outfile:file:{{i.infile | fn}}.bar.png'
+pBar.args.inopts = Box(
+	cnames  = True,
+	rnames  = False,
+	delimit = '\t'
+)
+pBar.args.x       = 2
+pBar.args.y       = 1
+pBar.args.helper  = ''
+pBar.args.stacked = False
+pBar.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pBar.args.params  = Box()
+pBar.args.ggs     = Box()
+pBar.envs.rimport = rimport
+pBar.lang         = params.Rscript.value
+pBar.script       = 'file:scripts/plot/pBar.r'
+
+pCol = pBar.copy()
 
 """
 @name:
@@ -411,6 +452,36 @@ pPie.envs.rimport = rimport
 pPie.lang         = params.Rscript.value
 pPie.script       = "file:scripts/plot/pPie.r"
 
+"""
+@name:
+	pManhattan
+@description:
+	Manhattan plot.
+@input:
+	`infile:file`: The input file. First 6 columns should be BED6, and then column:
+		- 7: The raw pvalue.
+		- 8: The x-axis labels for the records.
+		- For example:
+			```
+			chr19	45604163	45604163	rs7255060	0	+	3.238E-03	+200K
+			chr19	45595277	45595277	rs10417101	0	+	3.870E-03	+200K
+			chr19	45394336	45394336	rs71352238	0	+	6.440E-03	-50K
+			chr19	45615857	45615857	rs6509194	0	+	1.298E-02	+250K
+			chr19	45594170	45594170	rs3178166	0	+	3.617E-02	+200K
+			chr19	45361574	45361574	rs3852856	0	+	2.070E-02	-100K
+			chr19	45220205	45220205	rs57090948	0	+	4.384E-02	-200K
+			chr19	45396219	45396219	rs157582	0	+	9.472E-03	-50K
+			chr19	45210634	45210634	rs10421830	0	+	1.375E-02	-250K
+			chr19	45228502	45228502	rs10422350	0	+	4.121E-02	-200K
+			```
+	`hifile:file`: The file with the record names (one per line) to highlight in the plot.
+@output:
+	`outfile:file`: The plot. Default: `{{i.infile | fn}}.manht.png`
+@args:
+	`inopts` : Options to read the input file. Default: `Box(cnames = False, rnames = False)`
+	`ggs`    : Extra expressions for ggplot.
+	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+"""
 pManhattan              = Proc(desc = 'Manhattan plot.')
 pManhattan.input        = 'infile:file, hifile:file'
 pManhattan.output       = 'outfile:file:{{i.infile | fn}}.manht.png'

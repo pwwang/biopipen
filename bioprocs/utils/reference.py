@@ -79,7 +79,7 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	else:
 		raise ValueError('Index not found: {}'.format(bam))
 
-def vcfIndex(vcf, tabix = 'tabix', nthread = 1):
+def vcfIndex(vcf, tabix = 'tabix'):
 	
 	# /path/to/some.vcf -> some.vcf
 	# /path/to/some.vcf.gz -> some.vcf
@@ -115,11 +115,11 @@ def vcfIndex(vcf, tabix = 'tabix', nthread = 1):
 	if gt == 'gzip':
 		tmpvcf = path.join(dname, bname + '.tmp.vcf')
 		shell.gunzip_to(vcf, tmpvcf)
-		shell.bgzip(tmpvcf, threads = nthread)
+		shell.bgzip(tmpvcf)
 		tabix(p = 'vcf', _ = tmpvcf + '.gz').run()
 		shell.mv(tmpvcf + '.gz.tbi', expectedIndex)
 		return vcf
-	shell.bgzip(vcf, c = True, _stdout = vcf + '.gz', threads = nthread)
+	shell.bgzip(vcf, c = True, _stdout = vcf + '.gz')
 	tabix(p = 'vcf', _ = vcf + '.gz').run()
 	return vcf + '.gz'
 	

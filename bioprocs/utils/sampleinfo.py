@@ -144,7 +144,7 @@ class SampleInfo2(object):
 	def allGroups(self):
 		allgroups = [r.Group for r in self.mat]
 		group0    = self.mat[0].Group
-		return [group0] + [group for group in allgroups if group != group0]
+		return [group0] + list(set(group for group in allgroups if group != group0))
 
 	def getSamples(self, by = None, value = None, returnAll = False):
 		if by and by not in self.cnames:
