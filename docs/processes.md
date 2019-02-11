@@ -69,7 +69,6 @@
     - **args**  
         - `seed`: The seed for sampling the training set.  
         - `tfrac`: The fraction of samples used for training.  
-        ``
 ## bed
 
 !!! hint "pBedSort"
@@ -1271,6 +1270,20 @@
     - **description**  
         Use Kallisto to get gene expression from pair-end fastq files.
 
+    - **input**  
+        - `fqfile1:file`: The fastq file1.  
+        - `fqfile2:file`: The fastq file2.  
+
+    - **output**  
+        - `outfile:file`: The expression file  
+        - `outdir:dir`  : Output direcotry with expression and other output files  
+
+    - **args**  
+        - `params`  : Other parameters for `kallisto quant`. Default: `Box()`  
+        - `idxfile` : The kallisto index file. Default: `params.kallistoIdx`  
+        - `kallisto`: The path to `kallisto`. Default: `params.kallisto`  
+        - `nthread` : # threads to use. Default: `1`  
+
 !!! hint "pFastqSim"
 
     - **description**  
@@ -2077,9 +2090,6 @@
         - `plot`: Whether to plot the result. Default: True  
         - `devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`  
 
-    - **requires**  
-        [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0) if `args.norm` is `True`
-
 !!! hint "pTargetEnrichr"
 
     - **description**  
@@ -2421,6 +2431,32 @@
 
     - **requires**  
         `r-rpart`
+
+!!! hint "pCrossValid"
+
+    - **description**  
+        Do cross validation on a model using R carent package.
+
+    - **input**  
+        - `infile:file`: The input data file.  
+
+    - **output**  
+        - `outmodel:file`: The trained model in RDS format  
+        - `outdir:dir`   : The output directory containing output model and plots.  
+
+    - **args**  
+        - `inopts` : The options to read the input file.  
+        - `ctrl`   : Arguments for `trainControl`. See `?trainControl`. Default: `Box(method = '', savePredictions = True, classProbs = True)`  
+        - `train`  : Arguments for `train` other than `data` and `trControl`. Default: `Box(form = None, method = '', metric = 'ROC')`  
+        	- see `?train`
+        - `seed`   : The seed. Default: `None`  
+        - `nthread`: # threads to use. Default: `1`  
+        - `plots`  : Do types of plots. Default: `['model', 'roc']`  
+        	- `varimp` also available
+        	- You can also concatenate them using comma (`,`)
+
+    - **requires**  
+        `r-caret`
 ## network
 ## pca
 
@@ -2852,7 +2888,7 @@
         Generate box plot
 
     - **input**  
-        - `datafile:file`: The data file  
+        - `infile:file`: The data file  
 
     - **output**  
         - `outpng:file`: The output figure  
@@ -2884,7 +2920,31 @@
         	  1.1	.8	3.2
         	  1.2	.9	2.2
         	  ```
-        - `params`: Other parameters for `boxplot`, default: `""`  
+        - `params`: Other parameters for `geom_boxplot`, default: `Box()`  
+        - `ggs`   : Extra ggplot2 statements  
+
+!!! hint "pBar"
+
+    - **description**  
+        Generate bar/col plot
+
+    - **input**  
+        - `infile:file`: The data file  
+
+    - **output**  
+        - `outpng:file`: The output figure  
+
+    - **args**  
+        - `inopts` : Input options to read the input file  
+        	- `cnames` :   Whether the input file has header. Default: `True`
+        	- `rnames` :   Whether the input file has row names. Default: `False`
+        	- `delimit`:   The seperator. Defualt: `\\t`
+        - `x`      : The `ind` (index) column. Only for `args.stacked = True`. Default: `2`  
+        - `y`      : The `values` column. Only for `args.stacked = True`. Default: `1`  
+        - `helper` : Some raw codes to help to construct the matrix and arguments.  
+        - `stacked`: Whether the input file is stacked  
+        	- see `pBoxplot.args.stacked`
+        - `params`: Other parameters for `geom_bar`, default: `Box()`  
         - `ggs`   : Extra ggplot2 statements  
 
 !!! hint "pHeatmap"
@@ -3029,6 +3089,38 @@
 
     - **args**  
         - `rnames` : Whether the input file has row names. Default: `False`  
+        - `ggs`    : Extra expressions for ggplot.  
+        - `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+
+!!! hint "pManhattan"
+
+    - **description**  
+        Manhattan plot.
+
+    - **input**  
+        - `infile:file`: The input file. First 6 columns should be BED6, and then column:  
+        	- 7: The raw pvalue.
+        	- 8: The x-axis labels for the records.
+        	- For example:
+        		```
+        		chr19	45604163	45604163	rs7255060	0	+	3.238E-03	+200K
+        		chr19	45595277	45595277	rs10417101	0	+	3.870E-03	+200K
+        		chr19	45394336	45394336	rs71352238	0	+	6.440E-03	-50K
+        		chr19	45615857	45615857	rs6509194	0	+	1.298E-02	+250K
+        		chr19	45594170	45594170	rs3178166	0	+	3.617E-02	+200K
+        		chr19	45361574	45361574	rs3852856	0	+	2.070E-02	-100K
+        		chr19	45220205	45220205	rs57090948	0	+	4.384E-02	-200K
+        		chr19	45396219	45396219	rs157582	0	+	9.472E-03	-50K
+        		chr19	45210634	45210634	rs10421830	0	+	1.375E-02	-250K
+        		chr19	45228502	45228502	rs10422350	0	+	4.121E-02	-200K
+        		```
+        - `hifile:file`: The file with the record names (one per line) to highlight in the plot.  
+
+    - **output**  
+        - `outfile:file`: The plot. Default: `{{i.infile | fn}}.manht.png`  
+
+    - **args**  
+        - `inopts` : Options to read the input file. Default: `Box(cnames = False, rnames = False)`  
         - `ggs`    : Extra expressions for ggplot.  
         - `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
 ## power
@@ -3191,6 +3283,21 @@
         - `heatmapggs`: The ggplot parameters for heatmap. Default: `['r:theme(axis.text.y = element_blank())']`  
         - `histplotggs`: The ggplot parameters for histgram. Default: `['r:labs(x = "Expression", y = "# Samples")']`  
 
+!!! hint "pExprFiles2Mat"
+
+    - **description**  
+        Merge expression to a matrix from single samples.
+
+    - **input**  
+        - `infiles:files`: The expression file from single samples, typically with 2 columns: gene and expression value  
+
+    - **output**  
+        - `outfile:file`: the expression matrix file  
+
+    - **args**  
+        - `fn2sample`: Transform filename (no extension) as column name. Default: "function(fn) fn"  
+        - `inopts`   : Options to read input files. Default: `Box(rname = True, cnames = True)`  
+
 !!! hint "pExprStats"
 
     - **description**  
@@ -3347,29 +3454,27 @@
 
     - **output**  
         - `outfile:file`: The output bam file  
-        - `idxfile:file`: The index of the output bam file  
-        - If args.index == False, it'll a link to outfile and should be never used
 
     - **args**  
         - `tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools)  
         - `sambamba`         : The path of the sambamba. Default: sambamba  
         - `picard`           : The path of the picard. Default: picard  
         - `biobambam_bamsort`: The path of the biobambam's bamsort. Default: bamsort  
-        - `samtools`         : The path of the samtools. Default: samtools  
-        - `sort`             : Do sorting? Default: True  
-        - If input is sam, tool is biobambam, this should be True
-        - `index`            : Do indexing? Default: True  
-        - `markdup`          : Do duplicates marking? Default: False  
-        - `rmdup` for samtools will be called
-        - `rmdup`            : Do duplicates removing? Default: False  
-        - `tmpdir`           : The tmp dir used to store tmp files. Default: <system default tmpdir>  
-        - `sortby`           : Sort by coordinate or queryname. Default: coordinate  
-        - `nthread`          : Default: 1  
-        - `informat`         : The format of input file. Default: <detect from extension> (sam|bam)  
-        - `params`           : Other parameters for `tool`. Defaut: ""  
-        - `mem`              : The max memory to use. Default: "16G"  
-        - Unit could be G/g/M/m
-        - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+        - `samtools`: The path of the samtools. Default: samtools  
+        - `sort`    : Do sorting? Default: True  
+        	- If input is sam, tool is biobambam, this should be True
+        - `index`  : Do indexing? Default: True  
+        - `markdup`: Do duplicates marking? Default: False  
+        	- `rmdup` for samtools will be called
+        - `rmdup`  : Do duplicates removing? Default: False  
+        - `tmpdir` : The tmp dir used to store tmp files. Default: <system default tmpdir>  
+        - `sortby` : Sort by coordinate or queryname. Default: coordinate  
+        - `nthread`: Default: 1  
+        - `infmt`  : The format of input file. Default: <detect from extension> (sam|bam)  
+        - `params` : Other parameters for `tool`. Defaut: ""  
+        - `mem`    : The max memory to use. Default: "16G"  
+        	- Unit could be G/g/M/m
+        	- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 
     - **requires**  
         [sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html) if `args.tool` == samtools or reference used but not indexed.
@@ -3424,20 +3529,20 @@
         - `outfile:file`: The output bam file  
 
     - **args**  
-        - `tool`                         : The tool used to recalibrate the bam file. Default: `gatk` (gatk|bamutil)  
-        - `gatk`                         : The path of gatk, including java path. Default: `gatk`  
-        - `samtools`                     : The path of samtools. Default: `samtools`  
-        - `bamutil`                      : The path of bamutil. Default: `bam`  
-        - `picard`                       : The path of picard. Default: `picard`  
-        - `paramsRealignerTargetCreator` : Other parameters for `gatk RealignerTargetCreator`. Defaut: ""  
-        - `paramsIndelRealigner`         : Other parameters for `gatk IndelRealigner`. Defaut: ""  
-        - `paramsBaseRecalibrator`       : Other parameters for `gatk BaseRecalibrator`. Defaut: ""  
-        - `paramsPrintReads`             : Other parameters for `gatk PrintReads`. Defaut: ""  
-        - `params`                       : Other parameters for `bam recab`. Default: ""  
-        - `mem`                          : The max memory to use. Default: "32G"  
-        - `knownSites`                   : The known polymorphic sites to mask out. Default: "" (Required for GATK)  
-        - `ref`                          : The reference file. Required.  
-        - Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+        - `tool`    : The tool used to recalibrate the bam file. Default: `gatk` (gatk|bamutil)  
+        - `gatk`    : The path of gatk, including java path. Default: `gatk`  
+        - `samtools`: The path of samtools. Default: `samtools`  
+        - `bamutil` : The path of bamutil. Default: `bam`  
+        - `picard`  : The path of picard. Default: `picard`  
+        - `params`  : Other parameters for `bam recab`. Default         : ""  
+        	`RealignerTargetCreator` : Other parameters for `gatk RealignerTargetCreator`. Defaut: ""
+        	`IndelRealigner`         : Other parameters for `gatk IndelRealigner`. Defaut: ""
+        	`BaseRecalibrator`       : Other parameters for `gatk BaseRecalibrator`. Defaut: ""
+        	`PrintReads`             : Other parameters for `gatk PrintReads`. Defaut: ""
+        - `mem`: The max memory to use. Default: "32G"  
+        - `knownSites`: The known polymorphic sites to mask out. Default: "" (Required for GATK)  
+        - `ref`: The reference file. Required.  
+        	- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 
     - **requires**  
         [gatk](https://software.broadinstitute.org/gatk)
@@ -3533,17 +3638,17 @@
         - `outfile:file`: The vcf file containing the mutations  
 
     - **args**  
-        - `tool`: The tool used to call mutations. Default: gatk (vardict, snvsniffer, platypus, strelka)  
-        - `gatk`: The path of gatk. Default: gatk  
-        - `vardict`: The path of vardict. Default: vardict  
+        - `tool`      : The tool used to call mutations. Default: gatk (vardict, snvsniffer, platypus, strelka)  
+        - `gatk`      : The path of gatk. Default: gatk  
+        - `vardict`   : The path of vardict. Default: vardict  
         - `snvsniffer`: The path of snvsniffer. Default: SNVSniffer  
-        - `samtools`: The path of samtools. Default: samtools (used to generate reference index)  
-        - `platypus`: The path of platypus. Default: platypus  
-        - `strelka`: The path of strelka. Default: configureStrelkaGermlineWorkflow.py  
-        - `configParams`: The params for `strelka` configuration. Default: ""  
-        - `picard`: The path of picard. Default: picard  
-        - `mem`: The memory to be used. Default: 32G  
-        - will be converted to -Xms4G -Xmx32G for java programs
+        - `samtools`  : The path of samtools. Default: samtools (used to generate reference index)  
+        - `platypus`  : The path of platypus. Default: platypus  
+        - `strelka`   : The path of strelka. Default: configureStrelkaGermlineWorkflow.py  
+        - `cfgParams` : The params for `strelka` configuration. Default: ""  
+        - `picard`    : The path of picard. Default: picard  
+        - `mem`       : The memory to be used. Default: 32G  
+        	- will be converted to -Xms4G -Xmx32G for java programs
         - `ref`: The reference file. Required.  
         - `gz`: Gzip output file? Default: False  
         - `tmpdir`: The temporary directory. Default: <system tmpdir>  
@@ -3699,6 +3804,23 @@
 
     - **requires**  
         [`htseq`](https://htseq.readthedocs.io/)
+
+!!! hint "pBamIndex"
+
+    - **description**  
+        Index bam files.
+
+    - **input**  
+        - `infile:file`: The input bam file  
+
+    - **output**  
+        - `outfile:file`: The symbolic link to the input file  
+        - `outidx:file` : The index file  
+
+    - **args**  
+        - `samtools`: Path to samtools. Default: `params.samtools`  
+        - `params`  : Other parameters for samtools. Default: `Box(b = True)`  
+        - `nthread` : # threads to use. Default: `1`  
 ## seq
 
 !!! hint "pConsvPerm"
@@ -4996,7 +5118,7 @@
         - `exfile`  : The regions to be excluded. In BED3 format  
         - `vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`  
         - `cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`  
-        - `varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) fmt$AD`  
+        - `varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])`  
         	- If this function returns `NULL`, record will be skipped.
         	- It can use the sample calls (`fmt`) and also the record info (`info`)
         	- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
@@ -5027,7 +5149,7 @@
         - `params`  : Other parameters for original `PyClone run_analysis_pipeline` function. Default: `Box()`  
         - `vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`  
         - `cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`  
-        - `varcount`: A python lambda string to define how to get the variant allele count. Default: `lambda fmt: fmt.get("AD")`  
+        - `varcount`: A python lambda string to define how to get the variant allele count. Default: `lambda fmt: fmt.get("AD") and fmt.get("AD")[1]`  
         	- If this function returns `None`, record will be skipped.
         	- It can use the sample calls (`fmt`) and also the record info (`info`)
         	- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
@@ -5039,6 +5161,30 @@
         	- Returns copy number directly, or
         	- a `dict` like: `dict(cn = <copy number>, end = <end>)`
         	- `end` defines where the copy number variation stops
+
+!!! hint "pQuantumClone"
+
+    - **description**  
+        Run QuantumClone: https://academic.oup.com/bioinformatics/article/34/11/1808/4802225
+
+    - **input**  
+        - `vfvcfs:files`: The input vcf files with mutations  
+
+    - **output**  
+        - `outdir:dir`: The output directory  
+
+    - **args**  
+        - `params`  : other parameters for `QuantumClone`'s `One_step_clustering`  
+        - `vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`  
+        - `varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])`  
+        	- If this function returns `NULL`, record will be skipped.
+        	- It can use the sample calls (`fmt`) and also the record info (`info`)
+        	- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
+        	- Don't include `info` if not necessary. This saves time.
+        	- This function can return the variant count directly, or 
+        	- an R `list` like: `list(count = <var count>, depth = <depth>)`.
+        	- By default, the `depth` will be read from `fmt$DP`
+        - `nthread` : # threads to use. Default: `1`  
 
 !!! hint "pTheta"
 
@@ -5130,6 +5276,21 @@
 
     - **requires**  
         `pyvcf`
+
+!!! hint "pVcfRemoveFilter"
+
+    - **description**  
+        Remove one or more filters in vcf files
+
+    - **input**  
+        - `infile:file`: The input vcf file  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `rmfilter`: The filters to remove. If None, ALL filters will be removed!  
+        	- A `list` of filter names.
 
 !!! hint "pVcf"
 
@@ -5367,6 +5528,16 @@
         - `bedtools`: The path to bedtools.  
         - `tabix`   : The path to tabix.  
         - `any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`  
+
+!!! hint "pVcfExtract"
+
+    - **description**  
+        Extract variants from a VCF file by given regions
+
+    - **args**  
+        - `tabix` : The path to tabix.  
+        - `params`: Other parameters for `tabix`. Default: `Box(h = True, B = True)`  
+        	- See `tabix --help`
 ## vcfnext
 
 !!! hint "pVcfStatsPlot"
