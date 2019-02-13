@@ -300,7 +300,7 @@ pCrossValid.output = [
 	'outdir:dir:{{i.infile | fn2}}.{{args.train.method}}'
 ]
 pCrossValid.args.inopts  = Box(cnames = True, rnames = True)
-pCrossValid.args.ctrl    = Box(method = '', savePredictions = True, classProbs = True)
+pCrossValid.args.ctrl    = Box(method = '', savePredictions = True, classProbs = True, verboseIter = True)
 pCrossValid.args.train   = Box(form = None, method = '', metric = 'ROC')
 pCrossValid.args.seed    = None
 pCrossValid.args.nthread = 1

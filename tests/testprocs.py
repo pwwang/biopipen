@@ -4,40 +4,20 @@ from helpers import runBioprocs, getData, getOutput
 class TestProcs(testly.TestCase):
 
 	def dataProvider_testProc(self):
-		yield 'mlearn.pCrossValid', getData('mlearn.pCrossValid.default', **{
-			'args.seed'        : 998,
-			'args.train.method': 'rf',
-			'args.train.form'  : 'Class ~ .',
-			'args.ctrl.method' : 'cv',
-			'args.ctrl.number' : 10
-		}) , getData('mlearn.pCrossValid.default', 'e')
+		for data in getData():
+			yield data
 
-		yield 'algorithm.pAR', getData('algorithm.pAR.paper', **{
-			'args.seed' : 8525,
-			'args.tfrac': .472,
-			'args.svdP' : 25 # may have some issues with svd in R
-		}) , getData('algorithm.pAR.paper', 'e')
-
-		yield 'algorithm.pAR', getData('algorithm.pAR.default', **{
-			'args.seed': 8525
-		}), getData('algorithm.pAR.default', 'e')
-
-		yield 'snp.pRs2Bed', getData('snp.pRs2Bed.default', **{
-			'args.inopts.cnames': False
-		}) , getData('snp.pRs2Bed.default', 'e')
-
-
-
-	def testProc(self, proc, args, exptfiles = None):
-		c = runBioprocs(proc, args)
+	def testProc(self, proc, args, exptfiles = None, opt1 = None, opt2 = None):
+		c         = runBioprocs(proc, args)
 		exptfiles = exptfiles or {}
-		outfiles = getOutput(c)
+		outfiles  = getOutput(c)
+		opt1      = opt1 or {}
+		opt2      = opt2 or {}
 		for key, val in exptfiles.items():
-			k = key.split('.', 1)[-1]
-			if k in outfiles:
-				self.assertFileEqual(val, outfiles[k])
+			if key in outfiles:
+				self.assertFileEqual(val, outfiles[key], firstInopts = opt1, secondInopts = opt2)
 			else:
-				self.assertFileEqual(val, k.format(**outfiles))
+				self.assertFileEqual(val, key.format(**outfiles), firstInopts = opt1, secondInopts = opt2)
 
 if __name__ == '__main__':
 	testly.main(verbosity = 2)

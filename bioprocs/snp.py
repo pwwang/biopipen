@@ -19,12 +19,15 @@ from . import params
 pRs2Bed               = Proc(desc = 'Find coordinates for SNPs in BED format.')
 pRs2Bed.input         = "snpfile:file"
 pRs2Bed.output        = "outfile:file:{{i.snpfile | fn}}.bed"
+pRs2Bed.args.tool     = 'cruzdb' # or local/dbsnp
 pRs2Bed.args.notfound = 'skip' # error
 pRs2Bed.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
 pRs2Bed.args.snpcol   = ''
 pRs2Bed.args.dbsnp    = params.dbsnp_all.value
 pRs2Bed.args.vcftools = params.vcftools.value
 pRs2Bed.args.sortby   = 'coord' # name
+pRs2Bed.args.genome   = params.genome.value
+pRs2Bed.args.dbsnpver = params.dbsnpver.value
 pRs2Bed.lang          = params.python.value
 pRs2Bed.script        = "file:scripts/snp/pRs2Bed.py"
 
@@ -34,7 +37,6 @@ pCoord2SnpBedx.output        = 'outfile:file:{{i.infile | fn}}-snps.bed'
 pCoord2SnpBedx.args.genome   = params.genome.value
 pCoord2SnpBedx.args.dbsnpver = params.dbsnpver.value
 pCoord2SnpBedx.errhow        = 'retry'
-pCoord2SnpBedx.args.notfound = 'skip' # error
 pCoord2SnpBedx.args.inmeta   = ['CHR', 'START', 'END']
 pCoord2SnpBedx.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
 pCoord2SnpBedx.args.xcols    = ['refUCSC', 'alleles', 'alleleFreqs', 'alleleFreqCount']

@@ -1,20 +1,36 @@
 algorithm.pAR.default: 
-  tag : default
-  i.D : ar.d.txt.gz
-  i.Pt: ar.pt.txt.gz
-  i.Y : ar.y.txt.gz
-  e.W : default.W.txt
+  i.D      : ar.d.txt.gz
+  i.Pt     : ar.pt.txt.gz
+  i.Y      : ar.y.txt.gz
+  args.seed: 8525
+  o.W      : default.W.txt
 algorithm.pAR.paper: 
-  tag : paper
-  i.D : motif_hits.txt
-  i.Pt: protein_expression_t.txt
-  i.Y : gene_expression.txt
-  e.W : paper.W.txt
+  i.D       : motif_hits.txt
+  i.Pt      : protein_expression_t.txt
+  i.Y       : gene_expression.txt
+  args.seed : 8525
+  args.tfrac: .472
+  args.svdP : 25 # may have some issues with svd in R
+  o.W       : paper.W.txt
 snp.pRs2Bed.default:
-  tag: default
-  i.snpfile: snps.txt
-  e.outfile: snps.bed
+  args.inopts.cnames: False
+  args.tool         : local
+  i.snpfile         : snps.txt
+  o.outfile         : snps.bed
+  opt1.cnames       : False
+  opt2.cnames       : False
+snp.pRs2Bed.cruzdb:
+  args.inopts.cnames: False
+  args.tool         : cruzdb
+  i.snpfile         : snps.txt
+  o.outfile         : snps.cruzdb.bed
+  opt1.cnames       : False
+  opt2.cnames       : False
 mlearn.pCrossValid.default:
-  tag: default
   i.infile: crossvalid.txt
-  e.{outdir}/crossvalid.aucs.txt: crossvalid.aucs.txt
+  args.seed        : 998
+  args.train.method: rf
+  args.train.form  : Class ~ .
+  args.ctrl.method : cv
+  args.ctrl.number : 10
+  o.{outdir}/crossvalid.aucs.txt: crossvalid.aucs.txt

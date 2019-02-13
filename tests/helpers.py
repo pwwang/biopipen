@@ -3,20 +3,16 @@ import urllib2
 import testly
 import yaml
 from os import path
-from bioprocs.utils import shell, alwaysList
+from bioprocs.utils import shell
 from bioprocs.utils.tsvio2 import TsvReader
 from tempfile import gettempdir
 
 shbioprocs = shell.Shell(subcmd = True, dash = '-', equal = ' ').bioprocs
 
 PROCDATADIR = path.join(path.dirname(path.abspath(__file__)), 'procdata')
+DATAFILE    = path.join(PROCDATADIR, 'data.yml')
 TMPDIR      = gettempdir()
-
-def loadTestMetadata(ymlfile):
-	with open(ymlfile) as stream:
-		return yaml.load(stream)
-
-TESTDATA    = loadTestMetadata(path.join(PROCDATADIR, 'data.yml'))
+CACHED      = {}
 
 def runBioprocs(proc, args):
 	args['config._log.shortpath:py'] = 'False'
@@ -31,27 +27,47 @@ def download(url, savedir = TMPDIR):
 	return destfile
 
 def getlocal(bname, key, datadir = PROCDATADIR):
-	parts = key.split('.')
-	return path.join(datadir, parts[0], parts[1], bname)
+	d1, d2 = key.split('.')
+	return path.join(datadir, d1, d2, bname)
 
-def getData(key, which = 'i., tag', **kwargs):
-	which = alwaysList(which)
-	ret   = kwargs
-	tdata = TESTDATA[key]
-	for k, v in tdata.items():
-		if not any(k.startswith(w) for w in which): continue
-					
-		if v.startswith('http'):
-			data = download(v)
-			TESTDATA[key][k] = 'plain:' + data
-			ret[k] = data
-		elif v.startswith('plain:'):
-			ret[k] = v[7:]
-		elif k.startswith('i.') or k.startswith('e.'):
-			ret[k] = getlocal(v, key)
-		else:
-			ret[k] = v
-	return ret
+def getData(datafile = DATAFILE):
+	with open(datafile) as stream:
+		data = yaml.load(stream)
+
+	for key, value in data.items():
+		kparts    = key.split('.')
+		tag       = kparts[-1] if len(kparts) > 2 else 'default'
+		proc      = '.'.join(kparts[:2])
+		args      = {'tag': tag}
+		exptfiles = {}
+		opt1      = {}
+		opt2      = {}
+		for k, v in value.items():
+			ret = args
+			if k[:2] in ['i.', 'o.']:
+				if k[:2] == 'o.':
+					ret = exptfiles
+					k = k[2:] 
+				if not v.startswith('plain:') and not v.startswith('http') \
+					and not v.startswith('ftp') and not v.startswith('file:'):
+					v = 'file:' + v
+				if v in CACHED:
+					ret[k] = CACHED
+				elif v.startswith('plain:'):
+					ret[k] = v[7:]
+				elif v.startswith('http') or v.startswith('ftp'):
+					ret[k] = download(v)
+					CACHED[v] = ret[k]
+				elif v.startswith('file:'):
+					ret[k] = getlocal(v[5:], proc)
+				else:
+					ret[k] = v
+			elif k.startswith('opt'):
+				ret = opt1 if k.startswith('opt1.') else opt2
+				ret[k[5:]] = v
+			else:
+				ret[k] = v
+		yield testly.Data(proc = proc, args = args, exptfiles = exptfiles, opt1 = opt1, opt2 = opt2)
 
 def getOutput(c):
 	ret = {}
@@ -117,8 +133,8 @@ def assertFileEqual(self, first, second, filetype = None, firstInopts = None, se
 		)
 		self.fail(self._formatMessage(msg, standardMsg))
 	elif filetype1 == 'text':# and filetype2 == 'text':
-		reader1 = TsvReader(first,  firstInopts)  if firstInopts  else TsvReader(first)
-		reader2 = TsvReader(second, secondInopts) if secondInopts else TsvReader(second)
+		reader1 = TsvReader(first,  **firstInopts)  if firstInopts  else TsvReader(first)
+		reader2 = TsvReader(second, **secondInopts) if secondInopts else TsvReader(second)
 		rindex  = 0
 		for r1 in reader1:
 			rindex += 1
