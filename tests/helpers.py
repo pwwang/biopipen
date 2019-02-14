@@ -7,7 +7,7 @@ from bioprocs.utils import shell
 from bioprocs.utils.tsvio2 import TsvReader
 from tempfile import gettempdir
 
-shbioprocs = shell.Shell(subcmd = True, dash = '-', equal = ' ').bioprocs
+shbioprocs = shell.Shell(subcmd = True, dash = '-', equal = ' ', duplistkey = False).bioprocs
 
 PROCDATADIR = path.join(path.dirname(path.abspath(__file__)), 'procdata')
 DATAFILE    = path.join(PROCDATADIR, 'data.yml')
@@ -30,6 +30,23 @@ def getlocal(bname, key, datadir = PROCDATADIR):
 	d1, d2 = key.split('.')
 	return path.join(datadir, d1, d2, bname)
 
+def getioval(value, proc = None):
+	if isinstance(value, list):
+		return [getioval(v, proc) for v in value]
+	if not value.startswith('plain:') and not value.startswith('http') and \
+	not value.startswith('ftp') and not value.startswith('file:'):
+		value = 'file:' + value
+	if value in CACHED:
+		return CACHED[value]
+	elif value.startswith('plain:'):
+		return value[7:]
+	elif value.startswith('http') or value.startswith('ftp'):
+		CACHED[value] = download(v)
+		return CACHED[value]
+	elif value.startswith('file:'):
+		return getlocal(value[5:], proc)
+	return value
+
 def getData(datafile = DATAFILE):
 	with open(datafile) as stream:
 		data = yaml.load(stream)
@@ -45,23 +62,14 @@ def getData(datafile = DATAFILE):
 		for k, v in value.items():
 			ret = args
 			if k[:2] in ['i.', 'o.']:
+				v = getioval(v, proc)
 				if k[:2] == 'o.':
-					ret = exptfiles
-					k = k[2:] 
-				if not v.startswith('plain:') and not v.startswith('http') \
-					and not v.startswith('ftp') and not v.startswith('file:'):
-					v = 'file:' + v
-				if v in CACHED:
-					ret[k] = CACHED
-				elif v.startswith('plain:'):
-					ret[k] = v[7:]
-				elif v.startswith('http') or v.startswith('ftp'):
-					ret[k] = download(v)
-					CACHED[v] = ret[k]
-				elif v.startswith('file:'):
-					ret[k] = getlocal(v[5:], proc)
+					k = k[2:]
+					exptfiles[k] = v
+				elif isinstance(v, list):
+					args[k + ':list:one'] = v
 				else:
-					ret[k] = v
+					args[k] = v
 			elif k.startswith('opt'):
 				ret = opt1 if k.startswith('opt1.') else opt2
 				ret[k[5:]] = v

@@ -283,6 +283,29 @@ pHeatmap.script       = "file:scripts/plot/pHeatmap.r"
 
 """
 @name:
+	pHeatmap2
+@description:
+	Plot heatmaps using R package ComplexHeatmap.
+@input:
+	`infile:file`: The input data file for the main heatmap.
+	`annofiles:files`
+"""
+pHeatmap2              = Proc(desc  = 'Plot heatmaps using R package ComplexHeatmap.')
+pHeatmap2.input        = "infile:file, annofiles:files"
+pHeatmap2.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
+pHeatmap2.args.ggs     = Box()
+pHeatmap2.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pHeatmap2.args.params  = Box()
+pHeatmap2.args.anopts  = Box(rnames = True, cnames = True)
+pHeatmap2.args.inopts  = Box(rnames = True, cnames = True)
+pHeatmap2.args.seed    = None
+pHeatmap2.args.helper  = ''
+pHeatmap2.envs.rimport = rimport
+pHeatmap2.lang         = params.Rscript.value
+pHeatmap2.script       = "file:scripts/plot/pHeatmap2.r"
+
+"""
+@name:
 	pScatterCompare
 @description:
 	Plot scatter plot to compare values of first 2 columns of input data

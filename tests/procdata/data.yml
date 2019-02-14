@@ -34,3 +34,32 @@ mlearn.pCrossValid.default:
   args.ctrl.method : cv
   args.ctrl.number : 10
   o.{outdir}/crossvalid.aucs.txt: crossvalid.aucs.txt
+plot.pHeatmap2.default:
+  i.infile: mat.default.txt
+  args.devpars.res: 70
+  args.devpars.height: 500
+  args.devpars.width: 500
+  o.outfile: mat.default.heatmap.png
+plot.pHeatmap2.annotate:
+  i.infile: mat.default.txt
+  i.annofiles:
+    - mat.anno.txt
+  args.seed: 8525
+  args.devpars.res: 70
+  args.devpars.height: 500
+  args.devpars.width: 500
+  args.params.top_annotation: r:HeatmapAnnotation(foo = annos$foo, bar = as.matrix(annos[, c('bar1', 'bar2')]), pt = anno_points(annos$pt), show_legend = TRUE, show_annotation_name = TRUE)
+  o.outfile: mat.annotate.heatmap.png
+plot.pHeatmap2.multianno:
+  i.infile: mat.default.txt
+  i.annofiles:
+    - mat.anno.txt
+    - mat.ranno.txt
+  args.seed: 8525
+  args.devpars.res: 70
+  args.devpars.height: 500
+  args.devpars.width: 500
+  args.params.top_annotation: r:HeatmapAnnotation(foo = annos[[1]]$foo, bar = as.matrix(annos[[1]][, c('bar1', 'bar2')]), pt = anno_points(annos[[1]]$pt), show_legend = TRUE, show_annotation_name = TRUE)
+  args.params.right_annotation: r:rowAnnotation(rowanno = anno_lines(as.matrix(annos[[2]]$rowanno)))
+  o.outfile: mat.multianno.heatmap.png
+  

@@ -254,6 +254,23 @@ plot.boxplot = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, par
 	}
 }
 
+plot.heatmap2 = function(data, plotfile = NULL, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+	library(ComplexHeatmap)
+
+	params$matrix = data
+	hm = do.call(Heatmap, params)
+
+	if (is.logical(plotfile) && !plotfile) {
+		return(hm)
+	} else if (is.null(plotfile)) {
+		draw(hm)
+	} else {
+		do.call(png, c(list(filename=plotfile), devpars))
+		draw(hm)
+		dev.off()
+	}
+}
+
 plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	require('ggdendro')
 	require('gtable')
