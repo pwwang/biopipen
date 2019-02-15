@@ -20,5 +20,6 @@ if (length(annos) == 1) {
 }
 eval(parse(text = {{args.helper | repr}}))
 params    = {{args.params | R}}
+drawps    = {{args.draw | R}}
 
-plot.heatmap2(data, outfile, params = params, devpars = devpars)
+plot.heatmap2(data, outfile, params = params, draw = drawps, devpars = devpars)

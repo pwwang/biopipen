@@ -165,6 +165,35 @@ bQuote = function(s) {
 	}
 }
 
+is.true = function(x, collapse = 'all') {
+	if (is.null(x)) return (FALSE)
+	if (length(x) == 0) return (FALSE)
+	if (length(x) == 1) {
+		if (is.na(x)) return (FALSE)
+		tryCatch({
+			x = as.logical(x)
+		}, error = function(e){
+			x <<- TRUE
+		})
+		if (is.na(x)) return (TRUE)
+		return (x)
+	} else if (collapse == 'all') {
+		for (i in x) {
+			if (!is.true(i)) return (FALSE)
+		}
+		return (TRUE)
+	} else {
+		for (i in x) {
+			if (is.true(i)) return (TRUE)
+		}
+		return (FALSE)
+	}
+}
+
+is.false = function(x, collapse = 'all') {
+	!is.true(x, ifelse(collapse == 'all', 'any', 'all'))
+}
+
 list.get = function(l, key, default = NULL, check.names = FALSE) {
 	# get the value of a key in list with default
 	# @params:

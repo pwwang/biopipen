@@ -254,7 +254,7 @@ plot.boxplot = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, par
 	}
 }
 
-plot.heatmap2 = function(data, plotfile = NULL, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.heatmap2 = function(data, plotfile = NULL, params = list(), draw = list(), devpars = list(res=300, width=2000, height=2000)) {
 	library(ComplexHeatmap)
 
 	params$matrix = data
@@ -263,10 +263,10 @@ plot.heatmap2 = function(data, plotfile = NULL, params = list(), devpars = list(
 	if (is.logical(plotfile) && !plotfile) {
 		return(hm)
 	} else if (is.null(plotfile)) {
-		draw(hm)
+		do.call(ComplexHeatmap::draw, c(list(hm), draw))
 	} else {
 		do.call(png, c(list(filename=plotfile), devpars))
-		draw(hm)
+		do.call(ComplexHeatmap::draw, c(list(hm), draw))
 		dev.off()
 	}
 }

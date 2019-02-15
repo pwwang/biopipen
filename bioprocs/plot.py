@@ -295,7 +295,8 @@ pHeatmap2.input        = "infile:file, annofiles:files"
 pHeatmap2.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
 pHeatmap2.args.ggs     = Box()
 pHeatmap2.args.devpars = Box(res = 300, height = 2000, width = 2000)
-pHeatmap2.args.params  = Box()
+pHeatmap2.args.draw    = Box()
+pHeatmap2.args.params  = Box(heatmap_legend_param = Box())
 pHeatmap2.args.anopts  = Box(rnames = True, cnames = True)
 pHeatmap2.args.inopts  = Box(rnames = True, cnames = True)
 pHeatmap2.args.seed    = None

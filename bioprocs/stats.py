@@ -749,3 +749,48 @@ pBootstrap.args.devpars = Box(height = 2000, width = 2000, res = 300)
 pBootstrap.envs.rimport = rimport
 pBootstrap.lang         = params.Rscript.value
 pBootstrap.script       = "file:scripts/stats/pBootstrap.r"
+
+
+"""
+@name:
+	pPCA
+@description:
+	Perform PCA analysis
+@input:
+	`infile:file`: The matrix to do the analysis
+@output:
+	`outfile:file`: The output coordinate file
+	- Columns are PCs, rows are samples
+@args:
+	`transpose`:  Whether to transpose the input matrix from infile. Default: False
+	`rownames`:   The `row.names` argument for `read.table`, default: 1
+	`header`:     The `header` argument for `read.table` to read the input file, default: True.
+	`screeplot`:  Whether to generate the screeplot or not. Default: True
+	`sp_ncp`:     Number of components in screeplot. Default: 0 (auto detect)
+	- if total # components (tcp) < 20: use all
+	- else if tcp > 20, use 20
+	`varplot`:    Whether to generate the variable plot or not. Default: False
+	`biplot`:     Whether to generate the variable plot or not. Default: True
+@requires:
+	[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
+"""
+pPCA        = Proc(desc = 'Perform PCA analysis.')
+pPCA.input  = "infile:file, annofile:file"
+pPCA.output = [
+	"outfile:file:{{i.infile | fn2}}.pca/{{i.infile | fn2}}.pcs.txt", 
+	"outdir:dir:{{i.infile | fn2}}.pca"
+]
+pPCA.args.anopts = Box(cnames = True, rnames = True)
+pPCA.args.inopts = Box(cnames = True, rnames = True)
+pPCA.args.plots  = Box(
+	scree   = Box(ncp = 20),
+	var     = Box(repel = True),
+	bi      = Box(repel = True),
+	cluster = Box(method = 'kmeans', centers = 4),
+	clplot  = Box(repel = True, xlab = "PC1", ylab = "PC2", main = "", ggs = Box())
+)
+pPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)
+pPCA.envs.rimport = rimport
+pPCA.lang         = params.Rscript.value
+pPCA.script       = "file:scripts/stats/pPCA.r"
+
