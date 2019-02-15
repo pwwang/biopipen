@@ -170,6 +170,7 @@ is.true = function(x, collapse = 'all') {
 	if (length(x) == 0) return (FALSE)
 	if (length(x) == 1) {
 		if (is.na(x)) return (FALSE)
+		if (is.list(x)) return (TRUE)
 		tryCatch({
 			x = as.logical(x)
 		}, error = function(e){

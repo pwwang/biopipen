@@ -2458,49 +2458,6 @@
     - **requires**  
         `r-caret`
 ## network
-## pca
-
-!!! hint "pPCA"
-
-    - **description**  
-        Perform PCA analysis
-
-    - **input**  
-        - `infile:file`: The matrix to do the analysis  
-        - Note that rows are samples, columns are features, if not, use `args.transpose = True`
-
-    - **output**  
-        - `outfile:file`: The output coordinate file  
-        - Columns are PCs, rows are samples
-
-    - **args**  
-        - `transpose`: Whether to transpose the input matrix from infile. Default: False  
-        - `rownames`: The `row.names` argument for `read.table`, default: 1  
-        - `header`: The `header` argument for `read.table` to read the input file, default: True.  
-        - `screeplot`: Whether to generate the screeplot or not. Default: True  
-        - `sp_ncp`: Number of components in screeplot. Default: 0 (auto detect)  
-        - if total # components (tcp) < 20: use all
-        - else if tcp > 20, use 20
-        - `varplot`: Whether to generate the variable plot or not. Default: False  
-        - `biplot`: Whether to generate the variable plot or not. Default: True  
-
-    - **requires**  
-        [`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
-
-!!! hint "pSelectPCs"
-
-    - **description**  
-        Select a subset of PCs from pPCA results
-
-    - **input**  
-        - `indir:file`: The directory generated from pPCA  
-
-    - **output**  
-        - `outfile:file`: The file containing selected PCs  
-
-    - **args**  
-        - `n`: The number of PCs to select. Default: 0.9  
-        - If it is < 1, used as the % variation explained from stdev.txt
 ## picard
 
 !!! hint "pMarkDuplicates"
@@ -2975,6 +2932,50 @@
         	- `random:N`: Random N rows. N defaults to 50
         	- `random-both:N`: Random N rows from top part and N rows from bottom part. N defaults to 50
         - `cols`: Col selector (see `rows`).  
+
+!!! hint "pHeatmap2"
+
+    - **description**  
+        Plot heatmaps using R package ComplexHeatmap. Example:
+        ```
+        bioprocs plot.pHeatmap2 
+        	-i.infile MMPT.txt 
+        	-i.annofiles:l:o PatientAnno.txt 
+        	-args.params.row_names_gp 'r:fontsize5' 
+        	-args.params.column_names_gp 'r:fontsize5' 
+        	-args.params.clustering_distance_rows pearson 
+        	-args.params.clustering_distance_columns pearson 
+        	-args.devpars.width 5000 
+        	-args.devpars.height 5000 
+        	-args.draw.merge_legends 
+        	-args.params.heatmap_legend_param.title AUC 
+        	-args.params.row_dend_reorder 
+        	-args.params.column_dend_reorder 
+        	-args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1):ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey", `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend = c(Group=F))' 
+        	-args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))' 
+        	-args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c("Group1", "Group2", "Group3")' 
+        	-args.seed 8525
+        ```
+
+    - **input**  
+        - `infile:file`: The input data file for the main heatmap.  
+        - `annofiles:files`: The annotation files.  
+        	- For now, they should share the same `args.anopts`
+
+    - **output**  
+        - `outfile:flie`: The plot.  
+
+    - **args**  
+        - `devpars`: The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+        - `draw`   : The parameters for `ComplexHeatmap::draw`  
+        - `params` : Other parameters for `ComplexHeatmap::Heatmap`  
+        - `anopts` : The options to read the annotation files.  
+        - `inopts` : The options to read the input files.  
+        - `seed`   : The seed. Default: `None`  
+        - `helper` : The raw R codes to help defining some R variables or functions.  
+
+    - **requires**  
+        `R-ComplexHeatmap` (tested on c269eb425bf1b2d1713b9d5e68bf9f08bd8c7acb)
 
 !!! hint "pScatterCompare"
 
@@ -4629,6 +4630,53 @@
         	- You may also specify indices. For example: `[1, 2]` to plot the 1st and 2nd statistics
         	- Use `False` or `None` to disable plotting
         - `devpars`: The device parameters for the plot.  
+
+!!! hint "pPCA"
+
+    - **description**  
+        Perform PCA analysis. Example:
+        ```
+        bioprocs stats.pPCA 
+        	-i.infile Cellline_t.txt 
+        	-i.annofile CLAnno.txt 
+        	-args.plots.clplot.repel 
+        	-args.plots.clplot.shape 3 
+        	-args.plots.clplot.ggs.geom_point 'r:list(aes(shape = Cellline), color = "#2b6edb", data = anno)' 
+        	-args.seed 8525 
+        	-args.plots.cluster.centers 2 
+        	-args.plots.clplot.show-clust-cent 0 
+        	-args.plots.cluster.npcs 2
+        ```
+
+    - **input**  
+        - `infile:file`: The matrix to do the analysis  
+        	- Columns are the features
+
+    - **output**  
+        - `outfile:file`: The file with the components  
+        - `oudir:dir`   : The directory c  
+
+    - **args**  
+        - `devpars`: The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+        - `anopts` : The options to read the annotation files.  
+        - `inopts` : The options to read the input files.  
+        - `na`     : How to deal with `NA` values. Default: `0`  
+        	- A logistic/boolean value will remove them (use `complete.cases`)
+        	- Otherwise, it will be replaced by the given value.
+        - `seed`   : The seed. Default: `None`  
+        - `plots`  : Use R package `factoextra` to do Plots. You can use `False` for each to disable each plot.  
+        	- `scree`  : Scree plot, see `?fviz_screeplot`. Default: `Box(ncp = 20`)
+        	- `var`    : Var plot, see `?fviz_pca_var`. Default: `Box(repel = False)`
+        	- `bi`     : Biplot,   see `?fviz_pca_biplot`. Default: `Box(repel = False)`
+        	- `clplot` : Cluster plot, see `?fviz_cluster`. Default: `Box(repel = False, main = "", ggs = Box())`
+        		- The extra `ggs` is used to extend the plot. See example in description.
+        	- `cluster`: Cluster options for the cluster plot. Default: `Box(npcs  = .8, method = 'kmeans')`
+        		- `npcs`: # of PCs to use for clustering. `npcs` < 1 will be treated as variance contribution of PCs. For example, `0.8` will take first N PCs will contribute 80% of variance. Default: `.8`
+        		- `method`: Clustering method. Available methods would be `kmeans` and methods supported by `cluster` package.
+        		- Other arguments for the clustering function.
+
+    - **requires**  
+        [`R-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
 ## tabix
 
 !!! hint "pTabix"

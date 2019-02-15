@@ -8,14 +8,22 @@ outdir   = {{o.outdir | quote}}
 inopts   = {{args.inopts | R}}
 anopts   = {{args.anopts | R}}
 devpars  = {{args.devpars | R}}
+na       = {{args.na | R}}
+seed     = {{args.seed | R}}
+set.seed(seed)
 
 indata = read.table.inopts(infile, inopts)
+if (!is.logical(na)) {
+	indata[is.na(indata)] = na
+} else {
+	indata = indata[complete.cases(indata),,drop = FALSE]
+}
 anno = NULL
 if (annofile != "") {
 	anno = read.table.inopts(annofile, anopts)[rownames(indata),,drop=FALSE]
 }
 plots = {{args.plots | R}}
-pca   = prcomp(indata)
+pca   = prcomp(indata, scale = TRUE)
 
 xfile        = outfile
 sdevfile     = paste0(prefix, '.sdev.txt')
@@ -65,22 +73,31 @@ if (is.true(plots$bi)) {
 	dev.off()
 }
 
-if (is.true(plots$clplot)) {
+if (is.true(plots$clplot, 'any')) {
 	library(factoextra)
 	library(cluster)
 	clusterfile = paste0(prefix, '.clusterplot.png')
 
-	clmethod = plots$cluster$method
+	clmethod             = plots$cluster$method
+	npcs                 = plots$cluster$npcs
 	plots$cluster$method = NULL
-	plots$cluster$x = scale(pca$x[, 1:2])
-	cldata = do.call(clmethod, plots$cluster)
+	plots$cluster$npcs   = NULL
+	if (npcs > 1) {
+		pcadata = pca$x[, 1:npcs, drop = FALSE]
+	} else {
+		pcs = which(sdev$CumPercent <= npcs * 100)
+		if (length(pcs) < 2) pcs = 1:2
+		pcadata = pca$x[, pcs, drop = FALSE]
+	}
+	plots$cluster$x = scale(pcadata)
+	cldata          = do.call(clmethod, plots$cluster)
 	
 	if (!is.list(plots$clplot)) {
 		plots$clplot = list(repel = TRUE)
 	}
 	plots$clplot$object = cldata
-	plots$clplot$data = pca$x[, 1:2]
-	plots$clplot$ggs = NULL
+	plots$clplot$data   = pcadata
+	plots$clplot$ggs    = NULL
 
 	do.call(png, c(list(clusterfile), devpars))
 	p = do.call(fviz_cluster, plots$clplot)
