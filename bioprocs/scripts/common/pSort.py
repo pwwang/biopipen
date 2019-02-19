@@ -1,53 +1,29 @@
 from pyppl import Box
-from collections import OrderedDict
-from bioprocs.utils import runcmd, cmdargs
-from bioprocs.utils.tsvio import TsvReader, TsvWriter
+from bioprocs.utils import shell
 
-{% if args.sorted %}
-cmd = "ln -s {{i.infile | squote}} {{o.outfile | squote}}"
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
+params  = {{args.params | repr}}
+inopts  = {{args.inopts | repr}}
+case    = {{args.case | repr}}
+mem     = {{args.mem | repr}}
+tmpdir  = {{args.tmpdir | quote}}
+unique  = {{args.unique | repr}}
 
-{% else %}
-params = Box()
-params['T'] = {{args.tmpdir | quote}}
-params['S'] = {{args.mem | quote}}
-params['u'] = {{args.unique}}
-params['t'] = {{args.inopts.delimit | quote}}
-params.update({{args.params}})
-kopts = {k:v for k,v in params.items() if k.startswith('k')}
-for i, k in enumerate(sorted(kopts.keys())):
-	del params[k]
-	params['k%s' % (' '*i)] = kopts[k]
+shellargs = dict(dash = '-', equal = ' ', duplistkey = True)
+shellargs['env'] = {'LANG': 'C'} if case else {'LANG': 'en_US.UTF-8'}
 
-infile   = {{i.infile | quote}}
-outfile  = {{o.outfile | quote}}
-tmpfile  = outfile + '.tmp'
-skip     = {{args.inopts | lambda x: x.get('skip', 0)}}
-delimit  = {{args.inopts | lambda x: x.get('delimit', '\t') | quote}}
-comment  = {{args.inopts | lambda x: x.get('comment', '#') | quote}}
+params.t = params.get('t', inopts.get('delimit', "\t"))
+params.T = tmpdir
+params.u = unique
+params.S = mem
 
-if not skip and not comment:
-	tmpfile = infile
+if inopts.skip:
+	shell.head(_ = infile, n = inopts.skip, _stdout = outfile)
+	#params.__stdout = outfile
+	shell.Shell().tail(_ = infile, n = '+' + str(inopts.skip + 1)) \
+		.pipe(**shellargs).sort(__stdout = outfile, **params).run()
 else:
-	with open(infile) as readerSkip, open(outfile, 'w') as writerSkip:
-		for i, line in enumerate(readerSkip):
-			if i >= skip: break
-			writerSkip.write(line)
-
-	readerTmp = TsvReader(infile, delimit = delimit, comment = comment, skip = skip, ftype = 'nometa', head = False)
-	#readerTmp.autoMeta()
-	writerTmp = TsvWriter(tmpfile, delimit = delimit, ftype = 'nometa')
-	#writerTmp.meta.update(readerTmp.meta)
-	for r in readerTmp:
-		writerTmp.write(r)
-	writerTmp.close()
-	
-{% if args.case %}
-case = "LANG=C"
-{% else %}
-case = "LANG=en_US.UTF-8"
-{% endif %}
-
-cmd = '%s sort %s "%s" >> {{o.outfile | quote}}' % (case, cmdargs(params), tmpfile)
-{% endif %}
-
-runcmd(cmd)
+	params._ = infile
+	params._stdout = outfile
+	shell.Shell(**shellargs).sort(**params).run()

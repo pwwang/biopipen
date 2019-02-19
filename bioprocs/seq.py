@@ -100,8 +100,8 @@ pPromoters.input         = "infile:file"
 pPromoters.output        = "outfile:file:{{i.infile | fn}}-promoters.bed"
 pPromoters.args.region   = Box(up = 2000, down = None, withbody = False)
 pPromoters.args.notfound = 'skip' # error
-pPromoters.args.inopts   = Box(cnames = False, genecol = 0)
-pPromoters.args.outopts  = Box(cnames = False)
+pPromoters.args.inopts   = Box(cnames = False, delimit = "\t")
+pPromoters.args.genecol  = 0
 pPromoters.args.refgene  = params.refgene.value
 pPromoters.lang          = params.python.value
 pPromoters.script        = "file:scripts/seq/pPromoters.py"

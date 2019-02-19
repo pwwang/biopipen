@@ -5,7 +5,7 @@ from medoo import Raw, Field
 from pyppl import Box
 from bioprocs.utils import alwaysList
 from bioprocs.utils.cache import Cache
-from bioprocs.utils.tsvio import TsvReader, TsvWriter
+from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 from tempfile import gettempdir
 
 """
@@ -94,15 +94,33 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	_inopts.update(inopts or {})
 	inopts  = _inopts
 
-	_outopts = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
+	_outopts = Box(delimit = '\t', append = False, query = False, head = True)
 	_outopts.update(outopts or {})
 	outopts  = _outopts
+	outquery = outopts.get('query', False)
+	outhead  = outopts.get(outops.get('cnames', True), 'head', True)
+	if 'query' in outopts:
+		outquery = outopts['query']
+		del outopts['query']
+	if 'head' in outopts:
+		outhead = outopts['head']
+		del outopts['head']
+	if 'cnames' in outops:
+		outhead = outopts['cnames']
+		del outops['cnames']
 
-	reader   = TsvReader(infile, **inopts)
-	if not reader.meta: reader.autoMeta()
-	genecol  = genecol or 0
-	genes    = list(set([r[genecol].strip() for r in reader]))
+	reader  = TsvReader(infile, **inopts)
+	#if not reader.meta: reader.autoMeta()
+	genecol = genecol or 0
+	genes   = set()
+	ncol    = 0
+	for r in reader:
+		ncol = ncol or len(r)
+		genes.add(r[genecol].strip())
 	reader.rewind()
+	if not reader.meta:
+		reader.meta.extend(['COL' + str(i + 1) for i in range(ncol)])
+	genes = list(genes)
 
 	dbfile   = path.join(cachedir, 'geneinfo.db')
 	cache    = Cache(dbfile, 'geneinfo', {
@@ -163,6 +181,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	columns  = list(set(tocols + frmcols + ['taxid']))
 	frmkeys  = ','.join(frmcols)
 	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
+
 	# query from api
 	mgret = querygene(allrest[frmkeys], scopes = fields2remote(frmcols), fields = fields2remote(columns), species = SPECIES[genome])
 	# get all result for each query
@@ -203,11 +222,12 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 				data2save[x] = []
 			data2save[x].append(val)
 		genemap[query] = gr
-	
+
 	# add cached data
 	for i, ret in allfound.items():
 		query = genes[i]
 		genemap[query] = ret
+
 	#del genetmp
 	#print genemap
 
@@ -238,22 +258,22 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		cache.save(data2save_uniq, dummies)
 
 	if outfile:
-		writer   = TsvWriter(outfile, delimit = outopts['delimit'])
-		writer.meta.update(reader.meta)
+		writer = TsvWriter(outfile, **outopts)
+		writer.meta.extend(reader.meta)
+		if outquery:
+			write.meta.append('_QUERY')
+			
 		if len(tocols) > 1:
-			items   = writer.meta.items()
-			gcolidx = writer.meta.keys().index(genecol)
-			items[(gcolidx+1):(gcolidx+1)] = [(tocol, None) for tocol in tocols[1:]]
-			writer.meta.clear()
-			writer.meta.add(*items)
-		if outopts['query']:
-			writer.meta.add('_QUERY')
-
-		if outopts['head']:
-			writer.writeHead(outopts['headPrefix'], outopts['headDelimit'], outopts['headTransform'])
+			gcolidx = genecol if isinstance(genecol, int) else writer.meta.index(genecol)
+			writer.meta[(gcolidx+1):(gcolidx+1)] = [(tocol, None) for tocol in tocols[1:]]
+		
+		if outhead:
+			writer.writeHead()
+		#print writer.meta
 
 		#i = 0
-		for r in reader:
+		for row in reader:
+			r = TsvRecord(row.values(), reader.meta)
 
 			#if (i <= 10): print r
 			query = r[genecol].strip()
@@ -266,18 +286,18 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 					for tocol in tocols[1:]:
 						r[tocol] = ''
 			else:
+				#if (i <= 10): print genecol
 				r[genecol] = genemap[query][tocols[0]]
+				#if (i <= 10): print genemap[query][tocols[0]], r
 				if len(tocols) > 1:
 					for tocol in tocols[1:]:
 						r[tocol] = genemap[query][tocol]
 
-			if outopts['query']:
-				if isinstance(r, list):
-					r.append(query)
-				else:
-					r._QUERY = query
+			if outquery:
+				r._QUERY = query
 
 			#if (i <= 10): print r
+			i += 1
 			writer.write(r)
 
 	return genemap

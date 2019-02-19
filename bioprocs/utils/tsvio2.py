@@ -1,4 +1,4 @@
-import types
+import types, tempfile
 
 class TsvRecord(object):
 	__slots__ = ('__keys', '__vals')
@@ -54,6 +54,7 @@ class TsvRecord(object):
 		if isinstance(key, int):
 			if key > len(self) or key < 0:
 				raise IndexError('Index out of range: {}'.format(key))
+			self.__vals[key] = value
 		elif self.__keys and key in self.__keys:
 			self.__vals[self.__keys[key]] = value
 		else:
@@ -194,15 +195,21 @@ class TsvReader(object):
 			self.file.close()
 
 class TsvWriter(object):
-	def __init__(self, outfile, delimit = '\t', append = False):
+	def __init__(self, outfile = None, delimit = '\t', append = False):
 		openfunc = open
-		if outfile.endswith('.gz'):
+		if outfile and outfile.endswith('.gz'):
 			import gzip
 			openfunc = gzip.open
 
 		self.delimit = delimit
-		self.cnames    = []
-		self.file    = openfunc(outfile, 'w' if not append else 'a')
+		self.cnames  = []
+		if outfile:
+			self.file     = openfunc(outfile, 'w' if not append else 'a')
+			self.filename = outfile
+		else:
+			self.file     = tempfile.NamedTemporaryFile(delete = False)
+			self.filename = self.file.name
+		self.meta    = self.cnames # alias
 
 	def writeHead(self, callback = True):
 		if not self.cnames:
@@ -286,8 +293,9 @@ class TsvJoin(object):
 			del outopts['cnames']
 			
 		out = TsvWriter(outfile, **outopts)
-		out.cnames = sum((reader.cnames for reader in self.readers if reader.cnames), [])
-		out.writeHead(cnames)
+		out.cnames = cnames if isinstance(cnames, list) else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames else []
+		if out.cnames:
+			out.writeHead()
 
 		match = match or self._defaultMatch
 		rows = [None] * self.length

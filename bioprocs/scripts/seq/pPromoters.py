@@ -10,12 +10,8 @@ outfile  = {{o.outfile | quote}}
 region   = {{args.region | repr}}
 notfound = {{args.notfound | quote}}
 inopts   = {{args.inopts | repr}}
-outopts  = {{args.outopts | repr}}
 refgene  = {{args.refgene | quote}}
-genecol  = {{args.inopts.genecol | repr}}
-ocnames  = {{args.outopts.cnames | repr}}
-del inopts['genecol']
-del outopts['cnames']
+genecol  = {{args.genecol | repr}}
 if region.down is None:
 	region.down = region.up
 
@@ -24,10 +20,7 @@ reader = TsvReader(refgene, cnames = False, delimit = '"')
 genes  = {r[1]:r[0].split("\t")[:7] for r in reader}
 
 reader = TsvReader(infile, **inopts)
-writer = TsvWriter(outfile, **outopts)
-if ocnames:
-	writer.cnames = ['CHROM', 'START', 'END', 'NAME', 'SCORE', 'STRAND']
-	writer.writeHead()
+writer = TsvWriter(outfile)
 for r in reader:
 	gene = r[genecol]
 	if gene not in genes:

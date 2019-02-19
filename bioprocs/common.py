@@ -15,7 +15,6 @@ from .utils import fs2name
 	`inopts`: The input options for infile:
 		- `skip`   : First N lines to skip. Default: `0`
 		- `delimit`: The delimit. Default          : `\t`
-		- `comment`: The comment line mark. Default: `#`
 	`case`:   Case-sensitivity. Default: True
 		- If True, will set $LANG as C
 		- Otherwise, $LANG will be set as en_US.UTF-8
@@ -25,18 +24,17 @@ from .utils import fs2name
 	`delimit`: The delimit to separate the fields. Default: '\t'
 	`params` : The arguments used by `sort`
 """
-pSort                     = Proc(desc = 'Sort file.')
-pSort.input               = "infile:file"
-pSort.output              = "outfile:file:{{i.infile | bn}}"
-pSort.args.params         = Box()
-pSort.args.inopts         = Box(skip = 0, delimit = '\t', comment = '#')
-pSort.args.case           = True
-pSort.args.mem            = params.mem4G.value
-pSort.args.tmpdir         = params.tmpdir.value
-pSort.args.unique         = False
-pSort.args.sorted         = False
-pSort.lang                = params.python.value
-pSort.script              = "file:scripts/common/pSort.py"
+pSort             = Proc(desc = 'Sort file.')
+pSort.input       = "infile:file"
+pSort.output      = "outfile:file:{{i.infile | bn}}"
+pSort.args.params = Box()
+pSort.args.inopts = Box(skip = 0, delimit = '\t')
+pSort.args.case   = True
+pSort.args.mem    = params.mem4G.value
+pSort.args.tmpdir = params.tmpdir.value
+pSort.args.unique = False
+pSort.lang        = params.python.value
+pSort.script      = "file:scripts/common/pSort.py"
 
 """
 @name:

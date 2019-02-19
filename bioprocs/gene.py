@@ -23,7 +23,8 @@ pGenePromoters = pPromoters.copy()
 @args:
 	`inopts`: options for reading input file.
 	`outopts`: options for writing output file.
-		- `query`: Output the original query column? Default: `False`
+		- `query` : Output the original query column? Default: `False`
+		- `cnames`: Output headers? Default: `True`
 	`notfound`: What if a symbol is not found. Default: ignore
 		- skip  : skip the record(don't write it to output file)
 		- ignore: use the original name;
@@ -40,7 +41,7 @@ pGeneNameNorm.output        = 'outfile:file:{{i.infile | bn}}'
 pGeneNameNorm.errhow        = 'retry'
 pGeneNameNorm.args.notfound = 'ignore'
 pGeneNameNorm.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-pGeneNameNorm.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
+pGeneNameNorm.args.outopts  = Box(delimit = '\t', cnames = True, query = False)
 pGeneNameNorm.args.genecol  = ''
 pGeneNameNorm.args.frm      = 'symbol, alias'
 pGeneNameNorm.args.to       = 'symbol'

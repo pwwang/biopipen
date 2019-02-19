@@ -16,11 +16,19 @@ def distribute(total, nthread):
 	@returns:
 		A list of # jobs distribute on each thread.
 	"""
+	nthread = min(total, nthread)
 	(m, d) = divmod(total, nthread)
 	ret = [m] * nthread
 	for i in range(d):
 		ret[i] += 1
 	return ret
+
+def distributeList(joblist, nthread):
+	lists = distribute(len(joblist), nthread)
+	start = 0
+	for l in lists:
+		yield joblist[start:l+start]
+		start += l
 
 class Parallel(object):
 

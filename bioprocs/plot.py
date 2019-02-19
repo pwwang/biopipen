@@ -288,53 +288,61 @@ pHeatmap.script       = "file:scripts/plot/pHeatmap.r"
 	Plot heatmaps using R package ComplexHeatmap. Example:
 	```
 	bioprocs plot.pHeatmap2 
-		-i.infile MMPT.txt 
-		-i.annofiles:l:o PatientAnno.txt 
-		-args.params.row_names_gp 'r:fontsize5' 
-		-args.params.column_names_gp 'r:fontsize5' 
-		-args.params.clustering_distance_rows pearson 
-		-args.params.clustering_distance_columns pearson 
-		-args.devpars.width 5000 
-		-args.devpars.height 5000 
-		-args.draw.merge_legends 
-		-args.params.heatmap_legend_param.title AUC 
-		-args.params.row_dend_reorder 
-		-args.params.column_dend_reorder 
-		-args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1):ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey", `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend = c(Group=F))' 
-		-args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))' 
-		-args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c("Group1", "Group2", "Group3")' 
-		-args.seed 8525
+	  -i.infile MMPT.txt 
+	  -i.annofiles:l:o PatientAnno.txt 
+	  -args.params.row_names_gp 'r:fontsize5' 
+	  -args.params.column_names_gp 'r:fontsize5' 
+	  -args.params.clustering_distance_rows pearson 
+	  -args.params.clustering_distance_columns pearson 
+	  -args.params.show_row_names false
+	  -args.params.row_split 3
+	  -args.devpars.width 5000 
+	  -args.devpars.height 5000 
+	  -args.draw.merge_legends 
+	  -args.params.heatmap_legend_param.title AUC 
+	  -args.params.row_dend_reorder 
+	  -args.params.column_dend_reorder 
+	  -args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1)  :ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey",   `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend =   c(Group=F))' 
+	  -args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))  ' 
+	  -args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c  ("Group1", "Group2", "Group3")' 
+	  -args.seed 8525
 	```
 @input:
 	`infile:file`: The input data file for the main heatmap.
 	`annofiles:files`: The annotation files.
 		- For now, they should share the same `args.anopts`
 @output:
-	`outfile:flie`: The plot.
+	`outfile:file`: The plot.
+	`outdir:dir`: The output directory including the output plot and other information.
 @args:
-	`devpars`: The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-	`draw`   : The parameters for `ComplexHeatmap::draw`
-	`params` : Other parameters for `ComplexHeatmap::Heatmap`
-	`anopts` : The options to read the annotation files.
-	`inopts` : The options to read the input files.
-	`seed`   : The seed. Default: `None`
-	`helper` : The raw R codes to help defining some R variables or functions.
+	`devpars` : The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+	`draw`    : The parameters for `ComplexHeatmap::draw`
+	`params`  : Other parameters for `ComplexHeatmap::Heatmap`
+	`anopts`  : The options to read the annotation files.
+	`inopts`  : The options to read the input files.
+	`seed`    : The seed. Default: `None`
+	`helper`  : The raw R codes to help defining some R variables or functions.
+	`saveinfo`: Save other information include the heatmap object and the clusters. Default: `True`
 @requires:
 	`R-ComplexHeatmap` (tested on c269eb425bf1b2d1713b9d5e68bf9f08bd8c7acb)
 """
 pHeatmap2              = Proc(desc  = 'Plot heatmaps using R package ComplexHeatmap.')
 pHeatmap2.input        = "infile:file, annofiles:files"
-pHeatmap2.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
-pHeatmap2.args.devpars = Box(res = 300, height = 2000, width = 2000)
-pHeatmap2.args.draw    = Box()
-pHeatmap2.args.params  = Box(heatmap_legend_param = Box())
-pHeatmap2.args.anopts  = Box(rnames = True, cnames = True)
-pHeatmap2.args.inopts  = Box(rnames = True, cnames = True)
-pHeatmap2.args.seed    = None
-pHeatmap2.args.helper  = ''
-pHeatmap2.envs.rimport = rimport
-pHeatmap2.lang         = params.Rscript.value
-pHeatmap2.script       = "file:scripts/plot/pHeatmap2.r"
+pHeatmap2.output       = [
+	"outfile:file:{{i.infile | fn2}}.heatmap/{{i.infile | fn2}}.heatmap.png",
+	"outdir:dir:{{i.infile | fn2}}.heatmap"
+]
+pHeatmap2.args.devpars  = Box(res = 300, height = 2000, width = 2000)
+pHeatmap2.args.draw     = Box()
+pHeatmap2.args.params   = Box(heatmap_legend_param = Box())
+pHeatmap2.args.anopts   = Box(rnames = True, cnames = True)
+pHeatmap2.args.inopts   = Box(rnames = True, cnames = True)
+pHeatmap2.args.seed     = None
+pHeatmap2.args.saveinfo = True
+pHeatmap2.args.helper   = ''
+pHeatmap2.envs.rimport  = rimport
+pHeatmap2.lang          = params.Rscript.value
+pHeatmap2.script        = "file:scripts/plot/pHeatmap2.r"
 
 """
 @name:
