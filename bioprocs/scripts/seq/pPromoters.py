@@ -35,14 +35,14 @@ for r in reader:
 	if strand == '-':
 		record = [
 			chrom, 
-			min(start, end - region.down) if region.withbody else end - region.down, 
+			max(0, min(start, end - region.down) if region.withbody else end - region.down), 
 			end + region.up, 
 			gene, 0, strand
 		]
 	else:
 		record = [
 			chrom, 
-			start - region.up, 
+			max(0, start - region.up), 
 			max(end, start + region.down) if region.withbody else start + region.down, 
 			gene, 0, strand
 		]

@@ -80,7 +80,7 @@ ifelse = function(condition, true, false) {
 	return(false)
 }
 
-read.table.inopts = function(infile, inopts, nodup = T) {
+read.table.inopts = function(infile, inopts, nodup = T, try = FALSE) {
 	inopts.default = function(key, default) list.get(inopts, key, default, check.names = TRUE)
 	optrnames = inopts.default('rnames', TRUE)
 	#optrnames = ifelse('rnames' %in% opts, ifelse(inopts$rnames, 1, NULL), 1)
@@ -94,8 +94,16 @@ read.table.inopts = function(infile, inopts, nodup = T) {
 		quote       = inopts.default('quote', ""),
 		skip        = inopts.default('skip', 0)
 	)
-	d = do.call(read.table, params)
-	if (nodup && optrnames) {
+	if (!try) {
+		d = do.call(read.table, params)
+	} else {
+		d = tryCatch({do.call(read.table, params)}, error = function(e) {
+			logger('Error encountered while read file:', infile, level = 'WARNING')
+			logger(e, level = 'WARNING')
+			return (NULL)
+		})
+	}
+	if (nodup && optrnames && !is.null(d)) {
 		rnames = make.unique(as.character(as.vector(d[,1,drop = T])))
 		d = d[, -1, drop = F]
 		rownames(d) = rnames

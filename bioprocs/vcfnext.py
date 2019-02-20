@@ -206,7 +206,7 @@ pMafLiftover               = Proc(desc = 'Liftover a maf file from one assembly 
 pMafLiftover.input         = 'infile:file'
 pMafLiftover.output        = 'outfile:file:{{i.infile | fn | lambda x: x if x.endswith(".maf") else x + ".maf"}}'
 pMafLiftover.args.liftover = params.liftover.value
-pMafLiftover.args.lochain  = params.lochai.value
+pMafLiftover.args.lochain  = params.lochain.value
 pMafLiftover.args.genome   = params.genome.value
 pMafLiftover.lang          = params.python.value
 pMafLiftover.script        = "file:scripts/vcfnext/pMafLiftOver.py"

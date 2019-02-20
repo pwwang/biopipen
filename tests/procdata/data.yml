@@ -62,4 +62,9 @@ plot.pHeatmap2.multianno:
   args.params.top_annotation: r:HeatmapAnnotation(foo = annos[[1]]$foo, bar = as.matrix(annos[[1]][, c('bar1', 'bar2')]), pt = anno_points(annos[[1]]$pt), show_legend = TRUE, show_annotation_name = TRUE)
   args.params.right_annotation: r:rowAnnotation(rowanno = anno_lines(as.matrix(annos[[2]]$rowanno)))
   o.outfile: mat.multianno.heatmap.png
+stats.pChow.default:
+  i.infile: chow.data.txt
+  i.groupfile: chow.group.txt
+  args.pval: 1
+  o.outfile: chow.ret.txt
   

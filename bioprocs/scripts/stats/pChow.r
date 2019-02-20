@@ -1,5 +1,5 @@
 library(methods)
-{{rimport}}('plot.r', '__init__.r')
+{{rimport}}('__init__.r')
 options(stringsAsFactors = F)
 
 infile   = {{i.infile | R}}
@@ -14,11 +14,14 @@ devpars  = {{args.devpars | R}}
 ggs      = {{args.ggs | R}}
 inopts   = {{args.inopts | R}}
 covfile  = {{args.cov | R}}
+
+if (plotchow) {
+	{{rimport}}('plot.r')
+}
+
 if (dofdr == T) dofdr = 'BH'
 
-regress = function(regdata, name, fmula = NULL) {
-	Y = bQuote(colnames(regdata)[ncol(regdata)])
-	fmula = ifelse(is.null(fmula), paste(Y, "~ ."), fmula)
+regress = function(regdata, name, fmula) {
 	m = lm(as.formula(fmula), data = regdata)
 	list(model = m, ssr = sum(m$residuals ^ 2), n = nrow(regdata), name = name)
 }
@@ -30,9 +33,9 @@ formlm = function(model, k, withname = T) {
 	coefns  = c(coefns, "N")
 	coeffs  = c(coeffs, model$n)
 	if (withname) {
-		paste0(model$name, ': ', paste(coefns, round(coeffs, 3), sep = '=', collapse = ' '))
+		paste0(model$name, ':', paste(coefns, round(coeffs, 3), sep = '=', collapse = ','))
 	} else {
-		paste(coefns, round(coeffs, 3), sep = '=', collapse = ' ')
+		paste(coefns, round(coeffs, 3), sep = '=', collapse = ',')
 	}
 }
 
@@ -62,8 +65,20 @@ model2eq = function(model) {
 		), collapse = ''
 	))
 }
+results = data.frame(
+	Case   = character(),
+	Pooled = character(),
+	Groups = character(),
+	Fstat  = double(),
+	Pval   = double()
+)
 
-indata = read.table.inopts(infile, inopts)
+indata = read.table.inopts(infile, inopts, try = TRUE)
+if (is.null(indata)) {
+	write.table(results, outfile, col.names = T, row.names = F, sep = "\t", quote = F)
+	quit(save = "no")
+}
+
 #     X1  X2  X3  X4 ... Y
 # G1  1   2   1   4  ... 9
 # G2  2   3   1   1  ... 3
@@ -74,43 +89,37 @@ if (covfile != "") {
 	covdata = read.table(covfile, header = T, row.names = 1, check.names = F)
 	indata  = cbind(covdata[rownames(indata),,drop = F], indata)
 }
-gdata  = read.table(gfile, header = F, row.names = NULL, check.names = F)
-# G1	Group1	Case1
-# G2	Group1	Case1
+gdata  = read.table.inopts(gfile, list(cnames = TRUE, rnames = TRUE))
+# 	Case1	Case2
+# G1	Group1	Group1
+# G2	Group1	NA
+# G3	Group2	Group1
 # ... ...
-# Gs	Group2	Case1
-# Gt	Group2	Case1
-# Gt	Group1	Case2
-# ... ...
-# Gu	Group1	Case2
-# ... ...
-# Gz	Group2	Case2
-if (ncol(gdata) == 2) { # no case
-	cases = 'Case1'
-}
-fmulas = NULL
-if (cfile != "") {
-	fmulas = read.table(cfile, header = F, row.names = 1, sep = "\t", check.names = F)
+# Gm	Group2	Group2
+cases  = colnames(gdata)
+fmulas = data.frame(x = rep(paste(bQuote(colnames(indata)[ncol(indata)]), '~ .'), length(cases)))
+rownames(fmulas) = cases
+if (!is.null(cfile) && cfile != "") {
+	fmulas = read.table.inopts(cfile, list(cnames = FALSE, rnames = TRUE))
 	cases  = rownames(fmulas)
 }
 
-results = data.frame(
-	Case   = character(),
-	Pooled = character(),
-	Groups = character(),
-	Fstat  = double(),
-	Pval   = double())
 for (case in cases) {
-	caserows  = if(ncol(gdata) > 2) gdata[which(gdata$Case == case),,drop = F] else gdata
-	fmula     = fmulas[case,]
+	fmula     = fmulas[case,,drop = TRUE]
 	allvars   = all.vars(as.formula(fmula))
-	K         = ifelse(is.null(fmula), ncol(indata), length(allvars))
-	pooled_lm = regress(indata[caserows[,1],,drop = F], name = 'Pooled', fmula = fmulas[case,])
-	subgroups = levels(factor(caserows[,2]))
+	if (allvars[2] == '.') {
+		K = ncol(indata)
+	} else {
+		K = length(allvars)
+	}
+	subgroups = levels(as.factor(gdata[, case]))
+	pooled_lm = regress(
+		indata[rownames(gdata[which(gdata[,case] %in% subgroups), case, drop = F]),,drop = F], 
+		name = 'Pooled', fmula = fmula)
 	subgrp_lm = lapply(subgroups, function(sgroup) {
-		sdata = indata[caserows[which(caserows[,2] == sgroup),1],,drop = F]
+		sdata = indata[rownames(gdata[which(gdata[,case] == sgroup), case, drop = F]),,drop = F]
 		if (nrow(sdata) < 3) NULL
-		else regress(sdata, name = sgroup, fmula = fmulas[case,])
+		else regress(sdata, name = sgroup, fmula = fmula)
 	})
 	subgrp_lm[sapply(subgrp_lm, is.null)] <- NULL
 	# no subgroups
@@ -122,7 +131,9 @@ for (case in cases) {
 	# doplot
 	if (plotchow) {
 		incol = ncol(indata)
-		plotdata = cbind(indata[caserows[,1],,drop = F], Group = caserows[,2])
+		plotdata = cbind(
+			indata[rownames(gdata[which(gdata[,case] %in% subgroups), case,drop = F]),,drop = F], 
+			Group = na.omit(gdata[,case]))
 		rcase = make.names(case)
 		colnames(plotdata)[incol + 1] = rcase
 
@@ -160,11 +171,12 @@ for (case in cases) {
 				labels = labels
 			)
 		))
+		pcnames = colnames(plotdata)
 		plot.scatter(
 			plotdata, 
 			file.path(outdir, paste0(case, '.png')), 
-			x      = which(allvars[2] == colnames(plotdata)),
-			y      = which(allvars[1] == colnames(plotdata)),
+			x      = ifelse(allvars[2] == '.', pcnames[1], which(allvars[2] == pcnames)),
+			y      = which(allvars[1] == pcnames),
 			ggs    = ggs1,
 			params = list(aes_string(shape = rcase, color = rcase))
 		)

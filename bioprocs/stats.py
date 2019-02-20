@@ -502,33 +502,30 @@ pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
 @input:
 	`infile:file`: The input file for data to do the regressions. Example:
 		```
-			    X1  X2  X3  X4 ... Y
-			G1  1   2   1   4  ... 9
-			G2  2   3   1   1  ... 3
-			... ...
-			Gm  3   9   1   7  ... 8
+		  	X1  X2  X3  X4 ... Y
+		  S1  1   2   1   4  ... 9
+		  S2  2   3   1   1  ... 3
+		  ... ...
+		  Sm  3   9   1   7  ... 8
 		```
 	`groupfile:file`: Specify the groups to compare. You may also specify the cases. The Chow-Test will be done between the group for each case. Example:
 		```
-			G1	Group1	Case1
-			G2	Group1	Case1
-			... ...
-			Gs	Group2	Case1
-			Gt	Group2	Case1
-			Gt	Group1	Case2
-			... ...
-			Gu	Group1	Case2
-			... ...
-			Gz	Group2	Case2
+		        Case1	Case2
+		  S1	Group1	Group1
+		  S2	Group1	NA          # Exclude S2 in Case2
+		  S3	Group2	Group1
+		  ... ...
+		  Sm	Group2	Group2
 		```
 		- In such case, the test will be done between Group1 and Group2 for Case1 and Case2, respectively.
 		- Instances can be resued (Gt in the example)
 		- If cases not provided, all will be treated as one case.
 	`casefile:file`: Define the formula (which columns to use for each case). Example:
 		```
-		Case1	Y ~ X1
-		Case2	Y ~ X2
+		  Case1	Y ~ X1
+		  Case2	Y ~ X2
 		```
+		- This file is optional, then formula `Y ~ .` will be used for all cases.
 @output:
 	`outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`
 	`outdir:dir`: The output directory, containing the output file, results of regressions and plots.
@@ -553,7 +550,7 @@ pChow.args.inopts  = Box(
 pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
 pChow.args.pval    = 0.05
 pChow.args.fdr     = True
-pChow.args.plot    = False
+pChow.args.plot    = True
 pChow.args.devpars = Box(res = 300, width = 2000, height = 2000)
 pChow.args.ggs     = Box()
 pChow.envs.rimport = rimport

@@ -59,7 +59,7 @@ pBedLiftover               = Proc(desc = 'Lift over bed files.')
 pBedLiftover.input         = 'infile:file'
 pBedLiftover.output        = 'outfile:file:{{i.infile | bn}}, umfile:file:{{i.infile | fn}}.unmapped{{i.infile | ext}}'
 pBedLiftover.args.liftover = params.liftover.value
-pBedLiftover.args.lochain  = params.lochai.value
+pBedLiftover.args.lochain  = params.lochain.value
 pBedLiftover.args.params   = Box()
 pBedLiftover.lang          = params.python.value
 pBedLiftover.script        = "file:scripts/bed/pBedLiftover.py"
