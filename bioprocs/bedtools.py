@@ -331,25 +331,29 @@ pBedShift.script          = """
 	`bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file. One can also provide an exclusions BED/GFF/VCF file that lists regions where you do not want the permuted features to be placed. For example, one might want to prevent features from being placed in known genome gaps. shuffle is useful as a null basis against which to test the significance of associations of one feature with another.
 @input:
 	`infile:file`: The input file
-	`gfile:file`:  The genome size file
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools shuffle`, default: ""
+	`bedtools`: The bedtools executable, default: "bedtools"
+	`params`  : Other parameters for `bedtools shuffle`, default: ""
+	`gsize`   : The chromsize file. Default: `params.gsize`
+	`n`       : Only return top `n` records (act like sampling). Default: `0`
+		- `0`/`None` will return all records
+		- `n<1` will return proportion of the records
+		- `n>=1` will return top `n` records
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedShuffle                 = Proc(desc = '`bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file.')
-pBedShuffle.input           = "infile:file, gfile:file"
-pBedShuffle.output          = "outfile:file:{{infile | fn}}.shuffled.bed"
-pBedShuffle.args.bedtools   = params.bedtools.value
-pBedShuffle.args.params     = Box()
-pBedShuffle.envs.bashimport = bashimport
-pBedShuffle.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} shuffle $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
-"""
+pBedShuffle               = Proc(desc = 'Randomly permute the genomic locations of a BED file using `bedtools shuffle`')
+pBedShuffle.input         = "infile:file"
+pBedShuffle.output        = "outfile:file:{{i.infile | fn}}.shuffled.bed"
+pBedShuffle.args.bedtools = params.bedtools.value
+pBedShuffle.args.n        = 0
+pBedShuffle.args.gsize    = params.gsize.value
+pBedShuffle.args.seed     = False
+pBedShuffle.args.params   = Box()
+pBedShuffle.lang          = params.python.value
+pBedShuffle.script        = "file:scripts/bedtools/pBedShuffle.py"
 
 """
 @name:
