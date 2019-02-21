@@ -34,6 +34,23 @@ mlearn.pCrossValid.default:
   args.ctrl.method : cv
   args.ctrl.number : 10
   o.{outdir}/crossvalid.aucs.txt: crossvalid.aucs.txt
+plot.pBoxplot.default:
+  i.infile: boxplot.data.txt
+  args.devpars.res: 70
+  args.devpars.height: 500
+  args.devpars.width: 500
+  args.stacked: true
+  args.inopts.rnames: true
+  o.outfile: boxplot.data.boxplot.png
+plot.pHisto.default:
+  i.infile: histo.data.txt
+  args.devpars.res: 70
+  args.devpars.height: 500
+  args.devpars.width: 500
+  args.inopts.rnames: true
+  args.params.alpha: .6
+  args.params.mapping: 'r:aes_string(fill = "Group")'
+  o.outfile: histo.data.boxplot.png
 plot.pHeatmap2.default:
   i.infile: mat.default.txt
   args.devpars.res: 70

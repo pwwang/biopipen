@@ -7,6 +7,11 @@ outfile = {{ o.outfile | quote}}
 inopts  = {{ args.inopts | R}}
 devpars = {{ args.devpars | R}}
 ggs     = {{ args.ggs | R}}
+# chr1	249250621
+# chr2	243199373
+# chr3	198022430
+# chr4	191154276
+gsfile  = {{ args.gsize | R }}
 
 # A bed file with last column the p-value and region (8 columns)
 # Use region to color the snps if the snps are from the same chromosome
@@ -36,5 +41,9 @@ if (hifile != '') {
 	}
 	hidata = apply(hidata, 1, as.list)
 }
-
-plot.man(pdata, plotfile = outfile, hilights = hidata, ggs = ggs, devpars = devpars)
+if (!is.null(gsfile) && gsfile != "" && file.exists(gsfile)) {
+	gsize = read.table.inopts(gsfile, list(rnames = TRUE, cnames = FALSE))
+} else {
+	gsize = NULL
+}
+plot.man(pdata, plotfile = outfile, hilights = hidata, gsize = gsize, ggs = ggs, devpars = devpars)

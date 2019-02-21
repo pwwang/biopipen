@@ -1,12 +1,16 @@
+from __future__ import print_function
+import sys
 import testly
 from collections import defaultdict
 from helpers import runBioprocs, getData, getOutput
 
-def TestClassFactory(klass, datarows):
+def TestClassFactory(klass, datarows, listtests = False):
 
-	def dataprovider_maker(self):
-		for datarow in datarows:
-			yield datarow
+	def dataprovider_maker(drows):
+		def df(self):
+			for drow in drows:
+				yield drow
+		return df
 
 	def testit(self, proc, args, exptfiles = None, opt1 = None, opt2 = None):
 		c         = runBioprocs(proc, args)
@@ -24,21 +28,35 @@ def TestClassFactory(klass, datarows):
 		testly.TestCase.__init__(self, *args, **kwargs)
 
 	members = {'__init__': __init__}
-	proc = datarows[0].kwargs['proc'][len(klass)+1:]
-	proc = 'test' + proc
-	dataprovider = 'dataProvider_' + proc
-	members[dataprovider] = dataprovider_maker
-	members[proc] = testit
+	procs   = defaultdict(lambda: [])
+	for datarow in datarows:
+		procs[datarow.kwargs['proc'][len(klass)+1:]].append(datarow)
 
-	globals()['Test' + klass[0].upper() + klass[1:]] = type(klass, (testly.TestCase,), members)
+	for proc, drows in procs.items():
+		proc = 'test' + proc
+		dataprovider = 'dataProvider_' + proc
+		members[dataprovider] = dataprovider_maker(drows)
+		members[proc] = testit
+
+	if listtests:
+		print('Test' + klass[0].upper() + klass[1:])
+		for member in members:
+			if member.startswith('__') or member.startswith('dataProvider_'):
+				continue
+			print('- ' + member)
+		print('')
+	else:
+		globals()['Test' + klass[0].upper() + klass[1:]] = type(klass, (testly.TestCase,), members)
 
 DATAROWS = defaultdict(lambda: [])
 for data in getData():
 	klass = data.kwargs['proc'].split('.')[0]
 	DATAROWS[klass].append(data)
 
-for key, val in DATAROWS.items():
-	TestClassFactory(key, val)
-
 if __name__ == '__main__':
-	testly.main(verbosity = 2)
+	listtests = len(sys.argv) > 1 and sys.argv[1] == 'list'
+	for key, val in DATAROWS.items():
+		TestClassFactory(key, val, listtests)
+
+	if not listtests:
+		testly.main(verbosity = 2)

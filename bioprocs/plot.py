@@ -81,13 +81,12 @@ pPoints = pScatter.copy()
 	pHisto
 @description:
 	Use ggplot2 geom_histogram to generate histograms
-@infile:
+@input:
 	`infile:file`: The input data file
-@outfile:
+@output:
 	`outfile:file`: The output file
 @args:
-	`cnames` : Whether the input file has colnames. Default: True
-	`rnames` : Whether the input file has rownames. Default: False
+	`inopts` : Options to read the input file. Default: `Box(cnames = True, rnames = False)`
 	`x`      : The x aes. Default: 1 (corresponding to colnames)
 	`helper` : Some helper codes to generate `params` and `ggs`
 	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
@@ -97,8 +96,7 @@ pPoints = pScatter.copy()
 pHisto              = Proc(desc = 'Generate histogram.')
 pHisto.input        = 'infile:file'
 pHisto.output       = 'outfile:file:{{i.infile | fn}}.histo.png'
-pHisto.args.cnames  = True
-pHisto.args.rnames  = False
+pHisto.args.inopts  = Box(cnames = True, rnames = False)
 pHisto.args.x       = 1
 pHisto.args.helper  = ''
 pHisto.args.devpars = Box(res = 300, height = 2000, width = 2000)
@@ -180,14 +178,10 @@ pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
 	`params`:    Other parameters for `geom_boxplot`, default: `Box()`
 	`ggs`   :    Extra ggplot2 statements
 """
-pBoxplot             = Proc(desc = 'Generate boxplot plot.')
-pBoxplot.input       = 'infile:file'
-pBoxplot.output      = 'outfile:file:{{i.infile | fn}}.boxplot.png'
-pBoxplot.args.inopts = Box(
-	cnames  = True,
-	rnames  = False,
-	delimit = '\t'
-)
+pBoxplot              = Proc(desc = 'Generate boxplot plot.')
+pBoxplot.input        = 'infile:file'
+pBoxplot.output       = 'outfile:file:{{i.infile | fn}}.boxplot.png'
+pBoxplot.args.inopts  = Box(cnames = True, rnames = False, delimit = '\t')
 pBoxplot.args.x       = 2
 pBoxplot.args.y       = 1
 pBoxplot.args.helper  = ''
@@ -523,7 +517,8 @@ pPie.script       = "file:scripts/plot/pPie.r"
 @input:
 	`infile:file`: The input file. First 6 columns should be BED6, and then column:
 		- 7: The raw pvalue.
-		- 8: The x-axis labels for the records.
+		- 8: The x-axis labels for the records. Optional. If not provided, chromosomes will be used.
+		- This file has to be sorted by coordinates.
 		- For example:
 			```
 			chr19	45604163	45604163	rs7255060	0	+	3.238E-03	+200K
@@ -544,6 +539,8 @@ pPie.script       = "file:scripts/plot/pPie.r"
 	`inopts` : Options to read the input file. Default: `Box(cnames = False, rnames = False)`
 	`ggs`    : Extra expressions for ggplot.
 	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+	`gsize`  : The genome sizes file. Default: `None`
+		- If `None`, will infer from the snp coordinates
 """
 pManhattan              = Proc(desc = 'Manhattan plot.')
 pManhattan.input        = 'infile:file, hifile:file'
@@ -551,6 +548,7 @@ pManhattan.output       = 'outfile:file:{{i.infile | fn}}.manht.png'
 pManhattan.args.inopts  = Box(cnames = False, rnames = False)
 pManhattan.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pManhattan.args.ggs     = Box()
+pManhattan.args.gsize   = None # params.gsize.value
 pManhattan.envs.rimport = rimport
 pManhattan.lang         = params.Rscript.value
 pManhattan.script       = "file:scripts/plot/pManhattan.r"

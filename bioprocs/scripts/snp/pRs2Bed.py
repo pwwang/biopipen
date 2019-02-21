@@ -1,6 +1,6 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 snpfile   = {{ i.snpfile | quote}}
@@ -51,16 +51,21 @@ if tool == 'cruzdb':
 	'''
 
 	# snps
-	reader  = TsvReader(snpfile, cnames = False)
+	reader  = TsvReader(snpfile, **inopts)
 	snplist = list(set(r[snpcol] for r in reader))
 	reader.close()
+	nsnps   = len(snplist)
+	logger.info('Got %s snps.', nsnps)
 
 	from cruzdb import Genome
-	g = Genome(genome)
+	g          = Genome(genome)
 	outfiletmp = outfile + '.tmp'
-	writer = TsvWriter(outfiletmp)
-	for i in range(0, len(snplist), 1000):
-		chunk = snplist[i:i+1000]
+	writer     = TsvWriter(outfiletmp)
+	chunksize  = 1000
+	logger.info('Doing with chunks with %s in each one', chunksize)
+	for i in range(0, nsnps, chunksize):
+		logger.info('- Handling batch with index starts with %s (%.2f%%) ...', i, 100.0*float(i)/float(nsnps))
+		chunk = snplist[i:i+chunksize]
 		sql   = 'SELECT chrom, chromStart, chromEnd, name, score, strand, refUCSC, alleles, alleleFreqs FROM snp{dbsnpver} WHERE name in ({snps})'.format(
 			dbsnpver = dbsnpver,
 			snps     = ', '.join("'{}'".format(s) for s in chunk)
@@ -82,7 +87,7 @@ if tool == 'cruzdb':
 else:
 	# snps
 	snplist = path.join(jobindir, path.basename(snpfile) + '.list')
-	reader  = TsvReader(snpfile, cnames = False)
+	reader  = TsvReader(snpfile, **inopts)
 	writer  = TsvWriter(snplist)
 	for r in reader:
 		writer.write([r[snpcol]])
@@ -114,8 +119,10 @@ else:
 
 if sortby == 'coord':
 	shell.sort(k = ['1,1', '2,2n'], _ = outfiletmp, _stdout = outfile)
-else:
+elif sortby == 'name':
 	shell.sort(k = '4', _ = outfiletmp, _stdout = outfile)
+else:
+	shell.mv(outfiletmp, outfile)
 
 if tool == 'cruzdb':
 	shell.rm_rf(outfiletmp)

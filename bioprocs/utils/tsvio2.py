@@ -270,7 +270,6 @@ class TsvJoin(object):
 		inopts = []
 		for i in range(self.length):
 			inopts.append({k:v[i] for k,v in inopts_multi.items()})
-
 		self.readers = [TsvReader(f, **inopts[i]) for i,f in enumerate(files)]
 
 	def _defaultMatch(self, *rows):

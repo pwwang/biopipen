@@ -16,6 +16,8 @@ DEFAULTS = {
 	"genome.desc"     : "Commonly used genome assembly.",
 	"ncbikey"         : "",
 	"ncbikey.desc"    : "The NCBI API Key for E-Utils.",
+	"chrorder"        : ",".join('chr' + str(x) for x in list(range(1,23)) + ['X', 'Y', 'M', 'MT']),
+	"chrorder.desc"   : "Preferrable chromsome orders, used for sorting.",
 
 	# path
 	"affysnps"           : "",

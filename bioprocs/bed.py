@@ -12,15 +12,18 @@ from . import params
 @output:
 	`outfile:file`: The output file
 @args:
-	`tool`:         The tool used to sort the file. Default: sort (bedtools, bedops)
-	`bedtools`:     The path to bedtools. Default: bedtools
-	`bedops_sort`:  The path to bedops' sort-bed. Default: sort-bed
-	`mem`:          The memory to use. Default: 8G
-	`by`:           Sort by coordinates("coord", default) or name("name")
+	`tool`:     The tool used to sort the file. Default: sort (bedtools, bedops)
+	`bedtools`: The path to bedtools. Default: bedtools
+	`bedops`:   The path to bedops' sort-bed. Default: sort-bed
+	`mem`:      The memory to use. Default: 8G
+	`by`:       Sort by coordinates("coord", default) or name("name")
 		- Only available when use tool `sort`
-	`tmpdir`:       The tmpdir to use. Default: `$TMPDIR`
-	`unique`:       Remove the dupliated records? Default: True
-	`params`:       Other params for `tool`. Default: {}
+	`tmpdir`:   The tmpdir to use. Default: `$TMPDIR`
+	`unique`:   Remove the dupliated records? Default: True
+	`params`:   Other params for `tool`. Default: {}
+	`chrorder`: The chromosome order used to sort. Default: `None`
+		- `None`: Sort by natural order (chr1 followed by chr10, instead of chr2)
+		- Only available when using `sort` (`args.tool = 'sort'`)
 @requires:
 	[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 	[`bedops`](https://github.com/bedops/bedops)
@@ -35,6 +38,7 @@ pBedSort.args.mem      = '8G'
 pBedSort.args.by       = 'coord'
 pBedSort.args.unique   = True
 pBedSort.args.params   = Box()
+pBedSort.args.chrorder = None
 pBedSort.args.tmpdir   = params.tmpdir.value
 pBedSort.lang          = params.python.value
 pBedSort.script        = "file:scripts/bed/pBedSort.py"

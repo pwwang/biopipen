@@ -59,7 +59,7 @@ apply.ggs = function(p, ggs) {
 	return (p)
 }
 
-plot.no = function(data, plotfile, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.no = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	if (!is.null(plotfile)) {
 		do.call(png, c(list(filename=plotfile), devpars))
 	}
@@ -71,7 +71,7 @@ plot.no = function(data, plotfile, params = list(), ggs = list(), devpars = list
 	}
 }
 
-plot.xy = function(data, plotfile, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
 	cnames = colnames(data)
 	cnames = make.names(cnames)
 	colnames(data) = cnames
@@ -225,7 +225,7 @@ plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params 
 # alias
 plot.bar = plot.col
 
-plot.boxplot = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
@@ -403,7 +403,7 @@ plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(),
 	dev.off()
 }
 
-plot.histo = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	ggs = c(list(geom_histogram = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
@@ -556,7 +556,7 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
 }
 
-plot.man = function(data, plotfile = NULL, hilights = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.man = function(data, plotfile = NULL, hilights = list(), gsize = NULL, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	# manhattan plot
 	# data is a data frame of
 	# Chr, Pos, P[, Region]
@@ -576,11 +576,24 @@ plot.man = function(data, plotfile = NULL, hilights = list(), ggs = list(), devp
 	}
 	# calculate the x axis for each snp, position on each chromsome should be accumulated.
 	# min and max pos for each chr
-	chrlen = data[, .(minPos = min(Pos), maxPos = max(Pos)), by = Chr][, .(Chr, minPos, maxPos, cumPos = shift(cumsum(maxPos), 1, fill = 0))]
-	# add it back to data
-	data = merge(data, chrlen, by = "Chr")
-	data[, X:= Pos + cumPos][, Y:=-log10(P)]
 
+	if (is.null(gsize)) {
+		# Chr	minPos	maxPos	cumPos
+		# chr1	910473	249162263	0
+		# chr2	449487	242926381	249162263
+		# chr3	281636	197837967	
+		chrlen = data[, .(minPos = min(Pos), maxPos = max(Pos)), by = Chr][, .(Chr, minPos, maxPos, cumPos = shift(cumsum(as.numeric(maxPos)), 1, fill = 0))]
+		# add it back to data
+	} else {
+		chrs   = unique(unlist(data[, "Chr"]))
+		gsize  = gsize[chrs,,drop = FALSE]
+		gsize  = as.data.table(cbind(Chr = rownames(gsize), minPos = 0, maxPos = gsize[,1]))
+		gsize  = gsize[Chr %in% chrs]
+		chrlen = gsize[, .(Chr, minPos, maxPos, cumPos = shift(cumsum(as.numeric(maxPos)), 1, fill = 0))]
+	}
+	data = merge(data, chrlen, by = "Chr", sort = FALSE)
+	
+	data[, X:= Pos + cumPos][, Y:=-log10(P)]
 	# get region centers
 	rdata = data[, .(Region, centerPos = (min(X) + max(X))/2), by = Region]
 	# fix the order
@@ -611,7 +624,11 @@ plot.man = function(data, plotfile = NULL, hilights = list(), ggs = list(), devp
 		scale_y_continuous = list(expand = c(0, 0)),
 		scale_x_continuous = list(expand = expand_scale(mult = c(0.01, 0.01)), label = rdata$Region, breaks= rdata$centerPos),
 		theme_bw           = list(),
-		theme              = list(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank()),
+		theme              = list(
+			panel.grid.minor   = element_blank(),
+			panel.grid.major.x = element_blank(),
+			axis.text.x        = element_text(angle = 90, hjust = 1, vjust = 0.5)
+		),
 		labs               = list(x = "", y = "-log10(p-value)")
 		), ggs_hilight, ggs)
 	plot.xy (data, plotfile, x = 'X', y = 'Y', ggs = ggs, devpars = devpars)

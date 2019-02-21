@@ -83,7 +83,7 @@ pMotifFilter.script      = "file:scripts/tfbs/pMotifFilter.py"
 @input:
 	`tffile:file`:  The tf-motif file with 1st column the motif and 2nd the tf
 	`snpfile:file`: The snp file. 
-		- Could be a bed file with first 6 columns the bed6 format and 7th the alleles.
+		- Could be a bed file with first 6 columns the bed6 format and 7th the reference allele, and 8th the alternative alleles.
 		- Alleles including reference allele should be seperated by `,`
 		- It also could be a snp file required by `atSNP` package.
 		- See: https://rdrr.io/github/kinsigne/atSNP_modified/man/LoadSNPData.html

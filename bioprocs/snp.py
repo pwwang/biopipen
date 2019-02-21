@@ -11,10 +11,15 @@ from . import params
 @output:
 	`outfile:file`: the result file, could be a 3 or 6-col bed file.
 @args:
-	`dbsnp`: The dbsnp vcf file
+	`dbsnp`   : The dbsnp vcf file
 	`notfound`: What to do if the snp is not found. Default: skip
-	`inopts`: The input options for input file
-	``
+	`inopts`  : The input options for input file. Default: `Box(delimit = '\t', skip = 0, comment = '#')`
+	`snpcol`  : The column where the snp is. Could be index (0-based) or the column name with `args.inopts.cnames = True`
+	`vcftools`: The path to vcftools to extract snp from `args.dbsnp`
+	`genome`  : The genome to locate the right database from `cruzdb`
+	`dbsnpver`: The version of dbsnp from `cruzdb`
+	`sortby`  : Sort the output file by coordinates (coord) or name. Default: `coord`
+		- `False`: don't sort.
 """
 pRs2Bed               = Proc(desc = 'Find coordinates for SNPs in BED format.')
 pRs2Bed.input         = "snpfile:file"
@@ -25,7 +30,7 @@ pRs2Bed.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
 pRs2Bed.args.snpcol   = ''
 pRs2Bed.args.dbsnp    = params.dbsnp_all.value
 pRs2Bed.args.vcftools = params.vcftools.value
-pRs2Bed.args.sortby   = 'coord' # name
+pRs2Bed.args.sortby   = 'coord' # name/False
 pRs2Bed.args.genome   = params.genome.value
 pRs2Bed.args.dbsnpver = params.dbsnpver.value
 pRs2Bed.lang          = params.python.value

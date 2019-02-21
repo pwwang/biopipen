@@ -1,5 +1,6 @@
 library(methods)
 library(atSNP)
+library(chunked)
 options(stringsAsFactors = FALSE)
 
 snpfile  = {{i.snpfile | R}}
@@ -15,6 +16,11 @@ doplot   = {{args.plot | R}}
 devpars  = {{args.devpars | R}}
 prefix   = file.path(outdir, {{o.outfile | fn2 | R}})
 
+logger = function(...) {
+	msg = paste(list(...), collapse = ' ')
+	cat(paste0(msg, "\n"), file = stderr())
+}
+
 ### load desired pwms
 # load the list (or motifs)
 # col1: motif
@@ -26,53 +32,75 @@ pwms = pwms[unique(tflist[,1])]
 
 ### load snp information
 if (endsWith(snpfile, '.bed')) {
+	logger('Reformatting bed file to atSNP format ...')
 	# suppose no head
-	# must be a bed file with 7 columns
-	# bed6 + alleles (A,C,G)
-	# the first is reference allele and rest are mutant alleles
+	# must be a bed file with 8 columns
+	# bed6 + ref + alt alleles (C,G)
 	# first 2 will be used (ref and minor alleles in this case)
 	snps    = read.table(snpfile, header = FALSE, row.names = NULL, sep = "\t", check.names = FALSE)
 	snpfile = file.path(outdir, 'snps.txt')
 	# write it to snpfile for loading
-	snps2 = data.frame(snpid = snps[,4], chr = snps[,1], snp = snps[,3])
-	snps2 = cbind(snps2, t(sapply(snps[,7], function(x) unlist(strsplit(as.character(x), ',', fixed = T))[1:2])))
+	snps2 = data.frame(snpid = snps[,4], chr = snps[,1], snp = snps[,3], a1 = snps[,7])
+	snps2 = cbind(snps2, a2 = sapply(snps[,8], function(x) unlist(strsplit(as.character(x), ',', fixed = TRUE))[1]))
 	rm(snps)
-	colnames(snps2) = c('snpid', 'chr', 'snp', 'a1', 'a2')
-	write.table(snps2, file = snpfile, row.names = FALSE, quote = FALSE)
+	write.table(snps2, file = snpfile, row.names = FALSE, quote = FALSE, sep = "\t")
 }
 
-snp_info = LoadSNPData(
-	snpfile, 
-	genome.lib       = sprintf("BSgenome.Hsapiens.UCSC.%s", genome),
-	half.window.size = max(sapply(pwms, length))/4,
-	default.par      = TRUE,
-	mutation         = TRUE
-)
+chunksize = 50
+logger('Handling the snp file in chunks (chunksize:', chunksize, ')')
+chunks  = read_chunkwise(snpfile, chunk_size = chunksize, format = "table", header = TRUE)
+i       = 0
+results = NULL
+while (!chunks$is_complete()) {
+	i = i + 1
+	logger('- Handling chunk #', i, '...')
+	sfile = file.path(outdir, paste0('snp-chunk', i, '.txt'))
+	write.table(chunks$next_chunk(), sfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+	snp_info = LoadSNPData(
+		sfile, 
+		genome.lib       = sprintf("BSgenome.Hsapiens.UCSC.%s", genome),
+		half.window.size = max(sapply(pwms, length))/4,
+		default.par      = TRUE,
+		mutation         = TRUE
+	)
+	file.remove(sfile)
 
-atsnp.scores = ComputeMotifScore(pwms, snp_info, ncores = nthread)
-atsnp.result = ComputePValues(motif.lib = pwms, snp.info = snp_info, motif.scores = atsnp.scores$motif.scores, ncores = nthread)
-atsnp.result = atsnp.result[order(pval_rank) & pval_rank <= pval, list(snpid, motif, pval_ref, pval_snp, pval_rank)]
-colnames(atsnp.result) = c('Snp', 'Motif', 'Pval_Ref', 'Pval_Mut', 'Pval_Diff')
-atsnp.result[, TF := paste(tflist[which(tflist[,1] == Motif), 2], collapse = ',')]
-atsnp.result = atsnp.result[, list(Snp, TF, Motif, Pval_Ref, Pval_Mut, Pval_Diff)]
-if (fdr != FALSE) {
-	atsnp.result[, Qval_Diff := p.adjust(Pval_Diff, method = fdr)]
-}
-write.table(atsnp.result, outfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+	atsnp.scores = ComputeMotifScore(pwms, snp_info, ncores = nthread)
+	atsnp.result = ComputePValues(motif.lib = pwms, snp.info = snp_info, motif.scores = atsnp.scores$motif.scores, ncores = nthread)
+	if (fdr == FALSE) {
+		atsnp.result = atsnp.result[order(pval_rank) & pval_rank < pval, list(snpid, motif, pval_ref, pval_snp, pval_rank)]
+	}
+	colnames(atsnp.result) = c('Snp', 'Motif', 'Pval_Ref', 'Pval_Mut', 'Pval_Diff')
+	atsnp.result[, TF := paste(tflist[which(tflist[,1] == Motif), 2], collapse = ',')]
+	atsnp.result = atsnp.result[, list(Snp, TF, Motif, Pval_Ref, Pval_Mut, Pval_Diff)]
+	if (is.null(results)) {
+		results = atsnp.result
+	} else {
+		results = rbind(results, atsnp.result)
+	}
 
-if (doplot) {
-	for (i in 1:nrow(atsnp.result)) {
-		plotfile = paste(prefix, atsnp.result[i, Snp], atsnp.result[i, TF], atsnp.result[i, Motif], 'png', sep = '.')
-		devpars$file = plotfile
-		do.call(png, devpars)
-		plotMotifMatch(
-			snp.tbl      = atsnp.scores$snp.tbl,
-			motif.scores = atsnp.scores$motif.scores,
-			snpid        = atsnp.result[i, Snp],
-			motif.lib    = pwms,
-			motif        = atsnp.result[i, Motif])
-		dev.off()
+	if (doplot) {
+		for (i in 1:nrow(atsnp.result)) {
+			if (atsnp.result[i, Pval_Diff] >= pval) next
+			plotfile = paste(prefix, atsnp.result[i, Snp], atsnp.result[i, TF], atsnp.result[i, Motif], 'png', sep = '.')
+			devpars$file = plotfile
+			do.call(png, devpars)
+			plotMotifMatch(
+				snp.tbl      = atsnp.scores$snp.tbl,
+				motif.scores = atsnp.scores$motif.scores,
+				snpid        = atsnp.result[i, Snp],
+				motif.lib    = pwms,
+				motif        = atsnp.result[i, Motif])
+			dev.off()
+		}
 	}
 }
+if (fdr != FALSE) {
+	results[, Qval_Diff := p.adjust(Pval_Diff, method = ifelse(fdr == TRUE, 'BH', fdr))]
+	results = results[order(Pval_Diff) & Pval_Diff < pval]
+}
+
+write.table(results, outfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+
 
 
