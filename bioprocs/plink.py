@@ -4,6 +4,38 @@ Procs for plink 1.x
 from pyppl import Proc, Box
 from . import params, rimport, bashimport
 
+pPlinkStats               = Proc(desc = 'Do basic statistics with plink 1.9')
+pPlinkStats.input         = 'indir:dir'
+pPlinkStats.output        = 'outdir:dir:{{i.indir | fn}}.plinkStats'
+pPlinkStats.args.plink    = params.plink.value
+pPlinkStats.args.params   = Box({
+	'hardy'    : True,
+	'het'      : True,
+	'freq'     : True,
+	'missing'  : True,
+	'check-sex': True,
+})
+pPlinkStats.args.cutoff   = Box({
+	'hardy.hwe'     : 1e-5,
+	'hardy.mingt'   : None,
+	'het'           : 3,
+	'freq'          : 0.01,
+	'missing.sample': .95,
+	'missing.snp'   : .95,
+})
+pPlinkStats.args.plot     = Box({
+	'hardy.hwe'     : True,
+	'hardy.mingt'   : True,
+	'het'           : True,
+	'freq'          : True,
+	'missing.sample': True,
+	'missing.snp'   : True,
+})
+pPlinkStats.args.devpars  = Box(res=300, width=2000, height=2000)
+pPlinkStats.envs.rimport  = rimport
+pPlinkStats.lang          = params.Rscript.value
+pPlinkStats.script        = "file:scripts/plink/pPlinkStats.r"
+
 """
 @name:
 	pPlinkMiss
@@ -35,6 +67,16 @@ pPlinkMiss.args.devpars  = Box(res=300, width=2000, height=2000)
 pPlinkMiss.envs.rimport  = rimport
 pPlinkMiss.lang          = params.Rscript.value
 pPlinkMiss.script        = "file:scripts/plink/pPlinkMiss.r"
+
+pPlinkFreq              = Proc(desc = 'Filter snps with minor allele frequency.')
+pPlinkFreq.input        = 'indir:dir'
+pPlinkFreq.output       = 'outdir:dir:{{i.indir | fn}}.freq'
+pPlinkFreq.args.plink   = params.plink.value
+pPlinkFreq.args.cutoff  = 0.01
+pPlinkFreq.args.plot    = True
+pPlinkFreq.args.devpars = Box(res=300, width=2000, height=2000)
+pPlinkFreq.lang         = params.python.value
+pPlinkFreq.script       = "file:scripts/plink/pPlinkFreq.py"
 
 """
 @name:
@@ -108,6 +150,7 @@ pPlinkHWE.input        = 'indir:dir'
 pPlinkHWE.output       = 'outdir:dir:{{i.indir | fn}}.hwe'
 pPlinkHWE.args.plink   = params.plink.value
 pPlinkHWE.args.cutoff  = 1e-5
+pPlinkHWE.args.mingt   = .05
 pPlinkHWE.args.plot    = True
 pPlinkHWE.args.devpars = Box(res=300, width=2000, height=2000)
 pPlinkHWE.envs.rimport = rimport

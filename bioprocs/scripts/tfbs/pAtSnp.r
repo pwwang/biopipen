@@ -16,9 +16,10 @@ doplot   = {{args.plot | R}}
 devpars  = {{args.devpars | R}}
 prefix   = file.path(outdir, {{o.outfile | fn2 | R}})
 
-logger = function(...) {
-	msg = paste(list(...), collapse = ' ')
-	cat(paste0(msg, "\n"), file = stderr())
+logger = function(..., level = 'LOG') {
+	msg = paste(...)
+	if (!endsWith(msg, "\n")) msg = paste0(msg, "\n")
+	cat(paste0('pyppl.log.', level, ': ', msg), file = stderr())
 }
 
 ### load desired pwms
@@ -55,7 +56,11 @@ while (!chunks$is_complete()) {
 	i = i + 1
 	logger('- Handling chunk #', i, '...')
 	sfile = file.path(outdir, paste0('snp-chunk', i, '.txt'))
-	write.table(chunks$next_chunk(), sfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+	nextChunk = chunks$next_chunk()
+	if (is.null(nextChunk)) {
+		break
+	}
+	write.table(nextChunk, sfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
 	snp_info = LoadSNPData(
 		sfile, 
 		genome.lib       = sprintf("BSgenome.Hsapiens.UCSC.%s", genome),
@@ -71,7 +76,7 @@ while (!chunks$is_complete()) {
 		atsnp.result = atsnp.result[order(pval_rank) & pval_rank < pval, list(snpid, motif, pval_ref, pval_snp, pval_rank)]
 	}
 	colnames(atsnp.result) = c('Snp', 'Motif', 'Pval_Ref', 'Pval_Mut', 'Pval_Diff')
-	atsnp.result[, TF := paste(tflist[which(tflist[,1] == Motif), 2], collapse = ',')]
+	atsnp.result[, TF := paste(tflist[which(tflist[,1] == Motif), 2], collapse = ','), by = Motif]
 	atsnp.result = atsnp.result[, list(Snp, TF, Motif, Pval_Ref, Pval_Mut, Pval_Diff)]
 	if (is.null(results)) {
 		results = atsnp.result

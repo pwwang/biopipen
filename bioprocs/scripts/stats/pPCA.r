@@ -10,6 +10,7 @@ anopts   = {{args.anopts | R}}
 devpars  = {{args.devpars | R}}
 na       = {{args.na | R}}
 seed     = {{args.seed | R}}
+select   = {{args.select | R}}
 set.seed(seed)
 
 indata = read.table.inopts(infile, inopts)
@@ -25,11 +26,11 @@ if (annofile != "") {
 plots = {{args.plots | R}}
 pca   = prcomp(indata, scale = TRUE)
 
-xfile        = outfile
+allpcfile    = paste0(prefix, '.allpcs.txt')
 sdevfile     = paste0(prefix, '.sdev.txt')
 centerfile   = paste0(prefix, '.center.txt')
 rotationfile = paste0(prefix, '.rotation.txt')
-write.table(pca$x, xfile, sep = "\t", quote = FALSE)
+write.table(pca$x, allpcfile, sep = "\t", quote = FALSE)
 sdev = data.frame(Sdev = pca$sdev, Percent = 100.0*pca$sdev/sum(pca$sdev))
 sdev$CumPercent = cumsum(sdev$Percent)
 rownames(sdev) = paste0('PC', 1:length(pca$sdev))
@@ -39,6 +40,17 @@ colnames(center) = 'Center'
 write.table(center, centerfile, sep = "\t", quote = FALSE)
 rm(center)
 write.table(pca$rotation, rotationfile, sep = "\t", quote = FALSE)
+
+if (is.null(select)) {
+	pcs = pca$x
+} else if (select > 1) {
+	pcs = pca$x[, 1:select, drop = FALSE]
+} else {
+	npcs = which(sdev$CumPercent <= select * 100)
+	if (length(npcs) < 2) npcs = 1:2
+	pcs = pca$x[, npcs, drop = FALSE]
+}
+write.table(pcs, outfile, sep = "\t", quote = FALSE)
 
 if (is.true(plots$scree)) {
 	library(factoextra)
@@ -78,32 +90,23 @@ if (is.true(plots$clplot, 'any')) {
 	library(cluster)
 	clusterfile = paste0(prefix, '.clusterplot.png')
 
-	clmethod             = plots$cluster$method
-	npcs                 = plots$cluster$npcs
+	clmethod = plots$cluster$method
 	plots$cluster$method = NULL
-	plots$cluster$npcs   = NULL
-	if (npcs > 1) {
-		pcadata = pca$x[, 1:npcs, drop = FALSE]
-	} else {
-		pcs = which(sdev$CumPercent <= npcs * 100)
-		if (length(pcs) < 2) pcs = 1:2
-		pcadata = pca$x[, pcs, drop = FALSE]
-	}
-	plots$cluster$x = scale(pcadata)
+	plots$cluster$x = scale(pcs)
 	cldata          = do.call(clmethod, plots$cluster)
 	
 	if (!is.list(plots$clplot)) {
 		plots$clplot = list(repel = TRUE)
 	}
 	plots$clplot$object = cldata
-	plots$clplot$data   = pcadata
+	plots$clplot$data   = pcs
 	plots$clplot$ggs    = NULL
 
 	do.call(png, c(list(clusterfile), devpars))
 	p = do.call(fviz_cluster, plots$clplot)
 	if (!is.null(anno)) anno = cbind(p$data, anno)
 	# reload anno
-	ggs = {{args.plots.clplot.ggs | R}}
+	ggs = {{args.plots.get('clplot', {}).get('ggs', {}) | R}}
 	print(apply.ggs(p, ggs))
 	dev.off()
 }

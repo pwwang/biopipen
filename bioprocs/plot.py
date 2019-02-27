@@ -553,3 +553,13 @@ pManhattan.envs.rimport = rimport
 pManhattan.lang         = params.Rscript.value
 pManhattan.script       = "file:scripts/plot/pManhattan.r"
 
+pQQ              = Proc(desc = 'Q-Q plot')
+pQQ.input        = 'infile:file'
+pQQ.output       = 'outfile:file:{{i.infile | fn}}.qq.png'
+pQQ.args.inopts  = Box(cnames = True, rnames = False)
+pQQ.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pQQ.args.ggs     = Box()
+pQQ.args.params  = Box()
+pQQ.envs.rimport = rimport
+pQQ.lang         = params.Rscript.value
+pQQ.script       = "file:scripts/plot/pQQ.r"

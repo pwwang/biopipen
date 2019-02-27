@@ -96,16 +96,22 @@ pGTMat2Plink.script       = "file:scripts/vcfnext/pGTMat2Plink.py"
 @output:
 	`outfile:file`: The output bed file. Default: `outfile:file:{{i.infile | fn}}.bed`
 @args:
-	`ncol`: How many columns of bed to output. Default: `6`. Possible values: 3, 6 and 8
-	`name`: Use the neat name (usually rsid) or full name (row names). Default: `neat`
+	`ncol`  : How many columns of bed to output. Default: `6`. 
+		- Possible values: 3, 6, 8, 66, 88
+		- If `8`, then reference and alternative alleles will be 7th and 8th column
+		- If `66`, then genotypes will be attached to BED6
+		- If `88`, then genotypes will be attached to `ncol = 8`
+	`name`  : Use the neat name (usually rsid) or full name (row names). Default: `neat`
+	`inopts`: Options to read the input file. Default: `Box(cnames = True)`
 """
-pGTMat2Bed           = Proc(desc = 'Convert a genotype matrix to bed file')
-pGTMat2Bed.input     = 'infile:file'
-pGTMat2Bed.output    = 'outfile:file:{{i.infile | fn}}.bed'
-pGTMat2Bed.args.ncol = 6 # 3, 8
-pGTMat2Bed.args.name = 'neat' # full
-pGTMat2Bed.lang      = params.python.value
-pGTMat2Bed.script    = "file:scripts/vcfnext/pGTMat2Bed.py"
+pGTMat2Bed             = Proc(desc = 'Convert a genotype matrix to bed file')
+pGTMat2Bed.input       = 'infile:file'
+pGTMat2Bed.output      = 'outfile:file:{{i.infile | fn}}.bed'
+pGTMat2Bed.args.inopts = Box(cnames = True)
+pGTMat2Bed.args.ncol   = 6 
+pGTMat2Bed.args.name   = 'neat' # full
+pGTMat2Bed.lang        = params.python.value
+pGTMat2Bed.script      = "file:scripts/vcfnext/pGTMat2Bed.py"
 
 """
 @name:

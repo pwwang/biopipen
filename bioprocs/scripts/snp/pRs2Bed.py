@@ -1,5 +1,6 @@
 from os import path
 from pyppl import Box
+from collections import OrderedDict
 from bioprocs.utils import shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
@@ -12,6 +13,7 @@ vcftools  = {{ args.vcftools | quote}}
 sortby    = {{ args.sortby | quote}}
 jobindir  = {{ job.indir | quote}}
 joboutdir = {{ job.outdir | quote}}
+ncol      = {{ args.ncol | repr}}
 
 # cruzdb
 tool      = {{ args.tool | quote}}
@@ -72,16 +74,28 @@ if tool == 'cruzdb':
 		)
 		result = g.sql(sql)
 		for r in result:
-			allfreqs = dict(zip(r.alleles.split(','), r.alleleFreqs.split(',')))
-			reffreq  = allfreqs.get(r.refUCSC, '0')
-			if r.refUCSC in allfreqs:
-				del allfreqs[r.refUCSC]
-			if '' in allfreqs:
-				del allfreqs['']
-			writer.write([
-				r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand, 
-				r.refUCSC, ','.join(allfreqs.keys()), ','.join([reffreq] + list(allfreqs.values()))
-			])
+			if ncol == 6:
+				writer.write([
+					r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand
+				])
+			else:
+				allfreqs = OrderedDict(sorted(zip(r.alleles.rstrip(',').split(','), r.alleleFreqs.rstrip(',').split(',')), key = lambda x: float(x[1]), reverse = True))
+				reffreq  = allfreqs.get(r.refUCSC, '0')
+				if r.refUCSC in allfreqs:
+					del allfreqs[r.refUCSC]
+				if '' in allfreqs:
+					del allfreqs['']
+				
+				if ncol == 9:
+					writer.write([
+						r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand, 
+						r.refUCSC, ','.join(allfreqs.keys()), ','.join([reffreq] + list(allfreqs.values()))
+					])
+				else: #8
+					writer.write([
+						r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand, 
+						r.refUCSC, ','.join(allfreqs.keys())
+					])
 	writer.close()
 
 else:
@@ -113,7 +127,12 @@ else:
 	outfiletmp = outfile + '.tmp'
 	writer = TsvWriter(outfiletmp)
 	for r in reader:
-		writer.write([r[0], r[1], r[1], r[2], 0, '+', r[3], r[4]])
+		if ncol == 6:
+			writer.write([r[0], r[1], r[1], r[2], 0, '+'])
+		elif ncol == 8:
+			writer.write([r[0], r[1], r[1], r[2], 0, '+', r[3], r[4]])
+		else:
+			ValueError('Available ncol is 6 or 8 for `args.tool = "dbsnp"`')
 	reader.close()
 	writer.close()
 

@@ -98,16 +98,16 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	_outopts.update(outopts or {})
 	outopts  = _outopts
 	outquery = outopts.get('query', False)
-	outhead  = outopts.get(outops.get('cnames', True), 'head', True)
+	outhead  = outopts.get('head', outopts.get('cnames', True))
 	if 'query' in outopts:
 		outquery = outopts['query']
 		del outopts['query']
 	if 'head' in outopts:
 		outhead = outopts['head']
 		del outopts['head']
-	if 'cnames' in outops:
+	if 'cnames' in outopts:
 		outhead = outopts['cnames']
-		del outops['cnames']
+		del outopts['cnames']
 
 	reader  = TsvReader(infile, **inopts)
 	#if not reader.meta: reader.autoMeta()

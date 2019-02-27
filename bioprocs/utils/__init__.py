@@ -25,14 +25,14 @@ def fs2name(files):
 def dirpat2name(directory, pattern = '*'):
 	return fs2name(glob(path.join(directory, pattern)))
 
-def getLogger(name = 'bioprocs', logfmt = "[%(asctime)s][%(levelname)7s] %(message)s", level = logging.INFO):
+def getLogger(name = 'bioprocs', logfmt = "[%(asctime)s %(levelname)7s] %(message)s", datafmt = "%Y-%m-%d %H:%M:%S", level = logging.INFO):
 	logger = logging.getLogger(name)
 	for handler in logger.handlers:
 		handler.close()
 	del logger.handlers[:]
 
 	ch = logging.StreamHandler()
-	ch.setFormatter(logging.Formatter(fmt = logfmt))
+	ch.setFormatter(logging.Formatter(logfmt, datafmt))
 	logger.addHandler(ch)
 
 	logger.setLevel(level)

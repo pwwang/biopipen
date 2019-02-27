@@ -26,6 +26,8 @@ isSampleFail = function(fail) {
 isSNPFail = function(fail) {
 	endsWith(fail, '.snpcr.fail') ||
 	endsWith(fail, '.hwe.fail') ||
+	endsWith(fail, '.mingt.fail') ||
+	endsWith(fail, '.freq.fail') ||
 	endsWith(fail, '.hardy.fail')
 }
 

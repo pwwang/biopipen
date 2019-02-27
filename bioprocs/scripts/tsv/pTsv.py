@@ -1,18 +1,37 @@
 from pyppl import Box
-from bioprocs.utils.tsvio import tsvops, TsvRecord
+from bioprocs.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
 
-infile    = {{i.infile | quote}}
-outfile   = {{o.outfile | quote}}
-inopts    = {{args.inopts}}
-outopts   = {{args.outopts}}
-opshelper = {{args.opshelper | repr}}
-if not isinstance(opshelper, list):
-	opshelper = [opshelper]
+infile  = {{i.infile | quote}}
+outfile = {{o.outfile | quote}}
+inopts  = {{args.inopts | repr}}
+outopts = {{args.outopts | repr}}
+helper  = {{args.helper | repr}}
+if not isinstance(helper, list):
+	helper = [helper]
 
-opshelper = [line for line in opshelper if line]
-exec('\n'.join(opshelper), globals())
+helper = [line for line in helper if line]
+exec('\n'.join(helper), globals())
 
-ops = {{args.ops}}
+row = {{args.row}}
+inopts['row'] = {{args.inopts.get('row', None)}}
 
-tsvops(infile, outfile, inopts, outopts, ops)
+reader       = TsvReader(infile, **inopts)
+writer       = TsvWriter(outfile, delimit = outopts.get('delimit', "\t"))
+outcnames    = outopts.get('cnames', True)
+headCallback = {{args.outopts.get('headCallback', True)}}
+if outcnames is True:
+	writer.cnames = reader.cnames
+	writer.writeHead(headCallback)
+elif isinstance(outcnames, (list, tuple)):
+	writer.cnames = list(outcnames)
+	writer.writeHead(headCallback)
+
+for r in reader:
+	rec = row(r)
+	if not rec:
+		continue
+	if rec is True:
+		rec = r
+	writer.write(rec)
+writer.close()
 

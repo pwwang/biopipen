@@ -801,12 +801,13 @@ pPCA.output = [
 pPCA.args.anopts = Box(cnames = True, rnames = True)
 pPCA.args.inopts = Box(cnames = True, rnames = True)
 pPCA.args.na     = 0
+pPCA.args.select = .8
 pPCA.args.seed   = None
 pPCA.args.plots  = Box(
 	scree   = Box(ncp = 20),
 	var     = Box(repel = False),
 	bi      = Box(repel = False),
-	cluster = Box(npcs  = .8, method = 'kmeans'),
+	cluster = Box(method = 'kmeans'),
 	clplot  = Box(repel = False, main = "", ggs = Box())
 )
 pPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)

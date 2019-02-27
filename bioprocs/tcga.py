@@ -1,9 +1,10 @@
 from pyppl import Proc, Box
-from . import params
+from . import params, rimport
+from .utils import fs2name
 
 """
 @name:
-	pDownload
+	pTCGADownload
 @description:
 	Download TCGA use `gdc-client` and a manifest file
 @input:
@@ -16,15 +17,16 @@ from . import params
 	`nthread`   : Number of threads to use. Default     : `1`
 	`token`     : The token file if needed.
 """
-pDownload                 = Proc (desc = 'Download data with gdc-client and a menifest file.')
-pDownload.input           = "manifile:file"
-pDownload.output          = "outdir:dir:{{i.manifile | fn}}"
-pDownload.args.params     = Box({'no-file-md5sum': True})
-pDownload.args.nthread    = 1
-pDownload.args.token      = None
-pDownload.args.gdc_client = params.gdc_client.value
-pDownload.lang            = params.python.value
-pDownload.script          = "file:scripts/tcga/pDownload.py"
+pTCGADownload                 = Proc (desc = 'Download data with gdc-client and a menifest file.')
+pTCGADownload.input           = "manifile:file"
+pTCGADownload.output          = "outdir:dir:{{i.manifile | fn}}"
+pTCGADownload.echo            = Box(jobs = 0, type = 'stderr')
+pTCGADownload.args.params     = Box({'no-file-md5sum': True})
+pTCGADownload.args.nthread    = 1
+pTCGADownload.args.token      = None
+pTCGADownload.args.gdc_client = params.gdc_client.value
+pTCGADownload.lang            = params.python.value
+pTCGADownload.script          = "file:scripts/tcga/pTCGADownload.py"
 
 """
 @name:
@@ -59,16 +61,19 @@ pSample2SubmitterID.script       = "file:scripts/tcga/pSample2SubmitterID.py"
 @output:
 	`outfile:file`: The output matrix file
 @args:
-	`rsmap`  : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.
-	`fn2sam` : How to convert filename(without extension) to sample name. Default: `None`
+	`rsmap`    : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.
+	`fn2sample`: How to convert filename(without extension) to sample name. Default: `None`
+	`confcut`  : The confidence cutoff. Genotype will be NA for lower confidence snps. Default: `0.05`
 """
-pGtFiles2Mat              = Proc(desc = 'Convert genotype files to a matrix.')
-pGtFiles2Mat.input        = 'infiles:files'
-pGtFiles2Mat.output       = 'outfile:file'
-pGtFiles2Mat.args.rsmap   = params.rsmap_gwsnp6.value
-pGtFiles2Mat.args.fn2sam  = None
-pGtFiles2Mat.lang         = params.python.value
-pGtFiles2Mat.script       = "file:scripts/tcga/pGtFiles2Mat.py"
+pGtFiles2Mat                = Proc(desc = 'Convert genotype files to a matrix.')
+pGtFiles2Mat.input          = 'infiles:files'
+pGtFiles2Mat.output         = 'outfile:file:{{i.infiles | fs2name}}.gt.txt'
+pGtFiles2Mat.args.rsmap     = params.rsmap_gwsnp6.value
+pGtFiles2Mat.args.confcut   = 0.05
+pGtFiles2Mat.args.fn2sample = "lambda fn: fn.split('.')[0]"
+pGtFiles2Mat.envs.fs2name   = fs2name
+pGtFiles2Mat.lang           = params.python.value
+pGtFiles2Mat.script         = "file:scripts/tcga/pGtFiles2Mat.py"
 
 """
 @name:
@@ -108,150 +113,33 @@ pClinic2Survival.script    = "file:scripts/tcga/pClinic2Survival.py"
 
 """
 @name:
-	pConvertExpFiles2Matrix
+	pClinic2PlinkMeta
 @description:
-	convert TCGA expression files to expression matrix, and convert sample name to submitter id
+	Convert TCGA clinic data to plink meta file.
+	Used with a `GTMat` file to convert to plink binary file (see vcfnext.pGTMat2Plink).
 @input:
-	`dir:file`:    the directory containing the samples
-	`mdfile:file`: the metadata file
+	`infile:file`: The input TCGA patiant clinic file.
 @output:
-	`outfile:file`:the output matrix
-@requires:
-	[python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
+	`outfile:file`: The meta file.
+@args:
+	`suffix`: The suffix added to the barcode. Default: `''`
+		- By default the barcode is like `TCGA-55-8087`, but in analysis, we want to be specific to samples
+		- For example, for solid tumor, it'll be `TCGA-55-8087-01`, then suffix `-01` will be added
+		- You can add multiple suffices by `-01, -10` or `['-01', '-10']`
 """
-pConvertExpFiles2Matrix = Proc()
-pConvertExpFiles2Matrix.input     = "dir:file, mdfile:file"
-pConvertExpFiles2Matrix.output    = "outfile:file:expmat-{{#}}.txt"
-pConvertExpFiles2Matrix.lang = "python"
-pConvertExpFiles2Matrix.script    = """
-import json, glob, os
-import gzip
-import mygene
-mg = mygene.MyGeneInfo()
+pClinic2PlinkMeta             = Proc(desc = 'Convert TCGA clinic data to plink meta file.')
+pClinic2PlinkMeta.input       = 'infile:file'
+pClinic2PlinkMeta.output      = 'outfile:file:{{i.infile | fn}}.meta.txt'
+pClinic2PlinkMeta.args.suffix = ''
+pClinic2PlinkMeta.lang        = params.python.value
+pClinic2PlinkMeta.script      = "file:scripts/tcga/pClinic2PlinkMeta.py"
 
-sam_meta = None
-sample_ids = {}
-with open ("{{mdfile}}") as f:
-	sam_meta = json.load (f)
-
-fout = open ("{{outfile}}", 'w')
-ext = ''
-for sam in sam_meta:
-	if not ext:
-		ext = os.path.splitext (sam['file_name'])[1]
-	sample_ids[sam['file_name']] = sam['associated_entities'][0]['entity_submitter_id'][:15]
-
-gz = ext == '.gz'
-exps  = {}
-bns   = ['sample']
-genes = {}
-for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
-	bn = os.path.basename (samfile)
-	if not sample_ids.has_key(bn): continue
-	bns.append (sample_ids[bn])
-	f = gzip.open (samfile) if gz else open (samfile)
-	if not genes:
-		origenes = [line.split("\t")[0].split('.')[0] for line in f if line.strip()]
-		f.seek(0)
-		origenes = mg.getgenes(origenes, fields='symbol', species='human')
-		genes2 = {}
-		for ret in origenes:
-			if not ret.has_key('symbol'): continue
-			genes2[ret['symbol']] = ret['query']
-		genes = {v:k for k,v in genes2.iteritems()}
-				
-	for line in f:
-		line = line.strip()
-		if not line or "\\t" not in line: continue
-		(gene, exp) = line.split("\\t")
-		exp = "%.3f" % float(exp)
-		gene = gene.split('.')[0]
-		if not genes.has_key(gene):continue
-		gene = genes[gene]
-		if exps.has_key(gene):
-			exps[gene].append(exp)
-		else:
-			exps[gene] = [exp]
-	f.close()
-
-fout.write ("\\t".join(bns) + "\\n")
-for gene, expvec in exps.iteritems():
-	fout.write ("%s\\t%s\\n" % (gene, "\\t".join(expvec)))
-fout.close()
-"""
-
-"""
-@name:
-	pConvertMutFiles2Matrix
-@description:
-	convert TCGA mutation files (vcf.gz) to mut matrix, and convert sample name to submitter id
-@input:
-	`dir:file`:    the directory containing the samples
-	`mdfile:file`: the metadata file
-@output:
-	`outfile:file`:the output matrix
-"""
-pConvertMutFiles2Matrix = Proc()
-pConvertMutFiles2Matrix.input     = "dir:file, mdfile:file"
-pConvertMutFiles2Matrix.output    = "outfile:file:mutmat-{{#}}.txt"
-pConvertMutFiles2Matrix.lang = "python"
-pConvertMutFiles2Matrix.args      = {'minCount': 2}
-pConvertMutFiles2Matrix.script    = """
-import json, glob, os
-import gzip
-import mygene
-
-sam_meta = None
-sample_ids = {}
-with open ("{{mdfile}}") as f:
-	sam_meta = json.load (f)
-
-fout = open ("{{outfile}}", 'w')
-ext = ''
-for sam in sam_meta:
-	if not ext:
-		ext = os.path.splitext (sam['file_name'])[1]
-	assoc_entities = sam['associated_entities']
-	sid1           = assoc_entities[0]['entity_submitter_id'][:15]
-	sid2           = assoc_entities[1]['entity_submitter_id'][:15]
-	sid            = sid1 if sid1[-2] == '0' else sid2
-	sample_ids[sam['file_name']] = sid
-
-gz = ext == '.gz'
-muts  = {}
-bns   = ['sample']
-
-for samfile in glob.glob (os.path.join("{{dir}}", "*", "*" + ext)):
-	bn = os.path.basename (samfile)
-	if not sample_ids.has_key(bn): continue
-	sid = sample_ids[bn]
-	bns.append (sid)
-	f = gzip.open (samfile) if gz else open (samfile)
-				
-	for line in f:
-		line = line.strip()
-		if line.startswith ('#') or not line: continue
-		
-		items = line.split("\\t")
-		mut   = "%s:%s" % (items[0], items[1])
-
-		if not muts.has_key(mut):
-			muts[mut] = {sid: 1}
-		else:
-			muts[mut][sid] = 1
-
-	f.close()
-
-fout.write ("\\t".join(bns) + "\\n")
-for mut, sids in muts.iteritems():
-	if len(sids) < {{args.minCount}}: continue
-	fout.write (mut)
-	for s in bns:
-		if sids.has_key(s):
-			fout.write ("\\t1")
-		else:
-			fout.write ("\\t0")
-	fout.write ("\\n")
-fout.close()
-"""
-
+pClinic2Cov              = Proc(desc = 'Extract information from clinic data as covariance matrix')
+pClinic2Cov.input        = 'infile:file'
+pClinic2Cov.output       = 'outfile:file:{{i.infile | fn}}.cov.txt'
+pClinic2Cov.args.covs    = ['gender', 'race', 'pathologic_stage', 'age_at_initial_pathologic_diagnosis']
+pClinic2Cov.args.asnum   = True
+pClinic2Cov.args.suffix  = ''
+pClinic2Cov.envs.rimport = rimport
+pClinic2Cov.lang         = params.Rscript.value
+pClinic2Cov.script       = "file:scripts/tcga/pClinic2Cov.r"

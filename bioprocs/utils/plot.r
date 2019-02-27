@@ -565,6 +565,7 @@ plot.man = function(data, plotfile = NULL, hilights = list(), gsize = NULL, ggs 
 	# all snps are on the same chromosome
 
 	library(data.table)
+	library(ggrepel)
 	data = as.data.table(data)
 	if (ncol(data) == 4) {
 		colnames(data) = c('Snp', 'Chr', 'Pos', 'P')
@@ -606,18 +607,30 @@ plot.man = function(data, plotfile = NULL, hilights = list(), gsize = NULL, ggs 
 	if (!is.null(hinames)) {
 		hilights = list(hilights)
 	}
+	hdata = NULL
 	for (hilight in hilights) {
 		if ('snps' %in% names(hilight)) {
-			hdata = data[Snp %in% hilight$snps]
-			color = ifelse(is.null(hilight$color), "red", hilight$color)
-			ggs_hilight = c(ggs_hilight, list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = color, data = hdata, inherit.aes = FALSE)))
+			hdata_tmp = data[Snp %in% hilight$snps]
+			hdata = ifelse(is.null(hdata), hdata_tmp, rbind(hdata, hdata_tmp))
+			rm(hdata_tmp)
 		} else if ('chr' %in% names(hilight)) {
-			hdata = data[Chr == hilight$chr & Pos >= as.numeric(hilight$start) & Pos <= as.numeric(hilight$end)]
-			color = ifelse(is.null(hilight$color), "red", hilight$color)
-			ggs_hilight = c(ggs_hilight, list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = color, data = hdata, inherit.aes = FALSE)))
-		} 
+			hdata_tmp = data[Chr == hilight$chr & Pos >= as.numeric(hilight$start) & Pos <= as.numeric(hilight$end)]
+			hdata = ifelse(is.null(hdata), hdata_tmp, rbind(hdata, hdata_tmp))
+			rm(hdata_tmp)
+		} else {
+			stop('Either "snps" or "chr" needed to locate the snps to be highlighted.')
+		}
+	}
+	if (!is.null(hdata)) {
+		hicolor = ifelse(is.null(hilight$color), "red", hilight$color)
+		ggs_hilight = c(
+			ggs_hilight, 
+			list(geom_label_repel = list(aes_string(x = 'X', y = 'Y', label = 'Snp'), color = "white", fill = hicolor, data = hdata, inherit.aes = FALSE, alpha = .8)),
+			list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = hicolor, data = hdata, inherit.aes = FALSE))
+		)
 	}
 	ggs = c(list(
+		expand_limits      = list(y = c(0, max(data[, 'Y']) * 1.05)),
 		geom_point         = list(aes_string(color = 'Region'), alpha = .8),
 		guides             = list(color = FALSE),
 		scale_color_manual = list(values = rep(c("grey", "skyblue"), nrow(rdata))),

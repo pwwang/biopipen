@@ -11,10 +11,17 @@ from . import params
 @output:
 	`outfile:file`: the result file, could be a 3 or 6-col bed file.
 @args:
+	`tool`    : The tool used to retrieve the coordinates. Default: `cruzdb`
+		- Or retrieve from a dbsnp VCF file (dbsnp or local)
 	`dbsnp`   : The dbsnp vcf file
 	`notfound`: What to do if the snp is not found. Default: skip
 	`inopts`  : The input options for input file. Default: `Box(delimit = '\t', skip = 0, comment = '#')`
 	`snpcol`  : The column where the snp is. Could be index (0-based) or the column name with `args.inopts.cnames = True`
+	`ncol`    : How many columns to output. Possible values: 6, 8, 9. Default: `8`
+		- `6`: The BED6 format
+		- `8`: BED6 + `ref` + `alt`
+		- `9`: BED6 + `ref` + `alt` + `allele frequences from 1000 genome project` 
+		- `args.ncol = 9` only avaliable when `args.tool = "dbsnp"`
 	`vcftools`: The path to vcftools to extract snp from `args.dbsnp`
 	`genome`  : The genome to locate the right database from `cruzdb`
 	`dbsnpver`: The version of dbsnp from `cruzdb`
@@ -27,6 +34,7 @@ pRs2Bed.output        = "outfile:file:{{i.snpfile | fn}}.bed"
 pRs2Bed.args.tool     = 'cruzdb' # or local/dbsnp
 pRs2Bed.args.notfound = 'skip' # error
 pRs2Bed.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+pRs2Bed.args.ncol     = 6
 pRs2Bed.args.snpcol   = ''
 pRs2Bed.args.dbsnp    = params.dbsnp_all.value
 pRs2Bed.args.vcftools = params.vcftools.value

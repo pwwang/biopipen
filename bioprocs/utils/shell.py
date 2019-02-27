@@ -8,7 +8,7 @@ try:  # py3
 except ImportError:  # py2
 	from pipes import quote
 
-shquote = lambda x: quote(str(x))
+shquote = lambda x: x[6:] if str(x).startswith('shraw:') else quote(str(x))
 
 TOOLS = Box()
 
@@ -155,14 +155,16 @@ class ShellResult(object):
 	def __repr__(self):
 		return '<ShellResult {!r}>'.format(self.cmdobj)
 
-	def run(self, raiseExc = True, save = None, uselogger = True):
+	def run(self, raiseExc = True, save = None, logger = 'bioprocs'):
 		if not self.done:
-			if uselogger:
+			if logger == 'bioprocs':
 				from . import logger
 				logit = lambda *args: logger.info(*args)
-			else:
+			elif logger == 'sys':
 				from sys import stderr
 				logit = lambda *args: stderr.write((args[0] + '\n') % args[1:])
+			else:
+				logit = lambda *args: None
 			logit('RUNNING: %s', self.cmdobj.cmd)
 			logit('- PID: %s', self.cmdobj.pid)
 
@@ -171,8 +173,8 @@ class ShellResult(object):
 			self.done = True
 			logit('- RETURNCODE: %s', self.cmdobj.rc)
 			logit('-' * 80)
-		if raiseExc and self.cmdobj.rc != 0:
-			raise RuncmdException(self.cmdobj.cmd)
+			if raiseExc and self.cmdobj.rc != 0:
+				raise RuncmdException(self.cmdobj.cmd)
 		return self
 
 	@property
@@ -286,30 +288,31 @@ wc   = lambda *args, **kwargs: Shell().wc(*args, **kwargs).run()
 wc_l = lambda filename: int(wc(l = filename).stdout.split()[0])
 wcl  = wc_l
 
-gzip      = lambda *args,  **kwargs: Shell().gzip(*args, **kwargs).run()
-bgzip     = lambda *args,  **kwargs: Shell(equal = ' ').bgzip(*args, **kwargs).run()
-gunzip    = lambda *args,  **kwargs: Shell().gunzip(*args, **kwargs).run()
+gzip      = lambda *args,  **kwargs: Shell().gzip(*args, **kwargs).run(logger = False)
+bgzip     = lambda *args,  **kwargs: Shell(equal = ' ').bgzip(*args, **kwargs).run(logger = False)
+gunzip    = lambda *args,  **kwargs: Shell().gunzip(*args, **kwargs).run(logger = False)
 gzip_to   = lambda source, dest: gzip(_ = source, c = True, _stdout = dest)
 bgzip_to  = lambda source, dest: bgzip(_ = source, c = True, _stdout = dest)
 gunzip_to = lambda source, dest: gunzip(_ = source, c = True, _stdout = dest)
 
-mv    = lambda *args,  **kwargs: Shell().mv(*args, **kwargs).run()
-cp    = lambda *args,  **kwargs: Shell().cp(*args, **kwargs).run()
-rm    = lambda *args,  **kwargs: Shell().rm(*args, **kwargs).run()
+mv    = lambda *args,  **kwargs: Shell().mv(*args, **kwargs).run(logger = False)
+cp    = lambda *args,  **kwargs: Shell().cp(*args, **kwargs).run(logger = False)
+rm    = lambda *args,  **kwargs: Shell().rm(*args, **kwargs).run(logger = False)
 rm_rf = lambda *args: rm(*args, r = True, f = True)
-mkdir = lambda *args,  **kwargs: Shell().mkdir(*args, **kwargs).run()
-ln    = lambda *args,  **kwargs: Shell().ln(*args, **kwargs).run()
+rmrf  = rm_rf
+mkdir = lambda *args,  **kwargs: Shell().mkdir(*args, **kwargs).run(logger = False)
+ln    = lambda *args,  **kwargs: Shell().ln(*args, **kwargs).run(logger = False)
 ln_s  = lambda source, dest: ln(source, dest, s = True)
 
-head  = lambda *args, **kwargs: Shell().head(*args, **kwargs).run()
-tail  = lambda *args, **kwargs: Shell().tail(*args, **kwargs).run()
-grep  = lambda *args, **kwargs: Shell().grep(*args, **kwargs).run(raiseExc = False)
-sort  = lambda *args, **kwargs: Shell(dash = '-', equal = ' ', duplistkey = True).sort(*args, **kwargs).run()
-uniq  = lambda *args, **kwargs: Shell().uniq(*args, **kwargs).run()
-touch = lambda *args, **kwargs: Shell().touch(*args, **kwargs).run()
+head  = lambda *args, **kwargs: Shell().head(*args, **kwargs).run(logger = False)
+tail  = lambda *args, **kwargs: Shell().tail(*args, **kwargs).run(logger = False)
+grep  = lambda *args, **kwargs: Shell().grep(*args, **kwargs).run(raiseExc = False, logger = False)
+sort  = lambda *args, **kwargs: Shell(dash = '-', equal = ' ', duplistkey = True).sort(*args, **kwargs).run(logger = False)
+uniq  = lambda *args, **kwargs: Shell().uniq(*args, **kwargs).run(logger = False)
+touch = lambda *args, **kwargs: Shell().touch(*args, **kwargs).run(logger = False)
 
-kill  = lambda *args, **kwargs: Shell().kill(*args, **kwargs).run()
+kill  = lambda *args, **kwargs: Shell().kill(*args, **kwargs).run(logger = False)
 kill9 = lambda *procids: kill(**{'9': True, '': procids})
 
-zcat = lambda *args, **kwargs: Shell().zcat(*args, **kwargs).run()
-cat  = lambda *args, **kwargs: Shell().cat(*args, **kwargs).run()
+zcat = lambda *args, **kwargs: Shell().zcat(*args, **kwargs).run(logger = False)
+cat  = lambda *args, **kwargs: Shell().cat(*args, **kwargs).run(logger = False)

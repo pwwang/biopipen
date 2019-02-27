@@ -4,10 +4,11 @@ from bioprocs.utils import logger
 infiles = {{i.infiles | repr}}
 outfile = {{o.outfile | quote}}
 rsmap   = {{args.rsmap | : None if not a else a | repr}}
-fn2sam  = {{args.fn2sam}}
+fn2sam  = {{args.fn2sample}}
+confcut = {{args.confcut | repr}}
 
-def readone(infile, getsnps = True):
-	logger.info('Reading ' + infile + ' ...')
+def readone(infile, getsnps = True, progress = ''):
+	logger.info('Reading ' + progress + ': ' + path.basename(infile) + ' ...')
 	gts        = []
 	snps       = []
 	gts_append = gts.append
@@ -19,21 +20,24 @@ def readone(infile, getsnps = True):
 		for line in fin:
 			line = line.strip()
 			if not line: continue
-			snp, gt = line.split()[:2]
+			snp, gt, conf = line.split()[:3]
+			if confcut and float(conf) >= confcut:
+				gt = 'NA'
 			if getsnps:
 				snps_append(snp)
 			gts_append(gt)
 	return snps, gts
 
-ret = None
+ret     = None
 samples = ['Variant']
+inlen   = len(infiles)
 for i, infile in enumerate(infiles):
 	sam = path.splitext(path.basename(infile))[0]
 	if fn2sam:
 		samples.append(fn2sam(sam))
 	else:
 		samples.append(sam)
-	snps, gts = readone(infile, i == 0)
+	snps, gts = readone(infile, i == 0, progress = '{}/{}'.format(i+1, inlen))
 	if snps: 
 		ret = [(snps[i], [gt]) for i, gt in enumerate(gts)]
 	else:

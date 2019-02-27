@@ -42,7 +42,7 @@ if tool == 'meme':
 	for motif, name in motifs.items():
 		params.oc    = path.join(outdir, name + '.' + re.sub(r'[^\w_]', '', motif))
 		params.motif = motif
-		params[""]   = [tfmotifs, sfile]
+		params._     = [tfmotifs, sfile]
 		cmdparams.append((meme, cmdargs(params, dash = '--', equal = ' ')))
 	Parallel(nthread, raiseExc = True).run('{} {}', cmdparams)
 

@@ -75,7 +75,7 @@ pExprFiles2Mat                = Proc(desc = 'Merge expression to a matrix from s
 pExprFiles2Mat.input          = 'infiles:files'
 pExprFiles2Mat.output         = 'outfile:file:{{i.infiles | fs2name}}.expr.txt'
 pExprFiles2Mat.args.inopts    = Box(cnames = True, rnames = True)
-pExprFiles2Mat.args.fn2sample = 'function(fn) fn'
+pExprFiles2Mat.args.fn2sample = 'function(fn) unlist(strsplit(fn, ".", fixed=T))[1]'
 pExprFiles2Mat.envs.fs2name   = fs2name
 pExprFiles2Mat.envs.rimport   = rimport
 pExprFiles2Mat.lang           = params.Rscript.value

@@ -261,18 +261,18 @@ pRsplit.script       = "file:scripts/tsv/pRsplit.r"
 		- `headPrefix`: The prefix for header. Default: ``
 		- `headTransform`: The transformer for header. Default: `None`
 		- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict, '+' as an element or key is allowed to indicate extra meta from the reader). If not specified, metadata will be borrowed from the reader. 
-	`ops`: A ops function to transform the row. Argument is an instance of `readRecord`
-	`opshelper`: A helper function for `args.ops`
+	`row`: A row function to transform/filter the row. Argument is an instance of `TsvRecord`
+	`helper`: A helper function for `args.ops`
 """
-pTsv                = Proc(desc = 'Read, Transform, filter a TSV file.')
-pTsv.input          = "infile:file"
-pTsv.output         = "outfile:file:{{i.infile | fn}}.tsv"
-pTsv.lang           = params.python.value
-pTsv.args.opshelper = ''
-pTsv.args.ops       = None
-pTsv.args.inopts    = Box(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = [])
-pTsv.args.outopts   = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = False, ftype = '', cnames = [])
-pTsv.script         = "file:scripts/tsv/pTsv.py"
+pTsv              = Proc(desc = 'Read, Transform, filter a TSV file.')
+pTsv.input        = "infile:file"
+pTsv.output       = "outfile:file:{{i.infile | fn}}.tsv"
+pTsv.lang         = params.python.value
+pTsv.args.helper  = ''
+pTsv.args.row     = None
+pTsv.args.inopts  = Box(delimit = '\t', comment = '#', skip = 0, cnames = True)
+pTsv.args.outopts = Box(delimit = '\t', cnames = True)
+pTsv.script       = "file:scripts/tsv/pTsv.py"
 
 """
 @name:
@@ -304,6 +304,7 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 	`outopts`:
 		- `delimit`      : The delimit. Default: `\t`
 		- `cnames`         : Whether to output the head? Default: `False`
+	`debug`: Save debug information in stderr file. Default: `False`
 	`match`: The match function. 
 	`do`: The do function. Global vaiable `fout` is available to write results to output file.
 	`helper`: Some helper codes.
@@ -313,8 +314,10 @@ pTsv.script         = "file:scripts/tsv/pTsv.py"
 pTsvJoin              = Proc(desc = 'Read files simultaneously.')
 pTsvJoin.input        = 'infiles:files'
 pTsvJoin.output       = 'outfile:file:{{i.infiles[0] | fn}}.etc.joined.txt'
+pTsvJoin.echo         = 0
 pTsvJoin.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', cnames = True)
 pTsvJoin.args.outopts = Box(delimit = '\t', cnames = False)
+pTsvJoin.args.debug   = False
 pTsvJoin.args.match   = None
 pTsvJoin.args.do      = None
 pTsvJoin.args.helper  = ''

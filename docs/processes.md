@@ -85,13 +85,16 @@
     - **args**  
         - `tool`: The tool used to sort the file. Default: sort (bedtools, bedops)  
         - `bedtools`: The path to bedtools. Default: bedtools  
-        - `bedops_sort`: The path to bedops' sort-bed. Default: sort-bed  
+        - `bedops`: The path to bedops' sort-bed. Default: sort-bed  
         - `mem`: The memory to use. Default: 8G  
         - `by`: Sort by coordinates("coord", default) or name("name")  
         	- Only available when use tool `sort`
         - `tmpdir`: The tmpdir to use. Default: `$TMPDIR`  
         - `unique`: Remove the dupliated records? Default: True  
         - `params`: Other params for `tool`. Default: {}  
+        - `chrorder`: The chromosome order used to sort. Default: `None`  
+        	- `None`: Sort by natural order (chr1 followed by chr10, instead of chr2)
+        	- Only available when using `sort` (`args.tool = 'sort'`)
 
     - **requires**  
         [`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -363,14 +366,18 @@
 
     - **input**  
         - `infile:file`: The input file  
-        - `gfile:file`: The genome size file  
 
     - **output**  
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
-        - `params`: Other parameters for `bedtools shuffle`, default: ""  
+        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `params`  : Other parameters for `bedtools shuffle`, default: ""  
+        - `gsize`   : The chromsize file. Default: `params.gsize`  
+        - `n`       : Only return top `n` records (act like sampling). Default: `0`  
+        	- `0`/`None` will return all records
+        	- `n<1` will return proportion of the records
+        	- `n>=1` will return top `n` records
 
     - **requires**  
         [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -942,7 +949,6 @@
         - `inopts`: The input options for infile:  
         	- `skip`   : First N lines to skip. Default: `0`
         	- `delimit`: The delimit. Default          : `\t`
-        	- `comment`: The comment line mark. Default: `#`
         - `case`: Case-sensitivity. Default: True  
         	- If True, will set $LANG as C
         	- Otherwise, $LANG will be set as en_US.UTF-8
@@ -1778,7 +1784,8 @@
     - **args**  
         - `inopts`: options for reading input file.  
         - `outopts`: options for writing output file.  
-        	- `query`: Output the original query column? Default: `False`
+        	- `query` : Output the original query column? Default: `False`
+        	- `cnames`: Output headers? Default: `True`
         - `notfound`: What if a symbol is not found. Default: ignore  
         	- skip  : skip the record(don't write it to output file)
         	- ignore: use the original name;
@@ -2804,15 +2811,14 @@
     - **description**  
         Use ggplot2 geom_histogram to generate histograms
 
-    - **infile**  
+    - **input**  
         - `infile:file`: The input data file  
 
-    - **outfile**  
+    - **output**  
         - `outfile:file`: The output file  
 
     - **args**  
-        - `cnames` : Whether the input file has colnames. Default: True  
-        - `rnames` : Whether the input file has rownames. Default: False  
+        - `inopts` : Options to read the input file. Default: `Box(cnames = True, rnames = False)`  
         - `x`      : The x aes. Default: 1 (corresponding to colnames)  
         - `helper` : Some helper codes to generate `params` and `ggs`  
         - `devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`  
@@ -2939,22 +2945,24 @@
         Plot heatmaps using R package ComplexHeatmap. Example:
         ```
         bioprocs plot.pHeatmap2 
-        	-i.infile MMPT.txt 
-        	-i.annofiles:l:o PatientAnno.txt 
-        	-args.params.row_names_gp 'r:fontsize5' 
-        	-args.params.column_names_gp 'r:fontsize5' 
-        	-args.params.clustering_distance_rows pearson 
-        	-args.params.clustering_distance_columns pearson 
-        	-args.devpars.width 5000 
-        	-args.devpars.height 5000 
-        	-args.draw.merge_legends 
-        	-args.params.heatmap_legend_param.title AUC 
-        	-args.params.row_dend_reorder 
-        	-args.params.column_dend_reorder 
-        	-args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1):ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey", `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend = c(Group=F))' 
-        	-args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))' 
-        	-args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c("Group1", "Group2", "Group3")' 
-        	-args.seed 8525
+          -i.infile MMPT.txt 
+          -i.annofiles:l:o PatientAnno.txt 
+          -args.params.row_names_gp 'r:fontsize5' 
+          -args.params.column_names_gp 'r:fontsize5' 
+          -args.params.clustering_distance_rows pearson 
+          -args.params.clustering_distance_columns pearson 
+          -args.params.show_row_names false
+          -args.params.row_split 3
+          -args.devpars.width 5000 
+          -args.devpars.height 5000 
+          -args.draw.merge_legends 
+          -args.params.heatmap_legend_param.title AUC 
+          -args.params.row_dend_reorder 
+          -args.params.column_dend_reorder 
+          -args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1)  :ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey",   `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend =   c(Group=F))' 
+          -args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))  ' 
+          -args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c  ("Group1", "Group2", "Group3")' 
+          -args.seed 8525
         ```
 
     - **input**  
@@ -2963,16 +2971,18 @@
         	- For now, they should share the same `args.anopts`
 
     - **output**  
-        - `outfile:flie`: The plot.  
+        - `outfile:file`: The plot.  
+        - `outdir:dir`: The output directory including the output plot and other information.  
 
     - **args**  
-        - `devpars`: The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
-        - `draw`   : The parameters for `ComplexHeatmap::draw`  
-        - `params` : Other parameters for `ComplexHeatmap::Heatmap`  
-        - `anopts` : The options to read the annotation files.  
-        - `inopts` : The options to read the input files.  
-        - `seed`   : The seed. Default: `None`  
-        - `helper` : The raw R codes to help defining some R variables or functions.  
+        - `devpars` : The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+        - `draw`    : The parameters for `ComplexHeatmap::draw`  
+        - `params`  : Other parameters for `ComplexHeatmap::Heatmap`  
+        - `anopts`  : The options to read the annotation files.  
+        - `inopts`  : The options to read the input files.  
+        - `seed`    : The seed. Default: `None`  
+        - `helper`  : The raw R codes to help defining some R variables or functions.  
+        - `saveinfo`: Save other information include the heatmap object and the clusters. Default: `True`  
 
     - **requires**  
         `R-ComplexHeatmap` (tested on c269eb425bf1b2d1713b9d5e68bf9f08bd8c7acb)
@@ -3101,7 +3111,8 @@
     - **input**  
         - `infile:file`: The input file. First 6 columns should be BED6, and then column:  
         	- 7: The raw pvalue.
-        	- 8: The x-axis labels for the records.
+        	- 8: The x-axis labels for the records. Optional. If not provided, chromosomes will be used.
+        	- This file has to be sorted by coordinates.
         	- For example:
         		```
         		chr19	45604163	45604163	rs7255060	0	+	3.238E-03	+200K
@@ -3124,6 +3135,8 @@
         - `inopts` : Options to read the input file. Default: `Box(cnames = False, rnames = False)`  
         - `ggs`    : Extra expressions for ggplot.  
         - `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
+        - `gsize`  : The genome sizes file. Default: `None`  
+        	- If `None`, will infer from the snp coordinates
 ## power
 
 !!! hint "pSurvivalPower"
@@ -3914,10 +3927,22 @@
         - `outfile:file`: the result file, could be a 3 or 6-col bed file.  
 
     - **args**  
-        - `dbsnp`: The dbsnp vcf file  
+        - `tool`    : The tool used to retrieve the coordinates. Default: `cruzdb`  
+        	- Or retrieve from a dbsnp VCF file (dbsnp or local)
+        - `dbsnp`   : The dbsnp vcf file  
         - `notfound`: What to do if the snp is not found. Default: skip  
-        - `inopts`: The input options for input file  
-        ``
+        - `inopts`  : The input options for input file. Default: `Box(delimit = '\t', skip = 0, comment = '#')`  
+        - `snpcol`  : The column where the snp is. Could be index (0-based) or the column name with `args.inopts.cnames = True`  
+        - `ncol`    : How many columns to output. Possible values: 6, 8, 9. Default: `8`  
+        	- `6`: The BED6 format
+        	- `8`: BED6 + `ref` + `alt`
+        	- `9`: BED6 + `ref` + `alt` + `allele frequences from 1000 genome project` 
+        	- `args.ncol = 9` only avaliable when `args.tool = "dbsnp"`
+        - `vcftools`: The path to vcftools to extract snp from `args.dbsnp`  
+        - `genome`  : The genome to locate the right database from `cruzdb`  
+        - `dbsnpver`: The version of dbsnp from `cruzdb`  
+        - `sortby`  : Sort the output file by coordinates (coord) or name. Default: `coord`  
+        	- `False`: don't sort.
 
 !!! hint "pSnp2Avinput"
 
@@ -4459,33 +4484,30 @@
     - **input**  
         - `infile:file`: The input file for data to do the regressions. Example:  
         	```
-        		    X1  X2  X3  X4 ... Y
-        		G1  1   2   1   4  ... 9
-        		G2  2   3   1   1  ... 3
-        		... ...
-        		Gm  3   9   1   7  ... 8
+        	  	X1  X2  X3  X4 ... Y
+        	  S1  1   2   1   4  ... 9
+        	  S2  2   3   1   1  ... 3
+        	  ... ...
+        	  Sm  3   9   1   7  ... 8
         	```
         - `groupfile:file`: Specify the groups to compare. You may also specify the cases. The Chow-Test will be done between the group for each case. Example:  
         	```
-        		G1	Group1	Case1
-        		G2	Group1	Case1
-        		... ...
-        		Gs	Group2	Case1
-        		Gt	Group2	Case1
-        		Gt	Group1	Case2
-        		... ...
-        		Gu	Group1	Case2
-        		... ...
-        		Gz	Group2	Case2
+        	        Case1	Case2
+        	  S1	Group1	Group1
+        	  S2	Group1	NA          # Exclude S2 in Case2
+        	  S3	Group2	Group1
+        	  ... ...
+        	  Sm	Group2	Group2
         	```
         	- In such case, the test will be done between Group1 and Group2 for Case1 and Case2, respectively.
         	- Instances can be resued (Gt in the example)
         	- If cases not provided, all will be treated as one case.
         - `casefile:file`: Define the formula (which columns to use for each case). Example:  
         	```
-        	Case1	Y ~ X1
-        	Case2	Y ~ X2
+        	  Case1	Y ~ X1
+        	  Case2	Y ~ X2
         	```
+        	- This file is optional, then formula `Y ~ .` will be used for all cases.
 
     - **output**  
         - `outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`  
@@ -4713,7 +4735,7 @@
         - `params`: Other params for `tabix`  
 ## tcga
 
-!!! hint "pDownload"
+!!! hint "pTCGADownload"
 
     - **description**  
         Download TCGA use `gdc-client` and a manifest file
@@ -4759,8 +4781,9 @@
         - `outfile:file`: The output matrix file  
 
     - **args**  
-        - `rsmap`  : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.  
-        - `fn2sam` : How to convert filename(without extension) to sample name. Default: `None`  
+        - `rsmap`    : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.  
+        - `fn2sample`: How to convert filename(without extension) to sample name. Default: `None`  
+        - `confcut`  : The confidence cutoff. Genotype will be NA for lower confidence snps. Default: `0.05`  
 
 !!! hint "pClinic2Survival"
 
@@ -4785,32 +4808,23 @@
         	- `gender`, `race`, `ethnicity`, `age`
         - `mat`: An expression or genotype matrix with samples as column names, used to get sample names for patient instead of short ones. Default: `None`  
 
-!!! hint "pConvertExpFiles2Matrix"
+!!! hint "pClinic2PlinkMeta"
 
     - **description**  
-        convert TCGA expression files to expression matrix, and convert sample name to submitter id
+        Convert TCGA clinic data to plink meta file.
+        Used with a `GTMat` file to convert to plink binary file (see vcfnext.pGTMat2Plink).
 
     - **input**  
-        - `dir:file`: the directory containing the samples  
-        - `mdfile:file`: the metadata file  
+        - `infile:file`: The input TCGA patiant clinic file.  
 
     - **output**  
-        - `outfile:file`: the output matrix  
+        - `outfile:file`: The meta file.  
 
-    - **requires**  
-        [python-mygene](https://pypi.python.org/pypi/mygene/3.0.0)
-
-!!! hint "pConvertMutFiles2Matrix"
-
-    - **description**  
-        convert TCGA mutation files (vcf.gz) to mut matrix, and convert sample name to submitter id
-
-    - **input**  
-        - `dir:file`: the directory containing the samples  
-        - `mdfile:file`: the metadata file  
-
-    - **output**  
-        - `outfile:file`: the output matrix  
+    - **args**  
+        - `suffix`: The suffix added to the barcode. Default: `''`  
+        	- By default the barcode is like `TCGA-55-8087`, but in analysis, we want to be specific to samples
+        	- For example, for solid tumor, it'll be `TCGA-55-8087-01`, then suffix `-01` will be added
+        	- You can add multiple suffices by `-01, -10` or `['-01', '-10']`
 ## tfbs
 
 !!! hint "pMotifScan"
@@ -4840,6 +4854,49 @@
     - **requires**  
         [`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
 
+!!! hint "pMotifSimilarity"
+
+    - **description**  
+        Compare the similarity between motifs.
+
+    - **input**  
+        - `mfile1:file`: The motif database in meme format  
+        - `mfile2:file`: Another motif database in meme format.   
+        	- If not provided, `mfile1` will be used.
+
+    - **output**  
+        - `outfile:file`: The output file from `tomtom`  
+        - `outdir:dir`  : The output directory from `tomtom`  
+
+    - **args**  
+        - `qval`   : The qvalue cutoff. Default: `0.5`  
+        - `tomtom` : The path to `tomtom`  
+        - `nthread`: Number of threads to use. Default: `1`  
+        - `params` : parameters for `tomtom`:  
+        	- `xalph`       : `True`
+        	- `no-ssc`      : `True`
+        	- `dist`        : `pearson`,
+        	- `min-overlap` : `1`,
+        	- `motif-pseudo`: `.1`,
+        	- `verbosity`   : `4`
+
+!!! hint "pMotifFilter"
+
+    - **description**  
+        Filter motifs from a meme file.
+
+    - **input**  
+        - `infile:file`: The motif database in MEME format  
+
+    - **output**  
+        - `outfile:file`: the output file.  
+
+    - **args**  
+        - `filter`: A string of lambda function to filter the motifs.  
+        	- Possible attributes for a motif are:
+        	- `E, URL, alength, altname, matrix, mtype, name, nsites, w`
+        	- Motifs will be filtered out when this function returns `True`.
+
 !!! hint "pAtSnp"
 
     - **description**  
@@ -4848,7 +4905,7 @@
     - **input**  
         - `tffile:file`: The tf-motif file with 1st column the motif and 2nd the tf  
         - `snpfile:file`: The snp file.   
-        	- Could be a bed file with first 6 columns the bed6 format and 7th the alleles.
+        	- Could be a bed file with first 6 columns the bed6 format and 7th the reference allele, and 8th the alternative alleles.
         	- Alleles including reference allele should be seperated by `,`
         	- It also could be a snp file required by `atSNP` package.
         	- See: https://rdrr.io/github/kinsigne/atSNP_modified/man/LoadSNPData.html
@@ -5034,8 +5091,8 @@
         	- `headPrefix`: The prefix for header. Default: ``
         	- `headTransform`: The transformer for header. Default: `None`
         	- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict, '+' as an element or key is allowed to indicate extra meta from the reader). If not specified, metadata will be borrowed from the reader. 
-        - `ops`: A ops function to transform the row. Argument is an instance of `readRecord`  
-        - `opshelper`: A helper function for `args.ops`  
+        - `row`: A row function to transform/filter the row. Argument is an instance of `TsvRecord`  
+        - `helper`: A helper function for `args.ops`  
 
 !!! hint "pTsvJoin"
 
@@ -5069,6 +5126,7 @@
         - `outopts`:   
         	- `delimit`      : The delimit. Default: `\t`
         	- `cnames`         : Whether to output the head? Default: `False`
+        - `debug`: Save debug information in stderr file. Default: `False`  
         - `match`: The match function.   
         - `do`: The do function. Global vaiable `fout` is available to write results to output file.  
         - `helper`: Some helper codes.  
@@ -5104,7 +5162,7 @@
         [`q`](http://harelba.github.io/q/index.html)
         This process is built on `q 1.7.1`
 
-!!! hint "pMergeFiles"
+!!! hint "pTsvMerge"
 
     - **description**  
         Merge files in the input directory
@@ -5116,14 +5174,8 @@
         - `outfile:file`: The output file  
 
     - **args**  
-        - `inopts`: The options for input file.  
-        	- defaults: skip: 0, comment: #, delimit '\\t'
-        - `outopts`: The options for output file. Defaults:  
-        	- head: False (not output head line)
-        	- headPrefix: `#` (The prefix for head line)
-        	- headDelimit: `\\t` (The delimit for head line)
-        	- headTransform: `None` (The callback for head line)
-        	- delimit: `\\t` (The delimit for output line)
+        - `inopts`: The options for input file. Default: `Box(skip = 0, comment = '#', delimit = '\t')`  
+        - `outopts`: The options for output file. Default: `Box()`  
 
 !!! hint "pMergeRows"
 
@@ -5660,8 +5712,13 @@
         - `outfile:file`: The output bed file. Default: `outfile:file:{{i.infile | fn}}.bed`  
 
     - **args**  
-        - `ncol`: How many columns of bed to output. Default: `6`. Possible values: 3, 6 and 8  
-        - `name`: Use the neat name (usually rsid) or full name (row names). Default: `neat`  
+        - `ncol`  : How many columns of bed to output. Default: `6`.   
+        	- Possible values: 3, 6, 8, 66, 88
+        	- If `8`, then reference and alternative alleles will be 7th and 8th column
+        	- If `66`, then genotypes will be attached to BED6
+        	- If `88`, then genotypes will be attached to `ncol = 8`
+        - `name`  : Use the neat name (usually rsid) or full name (row names). Default: `neat`  
+        - `inopts`: Options to read the input file. Default: `Box(cnames = True)`  
 
 !!! hint "pCallRate"
 

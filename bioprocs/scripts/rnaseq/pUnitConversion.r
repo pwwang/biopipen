@@ -117,6 +117,7 @@ if (inunit == 'count' || inunit == 'rawcount' || inunit == 'rawcounts' || inunit
 		samples = colnames(data)
 		fld     = meanflFromFile(samples, meanfl)
 
+		# see: https://gist.github.com/slowkow/c6ab0348747f86e2748b
 		exp     = sapply(samples, function(s){
 			# rate <- log(counts) - log(effLen)
 			# denom <- log(sum(exp(rate)))

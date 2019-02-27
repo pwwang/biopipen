@@ -5,22 +5,14 @@ outfile = {{o.outfile | R}}
 params  = {{args.params | R}}
 inopts  = {{args.inopts | R}}
 
-inparams = list(
-	file      = infile,
-	header    = as.logical(inopts$cnames),
-	row.names = if (as.logical(inopts$rnames)) 1 else NULL,
-	skip      = if (is.null(inopts$skip)) 0 else as.numeric(inopts$skip),
-	sep       = inopts$delimit
-)
-
-mat = do.call(read.table.nodup, c(inparams, params))
+mat = read.table.inopts(infile, inopts)
 
 {% if isinstance(args.code, list) %}
-{% for c in args.code %}
-{{c}}
-{% endfor %}
+	{% for c in args.code %}
+	{{c}}
+	{% endfor %}
 {% else %}
-{{args.code}}
+	{{args.code}}
 {% endif %}
 
 outparams = list(

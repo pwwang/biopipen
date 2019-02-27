@@ -40,7 +40,7 @@ class TsvRecord(object):
 		if isinstance(key, (slice, int)):
 			return self.__vals[key]
 		
-		if key in self.__keys:
+		if self.__keys and key in self.__keys:
 			return self.__vals[self.__keys[key]]
 
 		raise KeyError("Record contains no '{}' field.".format(key))
@@ -247,6 +247,17 @@ class TsvJoin(object):
 			return 0 if a < b else 1 if a > b else -1
 		else:
 			return 0 if a > b else 1 if a < b else -1
+
+	@staticmethod
+	def _debug(rows, m):
+		from sys import stderr
+		for i, row in enumerate(rows):
+			stderr.write("- File {}: {}\n".format(i+1, row))
+		if m < 0:
+			stderr.write("- Matched\n")
+		else:
+			stderr.write("- File {} is behand\n".format(i+1))
+		stderr.write('-' * 80 + "\n")
 	
 	def __init__(self, *files, **inopts):
 		inopts_default = dict(
@@ -271,6 +282,7 @@ class TsvJoin(object):
 		for i in range(self.length):
 			inopts.append({k:v[i] for k,v in inopts_multi.items()})
 		self.readers = [TsvReader(f, **inopts[i]) for i,f in enumerate(files)]
+		self.debug   = False
 
 	def _defaultMatch(self, *rows):
 		data = [row[0] for row in rows]
@@ -290,11 +302,16 @@ class TsvJoin(object):
 		if 'cnames' in outopts:
 			cnames = outopts['cnames']
 			del outopts['cnames']
+
+		headCallback = None
+		if 'headCallback' in outopts:
+			headCallback = outopts['headCallback']
+			del outopts['headCallback']
 			
 		out = TsvWriter(outfile, **outopts)
 		out.cnames = cnames if isinstance(cnames, list) else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames else []
 		if out.cnames:
-			out.writeHead()
+			out.writeHead(headCallback)
 
 		match = match or self._defaultMatch
 		rows = [None] * self.length
@@ -303,6 +320,8 @@ class TsvJoin(object):
 				for i, row in enumerate(rows):
 					rows[i] = row or next(self.readers[i])
 				m = match(*rows)
+				if self.debug:
+					self._debug(rows, m)
 				if m < 0: # matched
 					do(out, *rows)
 					m = 0

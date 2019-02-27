@@ -43,21 +43,49 @@ pMotifScan.args.nthread  = 1
 pMotifScan.lang          = params.python.value
 pMotifScan.script        = "file:scripts/tfbs/pMotifScan.py"
 
+"""
+@name:
+	pMotifSimilarity
+@description:
+	Compare the similarity between motifs.
+@input:
+	`mfile1:file`: The motif database in meme format
+	`mfile2:file`: Another motif database in meme format. 
+		- If not provided, `mfile1` will be used.
+@output:
+	`outfile:file`: The output file from `tomtom`
+	`outdir:dir`  : The output directory from `tomtom`
+@args:
+	`qval`   : The qvalue cutoff. Default: `0.5`
+	`tomtom` : The path to `tomtom`
+	`nthread`: Number of threads to use. Default: `1`
+	`params` : parameters for `tomtom`:
+		- `xalph`       : `True`
+		- `no-ssc`      : `True`
+		- `dist`        : `pearson`,
+		- `min-overlap` : `1`,
+		- `motif-pseudo`: `.1`,
+		- `verbosity`   : `4`
+"""
 pMotifSimilarity        = Proc(desc = 'Compare the similarity between motifs.')
 pMotifSimilarity.input  = 'mfile1:file, mfile2:file'
 pMotifSimilarity.output = [
-	'outfile:file:{{i.mfile1, i.mfile2, args.tool, fn2, path.join | *&odfn | *:e(f, c+".txt") }}',
-	'outdir:dir:{{i.mfile1, i.mfile2, args.tool, fn2 | *odfn }}'
+	'outfile:file:{{odfn(i.mfile1, i.mfile2, fn2) | lambda x, path=path: path.join(x, "tomtom.tsv")}}',
+	'outdir:dir:{{odfn(i.mfile1, i.mfile2, fn2)}}'
 ]
-pMotifSimilarity.args.tool   = 'tomtom'
 pMotifSimilarity.args.qval   = 0.5
 pMotifSimilarity.args.tomtom = params.tomtom.value
 pMotifSimilarity.args.params = Box({
-	'xalph': True, 'no-ssc': True, 'dist': 'pearson', 'min-overlap': 1, 'motif-pseudo': .1, 'verbosity': 4
+	'xalph'       : True,
+	'no-ssc'      : True,
+	'dist'        : 'pearson',
+	'min-overlap' : 1,
+	'motif-pseudo': .1,
+	'verbosity'   : 4
 })
 pMotifSimilarity.args.nthread = 1
 pMotifSimilarity.envs.path    = __import__('os').path
-pMotifSimilarity.envs.odfn    = lambda f1, f2, tool, fn2, p = None: (fn2(f1) + "-" + fn2(f2) if f2 else fn2(f1)) + "." + tool
+pMotifSimilarity.envs.odfn    = lambda f1, f2, fn2: (fn2(f1), fn2(f1)+"-"+fn2(f2))[int(bool(f2))] + ".tomtom"
 pMotifSimilarity.lang         = params.python.value
 pMotifSimilarity.script       = "file:scripts/tfbs/pMotifSimilarity.py"
 
@@ -68,6 +96,21 @@ pMotifMerge.envs.fs2name = fs2name
 pMotifMerge.lang         = params.python.value
 pMotifMerge.script       = "file:scripts/tfbs/pMotifMerge.py"
 
+"""
+@name:
+	pMotifFilter
+@description:
+	Filter motifs from a meme file.
+@input:
+	`infile:file`: The motif database in MEME format
+@output:
+	`outfile:file`: the output file.
+@args:
+	`filter`: A string of lambda function to filter the motifs.
+		- Possible attributes for a motif are:
+		- `E, URL, alength, altname, matrix, mtype, name, nsites, w`
+		- Motifs will be filtered out when this function returns `True`.
+"""
 pMotifFilter             = Proc(desc = 'Filter motifs from a meme file.')
 pMotifFilter.input       = 'infile:file'
 pMotifFilter.output      = 'outfile:file:{{i.infile | bn}}'

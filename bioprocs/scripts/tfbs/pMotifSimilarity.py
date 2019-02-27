@@ -9,7 +9,6 @@ mfile1  = {{ i.mfile1 | quote}}
 mfile2  = {{ i.mfile2 | quote}}
 outfile = {{ o.outfile | quote}}
 outdir  = {{ o.outdir | quote}}
-tool    = {{ args.tool | quote}}
 qval    = {{ args.qval | repr}}
 tomtom  = {{ args.tomtom | quote}}
 params  = {{ args.params | repr}}

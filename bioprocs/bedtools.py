@@ -28,9 +28,8 @@ pBedGetfasta.args.ref        = params.ref.value
 pBedGetfasta.envs.bashimport = bashimport
 pBedGetfasta.beforeCmd       = '''
 {{bashimport}} reference.bash
-if [[ $(reffai_check {{args.ref | @append: ".fai" | squote}}) -eq 1 ]]; then
-	reffai_do {{args.ref | squote}} {{args.ref | @append: ".fai" | squote}} {{args.samtools | squote}}
-fi
+export samtools={{args.samtools | squote}}
+reference fasta {{args.ref | squote}}
 '''
 pBedGetfasta.lang   = params.python.value
 pBedGetfasta.script = "file:scripts/bedtools/pBedGetfasta.py"
