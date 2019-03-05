@@ -4,7 +4,7 @@ from bioprocs.utils import shell, runcmd, cmdargs
 from bioprocs.utils.reference import bamIndex
 
 infiles = {{i.infiles | repr}}
-exbaits = {{args.exbaits | repr}}
+baits   = {{args.baits | repr}}
 accfile = {{args.accfile | repr}}
 ref     = {{args.ref | repr}}
 params  = {{args.params | repr}}
@@ -26,9 +26,23 @@ envs = dict(
 ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
 
 # generate target file
+if baits[-4:] in ('.gff', '.gtf'):
+	from gff import Gff
+	baitfile = path.join(joboutdir, path.basename(baits[:-4]) + '.bait.bed')
+	gff = Gff(baits)
+	with open(baitfile, 'w') as f:
+		for g in gff:
+			f.write("{chrom}\t{start}\t{end}\t{name}\n".format(
+				chrom = g['seqid'],
+				start = g['start'],
+				end   = g['end'],
+				name  = g['attributes']['gene_id'],
+			))
+	baits = baitfile
+
 params_t   = params.target
 params_t.o = path.join(outdir, prefix + '.bed')
-ckshell.target(exbaits, **params_t).run()
+ckshell.target(baits, **params_t).run()
 
 # generate access file
 if not accfile:

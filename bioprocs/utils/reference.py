@@ -93,16 +93,16 @@ def vcfIndex(vcf, tabix = 'tabix'):
 	# [1]some -> some
 	rname = fname.split(']', 1)[1] if fname.startswith('[') else fname
 
-	expectedIndex = path.join(dname, rname + '.vcf.gz.tbi')
+	expectedIndex = path.join(dname, fname + '.vcf.gz.tbi')
 	if path.isfile(expectedIndex):
-		return vcf
+		return vcf if vcf.endswith('.gz') else vcf + '.gz'
 	
 	# if vcf is not a link, there is nowhere else to find index, create it using tabix
 	tabix = shell.Shell({'tabix': tabix}).tabix
 	gt    = gztype(vcf)
 	if gt == 'bgzip':
 		if path.islink(vcf):
-			linkvcf = path.readlink(vcf)
+			linkvcf = readlink(vcf)
 			if path.isfile(linkvcf + '.tbi'):
 				shell.ln_s(linkvcf + '.tbi', expectedIndex)
 				return vcf

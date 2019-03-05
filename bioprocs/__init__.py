@@ -34,8 +34,6 @@ DEFAULTS = {
 	"dbsnp.desc"         : "The dbsnp common variants in VCF format.",
 	"dbsnp_all"          : "",
 	"dbsnp_all.desc"     : "The dbsnp all variants in VCF format.",
-	"exbaits"            : "",
-	"exbaits.desc"       : "The exome sequencing bait file",
 	"gep70"              : "",
 	"gep70.desc"         : "The GEP70 genes (col1: 51up, col2:19down).",
 	"gsize"              : "",

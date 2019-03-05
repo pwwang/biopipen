@@ -16,7 +16,7 @@ CACHED      = {}
 
 def runBioprocs(proc, args):
 	args['config._log.shortpath:py'] = 'False'
-	return shbioprocs[proc](**args).run(save = 'same', uselogger = False)
+	return shbioprocs[proc](**args).run(save = 'same', logger = 'bioprocs')
 
 def download(url, savedir = TMPDIR):
 	bname = path.basename(url)
@@ -30,11 +30,13 @@ def getlocal(bname, key, datadir = PROCDATADIR):
 	d1, d2 = key.split('.')
 	return path.join(datadir, d1, d2, bname)
 
-def getioval(value, proc = None):
+def getioval(value, proc = None, forceFile = True):
 	if isinstance(value, list):
 		return [getioval(v, proc) for v in value]
+	if not value or isinstance(value, (int, float, bool)):
+		return value
 	if not value.startswith('plain:') and not value.startswith('http') and \
-	not value.startswith('ftp') and not value.startswith('file:'):
+	not value.startswith('ftp') and not value.startswith('file:') and forceFile:
 		value = 'file:' + value
 	if value in CACHED:
 		return CACHED[value]
@@ -61,7 +63,9 @@ def getData(datafile = DATAFILE):
 		opt2      = {}
 		for k, v in value.items():
 			ret = args
-			if k[:2] in ['i.', 'o.']:
+			if k[:5] == 'args.':
+				ret[k] = getioval(v, proc = proc, forceFile = False)
+			elif k[:2] in ['i.', 'o.']:
 				v = getioval(v, proc)
 				if k[:2] == 'o.':
 					k = k[2:]

@@ -11,8 +11,9 @@ class TsvRecord(object):
 		"""
 		self.__vals = vals or []
 		if keys:
-			assert len(keys) == len(vals)
 			self.__keys = dict(zip(keys, range(len(keys))))
+			if len(self.__keys) != len(self.__vals):
+				raise ValueError("Unequal length of keys and values. Make sure you don't have duplicated keys.")
 		else:
 			self.__keys = None
 	

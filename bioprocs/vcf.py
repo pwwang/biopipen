@@ -122,19 +122,19 @@ pVcfRemoveFilter.script        = "file:scripts/vcf/pVcfRemoveFilter.py"
 @args:
 	`helper`: The helper code injected to script
 		- Since lambda function can't do assignment and manipulation so you can write some help function here
-	`readerops`: A lambda function (must be quoted) to manipulate the reader (vcf.Reader instance)
-	`recordops`: A lambda function (must be quoted) to manipulate the record (vcf.Record instance)
+	`reader`: A string of lambda function to manipulate the reader (arg: vcf.Reader instance)
+	`record`: A string of lambda function to manipulate the record (arg1: vcf.Record instance, arg2: vcf.Writer, arg3: `samples`)
 	`gz`: Gzip the ouput file
 """
-pVcf                = Proc(desc = 'Motify vcf file using pyvcf')
-pVcf.input          = "infile:file"
-pVcf.output         = "outfile:file:{{i.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
-pVcf.args.helper    = ''
-pVcf.args.readerops = 'lambda x: None'
-pVcf.args.recordops = 'lambda x, y = None: None'
-pVcf.args.gz        = False
-pVcf.lang           = params.python.value
-pVcf.script         = "file:scripts/vcf/pVcf.py"
+pVcf             = Proc(desc = 'Motify vcf file using pyvcf')
+pVcf.input       = "infile:file"
+pVcf.output      = "outfile:file:{{i.infile | fn}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcf.args.helper = ''
+pVcf.args.reader = None
+pVcf.args.record = None
+pVcf.args.gz     = False
+pVcf.lang        = params.python.value
+pVcf.script      = "file:scripts/vcf/pVcf.py"
 
 """
 @name:
@@ -240,20 +240,22 @@ pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
 	`infiles:files`: The input vcf files
 	`outfile:dir`:  The output multi-sample vcf.
 @args:
-	`tool`:     The tool used to do extraction. Default: vcftools
+	`tool`:     The tool used to do extraction. Default: bcftools
 	`vcftools`: The path of vcftools' vcf-subset
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
 """
 pVcfMerge               = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
 pVcfMerge.input         = "infiles:files"
-pVcfMerge.output        = "outfile:file:{{i.infiles | fs2name}}.vcf"
-pVcfMerge.args.tool     = 'vcftools'
+pVcfMerge.output        = "outfile:file:{{i.infiles | fs2name}}.vcf{{'.gz' if args.gz else ''}}"
+pVcfMerge.args.tool     = 'bcftools'
 pVcfMerge.args.vcftools = params.vcftools_merge.value
+pVcfMerge.args.bcftools = params.bcftools.value
 pVcfMerge.args.gatk     = params.gatk.value
 pVcfMerge.args.params   = Box()
 pVcfMerge.args.tabix    = params.tabix.value
 pVcfMerge.args.ref      = params.ref.value # only for gatk
+pVcfMerge.args.gz       = False
 pVcfMerge.args.nthread  = 1
 pVcfMerge.envs.fs2name  = fs2name
 pVcfMerge.lang          = params.python.value
@@ -404,6 +406,15 @@ pVcfCleanup.args.ref = params.ref.value # required dict or fai file with it
 pVcfCleanup.lang     = params.python.value
 pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.py"
 
+pVcf2GTVcf               = Proc(desc = 'Keep only GT information for each sample.')
+pVcf2GTVcf.input         = 'infile:file'
+pVcf2GTVcf.output        = 'outfile:file:{{i.infile | fn2}}.vcf{{".gz" if args.gz else ""}}'
+pVcf2GTVcf.args.tool     = 'bcftools'
+pVcf2GTVcf.args.gz       = False
+pVcf2GTVcf.args.bcftools = params.bcftools.value
+pVcf2GTVcf.lang          = params.python.value
+pVcf2GTVcf.script        = "file:scripts/vcf/pVcf2GTVcf.py"
+
 """
 @name:
 	pVcf2GTMat
@@ -416,7 +427,7 @@ pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.py"
 	`outfile:file`: the output filename. Default: `{{i.infile | fn2}}.gtmat`
 @args:
 	`novel`: The snp name used if not mapped to any rsid. Default: `NOVEL`
-	`useid`: Use the id in vcf file is possible. Default: `True`
+	`useid`: Use the id in vcf file if possible. Default: `True`
 	`dbsnp`: The dbsnp vcf file used to get the rsid. If not provided, will use `novel`
 	`na`   : The value to replace missing genotypes.
 	`bialt`: bi-allelic snps only. Default: `True`
@@ -424,16 +435,20 @@ pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.py"
 	`pytabix`
 	`pysam`
 """
-pVcf2GTMat            = Proc(desc = 'Convert Vcf file to genotype matrix')
-pVcf2GTMat.input      = 'infile:file'
-pVcf2GTMat.output     = 'outfile:file:{{i.infile | fn2}}.gtmat'
-pVcf2GTMat.args.novel = 'NOVEL' # name
-pVcf2GTMat.args.useid = True # use id in vcf file as possible
-pVcf2GTMat.args.dbsnp = params.dbsnp_all.value
-pVcf2GTMat.args.bialt = True # bi-allelic snps only
-pVcf2GTMat.args.na    = 'NA'
-pVcf2GTMat.lang       = params.python.value
-pVcf2GTMat.script     = "file:scripts/vcf/pVcf2GTMat.py"
+pVcf2GTMat               = Proc(desc = 'Convert Vcf file to genotype matrix')
+pVcf2GTMat.input         = 'infile:file'
+pVcf2GTMat.output        = 'outfile:file:{{i.infile | fn2}}.gtmat.txt'
+pVcf2GTMat.args.novel    = 'NOVEL' # name. None to exclude variants without RSID
+pVcf2GTMat.args.useid    = True # use id in vcf file as possible
+pVcf2GTMat.args.dbsnp    = params.dbsnp_all.value
+pVcf2GTMat.args.tabix    = params.tabix.value
+pVcf2GTMat.args.samname  = None
+pVcf2GTMat.args.chrorder = params.chrorder.value
+pVcf2GTMat.args.bialt    = True # bi-allelic snps only
+pVcf2GTMat.args.mingt    = .5 # keep the variants with only the rate (mingt <= 1) or the number (mingt > 1)
+pVcf2GTMat.args.na       = 'NA'
+pVcf2GTMat.lang          = params.python.value
+pVcf2GTMat.script        = "file:scripts/vcf/pVcf2GTMat.py"
 
 """
 @name:

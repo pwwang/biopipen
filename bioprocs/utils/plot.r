@@ -436,7 +436,7 @@ plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(r
 	plot.scatter(data, plotfile, x = 'A', y = 'M', params = params, ggs = ggs, devpars = devpars)
 }
 
-plot.qq = function(data, plotfile, x = NULL, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list()) {
+plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list()) {
 	if (!stacked) {
 		data = stack(as.data.frame(data))
 	}
@@ -556,7 +556,7 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
 }
 
-plot.man = function(data, plotfile = NULL, hilights = list(), gsize = NULL, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gsize = NULL, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
 	# manhattan plot
 	# data is a data frame of
 	# Chr, Pos, P[, Region]
@@ -623,9 +623,13 @@ plot.man = function(data, plotfile = NULL, hilights = list(), gsize = NULL, ggs 
 	}
 	if (!is.null(hdata)) {
 		hicolor = ifelse(is.null(hilight$color), "red", hilight$color)
+		ggs_hilabel = list()
+		if (hilabel) {
+			ggs_hilabel = list(geom_label_repel = list(aes_string(x = 'X', y = 'Y', label = 'Snp'), color = "white", fill = hicolor, data = hdata, inherit.aes = FALSE, alpha = .8))
+		}
 		ggs_hilight = c(
 			ggs_hilight, 
-			list(geom_label_repel = list(aes_string(x = 'X', y = 'Y', label = 'Snp'), color = "white", fill = hicolor, data = hdata, inherit.aes = FALSE, alpha = .8)),
+			ggs_hilabel,
 			list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = hicolor, data = hdata, inherit.aes = FALSE))
 		)
 	}

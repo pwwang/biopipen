@@ -6,6 +6,7 @@ hifile  = {{ i.hifile | quote}}
 outfile = {{ o.outfile | quote}}
 inopts  = {{ args.inopts | R}}
 devpars = {{ args.devpars | R}}
+hilabel = {{ args.hilabel | R}}
 ggs     = {{ args.ggs | R}}
 # chr1	249250621
 # chr2	243199373
@@ -46,4 +47,4 @@ if (!is.null(gsfile) && gsfile != "" && file.exists(gsfile)) {
 } else {
 	gsize = NULL
 }
-plot.man(pdata, plotfile = outfile, hilights = hidata, gsize = gsize, ggs = ggs, devpars = devpars)
+plot.man(pdata, plotfile = outfile, hilights = hidata, hilabel = hilabel, gsize = gsize, ggs = ggs, devpars = devpars)

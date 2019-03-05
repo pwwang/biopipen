@@ -148,3 +148,20 @@ pTheta.args.nthread       = 1
 pTheta.args.affysnps      = params.affysnps.value
 pTheta.lang               = params.python.value
 pTheta.script             = "file:scripts/tumhet/pTheta.py"
+
+
+pSuperFreq              = Proc(desc = "Subclonal analysis with superFreq")
+pSuperFreq.input        = "indir:dir, gfile:file"
+pSuperFreq.output       = "outdir:dir:{{i.indir | fn2}}-{{i.gfile | fn2}}.superfreq"
+pSuperFreq.args.nthread = 1
+pSuperFreq.args.baits   = params.refexon.value
+pSuperFreq.args.ref     = params.ref.value
+pSuperFreq.args.genome  = params.genome.value
+pSuperFreq.args.params  = Box(
+	systematicVariance = .02, maxCov = 150, BQoffset = 33, 
+	mode = 'exome', splitRun = True
+)
+pSuperFreq.envs.rimport = rimport
+pSuperFreq.lang         = params.Rscript.value
+pSuperFreq.script       = "file:scripts/tumhet/pSuperFreq.r"
+

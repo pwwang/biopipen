@@ -21,54 +21,142 @@ if (plotchow) {
 
 if (dofdr == T) dofdr = 'BH'
 
-regress = function(regdata, name, fmula) {
-	m = lm(as.formula(fmula), data = regdata)
-	list(model = m, ssr = sum(m$residuals ^ 2), n = nrow(regdata), name = name)
+chow.test = function(formula, group, data, covdata = NULL, ...) {
+	fmvars  = all.vars(as.formula(formula))
+	vars    = colnames(data)
+	if (length(fmvars) == 2 && fmvars[2] == '.') {
+		fmvars = c(fmvars[1], vars[vars!=fmvars[1] & vars!=group])
+	}
+	formula = sprintf(
+		'%s ~ %s',
+		bQuote(fmvars[1]),
+		paste(sapply(fmvars[2:length(fmvars)], bQuote), collapse = '+')
+	)
+	covs = NULL
+	if (is.null(covdata)) {
+		pooledfm = as.formula(formula)
+	} else {
+		covdata = covdata[rownames(data),,drop = FALSE]
+		covs    = colnames(covdata)
+		data    = cbind(data, covdata)
+		rm(covdata)
+		pooledfm = as.formula(paste(formula, '+', paste(sapply(covs, bQuote), collapse = '+')))
+	}
+	
+	pooled_lm = lm(pooledfm, data = data, ...)
+	#coeff     = as.list(pooled_lm$coefficients)
+	groups    = levels(as.factor(data[, group]))
+	group_lms = sapply(groups, function(g) {
+		if (is.null(covdata)) {
+			subfm  = as.formula(formula)
+		} else {
+			subfm = as.formula(paste(
+				formula, '+', 
+				#paste(sapply(covs, function(x) paste0('offset(', coeff[[x]], '*', bQuote(x), ')')), collapse = '+')
+				paste(sapply(covs, bQuote), collapse = '+')
+			))
+		}
+		list(lm(subfm, data = data[data[,group] == g,,drop = FALSE], ...))
+	})
+
+	pooled.ssr = sum(pooled_lm$residuals ^ 2)
+	subssr     = sum(sapply(group_lms, function(x) sum(x$residuals ^ 2)))
+	ngroups    = length(groups)
+	K          = length(fmvars) + length(covs)
+	J          = (ngroups - 1) * K
+	DF         = nrow(data) - ngroups * K
+	FS         = (pooled.ssr - subssr) * DF / subssr / J
+	list(
+		pooled.lm  = pooled_lm,
+		group.lms  = group_lms,
+		Fstat      = FS,
+		group      = group,
+		pooled.ssr = pooled.ssr,
+		group.ssr  = subssr,
+		Pval       = pf(FS, J, DF, lower.tail = FALSE)
+	)
 }
 
-formlm = function(model, k, withname = T) {
-	lencoef = length(model$model$coefficients)
-	coefns  = c(names(model$model$coefficients)[(lencoef-k+2):lencoef], '_')
-	coeffs  = as.numeric(c(model$model$coefficients[(lencoef-k+2):lencoef], model$model$coefficients[1]))
-	coefns  = c(coefns, "N")
-	coeffs  = c(coeffs, model$n)
-	if (withname) {
-		paste0(model$name, ':', paste(coefns, round(coeffs, 3), sep = '=', collapse = ','))
+plot.chow = function(chow, plotfile, ggs, devpars) {
+	cols     = all.vars(chow$pooled.lm$terms)[1:2]
+	plotdata = do.call(rbind, lapply(names(chow$group.lms), function(m) data.frame(chow$group.lms[[m]]$model[, cols, drop = FALSE], group = m)))
+	colnames(plotdata)[3] = chow$group
+	if (!is.null(ggs$scale_color_discrete)) {
+		ggs$scale_color_discrete$name = ifelse(
+			is.function(ggs$scale_color_discrete$name), 
+			ggs$scale_color_discrete$name(chow$group),
+			chow$group
+		)
+		ggs$scale_color_discrete$labels = sapply(names(chow$group.lms), function(x) {
+			coeff = as.list(chow$group.lms[[x]]$coefficients)
+			bquote(.(x): beta[.(cols[2])]==.(round(coeff[[cols[2]]], 3)) ~ "," ~ epsilon == .(round(coeff[['(Intercept)']], 3)))
+		})
+	}
+
+	if (!is.null(ggs$scale_shape_discrete)) {
+		ggs$scale_shape_discrete$name = ifelse(
+			is.function(ggs$scale_shape_discrete$name), 
+			ggs$scale_shape_discrete$name(chow$group),
+			chow$group
+		)
+		ggs$scale_shape_discrete$labels = sapply(names(chow$group.lms), function(x) {
+			coeff = as.list(chow$group.lms[[x]]$coefficients)
+			bquote(.(x): beta[.(cols[2])]==.(round(coeff[[cols[2]]], 3)) ~ "," ~ epsilon == .(round(coeff[['(Intercept)']], 3)))
+		})
+	}
+
+	if (is.null(ggs$scale_color_discrete) && is.null(ggs$scale_shape_discrete)) {
+		ggs$scale_color_discrete = list(
+			name = chow$group,
+			labels = sapply(names(chow$group.lms), function(x) {
+				coeff = as.list(chow$group.lms[[x]]$coefficients)
+				bquote(.(x): beta[.(cols[2])]==.(round(coeff[[cols[2]]], 3)) ~ "," ~ epsilon == .(round(coeff[['(Intercept)']], 3)))
+			})
+		)
+	}
+
+	if (is.null(ggs$scale_color_discrete)) ggs$scale_color_discrete = ggs$scale_shape_discrete
+	if (is.null(ggs$scale_shape_discrete)) ggs$scale_shape_discrete = ggs$scale_color_discrete
+	
+	plot.points(
+		plotdata, 
+		plotfile, 
+		x = 2, y = 1, 
+		params = list(aes_string(color = chow$group, shape = chow$group)), 
+		ggs = c(ggs, list(
+			geom_smooth = list(aes_string(color = chow$group), method = "lm", se = FALSE)
+		))
+	)
+}
+
+formatlm = function(m) {
+	if (class(m) == 'lm') {
+		coeff = as.list(m$coefficients)
+		vars = all.vars(m$terms)
+		terms = unlist(sapply(c(vars[2:length(vars)], '(Intercept)', 'N'), function(x) {
+			if (x == 'N') {
+				paste0('N=', nrow(m$model))
+			} else if (is.null(coeff[[x]])) {
+				NULL
+			} else {
+				l = ifelse(x == '(Intercept)', '_', x)
+				paste0(l, '=', round(coeff[[x]], 3))
+			}
+		}))
+		paste(terms[!is.null(terms)], collapse = ', ')
 	} else {
-		paste(coefns, round(coeffs, 3), sep = '=', collapse = ',')
+		paste(sapply(names(m), function(x) {
+			paste0(x, ': ', formatlm(m[[x]]))
+		}), collapse = ' // ')
 	}
 }
 
-chow = function(pooled, subregs, k, case) {
-	subssr  = sum(sapply(subregs, function(x) x$ssr))
-	ngroups = length(subregs)
-	J  = (ngroups - 1) * k
-	DF = pooled$n - ngroups * k
-	FS = (pooled$ssr - subssr) * DF / subssr / J
-	groups = lapply(subregs, function(m) formlm(m, k))
-	pooledm = formlm(pooled, k, FALSE)
-	list(Case = case, Pooled = pooledm, Groups = paste(groups, collapse = '; '), Fstat = FS, Pval = pf(FS, J, DF, lower.tail = FALSE))
-}
-
-model2eq = function(model) {
-	vars = colnames(model$model)
-	cf   = sapply(model$coefficients, function(f) {
-		if (is.na(f)) return("NA")
-		f = round(f, 2)
-		if (f >= 0) return(paste0("+", f))
-		return(paste0("-", -f))
-	})
-	paste0(vars[1], ' = ', cf[1], paste(
-		sapply(
-			2:length(cf),
-			function(x) paste0(cf[x], '*', vars[x])
-		), collapse = ''
-	))
-}
 results = data.frame(
 	Case   = character(),
 	Pooled = character(),
 	Groups = character(),
+	SSR    = double(),
+	SumSSR = double(),
 	Fstat  = double(),
 	Pval   = double()
 )
@@ -84,10 +172,13 @@ if (is.null(indata)) {
 # G2  2   3   1   1  ... 3
 # ... ...
 # Gm  3   9   1   7  ... 8
-#K = ncol(indata)
+#K      = ncol(indata)
+covdata = NULL
+covs    = NULL
 if (covfile != "") {
 	covdata = read.table(covfile, header = T, row.names = 1, check.names = F)
-	indata  = cbind(covdata[rownames(indata),,drop = F], indata)
+	#indata  = cbind(covdata[rownames(indata),,drop = F], indata)
+	covs = colnames(covs)
 }
 gdata  = read.table.inopts(gfile, list(cnames = TRUE, rnames = TRUE))
 # 	Case1	Case2
@@ -105,81 +196,27 @@ if (!is.null(cfile) && cfile != "") {
 }
 
 for (case in cases) {
-	fmula     = fmulas[case,,drop = TRUE]
-	allvars   = all.vars(as.formula(fmula))
-	if (allvars[2] == '.') {
-		K = ncol(indata)
-	} else {
-		K = length(allvars)
+	logger('Handling case: ', case, '...')
+	fmula  = fmulas[case,,drop = TRUE]
+	groups = gdata[!is.na(gdata[,case]),case,drop = FALSE]
+	data   = cbind(indata[rownames(groups),, drop = FALSE], group = groups)
+	colnames(data)[ncol(data)] = case
+	ct = chow.test(fmula, case, data, covdata = covdata)
+	if (dofdr == FALSE && ct$Pval >= pcut) {
+		next
 	}
-	subgroups = levels(as.factor(gdata[, case]))
-	pooled_lm = regress(
-		indata[rownames(gdata[which(gdata[,case] %in% subgroups), case, drop = F]),,drop = F], 
-		name = 'Pooled', fmula = fmula)
-	subgrp_lm = lapply(subgroups, function(sgroup) {
-		sdata = indata[rownames(gdata[which(gdata[,case] == sgroup), case, drop = F]),,drop = F]
-		if (nrow(sdata) < 3) NULL
-		else regress(sdata, name = sgroup, fmula = fmula)
-	})
-	subgrp_lm[sapply(subgrp_lm, is.null)] <- NULL
-	# no subgroups
-	if (length(subgrp_lm) < 2) next
-	ret = chow(pooled_lm, subgrp_lm, k = K, case = case)
-	if (is.na(ret$Pval) || ret$Pval >= pcut) next
-	results = rbind(results, ret)
-
+	results = rbind(results, list(
+		Case   = case,
+		Pooled = formatlm(ct$pooled.lm),
+		Groups = formatlm(ct$group.lms),
+		SSR    = ct$pooled.ssr,
+		SumSSR = ct$group.ssr,
+		Fstat  = ct$Fstat,
+		Pval   = ct$Pval
+	))
 	# doplot
-	if (plotchow) {
-		incol = ncol(indata)
-		plotdata = cbind(
-			indata[rownames(gdata[which(gdata[,case] %in% subgroups), case,drop = F]),,drop = F], 
-			Group = na.omit(gdata[,case]))
-		rcase = make.names(case)
-		colnames(plotdata)[incol + 1] = rcase
-
-		labels = sapply(c(subgrp_lm, list(pooled_lm)), function(m) paste0(m$name, ': ', model2eq(m$model), ' (N=', m$n, ')'))
-		if (!is.null(ggs$scale_color_manual) && !is.null(ggs$scale_color_manual$labels)) {
-			if (is.function(ggs$scale_color_manual$labels)) {
-				labels = ggs$scale_color_manual$labels(labels)
-			} else {
-				labels = ggs$scale_color_manual$labels
-			}
-		}
-		ggs1 = c(ggs, list(
-			geom_smooth = list(
-				aes(color = 'Pooled'),
-				method   = 'lm',
-				se       = F,
-				linetype = "twodash"
-			),
-			geom_smooth = list(
-				aes_string(color = rcase),
-				method  = 'lm',
-				se      = F
-			),
-			theme = list(
-				legend.position = "bottom"
-			),
-			guides = list(
-				color=guide_legend(ncol=1),
-				shape=F
-			),
-			scale_color_manual = list(
-				values = c(scales::hue_pal()(length(subgroups)), '#555555'), 
-				name   = "",
-				limit  = c(subgroups, 'Pooled'),
-				labels = labels
-			)
-		))
-		pcnames = colnames(plotdata)
-		plot.scatter(
-			plotdata, 
-			file.path(outdir, paste0(case, '.png')), 
-			x      = ifelse(allvars[2] == '.', pcnames[1], which(allvars[2] == pcnames)),
-			y      = which(allvars[1] == pcnames),
-			ggs    = ggs1,
-			params = list(aes_string(shape = rcase, color = rcase))
-		)
+	if (plotchow && ct$Pval < pcut) {
+		plot.chow(ct, file.path(outdir, paste0(case, '.png')), ggs, devpars)
 	}
 }
 
@@ -187,7 +224,7 @@ if (dofdr != F) {
 	results = cbind(results, Qval = p.adjust(results$Pval, method = dofdr))
 } 
 write.table(pretty.numbers(results, list(
-	Fstat      = '%.3f',
+	SSR..SumSSR..Fstat = '%.3f',
 	Pval..Qval = '%.3E'
 )), outfile, col.names = T, row.names = F, sep = "\t", quote = F)
 

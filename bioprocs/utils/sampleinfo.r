@@ -45,6 +45,40 @@ SampleInfo2 = R6Class("SampleInfo2", public = list(
 		list(coldata = coldata, design = design)
 	},
 
+	as.superfreq.meta = function(datadir = NULL) {
+		# BAM, VCF, NAME, INDIVIDUAL, NORMAL, TIMEPOINT
+		# Sample  Patient  Group  Batch
+		# A.bam   A        Indvd1 NORMAL
+		# A.vcf   A        Indvd1 NORMAL
+		# B.bam   B        Indvd1 TUMOR
+		# B.vcf   B        Indvd1 TUMOR
+		ret = data.frame(
+			BAM        = character(), VCF    = character(), NAME      = character(),
+			INDIVIDUAL = character(), NORMAL = character(), TIMEPOINT = character()
+		)
+		patients = self$all.patients()
+		for (patient in patients) {
+			pair = self$get.samples("Patient", patient)
+			if (endsWith(pair[1], ".bam")) {
+				BAM = pair[1]
+				VCF = pair[2]
+			} else {
+				BAM = pair[2]
+				VCF = pair[1]
+			}
+			BamInfo = self$sample.info(BAM)
+			ret = rbind(ret, list(
+				BAM        = if (is.null(datadir)) BAM else file.path(datadir, BAM),
+				VCF        = if (is.null(datadir)) VCF else file.path(datadir, VCF),
+				NAME       = patient,
+				INDIVIDUAL = BamInfo$Group,
+				NORMAL     = if (toupper(BamInfo$Batch) %in% c("NORMAL", "HEALTHY", "CONTROL")) "YES" else "NO",
+				TIMEPOINT  = ""
+			))
+			ret
+		}
+	},
+
 	is.paired = function() {
 		allpatients = self$all.patients()
 		if (is.null(allpatients))

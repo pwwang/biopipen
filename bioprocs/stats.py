@@ -793,15 +793,16 @@ pBootstrap.script       = "file:scripts/stats/pBootstrap.r"
 	[`R-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
 """
 pPCA        = Proc(desc = 'Perform PCA analysis.')
-pPCA.input  = "infile:file, annofile:file"
+pPCA.input  = "infile:file"
 pPCA.output = [
 	"outfile:file:{{i.infile | fn2}}.pca/{{i.infile | fn2}}.pcs.txt", 
 	"outdir:dir:{{i.infile | fn2}}.pca"
 ]
+pPCA.args.anfile = ''
 pPCA.args.anopts = Box(cnames = True, rnames = True)
 pPCA.args.inopts = Box(cnames = True, rnames = True)
 pPCA.args.na     = 0
-pPCA.args.select = .8
+pPCA.args.select = .2
 pPCA.args.seed   = None
 pPCA.args.plots  = Box(
 	scree   = Box(ncp = 20),

@@ -5,6 +5,7 @@ import shlex
 import re
 from glob import glob
 from os import path
+from pyppl.utils import string_types
 # deprecate, will be removed later
 # use "from bioprocs.utils.shell import ..."
 from .shell import RuncmdException, runcmd, cmdargs
@@ -47,6 +48,8 @@ def alwaysList(l):
 	if isinstance(l, (list, tuple)):
 		for x in l:
 			ret += alwaysList(x)
+	elif not isinstance(l, string_types):
+		return [l]
 	else:
 		ret = [x.strip() for x in l.split(',') if x.strip()]
 	return ret

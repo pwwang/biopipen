@@ -274,6 +274,15 @@ pTsv.args.inopts  = Box(delimit = '\t', comment = '#', skip = 0, cnames = True)
 pTsv.args.outopts = Box(delimit = '\t', cnames = True)
 pTsv.script       = "file:scripts/tsv/pTsv.py"
 
+pTsvColFilter             = Proc(desc = 'Filter a tsv file by columns')
+pTsvColFilter.input       = 'infile:file'
+pTsvColFilter.output      = 'outfile:file:{{i.infile | bn}}'
+pTsvColFilter.args.inopts = Box(cnames = True)
+pTsvColFilter.args.keep   = True
+pTsvColFilter.args.cols   = None
+pTsvColFilter.lang        = params.python.value
+pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
+
 """
 @name:
 	pTsvJoin

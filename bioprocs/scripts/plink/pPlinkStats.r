@@ -8,12 +8,14 @@ cutoff  = {{args.cutoff | R}}
 plots   = {{args.plot | R}}
 devpars = {{args.devpars | R}}
 plink   = {{args.plink | quote}}
+nthread = {{args.nthread | R}}
 bedfile = Sys.glob(file.path(indir, '*.bed'))
 input   = tools::file_path_sans_ext(bedfile)
 output  = file.path(outdir, basename(input))
 
-params$bfile = input
-params$out   = output
+params$bfile   = input
+params$out     = output
+params$nthread = nthread
 
 cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
 runcmd(cmd)

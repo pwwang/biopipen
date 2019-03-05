@@ -16,7 +16,7 @@ from .utils import fs2name
 	`antitarget:file`: The (autobinned) target file
 @args:
 	`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
-	`exbaits`: The bait file for exome-sequencing data.
+	`baits` : The bait file for the regions you captured in the experiment.
 		- See https://github.com/AstraZeneca-NGS/reference_data/tree/master/hg19/bed
 	`accfile`: Directly use the access file. Default: generating from the reference file.
 		- See https://github.com/etal/cnvkit/tree/master/data
@@ -33,11 +33,11 @@ from .utils import fs2name
 @requires:
 	[CNVkit](http://cnvkit.readthedocs.io/)
 """
-pCNVkitPrepare = Proc(desc = 'Generate target files for cnvkit.')
-pCNVkitPrepare.input = 'infiles:files'
-pCNVkitPrepare.output = 'target:file:{{i.infiles | fs2name}}.target.bed, antitarget:file:{{i.infiles | fs2name}}.antitarget.bed'
+pCNVkitPrepare              = Proc(desc = 'Generate target files for cnvkit.')
+pCNVkitPrepare.input        = 'infiles:files'
+pCNVkitPrepare.output       = 'target:file:{{i.infiles | fs2name}}.target.bed, antitarget:file:{{i.infiles | fs2name}}.antitarget.bed'
 pCNVkitPrepare.args.cnvkit  = params.cnvkit.value
-pCNVkitPrepare.args.exbaits = params.exbaits.value
+pCNVkitPrepare.args.baits   = params.refexon.value
 pCNVkitPrepare.args.accfile = ''
 pCNVkitPrepare.args.nthread = 1
 pCNVkitPrepare.args.ref     = params.ref.value

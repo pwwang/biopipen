@@ -68,6 +68,9 @@ def cmdargs(params, dash = 'auto', equal = 'auto', duplistkey = False, ignorefal
 	if '__stdout' in params:
 		aoutfile = params['__stdout']
 		del params['__stdout']
+	elif '_stdout_' in params:
+		aoutfile = params['_stdout_']
+		del params['_stdout_']
 	if outfile and aoutfile:
 		raise ValueError('Cannot have both out files to write and append to.')
 	for key, val in params.items():

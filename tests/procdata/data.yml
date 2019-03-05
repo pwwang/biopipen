@@ -84,4 +84,19 @@ stats.pChow.default:
   i.groupfile: chow.group.txt
   args.pval: 1
   o.outfile: chow.ret.txt
+stats.pChow.na:
+  i.infile: chow.dataNA.txt
+  i.groupfile: chow.groupNA.txt
+  args.pval: 1
+  o.outfile: chow.ret.txt
+stats.pChow.cov:
+  i.infile: chow.dataNA.txt
+  i.groupfile: chow.groupNA.txt
+  args.cov: file:chow.cov.txt
+  args.pval: 1
+  o.outfile: chow.retCov.txt
+stats.pPCA.default:
+  i.infile: pca.data.txt
+  args.plots.cluster.centers: 3
+  o.outfile: pca.ret.txt
   

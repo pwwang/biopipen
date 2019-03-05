@@ -54,6 +54,8 @@ if tool == 'meme':
 	writer.writeHead(callback = lambda cnames: "#" + "\t".join(cnames))
 
 	def rowfactory(r):
+		if 'p-value' not in r:
+			return None
 		r.PVAL       = float(r['p-value'])
 		if r.PVAL >= pval:
 			return None
@@ -95,11 +97,13 @@ if tool == 'meme':
 		return r
 
 	for motif, name in motifs.items():
-		retfile = path.join(outdir, name + '.' + re.sub(r'[^\w_]', '', motif), 'fimo.txt')
+		retfile = path.join(outdir, name + '.' + re.sub(r'[^\w_]', '', motif), 'fimo.tsv')
 		# motif_id	motif_alt_id	sequence_name	start	stop	strand	score	p-value	q-value	matched_sequence
+		logger.info('- Merging %s ...', retfile)
 		reader = TsvReader(
 			retfile, 
-			cnames  = lambda header: header[1:].strip().split('\t'),
+			#cnames  = lambda header: header[1:].strip().split('\t'),
+			cnames  = True,
 			row     = rowfactory,
 			comment = None)
 		for r in reader:

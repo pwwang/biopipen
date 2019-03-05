@@ -1,5 +1,5 @@
 """
-Procs for plink 1.x
+Procs for plink 1.9
 """
 from pyppl import Proc, Box
 from . import params, rimport, bashimport
@@ -8,6 +8,7 @@ pPlinkStats               = Proc(desc = 'Do basic statistics with plink 1.9')
 pPlinkStats.input         = 'indir:dir'
 pPlinkStats.output        = 'outdir:dir:{{i.indir | fn}}.plinkStats'
 pPlinkStats.args.plink    = params.plink.value
+pPlinkStats.args.nthread  = False
 pPlinkStats.args.params   = Box({
 	'hardy'    : True,
 	'het'      : True,
@@ -35,6 +36,17 @@ pPlinkStats.args.devpars  = Box(res=300, width=2000, height=2000)
 pPlinkStats.envs.rimport  = rimport
 pPlinkStats.lang          = params.Rscript.value
 pPlinkStats.script        = "file:scripts/plink/pPlinkStats.r"
+
+pPlinkSampleFilter = Proc(desc = 'Do sample filtering or extraction using `--keep[-fam]` or `--remove[-fam]`')
+pPlinkSampleFilter.input        = 'indir:dir, samfile:file'
+pPlinkSampleFilter.output       = 'outdir:dir:{{i.indir | bn}}'
+pPlinkSampleFilter.args.plink   = params.plink.value
+pPlinkSampleFilter.args.keep    = True
+pPlinkSampleFilter.args.fam     = False
+pPlinkSampleFilter.args.params  = Box()
+pPlinkSampleFilter.args.nthread = False
+pPlinkSampleFilter.lang         = params.python.value
+pPlinkSampleFilter.script       = "file:scripts/plink/pPlinkSampleFilter.py"
 
 """
 @name:
@@ -267,3 +279,25 @@ pPlink2GTMat.args.chroms = {"23": "X", "24": "Y", "25": "XY", "26": "M"}
 pPlink2GTMat.args.nors   = "NOVEL"
 pPlink2GTMat.lang        = params.python.value
 pPlink2GTMat.script      = "file:scripts/plink/pPlink2GTMat.py"
+
+pPlinkPCA          = Proc(desc = "Perform PCA on genotype data and covariates.")
+pPlinkPCA.input    = 'indir:dir'
+pPlinkPCA.output   = [
+	'outfile:file:{{i.indir | fn}}.plinkPCA/{{i.indir | fn}}.pcs.txt',
+	'outdir:dir:{{i.indir | fn}}.plinkPCA'
+]
+pPlinkPCA.args.plink   = params.plink.value
+pPlinkPCA.args.samid   = 'both' # fid, iid
+pPlinkPCA.args.nthread = False
+pPlinkPCA.args.indep   = [50, 5, .2] # used to prune LD SNPs
+pPlinkPCA.args.highld  = params.highld.value
+pPlinkPCA.args.params  = Box(mind = .95)
+pPlinkPCA.args.select  = .2
+pPlinkPCA.args.plots   = Box(
+	scree = Box(ncp = 20),
+	# more to add
+)
+pPlinkPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)
+pPlinkPCA.envs.rimport = rimport
+pPlinkPCA.lang         = params.Rscript.value
+pPlinkPCA.script       = "file:scripts/plink/pPlinkPCA.r"

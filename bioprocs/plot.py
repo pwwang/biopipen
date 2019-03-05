@@ -537,6 +537,7 @@ pPie.script       = "file:scripts/plot/pPie.r"
 	`outfile:file`: The plot. Default: `{{i.infile | fn}}.manht.png`
 @args:
 	`inopts` : Options to read the input file. Default: `Box(cnames = False, rnames = False)`
+	`hilabel`: Show the labels of the highlight points. Default: `True`
 	`ggs`    : Extra expressions for ggplot.
 	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 	`gsize`  : The genome sizes file. Default: `None`
@@ -546,6 +547,7 @@ pManhattan              = Proc(desc = 'Manhattan plot.')
 pManhattan.input        = 'infile:file, hifile:file'
 pManhattan.output       = 'outfile:file:{{i.infile | fn}}.manht.png'
 pManhattan.args.inopts  = Box(cnames = False, rnames = False)
+pManhattan.args.hilabel = True
 pManhattan.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pManhattan.args.ggs     = Box()
 pManhattan.args.gsize   = None # params.gsize.value

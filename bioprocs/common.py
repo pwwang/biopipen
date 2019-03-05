@@ -96,13 +96,15 @@ pStr2File.script          = "file:scripts/common/pStr2File.py"
 @output:
 	`outfile:file`: The output file
 @args:
-	`n`: Top n lines. You may use '-n' to skip last n lines.
+	`n`   : Top n lines. You may use '-n' to skip last n lines.
+	`pipe`: other piped command to modify the results
 """
-pHead                     = Proc(desc = "Like linux's head command")
-pHead.input               = "infile:file"
-pHead.output              = "outfile:file:{{i.infile | fn}}.head.txt"
-pHead.args.n              = 10
-pHead.script              = 'head -n {{args.n}} {{i.infile | squote}} > {{o.outfile | squote}}'
+pHead           = Proc(desc = "Like linux's head command")
+pHead.input     = "infile:file"
+pHead.output    = "outfile:file:{{i.infile | fn}}.head.txt"
+pHead.args.n    = 10
+pHead.args.pipe = ''
+pHead.script    = 'head -n {{args.n}} {{i.infile | squote}} {{"| " + args.pipe if args.pipe else ""}} > {{o.outfile | squote}}'
 
 """
 @name:
