@@ -42,6 +42,7 @@ pPlinkSampleFilter.input        = 'indir:dir, samfile:file'
 pPlinkSampleFilter.output       = 'outdir:dir:{{i.indir | bn}}'
 pPlinkSampleFilter.args.plink   = params.plink.value
 pPlinkSampleFilter.args.keep    = True
+pPlinkSampleFilter.args.samname = 'iid' # both or fid
 pPlinkSampleFilter.args.fam     = False
 pPlinkSampleFilter.args.params  = Box()
 pPlinkSampleFilter.args.nthread = False

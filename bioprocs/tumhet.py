@@ -154,8 +154,9 @@ pSuperFreq              = Proc(desc = "Subclonal analysis with superFreq")
 pSuperFreq.input        = "indir:dir, gfile:file"
 pSuperFreq.output       = "outdir:dir:{{i.indir | fn2}}-{{i.gfile | fn2}}.superfreq"
 pSuperFreq.args.nthread = 1
-pSuperFreq.args.baits   = params.refexon.value
+pSuperFreq.args.baits   = '' # target regions
 pSuperFreq.args.ref     = params.ref.value
+pSuperFreq.args.resdir  = params.superfreq_res.value
 pSuperFreq.args.genome  = params.genome.value
 pSuperFreq.args.params  = Box(
 	systematicVariance = .02, maxCov = 150, BQoffset = 33, 

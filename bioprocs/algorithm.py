@@ -99,7 +99,42 @@ pAR.envs.rimport = rimport
 pAR.lang         = params.Rscript.value
 pAR.script       = "file:scripts/algorithm/pAR.r"
 
-
-
-
+"""
+@name:
+	pColoc
+@description:
+	Bayes Factor colocalisation analyses using R `coloc` package.
+	`coloc` package can accept multiple formats of input. Here we adopt the one using pvalues.
+	`coloc.abf(dataset1=list(pvalues=p1,N=nrow(X1),type="quant"), dataset2=list(pvalues=p2,N=nrow(X2),type="quant"), MAF=maf)`
+@input:
+	`infile:file`: The input file including the MAF, pvalues of 1st and 2nd phenotypes
+		- The first 6 columns are in BED6 format.
+		- 7th : MAF
+		- 8th : Pvalues for the 1st phenotype
+		- 9th : Pvalues for the 2nd phenotype
+		- This file could have a header with the names for phenotypes
+		- Snps have to be on the same chromosome, and sorted by positions.
+@output:
+	`outfile:file`: The output file including:
+		- # snps, PP.H0.abf, PP.H1.abf, PP.H2.abf, PP.H3.abf and PP.H4.abf
+	`outdir:dir`  : The output directory containing the output file and plots.
+@args:
+	`plot`: Do manhattan plot? Default: `True`
+"""
+pColoc        = Proc(desc = "Bayes Factor colocalisation analyses using R `coloc` package.")
+pColoc.input  = 'infile:file'
+pColoc.output = [
+	'outfile:file:{{i.infile | fn2}}.coloc/{{i.infile | fn2}}.coloc.txt',
+	'outdir:dir:{{i.infile | fn2}}.coloc'
+]
+pColoc.args.inopts  = Box(cnames = True, rnames = False)
+pColoc.args.plot    = True
+pColoc.args.ggs     = Box()
+pColoc.args.params  = Box()
+pColoc.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pColoc.args.hifile  = ''
+pColoc.args.hilabel = True
+pColoc.envs.rimport = rimport
+pColoc.lang         = params.Rscript.value
+pColoc.script       = "file:scripts/algorithm/pColoc.r"
 

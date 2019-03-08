@@ -51,7 +51,7 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	
 	samtools = shell.Shell({'samtools': samtools}, subcmd = True).samtools if samtools else None
 	# /path/to/some.bam.bai 
-	expectedIndex = path.join(dname, rname + ext)
+	expectedIndex = path.join(dname, fname + ext)
 	if path.isfile(expectedIndex):
 		return
 	# if bam is not a link, there is nowhere else to find index, create it using samtools

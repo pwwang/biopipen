@@ -202,7 +202,7 @@ for (case in cases) {
 	data   = cbind(indata[rownames(groups),, drop = FALSE], group = groups)
 	colnames(data)[ncol(data)] = case
 	ct = chow.test(fmula, case, data, covdata = covdata)
-	if (dofdr == FALSE && ct$Pval >= pcut) {
+	if (dofdr == FALSE && (is.na(ct$Pval) || ct$Pval >= pcut)) {
 		next
 	}
 	results = rbind(results, list(

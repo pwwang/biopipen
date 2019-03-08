@@ -33,13 +33,19 @@ logger.info('Writing tfam file ...')
 tfamWriter = TsvWriter(tfamfile)
 tfamWriter.meta = ['FID', 'IID', 'PID', 'MID', 'Sex', 'Pheno']
 #tfamWriter.writeHead(callback = lambda meta: '#' + '\t'.join(meta))
+uniqueIDs = {}
 if not metadata:
 	for s in samples:
 		tfamWriter.write([s, s, '0', '0', 'other', '-9'])
 else:
 	for s in samples:
+		fid     = metadata[s].FID if s in metadata and 'FID' in metadata[s] else s
+		idcheck = fid + ' ' + s
+		if idcheck in uniqueIDs:
+			raise ValueError('Duplicated ID {!r}'.format(idcheck))
+		uniqueIDs[idcheck] = 1		
 		tfamWriter.write([
-			metadata[s].FID if s in metadata and 'FID' in metadata[s] else s,
+			fid,
 			s, 
 			(metadata[s].PID or '0') if s in metadata and 'PID' in metadata[s] else '0',
 			(metadata[s].MID or '0') if s in metadata and 'MID' in metadata[s] else '0',

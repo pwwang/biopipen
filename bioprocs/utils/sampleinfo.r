@@ -1,6 +1,5 @@
 # legacy
-library(reticulate)
-SampleInfo  = import('bioprocs.utils.sampleinfo')$SampleInfo
+SampleInfo  = reticulate::import('bioprocs.utils.sampleinfo')$SampleInfo
 
 library(R6)
 options(stringsAsFactors = FALSE)
@@ -75,8 +74,8 @@ SampleInfo2 = R6Class("SampleInfo2", public = list(
 				NORMAL     = if (toupper(BamInfo$Batch) %in% c("NORMAL", "HEALTHY", "CONTROL")) "YES" else "NO",
 				TIMEPOINT  = ""
 			))
-			ret
 		}
+		ret
 	},
 
 	is.paired = function() {

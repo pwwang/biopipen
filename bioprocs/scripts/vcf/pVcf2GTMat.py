@@ -1,3 +1,4 @@
+from collections import Counter
 from pysam import VariantFile as Vcf
 from bioprocs.utils.tsvio2 import TsvJoin
 
@@ -18,6 +19,11 @@ vcf = Vcf(infile)
 samples = list(vcf.header.samples)
 if callable(samname):
 	samples = [samname(sam) for sam in samples]
+sc = Counter(samples)
+for s, c in sc.items():
+	if c > 1:
+		raise ValueError('Duplicated sample: {!r}'.format(s))
+
 with open(outfile, 'w') as fout:
 	fout.write("\t".join(samples) + "\n")
 if mingt <= 1:

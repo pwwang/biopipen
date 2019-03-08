@@ -81,7 +81,7 @@ sdevdf = read.table(valfile, header = FALSE, row.names = NULL)
 rownames(sdevdf) = paste0('PC', 1:nrow(sdevdf))
 colnames(sdevdf) = 'Sdev'
 
-sdevdf$Percent    = sdevdf$Sdev
+sdevdf$Percent    = 100 * sdevdf$Sdev / sum(sdevdf$Sdev)
 sdevdf$CumPercent = cumsum(sdevdf$Percent)
 
 write.table(sdevdf, paste0(output, '.sdev.txt'), sep = "\t", quote = FALSE)

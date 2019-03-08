@@ -70,6 +70,8 @@ DEFAULTS = {
 	"rsmap_gwsnp6.desc"  : "GenomeWideSNP_6 RSID SNP probe mapping file.",
 	"snpeffDb"           : "",
 	"snpeffDb.desc"      : "The path of database for snpEff.",
+	"superfreq_res"      : "",
+	"superfreq_res.desc" : "superFreq resource directory.",
 	"tflist"             : "",
 	"tflist.desc"        : "The TF list file with motif as 1st column and TF name as 2nd column.",
 	"tfmotifs"           : "",
@@ -238,8 +240,7 @@ if not path.exists(params.cachedir.value):
 
 rimport  = """
 (function(...) {
-	library(reticulate)
-	bioprocs = import('bioprocs')
+	bioprocs = reticulate::import('bioprocs')
 	for (rfile in list(...)) {
 		source(file.path(bioprocs$UTILS, rfile))
 	}
