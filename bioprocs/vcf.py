@@ -376,11 +376,11 @@ pVcfLiftover.script       = "file:scripts/vcf/pVcfLiftover.py"
 @name:
 	pVcfAddChr
 @description:
-	Add `chr` to records of vcf files.
+	Add `chr` to records and contigs of vcf files.
 @args:
 	`chr`: The prefix to add to each record.
 """
-pVcfAddChr          = Proc(desc = 'Add `chr` to records of vcf files.')
+pVcfAddChr          = Proc(desc = 'Add `chr` to records and contigs of vcf files.')
 pVcfAddChr.input    = 'infile:file'
 pVcfAddChr.output   = 'outfile:file:{{i.infile | fn}}.vcf'
 pVcfAddChr.args.chr = 'chr'

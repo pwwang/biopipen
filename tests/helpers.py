@@ -88,7 +88,7 @@ def getOutput(c):
 		#[2019-02-06 09:49:48  OUTPUT] pAR: [1/1] outdir => /local2/tmp/m161047/bioprocs.workdir/PyPPL.pAR.notag.6duu519e/1/output/motif_hits-protein_expression_t-gene_expression.AR
 		m = re.match(r'^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  OUTPUT\] \w+: \[\d+\/\d+\] (\w+) \s*=> (.+)$', line)
 		if not m: continue
-		ret[m.group(1)] = m.group(2)
+		ret[m.group(1)] = m.group(2).strip()
 	return ret
 
 

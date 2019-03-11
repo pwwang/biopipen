@@ -125,4 +125,10 @@ vcf.pVcfSort.picard:
   i.infile: default.vcf
   args.tool: picard
   o.outfile: out.picard.vcf
+vcf.pVcfAddChr.add:
+  i.infile: add.vcf
+  o.outfile: out.add.vcf
+vcf.pVcfAddChr.default:
+  i.infile: default.vcf
+  o.outfile: default.vcf
   
