@@ -55,7 +55,7 @@ with open(outfile, 'w') as fout:
 			gtline[0] = snpid.format(
 				chr = gtline[0],
 				pos = gtline[3],
-				rs  = gtline[1] if not 'rs' in gtline[1] else nors,
+				rs  = gtline[1] if 'rs' in gtline[1] else nors,
 				ref = gtline[4],
 				alt = gtline[5]
 			)
