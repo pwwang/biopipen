@@ -53,7 +53,7 @@ def getData(datafile = DATAFILE):
 	with open(datafile) as stream:
 		data = yaml.load(stream)
 
-	for key, value in data.items():
+	for key in sorted(data.keys()):
 		kparts    = key.split('.')
 		tag       = kparts[-1] if len(kparts) > 2 else 'default'
 		proc      = '.'.join(kparts[:2])
@@ -61,7 +61,8 @@ def getData(datafile = DATAFILE):
 		exptfiles = {}
 		opt1      = {}
 		opt2      = {}
-		for k, v in value.items():
+		for k in sorted(data[key].keys()):
+			v = data[key][k]
 			ret = args
 			if k[:5] == 'args.':
 				ret[k] = getioval(v, proc = proc, forceFile = False)

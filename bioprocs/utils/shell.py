@@ -317,5 +317,7 @@ touch = lambda *args, **kwargs: Shell().touch(*args, **kwargs).run(logger = Fals
 kill  = lambda *args, **kwargs: Shell().kill(*args, **kwargs).run(logger = False)
 kill9 = lambda *procids: kill(**{'9': True, '': procids})
 
-zcat = lambda *args, **kwargs: Shell().zcat(*args, **kwargs).run(logger = False)
-cat  = lambda *args, **kwargs: Shell().cat(*args, **kwargs).run(logger = False)
+zcat  = lambda *args,  **kwargs: Shell().zcat(*args, **kwargs).run(logger = False)
+cat   = lambda *args,  **kwargs: Shell().cat(*args, **kwargs).run(logger = False)
+# _ means waiting for run
+acat_ = lambda infile, **kwargs: Shell().zcat(infile, **kwargs) if infile.endswith('.gz') else Shell().cat(infile, **kwargs)

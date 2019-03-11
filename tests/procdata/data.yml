@@ -99,4 +99,30 @@ stats.pPCA.default:
   i.infile: pca.data.txt
   args.plots.cluster.centers: 3
   o.outfile: pca.ret.txt
+vcf.pVcfSort.default:
+  i.infile: default.vcf
+  o.outfile: out.default.vcf
+vcf.pVcfSort.name:
+  i.infile: default.vcf
+  args.sortby: name
+  o.outfile: out.name.vcf
+vcf.pVcfSort.ncname:
+  i.infile: default.vcf
+  args.chrorder: ''
+  args.sortby: name
+  o.outfile: out.ncname.vcf
+# not working, no contigs, then chrorder is required.
+# vcf.pVcfSort.ncpic:
+#   i.infile: default.vcf
+#   args.tool: picard
+#   args.chrorder: ''
+#   o.outfile: out.ncpic.vcf
+vcf.pVcfSort.nochr:
+  i.infile: default.vcf
+  args.chrorder: ''
+  o.outfile: out.nochr.vcf
+vcf.pVcfSort.picard:
+  i.infile: default.vcf
+  args.tool: picard
+  o.outfile: out.picard.vcf
   

@@ -138,5 +138,33 @@ def gztype(gzfile):
 		return 'gzip'
 	return 'flat'
 
+class FileConn(object):
+
+	def __init__(self, filename, flag = 'r'):
+		self.isgz = False
+		if filename.endswith('.gz'):
+			import gzip
+			self.isgz = True
+		self.filename = filename
+		self.flag     = flag
+		self.fp       = None
+	
+	def __enter__(self):
+		return self.open()
+	
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self.close()
+
+	def open(self):
+		if self.isgz:
+			self.fp = gzip.open(self.filename, self.flag)
+		else:
+			self.fp = open(self.filename, self.flag)
+		return self.fp
+	
+	def close(self):
+		self.fp.close()
+		
+
 
 logger = getLogger()

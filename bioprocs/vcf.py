@@ -460,16 +460,22 @@ pVcf2GTMat.script        = "file:scripts/vcf/pVcf2GTMat.py"
 @output:
 	`outfile:file`: The output file
 @args:
-	`header`: Output header? Default: `True`
-	`by`    : Sort by what, Coordinates (coord) or names (name)? Default: `coord`
+	`sortby`: Sort by what, Coordinates (coord) or names (name)? Default: `coord`
 	`tool`  : The tool used to do the sort. Default: `sort` (linux command)
+	`picard`: Path to picard.
+	`tabix` : Path to tabix.
+	`chrorder`: If sort by `args.sortby == 'coord'`, then records first sorted by `chrorder` then Coordinates.  
 """
 pVcfSort               = Proc(desc = 'Sort the vcf records')
 pVcfSort.input         = 'infile:file'
 pVcfSort.output        = 'outfile:file:{{i.infile | fn2}}.vcf'
-pVcfSort.args.header   = True
-pVcfSort.args.by       = 'coord' # or name
-pVcfSort.args.tool     = 'sort' # or bedtools
+pVcfSort.args.sortby   = 'coord' # or name
+pVcfSort.args.tool     = 'sort' # picard
+pVcfSort.args.picard   = params.picard.value
+pVcfSort.args.tabix    = params.tabix.value
+pVcfSort.args.chrorder = params.chrorder.value
+pVcfSort.args.gsize    = params.gsize.value
+pVcfSort.args.nthread  = 1
 pVcfSort.lang          = params.python.value
 pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
 
