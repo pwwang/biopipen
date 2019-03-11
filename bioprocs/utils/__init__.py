@@ -3,6 +3,7 @@ import logging
 import sys
 import shlex
 import re
+import gzip
 from glob import glob
 from os import path
 from pyppl.utils import string_types
@@ -143,7 +144,6 @@ class FileConn(object):
 	def __init__(self, filename, flag = 'r'):
 		self.isgz = False
 		if filename.endswith('.gz'):
-			import gzip
 			self.isgz = True
 		self.filename = filename
 		self.flag     = flag
