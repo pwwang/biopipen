@@ -1,16 +1,14 @@
 from os import path
 from pyppl import Box
-from vcf import Reader as Vcf
-from bioprocs.utils import runcmd, cmdargs, logger
+from bioprocs.utils.shell import cmdargs, runcmd
+from bioprocs.utils.reference import vcfIndex
 
-infile  = {{i.infile | quote}}
-idxfile = infile + '.tbi'
-if not path.isfile(idxfile):
-	raise ValueError('Vcf file needs to be indexed')
-
+infile = {{i.infile | quote}}
 outdir = {{o.outdir | quote}}
-plink  = {{args.plink | repr}}
+plink  = {{args.plink | quote}}
+tabix  = {{args.tabix | quote}}
 params = {{args.params | repr}}
+infile = vcfIndex(infile, tabix = tabix)
 
 params.vcf = infile
 params['make-bed'] = True

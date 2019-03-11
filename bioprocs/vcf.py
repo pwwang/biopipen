@@ -329,6 +329,7 @@ pVcf2Plink             = Proc(desc = 'Convert vcf to plink binary files (.bed/.b
 pVcf2Plink.input       = 'infile:file'
 pVcf2Plink.output      = 'outdir:dir:{{i.infile | fn2}}.plink'
 pVcf2Plink.args.plink  = params.plink.value
+pVcf2Plink.args.tabix  = params.tabix.value
 pVcf2Plink.args.params = Box({
 	'vcf-half-call'      : 'm',
 	'double-id'          : True,
@@ -382,7 +383,7 @@ pVcfLiftover.script       = "file:scripts/vcf/pVcfLiftover.py"
 """
 pVcfAddChr          = Proc(desc = 'Add `chr` to records and contigs of vcf files.')
 pVcfAddChr.input    = 'infile:file'
-pVcfAddChr.output   = 'outfile:file:{{i.infile | fn}}.vcf'
+pVcfAddChr.output   = 'outfile:file:{{i.infile | fn2}}.vcf'
 pVcfAddChr.args.chr = 'chr'
 pVcfAddChr.lang     = params.python.value
 pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
