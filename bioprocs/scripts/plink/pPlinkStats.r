@@ -15,7 +15,7 @@ output  = file.path(outdir, basename(input))
 
 params$bfile   = input
 params$out     = output
-params$nthread = nthread
+params$threads = nthread
 
 cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
 runcmd(cmd)
