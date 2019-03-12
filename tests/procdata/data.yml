@@ -155,4 +155,17 @@ tsv.pTsvReplaceHeader.func:
   i.hfile: header.txt
   args.cnames: 'lambda cs: ["x_" + c for c in cs]'
   o.outfile: out.func.tsv
+tsv.pTsvAggregate.default:
+  i.infile: aggr.default.txt
+  o.outfile: aggr.out.txt
+  args.inopts.cnames: true
+  args.on: Group
+  args.aggrs.sum: 'lambda rs: sum(float(r.value) for r in rs)'
+  args.aggrs.mean: 'lambda rs: sum(float(r.value) for r in rs)/float(len(rs))'
+tsv.pTsvAggregate.merged:
+  i.infile: aggr.default.txt
+  o.outfile: aggr.outmerged.txt
+  args.on: Group
+  args.inopts.cnames: true
+  args.aggrs.sum,mean: 'lambda rs: [sum(float(r.value) for r in rs), sum(float(r.value) for r in rs)/float(len(rs))]'
   

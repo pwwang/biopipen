@@ -297,6 +297,16 @@ pTsvColFilter.args.cols   = None
 pTsvColFilter.lang        = params.python.value
 pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
 
+pTsvAggregate             = Proc(desc = 'Aggregate on columns with a set of records')
+pTsvAggregate.input       = 'infile:file'
+pTsvAggregate.output      = 'outfile:file:{{i.infile | fn2}}.aggr.txt'
+pTsvAggregate.args.inopts = Box(cnames = True)
+pTsvAggregate.args.on     = 0 # which column
+pTsvAggregate.args.aggrs  = Box()
+pTsvAggregate.args.helper = ''
+pTsvAggregate.lang        = params.python.value
+pTsvAggregate.script      = "file:scripts/tsv/pTsvAggregate.py"
+
 """
 @name:
 	pTsvColSelect
