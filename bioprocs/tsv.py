@@ -274,6 +274,20 @@ pTsv.args.inopts  = Box(delimit = '\t', comment = '#', skip = 0, cnames = True)
 pTsv.args.outopts = Box(delimit = '\t', cnames = True)
 pTsv.script       = "file:scripts/tsv/pTsv.py"
 
+"""
+@name:
+	pTsvColFilter
+@description:
+	Filter a TSV file by columns
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file
+@args:
+	`inopts`: The options for reading input file. Default: `Box(cnames = True)`
+	`keep`  : Whether to keep in `args.cols` or to discard
+	`cols`  : The columns used to filter. Could be names or indices(0-based)
+"""
 pTsvColFilter             = Proc(desc = 'Filter a tsv file by columns')
 pTsvColFilter.input       = 'infile:file'
 pTsvColFilter.output      = 'outfile:file:{{i.infile | bn}}'
@@ -282,6 +296,62 @@ pTsvColFilter.args.keep   = True
 pTsvColFilter.args.cols   = None
 pTsvColFilter.lang        = params.python.value
 pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
+
+"""
+@name:
+	pTsvColSelect
+@description:
+	Alias of `pTsvColFilter`
+"""
+pTsvColSelect = pTsvColFilter.copy()
+
+"""
+@name:
+	pTsvHeader
+@description:
+	Get the header of a TSV file
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.header.txt`
+@args:
+	`inopts`: The options to read input file. Default: `Box(cnames = True)`
+	`filter`: The filter for the header. Default: `None`
+		- `None`: no filter
+		- `lambda cnames: ...` A callback to manipulate colnames.
+"""
+pTsvHeader             = Proc(desc = 'Get the header of a tsv file.')
+pTsvHeader.input       = 'infile:file'
+pTsvHeader.output      = 'outfile:file:{{i.infile | fn2}}.header.txt'
+pTsvHeader.args.inopts = Box(cnames = True)
+pTsvHeader.args.filter = None
+pTsvHeader.lang        = params.python.value
+pTsvHeader.script      = "file:scripts/tsv/pTsvHeader.py"
+
+"""
+@name:
+	pTsvReplaceHeader
+@description:
+	Replace the header of a TSV file
+@input:
+	`infile:file`: The input file
+	`hfile:file`:  The file containing the headers, one per line.
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | bn}}`
+@args:
+	`inopts`: The options to read input file, Default: `Box(cnames = True)`
+	`cnames`: The column names or callback, Default: `None`
+		- `None`: use the header in `i.hfile`
+		- `<list/str/file>`: the header to use if `i.hfile` is not provided
+		- `lambda cnames: ...`: The callback to modify header in `i.hfile` if provided, otherwise modify the original header.
+"""
+pTsvReplaceHeader             = Proc(desc = "Replace the header of a tsv file.")
+pTsvReplaceHeader.input       = 'infile:file, hfile:file'
+pTsvReplaceHeader.output      = 'outfile:file:{{i.infile | bn}}'
+pTsvReplaceHeader.args.inopts = Box(cnames = True)
+pTsvReplaceHeader.args.cnames = None
+pTsvReplaceHeader.lang        = params.python.value
+pTsvReplaceHeader.script      = "file:scripts/tsv/pTsvReplaceHeader.py"
 
 """
 @name:

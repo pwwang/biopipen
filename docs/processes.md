@@ -69,6 +69,30 @@
     - **args**  
         - `seed`: The seed for sampling the training set.  
         - `tfrac`: The fraction of samples used for training.  
+
+!!! hint "pColoc"
+
+    - **description**  
+        Bayes Factor colocalisation analyses using R `coloc` package.
+        `coloc` package can accept multiple formats of input. Here we adopt the one using pvalues.
+        `coloc.abf(dataset1=list(pvalues=p1,N=nrow(X1),type="quant"), dataset2=list(pvalues=p2,N=nrow(X2),type="quant"), MAF=maf)`
+
+    - **input**  
+        - `infile:file`: The input file including the MAF, pvalues of 1st and 2nd phenotypes  
+        	- The first 6 columns are in BED6 format.
+        	- 7th : MAF
+        	- 8th : Pvalues for the 1st phenotype
+        	- 9th : Pvalues for the 2nd phenotype
+        	- This file could have a header with the names for phenotypes
+        	- Snps have to be on the same chromosome, and sorted by positions.
+
+    - **output**  
+        - `outfile:file`: The output file including:  
+        	- # snps, PP.H0.abf, PP.H1.abf, PP.H2.abf, PP.H3.abf and PP.H4.abf
+        - `outdir:dir`  : The output directory containing the output file and plots.  
+
+    - **args**  
+        - `plot`: Do manhattan plot? Default: `True`  
 ## bed
 
 !!! hint "pBedSort"
@@ -681,7 +705,7 @@
 
     - **args**  
         - `cnvkit`: The executable of cnvkit. Default: 'cnvkit.py'  
-        - `exbaits`: The bait file for exome-sequencing data.  
+        - `baits` : The bait file for the regions you captured in the experiment.  
         	- See https://github.com/AstraZeneca-NGS/reference_data/tree/master/hg19/bed
         - `accfile`: Directly use the access file. Default: generating from the reference file.  
         	- See https://github.com/etal/cnvkit/tree/master/data
@@ -1003,7 +1027,8 @@
         - `outfile:file`: The output file  
 
     - **args**  
-        - `n`: Top n lines. You may use '-n' to skip last n lines.  
+        - `n`   : Top n lines. You may use '-n' to skip last n lines.  
+        - `pipe`: other piped command to modify the results  
 
 !!! hint "pTail"
 
@@ -3133,6 +3158,7 @@
 
     - **args**  
         - `inopts` : Options to read the input file. Default: `Box(cnames = False, rnames = False)`  
+        - `hilabel`: Show the labels of the highlight points. Default: `True`  
         - `ggs`    : Extra expressions for ggplot.  
         - `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
         - `gsize`  : The genome sizes file. Default: `None`  
@@ -5094,6 +5120,63 @@
         - `row`: A row function to transform/filter the row. Argument is an instance of `TsvRecord`  
         - `helper`: A helper function for `args.ops`  
 
+!!! hint "pTsvColFilter"
+
+    - **description**  
+        Filter a TSV file by columns
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `inopts`: The options for reading input file. Default: `Box(cnames = True)`  
+        - `keep`  : Whether to keep in `args.cols` or to discard  
+        - `cols`  : The columns used to filter. Could be names or indices(0-based)  
+
+!!! hint "pTsvColSelect"
+
+    - **description**  
+        Alias of `pTsvColFilter`
+
+!!! hint "pTsvHeader"
+
+    - **description**  
+        Get the header of a TSV file
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infile | fn2}}.header.txt`  
+
+    - **args**  
+        - `inopts`: The options to read input file. Default: `Box(cnames = True)`  
+        - `filter`: The filter for the header. Default: `None`  
+        	- `None`: no filter
+        	- `lambda cnames: ...` A callback to manipulate colnames.
+
+!!! hint "pTsvReplaceHeader"
+
+    - **description**  
+        Replace the header of a TSV file
+
+    - **input**  
+        - `infile:file`: The input file  
+        - `hfile:file`: The file containing the headers, one per line.  
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infile | bn}}`  
+
+    - **args**  
+        - `inopts`: The options to read input file, Default: `Box(cnames = True)`  
+        - `cnames`: The column names or callback, Default: `None`  
+        	- `None`: use the header in `i.hfile`
+        	- `<list/str/file>`: the header to use if `i.hfile` is not provided
+        	- `lambda cnames: ...`: The callback to modify header in `i.hfile` if provided, otherwise modify the original header.
+
 !!! hint "pTsvJoin"
 
     - **description**  
@@ -5406,8 +5489,8 @@
     - **args**  
         - `helper`: The helper code injected to script  
         	- Since lambda function can't do assignment and manipulation so you can write some help function here
-        - `readerops`: A lambda function (must be quoted) to manipulate the reader (vcf.Reader instance)  
-        - `recordops`: A lambda function (must be quoted) to manipulate the record (vcf.Record instance)  
+        - `reader`: A string of lambda function to manipulate the reader (arg: vcf.Reader instance)  
+        - `record`: A string of lambda function to manipulate the record (arg1: vcf.Record instance, arg2: vcf.Writer, arg3: `samples`)  
         - `gz`: Gzip the ouput file  
 
 !!! hint "pVcfAnno"
@@ -5470,7 +5553,7 @@
         - `outfile:dir`: The output multi-sample vcf.  
 
     - **args**  
-        - `tool`: The tool used to do extraction. Default: vcftools  
+        - `tool`: The tool used to do extraction. Default: bcftools  
         - `vcftools`: The path of vcftools' vcf-subset  
         - `bcftools`: The path of bcftools, used to extract the sample names from input vcf file.  
         - `gatk`: The path of gatk.  
@@ -5548,7 +5631,7 @@
 !!! hint "pVcfAddChr"
 
     - **description**  
-        Add `chr` to records of vcf files.
+        Add `chr` to records and contigs of vcf files.
 
     - **args**  
         - `chr`: The prefix to add to each record.  
@@ -5581,7 +5664,7 @@
 
     - **args**  
         - `novel`: The snp name used if not mapped to any rsid. Default: `NOVEL`  
-        - `useid`: Use the id in vcf file is possible. Default: `True`  
+        - `useid`: Use the id in vcf file if possible. Default: `True`  
         - `dbsnp`: The dbsnp vcf file used to get the rsid. If not provided, will use `novel`  
         - `na`   : The value to replace missing genotypes.  
         - `bialt`: bi-allelic snps only. Default: `True`  
@@ -5602,9 +5685,11 @@
         - `outfile:file`: The output file  
 
     - **args**  
-        - `header`: Output header? Default: `True`  
-        - `by`    : Sort by what, Coordinates (coord) or names (name)? Default: `coord`  
+        - `sortby`: Sort by what, Coordinates (coord) or names (name)? Default: `coord`  
         - `tool`  : The tool used to do the sort. Default: `sort` (linux command)  
+        - `picard`: Path to picard.  
+        - `tabix` : Path to tabix.  
+        - `chrorder`: If sort by `args.sortby == 'coord'`, then records first sorted by `chrorder` then Coordinates.    
 
 !!! hint "pVcfSubtract"
 

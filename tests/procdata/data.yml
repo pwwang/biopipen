@@ -131,4 +131,28 @@ vcf.pVcfAddChr.add:
 vcf.pVcfAddChr.default:
   i.infile: default.vcf
   o.outfile: default.vcf
+tsv.pTsvHeader.default:
+  i.infile: default.tsv
+  o.outfile: default.header.txt
+tsv.pTsvHeader.filter:
+  i.infile: default.tsv
+  args.filter: 'lambda cs: ["x_" + c for c in cs]'
+  o.outfile: filter.header.txt
+tsv.pTsvReplaceHeader.cnames:
+  i.infile: default.tsv
+  args.cnames: H1,H2,H3,H4
+  o.outfile: out.default.tsv
+tsv.pTsvReplaceHeader.cnfunc:
+  i.infile: default.tsv
+  args.cnames: 'lambda cs: ["x_H" + str(i+1) for i, c in enumerate(cs)]'
+  o.outfile: out.func.tsv
+tsv.pTsvReplaceHeader.default:
+  i.infile: default.tsv
+  i.hfile: header.txt
+  o.outfile: out.default.tsv
+tsv.pTsvReplaceHeader.func:
+  i.infile: default.tsv
+  i.hfile: header.txt
+  args.cnames: 'lambda cs: ["x_" + c for c in cs]'
+  o.outfile: out.func.tsv
   
