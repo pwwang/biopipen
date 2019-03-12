@@ -9,7 +9,7 @@ from . import params
 @input:
 	`snpfile:file`: The genotype file, rows are snps and columns are samples
 	`expfile:file`: The expression file, rows are genes
-	`covfile:file`: The covariant file, rows are covariants
+	`covfile:file`: The covariant file, columns are covariants
 @output:
 	`outfile:file`: The matrix eqtl output file
 @args:

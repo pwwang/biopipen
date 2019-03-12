@@ -38,7 +38,7 @@ gene$LoadFile( expfile );
 
 cvrt = SlicedData$new();
 {% if path.isfile(i.covfile) %}
-covmatrix = read.table({{i.covfile | quote}}, header = T, row.names = 1, check.names = F)
+covmatrix = t(read.table({{i.covfile | quote}}, header = T, row.names = 1, check.names = F))
 #covmatrix = covmatrix[, cnames, drop = F]
 #cvrt$fileDelimiter = "\t";       # the TAB character
 #cvrt$fileOmitCharacters = "NA";  # denote missing values;
