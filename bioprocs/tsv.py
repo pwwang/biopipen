@@ -286,7 +286,7 @@ pTsv.script       = "file:scripts/tsv/pTsv.py"
 @args:
 	`inopts`: The options for reading input file. Default: `Box(cnames = True)`
 	`keep`  : Whether to keep in `args.cols` or to discard
-	`cols`  : The columns used to filter. Could be names or indices(0-based)
+	`cols`  : The columns used to filter. Could be names or indices(0-based) or a file containing the column names, one per line.
 """
 pTsvColFilter             = Proc(desc = 'Filter a tsv file by columns')
 pTsvColFilter.input       = 'infile:file'

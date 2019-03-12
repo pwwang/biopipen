@@ -20,7 +20,7 @@ if not isinstance(cols[0], int) and cols[0].isdigit():
 reader = TsvReader(infile, **inopts)
 writer = TsvWriter(outfile, delimit = inopts.get('delimit', "\t"))
 if reader.cnames and not isinstance(cols[0], int):
-	cols = [reader.cnames.index(c) for c in cols]
+	cols = [reader.cnames.index(c) for c in cols if c in reader.cnames]
 elif not reader.cnames and not isinstance(cols[0], int):
 	raise ValueError("Input file doesn't have column names") 
 elif min(cols) < 0 or (reader.cnames and max(cols) >= len(reader.cnames)):
