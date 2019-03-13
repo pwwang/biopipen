@@ -79,8 +79,8 @@ if (file.exists(hwe_result)) {
 			ggs = list()
 			if (!is.null(cutoff$hardy.mingt)) {
 				mingt[which(mingt$SNP %in% mingt.fail$SNP), "Status"] = "Fail"
-				ggs_rt$geom_vline = list(xintercept = cutoff$hardy.mingt, color = "red", linetype="dashed")
-				ggs_rt$geom_text  = list(
+				ggs$geom_vline = list(xintercept = cutoff$hardy.mingt, color = "red", linetype="dashed")
+				ggs$geom_text  = list(
 					aes(x = cutoff$hardy.mingt, y = Inf, label = cutoff$hardy.mingt),
 					colour="red", angle=90, vjust = 1.2, hjust = 1.2
 				)
@@ -166,7 +166,7 @@ if (file.exists(freq_result)) {
 			freq[which(freq$SNP %in% freq.fail$SNP), "Status"] = "Fail"
 			ggs$geom_vline = list(xintercept = cutoff$freq, color = "red", linetype="dashed")
 			ggs$geom_text  = list(
-				aes(x = cutoff$freq, y = Inf, label = cutoff),
+				aes(x = cutoff$freq, y = Inf, label = cutoff$freq),
 				colour="red", angle=90, vjust = 1.2, hjust = 1.2
 			)
 		}

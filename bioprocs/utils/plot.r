@@ -206,7 +206,8 @@ plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params 
 			y = cnames[y]
 		}
 		params$stat = list.get(params, 'stat', 'identity')
-
+		# to keep the order
+		data[, x] = factor(data[, x], levels = data[,x])
 		ggs = c(
 			list(geom_bar = params),
 			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
