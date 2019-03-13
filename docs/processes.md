@@ -1276,7 +1276,7 @@
     - **input**  
         - `snpfile:file`: The genotype file, rows are snps and columns are samples  
         - `expfile:file`: The expression file, rows are genes  
-        - `covfile:file`: The covariant file, rows are covariants  
+        - `covfile:file`: The covariant file, columns are covariants  
 
     - **output**  
         - `outfile:file`: The matrix eqtl output file  
@@ -2784,6 +2784,35 @@
         	- `both`: use `<FID>_<IID>` as sample id
         	- `fid` : use `<FID>` as sample id
         	- `iid` : use `<IID>` as sample id
+
+!!! hint "pPlinkPCA"
+
+    - **description**  
+        Do PCA on genotype data with PLINK
+
+    - **input**  
+        - `indir`: The input directory with .bed/.bim/.fam files  
+
+    - **output**  
+        - `outfile:file`: The output file of selected PCs, Default: `{{i.indir | fn}}.plinkPCA/{{i.indir | fn}}.pcs.txt`  
+        - `outdir:dir`: The output directory with output file and plots. Default: `{{i.indir | fn}}.plinkPCA`  
+
+    - **args**  
+        - `plink`: The path to `plink`, Default: `<params.plink>`  
+        - `samid`: Which IDs to report in results, Default: `both`  
+        	- `both`: Both family ID and individual ID connected with `_`
+        	- `iid`:  Individual ID
+        	- `fid`:  Family ID
+        - `nthread`: # threads to use, Default: `False`  
+        	- `False`: Don't put `--threads` in plink command
+        - `indep`: `indep` used to prune LD SNPs. Default: `[50, 5, .2]`  
+        - `highld`: High LD regions. Default: `<params.highld>`  
+        - `params`: Other parameters for `plink --pca`. Default: `Box(mind = .95)`  
+        - `select`: Select first PCs in the output file. Default: `0.2`  
+        	- `select < 1`: select PCs with contribution greater than `select`
+        	- `select >=1`: select first `select` PCs
+        - `plots` : Output plots. Default: `Box(scree = Box(ncp = 20))`  
+        - `devpars`: The parameters for ploting device. Default: `Box(height = 2000, width = 2000, res = 300)`  
 ## plot
 
 !!! hint "pPlot"
@@ -5134,7 +5163,7 @@
     - **args**  
         - `inopts`: The options for reading input file. Default: `Box(cnames = True)`  
         - `keep`  : Whether to keep in `args.cols` or to discard  
-        - `cols`  : The columns used to filter. Could be names or indices(0-based)  
+        - `cols`  : The columns used to filter. Could be names or indices(0-based) or a file containing the column names, one per line.  
 
 !!! hint "pTsvColSelect"
 
@@ -5748,7 +5777,8 @@
     - **input**  
         - `infile:file`: The input genotype matrix, columns are samples, rows are mutations in format:  
         	- `<chr>_<pos>_<ref>_<alt>` or `<chr>_<pos>_<name>_<ref>_<alt>`
-        	- has to be sorted (see `args.chrsort`)
+        	- has to be sorted by coordinates.
+        	- `chromsomes` have to be in order of `args.chrorder`
 
     - **output**  
         - `outfile:file`: The output genotype matrix. Row names will turn into:  
@@ -5757,12 +5787,13 @@
     - **args**  
         - `dbsnp`: the dbsnp vcf file used to annotation the snps.  
         	- assume sorted by coordinates
-        	- see `args.chrsort` for chromsome sorting
+        	- `chromsomes` have to be in order of `args.chrorder`
         - `notfound`: What to used if RS id not found. Default: `NOVEL`  
-        - `chrsort`: How chromsome is sorted. Default: `version`  
-        	- version sort: chr1, chr2, chr3, ..., chr10, chr11, ... chr20, ..., chrM(T), chrX, chrY
-        	- natural sort: chr1, chr10, chr11, ..., chr19, chr2, chr21, chr22, chr3, ..., chrM(T), chrX, chrY
-        	- or a list of chromsome order: e.g: `["chr1", "chr2", ..., "chrM", "chrX", "chrY"]`
+        	- `None/Fase` to skip to record
+        - `exist`: What if RS id exists? Default: `keep`  
+        	- `keep`: Keep the RS ID and skip seeking
+        	- `force`: Force using the RS ID being found to replace the old one.
+        - `chrorder`: The chromsome order. Default: `<params.chrorder>`  
 
 !!! hint "pGTMat2Plink"
 
