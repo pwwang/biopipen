@@ -36,26 +36,29 @@ pVcfStatsPlot.script           = "file:scripts/vcfnext/pVcfStatsPlot.py"
 @input:
 	`infile:file`: The input genotype matrix, columns are samples, rows are mutations in format:
 		- `<chr>_<pos>_<ref>_<alt>` or `<chr>_<pos>_<name>_<ref>_<alt>`
-		- has to be sorted (see `args.chrsort`)
+		- has to be sorted by coordinates.
+		- `chromsomes` have to be in order of `args.chrorder`
 @output:
 	`outfile:file`: The output genotype matrix. Row names will turn into:
 		- `<chr>_<pos>_<rs>_<ref>_<alt>`
 @args:
 	`dbsnp`: the dbsnp vcf file used to annotation the snps.
 		- assume sorted by coordinates
-		- see `args.chrsort` for chromsome sorting
+		- `chromsomes` have to be in order of `args.chrorder`
 	`notfound`: What to used if RS id not found. Default: `NOVEL`
-	`chrsort`: How chromsome is sorted. Default: `version`
-		- version sort: chr1, chr2, chr3, ..., chr10, chr11, ... chr20, ..., chrM(T), chrX, chrY
-		- natural sort: chr1, chr10, chr11, ..., chr19, chr2, chr21, chr22, chr3, ..., chrM(T), chrX, chrY
-		- or a list of chromsome order: e.g: `["chr1", "chr2", ..., "chrM", "chrX", "chrY"]`
+		- `None/Fase` to skip to record
+	`exist`: What if RS id exists? Default: `keep`
+		- `keep`: Keep the RS ID and skip seeking
+		- `force`: Force using the RS ID being found to replace the old one.
+	`chrorder`: The chromsome order. Default: `<params.chrorder>`
 """
 pGTMatAddRs               = Proc(desc = "Add rs id to a genotype matrix")
 pGTMatAddRs.input         = 'infile:file'
 pGTMatAddRs.output        = 'outfile:file:{{i.infile | bn}}'
 pGTMatAddRs.args.dbsnp    = params.dbsnp_all.value
-pGTMatAddRs.args.chrsort  = 'version' 
+pGTMatAddRs.args.chrorder = params.chrorder.value
 pGTMatAddRs.args.notfound = 'NOVEL'
+pGTMatAddRs.args.exist    = 'keep'
 pGTMatAddRs.lang          = params.python.value
 pGTMatAddRs.script        = "file:scripts/vcfnext/pGTMatAddRs.py"
 

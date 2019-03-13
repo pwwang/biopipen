@@ -281,6 +281,33 @@ pPlink2GTMat.args.nors   = "NOVEL"
 pPlink2GTMat.lang        = params.python.value
 pPlink2GTMat.script      = "file:scripts/plink/pPlink2GTMat.py"
 
+"""
+@name:
+	pPlinkPCA
+@description:
+	Do PCA on genotype data with PLINK
+@input:
+	`indir`: The input directory with .bed/.bim/.fam files
+@output:
+	`outfile:file`: The output file of selected PCs, Default: `{{i.indir | fn}}.plinkPCA/{{i.indir | fn}}.pcs.txt`
+	`outdir:dir`: The output directory with output file and plots. Default: `{{i.indir | fn}}.plinkPCA`
+@args:
+	`plink`: The path to `plink`, Default: `<params.plink>`
+	`samid`: Which IDs to report in results, Default: `both`
+		- `both`: Both family ID and individual ID connected with `_`
+		- `iid`:  Individual ID
+		- `fid`:  Family ID
+	`nthread`: # threads to use, Default: `False`
+		- `False`: Don't put `--threads` in plink command
+	`indep`: `indep` used to prune LD SNPs. Default: `[50, 5, .2]`
+	`highld`: High LD regions. Default: `<params.highld>`
+	`params`: Other parameters for `plink --pca`. Default: `Box(mind = .95)`
+	`select`: Select first PCs in the output file. Default: `0.2`
+		- `select < 1`: select PCs with contribution greater than `select`
+		- `select >=1`: select first `select` PCs
+	`plots` : Output plots. Default: `Box(scree = Box(ncp = 20))`
+	`devpars`: The parameters for ploting device. Default: `Box(height = 2000, width = 2000, res = 300)`
+"""
 pPlinkPCA          = Proc(desc = "Perform PCA on genotype data and covariates.")
 pPlinkPCA.input    = 'indir:dir'
 pPlinkPCA.output   = [

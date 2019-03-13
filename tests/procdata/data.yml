@@ -168,4 +168,10 @@ tsv.pTsvAggregate.merged:
   args.on: Group
   args.inopts.cnames: true
   args.aggrs.sum,mean: 'lambda rs: [sum(float(r.value) for r in rs), sum(float(r.value) for r in rs)/float(len(rs))]'
-  
+vcfnext.pGTMatAddRs.default:
+  i.infile: default.gtmat
+  o.outfile: out.default.gtmat
+vcfnext.pGTMatAddRs.force:
+  i.infile: default.gtmat
+  args.exist: force
+  o.outfile: force.default.gtmat
