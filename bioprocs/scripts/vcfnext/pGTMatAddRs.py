@@ -51,7 +51,7 @@ with FileConn(infile) as fin, FileConn(dbsnp) as fdb, FileConn(outfile, 'w') as 
 				continue
 			inparts[0] = '_'.join((chr_in, pos_in, rs_db, ref, alt))
 			fout.write('\t'.join(inparts))
-			rin = rdb = None
+			rin = None
 		except StopIteration:
 			break
 		except:
