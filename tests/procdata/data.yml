@@ -155,6 +155,13 @@ tsv.pTsvReplaceHeader.func:
   i.hfile: header.txt
   args.cnames: 'lambda cs: ["x_" + c for c in cs]'
   o.outfile: out.func.tsv
+tsv.pTsvAggregate.builtin:
+  i.infile: aggr.default.txt
+  o.outfile: aggr.out.txt
+  args.inopts.cnames: true
+  args.on: Group
+  args.aggrs.sum: '$sum:value'
+  args.aggrs.mean: '$mean:value'
 tsv.pTsvAggregate.default:
   i.infile: aggr.default.txt
   o.outfile: aggr.out.txt

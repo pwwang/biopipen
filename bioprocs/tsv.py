@@ -297,6 +297,36 @@ pTsvColFilter.args.cols   = None
 pTsvColFilter.lang        = params.python.value
 pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
 
+"""
+@name:
+	pTsvAggregate
+@description:
+	Aggregate on columns with a set of records
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.aggr.txt`
+		- With columns `args.on` and aggregated results from `args.aggrs`
+@args:
+	`inopts`: The options to read the input file, Default: `Box(cnames = True)`
+	`on`: Aggregate according to which column, Default: `0`
+		- It also could column name if `args.inopts = True`
+		- The input file has to sorted by this column
+	`helper`: Raw codes to give some help for `args.aggrs`
+	`aggrs`: The aggregation methods. Required.
+		- It's a `Box` with the keys for aggregated results
+		- If `args.inopts.cnames = True` then these keys will be output as column names, otherwise ignored
+		- You can also combine the aggregation results. 
+			- For example: `{"sum,mean": lambda rs: [sum(r.value for r in rs), sum(r.value for r in rs)/float(len(rs))]}`
+		- We have some built-in aggregation methods:
+			- `args.aggrs.Sum = "$sum:3"`          : Get the sum of the 4th column
+			- `args.aggrs.Mean = "$mean:Height`    : Get the mean of column "Height"
+			- `args.aggrs.Median = "$median:1"`    : Get the median of the 2nd column
+			- `args.aggrs.Min = "$min:1"`          : Get the min of the 2nd column
+			- `args.aggrs.Max = "$max:1"`          : Get the max of the 2nd column
+			- `args.aggrs.Max2 = "$max:2"`         : Get the max of the 3rd column
+			- `args.aggrs["Max,Max2"] = "$max:1,2"`: Get the max of the 2nd and 3rd column, respectively
+"""
 pTsvAggregate             = Proc(desc = 'Aggregate on columns with a set of records')
 pTsvAggregate.input       = 'infile:file'
 pTsvAggregate.output      = 'outfile:file:{{i.infile | fn2}}.aggr.txt'
