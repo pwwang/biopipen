@@ -481,6 +481,37 @@ pTsvSql.script = "file:scripts/tsv/pTsvSql.py"
 
 """
 @name:
+	pTsvSample
+@description:
+	Sample records from a TSV file
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.sampled.txt`
+@args:
+	`inopts`   : input options, only skip available, Default: `Box()`
+	`n`        : how many records to sample, Default: `10`
+	`arsample` : sample program by Alex Reynolds, Default: `<params.arsample>`
+	`replace`  : Whether sample with replacement or not, Default: `False`
+	`keeporder`: Keep the order of the sampled records as it's in input file, Default: `False`
+	`seed`: The seed, Default: `0`
+	`params`: Other params for arsample, Default: `Box()`
+"""
+pTsvSample                = Proc(desc = 'Sample records from a TSV file.')
+pTsvSample.input          = 'infile:file'
+pTsvSample.output         = 'outfile:file:{{i.infile | fn2}}.sampled.txt'
+pTsvSample.args.inopts    = Box()
+pTsvSample.args.n         = 10
+pTsvSample.args.arsample  = params.arsample.value
+pTsvSample.args.replace   = False
+pTsvSample.args.keeporder = False
+pTsvSample.args.seed      = 0
+pTsvSample.args.params    = Box()
+pTsvSample.lang           = params.python.value
+pTsvSample.script         = "file:scripts/tsv/pTsvSample.py"
+
+"""
+@name:
 	pTsvMerge
 @description:
 	Merge files in the input directory

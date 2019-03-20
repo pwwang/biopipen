@@ -309,3 +309,15 @@ pCoexp.args.method = 'pearson'
 pCoexp.args.pval   = False
 pCoexp.lang        = params.Rscript.value
 pCoexp.script      = "file:scripts/rnaseq/pCoexp.r"
+
+
+pExprSimulate               = Proc(desc = "Simulate expression values")
+pExprSimulate.input         = 'seed:var'
+pExprSimulate.output        = 'outfile:file:exprsim.{{i.seed if isinstance(i.seed, int) else "noseed"}}.txt'
+pExprSimulate.args.nsamples = 100
+pExprSimulate.args.ngenes   = 1000
+pExprSimulate.args.slabel   = 'Sample'
+pExprSimulate.args.glabel   = 'Gene'
+pExprSimulate.args.params   = Box()
+pExprSimulate.lang          = params.Rscript.value
+pExprSimulate.script        = "file:scripts/rnaseq/pExprSimulate.r"

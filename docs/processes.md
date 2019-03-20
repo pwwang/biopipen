@@ -2876,7 +2876,26 @@
         - `x`      : The x aes. Default: 1 (corresponding to colnames)  
         - `helper` : Some helper codes to generate `params` and `ggs`  
         - `devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`  
-        - `params` : The extra params for `geom_point`  
+        - `params` : The extra params for `geom_histogram`  
+        - `ggs`    : The extra ggplot elements.  
+
+!!! hint "pDensity"
+
+    - **description**  
+        Use ggplot2 geom_density to generate density plot
+
+    - **input**  
+        - `infile:file`: The input data file  
+
+    - **output**  
+        - `outfile:file`: The output file  
+
+    - **args**  
+        - `inopts` : Options to read the input file. Default: `Box(cnames = True, rnames = False)`  
+        - `x`      : The x aes. Default: 1 (corresponding to colnames)  
+        - `helper` : Some helper codes to generate `params` and `ggs`  
+        - `devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`  
+        - `params` : The extra params for `geom_density`  
         - `ggs`    : The extra ggplot elements.  
 
 !!! hint "pFreqpoly"
@@ -5305,6 +5324,26 @@
     - **requires**  
         [`q`](http://harelba.github.io/q/index.html)
         This process is built on `q 1.7.1`
+
+!!! hint "pTsvSample"
+
+    - **description**  
+        Sample records from a TSV file
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infile | fn2}}.sampled.txt`  
+
+    - **args**  
+        - `inopts`   : input options, only skip available, Default: `Box()`  
+        - `n`        : how many records to sample, Default: `10`  
+        - `arsample` : sample program by Alex Reynolds, Default: `<params.arsample>`  
+        - `replace`  : Whether sample with replacement or not, Default: `False`  
+        - `keeporder`: Keep the order of the sampled records as it's in input file, Default: `False`  
+        - `seed`: The seed, Default: `0`  
+        - `params`: Other params for arsample, Default: `Box()`  
 
 !!! hint "pTsvMerge"
 

@@ -103,6 +103,8 @@ DEFAULTS = {
 	"annovar_convert.desc"     : "The path of annovar's convert2annovar.pl.",
 	"awk"                      : "awk",
 	"awk.desc"                 : "The awk program.",
+	"arsample"                 : "sample",
+	"arsample.desc"            : "The tool `sample` by Alex Reynolds.",
 	"bam_readcount"            : "bam-readcount",
 	"bam_readcount.desc"       : "Program to generate metrics at single nucleotide positions",
 	"bamstats"                 : "bamstats",

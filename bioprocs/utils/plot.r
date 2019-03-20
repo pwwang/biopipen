@@ -409,6 +409,10 @@ plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
+plot.density = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	ggs = c(list(geom_density = params), ggs)
+	plot.x(data, plotfile, x, ggs, devpars)
+}
 
 
 plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
@@ -437,31 +441,20 @@ plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(r
 	plot.scatter(data, plotfile, x = 'A', y = 'M', params = params, ggs = ggs, devpars = devpars)
 }
 
-plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list()) {
-	if (!stacked) {
-		data = stack(as.data.frame(data))
+plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+	data = as.data.frame(data)
+	n    = nrow(data)
+	q    = (1:n)/n
+	if (is.null(x)) {
+		data = cbind(data, Theoretical = qnorm(q))
+		x = "Theoretical"
 	}
-	if (!is.null(plotfile)) {
-		do.call(png, c(list(filename=plotfile), devpars))
-	}
-	cnames = colnames(data)
-	cnames = make.names(cnames)
-	colnames(data) = cnames
-	if (is.numeric(x)) x = sprintf("`%s`", cnames[x])
-	if (is.numeric(y)) y = sprintf("`%s`", cnames[y])
-	if (!is.null(x)) {
-		params = list(mapping = aes_string(theoretical = x, sample = y))
-	} else {
-		params = list(mapping = aes_string(sample = y))
-	}
-
-	p = ggplot(data)
-	p = p + do.call(geom_qq, params)
-	p = p + do.call(geom_qq_line, params)
-	print(apply.ggs(p, ggs))
-	if (!is.null(plotfile)) {
-		dev.off()
-	}
+	data[, x] = quantile(data[, x], q)
+	data[, y] = quantile(data[, y], q)
+	if (is.numeric(x)) x = sprintf("`%s`", colnames(data)[x])
+	if (is.numeric(y)) y = sprintf("`%s`", colnames(data)[y])
+	
+	plot.scatter(data, plotfile, x = x, y = y, params = params, ggs = ggs, devpars = devpars)
 }
 
 # data:

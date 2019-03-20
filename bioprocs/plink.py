@@ -329,3 +329,20 @@ pPlinkPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)
 pPlinkPCA.envs.rimport = rimport
 pPlinkPCA.lang         = params.Rscript.value
 pPlinkPCA.script       = "file:scripts/plink/pPlinkPCA.r"
+
+pPlinkSimulate              = Proc(desc = "Simulate a set of SNPs")
+pPlinkSimulate.input        = 'seed'
+pPlinkSimulate.output       = 'outdir:dir:simsnps.{{i.seed if isinstance(i.seed, int) else "noseed"}}.plink'
+pPlinkSimulate.args.plink   = params.plink.value
+pPlinkSimulate.args.ncases  = 1000
+pPlinkSimulate.args.nctrls  = 1000
+pPlinkSimulate.args.nsnps   = 100
+pPlinkSimulate.args.label   = 'SNP'
+pPlinkSimulate.args.dprev   = .01
+pPlinkSimulate.args.minfreq = 0
+pPlinkSimulate.args.maxfreq = 1
+pPlinkSimulate.args.hetodds = 1
+pPlinkSimulate.args.homodds = 1
+pPlinkSimulate.args.params  = Box()
+pPlinkSimulate.lang         = params.python.value
+pPlinkSimulate.script       = "file:scripts/plink/pPlinkSimulate.py"

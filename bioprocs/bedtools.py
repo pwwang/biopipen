@@ -451,14 +451,11 @@ pBedGenomecov.script          = """
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedCluster = Proc(desc = 'Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file.')
-pBedCluster.input           = "infile:file"
-pBedCluster.output          = "outfile:file:{{infile | fn}}.clustered.bt"
-pBedCluster.args.bedtools   = params.bedtools.value
-pBedCluster.args.params     = Box()
-pBedCluster.envs.bashimport = bashimport
-pBedCluster.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} cluster $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i "{{infile}}" > "{{outfile}}"
-"""
+pBedCluster               = Proc(desc = 'Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file.')
+pBedCluster.input         = "infile:file"
+pBedCluster.output        = "outfile:file:{{infile | fn}}.clustered.bt"
+pBedCluster.args.bedtools = params.bedtools.value
+pBedCluster.args.params   = Box()
+pBedCluster.lang          = params.python.value
+pBedCluster.script        = "file:scripts/bedtools/pBedCluster.py"
 

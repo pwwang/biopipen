@@ -90,7 +90,7 @@ pPoints = pScatter.copy()
 	`x`      : The x aes. Default: 1 (corresponding to colnames)
 	`helper` : Some helper codes to generate `params` and `ggs`
 	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
-	`params` : The extra params for `geom_point`
+	`params` : The extra params for `geom_histogram`
 	`ggs`    : The extra ggplot elements.
 """
 pHisto              = Proc(desc = 'Generate histogram.')
@@ -105,6 +105,36 @@ pHisto.args.ggs     = Box()
 pHisto.envs.rimport = rimport
 pHisto.lang         = params.Rscript.value
 pHisto.script       = 'file:scripts/plot/pHisto.r'
+
+"""
+@name:
+	pDensity
+@description:
+	Use ggplot2 geom_density to generate density plot
+@input:
+	`infile:file`: The input data file
+@output:
+	`outfile:file`: The output file
+@args:
+	`inopts` : Options to read the input file. Default: `Box(cnames = True, rnames = False)`
+	`x`      : The x aes. Default: 1 (corresponding to colnames)
+	`helper` : Some helper codes to generate `params` and `ggs`
+	`devpars`: The device parameters. Default: `Box(res = 300, height = 2000, width = 2000)`
+	`params` : The extra params for `geom_density`
+	`ggs`    : The extra ggplot elements.
+"""
+pDensity              = Proc(desc = 'Generate density plot.')
+pDensity.input        = 'infile:file'
+pDensity.output       = 'outfile:file:{{i.infile | fn}}.density.png'
+pDensity.args.inopts  = Box(cnames = True, rnames = False)
+pDensity.args.x       = 1
+pDensity.args.helper  = ''
+pDensity.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pDensity.args.params  = Box()
+pDensity.args.ggs     = Box()
+pDensity.envs.rimport = rimport
+pDensity.lang         = params.Rscript.value
+pDensity.script       = 'file:scripts/plot/pDensity.r'
 
 """
 @name:
