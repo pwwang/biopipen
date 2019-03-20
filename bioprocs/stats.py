@@ -809,7 +809,8 @@ pPCA.args.plots  = Box(
 	var     = Box(repel = False),
 	bi      = Box(repel = False),
 	cluster = Box(method = 'kmeans'),
-	clplot  = Box(repel = False, main = "", ggs = Box())
+	clplot  = Box(repel = False, main = "", ggs = Box()),
+	pairs   = Box(anno = "kmeans", pcs = 4, k = 4)
 )
 pPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)
 pPCA.envs.rimport = rimport

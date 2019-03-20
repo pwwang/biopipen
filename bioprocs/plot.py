@@ -595,3 +595,14 @@ pQQ.args.params  = Box()
 pQQ.envs.rimport = rimport
 pQQ.lang         = params.Rscript.value
 pQQ.script       = "file:scripts/plot/pQQ.r"
+
+pPairs              = Proc(desc = 'Plot pairs with ggpairs from GGally')
+pPairs.input        = 'infile:file'
+pPairs.output       = 'outfile:file:{{i.infile | fn}}.pairs.png'
+pPairs.args.inopts  = Box(cnames = True, rnames = True)
+pPairs.args.devpars = Box(res = 300, height = 400, width = 400) # for each cell
+pPairs.args.ggs     = Box() # geom_* not available but theme available
+pPairs.args.params  = Box(upper = Box(continuous = "density")) # other parameters for ggpairs
+pPairs.envs.rimport = rimport
+pPairs.lang         = params.Rscript.value
+pPairs.script       = "file:scripts/plot/pPairs.r"

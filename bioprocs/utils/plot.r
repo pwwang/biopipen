@@ -255,6 +255,35 @@ plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, par
 	}
 }
 
+plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+	if (stacked) {
+		cnames = colnames(data)
+		cnames = make.names(cnames)
+		colnames(data) = cnames
+		if (is.numeric(x)) {
+			x = cnames[x]
+		}
+		if (is.numeric(y)) {
+			y = cnames[y]
+		}
+		#params = update.aes(params, aes_string(group = x))
+
+		ggs = c(
+			list(geom_violin = params),
+			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+			ggs
+		)
+		plot.xy(data, plotfile, x, y, ggs, devpars)
+	} else {
+		ggs = c(
+			list(geom_violin = params),
+			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+			ggs
+		)
+		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+	}
+}
+
 plot.heatmap2 = function(data, plotfile = NULL, params = list(), draw = list(), devpars = list(res=300, width=2000, height=2000)) {
 	library(ComplexHeatmap)
 
@@ -643,4 +672,22 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 		labs               = list(x = "", y = "-log10(p-value)")
 		), ggs_hilight, ggs)
 	plot.xy (data, plotfile, x = 'X', y = 'Y', ggs = ggs, devpars = devpars)
+}
+
+plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = list(res = 300, width = 400, height = 400)) {
+	library(GGally)
+	p = do.call(ggpairs, c(list(data), params))
+	for (n in names(ggs)) {
+		p = p + do.call(n, ggs[[n]])
+	}
+	ncols          = ifelse(is.null(params$columns), ncol(data), length(params$columns))
+	devpars$width  = devpars$width*ncols
+	devpars$height = devpars$height*ncols
+	if (!is.null(plotfile)) {
+		do.call(png, c(list(plotfile), devpars))
+	}
+	print(p)
+	if (!is.null(plotfile)) {
+		dev.off()
+	}
 }

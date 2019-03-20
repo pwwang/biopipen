@@ -110,3 +110,27 @@ if (is.true(plots$clplot, 'any')) {
 	print(apply.ggs(p, ggs))
 	dev.off()
 }
+
+if (is.true(plots$pairs)) {
+	pcs = pca$x[, 1:plots$pcs, drop = FALSE]
+	cname = NULL
+	if (plots$pairs$anno == 'kmeans') {
+		anno = as.data.frame(kmeans(pcs, plots$pairs$k, nstart = ifelse(is.null(plots$pairs$nstart), 25, plots$pairs$nstart), iter.max = ifelse(is.null(plots$pairs$niter), 1000, plots$pairs$niter))$clust)
+		colnames(anno) = 'Cluster'
+		pcs = cbind(pcs, anno)
+		pcs$Cluster = as.factor(pcs$Cluster)
+		cname = 'Cluster'
+	} else if (file.exists(plots$pairs$anno)) {
+		anno = read.table(plots$pairs$anno, row.names = 1, header = TRUE, sep = "\t", check.names = FALSE)
+		anno = anno[rownames(pcs),,drop = FALSE]
+		anno[,1] = as.factor(anno[,1])
+		cname = colnames(anno)[1]
+		pcs = cbind(pcs, anno)
+	}
+	pairsfile = paste0(prefix, '.pairs.png')
+	if (!is.null(cname)) {
+		plot.pairs(pcs, pairsfile, params = list(mapping = ggplot2::aes_string(color = cname), upper = list(continuous = "density")), ggs = list(theme = list(axis.text.x = element_text(angle = 90, hjust = 1))))
+	} else {
+		plot.pairs(pcs, pairsfile, upper = list(continuous = "density")), ggs = list(theme = list(axis.text.x = element_text(angle = 90, hjust = 1))))
+	}
+}
