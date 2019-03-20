@@ -323,7 +323,12 @@ pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
 		- `vcf-filter`         : `True`
 		- `vcf-idspace-to`     : `_`
 		- `set-missing-var-ids`: `@_#`    # make sure no duplicate vars
+			- if `$1`, `$2` ... included, this will run a extra process to set the var ids first
+			- Since plink 1.x doesn't specify `$1` as ref, but the first one of all alleles in ASCII-sort order
+			- Here `$1` will be bound to reference allele
 		- `biallelic-only`     : `strict`
+@requires:
+	`python:pyvcf`: to assign variant names (see `args.set-missing-var-ids`)
 """
 pVcf2Plink             = Proc(desc = 'Convert vcf to plink binary files (.bed/.bim/.fam)')
 pVcf2Plink.input       = 'infile:file'
