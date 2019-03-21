@@ -2729,6 +2729,9 @@
         - `pihat`: The PI_HAT cutoff. Default: 0.1875 (see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/)  
         - `plot` : Whether plot the PI_HAT heatmap? Default: `True`  
         - `devpars`: The device parameters for the plot. Default: `Box(res=300, width=2200, height=1600)`  
+        - `samid`: Sample ids on the heatmap. Default: `iid`  
+        	- Could also be `fid` or `fid<sep>iid`, or an R function: `function(fid, iid)`
+        - `anno` : The annotation file for the samples. Names must match the ones that are transformed by `args.samid`. Default: `''`  
 
 !!! hint "pPlinkRemove"
 
@@ -5705,7 +5708,13 @@
         	- `vcf-filter`         : `True`
         	- `vcf-idspace-to`     : `_`
         	- `set-missing-var-ids`: `@_#`    # make sure no duplicate vars
+        		- if `$1`, `$2` ... included, this will run a extra process to set the var ids first
+        		- Since plink 1.x doesn't specify `$1` as ref, but the first one of all alleles in ASCII-sort order
+        		- Here `$1` will be bound to reference allele
         	- `biallelic-only`     : `strict`
+
+    - **requires**  
+        - `python:pyvcf`: to assign variant names (see `args.set-missing-var-ids`)  
 
 !!! hint "pVcfLiftover"
 
@@ -5749,6 +5758,68 @@
 
     - **args**  
         - `ref`: The reference file  
+
+!!! hint "pVcf2GTVcf"
+
+    - **description**  
+        Keep only GT information for each sample.
+
+    - **input**  
+        - `infile:file`: The input file  
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infile | fn2}}.vcf{{".gz" if args.gz else ""}}`  
+
+    - **args**  
+        - `tool`    : The tool to use, Default: `bcftools`  
+        - `gz`      : Gzip the output file or not, Default: `False`  
+        - `bcftools`: Path to bcftools, Default: `<params.bcftools>`  
+
+!!! hint "pVcfSampleFilter"
+
+    - **description**  
+        Keep or remove some samples from VCF file.
+
+    - **input**  
+        - `infile:file` : The input file  
+        - `samfile:file`: The file with sample names, one per line. Could be ignored, see `args.samples`  
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infile | fn2}}.vcf`  
+
+    - **args**  
+        - `bcftools`: Path to bcftools, Default: `<params.bcftools>`  
+        - `samples`: Samples to filter, could be one of the followings, Default: `None`  
+        	- A file with sample names, one per line.
+        	- A list with sample names
+        	- A string with sample names, separated by comma(,)
+        	- A string of lambda function to tell to keep current sample or not.
+        		- If this returns `True`, samples are added to the list, otherwise excluded.
+        		- Note that when `args.keep == False`, `True` samples will be removed.
+        	- `None`: use sample names from `i.samfile`
+        - `keep`: Keep the samples provided or remove them. Default: `True`  
+
+!!! hint "pVcfSampleReplace"
+
+    - **description**  
+        Replace sample names in VCF file
+
+    - **input**  
+        - `infile:file` : The input file  
+        - `samfile:file`: The file with sample names, one per line. Could be ignored, see `args.samples`  
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infile | fn2}}.vcf`  
+
+    - **args**  
+        - `bcftools`: Path to bcftools, Default: `<params.bcftools>`  
+        - `samples`: New samples, could be one of the followings, Default: `None`  
+        	- A file with new sample names, one per line.
+        	- A list with new sample names
+        	- A string with new sample names, separated by comma(,)
+        	- A string of lambda function to modify current sample names.
+        	- `None`: use sample names from `i.samfile`
+        - `nthread`: # threads used by `bcftools`  
 
 !!! hint "pVcf2GTMat"
 

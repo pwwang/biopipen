@@ -1,5 +1,6 @@
 
 from os import path
+from bioprocs.utils import FileConn
 from bioprocs.utils.tsvio import TsvReader
 
 infile  = {{i.infile | repr}}
@@ -24,7 +25,7 @@ elif path.isfile(reffai):
 	for r in reader:
 		contigs.append(r.CONFIG)
 
-with open(infile) as f, open(outfile, 'w') as fout:
+with FileConn(infile) as f, open(outfile, 'w') as fout:
 	for line in f:
 		if line.startswith('#'):
 			fout.write(line)

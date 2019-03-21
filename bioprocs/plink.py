@@ -202,6 +202,7 @@ pPlinkIBD.args.indep   = [50, 5, .2]
 pPlinkIBD.args.pihat   = 0.1875 # ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/
 pPlinkIBD.args.plot    = True
 pPlinkIBD.args.anno    = ''
+pPlinkIBD.args.seed    = None
 pPlinkIBD.args.devpars = Box(res=300, width=2000, height=2000)
 pPlinkIBD.envs.rimport = rimport
 pPlinkIBD.lang         = params.Rscript.value

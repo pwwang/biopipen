@@ -367,7 +367,7 @@ pVcf2Plink.script = "file:scripts/vcf/pVcf2Plink.py"
 """
 pVcfLiftover              = Proc(desc = 'Lift over vcf files.')
 pVcfLiftover.input        = 'infile:file'
-pVcfLiftover.output       = 'outfile:file:{{i.infile | fn}}.vcf, umfile:file:{{i.infile | fn}}.unmapped.vcf'
+pVcfLiftover.output       = 'outfile:file:{{i.infile | fn2}}.vcf, umfile:file:{{i.infile | fn2}}.unmapped.vcf'
 pVcfLiftover.args.tool    = 'picard'
 pVcfLiftover.args.picard  = params.picard.value
 pVcfLiftover.args.lochain = params.lochain.value
@@ -407,11 +407,25 @@ pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
 """
 pVcfCleanup          = Proc(desc = 'Remove configs from vcf file according to the given reference.')
 pVcfCleanup.input    = 'infile:file'
-pVcfCleanup.output   = 'outfile:file:{{i.infile | fn}}.vcf'
+pVcfCleanup.output   = 'outfile:file:{{i.infile | fn2}}.vcf'
 pVcfCleanup.args.ref = params.ref.value # required dict or fai file with it
 pVcfCleanup.lang     = params.python.value
 pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.py"
 
+"""
+@name:
+	pVcf2GTVcf
+@description:
+	Keep only GT information for each sample.
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.vcf{{".gz" if args.gz else ""}}`
+@args:
+	`tool`    : The tool to use, Default: `bcftools`
+	`gz`      : Gzip the output file or not, Default: `False`
+	`bcftools`: Path to bcftools, Default: `<params.bcftools>`
+"""
 pVcf2GTVcf               = Proc(desc = 'Keep only GT information for each sample.')
 pVcf2GTVcf.input         = 'infile:file'
 pVcf2GTVcf.output        = 'outfile:file:{{i.infile | fn2}}.vcf{{".gz" if args.gz else ""}}'
@@ -420,6 +434,66 @@ pVcf2GTVcf.args.gz       = False
 pVcf2GTVcf.args.bcftools = params.bcftools.value
 pVcf2GTVcf.lang          = params.python.value
 pVcf2GTVcf.script        = "file:scripts/vcf/pVcf2GTVcf.py"
+
+"""
+@name:
+	pVcfSampleFilter
+@description:
+	Keep or remove some samples from VCF file.
+@input:
+	`infile:file` : The input file
+	`samfile:file`: The file with sample names, one per line. Could be ignored, see `args.samples`
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.vcf`
+@args:
+	`bcftools`: Path to bcftools, Default: `<params.bcftools>`
+	`samples`: Samples to filter, could be one of the followings, Default: `None`
+		- A file with sample names, one per line.
+		- A list with sample names
+		- A string with sample names, separated by comma(,)
+		- A string of lambda function to tell to keep current sample or not.
+			- If this returns `True`, samples are added to the list, otherwise excluded.
+			- Note that when `args.keep == False`, `True` samples will be removed.
+		- `None`: use sample names from `i.samfile`
+	`keep`: Keep the samples provided or remove them. Default: `True`
+"""
+pVcfSampleFilter               = Proc(desc = 'Keep or remove some samples from VCF file.')
+pVcfSampleFilter.input         = 'infile:file, samfile:file'
+pVcfSampleFilter.output        = 'outfile:file:{{i.infile | fn2}}.vcf'
+pVcfSampleFilter.args.keep     = True
+pVcfSampleFilter.args.samples  = None
+pVcfSampleFilter.args.bcftools = params.bcftools.value
+pVcfSampleFilter.lang          = params.python.value
+pVcfSampleFilter.script        = "file:scripts/vcf/pVcfSampleFilter.py"
+
+"""
+@name:
+	pVcfSampleReplace
+@description:
+	Replace sample names in VCF file
+@input:
+	`infile:file` : The input file
+	`samfile:file`: The file with sample names, one per line. Could be ignored, see `args.samples`
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.vcf`
+@args:
+	`bcftools`: Path to bcftools, Default: `<params.bcftools>`
+	`samples`: New samples, could be one of the followings, Default: `None`
+		- A file with new sample names, one per line.
+		- A list with new sample names
+		- A string with new sample names, separated by comma(,)
+		- A string of lambda function to modify current sample names.
+		- `None`: use sample names from `i.samfile`
+	`nthread`: # threads used by `bcftools`
+"""
+pVcfSampleReplace               = Proc(desc = 'Replace sample names in VCF file')
+pVcfSampleReplace.input         = 'infile:file, samfile:file'
+pVcfSampleReplace.output        = 'outfile:file:{{i.infile | fn2}}.vcf'
+pVcfSampleReplace.args.bcftools = params.bcftools.value
+pVcfSampleReplace.args.samples  = None
+pVcfSampleReplace.args.nthread  = 0
+pVcfSampleReplace.lang          = params.python.value
+pVcfSampleReplace.script        = "file:scripts/vcf/pVcfSampleReplace.py"
 
 """
 @name:
