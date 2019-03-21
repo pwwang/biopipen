@@ -37,12 +37,12 @@ pPlinkStats.envs.rimport  = rimport
 pPlinkStats.lang          = params.Rscript.value
 pPlinkStats.script        = "file:scripts/plink/pPlinkStats.r"
 
-pPlinkSampleFilter = Proc(desc = 'Do sample filtering or extraction using `--keep[-fam]` or `--remove[-fam]`')
+pPlinkSampleFilter              = Proc(desc = 'Do sample filtering or extraction using `--keep[-fam]` or `--remove[-fam]`')
 pPlinkSampleFilter.input        = 'indir:dir, samfile:file'
 pPlinkSampleFilter.output       = 'outdir:dir:{{i.indir | bn}}'
 pPlinkSampleFilter.args.plink   = params.plink.value
 pPlinkSampleFilter.args.keep    = True
-pPlinkSampleFilter.args.samname = 'iid' # both or fid
+pPlinkSampleFilter.args.samid   = 'iid' # both or fid
 pPlinkSampleFilter.args.fam     = False
 pPlinkSampleFilter.args.params  = Box()
 pPlinkSampleFilter.args.nthread = False
@@ -188,16 +188,21 @@ pPlinkHWE.script       = "file:scripts/plink/pPlinkHWE.r"
 	`pihat`: The PI_HAT cutoff. Default: 0.1875 (see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/)
 	`plot` : Whether plot the PI_HAT heatmap? Default: `True`
 	`devpars`: The device parameters for the plot. Default: `Box(res=300, width=2200, height=1600)`
+	`samid`: Sample ids on the heatmap. Default: `iid`
+		- Could also be `fid` or `fid<sep>iid`, or an R function: `function(fid, iid)`
+	`anno` : The annotation file for the samples. Names must match the ones that are transformed by `args.samid`. Default: `''`
 """
 pPlinkIBD              = Proc(desc = "Estimate the identity by descent (IBD)")
 pPlinkIBD.input        = 'indir:dir'
 pPlinkIBD.output       = 'outdir:dir:{{i.indir | fn}}.ibd'
 pPlinkIBD.args.plink   = params.plink.value
 pPlinkIBD.args.highld  = params.highld.value
+pPlinkIBD.args.samid   = 'iid' # fid or a function (fid, iid)
 pPlinkIBD.args.indep   = [50, 5, .2]
 pPlinkIBD.args.pihat   = 0.1875 # ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/
 pPlinkIBD.args.plot    = True
-pPlinkIBD.args.devpars = Box(res=300, width=2200, height=1600)
+pPlinkIBD.args.anno    = ''
+pPlinkIBD.args.devpars = Box(res=300, width=2000, height=2000)
 pPlinkIBD.envs.rimport = rimport
 pPlinkIBD.lang         = params.Rscript.value
 pPlinkIBD.script       = "file:scripts/plink/pPlinkIBD.r"

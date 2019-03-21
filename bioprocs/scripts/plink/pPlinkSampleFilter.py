@@ -10,7 +10,7 @@ plink   = {{args.plink | quote}}
 nthread = {{args.nthread | repr}}
 keep    = {{args.keep | repr}}
 fam     = {{args.fam | repr}}
-samname = {{args.samname | repr}}
+samname = {{args.samid | repr}}
 params  = {{args.params | repr}}
 
 plink = shell.Shell(dict(plink = plink), equal = ' ').plink
