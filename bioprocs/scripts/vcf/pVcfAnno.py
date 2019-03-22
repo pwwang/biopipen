@@ -1,69 +1,86 @@
 from os import path, makedirs
-from shutil import rmtree
-from sys import stderr, exit
-import vcf
+from pyppl import Box
+from bioprocs.utils import shell, mem2
 
-{{ runcmd }}
-{{ mem2 }}
-{{ params2CmdArgs }}
-tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
-if not path.exists (tmpdir): makedirs (tmpdir)
+infile          = {{i.infile | quote}}
+outfile         = {{o.outfile | quote}}
+outdir          = {{o.outdir | quote}}
+tmpdir          = {{args.tmpdir | quote}}
+tool            = {{args.tool | quote}}
+snpeff          = {{args.snpeff | quote}}
+vep             = {{args.vep | quote}}
+gz              = {{args.gz | repr}}
+vcfanno         = {{args.vcfanno | quote}}
+annovar         = {{args.annovar | quote}}
+annovar_convert = {{args.annovar_convert | quote}}
+genome          = {{args.genome | quote}}
+nthread         = {{args.nthread | repr}}
+dbs             = {{args.dbs | repr}}
+dbs             = dbs[tool]
+snpeffStats     = {{args.snpeffStats | repr}}
+params          = {{args.params | repr}}
+mem             = {{args.mem | repr}}
+tmpdir          = path.join(tmpdir, "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
+if not path.exists(tmpdir):
+	makedirs(tmpdir)
+if gz:
+	outfile = outfile[:-3]
 
-gz      = {{args.gz | lambda x: bool(x)}}
-outfile = {{o.outfile | [:-3] | quote}} if gz else {{o.outfile | quote}}
-tool    = {{args.tool | quote}}
-dbpath  = {{args.dbpath}}[tool]
-params  = {{args.params}}
-try:
-{% case args.tool %}
-	###### snpeff
-	{% when'snpeff' %}
-	mem = mem2({{args.mem | quote}}, 'java')
-	params['dataDir'] = dbpath
-	{% if args.snpeffStats %}
-	params['csvStats'] = "{{o.outdir}}/{{i.infile | fn}}.stats.csv"
-	{% else %}
-	params['noStats'] = True
-	{% endif %}
-	params['i'] = 'vcf'
-	params['o'] = 'vcf'
-		
-	cmd = '{{args.snpeff}} %s -Djava.io.tmpdir="%s" %s {{args.genome}} "{{i.infile}}" > "%s"' % (mem, tmpdir, params2CmdArgs(params, dash='-', equal=' '), outfile)
-	runcmd (cmd)
-	
-	###### vep
-	{% when 'vep' %}
-	params['i']        = {{i.infile | quote}}
-	params['o']        = outfile
-	params['format']   = 'vcf'
-	params['vcf']      = True
-	params['cache']    = True
-	params['dir']      = dbpath
-	params['assembly'] = {{args.genome | quote}}
-	cmd = '{{args.vep}} %s' % (params2CmdArgs(params, equal=' '))
-	runcmd (cmd)
+shell.TOOLS.vcfanno         = vcfanno
+shell.TOOLS.annovar         = annovar
+shell.TOOLS.annovar_convert = annovar_convert
+shell.TOOLS.vep             = vep
+shell.TOOLS.snpeff          = snpeff
 
-	###### annovar
-	{% when 'annovar' %}
-	# convert vcf to avinput
-	avinput  = "{{o.outdir}}/{{i.infile | fn}}.avinput"
-	avparams = {}
+def run_snpeff():
+	if not path.exists(dbs):
+		raise ValueError('Database does not exist: {}'.format(dbs))
+	snpeff = shell.Shell(subcmd = True, dash = '-', equal = ' ').snpeff
+	params.dataDir = dbs
+	if snpeffStats:
+		params.csvStats = path.join(outdir, path.basename(infile) + '.stats.csv')
+	else:
+		params.noStats = True
+	params.i = 'vcf'
+	params.o = 'vcf'
+	params["Djava.io.tmpdir=%s" % tmpdir] = True
+	params._ = [genome, infile]
+	params._stdout = outfile
+	snpeff.ann(**params).run()
+	if gz: shell.bgzip(outfile)
 
-	avparams['includeinfo'] = True
-	avparams['allsample']   = True
-	avparams['withfreq']    = True
-	avparams['format']      = 'vcf4'
-	avparams['outfile']     = avinput
+def run_vep():
+	if not path.exists(dbs):
+		raise ValueError('Database does not exist: {}'.format(dbs))
+	vep             = shell.Shell(equal = ' ').vep
+	params.i        = infile
+	params.o        = outfile
+	params.format   = 'vcf'
+	params.vcf      = True
+	params.cache    = True
+	params.dir      = dbs
+	params.assembly = genome
+	vep(**params).run()
+	if gz: shell.bgzip(outfile)
 
-	cmd = '{{args.annovar_convert}} %s "{{i.infile}}"' % params2CmdArgs(avparams, equal=' ')
-	runcmd (cmd)
+def run_annovar():
+	if not path.exists(dbs):
+		raise ValueError('Database does not exist: {}'.format(dbs))
+	import vcf
+	avinput              = path.join(outdir, infile + '.avinput')
+	avparams             = Box()
+	avparams.includeinfo = True
+	avparams.allsample   = True
+	avparams.withfreq    = True
+	avparams.format      = 'vcf4'
+	avparams.outfile     = avinput
+	avparams._           = infile
+	shell.Shell(equal = ' ').annovar_convert(**avparams).run()
 
-	params['outfile']  = {{o.outfile | prefix | quote}}
-	params['buildver'] = {{args.genome | quote}}
-
-	cmd = '{{args.annovar}} %s "%s" "%s"' % (params2CmdArgs(params, equal=' '), avinput, dbpath) 
-	runcmd (cmd)
-		
+	params.buildver = genome
+	params._        = [avinput, dbs]
+	params.outfile  = path.splitext(outfile)[0]
+	shell.Shell(equal = ' ').annovar(**params).run()
 	# convert .variant_function to vcf
 	# like snpEff ann, add ANN field to vcf
 	def info2dict(info):
@@ -156,11 +173,36 @@ try:
 	record  = rs2record(lastr)
 	writer.write_record(record)		
 	writer.close()
-{% endcase %}
 
-	if gz: runcmd ('gzip "%s"' % outfile)
-except Exception as ex:
-	stderr.write ("Job failed: %s" % str(ex))
+	if gz: shell.bgzip(outfile)
+
+def run_vcfanno():
+	# compose toml file
+	toml = path.join(outdir, 'config.toml')
+	with open(toml, 'w') as f:
+		for config in dbs:
+			f.write("\n[[annotation]]\n")
+			for key, val in config.items():
+				f.write('{key}={val!r}\n'.format(key = key, val = val))
+	params.p       = nthread
+	params._       = [toml, infile]
+	params._stdout = outfile
+	shell.Shell(dash = '-', equal = ' ').vcfanno(**params).run()
+	if gz: shell.bgzip(outfile)
+
+tools = dict(
+	snpeff  = run_snpeff,
+	vep     = run_vep,
+	annovar = run_annovar,
+	vcfanno = run_vcfanno
+)
+
+
+try:
+	tools[tool]()
+except KeyError:
+	raise ValueError('Tool {!r} not supported yet.'.format(tool))
+except:
 	raise
 finally:
-	rmtree(tmpdir)
+	shell.rmrf(tmpdir)

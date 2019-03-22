@@ -201,6 +201,8 @@ DEFAULTS = {
 	"vardict.desc"             : "The path of vardict.",
 	"vcf2maf"                  : "vcf2maf.pl",
 	"vcf2maf.desc"             : "The path of vcf2maf.pl.",
+	"vcfanno"                  : "vcfanno",
+	"vcfanno.desc"             : "The path of vcfanno.",
 	"vcflib_vcffilter"         : "vcffilter",
 	"vcflib_vcffilter.desc"    : "The path of vcflib vcffilter.",
 	"vcftools"                 : "vcftools",

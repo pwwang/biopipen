@@ -182,11 +182,11 @@ class ShellResult(object):
 
 	@property
 	def stdout(self):
-		return self.run().cmdobj.stdout
+		return self.run(save = 'stdout').cmdobj.stdout
 	
 	@property
 	def stderr(self):
-		return self.run().cmdobj.stderr
+		return self.run(save = 'stderr').cmdobj.stderr
 
 	@property
 	def cmd(self):

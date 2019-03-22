@@ -156,7 +156,7 @@ pVcf.script      = "file:scripts/vcf/pVcf.py"
 	`annovar_convert`: The path of convert2annovar.pl, used to convert vcf to annovar input file. Default: convert2annovar.pl
 	`genome`:          The genome for annotation. Default: hg19
 	`tmpdir`:          The tmpdir, mainly used by snpeff. Default: <system tmpdir>
-	`dbpath`:          The path of database for each tool. Required by 'annovar' and 'vep'
+	`dbs`:             The path of database for each tool. Required by 'annovar' and 'vep'
 	`params`:          Other params for tool. Default: ''
 	`snpeffStats`:     Whether to generate stats file when use snpeff. Default: False
 	`mem`:             The memory used by snpeff. Default: '4G'
@@ -171,35 +171,28 @@ pVcfAnno.output               = [
 	"outfile:file:{{i.infile | fn}}.{{args.tool}}/{{i.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}", 
 	"outdir:dir:{{i.infile | fn}}.{{args.tool}}"
 ]
+pVcfAnno.echo                 = Box(jobs = 0, type = 'stderr')
 pVcfAnno.args.tool            = 'snpeff'
 pVcfAnno.args.snpeff          = params.snpeff.value
 pVcfAnno.args.vep             = params.vep.value
 pVcfAnno.args.gz              = False
+pVcfAnno.args.vcfanno         = params.vcfanno.value
 pVcfAnno.args.annovar         = params.annovar.value
 pVcfAnno.args.annovar_convert = params.annovar_convert.value
 pVcfAnno.args.genome          = params.genome.value
 pVcfAnno.args.tmpdir          = params.tmpdir.value
-pVcfAnno.args.dbpath          = Box({
-	'snpeff' : params.snpeffDb.value,
-	'annovar': params.annovarDb.value,
-	'vep'    : params.vepDb.value
-})
-pVcfAnno.args.snpeffStats    = False
-pVcfAnno.args.params         = Box()
-pVcfAnno.args.mem            = params.mem8G.value
-pVcfAnno.beforeCmd           = """
-# check dbpath
-dbpath=$({{proc.lang}} -c "print {{args.dbpath}}['{{args.tool}}']")
-if [[ ! -e "$dbpath" ]]; then
-	echo "You have to specify valid db path for tool: {{args.tool}}" 1>&2 
-	echo "  - For vep: /path/to/cache" 1>&2
-	echo "  - For snpEff: /path/to/datadir" 1>&2
-	echo "  - For annovar: /path/to/db" 1>&2
-	exit 1
-fi
-"""
-pVcfAnno.lang                 = params.python.value
-pVcfAnno.script               = "file:scripts/vcf/pVcfAnno.py"
+pVcfAnno.args.dbs             = Box(
+	snpeff  = params.snpeffDb.value,
+	annovar = params.annovarDb.value,
+	vep     = params.vepDb.value,
+	vcfanno = []
+)
+pVcfAnno.args.snpeffStats = False
+pVcfAnno.args.nthread     = 1
+pVcfAnno.args.params      = Box()
+pVcfAnno.args.mem         = params.mem8G.value
+pVcfAnno.lang             = params.python.value
+pVcfAnno.script           = "file:scripts/vcf/pVcfAnno.py"
 
 """
 @name:
