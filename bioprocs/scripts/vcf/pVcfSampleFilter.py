@@ -1,4 +1,5 @@
 from os import path
+from pyppl import Box
 from bioprocs.utils import shell
 
 {% python from os import path %}
@@ -9,6 +10,7 @@ infile   = {{i.infile | quote}}
 samfile  = {{i.samfile | quote}}
 outfile  = {{o.outfile | quote}}
 samples  = {{args.samples | samcalls.get(samtypes(args.samples), repr) }}
+params   = {{args.params | repr}}
 keep     = {{args.keep | quote}}
 bcftools = {{args.bcftools | quote}}
 
@@ -39,10 +41,10 @@ samfile = outfile + '.samples'
 with open(samfile, 'w') as f:
 	f.write(''.join(s + '\n' for s in rsams))
 
-params = dict(
+params.update(dict(
 	S = samfile if keep else '^' + samfile,
 	o       = outfile,
 	_       = infile
-)
+))
 
 bcftools.view(**params).run()

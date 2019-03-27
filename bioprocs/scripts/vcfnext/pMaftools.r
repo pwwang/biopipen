@@ -1,6 +1,5 @@
-require('maftools')
-
 {{rimport}}('__init__.r', 'plot.r')
+library(maftools)
 
 indir    = {{i.indir | quote}}
 outdir   = {{o.outdir | quote}}
@@ -11,18 +10,23 @@ plots    = {{args.plot | R}}
 mtparams = {{args.params | R}}
 ngenes   = {{args.ngenes | R}}
 nthread  = {{args.nthread | R}}
-ref      = {{args.ref | quote}}
+genome   = {{args.genome | quote}}
 
 setwd(outdir)
-# you probably have multiple maf files
-maffiles = c(Sys.glob(file.path(indir, "*.maf")), Sys.glob(file.path(indir, "*.maf.gz")))
+if (file.exists(indir) && dir.exists(indir)) {
+	# you probably have multiple maf files
+	maffiles = c(Sys.glob(file.path(indir, "*.maf")), Sys.glob(file.path(indir, "*.maf.gz")))
 
-if (length(maffiles) == 0) {
-	stop('No maf files found in input directory!')
-}
-maffile  = maffiles[1]
-if (length(maffiles) > 1) {
-	log2pyppl('You multiple MAF files in input directory, using the first one:', maffile, level = 'warning')
+	if (length(maffiles) == 0) {
+		stop('No maf files found in input directory!')
+	}
+	maffile  = maffiles[1]
+	if (length(maffiles) > 1) {
+		log2pyppl('You multiple MAF files in input directory, using the first one:', maffile, level = 'warning')
+	}
+} else if (file.exists(indir)) {
+	maffile = indir
+	indir = {{job.indir | quote}}
 }
 
 # get annotation file
@@ -671,7 +675,7 @@ if (plots$signature) {
 			params  [[name]] = NULL
 		}
 	}
-	tmParams$ref_genome = ref
+	tmParams$ref_genome = paste0('BSgenome.Hsapiens.UCSC.', genome)
 	tmParams$maf = laml
 	tm = do.call(trinucleotideMatrix, tmParams)
 	# apobec

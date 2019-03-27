@@ -1,80 +1,84 @@
-import shlex
-from pyppl import Box
-from bioprocs.utils import runcmd, cmdargs
-from bioprocs.utils.parallel import Parallel
-
-# vcf2maf doesn't support multiple samples
-# so we have to split multi-sample vcf to single-sample vcfs
-# convert each single-sample vcf to maf and then combine them
-{% if args.tool == 'vcf2maf' %}
 from os import path
-from subprocess import check_output
-vep = check_output(['which', {{args.vep | quote}}]).strip()
+from pyppl import Box
+from bioprocs.utils import shell, parallel
 
-params = {{args.params}}
+infile    = {{i.infile | quote}}
+outfile   = {{o.outfile | quote}}
+tool      = {{args.tool | quote}}
+vcf2maf   = {{args.vcf2maf | quote}}
+vep       = {{args.vep | quote}}
+vepDb     = {{args.vepDb | quote}}
+filtervcf = {{args.filtervcf | quote}}
+ref       = {{args.ref | quote}}
+bcftools  = {{args.bcftools | quote}}
+tumoridx  = {{args.tumor | repr}}
+nthread   = {{args.nthread | repr}}
+params    = {{args.params | repr}}
 
-# get samples
-{% if args.samfunc %}
-samples = ({{args.samfunc}})({{i.infile | quote}})
-{% else %}
-samples = check_output([{{args.bcftools | quote}}, 'query', '-l', {{i.infile | quote}}]).splitlines()
-samples = list(filter(None, [x.strip() for x in samples]))
-{% endif %}
+shell.TOOLS.vcf2maf  = vcf2maf
+shell.TOOLS.bcftools = bcftools
 
-{% 	if args.somatic %}
-params['input-vcf']  = {{i.infile | quote}}
-params['output-maf'] = {{o.outfile | quote}}
-params['vep-data']   = {{args.vepDb | quote}}
-params['vep-forks']  = {{args.nthread}}
-params['filter-vcf'] = {{args.filtervcf | quote}}
-params['ref-fasta']  = {{args.ref | quote}}
-params['vep-path']   = path.dirname(vep)
-{% if args.tumor1st %}
-params['tumor-id']   = samples.pop(0)
-params['normal-id']  = samples[0] if samples else 'NORMAL'
-{% else %}
-params['normal-id']  = samples.pop(0)
-params['tumor-id']   = samples[0] if samples else 'NORMAL'
-{% endif %}
+veppath  = path.dirname(shell.which(vep))
+vcf2maf  = shell.Shell(equal = ' ').vcf2maf
+bcftools = shell.Shell(subcmd = True, equal = ' ').bcftools
 
-cmd = '{{args.vcf2maf}} %s' % (cmdargs(params, equal=' '))
-runcmd(cmd)
+def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
+	params['input-vcf']  = vcf
+	params['output-maf'] = maf
+	params['vep-data']   = vepDb
+	params['vep-forks']  = forks
+	params['filter-vcf'] = filtervcf
+	params['ref-fasta']  = ref
+	params['vep-path']   = veppath
+	params['tumor-id']   = tumor
+	params['normal-id']  = normal
+	vcf2maf(**params).run()
 
-{% 	else %}
-cmds = []
-for sample in samples:
-	vtparams = {}
-	vtparams['a'] = True
-	vtparams['c'] = sample
-	vtparams['e'] = True
-	samplevcf     = "{{job.outdir}}/{{i.infile | fn}}-%s.vcf" % sample
-	cmd = '{{args.vcftools}} %s {{i.infile | quote}} > "%s"' % (cmdargs(vtparams), samplevcf)
+def extract_sample_from_vcf(vcf, sample, outvcf):
+	bcftools.view(s = sample, o = outvcf + '.tmp', _ = vcf).run()
+	# exclude sites without genotypes
+	# because this is split from a merged vcf file
+	bcftools.view(_ = outvcf + '.tmp', g = '^miss', o = outvcf).run()
+	shell.rmrf(outvcf + '.tmp')
 
-	# vcf2maf.pl --input-vcf ZYYP-ZYYB.vcf  --output-maf ZYYP-ZYYB.snpEff.maf --tumor-id ZXLT-ZXLB_TUMOR --normal-id ZXLT-ZXLB_NORMAL --vep-data /path/to/vep/cache/ --filter-vcf /path/to/vep/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz --ref-fasta /path/to/hs37d5/phase2_reference_assembly_sequence/hs37d5.fa --vep-path /path/to/miniconda2/bin
-	params['input-vcf']  = samplevcf
-	params['output-maf'] = "{{job.outdir}}/{{i.infile | fn}}-%s.maf" % sample
-	params['vep-data']   = {{args.vepDb | quote}}
-	params['vep-forks']  = {{args.nthread}}
-	params['filter-vcf'] = {{args.filtervcf | quote}}
-	params['ref-fasta']  = {{args.ref | quote}}
-	params['vep-path']   = path.dirname(vep)
-
-	cmd = cmd + '; {{args.vcf2maf}} --tumor-id %s %s' % (sample, cmdargs(params, equal=' '))
-	cmds.append(cmd)
-
-{% 		if args.nthread == 1 %}
-for cmd in cmds: runcmd(cmd)
-{% 		else %}
-# Note the threads may be hanging on here.
-p = Parallel({{args.nthread}})
-p.run('{}', [(cmd,) for cmd in cmds])
-{% 		endif %}
-
-for i, sample in enumerate(samples):
-	singlemaf = "{{job.outdir}}/{{i.infile | fn}}-%s.maf" % sample
-	if i == 0:
-		runcmd('cat "%s" > {{o.outfile | quote}}' % singlemaf)
+def run_vcf2maf():
+	vcfsams  = bcftools.query(l = infile).stdout.splitlines()
+	vcfsams  = [s for s in vcfsams if s.strip()]
+	
+	if tumoridx < 2: # single sample
+		tumor  = vcfsams[tumoridx]
+		normal = vcfsams[1-tumoridx]
+		run_vcf2maf_one(infile, outfile, tumor, normal)
 	else:
-		runcmd('egrep -v "^#|^Hugo_Symbol" "%s" >> {{o.outfile | quote}}' % singlemaf)
-{% 	endif %}
-{% endif %}
+		# split vcf file
+		splitdir = path.join(path.dirname(outfile), "splits")
+		shell.mkdir(p = splitdir)
+		mafdir = path.join(path.dirname(outfile), "mafs")
+		shell.mkdir(p = mafdir)
+
+		para = parallel.Parallel(nthread)
+		para.run(extract_sample_from_vcf, [
+			(infile, s, path.join(splitdir, "split{}.vcf".format(i+1))) 
+			for i, s in enumerate(vcfsams)
+		])
+		restThreads = int(float(nthread)/float(len(vcfsams)) - 1.0)
+		restThreads = max(restThreads, 1)
+		para.run(run_vcf2maf_one, [
+			(path.join(splitdir, "split" + str(i+1) + ".vcf"), path.join(mafdir, "split{}.maf".format(i+1)), s, None, restThreads) 
+			for i, s in enumerate(vcfsams)
+		])
+		del para
+
+		# merge mafs
+		shell.head(n = 1, _ = path.join(mafdir, "split1.maf"), _stdout = outfile)
+		for i, s in enumerate(vcfsams):
+			shell.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1)), _stdout_ = outfile)
+
+tools = dict(
+	vcf2maf = run_vcf2maf
+)
+
+try:
+	tools[tool]()
+except KeyError:
+	raise ValueError('Tool {!r} not supported.'.format(tool))

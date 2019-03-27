@@ -53,12 +53,17 @@ vcf2vaf = function(vcffile) {
 	samname = colnames(vcf@gt)[vfsamcol + 1]
 	for (i in 1:nrow(vcf@gt)) {
 		sample = makeSample(vcf@gt[i, "FORMAT"], vcf@gt[i, vfsamcol + 1])
-		if (varWithInfo) {
-			vari = makeInfo(vcf@fix[i, "INFO"])
-			varc = varcount(sample, vari)
-		} else {
-			varc = varcount(sample)
-		}
+		tryCatch({
+			if (varWithInfo) {
+				vari = makeInfo(vcf@fix[i, "INFO"])
+				varc = varcount(sample, vari)
+			} else {
+				varc = varcount(sample)
+			}
+		}, error = function(e) {
+			logger('Unable to get AD of variant ', vcf@fix[i, "CHROM"], ':', vcf@fix[i, "POS"], level = 'WARNING')
+			varc = NULL
+		})
 		if (!is.list(varc)) {
 			varc = list(count = varc)
 		}
@@ -88,7 +93,7 @@ vcf2vaf = function(vcffile) {
 		))
 	}
 	rownames(vaf) = NULL
-	vaf
+	vaf[complete.cases(vaf),,drop = FALSE]
 }
 
 # prepare input data

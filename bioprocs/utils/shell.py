@@ -287,7 +287,7 @@ class Shell(object):
 			subcmd = False, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, 
 			ignorefalse = self.ignorefalse, base = tool, **self.pargs)
 
-wc   = lambda *args, **kwargs: Shell().wc(*args, **kwargs).run()
+wc   = lambda *args, **kwargs: Shell().wc(*args, **kwargs).run(save = 'stdout')
 wc_l = lambda filename: int(wc(l = filename).stdout.split()[0])
 wcl  = wc_l
 
@@ -321,3 +321,5 @@ zcat  = lambda *args,  **kwargs: Shell().zcat(*args, **kwargs).run(logger = Fals
 cat   = lambda *args,  **kwargs: Shell().cat(*args, **kwargs).run(logger = False)
 # _ means waiting for run
 acat_ = lambda infile, **kwargs: Shell().zcat(infile, **kwargs) if infile.endswith('.gz') else Shell().cat(infile, **kwargs)
+
+which = lambda *args, **kwargs: Shell().which(*args, **kwargs).run(logger = False, save = 'stdout').stdout.rstrip('\n')

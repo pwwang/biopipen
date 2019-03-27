@@ -1,7 +1,7 @@
 from pysam import VariantFile
 from pyppl import Box
 from os import path
-from bioprocs.utils import funcargs, cmdargs, runcmd
+from bioprocs.utils import funcargs, cmdargs, runcmd, logger
 
 vfvcfs   = {{ i.vfvcfs | repr}}
 cnvcfs   = {{ i.cnvcfs | repr}}
@@ -13,7 +13,7 @@ cnsamcol = {{ args.cnsamcol | repr}} - 1
 varcount = {{ args.varcount}}
 cncount  = {{ args.cncount}}
 if not callable(varcount):
-	varcount = lambda fmt: fmt.get('AD') and fmt.get("AD")[1]
+	varcount = lambda fmt: fmt.get("AD")[1]
 if not callable(cncount):
 	cncount = lambda fmt: fmt.get('CN')
 
@@ -21,10 +21,14 @@ def vcf2vaf(vcf):
 	for record in vcf:
 		fmt  = Box(record.samples[vfsamcol].items())
 		info = Box(record.info.items())
-		vc   = varcount(fmt) if len(funcargs(varcount)) == 1 else varcount(fmt, info)
+		try:
+			vc = varcount(fmt) if len(funcargs(varcount)) == 1 else varcount(fmt, info)
+		except:
+			vc = None
 		if not isinstance(vc, dict):
 			vc = {'count': vc}
-		if vc['count'] is None:
+		if vc['count'] is None or vc['count'] is False:
+			logger.warning('Cannot get variant count for site {chr}:{pos}'.format(chr = record.chrom, pos = record.pos))
 			continue
 		yield dict(
 			mutation_id = "{chr}:{pos}".format(chr = record.chrom, pos = record.pos),

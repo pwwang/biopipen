@@ -274,7 +274,7 @@ pMaf2Mat.script       = "file:scripts/vcfnext/pMaf2Mat.r"
 @description:
 	Use maftools to draw plots.
 @input:
-	`indir:dir`: The input directory. Could contain:
+	`indir:file`: The input directory or a single maf file. A directory could contain:
 		- `*.maf` or `*.maf.gz` file (required)
 		- `*.annot.tsv` or `*.annot.txt` file (see: https://github.com/PoisonAlien/maftools/blob/master/inst/extdata/tcga_laml_annot.tsv)
 		- `all_lesions.conf_*.txt`: Gistic cnv data
@@ -348,11 +348,11 @@ pMaf2Mat.script       = "file:scripts/vcfnext/pMaf2Mat.r"
 	[Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
 """
 pMaftools              = Proc(desc = 'Use maftools to draw plots.')
-pMaftools.input        = 'indir:dir'
+pMaftools.input        = 'indir:file'
 pMaftools.output       = 'outdir:dir:{{i.indir | fn}}.maftools'
 pMaftools.args.ngenes  = 10
 pMaftools.args.isTCGA  = False
-pMaftools.args.ref     = params.ref.value # for signature
+pMaftools.args.genome  = params.genome.value # for signature
 pMaftools.args.mutypes = ["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]
 pMaftools.args.plot    = Box(
 	summary        = True,

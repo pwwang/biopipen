@@ -1,38 +1,46 @@
-from sys import stderr
+from os import path
 from pyppl import Box
-from subprocess import check_output
-from bioprocs.utils import runcmd, cmdargs
-from bioprocs.utils.parallel import Parallel
+from bioprocs.utils import shell, parallel
 
-allsamples = check_output([{{args.bcftools | quote}}, 'query', '-l', {{i.infile | quote}}]).splitlines()
-allsamples = list(filter(None, [x.strip() for x in allsamples]))
+infile   = {{i.infile | quote}}
+prefix   = {{i.infile | fn2 | quote}}
+outdir   = {{o.outdir | quote}}
+samples  = {{i.samples | quote}}
+tool     = {{args.tool | quote}}
+bcftools = {{args.bcftools | quote}}
+gatk     = {{args.gatk | quote}}
+ref      = {{args.ref | quote}}
+params   = {{args.params | repr}}
+nthread  = {{args.nthread | repr}}
 
-samples = {{i.samples | lambda x: list(filter(None, [x.strip() for x in x.split(',')]))}}
-if not samples: samples = allsamples
+shell.TOOLS.bcftools = bcftools
+shell.TOOLS.gatk     = gatk
 
-nonexists = [sample for sample in samples if sample not in allsamples]
-if nonexists:
-	stderr.write('pyppl.log.warning: Samples not exist: %s\n' % nonexists)
-	for ne in nonexists: del samples[samples.index(ne)]
+bcftools = shell.Shell(subcmd = True, equal = ' ').bcftools
 
-cmds = []
-########### vcftools
-{% if args.tool == 'vcftools' %}
-for sample in samples:
-	params = {}
-	params['a'] = True
-	params['c'] = sample
-	params['e'] = True
-	params.update({{args.params}})
-	cmd = '{{args.vcftools}} %s "{{i.infile}}" > "{{o.outdir}}/{{i.infile | fn}}-%s.vcf"' % (cmdargs(params), sample)
-	cmds.append(cmd)
+allsamples = bcftools.query(l = infile).stdout.splitlines()
+allsamples = [s.strip() for s in allsamples if s.strip()]
+if samples:
+	with open(samples) as f:
+		samples = f.readlines()
+	samples = list(set(allsamples) & set(samples))
+else:
+	samples = allsamples
 
-########### awk
-{% elif args.tool == 'awk' %}
-# write the awk script
-awkfile = '{{job.outdir}}/vcfsample.awk'
-awkfh   = open(awkfile, 'w')
-awkfh.write("""
+def run_bcftools_one(sample):
+	bcftools.view(_ = infile, s = sample, o = path.join(outdir, '{}-{}.vcf'.format(prefix, sample)), **params).run()
+
+def run_bcftools():
+	parallel.Parallel(nthread).run(run_bcftools_one, [(sample,) for sample in samples])
+
+def run_awk_one(sample, index, awkfile):
+	shell.Shell().awk(v = ["sample={!r}".format(sample), "index={}".format(index + 10)], f = awkfile, _ = infile, _stdout = path.join(outdir, '{}-{}.vcf'.format(prefix, sample))).run()
+
+def run_awk():
+	# write the awk script
+	awkfile = path.join(outdir, 'vcfsample.awk')
+	awkfh   = open(awkfile, 'w')
+	awkfh.write("""
 BEGIN {
 	OFS="\\t"
 } 
@@ -46,35 +54,26 @@ $0 !~ "^#" {
 	print $1,$2,$3,$4,$5,$6,$7,$8,$9,$index
 }
 """)
-awkfh.close()
-for i, sample in enumerate(samples):
-	cmd = '{{args.awk}} -v sample="{sample}" index={index} -f {awkfile} {infile}'.format(
-		sample = sample,
-		index  = 10 + i,
-		awk    = str(repr(awkfile)),
-		infile = str(repr(infile))
-	)
-	cmds.append(cmd)
+	awkfh.close()
+	parallel.Parallel(nthread).run(run_awk_one, [(sample, i, awkfile) for i, sample in enumerate(samples)])
 
-########### gatk
-{% elif args.tool == 'gatk' %}
-for sample in samples:
-	params                       = {}
-	params['R']                  = {{args.ref | quote}}
-	params['V']                  = {{i.infile | quote}}
-	params['o']                  = "{{o.outdir}}/{{i.infile | fn}}-%s.vcf" % sample
-	params['sample_name']        = sample
-	params['excludeFiltered']    = True
-	params['excludeNonVariants'] = True
-	params.update({{args.params}})
-	cmd = '{{args.gatk}} -T SelectVariants %s' % (cmdargs(params, equal=' '))
-	cmds.append(cmd)
+def run_gatk_one(sample):
+	shell.Shell(dash = '-', equal = ' ').gatk(
+		R = ref,
+		V = infile,
+		o = path.join(outdir, '{}-{}.vcf'.format(prefix, sample)),
+		sample_name = sample,
+		T = 'SelectVariants',
+		excludeNonVariants = True,
+		**params
+	).run()
 
-{% endif %}
+def run_gatk():
+	parallel.Parallel(nthread).run(run_gatk_one, [(sample, ) for sample in samples])
 
-{% if args.nthread == 1 %}
-for cmd in cmds: runcmd(cmd)
-{% else %}
-p = Parallel({{args.nthread}})
-p.run('{}', [(cmd,) for cmd in cmds])
-{% endif %}
+tools = dict(bcftools = run_bcftools, awk = run_awk, gatk = run_gatk)
+
+try:
+	tools[tool]()
+except KeyError:
+	raise ValueError('Tool {!r} not supported yet.'.format(tool))

@@ -13,7 +13,7 @@ from .utils import fs2name
 	`outfile:file`: The generated fasta file
 @args:
 	`ref`     : The fasta file
-	`bedtools`: The bedtools executable,                  default: "bedtools"
+	`bedtools`: The bedtools executable,                  default: `<params.bedtools>`
 	`params`  : Other parameters for `bedtools getfasta`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -46,21 +46,17 @@ pBedGetfasta.script = "file:scripts/bedtools/pBedGetfasta.py"
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`:   Other parameters for `bedtools closest`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedClosest                 = Proc(desc = 'Find the closest elements')
-pBedClosest.input           = "afile:file, bfile:file"
-pBedClosest.output          = "outfile:file:{{i.afile | fn}}.closest.bt"
-pBedClosest.args.bedtools   = params.bedtools.value
-pBedClosest.args.params     = Box()
-pBedClosest.envs.bashimport = bashimport
-pBedClosest.script = '''
-{{bashimport}} __init__.bash
-{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{i.afile | squote}} -b {{i.bfile | squote}} > {{out.outfile | squote}}
-'''
+pBedClosest               = Proc(desc = 'Find the closest elements')
+pBedClosest.input         = "afile:file, bfile:file"
+pBedClosest.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
+pBedClosest.args.bedtools = params.bedtools.value
+pBedClosest.args.params   = Box()
+pBedClosest.script        = "file:scripts/bedtools/pBedClosest.py"
 
 """
 @name:
@@ -73,21 +69,17 @@ pBedClosest.script = '''
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`:   Other parameters for `bedtools closest`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedClosest2                 = Proc(desc = 'Find the closest elements')
-pBedClosest2.input           = "afile:file, bfiles:files"
-pBedClosest2.output          = "outfile:file:{{i.afile | fn}}.closest.bt"
-pBedClosest2.args.bedtools   = params.bedtools.value
-pBedClosest2.args.params     = Box()
-pBedClosest2.envs.bashimport = bashimport
-pBedClosest2.script = '''
-{{bashimport}} __init__.bash
-{{args.bedtools}} closest $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a {{i.afile | squote}} -b {{i.bfiles | asquote}} > {{out.outfile | squote}}
-'''
+pBedClosest2               = Proc(desc = 'Find the closest elements')
+pBedClosest2.input         = "afile:file, bfiles:files"
+pBedClosest2.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
+pBedClosest2.args.bedtools = params.bedtools.value
+pBedClosest2.args.params   = Box()
+pBedClosest2.script        = "file:scripts/bedtools/pBedClosest2.py"
 
 """
 @name:
@@ -100,8 +92,8 @@ pBedClosest2.script = '''
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools flank`, default: ""
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools flank`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
@@ -126,7 +118,7 @@ pBedFlank.script        = "file:scripts/bedtools/pBedFlank.py"
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`:   Other parameters for `bedtools intersect`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -150,18 +142,18 @@ pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`:   Other parameters for `bedtools intersect`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedIntersect2                     = Proc(desc = 'The wrapper of "bedtools intersect" with multiple input b files.')
-pBedIntersect2.input               = "afile:file, bfiles:files"
-pBedIntersect2.output              = "outfile:file:{{i.afile | fn}}.intersect2.bt"
-pBedIntersect2.args.bedtools       = params.bedtools.value
-pBedIntersect2.args.params         = Box()
-pBedIntersect2.lang                = params.python.value
-pBedIntersect2.script              = 'file:scripts/bedtools/pBedIntersect2.py'
+pBedIntersect2               = Proc(desc = 'The wrapper of "bedtools intersect" with multiple input b files.')
+pBedIntersect2.input         = "afile:file, bfiles:files"
+pBedIntersect2.output        = "outfile:file:{{i.afile | fn}}.intersect2.bt"
+pBedIntersect2.args.bedtools = params.bedtools.value
+pBedIntersect2.args.params   = Box()
+pBedIntersect2.lang          = params.python.value
+pBedIntersect2.script        = 'file:scripts/bedtools/pBedIntersect2.py'
 
 """
 @name:
@@ -173,23 +165,19 @@ pBedIntersect2.script              = 'file:scripts/bedtools/pBedIntersect2.py'
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`informat`:The format of input file, whether is a "bed" file or "genome" size file. Default: "bed"
-	`params`:  Other parameters for `bedtools makewindows`, default: ""
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`intype`:   The format of input file, whether is a "bed" file or "genome" size file. Default: `bed`
+	`params`:   Other parameters for `bedtools makewindows`, default: `Box()`
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMakewindows = Proc(desc = 'Makes adjacent or sliding windows across a genome or BED file.')
+pBedMakewindows               = Proc(desc = 'Makes adjacent or sliding windows across a genome or BED file.')
 pBedMakewindows.input         = "infile:file"
 pBedMakewindows.output        = "outfile:file:{{i.infile | fn}}.window.bed"
 pBedMakewindows.args.params   = Box()
 pBedMakewindows.args.bedtools = params.bedtools.value
 pBedMakewindows.args.intype   = 'bed'
-pBedMakewindows.envs.bashimport = bashimport
-pBedMakewindows.script = '''
-{{bashimport}} __init__.bash
-{{args.bedtools}} makewindows $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') {{args.intype | lambda x: '-b' if x=='bed' else '-g'}} {{i.infile | squote}} > {{out.outfile | squote}}
-'''
+pBedMakewindows.script        = "file:scripts/bedtools/pBedMakewindows.py"
 
 # region pBedMerge2
 """
@@ -202,18 +190,18 @@ pBedMakewindows.script = '''
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable,               default: "bedtools"
+	`bedtools`: The bedtools executable,               default: `<params.bedtools>`
 	`params`  : Other parameters for `bedtools merge`, default: {}
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMerge                     = Proc(desc = 'Merge regions in a bed file using `bedtools merge`.')
-pBedMerge.input               = "infile:file"
-pBedMerge.output              = "outfile:file:{{i.infile | fn}}.merged.bed"
-pBedMerge.args.bedtools       = params.bedtools.value
-pBedMerge.args.params         = Box()
-pBedMerge.lang                = params.python.value
-pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
+pBedMerge               = Proc(desc = 'Merge regions in a bed file using `bedtools merge`.')
+pBedMerge.input         = "infile:file"
+pBedMerge.output        = "outfile:file:{{i.infile | fn}}.merged.bed"
+pBedMerge.args.bedtools = params.bedtools.value
+pBedMerge.args.params   = Box()
+pBedMerge.lang          = params.python.value
+pBedMerge.script        = "file:scripts/bedtools/pBedMerge.py"
 # endregion
 
 # region pBedMerge2
@@ -227,7 +215,7 @@ pBedMerge.script              = "file:scripts/bedtools/pBedMerge.py"
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable,               default: "bedtools"
+	`bedtools`: The bedtools executable,               default: `<params.bedtools>`
 	`params`  : Other parameters for `bedtools merge`, default: {}
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -252,22 +240,18 @@ pBedMerge2.script        = "file:scripts/bedtools/pBedMerge2.py"
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools multiinter`, default: ""
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools multiinter`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedMultiinter                 = Proc(desc = 'Identifies common intervals among multiple BED/GFF/VCF files.')
-pBedMultiinter.input           = "infiles:files"
-pBedMultiinter.output          = "outfile:file:{{i.infiles | fs2name}}.multiinter.bt"
-pBedMultiinter.args.bedtools   = params.bedtools.value
-pBedMultiinter.args.params     = Box()
-pBedMultiinter.envs.fs2name    = fs2name
-pBedMultiinter.envs.bashimport = bashimport
-pBedMultiinter.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} multiinter $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i {{infiles | asquote}} > "{{outfile}}"
-"""
+pBedMultiinter               = Proc(desc = 'Identifies common intervals among multiple BED/GFF/VCF files.')
+pBedMultiinter.input         = "infiles:files"
+pBedMultiinter.output        = "outfile:file:{{i.infiles | fs2name}}.multiinter.bt"
+pBedMultiinter.args.bedtools = params.bedtools.value
+pBedMultiinter.args.params   = Box()
+pBedMultiinter.envs.fs2name  = fs2name
+pBedMultiinter.script        = "file:scripts/bedtools/pBedMultiinter.py"
 
 # region pBedRandom
 """
@@ -280,7 +264,7 @@ pBedMultiinter.script          = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable,    default: "bedtools"
+	`bedtools`: The bedtools executable,    default: `<params.bedtools>`
 	`seed`    : The seed for randomization, default: None
 	`gsize`   : The chromsize file.
 @requires:
@@ -303,25 +287,22 @@ pBedRandom.script        = "file:scripts/bedtools/pBedRandom.py"
 	`bedtools shift` will move each feature in a feature file by a user-defined number of bases. While something like this could be done with an awk '{OFS="\t" print $1,$2+<shift>,$3+<shift>}', bedtools shift will restrict the resizing to the size of the chromosome (i.e. no features before 0 or past the chromosome end).
 @input:
 	`infile:file`: The input file
-	`gfile:file`:  The genome size file
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools shift`, default: ""
+	`gsize`   : The genome size file. Default: `<params.gsize>`
+	`bedtools`: The bedtools executable. Default: `<params.bedtools>`
+	`params`  : Other parameters for `bedtools shift`. Default: ``
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedShift                 = Proc(desc = '`bedtools shift` will move each feature in a feature file by a user-defined number of bases.')
-pBedShift.input           = "infile:file, gfile:file"
-pBedShift.output          = "outfile:file:{{infile | fn}}.shifted.bed"
-pBedShift.args.bedtools   = params.bedtools.value
-pBedShift.args.params     = Box()
-pBedShift.envs.bashimport = bashimport
-pBedShift.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} shift $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -i "{{infile}}" -g "{{gfile}}" > "{{outfile}}"
-"""
+pBedShift               = Proc(desc = '`bedtools shift` will move each feature in a feature file by a user-defined number of bases.')
+pBedShift.input         = "infile:file"
+pBedShift.output        = "outfile:file:{{infile | fn}}.shifted.bed"
+pBedShift.args.bedtools = params.bedtools.value
+pBedShift.args.gsize    = params.gsize.value
+pBedShift.args.params   = Box()
+pBedShift.script        = "file:scripts/bedtools/pBedShift.py"
 
 """
 @name:
@@ -333,7 +314,7 @@ pBedShift.script          = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`  : Other parameters for `bedtools shuffle`, default: ""
 	`gsize`   : The chromsize file. Default: `params.gsize`
 	`n`       : Only return top `n` records (act like sampling). Default: `0`
@@ -365,21 +346,17 @@ pBedShuffle.script        = "file:scripts/bedtools/pBedShuffle.py"
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools subtract`, default: ""
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools subtract`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedSubtract                 = Proc(desc = '`bedtools subtract` searches for features in B that overlap A.')
-pBedSubtract.input           = "afile:file, bfile:file"
-pBedSubtract.output          = "outfile:file:{{afile | fn}}.subtracted.bed"
-pBedSubtract.args.bedtools   = params.bedtools.value
-pBedSubtract.args.params     = Box()
-pBedSubtract.envs.bashimport = bashimport
-pBedSubtract.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} subtract $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a "{{afile}}" -b "{{bfile}}" > {{outfile}}
-"""
+pBedSubtract               = Proc(desc = '`bedtools subtract` searches for features in B that overlap A.')
+pBedSubtract.input         = "afile:file, bfile:file"
+pBedSubtract.output        = "outfile:file:{{afile | fn}}.subtracted.bed"
+pBedSubtract.args.bedtools = params.bedtools.value
+pBedSubtract.args.params   = Box()
+pBedSubtract.script        = "file:scripts/bedtools/pBedSubtract.py"
 
 """
 @name:
@@ -392,21 +369,17 @@ pBedSubtract.script          = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bin`:     The bedtools executable, default: "bedtools"
-	`params`:  Other parameters for `bedtools window`, default: ""
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools window`, default: ""
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedWindow                 = Proc(desc = 'Similar to `bedtools intersect`, `window` searches for overlapping features in A and B.')
-pBedWindow.input           = "afile:file, bfile:file"
-pBedWindow.output          = "outfile:file:{{afile | fn}}.window.bed"
-pBedWindow.args.bedtools   = params.bedtools.value
-pBedWindow.args.params     = Box()
-pBedWindow.envs.bashimport = bashimport
-pBedWindow.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} window $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -a "{{afile}}" -b "{{bfile}}" > "{{outfile}}"
-"""
+pBedWindow               = Proc(desc = 'Similar to `bedtools intersect`, `window` searches for overlapping features in A and B.')
+pBedWindow.input         = "afile:file, bfile:file"
+pBedWindow.output        = "outfile:file:{{afile | fn}}.window.bed"
+pBedWindow.args.bedtools = params.bedtools.value
+pBedWindow.args.params   = Box()
+pBedWindow.script        = "file:scripts/bedtools/pBedWindow.py"
 
 """
 @name:
@@ -420,21 +393,17 @@ pBedWindow.script          = """
 @output:
 	`outfile:file`: The result file
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`:   Other parameters for `bedtools genomecov`, default: `Box(bg = True)`
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 """
-pBedGenomecov                 = Proc(desc = '`bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.')
-pBedGenomecov.input           = "infile:file"
-pBedGenomecov.output          = "outfile:file:{{infile | fn}}.genomecov.bt"
-pBedGenomecov.args.bedtools   = params.bedtools.value
-pBedGenomecov.args.params     = Box(bg = True)
-pBedGenomecov.envs.bashimport = bashimport
-pBedGenomecov.script          = """
-{{bashimport}} __init__.bash
-{{args.bedtools}} genomecov $(cmdargs {{args.params | json | lambda x: __import__('json').loads(x) | quote}} '-' ' ') -ibam "{{infile}}" > "{{outfile}}"
-"""
+pBedGenomecov               = Proc(desc = '`bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.')
+pBedGenomecov.input         = "infile:file"
+pBedGenomecov.output        = "outfile:file:{{infile | fn}}.genomecov.bt"
+pBedGenomecov.args.bedtools = params.bedtools.value
+pBedGenomecov.args.params   = Box(bg = True)
+pBedGenomecov.script        = "file:scripts/bedtools/pBedGenomecov.py"
 
 """
 @name:
@@ -446,7 +415,7 @@ pBedGenomecov.script          = """
 @output:
 	`outfile:file`: The output file with cluster id for each record
 @args:
-	`bedtools`: The bedtools executable, default: "bedtools"
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
 	`params`:   Other parameters for `bedtools cluster`, default: `Box()`
 @requires:
 	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)

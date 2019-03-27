@@ -2,6 +2,7 @@
 
 from pyppl import Proc, Box
 from . import params, rimport
+from .utils import fs2name
 
 """
 @name:
@@ -452,16 +453,22 @@ pROC.script       = "file:scripts/plot/pROC.r"
 @description:
 	Venn/UpsetR plots.
 @input:
-	`infile:file`: The input matrix
-		- format:
-		```
+	`infile:file`: The input matrix, could be two formats:
+		- `args.intype == "raw"`:
+			```
 			category1	category2	category3
-		[e1]	0	1	1
-		[e2]	0	0	1
-		...
-		[eN]	1	0	0
-		```
-		rownames are not necessary but colnames are.
+			e1	e2	e2
+			e2	e3	e4
+			... ...
+			```
+		- `args.intype == "computed"`:
+			```
+				category1	category2	category3
+			[e1]	0	1	1
+			[e2]	0	0	1
+			...
+			[eN]	1	0	0
+			```
 	`metafile:file`: The metadata file for each category for upset plot.
 		- format:
 		```
@@ -475,7 +482,9 @@ pROC.script       = "file:scripts/plot/pROC.r"
 	`outfile:file`: The plot
 @args:
 	`tool`    : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
-	`rnames`  : Whether input file has rownames. Default: False
+	`intype`  : Type of input file. See `i.infile`. Default: `raw`
+	`inopts`  : options to read the input file.
+		- `rnames`  : Whether input file has rownames. Default: False
 	`params`  : Other params for `venn.diagram` or `upset`. Default: {}
 	`devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 @requires:
@@ -486,12 +495,51 @@ pVenn              = Proc(desc = 'Venn plots.')
 pVenn.input        = "infile:file, metafile:file"
 pVenn.output       = "outfile:file:{{i.infile | fn}}.venn.png"
 pVenn.args.tool    = 'auto' # upsetr or auto: < = 3 venn, else upsetr
-pVenn.args.rnames  = False
+pVenn.args.inopts  = Box(rnames  = False, cnames = True)
+pVenn.args.intype  = 'raw' # computed
 pVenn.args.params  = Box()
 pVenn.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pVenn.envs.rimport = rimport
 pVenn.lang         = params.Rscript.value
 pVenn.script       = "file:scripts/plot/pVenn.r"
+
+"""
+@name:
+	pVenn2
+@description:
+	Venn plots using individual input files, each of which contains the elements of the category.
+@input:
+	`infiles:files`: The input files, each one is a category containing the elements.
+		- If it has column name, then it will be used as category name, otherwise
+		- the filename (without extension) will be used.
+	`metafile:file`: The metadata file for each category for upset plot.
+		- format:
+		```
+			col1	col2	...	colN
+		category1	x1	y1	...	z1
+		category2	x2	y2	...	z2
+		...	...
+		categoryN	xN	yN	...	zN
+		```
+@output:
+	`outfile:file`: The output file, Default: `{{i.infiles | fs2name}}.venn.png`
+@args:
+	`tool`    : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))
+	`inopts`  : options to read the input file. Default: `Box(rnames = False, cnames = False)`
+	`params`  : Other params for `venn.diagram` or `upset`. Default: `Box()`
+	`devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+"""
+pVenn2              = Proc(desc = 'Venn plots using individual input files')
+pVenn2.input        = "infiles:files, metafile:file"
+pVenn2.output       = "outfile:file:{{i.infiles | fs2name}}.venn.png"
+pVenn2.args.tool    = 'auto'
+pVenn2.args.inopts  = Box(rnames = False, cnames = False)
+pVenn2.args.params  = Box()
+pVenn2.args.devpars = Box(res = 300, height = 2000, width = 2000)
+pVenn2.envs.rimport = rimport
+pVenn2.envs.fs2name = fs2name
+pVenn2.lang         = params.Rscript.value
+pVenn2.script       = "file:scripts/plot/pVenn2.r"
 
 """
 @name:

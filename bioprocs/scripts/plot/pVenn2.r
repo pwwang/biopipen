@@ -1,18 +1,36 @@
 {{rimport}}('plot.r', '__init__.r')
 
-infile   = {{i.infile | R}}
+infiles  = {{i.infiles | R}}
 metafile = {{i.metafile | R}}
 outfile  = {{o.outfile | R}}
 inopts   = {{args.inopts | R}}
-intype   = {{args.intype | R}}
 
-inopts$fill = TRUE
-data = read.table.inopts(infile, inopts)
-if (intype == 'raw') {
-	allelements = unique(as.vector(as.matrix(data)))
-	allelements = allelements[allelements!=""]
-	data = as.data.frame(apply(data, 2, function(x) as.integer(allelements %in% x)))
+allelements = c()
+categories  = c()
+datalist    = list()
+for (infile in infiles) {
+	indata = read.table.inopts(infile, inopts)
+	if (is.true(inopts$cnames)) {
+		category = colnames(indata)[1]
+	} else {
+		category = tools::file_path_sans_ext(basename(infile))
+	}
+	categories  = make.unique(c(categories, category))
+	catdata     = as.vector(unlist(indata[,1]))
+	datalist[[category]] = catdata
+	allelements = unique(c(allelements, catdata))
 }
+data = NULL
+for (name in names(datalist)) {
+	tmpdata = data.frame(tmp = as.integer(allelements %in% datalist[[name]]))
+	colnames(tmpdata) = name
+	if (!is.null(data)) {
+		data = cbind(data, tmpdata)
+	} else {
+		data = tmpdata
+	}
+}
+rownames(data) = allelements
 
 tool    = {{args.tool | R}}
 ncols   = ncol(data)

@@ -171,7 +171,7 @@
 
     - **args**  
         - `ref`     : The fasta file  
-        - `bedtools`: The bedtools executable,                  default: "bedtools"  
+        - `bedtools`: The bedtools executable,                  default: `<params.bedtools>`  
         - `params`  : Other parameters for `bedtools getfasta`, default: ""  
 
     - **requires**  
@@ -190,7 +190,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools closest`, default: ""  
 
     - **requires**  
@@ -209,7 +209,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools closest`, default: ""  
 
     - **requires**  
@@ -228,7 +228,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools flank`, default: ""  
 
     - **requires**  
@@ -247,7 +247,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools intersect`, default: ""  
 
     - **requires**  
@@ -266,7 +266,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools intersect`, default: ""  
 
     - **requires**  
@@ -284,9 +284,9 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
-        - `informat`: The format of input file, whether is a "bed" file or "genome" size file. Default: "bed"  
-        - `params`: Other parameters for `bedtools makewindows`, default: ""  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
+        - `intype`: The format of input file, whether is a "bed" file or "genome" size file. Default: `bed`  
+        - `params`: Other parameters for `bedtools makewindows`, default: `Box()`  
 
     - **requires**  
         [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -303,7 +303,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable,               default: "bedtools"  
+        - `bedtools`: The bedtools executable,               default: `<params.bedtools>`  
         - `params`  : Other parameters for `bedtools merge`, default: {}  
 
     - **requires**  
@@ -321,7 +321,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable,               default: "bedtools"  
+        - `bedtools`: The bedtools executable,               default: `<params.bedtools>`  
         - `params`  : Other parameters for `bedtools merge`, default: {}  
 
     - **requires**  
@@ -339,7 +339,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools multiinter`, default: ""  
 
     - **requires**  
@@ -357,7 +357,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable,    default: "bedtools"  
+        - `bedtools`: The bedtools executable,    default: `<params.bedtools>`  
         - `seed`    : The seed for randomization, default: None  
         - `gsize`   : The chromsize file.  
 
@@ -371,14 +371,14 @@
 
     - **input**  
         - `infile:file`: The input file  
-        - `gfile:file`: The genome size file  
 
     - **output**  
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
-        - `params`: Other parameters for `bedtools shift`, default: ""  
+        - `gsize`   : The genome size file. Default: `<params.gsize>`  
+        - `bedtools`: The bedtools executable. Default: `<params.bedtools>`  
+        - `params`  : Other parameters for `bedtools shift`. Default: ``  
 
     - **requires**  
         [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -395,7 +395,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`  : Other parameters for `bedtools shuffle`, default: ""  
         - `gsize`   : The chromsize file. Default: `params.gsize`  
         - `n`       : Only return top `n` records (act like sampling). Default: `0`  
@@ -419,7 +419,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools subtract`, default: ""  
 
     - **requires**  
@@ -438,7 +438,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bin`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools window`, default: ""  
 
     - **requires**  
@@ -458,7 +458,7 @@
         - `outfile:file`: The result file  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools genomecov`, default: `Box(bg = True)`  
 
     - **requires**  
@@ -476,7 +476,7 @@
         - `outfile:file`: The output file with cluster id for each record  
 
     - **args**  
-        - `bedtools`: The bedtools executable, default: "bedtools"  
+        - `bedtools`: The bedtools executable, default: `<params.bedtools>`  
         - `params`: Other parameters for `bedtools cluster`, default: `Box()`  
 
     - **requires**  
@@ -3118,16 +3118,22 @@
         Venn/UpsetR plots.
 
     - **input**  
-        - `infile:file`: The input matrix  
-        	- format:
-        	```
+        - `infile:file`: The input matrix, could be two formats:  
+        	- `args.intype == "raw"`:
+        		```
         		category1	category2	category3
-        	[e1]	0	1	1
-        	[e2]	0	0	1
-        	...
-        	[eN]	1	0	0
-        	```
-        	rownames are not necessary but colnames are.
+        		e1	e2	e2
+        		e2	e3	e4
+        		... ...
+        		```
+        	- `args.intype == "computed"`:
+        		```
+        			category1	category2	category3
+        		[e1]	0	1	1
+        		[e2]	0	0	1
+        		...
+        		[eN]	1	0	0
+        		```
         - `metafile:file`: The metadata file for each category for upset plot.  
         	- format:
         	```
@@ -3143,13 +3149,43 @@
 
     - **args**  
         - `tool`    : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))  
-        - `rnames`  : Whether input file has rownames. Default: False  
+        - `intype`  : Type of input file. See `i.infile`. Default: `raw`  
+        - `inopts`  : options to read the input file.  
+        	- `rnames`  : Whether input file has rownames. Default: False
         - `params`  : Other params for `venn.diagram` or `upset`. Default: {}  
         - `devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
 
     - **requires**  
         [`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
         [`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
+
+!!! hint "pVenn2"
+
+    - **description**  
+        Venn plots using individual input files, each of which contains the elements of the category.
+
+    - **input**  
+        - `infiles:files`: The input files, each one is a category containing the elements.  
+        	- If it has column name, then it will be used as category name, otherwise
+        	- the filename (without extension) will be used.
+        - `metafile:file`: The metadata file for each category for upset plot.  
+        	- format:
+        	```
+        		col1	col2	...	colN
+        	category1	x1	y1	...	z1
+        	category2	x2	y2	...	z2
+        	...	...
+        	categoryN	xN	yN	...	zN
+        	```
+
+    - **output**  
+        - `outfile:file`: The output file, Default: `{{i.infiles | fs2name}}.venn.png`  
+
+    - **args**  
+        - `tool`    : Which tools to use. Default: auto (venn, upsetr, auto(n<=3: venn, otherwise upsetr))  
+        - `inopts`  : options to read the input file. Default: `Box(rnames = False, cnames = False)`  
+        - `params`  : Other params for `venn.diagram` or `upset`. Default: `Box()`  
+        - `devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`  
 
 !!! hint "pPie"
 
@@ -5618,7 +5654,7 @@
         - `annovar_convert`: The path of convert2annovar.pl, used to convert vcf to annovar input file. Default: convert2annovar.pl  
         - `genome`: The genome for annotation. Default: hg19  
         - `tmpdir`: The tmpdir, mainly used by snpeff. Default: <system tmpdir>  
-        - `dbpath`: The path of database for each tool. Required by 'annovar' and 'vep'  
+        - `dbs`: The path of database for each tool. Required by 'annovar' and 'vep'  
         - `params`: Other params for tool. Default: ''  
         - `snpeffStats`: Whether to generate stats file when use snpeff. Default: False  
         - `mem`: The memory used by snpeff. Default: '4G'  
@@ -5641,8 +5677,7 @@
         - `outdir:dir`: The output directory containing the extracted vcfs  
 
     - **args**  
-        - `tool`: The tool used to do extraction. Default: vcftools (gatk, awk)  
-        - `vcftools`: The path of vcftools' vcf-subset  
+        - `tool`: The tool used to do extraction. Default: bcftools (gatk, awk)  
         - `bcftools`: The path of bcftools, used to extract the sample names from input vcf file.  
         - `gatk`: The path of gatk.  
 
@@ -5681,13 +5716,9 @@
         - `filtervcf`: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz  
         - `ref`      : The reference genome  
         - `nthread`  : Number of threads used to extract samples. Default: 1  
-        - `tumor1st` : Whether tumor sample comes first. Default: `True`  
         - `bcftools` : Path to bcftools used to extract sample names.  
-        - `vcftools` : Path to vcftools used to split vcf.  
-        - `samfunc`  : A lambda function used to deduce sample names from file name.  
-        - `somatic`  : Whether input vcf file is a somatic mutation file. Default: False  
-        	- somatic mutation vcf file can only have one sample TUMOR, or two samples, TUMOR and NORMAL, but will be considered as single sample.
-        	- otherwise, multiple samples are supported in the input vcf file. Tumor id will be sample name for each sample, normal id will be NORMAL.
+        - `tumor`    : The index of the tumor sample in the vcf file. Default: `0`  
+        	- If `tumor > 1 or tumor < 0`: Then all samples are tumors in the vcf file.
 
 !!! hint "pVcf2Plink"
 
@@ -5798,6 +5829,8 @@
         		- Note that when `args.keep == False`, `True` samples will be removed.
         	- `None`: use sample names from `i.samfile`
         - `keep`: Keep the samples provided or remove them. Default: `True`  
+        - `params`: Other parameters for `bcftools view`. Default: `Box(U = True)`  
+        	- `U = True`: Exclude uncalled sites (genotypes of all samples are missing).
 
 !!! hint "pVcfSampleReplace"
 
@@ -6094,7 +6127,7 @@
         Use maftools to draw plots.
 
     - **input**  
-        - `indir:dir`: The input directory. Could contain:  
+        - `indir:file`: The input directory or a single maf file. A directory could contain:  
         	- `*.maf` or `*.maf.gz` file (required)
         	- `*.annot.tsv` or `*.annot.txt` file (see: https://github.com/PoisonAlien/maftools/blob/master/inst/extdata/tcga_laml_annot.tsv)
         	- `all_lesions.conf_*.txt`: Gistic cnv data

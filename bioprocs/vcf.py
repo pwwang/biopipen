@@ -205,19 +205,16 @@ pVcfAnno.script           = "file:scripts/vcf/pVcfAnno.py"
 @output:
 	`outdir:dir`:  The output directory containing the extracted vcfs
 @args:
-	`tool`:     The tool used to do extraction. Default: vcftools (gatk, awk)
-	`vcftools`: The path of vcftools' vcf-subset
+	`tool`:     The tool used to do extraction. Default: bcftools (gatk, awk)
 	`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 	`gatk`:     The path of gatk.
 """
 pVcfSplit                     = Proc(desc = "Split multi-sample Vcf to single-sample Vcf files.")
 pVcfSplit.input               = "infile:file, samples"
 pVcfSplit.output              = "outdir:dir:{{i.infile | fn}}-individuals"
-pVcfSplit.args.tool           = 'vcftools'
-pVcfSplit.args.vcftools       = params.vcftools_subset.value
+pVcfSplit.args.tool           = 'bcftools'
 pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
 pVcfSplit.args.gatk           = params.gatk.value
-pVcfSplit.args.awk            = params.awk.value
 pVcfSplit.args.ref            = params.ref.value # only for gatk
 pVcfSplit.args.params         = Box()
 pVcfSplit.args.nthread        = 1
@@ -272,32 +269,25 @@ pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 	`filtervcf`: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
 	`ref`      : The reference genome
 	`nthread`  : Number of threads used to extract samples. Default: 1
-	`tumor1st` : Whether tumor sample comes first. Default: `True`
 	`bcftools` : Path to bcftools used to extract sample names.
-	`vcftools` : Path to vcftools used to split vcf.
-	`samfunc`  : A lambda function used to deduce sample names from file name.
-	`somatic`  : Whether input vcf file is a somatic mutation file. Default: False
-		- somatic mutation vcf file can only have one sample TUMOR, or two samples, TUMOR and NORMAL, but will be considered as single sample.
-		- otherwise, multiple samples are supported in the input vcf file. Tumor id will be sample name for each sample, normal id will be NORMAL.
+	`tumor`    : The index of the tumor sample in the vcf file. Default: `0`
+		- If `tumor > 1 or tumor < 0`: Then all samples are tumors in the vcf file.
 """
-pVcf2Maf                     = Proc(desc = 'Convert Vcf file to Maf file.')
-pVcf2Maf.input               = 'infile:file'
-pVcf2Maf.output              = 'outfile:file:{{i.infile | fn | fn}}.maf'
-pVcf2Maf.args.tool           = 'vcf2maf'
-pVcf2Maf.args.vcf2maf        = params.vcf2maf.value
-pVcf2Maf.args.vep            = params.vep.value
-pVcf2Maf.args.vepDb          = params.vepDb.value
-pVcf2Maf.args.filtervcf      = params.vepNonTCGAVcf.value
-pVcf2Maf.args.ref            = params.ref.value
-pVcf2Maf.args.bcftools       = params.bcftools.value
-pVcf2Maf.args.vcftools       = params.vcftools_subset.value
-pVcf2Maf.args.samfunc        = None
-pVcf2Maf.args.tumor1st       = True
-pVcf2Maf.args.somatic        = False
-pVcf2Maf.args.nthread        = 1
-pVcf2Maf.args.params         = Box()
-pVcf2Maf.lang                = params.python.value
-pVcf2Maf.script              = "file:scripts/vcf/pVcf2Maf.py"
+pVcf2Maf                = Proc(desc = 'Convert Vcf file to Maf file.')
+pVcf2Maf.input          = 'infile:file'
+pVcf2Maf.output         = 'outfile:file:{{i.infile | fn2}}.maf'
+pVcf2Maf.args.tool      = 'vcf2maf'
+pVcf2Maf.args.vcf2maf   = params.vcf2maf.value
+pVcf2Maf.args.vep       = params.vep.value
+pVcf2Maf.args.vepDb     = params.vepDb.value
+pVcf2Maf.args.filtervcf = params.vepNonTCGAVcf.value
+pVcf2Maf.args.ref       = params.ref.value
+pVcf2Maf.args.bcftools  = params.bcftools.value
+pVcf2Maf.args.tumor     = 0
+pVcf2Maf.args.nthread   = 1
+pVcf2Maf.args.params    = Box()
+pVcf2Maf.lang           = params.python.value
+pVcf2Maf.script         = "file:scripts/vcf/pVcf2Maf.py"
 
 """
 @name:
@@ -449,12 +439,15 @@ pVcf2GTVcf.script        = "file:scripts/vcf/pVcf2GTVcf.py"
 			- Note that when `args.keep == False`, `True` samples will be removed.
 		- `None`: use sample names from `i.samfile`
 	`keep`: Keep the samples provided or remove them. Default: `True`
+	`params`: Other parameters for `bcftools view`. Default: `Box(U = True)`
+		- `U = True`: Exclude uncalled sites (genotypes of all samples are missing).
 """
 pVcfSampleFilter               = Proc(desc = 'Keep or remove some samples from VCF file.')
 pVcfSampleFilter.input         = 'infile:file, samfile:file'
 pVcfSampleFilter.output        = 'outfile:file:{{i.infile | fn2}}.vcf'
 pVcfSampleFilter.args.keep     = True
 pVcfSampleFilter.args.samples  = None
+pVcfSampleFilter.args.params   = Box(U = True)
 pVcfSampleFilter.args.bcftools = params.bcftools.value
 pVcfSampleFilter.lang          = params.python.value
 pVcfSampleFilter.script        = "file:scripts/vcf/pVcfSampleFilter.py"
