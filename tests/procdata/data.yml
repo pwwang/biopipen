@@ -175,6 +175,12 @@ tsv.pTsvAggregate.merged:
   args.on: Group
   args.inopts.cnames: true
   args.aggrs.sum,mean: 'lambda rs: [sum(float(r.value) for r in rs), sum(float(r.value) for r in rs)/float(len(rs))]'
+tsv.pTsvAggregate.onfunc:
+  i.infile: aggr.default.txt
+  o.outfile: aggr.onfunc.txt
+  args.on: 'lambda row: row["Group"] + str(int(int(row["ROWNAME"])/10))'
+  args.inopts.cnames: true
+  args.aggrs.sum,mean: 'lambda rs: [sum(float(r.value) for r in rs), sum(float(r.value) for r in rs)/float(len(rs))]'
 vcfnext.pGTMatAddRs.default:
   i.infile: default.gtmat
   o.outfile: out.default.gtmat

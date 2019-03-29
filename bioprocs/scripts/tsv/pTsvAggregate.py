@@ -6,7 +6,7 @@ from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 infile  = {{ i.infile | quote}}
 outfile = {{ o.outfile | quote}}
 inopts  = {{ args.inopts | repr}}
-on      = {{ args.on | repr}}
+on      = {{ args.on if isinstance(args.on, int) or args.on.startswith('lambda') else quote(args.on) }}
 helper  = {{args.helper | repr}}
 if not isinstance(helper, list):
 	helper = [helper]
@@ -93,11 +93,15 @@ writer = TsvWriter(outfile, delimit = inopts.get('delimit', "\t"))
 if reader.cnames:
 	if isinstance(on, int):
 		writer.cnames = [reader.cnames[on]] + alwaysList(','.join(aggrs.keys()))
+	elif callable(on):
+		writer.cnames = ['AggrGroup'] + alwaysList(','.join(aggrs.keys()))
 	elif on not in reader.cnames:
 		raise ValueError('{!r} is not a valid column name!'.format(on))
 	else:
 		writer.cnames = [on] + alwaysList(','.join(aggrs.keys()))
 		on = reader.cnames.index(on)
+elif callable(on):
+	writer.cnames = ['AggrGroup'] + alwaysList(','.join(aggrs.keys()))
 elif not isinstance(on, int):
 	raise ValueError('The input file does not have column name (args.inopts.cnames = False?).')
 else:
@@ -108,7 +112,10 @@ writer.writeHead()
 refcol = None
 rows   = []
 for row in reader:
-	col = row[on]
+	if callable(on):
+		col = on(row)
+	else:
+		col = row[on]
 	if refcol is None:
 		refcol = col
 		rows.append(row)

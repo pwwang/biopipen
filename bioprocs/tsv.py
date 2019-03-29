@@ -307,11 +307,13 @@ pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
 @output:
 	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.aggr.txt`
 		- With columns `args.on` and aggregated results from `args.aggrs`
+		- If `args.on` is a function, then the calculated term will be add to the 1st column.
 @args:
 	`inopts`: The options to read the input file, Default: `Box(cnames = True)`
 	`on`: Aggregate according to which column, Default: `0`
 		- It also could column name if `args.inopts = True`
 		- The input file has to sorted by this column
+		- Or a string of (lambda) function to calculate the term to aggregate on.
 	`helper`: Raw codes to give some help for `args.aggrs`
 	`aggrs`: The aggregation methods. Required.
 		- It's a `Box` with the keys for aggregated results
