@@ -543,10 +543,7 @@ pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
 pChow              = Proc(desc = "Do Chow-Test")
 pChow.input        = 'infile:file, groupfile:file, casefile:file'
 pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
-pChow.args.inopts  = Box(
-	cnames = True,
-	rnames = True
-)
+pChow.args.inopts  = Box(cnames = True, rnames = True)
 pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
 pChow.args.pval    = 0.05
 pChow.args.fdr     = True
@@ -556,6 +553,17 @@ pChow.args.ggs     = Box()
 pChow.envs.rimport = rimport
 pChow.lang         = params.Rscript.value
 pChow.script       = "file:scripts/stats/pChow.r"
+
+pAnovaModel              = Proc(desc = "Run anova test on model to test the significance with/without terms")
+pAnovaModel.input        = 'infile:file, casefile:file'
+pAnovaModel.output       = 'outfile:file:{{i.infile | fn}}.anova/{{i.infile | fn}}.anova.txt, outdir:dir:{{i.infile | fn}}.anova'
+pAnovaModel.args.model   = 'lm'
+pAnovaModel.args.fmula   = None
+pAnovaModel.args.inopts  = Box(cnames = True, rnames = True)
+pAnovaModel.args.cov     = '' # requires inopts.rnames
+pAnovaModel.envs.rimport = rimport
+pAnovaModel.lang         = params.Rscript.value
+pAnovaModel.script       = "file:scripts/stats/pAnovaModel.r"
 
 """
 @name:

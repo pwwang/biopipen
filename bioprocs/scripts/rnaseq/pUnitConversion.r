@@ -10,7 +10,7 @@ refexon = {{args.refexon | R}}
 inform  = {{args.inform | lambda x: 'NULL' if not x else x}}
 outform = {{args.outform | lambda x: 'NULL' if not x else x}}
 
-data    = read.table.nodup (infile, sep="\t", header=T, row.names=1, check.names=F)
+data    = read.table.inopts (infile, list(cnames = TRUE), dup = 'drop')
 if (!is.null(inform)) {
 	data = inform(data)
 }
@@ -51,14 +51,16 @@ nreadsFromFile = function(samples, nreads) {
 if (inunit == 'count' || inunit == 'rawcount' || inunit == 'rawcounts' || inunit == 'counts') {
 
 	if (outunit == 'cpm') {
-		samples = colnames(data)
-		exp     = sapply(samples, function(s){
-			# log(cpm) = log(counts) - log(sum(counts)) + log(1e6)
-			# cpm = exp( log(counts) - log(sum(counts)) + log(1e6) )
-			N = sum(data[, s])
-			exp( log(data[, s]) - log(sum(data[, s])) + log(1e6) )
-		})
-		rownames(exp) = rownames(data)
+		exp = edgeR::cpm(data)
+
+		# samples = colnames(data)
+		# exp     = sapply(samples, function(s){
+		# 	# log(cpm) = log(counts) - log(sum(counts)) + log(1e6)
+		# 	# cpm = exp( log(counts) - log(sum(counts)) + log(1e6) )
+		# 	N = sum(data[, s])
+		# 	exp( log(data[, s]) - log(sum(data[, s])) + log(1e6) )
+		# })
+		# rownames(exp) = rownames(data)
 
 	} else if (outunit == 'fpkm' || outunit == 'rpkm') {
 		
@@ -68,19 +70,24 @@ if (inunit == 'count' || inunit == 'rawcount' || inunit == 'rawcounts' || inunit
 		outgenes = intersect(refgenes, mygenes)
 		if (length(outgenes) < length(mygenes))
 			logger('Genes not found in refexon: ', paste(setdiff(mygenes, outgenes), collapse = '\n'), level = 'WARNING')
+		
 		data    = data[outgenes, , drop = F]
 		glen    = glen[outgenes, , drop = T]
 
-		samples = colnames(data)
-		fld     = meanflFromFile(samples, meanfl)
+		dge = edgeR::DGEList(counts=data)
+		dge$genes$Length = glen
+		exp = edgeR::rpkm(dge)
 
-		exp     = sapply(samples, function(s){
-			# N <- sum(counts)
-			# exp( log(counts) + log(1e9) - log(effLen) - log(N) )
-			N = sum(data[, s])
-			exp( log(data[, s]) + log(1e9) - log(glen - fld[s, ] + 1) - log(N) )
-		})
-		rownames(exp) = outgenes
+		# samples = colnames(data)
+		# fld     = meanflFromFile(samples, meanfl)
+
+		# exp     = sapply(samples, function(s){
+		# 	# N <- sum(counts)
+		# 	# exp( log(counts) + log(1e9) - log(effLen) - log(N) )
+		# 	N = sum(data[, s])
+		# 	exp( log(data[, s]) + log(1e9) - log(glen - fld[s, ] + 1) - log(N) )
+		# })
+		# rownames(exp) = outgenes
 
 	} else if (outunit == 'fpkm-uq' || outunit == 'rpkm-uq') {
 		glen     = glenFromExon(refexon)
@@ -129,9 +136,12 @@ if (inunit == 'count' || inunit == 'rawcount' || inunit == 'rawcounts' || inunit
 		rownames(exp) = outgenes
 
 	} else if (outunit == 'tmm') {
-		library('coseq')
-		exp = transform_RNAseq(data, norm="TMM")
-		exp = exp$normCounts
+		# library('coseq')
+		# exp = transform_RNAseq(data, norm="TMM")
+		# exp = exp$normCounts
+		dge = edgeR::DGEList(counts=data)
+		dge = edgeR::calcNormFactors(dge, method = "TMM")
+		exp = edgeR::cpm(dge)
 	} else {
 		stop(paste("Don't know yet how to convert raw counts to", outunit))
 	}

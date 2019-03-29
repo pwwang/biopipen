@@ -16,7 +16,7 @@ indep     = {{args.indep | R}}
 highld    = {{args.highld | R}}
 jobstdout = {{job.outfile | R}}
 
-if (is.true(plots)) {
+if (is.true(plots, 'any')) {
 	{{rimport}}('plot.r')
 }
 
@@ -106,8 +106,7 @@ if (samid == 'fid') {
 pcs = pcs[, -(1:2), drop = FALSE]
 colnames(pcs) = paste0('PC', 1:ncol(pcs))
 write.table(pcs, paste0(output, '.allpcs.txt'), sep = "\t", quote = FALSE)
-pcs = pcs[, select, drop = FALSE]
-write.table(pcs, outfile, sep = "\t", quote = FALSE)
+write.table(pcs[, select, drop = FALSE], outfile, sep = "\t", quote = FALSE)
 
 if (is.true(plots$scree)) {
 	screefile = paste0(output, '.screeplot.png')
@@ -119,6 +118,19 @@ if (is.true(plots$scree)) {
 		screefile,
 		x = 'PCS', y = 'Percent'
 	)
+}
+
+if (is.true(plots$pairs$anno)) {
+	options(stringsAsFactors = TRUE)
+	annos = read.table.inopts(plots$pairs$anno, list(cnames = TRUE, rnames = TRUE))
+	annos = annos[rownames(pcs),,drop = FALSE]
+	pdata = cbind(pcs[, 1:plots$pairs$ncp,drop = FALSE], annos)
+	pairsfile = paste0(output, '.pairs.png')
+	if (is.null(plots$pairs$params))
+		plots$pairs$params = list()
+	if (is.null(plots$pairs$ggs))
+		plots$pairs$ggs = list()
+	plot.pairs(pdata, pairsfile, params = plots$pairs$params, ggs = plots$pairs$ggs)
 }
 
 

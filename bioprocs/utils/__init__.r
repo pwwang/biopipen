@@ -80,7 +80,7 @@ ifelse = function(condition, true, false) {
 	return(false)
 }
 
-read.table.inopts = function(infile, inopts, nodup = T, try = FALSE) {
+read.table.inopts = function(infile, inopts, dup = NULL, try = FALSE) {
 	inopts.default = function(key, default) list.get(inopts, key, default, check.names = TRUE)
 	optrnames = inopts.default('rnames', TRUE)
 	#optrnames = ifelse('rnames' %in% opts, ifelse(inopts$rnames, 1, NULL), 1)
@@ -88,7 +88,7 @@ read.table.inopts = function(infile, inopts, nodup = T, try = FALSE) {
 		infile,
 		#header      = ifelse('cnames' %in% opts, inopts$cnames, T),
 		header      = inopts.default('cnames', TRUE),
-		row.names   = ifelse(nodup, NULL, ifelse(optrnames, 1, NULL)),
+		row.names   = ifelse(!is.null(dup), NULL, ifelse(optrnames, 1, NULL)),
 		sep         = inopts.default('delimit', "\t"),
 		check.names = F,
 		quote       = inopts.default('quote', ""),
@@ -103,10 +103,22 @@ read.table.inopts = function(infile, inopts, nodup = T, try = FALSE) {
 			return (NULL)
 		})
 	}
-	if (nodup && optrnames && !is.null(d)) {
-		rnames = make.unique(as.character(as.vector(d[,1,drop = T])))
-		d = d[, -1, drop = F]
-		rownames(d) = rnames
+	if (is.null(dup) || !optrnames || is.null(d)) {
+		#return (d)
+	} else {
+		rnames = as.character(as.vector(d[,1,drop = T]))
+		if (dup == 'drop') {
+			rindex = !duplicated(rnames)
+			d = d[rindex, -1, drop = FALSE]
+			rownames(d) = rnames[rindex]
+		} else if (dup == 'mean') {
+			d = aggregate(d[,-1,drop=FALSE], by = list(rnames), FUN = mean)
+			rownames(d) = as.character(d[,1,drop=TRUE])
+			d = d[,-1,drop=FALSE]
+		} else  { # keep
+			rownames(d) = make.unique(rnames)
+			d = d[,-1,drop = FALSE]
+		}
 	}
 	d
 }
@@ -179,6 +191,7 @@ is.true = function(x, collapse = 'all') {
 	if (length(x) == 1) {
 		if (is.na(x)) return (FALSE)
 		if (is.list(x)) return (TRUE)
+		if (is.character(x)) return (nchar(x) > 0)
 		tryCatch({
 			x = as.logical(x)
 		}, error = function(e){
@@ -188,12 +201,12 @@ is.true = function(x, collapse = 'all') {
 		return (x)
 	} else if (collapse == 'all') {
 		for (i in x) {
-			if (!is.true(i)) return (FALSE)
+			if (!is.true(i, 'any')) return (FALSE)
 		}
 		return (TRUE)
 	} else {
 		for (i in x) {
-			if (is.true(i)) return (TRUE)
+			if (is.true(i, 'any')) return (TRUE)
 		}
 		return (FALSE)
 	}

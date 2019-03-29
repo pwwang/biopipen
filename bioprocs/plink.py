@@ -329,6 +329,8 @@ pPlinkPCA.args.params  = Box(mind = .95)
 pPlinkPCA.args.select  = .2
 pPlinkPCA.args.plots   = Box(
 	scree = Box(ncp = 20),
+	# rownames of anno should be consistent with `args.samid`
+	pairs = Box(anno = '', ncp = 4, params = Box(upper = Box(continuous = 'density')), ggs = Box(theme = {"axis.text.x": "r:ggplot2::element_text(angle = 60, hjust = 1)" })),
 	# more to add
 )
 pPlinkPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)

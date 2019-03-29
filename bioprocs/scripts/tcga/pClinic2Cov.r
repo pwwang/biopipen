@@ -18,6 +18,10 @@ cldata = read.table.inopts(infile, list(
 
 # remove CDE_ID: row
 covdata = cldata[-1, covs, drop = FALSE]
+covdata[covdata == '']                = '[Not Applicable]'
+covdata[covdata == '[Not Available]'] = '[Not Applicable]'
+covdata[covdata == '[Not Evaluated]'] = '[Not Applicable]'
+covdata[covdata == '[Unknown]']       = '[Not Applicable]'
 if (asnum) {
 	for (cov in covs) {
 		covdata[, cov] = as.numeric(covdata[, cov])
