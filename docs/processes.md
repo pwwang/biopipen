@@ -5234,12 +5234,14 @@
     - **output**  
         - `outfile:file`: The output file, Default: `{{i.infile | fn2}}.aggr.txt`  
         	- With columns `args.on` and aggregated results from `args.aggrs`
+        	- If `args.on` is a function, then the calculated term will be add to the 1st column.
 
     - **args**  
         - `inopts`: The options to read the input file, Default: `Box(cnames = True)`  
         - `on`: Aggregate according to which column, Default: `0`  
         	- It also could column name if `args.inopts = True`
         	- The input file has to sorted by this column
+        	- Or a string of (lambda) function to calculate the term to aggregate on.
         - `helper`: Raw codes to give some help for `args.aggrs`  
         - `aggrs`: The aggregation methods. Required.  
         	- It's a `Box` with the keys for aggregated results
@@ -5254,6 +5256,7 @@
         		- `args.aggrs.Max = "$max:1"`          : Get the max of the 2nd column
         		- `args.aggrs.Max2 = "$max:2"`         : Get the max of the 3rd column
         		- `args.aggrs["Max,Max2"] = "$max:1,2"`: Get the max of the 2nd and 3rd column, respectively
+        		- `args.aggrs.CombinedP = "$fisher:1"` : Get the combined pvalues for 1st column using fisher'method (`scipy.stats.combine_pvalues`)
 
 !!! hint "pTsvColSelect"
 
