@@ -1,4 +1,5 @@
-from pyppl import Proc
+from pyppl import Proc, Box
+from . import params
 
 #############################
 # picard utilities          #
@@ -190,3 +191,12 @@ pIndexBam.args   = { "picard": "picard", "params": "-Xms1g -Xmx8g" }
 pIndexBam.script = """
 {{args.picard}} BuildBamIndex I="{{infile}}" O="{{outfile}}" {{args.params}}
 """
+
+pCollectOxoGMetrics             = Proc(desc = 'Collect metrics to assess oxidative artifacts.')
+pCollectOxoGMetrics.input       = 'infile:file'
+pCollectOxoGMetrics.output      = 'outfile:file:{{i.infile | fn2}}.oxoG_metrics.txt'
+pCollectOxoGMetrics.args.ref    = params.ref.value
+pCollectOxoGMetrics.args.picard = params.picard.value
+pCollectOxoGMetrics.args.params = Box()
+pCollectOxoGMetrics.lang        = params.python.value
+pCollectOxoGMetrics.script      = "file:scripts/picard/pCollectOxoGMetrics.py"
