@@ -144,13 +144,14 @@ formatlm = function(m) {
 		coeff = as.list(m$coefficients)
 		vars = all.vars(m$terms)
 		terms = unlist(sapply(c(vars[2:length(vars)], '(Intercept)', 'N'), function(x) {
+			ce = list.get(coeff, x, list.get(coeff, bQuote(x)))
 			if (x == 'N') {
 				paste0('N=', nrow(m$model))
-			} else if (is.null(coeff[[x]])) {
+			} else if (ce) {
 				NULL
 			} else {
 				l = ifelse(x == '(Intercept)', '_', x)
-				paste0(l, '=', round(coeff[[x]], 3))
+				paste0(l, '=', round(ce, 3))
 			}
 		}))
 		paste(terms[!is.null(terms)], collapse = ', ')
