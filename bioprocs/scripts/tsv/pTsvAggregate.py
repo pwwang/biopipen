@@ -1,3 +1,4 @@
+import math
 from pyppl import Box
 from functools import partial
 from bioprocs.utils import alwaysList
@@ -60,12 +61,22 @@ def aggr_max(rs, idx):
 			ret[i] = r[ix] if ret[i] is None else max(ret[i], float(r[ix]))
 	return ret
 
+def aggr_fisher(rs, idx):
+	from scipy.stats import combine_pvalues
+	if (len(idx) == 1):
+		return combine_pvalues([float(r[idx[0]]) for r in rs])[1]
+	ret = [None] * len(idx)
+	for i, ix in enumerate(idx):
+		ret[i] = combine_pvalues([float(r[ix]) for r in rs])[1]
+	return ret
+
 builtin = {
 	"sum"   : aggr_sum,
 	"mean"  : aggr_mean,
 	"median": aggr_median,
 	"min"   : aggr_min,
 	"max"   : aggr_max,
+	"fisher": aggr_fisher,
 }
 
 helper = [line for line in helper if line]

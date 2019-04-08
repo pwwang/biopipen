@@ -41,9 +41,14 @@ chow.test = function(formula, group, data, covdata = NULL, ...) {
 		data    = cbind(data, covdata)
 		rm(covdata)
 		pooledfm = as.formula(paste(formula, '+', paste(sapply(covs, bQuote), collapse = '+')))
+		fmvars   = c(fmvars, covs)
 	}
 	
-	pooled_lm = lm(pooledfm, data = data, ...)
+	if (sum(complete.cases(data[,fmvars])) < 2) {
+		pooled_lm = NULL
+	} else {
+		pooled_lm = lm(pooledfm, data = data, ...)
+	}
 	#coeff     = as.list(pooled_lm$coefficients)
 	groups    = levels(as.factor(data[, group]))
 	group_lms = sapply(groups, function(g) {
@@ -56,11 +61,16 @@ chow.test = function(formula, group, data, covdata = NULL, ...) {
 				paste(sapply(covs, bQuote), collapse = '+')
 			))
 		}
-		list(lm(subfm, data = data[data[,group] == g,,drop = FALSE], ...))
+		sublmdata = data[data[,group] == g, , drop = FALSE]
+		if (sum(complete.cases(sublmdata[,fmvars])) < 2) {
+			NULL
+		} else {
+			list(lm(subfm, data = sublmdata, ...))
+		}
 	})
 
-	pooled.ssr = sum(pooled_lm$residuals ^ 2)
-	subssr     = sum(sapply(group_lms, function(x) sum(x$residuals ^ 2)))
+	pooled.ssr = ifelse(is.null(pooled_lm), NA, sum(pooled_lm$residuals ^ 2))
+	subssr     = ifelse(is.false(group_lms, 'any'), NA, sum(sapply(group_lms, function(x) sum(x$residuals ^ 2))))
 	ngroups    = length(groups)
 	K          = length(fmvars) + length(covs)
 	J          = (ngroups - 1) * K

@@ -328,6 +328,7 @@ pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
 			- `args.aggrs.Max = "$max:1"`          : Get the max of the 2nd column
 			- `args.aggrs.Max2 = "$max:2"`         : Get the max of the 3rd column
 			- `args.aggrs["Max,Max2"] = "$max:1,2"`: Get the max of the 2nd and 3rd column, respectively
+			- `args.aggrs.CombinedP = "$fisher:1"` : Get the combined pvalues for 1st column using fisher'method (`scipy.stats.combine_pvalues`)
 """
 pTsvAggregate             = Proc(desc = 'Aggregate on columns with a set of records')
 pTsvAggregate.input       = 'infile:file'
