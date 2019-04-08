@@ -26,7 +26,7 @@ def _update_args(*args, **kwargs):
 		BAKED_ARGS[k] = args
 
 import sh
-shell = sh
+shell = sh(_fg = True)
 
 
 
