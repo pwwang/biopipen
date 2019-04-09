@@ -192,6 +192,24 @@ pIndexBam.script = """
 {{args.picard}} BuildBamIndex I="{{infile}}" O="{{outfile}}" {{args.params}}
 """
 
+"""
+@name:
+	pCollectOxoGMetrics
+@description:
+	Collect metrics to assess oxidative artifacts.This tool collects metrics quantifying the error rate resulting from oxidative artifacts. For a brief primer on oxidative artifacts, see the GATK Dictionary.
+
+	This tool calculates the Phred-scaled probability that an alternate base call results from an oxidation artifact. This probability score is based on base context, sequencing read orientation, and the characteristic low allelic frequency. Please see the following reference for an in-depth discussion of the OxoG error rate.
+
+	Lower probability values implicate artifacts resulting from 8-oxoguanine, while higher probability values suggest that an alternate base call is due to either some other type of artifact or is a real variant.
+@input:
+	`infile:file`: The input bam file
+@output:
+	`outfile:file`: The output file, Default: `{{i.infile | fn2}}.oxoG_metrics.txt`
+@args:
+	`ref`   : The reference genome, Default: `<params.ref>`
+	`picard`: The path to picard, Default: `<params.picard>`
+	`params`: Other parameters for picard, Default: `Box()`
+"""
 pCollectOxoGMetrics             = Proc(desc = 'Collect metrics to assess oxidative artifacts.')
 pCollectOxoGMetrics.input       = 'infile:file'
 pCollectOxoGMetrics.output      = 'outfile:file:{{i.infile | fn2}}.oxoG_metrics.txt'

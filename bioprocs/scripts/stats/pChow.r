@@ -147,7 +147,7 @@ formatlm = function(m) {
 			ce = list.get(coeff, x, list.get(coeff, bQuote(x)))
 			if (x == 'N') {
 				paste0('N=', nrow(m$model))
-			} else if (ce) {
+			} else if (is.null(ce)) {
 				NULL
 			} else {
 				l = ifelse(x == '(Intercept)', '_', x)
