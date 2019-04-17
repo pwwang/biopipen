@@ -10,13 +10,14 @@ BAKED_ARGS.update(dict(
 	# it's changing in the futher. See: https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)
 	# Future one should be:
 	# picard = dict(_sep = ' ', _prefix = '-')
-	picard = dict(_sep = '=', _prefix = '')
+	picard = dict(_sep = '=', _prefix = ''),
+	oncotator = dict(_sep = 'auto'),
 ))
 
-def _update_args(*args, **kwargs):
+def update_args(*args, **kwargs):
 	for arg in args:
 		assert isinstance(arg, dict)
-		_update_args(**arg)
+		update_args(**arg)
 	for k, v in kwargs.items():
 		args = BAKED_ARGS.get(k, {})
 		if isinstance(v, dict):
@@ -26,8 +27,18 @@ def _update_args(*args, **kwargs):
 		BAKED_ARGS[k] = args
 
 import sh
-shell = sh(_fg = True)
+# run command on foreground
+sh_fg    = sh(_fg = True)
+# piped command, waiting for piping
+sh_piped = sh(_piped = True)
+# redirect output
+sh_out   = sh(_out = '>')
+# piped and redirecting
+sh_pout  = sh(_piped = True, _out = '>')
+# run with Popen shell = True
+sh_shell = sh(_shell = True)
 
-
+sh.rm_rf = sh.rm.bake(r = True, f = True)
+sh.ln_s  = sh.ln.bake(s = True)
 
 

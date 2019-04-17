@@ -1,26 +1,28 @@
-from os import path
+from os import path, chdir
 from pyppl import Box
-from bioprocs.utils import shell, parallel
+from bioprocs.utils import parallel, logger
+from bioprocs.utils.shell2 import sh, sh_out, update_args, sh_shell
 
-infile    = {{i.infile | quote}}
-outfile   = {{o.outfile | quote}}
-tool      = {{args.tool | quote}}
-vcf2maf   = {{args.vcf2maf | quote}}
-vep       = {{args.vep | quote}}
-vepDb     = {{args.vepDb | quote}}
-filtervcf = {{args.filtervcf | quote}}
-ref       = {{args.ref | quote}}
-bcftools  = {{args.bcftools | quote}}
-tumoridx  = {{args.tumor | repr}}
-nthread   = {{args.nthread | repr}}
-params    = {{args.params | repr}}
+infile       = {{i.infile | quote}}
+outfile      = {{o.outfile | quote}}
+tool         = {{args.tool | quote}}
+vcf2maf      = {{args.vcf2maf | quote}}
+vep          = {{args.vep | quote}}
+vepDb        = {{args.vepDb | quote}}
+filtervcf    = {{args.filtervcf | quote}}
+ref          = {{args.ref | quote}}
+bcftools     = {{args.bcftools | quote}}
+tumoridx     = {{args.tumor | repr}}
+nthread      = {{args.nthread | repr}}
+params       = {{args.params | repr}}
+oncotator    = {{args.oncotator | quote}}
+oncotator_db = {{args.oncotator_db | quote}}
 
-shell.TOOLS.vcf2maf  = vcf2maf
-shell.TOOLS.bcftools = bcftools
+update_args(vcf2maf = vcf2maf, bcftools = bcftools, oncotator = oncotator)
 
-veppath  = path.dirname(shell.which(vep))
-vcf2maf  = shell.Shell(equal = ' ').vcf2maf
-bcftools = shell.Shell(subcmd = True, equal = ' ').bcftools
+veppath   = path.dirname(sh.which(vep))
+vcf2maf   = sh.vcf2maf
+bcftools  = sh.bcftools
 
 def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
 	params['input-vcf']  = vcf
@@ -32,14 +34,14 @@ def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
 	params['vep-path']   = veppath
 	params['tumor-id']   = tumor
 	params['normal-id']  = normal
-	vcf2maf(**params).run()
+	vcf2maf(**params)
 
 def extract_sample_from_vcf(vcf, sample, outvcf):
-	bcftools.view(s = sample, o = outvcf + '.tmp', _ = vcf).run()
+	bcftools.view(s = sample, o = outvcf + '.tmp', _ = vcf)
 	# exclude sites without genotypes
 	# because this is split from a merged vcf file
-	bcftools.view(_ = outvcf + '.tmp', g = '^miss', o = outvcf).run()
-	shell.rmrf(outvcf + '.tmp')
+	bcftools.view(_ = outvcf + '.tmp', g = '^miss', o = outvcf)
+	sh.rm_rf(outvcf + '.tmp')
 
 def run_vcf2maf():
 	vcfsams  = bcftools.query(l = infile).stdout.splitlines()
@@ -52,9 +54,9 @@ def run_vcf2maf():
 	else:
 		# split vcf file
 		splitdir = path.join(path.dirname(outfile), "splits")
-		shell.mkdir(p = splitdir)
+		sh.mkdir(p = splitdir)
 		mafdir = path.join(path.dirname(outfile), "mafs")
-		shell.mkdir(p = mafdir)
+		sh.mkdir(p = mafdir)
 
 		para = parallel.Parallel(nthread)
 		para.run(extract_sample_from_vcf, [
@@ -70,12 +72,38 @@ def run_vcf2maf():
 		del para
 
 		# merge mafs
-		shell.head(n = 1, _ = path.join(mafdir, "split1.maf"), _stdout = outfile)
+		sh_out.head(n = 1, _ = path.join(mafdir, "split1.maf")) > outfile
 		for i, s in enumerate(vcfsams):
-			shell.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1)), _stdout_ = outfile)
+			sh_out.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1))) >> outfile
+
+def run_oncotator():
+	params._ = [infile, outfile, 'hg19']
+	params.v = True
+	params.input_format = 'VCF'
+	params.output_format = 'TCGAMAF'
+	params.log_name = outfile + '.oncotator.log'
+	# db_dir
+	params['db-dir'] = oncotator_db
+	# c
+	from glob import glob
+	txfiles = glob(path.join(oncotator_db, 'tx_exact_uniprot_matches*'))
+	if txfiles:
+		params.c = txfiles[0]
+
+	# configs
+	outdir = path.dirname(outfile)
+	chdir(outdir)
+	confs = glob(path.join(oncotator_db, '*.config'))
+	for conf in confs:
+		sh.ln_s(conf, path.join(outdir, path.basename(conf)))
+
+	# don't use **params, otherwise input_format will be turned into input-format
+	logger.info('See %s for oncotator logs.', outfile + '.oncotator.log')
+	sh_shell.oncotator(params)
 
 tools = dict(
-	vcf2maf = run_vcf2maf
+	vcf2maf   = run_vcf2maf,
+	oncotator = run_oncotator
 )
 
 try:

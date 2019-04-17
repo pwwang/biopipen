@@ -262,7 +262,8 @@ pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 @output:
 	`outfile:file`: The output maf file
 @args:
-	`tool`     : Which tool to use. Default: vcf2maf
+	`tool`     : Which tool to use, vcf2maf or oncotator. Default: `vcf2maf`
+		- Only hg19 available for oncotator
 	`vcf2maf`  : The path of vcf2maf.pl
 	`vep`      : The path of vep
 	`vepDb`    : The path of database for vep
@@ -273,21 +274,23 @@ pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 	`tumor`    : The index of the tumor sample in the vcf file. Default: `0`
 		- If `tumor > 1 or tumor < 0`: Then all samples are tumors in the vcf file.
 """
-pVcf2Maf                = Proc(desc = 'Convert Vcf file to Maf file.')
-pVcf2Maf.input          = 'infile:file'
-pVcf2Maf.output         = 'outfile:file:{{i.infile | fn2}}.maf'
-pVcf2Maf.args.tool      = 'vcf2maf'
-pVcf2Maf.args.vcf2maf   = params.vcf2maf.value
-pVcf2Maf.args.vep       = params.vep.value
-pVcf2Maf.args.vepDb     = params.vepDb.value
-pVcf2Maf.args.filtervcf = params.vepNonTCGAVcf.value
-pVcf2Maf.args.ref       = params.ref.value
-pVcf2Maf.args.bcftools  = params.bcftools.value
-pVcf2Maf.args.tumor     = 0
-pVcf2Maf.args.nthread   = 1
-pVcf2Maf.args.params    = Box()
-pVcf2Maf.lang           = params.python.value
-pVcf2Maf.script         = "file:scripts/vcf/pVcf2Maf.py"
+pVcf2Maf                   = Proc(desc = 'Convert Vcf file to Maf file.')
+pVcf2Maf.input             = 'infile:file'
+pVcf2Maf.output            = 'outfile:file:{{i.infile | fn2}}.maf'
+pVcf2Maf.args.tool         = 'vcf2maf'
+pVcf2Maf.args.vcf2maf      = params.vcf2maf.value
+pVcf2Maf.args.vep          = params.vep.value
+pVcf2Maf.args.vepDb        = params.vepDb.value
+pVcf2Maf.args.filtervcf    = params.vepNonTCGAVcf.value
+pVcf2Maf.args.ref          = params.ref.value
+pVcf2Maf.args.oncotator    = params.oncotator.value
+pVcf2Maf.args.oncotator_db = params.oncotator_db.value
+pVcf2Maf.args.bcftools     = params.bcftools.value
+pVcf2Maf.args.tumor        = 0
+pVcf2Maf.args.nthread      = 1
+pVcf2Maf.args.params       = Box()
+pVcf2Maf.lang              = params.python.value
+pVcf2Maf.script            = "file:scripts/vcf/pVcf2Maf.py"
 
 """
 @name:
