@@ -1,7 +1,6 @@
 from os import path, chdir
 from pyppl import Box
-from bioprocs.utils import parallel, logger
-from bioprocs.utils.shell2 import sh, sh_out, update_args, sh_shell
+from bioprocs.utils import parallel, logger, shell2 as shell
 
 infile       = {{i.infile | quote}}
 outfile      = {{o.outfile | quote}}
@@ -18,11 +17,11 @@ params       = {{args.params | repr}}
 oncotator    = {{args.oncotator | quote}}
 oncotator_db = {{args.oncotator_db | quote}}
 
-update_args(vcf2maf = vcf2maf, bcftools = bcftools, oncotator = oncotator)
+shell.load_config(vcf2maf = vcf2maf, bcftools = bcftools, oncotator = oncotator)
 
-veppath   = path.dirname(sh.which(vep))
-vcf2maf   = sh.vcf2maf
-bcftools  = sh.bcftools
+veppath   = path.dirname(shell.which(vep).strip())
+vcf2maf   = shell.fg.vcf2maf
+bcftools  = shell.bcftools
 
 def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
 	params['input-vcf']  = vcf
@@ -41,7 +40,7 @@ def extract_sample_from_vcf(vcf, sample, outvcf):
 	# exclude sites without genotypes
 	# because this is split from a merged vcf file
 	bcftools.view(_ = outvcf + '.tmp', g = '^miss', o = outvcf)
-	sh.rm_rf(outvcf + '.tmp')
+	shell.rm_rf(outvcf + '.tmp')
 
 def run_vcf2maf():
 	vcfsams  = bcftools.query(l = infile).stdout.splitlines()
@@ -54,9 +53,9 @@ def run_vcf2maf():
 	else:
 		# split vcf file
 		splitdir = path.join(path.dirname(outfile), "splits")
-		sh.mkdir(p = splitdir)
+		shell.mkdir(p = splitdir)
 		mafdir = path.join(path.dirname(outfile), "mafs")
-		sh.mkdir(p = mafdir)
+		shell.mkdir(p = mafdir)
 
 		para = parallel.Parallel(nthread)
 		para.run(extract_sample_from_vcf, [
@@ -72,9 +71,9 @@ def run_vcf2maf():
 		del para
 
 		# merge mafs
-		sh_out.head(n = 1, _ = path.join(mafdir, "split1.maf")) > outfile
+		shell.out.head(n = 1, _ = path.join(mafdir, "split1.maf")) > outfile
 		for i, s in enumerate(vcfsams):
-			sh_out.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1))) >> outfile
+			shell.out.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1))) >> outfile
 
 def run_oncotator():
 	params._ = [infile, outfile, 'hg19']
@@ -95,11 +94,11 @@ def run_oncotator():
 	chdir(outdir)
 	confs = glob(path.join(oncotator_db, '*.config'))
 	for conf in confs:
-		sh.ln_s(conf, path.join(outdir, path.basename(conf)))
+		shell.ln_s(conf, path.join(outdir, path.basename(conf)))
 
 	# don't use **params, otherwise input_format will be turned into input-format
 	logger.info('See %s for oncotator logs.', outfile + '.oncotator.log')
-	sh_shell.oncotator(params)
+	shell.fg.oncotator(params)
 
 tools = dict(
 	vcf2maf   = run_vcf2maf,
