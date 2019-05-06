@@ -2,7 +2,7 @@ import threading
 from time import sleep
 from concurrent.futures import ThreadPoolExecutor
 from loky import ProcessPoolExecutor
-from bioprocs.utils.shell import runcmd, ShellResult
+from bioprocs.utils.shell2 import runcmd
 from traceback import format_exc
 from pyppl.utils import Queue
 
@@ -46,9 +46,7 @@ class Parallel(object):
 
 	@staticmethod
 	def _run(func, arg):
-		if isinstance(func, ShellResult):
-			return func(*arg).run()
-		elif callable(func):
+		if callable(func):
 			ret = func(*arg)
 			return ret
 		else:

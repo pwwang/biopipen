@@ -7,9 +7,6 @@ import gzip
 from glob import glob
 from os import path
 from pyppl.utils import string_types
-# deprecate, will be removed later
-# use "from bioprocs.utils.shell import ..."
-from .shell import RuncmdException, runcmd, cmdargs
 
 class Mem2Exception(Exception):
 	pass
@@ -165,6 +162,10 @@ class FileConn(object):
 	def close(self):
 		self.fp.close()
 		
-
+def switch(value, cases, *args, **kwargs):
+	ret = cases.get(value, 'default')
+	if callable(ret) and (args or kwargs):
+		return ret(*args, **kwargs)
+	return ret
 
 logger = getLogger()

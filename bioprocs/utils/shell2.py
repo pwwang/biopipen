@@ -4,7 +4,8 @@ Modkit()
 import cmdy
 
 cmdy.config._load(dict(
-	sort = dict(_sep = '', _dupkey = True),
+	default = dict(_raise = False),
+	sort    = dict(_sep = '', _dupkey = True),
 
 	# As of picard 2.18.27-SNAPSHOT
 	# it's changing in the futher. See: https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)
@@ -32,3 +33,5 @@ out = cmdy(_out = '>')
 rm_rf  = cmdy.rm.bake(r = True, f = True)
 ln_s   = cmdy.ln.bake(s = True)
 kill_9 = cmdy.kill.bake(s = 9)
+
+runcmd = lambda cmd: cmdy.bash(c = cmd)

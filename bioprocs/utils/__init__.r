@@ -1,9 +1,8 @@
 library(reticulate)
-utils     = import('bioprocs')$utils
-runcmd    = utils$runcmd
-mem2      = utils$mem2
+utils  = import('bioprocs')$utils
+runcmd = utils$shell2$runcmd
+mem2   = utils$mem2
 # key orders not kept!
-cmdargs   = utils$cmdargs
 
 cbindfill = function (...) {
 	dfs = list(...)
