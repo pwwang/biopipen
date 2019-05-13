@@ -18,7 +18,7 @@ cmdy.config._load(dict(
 
 def load_config(conf):
 	cmdy.config._load({
-		key: (val if isinstance(val, dict) else {'_exe': val}) 
+		key: (val if isinstance(val, dict) else {'_exe': val})
 		for key, val in conf.items()
 	})
 

@@ -1,7 +1,10 @@
-library(reticulate)
-utils  = import('bioprocs')$utils
-runcmd = utils$shell2$runcmd
-mem2   = utils$mem2
+if (!exists('utils')) {
+	# don't load them twice
+	# python modkit package makes second load of utils$shell2 raise exceptions
+	utils  = reticulate::import('bioprocs', delay_load = TRUE)$utils
+	runcmd = utils$shell2$runcmd
+	mem2   = utils$mem2
+}
 # key orders not kept!
 
 cbindfill = function (...) {
@@ -148,7 +151,7 @@ pretty.numbers2 = function(df, ...) {
 	formats = list(...)
 	options(stringsAsFactors = FALSE)
 	df = as.data.frame(df)
-	if (nrow(df) == 0) 
+	if (nrow(df) == 0)
 		return(df)
 
 	allCols      = colnames(df)
