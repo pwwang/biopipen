@@ -108,7 +108,7 @@ class Methods(object):
 			seplen = 0
 			for i, mdoc in enumerate(moddoc):
 				msg = module.ljust(PROCLEN) + mdoc if i == 0 else ' ' * PROCLEN + mdoc
-				ret.append(ASSEMBLER.error(msg, withPrefix = False))
+				ret.append(ASSEMBLER.error(msg, with_prefix = False))
 			
 			for pname, proc in ps.items():
 				pnname = ('    ' + module + '.' + pname + ': ').ljust(PROCLEN)
