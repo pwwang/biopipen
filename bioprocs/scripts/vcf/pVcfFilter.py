@@ -2,7 +2,8 @@ from os import path, makedirs, remove
 from shutil import rmtree, copyfile, move
 from sys import stderr
 from pyppl import Box
-from bioprocs.utils import runcmd, log2pyppl
+from bioprocs.utils import log2pyppl
+from bioprocs.utils.shell2 import runcmd
 import vcf
 
 infile  = {{i.infile | quote}}

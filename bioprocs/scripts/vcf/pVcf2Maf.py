@@ -17,7 +17,7 @@ params       = {{args.params | repr}}
 oncotator    = {{args.oncotator | quote}}
 oncotator_db = {{args.oncotator_db | quote}}
 
-shell.load_config(vcf2maf = vcf2maf, bcftools = bcftools, oncotator = oncotator)
+shell.load_config(dict(vcf2maf = vcf2maf, bcftools = bcftools, oncotator = oncotator))
 
 veppath   = path.dirname(shell.which(vep).strip())
 vcf2maf   = shell.fg.vcf2maf
@@ -45,7 +45,7 @@ def extract_sample_from_vcf(vcf, sample, outvcf):
 def run_vcf2maf():
 	vcfsams  = bcftools.query(l = infile).stdout.splitlines()
 	vcfsams  = [s for s in vcfsams if s.strip()]
-	
+
 	if tumoridx < 2: # single sample
 		tumor  = vcfsams[tumoridx]
 		normal = vcfsams[1-tumoridx]
@@ -59,13 +59,13 @@ def run_vcf2maf():
 
 		para = parallel.Parallel(nthread)
 		para.run(extract_sample_from_vcf, [
-			(infile, s, path.join(splitdir, "split{}.vcf".format(i+1))) 
+			(infile, s, path.join(splitdir, "split{}.vcf".format(i+1)))
 			for i, s in enumerate(vcfsams)
 		])
 		restThreads = int(float(nthread)/float(len(vcfsams)) - 1.0)
 		restThreads = max(restThreads, 1)
 		para.run(run_vcf2maf_one, [
-			(path.join(splitdir, "split" + str(i+1) + ".vcf"), path.join(mafdir, "split{}.maf".format(i+1)), s, None, restThreads) 
+			(path.join(splitdir, "split" + str(i+1) + ".vcf"), path.join(mafdir, "split{}.maf".format(i+1)), s, None, restThreads)
 			for i, s in enumerate(vcfsams)
 		])
 		del para

@@ -1,5 +1,5 @@
 from pyppl import Proc, Box
-from . import params
+from . import params, rimport
 
 """
 @name:
@@ -57,31 +57,32 @@ pDist2Feats.script     = "file:scripts/cluster/pDist2Feats.r"
 	`inopts`: the options for input file
 		- `cnames`: Whether input file has column names
 		- `rnames`: Whether input file has row names
-	`sim`: Output similarity instead of distance? Default: `False`
+	`transfm`: Transform the results in follow way. Default: `scale`
+		- `scale`: scale the distance to [0, 1]
+		- `similarity`: 1 - scaled distance
+		- `False`: don't do any transformation.
 	`na` : Replace NAs with? Default: `0`
 	`method`: Method used to calculate the distance. See available below. Default: `euclidean`
-		- euclidean, manhattan, minkowski, chebyshev, sorensen, gower, soergel, kulczynski_d, 
-		- canberra, lorentzian, intersection, non-intersection, wavehedges, czekanowski, motyka, 
-		- kulczynski_s, tanimoto, ruzicka, inner_product, harmonic_mean, cosine, hassebrook, 
-		- jaccard, dice, fidelity, bhattacharyya, hellinger, matusita, squared_chord, 
-		- quared_euclidean, pearson, neyman, squared_chi, prob_symm, divergence, clark, 
-		- additive_symm, kullback-leibler, jeffreys, k_divergence, topsoe, jensen-shannon, 
+		- euclidean, manhattan, minkowski, chebyshev, sorensen, gower, soergel, kulczynski_d,
+		- canberra, lorentzian, intersection, non-intersection, wavehedges, czekanowski, motyka,
+		- kulczynski_s, tanimoto, ruzicka, inner_product, harmonic_mean, cosine, hassebrook,
+		- jaccard, dice, fidelity, bhattacharyya, hellinger, matusita, squared_chord,
+		- quared_euclidean, pearson, neyman, squared_chi, prob_symm, divergence, clark,
+		- additive_symm, kullback-leibler, jeffreys, k_divergence, topsoe, jensen-shannon,
 		- jensen_difference, taneja, kumar-johnson, avg
 		- see: https://cran.r-project.org/web/packages/philentropy/vignettes/Distances.html
 @requires:
 	`r-philentropy`
 """
-pFeats2Dist             = Proc(desc = 'Calculate the distance between each pair of rows')
-pFeats2Dist.input       = 'infile:file'
-pFeats2Dist.output      = 'outfile:file:{{i.infile | fn}}.dist.txt'
-pFeats2Dist.args.inopts = Box(
-	cnames = True,
-	rnames = True
-)
-pFeats2Dist.args.sim     = False # only for distance between [0,1]
+pFeats2Dist              = Proc(desc = 'Calculate the distance between each pair of rows')
+pFeats2Dist.input        = 'infile:file'
+pFeats2Dist.output       = 'outfile:file:{{i.infile | fn}}.dist.txt'
+pFeats2Dist.args.inopts  = Box(cnames = True, rnames = True)
+pFeats2Dist.args.transfm = 'scale'
 pFeats2Dist.args.na      = 0
 pFeats2Dist.args.method  = 'euclidean'
-pFeats2Dist.lang         = params.Rscript.value
+pFeats2Dist.envs.rimport = rimport
+pFeats2Dist.lang         = params.Rscript.str()
 pFeats2Dist.script       = "file:scripts/cluster/pFeats2Dist.r"
 
 """
@@ -170,7 +171,7 @@ pMCluster.script         = "file:scripts/cluster/pMCluster.r"
 @name:
 	pAPCluster
 @description:
-	Use `r-apcluster` to do clustering. 
+	Use `r-apcluster` to do clustering.
 @input:
 	`infile:file`:  The input a coordinate file
 @output:
@@ -222,7 +223,7 @@ pAPCluster.script         = "file:scripts/cluster/pAPCluster.r"
 pHCluster = Proc(desc = 'Do hierarchical clustering.')
 pHCluster.input  = "infile:file"
 pHCluster.output = [
-	"outmerge:file:{{i.infile | fn}}.hclust/merge.txt", 
+	"outmerge:file:{{i.infile | fn}}.hclust/merge.txt",
 	"outorder:file:{{i.infile | fn}}.hclust/order.txt",
 	"outdir:dir:{{i.infile | fn}}.hclust"
 ]
@@ -235,3 +236,18 @@ pHCluster.args.fast      = False
 pHCluster.args.devpars   = Box(res=300, width=2000, height=2000)
 pHCluster.lang           = params.Rscript.value
 pHCluster.script         = "file:scripts/cluster/pHCluster.r"
+
+pKMeans        = Proc(desc = 'Do K-Means clustering')
+pKMeans.input  = 'infile:file'
+pKMeans.output = [
+	'outfile:file:{{i.infile | fn}}.kmeans/{{i.infile | fn}}.kmeans.txt',
+	'outdir:dir:{{i.infile | fn}}.kmeans'
+]
+pKMeans.args.inopts  = Box(cnames = True, rnames = True)
+pKMeans.args.k       = None
+pKMeans.args.plot    = True
+pKMeans.args.ggs     = Box()
+pKMeans.args.devpars = Box(res=300, width=2000, height=2000)
+pKMeans.envs.rimport = rimport
+pKMeans.lang         = params.Rscript.str()
+pKMeans.script       = "file:scripts/cluster/pKMeans.r"

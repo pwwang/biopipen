@@ -16,9 +16,10 @@ set.seed(seed)
 indata = read.table.inopts(infile, inopts)
 if (!is.logical(na)) {
 	indata[is.na(indata)] = na
-} else {
-	indata = indata[complete.cases(indata),,drop = FALSE]
 }
+
+indata = indata[complete.cases(indata), colSums(indata)!=0, drop = FALSE]
+
 anno = NULL
 if (annofile != "") {
 	anno = read.table.inopts(annofile, anopts)[rownames(indata),,drop=FALSE]
@@ -112,7 +113,7 @@ if (is.true(plots$clplot, 'any')) {
 }
 
 if (is.true(plots$pairs)) {
-	pcs = pca$x[, 1:plots$pcs, drop = FALSE]
+	pcs = pca$x[, 1:plots$pairs$pcs, drop = FALSE]
 	cname = NULL
 	if (plots$pairs$anno == 'kmeans') {
 		anno = as.data.frame(kmeans(pcs, plots$pairs$k, nstart = ifelse(is.null(plots$pairs$nstart), 25, plots$pairs$nstart), iter.max = ifelse(is.null(plots$pairs$niter), 1000, plots$pairs$niter))$clust)
@@ -131,6 +132,6 @@ if (is.true(plots$pairs)) {
 	if (!is.null(cname)) {
 		plot.pairs(pcs, pairsfile, params = list(mapping = ggplot2::aes_string(color = cname), upper = list(continuous = "density")), ggs = list(theme = list(axis.text.x = element_text(angle = 90, hjust = 1))))
 	} else {
-		plot.pairs(pcs, pairsfile, upper = list(continuous = "density")), ggs = list(theme = list(axis.text.x = element_text(angle = 90, hjust = 1))))
+		plot.pairs(pcs, pairsfile, params = list(upper = list(continuous = "density")), ggs = list(theme = list(axis.text.x = element_text(angle = 90, hjust = 1))))
 	}
 }
