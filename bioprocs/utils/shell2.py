@@ -13,6 +13,12 @@ cmdy.config._load(dict(
 	picard    = dict(_sep = '=', _prefix = ''),
 	plink     = dict(_out = cmdy.DEVERR),
 	oncotator = dict(_sep = 'auto'),
+	bowtie2   = dict(_dupkey = True, _sep = ' '),
+	ngm       = dict(_sep = ' '),
+	star      = dict(_sep = ' '),
+	biobambam = dict(_sep = '=', _prefix = ''),
+	bedtools  = dict(_sep = ' ', _prefix = '-'),
+	samtools  = dict(_sep = ' ', _prefix = '-'),
 ))
 
 

@@ -13,6 +13,7 @@ from collections import OrderedDict
 from pyppl import PyPPL, utils, Channel
 from pyppl.parameters import commands, HelpAssembler, Fore, Back, Style
 from tempfile import gettempdir
+from cmdy import python
 
 METHODS   = None
 SCRIPTS   = None
@@ -62,7 +63,7 @@ class Methods(object):
 		main = Main.getMain()
 		if not cmds:
 			main.help(printNexit = True)
-		
+
 		obj = None
 		cmd = cmds[0]
 		if '.' in cmd:
@@ -98,7 +99,7 @@ class Methods(object):
 			procs = {mod: Main._getProcesses(mod)}
 		else:
 			procs = Main._getProcesses()
-		
+
 		ret = ['']
 		for module, ps in procs.items():
 			ret.append('-' * SEPLEN)
@@ -109,7 +110,7 @@ class Methods(object):
 			for i, mdoc in enumerate(moddoc):
 				msg = module.ljust(PROCLEN) + mdoc if i == 0 else ' ' * PROCLEN + mdoc
 				ret.append(ASSEMBLER.error(msg, with_prefix = False))
-			
+
 			for pname, proc in ps.items():
 				pnname = ('    ' + module + '.' + pname + ': ').ljust(PROCLEN)
 				ret.append(ASSEMBLER.prog(pnname) + ASSEMBLER.optdesc(proc.proc.desc))
@@ -121,7 +122,7 @@ class Methods(object):
 	@staticmethod
 	def params(*args, **kwargs):
 		"""
-		Show bioprocs.params items. 
+		Show bioprocs.params items.
 		@usage:
 			# Show all parameters
 			{prog}
@@ -168,7 +169,7 @@ class Methods(object):
 		else:
 			if not args:
 				args = bioprocs.params.asDict().keys()
-			
+
 			ret = []
 			for arg in sorted(args):
 				ret.append(ASSEMBLER.title('parameter') + ' ' + ASSEMBLER.prog(arg))
@@ -194,7 +195,7 @@ class Command(object):
 		self.prog      = prog
 		self.name      = name
 		self.assembler = HelpAssembler(prog, theme = ASSEMBLER.theme)
-	
+
 	@staticmethod
 	def getblocks(docstr):
 		lines = docstr.splitlines()
@@ -213,7 +214,7 @@ class Command(object):
 			ret[blockname].append(line)
 		return ret
 
-	@staticmethod	
+	@staticmethod
 	def getitems(lines):
 		ret = []
 		for optline in lines:
@@ -238,7 +239,7 @@ class Command(object):
 
 	def helpitems(self, blocks):
 		raise NotImplementedError()
-	
+
 	def help(self, error = '', printNexit = False):
 		ret = []
 		if error:
@@ -246,7 +247,7 @@ class Command(object):
 				error = [error]
 			ret = [self.assembler.error(err.strip()) for err in error]
 		ret += self.assembler.assemble(
-			self.helpitems(Command.getblocks(self.getDocstr())), 
+			self.helpitems(Command.getblocks(self.getDocstr())),
 			self.prog
 		)
 
@@ -293,7 +294,7 @@ class Script(Command):
 		self.script = path.join(path.dirname(__file__), 'bioprocs-' + self.name + '.py')
 
 	def help(self, error = '', printNexit = False):
-		c = utils.cmd.run([sys.executable, self.script, '--help'])
+		c = python(self.script, help = True)
 		h = c.stderr
 
 		ret = []
@@ -324,12 +325,7 @@ class Script(Command):
 		return {}
 
 	def run(self, *args, **kwargs):
-		utils.cmd.run(
-			[sys.executable, self.script] + sys.argv[2:], 
-			stdout = sys.stdout, 
-			stderr = sys.stderr,
-			stdin  = sys.stdin
-		)
+		python(self.script, *sys.argv[2:], _fg = True)
 
 class Process(Command):
 
@@ -342,10 +338,10 @@ class Process(Command):
 		self.procfile = path.join(path.dirname(bioprocs.__file__), self.module + '.py')
 		if not path.isfile(self.procfile):
 			raise ValueError('No such module: {}'.format(self.module))
-		
+
 		try:
 			self.proc = getattr(
-				__import__('bioprocs.' + self.module, fromlist = ['bioprocs']), 
+				__import__('bioprocs.' + self.module, fromlist = ['bioprocs']),
 				self.procname
 			)
 		except AttributeError:
@@ -359,7 +355,7 @@ class Process(Command):
 			r'(\"\"\"|\'\'\')\s+@name:\s+' + self.procname + r'\s+@description:\s+([\s\S]+?)\1'
 		)
 		docstr = regex.search(content)
-		
+
 		if not docstr or 'Alias of' in docstr.group(2):
 			alias = docstr.group(2) if docstr else None
 			docstr = ''
@@ -370,7 +366,7 @@ class Process(Command):
 			if alias is not None:
 				docstr += '	' + alias.strip() + ' (of module {})\n'.format(self.module)
 			docstr += '@input:\n'
-			
+
 			inputs = self.proc.config['input']
 			if isinstance(inputs, dict):
 				inputs = inputs.keys()
@@ -409,7 +405,7 @@ class Process(Command):
 		return docstr
 
 	def helpitems(self, blocks):
-		
+
 		def tokendefault(desc, token):
 			return [desc[:desc.index(token)] + HelpAssembler().theme['default'] + desc[desc.index(token):] + Style.RESET_ALL]
 
@@ -467,9 +463,9 @@ class Process(Command):
 				retouts.append(('{}o.{}'.format(prefix, name), t, desc))
 			else:
 				retouts[-1][-1].extend(sepdefault(oline.rstrip()))
-				
+
 		ret['output (basename only, template applied)'] = retouts
-		
+
 		# args
 		args = blocks.get('args')
 		if args:
@@ -477,7 +473,7 @@ class Process(Command):
 			argname = None
 			for argline in args:
 				argline = stripL(argline)
-				if argline.startswith('`'):					
+				if argline.startswith('`'):
 					argname, _, argdesc = splitNameLine(argline)
 					retargs.append(('{}args.{}'.format(prefix, argname), '', argdesc))
 				else:
@@ -486,16 +482,16 @@ class Process(Command):
 
 		ret['process attributes'] = [
 			(
-				'{}<xxx>'.format(prefix), 
-				'', 
+				'{}<xxx>'.format(prefix),
+				'',
 				'Such as {prefix}forks, {prefix}exdir, {prefix}cache, etc.'.format(prefix = prefix)
 			)
 		]
 
 		ret['pipeline configuration'] = [
 			(
-				'{}config.<subconfig>[.subconfig]'.format(prefix), 
-				'', 
+				'{}config.<subconfig>[.subconfig]'.format(prefix),
+				'',
 				'Such as {prefix}config._log.file'.format(prefix = prefix)
 			)
 		]
@@ -507,12 +503,12 @@ class Process(Command):
 	def createPipeline(self, **kwargs):
 
 		config = {
-			'_log': {'file': None}, 
+			'_log': {'file': None},
 			'default': {
 				'ppldir': path.join(gettempdir(), 'bioprocs.workdir')
 			}
 		}
-		
+
 		# get input keys
 		inkeys = self.proc.config['input']
 		if isinstance(inkeys, dict):
@@ -536,7 +532,7 @@ class Process(Command):
 			outputs = ['{}:{}'.format(k, v) for k, v in outputs.items()]
 		elif not isinstance(outputs, list):
 			outputs = utils.split(outputs, ',')
-		
+
 		for outkey in outputs:
 			parts = utils.split(outkey, ':')
 			if len(parts) == 2:
@@ -580,7 +576,7 @@ class Process(Command):
 
 		if not any([bool(it) for it in indata.values()]):
 			self.help('No input specified.', printNexit = True)
-		
+
 		self.proc.input  = indata
 		self.proc.output = outdata
 		return config
@@ -615,7 +611,7 @@ class Main(object):
 		METHODS = {
 			mname: Method(mname, path.basename(sys.argv[0]) + ' ' + mname)
 			for mname, _ in inspect.getmembers(
-				Methods, 
+				Methods,
 				predicate = inspect.isfunction
 			)
 			if not mname.startswith('_')
@@ -642,8 +638,8 @@ class Main(object):
 
 			pymodule = __import__('bioprocs.%s' % module, fromlist = ['bioprocs'])
 			procs    = {
-				proc: Process(module + '.' + proc) 
-				for proc in dir(pymodule) 
+				proc: Process(module + '.' + proc)
+				for proc in dir(pymodule)
 				if proc[0] == 'p' and (proc[1].isdigit() or proc[1].isupper())
 			}
 
@@ -652,7 +648,7 @@ class Main(object):
 			if PROCESSES: return PROCESSES
 			modules = set([path.splitext(mfile)[0] for mfile in listdir(pdir)])
 			modules = [
-				mod for mod in modules 
+				mod for mod in modules
 				if not mod.startswith('_') and mod not in ['utils', 'scripts', 'wxs']
 			]
 			PROCESSES   = {
@@ -723,7 +719,7 @@ class Main(object):
 		if MAIN: return MAIN
 		MAIN = Main()
 		return MAIN
-	
+
 if __name__ == '__main__':
 	commands._desc  = 'Command line utilities of bioprocs.'
 	commands._helpx = Main.helpx

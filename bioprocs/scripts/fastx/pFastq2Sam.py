@@ -1,8 +1,7 @@
 import re
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell
-from bioprocs.utils.shell import Shell
+from bioprocs.utils import shell2 as shell
 
 # variables
 infile1   = {{i.fq1 | quote}}
@@ -25,7 +24,8 @@ star      = {{args.star | quote}}
 tool      = {{args.tool | quote}}
 nthread   = {{args.nthread}}
 jobindex  = {{job.index}}
-shell.TOOLS.update(dict(
+
+shell.load_config(dict(
 	bowtie2  = bowtie2,
 	samtools = samtools,
 	bwa      = bwa,
@@ -42,9 +42,9 @@ if not rg['SM']:
 	rg['SM'] = outprefix
 
 def sam2bam(samfile, bamfile):
-	Shell(subcmd = True).samtools.view(
-		S = True, b = True, _stdout = bamfile, _ = samfile, **{'@': nthread}
-	).run()
+	shell.samtools.view(
+		S = True, b = True, _out = bamfile, _ = samfile, **{'@': nthread}
+	)
 	shell.rm_rf(samfile)
 
 def run_bowtie2():
@@ -55,7 +55,7 @@ def run_bowtie2():
 	params['2'] = infile2
 	params['rg-id'] = rg['ID']
 	params['rg'] = ['{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID']
-	Shell(equal = ' ', duplistkey = True).bowtie2(**params).run()
+	shell.bowtie2(**params)
 	if outfmt == 'bam': sam2bam(params.S, outfile)
 
 def run_bwa():
@@ -63,10 +63,10 @@ def run_bwa():
 	params.R = "@RG\\tID:{id}\\t{rg}".format(id = rg['ID'], rg = "\\t".join(
 		'{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID'
 	))
-	params._stdout = outfile if outfmt == 'sam' else path.split(outfile)[0] + '.sam'
+	params._out = outfile if outfmt == 'sam' else path.split(outfile)[0] + '.sam'
 	params._ = [ref, infile1, infile2]
-	Shell(subcmd = True).bwa.mem(**params).run()
-	if outfmt == 'bam': sam2bam(params._stdout, outfile)
+	shell.bwa.mem(**params)
+	if outfmt == 'bam': sam2bam(params._out, outfile)
 
 def run_ngm():
 	params['1'] = infile1
@@ -77,7 +77,7 @@ def run_ngm():
 	params.t = nthread
 	for k, v in rg.items():
 		params['rg-' + k.lower()] = v
-	Shell(equal = ' ').ngm(**params).run()
+	shell.ngm(**params)
 
 def run_star():
 	params.genomeDir        = ref + '.star'
@@ -88,8 +88,8 @@ def run_star():
 	params.readNameSeparator = '.'
 	params.outFileNamePrefix = outdir + '/'
 	params.outSAMtype        = [outfmt.upper(), 'Unsorted']
-	Shell(equal = ' ').star(**params).run()
-	
+	shell.star(**params)
+
 	starout = path.join(outdir, "Aligned.out.{}".format(outfmt))
 	if path.isfile(starout):
 		shell.mv(starout, outfile)
