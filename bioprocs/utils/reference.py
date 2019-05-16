@@ -1,6 +1,5 @@
 from os import path, readlink
-from bioprocs.utils.shell import runcmd, cmdargs
-from bioprocs.utils import shell, gztype
+from bioprocs.utils import shell2 as shell, gztype
 
 def check(ref):
 	if not ref or not path.exists(ref):
@@ -27,7 +26,7 @@ def buildIndex(ref, cmd, ref2 = None, cmd2 = None):
 def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	"""
 	Index bam files
-	If bam file is a link, try to find the index file in its orginal directory or 
+	If bam file is a link, try to find the index file in its orginal directory or
 	its realpath directory
 	If nothing found, try to create the index file using samtools
 	@params:
@@ -48,16 +47,16 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	# some -> some
 	# [1]some -> some
 	rname = fname.split(']', 1)[1] if fname.startswith('[') else fname
-	
-	samtools = shell.Shell({'samtools': samtools}, subcmd = True).samtools if samtools else None
-	# /path/to/some.bam.bai 
+
+	shell.load_config(samtools = samtools)
+	# /path/to/some.bam.bai
 	expectedIndex = path.join(dname, fname + ext)
 	if path.isfile(expectedIndex):
 		return
 	# if bam is not a link, there is nowhere else to find index, create it using samtools
 	if not path.islink(bam):
 		if samtools:
-			samtools.index(b = True, _stdout = expectedIndex, **{'@': nthread})
+			shell.samtools.index(b = True, _out = expectedIndex, **{'@': nthread})
 		else:
 			raise ValueError('Index not found: {}'.format(bam))
 		return
@@ -75,12 +74,12 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 		return
 	# if all failed, create it
 	if samtools:
-		samtools.index(b = True, _stdout = expectedIndex, **{'@': nthread})
+		shell.samtools.index(b = True, _out = expectedIndex, **{'@': nthread})
 	else:
 		raise ValueError('Index not found: {}'.format(bam))
 
 def vcfIndex(vcf, tabix = 'tabix'):
-	
+
 	# /path/to/some.vcf -> some.vcf
 	# /path/to/some.vcf.gz -> some.vcf
 	bname = path.basename(vcf[:-3]) if vcf.endswith('.gz') else path.basename(vcf)
@@ -96,9 +95,10 @@ def vcfIndex(vcf, tabix = 'tabix'):
 	expectedIndex = path.join(dname, fname + '.vcf.gz.tbi')
 	if path.isfile(expectedIndex):
 		return vcf if vcf.endswith('.gz') else vcf + '.gz'
-	
+
 	# if vcf is not a link, there is nowhere else to find index, create it using tabix
-	tabix = shell.Shell({'tabix': tabix}).tabix
+	shell.load_config(tabix = tabix)
+	#tabix = shell.Shell({'tabix': tabix}).tabix
 	gt    = gztype(vcf)
 	if gt == 'bgzip':
 		if path.islink(vcf):
@@ -110,18 +110,18 @@ def vcfIndex(vcf, tabix = 'tabix'):
 			if path.isfile(realvcf + '.tbi'):
 				shell.ln_s(realvcf + '.tbi', expectedIndex)
 				return vcf
-		tabix(p = 'vcf', _ = vcf).run()
+		shell.tabix(p = 'vcf', _ = vcf).run()
 		return vcf
 	if gt == 'gzip':
 		tmpvcf = path.join(dname, bname + '.tmp.vcf')
-		shell.gunzip_to(vcf, tmpvcf)
+		shell.gunzip(vcf, c = True, _out = tmpvcf)
 		shell.bgzip(tmpvcf)
-		tabix(p = 'vcf', _ = tmpvcf + '.gz').run()
+		shell.tabix(p = 'vcf', _ = tmpvcf + '.gz').run()
 		shell.mv(tmpvcf + '.gz.tbi', expectedIndex)
 		return vcf
-	shell.bgzip(vcf, c = True, _stdout = vcf + '.gz')
-	tabix(p = 'vcf', _ = vcf + '.gz').run()
+	shell.bgzip(vcf, c = True, _out = vcf + '.gz')
+	shell.tabix(p = 'vcf', _ = vcf + '.gz').run()
 	return vcf + '.gz'
-	
-	
+
+
 

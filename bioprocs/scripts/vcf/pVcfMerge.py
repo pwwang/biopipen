@@ -1,5 +1,5 @@
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 from bioprocs.utils.parallel import Parallel
 from bioprocs.utils.reference import vcfIndex
 
@@ -12,13 +12,16 @@ bcftools  = {{args.bcftools | quote}}
 gatk      = {{args.gatk | quote}}
 tabix     = {{args.tabix | quote}}
 ref       = {{args.ref | quote}}
-params    = {{args.params | repr}}
+params    = {{args.params}}
+params    = params if isinstance(params, Box) else Box(params)
 tool      = {{args.tool | quote}}
 gz        = {{args.gz | repr}}
 
-shell.TOOLS.bcftools = bcftools
-shell.TOOLS.vcftools = vcftools
-shell.TOOLS.gatk     = gatk
+shell.load_config(
+	bcftools = bcftools,
+	vcftools = vcftools,
+	gatk     = gatk,
+)
 
 para = Parallel(nthread, raiseExc = True)
 invcfs = para.run(vcfIndex, [
@@ -34,8 +37,9 @@ def run_vcftools():
 	params.R       = params.get('R', '0/0')
 	params._       = invcfs
 	params._stdout = outfile[:-3] if gz else outfile
-	shell.Shell(equal = ' ').vcftools(**params).run()
-	if gz: shell.bgzip(outfile[:-3])
+	shell.vcftools(**params)
+	if gz:
+		shell.bgzip(outfile[:-3])
 
 def run_bcftools():
 	params.F       = params.get('F', '+')
@@ -45,7 +49,7 @@ def run_bcftools():
 	params['0']    = params.get('0', True)
 	if gz:
 		params.O = 'z'
-	shell.Shell(subcmd = True, equal = ' ').bcftools.merge(**params).run()
+	shell.bcftools.merge(**params)
 
 def run_gatk():
 	params.T                   = 'CombineVariants'
@@ -55,8 +59,9 @@ def run_gatk():
 	params.variant             = invcfs
 	params._stdout             = outfile[:-3] if gz else outfile
 	params.genotypemergeoption = params.get('genotypemergeoption', 'UNIQUIFY')
-	shell.Shell(equal = ' ', duplistkeys = True).gatk(**params).run()
-	if gz: shell.bgzip(outfile[:-3])
+	shell.gatk(**params)
+	if gz:
+		shell.bgzip(outfile[:-3])
 
 tools = dict(
 	vcftools = run_vcftools,
