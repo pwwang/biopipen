@@ -19,8 +19,8 @@ if gz:
 Builtin filters
 """
 builtin_filters = Box(
-	SNPONLY   = lambda r, s: len(r.REF) != 1 or any(len(a) != 1 for a in r.ALT),
-	BIALTONLY = lambda r, s: len(r.ALT) != 1,
+	SNPONLY   = lambda r, s, q = None: len(r.REF) != 1 or any(len(a) != 1 for a in r.ALT),
+	BIALTONLY = lambda r, s, q = None: len(r.ALT) != 1,
 	QUAL      = lambda r, s, q: not r.QUAL or r.QUAL < q,
 	AF        = lambda r, s, q: r.INFO['AF'][0] < q
 )
@@ -58,6 +58,7 @@ for fname, fdesc in descs.items():
 writer = vcf.Writer(open(outfile, 'w'), reader)
 
 while True:
+	nerror = 0
 	try:
 		record = next(reader)
 		for fname, ffunc in realfilters.items():
@@ -68,9 +69,14 @@ while True:
 			writer.write_record(record)
 	except StopIteration:
 		break
-	except Exception as ex:
-		log2pyppl(str(ex), 'ERROR')
-		continue
+	except Exception:
+		nerror += 1
+		import traceback
+		tb = traceback.format_exc()
+		log2pyppl(str(tb), 'ERROR')
+		if nerror < 100:
+			continue
+		raise
 
 writer.close()
 
