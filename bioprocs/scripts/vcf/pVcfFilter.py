@@ -3,7 +3,7 @@ from shutil import rmtree, copyfile, move
 from sys import stderr
 from pyppl import Box
 from bioprocs.utils import log2pyppl
-from bioprocs.utils.shell2 import runcmd
+from bioprocs.utils.shell2 import bgzip
 import vcf
 
 infile  = {{i.infile | quote}}
@@ -21,7 +21,7 @@ Builtin filters
 builtin_filters = Box(
 	SNPONLY   = lambda r, s: len(r.REF) != 1 or any(len(a) != 1 for a in r.ALT),
 	BIALTONLY = lambda r, s: len(r.ALT) != 1,
-	QUAL      = lambda r, s, q: r.QUAL < q,
+	QUAL      = lambda r, s, q: not r.QUAL or r.QUAL < q,
 	AF        = lambda r, s, q: r.INFO['AF'][0] < q
 )
 builtin_descs = Box(
@@ -59,7 +59,7 @@ writer = vcf.Writer(open(outfile, 'w'), reader)
 
 while True:
 	try:
-		record = reader.next()
+		record = next(reader)
 		for fname, ffunc in realfilters.items():
 			if ffunc(record, record.samples):
 				record.FILTER = record.FILTER or []
@@ -75,6 +75,6 @@ while True:
 writer.close()
 
 if gz:
-	runcmd(['bgzip', outfile])
+	bgzip(outfile)
 
 
