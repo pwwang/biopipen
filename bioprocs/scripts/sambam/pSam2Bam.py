@@ -2,8 +2,7 @@ from shutil import move, rmtree
 from os import path, symlink, remove
 from sys import stderr
 from pyppl import Box
-from bioprocs.utils import shell, mem2, cmdargs
-from bioprocs.utils.shell import runcmd2, RuncmdException, Shell
+from bioprocs.utils import mem2, shell2 as shell
 
 infile     = {{ i.infile | quote }}
 inprefix   = {{ i.infile | fn | quote}}
@@ -12,9 +11,9 @@ joboutdir  = {{job.outdir | quote}}
 infmt      = {{ i.infile | ext | [1:] | quote}}
 tmpdir     = {{ args.tmpdir | quote}}
 tmpdir     = path.join (tmpdir, {{proc.id, fn(i.infile), str(job.index+1) | : '.'.join(a) | quote }})
-steps      = {{ args.steps | repr }}
-params     = {{ args.params | repr }}
-argsmem    = {{ args.mem | repr}}
+steps      = {{ args.steps }}
+params     = {{ args.params }}
+argsmem    = {{ args.mem | repr }}
 sortby     = {{ args.sortby | quote}}
 nthread    = {{ args.nthread | repr}}
 ref        = {{ args.ref | repr}}
@@ -25,13 +24,15 @@ sambamba   = {{ args.sambamba | quote}}
 samtools   = {{ args.samtools | quote}}
 picard     = {{ args.picard | quote}}
 tool       = {{ args.tool | quote }}
-shell.TOOLS.update(dict(
+
+
+shell.load_config(
 	biobambam = biobambam,
 	sambamba  = sambamba,
 	samtools  = samtools,
 	picard    = picard,
 	elprep    = elprep
-))
+)
 
 if steps.rmdup:
 	steps.markdup = True
@@ -40,7 +41,6 @@ if not path.exists(tmpdir):
 if steps.recal and tool != 'elprep':
 	raise ValueError('Step "recal" is only enabled by "elprep", use pBamRecal for other tools.')
 
-subshell = Shell(subcmd = True)
 
 def run_biobambam():
 	mem = mem2(argsmem, 'M')
@@ -60,17 +60,17 @@ def run_biobambam():
 	params.markduplicates = int(steps.markdup)
 	params.rmdup          = int(steps.rmdup)
 
-	Shell(dash = '', equal = '=').biobambam(**params).run()
+	shell.fg.biobambam(**params)
 
 def run_sambamba():
 	global infile
 	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
-		subshell.sambamba.view(S = True, f = 'bam', o = outfile, t = nthread, _ = infile).run()
+		shell.fg.sambamba.view(S = True, f = 'bam', o = outfile, t = nthread, _ = infile)
 	else:
 		bamfile = outfile
 		if infmt == 'sam':
 			bamfile = path.join(joboutdir, inprefix + '.s2b.bam')
-			subshell.sambamba.view(S = True, f = 'bam', o = bamfile, t = nthread, _ = infile).run()
+			shell.fg.sambamba.view(S = True, f = 'bam', o = bamfile, t = nthread, _ = infile)
 			infile = bamfile
 		if steps.sort:
 			if sortby == 'queryname':
@@ -82,21 +82,22 @@ def run_sambamba():
 			params.o      = bamfile
 			params.t      = nthread
 			params._      = infile
-			subshell.sambamba.sort(**params).run()
+			shell.fg.sambamba.sort(**params)
 			if infile != {{i.infile | quote}}:
-				shell.rm(f = True, _ = infile)
+				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.markdup:
 			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
-			subshell.sambamba.markdup(r = steps.rmdup, t = nthread, tmpdir = tmpdir, _ = [infile, bamfile]).run()
+			shell.fg.sambamba.markdup(r = steps.rmdup, t = nthread, tmpdir = tmpdir,
+				_ = [infile, bamfile])
 			if infile != {{i.infile | quote}}:
-				shell.rm(f = True, _ = infile)
+				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.index:
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
 			else:
-				subshell.sambamba.index(t = nthread, _ = [infile, infile + '.bai'])
+				shell.fg.sambamba.index(t = nthread, _ = [infile, infile + '.bai'])
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
@@ -105,32 +106,32 @@ def run_sambamba():
 def run_samtools():
 	global infile
 	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
-		subshell.samtools.view(b = True, o = outfile, O = 'bam', _ = infile).run()
+		shell.fg.samtools.view(b = True, o = outfile, O = 'bam', _ = infile)
 	else:
 		bamfile = outfile
 		if steps.sort:
 			mem = mem2(argsmem, 'M')
 			bamfile = path.join(joboutdir, inprefix + '.sorted.bam')
-			subshell.samtools.sort(
-				m = mem + 'M', 
-				n = sortby == 'queryname',
-				o = bamfile,
-				T = tmpdir,
-				O = 'bam',
-				_ = infile,
+			shell.fg.samtools.sort(
+				m     = mem + 'M',
+				n     = sortby == 'queryname',
+				o     = bamfile,
+				T     = tmpdir,
+				O     = 'bam',
+				_     = infile,
 				**{'@': nthread}
-			).run()
+			)
 			if infile != {{i.infile | quote}}:
-				shell.rm(infile, f = True)
+				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.markdup or steps.rmdup:
 			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
-			subshell.rmdup(infile, bamfile).run()
+			shell.fg.samtools.rmdup(infile, bamfile)
 			if infile != {{i.infile | quote}}:
-				shell.rm(infile, f = True)
+				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.index:
-			subshell.samtools.index(bamfile, outfile + '.bai')
+			shell.samtools.index(bamfile, outfile + '.bai')
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
@@ -140,33 +141,32 @@ def run_picard():
 	global infile
 	mem = mem2(argsmem, '-jdict')
 	mem['-Djava.io.tmpdir'] = tmpdir
-	shellpicard = Shell(subcmd = True, dash = '', equal = '=').picard(**mem)
 	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
-		shellpicard.SamFormatConverter(TMP_DIR = tmpdir, I = infile, O = outfile).run()
+		shell.fg.picard.SamFormatConverter(TMP_DIR = tmpdir, I = infile, O = outfile)
 	else:
 		bamfile = outfile
 		if steps.sort:
 			bamfile = path.join(joboutdir, inprefix + '.sorted.bam')
-			shellpicard.ShortSam(TMP_DIR = tmpdir, I = infile, O = bamfile, SO = sortby).run()
+			shell.fg.picard.ShortSam(TMP_DIR = tmpdir, I = infile, O = bamfile, SO = sortby)
 			if infile != {{i.infile | quote}}:
-				shell.rm(f = True, _ = infile)
+				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.markdup:
 			mfile = "/dev/null"
 			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
-			shellpicard.MarkDuplicates(REMOVE_DUPLICATES = 'true' if steps.rmdup else 'false', TMP_DIR = tmpdir, I = infile, O = bamfile, M = mfile).run()
+			shell.fg.picard.MarkDuplicates(REMOVE_DUPLICATES = 'true' if steps.rmdup else 'false',
+				TMP_DIR = tmpdir, I = infile, O = bamfile, M = mfile)
 			if infile != {{i.infile | quote}}:
-				shell.rm(f = True, _ = infile)
+				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.index:
-			shellpicard.BuildBamIndex(TMP_DIR = tmpdir, I = infile, O = outfile + '.bai').run()
+			shell.fg.picard.BuildBamIndex(TMP_DIR = tmpdir, I = infile, O = outfile + '.bai')
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
 			shell.mv(infile, outfile)
 
 def run_elprep():
-	elpsh = Shell(subcmd = True, equal = ' ').elprep
 
 	params['log-path']          = joboutdir
 	params['nr-of-threads']     = nthread
@@ -181,10 +181,10 @@ def run_elprep():
 		params['bqsr-reference'] = ref + '.elprep'
 		if knownSites:
 			params['known-sites'] = knownSites
-	
-	elpsh.filter(**params).run()
+
+	shell.fg.elprep.filter(**params)
 	if steps.index:
-		subshell.samtools.index(outfile, outfile + '.bai')
+		shell.samtools.index(outfile, outfile + '.bai')
 
 tools = {
 	'biobambam': run_biobambam,

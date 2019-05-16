@@ -1,3 +1,4 @@
+import sys
 from modkit import Modkit
 
 import cmdy
@@ -13,15 +14,11 @@ cmdy.config._load(dict(
 	picard    = dict(_sep = '=', _prefix = ''),
 	plink     = dict(_out = cmdy.DEVERR),
 	oncotator = dict(_sep = 'auto'),
-	bowtie2   = dict(_dupkey = True, _sep = ' '),
-	ngm       = dict(_sep = ' '),
-	gatk      = dict(_sep = ' ', _dupkey = True),
-	star      = dict(_sep = ' '),
+	bowtie2   = dict(_dupkey = True),
+	gatk      = dict(_dupkey = True),
 	biobambam = dict(_sep = '=', _prefix = ''),
-	bedtools  = dict(_sep = ' ', _prefix = '-'),
-	samtools  = dict(_sep = ' ', _prefix = '-'),
-	vcftools  = dict(_sep = ' '),
-	bcftools  = dict(_sep = ' '),
+	bedtools  = dict(_prefix = '-'),
+	samtools  = dict(_prefix = '-'),
 ))
 
 

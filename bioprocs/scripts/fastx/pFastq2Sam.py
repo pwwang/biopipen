@@ -55,10 +55,11 @@ def run_bowtie2():
 	params['2'] = infile2
 	params['rg-id'] = rg['ID']
 	params['rg'] = ['{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID']
-	shell.bowtie2(**params)
+	shell.fg.bowtie2(**params)
 	if outfmt == 'bam': sam2bam(params.S, outfile)
 
 def run_bwa():
+	del params._out_
 	params.t = nthread
 	params.R = "@RG\\tID:{id}\\t{rg}".format(id = rg['ID'], rg = "\\t".join(
 		'{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID'
@@ -77,7 +78,7 @@ def run_ngm():
 	params.t = nthread
 	for k, v in rg.items():
 		params['rg-' + k.lower()] = v
-	shell.ngm(**params)
+	shell.fg.ngm(**params)
 
 def run_star():
 	params.genomeDir        = ref + '.star'
@@ -88,7 +89,7 @@ def run_star():
 	params.readNameSeparator = '.'
 	params.outFileNamePrefix = outdir + '/'
 	params.outSAMtype        = [outfmt.upper(), 'Unsorted']
-	shell.star(**params)
+	shell.fg.star(**params)
 
 	starout = path.join(outdir, "Aligned.out.{}".format(outfmt))
 	if path.isfile(starout):
