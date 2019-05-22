@@ -13,12 +13,13 @@ bedfile = Sys.glob(file.path(indir, '*.bed'))
 input   = tools::file_path_sans_ext(bedfile)
 output  = file.path(outdir, basename(input))
 
+shell$load_config(plink = plink)
+
 params$bfile   = input
 params$out     = output
 params$threads = nthread
 
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
-runcmd(cmd)
+shell$plink(params, .raise = TRUE, .report = TRUE, .fg = TRUE)$reset()
 
 sexcheck_result = paste0(output, '.sexcheck')
 if (file.exists(sexcheck_result)) {
@@ -38,7 +39,7 @@ if (file.exists(hwe_result)) {
 		hardy$Pval   = -log10(hardy$P)
 		hardy$Status = "Pass"
 		ggs          = list()
-		if (!is.null(cutoff$hardy.hwe)) { 
+		if (!is.null(cutoff$hardy.hwe)) {
 			hardy[which(hardy$SNP %in% hardy.fail$SNP), "Status"] = "Fail"
 			ggs$geom_vline = list(xintercept = -log10(cutoff$hardy.hwe), color = "red", linetype="dashed")
 			ggs$geom_text  = list(

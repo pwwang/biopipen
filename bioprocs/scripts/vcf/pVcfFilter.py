@@ -7,7 +7,7 @@ from bioprocs.utils.shell2 import bgzip
 import vcf
 
 infile  = {{i.infile | quote}}
-filters = {{args.filters}}
+filters = {{args.filters | repr}}
 fname   = {{args.filters | quote}}
 gz      = {{args.gz | repr}}
 outfile = {{o.outfile | quote}}

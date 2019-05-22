@@ -1,6 +1,7 @@
+import sys
 from os import path, makedirs
 from pyppl import Box
-from bioprocs.utils import shell, mem2
+from bioprocs.utils import mem2, shell2 as shell
 
 infile          = {{i.infile | quote}}
 outfile         = {{o.outfile | quote}}
@@ -26,16 +27,18 @@ if not path.exists(tmpdir):
 if gz:
 	outfile = outfile[:-3]
 
-shell.TOOLS.vcfanno         = vcfanno
-shell.TOOLS.annovar         = annovar
-shell.TOOLS.annovar_convert = annovar_convert
-shell.TOOLS.vep             = vep
-shell.TOOLS.snpeff          = snpeff
+shell.load_config(
+	vcfanno         = vcfanno,
+	annovar         = annovar,
+	annovar_convert = annovar_convert,
+	vep             = vep,
+	snpeff          = snpeff,
+)
 
 def run_snpeff():
 	if not path.exists(dbs):
 		raise ValueError('Database does not exist: {}'.format(dbs))
-	snpeff = shell.Shell(subcmd = True, dash = '-', equal = ' ').snpeff
+
 	params.dataDir = dbs
 	if snpeffStats:
 		params.csvStats = path.join(outdir, path.basename(infile) + '.stats.csv')
@@ -45,14 +48,17 @@ def run_snpeff():
 	params.o = 'vcf'
 	params["Djava.io.tmpdir=%s" % tmpdir] = True
 	params._ = [genome, infile]
-	params._stdout = outfile
-	snpeff.ann(**params).run()
-	if gz: shell.bgzip(outfile)
+	params._out = outfile
+	params._stderr = sys.stderr
+	shell.snpeff.ann(**params)
+
+	if gz:
+		shell.bgzip(outfile)
 
 def run_vep():
 	if not path.exists(dbs):
 		raise ValueError('Database does not exist: {}'.format(dbs))
-	vep             = shell.Shell(equal = ' ').vep
+
 	params.i        = infile
 	params.o        = outfile
 	params.format   = 'vcf'
@@ -60,8 +66,10 @@ def run_vep():
 	params.cache    = True
 	params.dir      = dbs
 	params.assembly = genome
-	vep(**params).run()
-	if gz: shell.bgzip(outfile)
+	shell.fg.vep(**params)
+
+	if gz:
+		shell.bgzip(outfile)
 
 def run_annovar():
 	if not path.exists(dbs):
@@ -75,12 +83,13 @@ def run_annovar():
 	avparams.format      = 'vcf4'
 	avparams.outfile     = avinput
 	avparams._           = infile
-	shell.Shell(equal = ' ').annovar_convert(**avparams).run()
+	shell.fg.annovar_convert(**avparams)
 
 	params.buildver = genome
 	params._        = [avinput, dbs]
 	params.outfile  = path.splitext(outfile)[0]
-	shell.Shell(equal = ' ').annovar(**params).run()
+	shell.fg.annovar(**params)
+
 	# convert .variant_function to vcf
 	# like snpEff ann, add ANN field to vcf
 	def info2dict(info):
@@ -96,7 +105,7 @@ def run_annovar():
 			else:
 				ret[i] = True
 		return ret
-			
+
 	def rs2record(rs):
 		r       = rs[0]
 		CHROM   = r[2]
@@ -109,13 +118,13 @@ def run_annovar():
 		INFO    = info2dict(r[17])
 		FORMAT  = r[18]
 		samples = r[19:]
-		
+
 		anns = []
 		alts = []
 		for i, lr in enumerate(rs):
 			alts.append(vcf.model._Substitution(lr[6]))
 			ann = [lr[6]]
-			ann.append(lr[0])  #Annotation 
+			ann.append(lr[0])  #Annotation
 			ann.append('')     #impact
 			gene = ''
 			dist = '0'
@@ -141,11 +150,11 @@ def run_annovar():
 			ann.append('')  # Errors, Warnings or Information messages
 			anns.append ('|'.join(ann))
 		INFO['ANN'] = anns
-		
+
 		record  = vcf.model._Record(CHROM, POS, ID, REF, alts, QUAL, FILTER, INFO, FORMAT, snames)
 		record.samples = reader._parse_samples (samples, FORMAT, record)
 		return record
-			
+
 	reader = vcf.Reader(filename="{{i.infile}}")
 	reader.infos["ANN"] = vcf.parser._Info("ANN", 1, "String", "Annotation by ANNOVAR", "", "")
 	snames = {v:k for k,v in enumerate(reader.samples)}
@@ -157,10 +166,10 @@ def run_annovar():
 		for line in f:
 			line = line.strip("\r\n")
 			if not line: continue
-			
+
 			parts = line.split("\t")
 			varid = parts[2] + '|' + parts[3] + '|' + parts[12] + '|' + parts[5]
-			
+
 			if lastvid != varid and lastvid:
 				record  = rs2record(lastr)
 				writer.write_record(record)
@@ -169,12 +178,13 @@ def run_annovar():
 			else:
 				lastvid = varid
 				lastr.append (parts)
-				
+
 	record  = rs2record(lastr)
-	writer.write_record(record)		
+	writer.write_record(record)
 	writer.close()
 
-	if gz: shell.bgzip(outfile)
+	if gz:
+		shell.bgzip(outfile)
 
 def run_vcfanno():
 	# compose toml file
@@ -186,9 +196,12 @@ def run_vcfanno():
 				f.write('{key}={val!r}\n'.format(key = key, val = val))
 	params.p       = nthread
 	params._       = [toml, infile]
-	params._stdout = outfile
-	shell.Shell(dash = '-', equal = ' ').vcfanno(**params).run()
-	if gz: shell.bgzip(outfile)
+	params._out    = outfile
+	params._stderr = sys.stderr
+	shell.vcfanno(**params)
+
+	if gz:
+		shell.bgzip(outfile)
 
 tools = dict(
 	snpeff  = run_snpeff,
@@ -205,4 +218,4 @@ except KeyError:
 except:
 	raise
 finally:
-	shell.rmrf(tmpdir)
+	shell.rm_rf(tmpdir)

@@ -8,13 +8,14 @@ useid    = {{args.useid   | repr}}
 na       = {{args.na      | quote}}
 mingt    = {{args.mingt   | repr}}
 novel    = {{args.novel   | quote}}
-dbsnp    = {{args.dbsnp   | quote}}
+dbsnp    = {{args.dbsnp   | repr}}
 bialt    = {{args.bialt   | repr}}
 chrorder = {{args.chrorder.split(',') | repr}}
 samname  = {{args.samname }}
 
 chrorder = dict(zip(chrorder, list(range(len(chrorder)))))
-tsvjoin = TsvJoin(dbsnp, infile, cnames = False)
+if dbsnp:
+	tsvjoin = TsvJoin(dbsnp, infile, cnames = False)
 vcf = Vcf(infile)
 samples = list(vcf.header.samples)
 if callable(samname):

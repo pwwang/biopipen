@@ -6,10 +6,15 @@ import re
 import gzip
 from glob import glob
 from os import path
-from pyppl.utils import string_types
+from pyppl.utils import string_types, Box
 
 class Mem2Exception(Exception):
 	pass
+
+def ensureBox(var):
+	if isinstance(var, Box):
+		return var
+	return Box(var)
 
 def fs2name(files):
 	if not files: return 'nothing.etc'
@@ -145,10 +150,10 @@ class FileConn(object):
 		self.filename = filename
 		self.flag     = flag
 		self.fp       = None
-	
+
 	def __enter__(self):
 		return self.open()
-	
+
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		self.close()
 
@@ -158,10 +163,10 @@ class FileConn(object):
 		else:
 			self.fp = open(self.filename, self.flag)
 		return self.fp
-	
+
 	def close(self):
 		self.fp.close()
-		
+
 def switch(value, cases, *args, **kwargs):
 	ret = cases.get(value, 'default')
 	if callable(ret) and (args or kwargs):

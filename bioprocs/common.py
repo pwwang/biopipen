@@ -36,6 +36,13 @@ pSort.args.unique = False
 pSort.lang        = params.python.value
 pSort.script      = "file:scripts/common/pSort.py"
 
+pShell          = Proc(desc = 'Run shell command directly')
+pShell.input    = 'args'
+pShell.output   = 'outfile:stdout:{{args.cmd}}.{{proc.suffix}}.{{job.index + 1}}.txt'
+pShell.args.cmd = None
+pShell.lang     = params.python.value
+pShell.script   = "file:scripts/common/pShell.py"
+
 """
 @name:
 	pFiles2Dir
@@ -159,7 +166,7 @@ pAppend.script            = 'cat {{i.infile | squote}} > {{out.outfile | squote}
 	`outfile:file`: The output file.
 @args:
 	`inopts`: The options for input file
-		- `delimit`: delimit for columns 
+		- `delimit`: delimit for columns
 		- `skip`: skip first lines
 		- `comment`: signs for treating lines as comments
 	`outopts`: The output options

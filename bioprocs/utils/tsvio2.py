@@ -16,7 +16,7 @@ class TsvRecord(object):
 				raise ValueError("Unequal length of keys and values. Make sure you don't have duplicated keys.")
 		else:
 			self.__keys = None
-	
+
 	def attachKeys(self, keys):
 		assert len(keys) == len(self.__vals)
 		self.__keys = dict(zip(keys, range(len(keys))))
@@ -25,7 +25,7 @@ class TsvRecord(object):
 		if not self.__keys:
 			return range(len(self.__vals))
 		return sorted(self.__keys, key=self.__keys.get)
-	
+
 	def values(self):
 		return self.__vals
 
@@ -33,14 +33,14 @@ class TsvRecord(object):
 		if not self.__keys:
 			return enumerate(self.__vals)
 		return zip(list(self.keys()), list(self.__vals))
-	
+
 	def __repr__(self):
 		return '<TsvRecord: {!r}>'.format(dict(self.items()))
 
 	def __getitem__(self, key):
 		if isinstance(key, (slice, int)):
 			return self.__vals[key]
-		
+
 		if self.__keys and key in self.__keys:
 			return self.__vals[self.__keys[key]]
 
@@ -62,7 +62,7 @@ class TsvRecord(object):
 			self.__keys = self.__keys or {}
 			self.__keys[key] = len(self)
 			self.__vals.append(value)
-	
+
 	def __len__(self):
 		return len(self.__vals)
 
@@ -104,8 +104,8 @@ class TsvRecord(object):
 
 class TsvReader(object):
 
-	def __init__(self, 
-		infile, 
+	def __init__(self,
+		infile,
 		delimit = '\t',
 		comment = '#',
 		skip    = 0,
@@ -118,7 +118,7 @@ class TsvReader(object):
 			import gzip
 			openfunc = gzip.open
 
-		self.file    = openfunc(infile)
+		self.file    = openfunc(infile, errors='replace')
 		self.delimit = delimit
 		self.comment = comment
 		self.attach  = attach
@@ -136,7 +136,7 @@ class TsvReader(object):
 				continue
 			self.file.seek(tell)
 			break
-		
+
 		headline = self.file.readline() if cnames is not False else ''
 		if callable(cnames):
 			self.cnames = cnames(headline)
@@ -146,7 +146,7 @@ class TsvReader(object):
 			self.cnames = headline.rstrip('\n').split(delimit)
 		else:
 			self.cnames = []
-		# try to add "cname0" as column name 
+		# try to add "cname0" as column name
 		tell  = self.file.tell()
 		firstline = self.file.readline().rstrip('\n')
 		ncols = len(firstline.split(delimit))
@@ -155,7 +155,7 @@ class TsvReader(object):
 			self.cnames.insert(0, cname0)
 		if firstline and self.cnames and len(self.cnames) != ncols:
 			raise ValueError('Not a valid tsv file. Head has %s columns, while first line has %s.' % (len(self.cnames), ncols))
-		
+
 		self.file.seek(tell)
 		self.tell = tell
 		self.meta = self.cnames
@@ -259,7 +259,7 @@ class TsvJoin(object):
 		else:
 			stderr.write("- File {} is behand\n".format(i+1))
 		stderr.write('-' * 80 + "\n")
-	
+
 	def __init__(self, *files, **inopts):
 		inopts_default = dict(
 			delimit = '\t',
@@ -308,7 +308,7 @@ class TsvJoin(object):
 		if 'headCallback' in outopts:
 			headCallback = outopts['headCallback']
 			del outopts['headCallback']
-			
+
 		out = TsvWriter(outfile, **outopts)
 		out.cnames = cnames if isinstance(cnames, list) else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames else []
 		if out.cnames:

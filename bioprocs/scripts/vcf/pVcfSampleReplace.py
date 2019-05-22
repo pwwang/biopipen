@@ -1,4 +1,4 @@
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 {% python from os import path %}
 {% python from bioprocs.utils import alwaysList %}
@@ -11,8 +11,7 @@ samples  = {{args.samples | samcalls.get(samtypes(args.samples), repr) }}
 nthread  = {{args.nthread | quote}}
 bcftools = {{args.bcftools | quote}}
 
-shell.TOOLS.bcftools = bcftools
-bcftools = shell.Shell(subcmd = True, equal = ' ').bcftools
+shell.load_config(bcftools = bcftools)
 
 if not samfile and not samples:
 	raise ValueError('Require either `i.samfile` or `args.samples`')
@@ -20,7 +19,7 @@ if not samfile and not samples:
 if samfile and samples and not callable(samples):
 	raise ValueError('Both `i.samfile` and `args.samples` provided, I dont know which one to use.')
 
-osams = bcftools.query(l = infile).run(save = 'stdout').stdout.splitlines()
+osams = shell.bcftools.query(l = infile).splitlines()
 osams = [s.strip() for s in osams if s.strip()]
 if samfile:
 	with open(samfile) as f:
@@ -29,7 +28,7 @@ if samfile:
 		rsams = [samples(s) for s in rsams]
 else:
 	if callable(samples):
-		# get samples 
+		# get samples
 		rsams = [samples(s.strip()) for s in osams if s.strip()]
 	else:
 		rsams = list(samples)
@@ -47,4 +46,4 @@ params = dict(
 	_       = infile,
 	s       = samfile
 )
-bcftools.reheader(**params).run()
+shell.fg.bcftools.reheader(**params)

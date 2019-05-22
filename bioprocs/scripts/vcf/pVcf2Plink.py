@@ -1,13 +1,14 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils.shell import cmdargs, runcmd
+from bioprocs.utils import ensureBox, shell2 as shell
 from bioprocs.utils.reference import vcfIndex
 
 infile = {{i.infile | quote}}
 outdir = {{o.outdir | quote}}
 plink  = {{args.plink | quote}}
 tabix  = {{args.tabix | quote}}
-params = {{args.params | repr}}
+params = {{args.params}}
+params = ensureBox(params)
 
 # resolve plink 1.x --set-missing-var-ids doesn't distinguish $1, $2,... for ref and alts
 if 'set-missing-var-ids' in params and "$" in params['set-missing-var-ids']:
@@ -19,7 +20,8 @@ if 'set-missing-var-ids' in params and "$" in params['set-missing-var-ids']:
 	for r in reader:
 		if not r.ID:
 			all_alts = [r.REF] + list(r.ALT)
-			r.ID     = params['set-missing-var-ids'].replace('@', r.CHROM).replace('#', str(r.POS))
+			r.ID     = params['set-missing-var-ids'].replace(
+				'@', r.CHROM).replace('#', str(r.POS))
 			for i, a in enumerate(all_alts):
 				r.ID = r.ID.replace('${}'.format(i+1), str(a))
 		writer.write_record(r)
@@ -31,6 +33,4 @@ params.vcf = infile
 params['make-bed'] = True
 params.out = path.join(outdir, {{i.infile | fn2 | quote}})
 
-args = cmdargs(params, equal = ' ')
-cmd = '{} {} 1>&2'.format(plink, args)
-runcmd(cmd)
+shell.fg.plink(**params)

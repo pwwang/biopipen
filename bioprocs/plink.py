@@ -3,6 +3,11 @@ Procs for plink 1.9
 """
 from pyppl import Proc, Box
 from . import params, rimport, bashimport
+from .vcf import pVcf2Plink
+from .vcfnext import pGTMat2Plink
+
+pPlinkFromVcf   = pVcf2Plink.copy()
+pPlinkFromGTMat = pGTMat2Plink.copy()
 
 pPlinkStats               = Proc(desc = 'Do basic statistics with plink 1.9')
 pPlinkStats.input         = 'indir:dir'

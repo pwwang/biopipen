@@ -106,7 +106,7 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 	#		- D must be binary.
 	#	`plotfile`: The file to save the plot.
 	#	`stacked` : Whether the data is stacked(melt). See `data`
-	#	`params`  : The parameters for plotting. 
+	#	`params`  : The parameters for plotting.
 	#		- `returnAUC`: Return list of AUC values of this function
 	#		- `showAUC`  : Show AUC on the plot
 	#		- `combine`  : Combine the ROC in one plot?
@@ -284,7 +284,9 @@ plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, para
 	}
 }
 
-plot.heatmap2 = function(data, plotfile = NULL, params = list(), draw = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.heatmap2 = function(
+	data, plotfile = NULL, params = list(), draw = list(),
+	devpars = list(res=300, width=2000, height=2000)) {
 	library(ComplexHeatmap)
 
 	params$matrix = data
@@ -482,7 +484,7 @@ plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs 
 	data[, y] = quantile(data[, y], q)
 	if (is.numeric(x)) x = sprintf("`%s`", colnames(data)[x])
 	if (is.numeric(y)) y = sprintf("`%s`", colnames(data)[y])
-	
+
 	plot.scatter(data, plotfile, x = x, y = y, params = params, ggs = ggs, devpars = devpars)
 }
 
@@ -605,7 +607,7 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 		# Chr	minPos	maxPos	cumPos
 		# chr1	910473	249162263	0
 		# chr2	449487	242926381	249162263
-		# chr3	281636	197837967	
+		# chr3	281636	197837967
 		chrlen = data[, .(minPos = min(Pos), maxPos = max(Pos)), by = Chr][, .(Chr, minPos, maxPos, cumPos = shift(cumsum(as.numeric(maxPos)), 1, fill = 0))]
 		# add it back to data
 	} else {
@@ -616,7 +618,7 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 		chrlen = gsize[, .(Chr, minPos, maxPos, cumPos = shift(cumsum(as.numeric(maxPos)), 1, fill = 0))]
 	}
 	data = merge(data, chrlen, by = "Chr", sort = FALSE)
-	
+
 	data[, X:= Pos + cumPos][, Y:=-log10(P)]
 	# get region centers
 	rdata = data[, .(Region, centerPos = (min(X) + max(X))/2), by = Region]
@@ -651,7 +653,7 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 			ggs_hilabel = list(geom_label_repel = list(aes_string(x = 'X', y = 'Y', label = 'Snp'), color = "white", fill = hicolor, data = hdata, inherit.aes = FALSE, alpha = .8))
 		}
 		ggs_hilight = c(
-			ggs_hilight, 
+			ggs_hilight,
 			ggs_hilabel,
 			list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = hicolor, data = hdata, inherit.aes = FALSE))
 		)

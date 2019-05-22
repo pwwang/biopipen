@@ -2,10 +2,10 @@ if (!exists('utils')) {
 	# don't load them twice
 	# python modkit package makes second load of utils$shell2 raise exceptions
 	utils  = reticulate::import('bioprocs', delay_load = TRUE)$utils
-	runcmd = utils$shell2$runcmd
+	shell  = utils$shell2
+	runcmd = shell$runcmd
 	mem2   = utils$mem2
 }
-# key orders not kept!
 
 cbindfill = function (...) {
 	dfs = list(...)

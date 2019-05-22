@@ -1,23 +1,25 @@
-from os import path, remove
+from os import path
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-from bioprocs.utils import logger, runcmd, cmdargs
+from bioprocs.utils import logger, shell2 as shell
 
 infile   = {{i.infile | quote}}
 metafile = {{i.metafile | quote}}
 outdir   = {{o.outdir | quote}}
 plink    = {{args.plink | quote}}
 keeptxt  = {{args.keeptxt | repr}}
-chrmaps  = {{args.chrmaps | repr}}
+chrmaps  = {{args.chrmaps | str}}
 prefix   = path.join(outdir, {{i.infile | fn2 | quote}})
 tpedfile  = prefix + ".tped"
 tfamfile  = prefix + ".tfam"
+
+shell.load_config(plink = plink)
 
 # column names could be:
 # FID, IID, PID, MID, Sex, Pheno
 if metafile:
 	logger.info('Reading metafile ...')
 	metadata = dict(TsvReader(
-		metafile, 
+		metafile,
 		cnames = True,
 		row    = lambda r: tuple((r.IID, r))
 	).dump())
@@ -43,10 +45,10 @@ else:
 		idcheck = fid + ' ' + s
 		if idcheck in uniqueIDs:
 			raise ValueError('Duplicated ID {!r}'.format(idcheck))
-		uniqueIDs[idcheck] = 1		
+		uniqueIDs[idcheck] = 1
 		tfamWriter.write([
 			fid,
-			s, 
+			s,
 			(metadata[s].PID or '0') if s in metadata and 'PID' in metadata[s] else '0',
 			(metadata[s].MID or '0') if s in metadata and 'MID' in metadata[s] else '0',
 			(metadata[s].Sex or 'other') if s in metadata and 'Sex' in metadata[s] else 'other',
@@ -73,13 +75,8 @@ for r in inreader:
 tpedWriter.close()
 
 logger.info("Converting using plink ...")
-cmd = '{} {}'.format(plink, cmdargs({
-	'tfile': prefix,
-	'make-bed': True,
-	'out': prefix
-}, equal = ' '))
-runcmd(cmd)
+shell.fg.plink({'make-bed': True}, tfile = prefix, out = prefix)
 
 if not keeptxt:
-	remove(tpedfile)
-	remove(tfamfile)
+	shell.rm_rf(tpedfile)
+	shell.rm_rf(tfamfile)

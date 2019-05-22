@@ -15,6 +15,7 @@ annofile = {{args.anno | R}}
 doplot   = {{args.plot | R}}
 seed     = {{args.seed | R}}
 
+shell$load_config(plink = plink)
 bedfile = Sys.glob(file.path(indir, '*.bed'))
 input   = tools::file_path_sans_ext(bedfile)
 output  = file.path(outdir, basename(input))
@@ -26,8 +27,7 @@ params = list(
 	`indep-pairwise` = indep,
 	out              = output
 )
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
-runcmd(cmd)
+shell$plink(params, .raise = TRUE, .report = TRUE, .fg = TRUE)$reset()
 
 prunein = paste0(output, '.prune.in')
 params = list(
@@ -36,8 +36,7 @@ params = list(
 	genome  = T,
 	out     = output
 )
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
-runcmd(cmd)
+shell$plink(params, .raise = TRUE, .report = TRUE, .fg = TRUE)$reset()
 
 genome = read.table(paste0(output, '.genome'), row.names = NULL, header = T, check.names = F)
 # "unmelt" it
@@ -141,13 +140,22 @@ if (doplot) {
 		#),
 		clustering_distance_rows = function(m) as.dist(1-m),
 		clustering_distance_columns = function(m) as.dist(1-m),
-		top_annotation = annos
+		top_annotation = if (length(annos) == 0) NULL else annos
 	)
 
-	plot.heatmap2(similarity, paste0(output, '.ibd.png'), params = params, draw = list(
-		annotation_legend_list = list(
-			Legend(labels = paste(">", pihat), title = "", type = "points", pch = 4, title_gp = fontsize9, labels_gp = fontsize8)
-		),
-		merge_legend = TRUE
-	), devpars = devpars)
+	plot.heatmap2(
+		similarity,
+		paste0(output, '.ibd.png'),
+		params = params,
+		draw = list(
+			annotation_legend_list = list(
+				Legend(
+					labels = paste(">", pihat),
+					title = "",
+					type = "points",
+					pch = 4,
+					title_gp = fontsize9,
+					labels_gp = fontsize8)),
+			merge_legend = TRUE),
+		devpars = devpars)
 }

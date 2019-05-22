@@ -99,7 +99,7 @@ pGTMat2Plink.script       = "file:scripts/vcfnext/pGTMat2Plink.py"
 @output:
 	`outfile:file`: The output bed file. Default: `outfile:file:{{i.infile | fn}}.bed`
 @args:
-	`ncol`  : How many columns of bed to output. Default: `6`. 
+	`ncol`  : How many columns of bed to output. Default: `6`.
 		- Possible values: 3, 6, 8, 66, 88
 		- If `8`, then reference and alternative alleles will be 7th and 8th column
 		- If `66`, then genotypes will be attached to BED6
@@ -111,7 +111,7 @@ pGTMat2Bed             = Proc(desc = 'Convert a genotype matrix to bed file')
 pGTMat2Bed.input       = 'infile:file'
 pGTMat2Bed.output      = 'outfile:file:{{i.infile | fn}}.bed'
 pGTMat2Bed.args.inopts = Box(cnames = True)
-pGTMat2Bed.args.ncol   = 6 
+pGTMat2Bed.args.ncol   = 6
 pGTMat2Bed.args.name   = 'neat' # full
 pGTMat2Bed.lang        = params.python.value
 pGTMat2Bed.script      = "file:scripts/vcfnext/pGTMat2Bed.py"
@@ -168,7 +168,7 @@ pCepip.script              = "file:scripts/vcfnext/pCepip.py"
 @description:
 	MutSig stands for "Mutation Significance".  MutSig analyzes lists of mutations discovered in DNA sequencing, to identify genes that were mutated more often than expected by chance given background mutation processes.
 	For more information, see Lawrence, M. et al. Mutational heterogeneity in cancer and the search for new cancer-associated genes. Nature 499, 214-218 (2013).
-	
+
 	See [dcumentation](http://archive.broadinstitute.org/cancer/cga/mutsig_run)
 @input:
 	`infile:file`: mutation table
@@ -290,7 +290,7 @@ pMaf2Mat.script       = "file:scripts/vcfnext/pMaf2Mat.r"
 	`mutypes`: Provide manual list of variant classifications to be considered as non-synonymous. Rest will be considered as silent variants. Default: `["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]`
 	`isTCGA`:  If the maf file is from TCGA? Default: `False`
 	`ref`   :  The reference file for signature plot.
-	`plot`  :  Which plots to plot. 
+	`plot`  :  Which plots to plot.
 		- Default:
 		  ```python
 		  Box(
@@ -408,16 +408,16 @@ pMaftools.script       = "file:scripts/vcfnext/pMaftools.r"
 @name:
 	pMutationSigs
 @description:
-	Find similar COSMIC mutation signatures for MAF file 
+	Find similar COSMIC mutation signatures for MAF file
 	using https://github.com/pwwang/deconstruct_sigs_py
 @input:
 	`infile:file`: The input maf file.
 @output:
 	`outdir:dir`: The output directory
 @args:
-	`font_family`: Font family for plotting. 
-	`font_weight`: Font weight for plotting. 
-	`sig_cutoff` : Significance cutoff for signatures. 
+	`font_family`: Font family for plotting.
+	`font_weight`: Font weight for plotting.
+	`sig_cutoff` : Significance cutoff for signatures.
 	`err_thres`  : The threshold to top the iteration.
 	`ref`        : The reference genome.
 """
@@ -438,7 +438,7 @@ pMutationSigs.script           = "file:scripts/vcfnext/pMutationSigs.py"
 @description:
 	This is the default command. It is used for annotating variant filed (e.g. VCF files).
 @input:
-	`infile:file`:  The input file 
+	`infile:file`:  The input file
 @output:
 	`outdir:file`: The directory containing output anntated file, snpEff_genes.txt and snpEff_summary.html
 @args:
@@ -472,3 +472,42 @@ fi
 echo {{args.snpEff}} {{args.javamem}} -i {{args.informat}} -o {{args.outformat}} $csvStats $stats {{args.params}} {{args.genome}} "{{infile}}"
 {{args.snpEff}} {{args.javamem}} -i {{args.informat}} -o {{args.outformat}} $csvStats $stats {{args.params}} {{args.genome}} "{{infile}}" > "$outfile"
 """
+
+"""
+@name:
+	pDToxoG
+@description:
+	Run D-ToxoG on MAF files with columns listed at:
+	https://software.broadinstitute.org/cancer/cga/dtoxog
+	However,`i_picard_oxoQ` is required but not documented. This process
+	will try to put 0's for the field to let the program run.
+@input:
+	`infile:file`: The input maf file
+@output:
+	`outfile:file`: The output maf file. Default: `{{i.infile | fn}}.dtoxog.maf`
+		- with extra columns added:
+		- `pox` --  p-value that the call is actually an artifact
+		- `qox` --  false detection rate score.
+		- `pox_cutoff` --  minimum pox score for artifact.
+		- `isArtifactMode`:
+			- Variant is C>A, G>T: 1
+			- Variant is not C>A or G>T: 0
+		- `oxoGCut`:
+			- Variant is marked as artifact: 1
+			- Variant is not an artifact: 0
+@args:
+	`dtoxog` : D-ToxoG executable. Default: `params.dtoxog`
+	`nthread`: Maximum threads used by matlab. Default: `1`
+	`params` : Other parameters for `startFilterMAFFile`.
+		- `isGeneratingPlots`: Default: `True`
+		- `globalPoxoG`: Default: `0.96`
+		- See more in `startFilterMAFFile.m`
+"""
+pDToxoG              = Proc(desc = 'Run D-ToxoG on MAF files.')
+pDToxoG.input        = 'infile:file'
+pDToxoG.output       = 'outfile:file:{{i.infile | fn}}.dtoxog.maf'
+pDToxoG.args.nthread = 1
+pDToxoG.args.dtoxog  = params.dtoxog.value
+pDToxoG.args.params  = Box(isGeneratingPlots = True, globalPoxoG = .96)
+pDToxoG.lang         = params.python.value
+pDToxoG.script       = "file:scripts/vcfnext/pDToxoG.py"

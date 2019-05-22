@@ -139,6 +139,8 @@ DEFAULTS = {
 	"curl.desc"                : "The path of command line tool curl.",
 	"cutadapt"                 : "cutadapt",
 	"cutadapt.desc"            : "The path of cutadapt.",
+	"dtoxog"                   : "dtoxog",
+	"dtoxog.desc"              : "The path of dtoxog, a wrapper of D-ToxoG.",
 	"dwgsim"                   : "dwgsim",
 	"dwgsim.desc"              : "The path of dwgsim.",
 	"elprep"                   : "elprep",

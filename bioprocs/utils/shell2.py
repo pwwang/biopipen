@@ -13,12 +13,16 @@ cmdy.config._load(dict(
 	# picard = dict(_sep = ' ', _prefix = '-')
 	picard    = dict(_sep = '=', _prefix = ''),
 	plink     = dict(_out = cmdy.DEVERR),
+	dtoxog    = dict(_out = cmdy.DEVERR, _prefix = '-'),
 	oncotator = dict(_sep = 'auto'),
 	bowtie2   = dict(_dupkey = True),
 	gatk      = dict(_dupkey = True),
 	biobambam = dict(_sep = '=', _prefix = ''),
 	bedtools  = dict(_prefix = '-'),
 	samtools  = dict(_prefix = '-'),
+	snpeff    = dict(_prefix = '-'),
+	vcfanno   = dict(_prefix = '-'),
+	liftover  = dict(_prefix = '-', _sep = '='),
 ))
 
 
@@ -26,7 +30,7 @@ def _modkit_delegate(name):
 	return getattr(cmdy, name)
 
 # run command at foreground
-fg   = cmdy(_fg = True, _raise = True)
+fg   = cmdy(_fg = True, _raise = True, _report = True)
 out  = cmdy(_out = '>')
 
 ## aliases

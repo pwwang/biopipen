@@ -37,7 +37,7 @@ from .utils import fs2name
 		- Remember if filters() returns True, record filtered.
 		- For builtin filters, you may specify them as `{<filter>: <param>}`
 		- You can also use `!` to specify a negative builtin filter: `{!<filter>: <param>}`
-		- Bulitin filters: 
+		- Bulitin filters:
 			- SNPONLY: keeps only SNPs (`{"!SNPONLY": None}` means filtering SNPs out)
 			- BIALTONLY: keeps only mutations with bi-allele
 			- QUAL: keeps only site quality >= param (`{'QUAL': 30}`)
@@ -60,8 +60,8 @@ pVcfFilter.script       = "file:scripts/vcf/pVcfFilter.py"
 	pVcfUnique
 @description:
 	Remove duplicate mutations from a VCF file.
-	Because in most case where we want to remove the duplicate mutations, it might be 
-	because other program not accepting them. In this case, we don't put a filter on 
+	Because in most case where we want to remove the duplicate mutations, it might be
+	because other program not accepting them. In this case, we don't put a filter on
 	the records, but just remove them instead.
 @input:
 	`infile:file`: The input vcf file.
@@ -168,7 +168,7 @@ pVcf.script      = "file:scripts/vcf/pVcf.py"
 pVcfAnno                      = Proc(desc = 'Annotate the variants in vcf file.')
 pVcfAnno.input                = "infile:file"
 pVcfAnno.output               = [
-	"outfile:file:{{i.infile | fn}}.{{args.tool}}/{{i.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}", 
+	"outfile:file:{{i.infile | fn}}.{{args.tool}}/{{i.infile | fn}}.{{args.tool}}.vcf{% if args.gz %}.gz{% endif %}",
 	"outdir:dir:{{i.infile | fn}}.{{args.tool}}"
 ]
 pVcfAnno.echo                 = Box(jobs = 0, type = 'stderr')
@@ -271,8 +271,12 @@ pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 	`ref`      : The reference genome
 	`nthread`  : Number of threads used to extract samples. Default: 1
 	`bcftools` : Path to bcftools used to extract sample names.
-	`tumor`    : The index of the tumor sample in the vcf file. Default: `0`
-		- If `tumor > 1 or tumor < 0`: Then all samples are tumors in the vcf file.
+	`tumor`    : The index of the tumor sample in the vcf file. Default: `auto`
+		- `auto`: The sample name matches the file name as the tumor, only if there are 2 samples.
+		- `0`: The first sample as the tumor.
+		- `1`: The second sample as the tumor.
+		- Otherwise: All samples treated as tumors.
+		- If there is only one sample, this option has no effect
 """
 pVcf2Maf                   = Proc(desc = 'Convert Vcf file to Maf file.')
 pVcf2Maf.input             = 'infile:file'
@@ -286,7 +290,7 @@ pVcf2Maf.args.ref          = params.ref.value
 pVcf2Maf.args.oncotator    = params.oncotator.value
 pVcf2Maf.args.oncotator_db = params.oncotator_db.value
 pVcf2Maf.args.bcftools     = params.bcftools.value
-pVcf2Maf.args.tumor        = 0
+pVcf2Maf.args.tumor        = 'auto'
 pVcf2Maf.args.nthread      = 1
 pVcf2Maf.args.params       = Box()
 pVcf2Maf.lang              = params.python.value
@@ -533,7 +537,7 @@ pVcf2GTMat.script        = "file:scripts/vcf/pVcf2GTMat.py"
 	`tool`  : The tool used to do the sort. Default: `sort` (linux command)
 	`picard`: Path to picard.
 	`tabix` : Path to tabix.
-	`chrorder`: If sort by `args.sortby == 'coord'`, then records first sorted by `chrorder` then Coordinates.  
+	`chrorder`: If sort by `args.sortby == 'coord'`, then records first sorted by `chrorder` then Coordinates.
 """
 pVcfSort               = Proc(desc = 'Sort the vcf records')
 pVcfSort.input         = 'infile:file'
@@ -561,7 +565,7 @@ pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
 @args:
 	`header`  : Output header? Default: `True`
 	`bychrom` : Split the vcf file by chromosomes, do subtraction and then merge them. Default: `False`
-		- In case the vcf file is too big. 
+		- In case the vcf file is too big.
 		- Requires both vcf files indexed (.tbi). If not they will be indexed there.
 	`nthread` : # threads to use, only when `bychrom` is True. Default: `1`
 	`tool`    : The tool to be used. Default: `mem` (or pyvcf/bedtools)
@@ -607,3 +611,23 @@ pVcf2Pyclone.output = 'outfile:file:{{i.infile | bn}}.pyclone.txt'
 pVcf2Pyclone.lang   = params.python.value
 pVcf2Pyclone.script = "file:scripts/vcf/pVcf2Pyclone.py"
 
+"""
+@name:
+	pVcfFixGT
+@description:
+	Fix genotypes in GVCF files.
+	Some tools report genotype as 0/0 even there is no information for
+	other FORMAT. This process replaces inappropriate 0/0 into ./.
+@input:
+	`infile:file`: The input VCF file
+@output:
+	`outfile:file`: The output VCF file, Default: `{{i.infile | bn}}`
+@args:
+	`gz`: whether output (big) gzipped file. Default: `False`
+"""
+pVcfFixGT         = Proc(desc = 'Fix genotypes in GVCF files')
+pVcfFixGT.input   = 'infile:file'
+pVcfFixGT.output  = 'outfile:file:{{i.infile | bn}}'
+pVcfFixGT.args.gz = False
+pVcfFixGT.lang    = params.python.value
+pVcfFixGT.script  = "file:scripts/vcf/pVcfFixGT.py"
