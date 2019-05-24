@@ -1,24 +1,26 @@
 from os import path
 from copy import deepcopy
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 cnvkit   = {{args.cnvkit | quote}}
 cnrfile  = {{i.cnrfile | quote}}
 cnsfile  = {{i.cnsfile | quote}}
 outdir   = {{o.outdir | quote}}
-regions  = {{args.regions | repr}}
+regions  = {{args.regions | list}}
 nthread  = {{args.nthread | repr}}
-params   = {{args.params}}
+params   = {{args.params | repr}}
 
-shell.TOOLS['cnvkit'] = cnvkit
-envs = dict(
-	OPENBLAS_NUM_THREADS = nthread,
-	OMP_NUM_THREADS      = nthread,
-	NUMEXPR_NUM_THREADS  = nthread,
-	MKL_NUM_THREADS      = nthread
-)
-ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
+shell.load_config(cnvkit = dict(
+	_exe = cnvkit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	),
+	_cwd = outdir
+))
 
 for region in regions:
 	if not region:
@@ -46,16 +48,14 @@ for region in regions:
 	outfile   = path.join(outdir, stem + '.pdf')
 	iparams   = deepcopy(params)
 	iparams.o = outfile
-	
+
 	if cnsfile:
 		iparams.s = cnsfile
 
 	if rgion:
 		iparams.c = rgion
-	
+
 	if genes:
 		iparams.g = genes
 
-	ckshell.scatter(cnrfile, **iparams).run()
-
-
+	shell.fg.cnvkit.scatter(cnrfile, **iparams)

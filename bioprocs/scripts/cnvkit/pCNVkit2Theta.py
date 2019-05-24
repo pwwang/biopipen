@@ -1,23 +1,24 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
-{% python from os import path %}
 cnsfile  = {{i.cnsfile | quote}}
 cnnfile  = {{i.cnnfile | quote}}
 outfile  = {{o.outfile | quote}}
-nthread  = {{args.nthread | quote}}
+nthread  = {{args.nthread | repr}}
 params   = {{args.params | repr}}
 cnvkit   = {{args.cnvkit | quote}}
 
-shell.TOOLS['cnvkit'] = cnvkit
-envs = dict(
-	OPENBLAS_NUM_THREADS = nthread,
-	OMP_NUM_THREADS      = nthread,
-	NUMEXPR_NUM_THREADS  = nthread,
-	MKL_NUM_THREADS      = nthread
-)
-ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = path.dirname(outfile)).cnvkit
+shell.load_config(cnvkit = dict(
+	_exe = cnvkit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	),
+	_cwd = path.dirname(outfile)
+))
 
 # region cnvkit export example
 # cnvkit.py export theta Sample_T.cns reference.cnn -v Sample_Paired.vcf
@@ -68,5 +69,5 @@ params.o   = path.basename(outfile)
 if cnnfile:
 	params.r = cnnfile
 
-ckshell.export('theta', cnsfile, **params).run()
+shell.fg.cnvkit.export('theta', cnsfile, **params)
 

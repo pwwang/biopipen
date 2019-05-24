@@ -4,8 +4,8 @@ from bioprocs.utils import regionOverlap, log2pyppl
 from bioprocs.utils.tsvio2 import TsvJoin
 
 infiles = {{i.infiles}}
-inopts  = {{args.inopts}}
-outopts = {{args.outopts}}
+inopts  = {{args.inopts | repr}}
+outopts = {{args.outopts | repr}}
 debug   = {{args.debug}}
 outfile = {{o.outfile | quote}}
 sefile  = {{job.errfile | quote}}

@@ -23,7 +23,7 @@ from .utils import fs2name
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
 		- Don't include `info` if not necessary. This saves time.
-		- This function can return the variant count directly, or 
+		- This function can return the variant count directly, or
 		- an R `list` like: `list(count = <var count>, depth = <depth>)`.
 		- By default, the `depth` will be read from `fmt$DP`
 	`cncount` : An R function string to define how to get the copy number. Default: `function(fmt) fmt$CN`
@@ -43,7 +43,7 @@ pSciClone.args.exfile   = ""
 pSciClone.args.vfsamcol = 1 # the first sample is the target sample in variant vcf
 pSciClone.args.cnsamcol = 1 # the first sample is the target sample in copy number vcf
 pSciClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])' # how to get the var count
-pSciClone.args.cncount  = 'function(fmt) fmt$CN' # how to get the copy number 
+pSciClone.args.cncount  = 'function(fmt) fmt$CN' # how to get the copy number
 pSciClone.lang          = params.Rscript.value
 pSciClone.script        = "file:scripts/tumhet/pSciClone.r"
 
@@ -65,7 +65,7 @@ pSciClone.script        = "file:scripts/tumhet/pSciClone.r"
 		- If this function returns `None`, record will be skipped.
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
-		- This function can return the variant count directly, or 
+		- This function can return the variant count directly, or
 		- a `dict` like: `dict(count = <var count>, depth = <depth>)`.
 		- By default, the `depth` will be read from `fmt.DP`
 	`cncount` : An python lambda string to define how to get the copy number. Default: `lambda fmt: fmt.get("CN")`
@@ -81,7 +81,8 @@ pPyClone.envs.fs2name  = fs2name
 pPyClone.args.params   = Box()
 pPyClone.args.vfsamcol = 1 # 1-based
 pPyClone.args.cnsamcol = 1
-pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")[1]'
+pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")[1] \
+	if isinstance(fmt.get("AD"), (tuple, list)) else fmt.get("AD")'
 pPyClone.args.cncount  = 'lambda fmt: fmt.get("CN")'
 pPyClone.args.pyclone  = params.pyclone.value
 pPyClone.lang          = params.python.value
@@ -104,7 +105,7 @@ pPyClone.script        = "file:scripts/tumhet/pPyClone.py"
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
 		- Don't include `info` if not necessary. This saves time.
-		- This function can return the variant count directly, or 
+		- This function can return the variant count directly, or
 		- an R `list` like: `list(count = <var count>, depth = <depth>)`.
 		- By default, the `depth` will be read from `fmt$DP`
 	`nthread` : # threads to use. Default: `1`
@@ -126,8 +127,8 @@ pQuantumClone.script        = "file:scripts/tumhet/pQuantumClone.r"
 	pTheta
 @description:
 	Run THetA2 for tumor purity calculation
-	Set lower MIN_FRAC if interval is not enough and NO_CLUSTERING if it raises 
-	"No valid Copy Number Profiles exist", but have to pay attention to the results. 
+	Set lower MIN_FRAC if interval is not enough and NO_CLUSTERING if it raises
+	"No valid Copy Number Profiles exist", but have to pay attention to the results.
 	(see: https://groups.google.com/forum/#!topic/theta-users/igrEUol3sZo)
 @args:
 	`affysnps`: The affymetrix Array snps, or other candidate snp list, in BED6-like format
@@ -159,7 +160,7 @@ pSuperFreq.args.ref     = params.ref.value
 pSuperFreq.args.resdir  = params.superfreq_res.value
 pSuperFreq.args.genome  = params.genome.value
 pSuperFreq.args.params  = Box(
-	systematicVariance = .02, maxCov = 150, BQoffset = 33, 
+	systematicVariance = .02, maxCov = 150, BQoffset = 33,
 	mode = 'exome', splitRun = True
 )
 pSuperFreq.envs.rimport = rimport

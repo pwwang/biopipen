@@ -1,3 +1,4 @@
+from os import path
 from pyppl import Box
 from bioprocs.utils import shell
 
@@ -6,13 +7,22 @@ infile   = {{i.tgfile | quote}}
 atgfile  = {{i.atgfile | quote}}
 ref      = {{args.ref | quote}}
 outfile  = {{o.outfile | quote}}
-params   = {{args.params}}
+params   = {{args.params | repr}}
+nthread  = 1
 
-shell.TOOLS['cnvkit'] = cnvkit
-ckshell = shell.Shell(subcmd = True, equal = ' ').cnvkit
+shell.load_config(cnvkit = dict(
+	_exe = cnvkit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	),
+	_cwd = path.dirname(outfile)
+))
 
 params.o = outfile
 params.f = ref
 params.t = infile
 params.a = atgfile
-ckshell.reference(**params).run()
+shell.fg.cnvkit.reference(**params)

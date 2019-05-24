@@ -6,8 +6,7 @@ from pyppl import PyPPL, Channel, Box
 from bioprocs import params
 from bioprocs.common import pFiles2Dir
 from bioprocs.sambam import pBam2Gmut, pBamPair2Smut
-from bioprocs.utils.tsvio import TsvReader
-from bioprocs.utils.sampleinfo import SampleInfo
+from bioprocs.utils.sampleinfo import SampleInfo2 as SampleInfo
 from bioaggrs.wxs import aPrepareBam, aBam2SCNV, aBam2GCNV
 
 #params.prefix('-')
@@ -52,14 +51,12 @@ starts = []
 saminfo = SampleInfo(params.saminfo)
 
 aPrepareBam.pFastq2Sam.args.tool    = 'bowtie2'
-aPrepareBam.off('qc')
 
 pBamDir         = pFiles2Dir
 pBamDir.runner  = 'local'
 if params.intype == 'ebam':
 	#aPrepareBam.input = [Channel.fromPattern(path.join(params.indir, '*.bam'))]
-	aPrepareBam.on('ebam')
-	aPrepareBam.off('fastq')
+	aPrepareBam.modules.ebam()
 	aPrepareBam.input = [Channel.create(saminfo.toChannel(params.indir)).unique()]
 	if params.compress:
 		aPrepareBam.args.gz = True
@@ -95,9 +92,8 @@ elif params.intype == 'fq' or params.intype == 'fastq':
 		fqfiles2 = [path.join(fqdir, bname + ext) for ext in exts2]
 		fqfile2  = [fqfile for fqfile in fqfiles2 if path.isfile(fqfile)][0]
 		return fqfile1, fqfile2
-	
-	aPrepareBam.off('ebam')
-	aPrepareBam.on('fastq')
+
+	aPrepareBam.modules.fastq()
 	aPrepareBam.input = [bam2fqpair(fq) for fq in saminfo.toChannel(params.indir)]
 
 	pBamDir.depends = aPrepareBam.pBamRecal
@@ -117,18 +113,18 @@ if 'soma' in params.muts:
 	pBamPair2Smut.input        = lambda ch: saminfo.toChannel(ch.get(), paired = True)
 	pBamPair2Smut.exdir        = path.join(params.exdir, 'somatic')
 if 'scnv' in params.muts:
-	aBam2SCNV.on('plots')
+	aBam2SCNV.modules.plots()
 	aBam2SCNV.pBamDir.depends   = pBamDir
 	aBam2SCNV.pSampleInfo.input = [params.saminfo]
 	aBam2SCNV.exdir             = path.join(params.exdir, 'scnv')
 	starts.append(aBam2SCNV)
 if 'gcnv' in params.muts:
-	aBam2GCNV.on('plots')
+	aBam2GCNV.modules.plots()
 	aBam2GCNV.pBamDir.depends   = pBamDir
 	aBam2GCNV.pSampleInfo.input = [params.saminfo]
 	aBam2GCNV.exdir             = path.join(params.exdir, 'gcnv')
 	starts.append(aBam2GCNV)
-	
+
 config = {
 	'default': {
 		'forks' : int(params.forks),

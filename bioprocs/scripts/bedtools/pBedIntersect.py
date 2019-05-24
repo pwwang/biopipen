@@ -1,5 +1,6 @@
+from sys import stderr
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 params = {{args.params | repr}}
 
@@ -8,8 +9,8 @@ params['b']           = {{i.bfile | quote}}
 params['wa']          = params.get('wa', True)
 params['wb']          = params.get('wb', True)
 params['nonamecheck'] = params.get('nonamecheck', True)
-params['_stdout']     = {{o.outfile | quote}}
+params['_out']        = {{o.outfile | quote}}
+params['_stderr']     = stderr
 
-shell.TOOLS.bedtools = {{ args.bedtools | quote}}
-shell.Shell(subcmd = True, dash = '-', equal = ' ').bedtools.intersect(**params).run()
-
+shell.load_config(bedtools = {{args.bedtools | quote}})
+shell.bedtools.intersect(**params)

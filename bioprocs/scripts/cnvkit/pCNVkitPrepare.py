@@ -1,6 +1,6 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell, runcmd, cmdargs
+from bioprocs.utils import shell2 as shell
 from bioprocs.utils.reference import bamIndex
 
 infiles = {{i.infiles | repr}}
@@ -16,19 +16,22 @@ nthread = {{args.nthread | repr}}
 for infile in infiles:
 	bamIndex(infile)
 
-shell.TOOLS['cnvkit'] = cnvkit
-envs = dict(
-	OPENBLAS_NUM_THREADS = str(nthread),
-	OMP_NUM_THREADS      = str(nthread),
-	NUMEXPR_NUM_THREADS  = str(nthread),
-	MKL_NUM_THREADS      = str(nthread)
-)
-ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
+shell.load_config(cnvkit = dict(
+	_exe = cnvkit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	),
+	_cwd = outdir
+))
 
 # generate target file
 if baits[-4:] in ('.gff', '.gtf'):
+	#https://github.com/pwwang/pygff
 	from gff import Gff
-	baitfile = path.join(joboutdir, path.basename(baits[:-4]) + '.bait.bed')
+	baitfile = path.join(outdir, path.basename(baits[:-4]) + '.bait.bed')
 	gff = Gff(baits)
 	with open(baitfile, 'w') as f:
 		for g in gff:
@@ -42,22 +45,17 @@ if baits[-4:] in ('.gff', '.gtf'):
 
 params_t   = params.target
 params_t.o = path.join(outdir, prefix + '.bed')
-ckshell.target(baits, **params_t).run()
+shell.fg.cnvkit.target(baits, **params_t)
 
 # generate access file
 if not accfile:
-	accfile = path.join(outdir, prefix + '.access.bed')
-	params_a = params.access
+	accfile    = path.join(outdir, prefix + '.access.bed')
+	params_a   = params.access
 	params_a.o = accfile
-	ckshell.access(ref, **params_a).run()
+	shell.fg.cnvkit.access(ref, **params_a)
 
 # autobin
-params_b = params.autobin
+params_b   = params.autobin
 params_b.t = params_t.o
 params_b.g = accfile
-params_b[''] = infiles
-runcmd('cd {wdir}; {cnvkit} autobin {args}'.format(
-	wdir   = shell.shquote(outdir),
-	cnvkit = shell.shquote(cnvkit),
-	args   = cmdargs(params_b, equal = ' ')
-), env = envs)
+shell.fg.cnvkit.autobin(*infiles, **params_b)

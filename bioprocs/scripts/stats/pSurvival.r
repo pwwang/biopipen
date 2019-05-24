@@ -55,7 +55,7 @@ if (is.list(params.plot) && length(params.plot) > 0) {
 ncut = function(dat, n, prefix = 'q') {
 	indexes = 1:length(dat)
 	x       = cut(
-		indexes, 
+		indexes,
 		breaks         = quantile(indexes, probs = seq(0,1,1/n)),
 		include.lowest = T,
 		labels         = paste0(prefix, 1:n)
@@ -126,7 +126,7 @@ useCox = function(dat, varname) {
 			pval.coord   = c(0, 0.1)
 		)
 		params          = update.list(params.default, params.plot)
-		
+
 		params$legend.title = gsub('{var}', varname, params$legend.title, fixed = T)
 		if (!is.logical(pval)) {
 			params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
@@ -170,7 +170,7 @@ useKM = function(dat, varname, params = NULL) {
 	nvlvls = length(varlvls)
 
 	fmula = as.formula(paste('Surv(time, status) ~', var))
-	# the result: 
+	# the result:
 	#   - summary: The result table
 	#   - plot:    The survival plot
 	#   - quantdata: The data to determine the quantile percentage
@@ -190,10 +190,11 @@ useKM = function(dat, varname, params = NULL) {
 			if (is.list(params.plot)) {
 				ret$quantdata = data.frame(step = quantsteps, survscore = survscores)
 			}
-			idxmax = sample(which(survscores == max(survscores)), 1)
-			quant  = quantsteps[idxmax]
+			idxmaxes = which(survscores == max(survscores))
+			idxmax   = if (length(idxmaxes) == 1) idxmaxes[1] else sample(idxmaxes, 1)
+			quant    = quantsteps[idxmax]
 			dat[, var] = paste0(
-				"q", 
+				"q",
 				c(1, 2)[as.numeric(dat[, var] >= quantile(dat[, var], quant)) + 1]
 			)
 			varlvls = levels(factor(dat[, var]))
@@ -241,7 +242,7 @@ useKM = function(dat, varname, params = NULL) {
 				pval.coord   = c(0, 0.1)
 			)
 			params          = update.list(params.default, params.plot)
-			
+
 			if (!is.logical(pval)) {
 				params$pval = gsub('{method}', pvaldata$method, params$pval, fixed = T)
 				params$pval = gsub('{pval}',   pvaldata$pval,   params$pval, fixed = T)
@@ -287,11 +288,11 @@ useKM = function(dat, varname, params = NULL) {
 
 # do survival analysis on one variable and all covariants
 # the input data should be a data frame with header:
-# 
+#
 # 	time	status	var
 # sample1	100	1	1.2
 # sample2	89	0	3.3
-# 
+#
 # the cvdata (covariant data frame) should be:
 # 	sex	age
 # sample1	1	39
@@ -305,7 +306,7 @@ survivalOne = function(data, varname, cvdata = NULL) {
 	# construct formula like 'Surv(time, status) ~ age + sex' using column names
 	cnames    = make.names(colnames(data))
 	colnames(data) = cnames
-	
+
 	var     = cnames[3]
 	vars    = cnames[3:length(cnames)]
 	varlvls = levels(factor(data[, var]))
@@ -327,7 +328,7 @@ survivalOne = function(data, varname, cvdata = NULL) {
 data  = read.table.nodup(infile, sep = "\t", header = T, row.names = if(rnames) 1 else NULL, check.names = F)
 vdata = NULL
 if (!is.null(covfile) && covfile != '') {
-	if (!rnames) 
+	if (!rnames)
 		stop('Rownames are required for covariant analysis.')
 	vdata = read.table.nodup(covfile, sep = "\t", header = T, row.names = 1, check.names = F)
 }

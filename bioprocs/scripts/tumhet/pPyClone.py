@@ -1,7 +1,7 @@
 from pysam import VariantFile
 from pyppl import Box
 from os import path
-from bioprocs.utils import funcargs, cmdargs, runcmd, logger
+from bioprocs.utils import funcargs, logger, shell2 as shell
 
 vfvcfs   = {{ i.vfvcfs | repr}}
 cnvcfs   = {{ i.cnvcfs | repr}}
@@ -12,8 +12,14 @@ vfsamcol = {{ args.vfsamcol | repr}} - 1
 cnsamcol = {{ args.cnsamcol | repr}} - 1
 varcount = {{ args.varcount}}
 cncount  = {{ args.cncount}}
+
+shell.load_config(pyclone = dict(
+	_exe = pyclone,
+	_cwd = outdir
+))
+
 if not callable(varcount):
-	varcount = lambda fmt: fmt.get("AD")[1]
+	varcount = lambda fmt: fmt.get("AD")[1] if isinstance(fmt.get("AD"), (tuple, list)) else fmt.get("AD")
 if not callable(cncount):
 	cncount = lambda fmt: fmt.get('CN')
 
@@ -133,6 +139,4 @@ with open(path.join(outdir, 'matplotlibrc'), 'w') as f:
 	f.write('backend: Agg\n')
 params.working_dir = outdir
 params.prior = 'total_copy_number'
-cmd = 'cd {outdir}; {pyclone} run_analysis_pipeline {args}'.format(outdir = outdir, pyclone = pyclone, args = cmdargs(params, equal = ' '))
-runcmd(cmd)
-
+shell.fg.pyclone.run_analysis_pipeline(**params)

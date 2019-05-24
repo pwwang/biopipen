@@ -2,7 +2,7 @@ from os import path, makedirs
 from shutil import rmtree
 from sys import stderr
 from pyppl import Box
-from bioprocs.utils import cmdargs, runcmd, mem2
+from bioprocs.utils import mem2, shell2 as shell
 from bioprocs.utils.reference import bamIndex
 
 {% python from os import path %}
@@ -32,11 +32,15 @@ joboutdir = {{job.outdir | quote}}
 bamIndex(tumor,  samtools = None, nthread = nthread)
 bamIndex(normal, samtools = None, nthread = nthread)
 
+shell.load_config(
+	samtools = samtools, gatk = gatk, somaticsniper = ssniper,
+	snvsniffer = ssniffer, strelka = strelka, virmid = virmid, vardict = vardict)
+
 if tprefix == nprefix:
 	tprefix = tprefix + '_TUMOR'
 	nprefix = nprefix + '_NORMAL'
 
-if gz:	
+if gz:
 	# remove ending .gz
 	outfile = outfile[:-3]
 
@@ -56,61 +60,54 @@ if not path.exists (tmpdir):
 def run_gatk():
 	# generate interval list file
 	intvfile = {{job.outdir | path.join: "interval.list" | quote}}
-	cmd = '{samtools} idxstats {tumor!r} | head -1 | cut -f1 > {intvfile!r}'.format(
-		samtools = samtools,
-		tumor    = tumor,
-		intvfile = intvfile
-	)
-	runcmd(cmd)
+	shell.pipe.samtools.idxstats(tumor) | shell.pipe.head(n = 1) | shell.cut(f = 1, _out = intvfile)
 
 	mem = mem2(mem, 'java')
 
 	params['I:tumor']  = tumor
 	params['I:normal'] = normal
-	
+
 	params.R   = ref
 	params.o   = outfile
 	params.nct = nthread
 	params.L   = intvfile
 
-	cmd = '{gatk} -T MuTect2 {mem} -Djava.io.tmpdir={tmpdir!r} {args}'.format(
-		gatk   = gatk,
-		mem    = mem,
-		tmpdir = tmpdir,
-		args   = cmdargs(params, dash = '-', equal = ' ')
-	)
-	runcmd(cmd)
-	if gz: runcmd(['gzip', outfile])
+	shell.fg.gatk(
+		mem2(mem, 'java'),
+		{'Djava.io.tmpdir': tmpdir, '_prefix': '-', '_sep': '='},
+		T = 'MuTect2',
+		**params)
+	if gz:
+		shell.gzip(outfile)
 
 def run_somaticsniper():
 	params.f   = ref
 	params.F   = 'vcf'
 	params[''] = [tumor, normal, outfile]
-	cmd = '{ssniper} {args}'.format(ssniper = ssniper, args = cmdargs(params))
-	runcmd(cmd)
-	if gz: runcmd(['gzip', outfile])
+	shell.fg.somaticsniper(**params)
+	if gz:
+		shell.gzip(outfile)
 
 def run_snvsniffer():
 	# generate a header file
 	theader = {{job.outdir | path.join: bn(i.tumor)  | @append: '.header' | quote}}
 	nheader = {{job.outdir | path.join: bn(i.normal) | @append: '.header' | quote}}
-	cmd = '{samtools} view -H {infile!r} > {hfile!r}'
-	runcmd(cmd.format(samtools = samtools, infile = tumor, hfile = theader))
-	runcmd(cmd.format(samtools = samtools, infile = normal, hfile = nheader))
+	shell.samtools.view(H = True, _ = tumor, _out = theader)
+	shell.samtools.view(H = True, _ = normal, _out = nheader)
 
 	params.g = ref
 	params.o = outfile
 
 	params[''] = [theader, nheader, tumor, normal]
-	cmd = '{ssniffer} somatic {args}'.format(ssniffer, cmdargs(params))
-	runcmd(cmd)
-	if gz: runcmd(['gzip', outfile])
+	shell.fg.snvsniffer.somatic(**params)
+	if gz:
+		shell.gzip(outfile)
 
 def _mergeAndAddGT(snvvcf, indvcf, outfile):
 	from pysam import VariantFile
 	snv = VariantFile(snvvcf)
 	ind = VariantFile(indvcf)
-	
+
 	snv.header.info.add('TYPE', 1, 'String', 'Type of somatic mutation')
 	ind.header.info.add('TYPE', 1, 'String', 'Type of somatic mutation')
 	snv.header.info.add('QSI', 1, 'Integer', 'Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal')
@@ -129,6 +126,8 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 	snv.header.formats.add('DP50', 1, 'Float', 'Average tier1 read depth within 50 bases')
 	snv.header.formats.add('FDP50', 1, 'Float', 'Average tier1 number of basecalls filtered from original read depth within 50 bases')
 	snv.header.formats.add('SUBDP50', 1, 'Float', 'Average number of reads below tier1 mapping quality threshold aligned across sites within 50 bases')
+	snv.header.formats.add('AD', 2, 'Integer', 'Allele depths for tier 1')
+	snv.header.formats.add('AD2', 2, 'Integer', 'Allele depths for tier 2')
 	snv.header.formats.add('TAR', 2, 'Integer', 'Reads strongly supporting alternate allele for tiers 1,2')
 	snv.header.formats.add('TIR', 2, 'Integer', 'Reads strongly supporting indel allele for tiers 1,2')
 	snv.header.formats.add('TOR', 2, 'Integer', 'Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2')
@@ -144,7 +143,7 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 	cnames [-1] = tprefix
 	headers[-1] = "\t".join(cnames)
 	out.write("\n".join(headers) + "\n")
-	
+
 	r1 = r2 = None
 	indel_gts = {
 		'ref': (0, 0),
@@ -159,8 +158,19 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 				alleles = (r1.ref, ) + r1.alts
 				gts = r1.info['SGT'].split('->')
 				try:
-					r1.samples['NORMAL']['GT'] = tuple(sorted(alleles.index(gt) for gt in list(gts[0])))
-					r1.samples['TUMOR']['GT'] = tuple(sorted(alleles.index(gt) for gt in list(gts[1])))
+					r1.samples['NORMAL']['GT'] = tuple(sorted(alleles.index(gt)
+						for gt in list(gts[0])))
+					r1.samples['TUMOR']['GT'] = tuple(sorted(alleles.index(gt)
+						for gt in list(gts[1])))
+					assert len(r1.samples['TUMOR']['GT']) == 2
+					U1 = alleles[r1.samples['TUMOR']['GT'][0]] + 'U'
+					U2 = alleles[r1.samples['TUMOR']['GT'][1]] + 'U'
+					r1.samples['TUMOR']['AD'] = (
+						r.samples['TUMOR'][U1][0],
+						r.samples['TUMOR'][U2][0])
+					r1.samples['TUMOR']['AD2'] = (
+						r.samples['TUMOR'][U1][1],
+						r.samples['TUMOR'][U2][1])
 				except ValueError:
 					r1 = None
 					continue
@@ -175,7 +185,7 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 				r2.samples['TUMOR']['GT']  = indel_gts[gts[1]]
 			except StopIteration:
 				r2 = None
-		
+
 		if r1 and r2:
 			if (contigs.index(r1.chrom), r1.pos) < (contigs.index(r2.chrom), r2.pos):
 				out.write(str(r1))
@@ -199,43 +209,44 @@ def run_strelka():
 	cparams.tumorBam       = tumor
 	cparams.referenceFasta = ref
 	cparams.runDir         = joboutdir
-	runcmd('{strelka} {args}'.format(strelka = strelka, args = cmdargs(cparams)))
+	shell.fg.strelka(**cparams)
 
-	params.m = 'local'
-	params.g = mem2(mem, 'G')[:-1]
-	params.j = nthread
-	runcmd('{joboutdir}/runWorkflow.py {args}'.format(joboutdir = joboutdir, args = cmdargs(params)))
+	params.m    = 'local'
+	params.g    = int(float(mem2(mem, 'G')[:-1]))
+	params.j    = nthread
+	params._exe = path.join(joboutdir, 'runWorkflow.py')
+	shell.fg.runWorkflow(**params)
 
 	snvvcf = path.join(joboutdir, 'results', 'variants', 'somatic.snvs.vcf.gz')
 	indvcf = path.join(joboutdir, 'results', 'variants', 'somatic.indels.vcf.gz')
 	_mergeAndAddGT(snvvcf, indvcf, outfile)
-	if gz: runcmd(['gzip', outfile])
+	if gz:
+		shell.gzip(outfile)
 
 def run_virmid():
 	params.R = ref
 	params.D = tumor
 	params.N = normal
 	params.w = joboutdir
-	cmd = '{virmid} {mem} -Djava.io.tmpdir={tmpdir!r} {args}'.format(
-		virmid = virmid,
-		mem    = mem2(mem, 'java'),
-		tmpdir = tmpdir,
-		args   = cmdargs(params)
+	shell.fg.virmid(
+		mem2(mem, 'java'),
+		{'Djava.io.tmpdir': tmpdir, '_prefix': '-', '_sep': '='},
+		**params
 	)
-	runcmd(['mv', path.join(joboutdir, '*.virmid.som.passed.vcf'), outfile])
-	if gz: runcmd(['gzip', outfile])
+
+	shell.mv(path.join(joboutdir, '*.virmid.som.passed.vcf'), outfile)
+	if gz:
+		shell.gzip(outfile)
 
 def run_vardict():
-	params.v = True
-	params.G = ref
-	params.b = '{}|{}'.format(tumor, normal)
-	cmd = '{vardict} {args} > {outfile!r}'.format(
-		vardict = vardict,
-		args    = cmdargs(params),
-		outfile = outfile
-	)
-	runcmd(cmd)
-	if gz: runcmd(['gzip', outfile])
+	params.v    = True
+	params.G    = ref
+	params.b    = '{}|{}'.format(tumor, normal)
+	params._out = outfile
+	shell.fg.vardict(**params)
+
+	if gz:
+		shell.gzip(outfile)
 
 tools = {
 	'gatk'         : run_gatk,

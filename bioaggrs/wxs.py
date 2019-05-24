@@ -1,6 +1,7 @@
 
 from os import path
-from pyppl import Aggr, Channel
+from pyppl import ProcSet, Channel
+from pyppl.procset import Values
 from bioprocs.fastx import pFastqTrim, pFastq2Sam, pFastQC, pFastMC, pFastqSETrim, pFastqSE2Sam
 from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBam2Counts, pBamRecal, pBam2Gmut, pBamPair2Smut
 from bioprocs.common import pFile2Proc, pFiles2Dir
@@ -30,7 +31,7 @@ from bioprocs.utils.sampleinfo import SampleInfo
 	`qc`   : Do qc for the fastq files (off by default)
 		- `pFastqTrim` -> `pFastQC, pFastMC`
 """
-aPrepareBam = Aggr(
+aPrepareBam = ProcSet(
 	pBam2Fastq,
 	pFastqTrim,
 	pFastQC,
@@ -43,19 +44,31 @@ aPrepareBam = Aggr(
 # starts and ends
 aPrepareBam.ends = 'pBamRecal'
 # depends
-aPrepareBam['pFastq2Sam',].depends = ['pFastqTrim']
-aPrepareBam['pSam2Bam',].depends   = ['pFastq2Sam']
-aPrepareBam['pBamRecal',].depends  = ['pSam2Bam']
+aPrepareBam.pFastq2Sam.depends = aPrepareBam.pFastqTrim
+aPrepareBam.pSam2Bam.depends   = aPrepareBam.pFastq2Sam
+aPrepareBam.pBamRecal.depends  = aPrepareBam.pSam2Bam
 # delegates
-aPrepareBam.delegate('args.ref', 'pFastq2Sam, pBamRecal')
+aPrepareBam.delegate('args.ref', 'pFastq2Sam', 'pBamRecal')
 # args
 aPrepareBam.pSam2Bam.args.markdup = True
 # modules
-aPrepareBam.module('ebam', starts = 'pBam2Fastq', depends = {'pFastqTrim': 'pBam2Fastq'})
-aPrepareBam.module('fastq', starts = 'pFastqTrim')
-aPrepareBam.module('qc', ends = 'pFastQC, pFastMC', depends = {'pFastQC, pFastMC': ['pFastqTrim'] * 2})
+
+@aPrepareBam.module
+def aPrepareBam_ebam(ps):
+	ps.starts = 'pBam2Fastq'
+	ps.pFastqTrim.depends = ps.pBam2Fastq
+
+@aPrepareBam.module
+def aPrepareBam_fastq(ps):
+	ps.starts = 'pFastqTrim'
+
+@aPrepareBam.module
+def aPrepareBam_qc(ps):
+	ps.ends = 'pFast?C'
+	ps['pFast?C'].depends = ps.pFastqTrim
+
 # inital modules
-aPrepareBam.on('fastq')
+aPrepareBam.modules.ebam()
 
 
 """
@@ -82,10 +95,10 @@ aPrepareBam.on('fastq')
 	`plots`: Draw plots
 		- ... -> `pCNVkitFix, pCNVkitSeg` -> `pCNVkitScatter[!], pCNVkitDiagram[!], pCNVkitHeatmap[!], pCNVkitReport[!]`
 """
-aBam2SCNV = Aggr(
+aBam2SCNV = ProcSet(
 	pFile2Proc.copy(id = 'pBamDir'),     # single job
 	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	pCNVkitPrepare,   # prepare files 
+	pCNVkitPrepare,   # prepare files
 	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
 	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
 	pCNVkitRef,       # all normal samples, in: all normal cnn files      , out: refcnn
@@ -104,16 +117,16 @@ aBam2SCNV.pBamDir.runner     = 'local'
 aBam2SCNV.pSampleInfo.runner = 'local'
 # delegates
 aBam2SCNV.delegate('args.ref', 'pCNVkitPrepare, pCNVkitRef')
-aBam2SCNV.delegate('args.cnvkit', 'pCNVkitRef, pCNVkitFix, pCNVkitSeg, pCNVkitCall, pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport, pCNVkit2Vcf')
+aBam2SCNV.delegate('args.cnvkit', 'pCNVkit*')
 aBam2SCNV.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
 # depends
-aBam2SCNV.starts                 = aBam2SCNV.pBamDir,        aBam2SCNV.pSampleInfo
-aBam2SCNV.ends                   = aBam2SCNV.pCNVkit2Vcf
-aBam2SCNV.pCNVkitPrepare.depends = aBam2SCNV.pBamDir,        aBam2SCNV.pSampleInfo
-aBam2SCNV.pCNVkitCov.depends     = aBam2SCNV.pBamDir,        aBam2SCNV.pSampleInfo,    aBam2SCNV.pCNVkitPrepare
+aBam2SCNV.starts                 = 'pBamDir, pSampleInfo'
+aBam2SCNV.ends                   = 'pCNVkit2Vcf'
+aBam2SCNV.pCNVkitPrepare.depends = aBam2SCNV.starts
+aBam2SCNV.pCNVkitCov.depends     = aBam2SCNV['pBamDir, pSampleInfo, pCNVkitPrepare']
 aBam2SCNV.pCNNDir.depends        = aBam2SCNV.pCNVkitCov
-aBam2SCNV.pCNVkitRef.depends     = aBam2SCNV.pCNNDir,        aBam2SCNV.pSampleInfo
-aBam2SCNV.pCNVkitFix.depends     = aBam2SCNV.pCNNDir,        aBam2SCNV.pSampleInfo,    aBam2SCNV.pCNVkitRef
+aBam2SCNV.pCNVkitRef.depends     = aBam2SCNV['pCNNDir, pSampleInfo']
+aBam2SCNV.pCNVkitFix.depends     = aBam2SCNV['pCNNDir, pSampleInfo, pCNVkitRef']
 aBam2SCNV.pCNVkitSeg.depends     = aBam2SCNV.pCNVkitFix
 aBam2SCNV.pCNVkitCall.depends    = aBam2SCNV.pCNVkitSeg
 aBam2SCNV.pCNVkit2Vcf.depends    = aBam2SCNV.pCNVkitCall
@@ -141,12 +154,15 @@ aBam2SCNV.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: \
 	).cbind(ch_ref)
 aBam2SCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 # module
-aBam2SCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport', depends = {
-	'pCNVkitScatter': 'pCNVkitFix, pCNVkitSeg',
-	'pCNVkitDiagram': 'pCNVkitFix, pCNVkitSeg',
-	'pCNVkitHeatmap': 'pCNVkitSeg',
-	'pCNVkitReport' : 'pCNVkitFix, pCNVkitSeg',
-})
+@aBam2SCNV.module
+def aBam2SCNV_plots(ps):
+	ps.ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport pCNVkit2Vcf'
+
+	ps['pCNVkitScatter'].depends = ps['pCNVkitFix, pCNVkitSeg']
+	ps['pCNVkitDiagram'].depends = ps['pCNVkitFix, pCNVkitSeg']
+	ps['pCNVkitHeatmap'].depends = ps['pCNVkitSeg']
+	ps['pCNVkitReport'].depends  = ps['pCNVkitFix, pCNVkitSeg']
+
 
 """
 @name:
@@ -172,10 +188,10 @@ aBam2SCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap
 	`plots`: Draw plots
 		- ... -> `pCNVkitFix, pCNVkitSeg` -> `pCNVkitScatter[!], pCNVkitDiagram[!], pCNVkitHeatmap[!], pCNVkitReport[!]`
 """
-aBam2GCNV = Aggr(
-	pFile2Proc.copy(id = 'pBamDir'),     # single job
-	pFile2Proc.copy(id = 'pSampleInfo'), # single job
-	pCNVkitPrepare,    # prepare files 
+aBam2GCNV = ProcSet(
+	pFile2Proc.copy(id = 'pBamDir'),     # single job g
+	pFile2Proc.copy(id = 'pSampleInfo'), # single job g
+	pCNVkitPrepare,    # prepare files
 	pCNVkitCov,       # each sample       , in: bam file (target required), out: cnn file
 	pFiles2Dir.copy(id = 'pCNNDir'),  # put all cnn files in a directory
 	pCNVkitFlatRef,   # flat reference    , in: target file               , out: refcnn
@@ -195,15 +211,15 @@ aBam2GCNV.pSampleInfo.runner = 'local'
 # delegates
 aBam2GCNV.delegate('args.ref', 'pCNVkitPrepare, pCNVkitFlatRef')
 aBam2GCNV.delegate('args.nthread', 'pCNVkitCov, pCNVkitSeg')
-aBam2GCNV.delegate('args.cnvkit', 'pCNVkitFlatRef, pCNVkitFix, pCNVkitSeg, pCNVkitCall, pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport, pCNVkit2Vcf')
+aBam2GCNV.delegate('args.cnvkit', 'pCNVkit*')
 # depends
-aBam2GCNV.starts                 = aBam2GCNV.pBamDir,        aBam2GCNV.pSampleInfo
-aBam2GCNV.ends                   = aBam2GCNV.pCNVkit2Vcf
-aBam2GCNV.pCNVkitPrepare.depends = aBam2GCNV.pBamDir,        aBam2GCNV.pSampleInfo
-aBam2GCNV.pCNVkitCov.depends     = aBam2GCNV.pBamDir,        aBam2GCNV.pSampleInfo,    aBam2GCNV.pCNVkitPrepare
+aBam2GCNV.starts                 = 'pBamDir, pSampleInfo'
+aBam2GCNV.ends                   = 'pCNVkit2Vcf'
+aBam2GCNV.pCNVkitPrepare.depends = aBam2GCNV.starts
+aBam2GCNV.pCNVkitCov.depends     = aBam2GCNV['pBamDir, pSampleInfo, pCNVkitPrepare']
 aBam2GCNV.pCNNDir.depends        = aBam2GCNV.pCNVkitCov
 aBam2GCNV.pCNVkitFlatRef.depends = aBam2GCNV.pCNVkitPrepare
-aBam2GCNV.pCNVkitFix.depends     = aBam2GCNV.pCNNDir,        aBam2GCNV.pSampleInfo,    aBam2GCNV.pCNVkitFlatRef
+aBam2GCNV.pCNVkitFix.depends     = aBam2GCNV['pCNNDir, pSampleInfo, pCNVkitFlatRef']
 aBam2GCNV.pCNVkitSeg.depends     = aBam2GCNV.pCNVkitFix
 aBam2GCNV.pCNVkitCall.depends    = aBam2GCNV.pCNVkitSeg
 aBam2GCNV.pCNVkit2Vcf.depends    = aBam2GCNV.pCNVkitCall
@@ -226,12 +242,13 @@ aBam2GCNV.pCNVkitFix.input     = lambda ch_covs, ch_saminfo, ch_ref: \
 	).cbind(ch_ref)
 aBam2GCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 # module
-aBam2GCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport', depends = {
-	'pCNVkitScatter': 'pCNVkitFix, pCNVkitSeg',
-	'pCNVkitDiagram': 'pCNVkitFix, pCNVkitSeg',
-	'pCNVkitHeatmap': 'pCNVkitSeg',
-	'pCNVkitReport' : 'pCNVkitFix, pCNVkitSeg',
-})
+@aBam2GCNV.module
+def aBam2GCNV_plots(ps):
+	ps.ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap, pCNVkitReport'
+	ps['pCNVkitScatter'].depends = ps['pCNVkitFix, pCNVkitSeg']
+	ps['pCNVkitDiagram'].depends = ps['pCNVkitFix, pCNVkitSeg']
+	ps['pCNVkitHeatmap'].depends = ps['pCNVkitSeg']
+	ps['pCNVkitReport'].depends  = ps['pCNVkitFix, pCNVkitSeg']
 
 """
 @name:
@@ -243,7 +260,7 @@ aBam2GCNV.module('plots', ends = 'pCNVkitScatter, pCNVkitDiagram, pCNVkitHeatmap
 	`pFiles2Dir`: Put the maf files into a directory
 	`pMafMerge` : Merge the maf files.
 """
-aVcfs2Maf = Aggr(
+aVcfs2Maf = ProcSet(
 	pVcf2Maf,
 	pFiles2Dir,
 	pMafMerge

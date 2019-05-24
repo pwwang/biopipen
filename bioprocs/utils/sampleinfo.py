@@ -64,7 +64,6 @@ class SampleInfo (object):
 		return ret
 
 	def toChannel(self, datadir, paired = False, raiseExc = True):
-		from os import path
 		if not paired:
 			samples = self.select(get = 'Sample')
 			return [path.join(datadir, r.Sample) for r in samples]
@@ -111,20 +110,33 @@ class SampleInfo (object):
 
 class SampleInfo2(object):
 
+	def toChannel(self, datadir, paired = False, raiseExc = True):
+		if not paired:
+			samples = self.getSamples()
+			return [path.join(datadir, sample) for sample in samples]
+
+		paired_samples =  self.getPairedSamples()
+		ret = []
+		for sample1, sample2 in paired_samples:
+			if paired is not True and paired.upper() not in sample1.upper():
+				sample1, sample2 = sample2, sample1
+			ret.append((path.join(datadir, sample1), path.join(datadir, sample2)))
+		return ret
+
 	def _read(self, sifile):
 		standard_cnames = ["", "Sample", "Patient", "Group", "Batch"]
 		reader          = TsvReader(sifile)
-		
+
 		self.cnames     = reader.cnames
 		if not self.cnames:
 			raise SampleInfoException('Headers for sample information file is required.')
-		
+
 		if any(cname not in standard_cnames for cname in  self.cnames):
 			raise SampleInfoException('Headers should be a subset of {!r}'.format(', '.join(standard_cnames)))
 
 		if "" in self.cnames:
 			self.cnames[self.cnames.index("")] = "Sample"
-		
+
 		self.mat = reader.dump()
 
 	def __init__(self, sifile, checkPaired = False):

@@ -1,21 +1,24 @@
+from os import path
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 cnvkit   = {{args.cnvkit | quote}}
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}
 nthread  = {{args.nthread | repr}}
-params   = {{args.params}}
+params   = {{args.params | repr}}
 
-shell.TOOLS['cnvkit'] = cnvkit
-envs = dict(
-	OPENBLAS_NUM_THREADS = 1,
-	OMP_NUM_THREADS      = 1,
-	NUMEXPR_NUM_THREADS  = 1,
-	MKL_NUM_THREADS      = 1
-)
-ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs).cnvkit
+shell.load_config(cnvkit = dict(
+	_exe = cnvkit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	),
+	_cwd = path.dirname(outfile)
+))
 
 params.o = outfile
 params.p = nthread
-ckshell.segment(infile, **params).run()
+shell.fg.cnvkit.segment(infile, **params)

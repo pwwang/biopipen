@@ -1,23 +1,24 @@
 from os import path
-from copy import deepcopy
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 cnvkit   = {{args.cnvkit | quote}}
 cnfiles  = {{i.cnfiles | repr}}
 outdir   = {{o.outdir | quote}}
-regions  = {{args.regions | repr}}
-params   = {{args.params}}
+regions  = {{args.regions | list}}
+params   = {{args.params | repr}}
 nthread  = {{args.nthread | repr}}
 
-shell.TOOLS['cnvkit'] = cnvkit
-envs = dict(
-	OPENBLAS_NUM_THREADS = nthread,
-	OMP_NUM_THREADS      = nthread,
-	NUMEXPR_NUM_THREADS  = nthread,
-	MKL_NUM_THREADS      = nthread
-)
-ckshell = shell.Shell(subcmd = True, equal = ' ', envs = envs, cwd = outdir).cnvkit
+shell.load_config(cnvkit = dict(
+	_exe = cnvkit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	),
+	_cwd = outdir
+))
 
 for region in regions:
 	if not region:
@@ -39,11 +40,11 @@ for region in regions:
 	if not stem: stem = 'whole-genome'
 
 	outfile   = path.join(outdir, stem + '.pdf')
-	iparams   = deepcopy(params)
+	iparams   = params.copy()
 	iparams.o = outfile
 
 	if rgion:
 		iparams.c = rgion
 
-	ckshell.heatmap(*cnfiles, **iparams)
+	shell.fg.cnvkit.heatmap(*cnfiles, **iparams)
 
