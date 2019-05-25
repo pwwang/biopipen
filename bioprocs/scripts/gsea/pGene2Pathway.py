@@ -12,6 +12,7 @@ libs    = {{args.libs | alwaysList}}
 reader   = TsvReader(infile, **inopts)
 genes    = reader.dump(genecol)
 genes    = list(set(genes))
+enrich   = Enrichr()
 pathways = {}
 
 writer = TsvWriter(outfile)
@@ -22,14 +23,13 @@ if inopts.cnames:
 reader.rewind()
 for r in reader:
 	gene = r[genecol]
+	if gene not in pathways:
+		pathways[gene] = {lib:enlib.terms
+			for lib, enlib in enrich.genemap(gene, libs).items()}
+
 	for lib in libs:
-		if not lib in pathways:
-			pathways[lib] = {}
-		if gene not in pathways[lib]:
-			en = Enrichr(lib)
-			gmap = en.genemap(gene)
-			pathways[lib][gene] = '|'.join(gmap.terms if gmap else [])
-		r['Pathway_' + lib] = pathways[lib][gene]
+		r['Pathway_' + lib] = ' | '.join(pathways[gene][lib]) \
+			if lib in pathways[gene] else ''
 	writer.write(r.values())
 
 reader.close()

@@ -166,11 +166,11 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 					U1 = alleles[r1.samples['TUMOR']['GT'][0]] + 'U'
 					U2 = alleles[r1.samples['TUMOR']['GT'][1]] + 'U'
 					r1.samples['TUMOR']['AD'] = (
-						r.samples['TUMOR'][U1][0],
-						r.samples['TUMOR'][U2][0])
+						r1.samples['TUMOR'][U1][0],
+						r1.samples['TUMOR'][U2][0])
 					r1.samples['TUMOR']['AD2'] = (
-						r.samples['TUMOR'][U1][1],
-						r.samples['TUMOR'][U2][1])
+						r1.samples['TUMOR'][U1][1],
+						r1.samples['TUMOR'][U2][1])
 				except ValueError:
 					r1 = None
 					continue

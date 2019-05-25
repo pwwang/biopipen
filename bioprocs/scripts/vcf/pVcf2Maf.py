@@ -144,6 +144,7 @@ def run(tool):
 			sim0       = similarity(path.basename(infile), vcfsams[0])
 			sim1       = similarity(path.basename(infile), vcfsams[1])
 			tumoridx   = int(sim1 > sim0)
+			logger.info('Using sample %s(%s) as tumor', tumoridx + 1, vcfsams[tumoridx])
 
 		tumor  = vcfsams[tumoridx]
 		normal = vcfsams[1-tumoridx]
