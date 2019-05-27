@@ -215,6 +215,7 @@ pVcfSplit.output              = "outdir:dir:{{i.infile | fn}}-individuals"
 pVcfSplit.args.tool           = 'bcftools'
 pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
 pVcfSplit.args.gatk           = params.gatk.value
+pVcfSplit.args.tabix          = params.tabix.value
 pVcfSplit.args.ref            = params.ref.value # only for gatk
 pVcfSplit.args.params         = Box()
 pVcfSplit.args.nthread        = 1
@@ -610,6 +611,18 @@ pVcf2Pyclone.input  = 'infile:file'
 pVcf2Pyclone.output = 'outfile:file:{{i.infile | bn}}.pyclone.txt'
 pVcf2Pyclone.lang   = params.python.value
 pVcf2Pyclone.script = "file:scripts/vcf/pVcf2Pyclone.py"
+
+pVcfFix            = Proc(desc = 'Fix a bunch of stupid format problem in vcf files')
+pVcfFix.input      = 'infile:file'
+pVcfFix.output     = 'outfile:file:{{i.infile | bn}}'
+pVcfFix.args.tabix = params.tabix.value
+pVcfFix.args.fixes = Box(
+	clinvarLink = True,
+	nonInfoGT   = True,
+	addChr      = True
+)
+pVcfFix.lang       = params.python.value
+pVcfFix.script     = "file:scripts/vcf/pVcfFix.py"
 
 """
 @name:

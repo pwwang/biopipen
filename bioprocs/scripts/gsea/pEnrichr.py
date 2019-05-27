@@ -2,7 +2,7 @@ from os import path
 from enrichr import Enrichr
 from pyppl import Box
 from bioprocs import rimport
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 from bioprocs.utils.parallel import Parallel
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio2 import TsvReader
@@ -11,7 +11,7 @@ from bioprocs.utils.tsvio2 import TsvReader
 infile   = {{i.infile | quote}}
 prefix   = {{i.infile | fn2 | quote}}
 outdir   = {{o.outdir | quote}}
-inopts   = {{args.inopts}}
+inopts   = {{args.inopts | repr}}
 genecol  = {{args.genecol or 0 | repr}}
 top      = {{args.top}}
 dbs      = {{args.libs | alwaysList | repr}}
@@ -22,7 +22,8 @@ cutoff   = {{args.cutoff | repr}}
 devpars  = {{args.devpars | repr}}
 pathview = {{args.pathview | repr}}
 
-shell.TOOLS.Rscript = Rscript
+shell.load_config(Rscript = Rscript)
+
 if isinstance(cutoff, dict):
 	if cutoff['by'] == 'p':
 		cutoff['by'] = 'Pval'
@@ -36,7 +37,7 @@ en = Enrichr(cutoff = cutoff, top = top, Rscript = Rscript)
 en.addList(genes, description = path.basename(infile))
 
 para = Parallel(nthread = nthread)
-runPathview = lambda r, hsa: shell.Shell().Rscript(r, hsa).run()
+runPathview = lambda r, hsa: shell.fg.Rscript(r, hsa)
 for db in dbs:
 	outfile = path.join(outdir, prefix + '.' + db + '.txt')
 	en.enrich(db)
@@ -68,8 +69,8 @@ for db in dbs:
 			{% endraw %}
 			pathview(gene.data = genes, pathway.id = args[1], species = 'hsa', gene.idtype="SYMBOL")
 			""".format(
-				rimport = rimport, genecol = genecol + 1 if isinstance(genecol, int) else genecol, 
+				rimport = rimport, genecol = genecol + 1 if isinstance(genecol, int) else genecol,
 				infile = infile, pathviewRDir = pathviewRDir)
 			)
 		para.run(runPathview, [(pathviewRfile, term.Term.split('_')[-1]) for term in en.results[:top]])
-		
+
