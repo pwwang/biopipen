@@ -112,3 +112,5 @@ data/
 
 # docs
 site/
+
+poetry.lock

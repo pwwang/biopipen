@@ -81,8 +81,7 @@ pPyClone.envs.fs2name  = fs2name
 pPyClone.args.params   = Box()
 pPyClone.args.vfsamcol = 1 # 1-based
 pPyClone.args.cnsamcol = 1
-pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")[1] \
-	if isinstance(fmt.get("AD"), (tuple, list)) else fmt.get("AD")'
+pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")[1]'
 pPyClone.args.cncount  = 'lambda fmt: fmt.get("CN")'
 pPyClone.args.pyclone  = params.pyclone.value
 pPyClone.lang          = params.python.value

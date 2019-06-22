@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "bioprocs"
+version = "0.1.0"
+description = "A set of PyPPL processes for bioinformatics."
+authors = ["pwwang <pwwang@pwwang.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+PyPPL = "^1.4"
+
+[tool.poetry.scripts]
+bioprocs = 'bioprocs.main:main'
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

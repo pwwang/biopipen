@@ -255,7 +255,7 @@ if (plots$cbsseg) {
 
 	cbssegSingle = function(sam) {
 		segfiles = c(
-			Sys.glob(file.path(indir, paste0(sam, '*.seg.txt'))), 
+			Sys.glob(file.path(indir, paste0(sam, '*.seg.txt'))),
 			Sys.glob(file.path(indir, paste0(gsub('-', '.', sam), '*.seg.txt'))),
 			Sys.glob(file.path(indir, paste0(gsub('_', '.', sam), '*.seg.txt')))
 		)
@@ -433,7 +433,7 @@ if (plots$gisticOncoplot) {
 		if (!is.null(annofile)) {
 			params$clinicalData     = getClinicalData(x = laml)
 			params$sortByAnnotation = TRUE
-			if (!'top' %in% names(params)) 
+			if (!'top' %in% names(params))
 				params$top = ngenes
 		}
 		do.call(png, c(list(filename = gisoncoplotfile), devpars2))
@@ -482,7 +482,7 @@ if (plots$oncodrive) {
 	logger('## Plotting oncodrive ...')
 	oncodrivefile = file.path(outdir, 'oncodrive.png')
 	OcParams = list(maf = laml, AACol = NULL, minMut = 5, pvalMethod = "zscore",
-					nBgGenes = 100, bgEstimate = TRUE, ignoreGenes = NULL)		
+					nBgGenes = 100, bgEstimate = TRUE, ignoreGenes = NULL)
 	params = mtparams$oncodrive
 	for (name in names(params)) {
 		if (name %in% names(OcParams))
@@ -512,7 +512,7 @@ if (plots$pfam) {
 	logger('## Plotting pfam ...')
 	pfamfile = file.path(outdir, 'pfam.png')
 	params = c(list(maf = laml), mtparams$pfam)
-	if (!'top' %in% names(params)) 
+	if (!'top' %in% names(params))
 		params$top = ngenes
 	do.call(png, c(list(filename = pfamfile), devpars))
 	tryCatch(
@@ -626,7 +626,7 @@ if (plots$heterogeneity) {
 	} else {
 		heteroSingle = function(sam) {
 			segfiles = c(
-				Sys.glob(file.path(indir, paste0(sam, '*.seg.txt'))), 
+				Sys.glob(file.path(indir, paste0(sam, '*.seg.txt'))),
 				Sys.glob(file.path(indir, paste0(gsub('-', '.', sam), '*.seg.txt'))),
 				Sys.glob(file.path(indir, paste0(gsub('_', '.', sam), '*.seg.txt')))
 			)
@@ -668,7 +668,7 @@ if (plots$signature) {
 	logger('## Plotting signature ...')
 	require('NMF')
 	params = mtparams$signature
-	tmParams = list(prefix = NULL, add = TRUE, ignoreChr = NULL, useSyn = TRUE, fn = NULL)
+	tmParams = list(prefix = 'chr', add = TRUE, ignoreChr = NULL, useSyn = TRUE, fn = NULL)
 	for (name in names(params)) {
 		if (name %in% names(tmParams)) {
 			tmParams[[name]] = params[[name]]
@@ -677,7 +677,17 @@ if (plots$signature) {
 	}
 	tmParams$ref_genome = paste0('BSgenome.Hsapiens.UCSC.', genome)
 	tmParams$maf = laml
-	tm = do.call(trinucleotideMatrix, tmParams)
+	tryCatch({
+		tm = do.call(trinucleotideMatrix, tmParams)
+	}, error = function(e){
+		tmParams$add <<- FALSE
+		tryCatch({
+			tm <<- do.call(trinucleotideMatrix, tmParams)
+		}, error = function(e){
+			tmParams$prefix = NULL
+			tm <<- do.call(trinucleotideMatrix, tmParams)
+		})
+	})
 	# apobec
 	apobecfile = file.path(outdir, 'apobec.png')
 	do.call(png, c(list(filename = apobecfile), devpars))
@@ -716,7 +726,7 @@ if (plots$signature) {
 		plotSignatures(nmfRes = sigs, contributions = TRUE)
 		dev.off()
 	}, error = function(e) {
-		log2pyppl('Failed to plot extract signatures:', e, level = 'warning')		
+		log2pyppl('Failed to plot extract signatures:', e, level = 'warning')
 	})
 
 

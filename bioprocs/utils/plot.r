@@ -54,7 +54,9 @@ apply.ggs = function(p, ggs) {
 		return(p)
 	funcs = names(ggs)
 	for (i in 1:length(funcs)) {
-		p = p + do.call(funcs[i], ggs[[i]])
+		if (!is.null(ggs[[i]])) {
+			p = p + do.call(funcs[i], ggs[[i]])
+		}
 	}
 	return (p)
 }
@@ -552,27 +554,37 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 	fdr    = -log10(fdr)
 
 	# cutoffs
-	logfccut    = fccut
 	fdrcut      = pcut
 	fdrcutlabel = round(fdrcut, 3)
 	fdrcut      = -log10(fdrcut)
 
 	xm = min(max(abs(logfc)), 10)
 	ym = min(max(fdr), 15)
-	if (xm <= logfccut) logfccut = 1
 
-	threshold = as.factor(abs(logfc) > logfccut & fdr > fdrcut)
+	vline = NULL
+	text1 = NULL
+	text2 = NULL
+	threshold = as.factor(fdr > fdrcut)
+	if (!is.null(fccut)) {
+		logfccut = fccut
+		if (xm <= logfccut) logfccut = 1
+		vline = list(xintercept = c(-logfccut, logfccut), linetype = 'dashed', color = 'red3')
+		text1 = list(x = -logfccut, y = ym, label = paste(-logfccut, 'fold'),  vjust = 1, hjust = -0.1, color='red3')
+		text2 = list(x = +logfccut, y = ym, label = paste0('+', logfccut, ' ', 'fold'),  vjust = 1, hjust = -0.1, color="red3")
+		threshold = as.factor(abs(logfc) > logfccut) & threshold
+	}
+
 	data = data.frame(logfc, fdr, threshold)
 
 	ggs = c(list(
 		geom_point = list(alpha = .4, size = 1.75, aes(color = threshold)),
 		geom_hline = list(yintercept = fdrcut, linetype = 'dashed', color = 'blue3'),
-		geom_vline = list(xintercept = c(-logfccut, logfccut), linetype = 'dashed', color = 'red3'),
+		geom_vline = vline,
 		xlim       = list(c(-xm, xm)),
 		ylim       = list(c(0, ym)),
 		geom_text  = list(x = xm, y = fdrcut, label = paste('p', '=', fdrcutlabel), vjust = -1, hjust = 1, color = 'blue3'),
-		geom_text  = list(x = -logfccut, y = ym, label = paste(-logfccut, 'fold'),  vjust = 1, hjust = -0.1, color='red3'),
-		geom_text  = list(x = +logfccut, y = ym, label = paste0('+', logfccut, ' ', 'fold'),  vjust = 1, hjust = -0.1, color="red3"),
+		geom_text  = text1,
+		geom_text  = text2,
 		theme      = list(legend.position = "none"),
 		xlab       = list('log2 Fold Change'),
 		ylab       = list('-log10(p-value)')

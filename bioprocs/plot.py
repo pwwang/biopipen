@@ -312,24 +312,24 @@ pHeatmap.script       = "file:scripts/plot/pHeatmap.r"
 @description:
 	Plot heatmaps using R package ComplexHeatmap. Example:
 	```
-	bioprocs plot.pHeatmap2 
-	  -i.infile MMPT.txt 
-	  -i.annofiles:l:o PatientAnno.txt 
-	  -args.params.row_names_gp 'r:fontsize5' 
-	  -args.params.column_names_gp 'r:fontsize5' 
-	  -args.params.clustering_distance_rows pearson 
-	  -args.params.clustering_distance_columns pearson 
+	bioprocs plot.pHeatmap2
+	  -i.infile MMPT.txt
+	  -i.annofiles:l:o PatientAnno.txt
+	  -args.params.row_names_gp 'r:fontsize5'
+	  -args.params.column_names_gp 'r:fontsize5'
+	  -args.params.clustering_distance_rows pearson
+	  -args.params.clustering_distance_columns pearson
 	  -args.params.show_row_names false
 	  -args.params.row_split 3
-	  -args.devpars.width 5000 
-	  -args.devpars.height 5000 
-	  -args.draw.merge_legends 
-	  -args.params.heatmap_legend_param.title AUC 
-	  -args.params.row_dend_reorder 
-	  -args.params.column_dend_reorder 
-	  -args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1)  :ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey",   `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend =   c(Group=F))' 
-	  -args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))  ' 
-	  -args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c  ("Group1", "Group2", "Group3")' 
+	  -args.devpars.width 5000
+	  -args.devpars.height 5000
+	  -args.draw.merge_legends
+	  -args.params.heatmap_legend_param.title AUC
+	  -args.params.row_dend_reorder
+	  -args.params.column_dend_reorder
+	  -args.params.top_annotation 'r:HeatmapAnnotation(Mutation = as.matrix(annos[,(length(groups)+1)  :ncol(annos)]), Group = as.matrix(annos[,groups]), col = list(Mutation = c(`0`="grey",   `1`="lightgreen", `2`="green", `3`="darkgreen")), annotation_name_gp = fontsize8, show_legend =   c(Group=F))'
+	  -args.params.right_annotation 'r:rowAnnotation(AUC = anno_boxplot(as.matrix(data), outline = F))  '
+	  -args.helper 'fontsize8 = gpar(fontsize = 12); fontsize5 = gpar(fontsize = 8); groups = c  ("Group1", "Group2", "Group3")'
 	  -args.seed 8525
 	```
 @input:
@@ -419,12 +419,12 @@ pScatterCompare.script       = "file:scripts/plot/pScatterCompare.r"
 @args:
 	`inopts`: The options for input file. Default: `Box(rnames = True, cnames = True)`
 	`params`: The parameters for `plot.roc` from `utils/plot.r`
-	`ggs`   : Additaional ggplot terms. Default: 
+	`ggs`   : Additaional ggplot terms. Default:
 		```python
 		Box({
 		    'style_roc': {},
 		    # show legend at bottom right corner
-		    'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} 
+		    'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
 		})
 		```
 	`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
@@ -432,7 +432,7 @@ pScatterCompare.script       = "file:scripts/plot/pScatterCompare.r"
 pROC              = Proc(desc = 'Generate ROC curves.')
 pROC.input        = 'infile:file'
 pROC.output       = [
-	'outfile:file:{{i.infile | fn}}.roc/{{i.infile | fn}}.auc.txt', 
+	'outfile:file:{{i.infile | fn}}.roc/{{i.infile | fn}}.auc.txt',
 	'outdir:dir:{{i.infile | fn}}.roc'
 ]
 pROC.args.inopts  = Box(rnames = True, cnames = True)
@@ -440,7 +440,7 @@ pROC.args.params  = Box(labels = False, showAUC = True, combine = True)
 pROC.args.ggs     = Box({
 	'style_roc': {},
 	# show legend at bottom right corner
-	'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]} 
+	'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
 })
 pROC.args.devpars = Box(res = 300, height = 2000, width = 2000)
 pROC.envs.rimport = rimport
@@ -654,3 +654,16 @@ pPairs.args.params  = Box(upper = Box(continuous = "density")) # other parameter
 pPairs.envs.rimport = rimport
 pPairs.lang         = params.Rscript.value
 pPairs.script       = "file:scripts/plot/pPairs.r"
+
+pVolcano               = Proc(desc = 'Do volcano plot.')
+pVolcano.input         = 'infile:file'
+pVolcano.output        = 'outfile:file:{{i.infile | fn}}.volcano.png'
+pVolcano.args.fccut    = 2
+pVolcano.args.pvalcut  = .05
+pVolcano.args.usepval  = False
+pVolcano.args.hilights = []
+pVolcano.args.devpars  = Box(res = 300, height = 2000, width = 2000)
+pVolcano.args.ggs      = Box()
+pVolcano.envs.rimport  = rimport
+pVolcano.lang          = params.Rscript.value
+pVolcano.script        = "file:scripts/plot/pVolcano.r"

@@ -19,7 +19,7 @@ shell.load_config(pyclone = dict(
 ))
 
 if not callable(varcount):
-	varcount = lambda fmt: fmt.get("AD")[1] if isinstance(fmt.get("AD"), (tuple, list)) else fmt.get("AD")
+	varcount = lambda fmt: fmt.get("AD")[1]
 if not callable(cncount):
 	cncount = lambda fmt: fmt.get('CN')
 
