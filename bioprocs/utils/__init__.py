@@ -6,7 +6,7 @@ import re
 import gzip
 from glob import glob
 from os import path
-from pyppl.utils import string_types, Box
+from pyppl.utils import Box
 
 class Mem2Exception(Exception):
 	pass
@@ -45,18 +45,6 @@ def getLogger(name = 'bioprocs', logfmt = "[%(asctime)s %(levelname)7s] %(messag
 def log2pyppl(msg, level = None):
 	level = '.' + level if level else ''
 	sys.stderr.write('pyppl.log%s:%s\n' % (level, msg))
-
-def alwaysList(l):
-	ret = []
-	if isinstance(l, (list, tuple)):
-		for x in l:
-			ret += alwaysList(x)
-	elif not isinstance(l, string_types):
-		return [l]
-	else:
-		ret = [x.strip() for x in l.split(',') if x.strip()]
-	return ret
-
 
 def _autoUnit(num):
 	if num % (1024 * 1024) == 0:

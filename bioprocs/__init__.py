@@ -1,10 +1,10 @@
-VERSION = "0.0.1a1"
+__version__ = '0.1.0'
 
 import json
 from os import path, makedirs
 from tempfile import gettempdir
 from sys import modules, stderr, executable
-from pyparam import params
+from pyparam import Params
 
 # open to R (reticulate) to get the path of r util scripts
 UTILS    = path.join(path.realpath(path.dirname(__file__)), 'utils')
@@ -235,6 +235,7 @@ DEFAULTS = {
 	"bash.desc"   : "The path of bash.",
 }
 
+params = Params()
 params._load(DEFAULTS)
 cfgfiles = [
 	path.join (path.expanduser('~'), ".bioprocs.config"),   # values overwritten

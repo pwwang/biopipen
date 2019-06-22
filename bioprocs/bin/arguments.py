@@ -4,10 +4,16 @@ commands._prefix       = '-'
 
 # command: params
 commands.params            = 'Show or query a parameter'
-print(commands.params._prefix)
-commands.params._hbald     = False
+commands.params._.type     = list
+commands.params._.required = True
+commands.params._.desc     = 'The name of the parameter.'
 commands.params.get        = False
 commands.params.get.desc   = 'Get the value.'
-commands.params.query.desc = 'The keyword used to query parameters.'
 
-
+# command: list
+commands.list          = 'List modules or process'
+commands.list._hbald   = False
+commands.list.all      = False
+commands.list.all.desc = 'List all processes if no module specified.'
+commands.list._        = []
+commands.list._.desc   = 'Module name'
