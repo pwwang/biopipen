@@ -1,4 +1,4 @@
-# A set of algorithms or models
+"""A set of algorithms or models"""
 from pyppl import Proc, Box
 from . import params, rimport
 
@@ -16,9 +16,9 @@ from . import params, rimport
 	`c`:       The restart probability. Default: 0.1
 	`eps`:     The convergent cutoff || R(i+1) - R(i) ||. Default: 1e-5
 	`niter`:   Max iterations to stop. Default: 10000
-	`normW`:   Weather to normalize W or not, default True. 
+	`normW`:   Weather to normalize W or not, default True.
 		- Laplacian normalization is used (more to add).
-	`normE`:   Weather to normalize E or not, default True. 
+	`normE`:   Weather to normalize E or not, default True.
 		- E will be normalized as: E = E/sum(E)
 @requires:
 	if normW = True, R package `NetPreProc` is required.
@@ -42,30 +42,30 @@ pRWR.script     = "file:scripts/algorithm/pRWR.r"
 	Affinity Regression.
 	Ref: https://www.nature.com/articles/nbt.3343
 	```
-	        b           c        d          d  
+	        b           c        d          d
 	    _________    _______    ____       ____
 	    |       |    |  W  |    |  |       |  |
 	  a |   D   |  b |_____|  c |Pt|  =  a |Y |   <=>
 	    |_______|               |__|       |  |
 	                                       |__|
-	
+
 	kronecker(P, YtD)*vec(W) = vec(YtY)             <=>
 	X*vec(W) = vec(YtY)
 	WPt:
-	       c        d              d  
+	       c        d              d
 	    _______    ____          _____
 	    |  W  |    |  |          |   |
 	  b |_____|  c |Pt|  --->  b |___|
-                   |__|
+	               |__|
 
 	YtDW:
 	WtDtY:
-	     b           a        d               d    
-	  _______    _________   ____           _____  
-	  |  Wt |    |       |   |  |           |   |  
-	c |_____|  b |   Dt  | a |Y |    ---> c |___|  
-	             |_______|   |  |                 
-	                         |__|                  
+	     b           a        d               d
+	  _______    _________   ____           _____
+	  |  Wt |    |       |   |  |           |   |
+	c |_____|  b |   Dt  | a |Y |    ---> c |___|
+	             |_______|   |  |
+	                         |__|
 	```
 @input:
 	`D:file` : The D matrix
@@ -82,7 +82,7 @@ pRWR.script     = "file:scripts/algorithm/pRWR.r"
 pAR            = Proc(desc =  'Affinity Regression.')
 pAR.input      = 'D:file, Pt:file, Y:file'
 pAR.output     = [
-	'W:file:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR/W.txt', 
+	'W:file:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR/W.txt',
 	'outdir:dir:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR'
 ]
 pAR.args.seed    = None
