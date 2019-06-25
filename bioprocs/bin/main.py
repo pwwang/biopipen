@@ -42,7 +42,7 @@ def listProcs(opts):
 		pminfo  = Helps()
 		modules = Module.modules()
 		nmods   = len(modules)
-		for i, module in enumerate(modules):
+		for module in modules:
 			Module(module).toHelpsWithProcs(pminfo, nmods)
 		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)))
 	else: # list specific modules and their processes
@@ -66,9 +66,9 @@ def proc(opts):
 		else:
 			module.toHelpsAsSec(helps)
 			with module.loadProcs("%s/%s" % (i+1, nmods)) as procs:
-				for name, proc in procs.items():
+				for name, prc in procs.items():
 					if any(q.lower() in name.lower() for q in opts._):
-						proc.toHelps(helps.select(module.name + ':'))
+						prc.toHelps(helps.select(module.name + ':'))
 	print('\n'.join(highlightMulti(line, opts._) for line in  HELP_ASSEMBLER.assemble(helps)))
 
 
@@ -89,11 +89,11 @@ def main():
 	else:
 		command, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
 		if '.' in command:
-			module, proc = command.split('.')
+			module, prc = command.split('.')
 			module = Module(module)
-			if proc not in module.procs():
+			if prc not in module.procs():
 				raise ValueError('No such process: %s' % command)
-			module.procs()[proc].run(opts)
+			module.procs()[prc].run(opts)
 		else: # listing module processes
 			listProcs(Box(_ = [command]))
 

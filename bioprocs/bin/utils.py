@@ -1,7 +1,6 @@
 
 import re
 import sys
-import math
 from pathlib import Path
 from contextlib import contextmanager
 from colorama import Back
@@ -9,7 +8,7 @@ from pyparam import Helps, HelpAssembler, params
 from pyppl import utils
 import bioprocs
 
-def substrReplace(s, starts, lengths, replace):
+def substrReplace(string, starts, lengths, replace):
 	if not isinstance(starts, (tuple, list)):
 		starts = [starts]
 	if not isinstance(lengths, (tuple, list)):
@@ -21,17 +20,17 @@ def substrReplace(s, starts, lengths, replace):
 	delta = 0
 	for i, start in enumerate(starts):
 		# adjust starts
-		s = s[:start + delta] + replace[i] + s[start + lengths[i] + delta:]
+		string = string[:start + delta] + replace[i] + string[start + lengths[i] + delta:]
 		delta += len(replace[i]) - lengths[i]
-	return s
+	return string
 
-def highlight(origin, q, incase = True):
+def highlight(origin, query, incase = True):
 	# get all occurrences of q
 	if incase:
-		occurs = [m.start() for m in re.finditer(q.lower(), origin.lower())]
+		occurs = [m.start() for m in re.finditer(query.lower(), origin.lower())]
 	else:
-		occurs = [m.start() for m in re.finditer(q, origin)]
-	lengths = [len(q)] * len(occurs)
+		occurs = [m.start() for m in re.finditer(query, origin)]
+	lengths = [len(query)] * len(occurs)
 	return substrReplace(origin, occurs, lengths, [
 		'{}{}{}'.format(Back.LIGHTRED_EX, origin[occur:occur+length], Back.RESET)
 		for occur, length in zip(occurs, lengths)])
@@ -69,11 +68,11 @@ class Module:
 		descindex      = []
 		nameindex_flag = descindex_flag = False
 		for i, line in enumerate(doclines):
-			if doclines[i].startswith('@'):
+			if line.startswith('@'):
 				nameindex_flag = descindex_flag = False
-			if doclines[i].startswith('@name'):
+			if line.startswith('@name'):
 				nameindex_flag = True
-			elif doclines[i].startswith('@description'):
+			elif line.startswith('@description'):
 				descindex_flag = True
 			elif nameindex_flag:
 				nameindex.append(i)
@@ -94,12 +93,12 @@ class Module:
 		'from bedtools import *'
 		"""
 		# scan 'from bedtools import pBedIntersect' first
-		m = re.search(r'^from\s+(?:bioprocs)?\.(\w+?)\s+import\s+%s$' % proc, modsrc, re.M)
-		if not m:
-			m = re.search(r'^from\s+(?:bioprocs)?\.(\w+?)\s+import\s+\*$', modsrc, re.M)
-		if not m:
+		match = re.search(r'^from\s+(?:bioprocs)?\.(\w+?)\s+import\s+%s$' % proc, modsrc, re.M)
+		if not match:
+			match = re.search(r'^from\s+(?:bioprocs)?\.(\w+?)\s+import\s+\*$', modsrc, re.M)
+		if not match:
 			return None
-		module = Module(m.group(1))
+		module = Module(match.group(1))
 		aliasprocs = module.procs()
 		if proc in aliasprocs:
 			return aliasprocs[proc].desc, aliasprocs[proc].doc
@@ -168,12 +167,13 @@ class Module:
 class Process:
 
 	def __init__(self, proc, module, desc, doc):
-		self.name   = proc
-		self.module = module
-		self.proc   = getattr(module, proc)
-		self.desc   = desc
-		self.doc    = doc
-		self._helps = Helps()
+		self.name    = proc
+		self.module  = module
+		self.proc    = getattr(module, proc)
+		self.desc    = desc
+		self.doc     = doc
+		self._helps  = Helps()
+		self._parsed = {}
 
 	def toHelps(self, helpsec):
 		helpsec.prefix = ''
@@ -184,13 +184,13 @@ class Process:
 		ret      = {}
 		sec      = Module.deindent(sec)
 		lastdesc = []
-		for s in sec:
-			if not s:
+		for line in sec:
+			if not line:
 				continue
-			if s[0] in ('\t', ' '):
-				lastdesc.append(s)
+			if line[0] in ('\t', ' '):
+				lastdesc.append(line)
 				continue
-			parts = utils.split(s, ':', trim = False)
+			parts = utils.split(line, ':', trim = False)
 			nametype = parts.pop(0)
 			lastdesc = [':'.join(parts).strip()]
 			nametype = nametype.strip('`) ')
@@ -203,91 +203,103 @@ class Process:
 			ret[name.strip()] = (typ.strip(), lastdesc)
 		return ret
 
-	@staticmethod
-	def _parseDoc(doc):
-		if not doc:
-			return {}
-		ret = {}
+	def parsed(self):
+		if self._parsed:
+			return self._parsed
+		if not self.doc:
+			self._parsed = {}
+			return self._parsed
+		self._parsed = {}
 		lastsec = []
-		for line in doc:
+		for line in self.doc:
 			if line.startswith('@'):
 				secname = line.strip('@: ')
 				lastsec = []
-				ret[secname] = lastsec
+				self._parsed[secname] = lastsec
 			else:
 				lastsec.append(line)
-		for key, sec in ret.items():
-			ret[key] = Process._parseSec(sec)
-		return ret
+		for key, sec in self._parsed.items():
+			self._parsed[key] = Process._parseSec(sec)
+		return self._parsed
 
 	@staticmethod
 	def defaultVal(val):
 		return str(val) if val != '' else "''"
+
+	def inputs(self):
+		if isinstance(self.proc.config.input, dict):
+			inkeys = self.proc.config.input.keys()
+		elif isinstance(self.proc.config.input, str):
+			inkeys = utils.split(self.proc.config.input, ',')
+		else:
+			inkeys = self.proc.config.input
+		ret = utils.OBox()
+		for inkey in inkeys:
+			if ':' not in inkey:
+				inkey += ':var'
+			inname, intype = inkey.split(':', 1)
+			ret[inname] = intype
+		return ret
+
+	def outputs(self):
+		if isinstance(self.proc.config.output, dict):
+			outs = list(self.proc.config.output.keys())
+		elif isinstance(self.proc.config.output, str):
+			outs = utils.split(self.proc.config.output, ',')
+		else:
+			outs = self.proc.config.output
+		ret = utils.OBox()
+		for out in outs:
+			parts = utils.split(out, ':')
+			if len(parts) == 2:
+				outname, outype, default = parts[0], 'var', parts[1]
+			else:
+				outname, outype, default = parts
+		ret[outname] = (outype, Process.defaultVal(default))
+		return ret
 
 	def helps(self):
 		"""Construct help page using doc"""
 		if self._helps:
 			return self._helps
 
-		docs = Process._parseDoc(self.doc)
 		self._helps.add('Name', Path(self.module.__file__).stem + '.' + self.name)
 		self._helps.add('Description', self.desc)
 
 		# input
 		self._helps.add('Input options (Use \':list\' for multi-jobs)',
 			sectype = 'option', prefix = '-')
-		if isinstance(self.proc.config.input, dict):
-			inputs = list(self.proc.config.input.keys())
-		elif isinstance(self.proc.config.input, str):
-			inputs = utils.split(self.proc.config.input, ',')
-		else:
-			inputs = self.proc.config.input
-		for inopt in inputs:
-			if ':' not in inopt:
-				inopt += ':'
-			inname, intype = inopt.split(':', 1)
-			docinfo = docs.get('input', {}).get(inname, ('', '[ Not documented. ]'))
-			self._helps.select('Input options').add((
-				'-i.' + inname, '<%s>' % (intype or docinfo[0]) if intype or docinfo[0] \
-					else '<var>',
-				docinfo[1]))
+		for inname, intype in self.inputs().items():
+			doctype, docdesc = self.parsed().get('input', {}).get(inname, ('var', 'Input %s' % inname))
+			intype = intype or doctype or 'var'
+			self._helps.select('Input options').add(('-i.' + inname, '<%s>' % intype, docdesc))
 
 		# output
 		self._helps.add('Output options (\'exdir\' implied if path specified)',
 			sectype = 'option', prefix = '-')
-		if isinstance(self.proc.config.output, dict):
-			outputs = list(self.proc.config.output.keys())
-		elif isinstance(self.proc.config.input, str):
-			outputs = utils.split(self.proc.config.output, ',')
-		else:
-			outputs = self.proc.config.output
-		for outopt in outputs:
-			parts = utils.split(outopt, ':')
-			if len(parts) == 2:
-				outname, outype, default = parts[0], 'var', parts[1]
-			else:
-				outname, outype, default = parts
+		for outname, outypedeft in self.outputs().items():
+			outype, outdeft = outypedeft
+			doctype, docdesc = self.parsed().get('output', {}).get(
+				outname, ('var', ['Default: ' + outdeft]))
+			outype = outype or doctype or 'var'
 
-			docinfo = docs.get('output', {}).get(
-				outname, ('', ['Default: ' + Process.defaultVal(default)]))
-			desc = docinfo[1]
-
-			if not desc or ('default: ' not in desc[-1].lower() and len(desc[-1]) > 20):
-				desc.append('Default: ' + Process.defaultVal(default))
-			elif 'default: ' not in desc[-1].lower():
-				desc[-1] += ' Default: ' + Process.defaultVal(default)
-			self._helps.select('Output options').add((
-				'-o.' + outname, '<%s>' % (outype or docinfo[0]) if outype or docinfo[0] \
-					else '<var>',
-				desc))
+			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
+				docdesc.append('Default: ' + outdeft)
+			elif 'default: ' not in docdesc[-1].lower():
+				docdesc[-1] += ' Default: ' + outdeft
+			self._helps.select('Output options').add(('-o.' + outname, '<%s>' % outype, docdesc))
 
 		# args
 		self._helps.add('Process arguments', sectype = 'option', prefix = '-')
-		for key in self.proc.args:
-			docinfo = docs.get('args', {}).get(key, ('', '[ Not documented. ]'))
-			self._helps.select('Process arguments').add((
-				'-args.' + key, '<%s>' % docinfo[0] if docinfo[0] else '<auto>',
-				docinfo[1]))
+		for key, val in self.proc.args.items():
+			doctype, docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))
+			doctype = doctype or 'auto'
+			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
+				docdesc.append('Default: ' + Process.defaultVal(val))
+			elif 'default: ' not in docdesc[-1].lower():
+				docdesc[-1] += ' Default: ' + Process.defaultVal(val)
+
+			self._helps.select('Process arguments').add(('-args.' + key, '<%s>' % doctype, docdesc))
 
 		self._helps.add('Other options', sectype = 'option', prefix = '-')
 		# process properties
@@ -295,7 +307,9 @@ class Process:
 			('-<prop>', '', 'Process properties, such as -forks, -exdir, -cache ...'))
 
 		# pipeline configurations
-		self._helps.select('Other options').add(('-config.<subconf>[.subconf]', '', 'Pipeline configrations, such as -config._log.file'))
+		self._helps.select('Other options').add(
+			('-config.<subconf>[.subconf]', '',
+			 'Pipeline configrations, such as -config._log.file'))
 
 		# help
 		self._helps.select('Other options').addParam(
@@ -303,9 +317,9 @@ class Process:
 
 		return self._helps
 
-	def printHelps(self, quit = True):
+	def printHelps(self, halt = True):
 		print('\n'.join(HelpAssembler().assemble(self.helps())))
-		if quit:
+		if halt:
 			sys.exit(1)
 
 	def run(self, opts):
@@ -331,5 +345,6 @@ class Pipeline:
 		self.module = getattr(self.module, 'bioprocs_' + name)
 		self.desc = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
 
-	def run(self, args, prog = sys.argv[2:]):
+	def run(self, args, prog = None):
+		proc = proc or sys.argv[2:]
 		self.module.main(args, prog)
