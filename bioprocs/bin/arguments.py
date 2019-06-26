@@ -24,6 +24,20 @@ commands.proc = 'Search modules or processes.'
 commands.proc._        = []
 commands.proc._.desc   = 'Part of the module or process name.'
 
+# command: completion
+commands.completion = 'Generate completions for bioprocs.'
+commands.completion.shell = 'auto'
+commands.completion.shell.desc = 'The shell'
+commands.completion.auto = False
+commands.completion.auto.desc = 'Whether automatically deploy the completion script.'
+commands.completion.s = commands.completion.shell
+commands.completion.a = commands.completion.auto
+commands.completions  = commands.completion
+
+# command: profile
+commands.profile        = 'List available running profiles.'
+commands.profile._hbald = False
+commands.profile._.desc = 'Additional configurations.'
 
 def helpx(helps):
 	from bioprocs.bin.utils import Pipeline
@@ -38,12 +52,15 @@ def helpx(helps):
 
 	for ppl in Pipeline.pipelines():
 		help_pipeline.add((ppl, '', Pipeline(ppl).desc))
+
 	help_process.add(help_avail.select('list'))
 	help_process.add(help_avail.select('proc'))
 	help_process.add(('<module>', '', [
 		'List the process of module.', 'Same as "bioprocs list <module>"']))
 	help_process.add(('<module.proc>', '', 'Run a process in command line.'))
+	help_other.add(help_avail.select('completion'))
 	help_other.add(help_avail.select('params'))
+	help_other.add(help_avail.select('profile'))
 	help_other.add(help_avail.select('help'))
 
 	helps.remove('Available')

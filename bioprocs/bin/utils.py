@@ -2,10 +2,11 @@
 import re
 import sys
 from pathlib import Path
+from tempfile import gettempdir
 from contextlib import contextmanager
 from colorama import Back
-from pyparam import Helps, HelpAssembler, params
-from pyppl import utils
+from pyparam import Helps, HelpAssembler
+from pyppl import utils, Channel, PyPPL
 import bioprocs
 
 def substrReplace(string, starts, lengths, replace):
@@ -39,6 +40,17 @@ def highlightMulti(line, queries):
 	for query in queries:
 		line = highlight(line, query)
 	return line
+
+def subtractDict(bigger, smaller, prefix = ''):
+	ret = bigger.copy()
+	for key, val in smaller.items():
+		if key not in ret:
+			continue
+		if isinstance(ret[key], dict) and isinstance(val, dict) and ret[key] != val:
+			ret[key] = subtractDict(ret[key], val, prefix + '  ')
+		elif ret[key] == val:
+			del ret[key]
+	return ret
 
 class Module:
 
@@ -106,7 +118,10 @@ class Module:
 
 	def __init__(self, name):
 		self.name   = name
-		self.module = getattr(__import__('bioprocs', fromlist = [name]), name)
+		try:
+			self.module = getattr(__import__('bioprocs', fromlist = [name]), name)
+		except AttributeError:
+			raise AttributeError('No such module: %s' % name) from None
 		self.desc   = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
 		self._procs = {}
 
@@ -135,7 +150,7 @@ class Module:
 				desc, doc = docs[pname]
 			else:
 				descdoc = Module.scanAlias(pname, modulesrc)
-				desc, doc = descdoc if descdoc else ('[ Not documented. ]', [])
+				desc, doc = descdoc if descdoc else (['[ Not documented. ]'], [])
 			self._procs[pname] = Process(pname, self.module, desc, doc)
 		return self._procs
 
@@ -163,6 +178,13 @@ class Module:
 		with self.loadProcs("%s/%s" % (len(helps), nmods)) as procs:
 			for name, proc in procs.items():
 				proc.toHelps(helps.select(self.name + ': '))
+
+	def addToCompletions(self, comp):
+		comp.addCommand(self.name, self.desc)
+		with self.loadProcs() as procs:
+			for pname, proc in procs.items():
+				comp.addCommand(self.name + '.' + pname, proc.desc[0])
+				proc.addToCompletions(comp.command(self.name + '.' + pname))
 
 class Process:
 
@@ -255,8 +277,22 @@ class Process:
 				outname, outype, default = parts[0], 'var', parts[1]
 			else:
 				outname, outype, default = parts
-		ret[outname] = (outype, Process.defaultVal(default))
+		ret[outname] = (outype, default)
 		return ret
+
+	def addToCompletions(self, comp):
+		for inname in self.inputs():
+			docdesc = self.parsed().get('input', {}).get(inname, (None, ['Input %s' % inname]))[1]
+			comp.addOption('-i.' + inname, docdesc[0])
+		for outname, outypedeft in self.outputs().items():
+			docdesc = self.parsed().get('output', {}).get(
+				outname, ('var', ['Default: ' + Process.defaultVal(outypedeft[1])]))[1]
+			comp.addOption('-o.' + outname, docdesc[0])
+		for key, val in self.proc.args.items():
+			docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))[1]
+			comp.addOption('-args.' + key, docdesc[0])
+		# add -config.
+		comp.addOption('-config.', 'Pipeline configrations, such as -config._log.file')
 
 	def helps(self):
 		"""Construct help page using doc"""
@@ -280,13 +316,13 @@ class Process:
 		for outname, outypedeft in self.outputs().items():
 			outype, outdeft = outypedeft
 			doctype, docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', ['Default: ' + outdeft]))
+				outname, ('var', ['Default: ' + Process.defaultVal(outdeft)]))
 			outype = outype or doctype or 'var'
 
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.append('Default: ' + outdeft)
+				docdesc.append('Default: ' + Process.defaultVal(outdeft))
 			elif 'default: ' not in docdesc[-1].lower():
-				docdesc[-1] += ' Default: ' + outdeft
+				docdesc[-1] += ' Default: ' + Process.defaultVal(outdeft)
 			self._helps.select('Output options').add(('-o.' + outname, '<%s>' % outype, docdesc))
 
 		# args
@@ -313,20 +349,83 @@ class Process:
 
 		# help
 		self._helps.select('Other options').addParam(
-			params[params._hopts[0]], params._hopts, ishelp = True)
+			bioprocs.params[bioprocs.params._hopts[0]], bioprocs.params._hopts, ishelp = True)
 
 		return self._helps
 
-	def printHelps(self, halt = True):
-		print('\n'.join(HelpAssembler().assemble(self.helps())))
+	@staticmethod
+	def _updateArgs(args):
+		# replace ',' with '.' in key
+		ret = args.copy() # try to keep the type
+		ret.clear()
+		for key, val in args.items():
+			ret[key.replace(',', '.')] = Process._updateArgs(val) \
+				if isinstance(val, dict) else val
+		return ret
+
+	def printHelps(self, error = None, halt = True):
+		assembler = HelpAssembler()
+		error = error or []
+		if isinstance(error, str):
+			error = [error]
+		for err in error:
+			print(assembler.error(err))
+		print('\n'.join(assembler.assemble(self.helps())), end = '')
 		if halt:
 			sys.exit(1)
 
 	def run(self, opts):
-		if any(opts.get(h) for h in params._hopts) or \
-			all(key in params._hopts for key in opts):
+		if any(opts.get(h) for h in bioprocs.params._hopts) or \
+			all(key in bioprocs.params._hopts for key in opts):
 			self.printHelps()
+		if not opts.get('i') or not isinstance(opts.i, dict):
+			self.printHelps(error = 'No input specified.')
 
+		indata = {}
+		for inkey, intype in self.inputs().items():
+			if opts.i.get(inkey) is None:
+				self.printHelps(error = 'Input "[-i.]%s" is not specified.' % inkey)
+			indata[inkey + ':' + intype] = Channel.create(opts.i[inkey])
+		self.proc.input = indata
+
+		if opts.get('o') is not None:
+			if not isinstance(opts.o, dict):
+				self.printHelps(error = 'Malformat output specification.')
+
+			outdata = utils.OBox()
+			for outkey, outypedeft in self.outputs().items():
+				outype, outdeft = outypedeft
+				if not opts.o.get(outkey):
+					outdata[outkey + ':' + outype] = outdeft
+					continue
+				if outype not in ('file', 'dir'):
+					outdata[outkey + ':' + outype] = opts.o[outkey]
+					continue
+				# try to extract exdir from output
+				out = Path(opts.o[outkey])
+				if out.name != opts.o[outkey]: # we have path
+					if self.proc.exdir and out.parent != self.proc.exdir:
+						raise ValueError('Cannot have output files/dirs with different parents.')
+					self.proc.exdir = str(out.parent)
+			self.proc.output = outdata
+
+		if opts.get('args'):
+			if not isinstance(opts.args, dict):
+				self.printHelps(error = 'Malformat args specification.')
+			self.proc.args.update(Process._updateArgs(opts.args))
+
+		config = {
+			'_log'  : {'file': None },
+			'ppldir': Path(gettempdir()) / 'bioprocs.workdir'
+		}
+		config.update(Process._updateArgs(opts.get('config', {})))
+
+		for key, val in opts.items():
+			if key in bioprocs.params._hopts + ['i', 'o', 'args', 'config']:
+				continue
+			setattr(self.proc, key, val)
+
+		PyPPL(config).start(self.proc).run()
 
 
 class Pipeline:
@@ -345,6 +444,15 @@ class Pipeline:
 		self.module = getattr(self.module, 'bioprocs_' + name)
 		self.desc = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
 
-	def run(self, args, prog = None):
-		proc = proc or sys.argv[2:]
-		self.module.main(args, prog)
+	def run(self):
+		prog = 'bioprocs ' + self.name
+		sys.argv = [prog] + sys.argv[2:]
+		bioprocs.params._prog = prog
+		bioprocs.params._assembler.progname = prog
+
+		self.module.main()
+
+	def addToCompletions(self, comp):
+		comp.addCommand(self.name, self.desc)
+		self.module.params._addToCompletions(
+			comp.command(self.name), withtype = False, alias = True)

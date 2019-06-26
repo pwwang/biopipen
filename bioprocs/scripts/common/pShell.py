@@ -1,7 +1,7 @@
 from pyppl import Box
 from bioprocs.utils import ensureBox, shell2 as shell
 
-args = {{i.args | repr}}
+args = {{i.args if isinstance(i.args, str) else repr(i.args)}}
 args = ensureBox(args)
 
 cmd = {{args.cmd | repr}}

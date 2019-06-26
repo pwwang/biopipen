@@ -1,9 +1,11 @@
 import sys
-from bioprocs.bin.utils import highlightMulti, Module, Pipeline
+import copy
+from pprint import pformat
+from bioprocs.bin.utils import highlightMulti, Module, Pipeline, subtractDict
 from bioprocs.bin.arguments import commands
 from bioprocs import params
 from pyparam import HelpAssembler, Helps
-from pyppl import Box
+from pyppl import Box, PyPPL
 
 HELP_ASSEMBLER = HelpAssembler()
 
@@ -29,7 +31,8 @@ def showParams(opts):
 					continue
 				pminfo['params'].addParam(param)
 
-		print('\n'.join(highlightMulti(line, queries) for line in  HELP_ASSEMBLER.assemble(pminfo)))
+		print('\n'.join(highlightMulti(line, queries)
+			for line in  HELP_ASSEMBLER.assemble(pminfo)), end = '')
 
 def listProcs(opts):
 	if not opts._ and not opts.all: # list modules only
@@ -37,14 +40,14 @@ def listProcs(opts):
 		pminfo.add('modules', sectype = 'option', prefix = '')
 		for module in Module.modules():
 			Module(module).toHelps(pminfo['modules'])
-		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)))
+		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)), end = '')
 	elif not opts._:  # list all modules and processes
 		pminfo  = Helps()
 		modules = Module.modules()
 		nmods   = len(modules)
 		for module in modules:
 			Module(module).toHelpsWithProcs(pminfo, nmods)
-		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)))
+		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)), end = '')
 	else: # list specific modules and their processes
 		pminfo  = Helps()
 		modules = Module.modules()
@@ -53,7 +56,7 @@ def listProcs(opts):
 			if module not in modules:
 				raise ValueError('No such module: %s' % module)
 			Module(module).toHelpsWithProcs(pminfo, nmods)
-		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)))
+		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)), end ='')
 
 def proc(opts):
 	modules = Module.modules()
@@ -69,23 +72,98 @@ def proc(opts):
 				for name, prc in procs.items():
 					if any(q.lower() in name.lower() for q in opts._):
 						prc.toHelps(helps.select(module.name + ':'))
-	print('\n'.join(highlightMulti(line, opts._) for line in  HELP_ASSEMBLER.assemble(helps)))
+	print('\n'.join(highlightMulti(line, opts._)
+		for line in  HELP_ASSEMBLER.assemble(helps)), end = '')
 
+def complete(opts):
+	from completions import Completions
+	comp = Completions(desc = 'Bioprocs utilities.')
+	# add builtin commands
+	for cmd, pms in commands._cmds.items():
+		if cmd == '_':
+			continue
+		comp.addCommand(cmd, pms._desc)
+		pms._addToCompletions(comp.command(cmd), withtype = False, alias = True)
+
+	# add pipelines
+	for pipeline in Pipeline.pipelines():
+		Pipeline(pipeline).addToCompletions(comp)
+
+	# add modules/processes
+	for module in Module.modules():
+		Module(module).addToCompletions(comp)
+
+	compcode = comp.generate(shell = opts.s, auto = opts.a)
+	if not opts.a:
+		print(compcode)
+
+def profile(opts):
+	base = { '_flowchart': {},
+		'_log': {},
+		'args': {},
+		'sgeRunner': {},
+		'sshRunner': {},
+		'tplenvs': {}}
+
+	ppl = PyPPL(cfgfile = opts._)
+	ppl.config._use()
+	helps = Helps()
+	helps.add('Profile: "default"', sectype = 'plain')
+	helps.select('Profile: "default"').add(
+		pformat(subtractDict(ppl.config, base), indent = 2, width = 100))
+
+	default = copy.deepcopy(ppl.config)
+	for prof in ppl.config._profiles:
+		if prof == 'default':
+			continue
+		helps.add('Profile: "%s"' % prof, sectype = 'plain')
+
+		with ppl.config._with(prof, copy = True) as profconf:
+			profconf = subtractDict(profconf, default)
+			profconf = subtractDict(profconf, base)
+			helps.select('Profile: "%s"' % prof).add(
+				pformat(profconf, indent = 2, width = 100))
+		ppl.config.update(default)
+
+	print('\n'.join(HELP_ASSEMBLER.assemble(helps)), end = '')
 
 def main():
 	pipelines = Pipeline.pipelines()
 	command = sys.argv[1] if len(sys.argv) > 1 else None
 	if command == 'params':
-		command, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Box)
 		showParams(opts)
 	elif command == 'list':
-		command, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Box)
 		listProcs(opts)
 	elif command == 'proc':
-		command, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Box)
 		proc(opts)
+	elif command in ('completion', 'completions'):
+		_, opts, _ = commands._parse(dict_wrapper = Box)
+		complete(opts)
+	elif command == 'profile':
+		_, opts, _ = commands._parse(dict_wrapper = Box)
+		profile(opts)
 	elif command in pipelines:
-		Pipeline(command).run(sys.argv[2:])
+		# let the pipeline parse the arguments
+		Pipeline(command).run()
+	elif command in commands._hcmd:
+		_, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
+		if not opts._:
+			commands._help(print_and_exit = True)
+		if opts._ in commands._cmds:
+			commands._cmds[opts._]._help(print_and_exit = True)
+		if opts._ in pipelines:
+			Pipeline(opts._).module.params._help(print_and_exit = True)
+		if '.' in opts._: # process
+			module, proc = opts._.split('.')
+			try:
+				Module(module).procs()[proc].printHelps()
+			except KeyError:
+				raise KeyError('Module %r does not have process: %s' % (module, proc)) from None
+		else: # assume module
+			listProcs(Box(_ = [opts._]))
 	else:
 		command, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
 		if '.' in command:

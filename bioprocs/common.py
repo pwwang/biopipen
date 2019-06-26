@@ -36,6 +36,18 @@ pSort.args.unique = False
 pSort.lang        = params.python.value
 pSort.script      = "file:scripts/common/pSort.py"
 
+"""
+@name:
+	pShell
+@description:
+	Run shell command directly
+@input:
+	args: A dict of parameters of the command
+@output:
+	outfile: The output file
+@args:
+	cmd (str): The executable.
+"""
 pShell          = Proc(desc = 'Run shell command directly')
 pShell.input    = 'args'
 pShell.output   = 'outfile:stdout:{{args.cmd}}.{{proc.suffix}}.{{job.index + 1}}.txt'

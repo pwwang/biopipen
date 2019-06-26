@@ -1,5 +1,5 @@
 from os import path
-from bioprocs.utils import alwaysList
+from pyppl.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvRecord
 
 class SampleInfoException(Exception):
