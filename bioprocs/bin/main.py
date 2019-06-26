@@ -1,3 +1,4 @@
+"""Script entry point for bioprocs"""
 import sys
 import copy
 from pprint import pformat
@@ -35,6 +36,7 @@ def showParams(opts):
 			for line in  HELP_ASSEMBLER.assemble(pminfo)), end = '')
 
 def listProcs(opts):
+	"""List processes"""
 	if not opts._ and not opts.all: # list modules only
 		pminfo  = Helps()
 		pminfo.add('modules', sectype = 'option', prefix = '')
@@ -59,6 +61,7 @@ def listProcs(opts):
 		print('\n'.join(HELP_ASSEMBLER.assemble(pminfo)), end ='')
 
 def proc(opts):
+	"""Query processes"""
 	modules = Module.modules()
 	nmods   = len(modules)
 	helps   = Helps()
@@ -76,6 +79,7 @@ def proc(opts):
 		for line in  HELP_ASSEMBLER.assemble(helps)), end = '')
 
 def complete(opts):
+	"""Shell completions"""
 	from completions import Completions
 	comp = Completions(desc = 'Bioprocs utilities.')
 	# add builtin commands
@@ -98,6 +102,7 @@ def complete(opts):
 		print(compcode)
 
 def profile(opts):
+	"""List avaiable running profiles"""
 	base = { '_flowchart': {},
 		'_log': {},
 		'args': {},
@@ -128,6 +133,7 @@ def profile(opts):
 	print('\n'.join(HELP_ASSEMBLER.assemble(helps)), end = '')
 
 def main():
+	"""Main entry point"""
 	pipelines = Pipeline.pipelines()
 	command = sys.argv[1] if len(sys.argv) > 1 else None
 	if command == 'params':
@@ -157,11 +163,11 @@ def main():
 		if opts._ in pipelines:
 			Pipeline(opts._).module.params._help(print_and_exit = True)
 		if '.' in opts._: # process
-			module, proc = opts._.split('.')
+			module, prc = opts._.split('.')
 			try:
-				Module(module).procs()[proc].printHelps()
+				Module(module).procs()[prc].printHelps()
 			except KeyError:
-				raise KeyError('Module %r does not have process: %s' % (module, proc)) from None
+				raise KeyError('Module %r does not have process: %s' % (module, prc)) from None
 		else: # assume module
 			listProcs(Box(_ = [opts._]))
 	else:

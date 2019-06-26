@@ -1,4 +1,4 @@
-
+"""Utilities for bioprocs script"""
 import re
 import sys
 from pathlib import Path
@@ -10,6 +10,7 @@ from pyppl import utils, Channel, PyPPL
 import bioprocs
 
 def substrReplace(string, starts, lengths, replace):
+	"""Replace substrings"""
 	if not isinstance(starts, (tuple, list)):
 		starts = [starts]
 	if not isinstance(lengths, (tuple, list)):
@@ -26,6 +27,7 @@ def substrReplace(string, starts, lengths, replace):
 	return string
 
 def highlight(origin, query, incase = True):
+	"""Highlight string with query string"""
 	# get all occurrences of q
 	if incase:
 		occurs = [m.start() for m in re.finditer(query.lower(), origin.lower())]
@@ -37,11 +39,13 @@ def highlight(origin, query, incase = True):
 		for occur, length in zip(occurs, lengths)])
 
 def highlightMulti(line, queries):
+	"""Highlight a string with multiple queries"""
 	for query in queries:
 		line = highlight(line, query)
 	return line
 
 def subtractDict(bigger, smaller, prefix = ''):
+	"""Subtract a dict from another"""
 	ret = bigger.copy()
 	for key, val in smaller.items():
 		if key not in ret:
@@ -53,15 +57,17 @@ def subtractDict(bigger, smaller, prefix = ''):
 	return ret
 
 class Module:
-
+	"""A module of bioprocs"""
 	@staticmethod
 	def modules():
+		"""Get all modules"""
 		return [module.stem
 			for module in Path(bioprocs.__file__).parent.glob('*.py')
 			if not module.stem.startswith('_')]
 
 	@staticmethod
 	def deindent(lines):
+		"""Remove indent based on the first line"""
 		indention = lines[0][:-len(lines[0].lstrip())]
 		ret = []
 		for line in lines:
@@ -74,6 +80,7 @@ class Module:
 
 	@staticmethod
 	def procnameFromDoc(docstr):
+		"""Get the proc name and desc from the docstr"""
 		doclines       = docstr.splitlines()
 		doclines       = Module.deindent(doclines)
 		nameindex      = []
@@ -126,6 +133,7 @@ class Module:
 		self._procs = {}
 
 	def procs(self):
+		"""Get the processes of the module"""
 		if self._procs:
 			return self._procs
 
@@ -155,11 +163,13 @@ class Module:
 		return self._procs
 
 	def toHelps(self, helpsec):
+		"""Send me to a Helps section"""
 		helpsec.prefix = ''
 		helpsec.add((self.name, '', self.desc))
 
 	@contextmanager
 	def loadProcs(self, index = None):
+		"""Loading procs with indicators"""
 		info = 'Collecting module%s: %s ...' % (index and (' ' + index) or '', self.name)
 		print('\r' + info, end = '')
 		yield self.procs()
@@ -171,15 +181,18 @@ class Module:
 				print(end = '\r')
 
 	def toHelpsAsSec(self, helps):
+		"""Add me to helps as a section"""
 		helps.add(self.name + ': ' + self.desc, sectype = 'option', prefix = '')
 
 	def toHelpsWithProcs(self, helps, nmods):
+		"""Add me to helps with procs information"""
 		self.toHelpsAsSec(helps)
 		with self.loadProcs("%s/%s" % (len(helps), nmods)) as procs:
-			for name, proc in procs.items():
+			for proc in procs.values():
 				proc.toHelps(helps.select(self.name + ': '))
 
 	def addToCompletions(self, comp):
+		"""Add me to completions"""
 		comp.addCommand(self.name, self.desc)
 		with self.loadProcs() as procs:
 			for pname, proc in procs.items():
@@ -187,7 +200,7 @@ class Module:
 				proc.addToCompletions(comp.command(self.name + '.' + pname))
 
 class Process:
-
+	"""A bioprocs process"""
 	def __init__(self, proc, module, desc, doc):
 		self.name    = proc
 		self.module  = module
@@ -198,6 +211,7 @@ class Process:
 		self._parsed = {}
 
 	def toHelps(self, helpsec):
+		"""Send me to a Helps section"""
 		helpsec.prefix = ''
 		helpsec.add((self.name, '', self.desc))
 
@@ -226,6 +240,7 @@ class Process:
 		return ret
 
 	def parsed(self):
+		"""Get parsed doc"""
 		if self._parsed:
 			return self._parsed
 		if not self.doc:
@@ -246,9 +261,11 @@ class Process:
 
 	@staticmethod
 	def defaultVal(val):
+		"""Formatted value in help"""
 		return str(val) if val != '' else "''"
 
 	def inputs(self):
+		"""Get the input keys and types by definitions"""
 		if isinstance(self.proc.config.input, dict):
 			inkeys = self.proc.config.input.keys()
 		elif isinstance(self.proc.config.input, str):
@@ -264,6 +281,7 @@ class Process:
 		return ret
 
 	def outputs(self):
+		"""Get the input keys, types and default values by definitions"""
 		if isinstance(self.proc.config.output, dict):
 			outs = list(self.proc.config.output.keys())
 		elif isinstance(self.proc.config.output, str):
@@ -281,6 +299,7 @@ class Process:
 		return ret
 
 	def addToCompletions(self, comp):
+		"""Add me to completions"""
 		for inname in self.inputs():
 			docdesc = self.parsed().get('input', {}).get(inname, (None, ['Input %s' % inname]))[1]
 			comp.addOption('-i.' + inname, docdesc[0])
@@ -288,7 +307,7 @@ class Process:
 			docdesc = self.parsed().get('output', {}).get(
 				outname, ('var', ['Default: ' + Process.defaultVal(outypedeft[1])]))[1]
 			comp.addOption('-o.' + outname, docdesc[0])
-		for key, val in self.proc.args.items():
+		for key in self.proc.args:
 			docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))[1]
 			comp.addOption('-args.' + key, docdesc[0])
 		# add -config.
@@ -364,6 +383,7 @@ class Process:
 		return ret
 
 	def printHelps(self, error = None, halt = True):
+		"""Print helps"""
 		assembler = HelpAssembler()
 		error = error or []
 		if isinstance(error, str):
@@ -375,6 +395,7 @@ class Process:
 			sys.exit(1)
 
 	def run(self, opts):
+		"""Construct a pipeline with the process and run it"""
 		if any(opts.get(h) for h in bioprocs.params._hopts) or \
 			all(key in bioprocs.params._hopts for key in opts):
 			self.printHelps()
@@ -433,6 +454,7 @@ class Pipeline:
 
 	@staticmethod
 	def pipelines():
+		"""Get all available pipelines"""
 		return [pplfile.stem[9:]
 			for pplfile in (
 				Path(bioprocs.__file__).parent / 'bin' / 'pipeline').glob('bioprocs_*.py')
@@ -445,6 +467,7 @@ class Pipeline:
 		self.desc = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
 
 	def run(self):
+		"""Run the pipeline"""
 		prog = 'bioprocs ' + self.name
 		sys.argv = [prog] + sys.argv[2:]
 		bioprocs.params._prog = prog
@@ -453,6 +476,7 @@ class Pipeline:
 		self.module.main()
 
 	def addToCompletions(self, comp):
+		"""Add me to completions"""
 		comp.addCommand(self.name, self.desc)
 		self.module.params._addToCompletions(
 			comp.command(self.name), withtype = False, alias = True)
