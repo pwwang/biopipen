@@ -10,7 +10,7 @@ python = "^3.6"
 PyPPL = "^1.4"
 
 [tool.poetry.scripts]
-bioprocs = 'bioprocs.main:main'
+bioprocs = 'bioprocs.console:main'
 
 [tool.poetry.dev-dependencies]
 

@@ -2,11 +2,12 @@
 import sys
 import copy
 from pprint import pformat
-from bioprocs.bin.utils import highlightMulti, Module, Pipeline, subtractDict
-from bioprocs.bin.arguments import commands
-from bioprocs import params
+from .. import params
+from .utils import highlightMulti, Module, Pipeline, subtractDict
+from .arguments import commands
 from pyparam import HelpAssembler, Helps
-from pyppl import Box, PyPPL
+from pyppl import Box
+from pyppl.utils import config
 
 HELP_ASSEMBLER = HelpAssembler()
 
@@ -103,6 +104,9 @@ def complete(opts):
 
 def profile(opts):
 	"""List avaiable running profiles"""
+	if opts._:
+		config._load(opts._)
+
 	base = { '_flowchart': {},
 		'_log': {},
 		'args': {},
@@ -110,25 +114,23 @@ def profile(opts):
 		'sshRunner': {},
 		'tplenvs': {}}
 
-	ppl = PyPPL(cfgfile = opts._)
-	ppl.config._use()
 	helps = Helps()
 	helps.add('Profile: "default"', sectype = 'plain')
 	helps.select('Profile: "default"').add(
-		pformat(subtractDict(ppl.config, base), indent = 2, width = 100))
+		pformat(subtractDict(config, base), indent = 2, width = 100))
 
-	default = copy.deepcopy(ppl.config)
-	for prof in ppl.config._profiles:
+	default = copy.deepcopy(config)
+	for prof in config._profiles:
 		if prof == 'default':
 			continue
 		helps.add('Profile: "%s"' % prof, sectype = 'plain')
 
-		with ppl.config._with(prof, copy = True) as profconf:
+		with config._with(prof, copy = True) as profconf:
 			profconf = subtractDict(profconf, default)
 			profconf = subtractDict(profconf, base)
 			helps.select('Profile: "%s"' % prof).add(
 				pformat(profconf, indent = 2, width = 100))
-		ppl.config.update(default)
+		config.update(default)
 
 	print('\n'.join(HELP_ASSEMBLER.assemble(helps)), end = '')
 
