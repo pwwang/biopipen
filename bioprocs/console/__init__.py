@@ -172,6 +172,8 @@ def main():
 				raise KeyError('Module %r does not have process: %s' % (module, prc)) from None
 		else: # assume module
 			listProcs(Box(_ = [opts._]))
+	elif not sys.argv[0]:
+		raise RuntimeError('This package has to run as a command line tool.')
 	else:
 		command, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
 		if '.' in command:
@@ -183,5 +185,3 @@ def main():
 		else: # listing module processes
 			listProcs(Box(_ = [command]))
 
-if __name__ == "__main__":
-	main()

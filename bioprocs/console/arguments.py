@@ -40,7 +40,7 @@ commands.profile._hbald = False
 commands.profile._.desc = 'Additional configurations.'
 
 def helpx(helps):
-	from bioprocs.bin.utils import Pipeline
+	from bioprocs.console.utils import Pipeline
 	#helps.add('Parameter/Process query commands', helps.select('Available commands'))
 	helps.add('Assembled pipelines', sectype = 'option', prefix = '')
 	helps.add('Processes', sectype = 'option', prefix = '')

@@ -1,4 +1,4 @@
-# A set of processes for Tumor heterogeneity analysis
+"""A set of processes for Tumor heterogeneity analysis"""
 from pyppl import Box, Proc
 from . import rimport, params
 from .utils import fs2name
@@ -166,3 +166,43 @@ pSuperFreq.envs.rimport = rimport
 pSuperFreq.lang         = params.Rscript.value
 pSuperFreq.script       = "file:scripts/tumhet/pSuperFreq.r"
 
+"""
+@name:
+	pClonEvol
+@input:
+	mutfile: The mutation file.
+	saminfo: The sample information file.
+@output:
+	outdir: The output directory.
+@args:
+	inopts: The input options to read the mutation file.
+	params: The parameters for individual `ClonEvol` functions.
+"""
+pClonEvol             = Proc(desc = "Inferring and visualizing clonal evolution in multi-sample cancer sequencing.")
+pClonEvol.input       = 'mutfile:file, saminfo:file'
+pClonEvol.output      = 'outdir:dir:{{i.mutfile | stem}}.clonevol'
+pClonEvol.lang        = params.Rscript.value
+pClonEvol.args.inopts = Box(rnames = False, cnames = True)
+pClonEvol.args.params = Box({
+	'plot.variant.clusters': Box(
+		# see https://rdrr.io/github/hdng/clonevol/man/plot.variant.clusters.html
+	),
+	'plot.cluster.flow': Box(
+		# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
+	),
+	'infer.clonal.models': Box(
+		# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
+	),
+	'transfer.events.to.consensus.trees': Box(
+		# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
+	),
+	'convert.consensus.tree.clone.to.branch': Box(
+		# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
+	),
+	'plot.clonal.models': Box(
+		# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
+	)
+})
+pClonEvol.args.devpars = Box(width = 2000, height = 2000, res = 300)
+pClonEvol.envs.rimport = rimport
+pClonEvol.script = "file:scripts/tumhet/pClonEvol.R"

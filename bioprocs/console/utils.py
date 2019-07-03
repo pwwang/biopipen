@@ -100,7 +100,10 @@ class Module:
 		if len(nameindex) != 1:
 			raise ValueError('Proc name should be on a separated line.')
 		name = doclines[nameindex[0]].strip()
-		desc = Module.deindent([doclines[i] for i in descindex])
+		if descindex:
+			desc = Module.deindent([doclines[i] for i in descindex])
+		else:
+			desc = None
 		doc  = doclines[(max(nameindex + descindex)+1):]
 		return name, desc, doc
 
@@ -127,8 +130,11 @@ class Module:
 		self.name   = name
 		try:
 			self.module = getattr(__import__('bioprocs', fromlist = [name]), name)
-		except AttributeError:
-			raise AttributeError('No such module: %s' % name) from None
+		except AttributeError as ex:
+			if 'has no attribute' in str(ex):
+				raise AttributeError('No such module: %s' % name) from None
+			else:
+				raise
 		self.desc   = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
 		self._procs = {}
 
@@ -136,7 +142,6 @@ class Module:
 		"""Get the processes of the module"""
 		if self._procs:
 			return self._procs
-
 		# load docs
 		modulefile = Path(self.module.__file__)
 		modulefile = modulefile.with_suffix('.py')
@@ -158,7 +163,7 @@ class Module:
 				desc, doc = docs[pname]
 			else:
 				descdoc = Module.scanAlias(pname, modulesrc)
-				desc, doc = descdoc if descdoc else (['[ Not documented. ]'], [])
+				desc, doc = descdoc if descdoc else (None, [])
 			self._procs[pname] = Process(pname, self.module, desc, doc)
 		return self._procs
 
@@ -205,7 +210,7 @@ class Process:
 		self.name    = proc
 		self.module  = module
 		self.proc    = getattr(module, proc)
-		self.desc    = desc
+		self.desc    = desc or self.proc.desc
 		self.doc     = doc
 		self._helps  = Helps()
 		self._parsed = {}
@@ -260,9 +265,19 @@ class Process:
 		return self._parsed
 
 	@staticmethod
-	def defaultVal(val):
+	def defaultVal(val, prefix = 'Default: ', indent = 0):
 		"""Formatted value in help"""
-		return str(val) if val != '' else "''"
+		ret = []
+		lines = utils.formatDict(val if val != '' else "''", 0).splitlines()
+		for i, line in enumerate(lines):
+			if i == 0:
+				line = prefix + line
+				if len(lines) > 1:
+					line += ' \\'
+				ret.append(line)
+			else:
+				ret.append(' ' * indent + line + ' \\')
+		return ret
 
 	def inputs(self):
 		"""Get the input keys and types by definitions"""
@@ -305,7 +320,7 @@ class Process:
 			comp.addOption('-i.' + inname, docdesc[0])
 		for outname, outypedeft in self.outputs().items():
 			docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', ['Default: ' + Process.defaultVal(outypedeft[1])]))[1]
+				outname, ('var', Process.defaultVal(outypedeft[1])[0]))[1]
 			comp.addOption('-o.' + outname, docdesc[0])
 		for key in self.proc.args:
 			docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))[1]
@@ -335,13 +350,15 @@ class Process:
 		for outname, outypedeft in self.outputs().items():
 			outype, outdeft = outypedeft
 			doctype, docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', ['Default: ' + Process.defaultVal(outdeft)]))
+				outname, ('var', Process.defaultVal(outdeft)))
 			outype = outype or doctype or 'var'
 
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.append('Default: ' + Process.defaultVal(outdeft))
+				docdesc.extend(Process.defaultVal(outdeft, indent = 5))
 			elif 'default: ' not in docdesc[-1].lower():
-				docdesc[-1] += ' Default: ' + Process.defaultVal(outdeft)
+				defaults = Process.defaultVal(outdeft, indent = len(docdesc[-1]) + 6)
+				docdesc[-1] += ' ' + defaults.pop(0)
+				docdesc.extend(defaults)
 			self._helps.select('Output options').add(('-o.' + outname, '<%s>' % outype, docdesc))
 
 		# args
@@ -350,9 +367,11 @@ class Process:
 			doctype, docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))
 			doctype = doctype or 'auto'
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.append('Default: ' + Process.defaultVal(val))
+				docdesc.extend(Process.defaultVal(val, indent = 5))
 			elif 'default: ' not in docdesc[-1].lower():
-				docdesc[-1] += ' Default: ' + Process.defaultVal(val)
+				defaults = Process.defaultVal(val, indent = len(docdesc[-1]) + 6)
+				docdesc[-1] += ' ' + defaults.pop(0)
+				docdesc.extend(defaults)
 
 			self._helps.select('Process arguments').add(('-args.' + key, '<%s>' % doctype, docdesc))
 
