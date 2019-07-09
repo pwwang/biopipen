@@ -114,6 +114,8 @@ class TsvReader(object):
 		row     = None, # row factory
 		cname0  = "ROWNAME"):
 		openfunc = open
+		# in case infile is a Pathlib.Path object
+		infile = str(infile)
 		if infile.endswith('.gz'):
 			import gzip
 			openfunc = gzip.open

@@ -7,9 +7,11 @@ from .utils import fs2name
 @name:
 	pSciClone
 @description:
-	Run sciClone for subclonal analysis.
+	Run sciClone for clonality analysis.
 @input:
 	`vfvcfs:files`: The VCF files of mutations of each sample
+		- Single-sample/paired-sample vcf files.
+		- If it is paired, you have to specify which sample (`args.vfsamcol`) is the target.
 	`cnvcfs:files`: The VCF files of copy number variations of each sample
 @output:
 	`outdir:dir`: The output directory.
@@ -18,7 +20,7 @@ from .utils import fs2name
 	`exfile`  : The regions to be excluded. In BED3 format
 	`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
 	`cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`
-	`varcount`: An R function string to define how to get the variant allele count. Default: `function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])`
+	`varcount`: An R function string to define how to get the variant allele count.
 		- If this function returns `NULL`, record will be skipped.
 		- It can use the sample calls (`fmt`) and also the record info (`info`)
 		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
@@ -26,14 +28,14 @@ from .utils import fs2name
 		- This function can return the variant count directly, or
 		- an R `list` like: `list(count = <var count>, depth = <depth>)`.
 		- By default, the `depth` will be read from `fmt$DP`
-	`cncount` : An R function string to define how to get the copy number. Default: `function(fmt) fmt$CN`
+	`cncount` : An R function string to define how to get the copy number.
 		- Similar as `varcount`
 		- Returns copy number directly, or
 		- an R `list` like: `list(cn = <copy number>, end = <end>, probes = <probes>)`
 		- `end` defines where the copy number variation stops
 		- `probes` defines how many probes cover this copy number variantion.
 """
-pSciClone               = Proc(desc = "Run sciClone")
+pSciClone               = Proc(desc = "Run sciClone for clonality analysis.")
 pSciClone.input         = "vfvcfs:files, cnvcfs:files"
 pSciClone.output        = "outdir:dir:{{i.vfvcfs | fs2name}}.sciclone"
 pSciClone.envs.fs2name  = fs2name
@@ -50,39 +52,36 @@ pSciClone.script        = "file:scripts/tumhet/pSciClone.r"
 """
 @name:
 	pPyClone
-@description:
-	Run PyClone for subclonal analysis
 @input:
 	`vfvcfs:files`: The VCF files of mutations of each sample
+		- Single-sample/paired-sample vcf files.
+		- If it is paired, you have to specify which sample (`args.vfsamcol`) is the target.
 	`cnvcfs:files`: The VCF files of copy number variations of each sample
 @output:
 	`outdir:dir`: The output directory.
 @args:
-	`params`  : Other parameters for original `PyClone run_analysis_pipeline` function. Default: `Box()`
-	`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
-	`cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`
-	`varcount`: A python lambda string to define how to get the variant allele count. Default: `lambda fmt: fmt.get("AD") and fmt.get("AD")[1]`
+	params (dict): Other parameters for original `PyClone run_analysis_pipeline` function. Default: `Box()`
+	vfsamcol (int): The index of the target sample in mutation VCF file, 1-based. Default: `1`
+	cnsamcol (int): The index of the target sample in copy number VCF file, 1-based. Default: `1`
+	varcount (str): A python lambda string to define how to get #ref, #alt and allele frequency ( `ref`, `alt`, `af`).
 		- If this function returns `None`, record will be skipped.
-		- It can use the sample calls (`fmt`) and also the record info (`info`)
-		- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
-		- This function can return the variant count directly, or
-		- a `dict` like: `dict(count = <var count>, depth = <depth>)`.
-		- By default, the `depth` will be read from `fmt.DP`
-	`cncount` : An python lambda string to define how to get the copy number. Default: `lambda fmt: fmt.get("CN")`
-		- Similar as `varcount`
-		- Returns copy number directly, or
-		- a `dict` like: `dict(cn = <copy number>, end = <end>)`
-		- `end` defines where the copy number variation stops
+		- It can use the sample calls (`fmt`) and also the record info (`info`), meaning both `function(fmt) ...` and `function(fmt, info) ...` can be used.
+		- This function should return a dict with keys `ref`, `alt`, `dp` and `af`.
+		- By default, `ref` and `alt` will get from `FORMAT[AD]`; `af` from `FORMAT[AF]`, if not provided, then `alt/sum(FORMAT[AD])`
+	cncount (str): An python lambda string to define how to get the copy number.
+		- Similar as `varcount`, returns a `dict` of copy number of ref and alt alleles (key: `major` and `minor`), as well as end of the copy number region (`end`).
+		- By default, `major` and `minor` will get from `FORMAT[CN]` if it is a `tuple/list`. If it is an integer, then it's `major` and `minor` will be `0`. Otherwise, `major` and `minor` will be `2` and `0`, respectively.
+	pyclone (str): The path of `PyClone`.
 """
-pPyClone               = Proc(desc = "Run pyclone.")
+pPyClone               = Proc(desc = "Run PyClone for clonality analysis.")
 pPyClone.input         = "vfvcfs:files, cnvcfs:files"
 pPyClone.output        = "outdir:dir:{{i.vfvcfs | fs2name}}.pyclone"
 pPyClone.envs.fs2name  = fs2name
 pPyClone.args.params   = Box()
 pPyClone.args.vfsamcol = 1 # 1-based
 pPyClone.args.cnsamcol = 1
-pPyClone.args.varcount = 'lambda fmt: fmt.get("AD")[1]'
-pPyClone.args.cncount  = 'lambda fmt: fmt.get("CN")'
+pPyClone.args.varcount = None
+pPyClone.args.cncount  = None
 pPyClone.args.pyclone  = params.pyclone.value
 pPyClone.lang          = params.python.value
 pPyClone.script        = "file:scripts/tumhet/pPyClone.py"
@@ -190,19 +189,60 @@ pClonEvol.args.params = Box({
 	'plot.cluster.flow': Box(
 		# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
 	),
-	'infer.clonal.models': Box(
+	'infer.clonal.models': Box({
 		# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
-	),
-	'transfer.events.to.consensus.trees': Box(
+		"founding.cluster": 1,
+		"cluster.center": "mean",
+		"sum.p.cutoff": 0.05,
+		"alpha": 0.05
+	}),
+	'transfer.events.to.consensus.trees': Box({
 		# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
-	),
-	'convert.consensus.tree.clone.to.branch': Box(
+		"event.col.name": "gene"
+	}),
+	'convert.consensus.tree.clone.to.branch': Box({
 		# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
-	),
-	'plot.clonal.models': Box(
+		"branch.scale": "sqrt"
+	}),
+	'plot.clonal.models': Box({
 		# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
-	)
+		# "clone.shape"                     : 'bell',
+		# "bell.event"                      : True,
+		# "bell.event.label.color"          : 'blue',
+		# "bell.event.label.angle"          : 60,
+		# "clone.time.step.scale"           : 1,
+		# "bell.curve.step"                 : 2,
+		# "merged.tree.plot"                : True,
+		# "tree.node.label.split.character" : None,
+		# "tree.node.shape"                 : 'circle',
+		# "tree.node.size"                  : 30,
+		# "tree.node.text.size"             : 0.5,
+		# "merged.tree.node.size.scale"     : 1.25,
+		# "merged.tree.node.text.size.scale": 2.5,
+		# "merged.tree.cell.frac.ci"        : False,
+		# "mtcab.event.sep.char"            : ',',
+		"mtcab.branch.text.size"          : .8,
+		# "mtcab.branch.width"              : 0.75,
+		# "mtcab.node.size"                 : 3,
+		# "mtcab.node.label.size"           : 1,
+		"mtcab.node.text.size"            : .8,
+		# "cell.plot"                       : True,
+		# "num.cells"                       : 100,
+		# "cell.border.size"                : 0.25,
+		# "cell.border.color"               : 'black',
+		# "clone.grouping"                  : 'horizontal',
+		# "show.score"                      : False,
+		# "cell.frac.ci"                    : True,
+		# "disable.cell.frac"               : False
+	})
 })
 pClonEvol.args.devpars = Box(width = 2000, height = 2000, res = 300)
 pClonEvol.envs.rimport = rimport
 pClonEvol.script = "file:scripts/tumhet/pClonEvol.R"
+
+pPyClone2ClonEvol        = Proc(desc = "Convert PyClone results to ClonEvol input format.")
+pPyClone2ClonEvol.input  = 'indir:dir'
+pPyClone2ClonEvol.output = 'outfile:file:{{i.indir | fn}}.clonevol.txt'
+pPyClone2ClonEvol.lang   = params.python.value
+pPyClone2ClonEvol.script = "file:scripts/tumhet/pPyClone2ClonEvol.py"
+

@@ -333,7 +333,8 @@ class Process:
 		if self._helps:
 			return self._helps
 
-		self._helps.add('Name', Path(self.module.__file__).stem + '.' + self.name)
+		self._helps.add('Name',
+			Path(self.module.__file__).stem + '.' + self.name + ' [lang = %s]' % self.proc.lang)
 		self._helps.add('Description', self.desc)
 
 		# input
@@ -423,9 +424,16 @@ class Process:
 
 		indata = {}
 		for inkey, intype in self.inputs().items():
-			if opts.i.get(inkey) is None:
-				self.printHelps(error = 'Input "[-i.]%s" is not specified.' % inkey)
-			indata[inkey + ':' + intype] = Channel.create(opts.i[inkey])
+			# We should allow some input options to be empty
+			#if opts.i.get(inkey) is None:
+			#	self.printHelps(error = 'Input "[-i.]%s" is not specified.' % inkey)
+
+			# to be smart on "files"
+			if intype in self.proc.IN_FILESTYPE and inkey in opts.i \
+				and not isinstance(opts.i[inkey], list):
+				indata[inkey + ':' + intype] = Channel.create([[opts.i[inkey]]])
+			else:
+				indata[inkey + ':' + intype] = Channel.create(opts.i.get(inkey))
 		self.proc.input = indata
 
 		if opts.get('o') is not None:
