@@ -1,10 +1,8 @@
 from pathlib import Path
 import pytest
-from remotedata import remotedata
 from pyppl import PyPPL
 from bioprocs.tumhet import pClonEvol, pPyClone
-remotedata.manager.cachedir   = Path(__file__).parent / 'testdata'
-remotedata.manager.conf.repos = 'pwwang/bioprocs-testdata'
+from . import remotedata
 
 def test_clonevol():
 	pClonEvol1 = pClonEvol.copy()
@@ -18,4 +16,20 @@ def test_pyclone():
 	pPyClone1.input = (
 		list(vcfdir.glob('*.vcf.gz')),
 		list(vcfdir.glob('*.vcf.gz')))
-	PyPPL().start(pPyClone1).run()
+	pPyClone1.report = """
+{% python from os import path %}
+## {{proc.desc}}
+
+PyClone[1] is a tool using Probabilistic model for inferring clonal population structure from deep NGS sequencing.
+
+![Similarity matrix]({{path.join(jobs[0].o.outdir, "plots/loci/similarity_matrix.svg")}})
+
+```table
+caption: Clusters
+file: "{{path.join(jobs[0].o.outdir, "tables/cluster.tsv")}}"
+rows: 10
+```
+
+[1]: Roth, Andrew, et al. "PyClone: statistical inference of clonal population structure in cancer." Nature methods 11.4 (2014): 396.
+"""
+	PyPPL().start(pPyClone1).run().report(Path(pPyClone1.workdir) / 'report.html', title = 'Clonality analysis using PyClone')

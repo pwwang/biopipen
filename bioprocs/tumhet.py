@@ -85,6 +85,7 @@ pPyClone.args.cncount  = None
 pPyClone.args.pyclone  = params.pyclone.value
 pPyClone.lang          = params.python.value
 pPyClone.script        = "file:scripts/tumhet/pPyClone.py"
+pPyClone.report        = "file:reports/tumhet/pPyClone.md"
 
 """
 @name:

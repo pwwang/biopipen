@@ -6,6 +6,7 @@ import re
 import gzip
 from glob import glob
 from os import path
+import yaml
 from pyppl.utils import Box
 
 class Mem2Exception(Exception):
@@ -25,6 +26,17 @@ def fs2name(files):
 		return bnames[0] + '.etc'
 	else:
 		return compfix + '.etc'
+
+def reportdata(outdir, *args, **kwargs):
+	data = {}
+	for arg in args:
+		if not isinstance(arg, dict):
+			raise TypeError('Expect a dict as report data.')
+		data.update(arg)
+	data.update(kwargs)
+	datafile = path.join(outdir, 'job.report.data.yaml')
+	with open(datafile, 'w') as f:
+		yaml.dump(data, f, default_flow_style=False)
 
 def dirpat2name(directory, pattern = '*'):
 	return fs2name(glob(path.join(directory, pattern)))

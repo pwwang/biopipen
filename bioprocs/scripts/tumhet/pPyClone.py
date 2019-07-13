@@ -1,7 +1,7 @@
 from pysam import VariantFile
 from pyppl import Box
 from os import path
-from bioprocs.utils import funcargs, logger, shell2 as shell
+from bioprocs.utils import reportdata, funcargs, logger, shell2 as shell
 
 vfvcfs   = {{ i.vfvcfs | repr}}
 cnvcfs   = {{ i.cnvcfs | repr}}
@@ -162,7 +162,9 @@ with open(path.join(outdir, 'matplotlibrc'), 'w') as f:
 	f.write('backend: Agg\n')
 params.working_dir = outdir
 params.prior = 'total_copy_number'
+params.plot_file_format = 'svg'
 shell.fg.pyclone.run_analysis_pipeline(**params)
 
 assert path.exists(path.join(outdir, 'tables'))
 assert path.exists(path.join(outdir, 'plots'))
+
