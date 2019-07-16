@@ -241,9 +241,12 @@ pClonEvol.args.devpars = Box(width = 2000, height = 2000, res = 300)
 pClonEvol.envs.rimport = rimport
 pClonEvol.script = "file:scripts/tumhet/pClonEvol.R"
 
-pPyClone2ClonEvol        = Proc(desc = "Convert PyClone results to ClonEvol input format.")
-pPyClone2ClonEvol.input  = 'indir:dir'
-pPyClone2ClonEvol.output = 'outfile:file:{{i.indir | fn}}.clonevol.txt'
-pPyClone2ClonEvol.lang   = params.python.value
-pPyClone2ClonEvol.script = "file:scripts/tumhet/pPyClone2ClonEvol.py"
+pPyClone2ClonEvol               = Proc(desc = "Convert PyClone results to ClonEvol input format.")
+pPyClone2ClonEvol.input         = 'indir:dir'
+pPyClone2ClonEvol.output        = 'outfile:file:{{i.indir | fn}}.clonevol.txt'
+pPyClone2ClonEvol.args.refgene  = params.refgene.value
+pPyClone2ClonEvol.args.drivers  = []
+pPyClone2ClonEvol.args.bedtools = params.bedtools.value
+pPyClone2ClonEvol.lang          = params.python.value
+pPyClone2ClonEvol.script        = "file:scripts/tumhet/pPyClone2ClonEvol.py"
 

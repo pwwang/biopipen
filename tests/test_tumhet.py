@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL
-from bioprocs.tumhet import pClonEvol, pPyClone
+from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol
 from . import remotedata
 
 def test_clonevol():
@@ -13,23 +13,13 @@ def test_clonevol():
 def test_pyclone():
 	vcfdir = remotedata.get('tumhet/SRR385940-individuals/')
 	pPyClone1 = pPyClone.copy()
+	pPyClone2ClonEvol1 = pPyClone2ClonEvol.copy()
+	pClonEvol2 = pClonEvol.copy()
+
 	pPyClone1.input = (
 		list(vcfdir.glob('*.vcf.gz')),
 		list(vcfdir.glob('*.vcf.gz')))
-	pPyClone1.report = """
-{% python from os import path %}
-## {{proc.desc}}
-
-PyClone[1] is a tool using Probabilistic model for inferring clonal population structure from deep NGS sequencing.
-
-![Similarity matrix]({{path.join(jobs[0].o.outdir, "plots/loci/similarity_matrix.svg")}})
-
-```table
-caption: Clusters
-file: "{{path.join(jobs[0].o.outdir, "tables/cluster.tsv")}}"
-rows: 10
-```
-
-[1]: Roth, Andrew, et al. "PyClone: statistical inference of clonal population structure in cancer." Nature methods 11.4 (2014): 396.
-"""
-	PyPPL().start(pPyClone1).run().report(Path(pPyClone1.workdir) / 'report.html', title = 'Clonality analysis using PyClone')
+	pPyClone2ClonEvol1.depends = pPyClone1
+	pClonEvol2.depends = pPyClone2ClonEvol1
+	pClonEvol2.input = lambda ch: ch.cbind(remotedata.get('tumhet/SRR385940.sample.txt'))
+	PyPPL().start(pPyClone1).run()

@@ -200,6 +200,7 @@ class TsvReader(object):
 class TsvWriter(object):
 	def __init__(self, outfile = None, delimit = '\t', append = False):
 		openfunc = open
+		outfile = str(outfile) # support pathlib
 		if outfile and outfile.endswith('.gz'):
 			import gzip
 			openfunc = gzip.open
