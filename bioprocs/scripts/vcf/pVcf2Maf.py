@@ -3,12 +3,14 @@ from glob import glob
 from pyppl import Box
 from bioprocs.utils import parallel, logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvWriter, TsvReader
+from bioprocs.utils.reference import vcfIndex
 
 infile       = {{i.infile | quote}}
 outfile      = {{o.outfile | quote}}
 tool         = {{args.tool | quote}}
 vcf2maf      = {{args.vcf2maf | quote}}
 vep          = {{args.vep | quote}}
+tabix        = {{args.tabix | quote}}
 vepDb        = {{args.vepDb | quote}}
 filtervcf    = {{args.filtervcf | quote}}
 ref          = {{args.ref | quote}}
@@ -45,13 +47,14 @@ def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
 	shell.fg.vcf2maf(**params_one)
 
 def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
-
+	vcf = vcfIndex(vcf, tabix = tabix)
 	vcf0 = vcf
 	if normal: # split tumor and normal
 		vcf_tumor  = vcf + '.' + tumor
 		extract_sample_from_vcf(vcf, tumor, vcf_tumor, nomiss = False)
 		vcf = vcf_tumor
 
+	openblas_threads = max(nthread - forks, 1)
 	params_one               = params.copy()
 	params_one._             = [vcf, maf, 'hg19']
 	params_one.v             = True
@@ -74,7 +77,12 @@ def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
 
 	# don't use **params, otherwise input_format will be turned into input-format
 	logger.info('See %s for oncotator logs.', params_one.log_name)
-	shell.fg.oncotator(params_one)
+	shell.fg.oncotator(params_one, _env =  dict(
+		OPENBLAS_NUM_THREADS = str(openblas_threads),
+		OMP_NUM_THREADS      = str(openblas_threads),
+		NUMEXPR_NUM_THREADS  = str(openblas_threads),
+		MKL_NUM_THREADS      = str(openblas_threads)
+	))
 
 	# oncotator cannot put Matched_Norm_Sample_Barcode and allele information
 	# add them if normal is specified
@@ -161,7 +169,7 @@ def run(tool):
 			(infile, s, path.join(splitdir, "split{}.vcf".format(i+1)))
 			for i, s in enumerate(vcfsams)
 		])
-		restThreads = int(float(nthread)/float(len(vcfsams)) - 1.0)
+		restThreads = int(float(nthread)/float(len(vcfsams)))
 		restThreads = max(restThreads, 1)
 		para.run(one, [
 			(path.join(splitdir, "split" + str(i+1) + ".vcf"),

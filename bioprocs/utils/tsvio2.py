@@ -194,7 +194,7 @@ class TsvReader(object):
 		self.close()
 
 	def close(self):
-		if self.file:
+		if hasattr(self, 'file') and self.file:
 			self.file.close()
 
 class TsvWriter(object):
@@ -240,7 +240,7 @@ class TsvWriter(object):
 		self.close()
 
 	def close(self):
-		if self.file:
+		if hasattr(self, 'file') and self.file:
 			self.file.close()
 
 class TsvJoin(object):

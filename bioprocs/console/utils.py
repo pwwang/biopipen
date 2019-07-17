@@ -365,8 +365,8 @@ class Process:
 		# args
 		self._helps.add('Process arguments', sectype = 'option', prefix = '-')
 		for key, val in self.proc.args.items():
-			doctype, docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))
-			doctype = doctype or 'auto'
+			doctype, docdesc = self.parsed().get('args', {}).get(key, (None, ['[ Not documented. ]']))
+			doctype = doctype or type(val).__name__
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
 				docdesc.extend(Process.defaultVal(val, indent = 5))
 			elif 'default: ' not in docdesc[-1].lower():

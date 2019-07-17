@@ -259,18 +259,20 @@ pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 	Convert Vcf file to Maf file
 @input:
 	`infile:file` : The input vcf file
-		- see `args.somatic`
+		- see `args.tumor`
 @output:
 	`outfile:file`: The output maf file
 @args:
-	`tool`     : Which tool to use, vcf2maf or oncotator. Default: `vcf2maf`
+	`tool`     : Which tool to use, vcf2maf or oncotator.
 		- Only hg19 available for oncotator
 	`vcf2maf`  : The path of vcf2maf.pl
 	`vep`      : The path of vep
+		- For `vcf2maf`
 	`vepDb`    : The path of database for vep
 	`filtervcf`: The filter vcf. Something like: ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
+		- For `vcf2maf`
 	`ref`      : The reference genome
-	`nthread`  : Number of threads used to extract samples. Default: 1
+	`nthread`  : Number of threads used to extract samples.
 	`bcftools` : Path to bcftools used to extract sample names.
 	`tumor`    : The index of the tumor sample in the vcf file. Default: `auto`
 		- `auto`: The sample name matches the file name as the tumor, only if there are 2 samples.
@@ -278,13 +280,18 @@ pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
 		- `1`: The second sample as the tumor.
 		- Otherwise: All samples treated as tumors.
 		- If there is only one sample, this option has no effect
+	tabix: Path to tabix, used to index Vcf file.
+	oncotator: Path to oncotator.
+	oncotator_db (dir): Path to oncotator database.
+	params: Extra parameters for the tool.
 """
 pVcf2Maf                   = Proc(desc = 'Convert Vcf file to Maf file.')
 pVcf2Maf.input             = 'infile:file'
 pVcf2Maf.output            = 'outfile:file:{{i.infile | fn2}}.maf'
-pVcf2Maf.args.tool         = 'vcf2maf'
+pVcf2Maf.args.tool         = 'oncotator'
 pVcf2Maf.args.vcf2maf      = params.vcf2maf.value
 pVcf2Maf.args.vep          = params.vep.value
+pVcf2Maf.args.tabix        = params.tabix.value
 pVcf2Maf.args.vepDb        = params.vepDb.value
 pVcf2Maf.args.filtervcf    = params.vepNonTCGAVcf.value
 pVcf2Maf.args.ref          = params.ref.value
