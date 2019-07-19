@@ -3,7 +3,7 @@
 from pyppl import PyPPL, Box
 from bioprocs import params
 
-params.prefix = '-'
+params._prefix = '-'
 
 params.tflist.show     = True
 params.tfmotifs.show   = True

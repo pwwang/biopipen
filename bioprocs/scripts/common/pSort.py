@@ -18,6 +18,9 @@ params.T = tmpdir
 params.u = unique
 params.S = mem
 
+if 'cnames' in inopts:
+	inopts.skip += 1
+
 if inopts.skip:
 	shell.head(_ = infile, n = inopts.skip, _out = outfile)
 	#params.__stdout = outfile

@@ -78,54 +78,6 @@ class Module:
 			ret.append(line[len(indention):].replace('\t', '  '))
 		return ret
 
-	@staticmethod
-	def procnameFromDoc(docstr):
-		"""Get the proc name and desc from the docstr"""
-		doclines       = docstr.splitlines()
-		doclines       = Module.deindent(doclines)
-		nameindex      = []
-		descindex      = []
-		nameindex_flag = descindex_flag = False
-		for i, line in enumerate(doclines):
-			if line.startswith('@'):
-				nameindex_flag = descindex_flag = False
-			if line.startswith('@name'):
-				nameindex_flag = True
-			elif line.startswith('@description'):
-				descindex_flag = True
-			elif nameindex_flag:
-				nameindex.append(i)
-			elif descindex_flag:
-				descindex.append(i)
-		if len(nameindex) != 1:
-			raise ValueError('Proc name should be on a separated line.')
-		name = doclines[nameindex[0]].strip()
-		if descindex:
-			desc = Module.deindent([doclines[i] for i in descindex])
-		else:
-			desc = None
-		doc  = doclines[(max(nameindex + descindex)+1):]
-		return name, desc, doc
-
-	@staticmethod
-	def scanAlias(proc, modsrc):
-		"""Document of proc not found in this module
-		So try to find it in the contexts of
-		'from bedtools import pBedIntersect' or
-		'from bedtools import *'
-		"""
-		# scan 'from bedtools import pBedIntersect' first
-		match = re.search(r'^from\s+(?:bioprocs)?\.(\w+?)\s+import\s+%s$' % proc, modsrc, re.M)
-		if not match:
-			match = re.search(r'^from\s+(?:bioprocs)?\.(\w+?)\s+import\s+\*$', modsrc, re.M)
-		if not match:
-			return None
-		module = Module(match.group(1))
-		aliasprocs = module.procs()
-		if proc in aliasprocs:
-			return aliasprocs[proc].desc, aliasprocs[proc].doc
-		return None
-
 	def __init__(self, name):
 		self.name   = name
 		try:
@@ -142,29 +94,13 @@ class Module:
 		"""Get the processes of the module"""
 		if self._procs:
 			return self._procs
-		# load docs
-		modulefile = Path(self.module.__file__)
-		modulefile = modulefile.with_suffix('.py')
-		modulesrc  = modulefile.read_text()
-		regex      = re.compile(
-			r'(\"\"\"|\'\'\')\s*\n(\s*@name:\s+p[_A-Z0-9].+\s+@[\s\S]+?)\1', re.M)
-		docstrs    = regex.finditer(modulesrc)
-		docs       = {}
-		for docstr in docstrs:
-			name, desc, doc = Module.procnameFromDoc(docstr.group(2))
-			docs[name] = (desc, doc)
-
-		self._procs = {}
-		for pname in dir(self.module):
-			if len(pname) < 2 or pname[0] != 'p' or (
-				pname[1] != '_' and not pname[1].isdigit() and not pname[1].isupper()):
+		for proc, factory in self.module._envs.items():
+			if len(proc) < 3 or proc[0] != '_' or proc[1] != 'p' \
+				or not (proc[2].isdigit() or proc[2].isupper()):
 				continue
-			if pname in docs:
-				desc, doc = docs[pname]
-			else:
-				descdoc = Module.scanAlias(pname, modulesrc)
-				desc, doc = descdoc if descdoc else (None, [])
-			self._procs[pname] = Process(pname, self.module, desc, doc)
+			procobj = factory()
+			self._procs[proc[1:]] = Process(procobj, self.module, factory.__doc__)
+
 		return self._procs
 
 	def toHelps(self, helpsec):
@@ -206,11 +142,11 @@ class Module:
 
 class Process:
 	"""A bioprocs process"""
-	def __init__(self, proc, module, desc, doc):
-		self.name    = proc
+	def __init__(self, proc, module, doc):
+		self.name    = proc.id
 		self.module  = module
-		self.proc    = getattr(module, proc)
-		self.desc    = desc or self.proc.desc
+		self.proc    = proc
+		self.desc    = self.proc.desc
 		self.doc     = doc
 		self._helps  = Helps()
 		self._parsed = {}
@@ -367,6 +303,8 @@ class Process:
 		for key, val in self.proc.args.items():
 			doctype, docdesc = self.parsed().get('args', {}).get(key, (None, ['[ Not documented. ]']))
 			doctype = doctype or type(val).__name__
+			if doctype == 'NoneType':
+				doctype = 'auto'
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
 				docdesc.extend(Process.defaultVal(val, indent = 5))
 			elif 'default: ' not in docdesc[-1].lower():
@@ -484,12 +422,12 @@ class Pipeline:
 		"""Get all available pipelines"""
 		return [pplfile.stem[9:]
 			for pplfile in (
-				Path(bioprocs.__file__).parent / 'bin' / 'pipeline').glob('bioprocs_*.py')
+				Path(bioprocs.__file__).parent / 'console' / 'pipeline').glob('bioprocs_*.py')
 			if not pplfile.stem.startswith('_')]
 
 	def __init__(self, name):
 		self.name = name
-		self.module = __import__('bioprocs.bin.pipeline', fromlist = ['bioprocs_' + name])
+		self.module = __import__('bioprocs.console.pipeline', fromlist = ['bioprocs_' + name])
 		self.module = getattr(self.module, 'bioprocs_' + name)
 		self.desc = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
 

@@ -220,6 +220,8 @@ class TsvWriter(object):
 			return
 		if callback and callable(callback):
 			head = callback(self.cnames)
+			if isinstance(head, list):
+				head = self.delimit.join(head)
 			self.file.write(head + "\n")
 		elif callback:
 			head = self.delimit.join(self.cnames)
@@ -313,7 +315,9 @@ class TsvJoin(object):
 			del outopts['headCallback']
 
 		out = TsvWriter(outfile, **outopts)
-		out.cnames = cnames if isinstance(cnames, list) else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames else []
+		out.cnames = cnames if isinstance(cnames, list) \
+			else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames \
+			else []
 		if out.cnames:
 			out.writeHead(headCallback)
 

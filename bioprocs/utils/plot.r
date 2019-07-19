@@ -10,6 +10,8 @@ require('ggplot2')
 }
 source(file.path(dirname(.script.file()), '__init__.r'))
 
+DEVPARS = list(height = 2000, width = 2000, res = 300)
+
 # Update an aes in alist (named "mapping") for ggplot2 functions
 # namesbefore = c('data')
 update.aes = function(alist, newaes, namesbefore = c()) {
@@ -61,19 +63,29 @@ apply.ggs = function(p, ggs) {
 	return (p)
 }
 
-plot.no = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
-	if (!is.null(plotfile)) {
-		do.call(png, c(list(filename=plotfile), devpars))
+save.plot = function(p, plotfile, devpars = DEVPARS) {
+	if (plotfile == 'return') {
+		return(p)
 	}
-	params$data = as.data.frame(data)
-	p = do.call(ggplot, params)
-	print(apply.ggs(p, ggs))
-	if (!is.null(plotfile)) {
+	if (is.null(plotfile)) {
+		print(p)
+	} else if (endsWith(plotfile, '.png')) {
+		do.call(png, c(list(filename = plotfile), devpars))
+		print(p)
 		dev.off()
+	} else {
+		stop('Only .png file supported to save plots for now.')
 	}
 }
 
-plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.no = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = DEVPARS) {
+	params$data = as.data.frame(data)
+	p = do.call(ggplot, params)
+	p = apply.ggs(p, ggs)
+	save.plot(p, plotfile, devpars)
+}
+
+plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = DEVPARS) {
 	cnames = colnames(data)
 	cnames = make.names(cnames)
 	colnames(data) = cnames
@@ -83,7 +95,7 @@ plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = 
 	plot.no(data, plotfile, params, ggs, devpars)
 }
 
-plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = DEVPARS) {
 	cnames = colnames(data)
 	cnames = make.names(cnames)
 	colnames(data) = cnames
@@ -92,13 +104,13 @@ plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = list(res = 300,
 	plot.no(data, plotfile, params, ggs, devpars)
 }
 
-plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), devpars = DEVPARS) {
 	data = stack(as.data.frame(data))
 	plot.xy(data, plotfile, x = x, y = y, ggs = ggs, devpars = devpars)
 }
 
 
-plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.roc = function(data, plotfile = NULL, stacked = F, params = list(showAUC = T, combine = T, labels = F), ggs = list(), devpars = DEVPARS) {
 	# plot the ROC curve
 	# see: https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html
 	# @params:
@@ -109,10 +121,11 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 	#	`plotfile`: The file to save the plot.
 	#	`stacked` : Whether the data is stacked(melt). See `data`
 	#	`params`  : The parameters for plotting.
-	#		- `returnAUC`: Return list of AUC values of this function
 	#		- `showAUC`  : Show AUC on the plot
 	#		- `combine`  : Combine the ROC in one plot?
 	#		- `labels`   : Show some values on the curve for some cutting points
+	# To get the AUC from the plot:
+	#   calc_auc(plot.roc(data, plotfile = 'return'))
 	require('plotROC')
 
 	if (stacked) {
@@ -144,14 +157,11 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 
 	params = update.aes(params, aes(d = D, m = M, color = name))
 	if (combine) {
-		if (!is.null(plotfile))
-			do.call(png, c(list(filename=plotfile), devpars))
 		p = ggplot(data) + do.call(geom_roc, params)
-		if (returnAUC || showAUC) {
+		if (showAUC) {
 			aucs = as.list(calc_auc(p)$AUC)
 			names(aucs) = cnames
-		}
-		if (showAUC) {
+
 			auclabels = sapply(cnames, function(n) {
 				sprintf('AUC(%s) = %.3f', n, aucs[[n]])
 			})
@@ -162,41 +172,46 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 				p = p + scale_color_discrete(guide = F)
 			}
 		}
-		print(apply.ggs(p, ggs))
-		if (!is.null(plotfile))
-			dev.off()
-		if (returnAUC) return(aucs)
+		p = apply.ggs(p, ggs)
+		save.plot(p, plotfile, devpars)
 	} else {
-		aucs = list()
+		plots = list()
 		for (cname in cnames) {
 			if (!is.null(plotfile)) {
 				prefix = tools::file_path_sans_ext(plotfile)
 				do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
 			}
 			p = ggplot(data[which(data$name == cname), , drop=F]) + do.call(geom_roc, params)
-			if (returnAUC || showAUC) {
-				aucs[[cname]]= calc_auc(p)$AUC
-			}
 			if (showAUC) {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(aucs[[cname]], 3), sep = ' = '))
+				auc = calc_auc(p)$AUC
+
+				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(auc, 3), sep = ' = '))
 				p = p + scale_color_discrete(guide = F)
 			}
-			print(apply.ggs(p, ggs))
-			if (!is.null(plotfile))
-				dev.off()
+			p = apply.ggs(p, ggs)
+			if (is.null(plotfile)) {
+				save.plot(p, NULL, devpars)
+			} else if (plotfile == 'return') {
+				plots = c(plots, save.plot(p, 'return', devpars))
+			} else {
+				pfile = paste0(tools::file_path_sans_ext(plotfile), '-', cname, '.png')
+				save.plot(p, pfile, devpars)
+			}
 		}
-		if (returnAUC) return(aucs)
+		if (plotfile == 'return') {
+			return (plots)
+		}
 	}
 }
 
-plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_point = params), ggs)
 	plot.xy(data, plotfile, x, y, ggs, devpars)
 }
 # alias
 plot.points = plot.scatter
 
-plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
 	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
@@ -228,7 +243,7 @@ plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params 
 # alias
 plot.bar = plot.col
 
-plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
 	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
@@ -257,7 +272,7 @@ plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, par
 	}
 }
 
-plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
 	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
@@ -288,24 +303,24 @@ plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, para
 
 plot.heatmap2 = function(
 	data, plotfile = NULL, params = list(), draw = list(),
-	devpars = list(res=300, width=2000, height=2000)) {
+	devpars = DEVPARS) {
 	library(ComplexHeatmap)
 
 	params$matrix = data
 	hm = do.call(Heatmap, params)
 
-	if (is.logical(plotfile) && !plotfile) {
-		return(hm)
-	} else if (is.null(plotfile)) {
+	if (is.null(plotfile)) {
 		do.call(ComplexHeatmap::draw, c(list(hm), draw))
-	} else {
+	} else if (plotfile == 'return') {
+		return(hm)
+	}  else {
 		do.call(png, c(list(filename=plotfile), devpars))
 		do.call(ComplexHeatmap::draw, c(list(hm), draw))
 		dev.off()
 	}
 }
 
-plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = DEVPARS) {
 	require('ggdendro')
 	require('gtable')
 	require('grid')
@@ -437,23 +452,23 @@ plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(),
 	dev.off()
 }
 
-plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_histogram = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
-plot.density = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.density = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_density = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
 
-plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_freqpoly = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
-plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = DEVPARS) {
 	data = as.data.frame(data)
 	cnames = colnames(data)
 	A      = if ("A" %in% cnames) data$A else data[, 1]
@@ -474,7 +489,7 @@ plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(r
 	plot.scatter(data, plotfile, x = 'A', y = 'M', params = params, ggs = ggs, devpars = devpars)
 }
 
-plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	data = as.data.frame(data)
 	n    = nrow(data)
 	q    = (1:n)/n
@@ -497,7 +512,8 @@ plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs 
 # item3	0		1		1
 # item4	1		0		0
 # item5	1		0		1
-plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.venn = function(data, plotfile = NULL, params = list(), devpars = DEVPARS) {
+
 	library(VennDiagram)
 	rnames = rownames(data)
 	if (is.null(rnames)) {
@@ -513,17 +529,15 @@ plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, wi
 	do.call(venn.diagram, params)
 }
 
-plot.upset = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.upset = function(data, plotfile = NULL, params = list(), devpars = DEVPARS) {
 	library(UpSetR)
-	do.call(png, c(list(filename = plotfile), devpars))
 	default.params = list(data = data, nsets = ncol(data))
 	params = update.list(default.params, params)
 	p = do.call(upset, params)
-	print(p)
-	dev.off()
+	save.plot(p, plotfile, devpars)
 }
 
-plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.pie = function(data, plotfile, ggs = list(), devpars = DEVPARS) {
 	percent    = function(x) paste0(format(round(x*100, 1), nsmall = 1), "%")
 	N          = nrow(data)
 	Group      = colnames(data)
@@ -546,7 +560,7 @@ plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=
 	plot.xy(data, plotfile, x = '""', y = 'Value', ggs, devpars)
 }
 
-plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), devpars = DEVPARS) {
 	data   = as.data.frame(data)
 	cnames = names(data)
 	logfc  = if ("logFC" %in% cnames) data$logFC else data[, 1]
@@ -593,7 +607,8 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
 }
 
-plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gsize = NULL, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE,
+	gsize = NULL, ggs = list(), devpars = DEVPARS) {
 	# manhattan plot
 	# data is a data frame of
 	# Chr, Pos, P[, Region]
@@ -688,7 +703,9 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 	plot.xy (data, plotfile, x = 'X', y = 'Y', ggs = ggs, devpars = devpars)
 }
 
-plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = list(res = 300, width = 400, height = 400)) {
+plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
+	devpars = list(res = 300, width = 400, height = 400)) {
+
 	library(GGally)
 	p = do.call(ggpairs, c(list(data), params))
 	for (n in names(ggs)) {
@@ -697,11 +714,5 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(), devp
 	ncols          = ifelse(is.null(params$columns), ncol(data), length(params$columns))
 	devpars$width  = devpars$width*ncols
 	devpars$height = devpars$height*ncols
-	if (!is.null(plotfile)) {
-		do.call(png, c(list(plotfile), devpars))
-	}
-	print(p)
-	if (!is.null(plotfile)) {
-		dev.off()
-	}
+	save.plot(p, plotfile, devpars)
 }

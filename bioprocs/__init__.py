@@ -1,13 +1,14 @@
 __version__ = '0.1.0'
 
-import json
-from os import path, makedirs
+import inspect
+from pathlib import Path
 from tempfile import gettempdir
-from sys import modules, stderr, executable
+from sys import executable
 from pyparam import Params
+from pyppl import Proc
 
 # open to R (reticulate) to get the path of r util scripts
-UTILS    = path.join(path.realpath(path.dirname(__file__)), 'utils')
+HERE    = Path(__file__).resolve().parent
 DEFAULTS = {
 	# constants
 	"dbsnpver"        : "150",
@@ -24,7 +25,7 @@ DEFAULTS = {
 	"affysnps.desc"      : "Affymetrix SNP 6.0 Positions, used for THetA2 mostly.",
 	"annovarDb"          : "",
 	"annovarDb.desc"     : "The path of database for Annovar.",
-	"cachedir"           : path.expanduser("~/.bioprocs/cache"),
+	"cachedir"           : str(Path.home() / 'cache'),
 	"cachedir.desc"      : "The directory to cache query data.",
 	"consvdir"           : "",
 	"consvdir.desc"      : "The directory containing conservation scores in bigWig files.\nUse ucsc-wig2bigwig the original files are wigFix files.",
@@ -238,30 +239,86 @@ DEFAULTS = {
 params = Params()
 params._load(DEFAULTS)
 cfgfiles = [
-	path.join (path.expanduser('~'), ".bioprocs.config"),   # values overwritten
-	path.join (path.expanduser('~'), ".bioprocs.json")
+	Path.home() / '.bioprocs.config', # values overwritten
+	Path.home() / '.bioprocs.json',
 ]
 for cfgfile in cfgfiles:
-	if not path.exists(cfgfile):
+	if not cfgfile.exists():
 		continue
 	params._loadFile (cfgfile)
 
-if not path.exists(params.cachedir.value):
-	makedirs(params.cachedir.value)
+cachedir = Path(params.cachedir.value)
+if not cachedir.exists():
+	cachedir.mkdir()
 
 rimport  = """
 (function(...) {
 	bioprocs = reticulate::import('bioprocs')
 	for (rfile in list(...)) {
-		source(file.path(bioprocs$UTILS, rfile))
+		source(file.path(bioprocs$HERE, 'utils', rfile))
 	}
 })"""
 
 bashimport = """
 function __bashimport__ () {
 	for src in "$@"; do
-		source "%s/$src"
+		source "%s/utils/$src"
 	done
 }
 __python__='%s'
-__bashimport__""" % (UTILS, executable)
+__bashimport__""" % (HERE, executable)
+
+
+EXT_MAP = {
+	'Rscript': 'R',
+	'python' : 'py',
+	'python2': 'py',
+	'python3': 'py',
+}
+FACTORY_CACHE = {}
+
+def delefactory():
+	"""The factory to give the delegator for modkit"""
+	frame  = inspect.currentframe().f_back
+	module = inspect.getmodule(frame)
+	def delegator(proc):
+		try:
+			return getattr(module, '_' + proc)()
+		except:
+			from traceback import print_exc
+			print_exc()
+	return delegator
+
+def procfactory(procfunc):
+	"""Decorate a process, set some default attributes"""
+	module = procfunc.__module__.split('.')[-1]
+	pid    = procfunc.__name__.lstrip('_')
+
+	def factory():
+		proc = procfunc()
+		if isinstance(proc, dict):
+			proc = Proc(**proc)
+		proc.id = pid
+		proc.props.origin = pid
+		lang = Path(proc.lang).name
+		ext  = '.' + EXT_MAP.get(lang, lang)
+		if ext == '.R' and not proc.envs.get('rimport'):
+			proc.envs.rimport = rimport
+		if ext == '.bash' and not proc.envs.get('bashimport'):
+			proc.envs.bashimport = bashimport
+		script = HERE / 'scripts' / module / (pid + ext)
+		if not proc.config.script and script.exists():
+			proc.script = 'file:%s' % script
+		report = HERE / 'reports' / module / (pid + '.md')
+		if not proc.config.report and report.exists():
+			proc.report = 'file:%s' % report
+		return proc
+	return factory
+
+def procalias(alias):
+	"""Set alias of proc"""
+	def decorator(procfunc):
+		proc = procfunc()
+		proc.id = alias
+		proc.props.id = alias
+	return decorator
