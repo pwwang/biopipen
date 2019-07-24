@@ -1,3 +1,5 @@
+"""TSV file operations"""
+
 from pyppl import Proc, Box
 from . import params, rimport
 from .utils import fs2name
@@ -302,12 +304,8 @@ def _pTsv():
 	return pTsv
 
 @procfactory
-def _pTsvColFilter():
+def _pTsvColFilter(alias = 'pTsvColSelect'):
 	"""
-	@name:
-		pTsvColFilter
-	@description:
-		Filter a TSV file by columns
 	@input:
 		`infile:file`: The input file
 	@output:
@@ -372,17 +370,6 @@ def _pTsvAggregate():
 	pTsvAggregate.lang        = params.python.value
 	pTsvAggregate.script      = "file:scripts/tsv/pTsvAggregate.py"
 	return pTsvAggregate
-
-@procfactory
-def _pTsvColSelect():
-	"""
-	@name:
-		pTsvColSelect
-	@description:
-		Alias of `pTsvColFilter`
-	"""
-	pTsvColSelect = pTsvColFilter.copy()
-	return pTsvColSelect
 
 @procfactory
 def _pTsvHeader():

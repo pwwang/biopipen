@@ -3,7 +3,7 @@
 from pyppl import Proc, Box
 from . import params, rimport
 from .utils import fs2name
-from . import delefactory, procfactory, procalias
+from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -248,9 +248,8 @@ def _pBoxplot():
 	pBoxplot.script       = 'file:scripts/plot/pBoxplot.r'
 	return pBoxplot
 
-@procalias('pCol')
 @procfactory
-def _pBar():
+def _pBar(alias = 'pCol'):
 	"""
 	@name:
 		pBar

@@ -3,9 +3,9 @@ __version__ = '0.1.0'
 import inspect
 from pathlib import Path
 from tempfile import gettempdir
-from sys import executable
-from pyparam import Params
+from sys import executable, modules
 from pyppl import Proc
+from pyparam import Params
 
 # open to R (reticulate) to get the path of r util scripts
 HERE    = Path(__file__).resolve().parent
@@ -289,36 +289,38 @@ def delefactory():
 			print_exc()
 	return delegator
 
-def procfactory(procfunc):
-	"""Decorate a process, set some default attributes"""
-	module = procfunc.__module__.split('.')[-1]
-	pid    = procfunc.__name__.lstrip('_')
-
+def _procfactory(procfunc, pid, alias, mdname, doc):
 	def factory():
 		proc = procfunc()
 		if isinstance(proc, dict):
 			proc = Proc(**proc)
-		proc.id = pid
-		proc.props.origin = pid
+		proc.id = alias
+		proc.props.origin = alias
 		lang = Path(proc.lang).name
 		ext  = '.' + EXT_MAP.get(lang, lang)
 		if ext == '.R' and not proc.envs.get('rimport'):
 			proc.envs.rimport = rimport
 		if ext == '.bash' and not proc.envs.get('bashimport'):
 			proc.envs.bashimport = bashimport
-		script = HERE / 'scripts' / module / (pid + ext)
+		script = HERE / 'scripts' / mdname / (pid + ext)
 		if not proc.config.script and script.exists():
 			proc.script = 'file:%s' % script
-		report = HERE / 'reports' / module / (pid + '.md')
+		report = HERE / 'reports' / mdname / (pid + '.md')
 		if not proc.config.report and report.exists():
 			proc.report = 'file:%s' % report
 		return proc
+	factory.__doc__ = doc
 	return factory
 
-def procalias(alias):
-	"""Set alias of proc"""
-	def decorator(procfunc):
-		proc = procfunc()
-		proc.id = alias
-		proc.props.id = alias
-	return decorator
+def procfactory(procfunc):
+	mdname = procfunc.__module__.split('.')[-1]
+	pid    = procfunc.__name__.lstrip('_')
+	module = modules[procfunc.__module__]
+	args   = inspect.signature(procfunc).parameters
+	alias  = args.get('alias')
+	if alias:
+		alias = alias.default
+		if alias[0] == '_':
+			alias = alias[1:]
+		module._envs['_' + alias] = _procfactory(procfunc, pid, alias, mdname, procfunc.__doc__)
+	return _procfactory(procfunc, pid, pid, mdname, procfunc.__doc__)

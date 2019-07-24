@@ -68,7 +68,12 @@ class Module:
 	@staticmethod
 	def deindent(lines):
 		"""Remove indent based on the first line"""
-		indention = lines[0][:-len(lines[0].lstrip())]
+		indention = ''
+		for line in lines:
+			if not line:
+				continue
+			indention = line[:-len(line.lstrip())]
+			break
 		ret = []
 		for line in lines:
 			if not line:
@@ -83,7 +88,7 @@ class Module:
 		try:
 			self.module = getattr(__import__('bioprocs', fromlist = [name]), name)
 		except AttributeError as ex:
-			if 'has no attribute' in str(ex):
+			if "has no attribute '%s'" % name in str(ex):
 				raise AttributeError('No such module: %s' % name) from None
 			else:
 				raise
@@ -99,7 +104,7 @@ class Module:
 				or not (proc[2].isdigit() or proc[2].isupper()):
 				continue
 			procobj = factory()
-			self._procs[proc[1:]] = Process(procobj, self.module, factory.__doc__)
+			self._procs[proc[1:]] = Process(procobj, self.module, factory.__doc__.splitlines())
 
 		return self._procs
 
@@ -147,7 +152,7 @@ class Process:
 		self.module  = module
 		self.proc    = proc
 		self.desc    = self.proc.desc
-		self.doc     = doc
+		self.doc     = Module.deindent(doc) # list
 		self._helps  = Helps()
 		self._parsed = {}
 

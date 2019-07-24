@@ -12,6 +12,28 @@ source(file.path(dirname(.script.file()), '__init__.r'))
 
 DEVPARS = list(height = 2000, width = 2000, res = 300)
 
+.stack.data = function(data, colnames = c('values', 'ind')) {
+	data = stack(as.data.frame(data))
+	colnames(data) = colnames
+	return(data)
+}
+
+.get.aes.string = function(data, ...) {
+	# colnames(data) = c('A', 'B', 'C')
+	# .get.aes.string(data, x=2, y=1)
+	# => list(x='B', y='A')
+	cols   = list(...)
+	cnames = colnames(data)
+	ret    = list()
+	anames = names(cols)
+	for (i in 1:length(anames)) {
+		aname = anames[i]
+		colidx = cols[[aname]]
+		ret[[aname]] = ifelse(is.numeric(colidx), cnames[colidx], cols[[aname]])
+	}
+	return (ret)
+}
+
 # Update an aes in alist (named "mapping") for ggplot2 functions
 # namesbefore = c('data')
 update.aes = function(alist, newaes, namesbefore = c()) {
@@ -64,11 +86,10 @@ apply.ggs = function(p, ggs) {
 }
 
 save.plot = function(p, plotfile, devpars = DEVPARS) {
-	if (plotfile == 'return') {
-		return(p)
-	}
 	if (is.null(plotfile)) {
 		print(p)
+	} else if (plotfile == 'return') {
+		return(p)
 	} else if (endsWith(plotfile, '.png')) {
 		do.call(png, c(list(filename = plotfile), devpars))
 		print(p)
@@ -211,34 +232,58 @@ plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), gg
 # alias
 plot.points = plot.scatter
 
-plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
-	if (stacked) {
-		cnames = colnames(data)
-		cnames = make.names(cnames)
-		colnames(data) = cnames
-		if (is.numeric(x)) {
-			x = cnames[x]
-		}
-		if (is.numeric(y)) {
-			y = cnames[y]
-		}
-		params$stat = list.get(params, 'stat', 'identity')
-		# to keep the order
-		data[, x] = factor(data[, x], levels = data[,x])
-		ggs = c(
-			list(geom_bar = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.xy(data, plotfile, x, y, ggs, devpars)
-	} else {
-		ggs = c(
-			list(geom_bar = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+plot.col = function(
+	data,
+	plotfile = NULL,
+	x = 2,
+	y = 0,
+	params = list(),
+	ggs = list(), devpars = DEVPARS) {
+	# y = 1 # y as counts
+	# x = 2
+	# ----------------------
+	# Counts	Group	Fill
+	# 10	Ga	Yes
+	# 10	Gb	No
+	#
+	#    |
+	# 10 | |-|  |-|     Fill
+	#    | |x|  |.|     x: Yes
+	#    |_|x|__|.|___  .: No
+	#      Ga    Gb
+	#
+	# y.is.counts = FALSE
+	# x = 1
+	# y = 0 # counting Sub-groups
+	# ---------------------------
+	# Group	Fill
+	# Ga	Yes
+	# Ga	Yes
+	# Ga	Yes
+	# Gb	No
+	# Gb	No
+	# Gb	No
+	#
+	#    |
+	# 3  | |-|  |-|     Fill
+	#    | |x|  |.|     x: Yes
+	#    |_|x|__|.|___  .: No
+	#      Ga    Gb
+	#
+	if (y == 0) {
+		data = cbind(data, Count = 1)
+		y = ncol(data)
 	}
+
+	aes.string = .get.aes.string(data, x = x, y = y)
+	ggs = c(
+		list(geom_col = params),
+		list(theme = list(axis.text.x = element_text(angle = 60, hjust = 1))),
+		list(xlab = list(aes.string$x)),
+		ggs
+	)
+	data[, x] = as.character(data[, x])
+	plot.xy(data, plotfile, aes.string$x, aes.string$y, ggs, devpars)
 }
 # alias
 plot.bar = plot.col
@@ -273,32 +318,18 @@ plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, par
 }
 
 plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
-	if (stacked) {
-		cnames = colnames(data)
-		cnames = make.names(cnames)
-		colnames(data) = cnames
-		if (is.numeric(x)) {
-			x = cnames[x]
-		}
-		if (is.numeric(y)) {
-			y = cnames[y]
-		}
-		#params = update.aes(params, aes_string(group = x))
-
-		ggs = c(
-			list(geom_violin = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.xy(data, plotfile, x, y, ggs, devpars)
-	} else {
-		ggs = c(
-			list(geom_violin = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+	if (!stacked) {
+		data = .stack.data(data)
+		x = 2
+		y = 1
 	}
+	aes.string = .get.aes.string(data, x = x, y = y)
+	ggs = c(
+		list(geom_violin = params),
+		list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+		ggs
+	)
+	plot.xy(data, plotfile, aes.string$x, aes.string$y, ggs, devpars)
 }
 
 plot.heatmap2 = function(
@@ -457,9 +488,27 @@ plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
-plot.density = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = DEVPARS) {
+plot.density = function(
+	data,            # the data, either stacked or not
+	# NULL: print the plot,
+	# 'return': return the ggplot object,
+	# 'filepath': save the plot to file
+	plotfile = NULL,
+	x = 1, # The data column for values, only for stacked data
+	y = 2, # The data column for groups, only for stacked data
+	stacked = TRUE,  # whether the data is stacked, if not will stack it
+	params = list(), # The params for geom_density
+	ggs = list(), devpars = DEVPARS) {
+
+	if (!stacked) {
+		data = .stack.data(data)
+		x = 1
+		y = 2
+	}
+	aes.string = .get.aes.string(data, x = x, y = y)
+	params = c(params, list(mapping = aes_string(fill = aes.string$y), alpha = .3))
 	ggs = c(list(geom_density = params), ggs)
-	plot.x(data, plotfile, x, ggs, devpars)
+	plot.x(data, plotfile, aes.string$x, ggs, devpars)
 }
 
 
