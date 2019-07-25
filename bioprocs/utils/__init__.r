@@ -6,6 +6,7 @@ if (!exists('utils')) {
 	runcmd = shell$runcmd
 	mem2   = utils$mem2
 }
+options(stringsAsFactors = FALSE)
 
 cbindfill = function (...) {
 	dfs = list(...)
@@ -149,7 +150,6 @@ pretty.numbers = function(df, formats) {
 # format data.frame to output
 pretty.numbers2 = function(df, ...) {
 	formats = list(...)
-	options(stringsAsFactors = FALSE)
 	df = as.data.frame(df)
 	if (nrow(df) == 0)
 		return(df)
@@ -224,7 +224,7 @@ list.get = function(l, key, default = NULL, check.names = FALSE) {
 	#	`l`: The list
 	#	`key`: The key
 	#	`default`: The default value. Default: `NULL`
-	#	`check.names`: Check whetheer the name exists, even with value `NULL`. Default: `FALSE`
+	#	`check.names`: Check whether the name exists, even with value `NULL`. Default: `FALSE`
 	#		- `list.get(list(a = NULL), 'a', default = 1, check.names = TRUE) == NULL`
 	#		- `list.get(list(a = NULL), 'a', default = 1, check.names = FALSE) == 1`
 	if (!check.names) {

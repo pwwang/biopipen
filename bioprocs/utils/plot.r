@@ -1,4 +1,6 @@
 require('ggplot2')
+require('ggrepel')
+pdf(NULL) # preventing Rplots.pdf
 
 .script.file = function() {
 	for (i in 1:length(sys.frames())) {
@@ -131,7 +133,12 @@ plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), dev
 }
 
 
-plot.roc = function(data, plotfile = NULL, stacked = F, params = list(showAUC = T, combine = T, labels = F), ggs = list(), devpars = DEVPARS) {
+plot.roc = function(
+	data,
+	plotfile = NULL,
+	stacked = FALSE,
+	params = list(returnTable = FALSE, showAUC = TRUE, bestCut = FALSE),
+	ggs = list(), devpars = DEVPARS) {
 	# plot the ROC curve
 	# see: https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html
 	# @params:
@@ -143,85 +150,113 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(showAUC = 
 	#	`stacked` : Whether the data is stacked(melt). See `data`
 	#	`params`  : The parameters for plotting.
 	#		- `showAUC`  : Show AUC on the plot
-	#		- `combine`  : Combine the ROC in one plot?
-	#		- `labels`   : Show some values on the curve for some cutting points
-	# To get the AUC from the plot:
-	#   calc_auc(plot.roc(data, plotfile = 'return'))
-	require('plotROC')
+	#		- `returnTable`: Whether return a table of details. If TRUE, to get plot, use ret$plot and table use ret$table
+	require('pROC')
 
 	if (stacked) {
 		if (ncol(data) != 3)
-			stop('Expect 3 columns (D, M, name) in stacked data to plot ROC.')
-		colnames(data) = c('D', 'M', 'name')
+			stop('Expect 3 columns (D, M, Group) in stacked data to plot ROC.')
+		colnames(data) = c('D', 'M', 'Group')
 	} else {
 		if (ncol(data) > 2) {
 			data = melt_roc(data, 1, 2:ncol(data))
-			colnames(data) = c('D', 'M', 'name')
+			colnames(data) = c('D', 'M', 'Group')
 		} else {
-			data = data.frame(D = data[, 1], M = data[, 2], name = colnames(data)[2])
+			data = data.frame(D = data[, 1], M = data[, 2], Group = colnames(data)[2])
 		}
 	}
-	cnames = levels(factor(data$name))
+	groups = levels(factor(data$Group))
+	returnTable = params$returnTable
+	if (is.null(returnTable)) returnTable = FALSE
 
-	returnAUC = params$returnAUC
-	if (is.null(returnAUC)) returnAUC = T
+	showAUC = params$showAUC
+	if (is.null(showAUC)) showAUC = TRUE
 
-	showAUC   = params$showAUC
-	if (is.null(showAUC)) showAUC = T
+	bestCut = params$bestCut
+	if (is.null(bestCut)) bestCut = FALSE
 
-	combine   = params$combine
-	if (is.null(combine)) combine = T
+	params$returnTable = NULL
+	params$showAUC     = NULL
+	params$bestCut     = NULL
 
-	params$returnAUC = NULL
-	params$showAUC   = NULL
-	params$combine   = NULL
+	# get roc objects
+	rocs = list()
+	for (grup in groups) {
+		rocs[[grup]] = roc(D ~ M, data = data, subset=(Group == grup))
+	}
 
-	params = update.aes(params, aes(d = D, m = M, color = name))
-	if (combine) {
-		p = ggplot(data) + do.call(geom_roc, params)
-		if (showAUC) {
-			aucs = as.list(calc_auc(p)$AUC)
-			names(aucs) = cnames
+	# get table of a roc object
+	roc.table = function(rocobj) {
+		aucci = ci(rocobj)
+		ret = data.frame(
+			threshold   = rocobj$thresholds,
+			sensitivity = rocobj$sensitivities,
+			specificity = rocobj$specificities,
+			auc         = as.vector(rocobj$auc),
+			auc_95ci1   = aucci[1],
+			auc_95ci2   = aucci[3])
+		# checkout the best cut points
+		bests = as.matrix(coords(rocobj, 'best'))
+		cbind(ret, is.best = ret$threshold %in% bests[1,])
+	}
+	roc.tables = function(rocs) {
+		ret = NULL
+		for (name in names(rocs)) {
+			rtable = roc.table(rocs[[name]])
+			tmp = cbind(Group = name, rtable)
+			ret = ifelse(is.null(ret), tmp, rbind(ret, tmp))
+		}
+		ret
+	}
 
-			auclabels = sapply(cnames, function(n) {
-				sprintf('AUC(%s) = %.3f', n, aucs[[n]])
+	ret       = list()
+	ret$plot  = do.call(ggroc, c(list(rocs), params))
+	ret$table = roc.tables(rocs)
+	# add best cut
+	if (bestCut) {
+		bestdata = ret$table[ret$table$is.best,,drop=FALSE]
+		ret$plot = ret$plot + geom_point(
+			aes(x = specificity, y = sensitivity, color = Group),
+			data = bestdata,
+			inherit.aes = FALSE
+		) + geom_segment(
+			aes(x = specificity, xend = specificity, y = sensitivity, yend = -Inf, color = Group),
+			data = bestdata,
+			linetype = 'dashed',
+			inherit.aes = FALSE
+		) + geom_segment(
+			aes(x = Inf, xend = specificity, y = sensitivity, yend = sensitivity, color = Group),
+			data = bestdata,
+			linetype = 'dashed',
+			inherit.aes = FALSE
+		) + geom_text_repel(
+			aes(x = specificity, y = sensitivity,
+				label = paste0('best (', round(specificity, 3), ', ', round(sensitivity, 3) ,')'),
+				color = Group),
+			data = bestdata
+		)
+	}
+	# add AUC
+	if (showAUC) {
+		aucs = unique(ret$table[, c('Group', 'auc')])
+		if (nrow(aucs) == 1) {
+			ret$plot = ret$plot + annotate("text", x = .1, y = .05,
+				label = paste('AUC', round(aucs[1,2], 3), sep = ' = '))
+			ret$plot = ret$plot + scale_color_discrete(guide = F)
+		} else {
+			auclabels = apply(aucs, 1, function(row) {
+				sprintf('AUC(%s) = %.3f', row[1], as.numeric(row[2]))
 			})
-			if (length(cnames) >= 2) {
-				p = p + scale_color_discrete(name = "", breaks = cnames, labels = auclabels)
-			} else {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(unlist(aucs), 3), sep = ' = '))
-				p = p + scale_color_discrete(guide = F)
-			}
+			ret$plot = ret$plot + scale_color_discrete(name = "",
+				breaks = groups,
+				labels = as.vector(auclabels))
 		}
-		p = apply.ggs(p, ggs)
-		save.plot(p, plotfile, devpars)
-	} else {
-		plots = list()
-		for (cname in cnames) {
-			if (!is.null(plotfile)) {
-				prefix = tools::file_path_sans_ext(plotfile)
-				do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
-			}
-			p = ggplot(data[which(data$name == cname), , drop=F]) + do.call(geom_roc, params)
-			if (showAUC) {
-				auc = calc_auc(p)$AUC
+	}
 
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(auc, 3), sep = ' = '))
-				p = p + scale_color_discrete(guide = F)
-			}
-			p = apply.ggs(p, ggs)
-			if (is.null(plotfile)) {
-				save.plot(p, NULL, devpars)
-			} else if (plotfile == 'return') {
-				plots = c(plots, save.plot(p, 'return', devpars))
-			} else {
-				pfile = paste0(tools::file_path_sans_ext(plotfile), '-', cname, '.png')
-				save.plot(p, pfile, devpars)
-			}
-		}
-		if (plotfile == 'return') {
-			return (plots)
-		}
+	ret$plot = apply.ggs(ret$plot, ggs)
+	save.plot(ret$plot, plotfile, devpars)
+	if (returnTable) {
+		return(ret)
 	}
 }
 
@@ -666,7 +701,6 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE,
 	# all snps are on the same chromosome
 
 	library(data.table)
-	library(ggrepel)
 	data = as.data.table(data)
 	if (ncol(data) == 4) {
 		colnames(data) = c('Snp', 'Chr', 'Pos', 'P')

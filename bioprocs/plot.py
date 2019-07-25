@@ -441,10 +441,6 @@ def _pScatterCompare():
 @procfactory
 def _pROC():
 	"""
-	@name:
-		pROC
-	@description:
-		Generate ROC curves and output AUC.
 	@input:
 		infile: The input matrix file.
 			- Col0: rownames if `args.inopts.rnames` is True
@@ -467,24 +463,26 @@ def _pROC():
 			```
 		`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 	"""
-	pROC              = Proc(desc = 'Generate ROC curves.')
-	pROC.input        = 'infile:file'
-	pROC.output       = [
-		'outfile:file:{{i.infile | fn}}.roc/{{i.infile | fn}}.auc.txt',
-		'outdir:dir:{{i.infile | fn}}.roc'
-	]
-	pROC.args.inopts  = Box(rnames = True, cnames = True)
-	pROC.args.params  = Box(labels = False, showAUC = True, combine = True)
-	pROC.args.ggs     = Box({
-		'style_roc': {},
-		# show legend at bottom right corner
-		'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
-	})
-	pROC.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pROC.envs.rimport = rimport
-	pROC.lang         = params.Rscript.value
-	pROC.script       = "file:scripts/plot/pROC.r"
-	return pROC
+	return Box(
+		desc   = 'ROC curves and AUCs.',
+		lang   = params.Rscript.value,
+		input  = 'infile:file',
+		output = [
+			'outfile:file:{{i.infile | stem}}.roc/{{i.infile | stem}}.roc.png',
+			'outdir:dir:{{i.infile | stem}}.roc'
+		],
+		args = Box(
+			inopts  = Box(rnames = True, cnames = True),
+			params  = Box(bestCut = True, showAUC = True),
+			ggs     = Box({
+				# show legend at bottom right corner
+				'theme#auc': {
+					'legend.position': [1, 0], 'legend.justification': [1, 0],
+					'panel.border': 'r:element_rect(colour="black", fill=NA, size=.2)'}
+			}),
+			devpars = Box(res = 300, height = 2000, width = 2000)
+		)
+	)
 
 @procfactory
 def _pVenn():
