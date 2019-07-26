@@ -10,18 +10,17 @@ def _pStats():
 	@name:
 		pStats
 	"""
-	pStats              = Proc(desc = 'Show and report the statistics of the data.')
-	pStats.input        = 'infile:file'
-	pStats.output       = 'outdir:dir:{{i.infile | stem}}.stats'
-	pStats.args.inopts  = Box(rnames = True, cnames = True, delimit = "\t")
-	pStats.args.types   = Box()
-	pStats.args.groups  = []
-	pStats.args.ignore  = []
-	pStats.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pStats.envs.rimport = rimport
-	pStats.lang         = params.Rscript.value
-	pStats.script       = 'file:scripts/stats/pStats.R'
-	return pStats
+	return Box(
+		desc   = 'Data statistics',
+		lang   = params.Rscript.value,
+		input  = 'infile:file',
+		output = 'outdir:dir:{{i.infile | stem}}.stats',
+		args   = Box(inopts  = Box(rnames = True, cnames = True, delimit = "\t"),
+			types   = Box(),
+			groups  = [],
+			ignore  = [],
+			devpars = Box(res = 300, height = 2000, width = 2000))
+	)
 
 @procfactory
 def _pMetaPval():

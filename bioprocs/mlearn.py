@@ -121,12 +121,8 @@ def _pRegressPred():
 	return pRegressPred
 
 @procfactory
-def _pLogitRegTrain():
+def _pGlmTrain():
 	"""
-	@name:
-		pLogitRegTrain
-	@description:
-		Train a linear regression model
 	@input:
 		`infile:file`: The input file (Last column as Y)
 	@output:
@@ -142,40 +138,36 @@ def _pLogitRegTrain():
 			- `prob`   : probabilities
 			- `numeric`: numeric values
 	"""
-	pLogitRegTrain = Proc(desc = 'Train a linear regression model')
-	pLogitRegTrain.input  = 'infile:file'
-	pLogitRegTrain.output = [
-		'outmodel:file:{{i.infile | stem}}.glm/{{i.infile | stem}}.glm.rds',
-		'outdir:dir:{{i.infile | stem}}.glm'
-	]
-	pLogitRegTrain.args.plot    = True
-	pLogitRegTrain.args.formula = None
-	pLogitRegTrain.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pLogitRegTrain.args.ggs     = Box(
-		geom_smooth = Box({
-			"method"     : "glm",
-			"method.args": Box(family = "binomial"),
-			"se"         : True
-		})
-	)
-	pLogitRegTrain.args.inopts  = Box(
-		cnames  = True,
-		rnames  = True,
-		delimit = "\t"
-	)
-	pLogitRegTrain.args.yval    = 'categ'
-	pLogitRegTrain.envs.rimport = rimport
-	pLogitRegTrain.lang         = params.Rscript.value
-	pLogitRegTrain.script       = "file:scripts/mlearn/pLogitRegTrain.r"
-	return pLogitRegTrain
+	return Box(
+		desc   = 'Train a logistic regression model',
+		lang   = params.Rscript.value,
+		input  = 'infile:file',
+		output = [
+			'outmodel:file:{{i.infile | stem}}.glm/{{i.infile | stem}}.glm.RDS',
+			'outdir:dir:{{i.infile | stem}}.glm'
+		],
+		args = Box(
+			plot    = True,
+			formula = None,
+			devpars = Box(res = 300, height = 2000, width = 2000),
+			params  = Box(family = 'binomial'),
+			ggs     = Box(
+				geom_smooth = Box({
+					"method"     : "glm",
+					"method.args": Box(family = "binomial"),
+					"se"         : True
+				})
+			),
+			inopts  = Box(
+				cnames  = True,
+				rnames  = True,
+				delimit = "\t"
+			),
+			yval    = 'categ'))
 
 @procfactory
-def _pLogitRegPredict():
+def _pGlmTest():
 	"""
-	@name:
-		pLogitRegPredict
-	@description:
-		Use a trained linear regression model to predict
 	@input:
 		`infile:file`: The input file
 		`model:file` : The trained model by `pLogitRegTrain`
@@ -185,27 +177,22 @@ def _pLogitRegPredict():
 		`inopts` : The input options.
 		`outprob`: Also output probabilities? Default: True
 	"""
-	pLogitRegPredict = Proc(desc = 'Use a trained linear regression model to predict')
-	pLogitRegPredict.input        = 'infile:file, model:file'
-	pLogitRegPredict.output       = 'outdir:dir:{{i.infile | stem}}.pred'
-	pLogitRegPredict.args.outprob = True
-	pLogitRegPredict.args.outauc  = True
-	pLogitRegPredict.args.params  = Box(labels = False, showAUC = True, combine = True)
-	pLogitRegPredict.args.ggs     = Box({
-		'style_roc': {},
-		# show legend at bottom right corner
-		'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
-	})
-	pLogitRegPredict.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pLogitRegPredict.args.inopts  = Box(
-		cnames  = True,
-		rnames  = True,
-		delimit = "\t"
-	)
-	pLogitRegPredict.envs.rimport = rimport
-	pLogitRegPredict.lang         = params.Rscript.value
-	pLogitRegPredict.script       = "file:scripts/mlearn/pLogitRegPredict.r"
-	return pLogitRegPredict
+	return Box(
+		desc   = 'Test trained logistic regression model',
+		lang   = params.Rscript.value,
+		input  = 'infile:file, model:file',
+		output = 'outdir:dir:{{i.infile | stem}}.glm.test',
+		args   = Box(
+			outprob = True,
+			outauc  = True,
+			params  = Box(),
+			ggs     = Box(),
+			devpars = Box(res = 300, height = 2000, width = 2000),
+			inopts  = Box(
+				cnames  = True,
+				rnames  = True,
+				delimit = "\t"
+			)))
 
 @procfactory
 def _pRandomForestTrain():
@@ -294,10 +281,6 @@ def _pDecisionTreeTrain():
 @procfactory
 def _pCrossValid():
 	"""
-	@name:
-		pCrossValid
-	@description:
-		Do cross validation on a model using R carent package.
 	@input:
 		`infile:file`: The input data file.
 	@output:
@@ -305,32 +288,34 @@ def _pCrossValid():
 		`outdir:dir`   : The output directory containing output model and plots.
 	@args:
 		`inopts` : The options to read the input file.
-		`ctrl`   : Arguments for `trainControl`. See `?trainControl`. Default: `Box(method = '', savePredictions = True, classProbs = True)`
-		`train`  : Arguments for `train` other than `data` and `trControl`. Default: `Box(form = None, method = '', metric = 'ROC')`
-			- see `?train`
-		`seed`   : The seed. Default: `None`
-		`nthread`: # threads to use. Default: `1`
-		`plots`  : Do types of plots. Default: `['model', 'roc']`
+		`ctrl`   : Arguments for `trainControl`.
+			- See https://topepo.github.io/caret/model-training-and-tuning.html#the-traincontrol-function
+			- Available methods: "boot", "cv", "LOOCV", "LGOCV", "repeatedcv", "timeslice", "none" and "oob"
+		`train`  : Arguments for `train` other than `data` and `trControl`.
+			- See https://topepo.github.io/caret/model-training-and-tuning.html#basic-parameter-tuning
+			- form: formula of the model,
+			- method: rf, glm, etc
+		`seed`   : The seed.
+		`nthread`: # threads to use.
+		`plots`  : Do types of plots.
 			- `varimp` also available
 			- You can also concatenate them using comma (`,`)
 	@requires:
 		`r-caret`
 	"""
-	pCrossValid        = Proc(desc = 'Do cross validation on a model.')
-	pCrossValid.input  = 'infile:file'
-	pCrossValid.output = [
-		'outmodel:file:{{i.infile | fn2}}.{{args.train.method}}/{{i.infile | fn2}}.{{args.train.method}}.rds',
-		'outdir:dir:{{i.infile | fn2}}.{{args.train.method}}'
-	]
-	pCrossValid.args.inopts  = Box(cnames = True, rnames = True)
-	pCrossValid.args.ctrl    = Box(method = '', savePredictions = True, classProbs = True, verboseIter = True)
-	pCrossValid.args.train   = Box(form = None, method = '', metric = 'ROC')
-	pCrossValid.args.seed    = None
-	pCrossValid.args.nthread = 1
-	pCrossValid.args.plots   = ['model', 'roc'] # varimp
-	pCrossValid.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pCrossValid.envs.rimport = rimport
-	pCrossValid.lang         = params.Rscript.value
-	pCrossValid.script       = "file:scripts/mlearn/pCrossValid.r"
-	return pCrossValid
+	return Box(
+		desc   = 'Cross validation on the model',
+		lang   = params.Rscript.value,
+		input  = 'infile:file',
+		output = [
+			'outmodel:file:{{i.infile | fn2}}.{{args.train.method}}/{{i.infile | fn2}}.{{args.train.method}}.RDS',
+			'outdir:dir:{{i.infile | fn2}}.{{args.train.method}}'
+		],
+		args = Box(inopts  = Box(cnames = True, rnames = True),
+			ctrl    = Box(method = '', savePredictions = True, classProbs = True, verboseIter = True),
+			train   = Box(form = None, method = '', metric = 'ROC'),
+			seed    = None,
+			nthread = 1,
+			plots   = ['model', 'roc'], # varimp
+			devpars = Box(res = 300, height = 2000, width = 2000)))
 

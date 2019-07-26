@@ -179,13 +179,21 @@ is.installed = function(pkg) {
 	is.element(pkg, installed.packages()[,1])
 }
 
-bQuote = function(s) {
+.bQuote = function(s) {
 	if (startsWith(s, '`') && endsWith(s, '`')) {
 		return (s)
 	} else {
 		paste0('`', s, '`')
 	}
 }
+bQuote = Vectorize(.bQuote)
+
+.nobQuote = function(s) {
+	if (!startsWith(s, '`') || !endsWith(s, '`'))
+		return(s)
+	return (substring(s, 2, nchar(s) - 1))
+}
+nobQuote = Vectorize(.nobQuote)
 
 is.true = function(x, collapse = 'all') {
 	if (is.null(x)) return (FALSE)

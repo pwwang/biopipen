@@ -27,19 +27,17 @@ def _pMatrixR():
 		`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
 		`code`: The R code to operating the matrix. (the matrix is read in variable `mat`)
 	"""
-	pMatrixR             = Proc(desc = 'Operate a matrix and save the new matrix to file.')
-	pMatrixR.input       = "infile:file"
-	pMatrixR.output      = "outfile:file:{{i.infile | bn}}"
-	pMatrixR.args.inopts = Box(cnames = True, rnames = True, delimit = "\t", skip = 0)
-	pMatrixR.args.params = Box({
-		"check.names": "FALSE",
-		"quote"      : ""
-	})
-	pMatrixR.args.code    = []
-	pMatrixR.envs.rimport = rimport
-	pMatrixR.lang         = params.Rscript.value
-	pMatrixR.script       = "file:scripts/tsv/pMatrixR.r"
-	return pMatrixR
+	return Box(
+		desc   = 'Operate a matrix and save the new matrix to file',
+		lang   = params.Rscript.value,
+		input  = "infile:file",
+		output = "outfile:file:{{i.infile | bn}}",
+		args   = Box(inopts = Box(cnames = True, rnames = True, delimit = "\t", skip = 0),
+			params = Box({
+				"check.names": "FALSE",
+				"quote"      : ""
+			}),
+			code = []))
 
 @procfactory
 def _pTranspose():

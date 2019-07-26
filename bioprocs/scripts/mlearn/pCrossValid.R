@@ -2,7 +2,7 @@
 library(caret)
 options(stringsAsFactors = FALSE)
 
-{% python from bioprocs.utils import alwaysList %}
+{% python from pyppl.utils import alwaysList %}
 {% python from os import path %}
 infile   = {{ i.infile | quote}}
 prefix   = {{ o.outdir, fn2(i.infile) | *path.join | quote }}
@@ -44,6 +44,16 @@ if (nthread > 1) {
 }
 
 indata            = read.table.inopts(infile, inopts)
+# I tried na.action for train function, but I got an error:
+# Error in as.character(call_obj$na.action) :
+#	cannot coerce type 'closure' to vector of type 'character'
+# haven't figured out a way to fixed, just remove all NA records
+indata = indata[complete.cases(indata),,drop = FALSE]
+ycol = all.vars(trainps$form)[1]
+# for glm or binary output
+if (!is.numeric(indata[, ycol])) {
+	indata[, ycol] = as.factor(indata[, ycol])
+}
 ctrl$verboseIter  = TRUE
 train.control     = do.call(trainControl, ctrl)
 trainps$data      = indata
@@ -57,49 +67,41 @@ saveRDS(m, outmodel)
 
 if ('model' %in% plots) {
 	modelplot = paste0(prefix, '.model.png')
-	do.call(png, c(list(modelplot), devpars))
 	tryCatch({
-		print(ggplot(m))
+		save.plot(ggplot(m), modelplot, devpars = devpars)
 	}, error = function(e) {
 		logger(e, level = 'WARNNING')
-	}, finally = {
-		dev.off()
 	})
 }
 
+klass = m$pred$obs
+if (is.null(m$pred$Resample)) {
+	m$pred$Resample = 'M'
+}
+if (length(levels(factor(klass))) > 2) {
+	rocdata = data.frame(D = klass >= .5, M = m$pred[,4], name = m$pred$Resample)
+} else {
+	rocdata = data.frame(D = klass, M = m$pred[,4], name = m$pred$Resample)
+}
+aucs = plot.roc(rocdata, 'return',
+	params = list(returnTable = TRUE),
+	ggs    = list(scale_color_discrete = list(guide = FALSE)),
+	stacked = TRUE, devpars = devpars)
+aucs$table$mean_auc = mean(aucs$table$auc)
+aucfile = sprintf('%s.aucs.txt', prefix)
+write.table(
+	aucs$table[aucs$table$is.best,, drop=FALSE],
+	aucfile, row.names = FALSE, quote = FALSE, sep = "\t")
+
 if ('roc' %in% plots) {
-	klass = m$pred$obs
-	if (is.null(m$pred$Resample)) {
-		m$pred$Resample = 'M'
-	}
-	if (length(levels(factor(klass))) > 2) {
-		klass = (klass - min(klass)) / (max(klass) - min(klass))
-		# use different cutoff to bin
-		for (tfcut in c(.5, .6, .7, .8, .9)) {
-			rocplot = sprintf('%s.roc%d.png', prefix, 10*tfcut)
-			rocdata = data.frame(D = klass > tfcut, M = m$pred[,4], name = m$pred$Resample)
-			aucs = plot.roc(rocdata, rocplot, stacked = TRUE, devpars = devpars)
-		}
-	} else {
-		rocplot = sprintf('%s.roc.png', prefix)
-		rocdata = data.frame(D = klass, M = m$pred[,4], name = m$pred$Resample)
-		aucs = plot.roc(rocdata, rocplot, stacked = TRUE, devpars = devpars)
-	}
-	aucfile = sprintf('%s.aucs.txt', prefix)
-	aucs    = t(as.data.frame(aucs))
-	colnames(aucs) = 'AUC'
-	write.table(aucs, aucfile, quote = FALSE, sep = "\t")
+	rocplot = sprintf('%s.roc.png', prefix)
+	save.plot(aucs$plot, rocplot, devpars)
 }
 
+vi = varImp(m)
+vifile = sprintf('%s.varimp.txt', prefix)
+write.table(vi$importance, vifile, quote = FALSE, sep = "\t")
 if ('varimp' %in% plots) {
-	vi = varImp(m)
 	viplot = sprintf('%s.varimp.png', prefix)
-	vifile = sprintf('%s.varimp.txt', prefix)
-	write.table(vi$importance, vifile, quote = FALSE, sep = "\t")
-	do.call(png, c(list(viplot), devpars))
-	print(ggplot(vi))
-	dev.off()
+	save.plot(ggplot(vi), viplot, devpars = devpars)
 }
-
-
-

@@ -1,4 +1,4 @@
-# Data statistics
+# {{title}}
 ## Glimpse
 
 {% mode loose %}

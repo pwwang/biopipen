@@ -11,13 +11,7 @@ devpars = {{args.devpars | R}}
 ggs     = {{args.ggs | R}}
 prefix  = file.path(outdir, {{i.infile | stem | quote}})
 
-indata = read.table.nodup(
-	infile, 
-	header      = {{args.inopts.get('cnames', True) | R}},
-	row.names   = {{args.inopts.get('rnames', True) | :1 if a else None | R}},
-	sep         = {{args.inopts.get('delimit', '\t') | R}},
-	check.names = {{args.inopts.get('check.names', False) | R}}
-)
+indata = read.table.inopts(infile, inopts)
 
 cnames = colnames(indata)
 if (is.null(cnames)) {
@@ -26,7 +20,7 @@ if (is.null(cnames)) {
 }
 
 model = readRDS(inmodel)
-prob  = predict.glm(model, indata, type="response")
+prob  = do.call(predict.glm, c(list(model, indata, type="response"), params))
 
 if (model$yval == 'prob') {
 	if (outprob) {
@@ -55,11 +49,9 @@ if (model$yval == 'prob') {
 }
 if (outprob) {
 	preds = predict.glm(model, newdata = indata, type = "link", se.fit = TRUE)
-	# 2.5% CI
-	ci025 = model$family$linkinv(preds$fit - 1.96*preds$se.fit)
-	# 97.5% CI
-	ci975 = model$family$linkinv(preds$fit + 1.96*preds$se.fit)
-	out = cbind(out, Predict.ProbCI025 = round(ci025, 3), Predict.ProbCI975 = round(ci975, 3))
+	ci95_1 = model$family$linkinv(preds$fit - 1.96*preds$se.fit)
+	ci95_2 = model$family$linkinv(preds$fit + 1.96*preds$se.fit)
+	out = cbind(out, Predict.ProbCI95_1 = round(ci95_1, 3), Predict.ProbCI95_2 = round(ci95_2, 3))
 }
 
 ycol = model$ycol
@@ -71,8 +63,14 @@ if (outauc) {
 		stop('ROC/AUC is only available for categorical Y values, unable to plot ROC or output AUC.')
 	}
 	aucdata = data.frame(D = indata[, ycol] == out$Predict.Result, M = prob)
-	auc = plot.roc(aucdata, paste0(prefix, '.roc.png'), params = params, ggs = ggs, devpars = devpars)
-	out = cbind(out, AUC = auc)
+	roc = plot.roc(aucdata,
+		paste0(prefix, '.roc.png'),
+		params = list(returnTable = TRUE),
+		ggs = ggs, devpars = devpars)
+	out = cbind(out, AUC = roc$table[1, 'auc'])
 }
 
-write.table(out, paste0(prefix, '.result.txt'), row.names = {{args.inopts.get('rnames', True) | R}}, col.names = T, sep = "\t", quote = F)
+write.table(out,
+	paste0(prefix, '.result.txt'),
+	row.names = list.get(inopts, 'rnames', TRUE),
+	col.names = TRUE, sep = "\t", quote = F)
