@@ -9,11 +9,11 @@
 
 ```table
 caption: Model features
-file: {{glob(job.o.outdir, '*.features.txt')}}
+file: {{glob1(job.o.outdir, '*.features.txt')}}
 ```
 
 {% if args.plot %}
-![]({{glob(job.o.outdir, '*.glm.png')}})
+![]({{glob1(job.o.outdir, '*.glm.png')}})
 {% endif %}
 
 :::

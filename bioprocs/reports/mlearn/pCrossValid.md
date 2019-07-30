@@ -8,12 +8,12 @@
 {% endif %}
 
 
-{% assign modelfigs = glob(job.o.outdir, '*.model.png', first = False) %}
+{% assign modelfigs = glob1(job.o.outdir, '*.model.png', first = False) %}
 {% if report.get('modelfig', True) and modelfigs %}
 ![The model]({{modelfigs[0]}})
 {% endif %}
 
-{% assign rocfigs = glob(job.o.outdir, '*.roc.png', first = False) %}
+{% assign rocfigs = glob1(job.o.outdir, '*.roc.png', first = False) %}
 {% if report.get('roc', True) and rocfigs %}
 ![ROC curve]({{rocfigs[0]}})
 {% endif %}
@@ -21,11 +21,11 @@
 {% if report.get('auc', True) %}
 ```table
 caption: AUCs
-file: {{glob(job.o.outdir, '*.aucs.txt')}}
+file: {{glob1(job.o.outdir, '*.aucs.txt')}}
 ```
 {% endif %}
 
-{% assign varimpfigs = glob(job.o.outdir, '*.varimp.png', first = False) %}
+{% assign varimpfigs = glob1(job.o.outdir, '*.varimp.png', first = False) %}
 {% if report.get('varimpfig', True) and varimpfigs %}
 ![Feature importance]({{varimpfigs[0]}})
 {% endif %}
@@ -33,7 +33,7 @@ file: {{glob(job.o.outdir, '*.aucs.txt')}}
 {% if report.get('varimp', True) %}
 ```table
 caption: Feature importance
-file: {{glob(job.o.outdir, '*.varimp.txt')}}
+file: {{glob1(job.o.outdir, '*.varimp.txt')}}
 ```
 {% endif %}
 

@@ -254,10 +254,11 @@ plot.roc = function(
 	}
 
 	ret$plot = apply.ggs(ret$plot, ggs)
-	save.plot(ret$plot, plotfile, devpars)
 	if (returnTable) {
+		save.plot(ret$plot, plotfile, devpars)
 		return(ret)
 	}
+	save.plot(ret$plot, plotfile, devpars)
 }
 
 plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), ggs = list(), devpars = DEVPARS) {
@@ -799,3 +800,168 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 	devpars$height = devpars$height*ncols
 	save.plot(p, plotfile, devpars)
 }
+
+.surv.cut = function(data, vars = NULL, by = 'maxstat', labels = c("low", "high")) {
+	# by = mean, median, q25, q75, asis, maxstat
+	cnames = colnames(data)
+	if (is.null(vars)) {
+		vars = c(cnames[3:ncol(data)])
+	}
+	for (v in vars) {
+		vdata = as.vector(unlist(data[,v]))
+		if (by == 'asis' || !is.numeric(vdata) || length(levels(factor(vdata))) <= 5) {
+			data[, v] = as.factor(as.character(vdata))
+		} else if (by == 'maxstat') {
+			data.cut = surv_cutpoint(data, time = cnames[1], event = cnames[2], variables = v)
+			data.cat = surv_categorize(data.cut)
+			data[, v] = data.cat[, v]
+		} else {
+			if (by == 'mean') {
+				vcut = mean(vdata)
+			} else if (by == 'median') {
+				vcut = median(vdata)
+			} else if (by == 'q25') {
+				vcut = quantile(vdata, .25)
+			} else if (by == 'q75') {
+				vcut = quantile(vdata, .75)
+			} else {
+				stop('Unsupported cutting method.')
+			}
+			icut = as.integer(median(which(vdata %in% vcut)))
+			tmp = sapply(1:length(vdata), function(i) {
+				if (vdata[i] < vcut) {
+					labels[1]
+				} else if (vdata[i] > vcut) {
+					labels[2]
+				} else if (i < icut) {
+					labels[1]
+				} else {
+					labels[2]
+				}
+			})
+			data[,v] = tmp
+		}
+	}
+	return(data)
+}
+
+plot.survival.km = function(data, plotfile = NULL, params = list(
+	returnTable = FALSE,
+	risk.table  = TRUE,
+	pval        = TRUE,
+	cut         = 'maxstat',
+	cutlabels   = c('low', 'high')
+), devpars = DEVPARS) {
+	# @description:
+	#   Use Kaplan Merier to do survival analysis
+	#   See: http://www.sthda.com/english/wiki/survival-analysis-basics#kaplan-meier-survival-estimate
+	# @params:
+	#   dat: The data frame, where:
+	#     - 1st col is time
+	#     - 2nd col is status
+	#     - 3rd col is the variable (have to be categorical)
+	#   varname: The variable name to display instead of var (3rd colname)
+	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
+	# @returns:
+	#   list(plot, table) if `returnTable` is TRUE
+	#   plot othwise if `plotfile` is 'return'
+	library(survival)
+	library(survminer)
+
+	cutmethod = list.get(params, 'cut', 'maxstat')
+	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
+	params$cut = NULL
+	params$cutlabels = NULL
+
+	data = .surv.cut(data, by = cutmethod, labels = cutlabels)
+	cnames = colnames(data)
+	# compose formula
+	fmula  = sprintf('Surv(%s, %s) ~ %s',
+		bQuote(cnames[1]),
+		bQuote(cnames[2]),
+		bQuote(cnames[3]))
+	modfit = surv_fit(as.formula(fmula), data = data)
+
+	returnTable = list.get(params, 'returnTable', FALSE)
+	params$returnTable = NULL
+	params$risk.table = list.get(params, 'risk.table', TRUE)
+	params$pval = list.get(params, 'pval', TRUE)
+
+	ret = list()
+	ret$plot = do.call(ggsurvplot, c(list(modfit, data = data), params))
+	if (length(levels(as.factor(data[, 3]))) < 2) {
+		ret$table = data.frame(
+			var    = cnames[3],
+			method = 'Kaplan Merier (logrank)',
+			test   = NA,
+			groups = 1,
+			df     = 1,
+			pvalue = '1.00E+00'
+		)
+	} else {
+		ret$table = data.frame(
+			var    = cnames[3],
+			method = 'Kaplan Merier (logrank)',
+			test   = NA,
+			groups = NA,
+			df     = 1,
+			pvalue = sprintf('%.2E', surv_pvalue(modfit, data = lung)$pval)
+		)
+	}
+	if (returnTable) {
+		save.plot(ret$plot, plotfile, devpars)
+	 	return (ret)
+	}
+	save.plot(ret$plot, plotfile, devpars)
+}
+
+
+plot.survival.cox = function(data, plotfile = NULL, params = list(
+	returnTable = FALSE,
+	forst       = FALSE,
+	risk.table  = TRUE,
+	# mean, median, q25, q75, asis
+	# asis uses the levels in 3rd column, requring categorical values
+	# or if 3rd column has <= 5 levels, regard it as categorical,
+	# ignore this argument
+	cut = 'maxstat',
+	cutlabels = c('low', 'high')
+), devpars = DEVPARS) {
+	# @description:
+	#   Use Kaplan Merier to do survival analysis
+	#   See: http://www.sthda.com/english/wiki/cox-proportional-hazards-model
+	# @params:
+	#   dat: The data frame, where:
+	#     - 1st col is time
+	#     - 2nd col is status (censoring)
+	#     - 3rd col is the target variable
+	#     - ... covariates ...
+	#   varname: The variable name to display instead of var (3rd colname)
+	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
+	library(survival)
+	library(survminer)
+
+	cnames = colnames(data)
+	variable = cnames[3]
+	cutmethod = list.get(params, 'cut', 'maxstat')
+	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
+	data = .surv.cut(data, by = cutmethod, labels = cutlabels, vars = variable)
+
+	# compose formula
+	fmula    = sprintf('Surv(%s, %s) ~ .', bQuote(cnames[1]), bQuote(cnames[2]))
+	# do cox regression
+	fit     = coxph(as.formula(fmula), data = data)
+	groups  = levels(as.factor(data[,variable]))
+	newdata = data.frame(groups = groups)
+	colnames(newdata) = variable
+	if (length(cnames) > 3) {
+		for (i in 4:length(cnames)) {
+			var = cnames[i]
+			newdata[[var]] = mean(as.numeric(data[,var]))
+		}
+	}
+	fit2 = survfit(fit, newdata = newdata)
+	p = do.call(ggsurvplot, c(list(fit2, data = newdata), params))
+	save.plot(p, plotfile, devpars)
+}
+

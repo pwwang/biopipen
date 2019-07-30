@@ -82,10 +82,6 @@ def _pMetaPval():
 @procfactory
 def _pSurvival():
 	"""
-	@name:
-		pSurvival
-	@description:
-		Survival analysis
 	@input:
 		`infile:file`: The input file (header is required).
 			- col1: rownames if args.inopts.rnames = True
@@ -119,29 +115,37 @@ def _pSurvival():
 		[`r-survival`](https://rdrr.io/cran/survival/)
 		[`r-survminer`](https://rdrr.io/cran/survminer/)
 	"""
-	pSurvival        = Proc(desc = "Survival analysis.")
-	pSurvival.input  = 'infile:file'
-	pSurvival.output = [
-		'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt',
-		'outdir:dir:{{i.infile | fn2}}.dir'
-	]
-	pSurvival.args.inunit    = 'days' # months, weeks, years
-	pSurvival.args.outunit   = 'days'
-	pSurvival.args.method    = 'cox' # tm or auto
-	pSurvival.args.covfile   = None
-	pSurvival.args.nthread   = 1
-	pSurvival.args.inopts    = Box(rnames = True)
-	pSurvival.args.combine   = Box() # params for arrange_ggsurvplots. Typically nrow or ncol is set. If combine.ncol = 3, that means {ncol: 3, nrow: 1}. If ncol is not set, then it defaults to 1. If empty, the figures will not be combined
-	pSurvival.args.devpars   = Box(res = 300, height = 2000, width = 2000)
-	pSurvival.args.ngroups   = 2 # how many curves to plot, typically 2. The values will divided into <ngroups> groups for the var
-	pSurvival.args.autogroup = True # False to use median, else find the best binary split spot, only applicable when args.ngroup = 2
-	pSurvival.args.params    = Box({'font.legend': 13, 'pval': '{method}\np = {pval}', 'risk.table': True}) # params for ggsurvplot
-	pSurvival.args.ggs       = Box(table = Box())
-	pSurvival.args.pval      = True # 'logrank', 'waldtest', 'likeratio' (latter 2 only for cox)
-	pSurvival.envs.rimport   = rimport
-	pSurvival.lang           = params.Rscript.value
-	pSurvival.script         = "file:scripts/stats/pSurvival.r"
-	return pSurvival
+	return Box(desc = "Survival analysis",
+		lang   = params.Rscript.value
+		input  = 'infile:file'
+		output = [
+			'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt',
+			'outdir:dir:{{i.infile | fn2}}.dir'
+		]
+		args = Box(inunit = 'days', # months, weeks, years
+			outunit   = 'days',
+			method    = 'cox', # km or auto
+			covfile   = None,
+			nthread   = 1,
+			inopts    = Box(rnames = True),
+			# params for arrange_ggsurvplots.
+			# Typically nrow or ncol is set.
+			# If combine.ncol = 3, that means {ncol: 3, nrow: 1}.
+			# If ncol is not set, then it defaults to 1.
+			# If empty, the figures will not be combined
+			combine   = Box(),
+			devpars   = Box(res = 300, height = 2000, width = 2000),
+			# how many curves to plot, typically 2.
+			# The values will divided into <ngroups> groups for the var
+			ngroups   = 2,
+			# False to use median, else find the best binary split spot,
+			# only applicable when args.ngroup = 2
+			autogroup = True,
+			# params for ggsurvplot
+			params    = Box({'font.legend': 13, 'pval': '{method}\np = {pval}', 'risk.table': True}),
+			ggs       = Box(table = Box()),
+			# 'logrank', 'waldtest', 'likeratio' (latter 2 only for cox)
+			pval      = True))
 
 @procfactory
 def _pPostSurvival():

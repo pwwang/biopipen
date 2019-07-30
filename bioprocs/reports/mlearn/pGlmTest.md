@@ -8,12 +8,12 @@
 {% endif %}
 
 
-![]({{glob(job.o.outdir, '*.roc.png')}})
+![]({{glob1(job.o.outdir, '*.roc.png')}})
 
 {% if report.get('detail') %}
 ```table
 caption: Details of model performance
-file: {{glob(job.o.outdir, '*.result.txt')}}
+file: {{glob1(job.o.outdir, '*.result.txt')}}
 ```
 {% endif %}
 

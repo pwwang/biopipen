@@ -12,7 +12,7 @@
 
 ```table
 caption: First 10 samples
-file: {{glob(job.o.outdir, "*.top10.txt")}}
+file: {{glob1(job.o.outdir, "*.top10.txt")}}
 ```
 
 ::::
@@ -27,7 +27,7 @@ file: {{glob(job.o.outdir, "*.top10.txt")}}
 ### {{job.i.infile | stem}}
 {% endif %}
 
-{% for i, statfile in enumerate(sorted(glob(job.o.outdir, "feature-stat.*.txt", first = False))) %}
+{% for i, statfile in enumerate(sorted(glob1(job.o.outdir, "feature-stat.*.txt", first = False))) %}
 ::: {.tab}
 {% assign feature = statfile | stem | [13:] %}
 {% if len(jobs) > 1 %}#{%endif%}### {{feature}}
