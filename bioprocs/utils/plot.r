@@ -801,20 +801,26 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 	save.plot(p, plotfile, devpars)
 }
 
-.surv.cut = function(data, vars = NULL, by = 'maxstat', labels = c("low", "high")) {
+.surv.cut = function(data, vars = NULL, by = 'maxstat', labels = c("low", "high"), keep.raw = FALSE) {
 	# by = mean, median, q25, q75, asis, maxstat
 	cnames = colnames(data)
 	if (is.null(vars)) {
 		vars = c(cnames[3:ncol(data)])
 	}
+	p = list()
 	for (v in vars) {
 		vdata = as.vector(unlist(data[,v]))
+		if (keep.raw) {
+			rawv  = paste0('raw.', v)
+			data[, rawv] = data[, v]
+		}
 		if (by == 'asis' || !is.numeric(vdata) || length(levels(factor(vdata))) <= 5) {
 			data[, v] = as.factor(as.character(vdata))
 		} else if (by == 'maxstat') {
 			data.cut = surv_cutpoint(data, time = cnames[1], event = cnames[2], variables = v)
 			data.cat = surv_categorize(data.cut)
 			data[, v] = data.cat[, v]
+			p[[v]] = plot(data.cut)[[v]]
 		} else {
 			if (by == 'mean') {
 				vcut = mean(vdata)
@@ -842,16 +848,16 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 			data[,v] = tmp
 		}
 	}
-	return(data)
+	# plot is a list of plots named with the variables
+	return(list(data = data, plot = p))
 }
 
 plot.survival.km = function(data, plotfile = NULL, params = list(
-	returnTable = FALSE,
 	risk.table  = TRUE,
 	pval        = TRUE,
 	cut         = 'maxstat',
 	cutlabels   = c('low', 'high')
-), devpars = DEVPARS) {
+), ggs = list(table = NULL), devpars = DEVPARS) {
 	# @description:
 	#   Use Kaplan Merier to do survival analysis
 	#   See: http://www.sthda.com/english/wiki/survival-analysis-basics#kaplan-meier-survival-estimate
@@ -863,23 +869,31 @@ plot.survival.km = function(data, plotfile = NULL, params = list(
 	#   varname: The variable name to display instead of var (3rd colname)
 	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
 	# @returns:
-	#   list(plot, table) if `returnTable` is TRUE
-	#   plot othwise if `plotfile` is 'return'
-	library(survival)
-	library(survminer)
+	#   list(plot, table, cutplot)
+	library(survival)  # 2.44-1.1
+	library(survminer) # 0.4.4.999
+
+	ret = list()
+	cnames  = colnames(data)
+	variable = cnames[3]
 
 	cutmethod = list.get(params, 'cut', 'maxstat')
 	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
-	params$cut = NULL
+
+	params$cut       = NULL
 	params$cutlabels = NULL
 
-	data = .surv.cut(data, by = cutmethod, labels = cutlabels)
-	cnames = colnames(data)
+	survcut = .surv.cut(data, by = cutmethod, labels = cutlabels, keep.raw = TRUE)
+	data    = survcut$data
+
+	ret$cutplot = ifelse(length(survcut$plot) > 0, survcut$plot[[variable]], NULL)
+	ret$data    = data
+
 	# compose formula
 	fmula  = sprintf('Surv(%s, %s) ~ %s',
 		bQuote(cnames[1]),
 		bQuote(cnames[2]),
-		bQuote(cnames[3]))
+		bQuote(variable))
 	modfit = surv_fit(as.formula(fmula), data = data)
 
 	returnTable = list.get(params, 'returnTable', FALSE)
@@ -887,46 +901,54 @@ plot.survival.km = function(data, plotfile = NULL, params = list(
 	params$risk.table = list.get(params, 'risk.table', TRUE)
 	params$pval = list.get(params, 'pval', TRUE)
 
-	ret = list()
 	ret$plot = do.call(ggsurvplot, c(list(modfit, data = data), params))
 	if (length(levels(as.factor(data[, 3]))) < 2) {
 		ret$table = data.frame(
-			var    = cnames[3],
-			method = 'Kaplan Merier (logrank)',
-			test   = NA,
+			var    = variable,
+			method = 'Kaplan Merier',
+			test   = 'LogRank',
 			groups = 1,
 			df     = 1,
 			pvalue = '1.00E+00'
 		)
 	} else {
+		counts = as.data.frame(table(data[, variable]))
 		ret$table = data.frame(
-			var    = cnames[3],
-			method = 'Kaplan Merier (logrank)',
-			test   = NA,
-			groups = NA,
+			var    = variable,
+			method = 'Kaplan Merier',
+			test   = 'LogRank',
+			groups = paste(apply(counts, 1, function(row) paste(row, collapse = ':')),
+				collapse = ', '),
 			df     = 1,
-			pvalue = sprintf('%.2E', surv_pvalue(modfit, data = lung)$pval)
+			pvalue = sprintf('%.2E', surv_pvalue(modfit, data = data)$pval)
 		)
 	}
-	if (returnTable) {
-		save.plot(ret$plot, plotfile, devpars)
-	 	return (ret)
-	}
+
+	tableggs       = list.get(ggs, 'table', list())
+	ggs$table      = NULL
+	ret$plot$table = apply.ggs(ret$plot$table, tableggs)
+	ret$plot$plot  = apply.ggs(ret$plot$plot, ggs)
 	save.plot(ret$plot, plotfile, devpars)
+	if (!is.null(plotfile) && !is.null(ret$cutplot)) {
+		save.plot(
+			ret$cutplot,
+			sprintf("%s.cut.png", tools::file_path_sans_ext(plotfile)),
+			devpars)
+	}
+	return(ret)
 }
 
 
 plot.survival.cox = function(data, plotfile = NULL, params = list(
-	returnTable = FALSE,
-	forst       = FALSE,
 	risk.table  = TRUE,
+	pval        = TRUE,
 	# mean, median, q25, q75, asis
 	# asis uses the levels in 3rd column, requring categorical values
 	# or if 3rd column has <= 5 levels, regard it as categorical,
 	# ignore this argument
 	cut = 'maxstat',
 	cutlabels = c('low', 'high')
-), devpars = DEVPARS) {
+), ggs = list(table = NULL), devpars = DEVPARS) {
 	# @description:
 	#   Use Kaplan Merier to do survival analysis
 	#   See: http://www.sthda.com/english/wiki/cox-proportional-hazards-model
@@ -938,30 +960,102 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	#     - ... covariates ...
 	#   varname: The variable name to display instead of var (3rd colname)
 	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
+	# @returns:
+	#   list(data, plot, cutplot, forest, table)
 	library(survival)
 	library(survminer)
 
-	cnames = colnames(data)
+	ret      = list()
+	cnames   = colnames(data)
 	variable = cnames[3]
-	cutmethod = list.get(params, 'cut', 'maxstat')
-	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
-	data = .surv.cut(data, by = cutmethod, labels = cutlabels, vars = variable)
+	if (length(cnames) > 3) {
+		for (i in 4:length(cnames)) {
+			data[, i] = as.numeric(as.factor(data[, i]))
+		}
+	}
 
 	# compose formula
 	fmula    = sprintf('Surv(%s, %s) ~ .', bQuote(cnames[1]), bQuote(cnames[2]))
 	# do cox regression
-	fit     = coxph(as.formula(fmula), data = data)
-	groups  = levels(as.factor(data[,variable]))
+	fit0     = coxph(as.formula(fmula), data = data)
+
+	sumfit    = summary(fit0)
+	ret$table = data.frame(
+		var    = rownames(sumfit$conf.int),
+		method = 'Cox Regression',
+		test   = 'Log Rank')
+
+	ret$table         = cbind(
+		ret$table, sumfit$conf.int[, -2, drop = FALSE], sumfit$coefficients[, 4:5, drop = FALSE])
+	ret$table$df      = sumfit$logtest[2]
+	ret$table$modpval = sumfit$logtest[3]
+	ret$forest        = ggforest(fit0, data = data)
+
+	colnames(ret$table)[4:8] = c('HR', 'CI95_1', 'CI95_2', 'z', 'pvalue')
+
+	# now we cut the variable to plot it
+	cutmethod = list.get(params, 'cut', 'maxstat')
+	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
+	params$cut = NULL
+	params$cutlabels = NULL
+	survcuts  = .surv.cut(data, by = cutmethod, labels = cutlabels, vars = variable, keep.raw = TRUE)
+
+	ret$cutplot = ifelse(length(survcuts$plot) > 0, survcuts$plot[[variable]], NULL)
+	ret$data    = survcuts$data
+	survcuts$data[[paste0('raw.', variable)]] = NULL
+
+	fit     = coxph(as.formula(fmula), data = survcuts$data)
+	groups  = levels(as.factor(survcuts$data[,variable]))
+
 	newdata = data.frame(groups = groups)
 	colnames(newdata) = variable
 	if (length(cnames) > 3) {
 		for (i in 4:length(cnames)) {
 			var = cnames[i]
-			newdata[[var]] = mean(as.numeric(data[,var]))
+			newdata[[var]] = mean(as.numeric(survcuts$data[,var]))
 		}
 	}
 	fit2 = survfit(fit, newdata = newdata)
-	p = do.call(ggsurvplot, c(list(fit2, data = newdata), params))
-	save.plot(p, plotfile, devpars)
+	risktable = list.get(params, 'risk.table', TRUE)
+	params$risk.table = FALSE
+	pval = list.get(params, 'pval', TRUE)
+	if (pval) {
+		params$pval = sprintf(
+			'P = %.3E\nHR = %.3f (95%% CI %.3f ~ %.3f)',
+			sumfit$logtest[3], ret$table[1,4], ret$table[1,5], ret$table[1,6])
+	}
+
+	ret$plot = do.call(ggsurvplot,
+		c(list(fit2, data = newdata, legend.labs=paste(variable, '=', groups)), params))
+
+	# need to hack a risk table.
+	# See https://github.com/kassambara/survminer/issues/231#issuecomment-309453646
+	if (risktable) {
+		fmula = sprintf('Surv(%s, %s) ~ %s',
+				bQuote(cnames[1]), bQuote(cnames[2]), bQuote(variable))
+		kmfit = surv_fit(as.formula(fmula), data = survcuts$data)
+		kmplot = ggsurvplot(kmfit, risk.table = TRUE, data = survcuts$data)
+		kmplot$plot = ret$plot$plot
+		ret$plot = kmplot
+		tableggs = list.get(ggs, 'table', list())
+		ggs$table = NULL
+		ret$plot$table = apply.ggs(ret$plot$table, tableggs)
+	}
+	ret$plot$plot = apply.ggs(ret$plot$plot, ggs)
+
+	save.plot(ret$plot, plotfile, devpars)
+	if (!is.null(plotfile) && !is.null(ret$cutplot)) {
+		save.plot(
+			ret$cutplot[[variable]],
+			sprintf("%s.cut.png", tools::file_path_sans_ext(plotfile)),
+			devpars)
+	}
+	if (!is.null(plotfile)) {
+		save.plot(
+			ret$forest,
+			sprintf("%s.forest.png", tools::file_path_sans_ext(plotfile)),
+			devpars)
+	}
+	return(ret)
 }
 

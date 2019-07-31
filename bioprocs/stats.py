@@ -83,69 +83,63 @@ def _pMetaPval():
 def _pSurvival():
 	"""
 	@input:
-		`infile:file`: The input file (header is required).
+		infile: The input file (header is required).
 			- col1: rownames if args.inopts.rnames = True
 			- col2: the survival time
 			- col3: the status. 0/1 for alive/dead or 1/2 for alive dead
 			- col4: var1.
 			- ... other variables
+			- Note that covariales should be put in covfile, each variable in this file will be analyzed separately.
+		covfile: The covariate file. If not provided, use `args.covfile`
 	@output:
-		`outfile:file`: The outfile containing the pvalues
-		`outdir:dir`  : The output directory containing the pval files and plots
+		outfile: The outfile containing the pvalues and other details.
+		outdir : The output directory containing the pval files and plots, including:
+			- `outfile`
+			- cutplot: `<feature>.cut.png`, only available when `args.cutting = 'maxstat'`
+			- forest plot: `<feature>.forest.png`, only available using cox
+			- data with subpopulations: `<feature>.data.txt`
 	@args:
 		`inunit`    : The time unit in input file. Default: days
 		`outunit`   : The output unit for plots. Default: days
-		`nthread`   : Number of threads used to perform analysis for groups. Default: 1
 		`inopts`    : The options for input file
-			- `rnames`: Whether input file has row names. Default: True
-		`combine`   : Whether combine groups in the same plot. Default: `Box()`
+			- `rnames`: Whether input file has row names.
+		`combine`   : Whether combine variables in the same plot.
 			- `nrow`: The number of rows. Default: 1
 			- `ncol`: The number of cols. Default: 1
-		`devpars`   : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
-			- The height and width are for each survival plot. If args.combine is True, the width and height will be multiplied by `max(arrange.ncol, arrange.nrow)`
+		`devpars`   : The device parameters for png.
+			- The height and width are for each survival plot.
+			- If args.combine is True, the width and height will be multiplied by `max(combine.ncol, combine.nrow)`
 		`covfile`   : The covariant file. Require rownames in both this file and input file.
-		`ngroups`   : Number of curves to plot (the continuous number will divided into `ngroups` groups.
-		`params`    : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': '{method}\np = {pval}'})`
-			- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0.
-		`ggs`       : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
-		`pval`      : The method to calculate the pvalue shown on the plot. Default: True (logrank)
-			- Could also be `waldtest`, `likeratio` (Likelihoold ratio test)
-		`method`    : The method to do survival analysis.
+		`ggs`       : Extra ggplot2 elements for main plot. `ggs$table` is for the risk table.
+		`params`    : The params for `ggsurvplot`. Extra arguments:
+			- cut: Method to cut the continous value into subpopulations. One of mean, median, q25, q75, asis and maxstat (default).
+			- cutlabels: Labels for the subpopulations (from small to large).
+		`method`    : The method to do survival analysis. km (Kaplan Merier) or cox.
 	@requires:
 		[`r-survival`](https://rdrr.io/cran/survival/)
 		[`r-survminer`](https://rdrr.io/cran/survminer/)
 	"""
 	return Box(desc = "Survival analysis",
-		lang   = params.Rscript.value
-		input  = 'infile:file'
+		lang   = params.Rscript.value,
+		input  = 'infile:file, covfile:file',
 		output = [
 			'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt',
 			'outdir:dir:{{i.infile | fn2}}.dir'
-		]
+		],
 		args = Box(inunit = 'days', # months, weeks, years
 			outunit   = 'days',
-			method    = 'cox', # km or auto
+			method    = 'cox', # or km
 			covfile   = None,
-			nthread   = 1,
 			inopts    = Box(rnames = True),
 			# params for arrange_ggsurvplots.
 			# Typically nrow or ncol is set.
 			# If combine.ncol = 3, that means {ncol: 3, nrow: 1}.
 			# If ncol is not set, then it defaults to 1.
 			# If empty, the figures will not be combined
-			combine   = Box(),
+			combine   = Box(ncol = 2),
 			devpars   = Box(res = 300, height = 2000, width = 2000),
-			# how many curves to plot, typically 2.
-			# The values will divided into <ngroups> groups for the var
-			ngroups   = 2,
-			# False to use median, else find the best binary split spot,
-			# only applicable when args.ngroup = 2
-			autogroup = True,
-			# params for ggsurvplot
-			params    = Box({'font.legend': 13, 'pval': '{method}\np = {pval}', 'risk.table': True}),
-			ggs       = Box(table = Box()),
-			# 'logrank', 'waldtest', 'likeratio' (latter 2 only for cox)
-			pval      = True))
+			params    = Box(),
+			ggs       = Box(table = Box())))
 
 @procfactory
 def _pPostSurvival():
