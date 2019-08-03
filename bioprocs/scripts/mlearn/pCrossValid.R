@@ -90,7 +90,7 @@ aucs = plot.roc(rocdata, 'return',
 aucs$table$mean_auc = mean(aucs$table$auc)
 aucfile = sprintf('%s.aucs.txt', prefix)
 write.table(
-	aucs$table[aucs$table$is.best,, drop=FALSE],
+	pretty.numbers2(aucs$table[aucs$table$is.best,, drop=FALSE], threshold..sensitivity..specificity..auc..auc_95ci1..auc_95ci2..mean_auc = '%.3f'),
 	aucfile, row.names = FALSE, quote = FALSE, sep = "\t")
 
 if ('roc' %in% plots) {
