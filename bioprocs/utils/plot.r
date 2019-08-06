@@ -132,7 +132,6 @@ plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), dev
 	plot.xy(data, plotfile, x = x, y = y, ggs = ggs, devpars = devpars)
 }
 
-
 plot.roc = function(
 	data,
 	plotfile = NULL,
@@ -158,12 +157,12 @@ plot.roc = function(
 			stop('Expect 3 columns (D, M, Group) in stacked data to plot ROC.')
 		colnames(data) = c('D', 'M', 'Group')
 	} else {
-		if (ncol(data) > 2) {
-			data = melt_roc(data, 1, 2:ncol(data))
-			colnames(data) = c('D', 'M', 'Group')
-		} else {
-			data = data.frame(D = data[, 1], M = data[, 2], Group = colnames(data)[2])
+		ncols = ncol(data)
+		if (ncols < 2) {
+			stop('Expect at least 2 columns (D, M1, ..., Mn)')
 		}
+		data = cbind(rep(data[,1], ncols-1), stack(data[, 2:ncols, drop = FALSE]))
+		colnames(data) = c('D', 'M', 'Group')
 	}
 	groups = levels(factor(data$Group))
 	returnTable = params$returnTable
