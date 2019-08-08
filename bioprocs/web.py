@@ -34,7 +34,7 @@ def _pDownloadForm():
 	return pDownloadForm
 
 @procfactory
-def _pDownloadGet():
+def _pDownloadGet(alias = 'pDownload'):
 	"""
 	@name:
 		pDownloadGet
@@ -51,17 +51,6 @@ def _pDownloadGet():
 	pDownloadGet.lang   = params.python.value
 	pDownloadGet.script = "file:scripts/web/pDownloadGet.py"
 	return pDownloadGet
-
-@procfactory
-def _pDownload():
-	"""
-	@name:
-		pDownload
-	@description:
-		Alias of `pDownloadGet`
-	"""
-	pDownload = pDownloadGet.copy()
-	return pDownload
 
 @procfactory
 def _pDownloadPost():

@@ -104,7 +104,7 @@ class Module:
 				or not (proc[2].isdigit() or proc[2].isupper()):
 				continue
 			procobj = factory()
-			self._procs[proc[1:]] = Process(procobj, self.module, factory.__doc__.splitlines())
+			self._procs[proc[1:]] = Process(procobj, self.module, factory.__doc__ and factory.__doc__.splitlines() or [])
 
 		return self._procs
 
@@ -177,7 +177,7 @@ class Process:
 			lastdesc = [':'.join(parts).strip()]
 			nametype = nametype.strip('`) ')
 			if ' (' in nametype:
-				name, typ = nametype.split(' (')
+				name, typ = nametype.split(' (', 1)
 			elif ':' in nametype:
 				name, typ = nametype.split(':', 1)
 			else:

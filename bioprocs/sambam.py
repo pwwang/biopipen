@@ -454,16 +454,6 @@ def _pBamPair2Smut():
 	return pBamPair2Smut
 
 @procfactory
-def _pBam2Cnv():
-	"""
-	@name:
-		pBam2Cnv
-	@description:
-		see `bioaggr.wxs.aBam2SCnv` and `bioaggr.wxs.aBam2GCnv`
-	"""
-	return pBam2Cnv
-
-@procfactory
 def _pBamStats():
 	"""
 	@name:

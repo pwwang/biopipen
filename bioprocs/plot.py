@@ -42,7 +42,7 @@ def _pPlot():
 	return pPlot
 
 @procfactory
-def _pScatter():
+def _pScatter(alias = 'pPoints'):
 	"""
 	@name:
 		pScatter
@@ -77,17 +77,6 @@ def _pScatter():
 	pScatter.lang         = params.Rscript.value
 	pScatter.script       = 'file:scripts/plot/pScatter.r'
 	return pScatter
-
-@procfactory
-def _pPoints():
-	"""
-	@name:
-		pPoints
-	@description:
-		Alias for pScatter
-	"""
-	pPoints = pScatter.copy()
-	return pPoints
 
 @procfactory
 def _pHisto():
