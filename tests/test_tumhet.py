@@ -22,4 +22,4 @@ def test_pyclone():
 	pPyClone2ClonEvol1.depends = pPyClone1
 	pClonEvol2.depends = pPyClone2ClonEvol1
 	pClonEvol2.input = lambda ch: ch.cbind(remotedata.get('tumhet/SRR385940.sample.txt'))
-	PyPPL().start(pPyClone1).run()
+	PyPPL().start(pPyClone1).run().report()

@@ -317,7 +317,10 @@ class Process:
 				docdesc[-1] += ' ' + defaults.pop(0)
 				docdesc.extend(defaults)
 
-			self._helps.select('Process arguments').add(('-args.' + key, '<%s>' % doctype, docdesc))
+			self._helps.select('Process arguments').add((
+				'-args.' + key,
+				'<%s>' % doctype if str(doctype).lower() != 'bool' else '[bool]',
+				docdesc))
 
 		self._helps.add('Other options', sectype = 'option', prefix = '-')
 		# process properties

@@ -1,6 +1,6 @@
 from pysam import VariantFile
 from pyppl import Box
-from os import path
+from os import path, environ
 from bioprocs.utils import reportdata, funcargs, logger, shell2 as shell
 
 vfvcfs   = {{ i.vfvcfs | repr}}
@@ -12,16 +12,24 @@ vfsamcol = {{ args.vfsamcol | repr}} - 1
 cnsamcol = {{ args.cnsamcol | repr}} - 1
 varcount = {{ args.varcount}}
 cncount  = {{ args.cncount}}
+nthread  = {{ args.nthread | int }}
 
 shell.load_config(pyclone = dict(
 	_exe = pyclone,
-	_cwd = outdir
+	_cwd = outdir,
 ))
+env = environ.copy()
+env.update(dict(
+	OPENBLAS_NUM_THREADS = str(nthread),
+	OMP_NUM_THREADS      = str(nthread),
+	NUMEXPR_NUM_THREADS  = str(nthread),
+	MKL_NUM_THREADS      = str(nthread)
+) if nthread else {})
 
 varcount_default = lambda fmt, info = None: dict(
 	ref = fmt['AD'][0],
 	alt = fmt['AD'][1],
-	af  = fmt.get('AF', float(fmt['AD'][1]) / float(fmt.get('DP', sum(fmt['AD']))))
+	af  = fmt.get('AF', float(fmt['AD'][1]) / float(fmt.get('DP', sum(fmt['AD'])) or sum(fmt['AD'])))
 )
 if not callable(varcount):
 	varcount = varcount_default
@@ -58,8 +66,8 @@ def vcf2vaf(vcf):
 		try:
 			vc = varcount(fmt, info)
 		except Exception as ex:
-			logger.warning('[{sample}] Failed to get count for {chr}:{pos}: {ex}'.format(
-				sample = sample, chr = record.chrom, pos = record.pos, ex = ex))
+			logger.warning('[{sample}] Failed to get count for {chr}:{pos} ({fmt}): {ex}'.format(
+				sample = sample, chr = record.chrom, pos = record.pos, ex = ex, fmt = fmt))
 			continue
 		gtsum = 0 if fmt['GT'][0] is None else sum(fmt['GT'])
 		gt = 'BB' if gtsum == 2 else 'AB' if gtsum == 1 else 'AA'
@@ -103,7 +111,7 @@ def combineVafAndCn(vafs, outfile, cns, contigs):
 		out.write('\t'.join(keys) + '\n')
 		if not cns:
 			for vaf in vafs:
-				out.write('\t'.join(str(rec[key]) for key in keys) + '\n')
+				out.write('\t'.join(str(vaf[key]) for key in keys) + '\n')
 			return
 		for cn in cns:
 			flag = ''
@@ -160,11 +168,12 @@ for i, vfvcf in enumerate(vfvcfs):
 # create matplotlibrc file
 with open(path.join(outdir, 'matplotlibrc'), 'w') as f:
 	f.write('backend: Agg\n')
-params.working_dir = outdir
-params.prior = 'total_copy_number'
+params.working_dir      = outdir
+params.prior            = 'total_copy_number'
 params.plot_file_format = 'svg'
+params._env             = env
 shell.fg.pyclone.run_analysis_pipeline(**params)
 
-assert path.exists(path.join(outdir, 'tables'))
-assert path.exists(path.join(outdir, 'plots'))
+#assert path.exists(path.join(outdir, 'tables'))
+#assert path.exists(path.join(outdir, 'plots'))
 

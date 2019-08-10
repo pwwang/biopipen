@@ -107,6 +107,7 @@ def _pPyClone():
 			cnsamcol = 1,
 			varcount = None,
 			cncount  = None,
+			nthread  = 1,
 			pyclone  = params.pyclone.value,
 		)
 	)

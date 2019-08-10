@@ -14,6 +14,7 @@ DEFAULT_CONFIG = dict(
 	gatk      = dict(_dupkey = True),
 	liftover  = dict(_prefix = '-', _sep = '='),
 	oncotator = dict(_sep = 'auto'),
+	maf2vcf   = dict(_sep = ' '),
 
 	# As of picard 2.18.27-SNAPSHOT
 	# it's changing in the futher. See: https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)

@@ -160,6 +160,8 @@ DEFAULTS = {
 	"htseq_count.desc"         : "The path of htseq-ount.",
 	"kallisto"                 : "kallisto",
 	"kallisto.desc"            : "The path of kallisto.",
+	"maf2vcf"                  : "maf2vcf.pl",
+	"maf2vcf.desc"             : "The path of maf2vcf.pl.",
 	"multiqc"                  : "multiqc",
 	"multiqc.desc"             : "The path of multiqc.",
 	"mutsig"                   : "mutsig",
@@ -253,11 +255,12 @@ if not cachedir.exists():
 
 rimport  = """
 (function(...) {
+	reticulate::use_python('%s', required = TRUE)
 	bioprocs = reticulate::import('bioprocs')
 	for (rfile in list(...)) {
 		source(file.path(bioprocs$HERE, 'utils', rfile))
 	}
-})"""
+})""" % executable
 
 bashimport = """
 function __bashimport__ () {
