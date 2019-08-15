@@ -1,7 +1,6 @@
 import threading
 from time import sleep
-from concurrent.futures import ThreadPoolExecutor
-from loky import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from bioprocs.utils.shell2 import runcmd
 from traceback import format_exc
 from queue import Queue

@@ -6,7 +6,7 @@ from tempfile import gettempdir
 from contextlib import contextmanager
 from colorama import Back
 from pyparam import Helps, HelpAssembler
-from pyppl import utils, Channel, PyPPL
+from pyppl import utils, Channel, PyPPL, Box
 import bioprocs
 
 def substrReplace(string, starts, lengths, replace):
@@ -341,8 +341,9 @@ class Process:
 	@staticmethod
 	def _updateArgs(args):
 		# replace ',' with '.' in key
-		ret = args.copy() # try to keep the type
-		ret.clear()
+		# a bug of python-box, copy lost metadata
+		#ret = args.copy() # try to keep the type
+		ret = Box()
 		for key, val in args.items():
 			ret[key.replace(',', '.')] = Process._updateArgs(val) \
 				if isinstance(val, dict) else val

@@ -97,9 +97,9 @@ def mem2 (mem, unit = 'auto'):
 		retu = 'K'
 
 	if unit == 'JAVA':
-		xmx = "-Xmx" + str(retn) + retu
+		xmx = "-Xmx" + str(int(retn)) + retu
 		n, u = _autoUnit(num / 8)
-		return '-Xms' + str(n) + u + ' ' + xmx
+		return '-Xms' + str(int(n)) + u + ' ' + xmx
 	elif unit == 'JAVADICT' or unit == 'JDICT':
 		n, u = _autoUnit(num / 8)
 		return {

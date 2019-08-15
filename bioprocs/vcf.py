@@ -377,37 +377,35 @@ def _pVcf2Plink():
 @procfactory
 def _pVcfLiftover():
 	"""
-	@name:
-		pVcfLiftover
-	@description:
-		Lift over vcf files.
 	@input:
-		`infile:file`: The input vcf file.
+		infile: The input vcf file
 	@output:
-		`outfile:file`: The output vcf file.
-		`umfile:file`:  The unmapped records
+		outfile: The output vcf file
+		umfile:  The unmapped records
 	@args:
-		`tool`:    Which tool to use. Default: `picard`
-		`picard`:  The path to picard
-		`lochain`: The liftover chain file
-		`ref`:     The reference genome
-		`mem`:     The memory to use
-		`tmpdir`:  The temporary directory
-		`params`:  The extra params.
+		tool    (str) : Which tool to use
+		picard  (str) : The path to picard
+		lochain (file): The liftover chain file
+		ref     (file): The reference genome
+		mem     (str) : The memory to use
+		tmpdir  (dir) : The temporary directory
+		params  (Box) : The extra params for the tool
 	"""
-	pVcfLiftover              = Proc(desc = 'Lift over vcf files.')
-	pVcfLiftover.input        = 'infile:file'
-	pVcfLiftover.output       = 'outfile:file:{{i.infile | fn2}}.vcf, umfile:file:{{i.infile | fn2}}.unmapped.vcf'
-	pVcfLiftover.args.tool    = 'picard'
-	pVcfLiftover.args.picard  = params.picard.value
-	pVcfLiftover.args.lochain = params.lochain.value
-	pVcfLiftover.args.ref     = params.ref.value
-	pVcfLiftover.args.mem     = params.mem8G.value
-	pVcfLiftover.args.tmpdir  = params.tmpdir.value
-	pVcfLiftover.args.params  = Box()
-	pVcfLiftover.lang         = params.python.value
-	pVcfLiftover.script       = "file:scripts/vcf/pVcfLiftover.py"
-	return pVcfLiftover
+	return Box(
+		desc = 'Liftover VCF files',
+		input = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem | stem}}.vcf, umfile:file:{{i.infile | stem | stem}}.unmapped.vcf',
+		lang = params.python.value,
+		args = Box(
+			tool    = 'picard',
+			picard  = params.picard.value,
+			lochain = params.lochain.value,
+			ref     = params.ref.value,
+			mem     = params.mem8G.value,
+			tmpdir  = params.tmpdir.value,
+			params  = Box()
+		)
+	)
 
 @procfactory
 def _pVcfAddChr():
@@ -430,24 +428,21 @@ def _pVcfAddChr():
 @procfactory
 def _pVcfCleanup():
 	"""
-	@name:
-		pVcfCleanup
-	@description:
-		Remove configs from vcf file according to the given reference.
 	@input:
-		`infile:file`: The input vcf file
+		infile: The input vcf file
 	@output:
-		`outfile:file`: The output vcf file. Default: `{{i.infile | fn}}.vcf`
+		outfile: The output vcf file
 	@args:
-		`ref`: The reference file
+		ref (file): The reference file
+			- Require fai/dict file with it.
 	"""
-	pVcfCleanup          = Proc(desc = 'Remove configs from vcf file according to the given reference.')
-	pVcfCleanup.input    = 'infile:file'
-	pVcfCleanup.output   = 'outfile:file:{{i.infile | fn2}}.vcf'
-	pVcfCleanup.args.ref = params.ref.value # required dict or fai file with it
-	pVcfCleanup.lang     = params.python.value
-	pVcfCleanup.script   = "file:scripts/vcf/pVcfCleanup.py"
-	return pVcfCleanup
+	return Box(
+		desc   = 'Remove configs from vcf file according to the given reference',
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem | stem}}.vcf',
+		lang   = params.python.value,
+		args   = Box(ref = params.ref.value)
+	)
 
 @procfactory
 def _pVcf2GTVcf():
@@ -691,18 +686,23 @@ def _pVcfFix():
 	@name:
 		pVcfFix
 	"""
-	pVcfFix            = Proc(desc = 'Fix a bunch of stupid format problem in vcf files')
-	pVcfFix.input      = 'infile:file'
-	pVcfFix.output     = 'outfile:file:{{i.infile | bn}}'
-	pVcfFix.args.tabix = params.tabix.value
-	pVcfFix.args.fixes = Box(
-		clinvarLink = True,
-		nonInfoGT   = True,
-		addChr      = True
+	return Box(
+		desc   = 'Fix a bunch of format problems in vcf files',
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem | stem}}.fixed.vcf',
+		lang   = params.python.value,
+		args   = Box(
+			ref   = params.ref.value,
+			fixes = Box(
+				clinvarLink  = True,
+				addChr       = True,
+				headerInfo   = True,
+				headerContig = True,
+				headerFormat = True,
+				headerFilter = True
+			)
+		)
 	)
-	pVcfFix.lang       = params.python.value
-	pVcfFix.script     = "file:scripts/vcf/pVcfFix.py"
-	return pVcfFix
 
 @procfactory
 def _pVcfFixGT():

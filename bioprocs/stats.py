@@ -1,3 +1,4 @@
+"""Some statistic processes"""
 from pyppl import Proc, Box
 from . import params, rimport
 from . import delefactory, procfactory
