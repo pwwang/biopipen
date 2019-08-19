@@ -162,7 +162,7 @@ class Process:
 		helpsec.add((self.name, '', self.desc))
 
 	@staticmethod
-	def _parseSec(sec):
+	def _parseOptionSec(sec):
 		ret      = {}
 		sec      = Module.deindent(sec)
 		lastdesc = []
@@ -185,6 +185,10 @@ class Process:
 			ret[name.strip()] = (typ.strip(), lastdesc)
 		return ret
 
+	@staticmethod
+	def _parsePlainSec(sec):
+		return Module.deindent(sec)
+
 	def parsed(self):
 		"""Get parsed doc"""
 		if self._parsed:
@@ -202,7 +206,10 @@ class Process:
 			else:
 				lastsec.append(line)
 		for key, sec in self._parsed.items():
-			self._parsed[key] = Process._parseSec(sec)
+			if key in ('input', 'output', 'args'):
+				self._parsed[key] = Process._parseOptionSec(sec)
+			else:
+				self._parsed[key] = Process._parsePlainSec(sec)
 		return self._parsed
 
 	@staticmethod
@@ -276,7 +283,7 @@ class Process:
 
 		self._helps.add('Name',
 			Path(self.module.__file__).stem + '.' + self.name + ' [lang = %s]' % self.proc.lang)
-		self._helps.add('Description', self.desc)
+		self._helps.add('Description', self.parsed().get('description') or self.desc)
 
 		# input
 		self._helps.add('Input options (Use \':list\' for multi-jobs)',
