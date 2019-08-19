@@ -175,7 +175,12 @@ def main():
 	elif not sys.argv[0]:
 		raise RuntimeError('This package has to run as a command line tool.')
 	else:
+		# Hold helps first, because we haven't assembled the help page yet
+		hopts = commands[command]._hopts
+		commands[command]._hopts = []
 		command, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
+		# resume it
+		commands[command]._hopts = hopts
 		if '.' in command:
 			module, prc = command.split('.')
 			module = Module(module)
