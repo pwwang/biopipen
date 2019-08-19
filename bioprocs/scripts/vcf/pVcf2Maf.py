@@ -16,6 +16,7 @@ filtervcf    = {{args.filtervcf | quote}}
 ref          = {{args.ref | quote}}
 bcftools     = {{args.bcftools | quote}}
 tumoridx     = {{args.tumor | repr}}
+withchr      = {{args.withchr | repr}}
 nthread      = {{args.nthread | repr}}
 params       = {{args.params | repr}}
 oncotator    = {{args.oncotator | quote}}
@@ -103,15 +104,23 @@ def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
 
 			key = '{3}_{0.pos}_{0.ref}_{1}_{2}'.format(
 				record, tum_alt1, tum_alt2, chrom)
-
-			norm_alt_index1 = record.samples[norm_index]['GT'][0]
-			norm_alt_index2 = record.samples[norm_index]['GT'][-1]
-			normal_infos[key] = (record.alleles[norm_alt_index1], record.alleles[norm_alt_index2])
+			try:
+				norm_alt_index1 = record.samples[norm_index]['GT'][0]
+				norm_alt_index2 = record.samples[norm_index]['GT'][-1]
+				normal_infos[key] = (record.alleles[norm_alt_index1], record.alleles[norm_alt_index2])
+			except (TypeError, IndexError):
+				pass
 
 		reader = TsvReader(maf, cnames = True)
 		writer = TsvWriter(maf + '.tmp')
 		writer.cnames = reader.cnames
-		writer.writeHead()
+
+		# correct Start_position to Start_Position, End_position to End_Position
+		#               ^                               ^
+		writer.writeHead(lambda cnames: [
+			'Start_Position' if cname == 'Start_position' else 
+			'End_Position' if cname == 'End_position' else cname
+			for cname in cnames])
 		for r in reader:
 			key = '{r.Chromosome}_{r.Start_position}_{r.Reference_Allele}_{r.Tumor_Seq_Allele1}_{r.Tumor_Seq_Allele2}'.format(r = r)
 			r.Tumor_Sample_Barcode = tumor
@@ -126,6 +135,8 @@ def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
 				r.Match_Norm_Seq_Allele1 = r.Tumor_Seq_Allele2[0]
 			if r.Variant_Type == 'INS' and r.Match_Norm_Seq_Allele2 == '-' and r.Tumor_Seq_Allele2:
 				r.Match_Norm_Seq_Allele2 = r.Tumor_Seq_Allele2[0]
+			if withchr and r.Chromosome[:3] != 'chr':
+				r.Chromosome = 'chr' + r.Chromosome
 			writer.write(r)
 
 		shell.mv(maf + '.tmp', maf)

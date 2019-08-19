@@ -97,6 +97,12 @@ read.table.inopts = function(infile, inopts, dup = NULL, try = FALSE) {
 		quote       = inopts.default('quote', ""),
 		skip        = inopts.default('skip', 0)
 	)
+	inopts$cnames  = NULL
+	inopts$rnames  = NULL
+	inopts$delimit = NULL
+	inopts$quote   = NULL
+	inopts$skip    = NULL
+	params = c(params, inopts)
 	if (!try) {
 		d = do.call(read.table, params)
 	} else {

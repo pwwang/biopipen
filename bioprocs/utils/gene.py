@@ -3,7 +3,7 @@ from os import path
 from mygene import MyGeneInfo
 from medoo import Raw, Field
 from pyppl import Box
-from bioprocs.utils import alwaysList
+from pyppl.utils import alwaysList
 from bioprocs.utils.cache import Cache
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 from tempfile import gettempdir

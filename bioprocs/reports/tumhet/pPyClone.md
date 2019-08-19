@@ -13,56 +13,58 @@ This analysis is done using PyClone[1], which is designed to infer the prevalenc
 ## {{job.i.infile | stem}}
 {% endif %}
 
-### Cluster
+{% if len(jobs) > 1 %}#{% endif %}## Cluster
 ::: {.tab}
-#### Density
-![cluster-density]({{job.o.outdir}}/plots/cluster/density.svg)
+{% if len(jobs) > 1 %}#{% endif %}### Density
+![Cluster density]({{job.o.outdir}}/plots/cluster/density.svg)
 :::
 
 ::: {.tab}
-#### Parallel coordinates
-![cluster-density]({{job.o.outdir}}/plots/cluster/parallel_coordinates.svg)
+{% if len(jobs) > 1 %}#{% endif %}### Parallel coordinates
+![Parallel coordinates for clusters]({{job.o.outdir}}/plots/cluster/parallel_coordinates.svg)
 :::
 
 ::: {.tab}
-#### Scatter
-![scatter]({{job.o.outdir}}/plots/cluster/scatter.svg)
+{% if len(jobs) > 1 %}#{% endif %}### Scatter
+![Scatter for clusters]({{job.o.outdir}}/plots/cluster/scatter.svg)
 :::
 
 ::: {.tab}
-#### Table
+{% if len(jobs) > 1 %}#{% endif %}### Table
 ```table
-file: {{job.o.outdir}}/tables/cluster.csv
+file: {{job.o.outdir}}/tables/cluster.tsv
+caption: Cellular density of clusters
 ```
 :::
 
-### Loci
+{% if len(jobs) > 1 %}#{% endif %}## Loci
 ::: {.tab}
-#### Density
+{% if len(jobs) > 1 %}#{% endif %}### Density
 ![cluster-density]({{job.o.outdir}}/plots/loci/density.svg)
 :::
 
 ::: {.tab}
-#### Parallel coordinates
+{% if len(jobs) > 1 %}#{% endif %}### Parallel coordinates
 ![Cellular prevalence]({{job.o.outdir}}/plots/loci/parallel_coordinates.svg)
 ![VAF]({{job.o.outdir}}/plots/loci/vaf_parallel_coordinates.svg)
 :::
 
 ::: {.tab}
-#### Scatter
+{% if len(jobs) > 1 %}#{% endif %}### Scatter
 ![Cellular prevalence]({{job.o.outdir}}/plots/loci/scatter.svg)
 ![VAF]({{job.o.outdir}}/plots/loci/vaf_scatter.svg)
 :::
 
 ::: {.tab}
-#### Similarity
-![scatter]({{job.o.outdir}}/plots/loci/similarity_matrix.svg)
+{% if len(jobs) > 1 %}#{% endif %}### Similarity
+![Loci similarity by cellular prevalence]({{job.o.outdir}}/plots/loci/similarity_matrix.svg)
 :::
 
 ::: {.tab}
-#### Table
+{% if len(jobs) > 1 %}#{% endif %}### Table
 ```table
-file: {{job.o.outdir}}/tables/loci.csv
+file: {{job.o.outdir}}/tables/loci.tsv
+caption: Cellular prevalence for loci
 ```
 :::
 

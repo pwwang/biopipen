@@ -108,7 +108,7 @@ def _pFilter():
 			- If not, args about filter names will not work.
 		include  (str|list|dict): include only sites for which EXPRESSION is true.
 			- See: https://samtools.github.io/bcftools/bcftools.html#expressions
-			- Use `args.params.include` or `args.params.exclude` only if you just have on filter.
+			- Use `args.params.include` or `args.params.exclude` only if you just have one filter.
 			- If provided, `args.params.include/exclude` will be ignored.
 			- If `str`/`list` used, The filter names will be `Filter%d`
 			- A dict is used when keys are filter names and values are expressions

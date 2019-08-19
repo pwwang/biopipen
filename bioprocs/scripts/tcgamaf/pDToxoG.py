@@ -7,6 +7,8 @@ infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
 dtoxog  = {{args.dtoxog | quote}}
 params  = {{args.params | repr}}
+keep    = {{args.keep | repr}}
+nthread = {{args.nthread | repr}}
 
 shell.load_config(dtoxog = dtoxog)
 
@@ -35,8 +37,8 @@ shell.load_config(dtoxog = dtoxog)
 
 required_fields = { # set
 	'Chromosome',
-	'Start_position',
-	'End_position',
+	'Start_Position',
+	'End_Position',
 	'Reference_Allele',
 	'Tumor_Seq_Allele1',
 	'Tumor_Sample_Barcode',
@@ -75,7 +77,10 @@ reader = TsvReader(infile, comment = '#', cnames = True)
 writer = TsvWriter(infile_fixed)
 if fields_not_found:
 	writer.cnames = reader.cnames + ['i_picard_oxoQ']
-writer.writeHead()
+writer.writeHead(lambda cnames: [
+	'Start_position' if cname == 'Start_Position' else 
+	'End_position' if cname == 'End_Position' else cname
+	for cname in cnames])
 for r in reader:
 	if r.Variant_Type not in ('SNP', 'DNP', 'TNP'):
 		continue
@@ -86,12 +91,47 @@ for r in reader:
 	writer.write(r)
 
 params.mafFilename       = infile_fixed
-params.outputMAFFilename = path.basename(outfile)
+params.outputMAFFilename = path.basename(outfile) + '.all'
 params.outputDir         = path.dirname(outfile)
+params.nthread           = nthread
 
+
+# avoid lost values
 for key, value in params.items():
 	if isinstance(value, bool):
 		params[key] = int(value)
 
 shell.mkdir(path.join(path.dirname(outfile), 'figures'))
 shell.fg.dtoxog(**params)
+
+
+
+if not keep:
+	# remove variants with isArtifactMode = 1
+	with open(outfile + '.all') as fin, open(outfile, 'w') as fout:
+		for line in fin:
+			if line.startswith('#'):
+				fout.write(line)
+			else:
+				break
+	reader = TsvReader(outfile + '.all')
+	writer = TsvWriter(outfile, append = True)
+	writer.cnames = reader.cnames
+	writer.writeHead(lambda cnames: [
+		'Start_Position' if cname == 'Start_position' else 
+		'End_Position' if cname == 'End_position' else cname
+		for cname in cnames])
+	for r in reader:
+		if r.isArtifactMode == '1':
+			continue
+		writer.write(r)
+	reader.close()
+	writer.close()
+else:
+	# get Start_Position and End_Position back
+	with open(outfile + '.all') as fin, open(outfile, 'w') as fout:
+		for line in fin:
+			if line.startswith('Hugo_Symbol'):
+				fout.write(line.replace('Start_position', 'Start_Position').replace('End_position', 'End_Position'))
+			else:
+				fout.write(line)

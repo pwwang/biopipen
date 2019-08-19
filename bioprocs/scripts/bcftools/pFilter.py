@@ -33,8 +33,8 @@ def normExpr(expr):
 	return {"Filter1": expr}
 
 # get the normalized filters
-if not include and not exclude:
-	raise ValueError('At least one expression for `args.include` or `args.exclude` is required.')
+# if not include and not exclude:
+# 	raise ValueError('At least one expression for `args.include` or `args.exclude` is required.')
 
 if include and exclude:
 	raise ValueError('We can only handle `include` or `exclude` expression at one time, please rephrase one of them into the same type.')

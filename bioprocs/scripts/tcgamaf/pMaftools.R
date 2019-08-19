@@ -2,9 +2,10 @@
 library(maftools)
 
 indir    = {{i.indir | quote}}
+msdir    = {{i.msdir | quote}}
 outdir   = {{o.outdir | quote}}
 isTCGA   = {{args.isTCGA | R}}
-mutypes  = {{args.mutypes | R}}
+extypes  = {{args.extypes | R}}
 devpars  = {{args.devpars | R}}
 plots    = {{args.plot | R}}
 mtparams = {{args.params | R}}
@@ -96,6 +97,9 @@ if (!is.null(alllesion) && !is.null(ampgene) && !is.null(delgene) && !is.null(gi
 	lamlGistic = readGistic(gisticAllLesionsFile = alllesion, gisticAmpGenesFile = ampgene, gisticDelGenesFile = delgene, gisticScoresFile = gisscore, isTCGA = isTCGA)
 }
 
+mafdata = read.table.inopts(maffile, list(cnames = TRUE, rnames = FALSE, fill = TRUE))
+alltypes = levels(as.factor(mafdata$Variant_Classification))
+
 laml = read.maf(
 	maf                  = maffile,
 	clinicalData         = annofile,
@@ -105,7 +109,7 @@ laml = read.maf(
 	gisticScoresFile     = gisscore,
 	cnTable              = cntable,
 	isTCGA               = isTCGA,
-	vc_nonSyn            = mutypes
+	vc_nonSyn            = setdiff(alltypes, extypes)
 )
 
 genesum = getGeneSummary(laml)
@@ -113,16 +117,18 @@ samsum  = getSampleSummary(laml)
 genes   = genesum$Hugo_Symbol[1:ngenes]
 nsample = nrow(samsum)
 
-siggenes = c(Sys.glob(file.path(indir, '*sig_genes.txt.gz')), Sys.glob(file.path(indir, '*sig_genes.txt')))
-siggene  = NULL
-if (length(siggenes) > 0) {
-	siggene = siggenes[1]
-	if (length(siggenes) > 1) {
-		log2pyppl('You multiple mutsig files in input directory, using the first one:', siggene, level = 'warning')
-	} else {
-		msdata = read.table(if(endsWith(siggene, '.gz')) gzfile(siggene) else siggene, header = T, row.names = 1, sep = "\t", check.names = F)
-		genes = rownames(msdata)[1:ngenes]
-	}
+if (is.true(msdir) && dir.exists(msdir)) {
+	siggene = c(
+		Sys.glob(file.path(msdir, '*sig_genes.txt.gz')), 
+		Sys.glob(file.path(msdir, '*sig_genes.txt')))[1]
+} else if (is.true(msdir) && file.exists(msdir)) {
+	siggene = msdir
+} else {
+	siggene = NULL
+}
+if (!is.null(siggene)) {
+	msdata = read.table.inopts(siggene, list(rnames = TRUE, cnames = TRUE))
+	genes = rownames(msdata)[1:ngenes]
 }
 
 samples = samsum$Tumor_Sample_Barcode
@@ -493,7 +499,7 @@ if (plots$oncodrive) {
 			sig = do.call(oncodrive, OcParams)
 
 			PocParams = list(res = sig, fdrCutOff = 0.05, useFraction = FALSE,
-							colCode = NULL, labelSize = 2)
+							colCode = NULL) #, labelSize = 2) # plotOncodrive hangs with labelSize argument
 			for (name in names(params)) {
 				if (name %in% names(PocParams))
 					PocParams[[name]] = params[[name]]
@@ -517,7 +523,17 @@ if (plots$pfam) {
 	do.call(png, c(list(filename = pfamfile), devpars))
 	tryCatch(
 		{
-			do.call(pfamDomains, params)
+			pfam = do.call(pfamDomains, params)
+			pfsum = pfam$proteinSummary
+			# add link to domains 
+			pfsum$DomainLabel = sapply(
+				pfsum$DomainLabel, 
+				function(x) {sprintf("[%s](https://www.ncbi.nlm.nih.gov/cdd/?term=%s)", x, x)})
+			write.table(
+				pfsum[!is.na(pfsum$DomainLabel), 1:7, with=FALSE], 
+				file.path(outdir, 'pfam.csv'),
+				row.names = FALSE, col.names = TRUE, sep = ",", quote = FALSE)
+
 		}, error = function(e) {
 			log2pyppl('Failed to plot pfam:', e, level = 'warning')
 		}
@@ -668,7 +684,7 @@ if (plots$signature) {
 	logger('## Plotting signature ...')
 	require('NMF')
 	params = mtparams$signature
-	tmParams = list(prefix = 'chr', add = TRUE, ignoreChr = NULL, useSyn = TRUE, fn = NULL)
+	tmParams = list(prefix = '', add = TRUE, ignoreChr = NULL, useSyn = TRUE, fn = NULL)
 	for (name in names(params)) {
 		if (name %in% names(tmParams)) {
 			tmParams[[name]] = params[[name]]
@@ -701,7 +717,7 @@ if (plots$signature) {
 	dev.off()
 
 	# sigs
-	sgParams = list(n = NULL, nTry = 6, plotBestFitRes = FALSE, parallel = NULL)
+	sgParams = list(n = NULL, nTry = 6, pConstant = 1, plotBestFitRes = FALSE, parallel = NULL)
 	for (name in names(params)) {
 		if (name %in% names(sgParams)) {
 			sgParams[[name]] = params[[name]]

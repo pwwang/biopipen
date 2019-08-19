@@ -9,46 +9,88 @@ Modkit().delegate(delefactory())
 def _pSciClone():
 	"""
 	@input:
-		`vfvcfs:files`: The VCF files of mutations of each sample
-			- Single-sample/paired-sample vcf files.
-			- If it is paired, you have to specify which sample (`args.vfsamcol`) is the target.
-		`cnvcfs:files`: The VCF files of copy number variations of each sample
+		muts: Somatic mutations. Could be one of:
+			- Single(paired)-sample VCF files, separared by comma
+				- Must have `FORMAT/AF` and `FORMAT/AD`
+			- Multi-sample VCF file
+			- TCGA MAF file
+				- Must have `t_alt_count` and `t_ref_count`
+			- SciClone TSV file
+				- Chr, Pos, RefCount, VarCount, VAF*100
+		cnvs: Copy numbers. Could be one of:
+			- Single-sample VCF files, separared by comma
+			- Multi-sample VCF files, must have `INFO/END` and `FORMAT/CN`
+			- SciClone TSV file
+				- Chr, Start, End, CopyNumber
 	@output:
-		`outdir:dir`: The output directory.
+		outdir: The output directory.
 	@args:
-		`params`  : Other parameters for original `sciClone` function. Default: `Box()`
-		`exfile`  : The regions to be excluded. In BED3 format
-		`vfsamcol`: The index of the target sample in mutation VCF file, 1-based. Default: `1`
-		`cnsamcol`: The index of the target sample in copy number VCF file, 1-based. Default: `1`
-		`varcount`: An R function string to define how to get the variant allele count.
-			- If this function returns `NULL`, record will be skipped.
-			- It can use the sample calls (`fmt`) and also the record info (`info`)
-			- Both `function(fmt) ...` and `function(fmt, info) ...` can be used.
-			- Don't include `info` if not necessary. This saves time.
-			- This function can return the variant count directly, or
-			- an R `list` like: `list(count = <var count>, depth = <depth>)`.
-			- By default, the `depth` will be read from `fmt$DP`
-		`cncount` : An R function string to define how to get the copy number.
-			- Similar as `varcount`
-			- Returns copy number directly, or
-			- an R `list` like: `list(cn = <copy number>, end = <end>, probes = <probes>)`
-			- `end` defines where the copy number variation stops
-			- `probes` defines how many probes cover this copy number variantion.
+		params (Box)  : Other parameters for original `sciClone` function. Default: `Box()`
+		exfile (file)  : The regions to be excluded. In BED3 format
+		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based. 
+			- `None` indicates no control sample.
+			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
+		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based. 
 	"""
 	return Box(
 		desc   = "Clonality analysis using SciClone.",
-		input  = "vfvcfs:files, cnvcfs:files",
-		output = "outdir:dir:{{i.vfvcfs | fs2name}}.sciclone",
-		envs   = Box(fs2name  = fs2name),
+		input  = "muts:var, cnvs:var",
+		output = "outdir:dir:{{i.muts | bn | .split('.')[0]}}.sciclone",
 		lang   = params.Rscript.value,
 		args   = Box(
+			params  = Box(),
+			exfile  = "",
+			mutctrl = None,
+			cnctrl  = None
+		)
+	)
+
+@procfactory
+def _pPyClone():
+	"""
+	@input:
+		muts: Somatic mutations. Could be one of:
+			- Single(paired)-sample VCF files, separated by comma (i.e. a.vcf,b.vcf)
+				- Must have `FORMAT/AF` and `FORMAT/AD`
+			- Multi-sample VCF file (i.e. a.vcf)
+			- TCGA MAF file (i.e. a.maf)
+				- Must have `t_alt_count` and `t_ref_count` columns
+			- PyClone TSV file (i.e. a.tsv or a.txt)
+				- See https://github.com/aroth85/pyclone/blob/master/examples/mixing/tsv/SRR385941.tsv without `*_cn` columns
+				- `mutation_id` should be either `<sample>:<gt>:<chr>:<pos>` or `<chr>:<pos>`
+		cnvs: Copy numbers. Could be one of:
+			- Single-sample VCF files, separated by comma
+			- Multi-sample VCF file
+				- Must have `INFO/END` and `FORMAT/CN`
+			- PyClone TSV file
+				- See https://github.com/aroth85/pyclone/blob/master/examples/mixing/tsv/SRR385941.tsv without `*_counts` and `variant_freq` columns
+	@output:
+		`outdir:dir`: The output directory.
+	@args:
+		pyclone (str): Path to `PyClone`.
+		bcftools(str): Path to `bcftools`, used to get information from VCF file.
+		bedtools(str): Path to `bedtools`, used to intersect mutations with CNVs.
+		params  (Box): Other parameters for original `PyClone run_analysis_pipeline` function.
+		nthread (int): Number of threads to use by openblas.
+		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based. 
+			- `None` indicates no control sample.
+			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
+		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based. 
+	"""
+	return Box(
+		desc   = "Clonality analysis using PyClone",
+		input  = "muts:var, cnvs:var",
+		output = "outdir:dir:{{i.muts | bn | .split('.')[0]}}.pyclone",
+		lang   = params.python.value,
+		args   = Box(
+			pyclone  = params.pyclone.value,
+			bcftools = params.bcftools.value,
+			bedtools = params.bedtools.value,
+			refgene  = params.refgene.value,
+			nthread  = 1,
 			params   = Box(),
-			exfile   = "",
-			vfsamcol = 1,     # the first sample is the target sample in variant vcf
-			cnsamcol = 1,     # the first sample is the target sample in copy number vcf
-			# how to get the var count
-			varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])',
-			cncount  = 'function(fmt) fmt$CN' # how to get the copy number
+			mutctrl  = None,
+			cnctrl   = None,
 		)
 	)
 
@@ -69,47 +111,6 @@ def _pTMBurden():
 		output = 'outfile:file:{{i.infile | stem}}.tmb.txt',
 		args   = Box(type = 'nonsyn'),
 		lang   = params.python.value
-	)
-
-@procfactory
-def _pPyClone():
-	"""
-	@input:
-		`vfvcfs:files`: The VCF files of mutations of each sample
-			- Single-sample/paired-sample vcf files.
-			- If it is paired, you have to specify which sample (`args.vfsamcol`) is the target.
-		`cnvcfs:files`: The VCF files of copy number variations of each sample
-	@output:
-		`outdir:dir`: The output directory.
-	@args:
-		params (dict): Other parameters for original `PyClone run_analysis_pipeline` function. Default: `Box()`
-		vfsamcol (int): The index of the target sample in mutation VCF file, 1-based. Default: `1`
-		cnsamcol (int): The index of the target sample in copy number VCF file, 1-based. Default: `1`
-		varcount (str): A python lambda string to define how to get #ref, #alt and allele frequency ( `ref`, `alt`, `af`).
-			- If this function returns `None`, record will be skipped.
-			- It can use the sample calls (`fmt`) and also the record info (`info`), meaning both `function(fmt) ...` and `function(fmt, info) ...` can be used.
-			- This function should return a dict with keys `ref`, `alt`, `dp` and `af`.
-			- By default, `ref` and `alt` will get from `FORMAT[AD]`; `af` from `FORMAT[AF]`, if not provided, then `alt/sum(FORMAT[AD])`
-		cncount (str): An python lambda string to define how to get the copy number.
-			- Similar as `varcount`, returns a `dict` of copy number of ref and alt alleles (key: `major` and `minor`), as well as end of the copy number region (`end`).
-			- By default, `major` and `minor` will get from `FORMAT[CN]` if it is a `tuple/list`. If it is an integer, then it's `major` and `minor` will be `0`. Otherwise, `major` and `minor` will be `2` and `0`, respectively.
-		pyclone (str): The path of `PyClone`.
-	"""
-	return Box(
-		desc   = "Run PyClone for clonality analysis.",
-		input  = "vfvcfs:files, cnvcfs:files",
-		output = "outdir:dir:{{i.vfvcfs | fs2name}}.pyclone",
-		lang   = params.python.value,
-		envs   = Box(fs2name  = fs2name),
-		args   = Box(
-			params   = Box(),
-			vfsamcol = 1, # 1-based
-			cnsamcol = 1,
-			varcount = None,
-			cncount  = None,
-			nthread  = 1,
-			pyclone  = params.pyclone.value,
-		)
 	)
 
 @procfactory
@@ -195,75 +196,87 @@ def _pSuperFreq():
 def _pClonEvol():
 	"""
 	@input:
-		mutfile: The mutation file.
-		saminfo: The sample information file.
+		mutfile: The mutation file or output directory from PyClone.
+			- https://github.com/hdng/clonevol/issues/4#issuecomment-280997440
+			- VAF, CCF should x100
+		samfile: The sample information file.
+		drivers: The driver genes.
+			- One per line or
+			- Mutsig file with top 10 genes
 	@output:
 		outdir: The output directory.
 	@args:
 		inopts: The input options to read the mutation file.
 		params: The parameters for individual `ClonEvol` functions.
 	"""
-	pClonEvol             = Proc(desc = "Inferring and visualizing clonal evolution in multi-sample cancer sequencing.")
-	pClonEvol.input       = 'mutfile:file, saminfo:file'
-	pClonEvol.output      = 'outdir:dir:{{i.mutfile | stem}}.clonevol'
-	pClonEvol.lang        = params.Rscript.value
-	pClonEvol.args.inopts = Box(rnames = False, cnames = True)
-	pClonEvol.args.params = Box({
-		'plot.variant.clusters': Box(
-			# see https://rdrr.io/github/hdng/clonevol/man/plot.variant.clusters.html
-		),
-		'plot.cluster.flow': Box(
-			# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
-		),
-		'infer.clonal.models': Box({
-			# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
-			"founding.cluster": 1,
-			"cluster.center": "mean",
-			"sum.p.cutoff": 0.05,
-			"alpha": 0.05
-		}),
-		'transfer.events.to.consensus.trees': Box({
-			# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
-			"event.col.name": "gene"
-		}),
-		'convert.consensus.tree.clone.to.branch': Box({
-			# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
-			"branch.scale": "sqrt"
-		}),
-		'plot.clonal.models': Box({
-			# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
-			# "clone.shape"                     : 'bell',
-			# "bell.event"                      : True,
-			# "bell.event.label.color"          : 'blue',
-			# "bell.event.label.angle"          : 60,
-			# "clone.time.step.scale"           : 1,
-			# "bell.curve.step"                 : 2,
-			# "merged.tree.plot"                : True,
-			# "tree.node.label.split.character" : None,
-			# "tree.node.shape"                 : 'circle',
-			# "tree.node.size"                  : 30,
-			# "tree.node.text.size"             : 0.5,
-			# "merged.tree.node.size.scale"     : 1.25,
-			# "merged.tree.node.text.size.scale": 2.5,
-			# "merged.tree.cell.frac.ci"        : False,
-			# "mtcab.event.sep.char"            : ',',
-			"mtcab.branch.text.size"          : .8,
-			# "mtcab.branch.width"              : 0.75,
-			# "mtcab.node.size"                 : 3,
-			# "mtcab.node.label.size"           : 1,
-			"mtcab.node.text.size"            : .8,
-			# "cell.plot"                       : True,
-			# "num.cells"                       : 100,
-			# "cell.border.size"                : 0.25,
-			# "cell.border.color"               : 'black',
-			# "clone.grouping"                  : 'horizontal',
-			# "show.score"                      : False,
-			# "cell.frac.ci"                    : True,
-			# "disable.cell.frac"               : False
-		})
-	})
-	pClonEvol.args.devpars = Box(width = 2000, height = 2000, res = 300)
-	return pClonEvol
+	return Box(
+		desc   = "Inferring and visualizing clonal evolution in multi-sample cancer sequencing",
+		input  = 'mutfile:file, samfile:file, drivers:var',
+		output = 'outdir:dir:{{i.mutfile | stem}}.clonevol',
+		lang   = params.Rscript.value,
+		args   = Box(
+			# only for clonevol input format
+			inopts   = Box(rnames = False,  cnames = True),
+			drivers  = [],
+			refgene  = params.refgene.value,
+			bedtools = params.bedtools.value,
+			devpars  = Box(width = 2000, height = 2000, res = 300),
+			params   = Box({
+				'plot.variant.clusters': Box(
+					# see https://rdrr.io/github/hdng/clonevol/man/plot.variant.clusters.html
+				),
+				'plot.cluster.flow': Box({
+					# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
+				}),
+				'infer.clonal.models': Box({
+					# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
+					"founding.cluster": 1,
+					"cluster.center": "mean",
+					"sum.p.cutoff": 0.05,
+					"alpha": 0.05,
+				}),
+				'transfer.events.to.consensus.trees': Box({
+					# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
+					"event.col.name": "gene"
+				}),
+				'convert.consensus.tree.clone.to.branch': Box({
+					# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
+					"branch.scale": "sqrt"
+				}),
+				'plot.clonal.models': Box({
+					# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
+					# "clone.shape"                     : 'bell',
+					# "bell.event"                      : True,
+					# "bell.event.label.color"          : 'blue',
+					# "bell.event.label.angle"          : 60,
+					# "clone.time.step.scale"           : 1,
+					# "bell.curve.step"                 : 2,
+					# "merged.tree.plot"                : True,
+					# "tree.node.label.split.character" : None,
+					# "tree.node.shape"                 : 'circle',
+					# "tree.node.size"                  : 30,
+					# "tree.node.text.size"             : 0.5,
+					# "merged.tree.node.size.scale"     : 1.25,
+					# "merged.tree.node.text.size.scale": 2.5,
+					# "merged.tree.cell.frac.ci"        : False,
+					# "mtcab.event.sep.char"            : ',',
+					"mtcab.branch.text.size"          : .8,
+					# "mtcab.branch.width"              : 0.75,
+					# "mtcab.node.size"                 : 3,
+					# "mtcab.node.label.size"           : 1,
+					"mtcab.node.text.size"            : .8,
+					# "cell.plot"                       : True,
+					# "num.cells"                       : 100,
+					# "cell.border.size"                : 0.25,
+					# "cell.border.color"               : 'black',
+					# "clone.grouping"                  : 'horizontal',
+					# "show.score"                      : False,
+					# "cell.frac.ci"                    : True,
+					# "disable.cell.frac"               : False
+				})
+			})
+		)
+	)
 
 @procfactory
 def _pPyClone2ClonEvol():

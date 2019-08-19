@@ -134,45 +134,46 @@ def _pGSEA():
 @procfactory
 def _pEnrichr():
 	"""
-	@name:
-		pEnrichr
-	@description:
-		Use APIs from http://amp.pharm.mssm.edu/Enrichr/help#api&q=1 to analyze a gene list
 	@input:
 		`infile:file`: The gene list, each per line
 	@output:
 		`outdir:dir`:  The output directory, containing the tables and figures.
 	@args:
-		`top`:     Top N pathways used to plot. Default: 10
-		`genecol`: The columns index containing the genes. Default: 0
+		`top`:     Top N pathways used to plot
+		`genecol`: The columns index containing the genes
 		`inopts`:  The input options.
-			- `delimit`: The delimit of input file. Default: `\t`
-			- `skip`:    Skip first N lines. Default: `0`
-			- `comment`: Line comment mark. Default: `#`
+			- `delimit`: The delimit of input file.
+			- `skip`:    Skip first N lines. 
+			- `comment`: Line comment mark.
 			- Other parameters fit `bioprocs.utils.tsvio.TsvReader`
-		`libs`:  The databases to do enrichment against. Default: KEGG_2016
-		- A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
-		- Multiple dbs separated by comma (,)
-		`plot`: Whether to plot the result. Default: True
-		`devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+		`libs`:  The databases to do enrichment against.
+			- A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
+			- Multiple dbs separated by comma (,)
+		`plot`: Whether to plot the result.
+		`devpars`: Parameters for png.
+		include: A lambda function to include the records(genes)
+			- argument is `bioprocs.utils.tsvio2.TsvRecord`
 	"""
-	pEnrichr               = Proc()
-	pEnrichr.input         = "infile:file"
-	pEnrichr.output        = "outdir:dir:{{i.infile | fn}}.enrichr"
-	pEnrichr.lang          = params.python.value
-	pEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
-	pEnrichr.args.top      = 20
-	pEnrichr.args.cutoff   = 1
-	pEnrichr.args.genecol  = ''
-	pEnrichr.args.nthread  = 1
-	pEnrichr.args.Rscript  = params.Rscript.value
-	pEnrichr.args.pathview = Box() # Box(fccol = 2)
-	pEnrichr.args.libs     = "KEGG_2019_Human"
-	pEnrichr.args.devpars  = Box(res = 300, width = 2000, height = 2000)
-	pEnrichr.args.plot     = True
-	pEnrichr.errhow        = 'retry'
-	pEnrichr.script        = "file:scripts/gsea/pEnrichr.py"
-	return pEnrichr
+	return Box(
+		desc = 'Gene set enrichment analysis using Enrichr APIs',
+		input = 'infile:file',
+		output = 'outdir:dir:{{i.infile | stem}}.enrichr',
+		lang = params.python.value,
+		errhow = 'retry',
+		args = Box(
+			inopts   = Box(delimit = '\t', skip = 0, comment = '#'),
+			top      = 20,
+			cutoff   = 1,
+			genecol  = 0,
+			include  = None,
+			nthread  = 1,
+			Rscript  = params.Rscript.value,
+			pathview = Box(), # Box(fccol = 2)
+			libs     = "KEGG_2019_Human",
+			devpars  = Box(res = 300, width = 2000, height = 2000),
+			plot     = True
+		)
+	)
 
 @procfactory
 def _pGene2Pathway():

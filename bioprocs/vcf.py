@@ -279,10 +279,6 @@ def _pVcfMerge():
 @procfactory
 def _pVcf2Maf():
 	"""
-	@name:
-		pVcf2Maf
-	@description:
-		Convert Vcf file to Maf file
 	@input:
 		`infile:file` : The input vcf file
 			- see `args.tumor`
@@ -310,26 +306,30 @@ def _pVcf2Maf():
 		oncotator: Path to oncotator.
 		oncotator_db (dir): Path to oncotator database.
 		params: Extra parameters for the tool.
+		withchr (bool): Should we add chr to Chromosome column or not.
 	"""
-	pVcf2Maf                   = Proc(desc = 'Convert Vcf file to Maf file.')
-	pVcf2Maf.input             = 'infile:file'
-	pVcf2Maf.output            = 'outfile:file:{{i.infile | fn2}}.maf'
-	pVcf2Maf.args.tool         = 'oncotator'
-	pVcf2Maf.args.vcf2maf      = params.vcf2maf.value
-	pVcf2Maf.args.vep          = params.vep.value
-	pVcf2Maf.args.tabix        = params.tabix.value
-	pVcf2Maf.args.vepDb        = params.vepDb.value
-	pVcf2Maf.args.filtervcf    = params.vepNonTCGAVcf.value
-	pVcf2Maf.args.ref          = params.ref.value
-	pVcf2Maf.args.oncotator    = params.oncotator.value
-	pVcf2Maf.args.oncotator_db = params.oncotator_db.value
-	pVcf2Maf.args.bcftools     = params.bcftools.value
-	pVcf2Maf.args.tumor        = 'auto'
-	pVcf2Maf.args.nthread      = 1
-	pVcf2Maf.args.params       = Box()
-	pVcf2Maf.lang              = params.python.value
-	pVcf2Maf.script            = "file:scripts/vcf/pVcf2Maf.py"
-	return pVcf2Maf
+	return Box(
+		desc   = 'Convert Vcf file to Maf file',
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | fn2}}.maf',
+		lang   = params.python.value,
+		args   = Box(
+			tool         = 'oncotator',
+			withchr      = True,
+			vcf2maf      = params.vcf2maf.value,
+			vep          = params.vep.value,
+			tabix        = params.tabix.value,
+			vepDb        = params.vepDb.value,
+			filtervcf    = params.vepNonTCGAVcf.value,
+			ref          = params.ref.value,
+			oncotator    = params.oncotator.value,
+			oncotator_db = params.oncotator_db.value,
+			bcftools     = params.bcftools.value,
+			tumor        = 'auto',
+			nthread      = 1,
+			params       = Box()
+		)
+	)
 
 @procfactory
 def _pVcf2Plink():

@@ -3,11 +3,18 @@ options(stringsAsFactors = FALSE)
 library(sciClone)
 library(vcfR)
 
-vfvcfs   = {{i.vfvcfs | R}}
-cnvcfs   = {{i.cnvcfs | R}}
-outdir   = {{o.outdir | quote}}
-params   = {{args.params | R}}
-exfile   = {{args.exfile | quote}}
+mutfile = {{i.vfvcfs | R}}
+cnvfile = {{i.cnvcfs | R}}
+outdir  = {{o.outdir | quote}}
+params  = {{args.params | R}}
+exfile  = {{args.exfile | quote}}
+mutctrl = {{args.mutctrl | R}}
+cnctrl  = {{args.mutctrl | R}}
+
+
+
+
+
 vfsamcol = {{args.vfsamcol | R}}
 cnsamcol = {{args.cnsamcol | R}}
 varcount = {{args.varcount | :a if a else 'NULL'}}

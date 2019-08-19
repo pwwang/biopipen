@@ -15,7 +15,7 @@ def _pVcfStatsPlot():
 	@description:
 		Convert csvstat file from snpEff to R-readable matrix and plot them.
 	@input:
-		`indir:file`: The directory containing the csv stat files from `snpEff ann`
+		indir: The directory containing the csv stat files from `snpEff ann`
 	@output:
 		`outdir:dir`: The output directory
 	@args:
@@ -139,7 +139,7 @@ def _pCallRate():
 	@description:
 		Calculate sample/snp call rate from single sample vcfs
 	@input:
-		`indir:file`:     The dir containing the vcfs
+		indir:     The dir containing the vcfs
 	@output:
 		`outsample:file`: The report of call rate for each sample
 		`figsample:file`: The bar chat of sample call rates
@@ -250,27 +250,23 @@ def _pMafLiftover():
 @procfactory
 def _pMafMerge():
 	"""
-	@name:
-		pMafMerge
-	@description:
-		Merge maf files.
 	@input:
 		`infiles:files`: The maf files
 	@output:
 		outfile: The merged maf file
 	@args:
 		`excols`: How to deal with extra columns other than 34 standard columns from TCGA.
-			- merge(default): Merge the columns, if one not exists, fill with an empty string.
+			- merge(default): Merge the columns, if one not exists, fill with __UNKNOWN__.
 			- discard: Just discard the extra columns, with only 34 columns left. So you can also put just one maf file in the indir with some columns missed to fill it with standard columns.
 	"""
-	pMafMerge              = Proc(desc = 'Merge maf files.')
-	pMafMerge.input        = 'infiles:files'
-	pMafMerge.output       = 'outfile:file:{{i.infiles | fs2name}}.maf'
-	pMafMerge.args.excols  = 'merge' # discard
-	pMafMerge.envs.fs2name = fs2name
-	pMafMerge.lang         = params.python.value
-	pMafMerge.script       = "file:scripts/tcgamaf/pMafMerge.py"
-	return pMafMerge
+	return Box(
+		desc   = 'Merge MAF files',
+		input  = 'infiles:files',
+		output = 'outfile:file:{{i.infiles | fs2name}}.maf',
+		lang   = params.python.value,
+		args   = Box(excols  = 'merge'),  # discard,
+		envs   = Box(fs2name = fs2name)
+	)
 
 @procfactory
 def _pMaf2Mat():
@@ -303,12 +299,8 @@ def _pMaf2Mat():
 @procfactory
 def _pMaftools():
 	"""
-	@name:
-		pMaftools
-	@description:
-		Use maftools to draw plots.
 	@input:
-		`indir:file`: The input directory or a single maf file. A directory could contain:
+		indir: The input directory or a single maf file. A directory could contain:
 			- `*.maf` or `*.maf.gz` file (required)
 			- `*.annot.tsv` or `*.annot.txt` file (see: https://github.com/PoisonAlien/maftools/blob/master/inst/extdata/tcga_laml_annot.tsv)
 			- `all_lesions.conf_*.txt`: Gistic cnv data
@@ -316,18 +308,36 @@ def _pMaftools():
 			- `del_genes.conf_*.txt`: Gistic cnv data
 			- `scores.gistic`: Gistic cnv data
 			- `*.seg.txt`: CBS segments data
-			- `*sig_genes.txt` or `*sig_genes.txt.gz`: Mutsig results, to do pancancer somparison.
+		msdir: MutSig result directory.
+			- Must have`*sig_genes.txt` to do pancancer comparison.
 	@output:
-		`outdir:dir`: The output directory
+		outdir: The output directory
 	@args:
-		`ngenes` : Top number of genes to plot for some plots. Default: `10`
-		`mutypes`: Provide manual list of variant classifications to be considered as non-synonymous. Rest will be considered as silent variants. Default: `["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]`
-		`isTCGA`:  If the maf file is from TCGA? Default: `False`
-		`ref`   :  The reference file for signature plot.
-		`plot`  :  Which plots to plot.
-			- Default:
-			```python
-			Box(
+		ngenes : Top number of genes to plot for some plots.
+		extypes: Exclude mutation types, only consider nonsynonymous mutations.
+		isTCGA : If the maf file is from TCGA?
+		ref    : The reference file for signature plot.
+		plot   : Which plots to plot.
+		params : The extra parameters for each plot function.
+		devpars: The parameters for plot device.
+		nthread: Number of threads used for multiple plot of one type.
+	@requires:
+		[Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
+	"""
+	return Box(
+		desc   = 'Basic analysis on somatic mutations of a group of samples',
+		input  = 'indir:file, msdir:file',
+		output = 'outdir:dir:{{i.indir | fn}}.maftools',
+		lang   = params.Rscript.value,
+		args   = Box(
+			ngenes  = 10,
+			isTCGA  = False,
+			genome  = params.genome.value,
+			devpars = Box(res = 300, height = 2000, width = 2000),
+			nthread = 1,
+			# exclude mutation types, only consider nonsynonymous mutations.
+			extypes = ["Intron", "5'UTR", "3'UTR", "IGR", "5'Flank", "3'Flank", "Silent"],
+			plot    = Box(
 				summary        = True,
 				oncoplot       = True,
 				oncostrip      = True,
@@ -348,17 +358,13 @@ def _pMaftools():
 				survival       = True,
 				heterogeneity  = True,
 				signature      = True,
-			)
-			```
-		`params`:  The extra parameters for each plot function.
-			- Default:
-			```python
-			Box(
+			),
+			params = Box(
 				summary        = Box(rmOutlier = True, addStat = 'median', dashboard = True),
 				oncoplot       = Box(),
 				oncostrip      = Box(),
 				titv           = Box(),
-				lollipop       = Box(AACol = 'Protein_Change'),
+				lollipop       = Box(),
 				cbsseg         = Box(labelAll = True),
 				rainfall       = Box(detectChangePoints = True),
 				tcgacomp       = Box(),
@@ -368,76 +374,15 @@ def _pMaftools():
 				gisticBubble   = Box(),
 				gisticOncoplot = Box(),
 				somInteraction = Box(),
-				oncodrive      = Box(AACol = 'Protein_Change', minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
-				pfam           = Box(AACol = 'Protein_Change'),
-				pancan         = Box(qval = 0.1, label = 1, normSampleSize = True),
+				oncodrive      = Box(minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
+				pfam           = Box(),
+				pancan         = Box(qval = 0.1, label = 1),
 				survival       = Box(),
 				heterogeneity  = Box(),
 				signature      = Box(nTry = 6, plotBestFitRes = False),
 			)
-			```
-		`devpars`:  The parameters for plot device. Default: `Box(res = 300, height = 2000, width = 2000)`
-		`nthread`:  Number of threads used for multiple plot of one type. Default: `1`
-	@requires:
-		[Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
-	"""
-	pMaftools              = Proc(desc = 'Use maftools to draw plots.')
-	pMaftools.input        = 'indir:file'
-	pMaftools.output       = 'outdir:dir:{{i.indir | fn}}.maftools'
-	pMaftools.args.ngenes  = 10
-	pMaftools.args.isTCGA  = False
-	pMaftools.args.genome  = params.genome.value # for signature
-	pMaftools.args.mutypes = ["Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site","Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del","In_Frame_Ins", "Missense_Mutation"]
-	pMaftools.args.plot    = Box(
-		summary        = True,
-		oncoplot       = True,
-		oncostrip      = True,
-		titv           = True,
-		lollipop       = True,
-		cbsseg         = True,
-		rainfall       = True,
-		tcgacomp       = True,
-		vaf            = True,
-		genecloud      = True,
-		gisticGenome   = True,
-		gisticBubble   = True,
-		gisticOncoplot = True,
-		somInteraction = True,
-		oncodrive      = True,
-		pfam           = True,
-		pancan         = True,
-		survival       = True,
-		heterogeneity  = True,
-		signature      = True,
+		)
 	)
-	pMaftools.args.params  = Box(
-		summary        = Box(rmOutlier = True, addStat = 'median', dashboard = True),
-		oncoplot       = Box(),
-		oncostrip      = Box(),
-		titv           = Box(),
-		lollipop       = Box(),
-		cbsseg         = Box(labelAll = True),
-		rainfall       = Box(detectChangePoints = True),
-		tcgacomp       = Box(),
-		vaf            = Box(flip = True),
-		genecloud      = Box(minMut = 3),
-		gisticGenome   = Box(markBands = 'all'),
-		gisticBubble   = Box(),
-		gisticOncoplot = Box(),
-		somInteraction = Box(),
-		oncodrive      = Box(minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
-		pfam           = Box(),
-		pancan         = Box(qval = 0.1, label = 1, normSampleSize = True),
-		survival       = Box(),
-		heterogeneity  = Box(),
-		signature      = Box(nTry = 6, plotBestFitRes = False),
-	)
-	pMaftools.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pMaftools.args.nthread = 1
-	pMaftools.envs.rimport = rimport
-	pMaftools.lang         = params.Rscript.value
-	pMaftools.script       = "file:scripts/tcgamaf/pMaftools.r"
-	return pMaftools
 
 @procfactory
 def _pMutationSigs():
@@ -538,9 +483,10 @@ def _pDToxoG():
 				- Variant is marked as artifact: 1
 				- Variant is not an artifact: 0
 	@args:
-		`dtoxog` : D-ToxoG executable. 
-		`nthread`: Maximum threads used by matlab. 
-		`params` : Other parameters for `startFilterMAFFile`
+		dtoxog : D-ToxoG executable. 
+		nthread: Maximum threads used by matlab. 
+		keep   : Whether keep those artifact mode mutations in output MAF file or not.
+		params : Other parameters for `startFilterMAFFile`
 			- See more in `startFilterMAFFile.m` or run `dtoxog` directly
 	"""
 	return Box(
@@ -550,6 +496,7 @@ def _pDToxoG():
 		lang   = params.python.value,
 		args   = Box(
 			nthread = 1,
+			keep    = True,
 			dtoxog  = params.dtoxog.value,
 			params  = Box(isGeneratingPlots = True, globalPoxoG = .96, artifactThresholdRate = .01)
 		))
@@ -595,3 +542,25 @@ def _pMafAddChr():
 		input = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem}}.maf'
 	)
+
+@procfactory
+def _pMafSampleFilter():
+	"""
+	@input:
+		infile: The input MAF file
+		samfile: The tumor sample file
+			- Could also be a list of samples, separated by comma
+			- Overwrite `args.samples`
+	@output:
+		outfile: The output file contain only the given samples
+	@args:
+		samples (str|list): The samples or a list of samples
+	"""
+	return Box(
+		desc   = 'Filter MAF file with given samples',
+		input  = 'infile:file, samfile:var',
+		output = 'outfile:file:{{i.infile | stem}}.subset.maf',
+		lang   = params.python.value,
+		args   = Box(samples = [])
+	)
+

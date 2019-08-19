@@ -1,5 +1,7 @@
 # {{title}}
 
+The filters were applied using bcftools[1].
+
 {% python import yaml %}
 {% python from os import path %}
 {% if args.stat %}
@@ -27,3 +29,5 @@ csvargs:
 - {{key}}: {{value}}
 {%- endfor -%}
 {% endif %}{# if args.stat #}
+
+[1]: Li, Heng, et al. "The sequence alignment/map format and SAMtools." Bioinformatics 25.16 (2009): 2078-2079.
