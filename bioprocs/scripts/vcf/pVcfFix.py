@@ -2,6 +2,7 @@ import gzip
 from os import path
 from cyvcf2 import VCF, Writer
 from pyppl import Box
+from difflib import SequenceMatcher
 from bioprocs.utils import shell2 as shell
 
 infile  = {{i.infile | quote}}
@@ -18,6 +19,11 @@ fixes   = {{args.fixes | repr}}
 ref     = {{args.ref | quote}}
 reffai  = ref + '.fai'
 refdict = ref[:-3] + '.dict'
+
+if fixes.tumorpos is True:
+	fixes.tumorpos = path.splitext(path.basename(infile))[0]
+if fixes.tumorpos and isinstance(fixes.tumorpos, str):
+	fixes.tumorpos = fixes.tumorpos.split(',')
 
 def getContigsFromFai(fai):
 	ret = {}
@@ -39,25 +45,47 @@ def getContigsFromDict(dictfile):
 
 # fix clinvarLink first, because it will fail VCF parser
 # just remove it
-if fixes.clinvarLink or fixes.addChr:
+if fixes.clinvarLink or fixes.addChr or fixes.tumorpos:
 	tmpoutfile = outfile + '.tmp'
 	openfun = gzip.open if infile.endswith('.gz') else open
 	with openfun(infile, 'rt', errors='replace') as fin, \
 		openfun(tmpoutfile, 'wt', errors='replace') as fout:
 		for line in fin:
-			if line.startswith('#'):
+			if line.startswith('##'):
 				# if no header operated
 				fout.write(line)
-				continue
-			parts = line.strip().split('\t')
-			if fixes.addChr:
-				parts[0] = parts[0] if parts[0].startswith('chr') else 'chr' + parts[0]
-			info = parts[7]
-			if fixes.clinvarLink:
-				info = ';'.join(inf for inf in info.split(';') if not inf.startswith('<a href'))
-			parts[7] = info
+			elif line.startswith('#') and fixes.tumorpos:
+				# determine if we have 2 samples
+				parts = line.strip().split('\t')
+				if len(parts) != 11:
+					fixes.tumorpos = False
+				elif parts[10] in fixes.tumorpos:
+					fixes.tumorpos = True
+				elif parts[9] in fixes.tumorpos:
+					fixes.tumorpos = False
+				else:
+					sample1_match = max(SequenceMatcher(None, parts[9], tumor).ratio() 
+						for tumor in fixes.tumorpos)
+					sample2_match = max(SequenceMatcher(None, parts[10], tumor).ratio() 
+						for tumor in fixes.tumorpos)
+					fixes.tumorpos = sample2_match > sample1_match
+				if fixes.tumorpos:
+					parts[9], parts[10] = parts[10], parts[9]
+				fout.write('\t'.join(parts) + '\n')
+			elif line.startswith('#'):
+				fout.write(line)
+			else:
+				parts = line.strip().split('\t')
+				if fixes.tumorpos:
+					parts[9], parts[10] = parts[10], parts[9]
+				if fixes.addChr:
+					parts[0] = parts[0] if parts[0].startswith('chr') else 'chr' + parts[0]
+				info = parts[7]
+				if fixes.clinvarLink:
+					info = ';'.join(inf for inf in info.split(';') if not inf.startswith('<a href'))
+				parts[7] = info
 
-			fout.write('\t'.join(parts) + '\n')
+				fout.write('\t'.join(parts) + '\n')
 	infile = tmpoutfile
 
 pool = {}
@@ -132,10 +160,10 @@ if pool:
 		try:
 			item_type = vcf[filter_item]
 		except KeyError:
-			adict = fixes.headerFilter.get(filter_item, {})
+			desc  = fixes.headerFilter.get(filter_item, filter_item.upper())
 			adict = dict(
 				ID          = filter_item,
-				Description = adict.get('Description', filter_item.upper())
+				Description = desc
 			)
 			vcf.add_filter_to_header(adict)
 

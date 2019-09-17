@@ -168,3 +168,29 @@ def _pAnnotate():
 			params   = Box()
 		)
 	)
+
+@procfactory
+def _pStats():
+	"""
+	@input:
+		infile: The input VCF file
+	@output:
+		outdir: The output directory
+	@args:
+		bcftools (str) : Path to bcftools
+		plot_vcfstats (str): Script for processing output of bcftools stats.
+		params (Box): Other parameters for `bcftools stats`
+		plot (bool): Whether to plot the stats or not.
+	"""
+	return Box(
+		desc   = 'Statistics of VCF files',
+		lang   = params.python.value,
+		input  = 'infile:file',
+		output = 'outdir:dir:{{i.infile | stem | stem}}.vcfstats',
+		args   = Box(
+			bcftools = params.bcftools.value,
+			plot_vcfstats = params.plot_vcfstats.value,
+			plot = True,
+			params = Box()
+		)
+	)

@@ -390,6 +390,8 @@ def _pVcfLiftover():
 		mem     (str) : The memory to use
 		tmpdir  (dir) : The temporary directory
 		params  (Box) : The extra params for the tool
+		bcftools(str) : Path to bcftools
+			- Used to correct sample orders. `picard LiftoverVcf` sometimes swap samples.
 	"""
 	return Box(
 		desc = 'Liftover VCF files',
@@ -397,15 +399,27 @@ def _pVcfLiftover():
 		output = 'outfile:file:{{i.infile | stem | stem}}.vcf, umfile:file:{{i.infile | stem | stem}}.unmapped.vcf',
 		lang = params.python.value,
 		args = Box(
-			tool    = 'picard',
-			picard  = params.picard.value,
-			lochain = params.lochain.value,
-			ref     = params.ref.value,
-			mem     = params.mem8G.value,
-			tmpdir  = params.tmpdir.value,
-			params  = Box()
+			tool     = 'picard',
+			bcftools = params.bcftools.value,
+			picard   = params.picard.value,
+			lochain  = params.lochain.value,
+			ref      = params.ref.value,
+			mem      = params.mem8G.value,
+			tmpdir   = params.tmpdir.value,
+			params   = Box()
 		)
 	)
+
+@procfactory
+def _pVcfStats(): 
+	"""
+	@input:
+		infile: The input VCF file
+	@output:
+		outdir: The output directory
+	@args:
+		params (Box): Other parameters for `vcfstats`
+	"""
 
 @procfactory
 def _pVcfAddChr():
@@ -683,8 +697,36 @@ def _pVcf2Pyclone():
 @procfactory
 def _pVcfFix():
 	"""
-	@name:
-		pVcfFix
+	@input: 
+		infile: The input VCF file
+	@output:
+		outfile: The output fixed VCF file
+	@args:
+		ref: The reference genome. 
+			- fai/dict required to get valid contigs
+		fixes: The issues to fix.
+			- clinvarLink (bool): Remove some clinvar links in INFO that are not well-formatted
+			- addChr (bool): Try to add chr to chromosomes if not present.
+			- tumorpos (bool|str|list): Try to put tumor sample before normal if it is Tumor-Normal paired VCF file. It could be:
+				- False: to disable this fix
+				- True: to match the file name to determine the tumor sample
+				- str|list: A list (separated by comma in str) of tumor samples to match and identify the tumor sample
+				- If it is not a 2-sample VCF file, this is disabled anyway.
+			- headerInfo (bool|dict): Try to fix missing INFOs in header.
+				- False: to disable this fix
+				- True: to use `{ID: <info>, Number: 1, Type: String, Description: <info>.upper()}` to add INFO to header.
+				- dict: to specify details to add INFO to header. 
+					- For example: `{COMMON: {Type: "Int", Description: "Whether it is a common SNP"}}`
+			- headerFormat (bool|dict): Try to fix missing FORMATs in header.
+				- Similar as headerInfo
+			- headerFilter (bool|dict): Try to fix missing FILTERs in header.
+				- False: to disable this fix
+				- True: to use `<filter>.upper()` as description to add FILTER to header.
+				- dict: to specify description for filters.
+					- For example: `{LOWDEPTH: "Depth is lower than 50"}`
+			- headerContig (bool): Add missing header contigs to the header.
+				- `arg.ref` together with `<ref>.fai` or `<ref|stem>.dict` is recommended to get contig information
+				- If `args.ref` is  not specified, a length of 999999999 will be used for missing contigs.
 	"""
 	return Box(
 		desc   = 'Fix a bunch of format problems in vcf files',
@@ -696,6 +738,7 @@ def _pVcfFix():
 			fixes = Box(
 				clinvarLink  = True,
 				addChr       = True,
+				tumorpos     = True,
 				headerInfo   = True,
 				headerContig = True,
 				headerFormat = True,

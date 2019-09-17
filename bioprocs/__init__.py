@@ -176,6 +176,8 @@ DEFAULTS = {
 	"platypus.desc"            : "The path of platypus.",
 	"plink"                    : "plink",
 	"plink.desc"               : "Executable of plink.",
+	"plot_vcfstats"            : "plot-vcfstats",
+	"plot_vcfstats.desc"       : "Script for processing output of bcftools stats.",
 	"pyclone"                  : "PyClone",
 	"pyclone.desc"             : "The path of PyClone",
 	"sambamba"                 : "sambamba",

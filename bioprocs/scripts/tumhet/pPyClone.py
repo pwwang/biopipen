@@ -1,3 +1,4 @@
+import cmdy
 from pysam import VariantFile
 from pyppl import Box
 from os import path, environ
@@ -361,9 +362,12 @@ params.working_dir      = outdir
 params.prior            = 'total_copy_number'
 params.plot_file_format = 'svg'
 params._env             = env
+params._raise = False
+
 c = shell.fg.pyclone.run_analysis_pipeline(**params)
 if c.rc != 0:
-	raise RuntimeError('Failed to run pyclone.')
+	# Let it go if 'No mutations found in common across samples'
+	exit(0)
 
 # annotate tables/loci.tsv with genes
 """
