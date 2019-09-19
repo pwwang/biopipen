@@ -174,6 +174,8 @@ def main():
 			listProcs(Box(_ = [opts._]))
 	elif not sys.argv[0]:
 		raise RuntimeError('This package has to run as a command line tool.')
+	elif not command:
+		commands._help(print_and_exit = True)
 	else:
 		# Hold helps first, because we haven't assembled the help page yet
 		hopts = commands[command]._hopts
