@@ -631,45 +631,57 @@ def _pAnovaModel():
 @procfactory
 def _pCorr():
 	"""
-	@name:
-		pCorr
-	@description:
-		Calculate the correlation coefficient for the input matrix
 	@input:
-		`infile:file`: The input file of data to calculate correlations.
+		infile: The input file of data to calculate correlations.
+			- The columns are instances and rows variables when `args.byrow = True`.
+			- Transposed otherwise.
+		groupfile: The group file defining the groups of variables, then the correlation will be only calculated between variables in different groups.
+			- First column is the variable names, and second is the groups. Only two groups allowed.
+			- Overlaps allowed in different groups.
+			- If this is not provided, `args.groupfile` will be checked.
+			- If none of them provided, correlation will be calculated for each pair of variables.
 	@output:
-		`outfile:file`: The output file containing the correlation coefficients
-		`outdir:dir`  : The output directory containing the outfile and the plot
+		outfile: The output file containing the correlation coefficients
+		outdir : The output directory containing the outfile, pvalue file and the plot
 	@args:
-		`outfmt`: The output format. Could be `matrix` or `pairs` (default)
-		`metohd`: The method used to calculate the correlation coefficient. Default: `pearson`. Could also be `spearman` or `kendall`
-		`byrow`:  Calculate the correlation coefficient by row or by col. Default: `True`
-		`inopts`: The input options:
-			- `cnames`: Whether the input file has header. Default: `True`
-			- `rnames`: Whether the input file has row names. Default: `True`
-			- `delimit`: The separator of columns. Default: `\t`
-		`plot`:   Whether output a correlation plot. Default: `False`
-		`params`: The params for `plot.heatmap` in `utils/plot.r`
-		`ggs`:    The extra ggplot2 statements.
-		`devpars`:The parameters for the plot device. Default: `Box(height = 2000, width = 2000, res = 300)`
+		outfmt: The output format. Could be `matrix` or `pairs`.
+		method: The method used to calculate the correlation coefficient.
+			- Could be `pearson`, `spearman` or `kendall`
+		byrow: Whether the rows are variables or not.
+		pval:  Whether output the pvalues as well.
+			- Will be generated at `<outdir>/<i.infile | stem>.<args.method>.pval.txt`
+		groupfile: The group file. See `in.groupfile`
+		inopts: The input options:
+			- `cnames`: Required if `args.byrow = False`. Whether the input file has header.
+			- `rnames`: Required if `args.byrow = True`. Whether the input file has row names.
+			- `delimit`: The separator of columns.
+		plot   : Whether output a correlation plot.
+		params : The params for `plot.heatmap` in `utils/plot.r`
+		ggs    : The extra ggplot2 statements.
+		devpars: The parameters for the plot device.
 	@requires:
 		R packages: `ggplot2` and `reshape`
 	"""
-	pCorr              = Proc(desc = "Calculate the Correlation Coefficient.")
-	pCorr.input        = 'infile:file'
-	pCorr.output       = 'outfile:file:{{i.infile | fn}}.{{args.method}}/{{i.infile | fn}}.{{args.method}}.txt, outdir:dir:{{i.infile | fn}}.{{args.method}}'
-	pCorr.args.outfmt  = 'pairs' # matrix
-	pCorr.args.method  = 'pearson' # spearman, kendall
-	pCorr.args.byrow   = True # else by column
-	pCorr.args.inopts  = Box(cnames = True,	rnames = True,	delimit = "\t")
-	pCorr.args.plot    = False
-	pCorr.args.params  = Box() # the parameters for plot.heatmap
-	pCorr.args.ggs     = Box() # extra ggplot statements
-	pCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)
-	pCorr.envs.rimport = rimport
-	pCorr.lang         = params.Rscript.value
-	pCorr.script       = "file:scripts/stats/pCorr.r"
-	return pCorr
+	return Box(
+		desc   = 'Calculate Correlation Coefficient',
+		lang   = params.Rscript.value,
+		input  = 'infile:file, groupfile:file',
+		output = [
+			'outfile:file:{{i.infile | stem}}.{{args.method}}/{{i.infile | stem}}.{{args.method}}.txt',
+			'outdir:dir:{{i.infile | stem}}.{{args.method}}'
+		],
+		args = Box(
+			outfmt    = 'pairs',
+			method    = 'pearson',
+			byrow     = True,
+			pval      = False,
+			groupfile = None,
+			inopts    = Box(cnames = True,	rnames = True,	delimit = "\t"),
+			plot      = False,
+			params    = Box(), # the parameters for plot.heatmap2
+			devpars   = Box(height = 2000, width = 2000, res = 300)
+		)
+	)
 
 @procfactory
 def _pCorr2():
