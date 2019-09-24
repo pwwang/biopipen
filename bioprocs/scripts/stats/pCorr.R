@@ -27,13 +27,22 @@ data = read.table.inopts(infile, inopts)
 if (byrow) data = t(data)
 
 if (is.true(groupfile)) {
-	groupdata = read.table(groupfile, row.names = NULL, col.names = FALSE)
-	groups = levels(as.factor(groupdata[, 2]))
-	if (length(groups) != 2) {
-		stop("Only 2 groups allowed!")
+	if (file.exists(groupfile)) {
+		groupdata = read.table(groupfile, row.names = NULL, col.names = FALSE)
+		groups = levels(as.factor(groupdata[, 2]))
+		if (length(groups) != 2) {
+			stop("Only 2 groups allowed!")
+		}
+		group1 = groupdata[groupdata[,2] == groups[1], 1, drop = TRUE]
+		group2 = groupdata[groupdata[,2] == groups[2], 1, drop = TRUE]
+	} else { # group variable assigned directly
+		groups = unlist(strsplit(groupfile, ";", fixed = TRUE))
+		if (length(groups) != 2) {
+			stop("Only 2 groups allowed!")
+		}
+		group1 = unlist(strsplit(groups[1], ",", fixed = TRUE))
+		group2 = unlist(strsplit(groups[2], ",", fixed = TRUE))
 	}
-	group1 = groupdata[groupdata[,2] == groups[1], 1, drop = TRUE]
-	group2 = groupdata[groupdata[,2] == groups[2], 1, drop = TRUE]
 } else {
 	group1 = colnames(data)
 	group2 = group1
@@ -59,7 +68,7 @@ if (pval) {
 	ppairs = melt(pvalmat, na.rm = T)
 	write.table(ppairs, pvalpairfile, row.names = F, col.names = F, quote = F, sep = "\t")
 } else {
-	corrmat = cor(data[, group1, drop = FALSE], data[, group2, drop = FALSE], method = method)
+	corrmat = cor(data[, group1, drop = FALSE], data[, group2, drop = FALSE], method = method, use = "na.or.complete")
 }
 write.table(corrmat, outmatfile, row.names = T, col.names = T, quote = F, sep = "\t")
 cpairs = melt(corrmat, na.rm = T)

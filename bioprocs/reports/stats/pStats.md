@@ -37,7 +37,7 @@ caption: Basic statistics
 file: {{statfile}}
 ```
 
-![]({{path.join(job.o.outdir, "feature-plot." + feature + ".png")}})
+![{{feature}} distribution]({{path.join(job.o.outdir, "feature-plot." + feature + ".png")}})
 
 {% assign testfile = path.join(job.o.outdir, "feature-test." + feature + ".txt") %}
 {% if path.isfile(testfile) %}

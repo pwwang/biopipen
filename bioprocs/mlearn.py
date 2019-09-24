@@ -124,19 +124,20 @@ def _pRegressPred():
 def _pGlmTrain():
 	"""
 	@input:
-		`infile:file`: The input file (Last column as Y)
+		infile: The input file (Last column as Y)
 	@output:
-		`outmodel:file`: The output model (RData file)
-		`outdir:dir`   : The output directory containing model, plots and other files
+		outmodel: The output model (RData file)
+		outdir  : The output directory containing model, plots and other files
 	@args:
-		`plot`   : Whether plot the glm probability. Default: `True`
-		`formula`: The formula to perform the regression. Default: `None`.
+		plot   : Whether plot the glm probability. Default: `True`
+		formula: The formula to perform the regression. Default: `None`.
 			- If `None`, will use all first N-1 columns as features.
-		`inopts` : The input options.
-		`yval`   : The type of y values. Default: `categ`
+		inopts : The input options.
+		yval   : The type of y values. Default: `categ`
 			- `categ`  : categorical values
 			- `prob`   : probabilities
 			- `numeric`: numeric values
+		devpars: The device parameters for the plot.
 	"""
 	return Box(
 		desc   = 'Train a logistic regression model',
@@ -197,10 +198,6 @@ def _pGlmTest():
 @procfactory
 def _pRandomForestTrain():
 	"""
-	@name:
-		pRandomForestTrain
-	@description:
-		Train a random forest model
 	@input:
 		`infile:file`: The input file (Last column as Y)
 	@output:
@@ -212,7 +209,7 @@ def _pRandomForestTrain():
 			- If `None`, will use all first N-1 columns as features.
 		`inopts` : The input options.
 		`na`     : Replace NAs with? Default: `0`
-		`devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`
+		`devpars`: The device parameters for the plot.
 	@requires:
 		`r-randomForst`
 	"""

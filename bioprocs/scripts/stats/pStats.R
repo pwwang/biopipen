@@ -56,11 +56,13 @@ do_continuous = function (feat, groups, outdir) {
 				check.names = FALSE))
 		}
 		# t, wilcox, anova, Kruskal-Wallis
+		t = NULL
 		tryCatch({
 			t = t.test(fdata ~ indata[, grup])
 		}, error = function(e) {
 			t = list(p.value = '-')
 		})
+		w = NULL
 		tryCatch({
 			w = wilcox.test(fdata ~ indata[, grup])
 		}, error = function(e) {
@@ -71,8 +73,8 @@ do_continuous = function (feat, groups, outdir) {
 
 		testdata = rbind(testdata, data.frame(
 			Group = paste0(grup, ' [', paste(lvls, collapse = ', ') ,']'),
-			t.test = paste0('p=', round(t$p.value, 3)),
-			wilcox.test = paste0('p=', round(w$p.value, 3)),
+			t.test = paste0('p=', ifelse(is.numeric(t$p.value), round(t$p.value, 3), t$p.value)),
+			wilcox.test = paste0('p=', ifelse(is.numeric(w$p.value), round(w$p.value, 3), w$p.value)),
 			ANOVA = paste0('p=', round(a[1,5], 3)),
 			Kruskal.Wallis.test = paste0('p=', round(k$p.value, 3)),
 		check.names = FALSE))

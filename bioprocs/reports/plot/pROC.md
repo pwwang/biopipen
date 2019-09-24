@@ -1,13 +1,13 @@
 # {{title}}
 
 {% for job in jobs %}
-::: {.tab}
+::::: {.tab}
 {% if len(jobs) > 1 %}
 ## {{job.i.infile | stem}}
 {% else %}
 ## ROC curve
 {% endif %}
 
-![]({{job.o.outfile}})
-:::
+![ROC curve]({{job.o.outfile}})
+:::::
 {% endfor %}

@@ -640,6 +640,7 @@ def _pCorr():
 			- Overlaps allowed in different groups.
 			- If this is not provided, `args.groupfile` will be checked.
 			- If none of them provided, correlation will be calculated for each pair of variables.
+			- We can also specify variables directly here by 'var1,var2;var3,var4'
 	@output:
 		outfile: The output file containing the correlation coefficients
 		outdir : The output directory containing the outfile, pvalue file and the plot
@@ -663,9 +664,9 @@ def _pCorr():
 		R packages: `ggplot2` and `reshape`
 	"""
 	return Box(
-		desc   = 'Calculate Correlation Coefficient',
+		desc   = 'Correlation Coefficients between variables',
 		lang   = params.Rscript.value,
-		input  = 'infile:file, groupfile:file',
+		input  = 'infile:file, groupfile:var',
 		output = [
 			'outfile:file:{{i.infile | stem}}.{{args.method}}/{{i.infile | stem}}.{{args.method}}.txt',
 			'outdir:dir:{{i.infile | stem}}.{{args.method}}'
