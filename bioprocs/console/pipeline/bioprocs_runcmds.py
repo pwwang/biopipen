@@ -6,20 +6,19 @@ from pyppl import PyPPL, Proc, Box
 from bioprocs import params
 from tempfile import gettempdir
 
-params._prefix = '-'
-params.cmds.required = True
-params.cmds.type     = list
-params.cmds.desc     = 'The cmd list. If not provided, STDIN will be used.'
-params.runner        = 'local'
-params.runner.desc   = 'The runner.'
-params.intype        = 'stdin' # or file, stdin, or cmds (pass cmds directly)
-params.intype.desc   = 'Type of option `cmds`, cmds or file?'
-params.cache         = False
-params.cache.desc    = 'Cache the jobs or not?'
-params.ppldir        = path.join(gettempdir(), 'bioprocs.workdir')
-params.ppldir.desc   = 'The ppldir to save the pipeline data.'
-params.forks         = 1
-params.forks.desc    = 'How many jobs to run simultaneously.'
+params._prefix     = '-'
+params._hbald      = False
+params.cmds.desc   = 'The cmd list. If not provided, STDIN will be used.'
+params.runner      = 'local'
+params.runner.desc = 'The runner.'
+params.intype      = 'stdin' # or file, stdin, or cmds (pass cmds directly)
+params.intype.desc = 'Type of option `cmds`, cmds or file?'
+params.cache       = False
+params.cache.desc  = 'Cache the jobs or not?'
+params.ppldir      = path.join(gettempdir(), 'bioprocs.workdir')
+params.ppldir.desc = 'The ppldir to save the pipeline data.'
+params.forks       = 1
+params.forks.desc  = 'How many jobs to run simultaneously.'
 
 def main():
 	opts = params._parse(dict_wrapper = Box)
