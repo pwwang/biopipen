@@ -185,8 +185,6 @@ def _pBatchEffect():
 @procfactory
 def _pUnitConversion():
 	"""
-	@name:
-		pUnitConversion
 	@description:
 		Convert expression between units
 		See here: https://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/ and
@@ -198,16 +196,16 @@ def _pUnitConversion():
 		- `cpm -> count, fpkm/rpkm, tpm`
 		NOTE that during some conversions, `sum(counts/effLen)` is approximated to `sum(counts)/sum(effLen) * length(effLen))`
 	@input:
-		`infile:file`: the expression matrix
+		`infile`: the expression matrix
 			- rows are genes, columns are samples
 	@output:
-		`outfile:file`: the converted expression matrix
+		`outfile`: the converted expression matrix
 	@args:
-		`inunit`:    The unit of input expression values. Default: `count`
-		`outunit`:   The unit of output expression values. Default: `tpm`
-		`meanfl`:    A file containing the mean fragment length for each sample by rows, without header.
-			- Or a fixed universal estimated number. Default: `1` (used by TCGA)
-		`nreads`:    The estimatied total number of reads for each sample. Default: `30000000`
+		`inunit` : The unit of input expression values.
+		`outunit`: The unit of output expression values.
+		`meanfl` : A file containing the mean fragment length for each sample by rows, without header.
+			- Or a fixed universal estimated number (1 used by TCGA).
+		`nreads`:    The estimatied total number of reads for each sample.
 			- Or you can pass a file with the number for each sample by rows, without header.
 			- In converting `fpkm/rpkm -> count`: it should be total reads of that sample
 			- In converting `cpm -> count`: it should be total reads of that sample
@@ -217,28 +215,28 @@ def _pUnitConversion():
 		`inform`:    Transform the input to the unit specified. (sometimes the values are log transformed)
 			- For example, if the `inunit` is `tpm`, but it's actually `log2(expr+1)` transformed,
 			- Then this should be `function(expr) 2^(expr - 1)`.
-			- Default: `None` (No transformation has been done)
-		`outform`:   Transform to be done on the output expression values. Default: `None`
-		`refexon`:   the exome gff file, for RPKM/FPKM
+		`outform`: Transform to be done on the output expression values.
+		`refexon`: the exome gff file, for RPKM/FPKM
 			- `gene_id` is required for gene names
 	@requires:
 		[edgeR](https://bioconductor.org/packages/release/bioc/html/edger.html) if cpm or rpkm is chosen
 		[coseq](https://rdrr.io/rforge/coseq/man/transform_RNAseq.html) if tmm is chosen
 	"""
-	pUnitConversion              = Proc(desc = 'Convert raw counts to another unit.')
-	pUnitConversion.input        = "infile:file"
-	pUnitConversion.output       = "outfile:file:{{i.infile | fn2}}.{{args.outunit}}{{args.outform | lambda x: '_t' if x else ''}}.txt"
-	pUnitConversion.args.inunit  = 'count'
-	pUnitConversion.args.outunit = 'tpm'
-	pUnitConversion.args.meanfl  = 1
-	pUnitConversion.args.nreads  = 30000000
-	pUnitConversion.args.refexon = params.refexon.value
-	pUnitConversion.args.inform  = None
-	pUnitConversion.args.outform = None
-	pUnitConversion.envs.rimport = rimport
-	pUnitConversion.lang         = params.Rscript.value
-	pUnitConversion.script       = "file:scripts/rnaseq/pUnitConversion.r"
-	return pUnitConversion
+	return Box(
+		desc   = 'Convert RNAseq data in different units back and forth',
+		lang   = params.Rscript.value,
+		input  = 'infile:file',
+		output = "outfile:file:{{i.infile | fn2}}.{{args.outunit}}{{args.outform | lambda x: '_t' if x else ''}}.txt",
+		args   = Box(
+			inunit  = 'count',
+			outunit = 'tpm',
+			meanfl  = 1,
+			nreads  = 50000000,
+			refexon = params.refexon.value,
+			inform  = None,
+			outform = None
+		)
+	)
 
 @procfactory
 def _pRNASeqDEG():
