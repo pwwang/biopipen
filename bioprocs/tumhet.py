@@ -27,10 +27,10 @@ def _pSciClone():
 	@args:
 		params (Box)  : Other parameters for original `sciClone` function. Default: `Box()`
 		exfile (file)  : The regions to be excluded. In BED3 format
-		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based. 
+		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based.
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
-		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based. 
+		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based.
 	"""
 	return Box(
 		desc   = "Clonality analysis using SciClone.",
@@ -72,10 +72,10 @@ def _pPyClone():
 		bedtools(str): Path to `bedtools`, used to intersect mutations with CNVs.
 		params  (Box): Other parameters for original `PyClone run_analysis_pipeline` function.
 		nthread (int): Number of threads to use by openblas.
-		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based. 
+		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based.
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
-		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based. 
+		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based.
 	"""
 	return Box(
 		desc   = "Clonality analysis using PyClone",
@@ -95,6 +95,51 @@ def _pPyClone():
 	)
 
 @procfactory
+def _pAllFIT():
+	"""
+	@description:
+		All-FIT - Allele-Frequency-based Imputation of Tumor Purity infers specimen purity from tumor-only samples sequenced with deep sequencing. It is developed in Khiabanian Lab by Jui Wan Loh and Hossein Khiabanian.
+		See: https://github.com/KhiabanianLab/All-FIT
+	@input:
+		infile: The input file, could be one of:
+			- Single(paired)-sample VCF file with `FORMAT/AF` and `FORMAT/AD`
+			- All-FIT format (see: https://github.com/KhiabanianLab/All-FIT/blob/master/test/input/sampleFile1.xls)
+		cnfile: The copy number variation file, could be one of:
+			- Omitted (then Ploidy in `infile` must be provided)
+			- Single(paired)-sample VCF file with `INFO/END` and `FORMAT/CN`
+			- Bed3 file with 4th column as the copy number.
+	@output:
+		outfile: The output file with purity
+		outdir: The output directory with output file and figures.
+	@args:
+		allfit (str): Path to All-FIT.py
+		bcftools (str): Path to `bcftools`, used to get information from VCF file.
+		bedtools (str): Path to `bedtools`, used to intersect mutations with CNVs.
+		params (Box): Other parameters for All-FIT.py
+		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF file, 0-based.
+			- `None` indicates no control sample.
+			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
+		cnctrl (int|NoneType): Index of the control sample in copy number VCF file, 0-based.
+	"""
+	return Box(
+		desc = "Allele-Frequency-based Imputation of Tumor Purity Inference",
+		input = "infile:file, cnfile:var",
+		output = [
+			"outfile:file:{{i.infile | stem | @append: '.allfit'}}/{{i.infile | stem | @append: '.purity.txt'}}",
+			"outdir:dir:{{  i.infile | stem | @append: '.allfit'}}"
+		],
+		lang = params.python.value,
+		args = Box(
+			allfit   = params.allfit.value,
+			bcftools = params.bcftools.value,
+			bedtools = params.bedtools.value,
+			params   = Box(t = 'somatic'),
+			mutctrl  = None,
+			cnctrl   = None,
+		)
+	)
+
+@procfactory
 def _pTMBurden():
 	"""
 	@input:
@@ -106,11 +151,13 @@ def _pTMBurden():
 			- `nonsyn`: Counting nonsynonymous mutations
 	"""
 	return Box(
-		desc   = 'Calculation of tumor mutation burden.',
-		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem}}.tmb.txt',
-		args   = Box(type = 'nonsyn'),
-		lang   = params.python.value
+		desc    = 'Calculation of tumor mutation burden.',
+		input   = 'infile:file',
+		output  = 'outfile:file:{{i.infile | stem}}.tmb.txt',
+		args    = Box(type = 'nonsyn'),
+		lang    = params.python.value,
+		mutctrl = None,
+		cnctrl  = None,
 	)
 
 @procfactory
@@ -288,4 +335,6 @@ def _pPyClone2ClonEvol():
 	pPyClone2ClonEvol.args.bedtools = params.bedtools.value
 	pPyClone2ClonEvol.lang          = params.python.value
 	return pPyClone2ClonEvol
+
+
 

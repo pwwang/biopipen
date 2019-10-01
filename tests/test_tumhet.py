@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
-from pyppl import PyPPL
-from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol
+from pyppl import PyPPL, Box
+from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol, pAllFIT
 from . import remotedata
 
 def test_clonevol():
@@ -23,3 +23,16 @@ def test_pyclone():
 	pClonEvol2.depends = pPyClone2ClonEvol1
 	pClonEvol2.input = lambda ch: ch.cbind(remotedata.get('tumhet/SRR385940.sample.txt'))
 	PyPPL().start(pPyClone1).run().report()
+
+def test_allfit():
+	from remotedata import GithubRemoteData
+	remotedata2 = GithubRemoteData(Box(
+		source = 'github',
+		cachedir = Path(__file__).parent / 'testdata',
+		repos = 'KhiabanianLab/All-FIT'
+	))
+	infile = remotedata2.get('test/input/sampleFile1.xls')
+	pAllFIT1 = pAllFIT.copy()
+	pAllFIT1.input = [infile]
+	PyPPL().start(pAllFIT1).run()
+

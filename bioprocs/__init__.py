@@ -100,6 +100,8 @@ DEFAULTS = {
 	"mem32G.desc": "32GB memory.",
 
 	# tools
+	"allfit"                   : "All-FIT.py",
+	"allfit.desc"              : "Path to All-FIT.py",
 	"annovar"                  : "annotate_variation.pl",
 	"annovar.desc"             : "The path of annovar's annotate_variation.pl.",
 	"annovar_convert"          : "convert2annovar.pl",
