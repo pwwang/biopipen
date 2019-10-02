@@ -202,25 +202,50 @@ def _pTheta():
 		Set lower MIN_FRAC if interval is not enough and NO_CLUSTERING if it raises
 		"No valid Copy Number Profiles exist", but have to pay attention to the results.
 		(see: https://groups.google.com/forum/#!topic/theta-users/igrEUol3sZo)
+
+		THetA2 needs an interval file with the coverages of both tumor and normal and SNP files
+		with counts of mutation allele and reference allele for both tumor and normal as well.
+	@input:
+		infile: A bed3 file, or a THetA2 interval file.
+			- See: https://github.com/raphael-group/THetA/blob/master/example/Example.intervals
+		tumbam: bam file for tumor or SNP file for tumor.
+			- See: https://raw.githubusercontent.com/raphael-group/THetA/master/example/TUMOR_SNP.formatted.txt
+		normbam: bam file for normal or SNP file for normal.
+			- See: https://raw.githubusercontent.com/raphael-group/THetA/master/example/NORMAL_SNP.formatted.txt
+	@output:
+		outfile: The output file with purity.
+		outdir: The output directory with output files and figures.
 	@args:
-		`affysnps`: The affymetrix Array snps, or other candidate snp list, in BED6-like format
+		theta (str): Path to THetA2
+		bam_readcount (str): Path to bam_readcount.
+		bedtools (str): Path to bedtools, used to extract coverage of regions.
+		samtools (str): Path to samtools, used to index bam file if possible.
+		ref (file): The reference genome file.
+		params (Box): Other parameters for THetA2.
+		nthread (int): The number of threads to use.
+		affysnps (str): The affymetrix Array snps, or other candidate snp list, in BED6-like format
 			- The first 6 columns should be in BED6 format
 			- The 7th column is reference allele, and 8th column is mutation allele.
-	@install:
-		`conda install -c bioconda theta2`
-		`conda install -c bioconda bam-readcount`
 	"""
-	pTheta                    = Proc(desc = "Tumor purity calculation using THetA2")
-	pTheta.input              = 'itvfile:file, tumbam:file, normbam:file'
-	pTheta.output             = 'outdir:dir:{{i.itvfile | fn2}}.theta'
-	pTheta.args.params        = Box(BAF = True, FORCE = True, n = 2)
-	pTheta.args.bam_readcount = params.bam_readcount.value
-	pTheta.args.ref           = params.ref.value
-	pTheta.args.theta         = params.theta2.value
-	pTheta.args.nthread       = 1
-	pTheta.args.affysnps      = params.affysnps.value
-	pTheta.lang               = params.python.value
-	return pTheta
+	return Box(
+		desc   = "Tumor purity calculation using THetA2",
+		lang   = params.python.value,
+		input  = 'infile:file, tumbam:file, normbam:file',
+		output = [
+			'outfile:file:{{i.infile | stem}}.theta/{{i.infile | stem}}.purity.txt',
+			'outdir:dir:{{i.infile | stem}}.theta'
+		],
+		args = Box(
+			theta         = params.theta2.value,
+			bedtools      = params.bedtools.value,
+			bam_readcount = params.bam_readcount.value,
+			samtools      = params.samtools.value,
+			params        = Box(),
+			ref           = params.ref.value,
+			nthread       = 1,
+			affysnps      = params.affysnps.value,
+		)
+	)
 
 @procfactory
 def _pSuperFreq():

@@ -41,6 +41,7 @@ pipe = cmdy(_pipe = True)
 rm_rf  = cmdy.rm.bake(r = True, f = True)
 ln_s   = cmdy.ln.bake(s = True)
 kill_9 = cmdy.kill.bake(s = 9)
+wc_l   = cmdy.wc.bake(l = True)
 
 runcmd = lambda cmd: cmdy.bash(c = cmd)
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL, Box
-from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol, pAllFIT
+from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol, pAllFIT, pTheta
 from . import remotedata
 
 def test_clonevol():
@@ -35,4 +35,20 @@ def test_allfit():
 	pAllFIT1 = pAllFIT.copy()
 	pAllFIT1.input = [infile]
 	PyPPL().start(pAllFIT1).run()
+
+
+def test_theta():
+	from remotedata import GithubRemoteData
+	rd3 = GithubRemoteData(Box(
+		source = 'github',
+		cachedir = Path(__file__).parent / 'testdata',
+		repos = 'raphael-group/THetA'
+	))
+	pTheta1 = pTheta.copy()
+	pTheta1.input = (
+		rd3.get('example/Example.intervals'),
+		rd3.get('example/TUMOR_SNP.formatted.txt'),
+		rd3.get('example/NORMAL_SNP.formatted.txt'),
+	)
+	PyPPL().start(pTheta1).run()
 
