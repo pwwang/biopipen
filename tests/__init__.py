@@ -1,7 +1,5 @@
+import pytest
 from pathlib import Path
-from remotedata import remotedata
-remotedata.manager.cachedir   = Path(__file__).parent / 'testdata'
-remotedata.manager.conf.repos = 'pwwang/bioprocs-testdata'
 
 def assertInfile(file, *strings):
 	content = Path(file).read_text()

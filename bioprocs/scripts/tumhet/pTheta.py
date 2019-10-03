@@ -303,3 +303,5 @@ params.OUTPUT_PREFIX = prefix
 params['']           = itvfile
 shell.fg.theta2(**params)
 
+ln_s(prefix + '.BEST.results', outfile)
+

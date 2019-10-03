@@ -1,8 +1,8 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL, Box
+from remotedata import remotedata
 from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol, pAllFIT, pTheta
-from . import remotedata
 
 def test_clonevol():
 	pClonEvol1 = pClonEvol.copy()
@@ -37,12 +37,11 @@ def test_allfit():
 	PyPPL().start(pAllFIT1).run()
 
 
-def test_theta():
-	from remotedata import GithubRemoteData
-	rd3 = GithubRemoteData(Box(
-		source = 'github',
-		cachedir = Path(__file__).parent / 'testdata',
-		repos = 'raphael-group/THetA'
+def test_theta(config):
+	rd3 = remotedata(Box(
+		source   = config.source,
+		cachedir = config.cachedir,
+		repos    = 'raphael-group/THetA'
 	))
 	pTheta1 = pTheta.copy()
 	pTheta1.input = (
@@ -51,4 +50,3 @@ def test_theta():
 		rd3.get('example/NORMAL_SNP.formatted.txt'),
 	)
 	PyPPL().start(pTheta1).run()
-
