@@ -4,7 +4,7 @@ from . import params, bashimport
 from .utils import fs2name
 from . import delefactory, procfactory
 from modkit import Modkit
-Modkit().delegate(delefactory())
+Modkit().delegate(delefactory()).exports('_p*')
 
 @procfactory
 def _pBedGetfasta():

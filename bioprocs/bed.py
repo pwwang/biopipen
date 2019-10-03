@@ -1,3 +1,4 @@
+"""Processes for BED files"""
 from pyppl import Proc, Box
 from . import params
 from . import delefactory, procfactory
@@ -79,25 +80,20 @@ def _pBedLiftover():
 	return pBedLiftover
 
 @procfactory
-def _pGff2Bed():
+def _pGff2Bed(alias = 'pBedFromGff'):
 	"""
-	@name:
-		pGff2Bed
-	@description:
-		Convert GTF/GFF file to BED file
 	@input:
-		`infile:file`: The input gtf/gff file
+		infile: The input gtf/gff file
 	@output:
-		`outfile:file`: The converted bed file
+		outfile: The converted bed file
 	@args:
-		`attr2name`: The function used to convert attributes from GTF/GFF file to BED field 'name'
+		attr2name: The function used to convert attributes from GTF/GFF file to BED field 'name'
+		keepinfo: Keep the original information in the output BED file.
 	"""
-	pGff2Bed                = Proc(desc = 'Convert GTF/GFF file to BED file')
-	pGff2Bed.input          = 'infile:file'
-	pGff2Bed.output         = 'outfile:file:{{i.infile | fn}}.bed'
-	pGff2Bed.args.attr2name = None
-	pGff2Bed.args.keepinfo  = True
-	pGff2Bed.lang           = params.python.value
-	pGff2Bed.script         = "file:scripts/bed/pGff2Bed.py"
-	return pGff2Bed
-
+	return Box(
+		desc   = 'Convert GTF/GFF file to BED file',
+		lang   = params.python.value,
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem}}.bed',
+		args   = Box(attr2name = None, keepinfo = True)
+	)

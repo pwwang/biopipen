@@ -302,7 +302,7 @@ def _procfactory(procfunc, pid, alias, mdname, doc):
 		if isinstance(proc, dict):
 			proc = Proc(**proc)
 		proc.id = alias
-		proc.props.origin = alias
+		proc.props.origin = pid
 		lang = Path(proc.lang).name
 		ext  = '.' + EXT_MAP.get(lang, lang)
 		if ext == '.R' and not proc.envs.get('rimport'):
@@ -329,5 +329,5 @@ def procfactory(procfunc):
 		alias = alias.default
 		if alias[0] == '_':
 			alias = alias[1:]
-		module._envs['_' + alias] = _procfactory(procfunc, pid, alias, mdname, procfunc.__doc__)
+		module._mkenvs['_' + alias] = _procfactory(procfunc, pid, alias, mdname, procfunc.__doc__)
 	return _procfactory(procfunc, pid, pid, mdname, procfunc.__doc__)

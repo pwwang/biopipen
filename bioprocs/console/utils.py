@@ -99,7 +99,7 @@ class Module:
 		"""Get the processes of the module"""
 		if self._procs:
 			return self._procs
-		for proc, factory in self.module._envs.items():
+		for proc, factory in self.module._mkenvs.items():
 			if len(proc) < 3 or proc[0] != '_' or proc[1] != 'p' \
 				or not (proc[2].isdigit() or proc[2].isupper()):
 				continue
@@ -159,7 +159,10 @@ class Process:
 	def toHelps(self, helpsec):
 		"""Send me to a Helps section"""
 		helpsec.prefix = ''
-		helpsec.add((self.name, '', self.desc))
+		if self.proc.origin == self.name:
+			helpsec.add((self.name, '', self.desc))
+		else:
+			helpsec.add((self.name, '', 'Alias of: %s' % self.proc.origin))
 
 	@staticmethod
 	def _parseOptionSec(sec):
@@ -282,7 +285,9 @@ class Process:
 			return self._helps
 
 		self._helps.add('Name',
-			Path(self.module.__file__).stem + '.' + self.name + ' [lang = %s]' % self.proc.lang)
+			Path(self.module.__file__).stem + '.' + self.name + '%s [lang = %s]' % (
+				'(%s)' % self.proc.origin if self.name != self.proc.origin else '',
+				self.proc.lang))
 		self._helps.add('Description', self.parsed().get('description') or self.desc)
 
 		# input
