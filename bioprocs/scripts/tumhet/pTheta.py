@@ -127,6 +127,7 @@ normsnp  = {{ o.outdir | path.join: fn(i.normbam) | @append: '.bamrc' | quote}}
 outfile  = {{ o.outfile | quote}}
 outdir   = {{ o.outdir | quote}}
 params   = {{ args.params | repr}}
+ref      = {{ args.ref | quote}}
 bedtools = {{ args.bedtools | quote }}
 bamrc    = {{ args.bam_readcount | quote }}
 nthread  = {{ args.nthread | repr}}
@@ -135,10 +136,10 @@ theta    = {{ args.theta | quote}}
 samtools = {{ args.samtools | quote}}
 
 shell.load_config(
-	theta2   = Box(_exe = theta, _raw = True),
-	samtools = samtools,
-	bedtools = bedtools,
-	bamrc    = bamrc,
+	theta2        = Box(_exe = theta, _raw = True),
+	samtools      = samtools,
+	bedtools      = bedtools,
+	bam_readcount = bamrc,
 )
 if tumbam.endswith('.bam'):
 	logger.info('- Try to index tumor bam file...')
@@ -173,13 +174,13 @@ def getCoverage(bamfiles, region, outfile):
 		_iter = True):
 		# chr1	1	12444	104	87
 		i += 1
-		parts = line.split('\t')
+		parts = line.strip().split('\t')
 		parts.insert(0, i)
-		writer.write(parts[:4] + parts[:-2])
+		writer.write(parts[:4] + parts[-2:])
 	writer.close()
 
 def getAlleleCount(bamfile, snpfile, outfile):
-	logger.info('Get allele counts from %s ...' % bamfile)
+	logger.info('- Get allele counts from %s ...' % bamfile)
 	if not bamfile.endswith('.bam'): # it's THetA2 formatted SNP file already
 		logger.info('  THetA2 formatted SNP file already, skip.')
 		ln_s(bamfile, outfile)
@@ -212,10 +213,11 @@ def getAlleleCount(bamfile, snpfile, outfile):
 		rec.C = counts['C']
 		rec.G = counts['G']
 		rec.T = counts['T']
-		# if reference allele is unknown, assuming all are ref alleles
-		rec.refCount = counts.get(snp[6].upper(), r[3])
-		# if mut allele is unknown, assuming no mutations happened
-		rec.mutCount = counts.get(snp[7].upper(), 0)
+		# if reference allele is unknown, assuming all are mut alleles
+		refallele = r[2].upper()
+		rec.refCount = counts.get(refallele, 0)
+		counts = [int(count) for allele, count in counts.items() if allele != refallele and count.isdigit()]
+		rec.mutCount = max(counts) if counts else 0
 		writer.write(rec)
 	writer.close()
 
@@ -225,7 +227,7 @@ if nthread == 1:
 else:
 	# try to split the affysnps into N files and distribute the jobs to nthreads
 	# get number of lines of affysnps file
-	total  = wc_l(affysnps)
+	total  = int(wc_l(affysnps).split()[0])
 	dists  = distribute(total, nthread)
 	reader = TsvReader(affysnps, cnames = False)
 	# dir to save the split file and result file
