@@ -87,13 +87,22 @@ def _pGff2Bed(alias = 'pBedFromGff'):
 	@output:
 		outfile: The converted bed file
 	@args:
-		attr2name: The function used to convert attributes from GTF/GFF file to BED field 'name'
-		keepinfo: Keep the original information in the output BED file.
+		bedcols:  Strings of python functions used to convert GTF/GFF records to BED fields.
+			- You can define the NAME column here, and extra columns after the 6th column.
+			- For example: `args.bedcols = {"NAME": "lambda attrs: rec.CHR + ':' + rec.START"}`
+				- `attrs` are the attributes of GFF records, plus CHR, START, END, SCORE and STRAND.
+				- See: https://github.com/pwwang/pygff
+				- By default, NAME will use `id` in attributes, and then `name`. Otherwise `CHR:START-END` will  be used.
+			- You can also add extra columns starting from 7th column of BED file, for example:
+				- `args.bedcols = {"CN": "lambda attrs: attrs['CopyNumber']"}`
+		keepattrs: Keep the original attributes at last column of the output BED file.
+		outhead: Put head to output file or not.
+			- Could be prefix to the head.
 	"""
 	return Box(
 		desc   = 'Convert GTF/GFF file to BED file',
 		lang   = params.python.value,
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem}}.bed',
-		args   = Box(attr2name = None, keepinfo = True)
+		args   = Box(bedcols = Box(), keepattrs = True, outhead = '#')
 	)

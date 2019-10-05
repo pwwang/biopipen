@@ -411,7 +411,7 @@ def _pVcfLiftover():
 	)
 
 @procfactory
-def _pVcfStats(): 
+def _pVcfStats():
 	"""
 	@input:
 		infile: The input VCF file
@@ -697,16 +697,18 @@ def _pVcf2Pyclone():
 @procfactory
 def _pVcfFix():
 	"""
-	@input: 
+	@input:
 		infile: The input VCF file
 	@output:
 		outfile: The output fixed VCF file
 	@args:
-		ref: The reference genome. 
+		ref: The reference genome.
 			- fai/dict required to get valid contigs
+		nthread (int): The number of threads used by openblas from numpy
 		fixes: The issues to fix.
 			- clinvarLink (bool): Remove some clinvar links in INFO that are not well-formatted
 			- addChr (bool): Try to add chr to chromosomes if not present.
+			- addAF (bool): Try to add FORMAT/AF based on FORMAT/AD and FORMAT/DP.
 			- tumorpos (bool|str|list): Try to put tumor sample before normal if it is Tumor-Normal paired VCF file. It could be:
 				- False: to disable this fix
 				- True: to match the file name to determine the tumor sample
@@ -715,7 +717,7 @@ def _pVcfFix():
 			- headerInfo (bool|dict): Try to fix missing INFOs in header.
 				- False: to disable this fix
 				- True: to use `{ID: <info>, Number: 1, Type: String, Description: <info>.upper()}` to add INFO to header.
-				- dict: to specify details to add INFO to header. 
+				- dict: to specify details to add INFO to header.
 					- For example: `{COMMON: {Type: "Int", Description: "Whether it is a common SNP"}}`
 			- headerFormat (bool|dict): Try to fix missing FORMATs in header.
 				- Similar as headerInfo
@@ -734,10 +736,12 @@ def _pVcfFix():
 		output = 'outfile:file:{{i.infile | stem | stem}}.fixed.vcf',
 		lang   = params.python.value,
 		args   = Box(
-			ref   = params.ref.value,
-			fixes = Box(
+			ref     = params.ref.value,
+			nthread = 1,
+			fixes   = Box(
 				clinvarLink  = True,
 				addChr       = True,
+				addAF        = True,
 				tumorpos     = True,
 				headerInfo   = True,
 				headerContig = True,

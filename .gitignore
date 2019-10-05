@@ -116,3 +116,4 @@ site/
 poetry.lock
 testdata/
 .bnpy-test-write-permissions.txt
+*.swp

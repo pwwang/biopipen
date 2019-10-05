@@ -1,6 +1,6 @@
 """
 usage: All-FIT.py [-h] -i INPUTDIRFILE -d OUTPUTDIR -o OUTPUTNAME
-                  [-s STANDARDDEVIATION] [-t {somatic,all}]
+				  [-s STANDARDDEVIATION] [-t {somatic,all}]
 
 This is a program that estimates specimen purity from tumor-only sample
 sequenced with deep sequencing, called All-FIT (Allele Frequency based
@@ -22,18 +22,19 @@ Var7	52.0	841	2
 optional arguments:
   -h, --help            show this help message and exit
   -i INPUTDIRFILE, --inputDirFile INPUTDIRFILE
-                        Input file name with path
+						Input file name with path
   -d OUTPUTDIR, --outputDir OUTPUTDIR
-                        Output directory
+						Output directory
   -o OUTPUTNAME, --outputName OUTPUTNAME
-                        Output file name prefix
+						Output file name prefix
   -s STANDARDDEVIATION, --standardDeviation STANDARDDEVIATION
-                        How many standard deviation or confidence interval of
-                        estimated purity
+						How many standard deviation or confidence interval of
+						estimated purity
   -t {somatic,all}, --typeOfInput {somatic,all}
-                        Types of variants input whether germline variants are
-                        removed(somatic) or not(all)
+						Types of variants input whether germline variants are
+						removed(somatic) or not(all)
 """
+from os import path
 from pyppl import Box
 from bioprocs.utils import logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
@@ -48,14 +49,23 @@ bedtools = {{args.bedtools | quote}}
 params   = {{args.params | repr}}
 mutctrl  = {{args.mutctrl | repr}}
 cnctrl   = {{args.cnctrl | repr}}
+nthread  = {{args.nthread | repr}}
 
-shell.load_config(allfit = allfit, bcftools = bcftools, bedtools = bedtools)
+shell.load_config(allfit = dict(
+	_exe = allfit,
+	_env = dict(
+		OPENBLAS_NUM_THREADS = str(nthread),
+		OMP_NUM_THREADS      = str(nthread),
+		NUMEXPR_NUM_THREADS  = str(nthread),
+		MKL_NUM_THREADS      = str(nthread)
+	)),
+	bcftools = bcftools, bedtools = bedtools)
 
 def MutVCF2BED(vcffile):
 	"""
 	Convert single(paired)-sample VCFs to a BED file like:
-	#CHROM  START   END	    NAME      AF  Depth CN (use default first)
-	chr1    70820   70820   chr:70820 .39 1083  2
+	#CHROM  START   END	    NAME      AF  Depth GT
+	chr1    70820   70820   chr:70820 .39 1083  1
 	"""
 	ret = None
 	samples = shell.bcftools.query(l = vcffile).strip().splitlines()
@@ -66,10 +76,11 @@ def MutVCF2BED(vcffile):
 	writer = TsvWriter(ret)
 	writer.cnames = ['CHROM', 'START', 'END', 'NAME', 'AF', 'Depth', 'CN']
 	for line in shell.bcftools.query(
+		_iter = True,
 		_ = vcffile,
 		s = sample,
-		f = '%CHROM\t%POS\t%POS\t%CHROM:%POS\t%FORMAT/AF\t%FORMAT/AD{1}\t%GT\n'):
-		items = line.split('\t')
+		f = '%CHROM\t%POS\t%POS\t%CHROM:%POS\t[%AF]\t[%AD{1}]\t[%GT]\n'):
+		items = line.strip().split('\t')
 		try:
 			gt = int(items[-1][0]) + int(items[-1][-1])
 		except (TypeError, ValueError):
@@ -96,9 +107,11 @@ def CnVCF2BED(vcffile):
 	writer = TsvWriter(ret)
 	writer.cnames = ['CHROM', 'START', 'END', 'CN']
 	for line in shell.bcftools.query(
+		_iter = True,
 		_ = vcffile,
 		s = sample,
-		f = '%CHROM\t%POS\t%FORMAT/END\t%FORMAT/CN\n'):
+		f = '%CHROM\t%POS\t[%END]\t[%CN]\n'):
+		items = line.strip().split('\t')
 		writer.write(items)
 	writer.close()
 	return ret
@@ -115,20 +128,22 @@ if infile.endswith('.vcf') or infile.endswith('.vcf.gz'):
 	infile = path.join(outdir, path.splitext(mutbed)[0] + '.allfit.txt')
 	writer = TsvWriter(infile)
 	writer.cnames = ['ID', 'Allele_Freq', 'Depth', 'Ploidy']
+	writer.writeHead()
 	for line in shell.bedtools.intersect(
+		_iter = True,
 		a = mutbed,
 		b = cnbed,
 		loj = True):
-		# CHROM  START END NAME AF   Depth       CN
+		# CHROM  START END NAME AF   Depth       GT
 		# 0      1     2   3    4        5        6
 		# CHROM START END CN
 		# 7     8     9   10
-		parts = line.split('\t')
+		parts = line.strip().split('\t')
 		writer.write([
 			parts[3],
 			float(parts[4]) * 100,
 			parts[5],
-			parts[10]])
+			2 if parts[10] == '.' else parts[10]])
 	writer.close()
 
 elif cnfile:

@@ -32,7 +32,7 @@ else:
 	ncol = len(reader.next())
 	reader.rewind()
 
-cols = [ncol + c for c in cols if c < 0]
+cols = [ncol + c if c < 0 else c for c in cols]
 if not keep:
 	cols = [c for c in range(ncol) if c not in cols]
 

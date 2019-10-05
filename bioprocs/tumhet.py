@@ -120,6 +120,7 @@ def _pAllFIT():
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF file, 0-based.
+		nthread (int): Number of threads to use for openblas.
 	"""
 	return Box(
 		desc = "Allele-Frequency-based Imputation of Tumor Purity Inference",
@@ -136,6 +137,7 @@ def _pAllFIT():
 			params   = Box(t = 'somatic'),
 			mutctrl  = None,
 			cnctrl   = None,
+			nthread  = 1
 		)
 	)
 

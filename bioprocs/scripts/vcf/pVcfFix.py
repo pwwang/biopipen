@@ -1,5 +1,5 @@
 import gzip
-from os import path
+from os import path, environ
 from cyvcf2 import VCF, Writer
 from pyppl import Box
 from difflib import SequenceMatcher
@@ -16,9 +16,25 @@ outfile = {{o.outfile | quote}}
 # headerFilter = {filter1: descirption1, filter2: desc2, ...}
 
 fixes   = {{args.fixes | repr}}
+nthread = {{args.nthread | repr}}
 ref     = {{args.ref | quote}}
 reffai  = ref + '.fai'
 refdict = ref[:-3] + '.dict'
+
+environ['OPENBLAS_NUM_THREADS'] = str(nthread)
+environ['OMP_NUM_THREADS']      = str(nthread)
+environ['NUMEXPR_NUM_THREADS']  = str(nthread)
+environ['MKL_NUM_THREADS']      = str(nthread)
+import numpy
+
+fixes.clinvarLink  = fixes.get('clinvarLink', False)
+fixes.addChr       = fixes.get('addChr', False)
+fixes.addAF        = fixes.get('addAF', False)
+fixes.tumorpos     = fixes.get('tumorpos', False)
+fixes.headerInfo   = fixes.get('headerInfo', False)
+fixes.headerContig = fixes.get('headerContig', False)
+fixes.headerFormat = fixes.get('headerFormat', False)
+fixes.headerFilter = fixes.get('headerFilter', False)
 
 if fixes.tumorpos is True:
 	fixes.tumorpos = path.splitext(path.basename(infile))[0]
@@ -64,9 +80,9 @@ if fixes.clinvarLink or fixes.addChr or fixes.tumorpos:
 				elif parts[9] in fixes.tumorpos:
 					fixes.tumorpos = False
 				else:
-					sample1_match = max(SequenceMatcher(None, parts[9], tumor).ratio() 
+					sample1_match = max(SequenceMatcher(None, parts[9], tumor).ratio()
 						for tumor in fixes.tumorpos)
-					sample2_match = max(SequenceMatcher(None, parts[10], tumor).ratio() 
+					sample2_match = max(SequenceMatcher(None, parts[10], tumor).ratio()
 						for tumor in fixes.tumorpos)
 					fixes.tumorpos = sample2_match > sample1_match
 				if fixes.tumorpos:
@@ -98,9 +114,10 @@ if fixes.headerFormat not in (None, False):
 if fixes.headerFilter not in (None, False):
 	pool['filter'] = set()
 
-if pool:
+if pool or fixes.addAF:
 	# scan the problems
 	vcf  = VCF(infile)
+
 	for variant in vcf:
 		if fixes.headerContig not in (None, False):
 			pool['contig'].add(variant.CHROM)
@@ -125,7 +142,31 @@ if pool:
 		fixes.headerFilter = {}
 
 	vcf  = VCF(infile)
-	for info_item in pool['info']:
+
+	# if fixes.addAF is true, try to add it to header
+	if fixes.addAF:
+		try:
+			vcf["AD"]
+		except KeyError:
+			raise ValueError('Cannot fix addAF, vcf file does not contain "FORMAT/AD" field.')
+		try:
+			vcf["DP"]
+		except KeyError:
+			raise ValueError('Cannot fix addAF, Vcf file does not contain "FORMAT/DP" field.')
+		try:
+			item_type = vcf["AF"]
+			if item_type['Description'] == '"Dummy"':
+				raise KeyError()
+		except KeyError:
+			adict = dict(
+				ID          = "AF",
+				Number      = 1,
+				Type        = "Float",
+				Description = "The allele frequency of first minor allele."
+			)
+			vcf.add_format_to_header(adict)
+
+	for info_item in pool.get('info', []):
 		try:
 			item_type = vcf[info_item]
 			# auto added by cyvcf2
@@ -141,7 +182,7 @@ if pool:
 			)
 			vcf.add_info_to_header(adict)
 
-	for fmt_item in pool['format']:
+	for fmt_item in pool.get('format', []):
 		try:
 			item_type = vcf[fmt_item]
 			if item_type['Description'] == '"Dummy"':
@@ -156,7 +197,7 @@ if pool:
 			)
 			vcf.add_format_to_header(adict)
 
-	for filter_item in pool['filter']:
+	for filter_item in pool.get('filter', []):
 		try:
 			item_type = vcf[filter_item]
 		except KeyError:
@@ -168,7 +209,7 @@ if pool:
 			vcf.add_filter_to_header(adict)
 
 	contigs2drop = set()
-	if pool['contig']:
+	if pool.get('contig'):
 		if path.isfile(reffai):
 			refcontigs = getContigsFromFai(reffai)
 		elif path.isfile(refdict):
@@ -187,6 +228,11 @@ if pool:
 	for variant in vcf:
 		if variant.CHROM in contigs2drop:
 			continue
+		if fixes.addAF:
+			ADs = variant.format("AD")
+			DPs = variant.format("DP")
+			variant.set_format("AF",
+				numpy.array([numpy.float(ad[1])/numpy.float(DPs[i][0]) for i, ad in enumerate(ADs)]))
 		writer.write_record(variant)
 	writer.close()
 
