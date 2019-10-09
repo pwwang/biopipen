@@ -230,9 +230,13 @@ if pool or fixes.addAF:
 			continue
 		if fixes.addAF:
 			ADs = variant.format("AD")
+			if ADs is None:
+				continue
 			DPs = variant.format("DP")
-			variant.set_format("AF",
-				numpy.array([numpy.float(ad[1])/numpy.float(DPs[i][0]) for i, ad in enumerate(ADs)]))
+			variant.set_format("AF", numpy.array([
+				numpy.float(ad[1])/numpy.float(DPs[i][0])
+				if DPs[i] and float(DPs[i][0]) > 0 else 0.0
+				for i, ad in enumerate(ADs)]))
 		writer.write_record(variant)
 	writer.close()
 
