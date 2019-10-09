@@ -7,7 +7,7 @@ from bioprocs.utils.parallel import Parallel
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio2 import TsvReader
 
-{% python from bioprocs.utils import alwaysList %}
+{% python from pyppl.utils import alwaysList %}
 infile   = {{i.infile | quote}}
 prefix   = {{i.infile | fn2 | quote}}
 outdir   = {{o.outdir | quote}}
@@ -21,6 +21,7 @@ Rscript  = {{args.Rscript | repr}}
 cutoff   = {{args.cutoff | repr}}
 devpars  = {{args.devpars | repr}}
 pathview = {{args.pathview | repr}}
+include  = {{args.include if args.include else None}}
 
 shell.load_config(Rscript = Rscript)
 
@@ -31,7 +32,7 @@ if isinstance(cutoff, dict):
 		cutoff['by'] = 'AdjPval'
 
 reader = TsvReader(infile, **inopts)
-genes  = [r[genecol] for r in reader]
+genes  = [r[genecol] for r in reader if not include or include(r)]
 
 en = Enrichr(cutoff = cutoff, top = top, Rscript = Rscript)
 en.addList(genes, description = path.basename(infile))

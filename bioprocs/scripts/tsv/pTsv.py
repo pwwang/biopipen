@@ -28,9 +28,9 @@ elif isinstance(outcnames, (list, tuple)):
 
 for r in reader:
 	rec = row(r)
-	if not rec:
+	if rec is False:
 		continue
-	if rec is True:
+	if rec is None or rec is True:
 		rec = r
 	writer.write(rec)
 writer.close()

@@ -10,6 +10,7 @@ SampleInfo2 = R6Class("SampleInfo2", public = list(
 	cnames = c(),
 
 	initialize = function(sifile, checkPaired = FALSE) {
+		# 'Sample', 'Patient', 'Group', 'Batch'
 		private$read(sifile)
 		if (checkPaired && "Patient" %in% self$cnames) {
 			for (patient in self$all.patients()) {
@@ -92,7 +93,7 @@ SampleInfo2 = R6Class("SampleInfo2", public = list(
 	all.patients = function() {
 		if (!"Patient" %in% self$cnames)
 			return (NULL)
-        unique(as.vector(self$mat$Patient))
+		unique(as.vector(self$mat$Patient))
 	},
 
 	all.groups = function() {

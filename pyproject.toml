@@ -4,13 +4,22 @@ version = "0.1.0"
 description = "A set of PyPPL processes for bioinformatics."
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
+include = [
+	"bioprocs/scripts/*/*",
+	"bioprocs/utils/*/*",
+	"bioprocs/reports/*/*"
+]
+exclude = ["bioprocs/**/*.pyc"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-PyPPL = "^1.4"
+PyPPL = "*"
+pyparam = "*"
+python-box87 = "*"
+completions = "*"
 
 [tool.poetry.scripts]
-bioprocs = 'bioprocs.main:main'
+bioprocs = 'bioprocs.console:main'
 
 [tool.poetry.dev-dependencies]
 
