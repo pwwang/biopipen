@@ -6,18 +6,10 @@ authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
 include = [
 	"bioprocs/scripts/*/*",
-	"bioprocs/utils/*/*"
+	"bioprocs/utils/*/*",
+	"bioprocs/reports/*/*"
 ]
-exclude = [
-	"bioprocs/**/*.pyc"
-]
-
-packages = [
-	{ include = "bioprocs" },
-	{ include = "bioprocs.console" },
-	{ include = "bioprocs.console.pipeline" },
-	{ include = "bioprocs.sets" }
-]
+exclude = ["bioprocs/**/*.pyc"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
