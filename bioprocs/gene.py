@@ -1,3 +1,4 @@
+"""Gene related processes"""
 from pyppl import Proc, Box
 from . import params
 from .seq import _pPromoters

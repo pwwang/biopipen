@@ -1,3 +1,4 @@
+"""TCGA data analysis"""
 from pyppl import Proc, Box
 from . import params, rimport
 from .utils import fs2name

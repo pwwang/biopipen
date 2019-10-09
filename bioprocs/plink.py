@@ -4,7 +4,7 @@ Procs for plink 1.9
 from pyppl import Proc, Box
 from . import params, rimport, bashimport
 from .vcf import pVcf2Plink
-from .vcfnext import pGTMat2Plink
+from .tcgamaf import pGTMat2Plink
 from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())

@@ -1,11 +1,11 @@
+"""Plot genomic features using Gviz R package"""
+# https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
 from pyppl import Proc, Box
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
-# Plot genomic features using Gviz R package
-# https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
 
 @procfactory
 def _pInteractionTrack():

@@ -1,4 +1,4 @@
-# Analysis of expression data from RNA-seq
+"""Analysis of expression data from RNA-seq"""
 from os import path
 from glob import glob
 from pyppl import Proc, Box

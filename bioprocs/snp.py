@@ -1,3 +1,4 @@
+"""Processes to process files with SNPs"""
 from pyppl import Proc, Box
 from . import params
 from . import delefactory, procfactory

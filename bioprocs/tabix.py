@@ -1,3 +1,4 @@
+"""Tabix utilities"""
 from pyppl import Proc, Box
 #from .utils import helpers, runcmd
 from . import params

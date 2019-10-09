@@ -1,3 +1,4 @@
+"""A set of resources to download via API or URL links"""
 from pyppl import Proc, Box
 from . import params
 #from .utils import txt, download, runcmd

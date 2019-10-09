@@ -1,3 +1,4 @@
+"""Snp-array utilities"""
 from pyppl import Proc, Box
 from . import params
 #from .utils import runcmd, helpers

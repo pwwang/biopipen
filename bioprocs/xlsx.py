@@ -1,4 +1,4 @@
-# A set of processes handling Excel files (>=2010)
+"""A set of processes handling Excel files (>=2010)"""
 
 from pyppl import Proc
 from . import params

@@ -1,3 +1,4 @@
+"""Some commonly-used processes"""
 from pyppl import Proc, Box
 from modkit import Modkit
 from . import params, delefactory, procfactory

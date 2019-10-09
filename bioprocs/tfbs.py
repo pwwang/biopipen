@@ -1,5 +1,5 @@
+"""Putative transcription factor binding sites analysis"""
 from pyppl import Proc, Box
-#from .utils import runcmd, helpers, parallel
 from . import params
 from .utils import fs2name
 from . import delefactory, procfactory

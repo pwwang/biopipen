@@ -1,4 +1,4 @@
-# Utilities of cnvkit
+"""Utilities of cnvkit"""
 from pyppl import Proc, Box
 from . import params
 from .utils import fs2name

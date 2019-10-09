@@ -1,3 +1,4 @@
+"""Gene set enrichment analysis"""
 from os import path
 from pyppl import Proc, Box
 from . import params
@@ -143,7 +144,7 @@ def _pEnrichr():
 		`genecol`: The columns index containing the genes
 		`inopts`:  The input options.
 			- `delimit`: The delimit of input file.
-			- `skip`:    Skip first N lines. 
+			- `skip`:    Skip first N lines.
 			- `comment`: Line comment mark.
 			- Other parameters fit `bioprocs.utils.tsvio.TsvReader`
 		`libs`:  The databases to do enrichment against.

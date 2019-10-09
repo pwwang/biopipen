@@ -1,4 +1,4 @@
-# Generate plots using given data
+"""Generate plots using given data"""
 
 from pyppl import Proc, Box
 from . import params, rimport

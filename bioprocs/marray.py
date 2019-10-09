@@ -1,3 +1,4 @@
+"""Microarray data analysis"""
 import re
 from os import path
 from glob import glob

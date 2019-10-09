@@ -1,9 +1,9 @@
+"""Some misc processes"""
 from pyppl import Proc, Box
 from bioprocs import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
-# Some misc processes
 
 @procfactory
 def _pGEP70():

@@ -1,3 +1,4 @@
+"""Network (mathmatics) analysis"""
 from pyppl import Proc, Box
 from . import params
 from . import delefactory, procfactory

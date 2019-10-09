@@ -1,3 +1,4 @@
+"""Processes related to DNA/protein sequences"""
 from pyppl import Proc, Box
 #from .utils import runcmd, helpers, genenorm, write
 from . import params

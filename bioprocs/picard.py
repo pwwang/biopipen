@@ -1,12 +1,9 @@
+"""picard utilities"""
 from pyppl import Proc, Box
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
-
-#############################
-# picard utilities          #
-#############################
 
 @procfactory
 def _pMarkDuplicates():

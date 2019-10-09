@@ -1,4 +1,4 @@
-# A set of processes to generate/process vcf files
+"""A set of processes to generate/process vcf files"""
 from os import path
 from glob import glob
 from pyppl import Proc, Box
