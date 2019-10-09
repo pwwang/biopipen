@@ -6,6 +6,7 @@ if (!exists('utils')) {
 	runcmd = shell$runcmd
 	mem2   = utils$mem2
 }
+options(stringsAsFactors = FALSE)
 
 cbindfill = function (...) {
 	dfs = list(...)
@@ -96,6 +97,12 @@ read.table.inopts = function(infile, inopts, dup = NULL, try = FALSE) {
 		quote       = inopts.default('quote', ""),
 		skip        = inopts.default('skip', 0)
 	)
+	inopts$cnames  = NULL
+	inopts$rnames  = NULL
+	inopts$delimit = NULL
+	inopts$quote   = NULL
+	inopts$skip    = NULL
+	params = c(params, inopts)
 	if (!try) {
 		d = do.call(read.table, params)
 	} else {
@@ -149,7 +156,6 @@ pretty.numbers = function(df, formats) {
 # format data.frame to output
 pretty.numbers2 = function(df, ...) {
 	formats = list(...)
-	options(stringsAsFactors = FALSE)
 	df = as.data.frame(df)
 	if (nrow(df) == 0)
 		return(df)
@@ -179,13 +185,21 @@ is.installed = function(pkg) {
 	is.element(pkg, installed.packages()[,1])
 }
 
-bQuote = function(s) {
+.bQuote = function(s) {
 	if (startsWith(s, '`') && endsWith(s, '`')) {
 		return (s)
 	} else {
 		paste0('`', s, '`')
 	}
 }
+bQuote = Vectorize(.bQuote)
+
+.nobQuote = function(s) {
+	if (!startsWith(s, '`') || !endsWith(s, '`'))
+		return(s)
+	return (substring(s, 2, nchar(s) - 1))
+}
+nobQuote = Vectorize(.nobQuote)
 
 is.true = function(x, collapse = 'all') {
 	if (is.null(x)) return (FALSE)
@@ -224,7 +238,7 @@ list.get = function(l, key, default = NULL, check.names = FALSE) {
 	#	`l`: The list
 	#	`key`: The key
 	#	`default`: The default value. Default: `NULL`
-	#	`check.names`: Check whetheer the name exists, even with value `NULL`. Default: `FALSE`
+	#	`check.names`: Check whether the name exists, even with value `NULL`. Default: `FALSE`
 	#		- `list.get(list(a = NULL), 'a', default = 1, check.names = TRUE) == NULL`
 	#		- `list.get(list(a = NULL), 'a', default = 1, check.names = FALSE) == 1`
 	if (!check.names) {

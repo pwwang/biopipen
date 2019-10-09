@@ -1,7 +1,7 @@
 import json
 from pyppl import Box
+from pyppl.utils import alwaysList
 from medoo import Medoo, Raw, Field, Dialect
-from . import alwaysList
 try:
 	string_types = (str, unicode)
 except NameError:

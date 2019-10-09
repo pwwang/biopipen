@@ -151,12 +151,20 @@ class SampleInfo2(object):
 	def allPatients(self):
 		if 'Patient' not in self.cnames:
 			return None
-		return list(set([r.Patient for r in self.mat]))
+		patients = [r.Patient for r in self.mat]
+		ret = []
+		for patient in patients:
+			if patient not in ret:
+				ret.append(patient)
+		return ret
 
 	def allGroups(self):
 		allgroups = [r.Group for r in self.mat]
-		group0    = self.mat[0].Group
-		return [group0] + list(set(group for group in allgroups if group != group0))
+		ret = []
+		for group in allgroups:
+			if group not in ret:
+				ret.append(group)
+		return ret
 
 	def getSamples(self, by = None, value = None, returnAll = False):
 		if by and by not in self.cnames:
@@ -192,12 +200,13 @@ class SampleInfo2(object):
 	def getPairedSamples(self, datadir = None):
 		patients = self.allPatients()
 		groups   = self.allGroups()
+
 		ret = []
 		for patient in patients:
 			samples = self.getSamples(by = 'Patient', value = patient, returnAll = True)
 			s1 = path.join(datadir, samples[0].Sample) if datadir else samples[0].Sample
 			s2 = path.join(datadir, samples[1].Sample) if datadir else samples[1].Sample
-			if samples[0].Group == groups[0]:
+			if samples[0].Group != groups[1]: # make sure it's (tumor, normal) pair
 				ret.append((s1, s2))
 			else:
 				ret.append((s2, s1))

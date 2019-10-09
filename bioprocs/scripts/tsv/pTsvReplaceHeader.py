@@ -3,7 +3,7 @@ from bioprocs.utils import logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 {% python from os import path %}
-{% python from bioprocs.utils import alwaysList %}
+{% python from pyppl.utils import alwaysList %}
 {% assign cnames = dict(list = list, readlines = readlines,alwaysList = alwaysList, func = lambda x: x) %}
 {% assign cntype = lambda x, path = path: 'none' if x is None else 'list' if isinstance(x, (list, tuple)) else 'readlines' if path.isfile(x) else 'func' if x.startswith('lambda') else 'alwaysList' %}
 infile  = {{i.infile | quote}}

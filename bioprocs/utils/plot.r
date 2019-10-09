@@ -1,4 +1,6 @@
 require('ggplot2')
+require('ggrepel')
+pdf(NULL) # preventing Rplots.pdf
 
 .script.file = function() {
 	for (i in 1:length(sys.frames())) {
@@ -9,6 +11,30 @@ require('ggplot2')
 	}
 }
 source(file.path(dirname(.script.file()), '__init__.r'))
+
+DEVPARS = list(height = 2000, width = 2000, res = 300)
+
+.stack.data = function(data, colnames = c('values', 'ind')) {
+	data = stack(as.data.frame(data))
+	colnames(data) = colnames
+	return(data)
+}
+
+.get.aes.string = function(data, ...) {
+	# colnames(data) = c('A', 'B', 'C')
+	# .get.aes.string(data, x=2, y=1)
+	# => list(x='B', y='A')
+	cols   = list(...)
+	cnames = colnames(data)
+	ret    = list()
+	anames = names(cols)
+	for (i in 1:length(anames)) {
+		aname = anames[i]
+		colidx = cols[[aname]]
+		ret[[aname]] = ifelse(is.numeric(colidx), cnames[colidx], cols[[aname]])
+	}
+	return (ret)
+}
 
 # Update an aes in alist (named "mapping") for ggplot2 functions
 # namesbefore = c('data')
@@ -61,19 +87,28 @@ apply.ggs = function(p, ggs) {
 	return (p)
 }
 
-plot.no = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
-	if (!is.null(plotfile)) {
-		do.call(png, c(list(filename=plotfile), devpars))
-	}
-	params$data = as.data.frame(data)
-	p = do.call(ggplot, params)
-	print(apply.ggs(p, ggs))
-	if (!is.null(plotfile)) {
+save.plot = function(p, plotfile, devpars = DEVPARS) {
+	if (is.null(plotfile)) {
+		print(p)
+	} else if (plotfile == 'return') {
+		return(p)
+	} else if (endsWith(plotfile, '.png')) {
+		do.call(png, c(list(filename = plotfile), devpars))
+		print(p)
 		dev.off()
+	} else {
+		stop('Only .png file supported to save plots for now.')
 	}
 }
 
-plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.no = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = DEVPARS) {
+	params$data = as.data.frame(data)
+	p = do.call(ggplot, params)
+	p = apply.ggs(p, ggs)
+	save.plot(p, plotfile, devpars)
+}
+
+plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = DEVPARS) {
 	cnames = colnames(data)
 	cnames = make.names(cnames)
 	colnames(data) = cnames
@@ -83,7 +118,7 @@ plot.xy = function(data, plotfile = NULL, x = 1, y = 2, ggs = list(), devpars = 
 	plot.no(data, plotfile, params, ggs, devpars)
 }
 
-plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = DEVPARS) {
 	cnames = colnames(data)
 	cnames = make.names(cnames)
 	colnames(data) = cnames
@@ -92,13 +127,17 @@ plot.x = function(data, plotfile, x = 1, ggs = list(), devpars = list(res = 300,
 	plot.no(data, plotfile, params, ggs, devpars)
 }
 
-plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.stack = function(data, plotfile, x = 'ind', y = 'values', ggs = list(), devpars = DEVPARS) {
 	data = stack(as.data.frame(data))
 	plot.xy(data, plotfile, x = x, y = y, ggs = ggs, devpars = devpars)
 }
 
-
-plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC = T, showAUC = T, combine = T, labels = F), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.roc = function(
+	data,
+	plotfile = NULL,
+	stacked = FALSE,
+	params = list(returnTable = FALSE, showAUC = TRUE, bestCut = FALSE),
+	ggs = list(), devpars = DEVPARS) {
 	# plot the ROC curve
 	# see: https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html
 	# @params:
@@ -109,126 +148,182 @@ plot.roc = function(data, plotfile = NULL, stacked = F, params = list(returnAUC 
 	#	`plotfile`: The file to save the plot.
 	#	`stacked` : Whether the data is stacked(melt). See `data`
 	#	`params`  : The parameters for plotting.
-	#		- `returnAUC`: Return list of AUC values of this function
 	#		- `showAUC`  : Show AUC on the plot
-	#		- `combine`  : Combine the ROC in one plot?
-	#		- `labels`   : Show some values on the curve for some cutting points
-	require('plotROC')
+	#		- `returnTable`: Whether return a table of details. If TRUE, to get plot, use ret$plot and table use ret$table
+	require('pROC')
 
 	if (stacked) {
 		if (ncol(data) != 3)
-			stop('Expect 3 columns (D, M, name) in stacked data to plot ROC.')
-		colnames(data) = c('D', 'M', 'name')
+			stop('Expect 3 columns (D, M, Group) in stacked data to plot ROC.')
+		colnames(data) = c('D', 'M', 'Group')
 	} else {
-		if (ncol(data) > 2) {
-			data = melt_roc(data, 1, 2:ncol(data))
-			colnames(data) = c('D', 'M', 'name')
+		ncols = ncol(data)
+		if (ncols < 2) {
+			stop('Expect at least 2 columns (D, M1, ..., Mn)')
+		}
+		data = cbind(rep(data[,1], ncols-1), stack(data[, 2:ncols, drop = FALSE]))
+		colnames(data) = c('D', 'M', 'Group')
+	}
+	groups = levels(factor(data$Group))
+	returnTable = params$returnTable
+	if (is.null(returnTable)) returnTable = FALSE
+
+	showAUC = params$showAUC
+	if (is.null(showAUC)) showAUC = TRUE
+
+	bestCut = params$bestCut
+	if (is.null(bestCut)) bestCut = FALSE
+
+	params$returnTable = NULL
+	params$showAUC     = NULL
+	params$bestCut     = NULL
+
+	# get roc objects
+	rocs = list()
+	for (grup in groups) {
+		rocs[[grup]] = roc(D ~ M, data = data, subset=(Group == grup))
+	}
+
+	# get table of a roc object
+	roc.table = function(rocobj) {
+		aucci = ci(rocobj)
+		ret = data.frame(
+			threshold   = rocobj$thresholds,
+			sensitivity = rocobj$sensitivities,
+			specificity = rocobj$specificities,
+			auc         = as.vector(rocobj$auc),
+			auc_95ci1   = aucci[1],
+			auc_95ci2   = aucci[3])
+		# checkout the best cut points
+		bests = as.matrix(coords(rocobj, 'best'))
+		cbind(ret, is.best = ret$threshold %in% bests[1,])
+	}
+	roc.tables = function(rocs) {
+		ret = NULL
+		for (name in names(rocs)) {
+			rtable = roc.table(rocs[[name]])
+			tmp = cbind(Group = name, rtable)
+			ret = ifelse(is.null(ret), tmp, rbind(ret, tmp))
+		}
+		ret
+	}
+
+	ret       = list()
+	ret$plot  = do.call(ggroc, c(list(rocs), params))
+	ret$table = roc.tables(rocs)
+	# add best cut
+	if (bestCut) {
+		bestdata = ret$table[ret$table$is.best,,drop=FALSE]
+		ret$plot = ret$plot + geom_point(
+			aes(x = specificity, y = sensitivity, color = Group),
+			data = bestdata,
+			inherit.aes = FALSE
+		) + geom_segment(
+			aes(x = specificity, xend = specificity, y = sensitivity, yend = -Inf, color = Group),
+			data = bestdata,
+			linetype = 'dashed',
+			inherit.aes = FALSE
+		) + geom_segment(
+			aes(x = Inf, xend = specificity, y = sensitivity, yend = sensitivity, color = Group),
+			data = bestdata,
+			linetype = 'dashed',
+			inherit.aes = FALSE
+		) + geom_text_repel(
+			aes(x = specificity, y = sensitivity,
+				label = paste0('best (', round(specificity, 3), ', ', round(sensitivity, 3) ,')'),
+				color = Group),
+			data = bestdata
+		)
+	}
+	# add AUC
+	if (showAUC) {
+		aucs = unique(ret$table[, c('Group', 'auc')])
+		if (nrow(aucs) == 1) {
+			ret$plot = ret$plot + annotate("text", x = .1, y = .05,
+				label = paste('AUC', round(aucs[1,2], 3), sep = ' = '))
+			ret$plot = ret$plot + scale_color_discrete(guide = F)
 		} else {
-			data = data.frame(D = data[, 1], M = data[, 2], name = colnames(data)[2])
-		}
-	}
-	cnames = levels(factor(data$name))
-
-	returnAUC = params$returnAUC
-	if (is.null(returnAUC)) returnAUC = T
-
-	showAUC   = params$showAUC
-	if (is.null(showAUC)) showAUC = T
-
-	combine   = params$combine
-	if (is.null(combine)) combine = T
-
-	params$returnAUC = NULL
-	params$showAUC   = NULL
-	params$combine   = NULL
-
-	params = update.aes(params, aes(d = D, m = M, color = name))
-	if (combine) {
-		if (!is.null(plotfile))
-			do.call(png, c(list(filename=plotfile), devpars))
-		p = ggplot(data) + do.call(geom_roc, params)
-		if (returnAUC || showAUC) {
-			aucs = as.list(calc_auc(p)$AUC)
-			names(aucs) = cnames
-		}
-		if (showAUC) {
-			auclabels = sapply(cnames, function(n) {
-				sprintf('AUC(%s) = %.3f', n, aucs[[n]])
+			auclabels = apply(aucs, 1, function(row) {
+				sprintf('AUC(%s) = %.3f', row[1], as.numeric(row[2]))
 			})
-			if (length(cnames) >= 2) {
-				p = p + scale_color_discrete(name = "", breaks = cnames, labels = auclabels)
-			} else {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(unlist(aucs), 3), sep = ' = '))
-				p = p + scale_color_discrete(guide = F)
-			}
+			ret$plot = ret$plot + scale_color_discrete(name = "",
+				breaks = groups,
+				labels = as.vector(auclabels))
 		}
-		print(apply.ggs(p, ggs))
-		if (!is.null(plotfile))
-			dev.off()
-		if (returnAUC) return(aucs)
-	} else {
-		aucs = list()
-		for (cname in cnames) {
-			if (!is.null(plotfile)) {
-				prefix = tools::file_path_sans_ext(plotfile)
-				do.call(png, c(list(filename = paste0(prefix, '-', cname, '.png')), devpars))
-			}
-			p = ggplot(data[which(data$name == cname), , drop=F]) + do.call(geom_roc, params)
-			if (returnAUC || showAUC) {
-				aucs[[cname]]= calc_auc(p)$AUC
-			}
-			if (showAUC) {
-				p = p + annotate("text", x = .9, y = .1, label = paste('AUC', round(aucs[[cname]], 3), sep = ' = '))
-				p = p + scale_color_discrete(guide = F)
-			}
-			print(apply.ggs(p, ggs))
-			if (!is.null(plotfile))
-				dev.off()
-		}
-		if (returnAUC) return(aucs)
 	}
+
+	ret$plot = apply.ggs(ret$plot, ggs)
+	if (returnTable) {
+		save.plot(ret$plot, plotfile, devpars)
+		return(ret)
+	}
+	save.plot(ret$plot, plotfile, devpars)
 }
 
-plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.scatter = function(data, plotfile = NULL, x = 1, y = 2, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_point = params), ggs)
 	plot.xy(data, plotfile, x, y, ggs, devpars)
 }
 # alias
 plot.points = plot.scatter
 
-plot.col = function(data, plotfile = NULL, x = 1, y = 2, stacked = TRUE, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
-	if (stacked) {
-		cnames = colnames(data)
-		cnames = make.names(cnames)
-		colnames(data) = cnames
-		if (is.numeric(x)) {
-			x = cnames[x]
-		}
-		if (is.numeric(y)) {
-			y = cnames[y]
-		}
-		params$stat = list.get(params, 'stat', 'identity')
-		# to keep the order
-		data[, x] = factor(data[, x], levels = data[,x])
-		ggs = c(
-			list(geom_bar = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.xy(data, plotfile, x, y, ggs, devpars)
-	} else {
-		ggs = c(
-			list(geom_bar = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+plot.col = function(
+	data,
+	plotfile = NULL,
+	x = 2,
+	y = 0,
+	params = list(),
+	ggs = list(), devpars = DEVPARS) {
+	# y = 1 # y as counts
+	# x = 2
+	# ----------------------
+	# Counts	Group	Fill
+	# 10	Ga	Yes
+	# 10	Gb	No
+	#
+	#    |
+	# 10 | |-|  |-|     Fill
+	#    | |x|  |.|     x: Yes
+	#    |_|x|__|.|___  .: No
+	#      Ga    Gb
+	#
+	# y.is.counts = FALSE
+	# x = 1
+	# y = 0 # counting Sub-groups
+	# ---------------------------
+	# Group	Fill
+	# Ga	Yes
+	# Ga	Yes
+	# Ga	Yes
+	# Gb	No
+	# Gb	No
+	# Gb	No
+	#
+	#    |
+	# 3  | |-|  |-|     Fill
+	#    | |x|  |.|     x: Yes
+	#    |_|x|__|.|___  .: No
+	#      Ga    Gb
+	#
+	if (y == 0) {
+		data = cbind(data, Count = 1)
+		y = ncol(data)
 	}
+
+	aes.string = .get.aes.string(data, x = x, y = y)
+	ggs = c(
+		list(geom_col = params),
+		list(theme = list(axis.text.x = element_text(angle = 60, hjust = 1))),
+		list(xlab = list(aes.string$x)),
+		ggs
+	)
+	data[, x] = as.character(data[, x])
+	plot.xy(data, plotfile, aes.string$x, aes.string$y, ggs, devpars)
 }
 # alias
 plot.bar = plot.col
 
-plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
 	if (stacked) {
 		cnames = colnames(data)
 		cnames = make.names(cnames)
@@ -257,55 +352,41 @@ plot.boxplot = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, par
 	}
 }
 
-plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
-	if (stacked) {
-		cnames = colnames(data)
-		cnames = make.names(cnames)
-		colnames(data) = cnames
-		if (is.numeric(x)) {
-			x = cnames[x]
-		}
-		if (is.numeric(y)) {
-			y = cnames[y]
-		}
-		#params = update.aes(params, aes_string(group = x))
-
-		ggs = c(
-			list(geom_violin = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.xy(data, plotfile, x, y, ggs, devpars)
-	} else {
-		ggs = c(
-			list(geom_violin = params),
-			list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
-			ggs
-		)
-		plot.stack(data, plotfile, ggs = ggs, devpars = devpars)
+plot.violin = function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE, params = list(), ggs = list(), devpars = DEVPARS) {
+	if (!stacked) {
+		data = .stack.data(data)
+		x = 2
+		y = 1
 	}
+	aes.string = .get.aes.string(data, x = x, y = y)
+	ggs = c(
+		list(geom_violin = params),
+		list(theme = list(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))),
+		ggs
+	)
+	plot.xy(data, plotfile, aes.string$x, aes.string$y, ggs, devpars)
 }
 
 plot.heatmap2 = function(
 	data, plotfile = NULL, params = list(), draw = list(),
-	devpars = list(res=300, width=2000, height=2000)) {
+	devpars = DEVPARS) {
 	library(ComplexHeatmap)
 
 	params$matrix = data
 	hm = do.call(Heatmap, params)
 
-	if (is.logical(plotfile) && !plotfile) {
-		return(hm)
-	} else if (is.null(plotfile)) {
+	if (is.null(plotfile)) {
 		do.call(ComplexHeatmap::draw, c(list(hm), draw))
-	} else {
+	} else if (plotfile == 'return') {
+		return(hm)
+	}  else {
 		do.call(png, c(list(filename=plotfile), devpars))
 		do.call(ComplexHeatmap::draw, c(list(hm), draw))
 		dev.off()
 	}
 }
 
-plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(), devpars = DEVPARS) {
 	require('ggdendro')
 	require('gtable')
 	require('grid')
@@ -437,23 +518,41 @@ plot.heatmap = function(data, plotfile, params = list(dendro = T), ggs = list(),
 	dev.off()
 }
 
-plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.histo = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_histogram = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
-plot.density = function(data, plotfile = NULL, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.density = function(
+	data,            # the data, either stacked or not
+	# NULL: print the plot,
+	# 'return': return the ggplot object,
+	# 'filepath': save the plot to file
+	plotfile = NULL,
+	x = 1, # The data column for values, only for stacked data
+	y = 2, # The data column for groups, only for stacked data
+	stacked = TRUE,  # whether the data is stacked, if not will stack it
+	params = list(), # The params for geom_density
+	ggs = list(), devpars = DEVPARS) {
+
+	if (!stacked) {
+		data = .stack.data(data)
+		x = 1
+		y = 2
+	}
+	aes.string = .get.aes.string(data, x = x, y = y)
+	params = c(params, list(mapping = aes_string(fill = aes.string$y), alpha = .3))
 	ggs = c(list(geom_density = params), ggs)
-	plot.x(data, plotfile, x, ggs, devpars)
+	plot.x(data, plotfile, aes.string$x, ggs, devpars)
 }
 
 
-plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.freqpoly = function(data, plotfile, x = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	ggs = c(list(geom_freqpoly = params), ggs)
 	plot.x(data, plotfile, x, ggs, devpars)
 }
 
-plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = DEVPARS) {
 	data = as.data.frame(data)
 	cnames = colnames(data)
 	A      = if ("A" %in% cnames) data$A else data[, 1]
@@ -474,7 +573,7 @@ plot.maplot = function(data, plotfile, threshold, ggs = list(), devpars = list(r
 	plot.scatter(data, plotfile, x = 'A', y = 'M', params = params, ggs = ggs, devpars = devpars)
 }
 
-plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs = list(), devpars = list(res = 300, width = 2000, height = 2000)) {
+plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs = list(), devpars = DEVPARS) {
 	data = as.data.frame(data)
 	n    = nrow(data)
 	q    = (1:n)/n
@@ -497,7 +596,8 @@ plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs 
 # item3	0		1		1
 # item4	1		0		0
 # item5	1		0		1
-plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.venn = function(data, plotfile = NULL, params = list(), devpars = DEVPARS) {
+
 	library(VennDiagram)
 	rnames = rownames(data)
 	if (is.null(rnames)) {
@@ -513,17 +613,15 @@ plot.venn = function(data, plotfile, params = list(), devpars = list(res=300, wi
 	do.call(venn.diagram, params)
 }
 
-plot.upset = function(data, plotfile, params = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.upset = function(data, plotfile = NULL, params = list(), devpars = DEVPARS) {
 	library(UpSetR)
-	do.call(png, c(list(filename = plotfile), devpars))
 	default.params = list(data = data, nsets = ncol(data))
 	params = update.list(default.params, params)
 	p = do.call(upset, params)
-	print(p)
-	dev.off()
+	save.plot(p, plotfile, devpars)
 }
 
-plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.pie = function(data, plotfile, ggs = list(), devpars = DEVPARS) {
 	percent    = function(x) paste0(format(round(x*100, 1), nsmall = 1), "%")
 	N          = nrow(data)
 	Group      = colnames(data)
@@ -546,7 +644,7 @@ plot.pie = function(data, plotfile, ggs = list(), devpars = list(res=300, width=
 	plot.xy(data, plotfile, x = '""', y = 'Value', ggs, devpars)
 }
 
-plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), devpars = DEVPARS) {
 	data   = as.data.frame(data)
 	cnames = names(data)
 	logfc  = if ("logFC" %in% cnames) data$logFC else data[, 1]
@@ -593,7 +691,8 @@ plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), de
 	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
 }
 
-plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gsize = NULL, ggs = list(), devpars = list(res=300, width=2000, height=2000)) {
+plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE,
+	gsize = NULL, ggs = list(), devpars = DEVPARS) {
 	# manhattan plot
 	# data is a data frame of
 	# Chr, Pos, P[, Region]
@@ -602,7 +701,6 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 	# all snps are on the same chromosome
 
 	library(data.table)
-	library(ggrepel)
 	data = as.data.table(data)
 	if (ncol(data) == 4) {
 		colnames(data) = c('Snp', 'Chr', 'Pos', 'P')
@@ -688,7 +786,9 @@ plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE, gs
 	plot.xy (data, plotfile, x = 'X', y = 'Y', ggs = ggs, devpars = devpars)
 }
 
-plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(), devpars = list(res = 300, width = 400, height = 400)) {
+plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
+	devpars = list(res = 300, width = 400, height = 400)) {
+
 	library(GGally)
 	p = do.call(ggpairs, c(list(data), params))
 	for (n in names(ggs)) {
@@ -697,11 +797,264 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(), devp
 	ncols          = ifelse(is.null(params$columns), ncol(data), length(params$columns))
 	devpars$width  = devpars$width*ncols
 	devpars$height = devpars$height*ncols
-	if (!is.null(plotfile)) {
-		do.call(png, c(list(plotfile), devpars))
-	}
-	print(p)
-	if (!is.null(plotfile)) {
-		dev.off()
-	}
+	save.plot(p, plotfile, devpars)
 }
+
+.surv.cut = function(data, vars = NULL, by = 'maxstat', labels = c("low", "high"), keep.raw = FALSE) {
+	# by = mean, median, q25, q75, asis, maxstat
+	cnames = colnames(data)
+	if (is.null(vars)) {
+		vars = c(cnames[3:ncol(data)])
+	}
+	p = list()
+	for (v in vars) {
+		vdata = as.vector(unlist(data[,v]))
+		if (keep.raw) {
+			rawv  = paste0('raw.', v)
+			data[, rawv] = data[, v]
+		}
+		if (by == 'asis' || !is.numeric(vdata) || length(levels(factor(vdata))) <= 5) {
+			data[, v] = as.factor(as.character(vdata))
+		} else if (by == 'maxstat') {
+			data.cut = surv_cutpoint(data, time = cnames[1], event = cnames[2], variables = v)
+			data.cat = surv_categorize(data.cut)
+			data[, v] = data.cat[, v]
+			p[[v]] = plot(data.cut)[[v]]
+		} else {
+			if (by == 'mean') {
+				vcut = mean(vdata)
+			} else if (by == 'median') {
+				vcut = median(vdata)
+			} else if (by == 'q25') {
+				vcut = quantile(vdata, .25)
+			} else if (by == 'q75') {
+				vcut = quantile(vdata, .75)
+			} else {
+				stop('Unsupported cutting method.')
+			}
+			icut = as.integer(median(which(vdata %in% vcut)))
+			tmp = sapply(1:length(vdata), function(i) {
+				if (vdata[i] < vcut) {
+					labels[1]
+				} else if (vdata[i] > vcut) {
+					labels[2]
+				} else if (i < icut) {
+					labels[1]
+				} else {
+					labels[2]
+				}
+			})
+			data[,v] = tmp
+		}
+	}
+	# plot is a list of plots named with the variables
+	return(list(data = data, plot = p))
+}
+
+plot.survival.km = function(data, plotfile = NULL, params = list(
+	risk.table  = TRUE,
+	pval        = TRUE,
+	cut         = 'maxstat',
+	cutlabels   = c('low', 'high')
+), ggs = list(table = NULL), devpars = DEVPARS) {
+	# @description:
+	#   Use Kaplan Merier to do survival analysis
+	#   See: http://www.sthda.com/english/wiki/survival-analysis-basics#kaplan-meier-survival-estimate
+	# @params:
+	#   dat: The data frame, where:
+	#     - 1st col is time
+	#     - 2nd col is status
+	#     - 3rd col is the variable (have to be categorical)
+	#   varname: The variable name to display instead of var (3rd colname)
+	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
+	# @returns:
+	#   list(plot, table, cutplot)
+	library(survival)  # 2.44-1.1
+	library(survminer) # 0.4.4.999
+
+	ret = list()
+	cnames  = colnames(data)
+	variable = cnames[3]
+
+	cutmethod = list.get(params, 'cut', 'maxstat')
+	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
+
+	params$cut       = NULL
+	params$cutlabels = NULL
+
+	survcut = .surv.cut(data, by = cutmethod, labels = cutlabels, keep.raw = TRUE)
+	data    = survcut$data
+
+	ret$cutplot = ifelse(length(survcut$plot) > 0, survcut$plot[[variable]], NULL)
+	ret$data    = data
+
+	# compose formula
+	fmula  = sprintf('Surv(%s, %s) ~ %s',
+		bQuote(cnames[1]),
+		bQuote(cnames[2]),
+		bQuote(variable))
+	modfit = surv_fit(as.formula(fmula), data = data)
+
+	returnTable = list.get(params, 'returnTable', FALSE)
+	params$returnTable = NULL
+	params$risk.table = list.get(params, 'risk.table', TRUE)
+	params$pval = list.get(params, 'pval', TRUE)
+
+	ret$plot = do.call(ggsurvplot, c(list(modfit, data = data), params))
+	if (length(levels(as.factor(data[, 3]))) < 2) {
+		ret$table = data.frame(
+			var    = variable,
+			method = 'Kaplan Merier',
+			test   = 'LogRank',
+			groups = 1,
+			df     = 1,
+			pvalue = '1.00E+00'
+		)
+	} else {
+		counts = as.data.frame(table(data[, variable]))
+		ret$table = data.frame(
+			var    = variable,
+			method = 'Kaplan Merier',
+			test   = 'LogRank',
+			groups = paste(apply(counts, 1, function(row) paste(row, collapse = ':')),
+				collapse = ', '),
+			df     = 1,
+			pvalue = sprintf('%.2E', surv_pvalue(modfit, data = data)$pval)
+		)
+	}
+
+	tableggs       = list.get(ggs, 'table', list())
+	ggs$table      = NULL
+	ret$plot$table = apply.ggs(ret$plot$table, tableggs)
+	ret$plot$plot  = apply.ggs(ret$plot$plot, ggs)
+	save.plot(ret$plot, plotfile, devpars)
+	if (!is.null(plotfile) && !is.null(ret$cutplot)) {
+		save.plot(
+			ret$cutplot,
+			sprintf("%s.cut.png", tools::file_path_sans_ext(plotfile)),
+			devpars)
+	}
+	return(ret)
+}
+
+
+plot.survival.cox = function(data, plotfile = NULL, params = list(
+	risk.table  = TRUE,
+	pval        = TRUE,
+	# mean, median, q25, q75, asis
+	# asis uses the levels in 3rd column, requring categorical values
+	# or if 3rd column has <= 5 levels, regard it as categorical,
+	# ignore this argument
+	cut = 'maxstat',
+	cutlabels = c('low', 'high')
+), ggs = list(table = NULL), devpars = DEVPARS) {
+	# @description:
+	#   Use Kaplan Merier to do survival analysis
+	#   See: http://www.sthda.com/english/wiki/cox-proportional-hazards-model
+	# @params:
+	#   dat: The data frame, where:
+	#     - 1st col is time
+	#     - 2nd col is status (censoring)
+	#     - 3rd col is the target variable
+	#     - ... covariates ...
+	#   varname: The variable name to display instead of var (3rd colname)
+	#   params:  The params used for ggsurvplot. If provided, global plot$params will not be override
+	# @returns:
+	#   list(data, plot, cutplot, forest, table)
+	library(survival)
+	library(survminer)
+
+	ret      = list()
+	cnames   = colnames(data)
+	variable = cnames[3]
+	if (length(cnames) > 3) {
+		for (i in 4:length(cnames)) {
+			data[, i] = as.numeric(as.factor(data[, i]))
+		}
+	}
+
+	# compose formula
+	fmula    = sprintf('Surv(%s, %s) ~ .', bQuote(cnames[1]), bQuote(cnames[2]))
+	# do cox regression
+	fit0     = coxph(as.formula(fmula), data = data)
+
+	sumfit    = summary(fit0)
+	ret$table = data.frame(
+		var    = rownames(sumfit$conf.int),
+		method = 'Cox Regression',
+		test   = 'Log Rank')
+
+	ret$table         = cbind(
+		ret$table, sumfit$conf.int[, -2, drop = FALSE], sumfit$coefficients[, 4:5, drop = FALSE])
+	ret$table$df      = sumfit$logtest[2]
+	ret$table$modpval = sumfit$logtest[3]
+	ret$forest        = ggforest(fit0, data = data)
+
+	colnames(ret$table)[4:8] = c('HR', 'CI95_1', 'CI95_2', 'z', 'pvalue')
+
+	# now we cut the variable to plot it
+	cutmethod = list.get(params, 'cut', 'maxstat')
+	cutlabels = list.get(params, 'cutlabels', c('low', 'high'))
+	params$cut = NULL
+	params$cutlabels = NULL
+	survcuts  = .surv.cut(data, by = cutmethod, labels = cutlabels, vars = variable, keep.raw = TRUE)
+
+	ret$cutplot = ifelse(length(survcuts$plot) > 0, survcuts$plot[[variable]], NULL)
+	ret$data    = survcuts$data
+	survcuts$data[[paste0('raw.', variable)]] = NULL
+
+	fit     = coxph(as.formula(fmula), data = survcuts$data)
+	groups  = levels(as.factor(survcuts$data[,variable]))
+
+	newdata = data.frame(groups = groups)
+	colnames(newdata) = variable
+	if (length(cnames) > 3) {
+		for (i in 4:length(cnames)) {
+			var = cnames[i]
+			newdata[[var]] = mean(as.numeric(survcuts$data[,var]))
+		}
+	}
+	fit2 = survfit(fit, newdata = newdata)
+	risktable = list.get(params, 'risk.table', TRUE)
+	params$risk.table = FALSE
+	pval = list.get(params, 'pval', TRUE)
+	if (pval) {
+		params$pval = sprintf(
+			'P = %.3E\nHR = %.3f (95%% CI %.3f ~ %.3f)',
+			sumfit$logtest[3], ret$table[1,4], ret$table[1,5], ret$table[1,6])
+	}
+
+	ret$plot = do.call(ggsurvplot,
+		c(list(fit2, data = newdata, legend.labs=paste(variable, '=', groups)), params))
+
+	# need to hack a risk table.
+	# See https://github.com/kassambara/survminer/issues/231#issuecomment-309453646
+	if (risktable) {
+		fmula = sprintf('Surv(%s, %s) ~ %s',
+				bQuote(cnames[1]), bQuote(cnames[2]), bQuote(variable))
+		kmfit = surv_fit(as.formula(fmula), data = survcuts$data)
+		kmplot = ggsurvplot(kmfit, risk.table = TRUE, data = survcuts$data)
+		kmplot$plot = ret$plot$plot
+		ret$plot = kmplot
+		tableggs = list.get(ggs, 'table', list())
+		ggs$table = NULL
+		ret$plot$table = apply.ggs(ret$plot$table, tableggs)
+	}
+	ret$plot$plot = apply.ggs(ret$plot$plot, ggs)
+
+	save.plot(ret$plot, plotfile, devpars)
+	if (!is.null(plotfile) && !is.null(ret$cutplot)) {
+		save.plot(
+			ret$cutplot[[variable]],
+			sprintf("%s.cut.png", tools::file_path_sans_ext(plotfile)),
+			devpars)
+	}
+	if (!is.null(plotfile)) {
+		save.plot(
+			ret$forest,
+			sprintf("%s.forest.png", tools::file_path_sans_ext(plotfile)),
+			devpars)
+	}
+	return(ret)
+}
+

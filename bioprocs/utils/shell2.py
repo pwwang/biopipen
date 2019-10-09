@@ -14,8 +14,9 @@ DEFAULT_CONFIG = dict(
 	gatk      = dict(_dupkey = True),
 	liftover  = dict(_prefix = '-', _sep = '='),
 	oncotator = dict(_sep = 'auto'),
+	maf2vcf   = dict(_sep = ' '),
 
-	# As of picard 2.18.27-SNAPSHOT
+	# As of picard 2.20.5-SNAPSHOT
 	# it's changing in the futher. See: https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)
 	# Future one should be:
 	# picard = dict(_sep = ' ', _prefix = '-')
@@ -40,6 +41,7 @@ pipe = cmdy(_pipe = True)
 rm_rf  = cmdy.rm.bake(r = True, f = True)
 ln_s   = cmdy.ln.bake(s = True)
 kill_9 = cmdy.kill.bake(s = 9)
+wc_l   = cmdy.wc.bake(l = True)
 
 runcmd = lambda cmd: cmdy.bash(c = cmd)
 

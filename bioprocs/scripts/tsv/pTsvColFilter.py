@@ -1,7 +1,7 @@
 from os import path
-from pyppl import Box
 from collections import OrderedDict
-from bioprocs.utils import alwaysList
+from pyppl import Box
+from pyppl.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
@@ -22,8 +22,8 @@ writer = TsvWriter(outfile, delimit = inopts.get('delimit', "\t"))
 if reader.cnames and not isinstance(cols[0], int):
 	cols = [reader.cnames.index(c) for c in cols if c in reader.cnames]
 elif not reader.cnames and not isinstance(cols[0], int):
-	raise ValueError("Input file doesn't have column names") 
-elif min(cols) < 0 or (reader.cnames and max(cols) >= len(reader.cnames)):
+	raise ValueError("Input file doesn't have column names")
+elif min(cols) < -len(reader.cnames) or (reader.cnames and max(cols) >= len(reader.cnames)):
 	raise IndexError("Provided columns beyond input file range.")
 
 if reader.cnames:
@@ -31,6 +31,8 @@ if reader.cnames:
 else:
 	ncol = len(reader.next())
 	reader.rewind()
+
+cols = [ncol + c if c < 0 else c for c in cols]
 if not keep:
 	cols = [c for c in range(ncol) if c not in cols]
 

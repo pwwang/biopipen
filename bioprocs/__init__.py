@@ -1,13 +1,14 @@
 __version__ = '0.1.0'
 
-import json
-from os import path, makedirs
+import inspect
+from pathlib import Path
 from tempfile import gettempdir
-from sys import modules, stderr, executable
+from sys import executable, modules
+from pyppl import Proc
 from pyparam import Params
 
 # open to R (reticulate) to get the path of r util scripts
-UTILS    = path.join(path.realpath(path.dirname(__file__)), 'utils')
+HERE    = Path(__file__).resolve().parent
 DEFAULTS = {
 	# constants
 	"dbsnpver"        : "150",
@@ -24,7 +25,7 @@ DEFAULTS = {
 	"affysnps.desc"      : "Affymetrix SNP 6.0 Positions, used for THetA2 mostly.",
 	"annovarDb"          : "",
 	"annovarDb.desc"     : "The path of database for Annovar.",
-	"cachedir"           : path.expanduser("~/.bioprocs/cache"),
+	"cachedir"           : str(Path.home() / 'cache'),
 	"cachedir.desc"      : "The directory to cache query data.",
 	"consvdir"           : "",
 	"consvdir.desc"      : "The directory containing conservation scores in bigWig files.\nUse ucsc-wig2bigwig the original files are wigFix files.",
@@ -99,6 +100,8 @@ DEFAULTS = {
 	"mem32G.desc": "32GB memory.",
 
 	# tools
+	"allfit"                   : "All-FIT.py",
+	"allfit.desc"              : "Path to All-FIT.py",
 	"annovar"                  : "annotate_variation.pl",
 	"annovar.desc"             : "The path of annovar's annotate_variation.pl.",
 	"annovar_convert"          : "convert2annovar.pl",
@@ -159,6 +162,8 @@ DEFAULTS = {
 	"htseq_count.desc"         : "The path of htseq-ount.",
 	"kallisto"                 : "kallisto",
 	"kallisto.desc"            : "The path of kallisto.",
+	"maf2vcf"                  : "maf2vcf.pl",
+	"maf2vcf.desc"             : "The path of maf2vcf.pl.",
 	"multiqc"                  : "multiqc",
 	"multiqc.desc"             : "The path of multiqc.",
 	"mutsig"                   : "mutsig",
@@ -173,6 +178,8 @@ DEFAULTS = {
 	"platypus.desc"            : "The path of platypus.",
 	"plink"                    : "plink",
 	"plink.desc"               : "Executable of plink.",
+	"plot_vcfstats"            : "plot-vcfstats",
+	"plot_vcfstats.desc"       : "Script for processing output of bcftools stats.",
 	"pyclone"                  : "PyClone",
 	"pyclone.desc"             : "The path of PyClone",
 	"sambamba"                 : "sambamba",
@@ -238,30 +245,89 @@ DEFAULTS = {
 params = Params()
 params._load(DEFAULTS)
 cfgfiles = [
-	path.join (path.expanduser('~'), ".bioprocs.config"),   # values overwritten
-	path.join (path.expanduser('~'), ".bioprocs.json")
+	Path.home() / '.bioprocs.config', # values overwritten
+	Path.home() / '.bioprocs.json',
 ]
 for cfgfile in cfgfiles:
-	if not path.exists(cfgfile):
+	if not cfgfile.exists():
 		continue
 	params._loadFile (cfgfile)
 
-if not path.exists(params.cachedir.value):
-	makedirs(params.cachedir.value)
+cachedir = Path(params.cachedir.value)
+if not cachedir.exists():
+	cachedir.mkdir()
 
 rimport  = """
 (function(...) {
+	reticulate::use_python('%s', required = TRUE)
 	bioprocs = reticulate::import('bioprocs')
 	for (rfile in list(...)) {
-		source(file.path(bioprocs$UTILS, rfile))
+		source(file.path(bioprocs$HERE, 'utils', rfile))
 	}
-})"""
+})""" % executable
 
 bashimport = """
 function __bashimport__ () {
 	for src in "$@"; do
-		source "%s/$src"
+		source "%s/utils/$src"
 	done
 }
 __python__='%s'
-__bashimport__""" % (UTILS, executable)
+__bashimport__""" % (HERE, executable)
+
+
+EXT_MAP = {
+	'Rscript': 'R',
+	'python' : 'py',
+	'python2': 'py',
+	'python3': 'py',
+}
+FACTORY_CACHE = {}
+
+def delefactory():
+	"""The factory to give the delegator for modkit"""
+	frame  = inspect.currentframe().f_back
+	module = inspect.getmodule(frame)
+	def delegator(proc):
+		try:
+			return getattr(module, '_' + proc)()
+		except:
+			from traceback import print_exc
+			print_exc()
+	return delegator
+
+def _procfactory(procfunc, pid, alias, mdname, doc):
+	def factory():
+		proc = procfunc()
+		if isinstance(proc, dict):
+			proc = Proc(**proc)
+		proc.id = alias
+		proc.props.origin = pid
+		lang = Path(proc.lang).name
+		ext  = '.' + EXT_MAP.get(lang, lang)
+		if ext == '.R' and not proc.envs.get('rimport'):
+			proc.envs.rimport = rimport
+		if ext == '.bash' and not proc.envs.get('bashimport'):
+			proc.envs.bashimport = bashimport
+		script = HERE / 'scripts' / mdname / (pid + ext)
+		if not proc.config.script and script.exists():
+			proc.script = 'file:%s' % script
+		report = HERE / 'reports' / mdname / (pid + '.md')
+		if not proc.config.report and report.exists():
+			proc.report = 'file:%s' % report
+		return proc
+	factory.__doc__ = doc
+	return factory
+
+def procfactory(procfunc):
+	mdname = procfunc.__module__.split('.')[-1]
+	pid    = procfunc.__name__.lstrip('_')
+	module = modules[procfunc.__module__]
+	args   = inspect.signature(procfunc).parameters
+	alias  = args.get('alias')
+	if alias:
+		alias = alias.default
+		if alias[0] == '_':
+			alias = alias[1:]
+		module._mkenvs['_' + alias] = _procfactory(procfunc, pid, alias, mdname, procfunc.__doc__)
+	return _procfactory(procfunc, pid, pid, mdname, procfunc.__doc__)

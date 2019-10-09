@@ -1,27 +1,35 @@
+from pyppl import Box
+from bioprocs.utils import funcargs
 from bioprocs.utils.tsvio2 import TsvWriter, TsvRecord
 from gff import Gff
 
 infile    = {{i.infile | quote}}
 outfile   = {{o.outfile | quote}}
-attr2name = {{args.attr2name}}
-keepinfo  = {{args.keepinfo | repr}}
+bedcols   = {{args.bedcols | repr}}
+keepattrs = {{args.keepattrs | repr}}
+outhead   = {{args.outhead | repr}}
+
+bedcols.NAME = bedcols.get('NAME', 'lambda attrs: \
+										attrs["id"] if "id" in attrs else \
+										attrs["name"] if "name" in attrs else \
+										attrs["CHR"] + ":" + attrs["START"] + "-" + attrs["END"]')
+# convert strings to functions
+for key in bedcols:
+	bedcols[key] = eval(bedcols[key])
+
 
 writer = TsvWriter(outfile)
 writer.cnames = ['CHR', 'START', 'END', 'NAME', 'SCORE', 'STRAND']
-if keepinfo:
-	writer.cnames.append('ORIGINAL')
+writer.cnames.extend([field for field in bedcols if field != 'NAME'])
 
-def getNameFromAttrs(attrs):
-	if attr2name:
-		return attr2name(**attrs)
-	for key in sorted(attrs.keys()):
-		if key in writer.cnames:
-			continue
-		if 'id' in key.lower():
-			return attrs[key]
-		if 'name' in key.lower():
-			return attrs[key]
-		return attrs[key]
+if keepattrs:
+	writer.cnames.append('ATTRIBUTES')
+	bedcols.ATTRIBUTES = lambda attrs: ';'.join(
+		['{0}={1}'.format(key, val) for key, val in attrs.items()
+		 if key not in writer.cnames])
+
+if outhead:
+	writer.writeHead(lambda cns: ('' if outhead is True else outhead) + '\t'.join(cns))
 
 gff = Gff(infile)
 for record in gff:
@@ -39,8 +47,8 @@ for record in gff:
 		SCORE  = r.SCORE,
 		STRAND = r.STRAND
 	))
-	r.NAME   = getNameFromAttrs(attrs)
-	if keepinfo:
-		r.ORIGINAL = '; '.join('{}={}'.format(k,v) for k, v in attrs.items() if k not in writer.cnames)
+	for key in bedcols:
+		r[key] = bedcols[key](attrs)
+
 	writer.write(r)
-	
+writer.close()

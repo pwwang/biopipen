@@ -114,6 +114,8 @@ class TsvReader(object):
 		row     = None, # row factory
 		cname0  = "ROWNAME"):
 		openfunc = open
+		# in case infile is a Pathlib.Path object
+		infile = str(infile)
 		if infile.endswith('.gz'):
 			import gzip
 			openfunc = gzip.open
@@ -192,12 +194,13 @@ class TsvReader(object):
 		self.close()
 
 	def close(self):
-		if self.file:
+		if hasattr(self, 'file') and self.file:
 			self.file.close()
 
 class TsvWriter(object):
 	def __init__(self, outfile = None, delimit = '\t', append = False):
 		openfunc = open
+		outfile = str(outfile) # support pathlib
 		if outfile and outfile.endswith('.gz'):
 			import gzip
 			openfunc = gzip.open
@@ -217,6 +220,8 @@ class TsvWriter(object):
 			return
 		if callback and callable(callback):
 			head = callback(self.cnames)
+			if isinstance(head, list):
+				head = self.delimit.join(head)
 			self.file.write(head + "\n")
 		elif callback:
 			head = self.delimit.join(self.cnames)
@@ -237,7 +242,7 @@ class TsvWriter(object):
 		self.close()
 
 	def close(self):
-		if self.file:
+		if hasattr(self, 'file') and self.file:
 			self.file.close()
 
 class TsvJoin(object):
@@ -310,7 +315,9 @@ class TsvJoin(object):
 			del outopts['headCallback']
 
 		out = TsvWriter(outfile, **outopts)
-		out.cnames = cnames if isinstance(cnames, list) else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames else []
+		out.cnames = cnames if isinstance(cnames, list) \
+			else sum((reader.cnames for reader in self.readers if reader.cnames), []) if cnames \
+			else []
 		if out.cnames:
 			out.writeHead(headCallback)
 

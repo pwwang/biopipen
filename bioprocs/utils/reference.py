@@ -78,50 +78,51 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	else:
 		raise ValueError('Index not found: {}'.format(bam))
 
-def vcfIndex(vcf, tabix = 'tabix'):
-
+def tabixIndex(filename, type, tabix = 'tabix'):
 	# /path/to/some.vcf -> some.vcf
 	# /path/to/some.vcf.gz -> some.vcf
-	bname = path.basename(vcf[:-3]) if vcf.endswith('.gz') else path.basename(vcf)
+	bname = path.basename(filename[:-3]) if filename.endswith('.gz') else path.basename(filename)
 	# /path/to/some.bam -> /path/to/
-	dname = path.dirname(vcf)
+	dname = path.dirname(filename)
 	# some.vcf -> some
 	# some.vcf.gz -> some
-	fname = path.splitext(bname)[0]
+	fname = path.splitext(bname[:-3] if bname.endswith('.gz') else bname)[0]
 	# some -> some
 	# [1]some -> some
 	rname = fname.split(']', 1)[1] if fname.startswith('[') else fname
 
-	expectedIndex = path.join(dname, fname + '.vcf.gz.tbi')
+	expectedIndex = path.join(dname, fname + '.%s.gz.tbi' % type)
 	if path.isfile(expectedIndex):
-		return vcf if vcf.endswith('.gz') else vcf + '.gz'
-
-	# if vcf is not a link, there is nowhere else to find index, create it using tabix
+		return filename if filename.endswith('.gz') else filename + '.gz'
+	
 	shell.load_config(tabix = tabix)
-	#tabix = shell.Shell({'tabix': tabix}).tabix
-	gt    = gztype(vcf)
+	# type could bed3, bed6..
+	ptype = 'bed' if type.startswith('bed') else type
+	gt = gztype(filename)
 	if gt == 'bgzip':
-		if path.islink(vcf):
-			linkvcf = readlink(vcf)
-			if path.isfile(linkvcf + '.tbi'):
-				shell.ln_s(linkvcf + '.tbi', expectedIndex)
-				return vcf
-			realvcf = path.realpath(vcf)
-			if path.isfile(realvcf + '.tbi'):
-				shell.ln_s(realvcf + '.tbi', expectedIndex)
-				return vcf
-		shell.tabix(p = 'vcf', _ = vcf).run()
-		return vcf
+		if path.islink(filename):
+			linkfile = readline(filename)
+			if path.isfile(linkfile + '.tbi'):
+				shell.ln_s(linkfile + '.tbi', expectedIndex)
+				return filename
+			readfile = path.realpath(filename)
+			if path.isfile(realfile + '.tbi'):
+				shell.ln_s(realfile + '.tbi', expectedIndex)
+				return realfile
+		shell.fg.tabix(p = ptype, _ = filename)
+		return filename
 	if gt == 'gzip':
-		tmpvcf = path.join(dname, bname + '.tmp.vcf')
-		shell.gunzip(vcf, c = True, _out = tmpvcf)
-		shell.bgzip(tmpvcf)
-		shell.tabix(p = 'vcf', _ = tmpvcf + '.gz').run()
-		shell.mv(tmpvcf + '.gz.tbi', expectedIndex)
-		return vcf
-	shell.bgzip(vcf, c = True, _out = vcf + '.gz')
-	shell.tabix(p = 'vcf', _ = vcf + '.gz').run()
-	return vcf + '.gz'
+		bgzfile = path.join(dname, bname + '.bgz.' + type)
+		shell.gunzip(filename, c = True, _out = bgzfile)
+		shell.bgzip(bgzfile)
+		shell.fg.tabix(p = ptype, _ = bgzfile)
+		return bgzfile + '.gz'
+	shell.bgzip(filename, c = True, _out = filename + '.gz')
+	shell.fg.tabix(p = ptype, _ = filename + '.gz')
+	return filename + '.gz'
 
+def vcfIndex(vcf, tabix = 'tabix'):
+	return tabixIndex(vcf, 'vcf', tabix)
 
-
+def bedIndex(bed, tabix = 'tabix'):
+	return tabixIndex(bed, 'bed', tabix)

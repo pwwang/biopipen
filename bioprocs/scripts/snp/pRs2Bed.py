@@ -1,7 +1,7 @@
 from os import path
 from pyppl import Box
 from collections import OrderedDict
-from bioprocs.utils import shell, logger
+from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 snpfile   = {{ i.snpfile | quote}}
@@ -21,35 +21,35 @@ genome    = {{ args.genome | quote}}
 dbsnpver  = {{ args.dbsnpver | quote}}
 
 if tool == 'cruzdb':
-	'''	
-	snp151(	
-		bin=1566,	
-		chrom='chr8',	
-		chromStart=128700232L,	
-		chromEnd=128700233L,	
-		name='rs7005394',	
-		score=0,	
-		strand=u'+',	
-		refNCBI='T',	
-		refUCSC='T',	
-		observed='C/T',	
-		molType=u'genomic',	
-		class=u'single',	
-		valid=set(['by-2hit-2allele', 'by-cluster', 'by-hapmap', 'by-frequency', 'by-1000genomes']),	
-		avHet=0.498652,	
-		avHetSE=0.025923,	
-		func=set(['ncRNA']),	
-		locType=u'exact',	
-		weight=1L,	
-		exceptions=set([]),	
-		submitterCount=26,	
-		submitters='1000GENOMES,ABI,BCM-HGSC-SUB,BCM_SSAHASNP,BGI,BL,BUSHMAN,COMPLETE_GENOMICS,DDI,ENSEMBL,EVA-GONL,EVA_DECODE,EVA_GENOME_DK,EVA_UK10K_ALSPAC,EVA_UK10K_TWINSUK,GMI,HAMMER_LAB,HGSV,HUMANGENOME_JCVI,ILLUMINA-UK,JMKIDD_LAB,PJP,SSAHASNP,SSMP,TISHKOFF,WEILL_CORNELL_DGM,',	
-		alleleFreqCount=2,	
-		alleles='C,T,',	
-		alleleNs='2634.000000,2374.000000,',	
-		alleleFreqs='0.525958,0.474042,',	
-		bitfields=set(['maf-5-all-pops', 'maf-5-some-pop'])	
-	)	
+	'''
+	snp151(
+		bin=1566,
+		chrom='chr8',
+		chromStart=128700232L,
+		chromEnd=128700233L,
+		name='rs7005394',
+		score=0,
+		strand=u'+',
+		refNCBI='T',
+		refUCSC='T',
+		observed='C/T',
+		molType=u'genomic',
+		class=u'single',
+		valid=set(['by-2hit-2allele', 'by-cluster', 'by-hapmap', 'by-frequency', 'by-1000genomes']),
+		avHet=0.498652,
+		avHetSE=0.025923,
+		func=set(['ncRNA']),
+		locType=u'exact',
+		weight=1L,
+		exceptions=set([]),
+		submitterCount=26,
+		submitters='1000GENOMES,ABI,BCM-HGSC-SUB,BCM_SSAHASNP,BGI,BL,BUSHMAN,COMPLETE_GENOMICS,DDI,ENSEMBL,EVA-GONL,EVA_DECODE,EVA_GENOME_DK,EVA_UK10K_ALSPAC,EVA_UK10K_TWINSUK,GMI,HAMMER_LAB,HGSV,HUMANGENOME_JCVI,ILLUMINA-UK,JMKIDD_LAB,PJP,SSAHASNP,SSMP,TISHKOFF,WEILL_CORNELL_DGM,',
+		alleleFreqCount=2,
+		alleles='C,T,',
+		alleleNs='2634.000000,2374.000000,',
+		alleleFreqs='0.525958,0.474042,',
+		bitfields=set(['maf-5-all-pops', 'maf-5-some-pop'])
+	)
 	'''
 
 	# snps
@@ -85,15 +85,15 @@ if tool == 'cruzdb':
 					del allfreqs[r.refUCSC]
 				if '' in allfreqs:
 					del allfreqs['']
-				
+
 				if ncol == 9:
 					writer.write([
-						r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand, 
+						r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand,
 						r.refUCSC, ','.join(allfreqs.keys()), ','.join([reffreq] + list(allfreqs.values()))
 					])
 				else: #8
 					writer.write([
-						r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand, 
+						r.chrom, r.chromStart, r.chromEnd, r.name, r.score, r.strand,
 						r.refUCSC, ','.join(allfreqs.keys())
 					])
 	writer.close()
@@ -108,8 +108,7 @@ else:
 	reader.close()
 	writer.close()
 
-	shell.TOOLS.vcftools = vcftools
-	vcftools = shell.Shell(equal = ' ', dash = '--').vcftools
+	shell.load_config(vcftools = vcftools)
 
 	params = Box()
 	params.snps = snplist
@@ -121,7 +120,7 @@ else:
 		raise ValueError('dbsnp file (args.dbsnp) is required by tool "local"')
 	else:
 		params.vcf = dbsnp
-	vcftools(**params).run()
+	shell.fg.vcftools(**params)
 
 	reader = TsvReader(params.out + '.recode.vcf', cnames = False)
 	outfiletmp = outfile + '.tmp'

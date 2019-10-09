@@ -1,16 +1,15 @@
 import threading
 from time import sleep
-from concurrent.futures import ThreadPoolExecutor
-from loky import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from bioprocs.utils.shell2 import runcmd
 from traceback import format_exc
-from pyppl.utils import Queue
+from queue import Queue
 
 def distribute(total, nthread):
 	"""
 	Try to distribute jobs into N threads as equal as possible.
 	For example: distributing 10 jobs on 3 threads, we prefer (4, 3, 3) than (4, 4, 2)
-	How to do it? 
+	How to do it?
 	1. get the ceiling size for each thread, that should be (3, 3, 3), from `divmod(10, 3)[0]`
 	2. get the modulo by `divmod(10, 3)[1]`, which is the first # nthreads to add one more job to
 	@params:
