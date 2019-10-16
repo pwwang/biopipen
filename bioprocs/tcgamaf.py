@@ -7,6 +7,8 @@ from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
+from .tumhet import _pTMBurden
+
 @procfactory
 def _pVcfStatsPlot():
 	"""
@@ -483,8 +485,8 @@ def _pDToxoG():
 				- Variant is marked as artifact: 1
 				- Variant is not an artifact: 0
 	@args:
-		dtoxog : D-ToxoG executable. 
-		nthread: Maximum threads used by matlab. 
+		dtoxog : D-ToxoG executable.
+		nthread: Maximum threads used by matlab.
 		keep   : Whether keep those artifact mode mutations in output MAF file or not.
 		params : Other parameters for `startFilterMAFFile`
 			- See more in `startFilterMAFFile.m` or run `dtoxog` directly
@@ -544,7 +546,7 @@ def _pMafAddChr():
 	)
 
 @procfactory
-def _pMafSampleFilter():
+def _pMafExtractSample(alias = 'pMafSampleFilter'):
 	"""
 	@input:
 		infile: The input MAF file
@@ -564,3 +566,23 @@ def _pMafSampleFilter():
 		args   = Box(samples = [])
 	)
 
+@procfactory
+def _pMafExtractClass():
+	"""
+	@input:
+		infile: The input MAF file
+		classfile: The variant class file
+			- Could also be a list of classes, separated by comma
+			- Overwrite `args.classes`
+	@output:
+		outfile: The output file contain only the given classes
+	@args:
+		classes (str|list): The classes or a list of classes
+	"""
+	return Box(
+		desc   = 'Filter MAF file with given classes',
+		input  = 'infile:file, classfile:var',
+		output = 'outfile:file:{{i.infile | stem}}.subclass.maf',
+		lang   = params.python.value,
+		args   = Box(classes = [])
+	)

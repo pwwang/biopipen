@@ -63,6 +63,7 @@ This serves the purpose of knowing what domain in given cancer cohort, is most f
 ```table
 caption: Details of mutated domains
 file: {{glob1(job.o.outdir, 'pfam.csv')}}
+rows: 100
 csvargs:
 	delimiter: ','
 ```

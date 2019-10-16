@@ -802,6 +802,7 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 
 .surv.cut = function(data, vars = NULL, by = 'maxstat', labels = c("low", "high"), keep.raw = FALSE) {
 	# by = mean, median, q25, q75, asis, maxstat
+	# or a value as cutoff
 	cnames = colnames(data)
 	if (is.null(vars)) {
 		vars = c(cnames[3:ncol(data)])
@@ -830,7 +831,7 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 			} else if (by == 'q75') {
 				vcut = quantile(vdata, .75)
 			} else {
-				stop('Unsupported cutting method.')
+				vcut = by
 			}
 			icut = as.integer(median(which(vdata %in% vcut)))
 			tmp = sapply(1:length(vdata), function(i) {
@@ -941,7 +942,7 @@ plot.survival.km = function(data, plotfile = NULL, params = list(
 plot.survival.cox = function(data, plotfile = NULL, params = list(
 	risk.table  = TRUE,
 	pval        = TRUE,
-	# mean, median, q25, q75, asis
+	# mean, median, q25, q75, asis, or a value as cutoff
 	# asis uses the levels in 3rd column, requring categorical values
 	# or if 3rd column has <= 5 levels, regard it as categorical,
 	# ignore this argument
@@ -977,7 +978,6 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	fmula    = sprintf('Surv(%s, %s) ~ .', bQuote(cnames[1]), bQuote(cnames[2]))
 	# do cox regression
 	fit0     = coxph(as.formula(fmula), data = data)
-
 	sumfit    = summary(fit0)
 	ret$table = data.frame(
 		var    = rownames(sumfit$conf.int),
@@ -989,7 +989,6 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	ret$table$df      = sumfit$logtest[2]
 	ret$table$modpval = sumfit$logtest[3]
 	ret$forest        = ggforest(fit0, data = data)
-
 	colnames(ret$table)[4:8] = c('HR', 'CI95_1', 'CI95_2', 'z', 'pvalue')
 
 	# now we cut the variable to plot it
@@ -998,20 +997,17 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	params$cut = NULL
 	params$cutlabels = NULL
 	survcuts  = .surv.cut(data, by = cutmethod, labels = cutlabels, vars = variable, keep.raw = TRUE)
-
 	ret$cutplot = ifelse(length(survcuts$plot) > 0, survcuts$plot[[variable]], NULL)
 	ret$data    = survcuts$data
 	survcuts$data[[paste0('raw.', variable)]] = NULL
-
 	fit     = coxph(as.formula(fmula), data = survcuts$data)
 	groups  = levels(as.factor(survcuts$data[,variable]))
-
 	newdata = data.frame(groups = groups)
 	colnames(newdata) = variable
 	if (length(cnames) > 3) {
 		for (i in 4:length(cnames)) {
 			var = cnames[i]
-			newdata[[var]] = mean(as.numeric(survcuts$data[,var]))
+			newdata[[var]] = mean(as.numeric(survcuts$data[,var]), na.rm = TRUE)
 		}
 	}
 	fit2 = survfit(fit, newdata = newdata)
@@ -1033,7 +1029,14 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 		fmula = sprintf('Surv(%s, %s) ~ %s',
 				bQuote(cnames[1]), bQuote(cnames[2]), bQuote(variable))
 		kmfit = surv_fit(as.formula(fmula), data = survcuts$data)
-		kmplot = ggsurvplot(kmfit, risk.table = TRUE, data = survcuts$data)
+		rtparams = list(kmfit, risk.table = TRUE, data = survcuts$data)
+		if (!is.null(params$break.time.by)) {
+			rtparams = c(rtparams, list(break.time.by = params$break.time.by))
+		}
+		if (!is.null(params$xlim)) {
+			rtparams = c(rtparams, list(xlim = params$xlim))
+		}
+		kmplot = do.call(ggsurvplot, rtparams)
 		kmplot$plot = ret$plot$plot
 		ret$plot = kmplot
 		tableggs = list.get(ggs, 'table', list())
@@ -1041,7 +1044,6 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 		ret$plot$table = apply.ggs(ret$plot$table, tableggs)
 	}
 	ret$plot$plot = apply.ggs(ret$plot$plot, ggs)
-
 	save.plot(ret$plot, plotfile, devpars)
 	if (!is.null(plotfile) && !is.null(ret$cutplot)) {
 		save.plot(

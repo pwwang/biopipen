@@ -8,14 +8,14 @@ infile1   = {{i.fq1 | quote}}
 infile2   = {{i.fq2 | quote}}
 outfile   = {{o.outfile | quote}}
 outprefix = {{o.outfile | fn | quote}}
-outfmt    = {{o.outfile | ext | [1:] | quote}}
+outfmt    = {{args.outfmt | quote}}
 outdir    = {{job.outdir | quote}}
 ref       = {{args.ref | quote}}
 refgene   = {{args.refgene | quote}}
 ref2      = path.join(outdir, path.basename(ref))
 workdir   = {{proc.workdir | quote}}
-rg        = {{args.rg}}
-params    = {{args.params}}
+rg        = {{args.rg | repr}}
+params    = {{args.params | repr}}
 samtools  = {{args.samtools | quote}}
 bowtie2   = {{args.bowtie2 | quote}}
 bwa       = {{args.bwa | quote}}
@@ -59,7 +59,6 @@ def run_bowtie2():
 	if outfmt == 'bam': sam2bam(params.S, outfile)
 
 def run_bwa():
-	del params._out_
 	params.t = nthread
 	params.R = "@RG\\tID:{id}\\t{rg}".format(id = rg['ID'], rg = "\\t".join(
 		'{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID'
@@ -106,6 +105,4 @@ try:
 	tools[tool]()
 except KeyError:
 	raise KeyError('Tool {!r} not supported.'.format(tool))
-except Exception as ex:
-	raise
 

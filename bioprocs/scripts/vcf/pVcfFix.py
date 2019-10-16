@@ -7,6 +7,7 @@ from bioprocs.utils import shell2 as shell
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
+errfile = {{job.errfile | quote}}
 # currently supported:
 # clinvarLink  = True,
 # addChr       = True,
@@ -242,3 +243,8 @@ if pool or fixes.addAF:
 
 else:
 	shell.mv(infile, outfile)
+
+with open(errfile, 'r') as f:
+	for line in f:
+		if line.startswith('[E::vcf_parse_format]'):
+			raise ValueError(line)

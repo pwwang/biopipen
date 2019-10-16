@@ -6,7 +6,7 @@ from bioprocs.fastx import pFastqTrim, pFastq2Sam, pFastQC, pFastMC, pFastqSETri
 from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBam2Counts, pBamRecal, pBam2Gmut, pBamPair2Smut
 from bioprocs.common import pFile2Proc, pFiles2Dir
 from bioprocs.vcf import pVcf2Maf
-from bioprocs.vcfnext import pMafMerge
+from bioprocs.tcgamaf import pMafMerge
 from bioprocs.cnvkit import pCNVkit2Vcf, pCNVkitCall, pCNVkitRef, pCNVkitFlatRef, pCNVkitFix, pCNVkitCov, pCNVkitHeatmap, pCNVkitDiagram, pCNVkitReport, pCNVkitScatter, pCNVkitSeg, pCNVkitPrepare
 from bioprocs.utils.sampleinfo import SampleInfo
 
@@ -49,6 +49,7 @@ aPrepareBam.pSam2Bam.depends   = aPrepareBam.pFastq2Sam
 aPrepareBam.pBamRecal.depends  = aPrepareBam.pSam2Bam
 # delegates
 aPrepareBam.delegate('args.ref', 'pFastq2Sam', 'pBamRecal')
+aPrepareBam.delegate('args.gz', 'pBam2Fastq', 'pFastqTrim')
 # args
 aPrepareBam.pSam2Bam.args.markdup = True
 # modules

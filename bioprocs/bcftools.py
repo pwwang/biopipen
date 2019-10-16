@@ -180,6 +180,8 @@ def _pStats():
 		bcftools (str) : Path to bcftools
 		plot_vcfstats (str): Script for processing output of bcftools stats.
 		params (Box): Other parameters for `bcftools stats`
+		pdf2png (bool): Convert summary.pdf to pngs.
+			- Requires ImageMagick's convert in the PATH
 		plot (bool): Whether to plot the stats or not.
 	"""
 	return Box(
@@ -191,6 +193,7 @@ def _pStats():
 			bcftools = params.bcftools.value,
 			plot_vcfstats = params.plot_vcfstats.value,
 			plot = True,
+			pdf2png = False,
 			params = Box()
 		)
 	)

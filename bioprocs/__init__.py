@@ -160,6 +160,8 @@ DEFAULTS = {
 	"gistic.desc"              : "The path of gistic.",
 	"htseq_count"              : "htseq-count",
 	"htseq_count.desc"         : "The path of htseq-ount.",
+	"jvarkit"                  : "jvarkit",
+	"jvarkit.desc"             : "The path of jvarkit.",
 	"kallisto"                 : "kallisto",
 	"kallisto.desc"            : "The path of kallisto.",
 	"maf2vcf"                  : "maf2vcf.pl",

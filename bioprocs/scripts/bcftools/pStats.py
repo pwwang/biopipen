@@ -9,6 +9,7 @@ bcftools      = {{args.bcftools | quote}}
 plot_vcfstats = {{args.plot_vcfstats | quote}}
 plot          = {{args.plot | repr}}
 params        = {{args.params | repr}}
+pdf2png       = {{args.pdf2png | repr}}
 
 shell.load_config(
 	bcftools = bcftools,
@@ -19,3 +20,7 @@ params._out = prefix.with_suffix('.stats.txt')
 shell.bcftools.stats(**params)
 
 shell.fg.plot_vcfstats(p = outdir, _ = params._out)
+
+if pdf2png:
+	outdir = Path(outdir)
+	shell.convert(outdir / 'summary.pdf', outdir / 'summary.png')

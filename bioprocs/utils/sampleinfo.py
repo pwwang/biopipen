@@ -166,6 +166,16 @@ class SampleInfo2(object):
 				ret.append(group)
 		return ret
 
+	def allSamples(self, unique = False):
+		samples = self.getSamples()
+		if unique:
+			ret = []
+			for sample in samples:
+				if sample not in ret:
+					ret.append(sample)
+			return ret
+		return samples
+
 	def getSamples(self, by = None, value = None, returnAll = False):
 		if by and by not in self.cnames:
 			raise SampleInfoException('{!r} is not a valid column name.'.format(by))

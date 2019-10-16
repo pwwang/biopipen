@@ -411,17 +411,6 @@ def _pVcfLiftover():
 	)
 
 @procfactory
-def _pVcfStats():
-	"""
-	@input:
-		infile: The input VCF file
-	@output:
-		outdir: The output directory
-	@args:
-		params (Box): Other parameters for `vcfstats`
-	"""
-
-@procfactory
 def _pVcfAddChr():
 	"""
 	@name:

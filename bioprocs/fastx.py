@@ -166,64 +166,60 @@ def _pFastMC():
 @procfactory
 def _pFastqTrim():
 	"""
-	@name:
-		pFastqTrim
-	@description:
-		Trim pair-end FASTQ reads
 	@input:
-		`fq1:file`:  The input fastq file
-		`fq2:file`:  The input fastq file
+		fq1: The input fastq file 1
+		fq2: The input fastq file 2
 	@output:
-		`outfq1:file`: The trimmed fastq file
-		`outfq2:file`: The trimmed fastq file
+		outfq1: The trimmed fastq file 1
+		outfq2: The trimmed fastq file 2
 	@args:
-		`tool`        : The tools used for trimming. Default: trimmomatic (cutadapt|skewer)
-		`cutadapt`    : The path of seqtk. Default: cutadapt
-		`skewer`      : The path of fastx toolkit trimmer. Default: skewer
-		`trimmomatic` : The path of trimmomatic. Default: trimmomatic
-		`params`      : Other params for `tool`. Default: ""
-		`nthread`     : Number of threads to be used. Default: 1
-		- Not for cutadapt
-		`gz`          : Whether gzip output files. Default: True
-		`mem`         : The memory to be used. Default: 4G
-		- Only for trimmomatic
-		`minlen`      : Discard trimmed reads that are shorter than `minlen`. Default: 18
-		- For trimmomatic, the number will be `minlen`*2 for MINLEN, as it filters before trimming
-		`minq`        : Minimal mean qulity for 4-base window or leading/tailing reads. Default: 3
-		`cut5`        : Remove the 5'end reads if they are below qulity. Default: 3
-		`cut3`        : Remove the 3'end reads if they are below qulity. Default: 3
-		- Not for skewer
-		`adapter1`    : The adapter for sequence. Default: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
-		`adapter2`    : The adapter for pair-end sequence. Default: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA
+		tool       : The tools used for trimming. Available: trimmomatic, cutadapt or skewer
+		cutadapt   : The path of seqtk.
+		skewer     : The path of fastx toolkit trimmer.
+		trimmomatic: The path of trimmomatic.
+		params     : Other params for `tool`.
+		nthread    : Number of threads to be used.
+			- Not for cutadapt
+		gz : Whether gzip output files.
+		mem: The memory to be used.
+			- Only for trimmomatic
+		minlen: Discard trimmed reads that are shorter than `minlen`.
+			- For trimmomatic, the number will be `minlen`*2 for MINLEN, as it filters before trimming
+		minq: Minimal mean qulity for 4-base window or leading/tailing reads.
+		cut5: Remove the 5'end reads if they are below qulity.
+		cut3: Remove the 3'end reads if they are below qulity.
+			- Not for skewer
+		adapter1: The adapter for sequence.
+		adapter2: The adapter for pair-end sequence.
 	@requires:
 		[`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
 		[`skewer`](https://github.com/relipmoc/skewer)
 		[`trimmomatic`](https://github.com/timflutre/trimmomatic)
 	"""
-	pFastqTrim        = Proc(desc = 'Trim pair-end reads in fastq file.')
-	pFastqTrim.input  = "fq1:file, fq2:file"
-	pFastqTrim.output = [
-		"outfq1:file:{{i.fq1 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}",
-		"outfq2:file:{{i.fq2 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}"
-	]
-	pFastqTrim.lang             = params.python.value
-	pFastqTrim.args.tool        = 'skewer'
-	pFastqTrim.args.cutadapt    = params.cutadapt.value
-	pFastqTrim.args.skewer      = params.skewer.value
-	pFastqTrim.args.trimmomatic = params.trimmomatic.value
-	pFastqTrim.args.params      = Box()
-	pFastqTrim.args.nthread     = 1
-	pFastqTrim.args.gz          = False
-	pFastqTrim.args.mem         = params.mem4G.value
-	pFastqTrim.args.minlen      = 18
-	pFastqTrim.args.minq        = 3
-	pFastqTrim.args.cut5        = 3
-	pFastqTrim.args.cut3        = 3
-	pFastqTrim.args.adapter1    = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
-	pFastqTrim.args.adapter2    = 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA'
-	pFastqTrim.envs.getFastqFn  = _getFastqFn
-	pFastqTrim.script           = "file:scripts/fastx/pFastqTrim.py"
-	return pFastqTrim
+	return Box(
+		desc   = 'Trim pair-end reads in fastq file.',
+		lang   = params.python.value,
+		envs   = Box(getFastqFn = _getFastqFn),
+		input  = "fq1:file, fq2:file",
+		output = [
+			"outfq1:file:{{i.fq1 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}",
+			"outfq2:file:{{i.fq2 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}"
+		],
+		args = Box(
+			tool        = 'skewer',
+			cutadapt    = params.cutadapt.value,
+			skewer      = params.skewer.value,
+			trimmomatic = params.trimmomatic.value,
+			params      = Box(),
+			nthread     = 1,
+			gz          = False,
+			mem         = params.mem4G.value,
+			minlen      = 18,
+			minq        = 3,
+			cut5        = 3,
+			cut3        = 3,
+			adapter1    = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',
+			adapter2    = 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA'))
 
 @procfactory
 def _pFastqSETrim():
@@ -323,51 +319,50 @@ def _pFastqSE2Sam():
 @procfactory
 def _pFastq2Sam():
 	"""
-	@name:
-		pFastq2Sam
 	@description:
 		Cleaned paired fastq (.fq, .fq.gz, .fastq, .fastq.gz file to mapped sam/bam file
 	@args:
-		`tool`   : The tool used for alignment. Default: bwa (bowtie2, ngm, star)
-		`bwa`    : Path of bwa, default: bwa
-		`ngm`    : Path of ngm, default: ngm
-		`star`   : Path of ngm, default: STAR
-		`bowtie2`: Path of bowtie2, default: bowtie2
-		`rg`:     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
-		- `id` will be parsed from filename with "_LX_" in it if not given
-		- `sm` will be parsed from filename
+		`tool`   : The tool used for alignment. Available: bowtie2, ngm or star.
+		`bwa`    : Path of bwa
+		`ngm`    : Path of ngm
+		`star`   : Path of ngm
+		`bowtie2`: Path of bowtie2
+		`rg`:     The read group.
+			- `id` will be parsed from filename with "_LX_" in it if not given
+			- `sm` will be parsed from filename
 		`ref`    : Path of reference file
-		`refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built. Default: ''
-		`params` : Other params for tool, default: ''
+		`refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built.
+		`params` : Other params for tool
 	"""
-	pFastq2Sam                 = Proc(desc = 'Map cleaned paired fastq file to reference genome.')
-	pFastq2Sam.input           = "fq1:file, fq2:file"
-	pFastq2Sam.output          = "outfile:file:{{i.fq1, i.fq2 | path.commonprefix | path.basename | .rstrip: '_. ,[]' }}.sam"
-	pFastq2Sam.args.tool       = 'bwa'
-	pFastq2Sam.args.bwa        = params.bwa.value
-	pFastq2Sam.args.ngm        = params.ngm.value
-	pFastq2Sam.args.star       = params.star.value
-	pFastq2Sam.args.samtools   = params.samtools.value
-	pFastq2Sam.args.bowtie2    = params.bowtie2.value
-	pFastq2Sam.args.rg         = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = '')
-	pFastq2Sam.args.ref        = params.ref.value
-	pFastq2Sam.args.refgene    = params.refgene.value
-	pFastq2Sam.args.nthread    = 1
-	pFastq2Sam.args.params     = Box()
-	pFastq2Sam.envs.path       = path
-	pFastq2Sam.envs.bashimport = bashimport
-	pFastq2Sam.preCmd          = """
-	{{bashimport}} reference.bash
-	export bwa={{args.bwa | squote}}
-	export ngm={{args.ngm | squote}}
-	export star={{args.star | squote}}
-	export samtools={{args.samtools | squote}}
-	export bowtie2={{args.bowtie2 | squote}}
-	export nthread={{args.nthread}}
-	export refgene={{args.refgene | squote}}
-	reference {{args.tool | squote}} {{args.ref | squote}}
-	"""
-	pFastq2Sam.lang               = 'python'
-	pFastq2Sam.script             = "file:scripts/fastx/pFastq2Sam.py"
-	return pFastq2Sam
+	return Box(
+		desc   = 'Map cleaned paired fastq file to reference genome.',
+		lang   = params.python.value,
+		input  = "fq1:file, fq2:file",
+		output = "outfile:file:{{i.fq1, i.fq2 | path.commonprefix | bn | .rstrip: '_. ,[]' }}.{{args.outfmt}}",
+		envs   = Box(path = path),
+		preCmd = """
+			{{bashimport}} reference.bash
+			export bwa={{args.bwa | squote}}
+			export ngm={{args.ngm | squote}}
+			export star={{args.star | squote}}
+			export samtools={{args.samtools | squote}}
+			export bowtie2={{args.bowtie2 | squote}}
+			export nthread={{args.nthread}}
+			export refgene={{args.refgene | squote}}
+			reference {{args.tool | squote}} {{args.ref | squote}}""",
+		args = Box(
+			tool     = 'bwa',
+			outfmt   = 'sam',
+			bwa      = params.bwa.value,
+			ngm      = params.ngm.value,
+			star     = params.star.value,
+			samtools = params.samtools.value,
+			bowtie2  = params.bowtie2.value,
+			rg       = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = ''),
+			ref      = params.ref.value,
+			refgene  = params.refgene.value,
+			nthread  = 1,
+			params   = Box()
+		)
+	)
 
