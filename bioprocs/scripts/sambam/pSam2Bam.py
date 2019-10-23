@@ -168,12 +168,15 @@ def run_picard():
 
 def run_elprep():
 
-	params['log-path']          = joboutdir
-	params['nr-of-threads']     = nthread
-	params['sorting-order']     = sortby if steps.sort else 'keep'
-	params['mark-duplicates']   = steps.markdup
-	params['remove-duplicates'] = steps.rmdup
-	params['']                  = [infile, outfile]
+	params['log-path']                       = joboutdir
+	params['nr-of-threads']                  = nthread
+	params['sorting-order']                  = sortby if steps.sort else 'keep'
+	params['mark-duplicates']                = steps.markdup
+	params['remove-duplicates']              = steps.rmdup
+	params['intermediate-files-output-type'] = 'bam'
+	params['contig-group-size']              = 1
+	params['tmp-path']                       = tmpdir
+	params['']                               = [infile, outfile]
 	if steps.markdup:
 		params['mark-optical-duplicates'] = path.join(joboutdir, inprefix + '.opticaldups.txt')
 	if steps.recal:
@@ -182,7 +185,7 @@ def run_elprep():
 		if knownSites:
 			params['known-sites'] = knownSites
 
-	shell.fg.elprep.filter(**params)
+	shell.fg.elprep.sfm(**params)
 	if steps.index:
 		shell.samtools.index(outfile, outfile + '.bai')
 

@@ -10,33 +10,6 @@ Modkit().delegate(delefactory())
 from .tumhet import _pTMBurden
 
 @procfactory
-def _pVcfStatsPlot():
-	"""
-	@name:
-		pVcfStatsPlot
-	@description:
-		Convert csvstat file from snpEff to R-readable matrix and plot them.
-	@input:
-		indir: The directory containing the csv stat files from `snpEff ann`
-	@output:
-		`outdir:dir`: The output directory
-	@args:
-		`chroms`:     The chromsome filter. Default: "" (all chroms)
-		- Note: snpEff csvstat file has no "chr" prefix
-	"""
-	pVcfStatsPlot                  = Proc(desc = 'Convert csvstat file from snpEff to R-readable matrix and plot them.')
-	pVcfStatsPlot.input            = "indir:file"
-	pVcfStatsPlot.output           = "outdir:dir:{{i.indir | fn}}-{{job.index}}.statplots"
-	pVcfStatsPlot.args.chroms      = ""
-	pVcfStatsPlot.args.Rscript     = params.Rscript.value
-	pVcfStatsPlot.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
-	pVcfStatsPlot.args.histplotggs = []
-	pVcfStatsPlot.args.boxplotggs  = []
-	pVcfStatsPlot.lang             = params.python.value
-	pVcfStatsPlot.script           = "file:scripts/tcgamaf/pVcfStatsPlot.py"
-	return pVcfStatsPlot
-
-@procfactory
 def _pGTMatAddRs():
 	"""
 	@name:

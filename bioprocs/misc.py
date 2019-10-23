@@ -6,57 +6,6 @@ from modkit import Modkit
 Modkit().delegate(delefactory())
 
 @procfactory
-def _pVcfStats(alias = 'pJvarkitVcfStats'):
-	"""
-	@description:
-		VCF statistics using jvarkit vcfstats.
-		Requires jvarkit at https://github.com/pwwang/conda-jvarkit
-	@input:
-		infile: The input VCF file
-	@output:
-		outdir: The output directory
-	@args:
-		parmas (Box): The parameters for `jvarkit vcfstats`
-	"""
-	return Box(
-		desc = 'VCF statistics using jvarkit vcfstats',
-		lang = params.python.value,
-		input = 'infile:file',
-		output = 'outdir:dir:{{i.infile | stem}}.stats',
-		args = Box(
-			jvarkit = params.jvarkit.value,
-			params = Box()
-		)
-	)
-
-@procfactory
-def _pVcfStatsJFX(alias = 'pJvarkitVcfStatsJFX'):
-	"""
-	@description:
-		VCF statistics using jvarkit vcfstatsjfx.
-		Requires jvarkit at https://github.com/pwwang/conda-jvarkit
-	@input:
-		infile: The input VCF file
-	@output:
-		outdir: The output directory
-	@args:
-		Rscript (str): Path to Rscript
-		jvarkit (str): Path to jvarkit
-		parmas (Box): The parameters for `jvarkit vcfstats`
-	"""
-	return Box(
-		desc = 'VCF statistics using jvarkit vcfstats',
-		lang = params.python.value,
-		input = 'infile:file',
-		output = 'outdir:dir:{{i.infile | stem}}.stats',
-		args = Box(
-			jvarkit = params.jvarkit.value,
-			Rscript = params.Rscript.value,
-			params = Box()
-		)
-	)
-
-@procfactory
 def _pGEP70():
 	"""
 	@name:

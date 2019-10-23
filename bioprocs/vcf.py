@@ -764,3 +764,43 @@ def _pVcfFixGT():
 	pVcfFixGT.script  = "file:scripts/vcf/pVcfFixGT.py"
 	return pVcfFixGT
 
+@procfactory
+def _pVcfStats():
+	"""
+	@input:
+		infile: The input VCF file
+		config: The configuration file for `vcfstats`
+	@output:
+		outdir: The output directory
+	@args:
+		vcfstats (str)      : Path to vcfstats.
+		Rscript  (str)      : Path to Rscript.
+		formula  (str/list) : Formulas to do the statistics.
+		title    (str/list) : Title of each statistic.
+		figtype  (str/list) : Type of figure for each statistic.
+		passed   (bool)     : Whether Only take variants passed all filters in the statistics.
+		region   (str/list) : Only take variants in region in the statistics, such as `chr1:1-1000`.
+		regfile  (str)      : A bed file of regions.
+		macro    (str)      : A macro for `vcfstats`.
+		ggs      (str/list) : ggs expressions to modify each plot.
+		devpars  (dict/list): Devpars for each plot.
+	"""
+	return Box(
+		desc   = 'VCF statistics and plots using vcfstats',
+		lang   = params.python.value,
+		input  = 'infile:file, config:file',
+		output = 'outdir:dir:{{i.infile | stem}}.vcfstats',
+		args   = Box(
+			vcfstats = params.vcfstats.value,
+			Rscript  = params.Rscript.value,
+			formula  = [],
+			title    = [],
+			figtype  = [],
+			passed   = False,
+			region   = [],
+			regfile  = None,
+			macro    = None,
+			ggs      = [],
+			devpars  = []))
+
+

@@ -409,11 +409,14 @@ class Process:
 					outdata[outkey + ':' + outype] = opts.o[outkey]
 					continue
 				# try to extract exdir from output
-				out = Path(opts.o[outkey])
-				if out.name != opts.o[outkey]: # we have path
+				if '/' in opts.o[outkey]:
+					out = Path(opts.o[outkey])
 					if self.proc.exdir and out.parent != self.proc.exdir:
-						raise ValueError('Cannot have output files/dirs with different parents.')
+						raise ValueError('Cannot have output files/dirs with different parents as exdir.')
 					self.proc.exdir = str(out.parent)
+					outdata[outkey] = out.name
+				else:
+					outdata[outkey] = opts.o[outkey]
 			self.proc.output = outdata
 
 		if opts.get('args'):
