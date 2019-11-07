@@ -261,7 +261,7 @@ class Process:
 				outname, outype, default = parts[0], 'var', parts[1]
 			else:
 				outname, outype, default = parts
-		ret[outname] = (outype, default)
+			ret[outname] = (outype, default)
 		return ret
 
 	def addToCompletions(self, comp):
@@ -301,6 +301,7 @@ class Process:
 		# output
 		self._helps.add('Output options (\'exdir\' implied if path specified)',
 			sectype = 'option', prefix = '-')
+
 		for outname, outypedeft in self.outputs().items():
 			outype, outdeft = outypedeft
 			doctype, docdesc = self.parsed().get('output', {}).get(

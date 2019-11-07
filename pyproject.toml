@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bioprocs"
-version = "0.1.0"
+version = "0.1.1"
 description = "A set of PyPPL processes for bioinformatics."
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"

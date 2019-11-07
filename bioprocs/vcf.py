@@ -695,6 +695,8 @@ def _pVcfFix():
 			- fai/dict required to get valid contigs
 		nthread (int): The number of threads used by openblas from numpy
 		fixes: The issues to fix.
+			- _inverse (bool): Inverse the fix switches. Only fix those ones with False.
+				- The fixes with parameters (instead of True/False) will anyway be fixed.
 			- clinvarLink (bool): Remove some clinvar links in INFO that are not well-formatted
 			- addChr (bool): Try to add chr to chromosomes if not present.
 			- addAF (bool): Try to add FORMAT/AF based on FORMAT/AD and FORMAT/DP.
@@ -718,16 +720,22 @@ def _pVcfFix():
 			- headerContig (bool): Add missing header contigs to the header.
 				- `arg.ref` together with `<ref>.fai` or `<ref|stem>.dict` is recommended to get contig information
 				- If `args.ref` is  not specified, a length of 999999999 will be used for missing contigs.
+			- non_ref (bool): Fix the alternate alleles with `<NON_REF>`.
+				- If `<NON_REF>` is the sole alternative allele, replace it with `.`
+				- Otherwise remove it.
 	"""
 	return Box(
 		desc   = 'Fix a bunch of format problems in vcf files',
 		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem | stem}}.fixed.vcf',
+		output = '''outfile:file:{{i.infile
+			| ?.endswith(".gz") | : "_fixed.vcf.gz" | : "_fixed.vcf"
+			| @prepend: stem(stem(i.infile))}}''',
 		lang   = params.python.value,
 		args   = Box(
 			ref     = params.ref.value,
 			nthread = 1,
 			fixes   = Box(
+				_inverse     = False,
 				clinvarLink  = True,
 				addChr       = True,
 				addAF        = True,
@@ -735,7 +743,8 @@ def _pVcfFix():
 				headerInfo   = True,
 				headerContig = True,
 				headerFormat = True,
-				headerFilter = True
+				headerFilter = True,
+				non_ref      = True,
 			)
 		)
 	)

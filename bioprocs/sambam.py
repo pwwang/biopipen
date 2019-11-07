@@ -489,16 +489,12 @@ def _pBamStats():
 @procfactory
 def _pBam2Fastq():
 	"""
-	@name:
-		pBam2Fastq
-	@description:
-		Convert sam/bam files to pair-end fastq files.
 	@input:
-		`infile:file`: The sam/bam file.
+		infile: The sam/bam file.
 			- Sam files only available for biobambam, picard
 	@output:
-		`fqfile1:file`: The 1st match of paired reads
-		`fqfile2:file`: The 2nd match of paired reads
+		fqfile1: The 1st match of paired reads
+		fqfile2: The 2nd match of paired reads
 	@args:
 		`tool`     : The tool to use. Default: biobambam (bedtools, samtools, picard)
 		`biobambam`: The path of bamtofastq of biobambam. Default: bamtofastq
@@ -516,7 +512,7 @@ def _pBam2Fastq():
 		[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 	"""
 	return Box(
-		desc   = 'Convert bam files to pair-end fastq files.',
+		desc   = 'Convert sam/bam files to pair-end fastq files.',
 		input  = "infile:file",
 		output = [
 			"fqfile1:file:{{ i.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",

@@ -305,23 +305,27 @@ def _pTsv():
 def _pTsvColFilter(alias = 'pTsvColSelect'):
 	"""
 	@input:
-		`infile:file`: The input file
+		infile : The input file
+		colfile: The file with columns, one per line, or a list of columns separated by comma.
+			- If this is provided, `args.cols` will be ignored.
 	@output:
-		`outfile:file`: The output file
+		outfile: The output file
 	@args:
-		`inopts`: The options for reading input file. Default: `Box(cnames = True)`
-		`keep`  : Whether to keep in `args.cols` or to discard
-		`cols`  : The columns used to filter. Could be names or indices(0-based) or a file containing the column names, one per line.
+		inopts: The options for reading input file. Default: `Box(cnames = True)`
+		keep  : Whether to keep in `args.cols` or to discard
+		cols  : The columns used to filter. Could be names or indices(0-based) or a file containing the column names, one per line.
 	"""
-	pTsvColFilter             = Proc(desc = 'Filter a tsv file by columns')
-	pTsvColFilter.input       = 'infile:file'
-	pTsvColFilter.output      = 'outfile:file:{{i.infile | bn}}'
-	pTsvColFilter.args.inopts = Box(cnames = True)
-	pTsvColFilter.args.keep   = True
-	pTsvColFilter.args.cols   = None
-	pTsvColFilter.lang        = params.python.value
-	pTsvColFilter.script      = "file:scripts/tsv/pTsvColFilter.py"
-	return pTsvColFilter
+	return Box(
+		desc   = 'Filter a tsv file by columns',
+		lang   = params.python.value,
+		input  = 'infile:file, colfile:var',
+		output = 'outfile:file:{{i.infile | bn}}',
+		args   = Box(
+			inopts = Box(cnames = True),
+			keep = True,
+			cols = None,
+		)
+	)
 
 @procfactory
 def _pTsvAggregate():

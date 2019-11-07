@@ -325,13 +325,14 @@ def _pFastq2Sam():
 		`tool`   : The tool used for alignment. Available: bowtie2, ngm or star.
 		`bwa`    : Path of bwa
 		`ngm`    : Path of ngm
-		`star`   : Path of ngm
+		`star`   : Path of STAR
+			- The genomeDir should be at `/path/to/hg19.star` if `args.ref` is `/path/to/hg19.fa`
 		`bowtie2`: Path of bowtie2
 		`rg`:     The read group.
 			- `id` will be parsed from filename with "_LX_" in it if not given
 			- `sm` will be parsed from filename
 		`ref`    : Path of reference file
-		`refgene`: The GTF file for STAR to build index. It's not neccessary if index is already been built.
+		`refexon`: The GTF file for STAR to build index. It's not neccessary if index is already been built.
 		`params` : Other params for tool
 	"""
 	return Box(
@@ -348,7 +349,7 @@ def _pFastq2Sam():
 			export samtools={{args.samtools | squote}}
 			export bowtie2={{args.bowtie2 | squote}}
 			export nthread={{args.nthread}}
-			export refgene={{args.refgene | squote}}
+			export refexon={{args.refexon | squote}}
 			reference {{args.tool | squote}} {{args.ref | squote}}""",
 		args = Box(
 			tool     = 'bwa',
@@ -360,7 +361,7 @@ def _pFastq2Sam():
 			bowtie2  = params.bowtie2.value,
 			rg       = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = ''),
 			ref      = params.ref.value,
-			refgene  = params.refgene.value,
+			refexon  = params.refexon.value,
 			nthread  = 1,
 			params   = Box()
 		)

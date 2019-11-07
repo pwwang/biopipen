@@ -11,9 +11,6 @@ outprefix = {{o.outfile | fn | quote}}
 outfmt    = {{args.outfmt | quote}}
 outdir    = {{job.outdir | quote}}
 ref       = {{args.ref | quote}}
-refgene   = {{args.refgene | quote}}
-ref2      = path.join(outdir, path.basename(ref))
-workdir   = {{proc.workdir | quote}}
 rg        = {{args.rg | repr}}
 params    = {{args.params | repr}}
 samtools  = {{args.samtools | quote}}
@@ -80,7 +77,7 @@ def run_ngm():
 	shell.fg.ngm(**params)
 
 def run_star():
-	params.genomeDir        = ref + '.star'
+	params.genomeDir        = path.splitext(ref)[0] + '.star'
 	params.readFilesIn      = [infile1, infile2]
 	params.readFilesCommand = ("cat", "zcat", "bzcat")[
 		1 if infile1.endswith('.gz') else 2 if infile1.endswith('.bz2') else 0

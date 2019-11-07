@@ -43,7 +43,7 @@ def defaultCNs(chrom, gt):
 		ret[1] = 1
 		ret[2] = 1
 	else: # BB
-		ret[0] = 1 if chrom == 'chrY' else 2 
+		ret[0] = 1 if chrom == 'chrY' else 2
 		ret[1] = ret[0]
 		ret[2] = 0
 	return ret
@@ -84,7 +84,7 @@ def multiSampleMutVCF2BED(vcffile):
 	ret = {}
 	writers = {}
 	samples = shell.bcftools.query(l = vcffile).strip().splitlines()
-	samples = [sample for i, sample in samples 
+	samples = [sample for i, sample in samples
 		if mutctrl is None or i != (mutctrl if mutctrl >= 0 else len(samples) + mutctrl)]
 	for sample in samples:
 		ret[sample] = path.join(outdir, sample + '.muts.bed')
@@ -133,9 +133,13 @@ def MAF2BED(maffile):
 		r.VARCOUNTS = r.t_alt_count
 		r.CASE      = r.Tumor_Sample_Barcode
 		try:
-			r.VARFREQ   = float(r.VARCOUNTS) / (float(r.t_depth) if 't_depth' in r \
-				else float(r.REFCOUNTS) + float(r.VARCOUNTS))
-		except ValueError:
+			varcount  = float(r.VARCOUNTS)
+			refcount  = float(r.REFCOUNTS)
+			depth     = float(r.get('t_depth', 0))
+			if depth == 0:
+				depth = varcount + refcount
+			r.VARFREQ = varcount / depth
+		except (ValueError, TypeError, ZeroDivisionError):
 			logger.warning('Variant %s drop due to unknown t_ref_count(%s) or t_alt_count(%s)' % (
 				r.NAME,
 				r.t_ref_count,
@@ -148,7 +152,7 @@ def MAF2BED(maffile):
 			writers[r.CASE] = TsvWriter(ret[r.CASE])
 			writers[r.CASE].cnames = ['CHROM', 'START', 'END', 'NAME', 'GENOTYPE', 'REFCOUNTS', 'VARCOUNTS', 'CASE', 'VARFREQ']
 		writers[r.CASE].write(r)
-	
+
 	for writer in writers.values():
 		writer.close()
 	reader.close()
@@ -177,7 +181,7 @@ def PyCloneMutTSV2BED(pcfile):
 			ret[r.CASE] = path.join(outdir, r.CASE + '.muts.bed')
 			writers[r.CASE] = TsvWriter(ret[r.CASE])
 			writers[r.CASE].cnames = ['CHROM', 'START', 'END', 'NAME', 'GENOTYPE', 'REFCOUNTS', 'VARCOUNTS', 'CASE', 'VARFREQ']
-		writers[r.CASE].write(r)		
+		writers[r.CASE].write(r)
 	for writer in writers.values():
 		writer.close()
 	reader.close()
@@ -189,7 +193,7 @@ def singleSampleCnVCF2BED(vcffiles):
 	#CHROM  START   END	    GENOTYPE NORMAL_CN MINOR_CN MAJOR_CN CASE
 	chr1    70820   70820   BB       2         0        2        NA12156
 	"""
-	
+
 	ret = {}
 	for vcffile in vcffiles:
 		samples = shell.bcftools.query(l = vcffile).strip().splitlines()
@@ -211,9 +215,9 @@ def singleSampleCnVCF2BED(vcffiles):
 				items[3] = 'AB'
 			elif items[3] in ('1/1', '1|1'):
 				items[3] = 'BB'
-			
+
 			items[4], items[5], items[6] = defaultCNs(items[0], items[3])
-			
+
 			writer.write(items)
 		writer.close()
 	return ret
@@ -222,7 +226,7 @@ def multiSampleCnVCF2BED(vcffile):
 	ret = {}
 	writers = {}
 	samples = shell.bcftools.query(l = vcffile).strip().splitlines()
-	samples = [sample for i, sample in samples 
+	samples = [sample for i, sample in samples
 		if cnctrl is None or i != (cnctrl if cnctrl >= 0 else len(samples) + cnctrl)]
 	for sample in samples:
 		ret[sample] = path.join(outdir, sample + '.cn.bed')
@@ -270,7 +274,7 @@ def PyCloneCnTSV2BED(pcfile):
 			ret[r.CASE] = path.join(outdir, r.CASE + '.cn.bed')
 			writers[r.CASE] = TsvWriter(ret[r.CASE])
 			writers[r.CASE].cnames = ['CHROM', 'START', 'END', 'GENOTYPE', 'NORMAL_CN', 'MINOR_CN', 'MAJOR_CN', 'CASE']
-		writers[r.CASE].write(r)		
+		writers[r.CASE].write(r)
 	for writer in writers.values():
 		writer.close()
 	reader.close()
@@ -306,7 +310,7 @@ def GetPyCloneTsv(mutfile, outfile, cnfile = None):
 		b = cnfile,
 		loj = True):
 
-		# CHROM  START END NAME GENOTYPE REFCOUNTS VARCOUNTS CASE VARFREQ 
+		# CHROM  START END NAME GENOTYPE REFCOUNTS VARCOUNTS CASE VARFREQ
 		# 0      1     2   3    4        5         6         7    8
 		# CHROM START END GENOTYPE NORMAL_CN MINOR_CN MAJOR_CN CASE
 		# 9     10    11  12       13        14       15       16

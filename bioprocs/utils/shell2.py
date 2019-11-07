@@ -48,9 +48,9 @@ runcmd = lambda cmd: cmdy.bash(c = cmd)
 def load_config(conf = None, **kwargs):
 	conf = conf or {}
 	conf.update(kwargs)
-	conf2load = {}
+	conf2load = {'default': DEFAULT_CONFIG['default']}
 	for key, val in conf.items():
-		conf2load[key] = DEFAULT_CONFIG[key].copy() if key in DEFAULT_CONFIG else {}
+		conf2load[key] = DEFAULT_CONFIG.get(key, {}).copy()
 		conf2load[key].update(val if isinstance(val, dict) else {'_exe': val})
 
 	cmdy.config._load(conf2load)

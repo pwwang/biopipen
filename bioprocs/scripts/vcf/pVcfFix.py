@@ -28,6 +28,7 @@ environ['NUMEXPR_NUM_THREADS']  = str(nthread)
 environ['MKL_NUM_THREADS']      = str(nthread)
 import numpy
 
+inverse            = fixes.get('_inverse', False)
 fixes.clinvarLink  = fixes.get('clinvarLink', False)
 fixes.addChr       = fixes.get('addChr', False)
 fixes.addAF        = fixes.get('addAF', False)
@@ -36,6 +37,19 @@ fixes.headerInfo   = fixes.get('headerInfo', False)
 fixes.headerContig = fixes.get('headerContig', False)
 fixes.headerFormat = fixes.get('headerFormat', False)
 fixes.headerFilter = fixes.get('headerFilter', False)
+fixes.non_ref      = fixes.get('non_ref', False)
+
+if inverse:
+	inv = lambda v: not v if isinstance(v, bool) else v
+	fixes.clinvarLink  = inv(fixes.clinvarLink)
+	fixes.addChr       = inv(fixes.addChr)
+	fixes.addAF        = inv(fixes.addAF)
+	fixes.tumorpos     = inv(fixes.tumorpos)
+	fixes.headerInfo   = inv(fixes.headerInfo)
+	fixes.headerContig = inv(fixes.headerContig)
+	fixes.headerFormat = inv(fixes.headerFormat)
+	fixes.headerFilter = inv(fixes.headerFilter)
+	fixes.non_ref      = inv(fixes.non_ref)
 
 if fixes.tumorpos is True:
 	fixes.tumorpos = path.splitext(path.basename(infile))[0]
@@ -62,7 +76,7 @@ def getContigsFromDict(dictfile):
 
 # fix clinvarLink first, because it will fail VCF parser
 # just remove it
-if fixes.clinvarLink or fixes.addChr or fixes.tumorpos:
+if fixes.clinvarLink or fixes.addChr or fixes.tumorpos or fixes.non_ref:
 	tmpoutfile = outfile + '.tmp'
 	openfun = gzip.open if infile.endswith('.gz') else open
 	with openfun(infile, 'rt', errors='replace') as fin, \
@@ -97,6 +111,9 @@ if fixes.clinvarLink or fixes.addChr or fixes.tumorpos:
 					parts[9], parts[10] = parts[10], parts[9]
 				if fixes.addChr:
 					parts[0] = parts[0] if parts[0].startswith('chr') else 'chr' + parts[0]
+				if fixes.non_ref and "<NON_REF>" in parts[4]:
+					parts[4] = ','.join(alt for alt in parts[4].split(',') if alt != '<NON_REF>') \
+						or '.'
 				info = parts[7]
 				if fixes.clinvarLink:
 					info = ';'.join(inf for inf in info.split(';') if not inf.startswith('<a href'))
