@@ -19,7 +19,7 @@ It:
 
 	{%- assign hash = forloop.length | ?:_>1 | :'#' | :'' %}
 
-	{%- if `job.errfile | read | :"Found 0 valid trees after network adjustments" not in _` -%}
+	{%- if `job.errfile | read | :"Found 0 valid trees after network adjustments" not in _` %}
 ##{{hash}} Top tree
 
 ![Top tree]({{job.o.outdir, '*.png' | *glob1}})

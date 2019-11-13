@@ -87,6 +87,6 @@ tools = dict(
 try:
 	tools[tool]()
 except KeyError:
-	raise ValueError('Tool {%r} not supported.' % tool)
+	raise ValueError('Tool "%r" not supported.' % tool)
 finally:
 	shell.rm_rf(tmpdir)

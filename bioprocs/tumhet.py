@@ -392,6 +392,7 @@ def _pSchism():
 			dot      = params.dot.value,
 			fishplot = True,
 			Rscript  = params.Rscript.value,
+			devpars  = Box(res = 100),
 			params   = Box(
 				cellularity_estimator = Box(),
 				hypothesis_test       = Box(),
@@ -416,6 +417,7 @@ def _pLichee():
 	@args:
 		dot (str): Path to dot to generate figures
 		params (Box): Other parameters for `lichee`.
+			- Set a larger `e` if you have noisy data. Default is 0.1.
 	"""
 	return Box(
 		desc   = 'Fast and scalable inference of multi-sample cancer lineages using LICHeE',
@@ -427,6 +429,7 @@ def _pLichee():
 			lichee   = params.lichee.value,
 			fishplot = True,
 			Rscript  = params.Rscript.value,
+			devpars  = Box(res = 100),
 			params   = Box(maxVAFAbsent = 0.005, minVAFPresent = 0.005)
 		)
 	)

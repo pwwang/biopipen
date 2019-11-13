@@ -45,9 +45,9 @@ def sam2bam(samfile, bamfile):
 	shell.rm_rf(samfile)
 
 def run_bowtie2():
-	params.nthread = nthread
+	params.threads = nthread
 	params.x = ref
-	params.S = outfile if outfmt == 'sam' else path.split(outfile)[0] + '.sam'
+	params.S = outfile if outfmt == 'sam' else path.splitext(outfile)[0] + '.sam'
 	params['1'] = infile1
 	params['2'] = infile2
 	params['rg-id'] = rg['ID']
@@ -60,9 +60,9 @@ def run_bwa():
 	params.R = "@RG\\tID:{id}\\t{rg}".format(id = rg['ID'], rg = "\\t".join(
 		'{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID'
 	))
-	params._out = outfile if outfmt == 'sam' else path.split(outfile)[0] + '.sam'
+	params.o = outfile if outfmt == 'sam' else path.splitext(outfile)[0] + '.sam'
 	params._ = [ref, infile1, infile2]
-	shell.bwa.mem(**params)
+	shell.fg.bwa.mem(**params)
 	if outfmt == 'bam': sam2bam(params._out, outfile)
 
 def run_ngm():

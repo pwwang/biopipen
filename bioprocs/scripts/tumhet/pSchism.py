@@ -14,6 +14,7 @@ fishplot = {{args.fishplot | repr}}
 Rscript  = {{args.Rscript | quote}}
 dot      = {{args.dot | quote}}
 params   = {{args.params |repr}}
+devpars  = {{args.devpars |repr}}
 
 shell.load_config(schism = schism, Rscript = Rscript, dot = dot)
 
@@ -181,4 +182,4 @@ dotstr.append('}')
 with open(dotfile, 'w') as f:
 	f.write('\n'.join(dotstr))
 
-shell.fg.dot(dotfile, T = 'png', o = ctreefile[:-17] + '.tree.png')
+shell.fg.dot(dotfile, f'-Gdpi={devpars.res}', T = 'png', o = ctreefile[:-17] + '.tree.png')

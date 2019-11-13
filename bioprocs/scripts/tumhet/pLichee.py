@@ -10,6 +10,7 @@ lichee   = {{args.lichee |quote}}
 params   = {{args.params | repr}}
 fishplot = {{args.fishplot |repr}}
 Rscript  = {{args.Rscript |quote}}
+devpars  = {{args.devpars |repr}}
 
 shell.load_config(lichee = {'_exe': lichee, '_prefix': '-'}, Rscript = Rscript, dot = dot)
 
@@ -119,7 +120,7 @@ params.dotFile = prefix + '.dot'
 
 shell.fg.lichee('-build', **params)
 
-shell.fg.dot(params.dotFile, T = 'png', o = prefix + '.png')
+shell.fg.dot(params.dotFile, f'-Gdpi={devpars.res}', T = 'png', o = prefix + '.png')
 
 # save clusters and snv infos in different file for reporting
 snvfile = prefix + '.snvinfo.txt'

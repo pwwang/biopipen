@@ -166,7 +166,7 @@ class SampleInfo2(object):
 				ret.append(group)
 		return ret
 
-	def allSamples(self, unique = False):
+	def allSamples(self, unique = False, datadir = None):
 		samples = self.getSamples()
 		if unique:
 			ret = []
@@ -174,7 +174,7 @@ class SampleInfo2(object):
 				if sample not in ret:
 					ret.append(sample)
 			return ret
-		return samples
+		return [path.join(datadir, sample) for sample in samples] if datadir else samples
 
 	def getSamples(self, by = None, value = None, returnAll = False):
 		if by and by not in self.cnames:

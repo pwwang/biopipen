@@ -33,7 +33,8 @@ def _modkit_delegate(name):
 	return getattr(cmdy, name)
 
 # run command at foreground
-fg   = cmdy(_fg = True, _report = True)
+fg   = cmdy(_fg = True, _debug = True)
+bg   = cmdy(_bg = True, _debug = True)
 out  = cmdy(_out = '>')
 pipe = cmdy(_pipe = True)
 
