@@ -55,18 +55,23 @@ aPrepareBam.pSam2Bam.args.markdup = True
 # modules
 
 @aPrepareBam.module
-def aPrepareBam_ebam(ps):
+def aPrepareBam_ebam(ps, restore = True):
 	ps.starts = 'pBam2Fastq'
 	ps.pFastqTrim.depends = ps.pBam2Fastq
 
 @aPrepareBam.module
-def aPrepareBam_fastq(ps):
+def aPrepareBam_fastq(ps, restore = True):
 	ps.starts = 'pFastqTrim'
 
 @aPrepareBam.module
-def aPrepareBam_qc(ps):
+def aPrepareBam_qc(ps, restore = True):
 	ps.ends = 'pFast?C'
 	ps['pFast?C'].depends = ps.pFastqTrim
+
+@aPrepareBam.module
+def aPrepareBam_norecal(ps, restore = True):
+	ps.ends = 'pSam2Bam'
+	ps.pBamRecal.depends = []
 
 # inital modules
 aPrepareBam.modules.ebam()

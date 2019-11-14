@@ -112,6 +112,9 @@ def CnVCF2BED(vcffile):
 		s = sample,
 		f = '%CHROM\t%POS\t[%END]\t[%CN]\n'):
 		items = line.strip().split('\t')
+		if items[3] == '0':
+			logger.warning('Record skipped with CN=0: %s', line)
+			continue
 		writer.write(items)
 	writer.close()
 	return ret

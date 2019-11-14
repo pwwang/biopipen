@@ -276,17 +276,7 @@ def _pTsv():
 		`outfile:file`: The output file
 	@args:
 		`inopts`: The input options for infile:
-			- `delimit`: The delimit. Default: `\t`
-			- `comment`: The comment sign. Default: `#`
-			- `skip`: First N lines to skip. Default: `0`
-			- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict). If not specified, metadata will be generated automatically.
-		`outopts`: The output options for outfile:
-			- `delimit`: The delimit for records. Default: `\t`
-			- `head`: Output header or not. Default: `False`
-			- `headDelimit`: The delimit for header. Default: `\t`
-			- `headPrefix`: The prefix for header. Default: ``
-			- `headTransform`: The transformer for header. Default: `None`
-			- `ftype`: The file type. Metadata can be assigned direct (list/OrderedDict, '+' as an element or key is allowed to indicate extra meta from the reader). If not specified, metadata will be borrowed from the reader.
+		`outopts`: The output options for outfile
 		`row`: A row function to transform/filter the row. Argument is an instance of `TsvRecord`
 		`helper`: A helper function for `args.ops`
 	"""

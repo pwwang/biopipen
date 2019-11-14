@@ -63,7 +63,7 @@ def run_bwa():
 	params.o = outfile if outfmt == 'sam' else path.splitext(outfile)[0] + '.sam'
 	params._ = [ref, infile1, infile2]
 	shell.fg.bwa.mem(**params)
-	if outfmt == 'bam': sam2bam(params._out, outfile)
+	if outfmt == 'bam': sam2bam(params.o, outfile)
 
 def run_ngm():
 	params['1'] = infile1

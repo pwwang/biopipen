@@ -59,16 +59,18 @@ def main():
 	starts = []
 	saminfo = SampleInfo(opts.saminfo)
 	aPrepareBam.pFastq2Sam.args.tool    = opts.aligner
+	if aPrepareBam.pSam2Bam.args.tool == 'elprep' and aPrepareBam.pSam2Bam.args.steps.recal:
+		aPrepareBam.modules.norecal()
+	if opts.compress:
+		aPrepareBam.args.gz = True
+		aPrepareBam.pFastq2Sam.args.outfmt = 'bam'
 
 	pBamDir         = pFiles2Dir
 	pBamDir.runner  = 'local'
 	if opts.intype == 'ebam':
 		#aPrepareBam.input = [Channel.fromPattern(path.join(opts.indir, '*.bam'))]
-		aPrepareBam.modules.ebam()
+		aPrepareBam.modules.ebam(restore = False)
 		aPrepareBam.input = Channel.create(saminfo.toChannel(opts.indir)).unique()
-		if opts.compress:
-			aPrepareBam.args.gz = True
-			aPrepareBam.pFastq2Sam.args.outfmt = 'bam'
 
 		pBamDir.depends = aPrepareBam
 		pBamDir.input   = lambda ch: [ch.flatten()]

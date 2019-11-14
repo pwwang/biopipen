@@ -305,8 +305,9 @@ def _pVcf2Maf():
 		tabix: Path to tabix, used to index Vcf file.
 		oncotator: Path to oncotator.
 		oncotator_db (dir): Path to oncotator database.
-		params: Extra parameters for the tool.
+		params (Box): Extra parameters for the tool.
 		withchr (bool): Should we add chr to Chromosome column or not.
+		genome (str): The genome used to replace __UNKNOWN__ for the NCBI_Build column
 	"""
 	return Box(
 		desc   = 'Convert Vcf file to Maf file',
@@ -326,6 +327,7 @@ def _pVcf2Maf():
 			oncotator_db = params.oncotator_db.value,
 			bcftools     = params.bcftools.value,
 			tumor        = 'auto',
+			genome       = params.genome.value,
 			nthread      = 1,
 			params       = Box()
 		)

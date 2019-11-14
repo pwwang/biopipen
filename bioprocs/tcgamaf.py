@@ -559,3 +559,22 @@ def _pMafExtractClass():
 		lang   = params.python.value,
 		args   = Box(classes = [])
 	)
+
+@procfactory
+def _pMafGetSamples():
+	"""
+	@input:
+		infile: The input MAF file
+	@output:
+		outfile: The output sample file
+	@args:
+		out: Which samples to output, tumor, normal or both.
+		outopts: The output options
+	"""
+	return Box(
+		desc   = 'Get samples from MAF file',
+		lang   = params.python.value,
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem}}.samples.txt',
+		args   = Box(out = 'both', outopts = Box(cnames = True))
+	)
