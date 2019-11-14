@@ -241,79 +241,73 @@ def _pUnitConversion():
 @procfactory
 def _pRNASeqDEG():
 	"""
-	@name:
-		pRNASeqDEG
-	@description:
-		Detect DEGs for RNA-seq data
 	@input:
-		`efile:file`: The expression matrix
-		`gfile:file`: The group information
-			- Like:
-			```
-			Sample	[Patient	]Group
-			sample1	[patient1	]group1
-			sample2	[patient1	]group1
-			sample3	[patient2	]group1
-			sample4	[patient2	]group2
-			sample5	[patient3	]group2
-			sample6	[patient3	]group2
-			```
+		efile:file: The expression matrix
+			- Columns other than samples in gfile will be used as annotations
+			- See `args.mapping`
+		gfile:file: The group information
+			- For example:
+				```
+				Sample	[Patient	]Group
+				sample1	[patient1	]group1
+				sample2	[patient1	]group1
+				sample3	[patient2	]group1
+				sample4	[patient2	]group2
+				sample5	[patient3	]group2
+				sample6	[patient3	]group2
+				```
+			- If it is not paired comparison, you should not include Patient.
 	@output:
-		`outfile:file`: The DEG list
-		`outdir:file`:  The output directory containing deg list and plots
+		outfile:file: The DEG list
+		outdir:file:  The output directory containing deg list and plots
 	@args:
-		`tool`  : The tool used to detect DEGs. Default: 'deseq2' (edger is also available).
-		`inopts`: Options to read `infile`. Default: `Box(cnames = True, rnames = True)`
-		`cutoff`: The cutoff used to filter the results. Default: `0.05`
+		tool  : The tool used to detect DEGs. Default: 'deseq2' (edger is also available).
+		inopts: Options to read `infile`. Default: `Box(cnames = True, rnames = True)`
+		cutoff: The cutoff used to filter the results. Default: `0.05`
 			- `0.05` implies `{"by": "p", "value": "0.05", "sign": "<"}`
-		`plot`  : The plots to do. Default:
-			- `mdsplot`: True, MDS plot
-			- `volplot`: True, volcano plot
-			- `maplot `: True, MA plot
-			- `heatmap`: True, heatmap for DEGs
-			- `qqplot `: True, The QQplot for pvalues
-		`ggs`   : The ggs for each plot. Default:
-			- `heatmap`: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+		ggs   : The ggs for each plot. Default:
+			- For heatmap: should be the `draw` argument from `plot.heatmap2` in `plot.r`
 			- Not available for `mdsplot`.
 			- Others are empty `Box()`s
-		`params`: Parameters for each plot. Default:
-			- `volplot`: `Box(pcut = 0.05, fccut = 2)`
+			- To disable a plot: `ggs.heatmap = FALSE`
+		params: Parameters for each plot. Default:
+			- `volplot`: `Box(pcut = 0.05, logfccut = 2)`
 			- `maplot` : `Box(pcut = 0.05)`
-		`devpars`: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
-		`mapfile`: Probe to gene mapping file. If not provided, assume genes are used as rownames.
+			- `heatmap`: `Box(ngenes = None, <other arguments for plot.heatmap2's params>)`, all genes in heatmap or a number for up/down genes in heatmap
+		devpars: Parameters for png. Default: `{'res': 300, 'width': 2000, 'height': 2000}`
+		mapping: Probe to gene mapping file. If not provided, assume genes are used as rownames. This could be:
+			- A column name or a number (index without samples, starting from 1) in `i.efile` to specify which column is to use a gene names
+			- A file path with probe-to-gene mapping, could also include other annotations
+				- A suffix(`file:1` or `file:Gene`) is available to specify the gene column. An integer indicates no header for the file, while a columname indicates `header = TRUE`
+				- Without suffix, rownames will not be replaced and header is TRUE anyway.
+				- Columns are ignored if this is provided.
 	"""
-	pRNASeqDEG        = Proc(desc = 'Detect DEGs by RNA-seq data.')
-	pRNASeqDEG.input  = "efile:file, gfile:file"
-	pRNASeqDEG.output = [
-		"outfile:file:{{i.efile | fn2}}-{{i.gfile | fn2}}.DEGs/{{i.efile | fn2}}-{{i.gfile | fn2}}.degs.txt",
-		"outdir:dir:{{i.efile | fn2}}-{{i.gfile | fn2}}.DEGs"
-	]
-	pRNASeqDEG.args.tool    = 'deseq2' # edger
-	pRNASeqDEG.args.inopts  = Box(cnames = True, rnames = True)
-	pRNASeqDEG.args.mapfile = ""
-	pRNASeqDEG.args.cutoff  = 0.05
-	pRNASeqDEG.args.plot    = Box(
-		mdsplot = True,
-		volplot = True,
-		maplot  = True,
-		heatmap = True,
-		qqplot  = True
+	return Box(
+		desc   = 'Detect DEGs from RNA-seq data.',
+		lang   = params.Rscript.value,
+		input  = "efile:file, gfile:file",
+		output = """outfile:file:{{i.efile | stem | stem}}-{{i.gfile | stem
+			}}.DEGs/{{i.efile | stem | stem}}-{{i.gfile | stem
+			}}.degs.xls, outdir:dir:{{i.efile | stem | stem}}-{{i.gfile | stem}}.DEGs""",
+		args = Box(
+			tool    = 'deseq2',
+			inopts  = Box(cnames = True, rnames = True, dup = 'drop'),
+			mapping = "",
+			cutoff  = 0.05,
+			ggs = Box(
+				mdsplot = Box(),
+				volplot = Box(),
+				maplot  = Box(),
+				heatmap = Box(),
+				qqplot  = Box(labs = {'x': 'Expected', 'y': 'Observed -log10(PValue)'})
+			),
+			params  = Box(
+				volplot = Box(logfccut = 2),
+				maplot = Box(),
+				heatmap = Box(ngenes = None, show_row_names = False)),
+			devpars = Box(res = 300, width = 2000, height = 2000)
+		)
 	)
-	pRNASeqDEG.args.ggs = Box(
-		maplot  = Box(),
-		heatmap = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-		volplot = Box(),
-		qqplot  = Box(labs = {'x': 'Expected(-log10(p-value))', 'y': 'Observed(-log10(p-value))'})
-	)
-	pRNASeqDEG.args.params = Box(
-		volplot = Box(fccut = 2),
-		maplot  = Box()
-	)
-	pRNASeqDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
-	pRNASeqDEG.envs.rimport = rimport
-	pRNASeqDEG.lang         = params.Rscript.value
-	pRNASeqDEG.script       = "file:scripts/rnaseq/pRNASeqDEG.r"
-	return pRNASeqDEG
 
 @procfactory
 def _pCoexp():

@@ -305,8 +305,9 @@ def _pVcf2Maf():
 		tabix: Path to tabix, used to index Vcf file.
 		oncotator: Path to oncotator.
 		oncotator_db (dir): Path to oncotator database.
-		params: Extra parameters for the tool.
+		params (Box): Extra parameters for the tool.
 		withchr (bool): Should we add chr to Chromosome column or not.
+		genome (str): The genome used to replace __UNKNOWN__ for the NCBI_Build column
 	"""
 	return Box(
 		desc   = 'Convert Vcf file to Maf file',
@@ -326,6 +327,7 @@ def _pVcf2Maf():
 			oncotator_db = params.oncotator_db.value,
 			bcftools     = params.bcftools.value,
 			tumor        = 'auto',
+			genome       = params.genome.value,
 			nthread      = 1,
 			params       = Box()
 		)
@@ -409,17 +411,6 @@ def _pVcfLiftover():
 			params   = Box()
 		)
 	)
-
-@procfactory
-def _pVcfStats():
-	"""
-	@input:
-		infile: The input VCF file
-	@output:
-		outdir: The output directory
-	@args:
-		params (Box): Other parameters for `vcfstats`
-	"""
 
 @procfactory
 def _pVcfAddChr():
@@ -706,6 +697,8 @@ def _pVcfFix():
 			- fai/dict required to get valid contigs
 		nthread (int): The number of threads used by openblas from numpy
 		fixes: The issues to fix.
+			- _inverse (bool): Inverse the fix switches. Only fix those ones with False.
+				- The fixes with parameters (instead of True/False) will anyway be fixed.
 			- clinvarLink (bool): Remove some clinvar links in INFO that are not well-formatted
 			- addChr (bool): Try to add chr to chromosomes if not present.
 			- addAF (bool): Try to add FORMAT/AF based on FORMAT/AD and FORMAT/DP.
@@ -729,16 +722,22 @@ def _pVcfFix():
 			- headerContig (bool): Add missing header contigs to the header.
 				- `arg.ref` together with `<ref>.fai` or `<ref|stem>.dict` is recommended to get contig information
 				- If `args.ref` is  not specified, a length of 999999999 will be used for missing contigs.
+			- non_ref (bool): Fix the alternate alleles with `<NON_REF>`.
+				- If `<NON_REF>` is the sole alternative allele, replace it with `.`
+				- Otherwise remove it.
 	"""
 	return Box(
 		desc   = 'Fix a bunch of format problems in vcf files',
 		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem | stem}}.fixed.vcf',
+		output = '''outfile:file:{{i.infile
+			| ?.endswith(".gz") | : "_fixed.vcf.gz" | : "_fixed.vcf"
+			| @prepend: stem(stem(i.infile))}}''',
 		lang   = params.python.value,
 		args   = Box(
 			ref     = params.ref.value,
 			nthread = 1,
 			fixes   = Box(
+				_inverse     = False,
 				clinvarLink  = True,
 				addChr       = True,
 				addAF        = True,
@@ -746,7 +745,8 @@ def _pVcfFix():
 				headerInfo   = True,
 				headerContig = True,
 				headerFormat = True,
-				headerFilter = True
+				headerFilter = True,
+				non_ref      = True,
 			)
 		)
 	)
@@ -774,4 +774,44 @@ def _pVcfFixGT():
 	pVcfFixGT.lang    = params.python.value
 	pVcfFixGT.script  = "file:scripts/vcf/pVcfFixGT.py"
 	return pVcfFixGT
+
+@procfactory
+def _pVcfStats():
+	"""
+	@input:
+		infile: The input VCF file
+		config: The configuration file for `vcfstats`
+	@output:
+		outdir: The output directory
+	@args:
+		vcfstats (str)      : Path to vcfstats.
+		Rscript  (str)      : Path to Rscript.
+		formula  (str/list) : Formulas to do the statistics.
+		title    (str/list) : Title of each statistic.
+		figtype  (str/list) : Type of figure for each statistic.
+		passed   (bool)     : Whether Only take variants passed all filters in the statistics.
+		region   (str/list) : Only take variants in region in the statistics, such as `chr1:1-1000`.
+		regfile  (str)      : A bed file of regions.
+		macro    (str)      : A macro for `vcfstats`.
+		ggs      (str/list) : ggs expressions to modify each plot.
+		devpars  (dict/list): Devpars for each plot.
+	"""
+	return Box(
+		desc   = 'VCF statistics and plots using vcfstats',
+		lang   = params.python.value,
+		input  = 'infile:file, config:file',
+		output = 'outdir:dir:{{i.infile | stem}}.vcfstats',
+		args   = Box(
+			vcfstats = params.vcfstats.value,
+			Rscript  = params.Rscript.value,
+			formula  = [],
+			title    = [],
+			figtype  = [],
+			passed   = False,
+			region   = [],
+			regfile  = None,
+			macro    = None,
+			ggs      = [],
+			devpars  = []))
+
 

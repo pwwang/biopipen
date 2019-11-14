@@ -103,10 +103,11 @@ function reference_star() {
 	if [[ -z "$star" ]]; then star="star"; fi
 	if [[ -z "$nthread" ]]; then nthread=1; fi
 	ref=$1
-	if [[ ! -d "$ref.star" ]]; then
+	refdir="${ref%.fa*}.star"
+	if [[ ! -d "$refdir" ]]; then
 		logger "Star index not exists, creating ..." "WARNING"
-		mkdir -p "$ref.star"
-		$star --runMode genomeGenerate --genomeDir "$ref.star" --genomeFastaFiles $ref --sjdbOverhang 100 --sjdbGTFfile $refgene --runThreadN $nthread
+		mkdir -p "$refdir"
+		$star --runMode genomeGenerate --genomeDir "$refdir" --genomeFastaFiles $ref --sjdbGTFfile $refexon --runThreadN $nthread
 	fi
 }
 

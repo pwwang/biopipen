@@ -847,72 +847,50 @@ def _pBootstrap():
 @procfactory
 def _pPCA():
 	"""
-	@name:
-		pPCA
 	@description:
-		Perform PCA analysis. Example:
-		```
-		bioprocs stats.pPCA
-			-i.infile Cellline_t.txt
-			-i.annofile CLAnno.txt
-			-args.plots.clplot.repel
-			-args.plots.clplot.shape 3
-			-args.plots.clplot.ggs.geom_point 'r:list(aes(shape = Cellline), color = "#2b6edb", data = anno)'
-			-args.seed 8525
-			-args.plots.cluster.centers 2
-			-args.plots.clplot.show-clust-cent 0
-			-args.plots.cluster.npcs 2
-		```
+		Perform PCA analysis using PCAtools.
+		See: https://bioconductor.org/packages/release/bioc/vignettes/PCAtools/inst/doc/PCAtools.html
 	@input:
-		`infile:file`: The matrix to do the analysis
-			- Columns are the features
+		infile: The matrix to do the analysis
+			- Columns are features, rows are samples
+			- If not, you may use `args.params.transposed = True`
+		metafile: The metadata file
+			- Columns are features, rows are samples
+			- rnames and cnames are required
 	@output:
-		`outfile:file`: The file with the components
-		`oudir:dir`   : The directory c
+		outfile: The file with the components
+		oudir  : The directory containing the output file and plots.
 	@args:
-		`devpars`: The parameters for device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-		`anopts` : The options to read the annotation files.
-		`inopts` : The options to read the input files.
-		`na`     : How to deal with `NA` values. Default: `0`
+		devpars (Box)        : The parameters for plotting device.
+		inopts  (Box)        : The options to read the input files.
+		na      (bool|number): How to deal with `NA` values.
 			- A logistic/boolean value will remove them (use `complete.cases`)
 			- Otherwise, it will be replaced by the given value.
-		`seed`   : The seed. Default: `None`
-		`plots`  : Use R package `factoextra` to do Plots. You can use `False` for each to disable each plot.
-			- `scree`  : Scree plot, see `?fviz_screeplot`. Default: `Box(ncp = 20`)
-			- `var`    : Var plot, see `?fviz_pca_var`. Default: `Box(repel = False)`
-			- `bi`     : Biplot,   see `?fviz_pca_biplot`. Default: `Box(repel = False)`
-			- `clplot` : Cluster plot, see `?fviz_cluster`. Default: `Box(repel = False, main = "", ggs = Box())`
-				- The extra `ggs` is used to extend the plot. See example in description.
-			- `cluster`: Cluster options for the cluster plot. Default: `Box(npcs  = .8, method = 'kmeans')`
-				- `npcs`: # of PCs to use for clustering. `npcs` < 1 will be treated as variance contribution of PCs. For example, `0.8` will take first N PCs will contribute 80% of variance. Default: `.8`
-				- `method`: Clustering method. Available methods would be `kmeans` and methods supported by `cluster` package.
-				- Other arguments for the clustering function.
-	@requires:
-		[`R-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html) for plots
+		plots (Box): Plotting parameters supported by `PCAtools`. Set `False` to disable a plot.
+			- scree: A scree plot. See `?screeplot`
+				- Since `PCAtools::screeplot` returns a ggplot object, we have `args.plots.scree.ggs` to extend the plot.
+			- bi: A bi-plot. See `?biplot`
+			- pairs: A pairs plot. See `?pairsplot`
+			- loadings: A loadings plot. See `?plotloadings`
+			- eigencor: An eigencor plot. See `?eigencorplot`
+		params (Box): Other parameters for `PCAtools::pca`
+		npc (int|str): The number of PCs to write to the output file.
+			- A fixed number of PCs; or
+			- one of `horn` or `elbow` to determine the optimal number of PCs.
 	"""
-	pPCA        = Proc(desc = 'Perform PCA analysis.')
-	pPCA.input  = "infile:file"
-	pPCA.output = [
-		"outfile:file:{{i.infile | fn2}}.pca/{{i.infile | fn2}}.pcs.txt",
-		"outdir:dir:{{i.infile | fn2}}.pca"
-	]
-	pPCA.args.anfile = ''
-	pPCA.args.anopts = Box(cnames = True, rnames = True)
-	pPCA.args.inopts = Box(cnames = True, rnames = True)
-	pPCA.args.na     = 0
-	pPCA.args.select = .2
-	pPCA.args.seed   = None
-	pPCA.args.plots  = Box(
-		scree   = Box(ncp = 20),
-		var     = Box(repel = False),
-		bi      = Box(repel = False),
-		cluster = Box(method = 'kmeans'),
-		clplot  = Box(repel = False, main = "", ggs = Box()),
-		pairs   = Box(anno = "kmeans", pcs = 4, k = 4)
+	return Box(
+		desc   = 'Perform PCA analysis using PCAtools',
+		input  = 'infile:file, metafile:file',
+		output = [	'outfile:file:{{i.infile | stem | stem}}.pca/{{i.infile | stem | stem}}.pcs.txt',
+					'outdir:dir:{{i.infile | stem | stem}}.pca'],
+		lang = params.Rscript.value,
+		args = Box(
+			devpars = Box(height = 2000, width = 2000, res = 300),
+			inopts  = Box(cnames = True, rnames = True),
+			params  = Box(),
+			na      = 0,
+			plots   = Box(scree = True, bi = True, pairs = True, loadings = True, eigencor = True),
+			npc     = 'elbow'
+		)
 	)
-	pPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)
-	pPCA.envs.rimport = rimport
-	pPCA.lang         = params.Rscript.value
-	pPCA.script       = "file:scripts/stats/pPCA.r"
-	return pPCA
 

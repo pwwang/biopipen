@@ -14,16 +14,16 @@ if not path.isfile(refdict) and not path.isfile(reffai):
 
 contigs = []
 if path.isfile(refdict):
-	reader = TsvReader(refdict, skip = 1)
+	reader = TsvReader(refdict, skip = 1, cnames = False)
 	for r in reader:
 		contigs.append(r[1][3:])
 
 elif path.isfile(reffai):
-	reader = TsvReader(reffai)
+	reader = TsvReader(reffai, cnames = False)
 	for r in reader:
 		contigs.append(r[0])
 
-with FileConn(infile) as f, open(outfile, 'w') as fout:
+with FileConn(infile, 'rt') as f, open(outfile, 'w') as fout:
 	for line in f:
 		# also remove contigs from header
 		if line.startswith('##contig=<ID='):
@@ -33,6 +33,6 @@ with FileConn(infile) as f, open(outfile, 'w') as fout:
 		elif line.startswith('#'):
 			fout.write(line)
 		else:
-			parts = line.split('\t')
-			if parts[0] in contigs:
+			config, _ = line.split('\t', 1)
+			if config in contigs:
 				fout.write(line)

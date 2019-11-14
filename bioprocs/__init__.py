@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 import inspect
 from pathlib import Path
@@ -142,6 +142,8 @@ DEFAULTS = {
 	"curl.desc"                : "The path of command line tool curl.",
 	"cutadapt"                 : "cutadapt",
 	"cutadapt.desc"            : "The path of cutadapt.",
+	"dot"                      : "dot",
+	"dot.desc"                 : "The path of dot.",
 	"dtoxog"                   : "dtoxog",
 	"dtoxog.desc"              : "The path of dtoxog, a wrapper of D-ToxoG.",
 	"dwgsim"                   : "dwgsim",
@@ -159,7 +161,11 @@ DEFAULTS = {
 	"gistic"                   : "gistic2",
 	"gistic.desc"              : "The path of gistic.",
 	"htseq_count"              : "htseq-count",
-	"htseq_count.desc"         : "The path of htseq-ount.",
+	"htseq_count.desc"         : "The path of htseq-count.",
+	"lichee"                   : "lichee",
+	"lichee.desc"              : "The path of lichee.",
+	"jvarkit"                  : "jvarkit",
+	"jvarkit.desc"             : "The path of jvarkit.",
 	"kallisto"                 : "kallisto",
 	"kallisto.desc"            : "The path of kallisto.",
 	"maf2vcf"                  : "maf2vcf.pl",
@@ -168,6 +174,14 @@ DEFAULTS = {
 	"multiqc.desc"             : "The path of multiqc.",
 	"mutsig"                   : "mutsig",
 	"mutsig.desc"              : "The path of run_MutSigCV.sh",
+	"netmhc"                   : "netMHC",
+	"netmhc.desc"              : "The path of netMHC.",
+	"netmhcpan"                : "netMHCpan",
+	"netmhcpan.desc"           : "The path of netMHCpan.",
+	"netmhciipan"              : "netMHCIIpan",
+	"netmhciipan.desc"         : "The path of netMHCIIpan.",
+	"netmhccons"               : "netMHCCons",
+	"netmhccons.desc"          : "The path of netMHCCons.",
 	"ngm"                      : "ngm",
 	"ngm.desc"                 : "The path of ngm.",
 	"oncotator"                : "oncotator",
@@ -178,14 +192,14 @@ DEFAULTS = {
 	"platypus.desc"            : "The path of platypus.",
 	"plink"                    : "plink",
 	"plink.desc"               : "Executable of plink.",
-	"plot_vcfstats"            : "plot-vcfstats",
-	"plot_vcfstats.desc"       : "Script for processing output of bcftools stats.",
 	"pyclone"                  : "PyClone",
 	"pyclone.desc"             : "The path of PyClone",
 	"sambamba"                 : "sambamba",
 	"sambamba.desc"            : "The path of sambamba.",
 	"samtools"                 : "samtools",
 	"samtools.desc"            : "The path of samtools.",
+	"schism"                   : "runSchism",
+	"schism.desc"              : "The path of runSchism.",
 	"skewer"                   : "skewer",
 	"skewer.desc"              : "The path of skewer.",
 	"snpeff"                   : "snpEff",
@@ -208,6 +222,8 @@ DEFAULTS = {
 	"theta2.desc"              : "The path of THetA2 executable.",
 	"tomtom"                   : "tomtom",
 	"tomtom.desc"              : "tomtom from MEME suite.",
+	"topiary"                  : "topiary",
+	"topiary.desc"             : "The path to topiary.",
 	"trimmomatic"              : "trimmomatic",
 	"trimmomatic.desc"         : "The path of trimmomatic.",
 	"vardict"                  : "vardict",
@@ -218,6 +234,8 @@ DEFAULTS = {
 	"vcfanno.desc"             : "The path of vcfanno.",
 	"vcflib_vcffilter"         : "vcffilter",
 	"vcflib_vcffilter.desc"    : "The path of vcflib vcffilter.",
+	"vcfstats"                 : "vcfstats",
+	"vcfstats.desc"            : "The path of vcfstats.",
 	"vcftools"                 : "vcftools",
 	"vcftools.desc"            : "The path of vcftools.",
 	"vcftools_merge"           : "vcf-merge",
@@ -252,6 +270,9 @@ for cfgfile in cfgfiles:
 	if not cfgfile.exists():
 		continue
 	params._loadFile (cfgfile)
+
+# lock the params in case the options are overwritten unintentionally.
+params._locked = True
 
 cachedir = Path(params.cachedir.value)
 if not cachedir.exists():
@@ -290,10 +311,15 @@ def delefactory():
 	module = inspect.getmodule(frame)
 	def delegator(proc):
 		try:
-			return getattr(module, '_' + proc)()
-		except:
-			from traceback import print_exc
-			print_exc()
+			procfac =  module._mkenvs['_' + proc]
+			if not procfac:
+				raise KeyError
+		except KeyError as exc:
+			raise ImportError('No such process: {!r}'.format(proc)) from exc
+		if not callable(procfac):
+			raise ImportError('Wrong type of process factory: {!r} in module {!r}'.format(
+				'_' + proc, module.__name__))
+		return procfac()
 	return delegator
 
 def _procfactory(procfunc, pid, alias, mdname, doc):

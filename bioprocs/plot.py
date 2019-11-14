@@ -476,10 +476,10 @@ def _pROC():
 @procfactory
 def _pVenn():
 	"""
-	@name:
-		pVenn
 	@description:
-		Venn/UpsetR plots.
+		Venn/UpsetR plots. Requires:
+			- [`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram) and
+			- [`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
 	@input:
 		`infile:file`: The input matrix, could be two formats:
 			- `args.intype == "raw"`:
@@ -515,9 +515,6 @@ def _pVenn():
 			- `rnames`  : Whether input file has rownames. Default: False
 		`params`  : Other params for `venn.diagram` or `upset`. Default: {}
 		`devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-	@requires:
-		[`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram)
-		[`r-UpSetR`](https://www.rdocumentation.org/packages/UpSetR)
 	"""
 	pVenn              = Proc(desc = 'Venn plots.')
 	pVenn.input        = "infile:file, metafile:file"

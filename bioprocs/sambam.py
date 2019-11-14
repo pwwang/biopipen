@@ -11,32 +11,28 @@ Modkit().delegate(delefactory())
 @procfactory
 def _pSam2Bam():
 	"""
-	@name:
-		pSam2Bam
-	@description:
-		Deal with mapped sam/bam files, including sort, markdup, and/or index
 	@input:
-		`infile:file`: The input file
+		infile: The input file
 	@output:
-		`outfile:file`: The output bam file
+		outfile: The output bam file
 	@args:
-		`tool`             : The tool used to do the sort. Default: sambamba (picard|sambamba|biobambam|samtools)
-		`sambamba`         : The path of the sambamba. Default: sambamba
-		`picard`           : The path of the picard. Default: picard
-		`biobambam_bamsort`: The path of the biobambam's bamsort. Default: bamsort
-		`samtools`: The path of the samtools. Default: samtools
-		`sort`    : Do sorting? Default: True
+		tool             : The tool used to do the sort. Available: sambamba|picard|sambamba|biobambam|samtools
+		sambamba         : The path of the sambamba.
+		picard           : The path of the picard.
+		biobambam_bamsort: The path of the biobambam's bamsort.
+		samtools: The path of the samtools.
+		sort    : Do sorting?
 			- If input is sam, tool is biobambam, this should be True
-		`index`  : Do indexing? Default: True
-		`markdup`: Do duplicates marking? Default: False
+		index  : Do indexing?
+		markdup: Do duplicates marking?
 			- `rmdup` for samtools will be called
-		`rmdup`  : Do duplicates removing? Default: False
-		`tmpdir` : The tmp dir used to store tmp files. Default: <system default tmpdir>
-		`sortby` : Sort by coordinate or queryname. Default: coordinate
-		`nthread`: Default: 1
-		`infmt`  : The format of input file. Default: <detect from extension> (sam|bam)
-		`params` : Other parameters for `tool`. Defaut: ""
-		`mem`    : The max memory to use. Default: "16G"
+		rmdup  : Do duplicates removing?
+		tmpdir : The tmp dir used to store tmp files.
+		sortby : Sort by coordinate or queryname.
+		nthread: Number of threads to use.
+		infmt  : The format of input file. Available: sam|bam
+		params : Other parameters for `tool`.
+		mem    : The max memory to use.
 			- Unit could be G/g/M/m
 			- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 	@requires:
@@ -45,41 +41,33 @@ def _pSam2Bam():
 		[biobambam](https://github.com/gt1/biobambam2)
 		[samtools](https://github.com/samtools/samtools)
 	"""
-	pSam2Bam                = Proc(desc = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.')
-	pSam2Bam.input          = "infile:file"
-	pSam2Bam.output         = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai"
-	pSam2Bam.errhow         = 'retry'
-	pSam2Bam.args.tool      = "elprep"
-	pSam2Bam.args.sambamba  = params.sambamba.value
-	pSam2Bam.args.picard    = params.picard.value
-	pSam2Bam.args.biobambam = params.biobambam_bamsort.value
-	pSam2Bam.args.samtools  = params.samtools.value
-	pSam2Bam.args.elprep    = params.elprep.value
-	pSam2Bam.args.steps     = Box(
-		sort    = True,
-		index   = True,
-		markdup = True,
-		rmdup   = True,
-		recal   = True
-	)
-	pSam2Bam.args.tmpdir     = params.tmpdir.value
-	pSam2Bam.args.sortby     = "coordinate"
-	pSam2Bam.args.nthread    = 1
-	pSam2Bam.args.params     = Box()
-	pSam2Bam.args.mem        = params.mem16G.value
-	pSam2Bam.args.ref        = params.ref.value
-	pSam2Bam.args.knownSites = ''
-	pSam2Bam.preCmd       = """
-	{{bashimport}} reference.bash
-	export elprep={{args.elprep | quote}}
-	if [[ {{args.tool | quote}} == "elprep" ]]; then
-		reference elprep {{args.ref | squote}}
-	fi
-	"""
-	pSam2Bam.envs.bashimport = bashimport
-	pSam2Bam.lang            = params.python.value
-	pSam2Bam.script          = "file:scripts/sambam/pSam2Bam.py"
-	return pSam2Bam
+	return Box(
+		desc   = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.',
+		lang   = params.python.value,
+		input  = "infile:file",
+		output = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai",
+		errhow = 'retry',
+		preCmd = """
+			{{bashimport}} reference.bash
+			export elprep={{args.elprep | quote}}
+			if [[ {{args.tool | quote}} == "elprep" ]]; then
+				reference elprep {{args.ref | squote}}
+			fi""",
+		args = Box(
+			tool       = "elprep",
+			sambamba   = params.sambamba.value,
+			picard     = params.picard.value,
+			biobambam  = params.biobambam_bamsort.value,
+			samtools   = params.samtools.value,
+			elprep     = params.elprep.value,
+			steps      = Box(sort=True, index=True, markdup=True, rmdup=True, recal=True),
+			tmpdir     = params.tmpdir.value,
+			sortby     = "coordinate",
+			nthread    = 1,
+			params     = Box(),
+			mem        = params.mem16G.value,
+			ref        = params.ref.value,
+			knownSites = ''))
 
 @procfactory
 def _pBamMarkdup():
@@ -501,16 +489,12 @@ def _pBamStats():
 @procfactory
 def _pBam2Fastq():
 	"""
-	@name:
-		pBam2Fastq
-	@description:
-		Convert sam/bam files to pair-end fastq files.
 	@input:
-		`infile:file`: The sam/bam file.
+		infile: The sam/bam file.
 			- Sam files only available for biobambam, picard
 	@output:
-		`fqfile1:file`: The 1st match of paired reads
-		`fqfile2:file`: The 2nd match of paired reads
+		fqfile1: The 1st match of paired reads
+		fqfile2: The 2nd match of paired reads
 	@args:
 		`tool`     : The tool to use. Default: biobambam (bedtools, samtools, picard)
 		`biobambam`: The path of bamtofastq of biobambam. Default: bamtofastq
@@ -527,27 +511,24 @@ def _pBam2Fastq():
 		[samtools](https://github.com/samtools/samtools)
 		[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 	"""
-	pBam2Fastq        = Proc(desc = 'Convert bam files to pair-end fastq files.')
-	pBam2Fastq.input  = "infile:file"
-	pBam2Fastq.output = [
-		"fqfile1:file:{{ i.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
-		"fqfile2:file:{{ i.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
-	]
-	pBam2Fastq.args.tool           = 'biobambam'
-	pBam2Fastq.args.biobambam      = params.biobambam_bamtofastq.value
-	pBam2Fastq.args.bedtools       = params.bedtools.value
-	pBam2Fastq.args.samtools       = params.samtools.value
-	pBam2Fastq.args.picard         = params.picard.value
-	pBam2Fastq.args.mem            = params.mem8G.value # only for picard
-	pBam2Fastq.args.gz             = False
-	pBam2Fastq.args.params         = Box()
-	pBam2Fastq.args.tmpdir         = params.tmpdir.value
-	#pBam2Fastq.envs.runcmd         = runcmd.py
-	#pBam2Fastq.envs.params2CmdArgs = helpers.params2CmdArgs.py
-	#pBam2Fastq.envs.mem2           = mem2.py
-	pBam2Fastq.lang                = params.python.value
-	pBam2Fastq.script              = "file:./scripts/sambam/pBam2Fastq.py"
-	return pBam2Fastq
+	return Box(
+		desc   = 'Convert sam/bam files to pair-end fastq files.',
+		input  = "infile:file",
+		output = [
+			"fqfile1:file:{{ i.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
+			"fqfile2:file:{{ i.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
+		],
+		lang = params.python.value,
+		args = Box(
+			tool      = 'biobambam',
+			biobambam = params.biobambam_bamtofastq.value,
+			bedtools  = params.bedtools.value,
+			samtools  = params.samtools.value,
+			picard    = params.picard.value,
+			mem       = params.mem8G.value, # only for picard
+			gz        = False,
+			params    = Box(),
+			tmpdir    = params.tmpdir.value))
 
 @procfactory
 def _pBam2FastqSE():

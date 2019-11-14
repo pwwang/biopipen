@@ -13,7 +13,7 @@ Enrichr[1] is an easy to use intuitive enrichment analysis web-based tool provid
 ## {{job.i.infile | stem}}
 {% endif %}
 
-{% for lib in alwaysList(args.libs) %} 
+{% for lib in alwaysList(args.libs) %}
 
 ::: {.tab .force-tab}
 
@@ -25,6 +25,8 @@ Enrichr[1] is an easy to use intuitive enrichment analysis web-based tool provid
 ```table
 caption: Details of GSEA against {{lib}}
 file: {{glob1(job.o.outdir, '*.%s.txt' % lib)}}
+dtargs:
+	order: [[3, 'asc']]
 ```
 {% else %}
 Nothing enriched.

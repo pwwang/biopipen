@@ -353,6 +353,88 @@ def _pClonEvol():
 	)
 
 @procfactory
+def _pSchism():
+	"""
+	@description:
+		Infer subclonal hierarchy and the tumor evolution from somatic mutations using SCHISM.
+		See: https://github.com/KarchinLab/SCHISM
+	@input:
+		infile: The input mutation file
+			- In format of:
+				```
+				sampleID	mutationID	referenceReads	variantReads	copyNumber	clusterID
+				S1	0	368	132	2	0
+				S2	1	381	119	2	0
+				S3	2	367	133	3	1
+				...
+				```
+			- Or `pPyClone` output directory
+			- Or a MAF file
+		purity: The purity of the samples, two columns:
+			- Sample[tab]Purity, without header.
+			- If omitted, will assume 100% purity for all samples.
+	@output:
+		outdir: The output directory.
+	@args:
+		schism   (str) : Path to runSchism
+		params   (Box) : Other parameters for runSchism in yaml config.
+		fishplot (bool): Whether generate a fishplot or not, requires fishplot install with R.
+			- Not implemented yet
+		Rscript  (str) : Path to Rscript to run fishplot
+	"""
+	return Box(
+		desc   = 'Infer subclonal hierarchy and the tumor evolution from somatic mutations using SCHISM',
+		lang   = params.python.value,
+		input  = 'infile:file, purity:file',
+		output = 'outdir:dir:{{i.infile | stem}}.schism',
+		args   = Box(
+			schism   = params.schism.value,
+			dot      = params.dot.value,
+			fishplot = True,
+			Rscript  = params.Rscript.value,
+			devpars  = Box(res = 100),
+			params   = Box(
+				cellularity_estimator = Box(),
+				hypothesis_test       = Box(),
+				genetic_algorithm     = Box()
+			)
+		)
+	)
+
+@procfactory
+def _pLichee():
+	"""
+	@description:
+		Fast and scalable inference of multi-sample cancer lineages using LICHeE.
+		See: https://github.com/pwwang/lichee
+	@input:
+		infile: The input file, could be one of:
+			- LICHeE input file. Set `args.params.cp = True` if input data represents cell prevalence instead of VAF.
+			- A pPyClone output directory.
+			- A MAF file.
+	@output:
+		outdir: The output directory
+	@args:
+		dot (str): Path to dot to generate figures
+		params (Box): Other parameters for `lichee`.
+			- Set a larger `e` if you have noisy data. Default is 0.1.
+	"""
+	return Box(
+		desc   = 'Fast and scalable inference of multi-sample cancer lineages using LICHeE',
+		input  = 'infile:file',
+		output = 'outdir:dir:{{i.infile | stem}}.lichee',
+		lang   = params.python.value,
+		args   = Box(
+			dot      = params.dot.value,
+			lichee   = params.lichee.value,
+			fishplot = True,
+			Rscript  = params.Rscript.value,
+			devpars  = Box(res = 100),
+			params   = Box(maxVAFAbsent = 0.005, minVAFPresent = 0.005)
+		)
+	)
+
+@procfactory
 def _pPyClone2ClonEvol():
 	pPyClone2ClonEvol               = Proc(desc = "Convert PyClone results to ClonEvol input format.")
 	pPyClone2ClonEvol.input         = 'indir:dir'

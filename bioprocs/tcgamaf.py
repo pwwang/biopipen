@@ -7,32 +7,7 @@ from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
-@procfactory
-def _pVcfStatsPlot():
-	"""
-	@name:
-		pVcfStatsPlot
-	@description:
-		Convert csvstat file from snpEff to R-readable matrix and plot them.
-	@input:
-		indir: The directory containing the csv stat files from `snpEff ann`
-	@output:
-		`outdir:dir`: The output directory
-	@args:
-		`chroms`:     The chromsome filter. Default: "" (all chroms)
-		- Note: snpEff csvstat file has no "chr" prefix
-	"""
-	pVcfStatsPlot                  = Proc(desc = 'Convert csvstat file from snpEff to R-readable matrix and plot them.')
-	pVcfStatsPlot.input            = "indir:file"
-	pVcfStatsPlot.output           = "outdir:dir:{{i.indir | fn}}-{{job.index}}.statplots"
-	pVcfStatsPlot.args.chroms      = ""
-	pVcfStatsPlot.args.Rscript     = params.Rscript.value
-	pVcfStatsPlot.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
-	pVcfStatsPlot.args.histplotggs = []
-	pVcfStatsPlot.args.boxplotggs  = []
-	pVcfStatsPlot.lang             = params.python.value
-	pVcfStatsPlot.script           = "file:scripts/tcgamaf/pVcfStatsPlot.py"
-	return pVcfStatsPlot
+from .tumhet import _pTMBurden
 
 @procfactory
 def _pGTMatAddRs():
@@ -483,8 +458,8 @@ def _pDToxoG():
 				- Variant is marked as artifact: 1
 				- Variant is not an artifact: 0
 	@args:
-		dtoxog : D-ToxoG executable. 
-		nthread: Maximum threads used by matlab. 
+		dtoxog : D-ToxoG executable.
+		nthread: Maximum threads used by matlab.
 		keep   : Whether keep those artifact mode mutations in output MAF file or not.
 		params : Other parameters for `startFilterMAFFile`
 			- See more in `startFilterMAFFile.m` or run `dtoxog` directly
@@ -544,7 +519,7 @@ def _pMafAddChr():
 	)
 
 @procfactory
-def _pMafSampleFilter():
+def _pMafExtractSample(alias = 'pMafSampleFilter'):
 	"""
 	@input:
 		infile: The input MAF file
@@ -564,3 +539,42 @@ def _pMafSampleFilter():
 		args   = Box(samples = [])
 	)
 
+@procfactory
+def _pMafExtractClass():
+	"""
+	@input:
+		infile: The input MAF file
+		classfile: The variant class file
+			- Could also be a list of classes, separated by comma
+			- Overwrite `args.classes`
+	@output:
+		outfile: The output file contain only the given classes
+	@args:
+		classes (str|list): The classes or a list of classes
+	"""
+	return Box(
+		desc   = 'Filter MAF file with given classes',
+		input  = 'infile:file, classfile:var',
+		output = 'outfile:file:{{i.infile | stem}}.subclass.maf',
+		lang   = params.python.value,
+		args   = Box(classes = [])
+	)
+
+@procfactory
+def _pMafGetSamples():
+	"""
+	@input:
+		infile: The input MAF file
+	@output:
+		outfile: The output sample file
+	@args:
+		out: Which samples to output, tumor, normal or both.
+		outopts: The output options
+	"""
+	return Box(
+		desc   = 'Get samples from MAF file',
+		lang   = params.python.value,
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem}}.samples.txt',
+		args   = Box(out = 'both', outopts = Box(cnames = True))
+	)

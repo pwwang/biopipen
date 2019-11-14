@@ -1,6 +1,6 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell2 as shell
+from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
@@ -54,6 +54,7 @@ required_fields = { # set
 }
 
 # check
+logger.info('Checking required fields ...')
 header = None
 with open(infile) as f:
 	for line in f:
@@ -68,6 +69,8 @@ fields_not_found = required_fields - set(header)
 if fields_not_found and fields_not_found != {'i_picard_oxoQ'}:
 	raise ValueError('Required fields not found: %s' % (fields_not_found))
 
+
+logger.info('Cleaning up input MAF file ...')
 # Add i_picard_oxoQ as 0 if column does not exist
 # TODO: add real i_picard_oxoQ
 # Set i_t_ALT_F1R2, i_t_ALT_F2R1, i_t_REF_F1R2, i_t_REF_F2R1 as 0 if they are not reported
@@ -78,7 +81,7 @@ writer = TsvWriter(infile_fixed)
 if fields_not_found:
 	writer.cnames = reader.cnames + ['i_picard_oxoQ']
 writer.writeHead(lambda cnames: [
-	'Start_position' if cname == 'Start_Position' else 
+	'Start_position' if cname == 'Start_Position' else
 	'End_position' if cname == 'End_Position' else cname
 	for cname in cnames])
 for r in reader:
@@ -89,12 +92,12 @@ for r in reader:
 		if not r[key].isdigit():
 			r[key] = 0
 	writer.write(r)
+writer.close()
 
 params.mafFilename       = infile_fixed
 params.outputMAFFilename = path.basename(outfile) + '.all'
 params.outputDir         = path.dirname(outfile)
 params.nthread           = nthread
-
 
 # avoid lost values
 for key, value in params.items():
@@ -102,10 +105,11 @@ for key, value in params.items():
 		params[key] = int(value)
 
 shell.mkdir(path.join(path.dirname(outfile), 'figures'))
+logger.info('Running DToxoG ...')
 shell.fg.dtoxog(**params)
 
 
-
+logger.info('Fixing output file format issues ...')
 if not keep:
 	# remove variants with isArtifactMode = 1
 	with open(outfile + '.all') as fin, open(outfile, 'w') as fout:
@@ -118,7 +122,7 @@ if not keep:
 	writer = TsvWriter(outfile, append = True)
 	writer.cnames = reader.cnames
 	writer.writeHead(lambda cnames: [
-		'Start_Position' if cname == 'Start_position' else 
+		'Start_Position' if cname == 'Start_position' else
 		'End_Position' if cname == 'End_position' else cname
 		for cname in cnames])
 	for r in reader:

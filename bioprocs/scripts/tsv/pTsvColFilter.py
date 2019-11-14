@@ -5,15 +5,22 @@ from pyppl.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
+colfile = {{i.colfile | quote}}
 outfile = {{o.outfile | quote}}
 inopts  = {{args.inopts | repr}}
 cols    = {{args.cols | repr}}
 keep    = {{args.keep | repr}}
 
-if path.isfile(str(cols)):
+if path.isfile(colfile):
+	cols = TsvReader(colfile, cnames = False).dump(0)
+elif colfile:
+	cols = alwaysList(colfile)
+elif path.isfile(str(cols)):
 	cols = TsvReader(cols, cnames = False).dump(0)
-else:
+elif cols:
 	cols = alwaysList(cols)
+else:
+	raise ValueError('Columns not provided.')
 if not isinstance(cols[0], int) and cols[0].isdigit():
 	cols = [int(c) for c in cols]
 

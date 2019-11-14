@@ -13,6 +13,9 @@ The OxoG artifact from SNV calls was removed by D-ToxoG[1]. The goal of D-ToxoG 
 ## {{job.i.infile | stem}}
 {% endif %}
 
+{% if report.get('download') %}
+[Download MAF file]({{job.o.outfile}} "file-download")
+{% endif %}
 
 ::: {.tab}
 ### All cases
@@ -22,14 +25,19 @@ caption: Summary of all cases
 ```
 
 ![Lego plot before filtering for all cases]({{glob1(job.outdir, 'figures', '*.dtoxog.maf*_lego_before.png')}})
+
 ![Lego plot after filtering for all cases]({{glob1(job.outdir, 'figures', '*.dtoxog.maf*_lego_after.png')}})
-::: 
+
+:::
 
 {% for legoplot in glob1(job.outdir, 'figures', '*_lego_before.png', first = False) %}
 {% if '.dtoxog.maf' not in legoplot %}
 ::: {.tab}
 ### {{legoplot | bn | [:-16]}}
+
 ![Lego plot before filtering for {{legoplot | bn | [:-16]}}]({{legoplot}})
+
+
 ![Lego plot after filtering]({{legoplot | bn | [:-16] | @append: "_lego_after.png" | @prepend: dirname(legoplot) + '/'}})
 :::
 {% endif %}{# if not legoplot.endswith #}

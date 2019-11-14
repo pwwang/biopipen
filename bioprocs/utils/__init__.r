@@ -83,10 +83,12 @@ ifelse = function(condition, true, false) {
 	return(false)
 }
 
-read.table.inopts = function(infile, inopts, dup = NULL, try = FALSE) {
+read.table.inopts = function(infile, inopts) {
 	inopts.default = function(key, default) list.get(inopts, key, default, check.names = TRUE)
 	optrnames = inopts.default('rnames', TRUE)
-	#optrnames = ifelse('rnames' %in% opts, ifelse(inopts$rnames, 1, NULL), 1)
+	dup = inopts$dup
+	try = list.get(inopts, 'try', FALSE)
+	inopts$dup = NULL
 	params = list(
 		infile,
 		#header      = ifelse('cnames' %in% opts, inopts$cnames, T),
@@ -130,6 +132,21 @@ read.table.inopts = function(infile, inopts, dup = NULL, try = FALSE) {
 		}
 	}
 	d
+}
+
+write.xls = function(x, file, ...) {
+	rnames         = rownames(x)
+	args           = list(...)
+	args$quote     = list.get(args, 'quote', FALSE)
+	args$sep       = list.get(args, 'sep', "\t")
+	args$row.names = list.get(args, 'row.names', TRUE)
+	if (!is.null(rnames) && args$row.names == TRUE) {
+		cnames = colnames(x)
+		x = cbind(`.` = rnames, x)
+		colnames(x) = c('.', cnames)
+		args$row.names = FALSE
+	}
+	do.call(write.table, c(list(x, file), args))
 }
 
 # format data.frame to output

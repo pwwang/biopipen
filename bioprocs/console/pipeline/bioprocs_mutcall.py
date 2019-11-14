@@ -18,6 +18,9 @@ params.muts.type        = list
 params.muts.desc        = 'What kind of mutations to call.\nNote: soma need paired information'
 params.indir.required   = True
 params.indir.desc       = 'The input directory containing input files.'
+params.indir.callback   = lambda opt: opt.setValue(path.realpath(opt.value))
+params.aligner          = 'bwa'
+params.aligner.desc     = 'The alignment tool.'
 params.saminfo.required = True
 params.saminfo.desc     = """The sample information file:
 Column 1: the basename of the sample file in '-indir'
@@ -55,17 +58,19 @@ def main():
 
 	starts = []
 	saminfo = SampleInfo(opts.saminfo)
-	aPrepareBam.pFastq2Sam.args.tool    = 'bowtie2'
+	aPrepareBam.pFastq2Sam.args.tool    = opts.aligner
+	if aPrepareBam.pSam2Bam.args.tool == 'elprep' and aPrepareBam.pSam2Bam.args.steps.recal:
+		aPrepareBam.modules.norecal()
+	if opts.compress:
+		aPrepareBam.args.gz = True
+		aPrepareBam.pFastq2Sam.args.outfmt = 'bam'
 
 	pBamDir         = pFiles2Dir
 	pBamDir.runner  = 'local'
 	if opts.intype == 'ebam':
 		#aPrepareBam.input = [Channel.fromPattern(path.join(opts.indir, '*.bam'))]
-		aPrepareBam.modules.ebam()
-		aPrepareBam.input = [Channel.create(saminfo.toChannel(opts.indir)).unique()]
-		if opts.compress:
-			aPrepareBam.args.gz = True
-			aPrepareBam.pFastq2Sam.args.outfmt = 'bam'
+		aPrepareBam.modules.ebam(restore = False)
+		aPrepareBam.input = Channel.create(saminfo.toChannel(opts.indir)).unique()
 
 		pBamDir.depends = aPrepareBam
 		pBamDir.input   = lambda ch: [ch.flatten()]

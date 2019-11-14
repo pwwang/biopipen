@@ -27,8 +27,7 @@ eval(parse(text = {{args.helper | repr}}))
 params    = {{args.params | R}}
 drawps    = {{args.draw | R}}
 
-hm = plot.heatmap2(data, FALSE, params = params)
-
+hm = plot.heatmap2(data, 'return', params = params, draw = drawps, devpars = devpars)
 do.call(png, c(list(filename=outfile), devpars))
 do.call(ComplexHeatmap::draw, c(list(hm), drawps))
 dev.off()
@@ -50,7 +49,7 @@ if (saveinfo) {
 	rclines = c()
 	for (clname in names(ro)) {
 		rclines = c(
-			rclines, 
+			rclines,
 			paste("# Cluster:", clname, ', Size:', length(ro[[clname]])),
 			paste(rn_orig[ ro[[clname]] ], collapse = ", ")
 		)
@@ -72,7 +71,7 @@ if (saveinfo) {
 	cclines = c()
 	for (clname in names(co)) {
 		cclines = c(
-			cclines, 
+			cclines,
 			paste("# Cluster:", clname, ', Size:', length(co[[clname]])),
 			paste(cn_orig[ co[[clname]] ], collapse = ", ")
 		)

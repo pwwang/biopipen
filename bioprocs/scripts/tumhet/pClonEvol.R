@@ -78,10 +78,10 @@ if (dir.exists(mutfile) && endsWith(mutfile, '.pyclone')) {
 	logger('Extracting information from pyclone results ...')
 	mutations = read.table.inopts(file.path(mutfile, "tables/loci.tsv"), list(rnames = FALSE))
 	mutations = mutations[, c(
-		"mutation_id", "sample_id", "cluster_id", "variant_allele_frequency", "cellular_prevalence"), 
+		"mutation_id", "sample_id", "cluster_id", "variant_allele_frequency", "cellular_prevalence"),
 		drop = FALSE]
 	rownames(mutations) = make.unique(do.call(paste, c(mutations[c("sample_id", "mutation_id")], sep = "-")))
-	
+
 	samples = levels(as.factor(mutations$sample_id))
 	mutbeds = NULL
 	for (sample in samples) {
@@ -91,7 +91,7 @@ if (dir.exists(mutfile) && endsWith(mutfile, '.pyclone')) {
 
 		mbtmp = read.table.inopts(mutbed_withgene, list(cnames = FALSE, rnames = FALSE))
 		mbtmp = mbtmp[, c(1:9, 18), drop = FALSE]
-		colnames(mbtmp) = c("CHR", "START", "END", "NAME", "GENOTYPE", 
+		colnames(mbtmp) = c("CHR", "START", "END", "NAME", "GENOTYPE",
 							"REFCOUNTS", "VARCOUNTS", "CASE", "VARFREQ", "GENE")
 		mbtmp$GENE = sapply(mbtmp$GENE, function(g) {
 			if (g == '.') {
@@ -99,7 +99,7 @@ if (dir.exists(mutfile) && endsWith(mutfile, '.pyclone')) {
 			} else {
 				#gene_id "DCDC2C"
 				geneid = unlist(strsplit(g, "; ", fixed = TRUE))[1]
-				sub("^gene_id \"|\"$", "", geneid)
+				substring(geneid, 10, nchar(geneid)-1)
 			}
 		})
 		mbtmp$SAMPLE = sample

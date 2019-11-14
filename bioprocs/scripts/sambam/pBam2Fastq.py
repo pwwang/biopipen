@@ -7,7 +7,7 @@ infile  = {{i.infile | quote}}
 fqfile1 = {{o.fqfile1 | quote}}
 fqfile2 = {{o.fqfile2 | quote}}
 tool    = {{args.tool | quote}}
-params  = {{args.params}}
+params  = {{args.params | repr}}
 mem     = {{ args.mem | quote }}
 gz      = {{args.gz | bool}}
 tmpdir  = {{args.tmpdir | quote}}
@@ -87,6 +87,6 @@ tools = dict(
 try:
 	tools[tool]()
 except KeyError:
-	raise ValueError('Tool {%r} not supported.' % tool)
+	raise ValueError('Tool "%r" not supported.' % tool)
 finally:
 	shell.rm_rf(tmpdir)

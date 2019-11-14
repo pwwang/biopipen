@@ -261,7 +261,7 @@ class Process:
 				outname, outype, default = parts[0], 'var', parts[1]
 			else:
 				outname, outype, default = parts
-		ret[outname] = (outype, default)
+			ret[outname] = (outype, default)
 		return ret
 
 	def addToCompletions(self, comp):
@@ -301,6 +301,7 @@ class Process:
 		# output
 		self._helps.add('Output options (\'exdir\' implied if path specified)',
 			sectype = 'option', prefix = '-')
+
 		for outname, outypedeft in self.outputs().items():
 			outype, outdeft = outypedeft
 			doctype, docdesc = self.parsed().get('output', {}).get(
@@ -409,11 +410,14 @@ class Process:
 					outdata[outkey + ':' + outype] = opts.o[outkey]
 					continue
 				# try to extract exdir from output
-				out = Path(opts.o[outkey])
-				if out.name != opts.o[outkey]: # we have path
+				if '/' in opts.o[outkey]:
+					out = Path(opts.o[outkey])
 					if self.proc.exdir and out.parent != self.proc.exdir:
-						raise ValueError('Cannot have output files/dirs with different parents.')
+						raise ValueError('Cannot have output files/dirs with different parents as exdir.')
 					self.proc.exdir = str(out.parent)
+					outdata[outkey] = out.name
+				else:
+					outdata[outkey] = opts.o[outkey]
 			self.proc.output = outdata
 
 		if opts.get('args'):

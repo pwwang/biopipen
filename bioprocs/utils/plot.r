@@ -644,51 +644,114 @@ plot.pie = function(data, plotfile, ggs = list(), devpars = DEVPARS) {
 	plot.xy(data, plotfile, x = '""', y = 'Value', ggs, devpars)
 }
 
-plot.volplot = function(data, plotfile, fccut = 2, pcut = 0.05, ggs = list(), devpars = DEVPARS) {
-	data   = as.data.frame(data)
-	cnames = names(data)
-	logfc  = if ("logFC" %in% cnames) data$logFC else data[, 1]
-	fdr    = if ("FDR" %in% cnames) data$FDR else data[, 2]
-	fdr    = -log10(fdr)
+# Volcano plot
+# data must be a data frame of log fold change and p/q value
+# params is a list of:
+#	- logfccut: The absolute log fold change cutoff
+#	- pcut: The p/q value cutoff
+#	- hilight: genes to highlight
+#		- either the names (rownames) of the genes, or
+#		- A number or a vector of two numbers, of genes to highlight for both up-/down genes, or
+#		- a list of cutoffs for logfc and p/q value
+#			- list(logfc = 2, p = .05), or if you want have different logfc cutoff for up-/down genes:
+#			- list(logfc = c(-2, +2), p = .05), or
+#
+plot.volplot = function(data,
+	plotfile,
+	params  = list(logfccut = 2, pcut = 0.05, hilight = 5),
+	ggs     = list(),
+	devpars = DEVPARS) {
 
-	# cutoffs
-	fdrcut      = pcut
-	fdrcutlabel = round(fdrcut, 3)
-	fdrcut      = -log10(fdrcut)
+	data = as.data.frame(data)
+	# let's see if it is p or q value
+	is.pval = grepl('p', colnames(data)[2], fixed = TRUE)
+	colnames(data) = ifelse(is.pval, c('logFC', 'log10.P.'), c('logFC', 'log10.FDR.'))
+	data[, 2] = -log10(data[, 2])
 
-	xm = min(max(abs(logfc)), 10)
-	ym = min(max(fdr), 15)
-
-	vline = NULL
-	text1 = NULL
-	text2 = NULL
-	threshold = as.factor(fdr > fdrcut)
-	if (!is.null(fccut)) {
-		logfccut = fccut
-		if (xm <= logfccut) logfccut = 1
-		vline = list(xintercept = c(-logfccut, logfccut), linetype = 'dashed', color = 'red3')
-		text1 = list(x = -logfccut, y = ym, label = paste(-logfccut, 'fold'),  vjust = 1, hjust = -0.1, color='red3')
-		text2 = list(x = +logfccut, y = ym, label = paste0('+', logfccut, ' ', 'fold'),  vjust = 1, hjust = -0.1, color="red3")
-		threshold = as.factor(abs(logfc) > logfccut) & threshold
+	pcutlabel = round(params$pcut, 3)
+	params$pcut = -log10(params$pcut)
+	data$Group = apply(data, 1, function(row) {
+		if (row[1]>=params$logfccut && row[2]>params$pcut) {
+			'UP_SIG'
+		} else if (row[1]<=-params$logfccut && row[2]>params$pcut) {
+			'DOWN_SIG'
+		} else {
+			'INSIG'
+		}
+	})
+	data$Group = factor(data$Group, levels = c('DOWN_SIG', 'UP_SIG', 'INSIG'))
+	# parse Labels
+	rnames = rownames(data)
+	labeldata = NULL
+	if (is.null(params$hilight)) {
+		# pass
+	} else if (!is.list(params$hilight) && !is.numeric(params$hilight)) {
+		# gene names
+		labeldata = data[params$hilight, 1:2]
+		labeldata = cbind(labeldata, Label = params$hilight)
+	} else if (!is.list(params$hilight) && is.numeric(params$hilight)) {
+		# tops
+		if (length(params$hilight) == 1) {
+			params$hilight = c(params$hilight, params$hilight)
+		}
+		downtop   = params$hilight[1]
+		uptop     = params$hilight[2]
+		labeldata = data[order(data$logFC),,drop = FALSE]
+		labeldata = labeldata[labeldata$Group != 'INSIG',,drop = FALSE]
+		ngenes    = nrow(labeldata)
+		labeldata = labeldata[c(1:downtop, (ngenes-uptop+1):ngenes),,drop = FALSE]
+		labeldata$Label = rownames(labeldata)
+	} else if (is.list(params$hilight)) {
+		logfc = params$hilight$logfc
+		if (is.null(logfc)) {
+			logfc = c(-4, 4)
+		} else if (length(logfc) == 1) {
+			logfc = c(-logfc, logfc)
+		}
+		p         = params$hilight$p
+		p         = -log10(ifelse(is.null(p), 0.01, p))
+		labeldata = data[(data$logFC <= logfc[1] | data$logFC >= logfc[2]) & data[,2] > p,,drop = FALSE]
+		labeldata$Label = rownames(labeldata)
 	}
 
-	data = data.frame(logfc, fdr, threshold)
-
+	vline = list(xintercept = c(-params$logfccut, params$logfccut),
+		linetype = 'dashed', color = c('red3', 'blue3'))
+	vtext1 = list(x = -params$logfccut, y = 0,
+		label = paste(-params$logfccut, 'fold'), vjust = 1, hjust = 1.1, color='red3')
+	vtext2 = list(x = +params$logfccut, y = 0,
+		label = paste0('+', params$logfccut, ' ', 'fold'), vjust = 1, hjust = -0.1, color="blue3")
+	hline = list(yintercept = params$pcut, linetype = 'dashed', color = 'black')
+	htext = list(x = max(data$logFC), y = params$pcut,
+		label = paste(ifelse(is.pval, 'P', 'FDR'), '=', pcutlabel),
+		vjust = -1, hjust = 1, color = 'black')
+	labels = NULL
+	if (!is.null(labeldata)) {
+		labels = list(aes_string(
+			x = 'logFC', y = ifelse(is.pval, 'log10.P.', 'log10.FDR.'), label = 'Label', color = 'Group'
+		), alpha = 1, data = labeldata, min.segment.length = unit(0, 'lines'), inherit.aes = FALSE)
+	}
+	xlim = max(max(data$logFC), abs(min(data$logFC)))
 	ggs = c(list(
-		geom_point = list(alpha = .4, size = 1.75, aes(color = threshold)),
-		geom_hline = list(yintercept = fdrcut, linetype = 'dashed', color = 'blue3'),
-		geom_vline = vline,
-		xlim       = list(c(-xm, xm)),
-		ylim       = list(c(0, ym)),
-		geom_text  = list(x = xm, y = fdrcut, label = paste('p', '=', fdrcutlabel), vjust = -1, hjust = 1, color = 'blue3'),
-		geom_text  = text1,
-		geom_text  = text2,
-		theme      = list(legend.position = "none"),
-		xlab       = list('log2 Fold Change'),
-		ylab       = list('-log10(p-value)')
+		geom_point         = list(alpha = .4, size = 1.75, aes(color = Group)),
+		scale_color_manual = list(values=c("#F8766D", "#619CFF", "#999999")),
+		geom_hline         = hline,
+		geom_text          = htext,
+		geom_vline         = vline,
+		geom_text          = vtext1,
+		geom_text          = vtext2,
+		xlim               = list(c(-xlim, xlim)),
+		theme_bw           = list(),
+		theme              = list(legend.position ="none",
+								panel.grid.major = element_blank(),
+								panel.grid.minor = element_blank()),
+		geom_label_repel = labels,
+		xlab             = list('log2 Fold Change'),
+		ylab             = list(ifelse(is.pval, '-log10(P)', '-log10(FDR)'))
 	), ggs)
 
-	plot.xy(data, plotfile, x = 'logfc', y = 'fdr', ggs = ggs, devpars = devpars)
+	plot.xy(data, plotfile,
+		x = 'logFC', y = ifelse(is.pval, 'log10.P.', 'log10.FDR.'),
+		ggs = ggs, devpars = devpars)
 }
 
 plot.man = function(data, plotfile = NULL, hilights = list(), hilabel = TRUE,
@@ -802,6 +865,7 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 
 .surv.cut = function(data, vars = NULL, by = 'maxstat', labels = c("low", "high"), keep.raw = FALSE) {
 	# by = mean, median, q25, q75, asis, maxstat
+	# or a value as cutoff
 	cnames = colnames(data)
 	if (is.null(vars)) {
 		vars = c(cnames[3:ncol(data)])
@@ -830,7 +894,7 @@ plot.pairs = function(data, plotfile = NULL, params = list(), ggs = list(),
 			} else if (by == 'q75') {
 				vcut = quantile(vdata, .75)
 			} else {
-				stop('Unsupported cutting method.')
+				vcut = by
 			}
 			icut = as.integer(median(which(vdata %in% vcut)))
 			tmp = sapply(1:length(vdata), function(i) {
@@ -941,7 +1005,7 @@ plot.survival.km = function(data, plotfile = NULL, params = list(
 plot.survival.cox = function(data, plotfile = NULL, params = list(
 	risk.table  = TRUE,
 	pval        = TRUE,
-	# mean, median, q25, q75, asis
+	# mean, median, q25, q75, asis, or a value as cutoff
 	# asis uses the levels in 3rd column, requring categorical values
 	# or if 3rd column has <= 5 levels, regard it as categorical,
 	# ignore this argument
@@ -977,7 +1041,6 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	fmula    = sprintf('Surv(%s, %s) ~ .', bQuote(cnames[1]), bQuote(cnames[2]))
 	# do cox regression
 	fit0     = coxph(as.formula(fmula), data = data)
-
 	sumfit    = summary(fit0)
 	ret$table = data.frame(
 		var    = rownames(sumfit$conf.int),
@@ -989,7 +1052,6 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	ret$table$df      = sumfit$logtest[2]
 	ret$table$modpval = sumfit$logtest[3]
 	ret$forest        = ggforest(fit0, data = data)
-
 	colnames(ret$table)[4:8] = c('HR', 'CI95_1', 'CI95_2', 'z', 'pvalue')
 
 	# now we cut the variable to plot it
@@ -998,20 +1060,17 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 	params$cut = NULL
 	params$cutlabels = NULL
 	survcuts  = .surv.cut(data, by = cutmethod, labels = cutlabels, vars = variable, keep.raw = TRUE)
-
 	ret$cutplot = ifelse(length(survcuts$plot) > 0, survcuts$plot[[variable]], NULL)
 	ret$data    = survcuts$data
 	survcuts$data[[paste0('raw.', variable)]] = NULL
-
 	fit     = coxph(as.formula(fmula), data = survcuts$data)
 	groups  = levels(as.factor(survcuts$data[,variable]))
-
 	newdata = data.frame(groups = groups)
 	colnames(newdata) = variable
 	if (length(cnames) > 3) {
 		for (i in 4:length(cnames)) {
 			var = cnames[i]
-			newdata[[var]] = mean(as.numeric(survcuts$data[,var]))
+			newdata[[var]] = mean(as.numeric(survcuts$data[,var]), na.rm = TRUE)
 		}
 	}
 	fit2 = survfit(fit, newdata = newdata)
@@ -1033,7 +1092,14 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 		fmula = sprintf('Surv(%s, %s) ~ %s',
 				bQuote(cnames[1]), bQuote(cnames[2]), bQuote(variable))
 		kmfit = surv_fit(as.formula(fmula), data = survcuts$data)
-		kmplot = ggsurvplot(kmfit, risk.table = TRUE, data = survcuts$data)
+		rtparams = list(kmfit, risk.table = TRUE, data = survcuts$data)
+		if (!is.null(params$break.time.by)) {
+			rtparams = c(rtparams, list(break.time.by = params$break.time.by))
+		}
+		if (!is.null(params$xlim)) {
+			rtparams = c(rtparams, list(xlim = params$xlim))
+		}
+		kmplot = do.call(ggsurvplot, rtparams)
 		kmplot$plot = ret$plot$plot
 		ret$plot = kmplot
 		tableggs = list.get(ggs, 'table', list())
@@ -1041,7 +1107,6 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 		ret$plot$table = apply.ggs(ret$plot$table, tableggs)
 	}
 	ret$plot$plot = apply.ggs(ret$plot$plot, ggs)
-
 	save.plot(ret$plot, plotfile, devpars)
 	if (!is.null(plotfile) && !is.null(ret$cutplot)) {
 		save.plot(
@@ -1056,5 +1121,66 @@ plot.survival.cox = function(data, plotfile = NULL, params = list(
 			devpars)
 	}
 	return(ret)
+}
+
+# The data should be a data.frame with rows as samples and columns as genes
+#         Group   Gene1  Gene2 ... GeneN
+# sample1 Control 1      2     ... x
+# ...
+# params$has.group indicates if the data has first column as group or not
+plot.mds = function(data, plotfile, params = list(has.group = TRUE, ndim = 2),
+	ggs = list(), devpars = DEVPARS) {
+
+	data = as.data.frame(data)
+	groupdata = NULL
+	if (list.get(params, 'has.group', TRUE)) {
+		groupdata = data[, 1, drop = FALSE]
+		data = data[, -1, drop = FALSE]
+	}
+	plotdata = as.data.frame(cmdscale(dist(scale(data)), k = list.get(params, 'ndim', 2)))
+	if(!is.null(groupdata)) {
+		plotdata = cbind(plotdata,Group = groupdata[rownames(plotdata),])
+		hulldata = NULL
+		for (grup in levels(as.factor(plotdata$Group))) {
+			if (is.null(hulldata)) {
+				hulldata = plotdata[plotdata$Group == grup,,drop = FALSE][
+					chull(plotdata[plotdata$Group == grup, 1:2]), ]
+			} else {
+				hulldata = rbind(hulldata, plotdata[plotdata$Group == grup,,drop = FALSE][
+					chull(plotdata[plotdata$Group == grup, 1:2]), ])
+			}
+		}
+		print(hulldata)
+		ggs = c(list(
+			geom_point = list(aes_string(color = 'Group'), shape = 21),
+			geom_polygon = list(aes_string(fill = 'Group', group = 'Group'), alpha = .3, data = hulldata),
+			geom_text_repel = list(label = rownames(plotdata), min.segment.length = unit(0, 'lines')),
+			theme_bw = list(),
+			labs = list(x = 'Dimension 1', y = 'Dimension 2'),
+			theme = list(axis.text.x = element_blank(),  # remove x-axis text
+				axis.text.y = element_blank(), # remove y-axis text
+				axis.ticks = element_blank(),  # remove axis ticks
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(),  #remove major-grid labels
+				panel.grid.minor = element_blank(),  #remove minor-grid labels
+				plot.background = element_blank())
+		), ggs)
+	} else {
+		ggs = c(list(
+			geom_point = list(shape = 21),
+			geom_text_repel = list(label = rownames(plotdata), min.segment.length = unit(0, 'lines')),
+			theme_bw = list(),
+			labs = list(x = 'Dimension 1', y = 'Dimension 2'),
+			theme = list(axis.text.x = element_blank(),  # remove x-axis text
+				axis.text.y = element_blank(), # remove y-axis text
+				axis.ticks = element_blank(),  # remove axis ticks
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(),  #remove major-grid labels
+				panel.grid.minor = element_blank(),  #remove minor-grid labels
+				plot.background = element_blank())
+		), ggs)
+	}
+	plot.xy(plotdata, plotfile, x = 'V1', y = 'V2', ggs = ggs, devpars = devpars)
+
 }
 

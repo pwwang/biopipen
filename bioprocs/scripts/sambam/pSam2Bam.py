@@ -10,9 +10,9 @@ outfile    = {{ o.outfile | quote }}
 joboutdir  = {{job.outdir | quote}}
 infmt      = {{ i.infile | ext | [1:] | quote}}
 tmpdir     = {{ args.tmpdir | quote}}
-tmpdir     = path.join (tmpdir, {{proc.id, fn(i.infile), str(job.index+1) | : '.'.join(a) | quote }})
-steps      = {{ args.steps }}
-params     = {{ args.params }}
+tmpdir     = path.join(tmpdir, {{proc.id, fn(i.infile), str(job.index+1) | @join: "_" | quote }})
+steps      = {{ args.steps | repr }}
+params     = {{ args.params | repr }}
 argsmem    = {{ args.mem | repr }}
 sortby     = {{ args.sortby | quote}}
 nthread    = {{ args.nthread | repr}}
@@ -168,12 +168,15 @@ def run_picard():
 
 def run_elprep():
 
-	params['log-path']          = joboutdir
-	params['nr-of-threads']     = nthread
-	params['sorting-order']     = sortby if steps.sort else 'keep'
-	params['mark-duplicates']   = steps.markdup
-	params['remove-duplicates'] = steps.rmdup
-	params['']                  = [infile, outfile]
+	params['log-path']                       = joboutdir
+	params['nr-of-threads']                  = nthread
+	params['sorting-order']                  = sortby if steps.sort else 'keep'
+	params['mark-duplicates']                = steps.markdup
+	params['remove-duplicates']              = steps.rmdup
+	params['intermediate-files-output-type'] = 'bam'
+	params['contig-group-size']              = 1
+	params['tmp-path']                       = tmpdir
+	params['']                               = [infile, outfile]
 	if steps.markdup:
 		params['mark-optical-duplicates'] = path.join(joboutdir, inprefix + '.opticaldups.txt')
 	if steps.recal:
@@ -182,7 +185,7 @@ def run_elprep():
 		if knownSites:
 			params['known-sites'] = knownSites
 
-	shell.fg.elprep.filter(**params)
+	shell.fg.elprep.sfm(**params)
 	if steps.index:
 		shell.samtools.index(outfile, outfile + '.bai')
 

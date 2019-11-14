@@ -15,6 +15,7 @@ vepDb        = {{args.vepDb | quote}}
 filtervcf    = {{args.filtervcf | quote}}
 ref          = {{args.ref | quote}}
 bcftools     = {{args.bcftools | quote}}
+genome       = {{args.genome | quote}}
 tumoridx     = {{args.tumor | repr}}
 withchr      = {{args.withchr | repr}}
 nthread      = {{args.nthread | repr}}
@@ -111,35 +112,37 @@ def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
 			except (TypeError, IndexError):
 				pass
 
-		reader = TsvReader(maf, cnames = True)
-		writer = TsvWriter(maf + '.tmp')
-		writer.cnames = reader.cnames
+	reader = TsvReader(maf, cnames = True)
+	writer = TsvWriter(maf + '.tmp')
+	writer.cnames = reader.cnames
 
-		# correct Start_position to Start_Position, End_position to End_Position
-		#               ^                               ^
-		writer.writeHead(lambda cnames: [
-			'Start_Position' if cname == 'Start_position' else 
-			'End_Position' if cname == 'End_position' else cname
-			for cname in cnames])
-		for r in reader:
-			key = '{r.Chromosome}_{r.Start_position}_{r.Reference_Allele}_{r.Tumor_Seq_Allele1}_{r.Tumor_Seq_Allele2}'.format(r = r)
-			r.Tumor_Sample_Barcode = tumor
-			r.Matched_Norm_Sample_Barcode = normal
+	# correct Start_position to Start_Position, End_position to End_Position
+	#               ^                               ^
+	writer.writeHead(lambda cnames: [
+		'Start_Position' if cname == 'Start_position' else
+		'End_Position' if cname == 'End_position' else cname
+		for cname in cnames])
+	for r in reader:
+		key = '{r.Chromosome}_{r.Start_position}_{r.Reference_Allele}_{r.Tumor_Seq_Allele1}_{r.Tumor_Seq_Allele2}'.format(r = r)
+		r.NCBI_Build = genome if r.NCBI_Build == '__UNKNOWN__' else r.NCBI_Build
+		r.Tumor_Sample_Barcode = tumor
+		r.Matched_Norm_Sample_Barcode = normal or 'NORMAL'
+		if normal:
 			try:
 				r.Match_Norm_Seq_Allele1 = normal_infos[key][0]
 				r.Match_Norm_Seq_Allele2 = normal_infos[key][1]
 			except KeyError:
 				r.Match_Norm_Seq_Allele1 = r.Reference_Allele
 				r.Match_Norm_Seq_Allele2 = r.Reference_Allele
-			if r.Variant_Type == 'INS' and r.Match_Norm_Seq_Allele1 == '-' and r.Tumor_Seq_Allele2:
-				r.Match_Norm_Seq_Allele1 = r.Tumor_Seq_Allele2[0]
-			if r.Variant_Type == 'INS' and r.Match_Norm_Seq_Allele2 == '-' and r.Tumor_Seq_Allele2:
-				r.Match_Norm_Seq_Allele2 = r.Tumor_Seq_Allele2[0]
-			if withchr and r.Chromosome[:3] != 'chr':
-				r.Chromosome = 'chr' + r.Chromosome
-			writer.write(r)
+		if r.Variant_Type == 'INS' and r.Match_Norm_Seq_Allele1 == '-' and r.Tumor_Seq_Allele2:
+			r.Match_Norm_Seq_Allele1 = r.Tumor_Seq_Allele2[0]
+		if r.Variant_Type == 'INS' and r.Match_Norm_Seq_Allele2 == '-' and r.Tumor_Seq_Allele2:
+			r.Match_Norm_Seq_Allele2 = r.Tumor_Seq_Allele2[0]
+		if withchr and r.Chromosome[:3] != 'chr':
+			r.Chromosome = 'chr' + r.Chromosome
+		writer.write(r)
 
-		shell.mv(maf + '.tmp', maf)
+	shell.mv(maf + '.tmp', maf)
 
 ones = dict(
 	vcf2maf   = run_vcf2maf_one,
