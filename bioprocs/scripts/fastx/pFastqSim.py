@@ -1,65 +1,95 @@
+from hashlib import sha256
 from os import path
-from shutil import move
-from sys import stderr
-from bioprocs.utils import runcmd, cmdargs
 from pyppl import Box
+from bioprocs.utils import shell2 as shell
 
-ref  = {{args.ref | quote}}
+seed         = {{i.seed | repr}}
+fq1          = {{o.fq1 | quote}}
+fq2          = {{o.fq2 | quote}}
+tool         = {{args.tool | quote}}
+wgsim        = {{args.wgsim | quote}}
+dwgsim       = {{args.dwgsim | quote}}
+art_illumina = {{args.art_illumina | quote}}
+len1         = {{args.len1 | repr}}
+len2         = {{args.len2 | repr}}
+num          = {{args.num | repr}}
+gz           = {{args.gz | repr}}
+params       = {{args.params | repr}}
+ref          = {{args.ref | quote}}
 
-params = {{args.params}}
-fq1 = {{o.fq1 | quote}}
-fq2 = {{o.fq2 | quote}}
+shell.load_config(wgsim = wgsim, dwgsim = dwgsim, art_illumina = art_illumina)
+
+def get_seed(s):
+	if s is None:
+		return -1
+	if isinstance(s, int):
+		return s
+	return int(sha256(str(s).encode()).hexdigest()[:7], 16)
+
+def run_wgsim():
+	global fq1, fq2
+	if gz:
+		fq1, fq2 = fq1[:-3], fq2[:-3]
+	params.N = num
+	params['1'] = len1
+	params['2'] = len2
+	params.S = get_seed(seed)
+	params._ = [ref, fq1, fq2]
+	shell.fg.wgsim(**params)
+	if gz:
+		shell.gzip(fq1)
+		shell.gzip(fq2)
+
+def run_dwgsim():
+	global fq1, fq2
+	if gz:
+		fq1, fq2 = fq1[:-3], fq2[:-3]
+	prefix = path.commonprefix([fq1, fq2]).rstrip('._[]')
+
+	params.N = num
+	params['1'] = len1
+	params['2'] = len2
+	params.S = 2
+	params.z = get_seed(seed)
+	params._ = [ref, prefix]
+	shell.fg.dwgsim(**params)
+
+	shell.mv(prefix + '.bwa.read1.fastq', fq1)
+	shell.mv(prefix + '.bwa.read2.fastq', fq2)
+
+	if gz:
+		shell.gzip(fq1)
+		shell.gzip(fq2)
+
+def run_art_illumina():
+	global fq1, fq2
+	if gz:
+		fq1, fq2 = fq1[:-3], fq2[:-3]
+	prefix = path.commonprefix([fq1, fq2]).rstrip('._[]')
+
+	params.c = num
+	params.i = ref
+	params.l = len1
+	params.o = prefix
+	params.p = True
+	params.rndSeed = get_seed(seed)
+
+	shell.fg.art_illumina(**params)
+
+	shell.mv(prefix + '1.fq', fq1)
+	shell.mv(prefix + '2.fq', fq2)
+
+	if gz:
+		shell.gzip(fq1)
+		shell.gzip(fq2)
+
+tools = dict(
+	wgsim = run_wgsim,
+	dwgsim = run_dwgsim,
+	art_illumina = run_art_illumina
+)
+
 try:
-{% case args.tool %}
-	{% when 'wgsim' %}
-	{% if args.gz %}
-	fq1 = "{{o.fq1 | [:-3]}}"
-	fq2 = "{{o.fq2 | [:-3]}}"
-	{% endif %}
-
-	params['N'] = {{args.num}}
-	params['1'] = {{args.len1}}
-	params['2'] = {{args.len2}}
-	params['S'] = {{i.seed | lambda x: -1 if x is None else x}}
-	cmd = '{{args.wgsim}} %s "%s" "%s" "%s"' % (cmdargs(params), ref, fq1, fq2)
-	runcmd (cmd)
-
-	{% if args.gz %}
-	runcmd ('gzip "%s"' % fq1)
-	runcmd ('gzip "%s"' % fq2)
-	{% endif %}
-	
-	{% when 'dwgsim' %}
-	prefix = {{o.fq1 | [:-8] | quote}}
-	{% if args.gz %}
-	fq1 = "{{o.fq1 | [:-3]}}"
-	fq2 = "{{o.fq2 | [:-3]}}"
-	prefix = "{{o.fq1 | [:-11]}}"
-	{% endif %}
-
-	params['N'] = {{args.num}}
-	params['1'] = {{args.len1}}
-	params['2'] = {{args.len2}}
-	params['z'] = {{i.seed | lambda x: -1 if x is None else x}}
-	params['S'] = 2
-	cmd = '{{args.dwgsim}} %s "%s" "%s"' % (cmdargs(params), ref, prefix)
-	runcmd (cmd)
-
-	if path.exists (prefix + '.bwa.read1.fastq.gz'):
-		move (prefix + '.bwa.read1.fastq.gz', prefix + '_1.fastq.gz')
-		move (prefix + '.bwa.read2.fastq.gz', prefix + '_2.fastq.gz')
-		{% if not args.gz %}
-		runcmd ('gunzip "%s"' % (prefix + '_1.fastq.gz'))
-		runcmd ('gunzip "%s"' % (prefix + '_2.fastq.gz'))
-		{% endif %}
-	else:
-		move (prefix + '.bwa.read1.fastq', prefix + '_1.fastq')
-		move (prefix + '.bwa.read2.fastq', prefix + '_2.fastq')
-		{% if args.gz %}
-		runcmd ('gzip "%s"' % (prefix + '_1.fastq'))
-		runcmd ('gzip "%s"' % (prefix + '_2.fastq'))
-		{% endif %}
-{% endcase %}
-except Exception as ex:
-	stderr.write ("Job failed: %s" % str(ex))
-	raise
+	tools[tool]()
+except KeyError:
+	raise KeyError('Tool %r not supported.' % tool)

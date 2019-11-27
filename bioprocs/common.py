@@ -43,24 +43,20 @@ def _pSort():
 @procfactory
 def _pShell():
 	"""
-	@name:
-		pShell
-	@description:
-		Run shell command directly
 	@input:
-		args: A dict of parameters of the command
+		infile: The input file
 	@output:
 		outfile: The output file
 	@args:
 		cmd (str): The executable.
 	"""
-	pShell          = Proc(desc = 'Run shell command directly')
-	pShell.input    = 'args'
-	pShell.output   = 'outfile:stdout:{{args.cmd}}.{{proc.suffix}}.{{job.index + 1}}.txt'
-	pShell.args.cmd = None
-	pShell.lang     = params.python.value
-	pShell.script   = "file:scripts/common/pShell.py"
-	return pShell
+	return Box(
+		desc   = 'Run shell command directly',
+		lang   = params.python.value,
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem}}.pShell.txt',
+		args   = Box(cmd = None)
+	)
 
 @procfactory
 def _pFiles2Dir():
@@ -74,11 +70,12 @@ def _pFiles2Dir():
 	@output:
 		`outdir:dir`:    The output directory
 	"""
-	pFiles2Dir                = Proc(desc = 'Put files to a directory using symbolic links.')
-	pFiles2Dir.input          = "infiles:files"
-	pFiles2Dir.output         = "outdir:dir:{{i.infiles | lambda x: sorted(x) | [0] | fn}}.dir"
-	pFiles2Dir.lang           = params.python.value
-	pFiles2Dir.script         = "file:scripts/common/pFiles2Dir.py"
+	pFiles2Dir        = Proc(desc = 'Put files to a directory using symbolic links.')
+	pFiles2Dir.input  = "infiles:files"
+	pFiles2Dir.output = "outdir:dir:{{i.infiles | lambda x: sorted(x) | [0] | fn}}.dir"
+	pFiles2Dir.lang   = params.python.value
+	pFiles2Dir.script = "file:scripts/common/pFiles2Dir.py"
+	pFiles2Dir.runner = 'local'
 	return pFiles2Dir
 
 @procfactory
@@ -93,10 +90,11 @@ def _pFile2Proc():
 	@output:
 		`outfile:file`: The output file
 	"""
-	pFile2Proc                = Proc(desc="Convert a file to a proc so it can be used as dependent")
-	pFile2Proc.input          = "infile:file"
-	pFile2Proc.output         = "outfile:file:{{i.infile | bn}}"
-	pFile2Proc.script         = 'ln -s "{{i.infile}}" "{{o.outfile}}"'
+	pFile2Proc        = Proc(desc="Convert a file to a proc so it can be used as dependent")
+	pFile2Proc.input  = "infile:file"
+	pFile2Proc.output = "outfile:file:{{i.infile | bn}}"
+	pFile2Proc.script = 'ln -s "{{i.infile}}" "{{o.outfile}}"'
+	pFile2Proc.runner = 'local'
 	return pFile2Proc
 
 @procfactory
@@ -256,26 +254,21 @@ def _pAddHeader():
 @procfactory
 def _pMergeFiles():
 	"""
-	@name:
-		pMergeFiles
-	@description:
-		Merge files.
 	@input:
-		`infiles:files`: The input files
+		infiles: The input files
 	@output:
-		`outfile:file`: The output file
+		outfile:file: The output file
 	@args:
-		`header`: Whether the input files have header. Default: `False`
+		header: Whether the input files have header.
 			- If `True`, input files must have the same header line.
 	"""
-	pMergeFiles              = Proc(desc = 'Merge files.')
-	pMergeFiles.input        = "infiles:files"
-	pMergeFiles.output       = "outfile:file:{{i.infiles | fs2name}}{{i.infiles | :a[0] if a else '' | ext }}"
-	pMergeFiles.args.header  = False
-	pMergeFiles.envs.fs2name = fs2name
-	pMergeFiles.lang         = params.python.value
-	pMergeFiles.script       = "file:scripts/common/pMergeFiles.py"
-	return pMergeFiles
+	return Box(
+		desc   = 'Merge files by rows.',
+		input  = 'infiles:files',
+		output = 'outfile:file:{{i.infiles[0] | stem | @append: "_etc.merged"}}{{i.infiles[0] | ext}}',
+		lang   = params.python.value,
+		args   = Box(header = False)
+	)
 
 @procfactory
 def _pGrep():

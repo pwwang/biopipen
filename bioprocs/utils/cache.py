@@ -267,7 +267,7 @@ class Cache(object):
 	def query(self, columns, data, dummies = None, chunk = 500):
 		retall, retrest = {}, {}
 		datalen = Cache._checkData(data)
-		for i in xrange(0, datalen, chunk):
+		for i in range(0, datalen, chunk):
 			datai = {key:val[i:i+chunk] for key, val in data.items()}
 			results, rest = self._queryN(columns, datai, dummies)
 			retall.update({k+i:v for k,v in results.items()})
@@ -287,7 +287,7 @@ class Cache(object):
 	def save(self, data, dummies = None, chunk = 1000):
 
 		datalen = Cache._checkData(data)
-		for i in xrange(0, datalen, chunk):
+		for i in range(0, datalen, chunk):
 			datai = {key:val[i:i+chunk] for key, val in data.items()}
 			self.saveN(datai, dummies)
 
@@ -302,13 +302,13 @@ class Cache(object):
 		idxupdates = [(i, Cache._result(rsall[pks.index(pk)], dummies)) for i, pk in enumerate(pkdata) if pk in pks]
 
 		dataInsert = [
-			Box([Cache._getDummy(key, dummies)['insert'](key, val[i]) for key, val in data.items()]) 
+			Box([Cache._getDummy(key, dummies)['insert'](key, val[i]) for key, val in data.items()])
 			for i in idxinserts
 		]
 		dataUpdate = [
 			(data[self.pkey][i], Box([
-				Cache._getDummy(key, dummies)['update'](key, val[i], r[key]) 
-				for key, val in data.items() 
+				Cache._getDummy(key, dummies)['update'](key, val[i], r[key])
+				for key, val in data.items()
 				if key != self.pkey
 			]))	for i, r in idxupdates
 		]

@@ -1,25 +1,25 @@
 from os import path
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
-fq1     = {{ i.fqfile1 | quote}}
-fq2     = {{ i.fqfile2 | quote}}
-outfile = {{ o.outfile | quote}}
-outdir  = {{ o.outdir | quote}}
-params = {{ args.params | repr}}
-idxfile = {{ args.idxfile | quote}}
+fq1      = {{ i.fqfile1 | quote}}
+fq2      = {{ i.fqfile2 | quote}}
+outfile  = {{ o.outfile | quote}}
+outdir   = {{ o.outdir | quote}}
+params   = {{ args.params | repr}}
+idxfile  = {{ args.idxfile | quote}}
 kallisto = {{ args.kallisto | quote}}
-nthread = {{ args.nthread | repr}}
+nthread  = {{ args.nthread | repr}}
 
-shell.TOOLS.kallisto = kallisto
+shell.load_config(kallisto = kallisto)
+
 params.i = idxfile
 params.o = outdir
 params.t = nthread
 params._ = [fq1, fq2]
 
-kallisto = shell.Shell(subcmd = True).kallisto
-kallisto.quant(**params).run()
+shell.fg.kallisto.quant(**params)
 
 imfile        = path.join(outdir, 'abundance.tsv')
 reader        = TsvReader(imfile)

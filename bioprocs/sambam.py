@@ -2,9 +2,7 @@
 A set of processes to generate/process sam/bam files
 """
 from pyppl import Proc, Box
-#from .utils import mem2, runcmd, buildref, checkref, polling, helpers, plot, dirnameFiles
-from . import params, bashimport, rimport
-from . import delefactory, procfactory
+from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -48,7 +46,7 @@ def _pSam2Bam():
 		output = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai",
 		errhow = 'retry',
 		preCmd = """
-			{{bashimport}} reference.bash
+			{{"reference.bash" | bashimport}}
 			export elprep={{args.elprep | quote}}
 			if [[ {{args.tool | quote}} == "elprep" ]]; then
 				reference elprep {{args.ref | squote}}
@@ -175,9 +173,8 @@ def _pBamRecal():
 	pBamRecal.args.knownSites = params.dbsnp.value
 	pBamRecal.args.nthread    = 1
 	pBamRecal.args.mem        = params.mem32G.value
-	pBamRecal.envs.bashimport = bashimport
 	pBamRecal.preCmd          = """
-	{{bashimport}} reference.bash
+	{{"reference.bash" | bashimport}}
 	export samtools={{args.samtools | squote}}
 	reference fasta {{args.ref | squote}}
 	"""
@@ -360,9 +357,8 @@ def _pBam2Gmut():
 	pBam2Gmut.args.params     = Box()
 	pBam2Gmut.args.gz         = False
 	pBam2Gmut.args.nthread    = 1 # for gatk and platypus
-	pBam2Gmut.envs.bashimport = bashimport
 	pBam2Gmut.preCmd          = """
-	{{bashimport}} reference.bash
+	{{"reference.bash" | bashimport}}
 	export samtools={{args.samtools | squote}}
 	export picard={{args.picard | squote}}
 	reference fasta {{args.ref | squote}}
@@ -410,36 +406,37 @@ def _pBamPair2Smut():
 		[platypus](http://www.well.ox.ac.uk/platypus)
 		[strelka@2.7.1+](https://github.com/Illumina/strelka)
 	"""
-	pBamPair2Smut                    = Proc(desc = 'Call somatic mutations from tumor-normal bam pair.')
-	pBamPair2Smut.input              = "tumor:file, normal:file"
-	pBamPair2Smut.output             = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-	pBamPair2Smut.args.tool          = 'strelka'
-	pBamPair2Smut.args.gatk          = params.gatk.value # required for strelka
-	pBamPair2Smut.args.somaticsniper = params.somaticsniper.value
-	pBamPair2Smut.args.strelka       = params.strelka_soma.value # @2.7.1
-	pBamPair2Smut.args.snvsniffer    = params.snvsniffer.value
-	pBamPair2Smut.args.virmid        = params.virmid.value
-	pBamPair2Smut.args.vardict       = params.vardict.value
-	pBamPair2Smut.args.samtools      = params.samtools.value
-	pBamPair2Smut.args.picard        = params.picard.value
-	pBamPair2Smut.args.configParams  = Box() # only for strelka
-	pBamPair2Smut.args.params        = Box()
-	pBamPair2Smut.args.mem           = params.mem24G.value
-	pBamPair2Smut.args.ref           = params.ref.value
-	pBamPair2Smut.args.gz            = False
-	pBamPair2Smut.args.nthread       = 1
-	pBamPair2Smut.args.tmpdir        = params.tmpdir.value
-	pBamPair2Smut.envs.bashimport    = bashimport
-	pBamPair2Smut.preCmd             = """
-	{{bashimport}} reference.bash
-	export samtools={{args.samtools | squote}}
-	export picard={{args.picard | squote}}
-	reference fasta {{args.ref | squote}}
-	reference picard {{args.ref | squote}}
-	"""
-	pBamPair2Smut.lang   = params.python.value
-	pBamPair2Smut.script = "file:scripts/sambam/pBamPair2Smut.py"
-	return pBamPair2Smut
+	return Box(
+		desc   = 'Call somatic mutations from tumor-normal bam pair.',
+		lang   = params.python.value,
+		input  = "tumor:file, normal:file",
+		output = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}",
+		preCmd = """
+			{{"reference.bash" | bashimport}}
+			export samtools={{args.samtools | squote}}
+			export picard={{args.picard | squote}}
+			reference fasta {{args.ref | squote}}
+			reference picard {{args.ref | squote}}
+			""",
+		args = Box(
+			tool          = 'strelka',
+			gatk          = params.gatk.value, # required for strelka,
+			somaticsniper = params.somaticsniper.value,
+			strelka       = params.strelka_soma.value, # @2.7.1,
+			snvsniffer    = params.snvsniffer.value,
+			virmid        = params.virmid.value,
+			vardict       = params.vardict.value,
+			samtools      = params.samtools.value,
+			picard        = params.picard.value,
+			configParams  = Box(), # only for strelka,
+			params        = Box(),
+			mem           = params.mem24G.value,
+			ref           = params.ref.value,
+			gz            = False,
+			nthread       = 1,
+			tmpdir        = params.tmpdir.value,
+		)
+	)
 
 @procfactory
 def _pBamStats():
@@ -475,7 +472,6 @@ def _pBamStats():
 	pBamStats.args.cutoff      = 0
 	pBamStats.args.nfeats      = 40
 	pBamStats.args.feature     = 'wgs'
-	pBamStats.envs.rimport     = rimport
 	pBamStats.preCmd        = """
 	if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
 		echo "Plots can only be done with proc.forks >= 2." 1>&2

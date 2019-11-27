@@ -168,3 +168,32 @@ def _pAnnotate():
 			params   = Box()
 		)
 	)
+
+@procfactory
+def _pConcat():
+	"""
+	@input:
+		infiles: The input vcf files
+	@output:
+		outfile: The output merged vcf file
+	@args:
+		nthread  (int) : The number of threads to use
+		bcftools (path): The path to bcftools
+		tabix    (path): The path to tabix, used to index vcf files.
+		params   (Box) : Other parameters for `bcftools concat`
+		gz       (bool): Whether output gzipped vcf or not.
+	"""
+	return Box(
+		desc   = 'Concatenate or combine VCF/BCF files with same samples in the same order.',
+		input  = 'infiles:files',
+		output = 'outfile:file:{{i.infiles | [0] | stem2 | @append: "_etc.vcf"}}{{ \
+			args.gz | ? | =:".gz" | !:""}}',
+		lang   = params.python.value,
+		args   = Box(
+			nthread  = 1,
+			bcftools = params.bcftools.value,
+			tabix    = params.tabix.value,
+			params   = Box(),
+			gz       = False,
+		)
+	)

@@ -1,30 +1,32 @@
-import vcf
-from pyppl import Box
-from copy import copy
+from cyvcf2 import VCF, Writer
+from bioprocs.utils import shell2 as shell, logger
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
+gz      = {{args.gz | repr}}
+if gz:
+	outfile = outfile[:-3]
 helper  = {{args.helper | repr}}
 if not isinstance(helper, list):
 	helper = [helper]
 helper  = [line for line in helper if line]
 exec('\n'.join(helper), globals())
-
-reader    = vcf.Reader(filename=infile)
-readerops = {{args.reader}}
-newreader = readerops(copy(reader)) if callable(readerops) else None
-writer    = vcf.Writer(open(outfile, 'w'), newreader if newreader else reader)
+vcfops    = {{args.vcf}}
 recordops = {{args.record}}
 
-for record in reader:
-	formats = record.FORMAT.split(':')
-	samples = [
-		Box(data = Box(zip(formats, [getattr(sample.data, fm) for fm in formats]))) 
-		for sample in record.samples
-	]
-	rec     = recordops(record, writer, samples)
-	for i, sample in enumerate(record.samples):
-		sample.data = sample.data._make(list(samples[i].data.values()))
-	if rec:
-		writer.write_record(rec)
+vcf = VCF(infile)
+if callable(vcfops):
+	vcfops(vcf)
+
+writer = Writer(outfile, vcf)
+for var in vcf:
+	recordops(var)
+	try:
+		writer.write_record(var)
+	except Exception as ex:
+		logger.error(str(ex) + '. Record: ' + str(var))
 writer.close()
+vcf.close()
+
+if gz:
+	shell.bgzip(outfile)

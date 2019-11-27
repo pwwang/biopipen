@@ -1,19 +1,19 @@
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
-infile    = {{i.infile | quote}}
+infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}
-intype    = {{args.intype | quote}}
+intype   = {{args.intype | quote}}
 params   = {{args.params | repr}}
 bedtools = {{args.bedtools | quote}}
 
-bedtools = shell.Shell({'bedtools': bedtools}, subcmd = True, equal = ' ', dash = '-').bedtools
+shell.load_config(bedtools = bedtools)
 
 if intype == 'bed':
 	params.b = infile
 else:
 	params.g = infile
 
-params._       = intfile
-params._stdout = outfile
-bedtools.makewindows(**params).run()
+params._out   = outfile
+params._debug = True
+shell.bedtools.makewindows(**params)

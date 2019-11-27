@@ -124,7 +124,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 	dbfile   = path.join(cachedir, 'geneinfo.db')
 	cache    = Cache(dbfile, 'geneinfo', {
-		'_id'               : 'text primary key',
+		'_id'               : 'text',
 		'symbol'            : 'text',
 		'HGNC'              : 'int',
 		'alias'             : "text default ''",
@@ -181,7 +181,6 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	columns  = list(set(tocols + frmcols + ['taxid']))
 	frmkeys  = ','.join(frmcols)
 	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
-
 	# query from api
 	mgret = querygene(allrest[frmkeys], scopes = fields2remote(frmcols), fields = fields2remote(columns), species = SPECIES[genome])
 	# get all result for each query
@@ -205,7 +204,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 				thescore = g['_score'] + 10000
 			elif any([str(g[x]).upper() == query.upper() for x in tocols]):
 				thescore = g['_score'] + 5000
-			elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x]) for x in tocols]]):
+			elif any([x in g and query.upper() in [str(u).upper() for u in list(g[x])] for x in tocols]):
 				thescore = g['_score'] + 1000
 			else:
 				thescore = g['_score']
@@ -216,7 +215,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		if not gr: continue
 		del gr['_score']
 		del gr['query']
-		gr = Cache._result({x:(gr[x] if x in gr else '') for x in set(columns + gr.keys())}, dummies)
+		gr = Cache._result({x:(gr[x] if x in gr else '') for x in set(columns + list(gr.keys()))}, dummies)
 		for x, val in gr.items():
 			if not x in data2save:
 				data2save[x] = []
@@ -262,11 +261,11 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 		writer.meta.extend(reader.meta)
 		if outquery:
 			write.meta.append('_QUERY')
-			
+
 		if len(tocols) > 1:
 			gcolidx = genecol if isinstance(genecol, int) else writer.meta.index(genecol)
 			writer.meta[(gcolidx+1):(gcolidx+1)] = [(tocol, None) for tocol in tocols[1:]]
-		
+
 		if outhead:
 			writer.writeHead()
 		#print writer.meta

@@ -21,7 +21,7 @@ It:
 ## {{job.i.infile | stem}}
 	{%- endif %}
 
-{% assign hash = forloop.length | ?:_>1 | :'#' | :'' %}
+{% assign hash = forloop.length | ?:_>1 | =:'#' | !:'' %}
 ##{{hash}} Consensus trees
 
 ![Consensus trees]({{job.o.outdir, '*.tree.png' | *glob1}})

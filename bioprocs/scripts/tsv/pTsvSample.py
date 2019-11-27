@@ -1,5 +1,5 @@
 from pyppl import Box
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 infile    = {{i.infile | quote}}
 outfile   = {{o.outfile | quote}}
@@ -8,9 +8,10 @@ n         = {{args.n | repr}}
 arsample  = {{args.arsample | quote}}
 replace   = {{args.replace | repr}}
 keeporder = {{args.keeporder |repr}}
-seed      = {{args.seed |repr}}
+seed      = {{args.seed | repr}}
 params    = {{args.params | repr}}
-arsample  = shell.Shell(dict(sample = arsample)).sample
+
+shell.load_config(arsample = arsample)
 
 if inopts.get('skip', 0):
 	shell.head(n = inopts.skip, _ = infile, _stdout = outfile)
@@ -18,10 +19,11 @@ if inopts.get('skip', 0):
 	shell.tail(n = '+' + str(inopts.skip + 1), _ = infile, _stdout = infile_skipped)
 	infile = infile_skipped
 
-params._ = infile
-params._stdout_ = outfile
-params.k = n
-params.d = seed
+params._    = infile
+params._out = outfile
+params.k    = n
+if seed:
+	params.d    = seed
 if keeporder:
 	params.p = True
 if replace:
@@ -29,4 +31,4 @@ if replace:
 else:
 	params.o = True
 
-arsample(**params).run()
+shell.arsample(**params, _debug = True)

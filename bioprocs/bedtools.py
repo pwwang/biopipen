@@ -1,10 +1,9 @@
 """Utilities from bedtools"""
 from pyppl import Proc, Box
-from . import params, bashimport
 from .utils import fs2name
-from . import delefactory, procfactory
+from . import params, delefactory, procfactory
 from modkit import Modkit
-Modkit().delegate(delefactory()).exports('_p*')
+Modkit().delegate(delefactory()).exports('_p*', 'p*')
 
 @procfactory
 def _pBedGetfasta():
@@ -31,9 +30,8 @@ def _pBedGetfasta():
 	pBedGetfasta.args.bedtools   = params.bedtools.value
 	pBedGetfasta.args.params     = Box(name = True)
 	pBedGetfasta.args.ref        = params.ref.value
-	pBedGetfasta.envs.bashimport = bashimport
 	pBedGetfasta.beforeCmd       = '''
-	{{bashimport}} reference.bash
+	{{"reference.bash" | bashimport}}
 	export samtools={{args.samtools | squote}}
 	reference fasta {{args.ref | squote}}
 	'''
@@ -97,31 +95,34 @@ def _pBedClosest2():
 @procfactory
 def _pBedFlank():
 	"""
-	@name:
-		pBedFlank
 	@description:
 		`bedtools flank` will create two new flanking intervals for each interval in a BED file. Note that flank will restrict the created flanking intervals to the size of the chromosome (i.e. no start < 0 and no end > chromosome size).
 	@input:
-		`infile:file`:  The input file
-		`gfile:file`:   The genome size file
+		infile: The input file
 	@output:
-		`outfile:file`: The result file
+		outfile: The result file
 	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools flank`, default: ""
+		bedtools (path): The bedtools executable
+		params   (Box) : Other parameters for `bedtools flank`
+		gfile    (path): The genome size file
+		extend   (bool): Whether extend the flanking regions to include the element itself or not.
+			- For example: `chr1:100-200` with `args.params.b = 10` will extend to `chr1:90-210`
+			- But if `args.extend = False`, it will be `chr1:90-100` and `chr1:200-210`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 	"""
-	pBedFlank               = Proc(desc = 'Create two new flanking intervals for each interval in a BED file.')
-	pBedFlank.input         = "infile:file"
-	pBedFlank.output        = "outfile:file:{{i.infile | fn}}.flank.bed"
-	pBedFlank.args.extend   = False
-	pBedFlank.args.gsize    = params.gsize.value
-	pBedFlank.args.params   = Box()
-	pBedFlank.args.bedtools = params.bedtools.value
-	pBedFlank.lang          = params.python.value
-	pBedFlank.script        = "file:scripts/bedtools/pBedFlank.py"
-	return pBedFlank
+	return Box(
+		desc   = 'Create two new flanking intervals for each interval in a BED file.',
+		lang   = params.python.value,
+		input  = "infile:file",
+		output = "outfile:file:{{i.infile | fn}}.flank.bed",
+		args   = Box(
+			extend   = False,
+			gsize    = params.gsize.value,
+			params   = Box(),
+			bedtools = params.bedtools.value
+		)
+	)
 
 @procfactory
 def _pBedIntersect():
@@ -198,6 +199,7 @@ def _pBedMakewindows():
 	pBedMakewindows               = Proc(desc = 'Makes adjacent or sliding windows across a genome or BED file.')
 	pBedMakewindows.input         = "infile:file"
 	pBedMakewindows.output        = "outfile:file:{{i.infile | fn}}.window.bed"
+	pBedMakewindows.lang          = params.python.value
 	pBedMakewindows.args.params   = Box()
 	pBedMakewindows.args.bedtools = params.bedtools.value
 	pBedMakewindows.args.intype   = 'bed'

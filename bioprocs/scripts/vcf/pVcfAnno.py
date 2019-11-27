@@ -59,13 +59,19 @@ def run_vep():
 	if not path.exists(dbs):
 		raise ValueError('Database does not exist: {}'.format(dbs))
 
+	genomes = dict(
+		hg19 = 'GRCh37',
+		hg38 = 'GRCh38',
+	)
+
 	params.i        = infile
 	params.o        = outfile
 	params.format   = 'vcf'
 	params.vcf      = True
 	params.cache    = True
 	params.dir      = dbs
-	params.assembly = genome
+	params.offline  = params.get('offline', True)
+	params.assembly = genomes.get(genome, genome)
 	shell.fg.vep(**params)
 
 	if gz:

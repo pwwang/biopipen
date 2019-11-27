@@ -6,7 +6,7 @@ from gff import Gff
 
 infile  = {{i.infile | quote}}
 bedfile = {{i.bedfile | quote}}
-bedext  = {{i.bedfile | ?:ext(_) == '.gz' | prefix | :_ | ext | [1:] | quote }}
+bedext  = {{i.bedfile | ?.endswith: '.gz' | =prefix | :_ | ext | [1:] | quote }}
 outfile = {{o.outfile | quote}}
 bwtool  = {{args.bwtool | quote}}
 params  = {{args.params | repr}}

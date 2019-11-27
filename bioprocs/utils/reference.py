@@ -23,6 +23,40 @@ def buildIndex(ref, cmd, ref2 = None, cmd2 = None):
 		except Exception:
 			return None
 
+def faIndex(fa, ext = '.fai', samtools = 'samtools'):
+	if not ext.startswith('.'):
+		ext = '.' + ext
+
+	shell.load_config(samtools = samtools)
+
+	expectedIndex = path.join(path.dirname(fa), path.basename(fa) + ext)
+	if path.isfile(expectedIndex):
+		return
+	# if fa is not a link, there is nowhere else to find index, create it using samtools
+	if not path.islink(fa):
+		if samtools:
+			shell.samtools.faidx(fa)
+		else:
+			raise ValueError('Index not found: {}'.format(bam))
+		return
+	# find the index in original directory
+	origfa    = readlink(fa)
+	origIndex = origfa + ext
+	if path.isfile(origIndex):
+		shell.ln_s(origIndex, expectedIndex)
+		return
+	# find the index in realpath directory
+	realfa   = path.realpath(fa)
+	realIndex = path.splitext(readfa)[0] + ext
+	if path.isfile(realIndex):
+		shell.ln_s(realIndex, expectedIndex)
+		return
+	# if all failed, create it
+	if samtools:
+		shell.samtools.faidx(fa)
+	else:
+		raise ValueError('Index not found: {}'.format(fa))
+
 def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 	"""
 	Index bam files
@@ -74,7 +108,7 @@ def bamIndex(bam, ext = '.bam.bai', samtools = 'samtools', nthread = 1):
 		return
 	# if all failed, create it
 	if samtools:
-		shell.samtools.index(b = True, _out = expectedIndex, **{'@': nthread})
+		shell.samtools.index(b = True, _ = [bam, expectedIndex], **{'@': nthread})
 	else:
 		raise ValueError('Index not found: {}'.format(bam))
 
@@ -94,18 +128,18 @@ def tabixIndex(filename, type, tabix = 'tabix'):
 	expectedIndex = path.join(dname, fname + '.%s.gz.tbi' % type)
 	if path.isfile(expectedIndex):
 		return filename if filename.endswith('.gz') else filename + '.gz'
-	
+
 	shell.load_config(tabix = tabix)
 	# type could bed3, bed6..
 	ptype = 'bed' if type.startswith('bed') else type
 	gt = gztype(filename)
 	if gt == 'bgzip':
 		if path.islink(filename):
-			linkfile = readline(filename)
+			linkfile = readlink(filename)
 			if path.isfile(linkfile + '.tbi'):
 				shell.ln_s(linkfile + '.tbi', expectedIndex)
 				return filename
-			readfile = path.realpath(filename)
+			realfile = path.realpath(filename)
 			if path.isfile(realfile + '.tbi'):
 				shell.ln_s(realfile + '.tbi', expectedIndex)
 				return realfile

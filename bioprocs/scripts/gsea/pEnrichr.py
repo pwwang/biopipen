@@ -12,7 +12,7 @@ infile   = {{i.infile | quote}}
 prefix   = {{i.infile | fn2 | quote}}
 outdir   = {{o.outdir | quote}}
 inopts   = {{args.inopts | repr}}
-genecol  = {{args.genecol | ?bool | :_ | :0 | repr}}
+genecol  = {{args.genecol | ?!:0 | repr}}
 top      = {{args.top}}
 dbs      = {{args.libs | alwaysList | repr}}
 plot     = {{args.plot | repr}}
@@ -21,7 +21,7 @@ Rscript  = {{args.Rscript | repr}}
 cutoff   = {{args.cutoff | repr}}
 devpars  = {{args.devpars | repr}}
 pathview = {{args.pathview | repr}}
-include  = {{args.include | ?bool | :_ | :None }}
+include  = {{args.include | ?!:None }}
 
 shell.load_config(Rscript = Rscript)
 

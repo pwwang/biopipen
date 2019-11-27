@@ -1,9 +1,8 @@
 """TSV file operations"""
 
 from pyppl import Proc, Box
-from . import params, rimport
 from .utils import fs2name
-from . import delefactory, procfactory
+from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -57,7 +56,6 @@ def _pTranspose():
 	pTranspose.input        = 'infile:file'
 	pTranspose.output       = 'outfile:file:{{i.infile | bn}}'
 	pTranspose.args.inopts  = Box(cnames = True, rnames = True)
-	pTranspose.envs.rimport = rimport
 	pTranspose.lang         = params.Rscript.value
 	pTranspose.script       = "file:scripts/tsv/pTranspose.r"
 	return pTranspose
@@ -133,7 +131,6 @@ def _pCbind():
 	pCbind.args.fn2cname = 'function(fn) fn' # if
 	pCbind.args.fill     = True
 	pCbind.envs.fs2name  = fs2name
-	pCbind.envs.rimport  = rimport
 	pCbind.lang          = params.Rscript.value
 	pCbind.script        = "file:scripts/tsv/pCbind.r"
 	return pCbind
@@ -180,7 +177,6 @@ def _pRbind():
 	pRbind.args.fn2rname = 'function(fn) fn'
 	pRbind.args.fill     = True
 	pRbind.envs.fs2name  = fs2name
-	pRbind.envs.rimport  = rimport
 	pRbind.lang          = params.Rscript.value
 	pRbind.script        = "file:scripts/tsv/pRbind.r"
 	return pRbind
@@ -219,7 +215,6 @@ def _pCsplit():
 		"quote"      : ""
 	})
 	pCsplit.args.size    = 1
-	pCsplit.envs.rimport = rimport
 	pCsplit.lang         = params.Rscript.value
 	pCsplit.script       = "file:scripts/tsv/pCsplit.r"
 	return pCsplit
@@ -258,7 +253,6 @@ def _pRsplit():
 		"quote"      : ""
 	})
 	pRsplit.args.size    = 1
-	pRsplit.envs.rimport = rimport
 	pRsplit.lang         = params.Rscript.value
 	pRsplit.script       = "file:scripts/tsv/pRsplit.r"
 	return pRsplit
