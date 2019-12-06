@@ -2,7 +2,7 @@ import random
 import yaml
 from os import path
 from glob import glob
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
@@ -19,14 +19,14 @@ devpars  = {{args.devpars |repr}}
 shell.load_config(schism = schism, Rscript = Rscript, dot = dot)
 
 # default configurations
-config                        = Box()
+config                        = Diot()
 config.working_dir            = outdir
 config.output_prefix          = {{i.infile | stem | quote}}
 config.cellularity_estimation = "schism"
-config.cellularity_estimator  = Box(coverage_threshold = 50.0, absent_mode = 1)
-config.tumor_sample_purity    = Box()
-config.hypothesis_test        = Box(test_level = "mutations", significance_level = 0.05, store_pvalues = True)
-config.genetic_algorithm      = Box(
+config.cellularity_estimator  = Diot(coverage_threshold = 50.0, absent_mode = 1)
+config.tumor_sample_purity    = Diot()
+config.hypothesis_test        = Diot(test_level = "mutations", significance_level = 0.05, store_pvalues = True)
+config.genetic_algorithm      = Diot(
 	instance_count         = 10,
 	generation_count       = 50,
 	generation_size        = 100,
@@ -159,7 +159,7 @@ childs = set()
 for r in reader:
 	nodes.add(r.parent)
 	nodes.add(r.child)
-	edges.append(Box(parent = r.parent, child = r.child, freq = float(r.frequency), label = r.label))
+	edges.append(Diot(parent = r.parent, child = r.child, freq = float(r.frequency), label = r.label))
 	childs.add(r.child)
 
 dotstr = ['digraph G {']

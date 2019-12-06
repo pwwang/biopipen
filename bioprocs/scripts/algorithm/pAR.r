@@ -75,7 +75,7 @@ if (svdP > 0) {
 }
 vecYtY = as.matrix(as.vector(t(trainY) %*% trainY))
 
-# train 
+# train
 alpha = 0
 if (nthread > 1) {
 	library(doMC)
@@ -141,4 +141,3 @@ if (WtDtY) {
 	outfile = file.path(outdir, 'WtDtY.txt')
 	write.table(t(W) %*% t(as.matrix(D)) %*% as.matrix(Y), outfile, sep="\t", quote=F)
 }
-

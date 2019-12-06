@@ -1,4 +1,4 @@
-{{rimport}}('__init__.r', 'sampleinfo.r')
+{{'__init__.r', 'sampleinfo.r' | *rimport}}
 library(clonevol)
 
 # use to save converted pyclone results

@@ -6,7 +6,7 @@ from tempfile import gettempdir
 from contextlib import contextmanager
 from colorama import Back
 from pyparam import Helps, HelpAssembler
-from pyppl import utils, Channel, PyPPL, Box
+from pyppl import utils, Channel, PyPPL, Diot, OrderedDiot
 import bioprocs
 
 def substrReplace(string, starts, lengths, replace):
@@ -238,7 +238,7 @@ class Process:
 			inkeys = utils.split(self.proc.config.input, ',')
 		else:
 			inkeys = self.proc.config.input
-		ret = utils.OBox()
+		ret = OrderedDiot()
 		for inkey in inkeys:
 			if ':' not in inkey:
 				inkey += ':var'
@@ -254,7 +254,7 @@ class Process:
 			outs = utils.split(self.proc.config.output, ',')
 		else:
 			outs = self.proc.config.output
-		ret = utils.OBox()
+		ret = OrderedDiot()
 		for out in outs:
 			parts = utils.split(out, ':')
 			if len(parts) == 2:
@@ -356,7 +356,7 @@ class Process:
 		# replace ',' with '.' in key
 		# a bug of python-box, copy lost metadata
 		#ret = args.copy() # try to keep the type
-		ret = Box()
+		ret = Diot()
 		for key, val in args.items():
 			ret[key.replace(',', '.')] = Process._updateArgs(val) \
 				if isinstance(val, dict) else val
@@ -400,7 +400,7 @@ class Process:
 			if not isinstance(opts.o, dict):
 				self.printHelps(error = 'Malformat output specification.')
 
-			outdata = utils.OBox()
+			outdata = OrderedDiot()
 			for outkey, outypedeft in self.outputs().items():
 				outype, outdeft = outypedeft
 				if not opts.o.get(outkey):
@@ -415,9 +415,9 @@ class Process:
 					if self.proc.exdir and out.parent != self.proc.exdir:
 						raise ValueError('Cannot have output files/dirs with different parents as exdir.')
 					self.proc.exdir = str(out.parent)
-					outdata[outkey] = out.name
+					outdata[outkey + ':' + outype] = out.name
 				else:
-					outdata[outkey] = opts.o[outkey]
+					outdata[outkey + ':' + outype] = opts.o[outkey]
 			self.proc.output = outdata
 
 		if opts.get('args'):

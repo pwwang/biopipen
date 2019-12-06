@@ -3,7 +3,7 @@ from os import path, symlink
 from sys import stdout, stderr
 from time import sleep
 from shutil import move
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import runcmd, cmdargs, reference, logger
 from bioprocs.utils.poll import Poll
 

@@ -1,7 +1,6 @@
 """Some statistic processes"""
-from pyppl import Proc, Box
-from . import params, rimport
-from . import delefactory, procfactory
+from pyppl import Proc, Diot
+from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -11,16 +10,16 @@ def _pStats():
 	@name:
 		pStats
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Data statistics',
 		lang   = params.Rscript.value,
 		input  = 'infile:file',
 		output = 'outdir:dir:{{i.infile | stem}}.stats',
-		args   = Box(inopts  = Box(rnames = True, cnames = True, delimit = "\t"),
-			types   = Box(),
+		args   = Diot(inopts  = Diot(rnames = True, cnames = True, delimit = "\t"),
+			types   = Diot(),
 			groups  = [],
 			ignore  = [],
-			devpars = Box(res = 300, height = 2000, width = 2000))
+			devpars = Diot(res = 300, height = 2000, width = 2000))
 	)
 
 @procfactory
@@ -59,7 +58,7 @@ def _pMetaPval():
 		`outfile:file`: The output file containing the meta-pvalues. Default: `{{i.infile | fn}}.meta{{i.infile | ext}}`
 	@args:
 		`intype`: The type of the input file. Default: `matrix` (see `i.infile`)
-		`inopts`: The input options to read the input file. Default: `Box(rnames = True, cnames = True)`
+		`inopts`: The input options to read the input file. Default: `Diot(rnames = True, cnames = True)`
 		`method`: The method used to calculate the meta-pvalue. Default: sumlog (Fisher's method, aka `fisher`)
 			- Other available methods: logitp, sumz, votep, sump, meanp and wilkinsonp
 			- See: https://www.rdocumentation.org/packages/metap/versions/0.8
@@ -72,10 +71,10 @@ def _pMetaPval():
 	pMetaPval.input        = 'infile:file'
 	pMetaPval.output       = 'outfile:file:{{i.infile | fn}}.meta{{i.infile | ext}}'
 	pMetaPval.args.intype  = 'matrix'
-	pMetaPval.args.inopts  = Box(rnames = True, cnames = True)
+	pMetaPval.args.inopts  = Diot(rnames = True, cnames = True)
 	pMetaPval.args.method  = 'sumlog'
 	pMetaPval.args.na      = 'skip' #0, 1
-	pMetaPval.envs.rimport = rimport
+	#pMetaPval.envs.rimport = rimport
 	pMetaPval.lang         = params.Rscript.value
 	pMetaPval.script       = "file:scripts/stats/pMetaPval.r"
 	return pMetaPval
@@ -120,27 +119,27 @@ def _pSurvival():
 		[`r-survival`](https://rdrr.io/cran/survival/)
 		[`r-survminer`](https://rdrr.io/cran/survminer/)
 	"""
-	return Box(desc = "Survival analysis",
+	return Diot(desc = "Survival analysis",
 		lang   = params.Rscript.value,
 		input  = 'infile:file, covfile:file',
 		output = [
 			'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt',
 			'outdir:dir:{{i.infile | fn2}}.dir'
 		],
-		args = Box(inunit = 'days', # months, weeks, years
+		args = Diot(inunit = 'days', # months, weeks, years
 			outunit   = 'days',
 			method    = 'cox', # or km
 			covfile   = None,
-			inopts    = Box(rnames = True),
+			inopts    = Diot(rnames = True),
 			# params for arrange_ggsurvplots.
 			# Typically nrow or ncol is set.
 			# If combine.ncol = 3, that means {ncol: 3, nrow: 1}.
 			# If ncol is not set, then it defaults to 1.
 			# If empty, the figures will not be combined
-			combine   = Box(ncol = 2),
-			devpars   = Box(res = 300, height = 2000, width = 2000),
-			params    = Box(),
-			ggs       = Box(table = Box())))
+			combine   = Diot(ncol = 2),
+			devpars   = Diot(res = 300, height = 2000, width = 2000),
+			params    = Diot(),
+			ggs       = Diot(table = Diot())))
 
 @procfactory
 def _pPostSurvival():
@@ -167,9 +166,9 @@ def _pPostSurvival():
 	pPostSurvival.input        = 'infile:file, survfile:file'
 	pPostSurvival.output       = 'outfile:file:{{i.infile | fn2}}.stats.xlsx'
 	pPostSurvival.args.chi2n   = 10
-	pPostSurvival.args.inopts  = Box(rnames = True)
+	pPostSurvival.args.inopts  = Diot(rnames = True)
 	pPostSurvival.args.covfile = None
-	pPostSurvival.envs.rimport = rimport
+	#pPostSurvival.envs.rimport = rimport
 	pPostSurvival.lang         = params.Rscript.value
 	pPostSurvival.script       = "file:scripts/stats/pPostSurvival.r"
 	return pPostSurvival
@@ -212,10 +211,10 @@ def _pBin():
 	pBin              = Proc(desc = "Bin the data")
 	pBin.input        = 'infile:file'
 	pBin.output       = 'outfile:file:{{i.infile | stem}}.binned{{i.infile | ext}}'
-	pBin.args.inopts  = Box(delimit = "\t", rnames = False, cnames = True)
-	pBin.args.binopts = Box(nbin = None, step = None, nan = 'skip', out = 'step') # lower/min, upper/max, mean, median, binno
+	pBin.args.inopts  = Diot(delimit = "\t", rnames = False, cnames = True)
+	pBin.args.binopts = Diot(nbin = None, step = None, nan = 'skip', out = 'step') # lower/min, upper/max, mean, median, binno
 	pBin.args.cols    = None
-	pBin.envs.rimport = rimport
+	# pBin.envs.rimport = rimport
 	pBin.lang         = params.Rscript.value
 	pBin.script       = "file:scripts/stats/pBin.r"
 	return pBin
@@ -235,8 +234,8 @@ def _pQuantileNorm():
 	pQuantileNorm              = Proc(desc = 'Do quantile normalization')
 	pQuantileNorm.input        = 'infile:file'
 	pQuantileNorm.output       = 'outfile:file:{{i.infile | bn}}'
-	pQuantileNorm.args.inopts  = Box(rnames = True, cnames = True, delimit = "\t", skip = 0)
-	pQuantileNorm.envs.rimport = rimport
+	pQuantileNorm.args.inopts  = Diot(rnames = True, cnames = True, delimit = "\t", skip = 0)
+	# pQuantileNorm.envs.rimport = rimport
 	pQuantileNorm.lang         = params.Rscript.value
 	pQuantileNorm.script       = "file:scripts/stats/pQuantileNorm.r"
 	return pQuantileNorm
@@ -381,7 +380,7 @@ def _pPWFisherExact():
 	pPWFisherExact.args.rnames  = True
 	pPWFisherExact.args.intype  = 'raw' # pairs
 	pPWFisherExact.args.padj    = 'BH'
-	pPWFisherExact.envs.rimport = rimport
+	# pPWFisherExact.envs.rimport = rimport
 	pPWFisherExact.lang         = params.Rscript.value
 	pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
 	return pPWFisherExact
@@ -417,7 +416,7 @@ def _pMediation():
 		`outfile:file`: The result file.
 		`outdir:dir`  : The output directory containing output file and plots.
 	@args:
-		`inopts`: The options for input file. Default: `Box(cnames = True, rnames = True)`
+		`inopts`: The options for input file. Default: `Diot(cnames = True, rnames = True)`
 			- `cnames`: Whether the input file has column names
 			- `rnames`: Whether the input file has row names
 		`medopts`: The options for mediation analysis.
@@ -426,16 +425,16 @@ def _pMediation():
 		`cov`: The covariate file. Default: ``
 		`pval`: The pvalue cutoff. Default: `0.05`
 		`fdr` : Method to calculate fdr. Use `False` to disable. Default: `True` (`BH`)
-		`plot`: Parameters for `plot.mediate`? Use `False` to disable plotting. Default: `Box()`
+		`plot`: Parameters for `plot.mediate`? Use `False` to disable plotting. Default: `Diot()`
 			- Only case with pvalue < `args.pval` will be plotted.
 			- To plot all cases, use `args.pval = 1`
 		`nthread`: Number of threads to use for different cases. Default: `1`
-		`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
+		`devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
 		`case`   : Define cases, each case should have `model` and `fmula`.
-			- If you only have one case, then it could be: `Box(model = 'lm', fmula = 'Y~X|M')`
+			- If you only have one case, then it could be: `Diot(model = 'lm', fmula = 'Y~X|M')`
 			In this case, `{{i.infile | fn2}}` will be used as case name
 			- For multiple cases, this should be a dict of cases:
-			`Box(Case1 = Box(model='lm', fmula='Y~X|M'), Case2 = ...)`
+			`Diot(Case1 = Diot(model='lm', fmula='Y~X|M'), Case2 = ...)`
 	"""
 	pMediation = Proc(desc = "Do mediation analysis.")
 	pMediation.input  = 'infile:file, casefile:file'
@@ -443,16 +442,16 @@ def _pMediation():
 		'outfile:file:{{i.infile | fn2}}.mediation/{{i.infile | fn2}}.mediation.txt',
 		'outdir:dir:{{i.infile | fn2}}.mediation'
 	]
-	pMediation.args.inopts  = Box(cnames = True, rnames = True)
-	pMediation.args.medopts = Box(boot = True, sims = 500)
+	pMediation.args.inopts  = Diot(cnames = True, rnames = True)
+	pMediation.args.medopts = Diot(boot = True, sims = 500)
 	pMediation.args.cov     = ''
 	pMediation.args.pval    = 0.05
 	pMediation.args.fdr     = True # BH, or other methods for p.adjust
-	pMediation.args.plot    = Box()
-	pMediation.args.case    = Box(model = 'lm', fmula = 'Y~X|M')
+	pMediation.args.plot    = Diot()
+	pMediation.args.case    = Diot(model = 'lm', fmula = 'Y~X|M')
 	pMediation.args.nthread = 1
-	pMediation.args.devpars = Box(res = 300, width = 2000, height = 2000)
-	pMediation.envs.rimport = rimport
+	pMediation.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+	# pMediation.envs.rimport = rimport
 	pMediation.lang         = params.Rscript.value
 	pMediation.script       = "file:scripts/stats/pMediation.r"
 	return pMediation
@@ -492,7 +491,7 @@ def _pLiquidAssoc():
 		`fdr`    : The method to calculate FDR. Use `False` to disable. Default: `True` (BH)
 		`nthread`: The number of threads to use. Default: `1` (WCGNA requires)
 		`plot`   : Whether do plotting or not. Default: `False`
-		`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
+		`devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	@requires:
 		[r-fastLiquidAssociation](https://github.com/pwwang/fastLiquidAssociation)
 	"""
@@ -502,16 +501,16 @@ def _pLiquidAssoc():
 		'outfile:file:{{i.infile | fn2}}.la/{{i.infile | fn2}}.la.txt',
 		'outdir:dir:{{i.infile | fn2}}.la'
 	]
-	pLiquidAssoc.args.inopts = Box(cnames = True, rnames = True)
+	pLiquidAssoc.args.inopts = Diot(cnames = True, rnames = True)
 	pLiquidAssoc.args.zcat    = False
 	pLiquidAssoc.args.pval    = 0.05
 	pLiquidAssoc.args.fdr     = True # BH, or other methods for p.adjust
 	pLiquidAssoc.args.fdrfor  = 'case' # all
 	pLiquidAssoc.args.nthread = 1
 	pLiquidAssoc.args.plot    = False
-	pLiquidAssoc.args.ggs     = Box()
-	pLiquidAssoc.args.devpars = Box(res = 300, width = 2000, height = 2000)
-	pLiquidAssoc.envs.rimport = rimport
+	pLiquidAssoc.args.ggs     = Diot()
+	pLiquidAssoc.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+	# pLiquidAssoc.envs.rimport = rimport
 	pLiquidAssoc.lang         = params.Rscript.value
 	pLiquidAssoc.script       = "file:scripts/stats/pLiquidAssoc.r"
 	return pLiquidAssoc
@@ -540,9 +539,9 @@ def _pHypergeom():
 	pHypergeom.input        = 'infile:file'
 	pHypergeom.output       = 'outfile:file:{{i.infile | fn2}}.hypergeom.txt'
 	pHypergeom.args.intype  = 'raw' # numbers
-	pHypergeom.args.inopts  = Box(cnames = True, rnames = True)
+	pHypergeom.args.inopts  = Diot(cnames = True, rnames = True)
 	pHypergeom.args.N       = None
-	pHypergeom.envs.rimport = rimport
+	# pHypergeom.envs.rimport = rimport
 	pHypergeom.lang         = params.Rscript.value
 	pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
 	return pHypergeom
@@ -593,19 +592,19 @@ def _pChow():
 		`pval`: The pvalue cutoff. Default: `0.05`
 		`plot`: Whether plot the regressions. Default: `False`
 		`ggs` : The extra ggs for the plot.
-		`devpars`: device parameters for the plot. Default: `Box(res = 300, width = 2000, height = 2000)`
+		`devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	"""
 	pChow              = Proc(desc = "Do Chow-Test")
 	pChow.input        = 'infile:file, groupfile:file, casefile:file'
 	pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
-	pChow.args.inopts  = Box(cnames = True, rnames = True)
+	pChow.args.inopts  = Diot(cnames = True, rnames = True)
 	pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
 	pChow.args.pval    = 0.05
 	pChow.args.fdr     = True
 	pChow.args.plot    = True
-	pChow.args.devpars = Box(res = 300, width = 2000, height = 2000)
-	pChow.args.ggs     = Box()
-	pChow.envs.rimport = rimport
+	pChow.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+	pChow.args.ggs     = Diot()
+	# pChow.envs.rimport = rimport
 	pChow.lang         = params.Rscript.value
 	pChow.script       = "file:scripts/stats/pChow.r"
 	return pChow
@@ -621,9 +620,9 @@ def _pAnovaModel():
 	pAnovaModel.output       = 'outfile:file:{{i.infile | fn}}.anova/{{i.infile | fn}}.anova.txt, outdir:dir:{{i.infile | fn}}.anova'
 	pAnovaModel.args.model   = 'lm'
 	pAnovaModel.args.fmula   = None
-	pAnovaModel.args.inopts  = Box(cnames = True, rnames = True)
+	pAnovaModel.args.inopts  = Diot(cnames = True, rnames = True)
 	pAnovaModel.args.cov     = '' # requires inopts.rnames
-	pAnovaModel.envs.rimport = rimport
+	# pAnovaModel.envs.rimport = rimport
 	pAnovaModel.lang         = params.Rscript.value
 	pAnovaModel.script       = "file:scripts/stats/pAnovaModel.r"
 	return pAnovaModel
@@ -663,7 +662,7 @@ def _pCorr():
 	@requires:
 		R packages: `ggplot2` and `reshape`
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Correlation Coefficients between variables',
 		lang   = params.Rscript.value,
 		input  = 'infile:file, groupfile:var',
@@ -671,16 +670,16 @@ def _pCorr():
 			'outfile:file:{{i.infile | stem}}.{{args.method}}/{{i.infile | stem}}.{{args.method}}.txt',
 			'outdir:dir:{{i.infile | stem}}.{{args.method}}'
 		],
-		args = Box(
+		args = Diot(
 			outfmt    = 'pairs',
 			method    = 'pearson',
 			byrow     = True,
 			pval      = False,
 			groupfile = None,
-			inopts    = Box(cnames = True,	rnames = True,	delimit = "\t"),
+			inopts    = Diot(cnames = True,	rnames = True,	delimit = "\t"),
 			plot      = False,
-			params    = Box(), # the parameters for plot.heatmap2
-			devpars   = Box(height = 2000, width = 2000, res = 300)
+			params    = Diot(), # the parameters for plot.heatmap2
+			devpars   = Diot(height = 2000, width = 2000, res = 300)
 		)
 	)
 
@@ -707,7 +706,7 @@ def _pCorr2():
 		`plot`  : Whether plot a heatmap or not. Default: `False`
 		`params`: The params for `plot.heatmap` in `utils/plot.r`
 		`ggs`:    The extra ggplot2 statements.
-		`devpars`:The parameters for the plot device. Default: `Box(height = 2000, width = 2000, res = 300)`
+		`devpars`:The parameters for the plot device. Default: `Diot(height = 2000, width = 2000, res = 300)`
 	"""
 	pCorr2        = Proc(desc = 'Calculate correlation coefficient between instances of two files')
 	pCorr2.input  = 'infile1:file, infile2:file'
@@ -715,17 +714,17 @@ def _pCorr2():
 		'outfile:file:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr/{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr.txt',
 		'outdir:dir:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr'
 	]
-	pCorr2.args.inopts1 = Box()
-	pCorr2.args.inopts2 = Box()
+	pCorr2.args.inopts1 = Diot()
+	pCorr2.args.inopts2 = Diot()
 	pCorr2.args.method  = 'pearson' # spearman, kendall
 	pCorr2.args.pval    = False
 	pCorr2.args.fdr     = False # method: 'BH'
 	pCorr2.args.outfmt  = 'pairs' # matrix
 	pCorr2.args.plot    = False
-	pCorr2.args.params  = Box() # the parameters for plot.heatmap
-	pCorr2.args.ggs     = Box() # extra ggplot statements
-	pCorr2.args.devpars = Box(height = 2000, width = 2000, res = 300)
-	pCorr2.envs.rimport = rimport
+	pCorr2.args.params  = Diot() # the parameters for plot.heatmap
+	pCorr2.args.ggs     = Diot() # extra ggplot statements
+	pCorr2.args.devpars = Diot(height = 2000, width = 2000, res = 300)
+	# pCorr2.envs.rimport = rimport
 	pCorr2.lang         = params.Rscript.value
 	pCorr2.script       = "file:scripts/stats/pCorr2.r"
 	return pCorr2
@@ -784,15 +783,15 @@ def _pDiffCorr():
 		'outfile:file:{{i.infile | fn2}}.diffcorr/{{i.infile | fn2}}.diffcorr.txt',
 		'outdir:dir:{{i.infile | fn2}}.diffcorr'
 	]
-	pDiffCorr.args.inopts  = Box(cnames = True, rnames = True)
+	pDiffCorr.args.inopts  = Diot(cnames = True, rnames = True)
 	pDiffCorr.args.method  = 'pearson' # spearman
 	pDiffCorr.args.pval    = 0.05
 	pDiffCorr.args.fdr     = True # BH
 	pDiffCorr.args.fdrfor  = 'case'
 	pDiffCorr.args.plot    = False
-	pDiffCorr.args.ggs     = Box() # extra ggplot statements
-	pDiffCorr.args.devpars = Box(height = 2000, width = 2000, res = 300)
-	pDiffCorr.envs.rimport = rimport
+	pDiffCorr.args.ggs     = Diot() # extra ggplot statements
+	pDiffCorr.args.devpars = Diot(height = 2000, width = 2000, res = 300)
+	# pDiffCorr.envs.rimport = rimport
 	pDiffCorr.lang         = params.Rscript.value
 	pDiffCorr.script       = "file:scripts/stats/pDiffCorr.r"
 	return pDiffCorr
@@ -811,7 +810,7 @@ def _pBootstrap():
 			- depends on the `args.stats` function
 		`outdir:dir`: The directory to save the outfile and figures.
 	@args:
-		`inopts`:  The options to read the input file. Default: `Box(cnames = True, rnames = True)`
+		`inopts`:  The options to read the input file. Default: `Diot(cnames = True, rnames = True)`
 		`params`:  Other parameters for `boot` function from R `boot` package
 		`nthread`: # of threads(cores) to use. Default: `1`
 		`n`: Sampling how many times? Default: `1000`
@@ -831,14 +830,14 @@ def _pBootstrap():
 		'outfile:file:{{i.infile | fn2}}.boot/{{i.infile | fn2}}.boot.txt',
 		'outdir:dir:{{i.infile | fn2}}.boot'
 	]
-	pBootstrap.args.inopts  = Box(cnames = True, rnames = True)
-	pBootstrap.args.params  = Box()
+	pBootstrap.args.inopts  = Diot(cnames = True, rnames = True)
+	pBootstrap.args.params  = Diot()
 	pBootstrap.args.nthread = 1
 	pBootstrap.args.n       = 1000
 	pBootstrap.args.stats   = 'function(x) x'
 	pBootstrap.args.plot    = 'all'
-	pBootstrap.args.devpars = Box(height = 2000, width = 2000, res = 300)
-	pBootstrap.envs.rimport = rimport
+	pBootstrap.args.devpars = Diot(height = 2000, width = 2000, res = 300)
+	# pBootstrap.envs.rimport = rimport
 	pBootstrap.lang         = params.Rscript.value
 	pBootstrap.script       = "file:scripts/stats/pBootstrap.r"
 	return pBootstrap
@@ -861,36 +860,35 @@ def _pPCA():
 		outfile: The file with the components
 		oudir  : The directory containing the output file and plots.
 	@args:
-		devpars (Box)        : The parameters for plotting device.
-		inopts  (Box)        : The options to read the input files.
+		devpars (Diot)        : The parameters for plotting device.
+		inopts  (Diot)        : The options to read the input files.
 		na      (bool|number): How to deal with `NA` values.
 			- A logistic/boolean value will remove them (use `complete.cases`)
 			- Otherwise, it will be replaced by the given value.
-		plots (Box): Plotting parameters supported by `PCAtools`. Set `False` to disable a plot.
+		plots (Diot): Plotting parameters supported by `PCAtools`. Set `False` to disable a plot.
 			- scree: A scree plot. See `?screeplot`
 				- Since `PCAtools::screeplot` returns a ggplot object, we have `args.plots.scree.ggs` to extend the plot.
 			- bi: A bi-plot. See `?biplot`
 			- pairs: A pairs plot. See `?pairsplot`
 			- loadings: A loadings plot. See `?plotloadings`
 			- eigencor: An eigencor plot. See `?eigencorplot`
-		params (Box): Other parameters for `PCAtools::pca`
+		params (Diot): Other parameters for `PCAtools::pca`
 		npc (int|str): The number of PCs to write to the output file.
 			- A fixed number of PCs; or
 			- one of `horn` or `elbow` to determine the optimal number of PCs.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Perform PCA analysis using PCAtools',
 		input  = 'infile:file, metafile:file',
 		output = [	'outfile:file:{{i.infile | stem | stem}}.pca/{{i.infile | stem | stem}}.pcs.txt',
 					'outdir:dir:{{i.infile | stem | stem}}.pca'],
 		lang = params.Rscript.value,
-		args = Box(
-			devpars = Box(height = 2000, width = 2000, res = 300),
-			inopts  = Box(cnames = True, rnames = True),
-			params  = Box(),
+		args = Diot(
+			devpars = Diot(height = 2000, width = 2000, res = 300),
+			inopts  = Diot(cnames = True, rnames = True),
+			params  = Diot(),
 			na      = 0,
-			plots   = Box(scree = True, bi = True, pairs = True, loadings = True, eigencor = True),
+			plots   = Diot(scree = True, bi = True, pairs = True, loadings = True, eigencor = True),
 			npc     = 'elbow'
 		)
 	)
-

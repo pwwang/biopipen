@@ -1,6 +1,6 @@
 import sys
 from os import path, makedirs
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import mem2, shell2 as shell
 
 infile          = {{i.infile | quote}}
@@ -59,13 +59,19 @@ def run_vep():
 	if not path.exists(dbs):
 		raise ValueError('Database does not exist: {}'.format(dbs))
 
+	genomes = dict(
+		hg19 = 'GRCh37',
+		hg38 = 'GRCh38',
+	)
+
 	params.i        = infile
 	params.o        = outfile
 	params.format   = 'vcf'
 	params.vcf      = True
 	params.cache    = True
 	params.dir      = dbs
-	params.assembly = genome
+	params.offline  = params.get('offline', True)
+	params.assembly = genomes.get(genome, genome)
 	shell.fg.vep(**params)
 
 	if gz:
@@ -76,7 +82,7 @@ def run_annovar():
 		raise ValueError('Database does not exist: {}'.format(dbs))
 	import vcf
 	avinput              = path.join(outdir, infile + '.avinput')
-	avparams             = Box()
+	avparams             = Diot()
 	avparams.includeinfo = True
 	avparams.allsample   = True
 	avparams.withfreq    = True

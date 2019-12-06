@@ -77,17 +77,17 @@ if (endsWith(gpfile, ".bed")) {
 }
 
 Matrix_eQTL_main(
-	snps = snps, 
-	gene = gene, 
-	cvrt = cvrt, 
-	output_file_name = outfile, 
+	snps = snps,
+	gene = gene,
+	cvrt = cvrt,
+	output_file_name = outfile,
 	pvOutputThreshold = {{args.pval}},
-	useModel = {{args.model | lambda x: 'r:' + x | R}}, 
-	errorCovariance = numeric(), 
-	verbose=T, 
+	useModel = {{args.model | lambda x: 'r:' + x | R}},
+	errorCovariance = numeric(),
+	verbose=T,
 	output_file_name.cis  = cisfile,
 	pvOutputThreshold.cis = {{args.cisopts.cispv}},
-	snpspos = snpspos, 
+	snpspos = snpspos,
 	genepos = genepos,
 	cisDist = {{args.cisopts.dist}},
 	noFDRsaveMemory = !{{args.fdr | R}}
@@ -97,13 +97,13 @@ if (!file.exists(outfile))
 	file.create(outfile)
 {% else %}
 Matrix_eQTL_engine(
-	snps = snps, 
-	gene = gene, 
-	cvrt = cvrt, 
-	output_file_name = outfile, 
-	pvOutputThreshold = {{args.pval}}, 
-	useModel = {{args.model | lambda x: 'r:' + x | R}}, 
-	errorCovariance = numeric(), 
+	snps = snps,
+	gene = gene,
+	cvrt = cvrt,
+	output_file_name = outfile,
+	pvOutputThreshold = {{args.pval}},
+	useModel = {{args.model | lambda x: 'r:' + x | R}},
+	errorCovariance = numeric(),
 	verbose = T,
 	noFDRsaveMemory = !{{args.fdr | R}}
 )

@@ -1,5 +1,5 @@
 from pysam import VariantFile as Vcf
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import alwaysList
 
 infile   = {{ i.infile | quote}}
@@ -22,5 +22,3 @@ for rec in invcf.fetch():
 	parts[6] = filters
 	outvcf.write('\t'.join(parts))
 outvcf.close()
-
-

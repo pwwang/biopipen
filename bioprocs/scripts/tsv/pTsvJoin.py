@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import regionOverlap, log2pyppl
 from bioprocs.utils.tsvio2 import TsvJoin
 

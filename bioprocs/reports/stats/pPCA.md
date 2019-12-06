@@ -10,7 +10,7 @@ PCAtools[1] provides functions for data exploration via PCA, and allows the user
 	{%- if forloop.length > 1 %}
 ## {{job.i.infile | stem}}
 	{%- endif %}
-	{%- assign hash = forloop.length | ?:_>1 | :'#' | :'' %}
+	{%- assign hash = forloop.length | ?:_>1 | =:'#' | !:'' %}
 
 	{%- assign plots = job.o.outdir, '*.png' | *glob1: first = False %}
 	{%- if plots %}

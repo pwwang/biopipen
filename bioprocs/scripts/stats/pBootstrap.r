@@ -19,8 +19,8 @@ devpars = {{args.devpars | R}}
 n       = {{args.n | R}}
 stats   = {{args.stats}}
 
-# boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"), 
-#      strata = rep(1,n), L = NULL, m = 0, weights = NULL, 
+# boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
+#      strata = rep(1,n), L = NULL, m = 0, weights = NULL,
 #      ran.gen = function(d, p) d, mle = NULL, simple = FALSE, ...,
 #      parallel = c("no", "multicore", "snow"),
 #      ncpus = getOption("boot.ncpus", 1L), cl = NULL)

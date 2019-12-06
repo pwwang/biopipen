@@ -16,4 +16,3 @@ for infile in infiles:
 	reader.close()
 
 writer.close()
-

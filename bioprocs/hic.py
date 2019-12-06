@@ -1,7 +1,7 @@
 """
 Some long range interaction processes, not necessarily Hi-C
 """
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -28,9 +28,8 @@ def _pPartners():
 	pPartners                = Proc(desc = 'Find the interaction partners of the regions in input file.')
 	pPartners.input          = "regfile:file, intfile:file"
 	pPartners.output         = "outfile:file:{{i.regfile | fn2}}-{{i.intfile | fn2}}.partners.bedx"
-	pPartners.args.regopts   = Box(ftype = "auto") # bed,   bedx
-	pPartners.args.intopts   = Box(ftype = "auto") # bedpe, chiapet.tool, hiclib, bed12
+	pPartners.args.regopts   = Diot(ftype = "auto") # bed,   bedx
+	pPartners.args.intopts   = Diot(ftype = "auto") # bedpe, chiapet.tool, hiclib, bed12
 	pPartners.lang           = params.python.value
 	pPartners.script         = "file:scripts/hic/pPartners.py"
 	return pPartners
-

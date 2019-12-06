@@ -1,7 +1,7 @@
 from os import path, makedirs
 from shutil import rmtree
 from sys import stderr
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import mem2, shell2 as shell
 from bioprocs.utils.reference import bamIndex
 
@@ -78,7 +78,7 @@ def run_gatk():
 		T = 'MuTect2',
 		**params)
 	if gz:
-		shell.gzip(outfile)
+		shell.bgzip(outfile)
 
 def run_somaticsniper():
 	params.f   = ref
@@ -86,7 +86,7 @@ def run_somaticsniper():
 	params[''] = [tumor, normal, outfile]
 	shell.fg.somaticsniper(**params)
 	if gz:
-		shell.gzip(outfile)
+		shell.bgzip(outfile)
 
 def run_snvsniffer():
 	# generate a header file
@@ -101,9 +101,10 @@ def run_snvsniffer():
 	params[''] = [theader, nheader, tumor, normal]
 	shell.fg.snvsniffer.somatic(**params)
 	if gz:
-		shell.gzip(outfile)
+		shell.bgzip(outfile)
 
 def _mergeAndAddGT(snvvcf, indvcf, outfile):
+	"""Merge indels and snvs, and add genotypes"""
 	from pysam import VariantFile
 	snv = VariantFile(snvvcf)
 	ind = VariantFile(indvcf)
@@ -139,8 +140,8 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 	headers = str(snv.header).splitlines()
 	cnames  = headers[-1].split("\t")
 
-	cnames [-2] = nprefix
-	cnames [-1] = tprefix
+	cnames [-2] = tprefix
+	cnames [-1] = nprefix
 	headers[-1] = "\t".join(cnames)
 	out.write("\n".join(headers) + "\n")
 
@@ -188,16 +189,31 @@ def _mergeAndAddGT(snvvcf, indvcf, outfile):
 
 		if r1 and r2:
 			if (contigs.index(r1.chrom), r1.pos) < (contigs.index(r2.chrom), r2.pos):
-				out.write(str(r1))
+				#r1.samples['TUMOR'], r1.samples['NORMAL'] = r1.samples['NORMAL'], r1.samples['TUMOR']
+				parts = str(r1).rstrip().split('\t')
+				parts[-2], parts[-1] = parts[-1], parts[-2]
+				out.write('\t'.join(parts) + '\n')
 				r1 = None
 			else:
-				out.write(str(r2))
+				#r2.samples['TUMOR'], r2.samples['NORMAL'] = r2.samples['NORMAL'], r2.samples['TUMOR']
+				#out.write(str(r2))
+				parts = str(r2).rstrip().split('\t')
+				parts[-2], parts[-1] = parts[-1], parts[-2]
+				out.write('\t'.join(parts) + '\n')
 				r2 = None
 		elif r1:
-			out.write(str(r1))
+			#r1.samples['TUMOR'], r1.samples['NORMAL'] = r1.samples['NORMAL'], r1.samples['TUMOR']
+			#out.write(str(r1))
+			parts = str(r1).rstrip().split('\t')
+			parts[-2], parts[-1] = parts[-1], parts[-2]
+			out.write('\t'.join(parts) + '\n')
 			r1 = None
 		elif r2:
-			out.write(str(r2))
+			#r2.samples['TUMOR'], r2.samples['NORMAL'] = r2.samples['NORMAL'], r2.samples['TUMOR']
+			#out.write(str(r2))
+			parts = str(r2).rstrip().split('\t')
+			parts[-2], parts[-1] = parts[-1], parts[-2]
+			out.write('\t'.join(parts) + '\n')
 			r2 = None
 		else:
 			break
@@ -221,7 +237,7 @@ def run_strelka():
 	indvcf = path.join(joboutdir, 'results', 'variants', 'somatic.indels.vcf.gz')
 	_mergeAndAddGT(snvvcf, indvcf, outfile)
 	if gz:
-		shell.gzip(outfile)
+		shell.bgzip(outfile)
 
 def run_virmid():
 	params.R = ref
@@ -236,7 +252,7 @@ def run_virmid():
 
 	shell.mv(path.join(joboutdir, '*.virmid.som.passed.vcf'), outfile)
 	if gz:
-		shell.gzip(outfile)
+		shell.bgzip(outfile)
 
 def run_vardict():
 	params.v    = True
@@ -246,7 +262,7 @@ def run_vardict():
 	shell.fg.vardict(**params)
 
 	if gz:
-		shell.gzip(outfile)
+		shell.bgzip(outfile)
 
 tools = {
 	'gatk'         : run_gatk,

@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from collections import OrderedDict
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
@@ -110,7 +110,7 @@ else:
 
 	shell.load_config(vcftools = vcftools)
 
-	params = Box()
+	params = Diot()
 	params.snps = snplist
 	params.recode = True
 	params.out = path.join(joboutdir, 'tmp')

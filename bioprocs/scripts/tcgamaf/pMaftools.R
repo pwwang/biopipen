@@ -119,7 +119,7 @@ nsample = nrow(samsum)
 
 if (is.true(msdir) && dir.exists(msdir)) {
 	siggene = c(
-		Sys.glob(file.path(msdir, '*sig_genes.txt.gz')), 
+		Sys.glob(file.path(msdir, '*sig_genes.txt.gz')),
 		Sys.glob(file.path(msdir, '*sig_genes.txt')))[1]
 } else if (is.true(msdir) && file.exists(msdir)) {
 	siggene = msdir
@@ -525,12 +525,12 @@ if (plots$pfam) {
 		{
 			pfam = do.call(pfamDomains, params)
 			pfsum = pfam$proteinSummary
-			# add link to domains 
+			# add link to domains
 			pfsum$DomainLabel = sapply(
-				pfsum$DomainLabel, 
+				pfsum$DomainLabel,
 				function(x) {sprintf("[%s](https://www.ncbi.nlm.nih.gov/cdd/?term=%s)", x, x)})
 			write.table(
-				pfsum[!is.na(pfsum$DomainLabel), 1:7, with=FALSE], 
+				pfsum[!is.na(pfsum$DomainLabel), 1:7, with=FALSE],
 				file.path(outdir, 'pfam.csv'),
 				row.names = FALSE, col.names = TRUE, sep = ",", quote = FALSE)
 
@@ -747,8 +747,3 @@ if (plots$signature) {
 
 
 }
-
-
-
-
-

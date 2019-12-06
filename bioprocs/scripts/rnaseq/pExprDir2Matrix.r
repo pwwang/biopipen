@@ -29,7 +29,7 @@ exp = NULL
 for (efile in Sys.glob(pattern)) {
 
 	logger("Reading", efile, "...")
-	
+
 	sample = tools::file_path_sans_ext(basename(efile))
 	sample = fn2sample(sample)
 

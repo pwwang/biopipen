@@ -1,10 +1,10 @@
 import sys
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
 hfile    = {{i.hfile | quote}}
-samfile  = {{i.samfile or args.params.get('s', args.params.get('samples')) | repr}}
+samfile  = {{i.samfile | ?!:args.params.get('s', args.params.get('samples')) | repr}}
 outfile  = {{o.outfile | quote}}
 bcftools = {{args.bcftools | quote}}
 params   = {{args.params | repr}}

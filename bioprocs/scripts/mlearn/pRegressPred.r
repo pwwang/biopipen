@@ -77,7 +77,7 @@ if (outopts$auc || is.list(plotroc)) {
 	}
 	nrows = nrow(rocdata)
 	aucs = plot.roc(
-		rocdata, 
+		rocdata,
 		plotfile = file.path(outdir, {{i.infile | fn2 | @append: '.roc.png' | quote}}),
 		stacked  = FALSE,
 		params   = c(list(returnAUC = TRUE), plotroc),

@@ -35,7 +35,7 @@ optional arguments:
 						removed(somatic) or not(all)
 """
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 
@@ -157,4 +157,3 @@ params.d = outdir
 params.o = outstem
 
 shell.fg.allfit(**params)
-

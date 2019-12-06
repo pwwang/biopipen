@@ -1,4 +1,4 @@
-{{rimport}}('plot.r', '__init__.r', 'sampleinfo.r')
+{{ 'plot.r', '__init__.r', 'sampleinfo.r' | *rimport }}
 
 library(methods)
 options(stringsAsFactors = FALSE)
@@ -7,8 +7,8 @@ set.seed(8525)
 exprfile  = {{i.efile | R}}
 groupfile = {{i.gfile | R}}
 cutoff    = {{args.cutoff | ?isinstance: dict
-						  | :{"by": _.get("by", "p"), "value": _.get("value", .05)}
-						  | :{"by": "p", "value": _, "sign": "<"} | R }}
+						  | =:{"by": _.get("by", "p"), "value": _.get("value", .05)}
+						  | !:{"by": "p", "value": _, "sign": "<"} | R }}
 outdir    = {{o.outdir | R}}
 allfile   = {{o.outfile | prefix | prefix | @append: ".all.xls" | quote}}
 upfile    = {{o.outfile | prefix | prefix | @append: ".up.xls" | quote}}

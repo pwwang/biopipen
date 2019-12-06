@@ -7,7 +7,7 @@ outfile  = {{o.outfile  | quote}}
 
 #
 # A+	B+	4
-# A-	B-	175 
+# A-	B-	175
 # A+	B-	12
 # A-	B+	1
 #
@@ -46,7 +46,7 @@ for (name in names(cont.tables)) {
 {% else %}
 
 #
-# 
+#
 #    | A | B | ... | X |
 # ---+---+---+-----+---+
 # S1 | 1 | 0 | ... | 1 |
@@ -65,7 +65,7 @@ cont.tables = list()
 for (name1 in it.names) {
 	for (name2 in it.names) {
 		if (name1 >= name2) next
-		
+
 		name1plus  = paste0(name1, '+')
 		name1minus = paste0(name1, '-')
 		name2plus  = paste0(name2, '+')
@@ -77,12 +77,12 @@ for (name1 in it.names) {
 		cont.table = matrix(0, ncol = 2, nrow = 2)
 		rownames(cont.table) = c(name1plus, name1minus)
 		colnames(cont.table) = c(name2plus, name2minus)
-		
+
 		cont.table[name1plus, name2plus]   = length(intersect(name1plus.cols, name2plus.cols))
 		cont.table[name1plus, name2minus]  = length(intersect(name1plus.cols, name2minus.cols))
 		cont.table[name1minus, name2plus]  = length(intersect(name1minus.cols, name2plus.cols))
 		cont.table[name1minus, name2minus] = length(intersect(name1minus.cols, name2minus.cols))
-		
+
 		name = paste(name1, name2, sep = '.vs.')
 		cont.tables[[name]] = cont.table
 	}
@@ -98,7 +98,7 @@ pvals = c()
 ct.names = names(cont.tables)
 for (name in ct.names) {
 	rets[[name]] = fisher.test(cont.tables[[name]])
-	pvals = c(pvals, rets[[name]]$p.value)	
+	pvals = c(pvals, rets[[name]]$p.value)
 }
 qvals = p.adjust(pvals, method = {{args.padj | quote}})
 rm (pvals)
@@ -115,9 +115,9 @@ for (i in 1:length(ct.names)) {
 		ApBa        = cont.table[1,2],
 		AaBp        = cont.table[2,1],
 		AaBa        = cont.table[2,2],
-		confInt1    = ret$conf.int[1], 
-		confInt2    = ret$conf.int[2], 
-		oddsRatio   = ret$estimate, 
+		confInt1    = ret$conf.int[1],
+		confInt2    = ret$conf.int[2],
+		oddsRatio   = ret$estimate,
 		pval        = ret$p.value,
 		qval        = qval,
 		alternative = ret$alternative,
@@ -128,6 +128,3 @@ for (i in 1:length(ct.names)) {
 }
 
 write.table(pretty.numbers(out, formats = list(pval..qval = '%.2E', ApBp..ApBa..AaBp..AaBa = '%d', confInt1..confInt2..oddsRatio = '%.3f')), outfile, col.names = T, row.names = F, sep = "\t", quote = F)
-
-
-

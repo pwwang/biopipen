@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import mem2, logger, shell2 as shell
 
 infile   = {{i.infile | quote}}
@@ -36,13 +36,13 @@ if tool == 'picard':
 	params['-Djava.io.tmpdir'] = tmpdir
 	shell.fg.picard.LiftoverVcf(**params)
 
-	# check if samples being swapped 
+	# check if samples being swapped
 	# picard LiftoverVcf did that and no options to correct
 	samples_old = shell.bcftools.query(l = infile).strip().splitlines()
 	samples_new = shell.bcftools.query(l = outfile).strip().splitlines()
 	if samples_old == samples_new:
 		exit(0)
-	
+
 	orders = [samples_new.index(sample) for sample in samples_old]
 	tmpfile = outfile + '.sampleorder_incorrect'
 	shell.mv(outfile, tmpfile)

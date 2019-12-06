@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{ i.infile | quote}}
@@ -6,7 +6,7 @@ outfile = {{o.outfile | quote}}
 out     = {{args.out | quote}}
 outopts = {{args.outopts |repr}}
 
-CNAMES = Box(
+CNAMES = Diot(
 	tumor  = ['TUMOR'],
 	normal = ['NORMAL'],
 	both   = ['TUMOR', 'NORMAL']

@@ -40,5 +40,3 @@ colnames(exprs) = paste0(glabel, 1:ngenes)
 rownames(exprs) = paste0(slabel, 1:nsamples)
 
 write.table(t(exprs), outfile, sep = "\t", quote = FALSE, row.names = TRUE, col.names = TRUE)
-
-

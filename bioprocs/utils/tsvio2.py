@@ -18,7 +18,8 @@ class TsvRecord(object):
 			self.__keys = None
 
 	def attachKeys(self, keys):
-		assert len(keys) == len(self.__vals)
+		if (len(keys) != len(self.__vals)):
+			raise KeyError("Line doesn't have {} columns: {}".format(len(keys), self.__vals))
 		self.__keys = dict(zip(keys, range(len(keys))))
 
 	def keys(self):
@@ -346,5 +347,3 @@ class TsvJoin(object):
 				rows = [None] * self.length
 				continue
 		out.close()
-
-

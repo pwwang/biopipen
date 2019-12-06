@@ -3,9 +3,8 @@ A set of processes to generate/process fastq/fasta files
 """
 
 from os import path
-from pyppl import Proc, Box
-from . import params, bashimport
-from . import delefactory, procfactory
+from pyppl import Proc, Diot
+from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -26,83 +25,89 @@ def _getCommonName(f1, f2):
 @procfactory
 def _pFastq2Expr():
 	"""
-	@name:
-		pFastq2Expr
-	@description:
-		Use Kallisto to get gene expression from pair-end fastq files.
 	@input:
-		`fqfile1:file`: The fastq file1.
-		`fqfile2:file`: The fastq file2.
+		fqfile1: The fastq file1.
+		fqfile2: The fastq file2.
 	@output:
-		`outfile:file`: The expression file
-		`outdir:dir`  : Output direcotry with expression and other output files
+		outfile: The expression file
+		outdir : Output direcotry with expression and other output files
 	@args:
-		`params`  : Other parameters for `kallisto quant`. Default: `Box()`
-		`idxfile` : The kallisto index file. Default: `params.kallistoIdx`
-		`kallisto`: The path to `kallisto`. Default: `params.kallisto`
-		`nthread` : # threads to use. Default: `1`
+		params   (Diot) : Other parameters for `kallisto quant`.
+		idxfile  (path): The kallisto index file.
+		kallisto (path): The path to `kallisto`.
+		nthread  (int) : # threads to use.
 	"""
-	pFastq2Expr        = Proc(desc = 'Use Kallisto to get gene expression from pair-end fastq files.')
-	pFastq2Expr.input  = "fqfile1:file, fqfile2:file"
-	pFastq2Expr.output = [
-		"outfile:file:{{i.fqfile1, i.fqfile2 | *commonname}}/{{i.fqfile1, i.fqfile2 | *commonname}}.expr.txt",
-		"outdir:dir:{{i.fqfile1, i.fqfile2 | *commonname}}"
-	]
-	pFastq2Expr.args.params     = Box()
-	pFastq2Expr.args.idxfile    = params.kallistoIdx.value
-	pFastq2Expr.args.kallisto   = params.kallisto.value
-	pFastq2Expr.args.nthread    = 1
-	pFastq2Expr.envs.commonname = lambda f1, f2, path = __import__('os').path: path.basename(path.commonprefix([f1, f2])).rstrip('_. ,[]')
-	pFastq2Expr.envs.bashimport = bashimport
-	pFastq2Expr.preCmd          = """
-	{{bashimport}} reference.bash
-	reference kallisto {{args.idxfile | squote}}
-	"""
-	pFastq2Expr.lang   = params.python.value
-	pFastq2Expr.script = "file:scripts/fastx/pFastq2Expr.py"
-	return pFastq2Expr
+	return Diot(
+		desc   = 'Call gene expression from pair-end fastq files using kallisto.',
+		lang   = params.python.value,
+		input  = 'fqfile1:file, fqfile2:file',
+		output = [
+			'outfile:file:{{	i.fqfile1, i.fqfile2 | \
+							__import__("os").path.commonprefix | \
+							.rstrip("._[]") | bn }}.kallisto/{{i.fqfile1, i.fqfile2 | \
+							__import__("os").path.commonprefix | \
+							.rstrip("._[]") | bn }}.expr.txt',
+			'outdir:dir:{{	i.fqfile1, i.fqfile2 | \
+							__import__("os").path.commonprefix | \
+							.rstrip("._[]") | bn }}.kallisto'
+		],
+		preCmd = """
+			{{"reference.bash" | bashimport}}
+			reference kallisto {{args.idxfile | quote}}
+		""",
+		args = Diot(
+			kallisto = params.kallisto.value,
+			params   = Diot(),
+			nthread  = 1,
+			idxfile  = params.kallistoIdx.value,
+		)
+	)
 
 @procfactory
 def _pFastqSim():
 	"""
-	@name:
-		pFastqSim
-	@description:
-		Simulate reads
 	@input:
 		`seed`: The seed to generate simulation file
 			- None: use current timestamp.
 	@output:
-		`fq1:file`: The first pair read file
-		`fq2:file`: The second pair read file
+		fq1: The first pair read file
+		fq2: The second pair read file
 	@args:
-		`tool`:  The tool used for simulation. Default: wgsim (dwgsim)
-		`len1`:  The length of first pair read. Default: 100
-		`len2`:  The length of second pair read. Default: 100
-		`num`:   The number of read PAIRs. Default: 1000000
-		`gz`:    Whether generate gzipped read file. Default: True
-		`wgsim`: The path of wgsim. Default: wgsim
-		`dwgsim`:The path of wgsim. Default: dwgsim
-		`ref`:   The reference genome. Required
-		`params`:Other params for `tool`. Default: ""
+		tool (str) : The tool used for simulation. Could be one of:
+			- wgsim/dwgsim/art_illumina
+		len1         (int) : The length of first pair read.
+		len2         (int) : The length of second pair read.
+		num          (int) : The number of read PAIRs.
+		gz           (bool): Whether generate gzipped read file.
+		wgsim        (path): The path of wgsim.
+		dwgsim       (path): The path of wgsim.
+		art_illumina (path): The path of art_illumina.
+		ref          (path): The reference genome. Required
+		params       (Diot) : Other params for the tool
 	@requires:
-		[`wgsim`](https://github.com/lh3/wgsim)
+		[wgsim](https://github.com/lh3/wgsim)
+		[dwgsim](https://github.com/nh13/DWGSIM)
+		[art](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/): `conda install -c bioconda art`
 	"""
-	pFastqSim             = Proc(desc = 'Simulate pair-end reads.')
-	pFastqSim.input       = "seed"
-	pFastqSim.output      = "fq1:file:read{{i.seed}}_1.fastq{% if args.gz %}.gz{% endif %}, fq2:file:read{{i.seed}}_2.fastq{% if args.gz %}.gz{% endif %}"
-	pFastqSim.args.tool   = 'wgsim'
-	pFastqSim.args.wgsim  = params.wgsim.value
-	pFastqSim.args.dwgsim = params.dwgsim.value
-	pFastqSim.args.len1   = 100
-	pFastqSim.args.len2   = 100
-	pFastqSim.args.num    = 1000000
-	pFastqSim.args.gz     = False
-	pFastqSim.args.params = Box()
-	pFastqSim.args.ref    = params.ref.value
-	pFastqSim.lang        = params.python.value
-	pFastqSim.script      = "file:scripts/fastx/pFastqSim.py"
-	return pFastqSim
+	return Diot(
+		desc   = 'Simulation of pair-end reads',
+		lang   = params.python.value,
+		input  = 'seed',
+		output = [	'fq1:file:read_seed{{i.seed}}_1.fq{{args.gz | ? | =:".gz" | !:""}}',
+					'fq2:file:read_seed{{i.seed}}_2.fq{{args.gz | ? | =:".gz" | !:""}}'],
+		args = Diot(
+			tool         = 'dwgsim',
+			wgsim        = params.wgsim.value,
+			dwgsim       = params.dwgsim.value,
+			art_illumina = params.art_illumina.value,
+			len1         = 150,
+			len2         = 150,
+			num          = 1000000,
+			gz           = False,
+			params       = Diot(),
+			ref          = params.ref.value,
+		)
+	)
 
 @procfactory
 def _pFastQC():
@@ -129,7 +134,7 @@ def _pFastQC():
 	pFastQC.args.tool       = 'fastqc'
 	pFastQC.args.fastqc     = params.fastqc.value
 	pFastQC.args.nthread    = 1
-	pFastQC.args.params     = Box()
+	pFastQC.args.params     = Diot()
 	pFastQC.lang            = params.python.value
 	pFastQC.envs.getFastqFn = _getFastqFn
 	pFastQC.script          = "file:scripts/fastx/pFastQC.py"
@@ -158,7 +163,7 @@ def _pFastMC():
 	pFastMC.output       = "outdir:dir:{{i.qcdir | fn}}.multiqc"
 	pFastMC.args.tool    = 'multiqc'
 	pFastMC.args.multiqc = params.multiqc.value
-	pFastMC.args.params  = Box()
+	pFastMC.args.params  = Diot()
 	pFastMC.lang         = params.python.value
 	pFastMC.script       = "file:scripts/fastx/pFastMC.py"
 	return pFastMC
@@ -196,21 +201,21 @@ def _pFastqTrim():
 		[`skewer`](https://github.com/relipmoc/skewer)
 		[`trimmomatic`](https://github.com/timflutre/trimmomatic)
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Trim pair-end reads in fastq file.',
 		lang   = params.python.value,
-		envs   = Box(getFastqFn = _getFastqFn),
+		envs   = Diot(getFastqFn = _getFastqFn),
 		input  = "fq1:file, fq2:file",
 		output = [
 			"outfq1:file:{{i.fq1 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}",
 			"outfq2:file:{{i.fq2 | getFastqFn}}.fastq{% if args.gz %}.gz{% endif %}"
 		],
-		args = Box(
+		args = Diot(
 			tool        = 'skewer',
 			cutadapt    = params.cutadapt.value,
 			skewer      = params.skewer.value,
 			trimmomatic = params.trimmomatic.value,
-			params      = Box(),
+			params      = Diot(),
 			nthread     = 1,
 			gz          = False,
 			mem         = params.mem4G.value,
@@ -263,7 +268,7 @@ def _pFastqSETrim():
 	pFastqSETrim.args.cutadapt    = params.cutadapt.value
 	pFastqSETrim.args.skewer      = params.skewer.value
 	pFastqSETrim.args.trimmomatic = params.trimmomatic.value
-	pFastqSETrim.args.params      = Box()
+	pFastqSETrim.args.params      = Diot()
 	pFastqSETrim.args.nthread     = 1
 	pFastqSETrim.args.gz          = False
 	pFastqSETrim.args.mem         = params.mem4G.value
@@ -306,11 +311,11 @@ def _pFastqSE2Sam():
 	pFastqSE2Sam.args.samtools      = params.samtools.value
 	pFastqSE2Sam.args.bowtie2       = params.bowtie2.value
 	pFastqSE2Sam.args.bowtie2_build = params.bowtie2.value + '-build'
-	pFastqSE2Sam.args.rg            = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = '')
+	pFastqSE2Sam.args.rg            = Diot(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = '')
 	pFastqSE2Sam.args.ref           = params.ref.value
 	pFastqSE2Sam.args.refgene       = params.refgene.value
 	pFastqSE2Sam.args.nthread       = 1
-	pFastqSE2Sam.args.params        = Box()
+	pFastqSE2Sam.args.params        = Diot()
 	pFastqSE2Sam.envs.getFastqFn    = _getFastqFn
 	pFastqSE2Sam.lang               = params.python.value
 	pFastqSE2Sam.script             = "file:scripts/fastx/pFastqSE2Sam.py"
@@ -335,14 +340,14 @@ def _pFastq2Sam():
 		`refexon`: The GTF file for STAR to build index. It's not neccessary if index is already been built.
 		`params` : Other params for tool
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Map cleaned paired fastq file to reference genome.',
 		lang   = params.python.value,
 		input  = "fq1:file, fq2:file",
 		output = "outfile:file:{{i.fq1, i.fq2 | path.commonprefix | bn | .rstrip: '_. ,[]' }}.{{args.outfmt}}",
-		envs   = Box(path = path),
+		envs   = Diot(path = path),
 		preCmd = """
-			{{bashimport}} reference.bash
+			{{"reference.bash" | bashimport}}
 			export bwa={{args.bwa | squote}}
 			export ngm={{args.ngm | squote}}
 			export star={{args.star | squote}}
@@ -351,7 +356,7 @@ def _pFastq2Sam():
 			export nthread={{args.nthread}}
 			export refexon={{args.refexon | squote}}
 			reference {{args.tool | squote}} {{args.ref | squote}}""",
-		args = Box(
+		args = Diot(
 			tool     = 'bwa',
 			outfmt   = 'sam',
 			bwa      = params.bwa.value,
@@ -359,11 +364,10 @@ def _pFastq2Sam():
 			star     = params.star.value,
 			samtools = params.samtools.value,
 			bowtie2  = params.bowtie2.value,
-			rg       = Box(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = ''),
+			rg       = Diot(id = '', pl = 'Illumina', pu = 'unit1', lb = 'lib1', sm = ''),
 			ref      = params.ref.value,
 			refexon  = params.refexon.value,
 			nthread  = 1,
-			params   = Box()
+			params   = Diot()
 		)
 	)
-

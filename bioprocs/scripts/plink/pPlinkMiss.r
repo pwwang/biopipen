@@ -73,5 +73,3 @@ plot.histo(
 	devpars = devpars
 )
 {% endif %}
-
-

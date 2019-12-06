@@ -668,9 +668,11 @@ plot.volplot = function(data,
 	colnames(data) = ifelse(is.pval, c('logFC', 'log10.P.'), c('logFC', 'log10.FDR.'))
 	data[, 2] = -log10(data[, 2])
 
-	pcutlabel = round(params$pcut, 3)
-	params$pcut = -log10(params$pcut)
-	data$Group = apply(data, 1, function(row) {
+	default.params = list(logfccut = 2, pcut = 0.05, hilight = 5)
+	params         = update.list(default.params, params)
+	pcutlabel      = round(params$pcut, 3)
+	params$pcut    = -log10(params$pcut)
+	data$Group     = apply(data, 1, function(row) {
 		if (row[1]>=params$logfccut && row[2]>params$pcut) {
 			'UP_SIG'
 		} else if (row[1]<=-params$logfccut && row[2]>params$pcut) {
@@ -1183,4 +1185,3 @@ plot.mds = function(data, plotfile, params = list(has.group = TRUE, ndim = 2),
 	plot.xy(plotdata, plotfile, x = 'V1', y = 'V2', ggs = ggs, devpars = devpars)
 
 }
-

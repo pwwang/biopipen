@@ -1,6 +1,6 @@
 from os import path, chdir
 from glob import glob
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import parallel, logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvWriter, TsvReader
 from bioprocs.utils.reference import vcfIndex

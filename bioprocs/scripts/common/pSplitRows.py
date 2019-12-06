@@ -10,10 +10,10 @@ nskip  = {{args.skip}}
 nlines   = 0
 headerow = ''
 with open(infile) as f:
-	for line in f: 
+	for line in f:
 		if header and nlines == nskip: headerow = line
 		nlines += 1
-		
+
 nlines -= nskip
 if header: nlines -= 1
 
@@ -31,4 +31,3 @@ with open(infile) as f:
 			if header: fout.write(headerow)
 			for _ in range(nrows[i]):
 				fout.write(f.readline())
-

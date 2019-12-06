@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from os import path
 from bioprocs.utils import shell, logger
 
@@ -11,7 +11,7 @@ gdc_client = {{args.gdc_client | repr}}
 
 gdc = shell.Shell({'gdc': gdc_client}, subcmd = True, equal = ' ').gdc
 
-dftargs = Box({
+dftargs = Diot({
 	'retry-amount': '3',
 	'debug': False,
 	'log-file': path.join(outdir, 'gdc-client.log')

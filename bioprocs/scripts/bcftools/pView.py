@@ -1,6 +1,6 @@
 import sys
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.reference import vcfIndex
 

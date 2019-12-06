@@ -1,8 +1,8 @@
-from pyppl import Box
+from pyppl import Diot
 from os import path
 
 def dsnparse(dsn):
-	ret = Box()
+	ret = Diot()
 	scheme, args = dsn.split(':', 1)
 	ret.scheme = scheme
 	args = args.split(';')

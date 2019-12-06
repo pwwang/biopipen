@@ -1,5 +1,5 @@
 """picard utilities"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -216,15 +216,14 @@ def _pCollectOxoGMetrics():
 	@args:
 		`ref`   : The reference genome, Default: `<params.ref>`
 		`picard`: The path to picard, Default: `<params.picard>`
-		`params`: Other parameters for picard, Default: `Box()`
+		`params`: Other parameters for picard, Default: `Diot()`
 	"""
 	pCollectOxoGMetrics             = Proc(desc = 'Collect metrics to assess oxidative artifacts.')
 	pCollectOxoGMetrics.input       = 'infile:file'
 	pCollectOxoGMetrics.output      = 'outfile:file:{{i.infile | fn2}}.oxoG_metrics.txt'
 	pCollectOxoGMetrics.args.ref    = params.ref.value
 	pCollectOxoGMetrics.args.picard = params.picard.value
-	pCollectOxoGMetrics.args.params = Box()
+	pCollectOxoGMetrics.args.params = Diot()
 	pCollectOxoGMetrics.lang        = params.python.value
 	pCollectOxoGMetrics.script      = "file:scripts/picard/pCollectOxoGMetrics.py"
 	return pCollectOxoGMetrics
-

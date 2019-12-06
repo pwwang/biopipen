@@ -7,7 +7,8 @@ license = "MIT"
 include = [
 	"bioprocs/scripts/*/*",
 	"bioprocs/utils/*/*",
-	"bioprocs/reports/*/*"
+	"bioprocs/reports/*/*",
+	"bioprocs/params.toml"
 ]
 exclude = ["bioprocs/**/*.pyc"]
 
@@ -15,8 +16,9 @@ exclude = ["bioprocs/**/*.pyc"]
 python = "^3.6"
 PyPPL = "*"
 pyparam = "*"
-python-box87 = "*"
+diot = "*"
 completions = "*"
+toml = "0.*"
 
 [tool.poetry.scripts]
 bioprocs = 'bioprocs.console:main'

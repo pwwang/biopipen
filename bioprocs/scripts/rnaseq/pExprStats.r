@@ -37,7 +37,7 @@ if (plots$boxplot) {
 		for (group in groups) {
 			bpfile = file.path(outdir, paste0(prefix, '.', group, '.boxplot.png'))
 			plot.boxplot(
-				expr[, saminfo$get.samples('Group', group), drop = FALSE], 
+				expr[, saminfo$get.samples('Group', group), drop = FALSE],
 				bpfile, stacked = F, devpars = devpars, params = params$boxplot, ggs = ggs$boxplot)
 		}
 	}
@@ -50,7 +50,7 @@ if (plots$histogram) {
 		for (group in groups) {
 			histfile = file.path(outdir, paste0(prefix, '.', group, '.histo.png'))
 			plot.histo(
-				stack(expr[, saminfo$get.samples('Group', group), drop = FALSE]), 
+				stack(expr[, saminfo$get.samples('Group', group), drop = FALSE]),
 				histfile, devpars = devpars, params = params$histogram, ggs = ggs$histogram)
 		}
 	}
@@ -63,7 +63,7 @@ if (plots$qqplot) {
 		for (group in groups) {
 			qqfile = file.path(outdir, paste0(prefix, '.', group, '.qq.png'))
 			plot.qq(
-				stack(expr[, saminfo$get.samples('Group', group), drop = FALSE]), 
+				stack(expr[, saminfo$get.samples('Group', group), drop = FALSE]),
 				qqfile, stacked = FALSE, devpars = devpars, params = params$qqplot, ggs = ggs$qqplot)
 		}
 	}

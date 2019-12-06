@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Do PWM scan"""
-from pyppl import PyPPL, Box
+from pyppl import PyPPL, Diot
 from bioprocs import params
 
 params._prefix = '-'
@@ -37,7 +37,7 @@ params.nthread         = 1
 params.nthread.desc    = 'Number of threads used for scanning.'
 
 def main():
-	opts = params._parse(dict_wrapper = Box)
+	opts = params._parse(dict_wrapper = Diot)
 
 	from bioprocs.gene import pGeneNameNorm
 	from bioprocs.sets.tfbs import aTfbsTfPC, aTfbsTfRC, aTfbsTfP, aTfbsTfR, \
@@ -91,8 +91,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
-
-
-
-

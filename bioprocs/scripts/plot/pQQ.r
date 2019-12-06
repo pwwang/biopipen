@@ -11,7 +11,7 @@ params  = {{ args.params | R}}
 indata = read.table.inopts(infile, inopts)
 
 plot.qq(
-	indata, 
+	indata,
 	plotfile = outfile,
 	x        = ifelse(ncol(indata) == 1, NULL, 1),
 	y        = ifelse(ncol(indata) == 1, 1, 2),

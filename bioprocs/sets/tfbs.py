@@ -398,4 +398,3 @@ aTfbsTfRC.pTFList.args.params.k         = 2
 aTfbsTfRC.pTsvJoin.args.match           = 'lambda line1, line2: -1 if line1[1] == line2[0] else 0 if line1[1] < line2[0] else 1'
 aTfbsTfRC.pTsvJoin.args.do              = 'lambda line1, line2: fout.write("\\t".join(line1) + "\\n")'
 aTfbsTfRC.pConsv.args.pval              = 0.05
-

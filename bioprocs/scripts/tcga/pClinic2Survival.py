@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
 infile  = {{i.infile | quote}}
@@ -58,7 +58,7 @@ for r in reader:
 		time = r[realcols.get('time_lastfollow', 'time_lastfollow')]
 	if time == '[Not Available]' or time == '[Completed]' or time == '0':
 		continue
-	
+
 	for pat in patients:
 		rout         = TsvRecord()
 		rout.patient = pat

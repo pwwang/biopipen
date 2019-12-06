@@ -15,7 +15,7 @@ Method commands:
 Script commands:
   genomeplot                    - Plot genomic elements.
   mutcall                       - Call mutations from sequencing data.
-  pwmscan                       
+  pwmscan
   runcmds                       - Using PyPPL to distribute and run commands.
 
 Process commands:
@@ -140,5 +140,5 @@ OPTIONAL OPTIONS:
 
 ## Process
 
-Convert a `pyppl.Proc` to a command line interface.  
+Convert a `pyppl.Proc` to a command line interface.
 Try `bioprocs <module>.<process>` to show the help information of the process.

@@ -1,6 +1,6 @@
 import sys
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
@@ -80,13 +80,13 @@ if stat:
 					filters[filt] += 1
 		fstat.write(
 			'\t'.join(
-				[''] + 
-				[f for f in filters.keys() if f != 'PASS'] + 
+				[''] +
+				[f for f in filters.keys() if f != 'PASS'] +
 				['PASS']
 			) + '\n')
 		fstat.write(
 			'\t'.join(
-				[path.splitext(path.basename(infile))[0]] + 
+				[path.splitext(path.basename(infile))[0]] +
 				[str(count) for f, count in filters.items() if f != 'PASS'] +
 				[str(filters['PASS'])]
 			) + '\n')

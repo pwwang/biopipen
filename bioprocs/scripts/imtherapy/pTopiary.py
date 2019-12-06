@@ -15,16 +15,17 @@
 import re
 from os import environ
 from pathlib import Path
-from pyppl import Box
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-
+from cyvcf2 import VCF
+from gff import Gff
+from pyppl import Diot
+from cmdy import CmdyReturnCodeException
+from bioprocs.utils import shell2 as shell, logger
+from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+{% from os import path%}
 infile        = {{i.infile | quote}}
-mhcallele     = {{i.mhcallele | quote}}
-gexpr         = {{i.gexpr | quote}}
-texpr         = {{i.texpr | quote}}
+afile         = {{i.afile | ?path.isfile | =readlines | !alwaysList | repr}}
 outfile       = Path({{o.outfile | quote}})
-neatfile      = outfile.with_suffix('.neat.txt')
+outdir        = Path({{o.outdir | quote}})
 topiary       = {{args.topiary | quote}}
 netmhc        = {{args.netmhc | quote}}
 netmhcpan     = {{args.netmhcpan | quote}}
@@ -35,12 +36,13 @@ smm_pmbec     = {{args.smm_pmbec | quote}}
 mhc_predictor = {{args.mhc_predictor | quote}}
 genome        = {{args.genome | quote}}
 params        = {{args.params | repr}}
-wildtype      = {{args.wildtype | repr}}
+refall        = {{args.refall | quote}}
 tmpdir        = Path({{args.tmpdir | quote}}) / '.'.join([
 	{{proc.id | quote}}, {{proc.tag | quote}}, {{proc.suffix | quote}}, {{job.index | quote}}])
 tmpdir.mkdir(exist_ok = True, parents = True)
 
 # check if we have downloaded annotation data for the genome
+# topiary will use it to annotate the data
 gmaps = {'hg19': 'GRCh37', 'hg38': 'GRCh38'}
 datadir = Path.home().joinpath('.cache', 'pyensembl')
 if not datadir.joinpath(genome).is_dir() and not datadir.joinpath(gmaps.get(genome, genome)).is_dir():
@@ -48,9 +50,132 @@ if not datadir.joinpath(genome).is_dir() and not datadir.joinpath(gmaps.get(geno
 		"Either you run 'pyensembl install' first or "
 		"specify 'params.download_reference_genome_data = True'. "
 		"If you have it installed somewhere else, make a symbolic link to {}".format(genome, ('/' + gmaps[genome]) if genome in gmaps else '', datadir))
-if not datadir.joinpath(genome).is_dir() and datadir.joinpath(gmaps.get(genome, genome)).is_dir():
-	genome = gmaps[genome]
-datadir = datadir / genome
+# if not datadir.joinpath(genome).is_dir() and datadir.joinpath(gmaps.get(genome, genome)).is_dir():
+# 	genome = gmaps[genome]
+
+# extract expression from VCF file
+vcf      = VCF(infile)
+gxfile   = txfile = False
+features = set()
+if vcf.contains('GX'):
+	if not vcf.contains('CSQ'):
+		raise ValueError('VCF file has to be annotated with by VEP')
+	# tracking_id class_code  nearest_ref_id  gene_id gene_short_name tss_id  locus   length  coverage    FPKM    FPKM_conf_lo    FPKM_conf_hi    FPKM_status
+	# ENSG00000240361 -   -   ENSG00000240361 OR4G11P -   chr1:62947-63887    -   -   0   0   0   OK
+	# ENSG00000268020 -   -   ENSG00000268020 AL627309.1  -   chr1:53048-54936    -   -   0   0   0   OK
+	gxfile = outfile.with_suffix('.gx_nopos')
+	writer = TsvWriter(gxfile)
+	writer.cnames = ['tracking_id', 'class_code', 'nearest_ref_id', 'gene_id', 'gene_short_name', 'tss_id', 'locus', 'length', 'coverage', 'FPKM', 'FPKM_conf_lo', 'FPKM_conf_hi', 'FPKM_status']
+	writer.writeHead()
+	for variant in vcf:
+		# try..except
+		try:
+			gx = variant.format('GX')[0]
+		except (KeyError, TypeError):
+			continue
+		csqs = variant.INFO['CSQ'].split(',')
+		gxs = gx.split(',')
+		for gx in gxs:
+			gene, expr = gx.split('|', 1)
+			csq = [csq for csq in csqs if f'|{gene}|' in csq][0].split('|')
+			r                 = TsvRecord()
+			r.tracking_id     = csq[4]
+			r.class_code      = '-'
+			r.nearest_ref_id  = '-'
+			r.gene_id         = csq[4]
+			r.gene_short_name = csq[3]
+			r.tss_id          = '-'
+			r.locus           = '<pos>'
+			r.length          = '-'
+			r.coverage        = '-'
+			r.FPKM            = expr
+			r.FPKM_conf_lo    = 0
+			r.FPKM_conf_hi    = 1000
+			r.FPKM_status     = 'OK'
+			writer.write(r)
+			features.add(r.tracking_id)
+	writer.close()
+
+if vcf.contains('TX'):
+	if not vcf.contains('CSQ'):
+		raise ValueError('VCF file has to be annotated with by VEP')
+	# tracking_id class_code  nearest_ref_id  gene_id gene_short_name tss_id  locus   length  coverage    FPKM    FPKM_conf_lo    FPKM_conf_hi    FPKM_status
+	# ENSG00000240361 -   -   ENSG00000240361 OR4G11P -   chr1:62947-63887    -   -   0   0   0   OK
+	# ENSG00000268020 -   -   ENSG00000268020 AL627309.1  -   chr1:53048-54936    -   -   0   0   0   OK
+	txfile = outfile.with_suffix('.tx_nopos')
+	writer = TsvWriter(txfile)
+	writer.cnames = ['tracking_id', 'class_code', 'nearest_ref_id', 'gene_id', 'gene_short_name', 'tss_id', 'locus', 'length', 'coverage', 'FPKM', 'FPKM_conf_lo', 'FPKM_conf_hi', 'FPKM_status']
+	writer.writeHead()
+	for variant in vcf:
+		# try..except
+		try:
+			tx = variant.format('TX')[0]
+		except (KeyError, TypeError):
+			continue
+		csqs = variant.INFO['CSQ'].split('|')
+		txs = tx.split(',')
+		for tx in txs:
+			transcript, expr = tx.split('|', 1)
+			csq = [csq for csq in csqs if f'|{transcript}|' in csq][0].split('|')
+			r                 = TsvRecord()
+			r.tracking_id     = csq[6]
+			r.class_code      = '-'
+			r.nearest_ref_id  = '-'
+			r.gene_id         = csq[4]
+			r.gene_short_name = csq[3]
+			r.tss_id          = '-'
+			r.locus           = '<pos>'
+			r.length          = '-'
+			r.coverage        = '-'
+			r.FPKM            = expr
+			r.FPKM_conf_lo    = 0
+			r.FPKM_conf_hi    = 1000
+			r.FPKM_status     = 'OK'
+			writer.write(r)
+			features.add(r.tracking_id)
+	writer.close()
+
+if gxfile or txfile:
+	allpos = {}
+	for gff in Gff(refall):
+		if gff['type'] == 'gene':
+			feature = gff['attributes']['gene_id']
+		elif gff['type'] == 'transcript':
+			feature = gff['attributes']['transcript_id']
+		else:
+			continue
+		if feature not in features:
+			continue
+		allpos[feature] ='{}:{}-{}'.format(gff['seqid'], gff['start'], gff['end'])
+if gxfile:
+	gxfile2 = outfile.with_suffix('.gx')
+	with open(gxfile) as fin, open(gxfile2, 'w') as fout:
+		for line in fin:
+			if '<pos>' not in line:
+				fout.write(line)
+			else:
+				feature_id = line.split('\t', 1)[0]
+				if feature_id not in allpos:
+					logger.warning('Cannot find position information for: %s, skipping', feature_id)
+				else:
+					fout.write(line.replace('<pos>', allpos[feature_id]))
+	gxfile = gxfile2
+if txfile:
+	txfile2 = outfile.with_suffix('.tx')
+	with open(txfile) as fin, open(txfile2, 'w') as fout:
+		for line in fin:
+			if '<pos>' not in line:
+				fout.write(line)
+			else:
+				feature_id = line.split('\t', 1)[0]
+				if feature_id not in allpos:
+					logger.warning('Cannot find position information for: %s, skipping', feature_id)
+				else:
+					fout.write(line.replace('<pos>', allpos[feature_id]))
+	txfile = txfile2
+
+params['rna-gene-fpkm-tracking-file'] = gxfile
+params['rna-transcript-fpkm-tracking-file'] = txfile
 
 shell.load_config(topiary = topiary)
 if infile.endswith('.vcf') or infile.endswith('.vcf.gz'):
@@ -58,51 +183,34 @@ if infile.endswith('.vcf') or infile.endswith('.vcf.gz'):
 else:
 	params.maf = infile
 
-if Path(mhcallele).is_file():
-	mhcallelefile = outfile.parent.joinpath('mhcalleles.txt')
-	with open(mhcallele, 'r') as fin, open(mhcallelefile, 'w') as fout:
-		for line in fin:
-			fout.write(line.replace('*', ''))
-	params['mhc-alleles-file'] = mhcallelefile
-else:
-	params['mhc-alleles'] = mhcallele.replace('*', '')
-
-if gexpr:
-	params['rna-gene-fpkm-tracking-file'] = gexpr
-if texpr:
-	params['rna-transcript-fpkm-tracking-file'] = texpr
-
+alleles = [allele.replace('*', '') for allele in afile]
+params['mhc-alleles'] = ','.join(alleles)
 params.genome = genome
-params['output-csv'] = outfile
+params['output-csv'] = outfile.with_suffix('.nowt')
 params['mhc-predictor'] = mhc_predictor
 
 # make sure those mhc-predictors are in PATH
 PATHs = set()
 for mhcpred in (netmhc, netmhcpan, netmhciipan, netmhccons, smm, smm_pmbec):
-	if '/' in mhcpred:
-		PATHs.add(str(Path(mhcpred).parent))
+	try:
+		PATHs.add(str(Path(shell.which(mhcpred)).parent))
+	except CmdyReturnCodeException:
+		continue
 
-params._env = Box(PATH = environ['PATH'] + ':' + ':'.join(PATHs))
+params._env = Diot(PATH = environ['PATH'] + ':' + ':'.join(PATHs))
 
 shell.fg.topiary(**params)
 
-if not wildtype:
-	reader = TsvReader(outfile, comment = '###')
-	writer = TsvWriter(neatfile)
-	writer.cnames = ['HLA_allele', 'mt_peptide', 'mt_affinity', 'gene']
-	writer.writeHead()
-	for r in reader:
-		writer.write([r.allele, r.peptide, r.affinity, r.gene])
-else:
-	if mhc_predictor not in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 'smm_pmbec'):
-		raise ValueError("Calculations for wildtype peptides are only available with local predictors.")
+# add wildtype binding
+# #,variant,peptide_offset,peptide,allele,affinity,percentile_rank,prediction_method_name,peptide_length,gene,gene_id,transcript_id,transcript_name,effect,effect_type,contains_mutant_residues,mutation_start_in_peptide,mutation_end_in_peptide,gene_expression
+# 0,chr6 g.31237146C>A,353,AACSNSAHG,HLA-A*02:01,35651.3,65.0,netMHC,9,HLA-C,ENSG00000204525,ENST00000383329,HLA-C-002,p.Q361H,Substitution,True,7,8,0.0
+# 1,chr6 g.33037619G>T,40,AAFVQTHRT,HLA-A*02:01,22758.73,32.0,netMHC,9,HLA-DPA1,ENSG00000231389,ENST00000419277,HLA-DPA1-001,p.P49T,Substitution,True,8,9,0.0
 
-	tmpfile = outfile.with_suffix('.topiary.txt')
-	shell.mv(outfile, tmpfile)
+if mhc_predictor in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 'smm_pmbec'):
 
 	wildpeps = set()
 	mutpeps = {}
-	tpreader = TsvReader(tmpfile, comment = '###')
+	tpreader = TsvReader(outfile.with_suffix('.nowt'), comment = '###', delimit = ',')
 	for r in tpreader:
 		if r.effect_type != 'Substitution':
 			# I don't know how to get the wildtype peptides if it is not a substitution
@@ -120,7 +228,47 @@ else:
 		wildpeps.add(wildpep)
 
 	def run_netmhc():
-		pass
+		shell.load_config(netmhc = netmhc)
+		mhcallele2 = params['mhc-alleles'].replace(':', '').replace('*', '')
+
+		wildfile = outfile.parent / 'wildtype.peptides.txt'
+		wildfile.write_text('\n'.join(wildpeps))
+
+		nparams = Diot(
+			a = mhcallele2, v = True, inptype = 1, f = wildfile, _prefix = '-',
+			_iter = True, _debug = True)
+		res = shell.netmhc(**nparams)
+		pos_hit = False
+		wildbindings = {allele: {} for allele in mhcallele2.split(',')}
+		for line in res:
+			if 'PEPLIST' not in line or line.startswith('Protein'):
+				continue
+			parts = line.split()
+			wildbindings[parts[1]][parts[2]] = parts[12]
+
+		writer = TsvWriter(outfile)
+		writer.cnames = ['HLA_allele', 'Peptide', 'Affinity', 'Gene', 'ENSG', 'ENST', 'Ref_peptide', 'Ref_affinity', 'Mutation', 'AAChange']
+		writer.writeHead()
+		writerall = TsvWriter(outfile.with_suffix('.all.txt'))
+		writerall.cnames = writer.cnames
+		writerall.writeHead()
+		tpreader.rewind()
+		for r in tpreader:
+			out              = TsvRecord()
+			out.HLA_allele   = r.allele
+			out.Peptide      = r.peptide
+			out.Affinity     = r.affinity
+			out.Gene         = r.gene
+			out.ENSG         = r.gene_id
+			out.ENST         = r.transcript_id
+			wtpep            = mutpeps.get(r.peptide + '\t' + r.allele, '-')
+			out.Ref_peptide  = wtpep
+			out.Ref_affinity = wildbindings[r.allele.replace(':', '').replace('*', '')].get(wtpep, '>500')
+			out.Mutation     = r.variant
+			out.AAChange     = r.effect
+			writerall.write(out)
+			if float(out.Affinity) < 500 and ('>' in out.Ref_affinity or float(out.Ref_affinity) >= 2000):
+				writer.write(out)
 
 	def run_netmhcpan():
 		shell.load_config(netmhcpan = netmhcpan)
@@ -131,7 +279,7 @@ else:
 		wildfile = outfile.parent / 'wildtype.peptides.txt'
 		wildfile.write_text('\n'.join(wildpeps))
 		xlsfile = outfile.parent / 'wildtype.binding.txt'
-		nparams = Box(
+		nparams = Diot(
 			a = mhcallele2, v = True, BA = True, inptype = 1, f = wildfile, _prefix = '-',
 			xls = True, xlsfile = xlsfile)
 		shell.fg.netmhcpan(**nparams)

@@ -40,7 +40,7 @@ getCorr = function(gname1, mat1, gname2, mat2) {
 	)))
 	corr = cbind(merge(rnames1, rnames2, by = c()), corr)
 	colnames(corr) = c(gname1, gname2, 'Corr')
-	
+
 	lvl1 = levels(corr[,1])
 	lvl2 = levels(corr[,2])
 	levels(corr[,1]) = union(lvl1, lvl2)
@@ -155,7 +155,7 @@ results = NULL
 for (i in 1:nrow(cases)) {
 	x = as.vector(cases[i, 1])
 	y = as.vector(cases[i, 2])
-	if (is.null(corrs[[x]]) || is.null(corrs[[y]])) 
+	if (is.null(corrs[[x]]) || is.null(corrs[[y]]))
 		next
 	dc = diffCorr(corrs[[x]], corrs[[y]])
 	if (nrow(dc) == 0)
@@ -185,10 +185,10 @@ if (is.null(results)) {
 		results = data.frame(Case1 = character(), Case2 = character(), rgname1 = character(), rgname2 = character(), Corr1 = double(), Corr2 = double(), N1 = integer(), N2 = integer(), Z = double(), Pval =double(), Qval = double())
 	}
 	colnames(results)[3:4] = c(rgname1, rgname2)
-} else { 
+} else {
 	results = results[results$Pval < pcut,,drop = F]
 }
-write.table(pretty.numbers(results, list(Corr1..Corr2..Z = '%.3f', Pval..Qval = '%.2E')), 
+write.table(pretty.numbers(results, list(Corr1..Corr2..Z = '%.3f', Pval..Qval = '%.2E')),
 	outfile, col.names = T, row.names = F, sep = "\t", quote = F)
 
 # indata:
@@ -220,10 +220,10 @@ if (doplot && nrow(results)>0) {
 					se      = F
 				),
 				scale_color_manual = list(
-					values = scales::hue_pal()(2), 
+					values = scales::hue_pal()(2),
 					limit  = c(case1, case2),
 					labels = c(
-						paste0(case1, ' (r=', round(row[5], 3),')'), 
+						paste0(case1, ' (r=', round(row[5], 3),')'),
 						paste0(case2, ' (r=', round(row[6], 3),')'))
 				),
 				guides = list(shape = F)

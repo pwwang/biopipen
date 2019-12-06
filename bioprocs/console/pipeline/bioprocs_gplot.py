@@ -2,7 +2,7 @@
 """Plot genomic elements."""
 import json, sys
 from os import path
-from pyppl import PyPPL, utils, Box
+from pyppl import PyPPL, utils, Diot
 from bioprocs import params
 
 params._prefix = '-'
@@ -44,7 +44,7 @@ params.highlights      = []
 params.highlights.desc = 'The highlight regions in format of "start-end"'
 
 def main():
-	opts = params._parse(dict_wrapper = Box)
+	opts = params._parse(dict_wrapper = Diot)
 	from bioprocs.genomeplot import pInteractionTrack, pAnnoTrack, pDataTrack, \
 		pUcscTrack, pGenomePlot
 

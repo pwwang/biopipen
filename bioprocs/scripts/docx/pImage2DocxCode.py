@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 
 bcode   = {{args.bcode | repr}}
 acode   = {{args.acode | repr}}
@@ -125,4 +125,3 @@ with open(outfile, 'w') as f:
 		legend_code  = legend_code,
 		acode_code   = acode_code
 	))
-

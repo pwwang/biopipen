@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from shutil import copyfile
 from bioprocs.utils import shell2 as shell
 
@@ -28,28 +28,27 @@ shell.cp(cnsfile, path.join(outdir, path.basename(cnsfile)))
 
 if params.breaks:
 	if params.breaks is True:
-		params.breaks = Box()
+		params.breaks = Diot()
 	params.breaks.o = path.join(outdir, stem + '.breaks.txt')
 	shell.fg.cnvkit.breaks(cnrfile, cnsfile, **params.breaks)
 
 if params.gainloss:
 	if params.gainloss is True:
-		params.gainloss = Box()
+		params.gainloss = Diot()
 	params.gainloss.o = path.join(outdir, stem + '.gainloss.txt')
 	params.gainloss.s = cnsfile
 	shell.fg.cnvkit.gainloss(cnrfile, **params.gainloss)
 
 if params.metrics:
 	if params.metrics is True:
-		params.metrics = Box()
+		params.metrics = Diot()
 	params.metrics.o = path.join(outdir, stem + '.metrics.txt')
 	params.metrics.s = cnsfile
 	shell.fg.cnvkit.metrics(cnrfile, **params.metrics)
 
 if params.segmetrics:
 	if params.segmetrics is True:
-		params.segmetrics = Box()
+		params.segmetrics = Diot()
 	params.segmetrics.o = path.join(outdir, stem + '.segmetrics.txt')
 	params.segmetrics.s = cnsfile
 	shell.fg.cnvkit.segmetrics(cnrfile, **params.segmetrics).run()
-

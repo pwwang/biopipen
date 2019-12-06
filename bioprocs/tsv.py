@@ -1,9 +1,8 @@
 """TSV file operations"""
 
-from pyppl import Proc, Box
-from . import params, rimport
+from pyppl import Proc, Diot
 from .utils import fs2name
-from . import delefactory, procfactory
+from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -27,13 +26,13 @@ def _pMatrixR():
 		`params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
 		`code`: The R code to operating the matrix. (the matrix is read in variable `mat`)
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Operate a matrix and save the new matrix to file',
 		lang   = params.Rscript.value,
 		input  = "infile:file",
 		output = "outfile:file:{{i.infile | bn}}",
-		args   = Box(inopts = Box(cnames = True, rnames = True, delimit = "\t", skip = 0),
-			params = Box({
+		args   = Diot(inopts = Diot(cnames = True, rnames = True, delimit = "\t", skip = 0),
+			params = Diot({
 				"check.names": "FALSE",
 				"quote"      : ""
 			}),
@@ -56,8 +55,7 @@ def _pTranspose():
 	pTranspose              = Proc(desc = 'Transpose a matrix')
 	pTranspose.input        = 'infile:file'
 	pTranspose.output       = 'outfile:file:{{i.infile | bn}}'
-	pTranspose.args.inopts  = Box(cnames = True, rnames = True)
-	pTranspose.envs.rimport = rimport
+	pTranspose.args.inopts  = Diot(cnames = True, rnames = True)
 	pTranspose.lang         = params.Rscript.value
 	pTranspose.script       = "file:scripts/tsv/pTranspose.r"
 	return pTranspose
@@ -85,8 +83,8 @@ def _pPaired():
 		'outfile1:file:{{i.infile1 | fn}}.paired{{i.infile1 | ext}}',
 		'outfile2:file:{{i.infile2 | fn}}.paired{{i.infile2 | ext}}'
 	]
-	pPaired.args.inopts1 = Box(head = True, headCallback = None)
-	pPaired.args.inopts2 = Box(head = True, headCallback = None)
+	pPaired.args.inopts1 = Diot(head = True, headCallback = None)
+	pPaired.args.inopts2 = Diot(head = True, headCallback = None)
 	pPaired.lang         = params.python.value
 	pPaired.script       = "file:scripts/tsv/pPaired.py"
 	return pPaired
@@ -119,13 +117,13 @@ def _pCbind():
 	pCbind             = Proc(desc = 'Cbind the rest of files to the first file.')
 	pCbind.input       = 'infiles:files'
 	pCbind.output      = 'outfile:file:{{i.infiles | fs2name}}.cbound.txt'
-	pCbind.args.inopts = Box(
+	pCbind.args.inopts = Diot(
 		cnames  = True, # or [True, True, False] corresponding to the file order
 		rnames  = True,
 		delimit = "\t",
 		skip    = 0
 	)
-	pCbind.args.params = Box({
+	pCbind.args.params = Diot({
 		"check.names": "FALSE",
 		"quote"      : ""
 	})
@@ -133,7 +131,6 @@ def _pCbind():
 	pCbind.args.fn2cname = 'function(fn) fn' # if
 	pCbind.args.fill     = True
 	pCbind.envs.fs2name  = fs2name
-	pCbind.envs.rimport  = rimport
 	pCbind.lang          = params.Rscript.value
 	pCbind.script        = "file:scripts/tsv/pCbind.r"
 	return pCbind
@@ -166,13 +163,13 @@ def _pRbind():
 	pRbind                = Proc(desc = 'Rbind the rest of files to the first file.')
 	pRbind.input          = 'infiles:files'
 	pRbind.output         = 'outfile:file:{{i.infiles[0] | bn}}'
-	pRbind.args.inopts    = Box(
+	pRbind.args.inopts    = Diot(
 		cnames  = True, # or [True, True, False] corresponding to the file order
 		rnames  = True,
 		delimit = "\t",
 		skip    = 0
 	)
-	pRbind.args.params = Box({
+	pRbind.args.params = Diot({
 		"check.names": "FALSE",
 		"quote"      : ""
 	})
@@ -180,7 +177,6 @@ def _pRbind():
 	pRbind.args.fn2rname = 'function(fn) fn'
 	pRbind.args.fill     = True
 	pRbind.envs.fs2name  = fs2name
-	pRbind.envs.rimport  = rimport
 	pRbind.lang          = params.Rscript.value
 	pRbind.script        = "file:scripts/tsv/pRbind.r"
 	return pRbind
@@ -208,18 +204,17 @@ def _pCsplit():
 	pCsplit             = Proc(desc = 'Split the columns of input file into different files.')
 	pCsplit.input       = 'infile:file'
 	pCsplit.output      = 'outdir:dir:{{i.infile | fn}}.csplits'
-	pCsplit.args.inopts = Box(
+	pCsplit.args.inopts = Diot(
 		cnames  = True,
 		rnames  = True,
 		delimit = "\t",
 		skip    = 0
 	)
-	pCsplit.args.params = Box({
+	pCsplit.args.params = Diot({
 		"check.names": "FALSE",
 		"quote"      : ""
 	})
 	pCsplit.args.size    = 1
-	pCsplit.envs.rimport = rimport
 	pCsplit.lang         = params.Rscript.value
 	pCsplit.script       = "file:scripts/tsv/pCsplit.r"
 	return pCsplit
@@ -247,18 +242,17 @@ def _pRsplit():
 	pRsplit             = Proc(desc = 'Rbind the rest of files to the first file.')
 	pRsplit.input       = 'infile:file'
 	pRsplit.output      = 'outdir:dir:{{i.infile | fn}}.rsplits'
-	pRsplit.args.inopts = Box(
+	pRsplit.args.inopts = Diot(
 		cnames  = True,
 		rnames  = True,
 		delimit = "\t",
 		skip    = 0
 	)
-	pRsplit.args.params = Box({
+	pRsplit.args.params = Diot({
 		"check.names": "FALSE",
 		"quote"      : ""
 	})
 	pRsplit.args.size    = 1
-	pRsplit.envs.rimport = rimport
 	pRsplit.lang         = params.Rscript.value
 	pRsplit.script       = "file:scripts/tsv/pRsplit.r"
 	return pRsplit
@@ -286,8 +280,8 @@ def _pTsv():
 	pTsv.lang         = params.python.value
 	pTsv.args.helper  = ''
 	pTsv.args.row     = None
-	pTsv.args.inopts  = Box(delimit = '\t', comment = '#', skip = 0, cnames = True)
-	pTsv.args.outopts = Box(delimit = '\t', cnames = True)
+	pTsv.args.inopts  = Diot(delimit = '\t', comment = '#', skip = 0, cnames = True)
+	pTsv.args.outopts = Diot(delimit = '\t', cnames = True)
 	pTsv.script       = "file:scripts/tsv/pTsv.py"
 	return pTsv
 
@@ -301,17 +295,17 @@ def _pTsvColFilter(alias = 'pTsvColSelect'):
 	@output:
 		outfile: The output file
 	@args:
-		inopts: The options for reading input file. Default: `Box(cnames = True)`
+		inopts: The options for reading input file. Default: `Diot(cnames = True)`
 		keep  : Whether to keep in `args.cols` or to discard
 		cols  : The columns used to filter. Could be names or indices(0-based) or a file containing the column names, one per line.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Filter a tsv file by columns',
 		lang   = params.python.value,
 		input  = 'infile:file, colfile:var',
 		output = 'outfile:file:{{i.infile | bn}}',
-		args   = Box(
-			inopts = Box(cnames = True),
+		args   = Diot(
+			inopts = Diot(cnames = True),
 			keep = True,
 			cols = None,
 		)
@@ -331,14 +325,14 @@ def _pTsvAggregate():
 			- With columns `args.on` and aggregated results from `args.aggrs`
 			- If `args.on` is a function, then the calculated term will be add to the 1st column.
 	@args:
-		`inopts`: The options to read the input file, Default: `Box(cnames = True)`
+		`inopts`: The options to read the input file, Default: `Diot(cnames = True)`
 		`on`: Aggregate according to which column, Default: `0`
 			- It also could column name if `args.inopts = True`
 			- The input file has to sorted by this column
 			- Or a string of (lambda) function to calculate the term to aggregate on.
 		`helper`: Raw codes to give some help for `args.aggrs`
 		`aggrs`: The aggregation methods. Required.
-			- It's a `Box` with the keys for aggregated results
+			- It's a `Diot` with the keys for aggregated results
 			- If `args.inopts.cnames = True` then these keys will be output as column names, otherwise ignored
 			- You can also combine the aggregation results.
 				- For example: `{"sum,mean": lambda rs: [sum(r.value for r in rs), sum(r.value for r in rs)/float(len(rs))]}`
@@ -355,9 +349,9 @@ def _pTsvAggregate():
 	pTsvAggregate             = Proc(desc = 'Aggregate on columns with a set of records')
 	pTsvAggregate.input       = 'infile:file'
 	pTsvAggregate.output      = 'outfile:file:{{i.infile | fn2}}.aggr.txt'
-	pTsvAggregate.args.inopts = Box(cnames = True)
+	pTsvAggregate.args.inopts = Diot(cnames = True)
 	pTsvAggregate.args.on     = 0 # which column
-	pTsvAggregate.args.aggrs  = Box()
+	pTsvAggregate.args.aggrs  = Diot()
 	pTsvAggregate.args.helper = ''
 	pTsvAggregate.lang        = params.python.value
 	pTsvAggregate.script      = "file:scripts/tsv/pTsvAggregate.py"
@@ -375,7 +369,7 @@ def _pTsvHeader():
 	@output:
 		`outfile:file`: The output file, Default: `{{i.infile | fn2}}.header.txt`
 	@args:
-		`inopts`: The options to read input file. Default: `Box(cnames = True)`
+		`inopts`: The options to read input file. Default: `Diot(cnames = True)`
 		`filter`: The filter for the header. Default: `None`
 			- `None`: no filter
 			- `lambda cnames: ...` A callback to manipulate colnames.
@@ -383,7 +377,7 @@ def _pTsvHeader():
 	pTsvHeader             = Proc(desc = 'Get the header of a tsv file.')
 	pTsvHeader.input       = 'infile:file'
 	pTsvHeader.output      = 'outfile:file:{{i.infile | fn2}}.header.txt'
-	pTsvHeader.args.inopts = Box(cnames = True)
+	pTsvHeader.args.inopts = Diot(cnames = True)
 	pTsvHeader.args.filter = None
 	pTsvHeader.lang        = params.python.value
 	pTsvHeader.script      = "file:scripts/tsv/pTsvHeader.py"
@@ -402,7 +396,7 @@ def _pTsvReplaceHeader():
 	@output:
 		`outfile:file`: The output file, Default: `{{i.infile | bn}}`
 	@args:
-		`inopts`: The options to read input file, Default: `Box(cnames = True)`
+		`inopts`: The options to read input file, Default: `Diot(cnames = True)`
 		`cnames`: The column names or callback, Default: `None`
 			- `None`: use the header in `i.hfile`
 			- `<list/str/file>`: the header to use if `i.hfile` is not provided
@@ -411,7 +405,7 @@ def _pTsvReplaceHeader():
 	pTsvReplaceHeader             = Proc(desc = "Replace the header of a tsv file.")
 	pTsvReplaceHeader.input       = 'infile:file, hfile:file'
 	pTsvReplaceHeader.output      = 'outfile:file:{{i.infile | bn}}'
-	pTsvReplaceHeader.args.inopts = Box(cnames = True)
+	pTsvReplaceHeader.args.inopts = Diot(cnames = True)
 	pTsvReplaceHeader.args.cnames = None
 	pTsvReplaceHeader.lang        = params.python.value
 	pTsvReplaceHeader.script      = "file:scripts/tsv/pTsvReplaceHeader.py"
@@ -466,8 +460,8 @@ def _pTsvJoin():
 	pTsvJoin.input        = 'infiles:files'
 	pTsvJoin.output       = 'outfile:file:{{i.infiles[0] | fn}}.etc.joined.txt'
 	pTsvJoin.echo         = 0
-	pTsvJoin.args.inopts  = Box(delimit = '\t', skip = 0, comment = '#', cnames = True)
-	pTsvJoin.args.outopts = Box(delimit = '\t', cnames = False)
+	pTsvJoin.args.inopts  = Diot(delimit = '\t', skip = 0, comment = '#', cnames = True)
+	pTsvJoin.args.outopts = Diot(delimit = '\t', cnames = False)
 	pTsvJoin.args.debug   = False
 	pTsvJoin.args.match   = None
 	pTsvJoin.args.do      = None
@@ -507,9 +501,9 @@ def _pTsvSql():
 	pTsvSql.input       = 'infile:file, sqlfile:file'
 	pTsvSql.output      = 'outfile:file:{{i.infile | fn}}.bysql{{i.infile | ext}}'
 	pTsvSql.args.sql    = ''
-	pTsvSql.args.inopts = Box(
+	pTsvSql.args.inopts = Diot(
 		cnames = True, delimit = "\t", encoding = 'UTF-8', gz = 'auto')
-	pTsvSql.args.outopts = Box(
+	pTsvSql.args.outopts = Diot(
 		cnames = None, delimit = None, encoding = None)
 	pTsvSql.lang   = params.python.value
 	pTsvSql.script = "file:scripts/tsv/pTsvSql.py"
@@ -527,24 +521,24 @@ def _pTsvSample():
 	@output:
 		`outfile:file`: The output file, Default: `{{i.infile | fn2}}.sampled.txt`
 	@args:
-		`inopts`   : input options, only skip available, Default: `Box()`
+		`inopts`   : input options, only skip available, Default: `Diot()`
 		`n`        : how many records to sample, Default: `10`
 		`arsample` : sample program by Alex Reynolds, Default: `<params.arsample>`
 		`replace`  : Whether sample with replacement or not, Default: `False`
 		`keeporder`: Keep the order of the sampled records as it's in input file, Default: `False`
 		`seed`: The seed, Default: `0`
-		`params`: Other params for arsample, Default: `Box()`
+		`params`: Other params for arsample, Default: `Diot()`
 	"""
 	pTsvSample                = Proc(desc = 'Sample records from a TSV file.')
 	pTsvSample.input          = 'infile:file'
 	pTsvSample.output         = 'outfile:file:{{i.infile | fn2}}.sampled.txt'
-	pTsvSample.args.inopts    = Box()
+	pTsvSample.args.inopts    = Diot()
 	pTsvSample.args.n         = 10
 	pTsvSample.args.arsample  = params.arsample.value
 	pTsvSample.args.replace   = False
 	pTsvSample.args.keeporder = False
 	pTsvSample.args.seed      = 0
-	pTsvSample.args.params    = Box()
+	pTsvSample.args.params    = Diot()
 	pTsvSample.lang           = params.python.value
 	pTsvSample.script         = "file:scripts/tsv/pTsvSample.py"
 	return pTsvSample
@@ -561,14 +555,14 @@ def _pTsvMerge():
 	@output:
 		`outfile:file`: The output file
 	@args:
-		`inopts`: The options for input file. Default: `Box(skip = 0, comment = '#', delimit = '\t')`
-		`outopts`: The options for output file. Default: `Box()`
+		`inopts`: The options for input file. Default: `Diot(skip = 0, comment = '#', delimit = '\t')`
+		`outopts`: The options for output file. Default: `Diot()`
 	"""
 	pTsvMerge               = Proc(desc = 'Merge files by rows.')
 	pTsvMerge.input         = "infiles:files"
 	pTsvMerge.output        = "outfile:file:{{i.infiles | fs2name}}"
-	pTsvMerge.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-	pTsvMerge.args.outopts  = Box()
+	pTsvMerge.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
+	pTsvMerge.args.outopts  = Diot()
 	# IOError: [Errno 24] Too many open files
 	pTsvMerge.args.maxopen  = 100
 	pTsvMerge.envs.fs2name  = fs2name
@@ -602,11 +596,10 @@ def _pMergeRows():
 	pMergeRows              = Proc(desc = 'Merge repeated rows.')
 	pMergeRows.input        = 'infile:file'
 	pMergeRows.output       = 'outfile:file:{{i.infile | bn}}'
-	pMergeRows.args.inopts  = Box(skip = 0, comment = '#', delimit = '\t')
-	pMergeRows.args.outopts = Box(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
+	pMergeRows.args.inopts  = Diot(skip = 0, comment = '#', delimit = '\t')
+	pMergeRows.args.outopts = Diot(head = False, headPrefix = '', headDelimit = '\t', headTransform = None, delimit = '\t')
 	pMergeRows.args.match   = None
 	pMergeRows.args.do      = None
 	pMergeRows.lang         = params.python.value
 	pMergeRows.script       = "file:scripts/tsv/pMergeRows.py"
 	return pMergeRows
-

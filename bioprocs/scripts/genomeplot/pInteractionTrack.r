@@ -30,7 +30,7 @@ if (intype == 'bedpe') {
 		parts = unlist(strsplit(line, '\t', fixed = T))
 		# filter out interaction for other chromosomes, cuz you can't plot it!
 		# TODO: Also do for other input file types! Dramatically save time!
-		if (parts[1] != chrom) { next } 
+		if (parts[1] != chrom) { next }
 		if (parts[9] == '.')  parts[9]  = '*'
 		if (parts[10] == '.') parts[10] = '*'
 		#lines[i] = paste(parts, collapse = '\t')
@@ -59,7 +59,7 @@ if (intype == 'bedpe') {
 			name2index   = match("NAME2", parts)
 			strand2index = match("STRAND2", parts)
 			next
-		} 
+		}
 		if (is.na(chr2index) || is.na(start2index) || is.na(end2index)) {
 			stop('Cannot find CHR2, START2, END2 columns in bedx file')
 		}

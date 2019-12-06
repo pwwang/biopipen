@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 
 cnsfile  = {{i.cnsfile | quote}}
@@ -70,4 +70,3 @@ if cnnfile:
 	params.r = cnnfile
 
 shell.fg.cnvkit.export('theta', cnsfile, **params)
-

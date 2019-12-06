@@ -31,4 +31,3 @@ def _pTsvs2Xlsx():
 	pTsvs2Xlsx.lang          = params.python.value
 	pTsvs2Xlsx.script        = "file:scripts/xlsx/pTsvs2Xlsx.py"
 	return pTsvs2Xlsx
-

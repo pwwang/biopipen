@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell
 
 infile    = {{ i.infile | quote}}
@@ -40,7 +40,7 @@ def run_bedops():
 	else:
 		params.__stdout = outfile
 		c.bedops(**params).run()
-	
+
 def run_bedtools():
 	params.i = infile
 	shell.grep('^#', infile, _stdout = outfile)

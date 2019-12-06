@@ -53,7 +53,7 @@ def eachfile(infile):
 			modsec = moddocs.group(1)
 			fout.write(fmtSection(modsec, True))
 			content = content[len(modsec):]
-		
+
 		blocks = re.findall (r'(\"\"\"|\'\'\')\s*\n(@name:[\s\S]+?)\1', content)
 
 		for block in blocks:
@@ -76,7 +76,7 @@ def fmtSection(lines, mod = False):
 	if title.startswith('@name'):
 		return '\n!!! hint "%s"\n' % (lines[0].strip())
 		#return '\n%s %s\n' % (basepunk, lines[0].strip())
-	
+
 	# ret = '\n%s# %s\n' % (basepunk, title.strip('@:'))
 	ret = '\n    - **%s**  \n' % title.strip('@:')
 	for line in lines:
@@ -97,4 +97,3 @@ if __name__ == "__main__":
 		stdout.write('- Compiling %s\n' % infile)
 		eachfile (infile)
 	stdout.write('Done!\n')
-

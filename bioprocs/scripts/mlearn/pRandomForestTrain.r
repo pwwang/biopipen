@@ -34,8 +34,8 @@ saveRDS(model.rf, outmodel)
 
 # save importance
 write.table(
-	round(model.rf$importance[order(model.rf$importance[, 1], decreasing = T), , drop = F], 3), 
-	file.path(outdir, paste0(prefix, '.importance.txt')), 
+	round(model.rf$importance[order(model.rf$importance[, 1], decreasing = T), , drop = F], 3),
+	file.path(outdir, paste0(prefix, '.importance.txt')),
 	col.names = T, row.names = T, quote = F, sep = "\t")
 
 # plot importance
@@ -44,5 +44,3 @@ do.call(png, c(list(file.path(outdir, paste0(prefix, '.importance.png'))), devpa
 randomForest::varImpPlot(model.rf, main = 'Feature importance')
 dev.off()
 {% endif %}
-
-

@@ -7,15 +7,15 @@ import gzip
 from glob import glob
 from os import path
 import yaml
-from pyppl.utils import Box
+from diot import Diot
 
 class Mem2Exception(Exception):
 	pass
 
-def ensureBox(var):
-	if isinstance(var, Box):
+def ensureDiot(var):
+	if isinstance(var, Diot):
 		return var
-	return Box(var)
+	return Diot(var)
 
 def fs2name(files):
 	if not files: return 'nothing.etc'

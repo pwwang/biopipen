@@ -42,4 +42,3 @@ with open(outtmp + '.vcf', 'r') as fin, open(outfile, 'w') as fout:
 remove(outtmp + '.vcf')
 if gz:
 	runcmd(['bgzip', outfile])
-

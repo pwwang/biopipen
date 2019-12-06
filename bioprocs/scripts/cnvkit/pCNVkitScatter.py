@@ -1,6 +1,6 @@
 from os import path
 from copy import deepcopy
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 
 cnvkit   = {{args.cnvkit | quote}}

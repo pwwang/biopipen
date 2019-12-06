@@ -1,7 +1,7 @@
 """A set of processes for Tumor heterogeneity analysis"""
 from modkit import Modkit
-from pyppl import Box, Proc
-from . import rimport, params, delefactory, procfactory
+from pyppl import Diot, Proc
+from . import params, delefactory, procfactory
 from .utils import fs2name
 Modkit().delegate(delefactory())
 
@@ -25,20 +25,20 @@ def _pSciClone():
 	@output:
 		outdir: The output directory.
 	@args:
-		params (Box)  : Other parameters for original `sciClone` function. Default: `Box()`
+		params (Diot)  : Other parameters for original `sciClone` function. Default: `Diot()`
 		exfile (file)  : The regions to be excluded. In BED3 format
 		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based.
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based.
 	"""
-	return Box(
+	return Diot(
 		desc   = "Clonality analysis using SciClone.",
 		input  = "muts:var, cnvs:var",
 		output = "outdir:dir:{{i.muts | bn | .split('.')[0]}}.sciclone",
 		lang   = params.Rscript.value,
-		args   = Box(
-			params  = Box(),
+		args   = Diot(
+			params  = Diot(),
 			exfile  = "",
 			mutctrl = None,
 			cnctrl  = None
@@ -70,25 +70,26 @@ def _pPyClone():
 		pyclone (str): Path to `PyClone`.
 		bcftools(str): Path to `bcftools`, used to get information from VCF file.
 		bedtools(str): Path to `bedtools`, used to intersect mutations with CNVs.
-		params  (Box): Other parameters for original `PyClone run_analysis_pipeline` function.
+		params  (Diot): Other parameters for original `PyClone run_analysis_pipeline` function.
 		nthread (int): Number of threads to use by openblas.
 		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF files or multi-sample VCF file, 0-based.
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based.
 	"""
-	return Box(
+	return Diot(
 		desc   = "Clonality analysis using PyClone",
 		input  = "muts:var, cnvs:var",
-		output = "outdir:dir:{{i.muts | bn | .split('.')[0]}}.pyclone",
+		output = "outdir:dir:{{i.muts | __import__('pathlib').Path \
+									  | ?.is_file | =: [_] | !.split: ',' | [0] | fn }}.pyclone",
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			pyclone  = params.pyclone.value,
 			bcftools = params.bcftools.value,
 			bedtools = params.bedtools.value,
 			refgene  = params.refgene.value,
 			nthread  = 1,
-			params   = Box(),
+			params   = Diot(),
 			mutctrl  = None,
 			cnctrl   = None,
 		)
@@ -115,14 +116,14 @@ def _pAllFIT():
 		allfit (str): Path to All-FIT.py
 		bcftools (str): Path to `bcftools`, used to get information from VCF file.
 		bedtools (str): Path to `bedtools`, used to intersect mutations with CNVs.
-		params (Box): Other parameters for All-FIT.py
+		params (Diot): Other parameters for All-FIT.py
 		mutctrl (int|NoneType): Index of the control sample in paired-sample mutation VCF file, 0-based.
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF file, 0-based.
 		nthread (int): Number of threads to use for openblas.
 	"""
-	return Box(
+	return Diot(
 		desc = "Allele-Frequency-based Imputation of Tumor Purity Inference",
 		input = "infile:file, cnfile:var",
 		output = [
@@ -130,11 +131,11 @@ def _pAllFIT():
 			"outdir:dir:{{  i.infile | stem | @append: '.allfit'}}"
 		],
 		lang = params.python.value,
-		args = Box(
+		args = Diot(
 			allfit   = params.allfit.value,
 			bcftools = params.bcftools.value,
 			bedtools = params.bedtools.value,
-			params   = Box(t = 'somatic'),
+			params   = Diot(t = 'somatic'),
 			mutctrl  = None,
 			cnctrl   = None,
 			nthread  = 1
@@ -152,14 +153,12 @@ def _pTMBurden():
 		type: The type of mutation burden.
 			- `nonsyn`: Counting nonsynonymous mutations
 	"""
-	return Box(
+	return Diot(
 		desc    = 'Calculation of tumor mutation burden.',
 		input   = 'infile:file',
 		output  = 'outfile:file:{{i.infile | stem}}.tmb.txt',
-		args    = Box(type = 'nonsyn'),
+		args    = Diot(type = 'nonsyn'),
 		lang    = params.python.value,
-		mutctrl = None,
-		cnctrl  = None,
 	)
 
 @procfactory
@@ -189,7 +188,7 @@ def _pQuantumClone():
 	pQuantumClone.input         = 'vfvcfs:files'
 	pQuantumClone.output        = "outdir:dir:{{i.vfvcfs | fs2name}}.qclone"
 	pQuantumClone.envs.fs2name  = fs2name
-	pQuantumClone.args.params   = Box()
+	pQuantumClone.args.params   = Diot()
 	pQuantumClone.args.vfsamcol = 1 # 1-based
 	pQuantumClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])'
 	pQuantumClone.args.nthread  = 1
@@ -223,13 +222,13 @@ def _pTheta():
 		bedtools (str): Path to bedtools, used to extract coverage of regions.
 		samtools (str): Path to samtools, used to index bam file if possible.
 		ref (file): The reference genome file.
-		params (Box): Other parameters for THetA2.
+		params (Diot): Other parameters for THetA2.
 		nthread (int): The number of threads to use.
 		affysnps (str): The affymetrix Array snps, or other candidate snp list, in BED6-like format
 			- The first 6 columns should be in BED6 format
 			- The 7th column is reference allele, and 8th column is mutation allele.
 	"""
-	return Box(
+	return Diot(
 		desc   = "Tumor purity calculation using THetA2",
 		lang   = params.python.value,
 		input  = 'infile:file, tumbam:file, normbam:file',
@@ -237,12 +236,12 @@ def _pTheta():
 			'outfile:file:{{i.infile | stem}}.theta/{{i.infile | stem}}.purity.txt',
 			'outdir:dir:{{i.infile | stem}}.theta'
 		],
-		args = Box(
+		args = Diot(
 			theta         = params.theta2.value,
 			bedtools      = params.bedtools.value,
 			bam_readcount = params.bam_readcount.value,
 			samtools      = params.samtools.value,
-			params        = Box(),
+			params        = Diot(),
 			ref           = params.ref.value,
 			nthread       = 1,
 			affysnps      = params.affysnps.value,
@@ -259,7 +258,7 @@ def _pSuperFreq():
 	pSuperFreq.args.ref     = params.ref.value
 	pSuperFreq.args.resdir  = params.superfreq_res.value
 	pSuperFreq.args.genome  = params.genome.value
-	pSuperFreq.args.params  = Box(
+	pSuperFreq.args.params  = Diot(
 		systematicVariance = .02, maxCov = 150, BQoffset = 33,
 		mode = 'exome', splitRun = True
 	)
@@ -283,41 +282,41 @@ def _pClonEvol():
 		inopts: The input options to read the mutation file.
 		params: The parameters for individual `ClonEvol` functions.
 	"""
-	return Box(
+	return Diot(
 		desc   = "Inferring and visualizing clonal evolution in multi-sample cancer sequencing",
 		input  = 'mutfile:file, samfile:file, drivers:var',
 		output = 'outdir:dir:{{i.mutfile | stem}}.clonevol',
 		lang   = params.Rscript.value,
-		args   = Box(
+		args   = Diot(
 			# only for clonevol input format
-			inopts   = Box(rnames = False,  cnames = True),
+			inopts   = Diot(rnames = False,  cnames = True),
 			drivers  = [],
 			refgene  = params.refgene.value,
 			bedtools = params.bedtools.value,
-			devpars  = Box(width = 2000, height = 2000, res = 300),
-			params   = Box({
-				'plot.variant.clusters': Box(
+			devpars  = Diot(width = 2000, height = 2000, res = 300),
+			params   = Diot({
+				'plot.variant.clusters': Diot(
 					# see https://rdrr.io/github/hdng/clonevol/man/plot.variant.clusters.html
 				),
-				'plot.cluster.flow': Box({
+				'plot.cluster.flow': Diot({
 					# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
 				}),
-				'infer.clonal.models': Box({
+				'infer.clonal.models': Diot({
 					# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
 					"founding.cluster": 1,
 					"cluster.center": "mean",
 					"sum.p.cutoff": 0.05,
 					"alpha": 0.05,
 				}),
-				'transfer.events.to.consensus.trees': Box({
+				'transfer.events.to.consensus.trees': Diot({
 					# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
 					"event.col.name": "gene"
 				}),
-				'convert.consensus.tree.clone.to.branch': Box({
+				'convert.consensus.tree.clone.to.branch': Diot({
 					# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
 					"branch.scale": "sqrt"
 				}),
-				'plot.clonal.models': Box({
+				'plot.clonal.models': Diot({
 					# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
 					# "clone.shape"                     : 'bell',
 					# "bell.event"                      : True,
@@ -377,26 +376,26 @@ def _pSchism():
 		outdir: The output directory.
 	@args:
 		schism   (str) : Path to runSchism
-		params   (Box) : Other parameters for runSchism in yaml config.
+		params   (Diot) : Other parameters for runSchism in yaml config.
 		fishplot (bool): Whether generate a fishplot or not, requires fishplot install with R.
 			- Not implemented yet
 		Rscript  (str) : Path to Rscript to run fishplot
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Infer subclonal hierarchy and the tumor evolution from somatic mutations using SCHISM',
 		lang   = params.python.value,
 		input  = 'infile:file, purity:file',
 		output = 'outdir:dir:{{i.infile | stem}}.schism',
-		args   = Box(
+		args   = Diot(
 			schism   = params.schism.value,
 			dot      = params.dot.value,
 			fishplot = True,
 			Rscript  = params.Rscript.value,
-			devpars  = Box(res = 100),
-			params   = Box(
-				cellularity_estimator = Box(),
-				hypothesis_test       = Box(),
-				genetic_algorithm     = Box()
+			devpars  = Diot(res = 100),
+			params   = Diot(
+				cellularity_estimator = Diot(),
+				hypothesis_test       = Diot(),
+				genetic_algorithm     = Diot()
 			)
 		)
 	)
@@ -416,21 +415,21 @@ def _pLichee():
 		outdir: The output directory
 	@args:
 		dot (str): Path to dot to generate figures
-		params (Box): Other parameters for `lichee`.
+		params (Diot): Other parameters for `lichee`.
 			- Set a larger `e` if you have noisy data. Default is 0.1.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Fast and scalable inference of multi-sample cancer lineages using LICHeE',
 		input  = 'infile:file',
 		output = 'outdir:dir:{{i.infile | stem}}.lichee',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			dot      = params.dot.value,
 			lichee   = params.lichee.value,
 			fishplot = True,
 			Rscript  = params.Rscript.value,
-			devpars  = Box(res = 100),
-			params   = Box(maxVAFAbsent = 0.005, minVAFPresent = 0.005)
+			devpars  = Diot(res = 100),
+			params   = Diot(maxVAFAbsent = 0.005, minVAFPresent = 0.005)
 		)
 	)
 
@@ -444,6 +443,3 @@ def _pPyClone2ClonEvol():
 	pPyClone2ClonEvol.args.bedtools = params.bedtools.value
 	pPyClone2ClonEvol.lang          = params.python.value
 	return pPyClone2ClonEvol
-
-
-

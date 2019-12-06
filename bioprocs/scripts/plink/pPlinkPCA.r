@@ -114,7 +114,7 @@ if (is.true(plots$scree)) {
 		plots$scree = list(ncp = 20)
 	}
 	plot.bar(
-		cbind(sdevdf[1:plots$scree$ncp,,drop = FALSE], PCS = paste0('PC', 1:plots$scree$ncp)), 
+		cbind(sdevdf[1:plots$scree$ncp,,drop = FALSE], PCS = paste0('PC', 1:plots$scree$ncp)),
 		screefile,
 		x = 'PCS', y = 'Percent'
 	)
@@ -132,8 +132,3 @@ if (is.true(plots$pairs$anno)) {
 		plots$pairs$ggs = list()
 	plot.pairs(pdata, pairsfile, params = plots$pairs$params, ggs = plots$pairs$ggs)
 }
-
-
-
-
-

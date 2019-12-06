@@ -86,7 +86,7 @@ aExpDir2DegGSEA.pEnrichr.depends        = aExpDir2DegGSEA.pRNASeqDEG
 aExpDir2DegGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
 	ch1.repRow(ch2.length() * ch3.length())              \
 	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
-	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
+	   .cbind(ch3.repRow(ch1.length() * ch2.length()))
 aExpDir2DegGSEA.pRNASeqDEG.input = lambda ch1, ch2: \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
@@ -144,7 +144,7 @@ aRnaseqExpMat2DegGSEA.pEnrichr.depends        = aRnaseqExpMat2DegGSEA.pRNASeqDEG
 aRnaseqExpMat2DegGSEA.pGSEA.input      = lambda ch1, ch2, ch3: \
 	ch1.repRow(ch2.length() * ch3.length())              \
 	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
-	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
+	   .cbind(ch3.repRow(ch1.length() * ch2.length()))
 aRnaseqExpMat2DegGSEA.pRNASeqDEG.input = lambda ch1, ch2: \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Args
@@ -204,7 +204,7 @@ aCELDir2DEG['pMArrayDEG', ].depends = ['pCELDir2Matrix, pSampleInfo']
 aCELDir2DEG['pGSEA'].input = lambda ch1, ch2, ch3:       \
 	ch1.repRow(ch2.length() * ch3.length())              \
 	   .cbind(ch2.repRow(ch1.length() * ch3.length()))   \
-	   .cbind(ch3.repRow(ch1.length() * ch2.length())) 
+	   .cbind(ch3.repRow(ch1.length() * ch2.length()))
 aCELDir2DEG['pMArrayDEG'].input = lambda ch1, ch2:       \
 	ch1.colAt(0).repRow(ch2.length()).cbind(ch2.repRow(ch1.length()))
 # Configs
@@ -221,4 +221,3 @@ aCELDir2DEG.module('enrichr', depends = {
 }, ends = 'pEnrichr')
 # Enable all functions
 aCELDir2DEG.on()
-

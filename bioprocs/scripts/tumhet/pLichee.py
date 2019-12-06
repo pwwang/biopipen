@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from os import path
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 from bioprocs.utils import shell2 as shell, logger
@@ -31,7 +31,7 @@ if path.isdir(infile) and infile.endswith('.pyclone'):
 	reader = TsvReader(path.join(infile, 'tables/loci.tsv'))
 	samples = set()
 	for i, r in enumerate(reader):
-		indata.setdefault(r.mutation_id, Box())
+		indata.setdefault(r.mutation_id, Diot())
 		if not indata[r.mutation_id].get('_gene'):
 			indata[r.mutation_id]._gene = r.gene
 		indata[r.mutation_id]._cluster     = r.cluster_id
@@ -50,7 +50,7 @@ if path.isdir(infile) and infile.endswith('.pyclone'):
 		vafs = [0.0] + [info[sample] for sample in samples]
 		prof = profile(vafs)
 		clusters.setdefault(info.cluster, [])
-		clusters[info.cluster].append(Box(
+		clusters[info.cluster].append(Diot(
 			profile = prof,
 			vafs    = vafs,
 			index   = str(i)
@@ -83,7 +83,7 @@ elif infile.endswith('.maf') or infile.endswith('.maf.gz'):
 	samples = set()
 	for r in reader:
 		mut = r.Chromosome + ':' + r.Start_Position
-		mutations.setdefault(mut, Box())
+		mutations.setdefault(mut, Diot())
 		try:
 			mutations[mut][r.Tumor_Sample_Barcode] = float(r.t_alt_count) / (float(r.t_alt_count) + float(r.t_ref_count))
 		except ZeroDivisionError:
@@ -155,4 +155,3 @@ with open(snvfile, 'w') as fsnv:
 	fsnv.write('SNV\tClusterID\tDescription\n')
 	for snv, info in snvinfos.items():
 		fsnv.write(f'{snv}\t{info["cluster"]}\t{info["info"]}\n')
-

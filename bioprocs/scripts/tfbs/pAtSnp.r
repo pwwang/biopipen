@@ -62,7 +62,7 @@ while (!chunks$is_complete()) {
 	}
 	write.table(nextChunk, sfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
 	snp_info = LoadSNPData(
-		sfile, 
+		sfile,
 		genome.lib       = sprintf("BSgenome.Hsapiens.UCSC.%s", genome),
 		half.window.size = max(sapply(pwms, length))/4,
 		default.par      = TRUE,
@@ -106,6 +106,3 @@ if (fdr != FALSE) {
 }
 
 write.table(results, outfile, col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
-
-
-

@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from os import path, symlink
 from bioprocs.utils.gene import genenorm
 

@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.shell import grep, zcat
 
 infile  = {{ i.infile | quote}}

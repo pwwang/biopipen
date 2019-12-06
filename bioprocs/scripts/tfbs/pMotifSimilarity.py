@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 from bioprocs.utils.parallel import Parallel, distribute

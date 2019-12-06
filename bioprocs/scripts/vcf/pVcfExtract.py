@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell
 from bioprocs.utils.reference import vcfIndex
 
@@ -14,4 +14,3 @@ vcffile = vcfIndex(vcffile, tabix)
 params._ = [vcffile, regfile]
 params._stdout = outfile
 shell.Shell().tabix(**params).run()
-

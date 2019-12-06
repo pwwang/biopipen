@@ -1,16 +1,23 @@
-from pyppl import Box
+from os import path
+from pyppl import Diot
+from pyppl.utils import alwaysList
 from bioprocs.utils import logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
-{% python from os import path %}
-{% python from pyppl.utils import alwaysList %}
-{% assign cnames = dict(list = list, readlines = readlines,alwaysList = alwaysList, func = lambda x: x) %}
-{% assign cntype = lambda x, path = path: 'none' if x is None else 'list' if isinstance(x, (list, tuple)) else 'readlines' if path.isfile(x) else 'func' if x.startswith('lambda') else 'alwaysList' %}
 infile  = {{i.infile | quote}}
 hfile   = {{i.hfile | quote}}
 outfile = {{o.outfile | quote}}
 inopts  = {{args.inopts | repr}}
-cnames  = {{args.cnames | cnames.get(cntype(args.cnames), repr)}}
+cnames  = {{args.cnames | ?:isinstance(_, str) and _.startswith('lambda') | !repr}}
+
+if isinstance(cnames, str):
+	if path.isfile(cnames):
+		with open(cnames) as f:
+			cnames = [line.strip() for line in f.readlines() if line.strip()]
+	else:
+		cnames = alwaysList(cnames)
+elif cnames and not callable(cnames):
+	cnames = list(cnames)
 
 if hfile and cnames and not callable(cnames):
 	logger.warning('Both header file (hfile) and column names (args.cnames) specified, latter one discarded.')

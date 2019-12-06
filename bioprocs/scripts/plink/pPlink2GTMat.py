@@ -4,7 +4,7 @@ from glob import glob
 from bioprocs.utils import runcmd, cmdargs
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
-# plink -bfile x --recode A-transpose --out x.txt 
+# plink -bfile x --recode A-transpose --out x.txt
 # x.txt.traw
 
 indir   = {{i.indir | quote}}
@@ -61,5 +61,3 @@ with open(outfile, 'w') as fout:
 			)
 		del gtline[1:6]
 		fout.write('\t'.join(gtline) + '\n')
-
-

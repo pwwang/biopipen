@@ -1,15 +1,22 @@
+from os import path
+from pyppl.utils import alwaysList
 from bioprocs.utils import shell2 as shell
 
-{% python from os import path %}
-{% python from bioprocs.utils import alwaysList %}
-{% assign samcalls = dict(list = list, readlines = readlines, alwaysList = alwaysList, func = lambda x: x) %}
-{% assign samtypes = lambda x, path = path: 'none' if x is None else 'list' if isinstance(x, (list, tuple)) else 'readlines' if path.isfile(x) else 'func' if x.startswith('lambda') else 'alwaysList' %}
 infile   = {{i.infile | quote}}
 samfile  = {{i.samfile | quote}}
 outfile  = {{o.outfile | quote}}
-samples  = {{args.samples | samcalls.get(samtypes(args.samples), repr) }}
+samples  = {{args.samples | ?:isinstance(_, str) and _.startswith('lambda') | !repr}}
 nthread  = {{args.nthread | quote}}
 bcftools = {{args.bcftools | quote}}
+
+if isinstance(samples, str):
+	if path.isfile(samples):
+		with open(samples) as f:
+			samples = [line.strip() for line in f.readlines() if line.strip()]
+	else:
+		samples = alwaysList(samples)
+elif samples and not callable(samples):
+	samples = list(samples)
 
 shell.load_config(bcftools = bcftools)
 

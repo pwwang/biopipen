@@ -1,6 +1,6 @@
 from os import path
 from glob import glob
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell
 
 indir   = {{i.indir | quote}}

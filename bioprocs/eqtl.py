@@ -1,5 +1,5 @@
 """EQTL analysis"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -37,7 +37,7 @@ def _pMatrixeQTL():
 	pMatrixeQTL.args.model   = 'modelLINEAR' # or modelANOVA
 	pMatrixeQTL.args.pval    = 1e-5
 	pMatrixeQTL.args.fdr     = True
-	pMatrixeQTL.args.cisopts = Box(
+	pMatrixeQTL.args.cisopts = Diot(
 		snppos  = '',
 		genepos = params.refgene.value,
 		dist    = 0,    # 0 don't do cis-, trans- calls
@@ -46,4 +46,3 @@ def _pMatrixeQTL():
 	pMatrixeQTL.lang   = params.Rscript.value
 	pMatrixeQTL.script = 'file:scripts/eqtl/pMatrixeQTL.r'
 	return pMatrixeQTL
-

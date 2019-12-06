@@ -1,5 +1,5 @@
 from os import remove
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell
 
 infiles = {{i.infile | repr}}

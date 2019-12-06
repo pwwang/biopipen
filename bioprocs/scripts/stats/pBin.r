@@ -29,7 +29,7 @@ if (is.null(cols)) {
 } else if (is.list(cols)) {
 	for (col in names(cols)) {
 		cname = as.integer(col)
-		if (is.na(cname)) 
+		if (is.na(cname))
 			cname = col
 		else
 			cname = cnames[cname]
@@ -38,7 +38,7 @@ if (is.null(cols)) {
 } else {
 	for (col in cols) {
 		cname = as.integer(col)
-		if (is.na(cname)) 
+		if (is.na(cname))
 			cname = col
 		else
 			cname = cnames[cname]
@@ -58,7 +58,7 @@ for (i in 1:ncol(data)) {
 		} else {
 			dcol2 = dcol[!is.na(dcol)]
 		}
-		
+
 		cmax = max(dcol2)
 		cmin = min(dcol2)
 		probs = NULL
@@ -68,7 +68,7 @@ for (i in 1:ncol(data)) {
 			breaks = seq(cmin, cmax + 1, step)
 		} else {
 			stop('One of `nbin` and `step` is required for binning.')
-		} 
+		}
 		cuts = cut(dcol2, breaks = breaks, include.lowest = T)
 		ucuts = levels(factor(cuts))
 		for (j in 1:length(ucuts)) {
@@ -97,7 +97,3 @@ for (i in 1:ncol(data)) {
 }
 
 write.table(ret, outfile, sep = inopts$sep, col.names = inopts$header, row.names = if (is.null(inopts$row.names)) F else T, quote = F)
-
-
-
-

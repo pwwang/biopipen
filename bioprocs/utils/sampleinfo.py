@@ -172,7 +172,7 @@ class SampleInfo2(object):
 			ret = []
 			for sample in samples:
 				if sample not in ret:
-					ret.append(sample)
+					ret.append(sample if datadir is None else path.join(datadir, sample))
 			return ret
 		return [path.join(datadir, sample) for sample in samples] if datadir else samples
 
@@ -221,5 +221,3 @@ class SampleInfo2(object):
 			else:
 				ret.append((s2, s1))
 		return ret
-
-

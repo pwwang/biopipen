@@ -19,7 +19,7 @@ cont.table = read.table(infile, sep = "\t", header = T, row.names = 1, check.nam
 #
 # Contingency table rows: Mut, Non
 # Contingency table cols: Disease, Healthy
-# 
+#
 #         | S1 | S2 | ... | Sn |
 # --------+----+----+-----+----+
 # Disease | 1  | 0  | ... | 1  |
@@ -41,7 +41,7 @@ for (line in lines) {
 	if (!startsWith(line, '# Contingency table ')) next
 	if (startsWith(line, '# Contingency table cols:')) {
 		ct.cnames = trim(unlist(strsplit(substring(line, 26), ',', fixed = T)))
-	} 
+	}
 	else if (startsWith(line, '# Contingency table rows:')) {
 		ct.rnames = trim(unlist(strsplit(substring(line, 26), ',', fixed = T)))
 	}
@@ -88,7 +88,3 @@ out = data.frame(Xsquare = ret$statistic, df = ret$parameter, pval = ret$p.value
 write.table(t(out), outfile, col.names = F, sep = "\t", quote = F)
 write.table(ret$observed, obsvfile, sep = "\t", quote = F)
 write.table(ret$expected, exptfile, sep = "\t", quote = F)
-
-
-
-

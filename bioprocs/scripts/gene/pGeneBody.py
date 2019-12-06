@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from gff import Gff
 from bioprocs.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
 from bioprocs.utils import logger

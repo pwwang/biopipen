@@ -1,5 +1,5 @@
 """Processes for clustering data"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -86,7 +86,7 @@ def _pFeats2Dist():
 	pFeats2Dist              = Proc(desc = 'Calculate the distance between each pair of rows')
 	pFeats2Dist.input        = 'infile:file'
 	pFeats2Dist.output       = 'outfile:file:{{i.infile | fn}}.dist.txt'
-	pFeats2Dist.args.inopts  = Box(cnames = True, rnames = True)
+	pFeats2Dist.args.inopts  = Diot(cnames = True, rnames = True)
 	pFeats2Dist.args.transfm = 'scale'
 	pFeats2Dist.args.na      = 0
 	pFeats2Dist.args.method  = 'euclidean'
@@ -141,7 +141,7 @@ def _pCluster():
 	# You can also manually add them
 	pCluster.args.methods   = 'all'
 	pCluster.args.isCount   = False
-	pCluster.args.devpars   = Box(res=300, width=2000, height=2000)
+	pCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
 	pCluster.lang           = params.Rscript.value
 	pCluster.script         = "file:scripts/cluster/pCluster.r"
 	return pCluster
@@ -177,7 +177,7 @@ def _pMCluster():
 	pMCluster.args.cnames    = True
 	pMCluster.args.minc      = 2
 	pMCluster.args.maxc      = 15
-	pMCluster.args.devpars   = Box(res=300, width=2000, height=2000)
+	pMCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
 	pMCluster.lang           = params.Rscript.value
 	pMCluster.script         = "file:scripts/cluster/pMCluster.r"
 	return pMCluster
@@ -209,7 +209,7 @@ def _pAPCluster():
 	pAPCluster.args.transpose = False
 	pAPCluster.args.rnames    = True
 	pAPCluster.args.cnames    = True
-	pAPCluster.args.devpars   = Box(res=300, width=2000, height=2000)
+	pAPCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
 	pAPCluster.lang           = params.Rscript.value
 	pAPCluster.script         = "file:scripts/cluster/pAPCluster.r"
 	return pAPCluster
@@ -254,7 +254,7 @@ def _pHCluster():
 	pHCluster.args.method    = 'complete'
 	pHCluster.args.rotate    = False
 	pHCluster.args.fast      = False
-	pHCluster.args.devpars   = Box(res=300, width=2000, height=2000)
+	pHCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
 	pHCluster.lang           = params.Rscript.value
 	pHCluster.script         = "file:scripts/cluster/pHCluster.r"
 	return pHCluster
@@ -271,13 +271,12 @@ def _pKMeans():
 		'outfile:file:{{i.infile | fn}}.kmeans/{{i.infile | fn}}.kmeans.txt',
 		'outdir:dir:{{i.infile | fn}}.kmeans'
 	]
-	pKMeans.args.inopts  = Box(cnames = True, rnames = True)
+	pKMeans.args.inopts  = Diot(cnames = True, rnames = True)
 	pKMeans.args.k       = None
 	pKMeans.args.plot    = True
-	pKMeans.args.ggs     = Box()
-	pKMeans.args.devpars = Box(res=300, width=2000, height=2000)
+	pKMeans.args.ggs     = Diot()
+	pKMeans.args.devpars = Diot(res=300, width=2000, height=2000)
 	pKMeans.envs.rimport = rimport
 	pKMeans.lang         = params.Rscript.str()
 	pKMeans.script       = "file:scripts/cluster/pKMeans.r"
 	return pKMeans
-

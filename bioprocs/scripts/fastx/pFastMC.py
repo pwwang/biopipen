@@ -1,5 +1,5 @@
 from bioprocs.utils import logger, runcmd, cmdargs
-from pyppl import Box
+from pyppl import Diot
 
 params = {{args.params}}
 

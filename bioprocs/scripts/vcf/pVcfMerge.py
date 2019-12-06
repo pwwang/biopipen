@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.parallel import Parallel
 from bioprocs.utils.reference import vcfIndex
@@ -13,7 +13,7 @@ gatk      = {{args.gatk | quote}}
 tabix     = {{args.tabix | quote}}
 ref       = {{args.ref | quote}}
 params    = {{args.params}}
-params    = params if isinstance(params, Box) else Box(params)
+params    = params if isinstance(params, Diot) else Diot(params)
 tool      = {{args.tool | quote}}
 gz        = {{args.gz | repr}}
 

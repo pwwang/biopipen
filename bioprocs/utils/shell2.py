@@ -11,10 +11,13 @@ DEFAULT_CONFIG = dict(
 	bowtie2   = dict(_dupkey = True),
 	dtoxog    = dict(_out = cmdy.DEVERR, _prefix = '-'),
 	sort      = dict(_sep = '', _dupkey = True),
-	gatk      = dict(_dupkey = True),
+	gatk3     = dict(_dupkey = True),
+	hla_la    = dict(_raw = True),
 	liftover  = dict(_prefix = '-', _sep = '='),
 	oncotator = dict(_sep = 'auto'),
+	optitype  = dict(_dupkey = False),
 	maf2vcf   = dict(_sep = ' '),
+	netmhc    = dict(_prefix = '-'),
 
 	# As of picard 2.20.5-SNAPSHOT
 	# it's changing in the futher. See: https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)
@@ -23,9 +26,11 @@ DEFAULT_CONFIG = dict(
 	picard    = dict(_sep = '=', _prefix = ''),
 	plink     = dict(_out = cmdy.DEVERR),
 	pyclone   = dict(_raw = True),
+	razers3   = dict(_prefix = '-'),
 	samtools  = dict(_prefix = '-'),
 	snpeff    = dict(_prefix = '-'),
 	vcfanno   = dict(_prefix = '-'),
+	vep       = dict(_dupkey = True),
 )
 cmdy.config._load(DEFAULT_CONFIG)
 
@@ -43,7 +48,9 @@ rm_rf  = cmdy.rm.bake(r = True, f = True)
 ln_s   = cmdy.ln.bake(s = True)
 kill_9 = cmdy.kill.bake(s = 9)
 wc_l   = cmdy.wc.bake(l = True)
-
+cp     = copy = cmdy.cp
+mv     = move = cmdy.mv
+which  = lambda x: cmdy.which(x).strip()
 runcmd = lambda cmd: cmdy.bash(c = cmd)
 
 def load_config(conf = None, **kwargs):

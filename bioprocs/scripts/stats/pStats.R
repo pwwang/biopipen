@@ -184,5 +184,3 @@ for (feat in features) {
 	}
 	do.call(paste0('do_', ftype), list(feat = feat, groups = make.names(groups), outdir = outdir))
 }
-
-

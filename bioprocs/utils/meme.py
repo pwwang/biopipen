@@ -7,8 +7,8 @@ from collections import OrderedDict
 
 class MemeRecord(object):
 
-	def __init__(self, 
-		name, 
+	def __init__(self,
+		name,
 		matrix,
 		altname = '',
 		mtype   = 'letter-probability',
@@ -157,16 +157,16 @@ class MemeReader(object):
 				if not line:
 					continue
 				matrix.append(tuple(float(v) for v in line.split()))
-		
+
 		return MemeRecord(
-			name, 
+			name,
 			matrix,
 			altname = altname,
 			mtype   = mtype,
 			URL     = url,
 			**attrs
 		)
-	
+
 	def __next__(self):
 		return self.next()
 
@@ -203,7 +203,7 @@ class MemeWriter(object):
 			self.file.write("Background letter frequencies (from {}):\n".format(bgfreqs['from']))
 		if "freqs" in bgfreqs:
 			self.file.write(" ".join('{} {}'.format(k, v) for k, v in bgfreqs['freqs'].items()) + "\n\n")
-	
+
 	def write(self, mrec):
 		self.file.write(str(mrec))
 

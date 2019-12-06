@@ -2,7 +2,7 @@
 import re
 from os import path
 from glob import glob
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 #from .utils import plot, txt, dirnamePattern
 from .rnaseq import pBatchEffect, pCoexp, pExprStats
 from .utils import dirpat2name
@@ -81,9 +81,9 @@ def _pMArrayDEG():
 			- `heatmap` : The heatmap. (use `args.hmrows` to determine how many genes to plot)
 		`ggs`   : The extra ggplot element for each plot (should be able to concatenate by `+`).
 			- `maplot`  : for MA plot
-			- `heatmap` : for heatmap. Default: `Box(theme = {'axis.text.y': 'r:element_blank()'})`
+			- `heatmap` : for heatmap. Default: `Diot(theme = {'axis.text.y': 'r:element_blank()'})`
 			- `volplot` : for volcano plot
-		`devpars`: The parameters for plotting device. Default: `Box(res = 300, width = 2000, height = 2000)`
+		`devpars`: The parameters for plotting device. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	@requires:
 		`r-limma`
 	"""
@@ -106,20 +106,19 @@ def _pMArrayDEG():
 	pMArrayDEG.args.filter   = [0, 0]
 	pMArrayDEG.args.pval     = 0.05
 	pMArrayDEG.args.hmrows   = 100
-	pMArrayDEG.args.plot     = Box(
+	pMArrayDEG.args.plot     = Diot(
 		mdsplot = True,
-		volplot = Box(fccut = 2, pcut = 0.05),
+		volplot = Diot(fccut = 2, pcut = 0.05),
 		maplot  = False,
 		heatmap = False
 	)
-	pMArrayDEG.args.ggs = Box(
-		maplot  = Box(),
-		heatmap = Box(theme = {'axis.text.y': 'r:element_blank()'}),
-		volplot = Box(ylab = {0: '-log10(p-value)'})
+	pMArrayDEG.args.ggs = Diot(
+		maplot  = Diot(),
+		heatmap = Diot(theme = {'axis.text.y': 'r:element_blank()'}),
+		volplot = Diot(ylab = {0: '-log10(p-value)'})
 	)
-	pMArrayDEG.args.devpars = Box(res = 300, width = 2000, height = 2000)
+	pMArrayDEG.args.devpars = Diot(res = 300, width = 2000, height = 2000)
 	pMArrayDEG.envs.rimport = rimport
 	pMArrayDEG.lang         = params.Rscript.value
 	pMArrayDEG.script       = "file:scripts/marray/pMArrayDEG.r"
 	return pMArrayDEG
-

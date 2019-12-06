@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.snp import snpinfo
 
 infile   = {{i.snpfile | quote}}

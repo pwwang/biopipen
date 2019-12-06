@@ -56,5 +56,3 @@ writer.close()
 
 if gz:
 	runcmd(['bgzip', outfile])
-
-

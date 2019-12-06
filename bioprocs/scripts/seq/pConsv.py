@@ -32,7 +32,7 @@ with open(bedfile) as f:
 {% if args.pval %}
 def getPval(num, dist):
 	for i, d in enumerate(dist):
-		if d < num: 
+		if d < num:
 			return float(i)/float(len(dist))
 	return 1.0
 
@@ -76,4 +76,3 @@ with open({{i.bedfile | quote}}) as f, open({{out.outfile | quote}}, 'w') as fou
 		{% else %}
 		fout.write(line + '\t%.3f\n' % (consv))
 		{% endif %}
-

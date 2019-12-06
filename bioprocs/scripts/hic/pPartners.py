@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import regionOverlap
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
@@ -37,7 +37,7 @@ for line in reader:
 		reg1 = [line.CHR, line.START, line.END]
 	if intopts.ftype == 'bed12':
 		reg2 = re.split(r'[^\w]+', line.NAME)[:3]
-	else: 
+	else:
 		reg2 = [line.CHR2, line.START2, line.END2]
 
 	for region in regions:

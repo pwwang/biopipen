@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from pyppl.utils import cmd
 from collections import OrderedDict
 from subprocess import list2cmdline
@@ -10,7 +10,7 @@ except ImportError:  # py2
 
 shquote = lambda x: x[6:] if str(x).startswith('shraw:') else quote(str(x))
 
-TOOLS = Box()
+TOOLS = Diot()
 
 class RuncmdException(Exception):
 	pass
@@ -151,7 +151,7 @@ class ShellResult(object):
 		self.cmdobj = cmdobj
 		self.tools  = tools or {}
 		self.done   = False
-	
+
 	def __str__(self):
 		return self.stdout
 
@@ -183,7 +183,7 @@ class ShellResult(object):
 	@property
 	def stdout(self):
 		return self.run(save = 'stdout').cmdobj.stdout
-	
+
 	@property
 	def stderr(self):
 		return self.run(save = 'stderr').cmdobj.stderr
@@ -195,12 +195,12 @@ class ShellResult(object):
 	@property
 	def returncode(self):
 		return self.run().cmdobj.rc
-	
+
 	@property
 	def rc(self):
 		return self.returncode
 
-	def pipe(self, 
+	def pipe(self,
 		tools = None,   subcmd = False,
 		dash  = 'auto', equal  = 'auto', duplistkey = False, ignorefalse = True,
 		base  = None,   **pargs):
@@ -220,7 +220,7 @@ class ShellResult(object):
 		)
 
 class Shell(object):
-	def __init__(self, 
+	def __init__(self,
 		tools = None,   subcmd  = False,
 		dash  = 'auto', equal   = 'auto', duplistkey = False, ignorefalse = True,
 		base  = None,   prevcmd = None,   **pargs):
@@ -248,18 +248,18 @@ class Shell(object):
 		return self
 
 	def _run(self, *args, **kwargs):
-		kwargs[''] = list(args) + kwargs.get('', []) 
+		kwargs[''] = list(args) + kwargs.get('', [])
 		targs = '' if not self.targs else ' ' + cmdargs(
-			self.targs, dash = self.dash, equal = self.equal, 
+			self.targs, dash = self.dash, equal = self.equal,
 			duplistkey = self.duplistkey, ignorefalse = self.ignorefalse
 		)
 		cargs = cmdargs(
-			kwargs,     dash = self.dash, equal = self.equal, 
+			kwargs,     dash = self.dash, equal = self.equal,
 			duplistkey = self.duplistkey, ignorefalse = self.ignorefalse
 		)
 		cmd2run = '{0}{1} {2}'.format(self.base, targs, cargs)
 		cmdobj  = cmd.Cmd(cmd2run, **self.pargs)
-		
+
 		if self.prevcmd:
 			cmdobj.cmd = '{} | {}'.format(self.prevcmd, cmdobj.cmd)
 		return ShellResult(cmdobj, self.tools)
@@ -284,7 +284,7 @@ class Shell(object):
 				self.base = shquote(tool)
 			return self._run
 		return Shell(
-			subcmd = False, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey, 
+			subcmd = False, dash = self.dash, equal = self.equal, duplistkey = self.duplistkey,
 			ignorefalse = self.ignorefalse, base = tool, **self.pargs)
 
 wc   = lambda *args, **kwargs: Shell().wc(*args, **kwargs).run(save = 'stdout')

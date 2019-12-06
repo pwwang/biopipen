@@ -1,5 +1,5 @@
 """Some misc processes"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from bioprocs import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -35,7 +35,7 @@ def _pGEP70():
 			- Column 2: how is the regulated (up or down)
 		`inunit`  : The time unit in input file. Default: days
 		`outunit` : The output unit for plots. Default: days
-		`params`  : The params for `ggsurvplot`. Default: `Box({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': 'Log-rank p = {pval}'})`
+		`params`  : The params for `ggsurvplot`. Default: `Diot({'risk.table': True, 'conf.int': True, 'font.legend': 13, 'pval': 'Log-rank p = {pval}'})`
 			- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0.
 		`ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
 		`devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
@@ -47,9 +47,9 @@ def _pGEP70():
 	pGEP70.args.gep70   = params.gep70.value
 	pGEP70.args.inunit  = 'days' # months, weeks, years
 	pGEP70.args.outunit = 'days'
-	pGEP70.args.params  = Box({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
-	pGEP70.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pGEP70.args.ggs     = Box(table = Box())
+	pGEP70.args.params  = Diot({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
+	pGEP70.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+	pGEP70.args.ggs     = Diot(table = Diot())
 	pGEP70.envs.rimport = rimport
 	pGEP70.lang         = 'Rscript'
 	pGEP70.script       = "file:scripts/misc/pGEP70.r"
@@ -103,4 +103,3 @@ def _pNCBI():
 	pNCBI.lang        = params.python.value
 	pNCBI.script      = 'file:scripts/misc/pNCBI.py'
 	return pNCBI
-

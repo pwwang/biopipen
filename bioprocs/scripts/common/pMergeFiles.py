@@ -11,4 +11,3 @@ with open(infiles.pop(0)) as fin, open(outfile, 'w') as fout:
 			if header:
 				f.readline()
 			fout.write(f.read())
-			

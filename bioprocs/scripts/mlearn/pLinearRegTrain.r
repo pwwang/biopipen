@@ -11,7 +11,7 @@ prefix       = {{i.infile | stem | quote}}
 yval         = {{args.yval | quote}}
 
 indata = read.table.nodup(
-	infile, 
+	infile,
 	header      = {{args.inopts.get('cnames', True) | R}},
 	row.names   = {{args.inopts.get('rnames', True) | :1 if a else None | R}},
 	sep         = {{args.inopts.get('delimit', '\t') | R}},
@@ -77,5 +77,3 @@ colnames(plotdata) = c(ycol, if (ncol(model.fit$model) > 2) 'Features' else coln
 
 plot.scatter(plotdata, plotfile, x = 2, y = 1, ggs = ggs, devpars = devpars)
 {% endif %}
-
-

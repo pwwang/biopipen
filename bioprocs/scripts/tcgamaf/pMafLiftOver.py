@@ -59,4 +59,3 @@ for i, r in enumerate(reader):
 	r.Chromosome, r.Start_Position, r.End_Position = mapped[name]
 	r.NCBI_Build = genome
 	writer2.write(r)
-		

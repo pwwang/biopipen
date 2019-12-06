@@ -38,11 +38,11 @@ for i, infile in enumerate(infiles):
 	else:
 		samples.append(sam)
 	snps, gts = readone(infile, i == 0, progress = '{}/{}'.format(i+1, inlen))
-	if snps: 
+	if snps:
 		ret = [(snps[i], [gt]) for i, gt in enumerate(gts)]
 	else:
 		[ret[i][1].append(gt) for i, gt in enumerate(gts)]
-		
+
 if rsmap:
 	logger.info('Reading rs mapping file ...')
 	with open(rsmap) as fin:

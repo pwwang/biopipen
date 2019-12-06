@@ -1,6 +1,6 @@
 """Plot genomic features using Gviz R package"""
 # https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.pdf
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -31,7 +31,7 @@ def _pInteractionTrack():
 	pInteractionTrack.input       = "name, infile:file, region"
 	pInteractionTrack.output      = "outfile:file:interactionTrack_{{i.name}}_{{i.region | lambda x: x.replace(':', '-')}}.gviztrack"
 	pInteractionTrack.args.intype = "auto"
-	pInteractionTrack.args.params = Box({
+	pInteractionTrack.args.params = Diot({
 		'background.title': "#333333",
 		'col'             : 'NULL',
 		'col.outside'     : "#99beff",
@@ -66,7 +66,7 @@ def _pGeneTrack():
 	pGeneTrack.input       = "name, region"
 	pGeneTrack.output      = "outfile:file:geneTrack_{{i.name}}_{{i.region | lambda x: x.replace(':', '-')}}.gviztrack"
 	pGeneTrack.args.genome = params.genome.value
-	pGeneTrack.args.params = Box()
+	pGeneTrack.args.params = Diot()
 	pGeneTrack.lang        = params.Rscript.value
 	pGeneTrack.script      = "file:scripts/genomeplot/pGeneTrack.r"
 	return pGeneTrack
@@ -94,7 +94,7 @@ def _pAnnoTrack():
 	pAnnoTrack.input       = "name, infile:file, chrom"
 	pAnnoTrack.output      = "outfile:file:dataTrack_{{i.name}}_{{i.chrom}}.gviztrack"
 	pAnnoTrack.args.genome = params.genome.value
-	pAnnoTrack.args.params = Box()
+	pAnnoTrack.args.params = Diot()
 	pAnnoTrack.lang        = params.Rscript.value
 	pAnnoTrack.script      = "file:scripts/genomeplot/pAnnoTrack.r"
 	return pAnnoTrack
@@ -122,7 +122,7 @@ def _pDataTrack():
 	pDataTrack.input       = "name, infile:file, chrom"
 	pDataTrack.output      = "outfile:file:dataTrack_{{i.name}}_{{i.chrom}}.gviztrack"
 	pDataTrack.args.genome = params.genome.value
-	pDataTrack.args.params = Box()
+	pDataTrack.args.params = Diot()
 	pDataTrack.lang        = params.Rscript.value
 	pDataTrack.script      = "file:scripts/genomeplot/pDataTrack.r"
 	return pDataTrack
@@ -151,7 +151,7 @@ def _pUcscTrack():
 	pUcscTrack.output      = "outfile:file:ucscTrack_{{i.name}}_{{i.region | lambda x: x.replace(':', '-')}}.gviztrack"
 	pUcscTrack.lang        = params.Rscript.value
 	pUcscTrack.args.genome = params.genome.value
-	pUcscTrack.args.params = Box()
+	pUcscTrack.args.params = Diot()
 	pUcscTrack.script      = "file:scripts/genomeplot/pUcscTrack.r"
 	return pUcscTrack
 
@@ -186,14 +186,14 @@ def _pGenomePlot():
 	pGenomePlot.args.ideoTrack = params.cytoband.value # a file from ucsc (http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz); or True to download it in runtime; or False to disable it
 	pGenomePlot.args.axisTrack = True
 	pGenomePlot.args.geneTrack = params.refgene.value # or False to disable
-	pGenomePlot.args.params    = Box({
+	pGenomePlot.args.params    = Diot({
 		'title.width': .8
 	})
-	pGenomePlot.args.scheme  = Box(
-		GenomeAxisTrack = Box({
+	pGenomePlot.args.scheme  = Diot(
+		GenomeAxisTrack = Diot({
 			'fontsize': 8
 		}),
-		GeneRegionTrack = Box({
+		GeneRegionTrack = Diot({
 			'fontsize'         : 12,
 			'fill'             : "salmon",
 			'col'              : "NULL",
@@ -204,16 +204,14 @@ def _pGenomePlot():
 			"arrowHeadWidth"   : 30,
 			"arrowHeadMaxWidth": 40
 		}),
-		AnnotationTrack = Box({
+		AnnotationTrack = Diot({
 			'fontsize'        : 12,
 			'background.title': "#333333",
 			'fontcolor.item'  : "#333333"
 		})
 	)
-	pGenomePlot.args.devpars = Box(res = 300, height = 300, width = 2000)
+	pGenomePlot.args.devpars = Diot(res = 300, height = 300, width = 2000)
 	pGenomePlot.envs.rimport = rimport
 	pGenomePlot.lang         = params.Rscript.value
 	pGenomePlot.script       = "file:scripts/genomeplot/pGenomePlot.r"
 	return pGenomePlot
-
-

@@ -1,5 +1,5 @@
 library(reshape2)
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.r', 'plot.r' | *rimport}}
 
 infile       = {{i.infile | quote}}
 outdir       = {{o.outdir | quote}}
