@@ -25,5 +25,5 @@ setup(
     packages=['bioprocs', 'bioprocs.console', 'bioprocs.console.pipeline', 'bioprocs.scripts', 'bioprocs.sets', 'bioprocs.utils'],
     package_dir={"": "."},
     package_data={"bioprocs": ["*.toml", "reports/bcftools/*.md", "reports/gsea/*.md", "reports/imtherapy/*.md", "reports/mlearn/*.md", "reports/plot/*.md", "reports/rnaseq/*.md", "reports/stats/*.md", "reports/tcgamaf/*.md", "reports/tumhet/*.md"], "bioprocs.scripts": ["algorithm/*.r", "cluster/*.r", "eqtl/*.r", "genomeplot/*.r", "gsea/*.r", "marray/*.r", "misc/*.r", "mlearn/*.R", "mlearn/*.r", "plink/*.r", "plot/*.R", "plot/*.r", "power/*.r", "rank/*.r", "rnaseq/*.R", "rnaseq/*.r", "sambam/*.r", "stats/*.R", "stats/*.r", "tcga/*.r", "tcgamaf/*.R", "tcgamaf/*.bash", "tcgamaf/*.r", "tfbs/*.r", "tsv/*.R", "tsv/*.r", "tumhet/*.R"], "bioprocs.utils": ["*.bash", "*.r"]},
-    install_requires=['completions', 'pyparam', 'pyppl', 'python-box87', 'toml==0.*'],
+    install_requires=['completions', 'diot', 'pyparam', 'pyppl', 'toml==0.*'],
 )

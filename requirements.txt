@@ -1,5 +1,5 @@
 completions
+diot
 pyparam
 pyppl
-python-box87
 toml==0.*
