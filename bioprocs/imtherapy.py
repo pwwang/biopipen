@@ -1,5 +1,5 @@
 """A set of immunotherapy-related bioinformatics tools"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
@@ -38,17 +38,17 @@ def _pTopiary():
 			- netmhccons-iedb: Use NetMHCcons via the IEDB web API
 			- smm-iedb: Use SMM via the IEDB web API
 			- smm-pmbec-iedb: Use SMM-PMBEC via the IEDB web API
-		params (Box): Other parameters for topiary
+		params (Diot): Other parameters for topiary
 		tmpdir (str): Temporary directory for running local MHC predictors
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Epitope prediction using Topiary',
 		lang   = params.python.value,
 		input  = 'infile:file, afile:var',
 		output = [
 			'outfile:file:{{i.infile | stem2}}.topiary/{{i.infile | stem2}}.txt',
 			'outdir:dir:{{i.infile | stem2}}.topiary'],
-		args   = Box(
+		args   = Diot(
 			topiary       = params.topiary.value,
 			netmhc        = params.netmhc.value,
 			netmhcpan     = params.netmhcpan.value,
@@ -60,7 +60,7 @@ def _pTopiary():
 			tmpdir        = params.tmpdir.value,
 			refall        = params.refall.value,
 			mhc_predictor = 'netmhcpan',
-			params        = Box()
+			params        = Diot()
 		)
 	)
 
@@ -71,14 +71,14 @@ def _pVACseq():
 		pVACseq is a cancer immunotherapy pipeline for the identification of personalized Variant Antigens by Cancer Sequencing (pVACseq) that integrates tumor mutation and expression data (DNA- and RNA-Seq). It enables cancer immunotherapy research by using massively parallel sequence data to predicting tumor-specific mutant peptides (neoantigens) that can elicit anti-tumor T cell immunity. It is being used in studies of checkpoint therapy response and to identify targets for personalized cancer vaccines and adoptive T cell therapies. For more general information.
 		See: http://www.genomemedicine.com/content/8/1/11
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Identification of Variant Antigens using tumor mutation and expression data.',
 		lang   = params.python.value,
 		input  = 'infile:file, afile:var',
 		output = [
 			'outfile:file:{{i.infile | stem}}.pvacseq/{{i.infile | stem}}.epitopes.txt',
 			'outdir:dir:{{i.infile | stem}}.pvacseq'],
-		args   = Box(
+		args   = Diot(
 			# used to extract sample name
 			bcftools   = params.bcftools.value,
 			pvacseq    = params.pvacseq.value,
@@ -87,7 +87,7 @@ def _pVACseq():
 			netmhc     = params.netmhc.value,
 			iedb_mhc_i = params.iedb_mhc_i.value,
 			nthread    = 1,
-			params     = Box(epitope_length = 9)
+			params     = Diot(epitope_length = 9)
 		)
 	)
 
@@ -110,14 +110,14 @@ def _pOptiType():
 			- Samtools not used, as it may mark paired reads with different names, which causes bwa crash.
 		bwa      (str): Path to bwa
 		hlaref   (str): Path to HLA reference file
-		params   (Box): Other parameters for optitype
+		params   (Diot): Other parameters for optitype
 		nthread  (int): Number of threads to use
 	@requires:
 		[OptiType](https://github.com/FRED-2/OptiType)
 		bwa
 		picard
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Precision HLA typing from next-generation sequencing data using OptiType',
 		lang   = params.python.value,
 		input  = 'fqfile1:file, fqfile2:file',
@@ -131,13 +131,13 @@ def _pOptiType():
 								? :bool(_[1]) | \
 								= :__import__("os").path.commonprefix | \
 								! :_[0] | stem2 | .rstrip: "._[]"}}.optitype'],
-		args = Box(
+		args = Diot(
 			optitype = params.optitype.value,
 			picard   = params.picard.value,
 			bwa      = params.bwa.value,
 			hlaref   = params.hlaref.value,
 			nthread  = params.nthread.value,
-			params   = Box(dna = True, bwa = Box())
+			params   = Diot(dna = True, bwa = Diot())
 		)
 	)
 
@@ -155,23 +155,23 @@ def _pHLA_LA():
 		bwa      (path): Path to bwa
 		samtools (path): Path to samtools
 		nthread  (int) : Number of threads to use
-		params   (Box) : Other parameters for `HLA-LA.pl`
+		params   (Diot) : Other parameters for `HLA-LA.pl`
 	@requires:
 		[HLA-LA](https://github.com/DiltheyLab/HLA-LA)
 	"""
-	return Box(
+	return Diot(
 		desc   = 'HLA typing using HLA-LA',
 		lang   = params.python.value,
 		input  = 'infile:file',
 		output = [	'outfile:file:{{i.infile | stem2}}/{{i.infile | stem2}}.hlala.txt',
 					'outdir:dir:{{i.infile | stem2}}'],
-		args   = Box(
+		args   = Diot(
 			hla_la   = params.hla_la.value,
 			picard   = params.picard.value,
 			bwa      = params.bwa.value,
 			samtools = params.samtools.value,
 			java     = params.java.value,
-			params   = Box(),
+			params   = Diot(),
 			nthread  = 1,
 		)
 	)
@@ -184,15 +184,15 @@ def _pVcf2ProteinSeq():
 	@output:
 		outdir: The output directory containing the protein sequences
 	"""
-	return Box(
+	return Diot(
 		desc = 'Generate protein sequences from VCF file using pVACseq',
 		lang   = params.python.value,
 		input = 'infile:file',
 		output = 'outdir:dir:{{i.infile | stem2}}.protseqs',
-		args = Box(
+		args = Diot(
 			pvacseq = params.pvacseq.value,
 			lens    = [15, 17, 19, 21],
-			params  = Box(),
+			params  = Diot(),
 			nthread = 1,
 		)
 	)
@@ -209,22 +209,22 @@ def _pNetMHC():
 	@args:
 		netmhc  (path)        : Path to netMHC
 		isfa    (bool)        : Whether the input file is fasta sequence file (otherwise it is peptides)
-		params  (Box)         : Other parameters for netMHC
+		params  (Diot)         : Other parameters for netMHC
 		lens    (int|str|list): Peptide length
 		tmpdir  (path)        : Temporary directory for netMHC
 		nthread (int)         : Number of threads to use.
 			- netMHC itself does not multi-threading.
 			- We will split the input file and put them into multiple threads
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Run the netmhc to predict binding affinity between HLA-allele and peptides',
 		input  = 'infile:file, afile:var',
 		output = 'outfile:file:{{i.infile | stem2}}.netmhc.xls',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			netmhc  = params.netmhc.value,
 			isfa    = True,
-			params  = Box(v = True),
+			params  = Diot(v = True),
 			lens    = 9,
 			tmpdir  = params.tmpdir.value,
 			nthread = 1

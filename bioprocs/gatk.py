@@ -1,5 +1,5 @@
 """GATK utilities using GATK"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
@@ -16,22 +16,22 @@ def _pCombineVariants():
 		outfile: The output VCF file with all variants combined
 	@args:
 		gatk   (str): Path to GATK v3.8 (CombineVariants has not been ported to GATK v4 yet)
-		params (Box): Other parameters for `CombineVariants`
+		params (Diot): Other parameters for `CombineVariants`
 		ref    (str): Path to reference genome file.
 		tmpdir (str): Path to a temporary directory.
 		mem    (str): The memory used by JVM
 	@requires:
 		[gatk v3.8](https://software.broadinstitute.org/gatk/download/archive): `conda install -c bioconda gatk=3.8`
 	"""
-	return Box(
+	return Diot(
 		desc   = 'CombineVariants reads in variants records from separate ROD (Reference-Ordered Data) sources and combines them into a single VCF.',
 		lang   = params.python.value,
 		input  = 'infiles:files',
 		output = 'outfile:file:{{i.infiles[0] | stem | stem | @append: "_etc.combined.vcf"}}',
-		args   = Box(
+		args   = Diot(
 			gatk   = params.gatk3.value,
 			ref    = params.ref.value,
-			params = Box(),
+			params = Diot(),
 			tmpdir = params.tmpdir.value,
 			mem    = params.mem8G.value,
 		)
@@ -50,7 +50,7 @@ def _pReadBackedPhasing():
 		outfile: The output VCF with phasing information HP tags
 	@args:
 		gatk     (str): Path to GATK v3.8 (ReadBackedPhasing has not been ported to GATK v4 yet)
-		params   (Box): Other parameters for `ReadBackedPhasing`
+		params   (Diot): Other parameters for `ReadBackedPhasing`
 		ref      (str): Path to reference genome file.
 		tmpdir   (str): Path to a temporary directory.
 		mem      (str): The memory used by JVM
@@ -58,15 +58,15 @@ def _pReadBackedPhasing():
 	@requires:
 		[gatk v3.8](https://software.broadinstitute.org/gatk/download/archive): `conda install -c bioconda gatk=3.8`
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Identifies haplotypes based on the overlap between reads and uses this information to generate physical phasing information for variants within these haplotypes.',
 		lang   = params.python.value,
 		input  = 'infile:file, bamfile:file',
 		output = 'outfile:file:{{i.infile | stem | stem | @append: ".phased.vcf"}}',
-		args   = Box(
+		args   = Diot(
 			gatk     = params.gatk3.value,
 			ref      = params.ref.value,
-			params   = Box(),
+			params   = Diot(),
 			tmpdir   = params.tmpdir.value,
 			mem      = params.mem8G.value,
 			interval = None
@@ -539,4 +539,3 @@ def _pReadBackedPhasing():
 # 	{{args.gatk}} -T MuTect2 {{args.javamem}} -Djava.io.tmpdir="{{args.tmpdir}}" -R "{{reffile}}" -I:tumor "{{tumor}}" -I:normal "{{normal}}" -o "{{outfile}}" -L $intvfile {{args.params}}
 # 	""" % (_sNormalBai, _sTumorBai, _sReferenceFai, _sReferenceDict)
 # 	return pMuTect2Interval
-

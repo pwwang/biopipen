@@ -1,5 +1,5 @@
 """Processes for BED files"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -44,7 +44,7 @@ def _pBedSort():
 	pBedSort.args.mem      = '8G'
 	pBedSort.args.by       = 'coord'
 	pBedSort.args.unique   = True
-	pBedSort.args.params   = Box()
+	pBedSort.args.params   = Diot()
 	pBedSort.args.chrorder = None
 	pBedSort.args.tmpdir   = params.tmpdir.value
 	pBedSort.lang          = params.python.value
@@ -74,7 +74,7 @@ def _pBedLiftover():
 	pBedLiftover.output        = 'outfile:file:{{i.infile | bn}}, umfile:file:{{i.infile | fn}}.unmapped{{i.infile | ext}}'
 	pBedLiftover.args.liftover = params.liftover.value
 	pBedLiftover.args.lochain  = params.lochain.value
-	pBedLiftover.args.params   = Box()
+	pBedLiftover.args.params   = Diot()
 	pBedLiftover.lang          = params.python.value
 	pBedLiftover.script        = "file:scripts/bed/pBedLiftover.py"
 	return pBedLiftover
@@ -99,10 +99,10 @@ def _pGff2Bed(alias = 'pBedFromGff'):
 		outhead: Put head to output file or not.
 			- Could be prefix to the head.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Convert GTF/GFF file to BED file',
 		lang   = params.python.value,
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem}}.bed',
-		args   = Box(bedcols = Box(), keepattrs = True, outhead = '#')
+		args   = Diot(bedcols = Diot(), keepattrs = True, outhead = '#')
 	)

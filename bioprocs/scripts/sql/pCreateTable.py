@@ -34,5 +34,3 @@ if dsn.scheme in ['sqlite', 'sqlite3']:
 	conn.close()
 else:
 	raise NotImplementedError('Only support sqlite3 currently.')
-
-

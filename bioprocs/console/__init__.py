@@ -6,14 +6,14 @@ from .. import params
 from .utils import highlightMulti, Module, Pipeline, subtractDict
 from .arguments import commands
 from pyparam import HelpAssembler, Helps
-from pyppl import Box
+from pyppl import Diot
 from pyppl.utils import config
 
 HELP_ASSEMBLER = HelpAssembler()
 
 def showParams(opts):
 	"""Show and query a parameter"""
-	# get is preserved for Box
+	# get is preserved for Diot
 	if opts['get']:
 		for pname in opts._:
 			if pname not in params:
@@ -139,25 +139,25 @@ def main():
 	pipelines = Pipeline.pipelines()
 	command = sys.argv[1] if len(sys.argv) > 1 else None
 	if command == 'params':
-		_, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Diot)
 		showParams(opts)
 	elif command == 'list':
-		_, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Diot)
 		listProcs(opts)
 	elif command == 'proc':
-		_, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Diot)
 		proc(opts)
 	elif command in ('completion', 'completions'):
-		_, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Diot)
 		complete(opts)
 	elif command == 'profile':
-		_, opts, _ = commands._parse(dict_wrapper = Box)
+		_, opts, _ = commands._parse(dict_wrapper = Diot)
 		profile(opts)
 	elif command in pipelines:
 		# let the pipeline parse the arguments
 		Pipeline(command).run()
 	elif command in commands._hcmd:
-		_, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
+		_, opts, _ = commands._parse(arbi = True, dict_wrapper = Diot)
 		if not opts._:
 			commands._help(print_and_exit = True)
 		if opts._ in commands._cmds:
@@ -171,7 +171,7 @@ def main():
 			except KeyError:
 				raise KeyError('Module %r does not have process: %s' % (module, prc)) from None
 		else: # assume module
-			listProcs(Box(_ = [opts._]))
+			listProcs(Diot(_ = [opts._]))
 	elif not sys.argv[0]:
 		raise RuntimeError('This package has to run as a command line tool.')
 	elif not command:
@@ -180,7 +180,7 @@ def main():
 		# Hold helps first, because we haven't assembled the help page yet
 		hopts = commands[command]._hopts
 		commands[command]._hopts = []
-		command, opts, _ = commands._parse(arbi = True, dict_wrapper = Box)
+		command, opts, _ = commands._parse(arbi = True, dict_wrapper = Diot)
 		# resume it
 		commands[command]._hopts = hopts
 		if '.' in command:
@@ -190,5 +190,4 @@ def main():
 				raise ValueError('No such process: %s' % command)
 			module.procs()[prc].run(opts)
 		else: # listing module processes
-			listProcs(Box(_ = [command]))
-
+			listProcs(Diot(_ = [command]))

@@ -16,7 +16,7 @@ class HardFileLock(filelock.BaseFileLock):
 		except (IOError, OSError):
 			# wait
 			self._lock_file_fd = None
-		
+
 	def _release(self):
 		self._lock_file_fd = None
 
@@ -36,7 +36,7 @@ class Poll(object):
 		self.workdir  = workdir
 		self.joblen   = joblen
 		self.jobindex = jobindex
-		
+
 	"""
 	A helper function to poll `func`, if it is true, then wait
 	@params:
@@ -133,7 +133,7 @@ class Poll(object):
 			for jobindex in range(self.joblen)
 		]
 		lockfiles = [HardFileLock(f) for f in lockfilenames]
-		
+
 		#log2pyppl('Doing stuff at job #%s ... ' % self.jobindex)
 		# with lockfiles[self.jobindex]:
 		#lockfiles[self.jobindex].acquire()

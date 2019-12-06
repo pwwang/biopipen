@@ -43,7 +43,7 @@ chow.test = function(formula, group, data, covdata = NULL, ...) {
 		pooledfm = as.formula(paste(formula, '+', paste(sapply(covs, bQuote), collapse = '+')))
 		fmvars   = c(fmvars, covs)
 	}
-	
+
 	if (sum(complete.cases(data[,fmvars])) < 2) {
 		pooled_lm = NULL
 	} else {
@@ -56,7 +56,7 @@ chow.test = function(formula, group, data, covdata = NULL, ...) {
 			subfm  = as.formula(formula)
 		} else {
 			subfm = as.formula(paste(
-				formula, '+', 
+				formula, '+',
 				#paste(sapply(covs, function(x) paste0('offset(', coeff[[x]], '*', bQuote(x), ')')), collapse = '+')
 				paste(sapply(covs, bQuote), collapse = '+')
 			))
@@ -93,7 +93,7 @@ plot.chow = function(chow, plotfile, ggs, devpars) {
 	colnames(plotdata)[3] = chow$group
 	if (!is.null(ggs$scale_color_discrete)) {
 		ggs$scale_color_discrete$name = ifelse(
-			is.function(ggs$scale_color_discrete$name), 
+			is.function(ggs$scale_color_discrete$name),
 			ggs$scale_color_discrete$name(chow$group),
 			chow$group
 		)
@@ -105,7 +105,7 @@ plot.chow = function(chow, plotfile, ggs, devpars) {
 
 	if (!is.null(ggs$scale_shape_discrete)) {
 		ggs$scale_shape_discrete$name = ifelse(
-			is.function(ggs$scale_shape_discrete$name), 
+			is.function(ggs$scale_shape_discrete$name),
 			ggs$scale_shape_discrete$name(chow$group),
 			chow$group
 		)
@@ -127,12 +127,12 @@ plot.chow = function(chow, plotfile, ggs, devpars) {
 
 	if (is.null(ggs$scale_color_discrete)) ggs$scale_color_discrete = ggs$scale_shape_discrete
 	if (is.null(ggs$scale_shape_discrete)) ggs$scale_shape_discrete = ggs$scale_color_discrete
-	
+
 	plot.points(
-		plotdata, 
-		plotfile, 
-		x = 2, y = 1, 
-		params = list(aes_string(color = chow$group, shape = chow$group)), 
+		plotdata,
+		plotfile,
+		x = 2, y = 1,
+		params = list(aes_string(color = chow$group, shape = chow$group)),
 		ggs = c(ggs, list(
 			geom_smooth = list(aes_string(color = chow$group), method = "lm", se = FALSE)
 		))
@@ -233,9 +233,8 @@ for (case in cases) {
 
 if (dofdr != F) {
 	results = cbind(results, Qval = p.adjust(results$Pval, method = dofdr))
-} 
+}
 write.table(pretty.numbers(results, list(
 	SSR..SumSSR..Fstat = '%.3f',
 	Pval..Qval = '%.3E'
 )), outfile, col.names = T, row.names = F, sep = "\t", quote = F)
-

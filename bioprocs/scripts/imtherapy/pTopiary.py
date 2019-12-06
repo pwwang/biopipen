@@ -17,7 +17,7 @@ from os import environ
 from pathlib import Path
 from cyvcf2 import VCF
 from gff import Gff
-from pyppl import Box
+from pyppl import Diot
 from cmdy import CmdyReturnCodeException
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
@@ -197,7 +197,7 @@ for mhcpred in (netmhc, netmhcpan, netmhciipan, netmhccons, smm, smm_pmbec):
 	except CmdyReturnCodeException:
 		continue
 
-params._env = Box(PATH = environ['PATH'] + ':' + ':'.join(PATHs))
+params._env = Diot(PATH = environ['PATH'] + ':' + ':'.join(PATHs))
 
 shell.fg.topiary(**params)
 
@@ -234,7 +234,7 @@ if mhc_predictor in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 
 		wildfile = outfile.parent / 'wildtype.peptides.txt'
 		wildfile.write_text('\n'.join(wildpeps))
 
-		nparams = Box(
+		nparams = Diot(
 			a = mhcallele2, v = True, inptype = 1, f = wildfile, _prefix = '-',
 			_iter = True, _debug = True)
 		res = shell.netmhc(**nparams)
@@ -267,7 +267,7 @@ if mhc_predictor in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 
 			out.Mutation     = r.variant
 			out.AAChange     = r.effect
 			writerall.write(out)
-			if float(out.Affinity) > 500 and ('>' not in out.Ref_affinity and float(out.Ref_affinity) <= 2000):
+			if float(out.Affinity) < 500 and ('>' in out.Ref_affinity or float(out.Ref_affinity) >= 2000):
 				writer.write(out)
 
 	def run_netmhcpan():
@@ -279,7 +279,7 @@ if mhc_predictor in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 
 		wildfile = outfile.parent / 'wildtype.peptides.txt'
 		wildfile.write_text('\n'.join(wildpeps))
 		xlsfile = outfile.parent / 'wildtype.binding.txt'
-		nparams = Box(
+		nparams = Diot(
 			a = mhcallele2, v = True, BA = True, inptype = 1, f = wildfile, _prefix = '-',
 			xls = True, xlsfile = xlsfile)
 		shell.fg.netmhcpan(**nparams)

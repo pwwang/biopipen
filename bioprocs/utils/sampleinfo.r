@@ -143,4 +143,3 @@ SampleInfo2 = R6Class("SampleInfo2", public = list(
 	}
 
 ))
-

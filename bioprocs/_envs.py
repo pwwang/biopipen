@@ -2,8 +2,8 @@
 import json
 from pathlib import Path
 from sys import executable
+from diot import Diot, OrderedDiot
 from pyppl.template import Template
-from pyppl.utils import Box, OBox
 
 __all__ = []
 
@@ -172,30 +172,30 @@ def render(var, data = None):
 
 def box(var):
 	"""
-	Turn a dict into a Box object
+	Turn a dict into a Diot object
 	"""
-	from pyppl.utils import Box
+	from pyppl.utils import Diot
 	if not isinstance(var, dict):
-		raise TypeError('Cannot coerce non-dict object to Box.')
-	return 'Box(%r)' % var.items()
+		raise TypeError('Cannot coerce non-dict object to Diot.')
+	return 'Diot(%r)' % var.items()
 
 def obox(var):
 	"""
-	Turn a dict into an ordered Box object
+	Turn a dict into an ordered Diot object
 	"""
-	from pyppl.utils import OBox
 	if not isinstance(var, dict):
-		raise TypeError('Cannot coerce non-dict object to OrderedBox.')
-	return 'OBox(%r)' % var.items()
+		raise TypeError('Cannot coerce non-dict object to OrderedDiot.')
+	return 'OrderedDiot(%r)' % var.items()
 
 def glob1(*paths, first = True):
 	"""
 	Return the paths matches the paths
 	"""
-	assert len(paths) > 2
+	assert len(paths) >= 2
+	paths = list(paths)
 	path0 = paths.pop(0)
 	pattern = paths.pop(-1)
-	ret = Path(path0).joinpath(**paths).glob(pattern)
+	ret = list(Path(path0).joinpath(*paths).glob(pattern))
 
 	if ret and first:
 		return ret[0] # Path object

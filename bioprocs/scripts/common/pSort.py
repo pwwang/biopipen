@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 
 infile  = {{i.infile | quote}}

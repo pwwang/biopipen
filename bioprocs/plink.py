@@ -1,7 +1,7 @@
 """
 Procs for plink 1.9
 """
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport, bashimport
 from .vcf import pVcf2Plink
 from .tcgamaf import pGTMat2Plink
@@ -38,14 +38,14 @@ def _pPlinkStats():
 	pPlinkStats.output        = 'outdir:dir:{{i.indir | fn}}.plinkStats'
 	pPlinkStats.args.plink    = params.plink.value
 	pPlinkStats.args.nthread  = False
-	pPlinkStats.args.params   = Box({
+	pPlinkStats.args.params   = Diot({
 		'hardy'    : True,
 		'het'      : True,
 		'freq'     : True,
 		'missing'  : True,
 		'check-sex': True,
 	})
-	pPlinkStats.args.cutoff   = Box({
+	pPlinkStats.args.cutoff   = Diot({
 		'hardy.hwe'     : 1e-5,
 		'hardy.mingt'   : None,
 		'het'           : 3,
@@ -53,7 +53,7 @@ def _pPlinkStats():
 		'missing.sample': .95,
 		'missing.snp'   : .95,
 	})
-	pPlinkStats.args.plot     = Box({
+	pPlinkStats.args.plot     = Diot({
 		'hardy.hwe'     : True,
 		'hardy.mingt'   : True,
 		'het'           : True,
@@ -61,7 +61,7 @@ def _pPlinkStats():
 		'missing.sample': True,
 		'missing.snp'   : True,
 	})
-	pPlinkStats.args.devpars  = Box(res=300, width=2000, height=2000)
+	pPlinkStats.args.devpars  = Diot(res=300, width=2000, height=2000)
 	pPlinkStats.envs.rimport  = rimport
 	pPlinkStats.lang          = params.Rscript.value
 	pPlinkStats.script        = "file:scripts/plink/pPlinkStats.r"
@@ -80,7 +80,7 @@ def _pPlinkSampleFilter():
 	pPlinkSampleFilter.args.keep    = True
 	pPlinkSampleFilter.args.samid   = 'iid' # both or fid
 	pPlinkSampleFilter.args.fam     = False
-	pPlinkSampleFilter.args.params  = Box()
+	pPlinkSampleFilter.args.params  = Diot()
 	pPlinkSampleFilter.args.nthread = False
 	pPlinkSampleFilter.lang         = params.python.value
 	pPlinkSampleFilter.script       = "file:scripts/plink/pPlinkSampleFilter.py"
@@ -106,7 +106,7 @@ def _pPlinkMiss():
 		`samplecr`: The sample call rate cutoff. Default: `.95`
 		`snpcr`: The SNP call rate cutoff. Default: `.95`
 		`plot`: Whether plot the distribution of the call rates? Default: `True`
-		`devpars`: The device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`
+		`devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
 	"""
 	pPlinkMiss               = Proc(desc = 'Find samples and snps with missing calls')
 	pPlinkMiss.input         = 'indir:dir'
@@ -115,7 +115,7 @@ def _pPlinkMiss():
 	pPlinkMiss.args.samplecr = .95
 	pPlinkMiss.args.snpcr    = .95
 	pPlinkMiss.args.plot     = True
-	pPlinkMiss.args.devpars  = Box(res=300, width=2000, height=2000)
+	pPlinkMiss.args.devpars  = Diot(res=300, width=2000, height=2000)
 	pPlinkMiss.envs.rimport  = rimport
 	pPlinkMiss.lang          = params.Rscript.value
 	pPlinkMiss.script        = "file:scripts/plink/pPlinkMiss.r"
@@ -133,7 +133,7 @@ def _pPlinkFreq():
 	pPlinkFreq.args.plink   = params.plink.value
 	pPlinkFreq.args.cutoff  = 0.01
 	pPlinkFreq.args.plot    = True
-	pPlinkFreq.args.devpars = Box(res=300, width=2000, height=2000)
+	pPlinkFreq.args.devpars = Diot(res=300, width=2000, height=2000)
 	pPlinkFreq.lang         = params.python.value
 	pPlinkFreq.script       = "file:scripts/plink/pPlinkFreq.py"
 	return pPlinkFreq
@@ -180,7 +180,7 @@ def _pPlinkHet():
 		`plink`: The path to plink.
 		`cutoff`: The sample heterozygosity cutoff. Default: `3` (mean-3SD ~ mean+3SD)
 		`plot`: Whether plot the distribution of the heterozygosity? Default: `True`
-		`devpars`: The device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`
+		`devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
 	"""
 	pPlinkHet              = Proc(desc = 'Calculate the heterozygosity of each sample')
 	pPlinkHet.input        = 'indir:dir'
@@ -188,7 +188,7 @@ def _pPlinkHet():
 	pPlinkHet.args.plink   = params.plink.value
 	pPlinkHet.args.cutoff  = 3
 	pPlinkHet.args.plot    = True
-	pPlinkHet.args.devpars = Box(res=300, width=2000, height=2000)
+	pPlinkHet.args.devpars = Diot(res=300, width=2000, height=2000)
 	pPlinkHet.envs.rimport = rimport
 	pPlinkHet.lang         = params.Rscript.value
 	pPlinkHet.script       = "file:scripts/plink/pPlinkHet.r"
@@ -211,7 +211,7 @@ def _pPlinkHWE():
 		`plink`: The path to plink.
 		`cutoff`: The HWE p-value cutoff. Default: `1e-5`
 		`plot`: Whether plot the distribution of the HWE p-values? Default: `True`
-		`devpars`: The device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`
+		`devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
 	"""
 	pPlinkHWE = Proc(desc = "Hardy-Weinberg Equilibrium report and filtering.")
 	pPlinkHWE.input        = 'indir:dir'
@@ -220,7 +220,7 @@ def _pPlinkHWE():
 	pPlinkHWE.args.cutoff  = 1e-5
 	pPlinkHWE.args.mingt   = .05
 	pPlinkHWE.args.plot    = True
-	pPlinkHWE.args.devpars = Box(res=300, width=2000, height=2000)
+	pPlinkHWE.args.devpars = Diot(res=300, width=2000, height=2000)
 	pPlinkHWE.envs.rimport = rimport
 	pPlinkHWE.lang         = params.Rscript.value
 	pPlinkHWE.script       = "file:scripts/plink/pPlinkHWE.r"
@@ -245,7 +245,7 @@ def _pPlinkIBD():
 		`indep`: To give a concrete example: the command above that specifies 50 5 0.2 would a) consider a window of 50 SNPs, b) calculate LD between each pair of SNPs in the window, b) remove one of a pair of SNPs if the LD is greater than 0.5, c) shift the window 5 SNPs forward and repeat the procedure.
 		`pihat`: The PI_HAT cutoff. Default: 0.1875 (see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/)
 		`plot` : Whether plot the PI_HAT heatmap? Default: `True`
-		`devpars`: The device parameters for the plot. Default: `Box(res=300, width=2200, height=1600)`
+		`devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2200, height=1600)`
 		`samid`: Sample ids on the heatmap. Default: `iid`
 			- Could also be `fid` or `fid<sep>iid`, or an R function: `function(fid, iid)`
 		`anno` : The annotation file for the samples. Names must match the ones that are transformed by `args.samid`. Default: `''`
@@ -261,7 +261,7 @@ def _pPlinkIBD():
 	pPlinkIBD.args.plot    = True
 	pPlinkIBD.args.anno    = ''
 	pPlinkIBD.args.seed    = None
-	pPlinkIBD.args.devpars = Box(res=300, width=2000, height=2000)
+	pPlinkIBD.args.devpars = Diot(res=300, width=2000, height=2000)
 	pPlinkIBD.envs.rimport = rimport
 	pPlinkIBD.lang         = params.Rscript.value
 	pPlinkIBD.script       = "file:scripts/plink/pPlinkIBD.r"
@@ -377,12 +377,12 @@ def _pPlinkPCA():
 			- `False`: Don't put `--threads` in plink command
 		`indep`: `indep` used to prune LD SNPs. Default: `[50, 5, .2]`
 		`highld`: High LD regions. Default: `<params.highld>`
-		`params`: Other parameters for `plink --pca`. Default: `Box(mind = .95)`
+		`params`: Other parameters for `plink --pca`. Default: `Diot(mind = .95)`
 		`select`: Select first PCs in the output file. Default: `0.2`
 			- `select < 1`: select PCs with contribution greater than `select`
 			- `select >=1`: select first `select` PCs
-		`plots` : Output plots. Default: `Box(scree = Box(ncp = 20))`
-		`devpars`: The parameters for ploting device. Default: `Box(height = 2000, width = 2000, res = 300)`
+		`plots` : Output plots. Default: `Diot(scree = Diot(ncp = 20))`
+		`devpars`: The parameters for ploting device. Default: `Diot(height = 2000, width = 2000, res = 300)`
 	"""
 	pPlinkPCA          = Proc(desc = "Perform PCA on genotype data and covariates.")
 	pPlinkPCA.input    = 'indir:dir'
@@ -395,15 +395,15 @@ def _pPlinkPCA():
 	pPlinkPCA.args.nthread = False
 	pPlinkPCA.args.indep   = [50, 5, .2] # used to prune LD SNPs
 	pPlinkPCA.args.highld  = params.highld.value
-	pPlinkPCA.args.params  = Box(mind = .95)
+	pPlinkPCA.args.params  = Diot(mind = .95)
 	pPlinkPCA.args.select  = .2
-	pPlinkPCA.args.plots   = Box(
-		scree = Box(ncp = 20),
+	pPlinkPCA.args.plots   = Diot(
+		scree = Diot(ncp = 20),
 		# rownames of anno should be consistent with `args.samid`
-		pairs = Box(anno = '', ncp = 4, params = Box(upper = Box(continuous = 'density')), ggs = Box(theme = {"axis.text.x": "r:ggplot2::element_text(angle = 60, hjust = 1)" })),
+		pairs = Diot(anno = '', ncp = 4, params = Diot(upper = Diot(continuous = 'density')), ggs = Diot(theme = {"axis.text.x": "r:ggplot2::element_text(angle = 60, hjust = 1)" })),
 		# more to add
 	)
-	pPlinkPCA.args.devpars = Box(height = 2000, width = 2000, res = 300)
+	pPlinkPCA.args.devpars = Diot(height = 2000, width = 2000, res = 300)
 	pPlinkPCA.envs.rimport = rimport
 	pPlinkPCA.lang         = params.Rscript.value
 	pPlinkPCA.script       = "file:scripts/plink/pPlinkPCA.r"
@@ -428,8 +428,7 @@ def _pPlinkSimulate():
 	pPlinkSimulate.args.maxfreq = 1
 	pPlinkSimulate.args.hetodds = 1
 	pPlinkSimulate.args.homodds = 1
-	pPlinkSimulate.args.params  = Box()
+	pPlinkSimulate.args.params  = Diot()
 	pPlinkSimulate.lang         = params.python.value
 	pPlinkSimulate.script       = "file:scripts/plink/pPlinkSimulate.py"
 	return pPlinkSimulate
-

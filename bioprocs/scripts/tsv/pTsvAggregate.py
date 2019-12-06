@@ -1,5 +1,5 @@
 import math
-from pyppl import Box
+from pyppl import Diot
 from functools import partial
 from bioprocs.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
@@ -81,7 +81,7 @@ builtin = {
 
 helper = [line for line in helper if line]
 exec('\n'.join(helper), globals())
-aggrs  = Box()
+aggrs  = Diot()
 naggrs = {}
 {% for col, func in args.aggrs.items() %}
 col  = {{col | quote}}
@@ -150,6 +150,3 @@ for c, a in aggrs.items():
 		out.append(a(rows))
 writer.write(out)
 writer.close()
-
-
-

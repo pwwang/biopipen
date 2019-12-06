@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from matplotlib import gridspec
 from matplotlib import patches
 {% endif %}
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import alwaysList, logger
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord

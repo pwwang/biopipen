@@ -22,7 +22,7 @@ regressone = function(idata, model, fmula, covs, case) {
 	ycol  = gsub('^`|`$', '', ycol)
 	if (yval == 'categ') {
 		ylabs   = levels(as.factor(idata[, ycol]))
-		if (length(ylabs) < 2) 
+		if (length(ylabs) < 2)
 			stop('Require more than 1 levels for categorical Y values in case ', case)
 		ylevels = order(ylabs)
 		ymin    = min(ylevels)
@@ -34,13 +34,13 @@ regressone = function(idata, model, fmula, covs, case) {
 		idata[, ycol] = (idata[, ycol] - ymin) / (ymax - ymin)
 	}
 	fml  = ifelse(
-		is.null(covs), 
-		as.character(fmula), 
+		is.null(covs),
+		as.character(fmula),
 		paste(c(as.character(fmula), sapply(covs, bQuote)), collapse = ' + ')
 	)
 	m = ifelse(
-		model == 'glm', 
-		mdl(as.formula(fml), data = idata, family = glmfam), 
+		model == 'glm',
+		mdl(as.formula(fml), data = idata, family = glmfam),
 		mdl(as.formula(fml), data = idata)
 	)
 	if (args.plot) {
@@ -71,7 +71,7 @@ if (covfile!='') {
 }
 
 fmdata = read.table(fmfile, header = F, row.names = NULL, sep = "\t", check.names = F)
-if (ncol(fmdata) < 3) 
+if (ncol(fmdata) < 3)
 	fmdata = cbind(Case = paste0('Case', 1:nrow(fmdata)), fmdata, stringsAsFactors = F)
 
 casedata = NULL
@@ -90,8 +90,8 @@ out = data.frame(
 )
 for (case in cases) {
 	cdata = ifelse(
-		is.null(casedata), 
-		indata, 
+		is.null(casedata),
+		indata,
 		indata[casedata[which(casedata[,2]==case), 1],,drop=F])
 	fdata = fmdata[which(fmdata[,1] == case),,drop=T]
 	ret = regressone(cdata, fdata[[2]], fdata[[3]], covs, case)

@@ -1,5 +1,5 @@
-from pyppl import Box
-from bioprocs.utils import ensureBox, shell2 as shell
+from pyppl import Diot
+from bioprocs.utils import ensureDiot, shell2 as shell
 
 cmd = {{args.cmd | repr}}
 if not cmd:

@@ -1,7 +1,7 @@
 from shutil import move, rmtree
 from os import path, symlink, remove
 from sys import stderr
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import mem2, shell2 as shell
 
 infile     = {{ i.infile | quote }}

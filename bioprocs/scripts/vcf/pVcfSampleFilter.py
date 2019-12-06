@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from pyppl.utils import alwaysList
 from bioprocs.utils import shell2 as shell
 

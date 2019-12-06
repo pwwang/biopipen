@@ -1,6 +1,6 @@
 from os import path
-from pyppl import Box
-from bioprocs.utils import ensureBox, shell2 as shell
+from pyppl import Diot
+from bioprocs.utils import ensureDiot, shell2 as shell
 from bioprocs.utils.reference import vcfIndex
 
 infile = {{i.infile | quote}}
@@ -8,7 +8,7 @@ outdir = {{o.outdir | quote}}
 plink  = {{args.plink | quote}}
 tabix  = {{args.tabix | quote}}
 params = {{args.params}}
-params = ensureBox(params)
+params = ensureDiot(params)
 
 # resolve plink 1.x --set-missing-var-ids doesn't distinguish $1, $2,... for ref and alts
 if 'set-missing-var-ids' in params and "$" in params['set-missing-var-ids']:

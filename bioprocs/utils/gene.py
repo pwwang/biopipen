@@ -2,7 +2,7 @@ import re, json, requests
 from os import path
 from mygene import MyGeneInfo
 from medoo import Raw, Field
-from pyppl import Box
+from pyppl import Diot
 from pyppl.utils import alwaysList
 from bioprocs.utils.cache import Cache
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
@@ -90,11 +90,11 @@ fields2remote = lambda keys: [FIELD_L2M.get(key, key) for key in keys]
 
 def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias', to = 'symbol', genome = 'hg19', inopts = None, outopts = None, genecol = None, cachedir = gettempdir()):
 
-	_inopts = Box(skip = 0, comment = '#', delimit = '\t')
+	_inopts = Diot(skip = 0, comment = '#', delimit = '\t')
 	_inopts.update(inopts or {})
 	inopts  = _inopts
 
-	_outopts = Box(delimit = '\t', append = False, query = False, head = True)
+	_outopts = Diot(delimit = '\t', append = False, query = False, head = True)
 	_outopts.update(outopts or {})
 	outopts  = _outopts
 	outquery = outopts.get('query', False)

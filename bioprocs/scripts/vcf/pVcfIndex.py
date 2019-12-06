@@ -10,6 +10,3 @@ tabix   = {{args.tabix | quote}}
 ofile = vcfIndex(infile, tabix)
 shell.ln_s(ofile, outfile)
 shell.ln_s(ofile + '.tbi', outidx)
-
-
-

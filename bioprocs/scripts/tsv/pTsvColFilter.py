@@ -1,6 +1,6 @@
 from os import path
 from collections import OrderedDict
-from pyppl import Box
+from pyppl import Diot
 from pyppl.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 

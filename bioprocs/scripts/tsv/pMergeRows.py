@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
 infile  = {{i.infile | quote}}
@@ -37,5 +37,3 @@ for r in reader:
 
 if repeated:
 	writer.write(do(repeated))
-
-	

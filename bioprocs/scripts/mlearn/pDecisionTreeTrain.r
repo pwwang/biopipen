@@ -34,8 +34,8 @@ saveRDS(model.dt, outmodel)
 
 # save importance
 write.table(
-	round(model.dt$variable.importance, 3), 
-	file.path(outdir, paste0(prefix, '.importance.txt')), 
+	round(model.dt$variable.importance, 3),
+	file.path(outdir, paste0(prefix, '.importance.txt')),
 	col.names = F, row.names = T, quote = F, sep = "\t")
 
 # plot importance
@@ -45,11 +45,9 @@ nfeat = min(30, nrow(vi))
 vi    = vi[1:nfeat, , drop = F]
 feats = rownames(vi)
 plot.col(
-	data.frame(Feature = feats, Importance = vi[, 1]), 
-	file.path(outdir, paste0(prefix, '.importance.png')), 
+	data.frame(Feature = feats, Importance = vi[, 1]),
+	file.path(outdir, paste0(prefix, '.importance.png')),
 	params  = list(aes(x = factor(feats, levels = rev(feats)))),
 	ggs = list(coord_flip = list()),
 	devpars = devpars)
 {% endif %}
-
-

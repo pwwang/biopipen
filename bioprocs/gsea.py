@@ -1,6 +1,6 @@
 """Gene set enrichment analysis"""
 from os import path
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -155,23 +155,23 @@ def _pEnrichr():
 		include: A lambda function to include the records(genes)
 			- argument is `bioprocs.utils.tsvio2.TsvRecord`
 	"""
-	return Box(
+	return Diot(
 		desc = 'Gene set enrichment analysis using Enrichr APIs',
 		input = 'infile:file',
 		output = 'outdir:dir:{{i.infile | stem}}.enrichr',
 		lang = params.python.value,
 		errhow = 'retry',
-		args = Box(
-			inopts   = Box(delimit = '\t', skip = 0, comment = '#'),
+		args = Diot(
+			inopts   = Diot(delimit = '\t', skip = 0, comment = '#'),
 			top      = 20,
 			cutoff   = 1,
 			genecol  = 0,
 			include  = None,
 			nthread  = 1,
 			Rscript  = params.Rscript.value,
-			pathview = Box(), # Box(fccol = 2)
+			pathview = Diot(), # Diot(fccol = 2)
 			libs     = "KEGG_2019_Human",
-			devpars  = Box(res = 300, width = 2000, height = 2000),
+			devpars  = Diot(res = 300, width = 2000, height = 2000),
 			plot     = True
 		)
 	)
@@ -188,14 +188,14 @@ def _pGene2Pathway():
 	@output:
 		`outfile:file`: The output file, Default: `{{i.infile | fn}}-pw{{i.infile | ext}}`
 	@args:
-		`inopts`: Reading options for input file, Default: `Box(cnames = True)`
+		`inopts`: Reading options for input file, Default: `Diot(cnames = True)`
 		`genecol`: Index or name of the gene column, Default: `0`
 		`libs`: Libraries of the pathways, Default: `KEGG_2019_Human`
 	"""
 	pGene2Pathway              = Proc(desc = 'Find pathways that genes are present.')
 	pGene2Pathway.input        = 'infile:file'
 	pGene2Pathway.output       = 'outfile:file:{{i.infile | fn}}-pw{{i.infile | ext}}'
-	pGene2Pathway.args.inopts  = Box(cnames = True)
+	pGene2Pathway.args.inopts  = Diot(cnames = True)
 	pGene2Pathway.args.genecol = 0
 	pGene2Pathway.args.libs    = "KEGG_2019_Human"
 	pGene2Pathway.lang         = params.python.value
@@ -238,7 +238,7 @@ def _pTargetEnrichr():
 	pTargetEnrichr.input         = "infile:file"
 	pTargetEnrichr.output        = "outdir:dir:{{i.infile | fn}}.tenrichr"
 	pTargetEnrichr.lang          = params.python.value
-	pTargetEnrichr.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#', ftype = 'head')
+	pTargetEnrichr.args.inopts   = Diot(delimit = '\t', skip = 0, comment = '#', ftype = 'head')
 	pTargetEnrichr.args.genecol  = "COL2"
 	pTargetEnrichr.args.dbs      = "KEGG_2016"
 	pTargetEnrichr.args.norm     = False
@@ -253,4 +253,3 @@ def _pTargetEnrichr():
 	pTargetEnrichr.errhow        = 'retry'
 	pTargetEnrichr.script        = "file:scripts/gsea/pTargetEnrichr.py"
 	return pTargetEnrichr
-

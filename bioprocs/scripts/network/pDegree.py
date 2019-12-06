@@ -1,5 +1,5 @@
 from collections import defaultdict
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{ i.infile | quote }}

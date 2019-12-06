@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio2 import TsvReader
 
 infile  = {{i.infile | quote}}
@@ -135,4 +135,3 @@ with open(outfile, 'w') as f:
 		table_code   = table_code,
 		acode_code   = acode_code
 	))
-

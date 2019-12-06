@@ -1,7 +1,7 @@
 import sys
 
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 from bioprocs.utils import log2pyppl
 
@@ -34,18 +34,17 @@ for r in reader:
 	start, end = int(start), int(end)
 	if strand == '-':
 		record = [
-			chrom, 
-			max(0, min(start, end - region.down) if region.withbody else end - region.down), 
-			end + region.up, 
+			chrom,
+			max(0, min(start, end - region.down) if region.withbody else end - region.down),
+			end + region.up,
 			gene, 0, strand
 		]
 	else:
 		record = [
-			chrom, 
-			max(0, start - region.up), 
-			max(end, start + region.down) if region.withbody else start + region.down, 
+			chrom,
+			max(0, start - region.up),
+			max(end, start + region.down) if region.withbody else start + region.down,
 			gene, 0, strand
 		]
 	writer.write(record)
 writer.close()
-

@@ -1,5 +1,5 @@
 """Putative transcription factor binding sites analysis"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from .utils import fs2name
 from . import delefactory, procfactory
@@ -40,7 +40,7 @@ def _pMotifScan():
 	]
 	pMotifScan.args.tool     = 'meme'
 	pMotifScan.args.meme     = params.fimo.value
-	pMotifScan.args.params   = Box()
+	pMotifScan.args.params   = Diot()
 	pMotifScan.args.tfmotifs = params.tfmotifs.value
 	pMotifScan.args.pval     = 1e-4
 	pMotifScan.args.ucsclink = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}'
@@ -83,7 +83,7 @@ def _pMotifSimilarity():
 	]
 	pMotifSimilarity.args.qval   = 0.5
 	pMotifSimilarity.args.tomtom = params.tomtom.value
-	pMotifSimilarity.args.params = Box({
+	pMotifSimilarity.args.params = Diot({
 		'xalph'       : True,
 		'no-ssc'      : True,
 		'dist'        : 'pearson',
@@ -161,7 +161,7 @@ def _pAtSnp():
 		`pval`    : The pvalue cutoff for output and plot.
 		`plot`    : Do plot or not. Default: `True`
 		`nthread` : How many threads to use. Default: `1`
-		`depvars` : The device parameters for plotting. Default: `Box(res = 300, width = 2000, height = 2000)`
+		`depvars` : The device parameters for plotting. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	@requires:
 		`r-atSNP`
 	"""
@@ -177,8 +177,7 @@ def _pAtSnp():
 	pAtSnp.args.pval     = 0.05
 	pAtSnp.args.plot     = True
 	pAtSnp.args.nthread  = 1
-	pAtSnp.args.devpars  = Box(res = 300, width = 2000, height = 2000)
+	pAtSnp.args.devpars  = Diot(res = 300, width = 2000, height = 2000)
 	pAtSnp.lang          = params.Rscript.value
 	pAtSnp.script        = "file:scripts/tfbs/pAtSnp.r"
 	return pAtSnp
-

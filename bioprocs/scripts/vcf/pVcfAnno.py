@@ -1,6 +1,6 @@
 import sys
 from os import path, makedirs
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import mem2, shell2 as shell
 
 infile          = {{i.infile | quote}}
@@ -82,7 +82,7 @@ def run_annovar():
 		raise ValueError('Database does not exist: {}'.format(dbs))
 	import vcf
 	avinput              = path.join(outdir, infile + '.avinput')
-	avparams             = Box()
+	avparams             = Diot()
 	avparams.includeinfo = True
 	avparams.allsample   = True
 	avparams.withfreq    = True

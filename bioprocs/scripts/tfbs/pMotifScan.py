@@ -1,6 +1,6 @@
 import re
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import runcmd, cmdargs, logger
 from bioprocs.utils.meme import MemeReader
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
@@ -101,7 +101,7 @@ if tool == 'meme':
 		# motif_id	motif_alt_id	sequence_name	start	stop	strand	score	p-value	q-value	matched_sequence
 		logger.info('- Merging %s ...', retfile)
 		reader = TsvReader(
-			retfile, 
+			retfile,
 			#cnames  = lambda header: header[1:].strip().split('\t'),
 			cnames  = True,
 			row     = rowfactory,
@@ -114,7 +114,3 @@ if tool == 'meme':
 	writer.close()
 else:
 	raise ValueError('Unsupported tool: {}'.format(tool))
-
-
-
-

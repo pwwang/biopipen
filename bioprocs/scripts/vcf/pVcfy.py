@@ -1,6 +1,6 @@
 import random
 from pathlib import Path
-from pyppl import Box, OBox
+from pyppl import Diot, OrderedDiot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader
 from bioprocs.utils.parallel import Parallel
@@ -65,7 +65,7 @@ shell.rm_rf(*[str(vcf) for vcf in outfile.parent.glob('*.unmerged.vcf')])
 faIndex(ref)
 
 refindex = ref + '.fai'
-contig_len = OBox()
+contig_len = OrderedDiot()
 for r in TsvReader(refindex, cnames = False):
 	contig_len[r[0]] = r[1]
 

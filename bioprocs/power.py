@@ -1,5 +1,5 @@
 """Power analysis"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -53,4 +53,3 @@ def _pSurvivalPower():
 	pSurvivalPower.lang         = params.Rscript.value
 	pSurvivalPower.script       = "file:scripts/power/pSurvivalPower.r"
 	return pSurvivalPower
-

@@ -1,7 +1,7 @@
 from os import path, makedirs, remove
 from shutil import rmtree, copyfile, move
 from sys import stderr
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import log2pyppl
 from bioprocs.utils.shell2 import bgzip
 import vcf
@@ -18,13 +18,13 @@ if gz:
 """
 Builtin filters
 """
-builtin_filters = Box(
+builtin_filters = Diot(
 	SNPONLY   = lambda r, s, q = None: len(r.REF) != 1 or any(len(a) != 1 for a in r.ALT),
 	BIALTONLY = lambda r, s, q = None: len(r.ALT) != 1,
 	QUAL      = lambda r, s, q: not r.QUAL or r.QUAL < q,
 	AF        = lambda r, s, q: r.INFO['AF'][0] < q
 )
-builtin_descs = Box(
+builtin_descs = Diot(
 	SNPONLY   = lambda x: 'keep SNPs only',
 	BIALTONLY = lambda x: 'keep bi-allelic mutations only',
 	QUAL      = lambda x: 'keep sites with QUAL >= %s' % x,
@@ -82,5 +82,3 @@ writer.close()
 
 if gz:
 	bgzip(outfile)
-
-

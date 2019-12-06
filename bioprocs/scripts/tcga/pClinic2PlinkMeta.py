@@ -25,4 +25,3 @@ for r in reader:
 		rec.Sex    = 1 if r.gender == 'MALE' else 2 if r.gender == 'FEMALE' else 0
 		writer.write(rec)
 writer.close()
-

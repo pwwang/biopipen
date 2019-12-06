@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 infile1  = {{i.infile1 | quote}}

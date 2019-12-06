@@ -4,7 +4,7 @@ from sys import stderr, exit
 from time import sleep
 from datetime import date
 
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import runcmd, cmdargs, log2pyppl, logger
 from bioprocs.utils.poll import Poll
 
@@ -24,7 +24,7 @@ params   = {{args.params}}
 
 def log2log(*args, **kwargs):
 	# debug = False
-	# pass 
+	# pass
 	logger.info(*args, **kwargs)
 	# log2pyppl(*args, **kwargs)
 

@@ -1,5 +1,5 @@
 """Utilities from bedtools"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from .utils import fs2name
 from . import params, delefactory, procfactory
 from modkit import Modkit
@@ -28,7 +28,7 @@ def _pBedGetfasta():
 	pBedGetfasta.output          = "outfile:file:{{i.infile | fn}}.fa"
 	pBedGetfasta.args.samtools   = params.samtools.value
 	pBedGetfasta.args.bedtools   = params.bedtools.value
-	pBedGetfasta.args.params     = Box(name = True)
+	pBedGetfasta.args.params     = Diot(name = True)
 	pBedGetfasta.args.ref        = params.ref.value
 	pBedGetfasta.beforeCmd       = '''
 	{{"reference.bash" | bashimport}}
@@ -62,7 +62,7 @@ def _pBedClosest():
 	pBedClosest.input         = "afile:file, bfile:file"
 	pBedClosest.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
 	pBedClosest.args.bedtools = params.bedtools.value
-	pBedClosest.args.params   = Box()
+	pBedClosest.args.params   = Diot()
 	pBedClosest.script        = "file:scripts/bedtools/pBedClosest.py"
 	return pBedClosest
 
@@ -88,7 +88,7 @@ def _pBedClosest2():
 	pBedClosest2.input         = "afile:file, bfiles:files"
 	pBedClosest2.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
 	pBedClosest2.args.bedtools = params.bedtools.value
-	pBedClosest2.args.params   = Box()
+	pBedClosest2.args.params   = Diot()
 	pBedClosest2.script        = "file:scripts/bedtools/pBedClosest2.py"
 	return pBedClosest2
 
@@ -103,7 +103,7 @@ def _pBedFlank():
 		outfile: The result file
 	@args:
 		bedtools (path): The bedtools executable
-		params   (Box) : Other parameters for `bedtools flank`
+		params   (Diot) : Other parameters for `bedtools flank`
 		gfile    (path): The genome size file
 		extend   (bool): Whether extend the flanking regions to include the element itself or not.
 			- For example: `chr1:100-200` with `args.params.b = 10` will extend to `chr1:90-210`
@@ -111,15 +111,15 @@ def _pBedFlank():
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Create two new flanking intervals for each interval in a BED file.',
 		lang   = params.python.value,
 		input  = "infile:file",
 		output = "outfile:file:{{i.infile | fn}}.flank.bed",
-		args   = Box(
+		args   = Diot(
 			extend   = False,
 			gsize    = params.gsize.value,
-			params   = Box(),
+			params   = Diot(),
 			bedtools = params.bedtools.value
 		)
 	)
@@ -146,7 +146,7 @@ def _pBedIntersect():
 	pBedIntersect.input               = "afile:file, bfile:file"
 	pBedIntersect.output              = "outfile:file:{{i.afile | fn}}.intersect.bt"
 	pBedIntersect.args.bedtools       = params.bedtools.value
-	pBedIntersect.args.params         = Box()
+	pBedIntersect.args.params         = Diot()
 	pBedIntersect.lang                = params.python.value
 	pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
 	return pBedIntersect
@@ -173,7 +173,7 @@ def _pBedIntersect2():
 	pBedIntersect2.input         = "afile:file, bfiles:files"
 	pBedIntersect2.output        = "outfile:file:{{i.afile | fn}}.intersect2.bt"
 	pBedIntersect2.args.bedtools = params.bedtools.value
-	pBedIntersect2.args.params   = Box()
+	pBedIntersect2.args.params   = Diot()
 	pBedIntersect2.lang          = params.python.value
 	pBedIntersect2.script        = 'file:scripts/bedtools/pBedIntersect2.py'
 	return pBedIntersect2
@@ -192,7 +192,7 @@ def _pBedMakewindows():
 	@args:
 		`bedtools`: The bedtools executable, default: `<params.bedtools>`
 		`intype`:   The format of input file, whether is a "bed" file or "genome" size file. Default: `bed`
-		`params`:   Other parameters for `bedtools makewindows`, default: `Box()`
+		`params`:   Other parameters for `bedtools makewindows`, default: `Diot()`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 	"""
@@ -200,7 +200,7 @@ def _pBedMakewindows():
 	pBedMakewindows.input         = "infile:file"
 	pBedMakewindows.output        = "outfile:file:{{i.infile | fn}}.window.bed"
 	pBedMakewindows.lang          = params.python.value
-	pBedMakewindows.args.params   = Box()
+	pBedMakewindows.args.params   = Diot()
 	pBedMakewindows.args.bedtools = params.bedtools.value
 	pBedMakewindows.args.intype   = 'bed'
 	pBedMakewindows.script        = "file:scripts/bedtools/pBedMakewindows.py"
@@ -228,7 +228,7 @@ def _pBedMerge():
 	pBedMerge.input         = "infile:file"
 	pBedMerge.output        = "outfile:file:{{i.infile | fn}}.merged.bed"
 	pBedMerge.args.bedtools = params.bedtools.value
-	pBedMerge.args.params   = Box()
+	pBedMerge.args.params   = Diot()
 	pBedMerge.lang          = params.python.value
 	pBedMerge.script        = "file:scripts/bedtools/pBedMerge.py"
 	# endregion
@@ -256,7 +256,7 @@ def _pBedMerge2():
 	pBedMerge2.input         = "infiles:files"
 	pBedMerge2.output        = "outfile:file:{{i.infiles | fs2name}}.merged.bed"
 	pBedMerge2.args.bedtools = params.bedtools.value
-	pBedMerge2.args.params   = Box()
+	pBedMerge2.args.params   = Diot()
 	pBedMerge2.envs.fs2name  = fs2name
 	pBedMerge2.lang          = params.python.value
 	pBedMerge2.script        = "file:scripts/bedtools/pBedMerge2.py"
@@ -284,7 +284,7 @@ def _pBedMultiinter():
 	pBedMultiinter.input         = "infiles:files"
 	pBedMultiinter.output        = "outfile:file:{{i.infiles | fs2name}}.multiinter.bt"
 	pBedMultiinter.args.bedtools = params.bedtools.value
-	pBedMultiinter.args.params   = Box()
+	pBedMultiinter.args.params   = Diot()
 	pBedMultiinter.envs.fs2name  = fs2name
 	pBedMultiinter.script        = "file:scripts/bedtools/pBedMultiinter.py"
 	return pBedMultiinter
@@ -342,7 +342,7 @@ def _pBedShift():
 	pBedShift.output        = "outfile:file:{{infile | fn}}.shifted.bed"
 	pBedShift.args.bedtools = params.bedtools.value
 	pBedShift.args.gsize    = params.gsize.value
-	pBedShift.args.params   = Box()
+	pBedShift.args.params   = Diot()
 	pBedShift.script        = "file:scripts/bedtools/pBedShift.py"
 	return pBedShift
 
@@ -375,7 +375,7 @@ def _pBedShuffle():
 	pBedShuffle.args.n        = 0
 	pBedShuffle.args.gsize    = params.gsize.value
 	pBedShuffle.args.seed     = False
-	pBedShuffle.args.params   = Box()
+	pBedShuffle.args.params   = Diot()
 	pBedShuffle.lang          = params.python.value
 	pBedShuffle.script        = "file:scripts/bedtools/pBedShuffle.py"
 	return pBedShuffle
@@ -402,7 +402,7 @@ def _pBedSubtract():
 	pBedSubtract.input         = "afile:file, bfile:file"
 	pBedSubtract.output        = "outfile:file:{{afile | fn}}.subtracted.bed"
 	pBedSubtract.args.bedtools = params.bedtools.value
-	pBedSubtract.args.params   = Box()
+	pBedSubtract.args.params   = Diot()
 	pBedSubtract.script        = "file:scripts/bedtools/pBedSubtract.py"
 	return pBedSubtract
 
@@ -428,7 +428,7 @@ def _pBedWindow():
 	pBedWindow.input         = "afile:file, bfile:file"
 	pBedWindow.output        = "outfile:file:{{afile | fn}}.window.bed"
 	pBedWindow.args.bedtools = params.bedtools.value
-	pBedWindow.args.params   = Box()
+	pBedWindow.args.params   = Diot()
 	pBedWindow.script        = "file:scripts/bedtools/pBedWindow.py"
 	return pBedWindow
 
@@ -446,7 +446,7 @@ def _pBedGenomecov():
 		`outfile:file`: The result file
 	@args:
 		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools genomecov`, default: `Box(bg = True)`
+		`params`:   Other parameters for `bedtools genomecov`, default: `Diot(bg = True)`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 	"""
@@ -454,7 +454,7 @@ def _pBedGenomecov():
 	pBedGenomecov.input         = "infile:file"
 	pBedGenomecov.output        = "outfile:file:{{infile | fn}}.genomecov.bt"
 	pBedGenomecov.args.bedtools = params.bedtools.value
-	pBedGenomecov.args.params   = Box(bg = True)
+	pBedGenomecov.args.params   = Diot(bg = True)
 	pBedGenomecov.script        = "file:scripts/bedtools/pBedGenomecov.py"
 	return pBedGenomecov
 
@@ -471,7 +471,7 @@ def _pBedCluster():
 		`outfile:file`: The output file with cluster id for each record
 	@args:
 		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools cluster`, default: `Box()`
+		`params`:   Other parameters for `bedtools cluster`, default: `Diot()`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
 	"""
@@ -479,8 +479,7 @@ def _pBedCluster():
 	pBedCluster.input         = "infile:file"
 	pBedCluster.output        = "outfile:file:{{infile | fn}}.clustered.bt"
 	pBedCluster.args.bedtools = params.bedtools.value
-	pBedCluster.args.params   = Box()
+	pBedCluster.args.params   = Diot()
 	pBedCluster.lang          = params.python.value
 	pBedCluster.script        = "file:scripts/bedtools/pBedCluster.py"
 	return pBedCluster
-

@@ -109,7 +109,7 @@
 # (9) mutCount - # reads with the mutant allele (indicated in SNP file)
 # endregion
 
-from pyppl import Box
+from pyppl import Diot
 from os import path, makedirs
 from bioprocs.utils import logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
@@ -136,7 +136,7 @@ theta    = {{ args.theta | quote}}
 samtools = {{ args.samtools | quote}}
 
 shell.load_config(
-	theta2        = Box(_exe = theta, _raw = True),
+	theta2        = Diot(_exe = theta, _raw = True),
 	samtools      = samtools,
 	bedtools      = bedtools,
 	bam_readcount = bamrc,
@@ -185,7 +185,7 @@ def getAlleleCount(bamfile, snpfile, outfile):
 		logger.info('  THetA2 formatted SNP file already, skip.')
 		ln_s(bamfile, outfile)
 		return
-	brcparams       = Box()
+	brcparams       = Diot()
 	brcparams.f     = ref
 	brcparams.w     = 0
 	brcparams.l     = snpfile
@@ -306,4 +306,3 @@ params['']           = itvfile
 shell.fg.theta2(**params)
 
 ln_s(prefix + '.BEST.results', outfile)
-

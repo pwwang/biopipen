@@ -60,4 +60,3 @@ with open(outfileUnfiltered) as f, open({{out.outfile | quote}}, 'w') as fout:
 	for line in f:
 		if '\tNA\tNA\tNA' in line: continue
 		fout.write(line)
-

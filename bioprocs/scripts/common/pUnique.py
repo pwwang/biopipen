@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
@@ -6,10 +6,10 @@ outfile = {{o.outfile | quote}}
 inopts  = {{args.inopts}}
 col     = {{args.col | repr}}
 outopts  = {
-	'head': False, 
-	'headPrefix': '', 
-	'headDelimit': '\t', 
-	'headTransform': None, 
+	'head': False,
+	'headPrefix': '',
+	'headDelimit': '\t',
+	'headTransform': None,
 	'delimit': '\t',
 	'ftype': '',
 	'cnames': ''
@@ -40,7 +40,7 @@ if col != '*':
 		colkeys = [reader.meta.keys()[col]]
 	elif isinstance(col, (tuple, list)):
 		colkeys = [reader.meta.keys()[c] for c in col]
-		
+
 # try to keep the original order
 {% if args.sorted %}
 last = None

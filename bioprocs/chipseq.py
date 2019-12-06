@@ -50,7 +50,3 @@ def _pPeakToRegPotential():
 	pPeakToRegPotential.lang         = params.python.value
 	pPeakToRegPotential.script       = "file:scripts/chipseq/pPeakToRegPotential.py"
 	return pPeakToRegPotential
-
-
-
-

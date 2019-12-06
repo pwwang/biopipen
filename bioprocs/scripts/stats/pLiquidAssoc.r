@@ -28,7 +28,7 @@ onecase = function(idata, zs, xs = NULL, nthread, zcat, case) {
 	if (length(z) == 0)
 		stop('Find no rows in "Z" group from input file.')
 	ret    = fastMLA(
-		as.matrix(idata), 
+		as.matrix(idata),
 		nvec    = list(z = z, x = x),
 		rvalue  = 0.3,
 		cut     = ncut,
@@ -77,9 +77,9 @@ for (case in cases) {
 	zs    = cdata[which(cdata[,2] == 'Z'), 1]
 	xs    = cdata[which(cdata[,2] == 'X'), 1]
 	if (length(xs) == 0 || is.na(xs)) xs = NULL
-	
+
 	out = onecase(indata, zs, xs, nthread, zcat, case)
-	
+
 
 	if (dofdr != FALSE && fdrfor == 'case') {
 		out = cbind(out, Qval = p.adjust(out$Pval, method = dofdr))
@@ -102,12 +102,12 @@ if (plotla && nrow(ret)>0) {
 			LiquidAssociation::plotGLA(indata[, unlist(row[2:4]), drop = F], cut = ncut, dim = 3, pch = 4, filen = plotfile, save = T)
 		} else {
 			plotdata = data.frame(
-				X = indata[, row$X], 
+				X = indata[, row$X],
 				Y = indata[, row$Y],
 				Z = as.character(indata[, row$Z]))
 			rcase = make.names(row$Z)
 			colnames(plotdata) = c(row$X, row$Y, rcase)
-			
+
 			subgroups = levels(factor(plotdata[,3]))
 			labels = sapply(subgroups, function(m) {
 				r = cor(plotdata[plotdata[,3]==m, 1], plotdata[plotdata[,3]==m, 2], use = "pairwise.complete.obs")
@@ -127,15 +127,15 @@ if (plotla && nrow(ret)>0) {
 					shape=F
 				),
 				scale_color_manual = list(
-					values = scales::hue_pal()(length(subgroups)), 
+					values = scales::hue_pal()(length(subgroups)),
 					name   = "",
 					limit  = subgroups,
 					labels = labels
 				)
 			))
 			plot.scatter(
-				plotdata, 
-				paste0(plotfile, '.png'), 
+				plotdata,
+				paste0(plotfile, '.png'),
 				x      = 1,
 				y      = 2,
 				ggs    = ggs1,
@@ -144,6 +144,3 @@ if (plotla && nrow(ret)>0) {
 		}
 	}
 }
-
-
-

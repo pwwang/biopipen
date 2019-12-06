@@ -1,5 +1,5 @@
 """Processes related to DNA/protein sequences"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 #from .utils import runcmd, helpers, genenorm, write
 from . import params
 from . import delefactory, procfactory
@@ -93,7 +93,7 @@ def _pPromoters():
 	@output:
 		`outfile:file`: the bed file containing the promoter region
 	@args:
-		`region`: The region to output. Default: `Box(up = 2000, down = None, withbody = False)`
+		`region`: The region to output. Default: `Diot(up = 2000, down = None, withbody = False)`
 			- `up`: The upstream distance to TSS.
 			- `down`: The downstream distance to TSS. Defaults to `args.region.up` if `None`
 			- `withbody`: Include gene body in the output region? Default: `False`
@@ -101,21 +101,20 @@ def _pPromoters():
 			- `skip` : Skip the record
 			- `error`: Report error and exit
 		`refgene`: The ref gene file. Default: `@params.refgene`
-		`inopts` : The options for input file. Default: `Box(cnames = False, genecol = 0, delimit = "\t")`
+		`inopts` : The options for input file. Default: `Diot(cnames = False, genecol = 0, delimit = "\t")`
 			- `cnames`: Whether the input file has header
 			- `genecol`: The 0-based index or the colname of gene column.
 			- `delimit`: The delimit of the input file.
-		`outopts`:  The options for output file. Default: `Box(cnames = False)`
+		`outopts`:  The options for output file. Default: `Diot(cnames = False)`
 	"""
 	pPromoters               = Proc(desc = 'Get the promoter regions in bed format of a gene list give in infile.')
 	pPromoters.input         = "infile:file"
 	pPromoters.output        = "outfile:file:{{i.infile | fn}}-promoters.bed"
-	pPromoters.args.region   = Box(up = 2000, down = None, withbody = False)
+	pPromoters.args.region   = Diot(up = 2000, down = None, withbody = False)
 	pPromoters.args.notfound = 'skip' # error
-	pPromoters.args.inopts   = Box(cnames = False, delimit = "\t")
+	pPromoters.args.inopts   = Diot(cnames = False, delimit = "\t")
 	pPromoters.args.genecol  = 0
 	pPromoters.args.refgene  = params.refgene.value
 	pPromoters.lang          = params.python.value
 	pPromoters.script        = "file:scripts/seq/pPromoters.py"
 	return pPromoters
-

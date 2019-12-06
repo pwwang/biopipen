@@ -23,4 +23,3 @@ orderobj = data.frame (Order=hobj$order, Labels=hobj$labels)
 mergeobj = data.frame (Merge1=hobj$merge[,1], Merge2=hobj$merge[,2], Height=hobj$height)
 write.table (orderobj, orderfile, quote=F, row.names=F, col.names = T, sep="\t")
 write.table (mergeobj, mergefile, quote=F, row.names=F, col.names = T, sep="\t")
-

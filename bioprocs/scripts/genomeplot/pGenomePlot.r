@@ -77,7 +77,7 @@ for (trackfile in trackFiles) {
 			irtrackParams[[name]] = trackData$trackParams[[name]]
 			trackData$trackParams[[name]] = NULL
 		}
-		
+
 		track = do.call(InteractionTrack, irtrackParams)
 		displayPars(track)  = trackData$trackParams
 	} else {

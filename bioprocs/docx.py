@@ -1,5 +1,5 @@
 """Processes for WORD files"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -23,8 +23,8 @@ def _pDocx():
 		`acode`: Some extra AFTER the content is inserted.
 		`error`: What to do when error happens. Default: `exit`
 			- `ignore` to add nothing to the document
-		`section`: Start a new section of this table. Could be a box of values. Default: `Box()`.
-			- `Box()` means no new section will start.
+		`section`: Start a new section of this table. Could be a box of values. Default: `Diot()`.
+			- `Diot()` means no new section will start.
 			- `type`: The type of the section. Could be one of:
 				- `CONTINUOUS`
 				- `NEW_COLUMN`
@@ -47,7 +47,7 @@ def _pDocx():
 	pDocx.args.bcode   = []
 	pDocx.args.acode   = []
 	pDocx.args.error   = 'exit' # or ignore
-	pDocx.args.section = Box()
+	pDocx.args.section = Diot()
 	pDocx.envs.str2fn  = lambda s, re = __import__('re'): re.sub(r'[^\w\-_\.]', '_', s)[:32] if s else 'doc'
 	pDocx.envs.path    = __import__("os").path
 	pDocx.lang         = params.python.value
@@ -66,9 +66,9 @@ def _pTable2DocxCode():
 	@output:
 		`outfile:file`: The code file
 	@args:
-		`font`   : The font of table content. Default: `Box(family: 'Arial', size: 10)`
-		`section`: Start a new section of this table. Could be a box of values. Default: `Box()`.
-			- `Box()` means no new section will start.
+		`font`   : The font of table content. Default: `Diot(family: 'Arial', size: 10)`
+		`section`: Start a new section of this table. Could be a box of values. Default: `Diot()`.
+			- `Diot()` means no new section will start.
 			- `type`: The type of the section. Could be one of:
 				- `CONTINUOUS`
 				- `NEW_COLUMN`
@@ -108,12 +108,12 @@ def _pTable2DocxCode():
 	pTable2DocxCode              = Proc(desc = 'Convert a table to docx code')
 	pTable2DocxCode.input        = 'infile:file'
 	pTable2DocxCode.output       = 'outfile:file:{{i.infile | fn2}}.docxcode.py'
-	pTable2DocxCode.args.font    = Box(family = 'Arial', size = 10)
-	pTable2DocxCode.args.section = Box()
+	pTable2DocxCode.args.font    = Diot(family = 'Arial', size = 10)
+	pTable2DocxCode.args.section = Diot()
 	pTable2DocxCode.args.style   = 'Light List Accent 1'
 	pTable2DocxCode.args.title   = None
 	pTable2DocxCode.args.caption = None
-	pTable2DocxCode.args.inopts  = Box(cnames = True, skip = 0, delimit = "\t")
+	pTable2DocxCode.args.inopts  = Diot(cnames = True, skip = 0, delimit = "\t")
 	pTable2DocxCode.args.bcode   = []
 	pTable2DocxCode.args.acode   = []
 	pTable2DocxCode.envs.rimport = rimport
@@ -133,15 +133,15 @@ def _pImage2DocxCode():
 	@output:
 		`outfile:file`: The code file
 	@args:
-		`scale`: The scale of the image. Default: `Box()`
+		`scale`: The scale of the image. Default: `Diot()`
 			- With keys `width` and/or `height` in points.
 			- If only one is set, the other is automatically scaled.
 		`title`  : The title of the table, could be heading to table caption, Could be:
 			- A string, defaulted as `Heading 1` (2nd level heading)
 			- A `tuple` or `list` with first element (string) as the content, 2nd element as the heading level
 			- Template available. i.e. `("Title: {{i.infile | fn2}}", 2)`
-		`section`: Start a new section of this table. Could be a box of values. Default: `Box()`.
-			- `Box()` means no new section will start.
+		`section`: Start a new section of this table. Could be a box of values. Default: `Diot()`.
+			- `Diot()` means no new section will start.
 			- `type`: The type of the section. Could be one of:
 				- `CONTINUOUS`
 				- `NEW_COLUMN`
@@ -173,8 +173,8 @@ def _pImage2DocxCode():
 	pImage2DocxCode              = Proc(desc = 'Convert an image to docx code')
 	pImage2DocxCode.input        = 'infile:file'
 	pImage2DocxCode.output       = 'outfile:file:{{i.infile | fn2}}.docxcode.py'
-	pImage2DocxCode.args.scale   = Box() # width and/or height in inches
-	pImage2DocxCode.args.section = Box()
+	pImage2DocxCode.args.scale   = Diot() # width and/or height in inches
+	pImage2DocxCode.args.section = Diot()
 	pImage2DocxCode.args.title   = None
 	pImage2DocxCode.args.legend  = None
 	pImage2DocxCode.args.align   = 'CENTER'
@@ -183,4 +183,3 @@ def _pImage2DocxCode():
 	pImage2DocxCode.lang         = params.python.value
 	pImage2DocxCode.script       = "file:scripts/docx/pImage2DocxCode.py"
 	return pImage2DocxCode
-

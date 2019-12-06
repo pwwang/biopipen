@@ -1,5 +1,5 @@
 from sys import stderr
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import runcmd, cmdargs
 
 fq   = {{i.fq | quote}}

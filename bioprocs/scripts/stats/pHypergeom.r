@@ -34,7 +34,7 @@ if (intype == 'raw') {
 	if (is.null(N))
 		N = nrow(data)
 	if (ncols < 2)
-		stop ('Need at least 2 columns.') 
+		stop ('Need at least 2 columns.')
 	if (!inopts$cnames) {
 		cnames = paste0("COL", 1:ncols)
 		colnames(data) = cnames
@@ -89,6 +89,6 @@ if (intype == 'raw') {
 }
 
 write.table(
-	pretty.numbers(ret, formats = list(pval = '%.2E')), 
+	pretty.numbers(ret, formats = list(pval = '%.2E')),
 	outfile, quote = F, row.names = T, col.names = T, sep = "\t"
 )

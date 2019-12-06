@@ -26,7 +26,7 @@ write.table(as.data.frame(ret$summary), outfile, col.names = FALSE, sep = "\t", 
 detailfile = file.path(outdir, 'coloc.details.txt')
 write.table(ret$results, detailfile, sep = "\t", quote = FALSE, row.names = FALSE)
 
-if (!plotman) 
+if (!plotman)
 	q(save = FALSE)
 
 {{rimport}}('plot.r')
@@ -41,7 +41,7 @@ bits    = round(log10(binsize))
 nbits   = binsize/10 ** bits
 binsize = round(nbits * 4) / 4 * 10 ** bits
 nbins   = ceiling((maxpos - minpos)/binsize)
-start   = as.integer(minpos / binsize + 1) * binsize 
+start   = as.integer(minpos / binsize + 1) * binsize
 glabels = seq(start, maxpos, binsize)
 gbreaks = glabels - minpos
 glabels = sapply(glabels, function(x) {
@@ -112,7 +112,7 @@ if (!is.null(hdata)) {
 		ggs_hilabel = list(geom_label_repel = list(aes_string(x = 'X', y = 'Y', label = 'Snp'), color = "white", fill = hicolor, data = hdata, inherit.aes = FALSE, alpha = .8))
 	}
 	ggs_hilight = c(
-		ggs_hilight, 
+		ggs_hilight,
 		ggs_hilabel,
 		list(geom_point = list(aes_string(x = 'X', y = 'Y'), color = hicolor, data = hdata, inherit.aes = FALSE))
 	)
@@ -133,6 +133,3 @@ ggs = c(list(
 	), ggs_hilight, ggs)
 plotfile = file.path(outdir, 'coloc.man.png')
 plot.scatter (data, plotfile, x = 'X', y = 'Y', params = list(aes_string(color = "Group")), ggs = ggs, devpars = devpars)
-
-
-

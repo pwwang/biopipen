@@ -1,7 +1,7 @@
 """BigWig file operations using bwtool"""
 
 from modkit import Modkit
-from pyppl import Box, Proc
+from pyppl import Diot, Proc
 from . import params, delefactory, procfactory
 Modkit().delegate(delefactory())
 
@@ -19,12 +19,12 @@ def _pBWExtract():
 	@args:
 		bwtool (str): Path to bwtool.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Extract features from bigwig file.',
 		lang   = params.python.value,
 		input  = 'infile:file, bedfile:file',
 		output = 'outfile:file:{{i.infile | stem}}.bwtool-extracted.txt',
-		args   = Box(bwtool = params.bwtool.value)
+		args   = Diot(bwtool = params.bwtool.value)
 	)
 
 @procfactory
@@ -41,15 +41,15 @@ def _pBWSummary():
 		outfile: The output file.
 	@args:
 		bwtool (str): The path to bwtool
-		params (Box): Other parameters for `bwtool summary`
+		params (Diot): Other parameters for `bwtool summary`
 	"""
-	return Box(
+	return Diot(
 		desc   = 'provide some summary stats for each region in a bed file',
 		lang   = params.python.value,
 		input  = 'infile:file, bedfile:file',
 		output = 'outfile:file:{{i.infile | stem}}.bwtool-summarized.txt',
-		args   = Box(
+		args   = Diot(
 			bwtool = params.bwtool.value,
-			params = Box(header = True, keep_bed = True)
+			params = Diot(header = True, keep_bed = True)
 		)
 	)

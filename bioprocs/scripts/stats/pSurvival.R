@@ -1,6 +1,6 @@
 library(survival)
 library(survminer)
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.r', 'plot.r' | *rimport}}
 
 set.seed(8525)
 

@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell
 
 infile   = {{i.infile | quote}}
@@ -11,13 +11,13 @@ shell.TOOLS.bcftools = bcftools
 
 def run_bcftools():
 	bcftools        = shell.Shell(subcmd = True, equal = ' ').bcftools
-	hparams         = Box()
+	hparams         = Diot()
 	hparams.h       = True
 	hparams._       = infile
 	hparams._stdout = outfile
 	bcftools.view(**hparams).run()
 
-	qparams = Box()
+	qparams = Diot()
 	#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT
 	qparams.f        = "%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t.\tGT[\t%GT]\n"
 	qparams._        = infile

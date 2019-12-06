@@ -1,4 +1,4 @@
-# {{title}}
+# {{title}}{{proc.desc}}
 
 Enrichr[1] is an easy to use intuitive enrichment analysis web-based tool providing various types of visualization summaries of collective functions of gene lists. Here we use its API to perform the analysis of out gene sets.
 

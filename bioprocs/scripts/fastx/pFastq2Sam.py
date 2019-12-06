@@ -1,6 +1,6 @@
 import re
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 
 # variables
@@ -102,4 +102,3 @@ try:
 	tools[tool]()
 except KeyError:
 	raise KeyError('Tool {!r} not supported.'.format(tool))
-

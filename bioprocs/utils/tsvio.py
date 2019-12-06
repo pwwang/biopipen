@@ -2,7 +2,7 @@
 Reader and writer for tsv file.
 """
 import sys, inspect
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import alwaysList
 from collections import OrderedDict
 
@@ -246,7 +246,7 @@ class TsvReaderBase(object):
 		# empty lines not allowed
 		if not line: raise StopIteration()
 		return self._parse(line.split(self.delimit))
-	
+
 	def __next__(self):
 		self.next()
 
@@ -636,11 +636,11 @@ class SimRead (object):
 
 def tsvops(infile, outfile, inopts, outopts, ops = None):
 
-	inopts2 = Box(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = '')
+	inopts2 = Diot(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = '')
 	inopts2.update(inopts)
 	inopts = inopts2
 
-	outopts2 = Box(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = '', cnames = '')
+	outopts2 = Diot(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = '', cnames = '')
 	outopts2.update(outopts)
 	outopts = outopts2
 

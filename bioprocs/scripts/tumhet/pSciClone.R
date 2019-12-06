@@ -83,7 +83,7 @@ vcf2vaf = function(vcffile) {
 		if (!is.list(varc)) {
 			varc = list(count = varc)
 		}
-		if (is.null(varc$count)) 
+		if (is.null(varc$count))
 			next
 		varc$count = as.numeric(varc$count)
 		varc$depth = as.numeric(list.get(varc, 'depth', as.numeric(sample$DP)))
@@ -164,6 +164,3 @@ sc.plot1d(sc, plotfile1)
 if (length(sams) > 1) {
 	sc.plot2d(sc, plotfile2)
 }
-
-
-

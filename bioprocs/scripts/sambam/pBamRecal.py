@@ -1,5 +1,5 @@
 from sys import stderr
-from pyppl import Box
+from pyppl import Diot
 from os import path
 from bioprocs.utils import shell, mem2
 from bioprocs.utils.poll import Poll
@@ -47,7 +47,7 @@ def run_gatk():
 	mem['-Djava.io.tmpdir={}'.format(shell.shquote(tmpdir))] = True
 	gatksh = Shell(equal = ' ', dash = '-').gatk
 
-	rtcparams    = params.get('RealignerTargetCreator', Box())
+	rtcparams    = params.get('RealignerTargetCreator', Diot())
 	rtcparams.T  = 'RealignerTargetCreator'
 	rtcparams.R  = ref
 	rtcparams.I  = infile
@@ -57,7 +57,7 @@ def run_gatk():
 	gatksh(**rtcparams).run()
 
 	bamfileir    = path.join(joboutdir, outprefix + '.ir.bam')
-	irparams     = params.get('IndelRealigner', Box())
+	irparams     = params.get('IndelRealigner', Diot())
 	irparams.T   = 'IndelRealigner'
 	irparams.R   = ref
 	irparams.I   = infile
@@ -68,7 +68,7 @@ def run_gatk():
 	gatksh(**irparams).run()
 
 	recaltable   = path.join(joboutdir, outprefix + '.recaltable')
-	brparams     = params.get('BaseRecalibrator', Box())
+	brparams     = params.get('BaseRecalibrator', Diot())
 	brparams.T   = 'BaseRecalibrator'
 	brparams.R   = ref
 	brparams.I   = bamfileir
@@ -79,7 +79,7 @@ def run_gatk():
 	brparams.knownSites = knownSites
 	gatksh(**brparams).run()
 
-	prparams     = params.get('PrintReads', Box())
+	prparams     = params.get('PrintReads', Diot())
 	prparams.T   = 'PrintReads'
 	prparams.R   = ref
 	prparams.I   = bamfileir

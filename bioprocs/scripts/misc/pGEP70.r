@@ -59,7 +59,7 @@ allgenes = rownames(exprdata)
 gene70 = read.table(gep70, row.names = 1, header = T, sep = "\t", check.names = F)
 
 gene51   = intersect(allgenes, rownames(gene70[which(gene70[,1] == 'up'),,drop=F]))
-gene19   = intersect(allgenes, rownames(gene70[which(gene70[,1] == 'down'),,drop=F]))	
+gene19   = intersect(allgenes, rownames(gene70[which(gene70[,1] == 'down'),,drop=F]))
 exp51    = as.matrix(colMeans(exprdata[gene51, , drop = F]))
 exp19    = as.matrix(colMeans(exprdata[gene19, , drop = F]))
 gep70val = exp51 - exp19
@@ -75,7 +75,7 @@ if (gene != "") {
 }
 
 write.table(
-	survdata, 
+	survdata,
 	paste0(prefix, 'rawdata.txt'),
 	row.names = T,
 	col.names = T,
@@ -94,22 +94,22 @@ autogroup = function(survdata, var) {
 		}, error = function(x) 1)
 	})
 	plot.scatter(
-		data.frame(step = quantsteps, survscores = survscores), 
-		paste0(prefix, var, '.quant.png'), 
-		ggs = list(geom_line = list()), 
+		data.frame(step = quantsteps, survscores = survscores),
+		paste0(prefix, var, '.quant.png'),
+		ggs = list(geom_line = list()),
 		devpars = devpars
 	)
 	quantsteps[which.max(survscores)][1]
 }
 
 survdata[, name] = c('low', 'high')[as.numeric(survdata[, name] > quantile(
-	survdata[, name], 
+	survdata[, name],
 	autogroup(survdata, name)
 )) + 1]
 
 if (gene != "") {
 	survdata[, gene] = c('low', 'high')[as.numeric(survdata[, gene] > quantile(
-		survdata[, gene], 
+		survdata[, gene],
 		autogroup(survdata, gene)
 	)) + 1]
 	Group = apply(survdata, 1, function(row) paste(row[3], row[4], sep = ':'))
@@ -119,7 +119,7 @@ if (gene != "") {
 }
 
 write.table(
-	survdata, 
+	survdata,
 	paste0(prefix, 'groupdata.txt'),
 	row.names = T,
 	col.names = T,
@@ -193,4 +193,3 @@ plot.survival(survdata, name)
 if (gene != "") {
 	plot.survival(survdata, paste(name, gene, sep = ':'))
 }
-

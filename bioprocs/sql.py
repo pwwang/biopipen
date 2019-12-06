@@ -123,4 +123,3 @@ def _pSelectTable():
 	pSelectTable.lang          = params.python.value
 	pSelectTable.script        = 'file:scripts/sql/pSelectTable.py'
 	return pSelectTable
-

@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
@@ -35,7 +35,7 @@ def rowFactory(row):
 	if ncol == 88:
 		return [chrom, int(pos) - 1, pos, name, 0, '+', ref, alt] + row[1:]
 
-dft_inopts = Box(cnames = True, attach = False, row = rowFactory)
+dft_inopts = Diot(cnames = True, attach = False, row = rowFactory)
 dft_inopts.update(inopts)
 
 reader = TsvReader(infile, **dft_inopts)
@@ -43,5 +43,3 @@ writer = TsvWriter(outfile)
 for r in reader:
 	writer.write(r)
 writer.close()
-
-

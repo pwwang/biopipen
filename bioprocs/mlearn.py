@@ -1,5 +1,5 @@
 """Machine learning processes"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -39,8 +39,8 @@ def _pRegressTrain():
 		`outdir:dir`  : The output directory containing the summaries, models and plots
 	@args:
 		`plot`   : Plot the model? Default: `False`
-		`inopts` : Input options for input file. Default: `Box(cnames = True, rnames = True)`
-		`devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 4000, width = 4000)`
+		`inopts` : Input options for input file. Default: `Diot(cnames = True, rnames = True)`
+		`devpars`: The device parameters for the plot. Default: `Diot(res = 300, height = 4000, width = 4000)`
 	"""
 	pRegressTrain        = Proc(desc = 'Train a regression model')
 	pRegressTrain.input  = 'infile:file, fmfile:file, casefile:file'
@@ -53,8 +53,8 @@ def _pRegressTrain():
 	pRegressTrain.args.yval    = 'numeric'
 	pRegressTrain.args.save    = True
 	pRegressTrain.args.glmfam  = 'binomial'
-	pRegressTrain.args.inopts  = Box(rnames = True, cnames = True)
-	pRegressTrain.args.devpars = Box(res = 300, height = 4000, width = 4000)
+	pRegressTrain.args.inopts  = Diot(rnames = True, cnames = True)
+	pRegressTrain.args.devpars = Diot(res = 300, height = 4000, width = 4000)
 	pRegressTrain.envs.rimport = rimport
 	pRegressTrain.lang         = params.Rscript.value
 	pRegressTrain.script       = "file:scripts/mlearn/pRegressTrain.r"
@@ -84,18 +84,18 @@ def _pRegressPred():
 			- If `auc` is True, then ROC is anyway plotted.
 		`plot`   : Parameters to plot the ROC. Use `False` to disable. Default: `False`
 			- Enabled only when Y column exists in infile
-			- Could be a dict (Box) with keys:
+			- Could be a dict (Diot) with keys:
 			- `labels`:  show labels or not
 			- `showAUC`: show AUC or not
 			- `combine`: combine all roc in one figure?
 		`ggs`    : The ggs items to be added for the plot. Default:
-			```Box({
+			```Diot({
 				'style_roc': {},
 				# show legend at bottom right corner
 				'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
 			})```
-		`devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`
-		`inopts` : Options for reading the input file. Default: `Box(cnames = True, rnames = True, delimit = "\t")`
+		`devpars`: The device parameters for the plot. Default: `Diot(res = 300, height = 2000, width = 2000)`
+		`inopts` : Options for reading the input file. Default: `Diot(cnames = True, rnames = True, delimit = "\t")`
 	"""
 	pRegressPred           = Proc(desc = 'Use a trained linear regression model to predict')
 	pRegressPred.input     = 'infile:file, model:file'
@@ -103,15 +103,15 @@ def _pRegressPred():
 		'outfile:file:{{i.infile | fn2}}.pred/{{i.infile | fn2}}.pred.txt',
 		'outdir:dir:{{i.infile | fn2}}.pred'
 	]
-	pRegressPred.args.out  = Box(prob = True, auc = True)
-	pRegressPred.args.plot = Box(labels = False, showAUC = True, combine = True)
-	pRegressPred.args.ggs  = Box({
+	pRegressPred.args.out  = Diot(prob = True, auc = True)
+	pRegressPred.args.plot = Diot(labels = False, showAUC = True, combine = True)
+	pRegressPred.args.ggs  = Diot({
 		'style_roc': {},
 		# show legend at bottom right corner
 		'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
 	})
-	pRegressPred.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pRegressPred.args.inopts  = Box(
+	pRegressPred.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+	pRegressPred.args.inopts  = Diot(
 		cnames  = True,
 		rnames  = True,
 		delimit = "\t"
@@ -140,7 +140,7 @@ def _pGlmTrain():
 			- `numeric`: numeric values
 		devpars: The device parameters for the plot.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Train a logistic regression model',
 		lang   = params.Rscript.value,
 		input  = 'infile:file',
@@ -148,19 +148,19 @@ def _pGlmTrain():
 			'outmodel:file:{{i.infile | stem}}.glm/{{i.infile | stem}}.glm.RDS',
 			'outdir:dir:{{i.infile | stem}}.glm'
 		],
-		args = Box(
+		args = Diot(
 			plot    = True,
 			formula = None,
-			devpars = Box(res = 300, height = 2000, width = 2000),
-			params  = Box(family = 'binomial'),
-			ggs     = Box(
-				geom_smooth = Box({
+			devpars = Diot(res = 300, height = 2000, width = 2000),
+			params  = Diot(family = 'binomial'),
+			ggs     = Diot(
+				geom_smooth = Diot({
 					"method"     : "glm",
-					"method.args": Box(family = "binomial"),
+					"method.args": Diot(family = "binomial"),
 					"se"         : True
 				})
 			),
-			inopts  = Box(
+			inopts  = Diot(
 				cnames  = True,
 				rnames  = True,
 				delimit = "\t"
@@ -179,18 +179,18 @@ def _pGlmTest():
 		`inopts` : The input options.
 		`outprob`: Also output probabilities? Default: True
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Test trained logistic regression model',
 		lang   = params.Rscript.value,
 		input  = 'infile:file, model:file',
 		output = 'outdir:dir:{{i.infile | stem}}.glm.test',
-		args   = Box(
+		args   = Diot(
 			outprob = True,
 			outauc  = True,
-			params  = Box(),
-			ggs     = Box(),
-			devpars = Box(res = 300, height = 2000, width = 2000),
-			inopts  = Box(
+			params  = Diot(),
+			ggs     = Diot(),
+			devpars = Diot(res = 300, height = 2000, width = 2000),
+			inopts  = Diot(
 				cnames  = True,
 				rnames  = True,
 				delimit = "\t"
@@ -223,8 +223,8 @@ def _pRandomForestTrain():
 	pRandomForestTrain.args.plot    = True
 	pRandomForestTrain.args.formula = None
 	pRandomForestTrain.args.na      = 0
-	pRandomForestTrain.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pRandomForestTrain.args.inopts  = Box(
+	pRandomForestTrain.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+	pRandomForestTrain.args.inopts  = Diot(
 		cnames  = True,
 		rnames  = True,
 		delimit = "\t"
@@ -252,7 +252,7 @@ def _pDecisionTreeTrain():
 			- If `None`, will use all first N-1 columns as features.
 		`inopts` : The input options.
 		`na`     : Replace NAs with? Default: `0`
-		`devpars`: The device parameters for the plot. Default: `Box(res = 300, height = 2000, width = 2000)`
+		`devpars`: The device parameters for the plot. Default: `Diot(res = 300, height = 2000, width = 2000)`
 	@requires:
 		`r-rpart`
 	"""
@@ -265,8 +265,8 @@ def _pDecisionTreeTrain():
 	pDecisionTreeTrain.args.plot    = True
 	pDecisionTreeTrain.args.formula = None
 	pDecisionTreeTrain.args.na      = 0
-	pDecisionTreeTrain.args.devpars = Box(res = 300, height = 2000, width = 2000)
-	pDecisionTreeTrain.args.inopts  = Box(
+	pDecisionTreeTrain.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+	pDecisionTreeTrain.args.inopts  = Diot(
 		cnames  = True,
 		rnames  = True,
 		delimit = "\t"
@@ -301,7 +301,7 @@ def _pCrossValid():
 	@requires:
 		`r-caret`
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Cross validation on the model',
 		lang   = params.Rscript.value,
 		input  = 'infile:file',
@@ -309,11 +309,10 @@ def _pCrossValid():
 			'outmodel:file:{{i.infile | fn2}}.{{args.train.method}}/{{i.infile | fn2}}.{{args.train.method}}.RDS',
 			'outdir:dir:{{i.infile | fn2}}.{{args.train.method}}'
 		],
-		args = Box(inopts  = Box(cnames = True, rnames = True),
-			ctrl    = Box(method = '', savePredictions = True, classProbs = True, verboseIter = True),
-			train   = Box(form = None, method = '', metric = 'ROC'),
+		args = Diot(inopts  = Diot(cnames = True, rnames = True),
+			ctrl    = Diot(method = '', savePredictions = True, classProbs = True, verboseIter = True),
+			train   = Diot(form = None, method = '', metric = 'ROC'),
 			seed    = None,
 			nthread = 1,
 			plots   = ['model', 'roc'], # varimp
-			devpars = Box(res = 300, height = 2000, width = 2000)))
-
+			devpars = Diot(res = 300, height = 2000, width = 2000)))

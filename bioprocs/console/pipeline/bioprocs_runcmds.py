@@ -2,7 +2,7 @@
 """Using PyPPL to distribute and run commands."""
 import sys
 from os import path
-from pyppl import PyPPL, Proc, Box
+from pyppl import PyPPL, Proc, Diot
 from bioprocs import params
 from tempfile import gettempdir
 
@@ -21,7 +21,7 @@ params.forks       = 1
 params.forks.desc  = 'How many jobs to run simultaneously.'
 
 def main():
-	opts = params._parse(dict_wrapper = Box)
+	opts = params._parse(dict_wrapper = Diot)
 
 	if not isinstance(opts.cmds, list):
 		if opts.intype == 'cmds':

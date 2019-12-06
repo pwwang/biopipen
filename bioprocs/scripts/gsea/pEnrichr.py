@@ -1,7 +1,6 @@
 from os import path
 from enrichr import Enrichr
-from pyppl import Box
-from bioprocs import rimport
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.parallel import Parallel
 from bioprocs.utils.gene import genenorm
@@ -54,7 +53,7 @@ for db in dbs:
 		shell.mkdir(pathviewRDir)
 		with open(pathviewRfile, 'w') as f:
 			f.write("""
-			{rimport}('__init__.r')
+			{{'__init__.r' | rimport}}
 			library(pathview)
 			args = commandArgs(trailingOnly = TRUE)
 			setwd({pathviewRDir!r})
@@ -72,8 +71,7 @@ for db in dbs:
 			{% endraw %}
 			pathview(gene.data = genes, pathway.id = args[1], species = 'hsa', gene.idtype="SYMBOL")
 			""".format(
-				rimport = rimport, genecol = genecol + 1 if isinstance(genecol, int) else genecol,
+				genecol = genecol + 1 if isinstance(genecol, int) else genecol,
 				infile = infile, pathviewRDir = pathviewRDir)
 			)
 		para.run(runPathview, [(pathviewRfile, term.Term.split('_')[-1]) for term in en.results[:top]])
-

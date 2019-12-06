@@ -1,5 +1,5 @@
 """A set of algorithms or models"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -92,7 +92,7 @@ def _pAR():
 	]
 	pAR.args.seed    = None
 	pAR.args.tfrac   = .5
-	pAR.args.inopts  = Box(cnames = True, rnames = True)
+	pAR.args.inopts  = Diot(cnames = True, rnames = True)
 	pAR.args.svdP    = 0
 	pAR.args.predY   = True
 	pAR.args.WPt     = True
@@ -135,15 +135,14 @@ def _pColoc():
 		'outfile:file:{{i.infile | fn2}}.coloc/{{i.infile | fn2}}.coloc.txt',
 		'outdir:dir:{{i.infile | fn2}}.coloc'
 	]
-	pColoc.args.inopts  = Box(cnames = True, rnames = False)
+	pColoc.args.inopts  = Diot(cnames = True, rnames = False)
 	pColoc.args.plot    = True
-	pColoc.args.ggs     = Box()
-	pColoc.args.params  = Box()
-	pColoc.args.devpars = Box(res = 300, height = 2000, width = 2000)
+	pColoc.args.ggs     = Diot()
+	pColoc.args.params  = Diot()
+	pColoc.args.devpars = Diot(res = 300, height = 2000, width = 2000)
 	pColoc.args.hifile  = ''
 	pColoc.args.hilabel = True
 	pColoc.envs.rimport = rimport
 	pColoc.lang         = params.Rscript.value
 	pColoc.script       = "file:scripts/algorithm/pColoc.r"
 	return pColoc
-

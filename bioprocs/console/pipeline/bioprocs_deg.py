@@ -7,7 +7,7 @@
 
 from os import path
 
-from pyppl import PyPPL, Box
+from pyppl import PyPPL, Diot
 from bioprocs import params
 
 params._prefix = '-'
@@ -51,7 +51,7 @@ params.steps.desc       = [
 params.steps.callback   = lambda opt: all(v in ['stats', 'call', 'gsea', 'enrich'] for v in opt.value) or "-steps should be a subset of ['stats', 'call', 'gsea', 'enrich']"
 
 def main():
-	opts = params._parse(dict_wrapper = Box)
+	opts = params._parse(dict_wrapper = Diot)
 
 	from bioprocs.gsea import pEnrichr
 	from bioprocs.rnaseq import pExprStats, pRNASeqDEG
@@ -117,5 +117,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
-

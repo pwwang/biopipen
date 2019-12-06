@@ -1,5 +1,5 @@
 """A set of resources to download via API or URL links"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 #from .utils import txt, download, runcmd
 from . import delefactory, procfactory
@@ -44,7 +44,7 @@ def _pTxt():
 	# pTxt.tplenvs.txtTransform = txt.transform.py
 	# pTxt.tplenvs.downloadCurl = download.curl.py
 	# pTxt.tplenvs.runcmd       = runcmd.py
-	pTxt.args.urls            = Box({
+	pTxt.args.urls            = Diot({
 		'drugbank-target-all': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-all-uniprot-links',
 		'drugbank-target-approved': 'https://www.drugbank.ca/releases/5-0-7/downloads/target-approved-uniprot-links',
 		'ccle-sample-info': 'https://data.broadinstitute.org/ccle_legacy_data/cell_line_annotations/CCLE_sample_info_file_2012-10-18.txt',
@@ -121,4 +121,3 @@ def _pGtf():
 	shutil.rmtree(tmpdir)
 	"""
 	return pGtf
-

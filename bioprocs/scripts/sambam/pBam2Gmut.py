@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell, mem2
 from bioprocs.utils.reference import bamIndex
 
@@ -122,4 +122,3 @@ except Exception:
 	raise
 finally:
 	shell.rm(tmpdir, r = True, f = True)
-

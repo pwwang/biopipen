@@ -1,9 +1,8 @@
 """Operations on TCGA MAF file"""
-from pyppl import Proc, Box
-from . import params, rimport
+from pyppl import Proc, Diot
 from .utils import fs2name
 # Next-step processing after VCF file being generated.
-from . import delefactory, procfactory
+from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
@@ -94,12 +93,12 @@ def _pGTMat2Bed():
 			- If `66`, then genotypes will be attached to BED6
 			- If `88`, then genotypes will be attached to `ncol = 8`
 		`name`  : Use the neat name (usually rsid) or full name (row names). Default: `neat`
-		`inopts`: Options to read the input file. Default: `Box(cnames = True)`
+		`inopts`: Options to read the input file. Default: `Diot(cnames = True)`
 	"""
 	pGTMat2Bed             = Proc(desc = 'Convert a genotype matrix to bed file')
 	pGTMat2Bed.input       = 'infile:file'
 	pGTMat2Bed.output      = 'outfile:file:{{i.infile | fn}}.bed'
-	pGTMat2Bed.args.inopts = Box(cnames = True)
+	pGTMat2Bed.args.inopts = Diot(cnames = True)
 	pGTMat2Bed.args.ncol   = 6
 	pGTMat2Bed.args.name   = 'neat' # full
 	pGTMat2Bed.lang        = params.python.value
@@ -125,7 +124,7 @@ def _pCallRate():
 	pCallRate.input            = "indir:file"
 	pCallRate.output           = "outdir:dir:{{ i.indir | fn }}.callrate"
 	pCallRate.args.histplotggs = []
-	pCallRate.args.devpars     = Box({'res':300, 'width':2000, 'height':2000})
+	pCallRate.args.devpars     = Diot({'res':300, 'width':2000, 'height':2000})
 	pCallRate.lang             = params.Rscript.value
 	pCallRate.script           = "file:scripts/tcgamaf/pCallRate.r"
 	return pCallRate
@@ -153,7 +152,7 @@ def _pCepip():
 	pCepip.output              = "outfile:file:{{i.infile | fn}}.cepip.txt"
 	pCepip.args.cepip          = params.cepip.value
 	pCepip.args.cell           = ""
-	pCepip.args.params         = Box()
+	pCepip.args.params         = Diot()
 	pCepip.lang                = params.python.value
 	pCepip.script              = "file:scripts/tcgamaf/pCepip.py"
 	return pCepip
@@ -234,13 +233,13 @@ def _pMafMerge():
 			- merge(default): Merge the columns, if one not exists, fill with __UNKNOWN__.
 			- discard: Just discard the extra columns, with only 34 columns left. So you can also put just one maf file in the indir with some columns missed to fill it with standard columns.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Merge MAF files',
 		input  = 'infiles:files',
 		output = 'outfile:file:{{i.infiles | fs2name}}.maf',
 		lang   = params.python.value,
-		args   = Box(excols  = 'merge'),  # discard,
-		envs   = Box(fs2name = fs2name)
+		args   = Diot(excols  = 'merge'),  # discard,
+		envs   = Diot(fs2name = fs2name)
 	)
 
 @procfactory
@@ -299,20 +298,20 @@ def _pMaftools():
 	@requires:
 		[Maftools](https://bioconductor.org/packages/devel/bioc/vignettes/maftools/inst/doc/maftools.html)
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Basic analysis on somatic mutations of a group of samples',
 		input  = 'indir:file, msdir:file',
 		output = 'outdir:dir:{{i.indir | fn}}.maftools',
 		lang   = params.Rscript.value,
-		args   = Box(
+		args   = Diot(
 			ngenes  = 10,
 			isTCGA  = False,
 			genome  = params.genome.value,
-			devpars = Box(res = 300, height = 2000, width = 2000),
+			devpars = Diot(res = 300, height = 2000, width = 2000),
 			nthread = 1,
 			# exclude mutation types, only consider nonsynonymous mutations.
 			extypes = ["Intron", "5'UTR", "3'UTR", "IGR", "5'Flank", "3'Flank", "Silent"],
-			plot    = Box(
+			plot    = Diot(
 				summary        = True,
 				oncoplot       = True,
 				oncostrip      = True,
@@ -334,27 +333,27 @@ def _pMaftools():
 				heterogeneity  = True,
 				signature      = True,
 			),
-			params = Box(
-				summary        = Box(rmOutlier = True, addStat = 'median', dashboard = True),
-				oncoplot       = Box(),
-				oncostrip      = Box(),
-				titv           = Box(),
-				lollipop       = Box(),
-				cbsseg         = Box(labelAll = True),
-				rainfall       = Box(detectChangePoints = True),
-				tcgacomp       = Box(),
-				vaf            = Box(flip = True),
-				genecloud      = Box(minMut = 3),
-				gisticGenome   = Box(markBands = 'all'),
-				gisticBubble   = Box(),
-				gisticOncoplot = Box(),
-				somInteraction = Box(),
-				oncodrive      = Box(minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
-				pfam           = Box(),
-				pancan         = Box(qval = 0.1, label = 1),
-				survival       = Box(),
-				heterogeneity  = Box(),
-				signature      = Box(nTry = 6, plotBestFitRes = False),
+			params = Diot(
+				summary        = Diot(rmOutlier = True, addStat = 'median', dashboard = True),
+				oncoplot       = Diot(),
+				oncostrip      = Diot(),
+				titv           = Diot(),
+				lollipop       = Diot(),
+				cbsseg         = Diot(labelAll = True),
+				rainfall       = Diot(detectChangePoints = True),
+				tcgacomp       = Diot(),
+				vaf            = Diot(flip = True),
+				genecloud      = Diot(minMut = 3),
+				gisticGenome   = Diot(markBands = 'all'),
+				gisticBubble   = Diot(),
+				gisticOncoplot = Diot(),
+				somInteraction = Diot(),
+				oncodrive      = Diot(minMut = 5, pvalMethod = 'zscore', fdrCutOff = 0.1, useFraction = True),
+				pfam           = Diot(),
+				pancan         = Diot(qval = 0.1, label = 1),
+				survival       = Diot(),
+				heterogeneity  = Diot(),
+				signature      = Diot(nTry = 6, plotBestFitRes = False),
 			)
 		)
 	)
@@ -464,16 +463,16 @@ def _pDToxoG():
 		params : Other parameters for `startFilterMAFFile`
 			- See more in `startFilterMAFFile.m` or run `dtoxog` directly
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Discovery and characterization of artifactual mutations',
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem}}.dtoxog.maf',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			nthread = 1,
 			keep    = True,
 			dtoxog  = params.dtoxog.value,
-			params  = Box(isGeneratingPlots = True, globalPoxoG = .96, artifactThresholdRate = .01)
+			params  = Diot(isGeneratingPlots = True, globalPoxoG = .96, artifactThresholdRate = .01)
 		))
 
 @procfactory
@@ -489,17 +488,17 @@ def _pMaf2Vcf():
 		merge: Whether merge the VCF for individual samples or not.
 		params: Other parameters for `maf2vcf.pl`
 	"""
-	return Box(
-		desc = 'Convert MAF file back to VCF files',
-		lang = params.python.value,
-		input = 'infile:file',
+	return Diot(
+		desc   = 'Convert MAF file back to VCF files',
+		lang   = params.python.value,
+		input  = 'infile:file',
 		output = [
 			'outfile:file:{{i.infile | stem}}.vcfs/{{i.infile | stem}}.vcf',
 			'outdir:dir:{{i.infile | stem}}.vcfs'],
-		args = Box(
+		args = Diot(
 			maf2vcf = params.maf2vcf.value,
 			ref     = params.ref.value,
-			params  = Box({'per-tn-vcfs': True})),
+			params  = Diot({'per-tn-vcfs': True})),
 	)
 
 
@@ -511,7 +510,7 @@ def _pMafAddChr():
 	@output:
 		outfile: The output MAF file
 	"""
-	return Box(
+	return Diot(
 		desc = 'Add chr to chromosome if not present',
 		lang = params.python.value,
 		input = 'infile:file',
@@ -531,12 +530,12 @@ def _pMafExtractSample(alias = 'pMafSampleFilter'):
 	@args:
 		samples (str|list): The samples or a list of samples
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Filter MAF file with given samples',
 		input  = 'infile:file, samfile:var',
 		output = 'outfile:file:{{i.infile | stem}}.subset.maf',
 		lang   = params.python.value,
-		args   = Box(samples = [])
+		args   = Diot(samples = [])
 	)
 
 @procfactory
@@ -552,12 +551,12 @@ def _pMafExtractClass():
 	@args:
 		classes (str|list): The classes or a list of classes
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Filter MAF file with given classes',
 		input  = 'infile:file, classfile:var',
 		output = 'outfile:file:{{i.infile | stem}}.subclass.maf',
 		lang   = params.python.value,
-		args   = Box(classes = [])
+		args   = Diot(classes = [])
 	)
 
 @procfactory
@@ -571,10 +570,46 @@ def _pMafGetSamples():
 		out: Which samples to output, tumor, normal or both.
 		outopts: The output options
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Get samples from MAF file',
 		lang   = params.python.value,
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem}}.samples.txt',
-		args   = Box(out = 'both', outopts = Box(cnames = True))
+		args   = Diot(out = 'both', outopts = Diot(cnames = True))
+	)
+
+@procfactory
+def _pMafFromTsv():
+	"""
+	@description:
+		Convert a TSV file with essential columns to a MAF file.
+		See https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/#protected-maf-file-structure for MAF file columns.
+		Essential columns include: Chromosome, Start_Position, End_Position, Reference_Allele, Tumor_Seq_Allele2
+	@input:
+		infile: The TSV file, cnames(header) is required
+	@output:
+		output: The output MAF file
+	@args:
+		genome   (str) : The genome to fill the `NCBI_Build` column
+		missing  (str) : The string used to fill other missing values.
+		tumor    (str) : The string used to fill `Tumor_Sample_Barcode` if not provided.
+		normal   (str) : The string used to fill `Matched_Norm_Sample_Barcode` if not provided.
+		basic    (bool): Output the basic MAF file (32 columns) or full (126 columns)
+		refall   (path): The gene GTF file to extract gene names according to the coordinates
+		bedtools (bool): Used to extract gene names
+	"""
+	return Diot(
+		desc   = 'Convert a TSV file with essential columns to a MAF file',
+		input  = 'infile:file',
+		output = 'outfile:file:{{i.infile | stem}}.maf',
+		lang   = params.python.value,
+		args   = Diot(
+			genome   = params.genome.value,
+			missing  = '__UNKNOWN__',
+			tumor    = 'TUMOR',
+			normal   = 'NORMAL',
+			basic    = True,
+			refall   = params.refall.value,
+			bedtools = params.bedtools.value,
+		)
 	)

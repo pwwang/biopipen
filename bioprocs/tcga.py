@@ -1,5 +1,5 @@
 """TCGA data analysis"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from .utils import fs2name
 from . import delefactory, procfactory
@@ -26,8 +26,8 @@ def _pTCGADownload():
 	pTCGADownload                 = Proc (desc = 'Download data with gdc-client and a menifest file.')
 	pTCGADownload.input           = "manifile:file"
 	pTCGADownload.output          = "outdir:dir:{{i.manifile | fn}}"
-	pTCGADownload.echo            = Box(jobs = 0, type = 'stderr')
-	pTCGADownload.args.params     = Box({'no-file-md5sum': True})
+	pTCGADownload.echo            = Diot(jobs = 0, type = 'stderr')
+	pTCGADownload.args.params     = Diot({'no-file-md5sum': True})
 	pTCGADownload.args.nthread    = 1
 	pTCGADownload.args.token      = None
 	pTCGADownload.args.gdc_client = params.gdc_client.value
@@ -114,7 +114,7 @@ def _pClinic2Survival():
 	pClinic2Survival           = Proc(desc = 'Convert TCGA clinic data to survival data.')
 	pClinic2Survival.input     = 'infile:file'
 	pClinic2Survival.output    = 'outfile:file:{{i.infile | stem}}.survdata.txt, covfile:file:{{i.infile | stem}}.survcov.txt'
-	pClinic2Survival.args.cols = Box(
+	pClinic2Survival.args.cols = Diot(
 		time_lastfollow = ['days_to_last_followup'],
 		time_death      = ['days_to_death'],
 		status          = ['vital_status'],
@@ -169,4 +169,3 @@ def _pClinic2Cov():
 	pClinic2Cov.lang         = params.Rscript.value
 	pClinic2Cov.script       = "file:scripts/tcga/pClinic2Cov.r"
 	return pClinic2Cov
-

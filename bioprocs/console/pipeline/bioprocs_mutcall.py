@@ -2,12 +2,11 @@
 """Call mutatoins from 2nd-gen sequencing data"""
 
 import sys
-from pyppl import Box
 from bioprocs import params
 
 import sys
 from os import path
-from pyppl import PyPPL, Channel, Box
+from pyppl import PyPPL, Channel, Diot
 from bioprocs import params
 
 params._prefix          = '-'
@@ -49,7 +48,7 @@ params.ppldir         = './workdir'
 params.ppldir.desc    = 'The pipeline directory.'
 
 def main():
-	opts = params._parse(dict_wrapper = Box)
+	opts = params._parse(dict_wrapper = Diot)
 
 	from bioprocs.common import pFiles2Dir
 	from bioprocs.sambam import pBam2Gmut, pBamPair2Smut

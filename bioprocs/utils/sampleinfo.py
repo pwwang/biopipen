@@ -221,5 +221,3 @@ class SampleInfo2(object):
 			else:
 				ret.append((s2, s1))
 		return ret
-
-

@@ -2,7 +2,7 @@ from os import path
 from sys import stderr
 from cruzdb import Genome
 from tempfile import gettempdir
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import alwaysList
 from bioprocs.utils.cache import Cache
 from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
@@ -11,11 +11,11 @@ class RecordNotFound(Exception):
 	pass
 
 def snpinfo(infile, outfile = None, notfound = 'ignore', genome = 'hg19', dbsnpver = "150", inopts = None, outopts = None, snpcol = None, cachedir = gettempdir()):
-	_inopts = Box(skip = 0, comment = '#', delimit = '\t')
+	_inopts = Diot(skip = 0, comment = '#', delimit = '\t')
 	_inopts.update(inopts or {})
 	inopts  = _inopts
 
-	_outopts = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, ftype = 'bed', cnames = 'refUCSC, alleles, alleleFreqs, alleleFreqCount')
+	_outopts = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, ftype = 'bed', cnames = 'refUCSC, alleles, alleleFreqs, alleleFreqCount')
 	_outopts.update(outopts)
 	outopts  = _outopts
 	cnames   = alwaysList(outopts['cnames'])

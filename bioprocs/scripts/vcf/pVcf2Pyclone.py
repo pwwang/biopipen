@@ -25,7 +25,7 @@ while True:
 		# mutation_id	ref_counts	var_counts	normal_cn	minor_cn	major_cn	variant_case	variant_freq	genotype
 		# NA12156:BB:chr2:175263063	3812	14	2	0	2	NA12156	0.0036591741	BB
 		for samdata in record.samples:
-			
+
 
 	except StopIteration:
 		break

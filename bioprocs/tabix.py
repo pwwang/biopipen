@@ -1,5 +1,5 @@
 """Tabix utilities"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 #from .utils import helpers, runcmd
 from . import params
 from . import delefactory, procfactory
@@ -26,7 +26,7 @@ def _pTabix():
 	pTabix.input       = "infile, region"
 	pTabix.output      = "outfile:file:{{i.infile | fn | fn}}-{{job.index}}{% if i.infile.endswith('.gz') %}{{i.infile | fn | ext}}{% else %}{{i.infile | ext}}{% endif %}"
 	pTabix.args.tabix  = params.tabix.value
-	pTabix.args.params = Box(h = True)
+	pTabix.args.params = Diot(h = True)
 	pTabix.lang        = params.python.value
 	pTabix.script      = "file:scripts/tabix/pTabix.py"
 	return pTabix
@@ -56,8 +56,7 @@ def _pTabixIndex():
 	]
 	pTabixIndex.args.gz     = True
 	pTabixIndex.args.tabix  = params.tabix.value
-	pTabixIndex.args.params = Box()
+	pTabixIndex.args.params = Diot()
 	pTabixIndex.lang        = params.python.value
 	pTabixIndex.script      = "file:scripts/tabix/pTabixIndex.py"
 	return pTabixIndex
-

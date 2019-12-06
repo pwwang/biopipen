@@ -1,5 +1,5 @@
 import binascii, sys
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import runcmd, cmdargs
 
 def gzip_type(fn):

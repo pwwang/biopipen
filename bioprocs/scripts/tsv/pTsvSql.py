@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import cmd, cmdargs, logger
 
 infile  = {{i.infile | quote}}
@@ -29,7 +29,7 @@ params = {
 	'E': outopts.encoding if outopts.encoding is not None else inopts.encoding
 }
 c = cmd.Cmd(['cat', infile]).pipe('q {} {} > {!r}'.format(
-	cmdargs(params), 
+	cmdargs(params),
 	cmdargs({' ': sql})[2:],
 	outfile
 ), shell = True).run()

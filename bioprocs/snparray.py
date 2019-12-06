@@ -1,5 +1,5 @@
 """Snp-array utilities"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 #from .utils import runcmd, helpers
 from . import delefactory, procfactory
@@ -38,7 +38,7 @@ def _pGistic():
 	pGistic.args.gistic = params.gistic.value
 	pGistic.args.genome = params.genome.value
 	pGistic.args.mcr    = params.mcr # 2.0 requires r2014a
-	pGistic.args.params = Box()
+	pGistic.args.params = Diot()
 	pGistic.lang        = params.python.value
 	pGistic.script      = "file:scripts/snparray/pGistic.py"
 	return pGistic
@@ -123,4 +123,3 @@ def _pGenoToAvInput():
 	fout.close()
 	"""
 	return pGenoToAvInput
-

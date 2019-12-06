@@ -21,8 +21,3 @@ runcmd(cmd)
 sexcheck = read.table(paste0(output, '.sexcheck'), header = T, row.names = NULL, check.names = F)
 sex.sample.fail = sexcheck[which(sexcheck$STATUS == 'PROBLEM'), c('FID', 'IID'), drop=F]
 write.table(sex.sample.fail, paste0(output, '.sex.fail'), col.names = F, row.names = F, sep = "\t", quote = F)
-
-
-
-
-

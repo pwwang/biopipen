@@ -10,7 +10,7 @@ url = {{args.urls | json}}["{{i.in}}"]
 tmpdir = "{{job.outdir}}/tmp"
 if not os.path.exists(tmpdir):
 	os.makedirs(tmpdir)
-	
+
 downfile = os.path.join(tmpdir, 'downloaded')
 downloadCurl(url, downfile, {{args.username | quote}}, {{args.password | quote}}, {{args.curl | quote}})
 

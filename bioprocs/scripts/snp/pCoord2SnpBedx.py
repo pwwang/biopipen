@@ -86,4 +86,3 @@ for snp in snps:
 		for xcol in {{args.xcols}}:
 			setattr(r, xcol, str(getattr(s, xcol)))
 		writer.write(r)
-		

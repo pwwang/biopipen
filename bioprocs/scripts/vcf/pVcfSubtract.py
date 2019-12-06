@@ -35,7 +35,7 @@ if tool == 'bedtools':
 		}
 		if rmany:
 			params['A'] = True
-		
+
 		params = cmdargs(params, dash = '-', equal = ' ')
 		runcmd(cmd.format(
 			bedtools = bedtools,
@@ -48,7 +48,7 @@ if tool == 'bedtools':
 			if not vcf.endswith('.gz'):
 				gzfile = path.join(outdir, path.basename(vcf) + '.gz')
 				bgzip_cmd = 'bgzip {!r} -c > {!r}'.format(
-					vcf, 
+					vcf,
 					gzfile
 				)
 				runcmd(bgzip_cmd)
@@ -68,7 +68,7 @@ if tool == 'bedtools':
 						vcf = link
 					except OSError:
 						break
-				
+
 				if not path.isfile(idxfile):
 					index_cmd = '{} {!r}'.format(tabix, gzfile)
 					runcmd(index_cmd)
@@ -95,7 +95,7 @@ if tool == 'bedtools':
 			}
 			if rmany:
 				params['A'] = True
-			
+
 			params = cmdargs(params, dash = '-', equal = ' ')
 			runcmd(cmd.format(
 				bedtools = bedtools,
@@ -105,7 +105,7 @@ if tool == 'bedtools':
 			remove(outfile1)
 			remove(outfile2)
 			return outfile
-		
+
 		infile1 = tabindex(infile1, outdir)
 		infile2 = tabindex(infile2, outdir)
 		chroms  = [chr.strip() for chr in check_output([tabix, '-l', infile1]).splitlines()]
@@ -124,7 +124,7 @@ if tool == 'bedtools':
 			for of in outfiles:
 				with open(of) as f:
 					fout.write(f.read())
-		
+
 elif tool == 'pyvcf':
 	import vcf
 	v1  = vcf.Reader(filename = infile1)
@@ -167,7 +167,7 @@ else:
 			else:
 				line1 = line.split('\t')
 				break
-		
+
 		while True:
 			try:
 				line1 = line1 or f1.next().split('\t')
@@ -192,6 +192,3 @@ else:
 			except:
 				line1 = line2 = None
 				continue
-			
-
-

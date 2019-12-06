@@ -1,5 +1,5 @@
 """Gene related processes"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from .seq import _pPromoters
 #from .utils import genenorm, write
@@ -49,8 +49,8 @@ def _pGeneNameNorm():
 	pGeneNameNorm.output        = 'outfile:file:{{i.infile | bn}}'
 	pGeneNameNorm.errhow        = 'retry'
 	pGeneNameNorm.args.notfound = 'ignore'
-	pGeneNameNorm.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-	pGeneNameNorm.args.outopts  = Box(delimit = '\t', cnames = True, query = False)
+	pGeneNameNorm.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
+	pGeneNameNorm.args.outopts  = Diot(delimit = '\t', cnames = True, query = False)
 	pGeneNameNorm.args.genecol  = ''
 	pGeneNameNorm.args.frm      = 'symbol, alias'
 	pGeneNameNorm.args.to       = 'symbol'
@@ -88,8 +88,8 @@ def _pIPI():
 	pIPI.output        = 'outfile:file:{{i.infile | bn}}'
 	pIPI.errhow        = 'retry'
 	pIPI.args.notfound = 'ignore'
-	pIPI.args.inopts   = Box(skip = 0, comment = '#', delimit = '\t')
-	pIPI.args.outopts  = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
+	pIPI.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
+	pIPI.args.outopts  = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
 	pIPI.args.genecol  = None
 	pIPI.args.fromipi  = True
 	pIPI.args.ipidb    = params.ipidb.value
@@ -127,8 +127,8 @@ def _pGeneTss():
 	pGeneTss.errhow         = 'retry'
 	pGeneTss.args.notfound  = 'skip' # error
 	pGeneTss.args.genecol   = ''
-	pGeneTss.args.inopts    = Box(skip = 0, comment = '#', delimit = '\t')
-	pGeneTss.args.outopts   = Box(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
+	pGeneTss.args.inopts    = Diot(skip = 0, comment = '#', delimit = '\t')
+	pGeneTss.args.outopts   = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
 	pGeneTss.args.frm       = 'symbol, alias'
 	pGeneTss.args.cachedir  = params.cachedir.value
 	pGeneTss.args.genome    = params.genome.value
@@ -165,11 +165,10 @@ def _pGeneBody():
 	pGeneBody               = Proc(desc = 'Get gene body in BED format')
 	pGeneBody.input         = 'infile:file'
 	pGeneBody.output        = 'outfile:file:{{i.infile | fn}}-body.bed'
-	pGeneBody.args.inopts   = Box(cnames = False)
+	pGeneBody.args.inopts   = Diot(cnames = False)
 	pGeneBody.args.notfound = 'skip' # error
 	pGeneBody.args.genecol  = ''
 	pGeneBody.args.refgene  = params.refgene.value
 	pGeneBody.lang          = params.python.value
 	pGeneBody.script        = "file:scripts/gene/pGeneBody.py"
 	return pGeneBody
-

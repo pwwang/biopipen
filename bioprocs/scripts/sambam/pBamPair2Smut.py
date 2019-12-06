@@ -1,7 +1,7 @@
 from os import path, makedirs
 from shutil import rmtree
 from sys import stderr
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import mem2, shell2 as shell
 from bioprocs.utils.reference import bamIndex
 

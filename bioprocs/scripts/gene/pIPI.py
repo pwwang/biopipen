@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 
@@ -14,7 +14,7 @@ ipidb    = {{args.ipidb | quote}}
 if genecol is None:
 	genecol = 0
 
-# get dicts 
+# get dicts
 ipireader = TsvReader(ipidb, ftype = 'nometa')
 dicts = {}
 for r in ipireader:
@@ -56,4 +56,3 @@ for r in reader:
 		else:
 			r._QUERY = query
 	writer.write(r)
-	

@@ -33,7 +33,8 @@ for cfgfile in cfgfiles:
 	params._loadFile (cfgfile)
 
 # lock the params in case the options are overwritten unintentionally.
-params._locked = True
+if not params._locked:
+	params._locked = True
 
 cachedir = Path(params.cachedir.value)
 if not cachedir.exists():

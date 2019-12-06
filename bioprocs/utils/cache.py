@@ -1,5 +1,5 @@
 import json
-from pyppl import Box
+from pyppl import Diot
 from pyppl.utils import alwaysList
 from medoo import Medoo, Raw, Field, Dialect
 try:
@@ -168,8 +168,8 @@ class Cache(object):
 		else:
 			condkey = 'OR#' + ':'.join(cols)
 			conds   = [Cache._getDummy(key, dummies)['query'](key, data) for key in cols]
-			conditions.append((condkey, dict(Box(conds))))
-		return dict(Box(conditions))
+			conditions.append((condkey, dict(Diot(conds))))
+		return dict(Diot(conditions))
 
 	@staticmethod
 	def _find(qitems, results, dummies):
@@ -302,11 +302,11 @@ class Cache(object):
 		idxupdates = [(i, Cache._result(rsall[pks.index(pk)], dummies)) for i, pk in enumerate(pkdata) if pk in pks]
 
 		dataInsert = [
-			Box([Cache._getDummy(key, dummies)['insert'](key, val[i]) for key, val in data.items()])
+			Diot([Cache._getDummy(key, dummies)['insert'](key, val[i]) for key, val in data.items()])
 			for i in idxinserts
 		]
 		dataUpdate = [
-			(data[self.pkey][i], Box([
+			(data[self.pkey][i], Diot([
 				Cache._getDummy(key, dummies)['update'](key, val[i], r[key])
 				for key, val in data.items()
 				if key != self.pkey

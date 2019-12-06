@@ -1,6 +1,6 @@
 import cmdy
 from pysam import VariantFile
-from pyppl import Box
+from pyppl import Diot
 from os import path, environ
 from bioprocs.utils import logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
@@ -66,7 +66,7 @@ def singleSampleMutVCF2BED(vcffiles):
 		for line in shell.bcftools.query(
 			_ = vcffile,
 			s = sample,
-			f = '%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%FORMAT/AD{0}\t%FORMAT/AD{1}\t%SAMPLE\t%FORMAT/AF\n'):
+			f = r'[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%AD{0}\t%AD{1}\t%SAMPLE\t%AF\n]'):
 
 			items = line.split('\t')
 			if items[4] in ('0/0', '0|0'):
@@ -94,7 +94,7 @@ def multiSampleMutVCF2BED(vcffile):
 	for line in shell.bcftools.query(
 		_ = vcffile,
 		s = ','.join(samples),
-		f = '[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%FORMAT/AD{0}\t%FORMAT/AD{1}\t%SAMPLE\t%FORMAT/AF\n]'):
+		f = r'[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%AD{0}\t%AD{1}\t%SAMPLE\t%AF\n]'):
 		items = line.split('\t')
 
 		writer = writers[items[7]]
@@ -206,7 +206,7 @@ def singleSampleCnVCF2BED(vcffiles):
 		for line in shell.bcftools.query(
 			_ = vcffile,
 			s = sample,
-			f = '%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n'):
+			f = r'%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n'):
 
 			items = line.split('\t')
 			if items[3] in ('0/0', '0|0'):
@@ -236,7 +236,7 @@ def multiSampleCnVCF2BED(vcffile):
 	for line in shell.bcftools.query(
 		_ = vcffile,
 		s = ','.join(samples),
-		f = '[%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n]'):
+		f = r'[%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n]'):
 
 		items = line.split('\t')
 		if items[3] in ('0/0', '0|0'):
@@ -330,7 +330,7 @@ def GetPyCloneTsv(mutfile, outfile, cnfile = None):
 		writer.write(rec)
 	writer.close()
 
-params  = Box(in_files = [])
+params  = Diot(in_files = [])
 mutbeds = {}
 cnbeds  = {}
 if path.isfile(inmuts):
@@ -399,5 +399,3 @@ for line in shell.bedtools.intersect(a = locifilebed, b = refgene, loj = True, _
 	r = parts[3:9] + [parts[17].split('; ')[0][9:-1]]
 	writer.write(r)
 writer.close()
-
-

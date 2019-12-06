@@ -1,7 +1,7 @@
 """A set of processes to generate/process vcf files"""
 from os import path
 from glob import glob
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from .utils import fs2name
 from . import delefactory, procfactory
@@ -54,7 +54,7 @@ def _pVcfFilter():
 	pVcfFilter              = Proc(desc = 'Filter records in vcf file.')
 	pVcfFilter.input        = "infile:file"
 	pVcfFilter.output       = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
-	pVcfFilter.args.filters = Box()
+	pVcfFilter.args.filters = Diot()
 	pVcfFilter.args.gz      = False
 	pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
 	pVcfFilter.lang         = params.python.value
@@ -140,12 +140,12 @@ def _pVcf():
 		`record`: A string of lambda function to manipulate the record (cyvcf.Variant)
 		`gz`: Gzip the ouput file
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Manipulate a VCF file',
 		lang   = params.python.value,
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | bn}}',
-		args   = Box(
+		args   = Diot(
 			helper = '',
 			vcf    = None,
 			record = None,
@@ -174,7 +174,7 @@ def _pVcfAnno():
 		genome          (str) : The genome for annotation.
 		tmpdir          (dir) : The tmpdir,                     mainly used by snpeff
 		dbs             (str) : The path of database for each tool. Required by `annovar` and `vep`.
-		params          (Box) : Other parameters for the tool.
+		params          (Diot) : Other parameters for the tool.
 		snpeffStats     (bool): Whether to generate stats file when use snpeff.
 		mem             (str) : The memory used by snpeff.
 	@requires:
@@ -182,7 +182,7 @@ def _pVcfAnno():
 		[snpeff](http://snpeff.sourceforge.net/SnpEff_manual.html#intro)
 		[vep v98](http://www.ensembl.org/info/docs/tools/vep/script/vep_tutorial.html): `conda install -c bioconda ensembl-vep`
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Annotate the variants in vcf file.',
 		lang   = params.python.value,
 		input  = 'infile:file',
@@ -191,7 +191,7 @@ def _pVcfAnno():
 			"/{{i.infile | fn | fn}}.{{args.tool}}.vcf{{args.gz | ? | =:'.gz' | !: ''}}",
 			"outdir:dir:{{i.infile | fn | fn}}.{{args.tool}}"
 		],
-		args = Box(
+		args = Diot(
 			tool            = 'vep',
 			snpeff          = params.snpeff.value,
 			vep             = params.vep.value,
@@ -201,7 +201,7 @@ def _pVcfAnno():
 			annovar_convert = params.annovar_convert.value,
 			genome          = params.genome.value,
 			tmpdir          = params.tmpdir.value,
-			dbs             = Box(
+			dbs             = Diot(
 				snpeff  = params.snpeffDb.value,
 				annovar = params.annovarDb.value,
 				vep     = params.vepDb.value,
@@ -209,7 +209,7 @@ def _pVcfAnno():
 			),
 			snpeffStats = False,
 			nthread     = 1,
-			params      = Box(),
+			params      = Diot(),
 			mem         = params.mem8G.value,
 		)
 	)
@@ -239,7 +239,7 @@ def _pVcfSplit():
 	pVcfSplit.args.gatk           = params.gatk.value
 	pVcfSplit.args.tabix          = params.tabix.value
 	pVcfSplit.args.ref            = params.ref.value # only for gatk
-	pVcfSplit.args.params         = Box()
+	pVcfSplit.args.params         = Diot()
 	pVcfSplit.args.nthread        = 1
 	pVcfSplit.lang                = params.python.value
 	pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
@@ -268,7 +268,7 @@ def _pVcfMerge():
 	pVcfMerge.args.vcftools = params.vcftools_merge.value
 	pVcfMerge.args.bcftools = params.bcftools.value
 	pVcfMerge.args.gatk     = params.gatk.value
-	pVcfMerge.args.params   = Box()
+	pVcfMerge.args.params   = Diot()
 	pVcfMerge.args.tabix    = params.tabix.value
 	pVcfMerge.args.ref      = params.ref.value # only for gatk
 	pVcfMerge.args.gz       = False
@@ -307,16 +307,16 @@ def _pVcf2Maf():
 		tabix: Path to tabix, used to index Vcf file.
 		oncotator: Path to oncotator.
 		oncotator_db (dir): Path to oncotator database.
-		params (Box): Extra parameters for the tool.
+		params (Diot): Extra parameters for the tool.
 		withchr (bool): Should we add chr to Chromosome column or not.
 		genome (str): The genome used to replace __UNKNOWN__ for the NCBI_Build column
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Convert Vcf file to Maf file',
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | fn2}}.maf',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			tool         = 'oncotator',
 			withchr      = True,
 			vcf2maf      = params.vcf2maf.value,
@@ -331,7 +331,7 @@ def _pVcf2Maf():
 			tumor        = 'auto',
 			genome       = params.genome.value,
 			nthread      = 1,
-			params       = Box()
+			params       = Diot()
 		)
 	)
 
@@ -366,7 +366,7 @@ def _pVcf2Plink():
 	pVcf2Plink.output      = 'outdir:dir:{{i.infile | fn2}}.plink'
 	pVcf2Plink.args.plink  = params.plink.value
 	pVcf2Plink.args.tabix  = params.tabix.value
-	pVcf2Plink.args.params = Box({
+	pVcf2Plink.args.params = Diot({
 		'vcf-half-call'      : 'm',
 		'double-id'          : True,
 		'vcf-filter'         : True,
@@ -393,16 +393,16 @@ def _pVcfLiftover():
 		ref     (file): The reference genome
 		mem     (str) : The memory to use
 		tmpdir  (dir) : The temporary directory
-		params  (Box) : The extra params for the tool
+		params  (Diot) : The extra params for the tool
 		bcftools(str) : Path to bcftools
 			- Used to correct sample orders. `picard LiftoverVcf` sometimes swap samples.
 	"""
-	return Box(
+	return Diot(
 		desc = 'Liftover VCF files',
 		input = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem | stem}}.vcf, umfile:file:{{i.infile | stem | stem}}.unmapped.vcf',
 		lang = params.python.value,
-		args = Box(
+		args = Diot(
 			tool     = 'picard',
 			bcftools = params.bcftools.value,
 			picard   = params.picard.value,
@@ -410,7 +410,7 @@ def _pVcfLiftover():
 			ref      = params.ref.value,
 			mem      = params.mem8G.value,
 			tmpdir   = params.tmpdir.value,
-			params   = Box()
+			params   = Diot()
 		)
 	)
 
@@ -443,12 +443,12 @@ def _pVcfCleanup():
 		ref (file): The reference file
 			- Require fai/dict file with it.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Remove configs from vcf file according to the given reference',
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem | stem}}.vcf',
 		lang   = params.python.value,
-		args   = Box(ref = params.ref.value)
+		args   = Diot(ref = params.ref.value)
 	)
 
 @procfactory
@@ -500,18 +500,18 @@ def _pVcfSampleFilter():
 				- Note that when `args.keep == False`, `True` samples will be removed.
 			- `None`: use sample names from `i.samfile`
 		`keep`: Keep the samples provided or remove them. Default: `True`
-		`params`: Other parameters for `bcftools view`. Default: `Box(U = True)`
+		`params`: Other parameters for `bcftools view`. Default: `Diot(U = True)`
 			- `U = True`: Exclude uncalled sites (genotypes of all samples are missing).
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Keep or remove some samples from VCF file.',
 		input  = 'infile:file, samfile:file',
 		output = 'outfile:file:{{i.infile | bn}}',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			keep     = True,
 			samples  = None,
-			params   = Box(U = True),
+			params   = Diot(U = True),
 			bcftools = params.bcftools.value,
 		)
 	)
@@ -664,14 +664,14 @@ def _pVcfExtract():
 		Extract variants from a VCF file by given regions
 	@args:
 		`tabix` : The path to tabix.
-		`params`: Other parameters for `tabix`. Default: `Box(h = True, B = True)`
+		`params`: Other parameters for `tabix`. Default: `Diot(h = True, B = True)`
 			- See `tabix --help`
 	"""
 	pVcfExtract              = Proc(desc = "Extract variants from a VCF file by given regions")
 	pVcfExtract.input        = 'vcffile:file, regfile:file'
 	pVcfExtract.output       = 'outfile:file:{{i.vcffile | fn2}}.extracted.vcf'
 	pVcfExtract.args.tabix   = params.tabix.value
-	pVcfExtract.args.params  = Box(h = True, B = True)
+	pVcfExtract.args.params  = Diot(h = True, B = True)
 	pVcfExtract.lang         = params.python.value
 	pVcfExtract.script       = "file:scripts/vcf/pVcfExtract.py"
 	return pVcfExtract
@@ -730,17 +730,17 @@ def _pVcfFix():
 				- If `<NON_REF>` is the sole alternative allele, replace it with `.`
 				- Otherwise remove it.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Fix a bunch of format problems in vcf files',
 		input  = 'infile:file',
 		output = '''outfile:file:{{i.infile
 			| ?.endswith(".gz") | =: "_fixed.vcf.gz" | !: "_fixed.vcf"
 			| @prepend: stem(stem(i.infile))}}''',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			ref     = params.ref.value,
 			nthread = 1,
-			fixes   = Box(
+			fixes   = Diot(
 				_inverse     = False,
 				clinvarLink  = True,
 				addChr       = True,
@@ -800,12 +800,12 @@ def _pVcfStats():
 		ggs      (str/list) : ggs expressions to modify each plot.
 		devpars  (dict/list): Devpars for each plot.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'VCF statistics and plots using vcfstats',
 		lang   = params.python.value,
 		input  = 'infile:file, config:file',
 		output = 'outdir:dir:{{i.infile | stem}}.vcfstats',
-		args   = Box(
+		args   = Diot(
 			vcfstats = params.vcfstats.value,
 			Rscript  = params.Rscript.value,
 			formula  = [],
@@ -835,21 +835,21 @@ def _pVcfExprAnno():
 		vcf_expression_annotator (str): Path to vcf-expression-annotator
 		exprtype (str): Type of expression file, one of:
 			- {kallisto,stringtie,cufflinks,custom}
-		params (Box): Other parameters for vcf-expression-annotator
+		params (Diot): Other parameters for vcf-expression-annotator
 		istx (bool): Whether it's transcript expression in the expression file. Otherwise it's gene.
 		bcftools (path): Path to bcftools, used to get sample names from vcf file.
 		sample (int|str): The index or the name of the sample to annotate
 	"""
-	return Box(
+	return Diot(
 		desc = 'Annotate VCF files with expression data.',
 		lang = params.python.value,
 		input = 'infile:file, exprfile:file',
 		output = 'outfile:file:{{i.infile | bn}}',
-		args = Box(
+		args = Diot(
 			vcf_expression_annotator = params.vcf_expression_annotator.value,
 			bcftools                 = params.bcftools.value,
 			exprtype                 = '',
-			params                   = Box(),
+			params                   = Diot(),
 			istx                     = False,
 			sample                   = 0
 		)
@@ -867,7 +867,7 @@ def _pVcfIndex():
 		tabix (str): Path to tabix
 		nthread (int): Number of threads for (de)compressing files.
 	"""
-	return Box(
+	return Diot(
 		desc   = 'Index VCF files.',
 		lang   = params.python.value,
 		input  = 'infile:file',
@@ -875,7 +875,7 @@ def _pVcfIndex():
 			'outfile:file:{{i.infile | bn | ?.endswith(".gz") | !@append: ".gz"}}',
 			'outidx:file:{{i.infile | bn | ?.endswith(".gz") | !@append: ".gz" | @append: ".tbi"}}'
 		],
-		args = Box(tabix = params.tabix.value, nthread = 1)
+		args = Diot(tabix = params.tabix.value, nthread = 1)
 	)
 
 @procfactory
@@ -893,7 +893,7 @@ def _pVcfy():
 		outfile: The output vcf file
 	@args:
 		mutrate  (float)        : The mutations rate
-		params   (Box)          : Other parameters for vcfy
+		params   (Diot)          : Other parameters for vcfy
 		ref      (path)         : The reference file.
 		nthread  (int)          : The number of threads to use.
 		vcfy     (path)         : Path to vcfy.
@@ -905,14 +905,14 @@ def _pVcfy():
 	@requires:
 		[vcfy](https://pypi.org/project/vcfy/)
 	"""
-	return Box(
+	return Diot(
 		desc   = "Generate a vcf file with random mutations.",
 		input  = 'infile:file',
 		output = 'outfile:file:{{i.infile | stem2}}.random.vcf{{args.gz | ? | =:".gz" | !:""}}',
 		lang   = params.python.value,
-		args   = Box(
+		args   = Diot(
 			nmuts    = 1000,
-			params   = Box(),
+			params   = Diot(),
 			nthread  = params.nthread.value,
 			ref      = params.ref.value,
 			bedtools = params.bedtools.value,

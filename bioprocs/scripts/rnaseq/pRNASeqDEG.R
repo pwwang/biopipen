@@ -1,4 +1,4 @@
-{{rimport}}('plot.r', '__init__.r', 'sampleinfo.r')
+{{ 'plot.r', '__init__.r', 'sampleinfo.r' | *rimport }}
 
 library(methods)
 options(stringsAsFactors = FALSE)

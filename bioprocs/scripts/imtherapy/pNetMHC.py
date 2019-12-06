@@ -1,5 +1,5 @@
 from pathlib import Path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.parallel import Parallel, distributeList
 

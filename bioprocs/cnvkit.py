@@ -1,5 +1,5 @@
 """Utilities of cnvkit"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from .utils import fs2name
 from . import delefactory, procfactory
@@ -29,10 +29,10 @@ def _pCNVkitPrepare():
 		`ref`    : The reference genome.
 		`params` : The extra parameters for cnvkit's `access`, `target` and `autobin` command. Default:
 			```python
-			Box(
-				target  = Box({'short-name': True, 'split': True}),
-				access  = Box(s = '5000'),
-				autobin = Box()
+			Diot(
+				target  = Diot({'short-name': True, 'split': True}),
+				access  = Diot(s = '5000'),
+				autobin = Diot()
 			)
 			```
 	@requires:
@@ -46,10 +46,10 @@ def _pCNVkitPrepare():
 	pCNVkitPrepare.args.accfile = ''
 	pCNVkitPrepare.args.nthread = 1
 	pCNVkitPrepare.args.ref     = params.ref.value
-	pCNVkitPrepare.args.params  = Box(
-		target  = Box({'short-name': True, 'split': True}),
-		access  = Box(s = '5000'),
-		autobin = Box()
+	pCNVkitPrepare.args.params  = Diot(
+		target  = Diot({'short-name': True, 'split': True}),
+		access  = Diot(s = '5000'),
+		autobin = Diot()
 	)
 	pCNVkitPrepare.envs.fs2name = fs2name
 	pCNVkitPrepare.lang         = params.python.value
@@ -81,7 +81,7 @@ def _pCNVkitCov():
 	pCNVkitCov.output       = "outfile:file:{{i.infile | fn}}.target.cnn, antifile:file:{{i.infile | fn}}.antitarget.cnn"
 	pCNVkitCov.args.cnvkit  = params.cnvkit.value
 	pCNVkitCov.args.nthread = 1
-	pCNVkitCov.args.params  = Box()
+	pCNVkitCov.args.params  = Diot()
 	pCNVkitCov.lang         = params.python.value
 	pCNVkitCov.script       = "file:scripts/cnvkit/pCNVkitCov.py"
 	return pCNVkitCov
@@ -111,7 +111,7 @@ def _pCNVkitRef():
 	pCNVkitRef.args.cnvkit  = params.cnvkit.value
 	pCNVkitRef.args.ref     = params.ref.value
 	pCNVkitRef.args.nthread = 1
-	pCNVkitRef.args.params  = Box({'no-edge': True})
+	pCNVkitRef.args.params  = Diot({'no-edge': True})
 	pCNVkitRef.envs.fs2name = fs2name
 	pCNVkitRef.lang         = params.python.value
 	pCNVkitRef.script       = "file:scripts/cnvkit/pCNVkitRef.py"
@@ -141,7 +141,7 @@ def _pCNVkitFlatRef():
 	pCNVkitFlatRef.output       = "outfile:file:{{i.tgfile | fn}}.reference.cnn"
 	pCNVkitFlatRef.args.cnvkit  = params.cnvkit.value
 	pCNVkitFlatRef.args.ref     = params.ref.value
-	pCNVkitFlatRef.args.params  = Box()
+	pCNVkitFlatRef.args.params  = Diot()
 	pCNVkitFlatRef.envs.fs2name = fs2name
 	pCNVkitFlatRef.lang         = params.python.value
 	pCNVkitFlatRef.script       = "file:scripts/cnvkit/pCNVkitFlatRef.py"
@@ -171,7 +171,7 @@ def _pCNVkitFix():
 	pCNVkitFix.input        = "tgfile:file, atgfile:file, rcfile:file"
 	pCNVkitFix.output       = "outfile:file:{{i.tgfile | fn}}.cnr"
 	pCNVkitFix.args.cnvkit  = params.cnvkit.value
-	pCNVkitFix.args.params  = Box({'no-edge': True})
+	pCNVkitFix.args.params  = Diot({'no-edge': True})
 	pCNVkitFix.args.nthread = 1
 	pCNVkitFix.lang         = params.python.value
 	pCNVkitFix.script       = "file:scripts/cnvkit/pCNVkitFix.py"
@@ -200,7 +200,7 @@ def _pCNVkitSeg():
 	pCNVkitSeg.output       = "outfile:file:{{i.infile | fn}}.cns"
 	pCNVkitSeg.args.cnvkit  = params.cnvkit.value
 	pCNVkitSeg.args.nthread = 1
-	pCNVkitSeg.args.params  = Box()
+	pCNVkitSeg.args.params  = Diot()
 	pCNVkitSeg.lang         = params.python.value
 	pCNVkitSeg.script       = "file:scripts/cnvkit/pCNVkitSeg.py"
 	return pCNVkitSeg
@@ -226,7 +226,7 @@ def _pCNVkitCall():
 	pCNVkitCall.input       = "infile:file"
 	pCNVkitCall.output      = "outfile:file:{{i.infile | fn}}.callcns"
 	pCNVkitCall.args.cnvkit = params.cnvkit.value
-	pCNVkitCall.args.params = Box()
+	pCNVkitCall.args.params = Diot()
 	pCNVkitCall.lang        = params.python.value
 	pCNVkitCall.script      = "file:scripts/cnvkit/pCNVkitCall.py"
 	return pCNVkitCall
@@ -256,7 +256,7 @@ def _pCNVkitScatter():
 	pCNVkitScatter.output       = 'outdir:dir:{{i.cnrfile | fn}}.scatters'
 	pCNVkitScatter.args.cnvkit  = params.cnvkit.value
 	pCNVkitScatter.args.nthread = 1
-	pCNVkitScatter.args.params  = Box()
+	pCNVkitScatter.args.params  = Diot()
 	pCNVkitScatter.args.regions = [
 		'', # plot whole genome
 		# extra regions, format: chr5:100-50000000:TERT
@@ -288,7 +288,7 @@ def _pCNVkitDiagram():
 	pCNVkitDiagram.output      = 'outfile:file:{{i.cnrfile | fn}}.diagram.pdf'
 	pCNVkitDiagram.args.cnvkit = params.cnvkit.value
 	pCNVkitDiagram.args.nthread = 1
-	pCNVkitDiagram.args.params = Box()
+	pCNVkitDiagram.args.params = Diot()
 	pCNVkitDiagram.lang        = params.python.value
 	pCNVkitDiagram.script      = "file:scripts/cnvkit/pCNVkitDiagram.py"
 	return pCNVkitDiagram
@@ -315,7 +315,7 @@ def _pCNVkitHeatmap():
 	pCNVkitHeatmap.input        = 'cnfiles:files'
 	pCNVkitHeatmap.output       = 'outdir:dir:{{i.cnfiles | fs2name}}.heatmaps'
 	pCNVkitHeatmap.args.cnvkit  = params.cnvkit.value
-	pCNVkitHeatmap.args.params  = Box()
+	pCNVkitHeatmap.args.params  = Diot()
 	pCNVkitHeatmap.args.nthread = 1
 	pCNVkitHeatmap.args.regions = [
 		'', # plot whole genome
@@ -355,11 +355,11 @@ def _pCNVkitReport():
 	pCNVkitReport.output       = "outdir:dir:{{i.cnrfile | fn}}.cnvkit.reports"
 	pCNVkitReport.args.cnvkit  = params.cnvkit.value
 	pCNVkitReport.args.nthread = 1
-	pCNVkitReport.args.params  = Box(
+	pCNVkitReport.args.params  = Diot(
 		breaks     = True, # None to disable
 		gainloss   = True,
 		metrics    = True,
-		segmetrics = Box(iqr = True)
+		segmetrics = Diot(iqr = True)
 	)
 	pCNVkitReport.lang   = params.python.value
 	pCNVkitReport.script = 'file:scripts/cnvkit/pCNVkitReport.py'
@@ -388,7 +388,7 @@ def _pCNVkit2Vcf():
 	pCNVkit2Vcf.output       = "outfile:file:{{i.cnsfile | fn}}.cnvkit.vcf"
 	pCNVkit2Vcf.args.cnvkit  = params.cnvkit.value
 	pCNVkit2Vcf.args.nthread = 1
-	pCNVkit2Vcf.args.params  = Box()
+	pCNVkit2Vcf.args.params  = Diot()
 	pCNVkit2Vcf.lang         = params.python.value
 	pCNVkit2Vcf.script       = 'file:scripts/cnvkit/pCNVkit2Vcf.py'
 	return pCNVkit2Vcf
@@ -414,9 +414,8 @@ def _pCNVkit2Theta():
 	pCNVkit2Theta.input        = 'cnsfile:file, cnnfile:file'
 	pCNVkit2Theta.output       = 'outfile:file:{{i.cnsfile | fn2}}.interval.txt'
 	pCNVkit2Theta.args.nthread = 1
-	pCNVkit2Theta.args.params  = Box()
+	pCNVkit2Theta.args.params  = Diot()
 	pCNVkit2Theta.args.cnvkit  = params.cnvkit.value
 	pCNVkit2Theta.lang         = params.python.value
 	pCNVkit2Theta.script       = 'file:scripts/cnvkit/pCNVkit2Theta.py'
 	return pCNVkit2Theta
-

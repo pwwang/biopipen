@@ -1,5 +1,5 @@
 from pathlib import Path
-from pyppl import Box
+from pyppl import Diot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
@@ -13,7 +13,7 @@ hlaref   = {{args.hlaref | quote}}
 params   = {{args.params | repr}}
 nthread  = {{args.nthread | repr}}
 
-bwaps = Box(params.pop('bwa', {}))
+bwaps = Diot(params.pop('bwa', {}))
 
 shell.load_config(picard = picard, bwa = bwa, optitype = optitype)
 
@@ -23,7 +23,7 @@ if fqfile1.suffix == '.bam':
 	# convert it to fastq
 	tmpfq1 = outdir.joinpath(outdir.stem + '_1.fq')
 	tmpfq2 = outdir.joinpath(outdir.stem + '_2.fq')
-	opts = Box(F = tmpfq1, F2 = tmpfq2, I = fqfile1)
+	opts = Diot(F = tmpfq1, F2 = tmpfq2, I = fqfile1)
 	shell.fg.picard.SamToFastq(**opts)
 	fqfile1 = tmpfq1
 	fqfile2 = tmpfq2
@@ -38,7 +38,7 @@ shell.fg.bwa.mem(**bwaps)
 
 fqfish1 = outdir.joinpath(outdir.stem + '_fished_1.fq')
 fqfish2 = outdir.joinpath(outdir.stem + '_fished_2.fq')
-opts = Box(I = tmpbam, F = fqfish1, F2 = fqfish2)
+opts = Diot(I = tmpbam, F = fqfish1, F2 = fqfish2)
 shell.fg.picard.SamToFastq(**opts)
 
 params.i = [fqfish1, fqfish2]

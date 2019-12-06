@@ -1,5 +1,5 @@
 """Rank calculations"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params, rimport
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -45,7 +45,7 @@ def _pRank():
 	pRank.args.tie     = 'average' # "average", "first", "last", "random", "max", "min"
 	pRank.args.byrow   = True # else by column
 	pRank.args.reverse = True # large number ranks higher
-	pRank.args.inopts  = Box(
+	pRank.args.inopts  = Diot(
 		cnames  = True,
 		rnames  = True,
 		delimit = "\t"
@@ -88,8 +88,8 @@ def _pRankProduct():
 		`cex`:      Font size for plotting. Default: 0.9
 		`cnheight`: Colname height. Default: 80
 		`rnwidth`:  Rowname width. Default: 50
-		`devpars`:  device parameters for the plot. Default: `Box(res=300, width=2000, height=2000)`
-		`inopts`:   Options for reading the input file. Default: `Box(cnames=True, rnames=True, delimit="\t")`
+		`devpars`:  device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
+		`inopts`:   Options for reading the input file. Default: `Diot(cnames=True, rnames=True, delimit="\t")`
 	"""
 	pRankProduct               = Proc(desc = 'Calculate the rank product of a set of ranks.')
 	pRankProduct.input         = "infile:file"
@@ -100,9 +100,8 @@ def _pRankProduct():
 	pRankProduct.args.cex      = .9
 	pRankProduct.args.cnheight = 80
 	pRankProduct.args.rnwidth  = 50
-	pRankProduct.args.inopts   = Box(cnames  = True, rnames  = True, delimit = '\t')
-	pRankProduct.args.devpars  = Box(res = 300, width = 2000, height = 2000)
+	pRankProduct.args.inopts   = Diot(cnames  = True, rnames  = True, delimit = '\t')
+	pRankProduct.args.devpars  = Diot(res = 300, width = 2000, height = 2000)
 	pRankProduct.lang          = params.Rscript.value
 	pRankProduct.script        = "file:scripts/rank/pRankProduct.r"
 	return pRankProduct
-

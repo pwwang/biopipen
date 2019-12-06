@@ -17,7 +17,7 @@ cont.table = read.table(infile, sep = "\t", header = T, row.names = 1, check.nam
 #
 # Contingency table rows: Disease, Healthy
 # Contingency table cols: Mut, Non
-# 
+#
 #    | Disease Healthy | Mut  Non  |
 # ---+--------+--------+-----+-----+
 # S1 |    1   |    0   |  0  |  1  |
@@ -41,7 +41,7 @@ for (line in lines) {
 	if (!startsWith(line, '# Contingency table ')) next
 	if (startsWith(line, '# Contingency table cols:')) {
 		ct.cnames = trim(unlist(strsplit(substring(line, 26), ',', fixed = T)))
-	} 
+	}
 	else if (startsWith(line, '# Contingency table rows:')) {
 		ct.rnames = trim(unlist(strsplit(substring(line, 26), ',', fixed = T)))
 	}
@@ -93,6 +93,3 @@ out = data.frame(
 # method  Pearson's Chi-squared test with Yates' continuity correction
 #
 write.table(t(out), outfile, col.names = F, row.names = T, sep = "\t", quote = F)
-
-
-

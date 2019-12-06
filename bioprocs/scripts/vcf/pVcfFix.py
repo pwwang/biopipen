@@ -1,7 +1,7 @@
 import gzip
 from os import path, environ
 from cyvcf2 import VCF, Writer
-from pyppl import Box
+from pyppl import Diot
 from difflib import SequenceMatcher
 from bioprocs.utils import shell2 as shell
 

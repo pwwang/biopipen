@@ -1,4 +1,4 @@
-from pyppl import Box
+from pyppl import Diot
 from enrichr import Enrichr
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 

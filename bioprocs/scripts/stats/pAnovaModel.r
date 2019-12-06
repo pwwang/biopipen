@@ -78,4 +78,3 @@ r = do.call(rbind, apply(casedata, 1, function(row) {
 }))
 
 write.table(r, outfile, quote = FALSE, sep = "\t")
-

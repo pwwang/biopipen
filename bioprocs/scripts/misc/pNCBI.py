@@ -36,7 +36,7 @@ def writerResults(rets):
 					r[key] = str(r[key])
 				except UnicodeEncodeError:
 					r[key] = r[key].encode('utf-8')
-					
+
 		if callable(record):
 			r = record(r)
 		elif record is not None:
@@ -51,9 +51,9 @@ if prog == 'esearch':
 		error = list(sret._xml_root.find('ErrorList').iterchildren())
 	except:
 		error = None
-	
+
 	print sret.count if not error else 0
-	
+
 	if not sret.ids:
 		rets = []
 	else:

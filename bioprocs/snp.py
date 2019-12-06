@@ -1,5 +1,5 @@
 """Processes to process files with SNPs"""
-from pyppl import Proc, Box
+from pyppl import Proc, Diot
 from . import params
 from . import delefactory, procfactory
 from modkit import Modkit
@@ -21,7 +21,7 @@ def _pRs2Bed():
 			- Or retrieve from a dbsnp VCF file (dbsnp or local)
 		`dbsnp`   : The dbsnp vcf file
 		`notfound`: What to do if the snp is not found. Default: skip
-		`inopts`  : The input options for input file. Default: `Box(delimit = '\t', skip = 0, comment = '#')`
+		`inopts`  : The input options for input file. Default: `Diot(delimit = '\t', skip = 0, comment = '#')`
 		`snpcol`  : The column where the snp is. Could be index (0-based) or the column name with `args.inopts.cnames = True`
 		`ncol`    : How many columns to output. Possible values: 6, 8, 9. Default: `8`
 			- `6`: The BED6 format
@@ -39,7 +39,7 @@ def _pRs2Bed():
 	pRs2Bed.output        = "outfile:file:{{i.snpfile | fn}}.bed"
 	pRs2Bed.args.tool     = 'cruzdb' # or local/dbsnp
 	pRs2Bed.args.notfound = 'skip' # error
-	pRs2Bed.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+	pRs2Bed.args.inopts   = Diot(delimit = '\t', skip = 0, comment = '#')
 	pRs2Bed.args.ncol     = 6
 	pRs2Bed.args.snpcol   = ''
 	pRs2Bed.args.dbsnp    = params.dbsnp_all.value
@@ -64,7 +64,7 @@ def _pCoord2SnpBedx():
 	pCoord2SnpBedx.args.dbsnpver = params.dbsnpver.value
 	pCoord2SnpBedx.errhow        = 'retry'
 	pCoord2SnpBedx.args.inmeta   = ['CHR', 'START', 'END']
-	pCoord2SnpBedx.args.inopts   = Box(delimit = '\t', skip = 0, comment = '#')
+	pCoord2SnpBedx.args.inopts   = Diot(delimit = '\t', skip = 0, comment = '#')
 	pCoord2SnpBedx.args.xcols    = ['refUCSC', 'alleles', 'alleleFreqs', 'alleleFreqCount']
 	#pCoord2SnpBedx.envs.read     = read
 	#pCoord2SnpBedx.envs.write    = write
@@ -104,4 +104,3 @@ def _pSnp2Avinput():
 	pSnp2Avinput.args.col      = 0
 	pSnp2Avinput.script        = "file:scripts/snp/pSnp2Avinput.py"
 	return pSnp2Avinput
-
