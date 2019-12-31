@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Diot
+from diot import Diot
 from collections import OrderedDict
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter

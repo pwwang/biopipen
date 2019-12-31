@@ -1,6 +1,6 @@
 from os import path
 from collections import OrderedDict
-from pyppl import Diot
+from diot import Diot
 from pyppl.utils import alwaysList
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
@@ -11,17 +11,20 @@ inopts  = {{args.inopts | repr}}
 cols    = {{args.cols | repr}}
 keep    = {{args.keep | repr}}
 
+from_file = False
 if path.isfile(colfile):
 	cols = TsvReader(colfile, cnames = False).dump(0)
+	from_file = True
 elif colfile:
 	cols = alwaysList(colfile)
 elif path.isfile(str(cols)):
 	cols = TsvReader(cols, cnames = False).dump(0)
+	from_file = True
 elif cols:
 	cols = alwaysList(cols)
 else:
 	raise ValueError('Columns not provided.')
-if not isinstance(cols[0], int) and cols[0].isdigit():
+if not from_file and not isinstance(cols[0], int) and cols[0].isdigit():
 	cols = [int(c) for c in cols]
 
 reader = TsvReader(infile, **inopts)

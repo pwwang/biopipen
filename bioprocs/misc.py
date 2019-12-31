@@ -1,13 +1,11 @@
 """Some misc processes"""
-from pyppl import Proc, Diot
-from bioprocs import params, rimport
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pGEP70():
-	"""
+pGEP70 = proc_factory(
+	desc = 'Do GEP70 plot for multiple mylenoma 70-gene-signatures',
+	config = Diot(annotate = """
 	@name:
 		pGEP70
 	@description:
@@ -39,25 +37,22 @@ def _pGEP70():
 			- You may do `ylim.min` to set the min ylim. Or you can set it as 'auto'. Default: 0.
 		`ggs`     : Extra ggplot2 elements for main plot. `ggs.table` is for the risk table.
 		`devpars` : The device parameters for png. Default: `{res:300, height:2000, width:2000}`
-	"""
-	pGEP70              = Proc(desc = 'Do GEP70 plot for multiple mylenoma 70-gene-signatures')
-	pGEP70.input        = 'exprfile:file, survfile:file, gene'
-	pGEP70.output       = 'outdir:dir:{{i.survfile | fn2}}.{{args.name}}{{i.gene}}'
-	pGEP70.args.name    = 'GEP70'
-	pGEP70.args.gep70   = params.gep70.value
-	pGEP70.args.inunit  = 'days' # months, weeks, years
-	pGEP70.args.outunit = 'days'
-	pGEP70.args.params  = Diot({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
-	pGEP70.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pGEP70.args.ggs     = Diot(table = Diot())
-	pGEP70.envs.rimport = rimport
-	pGEP70.lang         = 'Rscript'
-	pGEP70.script       = "file:scripts/misc/pGEP70.r"
-	return pGEP70
+	"""))
+pGEP70.input        = 'exprfile:file, survfile:file, gene'
+pGEP70.output       = 'outdir:dir:{{i.survfile | fn2}}.{{args.name}}{{i.gene}}'
+pGEP70.args.name    = 'GEP70'
+pGEP70.args.gep70   = params.gep70.value
+pGEP70.args.inunit  = 'days' # months, weeks, years
+pGEP70.args.outunit = 'days'
+pGEP70.args.params  = Diot({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
+pGEP70.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pGEP70.args.ggs     = Diot(table = Diot())
+pGEP70.envs.rimport = rimport
+pGEP70.lang         = 'Rscript'
 
-@procfactory
-def _pNCBI():
-	"""
+pNCBI = proc_factory(
+	desc = 'The NCBI E-Utils',
+	config = Diot(annotate = """
 	@name:
 		pNCBI
 	@description:
@@ -84,22 +79,19 @@ def _pNCBI():
 		`record` : A function to transform the record.
 	@requires:
 		[python-eutils](https://github.com/biocommons/eutils)
-	"""
-	pNCBI             = Proc(desc = 'The NCBI E-Utils')
-	pNCBI.input       = 'term'
-	pNCBI.output      = 'outfile:file:{{i.term | lambda x: __import__("re").sub(r"[^\\w_]", "_", x)[:255]}}.{{args.prog}}.txt'
-	pNCBI.errhow      = 'retry'
-	pNCBI.args.prog   = 'esearch'
-	pNCBI.args.apikey = params.ncbikey.value
-	pNCBI.args.sleep  = .15
-	# annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books,
-	# cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr,
-	# homologene, ipg, medgen, mesh, ncbisearch, nlmcatalog, nuccore, nucest, nucgss, nucleotide,
-	# omim, orgtrack, pcassay, pccompound, pcsubstance, pmc, popset, probe, protein, proteinclusters,
-	# pubmed, pubmedhealth, seqannot, snp, sparcle, sra, structure, taxonomy, unigene
-	pNCBI.args.db     = 'pubmed'
-	pNCBI.args.joiner = '|'
-	pNCBI.args.record = None
-	pNCBI.lang        = params.python.value
-	pNCBI.script      = 'file:scripts/misc/pNCBI.py'
-	return pNCBI
+	"""))
+pNCBI.input       = 'term'
+pNCBI.output      = 'outfile:file:{{i.term | lambda x: __import__("re").sub(r"[^\\w_]", "_", x)[:255]}}.{{args.prog}}.txt'
+pNCBI.errhow      = 'retry'
+pNCBI.args.prog   = 'esearch'
+pNCBI.args.apikey = params.ncbikey.value
+pNCBI.args.sleep  = .15
+# annotinfo, assembly, biocollections, bioproject, biosample, biosystems, blastdbinfo, books,
+# cdd, clinvar, clone, dbvar, gap, gapplus, gds, gencoll, gene, genome, geoprofiles, grasp, gtr,
+# homologene, ipg, medgen, mesh, ncbisearch, nlmcatalog, nuccore, nucest, nucgss, nucleotide,
+# omim, orgtrack, pcassay, pccompound, pcsubstance, pmc, popset, probe, protein, proteinclusters,
+# pubmed, pubmedhealth, seqannot, snp, sparcle, sra, structure, taxonomy, unigene
+pNCBI.args.db     = 'pubmed'
+pNCBI.args.joiner = '|'
+pNCBI.args.record = None
+pNCBI.lang        = params.python.value

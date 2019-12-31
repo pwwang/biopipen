@@ -1,15 +1,13 @@
 """
 Some long range interaction processes, not necessarily Hi-C
 """
-from pyppl import Proc, Diot
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pPartners():
-	"""
+pPartners = proc_factory(
+	desc = 'Find the interaction partners of the regions in input file.',
+	config = Diot(annotate = """
 	@name:
 		pPartners
 	@description:
@@ -24,12 +22,9 @@ def _pPartners():
 			- Could also be `bed` or `bedx`
 		`inttype`: The type of interaction file. Default: `auto`
 			- Could also be `bedpe`, `chiapet.tool`, `hiclib` and `bed12`
-	"""
-	pPartners                = Proc(desc = 'Find the interaction partners of the regions in input file.')
-	pPartners.input          = "regfile:file, intfile:file"
-	pPartners.output         = "outfile:file:{{i.regfile | fn2}}-{{i.intfile | fn2}}.partners.bedx"
-	pPartners.args.regopts   = Diot(ftype = "auto") # bed,   bedx
-	pPartners.args.intopts   = Diot(ftype = "auto") # bedpe, chiapet.tool, hiclib, bed12
-	pPartners.lang           = params.python.value
-	pPartners.script         = "file:scripts/hic/pPartners.py"
-	return pPartners
+	"""))
+pPartners.input        = "regfile:file, intfile:file"
+pPartners.output       = "outfile:file:{{i.regfile | fn2}}-{{i.intfile | fn2}}.partners.bedx"
+pPartners.args.regopts = Diot(ftype = "auto") # bed,   bedx
+pPartners.args.intopts = Diot(ftype = "auto") # bedpe, chiapet.tool, hiclib, bed12
+pPartners.lang         = params.python.value

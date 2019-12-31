@@ -1,15 +1,12 @@
 """Processes for BED files"""
-from pyppl import Proc, Diot
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
-
+from diot import Diot
+from pyppl import Proc
+from . import params, proc_factory
 from .bedtools import *
 
-@procfactory
-def _pBedSort():
-	"""
+pBedSort = proc_factory(
+	desc = 'Sort bed files.',
+	config = Diot(annotate = """
 	@name:
 		pBedSort
 	@description:
@@ -34,26 +31,23 @@ def _pBedSort():
 	@requires:
 		[`bedtools`](http://bedtools.readthedocs.io/en/latest/index.html)
 		[`bedops`](https://github.com/bedops/bedops)
-	"""
-	pBedSort               = Proc(desc = 'Sort bed files.')
-	pBedSort.input         = "infile:file"
-	pBedSort.output        = "outfile:file:{{i.infile | bn}}"
-	pBedSort.args.tool     = 'sort'
-	pBedSort.args.bedtools = params.bedtools.value
-	pBedSort.args.bedops   = params.bedops_sort.value
-	pBedSort.args.mem      = '8G'
-	pBedSort.args.by       = 'coord'
-	pBedSort.args.unique   = True
-	pBedSort.args.params   = Diot()
-	pBedSort.args.chrorder = None
-	pBedSort.args.tmpdir   = params.tmpdir.value
-	pBedSort.lang          = params.python.value
-	pBedSort.script        = "file:scripts/bed/pBedSort.py"
-	return pBedSort
+	"""))
+pBedSort.input         = "infile:file"
+pBedSort.output        = "outfile:file:{{i.infile | bn}}"
+pBedSort.args.tool     = 'sort'
+pBedSort.args.bedtools = params.bedtools.value
+pBedSort.args.bedops   = params.bedops_sort.value
+pBedSort.args.mem      = '8G'
+pBedSort.args.by       = 'coord'
+pBedSort.args.unique   = True
+pBedSort.args.params   = Diot()
+pBedSort.args.chrorder = None
+pBedSort.args.tmpdir   = params.tmpdir.value
+pBedSort.lang          = params.python.value
 
-@procfactory
-def _pBedLiftover():
-	"""
+pBedLiftover = proc_factory(
+	desc = 'Lift over bed files.',
+	config = Diot(annotate = """
 	@name:
 		pBedLiftover
 	@description:
@@ -68,20 +62,17 @@ def _pBedLiftover():
 		`lochain` : the liftover chain file
 	@require:
 		`liftover` from UCSC
-	"""
-	pBedLiftover               = Proc(desc = 'Lift over bed files.')
-	pBedLiftover.input         = 'infile:file'
-	pBedLiftover.output        = 'outfile:file:{{i.infile | bn}}, umfile:file:{{i.infile | fn}}.unmapped{{i.infile | ext}}'
-	pBedLiftover.args.liftover = params.liftover.value
-	pBedLiftover.args.lochain  = params.lochain.value
-	pBedLiftover.args.params   = Diot()
-	pBedLiftover.lang          = params.python.value
-	pBedLiftover.script        = "file:scripts/bed/pBedLiftover.py"
-	return pBedLiftover
+	"""))
+pBedLiftover.input         = 'infile:file'
+pBedLiftover.output        = 'outfile:file:{{i.infile | bn}}, umfile:file:{{i.infile | fn}}.unmapped{{i.infile | ext}}'
+pBedLiftover.args.liftover = params.liftover.value
+pBedLiftover.args.lochain  = params.lochain.value
+pBedLiftover.args.params   = Diot()
+pBedLiftover.lang          = params.python.value
 
-@procfactory
-def _pGff2Bed(alias = 'pBedFromGff'):
-	"""
+pGff2Bed = proc_factory(
+	desc   = 'Convert GTF/GFF file to BED file',
+	config = Diot(annotate = """
 	@input:
 		infile: The input gtf/gff file
 	@output:
@@ -98,11 +89,10 @@ def _pGff2Bed(alias = 'pBedFromGff'):
 		keepattrs: Keep the original attributes at last column of the output BED file.
 		outhead: Put head to output file or not.
 			- Could be prefix to the head.
-	"""
-	return Diot(
-		desc   = 'Convert GTF/GFF file to BED file',
-		lang   = params.python.value,
-		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem}}.bed',
-		args   = Diot(bedcols = Diot(), keepattrs = True, outhead = '#')
-	)
+	"""))
+pGff2Bed.lang   = params.python.value,
+pGff2Bed.input  = 'infile:file',
+pGff2Bed.output = 'outfile:file:{{i.infile | stem}}.bed',
+pGff2Bed.args   = Diot(bedcols = Diot(), keepattrs = True, outhead = '#')
+
+pBedFromGff = pGff2Bed.copy()

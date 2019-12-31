@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from sys import executable
 from diot import Diot, OrderedDiot
-from pyppl.template import Template
+from pyppl.template import DEFAULT_ENVS
 
 __all__ = []
 
@@ -107,7 +107,7 @@ def R(var, ignoreintkey = True):
 		if var.upper() == 'FALSE':
 			return 'FALSE'
 		if var.upper() == 'NA' or var.upper() == 'NULL':
-			return var
+			return var.upper()
 		if var.startswith('r:') or var.startswith('R:'):
 			return str(var)[2:]
 		return repr(str(var))
@@ -256,4 +256,4 @@ TEMPLATE_ENVS['filename2'] = TEMPLATE_ENVS['stem2']
 TEMPLATE_ENVS['fn2']       = TEMPLATE_ENVS['stem2']
 TEMPLATE_ENVS['ext2']      = lambda var: TEMPLATE_ENVS['ext'](var).lstrip('.')
 
-Template.DEFAULT_ENVS.update(TEMPLATE_ENVS)
+DEFAULT_ENVS.update(TEMPLATE_ENVS)

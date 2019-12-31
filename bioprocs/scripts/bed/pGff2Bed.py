@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import funcargs
 from bioprocs.utils.tsvio2 import TsvWriter, TsvRecord
 from gff import Gff

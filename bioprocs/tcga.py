@@ -1,14 +1,12 @@
 """TCGA data analysis"""
-from pyppl import Proc, Diot
-from . import params, rimport
+from pyppl import Proc
+from diot import Diot
 from .utils import fs2name
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pTCGADownload():
-	"""
+pTCGADownload = proc_factory(
+	desc = 'Download data with gdc-client and a menifest file.',
+	config = Diot(annotate = """
 	@name:
 		pTCGADownload
 	@description:
@@ -22,22 +20,19 @@ def _pTCGADownload():
 		`gdc_client`: the executable file of `gdc-client`,    default: "gdc-client"
 		`nthread`   : Number of threads to use. Default     : `1`
 		`token`     : The token file if needed.
-	"""
-	pTCGADownload                 = Proc (desc = 'Download data with gdc-client and a menifest file.')
-	pTCGADownload.input           = "manifile:file"
-	pTCGADownload.output          = "outdir:dir:{{i.manifile | fn}}"
-	pTCGADownload.echo            = Diot(jobs = 0, type = 'stderr')
-	pTCGADownload.args.params     = Diot({'no-file-md5sum': True})
-	pTCGADownload.args.nthread    = 1
-	pTCGADownload.args.token      = None
-	pTCGADownload.args.gdc_client = params.gdc_client.value
-	pTCGADownload.lang            = params.python.value
-	pTCGADownload.script          = "file:scripts/tcga/pTCGADownload.py"
-	return pTCGADownload
+	"""))
+pTCGADownload.input           = "manifile:file"
+pTCGADownload.output          = "outdir:dir:{{i.manifile | fn}}"
+pTCGADownload.echo            = Diot(jobs = 0, type = 'stderr')
+pTCGADownload.args.params     = Diot({'no-file-md5sum': True})
+pTCGADownload.args.nthread    = 1
+pTCGADownload.args.token      = None
+pTCGADownload.args.gdc_client = params.gdc_client.value
+pTCGADownload.lang            = params.python.value
 
-@procfactory
-def _pSample2SubmitterID():
-	"""
+pSample2SubmitterID = proc_factory(
+	desc = 'convert TCGA sample names with submitter id with metadata and sample containing folder',
+	config = Diot(annotate = """
 	@name:
 		pSample2SubmitterID
 	@description:
@@ -51,19 +46,16 @@ def _pSample2SubmitterID():
 		`method`: How the deal with the files. Default: `symlink`
 			- We can also do `copy`
 		`nthread`: Number threads to use. Default: `1`
-	"""
-	pSample2SubmitterID              = Proc(desc = 'convert TCGA sample names with submitter id with metadata and sample containing folder')
-	pSample2SubmitterID.input        = "indir:file, mdfile:file"
-	pSample2SubmitterID.output       = "outdir:dir:{{i.indir | fn}}"
-	pSample2SubmitterID.args.method  = 'symlink' # or copy
-	pSample2SubmitterID.args.nthread = 1
-	pSample2SubmitterID.lang         = params.python.value
-	pSample2SubmitterID.script       = "file:scripts/tcga/pSample2SubmitterID.py"
-	return pSample2SubmitterID
+	"""))
+pSample2SubmitterID.input        = "indir:file, mdfile:file"
+pSample2SubmitterID.output       = "outdir:dir:{{i.indir | fn}}"
+pSample2SubmitterID.args.method  = 'symlink' # or copy
+pSample2SubmitterID.args.nthread = 1
+pSample2SubmitterID.lang         = params.python.value
 
-@procfactory
-def _pGtFiles2Mat():
-	"""
+pGtFiles2Mat = proc_factory(
+	desc = 'Convert genotype files to a matrix.',
+	config = Diot(annotate = """
 	@name:
 		pGtFiles2Mat
 	@description:
@@ -76,21 +68,18 @@ def _pGtFiles2Mat():
 		`rsmap`    : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.
 		`fn2sample`: How to convert filename(without extension) to sample name. Default: `None`
 		`confcut`  : The confidence cutoff. Genotype will be NA for lower confidence snps. Default: `0.05`
-	"""
-	pGtFiles2Mat                = Proc(desc = 'Convert genotype files to a matrix.')
-	pGtFiles2Mat.input          = 'infiles:files'
-	pGtFiles2Mat.output         = 'outfile:file:{{i.infiles | fs2name}}.gt.txt'
-	pGtFiles2Mat.args.rsmap     = params.rsmap_gwsnp6.value
-	pGtFiles2Mat.args.confcut   = 0.05
-	pGtFiles2Mat.args.fn2sample = "lambda fn: fn.split('.')[0]"
-	pGtFiles2Mat.envs.fs2name   = fs2name
-	pGtFiles2Mat.lang           = params.python.value
-	pGtFiles2Mat.script         = "file:scripts/tcga/pGtFiles2Mat.py"
-	return pGtFiles2Mat
+	"""))
+pGtFiles2Mat.input          = 'infiles:files'
+pGtFiles2Mat.output         = 'outfile:file:{{i.infiles | fs2name}}.gt.txt'
+pGtFiles2Mat.args.rsmap     = params.rsmap_gwsnp6.value
+pGtFiles2Mat.args.confcut   = 0.05
+pGtFiles2Mat.args.fn2sample = "lambda fn: fn.split('.')[0]"
+pGtFiles2Mat.envs.fs2name   = fs2name
+pGtFiles2Mat.lang           = params.python.value
 
-@procfactory
-def _pClinic2Survival():
-	"""
+pClinic2Survival = proc_factory(
+	desc = 'Convert TCGA clinic data to survival data.',
+	config = Diot(annotate = """
 	@name:
 		pClinic2Survival
 	@description:
@@ -110,26 +99,23 @@ def _pClinic2Survival():
 		`covs`: The covariates to output. Default:
 			- `gender`, `race`, `ethnicity`, `age`
 		`mat`: An expression or genotype matrix with samples as column names, used to get sample names for patient instead of short ones. Default: `None`
-	"""
-	pClinic2Survival           = Proc(desc = 'Convert TCGA clinic data to survival data.')
-	pClinic2Survival.input     = 'infile:file'
-	pClinic2Survival.output    = 'outfile:file:{{i.infile | stem}}.survdata.txt, covfile:file:{{i.infile | stem}}.survcov.txt'
-	pClinic2Survival.args.cols = Diot(
-		time_lastfollow = ['days_to_last_followup'],
-		time_death      = ['days_to_death'],
-		status          = ['vital_status'],
-		age             = ['days_to_birth'],
-		patient         = ['bcr_patient_barcode']
-	)
-	pClinic2Survival.args.covs = ['gender', 'race', 'ethnicity', 'age']
-	pClinic2Survival.args.mat  = None
-	pClinic2Survival.lang      = params.python.value
-	pClinic2Survival.script    = "file:scripts/tcga/pClinic2Survival.py"
-	return pClinic2Survival
+	"""))
+pClinic2Survival.input     = 'infile:file'
+pClinic2Survival.output    = 'outfile:file:{{i.infile | stem}}.survdata.txt, covfile:file:{{i.infile | stem}}.survcov.txt'
+pClinic2Survival.args.cols = Diot(
+	time_lastfollow = ['days_to_last_followup'],
+	time_death      = ['days_to_death'],
+	status          = ['vital_status'],
+	age             = ['days_to_birth'],
+	patient         = ['bcr_patient_barcode']
+)
+pClinic2Survival.args.covs = ['gender', 'race', 'ethnicity', 'age']
+pClinic2Survival.args.mat  = None
+pClinic2Survival.lang      = params.python.value
 
-@procfactory
-def _pClinic2PlinkMeta():
-	"""
+pClinic2PlinkMeta = proc_factory(
+	desc = 'Convert TCGA clinic data to plink meta file.',
+	config = Diot(annotate = """
 	@name:
 		pClinic2PlinkMeta
 	@description:
@@ -144,28 +130,22 @@ def _pClinic2PlinkMeta():
 			- By default the barcode is like `TCGA-55-8087`, but in analysis, we want to be specific to samples
 			- For example, for solid tumor, it'll be `TCGA-55-8087-01`, then suffix `-01` will be added
 			- You can add multiple suffices by `-01, -10` or `['-01', '-10']`
-	"""
-	pClinic2PlinkMeta             = Proc(desc = 'Convert TCGA clinic data to plink meta file.')
-	pClinic2PlinkMeta.input       = 'infile:file'
-	pClinic2PlinkMeta.output      = 'outfile:file:{{i.infile | fn}}.meta.txt'
-	pClinic2PlinkMeta.args.suffix = ''
-	pClinic2PlinkMeta.lang        = params.python.value
-	pClinic2PlinkMeta.script      = "file:scripts/tcga/pClinic2PlinkMeta.py"
-	return pClinic2PlinkMeta
+	"""))
+pClinic2PlinkMeta.input       = 'infile:file'
+pClinic2PlinkMeta.output      = 'outfile:file:{{i.infile | fn}}.meta.txt'
+pClinic2PlinkMeta.args.suffix = ''
+pClinic2PlinkMeta.lang        = params.python.value
 
-@procfactory
-def _pClinic2Cov():
-	"""
+pClinic2Cov = proc_factory(
+	desc = 'Extract information from clinic data as covariance matrix',
+	config = Diot(annotate = """
 	@name:
 		pClinic2Cov
-	"""
-	pClinic2Cov              = Proc(desc = 'Extract information from clinic data as covariance matrix')
-	pClinic2Cov.input        = 'infile:file'
-	pClinic2Cov.output       = 'outfile:file:{{i.infile | fn}}.cov.txt'
-	pClinic2Cov.args.covs    = ['gender', 'race', 'pathologic_stage', 'age_at_initial_pathologic_diagnosis']
-	pClinic2Cov.args.asnum   = True
-	pClinic2Cov.args.suffix  = ''
-	pClinic2Cov.envs.rimport = rimport
-	pClinic2Cov.lang         = params.Rscript.value
-	pClinic2Cov.script       = "file:scripts/tcga/pClinic2Cov.r"
-	return pClinic2Cov
+	"""))
+pClinic2Cov.input        = 'infile:file'
+pClinic2Cov.output       = 'outfile:file:{{i.infile | fn}}.cov.txt'
+pClinic2Cov.args.covs    = ['gender', 'race', 'pathologic_stage', 'age_at_initial_pathologic_diagnosis']
+pClinic2Cov.args.asnum   = True
+pClinic2Cov.args.suffix  = ''
+pClinic2Cov.envs.rimport = rimport
+pClinic2Cov.lang         = params.Rscript.value

@@ -1,14 +1,12 @@
 """Gene set enrichment analysis"""
 from os import path
-from pyppl import Proc, Diot
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pGMT2Mat():
-	"""
+pGMT2Mat = proc_factory(
+	desc = 'Convert a GMT file to a matrix.',
+	config = Diot(annotate = """
 	@name:
 		pGMT2Mat
 	@description:
@@ -18,17 +16,14 @@ def _pGMT2Mat():
 		`infile:file`: The input file in GMT format.
 	@output:
 		`outfile:file`: output matrix file
-	"""
-	pGMT2Mat        = Proc(desc = 'Convert a GMT file to a matrix.')
-	pGMT2Mat.input  = "infile:file"
-	pGMT2Mat.output = "outfile:file:{{i.infile | fn}}.gmat"
-	pGMT2Mat.lang   = params.python.value
-	pGMT2Mat.script = "file:scripts/gsea/pGMT2Mat.py"
-	return pGMT2Mat
+	"""))
+pGMT2Mat.input  = "infile:file"
+pGMT2Mat.output = "outfile:file:{{i.infile | fn}}.gmat"
+pGMT2Mat.lang   = params.python.value
 
-@procfactory
-def _pExprMat2GCT():
-	"""
+pExprMat2GCT = proc_factory(
+	desc = 'Convert expression matrix to GCT file.',
+	config = Diot(annotate = """
 	@name:
 		pExprMat2GCT
 	@description:
@@ -38,17 +33,14 @@ def _pExprMat2GCT():
 		`expfile:file`: the input expression matrix file. Samples as columns, genes as rows.
 	@output:
 		`outfile:file`: the gct file
-	"""
-	pExprMat2GCT        = Proc(desc = 'Convert expression matrix to GCT file.')
-	pExprMat2GCT.input  = 'expfile:file'
-	pExprMat2GCT.output = 'outfile:file:{{ i.expfile | fn }}.gct'
-	pExprMat2GCT.lang   = params.python.value
-	pExprMat2GCT.script = "file:scripts/gsea/pExprMat2GCT.py"
-	return pExprMat2GCT
+	"""))
+pExprMat2GCT.input  = 'expfile:file'
+pExprMat2GCT.output = 'outfile:file:{{ i.expfile | fn }}.gct'
+pExprMat2GCT.lang   = params.python.value
 
-@procfactory
-def _pSampleinfo2CLS():
-	"""
+pSampleinfo2CLS = proc_factory(
+	desc = 'Convert sample infomation to cls file.',
+	config = Diot(annotate = """
 	@name:
 		pSampleinfo2CLS
 	@description:
@@ -61,18 +53,15 @@ def _pSampleinfo2CLS():
 			- Rows are samples
 	@output:
 		`outfile:file`: the cls file
-	"""
-	pSampleinfo2CLS                    = Proc(desc = 'Convert sample infomation to cls file.')
-	pSampleinfo2CLS.input              = 'sifile:file'
-	pSampleinfo2CLS.output             = 'outfile:file:{{ i.sifile | fn }}.cls'
-	#pSampleinfo2CLS.envs.txtSampleinfo = txt.sampleinfo.py
-	pSampleinfo2CLS.lang               = params.python.value
-	pSampleinfo2CLS.script             = "file:scripts/gsea/pSampleinfo2CLS.py"
-	return pSampleinfo2CLS
+	"""))
+pSampleinfo2CLS.input              = 'sifile:file'
+pSampleinfo2CLS.output             = 'outfile:file:{{ i.sifile | fn }}.cls'
+#pSampleinfo2CLS.envs.txtSampleinfo = txt.sampleinfo.py
+pSampleinfo2CLS.lang               = params.python.value
 
-@procfactory
-def _pSSGSEA():
-	"""
+pSSGSEA = proc_factory(
+	desc = 'Do single-sample GSEA.',
+	config = Diot(annotate = """
 	@name:
 		pSSGSEA
 	@description:
@@ -90,20 +79,16 @@ def _pSSGSEA():
 	@args:
 		`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
 		`nperm`:     Number of permutations. Default: 10000
-	"""
-	pSSGSEA = Proc (desc = 'Do single-sample GSEA.')
-	pSSGSEA.input          = "gctfile:file, gmtfile:file"
-	pSSGSEA.output         = "outdir:file:{{i.gctfile | fn}}-{{i.gmtfile | fn}}-ssGSEA"
-	pSSGSEA.args.weightexp = 1
-	pSSGSEA.args.nperm     = 1000
-	pSSGSEA.args.seed      = -1
-	pSSGSEA.lang           = params.Rscript.value
-	pSSGSEA.script         = "file:scripts/gsea/pSSGSEA.r"
-	return pSSGSEA
+	"""))
+pSSGSEA.input          = "gctfile:file, gmtfile:file"
+pSSGSEA.output         = "outdir:file:{{i.gctfile | fn}}-{{i.gmtfile | fn}}-ssGSEA"
+pSSGSEA.args.weightexp = 1
+pSSGSEA.args.nperm     = 1000
+pSSGSEA.args.seed      = -1
 
-@procfactory
-def _pGSEA():
-	"""
+pGSEA = proc_factory(
+	desc = 'Do GSEA.',
+	config = Diot(annotate = """
 	@name:
 		pGSEA
 	@description:
@@ -120,21 +105,18 @@ def _pGSEA():
 	@args:
 		`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
 		`nperm`:     Number of permutations. Default: 1000
-	"""
-	pGSEA                = Proc (desc = 'Do GSEA.')
-	pGSEA.input          = "gctfile:file, clsfile:file, gmtfile:file"
-	pGSEA.output         = "outdir:dir:{{i.gctfile | fn}}-{{i.gmtfile | fn}}.GSEA"
-	pGSEA.args.weightexp = 1
-	pGSEA.args.nperm     = 1000
-	pGSEA.args.nthread   = 1
-	pGSEA.args.seed      = -1
-	pGSEA.lang           = params.Rscript.value
-	pGSEA.script         = "file:scripts/gsea/pGSEA.r"
-	return pGSEA
+	"""))
+pGSEA.input          = "gctfile:file, clsfile:file, gmtfile:file"
+pGSEA.output         = "outdir:dir:{{i.gctfile | fn}}-{{i.gmtfile | fn}}.GSEA"
+pGSEA.args.weightexp = 1
+pGSEA.args.nperm     = 1000
+pGSEA.args.nthread   = 1
+pGSEA.args.seed      = -1
+pGSEA.lang           = params.Rscript.value
 
-@procfactory
-def _pEnrichr():
-	"""
+pEnrichr = proc_factory(
+	desc = 'Gene set enrichment analysis using Enrichr APIs',
+	config = Diot(annotate = """
 	@input:
 		`infile:file`: The gene list, each per line
 	@output:
@@ -154,31 +136,29 @@ def _pEnrichr():
 		`devpars`: Parameters for png.
 		include: A lambda function to include the records(genes)
 			- argument is `bioprocs.utils.tsvio2.TsvRecord`
-	"""
-	return Diot(
-		desc = 'Gene set enrichment analysis using Enrichr APIs',
-		input = 'infile:file',
-		output = 'outdir:dir:{{i.infile | stem}}.enrichr',
-		lang = params.python.value,
-		errhow = 'retry',
-		args = Diot(
-			inopts   = Diot(delimit = '\t', skip = 0, comment = '#'),
-			top      = 20,
-			cutoff   = 1,
-			genecol  = 0,
-			include  = None,
-			nthread  = 1,
-			Rscript  = params.Rscript.value,
-			pathview = Diot(), # Diot(fccol = 2)
-			libs     = "KEGG_2019_Human",
-			devpars  = Diot(res = 300, width = 2000, height = 2000),
-			plot     = True
-		)
+	""")
+	input = 'infile:file',
+	output = 'outdir:dir:{{i.infile | stem}}.enrichr',
+	lang = params.python.value,
+	errhow = 'retry',
+	args = Diot(
+		inopts   = Diot(delimit = '\t', skip = 0, comment = '#'),
+		top      = 20,
+		cutoff   = 1,
+		genecol  = 0,
+		include  = None,
+		nthread  = 1,
+		Rscript  = params.Rscript.value,
+		pathview = Diot(), # Diot(fccol = 2)
+		libs     = "KEGG_2019_Human",
+		devpars  = Diot(res = 300, width = 2000, height = 2000),
+		plot     = True
 	)
+)
 
-@procfactory
-def _pGene2Pathway():
-	"""
+pGene2Pathway = proc_factory(
+	desc = 'Find pathways that genes are present.',
+	config = Diot(annotate = """
 	@name:
 		pGene2Pathway
 	@description:
@@ -191,20 +171,17 @@ def _pGene2Pathway():
 		`inopts`: Reading options for input file, Default: `Diot(cnames = True)`
 		`genecol`: Index or name of the gene column, Default: `0`
 		`libs`: Libraries of the pathways, Default: `KEGG_2019_Human`
-	"""
-	pGene2Pathway              = Proc(desc = 'Find pathways that genes are present.')
-	pGene2Pathway.input        = 'infile:file'
-	pGene2Pathway.output       = 'outfile:file:{{i.infile | fn}}-pw{{i.infile | ext}}'
-	pGene2Pathway.args.inopts  = Diot(cnames = True)
-	pGene2Pathway.args.genecol = 0
-	pGene2Pathway.args.libs    = "KEGG_2019_Human"
-	pGene2Pathway.lang         = params.python.value
-	pGene2Pathway.script       = "file:scripts/gsea/pGene2Pathway.py"
-	return pGene2Pathway
+	"""))
+pGene2Pathway.input        = 'infile:file'
+pGene2Pathway.output       = 'outfile:file:{{i.infile | fn}}-pw{{i.infile | ext}}'
+pGene2Pathway.args.inopts  = Diot(cnames = True)
+pGene2Pathway.args.genecol = 0
+pGene2Pathway.args.libs    = "KEGG_2019_Human"
+pGene2Pathway.lang         = params.python.value
 
-@procfactory
-def _pTargetEnrichr():
-	"""
+pTargetEnrichr = proc_factory(
+	desc = 'Do gene set enrichment analysis for target genes.',
+	config = Diot(annotate = """
 	@name:
 		pTargetEnrichr
 	@description:
@@ -233,23 +210,19 @@ def _pTargetEnrichr():
 	@requires:
 		[`python-mygene`](https://pypi.python.org/pypi/mygene/3.0.0)
 		[`graphviz`](https://pypi.python.org/pypi/graphviz)
-	"""
-	pTargetEnrichr               = Proc(desc = 'Do gene set enrichment analysis for target genes.')
-	pTargetEnrichr.input         = "infile:file"
-	pTargetEnrichr.output        = "outdir:dir:{{i.infile | fn}}.tenrichr"
-	pTargetEnrichr.lang          = params.python.value
-	pTargetEnrichr.args.inopts   = Diot(delimit = '\t', skip = 0, comment = '#', ftype = 'head')
-	pTargetEnrichr.args.genecol  = "COL2"
-	pTargetEnrichr.args.dbs      = "KEGG_2016"
-	pTargetEnrichr.args.norm     = False
-	pTargetEnrichr.args.rmtags   = True
-	pTargetEnrichr.args.enrplot  = True
-	pTargetEnrichr.args.enrn     = 10
-	pTargetEnrichr.args.netplot  = True
-	pTargetEnrichr.args.netn     = 5
-	pTargetEnrichr.args.title    = "Gene enrichment: {db}"
-	pTargetEnrichr.args.cachedir = params.cachedir.value
-	#pTargetEnrichr.envs.genenorm = genenorm.py
-	pTargetEnrichr.errhow        = 'retry'
-	pTargetEnrichr.script        = "file:scripts/gsea/pTargetEnrichr.py"
-	return pTargetEnrichr
+	"""))
+pTargetEnrichr.input         = "infile:file"
+pTargetEnrichr.output        = "outdir:dir:{{i.infile | fn}}.tenrichr"
+pTargetEnrichr.lang          = params.python.value
+pTargetEnrichr.args.inopts   = Diot(delimit = '\t', skip = 0, comment = '#', ftype = 'head')
+pTargetEnrichr.args.genecol  = "COL2"
+pTargetEnrichr.args.dbs      = "KEGG_2016"
+pTargetEnrichr.args.norm     = False
+pTargetEnrichr.args.rmtags   = True
+pTargetEnrichr.args.enrplot  = True
+pTargetEnrichr.args.enrn     = 10
+pTargetEnrichr.args.netplot  = True
+pTargetEnrichr.args.netn     = 5
+pTargetEnrichr.args.title    = "Gene enrichment: {db}"
+pTargetEnrichr.args.cachedir = params.cachedir.value
+pTargetEnrichr.errhow        = 'retry'

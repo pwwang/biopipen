@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from deconstructSigs import DeconstructSigs, Settings
 
 infile = {{i.infile | quote}}

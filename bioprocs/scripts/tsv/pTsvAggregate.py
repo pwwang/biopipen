@@ -1,14 +1,17 @@
 import math
-from pyppl import Diot
 from functools import partial
-from bioprocs.utils import alwaysList
+from diot import Diot
+from pyppl.utils import always_list
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
-infile  = {{ i.infile | quote}}
-outfile = {{ o.outfile | quote}}
-inopts  = {{ args.inopts | repr}}
-on      = {{ args.on if isinstance(args.on, int) or args.on.startswith('lambda') else quote(args.on) }}
-helper  = {{args.helper | repr}}
+infile   = {{ i.infile | quote}}
+outfile  = {{ o.outfile | quote}}
+inopts   = {{ args.inopts | repr}}
+on       = {{ args.on | ?:isinstance(_, int) or _.startswith('lambda ')
+					  | =:_ | !quote}}
+origin   = {{args.origin | repr}}
+helper   = {{args.helper | repr}}
+issorted = {{args.sorted | repr}}
 if not isinstance(helper, list):
 	helper = [helper]
 
@@ -70,7 +73,15 @@ def aggr_fisher(rs, idx):
 		ret[i] = combine_pvalues([float(r[ix]) for r in rs])[1]
 	return ret
 
+def aggr_first(rs, idx):
+	return rs[0][0]
+
+def aggr_last(rs, idx):
+	return rs[-1][0]
+
 builtin = {
+	"first" : aggr_first,
+	"last"  : aggr_last,
 	"sum"   : aggr_sum,
 	"mean"  : aggr_mean,
 	"median": aggr_median,
@@ -81,72 +92,74 @@ builtin = {
 
 helper = [line for line in helper if line]
 exec('\n'.join(helper), globals())
-aggrs  = Diot()
-naggrs = {}
+aggrs   = Diot()
+naggrs  = {}
+
 {% for col, func in args.aggrs.items() %}
 col  = {{col | quote}}
-aggrs [col] = {{func if not func.startswith('$') else quote(func)}}
+aggrs[col] = {{func | ?.startswith('$') | !:_ | =quote}}
 if not callable(aggrs[col]) and not aggrs[col].startswith('$'):
 	raise ValueError("I don't know how for {!r}.".format(col))
 if not callable(aggrs[col]):
 	fn, args = aggrs[col].split(':', 1)
 	fn = fn.strip()[1:]
 	if fn not in builtin:
-		raise ValueError('Unknown builtin aggregation function, expect sum, mean, median, min or max.')
+		raise ValueError('Unknown builtin aggregation function, expect first, last, sum, mean, median, min or max.')
 	args = [int(arg) if arg.isdigit() else arg for arg in args.strip().split(',')]
 	aggrs[col] = partial(builtin[fn], idx = args)
-naggrs[col] = len(alwaysList(col))
+naggrs[col] = len(always_list(col))
 {% endfor %}
-
 
 reader = TsvReader(infile, **inopts)
 writer = TsvWriter(outfile, delimit = inopts.get('delimit', "\t"))
-if reader.cnames:
-	if isinstance(on, int):
-		writer.cnames = [reader.cnames[on]] + alwaysList(','.join(aggrs.keys()))
-	elif callable(on):
-		writer.cnames = ['AggrGroup'] + alwaysList(','.join(aggrs.keys()))
-	elif on not in reader.cnames:
-		raise ValueError('{!r} is not a valid column name!'.format(on))
-	else:
-		writer.cnames = [on] + alwaysList(','.join(aggrs.keys()))
-		on = reader.cnames.index(on)
-elif callable(on):
-	writer.cnames = ['AggrGroup'] + alwaysList(','.join(aggrs.keys()))
-elif not isinstance(on, int):
-	raise ValueError('The input file does not have column name (args.inopts.cnames = False?).')
-else:
-	writer.cnames = ['ROWNAME'] + alwaysList(','.join(aggrs.keys()))
+if not reader.cnames:
+	row = next(reader)
+	reader.rewind()
+	writer.cnames = ['COL' + str(i+1) for i in range(len(row))]
+
+if not isinstance(on, int) and not callable(on) and on not in reader.cnames:
+	raise ValueError('{!r} is not a valid column name!'.format(on))
+
+if origin == 'keep':
+	writer.cnames = reader.cnames[:]
+writer.cnames += ['AggrOn'] + always_list(','.join(aggrs.keys()))
+if on in reader.cnames:
+	on = reader.cnames.index(on)
 
 writer.writeHead()
 
-refcol = None
-rows   = []
+group = None
+rows  = {}
 for row in reader:
-	if callable(on):
-		col = on(row)
-	else:
-		col = row[on]
-	if refcol is None:
-		refcol = col
-		rows.append(row)
-	elif col == refcol:
-		rows.append(row)
-	else:
-		out = [refcol]
-		for c, a in aggrs.items():
-			if naggrs[c] > 1:
-				out.extend(a(rows))
+	aggron = on(row) if callable(on) else row[on]
+
+	if group is None:
+		group = aggron
+		rows.setdefault(group, []).append(row)
+	elif aggron == group:
+		rows[group].append(row)
+	elif issorted:
+		data = rows[group]
+		out = list(row.values()) + [aggron] if origin == 'keep' else [aggron]
+		for newcol, aggr in aggrs.items():
+			if naggrs[newcol] > 1:
+				out.extend(aggr(data))
 			else:
-				out.append(a(rows))
+				out.append(aggr(data))
 		writer.write(out)
-		refcol = col
-		rows   = [row]
-out = [refcol]
-for c, a in aggrs.items():
-	if naggrs[c] > 1:
-		out.extend(a(rows))
+		group = aggron
+		rows  = {}
 	else:
-		out.append(a(rows))
-writer.write(out)
+		rows.setdefault(aggron, []).append(row)
+		group = aggron
+
+for grup, data in rows.items():
+	row = data[0]
+	out = list(row.values()) + [grup] if origin == 'keep' else [grup]
+	for newcol, aggr in aggrs.items():
+		if naggrs[newcol] > 1:
+			out.extend(aggr(data))
+		else:
+			out.append(aggr(data))
+	writer.write(out)
 writer.close()

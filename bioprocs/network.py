@@ -1,22 +1,17 @@
 """Network (mathmatics) analysis"""
-from pyppl import Proc, Diot
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pDegree():
-	"""
+pDegree = proc_factory(
+	desc = 'List the degree of nodes, order descendingly.',
+	config = Diot(annotate = """
 	@name:
 		pDegree
-	"""
-	pDegree             = Proc(desc = 'List the degree of nodes, order descendingly.')
-	pDegree.input       = 'infile:file'
-	pDegree.output      = 'outfile:file:{{i.infile | fn2}}.degree.txt'
-	pDegree.args.inopts = Diot()
-	pDegree.args.infmt  = 'pair-complete' # matrix
-	pDegree.args.cutoff = 0
-	pDegree.lang        = params.python.value
-	pDegree.script      = "file:scripts/network/pDegree.py"
-	return pDegree
+	"""))
+pDegree.input       = 'infile:file'
+pDegree.output      = 'outfile:file:{{i.infile | fn2}}.degree.txt'
+pDegree.args.inopts = Diot()
+pDegree.args.infmt  = 'pair-complete' # matrix
+pDegree.args.cutoff = 0
+pDegree.lang        = params.python.value

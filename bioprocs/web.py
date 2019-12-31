@@ -1,14 +1,11 @@
 """Download/Get data from Websites instead of APIs"""
 from pyppl import Proc
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
 # Web utils
-@procfactory
-def _pDownloadForm():
-	"""
+pDownloadForm = proc_factory(
+	desc="Download results by submitting to a form",
+	config = Diot(annotate = """
 	@name:
 		pDownloadForm
 	@description:
@@ -25,18 +22,15 @@ def _pDownloadForm():
 	@requires:
 		[`Splinter`](https://splinter.readthedocs.io/en/latest/index.html)
 		[`Phantomjs`](http://phantomjs.org/)
-	"""
-	pDownloadForm               = Proc (desc="Download results by submitting to a form")
-	pDownloadForm.input         = "url, data, submit, next"
-	pDownloadForm.output        = "outdir:dir:{{i.url | bn | lambda x: x if x else 'outdir'}}"
-	pDownloadForm.args.interval = 1
-	pDownloadForm.lang          = params.python.value
-	pDownloadForm.script        = "file:scripts/web/pDownloadForm.py"
-	return pDownloadForm
+	"""))
+pDownloadForm.input         = "url, data, submit, next"
+pDownloadForm.output        = "outdir:dir:{{i.url | bn | lambda x: x if x else 'outdir'}}"
+pDownloadForm.args.interval = 1
+pDownloadForm.lang          = params.python.value
 
-@procfactory
-def _pDownloadGet(alias = 'pDownload'):
-	"""
+pDownloadGet = proc_factory(
+	desc="Download from URLs",
+	config = Diot(annotate = """
 	@name:
 		pDownloadGet
 	@description:
@@ -45,17 +39,14 @@ def _pDownloadGet(alias = 'pDownload'):
 		`url`: the URLs to download
 	@output:
 		`outfile:file`: The output file
-	"""
-	pDownloadGet = Proc (desc="Download from URLs")
-	pDownloadGet.input  = "url"
-	pDownloadGet.output = "outfile:file:{{i.url | bn | lambda x: x if x else 'outfile' | .replace('?', '__Q__').replace('&', '__N__')}}"
-	pDownloadGet.lang   = params.python.value
-	pDownloadGet.script = "file:scripts/web/pDownloadGet.py"
-	return pDownloadGet
+	"""))
+pDownloadGet.input  = "url"
+pDownloadGet.output = "outfile:file:{{i.url | bn | lambda x: x if x else 'outfile' | .replace('?', '__Q__').replace('&', '__N__')}}"
+pDownloadGet.lang   = params.python.value
 
-@procfactory
-def _pDownloadPost():
-	"""
+pDownloadPost = proc_factory(
+	desc="Download from URLs",
+	config = Diot(annotate = """
 	@name:
 		pDownloadPost
 	@description:
@@ -65,10 +56,7 @@ def _pDownloadPost():
 		`data`: the POST data.
 	@output:
 		`outfile:file`: The output file
-	"""
-	pDownloadPost = Proc (desc="Download from URLs")
-	pDownloadPost.input  = "url, data"
-	pDownloadPost.output = "outfile:file:{{i.url | bn | lambda x: x if x else 'outfile'}}"
-	pDownloadPost.lang   = params.python.value
-	pDownloadPost.script = "file:scripts/web/pDownloadPost.py"
-	return pDownloadPost
+	"""))
+pDownloadPost.input  = "url, data"
+pDownloadPost.output = "outfile:file:{{i.url | bn | lambda x: x if x else 'outfile'}}"
+pDownloadPost.lang   = params.python.value

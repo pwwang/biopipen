@@ -1,14 +1,11 @@
 """Putative transcription factor binding sites analysis"""
 from pyppl import Proc, Diot
-from . import params
 from .utils import fs2name
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pMotifScan():
-	"""
+pMotifScan = proc_factory(
+	desc = 'Scan motif along the given sequences.',
+	config = Diot(annotate = """
 	@name:
 		pMotifScan
 	@description:
@@ -31,27 +28,24 @@ def _pMotifScan():
 		`params`  : Other parameters for `fimo`
 	@requires:
 		[`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
-	"""
-	pMotifScan                        = Proc(desc = 'Scan motif along the given sequences.')
-	pMotifScan.input                  = "tffile:file, sfile:file"
-	pMotifScan.output                 = [
-		"outfile:file:{{i.sfile | fn}}-{{i.tffile | fn}}.fimo/{{i.sfile | fn}}-{{i.tffile | fn}}.bed",
-		"outdir:dir:{{i.sfile | fn}}-{{i.tffile | fn}}.fimo"
-	]
-	pMotifScan.args.tool     = 'meme'
-	pMotifScan.args.meme     = params.fimo.value
-	pMotifScan.args.params   = Diot()
-	pMotifScan.args.tfmotifs = params.tfmotifs.value
-	pMotifScan.args.pval     = 1e-4
-	pMotifScan.args.ucsclink = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}'
-	pMotifScan.args.nthread  = 1
-	pMotifScan.lang          = params.python.value
-	pMotifScan.script        = "file:scripts/tfbs/pMotifScan.py"
-	return pMotifScan
+	"""))
+pMotifScan.input                  = "tffile:file, sfile:file"
+pMotifScan.output                 = [
+	"outfile:file:{{i.sfile | fn}}-{{i.tffile | fn}}.fimo/{{i.sfile | fn}}-{{i.tffile | fn}}.bed",
+	"outdir:dir:{{i.sfile | fn}}-{{i.tffile | fn}}.fimo"
+]
+pMotifScan.args.tool     = 'meme'
+pMotifScan.args.meme     = params.fimo.value
+pMotifScan.args.params   = Diot()
+pMotifScan.args.tfmotifs = params.tfmotifs.value
+pMotifScan.args.pval     = 1e-4
+pMotifScan.args.ucsclink = 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}'
+pMotifScan.args.nthread  = 1
+pMotifScan.lang          = params.python.value
 
-@procfactory
-def _pMotifSimilarity():
-	"""
+pMotifSimilarity = proc_factory(
+	desc = 'Compare the similarity between motifs.',
+	config = Diot(annotate = """
 	@name:
 		pMotifSimilarity
 	@description:
@@ -74,47 +68,41 @@ def _pMotifSimilarity():
 			- `min-overlap` : `1`,
 			- `motif-pseudo`: `.1`,
 			- `verbosity`   : `4`
-	"""
-	pMotifSimilarity        = Proc(desc = 'Compare the similarity between motifs.')
-	pMotifSimilarity.input  = 'mfile1:file, mfile2:file'
-	pMotifSimilarity.output = [
-		'outfile:file:{{odfn(i.mfile1, i.mfile2, fn2) | lambda x, path=path: path.join(x, "tomtom.tsv")}}',
-		'outdir:dir:{{odfn(i.mfile1, i.mfile2, fn2)}}'
-	]
-	pMotifSimilarity.args.qval   = 0.5
-	pMotifSimilarity.args.tomtom = params.tomtom.value
-	pMotifSimilarity.args.params = Diot({
-		'xalph'       : True,
-		'no-ssc'      : True,
-		'dist'        : 'pearson',
-		'min-overlap' : 1,
-		'motif-pseudo': .1,
-		'verbosity'   : 4
-	})
-	pMotifSimilarity.args.nthread = 1
-	pMotifSimilarity.envs.path    = __import__('os').path
-	pMotifSimilarity.envs.odfn    = lambda f1, f2, fn2: (fn2(f1), fn2(f1)+"-"+fn2(f2))[int(bool(f2))] + ".tomtom"
-	pMotifSimilarity.lang         = params.python.value
-	pMotifSimilarity.script       = "file:scripts/tfbs/pMotifSimilarity.py"
-	return pMotifSimilarity
+	"""))
+pMotifSimilarity.input  = 'mfile1:file, mfile2:file'
+pMotifSimilarity.output = [
+	'outfile:file:{{odfn(i.mfile1, i.mfile2, fn2) | lambda x, path=path: path.join(x, "tomtom.tsv")}}',
+	'outdir:dir:{{odfn(i.mfile1, i.mfile2, fn2)}}'
+]
+pMotifSimilarity.args.qval   = 0.5
+pMotifSimilarity.args.tomtom = params.tomtom.value
+pMotifSimilarity.args.params = Diot({
+	'xalph'       : True,
+	'no-ssc'      : True,
+	'dist'        : 'pearson',
+	'min-overlap' : 1,
+	'motif-pseudo': .1,
+	'verbosity'   : 4
+})
+pMotifSimilarity.args.nthread = 1
+pMotifSimilarity.envs.path    = __import__('os').path
+pMotifSimilarity.envs.odfn    = lambda f1, f2, fn2: (fn2(f1), fn2(f1)+"-"+fn2(f2))[int(bool(f2))] + ".tomtom"
+pMotifSimilarity.lang         = params.python.value
 
-@procfactory
-def _pMotifMerge():
-	"""
+pMotifMerge = proc_factory(
+	desc = 'Merge motif files in MEME format',
+	config = Diot(annotate = """
 	@name:
 		pMotifMerge
-	"""
-	pMotifMerge              = Proc(desc = 'Merge motif files in MEME format')
-	pMotifMerge.input        = 'infiles:files'
-	pMotifMerge.output       = 'outfile:file:{{i.infiles | fs2name}}.meme.txt'
-	pMotifMerge.envs.fs2name = fs2name
-	pMotifMerge.lang         = params.python.value
-	pMotifMerge.script       = "file:scripts/tfbs/pMotifMerge.py"
-	return pMotifMerge
+	"""))
+pMotifMerge.input        = 'infiles:files'
+pMotifMerge.output       = 'outfile:file:{{i.infiles | fs2name}}.meme.txt'
+pMotifMerge.envs.fs2name = fs2name
+pMotifMerge.lang         = params.python.value
 
-@procfactory
-def _pMotifFilter():
-	"""
+pMotifFilter = proc_factory(
+	desc = 'Filter motifs from a meme file.',
+	config = Diot(annotate = """
 	@name:
 		pMotifFilter
 	@description:
@@ -128,18 +116,15 @@ def _pMotifFilter():
 			- Possible attributes for a motif are:
 			- `E, URL, alength, altname, matrix, mtype, name, nsites, w`
 			- Motifs will be filtered out when this function returns `True`.
-	"""
-	pMotifFilter             = Proc(desc = 'Filter motifs from a meme file.')
-	pMotifFilter.input       = 'infile:file'
-	pMotifFilter.output      = 'outfile:file:{{i.infile | bn}}'
-	pMotifFilter.args.filter = None
-	pMotifFilter.lang        = params.python.value
-	pMotifFilter.script      = "file:scripts/tfbs/pMotifFilter.py"
-	return pMotifFilter
+	"""))
+pMotifFilter.input       = 'infile:file'
+pMotifFilter.output      = 'outfile:file:{{i.infile | bn}}'
+pMotifFilter.args.filter = None
+pMotifFilter.lang        = params.python.value
 
-@procfactory
-def _pAtSnp():
-	"""
+pAtSnp = proc_factory(
+	desc = 'Scan motifs on Snps to detect binding affinity changes.',
+	config = Diot(annotate = """
 	@name:
 		pAtSnp
 	@description:
@@ -164,20 +149,17 @@ def _pAtSnp():
 		`depvars` : The device parameters for plotting. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	@requires:
 		`r-atSNP`
-	"""
-	pAtSnp               = Proc(desc = 'Scan motifs on Snps to detect binding affinity changes.')
-	pAtSnp.input         = 'tffile:file, snpfile:file'
-	pAtSnp.output        = [
-		'outfile:file:{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp/{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp.txt',
-		'outdir:dir:{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp'
-	]
-	pAtSnp.args.tfmotifs = params.tfmotifs.value
-	pAtSnp.args.genome   = params.genome.value
-	pAtSnp.args.fdr      = True
-	pAtSnp.args.pval     = 0.05
-	pAtSnp.args.plot     = True
-	pAtSnp.args.nthread  = 1
-	pAtSnp.args.devpars  = Diot(res = 300, width = 2000, height = 2000)
-	pAtSnp.lang          = params.Rscript.value
-	pAtSnp.script        = "file:scripts/tfbs/pAtSnp.r"
-	return pAtSnp
+	"""))
+pAtSnp.input         = 'tffile:file, snpfile:file'
+pAtSnp.output        = [
+	'outfile:file:{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp/{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp.txt',
+	'outdir:dir:{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp'
+]
+pAtSnp.args.tfmotifs = params.tfmotifs.value
+pAtSnp.args.genome   = params.genome.value
+pAtSnp.args.fdr      = True
+pAtSnp.args.pval     = 0.05
+pAtSnp.args.plot     = True
+pAtSnp.args.nthread  = 1
+pAtSnp.args.devpars  = Diot(res = 300, width = 2000, height = 2000)
+pAtSnp.lang          = params.Rscript.value

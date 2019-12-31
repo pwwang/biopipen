@@ -1,26 +1,13 @@
 """Gene related processes"""
-from pyppl import Proc, Diot
-from . import params
-from .seq import _pPromoters
-#from .utils import genenorm, write
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pGenePromoters():
-	"""
-	@name:
-		pGenePromoters
-	@description:
-		Alias of `seq.pPromoters`.
-	"""
-	pGenePromoters = _pPromoters()
-	return pGenePromoters
+pGenePromoters = pPromoters.copy()
 
-@procfactory
-def _pGeneNameNorm():
-	"""
+pGeneNameNorm = proc_factory(
+	desc = 'Normalize gene names using MyGeneinfo.',
+	config = Diot(annotate = """
 	@name:
 		pGeneNameNorm
 	@description:
@@ -43,26 +30,23 @@ def _pGeneNameNorm():
 		`to`      : the output gene name format. Default: 'symbol'
 		`genome`  : the genome. Default: 'hg19'
 		`cachedir`: The cache directory
-	"""
-	pGeneNameNorm               = Proc(desc = 'Normalize gene names using MyGeneinfo.')
-	pGeneNameNorm.input         = 'infile:file'
-	pGeneNameNorm.output        = 'outfile:file:{{i.infile | bn}}'
-	pGeneNameNorm.errhow        = 'retry'
-	pGeneNameNorm.args.notfound = 'ignore'
-	pGeneNameNorm.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
-	pGeneNameNorm.args.outopts  = Diot(delimit = '\t', cnames = True, query = False)
-	pGeneNameNorm.args.genecol  = ''
-	pGeneNameNorm.args.frm      = 'symbol, alias'
-	pGeneNameNorm.args.to       = 'symbol'
-	pGeneNameNorm.args.genome   = params.genome.value
-	pGeneNameNorm.args.cachedir = params.cachedir.value
-	pGeneNameNorm.lang          = params.python.value
-	pGeneNameNorm.script        = "file:scripts/gene/pGeneNameNorm.py"
-	return pGeneNameNorm
+	"""))
+pGeneNameNorm.input         = 'infile:file'
+pGeneNameNorm.output        = 'outfile:file:{{i.infile | bn}}'
+pGeneNameNorm.errhow        = 'retry'
+pGeneNameNorm.args.notfound = 'ignore'
+pGeneNameNorm.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
+pGeneNameNorm.args.outopts  = Diot(delimit = '\t', cnames = True, query = False)
+pGeneNameNorm.args.genecol  = ''
+pGeneNameNorm.args.frm      = 'symbol, alias'
+pGeneNameNorm.args.to       = 'symbol'
+pGeneNameNorm.args.genome   = params.genome.value
+pGeneNameNorm.args.cachedir = params.cachedir.value
+pGeneNameNorm.lang          = params.python.value
 
-@procfactory
-def _pIPI():
-	"""
+pIPI = proc_factory(
+	desc = 'Convert gene symbol to IPI protein accession and vice versa.',
+	config = Diot(annotate = """
 	@name:
 		pIPI
 	@description:
@@ -82,24 +66,21 @@ def _pIPI():
 		`fromipi`: Whether the input is IPI or genes
 		`inopts`: The options for input file
 		`outopts`: The options for output file
-	"""
-	pIPI               = Proc(desc = 'Convert gene symbol to IPI protein accession and vice versa.')
-	pIPI.input         = 'infile:file'
-	pIPI.output        = 'outfile:file:{{i.infile | bn}}'
-	pIPI.errhow        = 'retry'
-	pIPI.args.notfound = 'ignore'
-	pIPI.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
-	pIPI.args.outopts  = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
-	pIPI.args.genecol  = None
-	pIPI.args.fromipi  = True
-	pIPI.args.ipidb    = params.ipidb.value
-	pIPI.lang          = params.python.value
-	pIPI.script        = "file:scripts/gene/pIPI.py"
-	return pIPI
+	"""))
+pIPI.input         = 'infile:file'
+pIPI.output        = 'outfile:file:{{i.infile | bn}}'
+pIPI.errhow        = 'retry'
+pIPI.args.notfound = 'ignore'
+pIPI.args.inopts   = Diot(skip = 0, comment = '#', delimit = '\t')
+pIPI.args.outopts  = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = True, query = False)
+pIPI.args.genecol  = None
+pIPI.args.fromipi  = True
+pIPI.args.ipidb    = params.ipidb.value
+pIPI.lang          = params.python.value
 
-@procfactory
-def _pGeneTss():
-	"""
+pGeneTss = proc_factory(
+	desc = 'Get gene TSS in BED format',
+	config = Diot(annotate = """
 	@name:
 		pGeneTss
 	@description:
@@ -120,27 +101,24 @@ def _pGeneTss():
 		`frm`: The format of the genes. Default: `symbol, alias`
 		`tmpdir`: The tmpdir used to store mygene cache files.
 		`genome`: In which genome to fetch the coordinates. Default: hg19
-	"""
-	pGeneTss                = Proc(desc = 'Get gene TSS in BED format')
-	pGeneTss.input          = 'infile:file'
-	pGeneTss.output         = 'outfile:file:{{i.infile | fn}}-tss.bedx'
-	pGeneTss.errhow         = 'retry'
-	pGeneTss.args.notfound  = 'skip' # error
-	pGeneTss.args.genecol   = ''
-	pGeneTss.args.inopts    = Diot(skip = 0, comment = '#', delimit = '\t')
-	pGeneTss.args.outopts   = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
-	pGeneTss.args.frm       = 'symbol, alias'
-	pGeneTss.args.cachedir  = params.cachedir.value
-	pGeneTss.args.genome    = params.genome.value
-	#pGeneTss.envs.genenorm  = genenorm.py
-	#pGeneTss.envs.writeBedx = write.bedx.py
-	pGeneTss.lang           = params.python.value
-	pGeneTss.script         = "file:scripts/gene/pGeneTss.py"
-	return pGeneTss
+	"""))
+pGeneTss.input          = 'infile:file'
+pGeneTss.output         = 'outfile:file:{{i.infile | fn}}-tss.bedx'
+pGeneTss.errhow         = 'retry'
+pGeneTss.args.notfound  = 'skip' # error
+pGeneTss.args.genecol   = ''
+pGeneTss.args.inopts    = Diot(skip = 0, comment = '#', delimit = '\t')
+pGeneTss.args.outopts   = Diot(delimit = '\t', headDelimit = '\t', headPrefix = '', headTransform = None, head = False, query = False, ftype = 'bed')
+pGeneTss.args.frm       = 'symbol, alias'
+pGeneTss.args.cachedir  = params.cachedir.value
+pGeneTss.args.genome    = params.genome.value
+#pGeneTss.envs.genenorm  = genenorm.py
+#pGeneTss.envs.writeBedx = write.bedx.py
+pGeneTss.lang           = params.python.value
 
-@procfactory
-def _pGeneBody():
-	"""
+pGeneBody = proc_factory(
+	desc = 'Get gene body in BED format',
+	config = Diot(annotate = """
 	@name:
 		pGeneBody
 	@description:
@@ -161,14 +139,11 @@ def _pGeneBody():
 		frm: The gene name format in the input file. Default: 'symbol, alias'
 		tmpdir: The tmpdir to cache the gene name conversion.
 		genome: The genome used to do the conversion.
-	"""
-	pGeneBody               = Proc(desc = 'Get gene body in BED format')
-	pGeneBody.input         = 'infile:file'
-	pGeneBody.output        = 'outfile:file:{{i.infile | fn}}-body.bed'
-	pGeneBody.args.inopts   = Diot(cnames = False)
-	pGeneBody.args.notfound = 'skip' # error
-	pGeneBody.args.genecol  = ''
-	pGeneBody.args.refgene  = params.refgene.value
-	pGeneBody.lang          = params.python.value
-	pGeneBody.script        = "file:scripts/gene/pGeneBody.py"
-	return pGeneBody
+	"""))
+pGeneBody.input         = 'infile:file'
+pGeneBody.output        = 'outfile:file:{{i.infile | fn}}-body.bed'
+pGeneBody.args.inopts   = Diot(cnames = False)
+pGeneBody.args.notfound = 'skip' # error
+pGeneBody.args.genecol  = ''
+pGeneBody.args.refgene  = params.refgene.value
+pGeneBody.lang          = params.python.value

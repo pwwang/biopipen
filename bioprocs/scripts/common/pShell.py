@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import ensureDiot, shell2 as shell
 
 cmd = {{args.cmd | repr}}

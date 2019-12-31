@@ -1,5 +1,5 @@
 import sys
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import shell2 as shell
 
 bedtools = {{args.bedtools | quote}}

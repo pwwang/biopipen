@@ -1,7 +1,7 @@
 from sys import stderr
 from shutil import move
 
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import runcmd, mem2, cmdargs
 
 params = {{args.params}}

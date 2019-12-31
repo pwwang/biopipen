@@ -1,12 +1,12 @@
 from pathlib import Path
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.parallel import Parallel, distributeList
 
 {%from os import path%}
-{%from pyppl.utils import alwaysList%}
+{%from pyppl.utils import always_list%}
 infile    = {{i.infile | quote}}
-afile     = {{i.afile | ?path.isfile | =readlines | !alwaysList | repr}}
+afile     = {{i.afile | ?path.isfile | =readlines | !always_list | repr}}
 outfile   = Path({{o.outfile | quote}})
 allfile   = {{o.outfile | prefix | @append: '.all' | @append: ext(o.outfile) | quote}}
 netmhc    = {{args.netmhc | quote}}
@@ -101,7 +101,11 @@ for allele in alleles:
 	if allele not in valid_alleles:
 		logger.warning('Not a valid allele: %s', allele)
 	for i in range(nthread):
-		args.append((allele, outfile.parent.joinpath('threads', str(i+1), 'peptides.txt'), i))
+		if outfile.parent.joinpath('threads', str(i+1), 'peptides.txt').is_file():
+			args.append((allele, outfile.parent.joinpath('threads', str(i+1), 'peptides.txt'), i))
+
+if not args:
+	raise ValueError('No valid alleles found.')
 
 para = Parallel(nthread = nthread)
 para.run(do_one, args)
@@ -114,9 +118,9 @@ with open(outfile, 'w') as fout, open(allfile, 'w') as fall:
 		with open(ofile) as fo:
 			for line in fo:
 				line = line.strip()
-				if not line:
+				if not line or line.startswith('-'):
 					continue
-				if header_written and (line.startswith('#') or line.startswith('-')):
+				if header_written and line.startswith('#'):
 					continue
 				if i == 0 and line.startswith('#'):
 					fout.write(line + '\n')

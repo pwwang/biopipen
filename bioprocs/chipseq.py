@@ -1,13 +1,11 @@
 """ChIP-seq data analysis"""
 from pyppl import Proc
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pPeakToRegPotential():
-	"""
+pPeakToRegPotential = proc_factory(
+	desc = 'Convert peaks to regulatory potential score for each gene.',
+	config = Diot(annotate = """
 	@name:
 		pPeakToRegPotential
 	@description:
@@ -39,14 +37,11 @@ def _pPeakToRegPotential():
 						^ (peak center)
 						|-- di --|
 			```
-	"""
-	pPeakToRegPotential              = Proc (desc = 'Convert peaks to regulatory potential score for each gene.')
-	pPeakToRegPotential.input        = "peakfile:file, genefile:file"
-	pPeakToRegPotential.output       = "outfile:file:{{peakfile | fn}}.rp.txt"
-	pPeakToRegPotential.args.signal  = True
-	pPeakToRegPotential.args.genefmt = 'ucsc+gz',
-	pPeakToRegPotential.args.peakfmt = 'peak',
-	pPeakToRegPotential.args.window  = 100000
-	pPeakToRegPotential.lang         = params.python.value
-	pPeakToRegPotential.script       = "file:scripts/chipseq/pPeakToRegPotential.py"
-	return pPeakToRegPotential
+	"""))
+pPeakToRegPotential.input        = "peakfile:file, genefile:file"
+pPeakToRegPotential.output       = "outfile:file:{{peakfile | fn}}.rp.txt"
+pPeakToRegPotential.args.signal  = True
+pPeakToRegPotential.args.genefmt = 'ucsc+gz',
+pPeakToRegPotential.args.peakfmt = 'peak',
+pPeakToRegPotential.args.window  = 100000
+pPeakToRegPotential.lang         = params.python.value

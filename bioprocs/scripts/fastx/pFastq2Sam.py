@@ -1,6 +1,6 @@
 import re
 from os import path
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import shell2 as shell
 
 # variables
@@ -40,7 +40,7 @@ if not rg['SM']:
 
 def sam2bam(samfile, bamfile):
 	shell.samtools.view(
-		S = True, b = True, _out = bamfile, _ = samfile, **{'@': nthread}
+		S = True, b = True, _out = bamfile, _ = samfile, threads = nthread
 	)
 	shell.rm_rf(samfile)
 

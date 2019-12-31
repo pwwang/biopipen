@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 
 bcode   = {{args.bcode | repr}}
 acode   = {{args.acode | repr}}

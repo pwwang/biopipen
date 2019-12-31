@@ -1,4 +1,5 @@
 from gff import Gff # python-gff
+from diot import Diot
 from pathlib import Path
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
@@ -9,7 +10,8 @@ genome   = {{args.genome | quote}}
 missing  = {{args.missing | quote}}
 tumor    = {{args.tumor | quote}}
 normal   = {{args.normal | quote}}
-basic    = {{args.basic | bool}}
+inopts   = {{args.inopts | repr}}
+full     = {{args.full | bool}}
 refall   = {{args.refall | quote}}
 bedtools = {{args.bedtools | quote}}
 shell.load_config(bedtools = bedtools)
@@ -40,9 +42,9 @@ FULL_COLUMNS = [
 	'GDC_Valid_Somatic', 'vcf_region', 'vcf_info', 'vcf_format', 'vcf_tumor_gt', 'vcf_normal_gt'
 ]
 
-ESSENTIAL_COLUMNS = FULL_COLUMNS[4:7] + [FULL_COLUMNS[10], FULL_COLUMNS[12]]
+ESSENTIAL_COLUMNS = FULL_COLUMNS[4:6] + [FULL_COLUMNS[10], FULL_COLUMNS[12]]
 
-reader = TsvReader(infile)
+reader = TsvReader(infile, **inopts)
 for ecol in ESSENTIAL_COLUMNS:
 	if ecol not in reader.cnames:
 		raise ValueError('Essential column {!r} not found.'.format(ecol))
@@ -60,6 +62,7 @@ if 'Hugo_Symbol' not in reader.cnames and 'Gene' not in reader.cnames:
 	bedfile = outfile.parent.joinpath(infile.with_suffix('.bed'))
 	with open(bedfile, 'w') as fbed:
 		for r in reader:
+			r.End_Position = r.get('End_Position', int(r.Start_Position) + 1)
 			fbed.write([r.Chromosome, r.Start_Position, r.End_Position])
 
 	res = shell.bedtools.intersect(a = bedfile, b = refgene, wa = True, wb = True, _iter = True)
@@ -70,10 +73,11 @@ if 'Hugo_Symbol' not in reader.cnames and 'Gene' not in reader.cnames:
 	reader.rewind()
 
 writer = TsvWriter(outfile)
-writer.cnames = FULL_COLUMNS[:32] if basic else FULL_COLUMNS
+writer.cnames = FULL_COLUMNS[:32] if not full else FULL_COLUMNS
 writer.writeHead()
 for r in reader:
-	genes = gene_mappings.get('\t'.join([r.Chromosome, r.Start_Position, r.End_Position]))
+	r.End_Position = r.get('End_Position', int(r.Start_Position) + 1)
+	genes = gene_mappings.get('\t'.join([r.Chromosome, str(r.Start_Position), str(r.End_Position)]))
 	r.Hugo_Symbol = r.get('Hugo_Symbol', genes[0] if genes else missing)
 	r.Entrez_Gene_Id = r.get('Entrez_Gene_Id', 0)
 	r.Center = r.get('Center', missing)

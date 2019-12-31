@@ -1,7 +1,7 @@
 from os import path, makedirs, remove
 from shutil import rmtree, copyfile, move
 from sys import stderr
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import log2pyppl
 from bioprocs.utils.shell2 import bgzip
 import vcf

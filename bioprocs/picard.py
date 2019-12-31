@@ -1,18 +1,13 @@
 """picard utilities"""
-from pyppl import Proc, Diot
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pMarkDuplicates():
-	"""
-	@name:
-		pMarkDuplicates
+pMarkDuplicates = proc_factory(
+	desc = 'Identifies duplicate reads.',
+	config = Diot(annotate = """
 	@description:
-		Identifies duplicate reads.
-		This tool locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR. See also EstimateLibraryComplexity for additional notes on PCR duplication artifacts. Duplicate reads can also result from a single amplification cluster, incorrectly detected as multiple clusters by the optical sensor of the sequencing instrument. These duplication artifacts are referred to as optical duplicates.
+		Identifies duplicate reads. This tool locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR. See also EstimateLibraryComplexity for additional notes on PCR duplication artifacts. Duplicate reads can also result from a single amplification cluster, incorrectly detected as multiple clusters by the optical sensor of the sequencing instrument. These duplication artifacts are referred to as optical duplicates.
 		The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. An BARCODE_TAG option is available to facilitate duplicate marking using molecular barcodes. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
 		The tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for each read. Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. If you are not familiar with this type of annotation, please see the following [blog post](https://www.broadinstitute.org/gatk/blog?id=7019) for additional information.
 		Although the bitwise flag annotation indicates whether a read was marked as a duplicate, it does not identify the type of duplicate. To do this, a new tag called the duplicate type (DT) tag was recently added as an optional output in the 'optional field' section of a SAM/BAM file. Invoking the TAGGING_POLICY option, you can instruct the program to mark all the duplicates (All), only the optical duplicates (OpticalOnly), or no duplicates (DontTag). The records within the output of a SAM/BAM file will have values for the 'DT' tag (depending on the invoked TAGGING_POLICY), as either library/PCR-generated duplicates (LB), or sequencing-platform artifact duplicates (SQ). This tool uses the READ_NAME_REGEX and the OPTICAL_DUPLICATE_PIXEL_DISTANCE options as the primary methods to identify and differentiate duplicate types. Set READ_NAME_REGEX to null to skip optical duplicate detection, e.g. for RNA-seq or other data where duplicate sets are extremely large and estimating library complexity is not an aim. Note that without optical duplicate counts, library size estimation will be inaccurate.
@@ -29,23 +24,21 @@ def _pMarkDuplicates():
 		`tmpdir`:  The tmpdir to use. Default: /tmp
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/)
-	"""
-	pMarkDuplicates = Proc()
-	pMarkDuplicates.input  = "infile:file"
-	pMarkDuplicates.output = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x)}}.dedup.bam"
-	pMarkDuplicates.args   = { "picard": "picard", "tmpdir": "/tmp", "params": "", "javamem": "-Xms1g -Xmx8g" }
-	pMarkDuplicates.script = """
-	tmpdir="{{args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
-	mkdir -p "$tmpdir"
-	mfile="{{job.outdir}}/{{infile | fn}}.metrics.txt"
-	{{args.picard}} MarkDuplicates {{args.javamem}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" I="{{infile}}" O="{{outfile}}" M="$mfile" {{args.params}}
-	rm -rf "$tmpdir"
-	"""
-	return pMarkDuplicates
+	"""))
+pMarkDuplicates.input  = "infile:file"
+pMarkDuplicates.output = "outfile:file:{{infile | fn | lambda x: __import__('re').sub(r'(\\.sort|\\.sorted)?$', '', x)}}.dedup.bam"
+pMarkDuplicates.args   = { "picard": "picard", "tmpdir": "/tmp", "params": "", "javamem": "-Xms1g -Xmx8g" }
+pMarkDuplicates.script = """
+tmpdir="{{args.tmpdir}}/{{proc.id}}_{{#}}_{{infile | fn}}"
+mkdir -p "$tmpdir"
+mfile="{{job.outdir}}/{{infile | fn}}.metrics.txt"
+{{args.picard}} MarkDuplicates {{args.javamem}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" I="{{infile}}" O="{{outfile}}" M="$mfile" {{args.params}}
+rm -rf "$tmpdir"
+"""
 
-@procfactory
-def _pAddOrReplaceReadGroups():
-	"""
+pAddOrReplaceReadGroups = proc_factory(
+	desc = 'Replace read groups in a BAM file.',
+	config = Diot(annotate = """
 	@name:
 		pAddOrReplaceReadGroups
 	@description:
@@ -64,23 +57,21 @@ def _pAddOrReplaceReadGroups():
 		`params`:  Other parameters for picard AddOrReplaceReadGroups, default: ""
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/)
-	"""
-	pAddOrReplaceReadGroups = Proc()
-	pAddOrReplaceReadGroups.input  = "infile:file, rg"
-	pAddOrReplaceReadGroups.output = "outfile:file:{{infile | fn}}.rg.bam"
-	pAddOrReplaceReadGroups.args   = { "picard": "picard", "params": "" }
-	pAddOrReplaceReadGroups.script = """
-	rg="{{rg}}"
-	if [[ "$rg" != *"RGPL="* ]]; then rg="$rg RGPL=illumina"; fi
-	if [[ "$rg" != *"RGPU="* ]]; then rg="$rg RGPU=unit1"; fi
-	if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
-	{{args.picard}} AddOrReplaceReadGroups I="{{infile}}" O="{{outfile}}" $rg {{args.params}}
-	"""
-	return pAddOrReplaceReadGroups
+	"""))
+pAddOrReplaceReadGroups.input  = "infile:file, rg"
+pAddOrReplaceReadGroups.output = "outfile:file:{{infile | fn}}.rg.bam"
+pAddOrReplaceReadGroups.args   = { "picard": "picard", "params": "" }
+pAddOrReplaceReadGroups.script = """
+rg="{{rg}}"
+if [[ "$rg" != *"RGPL="* ]]; then rg="$rg RGPL=illumina"; fi
+if [[ "$rg" != *"RGPU="* ]]; then rg="$rg RGPU=unit1"; fi
+if [[ "$rg" != *"RGLB="* ]]; then rg="$rg RGLB=lib1"; fi
+{{args.picard}} AddOrReplaceReadGroups I="{{infile}}" O="{{outfile}}" $rg {{args.params}}
+"""
 
-@procfactory
-def _pCreateSequenceDictionary():
-	"""
+pCreateSequenceDictionary = proc_factory(
+	desc = 'Creates a sequence dictionary for a reference sequence.',
+	config = Diot(annotate = """
 	@name:
 		pCreateSequenceDictionary
 	@description:
@@ -95,21 +86,19 @@ def _pCreateSequenceDictionary():
 		`params`:  Other parameters for picard CreateSequenceDictionary, default: ""
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/)
-	"""
-	pCreateSequenceDictionary = Proc()
-	pCreateSequenceDictionary.input  = "infile:file"
-	pCreateSequenceDictionary.output = "outfile:file:{{infile | bn}}"
-	pCreateSequenceDictionary.args   = { "picard": "picard", "params": "" }
-	pCreateSequenceDictionary.script = """
-	link="{{job.outdir}}/{{infile | bn}}"
-	ln -s "{{infile}}" "$link"
-	{{args.picard}} CreateSequenceDictionary R="$link" {{args.params}}
-	"""
-	return pCreateSequenceDictionary
+	"""))
+pCreateSequenceDictionary.input  = "infile:file"
+pCreateSequenceDictionary.output = "outfile:file:{{infile | bn}}"
+pCreateSequenceDictionary.args   = { "picard": "picard", "params": "" }
+pCreateSequenceDictionary.script = """
+link="{{job.outdir}}/{{infile | bn}}"
+ln -s "{{infile}}" "$link"
+{{args.picard}} CreateSequenceDictionary R="$link" {{args.params}}
+"""
 
-@procfactory
-def _pCollectWgsMetrics():
-	"""
+pCollectWgsMetrics = proc_factory(
+	desc = 'Collect metrics about coverage and performance of whole genome sequencing (WGS) experiments.',
+	config = Diot(annotate = """
 	@name:
 		pCollectWgsMetrics
 	@description:
@@ -127,27 +116,21 @@ def _pCollectWgsMetrics():
 		`reffile`: The reference file, default: ""
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/)
-	"""
-	pCollectWgsMetrics = Proc()
-	pCollectWgsMetrics.input  = "infile:file"
-	pCollectWgsMetrics.output = "outfile:file:{{infile | bn}}.metrics.txt"
-	pCollectWgsMetrics.args   = { "picard": "picard", "params": "", "reffile": "" }
-	pCollectWgsMetrics.script = """
-	if [[ -z "{{args.reffile}}" ]]; then
-		echo "Reference file not specified!" 1>&2
-		exit 1
-	fi
-	{{args.picard}} CollectWgsMetrics I="{{infile}}" O="{{outfile}}" R="{{args.reffile}}" {{args.params}}
-	"""
-	return pCollectWgsMetrics
+	"""))
+pCollectWgsMetrics.input  = "infile:file"
+pCollectWgsMetrics.output = "outfile:file:{{infile | bn}}.metrics.txt"
+pCollectWgsMetrics.args   = { "picard": "picard", "params": "", "reffile": "" }
+pCollectWgsMetrics.script = """
+if [[ -z "{{args.reffile}}" ]]; then
+	echo "Reference file not specified!" 1>&2
+	exit 1
+fi
+{{args.picard}} CollectWgsMetrics I="{{infile}}" O="{{outfile}}" R="{{args.reffile}}" {{args.params}}
+"""
 
-@procfactory
-def _pSortSam():
-	"""
-	@name:
-		pSortSam
-	@description:
-		Use `picard SortSam` to sort sam or bam file
+pSortSam = proc_factory(
+	desc = 'Use `picard SortSam` to sort sam or bam file',
+	config = Diot(annotate = """
 	@input:
 		`infile:file`:  The sam or bam file to be sorted
 	@output:
@@ -161,26 +144,20 @@ def _pSortSam():
 		`javamem`: The memory for java vm. Default: "-Xms1g -Xmx8g"
 	@requires:
 		[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
-	"""
-	pSortSam = Proc()
-	pSortSam.input  = "infile:file"
-	pSortSam.output = "outfile:file:{{infile | fn}}.sorted.{{args.outtype}}"
-	pSortSam.args   = { "picard": "picard", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp", "javamem": "-Xms1g -Xmx8g" }
-	pSortSam.script = """
-	tmpdir="{{args.tmpdir}}/{{proc.id}}_{{proc.tag}}_{{#}}_{{infile | fn}}"
-	mkdir -p "$tmpdir"
-	{{args.picard}} SortSam {{args.javamem}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" {{args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{args.order}}
-	rm -rf "$tmpdir"
-	"""
-	return pSortSam
+	"""))
+pSortSam.input  = "infile:file"
+pSortSam.output = "outfile:file:{{infile | fn}}.sorted.{{args.outtype}}"
+pSortSam.args   = { "picard": "picard", "order": "coordinate", "outtype": "bam", "params": "", "tmpdir": "/tmp", "javamem": "-Xms1g -Xmx8g" }
+pSortSam.script = """
+tmpdir="{{args.tmpdir}}/{{proc.id}}_{{proc.tag}}_{{#}}_{{infile | fn}}"
+mkdir -p "$tmpdir"
+{{args.picard}} SortSam {{args.javamem}} -Djava.io.tmpdir="$tmpdir" TMP_DIR="$tmpdir" {{args.params}} I="{{infile}}" O="{{outfile}}" SORT_ORDER={{args.order}}
+rm -rf "$tmpdir"
+"""
 
-@procfactory
-def _pIndexBam():
-	"""
-	@name:
-		pIndexBam
-	@description:
-		Use `picard BuildBamIndex` to index bam file
+pIndexBam = proc_factory(
+	desc = 'Use `picard BuildBamIndex` to index bam file',
+	config = Diot(annotate = """
 	@input:
 		`infile:file`:  The bam file
 	@output:
@@ -190,19 +167,17 @@ def _pIndexBam():
 		`params`:  Other parameters for `picard BuildBamIndex`, default: "-Xms1g -Xmx8g"
 	@requires:
 		[picard](http://broadinstitute.github.io/picard/command-line-overview.html)
-	"""
-	pIndexBam = Proc()
-	pIndexBam.input  = "infile:file"
-	pIndexBam.output = "outfile:file:{{infile | bn}}.bai"
-	pIndexBam.args   = { "picard": "picard", "params": "-Xms1g -Xmx8g" }
-	pIndexBam.script = """
-	{{args.picard}} BuildBamIndex I="{{infile}}" O="{{outfile}}" {{args.params}}
-	"""
-	return pIndexBam
+	"""))
+pIndexBam.input  = "infile:file"
+pIndexBam.output = "outfile:file:{{infile | bn}}.bai"
+pIndexBam.args   = { "picard": "picard", "params": "-Xms1g -Xmx8g" }
+pIndexBam.script = """
+{{args.picard}} BuildBamIndex I="{{infile}}" O="{{outfile}}" {{args.params}}
+"""
 
-@procfactory
-def _pCollectOxoGMetrics():
-	"""
+pCollectOxoGMetrics = proc_factory(
+	desc = 'Collect metrics to assess oxidative artifacts.',
+	config = Diot(annotate = """
 	@name:
 		pCollectOxoGMetrics
 	@description:
@@ -217,13 +192,10 @@ def _pCollectOxoGMetrics():
 		`ref`   : The reference genome, Default: `<params.ref>`
 		`picard`: The path to picard, Default: `<params.picard>`
 		`params`: Other parameters for picard, Default: `Diot()`
-	"""
-	pCollectOxoGMetrics             = Proc(desc = 'Collect metrics to assess oxidative artifacts.')
-	pCollectOxoGMetrics.input       = 'infile:file'
-	pCollectOxoGMetrics.output      = 'outfile:file:{{i.infile | fn2}}.oxoG_metrics.txt'
-	pCollectOxoGMetrics.args.ref    = params.ref.value
-	pCollectOxoGMetrics.args.picard = params.picard.value
-	pCollectOxoGMetrics.args.params = Diot()
-	pCollectOxoGMetrics.lang        = params.python.value
-	pCollectOxoGMetrics.script      = "file:scripts/picard/pCollectOxoGMetrics.py"
-	return pCollectOxoGMetrics
+	"""))
+pCollectOxoGMetrics.input       = 'infile:file'
+pCollectOxoGMetrics.output      = 'outfile:file:{{i.infile | fn2}}.oxoG_metrics.txt'
+pCollectOxoGMetrics.args.ref    = params.ref.value
+pCollectOxoGMetrics.args.picard = params.picard.value
+pCollectOxoGMetrics.args.params = Diot()
+pCollectOxoGMetrics.lang        = params.python.value

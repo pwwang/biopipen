@@ -27,10 +27,9 @@ DEFAULT_CONFIG = dict(
 	plink     = dict(_out = cmdy.DEVERR),
 	pyclone   = dict(_raw = True),
 	razers3   = dict(_prefix = '-'),
-	samtools  = dict(_prefix = '-'),
 	snpeff    = dict(_prefix = '-'),
 	vcfanno   = dict(_prefix = '-'),
-	vep       = dict(_dupkey = True),
+	vep       = dict(_dupkey = True, _raw = True),
 )
 cmdy.config._load(DEFAULT_CONFIG)
 

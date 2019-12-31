@@ -1,6 +1,6 @@
 import sys
 
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils.tsvio import TsvWriter, TsvRecord
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils import logger

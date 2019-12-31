@@ -1,5 +1,5 @@
 import docx
-from pyppl import Diot
+from diot import Diot
 from docx.shared import Inches, Pt
 from docx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING, WD_BREAK_TYPE, WD_COLOR, WD_TAB_ALIGNMENT, WD_TAB_LEADER, WD_UNDERLINE

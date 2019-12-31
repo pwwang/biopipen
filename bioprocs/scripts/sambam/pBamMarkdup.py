@@ -1,7 +1,7 @@
 from shutil import move, rmtree
 from os import makedirs, path, symlink, remove
 from sys import stdout, stderr
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import runcmd, mem2, cmdargs
 
 infile    = {{ i.infile | quote }}

@@ -4,27 +4,25 @@ from . import params, delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
-@procfactory
-def _pStats():
-	"""
+pStats = proc_factory(
+	desc   = 'Data statistics',
+	config = Diot(annotate = """
 	@name:
 		pStats
-	"""
-	return Diot(
-		desc   = 'Data statistics',
-		lang   = params.Rscript.value,
-		input  = 'infile:file',
-		output = 'outdir:dir:{{i.infile | stem}}.stats',
-		args   = Diot(inopts  = Diot(rnames = True, cnames = True, delimit = "\t"),
-			types   = Diot(),
-			groups  = [],
-			ignore  = [],
-			devpars = Diot(res = 300, height = 2000, width = 2000))
-	)
+	"""),
+	lang   = params.Rscript.value,
+	input  = 'infile:file',
+	output = 'outdir:dir:{{i.infile | stem}}.stats',
+	args   = Diot(inopts  = Diot(rnames = True, cnames = True, delimit = "\t"),
+		types   = Diot(),
+		groups  = [],
+		ignore  = [],
+		devpars = Diot(res = 300, height = 2000, width = 2000))
+)
 
-@procfactory
-def _pMetaPval():
-	"""
+pMetaPval = proc_factory(
+	desc = 'Calculate meta p-values.',
+	config = Diot(annotate = """
 	@name:
 		pMetaPval
 	@description:
@@ -66,22 +64,19 @@ def _pMetaPval():
 			- Or a numeric value to replace it with (e.g.: `1`).
 	@requires:
 		[`r-matep`](https://www.rdocumentation.org/packages/metap/)
-	"""
-	pMetaPval              = Proc(desc = 'Calculate meta p-values.')
-	pMetaPval.input        = 'infile:file'
-	pMetaPval.output       = 'outfile:file:{{i.infile | fn}}.meta{{i.infile | ext}}'
-	pMetaPval.args.intype  = 'matrix'
-	pMetaPval.args.inopts  = Diot(rnames = True, cnames = True)
-	pMetaPval.args.method  = 'sumlog'
-	pMetaPval.args.na      = 'skip' #0, 1
-	#pMetaPval.envs.rimport = rimport
-	pMetaPval.lang         = params.Rscript.value
-	pMetaPval.script       = "file:scripts/stats/pMetaPval.r"
-	return pMetaPval
+	"""))
+pMetaPval.input        = 'infile:file'
+pMetaPval.output       = 'outfile:file:{{i.infile | fn}}.meta{{i.infile | ext}}'
+pMetaPval.args.intype  = 'matrix'
+pMetaPval.args.inopts  = Diot(rnames = True, cnames = True)
+pMetaPval.args.method  = 'sumlog'
+pMetaPval.args.na      = 'skip' #0, 1
+#pMetaPval.envs.rimport = rimport
+pMetaPval.lang         = params.Rscript.value
 
-@procfactory
-def _pSurvival():
-	"""
+pSurvival = proc_factory(
+	desc   = 'Correlation Coefficients between variables',
+	config = Diot(annotate = """
 	@input:
 		infile: The input file (header is required).
 			- col1: rownames if args.inopts.rnames = True
@@ -118,32 +113,31 @@ def _pSurvival():
 	@requires:
 		[`r-survival`](https://rdrr.io/cran/survival/)
 		[`r-survminer`](https://rdrr.io/cran/survminer/)
-	"""
-	return Diot(desc = "Survival analysis",
-		lang   = params.Rscript.value,
-		input  = 'infile:file, covfile:file',
-		output = [
-			'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt',
-			'outdir:dir:{{i.infile | fn2}}.dir'
-		],
-		args = Diot(inunit = 'days', # months, weeks, years
-			outunit   = 'days',
-			method    = 'cox', # or km
-			covfile   = None,
-			inopts    = Diot(rnames = True),
-			# params for arrange_ggsurvplots.
-			# Typically nrow or ncol is set.
-			# If combine.ncol = 3, that means {ncol: 3, nrow: 1}.
-			# If ncol is not set, then it defaults to 1.
-			# If empty, the figures will not be combined
-			combine   = Diot(ncol = 2),
-			devpars   = Diot(res = 300, height = 2000, width = 2000),
-			params    = Diot(),
-			ggs       = Diot(table = Diot())))
+	"""),
+	lang   = params.Rscript.value,
+	input  = 'infile:file, covfile:file',
+	output = [
+		'outfile:file:{{i.infile | fn2}}.dir/{{i.infile | fn2}}.survival.txt',
+		'outdir:dir:{{i.infile | fn2}}.dir'
+	],
+	args = Diot(inunit = 'days', # months, weeks, years
+		outunit   = 'days',
+		method    = 'cox', # or km
+		covfile   = None,
+		inopts    = Diot(rnames = True),
+		# params for arrange_ggsurvplots.
+		# Typically nrow or ncol is set.
+		# If combine.ncol = 3, that means {ncol: 3, nrow: 1}.
+		# If ncol is not set, then it defaults to 1.
+		# If empty, the figures will not be combined
+		combine   = Diot(ncol = 2),
+		devpars   = Diot(res = 300, height = 2000, width = 2000),
+		params    = Diot(),
+		ggs       = Diot(table = Diot())))
 
-@procfactory
-def _pPostSurvival():
-	"""
+pPostSurvival = proc_factory(
+	desc = "Post survival analysis: statistics on variables in different groups",
+	config = Diot(annotate = """
 	@name:
 		pPostSurvival
 	@description:
@@ -161,21 +155,18 @@ def _pPostSurvival():
 			- `chisq`: chisquare-test
 		`inopts`: The input options for `i.survfile`.
 			- `rnames`: whether the file has row names. This has to be True if `args.covfile` provided.
-	"""
-	pPostSurvival              = Proc(desc = "Post survival analysis: statistics on variables in different groups")
-	pPostSurvival.input        = 'infile:file, survfile:file'
-	pPostSurvival.output       = 'outfile:file:{{i.infile | fn2}}.stats.xlsx'
-	pPostSurvival.args.chi2n   = 10
-	pPostSurvival.args.inopts  = Diot(rnames = True)
-	pPostSurvival.args.covfile = None
-	#pPostSurvival.envs.rimport = rimport
-	pPostSurvival.lang         = params.Rscript.value
-	pPostSurvival.script       = "file:scripts/stats/pPostSurvival.r"
-	return pPostSurvival
+	"""))
+pPostSurvival.input        = 'infile:file, survfile:file'
+pPostSurvival.output       = 'outfile:file:{{i.infile | fn2}}.stats.xlsx'
+pPostSurvival.args.chi2n   = 10
+pPostSurvival.args.inopts  = Diot(rnames = True)
+pPostSurvival.args.covfile = None
+#pPostSurvival.envs.rimport = rimport
+pPostSurvival.lang         = params.Rscript.value
 
-@procfactory
-def _pBin():
-	"""
+pBin = proc_factory(
+	desc = "Bin the data",
+	config = Diot(annotate = """
 	@name:
 		pBin
 	@description:
@@ -207,21 +198,18 @@ def _pBin():
 			- If not provided (`None`), all columns will use `binopts`.
 			- If column specified, only the specified column will be binned.
 			- Column indices can be used. It's 1-based.
-	"""
-	pBin              = Proc(desc = "Bin the data")
-	pBin.input        = 'infile:file'
-	pBin.output       = 'outfile:file:{{i.infile | stem}}.binned{{i.infile | ext}}'
-	pBin.args.inopts  = Diot(delimit = "\t", rnames = False, cnames = True)
-	pBin.args.binopts = Diot(nbin = None, step = None, nan = 'skip', out = 'step') # lower/min, upper/max, mean, median, binno
-	pBin.args.cols    = None
-	# pBin.envs.rimport = rimport
-	pBin.lang         = params.Rscript.value
-	pBin.script       = "file:scripts/stats/pBin.r"
-	return pBin
+	"""))
+pBin.input        = 'infile:file'
+pBin.output       = 'outfile:file:{{i.infile | stem}}.binned{{i.infile | ext}}'
+pBin.args.inopts  = Diot(delimit = "\t", rnames = False, cnames = True)
+pBin.args.binopts = Diot(nbin = None, step = None, nan = 'skip', out = 'step') # lower/min, upper/max, mean, median, binno
+pBin.args.cols    = None
+# pBin.envs.rimport = rimport
+pBin.lang         = params.Rscript.value
 
-@procfactory
-def _pQuantileNorm():
-	"""
+pQuantileNorm = proc_factory(
+	desc = 'Do quantile normalization',
+	config = Diot(annotate = """
 	@name:
 		pQuantileNorm
 	@description:
@@ -230,19 +218,16 @@ def _pQuantileNorm():
 		`infile:file`: The input matrix
 	@output:
 		`outfile:file`: The output matrix. Default: `{{i.infile | bn}}`
-	"""
-	pQuantileNorm              = Proc(desc = 'Do quantile normalization')
-	pQuantileNorm.input        = 'infile:file'
-	pQuantileNorm.output       = 'outfile:file:{{i.infile | bn}}'
-	pQuantileNorm.args.inopts  = Diot(rnames = True, cnames = True, delimit = "\t", skip = 0)
-	# pQuantileNorm.envs.rimport = rimport
-	pQuantileNorm.lang         = params.Rscript.value
-	pQuantileNorm.script       = "file:scripts/stats/pQuantileNorm.r"
-	return pQuantileNorm
+	"""))
+pQuantileNorm.input        = 'infile:file'
+pQuantileNorm.output       = 'outfile:file:{{i.infile | bn}}'
+pQuantileNorm.args.inopts  = Diot(rnames = True, cnames = True, delimit = "\t", skip = 0)
+# pQuantileNorm.envs.rimport = rimport
+pQuantileNorm.lang         = params.Rscript.value
 
-@procfactory
-def _pChiSquare():
-	"""
+pChiSquare = proc_factory(
+	desc = "Do chi-square test.",
+	config = Diot(annotate = """
 	@name:
 		pChiSquare
 	@description:
@@ -278,19 +263,16 @@ def _pChiSquare():
 			```
 		`ctcols`: The colnames of contingency table if input file is raw values
 			- You may also specify them in the head of the input file
-	"""
-	pChiSquare = Proc(desc = "Do chi-square test.")
-	pChiSquare.input = "infile:file"
-	pChiSquare.output = "outfile:file:{{i.infile | fn2}}.chi2.txt, obsvfile:file:{{i.infile | fn2}}.obsv.txt, exptfile:file:{{i.infile | fn2}}.expt.txt"
-	pChiSquare.args.intype = 'cont' # raw
-	pChiSquare.args.ctcols = ''
-	pChiSquare.lang = params.Rscript.value
-	pChiSquare.script = "file:scripts/stats/pChiSquare.r"
-	return pChiSquare
+	"""))
+pChiSquare.input = "infile:file"
+pChiSquare.output = "outfile:file:{{i.infile | fn2}}.chi2.txt, obsvfile:file:{{i.infile | fn2}}.obsv.txt, exptfile:file:{{i.infile | fn2}}.expt.txt"
+pChiSquare.args.intype = 'cont' # raw
+pChiSquare.args.ctcols = ''
+pChiSquare.lang = params.Rscript.value
 
-@procfactory
-def _pFisherExact():
-	"""
+pFisherExact = proc_factory(
+	desc = "Do fisher exact test.",
+	config = Diot(annotate = """
 	@name:
 		pFisherExact
 	@description:
@@ -324,19 +306,16 @@ def _pFisherExact():
 			```
 		`ctcols`: The colnames of contingency table if input file is raw values
 			- You may also specify them in the head of the input file
-	"""
-	pFisherExact             = Proc(desc = "Do fisher exact test.")
-	pFisherExact.input       = "infile:file"
-	pFisherExact.output      = "outfile:file:{{i.infile | fn2}}.fexact.txt"
-	pFisherExact.args.intype = 'cont' # raw
-	pFisherExact.args.ctcols = []
-	pFisherExact.lang        = params.Rscript.value
-	pFisherExact.script      = "file:scripts/stats/pFisherExact.r"
-	return pFisherExact
+	"""))
+pFisherExact.input       = "infile:file"
+pFisherExact.output      = "outfile:file:{{i.infile | fn2}}.fexact.txt"
+pFisherExact.args.intype = 'cont' # raw
+pFisherExact.args.ctcols = []
+pFisherExact.lang        = params.Rscript.value
 
-@procfactory
-def _pPWFisherExact():
-	"""
+pPWFisherExact = proc_factory(
+	desc = "Do pair-wise fisher exact test.",
+	config = Diot(annotate = """
 	@name:
 		pPWFisherExact
 	@description:
@@ -373,21 +352,18 @@ def _pPWFisherExact():
 			```
 		`padj`: The p-value adjustment method, see `p.adjust.methods` in R. Default: `BH`
 		`rnames`: If the input file has rownames for `raw` input type.
-	"""
-	pPWFisherExact              = Proc(desc = "Do pair-wise fisher exact test.")
-	pPWFisherExact.input        = "infile:file"
-	pPWFisherExact.output       = "outfile:file:{{i.infile | fn2}}.pwfexact.txt"
-	pPWFisherExact.args.rnames  = True
-	pPWFisherExact.args.intype  = 'raw' # pairs
-	pPWFisherExact.args.padj    = 'BH'
-	# pPWFisherExact.envs.rimport = rimport
-	pPWFisherExact.lang         = params.Rscript.value
-	pPWFisherExact.script       = "file:scripts/stats/pPWFisherExact.r"
-	return pPWFisherExact
+	"""))
+pPWFisherExact.input        = "infile:file"
+pPWFisherExact.output       = "outfile:file:{{i.infile | fn2}}.pwfexact.txt"
+pPWFisherExact.args.rnames  = True
+pPWFisherExact.args.intype  = 'raw' # pairs
+pPWFisherExact.args.padj    = 'BH'
+# pPWFisherExact.envs.rimport = rimport
+pPWFisherExact.lang         = params.Rscript.value
 
-@procfactory
-def _pMediation():
-	"""
+pMediation = proc_factory(
+	desc = "Do mediation analysis.",
+	config = Diot(annotate = """
 	@name:
 		pMediation
 	@description:
@@ -435,30 +411,27 @@ def _pMediation():
 			In this case, `{{i.infile | fn2}}` will be used as case name
 			- For multiple cases, this should be a dict of cases:
 			`Diot(Case1 = Diot(model='lm', fmula='Y~X|M'), Case2 = ...)`
-	"""
-	pMediation = Proc(desc = "Do mediation analysis.")
-	pMediation.input  = 'infile:file, casefile:file'
-	pMediation.output = [
-		'outfile:file:{{i.infile | fn2}}.mediation/{{i.infile | fn2}}.mediation.txt',
-		'outdir:dir:{{i.infile | fn2}}.mediation'
-	]
-	pMediation.args.inopts  = Diot(cnames = True, rnames = True)
-	pMediation.args.medopts = Diot(boot = True, sims = 500)
-	pMediation.args.cov     = ''
-	pMediation.args.pval    = 0.05
-	pMediation.args.fdr     = True # BH, or other methods for p.adjust
-	pMediation.args.plot    = Diot()
-	pMediation.args.case    = Diot(model = 'lm', fmula = 'Y~X|M')
-	pMediation.args.nthread = 1
-	pMediation.args.devpars = Diot(res = 300, width = 2000, height = 2000)
-	# pMediation.envs.rimport = rimport
-	pMediation.lang         = params.Rscript.value
-	pMediation.script       = "file:scripts/stats/pMediation.r"
-	return pMediation
+	"""))
+pMediation.input  = 'infile:file, casefile:file'
+pMediation.output = [
+	'outfile:file:{{i.infile | fn2}}.mediation/{{i.infile | fn2}}.mediation.txt',
+	'outdir:dir:{{i.infile | fn2}}.mediation'
+]
+pMediation.args.inopts  = Diot(cnames = True, rnames = True)
+pMediation.args.medopts = Diot(boot = True, sims = 500)
+pMediation.args.cov     = ''
+pMediation.args.pval    = 0.05
+pMediation.args.fdr     = True # BH, or other methods for p.adjust
+pMediation.args.plot    = Diot()
+pMediation.args.case    = Diot(model = 'lm', fmula = 'Y~X|M')
+pMediation.args.nthread = 1
+pMediation.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+# pMediation.envs.rimport = rimport
+pMediation.lang         = params.Rscript.value
 
-@procfactory
-def _pLiquidAssoc():
-	"""
+pLiquidAssoc = proc_factory(
+	,
+	config = Diot(annotate = """
 	@name:
 		pLiquidAssoc
 	@description:
@@ -494,30 +467,27 @@ def _pLiquidAssoc():
 		`devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	@requires:
 		[r-fastLiquidAssociation](https://github.com/pwwang/fastLiquidAssociation)
-	"""
-	pLiquidAssoc        = Proc()
-	pLiquidAssoc.input  = 'infile:file, casefile:file'
-	pLiquidAssoc.output = [
-		'outfile:file:{{i.infile | fn2}}.la/{{i.infile | fn2}}.la.txt',
-		'outdir:dir:{{i.infile | fn2}}.la'
-	]
-	pLiquidAssoc.args.inopts = Diot(cnames = True, rnames = True)
-	pLiquidAssoc.args.zcat    = False
-	pLiquidAssoc.args.pval    = 0.05
-	pLiquidAssoc.args.fdr     = True # BH, or other methods for p.adjust
-	pLiquidAssoc.args.fdrfor  = 'case' # all
-	pLiquidAssoc.args.nthread = 1
-	pLiquidAssoc.args.plot    = False
-	pLiquidAssoc.args.ggs     = Diot()
-	pLiquidAssoc.args.devpars = Diot(res = 300, width = 2000, height = 2000)
-	# pLiquidAssoc.envs.rimport = rimport
-	pLiquidAssoc.lang         = params.Rscript.value
-	pLiquidAssoc.script       = "file:scripts/stats/pLiquidAssoc.r"
-	return pLiquidAssoc
+	"""))
+pLiquidAssoc.input  = 'infile:file, casefile:file'
+pLiquidAssoc.output = [
+	'outfile:file:{{i.infile | fn2}}.la/{{i.infile | fn2}}.la.txt',
+	'outdir:dir:{{i.infile | fn2}}.la'
+]
+pLiquidAssoc.args.inopts = Diot(cnames = True, rnames = True)
+pLiquidAssoc.args.zcat    = False
+pLiquidAssoc.args.pval    = 0.05
+pLiquidAssoc.args.fdr     = True # BH, or other methods for p.adjust
+pLiquidAssoc.args.fdrfor  = 'case' # all
+pLiquidAssoc.args.nthread = 1
+pLiquidAssoc.args.plot    = False
+pLiquidAssoc.args.ggs     = Diot()
+pLiquidAssoc.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+# pLiquidAssoc.envs.rimport = rimport
+pLiquidAssoc.lang         = params.Rscript.value
 
-@procfactory
-def _pHypergeom():
-	"""
+pHypergeom = proc_factory(
+	desc = "Do hypergeometric test.",
+	config = Diot(annotate = """
 	@name:
 		pHypergeom
 	@description:
@@ -534,21 +504,18 @@ def _pHypergeom():
 			- `cnames`: Whether the input file has column names
 			- `rnames`: Whether the input file has row names
 		`N`: The population size. Default: `None`
-	"""
-	pHypergeom              = Proc(desc = "Do hypergeometric test.")
-	pHypergeom.input        = 'infile:file'
-	pHypergeom.output       = 'outfile:file:{{i.infile | fn2}}.hypergeom.txt'
-	pHypergeom.args.intype  = 'raw' # numbers
-	pHypergeom.args.inopts  = Diot(cnames = True, rnames = True)
-	pHypergeom.args.N       = None
-	# pHypergeom.envs.rimport = rimport
-	pHypergeom.lang         = params.Rscript.value
-	pHypergeom.script       = "file:scripts/stats/pHypergeom.r"
-	return pHypergeom
+	"""))
+pHypergeom.input        = 'infile:file'
+pHypergeom.output       = 'outfile:file:{{i.infile | fn2}}.hypergeom.txt'
+pHypergeom.args.intype  = 'raw' # numbers
+pHypergeom.args.inopts  = Diot(cnames = True, rnames = True)
+pHypergeom.args.N       = None
+# pHypergeom.envs.rimport = rimport
+pHypergeom.lang         = params.Rscript.value
 
-@procfactory
-def _pChow():
-	"""
+pChow = proc_factory(
+	desc = "Do Chow-Test",
+	config = Diot(annotate = """
 	@name:
 		pChow
 	@description:
@@ -593,39 +560,33 @@ def _pChow():
 		`plot`: Whether plot the regressions. Default: `False`
 		`ggs` : The extra ggs for the plot.
 		`devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
-	"""
-	pChow              = Proc(desc = "Do Chow-Test")
-	pChow.input        = 'infile:file, groupfile:file, casefile:file'
-	pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
-	pChow.args.inopts  = Diot(cnames = True, rnames = True)
-	pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
-	pChow.args.pval    = 0.05
-	pChow.args.fdr     = True
-	pChow.args.plot    = True
-	pChow.args.devpars = Diot(res = 300, width = 2000, height = 2000)
-	pChow.args.ggs     = Diot()
-	# pChow.envs.rimport = rimport
-	pChow.lang         = params.Rscript.value
-	pChow.script       = "file:scripts/stats/pChow.r"
-	return pChow
+	"""))
+pChow.input        = 'infile:file, groupfile:file, casefile:file'
+pChow.output       = 'outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, outdir:dir:{{i.infile | fn}}.chow'
+pChow.args.inopts  = Diot(cnames = True, rnames = True)
+pChow.args.cov     = '' # co-variates, inopts.rnames required, and must in same order
+pChow.args.pval    = 0.05
+pChow.args.fdr     = True
+pChow.args.plot    = True
+pChow.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+pChow.args.ggs     = Diot()
+# pChow.envs.rimport = rimport
+pChow.lang         = params.Rscript.value
 
-@procfactory
-def _pAnovaModel():
-	"""
+pAnovaModel = proc_factory(
+	desc = "Run anova test on model to test the significance with/without terms",
+	config = Diot(annotate = """
 	@name:
 		pAnovaModel
-	"""
-	pAnovaModel              = Proc(desc = "Run anova test on model to test the significance with/without terms")
-	pAnovaModel.input        = 'infile:file, casefile:file'
-	pAnovaModel.output       = 'outfile:file:{{i.infile | fn}}.anova/{{i.infile | fn}}.anova.txt, outdir:dir:{{i.infile | fn}}.anova'
-	pAnovaModel.args.model   = 'lm'
-	pAnovaModel.args.fmula   = None
-	pAnovaModel.args.inopts  = Diot(cnames = True, rnames = True)
-	pAnovaModel.args.cov     = '' # requires inopts.rnames
-	# pAnovaModel.envs.rimport = rimport
-	pAnovaModel.lang         = params.Rscript.value
-	pAnovaModel.script       = "file:scripts/stats/pAnovaModel.r"
-	return pAnovaModel
+	"""))
+pAnovaModel.input        = 'infile:file, casefile:file'
+pAnovaModel.output       = 'outfile:file:{{i.infile | fn}}.anova/{{i.infile | fn}}.anova.txt, outdir:dir:{{i.infile | fn}}.anova'
+pAnovaModel.args.model   = 'lm'
+pAnovaModel.args.fmula   = None
+pAnovaModel.args.inopts  = Diot(cnames = True, rnames = True)
+pAnovaModel.args.cov     = '' # requires inopts.rnames
+# pAnovaModel.envs.rimport = rimport
+pAnovaModel.lang         = params.Rscript.value
 
 @procfactory
 def _pCorr():
@@ -661,31 +622,29 @@ def _pCorr():
 		devpars: The parameters for the plot device.
 	@requires:
 		R packages: `ggplot2` and `reshape`
-	"""
-	return Diot(
-		desc   = 'Correlation Coefficients between variables',
-		lang   = params.Rscript.value,
-		input  = 'infile:file, groupfile:var',
-		output = [
-			'outfile:file:{{i.infile | stem}}.{{args.method}}/{{i.infile | stem}}.{{args.method}}.txt',
-			'outdir:dir:{{i.infile | stem}}.{{args.method}}'
-		],
-		args = Diot(
-			outfmt    = 'pairs',
-			method    = 'pearson',
-			byrow     = True,
-			pval      = False,
-			groupfile = None,
-			inopts    = Diot(cnames = True,	rnames = True,	delimit = "\t"),
-			plot      = False,
-			params    = Diot(), # the parameters for plot.heatmap2
-			devpars   = Diot(height = 2000, width = 2000, res = 300)
-		)
+	"""),
+	lang   = params.Rscript.value,
+	input  = 'infile:file, groupfile:var',
+	output = [
+		'outfile:file:{{i.infile | stem}}.{{args.method}}/{{i.infile | stem}}.{{args.method}}.txt',
+		'outdir:dir:{{i.infile | stem}}.{{args.method}}'
+	],
+	args = Diot(
+		outfmt    = 'pairs',
+		method    = 'pearson',
+		byrow     = True,
+		pval      = False,
+		groupfile = None,
+		inopts    = Diot(cnames = True,	rnames = True,	delimit = "\t"),
+		plot      = False,
+		params    = Diot(), # the parameters for plot.heatmap2
+		devpars   = Diot(height = 2000, width = 2000, res = 300)
 	)
+)
 
-@procfactory
-def _pCorr2():
-	"""
+pCorr2 = proc_factory(
+	desc = 'Calculate correlation coefficient between instances of two files',
+	config = Diot(annotate = """
 	@name:
 		pCorr2
 	@description:
@@ -707,31 +666,28 @@ def _pCorr2():
 		`params`: The params for `plot.heatmap` in `utils/plot.r`
 		`ggs`:    The extra ggplot2 statements.
 		`devpars`:The parameters for the plot device. Default: `Diot(height = 2000, width = 2000, res = 300)`
-	"""
-	pCorr2        = Proc(desc = 'Calculate correlation coefficient between instances of two files')
-	pCorr2.input  = 'infile1:file, infile2:file'
-	pCorr2.output = [
-		'outfile:file:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr/{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr.txt',
-		'outdir:dir:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr'
-	]
-	pCorr2.args.inopts1 = Diot()
-	pCorr2.args.inopts2 = Diot()
-	pCorr2.args.method  = 'pearson' # spearman, kendall
-	pCorr2.args.pval    = False
-	pCorr2.args.fdr     = False # method: 'BH'
-	pCorr2.args.outfmt  = 'pairs' # matrix
-	pCorr2.args.plot    = False
-	pCorr2.args.params  = Diot() # the parameters for plot.heatmap
-	pCorr2.args.ggs     = Diot() # extra ggplot statements
-	pCorr2.args.devpars = Diot(height = 2000, width = 2000, res = 300)
-	# pCorr2.envs.rimport = rimport
-	pCorr2.lang         = params.Rscript.value
-	pCorr2.script       = "file:scripts/stats/pCorr2.r"
-	return pCorr2
+	"""))
+pCorr2.input  = 'infile1:file, infile2:file'
+pCorr2.output = [
+	'outfile:file:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr/{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr.txt',
+	'outdir:dir:{{i.infile1 | fn2}}-{{i.infile2 | fn2}}.corr'
+]
+pCorr2.args.inopts1 = Diot()
+pCorr2.args.inopts2 = Diot()
+pCorr2.args.method  = 'pearson' # spearman, kendall
+pCorr2.args.pval    = False
+pCorr2.args.fdr     = False # method: 'BH'
+pCorr2.args.outfmt  = 'pairs' # matrix
+pCorr2.args.plot    = False
+pCorr2.args.params  = Diot() # the parameters for plot.heatmap
+pCorr2.args.ggs     = Diot() # extra ggplot statements
+pCorr2.args.devpars = Diot(height = 2000, width = 2000, res = 300)
+# pCorr2.envs.rimport = rimport
+pCorr2.lang         = params.Rscript.value
 
-@procfactory
-def _pDiffCorr():
-	"""
+pDiffCorr = proc_factory(
+	desc = 'Test correlation differences.',
+	config = Diot(annotate = """
 	@name:
 		pDiffCorr
 	@description:
@@ -776,29 +732,26 @@ def _pDiffCorr():
 		`plot`  : Plot the correlation for cases? Default: `False`
 		`ggs`   : `ggs` items for the plot.
 		`devpars`: The device parameters for the plot.
-	"""
-	pDiffCorr = Proc(desc = 'Test correlation differences.')
-	pDiffCorr.input  = 'infile:file, samfile:file, casefile:file, groupfile:file'
-	pDiffCorr.output = [
-		'outfile:file:{{i.infile | fn2}}.diffcorr/{{i.infile | fn2}}.diffcorr.txt',
-		'outdir:dir:{{i.infile | fn2}}.diffcorr'
-	]
-	pDiffCorr.args.inopts  = Diot(cnames = True, rnames = True)
-	pDiffCorr.args.method  = 'pearson' # spearman
-	pDiffCorr.args.pval    = 0.05
-	pDiffCorr.args.fdr     = True # BH
-	pDiffCorr.args.fdrfor  = 'case'
-	pDiffCorr.args.plot    = False
-	pDiffCorr.args.ggs     = Diot() # extra ggplot statements
-	pDiffCorr.args.devpars = Diot(height = 2000, width = 2000, res = 300)
-	# pDiffCorr.envs.rimport = rimport
-	pDiffCorr.lang         = params.Rscript.value
-	pDiffCorr.script       = "file:scripts/stats/pDiffCorr.r"
-	return pDiffCorr
+	"""))
+pDiffCorr.input  = 'infile:file, samfile:file, casefile:file, groupfile:file'
+pDiffCorr.output = [
+	'outfile:file:{{i.infile | fn2}}.diffcorr/{{i.infile | fn2}}.diffcorr.txt',
+	'outdir:dir:{{i.infile | fn2}}.diffcorr'
+]
+pDiffCorr.args.inopts  = Diot(cnames = True, rnames = True)
+pDiffCorr.args.method  = 'pearson' # spearman
+pDiffCorr.args.pval    = 0.05
+pDiffCorr.args.fdr     = True # BH
+pDiffCorr.args.fdrfor  = 'case'
+pDiffCorr.args.plot    = False
+pDiffCorr.args.ggs     = Diot() # extra ggplot statements
+pDiffCorr.args.devpars = Diot(height = 2000, width = 2000, res = 300)
+# pDiffCorr.envs.rimport = rimport
+pDiffCorr.lang         = params.Rscript.value
 
-@procfactory
-def _pBootstrap():
-	"""
+pBootstrap = proc_factory(
+	desc = 'Do bootstrapping',
+	config = Diot(annotate = """
 	@name:
 		pBootstrap
 	@description:
@@ -823,29 +776,25 @@ def _pBootstrap():
 			- You may also specify indices. For example: `[1, 2]` to plot the 1st and 2nd statistics
 			- Use `False` or `None` to disable plotting
 		`devpars`: The device parameters for the plot.
-	"""
-	pBootstrap        = Proc(desc = 'Do bootstrapping')
-	pBootstrap.input  = 'infile:file'
-	pBootstrap.output = [
-		'outfile:file:{{i.infile | fn2}}.boot/{{i.infile | fn2}}.boot.txt',
-		'outdir:dir:{{i.infile | fn2}}.boot'
-	]
-	pBootstrap.args.inopts  = Diot(cnames = True, rnames = True)
-	pBootstrap.args.params  = Diot()
-	pBootstrap.args.nthread = 1
-	pBootstrap.args.n       = 1000
-	pBootstrap.args.stats   = 'function(x) x'
-	pBootstrap.args.plot    = 'all'
-	pBootstrap.args.devpars = Diot(height = 2000, width = 2000, res = 300)
-	# pBootstrap.envs.rimport = rimport
-	pBootstrap.lang         = params.Rscript.value
-	pBootstrap.script       = "file:scripts/stats/pBootstrap.r"
-	return pBootstrap
+	"""))
+pBootstrap.input  = 'infile:file'
+pBootstrap.output = [
+	'outfile:file:{{i.infile | fn2}}.boot/{{i.infile | fn2}}.boot.txt',
+	'outdir:dir:{{i.infile | fn2}}.boot'
+]
+pBootstrap.args.inopts  = Diot(cnames = True, rnames = True)
+pBootstrap.args.params  = Diot()
+pBootstrap.args.nthread = 1
+pBootstrap.args.n       = 1000
+pBootstrap.args.stats   = 'function(x) x'
+pBootstrap.args.plot    = 'all'
+pBootstrap.args.devpars = Diot(height = 2000, width = 2000, res = 300)
+# pBootstrap.envs.rimport = rimport
+pBootstrap.lang         = params.Rscript.value
 
-
-@procfactory
-def _pPCA():
-	"""
+pPCA = proc_factory(
+	desc   = 'Perform PCA analysis using PCAtools',
+	config = Diot(annotate = """
 	@description:
 		Perform PCA analysis using PCAtools.
 		See: https://bioconductor.org/packages/release/bioc/vignettes/PCAtools/inst/doc/PCAtools.html
@@ -876,19 +825,17 @@ def _pPCA():
 		npc (int|str): The number of PCs to write to the output file.
 			- A fixed number of PCs; or
 			- one of `horn` or `elbow` to determine the optimal number of PCs.
-	"""
-	return Diot(
-		desc   = 'Perform PCA analysis using PCAtools',
-		input  = 'infile:file, metafile:file',
-		output = [	'outfile:file:{{i.infile | stem | stem}}.pca/{{i.infile | stem | stem}}.pcs.txt',
-					'outdir:dir:{{i.infile | stem | stem}}.pca'],
-		lang = params.Rscript.value,
-		args = Diot(
-			devpars = Diot(height = 2000, width = 2000, res = 300),
-			inopts  = Diot(cnames = True, rnames = True),
-			params  = Diot(),
-			na      = 0,
-			plots   = Diot(scree = True, bi = True, pairs = True, loadings = True, eigencor = True),
-			npc     = 'elbow'
-		)
+	"""),
+	input  = 'infile:file, metafile:file',
+	output = [	'outfile:file:{{i.infile | stem | stem}}.pca/{{i.infile | stem | stem}}.pcs.txt',
+				'outdir:dir:{{i.infile | stem | stem}}.pca'],
+	lang = params.Rscript.value,
+	args = Diot(
+		devpars = Diot(height = 2000, width = 2000, res = 300),
+		inopts  = Diot(cnames = True, rnames = True),
+		params  = Diot(),
+		na      = 0,
+		plots   = Diot(scree = True, bi = True, pairs = True, loadings = True, eigencor = True),
+		npc     = 'elbow'
 	)
+)

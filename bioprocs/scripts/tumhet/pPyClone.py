@@ -1,6 +1,6 @@
 import cmdy
 from pysam import VariantFile
-from pyppl import Diot
+from diot import Diot
 from os import path, environ
 from bioprocs.utils import logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
