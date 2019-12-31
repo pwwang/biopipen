@@ -1,13 +1,12 @@
 """A set of processes for Tumor heterogeneity analysis"""
-from modkit import Modkit
-from pyppl import Diot, Proc
-from . import params, delefactory, procfactory
-from .utils import fs2name
-Modkit().delegate(delefactory())
+from os import path
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pSciClone():
-	"""
+pSciClone = proc_factory(
+	desc   = "Clonality analysis using SciClone.",
+	config = Diot(annotate = """
 	@input:
 		muts: Somatic mutations. Could be one of:
 			- Single(paired)-sample VCF files, separared by comma
@@ -31,23 +30,21 @@ def _pSciClone():
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based.
-	"""
-	return Diot(
-		desc   = "Clonality analysis using SciClone.",
-		input  = "muts:var, cnvs:var",
-		output = "outdir:dir:{{i.muts | bn | .split('.')[0]}}.sciclone",
-		lang   = params.Rscript.value,
-		args   = Diot(
-			params  = Diot(),
-			exfile  = "",
-			mutctrl = None,
-			cnctrl  = None
-		)
+	"""),
+	input  = "muts:var, cnvs:var",
+	output = "outdir:dir:{{i.muts | bn | .split('.')[0]}}.sciclone",
+	lang   = params.Rscript.value,
+	args   = Diot(
+		params  = Diot(),
+		exfile  = "",
+		mutctrl = None,
+		cnctrl  = None
 	)
+)
 
-@procfactory
-def _pPyClone():
-	"""
+pPyClone = proc_factory(
+	desc   = "Clonality analysis using PyClone",
+	config = Diot(annotate = """
 	@input:
 		muts: Somatic mutations. Could be one of:
 			- Single(paired)-sample VCF files, separated by comma (i.e. a.vcf,b.vcf)
@@ -76,28 +73,26 @@ def _pPyClone():
 			- `None` indicates no control sample.
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF files or multi-sample VCF file, 0-based.
-	"""
-	return Diot(
-		desc   = "Clonality analysis using PyClone",
-		input  = "muts:var, cnvs:var",
-		output = "outdir:dir:{{i.muts | __import__('pathlib').Path \
-									  | ?.is_file | =: [_] | !.split: ',' | [0] | fn }}.pyclone",
-		lang   = params.python.value,
-		args   = Diot(
-			pyclone  = params.pyclone.value,
-			bcftools = params.bcftools.value,
-			bedtools = params.bedtools.value,
-			refgene  = params.refgene.value,
-			nthread  = 1,
-			params   = Diot(),
-			mutctrl  = None,
-			cnctrl   = None,
-		)
+	"""),
+	input  = "muts:var, cnvs:var",
+	output = "outdir:dir:{{i.muts | __import__('pathlib').Path \
+									| ?.is_file | =: [_] | !.split: ',' | [0] | fn }}.pyclone",
+	lang   = params.python.value,
+	args   = Diot(
+		pyclone  = params.pyclone.value,
+		bcftools = params.bcftools.value,
+		bedtools = params.bedtools.value,
+		refgene  = params.refgene.value,
+		nthread  = 1,
+		params   = Diot(),
+		mutctrl  = None,
+		cnctrl   = None,
 	)
+)
 
-@procfactory
-def _pAllFIT():
-	"""
+pAllFIT = proc_factory(
+	desc = "Allele-Frequency-based Imputation of Tumor Purity Inference",
+	config = Diot(annotate = """
 	@description:
 		All-FIT - Allele-Frequency-based Imputation of Tumor Purity infers specimen purity from tumor-only samples sequenced with deep sequencing. It is developed in Khiabanian Lab by Jui Wan Loh and Hossein Khiabanian.
 		See: https://github.com/KhiabanianLab/All-FIT
@@ -122,29 +117,27 @@ def _pAllFIT():
 			- For paired-sample VCF files, if `None` specified, second sample(1) will be used as control.
 		cnctrl (int|NoneType): Index of the control sample in copy number VCF file, 0-based.
 		nthread (int): Number of threads to use for openblas.
-	"""
-	return Diot(
-		desc = "Allele-Frequency-based Imputation of Tumor Purity Inference",
-		input = "infile:file, cnfile:var",
-		output = [
-			"outfile:file:{{i.infile | stem | @append: '.allfit'}}/{{i.infile | stem | @append: '.purity.txt'}}",
-			"outdir:dir:{{  i.infile | stem | @append: '.allfit'}}"
-		],
-		lang = params.python.value,
-		args = Diot(
-			allfit   = params.allfit.value,
-			bcftools = params.bcftools.value,
-			bedtools = params.bedtools.value,
-			params   = Diot(t = 'somatic'),
-			mutctrl  = None,
-			cnctrl   = None,
-			nthread  = 1
-		)
+	"""),
+	input = "infile:file, cnfile:var",
+	output = [
+		"outfile:file:{{i.infile | stem | @append: '.allfit'}}/{{i.infile | stem | @append: '.purity.txt'}}",
+		"outdir:dir:{{  i.infile | stem | @append: '.allfit'}}"
+	],
+	lang = params.python.value,
+	args = Diot(
+		allfit   = params.allfit.value,
+		bcftools = params.bcftools.value,
+		bedtools = params.bedtools.value,
+		params   = Diot(t = 'somatic'),
+		mutctrl  = None,
+		cnctrl   = None,
+		nthread  = 1
 	)
+)
 
-@procfactory
-def _pTMBurden():
-	"""
+pTMBurden = proc_factory(
+	desc    = 'Calculation of tumor mutation burden.',
+	config = Diot(annotate = """
 	@input:
 		infile: The input MAF file
 	@output:
@@ -152,18 +145,17 @@ def _pTMBurden():
 	@args:
 		type: The type of mutation burden.
 			- `nonsyn`: Counting nonsynonymous mutations
-	"""
-	return Diot(
-		desc    = 'Calculation of tumor mutation burden.',
-		input   = 'infile:file',
-		output  = 'outfile:file:{{i.infile | stem}}.tmb.txt',
-		args    = Diot(type = 'nonsyn'),
-		lang    = params.python.value,
-	)
+	"""),
+	input   = 'infile:file',
+	output  = 'outfile:file:{{i.infile | stem}}.tmb.txt',
+	args    = Diot(type = 'nonsyn'),
+	lang    = params.python.value,
+)
 
-@procfactory
-def _pQuantumClone():
-	"""
+pQuantumClone = proc_factory(
+	desc   = "Clonality analysis using QuantumClone",
+	lang   = params.Rscript.value,
+	config = Diot(annotate = """
 	@description:
 		Clonality analysis using QuantumClone:
 		https://academic.oup.com/bioinformatics/article/34/11/1808/4802225
@@ -183,21 +175,18 @@ def _pQuantumClone():
 			- an R `list` like: `list(count = <var count>, depth = <depth>)`.
 			- By default, the `depth` will be read from `fmt$DP`
 		`nthread` : # threads to use. Default: `1`
-	"""
-	pQuantumClone               = Proc(desc = "Clonality analysis using QuantumClone")
-	pQuantumClone.input         = 'vfvcfs:files'
-	pQuantumClone.output        = "outdir:dir:{{i.vfvcfs | fs2name}}.qclone"
-	pQuantumClone.envs.fs2name  = fs2name
-	pQuantumClone.args.params   = Diot()
-	pQuantumClone.args.vfsamcol = 1 # 1-based
-	pQuantumClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])'
-	pQuantumClone.args.nthread  = 1
-	pQuantumClone.lang          = params.Rscript.value
-	return pQuantumClone
+	"""))
+pQuantumClone.input         = 'vfvcfs:files'
+pQuantumClone.output        = "outdir:dir:{{i.vfvcfs | path.commonprefix | bn}}.qclone"
+pQuantumClone.envs.path     = path
+pQuantumClone.args.params   = Diot()
+pQuantumClone.args.vfsamcol = 1 # 1-based
+pQuantumClone.args.varcount = 'function(fmt) as.integer(unlist(strsplit(fmt$AD, ","))[2])'
+pQuantumClone.args.nthread  = 1
 
-@procfactory
-def _pTheta():
-	"""
+pTheta = proc_factory(
+	desc = 'Run THetA2 for tumor purity calculation',
+	config = Diot(annotate = """
 	@description:
 		Run THetA2 for tumor purity calculation
 		Set lower MIN_FRAC if interval is not enough and NO_CLUSTERING if it raises
@@ -227,47 +216,43 @@ def _pTheta():
 		affysnps (str): The affymetrix Array snps, or other candidate snp list, in BED6-like format
 			- The first 6 columns should be in BED6 format
 			- The 7th column is reference allele, and 8th column is mutation allele.
-	"""
-	return Diot(
-		desc   = "Tumor purity calculation using THetA2",
-		lang   = params.python.value,
-		input  = 'infile:file, tumbam:file, normbam:file',
-		output = [
-			'outfile:file:{{i.infile | stem}}.theta/{{i.infile | stem}}.purity.txt',
-			'outdir:dir:{{i.infile | stem}}.theta'
-		],
-		args = Diot(
-			theta         = params.theta2.value,
-			bedtools      = params.bedtools.value,
-			bam_readcount = params.bam_readcount.value,
-			samtools      = params.samtools.value,
-			params        = Diot(),
-			ref           = params.ref.value,
-			nthread       = 1,
-			affysnps      = params.affysnps.value,
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, tumbam:file, normbam:file',
+	output = [
+		'outfile:file:{{i.infile | stem}}.theta/{{i.infile | stem}}.purity.txt',
+		'outdir:dir:{{i.infile | stem}}.theta'
+	],
+	args = Diot(
+		theta         = params.theta2.value,
+		bedtools      = params.bedtools.value,
+		bam_readcount = params.bam_readcount.value,
+		samtools      = params.samtools.value,
+		params        = Diot(),
+		ref           = params.ref.value,
+		nthread       = 1,
+		affysnps      = params.affysnps.value,
 	)
+)
 
-@procfactory
-def _pSuperFreq():
-	pSuperFreq              = Proc(desc = "Subclonal analysis with superFreq")
-	pSuperFreq.input        = "indir:dir, gfile:file"
-	pSuperFreq.output       = "outdir:dir:{{i.indir | fn2}}-{{i.gfile | fn2}}.superfreq"
-	pSuperFreq.args.nthread = 1
-	pSuperFreq.args.baits   = '' # target regions
-	pSuperFreq.args.ref     = params.ref.value
-	pSuperFreq.args.resdir  = params.superfreq_res.value
-	pSuperFreq.args.genome  = params.genome.value
-	pSuperFreq.args.params  = Diot(
-		systematicVariance = .02, maxCov = 150, BQoffset = 33,
-		mode = 'exome', splitRun = True
-	)
-	pSuperFreq.lang         = params.Rscript.value
-	return pSuperFreq
+pSuperFreq = proc_factory(
+	desc = "Subclonal analysis with superFreq",
+	lang = params.Rscript.value)
+pSuperFreq.input        = "indir:dir, gfile:file"
+pSuperFreq.output       = "outdir:dir:{{i.indir | fn2}}-{{i.gfile | fn2}}.superfreq"
+pSuperFreq.args.nthread = 1
+pSuperFreq.args.baits   = '' # target regions
+pSuperFreq.args.ref     = params.ref.value
+pSuperFreq.args.resdir  = params.superfreq_res.value
+pSuperFreq.args.genome  = params.genome.value
+pSuperFreq.args.params  = Diot(
+	systematicVariance = .02, maxCov = 150, BQoffset = 33,
+	mode = 'exome', splitRun = True
+)
 
-@procfactory
-def _pClonEvol():
-	"""
+pClonEvol = proc_factory(
+	desc   = "Inferring and visualizing clonal evolution in multi-sample cancer sequencing",
+	config = Diot(annotate = """
 	@input:
 		mutfile: The mutation file or output directory from PyClone.
 			- https://github.com/hdng/clonevol/issues/4#issuecomment-280997440
@@ -281,79 +266,77 @@ def _pClonEvol():
 	@args:
 		inopts: The input options to read the mutation file.
 		params: The parameters for individual `ClonEvol` functions.
-	"""
-	return Diot(
-		desc   = "Inferring and visualizing clonal evolution in multi-sample cancer sequencing",
-		input  = 'mutfile:file, samfile:file, drivers:var',
-		output = 'outdir:dir:{{i.mutfile | stem}}.clonevol',
-		lang   = params.Rscript.value,
-		args   = Diot(
-			# only for clonevol input format
-			inopts   = Diot(rnames = False,  cnames = True),
-			drivers  = [],
-			refgene  = params.refgene.value,
-			bedtools = params.bedtools.value,
-			devpars  = Diot(width = 2000, height = 2000, res = 300),
-			params   = Diot({
-				'plot.variant.clusters': Diot(
-					# see https://rdrr.io/github/hdng/clonevol/man/plot.variant.clusters.html
-				),
-				'plot.cluster.flow': Diot({
-					# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
-				}),
-				'infer.clonal.models': Diot({
-					# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
-					"founding.cluster": 1,
-					"cluster.center": "mean",
-					"sum.p.cutoff": 0.05,
-					"alpha": 0.05,
-				}),
-				'transfer.events.to.consensus.trees': Diot({
-					# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
-					"event.col.name": "gene"
-				}),
-				'convert.consensus.tree.clone.to.branch': Diot({
-					# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
-					"branch.scale": "sqrt"
-				}),
-				'plot.clonal.models': Diot({
-					# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
-					# "clone.shape"                     : 'bell',
-					# "bell.event"                      : True,
-					# "bell.event.label.color"          : 'blue',
-					# "bell.event.label.angle"          : 60,
-					# "clone.time.step.scale"           : 1,
-					# "bell.curve.step"                 : 2,
-					# "merged.tree.plot"                : True,
-					# "tree.node.label.split.character" : None,
-					# "tree.node.shape"                 : 'circle',
-					# "tree.node.size"                  : 30,
-					# "tree.node.text.size"             : 0.5,
-					# "merged.tree.node.size.scale"     : 1.25,
-					# "merged.tree.node.text.size.scale": 2.5,
-					# "merged.tree.cell.frac.ci"        : False,
-					# "mtcab.event.sep.char"            : ',',
-					"mtcab.branch.text.size"          : .8,
-					# "mtcab.branch.width"              : 0.75,
-					# "mtcab.node.size"                 : 3,
-					# "mtcab.node.label.size"           : 1,
-					"mtcab.node.text.size"            : .8,
-					# "cell.plot"                       : True,
-					# "num.cells"                       : 100,
-					# "cell.border.size"                : 0.25,
-					# "cell.border.color"               : 'black',
-					# "clone.grouping"                  : 'horizontal',
-					# "show.score"                      : False,
-					# "cell.frac.ci"                    : True,
-					# "disable.cell.frac"               : False
-				})
+	"""),
+	input  = 'mutfile:file, samfile:file, drivers:var',
+	output = 'outdir:dir:{{i.mutfile | stem}}.clonevol',
+	lang   = params.Rscript.value,
+	args   = Diot(
+		# only for clonevol input format
+		inopts   = Diot(rnames = False,  cnames = True),
+		drivers  = [],
+		refgene  = params.refgene.value,
+		bedtools = params.bedtools.value,
+		devpars  = Diot(width = 2000, height = 2000, res = 300),
+		params   = Diot({
+			'plot.variant.clusters': Diot(
+				# see https://rdrr.io/github/hdng/clonevol/man/plot.variant.clusters.html
+			),
+			'plot.cluster.flow': Diot({
+				# see https://rdrr.io/github/hdng/clonevol/man/plot.cluster.flow.html
+			}),
+			'infer.clonal.models': Diot({
+				# see https://rdrr.io/github/hdng/clonevol/man/infer.clonal.models.html
+				"founding.cluster": 1,
+				"cluster.center": "mean",
+				"sum.p.cutoff": 0.05,
+				"alpha": 0.05,
+			}),
+			'transfer.events.to.consensus.trees': Diot({
+				# see https://rdrr.io/github/hdng/clonevol/man/transfer.events.to.consensus.trees.html
+				"event.col.name": "gene"
+			}),
+			'convert.consensus.tree.clone.to.branch': Diot({
+				# see https://rdrr.io/github/hdng/clonevol/man/convert.consensus.tree.clone.to.branch.html
+				"branch.scale": "sqrt"
+			}),
+			'plot.clonal.models': Diot({
+				# see https://rdrr.io/github/hdng/clonevol/man/plot.clonal.models.html
+				# "clone.shape"                     : 'bell',
+				# "bell.event"                      : True,
+				# "bell.event.label.color"          : 'blue',
+				# "bell.event.label.angle"          : 60,
+				# "clone.time.step.scale"           : 1,
+				# "bell.curve.step"                 : 2,
+				# "merged.tree.plot"                : True,
+				# "tree.node.label.split.character" : None,
+				# "tree.node.shape"                 : 'circle',
+				# "tree.node.size"                  : 30,
+				# "tree.node.text.size"             : 0.5,
+				# "merged.tree.node.size.scale"     : 1.25,
+				# "merged.tree.node.text.size.scale": 2.5,
+				# "merged.tree.cell.frac.ci"        : False,
+				# "mtcab.event.sep.char"            : ',',
+				"mtcab.branch.text.size"          : .8,
+				# "mtcab.branch.width"              : 0.75,
+				# "mtcab.node.size"                 : 3,
+				# "mtcab.node.label.size"           : 1,
+				"mtcab.node.text.size"            : .8,
+				# "cell.plot"                       : True,
+				# "num.cells"                       : 100,
+				# "cell.border.size"                : 0.25,
+				# "cell.border.color"               : 'black',
+				# "clone.grouping"                  : 'horizontal',
+				# "show.score"                      : False,
+				# "cell.frac.ci"                    : True,
+				# "disable.cell.frac"               : False
 			})
-		)
+		})
 	)
+)
 
-@procfactory
-def _pSchism():
-	"""
+pSchism = proc_factory(
+	desc   = 'Infer subclonal hierarchy and the tumor evolution from somatic mutations using SCHISM',
+	config = Diot(annotate = """
 	@description:
 		Infer subclonal hierarchy and the tumor evolution from somatic mutations using SCHISM.
 		See: https://github.com/KarchinLab/SCHISM
@@ -380,29 +363,27 @@ def _pSchism():
 		fishplot (bool): Whether generate a fishplot or not, requires fishplot install with R.
 			- Not implemented yet
 		Rscript  (str) : Path to Rscript to run fishplot
-	"""
-	return Diot(
-		desc   = 'Infer subclonal hierarchy and the tumor evolution from somatic mutations using SCHISM',
-		lang   = params.python.value,
-		input  = 'infile:file, purity:file',
-		output = 'outdir:dir:{{i.infile | stem}}.schism',
-		args   = Diot(
-			schism   = params.schism.value,
-			dot      = params.dot.value,
-			fishplot = True,
-			Rscript  = params.Rscript.value,
-			devpars  = Diot(res = 100),
-			params   = Diot(
-				cellularity_estimator = Diot(),
-				hypothesis_test       = Diot(),
-				genetic_algorithm     = Diot()
-			)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, purity:file',
+	output = 'outdir:dir:{{i.infile | stem}}.schism',
+	args   = Diot(
+		schism   = params.schism.value,
+		dot      = params.dot.value,
+		fishplot = True,
+		Rscript  = params.Rscript.value,
+		devpars  = Diot(res = 100),
+		params   = Diot(
+			cellularity_estimator = Diot(),
+			hypothesis_test       = Diot(),
+			genetic_algorithm     = Diot()
 		)
 	)
+)
 
-@procfactory
-def _pLichee():
-	"""
+pLichee = proc_factory(
+	desc   = 'Fast and scalable inference of multi-sample cancer lineages using LICHeE',
+	config = Diot(annotate = """
 	@description:
 		Fast and scalable inference of multi-sample cancer lineages using LICHeE.
 		See: https://github.com/pwwang/lichee
@@ -417,29 +398,24 @@ def _pLichee():
 		dot (str): Path to dot to generate figures
 		params (Diot): Other parameters for `lichee`.
 			- Set a larger `e` if you have noisy data. Default is 0.1.
-	"""
-	return Diot(
-		desc   = 'Fast and scalable inference of multi-sample cancer lineages using LICHeE',
-		input  = 'infile:file',
-		output = 'outdir:dir:{{i.infile | stem}}.lichee',
-		lang   = params.python.value,
-		args   = Diot(
-			dot      = params.dot.value,
-			lichee   = params.lichee.value,
-			fishplot = True,
-			Rscript  = params.Rscript.value,
-			devpars  = Diot(res = 100),
-			params   = Diot(maxVAFAbsent = 0.005, minVAFPresent = 0.005)
-		)
+	"""),
+	input  = 'infile:file',
+	output = 'outdir:dir:{{i.infile | stem}}.lichee',
+	lang   = params.python.value,
+	args   = Diot(
+		dot      = params.dot.value,
+		lichee   = params.lichee.value,
+		fishplot = True,
+		Rscript  = params.Rscript.value,
+		devpars  = Diot(res = 100),
+		params   = Diot(maxVAFAbsent = 0.005, minVAFPresent = 0.005)
 	)
+)
 
-@procfactory
-def _pPyClone2ClonEvol():
-	pPyClone2ClonEvol               = Proc(desc = "Convert PyClone results to ClonEvol input format.")
-	pPyClone2ClonEvol.input         = 'indir:dir'
-	pPyClone2ClonEvol.output        = 'outfile:file:{{i.indir | fn}}.clonevol.txt'
-	pPyClone2ClonEvol.args.refgene  = params.refgene.value
-	pPyClone2ClonEvol.args.drivers  = []
-	pPyClone2ClonEvol.args.bedtools = params.bedtools.value
-	pPyClone2ClonEvol.lang          = params.python.value
-	return pPyClone2ClonEvol
+pPyClone2ClonEvol               = Proc(desc = "Convert PyClone results to ClonEvol input format.")
+pPyClone2ClonEvol.input         = 'indir:dir'
+pPyClone2ClonEvol.output        = 'outfile:file:{{i.indir | fn}}.clonevol.txt'
+pPyClone2ClonEvol.args.refgene  = params.refgene.value
+pPyClone2ClonEvol.args.drivers  = []
+pPyClone2ClonEvol.args.bedtools = params.bedtools.value
+pPyClone2ClonEvol.lang          = params.python.value

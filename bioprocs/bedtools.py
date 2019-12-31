@@ -1,100 +1,93 @@
 """Utilities from bedtools"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from .utils import fs2name
-from . import params, delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory()).exports('_p*', 'p*')
+from . import params, proc_factory
 
-@procfactory
-def _pBedGetfasta():
-	"""
-	@name:
-		pBedGetfasta
-	@description:
-		`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.
-	@input:
-		`infile:file`: The input bed file
-	@output:
-		`outfile:file`: The generated fasta file
-	@args:
-		`ref`     : The fasta file
-		`bedtools`: The bedtools executable,                  default: `<params.bedtools>`
-		`params`  : Other parameters for `bedtools getfasta`, default: ""
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedGetfasta                 = Proc(desc = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.')
-	pBedGetfasta.input           = "infile:file"
-	pBedGetfasta.output          = "outfile:file:{{i.infile | fn}}.fa"
-	pBedGetfasta.args.samtools   = params.samtools.value
-	pBedGetfasta.args.bedtools   = params.bedtools.value
-	pBedGetfasta.args.params     = Diot(name = True)
-	pBedGetfasta.args.ref        = params.ref.value
-	pBedGetfasta.beforeCmd       = '''
-	{{"reference.bash" | bashimport}}
-	export samtools={{args.samtools | squote}}
-	reference fasta {{args.ref | squote}}
-	'''
-	pBedGetfasta.lang   = params.python.value
-	pBedGetfasta.script = "file:scripts/bedtools/pBedGetfasta.py"
-	return pBedGetfasta
+pBedGetfasta = proc_factory(
+	desc   = '`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedGetfasta
+@description:
+	`bedtools getfasta` extracts sequences from a FASTA file for each of the intervals defined in a BED file.
+@input:
+	`infile:file`: The input bed file
+@output:
+	`outfile:file`: The generated fasta file
+@args:
+	`ref`     : The fasta file
+	`bedtools`: The bedtools executable,                  default: `<params.bedtools>`
+	`params`  : Other parameters for `bedtools getfasta`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedGetfasta.input             = "infile:file"
+pBedGetfasta.output            = "outfile:file:{{i.infile | fn}}.fa"
+pBedGetfasta.args.samtools     = params.samtools.value
+pBedGetfasta.args.bedtools     = params.bedtools.value
+pBedGetfasta.args.params       = Diot(name = True)
+pBedGetfasta.args.ref          = params.ref.value
+pBedGetfasta.config.runcmd_pre = '''
+{{"reference.bash" | bashimport}}
+export samtools={{args.samtools | squote}}
+reference fasta {{args.ref | squote}}
+'''
 
 
-@procfactory
-def _pBedClosest():
-	"""
-	@name:
-		pBedClosest
-	@description:
-		Similar to intersect, closest searches for overlapping features in A and B. In the event that no feature in B overlaps the current feature in A, closest will report the nearest (that is, least genomic distance from the start or end of A) feature in B. For example, one might want to find which is the closest gene to a significant GWAS polymorphism. Note that closest will report an overlapping feature as the closest that is, it does not restrict to closest non-overlapping feature. The following iconic cheatsheet summarizes the funcitonality available through the various optyions provided by the closest tool.
-	@input:
-		`afile:file`: The -a file
-		`bfile:file`: The -b file
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools closest`, default: ""
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedClosest               = Proc(desc = 'Find the closest elements')
-	pBedClosest.input         = "afile:file, bfile:file"
-	pBedClosest.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
-	pBedClosest.args.bedtools = params.bedtools.value
-	pBedClosest.args.params   = Diot()
-	pBedClosest.script        = "file:scripts/bedtools/pBedClosest.py"
-	return pBedClosest
+pBedClosest = proc_factory(
+	desc   = 'Find the closest elements',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedClosest
+@description:
+	Similar to intersect, closest searches for overlapping features in A and B. In the event that no feature in B overlaps the current feature in A, closest will report the nearest (that is, least genomic distance from the start or end of A) feature in B. For example, one might want to find which is the closest gene to a significant GWAS polymorphism. Note that closest will report an overlapping feature as the closest that is, it does not restrict to closest non-overlapping feature. The following iconic cheatsheet summarizes the funcitonality available through the various optyions provided by the closest tool.
+@input:
+	`afile:file`: The -a file
+	`bfile:file`: The -b file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools closest`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedClosest.input         = "afile:file, bfile:file"
+pBedClosest.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
+pBedClosest.args.bedtools = params.bedtools.value
+pBedClosest.args.params   = Diot()
 
-@procfactory
-def _pBedClosest2():
-	"""
-	@name:
-		pBedClosest2
-	@description:
-		Multiple b-file version of pBedClosest
-	@input:
-		`afile:file`:   The -a file
-		`bfiles:files`: The -b files
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools closest`, default: ""
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedClosest2               = Proc(desc = 'Find the closest elements')
-	pBedClosest2.input         = "afile:file, bfiles:files"
-	pBedClosest2.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
-	pBedClosest2.args.bedtools = params.bedtools.value
-	pBedClosest2.args.params   = Diot()
-	pBedClosest2.script        = "file:scripts/bedtools/pBedClosest2.py"
-	return pBedClosest2
+pBedClosest2 = proc_factory(
+	desc   = 'Find the closest elements',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedClosest2
+@description:
+	Multiple b-file version of pBedClosest
+@input:
+	`afile:file`:   The -a file
+	`bfiles:files`: The -b files
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools closest`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedClosest2.input         = "afile:file, bfiles:files"
+pBedClosest2.output        = "outfile:file:{{i.afile | fn}}.closest.bt"
+pBedClosest2.args.bedtools = params.bedtools.value
+pBedClosest2.args.params   = Diot()
 
-@procfactory
-def _pBedFlank():
-	"""
+pBedFlank = proc_factory(
+	desc   = 'Create two new flanking intervals for each interval in a BED file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@description:
 		`bedtools flank` will create two new flanking intervals for each interval in a BED file. Note that flank will restrict the created flanking intervals to the size of the chromosome (i.e. no start < 0 and no end > chromosome size).
 	@input:
@@ -110,23 +103,21 @@ def _pBedFlank():
 			- But if `args.extend = False`, it will be `chr1:90-100` and `chr1:200-210`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	return Diot(
-		desc   = 'Create two new flanking intervals for each interval in a BED file.',
-		lang   = params.python.value,
-		input  = "infile:file",
-		output = "outfile:file:{{i.infile | fn}}.flank.bed",
-		args   = Diot(
-			extend   = False,
-			gsize    = params.gsize.value,
-			params   = Diot(),
-			bedtools = params.bedtools.value
-		)
+	"""),
+	input  = "infile:file",
+	output = "outfile:file:{{i.infile | fn}}.flank.bed",
+	args   = Diot(
+		extend   = False,
+		gsize    = params.gsize.value,
+		params   = Diot(),
+		bedtools = params.bedtools.value
 	)
+)
 
-@procfactory
-def _pBedIntersect():
-	"""
+pBedIntersect = proc_factory(
+	desc   = 'The wrapper of "bedtools intersect" with single input b file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedIntersect
 	@description:
@@ -141,19 +132,16 @@ def _pBedIntersect():
 		`params`:   Other parameters for `bedtools intersect`, default: ""
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedIntersect                     = Proc(desc = 'The wrapper of "bedtools intersect" with single input b file.')
-	pBedIntersect.input               = "afile:file, bfile:file"
-	pBedIntersect.output              = "outfile:file:{{i.afile | fn}}.intersect.bt"
-	pBedIntersect.args.bedtools       = params.bedtools.value
-	pBedIntersect.args.params         = Diot()
-	pBedIntersect.lang                = params.python.value
-	pBedIntersect.script              = 'file:scripts/bedtools/pBedIntersect.py'
-	return pBedIntersect
+	"""))
+pBedIntersect.input         = "afile:file, bfile:file"
+pBedIntersect.output        = "outfile:file:{{i.afile | fn}}.intersect.bt"
+pBedIntersect.args.bedtools = params.bedtools.value
+pBedIntersect.args.params   = Diot()
 
-@procfactory
-def _pBedIntersect2():
-	"""
+pBedIntersect2 = proc_factory(
+	desc   = 'The wrapper of "bedtools intersect" with multiple input b files.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedIntersect2
 	@description:
@@ -168,19 +156,16 @@ def _pBedIntersect2():
 		`params`:   Other parameters for `bedtools intersect`, default: ""
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedIntersect2               = Proc(desc = 'The wrapper of "bedtools intersect" with multiple input b files.')
-	pBedIntersect2.input         = "afile:file, bfiles:files"
-	pBedIntersect2.output        = "outfile:file:{{i.afile | fn}}.intersect2.bt"
-	pBedIntersect2.args.bedtools = params.bedtools.value
-	pBedIntersect2.args.params   = Diot()
-	pBedIntersect2.lang          = params.python.value
-	pBedIntersect2.script        = 'file:scripts/bedtools/pBedIntersect2.py'
-	return pBedIntersect2
+	"""))
+pBedIntersect2.input         = "afile:file, bfiles:files"
+pBedIntersect2.output        = "outfile:file:{{i.afile | fn}}.intersect2.bt"
+pBedIntersect2.args.bedtools = params.bedtools.value
+pBedIntersect2.args.params   = Diot()
 
-@procfactory
-def _pBedMakewindows():
-	"""
+pBedMakewindows = proc_factory(
+	desc   = 'Makes adjacent or sliding windows across a genome or BED file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedMakewindows
 	@description:
@@ -195,104 +180,93 @@ def _pBedMakewindows():
 		`params`:   Other parameters for `bedtools makewindows`, default: `Diot()`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedMakewindows               = Proc(desc = 'Makes adjacent or sliding windows across a genome or BED file.')
-	pBedMakewindows.input         = "infile:file"
-	pBedMakewindows.output        = "outfile:file:{{i.infile | fn}}.window.bed"
-	pBedMakewindows.lang          = params.python.value
-	pBedMakewindows.args.params   = Diot()
-	pBedMakewindows.args.bedtools = params.bedtools.value
-	pBedMakewindows.args.intype   = 'bed'
-	pBedMakewindows.script        = "file:scripts/bedtools/pBedMakewindows.py"
-	return pBedMakewindows
+	"""))
+pBedMakewindows.input         = "infile:file"
+pBedMakewindows.output        = "outfile:file:{{i.infile | fn}}.window.bed"
+pBedMakewindows.args.params   = Diot()
+pBedMakewindows.args.bedtools = params.bedtools.value
+pBedMakewindows.args.intype   = 'bed'
 
 # region pBedMerge2
-@procfactory
-def _pBedMerge():
-	"""
-	@name:
-		pBedMerge
-	@description:
-		`bedtools merge` combines overlapping or book-ended features in an interval file into a single feature which spans all of the combined features.
-	@input:
-		`infile:file`: The input file
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable,               default: `<params.bedtools>`
-		`params`  : Other parameters for `bedtools merge`, default: {}
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedMerge               = Proc(desc = 'Merge regions in a bed file using `bedtools merge`.')
-	pBedMerge.input         = "infile:file"
-	pBedMerge.output        = "outfile:file:{{i.infile | fn}}.merged.bed"
-	pBedMerge.args.bedtools = params.bedtools.value
-	pBedMerge.args.params   = Diot()
-	pBedMerge.lang          = params.python.value
-	pBedMerge.script        = "file:scripts/bedtools/pBedMerge.py"
-	# endregion
-	return pBedMerge
+pBedMerge = proc_factory(
+	desc   = 'Merge regions in a bed file using `bedtools merge`.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedMerge
+@description:
+	`bedtools merge` combines overlapping or book-ended features in an interval file into a single feature which spans all of the combined features.
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable,               default: `<params.bedtools>`
+	`params`  : Other parameters for `bedtools merge`, default: {}
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedMerge.input         = "infile:file"
+pBedMerge.output        = "outfile:file:{{i.infile | fn}}.merged.bed"
+pBedMerge.args.bedtools = params.bedtools.value
+pBedMerge.args.params   = Diot()
+# endregion
 
 # region pBedMerge2
-@procfactory
-def _pBedMerge2():
-	"""
-	@name:
-		pBedMerge2
-	@description:
-		A multi-input file model of pBedMerge: Merge multiple input files.
-	@input:
-		`infiles:files`: The input files
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable,               default: `<params.bedtools>`
-		`params`  : Other parameters for `bedtools merge`, default: {}
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedMerge2               = Proc(desc = 'A multi-input file model of `pBedMerge`: Merge multiple input files.')
-	pBedMerge2.input         = "infiles:files"
-	pBedMerge2.output        = "outfile:file:{{i.infiles | fs2name}}.merged.bed"
-	pBedMerge2.args.bedtools = params.bedtools.value
-	pBedMerge2.args.params   = Diot()
-	pBedMerge2.envs.fs2name  = fs2name
-	pBedMerge2.lang          = params.python.value
-	pBedMerge2.script        = "file:scripts/bedtools/pBedMerge2.py"
-	# endregion
-	return pBedMerge2
+pBedMerge2 = proc_factory(
+	desc   = 'A multi-input file model of `pBedMerge`: Merge multiple input files.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedMerge2
+@description:
+	A multi-input file model of pBedMerge: Merge multiple input files.
+@input:
+	`infiles:files`: The input files
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable,               default: `<params.bedtools>`
+	`params`  : Other parameters for `bedtools merge`, default: {}
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedMerge2.input         = "infiles:files"
+pBedMerge2.output        = "outfile:file:{{i.infiles | fs2name}}.merged.bed"
+pBedMerge2.args.bedtools = params.bedtools.value
+pBedMerge2.args.params   = Diot()
+pBedMerge2.envs.fs2name  = fs2name
+# endregion
 
-@procfactory
-def _pBedMultiinter():
-	"""
-	@name:
-		pBedMultiinter
-	@description:
-		Identifies common intervals among multiple BED/GFF/VCF files.
-	@input:
-		`infiles:files`: The input files
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools multiinter`, default: ""
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedMultiinter               = Proc(desc = 'Identifies common intervals among multiple BED/GFF/VCF files.')
-	pBedMultiinter.input         = "infiles:files"
-	pBedMultiinter.output        = "outfile:file:{{i.infiles | fs2name}}.multiinter.bt"
-	pBedMultiinter.args.bedtools = params.bedtools.value
-	pBedMultiinter.args.params   = Diot()
-	pBedMultiinter.envs.fs2name  = fs2name
-	pBedMultiinter.script        = "file:scripts/bedtools/pBedMultiinter.py"
-	return pBedMultiinter
+pBedMultiinter = proc_factory(
+	desc   = 'Identifies common intervals among multiple BED/GFF/VCF files.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedMultiinter
+@description:
+	Identifies common intervals among multiple BED/GFF/VCF files.
+@input:
+	`infiles:files`: The input files
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools multiinter`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedMultiinter.input         = "infiles:files"
+pBedMultiinter.output        = "outfile:file:{{i.infiles | fs2name}}.multiinter.bt"
+pBedMultiinter.args.bedtools = params.bedtools.value
+pBedMultiinter.args.params   = Diot()
+pBedMultiinter.envs.fs2name  = fs2name
 
 # region pBedRandom
-@procfactory
-def _pBedRandom():
-	"""
+pBedRandom = proc_factory(
+	desc   = 'Generate a random set of intervals in BED format.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedRandom
 	@description:
@@ -307,21 +281,18 @@ def _pBedRandom():
 		`gsize`   : The chromsize file.
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedRandom               = Proc(desc = 'Generate a random set of intervals in BED format.')
-	pBedRandom.input         = "l, n"
-	pBedRandom.output        = "outfile:file:random.L{{i.l}}.N{{i.n}}.S{{args.seed}}.bed"
-	pBedRandom.args.seed     = None
-	pBedRandom.args.bedtools = params.bedtools.value
-	pBedRandom.args.gsize    = params.gsize.value
-	pBedRandom.lang          = params.python.value
-	pBedRandom.script        = "file:scripts/bedtools/pBedRandom.py"
-	# endregion
-	return pBedRandom
+	"""))
+pBedRandom.input         = "l, n"
+pBedRandom.output        = "outfile:file:random.L{{i.l}}.N{{i.n}}.S{{args.seed}}.bed"
+pBedRandom.args.seed     = None
+pBedRandom.args.bedtools = params.bedtools.value
+pBedRandom.args.gsize    = params.gsize.value
+# endregion
 
-@procfactory
-def _pBedShift():
-	"""
+pBedShift = proc_factory(
+	desc   = '`bedtools shift` will move each feature in a feature file by a user-defined number of bases.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedShift
 	@description:
@@ -336,105 +307,96 @@ def _pBedShift():
 		`params`  : Other parameters for `bedtools shift`. Default: ``
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedShift               = Proc(desc = '`bedtools shift` will move each feature in a feature file by a user-defined number of bases.')
-	pBedShift.input         = "infile:file"
-	pBedShift.output        = "outfile:file:{{infile | fn}}.shifted.bed"
-	pBedShift.args.bedtools = params.bedtools.value
-	pBedShift.args.gsize    = params.gsize.value
-	pBedShift.args.params   = Diot()
-	pBedShift.script        = "file:scripts/bedtools/pBedShift.py"
-	return pBedShift
+	"""))
+pBedShift.input         = "infile:file"
+pBedShift.output        = "outfile:file:{{infile | fn}}.shifted.bed"
+pBedShift.args.bedtools = params.bedtools.value
+pBedShift.args.gsize    = params.gsize.value
+pBedShift.args.params   = Diot()
 
-@procfactory
-def _pBedShuffle():
-	"""
-	@name:
-		pBedShuffle
-	@description:
-		`bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file. One can also provide an exclusions BED/GFF/VCF file that lists regions where you do not want the permuted features to be placed. For example, one might want to prevent features from being placed in known genome gaps. shuffle is useful as a null basis against which to test the significance of associations of one feature with another.
-	@input:
-		`infile:file`: The input file
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`  : Other parameters for `bedtools shuffle`, default: ""
-		`gsize`   : The chromsize file. Default: `params.gsize`
-		`n`       : Only return top `n` records (act like sampling). Default: `0`
-			- `0`/`None` will return all records
-			- `n<1` will return proportion of the records
-			- `n>=1` will return top `n` records
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedShuffle               = Proc(desc = 'Randomly permute the genomic locations of a BED file using `bedtools shuffle`')
-	pBedShuffle.input         = "infile:file"
-	pBedShuffle.output        = "outfile:file:{{i.infile | fn}}.shuffled.bed"
-	pBedShuffle.args.bedtools = params.bedtools.value
-	pBedShuffle.args.n        = 0
-	pBedShuffle.args.gsize    = params.gsize.value
-	pBedShuffle.args.seed     = False
-	pBedShuffle.args.params   = Diot()
-	pBedShuffle.lang          = params.python.value
-	pBedShuffle.script        = "file:scripts/bedtools/pBedShuffle.py"
-	return pBedShuffle
+pBedShuffle = proc_factory(
+	desc = 'Randomly permute the genomic locations of a BED file using `bedtools shuffle`',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedShuffle
+@description:
+	`bedtools shuffle` will randomly permute the genomic locations of a feature file among a genome defined in a genome file. One can also provide an exclusions BED/GFF/VCF file that lists regions where you do not want the permuted features to be placed. For example, one might want to prevent features from being placed in known genome gaps. shuffle is useful as a null basis against which to test the significance of associations of one feature with another.
+@input:
+	`infile:file`: The input file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`  : Other parameters for `bedtools shuffle`, default: ""
+	`gsize`   : The chromsize file. Default: `params.gsize`
+	`n`       : Only return top `n` records (act like sampling). Default: `0`
+		- `0`/`None` will return all records
+		- `n<1` will return proportion of the records
+		- `n>=1` will return top `n` records
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedShuffle.input         = "infile:file"
+pBedShuffle.output        = "outfile:file:{{i.infile | fn}}.shuffled.bed"
+pBedShuffle.args.bedtools = params.bedtools.value
+pBedShuffle.args.n        = 0
+pBedShuffle.args.gsize    = params.gsize.value
+pBedShuffle.args.seed     = False
+pBedShuffle.args.params   = Diot()
 
-@procfactory
-def _pBedSubtract():
-	"""
-	@name:
-		pBedSubtract
-	@description:
-		`bedtools subtract` searches for features in B that overlap A. If an overlapping feature is found in B, the overlapping portion is removed from A and the remaining portion of A is reported. If a feature in B overlaps all of a feature in A, the A feature will not be reported.
-	@input:
-		`afile:file`: The a file
-		`bfile:file`: The b file
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools subtract`, default: ""
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedSubtract               = Proc(desc = '`bedtools subtract` searches for features in B that overlap A.')
-	pBedSubtract.input         = "afile:file, bfile:file"
-	pBedSubtract.output        = "outfile:file:{{afile | fn}}.subtracted.bed"
-	pBedSubtract.args.bedtools = params.bedtools.value
-	pBedSubtract.args.params   = Diot()
-	pBedSubtract.script        = "file:scripts/bedtools/pBedSubtract.py"
-	return pBedSubtract
+pBedSubtract = proc_factory(
+	desc = '`bedtools subtract` searches for features in B that overlap A.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedSubtract
+@description:
+	`bedtools subtract` searches for features in B that overlap A. If an overlapping feature is found in B, the overlapping portion is removed from A and the remaining portion of A is reported. If a feature in B overlaps all of a feature in A, the A feature will not be reported.
+@input:
+	`afile:file`: The a file
+	`bfile:file`: The b file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools subtract`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedSubtract.input         = "afile:file, bfile:file"
+pBedSubtract.output        = "outfile:file:{{afile | fn}}.subtracted.bed"
+pBedSubtract.args.bedtools = params.bedtools.value
+pBedSubtract.args.params   = Diot()
 
-@procfactory
-def _pBedWindow():
-	"""
-	@name:
-		pBedWindow
-	@description:
-		Similar to `bedtools intersect`, `window` searches for overlapping features in A and B. However, window adds a specified number (1000, by default) of base pairs upstream and downstream of each feature in A. In effect, this allows features in B that are near features in A to be detected.
-	@input:
-		`afile:file`: The a file
-		`bfile:file`: The b file
-	@output:
-		`outfile:file`: The result file
-	@args:
-		`bedtools`: The bedtools executable, default: `<params.bedtools>`
-		`params`:   Other parameters for `bedtools window`, default: ""
-	@requires:
-		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedWindow               = Proc(desc = 'Similar to `bedtools intersect`, `window` searches for overlapping features in A and B.')
-	pBedWindow.input         = "afile:file, bfile:file"
-	pBedWindow.output        = "outfile:file:{{afile | fn}}.window.bed"
-	pBedWindow.args.bedtools = params.bedtools.value
-	pBedWindow.args.params   = Diot()
-	pBedWindow.script        = "file:scripts/bedtools/pBedWindow.py"
-	return pBedWindow
+pBedWindow = proc_factory(
+	desc = 'Similar to `bedtools intersect`, `window` searches for overlapping features in A and B.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
+@name:
+	pBedWindow
+@description:
+	Similar to `bedtools intersect`, `window` searches for overlapping features in A and B. However, window adds a specified number (1000, by default) of base pairs upstream and downstream of each feature in A. In effect, this allows features in B that are near features in A to be detected.
+@input:
+	`afile:file`: The a file
+	`bfile:file`: The b file
+@output:
+	`outfile:file`: The result file
+@args:
+	`bedtools`: The bedtools executable, default: `<params.bedtools>`
+	`params`:   Other parameters for `bedtools window`, default: ""
+@requires:
+	[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
+"""))
+pBedWindow.input         = "afile:file, bfile:file"
+pBedWindow.output        = "outfile:file:{{afile | fn}}.window.bed"
+pBedWindow.args.bedtools = params.bedtools.value
+pBedWindow.args.params   = Diot()
 
-@procfactory
-def _pBedGenomecov():
-	"""
+pBedGenomecov = proc_factory(
+	desc = '`bedtools genomecov` computes histograms',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedGenomecov
 	@description:
@@ -449,18 +411,16 @@ def _pBedGenomecov():
 		`params`:   Other parameters for `bedtools genomecov`, default: `Diot(bg = True)`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedGenomecov               = Proc(desc = '`bedtools genomecov` computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature coverage (e.g., aligned sequences) for a given genome.')
-	pBedGenomecov.input         = "infile:file"
-	pBedGenomecov.output        = "outfile:file:{{infile | fn}}.genomecov.bt"
-	pBedGenomecov.args.bedtools = params.bedtools.value
-	pBedGenomecov.args.params   = Diot(bg = True)
-	pBedGenomecov.script        = "file:scripts/bedtools/pBedGenomecov.py"
-	return pBedGenomecov
+	"""))
+pBedGenomecov.input         = "infile:file"
+pBedGenomecov.output        = "outfile:file:{{infile | fn}}.genomecov.bt"
+pBedGenomecov.args.bedtools = params.bedtools.value
+pBedGenomecov.args.params   = Diot(bg = True)
 
-@procfactory
-def _pBedCluster():
-	"""
+pBedCluster = proc_factory(
+	desc   = 'Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBedCluster
 	@description:
@@ -474,12 +434,8 @@ def _pBedCluster():
 		`params`:   Other parameters for `bedtools cluster`, default: `Diot()`
 	@requires:
 		[bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
-	"""
-	pBedCluster               = Proc(desc = 'Similar to merge, cluster report each set of overlapping or "book-ended" features in an interval file.')
-	pBedCluster.input         = "infile:file"
-	pBedCluster.output        = "outfile:file:{{infile | fn}}.clustered.bt"
-	pBedCluster.args.bedtools = params.bedtools.value
-	pBedCluster.args.params   = Diot()
-	pBedCluster.lang          = params.python.value
-	pBedCluster.script        = "file:scripts/bedtools/pBedCluster.py"
-	return pBedCluster
+	"""))
+pBedCluster.input         = "infile:file"
+pBedCluster.output        = "outfile:file:{{infile | fn}}.clustered.bt"
+pBedCluster.args.bedtools = params.bedtools.value
+pBedCluster.args.params   = Diot()

@@ -1,6 +1,6 @@
 from hashlib import sha256
 from os import path
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import shell2 as shell
 
 seed         = {{i.seed | repr}}

@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils.snp import snpinfo
 
 infile   = {{i.snpfile | quote}}

@@ -1,14 +1,11 @@
 """Tabix utilities"""
 from pyppl import Proc, Diot
 #from .utils import helpers, runcmd
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pTabix():
-	"""
+pTabix = proc_factory(
+	desc = 'Use tabix to extract information.',
+	config = Diot(annotate = """
 	@name:
 		pTabix
 	@description:
@@ -21,19 +18,16 @@ def _pTabix():
 	@args:
 		`tabix`: The path to `tabix`
 		`params`: Other params for `tabix`
-	"""
-	pTabix             = Proc(desc = 'Use tabix to extract information.')
-	pTabix.input       = "infile, region"
-	pTabix.output      = "outfile:file:{{i.infile | fn | fn}}-{{job.index}}{% if i.infile.endswith('.gz') %}{{i.infile | fn | ext}}{% else %}{{i.infile | ext}}{% endif %}"
-	pTabix.args.tabix  = params.tabix.value
-	pTabix.args.params = Diot(h = True)
-	pTabix.lang        = params.python.value
-	pTabix.script      = "file:scripts/tabix/pTabix.py"
-	return pTabix
+	"""))
+pTabix.input       = "infile, region"
+pTabix.output      = "outfile:file:{{i.infile | fn | fn}}-{{job.index}}{% if i.infile.endswith('.gz') %}{{i.infile | fn | ext}}{% else %}{{i.infile | ext}}{% endif %}"
+pTabix.args.tabix  = params.tabix.value
+pTabix.args.params = Diot(h = True)
+pTabix.lang        = params.python.value
 
-@procfactory
-def _pTabixIndex():
-	"""
+pTabixIndex = proc_factory(
+	desc = 'Generate tabix index file',
+	config = Diot(annotate = """
 	@name:
 		pTabixIndex
 	@description:
@@ -47,16 +41,13 @@ def _pTabixIndex():
 	@args:
 		`tabix`: The path to `tabix`
 		`params`: Other params for `tabix`
-	"""
-	pTabixIndex        = Proc(desc = 'Generate tabix index file')
-	pTabixIndex.input  = "infile:file"
-	pTabixIndex.output = [
-		"outfile:file:{{i.infile | bn}}{% if args.gz %}.gz{% endif %}",
-		"outidx:file:{{i.infile  | bn}}{% if args.gz %}.gz{% endif %}.tbi"
-	]
-	pTabixIndex.args.gz     = True
-	pTabixIndex.args.tabix  = params.tabix.value
-	pTabixIndex.args.params = Diot()
-	pTabixIndex.lang        = params.python.value
-	pTabixIndex.script      = "file:scripts/tabix/pTabixIndex.py"
-	return pTabixIndex
+	"""))
+pTabixIndex.input  = "infile:file"
+pTabixIndex.output = [
+	"outfile:file:{{i.infile | bn}}{% if args.gz %}.gz{% endif %}",
+	"outidx:file:{{i.infile  | bn}}{% if args.gz %}.gz{% endif %}.tbi"
+]
+pTabixIndex.args.gz     = True
+pTabixIndex.args.tabix  = params.tabix.value
+pTabixIndex.args.params = Diot()
+pTabixIndex.lang        = params.python.value

@@ -3,7 +3,7 @@ from bioprocs.utils import shell2 as shell, FileConn
 from bioprocs.utils.reference import vcfIndex
 from bioprocs.utils.parallel import Parallel
 
-{% from pyppl.utils import alwaysList %}
+{% from pyppl.utils import always_list %}
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}
 sortby   = {{args.sortby | quote}}
@@ -11,7 +11,7 @@ picard   = {{args.picard | quote}}
 tabix    = {{args.tabix | quote}}
 nthread  = {{args.nthread | repr}}
 gsize    = {{args.gsize | quote}}
-chrorder = {{args.chrorder | alwaysList | repr}}
+chrorder = {{args.chrorder | always_list | repr}}
 tool     = {{args.tool | quote}}
 
 shell.load_config(picard = picard)

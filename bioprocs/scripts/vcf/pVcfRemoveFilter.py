@@ -1,5 +1,5 @@
 from pysam import VariantFile as Vcf
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import alwaysList
 
 infile   = {{ i.infile | quote}}

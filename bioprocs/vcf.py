@@ -1,16 +1,15 @@
 """A set of processes to generate/process vcf files"""
 from os import path
 from glob import glob
-from pyppl import Proc, Diot
-from . import params
+from pyppl import Proc
+from diot import Diot
 from .utils import fs2name
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pVcfFilter():
-	"""
+pVcfFilter = proc_factory(
+	desc   = 'Filter records in vcf file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pVcfFilter
 	@description:
@@ -50,20 +49,16 @@ def _pVcfFilter():
 		`keep`   : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
 	@requires:
 		[`pyvcf`](https://github.com/jamescasbon/PyVCF)
-	"""
-	pVcfFilter              = Proc(desc = 'Filter records in vcf file.')
-	pVcfFilter.input        = "infile:file"
-	pVcfFilter.output       = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
-	pVcfFilter.args.filters = Diot()
-	pVcfFilter.args.gz      = False
-	pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
-	pVcfFilter.lang         = params.python.value
-	pVcfFilter.script       = "file:scripts/vcf/pVcfFilter.py"
-	return pVcfFilter
+	"""))
+pVcfFilter.input        = "infile:file"
+pVcfFilter.output       = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
+pVcfFilter.args.filters = Diot()
+pVcfFilter.args.gz      = False
+pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
 
-@procfactory
-def _pVcfUnique():
-	"""
+pVcfUnique = proc_factory(
+	desc = 'Remove duplicate mutations from a VCF file.',
+	config = Diot(annotate = """
 	@name:
 		pVcfUnique
 	@description:
@@ -88,20 +83,17 @@ def _pVcfUnique():
 		`gz`: Bgzip the output vcf file or not. Default: `False`
 	@requires:
 		`pyvcf`
-	"""
-	pVcfUnique            = Proc(desc = 'Remove duplicate mutations from a VCF file.')
-	pVcfUnique.input      = 'infile:file'
-	pVcfUnique.output     = 'outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}'
-	pVcfUnique.args.upart = ['CHROM', 'POS', 'ID', 'REF', 'ALT']
-	pVcfUnique.args.keep  = 'first' # last, random, snp, bisnp, bialt
-	pVcfUnique.args.gz    = False
-	pVcfUnique.lang       = params.python.value
-	pVcfUnique.script     = "file:scripts/vcf/pVcfUnique.py"
-	return pVcfUnique
+	"""))
+pVcfUnique.input      = 'infile:file'
+pVcfUnique.output     = 'outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}'
+pVcfUnique.args.upart = ['CHROM', 'POS', 'ID', 'REF', 'ALT']
+pVcfUnique.args.keep  = 'first' # last, random, snp, bisnp, bialt
+pVcfUnique.args.gz    = False
+pVcfUnique.lang       = params.python.value
 
-@procfactory
-def _pVcfRemoveFilter():
-	"""
+pVcfRemoveFilter = proc_factory(
+	desc = 'Remove one or more filters in vcf files',
+	config = Diot(annotate = """
 	@name:
 		pVcfRemoveFilter
 	@description:
@@ -113,18 +105,15 @@ def _pVcfRemoveFilter():
 	@args:
 		`rmfilter`: The filters to remove. If None, ALL filters will be removed!
 			- A `list` of filter names.
-	"""
-	pVcfRemoveFilter               = Proc(desc = 'Remove one or more filters in vcf files')
-	pVcfRemoveFilter.input         = 'infile:file'
-	pVcfRemoveFilter.output        = 'outfile:file:{{i.infile | bn}}'
-	pVcfRemoveFilter.args.rmfilter = None # remove all filters
-	pVcfRemoveFilter.lang          = params.python.value
-	pVcfRemoveFilter.script        = "file:scripts/vcf/pVcfRemoveFilter.py"
-	return pVcfRemoveFilter
+	"""))
+pVcfRemoveFilter.input         = 'infile:file'
+pVcfRemoveFilter.output        = 'outfile:file:{{i.infile | bn}}'
+pVcfRemoveFilter.args.rmfilter = None # remove all filters
+pVcfRemoveFilter.lang          = params.python.value
 
-@procfactory
-def _pVcf():
-	"""
+pVcf = proc_factory(
+	desc   = 'Manipulate a VCF file',
+	config = Diot(annotate = """
 	@name:
 		pVcf
 	@description:
@@ -139,23 +128,21 @@ def _pVcf():
 		`vcf`: A string of lambda function to vcf object itself (cyvcf2.VCF)
 		`record`: A string of lambda function to manipulate the record (cyvcf.Variant)
 		`gz`: Gzip the ouput file
-	"""
-	return Diot(
-		desc   = 'Manipulate a VCF file',
-		lang   = params.python.value,
-		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | bn}}',
-		args   = Diot(
-			helper = '',
-			vcf    = None,
-			record = None,
-			gz     = False
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | bn}}',
+	args   = Diot(
+		helper = '',
+		vcf    = None,
+		record = None,
+		gz     = False
 	)
+)
 
-@procfactory
-def _pVcfAnno():
-	"""
+pVcfAnno = proc_factory(
+	desc   = 'Annotate the variants in vcf file.',
+	config = Diot(annotate = """
 	@description:
 		Annotate the variants in vcf file.
 		You have to prepare the databases for each tool.
@@ -181,42 +168,40 @@ def _pVcfAnno():
 		[annovar](http://doc-openbio.readthedocs.io/projects/annovar/en/latest/)
 		[snpeff](http://snpeff.sourceforge.net/SnpEff_manual.html#intro)
 		[vep v98](http://www.ensembl.org/info/docs/tools/vep/script/vep_tutorial.html): `conda install -c bioconda ensembl-vep`
-	"""
-	return Diot(
-		desc   = 'Annotate the variants in vcf file.',
-		lang   = params.python.value,
-		input  = 'infile:file',
-		output = [
-			"outfile:file:{{i.infile | fn | fn}}.{{args.tool}}"
-			"/{{i.infile | fn | fn}}.{{args.tool}}.vcf{{args.gz | ? | =:'.gz' | !: ''}}",
-			"outdir:dir:{{i.infile | fn | fn}}.{{args.tool}}"
-		],
-		args = Diot(
-			tool            = 'vep',
-			snpeff          = params.snpeff.value,
-			vep             = params.vep.value,
-			gz              = False,
-			vcfanno         = params.vcfanno.value,
-			annovar         = params.annovar.value,
-			annovar_convert = params.annovar_convert.value,
-			genome          = params.genome.value,
-			tmpdir          = params.tmpdir.value,
-			dbs             = Diot(
-				snpeff  = params.snpeffDb.value,
-				annovar = params.annovarDb.value,
-				vep     = params.vepDb.value,
-				vcfanno = []
-			),
-			snpeffStats = False,
-			nthread     = 1,
-			params      = Diot(),
-			mem         = params.mem8G.value,
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file',
+	output = [
+		"outfile:file:{{i.infile | fn | fn}}.{{args.tool}}"
+		"/{{i.infile | fn | fn}}.{{args.tool}}.vcf{{args.gz | ? | =:'.gz' | !: ''}}",
+		"outdir:dir:{{i.infile | fn | fn}}.{{args.tool}}"
+	],
+	args = Diot(
+		tool            = 'vep',
+		snpeff          = params.snpeff.value,
+		vep             = params.vep.value,
+		gz              = False,
+		vcfanno         = params.vcfanno.value,
+		annovar         = params.annovar.value,
+		annovar_convert = params.annovar_convert.value,
+		genome          = params.genome.value,
+		tmpdir          = params.tmpdir.value,
+		dbs             = Diot(
+			snpeff  = params.snpeffDb.value,
+			annovar = params.annovarDb.value,
+			vep     = params.vepDb.value,
+			vcfanno = []
+		),
+		snpeffStats = False,
+		nthread     = 1,
+		params      = Diot(),
+		mem         = params.mem8G.value,
 	)
+)
 
-@procfactory
-def _pVcfSplit():
-	"""
+pVcfSplit = proc_factory(
+	desc = "Split multi-sample Vcf to single-sample Vcf files.",
+	config = Diot(annotate = """
 	@name:
 		pVcfSplit
 	@description:
@@ -230,24 +215,21 @@ def _pVcfSplit():
 		`tool`:     The tool used to do extraction. Default: bcftools (gatk, awk)
 		`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 		`gatk`:     The path of gatk.
-	"""
-	pVcfSplit                     = Proc(desc = "Split multi-sample Vcf to single-sample Vcf files.")
-	pVcfSplit.input               = "infile:file, samples"
-	pVcfSplit.output              = "outdir:dir:{{i.infile | fn}}-individuals"
-	pVcfSplit.args.tool           = 'bcftools'
-	pVcfSplit.args.bcftools       = params.bcftools.value # used to extract samples
-	pVcfSplit.args.gatk           = params.gatk.value
-	pVcfSplit.args.tabix          = params.tabix.value
-	pVcfSplit.args.ref            = params.ref.value # only for gatk
-	pVcfSplit.args.params         = Diot()
-	pVcfSplit.args.nthread        = 1
-	pVcfSplit.lang                = params.python.value
-	pVcfSplit.script              = "file:scripts/vcf/pVcfSplit.py"
-	return pVcfSplit
+	"""))
+pVcfSplit.input         = "infile:file, samples"
+pVcfSplit.output        = "outdir:dir:{{i.infile | fn}}-individuals"
+pVcfSplit.args.tool     = 'bcftools'
+pVcfSplit.args.bcftools = params.bcftools.value # used to extract samples
+pVcfSplit.args.gatk     = params.gatk.value
+pVcfSplit.args.tabix    = params.tabix.value
+pVcfSplit.args.ref      = params.ref.value # only for gatk
+pVcfSplit.args.params   = Diot()
+pVcfSplit.args.nthread  = 1
+pVcfSplit.lang          = params.python.value
 
-@procfactory
-def _pVcfMerge():
-	"""
+pVcfMerge = proc_factory(
+	desc = "Merge single-sample Vcf files to multi-sample Vcf file.",
+	config = Diot(annotate = """
 	@name:
 		pVcfMerge
 	@description:
@@ -260,27 +242,24 @@ def _pVcfMerge():
 		`vcftools`: The path of vcftools' vcf-subset
 		`bcftools`: The path of bcftools, used to extract the sample names from input vcf file.
 		`gatk`:     The path of gatk.
-	"""
-	pVcfMerge               = Proc(desc = "Merge single-sample Vcf files to multi-sample Vcf file.")
-	pVcfMerge.input         = "infiles:files"
-	pVcfMerge.output        = "outfile:file:{{i.infiles | fs2name}}.vcf{{'.gz' if args.gz else ''}}"
-	pVcfMerge.args.tool     = 'bcftools'
-	pVcfMerge.args.vcftools = params.vcftools_merge.value
-	pVcfMerge.args.bcftools = params.bcftools.value
-	pVcfMerge.args.gatk     = params.gatk.value
-	pVcfMerge.args.params   = Diot()
-	pVcfMerge.args.tabix    = params.tabix.value
-	pVcfMerge.args.ref      = params.ref.value # only for gatk
-	pVcfMerge.args.gz       = False
-	pVcfMerge.args.nthread  = 1
-	pVcfMerge.envs.fs2name  = fs2name
-	pVcfMerge.lang          = params.python.value
-	pVcfMerge.script        = "file:scripts/vcf/pVcfMerge.py"
-	return pVcfMerge
+	"""))
+pVcfMerge.input         = "infiles:files"
+pVcfMerge.output        = "outfile:file:{{i.infiles | fs2name}}.vcf{{'.gz' if args.gz else ''}}"
+pVcfMerge.args.tool     = 'bcftools'
+pVcfMerge.args.vcftools = params.vcftools_merge.value
+pVcfMerge.args.bcftools = params.bcftools.value
+pVcfMerge.args.gatk     = params.gatk.value
+pVcfMerge.args.params   = Diot()
+pVcfMerge.args.tabix    = params.tabix.value
+pVcfMerge.args.ref      = params.ref.value # only for gatk
+pVcfMerge.args.gz       = False
+pVcfMerge.args.nthread  = 1
+pVcfMerge.envs.fs2name  = fs2name
+pVcfMerge.lang          = params.python.value
 
-@procfactory
-def _pVcf2Maf():
-	"""
+pVcf2Maf = proc_factory(
+	desc   = 'Convert Vcf file to Maf file',
+	config = Diot(annotate = """
 	@input:
 		`infile:file` : The input vcf file
 			- see `args.tumor`
@@ -310,34 +289,32 @@ def _pVcf2Maf():
 		params (Diot): Extra parameters for the tool.
 		withchr (bool): Should we add chr to Chromosome column or not.
 		genome (str): The genome used to replace __UNKNOWN__ for the NCBI_Build column
-	"""
-	return Diot(
-		desc   = 'Convert Vcf file to Maf file',
-		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | fn2}}.maf',
-		lang   = params.python.value,
-		args   = Diot(
-			tool         = 'oncotator',
-			withchr      = True,
-			vcf2maf      = params.vcf2maf.value,
-			vep          = params.vep.value,
-			tabix        = params.tabix.value,
-			vepDb        = params.vepDb.value,
-			filtervcf    = params.vepNonTCGAVcf.value,
-			ref          = params.ref.value,
-			oncotator    = params.oncotator.value,
-			oncotator_db = params.oncotator_db.value,
-			bcftools     = params.bcftools.value,
-			tumor        = 'auto',
-			genome       = params.genome.value,
-			nthread      = 1,
-			params       = Diot()
-		)
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | fn2}}.maf',
+	lang   = params.python.value,
+	args   = Diot(
+		tool         = 'oncotator',
+		withchr      = True,
+		vcf2maf      = params.vcf2maf.value,
+		vep          = params.vep.value,
+		tabix        = params.tabix.value,
+		vepDb        = params.vepDb.value,
+		filtervcf    = params.vepNonTCGAVcf.value,
+		ref          = params.ref.value,
+		oncotator    = params.oncotator.value,
+		oncotator_db = params.oncotator_db.value,
+		bcftools     = params.bcftools.value,
+		tumor        = 'auto',
+		genome       = params.genome.value,
+		nthread      = 1,
+		params       = Diot()
 	)
+)
 
-@procfactory
-def _pVcf2Plink():
-	"""
+pVcf2Plink = proc_factory(
+	desc = 'Convert vcf to plink binary files (.bed/.bim/.fam)',
+	config = Diot(annotate = """
 	@name:
 		pVcf2Plink
 	@description:
@@ -360,27 +337,24 @@ def _pVcf2Plink():
 			- `biallelic-only`     : `strict`
 	@requires:
 		`python:pyvcf`: to assign variant names (see `args.set-missing-var-ids`)
-	"""
-	pVcf2Plink             = Proc(desc = 'Convert vcf to plink binary files (.bed/.bim/.fam)')
-	pVcf2Plink.input       = 'infile:file'
-	pVcf2Plink.output      = 'outdir:dir:{{i.infile | fn2}}.plink'
-	pVcf2Plink.args.plink  = params.plink.value
-	pVcf2Plink.args.tabix  = params.tabix.value
-	pVcf2Plink.args.params = Diot({
-		'vcf-half-call'      : 'm',
-		'double-id'          : True,
-		'vcf-filter'         : True,
-		'vcf-idspace-to'     : '_',
-		'set-missing-var-ids': '@_#', # may generate duplicate vars!
-		'biallelic-only'     : 'strict'
-	})
-	pVcf2Plink.lang   = params.python.value
-	pVcf2Plink.script = "file:scripts/vcf/pVcf2Plink.py"
-	return pVcf2Plink
+	"""))
+pVcf2Plink.input       = 'infile:file'
+pVcf2Plink.output      = 'outdir:dir:{{i.infile | fn2}}.plink'
+pVcf2Plink.args.plink  = params.plink.value
+pVcf2Plink.args.tabix  = params.tabix.value
+pVcf2Plink.args.params = Diot({
+	'vcf-half-call'      : 'm',
+	'double-id'          : True,
+	'vcf-filter'         : True,
+	'vcf-idspace-to'     : '_',
+	'set-missing-var-ids': '@_#', # may generate duplicate vars!
+	'biallelic-only'     : 'strict'
+})
+pVcf2Plink.lang   = params.python.value
 
-@procfactory
-def _pVcfLiftover():
-	"""
+pVcfLiftover = proc_factory(
+	desc = 'Liftover VCF files',
+	config = Diot(annotate = """
 	@input:
 		infile: The input vcf file
 	@output:
@@ -396,45 +370,40 @@ def _pVcfLiftover():
 		params  (Diot) : The extra params for the tool
 		bcftools(str) : Path to bcftools
 			- Used to correct sample orders. `picard LiftoverVcf` sometimes swap samples.
-	"""
-	return Diot(
-		desc = 'Liftover VCF files',
-		input = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem | stem}}.vcf, umfile:file:{{i.infile | stem | stem}}.unmapped.vcf',
-		lang = params.python.value,
-		args = Diot(
-			tool     = 'picard',
-			bcftools = params.bcftools.value,
-			picard   = params.picard.value,
-			lochain  = params.lochain.value,
-			ref      = params.ref.value,
-			mem      = params.mem8G.value,
-			tmpdir   = params.tmpdir.value,
-			params   = Diot()
-		)
+	"""),
+	input = 'infile:file',
+	output = 'outfile:file:{{i.infile | stem | stem}}.vcf, umfile:file:{{i.infile | stem | stem}}.unmapped.vcf',
+	lang = params.python.value,
+	args = Diot(
+		tool     = 'picard',
+		bcftools = params.bcftools.value,
+		picard   = params.picard.value,
+		lochain  = params.lochain.value,
+		ref      = params.ref.value,
+		mem      = params.mem8G.value,
+		tmpdir   = params.tmpdir.value,
+		params   = Diot()
 	)
+)
 
-@procfactory
-def _pVcfAddChr():
-	"""
+pVcfAddChr = proc_factory(
+	desc = 'Add `chr` to records and contigs of vcf files.',
+	config = Diot(annotate = """
 	@name:
 		pVcfAddChr
 	@description:
 		Add `chr` to records and contigs of vcf files.
 	@args:
 		`chr`: The prefix to add to each record.
-	"""
-	pVcfAddChr          = Proc(desc = 'Add `chr` to records and contigs of vcf files.')
-	pVcfAddChr.input    = 'infile:file'
-	pVcfAddChr.output   = 'outfile:file:{{i.infile | fn2}}.vcf'
-	pVcfAddChr.args.chr = 'chr'
-	pVcfAddChr.lang     = params.python.value
-	pVcfAddChr.script   = "file:scripts/vcf/pVcfAddChr.py"
-	return pVcfAddChr
+	"""))
+pVcfAddChr.input    = 'infile:file'
+pVcfAddChr.output   = 'outfile:file:{{i.infile | fn2}}.vcf'
+pVcfAddChr.args.chr = 'chr'
+pVcfAddChr.lang     = params.python.value
 
-@procfactory
-def _pVcfCleanup():
-	"""
+pVcfCleanup = proc_factory(
+	desc   = 'Remove configs from vcf file according to the given reference',
+	config = Diot(annotate = """
 	@input:
 		infile: The input vcf file
 	@output:
@@ -442,18 +411,16 @@ def _pVcfCleanup():
 	@args:
 		ref (file): The reference file
 			- Require fai/dict file with it.
-	"""
-	return Diot(
-		desc   = 'Remove configs from vcf file according to the given reference',
-		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem | stem}}.vcf',
-		lang   = params.python.value,
-		args   = Diot(ref = params.ref.value)
-	)
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | stem | stem}}.vcf',
+	lang   = params.python.value,
+	args   = Diot(ref = params.ref.value)
+)
 
-@procfactory
-def _pVcf2GTVcf():
-	"""
+pVcf2GTVcf = proc_factory(
+	desc = 'Keep only GT information for each sample.',
+	config = Diot(annotate = """
 	@name:
 		pVcf2GTVcf
 	@description:
@@ -466,20 +433,17 @@ def _pVcf2GTVcf():
 		`tool`    : The tool to use, Default: `bcftools`
 		`gz`      : Gzip the output file or not, Default: `False`
 		`bcftools`: Path to bcftools, Default: `<params.bcftools>`
-	"""
-	pVcf2GTVcf               = Proc(desc = 'Keep only GT information for each sample.')
-	pVcf2GTVcf.input         = 'infile:file'
-	pVcf2GTVcf.output        = 'outfile:file:{{i.infile | fn2}}.vcf{{".gz" if args.gz else ""}}'
-	pVcf2GTVcf.args.tool     = 'bcftools'
-	pVcf2GTVcf.args.gz       = False
-	pVcf2GTVcf.args.bcftools = params.bcftools.value
-	pVcf2GTVcf.lang          = params.python.value
-	pVcf2GTVcf.script        = "file:scripts/vcf/pVcf2GTVcf.py"
-	return pVcf2GTVcf
+	"""))
+pVcf2GTVcf.input         = 'infile:file'
+pVcf2GTVcf.output        = 'outfile:file:{{i.infile | fn2}}.vcf{{".gz" if args.gz else ""}}'
+pVcf2GTVcf.args.tool     = 'bcftools'
+pVcf2GTVcf.args.gz       = False
+pVcf2GTVcf.args.bcftools = params.bcftools.value
+pVcf2GTVcf.lang          = params.python.value
 
-@procfactory
-def _pVcfSampleFilter():
-	"""
+pVcfSampleFilter = proc_factory(
+	desc   = 'Keep or remove some samples from VCF file.',
+	config = Diot(annotate = """
 	@name:
 		pVcfSampleFilter
 	@description:
@@ -502,23 +466,21 @@ def _pVcfSampleFilter():
 		`keep`: Keep the samples provided or remove them. Default: `True`
 		`params`: Other parameters for `bcftools view`. Default: `Diot(U = True)`
 			- `U = True`: Exclude uncalled sites (genotypes of all samples are missing).
-	"""
-	return Diot(
-		desc   = 'Keep or remove some samples from VCF file.',
-		input  = 'infile:file, samfile:file',
-		output = 'outfile:file:{{i.infile | bn}}',
-		lang   = params.python.value,
-		args   = Diot(
-			keep     = True,
-			samples  = None,
-			params   = Diot(U = True),
-			bcftools = params.bcftools.value,
-		)
+	"""),
+	input  = 'infile:file, samfile:file',
+	output = 'outfile:file:{{i.infile | bn}}',
+	lang   = params.python.value,
+	args   = Diot(
+		keep     = True,
+		samples  = None,
+		params   = Diot(U = True),
+		bcftools = params.bcftools.value,
 	)
+)
 
-@procfactory
-def _pVcfSampleReplace():
-	"""
+pVcfSampleReplace = proc_factory(
+	desc = 'Replace sample names in VCF file',
+	config = Diot(annotate = """
 	@name:
 		pVcfSampleReplace
 	@description:
@@ -537,20 +499,17 @@ def _pVcfSampleReplace():
 			- A string of lambda function to modify current sample names.
 			- `None`: use sample names from `i.samfile`
 		`nthread`: # threads used by `bcftools`
-	"""
-	pVcfSampleReplace               = Proc(desc = 'Replace sample names in VCF file')
-	pVcfSampleReplace.input         = 'infile:file, samfile:file'
-	pVcfSampleReplace.output        = 'outfile:file:{{i.infile | bn}}'
-	pVcfSampleReplace.args.bcftools = params.bcftools.value
-	pVcfSampleReplace.args.samples  = None
-	pVcfSampleReplace.args.nthread  = 0
-	pVcfSampleReplace.lang          = params.python.value
-	pVcfSampleReplace.script        = "file:scripts/vcf/pVcfSampleReplace.py"
-	return pVcfSampleReplace
+	"""))
+pVcfSampleReplace.input         = 'infile:file, samfile:file'
+pVcfSampleReplace.output        = 'outfile:file:{{i.infile | bn}}'
+pVcfSampleReplace.args.bcftools = params.bcftools.value
+pVcfSampleReplace.args.samples  = None
+pVcfSampleReplace.args.nthread  = 0
+pVcfSampleReplace.lang          = params.python.value
 
-@procfactory
-def _pVcf2GTMat():
-	"""
+pVcf2GTMat = proc_factory(
+	desc = 'Convert Vcf file to genotype matrix',
+	config = Diot(annotate = """
 	@name:
 		pVcf2GTMat
 	@description:
@@ -569,26 +528,24 @@ def _pVcf2GTMat():
 	@requires:
 		`pytabix`
 		`pysam`
-	"""
-	pVcf2GTMat               = Proc(desc = 'Convert Vcf file to genotype matrix')
-	pVcf2GTMat.input         = 'infile:file'
-	pVcf2GTMat.output        = 'outfile:file:{{i.infile | fn2}}.gtmat.txt'
-	pVcf2GTMat.args.novel    = 'NOVEL' # name. None to exclude variants without RSID
-	pVcf2GTMat.args.useid    = True # use id in vcf file as possible
-	pVcf2GTMat.args.dbsnp    = params.dbsnp_all.value
-	pVcf2GTMat.args.tabix    = params.tabix.value
-	pVcf2GTMat.args.samname  = None
-	pVcf2GTMat.args.chrorder = params.chrorder.value
-	pVcf2GTMat.args.bialt    = True # bi-allelic snps only
-	pVcf2GTMat.args.mingt    = .5 # keep the variants with only the rate (mingt <= 1) or the number (mingt > 1)
-	pVcf2GTMat.args.na       = 'NA'
-	pVcf2GTMat.lang          = params.python.value
-	pVcf2GTMat.script        = "file:scripts/vcf/pVcf2GTMat.py"
-	return pVcf2GTMat
+	"""))
+pVcf2GTMat.input         = 'infile:file'
+pVcf2GTMat.output        = 'outfile:file:{{i.infile | fn2}}.gtmat.txt'
+pVcf2GTMat.args.novel    = 'NOVEL' # name. None to exclude variants without RSID
+pVcf2GTMat.args.useid    = True # use id in vcf file as possible
+pVcf2GTMat.args.dbsnp    = params.dbsnp_all.value
+pVcf2GTMat.args.tabix    = params.tabix.value
+pVcf2GTMat.args.samname  = None
+pVcf2GTMat.args.chrorder = params.chrorder.value
+pVcf2GTMat.args.bialt    = True # bi-allelic snps only
+pVcf2GTMat.args.mingt    = .5 # keep the variants with only the rate (mingt <= 1) or the number (mingt > 1)
+pVcf2GTMat.args.na       = 'NA'
+pVcf2GTMat.lang          = params.python.value
 
-@procfactory
-def _pVcfSort():
-	"""
+pVcfSort = proc_factory(
+	desc   = 'Sort the vcf records',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pVcfSort
 	@description:
@@ -603,24 +560,23 @@ def _pVcfSort():
 		`picard`: Path to picard.
 		`tabix` : Path to tabix.
 		`chrorder`: If sort by `args.sortby == 'coord'`, then records first sorted by `chrorder` then Coordinates.
-	"""
-	pVcfSort               = Proc(desc = 'Sort the vcf records')
-	pVcfSort.input         = 'infile:file'
-	pVcfSort.output        = 'outfile:file:{{i.infile | fn2}}.vcf'
-	pVcfSort.args.sortby   = 'coord' # or name
-	pVcfSort.args.tool     = 'sort' # picard
-	pVcfSort.args.picard   = params.picard.value
-	pVcfSort.args.tabix    = params.tabix.value
-	pVcfSort.args.chrorder = params.chrorder.value
-	pVcfSort.args.gsize    = params.gsize.value
-	pVcfSort.args.nthread  = 1
-	pVcfSort.lang          = params.python.value
-	pVcfSort.script        = "file:scripts/vcf/pVcfSort.py"
-	return pVcfSort
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | fn2}}.vcf',
+	args   = Diot(
+		sortby   = 'coord', # or name,
+		tool     = 'sort', # picard,
+		picard   = params.picard.value,
+		tabix    = params.tabix.value,
+		chrorder = params.chrorder.value,
+		gsize    = params.gsize.value,
+		nthread  = 1,
+	)
+)
 
-@procfactory
-def _pVcfSubtract():
-	"""
+pVcfSubtract = proc_factory(
+	desc = 'Subtract one vcf file from another',
+	config = Diot(annotate = """
 	@name:
 		pVcfSubtract
 	@description:
@@ -640,24 +596,21 @@ def _pVcfSubtract():
 		`bedtools`: The path to bedtools.
 		`tabix`   : The path to tabix.
 		`any`     : Remove record in `infile1` with any overlap in `infile2`. Default: `True`
-	"""
-	pVcfSubtract               = Proc(desc = 'Subtract one vcf file from another')
-	pVcfSubtract.input         = 'infile1:file, infile2:file'
-	pVcfSubtract.output        = 'outfile:file:{{i.infile1 | fn2}}.subtracted.vcf'
-	pVcfSubtract.args.bychrom  = False
-	pVcfSubtract.args.nthread  = 1
-	pVcfSubtract.args.header   = True
-	pVcfSubtract.args.any      = True
-	pVcfSubtract.args.tool     = 'mem'
-	pVcfSubtract.args.tabix    = params.tabix.value
-	pVcfSubtract.args.bedtools = params.bedtools.value
-	pVcfSubtract.lang          = params.python.value
-	pVcfSubtract.script        = "file:scripts/vcf/pVcfSubtract.py"
-	return pVcfSubtract
+	"""))
+pVcfSubtract.input         = 'infile1:file, infile2:file'
+pVcfSubtract.output        = 'outfile:file:{{i.infile1 | fn2}}.subtracted.vcf'
+pVcfSubtract.args.bychrom  = False
+pVcfSubtract.args.nthread  = 1
+pVcfSubtract.args.header   = True
+pVcfSubtract.args.any      = True
+pVcfSubtract.args.tool     = 'mem'
+pVcfSubtract.args.tabix    = params.tabix.value
+pVcfSubtract.args.bedtools = params.bedtools.value
+pVcfSubtract.lang          = params.python.value
 
-@procfactory
-def _pVcfExtract():
-	"""
+pVcfExtract = proc_factory(
+	desc = "Extract variants from a VCF file by given regions",
+	config = Diot(annotate = """
 	@name:
 		pVcfExtract
 	@description:
@@ -666,32 +619,26 @@ def _pVcfExtract():
 		`tabix` : The path to tabix.
 		`params`: Other parameters for `tabix`. Default: `Diot(h = True, B = True)`
 			- See `tabix --help`
-	"""
-	pVcfExtract              = Proc(desc = "Extract variants from a VCF file by given regions")
-	pVcfExtract.input        = 'vcffile:file, regfile:file'
-	pVcfExtract.output       = 'outfile:file:{{i.vcffile | fn2}}.extracted.vcf'
-	pVcfExtract.args.tabix   = params.tabix.value
-	pVcfExtract.args.params  = Diot(h = True, B = True)
-	pVcfExtract.lang         = params.python.value
-	pVcfExtract.script       = "file:scripts/vcf/pVcfExtract.py"
-	return pVcfExtract
+	"""))
+pVcfExtract.input        = 'vcffile:file, regfile:file'
+pVcfExtract.output       = 'outfile:file:{{i.vcffile | fn2}}.extracted.vcf'
+pVcfExtract.args.tabix   = params.tabix.value
+pVcfExtract.args.params  = Diot(h = True, B = True)
+pVcfExtract.lang         = params.python.value
 
-@procfactory
-def _pVcf2Pyclone():
-	"""
+pVcf2Pyclone = proc_factory(
+	desc = 'Generate PyClone input file for non-CN mutations',
+	config = Diot(annotate = """
 	@name:
 		pVcf2Pyclone
-	"""
-	pVcf2Pyclone        = Proc(desc = 'Generate PyClone input file for non-CN mutations')
-	pVcf2Pyclone.input  = 'infile:file'
-	pVcf2Pyclone.output = 'outfile:file:{{i.infile | bn}}.pyclone.txt'
-	pVcf2Pyclone.lang   = params.python.value
-	pVcf2Pyclone.script = "file:scripts/vcf/pVcf2Pyclone.py"
-	return pVcf2Pyclone
+	"""))
+pVcf2Pyclone.input  = 'infile:file'
+pVcf2Pyclone.output = 'outfile:file:{{i.infile | bn}}.pyclone.txt'
+pVcf2Pyclone.lang   = params.python.value
 
-@procfactory
-def _pVcfFix():
-	"""
+pVcfFix = proc_factory(
+	desc   = 'Fix a bunch of format problems in vcf files',
+	config = Diot(annotate = """
 	@input:
 		infile: The input VCF file
 	@output:
@@ -729,35 +676,33 @@ def _pVcfFix():
 			- non_ref (bool): Fix the alternate alleles with `<NON_REF>`.
 				- If `<NON_REF>` is the sole alternative allele, replace it with `.`
 				- Otherwise remove it.
-	"""
-	return Diot(
-		desc   = 'Fix a bunch of format problems in vcf files',
-		input  = 'infile:file',
-		output = '''outfile:file:{{i.infile
-			| ?.endswith(".gz") | =: "_fixed.vcf.gz" | !: "_fixed.vcf"
-			| @prepend: stem(stem(i.infile))}}''',
-		lang   = params.python.value,
-		args   = Diot(
-			ref     = params.ref.value,
-			nthread = 1,
-			fixes   = Diot(
-				_inverse     = False,
-				clinvarLink  = True,
-				addChr       = True,
-				addAF        = True,
-				tumorpos     = True,
-				headerInfo   = True,
-				headerContig = True,
-				headerFormat = True,
-				headerFilter = True,
-				non_ref      = True,
-			)
+	"""),
+	input  = 'infile:file',
+	output = '''outfile:file:{{i.infile
+		| ?.endswith(".gz") | =: "_fixed.vcf.gz" | !: "_fixed.vcf"
+		| @prepend: stem(stem(i.infile))}}''',
+	lang   = params.python.value,
+	args   = Diot(
+		ref     = params.ref.value,
+		nthread = 1,
+		fixes   = Diot(
+			_inverse     = False,
+			clinvarLink  = True,
+			addChr       = True,
+			addAF        = True,
+			tumorpos     = True,
+			headerInfo   = True,
+			headerContig = True,
+			headerFormat = True,
+			headerFilter = True,
+			non_ref      = True,
 		)
 	)
+)
 
-@procfactory
-def _pVcfFixGT():
-	"""
+pVcfFixGT = proc_factory(
+	desc = 'Fix genotypes in GVCF files',
+	config = Diot(annotate = """
 	@name:
 		pVcfFixGT
 	@description:
@@ -770,18 +715,15 @@ def _pVcfFixGT():
 		`outfile:file`: The output VCF file, Default: `{{i.infile | bn}}`
 	@args:
 		`gz`: whether output (big) gzipped file. Default: `False`
-	"""
-	pVcfFixGT         = Proc(desc = 'Fix genotypes in GVCF files')
-	pVcfFixGT.input   = 'infile:file'
-	pVcfFixGT.output  = 'outfile:file:{{i.infile | bn}}'
-	pVcfFixGT.args.gz = False
-	pVcfFixGT.lang    = params.python.value
-	pVcfFixGT.script  = "file:scripts/vcf/pVcfFixGT.py"
-	return pVcfFixGT
+	"""))
+pVcfFixGT.input   = 'infile:file'
+pVcfFixGT.output  = 'outfile:file:{{i.infile | bn}}'
+pVcfFixGT.args.gz = False
+pVcfFixGT.lang    = params.python.value
 
-@procfactory
-def _pVcfStats():
-	"""
+pVcfStats = proc_factory(
+	desc   = 'VCF statistics and plots using vcfstats',
+	config = Diot(annotate = """
 	@input:
 		infile: The input VCF file
 		config: The configuration file for `vcfstats`
@@ -799,30 +741,28 @@ def _pVcfStats():
 		macro    (str)      : A macro for `vcfstats`.
 		ggs      (str/list) : ggs expressions to modify each plot.
 		devpars  (dict/list): Devpars for each plot.
-	"""
-	return Diot(
-		desc   = 'VCF statistics and plots using vcfstats',
-		lang   = params.python.value,
-		input  = 'infile:file, config:file',
-		output = 'outdir:dir:{{i.infile | stem}}.vcfstats',
-		args   = Diot(
-			vcfstats = params.vcfstats.value,
-			Rscript  = params.Rscript.value,
-			formula  = [],
-			title    = [],
-			figtype  = [],
-			passed   = False,
-			region   = [],
-			regfile  = None,
-			macro    = None,
-			ggs      = [],
-			devpars  = []
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, config:file',
+	output = 'outdir:dir:{{i.infile | stem}}.vcfstats',
+	args   = Diot(
+		vcfstats = params.vcfstats.value,
+		Rscript  = params.Rscript.value,
+		formula  = [],
+		title    = [],
+		figtype  = [],
+		passed   = False,
+		region   = [],
+		regfile  = None,
+		macro    = None,
+		ggs      = [],
+		devpars  = []
 	)
+)
 
-@procfactory
-def _pVcfExprAnno():
-	"""
+pVcfExprAnno = proc_factory(
+	desc = 'Annotate VCF files with expression data.',
+	config = Diot(annotate = """
 	@description:
 		Annotate VCF files with expression data.
 		See: https://vatools.readthedocs.io/en/latest/vcf_expression_annotator.html
@@ -839,25 +779,23 @@ def _pVcfExprAnno():
 		istx (bool): Whether it's transcript expression in the expression file. Otherwise it's gene.
 		bcftools (path): Path to bcftools, used to get sample names from vcf file.
 		sample (int|str): The index or the name of the sample to annotate
-	"""
-	return Diot(
-		desc = 'Annotate VCF files with expression data.',
-		lang = params.python.value,
-		input = 'infile:file, exprfile:file',
-		output = 'outfile:file:{{i.infile | bn}}',
-		args = Diot(
-			vcf_expression_annotator = params.vcf_expression_annotator.value,
-			bcftools                 = params.bcftools.value,
-			exprtype                 = '',
-			params                   = Diot(),
-			istx                     = False,
-			sample                   = 0
-		)
+	"""),
+	lang = params.python.value,
+	input = 'infile:file, exprfile:file',
+	output = 'outfile:file:{{i.infile | bn}}',
+	args = Diot(
+		vcf_expression_annotator = params.vcf_expression_annotator.value,
+		bcftools                 = params.bcftools.value,
+		exprtype                 = '',
+		params                   = Diot(),
+		istx                     = False,
+		sample                   = 0
 	)
+)
 
-@procfactory
-def _pVcfIndex():
-	"""
+pVcfIndex = proc_factory(
+	desc   = 'Index VCF files.',
+	config = Diot(annotate = """
 	@input:
 		infile: The input VCF file
 	@output:
@@ -866,21 +804,19 @@ def _pVcfIndex():
 	@args:
 		tabix (str): Path to tabix
 		nthread (int): Number of threads for (de)compressing files.
-	"""
-	return Diot(
-		desc   = 'Index VCF files.',
-		lang   = params.python.value,
-		input  = 'infile:file',
-		output = [
-			'outfile:file:{{i.infile | bn | ?.endswith(".gz") | !@append: ".gz"}}',
-			'outidx:file:{{i.infile | bn | ?.endswith(".gz") | !@append: ".gz" | @append: ".tbi"}}'
-		],
-		args = Diot(tabix = params.tabix.value, nthread = 1)
-	)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file',
+	output = [
+		'outfile:file:{{i.infile | bn | ?.endswith(".gz") | !@append: ".gz"}}',
+		'outidx:file:{{i.infile | bn | ?.endswith(".gz") | !@append: ".gz" | @append: ".tbi"}}'
+	],
+	args = Diot(tabix = params.tabix.value, nthread = 1)
+)
 
-@procfactory
-def _pVcfy():
-	"""
+pVcfy = proc_factory(
+	desc   = "Generate a vcf file with random mutations.",
+	config = Diot(annotate = """
 	@description:
 		Generate a vcf file with random mutations
 		Note that we will generate mutaion for all regions (contigs) in reference file, unlike
@@ -904,22 +840,20 @@ def _pVcfy():
 		gz       (bool)         : Whether to gzip the output file.
 	@requires:
 		[vcfy](https://pypi.org/project/vcfy/)
-	"""
-	return Diot(
-		desc   = "Generate a vcf file with random mutations.",
-		input  = 'infile:file',
-		output = 'outfile:file:{{i.infile | stem2}}.random.vcf{{args.gz | ? | =:".gz" | !:""}}',
-		lang   = params.python.value,
-		args   = Diot(
-			nmuts    = 1000,
-			params   = Diot(),
-			nthread  = params.nthread.value,
-			ref      = params.ref.value,
-			bedtools = params.bedtools.value,
-			vcfy     = params.vcfy.value,
-			bcftools = params.bcftools.value,
-			tmpdir   = params.tmpdir.value,
-			samples  = False,
-			gz       = False
-		)
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | stem2}}.random.vcf{{args.gz | ? | =:".gz" | !:""}}',
+	lang   = params.python.value,
+	args   = Diot(
+		nmuts    = 1000,
+		params   = Diot(),
+		nthread  = params.nthread.value,
+		ref      = params.ref.value,
+		bedtools = params.bedtools.value,
+		vcfy     = params.vcfy.value,
+		bcftools = params.bcftools.value,
+		tmpdir   = params.tmpdir.value,
+		samples  = False,
+		gz       = False
 	)
+)

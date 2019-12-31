@@ -1,5 +1,5 @@
 from sys import stderr
-from pyppl import Diot
+from diot import Diot
 from os import path
 from bioprocs.utils import shell, mem2
 from bioprocs.utils.poll import Poll

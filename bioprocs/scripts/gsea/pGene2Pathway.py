@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from enrichr import Enrichr
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 

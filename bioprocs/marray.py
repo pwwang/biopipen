@@ -6,14 +6,11 @@ from pyppl import Proc, Diot
 #from .utils import plot, txt, dirnamePattern
 from .rnaseq import pBatchEffect, pCoexp, pExprStats
 from .utils import dirpat2name
-from . import params, rimport
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pCELDir2Matrix():
-	"""
+pCELDir2Matrix = proc_factory(
+	desc = 'Merge expression files to a matrix.',
+	config = Diot(annotate = """
 	@name:
 		pCELDir2Matrix
 	@description:
@@ -34,24 +31,20 @@ def _pCELDir2Matrix():
 			- `Note the expression values have been done with log`
 		`cdffile`  : The cdffile. Default: ''
 		`fn2sample`: The transformer to transform file name
-	"""
-	pCELDir2Matrix                  = Proc(desc = 'Merge expression files to a matrix.')
-	pCELDir2Matrix.input            = "indir:file, sifile:file"
-	pCELDir2Matrix.output           = "outfile:file:{{i.indir, args.pattern | *dirpat2name}}.expr.txt"
-	pCELDir2Matrix.lang             = params.Rscript.value
-	pCELDir2Matrix.args.fn2sample   = 'function(fn) unlist(strsplit(fn, ".", fixed = T))[1]'
-	pCELDir2Matrix.args.pattern     = '*'
-	pCELDir2Matrix.args.norm        = 'rma' # mas5
-	pCELDir2Matrix.args.transfm     = None # mas5
-	pCELDir2Matrix.args.cdffile     = ''
-	pCELDir2Matrix.envs.rimport     = rimport
-	pCELDir2Matrix.envs.dirpat2name = dirpat2name
-	pCELDir2Matrix.script           = "file:scripts/marray/pCELDir2Matrix.r"
-	return pCELDir2Matrix
+	"""))
+pCELDir2Matrix.input            = "indir:file, sifile:file"
+pCELDir2Matrix.output           = "outfile:file:{{i.indir, args.pattern | *dirpat2name}}.expr.txt"
+pCELDir2Matrix.lang             = params.Rscript.value
+pCELDir2Matrix.args.fn2sample   = 'function(fn) unlist(strsplit(fn, ".", fixed = T))[1]'
+pCELDir2Matrix.args.pattern     = '*'
+pCELDir2Matrix.args.norm        = 'rma' # mas5
+pCELDir2Matrix.args.transfm     = None # mas5
+pCELDir2Matrix.args.cdffile     = ''
+pCELDir2Matrix.envs.dirpat2name = dirpat2name
 
-@procfactory
-def _pMArrayDEG():
-	"""
+pMArrayDEG = proc_factory(
+	desc = 'Detect DEGs from microarray data.',
+	config = Diot(annotate = """
 	@name:
 		pMArrayDEG
 	@description:
@@ -86,39 +79,28 @@ def _pMArrayDEG():
 		`devpars`: The parameters for plotting device. Default: `Diot(res = 300, width = 2000, height = 2000)`
 	@requires:
 		`r-limma`
-	"""
-	return pMArrayDEG
-
-@procfactory
-def _pMArrayDEG():
-	"""
-	@name:
-		pMArrayDEG
-	"""
-	pMArrayDEG        = Proc(desc = 'Detect DEGs from microarray data.')
-	pMArrayDEG.input  = "efile:file, gfile:file"
-	pMArrayDEG.output = [
-		"outfile:file:{{i.efile | fn2}}-{{i.gfile | fn2}}-DEGs/{{i.efile | fn2}}-{{i.gfile | fn2}}.degs.txt",
-		"outdir:dir:{{i.efile | fn2}}-{{i.gfile | fn2}}-DEGs"
-	]
-	pMArrayDEG.args.tool     = 'limma'
-	pMArrayDEG.args.annofile = ''
-	pMArrayDEG.args.filter   = [0, 0]
-	pMArrayDEG.args.pval     = 0.05
-	pMArrayDEG.args.hmrows   = 100
-	pMArrayDEG.args.plot     = Diot(
-		mdsplot = True,
-		volplot = Diot(fccut = 2, pcut = 0.05),
-		maplot  = False,
-		heatmap = False
-	)
-	pMArrayDEG.args.ggs = Diot(
-		maplot  = Diot(),
-		heatmap = Diot(theme = {'axis.text.y': 'r:element_blank()'}),
-		volplot = Diot(ylab = {0: '-log10(p-value)'})
-	)
-	pMArrayDEG.args.devpars = Diot(res = 300, width = 2000, height = 2000)
-	pMArrayDEG.envs.rimport = rimport
-	pMArrayDEG.lang         = params.Rscript.value
-	pMArrayDEG.script       = "file:scripts/marray/pMArrayDEG.r"
-	return pMArrayDEG
+	"""))
+pMArrayDEG.input  = "efile:file, gfile:file"
+pMArrayDEG.output = [
+	"outfile:file:{{i.efile | fn2}}-{{i.gfile | fn2}}-DEGs/{{i.efile | fn2}}-{{i.gfile | fn2}}.degs.txt",
+	"outdir:dir:{{i.efile | fn2}}-{{i.gfile | fn2}}-DEGs"
+]
+pMArrayDEG.args.tool     = 'limma'
+pMArrayDEG.args.annofile = ''
+pMArrayDEG.args.filter   = [0, 0]
+pMArrayDEG.args.pval     = 0.05
+pMArrayDEG.args.hmrows   = 100
+pMArrayDEG.args.plot     = Diot(
+	mdsplot = True,
+	volplot = Diot(fccut = 2, pcut = 0.05),
+	maplot  = False,
+	heatmap = False
+)
+pMArrayDEG.args.ggs = Diot(
+	maplot  = Diot(),
+	heatmap = Diot(theme = {'axis.text.y': 'r:element_blank()'}),
+	volplot = Diot(ylab = {0: '-log10(p-value)'})
+)
+pMArrayDEG.args.devpars = Diot(res = 300, width = 2000, height = 2000)
+pMArrayDEG.envs.rimport = rimport
+pMArrayDEG.lang         = params.Rscript.value

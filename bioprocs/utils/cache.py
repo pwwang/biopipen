@@ -1,6 +1,6 @@
 import json
-from pyppl import Diot
-from pyppl.utils import alwaysList
+from diot import Diot
+from pyppl.utils import always_list
 from medoo import Medoo, Raw, Field, Dialect
 try:
 	string_types = (str, unicode)
@@ -175,7 +175,7 @@ class Cache(object):
 	def _find(qitems, results, dummies):
 		found = results
 		for keys, qitem in qitems.items():
-			keys = alwaysList(keys)
+			keys = always_list(keys)
 			found2 = []
 			for key in keys:
 				dummy   = Cache._getDummy(key, dummies)
@@ -230,14 +230,14 @@ class Cache(object):
 				'speicies': 'human'
 			})
 		"""
-		columns = alwaysList(columns) + [self.pkey]
+		columns = always_list(columns) + [self.pkey]
 
 		conditions = []
 		#datalen = Cache._checkData(data)
 		datalen = None
 		for keys, dt in data.items():
 			datalen  = datalen or len(dt)
-			keys     = alwaysList(keys)
+			keys     = always_list(keys)
 			columns += keys
 			conditions.append(self._queryWhere(keys, dt, dummies))
 

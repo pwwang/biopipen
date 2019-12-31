@@ -2,7 +2,7 @@ import re
 from os import makedirs, path
 from shutil import rmtree
 from sys import stderr
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import cmdargs, runcmd, mem2
 
 # detemine default read group

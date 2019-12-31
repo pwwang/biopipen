@@ -1,13 +1,10 @@
 """Power analysis"""
 from pyppl import Proc, Diot
-from . import params, rimport
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pSurvivalPower():
-	"""
+pSurvivalPower = proc_factory(
+	desc = "Survival analysis.",
+	config = Diot(annotate = """
 	@name:
 		pSurvivalPower
 	@description:
@@ -39,17 +36,14 @@ def _pSurvivalPower():
 		`alphas`: The alpha values (two-sided). You need to *2 for one-sided. Default:
 			- `[.005, .01, .05, .1]`
 		`betas` : 1-power. Default: `[.05, .1, .2]`
-	"""
-	pSurvivalPower              = Proc(desc = "Survival analysis.")
-	pSurvivalPower.input        = 'infile:file, ngroup1, ngroup2, ngroup3, ngroup4'
-	pSurvivalPower.output       = 'outfile:file:{{i.infile | fn}}.power/{{i.infile | fn}}.ssize.txt, outdir:dir:{{i.infile | fn}}.power'
-	pSurvivalPower.args.rnames  = True
-	pSurvivalPower.args.plot    = False
-	pSurvivalPower.args.ngroup  = 2
-	pSurvivalPower.args.intype  = 'detailed' # ratios or ratio
-	pSurvivalPower.args.alphas  = [.005, .01, .05, .1] # two-sided, *2 if you want one-sided
-	pSurvivalPower.args.betas   = [.05, .1, .2]
-	pSurvivalPower.envs.rimport = rimport
-	pSurvivalPower.lang         = params.Rscript.value
-	pSurvivalPower.script       = "file:scripts/power/pSurvivalPower.r"
-	return pSurvivalPower
+	"""))
+pSurvivalPower.input        = 'infile:file, ngroup1, ngroup2, ngroup3, ngroup4'
+pSurvivalPower.output       = 'outfile:file:{{i.infile | fn}}.power/{{i.infile | fn}}.ssize.txt, outdir:dir:{{i.infile | fn}}.power'
+pSurvivalPower.args.rnames  = True
+pSurvivalPower.args.plot    = False
+pSurvivalPower.args.ngroup  = 2
+pSurvivalPower.args.intype  = 'detailed' # ratios or ratio
+pSurvivalPower.args.alphas  = [.005, .01, .05, .1] # two-sided, *2 if you want one-sided
+pSurvivalPower.args.betas   = [.05, .1, .2]
+pSurvivalPower.envs.rimport = rimport
+pSurvivalPower.lang         = params.Rscript.value

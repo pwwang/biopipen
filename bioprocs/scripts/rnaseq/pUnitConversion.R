@@ -1,7 +1,8 @@
-{{rimport}}('__init__.r')
+{{'__init__.r' | rimport}}
 
 infile  = {{i.infile | R}}
 outfile = {{o.outfile | R}}
+inopts  = {{args.inopts | R}}
 inunit  = {{args.inunit | R}}
 outunit = {{args.outunit | R}}
 meanfl  = {{args.meanfl | R}}
@@ -10,7 +11,7 @@ refexon = {{args.refexon | R}}
 inform  = {{args.inform | lambda x: 'NULL' if not x else x}}
 outform = {{args.outform | lambda x: 'NULL' if not x else x}}
 
-data    = read.table.inopts (infile, list(cnames = TRUE), dup = 'drop')
+data    = read.table.inopts (infile, inopts)
 samples = colnames(data)
 if (!is.null(inform)) {
 	data = inform(data)
@@ -25,7 +26,7 @@ glenFromExon = function(exonfile, data) {
 	rownames(glen) = genes
 
 	mygenes  = rownames(data)
-	outgenes = intersect(refgenes, mygenes)
+	outgenes = intersect(genes, mygenes)
 	if (length(outgenes) < length(mygenes))
 		logger('Genes not found in refexon: ', paste(setdiff(mygenes, outgenes), collapse = ','), level = 'WARNING')
 
@@ -60,7 +61,7 @@ count2cpm = function(data) {
 
 count2fpkm = function(data) {
 	# may lose some genes
-	glen = glenFromExon(refexon)
+	glen = glenFromExon(refexon, data)
 	data = data[rownames(glen), , drop = F]
 	dge  = edgeR::DGEList(counts=data)
 
@@ -70,7 +71,7 @@ count2fpkm = function(data) {
 
 count2fpkmuq = function(data) {
 	# may lose some genes
-	glen = glenFromExon(refexon)
+	glen = glenFromExon(refexon, data)
 	data = data[rownames(glen), , drop = FALSE]
 
 	fld  = meanflFromFile(samples, meanfl)
@@ -83,16 +84,17 @@ count2fpkmuq = function(data) {
 }
 
 count2tpm = function(data) {
-	glen = glenFromExon(refexon)
+	glen = glenFromExon(refexon, data)
 	data = data[rownames(glen), , drop = F]
 	fld  = meanflFromFile(samples, meanfl)
 
 	# see: https://gist.github.com/slowkow/c6ab0348747f86e2748b
-	expr     = sapply(samples, function(s){
+	expr = as.data.frame(sapply(samples, function(s){
 		rate  = log(data[, s]) - log(glen - fld[s, ] + 1)
 		denom = log(sum(exp(rate)))
 		exp(rate - denom + log(1e6))
-	})
+	}))
+	colnames(expr) = colnames(data)
 	rownames(expr) = rownames(data)
 	expr
 }
@@ -104,7 +106,7 @@ count2tmm = function(data) {
 }
 
 fpkm2count = function(data) {
-	glen    = glenFromExon(refexon)
+	glen    = glenFromExon(refexon, data)
 	data    = data[rownames(glen), , drop = F]
 	fld     = meanflFromFile(samples, meanfl)
 	totalnr = nreadsFromFile(samples, nreads)
@@ -126,7 +128,7 @@ fpkm2tpm = function(data) {
 }
 
 fpkm2cpm = function(data) {
-	glen = glenFromExon(refexon)
+	glen = glenFromExon(refexon, data)
 	data = data[rownames(glen), , drop = F]
 	expr = sapply(samples, function(s) {
 		exp( log(data[, s]) - log(1e3) - log(glen - fld[s, ] + 1) )
@@ -171,7 +173,7 @@ tpm2fpkm = function(data) {
 }
 
 tpm2cpm = function(data) {
-	glen   = glenFromExon(refexon)
+	glen   = glenFromExon(refexon, data)
 	data   = data[rownames(glen), , drop = F]
 	fld    = meanflFromFile(samples, meanfl)
 	ngenes = length(outgenes)
@@ -194,7 +196,7 @@ cpm2count = function(data) {
 }
 
 cpm2fpkm = function(data) {
-	glen = glenFromExon(refexon)
+	glen = glenFromExon(refexon, data)
 	data = data[rownames(glen), , drop = F]
 	expr = sapply(samples, function(s) {
 		exp( log(data[, s]) + log(1e3) - log(glen - fld[s, ] + 1) )
@@ -204,7 +206,7 @@ cpm2fpkm = function(data) {
 }
 
 cpm2tpm = function(data) {
-	glen   = glenFromExon(refexon)
+	glen   = glenFromExon(refexon, data)
 	data   = data[rownames(glen), , drop = F]
 	ngenes = nrow(glen)
 	expr   = sapply(samples, function(s) {

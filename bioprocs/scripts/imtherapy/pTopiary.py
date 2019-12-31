@@ -17,7 +17,7 @@ from os import environ
 from pathlib import Path
 from cyvcf2 import VCF
 from gff import Gff
-from pyppl import Diot
+from diot import Diot
 from cmdy import CmdyReturnCodeException
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord

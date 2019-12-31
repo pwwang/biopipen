@@ -1,6 +1,6 @@
 import random
 from pathlib import Path
-from pyppl import Diot, OrderedDiot
+from diot import Diot, OrderedDiot
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader
 from bioprocs.utils.parallel import Parallel

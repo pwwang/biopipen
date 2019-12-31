@@ -1,6 +1,6 @@
 from os import path
-from pyppl import Diot
-from pyppl.utils import alwaysList
+from diot import Diot
+from pyppl.utils import always_list
 from bioprocs.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
@@ -16,7 +16,7 @@ if isinstance(samples, str):
 		with open(samples) as f:
 			samples = [line.strip() for line in f.readlines() if line.strip()]
 	else:
-		samples = alwaysList(samples)
+		samples = always_list(samples)
 elif samples and not callable(samples):
 	samples = list(samples)
 

@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
 
 infile  = {{i.infile | quote}}

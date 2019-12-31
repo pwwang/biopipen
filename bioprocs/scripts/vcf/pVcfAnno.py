@@ -1,6 +1,6 @@
 import sys
 from os import path, makedirs
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import mem2, shell2 as shell
 
 infile          = {{i.infile | quote}}
@@ -64,14 +64,15 @@ def run_vep():
 		hg38 = 'GRCh38',
 	)
 
-	params.i        = infile
-	params.o        = outfile
-	params.format   = 'vcf'
-	params.vcf      = True
-	params.cache    = True
-	params.dir      = dbs
-	params.offline  = params.get('offline', True)
-	params.assembly = genomes.get(genome, genome)
+	params.i               = infile
+	params.o               = outfile
+	params.format          = 'vcf'
+	params.vcf             = True
+	params.cache           = True
+	params.dir             = dbs
+	params.force_overwrite = True
+	params.offline         = params.get('offline', True)
+	params.assembly        = genomes.get(genome, genome)
 	shell.fg.vep(**params)
 
 	if gz:

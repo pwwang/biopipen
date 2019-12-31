@@ -1,5 +1,5 @@
 from os import path
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import ensureDiot, shell2 as shell
 from bioprocs.utils.reference import vcfIndex
 

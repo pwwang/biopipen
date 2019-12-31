@@ -4,15 +4,12 @@ Some sql database utilities
 
 from pyppl import Proc
 
-from . import params
+from . import params, proc_factory
 from .utils import sql
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
 
-@procfactory
-def _pCreateTable():
-	"""
+pCreateTable = proc_factory(
+	desc = 'Create tables in the database.',
+	config = Diot(annotate = """
 	@name:
 		pCreateTable
 	@description:
@@ -34,22 +31,19 @@ def _pCreateTable():
 		`intype`: The input file schema file or a data file. Default: `schema`
 		`drop`:  Force creating the table (drop the pre-existing table)
 		`delimit`:The delimit of input file. Default: `\\t`
-	"""
-	pCreateTable                  = Proc(desc = 'Create tables in the database.')
-	pCreateTable.input            = "dsn, schema:file"
-	pCreateTable.output           = "dsn:var:{{i.dsn}}"
-	pCreateTable.args.intype      = 'schema'
-	pCreateTable.args.drop        = False
-	pCreateTable.args.delimit     = "\t"
-	pCreateTable.envs.dsnparse    = sql.dsnparse
-	pCreateTable.envs.schemaparse = sql.schemaparse
-	pCreateTable.lang             = params.python.value
-	pCreateTable.script           = 'file:scripts/sql/pCreateTable.py'
-	return pCreateTable
+	"""))
+pCreateTable.input            = "dsn, schema:file"
+pCreateTable.output           = "dsn:var:{{i.dsn}}"
+pCreateTable.args.intype      = 'schema'
+pCreateTable.args.drop        = False
+pCreateTable.args.delimit     = "\t"
+pCreateTable.envs.dsnparse    = sql.dsnparse
+pCreateTable.envs.schemaparse = sql.schemaparse
+pCreateTable.lang             = params.python.value
 
-@procfactory
-def _pImportData():
-	"""
+pImportData = proc_factory(
+	desc = 'Create tables and import the data',
+	config = Diot(annotate = """
 	@name:
 		pImportData
 	@description:
@@ -63,22 +57,19 @@ def _pImportData():
 		`dsn`: The dsn
 	@args:
 		`delimit`:The delimit of input file. Default: `\\t`
-	"""
-	pImportData                  = Proc(desc = 'Create tables and import the data')
-	pImportData.input            = "dsn, datafile:file"
-	pImportData.output           = "dsn:var:{{i.dsn}}"
-	pImportData.args.delimit     = "\t"
-	pImportData.args.drop        = False
-	pImportData.envs.dsnparse    = sql.dsnparse
-	pImportData.envs.schemaparse = sql.schemaparse
-	pImportData.envs.tablename   = lambda fn: __import__('os').path.basename(fn).split('.')[0]
-	pImportData.lang             = params.python.value
-	pImportData.script           = 'file:scripts/sql/pImportData.py'
-	return pImportData
+	"""))
+pImportData.input            = "dsn, datafile:file"
+pImportData.output           = "dsn:var:{{i.dsn}}"
+pImportData.args.delimit     = "\t"
+pImportData.args.drop        = False
+pImportData.envs.dsnparse    = sql.dsnparse
+pImportData.envs.schemaparse = sql.schemaparse
+pImportData.envs.tablename   = lambda fn: __import__('os').path.basename(fn).split('.')[0]
+pImportData.lang             = params.python.value
 
-@procfactory
-def _pUpdateTable():
-	"""
+pUpdateTable = proc_factory(
+	desc = 'Update table using sql.',
+	config = Diot(annotate = """
 	@name:
 		pUpdateTable
 	@description:
@@ -90,19 +81,16 @@ def _pUpdateTable():
 		`dsn`: The dsn
 	@args:
 		`sql`: The sql to update the table (list)
-	"""
-	pUpdateTable               = Proc(desc = 'Update table using sql.')
-	pUpdateTable.input         = 'dsn'
-	pUpdateTable.output        = 'dsn:var:{{i.dsn}}'
-	pUpdateTable.args.sql      = []
-	pUpdateTable.envs.dsnparse = sql.dsnparse
-	pUpdateTable.lang          = params.python.value
-	pUpdateTable.script        = 'file:scripts/sql/pUpdateTable.py'
-	return pUpdateTable
+	"""))
+pUpdateTable.input         = 'dsn'
+pUpdateTable.output        = 'dsn:var:{{i.dsn}}'
+pUpdateTable.args.sql      = []
+pUpdateTable.envs.dsnparse = sql.dsnparse
+pUpdateTable.lang          = params.python.value
 
-@procfactory
-def _pSelectTable():
-	"""
+pSelectTable = proc_factory(
+	desc = 'Select data from table and dump it.',
+	config = Diot(annotate = """
 	@name:
 		pSelectTable
 	@description:
@@ -114,12 +102,9 @@ def _pSelectTable():
 		`outfile:file`: The dumped file
 	@args:
 		`sql`: The sql to select data from the table (list)
-	"""
-	pSelectTable               = Proc(desc = 'Select data from table and dump it.')
-	pSelectTable.input         = 'dsn'
-	pSelectTable.output        = 'outfile:file:sqlSelectTable-{{i.dsn, args.sql | lambda x,y: __import__("hashlib").md5(str(x) + str(y)).hexdigest()[:16]}}.dumped.txt'
-	pSelectTable.args.sql      = []
-	pSelectTable.envs.dsnparse = sql.dsnparse
-	pSelectTable.lang          = params.python.value
-	pSelectTable.script        = 'file:scripts/sql/pSelectTable.py'
-	return pSelectTable
+	"""))
+pSelectTable.input         = 'dsn'
+pSelectTable.output        = 'outfile:file:sqlSelectTable-{{i.dsn, args.sql | lambda x,y: __import__("hashlib").md5(str(x) + str(y)).hexdigest()[:16]}}.dumped.txt'
+pSelectTable.args.sql      = []
+pSelectTable.envs.dsnparse = sql.dsnparse
+pSelectTable.lang          = params.python.value

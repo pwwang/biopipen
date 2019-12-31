@@ -1,14 +1,12 @@
 """Processes related to DNA/protein sequences"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 #from .utils import runcmd, helpers, genenorm, write
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pConsvPerm():
-	"""
+pConsvPerm = proc_factory(
+	desc = 'Generate a null distribution of conservation scores.',
+	config = Diot(annotate = """
 	@name:
 		pConsvPerm
 	@description:
@@ -28,25 +26,21 @@ def _pConsvPerm():
 	@requires:
 		[bwtool](https://github.com/CRG-Barcelona/bwtool)
 		[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
-	"""
-	pConsvPerm               = Proc(desc = 'Generate a null distribution of conservation scores.')
-	pConsvPerm.input         = 'seed'
-	pConsvPerm.output        = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{i.seed}}.txt'
-	pConsvPerm.args.len      = 50
-	pConsvPerm.args.nperm    = 1000
-	pConsvPerm.args.consvdir = params.consvdir.value
-	pConsvPerm.args.gsize    = params.gsize.value
-	pConsvPerm.args.bedtools = params.bedtools.value
-	pConsvPerm.args.bwtool   = params.bwtool.value
-	pConsvPerm.args.seed     = None
-	pConsvPerm.lang          = params.python.value
-	pConsvPerm.script        = "file:scripts/seq/pConsvPerm.py"
-	return pConsvPerm
+	"""))
+pConsvPerm.input         = 'seed'
+pConsvPerm.output        = 'outfile:file:consv-len{{args.len}}-nperm{{args.nperm}}-{{i.seed}}.txt'
+pConsvPerm.args.len      = 50
+pConsvPerm.args.nperm    = 1000
+pConsvPerm.args.consvdir = params.consvdir.value
+pConsvPerm.args.gsize    = params.gsize.value
+pConsvPerm.args.bedtools = params.bedtools.value
+pConsvPerm.args.bwtool   = params.bwtool.value
+pConsvPerm.args.seed     = None
+pConsvPerm.lang          = params.python.value
 
-
-@procfactory
-def _pConsv():
-	"""
+pConsv = proc_factory(
+	desc = 'Get the conservation scores of regions.',
+	config = Diot(annotate = """
 	@name:
 		pConsv
 	@description:
@@ -68,21 +62,17 @@ def _pConsv():
 	@requires:
 		[bwtool](https://github.com/CRG-Barcelona/bwtool)
 		[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
-	"""
-	pConsv               = Proc(desc = 'Get the conservation scores of regions.')
-	pConsv.input         = "bedfile:file, permfile:file"
-	pConsv.output        = "outfile:file:{{i.bedfile | fn}}-consv.bed"
-	pConsv.args.bwtool   = params.bwtool.value
-	pConsv.args.consvdir = params.consvdir.value
-	pConsv.args.pval     = False
-	pConsv.lang          = params.python.value
-	pConsv.script        = "file:scripts/seq/pConsv.py"
-	return pConsv
+	"""))
+pConsv.input         = "bedfile:file, permfile:file"
+pConsv.output        = "outfile:file:{{i.bedfile | fn}}-consv.bed"
+pConsv.args.bwtool   = params.bwtool.value
+pConsv.args.consvdir = params.consvdir.value
+pConsv.args.pval     = False
+pConsv.lang          = params.python.value
 
-
-@procfactory
-def _pPromoters():
-	"""
+pPromoters = proc_factory(
+	desc = 'Get the promoter regions in bed format of a gene list give in infile.',
+	config = Diot(annotate = """
 	@name:
 		pPromoters
 	@description:
@@ -106,15 +96,12 @@ def _pPromoters():
 			- `genecol`: The 0-based index or the colname of gene column.
 			- `delimit`: The delimit of the input file.
 		`outopts`:  The options for output file. Default: `Diot(cnames = False)`
-	"""
-	pPromoters               = Proc(desc = 'Get the promoter regions in bed format of a gene list give in infile.')
-	pPromoters.input         = "infile:file"
-	pPromoters.output        = "outfile:file:{{i.infile | fn}}-promoters.bed"
-	pPromoters.args.region   = Diot(up = 2000, down = None, withbody = False)
-	pPromoters.args.notfound = 'skip' # error
-	pPromoters.args.inopts   = Diot(cnames = False, delimit = "\t")
-	pPromoters.args.genecol  = 0
-	pPromoters.args.refgene  = params.refgene.value
-	pPromoters.lang          = params.python.value
-	pPromoters.script        = "file:scripts/seq/pPromoters.py"
-	return pPromoters
+	"""))
+pPromoters.input         = "infile:file"
+pPromoters.output        = "outfile:file:{{i.infile | fn}}-promoters.bed"
+pPromoters.args.region   = Diot(up = 2000, down = None, withbody = False)
+pPromoters.args.notfound = 'skip' # error
+pPromoters.args.inopts   = Diot(cnames = False, delimit = "\t")
+pPromoters.args.genecol  = 0
+pPromoters.args.refgene  = params.refgene.value
+pPromoters.lang          = params.python.value

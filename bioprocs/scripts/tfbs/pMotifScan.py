@@ -1,6 +1,6 @@
 import re
 from os import path
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import runcmd, cmdargs, logger
 from bioprocs.utils.meme import MemeReader
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord

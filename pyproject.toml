@@ -14,11 +14,14 @@ exclude = ["bioprocs/**/*.pyc"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-PyPPL = "*"
+PyPPL = "3.*"
 pyparam = "*"
 diot = "*"
 completions = "*"
 toml = "0.*"
+pyppl_annotate = "*"
+pyppl_export = "*"
+pyppl_report = "*"
 
 [tool.poetry.scripts]
 bioprocs = 'bioprocs.console:main'

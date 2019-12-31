@@ -1,15 +1,24 @@
 """Utilities for bioprocs script"""
 import re
 import sys
+import yaml
+import cmdy
 from pathlib import Path
 from tempfile import gettempdir
 from contextlib import contextmanager
 from colorama import Back
 from pyparam import Helps, HelpAssembler
-from pyppl import utils, Channel, PyPPL, Diot, OrderedDiot
+from diot import Diot, OrderedDiot
+from pyppl import utils, Channel, PyPPL, Proc
+from pyppl.template import TemplateLiquid
+from pyppl._proc import IN_FILESTYPE
+from liquid.stream import LiquidStream
 import bioprocs
 
-def substrReplace(string, starts, lengths, replace):
+def _split(string, delimit, trim = True):
+	return LiquidStream.from_string(string).split(delimit, trim = trim)
+
+def substr_replace(string, starts, lengths, replace):
 	"""Replace substrings"""
 	if not isinstance(starts, (tuple, list)):
 		starts = [starts]
@@ -26,7 +35,7 @@ def substrReplace(string, starts, lengths, replace):
 		delta += len(replace[i]) - lengths[i]
 	return string
 
-def highlight(origin, query, incase = True):
+def highlight(origin, query, incase = True, hicolor = Back.LIGHTRED_EX):
 	"""Highlight string with query string"""
 	# get all occurrences of q
 	if incase:
@@ -34,24 +43,24 @@ def highlight(origin, query, incase = True):
 	else:
 		occurs = [m.start() for m in re.finditer(query, origin)]
 	lengths = [len(query)] * len(occurs)
-	return substrReplace(origin, occurs, lengths, [
-		'{}{}{}'.format(Back.LIGHTRED_EX, origin[occur:occur+length], Back.RESET)
+	return substr_replace(origin, occurs, lengths, [
+		'{}{}{}'.format(hicolor, origin[occur:occur+length], Back.RESET)
 		for occur, length in zip(occurs, lengths)])
 
-def highlightMulti(line, queries):
+def highlight_multi(line, queries):
 	"""Highlight a string with multiple queries"""
 	for query in queries:
 		line = highlight(line, query)
 	return line
 
-def subtractDict(bigger, smaller, prefix = ''):
+def subtract_dict(bigger, smaller, prefix = ''):
 	"""Subtract a dict from another"""
 	ret = bigger.copy()
 	for key, val in smaller.items():
 		if key not in ret:
 			continue
 		if isinstance(ret[key], dict) and isinstance(val, dict) and ret[key] != val:
-			ret[key] = subtractDict(ret[key], val, prefix + '  ')
+			ret[key] = subtract_dict(ret[key], val, prefix + '  ')
 		elif ret[key] == val:
 			del ret[key]
 	return ret
@@ -92,29 +101,29 @@ class Module:
 				raise AttributeError('No such module: %s' % name) from None
 			else:
 				raise
-		self.desc   = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
+		self.desc   = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented ]'
 		self._procs = {}
 
 	def procs(self):
 		"""Get the processes of the module"""
 		if self._procs:
 			return self._procs
-		for proc, factory in self.module._mkenvs.items():
-			if len(proc) < 3 or proc[0] != '_' or proc[1] != 'p' \
-				or not (proc[2].isdigit() or proc[2].isupper()):
+		for attr in dir(self.module):
+			proc = getattr(self.module, attr)
+			if not isinstance(proc, Proc):
 				continue
-			procobj = factory()
-			self._procs[proc[1:]] = Process(procobj, self.module, factory.__doc__ and factory.__doc__.splitlines() or [])
+			doc = proc.config.long.splitlines()
+			self._procs[attr] = Process(proc, self.module, doc)
 
 		return self._procs
 
-	def toHelps(self, helpsec):
+	def to_helps(self, helpsec):
 		"""Send me to a Helps section"""
 		helpsec.prefix = ''
 		helpsec.add((self.name, '', self.desc))
 
 	@contextmanager
-	def loadProcs(self, index = None):
+	def load_procs(self, index = None):
 		"""Loading procs with indicators"""
 		info = 'Collecting module%s: %s ...' % (index and (' ' + index) or '', self.name)
 		print('\r' + info, end = '')
@@ -126,24 +135,24 @@ class Module:
 			if idx == total:
 				print(end = '\r')
 
-	def toHelpsAsSec(self, helps):
+	def to_helps_as_sec(self, helps):
 		"""Add me to helps as a section"""
 		helps.add(self.name + ': ' + self.desc, sectype = 'option', prefix = '')
 
-	def toHelpsWithProcs(self, helps, nmods):
+	def to_helps_with_procs(self, helps, nmods):
 		"""Add me to helps with procs information"""
-		self.toHelpsAsSec(helps)
-		with self.loadProcs("%s/%s" % (len(helps), nmods)) as procs:
+		self.to_helps_as_sec(helps)
+		with self.load_procs("%s/%s" % (len(helps), nmods)) as procs:
 			for proc in procs.values():
-				proc.toHelps(helps.select(self.name + ': '))
+				proc.to_helps(helps.select(self.name + ': '))
 
-	def addToCompletions(self, comp):
+	def add_to_completions(self, comp):
 		"""Add me to completions"""
 		comp.addCommand(self.name, self.desc)
-		with self.loadProcs() as procs:
+		with self.load_procs() as procs:
 			for pname, proc in procs.items():
 				comp.addCommand(self.name + '.' + pname, proc.desc[0])
-				proc.addToCompletions(comp.command(self.name + '.' + pname))
+				proc.add_to_completions(comp.command(self.name + '.' + pname))
 
 class Process:
 	"""A bioprocs process"""
@@ -156,7 +165,7 @@ class Process:
 		self._helps  = Helps()
 		self._parsed = {}
 
-	def toHelps(self, helpsec):
+	def to_helps(self, helpsec):
 		"""Send me to a Helps section"""
 		helpsec.prefix = ''
 		if self.proc.origin == self.name:
@@ -165,7 +174,7 @@ class Process:
 			helpsec.add((self.name, '', 'Alias of: %s' % self.proc.origin))
 
 	@staticmethod
-	def _parseOptionSec(sec):
+	def _parse_option_sec(sec):
 		ret      = {}
 		sec      = Module.deindent(sec)
 		lastdesc = []
@@ -175,7 +184,7 @@ class Process:
 			if line[0] in ('\t', ' '):
 				lastdesc.append(line)
 				continue
-			parts = utils.split(line, ':', trim = False)
+			parts = _split(line, ':', trim = False)
 			nametype = parts.pop(0)
 			lastdesc = [':'.join(parts).strip()]
 			nametype = nametype.strip('`) ')
@@ -189,7 +198,7 @@ class Process:
 		return ret
 
 	@staticmethod
-	def _parsePlainSec(sec):
+	def _parse_plain_sec(sec):
 		return Module.deindent(sec)
 
 	def parsed(self):
@@ -210,13 +219,13 @@ class Process:
 				lastsec.append(line)
 		for key, sec in self._parsed.items():
 			if key in ('input', 'output', 'args'):
-				self._parsed[key] = Process._parseOptionSec(sec)
+				self._parsed[key] = Process._parse_option_sec(sec)
 			else:
-				self._parsed[key] = Process._parsePlainSec(sec)
+				self._parsed[key] = Process._parse_plain_sec(sec)
 		return self._parsed
 
 	@staticmethod
-	def defaultVal(val, prefix = 'Default: ', indent = 0):
+	def default_val(val, prefix = 'Default: ', indent = 0):
 		"""Formatted value in help"""
 		ret = []
 		lines = utils.formatDict(val if val != '' else "''", 0).splitlines()
@@ -232,12 +241,12 @@ class Process:
 
 	def inputs(self):
 		"""Get the input keys and types by definitions"""
-		if isinstance(self.proc.config.input, dict):
-			inkeys = self.proc.config.input.keys()
-		elif isinstance(self.proc.config.input, str):
-			inkeys = utils.split(self.proc.config.input, ',')
+		if isinstance(self.proc._input, dict):
+			inkeys = self.proc._input.keys()
+		elif isinstance(self.proc._input, str):
+			inkeys = _split(self.proc._input, ',')
 		else:
-			inkeys = self.proc.config.input
+			inkeys = self.proc._input
 		ret = OrderedDiot()
 		for inkey in inkeys:
 			if ':' not in inkey:
@@ -251,12 +260,12 @@ class Process:
 		if isinstance(self.proc.config.output, dict):
 			outs = list(self.proc.config.output.keys())
 		elif isinstance(self.proc.config.output, str):
-			outs = utils.split(self.proc.config.output, ',')
+			outs = _split(self.proc.config.output, ',')
 		else:
 			outs = self.proc.config.output
 		ret = OrderedDiot()
 		for out in outs:
-			parts = utils.split(out, ':')
+			parts = _split(out, ':')
 			if len(parts) == 2:
 				outname, outype, default = parts[0], 'var', parts[1]
 			else:
@@ -264,14 +273,23 @@ class Process:
 			ret[outname] = (outype, default)
 		return ret
 
-	def addToCompletions(self, comp):
+	def requirements(self):
+		req = self.parsed().get('requires')
+		if not req:
+			return '[ Not documented ]'
+		data4render = { 'proc': self.proc,
+						'args': self.proc.args}
+		requires = yaml.safe_load(TemplateLiquid('\n'.join(req)).render(data4render))
+		return yaml.dump(requires, default_flow_style = False)
+
+	def add_to_completions(self, comp):
 		"""Add me to completions"""
 		for inname in self.inputs():
 			docdesc = self.parsed().get('input', {}).get(inname, (None, ['Input %s' % inname]))[1]
 			comp.addOption('-i.' + inname, docdesc[0])
 		for outname, outypedeft in self.outputs().items():
 			docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', Process.defaultVal(outypedeft[1])[0]))[1]
+				outname, ('var', Process.default_val(outypedeft[1])[0]))[1]
 			comp.addOption('-o.' + outname, docdesc[0])
 		for key in self.proc.args:
 			docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))[1]
@@ -305,13 +323,13 @@ class Process:
 		for outname, outypedeft in self.outputs().items():
 			outype, outdeft = outypedeft
 			doctype, docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', Process.defaultVal(outdeft)))
+				outname, ('var', Process.default_val(outdeft)))
 			outype = outype or doctype or 'var'
 
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.extend(Process.defaultVal(outdeft, indent = 5))
+				docdesc.extend(Process.default_val(outdeft, indent = 5))
 			elif 'default: ' not in docdesc[-1].lower():
-				defaults = Process.defaultVal(outdeft, indent = len(docdesc[-1]) + 6)
+				defaults = Process.default_val(outdeft, indent = len(docdesc[-1]) + 6)
 				docdesc[-1] += ' ' + defaults.pop(0)
 				docdesc.extend(defaults)
 			self._helps.select('Output options').add(('-o.' + outname, '<%s>' % outype, docdesc))
@@ -319,14 +337,14 @@ class Process:
 		# args
 		self._helps.add('Process arguments', sectype = 'option', prefix = '-')
 		for key, val in self.proc.args.items():
-			doctype, docdesc = self.parsed().get('args', {}).get(key, (None, ['[ Not documented. ]']))
+			doctype, docdesc = self.parsed().get('args', {}).get(key, (None, ['[ Not documented ]']))
 			doctype = doctype or type(val).__name__
 			if doctype == 'NoneType':
 				doctype = 'auto'
 			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.extend(Process.defaultVal(val, indent = 5))
+				docdesc.extend(Process.default_val(val, indent = 5))
 			elif 'default: ' not in docdesc[-1].lower():
-				defaults = Process.defaultVal(val, indent = len(docdesc[-1]) + 6)
+				defaults = Process.default_val(val, indent = len(docdesc[-1]) + 6)
 				docdesc[-1] += ' ' + defaults.pop(0)
 				docdesc.extend(defaults)
 
@@ -336,6 +354,13 @@ class Process:
 				docdesc))
 
 		self._helps.add('Other options', sectype = 'option', prefix = '-')
+		# install requirements
+		self._helps.select('Other options').add(
+			('-install', '[BINDIR]', 'Install process requirements to BINDIR. Default: /usr/bin'))
+		# validate requirements
+		self._helps.select('Other options').add(
+			('-validate', '', 'Validate process requirements.'))
+
 		# process properties
 		self._helps.select('Other options').add(
 			('-<prop>', '', 'Process properties, such as -forks, -exdir, -cache ...'))
@@ -349,20 +374,21 @@ class Process:
 		self._helps.select('Other options').addParam(
 			bioprocs.params[bioprocs.params._hopts[0]], bioprocs.params._hopts, ishelp = True)
 
+		self._helps.add('Requirements', self.requirements())
 		return self._helps
 
 	@staticmethod
-	def _updateArgs(args):
+	def _update_args(args):
 		# replace ',' with '.' in key
 		# a bug of python-box, copy lost metadata
 		#ret = args.copy() # try to keep the type
 		ret = Diot()
 		for key, val in args.items():
-			ret[key.replace(',', '.')] = Process._updateArgs(val) \
+			ret[key.replace(',', '.')] = Process._update_args(val) \
 				if isinstance(val, dict) else val
 		return ret
 
-	def printHelps(self, error = None, halt = True):
+	def print_helps(self, error = None, halt = True):
 		"""Print helps"""
 		assembler = HelpAssembler()
 		error = error or []
@@ -374,22 +400,82 @@ class Process:
 		if halt:
 			sys.exit(1)
 
+	def _logger(self, msg, hiword = '', hicolor = Back.GREEN, end = '\n', prefix = True):
+		if prefix:
+			modname = Path(self.module.__file__).stem
+			prefix_str = f'[{modname}.{self.name}] '
+			prefix_str = highlight(prefix_str, prefix_str[1:-2],
+				incase = False, hicolor = Back.MAGENTA)
+		else:
+			prefix_str = ''
+		if not hiword:
+			print(f'{prefix_str}{msg}', end = end)
+		else:
+			himsg = highlight(msg, hiword, hicolor = hicolor)
+			print(f'{prefix_str}{himsg}', end = end)
+
+	def _run_validate(self):
+		req = self.requirements()
+		if req == '[ Not documented ]':
+			raise ValueError("Requirements for process %r is not documented, "
+				"I have no idea about the requirements." % self.proc.id)
+		requires = yaml.safe_load(req)
+		failed = []
+		for tool, info in requires.items():
+			self._logger(f"Validating {tool} ... ", tool, end = '', hicolor = Back.YELLOW)
+			cmd = cmdy.bash(c = info['validate'], _raise = False)
+			if cmd.rc != 0:
+				failed.append((tool, info))
+				self._logger("Failed.", "Failed", hicolor = Back.RED, prefix = False)
+				self._logger("Validation command: " + cmd.cmd)
+				for err in cmd.stderr.splitlines():
+					self._logger(f"  {err}")
+			else:
+				self._logger("Installed.", "Installed", hicolor = Back.GREEN, prefix = False)
+		return failed
+
+	def _run_install(self, failed, bindir):
+		if not failed:
+			self._logger('All requirements met, nothing to install.')
+		else:
+			for tool, info in failed:
+				self._logger('Installing %s ...' % tool, tool, hicolor = Back.YELLOW)
+				cmd = cmdy.bash(c = info['install'].replace('$bindir$', bindir),
+					_iter = 'err', _raise = True)
+				for line in cmd.__iter__():
+					self._logger(f'  {line}'.rstrip())
+				if cmd.rc != 0:
+					self._logger("Failed to install, please intall it manually.", "Failed",
+						hicolor = Back.RED)
+					self._logger("  " + cmd.cmd)
+				else:
+					self._logger("Succeeded!", "succeeded")
+			self._run_validate()
+
 	def run(self, opts):
 		"""Construct a pipeline with the process and run it"""
 		if any(opts.get(h) for h in bioprocs.params._hopts) or \
 			all(key in bioprocs.params._hopts for key in opts):
-			self.printHelps()
-		if not opts.get('i') or not isinstance(opts.i, dict):
-			self.printHelps(error = 'No input specified.')
+			self.print_helps()
 
-		indata = {}
+		# install requirements
+		if 'install' in opts or 'validate' in opts:
+			failed = self._run_validate()
+			if 'install' in opts:
+				self._run_install(failed, '/usr/bin' if opts.install is True else opts.install)
+			sys.exit(0)
+
+		if not opts.get('i') or not isinstance(opts.i, dict):
+			self.print_helps(error = 'No input specified.')
+
+		indata = OrderedDiot()
 		for inkey, intype in self.inputs().items():
 			# We should allow some input options to be empty
 			#if opts.i.get(inkey) is None:
-			#	self.printHelps(error = 'Input "[-i.]%s" is not specified.' % inkey)
+			#	self.print_helps(error = 'Input "[-i.]%s" is not specified.' % inkey)
 
 			# to be smart on "files"
-			if intype in self.proc.IN_FILESTYPE and inkey in opts.i \
+			if intype in IN_FILESTYPE and inkey in opts.i \
 				and not isinstance(opts.i[inkey], list):
 				indata[inkey + ':' + intype] = Channel.create([[opts.i[inkey]]])
 			else:
@@ -398,7 +484,7 @@ class Process:
 
 		if opts.get('o') is not None:
 			if not isinstance(opts.o, dict):
-				self.printHelps(error = 'Malformat output specification.')
+				self.print_helps(error = 'Malformat output specification.')
 
 			outdata = OrderedDiot()
 			for outkey, outypedeft in self.outputs().items():
@@ -420,23 +506,26 @@ class Process:
 					outdata[outkey + ':' + outype] = opts.o[outkey]
 			self.proc.output = outdata
 
-		if opts.get('args'):
-			if not isinstance(opts.args, dict):
-				self.printHelps(error = 'Malformat args specification.')
-			self.proc.args.update(Process._updateArgs(opts.args))
+		args = opts.pop('args', {})
+		if not isinstance(args, dict):
+			self.print_helps(error = 'Malformat args specification.')
+		self.proc.args.update(Process._update_args(args))
 
-		config = {
-			'_log'  : {'file': None },
-			'ppldir': Path(gettempdir()) / 'bioprocs.workdir'
-		}
-		config.update(Process._updateArgs(opts.get('config', {})))
+		self.proc.config.update(opts.pop('config', {}))
+		# config = {
+		# 	'logger'  : {'file': None },
+		# 	'ppldir': Path(gettempdir()) / 'bioprocs.workdir'
+		# }
+		# config.update(Process._update_args(opts.get('config', {})))
 
 		for key, val in opts.items():
-			if key in bioprocs.params._hopts + ['i', 'o', 'args', 'config']:
+			if key in bioprocs.params._hopts + ['i', 'o']:
 				continue
+
 			setattr(self.proc, key, val)
 
-		PyPPL(config).start(self.proc).run()
+		PyPPL(logger_file = False,
+			ppldir = Path(gettempdir()) / 'bioprocs.workdir').start(self.proc).run()
 
 
 class Pipeline:
@@ -454,7 +543,7 @@ class Pipeline:
 		self.name = name
 		self.module = __import__('bioprocs.console.pipeline', fromlist = ['bioprocs_' + name])
 		self.module = getattr(self.module, 'bioprocs_' + name)
-		self.desc = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented. ]'
+		self.desc = self.module.__doc__ and self.module.__doc__.strip() or '[ Not documented ]'
 
 	def run(self):
 		"""Run the pipeline"""
@@ -465,7 +554,7 @@ class Pipeline:
 
 		self.module.main()
 
-	def addToCompletions(self, comp):
+	def add_to_completions(self, comp):
 		"""Add me to completions"""
 		comp.addCommand(self.name, self.desc)
 		self.module.params._addToCompletions(

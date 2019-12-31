@@ -2,12 +2,12 @@
 import sys
 import copy
 from pprint import pformat
+from diot import Diot
 from .. import params
-from .utils import highlightMulti, Module, Pipeline, subtractDict
+from .utils import highlight_multi, Module, Pipeline, subtract_dict
 from .arguments import commands
 from pyparam import HelpAssembler, Helps
-from pyppl import Diot
-from pyppl.utils import config
+from pyppl.config import config
 
 HELP_ASSEMBLER = HelpAssembler()
 
@@ -33,7 +33,7 @@ def showParams(opts):
 					continue
 				pminfo['params'].addParam(param)
 
-		print('\n'.join(highlightMulti(line, queries)
+		print('\n'.join(highlight_multi(line, queries)
 			for line in  HELP_ASSEMBLER.assemble(pminfo)), end = '')
 
 def listProcs(opts):
@@ -76,7 +76,7 @@ def proc(opts):
 				for name, prc in procs.items():
 					if any(q.lower() in name.lower() for q in opts._):
 						prc.toHelps(helps.select(module.name + ':'))
-	print('\n'.join(highlightMulti(line, opts._)
+	print('\n'.join(highlight_multi(line, opts._)
 		for line in  HELP_ASSEMBLER.assemble(helps)), end = '')
 
 def complete(opts):
@@ -117,7 +117,7 @@ def profile(opts):
 	helps = Helps()
 	helps.add('Profile: "default"', sectype = 'plain')
 	helps.select('Profile: "default"').add(
-		pformat(subtractDict(config, base), indent = 2, width = 100))
+		pformat(subtract_dict(config, base), indent = 2, width = 100))
 
 	default = copy.deepcopy(config)
 	for prof in config._profiles:
@@ -126,8 +126,8 @@ def profile(opts):
 		helps.add('Profile: "%s"' % prof, sectype = 'plain')
 
 		with config._with(prof, copy = True) as profconf:
-			profconf = subtractDict(profconf, default)
-			profconf = subtractDict(profconf, base)
+			profconf = subtract_dict(profconf, default)
+			profconf = subtract_dict(profconf, base)
 			helps.select('Profile: "%s"' % prof).add(
 				pformat(profconf, indent = 2, width = 100))
 		config.update(default)

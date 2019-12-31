@@ -1,5 +1,8 @@
 completions
 diot
 pyparam
-pyppl
+pyppl==3.*
+pyppl-annotate
+pyppl-export
+pyppl-report
 toml==0.*

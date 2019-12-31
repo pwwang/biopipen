@@ -1,12 +1,12 @@
 """GATK utilities using GATK"""
-from pyppl import Proc, Diot
-from . import params, delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pCombineVariants():
-	"""
+pCombineVariants = proc_factory(
+	desc   = 'CombineVariants reads in variants records from separate ROD (Reference-Ordered Data) sources and combines them into a single VCF.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@description:
 		CombineVariants reads in variants records from separate ROD (Reference-Ordered Data) sources and combines them into a single VCF. Any number of sources can be input. This tool aims to fulfill two main possible use cases, reflected by the two combination options (MERGE and UNION), for merging records at the variant level (the first 8 fields of the VCF) or at the genotype level (the rest).
 		See: https://software.broadinstitute.org/gatk/documentation/tooldocs/3.8-0/org_broadinstitute_gatk_tools_walkers_variantutils_CombineVariants.php
@@ -22,24 +22,21 @@ def _pCombineVariants():
 		mem    (str): The memory used by JVM
 	@requires:
 		[gatk v3.8](https://software.broadinstitute.org/gatk/download/archive): `conda install -c bioconda gatk=3.8`
-	"""
-	return Diot(
-		desc   = 'CombineVariants reads in variants records from separate ROD (Reference-Ordered Data) sources and combines them into a single VCF.',
-		lang   = params.python.value,
-		input  = 'infiles:files',
-		output = 'outfile:file:{{i.infiles[0] | stem | stem | @append: "_etc.combined.vcf"}}',
-		args   = Diot(
-			gatk   = params.gatk3.value,
-			ref    = params.ref.value,
-			params = Diot(),
-			tmpdir = params.tmpdir.value,
-			mem    = params.mem8G.value,
-		)
+	"""),
+	input  = 'infiles:files',
+	output = 'outfile:file:{{i.infiles[0] | stem | stem | @append: "_etc.combined.vcf"}}',
+	args   = Diot(
+		gatk   = params.gatk3.value,
+		ref    = params.ref.value,
+		params = Diot(),
+		tmpdir = params.tmpdir.value,
+		mem    = params.mem8G.value,
 	)
+)
 
-@procfactory
-def _pReadBackedPhasing():
-	"""
+pReadBackedPhasing = proc_factory(
+	desc   = 'Identifies haplotypes based on the overlap between reads and uses this information to generate physical phasing information for variants within these haplotypes.',
+	config = Diot(annotate = """
 	@description:
 		Identifies haplotypes based on the overlap between reads and uses this information to generate physical phasing information for variants within these haplotypes.
 		See: https://software.broadinstitute.org/gatk/documentation/tooldocs/3.8-0/org_broadinstitute_gatk_tools_walkers_phasing_ReadBackedPhasing.php
@@ -57,21 +54,19 @@ def _pReadBackedPhasing():
 		interval (str): The interval file, if not specified, input VCF file will be used.
 	@requires:
 		[gatk v3.8](https://software.broadinstitute.org/gatk/download/archive): `conda install -c bioconda gatk=3.8`
-	"""
-	return Diot(
-		desc   = 'Identifies haplotypes based on the overlap between reads and uses this information to generate physical phasing information for variants within these haplotypes.',
-		lang   = params.python.value,
-		input  = 'infile:file, bamfile:file',
-		output = 'outfile:file:{{i.infile | stem | stem | @append: ".phased.vcf"}}',
-		args   = Diot(
-			gatk     = params.gatk3.value,
-			ref      = params.ref.value,
-			params   = Diot(),
-			tmpdir   = params.tmpdir.value,
-			mem      = params.mem8G.value,
-			interval = None
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, bamfile:file',
+	output = 'outfile:file:{{i.infile | stem | stem | @append: ".phased.vcf"}}',
+	args   = Diot(
+		gatk     = params.gatk3.value,
+		ref      = params.ref.value,
+		params   = Diot(),
+		tmpdir   = params.tmpdir.value,
+		mem      = params.mem8G.value,
+		interval = None
 	)
+)
 
 # #############################
 # # GATK utilities            #

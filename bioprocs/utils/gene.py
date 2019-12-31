@@ -2,8 +2,8 @@ import re, json, requests
 from os import path
 from mygene import MyGeneInfo
 from medoo import Raw, Field
-from pyppl import Diot
-from pyppl.utils import alwaysList
+from diot import Diot
+from pyppl.utils import always_list
 from bioprocs.utils.cache import Cache
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 from tempfile import gettempdir
@@ -165,14 +165,14 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 	}
 
 	# query from cache
-	tocols = alwaysList(to)
+	tocols = always_list(to)
 	# alias
 	tocols = replaceList(tocols, ['ensg', 'ensemblgene', 'ensembl'], 'ensembl.gene')
 	tocols = replaceList(tocols, ['uniprot'], 'uniprot.Swiss-Prot')
 	tocols = replaceList(tocols, ['refseq'], 'refseq.rna')
 	tocols = fields2local(tocols)
 
-	frmcols = alwaysList(frm)
+	frmcols = always_list(frm)
 	frmcols = replaceList(frmcols, ['ensg', 'ensemblgene', 'ensembl'], 'ensembl.gene')
 	frmcols = replaceList(frmcols, ['uniprot'], 'uniprot.Swiss-Prot')
 	frmcols = replaceList(frmcols, ['refseq'], 'refseq.rna')
@@ -180,6 +180,7 @@ def genenorm(infile, outfile = None, notfound = 'ignore', frm = 'symbol, alias',
 
 	columns  = list(set(tocols + frmcols + ['taxid']))
 	frmkeys  = ','.join(frmcols)
+
 	allfound, allrest = cache.query(columns, {frmkeys: genes, 'taxid': TAXIDS[genome]}, dummies)
 	# query from api
 	mgret = querygene(allrest[frmkeys], scopes = fields2remote(frmcols), fields = fields2remote(columns), species = SPECIES[genome])

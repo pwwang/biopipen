@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio import TsvReader, TsvWriter
 

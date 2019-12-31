@@ -1,15 +1,12 @@
 """Generate plots using given data"""
 
 from pyppl import Proc, Diot
-from . import params, rimport
 from .utils import fs2name
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
-@procfactory
-def _pPlot():
-	"""
+pPlot = proc_factory(
+	desc = 'Generate plot using ggplot2',
+	config = Diot(annotate = """
 	@name:
 		pPlot
 	@description:
@@ -25,25 +22,28 @@ def _pPlot():
 		`helper` : Some helper codes to generate `params` and `ggs`
 		`devpars`: The device parameters. Default: `Diot(res = 300, height = 2000, width = 2000)`
 		`ggs`    : The extra ggplot elements.
-	"""
-	pPlot = Proc(desc = 'Generate plot using ggplot2')
-	pPlot.input  = 'infile:file'
-	pPlot.output = 'outfile:file:{{i.infile | fn}}.png'
-	pPlot.args.cnames  = True
-	pPlot.args.rnames  = False
-	pPlot.args.aes     = Diot(x = 1, y = 2) # only allow x, y
-	pPlot.args.helper  = ''
-	pPlot.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pPlot.args.params  = Diot()
-	pPlot.args.ggs     = Diot()
-	pPlot.envs.rimport = rimport
-	pPlot.lang   = params.Rscript.value
-	pPlot.script = 'file:scripts/plot/pPlot.r'
-	return pPlot
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pPlot.input  = 'infile:file'
+pPlot.output = 'outfile:file:{{i.infile | fn}}.png'
+pPlot.args.cnames  = True
+pPlot.args.rnames  = False
+pPlot.args.aes     = Diot(x = 1, y = 2) # only allow x, y
+pPlot.args.helper  = ''
+pPlot.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pPlot.args.params  = Diot()
+pPlot.args.ggs     = Diot()
+# pPlot.envs.rimport = rimport
+pPlot.lang   = params.Rscript.value
 
-@procfactory
-def _pScatter(alias = 'pPoints'):
-	"""
+pScatter = proc_factory(
+	desc = 'Generate scatter plot.',
+	config = Diot(annotate = """
 	@name:
 		pScatter
 	@description:
@@ -61,26 +61,29 @@ def _pScatter(alias = 'pPoints'):
 		`devpars`: The device parameters. Default: `Diot(res = 300, height = 2000, width = 2000)`
 		`params` : The extra params for `geom_point`
 		`ggs`    : The extra ggplot elements.
-	"""
-	pScatter              = Proc(desc = 'Generate scatter plot.')
-	pScatter.input        = 'infile:file'
-	pScatter.output       = 'outfile:file:{{i.infile | fn}}.scatter.png'
-	pScatter.args.cnames  = True
-	pScatter.args.rnames  = False
-	pScatter.args.x       = 1
-	pScatter.args.y       = 2
-	pScatter.args.helper  = ''
-	pScatter.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pScatter.args.params  = Diot()
-	pScatter.args.ggs     = Diot()
-	pScatter.envs.rimport = rimport
-	pScatter.lang         = params.Rscript.value
-	pScatter.script       = 'file:scripts/plot/pScatter.r'
-	return pScatter
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pScatter.input        = 'infile:file'
+pScatter.output       = 'outfile:file:{{i.infile | fn}}.scatter.png'
+pScatter.args.cnames  = True
+pScatter.args.rnames  = False
+pScatter.args.x       = 1
+pScatter.args.y       = 2
+pScatter.args.helper  = ''
+pScatter.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pScatter.args.params  = Diot()
+pScatter.args.ggs     = Diot()
+# pScatter.envs.rimport = rimport
+pScatter.lang         = params.Rscript.value
 
-@procfactory
-def _pHisto():
-	"""
+pHisto = proc_factory(
+	desc = 'Generate histogram.',
+	config = Diot(annotate = """
 	@name:
 		pHisto
 	@description:
@@ -96,24 +99,27 @@ def _pHisto():
 		`devpars`: The device parameters. Default: `Diot(res = 300, height = 2000, width = 2000)`
 		`params` : The extra params for `geom_histogram`
 		`ggs`    : The extra ggplot elements.
-	"""
-	pHisto              = Proc(desc = 'Generate histogram.')
-	pHisto.input        = 'infile:file'
-	pHisto.output       = 'outfile:file:{{i.infile | fn}}.histo.png'
-	pHisto.args.inopts  = Diot(cnames = True, rnames = False)
-	pHisto.args.x       = 1
-	pHisto.args.helper  = ''
-	pHisto.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pHisto.args.params  = Diot()
-	pHisto.args.ggs     = Diot()
-	pHisto.envs.rimport = rimport
-	pHisto.lang         = params.Rscript.value
-	pHisto.script       = 'file:scripts/plot/pHisto.r'
-	return pHisto
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pHisto.input        = 'infile:file'
+pHisto.output       = 'outfile:file:{{i.infile | fn}}.histo.png'
+pHisto.args.inopts  = Diot(cnames = True, rnames = False)
+pHisto.args.x       = 1
+pHisto.args.helper  = ''
+pHisto.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pHisto.args.params  = Diot()
+pHisto.args.ggs     = Diot()
+# pHisto.envs.rimport = rimport
+pHisto.lang         = params.Rscript.value
 
-@procfactory
-def _pDensity():
-	"""
+pDensity = proc_factory(
+	desc = 'Generate density plot.',
+	config = Diot(annotate = """
 	@name:
 		pDensity
 	@description:
@@ -129,24 +135,27 @@ def _pDensity():
 		`devpars`: The device parameters. Default: `Diot(res = 300, height = 2000, width = 2000)`
 		`params` : The extra params for `geom_density`
 		`ggs`    : The extra ggplot elements.
-	"""
-	pDensity              = Proc(desc = 'Generate density plot.')
-	pDensity.input        = 'infile:file'
-	pDensity.output       = 'outfile:file:{{i.infile | fn}}.density.png'
-	pDensity.args.inopts  = Diot(cnames = True, rnames = False)
-	pDensity.args.x       = 1
-	pDensity.args.helper  = ''
-	pDensity.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pDensity.args.params  = Diot()
-	pDensity.args.ggs     = Diot()
-	pDensity.envs.rimport = rimport
-	pDensity.lang         = params.Rscript.value
-	pDensity.script       = 'file:scripts/plot/pDensity.r'
-	return pDensity
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pDensity.input        = 'infile:file'
+pDensity.output       = 'outfile:file:{{i.infile | fn}}.density.png'
+pDensity.args.inopts  = Diot(cnames = True, rnames = False)
+pDensity.args.x       = 1
+pDensity.args.helper  = ''
+pDensity.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pDensity.args.params  = Diot()
+pDensity.args.ggs     = Diot()
+# pDensity.envs.rimport = rimport
+pDensity.lang         = params.Rscript.value
 
-@procfactory
-def _pFreqpoly():
-	"""
+pFreqpoly = proc_factory(
+	desc = 'Generate frequency polygon plot.',
+	config = Diot(annotate = """
 	@name:
 		pFreqpoly
 	@description:
@@ -163,28 +172,30 @@ def _pFreqpoly():
 		`devpars`: The device parameters. Default: `Diot(res = 300, height = 2000, width = 2000)`
 		`params` : The extra params for `geom_point`
 		`ggs`    : The extra ggplot elements.
-	"""
-	pFreqpoly = Proc(desc = 'Generate frequency polygon plot.')
-	pFreqpoly.input  = 'infile:file'
-	pFreqpoly.output = 'outfile:file:{{i.infile | fn}}.freqpoly.png'
-	pFreqpoly.args.cnames  = True
-	pFreqpoly.args.rnames  = False
-	pFreqpoly.args.x       = 1
-	pFreqpoly.args.helper  = ''
-	pFreqpoly.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pFreqpoly.args.params  = Diot()
-	pFreqpoly.args.ggs     = Diot()
-	pFreqpoly.envs.rimport = rimport
-	pFreqpoly.lang   = params.Rscript.value
-	pFreqpoly.script = 'file:scripts/plot/pFreqpoly.r'
-	return pFreqpoly
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pFreqpoly.input  = 'infile:file'
+pFreqpoly.output = 'outfile:file:{{i.infile | fn}}.freqpoly.png'
+pFreqpoly.args.cnames  = True
+pFreqpoly.args.rnames  = False
+pFreqpoly.args.x       = 1
+pFreqpoly.args.helper  = ''
+pFreqpoly.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pFreqpoly.args.params  = Diot()
+pFreqpoly.args.ggs     = Diot()
+# pFreqpoly.envs.rimport = rimport
+pFreqpoly.lang   = params.Rscript.value
 
-
-@procfactory
-def _pDiotplot():
-	"""
+pBoxplot = proc_factory(
+	desc = 'Generate boxplot plot.',
+	config = Diot(annotate = """
 	@name:
-		pDiotplot
+		pBoxplot
 	@description:
 		Generate box plot
 	@input:
@@ -220,26 +231,29 @@ def _pDiotplot():
 			```
 		`params`:    Other parameters for `geom_boxplot`, default: `Diot()`
 		`ggs`   :    Extra ggplot2 statements
-	"""
-	pDiotplot              = Proc(desc = 'Generate boxplot plot.')
-	pDiotplot.input        = 'infile:file'
-	pDiotplot.output       = 'outfile:file:{{i.infile | fn}}.boxplot.png'
-	pDiotplot.args.inopts  = Diot(cnames = True, rnames = False, delimit = '\t')
-	pDiotplot.args.x       = 2
-	pDiotplot.args.y       = 1
-	pDiotplot.args.helper  = ''
-	pDiotplot.args.stacked = False
-	pDiotplot.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pDiotplot.args.params  = Diot()
-	pDiotplot.args.ggs     = Diot()
-	pDiotplot.envs.rimport = rimport
-	pDiotplot.lang         = params.Rscript.value
-	pDiotplot.script       = 'file:scripts/plot/pDiotplot.r'
-	return pDiotplot
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pBoxplot.input        = 'infile:file'
+pBoxplot.output       = 'outfile:file:{{i.infile | fn}}.boxplot.png'
+pBoxplot.args.inopts  = Diot(cnames = True, rnames = False, delimit = '\t')
+pBoxplot.args.x       = 2
+pBoxplot.args.y       = 1
+pBoxplot.args.helper  = ''
+pBoxplot.args.stacked = False
+pBoxplot.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pBoxplot.args.params  = Diot()
+pBoxplot.args.ggs     = Diot()
+# pBoxplot.envs.rimport = rimport
+pBoxplot.lang         = params.Rscript.value
 
-@procfactory
-def _pBar(alias = 'pCol'):
-	"""
+pBar = proc_factory(
+	desc = 'Generate bar/col plot.',
+	config = Diot(annotate = """
 	@name:
 		pBar
 	@description:
@@ -257,33 +271,36 @@ def _pBar(alias = 'pCol'):
 		`y`      :   The `values` column. Only for `args.stacked = True`. Default: `1`
 		`helper` :   Some raw codes to help to construct the matrix and arguments.
 		`stacked`:   Whether the input file is stacked
-			- see `pDiotplot.args.stacked`
+			- see `pBoxplot.args.stacked`
 		`params`:    Other parameters for `geom_bar`, default: `Diot()`
 		`ggs`   :    Extra ggplot2 statements
-	"""
-	pBar             = Proc(desc = 'Generate bar/col plot.')
-	pBar.input       = 'infile:file'
-	pBar.output      = 'outfile:file:{{i.infile | fn}}.bar.png'
-	pBar.args.inopts = Diot(
-		cnames  = True,
-		rnames  = False,
-		delimit = '\t'
-	)
-	pBar.args.x       = 2
-	pBar.args.y       = 1
-	pBar.args.helper  = ''
-	pBar.args.stacked = False
-	pBar.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pBar.args.params  = Diot()
-	pBar.args.ggs     = Diot()
-	pBar.envs.rimport = rimport
-	pBar.lang         = params.Rscript.value
-	pBar.script       = 'file:scripts/plot/pBar.r'
-	return pBar
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pBar.input       = 'infile:file'
+pBar.output      = 'outfile:file:{{i.infile | fn}}.bar.png'
+pBar.args.inopts = Diot(
+	cnames  = True,
+	rnames  = False,
+	delimit = '\t'
+)
+pBar.args.x       = 2
+pBar.args.y       = 1
+pBar.args.helper  = ''
+pBar.args.stacked = False
+pBar.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pBar.args.params  = Diot()
+pBar.args.ggs     = Diot()
+# pBar.envs.rimport = rimport
+pBar.lang         = params.Rscript.value
 
-@procfactory
-def _pHeatmap():
-	"""
+pHeatmap = proc_factory(
+	desc  = 'Plot heatmaps.',
+	config = Diot(annotate = """
 	@name:
 		pHeatmap
 	@description:
@@ -309,23 +326,26 @@ def _pHeatmap():
 			- `random:N`: Random N rows. N defaults to 50
 			- `random-both:N`: Random N rows from top part and N rows from bottom part. N defaults to 50
 		`cols`: Col selector (see `rows`).
-	"""
-	pHeatmap              = Proc(desc  = 'Plot heatmaps.')
-	pHeatmap.input        = "infile:file"
-	pHeatmap.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
-	pHeatmap.args.ggs     = Diot()
-	pHeatmap.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pHeatmap.args.params  = Diot(dendro = True)
-	pHeatmap.args.inopts  = Diot(rnames = True, cnames = True)
-	pHeatmap.args.helper  = ''
-	pHeatmap.envs.rimport = rimport
-	pHeatmap.lang         = params.Rscript.value
-	pHeatmap.script       = "file:scripts/plot/pHeatmap.r"
-	return pHeatmap
+	@requires:
+		ggplot2:
+		  desc: A system for declaratively creating graphics, based on The Grammar of Graphics.
+		  url: https://ggplot2.tidyverse.org/index.html
+		  install: "{{proc.lang}} <(echo install.packages('ggplot2'))"
+		  validate: "{{proc.lang}} <(echo require('ggplot2'))"
+	"""))
+pHeatmap.input        = "infile:file"
+pHeatmap.output       = "outfile:file:{{i.infile | fn}}.heatmap.png"
+pHeatmap.args.ggs     = Diot()
+pHeatmap.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pHeatmap.args.params  = Diot(dendro = True)
+pHeatmap.args.inopts  = Diot(rnames = True, cnames = True)
+pHeatmap.args.helper  = ''
+# pHeatmap.envs.rimport = rimport
+pHeatmap.lang         = params.Rscript.value
 
-@procfactory
-def _pHeatmap2():
-	"""
+pHeatmap2 = proc_factory(
+	desc  = 'Plot heatmaps using R package ComplexHeatmap.',
+	config = Diot(annotate = """
 	@name:
 		pHeatmap2
 	@description:
@@ -368,30 +388,31 @@ def _pHeatmap2():
 		`helper`  : The raw R codes to help defining some R variables or functions.
 		`saveinfo`: Save other information include the heatmap object and the clusters. Default: `True`
 	@requires:
-		`R-ComplexHeatmap` (tested on c269eb425bf1b2d1713b9d5e68bf9f08bd8c7acb)
-	"""
-	pHeatmap2              = Proc(desc  = 'Plot heatmaps using R package ComplexHeatmap.')
-	pHeatmap2.input        = "infile:file, annofiles:files"
-	pHeatmap2.output       = [
-		"outfile:file:{{i.infile | fn2}}.heatmap/{{i.infile | fn2}}.heatmap.png",
-		"outdir:dir:{{i.infile | fn2}}.heatmap"
-	]
-	pHeatmap2.args.devpars  = Diot(res = 300, height = 2000, width = 2000)
-	pHeatmap2.args.draw     = Diot()
-	pHeatmap2.args.params   = Diot(heatmap_legend_param = Diot())
-	pHeatmap2.args.anopts   = Diot(rnames = True, cnames = True)
-	pHeatmap2.args.inopts   = Diot(rnames = True, cnames = True)
-	pHeatmap2.args.seed     = None
-	pHeatmap2.args.saveinfo = True
-	pHeatmap2.args.helper   = ''
-	pHeatmap2.envs.rimport  = rimport
-	pHeatmap2.lang          = params.Rscript.value
-	pHeatmap2.script        = "file:scripts/plot/pHeatmap2.r"
-	return pHeatmap2
+		ComplexHeatmap:
+		  desc: efficient to visualize associations between different sources of data sets and reveal potential patterns.
+		  url: https://github.com/jokergoo/ComplexHeatmap
+		  install: "{{proc.lang}} <(echo devtools::install_github('jokergoo/ComplexHeatmap', ref = 'c269eb4'))"
+		  validate: "{{proc.lang}} <(echo require('ComplexHeatmap'))"
+	"""))
+pHeatmap2.input        = "infile:file, annofiles:files"
+pHeatmap2.output       = [
+	"outfile:file:{{i.infile | fn2}}.heatmap/{{i.infile | fn2}}.heatmap.png",
+	"outdir:dir:{{i.infile | fn2}}.heatmap"
+]
+pHeatmap2.args.devpars  = Diot(res = 300, height = 2000, width = 2000)
+pHeatmap2.args.draw     = Diot()
+pHeatmap2.args.params   = Diot(heatmap_legend_param = Diot())
+pHeatmap2.args.anopts   = Diot(rnames = True, cnames = True)
+pHeatmap2.args.inopts   = Diot(rnames = True, cnames = True)
+pHeatmap2.args.seed     = None
+pHeatmap2.args.saveinfo = True
+pHeatmap2.args.helper   = ''
+# pHeatmap2.envs.rimport  = rimport
+pHeatmap2.lang          = params.Rscript.value
 
-@procfactory
-def _pScatterCompare():
-	"""
+pScatterCompare = proc_factory(
+	desc = 'Plot scatter compare plots.',
+	config = Diot(annotate = """
 	@name:
 		pScatterCompare
 	@description:
@@ -410,26 +431,23 @@ def _pScatterCompare():
 		`corr`: The method to calculate the correlation. Default: `pearson`
 			- Could be: `pearson`, `spearman` or `kendall`
 			- If it's neither of the three, no correlations will show.
-	"""
-	pScatterCompare              = Proc(desc = 'Plot scatter compare plots.')
-	pScatterCompare.input        = "infile:file"
-	pScatterCompare.output       = "outfile:file:{{i.infile | fn}}.scattercomp.png"
-	pScatterCompare.args.ggs     = Diot()
-	pScatterCompare.args.params  = Diot()
-	pScatterCompare.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pScatterCompare.args.x       = 1
-	pScatterCompare.args.y       = 2
-	pScatterCompare.args.rnames  = True
-	pScatterCompare.args.cnames  = True
-	pScatterCompare.args.helper  = ''
-	pScatterCompare.envs.rimport = rimport
-	pScatterCompare.lang         = params.Rscript.value
-	pScatterCompare.script       = "file:scripts/plot/pScatterCompare.r"
-	return pScatterCompare
+	"""))
+pScatterCompare.input        = "infile:file"
+pScatterCompare.output       = "outfile:file:{{i.infile | fn}}.scattercomp.png"
+pScatterCompare.args.ggs     = Diot()
+pScatterCompare.args.params  = Diot()
+pScatterCompare.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pScatterCompare.args.x       = 1
+pScatterCompare.args.y       = 2
+pScatterCompare.args.rnames  = True
+pScatterCompare.args.cnames  = True
+pScatterCompare.args.helper  = ''
+# pScatterCompare.envs.rimport = rimport
+pScatterCompare.lang         = params.Rscript.value
 
-@procfactory
-def _pROC():
-	"""
+pROC = proc_factory(
+	desc   = 'ROC curves and AUCs.',
+	config = Diot(annotate = """
 	@input:
 		infile: The input matrix file.
 			- Col0: rownames if `args.inopts.rnames` is True
@@ -451,31 +469,29 @@ def _pROC():
 			})
 			```
 		`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-	"""
-	return Diot(
-		desc   = 'ROC curves and AUCs.',
-		lang   = params.Rscript.value,
-		input  = 'infile:file',
-		output = [
-			'outfile:file:{{i.infile | stem}}.roc/{{i.infile | stem}}.roc.png',
-			'outdir:dir:{{i.infile | stem}}.roc'
-		],
-		args = Diot(
-			inopts  = Diot(rnames = True, cnames = True),
-			params  = Diot(bestCut = True, showAUC = True),
-			ggs     = Diot({
-				# show legend at bottom right corner
-				'theme#auc': {
-					'legend.position': [1, 0], 'legend.justification': [1, 0],
-					'panel.border': 'r:element_rect(colour="black", fill=NA, size=.2)'}
-			}),
-			devpars = Diot(res = 300, height = 2000, width = 2000)
-		)
+	""")，
+	lang   = params.Rscript.value,
+	input  = 'infile:file',
+	output = [
+		'outfile:file:{{i.infile | stem}}.roc/{{i.infile | stem}}.roc.png',
+		'outdir:dir:{{i.infile | stem}}.roc'
+	],
+	args = Diot(
+		inopts  = Diot(rnames = True, cnames = True),
+		params  = Diot(bestCut = True, showAUC = True),
+		ggs     = Diot({
+			# show legend at bottom right corner
+			'theme#auc': {
+				'legend.position': [1, 0], 'legend.justification': [1, 0],
+				'panel.border': 'r:element_rect(colour="black", fill=NA, size=.2)'}
+		}),
+		devpars = Diot(res = 300, height = 2000, width = 2000)
 	)
+)
 
-@procfactory
-def _pVenn():
-	"""
+pVenn = proc_factory(
+	desc = 'Venn plots.',
+	config = Diot(annotate = """
 	@description:
 		Venn/UpsetR plots. Requires:
 			- [`r-VennDiagram`](https://www.rdocumentation.org/packages/VennDiagram) and
@@ -515,23 +531,20 @@ def _pVenn():
 			- `rnames`  : Whether input file has rownames. Default: False
 		`params`  : Other params for `venn.diagram` or `upset`. Default: {}
 		`devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-	"""
-	pVenn              = Proc(desc = 'Venn plots.')
-	pVenn.input        = "infile:file, metafile:file"
-	pVenn.output       = "outfile:file:{{i.infile | fn}}.venn.png"
-	pVenn.args.tool    = 'auto' # upsetr or auto: < = 3 venn, else upsetr
-	pVenn.args.inopts  = Diot(rnames  = False, cnames = True)
-	pVenn.args.intype  = 'raw' # computed
-	pVenn.args.params  = Diot()
-	pVenn.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pVenn.envs.rimport = rimport
-	pVenn.lang         = params.Rscript.value
-	pVenn.script       = "file:scripts/plot/pVenn.r"
-	return pVenn
+	"""))
+pVenn.input        = "infile:file, metafile:file"
+pVenn.output       = "outfile:file:{{i.infile | fn}}.venn.png"
+pVenn.args.tool    = 'auto' # upsetr or auto: < = 3 venn, else upsetr
+pVenn.args.inopts  = Diot(rnames  = False, cnames = True)
+pVenn.args.intype  = 'raw' # computed
+pVenn.args.params  = Diot()
+pVenn.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+# pVenn.envs.rimport = rimport
+pVenn.lang         = params.Rscript.value
 
-@procfactory
-def _pVenn2():
-	"""
+pVenn2 = proc_factory(
+	desc = 'Venn plots using individual input files',
+	config = Diot(annotate = """
 	@name:
 		pVenn2
 	@description:
@@ -556,23 +569,20 @@ def _pVenn2():
 		`inopts`  : options to read the input file. Default: `Diot(rnames = False, cnames = False)`
 		`params`  : Other params for `venn.diagram` or `upset`. Default: `Diot()`
 		`devpars` : The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-	"""
-	pVenn2              = Proc(desc = 'Venn plots using individual input files')
-	pVenn2.input        = "infiles:files, metafile:file"
-	pVenn2.output       = "outfile:file:{{i.infiles | fs2name}}.venn.png"
-	pVenn2.args.tool    = 'auto'
-	pVenn2.args.inopts  = Diot(rnames = False, cnames = False)
-	pVenn2.args.params  = Diot()
-	pVenn2.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pVenn2.envs.rimport = rimport
-	pVenn2.envs.fs2name = fs2name
-	pVenn2.lang         = params.Rscript.value
-	pVenn2.script       = "file:scripts/plot/pVenn2.r"
-	return pVenn2
+	"""))
+pVenn2.input        = "infiles:files, metafile:file"
+pVenn2.output       = "outfile:file:{{i.infiles | fs2name}}.venn.png"
+pVenn2.args.tool    = 'auto'
+pVenn2.args.inopts  = Diot(rnames = False, cnames = False)
+pVenn2.args.params  = Diot()
+pVenn2.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+# pVenn2.envs.rimport = rimport
+pVenn2.envs.fs2name = fs2name
+pVenn2.lang         = params.Rscript.value
 
-@procfactory
-def _pPie():
-	"""
+pPie = proc_factory(
+	desc = 'Pie chart.',
+	config = Diot(annotate = """
 	@name:
 		pPie
 	@description:
@@ -597,31 +607,28 @@ def _pPie():
 		`rnames` : Whether the input file has row names. Default: `False`
 		`ggs`    : Extra expressions for ggplot.
 		`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-	"""
-	pPie              = Proc(desc = 'Pie chart.')
-	pPie.input        = "infile:file"
-	pPie.output       = "outfile:file:{{i.infile | fn}}.pie.png"
-	pPie.args.rnames  = False
-	pPie.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pPie.args.ggs     = Diot(
-		theme = {
-			'axis.title.x'    : 'r:element_blank()',
-			'axis.title.y'    : 'r:element_blank()',
-			'panel.border'    : 'r:element_blank()',
-			'panel.grid'      : 'r:element_blank()',
-			'axis.ticks'      : 'r:element_blank()',
-			'panel.background': 'r:element_blank()',
-			'axis.text.x'     : 'r:element_blank()',
-		}
-	)
-	pPie.envs.rimport = rimport
-	pPie.lang         = params.Rscript.value
-	pPie.script       = "file:scripts/plot/pPie.r"
-	return pPie
+	"""))
+pPie.input        = "infile:file"
+pPie.output       = "outfile:file:{{i.infile | fn}}.pie.png"
+pPie.args.rnames  = False
+pPie.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pPie.args.ggs     = Diot(
+	theme = {
+		'axis.title.x'    : 'r:element_blank()',
+		'axis.title.y'    : 'r:element_blank()',
+		'panel.border'    : 'r:element_blank()',
+		'panel.grid'      : 'r:element_blank()',
+		'axis.ticks'      : 'r:element_blank()',
+		'panel.background': 'r:element_blank()',
+		'axis.text.x'     : 'r:element_blank()',
+	}
+)
+# pPie.envs.rimport = rimport
+pPie.lang         = params.Rscript.value
 
-@procfactory
-def _pManhattan():
-	"""
+pManhattan = proc_factory(
+	desc = 'Manhattan plot.',
+	config = Diot(annotate = """
 	@name:
 		pManhattan
 	@description:
@@ -654,72 +661,60 @@ def _pManhattan():
 		`devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
 		`gsize`  : The genome sizes file. Default: `None`
 			- If `None`, will infer from the snp coordinates
-	"""
-	pManhattan              = Proc(desc = 'Manhattan plot.')
-	pManhattan.input        = 'infile:file, hifile:file'
-	pManhattan.output       = 'outfile:file:{{i.infile | fn}}.manht.png'
-	pManhattan.args.inopts  = Diot(cnames = False, rnames = False)
-	pManhattan.args.hilabel = True
-	pManhattan.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pManhattan.args.ggs     = Diot()
-	pManhattan.args.gsize   = None # params.gsize.value
-	pManhattan.envs.rimport = rimport
-	pManhattan.lang         = params.Rscript.value
-	pManhattan.script       = "file:scripts/plot/pManhattan.r"
-	return pManhattan
+	"""))
+pManhattan.input        = 'infile:file, hifile:file'
+pManhattan.output       = 'outfile:file:{{i.infile | fn}}.manht.png'
+pManhattan.args.inopts  = Diot(cnames = False, rnames = False)
+pManhattan.args.hilabel = True
+pManhattan.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pManhattan.args.ggs     = Diot()
+pManhattan.args.gsize   = None # params.gsize.value
+# pManhattan.envs.rimport = rimport
+pManhattan.lang         = params.Rscript.value
 
-@procfactory
-def _pQQ():
-	"""
+pQQ = proc_factory(
+	desc = 'Q-Q plot',
+	config = Diot(annotate = """
 	@name:
 		pQQ
-	"""
-	pQQ              = Proc(desc = 'Q-Q plot')
-	pQQ.input        = 'infile:file'
-	pQQ.output       = 'outfile:file:{{i.infile | fn}}.qq.png'
-	pQQ.args.inopts  = Diot(cnames = True, rnames = False)
-	pQQ.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-	pQQ.args.ggs     = Diot()
-	pQQ.args.params  = Diot()
-	pQQ.envs.rimport = rimport
-	pQQ.lang         = params.Rscript.value
-	pQQ.script       = "file:scripts/plot/pQQ.r"
-	return pQQ
+	"""))
+pQQ.input        = 'infile:file'
+pQQ.output       = 'outfile:file:{{i.infile | fn}}.qq.png'
+pQQ.args.inopts  = Diot(cnames = True, rnames = False)
+pQQ.args.devpars = Diot(res = 300, height = 2000, width = 2000)
+pQQ.args.ggs     = Diot()
+pQQ.args.params  = Diot()
+# pQQ.envs.rimport = rimport
+pQQ.lang         = params.Rscript.value
 
-@procfactory
-def _pPairs():
-	"""
+pPairs = proc_factory(
+	desc = 'Plot pairs with ggpairs from GGally',
+	config = Diot(annotate = """
 	@name:
 		pPairs
-	"""
-	pPairs              = Proc(desc = 'Plot pairs with ggpairs from GGally')
-	pPairs.input        = 'infile:file'
-	pPairs.output       = 'outfile:file:{{i.infile | fn}}.pairs.png'
-	pPairs.args.inopts  = Diot(cnames = True, rnames = True)
-	pPairs.args.devpars = Diot(res = 300, height = 400, width = 400) # for each cell
-	pPairs.args.ggs     = Diot() # geom_* not available but theme available
-	pPairs.args.params  = Diot(upper = Diot(continuous = "density")) # other parameters for ggpairs
-	pPairs.envs.rimport = rimport
-	pPairs.lang         = params.Rscript.value
-	pPairs.script       = "file:scripts/plot/pPairs.r"
-	return pPairs
+	"""))
+pPairs.input        = 'infile:file'
+pPairs.output       = 'outfile:file:{{i.infile | fn}}.pairs.png'
+pPairs.args.inopts  = Diot(cnames = True, rnames = True)
+pPairs.args.devpars = Diot(res = 300, height = 400, width = 400) # for each cell
+pPairs.args.ggs     = Diot() # geom_* not available but theme available
+pPairs.args.params  = Diot(upper = Diot(continuous = "density")) # other parameters for ggpairs
+# pPairs.envs.rimport = rimport
+pPairs.lang         = params.Rscript.value
 
-@procfactory
-def _pVolcano():
-	"""
+pVolcano = proc_factory(
+	desc = 'Do volcano plot.',
+	config = Diot(annotate = """
 	@name:
 		pVolcano
-	"""
-	pVolcano               = Proc(desc = 'Do volcano plot.')
-	pVolcano.input         = 'infile:file'
-	pVolcano.output        = 'outfile:file:{{i.infile | fn}}.volcano.png'
-	pVolcano.args.fccut    = 2
-	pVolcano.args.pvalcut  = .05
-	pVolcano.args.usepval  = False
-	pVolcano.args.hilights = []
-	pVolcano.args.devpars  = Diot(res = 300, height = 2000, width = 2000)
-	pVolcano.args.ggs      = Diot()
-	pVolcano.envs.rimport  = rimport
-	pVolcano.lang          = params.Rscript.value
-	pVolcano.script        = "file:scripts/plot/pVolcano.r"
-	return pVolcano
+	"""))
+pVolcano.input         = 'infile:file'
+pVolcano.output        = 'outfile:file:{{i.infile | fn}}.volcano.png'
+pVolcano.args.fccut    = 2
+pVolcano.args.pvalcut  = .05
+pVolcano.args.usepval  = False
+pVolcano.args.hilights = []
+pVolcano.args.devpars  = Diot(res = 300, height = 2000, width = 2000)
+pVolcano.args.ggs      = Diot()
+# pVolcano.envs.rimport  = rimport
+pVolcano.lang          = params.Rscript.value

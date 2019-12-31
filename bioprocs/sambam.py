@@ -1,14 +1,13 @@
 """
 A set of processes to generate/process sam/bam files
 """
-from pyppl import Proc, Diot
-from . import params, delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pSam2Bam():
-	"""
+pSam2Bam = proc_factory(
+	desc   = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.',
+	config = Diot(annotate = """
 	@input:
 		infile: The input file
 	@output:
@@ -38,38 +37,36 @@ def _pSam2Bam():
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 		[biobambam](https://github.com/gt1/biobambam2)
 		[samtools](https://github.com/samtools/samtools)
-	"""
-	return Diot(
-		desc   = 'Deal with mapped sam/bam files, including sort, markdup, rmdup, and/or index.',
-		lang   = params.python.value,
-		input  = "infile:file",
-		output = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai",
-		errhow = 'retry',
-		preCmd = """
-			{{"reference.bash" | bashimport}}
-			export elprep={{args.elprep | quote}}
-			if [[ {{args.tool | quote}} == "elprep" ]]; then
-				reference elprep {{args.ref | squote}}
-			fi""",
-		args = Diot(
-			tool       = "elprep",
-			sambamba   = params.sambamba.value,
-			picard     = params.picard.value,
-			biobambam  = params.biobambam_bamsort.value,
-			samtools   = params.samtools.value,
-			elprep     = params.elprep.value,
-			steps      = Diot(sort=True, index=True, markdup=True, rmdup=True, recal=True),
-			tmpdir     = params.tmpdir.value,
-			sortby     = "coordinate",
-			nthread    = 1,
-			params     = Diot(),
-			mem        = params.mem16G.value,
-			ref        = params.ref.value,
-			knownSites = ''))
+	""", runcmd_pre = """
+		{{"reference.bash" | bashimport}}
+		export elprep={{args.elprep | quote}}
+		if [[ {{args.tool | quote}} == "elprep" ]]; then
+			reference elprep {{args.ref | squote}}
+		fi
+	"""),
+	lang   = params.python.value,
+	input  = "infile:file",
+	output = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai",
+	errhow = 'retry',
+	args   = Diot(
+		tool       = "elprep",
+		sambamba   = params.sambamba.value,
+		picard     = params.picard.value,
+		biobambam  = params.biobambam_bamsort.value,
+		samtools   = params.samtools.value,
+		elprep     = params.elprep.value,
+		steps      = Diot(sort=True, index=True, markdup=True, rmdup=True, recal=True),
+		tmpdir     = params.tmpdir.value,
+		sortby     = "coordinate",
+		nthread    = 1,
+		params     = Diot(),
+		mem        = params.mem16G.value,
+		ref        = params.ref.value,
+		knownSites = ''))
 
-@procfactory
-def _pBamMarkdup():
-	"""
+pBamMarkdup = proc_factory(
+	desc = 'Mark/remove duplicates for bam files.',
+	config = Diot(annotate = """
 	@name:
 		pBamMarkdup
 	@description:
@@ -100,31 +97,28 @@ def _pBamMarkdup():
 		[biobambam](https://github.com/gt1/biobambam2)
 		[samtools](https://github.com/samtools/samtools)
 		[bamutil](http://genome.sph.umich.edu/wiki/BamUtil#Programs)
-	"""
-	pBamMarkdup                        = Proc(desc = 'Mark/remove duplicates for bam files.')
-	pBamMarkdup.input                  = "infile:file"
-	pBamMarkdup.output                 = "outfile:file:{{i.infile | fn}}.bam"
-	pBamMarkdup.args.tool              = "biobambam"
-	pBamMarkdup.args.sambamba          = params.sambamba.value
-	pBamMarkdup.args.picard            = params.picard.value
-	pBamMarkdup.args.biobambam_bamsort = params.biobambam_bamsort.value
-	pBamMarkdup.args.samtools          = params.samtools.value
-	pBamMarkdup.args.bamutil           = params.bamutil.value
-	pBamMarkdup.args.rmdup             = False
-	pBamMarkdup.args.tmpdir            = params.tmpdir.value
-	pBamMarkdup.args.nthread           = 1
-	pBamMarkdup.args.params            = Diot()
-	pBamMarkdup.args.mem               = params.mem16G.value
-	#pBamMarkdup.envs.mem2              = mem2.py
-	#pBamMarkdup.envs.runcmd            = runcmd.py
-	#pBamMarkdup.envs.params2CmdArgs    = helpers.params2CmdArgs.py
-	pBamMarkdup.lang                   = params.python.value
-	pBamMarkdup.script                 = "file:scripts/sambam/pBamMarkdup.py"
-	return pBamMarkdup
+	"""))
+pBamMarkdup.input                  = "infile:file"
+pBamMarkdup.output                 = "outfile:file:{{i.infile | fn}}.bam"
+pBamMarkdup.args.tool              = "biobambam"
+pBamMarkdup.args.sambamba          = params.sambamba.value
+pBamMarkdup.args.picard            = params.picard.value
+pBamMarkdup.args.biobambam_bamsort = params.biobambam_bamsort.value
+pBamMarkdup.args.samtools          = params.samtools.value
+pBamMarkdup.args.bamutil           = params.bamutil.value
+pBamMarkdup.args.rmdup             = False
+pBamMarkdup.args.tmpdir            = params.tmpdir.value
+pBamMarkdup.args.nthread           = 1
+pBamMarkdup.args.params            = Diot()
+pBamMarkdup.args.mem               = params.mem16G.value
+#pBamMarkdup.envs.mem2              = mem2.py
+#pBamMarkdup.envs.runcmd            = runcmd.py
+#pBamMarkdup.envs.params2CmdArgs    = helpers.params2CmdArgs.py
+pBamMarkdup.lang                   = params.python.value
 
-@procfactory
-def _pBamRecal():
-	"""
+pBamRecal = proc_factory(
+	desc = 'Recalibrate a bam file.',
+	config = Diot(annotate = """
 	@name:
 		pBamRecal
 	@description:
@@ -152,39 +146,35 @@ def _pBamRecal():
 		[gatk](https://software.broadinstitute.org/gatk)
 		[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed, or bamutil is used for bam index file generation.
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
-	"""
-	pBamRecal               = Proc(desc = 'Recalibrate a bam file.')
-	pBamRecal.input         = "infile:file"
-	pBamRecal.output        = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai"
-	pBamRecal.args.tool     = "bamutil"
-	pBamRecal.args.gatk     = params.gatk.value
-	pBamRecal.args.samtools = params.samtools.value
-	pBamRecal.args.picard   = params.picard.value
-	pBamRecal.args.bamutil  = params.bamutil.value
-	pBamRecal.args.params   = Diot(
-		# For GATK
-		# RealignerTargetCreator = Diot(),
-		# IndelRealigner         = Diot(),
-		# BaseRecalibrator       = Diot(),
-		# PrintReads             = Diot()
-	)
-	pBamRecal.args.ref        = params.ref.value
-	pBamRecal.args.tmpdir     = params.tmpdir.value
-	pBamRecal.args.knownSites = params.dbsnp.value
-	pBamRecal.args.nthread    = 1
-	pBamRecal.args.mem        = params.mem32G.value
-	pBamRecal.preCmd          = """
-	{{"reference.bash" | bashimport}}
-	export samtools={{args.samtools | squote}}
-	reference fasta {{args.ref | squote}}
-	"""
-	pBamRecal.lang   = params.python.value
-	pBamRecal.script = "file:scripts/sambam/pBamRecal.py"
-	return pBamRecal
+	""", runcmd_pre = """
+		{{"reference.bash" | bashimport}}
+		export samtools={{args.samtools | squote}}
+		reference fasta {{args.ref | squote}}
+	"""))
+pBamRecal.input         = "infile:file"
+pBamRecal.output        = "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai"
+pBamRecal.args.tool     = "bamutil"
+pBamRecal.args.gatk     = params.gatk.value
+pBamRecal.args.samtools = params.samtools.value
+pBamRecal.args.picard   = params.picard.value
+pBamRecal.args.bamutil  = params.bamutil.value
+pBamRecal.args.params   = Diot(
+	# For GATK
+	# RealignerTargetCreator = Diot(),
+	# IndelRealigner         = Diot(),
+	# BaseRecalibrator       = Diot(),
+	# PrintReads             = Diot()
+)
+pBamRecal.args.ref        = params.ref.value
+pBamRecal.args.tmpdir     = params.tmpdir.value
+pBamRecal.args.knownSites = params.dbsnp.value
+pBamRecal.args.nthread    = 1
+pBamRecal.args.mem        = params.mem32G.value
+pBamRecal.lang            = params.python.value
 
-@procfactory
-def _pBamReadGroup():
-	"""
+pBamReadGroup = proc_factory(
+	desc = 'Add or replace read groups of a bam file.',
+	config = Diot(annotate = """
 	@name:
 		pBamReadGroup
 	@description:
@@ -208,26 +198,22 @@ def _pBamReadGroup():
 		[gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
 		[samtools](https://github.com/samtools/samtools) if `args.ref` is not indexed.
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html) if `args.ref is not dicted.`
-	"""
-	pBamReadGroup                     = Proc(desc = 'Add or replace read groups of a bam file.')
-	pBamReadGroup.input               = "infile:file"
-	pBamReadGroup.output              = "outfile:file:{{i.infile | bn}}"
-	pBamReadGroup.args.tool           = "bamutil"
-	pBamReadGroup.args.picard         = params.picard.value
-	pBamReadGroup.args.bamutil        = params.bamutil.value
-	pBamReadGroup.args.rg             = Diot({'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''})
-	pBamReadGroup.args.params         = Diot()
-	pBamReadGroup.args.tmpdir         = params.tmpdir.value
-	pBamReadGroup.args.mem            = params.mem4G.value
-	#pBamReadGroup.envs.params2CmdArgs = helpers.params2CmdArgs.py
-	pBamReadGroup.lang                = params.python.value
-	pBamReadGroup.script              = "file:scripts/sambam/pBamReadGroup.py"
-	return pBamReadGroup
+	"""))
+pBamReadGroup.input               = "infile:file"
+pBamReadGroup.output              = "outfile:file:{{i.infile | bn}}"
+pBamReadGroup.args.tool           = "bamutil"
+pBamReadGroup.args.picard         = params.picard.value
+pBamReadGroup.args.bamutil        = params.bamutil.value
+pBamReadGroup.args.rg             = Diot({'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''})
+pBamReadGroup.args.params         = Diot()
+pBamReadGroup.args.tmpdir         = params.tmpdir.value
+pBamReadGroup.args.mem            = params.mem4G.value
+#pBamReadGroup.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBamReadGroup.lang                = params.python.value
 
-
-@procfactory
-def _pBamReorder():
-	"""
+pBamReorder = proc_factory(
+	desc = 'Reorder a sam/bam file by a given reference.',
+	config = Diot(annotate = """
 	@name:
 		pBamReorder
 	@description:
@@ -245,23 +231,18 @@ def _pBamReorder():
 		`tmpdir`                       : The temporary directory. Default: <system tmpdir>
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
-	"""
-	pBamReorder                     = Proc(desc = 'Reorder a sam/bam file by a given reference.')
-	pBamReorder.input               = "infile:file"
-	pBamReorder.output              = "outfile:file:{{i.infile | bn}}"
-	pBamReorder.args.picard         = params.picard.value
-	pBamReorder.args.params         = Diot()
-	pBamReorder.args.tmpdir         = params.tmpdir.value
-	pBamReorder.args.mem            = params.mem4G.value
-	pBamReorder.args.ref            = params.ref.value
-	pBamReorder.lang                = params.python.value
-	pBamReorder.script              = "file:scripts/sambam/pBamReorder.py"
-	return pBamReorder
+	"""))
+pBamReorder.input               = "infile:file"
+pBamReorder.output              = "outfile:file:{{i.infile | bn}}"
+pBamReorder.args.picard         = params.picard.value
+pBamReorder.args.params         = Diot()
+pBamReorder.args.tmpdir         = params.tmpdir.value
+pBamReorder.args.mem            = params.mem4G.value
+pBamReorder.args.ref            = params.ref.value
 
-
-@procfactory
-def _pBamMerge():
-	"""
+pBamMerge = proc_factory(
+	desc = 'Merges multiple SAM and/or BAM sorted files into a single file.',
+	config = Diot(annotate = """
 	@name:
 		pBamMerge
 	@description:
@@ -284,28 +265,25 @@ def _pBamMerge():
 		- For picard, if nthread>1, USE_THREADING=true, otherwise USE_THREADING=false
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
-	"""
-	pBamMerge                     = Proc(desc = 'Merges multiple SAM and/or BAM sorted files into a single file.')
-	pBamMerge.input               = "infiles:files"
-	pBamMerge.output              = "outfile:file:{{i.infiles[0] | fn2}}.etc.bam"
-	pBamMerge.args.tool           = "picard"
-	pBamMerge.args.picard         = params.picard.value
-	pBamMerge.args.bamutil        = params.bamutil.value
-	pBamMerge.args.samtools       = params.samtools.value
-	pBamMerge.args.sambamba       = params.sambamba.value
-	pBamMerge.args.params         = Diot()
-	pBamMerge.args.tmpdir         = params.tmpdir.value
-	pBamMerge.args.nthread        = 1
-	pBamMerge.args.mem            = params.mem4G.value
-	#pBamMerge.envs.fsDirname      = dirnameFiles
-	pBamMerge.lang                = params.python.value
-	pBamMerge.script              = "file:scripts/sambam/pBamMerge.py"
-	return pBamMerge
+	"""))
+pBamMerge.input               = "infiles:files"
+pBamMerge.output              = "outfile:file:{{i.infiles[0] | fn2}}.etc.bam"
+pBamMerge.args.tool           = "picard"
+pBamMerge.args.picard         = params.picard.value
+pBamMerge.args.bamutil        = params.bamutil.value
+pBamMerge.args.samtools       = params.samtools.value
+pBamMerge.args.sambamba       = params.sambamba.value
+pBamMerge.args.params         = Diot()
+pBamMerge.args.tmpdir         = params.tmpdir.value
+pBamMerge.args.nthread        = 1
+pBamMerge.args.mem            = params.mem4G.value
+#pBamMerge.envs.fsDirname      = dirnameFiles
+pBamMerge.lang                = params.python.value
 
-
-@procfactory
-def _pBam2Gmut():
-	"""
+pBam2Gmut = proc_factory(
+	desc   = 'Call germline (snps and indels) from a call-ready bam file.',
+	lang   = params.python.value,
+	config = Diot(annotate = """
 	@name:
 		pBam2Gmut
 	@description:
@@ -338,39 +316,35 @@ def _pBam2Gmut():
 		[snvsniffer](http://snvsniffer.sourceforge.net/homepage.htm#latest)
 		[platypus](http://www.well.ox.ac.uk/platypus)
 		[strelka@2.7.1+](https://github.com/Illumina/strelka)
-	"""
-	pBam2Gmut                 = Proc(desc = 'Call germline (snps and indels) from a call-ready bam file.')
-	pBam2Gmut.input           = "infile:file"
-	pBam2Gmut.output          = "outfile:file:{{i.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
-	pBam2Gmut.args.tool       = "strelka"
-	pBam2Gmut.args.gatk       = params.gatk.value
-	pBam2Gmut.args.vardict    = params.vardict.value
-	pBam2Gmut.args.snvsniffer = params.snvsniffer.value
-	pBam2Gmut.args.samtools   = params.samtools.value # required by SNVSniffer to generate a bam header file
-	pBam2Gmut.args.platypus   = params.platypus.value
-	pBam2Gmut.args.picard     = params.picard.value
-	pBam2Gmut.args.strelka    = params.strelka_germ.value
-	pBam2Gmut.args.mem        = params.mem24G.value
-	pBam2Gmut.args.ref        = params.ref.value
-	pBam2Gmut.args.tmpdir     = params.tmpdir.value
-	pBam2Gmut.args.cfgParams  = Diot() # only for strelka
-	pBam2Gmut.args.params     = Diot()
-	pBam2Gmut.args.gz         = False
-	pBam2Gmut.args.nthread    = 1 # for gatk and platypus
-	pBam2Gmut.preCmd          = """
-	{{"reference.bash" | bashimport}}
-	export samtools={{args.samtools | squote}}
-	export picard={{args.picard | squote}}
-	reference fasta {{args.ref | squote}}
-	reference picard {{args.ref | squote}}
-	"""
-	pBam2Gmut.lang   = params.python.value
-	pBam2Gmut.script = "file:scripts/sambam/pBam2Gmut.py"
-	return pBam2Gmut
+	"""))
+pBam2Gmut.input             = "infile:file"
+pBam2Gmut.output            = "outfile:file:{{i.infile | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}"
+pBam2Gmut.args.tool         = "strelka"
+pBam2Gmut.args.gatk         = params.gatk.value
+pBam2Gmut.args.vardict      = params.vardict.value
+pBam2Gmut.args.snvsniffer   = params.snvsniffer.value
+pBam2Gmut.args.samtools     = params.samtools.value # required by SNVSniffer to generate a bam header file
+pBam2Gmut.args.platypus     = params.platypus.value
+pBam2Gmut.args.picard       = params.picard.value
+pBam2Gmut.args.strelka      = params.strelka_germ.value
+pBam2Gmut.args.mem          = params.mem24G.value
+pBam2Gmut.args.ref          = params.ref.value
+pBam2Gmut.args.tmpdir       = params.tmpdir.value
+pBam2Gmut.args.cfgParams    = Diot() # only for strelka
+pBam2Gmut.args.params       = Diot()
+pBam2Gmut.args.gz           = False
+pBam2Gmut.args.nthread      = 1 # for gatk and platypus
+pBam2Gmut.config.runcmd_pre = """
+{{"reference.bash" | bashimport}}
+export samtools={{args.samtools | squote}}
+export picard={{args.picard | squote}}
+reference fasta {{args.ref | squote}}
+reference picard {{args.ref | squote}}
+"""
 
-@procfactory
-def _pBamPair2Smut():
-	"""
+pBamPair2Smut = proc_factory(
+	desc   = 'Call somatic mutations from tumor-normal bam pair.',
+	config = Diot(annotate = """
 	@name:
 		pBamPair2Smut
 	@description:
@@ -405,42 +379,39 @@ def _pBamPair2Smut():
 		[snvsniffer](http://snvsniffer.sourceforge.net/homepage.htm#latest)
 		[platypus](http://www.well.ox.ac.uk/platypus)
 		[strelka@2.7.1+](https://github.com/Illumina/strelka)
-	"""
-	return Diot(
-		desc   = 'Call somatic mutations from tumor-normal bam pair.',
-		lang   = params.python.value,
-		input  = "tumor:file, normal:file",
-		output = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}",
-		preCmd = """
-			{{"reference.bash" | bashimport}}
-			export samtools={{args.samtools | squote}}
-			export picard={{args.picard | squote}}
-			reference fasta {{args.ref | squote}}
-			reference picard {{args.ref | squote}}
-			""",
-		args = Diot(
-			tool          = 'strelka',
-			gatk          = params.gatk.value, # required for strelka,
-			somaticsniper = params.somaticsniper.value,
-			strelka       = params.strelka_soma.value, # @2.7.1,
-			snvsniffer    = params.snvsniffer.value,
-			virmid        = params.virmid.value,
-			vardict       = params.vardict.value,
-			samtools      = params.samtools.value,
-			picard        = params.picard.value,
-			configParams  = Diot(), # only for strelka,
-			params        = Diot(),
-			mem           = params.mem24G.value,
-			ref           = params.ref.value,
-			gz            = False,
-			nthread       = 1,
-			tmpdir        = params.tmpdir.value,
-		)
+	""", runcmd_pre = """
+		{{"reference.bash" | bashimport}}
+		export samtools={{args.samtools | squote}}
+		export picard={{args.picard | squote}}
+		reference fasta {{args.ref | squote}}
+		reference picard {{args.ref | squote}}
+	"""),
+	lang   = params.python.value,
+	input  = "tumor:file, normal:file",
+	output = "outfile:file:{{i.tumor | fn}}-{{i.normal | fn}}.vcf{{args.gz | lambda x: '.gz' if x else ''}}",
+	args   = Diot(
+		tool          = 'strelka',
+		gatk          = params.gatk.value, # required for strelka,
+		somaticsniper = params.somaticsniper.value,
+		strelka       = params.strelka_soma.value, # @2.7.1,
+		snvsniffer    = params.snvsniffer.value,
+		virmid        = params.virmid.value,
+		vardict       = params.vardict.value,
+		samtools      = params.samtools.value,
+		picard        = params.picard.value,
+		configParams  = Diot(), # only for strelka,
+		params        = Diot(),
+		mem           = params.mem24G.value,
+		ref           = params.ref.value,
+		gz            = False,
+		nthread       = 1,
+		tmpdir        = params.tmpdir.value,
 	)
+)
 
-@procfactory
-def _pBamStats():
-	"""
+pBamStats = proc_factory(
+	desc = 'Get read depth from bam files.',
+	config = Diot(annotate = """
 	@name:
 		pBamStats
 	@description:
@@ -456,35 +427,32 @@ def _pBamStats():
 		`params`: Other params to main program. Default: `{}`
 		`mem`: The memory to be used. Default: 16G
 		`plot`: Whether plot the result. Default: True
-	"""
-	pBamStats                  = Proc(desc = 'Get read depth from bam files.')
-	pBamStats.input            = 'infile:file'
-	pBamStats.output           = 'outfile:file:{{i.infile | fn}}/{{i.infile | fn}}.stat.txt, outdir:dir:{{i.infile | fn}}'
-	pBamStats.args.tool        = 'bamstats'
-	pBamStats.args.bamstats    = params.bamstats.value
-	pBamStats.args.params      = Diot()
-	pBamStats.args.mem         = params.mem16G.value
-	pBamStats.args.plot        = True
-	pBamStats.args.histplotggs = Diot(xlab = {0: 'Read depth'}, ylab = {0: '# samples'})
-	pBamStats.args.boxplotggs  = Diot(xlab = {0: 'Counts'})
-	pBamStats.args.devpars     = Diot(res = 300, width = 2000, height = 2000)
-	pBamStats.args.cap         = 500
-	pBamStats.args.cutoff      = 0
-	pBamStats.args.nfeats      = 40
-	pBamStats.args.feature     = 'wgs'
-	pBamStats.preCmd        = """
-	if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
-		echo "Plots can only be done with proc.forks >= 2." 1>&2
-		exit 1
-	fi
-	"""
-	pBamStats.lang   = params.Rscript.value
-	pBamStats.script = "file:scripts/sambam/pBamStats.r"
-	return pBamStats
+	"""))
+pBamStats.input             = 'infile:file'
+pBamStats.output            = 'outfile:file:{{i.infile | fn}}/{{i.infile | fn}}.stat.txt, outdir:dir:{{i.infile | fn}}'
+pBamStats.args.tool         = 'bamstats'
+pBamStats.args.bamstats     = params.bamstats.value
+pBamStats.args.params       = Diot()
+pBamStats.args.mem          = params.mem16G.value
+pBamStats.args.plot         = True
+pBamStats.args.histplotggs  = Diot(xlab = {0: 'Read depth'}, ylab = {0: '# samples'})
+pBamStats.args.boxplotggs   = Diot(xlab = {0: 'Counts'})
+pBamStats.args.devpars      = Diot(res = 300, width = 2000, height = 2000)
+pBamStats.args.cap          = 500
+pBamStats.args.cutoff       = 0
+pBamStats.args.nfeats       = 40
+pBamStats.args.feature      = 'wgs'
+pBamStats.config.runcmd_pre = """
+if [[ "{{args.plot | R}}" == "TRUE" && {{proc.forks}} -lt 2 ]]; then
+	echo "Plots can only be done with proc.forks >= 2." 1>&2
+	exit 1
+fi
+"""
+pBamStats.lang   = params.Rscript.value
 
-@procfactory
-def _pBam2Fastq():
-	"""
+pBam2Fastq = proc_factory(
+	desc   = 'Convert sam/bam files to pair-end fastq files.',
+	config = Diot(annotate = """
 	@input:
 		infile: The sam/bam file.
 			- Sam files only available for biobambam, picard
@@ -506,29 +474,27 @@ def _pBam2Fastq():
 		[biobambam](https://github.com/gt1/biobambam2)
 		[samtools](https://github.com/samtools/samtools)
 		[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
-	"""
-	return Diot(
-		desc   = 'Convert sam/bam files to pair-end fastq files.',
-		input  = "infile:file",
-		output = [
-			"fqfile1:file:{{ i.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
-			"fqfile2:file:{{ i.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
-		],
-		lang = params.python.value,
-		args = Diot(
-			tool      = 'biobambam',
-			biobambam = params.biobambam_bamtofastq.value,
-			bedtools  = params.bedtools.value,
-			samtools  = params.samtools.value,
-			picard    = params.picard.value,
-			mem       = params.mem8G.value, # only for picard
-			gz        = False,
-			params    = Diot(),
-			tmpdir    = params.tmpdir.value))
+	"""),
+	input  = "infile:file",
+	output = [
+		"fqfile1:file:{{ i.infile | fn }}_1.fastq{% if args.gz %}.gz{% endif %}",
+		"fqfile2:file:{{ i.infile | fn }}_2.fastq{% if args.gz %}.gz{% endif %}"
+	],
+	lang = params.python.value,
+	args = Diot(
+		tool      = 'biobambam',
+		biobambam = params.biobambam_bamtofastq.value,
+		bedtools  = params.bedtools.value,
+		samtools  = params.samtools.value,
+		picard    = params.picard.value,
+		mem       = params.mem8G.value, # only for picard
+		gz        = False,
+		params    = Diot(),
+		tmpdir    = params.tmpdir.value))
 
-@procfactory
-def _pBam2FastqSE():
-	"""
+pBam2FastqSE = proc_factory(
+	desc = 'Convert bam files to single-end fastq files.',
+	config = Diot(annotate = """
 	@name:
 		pBam2FastqSE
 	@description:
@@ -553,29 +519,26 @@ def _pBam2FastqSE():
 		[biobambam](https://github.com/gt1/biobambam2)
 		[samtools](https://github.com/samtools/samtools)
 		[bedtools](http://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
-	"""
-	pBam2FastqSE                     = Proc(desc = 'Convert bam files to single-end fastq files.')
-	pBam2FastqSE.input               = "infile:file"
-	pBam2FastqSE.output              = "fqfile:file:{{i.infile | fn }}.fq{% if args.gz %}.gz{% endif %}"
-	pBam2FastqSE.args.tool           = 'biobambam'
-	pBam2FastqSE.args.biobambam      = params.biobambam_bamtofastq.value
-	pBam2FastqSE.args.bedtools       = params.bedtools.value
-	pBam2FastqSE.args.samtools       = params.samtools.value
-	pBam2FastqSE.args.picard         = params.picard.value
-	pBam2FastqSE.args.mem            = params.mem8G.value # only for picard
-	pBam2FastqSE.args.gz             = False
-	pBam2FastqSE.args.params         = Diot()
-	pBam2FastqSE.args.tmpdir         = params.tmpdir.value
-	#pBam2FastqSE.envs.runcmd         = runcmd.py
-	#pBam2FastqSE.envs.mem2           = mem2.py
-	#pBam2FastqSE.envs.params2CmdArgs = helpers.params2CmdArgs.py
-	pBam2FastqSE.lang                = params.python.value
-	pBam2FastqSE.script              = "file:scripts/sambam/pBam2FastqSE.py"
-	return pBam2FastqSE
+	"""))
+pBam2FastqSE.input               = "infile:file"
+pBam2FastqSE.output              = "fqfile:file:{{i.infile | fn }}.fq{% if args.gz %}.gz{% endif %}"
+pBam2FastqSE.args.tool           = 'biobambam'
+pBam2FastqSE.args.biobambam      = params.biobambam_bamtofastq.value
+pBam2FastqSE.args.bedtools       = params.bedtools.value
+pBam2FastqSE.args.samtools       = params.samtools.value
+pBam2FastqSE.args.picard         = params.picard.value
+pBam2FastqSE.args.mem            = params.mem8G.value # only for picard
+pBam2FastqSE.args.gz             = False
+pBam2FastqSE.args.params         = Diot()
+pBam2FastqSE.args.tmpdir         = params.tmpdir.value
+#pBam2FastqSE.envs.runcmd         = runcmd.py
+#pBam2FastqSE.envs.mem2           = mem2.py
+#pBam2FastqSE.envs.params2CmdArgs = helpers.params2CmdArgs.py
+pBam2FastqSE.lang                = params.python.value
 
-@procfactory
-def _pBam2Counts():
-	"""
+pBam2Counts = proc_factory(
+	desc = 'Extract read counts from RNA-seq bam files.',
+	config = Diot(annotate = """
 	@name:
 		pBam2Counts
 	@description:
@@ -591,21 +554,18 @@ def _pBam2Counts():
 		`refgene`: The reference gene in GTF format.
 	@requires:
 		[`htseq`](https://htseq.readthedocs.io/)
-	"""
-	pBam2Counts                     = Proc(desc = 'Extract read counts from RNA-seq bam files.')
-	pBam2Counts.input               = 'infile:file'
-	pBam2Counts.output              = 'outfile:file:{{i.infile | fn}}.counts'
-	pBam2Counts.args.tool           = 'htseq'
-	pBam2Counts.args.htseq          = params.htseq_count.value
-	pBam2Counts.args.params         = Diot()
-	pBam2Counts.args.refgene        = params.refexon.value
-	pBam2Counts.lang                = params.python.value
-	pBam2Counts.script              = "file:scripts/sambam/pBam2Counts.py"
-	return pBam2Counts
+	"""))
+pBam2Counts.input        = 'infile:file'
+pBam2Counts.output       = 'outfile:file:{{i.infile | fn}}.counts'
+pBam2Counts.args.tool    = 'htseq'
+pBam2Counts.args.htseq   = params.htseq_count.value
+pBam2Counts.args.params  = Diot()
+pBam2Counts.args.refgene = params.refexon.value
+pBam2Counts.lang         = params.python.value
 
-@procfactory
-def _pBamIndex():
-	"""
+pBamIndex = proc_factory(
+	desc = 'Index bam files',
+	config = Diot(annotate = """
 	@name:
 		pBamIndex
 	@description:
@@ -619,14 +579,11 @@ def _pBamIndex():
 		`samtools`: Path to samtools. Default: `params.samtools`
 		`params`  : Other parameters for samtools. Default: `Diot(b = True)`
 		`nthread` : # threads to use. Default: `1`
-	"""
-	pBamIndex               = Proc(desc = 'Index bam files')
-	pBamIndex.input         = 'infile:file'
-	pBamIndex.output        = 'outfile:file:{{i.infile | bn}}, outidx:file:{{i.infile | bn}}.bai'
-	pBamIndex.args.tool     = 'samtools'
-	pBamIndex.args.samtools = params.samtools.value
-	pBamIndex.args.params   = Diot(b = True)
-	pBamIndex.args.nthread  = 1
-	pBamIndex.lang          = params.python.value
-	pBamIndex.script        = "file:scripts/sambam/pBamIndex.py"
-	return pBamIndex
+	"""))
+pBamIndex.input         = 'infile:file'
+pBamIndex.output        = 'outfile:file:{{i.infile | bn}}, outidx:file:{{i.infile | bn}}.bai'
+pBamIndex.args.tool     = 'samtools'
+pBamIndex.args.samtools = params.samtools.value
+pBamIndex.args.params   = Diot(b = True)
+pBamIndex.args.nthread  = 1
+pBamIndex.lang          = params.python.value

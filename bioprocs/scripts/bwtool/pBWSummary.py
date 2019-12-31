@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from os import path
 from bioprocs.utils import shell2 as shell
 from bioprocs.utils.tsvio2 import TsvWriter

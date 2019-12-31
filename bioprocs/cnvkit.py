@@ -6,9 +6,9 @@ from . import delefactory, procfactory
 from modkit import Modkit
 Modkit().delegate(delefactory())
 
-@procfactory
-def _pCNVkitPrepare():
-	"""
+pCNVkitPrepare = proc_factory(
+	desc = 'Generate target files for cnvkit.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitPrepare
 	@description:
@@ -37,28 +37,25 @@ def _pCNVkitPrepare():
 			```
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitPrepare              = Proc(desc = 'Generate target files for cnvkit.')
-	pCNVkitPrepare.input        = 'infiles:files'
-	pCNVkitPrepare.output       = 'target:file:{{i.infiles | fs2name}}.target.bed, antitarget:file:{{i.infiles | fs2name}}.antitarget.bed'
-	pCNVkitPrepare.args.cnvkit  = params.cnvkit.value
-	pCNVkitPrepare.args.baits   = params.refexon.value
-	pCNVkitPrepare.args.accfile = ''
-	pCNVkitPrepare.args.nthread = 1
-	pCNVkitPrepare.args.ref     = params.ref.value
-	pCNVkitPrepare.args.params  = Diot(
-		target  = Diot({'short-name': True, 'split': True}),
-		access  = Diot(s = '5000'),
-		autobin = Diot()
-	)
-	pCNVkitPrepare.envs.fs2name = fs2name
-	pCNVkitPrepare.lang         = params.python.value
-	pCNVkitPrepare.script       = 'file:scripts/cnvkit/pCNVkitPrepare.py'
-	return pCNVkitPrepare
+	"""))
+pCNVkitPrepare.input        = 'infiles:files'
+pCNVkitPrepare.output       = 'target:file:{{i.infiles | fs2name}}.target.bed, antitarget:file:{{i.infiles | fs2name}}.antitarget.bed'
+pCNVkitPrepare.args.cnvkit  = params.cnvkit.value
+pCNVkitPrepare.args.baits   = params.refexon.value
+pCNVkitPrepare.args.accfile = ''
+pCNVkitPrepare.args.nthread = 1
+pCNVkitPrepare.args.ref     = params.ref.value
+pCNVkitPrepare.args.params  = Diot(
+	target  = Diot({'short-name': True, 'split': True}),
+	access  = Diot(s = '5000'),
+	autobin = Diot()
+)
+pCNVkitPrepare.envs.fs2name = fs2name
+pCNVkitPrepare.lang         = params.python.value
 
-@procfactory
-def _pCNVkitCov():
-	"""
+pCNVkitCov = proc_factory(
+	desc = 'Calculate coverage in the given regions from BAM read depths.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitCov
 	@description:
@@ -75,20 +72,17 @@ def _pCNVkitCov():
 		`params`:  Other parameters for `cnvkit.py coverage`
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitCov              = Proc (desc = 'Calculate coverage in the given regions from BAM read depths.')
-	pCNVkitCov.input        = "infile:file, tgfile:file, atgfile:file"
-	pCNVkitCov.output       = "outfile:file:{{i.infile | fn}}.target.cnn, antifile:file:{{i.infile | fn}}.antitarget.cnn"
-	pCNVkitCov.args.cnvkit  = params.cnvkit.value
-	pCNVkitCov.args.nthread = 1
-	pCNVkitCov.args.params  = Diot()
-	pCNVkitCov.lang         = params.python.value
-	pCNVkitCov.script       = "file:scripts/cnvkit/pCNVkitCov.py"
-	return pCNVkitCov
+	"""))
+pCNVkitCov.input        = "infile:file, tgfile:file, atgfile:file"
+pCNVkitCov.output       = "outfile:file:{{i.infile | fn}}.target.cnn, antifile:file:{{i.infile | fn}}.antitarget.cnn"
+pCNVkitCov.args.cnvkit  = params.cnvkit.value
+pCNVkitCov.args.nthread = 1
+pCNVkitCov.args.params  = Diot()
+pCNVkitCov.lang         = params.python.value
 
-@procfactory
-def _pCNVkitRef():
-	"""
+pCNVkitRef = proc_factory(
+	desc = 'Compile a copy-number reference from the given files or directory',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitRef
 	@description:
@@ -104,22 +98,19 @@ def _pCNVkitRef():
 		`params`:  Other parameters for `cnvkit.py reference`, default: " --no-edge "
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitRef              = Proc (desc = 'Compile a copy-number reference from the given files or directory')
-	pCNVkitRef.input        = "infiles:files"
-	pCNVkitRef.output       = "outfile:file:{{i.infiles | fs2name}}.reference.cnn"
-	pCNVkitRef.args.cnvkit  = params.cnvkit.value
-	pCNVkitRef.args.ref     = params.ref.value
-	pCNVkitRef.args.nthread = 1
-	pCNVkitRef.args.params  = Diot({'no-edge': True})
-	pCNVkitRef.envs.fs2name = fs2name
-	pCNVkitRef.lang         = params.python.value
-	pCNVkitRef.script       = "file:scripts/cnvkit/pCNVkitRef.py"
-	return pCNVkitRef
+	"""))
+pCNVkitRef.input        = "infiles:files"
+pCNVkitRef.output       = "outfile:file:{{i.infiles | fs2name}}.reference.cnn"
+pCNVkitRef.args.cnvkit  = params.cnvkit.value
+pCNVkitRef.args.ref     = params.ref.value
+pCNVkitRef.args.nthread = 1
+pCNVkitRef.args.params  = Diot({'no-edge': True})
+pCNVkitRef.envs.fs2name = fs2name
+pCNVkitRef.lang         = params.python.value
 
-@procfactory
-def _pCNVkitFlatRef():
-	"""
+pCNVkitFlatRef = proc_factory(
+	desc = 'Compile a copy-number flat reference without normal samples',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitFlatRef
 	@description:
@@ -135,21 +126,18 @@ def _pCNVkitFlatRef():
 		`params`:  Other parameters for `cnvkit.py reference`, default: `{}`
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitFlatRef              = Proc (desc = 'Compile a copy-number flat reference without normal samples')
-	pCNVkitFlatRef.input        = "tgfile:file, atgfile:file"
-	pCNVkitFlatRef.output       = "outfile:file:{{i.tgfile | fn}}.reference.cnn"
-	pCNVkitFlatRef.args.cnvkit  = params.cnvkit.value
-	pCNVkitFlatRef.args.ref     = params.ref.value
-	pCNVkitFlatRef.args.params  = Diot()
-	pCNVkitFlatRef.envs.fs2name = fs2name
-	pCNVkitFlatRef.lang         = params.python.value
-	pCNVkitFlatRef.script       = "file:scripts/cnvkit/pCNVkitFlatRef.py"
-	return pCNVkitFlatRef
+	"""))
+pCNVkitFlatRef.input        = "tgfile:file, atgfile:file"
+pCNVkitFlatRef.output       = "outfile:file:{{i.tgfile | fn}}.reference.cnn"
+pCNVkitFlatRef.args.cnvkit  = params.cnvkit.value
+pCNVkitFlatRef.args.ref     = params.ref.value
+pCNVkitFlatRef.args.params  = Diot()
+pCNVkitFlatRef.envs.fs2name = fs2name
+pCNVkitFlatRef.lang         = params.python.value
 
-@procfactory
-def _pCNVkitFix():
-	"""
+pCNVkitFix = proc_factory(
+	desc = 'Combine the uncorrected target and antitarget coverage tables and correct them.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitFix
 	@description:
@@ -166,20 +154,17 @@ def _pCNVkitFix():
 		`params`:  Other parameters for `cnvkit.py fix`, default: " --no-edge "
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitFix              = Proc (desc = 'Combine the uncorrected target and antitarget coverage tables and correct them.')
-	pCNVkitFix.input        = "tgfile:file, atgfile:file, rcfile:file"
-	pCNVkitFix.output       = "outfile:file:{{i.tgfile | fn}}.cnr"
-	pCNVkitFix.args.cnvkit  = params.cnvkit.value
-	pCNVkitFix.args.params  = Diot({'no-edge': True})
-	pCNVkitFix.args.nthread = 1
-	pCNVkitFix.lang         = params.python.value
-	pCNVkitFix.script       = "file:scripts/cnvkit/pCNVkitFix.py"
-	return pCNVkitFix
+	"""))
+pCNVkitFix.input        = "tgfile:file, atgfile:file, rcfile:file"
+pCNVkitFix.output       = "outfile:file:{{i.tgfile | fn}}.cnr"
+pCNVkitFix.args.cnvkit  = params.cnvkit.value
+pCNVkitFix.args.params  = Diot({'no-edge': True})
+pCNVkitFix.args.nthread = 1
+pCNVkitFix.lang         = params.python.value
 
-@procfactory
-def _pCNVkitSeg():
-	"""
+pCNVkitSeg = proc_factory(
+	desc = 'Infer discrete copy number segments from the given coverage table.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitSeg
 	@description:
@@ -194,20 +179,17 @@ def _pCNVkitSeg():
 		`params`:  Other parameters for `cnvkit.py segment`, default: ""
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitSeg              = Proc (desc = 'Infer discrete copy number segments from the given coverage table.')
-	pCNVkitSeg.input        = "infile:file"
-	pCNVkitSeg.output       = "outfile:file:{{i.infile | fn}}.cns"
-	pCNVkitSeg.args.cnvkit  = params.cnvkit.value
-	pCNVkitSeg.args.nthread = 1
-	pCNVkitSeg.args.params  = Diot()
-	pCNVkitSeg.lang         = params.python.value
-	pCNVkitSeg.script       = "file:scripts/cnvkit/pCNVkitSeg.py"
-	return pCNVkitSeg
+	"""))
+pCNVkitSeg.input        = "infile:file"
+pCNVkitSeg.output       = "outfile:file:{{i.infile | fn}}.cns"
+pCNVkitSeg.args.cnvkit  = params.cnvkit.value
+pCNVkitSeg.args.nthread = 1
+pCNVkitSeg.args.params  = Diot()
+pCNVkitSeg.lang         = params.python.value
 
-@procfactory
-def _pCNVkitCall():
-	"""
+pCNVkitCall = proc_factory(
+	desc="Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number",
+	config = Diot(annotate = """
 	@name:
 		pCNVkitCall
 	@description:
@@ -221,19 +203,16 @@ def _pCNVkitCall():
 		`params`:  Other parameters for `cnvkit.py segment`, default: ""
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitCall             = Proc (desc="Given segmented log2 ratio estimates (.cns), derive each segment's absolute integer copy number")
-	pCNVkitCall.input       = "infile:file"
-	pCNVkitCall.output      = "outfile:file:{{i.infile | fn}}.callcns"
-	pCNVkitCall.args.cnvkit = params.cnvkit.value
-	pCNVkitCall.args.params = Diot()
-	pCNVkitCall.lang        = params.python.value
-	pCNVkitCall.script      = "file:scripts/cnvkit/pCNVkitCall.py"
-	return pCNVkitCall
+	"""))
+pCNVkitCall.input       = "infile:file"
+pCNVkitCall.output      = "outfile:file:{{i.infile | fn}}.callcns"
+pCNVkitCall.args.cnvkit = params.cnvkit.value
+pCNVkitCall.args.params = Diot()
+pCNVkitCall.lang        = params.python.value
 
-@procfactory
-def _pCNVkitScatter():
-	"""
+pCNVkitScatter = proc_factory(
+	desc = 'Generate scatter plot for CNVkit results.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitScatter
 	@description:
@@ -250,25 +229,22 @@ def _pCNVkitScatter():
 		`regions`: The regoins to plot. Default: `['']`
 			- You can have extra specific regions, format:
 			- `chr5:100-50000000:TERT` or `chr7:BRAF,MET` (genes are used to highlight)
-	"""
-	pCNVkitScatter              = Proc(desc = 'Generate scatter plot for CNVkit results.')
-	pCNVkitScatter.input        = 'cnrfile:file, cnsfile:file'
-	pCNVkitScatter.output       = 'outdir:dir:{{i.cnrfile | fn}}.scatters'
-	pCNVkitScatter.args.cnvkit  = params.cnvkit.value
-	pCNVkitScatter.args.nthread = 1
-	pCNVkitScatter.args.params  = Diot()
-	pCNVkitScatter.args.regions = [
-		'', # plot whole genome
-		# extra regions, format: chr5:100-50000000:TERT
-		# or chr7:BRAF,MET
-	]
-	pCNVkitScatter.lang   = params.python.value
-	pCNVkitScatter.script = "file:scripts/cnvkit/pCNVkitScatter.py"
-	return pCNVkitScatter
+	"""))
+pCNVkitScatter.input        = 'cnrfile:file, cnsfile:file'
+pCNVkitScatter.output       = 'outdir:dir:{{i.cnrfile | fn}}.scatters'
+pCNVkitScatter.args.cnvkit  = params.cnvkit.value
+pCNVkitScatter.args.nthread = 1
+pCNVkitScatter.args.params  = Diot()
+pCNVkitScatter.args.regions = [
+	'', # plot whole genome
+	# extra regions, format: chr5:100-50000000:TERT
+	# or chr7:BRAF,MET
+]
+pCNVkitScatter.lang   = params.python.value
 
-@procfactory
-def _pCNVkitDiagram():
-	"""
+pCNVkitDiagram = proc_factory(
+	desc = 'Generate diagram plot for CNVkit results.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitDiagram
 	@description:
@@ -282,20 +258,17 @@ def _pCNVkitDiagram():
 		`cnvkit`:  The executable of cnvkit. Default: 'cnvkit.py'
 		`nthread`: The number of threads to use. Default: 1
 		`params`:  Other parameters for `cnvkit.py scatter`
-	"""
-	pCNVkitDiagram             = Proc(desc = 'Generate diagram plot for CNVkit results.')
-	pCNVkitDiagram.input       = 'cnrfile:file, cnsfile:file'
-	pCNVkitDiagram.output      = 'outfile:file:{{i.cnrfile | fn}}.diagram.pdf'
-	pCNVkitDiagram.args.cnvkit = params.cnvkit.value
-	pCNVkitDiagram.args.nthread = 1
-	pCNVkitDiagram.args.params = Diot()
-	pCNVkitDiagram.lang        = params.python.value
-	pCNVkitDiagram.script      = "file:scripts/cnvkit/pCNVkitDiagram.py"
-	return pCNVkitDiagram
+	"""))
+pCNVkitDiagram.input       = 'cnrfile:file, cnsfile:file'
+pCNVkitDiagram.output      = 'outfile:file:{{i.cnrfile | fn}}.diagram.pdf'
+pCNVkitDiagram.args.cnvkit = params.cnvkit.value
+pCNVkitDiagram.args.nthread = 1
+pCNVkitDiagram.args.params = Diot()
+pCNVkitDiagram.lang        = params.python.value
 
-@procfactory
-def _pCNVkitHeatmap():
-	"""
+pCNVkitHeatmap = proc_factory(
+	desc = 'Generate heatmap plot for CNVkit results.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitHeatmap
 	@description:
@@ -310,26 +283,23 @@ def _pCNVkitHeatmap():
 		`regions`: The regoins to plot. Default: `['']`
 			- You can have extra specific regions, format:
 			- `chr5:100-50000000` or `chr7` (genes are used to highlight)
-	"""
-	pCNVkitHeatmap              = Proc(desc = 'Generate heatmap plot for CNVkit results.')
-	pCNVkitHeatmap.input        = 'cnfiles:files'
-	pCNVkitHeatmap.output       = 'outdir:dir:{{i.cnfiles | fs2name}}.heatmaps'
-	pCNVkitHeatmap.args.cnvkit  = params.cnvkit.value
-	pCNVkitHeatmap.args.params  = Diot()
-	pCNVkitHeatmap.args.nthread = 1
-	pCNVkitHeatmap.args.regions = [
-		'', # plot whole genome
-		# extra regions, format: chr5:100-50000000
-		# or chr7
-	]
-	pCNVkitHeatmap.envs.fs2name = fs2name
-	pCNVkitHeatmap.lang         = params.python.value
-	pCNVkitHeatmap.script       = "file:scripts/cnvkit/pCNVkitHeatmap.py"
-	return pCNVkitHeatmap
+	"""))
+pCNVkitHeatmap.input        = 'cnfiles:files'
+pCNVkitHeatmap.output       = 'outdir:dir:{{i.cnfiles | fs2name}}.heatmaps'
+pCNVkitHeatmap.args.cnvkit  = params.cnvkit.value
+pCNVkitHeatmap.args.params  = Diot()
+pCNVkitHeatmap.args.nthread = 1
+pCNVkitHeatmap.args.regions = [
+	'', # plot whole genome
+	# extra regions, format: chr5:100-50000000
+	# or chr7
+]
+pCNVkitHeatmap.envs.fs2name = fs2name
+pCNVkitHeatmap.lang         = params.python.value
 
-@procfactory
-def _pCNVkitReport():
-	"""
+pCNVkitReport = proc_factory(
+	desc = 'Report CNVkit results',
+	config = Diot(annotate = """
 	@name:
 		pCNVkitReport
 	@description:
@@ -349,25 +319,22 @@ def _pCNVkitReport():
 			- `segmetrics`:   Whether to report segmetrics. Default: True
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkitReport              = Proc (desc = 'Report CNVkit results')
-	pCNVkitReport.input        = "cnrfile:file, cnsfile:file"
-	pCNVkitReport.output       = "outdir:dir:{{i.cnrfile | fn}}.cnvkit.reports"
-	pCNVkitReport.args.cnvkit  = params.cnvkit.value
-	pCNVkitReport.args.nthread = 1
-	pCNVkitReport.args.params  = Diot(
-		breaks     = True, # None to disable
-		gainloss   = True,
-		metrics    = True,
-		segmetrics = Diot(iqr = True)
-	)
-	pCNVkitReport.lang   = params.python.value
-	pCNVkitReport.script = 'file:scripts/cnvkit/pCNVkitReport.py'
-	return pCNVkitReport
+	"""))
+pCNVkitReport.input        = "cnrfile:file, cnsfile:file"
+pCNVkitReport.output       = "outdir:dir:{{i.cnrfile | fn}}.cnvkit.reports"
+pCNVkitReport.args.cnvkit  = params.cnvkit.value
+pCNVkitReport.args.nthread = 1
+pCNVkitReport.args.params  = Diot(
+	breaks     = True, # None to disable
+	gainloss   = True,
+	metrics    = True,
+	segmetrics = Diot(iqr = True)
+)
+pCNVkitReport.lang   = params.python.value
 
-@procfactory
-def _pCNVkit2Vcf():
-	"""
+pCNVkit2Vcf = proc_factory(
+	desc = 'Output vcf file for cnvkit results',
+	config = Diot(annotate = """
 	@name:
 		pCNVkit2Vcf
 	@description:
@@ -382,20 +349,17 @@ def _pCNVkit2Vcf():
 		`params`:   Other params for `cnvkit.py export`
 	@requires:
 		[CNVkit](http://cnvkit.readthedocs.io/)
-	"""
-	pCNVkit2Vcf              = Proc (desc = 'Output vcf file for cnvkit results')
-	pCNVkit2Vcf.input        = "cnsfile:file"
-	pCNVkit2Vcf.output       = "outfile:file:{{i.cnsfile | fn}}.cnvkit.vcf"
-	pCNVkit2Vcf.args.cnvkit  = params.cnvkit.value
-	pCNVkit2Vcf.args.nthread = 1
-	pCNVkit2Vcf.args.params  = Diot()
-	pCNVkit2Vcf.lang         = params.python.value
-	pCNVkit2Vcf.script       = 'file:scripts/cnvkit/pCNVkit2Vcf.py'
-	return pCNVkit2Vcf
+	"""))
+pCNVkit2Vcf.input        = "cnsfile:file"
+pCNVkit2Vcf.output       = "outfile:file:{{i.cnsfile | fn}}.cnvkit.vcf"
+pCNVkit2Vcf.args.cnvkit  = params.cnvkit.value
+pCNVkit2Vcf.args.nthread = 1
+pCNVkit2Vcf.args.params  = Diot()
+pCNVkit2Vcf.lang         = params.python.value
 
-@procfactory
-def _pCNVkit2Theta():
-	"""
+pCNVkit2Theta = proc_factory(
+	desc = 'Convert the results to THetA2 interval input.',
+	config = Diot(annotate = """
 	@name:
 		pCNVkit2Theta
 	@description:
@@ -409,13 +373,10 @@ def _pCNVkit2Theta():
 		`nthread` : Number threads to use. Default: `1`
 		`cnvkit`  : The executable of cnvkit. Default: `cnvkit.py`
 		`params`  : Other params for `cnvkit.py export theta`
-	"""
-	pCNVkit2Theta              = Proc(desc = 'Convert the results to THetA2 interval input.')
-	pCNVkit2Theta.input        = 'cnsfile:file, cnnfile:file'
-	pCNVkit2Theta.output       = 'outfile:file:{{i.cnsfile | fn2}}.interval.txt'
-	pCNVkit2Theta.args.nthread = 1
-	pCNVkit2Theta.args.params  = Diot()
-	pCNVkit2Theta.args.cnvkit  = params.cnvkit.value
-	pCNVkit2Theta.lang         = params.python.value
-	pCNVkit2Theta.script       = 'file:scripts/cnvkit/pCNVkit2Theta.py'
-	return pCNVkit2Theta
+	"""))
+pCNVkit2Theta.input        = 'cnsfile:file, cnnfile:file'
+pCNVkit2Theta.output       = 'outfile:file:{{i.cnsfile | fn2}}.interval.txt'
+pCNVkit2Theta.args.nthread = 1
+pCNVkit2Theta.args.params  = Diot()
+pCNVkit2Theta.args.cnvkit  = params.cnvkit.value
+pCNVkit2Theta.lang         = params.python.value

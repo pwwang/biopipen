@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import cmd, cmdargs, logger
 
 infile  = {{i.infile | quote}}

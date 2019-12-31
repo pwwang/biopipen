@@ -109,7 +109,7 @@
 # (9) mutCount - # reads with the mutant allele (indicated in SNP file)
 # endregion
 
-from pyppl import Diot
+from diot import Diot
 from os import path, makedirs
 from bioprocs.utils import logger, shell2 as shell
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord

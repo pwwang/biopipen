@@ -1,13 +1,11 @@
 """EQTL analysis"""
-from pyppl import Proc, Diot
-from . import params
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc,
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pMatrixeQTL():
-	"""
+pMatrixeQTL = proc_factory(
+	desc = 'Use matrix eQTL to call eQTLs',
+	config = Diot(annotate = """
 	@name:
 		pMatrixeQTL
 	@description:
@@ -30,19 +28,16 @@ def _pMatrixeQTL():
 			- `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work). Default: `1e-3`
 	@requires:
 		[`Matrix-eQTL (R)`](http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/)
-	"""
-	pMatrixeQTL              = Proc(desc = 'Use matrix eQTL to call eQTLs')
-	pMatrixeQTL.input        = 'snpfile:file, expfile:file, covfile:file'
-	pMatrixeQTL.output       = 'outfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.eqtl.txt, cisfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.ciseqtl.txt'
-	pMatrixeQTL.args.model   = 'modelLINEAR' # or modelANOVA
-	pMatrixeQTL.args.pval    = 1e-5
-	pMatrixeQTL.args.fdr     = True
-	pMatrixeQTL.args.cisopts = Diot(
-		snppos  = '',
-		genepos = params.refgene.value,
-		dist    = 0,    # 0 don't do cis-, trans- calls
-		cispv   = 1e-3
-	)
-	pMatrixeQTL.lang   = params.Rscript.value
-	pMatrixeQTL.script = 'file:scripts/eqtl/pMatrixeQTL.r'
-	return pMatrixeQTL
+	"""))
+pMatrixeQTL.input        = 'snpfile:file, expfile:file, covfile:file'
+pMatrixeQTL.output       = 'outfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.eqtl.txt, cisfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.ciseqtl.txt'
+pMatrixeQTL.args.model   = 'modelLINEAR' # or modelANOVA
+pMatrixeQTL.args.pval    = 1e-5
+pMatrixeQTL.args.fdr     = True
+pMatrixeQTL.args.cisopts = Diot(
+	snppos  = '',
+	genepos = params.refgene.value,
+	dist    = 0,    # 0 don't do cis-, trans- calls
+	cispv   = 1e-3
+)
+pMatrixeQTL.lang   = params.Rscript.value

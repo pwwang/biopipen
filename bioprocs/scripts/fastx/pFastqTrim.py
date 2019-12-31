@@ -1,4 +1,4 @@
-from pyppl import Diot
+from diot import Diot
 from bioprocs.utils import mem2, shell2 as shell
 from pathlib import Path
 

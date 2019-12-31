@@ -1,12 +1,11 @@
 """A set of immunotherapy-related bioinformatics tools"""
-from pyppl import Proc, Diot
-from . import params, delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pTopiary():
-	"""
+pTopiary = proc_factory(
+	desc   = 'Epitope prediction using Topiary',
+	config = Diot(annotate = """
 	@description:
 		Predict mutation-derived cancer T-cell epitopes from somatic variants, tumor RNA expression data, and patient HLA type.
 	@input:
@@ -40,60 +39,56 @@ def _pTopiary():
 			- smm-pmbec-iedb: Use SMM-PMBEC via the IEDB web API
 		params (Diot): Other parameters for topiary
 		tmpdir (str): Temporary directory for running local MHC predictors
-	"""
-	return Diot(
-		desc   = 'Epitope prediction using Topiary',
-		lang   = params.python.value,
-		input  = 'infile:file, afile:var',
-		output = [
-			'outfile:file:{{i.infile | stem2}}.topiary/{{i.infile | stem2}}.txt',
-			'outdir:dir:{{i.infile | stem2}}.topiary'],
-		args   = Diot(
-			topiary       = params.topiary.value,
-			netmhc        = params.netmhc.value,
-			netmhcpan     = params.netmhcpan.value,
-			netmhciipan   = params.netmhciipan.value,
-			netmhccons    = params.netmhccons.value,
-			genome        = params.genome.value,
-			smm           = params.smm.value,
-			smm_pmbec     = params.smm_pmbec.value,
-			tmpdir        = params.tmpdir.value,
-			refall        = params.refall.value,
-			mhc_predictor = 'netmhcpan',
-			params        = Diot()
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, afile:var',
+	output = [
+		'outfile:file:{{i.infile | stem2}}.topiary/{{i.infile | stem2}}.txt',
+		'outdir:dir:{{i.infile | stem2}}.topiary'],
+	args   = Diot(
+		topiary       = params.topiary.value,
+		netmhc        = params.netmhc.value,
+		netmhcpan     = params.netmhcpan.value,
+		netmhciipan   = params.netmhciipan.value,
+		netmhccons    = params.netmhccons.value,
+		genome        = params.genome.value,
+		smm           = params.smm.value,
+		smm_pmbec     = params.smm_pmbec.value,
+		tmpdir        = params.tmpdir.value,
+		refall        = params.refall.value,
+		mhc_predictor = 'netmhcpan',
+		params        = Diot()
 	)
+)
 
-@procfactory
-def _pVACseq():
-	"""
+pVACseq = proc_factory(
+	desc   = 'Identification of Variant Antigens using tumor mutation and expression data.',
+	config = Diot(annotate = """
 	@description:
 		pVACseq is a cancer immunotherapy pipeline for the identification of personalized Variant Antigens by Cancer Sequencing (pVACseq) that integrates tumor mutation and expression data (DNA- and RNA-Seq). It enables cancer immunotherapy research by using massively parallel sequence data to predicting tumor-specific mutant peptides (neoantigens) that can elicit anti-tumor T cell immunity. It is being used in studies of checkpoint therapy response and to identify targets for personalized cancer vaccines and adoptive T cell therapies. For more general information.
 		See: http://www.genomemedicine.com/content/8/1/11
-	"""
-	return Diot(
-		desc   = 'Identification of Variant Antigens using tumor mutation and expression data.',
-		lang   = params.python.value,
-		input  = 'infile:file, afile:var',
-		output = [
-			'outfile:file:{{i.infile | stem}}.pvacseq/{{i.infile | stem}}.epitopes.txt',
-			'outdir:dir:{{i.infile | stem}}.pvacseq'],
-		args   = Diot(
-			# used to extract sample name
-			bcftools   = params.bcftools.value,
-			pvacseq    = params.pvacseq.value,
-			allele     = '',
-			bdtool     = 'netmhc',
-			netmhc     = params.netmhc.value,
-			iedb_mhc_i = params.iedb_mhc_i.value,
-			nthread    = 1,
-			params     = Diot(epitope_length = 9)
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, afile:var',
+	output = [
+		'outfile:file:{{i.infile | stem}}.pvacseq/{{i.infile | stem}}.epitopes.txt',
+		'outdir:dir:{{i.infile | stem}}.pvacseq'],
+	args   = Diot(
+		# used to extract sample name
+		bcftools   = params.bcftools.value,
+		pvacseq    = params.pvacseq.value,
+		allele     = '',
+		bdtool     = 'netmhc',
+		netmhc     = params.netmhc.value,
+		iedb_mhc_i = params.iedb_mhc_i.value,
+		nthread    = 1,
+		params     = Diot(epitope_length = 9)
 	)
+)
 
-@procfactory
-def _pOptiType():
-	"""
+pOptiType = proc_factory(
+	desc   = 'Precision HLA typing from next-generation sequencing data using OptiType',
+	config = Diot(annotate = """
 	@description:
 		Precision HLA typing from next-generation sequencing data using OptiType
 		See: https://github.com/FRED-2/OptiType
@@ -116,34 +111,32 @@ def _pOptiType():
 		[OptiType](https://github.com/FRED-2/OptiType)
 		bwa
 		picard
-	"""
-	return Diot(
-		desc   = 'Precision HLA typing from next-generation sequencing data using OptiType',
-		lang   = params.python.value,
-		input  = 'fqfile1:file, fqfile2:file',
-		output = [
-			'outfile:file:{% 	assign outdir = i.fqfile1, i.fqfile2 | \
-								? :bool(_[1]) | \
-								= :__import__("os").path.commonprefix | \
-								! :_[0] | stem2 | .rstrip: "._[]" | \
-								@append: ".optitype" %}{{outdir}}/{{outdir}}.txt',
-			'outdir:dir:{{		i.fqfile1, i.fqfile2 | \
-								? :bool(_[1]) | \
-								= :__import__("os").path.commonprefix | \
-								! :_[0] | stem2 | .rstrip: "._[]"}}.optitype'],
-		args = Diot(
-			optitype = params.optitype.value,
-			picard   = params.picard.value,
-			bwa      = params.bwa.value,
-			hlaref   = params.hlaref.value,
-			nthread  = params.nthread.value,
-			params   = Diot(dna = True, bwa = Diot())
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'fqfile1:file, fqfile2:file',
+	output = [
+		'outfile:file:{% 	assign outdir = i.fqfile1, i.fqfile2 | \
+							? :bool(_[1]) | \
+							= :__import__("os").path.commonprefix | \
+							! :_[0] | stem2 | .rstrip: "._[]" | \
+							@append: ".optitype" %}{{outdir}}/{{outdir}}.txt',
+		'outdir:dir:{{		i.fqfile1, i.fqfile2 | \
+							? :bool(_[1]) | \
+							= :__import__("os").path.commonprefix | \
+							! :_[0] | stem2 | .rstrip: "._[]"}}.optitype'],
+	args = Diot(
+		optitype = params.optitype.value,
+		picard   = params.picard.value,
+		bwa      = params.bwa.value,
+		hlaref   = params.hlaref.value,
+		nthread  = params.nthread.value,
+		params   = Diot(dna = True, bwa = Diot())
 	)
+)
 
-@procfactory
-def _pHLA_LA():
-	"""
+pHLA_LA = proc_factory(
+	desc   = 'HLA typing using HLA-LA',
+	config = Diot(annotate = """
 	@input:
 		infile: The bam file
 	@output:
@@ -158,48 +151,44 @@ def _pHLA_LA():
 		params   (Diot) : Other parameters for `HLA-LA.pl`
 	@requires:
 		[HLA-LA](https://github.com/DiltheyLab/HLA-LA)
-	"""
-	return Diot(
-		desc   = 'HLA typing using HLA-LA',
-		lang   = params.python.value,
-		input  = 'infile:file',
-		output = [	'outfile:file:{{i.infile | stem2}}/{{i.infile | stem2}}.hlala.txt',
-					'outdir:dir:{{i.infile | stem2}}'],
-		args   = Diot(
-			hla_la   = params.hla_la.value,
-			picard   = params.picard.value,
-			bwa      = params.bwa.value,
-			samtools = params.samtools.value,
-			java     = params.java.value,
-			params   = Diot(),
-			nthread  = 1,
-		)
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file',
+	output = [	'outfile:file:{{i.infile | stem2}}/{{i.infile | stem2}}.hlala.txt',
+				'outdir:dir:{{i.infile | stem2}}'],
+	args   = Diot(
+		hla_la   = params.hla_la.value,
+		picard   = params.picard.value,
+		bwa      = params.bwa.value,
+		samtools = params.samtools.value,
+		java     = params.java.value,
+		params   = Diot(),
+		nthread  = 1,
 	)
+)
 
-@procfactory
-def _pVcf2ProteinSeq():
-	"""
+pVcf2ProteinSeq = proc_factory(
+	desc = 'Generate protein sequences from VCF file using pVACseq',
+	config = Diot(annotate = """
 	@input:
 		infile: The input VCF file
 	@output:
 		outdir: The output directory containing the protein sequences
-	"""
-	return Diot(
-		desc = 'Generate protein sequences from VCF file using pVACseq',
-		lang   = params.python.value,
-		input = 'infile:file',
-		output = 'outdir:dir:{{i.infile | stem2}}.protseqs',
-		args = Diot(
-			pvacseq = params.pvacseq.value,
-			lens    = [15, 17, 19, 21],
-			params  = Diot(),
-			nthread = 1,
-		)
+	"""),
+	lang   = params.python.value,
+	input = 'infile:file',
+	output = 'outdir:dir:{{i.infile | stem2}}.protseqs',
+	args = Diot(
+		pvacseq = params.pvacseq.value,
+		lens    = [15, 17, 19, 21],
+		params  = Diot(),
+		nthread = 1,
 	)
+)
 
-@procfactory
-def _pNetMHC():
-	"""
+pNetMHC = proc_factory(
+	desc   = 'Run the netmhc to predict binding affinity between HLA-allele and peptides',
+	config = Diot(annotate = """
 	@input:
 		infile: Peptide sequences in fasta format or list of peptide sequences, optionally with 2nd columns of numeric values.
 		afile: A list (separated by comma) or a file of alleles, one per line. For example:
@@ -215,18 +204,16 @@ def _pNetMHC():
 		nthread (int)         : Number of threads to use.
 			- netMHC itself does not multi-threading.
 			- We will split the input file and put them into multiple threads
-	"""
-	return Diot(
-		desc   = 'Run the netmhc to predict binding affinity between HLA-allele and peptides',
-		input  = 'infile:file, afile:var',
-		output = 'outfile:file:{{i.infile | stem2}}.netmhc.xls',
-		lang   = params.python.value,
-		args   = Diot(
-			netmhc  = params.netmhc.value,
-			isfa    = True,
-			params  = Diot(v = True),
-			lens    = 9,
-			tmpdir  = params.tmpdir.value,
-			nthread = 1
-		)
+	"""),
+	input  = 'infile:file, afile:var',
+	output = 'outfile:file:{{i.infile | stem2}}.netmhc.xls',
+	lang   = params.python.value,
+	args   = Diot(
+		netmhc  = params.netmhc.value,
+		isfa    = True,
+		params  = Diot(v = True),
+		lens    = 9,
+		tmpdir  = params.tmpdir.value,
+		nthread = 1
 	)
+)

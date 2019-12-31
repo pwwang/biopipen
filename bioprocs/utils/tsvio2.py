@@ -103,6 +103,17 @@ class TsvRecord(object):
 			del self.__keys[list(self.keys())[key]]
 			del self.__vals[key]
 
+	def pop(self, key, *default):
+		if not default and key not in self:
+			raise KeyError("No such key: %s" % key)
+		if len(default) > 2:
+			raise ValueError("More than 1 default value.")
+		if key not in self:
+			return default[0]
+		ret = self[key]
+		del self[key]
+		return ret
+
 class TsvReader(object):
 
 	def __init__(self,

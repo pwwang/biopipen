@@ -1,13 +1,11 @@
 """Rank calculations"""
-from pyppl import Proc, Diot
-from . import params, rimport
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pRank():
-	"""
+pRank = proc_factory(
+	desc = 'Convert values to ranks',
+	config = Diot(annotate = """
 	@name:
 		pRank
 	@description:
@@ -37,27 +35,24 @@ def _pRank():
 			- `cnames`: Whether the input file has header. Default: `True`
 			- `rnames`: Whether the input file has row names. Default: `True`
 			- `delimit`: The separator of columns. Default: `\t`
-	"""
-	pRank              = Proc(desc = 'Convert values to ranks')
-	pRank.input        = 'infile:file'
-	pRank.output       = 'outfile:file:{{i.infile | fn}}.rank.txt'
-	pRank.args.na      = 'last' # keep,         first,   remove
-	pRank.args.tie     = 'average' # "average", "first", "last", "random", "max", "min"
-	pRank.args.byrow   = True # else by column
-	pRank.args.reverse = True # large number ranks higher
-	pRank.args.inopts  = Diot(
-		cnames  = True,
-		rnames  = True,
-		delimit = "\t"
-	)
-	pRank.envs.rimport = rimport
-	pRank.lang         = params.Rscript.value
-	pRank.script       = "file:scripts/rank/pRank.r"
-	return pRank
+	"""))
+pRank.input        = 'infile:file'
+pRank.output       = 'outfile:file:{{i.infile | fn}}.rank.txt'
+pRank.args.na      = 'last' # keep,         first,   remove
+pRank.args.tie     = 'average' # "average", "first", "last", "random", "max", "min"
+pRank.args.byrow   = True # else by column
+pRank.args.reverse = True # large number ranks higher
+pRank.args.inopts  = Diot(
+	cnames  = True,
+	rnames  = True,
+	delimit = "\t"
+)
+pRank.envs.rimport = rimport
+pRank.lang         = params.Rscript.value
 
-@procfactory
-def _pRankProduct():
-	"""
+pRankProduct = proc_factory(
+	desc = 'Calculate the rank product of a set of ranks.',
+	config = Diot(annotate = """
 	@name:
 		pRankProduct
 	@description:
@@ -90,18 +85,15 @@ def _pRankProduct():
 		`rnwidth`:  Rowname width. Default: 50
 		`devpars`:  device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
 		`inopts`:   Options for reading the input file. Default: `Diot(cnames=True, rnames=True, delimit="\t")`
-	"""
-	pRankProduct               = Proc(desc = 'Calculate the rank product of a set of ranks.')
-	pRankProduct.input         = "infile:file"
-	pRankProduct.output        = "outdir:dir:{{i.infile | fn}}.rp"
-	pRankProduct.envs.rimport  = rimport
-	pRankProduct.args.informat = "value"
-	pRankProduct.args.pval     = True
-	pRankProduct.args.cex      = .9
-	pRankProduct.args.cnheight = 80
-	pRankProduct.args.rnwidth  = 50
-	pRankProduct.args.inopts   = Diot(cnames  = True, rnames  = True, delimit = '\t')
-	pRankProduct.args.devpars  = Diot(res = 300, width = 2000, height = 2000)
-	pRankProduct.lang          = params.Rscript.value
-	pRankProduct.script        = "file:scripts/rank/pRankProduct.r"
-	return pRankProduct
+	"""))
+pRankProduct.input         = "infile:file"
+pRankProduct.output        = "outdir:dir:{{i.infile | fn}}.rp"
+pRankProduct.envs.rimport  = rimport
+pRankProduct.args.informat = "value"
+pRankProduct.args.pval     = True
+pRankProduct.args.cex      = .9
+pRankProduct.args.cnheight = 80
+pRankProduct.args.rnwidth  = 50
+pRankProduct.args.inopts   = Diot(cnames  = True, rnames  = True, delimit = '\t')
+pRankProduct.args.devpars  = Diot(res = 300, width = 2000, height = 2000)
+pRankProduct.lang          = params.Rscript.value

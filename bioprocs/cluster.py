@@ -1,13 +1,11 @@
 """Processes for clustering data"""
-from pyppl import Proc, Diot
-from . import params, rimport
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
-@procfactory
-def _pDist2Feats():
-	"""
+pDist2Feats = proc_factory(
+	desc = 'Convert a distance matrix to coordinates, using multidimensional scaling.',
+	config = Diot(annotate = """
 	@name:
 		pDist2Feats
 	@description:
@@ -41,19 +39,17 @@ def _pDist2Feats():
 		`informat`: The format of the input file: full, triangle or pair. Default: full
 			- Could also be upper, lower, pair
 		`k`:        How many dimensions? Default: 2 (R^2)
-	"""
-	pDist2Feats            = Proc(desc = 'Convert a distance matrix to coordinates, using multidimensional scaling.')
-	pDist2Feats.input      = "infile:file"
-	pDist2Feats.output     = "outfile:file:{{i.infile | fn}}.xyz"
-	pDist2Feats.args.infmt = 'full'
-	pDist2Feats.args.k     = 2
-	pDist2Feats.lang       = params.Rscript.value
-	pDist2Feats.script     = "file:scripts/cluster/pDist2Feats.r"
-	return pDist2Feats
+	"""))
+pDist2Feats.input      = "infile:file"
+pDist2Feats.output     = "outfile:file:{{i.infile | fn}}.xyz"
+pDist2Feats.args.infmt = 'full'
+pDist2Feats.args.k     = 2
+pDist2Feats.lang       = params.Rscript.value
+pDist2Feats.script     = "file:scripts/cluster/pDist2Feats.r"
 
-@procfactory
-def _pFeats2Dist():
-	"""
+pFeats2Dist = proc_factory(
+	desc = 'Calculate the distance between each pair of rows',
+	config = Diot(annotate = """
 	@name:
 		pFeats2Dist
 	@description:
@@ -82,22 +78,19 @@ def _pFeats2Dist():
 			- see: https://cran.r-project.org/web/packages/philentropy/vignettes/Distances.html
 	@requires:
 		`r-philentropy`
-	"""
-	pFeats2Dist              = Proc(desc = 'Calculate the distance between each pair of rows')
-	pFeats2Dist.input        = 'infile:file'
-	pFeats2Dist.output       = 'outfile:file:{{i.infile | fn}}.dist.txt'
-	pFeats2Dist.args.inopts  = Diot(cnames = True, rnames = True)
-	pFeats2Dist.args.transfm = 'scale'
-	pFeats2Dist.args.na      = 0
-	pFeats2Dist.args.method  = 'euclidean'
-	pFeats2Dist.envs.rimport = rimport
-	pFeats2Dist.lang         = params.Rscript.str()
-	pFeats2Dist.script       = "file:scripts/cluster/pFeats2Dist.r"
-	return pFeats2Dist
+	"""))
+pFeats2Dist.input        = 'infile:file'
+pFeats2Dist.output       = 'outfile:file:{{i.infile | fn}}.dist.txt'
+pFeats2Dist.args.inopts  = Diot(cnames = True, rnames = True)
+pFeats2Dist.args.transfm = 'scale'
+pFeats2Dist.args.na      = 0
+pFeats2Dist.args.method  = 'euclidean'
+pFeats2Dist.envs.rimport = rimport
+pFeats2Dist.lang         = params.Rscript.str()
 
-@procfactory
-def _pCluster():
-	"""
+pCluster = proc_factory(
+	desc = 'Use `optCluster` to select the best number of clusters and cluster method, then perform the clustering.',
+	config = Diot(annotate = """
 	@name:
 		pCluster
 	@description:
@@ -124,32 +117,28 @@ def _pCluster():
 	@requires:
 		[`r-optCluster`](https://rdrr.io/cran/optCluster/man/optCluster.html)
 		[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-	"""
-	pCluster                = Proc (desc = 'Use `optCluster` to select the best number of clusters and cluster method, then perform the clustering.')
-	pCluster.input          = 'infile:file'
-	pCluster.output         = 'outfile:file:{{i.infile | fn}}.cluster/clusters.txt, outdir:dir:{{i.infile | fn}}.cluster'
-	pCluster.args.transpose = False
-	pCluster.args.cnames    = True
-	pCluster.args.rnames    = True
-	pCluster.args.plot      = True
-	pCluster.args.minc      = 2
-	pCluster.args.maxc      = 15
-	# "agnes", "clara", "diana", "fanny", "hierarchical", "kmeans", "model", "pam", "som", "sota", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson"
-	# Note fanny reports error and the algorithm cannot go further.
-	# It is excluded by default, you can add it manually
-	# model and sota are excluded because they are slow
-	# You can also manually add them
-	pCluster.args.methods   = 'all'
-	pCluster.args.isCount   = False
-	pCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
-	pCluster.lang           = params.Rscript.value
-	pCluster.script         = "file:scripts/cluster/pCluster.r"
-	return pCluster
+	"""))
+pCluster.input          = 'infile:file'
+pCluster.output         = 'outfile:file:{{i.infile | fn}}.cluster/clusters.txt, outdir:dir:{{i.infile | fn}}.cluster'
+pCluster.args.transpose = False
+pCluster.args.cnames    = True
+pCluster.args.rnames    = True
+pCluster.args.plot      = True
+pCluster.args.minc      = 2
+pCluster.args.maxc      = 15
+# "agnes", "clara", "diana", "fanny", "hierarchical", "kmeans", "model", "pam", "som", "sota", "em.nbinom", "da.nbinom", "sa.nbinom", "em.poisson", "da.poisson", "sa.poisson"
+# Note fanny reports error and the algorithm cannot go further.
+# It is excluded by default, you can add it manually
+# model and sota are excluded because they are slow
+# You can also manually add them
+pCluster.args.methods   = 'all'
+pCluster.args.isCount   = False
+pCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
+pCluster.lang           = params.Rscript.value
 
-
-@procfactory
-def _pMCluster():
-	"""
+pMCluster = proc_factory(
+	desc = 'Use `r-mclust` to do clustering. Current just do simple clustering with the package.',
+	config = Diot(annotate = """
 	@name:
 		pMCluster
 	@description:
@@ -168,24 +157,20 @@ def _pMCluster():
 	@requires:
 		[`r-mclust`](https://cran.r-project.org/web/packages/mclust/index.html)
 		[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-	"""
-	pMCluster                = Proc(desc = 'Use `r-mclust` to do clustering. Current just do simple clustering with the package.')
-	pMCluster.input          = "infile:file"
-	pMCluster.output         = 'outfile:file:{{i.infile | fn}}.mclust/clusters.txt, outdir:dir:{{i.infile | fn}}.mclust'
-	pMCluster.args.transpose = False
-	pMCluster.args.rnames    = True
-	pMCluster.args.cnames    = True
-	pMCluster.args.minc      = 2
-	pMCluster.args.maxc      = 15
-	pMCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
-	pMCluster.lang           = params.Rscript.value
-	pMCluster.script         = "file:scripts/cluster/pMCluster.r"
-	return pMCluster
+	"""))
+pMCluster.input          = "infile:file"
+pMCluster.output         = 'outfile:file:{{i.infile | fn}}.mclust/clusters.txt, outdir:dir:{{i.infile | fn}}.mclust'
+pMCluster.args.transpose = False
+pMCluster.args.rnames    = True
+pMCluster.args.cnames    = True
+pMCluster.args.minc      = 2
+pMCluster.args.maxc      = 15
+pMCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
+pMCluster.lang           = params.Rscript.value
 
-
-@procfactory
-def _pAPCluster():
-	"""
+pAPCluster = proc_factory(
+	desc = 'Use `r-apcluster` to do clustering.',
+	config = Diot(annotate = """
 	@name:
 		pAPCluster
 	@description:
@@ -202,21 +187,18 @@ def _pAPCluster():
 	@requires:
 		[`r-apcluster`](https://cran.r-project.org/web/packages/apcluster/index.html)
 		[`r-factoextra`](https://cran.r-project.org/web/packages/factoextra/index.html)
-	"""
-	pAPCluster                = Proc(desc = 'Use `r-apcluster` to do clustering.')
-	pAPCluster.input          = "infile:file"
-	pAPCluster.output         = 'outfile:file:{{i.infile | fn}}.apclust/clusters.txt, outdir:dir:{{i.infile | fn}}.apclust'
-	pAPCluster.args.transpose = False
-	pAPCluster.args.rnames    = True
-	pAPCluster.args.cnames    = True
-	pAPCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
-	pAPCluster.lang           = params.Rscript.value
-	pAPCluster.script         = "file:scripts/cluster/pAPCluster.r"
-	return pAPCluster
+	"""))
+pAPCluster.input          = "infile:file"
+pAPCluster.output         = 'outfile:file:{{i.infile | fn}}.apclust/clusters.txt, outdir:dir:{{i.infile | fn}}.apclust'
+pAPCluster.args.transpose = False
+pAPCluster.args.rnames    = True
+pAPCluster.args.cnames    = True
+pAPCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
+pAPCluster.lang           = params.Rscript.value
 
-@procfactory
-def _pHCluster():
-	"""
+pHCluster = proc_factory(
+	desc = 'Do hierarchical clustering.',
+	config = Diot(annotate = """
 	@name:
 		pHCluster
 	@description:
@@ -240,43 +222,37 @@ def _pHCluster():
 	@requires:
 		[`r-fastcluster`](https://cran.r-project.org/web/packages/fastcluster/index.html) if `args.fast` is True
 		[`r-ggdendro`](https://cran.r-project.org/web/packages/ggdendro/index.html) if `args.gg` is True
-	"""
-	pHCluster = Proc(desc = 'Do hierarchical clustering.')
-	pHCluster.input  = "infile:file"
-	pHCluster.output = [
-		"outmerge:file:{{i.infile | fn}}.hclust/merge.txt",
-		"outorder:file:{{i.infile | fn}}.hclust/order.txt",
-		"outdir:dir:{{i.infile | fn}}.hclust"
-	]
-	pHCluster.args.transpose = False
-	pHCluster.args.cnames    = True
-	pHCluster.args.rnames    = True
-	pHCluster.args.method    = 'complete'
-	pHCluster.args.rotate    = False
-	pHCluster.args.fast      = False
-	pHCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
-	pHCluster.lang           = params.Rscript.value
-	pHCluster.script         = "file:scripts/cluster/pHCluster.r"
-	return pHCluster
+	"""))
+pHCluster.input  = "infile:file"
+pHCluster.output = [
+	"outmerge:file:{{i.infile | fn}}.hclust/merge.txt",
+	"outorder:file:{{i.infile | fn}}.hclust/order.txt",
+	"outdir:dir:{{i.infile | fn}}.hclust"
+]
+pHCluster.args.transpose = False
+pHCluster.args.cnames    = True
+pHCluster.args.rnames    = True
+pHCluster.args.method    = 'complete'
+pHCluster.args.rotate    = False
+pHCluster.args.fast      = False
+pHCluster.args.devpars   = Diot(res=300, width=2000, height=2000)
+pHCluster.lang           = params.Rscript.value
 
-@procfactory
-def _pKMeans():
-	"""
+pKMeans = proc_factory(
+	desc = 'Do K-Means clustering',
+	config = Diot(annotate = """
 	@name:
 		pKMeans
-	"""
-	pKMeans        = Proc(desc = 'Do K-Means clustering')
-	pKMeans.input  = 'infile:file'
-	pKMeans.output = [
-		'outfile:file:{{i.infile | fn}}.kmeans/{{i.infile | fn}}.kmeans.txt',
-		'outdir:dir:{{i.infile | fn}}.kmeans'
-	]
-	pKMeans.args.inopts  = Diot(cnames = True, rnames = True)
-	pKMeans.args.k       = None
-	pKMeans.args.plot    = True
-	pKMeans.args.ggs     = Diot()
-	pKMeans.args.devpars = Diot(res=300, width=2000, height=2000)
-	pKMeans.envs.rimport = rimport
-	pKMeans.lang         = params.Rscript.str()
-	pKMeans.script       = "file:scripts/cluster/pKMeans.r"
-	return pKMeans
+	"""))
+pKMeans.input  = 'infile:file'
+pKMeans.output = [
+	'outfile:file:{{i.infile | fn}}.kmeans/{{i.infile | fn}}.kmeans.txt',
+	'outdir:dir:{{i.infile | fn}}.kmeans'
+]
+pKMeans.args.inopts  = Diot(cnames = True, rnames = True)
+pKMeans.args.k       = None
+pKMeans.args.plot    = True
+pKMeans.args.ggs     = Diot()
+pKMeans.args.devpars = Diot(res=300, width=2000, height=2000)
+pKMeans.envs.rimport = rimport
+pKMeans.lang         = params.Rscript.str()
