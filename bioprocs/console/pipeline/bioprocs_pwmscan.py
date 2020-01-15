@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """Do PWM scan"""
-from pyppl import PyPPL, Diot
+from pyppl import PyPPL
+from diot import Diot
 from bioprocs import params
-
-params._prefix = '-'
 
 params.tflist.show     = True
 params.tfmotifs.show   = True

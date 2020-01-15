@@ -6,11 +6,11 @@ from .utils import fs2name
 
 pSort = proc_factory(
 	desc   = 'Sort file using linux command `sort`',
-	config = Diot(long = """
+	config = Diot(annotate = """
 		@input:
-			`infile:file`: The input file
+			infile: The input file
 		@output:
-			`outfile:file`: The output file
+			outfile: The output file
 		@args:
 			`inopts`: The input options for infile:
 				- `skip`   : First N lines to skip. Default: `0`
@@ -82,10 +82,12 @@ pFile2Proc = proc_factory(
 		`infile:file`: The input file
 	@output:
 		`outfile:file`: The output file
-	"""))
-pFile2Proc.input  = "infile:file"
-pFile2Proc.output = "outfile:file:{{i.infile | bn}}"
-pFile2Proc.script = 'ln -s "{{i.infile}}" "{{o.outfile}}"'
+	"""),
+	input  = "infile:file",
+	output = "outfile:file:{{i.infile | bn}}",
+	script = 'ln -s "{{i.infile}}" "{{o.outfile}}"'
+)
+# not overwritten by runtime_config
 pFile2Proc.runner = 'local'
 
 pStr2File = proc_factory(

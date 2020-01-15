@@ -73,9 +73,9 @@ pSSGSEA = proc_factory(
 		`gmtfile:file`: the gmtfile for gene sets
 	@output:
 		`outdir:file`: the output directory
-		- `report.txt`: the enrichment report for each Gene set.
-		- `RES_<GeneSet>.png`: the running ES plot for <GeneSet>
-		- `normP_<GeneSet>.png`: the norminal P value plot for <GeneSet>
+			- `report.txt`: the enrichment report for each Gene set.
+			- `RES_<GeneSet>.png`: the running ES plot for <GeneSet>
+			- `normP_<GeneSet>.png`: the norminal P value plot for <GeneSet>
 	@args:
 		`weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
 		`nperm`:     Number of permutations. Default: 10000
@@ -115,7 +115,7 @@ pGSEA.args.seed      = -1
 pGSEA.lang           = params.Rscript.value
 
 pEnrichr = proc_factory(
-	desc = 'Gene set enrichment analysis using Enrichr APIs',
+	desc   = 'Gene set enrichment analysis using Enrichr APIs',
 	config = Diot(annotate = """
 	@input:
 		`infile:file`: The gene list, each per line
@@ -136,12 +136,12 @@ pEnrichr = proc_factory(
 		`devpars`: Parameters for png.
 		include: A lambda function to include the records(genes)
 			- argument is `bioprocs.utils.tsvio2.TsvRecord`
-	""")
-	input = 'infile:file',
+	"""),
+	input  = 'infile:file',
 	output = 'outdir:dir:{{i.infile | stem}}.enrichr',
-	lang = params.python.value,
+	lang   = params.python.value,
 	errhow = 'retry',
-	args = Diot(
+	args   = Diot(
 		inopts   = Diot(delimit = '\t', skip = 0, comment = '#'),
 		top      = 20,
 		cutoff   = 1,
@@ -197,10 +197,10 @@ pTargetEnrichr = proc_factory(
 		`outdir:dir`:  The output directory, containing the tables and figures.
 	@args:
 		`dbs`       : The databases to do enrichment against. Default: KEGG_2016
-		- A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
-		- Multiple dbs separated by comma (,)
+			- A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
+			- Multiple dbs separated by comma (,)
 		`rmtags`    : Remove pathway tags in the plot. Default: True
-		- For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
+			- For example: change "Lysine degradation_Homo sapiens_hsa00310" to "Lysine degradation".
 		`enrplot`   : Whether to plot the result. Default: True
 		`enrn`      : Top N pathways used to plot. Default: 10
 		`netplot`   : Whether to plot the network. Default: True

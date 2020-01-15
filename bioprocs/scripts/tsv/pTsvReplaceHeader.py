@@ -1,6 +1,6 @@
 from os import path
 from diot import Diot
-from pyppl.utils import alwaysList
+from pyppl.utils import always_list
 from bioprocs.utils import logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
@@ -15,7 +15,7 @@ if isinstance(cnames, str):
 		with open(cnames) as f:
 			cnames = [line.strip() for line in f.readlines() if line.strip()]
 	else:
-		cnames = alwaysList(cnames)
+		cnames = always_list(cnames)
 elif cnames and not callable(cnames):
 	cnames = list(cnames)
 

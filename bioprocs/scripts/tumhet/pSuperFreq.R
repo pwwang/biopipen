@@ -39,7 +39,7 @@ if (baits == "") {
 	baitfile = file.path(outdir, 'bait.bed')
 	reticulate::import('gff')$Gff$toBedfile(baits, baitfile, name = '{attributes[gene_id]}')
 	baits = baitfile
-} 
+}
 
 # normal directory
 normaldir_cache = file.path(cachedir, 'normalDirectory')

@@ -47,7 +47,7 @@ pRank.args.inopts  = Diot(
 	rnames  = True,
 	delimit = "\t"
 )
-pRank.envs.rimport = rimport
+#pRank.envs.rimport = rimport
 pRank.lang         = params.Rscript.value
 
 pRankProduct = proc_factory(
@@ -88,7 +88,7 @@ pRankProduct = proc_factory(
 	"""))
 pRankProduct.input         = "infile:file"
 pRankProduct.output        = "outdir:dir:{{i.infile | fn}}.rp"
-pRankProduct.envs.rimport  = rimport
+#pRankProduct.envs.rimport  = rimport
 pRankProduct.args.informat = "value"
 pRankProduct.args.pval     = True
 pRankProduct.args.cex      = .9

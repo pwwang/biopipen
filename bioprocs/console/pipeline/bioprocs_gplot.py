@@ -2,10 +2,9 @@
 """Plot genomic elements."""
 import json, sys
 from os import path
-from pyppl import PyPPL, utils, Diot
+from pyppl import PyPPL, utils
+from diot import Diot
 from bioprocs import params
-
-params._prefix = '-'
 
 params.ideo       = 'True'
 params.ideo.desc  = 'Show ideogram track?'

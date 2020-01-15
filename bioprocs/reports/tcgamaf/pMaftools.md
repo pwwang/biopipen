@@ -1,4 +1,4 @@
-# {{title}}
+# {{report.title}}
 
 All of the basic anlyses were performed by Maftools[1], which attempts to summarize, analyze, annotate and visualize MAF files in an efficient manner from either TCGA sources or any in-house studies as long as the data is in MAF format.
 

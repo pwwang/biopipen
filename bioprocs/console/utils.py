@@ -1,13 +1,13 @@
 """Utilities for bioprocs script"""
 import re
 import sys
-import yaml
+import toml
 import cmdy
 from pathlib import Path
 from tempfile import gettempdir
 from contextlib import contextmanager
 from colorama import Back
-from pyparam import Helps, HelpAssembler
+from pyparam.help import Helps, HelpAssembler
 from diot import Diot, OrderedDiot
 from pyppl import utils, Channel, PyPPL, Proc
 from pyppl.template import TemplateLiquid
@@ -74,24 +74,6 @@ class Module:
 			for module in Path(bioprocs.__file__).parent.glob('*.py')
 			if not module.stem.startswith('_')]
 
-	@staticmethod
-	def deindent(lines):
-		"""Remove indent based on the first line"""
-		indention = ''
-		for line in lines:
-			if not line:
-				continue
-			indention = line[:-len(line.lstrip())]
-			break
-		ret = []
-		for line in lines:
-			if not line:
-				continue
-			if not line.startswith(indention):
-				raise ValueError('Unexpected indention at doc line:\n' + repr(line))
-			ret.append(line[len(indention):].replace('\t', '  '))
-		return ret
-
 	def __init__(self, name):
 		self.name   = name
 		try:
@@ -112,8 +94,7 @@ class Module:
 			proc = getattr(self.module, attr)
 			if not isinstance(proc, Proc):
 				continue
-			doc = proc.config.long.splitlines()
-			self._procs[attr] = Process(proc, self.module, doc)
+			self._procs[attr] = Process(proc, self.module, proc.config.annotate)
 
 		return self._procs
 
@@ -148,10 +129,10 @@ class Module:
 
 	def add_to_completions(self, comp):
 		"""Add me to completions"""
-		comp.addCommand(self.name, self.desc)
+		comp.add_command(self.name, self.desc)
 		with self.load_procs() as procs:
 			for pname, proc in procs.items():
-				comp.addCommand(self.name + '.' + pname, proc.desc[0])
+				comp.add_command(self.name + '.' + pname, proc.desc)
 				proc.add_to_completions(comp.command(self.name + '.' + pname))
 
 class Process:
@@ -161,220 +142,91 @@ class Process:
 		self.module  = module
 		self.proc    = proc
 		self.desc    = self.proc.desc
-		self.doc     = Module.deindent(doc) # list
+		self.doc     = doc
 		self._helps  = Helps()
 		self._parsed = {}
 
 	def to_helps(self, helpsec):
 		"""Send me to a Helps section"""
 		helpsec.prefix = ''
-		if self.proc.origin == self.name:
+		if not self.proc.origin or self.proc.origin == self.name:
 			helpsec.add((self.name, '', self.desc))
 		else:
 			helpsec.add((self.name, '', 'Alias of: %s' % self.proc.origin))
 
-	@staticmethod
-	def _parse_option_sec(sec):
-		ret      = {}
-		sec      = Module.deindent(sec)
-		lastdesc = []
-		for line in sec:
-			if not line:
-				continue
-			if line[0] in ('\t', ' '):
-				lastdesc.append(line)
-				continue
-			parts = _split(line, ':', trim = False)
-			nametype = parts.pop(0)
-			lastdesc = [':'.join(parts).strip()]
-			nametype = nametype.strip('`) ')
-			if ' (' in nametype:
-				name, typ = nametype.split(' (', 1)
-			elif ':' in nametype:
-				name, typ = nametype.split(':', 1)
-			else:
-				name, typ = nametype.strip(), ''
-			ret[name.strip()] = (typ.strip(), lastdesc)
-		return ret
-
-	@staticmethod
-	def _parse_plain_sec(sec):
-		return Module.deindent(sec)
-
-	def parsed(self):
-		"""Get parsed doc"""
-		if self._parsed:
-			return self._parsed
-		if not self.doc:
-			self._parsed = {}
-			return self._parsed
-		self._parsed = {}
-		lastsec = []
-		for line in self.doc:
-			if line.startswith('@'):
-				secname = line.strip('@: ')
-				lastsec = []
-				self._parsed[secname] = lastsec
-			else:
-				lastsec.append(line)
-		for key, sec in self._parsed.items():
-			if key in ('input', 'output', 'args'):
-				self._parsed[key] = Process._parse_option_sec(sec)
-			else:
-				self._parsed[key] = Process._parse_plain_sec(sec)
-		return self._parsed
-
-	@staticmethod
-	def default_val(val, prefix = 'Default: ', indent = 0):
-		"""Formatted value in help"""
-		ret = []
-		lines = utils.formatDict(val if val != '' else "''", 0).splitlines()
-		for i, line in enumerate(lines):
-			if i == 0:
-				line = prefix + line
-				if len(lines) > 1:
-					line += ' \\'
-				ret.append(line)
-			else:
-				ret.append(' ' * indent + line + ' \\')
-		return ret
-
-	def inputs(self):
-		"""Get the input keys and types by definitions"""
-		if isinstance(self.proc._input, dict):
-			inkeys = self.proc._input.keys()
-		elif isinstance(self.proc._input, str):
-			inkeys = _split(self.proc._input, ',')
-		else:
-			inkeys = self.proc._input
-		ret = OrderedDiot()
-		for inkey in inkeys:
-			if ':' not in inkey:
-				inkey += ':var'
-			inname, intype = inkey.split(':', 1)
-			ret[inname] = intype
-		return ret
-
-	def outputs(self):
-		"""Get the input keys, types and default values by definitions"""
-		if isinstance(self.proc.config.output, dict):
-			outs = list(self.proc.config.output.keys())
-		elif isinstance(self.proc.config.output, str):
-			outs = _split(self.proc.config.output, ',')
-		else:
-			outs = self.proc.config.output
-		ret = OrderedDiot()
-		for out in outs:
-			parts = _split(out, ':')
-			if len(parts) == 2:
-				outname, outype, default = parts[0], 'var', parts[1]
-			else:
-				outname, outype, default = parts
-			ret[outname] = (outype, default)
-		return ret
-
 	def requirements(self):
-		req = self.parsed().get('requires')
-		if not req:
-			return '[ Not documented ]'
-		data4render = { 'proc': self.proc,
-						'args': self.proc.args}
-		requires = yaml.safe_load(TemplateLiquid('\n'.join(req)).render(data4render))
-		return yaml.dump(requires, default_flow_style = False)
+		return self.doc.section('requires') or '[Not documented.]'
 
 	def add_to_completions(self, comp):
 		"""Add me to completions"""
-		for inname in self.inputs():
-			docdesc = self.parsed().get('input', {}).get(inname, (None, ['Input %s' % inname]))[1]
-			comp.addOption('-i.' + inname, docdesc[0])
-		for outname, outypedeft in self.outputs().items():
-			docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', Process.default_val(outypedeft[1])[0]))[1]
-			comp.addOption('-o.' + outname, docdesc[0])
-		for key in self.proc.args:
-			docdesc = self.parsed().get('args', {}).get(key, ('auto', ['[ Not documented. ]']))[1]
-			comp.addOption('-args.' + key, docdesc[0])
+		for inname in self.doc.input or []:
+			comp.add_option('-i.' + inname, self.doc.input[inname]['desc'])
+		for outname in self.doc.output or []:
+			comp.add_option('-o.' + outname, self.doc.output[outname]['desc'])
+		for key in self.doc.args or []:
+			comp.add_option('--args.' + key, self.doc.args[key]['desc'])
 		# add -config.
-		comp.addOption('-config.', 'Pipeline configrations, such as -config._log.file')
+		comp.add_option('--config.', 'Plugin configrations, such as --config.export_dir')
 
 	def helps(self):
 		"""Construct help page using doc"""
 		if self._helps:
 			return self._helps
 
-		self._helps.add('Name',
-			Path(self.module.__file__).stem + '.' + self.name + '%s [lang = %s]' % (
-				'(%s)' % self.proc.origin if self.name != self.proc.origin else '',
-				self.proc.lang))
-		self._helps.add('Description', self.parsed().get('description') or self.desc)
+		self._helps.add('Name', '%s.%s %s[lang = %s]' % (
+			Path(self.module.__file__).stem,
+			self.name,
+			'(%s)' % self.proc.origin if self.proc.origin and self.name != self.proc.origin else '',
+			self.proc.lang
+		))
+		self._helps.add('Description', self.doc.description or self.desc)
 
 		# input
-		self._helps.add('Input options (Use \':list\' for multi-jobs)',
-			sectype = 'option', prefix = '-')
-		for inname, intype in self.inputs().items():
-			doctype, docdesc = self.parsed().get('input', {}).get(inname, ('var', 'Input %s' % inname))
-			intype = intype or doctype or 'var'
-			self._helps.select('Input options').add(('-i.' + inname, '<%s>' % intype, docdesc))
+		self._helps.add(
+			'Input options (Use \':list\' for multi-jobs)',
+			sectype = 'option'
+		)
+
+		for inname in self.doc.input:
+			self._helps.select('Input options').add((
+				'-i.' + inname,
+				'<%s>' % self.doc.input[inname]['type'],
+				self.doc.input[inname]['desc']))
 
 		# output
-		self._helps.add('Output options (\'exdir\' implied if path specified)',
-			sectype = 'option', prefix = '-')
+		self._helps.add(
+			'Output options (\'--config.export_dir\' implied if path specified)',
+			sectype = 'option'
+		)
 
-		for outname, outypedeft in self.outputs().items():
-			outype, outdeft = outypedeft
-			doctype, docdesc = self.parsed().get('output', {}).get(
-				outname, ('var', Process.default_val(outdeft)))
-			outype = outype or doctype or 'var'
-
-			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.extend(Process.default_val(outdeft, indent = 5))
-			elif 'default: ' not in docdesc[-1].lower():
-				defaults = Process.default_val(outdeft, indent = len(docdesc[-1]) + 6)
-				docdesc[-1] += ' ' + defaults.pop(0)
-				docdesc.extend(defaults)
-			self._helps.select('Output options').add(('-o.' + outname, '<%s>' % outype, docdesc))
+		for outname in self.doc.output:
+			self._helps.select('Output options').add((
+				'-o.' + outname,
+				'<%s>' % self.doc.output[outname]['type'],
+				self.doc.output[outname]['desc'] + \
+				'Default: ' + repr(self.doc.output[outname]['default'])))
 
 		# args
-		self._helps.add('Process arguments', sectype = 'option', prefix = '-')
-		for key, val in self.proc.args.items():
-			doctype, docdesc = self.parsed().get('args', {}).get(key, (None, ['[ Not documented ]']))
-			doctype = doctype or type(val).__name__
-			if doctype == 'NoneType':
-				doctype = 'auto'
-			if not docdesc or ('default: ' not in docdesc[-1].lower() and len(docdesc[-1]) > 20):
-				docdesc.extend(Process.default_val(val, indent = 5))
-			elif 'default: ' not in docdesc[-1].lower():
-				defaults = Process.default_val(val, indent = len(docdesc[-1]) + 6)
-				docdesc[-1] += ' ' + defaults.pop(0)
-				docdesc.extend(defaults)
-
+		self._helps.add('Process arguments', sectype = 'option')
+		for key in (self.doc.args or {}):
 			self._helps.select('Process arguments').add((
-				'-args.' + key,
-				'<%s>' % doctype if str(doctype).lower() != 'bool' else '[bool]',
-				docdesc))
+				'--args.' + key,
+				'<%s>' % self.doc.args[key]['type'],
+				self.doc.args[key]['desc'] + \
+				'Default: ' + str(self.doc.args[key]['default'])))
 
-		self._helps.add('Other options', sectype = 'option', prefix = '-')
-		# install requirements
-		self._helps.select('Other options').add(
-			('-install', '[BINDIR]', 'Install process requirements to BINDIR. Default: /usr/bin'))
-		# validate requirements
-		self._helps.select('Other options').add(
-			('-validate', '', 'Validate process requirements.'))
-
-		# process properties
-		self._helps.select('Other options').add(
-			('-<prop>', '', 'Process properties, such as -forks, -exdir, -cache ...'))
+		self._helps.add('Other options', sectype = 'option')
 
 		# pipeline configurations
 		self._helps.select('Other options').add(
-			('-config.<subconf>[.subconf]', '',
-			 'Pipeline configrations, such as -config._log.file'))
+			('--config.<subconf>[.subconf]', '',
+			 'Plugin configrations, such as --config.export_dir'))
 
 		# help
-		self._helps.select('Other options').addParam(
+		self._helps.select('Other options').add_param(
 			bioprocs.params[bioprocs.params._hopts[0]], bioprocs.params._hopts, ishelp = True)
 
-		self._helps.add('Requirements', self.requirements())
+		self._helps.add('Requirements', self.requirements(), sectype = 'plain')
 		return self._helps
 
 	@staticmethod
@@ -414,67 +266,20 @@ class Process:
 			himsg = highlight(msg, hiword, hicolor = hicolor)
 			print(f'{prefix_str}{himsg}', end = end)
 
-	def _run_validate(self):
-		req = self.requirements()
-		if req == '[ Not documented ]':
-			raise ValueError("Requirements for process %r is not documented, "
-				"I have no idea about the requirements." % self.proc.id)
-		requires = yaml.safe_load(req)
-		failed = []
-		for tool, info in requires.items():
-			self._logger(f"Validating {tool} ... ", tool, end = '', hicolor = Back.YELLOW)
-			cmd = cmdy.bash(c = info['validate'], _raise = False)
-			if cmd.rc != 0:
-				failed.append((tool, info))
-				self._logger("Failed.", "Failed", hicolor = Back.RED, prefix = False)
-				self._logger("Validation command: " + cmd.cmd)
-				for err in cmd.stderr.splitlines():
-					self._logger(f"  {err}")
-			else:
-				self._logger("Installed.", "Installed", hicolor = Back.GREEN, prefix = False)
-		return failed
-
-	def _run_install(self, failed, bindir):
-		if not failed:
-			self._logger('All requirements met, nothing to install.')
-		else:
-			for tool, info in failed:
-				self._logger('Installing %s ...' % tool, tool, hicolor = Back.YELLOW)
-				cmd = cmdy.bash(c = info['install'].replace('$bindir$', bindir),
-					_iter = 'err', _raise = True)
-				for line in cmd.__iter__():
-					self._logger(f'  {line}'.rstrip())
-				if cmd.rc != 0:
-					self._logger("Failed to install, please intall it manually.", "Failed",
-						hicolor = Back.RED)
-					self._logger("  " + cmd.cmd)
-				else:
-					self._logger("Succeeded!", "succeeded")
-			self._run_validate()
-
 	def run(self, opts):
 		"""Construct a pipeline with the process and run it"""
 		if any(opts.get(h) for h in bioprocs.params._hopts) or \
 			all(key in bioprocs.params._hopts for key in opts):
 			self.print_helps()
 
-		# install requirements
-		if 'install' in opts or 'validate' in opts:
-			failed = self._run_validate()
-			if 'install' in opts:
-				self._run_install(failed, '/usr/bin' if opts.install is True else opts.install)
-			sys.exit(0)
-
-		if not opts.get('i') or not isinstance(opts.i, dict):
-			self.print_helps(error = 'No input specified.')
-
 		indata = OrderedDiot()
-		for inkey, intype in self.inputs().items():
+		for inkey in self.doc.input:
 			# We should allow some input options to be empty
 			#if opts.i.get(inkey) is None:
 			#	self.print_helps(error = 'Input "[-i.]%s" is not specified.' % inkey)
 
 			# to be smart on "files"
+			intype = self.doc.input[inkey]['type']
 			if intype in IN_FILESTYPE and inkey in opts.i \
 				and not isinstance(opts.i[inkey], list):
 				indata[inkey + ':' + intype] = Channel.create([[opts.i[inkey]]])
@@ -487,8 +292,8 @@ class Process:
 				self.print_helps(error = 'Malformat output specification.')
 
 			outdata = OrderedDiot()
-			for outkey, outypedeft in self.outputs().items():
-				outype, outdeft = outypedeft
+			for outkey in self.doc.output:
+				outype, outdeft = self.doc.output[outkey]['type'], self.doc.output[outkey]['default']
 				if not opts.o.get(outkey):
 					outdata[outkey + ':' + outype] = outdeft
 					continue
@@ -498,9 +303,9 @@ class Process:
 				# try to extract exdir from output
 				if '/' in opts.o[outkey]:
 					out = Path(opts.o[outkey])
-					if self.proc.exdir and out.parent != self.proc.exdir:
+					if self.proc.config.export_dir and out.parent != self.proc.config.export_dir:
 						raise ValueError('Cannot have output files/dirs with different parents as exdir.')
-					self.proc.exdir = str(out.parent)
+					self.proc.config.export_dir = str(out.parent)
 					outdata[outkey + ':' + outype] = out.name
 				else:
 					outdata[outkey + ':' + outype] = opts.o[outkey]
@@ -556,6 +361,6 @@ class Pipeline:
 
 	def add_to_completions(self, comp):
 		"""Add me to completions"""
-		comp.addCommand(self.name, self.desc)
-		self.module.params._addToCompletions(
+		comp.add_command(self.name, self.desc)
+		self.module.params._add_to_completions(
 			comp.command(self.name), withtype = False, alias = True)

@@ -2,6 +2,7 @@
 from pyppl import Proc
 from diot import Diot
 from . import params, proc_factory
+from .seq import pPromoters
 
 pGenePromoters = pPromoters.copy()
 

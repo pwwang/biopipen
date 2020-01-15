@@ -67,7 +67,7 @@ vcf2vaf = function(vcffile) {
 		if (!is.list(varc)) {
 			varc = list(count = varc)
 		}
-		if (is.null(varc$count)) 
+		if (is.null(varc$count))
 			next
 		varc$count = as.numeric(varc$count)
 		varc$depth = as.numeric(list.get(varc, 'depth', as.numeric(sample$DP)))
@@ -103,8 +103,7 @@ for (vfvcf in vfvcfs) {
 }
 
 output = One_step_clustering(
-	indata, 
+	indata,
 	contamination    = rep(0, length(vfvcfs)),
 	output_directory = outdir
 )
-

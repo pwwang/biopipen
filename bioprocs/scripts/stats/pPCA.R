@@ -1,4 +1,4 @@
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.r' | rimport}}
 
 set.seed(8525)
 library(PCAtools)
@@ -14,6 +14,10 @@ params   = {{args.params | R}}
 na       = {{args.na | R}}
 plots    = {{args.plots | R}}
 npc      = {{args.npc | R}}
+
+{% if args.plots %}
+{{'plot.r' | rimport}}
+{% endif %}
 
 indata = read.table.inopts(infile, inopts)
 if (!is.logical(na)) {
@@ -37,8 +41,8 @@ allpcfile   = paste0(prefix, '.allpcs.txt')
 sdevfile    = paste0(prefix, '.sdev.txt')
 rotatedfile = paste0(prefix, '.rotated.txt')
 
-write.table(p$rotated, allpcfile, quote = FALSE, sep = "\t")
-write.table(p$loadings, rotatedfile, quote = FALSE, sep = "\t")
+write.table(p$rotated, rotatedfile, quote = FALSE, sep = "\t")
+write.table(p$loadings, allpcfile, quote = FALSE, sep = "\t")
 write.table(p$sdev, sdevfile, quote = FALSE, sep = "\t")
 sdev = data.frame(sdev = p$sdev, variance = p$variance)
 rownames(sdev) = p$components
@@ -56,8 +60,11 @@ if (npc == 'horn') {
 } else if (!is.numeric(npc)) {
 	stop('Expected a number, "horn" or "elbow" for optimal number of PCs.')
 }
-write.table(p$rotated[, 1:npc], outfile, quote = FALSE, sep = "\t")
+write.table(p$loadings[, 1:npc], outfile, quote = FALSE, sep = "\t")
 
+if (is.false(plots)) {
+	quit()
+}
 # start plotting
 if (is.list(plots$scree) || plots$scree != FALSE) {
 	screepng = paste0(prefix, '.scree.png')
@@ -118,7 +125,7 @@ if (is.list(plots$eigencor) || plots$eigencor != FALSE) {
 	if (!is.list(plots$eigencor)) {
 		plots$eigencor = list()
 	}
-	do.call(png, c(list(filename = eigencor), devpars))
+	do.call(png, c(list(filename = eigencorpng), devpars))
 	plots$eigencor$pcaobj = p
 	print(do.call(eigencorplot, plots$eigencor))
 	dev.off()

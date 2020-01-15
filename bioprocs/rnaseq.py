@@ -1,7 +1,8 @@
 """Analysis of expression data from RNA-seq"""
 from os import path
 from glob import glob
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from .utils import dirpat2name, fs2name
 from . import params, proc_factory
 

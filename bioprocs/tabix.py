@@ -1,5 +1,6 @@
 """Tabix utilities"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 #from .utils import helpers, runcmd
 from . import params, proc_factory
 

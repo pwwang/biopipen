@@ -7,10 +7,10 @@
 
 from os import path
 
-from pyppl import PyPPL, Diot
+from pyppl import PyPPL
+from diot import Diot
 from bioprocs import params
 
-params._prefix = '-'
 params._desc = [
 	"Things this script can do:",
 	"1. Statistics/Characteristics of the expression matrix",

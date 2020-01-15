@@ -2,7 +2,8 @@
 """Using PyPPL to distribute and run commands."""
 import sys
 from os import path
-from pyppl import PyPPL, Proc, Diot
+from pyppl import PyPPL, Proc
+from diot import Diot
 from bioprocs import params
 from tempfile import gettempdir
 

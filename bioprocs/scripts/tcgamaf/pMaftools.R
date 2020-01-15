@@ -1,4 +1,4 @@
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.r', 'plot.r' | *rimport}}
 library(maftools)
 
 indir    = {{i.indir | quote}}

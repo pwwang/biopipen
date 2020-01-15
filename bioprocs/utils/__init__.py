@@ -6,7 +6,7 @@ import re
 import gzip
 from glob import glob
 from os import path
-import yaml
+import toml
 from diot import Diot
 
 class Mem2Exception(Exception):
@@ -34,9 +34,9 @@ def reportdata(outdir, *args, **kwargs):
 			raise TypeError('Expect a dict as report data.')
 		data.update(arg)
 	data.update(kwargs)
-	datafile = path.join(outdir, 'job.report.data.yaml')
+	datafile = path.join(outdir, 'job.report.data.toml')
 	with open(datafile, 'w') as f:
-		yaml.dump(data, f, default_flow_style=False)
+		toml.dump(data, f)
 
 def dirpat2name(directory, pattern = '*'):
 	return fs2name(glob(path.join(directory, pattern)))

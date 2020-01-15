@@ -1,5 +1,6 @@
 """Putative transcription factor binding sites analysis"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from .utils import fs2name
 from . import params, proc_factory
 

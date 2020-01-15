@@ -47,7 +47,7 @@ pGEP70.args.outunit = 'days'
 pGEP70.args.params  = Diot({'font.legend': 13, 'pval': 'Log-rank p = {pval}', 'risk.table': True})
 pGEP70.args.devpars = Diot(res = 300, height = 2000, width = 2000)
 pGEP70.args.ggs     = Diot(table = Diot())
-pGEP70.envs.rimport = rimport
+#pGEP70.envs.rimport = rimport
 pGEP70.lang         = 'Rscript'
 
 pNCBI = proc_factory(

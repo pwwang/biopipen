@@ -44,7 +44,7 @@ pPlinkStats.args.plot     = Diot({
 	'missing.snp'   : True,
 })
 pPlinkStats.args.devpars  = Diot(res=300, width=2000, height=2000)
-pPlinkStats.envs.rimport  = rimport
+#pPlinkStats.envs.rimport  = rimport
 pPlinkStats.lang          = params.Rscript.value
 
 pPlinkSampleFilter = proc_factory(
@@ -92,7 +92,7 @@ pPlinkMiss.args.samplecr = .95
 pPlinkMiss.args.snpcr    = .95
 pPlinkMiss.args.plot     = True
 pPlinkMiss.args.devpars  = Diot(res=300, width=2000, height=2000)
-pPlinkMiss.envs.rimport  = rimport
+#pPlinkMiss.envs.rimport  = rimport
 pPlinkMiss.lang          = params.Rscript.value
 
 pPlinkFreq = proc_factory(
@@ -128,7 +128,7 @@ pPlinkSexcheck = proc_factory(
 pPlinkSexcheck.input        = 'indir:dir'
 pPlinkSexcheck.output       = 'outdir:dir:{{i.indir | fn}}.sexcheck'
 pPlinkSexcheck.args.plink   = params.plink.value
-pPlinkSexcheck.envs.rimport = rimport
+#pPlinkSexcheck.envs.rimport = rimport
 pPlinkSexcheck.lang         = params.Rscript.value
 
 pPlinkHet = proc_factory(
@@ -156,7 +156,7 @@ pPlinkHet.args.plink   = params.plink.value
 pPlinkHet.args.cutoff  = 3
 pPlinkHet.args.plot    = True
 pPlinkHet.args.devpars = Diot(res=300, width=2000, height=2000)
-pPlinkHet.envs.rimport = rimport
+#pPlinkHet.envs.rimport = rimport
 pPlinkHet.lang         = params.Rscript.value
 
 pPlinkHWE = proc_factory(
@@ -245,7 +245,7 @@ pPlinkRemove = proc_factory(
 pPlinkRemove.input        = 'indir:dir, pdir:dir'
 pPlinkRemove.output       = 'outdir:dir:{{i.indir | fn}}'
 pPlinkRemove.args.plink   = params.plink.value
-pPlinkRemove.envs.rimport = rimport
+#pPlinkRemove.envs.rimport = rimport
 pPlinkRemove.lang         = params.Rscript.value
 
 pPlink2Vcf = proc_factory(
@@ -351,7 +351,7 @@ pPlinkPCA.args.plots   = Diot(
 	# more to add
 )
 pPlinkPCA.args.devpars = Diot(height = 2000, width = 2000, res = 300)
-pPlinkPCA.envs.rimport = rimport
+#pPlinkPCA.envs.rimport = rimport
 pPlinkPCA.lang         = params.Rscript.value
 
 pPlinkSimulate = proc_factory(

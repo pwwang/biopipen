@@ -1,8 +1,7 @@
 """Some statistic processes"""
-from pyppl import Proc, Diot
-from . import params, delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 
 pStats = proc_factory(
 	desc   = 'Data statistics',
@@ -430,7 +429,7 @@ pMediation.args.devpars = Diot(res = 300, width = 2000, height = 2000)
 pMediation.lang         = params.Rscript.value
 
 pLiquidAssoc = proc_factory(
-	,
+	desc = 'Do liquid association analysis',
 	config = Diot(annotate = """
 	@name:
 		pLiquidAssoc
@@ -588,9 +587,9 @@ pAnovaModel.args.cov     = '' # requires inopts.rnames
 # pAnovaModel.envs.rimport = rimport
 pAnovaModel.lang         = params.Rscript.value
 
-@procfactory
-def _pCorr():
-	"""
+pCorr = proc_factory(
+	desc   = 'Calculate correlation coefficients.',
+	config = Diot(annotate = """
 	@input:
 		infile: The input file of data to calculate correlations.
 			- The columns are instances and rows variables when `args.byrow = True`.

@@ -2,7 +2,8 @@
 import re
 from os import path
 from glob import glob
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 #from .utils import plot, txt, dirnamePattern
 from .rnaseq import pBatchEffect, pCoexp, pExprStats
 from .utils import dirpat2name
@@ -102,5 +103,5 @@ pMArrayDEG.args.ggs = Diot(
 	volplot = Diot(ylab = {0: '-log10(p-value)'})
 )
 pMArrayDEG.args.devpars = Diot(res = 300, width = 2000, height = 2000)
-pMArrayDEG.envs.rimport = rimport
+#pMArrayDEG.envs.rimport = rimport
 pMArrayDEG.lang         = params.Rscript.value

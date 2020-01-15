@@ -90,9 +90,9 @@ pGff2Bed = proc_factory(
 		outhead: Put head to output file or not.
 			- Could be prefix to the head.
 	"""))
-pGff2Bed.lang   = params.python.value,
-pGff2Bed.input  = 'infile:file',
-pGff2Bed.output = 'outfile:file:{{i.infile | stem}}.bed',
+pGff2Bed.lang   = params.python.value
+pGff2Bed.input  = 'infile:file'
+pGff2Bed.output = 'outfile:file:{{i.infile | stem}}.bed'
 pGff2Bed.args   = Diot(bedcols = Diot(), keepattrs = True, outhead = '#')
 
 pBedFromGff = pGff2Bed.copy()

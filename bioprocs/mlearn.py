@@ -1,5 +1,6 @@
 """Machine learning processes"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from . import params, proc_factory
 
 pRegressTrain = proc_factory(
@@ -38,21 +39,23 @@ pRegressTrain = proc_factory(
 		`plot`   : Plot the model? Default: `False`
 		`inopts` : Input options for input file. Default: `Diot(cnames = True, rnames = True)`
 		`devpars`: The device parameters for the plot. Default: `Diot(res = 300, height = 4000, width = 4000)`
-	"""))
-pRegressTrain.input  = 'infile:file, fmfile:file, casefile:file'
-pRegressTrain.output = [
-	'outfile:file:{{i.infile | fn2}}.regress/{{i.infile | fn2}}.regress.txt',
-	'outdir:dir:{{i.infile | fn2}}.regress'
-]
-pRegressTrain.args.plot    = False
-pRegressTrain.args.cov     = ''
-pRegressTrain.args.yval    = 'numeric'
-pRegressTrain.args.save    = True
-pRegressTrain.args.glmfam  = 'binomial'
-pRegressTrain.args.inopts  = Diot(rnames = True, cnames = True)
-pRegressTrain.args.devpars = Diot(res = 300, height = 4000, width = 4000)
-pRegressTrain.envs.rimport = rimport
-pRegressTrain.lang         = params.Rscript.value
+	"""),
+	input  = 'infile:file, fmfile:file, casefile:file',
+	output = [
+		'outfile:file:{{i.infile | fn2}}.regress/{{i.infile | fn2}}.regress.txt',
+		'outdir:dir:{{i.infile | fn2}}.regress'
+	],
+	args = Diot(
+		plot    = False,
+		cov     = '',
+		yval    = 'numeric',
+		save    = True,
+		glmfam  = 'binomial',
+		inopts  = Diot(rnames = True, cnames = True),
+		devpars = Diot(res = 300, height = 4000, width = 4000),
+	),
+	lang         = params.Rscript.value,
+)
 
 pRegressPred = proc_factory(
 	desc = 'Use a trained linear regression model to predict',
@@ -90,27 +93,29 @@ pRegressPred = proc_factory(
 			})```
 		`devpars`: The device parameters for the plot. Default: `Diot(res = 300, height = 2000, width = 2000)`
 		`inopts` : Options for reading the input file. Default: `Diot(cnames = True, rnames = True, delimit = "\t")`
-	"""))
-pRegressPred.input     = 'infile:file, model:file'
-pRegressPred.output    = [
-	'outfile:file:{{i.infile | fn2}}.pred/{{i.infile | fn2}}.pred.txt',
-	'outdir:dir:{{i.infile | fn2}}.pred'
-]
-pRegressPred.args.out  = Diot(prob = True, auc = True)
-pRegressPred.args.plot = Diot(labels = False, showAUC = True, combine = True)
-pRegressPred.args.ggs  = Diot({
-	'style_roc': {},
-	# show legend at bottom right corner
-	'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
-})
-pRegressPred.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-pRegressPred.args.inopts  = Diot(
-	cnames  = True,
-	rnames  = True,
-	delimit = "\t"
+	"""),
+	input  = 'infile:file, model:file',
+	output = [
+		'outfile:file:{{i.infile | fn2}}.pred/{{i.infile | fn2}}.pred.txt',
+		'outdir:dir:{{i.infile | fn2}}.pred'
+	],
+	args = Diot(
+		out  = Diot(prob = True, auc = True),
+		plot = Diot(labels = False, showAUC = True, combine = True),
+		ggs  = Diot({
+			'style_roc': {},
+			# show legend at bottom right corner
+			'theme#auc': {'legend.position': [1, 0], 'legend.justification': [1, 0]}
+		}),
+		devpars = Diot(res = 300, height = 2000, width = 2000),
+		inopts  = Diot(
+			cnames  = True,
+			rnames  = True,
+			delimit = "\t"
+		)
+	),
+	lang = params.Rscript.value
 )
-pRegressPred.envs.rimport = rimport
-pRegressPred.lang         = params.Rscript.value
 
 pGlmTrain = proc_factory(
 	desc   = 'Train a logistic regression model',
@@ -200,23 +205,53 @@ pRandomForestTrain = proc_factory(
 		`devpars`: The device parameters for the plot.
 	@requires:
 		`r-randomForst`
-	"""))
-pRandomForestTrain.input = 'infile:file'
-pRandomForestTrain.output = [
-	'outmodel:file:{{i.infile | stem}}.rforest/{{i.infile | stem}}.rforest.rds',
-	'outdir:dir:{{i.infile | stem}}.rforest'
-]
-pRandomForestTrain.args.plot    = True
-pRandomForestTrain.args.formula = None
-pRandomForestTrain.args.na      = 0
-pRandomForestTrain.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-pRandomForestTrain.args.inopts  = Diot(
-	cnames  = True,
-	rnames  = True,
-	delimit = "\t"
+	"""),
+	input = 'infile:file',
+	output = [
+		'outmodel:file:{{i.infile | stem}}.rforest/{{i.infile | stem}}.rforest.rds',
+		'outdir:dir:{{i.infile | stem}}.rforest'
+	],
+	args = Diot(
+		plot    = True,
+		formula = None,
+		params  = Diot(importance = True),
+		na      = 0,
+		devpars = Diot(res = 300, height = 2000, width = 2000),
+		inopts  = Diot(
+			cnames  = True,
+			rnames  = True,
+			delimit = "\t"
+		)
+	),
+	lang = params.Rscript.value
 )
-pRandomForestTrain.envs.rimport = rimport
-pRandomForestTrain.lang         = params.Rscript.value
+
+pRandomForestTest = proc_factory(
+	desc   = 'Test trained random forest model',
+	config = Diot(annotate = """
+	@input:
+		`infile:file`: The input file
+		`model:file` : The trained model by `pLogitRegTrain`
+	@output:
+		`outdir:dir`: The output directory
+	@args:
+		`inopts` : The input options.
+		`outprob`: Also output probabilities? Default: True
+	"""),
+	lang   = params.Rscript.value,
+	input  = 'infile:file, model:file',
+	output = 'outdir:dir:{{i.infile | stem}}.rf.test',
+	args   = Diot(
+		outprob = True,
+		outauc  = True,
+		params  = Diot(),
+		ggs     = Diot(),
+		devpars = Diot(res = 300, height = 2000, width = 2000),
+		inopts  = Diot(
+			cnames  = True,
+			rnames  = True,
+			delimit = "\t"
+		)))
 
 pDecisionTreeTrain = proc_factory(
 	desc = "Train a decision tree model",
@@ -239,23 +274,25 @@ pDecisionTreeTrain = proc_factory(
 		`devpars`: The device parameters for the plot. Default: `Diot(res = 300, height = 2000, width = 2000)`
 	@requires:
 		`r-rpart`
-	"""))
-pDecisionTreeTrain.input = 'infile:file'
-pDecisionTreeTrain.output = [
-	'outmodel:file:{{i.infile | stem}}.dtree/{{i.infile | stem}}.dtree.rds',
-	'outdir:dir:{{i.infile | stem}}.dtree'
-]
-pDecisionTreeTrain.args.plot    = True
-pDecisionTreeTrain.args.formula = None
-pDecisionTreeTrain.args.na      = 0
-pDecisionTreeTrain.args.devpars = Diot(res = 300, height = 2000, width = 2000)
-pDecisionTreeTrain.args.inopts  = Diot(
-	cnames  = True,
-	rnames  = True,
-	delimit = "\t"
+	"""),
+	input = 'infile:file',
+	output = [
+		'outmodel:file:{{i.infile | stem}}.dtree/{{i.infile | stem}}.dtree.rds',
+		'outdir:dir:{{i.infile | stem}}.dtree'
+	],
+	args = Diot(
+		plot    = True,
+		formula = None,
+		na      = 0,
+		devpars = Diot(res = 300, height = 2000, width = 2000),
+		inopts  = Diot(
+			cnames  = True,
+			rnames  = True,
+			delimit = "\t"
+		)
+	),
+	lang = params.Rscript.value
 )
-pDecisionTreeTrain.envs.rimport = rimport
-pDecisionTreeTrain.lang         = params.Rscript.value
 
 pCrossValid = proc_factory(
 	desc   = 'Cross validation on the model',
@@ -295,3 +332,17 @@ pCrossValid = proc_factory(
 		nthread = 1,
 		plots   = ['model', 'roc'], # varimp
 		devpars = Diot(res = 300, height = 2000, width = 2000)))
+
+pSplitSamples = proc_factory(
+	desc   = 'Split samples for testing and training',
+	lang   = params.python.value,
+	input  = 'infile:file',
+	output = [
+		'trainfile:file:{{i.infile | stem}}.training{{i.infile | ext}}',
+		'testfile:file:{{i.infile | stem}}.testing{{i.infile | ext}}'],
+	args = Diot(
+		seed   = 0,
+		inopts = Diot(cnames = True),
+		method = '10-fold' # leave-one, or a ratio for training and testing (i.e: 9:1)
+	)
+)

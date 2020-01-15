@@ -21,14 +21,15 @@ pTCGADownload = proc_factory(
 		`nthread`   : Number of threads to use. Default     : `1`
 		`token`     : The token file if needed.
 	"""))
-pTCGADownload.input           = "manifile:file"
-pTCGADownload.output          = "outdir:dir:{{i.manifile | fn}}"
-pTCGADownload.echo            = Diot(jobs = 0, type = 'stderr')
-pTCGADownload.args.params     = Diot({'no-file-md5sum': True})
-pTCGADownload.args.nthread    = 1
-pTCGADownload.args.token      = None
-pTCGADownload.args.gdc_client = params.gdc_client.value
-pTCGADownload.lang            = params.python.value
+pTCGADownload.input             = "manifile:file"
+pTCGADownload.output            = "outdir:dir:{{i.manifile | fn}}"
+pTCGADownload.config.echo_jobs  = 0
+pTCGADownload.config.echo_types = 'stderr'
+pTCGADownload.args.params       = Diot({'no-file-md5sum': True})
+pTCGADownload.args.nthread      = 1
+pTCGADownload.args.token        = None
+pTCGADownload.args.gdc_client   = params.gdc_client.value
+pTCGADownload.lang              = params.python.value
 
 pSample2SubmitterID = proc_factory(
 	desc = 'convert TCGA sample names with submitter id with metadata and sample containing folder',
@@ -147,5 +148,5 @@ pClinic2Cov.output       = 'outfile:file:{{i.infile | fn}}.cov.txt'
 pClinic2Cov.args.covs    = ['gender', 'race', 'pathologic_stage', 'age_at_initial_pathologic_diagnosis']
 pClinic2Cov.args.asnum   = True
 pClinic2Cov.args.suffix  = ''
-pClinic2Cov.envs.rimport = rimport
+#pClinic2Cov.envs.rimport = rimport
 pClinic2Cov.lang         = params.Rscript.value

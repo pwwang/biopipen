@@ -1,4 +1,4 @@
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.r', 'plot.r' | *rimport}}
 
 infile  = {{i.infile | quote}}
 inmodel = {{i.model | quote}}
@@ -62,7 +62,7 @@ if (outauc) {
 	if (model$yval == 'prob' || model$yval == 'numeric') {
 		stop('ROC/AUC is only available for categorical Y values, unable to plot ROC or output AUC.')
 	}
-	aucdata = data.frame(D = indata[, ycol] == out$Predict.Result, M = prob)
+	aucdata = data.frame(D = indata[, ycol], M = prob)
 	roc = plot.roc(aucdata,
 		paste0(prefix, '.roc.png'),
 		params = list(returnTable = TRUE),

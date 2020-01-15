@@ -1,5 +1,5 @@
 """EQTL analysis"""
-from pyppl import Proc,
+from pyppl import Proc
 from diot import Diot
 from . import params, proc_factory
 

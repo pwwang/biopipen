@@ -1,4 +1,4 @@
-{{rimport}}('plot.r', '__init__.r')
+{{'plot.r', '__init__.r' | rimport}}
 
 infile   = {{i.infile | R}}
 metafile = {{i.metafile | R}}

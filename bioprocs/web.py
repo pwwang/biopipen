@@ -1,5 +1,6 @@
 """Download/Get data from Websites instead of APIs"""
 from pyppl import Proc
+from diot import Diot
 from . import params, proc_factory
 
 # Web utils

@@ -2,7 +2,6 @@ import gzip
 from os import path, environ
 from cyvcf2 import VCF, Writer
 from diot import Diot
-from difflib import SequenceMatcher
 from bioprocs.utils import shell2 as shell
 
 infile  = {{i.infile | quote}}
@@ -51,8 +50,6 @@ if inverse:
 	fixes.headerFilter = inv(fixes.headerFilter)
 	fixes.non_ref      = inv(fixes.non_ref)
 
-if fixes.tumorpos is True:
-	fixes.tumorpos = path.splitext(path.basename(infile))[0]
 if fixes.tumorpos and isinstance(fixes.tumorpos, str):
 	fixes.tumorpos = fixes.tumorpos.split(',')
 
@@ -90,16 +87,31 @@ if fixes.clinvarLink or fixes.addChr or fixes.tumorpos or fixes.non_ref:
 				parts = line.strip().split('\t')
 				if len(parts) != 11:
 					fixes.tumorpos = False
-				elif parts[10] in fixes.tumorpos:
+				elif isinstance(fixes.tumorpos, list) and parts[10] in fixes.tumorpos:
 					fixes.tumorpos = True
-				elif parts[9] in fixes.tumorpos:
+				elif isinstance(fixes.tumorpos, list) and parts[9] in fixes.tumorpos:
 					fixes.tumorpos = False
-				else:
-					sample1_match = max(SequenceMatcher(None, parts[9], tumor).ratio()
-						for tumor in fixes.tumorpos)
-					sample2_match = max(SequenceMatcher(None, parts[10], tumor).ratio()
-						for tumor in fixes.tumorpos)
-					fixes.tumorpos = sample2_match > sample1_match
+				elif fixes.tumorpos is True:
+					# cursor = fin.tell() # gzip: telling position disabled by next() call
+					while True:
+						record = fin.readline().strip()
+						filters, *_, fmt, info1, info2 = record.split('\t')[6:]
+						if 'PASS' not in filters and '.' not in filters:
+							continue
+						gtindex = fmt.split(':').index('GT')
+						gt1, gt2 = info1.split(':')[gtindex], info2.split(':')[gtindex]
+						if gt1[0] == gt1[-1] == '0' and not (gt2[0] == gt2[-1] == '0'):
+							fixes.tumorpos = True
+							break
+						if gt2[0] == gt2[-1] == '0' and not (gt1[0] == gt1[-1] == '0'):
+							fixes.tumorpos = False
+							break
+					# try to recorver the cursor
+					fin.seek(0)
+					while fin.readline()[:2] == '##':
+					    pass
+					fin.readline() # this line
+
 				if fixes.tumorpos:
 					parts[9], parts[10] = parts[10], parts[9]
 				fout.write('\t'.join(parts) + '\n')

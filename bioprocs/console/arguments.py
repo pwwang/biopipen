@@ -1,6 +1,6 @@
 from pyparam import commands
 
-commands._prefix       = '-'
+#commands._prefix       = '-'
 
 # command: params
 commands.params            = 'Show or query a parameter'

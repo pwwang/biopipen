@@ -194,5 +194,5 @@ pGenomePlot.args.scheme  = Diot(
 	})
 )
 pGenomePlot.args.devpars = Diot(res = 300, height = 300, width = 2000)
-pGenomePlot.envs.rimport = rimport
+#pGenomePlot.envs.rimport = rimport
 pGenomePlot.lang         = params.Rscript.value

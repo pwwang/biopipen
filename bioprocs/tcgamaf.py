@@ -216,6 +216,48 @@ pMafMerge = proc_factory(
 	envs   = Diot(fs2name = fs2name)
 )
 
+pMaf2GeneMat = proc_factory(
+	desc   = "Convert MAF file to a gene-sample mutation matrix.",
+	lang   = params.python.value,
+	config = Diot(annotate = """
+	@input:
+		infile: The input MAF file
+	@output:
+		outfile: The output gene-sample mutation matrix
+	@args:
+		classes (list|str): Classes of mutations to be counted.
+			- You can also use the groups (red, blue, green and orange)
+			- If not provided, all classes will be counted
+		binary (bool): Whether just output the binary value (0/1) or not.
+		all (bool): Whether include all genes or not.
+			- If this is `False`, genes with mutations not selected will not be included
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | stem}}.genes.txt',
+	args   = Diot(classes = '', binary = False, all = True)
+)
+
+pMaf2MutMat = proc_factory(
+	desc   = "Convert MAF file to a mutation-sample count matrix.",
+	lang   = params.python.value,
+	config = Diot(annotate = """
+	@input:
+		infile: The input MAF file
+	@output:
+		outfile: The output count matrix
+	@args:
+		classes (list|str): Classes of mutations to be counted.
+			- You can also use the groups (red, blue, green and orange)
+			- If not provided, all classes will be counted
+		binary (bool): Whether just output the binary value (0/1) or not.
+		all (bool): Whether include all mutations or not.
+			- If this is `False`, mutations not selected will not be included
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | stem}}.mutations.txt',
+	args   = Diot(classes = '', binary = False, all = True)
+)
+
 pMaf2Mat = proc_factory(
 	desc = 'Convert maf file to a gene-based mutation matrix',
 	config = Diot(annotate = """

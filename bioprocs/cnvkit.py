@@ -1,10 +1,8 @@
 """Utilities of cnvkit"""
-from pyppl import Proc, Diot
-from . import params
+from pyppl import Proc
+from diot import Diot
+from . import params, proc_factory
 from .utils import fs2name
-from . import delefactory, procfactory
-from modkit import Modkit
-Modkit().delegate(delefactory())
 
 pCNVkitPrepare = proc_factory(
 	desc = 'Generate target files for cnvkit.',

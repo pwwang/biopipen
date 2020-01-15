@@ -1,9 +1,9 @@
-# {{title}}{{proc.desc}}
+# {{report.title}}
 
 Enrichr[1] is an easy to use intuitive enrichment analysis web-based tool providing various types of visualization summaries of collective functions of gene lists. Here we use its API to perform the analysis of out gene sets.
 
 
-{% python from pyppl.utils import alwaysList %}
+{% python from pyppl.utils import always_list %}
 {% python from os import path %}
 {% for job in jobs %}
 
@@ -13,7 +13,7 @@ Enrichr[1] is an easy to use intuitive enrichment analysis web-based tool provid
 ## {{job.i.infile | stem}}
 {% endif %}
 
-{% for lib in alwaysList(args.libs) %}
+{% for lib in always_list(args.libs) %}
 
 ::: {.tab .force-tab}
 

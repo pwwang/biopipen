@@ -7,6 +7,15 @@ from pyppl.template import DEFAULT_ENVS
 
 __all__ = []
 
+def _get_paths(paths):
+	ret = []
+	for path in paths:
+		if isinstance(path, (list, tuple)):
+			ret.extend(list(path))
+		else:
+			ret.append(path)
+	return (repr(str(path)) for path in ret)
+
 def rimport(*paths):
 	rimport_rfunc = f"""
 	if (!exists('..rimport..') || !is.function(..rimport..)) {{
@@ -19,7 +28,7 @@ def rimport(*paths):
 		}}
 	}}
 	"""
-	pathstr = ', '.join(f'{path!r}' for path in ((str(path) for path in paths)))
+	pathstr = ', '.join(_get_paths(paths))
 	return f"""
 	{rimport_rfunc}
 	..rimport..({pathstr})
@@ -38,7 +47,7 @@ def bashimport(*paths):
 		}}
 	fi
 	"""
-	pathstr = ' '.join(f'{path!r}' for path in ((str(path) for path in paths)))
+	pathstr = ', '.join(_get_paths(paths))
 	return f"""
 	{bashimport_bashfunc}
 	__bashimport__ {pathstr}
@@ -191,12 +200,12 @@ def glob1(*paths, first = True):
 	"""
 	Return the paths matches the paths
 	"""
-	assert len(paths) >= 2
+	assert len(paths) >= 2, "glob1 needs at least two parts for path."
+	assert not (paths[-1] is True or paths[-1] is False), "`first` should be a keyword argument."
 	paths = list(paths)
 	path0 = paths.pop(0)
 	pattern = paths.pop(-1)
 	ret = list(Path(path0).joinpath(*paths).glob(pattern))
-
 	if ret and first:
 		return ret[0] # Path object
 	if not ret and first:

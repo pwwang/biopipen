@@ -49,12 +49,15 @@ pVcfFilter = proc_factory(
 		`keep`   : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
 	@requires:
 		[`pyvcf`](https://github.com/jamescasbon/PyVCF)
-	"""))
-pVcfFilter.input        = "infile:file"
-pVcfFilter.output       = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}"
-pVcfFilter.args.filters = Diot()
-pVcfFilter.args.gz      = False
-pVcfFilter.args.keep    = True # only for gatk, snpsift at filter step
+	"""),
+	input  = "infile:file",
+	output = "outfile:file:{{i.infile | fn2}}.vcf{% if args.gz %}.gz{% endif %}",
+	args   = Diot(
+		filters = Diot(),
+		gz      = False,
+		keep    = True,   # only for gatk, snpsift at filter step,
+	)
+)
 
 pVcfUnique = proc_factory(
 	desc = 'Remove duplicate mutations from a VCF file.',
@@ -655,7 +658,7 @@ pVcfFix = proc_factory(
 			- addAF (bool): Try to add FORMAT/AF based on FORMAT/AD and FORMAT/DP.
 			- tumorpos (bool|str|list): Try to put tumor sample before normal if it is Tumor-Normal paired VCF file. It could be:
 				- False: to disable this fix
-				- True: to match the file name to determine the tumor sample
+				- True: Try to fix from the record where one of the samples has genotype ref_hom
 				- str|list: A list (separated by comma in str) of tumor samples to match and identify the tumor sample
 				- If it is not a 2-sample VCF file, this is disabled anyway.
 			- headerInfo (bool|dict): Try to fix missing INFOs in header.
@@ -732,15 +735,15 @@ pVcfStats = proc_factory(
 	@args:
 		vcfstats (str)      : Path to vcfstats.
 		Rscript  (str)      : Path to Rscript.
-		formula  (str/list) : Formulas to do the statistics.
-		title    (str/list) : Title of each statistic.
-		figtype  (str/list) : Type of figure for each statistic.
+		formula  (str|list) : Formulas to do the statistics.
+		title    (str|list) : Title of each statistic.
+		figtype  (str|list) : Type of figure for each statistic.
 		passed   (bool)     : Whether Only take variants passed all filters in the statistics.
-		region   (str/list) : Only take variants in region in the statistics, such as `chr1:1-1000`.
+		region   (str|list) : Only take variants in region in the statistics, such as `chr1:1-1000`.
 		regfile  (str)      : A bed file of regions.
 		macro    (str)      : A macro for `vcfstats`.
-		ggs      (str/list) : ggs expressions to modify each plot.
-		devpars  (dict/list): Devpars for each plot.
+		ggs      (str|list) : ggs expressions to modify each plot.
+		devpars  (dict|list): Devpars for each plot.
 	"""),
 	lang   = params.python.value,
 	input  = 'infile:file, config:file',

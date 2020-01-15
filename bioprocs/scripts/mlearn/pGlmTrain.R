@@ -1,4 +1,6 @@
-{{rimport}}('__init__.r')
+{{'__init__.r' | rimport}}
+
+library(caret)
 
 infile       = {{i.infile | quote}}
 outmodel     = {{o.outmodel | quote}}
@@ -52,6 +54,10 @@ model.fit$ycol = ycol
 
 saveRDS(model.fit, outmodel)
 
+vi = varImp(model.fit)
+vi[,1] = scales::rescale(vi[,1], to = c(0, 100))
+write.table(vi, file.path(outdir, 'varimp.txt'), sep = "\t", quote = FALSE)
+
 model.fit.sum = summary(model.fit)
 ret = model.fit.sum$coefficients
 
@@ -77,7 +83,7 @@ write.table(ret,
 	quote = FALSE)
 
 {% if args.plot %}
-{{rimport}}('plot.r')
+{{'plot.r' | rimport}}
 plotfile = file.path(outdir, paste0(prefix, '.glm.png'))
 featdata = model.fit$model[, -1, drop = F]
 # what about categorical features

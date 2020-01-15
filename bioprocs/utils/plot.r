@@ -177,7 +177,7 @@ plot.roc = function(
 	params$returnTable = NULL
 	params$showAUC     = NULL
 	params$bestCut     = NULL
-
+	#print(data)
 	# get roc objects
 	rocs = list()
 	for (grup in groups) {
@@ -1152,7 +1152,7 @@ plot.mds = function(data, plotfile, params = list(has.group = TRUE, ndim = 2),
 					chull(plotdata[plotdata$Group == grup, 1:2]), ])
 			}
 		}
-		print(hulldata)
+		#print(hulldata)
 		ggs = c(list(
 			geom_point = list(aes_string(color = 'Group'), shape = 21),
 			geom_polygon = list(aes_string(fill = 'Group', group = 'Group'), alpha = .3, data = hulldata),

@@ -83,14 +83,14 @@ pBamMarkdup = proc_factory(
 		`samtools`         : The path of samtools. Default: samtools
 		`bamutil`          : The path of bamutil. Default: bam
 		`rmdup`            : Do duplicates removing? Default: False
-		- Samtools will anyway remove the duplicates
+			- Samtools will anyway remove the duplicates
 		`tmpdir`           : The tmp dir used to store tmp files. Default: <system default tmpdir>
 		`nthread`          : Default: 1
-		- Not available for samtools and picard
+			- Not available for samtools and picard
 		`params`           : Other parameters for `tool`. Defaut: ""
 		`mem`              : The max memory to use. Default: "16G"
-		- Unit could be G/g/M/m
-		- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+			- Unit could be G/g/M/m
+			- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 	@requires:
 		[sambamba](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
@@ -188,11 +188,11 @@ pBamReadGroup = proc_factory(
 		`picard`                       : The path of picard. Default: `picard`
 		`bamutil`                      : The path of bamutil. Default: `bam`
 		`rg`                           : The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
-		- `id` will be parsed from filename with "_LX_" in it if not given
-		- `sm` will be parsed from filename
+			- `id` will be parsed from filename with "_LX_" in it if not given
+			- `sm` will be parsed from filename
 		`params`                       : Other parameters for `tool`. Defaut: ""
 		`mem`                          : The max memory to use. Default: "4G"
-		- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+			- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 		`tmpdir`                       : The temporary directory. Default: <system tmpdir>
 	@requires:
 		[gatk](https://lomereiter.github.io/sambamba/docs/sambamba-view.html)
@@ -227,7 +227,7 @@ pBamReorder = proc_factory(
 		`ref`                          : The reference file. Required
 		`params`                       : Other parameters for `picard ReorderSam`. Defaut: ""
 		`mem`                          : The max memory to use. Default: "4G"
-		- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
+			- Will be converted to -Xmx4G, and -Xms will be 1/8 of it
 		`tmpdir`                       : The temporary directory. Default: <system tmpdir>
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
@@ -259,10 +259,10 @@ pBamMerge = proc_factory(
 		`sambamba` : The path of sambamba. Default: `sambamba`
 		`params`   : Other parameters for `tool`. Defaut: ""
 		`mem`      : The max memory to use. Default: "4G"
-		- Will be converted to -Xmx4G, and -Xms will be 1/8 of it, just for picard
+			- Will be converted to -Xmx4G, and -Xms will be 1/8 of it, just for picard
 		`tmpdir`   : The temporary directory. Default: <system tmpdir>
 		`nthread`  : # threads to use. Default: 1
-		- For picard, if nthread>1, USE_THREADING=true, otherwise USE_THREADING=false
+			- For picard, if nthread>1, USE_THREADING=true, otherwise USE_THREADING=false
 	@requires:
 		[picard](https://broadinstitute.github.io/picard/command-line-overview.html)
 	"""))

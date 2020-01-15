@@ -1,5 +1,6 @@
 """Processes to process files with SNPs"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from . import params, proc_factory
 
 pRs2Bed = proc_factory(

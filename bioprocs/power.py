@@ -1,5 +1,6 @@
 """Power analysis"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from . import params, proc_factory
 
 pSurvivalPower = proc_factory(
@@ -45,5 +46,5 @@ pSurvivalPower.args.ngroup  = 2
 pSurvivalPower.args.intype  = 'detailed' # ratios or ratio
 pSurvivalPower.args.alphas  = [.005, .01, .05, .1] # two-sided, *2 if you want one-sided
 pSurvivalPower.args.betas   = [.05, .1, .2]
-pSurvivalPower.envs.rimport = rimport
+#pSurvivalPower.envs.rimport = rimport
 pSurvivalPower.lang         = params.Rscript.value

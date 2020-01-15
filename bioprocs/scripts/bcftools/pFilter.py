@@ -19,11 +19,11 @@ shell.load_config(bcftools = bcftools)
 
 params.O = 'z' if gz else 'v'
 
-def runBcftools(command, *args, **kwargs):
+def run_bcftools(command, *args, **kwargs):
 	cmd = getattr(shell.bcftools, command)(*args, **kwargs).cmd
 	sys.stderr.write("\n%s RUNNING %s\n%s\n%s\n\n" % ("-" * 40, "-" * 40, cmd, "-" *  89))
 
-def normExpr(expr):
+def norm_expr(expr):
 	if not expr:
 		return {}
 	if isinstance(expr, list):
@@ -39,8 +39,8 @@ def normExpr(expr):
 if include and exclude:
 	raise ValueError('We can only handle `include` or `exclude` expression at one time, please rephrase one of them into the same type.')
 
-includes = normExpr(include)
-excludes = normExpr(exclude)
+includes = norm_expr(include)
+excludes = norm_expr(exclude)
 
 flag = 'include' if includes else 'exclude'
 exprs = includes or excludes
@@ -54,7 +54,8 @@ for filter_name, filter_expr in exprs.items():
 	params_one._ = infile
 	params_one.o = tmpfile
 	params_one.threads = nthread
-	runBcftools('filter', **params_one)
+	params_one._debug = True
+	shell.fg.bcftools.filter(**params_one)
 	infile = tmpfile
 
 # stat file
@@ -62,22 +63,20 @@ if stat:
 	annfile = statfile + '.ann'
 	with open(infile) as fin, open(annfile, 'w') as fann, open(statfile, 'w') as fstat:
 		filters = {'PASS': 0}
-		fann.write('"": "Variants may share multiple filters. Variants with PASS are desired ones and exclusive with other filters."\n')
+		fann.write('_NOTE_ = "Variants may share multiple filters. Variants with PASS are desired ones and exclusive with other filters."\n')
 		for line in fin:
 			# ##FILTER=<ID=SIMPLEREPEAT,Description="Set if true: INFO/SIMPLEREPEAT">
 			if line.startswith('##FILTER=<ID='):
 				# SIMPLEREPEAT: "Set if true: INFO/SIMPLEREPEAT"
 				line = line.strip()
-				line = line[13:-1].replace(',Description=', ': ')
+				line = line[13:-1].replace(',Description=', ' = ')
 				fann.write(line + '\n')
 			elif not line.startswith('#'):
 				filts = line.split('\t')[6].split(';')
 				for filt in filts:
 					if filt == '.':
 						filt = 'PASS'
-					if filt not in filters:
-						filters[filt] = 0
-					filters[filt] += 1
+					filters[filt] = filters.setdefault(filt, 0) + 1
 		fstat.write(
 			'\t'.join(
 				[''] +
@@ -94,7 +93,18 @@ else:
 	open(statfile, 'w').close()
 
 if not keep:
-	runBcftools('view', f = '.,PASS', o = outfile, O = params.O, threads = nthread, _ = infile)
+	shell.fg.bcftools.view(
+		f       = '.,PASS',
+		o       = outfile,
+		O       = params.O,
+		threads = nthread,
+		_       = infile,
+		_debug  = True)
 else:
 	# don't do just simple move, in case of inconsistency of gz options of input and output
-	runBcftools('convert', o = outfile, O = params.O, threads = nthread, _ = infile)
+	shell.fg.bcftools.convert(
+		o       = outfile,
+		O       = params.O,
+		threads = nthread,
+		_       = infile,
+		_debug  = True)

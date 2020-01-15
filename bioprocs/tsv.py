@@ -108,6 +108,7 @@ pCbind = proc_factory(
 		fill     = True
 	)
 )
+pTsvCbind = pCbind.copy()
 
 pRbind = proc_factory(
 	desc = 'Rbind the rest of files to the first file.',
@@ -151,6 +152,7 @@ pRbind.args.fn2rname = 'function(fn) fn'
 pRbind.args.fill     = True
 pRbind.envs.fs2name  = fs2name
 pRbind.lang          = params.Rscript.value
+pTsvRbind = pRbind.copy()
 
 pCsplit = proc_factory(
 	desc   = 'Split the columns of input file into different files.',
@@ -212,7 +214,7 @@ pRsplit.args.size    = 1
 pRsplit.lang         = params.Rscript.value
 
 pTsv = proc_factory(
-	config = Diot(long = """
+	config = Diot(annotate = """
 		@name:
 			pTsv
 		@description:
@@ -236,6 +238,28 @@ pTsv = proc_factory(
 		row     = None,
 		inopts  = Diot(delimit = '\t', comment = '#', skip = 0, cnames = True),
 		outopts = Diot(delimit = '\t', cnames = True)
+	)
+)
+
+pTsvDump = proc_factory(
+	desc = "Dump certain column from a TSV file",
+	config = Diot(annotate = """
+	@input:
+		infile: The input file
+	@output:
+		outfile: The output file
+	@args:
+		inopts (Diot): The input options for infile
+		col (int|str): The index of the column (0-based) or the column name if inopts.cnames is True
+		unique (bool): Whether output the unique values only
+	"""),
+	lang = params.python.value,
+	input = 'infile:file',
+	output = 'outfile:file:{{i.infile | stem}}.dumped.txt',
+	args = Diot(
+		inopts = Diot(cnames = True),
+		col    = 0,
+		unique = True
 	)
 )
 
@@ -263,9 +287,10 @@ pTsvColFilter = proc_factory(
 		cols = None,
 	)
 )
+pTsvColSelect = pTsvColFilter.copy()
 
 pTsvAggregate = proc_factory(
-	config = Diot(long = """
+	config = Diot(annotate = """
 		@input:
 			infile: The input file
 		@output:
@@ -279,7 +304,12 @@ pTsvAggregate = proc_factory(
 				- The input file has to sorted by this column
 				- Or a (lambda) function to calculate the term to aggregate on.
 			helper (str): Raw codes to give some help for `args.aggrs`
-			origin (bool): Whether keep or drop the original columns.
+			origin (str): Whether keep or drop the original columns.
+				- `drop`: Drop the original columns
+				- `keep`: Keep all original records
+				- `keep1`: Keep the first original record
+				- `keep0`: alias of `keep1`
+				- `keep-1`: Keep the last original record
 			sorted (bool): Whether the input file has been sorted by `args.on`
 			aggrs (Diot): The aggregation methods. Required.
 				- It's a `Diot` with the keys for aggregated results
@@ -287,16 +317,16 @@ pTsvAggregate = proc_factory(
 				- You can also combine the aggregation results.
 					- For example: `{"sum,mean": lambda rs: [sum(r.value for r in rs), sum(r.value for r in rs)/float(len(rs))]}`
 				- We have some built-in aggregation methods:
-					- `args.aggrs.Sum = "$sum:3"`          : Get the sum of the 4th column
-					- `args.aggrs.First = "$first:ID"`     : Get the first record of the ID column
-					- `args.aggrs.Last = "$last:ID"`       : Get the last record of the ID column
-					- `args.aggrs.Mean = "$mean:Height`    : Get the mean of column "Height"
-					- `args.aggrs.Median = "$median:1"`    : Get the median of the 2nd column
-					- `args.aggrs.Min = "$min:1"`          : Get the min of the 2nd column
-					- `args.aggrs.Max = "$max:1"`          : Get the max of the 2nd column
-					- `args.aggrs.Max2 = "$max:2"`         : Get the max of the 3rd column
+					- `args.aggrs.Sum = "$sum:3"`: Get the sum of the 4th column
+					- `args.aggrs.First = "$first:ID"`: Get the first record of the ID column
+					- `args.aggrs.Last = "$last:ID"`: Get the last record of the ID column
+					- `args.aggrs.Mean = "$mean:Height`: Get the mean of column "Height"
+					- `args.aggrs.Median = "$median:1"`: Get the median of the 2nd column
+					- `args.aggrs.Min = "$min:1"`: Get the min of the 2nd column
+					- `args.aggrs.Max = "$max:1"`: Get the max of the 2nd column
+					- `args.aggrs.Max2 = "$max:2"`: Get the max of the 3rd column
 					- `args.aggrs["Max,Max2"] = "$max:1,2"`: Get the max of the 2nd and 3rd column, respectively
-					- `args.aggrs.CombinedP = "$fisher:1"` : Get the combined pvalues for 1st column using fisher'method (`scipy.stats.combine_pvalues`)
+					- `args.aggrs.CombinedP = "$fisher:1"`: Get the combined pvalues for 1st column using fisher'method (`scipy.stats.combine_pvalues`)
 		"""),
 	desc   = 'Aggregate on columns with a set of records',
 	input  = 'infile:file',
@@ -352,15 +382,15 @@ pTsvReplaceHeader = proc_factory(
 			- `None`: use the header in `i.hfile`
 			- `<list/str/file>`: the header to use if `i.hfile` is not provided
 			- `lambda cnames: ...`: The callback to modify header in `i.hfile` if provided, otherwise modify the original header.
-	"""))
-pTsvReplaceHeader.input       = 'infile:file, hfile:file'
-pTsvReplaceHeader.output      = 'outfile:file:{{i.infile | bn}}'
-pTsvReplaceHeader.args.inopts = Diot(cnames = True)
-pTsvReplaceHeader.args.cnames = None
-pTsvReplaceHeader.lang        = params.python.value
+	"""),
+	lang   = params.python.value,
+	input  = 'infile:file, hfile:file',
+	output = 'outfile:file:{{i.infile | bn}}',
+	args   = Diot(inopts = dict(cnames = True), cnames = None),
+)
 
 pTsvJoin = proc_factory(
-	config = Diot(echo_jobs = 0, long = """
+	config = Diot(echo_jobs = 0, annotate = """
 		@name:
 			pTsvJoin
 		@description:
@@ -463,35 +493,38 @@ pTsvSql.args.outopts = Diot(
 pTsvSql.lang   = params.python.value
 
 pTsvSample = proc_factory(
-	desc = 'Sample records from a TSV file.',
+	desc   = 'Sample records from a TSV file.',
+	lang   = params.python.value,
 	config = Diot(annotate = """
 	@name:
 		pTsvSample
 	@description:
 		Sample records from a TSV file
 	@input:
-		`infile:file`: The input file
+		infile: The input file
 	@output:
-		`outfile:file`: The output file, Default: `{{i.infile | fn2}}.sampled.txt`
+		outfile: The output file
 	@args:
-		`inopts`   : input options, only skip available, Default: `Diot()`
-		`n`        : how many records to sample, Default: `10`
-		`arsample` : sample program by Alex Reynolds, Default: `<params.arsample>`
-		`replace`  : Whether sample with replacement or not, Default: `False`
-		`keeporder`: Keep the order of the sampled records as it's in input file, Default: `False`
-		`seed`: The seed, Default: `0`
-		`params`: Other params for arsample, Default: `Diot()`
-	"""))
-pTsvSample.input          = 'infile:file'
-pTsvSample.output         = 'outfile:file:{{i.infile | fn2}}.sampled.txt'
-pTsvSample.args.inopts    = Diot()
-pTsvSample.args.n         = 10
-pTsvSample.args.arsample  = params.arsample.value
-pTsvSample.args.replace   = False
-pTsvSample.args.keeporder = False
-pTsvSample.args.seed      = 0
-pTsvSample.args.params    = Diot()
-pTsvSample.lang           = params.python.value
+		inopts   : input options, only skip available
+		n        : how many records to sample`
+		arsample : sample program by Alex Reynolds
+		replace  : Whether sample with replacement or not
+		keeporder: Keep the order of the sampled records as it's in input file
+		seed     : The seed
+		params   : Other params for arsample
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | fn2}}.sampled.txt',
+	args   = Diot(
+		inopts    = Diot(),
+		n         = 10,
+		arsample  = params.arsample.value,
+		replace   = False,
+		keeporder = False,
+		seed      = 0,
+		params    = Diot(),
+	)
+)
 
 pTsvMerge = proc_factory(
 	desc = 'Merge files by rows.',
@@ -644,7 +677,7 @@ pTsvsFromXlsx = proc_factory(
 )
 
 pTsvFromXlsx = proc_factory(
-	config = Diot(long = """
+	config = Diot(annotate = """
 		@input:
 			infile: The input XLSX file
 		@output:

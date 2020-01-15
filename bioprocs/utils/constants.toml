@@ -1,0 +1,31 @@
+[tcgamaf.classes]
+# see here: https://ucsc-xena.gitbook.io/project/faq/basic-xena-browser#how-are-mutations-colored
+# and here: https://github.com/cBioPortal/cbioportal/blob/master/docs/File-Formats.md#minimal-maf-format
+RED = [
+	'Nonsense_Mutation',
+	'Frame_Shift_Del',
+	'Frame_Shift_Ins',
+	'Splice_Site',
+]
+BLUE = [
+	'Splice_Region', # cBioPortal
+	'Missense_Mutation',
+	'RNA',
+	'lincRNA', # oncotator
+	'Translation_Start_Site',
+	'De_novo_Start_InFrame',
+	'De_novo_Start_OutOfFrame',
+	'Nonstop_Mutation',
+	'In_Frame_Del',
+	'In_Frame_Ins',
+	'Targeted_Region',
+	''
+]
+GREEN = [
+	"5'Flank",
+	"3'Flank",
+	"5'UTR",
+	"3'UTR",
+	"Silent",
+]
+ORANGE = ["Intron", "IGR", "Unknown"]

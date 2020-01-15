@@ -46,9 +46,9 @@ pView = proc_factory(
 		params   (Diot) : Other parameters for `bcftools view`.
 			- See: https://samtools.github.io/bcftools/bcftools.html#view
 	"""))
-pView.input  = 'infile:file, samfile:var',
-pView.output = 'outfile:file:{{i.infile | stem | stem}}.vcf{{".gz" if args.gz else ""}}',
-pView.lang   = params.python.value,
+pView.input  = 'infile:file, samfile:var'
+pView.output = 'outfile:file:{{i.infile | stem | stem}}.vcf{{".gz" if args.gz else ""}}'
+pView.lang   = params.python.value
 pView.args   = Diot(
 	gz       = False,
 	nthread  = 1,
@@ -75,9 +75,9 @@ pReheader = proc_factory(
 		params   (Diot): Other parameters for `bcftools view`.
 			- See https://samtools.github.io/bcftools/bcftools.html#reheader
 	"""))
-pReheader.input  = 'infile:file, hfile:file, samfile:var',
-pReheader.output = 'outfile:file:{{i.infile | bn}}',
-pReheader.lang   = params.python.value,
+pReheader.input  = 'infile:file, hfile:file, samfile:var'
+pReheader.output = 'outfile:file:{{i.infile | bn}}'
+pReheader.lang   = params.python.value
 pReheader.args   = Diot(
 	bcftools = params.bcftools.value,
 	nthread  = 1,
@@ -86,6 +86,7 @@ pReheader.args   = Diot(
 
 pFilter = proc_factory(
 	desc   = "Apply fixed-threshold filters to VCF files",
+	lang   = params.python.value,
 	config = Diot(annotate = """
 	@input:
 		infile: The input VCF file
@@ -109,25 +110,26 @@ pFilter = proc_factory(
 			- See also `args.include`
 		params   (Diot)          : Other parameters for `bcftools filter`
 			- See: https://samtools.github.io/bcftools/bcftools.html#filter
-	"""))
-pFilter.input  = 'infile:file',
-pFilter.output = 'outfile:file:{{i.infile | bn}}, statfile:file:{{i.infile | stem | stem}}.filterstats.txt',
-pFilter.lang   = params.python.value,
-pFilter.args   = Diot(
-	bcftools = params.bcftools.value,
-	nthread  = 1,
-	gz       = False,
-	stat     = False,
-	keep     = True,
-	include  = None,
-	exclude  = None,
-	params   = Diot(
-		mode = '+' # accumulating Filter names instead of repolacing
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | bn}}, statfile:file:{{i.infile | stem | stem}}.filterstats.txt',
+	args   = Diot(
+		bcftools = params.bcftools.value,
+		nthread  = 1,
+		gz       = False,
+		stat     = False,
+		keep     = True,
+		include  = None,
+		exclude  = None,
+		params   = Diot(
+			mode = '+' # accumulating Filter names instead of repolacing
+		)
 	)
 )
 
 pAnnotate = proc_factory(
 	desc   = 'Add or remove annotations from VCF files',
+	lang   = params.python.value,
 	config = Diot(annotate = """
 	@input:
 		infile: The input VCF file
@@ -142,18 +144,18 @@ pAnnotate = proc_factory(
 		cols    (str|list): Overwrite `-c/--columns`.
 		header  (str|list): headers to be added.
 		params  (Diot)     : Other parameters for `bcftools annotate`
-	"""))
-pAnnotate.lang   = params.python.value,
-pAnnotate.input  = 'infile:file',
-pAnnotate.output = 'outfile:file:{{i.infile | bn}}',
-pAnnotate.args   = Diot(
-	tabix    = params.tabix.value,
-	bcftools = params.bcftools.value,
-	nthread  = 1,
-	annfile  = '',
-	cols     = [],
-	header   = [],
-	params   = Diot()
+	"""),
+	input  = 'infile:file',
+	output = 'outfile:file:{{i.infile | bn}}',
+	args   = Diot(
+		tabix    = params.tabix.value,
+		bcftools = params.bcftools.value,
+		nthread  = 1,
+		annfile  = '',
+		cols     = [],
+		header   = [],
+		params   = Diot()
+	)
 )
 
 pConcat = proc_factory(
@@ -170,10 +172,10 @@ pConcat = proc_factory(
 		params   (Diot) : Other parameters for `bcftools concat`
 		gz       (bool): Whether output gzipped vcf or not.
 	"""))
-pConcat.input  = 'infiles:files',
+pConcat.input  = 'infiles:files'
 pConcat.output = 'outfile:file:{{i.infiles | [0] | stem2 | @append: "_etc.vcf"}}{{ \
-	args.gz | ? | =:".gz" | !:""}}',
-pConcat.lang   = params.python.value,
+	args.gz | ? | =:".gz" | !:""}}'
+pConcat.lang   = params.python.value
 pConcat.args   = Diot(
 	nthread  = 1,
 	bcftools = params.bcftools.value,

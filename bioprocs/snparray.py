@@ -1,5 +1,6 @@
 """Snp-array utilities"""
-from pyppl import Proc, Diot
+from pyppl import Proc
+from diot import Diot
 from . import params, proc_factory
 
 pGistic = proc_factory(
@@ -47,8 +48,8 @@ pSNP6Genotype = proc_factory(
 		`celfile:file`: the CEL file
 	@output:
 		`outfile:file`: the outfile containing probe name and genotypes
-		- format: `<Probe name>\t<genotype>`
-		- `<genotype>` = 0: AA, 1: AB, 2: BB
+			- format: `<Probe name>\t<genotype>`
+			- `<genotype>` = 0: AA, 1: AB, 2: BB
 	@requires:
 		[bioconductor-crlmm](http://bioconductor.org/packages/release/bioc/html/crlmm.html)
 	"""))

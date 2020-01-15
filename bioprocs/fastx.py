@@ -230,16 +230,16 @@ pFastqSETrim = proc_factory(
 		`trimmomatic` : The path of trimmomatic. Default: trimmomatic
 		`params`      : Other params for `tool`. Default: ""
 		`nthread`     : Number of threads to be used. Default: 1
-		- Not for cutadapt
+			- Not for cutadapt
 		`gz`          : Whether gzip output files. Default: True
 		`mem`         : The memory to be used. Default: 4G
-		- Only for trimmomatic
+			- Only for trimmomatic
 		`minlen`      : Discard trimmed reads that are shorter than `minlen`. Default: 18
-		- For trimmomatic, the number will be `minlen`*2 for MINLEN, as it filters before trimming
+			- For trimmomatic, the number will be `minlen`*2 for MINLEN, as it filters before trimming
 		`minq`        : Minimal mean qulity for 4-base window or leading/tailing reads. Default: 3
 		`cut5`        : Remove the 5'end reads if they are below qulity. Default: 3
 		`cut3`        : Remove the 3'end reads if they are below qulity. Default: 3
-		- Not for skewer
+			- Not for skewer
 		`adapter`     : The adapter for sequence. Default: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
 	@requires:
 		[`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
@@ -278,8 +278,8 @@ pFastqSE2Sam = proc_factory(
 		`ngm`:    Path of ngm, default: ngm
 		`bowtie2`:Path of bowtie2, default: bowtie2
 		`rg`:     The read group. Default: {'id': '', 'pl': 'Illumina', 'pu': 'unit1', 'lb': 'lib1', 'sm': ''}
-		- `id` will be parsed from filename with "_LX_" in it if not given
-		- `sm` will be parsed from filename
+			- `id` will be parsed from filename with "_LX_" in it if not given
+			- `sm` will be parsed from filename
 		`ref`:    Path of reference file
 		`params`: Other params for tool, default: ''
 	"""))

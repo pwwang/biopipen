@@ -120,7 +120,7 @@ if not reader.cnames:
 if not isinstance(on, int) and not callable(on) and on not in reader.cnames:
 	raise ValueError('{!r} is not a valid column name!'.format(on))
 
-if origin == 'keep':
+if 'keep' in origin:
 	writer.cnames = reader.cnames[:]
 writer.cnames += ['AggrOn'] + always_list(','.join(aggrs.keys()))
 if on in reader.cnames:
@@ -132,34 +132,34 @@ group = None
 rows  = {}
 for row in reader:
 	aggron = on(row) if callable(on) else row[on]
+	if not issorted:
+		rows.setdefault(aggron, []).append(row)
+		continue
 
 	if group is None:
 		group = aggron
+
+	if aggron == group:
 		rows.setdefault(group, []).append(row)
-	elif aggron == group:
-		rows[group].append(row)
-	elif issorted:
-		data = rows[group]
-		out = list(row.values()) + [aggron] if origin == 'keep' else [aggron]
-		for newcol, aggr in aggrs.items():
-			if naggrs[newcol] > 1:
-				out.extend(aggr(data))
-			else:
-				out.append(aggr(data))
-		writer.write(out)
-		group = aggron
-		rows  = {}
+
 	else:
 		rows.setdefault(aggron, []).append(row)
 		group = aggron
 
 for grup, data in rows.items():
-	row = data[0]
-	out = list(row.values()) + [grup] if origin == 'keep' else [grup]
+	aggrout = [grup]
 	for newcol, aggr in aggrs.items():
 		if naggrs[newcol] > 1:
-			out.extend(aggr(data))
+			aggrout.extend(aggr(data))
 		else:
-			out.append(aggr(data))
-	writer.write(out)
+			aggrout.append(aggr(data))
+	if origin == 'keep':
+		for row in data:
+			writer.write(list(row.values()) + aggrout)
+	elif origin in ('keep1', 'keep0'):
+		writer.write(list(data[0].values()) + aggrout)
+	elif origin == 'keep-1':
+		writer.write(list(data[-1].values()) + aggrout)
+	else:
+		writer.write(aggrout)
 writer.close()

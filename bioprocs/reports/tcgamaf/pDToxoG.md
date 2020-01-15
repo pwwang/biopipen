@@ -1,4 +1,4 @@
-# {{title}}
+# {{report.title}}
 
 The OxoG artifact from SNV calls was removed by D-ToxoG[1]. The goal of D-ToxoG is to limit the output mutation calls to less than {{args.params.artifactThresholdRate}} artifact by following steps:
 
@@ -31,7 +31,7 @@ caption: Summary of all cases
 :::
 
 {% for legoplot in glob1(job.outdir, 'figures', '*_lego_before.png', first = False) %}
-{% if '.dtoxog.maf' not in legoplot %}
+{% 	if '.dtoxog.maf' not in str(legoplot) %}
 ::: {.tab}
 ### {{legoplot | bn | [:-16]}}
 
@@ -40,7 +40,7 @@ caption: Summary of all cases
 
 ![Lego plot after filtering]({{legoplot | bn | [:-16] | @append: "_lego_after.png" | @prepend: dirname(legoplot) + '/'}})
 :::
-{% endif %}{# if not legoplot.endswith #}
+{% 	endif %}{# if not legoplot.endswith #}
 {% endfor %}{# for legoplot #}
 
 ::::

@@ -3,8 +3,7 @@
 from modkit import Modkit
 from pyppl import Proc
 from diot import Diot
-from . import params, delefactory, procfactory
-Modkit().delegate(delefactory())
+from . import params, proc_factory
 
 pBWExtract = proc_factory(
 	desc   = 'Extract features from bigwig file.',

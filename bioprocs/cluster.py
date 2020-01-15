@@ -85,7 +85,7 @@ pFeats2Dist.args.inopts  = Diot(cnames = True, rnames = True)
 pFeats2Dist.args.transfm = 'scale'
 pFeats2Dist.args.na      = 0
 pFeats2Dist.args.method  = 'euclidean'
-pFeats2Dist.envs.rimport = rimport
+#pFeats2Dist.envs.rimport = rimport
 pFeats2Dist.lang         = params.Rscript.str()
 
 pCluster = proc_factory(
@@ -254,5 +254,5 @@ pKMeans.args.k       = None
 pKMeans.args.plot    = True
 pKMeans.args.ggs     = Diot()
 pKMeans.args.devpars = Diot(res=300, width=2000, height=2000)
-pKMeans.envs.rimport = rimport
+#pKMeans.envs.rimport = rimport
 pKMeans.lang         = params.Rscript.str()

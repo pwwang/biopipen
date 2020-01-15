@@ -6,14 +6,14 @@ from bioprocs.utils.parallel import Parallel
 from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio2 import TsvReader
 
-{% from pyppl.utils import alwaysList %}
+{% from pyppl.utils import always_list %}
 infile   = {{i.infile | quote}}
 prefix   = {{i.infile | fn2 | quote}}
 outdir   = {{o.outdir | quote}}
 inopts   = {{args.inopts | repr}}
 genecol  = {{args.genecol | ?!:0 | repr}}
 top      = {{args.top}}
-dbs      = {{args.libs | alwaysList | repr}}
+dbs      = {{args.libs | always_list | repr}}
 plot     = {{args.plot | repr}}
 nthread  = {{args.nthread | repr}}
 Rscript  = {{args.Rscript | repr}}
