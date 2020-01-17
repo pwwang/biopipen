@@ -23,6 +23,8 @@ params.indir.desc = 'The input directory containing input files.'
 params.indir.callback = lambda opt: opt.set_value(path.realpath(opt.value))
 params.aligner = 'bwa'
 params.aligner.desc = 'The alignment tool.'
+params.trimmer = 'trimmomatic'
+params.trimmer.desc = 'The trimming tool.'
 params.saminfo.required = True
 params.saminfo.desc = """The sample information file:
 Column 1: the basename of the sample file in '-indir'
@@ -47,13 +49,15 @@ params.forks = 1
 params.forks.desc = 'How many jobs to run simultanuously.'
 params.logfile = ''
 params.logfile.desc = 'Where to save the logs.'
+params.loglevel = 'info'
+params.loglevel.desc = 'The logging level.'
 params.compress = True
 params.compress.desc = 'Use gzip and bam file to save space.'
 params.ppldir = './workdir'
 params.ppldir.desc = 'The pipeline directory.'
 params.flowchart.desc = 'The flowchart file'
 
-def main():
+def main(): # pylint: disable=too-many-statements
     """The main entry point of the pipeline"""
     opts = params._parse(dict_wrapper=Diot)
 
@@ -65,6 +69,7 @@ def main():
     starts = []
     saminfo = SampleInfo(opts.saminfo)
     aPrepareBam.pFastq2Sam.args.tool = opts.aligner
+    aPrepareBam.pFastqTrim.args.tool = opts.trimmer
     aPrepareBam.args.nthread = opts.nthread
     if (aPrepareBam.pSam2Bam.args.tool == 'elprep' and
             aPrepareBam.pSam2Bam.args.steps.recal):
@@ -157,6 +162,7 @@ def main():
 
     ppl = PyPPL(forks=int(opts.forks),
                 ppldir=opts.ppldir,
+                logger_level=opts.loglevel,
                 logger_file=opts.logfile).start(starts)
     if opts.flowchart:
         ppl.flowchart(fcfile=opts.flowchart)
