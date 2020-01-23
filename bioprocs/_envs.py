@@ -142,14 +142,11 @@ def R(var, ignoreintkey=True): # pylint: disable=too-many-return-statements,inva
     if isinstance(var, dict):
         # list allow repeated names
         return 'list({})'.format(','.join([
-            '`{0}`={1}'.format(
-                k,
-                (R(v)
-                 if isinstance(k, int) and not ignoreintkey
-                 else R(v)
-                 if isinstance(k, int) and ignoreintkey
-                 else '`{0}`={1}'.format(str(k).split('#')[0], R(v)))
-            )
+            '`{0}`={1}'.format(k, R(v))
+            if isinstance(k, int) and not ignoreintkey
+            else R(v)
+            if isinstance(k, int) and ignoreintkey
+            else '`{0}`={1}'.format(str(k).split('#')[0], R(v))
             for k, v in sorted(var.items())
         ]))
     return repr(var)

@@ -581,8 +581,8 @@ plot.qq = function(data, plotfile = NULL, x = NULL, y = 1, params = list(), ggs 
 		data = cbind(data, Theoretical = qnorm(q))
 		x = "Theoretical"
 	}
-	data[, x] = quantile(data[, x], q)
-	data[, y] = quantile(data[, y], q)
+	data[, x] = quantile(data[, x], q, na.rm = TRUE)
+	data[, y] = quantile(data[, y], q, na.rm = TRUE)
 	if (is.numeric(x)) x = sprintf("`%s`", colnames(data)[x])
 	if (is.numeric(y)) y = sprintf("`%s`", colnames(data)[y])
 
@@ -610,7 +610,11 @@ plot.venn = function(data, plotfile = NULL, params = list(), devpars = DEVPARS) 
 	}
 	default.params = list(x = x, filename = plotfile, height = devpars$height, width = devpars$width, resolution = devpars$res, imagetype = "png", alpha = .5, fill = rainbow(ncol(data)))
 	params = update.list(default.params, params)
-	do.call(venn.diagram, params)
+	p = do.call(venn.diagram, params)
+	if (is.null(plotfile)) {
+		library(grid)
+		grid.draw(p)
+	}
 }
 
 plot.upset = function(data, plotfile = NULL, params = list(), devpars = DEVPARS) {

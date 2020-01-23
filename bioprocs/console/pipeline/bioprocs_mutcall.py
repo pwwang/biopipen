@@ -56,6 +56,9 @@ params.compress.desc = 'Use gzip and bam file to save space.'
 params.ppldir = './workdir'
 params.ppldir.desc = 'The pipeline directory.'
 params.flowchart.desc = 'The flowchart file'
+params.forcecache = True
+params.forcecache.desc = ('Force processes to cache '
+                          'if they had successful run before.')
 
 def main(): # pylint: disable=too-many-statements
     """The main entry point of the pipeline"""
@@ -162,6 +165,7 @@ def main(): # pylint: disable=too-many-statements
 
     ppl = PyPPL(forks=int(opts.forks),
                 ppldir=opts.ppldir,
+                cache='force' if opts.forcecache else True,
                 logger_level=opts.loglevel,
                 logger_file=opts.logfile).start(starts)
     if opts.flowchart:

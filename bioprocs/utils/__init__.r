@@ -83,7 +83,7 @@ ifelse = function(condition, true, false) {
 	return(false)
 }
 
-read.table.inopts = function(infile, inopts) {
+read.table.inopts = function(infile, inopts = list()) {
 	inopts.default = function(key, default) list.get(inopts, key, default, check.names = TRUE)
 	optrnames = inopts.default('rnames', TRUE)
 	dup = inopts$dup
