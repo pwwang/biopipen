@@ -625,7 +625,7 @@ plot.upset = function(data, plotfile = NULL, params = list(), devpars = DEVPARS)
 	save.plot(p, plotfile, devpars)
 }
 
-plot.pie = function(data, plotfile, ggs = list(), devpars = DEVPARS) {
+plot.pie = function(data, plotfile = NULL, ggs = list(), devpars = DEVPARS) {
 	percent    = function(x) paste0(format(round(x*100, 1), nsmall = 1), "%")
 	N          = nrow(data)
 	Group      = colnames(data)

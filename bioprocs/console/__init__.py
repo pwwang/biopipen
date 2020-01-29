@@ -33,7 +33,7 @@ def show_params(opts):
                         and query not in key.lower()
                         and not any(query in desc for desc in param.desc)):
                     continue
-                pminfo['params'].addParam(param)
+                pminfo['params'].add_param(param)
 
         print('\n'.join(
             highlight_multi(line, queries)

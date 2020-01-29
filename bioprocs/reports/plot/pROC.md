@@ -1,4 +1,4 @@
-# {{title}}
+# {{report.title}}
 
 {% for job in jobs %}
 ::::: {.tab}

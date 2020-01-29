@@ -33,14 +33,16 @@ pGTMatAddRs = proc_factory(
             - `force`: Force using the RS ID being found to replace the old one.
         `chrorder`: The chromsome order. Default: `<params.chrorder>`
 	"""),
+    input='infile:file',
+    output='outfile:file:{{i.infile | bn}}',
+    lang=params.python.value,
+    args=Diot(
+        dbsnp=params.dbsnp_all.value,
+        chrorder=params.chrorder.value,
+        notfound='NOVEL',
+        exist='keep',
+    )
 )
-pGTMatAddRs.input = 'infile:file'
-pGTMatAddRs.output = 'outfile:file:{{i.infile | bn}}'
-pGTMatAddRs.lang = params.python.value
-pGTMatAddRs.args.dbsnp = params.dbsnp_all.value
-pGTMatAddRs.args.chrorder = params.chrorder.value
-pGTMatAddRs.args.notfound = 'NOVEL'
-pGTMatAddRs.args.exist = 'keep'
 
 pGTMat2Plink = proc_factory(
     desc='Convert a genotype matrix to plink binary files',

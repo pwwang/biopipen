@@ -1,4 +1,4 @@
-# {{title}}
+# {{report.title}}
 
 One of the aim of RNAseq data analysis is the detection of differentially expressed genes. The analysis takes the normalised read count data and performing statistical analysis to discover quantitative changes in expression levels between experimental groups.
 

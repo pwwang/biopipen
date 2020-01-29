@@ -1,4 +1,4 @@
-{{rimport}}('__init__.r')
+{{'__init__.R' | rimport}}
 
 infile  = {{i.infile | R}}
 outfile = {{o.outfile | R}}
@@ -7,13 +7,7 @@ inopts  = {{args.inopts | R}}
 
 mat = read.table.inopts(infile, inopts)
 
-{% if isinstance(args.code, list) %}
-	{% for c in args.code %}
-	{{c}}
-	{% endfor %}
-{% else %}
-	{{args.code}}
-{% endif %}
+{{args.code | ?isinstance: list | = '\n'.join | $ render }}
 
 outparams = list(
 	x         = mat,

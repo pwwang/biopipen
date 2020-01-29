@@ -174,7 +174,7 @@ def tabix_index(filename, type, tabix='tabix'): # pylint: disable=redefined-buil
     shell.fg.tabix(p=ptype, _=filename + '.gz')
     return filename + '.gz'
 
-tabIndex = tabix_index # pylint: disable=invalid-name
+tabixIndex = tabix_index # pylint: disable=invalid-name
 
 def vcf_index(vcf, tabix='tabix'):
     """Index vcf file"""
