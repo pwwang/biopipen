@@ -1,35 +1,49 @@
-{{ 'plot.r', '__init__.r', 'sampleinfo.r' | *rimport }}
+{{ 'plot.r', '__init__.r', 'sampleinfo.r' | rimport }}
 
 library(methods)
 options(stringsAsFactors = FALSE)
 set.seed(8525)
 
-exprfile  = {{i.efile | R}}
-groupfile = {{i.gfile | R}}
-cutoff    = {{args.cutoff | ?isinstance: dict
-						  | =:{"by": _.get("by", "p"), "value": _.get("value", .05)}
-						  | !:{"by": "p", "value": _, "sign": "<"} | $R }}
-outdir    = {{o.outdir | R}}
-allfile   = {{o.outfile | prefix | prefix | @append: ".all.xls" | quote}}
-upfile    = {{o.outfile | prefix | prefix | @append: ".up.xls" | quote}}
-downfile  = {{o.outfile | prefix | prefix | @append: ".down.xls" | quote}}
-outfile   = {{o.outfile | R}}
-tool      = {{args.tool | R}}
-inopts    = {{args.inopts | R}}
-ggs       = {{args.ggs | R}}
-params    = {{args.params | R}}
-devpars   = {{args.devpars | R}}
-mapping   = {{args.mapping | quote}}
+exprfile  <- {{i.efile | R}}
+groupfile <- {{i.gfile | R}}
+inmeta    <- {{i.meta | R}}
+cutoff    <- {{args.cutoff | ?isinstance: dict
+						   | =:{"by": _.get("by", "p"), "value": _.get("value", .05)}
+						   | !:{"by": "p", "value": _, "sign": "<"} | $R }}
+outdir    <- {{o.outdir | R}}
+allfile   <- {{o.outfile | prefix | prefix | @append: ".all.xls" | quote}}
+upfile    <- {{o.outfile | prefix | prefix | @append: ".up.xls" | quote}}
+downfile  <- {{o.outfile | prefix | prefix | @append: ".down.xls" | quote}}
+outfile   <- {{o.outfile | R}}
+tool      <- {{args.tool | R}}
+inopts    <- {{args.inopts | R}}
+ggs       <- {{args.ggs | R}}
+params    <- {{args.params | R}}
+devpars   <- {{args.devpars | R}}
+meta      <- {{args.meta | R}}
+gscol     <- {{args.gscol | R}}
 
 # get the exp data
 indata = read.table.inopts(exprfile, inopts)
+
+# get metadata
+metadata = NULL
+meta = ifelse(is.true(inmeta), inmeta, meta)
+
+if (is.true(meta) && file.exists(meta)) {
+	metadata = read.table.inopts(meta,
+								 list(rnames=TRUE, cnames=TRUE, delimit="\t"))
+} else if (is.true(meta)) {
+	metadata = indata[, meta, drop=FALSE]
+}
 
 # get groups
 saminfo = SampleInfo2$new(groupfile, checkPaired = TRUE)
 
 groups = saminfo$all.groups()
 if (length(groups) != 2) {
-	stop("I don't know how to do comparison between non-paired groups (# group must equal 2)")
+	stop(paste("I don't know how to do comparison",
+			   "between non-paired groups (# group must equal 2)"))
 }
 group1   = groups[1]
 group2   = groups[2]
@@ -39,24 +53,6 @@ samples2 = saminfo$get.samples(by = 'Group', value = group2)
 samples = c(samples1, samples2)
 saminfo$select(samples)
 ematrix = indata[, samples, drop = FALSE]
-
-maps = NULL
-replacecol = NULL
-if (is.true(mapping)) {
-	splits = unlist(strsplit(mapping, ':'))
-	if (length(splits) == 1) {
-		if (file.exists(splits)) {
-			maps = read.table.inopts(mapping, list(rnames = TRUE, colnames = TRUE))
-		} else {
-			replacecol = ifelse(is.na(as.numeric(splits)), splits, as.numeric(splits))
-		}
-	} else {
-		replacecol = ifelse(is.na(as.numeric(splits[2])), splits[2], as.numeric(splits[2]))
-		maps = read.table.inopts(mapping, list(rnames = TRUE, colnames = is.na(as.numeric(replacecol))))
-	}
-} else if (is.null(maps) && ncol(indata) > length(samples)) {
-	maps = indata[, setdiff(colnames(indata), samples), drop = FALSE]
-}
 
 do_edger = function() {
 	require('edgeR')
@@ -83,7 +79,8 @@ do_edger = function() {
 	)
 	rownames(allgene) = allgenes
 	allgene = allgene[!is.na(allgene$PValue) & !is.na(allgene$FDR),,drop=FALSE]
-	list(allgene = allgene, normcounts = log2(dge$counts[rownames(allgene),, drop=FALSE] + 1))
+	list(allgene = allgene,
+		 normcounts = log2(dge$counts[rownames(allgene),, drop=FALSE] + 1))
 }
 
 do_deseq2 = function() {
@@ -91,7 +88,8 @@ do_deseq2 = function() {
 	library(DESeq2)
 	# model
 	design = saminfo$as.deseq2.design()
-	dge = DESeqDataSetFromMatrix(round(ematrix), design$coldata, design = design$design)
+	dge = DESeqDataSetFromMatrix(round(ematrix), design$coldata,
+								 design = design$design)
 
 	dge      = DESeq(dge)
 	allgene  = results(dge)
@@ -107,7 +105,8 @@ do_deseq2 = function() {
 	)
 	rownames(allgene) = allgenes
 	allgene = allgene[!is.na(allgene$PValue) & !is.na(allgene$FDR),,drop=FALSE]
-	list(allgene = allgene, normcounts = log2(assay(dge)[rownames(allgene),, drop=FALSE] + 1))
+	list(allgene = allgene,
+		 normcounts = log2(assay(dge)[rownames(allgene),, drop=FALSE] + 1))
 }
 
 if (tool == 'edger') {
@@ -119,19 +118,11 @@ if (tool == 'edger') {
 }
 
 # save allgenes
-# add maps to allgenes
-if (!is.null(maps)) {
+# add metadata to allgenes
+if (!is.null(metadata)) {
 	probes = rownames(ret$allgene)
-	if (is.true(replacecol)) {
-		rownames(ret$allgene) = maps[, replacecol]
-		restmaps = ifelse(is.numeric(replacecol),
-			colnames(maps)[-replacecol],
-			setdiff(colnames(maps), replacecol))
-		allgene = cbind(ret$allgene, probes, maps[, restmaps, drop = FALSE])
-		colnames(allgene)[ncol(allgene) + 1] = 'Original_Probe'
-	} else {
-		allgene = cbind(ret$allgene, maps[probes, , drop=FALSE])
-	}
+	metaall = metadata[probes,,drop=FALSE]
+	allgene = cbind(metaall, ret$allgene)
 }
 write.xls(allgene, allfile)
 
@@ -160,12 +151,16 @@ if (!is.logical(ggs$mdsplot) || ggs$mdsplot!=FALSE) {
 # Volcano
 if (!is.logical(ggs$volplot) || ggs$volplot!=FALSE) {
 	volplot = file.path (outdir, "volcano.png")
+	voldata = allgene
+	rownames(voldata) = make.unique(make.names(allgene[, gscol]))
+	voldata = voldata[, c('logFC', ifelse(cutoff$by == 'p', 'PValue', 'FDR'))]
+	colnames(voldata) = c('logFC', 'FDR')
 	plot.volplot(
-		allgene[, c('logFC', 'FDR')],
+		voldata,
 		volplot,
 		params = list(logfccut = list.get(params$volplot, 'logfccut', 2),
 					  pcut = list.get(params$volplot, 'pcut', 0.05),
-					  hilight = list.get(params$volplot, 'hilight', NULL)),
+					  hilight = list.get(params$volplot, 'hilight', 10)),
 		ggs      = ggs$volplot,
 		devpars  = devpars
 	)
@@ -186,7 +181,8 @@ if (!is.logical(ggs$heatmap) || ggs$heatmap!=FALSE) {
 		}
 		mat   = ret$normcounts[hmgenes, ]
 		params$heatmap$ngenes = NULL
-		plot.heatmap2(mat, hmap, params = params$heatmap, draw = ggs$heatmap, devpars = devpars)
+		plot.heatmap2(mat, hmap, params = params$heatmap,
+					  draw = ggs$heatmap, devpars = devpars)
 	}
 }
 
@@ -208,5 +204,6 @@ if (!is.logical(ggs$maplot) || ggs$maplot!=FALSE) {
 # qqplot
 if (!is.logical(ggs$qqplot) || ggs$qqplot!=FALSE) {
 	qqplot = file.path(outdir, 'qqplot.png')
-	plot.qq(data.frame(`-log10(Pval)` = -log10(degene$PValue)), qqplot, ggs = ggs$qqplot, devpars = devpars)
+	plot.qq(data.frame(`-log10(Pval)` = -log10(degene$PValue)),
+			qqplot, ggs = ggs$qqplot, devpars = devpars)
 }

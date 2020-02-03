@@ -7,6 +7,7 @@ from bioprocs.utils.gene import genenorm
 from bioprocs.utils.tsvio2 import TsvReader
 
 {% from pyppl.utils import always_list %}
+
 infile   = {{i.infile | quote}}
 prefix   = {{i.infile | fn2 | quote}}
 outdir   = {{o.outdir | quote}}
@@ -53,7 +54,7 @@ for db in dbs:
 		shell.mkdir(pathviewRDir)
 		with open(pathviewRfile, 'w') as f:
 			f.write("""
-			{{'__init__.r' | rimport}}
+			{{'__init__.r' | rimport | .replace: '{', '{{' | .replace: '}', '}}' }}
 			library(pathview)
 			args = commandArgs(trailingOnly = TRUE)
 			setwd({pathviewRDir!r})
@@ -69,9 +70,12 @@ for db in dbs:
 				genes = fcdata
 			}}
 			{% endraw %}
-			pathview(gene.data = genes, pathway.id = args[1], species = 'hsa', gene.idtype="SYMBOL")
+			pathview(gene.data = genes, pathway.id = args[1], species = 'hsa',
+   					 gene.idtype="SYMBOL")
 			""".format(
 				genecol = genecol + 1 if isinstance(genecol, int) else genecol,
 				infile = infile, pathviewRDir = pathviewRDir)
 			)
-		para.run(runPathview, [(pathviewRfile, term.Term.split('_')[-1]) for term in en.results[:top]])
+		para.run(runPathview,
+           		 [(pathviewRfile, term.Term.split('_')[-1])
+               	  for term in en.results[:top]])

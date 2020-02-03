@@ -154,7 +154,7 @@ pEnrichr = proc_factory(
     args=Diot(
         inopts=Diot(delimit='\t', skip=0, comment='#'),
         top=20,
-        cutoff=1,
+        cutoff=1.1,
         genecol=0,
         include=None,
         nthread=1,
