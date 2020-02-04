@@ -4,7 +4,7 @@
 :::: {.tab}
 
 {%	if len(jobs) > 1 %}
-## {{ job.i.infile | stem }}
+## {{ job.i.infiles | [0] | stem }}
 {%	endif %}
 
 ![Venn/UpSet Plot]({{job.outdir, '*.png' | *glob1}})

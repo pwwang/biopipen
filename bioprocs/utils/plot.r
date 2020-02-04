@@ -652,11 +652,13 @@ plot.venn <- function(data, plotfile = NULL, params = list(),
     for (cname in colnames(data)) {
         x[[cname]] <- rownames(data[which(data[, cname] == 1), cname, drop = F])
     }
+
     default.params <- list(x = x,
                            filename = plotfile,
                            height = devpars$height,
                            width = devpars$width,
                            resolution = devpars$res,
+                           margin = .08,
                            imagetype = "png",
                            alpha = .5,
                            fill = rainbow(ncol(data)))
