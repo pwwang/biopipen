@@ -74,10 +74,10 @@ def aggr_fisher(rs, idx):
 	return ret
 
 def aggr_first(rs, idx):
-	return rs[0][0]
+	return rs[0][idx[0]]
 
 def aggr_last(rs, idx):
-	return rs[-1][0]
+	return rs[-1][idx[0]]
 
 builtin = {
 	"first" : aggr_first,
@@ -115,7 +115,7 @@ writer = TsvWriter(outfile, delimit = inopts.get('delimit', "\t"))
 if not reader.cnames:
 	row = next(reader)
 	reader.rewind()
-	writer.cnames = ['COL' + str(i+1) for i in range(len(row))]
+	reader.cnames = ['COL' + str(i+1) for i in range(len(row))]
 
 if not isinstance(on, int) and not callable(on) and on not in reader.cnames:
 	raise ValueError('{!r} is not a valid column name!'.format(on))

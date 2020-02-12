@@ -663,6 +663,9 @@ plot.venn <- function(data, plotfile = NULL, params = list(),
                            alpha = .5,
                            fill = rainbow(ncol(data)))
     params <- update.list(default.params, params)
+    # Haven't found a way to relocate the log file, just set a higher level
+    futile.logger::flog.threshold(futile.logger::ERROR,
+                                  name = "VennDiagramLogger")
     p <- do.call(venn.diagram, params)
     if (is.null(plotfile)) {
         library(grid)
