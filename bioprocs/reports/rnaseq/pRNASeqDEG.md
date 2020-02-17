@@ -15,7 +15,7 @@ Here we use edgeR[[1]] to perform the analysis. edgeR is a Bioconductor software
 ## {{ job.i.efile | stem2 | @append: "-" + stem(job.i.gfile) }}
 {%-	endif %}
 
-{% 	assign punc = forloop.length | @minus: 1 | ?=: '#' | $?! ''  %}
+{% 	assign punc = forloop.length | @minus: 1 | ?=: '#' | $?!: ''  %}
 
 {{punc}}## Compairson
 

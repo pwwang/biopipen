@@ -9,15 +9,13 @@ Enrichr[[1]] is an easy to use intuitive enrichment analysis web-based tool prov
 
 :::: {.panel}
 
-{% 	if len(jobs) > 1 %}
 ## {{job.i.infile | stem}}
-{% 	endif %}
 
 {% 	for lib in always_list(args.libs) %}
 
 ::: {.panel .tab}
 
-{% 		if len(jobs) > 1 %}#{% endif %}## {{lib}}
+### {{lib}}
 
 {% if path.isfile(glob1(job.o.outdir, '*.%s.png' % lib)) %}
 ![Gene set enrichment analysis against {{lib}}]({{glob1(job.o.outdir, '*.%s.png' % lib)}})

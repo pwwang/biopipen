@@ -1,7 +1,7 @@
 # {{report.title}}
 
 {% for job in jobs %}
-:::: {.tab}
+:::: {.panel}
 
 {%	if len(jobs) > 1 %}
 ## {{ job.i.infiles | [0] | stem }}

@@ -152,8 +152,8 @@ pBatchEffect = proc_factory(
         inlog (bool): Whether the input values has already been in log scale.
     """),
     input="expr:file, batch:file",
-    output="outfile:file:{{i.expr | fn2}}/{{i.expr | fn2}}.expr.txt, \
-            outdir:dir:{{i.expr | fn2}}",
+    output="outfile:file:{{i.expr | fn2}}-{{i.batch | fn}}/{{i.expr | fn2}}.expr.txt, \
+            outdir:dir:{{i.expr | fn2}}-{{i.batch | fn}}",
     lang=params.Rscript.value,
     args=Diot(
         tool='combat',

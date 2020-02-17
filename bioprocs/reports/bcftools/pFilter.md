@@ -1,6 +1,6 @@
 # {{report.title}}
 
-The filters were applied using bcftools[1].
+The filters were applied using bcftools[[1]].
 
 {% import toml %}
 {% from os import path %}
@@ -14,7 +14,7 @@ csvargs:
 {%- 	assign fstable = glob1(job.outdir, '*.filterstats.txt') -%}
 {%- 	for j, line in enumerate(readlines(fstable)) -%}
 {%- 		if j > 0 or i == 0 %}
-{{				line.replace('\t', ',')}}
+{{				line.replace('\t', ',') | ?.startswith: "," | =@prepend: "Sample"}}
 {%- 		endif -%}
 {%- 	endfor -%}
 {%- endfor %}
@@ -30,4 +30,4 @@ csvargs:
 {%- endfor -%}
 {% endif %}{# if args.stat #}
 
-[1]: Li, Heng, et al. "The sequence alignment/map format and SAMtools." Bioinformatics 25.16 (2009): 2078-2079.
+[[1]]: Li, Heng, et al. "The sequence alignment/map format and SAMtools." Bioinformatics 25.16 (2009): 2078-2079.

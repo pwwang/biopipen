@@ -16,6 +16,7 @@
 #    and Group (comparison)
 
 from os import path
+from uuid import uuid5, NAMESPACE_URL
 
 from pyppl import PyPPL
 from diot import Diot
@@ -80,6 +81,8 @@ params.skips.callback = lambda opt: (
     else True
 )
 params.report.desc = 'The report file or a directory to save the file.'
+params.title = 'Reports for DEG analysis'
+params.title.desc = 'The title of the report'
 
 def expand_numbers(nums):
     """Expand short formatted numbers like '0-3,5' to [0,1,2,3,5]"""
@@ -117,6 +120,11 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
                                               'information file.')
     pTsvColSelectSamples.input = [opts.exprmat]
     pTsvColSelectSamples.args.cols = [reader.cnames[0]] + samples
+    # in case we have multiple comparisons against the same expression matrix
+    pTsvColSelectSamples.tag = str(uuid5(
+        NAMESPACE_URL,
+        ':'.join(pTsvColSelectSamples.args.cols)
+    ))[:8]
     starts = [pTsvColSelectSamples]
 
     if opts.meta and path.isfile(opts.meta):
@@ -210,6 +218,7 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
             dirindex += 1
 
         pEnrichrUp = pEnrichr.copy() # pylint: disable=invalid-name
+        pEnrichrUp.desc = 'Enrichment analysis for up-regulated genes'
         pEnrichrUp.depends = pRNASeqDEG
         pEnrichrUp.input = lambda ch: ch.outdir.expand(pattern='*.up.xls')
         if opts.exdir:
@@ -221,6 +230,7 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
             dirindex += 1
 
         pEnrichrDown = pEnrichr.copy() # pylint: disable=invalid-name
+        pEnrichrDown.desc = 'Enrichment analysis for down-regulated genes'
         pEnrichrDown.depends = pRNASeqDEG
         pEnrichrDown.input = lambda ch: ch.outdir.expand(pattern='*.down.xls')
         if opts.exdir:
@@ -235,7 +245,7 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
     ppl.start(starts)
     ppl.run(opts.runner)
     if opts.report:
-        ppl.report(outfile=opts.report, standalone=False)
+        ppl.report(outfile=opts.report, standalone=False, title=opts.title)
 
 if __name__ == "__main__":
     main()

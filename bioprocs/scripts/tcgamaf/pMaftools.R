@@ -735,7 +735,7 @@ if (plots$signature) {
 		plotSignatures(sigs)
 		dev.off()
 		# cosine similarity against validated signatures
-		plot.heatmap(sigs$coSineSimMat, file.path(outdir, 'signature-sim.png'), devpars = devpars, params = list(dendro = 'col'))
+		plot.heatmap2(sigs$coSineSimMat, file.path(outdir, 'signature-sim.png'), devpars = devpars, params = list(dendro = 'col'))
 		# signature contrib
 		sigcfile = file.path(outdir, 'signature-contrib.png')
 		do.call(png, c(list(filename = sigcfile), devpars))
