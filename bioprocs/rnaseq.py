@@ -309,11 +309,18 @@ pCoexp = proc_factory(
 pExprSimulate = proc_factory(
     desc="Simulate expression values",
     config=Diot(annotate="""
-    @name:
-        pExprSimulate
+    @input:
+        seed: The seed for random initialization. Needs an integer.
+    @output:
+        outfile: The simulated gene expression matrix
+    @args:
+        nsamples (int): The number of samples
+        ngenes (int): The number of genes
+        slabel (str): The prefix for Sample Label
+        glabel (str): The prefix for Gene Label
     """),
     input='seed:var',
-    output='outfile:file:exprsim.{{i.seed | ?isinstance:int | !="noseed"}}.txt',
+    output='outfile:file:exprsim.{{i.seed | ?isinstance:int | !:"noseed"}}.txt',
     lang=params.Rscript.value,
     args=Diot(
         nsamples=100,

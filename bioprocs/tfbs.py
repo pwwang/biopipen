@@ -8,10 +8,6 @@ from . import params, proc_factory
 pMotifScan = proc_factory(
     desc='Scan motif along the given sequences.',
     config=Diot(annotate="""
-    @name:
-        pMotifScan
-    @description:
-        Scan motif along the given sequences.
     @input:
         `tffile:file`: The infile containing TF name and motif name.
             - If only one column is give, will be used as both TF and motif name
@@ -20,7 +16,7 @@ pMotifScan = proc_factory(
     @output:
         `outdir:file`: The output dir
     @args:
-        `tools`   : The tool used to scan the motif. Default: 'meme'
+        `tool`   : The tool used to scan the motif. Default: 'meme'
         `meme`    : The path of MEME's fimo. Default: 'fimo'
         `motifs`  : The motif database in MEME format.
         `pval`    : The pvalue cutoff. Default: 1e-4
@@ -43,7 +39,7 @@ pMotifScan = proc_factory(
         meme=params.fimo.value,
         params=Diot(),
         tfmotifs=params.tfmotifs.value,
-        pval=1e-4,
+        pval=1e-6,
         ucsclink='https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}',
         nthread=1,
     )

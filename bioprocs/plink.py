@@ -394,11 +394,25 @@ pPlinkPCA = proc_factory(
 pPlinkSimulate = proc_factory(
     desc="Simulate a set of SNPs",
     config=Diot(annotate="""
-    @name:
-        pPlinkSimulate
+    @input:
+        seed: The seed for random initialization. Needs an integer
+    @output:
+        outdir: The directory containing the simulated SNPs
+    @args:
+        plink (path): The path to plink
+        ncases (int): The number of cases
+        nctrls (int): The number of controls
+        nsnps (int): The number of snps
+        label (str): The prefix for SNP labeling
+        dprev (float): The disease prevalence
+        minfreq (float): The minimum frequency
+        maxfreq (float): The maximum frequency
+        hetodds (float): Odds ratio for disease, heterozygote
+        homodss (float): Odds ratio for disease, homozyygote
+        params (Diot): Other parameters for plink
     """),
     input='seed',
-    output='outdir:dir:simsnps.{{i.seed|?isinstance: int|!="noseed"}}.plink',
+    output='outdir:dir:simsnps.{{i.seed|?isinstance: int|!:"noseed"}}.plink',
     lang=params.python.value,
     args=Diot(
         plink=params.plink.value,

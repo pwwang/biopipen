@@ -1,6 +1,7 @@
+{{"__init__.r", "plot.r" | rimport}}
+
 library(methods)
 library(data.table)
-{{rimport}}('__init__.r', 'plot.r')
 options(stringsAsFactors = FALSE)
 
 infile   = {{i.infile     | quote}}
@@ -64,10 +65,11 @@ diffCorr = function(corr1, corr2) {
 		sedz = sqrt( 1/(n1 - 3) + 1/(n2 - 3) )
 		dz/sedz
 		# two-sized
-		#list(Z = z, Pval = 2 * pnorm(abs(z), lower.tail=F))
+		# //list(Z = z, Pval = 2 * pnorm(abs(z), lower.tail=F))
 	})
 	pval = 2*pnorm(abs(dzcor), lower.tail = F)
-	ret = cbind(corr1$corr, Corr2 = corr2$corr$Corr2, N1 = n1, N2 = n2, Z = dzcor, Pval = pval)
+	ret = cbind(corr1$corr, Corr2 = corr2$corr$Corr2, N1 = n1, N2 = n2,
+				Z = dzcor, Pval = pval)
 }
 
 indata  = read.table.inopts(infile, inopts)
@@ -120,7 +122,8 @@ corrs = list()
 for (samgrp in samgrps) {
 	sams = samdata[which(samdata[,2] == samgrp), 1]
 	if (length(sams) < 3) next # not able to do correlation
-	corrs[[samgrp]] = getCorr(rgname1, indata[rgroup1, sams, drop=F], rgname2, indata[rgroup2, sams,drop=F])
+	corrs[[samgrp]] = getCorr(rgname1, indata[rgroup1, sams, drop=F], rgname2,
+							  indata[rgroup2, sams,drop=F])
 	# $corr
 	# 	G1	G2	Corr
 	# 	A	Z	.9
@@ -155,6 +158,7 @@ results = NULL
 for (i in 1:nrow(cases)) {
 	x = as.vector(cases[i, 1])
 	y = as.vector(cases[i, 2])
+	logger('Working on case #', i, ': ', x, ', ', y, '...')
 	if (is.null(corrs[[x]]) || is.null(corrs[[y]]))
 		next
 	dc = diffCorr(corrs[[x]], corrs[[y]])
@@ -174,22 +178,32 @@ if (dofdr != F && !is.null(results)) {
 			y = as.vector(cases[i, 2])
 			rows = which(results$Case1 == x & results$Case2 == y)
 			if (length(rows)>0)
-				results[rows, 'Qval'] = p.adjust(results[rows, 'Pval'], method = dofdr)
+				results[rows, 'Qval'] = p.adjust(results[rows, 'Pval'],
+												 method = dofdr)
 		}
 	}
 }
 if (is.null(results)) {
 	if (dofdr == F) {
-		results = data.frame(Case1 = character(), Case2 = character(), rgname1 = character(), rgname2 = character(), Corr1 = double(), Corr2 = double(), N1 = integer(), N2 = integer(), Z = double(), Pval = double())
+		results = data.frame(Case1 = character(), Case2 = character(),
+							 rgname1 = character(), rgname2 = character(),
+							 Corr1 = double(), Corr2 = double(),
+							 N1 = integer(), N2 = integer(), Z = double(),
+							 Pval = double())
 	} else {
-		results = data.frame(Case1 = character(), Case2 = character(), rgname1 = character(), rgname2 = character(), Corr1 = double(), Corr2 = double(), N1 = integer(), N2 = integer(), Z = double(), Pval =double(), Qval = double())
+		results = data.frame(Case1 = character(), Case2 = character(),
+							 rgname1 = character(), rgname2 = character(),
+							 Corr1 = double(), Corr2 = double(),
+							 N1 = integer(), N2 = integer(), Z = double(),
+							 Pval =double(), Qval = double())
 	}
 	colnames(results)[3:4] = c(rgname1, rgname2)
 } else {
 	results = results[results$Pval < pcut,,drop = F]
 }
-write.table(pretty.numbers(results, list(Corr1..Corr2..Z = '%.3f', Pval..Qval = '%.2E')),
-	outfile, col.names = T, row.names = F, sep = "\t", quote = F)
+write.table(pretty.numbers(results, list(Corr1..Corr2..Z = '%.3f',
+										 Pval..Qval = '%.2E')),
+			outfile, col.names = T, row.names = F, sep = "\t", quote = F)
 
 # indata:
 #    S1   S2   S3 ...
@@ -201,13 +215,16 @@ if (doplot && nrow(results)>0) {
 		row = results[i,]
 		case1 = as.vector(unlist(row[1]))
 		case2 = as.vector(unlist(row[2]))
+		logger('Working on plots for #', i, ': ', case1, ', ', case2, '...')
 		sam1  = as.vector(unlist(samdata[which(samdata[,2] == case1),1]))
 		sam2  = as.vector(unlist(samdata[which(samdata[,2] == case2),1]))
 		plotdata = as.data.frame(t(indata[unlist(row[3:4]), c(sam1,sam2),drop=F]))
 		plotdata$Case = ""
 		plotdata[sam1, 'Case'] = case1
 		plotdata[sam2, 'Case'] = case2
-		plotfile = file.path(outdir, paste(c(as.vector(unlist(row[1:4])), 'png'), collapse = '.'))
+		plotfile = file.path(outdir,
+							 paste(c(as.vector(unlist(row[1:4])), 'png'),
+							 	   collapse = '.'))
 		plot.scatter(
 			plotdata,
 			plotfile,

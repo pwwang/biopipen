@@ -116,3 +116,30 @@ pPromoters = proc_factory(
         refgene=params.refgene.value,
     )
 )
+
+pSeqMutate = proc_factory(
+    desc='Mutate sequence with point mutations',
+    config=Diot(annotate="""
+                @input:
+                    fafile: The input sequence file in fasta
+                        - Coordinate offset supported. You can specify "chr1:1000" as
+                          sequence name, denoting the start position of the given sequence
+                    mutfile: The mutation file in BED6+ format
+                        - The coordinates should be 1-based
+                        - 7th col: the reference allele
+                        - 8th col: the alternate allele
+                @output:
+                    outfile: The output sequence file
+                @args:
+                    refcheck (bool): Check if reference allele is present matches
+                    nthread (int): Number of threads to use
+                @requires:
+                    [seqkit]
+                    validate: "{{args.seqkit}} version"
+                    install: "conda install -c bioconda seqkit"
+                """),
+    input='fafile:file,mutfile:file',
+    output='outfile:file:{{i.fafile | stem2}}.mutated.fa',
+    lang=params.python.value,
+    args=Diot(refcheck=True, nthread=1, seqkit=params.seqkit.value)
+)

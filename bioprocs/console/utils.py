@@ -202,7 +202,7 @@ class Process:
         self._helps.add('Input options (Use \':list\' for multi-jobs)',
                         sectype='option')
 
-        for inname in self.doc.input:
+        for inname in (self.doc.input or []):
             self._helps.select('Input options').add(
                 ('-i.' + inname, '<%s>' % self.doc.input[inname]['type'],
                  self.doc.input[inname]['desc']))
@@ -212,7 +212,7 @@ class Process:
                         'implied if path specified)',
                         sectype='option')
 
-        for outname in self.doc.output:
+        for outname in (self.doc.output or []):
             self._helps.select('Output options').add((
                 '-o.' + outname,
                 '<%s>' % self.doc.output[outname]['type'],

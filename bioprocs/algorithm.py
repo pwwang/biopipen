@@ -41,7 +41,7 @@ pRWR = proc_factory(
         normE=True,
     ))
 
-pAR = Proc(
+pAR = proc_factory(
     desc='Affinity Regression.',
     config=Diot(annotate="""
     @name:
@@ -59,36 +59,43 @@ pAR = Proc(
         kronecker(P, YtD)*vec(W) = vec(YtY)             <=>
         X*vec(W) = vec(YtY)
         WPt:
-            c        d              d
+            c           d              d
             _______    ____          _____
             |  W  |    |  |          |   |
-          b |_____|  c |Pt|  --->  b |___|
+          b |_____|  c |Pt|    =>  b |___|
                        |__|
+
         YtDW:
         WtDtY:
-            b           a        d               d
+              b             a        d               d
             _______    _________   ____           _____
             |  Wt |    |       |   |  |           |   |
-          c |_____|  b |   Dt  | a |Y |    ---> c |___|
+          c |_____|  b |   Dt  | a |Y |     =>  c |___|
                        |_______|   |  |
                                    |__|
         ```
     @input:
-        `D:file` : The D matrix
-        `Pt:file`: The Pt matrix
-        `Y:file`:  The Y matrix
+        `D:file` : The D matrix, with `b` as the cnames and `a` as rnames
+        `Pt:file`: The Pt matrix, with `d` as the cnames and `c` as rnames
+        `Y:file`:  The Y matrix, with `d` as the cnames and `a` as rnames
             - All input files could be gzipped
     @output:
         `W:file`:  The interaction matrix
         `outdir:dir`: The output directory
     @args:
-        `seed`:  The seed for sampling the training set.
-        `tfrac`: The fraction of samples used for training.
+        seed (int):  The seed for sampling the training set.
+        tfrac (float): The fraction of samples used for training.
+        nthread (int): The number of threads to use
+        method (str): The solver
+        nfold (int): N-fold cross validation to use
+        svdP (int): Dimension to reduce using SVD on P
     """),
     input='D:file, Pt:file, Y:file',
     output=[
-        'W:file:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR/W.txt',
-        'outdir:dir:{{i.D | fn}}-{{i.Pt | fn}}-{{i.Y | fn}}.AR'
+        'W:file:{{i.D, i.Pt, i.Y | *commonprefix '
+        '                        | ? | =_ | !:stem2(i.D) }}.AR/W.txt',
+        'outdir:dir:{{i.D, i.Pt, i.Y | *commonprefix '
+        '                            | ? | =_ | !:stem2(i.D) }}.AR'
     ],
     lang=params.Rscript.value,
     args=Diot(
@@ -105,7 +112,7 @@ pAR = Proc(
     )
 )
 
-pColoc = Proc(
+pColoc = proc_factory(
     desc="Bayes Factor colocalisation analyses using R `coloc` package.",
     config=Diot(annotate="""
     @description:

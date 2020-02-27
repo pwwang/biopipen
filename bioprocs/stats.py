@@ -576,7 +576,6 @@ pChow = proc_factory(
             Sm	Group2	Group2
             ```
             - In such case, the test will be done between Group1 and Group2 for Case1 and Case2, respectively.
-            - Instances can be resued (Gt in the example)
             - If cases not provided, all will be treated as one case.
         `casefile:file`: Define the formula (which columns to use for each case). Example:
             ```
@@ -589,10 +588,9 @@ pChow = proc_factory(
         `outdir:dir`: The output directory, containing the output file, results of regressions and plots.
     @args:
         `inopts`: The options for input file.
-            - `cnames`: Whether the input file has column names. Default: `True`
-            - `rnames`: Whether the input file has row names. Default: `True`
-        `cov`: The covariate file. `inopts.rnames` required and this file should have row names too. Default: `''`
-        `fdr`   : Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
+            - `cnames`: Whether the input file has column names.
+            - `rnames`: Whether the input file has row names.
+        `fdr`: Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
         `pval`: The pvalue cutoff. Default: `0.05`
         `plot`: Whether plot the regressions. Default: `False`
         `ggs` : The extra ggs for the plot.
@@ -604,7 +602,6 @@ pChow = proc_factory(
     lang=params.Rscript.value,
     args=Diot(
         inopts=Diot(cnames=True, rnames=True),
-        cov='',  # co-variates, inopts.rnames required, and must in same order,
         pval=0.05,
         fdr=True,
         plot=True,
@@ -743,30 +740,30 @@ pDiffCorr = proc_factory(
     @input:
         `infile:file`: The entire dataset used to calculate correlations. Rownames and colnames are required. Example:
             ```
-                    S1  S2  S3  S4 ... Sn
-                G1  1   2   1   4  ... 9
-                G2  2   3   1   1  ... 3
-                ... ...
-                Gm  3   9   1   7  ... 8
+                S1  S2  S3  S4 ... Sn
+            G1  1   2   1   4  ... 9
+            G2  2   3   1   1  ... 3
+            ... ...
+            Gm  3   9   1   7  ... 8
             ```
         `samfile:file`: The sample groups, between which you want to compare the correlations. You can also specify one sample to multiple groups, and assign with different cases. Example:
             ```
-                S1	Healthy
-                S2	Healthy
-                S3	Disease
-                ... ...
-                Sn	Disease
+            S1	Healthy
+            S2	Healthy
+            S3	Disease
+            ... ...
+            Sn	Disease
             ```
         `casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination. Example:
             ```
-                Healthy	Disease
+            Healthy	Disease
             ```
         `groupfile:file`: Specify groups for rows, then the correlation will be only done within the pairs, each of which is from different groups (only 2 allowed). If not provided, it will investigate for every possible row pairs. Example:
             ```
-                G1	Kinase
-                G2	Kinase
-                ... ...
-                Gm	TF
+            G1	Kinase
+            G2	Kinase
+            ... ...
+            Gm	TF
             ```
     @output:
         `outfile:file`: The pairs under different cases that their correlations have been changed significantly
