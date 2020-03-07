@@ -4,7 +4,7 @@ import types
 import tempfile
 from collections import OrderedDict
 
-class TsvRecord(object):
+class TsvRecord:
     """Tsv record"""
 
     __slots__ = ('__keys', '__vals')
@@ -130,9 +130,9 @@ class TsvRecord(object):
         return ret
 
 
-class TsvReader(object):
+class TsvReader: # pylint: disable=too-many-instance-attributes
     """Tsv reader"""
-    def __init__(self,
+    def __init__(self, # pylint: disable=too-many-arguments
                  infile,
                  delimit='\t',
                  comment='#',
@@ -144,14 +144,14 @@ class TsvReader(object):
                  attach=True,
                  row=None,  # row factory
                  cname0="ROWNAME"):
-        openfunc = open
         # in case infile is a Pathlib.Path object
         infile = str(infile)
         if infile.endswith('.gz'):
             import gzip
-            openfunc = gzip.open
+            self.file = gzip.open(infile, 'rt')
+        else:
+            self.file = open(infile, errors='replace')
 
-        self.file = openfunc(infile, errors='replace')
         self.delimit = delimit
         self.comment = comment
         self.attach = attach
@@ -163,11 +163,11 @@ class TsvReader(object):
                 self.file.readline()
 
         while True:
-            tell = self.file.tell()
+            self.tell = self.file.tell()
             line = self.file.readline()
             if comment and line.startswith(comment):
                 continue
-            self.file.seek(tell)
+            self.file.seek(self.tell)
             break
 
         headline = self.file.readline() if cnames is not False else ''
@@ -180,7 +180,7 @@ class TsvReader(object):
         else:
             self.cnames = []
         # try to add "cname0" as column name
-        tell = self.file.tell()
+        self.tell = self.file.tell()
         firstline = self.file.readline().rstrip('\n')
         ncols = len(firstline.split(delimit))
 
@@ -191,8 +191,7 @@ class TsvReader(object):
                              '%s columns, while first line has %s.' %
                              (len(self.cnames), ncols))
 
-        self.file.seek(tell)
-        self.tell = tell
+        self.file.seek(self.tell)
         self.meta = self.cnames
 
     def next(self):
@@ -236,7 +235,7 @@ class TsvReader(object):
             self.file.close()
 
 
-class TsvWriter(object):
+class TsvWriter:
     """Tsv writer"""
     def __init__(self, outfile=None, delimit='\t', append=False):
         openfunc = open
@@ -248,7 +247,7 @@ class TsvWriter(object):
         self.delimit = delimit
         self.cnames = []
         if outfile:
-            self.file = openfunc(outfile, 'w' if not append else 'a')
+            self.file = openfunc(outfile, 'wt' if not append else 'at')
             self.filename = outfile
         else:
             self.file = tempfile.NamedTemporaryFile(delete=False)
@@ -272,7 +271,7 @@ class TsvWriter(object):
 
     def write(self, record):
         """Write the recrod to file"""
-        if isinstance(record, list) or isinstance(record, types.GeneratorType):
+        if isinstance(record, (list, types.GeneratorType)):
             self.file.write(self.delimit.join(str(v) for v in record) + '\n')
         elif isinstance(record, TsvRecord):
             if not self.cnames:
@@ -291,7 +290,7 @@ class TsvWriter(object):
             self.file.close()
 
 
-class TsvJoin(object):
+class TsvJoin:
     """Join tsv files"""
     @staticmethod
     def compare(obja, objb, reverse=False):
@@ -300,8 +299,7 @@ class TsvJoin(object):
         """
         if not reverse:
             return 0 if obja < objb else 1 if obja > objb else -1
-        else:
-            return 0 if obja > objb else 1 if obja < objb else -1
+        return 0 if obja > objb else 1 if obja < objb else -1
 
     @staticmethod
     def _debug(rows, mat):
@@ -350,12 +348,8 @@ class TsvJoin(object):
     def join(self, do, outfile, match=None, outopts=None):
         """Start joining"""
         outopts = outopts or {}
-        outopts_default = dict(
-            delimit="\t",
-            append=False
-        )
-        outopts_default.update(outopts)
-        outopts = outopts_default
+        outopts['delimit'] = outopts.get('delimit', "\t")
+        outopts['append'] = outopts.get('append', False)
 
         cnames = False
         if 'cnames' in outopts:

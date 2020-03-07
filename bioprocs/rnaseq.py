@@ -205,8 +205,7 @@ pUnitConversion = proc_factory(
     """),
     lang=params.Rscript.value,
     input='infile:file',
-    output="outfile:file:{{i.infile | fn2}}.{{args.outunit}}{{ \
-            args.outform | ?=: '_t' | !=:'' }}.txt",
+    output="outfile:file:{{i.infile | fn2}}.{{args.outunit}}.txt",
     args=Diot(inunit='count',
               outunit='tpm',
               inopts=Diot(rnames=True, cnames=True),

@@ -1,20 +1,23 @@
-samples = []
-ngenes  = 0
-with open("{{i.expfile}}") as f:
-	for line in f:
-		if not samples:
-			samples = line.strip().split('\t')
-		elif line.strip():
-			ngenes += 1
+"""Script for gsea.pExprMat2GCT"""
+# pylint: disable=undefined-variable,unused-import,invalid-name
 
-with open("{{i.expfile}}") as f, open("{{o.outfile}}", "w") as fout:
-	fout.write("#1.2\n")
-	fout.write("%s\t%s\n" % (ngenes, len(samples)))
-	fout.write("NAME\tDescription\t%s\n" % ('\t'.join(samples)))
-	f.readline() # header
-	for line in f:
-		line  = line.strip()
-		if not line: continue
-		parts = line.split('\t')
-		parts.insert(1, parts[0])
-		fout.write('\t'.join(parts) + '\n')
+from bioprocs.utils.tsvio2 import TsvReader
+
+expfile = {{i.expfile | quote}}
+outfile = {{o.outfile | quote}}
+reader = TsvReader(expfile)
+ngenes = 0
+nsamples = 0
+for row in reader:
+    if nsamples == 0:
+        nsamples = len(row) - 1
+    ngenes += 1
+reader.rewind()
+samples = reader.cnames[-nsamples:]
+
+with open(outfile, "w") as fout:
+    fout.write("#1.2\n")
+    fout.write("%s\t%s\n" % (ngenes, len(samples)))
+    fout.write("NAME\tDescription\t%s\n" % ('\t'.join(samples)))
+    for row in reader:
+        fout.write("\t".join([row[0]] + list(row)) + "\n")

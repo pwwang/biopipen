@@ -120,6 +120,7 @@ pGSEA = proc_factory(
         nperm=1000,
         nthread=1,
         seed=-1,
+        devpars=Diot(res=300, height=2000, width=2000)
     ),
     lang=params.Rscript.value,
 )

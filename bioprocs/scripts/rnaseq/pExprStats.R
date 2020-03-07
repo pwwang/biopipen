@@ -41,6 +41,10 @@ if (gfile != "") {
     batches = saminfo$all.batches()
 }
 
+if (is.false(plots)) {
+    plots = list()
+}
+
 if (is.true(plots$pca)) {
     library(PCAtools)
     pcafile = file.path(outdir, paste0(prefix, '.pca.png'))

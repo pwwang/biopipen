@@ -21,8 +21,8 @@ pBedGetfasta = proc_factory(
             `outfile:file`: The generated fasta file
         @args:
             `ref`     : The fasta file
-            `bedtools`: The bedtools executable,                  default: `<params.bedtools>`
-            `params`  : Other parameters for `bedtools getfasta`, default: ""
+            `bedtools`: The bedtools executable
+            `params`  : Other parameters for `bedtools getfasta`
         @requires:
             [bedtools](http://bedtools.readthedocs.io/en/latest/index.html)
         """,

@@ -1,5 +1,5 @@
 library(methods)
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.r', 'plot.r' | rimport}}
 
 indir   = {{i.indir | R}}
 outdir  = {{o.outdir | R}}
@@ -19,7 +19,7 @@ params$bfile   = input
 params$out     = output
 params$threads = nthread
 
-shell$plink(params, .raise = TRUE, .report = TRUE, .fg = TRUE)$reset()
+shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
 
 sexcheck_result = paste0(output, '.sexcheck')
 if (file.exists(sexcheck_result)) {

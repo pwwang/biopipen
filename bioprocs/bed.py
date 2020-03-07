@@ -49,6 +49,25 @@ pBedSort = proc_factory(
     lang=params.python.value,
 )
 
+pBedSwitchBase = proc_factory(
+    desc='Switch BED files between 0-based and 1-based coordinates',
+    config=Diot(annotate="""
+                @input:
+                    infile: The input BED file
+                @output:
+                    outfile: The output BED file
+                @args:
+                    inbase (int): The input BED coordinate base
+                        - If `args.outbase` is specified as 0, this is implied 1, vice versa.
+                    outbase (int): The output BED coordinate base
+                        - This is also implied if `args.inbase` is specified
+                """),
+    input='infile:file',
+    output='outfile:file:{{i.infile | bn}}',
+    lang=params.python.value,
+    args=Diot(inbase=None, outbase=None)
+)
+
 pBedLiftover = proc_factory(
     desc='Lift over bed files.',
     config=Diot(annotate="""

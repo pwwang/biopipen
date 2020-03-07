@@ -3,7 +3,7 @@ from bioprocs.utils import logger
 
 infiles = {{i.infiles | repr}}
 outfile = {{o.outfile | quote}}
-rsmap   = {{args.rsmap | : None if not a else a | repr}}
+rsmap   = {{args.rsmap | ?!:None | $repr}}
 fn2sam  = {{args.fn2sample}}
 confcut = {{args.confcut | repr}}
 

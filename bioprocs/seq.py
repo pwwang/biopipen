@@ -95,6 +95,7 @@ pPromoters = proc_factory(
             - `up`: The upstream distance to TSS.
             - `down`: The downstream distance to TSS. Defaults to `args.region.up` if `None`
             - `withbody`: Include gene body in the output region? Default: `False`
+        base: Whether the output BED file is 0-based or 1-based
         `notfound`: How to deal with records can't be found. Default: `skip`
             - `skip` : Skip the record
             - `error`: Report error and exit
@@ -112,6 +113,7 @@ pPromoters = proc_factory(
         region=Diot(up=2000, down=None, withbody=False),
         notfound='skip',  # error,
         inopts=Diot(cnames=False, delimit="\t"),
+        base=0,
         genecol=0,
         refgene=params.refgene.value,
     )
@@ -124,6 +126,8 @@ pSeqMutate = proc_factory(
                     fafile: The input sequence file in fasta
                         - Coordinate offset supported. You can specify "chr1:1000" as
                           sequence name, denoting the start position of the given sequence
+                        - It can be 0- or 1-based, indicating by `args.seqbase`
+                        - "Gene::chr1:1000-2000" (used by bedtools getfasta) also supported
                     mutfile: The mutation file in BED6+ format
                         - The coordinates should be 1-based
                         - 7th col: the reference allele
@@ -131,15 +135,11 @@ pSeqMutate = proc_factory(
                 @output:
                     outfile: The output sequence file
                 @args:
-                    refcheck (bool): Check if reference allele is present matches
                     nthread (int): Number of threads to use
-                @requires:
-                    [seqkit]
-                    validate: "{{args.seqkit}} version"
-                    install: "conda install -c bioconda seqkit"
+                    seqbase (int): The base of the coordinate in `i.fafile`
                 """),
     input='fafile:file,mutfile:file',
     output='outfile:file:{{i.fafile | stem2}}.mutated.fa',
     lang=params.python.value,
-    args=Diot(refcheck=True, nthread=1, seqkit=params.seqkit.value)
+    args=Diot(nthread=1, seqbase=0)
 )

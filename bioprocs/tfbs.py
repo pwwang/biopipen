@@ -16,14 +16,17 @@ pMotifScan = proc_factory(
     @output:
         `outdir:file`: The output dir
     @args:
-        `tool`   : The tool used to scan the motif. Default: 'meme'
-        `meme`    : The path of MEME's fimo. Default: 'fimo'
-        `motifs`  : The motif database in MEME format.
-        `pval`    : The pvalue cutoff. Default: 1e-4
-        `cleanmname`: Whether to clean motif name. Default: True
-        `ucsclink`: The ucsc link template. Default: `https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}`
-        `nthread` : Number of threads used to scan, only available when you have multiple mids. Default: 1
-        `params`  : Other parameters for `fimo`
+        `tool` : The tool used to scan the motif.
+        `meme` : The path of MEME's fimo.
+        fimo: Alias for `args.meme`
+        `tfmotifs`: The motif database in MEME format.
+        `cutoff` : The cutoff for the hits.
+            - Could be a float that denote the pvalue threshold
+            - Or a dict with keys `by` indicating pvalue (`p`) or qvalue (`q`) to filter, and `value` indicating the cutoff value.
+        `cleanmname`: Whether to clean motif name.
+        `ucsclink`: The ucsc link template.
+        `nthread` : Number of threads used to scan, only available when you have multiple m-ids.
+        `params` : Other parameters for `fimo`
     @requires:
         [`fimo` from MEME Suite](http://meme-suite.org/tools/fimo)
 	"""),
@@ -37,9 +40,10 @@ pMotifScan = proc_factory(
     args=Diot(
         tool='meme',
         meme=params.fimo.value,
+        fimo=params.fimo.value,
         params=Diot(),
         tfmotifs=params.tfmotifs.value,
-        pval=1e-6,
+        cutoff=1e-6,
         ucsclink='https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position={}',
         nthread=1,
     )

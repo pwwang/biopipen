@@ -36,7 +36,7 @@ genes  = list(set([r[genecol] for r in reader if not include or include(r)]))
 with open(path.join(outdir, 'genes.txt'), 'w') as fg:
 	fg.write('\n'.join(genes))
 
-en = Enrichr(cutoff = cutoff, top = top, Rscript = Rscript)
+en = Enrichr(cutoff = cutoff, top = top, rscript = Rscript)
 en.addList(genes, description = path.basename(infile))
 
 para = Parallel(nthread = nthread)

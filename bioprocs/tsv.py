@@ -273,7 +273,11 @@ pTsvColFilter = proc_factory(
     @args:
         inopts: The options for reading input file. Default: `Diot(cnames = True)`
         keep  : Whether to keep in `args.cols` or to discard
-        cols  : The columns used to filter. Could be names or indices(0-based) or a file containing the column names, one per line.
+        cols  : The columns used to filter. Could be:
+            - column names
+            - indices(0-based)
+            - a string of lambda function to select column names
+            - a file containing the column names, one per line.
     """),
     lang=params.python.value,
     input='infile:file, colfile:var',

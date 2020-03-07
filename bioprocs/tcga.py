@@ -47,9 +47,11 @@ pSample2SubmitterID = proc_factory(
     @output:
         `outdir:file`: the directory containing submitter-id named files
     @args:
-        `method`: How the deal with the files. Default: `symlink`
+        `method`: How the deal with the files.
             - We can also do `copy`
-        `nthread`: Number threads to use. Default: `1`
+        `nthread`: Number threads to use.
+        len: The length of the SubmitterID to keep.
+            - The submitter id can be as long as "TCGA-78-7150-01A-21D-2035-01"
     """),
     input="indir:file, mdfile:file",
     output="outdir:dir:{{i.indir | fn}}",
@@ -57,6 +59,7 @@ pSample2SubmitterID = proc_factory(
     args=Diot(
         method='symlink',  # or copy,
         nthread=1,
+        len=14 #TCGA-67-3771-10
     )
 )
 
@@ -73,8 +76,8 @@ pGtFiles2Mat = proc_factory(
         `outfile:file`: The output matrix file
     @args:
         `rsmap`    : The rsid probe mapping file. If not provided, will use the probe id for matrix rownames.
-        `fn2sample`: How to convert filename(without extension) to sample name. Default: `None`
-        `confcut`  : The confidence cutoff. Genotype will be NA for lower confidence snps. Default: `0.05`
+        `fn2sample`: How to convert filename(without extension) to sample name.
+        `confcut`  : The confidence cutoff. Genotype will be NA for lower confidence snps.
     """),
     input='infiles:files',
     output='outfile:file:{{i.infiles | fs2name}}.gt.txt',

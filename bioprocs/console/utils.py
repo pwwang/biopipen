@@ -350,7 +350,6 @@ class Process:
         for key, val in opts.items():
             if key in bioprocs.params._hopts + ['i', 'o']:
                 continue
-
             setattr(self.proc, key, val)
 
         PyPPL(logger_file=False,

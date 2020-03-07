@@ -731,14 +731,10 @@ pCorr2 = proc_factory(
 )
 
 pDiffCorr = proc_factory(
-    desc='Test correlation differences.',
+    desc='Test correlation differences using Fisher Z method.',
     config=Diot(annotate="""
-    @name:
-        pDiffCorr
-    @description:
-        Test correlation differences using Fisher Z method.
     @input:
-        `infile:file`: The entire dataset used to calculate correlations. Rownames and colnames are required. Example:
+        infile: The entire dataset used to calculate correlations. Rownames and colnames are required.
             ```
                 S1  S2  S3  S4 ... Sn
             G1  1   2   1   4  ... 9
@@ -746,52 +742,92 @@ pDiffCorr = proc_factory(
             ... ...
             Gm  3   9   1   7  ... 8
             ```
-        `samfile:file`: The sample groups, between which you want to compare the correlations. You can also specify one sample to multiple groups, and assign with different cases. Example:
-            ```
-            S1	Healthy
-            S2	Healthy
-            S3	Disease
-            ... ...
-            Sn	Disease
-            ```
-        `casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination. Example:
-            ```
-            Healthy	Disease
-            ```
-        `groupfile:file`: Specify groups for rows, then the correlation will be only done within the pairs, each of which is from different groups (only 2 allowed). If not provided, it will investigate for every possible row pairs. Example:
-            ```
-            G1	Kinase
-            G2	Kinase
-            ... ...
-            Gm	TF
-            ```
+        `colfile:file`: The sample groups, between which you want to compare the correlations.
+            - It can be stacked, for example:
+              ```
+              S1    Healthy
+              S2    Healthy
+              S2    Healthy-1
+              S3    Disease
+              S3    Disease-1
+              ... ...
+              Sn    Disease
+              ```
+            - Or unstacked, for example:
+              ```
+                    SampleGroup1    SampleGroup2
+              S1    Healthy         NA
+              S2    Healthy         Healthy-1
+              S3    Disease         Disease-1
+              ... ...
+              Sn    Disease         NA
+              ```
+            - See `args.stacked`
+        `casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination.
+            - If `i.colfile` and `i.rowfile` are stacked, this should be a 3-column file:
+              ```
+              Case_1    SampleGroup1    <empty>    GeneGroup1
+              Case_2    SampleGroup2    <empty>    GeneGroup2
+              ```
+            - Otherwise, this should be a 4-column file:
+              ```
+              Case1     Healthy     Disease     Kinase  TF
+              Case2     Healthy-1   Disease-1   LncRNA  Gene
+              ```
+            - The GeneGroups can be omitted, then it will use all groups defined in row file or all possible row pairs
+            - If this file is not provided, will exhaust all possible cases
+        `rowfile:file`: Specify groups for rows, then the correlation will be only done within the pairs, each of which is from different groups (only 2 allowed). If not provided, it will investigate for every possible row pairs.
+            - If `args.stacked` is true, it should be like:
+              ```
+              G1	Kinase
+              G2	Kinase
+              G2    LncRNA
+              G3    Gene
+              ... ...
+              Gm	TF
+              ```
+            - Otherwise, it should be like:
+              ```
+                    GeneGroup1  GeneGroup2
+              G1    Kinase      NA
+              G2    Kinase      LncRNA
+              G3    NA          Gene
+              ... ...
+              Gm    TF          NA
+              ```
+            - If this file is not provided, will exhaust all possible pairs
     @output:
         `outfile:file`: The pairs under different cases that their correlations have been changed significantly
         `outdir:dir`: The output directory containing plots and other output files.
     @args:
+        stacked: Whether `i.rowfile` and `i.colfile` are stacked or not.
+            - If they are stacked, no column names (header) should be in the file
+            - Otherwise, rownames and column names are required
+            - If one is stacked and the other is not, you can use a dict: `{col: False, row:True}`
+        nthread: Number of threads to use.
         `inopts`: The input options for `infile`. `cnames` and `rnames` have to be `True`
         `method`: The method to calculate the correlation. Default: `pearson`
         `pval`  : The pvalue cutoff to define correlation change significance. Default: `0.05`
         `fdr`   : Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
-        `fdrfor`: Do FDR calculation for each case (`case`) or all instances (`all`). Default: `case`
         `plot`  : Plot the correlation for cases? Default: `False`
         `ggs`   : `ggs` items for the plot.
         `devpars`: The device parameters for the plot.
     """),
     lang=params.Rscript.value,
-    input='infile:file, samfile:file, casefile:file, groupfile:file',
+    input='infile:file, colfile:file, casefile:file, rowfile:file',
     output=[
         'outfile:file:{{i.infile | fn2}}.diffcorr/'
         '{{i.infile | fn2}}.diffcorr.txt',
         'outdir:dir:{{i.infile | fn2}}.diffcorr'
     ],
     args=Diot(
+        stacked=False,
         inopts=Diot(cnames=True, rnames=True),
         method='pearson',  # spearman,
         pval=0.05,
         fdr=True,  # BH,
-        fdrfor='case',
         plot=False,
+        nthread=1,
         ggs=Diot(),  # extra ggplot statements,
         devpars=Diot(height=2000, width=2000, res=300),
     )

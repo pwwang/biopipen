@@ -1,5 +1,5 @@
 library(methods)
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.R', 'plot.R' | rimport}}
 
 indir  = {{i.indir | R}}
 outdir = {{o.outdir | R}}
@@ -17,8 +17,10 @@ params = list(
 	hardy = T,
 	out   = output
 )
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
-runcmd(cmd)
+shell$load_config(plink = plink)
+shell$plink(params, `_fg` = TRUE)$reset()
+#//cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
+#//runcmd(cmd)
 
 hardy = read.table(paste0(output, '.hwe'), header = T, row.names = NULL, check.names = F)
 hardy.fail = hardy[which(hardy$P < cutoff), 'SNP', drop = F]

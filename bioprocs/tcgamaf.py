@@ -60,7 +60,10 @@ pGTMat2Plink = proc_factory(
         `outdir:dir`: The output directory. Default: `{{i.infile | fn}}.plink`
     @args:
         `plink`:   The path to `plink`
-        `keeptxt`: Keep the text files (.ped and .map) or not. Default: `False`
+        `keeptxt`: Keep the text files (.ped and .map) or not.
+        chrmaps: The chromosome mappings for encoding.
+        snpbed: SNPs in BED format giving the coordinates
+            - If not given, assuming the rownamess are in the format of `chr_pos_X_ref_alt`
     @requires:
         `plink 1.x`
 	"""),
@@ -70,6 +73,7 @@ pGTMat2Plink = proc_factory(
     args=Diot(
         plink=params.plink.value,
         keeptxt=False,
+        snpbed=None,
         chrmaps={'X': 23, 'Y': 24, 'XY': 25, 'M': 26, 'MT': 26},
     )
 )

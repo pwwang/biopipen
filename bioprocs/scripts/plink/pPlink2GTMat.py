@@ -14,12 +14,15 @@ from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
 indir = {{i.indir | quote}}
 outfile = {{o.outfile | quote}}
+outsnp = {{o.outsnp | quote}}
 plink = {{args.plink | quote}}
 samid = {{args.samid | quote}}
 snpid = {{args.snpid | quote}}
 addchr = {{args.addchr | repr}}
 nors = {{args.nors | quote}}
+refallele = {{args.refallele | repr}}
 chroms = {{args.chroms | repr}}
+bcftools = {{args.bcftools | quote}}
 
 bedfile = glob(path.join(indir, '*.bed'))[0]
 prefix = path.splitext(bedfile)[0]
@@ -31,7 +34,7 @@ params = {
     'out': output
 }
 
-shell.load_config(plink=plink)
+shell.load_config(plink=plink, bcftools=bcftools)
 
 shell.fg.plink(**params)
 
@@ -51,7 +54,7 @@ writer.writeHead()
 
 for gtline in gts:
     if snpid == 'raw':
-        gtline[0] = gtline[1]
+        snpname = gtline[1]
     else:
         if gtline[0] in chroms:
             gtline[0] = chroms[gtline[0]]
@@ -59,13 +62,56 @@ for gtline in gts:
             gtline[0] = chroms['chr' + gtline[0]]
         if addchr and not gtline[0].startswith('chr'):
             gtline[0] = 'chr' + gtline[0]
-        gtline[0] = snpid.format(
+        snpname = snpid.format(
             chr=gtline[0],
             pos=gtline[3],
             rs=gtline[1] if 'rs' in gtline[1] else nors,
-            ref=gtline[4],
-            alt=gtline[5]
+            ref=gtline[4], # NOT reliable!!
+            alt=gtline[5] # NOT reliable!!
         )
+    gtline[0] = snpname
     del gtline[1:6]
     writer.write(list(gtline.values()))
 writer.close()
+
+# plink 1.9 does not keep track of reference allele
+# we need either a vcf with reference alleles or
+# a bed6+ file with ref/alt alleles as 7th and 8th columns
+if refallele:
+    params = {
+        'bfile': prefix,
+        'recode': 'vcf-iid',
+        'out': outsnp,
+    }
+    if refallele.endswith('.vcf.gz') or refallele.endswith('.vcf'):
+        # get the vcf file first to extract information
+        params['output-chr'] = 'chr' + chroms["26"]
+        shell.fg.plink(**params)
+        shell.fg.bcftools.query(
+            R=outsnp + '.vcf',
+            o=outsnp,
+            f='%CHROM\\t%POS0\\t%END\\t%ID\\t0\\t+\\t%REF\\t%ALT{0}\\n',
+            _=refallele
+        )
+        refallele = outsnp
+
+    params['a2-allele'] = [refallele, 7, 4, '#']
+    shell.fg.plink(**params)
+
+    snpreader = TsvReader(outsnp + '.vcf', cnames=False)
+    snpwriter = TsvWriter(outsnp)
+    for snp in snpreader:
+        snpwriter.write([
+            ('chr' + snp[0]
+             if addchr and not snp[0].startswith('chr')
+             else snp[0]),
+            snp[1],
+            snp[1],
+            snp[2],
+            0,
+            '+', snp[3], snp[4]
+        ])
+    snpwriter.close()
+    snpreader.close()
+else:
+    open(outsnp, 'w').close()

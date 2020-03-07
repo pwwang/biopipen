@@ -12,7 +12,7 @@ infile = {{i.infile | quote}}
 colfile = {{i.colfile | quote}}
 outfile = {{o.outfile | quote}}
 inopts = {{args.inopts | repr}}
-cols = {{args.cols | repr}}
+cols = {{args.cols | ?isinstance: str | !repr | =_ | ?.startswith: "lambda " | =:_ | !repr}}
 keep = {{args.keep | repr}}
 
 from_file = False
@@ -26,22 +26,32 @@ elif path.isfile(str(cols)):
     from_file = True
 elif isinstance(cols, int):
     cols = [cols]
+elif callable(cols):
+    pass # keep it callable for later
 elif cols:
     cols = always_list(cols)
 else:
     raise ValueError('Columns not provided.')
-if not from_file and not isinstance(cols[0], int) and cols[0].isdigit():
+if (not from_file
+        and isinstance(cols, list)
+        and not isinstance(cols[0], int)
+        and cols[0].isdigit()):
     cols = [int(c) for c in cols]
 
 reader = TsvReader(infile, **inopts)
 writer = TsvWriter(outfile, delimit=inopts.get('delimit', "\t"))
-if reader.cnames and not isinstance(cols[0], int):
-    cols = [reader.cnames.index(c) for c in cols if c in reader.cnames]
-elif not reader.cnames and not isinstance(cols[0], int):
+if reader.cnames:
+    if callable(cols):
+        cols = [reader.cnames.index(c)
+                for c in cols(reader.cnames)
+                if c in reader.cnames]
+    elif not isinstance(cols[0], int):
+        cols = [reader.cnames.index(c) for c in cols if c in reader.cnames]
+    elif (min(cols) < -len(reader.cnames)
+          or (reader.cnames and max(cols) >= len(reader.cnames))):
+        raise IndexError("Provided columns beyond input file range.")
+elif callable(cols) or not isinstance(cols[0], int):
     raise ValueError("Input file doesn't have column names")
-elif (min(cols) < -len(reader.cnames)
-      or (reader.cnames and max(cols) >= len(reader.cnames))):
-    raise IndexError("Provided columns beyond input file range.")
 
 if reader.cnames:
     ncol = len(reader.cnames)

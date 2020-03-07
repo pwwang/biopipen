@@ -4,7 +4,7 @@
 import re
 from os import path
 from diot import Diot
-from bioprocs.utils import runcmd, cmdargs, logger
+from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.meme import MemeReader
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 from bioprocs.utils.parallel import Parallel
@@ -15,11 +15,14 @@ outfile = {{o.outfile | quote}}
 outdir = {{o.outdir | quote}}
 tool = {{args.tool | quote}}
 meme = {{args.meme | quote}}
+fimo = {{args.fimo | quote}}
 params = {{args.params | repr}}
 tfmotifs = {{args.tfmotifs | quote}}
-pval = {{args.pval | repr}}
+cutoff = {{args.cutoff | ?isinstance: dict | !: dict(by='p', value=_) | $repr}}
 ucsclink = {{args.ucsclink | repr}}
 nthread = {{args.nthread | repr}}
+
+shell.load_config(fimo=fimo or meme)
 
 # get all motifs
 logger.info('Loading motif names ...')
@@ -40,15 +43,19 @@ logger.info('%s motifs loaded', len(motifs))
 
 if tool == 'meme':
     cmdparams = []
-    params.thresh = pval
+    if 'p' in cutoff:
+        params.thresh = cutoff['p']
+    else:
+        params['qv-thresh'] = cutoff['q']
     params.verbosity = 4
+    params._ = [tfmotifs, sfile]
     for motif, name in motifs.items():
-        params.oc = path.join(outdir, name + '.' +
-                              re.sub(r'[^\w_]', '', motif))
-        params.motif = motif
-        params._ = [tfmotifs, sfile]
-        cmdparams.append((meme, cmdargs(params, dash='--', equal=' ')))
-    Parallel(nthread, raiseExc=True).run('{} {}', cmdparams)
+        prms = params.copy()
+        prms.oc = path.join(outdir, name + '.' +
+                            re.sub(r'[^\w_]', '', motif))
+        prms.motif = motif
+        cmdparams.append((prms,))
+    Parallel(nthread, raiseExc=True).run(shell.fg.fimo, cmdparams)
 
     writer = TsvWriter(outfile)
     writer.cnames = [
@@ -65,7 +72,10 @@ if tool == 'meme':
         if 'p-value' not in r:
             return None
         r.PVAL = float(r['p-value'])
-        if r.PVAL >= pval:
+        r.QVAL = float(r['q-value'])
+        if 'p' in cutoff and r.PVAL >= cutoff['p']:
+            return None
+        elif 'q' in cutoff and r.QVAL >= cutoff['q']:
             return None
         r.RAWSCORE = r.score
         try:
@@ -95,7 +105,7 @@ if tool == 'meme':
         r.STOPONSEQ = r.stop
         r.START = start + int(r.start)
         r.END = start + int(r.stop)
-        r.QVAL = r['q-value']
+        #r.QVAL = r['q-value']
         r.MATCHEDSEQ = r.matched_sequence
         if ucsclink:
             r.UCSCLINK = ucsclink.format('{chrom}:{start}:{end}'.format(

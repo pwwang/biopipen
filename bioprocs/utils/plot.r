@@ -399,8 +399,7 @@ plot.violin <- function(data, plotfile = NULL, x = 2, y = 1, stacked = TRUE,
     plot.xy(data, plotfile, aes.string$x, aes.string$y, ggs, devpars)
 }
 
-plot.heatmap2 <- function(
-                          data, plotfile = NULL, params = list(), draw = list(),
+plot.heatmap2 <- function(data, plotfile = NULL, params = list(), draw = list(),
                           devpars = DEVPARS) {
     library(ComplexHeatmap)
 

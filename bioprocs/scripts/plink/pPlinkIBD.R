@@ -1,6 +1,6 @@
 library(methods)
 library(data.table)
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.R', 'plot.R' | rimport}}
 
 indir  = {{i.indir | R}}
 outdir = {{o.outdir | R}}
@@ -10,7 +10,7 @@ indep    = {{args.indep | R}}
 highld   = {{args.highld | R}}
 devpars  = {{args.devpars | R}}
 pihat    = {{args.pihat | R}}
-samid    = {{R(args.samid) if not args.samid.startswith("function") else args.samid}}
+samid    = {{args.samid | ?.startswith: "function" | !R | =:_}}
 annofile = {{args.anno | R}}
 doplot   = {{args.plot | R}}
 seed     = {{args.seed | R}}
@@ -27,7 +27,7 @@ params = list(
 	`indep-pairwise` = indep,
 	out              = output
 )
-shell$plink(params, .raise = TRUE, .report = TRUE, .fg = TRUE)$reset()
+shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
 
 prunein = paste0(output, '.prune.in')
 params = list(
@@ -36,7 +36,7 @@ params = list(
 	genome  = T,
 	out     = output
 )
-shell$plink(params, .raise = TRUE, .report = TRUE, .fg = TRUE)$reset()
+shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
 
 genome = read.table(paste0(output, '.genome'), row.names = NULL, header = T, check.names = F)
 # "unmelt" it

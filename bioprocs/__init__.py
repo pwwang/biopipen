@@ -67,7 +67,7 @@ def proc_factory(id=None, tag='notag', desc='No description.', **kwargs):
     """A factory to produce processes with default script,
     envs and report_template"""
     # in case if we have too long description
-    id = id or varname(context=200)
+    id = id or varname(context=300)
     proc = Proc(id, tag=tag, desc=desc, **kwargs)
     lang = Path(proc.lang).name
     ext = '.' + EXT_MAP.get(lang, lang)
