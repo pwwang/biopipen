@@ -725,11 +725,12 @@ plot.volplot <- function(data,
                          devpars = DEVPARS) {
     data <- as.data.frame(data)
     # let's see if it is p or q value
-    is.pval <- grepl("p", colnames(data)[2], fixed = TRUE)
+    is.pval <- grepl("p", tolower(colnames(data)[2]), fixed = TRUE) &&
+               !grepl("adj", tolower(colnames(data)[2]), fixed = TRUE)
     colnames(data) <- ifelse(is.pval,
                              c("logFC", "log10.P."), c("logFC", "log10.FDR."))
     data[, 2] <- -log10(data[, 2])
-
+    data = data[complete.cases(data),, drop = FALSE]
     default.params <- list(logfccut = 2, pcut = 0.05, hilight = 5)
     params <- update.list(default.params, params)
     pcutlabel <- round(params$pcut, 3)

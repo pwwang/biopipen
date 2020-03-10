@@ -1,4 +1,4 @@
-{{'__init__.r' | rimport}}
+{{'__init__.R' | rimport}}
 
 infile  = {{i.infile | R}}
 outfile = {{o.outfile | R}}
@@ -8,8 +8,8 @@ outunit = {{args.outunit | R}}
 meanfl  = {{args.meanfl | R}}
 nreads  = {{args.nreads | R}}
 refexon = {{args.refexon | R}}
-inform  = {{args.inform | lambda x: 'NULL' if not x else x}}
-outform = {{args.outform | lambda x: 'NULL' if not x else x}}
+inform  = {{args.inform | ?!:'NULL' }}
+outform = {{args.outform | ?!:'NULL' }}
 
 data    = read.table.inopts (infile, inopts)
 samples = colnames(data)

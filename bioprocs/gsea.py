@@ -94,32 +94,46 @@ pSSGSEA = proc_factory(
 )
 
 pGSEA = proc_factory(
-    desc='Do GSEA.',
+    desc='Multiple-sample GSEA',
     config=Diot(annotate="""
-    @name:
-        pGSEA
     @description:
-        GSEA
-        Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GCT for GCT file format
-        Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GMT for GMT file format
-        Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#CLS for CLS file format
+        Multiple-sample GSEA with 3+ samples using fgsea
     @input:
-        `gctfile:file`: the expression file
-        `clsfile:file`: the class file
-        `gmtfile:file`: the gmtfile for gene sets
+        exprfile: The expression matrix.
+            - Must be normalized and log2 transformed in most cases
+            - See `args.ranking` to select the right ranking method for your data
+        saminfo: The sample information file
+        gmtfile: the gmtfile for gene sets
+            - Refer to http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GMT for GMT file format
     @output:
-        `outdir:file`: the output directory
+        outfile: The output table for top pathways
+        outdir: The output directory containing the other outputs
     @args:
-        `weightexp`: Exponential weight employed in calculation of enrichment scores. Default: 0.75
-        `nperm`:     Number of permutations. Default: 1000
+        inopts (Diot): Options to read the expression file
+            - `cnames` and `rnames` will be forced to be `True`
+        ranking (str): The method to rank the genes. See: https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_Metrics_for_Ranking Could be one of
+            - `s2n`: Signal2Noise
+            - `ttest`: tTest
+            - `roc`: Ratio_of_Classes
+            - `doc`: Diff_of_Classes
+            - `log2roc`: log2_Ratio_of_Classes
+        minsize (int): Minimal size of a gene set to test. All pathways below the threshold are excluded.
+        top (int): Top N pathways to plot
+        nthread (int): Number of threads to use
+        seed (int): Seed for random number generator
+        devpars (Diot): Device parameters for plotting
     """),
-    input="gctfile:file, clsfile:file, gmtfile:file",
-    output="outdir:dir:{{i.gctfile | fn}}-{{i.gmtfile | fn}}.GSEA",
+    input="exprfile:file, saminfo:file, gmtfile:file",
+    output=("outfile:file:{{i.exprfile | stem2}}-{{i.gmtfile | stem2}}.GSEA/"
+            "{{i.exprfile | stem2}}-{{i.gmtfile | stem2}}.gsea.txt, "
+            "outdir:dir:{{i.exprfile | stem2}}-{{i.gmtfile | stem2}}.GSEA"),
     args=Diot(
-        weightexp=1,
-        nperm=1000,
+        ranking="s2n",
         nthread=1,
-        seed=-1,
+        seed=8525,
+        top=20,
+        minsize=10,
+        inopts=Diot(dup='ignore'),
         devpars=Diot(res=300, height=2000, width=2000)
     ),
     lang=params.Rscript.value,

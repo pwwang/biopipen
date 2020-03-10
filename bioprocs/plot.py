@@ -748,15 +748,24 @@ pPairs = proc_factory(
 pVolcano = proc_factory(
     desc='Do volcano plot.',
     config=Diot(annotate="""
-    @name:
-        pVolcano
+    @input:
+        infile: The input file to plot the volcano plot
+    @output:
+        outfile: The output plot
+    @args:
+        fccut (float): The (log) fold change cutoff
+        pcut (float): The pvalue cutoff
+        usepval (bool): Whether use pvalue or qvalue.
+        hilights (list): The gene to highlight
+        devpars (Diot): The device parameters for the plot
+        ggs (Diot): The extra ggs for the plot
     """),
     input='infile:file',
     output='outfile:file:{{i.infile | fn}}.volcano.png',
     lang=params.Rscript.value,
     args=Diot(
         fccut=2,
-        pvalcut=.05,
+        pcut=.05,
         usepval=False,
         hilights=[],
         devpars=Diot(res=300, height=2000, width=2000),
