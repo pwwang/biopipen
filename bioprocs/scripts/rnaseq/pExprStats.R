@@ -17,6 +17,9 @@ devpars  <- {{args.devpars | R}}
 
 expr = read.table.inopts(infile, inopts)
 if (is.true(annocols)) {
+    if (is.character(annocols)) {
+        annocols = expand.numbers(annocols)
+    }
     if (is.numeric(annocols)) {
         annocols = colnames(expr)[annocols]
     }
@@ -35,10 +38,12 @@ if (is.function(tsform)) {
 saminfo = NULL
 groups = NULL
 batches = NULL
+samples = NULL
 if (gfile != "") {
     saminfo = SampleInfo2$new(gfile)
     groups  = saminfo$all.groups()
     batches = saminfo$all.batches()
+    samples = saminfo$all.samples(unique = TRUE)
 }
 
 if (is.false(plots)) {
@@ -49,10 +54,12 @@ if (is.true(plots$pca)) {
     library(PCAtools)
     pcafile = file.path(outdir, paste0(prefix, '.pca.png'))
     metadata = NULL
-    samples = colnames(expr)
+    if (is.null(samples)) {
+        samples = colnames(expr)
+    }
     if (!is.null(groups)) {
-        tmp = sapply(samples,
-                     function(sam) saminfo$sample.info(sam, 'Group'))
+        tmp = na.omit(sapply(samples,
+                             function(sam) saminfo$sample.info(sam, 'Group')))
         if (is.null(metadata)) {
             metadata = data.frame(Group = tmp)
             rownames(metadata) = samples
@@ -70,13 +77,24 @@ if (is.true(plots$pca)) {
             metadata$Batch = tmp
         }
     }
-    p = pca(expr, metadata = metadata, removeVar = 0.1)
-    biplot_params = list(pcaobj=p)
-    if (!is.null(groups)) {
+    p = pca(expr[, samples, drop = FALSE], metadata = metadata, removeVar = 0.1)
+    biplot_params = params$pca
+    biplot_params$pcaobj = p
+    # if (is.list(biplot_params$shapekey)) {
+    #     biplot_params$shapekey = unlist(biplot_params$shapekey)
+    # }
+    # if (is.list(biplot_params$colkey)) {
+    #     biplot_params$colkey = unlist(biplot_params$colkey)
+    # }
+
+    if (!is.null(groups) && !is.null(batches)) {
         biplot_params$shape = 'Group'
+        biplot_params$colby = 'Batch'
         biplot_params$legendPosition = 'right'
-    }
-    if (!is.null(batches)) {
+    } else if (!is.null(groups)) {
+        biplot_params$colby = 'Group'
+        biplot_params$legendPosition = 'right'
+    } else if (!is.null(batches)) {
         biplot_params$colby = 'Batch'
         biplot_params$legendPosition = 'right'
     }

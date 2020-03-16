@@ -77,6 +77,35 @@ update.list <- function(list1, list2, recursive = F) {
     return(list1)
 }
 
+expand.numbers <- function(numstr) {
+    if (length(numstr) > 1) {
+        # this is not supposed to be expaned
+        return(numstr)
+    }
+    # expand "1,2,3-6" to c(1,2,3,4,5,6)
+    parts <- unlist(strsplit(numstr, "\\s*,\\s*"))
+    ret <- c()
+    for (part in parts) {
+        if (grepl("-", part, fixed = TRUE)) {
+            startend <- unlist(strsplit(part, "-", fixed = TRUE))
+            start <- as.numeric(startend[1])
+            end <- as.numeric(startend[2])
+            if (is.na(start) || is.na(end)) {
+                # nothing we can do, return the original string
+                return(numstr)
+            }
+            ret <- c(ret, seq(start, end))
+        } else {
+            part = as.numeric(part)
+            if (is.na(part)) {
+                return(numstr)
+            }
+            ret <- c(ret, part)
+        }
+    }
+    ret
+}
+
 # allow ifelse to return NULL
 ifelse <- function(condition, true, false) {
     if (condition) {

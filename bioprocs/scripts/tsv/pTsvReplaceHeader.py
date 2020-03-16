@@ -33,7 +33,7 @@ if header:
 elif cnames and not callable(cnames):
 	reader.cnames = cnames
 if callable(cnames):
-	reader.cnames = cnames(reader.cnames)
+	reader.cnames = cnames(reader.cnames, path.basename(infile))
 
 writer = TsvWriter(outfile, delimit = inopts.get('delimit', "\t"))
 writer.cnames = reader.cnames

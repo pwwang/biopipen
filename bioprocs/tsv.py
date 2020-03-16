@@ -386,7 +386,7 @@ pTsvReplaceHeader = proc_factory(
         `cnames`: The column names or callback, Default: `None`
             - `None`: use the header in `i.hfile`
             - `<list/str/file>`: the header to use if `i.hfile` is not provided
-            - `lambda cnames: ...`: The callback to modify header in `i.hfile` if provided, otherwise modify the original header.
+            - `lambda cnames, bname: ...`: The callback to modify header in `i.hfile` if provided, otherwise modify the original header with the basename of `i.infile`.
     """),
     lang=params.python.value,
     input='infile:file, hfile:file',

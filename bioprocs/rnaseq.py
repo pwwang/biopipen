@@ -99,7 +99,7 @@ pExprStats = proc_factory(
     @args:
         inopts (Diot): Options to read `infile`.
         tsform (string): An R function in string to transform the expression matrix (i.e take log).
-        anncols (list|str): Annotation columns, either column names or indexes (1-based)
+        annocols (list|str): Annotation columns, either column names or indexes (1-based)
             - Will be excluded in the stats.
         filter (str): An R function in string to filter the expression data before stats.
         plot (Diot): Which plot to do?
@@ -197,6 +197,10 @@ pUnitConversion = proc_factory(
             - For example, if the `inunit` is `tpm`, but it's actually `log2(expr+1)` transformed,
             - Then this should be `function(expr) 2^(expr - 1)`.
         `outform`: Transform to be done on the output expression values.
+        datacols (list): The data columns of the `i.infile`.
+            - If `None`, all columns will be used
+            - Can be columns names or indexes (1-based, without rownames)
+            - Note that the annotation columns (columns other than data) will be put before the transformed data in output file.
         `refexon`: the exome gff file, for RPKM/FPKM
             - `gene_id` is required for gene names
     @requires:
@@ -211,6 +215,7 @@ pUnitConversion = proc_factory(
               inopts=Diot(rnames=True, cnames=True),
               meanfl=1,
               nreads=50000000,
+              datacols=None,
               refexon=params.refexon.value,
               inform=None,
               outform=None)
