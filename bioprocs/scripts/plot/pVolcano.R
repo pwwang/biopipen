@@ -8,9 +8,12 @@ usep <- {{ args.usepval | R }}
 hilights <- {{ args.hilights | R }}
 devpars <- {{ args.devpars | R }}
 ggs <- {{ args.ggs | R }}
+fdrpos <- {{ args.fdrpos | R }}
 
-indata <- read.table.inopts(infile, list(rnames = TRUE, cnames = TRUE))
-plotdata = data.frame(.placeholder = 1:nrow(indata))
+indata <- read.table.inopts(infile,
+                            list(rnames = TRUE, cnames = TRUE, dup = "ignore"))
+plotdata <- data.frame(.placeholder = 1:nrow(indata))
+rownames(plotdata) <- rownames(indata)
 for (cname in colnames(indata)) {
     cname_to_check <- tolower(gsub("[^[:alnum:] ]", "", cname))
     if (cname_to_check %in% c("logfc", "log2fc",
@@ -28,5 +31,6 @@ for (cname in colnames(indata)) {
 }
 
 plot.volplot(plotdata[, -1, drop=FALSE], outfile,
-             params = list(logfccut=fccut, pcut=pcut, hilight=hilights),
+             params = list(logfccut=fccut, pcut=pcut, hilight=hilights,
+                           fdrpos = fdrpos),
              ggs = ggs, devpars = devpars)

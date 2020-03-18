@@ -1,11 +1,15 @@
-{{'plot.R' | rimport}}
+{{ "plot.R" | rimport }}
 
-ggs     = {{args.ggs | R}}
-infile  = {{i.infile | R}}
-outfile = {{o.outfile | R}}
-rnames  = {{args.rnames | R}}
-ggs     = {{args.ggs | R}}
-devpars = {{args.devpars | R}}
-data    = read.table.nodup(infile, sep = "\t", header = T, row.names = rnames)
+ggs <- {{ args.ggs | R }}
+infile <- {{ i.infile | R }}
+outfile <- {{ o.outfile | R }}
+inopts <- {{ args.inopts | R }}
+params <- {{ args.params | R }}
+intype <- {{ args.intype | R }}
+devpars <- {{ args.devpars | R }}
+data <- read.table.inopts(infile, inopts)
 
-plot.pie(data, outfile, ggs, devpars)
+plot.pie(data, outfile,
+         params = list(intype = intype),
+         ggs = ggs,
+         devpars = devpars)

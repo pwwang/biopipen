@@ -32,7 +32,8 @@ meta = ifelse(is.true(inmeta), inmeta, meta)
 
 if (is.true(meta) && file.exists(meta)) {
     metadata = read.table.inopts(meta,
-                                 list(rnames=TRUE, cnames=TRUE, delimit="\t"))
+                                 list(rnames=TRUE, cnames=TRUE, delimit="\t",
+                                      dup="ignore"))
 } else if (is.true(meta)) {
     metadata = indata[, meta, drop=FALSE]
 }

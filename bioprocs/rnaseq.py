@@ -111,7 +111,7 @@ pExprStats = proc_factory(
     output='outdir:dir:{{i.infile | fn2}}.stats',
     lang=params.Rscript.value,
     args=Diot(
-        inopts=Diot(cnames=True, rnames=True),
+        inopts=Diot(cnames=True, rnames=True, dup="ignore"),
         annocols=None,
         tsform=None,
         filter=None,
@@ -274,7 +274,7 @@ pRNASeqDEG = proc_factory(
             "/{{i.efile | stem | stem}}-{{i.gfile | stem}}.degs.xls",
             "outdir:dir:{{i.efile | stem | stem}}-{{i.gfile | stem}}.DEGs"],
     args=Diot(tool='deseq2',
-              inopts=Diot(cnames=True, rnames=True, dup='drop'),
+              inopts=Diot(cnames=True, rnames=True, dup='ignore'),
               gscol=None,
               meta=None,
               cutoff=0.05,

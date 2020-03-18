@@ -681,27 +681,93 @@ plot.upset <- function(data, plotfile = NULL, params = list(),
     save.plot(p, plotfile, devpars)
 }
 
-plot.pie <- function(data, plotfile = NULL, ggs = list(), devpars = DEVPARS) {
-    percent <- function(x) paste0(format(round(x * 100, 1), nsmall = 1), "%")
-    N <- nrow(data)
-    Group <- colnames(data)
-    oValue <- if (N == 1) data[1, ] else colSums(data)
-    oValue <- as.vector(as.matrix(oValue))
-    GroupName <- paste0(Group, " (", oValue, ")")
-    Value <- 100 * oValue / sum(oValue)
-    Labels <- percent(Value / 100)
-    data <- data.frame(Group = Group, Value = Value)
-    data$Group <- factor(data$Group, levels = data$Group)
-    ytext <- cumsum(rev(Value)) - rev(Value) / 2
+plot.pie <- function(data,
+                     plotfile = NULL,
+                     params = list(intype = "direct"), # parameters for ggpie
+                     ggs = list(),
+                     devpars = DEVPARS) {
+    # Pie chart
+    #
+    # data (direct, with rownames):
+    #   Group1	50
+    #   Group2	50
+    #
+    # data (transposed, with colnames)
+    #   Group1	Group2
+    #   50	50
+    #
+    # data (presence, with colnames, with/without rownames)
+    #       Group1	Group2
+    #   Elem1   1   0
+    #   Elem2   1   1
+    #   ...
+    #
+    # data (stacked, with/without colnames, WITHOUT rownames)
+    #   Elem    Group
+    #   Elem1   Group1
+    #   Elem1   Group2
+    #   Elem2   Group2
+    #   ...
+    #
+    # See: https://rpkgs.datanovia.com/ggpubr/reference/ggpie.html
+    library(ggpubr)
 
-    default.ggs <- list(
-        geom_bar = list(aes(fill = Group), width = 1, stat = "identity"),
-        geom_text = list(y = ytext, label = rev(Labels)),
-        coord_polar = list("y"),
-        scale_fill_discrete = list(labels = GroupName, breaks = Group)
-    )
-    ggs <- c(default.ggs, ggs)
-    plot.xy(data, plotfile, x = '""', y = "Value", ggs, devpars)
+    # target data
+    #>    group value
+    #> 1   Male    25
+    #> 2 Female    25
+    #> 3  Child    50
+
+    if (params$intype == "direct") {
+        plotdata <- data.frame(group = rownames(data), value = data[, 1])
+    } else if (params$intype == "transposed") {
+        plotdata <- data.frame(group = colnames(data), value = data[1, ])
+    } else if (params$intype == "presence") {
+        plotdata <- as.data.frame(colSums(data))
+        plotdata <- data.frame(group = rownames(plotdata),
+                               value = plotdata[, 1])
+    } else if (params$intype == "stacked") {
+        library(reshape2)
+        if (ncol(data) != 2) {
+            stop(paste("Stacked data for a piechart needs exact two columns.",
+                       "If you have rownames, you should disable it and ",
+                       "let it be one column", sep = "\n"))
+        }
+        cnames <- colnames(data)
+        plotdata <- dcast(data,
+                          as.formula(paste(cnames[1], "~", cnames[2])),
+                          fun.aggregate = function(x) as.integer(length(x) > 0))
+        plotdata <- as.data.frame(colSums(plotdata[, -1, drop = FALSE]))
+        plotdata <- data.frame(group = rownames(plotdata),
+                               value = plotdata[, 1])
+    } else {
+        stop(paste("Unsupported input format, expecting direct,",
+                   "transponsed, presence, or stacked."))
+    }
+    # keep the order
+    plotdata$group <- factor(plotdata$group, levels = plotdata$group)
+
+    default_label <- function(data) {
+        paste0(round(100 * data$value / sum(data$value), 1), "%")
+    }
+
+    params$intype <- NULL
+    params$data <- plotdata
+    params$x <- "value"
+    params$fill <- "group"
+    params$palette <- ifelse(is.true(params$palette), params$palette, "png")
+    params$color <- ifelse(is.true(params$color), params$color, "#EEEEEE")
+    params$label <- ifelse(is.function(params$label),
+                           params$label(plotdata),
+                           ifelse(is.true(params$label),
+                                  params$label,
+                                  default_label(plotdata)))
+    ggs <- c(ggs, list(scale_fill_discrete = list(
+        labels = paste0(plotdata$group, " (", plotdata$value, ")")
+    )))
+    p <- do.call(ggpie, params)
+    p <- apply.ggs(p, ggs)
+    save.plot(p, plotfile, devpars)
 }
 
 # Volcano plot
@@ -709,6 +775,7 @@ plot.pie <- function(data, plotfile = NULL, ggs = list(), devpars = DEVPARS) {
 # params is a list of:
 # 	- logfccut: The absolute log fold change cutoff
 # 	- pcut: The p/q value cutoff
+#	- fdrpos: Where should we put FDR label on the plot
 # 	- hilight: genes to highlight
 # 		- either the names (rownames) of the genes, or
 # 		- A number or a vector of two numbers, of genes to highlight for
@@ -720,7 +787,8 @@ plot.pie <- function(data, plotfile = NULL, ggs = list(), devpars = DEVPARS) {
 #
 plot.volplot <- function(data,
                          plotfile,
-                         params = list(logfccut = 2, pcut = 0.05, hilight = 5),
+                         params = list(logfccut = 2, pcut = 0.05, hilight = 5,
+                                       fdrpos = "right"),
                          ggs = list(),
                          devpars = DEVPARS) {
     data <- as.data.frame(data)
@@ -731,7 +799,8 @@ plot.volplot <- function(data,
                              c("logFC", "log10.P."), c("logFC", "log10.FDR."))
     data[, 2] <- -log10(data[, 2])
     data = data[complete.cases(data),, drop = FALSE]
-    default.params <- list(logfccut = 2, pcut = 0.05, hilight = 5)
+    default.params <- list(logfccut = 2, pcut = 0.05, hilight = 5,
+                           fdrpos = "right")
     params <- update.list(default.params, params)
     pcutlabel <- round(params$pcut, 3)
     params$pcut <- -log10(params$pcut)
@@ -804,11 +873,21 @@ plot.volplot <- function(data,
     hline <- list(yintercept = params$pcut,
                   linetype = "dashed",
                   color = "black")
-    htext <- list(
-        x = max(data$logFC), y = params$pcut,
-        label = paste(ifelse(is.pval, "P", "FDR"), "=", pcutlabel),
-        vjust = -1, hjust = 1, color = "black"
-    )
+
+    if (params$fdrpos == "right") {
+        htext <- list(
+            x = max(data$logFC), y = params$pcut,
+            label = paste(ifelse(is.pval, "P", "FDR"), "=", pcutlabel),
+            vjust = -1, hjust = 1, color = "black"
+        )
+    } else {
+        htext <- list(
+            x = min(data$logFC), y = params$pcut,
+            label = paste(ifelse(is.pval, "P", "FDR"), "=", pcutlabel),
+            vjust = -1, hjust = 0, color = "black"
+        )
+    }
+
     labels <- NULL
     if (!is.null(labeldata)) {
         labels <- list(

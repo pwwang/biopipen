@@ -55,6 +55,8 @@ params.nthread = 1
 params.nthread.desc = '# threads to use.'
 params.enlibs = ['KEGG_2019_Human']
 params.enlibs.desc = 'The enrichment analysis libraries'
+params.enincl.desc = ('A lambda function of a TsvRecord to '
+                      'include genes in Enrichr analysis')
 params.cutoff = 0.05
 params.cutoff.desc = 'The cutoff for DEGs'
 params.cutoff.callback = lambda opt: opt.set_value({
@@ -188,9 +190,15 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
 
     if 'call' not in opts.skips:
         pRNASeqDEG.depends = pTsvColSelectSamples, pMeta
-        pRNASeqDEG.input = lambda ch1, ch2: ch1.outfile.cbind(opts.saminfo, ch2)
+        pRNASeqDEG.input = (
+            lambda ch1, ch2: ch1.outfile.cbind(opts.saminfo, ch2)
+            if hasattr(ch1, 'outfile')
+            # make sure it is .txt
+            else ch1.expand(
+                pattern="*%s" % path.splitext(opts.exprmat)[1]
+            ).cbind(opts.saminfo, ch2))
         pRNASeqDEG.args.tool = opts.caller
-        pRNASeqDEG.args.gscol = opts.gscol
+        pRNASeqDEG.args.gscol = opts.gscol - 1
         pRNASeqDEG.args.meta = opts.meta
         pRNASeqDEG.args.cutoff = opts.cutoff
         if opts.exdir:
@@ -208,8 +216,10 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
         pEnrichr.depends = pRNASeqDEG
         pEnrichr.args.pathview = False # don't do it for now
         pEnrichr.args.nthread = opts.nthread
-        pEnrichr.args.genecol = opts.gscol or 0
+        pEnrichr.args.inopts.cnames = True
+        pEnrichr.args.genecol = opts.gscol - 1 if opts.gscol is not None else 0
         pEnrichr.args.libs = opts.enlibs
+        pEnrichr.args.include = opts.enincl
         if opts.exdir:
             pEnrichr.config.export_dir = path.join(
                 opts.exdir,

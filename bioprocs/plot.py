@@ -624,41 +624,47 @@ pPie = proc_factory(
         Plot piechart
     @input:
         `infile:file`: The input file. Could be either:
-            - Direct numbers of each category.
+            - Direct numbers of each category (`args.inopts.rnames = True`).
+            ```
+            Group1	50
+            Group2	50
+            ```
+            - Transposed number of each category (`args.inopts.cnames = True`)
             ```
             Group1	Group2
             50	50
             ```
-            - Presence of each items in the category.
+            - Presence of each items in the category (`args.inopts.cnames = True`)
             ```
                 Group1	Group2
             Item1	1	0
             Item2	0	1
             ...
             ```
+            - Or a stacked version:
+            ```
+            Item1	Group1
+            Item2	Group2
+            ```
     @output:
         `outfile:file`: the output plot
     @args:
-        `rnames` : Whether the input file has row names. Default: `False`
-        `ggs`    : Extra expressions for ggplot.
-        `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
+        intype (str): The type of the input file. `direct`, `presence` or `stacked`.
+            - See `i.infile`
+        inopts (Diot): The options for reading the input file
+        ggs (Diot): Extra expressions for ggplot.
+        devpars (Diot): The parameters for plot device.
+        params (Diot): The parameters for `ggpie` for `ggpubr`
     """),
     input="infile:file",
     output="outfile:file:{{i.infile | fn}}.pie.png",
     lang=params.Rscript.value,
     args=Diot(
-        rnames=False,
+        inopts=Diot(delimit="\t", rnames=False),
         devpars=Diot(res=300, height=2000, width=2000),
-        ggs=Diot(
-            theme={
-                'axis.title.x': 'r:element_blank()',
-                'axis.title.y': 'r:element_blank()',
-                'panel.border': 'r:element_blank()',
-                'panel.grid': 'r:element_blank()',
-                'axis.ticks': 'r:element_blank()',
-                'panel.background': 'r:element_blank()',
-                'axis.text.x': 'r:element_blank()',
-            })
+        intype="direct",
+        params=Diot(),
+        ggs=Diot(),
     )
 )
 
@@ -759,6 +765,9 @@ pVolcano = proc_factory(
         hilights (list): The gene to highlight
         devpars (Diot): The device parameters for the plot
         ggs (Diot): The extra ggs for the plot
+        fdrpos (str): Where should we put the FDR=xxx label
+            - `left` or `right`.
+            - Sometimes it may be blocked by the highlights
     """),
     input='infile:file',
     output='outfile:file:{{i.infile | fn}}.volcano.png',
@@ -767,6 +776,7 @@ pVolcano = proc_factory(
         fccut=2,
         pcut=.05,
         usepval=False,
+        fdrpos="right",
         hilights=[],
         devpars=Diot(res=300, height=2000, width=2000),
         ggs=Diot(),
