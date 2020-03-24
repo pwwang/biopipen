@@ -10,7 +10,7 @@ mingt    = {{args.mingt   | repr}}
 novel    = {{args.novel   | quote}}
 dbsnp    = {{args.dbsnp   | repr}}
 bialt    = {{args.bialt   | repr}}
-chrorder = {{args.chrorder.split(',') | repr}}
+chrorder = {{args.chrorder | ?isinstance: list | !.split: ',' | $repr}}
 samname  = {{args.samname }}
 
 chrorder = dict(zip(chrorder, list(range(len(chrorder)))))
