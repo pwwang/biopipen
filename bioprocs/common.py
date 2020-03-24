@@ -37,6 +37,23 @@ pSort = proc_factory(
     )
 )
 
+pAny2Bgzip = proc_factory(
+    desc='Convert any file to bgzipped file.',
+    config=Diot(annotate="""
+                @description:
+                    Convert any file to bgzipped file.
+                    If the file is already bgzipped, will output the symbolic link to the original file.
+                @input:
+                    infile: The input file
+                @output:
+                    outfile: The output bgzipped file
+                """),
+    lang=params.python.value,
+    input='infile:file',
+    output=('outfile:file:{{i.infile | bn | ?.endswith: ".gz" '
+            '| !@append: ".gz"}}')
+)
+
 pShell = proc_factory(
     desc='Run shell command directly',
     config=Diot(annotate="""
