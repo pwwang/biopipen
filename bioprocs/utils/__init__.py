@@ -137,7 +137,7 @@ def gztype(gzfile):
 		flag = binascii.hexlify(f.read(4))
 	if flag == b'1f8b0804':
 		return 'bgzip'
-	if flag == b'1f8b0808':
+	if flag.startswith(b'1f8b08'):
 		return 'gzip'
 	return 'flat'
 
