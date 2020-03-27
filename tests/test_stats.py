@@ -27,8 +27,8 @@ def test_diffcorr(rdata):
     pDiffCorr1.args.plot = True
     pDiffCorr1.args.nthread = 10
     PyPPL().start(pDiffCorr1).run()
-    assertInfile(pDiffCorr1.channel.outfile.get(), 'Case1	V8	V4	0.609')
-    assert Path(pDiffCorr1.channel.outdir.get() / 'Case1-V8-V4.png').is_file()
+    assertInfile(pDiffCorr1.channel.outfile.get(), 'Case2	V8	V4	0.941')
+    assert Path(pDiffCorr1.channel.outdir.get() / 'Case2-V8-V4.png').is_file()
 
 def test_diffcorr_stacked(rdata):
     pDiffCorr2 = pDiffCorr.copy()

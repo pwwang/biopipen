@@ -757,8 +757,8 @@ pDiffCorr = proc_factory(
               ```
                     SampleGroup1    SampleGroup2
               S1    Healthy         NA
-              S2    Healthy         Healthy-1
-              S3    Disease         Disease-1
+              S2    Healthy         Healthy
+              S3    Disease         Disease
               ... ...
               Sn    Disease         NA
               ```
@@ -766,13 +766,13 @@ pDiffCorr = proc_factory(
         `casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination.
             - If `i.colfile` and `i.rowfile` are stacked, this should be a 3-column file:
               ```
-              Case_1    SampleGroup1    <empty>    GeneGroup1
-              Case_2    SampleGroup2    <empty>    GeneGroup2
+              Case_1    SampleGroup1    GeneGroup1
+              Case_2    SampleGroup2    GeneGroup2
               ```
             - Otherwise, this should be a 4-column file:
               ```
-              Case1     Healthy     Disease     Kinase  TF
-              Case2     Healthy-1   Disease-1   LncRNA  Gene
+              Case1     Healthy:Disease     Kinase:TF
+              Case2     Healthy-1:Disease-1   LncRNA:Gene
               ```
             - The GeneGroups can be omitted, then it will use all groups defined in row file or all possible row pairs
             - If this file is not provided, will exhaust all possible cases

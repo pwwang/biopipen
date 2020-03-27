@@ -5,7 +5,7 @@ library(methods)
 library(reshape2)
 library(dplyr)
 library(parallel)
-options(stringsAsFactors = TRUE)
+options(stringsAsFactors = FALSE)
 
 infile   = {{i.infile     | quote}}
 colfile  = {{i.colfile    | quote}}
@@ -53,19 +53,25 @@ read_col = function(colfile, stked) {
         list(group = NULL, data = coldata)
     } else {
         coldata = read.table.inopts(colfile, list(cnames=TRUE, rnames=TRUE))
-        retgroup = lapply(colnames(coldata), function(group) {
-            out = list()
-            out[[group]] = levels(coldata[[group]])
-            if (length(out[[group]]) != 2) {
-                stop('Exact 2 groups needed for both columns and rows.')
+        # attach the column name to the groups
+        coldata = col.apply(coldata, func = function(col, name) {
+            col = as.vector(col)
+            col[!is.na(col)] = paste0(name, '-', na.omit(unlist(col)))
+            factor(col, levels = unique(col))
+        })
+        retgroup = col.apply(coldata, rnames = NULL, function(col, name) {
+            out = levels(as.factor(col))
+            if (length(out) != 2) {
+                stop(paste('Exact 2 groups needed for column group', name))
             }
             out
         })
+
         cnames = paste0("V", 1:ncol(coldata))
         colnames(coldata) = cnames
         coldata$ROWNAME = rownames(coldata)
         retdata = melt(data = coldata, id.vars = "ROWNAME",
-                   measure.vars = cnames, na.rm = TRUE)
+                       measure.vars = cnames, na.rm = TRUE)
         list(group = as.data.frame(retgroup),
              data = retdata %>% select(ROWNAME, value))
     }
@@ -89,16 +95,9 @@ coldata = read_col(colfile, stacked$col)
 rowdata = read_row(rowfile, stacked$row)
 
 read_case = function(casefile) {
-    ret = data.frame(Case = character(),
-                     SampleGroup1 = character(),
-                     SampleGroup2 = character(),
-                     RowGroup1 = character(),
-                     RowGroup2 = character(),
-                     stringsAsFactors = FALSE)
     if (is.false(casefile)) {
         casedata = data.frame(Case = character(),
-                              SampleGroup1 = character(),
-                              SampleGroup2 = character(),
+                              SampleGroups = character(),
                               stringsAsFactors = FALSE)
         if (is.null(coldata$group)) {
             allgroups = levels(coldata$data[,1])
@@ -107,8 +106,7 @@ read_case = function(casefile) {
                     casedata[nrow(casedata)+1, ] = list(
                         Case = paste("Case", allgroups[i],
                                      allgroups[j], sep="_"),
-                        SampleGroup1 = allgroups[i],
-                        SampleGroup2 = allgroups[j]
+                        SampleGroups = paste(allgroups[c(i, j)], collpase = ":")
                     )
                 }
             }
@@ -116,89 +114,89 @@ read_case = function(casefile) {
             for (group in names(coldata$group)) {
                 casedata[nrow(casedata)+1, ] = list(
                     Case = paste("Case", group, sep="_"),
-                    SampleGroup1 = as.vector(coldata$group[1, group,
-                                                           drop=TRUE]),
-                    SampleGroup2 = as.vector(coldata$group[2, group,
-                                                           drop=TRUE])
+                    SampleGroups = paste(coldata$group[1:2, group],
+                                         collapse = ':')
                 )
             }
         }
     } else {
         casedata = read.table.inopts(casefile, list(rnames=FALSE, cnames=FALSE))
-        ncols = ncol(casedata)
-        if (!ncols %in% 2:5) {
-            stop("Case file experts 2 to 5 columns.")
-        }
-
-        if (ncols == 2 ||
-            is.na(casedata[1,3]) ||
-            nchar(as.character(casedata[1, 3])) == 0) {
-
-            # it has to be column groups
-            if (is.null(coldata$group)) {
-                stop(paste('Column group', casedata[1, 2],
-                           'specified in case file',
-                           'but not defined in colfile'))
+        casedata = row.apply(casedata, cnames = NULL, function(row) {
+            row = unlist(row)
+            if (!grepl(":", row[2], fixed = TRUE)) {
+                if (is.null(coldata$group[[row[2]]])) {
+                    stop(paste("Column group is not defined:", row[2]))
+                }
+                row[2] = paste(coldata$group[[row[2]]], collapse = ":")
             }
-            casedata1 = casedata[, 1:2]
-            colnames(casedata1) = c("ROWNAME", "V1")
-            casedata1 = casedata1 %>% rowwise() %>%
-                mutate(SampleGroup1=coldata$group[1, V1, drop=TRUE],
-                       SampleGroup2=coldata$group[2, V1, drop=TRUE]) %>%
-                select(-V1)
-            if (ncol(casedata) > 3) {
-                casedata = cbind(casedata1,
-                                 casedata[, 4:ncol(casedata), drop = FALSE])
-            }
-        }
+            row
+        })
     }
 
     # no row groups specified
-    if (ncol(casedata) == 3) {
+    if (ncol(casedata) == 2) {
         # exhaust all row (group) pairs
+        casedata$RowGroups = ""
         if (is.null(rowdata$group)) {
             # exhaust all combinations
-            groups = levels(rowdata$data[,2])
-            for (i in 1:nrow(casedata)) {
-                for (j in 1:(length(groups)-1)) {
-                    for (k in (j+1):length(groups)) {
-                        ret[nrow(ret)+1, ] = c(
-                            as.vector(unlist(casedata[i, 1:3, drop=T])),
-                            groups[c(j, k)]
-                        )
+            groups = na.omit(unique(rowdata$data[,2]))
+            ngroups = length(groups)
+            ngpairs = (ngroups * (ngroups - 1)) / 2
+            ret = col.apply(casedata, rnames = NULL, function(col, name) {
+                if (name != "RowGroups") {
+                    rep(col, each = ngpairs)
+                } else {
+                    out = c()
+                    for (i in 1:(ngroups-1)) {
+                        for (j in (i+1):ngroups) {
+                            out = c(out, paste(groups[c(i, j)], collapse = ":"))
+                        }
                     }
+                    rep(out, length(col))
                 }
-            }
+            })
         } else {
             # row groups defined, exhaust them
             groups = colnames(rowdata$group)
-            for (i in 1:nrow(casedata)) {
-                for (group in groups) {
-                    ret[nrow(ret)+1, ] = c(
-                        as.vector(unlist(casedata[i, 1:3, drop=T])),
-                        as.vector(unlist(rowdata$group[, group]))
-                    )
+            ngroups = length(groups)
+            ret = col.apply(casedata, rnames = NULL, function(col, name) {
+                if (name != "RowGroups") {
+                    rep(col, each = ngroups)
+                } else {
+                    out = c()
+                    for (group in groups) {
+                        out = c(out, paste(rowdata$group[, group],
+                                collapse = ":"))
+                    }
+                    rep(out, length(col))
                 }
-            }
+            })
         }
     # row groups specified
-    } else if (ncol(casedata) == 4) {
-        if (is.null(rowdata$group)) {
-            stop("Row groups specified in case file but not found in rowfile.")
-        }
-        for (i in 1:nrow(casedata)) {
-            ret[nrow(ret)+1, ] = c(
-                as.vector(unlist(casedata[i, 1:3, drop=T])),
-                as.vector(unlist(rowdata$group[, casedata[i, 4]]))
-            )
-        }
     } else {
-        for (i in 1:nrow(casedata)) {
-            ret[nrow(ret)+1, ] = as.vector(unlist(casedata[i, 1:5, drop=T]))
-        }
+        ret = col.apply(casedata, rnames = NULL, function(col, index) {
+            if (index < 3) {
+                as.vector(col)
+            } else {
+                sapply(col, function(one) {
+                    if (is.null(rowdata$group[[one]])) {
+                        one
+                    } else {
+                        paste(rowdata$group[[one]], collapse = ":")
+                    }
+                })
+            }
+        })
     }
 
-    ret
+    row.apply(ret, cnames = c("Case", "SampleGroup1", "SampleGroup2",
+                              "RowGroup1", "RowGroup2"),
+              function(row) {
+                  row = unlist(row)
+                  c(row[1],
+                    unlist(strsplit(as.character(row[2]), ":", fixed = TRUE)),
+                    unlist(strsplit(as.character(row[3]), ":", fixed = TRUE)))
+              })
 }
 
 cases = read_case(casefile)

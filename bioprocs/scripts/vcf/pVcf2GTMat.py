@@ -1,5 +1,6 @@
 from collections import Counter
 from pysam import VariantFile as Vcf
+from bioprocs.utils import FileConn
 from bioprocs.utils.tsvio2 import TsvJoin
 
 infile   = {{i.infile     | quote}}
@@ -60,7 +61,7 @@ def formatRow(row, rs = novel):
 	return "_".join(row[:5]) + "\t" + "\t".join(gts) + "\n"
 
 if not dbsnp:
-	reader = open(infile)
+	reader = FileConn(infile, 'rt').open()
 	writer = open(outfile, 'a')
 	for line in reader:
 		if line.startswith('#'):

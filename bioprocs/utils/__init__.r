@@ -114,6 +114,79 @@ ifelse <- function(condition, true, false) {
     return(false)
 }
 
+# apply function on each row
+#   cnames: TRUE: apply original column names
+#           FALSE/NULL: no column names
+#           vector: new column names
+# arguments of the function any of:
+#   row: that row of the data frame
+#   index: The index of that row
+#   name: The rowname of that row
+rapply <- function(df, cnames = TRUE, func) {
+    rnames <- rownames(df)
+    fms <- formals(func)
+    sfunc <- function(index) {
+        params <- list()
+        if (length(fms$row) == 1) {
+            params$row <- df[index, ]
+        }
+        if (length(fms$index) == 1) {
+            params$index <- index
+        }
+        if (length(fms$name) == 1) {
+            params$name <- rnames[index]
+        }
+        do.call(func, params)
+    }
+    ret <- t(sapply(seq_along(rnames), sfunc))
+    rownames(ret) <- rnames
+    if (is.false(cnames)) {
+        cnames <- NULL
+    } else if (cnames == TRUE) {
+        cnames <- colnames(df)
+    }
+    colnames(ret) <- cnames
+    as.data.frame(ret)
+}
+
+# apply function on each column
+#   rnames: TRUE: apply original row names
+#           FALSE/NULL: no row names
+#           vector: new row names
+# arguments of the function any of:
+#   col: that column of the data frame
+#   index: The index of that column
+#   name: The rowname of that column
+capply <- function(df, rnames = TRUE, func) {
+    cnames <- colnames(df)
+    fms <- formals(func)
+    sfunc <- function(index) {
+        params <- list()
+        if (length(fms$col) == 1) {
+            params$col <- df[, index]
+        }
+        if (length(fms$index) == 1) {
+            params$index <- index
+        }
+        if (length(fms$name) == 1) {
+            params$name <- cnames[index]
+        }
+        do.call(func, params)
+    }
+    ret <- sapply(seq_along(cnames), sfunc)
+    colnames(ret) <- cnames
+    if (is.false(rnames)) {
+        rnames <- NULL
+    } else if (rnames == TRUE) {
+        rnames <- rownames(df)
+    }
+    rownames(ret) <- rnames
+    as.data.frame(ret)
+}
+
+row.apply = rapply
+col.apply = capply
+
 read.table.inopts <- function(infile, inopts = list()) {
     inopts.default <- function(key, default) {
         list.get(inopts, key, default, check.names = TRUE)
