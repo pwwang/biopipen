@@ -1,119 +1,265 @@
-{{ "__init__.R" | rimport }}
+
+{{"__init__.R" | rimport}}
 
 library(methods)
+library(reshape2)
+library(dplyr)
+library(parallel)
 options(stringsAsFactors = FALSE)
 
-infile <- {{ i.infile | R }}
-gfile <- {{ i.groupfile | R }}
-cfile <- {{ i.casefile | R }}
-outfile <- {{ o.outfile | R }}
-outdir <- {{ o.outdir | R }}
-pcut <- {{ args.pval | R }}
-dofdr <- {{ args.fdr | R }}
-plotchow <- {{ args.plot | R }}
-devpars <- {{ args.devpars | R }}
-ggs <- {{ args.ggs | R }}
-inopts <- {{ args.inopts | R }}
-
-if (plotchow) {
-    {{ "plot.R" | rimport }}
+infile   = {{i.infile     | quote}}
+colfile  = {{i.colfile    | quote}}
+casefile = {{i.casefile   | quote}}
+rowfile  = {{i.rowfile    | quote}}
+outdir   = {{o.outdir     | quote}}
+outfile  = {{o.outfile    | quote}}
+inopts   = {{args.inopts  | R}}
+pcut     = {{args.pval    | R}}
+dofdr    = {{args.fdr     | R}}
+doplot   = {{args.plot    | R}}
+ggs      = {{args.ggs     | R}}
+devpars  = {{args.devpars | R}}
+nthread  = {{args.nthread | R}}
+stacked  = {{args.stacked | ?isinstance: dict | !:dict(row=_, col=_) | $R}}
+if (dofdr == TRUE) dofdr = 'BH'
+if (is.false(colfile)) {
+    stop("A file must be specified to define groups in columns.")
+}
+if (doplot) {
+    {{"plot.R" | rimport}}
 }
 
-if (dofdr == TRUE) dofdr <- "BH"
-
-chow.test <- function(formula, group, data, ...) {
-    fmvars <- all.vars(as.formula(formula))
-    vars <- colnames(data)
-    if (length(fmvars) == 2 && fmvars[2] == ".") {
-        fmvars <- c(fmvars[1], vars[vars != fmvars[1] & vars != group])
-    }
-    formula <- sprintf(
-        "%s ~ %s",
-        bQuote(fmvars[1]),
-        paste(sapply(fmvars[2:length(fmvars)], bQuote), collapse = "+")
-    )
-    # covs <- NULL
-    # if (is.null(covdata)) {
-    #     pooledfm <- as.formula(formula)
-    # } else {
-    #     covdata <- covdata[rownames(data), , drop = FALSE]
-    #     covs <- colnames(covdata)
-    #     data <- cbind(data, covdata)
-    #     rm(covdata)
-    #     pooledfm <- as.formula(
-    #         paste(formula, "+", paste(sapply(covs, bQuote), collapse = "+"))
-    #     )
-    #     fmvars <- c(fmvars, covs)
-    # }
-
-    if (sum(complete.cases(data[, fmvars])) < 2) {
-        pooled_lm <- NULL
+# read colfile and rowfile into:
+# list(
+#	group =
+#   	+------------+------------+------------+------+-----------+
+#       | SamGroup1  | SamGroup2  | SamGroup3  | ... |	SamGroupN |
+#   	+------------+------------+------------+-----+------------+
+#       | SubGroup11 | SubGroup21 | SubGroup31 | ... | SubGroupN1 |
+#       | SubGroup12 | SubGroup22 | SubGroup32 | ... | SubGroupN2 |
+#   	+------------+------------+------------+-----+------------+
+#   data =
+#       +---------+------------+
+#       | Sample  | Group      |
+#       +---------+------------+
+#       | Sample1 | SubGroup11 |
+#       | Sample1 | SubGroup21 |
+#       | Sample2 | SubGroup22 |
+#       | ...     | ...        |
+#       | SampleX | SubGroupN2 |
+#       +---------+------------+
+# )
+read_col = function(colfile, stked) {
+    if (stked) {
+        coldata = read.table.inopts(colfile, list(cnames=FALSE, rnames=FALSE))
+        list(group = NULL, data = coldata)
     } else {
-        pooled_lm <- lm(pooledfm, data = data, ...)
-    }
-    # // coeff = as.list(pooled_lm$coefficients)
-    groups <- levels(as.factor(data[, group]))
-    group_lms <- sapply(groups, function(g) {
-        # if (is.null(covdata)) {
-        subfm <- as.formula(formula)
-        # } else {
-        #     subfm <- as.formula(paste(
-        #         formula, "+",
-        #         # // paste(sapply(covs, function(x)
-        #         # // paste0('offset(', coeff[[x]], '*', bQuote(x), ')')),
-        #         # // collapse = '+')
-        #         paste(sapply(covs, bQuote), collapse = "+")
-        #     ))
-        # }
-        sublmdata <- data[data[, group] == g, , drop = FALSE]
-        if (sum(complete.cases(sublmdata[, fmvars])) < 2) {
-            NULL
-        } else {
-            list(lm(subfm, data = sublmdata, ...))
-        }
-    })
+        coldata = read.table.inopts(colfile, list(cnames=TRUE, rnames=TRUE))
+        # attach the column name to the groups
+        coldata = col.apply(coldata, func = function(col, name) {
+            col = as.vector(col)
+            col[!is.na(col)] = paste0(name, '-', na.omit(unlist(col)))
+            factor(col, levels = unique(col))
+        })
+        retgroup = col.apply(coldata, rnames = NULL, function(col, name) {
+            out = na.omit(unique(unlist(col)))
+            lout = length(out)
+            if (lout < 2) {
+                stop(paste('At least 2 groups needed for column group', name))
+            }
+            c(out, rep(NA, 10-lout))
+        })
 
+        cnames = paste0("V", 1:ncol(coldata))
+        colnames(coldata) = cnames
+        coldata$ROWNAME = rownames(coldata)
+        retdata = melt(data = coldata, id.vars = "ROWNAME",
+                       measure.vars = cnames, na.rm = TRUE)
+        list(group = as.data.frame(retgroup),
+             data = retdata %>% select(ROWNAME, value))
+    }
+}
+
+indata = read.table.inopts(infile, inopts)
+inrows = rownames(indata)
+incols = colnames(indata)
+indata = as.data.frame(t(indata))
+read_row = function(rowfile, stked) {
+    if (is.false(rowfile)) {
+        list(group=data.frame(RowGroup = c('Group1', 'Group2')),
+             data=data.frame(
+            ROWNAME=rep(inrows, 2),
+            Group=rep(c('Group1', 'Group2'), each=length(inrows))
+        ))
+    } else {
+        ret = read_col(rowfile, stked)
+        if (!stked) {
+            ret$group = ret$group[1:2, , drop=FALSE]
+        }
+        ret
+    }
+}
+coldata = read_col(colfile, stacked$col)
+rowdata = read_row(rowfile, stacked$row)
+
+read_case = function(casefile) {
+    if (is.false(casefile)) {
+        casedata = data.frame(Case = character(),
+                              SampleGroups = character(),
+                              stringsAsFactors = FALSE)
+        if (is.null(coldata$group)) {
+            allgroups = levels(coldata$data[,1])
+            for (i in 1:(length(allgroups)-1)) {
+                for (j in (i+1):length(allgroups)) {
+                    casedata[nrow(casedata)+1, ] = list(
+                        Case = paste(allgroups[i], allgroups[j], sep=":"),
+                        SampleGroups = paste(allgroups[c(i, j)], collpase = ":")
+                    )
+                }
+            }
+        } else {
+            for (group in names(coldata$group)) {
+                casedata[nrow(casedata)+1, ] = list(
+                    Case = group,
+                    SampleGroups = paste(coldata$group[1:2, group],
+                                         collapse = ':')
+                )
+            }
+        }
+    } else {
+        casedata = read.table.inopts(casefile, list(rnames=FALSE, cnames=FALSE))
+        casedata = row.apply(casedata, cnames = NULL, function(row) {
+            row = unlist(row)
+            case = row[1]
+            if (!grepl(":", case, fixed = TRUE)) {
+                if (is.null(coldata$group[[case]])) {
+                    stop(paste("Column group is not defined:", case))
+                }
+                row[1] = paste(na.omit(coldata$group[[case]]), collapse = ":")
+            }
+            c(case, row)
+        })
+    }
+
+    # no row groups specified
+    if (ncol(casedata) == 2) {
+        # exhaust all row (group) pairs
+        casedata$RowGroups = ""
+        if (is.null(rowdata$group)) {
+            # exhaust all combinations
+            groups = na.omit(unique(rowdata$data[,2]))
+            ngroups = length(groups)
+            ngpairs = (ngroups * (ngroups - 1)) / 2
+            ret = col.apply(casedata, rnames = NULL, function(col, name) {
+                if (name != "RowGroups") {
+                    rep(col, each = ngpairs)
+                } else {
+                    out = c()
+                    for (i in 1:(ngroups-1)) {
+                        for (j in (i+1):ngroups) {
+                            out = c(out, paste(groups[c(i, j)], collapse = ":"))
+                        }
+                    }
+                    rep(out, length(col))
+                }
+            })
+        } else {
+            # row groups defined, exhaust them
+            groups = colnames(rowdata$group)
+            ngroups = length(groups)
+            ret = col.apply(casedata, rnames = NULL, function(col, name) {
+                if (name != "RowGroups") {
+                    rep(col, each = ngroups)
+                } else {
+                    out = c()
+                    for (group in groups) {
+                        out = c(out, paste(rowdata$group[, group],
+                                collapse = ":"))
+                    }
+                    rep(out, length(col))
+                }
+            })
+        }
+    # row groups specified
+    } else {
+        ret = col.apply(casedata, rnames = NULL, function(col, index) {
+            if (index < 3) {
+                as.vector(col)
+            } else {
+                sapply(col, function(one) {
+                    if (is.null(rowdata$group[[one]])) {
+                        if (grepl(":", one, fixed = TRUE)) {
+                            one
+                        } else {
+                            warning(paste("No such column group:", one))
+                            NA
+                        }
+                    } else {
+                        paste(rowdata$group[[one]], collapse = ":")
+                    }
+                })
+            }
+        })
+    }
+
+    row.apply(ret[complete.cases(ret),,drop=FALSE],
+              cnames = c("Case", "SampleGroups",
+                         "RowGroup1", "RowGroup2"),
+              function(row) {
+                  row = unlist(row)
+                  rowgroups = unlist(strsplit(as.character(row[3]),
+                                              ":", fixed = TRUE))
+                  c(row[1], row[2], rowgroups)
+              })
+}
+
+# "Case", "SampleGroups", "RowGroup1", "RowGroup2"
+cases = read_case(casefile)
+
+chow_test_one = function(groups, row1, row2) {
+    fmula = as.formula(paste(row2, "~", row1))
+    pooled_lm = tryCatch({lm(fmula, data = indata)}, error = function(e) NULL)
+    group_lms = sapply(groups, function(grup) {
+        list(lm(fmula, data = indata[coldata$data[ coldata$data[,2] == grup, 1],
+                                     c(row1, row2), drop=FALSE ]))
+    })
     pooled.ssr <- ifelse(is.null(pooled_lm), NA, sum(pooled_lm$residuals^2))
     subssr <- ifelse(is.false(group_lms, "any"), NA,
                      sum(sapply(group_lms, function(x) sum(x$residuals^2))))
     ngroups <- length(groups)
-    K <- length(fmvars) #+ length(covs)
+    K <- 2 #+ length(covs)
     J <- (ngroups - 1) * K
-    DF <- nrow(data) - ngroups * K
+    DF <- nrow(indata) - ngroups * K
     FS <- (pooled.ssr - subssr) * DF / subssr / J
-    list(
-        pooled.lm = pooled_lm,
-        group.lms = group_lms,
-        Fstat = FS,
-        group = group,
-        pooled.ssr = pooled.ssr,
-        group.ssr = subssr,
-        Pval = pf(FS, J, DF, lower.tail = FALSE)
-    )
+    list(pooled_lm = pooled_lm,
+         group_lms = group_lms,
+         Fstat = FS,
+         Pval = pf(FS, J, DF))
 }
 
-plot.chow <- function(chow, plotfile, ggs, devpars) {
-    cols <- all.vars(chow$pooled.lm$terms)[1:2]
+total = nrow(indata)
+
+plot_chow = function(pooled_lm, group_lms, case, row1, row2) {
     plotdata <- do.call(
         rbind,
-        lapply(names(chow$group.lms),
+        lapply(names(group_lms),
                function(m) data.frame(
-                   chow$group.lms[[m]]$model[, cols, drop = FALSE],
+                   group_lms[[m]]$model[, c(row1, row2), drop = FALSE],
                    group = m
                ))
     )
-    colnames(plotdata)[3] <- chow$group
+    colnames(plotdata)[3] <- case
     if (!is.null(ggs$scale_color_discrete)) {
         ggs$scale_color_discrete$name <- ifelse(
             is.function(ggs$scale_color_discrete$name),
-            ggs$scale_color_discrete$name(chow$group),
-            chow$group
+            ggs$scale_color_discrete$name(case),
+            case
         )
         ggs$scale_color_discrete$labels <- sapply(
-            names(chow$group.lms),
+            names(group_lms),
             function(x) {
-                coeff <- as.list(chow$group.lms[[x]]$coefficients)
-                bquote(.(x):beta[.(cols[2])] == .(round(coeff[[cols[2]]], 3)) ~
+                coeff <- as.list(group_lms[[x]]$coefficients)
+                bquote(.(x):beta[.(row1)] == .(round(coeff[[row1]], 3)) ~
                        "," ~ epsilon == .(round(coeff[["(Intercept)"]], 3)))
             }
         )
@@ -122,24 +268,24 @@ plot.chow <- function(chow, plotfile, ggs, devpars) {
     if (!is.null(ggs$scale_shape_discrete)) {
         ggs$scale_shape_discrete$name <- ifelse(
             is.function(ggs$scale_shape_discrete$name),
-            ggs$scale_shape_discrete$name(chow$group),
-            chow$group
+            ggs$scale_shape_discrete$name(case),
+            case
         )
         ggs$scale_shape_discrete$labels <- sapply(
-            names(chow$group.lms),
+            names(group_lms),
             function(x) {
-                coeff <- as.list(chow$group.lms[[x]]$coefficients)
-                bquote(.(x):beta[.(cols[2])] == .(round(coeff[[cols[2]]], 3)) ~
+                coeff <- as.list(group_lms[[x]]$coefficients)
+                bquote(.(x):beta[.(row1)] == .(round(coeff[[row1]], 3)) ~
                        "," ~ epsilon == .(round(coeff[["(Intercept)"]], 3)))
         })
     }
 
     if (is.null(ggs$scale_color_discrete) && is.null(ggs$scale_shape_discrete)){
         ggs$scale_color_discrete <- list(
-            name = chow$group,
-            labels = sapply(names(chow$group.lms), function(x) {
-                coeff <- as.list(chow$group.lms[[x]]$coefficients)
-                bquote(.(x):beta[.(cols[2])] == .(round(coeff[[cols[2]]], 3)) ~
+            name = case,
+            labels = sapply(names(group_lms), function(x) {
+                coeff <- as.list(group_lms[[x]]$coefficients)
+                bquote(.(x):beta[.(row1)] == .(round(coeff[[row1]], 3)) ~
                        "," ~ epsilon == .(round(coeff[["(Intercept)"]], 3)))
             })
         )
@@ -152,120 +298,53 @@ plot.chow <- function(chow, plotfile, ggs, devpars) {
 
     plot.points(
         plotdata,
-        plotfile,
-        x = 2, y = 1,
-        params = list(aes_string(color = chow$group, shape = chow$group)),
+        file.path(outdir, paste0(case, "-", row1, "-", row2, ".png")),
+        x = 1, y = 2,
+        params = list(aes_string(color = case, shape = case)),
         ggs = c(ggs, list(
-            geom_smooth = list(aes_string(color = chow$group),
+            geom_smooth = list(aes_string(color = case),
                                method = "lm", se = FALSE)
         ))
     )
 }
 
-formatlm <- function(m) {
-    if (class(m) == "lm") {
-        coeff <- as.list(m$coefficients)
-        vars <- all.vars(m$terms)
-        terms <- unlist(sapply(
-            c(vars[2:length(vars)], "(Intercept)", "N"),
-            function(x) {
-                ce <- list.get(coeff, x, list.get(coeff, bQuote(x)))
-                if (x == "N") {
-                    paste0("N=", nrow(m$model))
-                } else if (is.null(ce)) {
-                    NULL
-                } else {
-                    l <- ifelse(x == "(Intercept)", "_", x)
-                    paste0(l, "=", round(ce, 3))
-                }
+do_one_case = function(i) {
+    case = cases[i, 1]
+    samgroups = unlist(strsplit(cases[i, 2], ":", fixed=TRUE))
+    rowgroup1 = cases[i, 3]
+    rowgroup2 = cases[i, 4]
+    rowgroup1 = rowdata$data[ rowdata$data[,2] == rowgroup1, 1 ]
+    rowgroup2 = rowdata$data[ rowdata$data[,2] == rowgroup2, 1 ]
+
+    ret = data.frame(Case=character(), Elem1=character(), Elem2=character(),
+                     TotalN=numeric(), Ns=character(), Fstat=numeric(),
+                     Pval=numeric())
+    for (row1 in rowgroup1) {
+        for (row2 in rowgroup2) {
+            out = chow_test_one(samgroups, row1, row2)
+            ret[nrow(ret)+1, ] = list(Case=case, Elem1=row1, Elem2=row2,
+                                      TotalN=total, Ns=paste(sapply(
+                                          samgroups,
+                                          function(grup) {
+                                              sum(coldata$data[,2] == grup)
+                                          }
+                                      ), collapse=":"),
+                                      Fstat=out$Fstat, Pval=out$Pval)
+            if (!is.na(out$Pval) && out$Pval < pcut) {
+                plot_chow(out$pool_lm, out$group_lms, case, row1, row2)
             }
-        ))
-        paste(terms[!is.null(terms)], collapse = ", ")
-    } else {
-        paste(sapply(names(m), function(x) {
-            paste0(x, ": ", formatlm(m[[x]]))
-        }), collapse = " // ")
+        }
     }
+    ret
 }
 
-results <- data.frame(
-    Case = character(),
-    Pooled = character(),
-    Groups = character(),
-    SSR = double(),
-    SumSSR = double(),
-    Fstat = double(),
-    Pval = double()
-)
+results = do.call(rbind, mcmapply(do_one_case, 1:nrow(cases),
+                                  SIMPLIFY=FALSE,
+                                  mc.cores=nthread))
 
-indata <- read.table.inopts(infile, inopts, try = TRUE)
-if (is.null(indata)) {
-    write.table(results, outfile, col.names = TRUE row.names = FALSE,
-                sep = "\t", quote = FALSE)
-    quit(save = "no")
+if (is.true(dofdr) && nrow(results) > 0) {
+    results$Qval = p.adjust(results$Pval, method = dofdr)
 }
-
-#     X1  X2  X3  X4 ... Y
-# G1  1   2   1   4  ... 9
-# G2  2   3   1   1  ... 3
-# ... ...
-# Gm  3   9   1   7  ... 8
-# // K = ncol(indata)
-# covdata <- NULL
-# covs <- NULL
-# if (covfile != "") {
-#     covdata <- read.table(covfile, header = TRUE, row.names = 1,
-#                           check.names = F)
-#     # // indata  = cbind(covdata[rownames(indata),,drop = F], indata)
-#     covs <- colnames(covs)
-# }
-gdata <- read.table.inopts(gfile, list(cnames = TRUE, rnames = TRUE))
-# 	Case1	Case2
-# G1	Group1	Group1
-# G2	Group1	NA
-# G3	Group2	Group1
-# ... ...
-# Gm	Group2	Group2
-cases <- colnames(gdata)
-fmulas <- data.frame(
-    x = rep(paste(bQuote(colnames(indata)[ncol(indata)]), "~ ."), length(cases))
-)
-rownames(fmulas) <- cases
-if (!is.null(cfile) && cfile != "") {
-    fmulas <- read.table.inopts(cfile, list(cnames = FALSE, rnames = TRUE))
-    cases <- rownames(fmulas)
-}
-
-for (case in cases) {
-    logger("Handling case: ", case, "...")
-    fmula <- fmulas[case, , drop = TRUE]
-    groups <- gdata[!is.na(gdata[, case]), case, drop = FALSE]
-    data <- cbind(indata[rownames(groups), , drop = FALSE], group = groups)
-    colnames(data)[ncol(data)] <- case
-    # // ct <- chow.test(fmula, case, data, covdata = covdata)
-    ct <- chow.test(fmula, case, data)
-    if (dofdr == FALSE && (is.na(ct$Pval) || ct$Pval >= pcut)) {
-        next
-    }
-    results <- rbind(results, list(
-        Case = case,
-        Pooled = formatlm(ct$pooled.lm),
-        Groups = formatlm(ct$group.lms),
-        SSR = ct$pooled.ssr,
-        SumSSR = ct$group.ssr,
-        Fstat = ct$Fstat,
-        Pval = ct$Pval
-    ))
-    # doplot
-    if (plotchow && ct$Pval < pcut) {
-        plot.chow(ct, file.path(outdir, paste0(case, ".png")), ggs, devpars)
-    }
-}
-
-if (dofdr != F) {
-    results <- cbind(results, Qval = p.adjust(results$Pval, method = dofdr))
-}
-write.table(pretty.numbers(results, list(
-    SSR..SumSSR..Fstat = "%.3f",
-    Pval..Qval = "%.3E"
-)), outfile, col.names = T, row.names = F, sep = "\t", quote = F)
+results = results[!is.na(results$Pval) & results$Pval < pcut, , drop = FALSE]
+write.table(results, outfile, row.names = FALSE, col.names = TRUE,
+            quote = FALSE, sep = "\t")

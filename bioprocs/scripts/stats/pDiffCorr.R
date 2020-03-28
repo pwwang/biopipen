@@ -60,7 +60,7 @@ read_col = function(colfile, stked) {
             factor(col, levels = unique(col))
         })
         retgroup = col.apply(coldata, rnames = NULL, function(col, name) {
-            out = levels(as.factor(col))
+            out = na.omit(unique(unlist(col)))
             if (length(out) != 2) {
                 stop(paste('Exact 2 groups needed for column group', name))
             }
@@ -104,8 +104,7 @@ read_case = function(casefile) {
             for (i in 1:(length(allgroups)-1)) {
                 for (j in (i+1):length(allgroups)) {
                     casedata[nrow(casedata)+1, ] = list(
-                        Case = paste("Case", allgroups[i],
-                                     allgroups[j], sep="_"),
+                        Case = paste(allgroups[i], allgroups[j], sep=":"),
                         SampleGroups = paste(allgroups[c(i, j)], collpase = ":")
                     )
                 }
@@ -113,7 +112,7 @@ read_case = function(casefile) {
         } else {
             for (group in names(coldata$group)) {
                 casedata[nrow(casedata)+1, ] = list(
-                    Case = paste("Case", group, sep="_"),
+                    Case = group,
                     SampleGroups = paste(coldata$group[1:2, group],
                                          collapse = ':')
                 )
@@ -123,13 +122,14 @@ read_case = function(casefile) {
         casedata = read.table.inopts(casefile, list(rnames=FALSE, cnames=FALSE))
         casedata = row.apply(casedata, cnames = NULL, function(row) {
             row = unlist(row)
-            if (!grepl(":", row[2], fixed = TRUE)) {
-                if (is.null(coldata$group[[row[2]]])) {
-                    stop(paste("Column group is not defined:", row[2]))
+            case = row[1]
+            if (!grepl(":", case, fixed = TRUE)) {
+                if (is.null(coldata$group[[case]])) {
+                    stop(paste("Column group is not defined:", case))
                 }
-                row[2] = paste(coldata$group[[row[2]]], collapse = ":")
+                row[1] = paste(coldata$group[[case]], collapse = ":")
             }
-            row
+            c(case, row)
         })
     }
 
@@ -180,7 +180,12 @@ read_case = function(casefile) {
             } else {
                 sapply(col, function(one) {
                     if (is.null(rowdata$group[[one]])) {
-                        one
+                        if (grepl(":", one, fixed = TRUE)) {
+                            one
+                        } else {
+                            warning(paste("No such column group:", one))
+                            NA
+                        }
                     } else {
                         paste(rowdata$group[[one]], collapse = ":")
                     }
@@ -189,13 +194,16 @@ read_case = function(casefile) {
         })
     }
 
-    row.apply(ret, cnames = c("Case", "SampleGroup1", "SampleGroup2",
+    row.apply(ret[complete.cases(ret),,drop=FALSE],
+              cnames = c("Case", "SampleGroup1", "SampleGroup2",
                               "RowGroup1", "RowGroup2"),
               function(row) {
                   row = unlist(row)
-                  c(row[1],
-                    unlist(strsplit(as.character(row[2]), ":", fixed = TRUE)),
-                    unlist(strsplit(as.character(row[3]), ":", fixed = TRUE)))
+                  samgroups = unlist(strsplit(as.character(row[2]),
+                                              ":", fixed = TRUE))
+                  rowgroups = unlist(strsplit(as.character(row[3]),
+                                              ":", fixed = TRUE))
+                  c(row[1], samgroups, rowgroups)
               })
 }
 

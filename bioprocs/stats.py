@@ -553,54 +553,93 @@ pHypergeom = proc_factory(
 pChow = proc_factory(
     desc="Do Chow-Test",
     config=Diot(annotate="""
-    @name:
-        pChow
     @description:
         Do Chow-Test
     @input:
-        `infile:file`: The input file for data to do the regressions. Example:
+        infile: The entire dataset used to calculate correlations. Rownames and colnames are required.
             ```
-                X1  X2  X3  X4 ... Y
-            S1  1   2   1   4  ... 9
-            S2  2   3   1   1  ... 3
+                S1  S2  S3  S4 ... Sn
+            G1  1   2   1   4  ... 9
+            G2  2   3   1   1  ... 3
             ... ...
-            Sm  3   9   1   7  ... 8
+            Gm  3   9   1   7  ... 8
             ```
-        `groupfile:file`: Specify the groups to compare. You may also specify the cases. The Chow-Test will be done between the group for each case. Example:
-            ```
-                    Case1	Case2
-            S1	Group1	Group1
-            S2	Group1	NA          # Exclude S2 in Case2
-            S3	Group2	Group1
-            ... ...
-            Sm	Group2	Group2
-            ```
-            - In such case, the test will be done between Group1 and Group2 for Case1 and Case2, respectively.
-            - If cases not provided, all will be treated as one case.
-        `casefile:file`: Define the formula (which columns to use for each case). Example:
-            ```
-            Case1	Y ~ X1
-            Case2	Y ~ X2
-            ```
-            - This file is optional, then formula `Y ~ .` will be used for all cases.
+        `colfile:file`: The sample groups, between which you want to compare the correlations.
+            - It can be stacked, for example:
+              ```
+              S1    SG1-Group1
+              S2    SG1-Group2
+              S2    SG1-Group3
+              S3    SG2-Group1
+              S3    SG2-Group2
+              ... ...
+              Sn    SG2-Group3
+              ```
+            - Or unstacked, for example:
+              ```
+                    SG1     SG2
+              S1    Group1  NA
+              S2    Group2  Group1
+              S3    Group1  Group2
+              ... ...
+              Sn    Group3  Group1
+              ```
+            - See `args.stacked`
+        `casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination.
+            - If `i.colfile` and `i.rowfile` are stacked, this should be a 3-column file:
+              ```
+              Case_1    SG1    GeneGroup1
+              Case_2    SG2    GeneGroup2
+              ```
+            - Otherwise, this should be a 4-column file:
+              ```
+              Case1     SG1-Group1:SG1-Group2:SG1-Group3     Kinase:TF
+              Case2     SG2-Group1:SG2-Group2   LncRNA:Gene
+              ```
+            - The GeneGroups can be omitted, then it will use all groups defined in row file or all possible row pairs
+            - If this file is not provided, will exhaust all possible cases
+        `rowfile:file`: Specify groups for rows, then the correlation will be only done within the pairs, each of which is from different groups (only 2 allowed). If not provided, it will investigate for every possible row pairs.
+            - If `args.stacked` is true, it should be like:
+              ```
+              G1	Kinase
+              G2	Kinase
+              G2    LncRNA
+              G3    Gene
+              ... ...
+              Gm	TF
+              ```
+            - Otherwise, it should be like:
+              ```
+                    GeneGroup1  GeneGroup2
+              G1    Kinase      NA
+              G2    Kinase      LncRNA
+              G3    NA          Gene
+              ... ...
+              Gm    TF          NA
+              ```
+            - If this file is not provided, will exhaust all possible pairs
     @output:
-        `outfile:file`: The result file of chow test. Default: `{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt`
-        `outdir:dir`: The output directory, containing the output file, results of regressions and plots.
+        `outfile:file`: Significant trios (Case/ColumnGroup ~ RowGroup1 ~ RowGroup2)
+        `outdir:dir`: The output directory containing plots and other output files.
     @args:
-        `inopts`: The options for input file.
-            - `cnames`: Whether the input file has column names.
-            - `rnames`: Whether the input file has row names.
-        `fdr`: Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
-        `pval`: The pvalue cutoff. Default: `0.05`
-        `plot`: Whether plot the regressions. Default: `False`
-        `ggs` : The extra ggs for the plot.
-        `devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
+        stacked: Whether `i.rowfile` and `i.colfile` are stacked or not.
+            - If they are stacked, no column names (header) should be in the file
+            - Otherwise, rownames and column names are required
+            - If one is stacked and the other is not, you can use a dict: `{col: False, row:True}`
+        nthread: Number of threads to use.
+        `inopts`: The input options for `infile`. `cnames` and `rnames` have to be `True`
+        `pval`  : The pvalue cutoff to define correlation change significance. Default: `0.05`
+        `fdr`   : Calculate FDR or not. Use `False` to disable. If `True` will use `BH` method, otherwise, specify the method (see `R`'s `p.adjust`).
+        `plot`  : Plot the correlation for cases? Default: `False`
+        `ggs`   : `ggs` items for the plot.
+        `devpars`: The device parameters for the plot.
     """),
-    input='infile:file, groupfile:file, casefile:file',
+    input='infile:file, colfile:file, casefile:file, rowfile:file',
     output='outfile:file:{{i.infile | fn}}.chow/{{i.infile | fn}}.chow.txt, \
             outdir:dir:{{i.infile | fn}}.chow',
     lang=params.Rscript.value,
     args=Diot(
+        stacked=False,
         inopts=Diot(cnames=True, rnames=True),
         pval=0.05,
         fdr=True,
@@ -764,15 +803,15 @@ pDiffCorr = proc_factory(
               ```
             - See `args.stacked`
         `casefile:file`: Assign the cases to compare. If not provided, it will do for every possible combination.
-            - If `i.colfile` and `i.rowfile` are stacked, this should be a 3-column file:
+            - If `i.colfile` and `i.rowfile` are stacked, this should be a 2-column file:
               ```
-              Case_1    SampleGroup1    GeneGroup1
-              Case_2    SampleGroup2    GeneGroup2
+              SampleGroup1    GeneGroup1
+              SampleGroup2    GeneGroup2
               ```
-            - Otherwise, this should be a 4-column file:
+            - otherwise, it should be:
               ```
-              Case1     Healthy:Disease     Kinase:TF
-              Case2     Healthy-1:Disease-1   LncRNA:Gene
+              Healthy:Disease     Kinase:TF
+              Healthy-1:Disease-1   LncRNA:Gene
               ```
             - The GeneGroups can be omitted, then it will use all groups defined in row file or all possible row pairs
             - If this file is not provided, will exhaust all possible cases
