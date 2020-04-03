@@ -132,6 +132,10 @@ fpkm2count = function(data) {
     expr
 }
 
+fpkm2tmm = function(data) {
+    count2tmm(fpkm2count(data))
+}
+
 fpkm2tpm = function(data) {
     expr = sapply(samples, function(s) {
         exp( log(data[, s]) - log(sum(data[, s])) + log(1e6) )
@@ -266,6 +270,8 @@ convert = function(data, inunit, outunit) {
         return (cpm2fpkm(data))
     if (is.cpm(inunit) && is.tpm(outunit))
         return (cpm2tpm(data))
+    if (is.fpkm(inunit) && is.tmm(outunit))
+        return (fpkm2tmm(data))
     stop(paste('Unsupported conversion from', inunit, 'to', outunit, '.'))
 }
 

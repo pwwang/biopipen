@@ -8,8 +8,8 @@ ext     = {{i.infile | ext | quote}}
 inopts  = {{args.inopts | repr}}
 outopts = {{args.outopts | repr}}
 by      = {{args.by | ? :isinstance(_, str) and _.startswith('col:')
-					| = :quote(_[4:])
-					| ! :_}}
+					| = [4:]
+     				| $repr }}
 
 reader    = TsvReader(infile, **inopts)
 outheader = outopts.pop('header', True)
@@ -27,7 +27,7 @@ else:
 	raise ValueError('Unsupported `args.by = %r`' % by)
 
 def get_writer(tag):
-	outfile = outdir + "/" + prefix + "_" + tag + ext
+	outfile = outdir + "/" + prefix + "_" + str(tag) + ext
 	writer = TsvWriter(outfile, **outopts)
 	if outheader is True:
 		writer.cnames = reader.cnames

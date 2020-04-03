@@ -351,16 +351,16 @@ class TsvJoin:
         outopts['delimit'] = outopts.get('delimit', "\t")
         outopts['append'] = outopts.get('append', False)
 
-        cnames = False
-        if 'cnames' in outopts:
-            cnames = outopts['cnames']
-            del outopts['cnames']
+        cnames = outopts.pop('cnames', False)
 
         head_callback = outopts.pop('headCallback')
 
         out = TsvWriter(outfile, **outopts)
         out.cnames = (cnames
                       if isinstance(cnames, list)
+                      else self.readers[cnames].cnames
+                      if isinstance(cnames, int) and not isinstance(cnames,
+                                                                    bool)
                       else sum((reader.cnames
                                 for reader in self.readers
                                 if reader.cnames), [])

@@ -1,5 +1,5 @@
 library(methods)
-{{rimport}}('__init__.r')
+{{"__init__.R" | rimport}}
 options(stringsAsFactors = FALSE)
 
 indir     = {{i.indir | R}}
@@ -17,9 +17,10 @@ highld    = {{args.highld | R}}
 jobstdout = {{job.outfile | R}}
 
 if (is.true(plots, 'any')) {
-	{{rimport}}('plot.r')
+	{{"plot.R" | rimport}}
 }
 
+shell$load_config(plink = plink)
 bedfile = Sys.glob(file.path(indir, '*.bed'))
 input   = tools::file_path_sans_ext(bedfile)
 output  = file.path(outdir, basename(input))
@@ -55,8 +56,7 @@ pruneparams = list(
 	`indep-pairwise` = indep,
 	out              = output
 )
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(pruneparams, equal = ' '))
-runcmd(cmd)
+shell$plink(pruneparams, `_raise` = TRUE, `_fg` = TRUE)$reset()
 
 prunein = paste0(output, '.prune.in')
 
@@ -71,8 +71,9 @@ default.params = list(
 
 params = update.list(default.params, params)
 # stdout slows down the program
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '), jobstdout)
-runcmd(cmd)
+shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
+# cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '), jobstdout)
+# runcmd(cmd)
 
 valfile = paste0(output, '.eigenval')
 vecfile = paste0(output, '.eigenvec')

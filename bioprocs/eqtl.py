@@ -7,42 +7,42 @@ from . import params, proc_factory
 pMatrixeQTL = proc_factory(
     desc='Use matrix eQTL to call eQTLs',
     config=Diot(annotate="""
-    @name:
-        pMatrixeQTL
     @description:
-        Call eQTLs using Matrix eQTL
+        Call eQTLs using Matrix eQTL.
+        By default, this is only calling cis-eQTLs.
+        See: http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/
     @input:
-        `snpfile:file`: The genotype file, rows are snps and columns are samples
-        `expfile:file`: The expression file, rows are genes
-        `covfile:file`: The covariant file, columns are covariants
+        snpfile: The genotype file, rows are snps and columns are samples
+        expfile: The expression file, rows are genes
+        covfile: The covariant file, columns are covariants
     @output:
-        `outfile:file`: The matrix eqtl output file
+        outfile: The cis-eQTL file if `snppos` and `genepos` are provided. Otherwise it'll be empty.
+        alleqtl: All eQTL file
     @args:
-        `model`: The model to use, either modelLINEAR(default) or modelANOVA
-        `pval` : The pvalue cutoff (if `cisopts.dist` > 0, will be used as pval for trans-eQTL)
-            - Set this to 0 and `cisopts.cispv` to do ciseqtl analysis only.
-        `fdr`  : Calculate FDR or not (default: True)
-        `cisopts`: Options for calling cis-, trans-eQTL
-            - `snppos` : The snp position file (columns are: snp, chr, pos)
-            - `genepos`: The gene position file (columns are: gene, chr, start, end)
-            - `dist`   : The distance to define cis-eQTL. (default: 0 (don't do cis-, trans- calling)
-            - `cispv`  : The pvalue cutoff for cis-eQTL (`pval` will not work). Default: `1e-3`
+        model (str): The model to use, either modelLINEAR or modelANOVA
+        pval (float): The pvalue cutoff for the results
+        transp (float): The pvalue for trans-eQTLs. If this is `False`, then trans-eQTL will not be calculated.
+            - Either this is set, or snppos, genepos and dist are required
+            - If this is `True`, `1e-5` will be used as cutoff
+        fdr (bool): Do FDR calculation or not (save memory if not).
+        snppos (str): The path of the SNP positions. Could be BED, GFF, VCF or
+            - custom file with `snp`, `chr`, `pos` as first 3 columns.
+        genepos (str): The path of Gene positions. Could be BED or GFF file.
+        dist (int): The distance to decide the SNP-gene pairs for cis-eQTL calculation.
     @requires:
         [`Matrix-eQTL (R)`](http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/)
     """),
     input='snpfile:file, expfile:file, covfile:file',
-    output='''outfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.eqtl.txt,
-              cisfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.ciseqtl.txt''',
+    output='''outfile:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.ciseqtl.txt,
+              alleqtl:file:{{i.snpfile | fn}}-{{i.expfile | fn}}.eqtl.txt''',
     lang=params.Rscript.value,
     args=Diot(
         model='modelLINEAR',  # or modelANOVA
-        pval=1e-5,
+        pval=1e-3,
+        transp=False,
         fdr=True,
-        cisopts=Diot(
-            snppos='',
-            genepos=params.refgene.value,
-            dist=0,  # 0 don't do cis-, trans- calls
-            cispv=1e-3
-        )
+        snppos='',
+        genepos=params.refgene.value,
+        dist=250000,
     )
 )

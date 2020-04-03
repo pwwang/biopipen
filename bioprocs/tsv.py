@@ -184,29 +184,21 @@ pCsplit = proc_factory(
 pRsplit = proc_factory(
     desc='Rbind the rest of files to the first file.',
     config=Diot(annotate="""
-    @name:
-        pRsplit
-    @description:
-        Split a matrix by rows and save them into files.
-    @input:
-        `infile:file`: The input file
-    @output:
-        `outdir:dir`: The directory containing the output row files
-    @args:
-        `inopts`: The input options for infile:
-            - `cnames`: Whether the input file has cnames. Default: True
-            - `rnames  `: Whether the input file has rnames. Default: True
-            - `delimit`: The delimit. Default: `\t`
-            - `skip`: First N lines to skip. Default: `0`
-        `params`: Other params for `read.table`. Default: `{"check.names": "FALSE", "quote": ""}`
-        `size`: The chunk size (how many rows to split into one file). Default: `1`
-    """),
+                @description:
+                    Split a matrix by rows and save them into files.
+                @input:
+                    infile: The input file
+                @output:
+                    outdir: The directory containing the output row files
+                @args:
+                    inopts (Diot): The input options for infile
+                    size: The chunk size (how many rows to split into one file)
+                """),
     input='infile:file',
     output='outdir:dir:{{i.infile | fn}}.rsplits',
     lang=params.Rscript.value,
     args=Diot(
         inopts=Diot(cnames=True, rnames=True, delimit="\t", skip=0),
-        params=Diot({"check.names": "FALSE", "quote": ""}),
         size=1,
     )
 )

@@ -52,7 +52,7 @@ def formatRow(row, rs = novel):
 		row[4] = row[4].split(',')[0]
 		if row[4] not in list('AGTCagtc'):
 			return None
-	gts = [formatGT(gt) for gt in row[9:]]
+	gts = [formatGT(gt.split(':')[0]) for gt in row[9:]]
 	if mingt > 0 and sum(1 for gt in gts if gt!=na) < mingt:
 		return None
 	if not useid or not row[2] or row[2] == '.':

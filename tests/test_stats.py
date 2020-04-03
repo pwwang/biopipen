@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL
-from bioprocs.stats import pSurvival, pCorr, pDiffCorr
+from bioprocs.stats import pSurvival, pCorr, pDiffCorr, pAdjust, pDeCov, pChow
 from . import assertInfile, assertNotInfile
 
 def test_survival(rdata):
@@ -27,8 +27,8 @@ def test_diffcorr(rdata):
     pDiffCorr1.args.plot = True
     pDiffCorr1.args.nthread = 10
     PyPPL().start(pDiffCorr1).run()
-    assertInfile(pDiffCorr1.channel.outfile.get(), 'Case2	V8	V4	0.941')
-    assert Path(pDiffCorr1.channel.outdir.get() / 'Case2-V8-V4.png').is_file()
+    assertInfile(pDiffCorr1.channel.outfile.get(), 'Compare2	V4	V8	0.941')
+    assert Path(pDiffCorr1.channel.outdir.get() / 'Compare2-V4-V8.png').is_file()
 
 def test_diffcorr_stacked(rdata):
     pDiffCorr2 = pDiffCorr.copy()
@@ -43,8 +43,8 @@ def test_diffcorr_stacked(rdata):
     pDiffCorr2.args.stacked = True
     pDiffCorr2.args.nthread = 10
     PyPPL().start(pDiffCorr2).run()
-    assertNotInfile(pDiffCorr2.channel.outfile.get(0), 'Case1', 'Case2')
-    assertNotInfile(pDiffCorr2.channel.outfile.get(1), 'Case1', 'Case2')
+    assertNotInfile(pDiffCorr2.channel.outfile.get(0), 'Compare1', 'Compare2')
+    assertNotInfile(pDiffCorr2.channel.outfile.get(1), 'Compare1', 'Compare2')
 
 def test_diffcorr_exhaust(rdata):
     pDiffCorr3 = pDiffCorr.copy()
@@ -52,3 +52,46 @@ def test_diffcorr_exhaust(rdata):
                         rdata.get('stats/colfile.txt'))
     pDiffCorr3.args.nthread = 10
     PyPPL().start(pDiffCorr3).run()
+
+def test_padj_header(rdata):
+    pAdjust1 = pAdjust.copy()
+    pAdjust1.input = [[rdata.get('stats/padj-header-in1.txt'),
+                       rdata.get('stats/padj-header-in2.txt')]]
+    pAdjust1.args.inopts.rnames = True
+    pAdjust1.args.pcol = 1
+    PyPPL().start(pAdjust1).run()
+    assertInfile(pAdjust1.channel.outfile.get(), 'pval	Padj')
+    assertInfile(pAdjust1.channel.outfile.get(), 'R1	1e-10	2e-10')
+    assertInfile(pAdjust1.channel.outfile.get(), 'R4	1e-06	1.333')
+
+def test_padj_noheader(rdata):
+    pAdjust2 = pAdjust.copy()
+    pAdjust2.input = [[rdata.get('stats/padj-noheader-in1.txt'),
+                       rdata.get('stats/padj-noheader-in2.txt')]]
+    pAdjust2.args.inopts.rnames = False
+    pAdjust2.args.inopts.cnames = False
+    pAdjust2.args.pcol = 2
+    PyPPL().start(pAdjust2).run()
+    assertNotInfile(pAdjust2.channel.outfile.get(), 'pval	Padj')
+    assertInfile(pAdjust2.channel.outfile.get(), 'R1	1e-10	1e-10')
+    assertInfile(pAdjust2.channel.outfile.get(), 'R2	1e-20	2e-20')
+
+def test_decov(rdata):
+    pDeCov1 = pDeCov.copy()
+    pDeCov1.input = rdata.get('stats/corr.txt'), rdata.get('stats/cov.txt')
+    PyPPL().start(pDeCov1).run()
+    assertInfile(pDeCov1.channel.get(), 'V1	V2	V3')
+    assertInfile(pDeCov1.channel.get(), 'S1	-14.37')
+    assertInfile(pDeCov1.channel.get(), 'S2	12.48')
+    assertInfile(pDeCov1.channel.get(), 'S10	6.48')
+
+def test_chow(rdata):
+    pChow1 = pChow.copy()
+    pChow1.input = (rdata.get('stats/chow.txt'),
+                    rdata.get('stats/chow-cols.txt'))
+    pChow1.args.stacked = True
+    pChow1.args.pval = 1.1
+    PyPPL().start(pChow1).run()
+    assertInfile(pChow1.channel.outfile.get(), 'P1:P2	Income	Savings	26')
+    assertInfile(pChow1.channel.outfile.get(), '10.69') # Fstat
+

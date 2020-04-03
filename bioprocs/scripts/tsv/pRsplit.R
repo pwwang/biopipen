@@ -1,20 +1,12 @@
-{{rimport}}('__init__.r')
+{{"__init__.R" | rimport}}
 
 infile  = {{i.infile | R}}
 outdir  = {{o.outdir | R}}
-params  = {{args.params | R}}
 inopts  = {{args.inopts | R}}
-size    = as.numeric({{args.size | R}})
+size    = {{args.size | int | R}}
 
-inparams = list(
-	file      = infile,
-	header    = as.logical(inopts$cnames),
-	row.names = if (as.logical(inopts$rnames)) 1 else NULL,
-	skip      = if (is.null(inopts$skip)) 0 else as.numeric(inopts$skip),
-	sep       = inopts$delimit
-)
+mat = read.table.inopts(infile, inopts)
 
-mat       = do.call(read.table.nodup, c(inparams, params))
 allrnames = if (as.logical(inopts$rnames)) rownames(mat) else paste0("ROW", 1:nrow(mat))
 
 for ( chunk in split(1:length(allrnames), ceiling(seq_along(1:length(allrnames))/size)) ) {
@@ -26,10 +18,10 @@ for ( chunk in split(1:length(allrnames), ceiling(seq_along(1:length(allrnames))
 	outparams = list(
 		x         = m,
 		file      = outfile,
-		sep       = inopts$delimit,
+		sep       = list.get(inopts, "delimit", "\t"),
 		quote     = F,
-		col.names = as.logical(inopts$cnames),
-		row.names = as.logical(inopts$rnames)
+		col.names = is.true(inopts$cnames),
+		row.names = is.true(inopts$rnames)
 	)
 	do.call(write.table, outparams)
 }

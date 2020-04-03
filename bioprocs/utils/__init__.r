@@ -76,6 +76,7 @@ update.list <- function(list1, list2, recursive = F) {
     }
     return(list1)
 }
+list.update = update.list
 
 expand.numbers <- function(numstr) {
     if (length(numstr) > 1) {
@@ -124,6 +125,8 @@ ifelse <- function(condition, true, false) {
 #   name: The rowname of that row
 rapply <- function(df, cnames = TRUE, func) {
     rnames <- rownames(df)
+    if (is.null(rnames))
+        rnames = paste0("R", 1:ncol(df))
     fms <- formals(func)
     sfunc <- function(index) {
         params <- list()
@@ -138,15 +141,16 @@ rapply <- function(df, cnames = TRUE, func) {
         }
         do.call(func, params)
     }
-    ret <- t(sapply(seq_along(rnames), sfunc))
+    ret <- lapply(seq_along(rnames), sfunc)
+    ret <- t(as.data.frame(ret))
     rownames(ret) <- rnames
     if (is.false(cnames)) {
         cnames <- NULL
-    } else if (cnames == TRUE) {
+    } else if (length(cnames) == 1 && cnames == TRUE) {
         cnames <- colnames(df)
     }
     colnames(ret) <- cnames
-    as.data.frame(ret)
+    ret
 }
 
 # apply function on each column
@@ -159,6 +163,8 @@ rapply <- function(df, cnames = TRUE, func) {
 #   name: The rowname of that column
 capply <- function(df, rnames = TRUE, func) {
     cnames <- colnames(df)
+    if (is.null(cnames))
+        cnames = paste0("V", 1:ncol(df))
     fms <- formals(func)
     sfunc <- function(index) {
         params <- list()
@@ -173,15 +179,16 @@ capply <- function(df, rnames = TRUE, func) {
         }
         do.call(func, params)
     }
-    ret <- sapply(seq_along(cnames), sfunc)
+    ret <- lapply(seq_along(cnames), sfunc)
+    ret <- as.data.frame(ret)
     colnames(ret) <- cnames
     if (is.false(rnames)) {
         rnames <- NULL
-    } else if (rnames == TRUE) {
+    } else if (length(rnames) == 1 && rnames == TRUE) {
         rnames <- rownames(df)
     }
     rownames(ret) <- rnames
-    as.data.frame(ret)
+    ret
 }
 
 row.apply = rapply

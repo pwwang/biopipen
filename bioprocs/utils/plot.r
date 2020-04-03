@@ -613,10 +613,18 @@ plot.maplot <- function(data, plotfile, threshold, ggs = list(),
                  devpars = devpars)
 }
 
-plot.qq <- function(data, plotfile = NULL, x = NULL, y = 1, params = list(),
+plot.qq <- function(data, plotfile = NULL, x = NULL, y = 1, params = list(tsform = NULL),
                     ggs = list(), devpars = DEVPARS) {
     # NAs can be used if lengths of x and y are different
     data <- as.data.frame(data)
+    tsform <- params$tsform
+    if (is.function(tsform)) {
+        if (!is.null(x)) {
+            data[, x] <- tsform(data[, x])
+        }
+        data[, y] <- tsform(data[, y])
+    }
+    params$tsform <- NULL
     n <- nrow(data)
     q <- (1:n) / n
     if (is.null(x)) {
@@ -928,6 +936,24 @@ plot.volplot <- function(data,
         x = "logFC", y = ifelse(is.pval, "log10.P.", "log10.FDR."),
         ggs = ggs, devpars = devpars
     )
+}
+
+plot.man2 <- function(data, plotfile, params = list(), devpars = DEVPARS) {
+    # manhattan plot using R-CMplot
+    library(CMplot)
+    tmpdir = file.path(tempdir(), paste0("CMPlot-", abs(as.integer(rnorm(1) * 1e6))))
+    set.seed(8525)
+    dir.create(tmpdir, recursive = TRUE)
+    setwd(tmpdir)
+
+    params.default = list(plot.type = "m", LOG10 = TRUE, ylim = NULL,
+                          dpi = devpars$res, file.output = TRUE,
+                          file = "jpg", verbose = TRUE, Pmap = data,
+                          width = devpars$width / devpars$res,
+                          height = devpars$height / devpars$res)
+    params = list.update(params.default, params)
+    do.call(CMplot, params)
+    file.copy(Sys.glob(file.path(tmpdir, "*.jpg")), plotfile)
 }
 
 plot.man <- function(data, plotfile = NULL, hilights = list(), hilabel = TRUE,

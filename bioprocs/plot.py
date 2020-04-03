@@ -668,6 +668,38 @@ pPie = proc_factory(
     )
 )
 
+pManhattan2 = proc_factory(
+    desc="Manhattan plot.",
+    config=Diot(annotate="""
+                @input:
+                    infile: The input file with columns:
+                        - Snp name
+                        - Chromsome
+                        - Position
+                        - Pvalue
+                    hifile: The file with highlight data:
+                        - Snp name
+                        - Labels (optional)
+                @output:
+                    outfile: The output plot file
+                @args:
+                    hifile (str): The file with highlight data
+                        - ignored if `i.hifile` provided
+                    devpars (Diot): The parameters for plot device.
+                    params (Diot): Parameters for `CMplot`
+                        - See `?CMplot` in R for more options.
+                """),
+    input="infile:file, hifile:file",
+    output="outfile:file:{{i.infile | stem2}}.manhattan.jpg",
+    lang=params.Rscript.value,
+    args=Diot(
+        inopts=Diot(cnames=True, rnames=False),
+        devpars=Diot(res=300, height=2000, width=2000),
+        hifile=None,
+        params=Diot()
+    )
+)
+
 pManhattan = proc_factory(
     desc='Manhattan plot.',
     config=Diot(annotate="""
@@ -719,9 +751,18 @@ pManhattan = proc_factory(
 pQQ = proc_factory(
     desc='Q-Q plot',
     config=Diot(annotate="""
-    @name:
-        pQQ
-    """),
+                @input:
+                    infile: The input file with one or two columns.
+                        - If only one column is given, x-axis will be theoretical values
+                @outfile:
+                    outfile: The plot file
+                @args:
+                    inopts (Diot): The options to read the input file
+                    devpars (Diot): The parameters for plot device.
+                    ggs (Diot): Extra expression for ggplot object
+                    tsform (str): An R function to transform the input data
+                    params (Diot): Paramters for `geom_scatter`
+                """),
     input='infile:file',
     output='outfile:file:{{i.infile | fn}}.qq.png',
     lang=params.Rscript.value,
@@ -729,6 +770,7 @@ pQQ = proc_factory(
         inopts=Diot(cnames=True, rnames=False),
         devpars=Diot(res=300, height=2000, width=2000),
         ggs=Diot(),
+        tsform=None,
         params=Diot(),
     )
 )

@@ -24,6 +24,53 @@ pStats = proc_factory(
                            width=2000))
 )
 
+pAdjust = proc_factory(
+    desc='Calcuate adjusted pvalues',
+    config=Diot(annotate="""
+                @input:
+                    infiles: The input files with pvalues
+                        - They must have pvalues at the same column
+                @output:
+                    outfile: The output file with all input files concatenated and last column the adjusted pvalue
+                @args:
+                    inopts (Diot): The options to read the input
+                    pcol (int|str): The column of the pvalue, could be the column index(1-based)
+                        - The index is used to subset the input to get the pvalues in `R`
+                        - Note if `args.inopts.rnames` is `True`
+                    method (str): The method used to adjust the pvalues
+                        - See `?p.adjust` in `R`
+                """),
+    input='infiles:files',
+    output='outfile:file:{{i.infiles | ?commonprefix | ![0] | stem2 | =commprefix}}.padj.txt',
+    lang=params.Rscript.value,
+    args=Diot(method='BH', pcol=0, inopts=Diot(rnames=False, cnames=True))
+)
+
+pDeCov = proc_factory(
+    desc='Remove covariate effects using linear regression',
+    config=Diot(annotate="""
+                @description:
+                    Adjust covariate effects using linear regression.
+                    Residues will be returned.
+                @input:
+                    infile: The input data, features as rows and samples as columns
+                    covfile: The covariate data, covariate as columns and samples as rows
+                @output:
+                    outfile: The output file with the residues
+                @args:
+                    tool (str): Tool used to do the job.
+                        - linear: using linear model
+                        - peer: using peer, see: https://github.com/PMBio/peer/wiki/Tutorial
+                    nthread (int): Number of threads to use for regression
+                        - Only available for tool `linear`
+                    nk (int): Number of hidden confounders, only for tool `peer`
+                """),
+    input='infile:file, covfile:file',
+    output='outfile:file:{{i.infile | stem2}}.decov.txt',
+    lang=params.Rscript.value,
+    args=Diot(nthread=1, tool='linear', nk=10)
+)
+
 pMetaPval = proc_factory(
     desc='Calculate meta p-values.',
     config=Diot(annotate="""
@@ -644,6 +691,7 @@ pChow = proc_factory(
         pval=0.05,
         fdr=True,
         plot=True,
+        nthread=1,
         devpars=Diot(res=300, width=2000, height=2000),
         ggs=Diot(),
     )
