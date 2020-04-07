@@ -441,24 +441,41 @@ pHeatmap2 = proc_factory(
 pScatterCompare = proc_factory(
     desc='Plot scatter compare plots.',
     config=Diot(annotate="""
-    @name:
-        pScatterCompare
-    @description:
-        Plot scatter plot to compare values of first 2 columns of input data
     @input:
-        `infile:file`: The input file containing a matrix with at least 2 columns
-            - Other columns are groups used to group the scatter points
-            - Data must be normalized to [0, 1]
+        infile: The input file
+            - If `args.stacked` is `True`, it will be like (`args.rnames` should be `False`):
+              ```
+              Item  Value   Group
+              rs1   1       A
+              rs2   2       A
+              ...
+              rs1   7       B
+              rs2   9       B
+              ```
+            - Otherwise:
+              ```
+              [ROWNAME  ]A  B
+              [rs1      ]1  7
+              [rs2      ]2  9
+              ...
+              ```
     @output:
-        `outfile:file`: The output plot
+        outfile: The output plot
     @args:
-        `ggs`: Extra expressions for ggplot. Note if geom_point is included, original geom_point will be ignored.
-        `devpars`: The parameters for plot device. Default: `{'res': 300, 'height': 2000, 'width': 2000}`
-        `rownames`: Whether the input file has row names. Default: True
-        `regr`: Whether draw the regression line. Default: False
-        `corr`: The method to calculate the correlation. Default: `pearson`
-            - Could be: `pearson`, `spearman` or `kendall`
-            - If it's neither of the three, no correlations will show.
+        ggs (Diot): Extra expressions for ggplot. Note if geom_point is included, original geom_point will be ignored.
+        params (Diot): Other parameters for `geom_point`
+        devpars (Diot): The parameters for plot device.
+        x (int|str): The (unstacked) column used to be x-axis.
+        tsform (str): An R function to transform the data for each group
+        corr (str): Method to calculate correlation to show. `None` to hide.
+            - Could be one of `pearson`, `spearman` or `kendall`
+            - If `args.tsform` is provided, correlation will be calculated based on transformed values.
+        line (str): The line to separate the performance.
+            - Note that the coefficient and `x` should be connected with `*`
+            - For example: `y = 2*x + 1`
+            - Points with `y > 2*x + 1` and `y < 2*x + 1` will showed in different colors.
+        stacked (bool): Whether the input data is stacked.
+        inopts (Diot): Options to read input file.
     """),
     input="infile:file",
     output="outfile:file:{{i.infile | fn}}.scattercomp.png",
@@ -468,10 +485,11 @@ pScatterCompare = proc_factory(
         params=Diot(),
         devpars=Diot(res=300, height=2000, width=2000),
         x=1,
-        y=2,
-        rnames=True,
-        cnames=True,
-        helper='',
+        tsform=None,
+        corr="pearson",
+        line="y=x",
+        stacked=False,
+        inopts=Diot(cnames=True, rnames=True)
     )
 )
 

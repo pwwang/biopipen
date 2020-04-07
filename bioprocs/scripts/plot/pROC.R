@@ -1,5 +1,5 @@
 
-{{rimport}}('__init__.r', 'plot.r')
+{{"__init__.R", "plot.R" | rimport}}
 
 infile  = {{i.infile | R}}
 outfile = {{o.outfile | R}}

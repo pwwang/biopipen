@@ -13,22 +13,21 @@
 # *        =   logfact(m) + logfact(N-m) + logfact(n) + logfact(N-n)
 # *          - logfact(k) - logfact(m-k) - logfact(n-k) - logfact(N-m-n+k) - logfact(N)
 # */
-{{rimport}}('__init__.r')
+{{"__init__.R" | rimport}}
 library(methods)
 
 infile  = {{i.infile | R}}
 outfile = {{o.outfile | R}}
 intype  = {{args.intype | R}}
 N       = {{args.N | R}}
-inopts  = update.list(list(rnames=T, cnames=T), {{args.inopts | R}})
+inopts  = {{args.inopts | R}}
 
 
 ret    = matrix(nrow = 0, ncol = 5)
 colnames(ret) = c('k', 'm', 'n', 'N', 'pval')
 
 if (intype == 'raw') {
-	rn     = if (inopts$rnames) 1 else NULL
-	data   = read.table(infile, row.names = rn, header = inopts$cnames, sep = "\t", check.names = F)
+	data   = read.table.inopts(infile, inopts)
 	cnames = colnames(data)
 	ncols  = ncol(data)
 	if (is.null(N))

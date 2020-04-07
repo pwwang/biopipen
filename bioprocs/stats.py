@@ -441,10 +441,6 @@ pPWFisherExact = proc_factory(
 pMediation = proc_factory(
     desc="Do mediation analysis.",
     config=Diot(annotate="""
-    @name:
-        pMediation
-    @description:
-        Do mediation analysis
     @input:
         `infile:file`: The input file (a matrix or data.frame). Example:
             ```
@@ -456,15 +452,14 @@ pMediation = proc_factory(
             ```
         `casefile:file`: The mediation options. Example:
             ```
-            Case1   lm      V3~V2|V1
-            Case2   lm,glm  V3~V1|V2
+            Case1   V3~V2|V1[   lm]
+            Case2   V3~V1|V2[   glm]
             ```
             - No column names, but implies `Case`, 'Model' and `Formua`.
             - `\t` as delimiter.
             - This file is optional. If it is not provided, `args.case` is required.
             - If this file is provided, `args.case` is ignored
-            - For different models, model for Mediator comes last. For Case2, the models will be:
-                - lm(V3 ~ V2 + V1) and glm(V2 ~ V1)
+            - For different models, model for Mediator comes last. For Case2, `V2` is the mediator
     @output:
         `outfile:file`: The result file.
         `outdir:dir`  : The output directory containing output file and plots.
@@ -481,8 +476,8 @@ pMediation = proc_factory(
         `plot`: Parameters for `plot.mediate`? Use `False` to disable plotting. Default: `Diot()`
             - Only case with pvalue < `args.pval` will be plotted.
             - To plot all cases, use `args.pval = 1`
-        `nthread`: Number of threads to use for different cases. Default: `1`
-        `devpars`: device parameters for the plot. Default: `Diot(res = 300, width = 2000, height = 2000)`
+        `nthread`: Number of threads to use for different cases.
+        `devpars`: device parameters for the plot.
         `case`   : Define cases, each case should have `model` and `fmula`.
             - If you only have one case, then it could be: `Diot(model = 'lm', fmula = 'Y~X|M')`
             In this case, `{{i.infile | fn2}}` will be used as case name
@@ -570,10 +565,6 @@ pLiquidAssoc = proc_factory(
 pHypergeom = proc_factory(
     desc="Do hypergeometric test.",
     config=Diot(annotate="""
-    @name:
-        pHypergeom
-    @description:
-        Do hypergeometric test.
     @input:
         `infile:file`: The input file, could be raw data (presence (1) and absence (0) of elements) or number of overlapped elements and elements in each category.
             - Set `args.intype` as `raw` if it is raw data. The population size `args.N` is required

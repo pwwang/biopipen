@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL
-from bioprocs.stats import pSurvival, pCorr, pDiffCorr, pAdjust, pDeCov, pChow
+from bioprocs.stats import pSurvival, pCorr, pDiffCorr, pAdjust, pDeCov, pChow, pMediation
 from . import assertInfile, assertNotInfile
 
 def test_survival(rdata):
@@ -95,3 +95,10 @@ def test_chow(rdata):
     assertInfile(pChow1.channel.outfile.get(), 'P1:P2	Income	Savings	26')
     assertInfile(pChow1.channel.outfile.get(), '10.69') # Fstat
 
+def test_mediation(rdata):
+    pMediation1 = pMediation.copy()
+    pMediation1.input = rdata.get('stats/corr.txt'), rdata.get('stats/medcases.txt')
+    pMediation1.args.pval = 1
+    PyPPL().start(pMediation1).run()
+    assertInfile(pMediation1.channel.outfile.get(), 'Case1	S3	S2	S1	-0.077	-0.604	0.268')
+    assertInfile(pMediation1.channel.outfile.get(), 'Case4	S8	S5	S9	-0.022	-0.293	0.856')
