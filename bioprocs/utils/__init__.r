@@ -139,10 +139,9 @@ rapply <- function(df, cnames = TRUE, func) {
         if (length(fms$name) == 1) {
             params$name <- rnames[index]
         }
-        do.call(func, params)
+        unlist(do.call(func, params))
     }
-    ret <- lapply(seq_along(rnames), sfunc)
-    ret <- t(as.data.frame(ret))
+    ret <- do.call(rbind, lapply(seq_along(rnames), sfunc))
     rownames(ret) <- rnames
     if (is.false(cnames)) {
         cnames <- NULL
@@ -150,7 +149,7 @@ rapply <- function(df, cnames = TRUE, func) {
         cnames <- colnames(df)
     }
     colnames(ret) <- cnames
-    ret
+    as.data.frame(ret)
 }
 
 # apply function on each column
@@ -177,10 +176,9 @@ capply <- function(df, rnames = TRUE, func) {
         if (length(fms$name) == 1) {
             params$name <- cnames[index]
         }
-        do.call(func, params)
+        unlist(do.call(func, params))
     }
-    ret <- lapply(seq_along(cnames), sfunc)
-    ret <- as.data.frame(ret)
+    ret <- do.call(cbind, lapply(seq_along(cnames), sfunc))
     colnames(ret) <- cnames
     if (is.false(rnames)) {
         rnames <- NULL
@@ -188,7 +186,7 @@ capply <- function(df, rnames = TRUE, func) {
         rnames <- rownames(df)
     }
     rownames(ret) <- rnames
-    ret
+    as.data.frame(ret)
 }
 
 row.apply = rapply

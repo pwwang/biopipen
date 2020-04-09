@@ -147,34 +147,39 @@ pAtSnp = proc_factory(
     @description:
         Scan motifs on Snps to detect binding affinity changes.
     @input:
-        `tffile:file`:  The tf-motif file with 1st column the motif and 2nd the tf
-        `snpfile:file`: The snp file.
-            - Could be a bed file with first 6 columns the bed6 format and 7th the reference allele, and 8th the alternative alleles.
-            - Alleles including reference allele should be seperated by `,`
-            - It also could be a snp file required by `atSNP` package.
-            - See: https://rdrr.io/github/kinsigne/atSNP_modified/man/LoadSNPData.html
+        infile: The input snp-TF pair file
+            - It can be either snp-TF pair per-line file (`args.stacked = True`)
+            - Or a matrix with snps as rows and TFs as columns. Values will be 0/1.
+        snpbed: The snp coordinate file in BED6+ format with:
+            - 7th column the reference allele, and
+            - 8th column the alternative allele
     @output:
-        `outfile:file`: The output file
-        `outdir:dir`  : The output directory containing the output file and plots.
+        outfile: The output file
+        outdir: The output directory containing the output file and plots.
     @args:
-        `tfmotifs`: The motif database. Defaut: `params.tfmotifs`
-        `genome`  : The reference genome to get the sequences. Default: `params.genome`
-        `fdr`     : Do fdr or not. Or could be the p-value adjustment method. Default: `True` (using `BH` method)
-        `pval`    : The pvalue cutoff for output and plot.
-        `plot`    : Do plot or not. Default: `True`
-        `nthread` : How many threads to use. Default: `1`
-        `depvars` : The device parameters for plotting. Default: `Diot(res = 300, width = 2000, height = 2000)`
+        stacked (bool): Whether the input file is in stacked (long) format
+        tflist (str): The motif-TF pair file.
+        tfmotifs (str): The motif database in MEME format.
+        genome (str): The reference genome to get the sequences
+        fdr (bool|str): Do fdr or not. Or could be the p-value adjustment method.
+            - `False` to disable
+            - `BH` method will be used for `True`
+        pval (float): The pvalue cutoff for output and plot.
+        plot (bool): Do plot or not. Default: `True`
+        nthread (int) : How many threads to use.
+        devpars (Diot) : The device parameters for plotting.
     @requires:
         `r-atSNP`
 	"""),
     lang=params.Rscript.value,
-    input='tffile:file, snpfile:file',
+    input='infile:file, snpbed:file',
     output=[
-        'outfile:file:{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp'
-        '/{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp.txt',
-        'outdir:dir:{{i.tffile | fn2}}-{{i.snpfile | fn2}}.atsnp'
+        'outfile:file:{{i.infile | fn2}}.atsnp/{{i.infile | fn2}}.atsnp.txt',
+        'outdir:dir:{{i.infile | fn2}}.atsnp'
     ],
     args=Diot(
+        stacked=True,
+        tflist=params.tflist.value,
         tfmotifs=params.tfmotifs.value,
         genome=params.genome.value,
         fdr=True,

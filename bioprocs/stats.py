@@ -450,12 +450,12 @@ pMediation = proc_factory(
             ... ...
             Sn   3    3    1
             ```
-        `casefile:file`: The mediation options. Example:
+        `casefile:file`: The mediation cases. Example:
             ```
             Case1   V3~V2|V1[   lm]
             Case2   V3~V1|V2[   glm]
             ```
-            - No column names, but implies `Case`, 'Model' and `Formua`.
+            - No column names, but implies `Case`, `Formua`, and `Model`.
             - `\t` as delimiter.
             - This file is optional. If it is not provided, `args.case` is required.
             - If this file is provided, `args.case` is ignored
@@ -464,7 +464,7 @@ pMediation = proc_factory(
         `outfile:file`: The result file.
         `outdir:dir`  : The output directory containing output file and plots.
     @args:
-        `inopts`: The options for input file. Default: `Diot(cnames = True, rnames = True)`
+        `inopts`: The options for input file.
             - `cnames`: Whether the input file has column names
             - `rnames`: Whether the input file has row names
         `medopts`: The options for mediation analysis.
@@ -495,6 +495,66 @@ pMediation = proc_factory(
         inopts=Diot(cnames=True, rnames=True),
         medopts=Diot(boot=True, sims=500),
         cov='',
+        pval=0.05,
+        fdr=True,  # BH, or other methods for p.adjust,
+        plot=Diot(),
+        case=Diot(model='lm', fmula='Y~X|M'),
+        nthread=1,
+        devpars=Diot(res=300, width=2000, height=2000),
+    )
+)
+
+pModeration = proc_factory(
+    desc="Do moderation analysis.",
+    config=Diot(annotate="""
+    @input:
+        `infile:file`: The input file (a matrix or data.frame). Example:
+            ```
+                V1   V2   V3
+            S1   1    2    3
+            S2   4    1    8
+            ... ...
+            Sn   3    3    1
+            ```
+        `casefile:file`: The moderation cases. Example:
+            ```
+            Case1   V3~V1|V2[   lm]
+            Case2   V3~V1|V2[   glm]
+            ```
+            - No column names, but implies `Case`, `Formua`, and `Model`.
+            - `\t` as delimiter.
+            - This file is optional. If it is not provided, `args.case` is required.
+            - If this file is provided, `args.case` is ignored
+            - Moderator comes last (V2 in the above examples)
+    @output:
+        `outfile:file`: The result file.
+        `outdir:dir`  : The output directory containing output file and plots.
+    @args:
+        `inopts`: The options for input file.
+            - `cnames`: Whether the input file has column names
+            - `rnames`: Whether the input file has row names
+        `pval`: The pvalue cutoff.
+        `fdr` : Method to calculate fdr. Use `False` to disable.
+        `plot`: Parameters for `plot.mediate`? Use `False` to disable plotting.
+            - Only case with pvalue < `args.pval` will be plotted.
+            - To plot all cases, use `args.pval = 1`
+        `nthread`: Number of threads to use for different cases.
+        `devpars`: device parameters for the plot.
+        `case`   : Define cases, each case should have `model` and `fmula`.
+            - If you only have one case, then it could be: `Diot(model = 'lm', fmula = 'Y~X|M')`
+            In this case, `{{i.infile | fn2}}` will be used as case name
+            - For multiple cases, this should be a dict of cases:
+            `Diot(Case1 = Diot(model='lm', fmula='Y~X|M'), Case2 = ...)`
+    """),
+    lang=params.Rscript.value,
+    input='infile:file, casefile:file',
+    output=[
+        'outfile:file:{{i.infile | fn2}}.moderation/'
+        '{{i.infile | fn2}}.moderation.txt',
+        'outdir:dir:{{i.infile | fn2}}.moderation'
+    ],
+    args=Diot(
+        inopts=Diot(cnames=True, rnames=True),
         pval=0.05,
         fdr=True,  # BH, or other methods for p.adjust,
         plot=Diot(),
