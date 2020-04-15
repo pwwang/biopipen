@@ -105,7 +105,7 @@ def bam_index(bam, ext='.bam.bai', samtools='samtools', nthread=1):
     # create it using samtools
     if not path.islink(bam):
         if samtools:
-            shell.samtools.index(b=True, _out=expected_index, **{'@': nthread})
+            shell.samtools.index({'@': nthread}, b=True, _=[bam, expected_index])
         else:
             raise ValueError('Index not found: {}'.format(bam))
         return
@@ -123,7 +123,7 @@ def bam_index(bam, ext='.bam.bai', samtools='samtools', nthread=1):
         return
     # if all failed, create it
     if samtools:
-        shell.samtools.index(b=True, _=[bam, expected_index], **{'@': nthread})
+        shell.samtools.index({'@': nthread}, b=True, _=[bam, expected_index])
     else:
         raise ValueError('Index not found: {}'.format(bam))
 

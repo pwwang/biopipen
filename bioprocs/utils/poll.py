@@ -1,7 +1,9 @@
+"""Make sure a task is running within one job"""
 import filelock
 from os import path
 from time import sleep
-from bioprocs.utils import runcmd, log2pyppl
+from bioprocs.utils import log2pyppl
+from bioprocs.utils.shell2 import runcmd
 
 class HardFileLock(filelock.BaseFileLock):
 	"""

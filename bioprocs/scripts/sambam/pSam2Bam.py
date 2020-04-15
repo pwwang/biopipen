@@ -2,7 +2,7 @@ from shutil import move, rmtree
 from os import path, symlink, remove
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import mem2, shell2 as shell
+from bioprocs.utils import mem2, shell2 as shell, logger
 
 infile     = {{ i.infile | quote }}
 inprefix   = {{ i.infile | fn | quote}}
@@ -39,7 +39,7 @@ if steps.rmdup:
 if not path.exists(tmpdir):
 	shell.mkdir(tmpdir, p = True)
 if steps.recal and tool != 'elprep':
-	raise ValueError('Step "recal" is only enabled by "elprep", use pBamRecal for other tools.')
+	logger.warning('Step "recal" is only enabled by "elprep", use pBamRecal for other tools.')
 
 
 def run_biobambam():

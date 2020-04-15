@@ -54,7 +54,7 @@ pSam2Bam = proc_factory(
     output=
     "outfile:file:{{i.infile | fn}}.bam, outidx:file:{{i.infile | fn}}.bam.bai",
     errhow='retry',
-    args=Diot(tool="elprep",
+    args=Diot(tool="biobambam",
               sambamba=params.sambamba.value,
               picard=params.picard.value,
               biobambam=params.biobambam_bamsort.value,

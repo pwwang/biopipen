@@ -17,7 +17,7 @@ from bioprocs.cnvkit import (pCNVkit2Vcf,
                              pCNVkitScatter,
                              pCNVkitSeg,
                              pCNVkitPrepare)
-from bioprocs.utils.sampleinfo import SampleInfo
+from bioprocs.utils.sampleinfo import SampleInfo2
 
 # pylint: disable=pointless-string-statement
 """
@@ -74,6 +74,7 @@ def aPrepareBam_ebam(procset, restore=True): # pylint: disable=unused-argument,i
 def aPrepareBam_fastq(procset, restore=True): # pylint: disable=unused-argument,invalid-name
     """fastq module for aPrepareBam"""
     procset.starts = 'pFastqTrim'
+    procset.pFastqTrim.depends = []
 
 @aPrepareBam.module
 def aPrepareBam_qc(procset, restore=True):# pylint: disable=unused-argument,invalid-name
@@ -136,6 +137,7 @@ aBam2SCNV = ProcSet( # pylint: disable=invalid-name
 # defaults
 aBam2SCNV.pBamDir.runner = 'local'
 aBam2SCNV.pSampleInfo.runner = 'local'
+aBam2SCNV.pCNNDir.runner = 'local'
 # delegates
 aBam2SCNV.delegate('args.ref', 'pCNVkitPrepare, pCNVkitRef')
 aBam2SCNV.delegate('args.cnvkit', 'pCNVkit*')
@@ -154,24 +156,28 @@ aBam2SCNV.pCNVkitCall.depends = aBam2SCNV.pCNVkitSeg
 aBam2SCNV.pCNVkit2Vcf.depends = aBam2SCNV.pCNVkitCall
 # input
 aBam2SCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [
-    Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).
+    Channel.create(SampleInfo2(ch_saminfo.get()).to_channel(ch_bamdir.get())).
     unique().flatten()
 ]
 aBam2SCNV.pCNVkitCov.input = lambda ch_bamdir, ch_saminfo, ch_target: \
     Channel.create(
-        SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())
+        SampleInfo2(ch_saminfo.get()).to_channel(ch_bamdir.get())
     ).unique().cbind(ch_target)
 aBam2SCNV.pCNNDir.input = lambda ch: [ch.flatten()]
 aBam2SCNV.pCNVkitRef.input = lambda ch_covs, ch_saminfo: [
     Channel.create(
-        SampleInfo(ch_saminfo.get()).
-        toChannel(ch_covs.get(), paired=True, raiseExc=False)).colAt(1).unique(
-        ).map(lambda x: (x[0].rpartition('.')[0] + '.target.cnn', x[0].
-                         rpartition('.')[0] + '.antitarget.cnn')).flatten()
+        SampleInfo2(ch_saminfo.get()).to_channel(
+            ch_covs.get(),
+            paired=True
+        )
+    ).colAt(1).unique().map(
+        lambda x: (x[0].rpartition('.')[0] + '.target.cnn',
+                   x[0].rpartition('.')[0] + '.antitarget.cnn')
+    ).flatten()
 ]
 aBam2SCNV.pCNVkitFix.input = lambda ch_covs, ch_saminfo, ch_ref: \
     Channel.create(
-        SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get(), paired=True)
+        SampleInfo2(ch_saminfo.get()).to_channel(ch_covs.get(), paired=True)
     ).colAt(0).unique().map(
         lambda x: (x[0].rpartition('.')[0] + '.target.cnn',
                    x[0].rpartition('.')[0] + '.antitarget.cnn')
@@ -184,7 +190,7 @@ aBam2SCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 def aBam2SCNV_plots(procset): # pylint: disable=invalid-name
     """plots module for aBam2SCNV"""
     procset.ends = ('pCNVkitScatter, pCNVkitDiagram, '
-                    'pCNVkitHeatmap, pCNVkitReport pCNVkit2Vcf')
+                    'pCNVkitHeatmap, pCNVkitReport, pCNVkit2Vcf')
 
     procset['pCNVkitScatter'].depends = procset['pCNVkitFix, pCNVkitSeg']
     procset['pCNVkitDiagram'].depends = procset['pCNVkitFix, pCNVkitSeg']
@@ -239,6 +245,7 @@ aBam2GCNV = ProcSet( # pylint: disable=invalid-name
 # defaults
 aBam2GCNV.pBamDir.runner = 'local'
 aBam2GCNV.pSampleInfo.runner = 'local'
+aBam2GCNV.pCNNDir.runner = 'local'
 # delegates
 aBam2GCNV.delegate('args.ref', 'pCNVkitPrepare, pCNVkitFlatRef')
 aBam2GCNV.delegate('args.nthread', 'pCNVkitPrepare, pCNVkitCov, pCNVkitSeg')
@@ -260,17 +267,17 @@ aBam2GCNV.pCNVkit2Vcf.depends = aBam2GCNV.pCNVkitCall
 #aBam2GCNV.pCNVkitAccess.input  = lambda ch:
 # path.basename(ch.get()).split('.')[:1]
 aBam2GCNV.pCNVkitPrepare.input = lambda ch_bamdir, ch_saminfo: [
-    Channel.create(SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())).
+    Channel.create(SampleInfo2(ch_saminfo.get()).to_channel(ch_bamdir.get())).
     unique().flatten()
 ]
 aBam2GCNV.pCNVkitCov.input = lambda ch_bamdir, ch_saminfo, ch_target: \
     Channel.create(
-        SampleInfo(ch_saminfo.get()).toChannel(ch_bamdir.get())
+        SampleInfo2(ch_saminfo.get()).to_channel(ch_bamdir.get())
     ).unique().cbind(ch_target)
 aBam2GCNV.pCNNDir.input = lambda ch: [ch.flatten()]
 aBam2GCNV.pCNVkitFix.input = lambda ch_covs, ch_saminfo, ch_ref: \
     Channel.create(
-        SampleInfo(ch_saminfo.get()).toChannel(ch_covs.get())
+        SampleInfo2(ch_saminfo.get()).to_channel(ch_covs.get())
     ).colAt(0).unique().map(
         lambda x: (x[0].rpartition('.')[0] + '.target.cnn',
                    x[0].rpartition('.')[0] + '.antitarget.cnn')
@@ -283,7 +290,7 @@ aBam2GCNV.pCNVkitHeatmap.input = lambda ch: [ch.flatten()]
 def aBam2GCNV_plots(procset): # pylint: disable=invalid-name
     """plots module for aBam2GCNV"""
     procset.ends = ('pCNVkitScatter, pCNVkitDiagram, '
-                    'pCNVkitHeatmap, pCNVkitReport')
+                    'pCNVkitHeatmap, pCNVkitReport, pCNVkit2Vcf')
     procset['pCNVkitScatter'].depends = procset['pCNVkitFix, pCNVkitSeg']
     procset['pCNVkitDiagram'].depends = procset['pCNVkitFix, pCNVkitSeg']
     procset['pCNVkitHeatmap'].depends = procset['pCNVkitSeg']

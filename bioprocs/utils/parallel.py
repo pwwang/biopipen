@@ -28,11 +28,14 @@ def distribute(total, nthread):
 
 
 def distributeList(joblist, nthread):
+    """Distribute (Chunk) a list to distribute it to nthread"""
     lists = distribute(len(joblist), nthread)
     start = 0
     for l in lists:
         yield joblist[start:l+start]
         start += l
+
+distribute_list = distributeList
 
 
 class Parallel(object):
