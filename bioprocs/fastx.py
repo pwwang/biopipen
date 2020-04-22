@@ -163,7 +163,8 @@ pFastqTrim = proc_factory(
         outfq1: The trimmed fastq file 1
         outfq2: The trimmed fastq file 2
     @args:
-        tool       : The tools used for trimming. Available: trimmomatic, cutadapt or skewer
+        tool       : The tools used for trimming. Available: `trimmomatic`, `cutadapt`, `skewer` and any one of the above plus "bbmap_repair".
+            - For example: "skewer+bbmap_repair", use will `repair.sh` to repair some unmapped read names that will cause error in alignment.
         cutadapt   : The path of seqtk.
         skewer     : The path of fastx toolkit trimmer.
         trimmomatic: The path of trimmomatic.
@@ -181,6 +182,7 @@ pFastqTrim = proc_factory(
             - Not for skewer
         adapter1: The adapter for sequence.
         adapter2: The adapter for pair-end sequence.
+        bbmap_repair: The path to `repair.sh` from `bbmap`
     @requires:
         [`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
         [`skewer`](https://github.com/relipmoc/skewer)
@@ -214,6 +216,7 @@ pFastqTrim = proc_factory(
               minq=3,
               cut5=3,
               cut3=3,
+              bbmap_repair=params.bbmap_repair.value,
               adapter1='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',
               adapter2='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA')
 )

@@ -74,6 +74,7 @@ def main(): # pylint: disable=too-many-statements,assigning-non-slot
     aPrepareBam.pFastq2Sam.args.tool = opts.aligner
     aPrepareBam.pFastqTrim.args.tool = opts.trimmer
     aPrepareBam.args.nthread = opts.nthread
+
     if (aPrepareBam.pSam2Bam.args.tool == 'elprep' and
             aPrepareBam.pSam2Bam.args.steps.recal):
         aPrepareBam.modules.norecal()

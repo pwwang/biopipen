@@ -6,6 +6,7 @@ import cmdy
 DEFAULT_CONFIG = dict(
     default=dict(_raise=True),
 
+    bbmap_repair=dict(_prefix='', _sep='='),
     bedtools=dict(_prefix='-'),
     biobambam=dict(_sep='=', _prefix=''),
     bowtie2=dict(_dupkey=True),
