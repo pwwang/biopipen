@@ -39,8 +39,11 @@ if not rg['SM']:
 	rg['SM'] = outprefix
 
 def sam2bam(samfile, bamfile):
+    # shall remove threads from here
+    # Error creating thread pool
+    # with even 16G per thread
 	shell.samtools.view(
-		S = True, b = True, _out = bamfile, _ = samfile, threads = nthread
+		S = True, b = True, _out = bamfile, _ = samfile
 	)
 	shell.rm_rf(samfile)
 

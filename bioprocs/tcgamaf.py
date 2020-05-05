@@ -582,6 +582,8 @@ pMafExtractSample = proc_factory(
     args=Diot(samples=[])
 )
 
+pMafSampleFilter = pMafExtractSample.copy()
+
 pMafExtractClass = proc_factory(
     desc='Filter MAF file with given classes',
     config=Diot(annotate="""

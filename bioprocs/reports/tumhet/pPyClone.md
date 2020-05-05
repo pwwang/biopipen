@@ -1,4 +1,4 @@
-# {{title}}
+# {{report.title}}
 
 This analysis is done using PyClone[1], which is designed to infer the prevalence of point mutations in heterogeneous cancer samples.
 

@@ -3,14 +3,14 @@ from diot import Diot
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
 
-infile  = {{i.infile | quote}}
+infile = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
-dtoxog  = {{args.dtoxog | quote}}
-params  = {{args.params | repr}}
-keep    = {{args.keep | repr}}
+dtoxog = {{args.dtoxog | quote}}
+params = {{args.params | repr}}
+keep = {{args.keep | repr}}
 nthread = {{args.nthread | repr}}
 
-shell.load_config(dtoxog = dtoxog)
+shell.load_config(dtoxog=dtoxog)
 
 # see if maf file has required fields
 # required fields
@@ -35,39 +35,39 @@ shell.load_config(dtoxog = dtoxog)
 # Variant_Type -- "SNP" (without quotes)
 # i_picard_oxoQ -- will be 0
 
-required_fields = { # set
-	'Chromosome',
-	'Start_Position',
-	'End_Position',
-	'Reference_Allele',
-	'Tumor_Seq_Allele1',
-	'Tumor_Sample_Barcode',
-	'Matched_Norm_Sample_Barcode',
-	'ref_context',
-	'i_t_ALT_F1R2',
-	'i_t_ALT_F2R1',
-	'i_t_REF_F1R2',
-	'i_t_REF_F2R1',
-	'i_t_Foxog',
-	'Variant_Type',
-	'i_picard_oxoQ',
+required_fields = {  # set
+    'Chromosome',
+    'Start_Position',
+    'End_Position',
+    'Reference_Allele',
+    'Tumor_Seq_Allele1',
+    'Tumor_Sample_Barcode',
+    'Matched_Norm_Sample_Barcode',
+    'ref_context',
+    'i_t_ALT_F1R2',
+    'i_t_ALT_F2R1',
+    'i_t_REF_F1R2',
+    'i_t_REF_F2R1',
+    'i_t_Foxog',
+    'Variant_Type',
+    'i_picard_oxoQ',
 }
 
 # check
 logger.info('Checking required fields ...')
 header = None
 with open(infile) as f:
-	for line in f:
-		if line.startswith('Hugo_Symbol'):
-			header = line.rstrip('\n').split('\t')
-			break
+    for line in f:
+        if line.startswith('Hugo_Symbol'):
+            header = line.rstrip('\n').split('\t')
+            break
 
 if not header:
-	raise ValueError('No header found for input MAF file.')
+    raise ValueError('No header found for input MAF file.')
 
 fields_not_found = required_fields - set(header)
 if fields_not_found and fields_not_found != {'i_picard_oxoQ'}:
-	raise ValueError('Required fields not found: %s' % (fields_not_found))
+    raise ValueError('Required fields not found: %s' % (fields_not_found))
 
 
 logger.info('Cleaning up input MAF file ...')
@@ -75,34 +75,35 @@ logger.info('Cleaning up input MAF file ...')
 # TODO: add real i_picard_oxoQ
 # Set i_t_ALT_F1R2, i_t_ALT_F2R1, i_t_REF_F1R2, i_t_REF_F2R1 as 0 if they are not reported
 # Exclude mutations other than [SNP, DNP, TNP]
-infile_fixed = path.join(path.dirname(outfile), 'fixed.' + path.basename(infile))
-reader = TsvReader(infile, comment = '#', cnames = True)
+infile_fixed = path.join(path.dirname(
+    outfile), 'fixed.' + path.basename(infile))
+reader = TsvReader(infile, comment='#', cnames=True)
 writer = TsvWriter(infile_fixed)
 if fields_not_found:
-	writer.cnames = reader.cnames + ['i_picard_oxoQ']
+    writer.cnames = reader.cnames + ['i_picard_oxoQ']
 writer.writeHead(lambda cnames: [
-	'Start_position' if cname == 'Start_Position' else
-	'End_position' if cname == 'End_Position' else cname
-	for cname in cnames])
+    'Start_position' if cname == 'Start_Position' else
+    'End_position' if cname == 'End_Position' else cname
+    for cname in cnames])
 for r in reader:
-	if r.Variant_Type not in ('SNP', 'DNP', 'TNP'):
-		continue
-	r.i_picard_oxoQ = 0
-	for key in ('i_t_ALT_F1R2', 'i_t_ALT_F2R1', 'i_t_REF_F1R2', 'i_t_REF_F2R1'):
-		if not r[key].isdigit():
-			r[key] = 0
-	writer.write(r)
+    if r.Variant_Type not in ('SNP', 'DNP', 'TNP'):
+        continue
+    r.i_picard_oxoQ = 0
+    for key in ('i_t_ALT_F1R2', 'i_t_ALT_F2R1', 'i_t_REF_F1R2', 'i_t_REF_F2R1'):
+        if not r[key].isdigit():
+            r[key] = 0
+    writer.write(r)
 writer.close()
 
-params.mafFilename       = infile_fixed
+params.mafFilename = infile_fixed
 params.outputMAFFilename = path.basename(outfile) + '.all'
-params.outputDir         = path.dirname(outfile)
-params.nthread           = nthread
+params.outputDir = path.dirname(outfile)
+params.nthread = nthread
 
 # avoid lost values
 for key, value in params.items():
-	if isinstance(value, bool):
-		params[key] = int(value)
+    if isinstance(value, bool):
+        params[key] = int(value)
 
 shell.mkdir(path.join(path.dirname(outfile), 'figures'))
 logger.info('Running DToxoG ...')
@@ -110,32 +111,35 @@ shell.fg.dtoxog(**params)
 
 
 logger.info('Fixing output file format issues ...')
-if not keep:
-	# remove variants with isArtifactMode = 1
-	with open(outfile + '.all') as fin, open(outfile, 'w') as fout:
-		for line in fin:
-			if line.startswith('#'):
-				fout.write(line)
-			else:
-				break
-	reader = TsvReader(outfile + '.all')
-	writer = TsvWriter(outfile, append = True)
-	writer.cnames = reader.cnames
-	writer.writeHead(lambda cnames: [
-		'Start_Position' if cname == 'Start_position' else
-		'End_Position' if cname == 'End_position' else cname
-		for cname in cnames])
-	for r in reader:
-		if r.isArtifactMode == '1':
-			continue
-		writer.write(r)
-	reader.close()
-	writer.close()
-else:
-	# get Start_Position and End_Position back
-	with open(outfile + '.all') as fin, open(outfile, 'w') as fout:
-		for line in fin:
-			if line.startswith('Hugo_Symbol'):
-				fout.write(line.replace('Start_position', 'Start_Position').replace('End_position', 'End_Position'))
-			else:
-				fout.write(line)
+rejected_maf = outfile + '.rejected'
+
+# try to remove variants with oxoGCut = 1 if not keep
+with open(outfile + '.all') as fin, open(outfile, 'w') as fout, \
+        open(rejected_maf, 'w') as frej:
+    for line in fin:
+        if line.startswith('#'):
+            fout.write(line)
+            frej.write(line)
+        else:
+            break
+reader = TsvReader(outfile + '.all')
+writer = TsvWriter(outfile, append=True)
+writer_rejected = TsvWriter(rejected_maf, append=True)
+writer.cnames = reader.cnames
+writer_rejected.cnames = reader.cnames
+writer.writeHead(lambda cnames: [
+    'Start_Position' if cname == 'Start_position' else
+    'End_Position' if cname == 'End_position' else cname
+    for cname in cnames])
+writer_rejected.writeHead(lambda cnames: [
+    'Start_Position' if cname == 'Start_position' else
+    'End_Position' if cname == 'End_position' else cname
+    for cname in cnames])
+for r in reader:
+    if r.oxoGCut == '1':
+        writer_rejected.write(r)
+        if not keep:
+            continue
+    writer.write(r)
+reader.close()
+writer.close()

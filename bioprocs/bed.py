@@ -124,3 +124,106 @@ pGff2Bed = proc_factory(
 )
 
 pBedFromGff = pGff2Bed.copy()
+
+pBed2Wiggle = proc_factory(
+    desc="Convert BED file to fixedStep Wiggle(bigwig) file",
+    config=Diot(annotate="""
+                @input:
+                    infile: The input BED file
+                        - Last column is the signals (separated by comma)
+                @output:
+                    outfile: The output Wiggle(bigwig) file
+                @args:
+                    inbase (int): The BED coordinate base of input file
+                    step (int): The step of each bin
+                    span (int): The span of each bin
+                        - Note that the length of of region specified in the input BED file won't be checked if it is exactly Ndata x Msteps
+                    addchr (bool): Try to add `chr` prefix to chromosome?
+                    bigwig (bool): Output bigwig file? Requires `args.wigtobigwig` and `args.gsize`
+                    wigtobigwig (str): Path to ucsc wigToBigWig
+                    gsize (str): Path to geome size
+                """),
+    lang=params.python.value,
+    input="infile:file",
+    output="""outfile:file:{{i.infile | stem}}.{{args.bigwig | ?
+                                                             | =:'bw'
+                                                             | !:'wig'}}""",
+    args=Diot(inbase=0, span=1, step=1, addchr=True,
+              gsize=params.gsize.value,
+              bigwig=True, wigtobigwig=params.wigtobigwig)
+)
+
+pBedExpand2 = proc_factory(
+    desc="Expand a bed file with signals at last columns",
+    config=Diot(annotate="""
+                @description:
+                    Expand a bed file with signals at last columns.
+                    Extending the `bedtools expand`, which does not make windows
+                    of the regions but just splits the signals
+
+                    Bedtools expand behavior:
+                    ```
+                    $ cat test.txt
+                    chr1	10	20	10,20
+                    chr1	40	50	40,50
+
+                    $ bedtools expand test.txt -c 5
+                    chr1	10	20	10
+                    chr1	10	20	20
+                    chr1	40	50	40
+                    chr1	40	50	50
+                    ```
+
+                    This tool's behavior with window size 5:
+                    ```
+                    chr1	10	15	1,2	10
+                    chr1	15	20	1,2	20
+                    chr1	40	45	4,5	40
+                    chr1	45	50	4,5	50
+                    ```
+                @input:
+                    infile: The input bed file with signals at last column
+                        - Signals must be separated by comma
+                @output:
+                    outfile: The output bed file with both regions and signals
+                        being split
+                @args:
+                    base (int): The coordinate base of input bed file
+                    binsize (int): The size of the bins
+                        - The length of each region must be divided by `binsize`
+                    datacols (str|list): The indexes of the columns that have
+                                         the data
+                        - 1-based
+                        - Number of data must be divided by the number of bins
+                          in that region
+                    name (str): The name of the output bins
+                        - `None`: don't output name
+                        - `src`: Use the source name if provided otherwise
+                          `src<src_index>` will be used.
+                        - `srcbin`: Use the source name plus the bin index
+                          (`src_bin<bin_index>`). if src is not provided, using
+                          `src<src_index>`
+                    origcols (str): What about other columns in the input file
+                        - `keep`: Keep and duplicate them for each bin
+                        - `drop`: Drop them
+                    aggrs (str|list): How to aggregate the data if there are more
+                                      than 1 for the bin
+                        - `raw`: comma-separated raw values
+                        - `mean`: Take the mean (sum/binsize)
+                        - `sum`: Take the sum
+                        - `min`: Take the min
+                        - `max`: Take the max
+                        - `count`: Count the number of data in that bin
+                        - Arithmetic function will turn the data into a float
+                          number
+                        - A string of lambda function to aggregate. Argument is
+                          the list of data in that bin.
+                        - If there are more than 1 datacols, you can specify
+                          multiple aggrs in a list for each datacol.
+                """),
+    lang=params.python.value,
+    input='infile:file',
+    output='outfile:file:{{i.infile | stem}}.expanded.bed',
+    args=Diot(base=0, binsize=None, datacols=None,
+              name='srcbin', origcols='keep', aggrs='raw')
+)

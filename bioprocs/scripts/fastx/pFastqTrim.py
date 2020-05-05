@@ -114,9 +114,9 @@ def run_bbmap_repair():
     params2.out = outfq1
     params2.out2 = outfq2
     params2.overwrite = 'f'
+    shell.fg.bbmap_repair(mem_java, **params2)
     shell.rm_rf(unrepaired_fq1)
     shell.rm_rf(unrepaired_fq2)
-    shell.fg.bbmap_repair(mem_java, **params2)
 
 TOOLS = {
     'trimmomatic': run_trimmomatic,
