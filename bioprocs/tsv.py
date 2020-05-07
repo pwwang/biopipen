@@ -598,18 +598,22 @@ pMergeRows = proc_factory(
 pTsvSplit = proc_factory(
     desc='Split a tsv file by rows.',
     config=Diot(annotate="""
-    @input:
-        infile: The input TSV file
-    @output:
-        outdir: The output directory of split files
-    @args:
-        inopts (Diot): Options for TsvReader to read input file
-        outopts (Diot): Options for TsvWriter to write output file
-        by (str|int): Split by what?
-            - Size as an integer
-            - Column as "col:column_name" or "col:column_index" (0-based)
-            - A string of lambda function using TsvRecord as argument, returns a tag of split file.
-    """),
+                @description:
+                    Split a TSV by rows.
+                    If you have `Too many open files` error, using `pRsplit`
+                    instead, which will load the whole data into memory.
+                @input:
+                    infile: The input TSV file
+                @output:
+                    outdir: The output directory of split files
+                @args:
+                    inopts (Diot): Options for TsvReader to read input file
+                    outopts (Diot): Options for TsvWriter to write output file
+                    by (str|int): Split by what?
+                        - Size as an integer
+                        - Column as "col:column_name" or "col:column_index" (0-based)
+                        - A string of lambda function using TsvRecord as argument, returns a tag of split file.
+                """),
     lang=params.python.value,
     input="infile:file",
     output="outdir:dir:{{i.infile | fn}}.splits",

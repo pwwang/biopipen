@@ -840,7 +840,13 @@ plot.volplot <- function(data,
         uptop <- params$hilight[2]
         labeldata <- data[order(data$logFC), , drop = FALSE]
         labeldata <- labeldata[labeldata$Group != "INSIG", , drop = FALSE]
-        ngenes <- nrow(labeldata)
+
+		# we can extract the up/down genes and rbind them later.
+		downtop <- min(downtop, nrow(labeldata[labeldata$Group == "DOWN_SIG",,
+											   drop = FALSE]))
+		uptop <- min(uptop, nrow(labeldata[labeldata$Group == "UP_SIG",,
+										   drop = FALSE]))
+		ngenes = nrow(labeldata)
         labeldata <- labeldata[c(1:downtop, (ngenes - uptop + 1):ngenes), ,
                                drop = FALSE]
         labeldata$Label <- rownames(labeldata)

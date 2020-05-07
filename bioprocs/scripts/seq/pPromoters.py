@@ -20,6 +20,7 @@ if region.down is None:
 # get all genes' TSS and strand
 reader = TsvReader(refgene, cnames=False, delimit='"')
 genes = {r[1]: r[0].split("\t")[:7] for r in reader}
+log2pyppl(f"{len(genes)} loaded from database ...")
 
 reader = TsvReader(infile, **inopts)
 writer = TsvWriter(outfile)

@@ -198,7 +198,7 @@ def main(): # pylint: disable=too-many-locals,too-many-statements,too-many-branc
                 pattern="*%s" % path.splitext(opts.exprmat)[1]
             ).cbind(opts.saminfo, ch2))
         pRNASeqDEG.args.tool = opts.caller
-        pRNASeqDEG.args.gscol = opts.gscol - 1
+        pRNASeqDEG.args.gscol = opts.gscol
         pRNASeqDEG.args.meta = opts.meta
         pRNASeqDEG.args.cutoff = opts.cutoff
         if opts.exdir:

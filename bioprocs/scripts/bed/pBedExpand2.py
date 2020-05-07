@@ -54,7 +54,7 @@ for ridx, row in enumerate(reader):
         if len(data) % nbins != 0:
             raise ValueError(f"Number of data {len(data)} "
                              f"at column {datacols[i]} cannot be divided by "
-                             f"number of bins for region {row}")
+                             f"number of bins for region {row[:3]}")
         chunk_size = len(data) // nbins
         data = [data[n*chunk_size: (n+1)*chunk_size] for n in range(nbins)]
         datas[i] = data

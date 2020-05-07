@@ -17,7 +17,7 @@ inopts['row'] = {{args.inopts.get('row', None)}}
 
 reader = TsvReader(infile, **inopts)
 exec('\n'.join(helper), globals())
-row = {{args.row | render}}
+row_func = {{args.row | render}}
 
 writer = TsvWriter(outfile, delimit=outopts.get('delimit', "\t"))
 outcnames = outopts.get('cnames', True)
@@ -30,7 +30,7 @@ elif isinstance(outcnames, (list, tuple)):
     writer.writeHead(head_callback)
 
 for record in reader:
-    rec = row(record)
+    rec = row_func(record)
     if rec is False:
         continue
     if rec is None or rec is True:
