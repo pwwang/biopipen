@@ -153,7 +153,9 @@ if (!is.logical(ggs$mdsplot) || ggs$mdsplot!=FALSE) {
 if (!is.logical(ggs$volplot) || ggs$volplot!=FALSE) {
     volplot = file.path (outdir, "volcano.png")
     voldata = ret$allgene
-    rownames(voldata) = make.unique(make.names(ret$allgene[, gscol]))
+	if (!is.null(gscol)) {
+    	rownames(voldata) = make.unique(make.names(ret$allgene[, gscol]))
+	}
     voldata = voldata[, c('logFC', ifelse(cutoff$by == 'p', 'PValue', 'FDR'))]
     colnames(voldata) = c('logFC', 'FDR')
     plot.volplot(

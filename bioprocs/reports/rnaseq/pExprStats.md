@@ -1,5 +1,7 @@
 # {{report.title}}
 
+{% from pathlib import Path %}
+
 {% for job in jobs %}
 :::: {.panel}
 ## {{ job.i.infile | stem | stem | @append: "-" + stem(job.i.gfile) }}
@@ -30,7 +32,7 @@
 
 :::
 
-{% 	if `job.o.outdir, '*.group.*.png' | *glob1` %}
+{% 	if `job.o.outdir, '*.group.*.png' | *glob1 | isinstance: (Path, list)` %}
 ::: {.panel}
 ### Stats for groups
 
@@ -51,7 +53,7 @@
 {% 		endif %}
 {% 	endif %}
 
-{% 	if `job.o.outdir, '*.batch.*.png' | *glob1` %}
+{% 	if `job.o.outdir, '*.batch.*.png' | *glob1 | isinstance: (Path, list)` %}
 ::: {.panel}
 ### Stats for batches
 
