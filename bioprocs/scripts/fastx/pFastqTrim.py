@@ -55,15 +55,15 @@ def run_trimmomatic():
     params2 = params.copy()
     params2.threads = nthread
     params2._prefix = '-'
-    shell.fg.trimmomatic(
-        *mem_java, "PE", params2, fq1, fq2, outfq1, "/dev/null",
+    shell.trimmomatic(*mem_java, _sub=True).PE(
+        params2, fq1, fq2, outfq1, "/dev/null",
         outfq2, "/dev/null",
         "ILLUMINACLIP:%s:2:30:10" % adfile,
         "LEADING:%s" % cut5,
         "TRAILING:%s" % cut3,
         "SLIDINGWINDOW:4:%s" % minq,
         "MINLEN:%s" % minlen2
-    )
+    ).fg
 
 def run_cutadapt():
     """Run cutadapt"""
@@ -77,7 +77,7 @@ def run_cutadapt():
     params2.o = outfq1
     params2.O = outfq2
     params2._ = [fq1, fq2]
-    shell.fg.cutadapt(**params2)
+    shell.cutadapt(**params2).fg
 
 def run_skewer():
     """Run skewer"""
@@ -91,7 +91,7 @@ def run_skewer():
     params2.z = gz
     params2.o = jobout / 'tmp'
     params2._ = [fq1, fq2]
-    shell.fg.skewer(**params2)
+    shell.skewer(**params2).fg
     out1 = jobout / 'tmp-trimmed-pair1.fastq'
     out2 = jobout / 'tmp-trimmed-pair2.fastq'
     if gz:
@@ -114,7 +114,7 @@ def run_bbmap_repair():
     params2.out = outfq1
     params2.out2 = outfq2
     params2.overwrite = 'f'
-    shell.fg.bbmap_repair(mem_java, **params2)
+    shell.bbmap_repair(mem_java, **params2).fg
     shell.rm_rf(unrepaired_fq1)
     shell.rm_rf(unrepaired_fq2)
 

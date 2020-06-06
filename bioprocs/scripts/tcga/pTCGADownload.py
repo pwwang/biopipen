@@ -25,7 +25,7 @@ dftargs.n = nthread
 dftargs.d = outdir
 if token:
     dftargs.t = token
-shell.fg.gdc.download(**dftargs)
+shell.gdc.download(**dftargs).fg
 
 # check if all the data sucessfully downloaded
 logger.warning(

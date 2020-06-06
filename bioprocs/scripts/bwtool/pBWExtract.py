@@ -23,4 +23,4 @@ if 'bed' not in bedext:
 
 shell.load_config(bwtool = dict(_exe = bwtool, _prefix = '-'))
 
-shell.fg.bwtool.extract('bed', bedfile, infile, outfile, tabs = True)
+shell.bwtool.extract('bed', bedfile, infile, outfile, tabs = True).fg

@@ -18,7 +18,7 @@ from pathlib import Path
 from cyvcf2 import VCF
 from gff import Gff
 from diot import Diot
-from cmdy import CmdyReturnCodeException
+from cmdy import CmdyReturnCodeError
 from bioprocs.utils import shell2 as shell, logger
 from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 {% from os import path%}
@@ -193,13 +193,13 @@ params['mhc-predictor'] = mhc_predictor
 PATHs = set()
 for mhcpred in (netmhc, netmhcpan, netmhciipan, netmhccons, smm, smm_pmbec):
 	try:
-		PATHs.add(str(Path(shell.which(mhcpred)).parent))
-	except CmdyReturnCodeException:
+		PATHs.add(str(Path(shell.which(mhcpred).str()).parent))
+	except CmdyReturnCodeError:
 		continue
 
 params._env = Diot(PATH = environ['PATH'] + ':' + ':'.join(PATHs))
 
-shell.fg.topiary(**params)
+shell.topiary(**params).fg
 
 # add wildtype binding
 # #,variant,peptide_offset,peptide,allele,affinity,percentile_rank,prediction_method_name,peptide_length,gene,gene_id,transcript_id,transcript_name,effect,effect_type,contains_mutant_residues,mutation_start_in_peptide,mutation_end_in_peptide,gene_expression
@@ -237,7 +237,7 @@ if mhc_predictor in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 
 		nparams = Diot(
 			a = mhcallele2, v = True, inptype = 1, f = wildfile, _prefix = '-',
 			_iter = True, _debug = True)
-		res = shell.netmhc(**nparams)
+		res = shell.netmhc(**nparams).iter()
 		pos_hit = False
 		wildbindings = {allele: {} for allele in mhcallele2.split(',')}
 		for line in res:
@@ -282,7 +282,7 @@ if mhc_predictor in ('netmhc', 'netmhcpan', 'netmhciipan', 'netmhccons', 'smm', 
 		nparams = Diot(
 			a = mhcallele2, v = True, BA = True, inptype = 1, f = wildfile, _prefix = '-',
 			xls = True, xlsfile = xlsfile)
-		shell.fg.netmhcpan(**nparams)
+		shell.netmhcpan(**nparams).fg
 
 		if not xlsfile.is_file():
 			raise RuntimeError("Failed to run netmhcpan, output file not generated.")

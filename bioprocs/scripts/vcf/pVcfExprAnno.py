@@ -37,6 +37,6 @@ if exprtype == 'kallisto':
 	exprfile = efile_withgene
 
 params.o = outfile
-shell.fg.vcf_expression_annotator(
+shell.vcf_expression_annotator(
 	params, infile, exprfile, exprtype, 'transcript' if istx else 'gene'
-)
+).fg

@@ -55,7 +55,7 @@ if tool == 'meme':
                             re.sub(r'[^\w_]', '', motif))
         prms.motif = motif
         cmdparams.append((prms,))
-    Parallel(nthread, raiseExc=True).run(shell.fg.fimo, cmdparams)
+    Parallel(nthread, raiseExc=True).run(shell.fimo, cmdparams)
 
     writer = TsvWriter(outfile)
     writer.cnames = [

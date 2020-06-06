@@ -170,8 +170,7 @@ def getCoverage(bamfiles, region, outfile):
 	i = 0
 	for line in shell.bedtools.multicov(
 		bams  = bamfiles,
-		bed   = region,
-		_iter = True):
+		bed   = region).iter():
 		# chr1	1	12444	104	87
 		i += 1
 		parts = line.strip().split('\t')
@@ -189,14 +188,14 @@ def getAlleleCount(bamfile, snpfile, outfile):
 	brcparams.f     = ref
 	brcparams.w     = 0
 	brcparams.l     = snpfile
-	brcparams._iter = True
+	# brcparams._iter = True
 
 	brcparams[''] = bamfile
 
 	writer = TsvWriter(outfile)
 	writer.cnames = ['Chrm', 'pos', 'A', 'C', 'G', 'T', 'Total', 'refCount', 'mutCount']
 	writer.writeHead(lambda ns: '#' + '\t'.join(ns))
-	for line in shell.bam_readcount(**brcparams):
+	for line in shell.bam_readcount(**brcparams).iter():
 		#chr1	564773	C	14	=:0:0.00:0.00:0.00:0:0:0.00:0.00:0.00:0:0.00:0.00:0.00	A:0:0.00:0.00:0.00:0:0:0.00:0.00:0.00:0:0.00:0.00:0.00	C:14:...	G:0:...	T:0:...	N:0:...
 		r = line.split('\t')
 		counts = dict(
@@ -303,6 +302,6 @@ params.OUTPUT_PREFIX = prefix
 #params.RATIO_DEV     = params.get('RATIO_DEV', .5)
 #params.MIN_FRAC      = params.get('MIN_FRAC', .1)
 params['']           = itvfile
-shell.fg.theta2(**params)
+shell.theta2(**params).fg
 
 ln_s(prefix + '.BEST.results', outfile)

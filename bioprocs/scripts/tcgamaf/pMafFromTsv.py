@@ -65,8 +65,8 @@ if 'Hugo_Symbol' not in reader.cnames and 'Gene' not in reader.cnames:
 			r.End_Position = r.get('End_Position', int(r.Start_Position) + 1)
 			fbed.write([r.Chromosome, r.Start_Position, r.End_Position])
 
-	res = shell.bedtools.intersect(a = bedfile, b = refgene, wa = True, wb = True, _iter = True)
-	for line in res.stdout:
+	res = shell.bedtools.intersect(a = bedfile, b = refgene, wa = True, wb = True).iter()
+	for line in res:
 		parts = line.strip().split('\t')
 		gene_mappings['\t'.join(parts[:3])] = tuple(parts[:-2])
 

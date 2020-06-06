@@ -107,7 +107,7 @@ def split_mutfile():
 
     # split reseq
     mutfile_sorted = mutfile_reseq.with_suffix('.reseq.sorted')
-    shell.sort(_=[mutfile_reseq], _out=mutfile_sorted, k=['1,1', '2,2n'])
+    shell.sort(_=[mutfile_reseq], k=['1,1', '2,2n']).r > mutfile_sorted
     mutreader = TsvReader(mutfile_sorted, cnames=False)
     last_seq = None
     mutwriter = None

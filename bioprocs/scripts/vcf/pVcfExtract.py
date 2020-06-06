@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 from bioprocs.utils.reference import vcfIndex
 
 vcffile = {{ i.vcffile | quote}}
@@ -8,9 +8,9 @@ outfile = {{ o.outfile | quote}}
 tabix   = {{ args.tabix | quote}}
 params  = {{ args.params | repr}}
 
-shell.TOOLS.tabix = tabix
+shell.load_config(tabix=tabix)
 vcffile = vcfIndex(vcffile, tabix)
 
 params._ = [vcffile, regfile]
-params._stdout = outfile
-shell.Shell().tabix(**params).run()
+# params._stdout = outfile
+shell.tabix(**params).r > outfile

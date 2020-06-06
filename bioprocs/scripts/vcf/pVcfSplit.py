@@ -29,7 +29,7 @@ else:
 	samples = allsamples
 
 def run_bcftools_one(sample):
-	shell.fg.bcftools.view(_ = infile, s = sample, o = path.join(outdir, '{}-{}.vcf'.format(prefix, sample)), **params)
+	shell.bcftools.view(_ = infile, s = sample, o = path.join(outdir, '{}-{}.vcf'.format(prefix, sample)), **params).fg
 
 def run_bcftools():
 	parallel.Parallel(nthread).run(run_bcftools_one, [(sample,) for sample in samples])
@@ -37,10 +37,9 @@ def run_bcftools():
 def run_awk_one(sample, index, awkfile):
 	shell.awk(
 		v = ["sample={!r}".format(sample), "index={}".format(index + 10)],
-		_stderr = stderr,
+		# _stderr = stderr,
 		f = awkfile,
-		_ = infile,
-		_out = path.join(outdir, '{}-{}.vcf'.format(prefix, sample)))
+		_ = infile).r(shell.STDOUT, shell.STDERR) ^ path.join(outdir, '{}-{}.vcf'.format(prefix, sample)) > stderr
 
 def run_awk():
 	# write the awk script
@@ -64,7 +63,7 @@ $0 !~ "^#" {
 	parallel.Parallel(nthread).run(run_awk_one, [(sample, i, awkfile) for i, sample in enumerate(samples)])
 
 def run_gatk_one(sample):
-	shell.fg.gatk(
+	shell.gatk(
 		R = ref,
 		V = infile,
 		o = path.join(outdir, '{}-{}.vcf'.format(prefix, sample)),
@@ -72,7 +71,7 @@ def run_gatk_one(sample):
 		T = 'SelectVariants',
 		excludeNonVariants = True,
 		**params
-	)
+	).fg
 
 def run_gatk():
 	parallel.Parallel(nthread).run(run_gatk_one, [(sample, ) for sample in samples])

@@ -8,8 +8,8 @@ keyword = {{ args.keyword | repr}}
 if not keyword:
 	raise ValueError('A keyword (args.keyword) is required.')
 
-params._stdout = outfile
+# params._stdout = outfile
 if infile.endswith('.gz'):
-	zcat(infile).pipe().grep(_ = keyword, **params)
+	zcat(infile).p | grep(_ = keyword, **params) ^ outfile
 else:
 	grep(_ = [keyword, infile], **params)

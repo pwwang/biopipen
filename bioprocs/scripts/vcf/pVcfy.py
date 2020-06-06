@@ -22,7 +22,7 @@ gz       = {{args.gz | repr}}
 shell.load_config(vcfy = vcfy, bcftools = bcftools, bedtools = bedtools)
 
 mergedfile = outfile.parent.joinpath(infile.stem + '.merged.bed')
-shell.bedtools.merge(i = infile, _out = mergedfile)
+shell.bedtools.merge(i = infile).r > mergedfile
 
 # get total length of regions
 total = 0
@@ -34,7 +34,7 @@ mutrate = float(nmuts) / float(total)
 
 subfafile = outfile.parent.joinpath(infile.stem + '.sub.fa')
 # get fasta
-shell.fg.bedtools.getfasta('-name+', fi = ref, fo = subfafile, bed = mergedfile)
+shell.bedtools.getfasta('-name+', fi = ref, fo = subfafile, bed = mergedfile).fg
 
 # index it
 faIndex(subfafile)
@@ -51,13 +51,13 @@ def one_run(region):
 	ps = params.copy()
 	ps.r = region
 	ps.o = outfile.with_suffix('.' + region + '.unmerged.vcf')
-	shell.fg.vcfy(**ps)
+	shell.vcfy(**ps).fg
 
 para.run(one_run, [(reg, ) for reg in regions])
 
 tmpfile = outfile.parent.joinpath(outfile.stem + '.tmp.vcf')
-shell.fg.bcftools.concat(_ = [vcf for vcf in outfile.parent.glob('*.unmerged.vcf')],
-	o = tmpfile, threads = nthread)
+shell.bcftools.concat(_ = [vcf for vcf in outfile.parent.glob('*.unmerged.vcf')],
+	o = tmpfile, threads = nthread).fg
 
 shell.rm_rf(*[str(vcf) for vcf in outfile.parent.glob('*.unmerged.vcf')])
 
@@ -115,4 +115,4 @@ with open(tmpfile) as fin, open(unsorted, 'w') as fout:
 			else:
 				fout.write('\t'.join(parts))
 
-shell.fg.bcftools.sort(_ = unsorted, o = outfile, T = tmpdir, O = 'z' if gz else 'v')
+shell.bcftools.sort(_ = unsorted, o = outfile, T = tmpdir, O = 'z' if gz else 'v').fg

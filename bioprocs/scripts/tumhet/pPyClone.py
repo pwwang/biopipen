@@ -66,7 +66,7 @@ def singleSampleMutVCF2BED(vcffiles):
 		for line in shell.bcftools.query(
 			_ = vcffile,
 			s = sample,
-			f = r'[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%AD{0}\t%AD{1}\t%SAMPLE\t%AF\n]'):
+			f = r'[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%AD{0}\t%AD{1}\t%SAMPLE\t%AF\n]').iter():
 
 			items = line.split('\t')
 			if items[4] in ('0/0', '0|0'):
@@ -94,7 +94,7 @@ def multiSampleMutVCF2BED(vcffile):
 	for line in shell.bcftools.query(
 		_ = vcffile,
 		s = ','.join(samples),
-		f = r'[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%AD{0}\t%AD{1}\t%SAMPLE\t%AF\n]'):
+		f = r'[%CHROM\t%POS\t%POS\t%CHROM:%POS\t%GT\t%AD{0}\t%AD{1}\t%SAMPLE\t%AF\n]').iter():
 		items = line.split('\t')
 
 		writer = writers[items[7]]
@@ -206,7 +206,7 @@ def singleSampleCnVCF2BED(vcffiles):
 		for line in shell.bcftools.query(
 			_ = vcffile,
 			s = sample,
-			f = r'%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n'):
+			f = r'%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n').iter():
 
 			items = line.split('\t')
 			if items[3] in ('0/0', '0|0'):
@@ -236,7 +236,7 @@ def multiSampleCnVCF2BED(vcffile):
 	for line in shell.bcftools.query(
 		_ = vcffile,
 		s = ','.join(samples),
-		f = r'[%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n]'):
+		f = r'[%CHROM\t%POS\t%POS\t%GT\t2\t0\t2\t%SAMPLE\n]').iter():
 
 		items = line.split('\t')
 		if items[3] in ('0/0', '0|0'):
@@ -308,7 +308,7 @@ def GetPyCloneTsv(mutfile, outfile, cnfile = None):
 	for line in shell.bedtools.intersect(
 		a = mutfile,
 		b = cnfile,
-		loj = True):
+		loj = True).iter():
 
 		# CHROM  START END NAME GENOTYPE REFCOUNTS VARCOUNTS CASE VARFREQ
 		# 0      1     2   3    4        5         6         7    8
@@ -368,7 +368,7 @@ params.plot_file_format = 'svg'
 params._env             = env
 params._raise = False
 
-c = shell.fg.pyclone.run_analysis_pipeline(**params)
+c = shell.pyclone.run_analysis_pipeline(**params).fg
 if c.rc != 0:
 	# Let it go if 'No mutations found in common across samples'
 	exit(0)
@@ -394,7 +394,7 @@ writer.close()
 writer = TsvWriter(locifile)
 writer.cnames = reader.cnames + ['gene']
 writer.writeHead()
-for line in shell.bedtools.intersect(a = locifilebed, b = refgene, loj = True, _iter = True):
+for line in shell.bedtools.intersect(a = locifilebed, b = refgene, loj = True).iter():
 	parts = line.split('\t')
 	r = parts[3:9] + [parts[17].split('; ')[0][9:-1]]
 	writer.write(r)

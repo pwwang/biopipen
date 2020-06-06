@@ -47,6 +47,8 @@ params.runner = 'local'
 params.runner.desc = 'The runner to run the processes.'
 params.forks = 1
 params.forks.desc = 'How many jobs to run simultanuously.'
+params.errhow = 'terminate'
+params.errhow.desc = 'What to do if error happens. retry, terminate or halt.'
 params.logfile = ''
 params.logfile.desc = 'Where to save the logs.'
 params.loglevel = 'info'
@@ -168,6 +170,7 @@ def main(): # pylint: disable=too-many-statements,assigning-non-slot
     ppl = PyPPL(forks=int(opts.forks),
                 ppldir=opts.ppldir,
                 cache='force' if opts.forcecache else True,
+                errhow=opts.errhow,
                 logger_level=opts.loglevel,
                 logger_file=opts.logfile).start(starts)
     if opts.flowchart:

@@ -22,10 +22,10 @@ if 'cnames' in inopts:
 	inopts.skip += 1
 
 if inopts.skip:
-	shell.head(_ = infile, n = inopts.skip, _out = outfile)
+	shell.head(_ = infile, n = inopts.skip).r > outfile
 	#params.__stdout = outfile
-	shell.pipe.tail(_ = infile, n = '+' + str(inopts.skip + 1)) | \
-		shell.sort(_out_ = outfile, **params)
+	(shell.tail(_ = infile, n = '+' + str(inopts.skip + 1)).p | \
+		shell.sort(**params).r) >> outfile
 else:
 	params._    = infile
 	params._out = outfile

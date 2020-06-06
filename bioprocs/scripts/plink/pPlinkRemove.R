@@ -49,7 +49,7 @@ for (fail in fails) {
             out = output,
             `make-bed` = T
         )
-        shell$plink(params, `_fg` = TRUE)$reset()
+        shell$plink(params)$fg
         #//cmd <- sprintf("%s %s 1>&2", plink, cmdargs(params, equal = " "))
         #//runcmd(cmd)
     } else if (isSNPFail(fail)) {
@@ -59,7 +59,7 @@ for (fail in fails) {
             out = output,
             `make-bed` = T
         )
-        shell$plink(params, `_fg` = TRUE)$reset()
+        shell$plink(params)$fg
         #//cmd <- sprintf("%s %s 1>&2", plink, cmdargs(params, equal = " "))
         #//runcmd(cmd)
     }

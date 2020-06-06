@@ -107,7 +107,7 @@ for key, value in params.items():
 
 shell.mkdir(path.join(path.dirname(outfile), 'figures'))
 logger.info('Running DToxoG ...')
-shell.fg.dtoxog(**params)
+shell.dtoxog(**params).fg
 
 
 logger.info('Fixing output file format issues ...')

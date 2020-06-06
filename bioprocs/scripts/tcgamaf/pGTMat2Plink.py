@@ -107,7 +107,7 @@ for r in inreader:
 tpedWriter.close()
 
 logger.info("Converting using plink ...")
-shell.fg.plink({'make-bed': True}, tfile=prefix, out=prefix)
+shell.plink({'make-bed': True}, tfile=prefix, out=prefix).fg
 
 if not keeptxt:
     shell.rm_rf(tpedfile)

@@ -28,5 +28,5 @@ params2   = params.copy()
 params1.o = outfile
 params2.o = antifile
 
-shell.fg.cnvkit.coverage(infile, target,  **params1)
-shell.fg.cnvkit.coverage(infile, atarget, **params2)
+shell.cnvkit.coverage(infile, target,  **params1).fg
+shell.cnvkit.coverage(infile, atarget, **params2).fg

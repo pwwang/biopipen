@@ -60,7 +60,7 @@ if not path.exists (tmpdir):
 def run_gatk():
 	# generate interval list file
 	intvfile = {{job.outdir | path.join: "interval.list" | quote}}
-	shell.pipe.samtools.idxstats(tumor) | shell.pipe.head(n = 1) | shell.cut(f = 1, _out = intvfile)
+	shell.samtools.idxstats(tumor).p | shell.head(n = 1).p | shell.cut(f = 1).r > intvfile
 
 	mem = mem2(mem, 'java')
 
@@ -72,11 +72,11 @@ def run_gatk():
 	params.nct = nthread
 	params.L   = intvfile
 
-	shell.fg.gatk(
+	shell.gatk(
 		mem2(mem, 'java'),
 		{'Djava.io.tmpdir': tmpdir, '_prefix': '-', '_sep': '='},
 		T = 'MuTect2',
-		**params)
+		**params).fg
 	if gz:
 		shell.bgzip(outfile)
 
@@ -84,7 +84,7 @@ def run_somaticsniper():
 	params.f   = ref
 	params.F   = 'vcf'
 	params[''] = [tumor, normal, outfile]
-	shell.fg.somaticsniper(**params)
+	shell.somaticsniper(**params).fg
 	if gz:
 		shell.bgzip(outfile)
 
@@ -99,7 +99,7 @@ def run_snvsniffer():
 	params.o = outfile
 
 	params[''] = [theader, nheader, tumor, normal]
-	shell.fg.snvsniffer.somatic(**params)
+	shell.snvsniffer.somatic(**params).fg
 	if gz:
 		shell.bgzip(outfile)
 
@@ -225,13 +225,13 @@ def run_strelka():
 	cparams.tumorBam       = tumor
 	cparams.referenceFasta = ref
 	cparams.runDir         = joboutdir
-	shell.fg.strelka(**cparams)
+	shell.strelka(**cparams).fg
 
 	params.m    = 'local'
 	params.g    = int(float(mem2(mem, 'G')[:-1]))
 	params.j    = nthread
 	params._exe = path.join(joboutdir, 'runWorkflow.py')
-	shell.fg.runWorkflow(**params)
+	shell.runWorkflow(**params).fg
 
 	snvvcf = path.join(joboutdir, 'results', 'variants', 'somatic.snvs.vcf.gz')
 	indvcf = path.join(joboutdir, 'results', 'variants', 'somatic.indels.vcf.gz')
@@ -244,11 +244,11 @@ def run_virmid():
 	params.D = tumor
 	params.N = normal
 	params.w = joboutdir
-	shell.fg.virmid(
+	shell.virmid(
 		mem2(mem, 'java'),
 		{'Djava.io.tmpdir': tmpdir, '_prefix': '-', '_sep': '='},
 		**params
-	)
+	).fg
 
 	shell.mv(path.join(joboutdir, '*.virmid.som.passed.vcf'), outfile)
 	if gz:
@@ -258,8 +258,8 @@ def run_vardict():
 	params.v    = True
 	params.G    = ref
 	params.b    = '{}|{}'.format(tumor, normal)
-	params._out = outfile
-	shell.fg.vardict(**params)
+	# params._out = outfile
+	shell.vardict(**params).r > outfile
 
 	if gz:
 		shell.bgzip(outfile)

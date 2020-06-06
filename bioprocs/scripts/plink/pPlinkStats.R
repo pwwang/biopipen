@@ -19,7 +19,7 @@ params$bfile   = input
 params$out     = output
 params$threads = nthread
 
-shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
+shell$plink(params, `_raise` = TRUE)$fg
 
 sexcheck_result = paste0(output, '.sexcheck')
 if (file.exists(sexcheck_result)) {

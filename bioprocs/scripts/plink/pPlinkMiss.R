@@ -27,7 +27,7 @@ shell$load_config(plink=plink)
 # we have to specify it to something, otherwise
 # "No stdout captured, may be redirected" will be raised
 # as shell.plink() returns CmdyResult object
-do.call(shell$plink, params)$reset()
+do.call(shell$plink, params)$fg
 # //cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
 # //runcmd(cmd)
 

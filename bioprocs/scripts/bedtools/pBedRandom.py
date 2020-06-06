@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 l        = {{i.l | repr}}
 n        = {{i.n | repr}}
@@ -8,5 +8,5 @@ bedtools = {{args.bedtools | quote}}
 gsize    = {{args.gsize | quote}}
 outfile  = {{o.outfile | quote}}
 
-shell.TOOLS.bedtools = bedtools
-shell.Shell(subcmd = True, dash = '-', equal = '=').bedtools.random(l = l, n = n, seed = seed, g = gsize, _stdout = outfile)
+shell.load_config(bedtools = bedtools)
+shell.bedtools.random(l = l, n = n, seed = seed, g = gsize).r > outfile

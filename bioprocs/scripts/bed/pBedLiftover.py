@@ -10,4 +10,4 @@ liftover = {{args.liftover | repr}}
 
 shell.load_config(liftover = liftover)
 
-shell.fg.liftover(infile, chain, outfile, umfile, **params)
+shell.liftover(infile, chain, outfile, umfile, **params).fg

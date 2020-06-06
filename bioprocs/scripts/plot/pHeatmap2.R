@@ -1,3 +1,4 @@
+{% config loglevel=debug %}
 {{'__init__.r', 'plot.r' | rimport}}
 library(ComplexHeatmap)
 

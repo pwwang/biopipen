@@ -1,13 +1,13 @@
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}
 bedtools = {{args.bedtools | quote}}
 params   = {{args.params | repr}}
 
-bedtools = shell.Shell(dict(bedtools = bedtools), subcmd = True).bedtools
+shell.load_config(bedtools=bedtools)
 
 params.i = infile
-params._stdout = outfile
-bedtools(**params).run()
+# params._stdout = outfile
+shell.bedtools.cluster(**params).r > outfile

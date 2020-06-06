@@ -18,4 +18,4 @@ params._       = infiles
 params.o       = outfile
 params.threads = nthread
 params.O       = 'z' if gz else 'v'
-shell.fg.bcftools.concat(**params)
+shell.bcftools.concat(**params).fg

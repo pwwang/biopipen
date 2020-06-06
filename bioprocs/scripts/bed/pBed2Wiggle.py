@@ -36,4 +36,4 @@ if not bigwig:
 from bioprocs.utils import shell2 as shell
 shell.mv(outfile, outfile + '.wig')
 shell.load_config(wigtobigwig=wigtobigwig)
-shell.fg.wigtobigwig(outfile + '.wig', gsize, outfile, _sep="=", _prefix="-")
+shell.wigtobigwig(outfile + '.wig', gsize, outfile, _sep="=", _prefix="-").fg

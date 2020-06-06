@@ -19,7 +19,7 @@ params.o = outdir
 params.t = nthread
 params._ = [fq1, fq2]
 
-shell.fg.kallisto.quant(**params)
+shell.kallisto.quant(**params).fg
 
 imfile        = path.join(outdir, 'abundance.tsv')
 reader        = TsvReader(imfile)

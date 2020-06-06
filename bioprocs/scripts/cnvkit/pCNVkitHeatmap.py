@@ -46,4 +46,4 @@ for region in regions:
 	if rgion:
 		iparams.c = rgion
 
-	shell.fg.cnvkit.heatmap(*cnfiles, **iparams)
+	shell.cnvkit.heatmap(*cnfiles, **iparams).fg

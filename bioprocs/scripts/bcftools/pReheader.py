@@ -21,5 +21,7 @@ if samfile:
 		params.S = samfile
 	else:
 		params.s = samfile
-cmd = shell.bcftools.reheader(**params).cmd
-sys.stderr.write("\n%s RUNNING %s\n%s\n%s\n\n" % ("-" * 40, "-" * 40, cmd, "-" *  89))
+cmd = shell.bcftools.reheader(**params).h.fg
+sys.stderr.write("\n%s RUNNING %s\n%s\n%s\n\n" % (
+	"-" * 40, "-" * 40, cmd.strcmd, "-" *  89))
+cmd.run(wait=True)

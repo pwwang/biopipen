@@ -36,8 +36,7 @@ def run_vcftools():
 	params.t       = params.get('t', True)
 	params.R       = params.get('R', '0/0')
 	params._       = invcfs
-	params._stdout = outfile[:-3] if gz else outfile
-	shell.vcftools(**params)
+	shell.vcftools(**params).r > outfile[:-3] if gz else outfile
 	if gz:
 		shell.bgzip(outfile[:-3])
 
@@ -57,9 +56,8 @@ def run_gatk():
 	params.R                   = ref
 	params.nt                  = nthread
 	params.variant             = invcfs
-	params._stdout             = outfile[:-3] if gz else outfile
 	params.genotypemergeoption = params.get('genotypemergeoption', 'UNIQUIFY')
-	shell.gatk(**params)
+	shell.gatk(**params).r > outfile[:-3] if gz else outfile
 	if gz:
 		shell.bgzip(outfile[:-3])
 

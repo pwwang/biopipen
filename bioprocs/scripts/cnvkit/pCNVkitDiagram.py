@@ -24,4 +24,4 @@ params.o = outfile
 if cnsfile:
 	params.s = cnsfile
 
-shell.fg.cnvkit.diagram(cnrfile, **params)
+shell.cnvkit.diagram(cnrfile, **params).fg

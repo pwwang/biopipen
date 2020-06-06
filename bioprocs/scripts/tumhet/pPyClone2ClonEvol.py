@@ -79,7 +79,7 @@ for mutation in records:
 bedwriter.close()
 
 mutations_with_genes = outfile.parent / 'mutations_with_genes.txt'
-shell.bedtools.intersect(a = bedwriter.filename, b = refgene, wo = True, _out = str(mutations_with_genes))
+shell.bedtools.intersect(a = bedwriter.filename, b = refgene, wo = True).r > str(mutations_with_genes)
 
 bedreader = TsvReader(mutations_with_genes)
 for bedr in bedreader:

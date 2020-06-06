@@ -57,26 +57,26 @@ def run_gatk():
 	params.threads = nthread
 	params._   = list(gatkmem.keys())
 
-	shell.fg.gatk(**params)
+	shell.gatk(**params).fg
 	if gz: shell.gzip(outfile)
 
 def run_vardict():
 	params.v      = True
 	params.G      = ref
 	params.b      = infile
-	params._out   = outfile
-	params._debug = True
-	shell.vardict(**params)
+	# params._out   = outfile
+	# params._debug = True
+	shell.vardict(**params).r > outfile
 	if gz: shell.gzip(outfile)
 
 def run_snvsniffer():
 	hfile = path.join(joboutdir, prefix + '.header')
-	shell.samtools.view(H = True, _out = hfile)
+	shell.samtools.view(H = True).r > hfile
 
 	params.g = ref
 	params.o = outfile
 	params._ = [hfile, infile]
-	shell.fg.ssniffer.snp(**params)
+	shell.ssniffer.snp(**params).fg
 	if gz: shell.gzip(outfile)
 
 def run_platypus():
@@ -85,7 +85,7 @@ def run_platypus():
 	params.nCPU        = nthread
 	params.output      = outfile
 	params.logFileName = outfile + '.platypus.log'
-	shell.fg.platypus.callVariants(**params)
+	shell.platypus.callVariants(**params).fg
 	if gz: shell.gzip(outfile)
 
 def run_strelka():
@@ -93,14 +93,14 @@ def run_strelka():
 	cfgParams.bam            = infile
 	cfgParams.referenceFasta = ref
 	cfgParams.runDir         = joboutdir
-	shell.fg.strelka(**cfgParams)
+	shell.strelka(**cfgParams).fg
 
 	# run the pipeline
 	params.m = 'local'
 	params.j = nthread
 	params.g = int(float(mem2(mem, 'G')[:-1]))
 	params._exe = path.join(joboutdir, 'runWorkflow.py')
-	shell.fg.runWorkflow(**params)
+	shell.runWorkflow(**params).fg
 
 	# mv output file to desired outfile
 	ofile = path.join(joboutdir, 'results', 'variants', 'genome.S1.vcf.gz')

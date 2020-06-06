@@ -59,17 +59,17 @@ if baits[-4:] in ('.gff', '.gtf'):
 
 params_t   = params.target
 params_t.o = path.join(outdir, prefix + '.bed')
-shell.fg.cnvkit.target(baits, **params_t)
+shell.cnvkit.target(baits, **params_t).fg
 
 # generate access file
 if not accfile:
     accfile    = path.join(outdir, prefix + '.access.bed')
     params_a   = params.access
     params_a.o = accfile
-    shell.fg.cnvkit.access(ref, **params_a)
+    shell.cnvkit.access(ref, **params_a).fg
 
 # autobin
 params_b   = params.autobin
 params_b.t = params_t.o
 params_b.g = accfile
-shell.fg.cnvkit.autobin(*infiles, **params_b)
+shell.cnvkit.autobin(*infiles, **params_b).fg

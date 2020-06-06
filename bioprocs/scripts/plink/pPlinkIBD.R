@@ -27,7 +27,7 @@ params = list(
 	`indep-pairwise` = indep,
 	out              = output
 )
-shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
+shell$plink(params, `_raise` = TRUE)$fg
 
 prunein = paste0(output, '.prune.in')
 params = list(
@@ -36,7 +36,7 @@ params = list(
 	genome  = T,
 	out     = output
 )
-shell$plink(params, `_raise` = TRUE, `_fg` = TRUE)$reset()
+shell$plink(params, `_raise` = TRUE)$fg
 
 genome = read.table(paste0(output, '.genome'), row.names = NULL, header = T, check.names = F)
 # "unmelt" it

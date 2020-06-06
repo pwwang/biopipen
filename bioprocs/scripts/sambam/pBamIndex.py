@@ -1,6 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell
-from bioprocs.utils.shell import Shell
+from bioprocs.utils import shell2 as shell
 
 infile   = {{ i.infile | quote}}
 outfile  = {{ o.outfile | quote }}
@@ -10,14 +9,14 @@ samtools = {{ args.samtools | quote}}
 params   = {{ args.params | repr}}
 nthread  = {{ args.nthread | repr}}
 
-shell.TOOLS['samtools'] = samtools
+shell.load_config(samtools=samtools)
 
 shell.ln_s(infile, outfile)
 
 def run_samtools():
-	shellst = Shell(subcmd = True).samtools
+	# shellst = Shell(subcmd = True).samtools
 	params['@'] = nthread
-	shellst.index(_ = [infile, outidx]).run()
+	shell.samtools.index(_ = [infile, outidx], **params).fg
 
 tools = dict(
 	samtools = run_samtools

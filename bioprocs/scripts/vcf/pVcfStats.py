@@ -18,7 +18,7 @@ vcfstats = {{args.vcfstats | repr}}
 
 shell.load_config(vcfstats = vcfstats)
 
-shell.fg.vcfstats(
+shell.vcfstats(
 	vcf      = infile,
 	outdir   = outdir,
 	formula  = formula,
@@ -32,4 +32,4 @@ shell.fg.vcfstats(
 	ggs      = ggs or False,
 	devpars  = devpars or False,
 	config   = config or False
-)
+).fg

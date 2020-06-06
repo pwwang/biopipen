@@ -35,7 +35,7 @@ def run_wgsim():
 	params['2'] = len2
 	params.S = get_seed(seed)
 	params._ = [ref, fq1, fq2]
-	shell.fg.wgsim(**params)
+	shell.wgsim(**params).fg
 	if gz:
 		shell.gzip(fq1)
 		shell.gzip(fq2)
@@ -52,7 +52,7 @@ def run_dwgsim():
 	params.S = 2
 	params.z = get_seed(seed)
 	params._ = [ref, prefix]
-	shell.fg.dwgsim(**params)
+	shell.dwgsim(**params).fg
 
 	shell.mv(prefix + '.bwa.read1.fastq', fq1)
 	shell.mv(prefix + '.bwa.read2.fastq', fq2)
@@ -74,7 +74,7 @@ def run_art_illumina():
 	params.p = True
 	params.rndSeed = get_seed(seed)
 
-	shell.fg.art_illumina(**params)
+	shell.art_illumina(**params).fg
 
 	shell.mv(prefix + '1.fq', fq1)
 	shell.mv(prefix + '2.fq', fq2)

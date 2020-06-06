@@ -22,4 +22,4 @@ shell.load_config(cnvkit = dict(
 
 params.o = outfile
 params.f = ref
-shell.fg.cnvkit.reference(*infiles, **params)
+shell.cnvkit.reference(*infiles, **params).fg

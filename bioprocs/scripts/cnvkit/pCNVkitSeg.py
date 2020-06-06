@@ -21,4 +21,4 @@ shell.load_config(cnvkit = dict(
 
 params.o = outfile
 params.p = nthread
-shell.fg.cnvkit.segment(infile, **params)
+shell.cnvkit.segment(infile, **params).fg

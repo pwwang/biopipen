@@ -49,7 +49,7 @@ def run_gatk():
     mem = mem2(argsmem, '-jdict')
     intfile = path.join(joboutdir, outprefix + '.intervals')
 
-    mem['-Djava.io.tmpdir={}'.format(shell.shquote(tmpdir))] = True
+    mem['-Djava.io.tmpdir={}'.format(tmpdir)] = True
 
     rtcparams    = params.get('RealignerTargetCreator', Diot())
     rtcparams.T  = 'RealignerTargetCreator'
@@ -58,7 +58,7 @@ def run_gatk():
     rtcparams.o  = intfile
     rtcparams.nt = nthread
     rtcparams._  = list(mem.keys())
-    shell.fg.gatk(**rtcparams)
+    shell.gatk(**rtcparams).fg
 
     bamfileir    = path.join(joboutdir, outprefix + '.ir.bam')
     irparams     = params.get('IndelRealigner', Diot())
@@ -69,7 +69,7 @@ def run_gatk():
     irparams._   = list(mem.keys())
 
     irparams.targetIntervals = intfile
-    shell.fg.gatk(**irparams)
+    shell.gatk(**irparams).fg
 
     recaltable   = path.join(joboutdir, outprefix + '.recaltable')
     brparams     = params.get('BaseRecalibrator', Diot())
@@ -81,7 +81,7 @@ def run_gatk():
     brparams._   = list(mem.keys())
 
     brparams.knownSites = knownSites
-    shell.fg.gatk(**brparams)
+    shell.gatk(**brparams).fg
 
     prparams     = params.get('PrintReads', Diot())
     prparams.T   = 'PrintReads'
@@ -90,7 +90,7 @@ def run_gatk():
     prparams.o   = outfile
     prparams.nct = nthread
     prparams._   = list(mem.keys())
-    shell.fg.gatk(**prparams)
+    shell.gatk(**prparams).fg
 
     shell.rm_rf(bamfileir)
     shell.mv(outprefix + '.bai', outfile + '.bai')
@@ -107,9 +107,9 @@ def run_bamutil():
     refcache       = path.splitext(ref)[0] + '-bs.umfa'
     if not path.isfile(refcache):
         poll = Poll(workdir, joblen, jobindex)
-        poll.first(shell.fg.bamutil.recab, **params)
+        poll.first(shell.bamutil.recab, **params)
     else:
-        shell.fg.bamutil.recab(**params)
+        shell.bamutil.recab(**params).fg
     bam_index(outfile, samtools=samtools)
 
 tools = dict(

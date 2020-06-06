@@ -43,8 +43,8 @@ def sam2bam(samfile, bamfile):
     # Error creating thread pool
     # with even 16G per thread
 	shell.samtools.view(
-		S = True, b = True, _out = bamfile, _ = samfile
-	)
+		S = True, b = True, _ = samfile
+	).r > bamfile
 	shell.rm_rf(samfile)
 
 def run_bowtie2():
@@ -55,7 +55,7 @@ def run_bowtie2():
 	params['2'] = infile2
 	params['rg-id'] = rg['ID']
 	params['rg'] = ['{}:{}'.format(k, v) for k, v in rg.items() if k != 'ID']
-	shell.fg.bowtie2(**params)
+	shell.bowtie2(**params).fg
 	if outfmt == 'bam': sam2bam(params.S, outfile)
 
 def run_bwa():
@@ -65,7 +65,7 @@ def run_bwa():
 	))
 	params.o = outfile if outfmt == 'sam' else path.splitext(outfile)[0] + '.sam'
 	params._ = [ref, infile1, infile2]
-	shell.fg.bwa.mem(**params)
+	shell.bwa.mem(**params).fg
 	if outfmt == 'bam': sam2bam(params.o, outfile)
 
 def run_ngm():
@@ -77,7 +77,7 @@ def run_ngm():
 	params.t = nthread
 	for k, v in rg.items():
 		params['rg-' + k.lower()] = v
-	shell.fg.ngm(**params)
+	shell.ngm(**params).fg
 
 def run_star():
 	params.genomeDir        = path.splitext(ref)[0] + '.star'
@@ -88,7 +88,7 @@ def run_star():
 	params.readNameSeparator = '.'
 	params.outFileNamePrefix = outdir + '/'
 	params.outSAMtype        = [outfmt.upper(), 'Unsorted']
-	shell.fg.star(**params)
+	shell.star(**params).fg
 
 	starout = path.join(outdir, "Aligned.out.{}".format(outfmt))
 	if path.isfile(starout):

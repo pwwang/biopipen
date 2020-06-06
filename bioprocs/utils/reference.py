@@ -162,16 +162,16 @@ def tabix_index(filename, type, tabix='tabix'): # pylint: disable=redefined-buil
             if path.isfile(realfile + '.tbi'):
                 shell.ln_s(realfile + '.tbi', expected_index)
                 return realfile
-        shell.fg.tabix(p=ptype, _=filename)
+        shell.tabix(p=ptype, _=filename).fg
         return filename
     if gt == 'gzip':
         bgzfile = path.join(dname, bname + '.bgz.' + type)
-        shell.gunzip(filename, c=True, _out=bgzfile)
+        shell.gunzip(filename, c=True).r > bgzfile
         shell.bgzip(bgzfile)
-        shell.fg.tabix(p=ptype, _=bgzfile)
+        shell.tabix(p=ptype, _=bgzfile).fg
         return bgzfile + '.gz'
-    shell.bgzip(filename, c=True, _out=filename + '.gz')
-    shell.fg.tabix(p=ptype, _=filename + '.gz')
+    shell.bgzip(filename, c=True).r > filename + '.gz'
+    shell.tabix(p=ptype, _=filename + '.gz').fg
     return filename + '.gz'
 
 tabixIndex = tabix_index # pylint: disable=invalid-name

@@ -24,7 +24,7 @@ if fqfile1.suffix == '.bam':
 	tmpfq1 = outdir.joinpath(outdir.stem + '_1.fq')
 	tmpfq2 = outdir.joinpath(outdir.stem + '_2.fq')
 	opts = Diot(F = tmpfq1, F2 = tmpfq2, I = fqfile1)
-	shell.fg.picard.SamToFastq(**opts)
+	shell.picard.SamToFastq(**opts).fg
 	fqfile1 = tmpfq1
 	fqfile2 = tmpfq2
 
@@ -34,17 +34,17 @@ tmpbam = outdir.joinpath(outdir.stem + '.sam')
 bwaps.o = tmpbam
 bwaps._ = [hlaref, fqfile1, fqfile2]
 bwaps.t = nthread
-shell.fg.bwa.mem(**bwaps)
+shell.bwa.mem(**bwaps).fg
 
 fqfish1 = outdir.joinpath(outdir.stem + '_fished_1.fq')
 fqfish2 = outdir.joinpath(outdir.stem + '_fished_2.fq')
 opts = Diot(I = tmpbam, F = fqfish1, F2 = fqfish2)
-shell.fg.picard.SamToFastq(**opts)
+shell.picard.SamToFastq(**opts).fg
 
 params.i = [fqfish1, fqfish2]
 params.verbose = True
 params.outdir = outdir
-shell.fg.optitype(**params)
+shell.optitype(**params).fg
 
 # replace this:
 # 	A1	A2	B1	B2	C1	C2	Reads	Objective

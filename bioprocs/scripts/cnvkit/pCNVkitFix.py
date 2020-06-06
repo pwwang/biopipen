@@ -24,4 +24,4 @@ shell.load_config(cnvkit = dict(
 
 params.o = outfile
 params.i = sample # sample id
-shell.fg.cnvkit.fix(tgfile, atgfile, rcfile, **params)
+shell.cnvkit.fix(tgfile, atgfile, rcfile, **params).fg

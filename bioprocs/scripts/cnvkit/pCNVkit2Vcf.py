@@ -20,4 +20,4 @@ shell.load_config(cnvkit = dict(
 ))
 
 params.o = outfile
-shell.fg.cnvkit.export('vcf', infile, **params)
+shell.cnvkit.export('vcf', infile, **params).fg

@@ -26,13 +26,13 @@ oncotator_db = {{args.oncotator_db | quote}}
 shell.load_config(vcf2maf = vcf2maf, bcftools = bcftools, oncotator = oncotator)
 
 def extract_sample_from_vcf(vcf, sample, outvcf, nomiss = True):
-	shell.fg.bcftools.view(s = sample, o = outvcf + '.tmp', _ = vcf)
+	shell.bcftools.view(s = sample, o = outvcf + '.tmp', _ = vcf).fg
 	# exclude sites without genotypes
 	# because this is split from a merged vcf file
 	if nomiss:
-		shell.fg.bcftools.view(_ = outvcf + '.tmp', g = '^miss', o = outvcf)
+		shell.bcftools.view(_ = outvcf + '.tmp', g = '^miss', o = outvcf).fg
 	else:
-		shell.fg.bcftools.view(_ = outvcf + '.tmp', o = outvcf)
+		shell.bcftools.view(_ = outvcf + '.tmp', o = outvcf).fg
 	shell.rm_rf(outvcf + '.tmp')
 
 def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
@@ -46,7 +46,7 @@ def run_vcf2maf_one(vcf, maf, tumor, normal = None, forks = nthread):
 	params_one['vep-path']   = path.dirname(shell.which(vep).strip())
 	params_one['tumor-id']   = tumor
 	params_one['normal-id']  = normal
-	shell.fg.vcf2maf(**params_one)
+	shell.vcf2maf(**params_one).fg
 
 def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
 	vcf = vcfIndex(vcf, tabix = tabix)
@@ -79,12 +79,12 @@ def run_oncotator_one(vcf, maf, tumor, normal = None, forks = nthread):
 
 	# don't use **params, otherwise input_format will be turned into input-format
 	logger.info('See %s for oncotator logs.', params_one.log_name)
-	shell.fg.oncotator(params_one, _env =  dict(
+	shell.oncotator(params_one, _env =  dict(
 		OPENBLAS_NUM_THREADS = str(openblas_threads),
 		OMP_NUM_THREADS      = str(openblas_threads),
 		NUMEXPR_NUM_THREADS  = str(openblas_threads),
 		MKL_NUM_THREADS      = str(openblas_threads)
-	))
+	)).fg
 
 	# oncotator cannot put Matched_Norm_Sample_Barcode and allele information
 	# add them if normal is specified
@@ -194,9 +194,9 @@ def run(tool):
 		del para
 
 		# merge mafs
-		shell.out.head(n = 1, _ = path.join(mafdir, "split1.maf")) > outfile
+		shell.head(n = 1, _ = path.join(mafdir, "split1.maf")).r > outfile
 		for i, s in enumerate(vcfsams):
-			shell.out.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1))) >> outfile
+			shell.tail(n = '+2', _ = path.join(mafdir, "split{}.maf".format(i+1))).r >> outfile
 
 try:
 	run(tool)

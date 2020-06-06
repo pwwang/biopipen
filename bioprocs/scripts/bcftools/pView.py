@@ -21,9 +21,11 @@ params._    = infile
 params.o    = outfile
 params.O    = 'z' if gz else 'v'
 if samfile:
-	if path.isfile(samfile):
-		params.S = samfile
-	else:
-		params.s = samfile
-cmd = shell.bcftools.view(**params).cmd
-sys.stderr.write("\n%s RUNNING %s\n%s\n%s\n\n" % ("-" * 40, "-" * 40, cmd, "-" *  89))
+    if path.isfile(samfile):
+        params.S = samfile
+    else:
+        params.s = samfile
+cmd = shell.bcftools.view(**params).h.fg
+sys.stderr.write("\n%s RUNNING %s\n%s\n%s\n\n" % (
+    "-" * 40, "-" * 40, cmd.strcmd, "-" *  89))
+cmd.run(wait=True)

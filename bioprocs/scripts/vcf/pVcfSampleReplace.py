@@ -53,4 +53,4 @@ params = dict(
 	_       = infile,
 	s       = samfile
 )
-shell.fg.bcftools.reheader(**params)
+shell.bcftools.reheader(**params).fg

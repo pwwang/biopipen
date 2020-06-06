@@ -54,4 +54,4 @@ params.update(dict(
 	_       = infile
 ))
 
-shell.fg.bcftools.view(**params)
+shell.bcftools.view(**params).fg

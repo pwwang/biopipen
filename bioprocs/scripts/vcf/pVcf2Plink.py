@@ -33,4 +33,4 @@ params.vcf = infile
 params['make-bed'] = True
 params.out = path.join(outdir, {{i.infile | fn2 | quote}})
 
-shell.fg.plink(**params)
+shell.plink(**params).fg

@@ -34,7 +34,7 @@ if tool == 'picard':
 		params['-' + jm[1:]] = True
 
 	params['-Djava.io.tmpdir'] = tmpdir
-	shell.fg.picard.LiftoverVcf(**params)
+	shell.picard.LiftoverVcf(**params).fg
 
 	# check if samples being swapped
 	# picard LiftoverVcf did that and no options to correct

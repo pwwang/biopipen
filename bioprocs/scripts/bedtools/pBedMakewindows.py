@@ -14,6 +14,6 @@ if intype == 'bed':
 else:
 	params.g = infile
 
-params._out   = outfile
-params._debug = True
-shell.bedtools.makewindows(**params)
+# params._out   = outfile
+# params._debug = True
+shell.bedtools.makewindows(**params).r > outfile

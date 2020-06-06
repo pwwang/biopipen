@@ -76,10 +76,9 @@ def MutVCF2BED(vcffile):
 	writer = TsvWriter(ret)
 	writer.cnames = ['CHROM', 'START', 'END', 'NAME', 'AF', 'Depth', 'CN']
 	for line in shell.bcftools.query(
-		_iter = True,
 		_ = vcffile,
 		s = sample,
-		f = '%CHROM\t%POS\t%POS\t%CHROM:%POS\t[%AF]\t[%AD{1}]\t[%GT]\n'):
+		f = '%CHROM\t%POS\t%POS\t%CHROM:%POS\t[%AF]\t[%AD{1}]\t[%GT]\n').iter():
 		items = line.strip().split('\t')
 		try:
 			gt = int(items[-1][0]) + int(items[-1][-1])
@@ -107,10 +106,9 @@ def CnVCF2BED(vcffile):
 	writer = TsvWriter(ret)
 	writer.cnames = ['CHROM', 'START', 'END', 'CN']
 	for line in shell.bcftools.query(
-		_iter = True,
 		_ = vcffile,
 		s = sample,
-		f = '%CHROM\t%POS\t[%END]\t[%CN]\n'):
+		f = '%CHROM\t%POS\t[%END]\t[%CN]\n').iter():
 		items = line.strip().split('\t')
 		if items[3] == '0':
 			logger.warning('Record skipped with CN=0: %s', line)
@@ -133,10 +131,9 @@ if infile.endswith('.vcf') or infile.endswith('.vcf.gz'):
 	writer.cnames = ['ID', 'Allele_Freq', 'Depth', 'Ploidy']
 	writer.writeHead()
 	for line in shell.bedtools.intersect(
-		_iter = True,
 		a = mutbed,
 		b = cnbed,
-		loj = True):
+		loj = True).iter():
 		# CHROM  START END NAME AF   Depth       GT
 		# 0      1     2   3    4        5        6
 		# CHROM START END CN
@@ -156,4 +153,4 @@ params.i = infile
 params.d = outdir
 params.o = outstem
 
-shell.fg.allfit(**params)
+shell.allfit(**params).fg

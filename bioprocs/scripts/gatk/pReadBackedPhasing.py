@@ -20,4 +20,5 @@ params.o = outfile
 params.variant = infile
 params.L = interval or infile
 
-shell.fg.gatk3(f'-Djava.io.tmpdir={tmpdir}', *mem2(mem, 'java').split(), **params)
+shell.gatk3(f'-Djava.io.tmpdir={tmpdir}',
+            *mem2(mem, 'java').split(), **params).fg

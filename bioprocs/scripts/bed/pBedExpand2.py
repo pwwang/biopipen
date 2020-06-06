@@ -57,6 +57,7 @@ for ridx, row in enumerate(reader):
                              f"number of bins for region {row[:3]}")
         chunk_size = len(data) // nbins
         data = [data[n*chunk_size: (n+1)*chunk_size] for n in range(nbins)]
+        # datas: mark_index => bin_index => [data]
         datas[i] = data
 
     for binidx in range(nbins):
@@ -67,8 +68,9 @@ for ridx, row in enumerate(reader):
             outs.append(f"{origname}_bin{binidx+1}")
         if origcols == 'keep':
             outs.extend(row[4:])
+        # add aggregation value of each mark
         for i, data in enumerate(datas):
-            outs.append(aggrs[i](data[i]))
+            outs.append(aggrs[i](data[binidx]))
         writer.write(outs)
 
 reader.close()

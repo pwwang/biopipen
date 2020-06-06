@@ -60,17 +60,17 @@ def run_biobambam():
 	params.markduplicates = int(steps.markdup)
 	params.rmdup          = int(steps.rmdup)
 
-	shell.fg.biobambam(**params)
+	shell.biobambam(**params).fg
 
 def run_sambamba():
 	global infile
 	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
-		shell.fg.sambamba.view(S = True, f = 'bam', o = outfile, t = nthread, _ = infile)
+		shell.sambamba.view(S = True, f = 'bam', o = outfile, t = nthread, _ = infile).fg
 	else:
 		bamfile = outfile
 		if infmt == 'sam':
 			bamfile = path.join(joboutdir, inprefix + '.s2b.bam')
-			shell.fg.sambamba.view(S = True, f = 'bam', o = bamfile, t = nthread, _ = infile)
+			shell.fg.sambamba.view(S = True, f = 'bam', o = bamfile, t = nthread, _ = infile).fg
 			infile = bamfile
 		if steps.sort:
 			if sortby == 'queryname':
@@ -82,14 +82,14 @@ def run_sambamba():
 			params.o      = bamfile
 			params.t      = nthread
 			params._      = infile
-			shell.fg.sambamba.sort(**params)
+			shell.sambamba.sort(**params).fg
 			if infile != {{i.infile | quote}}:
 				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.markdup:
 			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
-			shell.fg.sambamba.markdup(r = steps.rmdup, t = nthread, tmpdir = tmpdir,
-				_ = [infile, bamfile])
+			shell.sambamba.markdup(r = steps.rmdup, t = nthread, tmpdir = tmpdir,
+				_ = [infile, bamfile]).fg
 			if infile != {{i.infile | quote}}:
 				shell.rm_rf(infile)
 			infile = bamfile
@@ -97,7 +97,7 @@ def run_sambamba():
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
 			else:
-				shell.fg.sambamba.index(t = nthread, _ = [infile, infile + '.bai'])
+				shell.sambamba.index(t = nthread, _ = [infile, infile + '.bai']).fg
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
@@ -106,13 +106,13 @@ def run_sambamba():
 def run_samtools():
 	global infile
 	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
-		shell.fg.samtools.view(b = True, o = outfile, O = 'bam', _ = infile)
+		shell.samtools.view(b = True, o = outfile, O = 'bam', _ = infile).fg
 	else:
 		bamfile = outfile
 		if steps.sort:
 			mem = mem2(argsmem, 'M')
 			bamfile = path.join(joboutdir, inprefix + '.sorted.bam')
-			shell.fg.samtools.sort(
+			shell.samtools.sort(
 				m     = mem + 'M',
 				n     = sortby == 'queryname',
 				o     = bamfile,
@@ -120,13 +120,13 @@ def run_samtools():
 				O     = 'bam',
 				_     = infile,
 				**{'@': nthread}
-			)
+			).fg
 			if infile != {{i.infile | quote}}:
 				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.markdup or steps.rmdup:
 			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
-			shell.fg.samtools.rmdup(infile, bamfile)
+			shell.samtools.rmdup(infile, bamfile).fg
 			if infile != {{i.infile | quote}}:
 				shell.rm_rf(infile)
 			infile = bamfile
@@ -142,25 +142,25 @@ def run_picard():
 	mem = mem2(argsmem, '-jdict')
 	mem['-Djava.io.tmpdir'] = tmpdir
 	if not (steps.sort or steps.index or steps.markdup or steps.rmdup):
-		shell.fg.picard.SamFormatConverter(TMP_DIR = tmpdir, I = infile, O = outfile)
+		shell.picard.SamFormatConverter(TMP_DIR = tmpdir, I = infile, O = outfile).fg
 	else:
 		bamfile = outfile
 		if steps.sort:
 			bamfile = path.join(joboutdir, inprefix + '.sorted.bam')
-			shell.fg.picard.ShortSam(TMP_DIR = tmpdir, I = infile, O = bamfile, SO = sortby)
+			shell.picard.ShortSam(TMP_DIR = tmpdir, I = infile, O = bamfile, SO = sortby).fg
 			if infile != {{i.infile | quote}}:
 				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.markdup:
 			mfile = "/dev/null"
 			bamfile = path.join(joboutdir, inprefix + '.dedup.bam')
-			shell.fg.picard.MarkDuplicates(REMOVE_DUPLICATES = 'true' if steps.rmdup else 'false',
-				TMP_DIR = tmpdir, I = infile, O = bamfile, M = mfile)
+			shell.picard.MarkDuplicates(REMOVE_DUPLICATES = 'true' if steps.rmdup else 'false',
+				TMP_DIR = tmpdir, I = infile, O = bamfile, M = mfile).fg
 			if infile != {{i.infile | quote}}:
 				shell.rm_rf(infile)
 			infile = bamfile
 		if steps.index:
-			shell.fg.picard.BuildBamIndex(TMP_DIR = tmpdir, I = infile, O = outfile + '.bai')
+			shell.picard.BuildBamIndex(TMP_DIR = tmpdir, I = infile, O = outfile + '.bai').fg
 		if infile != outfile:
 			if path.exists(infile + '.bai'):
 				shell.mv(infile + '.bai', outfile + '.bai')
@@ -185,7 +185,7 @@ def run_elprep():
 		if knownSites:
 			params['known-sites'] = knownSites
 
-	shell.fg.elprep.sfm(**params)
+	shell.elprep.sfm(**params).fg
 	if steps.index:
 		shell.samtools.index(outfile, outfile + '.bai')
 

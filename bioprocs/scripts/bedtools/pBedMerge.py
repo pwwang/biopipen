@@ -1,9 +1,9 @@
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 params = {{args.params | repr}}
 params.i = {{i.infile | quote}}
-params._stdout = {{o.outfile | quote}}
 
-shell.TOOLS.bedtools = {{args.bedtools | quote}}
-shell.Shell(subcmd = True, dash = '-', equal = '=').bedtools.merge(**params).run()
+shell.load_config(bedtools = {{args.bedtools | quote}})
+
+shell.bedtools.merge(**params).r > {{out.outfile | squote}}

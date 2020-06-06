@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 infile   = {{ i.infile | quote}}
 outfile  = {{ o.outfile | quote}}
@@ -8,7 +8,8 @@ gsize    = {{ args.gsize | quote}}
 seed     = {{ args.seed | repr}}
 params   = {{ args.params | repr}}
 bedtools = {{ args.bedtools | quote}}
-bedtools = shell.Shell({'bedtools': bedtools}, subcmd = True, dash = '-', equal = ' ').bedtools
+
+shell.load_config(bedtools=bedtools)
 
 if n and n<1:
 	total = shell.wcl(infile)
@@ -19,9 +20,6 @@ params.g = gsize
 params.seed = seed
 
 if n:
-	shuffle = bedtools.shuffle(**params)
-	shuffle.pipe().head(n = n, _stdout = outfile)
+	shell.bedtools.shuffle(**params).p | shell.head(n=n) ^ outfile
 else:
-	params._stdout = outfile
-	shuffle = bedtools.shuffle(**params)
-	shuffle.run()
+	shell.bedtools.shuffle(**params).r > outfile

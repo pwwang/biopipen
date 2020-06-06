@@ -1,7 +1,7 @@
 from os import path
 from glob import glob
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 indir   = {{i.indir | quote}}
 samfile = {{i.samfile | quote}}
@@ -13,7 +13,7 @@ fam     = {{args.fam | repr}}
 samname = {{args.samid | repr}}
 params  = {{args.params | repr}}
 
-plink = shell.Shell(dict(plink = plink), equal = ' ').plink
+shell.load_config(plink=plink)
 
 bedfile = glob(path.join(indir, '*.bed'))[0]
 input   = bedfile[:-4]
@@ -37,4 +37,4 @@ params['make-bed'] = True
 key = 'keep' if keep and fam else 'keep-fam' if keep and not fam else 'remove' if not keep and not fam else 'remove-fam'
 params[key] = samfile
 
-plink(**params).run()
+shell.plink(**params).fg

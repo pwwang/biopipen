@@ -40,7 +40,7 @@ en = Enrichr(cutoff = cutoff, top = top, rscript = Rscript)
 en.addList(genes, description = path.basename(infile))
 
 para = Parallel(nthread = nthread)
-runPathview = lambda r, hsa: shell.fg.Rscript(r, hsa)
+runPathview = lambda r, hsa: shell.Rscript(r, hsa).fg
 for db in dbs:
 	outfile = path.join(outdir, prefix + '.' + db + '.txt')
 	en.enrich(db)

@@ -6,8 +6,8 @@ outfile = {{o.outfile | quote}}
 
 gzt = gztype(infile)
 if gzt == 'gzip':
-    shell.gunzip(c=infile, _pipe=True) | shell.bgzip(c=True, _out=outfile)
+    shell.gunzip(c=infile).p | shell.bgzip(c=True) ^ outfile
 elif gzt == 'bgzip':
     shell.ln_s(infile, outfile)
 else:
-    shell.bgzip(c=infile, _out=outfile)
+    shell.bgzip(c=infile).r > outfile

@@ -29,7 +29,7 @@ params.sampleID             = sample
 params.BAM                  = infile
 params.graph                = 'PRG_MHC_GRCh38_withIMGT'
 
-shell.fg.hla_la(**params)
+shell.hla_la(**params).fg
 
 hlafile = outdir.joinpath('hla', 'R1_bestguess_G.txt')
 reader = TsvReader(hlafile)

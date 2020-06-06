@@ -77,20 +77,20 @@ def copyHeader(hasContigs, contigs = None):
 def run_sort_nochrorder_nocontigs(sortby):
 	copyHeader(hasContigs = False, contigs = None)
 	if sortby == 'coord':
-		params = dict(k = ['1,1', '2,2n'], _out = outfile)
+		params = dict(k = ['1,1', '2,2n'])
 	else:
-		params = dict(k = ['3,3', '1,1', '2,2n'], _out = outfile)
-	shell.cat(infile, _pipe = True) | shell.grep(v = '^#', _pipe = True) | shell.sort(**params)
+		params = dict(k = ['3,3', '1,1', '2,2n'])
+	shell.cat(infile).p | shell.grep(v = '^#').p | shell.sort(**params) ^ outfile
 
 def run_sort_contigs(sortby, hasContigs, contigs): # no chrorder
 	copyHeader(hasContigs = hasContigs, contigs = contigs if chrorder or not hasContigs else None)
 	splitChroms(infile, contigs.keys())
 	if sortby == 'coord':
 		sortchr = lambda chrom: shell.sort(
-			k = '2,2n', _ = outfile + '.' + chrom + '.split', _out = outfile + '.' + chrom + '.sorted')
+			k = '2,2n', _ = outfile + '.' + chrom + '.split').r > outfile + '.' + chrom + '.sorted'
 	else:
 		sortchr = lambda chrom: shell.sort(
-			k = ['3,3', '2,2n'], _ = outfile + '.' + chrom + '.split', _out = outfile + '.' + chrom + '.sorted')
+			k = ['3,3', '2,2n'], _ = outfile + '.' + chrom + '.split').r > outfile + '.' + chrom + '.sorted'
 	para = Parallel(nthread)
 	para.run(sortchr, [(chrom, ) for chrom in contigs.keys()])
 	for chrom in contigs.keys():
@@ -132,9 +132,9 @@ def run_picard():
 		with open(dictfile, 'w') as f:
 			f.write("@HD\tVN:1.5\tSO:unsorted\n")
 			f.write("".join(["@SQ\tSN:{}\tLN:{}\n".format(chrom, contig['length']) for chrom, contig in contigs.items()]))
-		shell.fg.picard.SortVcf(INPUT = infile, OUTPUT = outfile, SEQUENCE_DICTIONARY = dictfile)
+		shell.picard.SortVcf(INPUT = infile, OUTPUT = outfile, SEQUENCE_DICTIONARY = dictfile).fg
 	else:
-		shell.fg.picard.SortVcf(INPUT = infile, OUTPUT = outfile)
+		shell.picard.SortVcf(INPUT = infile, OUTPUT = outfile).fg
 
 tools = dict(
 	sort   = run_sort,

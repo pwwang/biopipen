@@ -135,7 +135,7 @@ configfile = path.join(outdir, 'config.yaml')
 with open(configfile, 'w') as fconf:
 	yaml.dump(config.to_dict(), fconf)
 
-shell.fg.schism.analyze(c = configfile)
+shell.schism.analyze(c = configfile).fg
 
 # schism always returns 0
 # check if consensus plot generated
@@ -182,4 +182,4 @@ dotstr.append('}')
 with open(dotfile, 'w') as f:
 	f.write('\n'.join(dotstr))
 
-shell.fg.dot(dotfile, f'-Gdpi={devpars.res}', T = 'png', o = ctreefile[:-17] + '.tree.png')
+shell.dot(dotfile, f'-Gdpi={devpars.res}', T = 'png', o = ctreefile[:-17] + '.tree.png').fg

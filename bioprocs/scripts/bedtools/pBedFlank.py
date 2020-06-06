@@ -44,6 +44,6 @@ if extend:
         r[1] = max(0, r[1])
         writer.write(r)
 else:
-    params._out = outfile
-    params._debug = True
-    shell.bedtools.flank(**params)
+    # params._out = outfile
+    # params._debug = True
+    shell.bedtools.flank(**params).r > outfile

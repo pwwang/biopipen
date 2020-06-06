@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import cmd, cmdargs, logger
+from bioprocs.utils import shell2 as shell, logger
 
 infile  = {{i.infile | quote}}
 sqlfile = {{i.sqlfile | quote}}
@@ -26,11 +26,7 @@ params = {
 	'z': (inopts.gz == 'auto' and infile.endswith('.gz')) or inopts.gz is True,
 	'D': outopts.delimit if outopts.delimit is not None else inopts.delimit,
 	'O': outopts.cnames if outopts.cnames is not None else inopts.cnames,
-	'E': outopts.encoding if outopts.encoding is not None else inopts.encoding
+	'E': outopts.encoding if outopts.encoding is not None else inopts.encoding,
+	' ': sql
 }
-c = cmd.Cmd(['cat', infile]).pipe('q {} {} > {!r}'.format(
-	cmdargs(params),
-	cmdargs({' ': sql})[2:],
-	outfile
-), shell = True).run()
-logger.info('Done: %s', c.cmd)
+shell.cat(infile).p | shell.q(**params) ^ outfile

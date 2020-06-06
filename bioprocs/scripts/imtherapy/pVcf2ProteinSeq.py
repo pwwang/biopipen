@@ -16,7 +16,7 @@ def do_one(protein_length):
 	ps = params.copy()
 	ps._ = [infile, protein_length, outdir.joinpath('%s.%s.peptide' % (
 		infile.name.split('.')[0], protein_length))]
-	shell.fg.pvacseq.generate_protein_fasta(**ps)
+	shell.pvacseq.generate_protein_fasta(**ps).fg
 
 para = Parallel(nthread = nthread)
 para.run(do_one, [(plen,) for plen in lens])

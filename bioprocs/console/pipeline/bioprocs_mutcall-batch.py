@@ -57,6 +57,8 @@ params.aligner = 'bwa'
 params.aligner.desc = 'The alignment tool'
 params.trimmer = 'trimmomatic'
 params.trimmer.desc = 'The trimming tool'
+params.errhow = 'terminate'
+params.errhow.desc = 'What to do if error happens. retry, terminate or halt.'
 params.compress = True
 params.compress.desc = 'Use gzip and bam file to save space.'
 params.dropim = False
@@ -95,12 +97,11 @@ def clean_im(wdir, nthread):
     """Clean intermediate files (process workdirs) in wdir"""
     cmdy.pyppl.clean(
         _raise=False,
-        _fg=True,
         nthread=nthread,
         nocheck=True,
         force=True,
         wdir=wdir
-    )
+    ).fg
     cmdy.rm(wdir, r=True, f=True)
 
 def split_batches(saminfo, batchsize):
@@ -220,14 +221,13 @@ def main():
                                            opts.saminfo, opts.metadir)
 
         cmd = cmdy.bioprocs.mutcall(
-            _hold=True,
-            _fg=True,
             _raise=True,
             intype=opts.intype,
             muts=opts.muts,
             indir=opts.indir,
             aligner=opts.aligner,
             trimmer=opts.trimmer,
+            errhow=opts.errhow,
             saminfo=batch_saminfo,
             nthread=opts.nthread,
             outdir=opts.outdir,
@@ -237,7 +237,7 @@ def main():
             compress=opts.compress,
             forcecache=opts.forcecache,
             ppldir=batchdir(opts.ppldir, opts.saminfo, i)
-        )
+        ).h.fg
         logger.info(cmd.cmd)
         cmd.run()
         logger.info('')

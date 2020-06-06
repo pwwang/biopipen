@@ -36,7 +36,7 @@ params = {
 
 shell.load_config(plink=plink, bcftools=bcftools)
 
-shell.fg.plink(**params)
+shell.plink(**params).fg
 
 fams = TsvReader(prefix + '.fam', delimit=' ', cnames=False)
 if samid == 'fid':
@@ -86,17 +86,17 @@ if refallele:
     if refallele.endswith('.vcf.gz') or refallele.endswith('.vcf'):
         # get the vcf file first to extract information
         params['output-chr'] = 'chr' + chroms["26"]
-        shell.fg.plink(**params)
-        shell.fg.bcftools.query(
+        shell.plink(**params).fg
+        shell.bcftools.query(
             R=outsnp + '.vcf',
             o=outsnp,
             f='%CHROM\\t%POS0\\t%END\\t%ID\\t0\\t+\\t%REF\\t%ALT{0}\\n',
             _=refallele
-        )
+        ).fg
         refallele = outsnp
 
     params['a2-allele'] = [refallele, 7, 4, '#']
-    shell.fg.plink(**params)
+    shell.plink(**params).fg
 
     snpreader = TsvReader(outsnp + '.vcf', cnames=False)
     snpwriter = TsvWriter(outsnp)

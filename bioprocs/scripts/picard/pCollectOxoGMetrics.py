@@ -9,4 +9,4 @@ params  = {{args.params | repr}}
 
 shell.load_config(picard = picard)
 
-shell.fg.picard.CollectOxoGMetrics(I = infile, R = ref, O = outfile, **params)
+shell.picard.CollectOxoGMetrics(I = infile, R = ref, O = outfile, **params).fg

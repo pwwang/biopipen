@@ -15,9 +15,9 @@ shell.load_config(bedtools=bedtools)
 
 params.fi = ref
 params.bed = infile
-params._out = outfile
-params._debug = True
+# params._out = outfile
+# params._debug = True
 if params['name+']:
     params.name = False
 
-shell.bedtools.getfasta(**params)
+shell.bedtools.getfasta(**params).r > outfile

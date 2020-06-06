@@ -47,4 +47,4 @@ params._ = infile
 params.o = outfile
 params.threads = nthread
 
-shell.fg.bcftools.annotate(**params)
+shell.bcftools.annotate(**params).fg

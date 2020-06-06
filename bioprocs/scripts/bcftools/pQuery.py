@@ -9,5 +9,5 @@ params   = {{args.params | repr}}
 shell.load_config(bcftools = bcftools)
 
 params._ = infile
-params._out = outfile
-shell.bcftools.query(**params)
+# params._out = outfile
+shell.bcftools.query(**params).r > outfile

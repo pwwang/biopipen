@@ -30,4 +30,4 @@ params.o = outfile
 params.f = ref
 params.t = infile
 params.a = atgfile
-shell.fg.cnvkit.reference(**params)
+shell.cnvkit.reference(**params).fg

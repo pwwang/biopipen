@@ -28,4 +28,4 @@ with FileLock(maf2vcf_real):
 
 shell.load_config(maf2vcf = maf2vcf_real)
 
-shell.fg.maf2vcf(**params)
+shell.maf2vcf(**params).fg

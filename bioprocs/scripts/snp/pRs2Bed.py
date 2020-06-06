@@ -138,7 +138,7 @@ else:
         raise ValueError('dbsnp file (args.dbsnp) is required by tool "local"')
     else:
         params.vcf = dbsnp
-    shell.fg.vcftools(**params)
+    shell.vcftools(**params).fg
 
     reader = TsvReader(params.out + '.recode.vcf', cnames=False)
     outfiletmp = outfile + '.tmp'
@@ -155,9 +155,9 @@ else:
     writer.close()
 
 if sortby == 'coord':
-    shell.sort(k=['1,1', '2,2n'], _=outfiletmp, _out=outfile)
+    shell.sort(k=['1,1', '2,2n'], _=outfiletmp).r > outfile
 elif sortby == 'name':
-    shell.sort(k='4', _=outfiletmp, _out=outfile)
+    shell.sort(k='4', _=outfiletmp).r > outfile
 else:
     shell.mv(outfiletmp, outfile)
 

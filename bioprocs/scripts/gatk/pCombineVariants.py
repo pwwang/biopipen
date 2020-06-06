@@ -27,4 +27,5 @@ params.R = ref
 params.o = outfile
 params.variant = infiles
 
-shell.fg.gatk3(f'-Djava.io.tmpdir={tmpdir}', *mem2(mem, 'java').split(), **params)
+shell.gatk3(f'-Djava.io.tmpdir={tmpdir}',
+			*mem2(mem, 'java').split(), **params).fg

@@ -58,4 +58,4 @@ for region in regions:
 	if genes:
 		iparams.g = genes
 
-	shell.fg.cnvkit.scatter(cnrfile, **iparams)
+	shell.cnvkit.scatter(cnrfile, **iparams).fg

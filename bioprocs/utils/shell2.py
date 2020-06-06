@@ -1,5 +1,5 @@
 """Shell utilities using cmdy"""
-from modkit import Modkit
+from modkit import modkit
 
 import cmdy
 
@@ -10,10 +10,10 @@ DEFAULT_CONFIG = dict(
     bedtools=dict(_prefix='-'),
     biobambam=dict(_sep='=', _prefix=''),
     bowtie2=dict(_dupkey=True),
-    dtoxog=dict(_out=cmdy.DEVERR, _prefix='-'),
+    dtoxog=dict(_prefix='-'),
     sort=dict(_sep='', _dupkey=True),
     gatk3=dict(_dupkey=True),
-    hla_la=dict(_raw=True),
+    hla_la=dict(_deform=None),
     liftover=dict(_prefix='-', _sep='='),
     oncotator=dict(_sep='auto'),
     optitype=dict(_dupkey=False),
@@ -27,26 +27,14 @@ DEFAULT_CONFIG = dict(
     # Future one should be:
     # picard = dict(_sep = ' ', _prefix = '-')
     picard=dict(_sep='=', _prefix=''),
-    plink=dict(_out=cmdy.DEVERR, _dupkey=False),
-    pyclone=dict(_raw=True),
+    plink=dict(_dupkey=False),
+    pyclone=dict(_deform=None),
     razers3=dict(_prefix='-'),
     snpeff=dict(_prefix='-'),
     vcfanno=dict(_prefix='-'),
-    vep=dict(_dupkey=True, _raw=True),
+    vep=dict(_dupkey=True, _deform=None),
 )
-cmdy.config._load(DEFAULT_CONFIG)
-
-
-def _modkit_delegate(name):
-    return getattr(cmdy, name)
-
-
-# run command at foreground
-# pylint: disable=not-callable,invalid-name
-fg = cmdy(_fg=True, _debug=True)
-bg = cmdy(_bg=True, _debug=True)
-out = cmdy(_out='>')
-pipe = cmdy(_pipe=True)
+cmdy.CMDY_CONFIG._load(DEFAULT_CONFIG)
 
 # aliases
 rm_rf = cmdy.rm.bake(r=True, f=True)
@@ -67,8 +55,8 @@ def load_config(conf=None, **kwargs):
         conf2load[key] = DEFAULT_CONFIG.get(key, {}).copy()
         conf2load[key].update(val if isinstance(val, dict) else {'_exe': val})
 
-    cmdy.config._load(conf2load)
-    fg.config._load(conf2load)
-    out.config._load(conf2load)
+    cmdy.CMDY_CONFIG._load(conf2load)
 
-Modkit()
+@modkit.delegate
+def _modkit_delegate(module, name):
+    return getattr(cmdy, name)

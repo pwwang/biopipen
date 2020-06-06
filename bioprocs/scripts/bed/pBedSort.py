@@ -1,6 +1,6 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 infile    = {{ i.infile | quote}}
 outfile   = {{ o.outfile | quote }}
@@ -15,89 +15,87 @@ params    = {{ args.params | repr}}
 tmpdir    = {{ args.tmpdir | quote}}
 chrorder  = {{ args.chrorder if not args.chrorder or isinstance(args.chrorder, (tuple, list)) else args.chrorder.split(',') | repr }}
 
-shell.TOOLS.bedtools = bedtools
-shell.TOOLS.bedops   = bedtools
+shell.load_config(
+    bedtools = bedtools,
+    bedops   = bedops
+)
 
 def run_sort():
-	params.T = tmpdir
-	params.S = argsmem
-	params.u = unique
-	if sortby == 'coord':
-		params.k = ['1,1', '2,2n']
-	else:
-		params.k = '4'
-	shell.grep('^#', infile, _stdout = outfile)
-	shell.Shell().grep(v = '^#', _ = infile).pipe(dash = '-', equal = ' ', duplistkey = True).sort(__stdout = outfile, **params).run()
+    params.T = tmpdir
+    params.S = argsmem
+    params.u = unique
+    if sortby == 'coord':
+        params.k = ['1,1', '2,2n']
+    else:
+        params.k = '4'
+    shell.grep('^#', infile).r > outfile
+    (shell.grep(v='^#', _=infile).p | shell.sort(**params).r) >> outfile
 
 def run_bedops():
-	params['max-mem'] = args.mem
-	params.tmpdir = tmpdir
-	params._ = infile
-	shell.grep('^#', infile, _stdout = outfile)
-	c = shell.Shell(equal = ' ')
-	if unique:
-		c.bedops(**params).pipe().uniq(__stdout = outfile).run()
-	else:
-		params.__stdout = outfile
-		c.bedops(**params).run()
+    params['max-mem'] = args.mem
+    params.tmpdir = tmpdir
+    params._ = infile
+    shell.grep('^#', infile).r > outfile
+    if unique:
+        (shell.bedops(**params).p | shell.uniq().r) >> outfile
+    else:
+        shell.bedops(**params).r >> outfile
 
 def run_bedtools():
-	params.i = infile
-	shell.grep('^#', infile, _stdout = outfile)
-	c = shell.Shell(dash = '-', equal = ' ', subcmd = True).bedtools
-	if unique:
-		c.sort(**params).pipe().uniq(__stdout = outfile).run()
-	else:
-		params.__stdout = outfile
-		c.sort(**params).run()
+    params.i = infile
+    shell.grep('^#', infile) > outfile
+    if unique:
+        (shell.sort(**params).p | shell.uniq().r) >> outfile
+    else:
+        shell.sort(**params).r >> outfile
 
 def attach_order():
-	if tool != 'sort':
-		return
-	mappings = dict(zip(chrorder, sorted(chrorder)))
-	global infile
-	tmpfile = path.join(joboutdir, path.basename(infile) + '.withorder')
-	from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-	reader = TsvReader(infile, cnames = False)
-	writer = TsvWriter(tmpfile)
-	for r in reader:
-		r[0] = mappings.get(r[0], r[0])
-		writer.write(r)
-	reader.close()
-	writer.close()
-	infile = tmpfile
-	return dict(zip(mappings.values(), mappings.keys()))
+    if tool != 'sort':
+        return
+    mappings = dict(zip(chrorder, sorted(chrorder)))
+    global infile
+    tmpfile = path.join(joboutdir, path.basename(infile) + '.withorder')
+    from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+    reader = TsvReader(infile, cnames = False)
+    writer = TsvWriter(tmpfile)
+    for r in reader:
+        r[0] = mappings.get(r[0], r[0])
+        writer.write(r)
+    reader.close()
+    writer.close()
+    infile = tmpfile
+    return dict(zip(mappings.values(), mappings.keys()))
 
 def detach_order(mappings):
-	if tool != 'sort' or not mappings:
-		return
-	shell.rm(infile)
-	tmpfile = path.join(joboutdir, path.basename(infile) + '.withoutorder')
-	from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-	reader = TsvReader(outfile, cnames = False)
-	writer = TsvWriter(tmpfile)
-	for r in reader:
-		r[0] = mappings.get(r[0], r[0])
-		writer.write(r)
-	reader.close()
-	writer.close()
-	shell.mv(tmpfile, outfile)
+    if tool != 'sort' or not mappings:
+        return
+    shell.rm_rf(infile)
+    tmpfile = path.join(joboutdir, path.basename(infile) + '.withoutorder')
+    from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+    reader = TsvReader(outfile, cnames = False)
+    writer = TsvWriter(tmpfile)
+    for r in reader:
+        r[0] = mappings.get(r[0], r[0])
+        writer.write(r)
+    reader.close()
+    writer.close()
+    shell.mv(tmpfile, outfile)
 
 tools = dict(
-	sort     = run_sort,
-	bedops   = run_bedops,
-	bedtools = run_bedtools
+    sort     = run_sort,
+    bedops   = run_bedops,
+    bedtools = run_bedtools
 )
 
 try:
-	if chrorder:
-		mappings = attach_order()
-	tools[tool]()
-	if chrorder:
-		detach_order(mappings)
+    if chrorder:
+        mappings = attach_order()
+    tools[tool]()
+    if chrorder:
+        detach_order(mappings)
 except KeyError:
-	raise KeyError('Tool {!r} not supported.'.format(tool))
+    raise KeyError('Tool {!r} not supported.'.format(tool))
 except:
-	raise
+    raise
 finally:
-	pass
+    pass

@@ -20,4 +20,4 @@ shell.load_config(cnvkit = dict(
 ))
 
 params.o = outfile
-shell.fg.cnvkit.call(infile, **params)
+shell.cnvkit.call(infile, **params).fg

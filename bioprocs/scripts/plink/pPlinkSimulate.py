@@ -42,4 +42,4 @@ params['simulate-ncases'] = ncases
 params['simulate-ncontrols'] = nctrls
 params['simulate-prevalence'] = dprev
 
-shell.fg.plink(**params)
+shell.plink(**params).fg

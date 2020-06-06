@@ -8,11 +8,11 @@ params['b']           = {{i.bfile | quote}}
 params['wa']          = params.get('wa', True)
 params['wb']          = params.get('wb', True)
 params['nonamecheck'] = params.get('nonamecheck', True)
-params['_out']        = {{o.outfile | quote}}
+# params['_out']        = {{o.outfile | quote}}
 params['_debug']      = True
 
 shell.load_config(bedtools = {{args.bedtools | quote}})
-shell.bedtools.intersect(**params)
+shell.bedtools.intersect(**params) > {{o.outfile | quote}}
 
 # attach header to the output file if input is a VCF file
 # do it only when wa is True and wb is False and a is VCF file, or
@@ -22,10 +22,10 @@ def attach_header(ofile, vfile):
 	"""Attach the header of vfile to ofile"""
 	tmpfile = ofile + '.tmp'
 	if vfile.endswith('.gz'):
-		shell.zcat(vfile, _pipe = True) | shell.grep('^#', _out = tmpfile)
+		shell.zcat(vfile).p | shell.grep('^#') ^ tmpfile
 	else:
-		shell.grep('^#', vfile, _out = tmpfile)
-	shell.cat(ofile, _out_ = tmpfile)
+		shell.grep('^#', vfile).r > tmpfile
+	shell.cat(ofile, tmpfile) >> tmpfile
 	shell.mv(tmpfile, ofile)
 
 if params.wa and params.wb:

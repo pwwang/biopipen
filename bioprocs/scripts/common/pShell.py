@@ -7,4 +7,4 @@ if not cmd:
 
 cmd = {{args.cmd | render | quote}}
 
-shell.fg.bash(c = cmd)
+shell.bash(c = cmd).fg

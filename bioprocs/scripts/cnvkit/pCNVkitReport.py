@@ -30,25 +30,25 @@ if params.breaks:
 	if params.breaks is True:
 		params.breaks = Diot()
 	params.breaks.o = path.join(outdir, stem + '.breaks.txt')
-	shell.fg.cnvkit.breaks(cnrfile, cnsfile, **params.breaks)
+	shell.cnvkit.breaks(cnrfile, cnsfile, **params.breaks).fg
 
 if params.gainloss:
 	if params.gainloss is True:
 		params.gainloss = Diot()
 	params.gainloss.o = path.join(outdir, stem + '.gainloss.txt')
 	params.gainloss.s = cnsfile
-	shell.fg.cnvkit.gainloss(cnrfile, **params.gainloss)
+	shell.cnvkit.gainloss(cnrfile, **params.gainloss).fg
 
 if params.metrics:
 	if params.metrics is True:
 		params.metrics = Diot()
 	params.metrics.o = path.join(outdir, stem + '.metrics.txt')
 	params.metrics.s = cnsfile
-	shell.fg.cnvkit.metrics(cnrfile, **params.metrics)
+	shell.cnvkit.metrics(cnrfile, **params.metrics).fg
 
 if params.segmetrics:
 	if params.segmetrics is True:
 		params.segmetrics = Diot()
 	params.segmetrics.o = path.join(outdir, stem + '.segmetrics.txt')
 	params.segmetrics.s = cnsfile
-	shell.fg.cnvkit.segmetrics(cnrfile, **params.segmetrics).run()
+	shell.cnvkit.segmetrics(cnrfile, **params.segmetrics).fg

@@ -69,4 +69,4 @@ params.o   = path.basename(outfile)
 if cnnfile:
 	params.r = cnnfile
 
-shell.fg.cnvkit.export('theta', cnsfile, **params)
+shell.cnvkit.export('theta', cnsfile, **params).fg

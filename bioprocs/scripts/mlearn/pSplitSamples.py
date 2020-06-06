@@ -15,13 +15,13 @@ method    = {{args.method | quote}}
 random.seed(seed)
 
 if inopts.cnames:
-	cmdy.head(infile, n = 1, _out = '>') > trainfile
-	cmdy.head(infile, n = 1, _out = '>') > testfile
-	cmdy.tail(infile, n = '+2', _out = '>') > outdir.joinpath(infile.with_suffix('.main'))
+	cmdy.head(infile, n=1).r > trainfile
+	cmdy.head(infile, n=1).r > testfile
+	cmdy.tail(infile, n='+2').r > outdir.joinpath(infile.with_suffix('.main'))
 	infile = outdir.joinpath(infile.with_suffix('.main'))
 
 # get total lines
-nlines = int(cmdy.wc(l = infile).split()[0])
+nlines = int(cmdy.wc(l=infile).split()[0])
 
 # get the number of tests
 if method.endswith('-fold'):

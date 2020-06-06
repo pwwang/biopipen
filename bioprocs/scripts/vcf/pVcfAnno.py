@@ -73,7 +73,7 @@ def run_vep():
 	params.force_overwrite = True
 	params.offline         = params.get('offline', True)
 	params.assembly        = genomes.get(genome, genome)
-	shell.fg.vep(**params)
+	shell.vep(**params).fg
 
 	if gz:
 		shell.bgzip(outfile)
@@ -90,12 +90,12 @@ def run_annovar():
 	avparams.format      = 'vcf4'
 	avparams.outfile     = avinput
 	avparams._           = infile
-	shell.fg.annovar_convert(**avparams)
+	shell.annovar_convert(**avparams).fg
 
 	params.buildver = genome
 	params._        = [avinput, dbs]
 	params.outfile  = path.splitext(outfile)[0]
-	shell.fg.annovar(**params)
+	shell.annovar(**params).fg
 
 	# convert .variant_function to vcf
 	# like snpEff ann, add ANN field to vcf
@@ -203,9 +203,9 @@ def run_vcfanno():
 				f.write('{key}={val!r}\n'.format(key = key, val = val))
 	params.p       = nthread
 	params._       = [toml, infile]
-	params._out    = outfile
-	params._stderr = sys.stderr
-	shell.vcfanno(**params)
+	# params._out    = outfile
+	# params._stderr = sys.stderr
+	shell.vcfanno(**params).r(shell.STDOUT, shell.STDERR) ^ outfile > sys.stderr
 
 	if gz:
 		shell.bgzip(outfile)

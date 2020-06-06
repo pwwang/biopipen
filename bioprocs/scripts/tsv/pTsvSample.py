@@ -14,9 +14,9 @@ params    = {{args.params | repr}}
 shell.load_config(arsample = arsample)
 
 if inopts.get('skip', 0):
-	shell.head(n = inopts.skip, _ = infile, _stdout = outfile)
+	shell.head(n = inopts.skip, _ = infile).r > outfile
 	infile_skipped = outfile + '.skipped'
-	shell.tail(n = '+' + str(inopts.skip + 1), _ = infile, _stdout = infile_skipped)
+	shell.tail(n = '+' + str(inopts.skip + 1), _ = infile).r > infile_skipped
 	infile = infile_skipped
 
 params._    = infile
@@ -31,4 +31,4 @@ if replace:
 else:
 	params.o = True
 
-shell.arsample(**params, _debug = True)
+shell.arsample(**params).fg

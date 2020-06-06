@@ -1,6 +1,6 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import shell
+from bioprocs.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}
@@ -13,9 +13,9 @@ if not gsize:
 if not path.isfile(gsize):
 	raise ValueError('Genome size file does not exist (args.gsize).')
 
-bedtools = shell.Shell({'bedtools': bedtools}, subcmd = True, equal = ' ', dash = '-').bedtools
+shell.load_config(bedtools=bedtools)
 
 params.i = infile
 params.g = gsize
-params._stdout = outfile
-bedtools.shift(**params).run()
+# params._stdout = outfile
+shell.bedtools.shift(**params).r > outfile

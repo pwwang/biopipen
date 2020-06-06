@@ -120,10 +120,10 @@ params.v = True
 params.dot = True
 params.dotFile = prefix + '.dot'
 
-shell.fg.lichee('-build', **params)
+shell.lichee('-build', **params).fg
 
-shell.fg.dot(params.dotFile,
-             f'-Gdpi={devpars.res}', T='png', o=prefix + '.png')
+shell.dot(params.dotFile,
+          f'-Gdpi={devpars.res}', T='png', o=prefix + '.png').fg
 
 # save clusters and snv infos in different file for reporting
 snvfile = prefix + '.snvinfo.txt'

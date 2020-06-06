@@ -31,4 +31,4 @@ if 'bed' not in bedext:
 
 shell.load_config(bwtool = dict(_exe = bwtool, _prefix = '-'))
 
-shell.fg.bwtool.summary(bedfile, infile, outfile, **params)
+shell.bwtool.summary(bedfile, infile, outfile, **params).fg
