@@ -2,7 +2,8 @@
 Procs for plink 1.9
 """
 from diot import Diot
-from . import params, proc_factory
+from modkit import modkit
+from . import params, proc_factory, module_postinit
 from .vcf import pVcf2Plink
 from .tcgamaf import pGTMat2Plink
 
@@ -103,22 +104,28 @@ pPlinkMiss = proc_factory(
     )
 )
 
-pPlinkFreq = proc_factory(
-    desc='Filter snps with minor allele frequency.',
-    config=Diot(annotate="""
-    @name:
-        pPlinkFreq
-    """),
-    input='indir:dir',
-    output='outdir:dir:{{i.indir | fn}}.freq',
-    lang=params.Rscript.value,
-    args=Diot(
+class PPlinkFreq:
+    """
+    @input:
+        indir: The directory containing plink data
+    @output:
+        outdir: The directory containing output data
+    @args:
+        plink (str): Path to plink
+        cutoff (float): The MAF cutoff
+        plot (bool): Whether to plot the MAF distribution
+        devpars (Diot): The parameters for plot device.
+    """
+    desc = 'Filter snps with minor allele frequency.'
+    input = 'indir:dir'
+    output = 'outdir:dir:{{i.indir | fn}}.freq'
+    lang = params.Rscript.value
+    args = Diot(
         plink=params.plink.value,
         cutoff=0.01,
         plot=True,
         devpars=Diot(res=300, width=2000, height=2000),
     )
-)
 
 pPlinkSexcheck = proc_factory(
     desc='Check inconsistency between sex denoted and from genotypes.',
@@ -440,3 +447,5 @@ pPlinkSimulate = proc_factory(
         params=Diot(),
     )
 )
+
+modkit.postinit(module_postinit)

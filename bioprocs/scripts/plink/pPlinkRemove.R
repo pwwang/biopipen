@@ -47,9 +47,9 @@ for (fail in fails) {
             bfile = output,
             remove = fail,
             out = output,
-            `make-bed` = T
+            make_bed = T
         )
-        shell$plink(params)$fg
+        shell$plink(params)
         #//cmd <- sprintf("%s %s 1>&2", plink, cmdargs(params, equal = " "))
         #//runcmd(cmd)
     } else if (isSNPFail(fail)) {
@@ -57,9 +57,9 @@ for (fail in fails) {
             bfile = output,
             exclude = fail,
             out = output,
-            `make-bed` = T
+            make_bed = T
         )
-        shell$plink(params)$fg
+        shell$plink(params)
         #//cmd <- sprintf("%s %s 1>&2", plink, cmdargs(params, equal = " "))
         #//runcmd(cmd)
     }

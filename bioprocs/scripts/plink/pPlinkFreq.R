@@ -18,7 +18,7 @@ params = list(
 	out   = output
 )
 shell$load_config(plink = plink)
-shell$plink(params)$fg
+shell$plink(params)
 #//cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
 #//runcmd(cmd)
 

@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 from tempfile import gettempdir
 from contextlib import contextmanager
+import inflection
+from modkit import Module as ModkitModule
 from colorama import Back
 from pyparam.help import Helps, HelpAssembler
 from diot import Diot, OrderedDiot
@@ -103,6 +105,18 @@ class Module:
         """Get the processes of the module"""
         if self._procs:
             return self._procs
+
+        if isinstance(self.module, ModkitModule):
+            for proc_id in self.module._PROC_FACTORY:
+                proc = getattr(self.module, proc_id)
+                self._procs[proc_id] = Process(
+                    proc, self.module,
+                    proc.config.annotate,
+                    self.module._PROC_FACTORY[proc_id].aliasof
+                )
+
+            return self._procs
+
         for attr in dir(self.module):
             proc = getattr(self.module, attr)
             if not isinstance(proc, Proc):
@@ -153,22 +167,25 @@ class Module:
 
 class Process:
     """A bioprocs process"""
-    def __init__(self, proc, module, doc):
+    def __init__(self, proc, module, doc, aliasof=None):
         self.name = proc.id
         self.module = module
         self.proc = proc
         self.desc = self.proc.desc
         self.doc = doc
+        self.aliasof = aliasof
         self._helps = Helps()
         self._parsed = {}
 
     def to_helps(self, helpsec):
         """Send me to a Helps section"""
         helpsec.prefix = ''
-        if not self.proc.origin or self.proc.origin == self.name:
+        if self.aliasof:
+            helpsec.add((self.name, '', 'Alias of `%s`' % self.aliasof))
+        elif not self.proc.origin or self.proc.origin == self.name:
             helpsec.add((self.name, '', self.desc))
         else:
-            helpsec.add((self.name, '', 'Alias of: %s' % self.proc.origin))
+            helpsec.add((self.name, '', 'Alias of `%s`' % self.proc.origin))
 
     def requirements(self):
         """Get requirements of process"""
@@ -201,7 +218,6 @@ class Process:
         # input
         self._helps.add('Input options (Use \':list\' for multi-jobs)',
                         sectype='option')
-
         for inname in (self.doc.input or []):
             self._helps.select('Input options').add(
                 ('-i.' + inname, '<%s>' % self.doc.input[inname]['type'],

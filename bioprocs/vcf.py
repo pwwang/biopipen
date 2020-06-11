@@ -45,7 +45,7 @@ pVcfFilter = proc_factory(
                 - SNPONLY: keeps only SNPs (`{"!SNPONLY": None}` means filtering SNPs out)
                 - BIALTONLY: keeps only mutations with bi-allele
                 - QUAL: keeps only site quality >= param (`{'QUAL': 30}`)
-        `gz`     : Whether to gzip the output file. Default: False
+        `gz`     : Whether to bgzip the output file. Default: False
         `keep`   : Whether to keep the filtered records. Default: True. (only for gatk, snpsift at filter step)
     @requires:
         [`pyvcf`](https://github.com/jamescasbon/PyVCF)

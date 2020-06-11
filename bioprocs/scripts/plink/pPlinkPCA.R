@@ -56,7 +56,7 @@ pruneparams = list(
 	`indep-pairwise` = indep,
 	out              = output
 )
-shell$plink(pruneparams, `_raise` = TRUE)$fg
+shell$plink(pruneparams, cmdy_raise = TRUE)
 
 prunein = paste0(output, '.prune.in')
 
@@ -71,7 +71,7 @@ default.params = list(
 
 params = update.list(default.params, params)
 # stdout slows down the program
-shell$plink(params, `_raise` = TRUE)$fg
+shell$plink(params, cmdy_raise = TRUE)
 # cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '), jobstdout)
 # runcmd(cmd)
 

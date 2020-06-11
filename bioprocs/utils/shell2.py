@@ -1,38 +1,39 @@
 """Shell utilities using cmdy"""
 from modkit import modkit
-
 import cmdy
 
-DEFAULT_CONFIG = dict(
-    default=dict(_raise=True),
+# pylint: disable=invalid-name
 
-    bbmap_repair=dict(_prefix='', _sep='='),
-    bedtools=dict(_prefix='-'),
-    biobambam=dict(_sep='=', _prefix=''),
-    bowtie2=dict(_dupkey=True),
-    dtoxog=dict(_prefix='-'),
-    sort=dict(_sep='', _dupkey=True),
-    gatk3=dict(_dupkey=True),
-    hla_la=dict(_deform=None),
-    liftover=dict(_prefix='-', _sep='='),
-    oncotator=dict(_sep='auto'),
-    optitype=dict(_dupkey=False),
-    maf2vcf=dict(_sep=' '),
-    netmhc=dict(_prefix='-'),
+DEFAULT_CONFIG = dict(
+    default={'raise': True},
+
+    bbmap_repair=dict(prefix='', sep='='),
+    bedtools=dict(prefix='-'),
+    biobambam=dict(sep='=', prefix=''),
+    bowtie2=dict(dupkey=True),
+    dtoxog=dict(prefix='-'),
+    sort=dict(sep='', dupkey=True),
+    gatk3=dict(dupkey=True),
+    hla_la=dict(deform=None),
+    liftover=dict(prefix='-', sep='='),
+    oncotator=dict(sep='auto'),
+    optitype=dict(dupkey=False),
+    maf2vcf=dict(sep=' '),
+    netmhc=dict(prefix='-'),
 
     # As of picard 2.20.5-SNAPSHOT
     # it's changing in the futher.
     # pylint: disable=line-too-long
     # See: https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)
     # Future one should be:
-    # picard = dict(_sep = ' ', _prefix = '-')
-    picard=dict(_sep='=', _prefix=''),
-    plink=dict(_dupkey=False),
-    pyclone=dict(_deform=None),
-    razers3=dict(_prefix='-'),
-    snpeff=dict(_prefix='-'),
-    vcfanno=dict(_prefix='-'),
-    vep=dict(_dupkey=True, _deform=None),
+    # picard = dict(sep = ' ', prefix = '-')
+    picard=dict(sep='=', prefix=''),
+    plink=dict(dupkey=False),
+    pyclone=dict(deform=None),
+    razers3=dict(prefix='-'),
+    snpeff=dict(prefix='-'),
+    vcfanno=dict(prefix='-'),
+    vep=dict(dupkey=True, deform=None),
 )
 cmdy.CMDY_CONFIG._load(DEFAULT_CONFIG)
 
@@ -53,10 +54,10 @@ def load_config(conf=None, **kwargs):
     conf2load = {'default': DEFAULT_CONFIG['default']}
     for key, val in conf.items():
         conf2load[key] = DEFAULT_CONFIG.get(key, {}).copy()
-        conf2load[key].update(val if isinstance(val, dict) else {'_exe': val})
+        conf2load[key].update(val if isinstance(val, dict) else {'exe': val})
 
     cmdy.CMDY_CONFIG._load(conf2load)
 
 @modkit.delegate
-def _modkit_delegate(module, name):
+def _modkit_delegate(module, name): # pylint: disable=unused-argument
     return getattr(cmdy, name)

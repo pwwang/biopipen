@@ -1,15 +1,11 @@
 """Commands of bcftools"""
-
+from modkit import modkit
 from diot import Diot
-from . import params, proc_factory
+from .utils import fs2name
+from . import params, module_postinit
 
-# pylint: disable=invalid-name
-
-pQuery = proc_factory(
-    desc=("Extracts fields from VCF or BCF files and "
-          "outputs them in user-defined format"),
-    lang=params.python.value,
-    config=Diot(annotate="""
+def p_query():
+    """
     @input
         infile: The input VCF file. Currently only single VCF file is supported.
     @output
@@ -18,20 +14,25 @@ pQuery = proc_factory(
         bcftools (str): Path to bcftools.
         params (Diot): Other parameters for `bcftools query`.
             - See: https://samtools.github.io/bcftools/bcftools.html#query
-    """))
-pQuery.input = 'infile:file'
-pQuery.output = 'outfile:file:{{i.infile | stem | stem}}.query.txt'
-pQuery.args = Diot(bcftools=params.bcftools.value, params=Diot())
+    """
+    return Diot(
+        desc=("Extracts fields from VCF or BCF files and "
+              "outputs them in user-defined format"),
+        lang=params.python.value,
+        input='infile:file',
+        output='outfile:file:{{i.infile | stem | stem}}.query.txt',
+        args=Diot(bcftools=params.bcftools.value,
+                  params=Diot())
+    )
 
-pView = proc_factory(
-    desc=("View, subset and filter VCF or BCF files by position and "
-          "filtering expression."),
-    config=Diot(annotate="""
+def p_view():
+    """
     @input
         infile: The input VCF file. Currently only single VCF file is supported.
         samfile: The sample name file to extract samples from infile
             - It also can be samples directly, separated by comma
-            - If this is provided, `args.params.s` and `args.params.S` will be ignored
+            - If this is provided, `args.params.s` and `args.params.S`
+              will be ignored
             - See https://samtools.github.io/bcftools/bcftools.html#view
     @output
         outfile: The output file
@@ -42,22 +43,24 @@ pView = proc_factory(
         nthread  (int) : Number of threads to use.
         params   (Diot) : Other parameters for `bcftools view`.
             - See: https://samtools.github.io/bcftools/bcftools.html#view
-    """),
-    input='infile:file, samfile:var',
-    output='''outfile:file:{{i.infile | stem2}}.vcf{{args.gz | ?
-                                                             | =:".gz"
-                                                             | !:""}}''',
-    lang=params.python.value,
-    args=Diot(gz=False,
-              nthread=1,
-              tabix=params.tabix.value,
-              bcftools=params.bcftools.value,
-              params=Diot())
-)
+    """
+    return Diot(
+        desc=("View, subset and filter VCF or BCF files by position and "
+              "filtering expression."),
+        input='infile:file, samfile:var',
+        output='''outfile:file:{{i.infile | stem2}}.vcf{{args.gz | ?
+                                                                 | =:".gz"
+                                                                 | !:""}}''',
+        lang=params.python.value,
+        args=Diot(gz=False,
+                  nthread=1,
+                  tabix=params.tabix.value,
+                  bcftools=params.bcftools.value,
+                  params=Diot())
+    )
 
-pReheader = proc_factory(
-    desc="Modify header of VCF/BCF files, change sample names",
-    config=Diot(annotate="""
+def p_reheader():
+    """
     @input:
         infile: The input VCF file
         hfile: The new header file
@@ -72,16 +75,19 @@ pReheader = proc_factory(
         nthread  (int): Number of threads to use.
         params   (Diot): Other parameters for `bcftools view`.
             - See https://samtools.github.io/bcftools/bcftools.html#reheader
-    """))
-pReheader.input = 'infile:file, hfile:file, samfile:var'
-pReheader.output = 'outfile:file:{{i.infile | bn}}'
-pReheader.lang = params.python.value
-pReheader.args = Diot(bcftools=params.bcftools.value, nthread=1, params=Diot())
+    """
+    return Diot(
+        desc="Modify header of VCF/BCF files, change sample names",
+        input='infile:file, hfile:file, samfile:var',
+        output='outfile:file:{{i.infile | bn}}',
+        lang=params.python.value,
+        args=Diot(bcftools=params.bcftools.value,
+                  nthread=1,
+                  params=Diot())
+    )
 
-pFilter = proc_factory(
-    desc="Apply fixed-threshold filters to VCF files",
-    lang=params.python.value,
-    config=Diot(annotate="""
+def p_filter():
+    """
     @input:
         infile: The input VCF file
     @output:
@@ -94,34 +100,39 @@ pFilter = proc_factory(
             - Overwrite `args.params.O`
         keep     (bool): Whether should we keep the excluded variants or not.
             - If not, args about filter names will not work.
-        include  (str|list|dict): include only sites for which EXPRESSION is true.
+        include  (str|list|dict): include only sites for which EXPRESSION
+                                  is true.
             - See: https://samtools.github.io/bcftools/bcftools.html#expressions
-            - Use `args.params.include` or `args.params.exclude` only if you just have one filter.
+            - Use `args.params.include` or `args.params.exclude` only if you
+              just have one filter.
             - If provided, `args.params.include/exclude` will be ignored.
             - If `str`/`list` used, The filter names will be `Filter%d`
-            - A dict is used when keys are filter names and values are expressions
+            - A dict is used when keys are filter names and values are
+              expressions
         exclude  (str|list|dict): exclude sites for which EXPRESSION is true.
             - See also `args.include`
         params   (Diot)          : Other parameters for `bcftools filter`
             - See: https://samtools.github.io/bcftools/bcftools.html#filter
-    """),
-    input='infile:file',
-    output=['outfile:file:{{i.infile | bn}}',
-            'statfile:file:{{i.infile | stem | stem}}.filterstats.txt'],
-    args=Diot(
-        bcftools=params.bcftools.value,
-        nthread=1,
-        gz=False,
-        stat=False,
-        keep=True,
-        include=None,
-        exclude=None,
-        params=Diot(mode='+'  # accumulating Filter names instead of repolacing
-                    )))
+    """
+    return Diot(
+        desc="Apply fixed-threshold filters to VCF files",
+        lang=params.python.value,
+        input='infile:file',
+        output=['outfile:file:{{i.infile | bn}}',
+                'statfile:file:{{i.infile | stem | stem}}.filterstats.txt'],
+        args=Diot(bcftools=params.bcftools.value,
+                  nthread=1,
+                  gz=False,
+                  stat=False,
+                  keep=True,
+                  include=None,
+                  exclude=None,
+                  # accumulating Filter names instead of repolacing
+                  params=Diot(mode='+'))
+    )
 
-pAnnotate = proc_factory(desc='Add or remove annotations from VCF files',
-                         lang=params.python.value,
-                         config=Diot(annotate="""
+def p_annotate():
+    """
     @input:
         infile: The input VCF file
     @output:
@@ -135,21 +146,23 @@ pAnnotate = proc_factory(desc='Add or remove annotations from VCF files',
         cols    (str|list): Overwrite `-c/--columns`.
         header  (str|list): headers to be added.
         params  (Diot)     : Other parameters for `bcftools annotate`
-    """),
-                         input='infile:file',
-                         output='outfile:file:{{i.infile | bn}}',
-                         args=Diot(tabix=params.tabix.value,
-                                   bcftools=params.bcftools.value,
-                                   nthread=1,
-                                   annfile='',
-                                   cols=[],
-                                   header=[],
-                                   params=Diot()))
+    """
+    return Diot(
+        desc='Add or remove annotations from VCF files',
+        lang=params.python.value,
+        input='infile:file',
+        output='outfile:file:{{i.infile | bn}}',
+        args=Diot(tabix=params.tabix.value,
+                  bcftools=params.bcftools.value,
+                  nthread=1,
+                  annfile='',
+                  cols=[],
+                  header=[],
+                  params=Diot())
+    )
 
-pConcat = proc_factory(
-    desc=('Concatenate or combine VCF/BCF files with same samples '
-          'in the same order.'),
-    config=Diot(annotate="""
+def p_concat():
+    """
     @input:
         infiles: The input vcf files
     @output:
@@ -160,20 +173,54 @@ pConcat = proc_factory(
         tabix    (path): The path to tabix, used to index vcf files.
         params   (Diot) : Other parameters for `bcftools concat`
         gz       (bool): Whether output gzipped vcf or not.
-    """),
-    input='infiles:files',
-    output='''outfile:file:{{i.infiles | [0]
-                                         | stem2
-                                         | @append: "_etc.vcf"
-                            }}{{ args.gz | ?
-                                         | =:".gz"
-                                         | !:""}}''',
-    lang=params.python.value,
-    args=Diot(
-        nthread=1,
-        bcftools=params.bcftools.value,
-        tabix=params.tabix.value,
-        params=Diot(),
-        gz=False,
+    """
+    return Diot(
+        desc=('Concatenate or combine VCF/BCF files with same samples '
+              'in the same order.'),
+        input='infiles:files',
+        output='''outfile:file:{{i.infiles | [0]
+                                           | stem2
+                                           | @append: "_etc.vcf"
+                                }}{{ args.gz | ?
+                                             | =:".gz"
+                                             | !:""}}''',
+        lang=params.python.value,
+        args=Diot(nthread=1,
+                  bcftools=params.bcftools.value,
+                  tabix=params.tabix.value,
+                  params=Diot(),
+                  gz=False)
     )
-)
+
+class PMerge:
+    """
+    @input:
+        infiles: The input vcf files
+    @output:
+        outfile: The merged vcf file
+    @args:
+        nthread (int): The number of threads to use
+        params (Diot) : Other parameters for `bcftools merge`
+        bcftools (str): Path to bcftools
+        gz (bool): Whether output gzipped vcf
+    """
+    desc = ('Merge multiple VCF/BCF files from non-overlapping sample sets '
+            'to create one multi-sample file using `bcftools merge`.')
+    lang = params.python.value
+    input = 'infiles:files'
+    output = ('outfile:file:{{i.infiles | fs2name}}.vcf'
+              '{{args.gz | ?! :"" | ?= :".gz"}}')
+    envs = Diot(fs2name=fs2name)
+    args = Diot(nthread=1,
+                bcftools=params.bcftools.value,
+                gz=False,
+                params=Diot())
+
+modkit.alias(pBcftoolsMerge='pMerge',
+             pBcftoolsAnnotate='pAnnotate',
+             pBcftoolsConcat='pConcat',
+             pBcftoolsFilter='pFilter',
+             pBcftoolsQuery='pQuery',
+             pBcftoolsReheader='pReheader',
+             pBcftoolsView='pView')
+modkit.postinit(module_postinit)

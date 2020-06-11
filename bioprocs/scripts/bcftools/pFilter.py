@@ -27,7 +27,7 @@ def norm_expr(expr):
     if not expr:
         return {}
     if isinstance(expr, list):
-        return {("Filter%s" % i+1): ex for i, ex in enumerate(expr)}
+        return {("Filter%s" % (i+1)): ex for i, ex in enumerate(expr)}
     if isinstance(expr, dict):
         return expr
     return {"Filter1": expr}

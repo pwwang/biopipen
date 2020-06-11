@@ -1,5 +1,5 @@
 library(methods)
-{{rimport}}('__init__.r', 'plot.r')
+{{'__init__.R', 'plot.R' | rimport}}
 
 indir  = {{i.indir | R}}
 outdir = {{o.outdir | R}}
@@ -17,8 +17,11 @@ params = list(
 	het   = T,
 	out   = output
 )
-cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
-runcmd(cmd)
+shell$load_config(plink = plink)
+shell$plink(params)
+
+# cmd = sprintf("%s %s 1>&2", plink, cmdargs(params, equal = ' '))
+# runcmd(cmd)
 
 phet = read.table(paste0(output, '.het'), header = T, row.names = NULL, check.names = F)
 het = data.frame(Het = 1 - phet[, "O(HOM)"]/phet[, "N(NM)"])

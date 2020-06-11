@@ -263,6 +263,8 @@ if pool or fixes.addAF:
 			if ADs is None:
 				continue
 			DPs = variant.format("DP")
+			if DPs is None:
+				continue
 			variant.set_format("AF", numpy.array([
 				numpy.float(ad[1])/numpy.float(DPs[i][0])
 				if DPs[i] and float(DPs[i][0]) > 0 else 0.0
