@@ -1,11 +1,11 @@
 """Environment to render templates"""
 import json
 from pathlib import Path
-from sys import executable
 from pyppl.template import DEFAULT_ENVS
 
 __all__ = []
 
+HERE = Path(__file__).parent.resolve()
 
 def _get_paths(paths):
     ret = []
@@ -21,11 +21,9 @@ def rimport(*paths):
     """Import an R source file"""
     rimport_rfunc = f"""
     if (!exists('..rimport..') || !is.function(..rimport..)) {{
-        reticulate::use_python({executable!r}, required = TRUE)
-        ..bioprocs.. = reticulate::import('bioprocs')
         ..rimport.. = function(...) {{
             for (rfile in list(...)) {{
-                source(file.path(..bioprocs..$HERE, 'utils', rfile))
+                source(file.path({str(HERE)!r}, 'utils', rfile))
             }}
         }}
     }}
@@ -42,11 +40,9 @@ def bashimport(*paths):
     bashimport_bashfunc = f"""
     type __bashimport__ 1>&2 2>/dev/null
     if [ $? -ne 0 ]; then
-        __python__={executable!r}
-        __bioprocsdir__=$(exec $__python__ -c 'import bioprocs; print(bioprocs.HERE)')
         function __bashimport__() {{
             for src in "$@"; do
-                source $__bioprocsdir__/utils/$src
+                source {HERE}/utils/$src
             done
         }}
     fi
@@ -238,6 +234,7 @@ TEMPLATE_ENVS = dict(
     #Rvec     = R,            # will be deprecated!
     Rlist=Rlist,
     realpath=lambda var: Path(var).resolve().as_posix(),
+    readlink=__import__('os').readlink,
     dirname=lambda var: Path(var).parent.as_posix(),
     # /a/b/c[1].txt => c.txt
     basename=basename,
@@ -265,7 +262,7 @@ TEMPLATE_ENVS = dict(
 )
 
 # aliases or reuses
-TEMPLATE_ENVS['readlink'] = TEMPLATE_ENVS['realpath']
+# TEMPLATE_ENVS['readlink'] = TEMPLATE_ENVS['realpath']
 TEMPLATE_ENVS['parent'] = TEMPLATE_ENVS['dirname']
 TEMPLATE_ENVS['bn'] = TEMPLATE_ENVS['basename']
 TEMPLATE_ENVS['filename'] = TEMPLATE_ENVS['stem']

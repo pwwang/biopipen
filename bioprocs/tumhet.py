@@ -1,6 +1,57 @@
 """A set of processes for Tumor heterogeneity analysis"""
 from diot import Diot
-from . import params, proc_factory
+from modkit import modkit
+from . import params, proc_factory, module_postinit
+from .utils import fs2name
+
+class POncodriveFM:
+    """
+    @input:
+        infiles: The annotated (single-sample) vcf files.
+            Typically, from vcf.pVcfSift4G, vcf.pVcfPolyPhen and
+            pVcfMutationAssessor.
+            We wil be looking for annotations from `SIFTINFO`, `PP2` and
+            `MutationAssessor` `INFO` fields.
+    @output:
+        outgenes: The output gene file
+        outpathways: The output pathway file
+    @args:
+        oncodrivefm (str): Path to `oncodrivefm`
+        gene2kegg (str): A gene to KEGG pathway mapping file.
+        params (Diot): Other parameters for `oncodrivefm`
+    """
+    input = 'infiles:files'
+    output = ['outgenes:file:{{i.infiles | fs2name}}-genes.tsv',
+              'outpathways:file:{{i.infiles | fs2name}}-pathways.tsv']
+    lang = params.python.value
+    envs = Diot(fs2name=fs2name)
+    args = Diot(
+        oncodrivefm=params.oncodrivefm.value,
+        gene2kegg=params.gene2kegg.value,
+        params=Diot(e='median')
+    )
+
+class POncodriveCLUST:
+    """
+    @input:
+        infile: The input MAF file
+    @output:
+        outfile: The result file from oncodriveCLUST.
+    @args:
+        oncodriveclust (str): Path to `oncodriveclust`
+        oncodriveclust_data (str): Path to `oncodriveclust` data directory,
+            containing `CGC_phenotype.tsv`, `pfam_domains.txt` and
+            `gene_transcripts.tsv` (required)
+        params (Diot): Other parameters for `oncodriveclust`
+    """
+    input = 'infile:file'
+    output = 'outfile:file:{{i.infile | stem}}-oncodriveclust.tsv'
+    lang = params.python.value
+    args = Diot(
+        oncodriveclust=params.oncodriveclust.value,
+        oncodriveclust_data=params.oncodriveclust_data.value,
+        params=Diot(m=3)
+    )
 
 # pylint: disable=invalid-name
 
@@ -427,3 +478,5 @@ pPyClone2ClonEvol = proc_factory(
         bedtools=params.bedtools.value,
     )
 )
+
+modkit.postinit(module_postinit)

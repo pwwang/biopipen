@@ -1,8 +1,165 @@
 """A set of processes to generate/process vcf files"""
 
 from diot import Diot
+from modkit import modkit
 from .utils import fs2name
-from . import params, proc_factory
+from . import params, proc_factory, module_postinit
+
+class PVcfSift4G:
+    """
+    @input:
+        infile: The input VCF file (.gz file not supported yet)
+    @output:
+        outfile: The annotated file
+        xlsfile: Tab-delimited annotation file
+    @args:
+        sift4g_annotator (str): Path to `sift4g_annotator`
+        sift4g_db (str): Path to sift4g database. Must contain a `.gz`,
+            `.regions` and `_SIFTDB_stats.txt` for each chromosome
+        params (Diot): Other parameters for `sift4g_annotator`
+    """
+    desc = 'Annotate a VCF file with SIFT 4G database'
+    input = 'infile:file'
+    output = ['outfile:file:{{i.infile | fn}}_SIFTpredictions.vcf',
+              'xlsfile:file:{{i.infile | fn}}_SIFTannotations.xls']
+    lang = params.python.value
+    args = Diot(
+        sift4g_annotator=params.sift4g_annotator.value,
+        sift4g_db=params.sift4g_db.value,
+        params=Diot()
+    )
+
+class PVcfPolyPhen:
+    """
+    @input:
+        infile: The input VCF file
+    @output:
+        outfile: The output VCF file with annotations
+    @args:
+        polyphen2_annotator (str): Path to vcf-annotate-polyphen
+        polyphen2_db (str): Path to polyphen2 sqlite database
+    """
+    desc = 'Annotate a VCF file PhlyPhen-2 sqlite database'
+    input = 'infile:file'
+    output = 'outfile:file:{{i.infile | fn}}_pph2.vcf'
+    lang = params.python.value
+    args = Diot(
+        polyphen2_annotator=params.polyphen2_annotator.value,
+        polyphen2_db=params.polyphen2_db.value
+    )
+
+class PVcfMutationAssessor:
+    """
+    @input:
+        infile: The input VCF file
+    @output:
+        outfile: The output VCF file with annotations
+    @args:
+        mutation_assessor_db (str): Path to mutation_assessor sqlite database
+            The database should be downloaded from:
+            http://mutationassessor.org/r3/
+            And then compiled into a sqlite database with schema.
+            ```sql
+            CREATE TABLE scores (
+                chrom       CHAR(5) NOT NULL,
+                chrpos      INTEGER NOT NULL,
+                ref         CHAR(1) NOT NULL,
+                alt         CHAR(1) NOT NULL,
+                aachange    CHAR(10),
+                gene        VARCHAR(16),
+                uniprot     VARCHAR(16),
+                info        VARCHAR(32),
+                uniprotvar  VARCHAR(10),
+                impact      VARCHAR(10),
+                score       REAL
+            );
+            CREATE INDEX x_query ON scores (chrom, chrpos, ref, alt);
+            CREATE INDEX x_gene ON scores (gene);
+            ```
+
+            Use following script to prepare the csv files for import:
+            ```fish
+            for i in *chr*.csv;
+                sed 's/","/,/g' $i |
+                sed -E 's/^"hg19,|"$//g' |
+                grep -v '^"' >> ready.csv
+            end
+            ```
+            You may also want to remove non-informative records:
+            ```sql
+            delete from scores where score = ""
+            ```
+    """
+    desc = 'Annotate a VCF file PhlyPhen-2 sqlite database'
+    input = 'infile:file'
+    output = 'outfile:file:{{i.infile | fn}}_ma.vcf'
+    lang = params.python.value
+    args = Diot(
+        mutation_assessor_db=params.mutation_assessor_db.value
+    )
+
+class PVcfExplode:
+    """
+    @input:
+        infile: The input VCF file
+            The file has to be sorted by SO (coordinates)
+    @output:
+        outdir: The output directory with the exploded VCF files
+    @args:
+        header (bool|str): The header for each exploded VCF file
+            - `True`: Output the same header as original VCF file
+            - `False`: Don't output any header
+            - `contig`: Force CONTIG to contain only the contig of the exploded
+                file
+        nthread (bool): Number of threads to use.
+            - Reduce this number if you got "too many open files" error while
+                running multiple vcf files.
+    """
+    desc = 'Explode a VCF file according to the CONFIGs defined in header'
+    input = 'infile:file'
+    output = 'outfile:file:{{i.infile | stem}}.exploded'
+    lang = params.python.value
+    args = Diot(header=True, nthread=1)
+
+class PVcf2Plink:
+    """
+    @input:
+        infile: The input vcf file, needs to be tabix indexed.
+    @output:
+        outdir: The output directory containing the plink binary files
+    @args:
+        plink (str): The path to plink
+        params (Diot): Command arguments for `plink`. Some pre-settings:
+            - `vcf-half-call`: `m`
+            - `double-id`: `True`
+            - `vcf-filter`: `True`
+            - `vcf-idspace-to`: `_`
+            - `set-missing-var-ids`: `@_#`    # make sure no duplicate vars
+                - if `$1`, `$2` ... included, this will run a extra process to
+                    set the var ids first
+                - Since plink 1.x doesn't specify `$1` as ref, but the first
+                    one of all alleles in ASCII-sort order
+                - Here `$1` will be bound to reference allele
+            - `biallelic-only`: `strict`
+    @requires:
+        `python:pyvcf`: to assign variant names (see `args.set-missing-var-ids`)
+    """
+    desc = 'Convert vcf to plink binary files (.bed/.bim/.fam)'
+    input = 'infile:file'
+    output = 'outdir:dir:{{i.infile | fn2}}.plink'
+    lang = params.python.value
+    args=Diot(
+        plink=params.plink.value,
+        tabix=params.tabix.value,
+        params=Diot({
+            'vcf-half-call': 'm',
+            'double-id': True,
+            'vcf-filter': True,
+            'vcf-idspace-to': '_',
+            'set-missing-var-ids': '@_#',  # may generate duplicate vars!
+            'biallelic-only': 'strict'
+        })
+    )
 
 # pylint: disable=invalid-name
 
@@ -316,48 +473,6 @@ pVcf2Maf = proc_factory(
               params=Diot())
 )
 
-pVcf2Plink = proc_factory(
-    desc='Convert vcf to plink binary files (.bed/.bim/.fam)',
-    config=Diot(annotate="""
-    @name:
-        pVcf2Plink
-    @description:
-        Convert vcf to plink binary files (.bed/.bim/.fam)
-    @input:
-        `infile:file`: The input vcf file, needs to be tabix indexed.
-    @output:
-        `outdir:dir`: The output directory containing the plink binary files
-    @args:
-        `plink` : The path to plink
-        `params`: Command arguments for `plink`. Some pre-settings:
-            - `vcf-half-call`      : `m`
-            - `double-id`          : `True`
-            - `vcf-filter`         : `True`
-            - `vcf-idspace-to`     : `_`
-            - `set-missing-var-ids`: `@_#`    # make sure no duplicate vars
-                - if `$1`, `$2` ... included, this will run a extra process to set the var ids first
-                - Since plink 1.x doesn't specify `$1` as ref, but the first one of all alleles in ASCII-sort order
-                - Here `$1` will be bound to reference allele
-            - `biallelic-only`     : `strict`
-    @requires:
-        `python:pyvcf`: to assign variant names (see `args.set-missing-var-ids`)
-    """),
-    input='infile:file',
-    output='outdir:dir:{{i.infile | fn2}}.plink',
-    lang=params.python.value,
-    args=Diot(
-        plink=params.plink.value,
-        tabix=params.tabix.value,
-        params=Diot({
-            'vcf-half-call': 'm',
-            'double-id': True,
-            'vcf-filter': True,
-            'vcf-idspace-to': '_',
-            'set-missing-var-ids': '@_#',  # may generate duplicate vars!
-            'biallelic-only': 'strict'
-        })
-    )
-)
 
 pVcfLiftover = proc_factory(
     desc='Liftover VCF files',
@@ -877,3 +992,5 @@ pVcfy = proc_factory(
               samples=False,
               gz=False)
 )
+
+modkit.postinit(module_postinit)

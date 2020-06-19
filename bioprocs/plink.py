@@ -70,11 +70,8 @@ pPlinkSampleFilter = proc_factory(
     )
 )
 
-pPlinkMiss = proc_factory(
-    desc='Find samples and snps with missing calls',
-    config=Diot(annotate="""
-    @name:
-        pPlinkMiss
+class PPlinkMiss:
+    """
     @description:
         Find samples and snps with missing calls, calculate the call rates and plot them.
     @input:
@@ -91,10 +88,11 @@ pPlinkMiss = proc_factory(
         `snpcr`: The SNP call rate cutoff. Default: `.95`
         `plot`: Whether plot the distribution of the call rates? Default: `True`
         `devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
-    """),
-    input='indir:dir',
-    output='outdir:dir:{{i.indir | fn}}.miss',
-    lang=params.Rscript.value,
+    """
+    desc='Find samples and snps with missing calls'
+    input='indir:dir'
+    output='outdir:dir:{{i.indir | fn}}.miss'
+    lang=params.Rscript.value
     args=Diot(
         plink=params.plink.value,
         samplecr=.95,
@@ -102,7 +100,6 @@ pPlinkMiss = proc_factory(
         plot=True,
         devpars=Diot(res=300, width=2000, height=2000),
     )
-)
 
 class PPlinkFreq:
     """

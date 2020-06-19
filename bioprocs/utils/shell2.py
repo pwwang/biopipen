@@ -55,7 +55,6 @@ def load_config(conf=None, **kwargs):
     for key, val in conf.items():
         conf2load[key] = DEFAULT_CONFIG.get(key, {}).copy()
         conf2load[key].update(val if isinstance(val, dict) else {'exe': val})
-
     cmdy.CMDY_CONFIG._load(conf2load)
 
 @modkit.delegate
