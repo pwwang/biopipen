@@ -5,6 +5,28 @@ from modkit import modkit
 from .utils import fs2name
 from . import params, proc_factory, module_postinit
 
+class PVcfRemoveWithFilters:
+    """
+    @input:
+        infile: The input VCF file
+    @output:
+        outfile: The output VCF file with records with given filters removed
+    @args:
+        filters (str|list): The records with these filters will be removed
+            - See also `args.reverse`
+        reverse (bool): Remove the records without given filters
+            - About `PASS` filter:
+            - If reverse is False, PASS will be kept unless specified by
+                `args.filters`
+            - If reverse is True, PASS will be removed if not specified by
+                `args.filters`
+    """
+    desc = 'Remove records with given filters in a VCF file'
+    input = 'infile:file'
+    output = 'outfile:file:{{i.infile | bn}}'
+    lang = params.python.value
+    args = Diot(filters=[], reverse=False)
+
 class PVcfSift4G:
     """
     @input:
@@ -254,26 +276,27 @@ pVcfUnique = proc_factory(
     )
 )
 
-pVcfRemoveFilter = proc_factory(
-    desc='Remove one or more filters in vcf files',
-    config=Diot(annotate="""
-    @name:
-        pVcfRemoveFilter
-    @description:
-        Remove one or more filters in vcf files
+class PVcfRemoveFilter:
+    """
     @input:
-        `infile:file`: The input vcf file
+        infile: The input vcf file
     @output:
-        `outfile:file`: The output file
+        outfile: The output file
     @args:
-        `rmfilter`: The filters to remove. If None, ALL filters will be removed!
+        filters (str|list): The filters to remove.
             - A `list` of filter names.
-    """),
-    input='infile:file',
-    output='outfile:file:{{i.infile | bn}}',
-    lang=params.python.value,
-    args=Diot(rmfilter=None) # remove all filters
-)
+        reverse (bool): Remove the records without given filters
+            - About `PASS` filter:
+            - If reverse is False, PASS will be kept unless specified by
+                `args.filters`
+            - If reverse is True, PASS will be removed if not specified by
+                `args.filters`
+    """
+    desc = 'Remove one or more filters (not records) in vcf files'
+    input = 'infile:file'
+    output = 'outfile:file:{{i.infile | bn}}'
+    lang = params.python.value
+    args=Diot(filters=[], reverse=False)
 
 pVcf = proc_factory(
     desc='Manipulate a VCF file',

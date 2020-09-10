@@ -203,6 +203,8 @@ class PMerge:
         params (Diot) : Other parameters for `bcftools merge`
         bcftools (str): Path to bcftools
         gz (bool): Whether output gzipped vcf
+        tabix (str): Path to tabix
+        bychr (bool): Merge by chromosome and then concatenate
     """
     desc = ('Merge multiple VCF/BCF files from non-overlapping sample sets '
             'to create one multi-sample file using `bcftools merge`.')
@@ -214,6 +216,8 @@ class PMerge:
     args = Diot(nthread=1,
                 bcftools=params.bcftools.value,
                 gz=False,
+                tabix=params.tabix.value,
+                bychr=False,
                 params=Diot())
 
 modkit.alias(pBcftoolsMerge='pMerge',

@@ -1,24 +1,28 @@
-from pysam import VariantFile as Vcf
-from diot import Diot
-from bioprocs.utils import alwaysList
+from cyvcf2 import VCF, Writer
+from pyppl.utils import always_list
 
 infile   = {{ i.infile | quote}}
 outfile  = {{ o.outfile | quote}}
-rmfilter = {{ args.rmfilter | repr}}
-if rmfilter:
-	rmfilter = alwaysList(rmfilter)
+filters = {{args.filters | repr}}
+reverse = {{args.reverse | bool}}
+filters = always_list(filters)
 
-invcf  = Vcf(infile)
-outvcf = open(outfile, 'w')
-outvcf.write(str(invcf.header))
-for rec in invcf.fetch():
-	parts   = str(rec).split('\t')
-	filters = parts[6].split(';')
-	if not rmfilter:
-		filters = 'PASS'
-	else:
-		filters = ';'.join(f for f in filters if f not in rmfilter)
-		filters = filters or 'PASS'
-	parts[6] = filters
-	outvcf.write('\t'.join(parts))
-outvcf.close()
+reader = VCF(infile)
+writer = Writer(outfile, reader)
+
+for rec in reader:
+    filt = rec.FILTER or 'PASS'
+    filt = filt.split(';')
+    for rmfilt in filters:
+        if not reverse and rmfilt in filt:
+            filt.remove(rmfilt)
+        elif reverse and rmfile not in filt:
+            filt.remove(rmfilt)
+    if not filt:
+        rec.FILTER = 'PASS'
+    else:
+        rec.FILTER = ';'.join(filt)
+    writer.write_record(rec)
+
+reader.close()
+writer.close()

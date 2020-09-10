@@ -43,6 +43,7 @@ def main():
     pCmdRunner.errhow = 'halt'
     pCmdRunner.forks = int(opts.get('forks', 1))
     pCmdRunner.input = {'cmd': opts.cmds}
+    pCmdRunner.output = 'output:var:0'
     pCmdRunner.script = '{{i.cmd}}'
 
     PyPPL(ppldir=opts.ppldir).start(pCmdRunner).run()

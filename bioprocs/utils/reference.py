@@ -133,6 +133,7 @@ def tabix_index(filename, type, tabix='tabix'): # pylint: disable=redefined-buil
     """Use tabix to index file"""
     # /path/to/some.vcf -> some.vcf
     # /path/to/some.vcf.gz -> some.vcf
+    filename = str(filename)
     bname = path.basename(
         filename[:-3]) if filename.endswith('.gz') else path.basename(filename)
     # /path/to/some.bam -> /path/to/

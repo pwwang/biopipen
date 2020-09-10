@@ -89,11 +89,11 @@ class PPlinkMiss:
         `plot`: Whether plot the distribution of the call rates? Default: `True`
         `devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
     """
-    desc='Find samples and snps with missing calls'
-    input='indir:dir'
-    output='outdir:dir:{{i.indir | fn}}.miss'
-    lang=params.Rscript.value
-    args=Diot(
+    desc = 'Find samples and snps with missing calls'
+    input = 'indir:dir'
+    output = 'outdir:dir:{{i.indir | fn}}.miss'
+    lang = params.Rscript.value
+    args = Diot(
         plink=params.plink.value,
         samplecr=.95,
         snpcr=.95,
