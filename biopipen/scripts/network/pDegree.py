@@ -1,6 +1,6 @@
 from collections import defaultdict
 from diot import Diot
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{ i.infile | quote }}
 outfile = {{ o.outfile | quote }}

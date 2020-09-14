@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell2 as shell, logger
+from biopipen.utils import shell2 as shell, logger
 
 infile  = {{i.infile | quote}}
 sqlfile = {{i.sqlfile | quote}}

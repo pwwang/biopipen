@@ -1,7 +1,7 @@
 from os import makedirs, path
 from shutil import rmtree
 from diot import Diot
-from bioprocs.utils import cmdargs, runcmd, mem2
+from biopipen.utils import cmdargs, runcmd, mem2
 
 tmpdir    = path.join ("{{args.tmpdir}}", "{{proc.id}}.{{i.infile | fn}}.{{job.index}}")
 if not path.exists (tmpdir): makedirs (tmpdir)

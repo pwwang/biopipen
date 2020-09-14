@@ -10,7 +10,7 @@ def config():
 		'default': {
 			'cachedir': Path(__file__).resolve().parent / 'testdata',
 			'source': 'github',
-			'repos': 'pwwang/bioprocs-testdata'
+			'repos': 'pwwang/biopipen-testdata'
 		}
 	}, '~/.remotedata.yaml', 'REMOTEDATA.osenv')
 	return ret

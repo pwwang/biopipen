@@ -3,8 +3,8 @@
 # pylint: disable=invalid-name,unused-import,not-a-mapping,undefined-variable
 
 from diot import Diot
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-from bioprocs.utils import log2pyppl
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import log2pyppl
 
 infile = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

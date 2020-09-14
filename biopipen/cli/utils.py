@@ -1,4 +1,4 @@
-# """Utilities for bioprocs script"""
+# """Utilities for biopipen script"""
 # import re
 # import sys
 # from pathlib import Path
@@ -12,7 +12,7 @@
 # from pyppl import Channel, PyPPL, Proc
 # from pyppl._proc import IN_FILESTYPE
 # from liquid.stream import LiquidStream
-# import bioprocs
+# import biopipen
 
 
 # def _split(string, delimit, trim=True):
@@ -77,20 +77,20 @@
 
 
 # class Module:
-#     """A module of bioprocs"""
+#     """A module of biopipen"""
 #     @staticmethod
 #     def modules():
 #         """Get all modules"""
 #         return [
 #             module.stem
-#             for module in Path(bioprocs.__file__).parent.glob('*.py')
+#             for module in Path(biopipen.__file__).parent.glob('*.py')
 #             if not module.stem.startswith('_')
 #         ]
 
 #     def __init__(self, name):
 #         self.name = name
 #         try:
-#             self.module = getattr(__import__('bioprocs', fromlist=[name]),
+#             self.module = getattr(__import__('biopipen', fromlist=[name]),
 #                                   name)
 #         except AttributeError as ex:
 #             if "has no attribute '%s'" % name in str(ex):
@@ -166,7 +166,7 @@
 
 
 # class Process:
-#     """A bioprocs process"""
+#     """A biopipen process"""
 #     def __init__(self, proc, module, doc, aliasof=None):
 #         self.name = proc.id
 #         self.module = module
@@ -253,8 +253,8 @@
 
 #         # help
 #         self._helps.select('Other options').add_param(
-#             bioprocs.params[bioprocs.params._hopts[0]],
-#             bioprocs.params._hopts,
+#             biopipen.params[biopipen.params._hopts[0]],
+#             biopipen.params._hopts,
 #             ishelp=True)
 
 #         self._helps.add('Requirements', self.requirements(), sectype='plain')
@@ -306,8 +306,8 @@
 
 #     def run(self, opts): # pylint: disable=too-many-branches
 #         """Construct a pipeline with the process and run it"""
-#         if (any(opts.get(h) for h in bioprocs.params._hopts)
-#                 or all(key in bioprocs.params._hopts for key in opts)):
+#         if (any(opts.get(h) for h in biopipen.params._hopts)
+#                 or all(key in biopipen.params._hopts for key in opts)):
 #             self.print_helps()
 
 #         indata = OrderedDiot()
@@ -360,17 +360,17 @@
 #         self.proc.config.update(opts.pop('config', {}))
 #         # config = {
 #         # 	'logger'  : {'file': None },
-#         # 	'ppldir': Path(gettempdir()) / 'bioprocs.workdir'
+#         # 	'ppldir': Path(gettempdir()) / 'biopipen.workdir'
 #         # }
 #         # config.update(Process._update_args(opts.get('config', {})))
 
 #         for key, val in opts.items():
-#             if key in bioprocs.params._hopts + ['i', 'o']:
+#             if key in biopipen.params._hopts + ['i', 'o']:
 #                 continue
 #             setattr(self.proc, key, val)
 
 #         PyPPL(logger_file=False,
-#               ppldir=Path(gettempdir()) / 'bioprocs.workdir').start(
+#               ppldir=Path(gettempdir()) / 'biopipen.workdir').start(
 #                   self.proc
 #               ).run()
 
@@ -382,26 +382,26 @@
 #         """Get all available pipelines"""
 #         return [
 #             pplfile.stem[9:]
-#             for pplfile in (Path(bioprocs.__file__).parent / 'cli' /
-#                             'pipeline').glob('bioprocs_*.py')
+#             for pplfile in (Path(biopipen.__file__).parent / 'cli' /
+#                             'pipeline').glob('biopipen_*.py')
 #             if not pplfile.stem.startswith('_')
 #         ]
 
 #     def __init__(self, name):
 #         self.name = name
-#         self.module = __import__('bioprocs.cli.pipeline',
-#                                  fromlist=['bioprocs_' + name])
-#         self.module = getattr(self.module, 'bioprocs_' + name)
+#         self.module = __import__('biopipen.cli.pipeline',
+#                                  fromlist=['biopipen_' + name])
+#         self.module = getattr(self.module, 'biopipen_' + name)
 #         self.desc = (self.module.__doc__.strip()
 #                      if self.module.__doc__
 #                      else '[ Not documented ]')
 
 #     def run(self):
 #         """Run the pipeline"""
-#         prog = 'bioprocs ' + self.name
+#         prog = 'biopipen ' + self.name
 #         sys.argv = [prog] + sys.argv[2:]
-#         bioprocs.params._prog = prog
-#         bioprocs.params._assembler.progname = prog
+#         biopipen.params._prog = prog
+#         biopipen.params._assembler.progname = prog
 
 #         self.module.main()
 

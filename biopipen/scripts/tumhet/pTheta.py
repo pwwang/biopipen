@@ -111,11 +111,11 @@
 
 from diot import Diot
 from os import path, makedirs
-from bioprocs.utils import logger, shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
-from bioprocs.utils.parallel import Parallel, distribute
-from bioprocs.utils.reference import bamIndex
-from bioprocs.utils.shell2 import ln_s, wc_l
+from biopipen.utils import logger, shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils.parallel import Parallel, distribute
+from biopipen.utils.reference import bamIndex
+from biopipen.utils.shell2 import ln_s, wc_l
 
 {% python from os import path %}
 itvfile  = {{ i.infile | quote}}

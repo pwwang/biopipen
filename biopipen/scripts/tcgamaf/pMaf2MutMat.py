@@ -1,5 +1,5 @@
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-from bioprocs.utils.constants import tcgamaf
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.constants import tcgamaf
 
 {% from pyppl.utils import always_list %}
 infile  = {{i.infile | quote}}

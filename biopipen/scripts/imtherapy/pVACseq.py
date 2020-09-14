@@ -1,8 +1,8 @@
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.reference import vcfIndex
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import shell2 as shell
+from biopipen.utils.reference import vcfIndex
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 
 {% from os import path %}
 {% from pyppl.utils import alwaysList %}

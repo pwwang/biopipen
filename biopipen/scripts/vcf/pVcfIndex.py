@@ -1,6 +1,6 @@
 from os import path
-from bioprocs.utils import gztype, shell2 as shell
-from bioprocs.utils.reference import vcfIndex
+from biopipen.utils import gztype, shell2 as shell
+from biopipen.utils.reference import vcfIndex
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

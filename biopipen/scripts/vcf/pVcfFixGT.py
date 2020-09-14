@@ -1,4 +1,4 @@
-from bioprocs.utils.shell2 import bgzip
+from biopipen.utils.shell2 import bgzip
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils.snp import snpinfo
+from biopipen.utils.snp import snpinfo
 
 infile   = {{i.snpfile | quote}}
 outfile  = {{o.outfile | quote}}

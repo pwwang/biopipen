@@ -1,5 +1,5 @@
 from cyvcf2 import VCF, Writer
-from bioprocs.utils import shell2 as shell, logger
+from biopipen.utils import shell2 as shell, logger
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

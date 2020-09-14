@@ -2,8 +2,8 @@ from os import path, makedirs
 from shutil import rmtree
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import mem2, shell2 as shell
-from bioprocs.utils.reference import bamIndex
+from biopipen.utils import mem2, shell2 as shell
+from biopipen.utils.reference import bamIndex
 
 {% python from os import path %}
 

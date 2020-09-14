@@ -5,9 +5,9 @@
 
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader
-from bioprocs.utils.reference import bam_index, fa_index
+from biopipen.utils import shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader
+from biopipen.utils.reference import bam_index, fa_index
 
 infiles = {{i.infiles | repr}}
 baits   = {{args.baits | repr}}

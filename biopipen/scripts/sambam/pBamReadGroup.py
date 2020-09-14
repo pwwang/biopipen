@@ -3,7 +3,7 @@ from os import makedirs, path
 from shutil import rmtree
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import cmdargs, runcmd, mem2
+from biopipen.utils import cmdargs, runcmd, mem2
 
 # detemine default read group
 rg = {{ args.rg }}

@@ -5,7 +5,7 @@
 
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 cnvkit   = {{args.cnvkit | quote}}
 infile   = {{i.tgfile | quote}}

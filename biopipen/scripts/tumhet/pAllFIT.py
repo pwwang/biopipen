@@ -36,8 +36,8 @@ optional arguments:
 """
 from os import path
 from diot import Diot
-from bioprocs.utils import logger, shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import logger, shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 
 infile   = {{i.infile | quote}}
 cnfile   = {{i.cnfile | quote}}

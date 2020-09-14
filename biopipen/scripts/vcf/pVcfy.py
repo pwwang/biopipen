@@ -1,10 +1,10 @@
 import random
 from pathlib import Path
 from diot import Diot, OrderedDiot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader
-from bioprocs.utils.parallel import Parallel
-from bioprocs.utils.reference import faIndex
+from biopipen.utils import shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader
+from biopipen.utils.parallel import Parallel
+from biopipen.utils.reference import faIndex
 
 infile   = Path({{i.infile | quote}})
 ref      = {{args.ref | quote}}

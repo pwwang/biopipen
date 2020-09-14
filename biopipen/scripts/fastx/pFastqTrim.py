@@ -4,7 +4,7 @@
 
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import mem2, shell2 as shell
+from biopipen.utils import mem2, shell2 as shell
 
 fq1          = {{i.fq1 | quote}}
 fq2          = {{i.fq2 | quote}}

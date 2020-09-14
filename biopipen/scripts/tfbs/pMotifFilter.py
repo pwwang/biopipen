@@ -1,4 +1,4 @@
-from bioprocs.utils.meme import MemeReader, MemeWriter
+from biopipen.utils.meme import MemeReader, MemeWriter
 
 infile  = {{ i.infile | quote}}
 outfile = {{ o.outfile | quote}}

@@ -1,7 +1,7 @@
 from os import path, remove
 from glob import glob
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 indir   = {{i.indir | quote}}
 outfile = {{o.outfile | quote}}

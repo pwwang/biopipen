@@ -364,7 +364,7 @@ pHeatmap2 = proc_factory(
     @description:
         Plot heatmaps using R package ComplexHeatmap. Example:
         ```bash
-        bioprocs plot.pHeatmap2
+        biopipen plot.pHeatmap2
         -i.infile MMPT.txt
         -i.annofiles:l:o PatientAnno.txt
         -args.params.row_names_gp 'r:fontsize5'

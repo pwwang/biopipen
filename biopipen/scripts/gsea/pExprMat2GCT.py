@@ -1,7 +1,7 @@
 """Script for gsea.pExprMat2GCT"""
 # pylint: disable=undefined-variable,unused-import,invalid-name
-from bioprocs.utils import logger
-from bioprocs.utils.tsvio2 import TsvReader
+from biopipen.utils import logger
+from biopipen.utils.tsvio2 import TsvReader
 
 expfile = {{i.expfile | quote}}
 outfile = {{o.outfile | quote}}

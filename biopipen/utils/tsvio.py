@@ -3,7 +3,7 @@ Reader and writer for tsv file.
 """
 import sys, inspect
 from pyppl import Diot
-from bioprocs.utils import alwaysList
+from biopipen.utils import alwaysList
 from collections import OrderedDict
 
 def _getargs(args, func):

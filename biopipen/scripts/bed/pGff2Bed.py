@@ -1,6 +1,6 @@
 from diot import Diot
-from bioprocs.utils import funcargs
-from bioprocs.utils.tsvio2 import TsvWriter, TsvRecord
+from biopipen.utils import funcargs
+from biopipen.utils.tsvio2 import TsvWriter, TsvRecord
 from gff import Gff
 
 infile    = {{i.infile | quote}}

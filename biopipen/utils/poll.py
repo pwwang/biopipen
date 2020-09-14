@@ -2,8 +2,8 @@
 import filelock
 from os import path
 from time import sleep
-from bioprocs.utils import log2pyppl
-from bioprocs.utils.shell2 import runcmd
+from biopipen.utils import log2pyppl
+from biopipen.utils.shell2 import runcmd
 
 class HardFileLock(filelock.BaseFileLock):
 	"""

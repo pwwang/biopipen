@@ -5,7 +5,7 @@ import glob
 import os
 from shutil import copyfile
 from threading import Lock
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils.parallel import Parallel
 
 # load varialbes
 indir = {{i.indir | quote}}

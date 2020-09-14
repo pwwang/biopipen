@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL
-from bioprocs.stats import pSurvival, pCorr, pDiffCorr, pAdjust, pDeCov, pChow, pMediation
+from biopipen.stats import pSurvival, pCorr, pDiffCorr, pAdjust, pDeCov, pChow, pMediation
 from . import assertInfile, assertNotInfile
 
 def test_survival(rdata):

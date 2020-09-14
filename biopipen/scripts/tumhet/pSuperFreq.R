@@ -24,7 +24,7 @@ write.table(metadata, metafile, row.names = FALSE, sep = "\t", quote = FALSE)
 
 # try to find index of all bam files
 for (bam in unique(unlist(metadata$BAM))) {
-	reticulate::import('bioprocs')$utils$reference$bamIndex(bam, samtools = NULL, nthread = nthread)
+	reticulate::import('biopipen')$utils$reference$bamIndex(bam, samtools = NULL, nthread = nthread)
 }
 
 # convert baits to bed

@@ -1,7 +1,7 @@
 from diot import Diot
 from os import path
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.tsvio2 import TsvWriter
+from biopipen.utils import shell2 as shell
+from biopipen.utils.tsvio2 import TsvWriter
 from gff import Gff
 
 infile  = {{i.infile | quote}}

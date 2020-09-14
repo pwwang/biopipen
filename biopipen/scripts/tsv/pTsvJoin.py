@@ -1,7 +1,7 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import regionOverlap, log2pyppl
-from bioprocs.utils.tsvio2 import TsvJoin
+from biopipen.utils import regionOverlap, log2pyppl
+from biopipen.utils.tsvio2 import TsvJoin
 
 infiles = {{i.infiles}}
 inopts  = {{args.inopts | repr}}

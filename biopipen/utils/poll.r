@@ -1,8 +1,8 @@
 library(methods)
 library(filelock)
 library(reticulate)
-bioprocs = import('bioprocs')
-source(file.path(bioprocs$UTILS, '__init__.r'))
+biopipen = import('biopipen')
+source(file.path(biopipen$UTILS, '__init__.r'))
 
 getkw = function (kwargs, key, default) {
 	kwnames = names(kwargs)

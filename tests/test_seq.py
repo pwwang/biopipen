@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pyppl import PyPPL
-from bioprocs.seq import pSeqMutate
+from biopipen.seq import pSeqMutate
 from . import assertInfile
 
 def test_seqmutate(rdata):

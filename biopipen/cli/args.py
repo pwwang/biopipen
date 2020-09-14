@@ -1,4 +1,4 @@
-"""Arguments of bioprocs"""
+"""Arguments of biopipen"""
 import logging
 from pathlib import Path
 from pyparam import Params

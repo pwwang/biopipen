@@ -1,7 +1,7 @@
 import re
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 # variables
 infile1   = {{i.fq1 | quote}}

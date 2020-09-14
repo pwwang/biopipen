@@ -1,10 +1,10 @@
 from pyppl import ProcSet
-from bioprocs.common import pStr2File, pFile2Proc, pSort
-from bioprocs.tsv import pTsvJoin
-from bioprocs.seq import pPromoters, pConsv, pConsvPerm
-from bioprocs.bed import pBedGetfasta
-from bioprocs.tfbs import pMotifScan
-from bioprocs import params
+from biopipen.common import pStr2File, pFile2Proc, pSort
+from biopipen.tsv import pTsvJoin
+from biopipen.seq import pPromoters, pConsv, pConsvPerm
+from biopipen.bed import pBedGetfasta
+from biopipen.tfbs import pMotifScan
+from biopipen import params
 
 """
 @name:

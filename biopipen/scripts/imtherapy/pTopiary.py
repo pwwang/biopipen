@@ -19,8 +19,8 @@ from cyvcf2 import VCF
 from gff import Gff
 from diot import Diot
 from cmdy import CmdyReturnCodeError
-from bioprocs.utils import shell2 as shell, logger
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import shell2 as shell, logger
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 {% from os import path%}
 infile        = {{i.infile | quote}}
 afile         = {{i.afile | ?path.isfile | =readlines | !alwaysList | repr}}

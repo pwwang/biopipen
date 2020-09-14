@@ -1,5 +1,5 @@
-from bioprocs.utils import runcmd, cmdargs
-from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import runcmd, cmdargs
+from biopipen.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}

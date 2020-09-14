@@ -3,7 +3,7 @@
 
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell, logger
+from biopipen.utils import shell2 as shell, logger
 
 infile = {{i.manifile | quote}}
 outdir = {{o.outdir | quote}}

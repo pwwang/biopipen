@@ -1,6 +1,6 @@
 import binascii, sys
 from diot import Diot
-from bioprocs.utils import runcmd, cmdargs
+from biopipen.utils import runcmd, cmdargs
 
 def gzip_type(fn):
 	with open(fn, 'rb') as f:

@@ -33,8 +33,8 @@ mutations:
 """
 from pathlib import Path
 import yaml
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
-from bioprocs.utils import shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import shell2 as shell
 indir    = Path({{i.indir | quote}})
 outfile  = Path({{o.outfile | quote}})
 refgene  = {{args.refgene | quote}}

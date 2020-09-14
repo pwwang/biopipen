@@ -2,7 +2,7 @@ from shutil import move, rmtree
 from os import path, symlink, remove
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import mem2, shell2 as shell, logger
+from biopipen.utils import mem2, shell2 as shell, logger
 
 infile     = {{ i.infile | quote }}
 inprefix   = {{ i.infile | fn | quote}}

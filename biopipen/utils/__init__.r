@@ -1,7 +1,7 @@
 if (!exists("utils")) {
     # don't load them twice
     # python modkit package makes second load of utils$shell2 raise exceptions
-    utils <- reticulate::import("bioprocs", delay_load = TRUE)$utils
+    utils <- reticulate::import("biopipen", delay_load = TRUE)$utils
     shell <- utils$shell2
     runcmd <- shell$runcmd
     mem2 <- utils$mem2

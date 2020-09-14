@@ -1,6 +1,6 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infile    = {{ i.infile | quote}}
 outfile   = {{ o.outfile | quote }}
@@ -55,7 +55,7 @@ def attach_order():
     mappings = dict(zip(chrorder, sorted(chrorder)))
     global infile
     tmpfile = path.join(joboutdir, path.basename(infile) + '.withorder')
-    from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+    from biopipen.utils.tsvio2 import TsvReader, TsvWriter
     reader = TsvReader(infile, cnames = False)
     writer = TsvWriter(tmpfile)
     for r in reader:
@@ -71,7 +71,7 @@ def detach_order(mappings):
         return
     shell.rm_rf(infile)
     tmpfile = path.join(joboutdir, path.basename(infile) + '.withoutorder')
-    from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+    from biopipen.utils.tsvio2 import TsvReader, TsvWriter
     reader = TsvReader(outfile, cnames = False)
     writer = TsvWriter(tmpfile)
     for r in reader:

@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from bioprocs.utils import shell2 as shell, FileConn
-from bioprocs.utils.reference import vcfIndex
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils import shell2 as shell, FileConn
+from biopipen.utils.reference import vcfIndex
+from biopipen.utils.parallel import Parallel
 
 {% from pyppl.utils import always_list %}
 infile   = {{i.infile | quote}}

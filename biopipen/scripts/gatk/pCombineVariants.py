@@ -1,6 +1,6 @@
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import shell2 as shell, mem2
+from biopipen.utils import shell2 as shell, mem2
 
 infiles = {{i.infiles | repr}}
 outfile = {{o.outfile | quote}}

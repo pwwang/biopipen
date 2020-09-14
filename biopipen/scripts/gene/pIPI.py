@@ -1,6 +1,6 @@
 from diot import Diot
-from bioprocs.utils.gene import genenorm
-from bioprocs.utils.tsvio import TsvReader, TsvWriter
+from biopipen.utils.gene import genenorm
+from biopipen.utils.tsvio import TsvReader, TsvWriter
 
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}

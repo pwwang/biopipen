@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Do PWM scan"""
 from pyppl import PyPPL
-from diot import Diot
 from pyparam import Params
 from biopipen import params as bp_params
 
+# pylint: disable=invalid-name
 help_group = 'SCRIPTS'
 params = Params(desc=__doc__)
 
@@ -32,8 +32,8 @@ def main(opts): # pylint: disable=too-many-branches
     """Main function"""
     opts = bp_params.parse() | opts
 
-    from bioprocs.gene import pGeneNameNorm
-    from bioprocs.sets.tfbs import (aTfbsTfPC,
+    from biopipen.gene import pGeneNameNorm
+    from biopipen.sets.tfbs import (aTfbsTfPC,
                                     aTfbsTfRC,
                                     aTfbsTfP,
                                     aTfbsTfR,

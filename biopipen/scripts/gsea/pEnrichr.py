@@ -1,10 +1,10 @@
 from os import path
 from enrichr import Enrichr
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.parallel import Parallel
-from bioprocs.utils.gene import genenorm
-from bioprocs.utils.tsvio2 import TsvReader
+from biopipen.utils import shell2 as shell
+from biopipen.utils.parallel import Parallel
+from biopipen.utils.gene import genenorm
+from biopipen.utils.tsvio2 import TsvReader
 
 {% from pyppl.utils import always_list %}
 

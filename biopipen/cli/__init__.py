@@ -1,4 +1,4 @@
-"""Script entry point for bioprocs"""
+"""Script entry point for biopipen"""
 from .args import params
 from .modules import Module
 from .commands import Command

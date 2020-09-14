@@ -17,11 +17,11 @@ params.add_param('shell', type='choice', choices=['bash', 'fish', 'zsh'],
 params.add_param('module', type=str, default='self',
                  desc=['Which module to generate completion code for.',
                        f'* `self`: generate for `{ROOT_MODULE}`',
-                       f'* `all`: generate for all modules, including `self`',
+                       '* `all`: generate for all modules, including `self`',
                        '  [yellow]WARNING[/yellow]: codes will be '
                        'automatically appended ',
                        '  to target file(s).',
-                       f'* `{{{{module}}}}`: generate for `{{{{module}}}}`',
+                       '* `{{{{module}}}}`: generate for `{{{{module}}}}`',
                        '  For fish, code should be saved to ',
                        '  `~/.config/fish/completions/'
                        f'{ROOT_MODULE}-{{{{module}}}}.fish`'])

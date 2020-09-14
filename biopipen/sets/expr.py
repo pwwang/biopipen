@@ -1,9 +1,9 @@
 from pyppl import Aggr
-from bioprocs.common import pFile2Proc
-from bioprocs.rnaseq import pExprDir2Matrix, pRNASeqDEG, pExprPlot
-from bioprocs.marray import pCELDir2Matrix, pMArrayDEG
-from bioprocs.resource import pTxt
-from bioprocs.gsea import pExprMat2GCT, pSampleinfo2CLS, pGSEA, pEnrichr
+from biopipen.common import pFile2Proc
+from biopipen.rnaseq import pExprDir2Matrix, pRNASeqDEG, pExprPlot
+from biopipen.marray import pCELDir2Matrix, pMArrayDEG
+from biopipen.resource import pTxt
+from biopipen.gsea import pExprMat2GCT, pSampleinfo2CLS, pGSEA, pEnrichr
 
 """
 @name:

@@ -1,6 +1,6 @@
-from bioprocs.utils import FileConn
+from biopipen.utils import FileConn
 
-{% python from bioprocs.utils import alwaysList %}
+{% python from biopipen.utils import alwaysList %}
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}
 dbsnp    = {{args.dbsnp | quote}}

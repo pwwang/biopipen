@@ -6,7 +6,7 @@ from os import path
 from collections import OrderedDict
 from diot import Diot
 from pyppl.utils import always_list
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 infile = {{i.infile | quote}}
 colfile = {{i.colfile | quote}}

@@ -1,6 +1,6 @@
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import runcmd, cmdargs
+from biopipen.utils import runcmd, cmdargs
 
 fq   = {{i.fq | quote}}
 params = {{args.params}}

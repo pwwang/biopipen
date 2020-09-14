@@ -1,6 +1,6 @@
 """Script for bed.pBed2Wiggle"""
 # pylint: disable=invalid-name
-from bioprocs.utils.tsvio2 import TsvReader
+from biopipen.utils.tsvio2 import TsvReader
 
 infile = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
@@ -33,7 +33,7 @@ reader.close()
 if not bigwig:
     exit(0)
 
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 shell.mv(outfile, outfile + '.wig')
 shell.load_config(wigtobigwig=wigtobigwig)
 shell.wigtobigwig(outfile + '.wig', gsize, outfile, _sep="=", _prefix="-").fg

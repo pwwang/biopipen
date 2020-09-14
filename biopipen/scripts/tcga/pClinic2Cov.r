@@ -1,6 +1,6 @@
 {{rimport}}('__init__.r')
 
-{% python from bioprocs.utils import alwaysList %}
+{% python from biopipen.utils import alwaysList %}
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
 covs    = {{args.covs | alwaysList | R}}

@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils.shell import grep, zcat
+from biopipen.utils.shell import grep, zcat
 
 infile  = {{ i.infile | quote}}
 outfile = {{ o.outfile | quote}}

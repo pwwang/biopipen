@@ -9,7 +9,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_TABLE_DIRECTION
 from docx.enum.shape import WD_INLINE_SHAPE_TYPE
 from os import path
 from runpy import run_path
-from bioprocs.utils import log2pyppl
+from biopipen.utils import log2pyppl
 
 infile    = {{i.infile | quote}}
 outfile   = {{o.outfile | quote}}

@@ -1,8 +1,8 @@
 from os import path
 from diot import Diot
 from pyppl.utils import always_list
-from bioprocs.utils import logger
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import logger
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
 hfile   = {{i.hfile | quote}}

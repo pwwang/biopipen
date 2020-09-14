@@ -2,9 +2,9 @@
 # pylint: disable=not-a-mapping,invalid-name,expression-not-assigned
 from pathlib import Path
 from diot import Diot # pylint: disable=unused-import
-from bioprocs.utils import shell2 as shell, gztype, logger
-from bioprocs.utils.reference import vcf_index
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils import shell2 as shell, gztype, logger
+from biopipen.utils.reference import vcf_index
+from biopipen.utils.parallel import Parallel
 
 # pylint: disable=undefined-variable, unsubscriptable-object
 infiles = {{i.infiles | repr}}

@@ -1,7 +1,7 @@
 from collections import Counter
 from pysam import VariantFile as Vcf
-from bioprocs.utils import FileConn
-from bioprocs.utils.tsvio2 import TsvJoin
+from biopipen.utils import FileConn
+from biopipen.utils.tsvio2 import TsvJoin
 
 infile   = {{i.infile     | quote}}
 outfile  = {{o.outfile    | quote}}

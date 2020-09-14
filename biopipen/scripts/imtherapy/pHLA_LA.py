@@ -1,8 +1,8 @@
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.reference import bamIndex
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import shell2 as shell
+from biopipen.utils.reference import bamIndex
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 infile   = {{i.infile | quote}}
 outdir   = Path({{o.outdir | quote}})

@@ -1,6 +1,6 @@
 from diot import Diot
-from bioprocs.utils import regionOverlap
-from bioprocs.utils.tsvio import TsvReader, TsvWriter
+from biopipen.utils import regionOverlap
+from biopipen.utils.tsvio import TsvReader, TsvWriter
 
 # read input file
 regfile = {{i.regfile | quote}}

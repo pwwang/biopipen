@@ -1,7 +1,7 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 fq1      = {{ i.fqfile1 | quote}}
 fq2      = {{ i.fqfile2 | quote}}

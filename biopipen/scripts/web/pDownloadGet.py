@@ -2,7 +2,7 @@
 # pylint: disable=invalid-name,undefined-variable
 
 import requests
-from bioprocs.utils import logger
+from biopipen.utils import logger
 
 logger.info('Beginning file download with requests')
 

@@ -1,6 +1,6 @@
 from os import remove
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infiles = {{i.infile | repr}}
 params  = {{args.params | repr}}

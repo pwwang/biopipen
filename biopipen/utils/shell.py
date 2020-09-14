@@ -139,10 +139,10 @@ def runcmd2(tool, params, dash = 'auto', equal = 'auto', duplistkey = False, ign
 	return r
 
 # def call(command, args, quit = True):
-# 	bioprocs = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'bioprocs')
+# 	biopipen = path.join(path.realpath(path.dirname(path.dirname(path.dirname(__file__)))), 'bin', 'biopipen')
 # 	if not isinstance(args, list):
 # 		args = shlex.split(args)
-# 	args = [bioprocs, command] + args
+# 	args = [biopipen, command] + args
 # 	return runcmd(args, quit)
 
 class ShellResult(object):
@@ -158,9 +158,9 @@ class ShellResult(object):
 	def __repr__(self):
 		return '<ShellResult {!r}>'.format(self.cmdobj)
 
-	def run(self, raiseExc = True, save = None, logger = 'bioprocs'):
+	def run(self, raiseExc = True, save = None, logger = 'biopipen'):
 		if not self.done:
-			if logger == 'bioprocs':
+			if logger == 'biopipen':
 				from . import logger
 				logit = lambda *args: logger.info(*args)
 			elif logger == 'sys':

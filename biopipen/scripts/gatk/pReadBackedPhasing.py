@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell2 as shell, mem2
+from biopipen.utils import shell2 as shell, mem2
 
 infile   = {{i.infile | quote}}
 bamfile  = {{i.bamfile | quote}}

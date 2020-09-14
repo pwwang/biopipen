@@ -2,7 +2,7 @@
 """Script for gsea.pSampleinfo2CLS"""
 # pylint: disable=undefined-variable,unused-import,invalid-name
 from diot import OrderedDiot
-from bioprocs.utils.sampleinfo import SampleInfo2 as SampleInfo
+from biopipen.utils.sampleinfo import SampleInfo2 as SampleInfo
 
 infile = {{i.sifile | quote}}
 outfile = {{o.outfile | quote}}

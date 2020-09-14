@@ -2,7 +2,7 @@ from sys import stderr
 from shutil import move
 
 from diot import Diot
-from bioprocs.utils import runcmd, mem2, cmdargs
+from biopipen.utils import runcmd, mem2, cmdargs
 
 params = {{args.params}}
 try:

@@ -1,7 +1,7 @@
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.parallel import Parallel
-from bioprocs.utils.reference import vcfIndex
+from biopipen.utils import shell2 as shell
+from biopipen.utils.parallel import Parallel
+from biopipen.utils.reference import vcfIndex
 
 invcfs    = {{i.infiles | repr}}
 outfile   = {{o.outfile | quote}}

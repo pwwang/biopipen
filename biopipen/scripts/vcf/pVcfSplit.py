@@ -1,8 +1,8 @@
 from os import path
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import parallel, shell2 as shell
-from bioprocs.utils.reference import vcfIndex
+from biopipen.utils import parallel, shell2 as shell
+from biopipen.utils.reference import vcfIndex
 
 infile   = {{i.infile | quote}}
 prefix   = {{i.infile | fn2 | quote}}

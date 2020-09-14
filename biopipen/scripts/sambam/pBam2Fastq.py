@@ -5,7 +5,7 @@
 
 from os import makedirs, path
 from diot import Diot
-from bioprocs.utils import logger, mem2, shell2 as shell
+from biopipen.utils import logger, mem2, shell2 as shell
 
 # bam2fastq will create {i.infile}.tmp,
 # use file in indir in case of permission issue

@@ -1,9 +1,9 @@
 import sys
 
 from diot import Diot
-from bioprocs.utils.tsvio import TsvWriter, TsvRecord
-from bioprocs.utils.gene import genenorm
-from bioprocs.utils import logger
+from biopipen.utils.tsvio import TsvWriter, TsvRecord
+from biopipen.utils.gene import genenorm
+from biopipen.utils import logger
 
 genome   = {{args.genome | quote}}
 poscol   = 'genomic_pos_%s' % genome if genome!= 'hg38' else 'genomic_pos'

@@ -4,10 +4,10 @@
 import re
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell, logger
-from bioprocs.utils.meme import MemeReader
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils import shell2 as shell, logger
+from biopipen.utils.meme import MemeReader
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils.parallel import Parallel
 
 tffile = {{i.tffile | quote}}
 sfile = {{i.sfile | quote}}

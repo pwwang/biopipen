@@ -80,73 +80,73 @@ pReadBackedPhasing = proc_factory(
 # _sReferenceFai = """
 # # make sure reference index is generated
 # if [[ ! -e "{{brings.reffile#fai}}" ]]; then
-# 	echo "[BioProcs] Cannot find index file for reference: {{reffile.orig}}, generating ..." 1>&2
+# 	echo "[biopipen] Cannot find index file for reference: {{reffile.orig}}, generating ..." 1>&2
 # 	({{args.samtools}} faidx "{{reffile | realpath}}" ]] && \\
 # 		ln -s "{{reffile | realpath}}.fai" "{{reffile}}.fai" && \\
-# 		echo "[BioProcs] Generated: {{reffile | realpath}}.fai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{reffile | realpath}}.fai" 1>&2) || \\
 # 	({{args.samtools}} faidx "{{reffile.orig}}" ]] && \\
 # 		ln -s "{{reffile.orig}}.fai" "{{reffile}}.fai" && \\
-# 		echo "[BioProcs] Generated: {{reffile.orig}}.fai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{reffile.orig}}.fai" 1>&2) || \\
 # 	({{args.samtools}} faidx "{{reffile}}" && \\
-# 		echo "[BioProcs] Generated: {{reffile}}.fai" 1>&2)
+# 		echo "[biopipen] Generated: {{reffile}}.fai" 1>&2)
 # fi
 # """
 
 # _sReferenceDict = """
 # # make sure reference dict is generated
 # if [[ ! -e "{{brings.reffile#dict}}" ]]; then
-# 	echo "[BioProcs] Cannot find dict file for reference: {{reffile.orig}}, generating ..." 1>&2
+# 	echo "[biopipen] Cannot find dict file for reference: {{reffile.orig}}, generating ..." 1>&2
 # 	({{args.picard}} CreateSequenceDictionary R="{{reffile}}" O="{{reffile | realpath | prefix}}.dict" && \\
 # 		ln -s "{{reffile | realpath | prefix}}.dict" "{{reffile | prefix}}.dict" && \\
-# 		echo "[BioProcs] Generated: {{reffile | realpath | prefix}}.dict" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{reffile | realpath | prefix}}.dict" 1>&2) || \\
 # 	({{args.picard}} CreateSequenceDictionary R="{{reffile}}" O="{{reffile.orig | prefix}}.dict" && \\
 # 		ln -s "{{reffile.orig | prefix}}.dict" "{{reffile | prefix}}.dict" && \\
-# 		echo "[BioProcs] Generated: {{reffile.orig | prefix}}.dict" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{reffile.orig | prefix}}.dict" 1>&2) || \\
 # 	({{args.picard}} CreateSequenceDictionary R="{{reffile}}" O="{{reffile | prefix}}.dict" && \\
-# 		echo "[BioProcs] Generated: {{reffile | prefix}}.dict" 1>&2)
+# 		echo "[biopipen] Generated: {{reffile | prefix}}.dict" 1>&2)
 # fi
 # """
 
 # _sBamBai = """
 # # get index file of bam file
 # if [[ ! -e "{{brings.bamfile}}" ]]; then
-# 	echo "[BioProcs] Cannot find index file for input file: {{bamfile.orig}}, generating ..." 1>&2
+# 	echo "[biopipen] Cannot find index file for input file: {{bamfile.orig}}, generating ..." 1>&2
 # 	({{args.samtools}} index "{{bamfile | realpath}}" && \\
 # 		ln -s "{{bamfile | realpath}}.bai" "{{bamfile}}.bai" && \\
-# 		echo "[BioProcs] Generated: {{bamfile | realpath}}.bai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{bamfile | realpath}}.bai" 1>&2) || \\
 # 	({{args.samtools}} index "{{bamfile.orig}}" && \\
 # 		ln -s "{{bamfile.orig}}.bai" "{{bamfile}}.bai" && \\
-# 		echo "[BioProcs] Generated: {{bamfile.orig}}.bai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{bamfile.orig}}.bai" 1>&2) || \\
 # 	({{args.samtools}} index "{{bamfile}}" && \\
-# 		echo "[BioProcs] Generated: {{bamfile}}.bai" 1>&2)
+# 		echo "[biopipen] Generated: {{bamfile}}.bai" 1>&2)
 # fi
 # """
 
 # _sTumorBai = """
 # if [[ ! -e "{{brings.tumor}}" ]]; then
-# 	echo "[BioProcs] Cannot find index file for tumor: {{tumor.orig}}, generating ..." 1>&2
+# 	echo "[biopipen] Cannot find index file for tumor: {{tumor.orig}}, generating ..." 1>&2
 # 	({{args.samtools}} index "{{tumor | realpath}}" && \\
 # 		ln -s "{{tumor | realpath}}.bai" "{{tumor}}.bai" && \\
-# 		echo "[BioProcs] Generated: {{tumor | realpath}}.bai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{tumor | realpath}}.bai" 1>&2) || \\
 # 	({{args.samtools}} index "{{tumor.orig}}" && \\
 # 		ln -s "{{tumor.orig}}.bai" "{{tumor}}.bai" && \\
-# 		echo "[BioProcs] Generated: {{tumor.orig}}.bai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{tumor.orig}}.bai" 1>&2) || \\
 # 	({{args.samtools}} index "{{tumor}}" && \\
-# 		echo "[BioProcs] Generated: {{tumor}}.bai" 1>&2)
+# 		echo "[biopipen] Generated: {{tumor}}.bai" 1>&2)
 # fi
 # """
 
 # _sNormalBai = """
 # if [[ ! -e "{{brings.normal}}" ]]; then
-# 	echo "[BioProcs] Cannot find index file for tumor: {{tumor.orig}}, generating ..." 1>&2
+# 	echo "[biopipen] Cannot find index file for tumor: {{tumor.orig}}, generating ..." 1>&2
 # 	({{args.samtools}} index "{{normal | realpath}}" && \\
 # 		ln -s "{{normal | realpath}}.bai" "{{normal}}.bai" && \\
-# 		echo "[BioProcs] Generated: {{normal | realpath}}.bai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{normal | realpath}}.bai" 1>&2) || \\
 # 	({{args.samtools}} index "{{normal.orig}}" && \\
 # 		ln -s "{{normal.orig}}.bai" "{{normal}}.bai" &&
-# 		echo "[BioProcs] Generated: {{normal.orig}}.bai" 1>&2) || \\
+# 		echo "[biopipen] Generated: {{normal.orig}}.bai" 1>&2) || \\
 # 	({{args.samtools}} index "{{normal}}" && \\
-# 		echo "[BioProcs] Generated: {{normal}}.bai" 1>&2)
+# 		echo "[biopipen] Generated: {{normal}}.bai" 1>&2)
 # fi
 # """
 
@@ -461,7 +461,7 @@ pReadBackedPhasing = proc_factory(
 # 		pMuTect2
 # 	@description:
 # 		MuTect2 is a somatic SNP and indel caller that combines the DREAM challenge-winning somatic genotyping engine of the original MuTect ([Cibulskis et al., 2013](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html)) with the assembly-based machinery of HaplotypeCaller. The basic operation of MuTect2 proceeds similarly to that of the HaplotypeCaller.
-# 		NOTE: only Tumor/Normal variant calling implemented in bioprocs
+# 		NOTE: only Tumor/Normal variant calling implemented in biopipen
 # 	@input:
 # 		`tumor:file`:   the tumor bam file
 # 		`normal:file`:  the normal bam file

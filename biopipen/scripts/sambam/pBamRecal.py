@@ -3,9 +3,9 @@
 from sys import stderr
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell, mem2
-from bioprocs.utils.poll import Poll
-from bioprocs.utils.reference import bam_index
+from biopipen.utils import shell2 as shell, mem2
+from biopipen.utils.poll import Poll
+from biopipen.utils.reference import bam_index
 
 infile     = {{ i.infile | quote}}
 bam_index(infile, samtools=None)

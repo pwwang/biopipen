@@ -43,7 +43,6 @@ class Command(CommandABC):
 
     @classmethod
     def to_params(cls, params):
-        from rich import print
         for cmdname, command in cls.collections().items():
             command.params.names = [cmdname]
             params.add_command(command.params, group=command.help_group)

@@ -22,7 +22,7 @@ def main(opts): # pylint: disable=too-many-branches,too-many-locals,too-many-sta
     """Main function"""
     opts = bp_params.parse() | opts
 
-    from bioprocs.genomeplot import (pInteractionTrack,
+    from biopipen.genomeplot import (pInteractionTrack,
                                      pAnnoTrack,
                                      pDataTrack,
                                      pUcscTrack,

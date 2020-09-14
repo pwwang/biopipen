@@ -2,8 +2,8 @@ import cmdy
 from pysam import VariantFile
 from diot import Diot
 from os import path, environ
-from bioprocs.utils import logger, shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import logger, shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 
 inmuts   = {{i.muts | quote}}
 incnvs   = {{i.cnvs | quote}}

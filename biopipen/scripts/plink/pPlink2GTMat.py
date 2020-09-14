@@ -6,8 +6,8 @@
 from os import path
 from glob import glob
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 # plink -bfile x --recode A-transpose --out x.txt
 # x.txt.traw

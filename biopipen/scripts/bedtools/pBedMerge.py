@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 params = {{args.params | repr}}
 params.i = {{i.infile | quote}}

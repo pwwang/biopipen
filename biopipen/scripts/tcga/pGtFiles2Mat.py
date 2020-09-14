@@ -1,5 +1,5 @@
 from os import path
-from bioprocs.utils import logger
+from biopipen.utils import logger
 
 infiles = {{i.infiles | repr}}
 outfile = {{o.outfile | quote}}

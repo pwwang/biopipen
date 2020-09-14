@@ -1,11 +1,11 @@
 """A set of procsets for WXS data analysis"""
 from pyppl import ProcSet, Channel
-from bioprocs.fastx import pFastqTrim, pFastq2Sam, pFastQC, pFastMC
-from bioprocs.sambam import pBam2Fastq, pSam2Bam, pBamRecal
-from bioprocs.common import pFile2Proc, pFiles2Dir
-from bioprocs.vcf import pVcf2Maf
-from bioprocs.tcgamaf import pMafMerge
-from bioprocs.cnvkit import (pCNVkit2Vcf,
+from biopipen.fastx import pFastqTrim, pFastq2Sam, pFastQC, pFastMC
+from biopipen.sambam import pBam2Fastq, pSam2Bam, pBamRecal
+from biopipen.common import pFile2Proc, pFiles2Dir
+from biopipen.vcf import pVcf2Maf
+from biopipen.tcgamaf import pMafMerge
+from biopipen.cnvkit import (pCNVkit2Vcf,
                              pCNVkitCall,
                              pCNVkitRef,
                              pCNVkitFlatRef,
@@ -17,7 +17,7 @@ from bioprocs.cnvkit import (pCNVkit2Vcf,
                              pCNVkitScatter,
                              pCNVkitSeg,
                              pCNVkitPrepare)
-from bioprocs.utils.sampleinfo import SampleInfo2
+from biopipen.utils.sampleinfo import SampleInfo2
 
 # pylint: disable=pointless-string-statement
 """

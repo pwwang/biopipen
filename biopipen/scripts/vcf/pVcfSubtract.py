@@ -1,8 +1,8 @@
 import gzip
 from os import path, symlink, readlink, remove
-from bioprocs.utils import runcmd, cmdargs
+from biopipen.utils import runcmd, cmdargs
 from subprocess import check_output
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils.parallel import Parallel
 
 infile1  = {{i.infile1 | quote}}
 infile2  = {{i.infile2 | quote}}

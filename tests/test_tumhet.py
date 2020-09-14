@@ -2,7 +2,7 @@ from pathlib import Path
 import pytest
 from diot import Diot
 from pyppl import PyPPL
-from bioprocs.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol, pAllFIT, pTheta
+from biopipen.tumhet import pClonEvol, pPyClone, pPyClone2ClonEvol, pAllFIT, pTheta
 
 def test_clonevol(rdata):
     pClonEvol1 = pClonEvol.copy()

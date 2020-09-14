@@ -1,5 +1,5 @@
 
-from bioprocs.utils import FileConn
+from biopipen.utils import FileConn
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
 chrom   = {{args.chr | quote}}

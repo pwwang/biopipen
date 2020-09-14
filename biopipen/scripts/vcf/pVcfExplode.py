@@ -3,7 +3,7 @@
 from pathlib import Path
 from diot import Diot
 from cyvcf2 import VCF, Writer
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils.parallel import Parallel
 
 # pylint: disable=undefined-variable
 infile = Path({{i.infile | quote}})

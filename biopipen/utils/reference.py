@@ -1,6 +1,6 @@
 """Reference file and index file managing"""
 from os import path, readlink
-from bioprocs.utils import shell2 as shell, gztype
+from biopipen.utils import shell2 as shell, gztype
 
 
 def check(ref):

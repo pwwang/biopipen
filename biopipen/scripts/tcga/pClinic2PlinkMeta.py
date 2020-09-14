@@ -1,5 +1,5 @@
-from bioprocs.utils import alwaysList
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import alwaysList
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

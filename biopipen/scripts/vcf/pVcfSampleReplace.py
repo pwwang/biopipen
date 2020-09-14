@@ -1,6 +1,6 @@
 from os import path
 from pyppl.utils import alwaysList
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
 samfile  = {{i.samfile | quote}}

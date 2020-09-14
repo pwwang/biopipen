@@ -21,10 +21,10 @@ def main(opts): # pylint: disable=too-many-statements,assigning-non-slot
     """The main entry point of the pipeline"""
     opts = bp_params.parse() | opts
 
-    from bioprocs.common import pFiles2Dir
-    from bioprocs.sambam import pBam2Gmut, pBamPair2Smut
-    from bioprocs.utils.sampleinfo import SampleInfo2 as SampleInfo
-    from bioprocs.sets.wxs import aPrepareBam, aBam2SCNV, aBam2GCNV
+    from biopipen.common import pFiles2Dir
+    from biopipen.sambam import pBam2Gmut, pBamPair2Smut
+    from biopipen.utils.sampleinfo import SampleInfo2 as SampleInfo
+    from biopipen.sets.wxs import aPrepareBam, aBam2SCNV, aBam2GCNV
 
     starts = []
     saminfo = SampleInfo(opts.saminfo)

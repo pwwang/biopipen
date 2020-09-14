@@ -4,8 +4,8 @@ from sys import stdout, stderr
 from time import sleep
 from shutil import move
 from diot import Diot
-from bioprocs.utils import runcmd, cmdargs, reference, logger
-from bioprocs.utils.poll import Poll
+from biopipen.utils import runcmd, cmdargs, reference, logger
+from biopipen.utils.poll import Poll
 
 # variables
 infile   = {{i.fq | quote}}

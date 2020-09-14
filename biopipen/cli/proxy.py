@@ -254,7 +254,7 @@ class Process:
         self.proc.config.update(vars(opts.config))
         # config = {
         # 	'logger'  : {'file': None },
-        # 	'ppldir': Path(gettempdir()) / 'bioprocs.workdir'
+        # 	'ppldir': Path(gettempdir()) / 'biopipen.workdir'
         # }
         # config.update(Process._update_args(opts.get('config', {})))
 
@@ -264,7 +264,7 @@ class Process:
             setattr(self.proc, key, val)
 
         PyPPL(logger_file=False,
-              ppldir=Path(gettempdir()) / 'bioprocs.workdir').start(
+              ppldir=Path(gettempdir()) / 'biopipen.workdir').start(
                   self.proc
               ).run()
 

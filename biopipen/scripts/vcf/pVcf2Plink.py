@@ -2,8 +2,8 @@
 # pylint: disable=invalid-name
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.reference import vcfIndex
+from biopipen.utils import shell2 as shell
+from biopipen.utils.reference import vcfIndex
 
 # pylint: disable=undefined-variable
 infile = {{i.infile | quote}}

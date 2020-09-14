@@ -153,14 +153,14 @@ pEnrichr = proc_factory(
             - `delimit`: The delimit of input file.
             - `skip`:    Skip first N lines.
             - `comment`: Line comment mark.
-            - Other parameters fit `bioprocs.utils.tsvio.TsvReader`
+            - Other parameters fit `biopipen.utils.tsvio.TsvReader`
         `libs`:  The databases to do enrichment against.
             - A full list can be found here: http://amp.pharm.mssm.edu/Enrichr/#stats
             - Multiple dbs separated by comma (,)
         `plot`: Whether to plot the result.
         `devpars`: Parameters for png.
         include: A lambda function to include the records(genes)
-            - argument is `bioprocs.utils.tsvio2.TsvRecord`
+            - argument is `biopipen.utils.tsvio2.TsvRecord`
     """),
     input='infile:file',
     output='outdir:dir:{{i.infile | stem}}.enrichr',

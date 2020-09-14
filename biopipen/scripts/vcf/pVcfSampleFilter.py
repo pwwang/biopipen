@@ -1,7 +1,7 @@
 from os import path
 from diot import Diot
 from pyppl.utils import always_list
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
 samfile  = {{i.samfile | quote}}

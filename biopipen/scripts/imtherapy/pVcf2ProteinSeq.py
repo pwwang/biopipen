@@ -1,7 +1,7 @@
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.parallel import Parallel
+from biopipen.utils import shell2 as shell
+from biopipen.utils.parallel import Parallel
 
 infile  = Path({{i.infile | quote}})
 outdir  = Path({{o.outdir | quote}})

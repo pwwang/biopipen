@@ -2,8 +2,8 @@
 # pylint: disable=undefined-variable,unused-import,invalid-name
 
 from os import path
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-from bioprocs.utils import logger, shell2 as shell
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import logger, shell2 as shell
 
 infile = {{i.infile | quote}}
 metafile = {{i.metafile | quote}}

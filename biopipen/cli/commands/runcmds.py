@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 """Using PyPPL to distribute and run commands."""
 import sys
-from os import path
-from tempfile import gettempdir
 from pyppl import PyPPL, Proc
-from diot import Diot
 from pyparam import Params
 from biopipen import params as bp_params
 
+# pylint: disable=invalid-name
 help_group = 'SCRIPTS'
 
 params = Params(desc=__doc__, help_on_void=False)

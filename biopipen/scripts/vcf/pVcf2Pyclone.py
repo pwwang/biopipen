@@ -1,5 +1,5 @@
 import vcf
-from bioprocs.utils.tsvio import TsvWriter, TsvRecord
+from biopipen.utils.tsvio import TsvWriter, TsvRecord
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

@@ -1,6 +1,6 @@
 from os import path
 from pyppl.utils import always_list
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 infile    = {{i.infile | quote}}
 classfile = {{i.classfile | quote}}

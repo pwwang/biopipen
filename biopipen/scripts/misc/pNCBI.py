@@ -1,5 +1,5 @@
 from eutils import Client
-from bioprocs.utils.tsvio import TsvWriter, TsvRecord
+from biopipen.utils.tsvio import TsvWriter, TsvRecord
 from time import sleep
 
 term     = {{i.term | repr}}

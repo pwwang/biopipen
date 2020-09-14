@@ -1,4 +1,4 @@
-from bioprocs.utils import logger, runcmd, cmdargs
+from biopipen.utils import logger, runcmd, cmdargs
 from diot import Diot
 
 params = {{args.params}}

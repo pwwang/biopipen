@@ -2,7 +2,7 @@ from shutil import move, rmtree
 from os import makedirs, path, symlink, remove
 from sys import stdout, stderr
 from diot import Diot
-from bioprocs.utils import runcmd, mem2, cmdargs
+from biopipen.utils import runcmd, mem2, cmdargs
 
 infile    = {{ i.infile | quote }}
 outfile   = {{ o.outfile | quote }}

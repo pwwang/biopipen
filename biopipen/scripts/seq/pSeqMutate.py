@@ -3,9 +3,9 @@
 
 import sys
 from pathlib import Path
-from bioprocs.utils.parallel import Parallel
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-from bioprocs.utils import logger, shell2 as shell
+from biopipen.utils.parallel import Parallel
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils import logger, shell2 as shell
 
 fafile = Path({{i.fafile | quote}})
 mutfile = Path({{i.mutfile | quote}})

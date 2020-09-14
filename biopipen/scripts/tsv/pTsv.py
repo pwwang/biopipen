@@ -2,7 +2,7 @@
 # pylint: disable=unused-import,exec-used,undefined-variable,not-callable
 # pylint: disable=unsupported-assignment-operation,not-a-mapping,invalid-name
 from diot import Diot
-from bioprocs.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
+from biopipen.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
 
 infile = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

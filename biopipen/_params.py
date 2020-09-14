@@ -2,9 +2,9 @@
 from pathlib import Path
 from tempfile import gettempdir
 from pyparam import Params, Namespace as PMNamespace
-from . import _envs
 
 class Namespace(PMNamespace):
+    """Give default value '' when name not exists"""
 
     def __getattr__(self, name):
         try:

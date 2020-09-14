@@ -1,7 +1,7 @@
 
 from os import path
-from bioprocs.utils import FileConn
-from bioprocs.utils.tsvio2 import TsvReader
+from biopipen.utils import FileConn
+from biopipen.utils.tsvio2 import TsvReader
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

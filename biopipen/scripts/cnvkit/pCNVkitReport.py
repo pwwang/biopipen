@@ -1,7 +1,7 @@
 from os import path
 from diot import Diot
 from shutil import copyfile
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 cnvkit   = {{args.cnvkit | quote}}
 cnrfile  = {{i.cnrfile | quote}}

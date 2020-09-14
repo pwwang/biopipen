@@ -6,8 +6,8 @@
 from os import path
 from tempfile import gettempdir
 from diot import Diot
-from bioprocs.utils import shell2 as shell
-from bioprocs.utils.reference import tabix_index
+from biopipen.utils import shell2 as shell
+from biopipen.utils.reference import tabix_index
 
 infile   = {{i.infile | quote}}
 outfile  = {{o.outfile | quote}}

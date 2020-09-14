@@ -1,9 +1,9 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import runcmd, cmdargs
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
-from bioprocs.utils.parallel import Parallel, distribute
-from bioprocs.utils.meme import MemeReader, MemeWriter
+from biopipen.utils import runcmd, cmdargs
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.parallel import Parallel, distribute
+from biopipen.utils.meme import MemeReader, MemeWriter
 
 mfile1  = {{ i.mfile1 | quote}}
 mfile2  = {{ i.mfile2 | quote}}

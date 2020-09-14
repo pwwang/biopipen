@@ -6,8 +6,8 @@ from mygene import MyGeneInfo
 from medoo import Raw, Field
 from diot import Diot
 from pyppl.utils import always_list
-from bioprocs.utils.cache import Cache
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils.cache import Cache
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter, TsvRecord
 from tempfile import gettempdir
 
 """

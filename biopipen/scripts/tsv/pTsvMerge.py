@@ -1,5 +1,5 @@
 from diot import Diot
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 files   = {{i.infiles | repr}}
 inopts  = {{args.inopts | repr}}

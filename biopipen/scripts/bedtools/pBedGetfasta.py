@@ -3,7 +3,7 @@
 # pylint: disable=unsubscriptable-object
 
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infile = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

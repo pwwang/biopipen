@@ -2,7 +2,7 @@ import gzip
 from os import path, environ
 from cyvcf2 import VCF, Writer
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}

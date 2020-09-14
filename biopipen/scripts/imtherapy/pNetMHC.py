@@ -1,7 +1,7 @@
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import shell2 as shell, logger
-from bioprocs.utils.parallel import Parallel, distributeList
+from biopipen.utils import shell2 as shell, logger
+from biopipen.utils.parallel import Parallel, distributeList
 
 {%from os import path%}
 {%from pyppl.utils import always_list%}

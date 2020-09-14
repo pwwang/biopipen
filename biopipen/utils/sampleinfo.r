@@ -1,5 +1,5 @@
 # legacy
-SampleInfo <- reticulate::import("bioprocs.utils.sampleinfo")$SampleInfo
+SampleInfo <- reticulate::import("biopipen.utils.sampleinfo")$SampleInfo
 
 library(R6)
 options(stringsAsFactors = FALSE)

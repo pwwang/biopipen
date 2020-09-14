@@ -1,7 +1,7 @@
 import sys
 from os import path, makedirs
 from diot import Diot
-from bioprocs.utils import mem2, shell2 as shell
+from biopipen.utils import mem2, shell2 as shell
 
 infile          = {{i.infile | quote}}
 outfile         = {{o.outfile | quote}}

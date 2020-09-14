@@ -1,8 +1,8 @@
 from os import path
 from diot import Diot
 from gff import Gff
-from bioprocs.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
-from bioprocs.utils import logger
+from biopipen.utils.tsvio2 import TsvWriter, TsvReader, TsvRecord
+from biopipen.utils import logger
 
 infile   = {{ i.infile | quote}}
 outfile  = {{ o.outfile | quote}}

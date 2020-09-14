@@ -12,9 +12,9 @@ from matplotlib import gridspec
 from matplotlib import patches
 {% endif %}
 from diot import Diot
-from bioprocs.utils import alwaysList, logger
-from bioprocs.utils.gene import genenorm
-from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import alwaysList, logger
+from biopipen.utils.gene import genenorm
+from biopipen.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
 infile   = {{i.infile | quote}}
 inopts   = {{args.inopts}}

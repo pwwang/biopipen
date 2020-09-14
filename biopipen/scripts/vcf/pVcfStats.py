@@ -1,5 +1,5 @@
 
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 infile   = {{i.infile | quote}}
 config   = {{i.config | quote}}

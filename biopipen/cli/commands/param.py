@@ -21,7 +21,7 @@ class QueryHighlighter(RegexHighlighter):
         self.highlights = [rf"(?P<code>{kw})"]
 
 def main(opts):
-    from ..._params import params, opts as pmopts
+    from ..._params import pmparams, opts as pmopts
     if opts.get:
         if opts[POSITIONAL] not in pmopts:
             logger.error('No such parameter: %r', opts[POSITIONAL])
@@ -33,7 +33,7 @@ def main(opts):
             if not opts[POSITIONAL] in qkey:
                 continue
 
-            param = params.get_param(qkey)
+            param = pmparams.get_param(qkey)
             highlighter = QueryHighlighter(opts[POSITIONAL])
             table = Table(show_header=False, box=box.SQUARE, expand=True)
             table.add_column(style="green", width=10, ratio=1)
@@ -47,5 +47,4 @@ def main(opts):
 
 
 if __name__ == '__main__':
-    parsed = params.parse()
-    main(parsed)
+    main(params.parse())

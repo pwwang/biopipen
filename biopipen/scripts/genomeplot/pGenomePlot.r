@@ -22,8 +22,8 @@ outfile    = {{o.outfile | R}}
 scheme.default = getScheme()
 scheme         = update.list(scheme.default, scheme, recursive = T)
 
-addScheme(scheme, "bioprocs")
-options(Gviz.scheme = "bioprocs")
+addScheme(scheme, "biopipen")
+options(Gviz.scheme = "biopipen")
 
 ntracks = 0
 tracks  = list()

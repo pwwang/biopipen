@@ -1,7 +1,7 @@
 from os import path
 from diot import Diot
-from bioprocs.utils import shell2 as shell, mem2
-from bioprocs.utils.reference import bamIndex
+from biopipen.utils import shell2 as shell, mem2
+from biopipen.utils.reference import bamIndex
 
 ref       = {{args.ref | quote}}
 jobindex  = {{job.index | repr}}

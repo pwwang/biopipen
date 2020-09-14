@@ -3,7 +3,7 @@
 # pylint: disable=unused-import,invalid-name
 from pathlib import Path
 from diot import Diot
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 # pylint: disable=undefined-variable
 infile = {{i.infile | quote}}

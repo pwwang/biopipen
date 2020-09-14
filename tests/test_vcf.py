@@ -1,6 +1,6 @@
 import pytest
 from pyppl import PyPPL
-from bioprocs.vcf import pVcfFix
+from biopipen.vcf import pVcfFix
 from . import assertInfile
 
 def test_survival(rdata):

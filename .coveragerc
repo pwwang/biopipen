@@ -1,6 +1,6 @@
 [run]
 source =
-	../bioprocs
+	../biopipen
 omit =
 	test*.py
 	workdir/*.py

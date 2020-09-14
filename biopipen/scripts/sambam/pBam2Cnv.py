@@ -5,8 +5,8 @@ from time import sleep
 from datetime import date
 
 from diot import Diot
-from bioprocs.utils import runcmd, cmdargs, log2pyppl, logger
-from bioprocs.utils.poll import Poll
+from biopipen.utils import runcmd, cmdargs, log2pyppl, logger
+from biopipen.utils.poll import Poll
 
 gz       = {{args.gz | lambda x: bool(x)}}
 infile   = {{i.infile | quote}}

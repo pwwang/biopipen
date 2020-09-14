@@ -1,9 +1,9 @@
 from os import path, chdir
 from glob import glob
 from diot import Diot
-from bioprocs.utils import parallel, logger, shell2 as shell
-from bioprocs.utils.tsvio2 import TsvWriter, TsvReader
-from bioprocs.utils.reference import vcfIndex
+from biopipen.utils import parallel, logger, shell2 as shell
+from biopipen.utils.tsvio2 import TsvWriter, TsvReader
+from biopipen.utils.reference import vcfIndex
 
 infile       = {{i.infile | quote}}
 outfile      = {{o.outfile | quote}}

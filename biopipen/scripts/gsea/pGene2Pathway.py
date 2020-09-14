@@ -1,8 +1,8 @@
 from diot import Diot
 from enrichr import Enrichr
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
-{%python from bioprocs.utils import alwaysList%}
+{%python from biopipen.utils import alwaysList%}
 infile  = {{i.infile | quote}}
 outfile = {{o.outfile | quote}}
 inopts  = {{args.inopts | repr}}

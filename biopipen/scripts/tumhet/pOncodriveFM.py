@@ -5,7 +5,7 @@ import warnings
 from pathlib import Path
 from diot import Diot
 from cyvcf2 import VCF
-from bioprocs.utils import shell2 as shell
+from biopipen.utils import shell2 as shell
 
 # pylint: disable=undefined-variable
 infiles = {{i.infiles | repr}}

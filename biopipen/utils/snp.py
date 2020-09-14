@@ -3,9 +3,9 @@ from sys import stderr
 from cruzdb import Genome
 from tempfile import gettempdir
 from pyppl import Diot
-from bioprocs.utils import alwaysList
-from bioprocs.utils.cache import Cache
-from bioprocs.utils.tsvio import TsvReader, TsvWriter, TsvRecord
+from biopipen.utils import alwaysList
+from biopipen.utils.cache import Cache
+from biopipen.utils.tsvio import TsvReader, TsvWriter, TsvRecord
 
 class RecordNotFound(Exception):
 	pass

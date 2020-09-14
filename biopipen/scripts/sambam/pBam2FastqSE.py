@@ -1,6 +1,6 @@
 from os import makedirs, path
 from diot import Diot
-from bioprocs.utils import runcmd, mem2, cmdargs
+from biopipen.utils import runcmd, mem2, cmdargs
 
 tmpdir = path.join({{args.tmpdir | quote}}, "tmp.{{proc.id}}.{{proc.tag}}.{{proc.suffix}}.{{job.index}}")
 if not path.exists(tmpdir):

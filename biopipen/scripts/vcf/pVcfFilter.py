@@ -2,8 +2,8 @@ from os import path, makedirs, remove
 from shutil import rmtree, copyfile, move
 from sys import stderr
 from diot import Diot
-from bioprocs.utils import log2pyppl
-from bioprocs.utils.shell2 import bgzip
+from biopipen.utils import log2pyppl
+from biopipen.utils.shell2 import bgzip
 import vcf
 
 infile = {{i.infile | quote}}
@@ -31,7 +31,7 @@ builtin_descs = Diot(
     QUAL=lambda x: 'keep sites with QUAL >= %s' % x,
     AF=lambda x: 'keep sites with AF >= %s' % x
 )
-desc_prefix = 'Created by bioprocs.vcf.pVcfFilter: '
+desc_prefix = 'Created by biopipen.vcf.pVcfFilter: '
 
 filters = filters or {}
 realfilters = {}

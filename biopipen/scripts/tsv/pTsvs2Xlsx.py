@@ -1,7 +1,7 @@
 import csv
 from os import path
 from openpyxl import Workbook
-from bioprocs.utils import log2pyppl
+from biopipen.utils import log2pyppl
 
 infiles  = {{i.infiles | repr}}
 outfile  = {{o.outfile | quote}}

@@ -7,7 +7,7 @@ function cmdargs() {
 	if [[ $# -gt 2 ]]; then
 		equal=$3
 	fi
-	$__python__ -c "from bioprocs.utils import cmdargs; import sys; sys.stdout.write(cmdargs($1, dash='$dash', equal='$equal'))"
+	$__python__ -c "from biopipen.utils import cmdargs; import sys; sys.stdout.write(cmdargs($1, dash='$dash', equal='$equal'))"
 }
 
 function logger() {

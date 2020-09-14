@@ -1,5 +1,5 @@
 from os import path
-from bioprocs.utils.tsvio2 import TsvReader, TsvWriter
+from biopipen.utils.tsvio2 import TsvReader, TsvWriter
 
 infile  = {{i.infile | quote}}
 samfile = {{i.samfile | quote}}

@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from pyparam import Params, POSITIONAL
-from ..modules import MODULE_FILES, MODULE_DIR
+from ..modules import MODULE_FILES
 from ..utils import logger, ROOT_MODULE
 
 params = Params(desc=__doc__)
@@ -60,6 +60,7 @@ def _module_to_add(modname):
     return None
 
 def main(opts):
+    """Main entry point"""
     if not PYPROJECT_TOML.is_file():
         logger.error('This command is for internal use ONLY.')
         sys.exit(1)

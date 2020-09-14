@@ -1,6 +1,6 @@
 from diot import Diot
 from os import path, symlink
-from bioprocs.utils.gene import genenorm
+from biopipen.utils.gene import genenorm
 
 genenorm(
 	infile   = {{i.infile | quote}},

@@ -58,12 +58,12 @@ def main(opts): # pylint: disable=too-many-locals,too-many-statements,too-many-b
 
     dirindex = 1
 
-    from bioprocs.tsv import pTsvColSelect
-    from bioprocs.gsea import pEnrichr
-    from bioprocs.rnaseq import pExprStats, pRNASeqDEG, pBatchEffect
-    from bioprocs.common import pFile2Proc
-    from bioprocs.utils.sampleinfo import SampleInfo2
-    from bioprocs.utils.tsvio2 import TsvReader
+    from biopipen.tsv import pTsvColSelect
+    from biopipen.gsea import pEnrichr
+    from biopipen.rnaseq import pExprStats, pRNASeqDEG, pBatchEffect
+    from biopipen.common import pFile2Proc
+    from biopipen.utils.sampleinfo import SampleInfo2
+    from biopipen.utils.tsvio2 import TsvReader
 
     saminfo = SampleInfo2(opts.saminfo)
     samples = saminfo.all_samples(unique=True)
