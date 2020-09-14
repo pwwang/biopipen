@@ -1,0 +1,449 @@
+"""
+Procs for plink 1.9
+"""
+from diot import Diot
+from . import opts, proc_factory, module_postinit
+from .vcf import pVcf2Plink
+from .tcgamaf import pGTMat2Plink
+from modkit import modkit
+from .cli.utils import logger
+
+# pylint: disable=invalid-name
+pPlinkFromVcf = pVcf2Plink.copy()
+pPlinkFromGTMat = pGTMat2Plink.copy()
+
+pPlinkStats = proc_factory(
+    desc='Do basic statistics with plink 1.9',
+    config=Diot(annotate="""
+    @name:
+        pPlinkStats
+    """),
+    input='indir:dir',
+    output='outdir:dir:{{i.indir | fn}}.plinkStats',
+    lang=opts.Rscript,
+    args=Diot(
+        plink=opts.plink,
+        nthread=False,
+        params=Diot({
+            'hardy': True,
+            'het': True,
+            'freq': True,
+            'missing': True,
+            'check-sex': True,
+        }),
+        cutoff=Diot({
+            'hardy.hwe': 1e-5,
+            'hardy.mingt': None,
+            'het': 3,
+            'freq': 0.01,
+            'missing.sample': .95,
+            'missing.snp': .95,
+        }),
+        plot=Diot({
+            'hardy.hwe': True,
+            'hardy.mingt': True,
+            'het': True,
+            'freq': True,
+            'missing.sample': True,
+            'missing.snp': True,
+        }),
+        devpars=Diot(res=300, width=2000, height=2000)
+    )
+)
+
+pPlinkSampleFilter = proc_factory(
+    desc=('Do sample filtering or extraction using '
+          '`--keep[-fam]` or `--remove[-fam]`'),
+    config=Diot(annotate="""
+    @name:
+        pPlinkSampleFilter
+    """),
+    input='indir:dir, samfile:file',
+    output='outdir:dir:{{i.indir | bn}}',
+    lang=opts.python,
+    args=Diot(
+        plink=opts.plink,
+        keep=True,
+        samid='iid',  # both or fid,
+        fam=False,
+        params=Diot(),
+        nthread=False,
+    )
+)
+
+class PPlinkMiss:
+    """
+    @description:
+        Find samples and snps with missing calls, calculate the call rates and plot them.
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outdir:dir`: The output directory. Default: `{{i.indir | fn}}.miss`
+            - `.imiss`: The miss calls for samples
+            - `.lmiss`: The miss calls for snps
+            - `.samplecr.fail`: The samples fail sample call rate cutoff (`args.samplecr`)
+            - `.snpcr.fail`: The SNPs fail snp call rate cutoff (`args.snpcr`)
+    @args:
+        `plink`: The path to plink.
+        `samplecr`: The sample call rate cutoff. Default: `.95`
+        `snpcr`: The SNP call rate cutoff. Default: `.95`
+        `plot`: Whether plot the distribution of the call rates? Default: `True`
+        `devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
+    """
+    desc = 'Find samples and snps with missing calls'
+    input = 'indir:dir'
+    output = 'outdir:dir:{{i.indir | fn}}.miss'
+    lang = opts.Rscript
+    args = Diot(
+        plink=opts.plink,
+        samplecr=.95,
+        snpcr=.95,
+        plot=True,
+        devpars=Diot(res=300, width=2000, height=2000),
+    )
+
+class PPlinkFreq:
+    """
+    @input:
+        indir: The directory containing plink data
+    @output:
+        outdir: The directory containing output data
+    @args:
+        plink (str): Path to plink
+        cutoff (float): The MAF cutoff
+        plot (bool): Whether to plot the MAF distribution
+        devpars (Diot): The parameters for plot device.
+    """
+    desc = 'Filter snps with minor allele frequency.'
+    input = 'indir:dir'
+    output = 'outdir:dir:{{i.indir | fn}}.freq'
+    lang = opts.Rscript
+    args = Diot(
+        plink=opts.plink,
+        cutoff=0.01,
+        plot=True,
+        devpars=Diot(res=300, width=2000, height=2000),
+    )
+
+pPlinkSexcheck = proc_factory(
+    desc='Check inconsistency between sex denoted and from genotypes.',
+    config=Diot(annotate="""
+    @name:
+        pPlinkSexcheck
+    @description:
+        Check inconsistency between sex denoted and from genotypes.
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outdir:dir`: The output directory. Default: `{{i.indir | fn}}.sexcheck`
+            - `.sexcheck`: The orginal sex check report from `plink`
+            - `.sex.fail`: The samples that fail sex check.
+    @args:
+        `plink`: The path to plink.
+    """),
+    input='indir:dir',
+    output='outdir:dir:{{i.indir | fn}}.sexcheck',
+    lang=opts.Rscript,
+    args=Diot(plink=opts.plink)
+)
+
+pPlinkHet = proc_factory(
+    desc='Calculate the heterozygosity of each sample',
+    config=Diot(annotate="""
+    @name:
+        pPlinkHet
+    @description:
+        Calculate the heterozygosity of each sample.
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outdir:dir`: The output directory. Default: `{{i.indir | fn}}.het`
+            - `.het`: The heterozygosity file generated by `plink`.
+            - `.het.fail`: The samples fail sample heterozygosity cutoff (`args.cutoff`)
+    @args:
+        `plink`: The path to plink.
+        `cutoff`: The sample heterozygosity cutoff. Default: `3` (mean-3SD ~ mean+3SD)
+        `plot`: Whether plot the distribution of the heterozygosity? Default: `True`
+        `devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
+    """),
+    input='indir:dir',
+    output='outdir:dir:{{i.indir | fn}}.het',
+    lang=opts.Rscript,
+    args=Diot(
+        plink=opts.plink,
+        cutoff=3,
+        plot=True,
+        devpars=Diot(res=300, width=2000, height=2000),
+    )
+)
+
+pPlinkHWE = proc_factory(
+    desc="Hardy-Weinberg Equilibrium report and filtering.",
+    config=Diot(annotate="""
+    @name:
+        pPlinkHWE
+    @description:
+        Hardy-Weinberg Equilibrium report and filtering.
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outdir:dir`: The output directory. Default: `{{i.indir | fn}}.hwe`
+            - `.hwe`: The HWE report by `plink`
+            - `.hardy.fail`: The SNPs fail HWE test
+    @args:
+        `plink`: The path to plink.
+        `cutoff`: The HWE p-value cutoff. Default: `1e-5`
+        `plot`: Whether plot the distribution of the HWE p-values? Default: `True`
+        `devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2000, height=2000)`
+    """),
+    input='indir:dir',
+    output='outdir:dir:{{i.indir | fn}}.hwe',
+    lang=opts.Rscript,
+    args=Diot(
+        plink=opts.plink,
+        cutoff=1e-5,
+        plot=True,
+        devpars=Diot(res=300, width=2000, height=2000),
+    )
+)
+
+pPlinkIBD = proc_factory(
+    desc="Estimate the identity by descent (IBD)",
+    config=Diot(annotate="""
+    @name:
+        pPlinkIBD
+    @description:
+        Estimate the degree of recent shared ancestry individual pairs,
+        the identity by descent (IBD)
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outdir:dir`: The output directory. Default: `{{i.indir | fn}}.ibd`
+            - `.genome`: The original genome report from `plink`
+            - `.ibd.png`: The heatmap of PI_HAT
+    @args:
+        `plink`: The path to plink.
+        `indep`: To give a concrete example: the command above that specifies 50 5 0.2 would a) consider a window of 50 SNPs, b) calculate LD between each pair of SNPs in the window, b) remove one of a pair of SNPs if the LD is greater than 0.5, c) shift the window 5 SNPs forward and repeat the procedure.
+        `pihat`: The PI_HAT cutoff. Default: 0.1875 (see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/)
+        `plot` : Whether plot the PI_HAT heatmap? Default: `True`
+        `devpars`: The device parameters for the plot. Default: `Diot(res=300, width=2200, height=1600)`
+        `samid`: Sample ids on the heatmap. Default: `iid`
+            - Could also be `fid` or `fid<sep>iid`, or an R function: `function(fid, iid)`
+        `anno` : The annotation file for the samples. Names must match the ones that are transformed by `args.samid`. Default: `''`
+    """),
+    input='indir:dir',
+    output='outdir:dir:{{i.indir | fn}}.ibd',
+    lang=opts.Rscript,
+    args=Diot(
+        plink=opts.plink,
+        highld=opts.highld,
+        samid='iid',  # fid or a function (fid, iid),
+        indep=[50, 5, .2],
+        # ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/,
+        pihat=0.1875,
+        plot=True,
+        anno='',
+        seed=None,
+        devpars=Diot(res=300, width=2000, height=2000),
+    )
+)
+
+pPlinkRemove = proc_factory(
+    desc="Remove failed samples and SNPs",
+    config=Diot(annotate="""
+    @description:
+        Remove failed samples and/or SNPs
+        The samples/SNPs to be removed should be generated by one of:
+        `pPlinkHet`, `pPlinkHWE`, `pPlinkIBD` or `pPlinkMiss`
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+        `pdir:dir` : The output directory from one of the processes listed in description
+            - It could also be the `.fail` file generated by those processes
+    @output:
+        `outdir:dir`: The output directory containing the `.bed/.bim/.fam` after filtering.
+    @args:
+        `plink`: The path to plink.
+    """),
+    input='indir:dir, pdir:dir',
+    output='outdir:dir:{{i.indir | fn}}',
+    lang=opts.Rscript,
+    args=Diot(plink=opts.plink)
+)
+
+pPlink2Vcf = proc_factory(
+    desc="Convert plink binary files to VCF file.",
+    config=Diot(annotate="""
+    @name:
+        pPlink2Vcf
+    @description:
+        Convert plink binaries into VCF file.
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outfile:file`: The output vcf file.
+    @args:
+        `plink`: The path to plink.
+        `gz`   : Whether bgzip the output vcf file. Default: `False`
+        `samid`: What to use as sample ID. Default: `both`
+            - `both`: use `<FID>_<IID>` as sample id
+            - `fid` : use `<FID>` as sample id
+            - `iid` : use `<IID>` as sample id
+    """),
+    input='indir:dir',
+    output='outfile:file:{{i.indir | bn}}.vcf{% if args.gz %}.gz{% endif %}',
+    lang=opts.python,
+    args=Diot(
+        plink=opts.plink,
+        gz=False,
+        samid='both',  # fid, iid,
+        chroms={"23": "X", "24": "Y", "25": "XY", "26": "M"},
+    )
+)
+
+pPlink2GTMat = proc_factory(
+    desc="Convert plink binary files to genotype matrix",
+    config=Diot(annotate="""
+    @description:
+        Convert plink binaries into genotype matrix.
+    @input:
+        `indir:dir`: The input directory containing .bed/.bim/.fam files
+    @output:
+        `outfile:file`: The output genotype matrix file.
+        outsnp: The SNP file in BED6+ format with 7th col ref and 8th alt allele
+            - If you already have coordinates and alleles in SNP IDs, you should set `args.refallele` to `None`
+              and generate an SNP file by yourself.
+    @args:
+        `plink`: The path to plink.
+        `samid`: What to use as sample ID. Default: `both`
+            - `both`: use `<FID>_<IID>` as sample id
+            - `fid` : use `<FID>` as sample id
+            - `iid` : use `<IID>` as sample id
+        addchr: Whether add "chr" prefix to the chromosome identifiers or not
+        refallele: A vcf file or a BED6+ file to give the reference allele, since plink 1.9 does not kekep track of reference alleles
+            If this is not provided, outsnp will be empty!!!
+        snpid: The SNP ID to be ouput in the matrix or the outsnp file
+            - NOTE: `{ref}` and `{alt}` are NOT reliable since plink 1.9 does not keep track of reference alleles
+            - To get the right ones, you have to:
+                - Use pure RS ids when building plink bed
+                - Provide a BED6+ or vcf file for alleles by `args.refallele`
+        chroms: The chromsome mappings for those beyond chr1-22
+        nors: ID to use for SNPs without rs IDs.
+        bcftools: Path to bcftools. Used to extract coordinates and allele information from `refallele` if it is a vcf file.
+    """),
+    input='indir:dir',
+    output=('outfile:file:{{i.indir | bn}}.gtmat.txt, '
+            'outsnp:file:{{i.indir | bn}}.snp.bed'),
+    lang=opts.python,
+    args=Diot(
+        plink=opts.plink,
+        samid='both',  # fid, iid,
+        addchr=True,
+        refallele=opts.dbsnp,
+        snpid='{chr}_{pos}_{rs}_{ref}_{alt}',  # or raw,
+        bcftools=opts.bcftools,
+        chroms={"23": "X", "24": "Y", "25": "XY", "26": "M"},
+        nors="NOVEL",
+    )
+)
+
+pPlinkPCA = proc_factory(
+    desc="Perform PCA on genotype data and covariates.",
+    config=Diot(annotate="""
+    @name:
+        pPlinkPCA
+    @description:
+        Do PCA on genotype data with PLINK
+    @input:
+        `indir`: The input directory with .bed/.bim/.fam files
+    @output:
+        `outfile:file`: The output file of selected PCs, Default: `{{i.indir | fn}}.plinkPCA/{{i.indir | fn}}.pcs.txt`
+        `outdir:dir`: The output directory with output file and plots. Default: `{{i.indir | fn}}.plinkPCA`
+    @args:
+        `plink`: The path to `plink`, Default: `<params.plink>`
+        `samid`: Which IDs to report in results, Default: `both`
+            - `both`: Both family ID and individual ID connected with `_`
+            - `iid`:  Individual ID
+            - `fid`:  Family ID
+        `nthread`: # threads to use, Default: `False`
+            - `False`: Don't put `--threads` in plink command
+        `indep`: `indep` used to prune LD SNPs. Default: `[50, 5, .2]`
+        `highld`: High LD regions. Default: `<params.highld>`
+        `params`: Other parameters for `plink --pca`. Default: `Diot(mind = .95)`
+        `select`: Select first PCs in the output file. Default: `0.2`
+            - `select < 1`: select PCs with contribution greater than `select`
+            - `select >=1`: select first `select` PCs
+        `plots` : Output plots. Default: `Diot(scree = Diot(ncp = 20))`
+        `devpars`: The parameters for ploting device. Default: `Diot(height = 2000, width = 2000, res = 300)`
+    """),
+    lang=opts.Rscript,
+    input='indir:dir',
+    output=[
+        'outfile:file:{{i.indir | fn}}.plinkPCA/{{i.indir | fn}}.pcs.txt',
+        'outdir:dir:{{i.indir | fn}}.plinkPCA'
+    ],
+    args=Diot(
+        plink=opts.plink,
+        samid='both',  # fid, iid,
+        nthread=False,
+        indep=[50, 5, .2],  # used to prune LD SNPs,
+        highld=opts.highld,
+        params=Diot(mind=.95),
+        select=.2,
+        plots=Diot(
+            scree=Diot(ncp=20),
+            # rownames of anno should be consistent with `args.samid`
+            pairs=Diot(
+                anno='',
+                ncp=4,
+                params=Diot(upper=Diot(continuous='density')),
+                ggs=Diot(
+                    theme={
+                        "axis.text.x":
+                            "r:ggplot2::element_text(angle = 60, hjust = 1)"
+                    })
+            ),
+            # more to add
+        ),
+        devpars=Diot(height=2000, width=2000, res=300)
+    )
+)
+
+pPlinkSimulate = proc_factory(
+    desc="Simulate a set of SNPs",
+    config=Diot(annotate="""
+    @input:
+        seed: The seed for random initialization. Needs an integer
+    @output:
+        outdir: The directory containing the simulated SNPs
+    @args:
+        plink (path): The path to plink
+        ncases (int): The number of cases
+        nctrls (int): The number of controls
+        nsnps (int): The number of snps
+        label (str): The prefix for SNP labeling
+        dprev (float): The disease prevalence
+        minfreq (float): The minimum frequency
+        maxfreq (float): The maximum frequency
+        hetodds (float): Odds ratio for disease, heterozygote
+        homodss (float): Odds ratio for disease, homozyygote
+        params (Diot): Other parameters for plink
+    """),
+    input='seed',
+    output='outdir:dir:simsnps.{{i.seed|?isinstance: int|!:"noseed"}}.plink',
+    lang=opts.python,
+    args=Diot(
+        plink=opts.plink,
+        ncases=1000,
+        nctrls=1000,
+        nsnps=100,
+        label='SNP',
+        dprev=.01,
+        minfreq=0,
+        maxfreq=1,
+        hetodds=1,
+        homodds=1,
+        params=Diot(),
+    )
+)
+
+modkit.postinit(module_postinit)

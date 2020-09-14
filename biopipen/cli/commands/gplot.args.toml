@@ -1,0 +1,72 @@
+[params.ideo]
+default = true
+desc = 'Show ideogram track?'
+
+[params.genes]
+desc = 'Show gene track?'
+
+[params.axis]
+default = true
+desc = 'Show axis?'
+
+[params.outdir]
+required = true
+desc = 'Output directory.'
+
+[params.region]
+required = true
+desc = 'The region to plot. E.g. chr1:1000000-1200000'
+
+[params.tracks]
+required = true
+type = 'list'
+desc = 'The track types. Could be data, anno, interaction or ucsc, or multiple of them.'
+
+[params.names]
+required = true
+type = 'list'
+desc = 'The corresponding names of the tracks.'
+
+[params.inputs]
+required = true
+type = 'list'
+desc = ['The input of the tracks.',
+        '"<ucscTrack>:<gvizTrack>" for ucsc track;',
+        '"<infile>:<intype>" for interaction tracks;',
+        'files for other tracks.']
+
+[params.params]
+type = 'list'
+desc = 'The params for each track'
+
+[params.plotparams]
+desc = 'The params for pGenomePlot.'
+
+[params.devpars]
+type = "ns"
+desc = 'The device parameters for plotting.'
+
+[params."devpars.res"]
+default = 300
+desc = "The resolution of the plot"
+
+[params."devpars.height"]
+default = 300
+desc = "The height of the plot"
+
+[params."devpars.width"]
+default = 2000
+desc = "The width of the plot"
+
+[params.splitlen]
+default = 5000000
+desc = 'Split the plot into 2 if the region is longer then splitlen.'
+
+[params.forks]
+default = 2
+desc = 'Number of cores used to plot if split.'
+
+# highlist
+[params.highlights]
+default = []
+desc = 'The highlight regions in format of "start-end"'

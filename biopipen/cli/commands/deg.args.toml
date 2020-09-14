@@ -1,0 +1,76 @@
+[params.exprmat]
+required = true
+desc = 'The expression matrix.'
+type = 'file'
+
+[params.saminfo]
+required = true
+desc = 'The sample information file.'
+
+[params.ppldir]
+default = './workdir'
+type = 'path'
+desc = 'The pipeline directory.'
+
+[params.exdir]
+desc = 'TWhere to export the result files.'
+
+[params.caller]
+default = 'deseq2'
+desc = 'The DEG caller'
+
+[params.runner]
+default = 'local'
+desc = 'The runner to run the processes'
+
+[params.nthread]
+default = 1
+desc = 'Number of threads to use.'
+
+[params.enlibs]
+default = ['KEGG_2019_Human']
+desc = 'The enrichment analysis libraries.'
+
+[params.enincl]
+desc = 'A lambda function of a TsvRecord to include genes in Enrichr analysis'
+
+[params.cutoff]
+default = 0.05
+desc = 'The cutoff for DEGs'
+
+[params.filter]
+desc = 'A filter for expression matrix'
+
+[params.skips]
+type = 'list'
+desc = [
+    'Skip some steps, including: stats, batch, call, gsea and enrich',
+    '   - stats: Statistics for the expression profile. If batch effect correction is enabled, will do for pre- and post-correction stats.',
+    '   - batch: Batch effect correction.',
+    '   - call: DEG calling',
+    '   - gsea: The GSEA analysis (coming) (requires call)',
+    '   - enrich: Enrichr enrichment analysis (requires call)'
+]
+
+[params.report]
+desc = 'The report file or directory to save the reports.'
+
+[params.title]
+default = 'Reports for DEG analysis'
+desc = 'The title of the report'
+
+[params.meta]
+desc = [
+    'The meta information for genes. Could be one of:',
+    '   - A matrix file with exactly the same rownames as `exprmat`,',
+    '   - A column name list indicating position of the metadata in `exprmat`,',
+    '   - A column indexes (1-based, not including rownames) indicating position of the metadata in `exprmat`,',
+    '       - You can short-formatted indexes, i.e. "0-3,5" for 0,1,2,3,5',
+    '   - If not provided, the rownames of `exprmat` must be gene symbols for enrichment analysis.'
+]
+
+[params.gscol]
+desc = [
+    'The gene symbol column, could be column name or index (1-based, not including rownames) relative to `meta`',
+    '   - If not provided, will assume rownames of `exprmat` are gene symbols.'
+]

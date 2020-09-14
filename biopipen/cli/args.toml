@@ -1,0 +1,49 @@
+[commands.params]
+desc = 'Show or query a parameter'
+
+    [commands.params.params.POSITIONAL]
+    required = true
+    type = 'str'
+    desc = 'The name of the parameter.'
+
+    [commands.params.params.get]
+    default = false
+    desc = 'Print the value of the parameter directly'
+
+[commands.list]
+desc = 'List modules or processes'
+help_on_void = false
+
+    [commands.list.params.all]
+    aliases = ['a']
+    default = false
+    desc = 'List all processes if no module specified.'
+
+    [commands.list.params.POSITIONAL]
+    type = 'str'
+    desc = 'The module name.'
+
+[commands.proc]
+desc = 'Search modules or processes.'
+
+    [command.proc.params.POSITIONAL]
+    type = 'str'
+    desc = 'Part of the module or process name.'
+
+[commands.completion]
+desc = 'Generate the completion codes'
+aliases = ['completions']
+
+    [commands.completion.params.shell]
+    type = 'choice'
+    required = true
+    desc = 'The shell name'
+    choices = ['fish', 'zsh', 'bash']
+
+[commands.profile]
+desc = 'List available running profiles.'
+help_on_void = false
+
+    [commands.completion.params.POSITIONAL]
+    type = 'str'
+    desc = 'Additional configurations.'

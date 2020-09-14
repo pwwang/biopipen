@@ -1,0 +1,87 @@
+
+[params.intype]
+default = 'bam'  # ebam, fastq
+desc = [
+    'The input file types. Either bam, ebam or fastq.',
+    'Ebam means the bam files need to reformatted into fastq files.'
+]
+
+[params.muts]
+default = ['germ']  # or ['germ', 'soma', 'scnv', 'gcnv']
+type = 'list'
+desc = [
+    'What kind of mutations to call.',
+    'Note: soma need paired information'
+]
+
+[params.indir]
+required = true
+type = 'path'
+desc = 'The input directory containing input files.'
+
+[params.aligner]
+default = 'bwa'
+desc = 'The alignment tool.'
+
+[params.trimmer]
+default = 'trimmomatic'
+desc = 'The trimming tool.'
+
+[params.saminfo]
+required = true
+desc = """The sample information file:
+Column 1: the basename of the sample file in '-indir'
+Column 2: Group if '-muts' includes 'soma', basically, 'TUMOR' and 'NORMAL'
+Column 3: Patient if multiple samples belong to the same patient.
+Example:
+```
+Sample    Group    Patient
+A1.bam    TUMOR    A
+A2.bam    NORMAL   A
+B1.bam    TUMOR    A
+B2.bam    NORMAL   A
+```
+"""
+
+[params.nthread]
+default = 1
+desc = 'Use multithreading if possible.'
+
+[params.outdir]
+required = true
+desc = 'Where to export the result files.'
+
+[params.runner]
+default = 'local'
+desc = 'The runner to run the processes.'
+
+[params.forks]
+default = 1
+desc = 'How many jobs to run simultanuously.'
+
+[params.errhow]
+type = 'choice'
+choices = ['terminate', 'retry', 'halt']
+
+[params.logfile]
+default = ''
+desc = 'Where to save the logs.'
+
+[params.loglevel]
+default = 'info'
+desc = 'The logging level.'
+
+[params.compress]
+default = true
+desc = 'Use gzip and bam file to save space.'
+
+[params.ppldir]
+default = './workdir'
+desc = 'The pipeline directory.'
+
+[params.flowchart]
+desc = 'The flowchart file'
+
+[params.forcecache]
+default = true
+desc = 'Force processes to cache if they had successful run before.'

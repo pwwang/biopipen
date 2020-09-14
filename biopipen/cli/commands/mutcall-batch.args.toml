@@ -1,0 +1,75 @@
+[params.metadir]
+desc = 'The meta directory to save cache and log files. Default: ./<ppldir>/<saminfo>.meta'
+
+[params.indir]
+required = true
+desc = 'The data directory with raw data'
+
+[params.saminfo]
+required = true
+desc = 'The sample information'
+
+[params.batchsize]
+default = 10
+desc = ['The batch size (how many instances to run per batch)',
+        'Note if samples are paired (tumor-normal), this will be number of pairs']
+
+[params.outdir]
+required = true
+desc = 'The output directory'
+
+[params.runner]
+default = 'local'
+desc = 'The runner for the pipeline'
+
+[params.ppldir]
+default = './workdir'
+type = 'path'
+desc = 'The directory for PyPPL pipeline where the intermediate files are saved. This directory will be clearned up if `dropim` is `true`'
+
+[params.intype]
+default = 'bam' # ebam, fastq
+type = 'choice'
+choices = ['bam', 'ebam', 'fastq']
+desc = ['The type of input files. One of {choices}',
+        '- ebam: External bam files, need to be remapped to current ref genome',
+        '- bam: Bam files already mapped to current ref genome',
+        '- fastq: Raw read files']
+
+[params.muts]
+default = ['germ'] # germ, soma, scnv, gcnv
+desc = [
+    'What kind of mutations to call.',
+    'Note: soma need paired information. scnv needs `batchsize` > 1.'
+]
+
+[params.aligner]
+default = 'bwa'
+desc = 'The alignment tool'
+
+[params.trimmer]
+default = 'trimmomatic'
+desc = 'The trimming tool'
+
+[params.errhow]
+default = 'terminate'
+desc = 'What to do if error happens. retry, terminate or halt.'
+
+[params.compress]
+default = true
+desc = 'Use gzip and bam file to save space.'
+
+[params.dropim]
+default = false
+desc = 'Should we drop the intermediate files?'
+
+[params.nthread]
+default = 1
+desc = 'Threads used for each job'
+
+[params.forks]
+desc = 'How many instances to run simultaneously for each batch. Default: <batchsize>*2'
+
+[params.forcecache]
+default = true
+desc = 'Force processes to cache if they had successful run before without rcfiles being generated.'

@@ -1,8 +1,8 @@
-completions
 diot
 pyparam
 pyppl==3.*
 pyppl-annotate
 pyppl-export
 pyppl-report
-toml==0.*
+rich==6.*
+toml==0.10.0

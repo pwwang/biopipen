@@ -2,6 +2,5 @@
 source =
 	../bioprocs
 omit =
-	bioprocs/console/**
 	test*.py
 	workdir/*.py
