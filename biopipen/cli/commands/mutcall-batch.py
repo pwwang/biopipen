@@ -26,10 +26,12 @@ help_group = 'SCRIPTS'
 params = Params(desc=__doc__)
 params.from_file(ARGS_FILE)
 
-params.get_param('metadir').callback = lambda val, allvals: (
+metadir = params.get_param('metadir')
+metadir.callback = lambda val, allvals: (
     val or allvals.ppldir.joinpath(allvals.saminfo.stem + '.meta')
 )
-params.get_param('forks').callback = lambda val, allvals: (
+forks = params.get_param('forks')
+forks.callback = lambda val, allvals: (
     allvals.batchsize * 2 if '<batchsize>' in val else None
 )
 

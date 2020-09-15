@@ -29,11 +29,13 @@ ARGS_FILE = HERE / 'deg.args.toml'
 help_group = 'SCRIPTS'
 params = Params(desc=__doc__)
 params.from_file(ARGS_FILE)
-params.get_param('cutoff').callback = lambda val: {
+cutoff = params.get_param('cutoff')
+cutoff.callback = lambda val: {
     "by": "q",
     "value": val
 } if not isinstance(val, dict) else val
-params.get_param('skips').callback = lambda val: (
+skips = params.get_param('skips')
+skips.callback = lambda val: (
     ValueError('Unknown steps to skip.')
     if set(val) - {'stats', 'batch', 'call', 'gsea', 'enrich'}
     else val

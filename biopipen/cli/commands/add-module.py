@@ -44,7 +44,10 @@ def _scan_scripts():
 
     return before, scripts, after
 
-BEFORE_SCRIPTS, SCRIPTS, AFTER_SCRIPTS = _scan_scripts()
+_SCANNED_SCRIPTS = _scan_scripts()
+BEFORE_SCRIPTS = _SCANNED_SCRIPTS[0]
+SCRIPTS = _SCANNED_SCRIPTS[1]
+AFTER_SCRIPTS = _SCANNED_SCRIPTS[2]
 
 def _module_to_add(modname):
     if modname in SCRIPTS:

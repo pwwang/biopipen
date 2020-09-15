@@ -73,7 +73,8 @@ def module_delegator(module: "ModuleType", name: str) -> Proc:
         Proc: Initialized `Proc` object
     """
     if name not in module._PROC_FACTORY:
-        raise NameError(f"No such process {name} in module {module.__name__}")
+        raise AttributeError(f"No such process {name} in "
+                             f"module {module.__name__}")
 
     pfac = module._PROC_FACTORY[name].factory
     pfac_type = module._PROC_FACTORY[name].factype

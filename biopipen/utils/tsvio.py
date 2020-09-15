@@ -2,8 +2,8 @@
 Reader and writer for tsv file.
 """
 import sys, inspect
-from pyppl import Diot
-from biopipen.utils import alwaysList
+from diot import Diot
+from pyppl.utils import always_list
 from collections import OrderedDict
 
 def _getargs(args, func):
@@ -453,7 +453,7 @@ class TsvReader(object):
 		ftype  = inopts['ftype']
 		cnames = inopts['cnames']
 		if not isinstance(cnames, dict):
-			cnames = alwaysList(cnames)
+			cnames = always_list(cnames)
 		del inopts['ftype']
 		del inopts['cnames']
 
@@ -482,7 +482,7 @@ class TsvWriter(object):
 		cnames   = outopts['cnames']
 		#print cnames, '3242342'
 		if not isinstance(cnames, dict):
-			cnames = alwaysList(cnames)
+			cnames = always_list(cnames)
 		del outopts['ftype']
 		del outopts['cnames']
 

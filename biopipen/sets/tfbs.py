@@ -4,7 +4,7 @@ from biopipen.tsv import pTsvJoin
 from biopipen.seq import pPromoters, pConsv, pConsvPerm
 from biopipen.bed import pBedGetfasta
 from biopipen.tfbs import pMotifScan
-from biopipen import params
+from biopipen import opts
 
 """
 @name:
@@ -25,9 +25,9 @@ from biopipen import params
 	- TF (1st col) list file with motif ids (2nd col). Default: params.tflist.value
 """
 aTfbsTfP = ProcSet(
-	pSort.copy('pTFs'),
+	pSort.copy('pTFs', tag='atfbstfp'),
 	pPromoters,
-	pSort.copy('pTFList'),
+	pSort.copy('pTFList', tag='atfbstfp'),
 	pTsvJoin,
 	pBedGetfasta,
 	pMotifScan,
@@ -49,7 +49,7 @@ aTfbsTfP.pMotifScan.depends   = aTfbsTfP.pTsvJoin, aTfbsTfP.pBedGetfasta
 aTfbsTfP.pBedGetfasta.depends = aTfbsTfP.pPromoters
 aTfbsTfP.pTsvJoin.depends     = aTfbsTfP.pTFList, aTfbsTfP.pTFs
 # input
-aTfbsTfP.pTFList.input    = [params.tflist.value]
+aTfbsTfP.pTFList.input    = [opts.tflist]
 # input size of either pTFs or pTFList should be 1
 aTfbsTfP.pTsvJoin.input   = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)).flatten() for l in [max(ch1.length(), ch2.length())]]
 aTfbsTfP.pMotifScan.input = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)) for l in [max(ch1.length(), ch2.length())]][0]
@@ -74,7 +74,7 @@ aTfbsTfP.pTsvJoin.args.do              = 'lambda line1, line2: fout.write("\\t".
 	- gene list file, one per line
 """
 aTfbsP = ProcSet(
-	pFile2Proc.copy('pTFList'),
+	pFile2Proc.copy('pTFList', tag='atfbsp'),
 	pPromoters,
 	pBedGetfasta,
 	pMotifScan,
@@ -116,9 +116,9 @@ aTfbsP.pBedGetfasta.args.params.name = True
 	- TF (1st col) list file with motif ids (2nd col). Default: params.tflist.value
 """
 aTfbsTfR = ProcSet(
-	pSort.copy('pTFs'),
+	pSort.copy('pTFs', tag='atfbstfr'),
 	pBedGetfasta,
-	pSort.copy('pTFList'),
+	pSort.copy('pTFList', tag='atfbstfr'),
 	pTsvJoin,
 	pMotifScan,
 	depends = False
@@ -135,7 +135,7 @@ aTfbsTfR.ends                = aTfbsTfR.pMotifScan
 aTfbsTfR.pMotifScan.depends  = aTfbsTfR.pTsvJoin, aTfbsTfR.pBedGetfasta
 aTfbsTfR.pTsvJoin.depends    = aTfbsTfR.pTFList, aTfbsTfR.pTFs
 # input
-aTfbsTfR.pTFList.input    = [params.tflist.value]
+aTfbsTfR.pTFList.input    = [opts.tflist]
 aTfbsTfR.pTsvJoin.input   = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)).flatten() for l in [max(ch1.length(), ch2.length())]]
 aTfbsTfR.pMotifScan.input = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)) for l in [max(ch1.length(), ch2.length())]][0]
 # args
@@ -159,7 +159,7 @@ aTfbsTfR.pTsvJoin.args.do              = 'lambda line1, line2: fout.write("\\t".
 	- region file in bed
 """
 aTfbsR = ProcSet(
-	pFile2Proc.copy('pTFList'),
+	pFile2Proc.copy('pTFList', tag='atfbsr'),
 	pBedGetfasta,
 	pMotifScan,
 	depends = False
@@ -196,7 +196,7 @@ aTfbsR.pBedGetfasta.args.params.name = True
 	- Seeds for pConsvPerm. Default: [0]
 """
 aTfbsPC = ProcSet(
-	pFile2Proc.copy('pTFList'),
+	pFile2Proc.copy('pTFList', tag='atfbspc'),
 	pPromoters,
 	pConsvPerm,
 	pBedGetfasta,
@@ -250,7 +250,7 @@ aTfbsPC.pConsv.args.pval              = 0.05
 	- Seeds for pConsvPerm. Default: [0]
 """
 aTfbsRC = ProcSet(
-	pFile2Proc.copy('pTFList'),
+	pFile2Proc.copy('pTFList', tag='atfbsrc'),
 	pBedGetfasta,
 	pConsvPerm,
 	pMotifScan,
@@ -299,9 +299,9 @@ aTfbsRC.pConsv.args.pval              = 0.05
 	- TF (1st col) list file with motif ids (2nd col). Default: params.tflist.value
 """
 aTfbsTfPC = ProcSet(
-	pSort.copy('pTFs'),
+	pSort.copy('pTFs', tag='atfbstfpc'),
 	pPromoters,
-	pSort.copy('pTFList'),
+	pSort.copy('pTFList', tag='atfbstfpc'),
 	pTsvJoin,
 	pBedGetfasta,
 	pConsvPerm,
@@ -331,7 +331,7 @@ aTfbsTfPC.pMotifScan.depends   = aTfbsTfPC.pTsvJoin, aTfbsTfPC.pBedGetfasta
 aTfbsTfPC.pBedGetfasta.depends = aTfbsTfPC.pPromoters
 aTfbsTfPC.pTsvJoin.depends     = aTfbsTfPC.pTFList, aTfbsTfPC.pTFs
 # input
-aTfbsTfPC.pTFList.input    = [params.tflist.value]
+aTfbsTfPC.pTFList.input    = [opts.tflist]
 # input size of either pTFs or pTFList should be 1
 aTfbsTfPC.pTsvJoin.input   = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)).flatten() for l in [max(ch1.length(), ch2.length())]]
 aTfbsTfPC.pMotifScan.input = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)) for l in [max(ch1.length(), ch2.length())]][0]
@@ -361,10 +361,10 @@ aTfbsTfPC.pConsv.args.pval              = 0.05
 	- TF (1st col) list file with motif ids (2nd col). Default: params.tflist.value
 """
 aTfbsTfRC = ProcSet(
-	pSort.copy('pTFs'),
+	pSort.copy('pTFs', tag='atfbstfrc'),
 	pBedGetfasta,
 	pConsvPerm,
-	pSort.copy('pTFList'),
+	pSort.copy('pTFList', tag='atfbstfrc'),
 	pTsvJoin,
 	pMotifScan,
 	pConsv,
@@ -388,7 +388,7 @@ aTfbsTfRC.pConsv.depends     = aTfbsTfRC.pMotifScan, aTfbsTfRC.pConsvPerm
 aTfbsTfRC.pMotifScan.depends = aTfbsTfRC.pTsvJoin,   aTfbsTfRC.pBedGetfasta
 aTfbsTfRC.pTsvJoin.depends   = aTfbsTfRC.pTFList,    aTfbsTfRC.pTFs
 # input
-aTfbsTfRC.pTFList.input    = [params.tflist.value]
+aTfbsTfRC.pTFList.input    = [opts.tflist]
 aTfbsTfRC.pTsvJoin.input   = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)).flatten() for l in [max(ch1.length(), ch2.length())]]
 aTfbsTfRC.pMotifScan.input = lambda ch1, ch2: [ch1.repRow(l).cbind(ch2.repRow(l)) for l in [max(ch1.length(), ch2.length())]][0]
 aTfbsTfRC.pConsv.input     = lambda ch1, ch2: ch1.outfile.cbind(ch2)

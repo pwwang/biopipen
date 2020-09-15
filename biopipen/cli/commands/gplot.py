@@ -14,7 +14,8 @@ help_group = 'SCRIPTS'
 params = Params(desc=__doc__)
 params.from_file(ARGS_FILE)
 
-params.get_param('genes').callback = lambda val: val or bp_opts.refgene
+genes = params.get_param('genes')
+genes.callback = lambda val: val or bp_opts.refgene
 params.add_param(bp_params.get_param('genome'))
 
 

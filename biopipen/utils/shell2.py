@@ -59,4 +59,12 @@ def load_config(conf=None, **kwargs):
 
 @modkit.delegate
 def _modkit_delegate(module, name): # pylint: disable=unused-argument
+    if name in ('__wrapped__', '__pytest_wrapped__',
+                '__dataclass_fields__', 'cmdy'):
+        raise AttributeError
+
+    if name == '__bases__':
+        return ()
+    if name == '__qualname__':
+        return ''
     return getattr(cmdy, name)
