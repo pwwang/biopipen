@@ -1,8 +1,7 @@
 diot
+modkit
+pipen
+pipen-annotate
 pyparam
-pyppl==3.*
-pyppl-annotate
-pyppl-export
-pyppl-report
-rich==6.*
-toml==0.10.0
+rich==9.*
+toml==0.*

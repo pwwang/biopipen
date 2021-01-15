@@ -14,58 +14,16 @@ exclude = ["biopipen/**/*.pyc"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-PyPPL = "3.*"
+pipen = "*"
 pyparam = "*"
 diot = "*"
-toml = "0.10.0" # 0.10.1 has a bug: https://github.com/uiri/toml/issues/295
-pyppl_annotate = "*"
-pyppl_export = "*"
-pyppl_report = "*"
-rich = "6.*"
+modkit = "*"
+toml = "0.*" # 0.10.1 has a bug: https://github.com/uiri/toml/issues/295
+pipen-annotate = "*"
+rich = "9.*"
 
 [tool.poetry.scripts]
 biopipen = 'biopipen.cli:main'
-biopipen-stats = 'biopipen.cli.proxy:stats'
-biopipen-plink = 'biopipen.cli.proxy:plink'
-biopipen-imtherapy = 'biopipen.cli.proxy:imtherapy'
-biopipen-tabix = 'biopipen.cli.proxy:tabix'
-biopipen-gatk = 'biopipen.cli.proxy:gatk'
-biopipen-gene = 'biopipen.cli.proxy:gene'
-biopipen-bedtools = 'biopipen.cli.proxy:bedtools'
-biopipen-resource = 'biopipen.cli.proxy:resource'
-biopipen-gsea = 'biopipen.cli.proxy:gsea'
-biopipen-rank = 'biopipen.cli.proxy:rank'
-biopipen-hic = 'biopipen.cli.proxy:hic'
-biopipen-power = 'biopipen.cli.proxy:power'
-biopipen-tcgamaf = 'biopipen.cli.proxy:tcgamaf'
-biopipen-snparray = 'biopipen.cli.proxy:snparray'
-biopipen-rnaseq = 'biopipen.cli.proxy:rnaseq'
-biopipen-genomeplot = 'biopipen.cli.proxy:genomeplot'
-biopipen-mlearn = 'biopipen.cli.proxy:mlearn'
-biopipen-fastx = 'biopipen.cli.proxy:fastx'
-biopipen-picard = 'biopipen.cli.proxy:picard'
-biopipen-eqtl = 'biopipen.cli.proxy:eqtl'
-biopipen-common = 'biopipen.cli.proxy:common'
-biopipen-cluster = 'biopipen.cli.proxy:cluster'
-biopipen-plot = 'biopipen.cli.proxy:plot'
-biopipen-tcga = 'biopipen.cli.proxy:tcga'
-biopipen-sambam = 'biopipen.cli.proxy:sambam'
-biopipen-vcf = 'biopipen.cli.proxy:vcf'
-biopipen-cnvkit = 'biopipen.cli.proxy:cnvkit'
-biopipen-tumhet = 'biopipen.cli.proxy:tumhet'
-biopipen-sql = 'biopipen.cli.proxy:sql'
-biopipen-bwtool = 'biopipen.cli.proxy:bwtool'
-biopipen-bed = 'biopipen.cli.proxy:bed'
-biopipen-misc = 'biopipen.cli.proxy:misc'
-biopipen-seq = 'biopipen.cli.proxy:seq'
-biopipen-network = 'biopipen.cli.proxy:network'
-biopipen-tsv = 'biopipen.cli.proxy:tsv'
-biopipen-snp = 'biopipen.cli.proxy:snp'
-biopipen-tfbs = 'biopipen.cli.proxy:tfbs'
-biopipen-marray = 'biopipen.cli.proxy:marray'
-biopipen-web = 'biopipen.cli.proxy:web'
-biopipen-chipseq = 'biopipen.cli.proxy:chipseq'
-biopipen-algorithm = 'biopipen.cli.proxy:algorithm'
 
 [tool.poetry.dev-dependencies]
 

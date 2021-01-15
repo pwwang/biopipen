@@ -1,678 +1,396 @@
-"""
-Reader and writer for tsv file.
-"""
-import sys, inspect
-from diot import Diot
-from pyppl.utils import always_list
+"""Utilities for read/write TSV files"""
+
+import types
+import tempfile
 from collections import OrderedDict
 
-def _getargs(args, func):
-	argnames = inspect.getargspec(func).args
-	return {k:v for k, v in args.items() if k in argnames}
-
-__all__ = ['TsvMeta', 'TsvRecord', 'TsvReader', 'TsvWriter', 'tsvops']
-
-class NoSuchReader(Exception):
-	pass
-
-class NoSuchWriter(Exception):
-	pass
-
-class TsvRecord(object):
-	__slots__ = ('__keys', '__vals')
-
-	def __init__(self, *items, **kwargs):
-		self.__keys = []
-		self.__vals = []
-		self.fromItems(*(list(items) + list(kwargs.items())))
-
-	def fromKeyVals(self, keys = None, values = None):
-		keys = keys or []
-		vals = values or [None] * len(keys)
-		if not isinstance(vals, list):
-			vals = [vals] * len(keys)
-		# avoid TsvRecord operation change original keys
-		self.__keys = keys[:]
-		self.__vals = vals
-
-		for key in self.__keys:
-			if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
-				raise KeyError('No keys startswith underscore(__) allowed.')
-		# Ensure that lengths match properly.
-		assert len(self.__keys) == len(self.__vals)
-		# Ensure the keys are unique
-		assert len(set(self.__keys)) == len(self.__keys)
-
-	def fromItems(self, *items):
-		for item in items:
-			if isinstance(item, list):
-				self.fromItems(*item)
-			elif isinstance(item, (dict, TsvRecord)):
-				self.fromItems(*item.items())
-			else:
-				assert isinstance(item, tuple)
-				self.__setattr__(*item)
-
-	def keys(self):
-		"""Returns the list of column names from the query."""
-		return self.__keys
-
-	def values(self):
-		"""Returns the list of values from the query."""
-		return self.__vals
-
-	def __repr__(self):
-		return 'TsvRecord({})'.format(list(self.items()))
-
-	def items(self):
-		return ((key, val) for key, val in zip(self.__keys, self.__vals))
-
-	def __getitem__(self, key):
-		# Support for index-based lookup.
-		if isinstance(key, int):
-			return self.__vals[key]
-
-		# Support for string-based lookup.
-		if key in self.__keys:
-			i = self.__keys.index(key)
-			return self.__vals[i]
-
-		raise KeyError("Record contains no '{}' field.".format(key))
-
-	def __getattr__(self, key):
-		if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
-			return super(TsvRecord, self).__getattr__(key)
-		return self[key]
-
-	def __setitem__(self, key, value):
-		if isinstance(key, int):
-			if key >= len(self):
-				raise IndexError('Index out of range: {}'.format(key))
-			self.__vals[key] = value
-		elif key in self.__keys:
-			i = self.__keys.index(key)
-			self.__vals[i] = value
-		else:
-			self.__keys.append(key)
-			self.__vals.append(value)
-
-	def __setattr__(self, key, value):
-		if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
-			super(TsvRecord, self).__setattr__(key, value)
-		else:
-		  self[key] = value
-
-	def __len__(self):
-		return len(self.__keys)
-
-	def __eq__(self, other):
-		return self.keys() == other.keys() and self.values() == other.values()
-
-	def __ne__(self, other):
-		return not self.__eq__(other)
-
-	def get(self, key, default=None):
-		"""Returns the value for a given key, or default."""
-		try:
-			return self[key]
-		except KeyError:
-			return default
-
-	def asDict(self, ordered=False):
-		"""Returns the row as a dictionary, as ordered."""
-		items = zip(self.__keys, self.__vals)
-
-		return OrderedDict(items) if ordered else dict(items)
-
-	def update(self, *others, **kwargs):
-		self.fromItems(*(list(others) + kwargs.items()))
-
-	def __contains__(self, key):
-		return key in self.__keys
-
-	def __index__(self, key):
-		return self.__keys.index(key)
-
-	def __delitem__(self, key):
-		i = self.__keys.index(key)
-		del self.__keys[i]
-		del self.__vals[i]
-
-class TsvMeta(TsvRecord):
-	"""
-	Tsv meta data
-	"""
-	def __init__(self, *args, **kwargs):
-		"""
-		arg could be a string, a tuple or a list:
-		'a', ('b': int) or ['c', 'd']
-		"""
-		super(TsvMeta, self).__init__()
-		self.add(*args)
-
-	def __repr__(self):
-		return 'TsvMeta(%s)' % ', '.join(['%s=%s'%(k,v.__name__ if v else v) for k,v in self.items()])
-
-	def add(self, *args):
-		for arg in args:
-			if isinstance(arg, tuple):
-				if arg[1] and not callable(arg[1]):
-					raise ValueError('Expect callable as meta value.')
-				self.__setattr__(*arg)
-			elif isinstance(arg, list):
-				for a in arg:
-					if a[1] and not callable(a[1]):
-						raise ValueError('Expect callable as meta value.')
-						self.__setattr__(*a)
-					else:
-						self[a] = None
-			else:
-				self[arg] = None
-
-	def append(self, *args):
-		self.add(*args)
-
-	def prepend(self, *args):
-		keys = []
-		vals = []
-		for arg in args:
-			if isinstance(arg, tuple):
-				if arg[1] and not callable(arg[1]):
-					raise ValueError('Expect callable as meta value.')
-				keys.append(arg[0])
-				vals.append(arg[1])
-			elif isinstance(arg, list):
-				for a in arg:
-					if a[1] and not callable(a[1]):
-						raise ValueError('Expect callable as meta value.')
-						keys.append(a[0])
-						vals.append(a[1])
-					else:
-						keys.append(a)
-						vals.append(None)
-			else:
-				keys.append(arg)
-				vals.append(None)
-		self.fromKeyVals(keys + self.keys(), vals + self.values())
-
-class TsvReaderBase(object):
-	def __init__(self, infile, delimit = '\t', comment = '#', skip = 0):
-		openfunc = open
-		if infile.endswith('.gz'):
-			import gzip
-			openfunc = gzip.open
-
-		self.meta    = TsvMeta()
-		self.file    = openfunc(infile)
-		self.delimit = delimit
-		self.comment = comment
-		self.tell    = 0
-
-		while True:
-			tell = self.file.tell()
-			line = self.file.readline()
-			if self.comment and line.startswith(self.comment):
-				continue
-			self.file.seek(tell)
-			break
-
-		if skip > 0:
-			for _ in range(skip):
-				self.file.readline()
-		self.tell = self.file.tell()
-
-	def autoMeta(self, prefix = 'COL'):
-		line = self.file.readline()
-		while self.comment and line.startswith(self.comment):
-			line = self.file.readline()
-		self.rewind()
-		line = line.rstrip('\n').split(self.delimit)
-		cols = [prefix + str(i+1) for i in range(len(line))]
-		self.meta.add(*cols)
-
-	def _parse(self, line):
-		record = TsvRecord()
-		keys = self.meta.keys()
-		record.fromKeyVals(keys, [
-			'' if i >= len(line) else self.meta[key](line[i]) if self.meta[key] else line[i] for i, key in enumerate(keys)
-		])
-		return record
-
-	def next(self):
-		line = self.file.readline()
-		while self.comment and line.startswith(self.comment):
-			line = self.file.readline()
-		line = line.rstrip('\n')
-		# empty lines not allowed
-		if not line: raise StopIteration()
-		return self._parse(line.split(self.delimit))
-
-	def __next__(self):
-		self.next()
-
-	def dump(self, col = None):
-		return [r if not col else r[col] for r in iter(self)]
-
-	def rewind(self):
-		self.file.seek(self.tell)
-
-	def __iter__(self):
-		return self
-
-	def __del__(self):
-		self.close()
-
-	def close(self):
-		if self.file:
-			self.file.close()
-
-class TsvReaderBed(TsvReaderBase):
-	META = [
-		('CHR'   , None),
-		('START' , int),
-		('END'   , int),
-		('NAME'  , None),
-		('SCORE' , float),
-		('STRAND', None)
-	]
-
-	def __init__(self, infile, skip = 0, comment = '#', delimit = '\t'):
-		super(TsvReaderBed, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-		self.meta = TsvMeta(*TsvReaderBed.META)
-		self.index = 1
-
-	def _parse(self, line):
-		self.meta.SCORE = str
-		r = super(TsvReaderBed, self)._parse(line)
-		if not r.NAME:
-			r.NAME = 'BED' + str(self.index)
-			self.index += 1
-		if not r.SCORE or r.SCORE == '.': r.SCORE   = 0.0
-		if not r.STRAND: r.STRAND = '+'
-		return r
-
-class TsvReaderBed12(TsvReaderBase):
-	META = [
-		('CHR'         , None),
-		('START'       , int),
-		('END'         , int),
-		('NAME'        , None),
-		('SCORE'       , float),
-		('STRAND'      , None),
-		('THICKSTART'  , int),
-		('THICKEND'    , int),
-		('ITEMRGB'     , None),
-		('BLOCKCOUNT'  , int),
-		('BLOCKSIZES'  , None),
-		('BLOCKSTARTS' , None)
-	]
-
-	def __init__(self, infile, skip = 0, comment = '#', delimit = '\t'):
-		super(TsvReaderBed12, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-		self.meta = TsvMeta(*TsvReaderBed12.META)
-
-class TsvReaderBedpe(TsvReaderBase):
-	META = [
-		('CHR1'    , None),
-		('START1'  , int),
-		('END1'    , int),
-		('CHR2'    , None),
-		('START2'  , int),
-		('END2'    , int),
-		('NAME'    , None),
-		('SCORE'   , float),
-		('STRAND1' , None),
-		('STRAND2' , None)
-	]
-
-	def __init__(self, infile, skip = 0, comment = '#', delimit = '\t'):
-		super(TsvReaderBedpe, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-		self.meta = TsvMeta(*TsvReaderBedpe.META)
-
-class TsvReaderBedx(TsvReaderBase):
-	META = [
-		('CHR'   , None),
-		('START' , int),
-		('END'   , int),
-		('NAME'  , None),
-		('SCORE' , float),
-		('STRAND', None)
-	]
-
-	def __init__(self, infile, skip = 0, comment = '#', delimit = '\t', xcols = None, headprefix = ''):
-		super(TsvReaderBedx, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-		self.meta = TsvMeta(*TsvReaderBedx.META)
-
-		xmeta = OrderedDict()
-		if not xcols:
-			pass
-		elif isinstance(xcols, list):
-			for xcol in xcols:
-				xmeta[xcol] = None
-		elif isinstance(xcols, dict):
-			for xcol, callback in xcols.items():
-				if not callable(callback):
-					raise TypeError('Expect callable for xcols values.')
-				xmeta[xcol] = callback
-		else:
-			xmeta[xcols] = None
-		self.meta.add(*xmeta.items())
-
-class TsvReaderHead(TsvReaderBase):
-
-	def __init__(self, infile, comment = '#', delimit = '\t', skip = 0, tmeta = None):
-		super(TsvReaderHead, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-		self.meta = TsvMeta()
-
-		header = self.file.readline().strip('#\t\n ').split(delimit)
-		self.tell = self.file.tell()
-		row1   = self.file.readline().strip().split(delimit)
-		if len(row1) == len(header) + 1:
-			header.insert(0, 'ROWNAMES')
-		metatype = OrderedDict()
-		for head in header:
-			metatype[head] = None if not tmeta or not isinstance(tmeta, dict) or not head in tmeta or not callable(tmeta[head]) else tmeta[head]
-		self.meta.add(*metatype.items())
-
-		self.rewind()
-
-class TsvReaderNometa(TsvReaderHead):
-
-	def __init__(self, infile, comment = '#', delimit = '\t', skip = 0, head = True, tmeta = None):
-		if head:
-			super(TsvReaderNometa, self).__init__(infile, skip = skip, comment = comment, delimit = delimit, tmeta = tmeta)
-		else:
-			super(TsvReaderHead, self).__init__(infile, skip = skip, comment = comment, delimit = delimit)
-
-	def _parse(self, line):
-		return line
-
-class TsvWriterBase(object):
-	def __init__(self, outfile, delimit = '\t'):
-		openfunc = open
-		if outfile.endswith('.gz'):
-			import gzip
-			openfunc = gzip.open
-
-		self.delimit = delimit
-		self.meta    = TsvMeta()
-		self.file    = open(outfile, 'w')
-
-	def writeHead(self, prefix = '', delimit = None, transform = None):
-		delimit = delimit or self.delimit
-		keys = self.meta.keys()
-		if callable(transform):
-			keys = transform(keys)
-		elif isinstance(transform, dict):
-			keys = [key if not key in transform or not callable(transform[key]) else transform[key](key) for key in keys]
-		self.file.write(prefix + delimit.join(keys) + '\n')
-
-	def write(self, record, delimit = None):
-		delimit = delimit or self.delimit
-		outs = []
-		for i, key in enumerate(self.meta.keys()):
-			try:
-				outs.append(str(record[key]))
-			except TypeError:
-				outs.append(str(record[i]))
-
-		self.file.write(delimit.join(outs) + '\n')
-
-	def __del__(self):
-		self.close()
-
-	def close(self):
-		if self.file:
-			self.file.close()
-
-class TsvWriterNometa(TsvWriterBase):
-
-	def writeHead(self, prefix = '', delimit = None, transform = None):
-		transform = transform or (lambda keys: [str(key) for key in keys])
-		super(TsvWriterNometa, self).writeHead(prefix, delimit, transform)
-
-	def write(self, record, delimit = None):
-		delimit = delimit or self.delimit
-		self.file.write(delimit.join([str(r) for r in record]) + '\n')
-
-class TsvWriterBed(TsvWriterBase):
-
-	def __init__(self, outfile, delimit = '\t'):
-		super(TsvWriterBed, self).__init__(outfile)
-		self.meta = TsvMeta(*TsvReaderBed.META)
-
-class TsvReader(object):
-	# inopts:
-	# - delimit, comment, skip
-	# - ftype
-	# - cnames
-	def __new__(cls, infile, **inopts):
-		inopts2 = {'delimit': '\t', 'comment': '#', 'skip': 0, 'ftype': '', 'cnames': ''}
-		inopts2.update(inopts)
-		inopts = inopts2
-		ftype  = inopts['ftype']
-		cnames = inopts['cnames']
-		if not isinstance(cnames, dict):
-			cnames = always_list(cnames)
-		del inopts['ftype']
-		del inopts['cnames']
-
-		if not ftype:
-			inopts = _getargs(inopts, TsvReaderBase.__init__)
-			reader = TsvReaderBase(infile, **inopts)
-		else:
-			klass = 'TsvReader' + ftype[0].upper() + ftype[1:].lower()
-			if not klass in globals():
-				raise NoSuchReader(klass)
-			klass  = globals()[klass]
-			inopts = _getargs(inopts, klass.__init__)
-			reader = klass(infile, **inopts)
-		if cnames:
-			metas = cnames if isinstance(cnames, list) else cnames.items()
-			reader.meta.add(*metas)
-		return reader
-
-
-class TsvWriter(object):
-	def __new__(cls, outfile, **outopts):
-		outopts2 = {'delimit': '\t', 'ftype': '', 'cnames': ''}
-		outopts2.update(outopts)
-		outopts  = outopts2
-		ftype    = outopts['ftype']
-		cnames   = outopts['cnames']
-		#print cnames, '3242342'
-		if not isinstance(cnames, dict):
-			cnames = always_list(cnames)
-		del outopts['ftype']
-		del outopts['cnames']
-
-		if not ftype:
-			outopts = _getargs(outopts, TsvWriterBase.__init__)
-			writer = TsvWriterBase(outfile, **outopts)
-		else:
-			klass = 'TsvWriter' + ftype[0].upper() + ftype[1:].lower()
-			if not klass in globals():
-				raise NoSuchWriter(klass)
-			klass = globals()[klass]
-			outopts = _getargs(outopts, klass.__init__)
-			writer = klass(outfile, **outopts)
-		if cnames:
-			metas = cnames if isinstance(cnames, list) else cnames.items()
-			writer.meta.add(*metas)
-		return writer
-
-class SimRead (object):
-
-	def __init__(self, *files, **kwargs):
-
-		length = len(files)
-
-		self.do      = None
-		self.comment = ["#"] * length
-		self.delimit = ["\t"] * length
-		self.skip    = [0] * length
-		self.debug   = kwargs['debug'] if 'debug' in kwargs else False
-		self.ftype   = [''] * length
-		self.cnames  = [''] * length
-		self.head    = [None] * length # for nometa
-
-		if 'match' in kwargs:
-			self.match = kwargs['match']
-		if 'do' in kwargs:
-			self.do    = kwargs['do']
-		if 'delimit' in kwargs and kwargs['delimit']:
-			if not isinstance(kwargs['delimit'], (tuple, list)):
-				self.delimit = [kwargs['delimit']] * length
-			else:
-				self.delimit[:len(kwargs['delimit'])] = list(kwargs['delimit'])
-		if 'skip' in kwargs and kwargs['skip']:
-			if not isinstance(kwargs['skip'], (tuple, list)):
-				self.skip = [kwargs['skip']] * length
-			else:
-				self.skip[:len(kwargs['skip'])] = list(kwargs['skip'])
-		if 'comment' in kwargs and kwargs['comment']:
-			if not isinstance(kwargs['comment'], (tuple, list)):
-				self.comment = [kwargs['comment']] * length
-			else:
-				self.comment[:len(kwargs['comment'])] = list(kwargs['comment'])
-		if 'ftype' in kwargs and kwargs['ftype']:
-			if not isinstance(kwargs['ftype'], (tuple, list)):
-				self.ftype = [kwargs['ftype']] * length
-			else:
-				self.ftype[:len(kwargs['ftype'])] = list(kwargs['ftype'])
-		if 'cnames' in kwargs and kwargs['cnames']:
-			if not isinstance(kwargs['cnames'], (tuple, list)):
-				self.cnames = [kwargs['cnames']] * length
-			else:
-				self.cnames[:len(kwargs['cnames'])] = list(kwargs['cnames'])
-		if 'head' in kwargs and kwargs['head']:
-			if not isinstance(kwargs['head'], (tuple, list)):
-				self.head = [kwargs['head']] * length
-			else:
-				self.head[:len(kwargs['head'])] = list(kwargs['head'])
-
-		self.match = SimRead._defaultMatch
-
-		self.readers = []
-		for i, fn in enumerate(files):
-			if self.ftype[i] == 'nometa':
-				inopts = {
-					'ftype'  : self.ftype[i],
-					'cnames' : self.cnames[i],
-					'delimit': self.delimit[i],
-					'skip'   : self.skip[i],
-					'comment': self.comment[i],
-					'head'   : self.head[i]
-				}
-			else:
-				inopts = {
-					'ftype'  : self.ftype[i],
-					'cnames' : self.cnames[i],
-					'delimit': self.delimit[i],
-					'skip'   : self.skip[i],
-					'comment': self.comment[i]
-				}
-			reader = TsvReader(fn, **inopts)
-			if not reader.meta: reader.autoMeta()
-			self.readers.append(reader)
-
-	@staticmethod
-	def compare(a, b, reverse = False):
-		if not reverse:
-			return 0 if a < b else 1 if a > b else -1
-		else:
-			return 0 if a > b else 1 if a < b else -1
-
-	@staticmethod
-	def _defaultMatch(*lines):
-		data = [line[0] for line in lines]
-		mind = min(data)
-		if data.count(mind) == len(lines):
-			return -1
-		else:
-			return data.index(mind)
-
-	def run (self):
-		if not self.do:
-			raise AttributeError('You would like to do something when lines are matched.')
-		try:
-			lines = [next(reader) for reader in self.readers]
-		except StopIteration:
-			return
-		if self.debug:
-			sys.stderr.write('- Lines initiated ...\n')
-
-		while True:
-			if self.debug:
-				sys.stderr.write('\n'.join([('  > FILE %s: [' % (i+1)) + str(line) + ']' for i, line in enumerate(lines)]) + '\n')
-			if not all(lines): break
-
-			try:
-				m = self.match(*lines)
-			except Exception as ex:
-				msgs = [str(ex) + ' in MATCH function:']
-				for k, line in enumerate(lines):
-					msgs.append('File %s: %s' % (k+1, line))
-				raise type(ex)('\n'.join(msgs) + '\n')
-			if self.debug:
-				sys.stderr.write('  Match returns: %s\n' % m)
-			if m < 0:
-				if self.debug:
-					sys.stderr.write('  All lines matched, do stuff.\n')
-				try:
-					self.do(*lines)
-				except Exception as ex:
-					msgs = [str(ex) + ' in DO function:']
-					for k, line in enumerate(lines):
-						msgs.append('File %s: %s' % (k+1, line))
-					raise type(ex)('\n'.join(msgs) + '\n')
-				m = 0
-			if self.debug:
-				sys.stderr.write('- File %s is behind, read it ...\n' % (m+1))
-			try:
-				lines[m] = next(self.readers[m])
-			except StopIteration:
-				break
-
-def tsvops(infile, outfile, inopts, outopts, ops = None):
-
-	inopts2 = Diot(delimit = '\t', comment = '#', skip = 0, ftype = '', cnames = '')
-	inopts2.update(inopts)
-	inopts = inopts2
-
-	outopts2 = Diot(delimit = '\t', headPrefix = '', headDelimit = '\t', headTransform = None, head = True, ftype = '', cnames = '')
-	outopts2.update(outopts)
-	outopts = outopts2
-
-	inftype       = inopts['ftype']
-	outftype      = outopts['ftype']
-	head          = outopts['head']
-	headPrefix    = outopts['headPrefix']
-	headDelimit   = outopts['headDelimit']
-	headTransform = outopts['headTransform']
-	del outopts['head']
-	del outopts['headPrefix']
-	del outopts['headDelimit']
-	del outopts['headTransform']
-
-	reader = TsvReader(infile, **inopts)
-	if not reader.meta: reader.autoMeta()
-
-	if not outftype and not outopts['cnames']:
-		outftype = 'reader'
-
-	if outftype == 'reader':
-		del outopts['ftype']
-		writer = TsvWriter(outfile, **outopts)
-		writer.meta.prepend(*reader.meta.items())
-	else:
-		writer = TsvWriter(outfile, **outopts)
-
-	if head:
-		writer.writeHead(prefix = headPrefix, delimit = headDelimit, transform = headTransform)
-
-	for r in reader:
-		if callable(ops):
-			r = ops(r)
-			if not r: continue
-		writer.write(r)
+class TsvRecord:
+    """Tsv record"""
+
+    __slots__ = ('__keys', '__vals')
+
+    def __init__(self, vals=None, keys=None):
+        """
+        r = TsvRecord([1,2,3,4,5])
+        r.__vals == [1,2,3,4,5]
+        r.__keys == None
+        """
+        self.__vals = vals or []
+        if keys:
+            self.__keys = dict(zip(keys, range(len(keys))))
+            if len(self.__keys) != len(self.__vals):
+                raise ValueError("Unequal length of keys and values. "
+                                 "Make sure you don't have duplicated keys.")
+        else:
+            self.__keys = None
+
+    def attachKeys(self, keys): # pylint: disable=invalid-name
+        """Attach keys to the record"""
+        if len(keys) != len(self.__vals):
+            raise KeyError("Line doesn't have {} columns: {}".format(
+                len(keys), self.__vals))
+        self.__keys = dict(zip(keys, range(len(keys))))
+    attach_keys = attachKeys
+
+    def keys(self):
+        """Get the keys of the record"""
+        if not self.__keys:
+            return range(len(self.__vals))
+        return sorted(self.__keys, key=self.__keys.get)
+
+    def values(self):
+        """Get the values of the record"""
+        return self.__vals
+
+    def items(self):
+        """Get the items of the record"""
+        if not self.__keys:
+            return enumerate(self.__vals)
+        return zip(list(self.keys()), list(self.__vals))
+
+    def __repr__(self):
+        return '<TsvRecord: {!r}>'.format(dict(self.items()))
+
+    def __getitem__(self, key):
+        if isinstance(key, (slice, int)):
+            return self.__vals[key]
+
+        if self.__keys and key in self.__keys:
+            return self.__vals[self.__keys[key]]
+
+        raise KeyError("Record contains no '{}' field.".format(key))
+
+    def __getattr__(self, key):
+        if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
+            return super(TsvRecord, self).__getattr__(key)
+        return self[key]
+
+    def __setitem__(self, key, value):
+        if isinstance(key, int):
+            if key > len(self) or key < 0:
+                raise IndexError('Index out of range: {}'.format(key))
+            self.__vals[key] = value
+        elif self.__keys and key in self.__keys:
+            self.__vals[self.__keys[key]] = value
+        else:
+            self.__keys = self.__keys or {}
+            self.__keys[key] = len(self)
+            self.__vals.append(value)
+
+    def __len__(self):
+        return len(self.__vals)
+
+    def __setattr__(self, key, value):
+        if str(key).startswith('__') or str(key).startswith('_TsvRecord'):
+            super(TsvRecord, self).__setattr__(key, value)
+        else:
+            self[key] = value
+
+    def get(self, key, default=None):
+        """Returns the value for a given key, or default."""
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __eq__(self, other):
+        return self.keys() == other.keys() and self.values() == other.values()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def asDict(self, ordered=False): # pylint: disable=invalid-name
+        """Returns the row as a dictionary, as ordered."""
+        return OrderedDict(self.items()) if ordered else dict(ordered.items())
+    as_dict = asDict
+
+    def __contains__(self, key):
+        return self.__keys and key in self.__keys
+
+    def __delitem__(self, key):
+        if not self.__keys:
+            del self.__vals[key]
+        elif key in self.__keys:
+            del self.__vals[self.__keys[key]]
+            del self.__keys[key]
+        else:
+            del self.__keys[list(self.keys())[key]]
+            del self.__vals[key]
+
+    def pop(self, key, *default):
+        """Pop up a key of the recrod"""
+        if not default and key not in self:
+            raise KeyError("No such key: %s" % key)
+        if len(default) > 2:
+            raise ValueError("More than 1 default value.")
+        if key not in self:
+            return default[0]
+        ret = self[key]
+        del self[key]
+        return ret
+
+
+class TsvReader: # pylint: disable=too-many-instance-attributes
+    """Tsv reader"""
+    def __init__(self, # pylint: disable=too-many-arguments
+                 infile,
+                 delimit='\t',
+                 comment='#',
+                 skip=0,
+                 # "False": no head;
+                 # "None"/"True": split first line with delimit,
+                 # "Callback": get head for first line in your way
+                 cnames=True,
+                 attach=True,
+                 row=None,  # row factory
+                 cname0="ROWNAME"):
+        # in case infile is a Pathlib.Path object
+        infile = str(infile)
+        if infile.endswith('.gz'):
+            import gzip
+            self.file = gzip.open(infile, 'rt')
+        else:
+            self.file = open(infile, errors='replace')
+
+        self.delimit = delimit
+        self.comment = comment
+        self.attach = attach
+        self.row = row
+        self.tell = 0
+
+        if skip > 0:
+            for _ in range(skip):
+                self.file.readline()
+
+        while True:
+            self.tell = self.file.tell()
+            line = self.file.readline()
+            if comment and line.startswith(comment):
+                continue
+            self.file.seek(self.tell)
+            break
+
+        headline = self.file.readline() if cnames is not False else ''
+        if callable(cnames):
+            self.cnames = cnames(headline)
+        elif headline:
+            if comment and headline.startswith(comment):
+                headline = headline[1:].lstrip()
+            self.cnames = headline.rstrip('\n').split(delimit)
+        else:
+            self.cnames = []
+        # try to add "cname0" as column name
+        self.tell = self.file.tell()
+        firstline = self.file.readline().rstrip('\n')
+        ncols = len(firstline.split(delimit))
+
+        if firstline and self.cnames and len(self.cnames) == ncols - 1:
+            self.cnames.insert(0, cname0)
+        if firstline and self.cnames and len(self.cnames) != ncols:
+            raise ValueError('Not a valid tsv file. Head has '
+                             '%s columns, while first line has %s.' %
+                             (len(self.cnames), ncols))
+
+        self.file.seek(self.tell)
+        self.meta = self.cnames
+
+    def next(self):
+        """Get the next line"""
+        line = self.file.readline()
+        line = line.rstrip('\n')
+        # empty lines not allowed
+        if not line:
+            raise StopIteration()
+        record = TsvRecord(line.split(self.delimit))
+        if self.attach and self.cnames:
+            record.attachKeys(self.cnames)
+        if callable(self.row):
+            return self.row(record)
+        return record
+
+    def dump(self, col=None):
+        """Dump all records"""
+        if col is None:
+            return list(self)
+        if not isinstance(col, list):
+            return [r[col] for r in self]
+        return [tuple(r[c] for c in col) for r in self]
+
+    def __next__(self):
+        return self.next()
+
+    def rewind(self):
+        """Reset the file cursor"""
+        self.file.seek(self.tell)
+
+    def __iter__(self):
+        return self
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        """Close the file handle"""
+        if hasattr(self, 'file') and self.file:
+            self.file.close()
+
+
+class TsvWriter:
+    """Tsv writer"""
+    def __init__(self, outfile=None, delimit='\t', append=False):
+        openfunc = open
+        outfile = str(outfile)  # support pathlib
+        if outfile and outfile.endswith('.gz'):
+            import gzip
+            openfunc = gzip.open
+
+        self.delimit = delimit
+        self.cnames = []
+        if outfile:
+            self.file = openfunc(outfile, 'wt' if not append else 'at')
+            self.filename = outfile
+        else:
+            self.file = tempfile.NamedTemporaryFile(delete=False)
+            self.filename = self.file.name
+        self.meta = self.cnames  # alias
+
+    def writeHead(self, callback=True): # pylint: disable=invalid-name
+        """Write the header to file"""
+        if not self.cnames:
+            return
+        if callback and callable(callback):
+            head = callback(self.cnames)
+            if isinstance(head, list):
+                head = self.delimit.join(head)
+            self.file.write(head + "\n")
+        elif callback:
+            head = self.delimit.join(self.cnames)
+            self.file.write(head + "\n")
+
+    write_head = writeHead
+
+    def write(self, record):
+        """Write the recrod to file"""
+        if isinstance(record, (list, types.GeneratorType)):
+            self.file.write(self.delimit.join(str(v) for v in record) + '\n')
+        elif isinstance(record, TsvRecord):
+            if not self.cnames:
+                self.write(record.values())
+            else:
+                self.write(record[n] for n in self.cnames)
+        else:
+            self.file.write(str(record))
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        """Close the file handle."""
+        if hasattr(self, 'file') and self.file:
+            self.file.close()
+
+
+class TsvJoin:
+    """Join tsv files"""
+    @staticmethod
+    def compare(obja, objb, reverse=False):
+        """Compare object a and b
+        Return the index whose value is smaller if reverse is false
+        """
+        if not reverse:
+            return 0 if obja < objb else 1 if obja > objb else -1
+        return 0 if obja > objb else 1 if obja < objb else -1
+
+    @staticmethod
+    def _debug(rows, mat):
+        from sys import stderr
+        row_index = None
+        for i, row in enumerate(rows):
+            stderr.write("- File {}: {}\n".format(i+1, row))
+            row_index = i
+        if mat < 0:
+            stderr.write("- Matched\n")
+        else:
+            stderr.write("- File {} is behand\n".format(row_index+1))
+        stderr.write('-' * 80 + "\n")
+
+    def __init__(self, *files, **inopts):
+        inopts_default = dict(
+            delimit='\t',
+            comment='#',
+            skip=0,
+            cnames=True,
+            attach=False,
+            row=None,
+            cname0="ROWNAME"
+        )
+        inopts_multi = {}
+        self.length = len(files)
+        for key, val in inopts.items():
+            if not isinstance(val, list):
+                inopts_multi[key] = [val] * self.length
+            elif len(val) < self.length:
+                inopts_multi[key] = val + \
+                    [inopts_default[key]] * (self.length - len(val))
+            else:
+                inopts_multi[key] = val
+        inopts = []
+        for i in range(self.length):
+            inopts.append({k: v[i] for k, v in inopts_multi.items()})
+        self.readers = [TsvReader(f, **inopts[i]) for i, f in enumerate(files)]
+        self.debug = False
+
+    def _default_match(self, *rows):
+        data = [row[0] for row in rows]
+        mind = min(data)
+        return -1 if data.count(mind) == self.length else data.index(mind)
+
+    def join(self, do, outfile, match=None, outopts=None):
+        """Start joining"""
+        outopts = outopts or {}
+        outopts['delimit'] = outopts.get('delimit', "\t")
+        outopts['append'] = outopts.get('append', False)
+
+        cnames = outopts.pop('cnames', False)
+
+        head_callback = outopts.pop('headCallback')
+
+        out = TsvWriter(outfile, **outopts)
+        out.cnames = (cnames
+                      if isinstance(cnames, list)
+                      else self.readers[cnames].cnames
+                      if isinstance(cnames, int) and not isinstance(cnames,
+                                                                    bool)
+                      else sum((reader.cnames
+                                for reader in self.readers
+                                if reader.cnames), [])
+                      if cnames
+                      else [])
+        if out.cnames:
+            out.writeHead(head_callback)
+
+        match = match or self._default_match
+        rows = [None] * self.length
+        while True:
+            try:
+                for i, row in enumerate(rows):
+                    rows[i] = row or next(self.readers[i])
+                mat = match(*rows)
+                if self.debug:
+                    self._debug(rows, mat)
+                if mat < 0:  # matched
+                    do(out, *rows)
+                    mat = 0
+                rows[mat] = None
+            except StopIteration:
+                break
+            except Exception:
+                from sys import stderr
+                from traceback import format_exc
+                info = format_exc().splitlines()
+                info.append("With rows:")
+                info.extend(["- {}".format(r) for r in rows])
+                stderr.write("\n".join(info) + "\n\n")
+                rows = [None] * self.length
+                continue
+        out.close()
