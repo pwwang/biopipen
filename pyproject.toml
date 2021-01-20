@@ -20,6 +20,7 @@ diot = "*"
 modkit = "*"
 toml = "0.*" # 0.10.1 has a bug: https://github.com/uiri/toml/issues/295
 pipen-annotate = "*"
+pipen-args = "*"
 rich = "9.*"
 
 [tool.poetry.scripts]

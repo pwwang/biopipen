@@ -2,9 +2,10 @@
 from os import environ
 from pathlib import Path
 from tempfile import gettempdir
-from pyparam import Params, Namespace
 
 import modkit
+from pipen_args import args as params
+from pyparam import Namespace
 
 from .defaults import PKG_NAME
 
@@ -12,7 +13,6 @@ from .defaults import PKG_NAME
 # open to R (reticulate) to get the path of r util scripts
 HERE = Path(__file__).parent.resolve()
 
-params = Params(help_on_void=False)
 params.from_file(HERE / 'args.toml', show=False)
 
 cfgfiles = [
