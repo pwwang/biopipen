@@ -15,6 +15,7 @@ DEFAULT_CONFIG = dict(
     sort=dict(sep='', dupkey=True),
     gatk3=dict(dupkey=True),
     hla_la=dict(deform=None),
+    trim_galore=dict(deform=None),
     liftover=dict(prefix='-', sep='='),
     oncotator=dict(sep='auto'),
     optitype=dict(dupkey=False),
