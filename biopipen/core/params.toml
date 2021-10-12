@@ -1,0 +1,20 @@
+# Executables or binaries
+[exe]
+# liftover coordinates across genomes
+liftover = "liftOver"
+# gatk, installed via conda
+gatk4 = "gatk"
+
+# Interpreters
+[lang]
+# Bash
+bash = "bash"
+# python
+python = "python"
+# R
+rscript = "Rscript"
+
+# Path to files/directories
+[path]
+# Map chain file for liftover
+liftover_chain = ""
