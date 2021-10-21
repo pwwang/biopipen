@@ -1,6 +1,6 @@
 """Tools to handle VCF files"""
 from ..core.proc import Proc
-from ..core.params import params
+from ..core.config import config
 
 class VcfLiftOver(Proc):
     """Liftover a VCF file using GATK
@@ -12,13 +12,19 @@ class VcfLiftOver(Proc):
         outvcf: The output VCF file
 
     Envs:
-        chain: The map chain file for liftOver
+        gatk: The path to gatk4, which should be installed via conda
+        chain: The map chain file for liftover
+        tmpdir: Directory for temporary storage of working files
+        args: Other CLI arguments for `gatk LiftoverVcf`
     """
     input = "invcf:file"
-    output = "outvcf:file:{{in.invcf | stem}}"
+    output = "outvcf:file:{{in.invcf | basename}}"
     envs = {
-        "liftover": params.exe.liftover,
-        "chain": params.path.liftover_chain,
+        "gatk": config.exe.gatk4,
+        "chain": config.path.liftover_chain,
+        "tmpdir": config.path.tmpdir,
+        "reffa": config.ref.reffa,
+        "args": {},
     }
-    lang = params.lang.bash
+    lang = config.lang.bash
     script = "file://../scripts/vcf/VcfLiftOver.sh"

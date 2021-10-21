@@ -3,6 +3,7 @@
 # liftover coordinates across genomes
 liftover = "liftOver"
 # gatk, installed via conda
+gatk = "gatk"
 gatk4 = "gatk"
 
 # Interpreters
@@ -18,3 +19,12 @@ rscript = "Rscript"
 [path]
 # Map chain file for liftover
 liftover_chain = ""
+# Temporary directory
+# Assign via config.py
+# tmpdir = ""
+
+[ref]
+# The reference genome
+reffa = ""
+# The reference sequence dictionary
+refdict = ""
