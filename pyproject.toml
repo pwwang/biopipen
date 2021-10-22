@@ -13,6 +13,7 @@ pipen = "^0.2"
 
 [tool.poetry.plugins.pipen_cli_run]
 vcf = "biopipen.namespaces.vcf"
+bed = "biopipen.namespaces.bed"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
