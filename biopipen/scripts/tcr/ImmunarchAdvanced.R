@@ -17,6 +17,7 @@ div_by = {{ envs.div_by | r }}
 raref_by = {{ envs.raref_by | r }}
 tracking_target = {{ envs.tracking_target | r }}
 tracking_samples = {{ envs.tracking_samples | r }}
+kmers_args = {{ envs.kmers | r: ignoreintkey=False }}
 
 vec_to_list = function(vec) {
     key = paste(vec, sep = "_")
@@ -146,16 +147,16 @@ for (div_method in div_methods) {
 }
 
 # Rarefaction
-raref_div = file.path(outdir, "raref")
-dir.create(raref_div, showWarnings = FALSE)
+raref_dir = file.path(outdir, "raref")
+dir.create(raref_dir, showWarnings = FALSE)
 imm_raref = repDiversity(immdata$data, "raref", .verbose = F)
-rarefpng = file.path(raref_div, "raref-.png")
-png(rarefpng, res=300, width=2000, height=2500)
+rarefpng = file.path(raref_dir, "raref-.png")
+png(rarefpng, res=300, width=2200, height=2000)
 print(vis(imm_raref))
 dev.off()
 
 for (name in names(raref_by)) {
-    rfpng = file.path(raref_div, paste0("raref-", name, ".png"))
+    rfpng = file.path(raref_dir, paste0("raref-", name, ".png"))
     png(rfpng, res=300, height=2000, width=2000)
     print(vis(imm_raref, .by=raref_by[[name]], .meta=immdata$data))
     dev.off()
@@ -163,8 +164,8 @@ for (name in names(raref_by)) {
 
 
 # Clonotype tracking
-tracking_div = file.path(outdir, "tracking")
-dir.create(tracking_div, showWarnings = FALSE)
+tracking_dir = file.path(outdir, "tracking")
+dir.create(tracking_dir, showWarnings = FALSE)
 for (name in names(tracking_target)) {
     target = tracking_target[[name]]
     samples = tracking_samples[[name]]
@@ -174,7 +175,10 @@ for (name in names(tracking_target)) {
     if (length(samples) == 1) {
         stop(paste0("Cannot track clonotypes for only one sample: ", samples))
     }
-    if (names(target) == "TOP") {
+    if (is.list(target)) {
+        target = list(names(target), unname(unlist(target)))
+    }
+    if (target[[1]] == "TOP") {
         top_clones = NULL
         for (sample in samples) {
             if (is.null(top_clones)) {
@@ -187,12 +191,60 @@ for (name in names(tracking_target)) {
 
             }
         }
-        target = top_clones %>% slice_max(Clones, n=target$TOP) %>% head(n=4) %>% pull(CDR3.aa)
+        target = top_clones %>% slice_max(Clones, n=target[[2]]) %>% head(n=4) %>% pull(CDR3.aa)
     }
 
     imm_tracking = trackClonotypes(immdata$data, target, .col = "aa")
-    tracking_png = file.path(tracking_div, paste0("tracking_", name, ".png"))
+    tracking_png = file.path(tracking_dir, paste0("tracking_", name, ".png"))
     png(tracking_png, res=300, height=2000, width=3000)
     print(vis(imm_tracking, .order = samples))
     dev.off()
+}
+
+# K-mer analysis
+kmer_dir = file.path(outdir, "kmer")
+dir.create(kmer_dir, showWarnings = FALSE)
+for (k in names(kmers_args)) {
+    k_dir = file.path(kmer_dir, paste0("kmer_", k))
+    dir.create(k_dir, showWarnings = FALSE)
+    kmer_args = kmers_args[[k]]
+    k = as.integer(k)
+
+    kmers = getKmers(immdata$data, k)
+    head = kmer_args$head
+    if (is.null(head)) { head = 10 }
+    position = kmer_args$position
+    if (is.null(position)) { position = "stack" }
+    logg = kmer_args$log
+    if (is.null(logg)) { logg = FALSE }
+
+    for (h in head) {
+        kmerpng = file.path(
+            k_dir,
+            paste0("head_", h, ".position_", position, ".log_", logg, ".png")
+        )
+        width = 200 * h
+        png(kmerpng, res=300, height=2000, width=width)
+        print(vis(kmers, .head=h, .position=position, .log=logg))
+        dev.off()
+    }
+
+    # motif analysis
+    for (mot in kmer_args$motif) {
+        mot_dir = file.path(k_dir, paste0("motif_", mot))
+        dir.create(mot_dir, showWarnings = FALSE)
+        # multiple samples not supported as of 0.6.7
+        for (sample in names(immdata$data)) {
+            kmers_sample = getKmers(immdata$data[[sample]], k)
+            motif = kmer_profile(kmers_sample, mot)
+            motpng = file.path(mot_dir, paste0("motif_", sample, ".png"))
+            png(motpng, res=300, width=2000, height=2000)
+            print(vis(motif) + ggtitle(subtitle = paste("Method:", mot), label = sample))
+            dev.off()
+            motseqpng = file.path(mot_dir, paste0("motif_", sample, ".seq.png"))
+            png(motseqpng, res=300, width=2000, height=2000)
+            print(vis(motif, .plot = "seq") + ggtitle(subtitle = paste("Method:", mot), label = sample))
+            dev.off()
+        }
+    }
 }

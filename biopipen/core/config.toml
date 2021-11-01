@@ -5,6 +5,8 @@ liftover = "liftOver"
 # gatk, installed via conda
 gatk = "gatk"
 gatk4 = "gatk"
+# vdjtools, installed via conda
+vdjtools = "vdjtools"
 
 # Interpreters
 [lang]

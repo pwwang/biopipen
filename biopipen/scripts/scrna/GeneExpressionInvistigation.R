@@ -28,11 +28,16 @@ gnames = rownames(groups)
 groups = groups %>% rowwise() %>%
     mutate(across(everything(), ~ strsplit(.x, ";", fixed=TRUE))) %>%
     as.data.frame()
+group_ns = groups
+group_ns[is.na(group_ns)] = list(NULL)
+group_ns = group_ns %>% mutate(across(everything(), lengths))
 rownames(groups) = gnames
+rownames(group_ns) = gnames
 
 x = 0
 for (case in names(cases)) {
-    gdata = groups %>% filter(eval(parse(text=cases[[case]]$condition)))
+    gdata_ns = group_ns %>% filter(eval(parse(text=cases[[case]]$condition)))
+    gdata = groups[rownames(gdata_ns),,drop=F]
     samples = cases[[case]]$target
     cells = paste(samples[1], unlist(gdata[[ samples[1] ]]), sep="_")
     # merge seurat object and add cell ids
@@ -100,9 +105,12 @@ for (case in names(cases)) {
         xlab("") +
         ggtitle(case)
 
-
-    cat(case, file = file.path(outdir, paste0(x, ".title")))
-    pngfile = file.path(outdir, paste0(x, ".png"))
+    slug = cases[[case]]$slug
+    if (is.null(slug)) {
+        slug = x
+    }
+    cat(case, file = file.path(outdir, paste0(slug, ".title")))
+    pngfile = file.path(outdir, paste0(slug, ".png"))
     if (is.null(cases[[case]]$devpars)) {
         cases[[case]]$devpars = list()
     }

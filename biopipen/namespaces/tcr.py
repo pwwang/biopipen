@@ -5,6 +5,7 @@ from pipen.channel import expand_dir
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class ImmunarchLoading(Proc):
     """Immuarch - Loading data
 
@@ -34,13 +35,14 @@ class ImmunarchLoading(Proc):
     Envs:
         tmpdir: The temporary directory to link all data files.
     """
+
     input = "metafile:file"
     output = [
         "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS",
-        "allclones:file:{{in.metafile | stem}}.allclones.txt"
+        "allclones:file:{{in.metafile | stem}}.allclones.txt",
     ]
     lang = config.lang.rscript
-    envs = { "tmpdir": config.path.tmpdir }
+    envs = {"tmpdir": config.path.tmpdir}
     script = "file://../scripts/tcr/ImmunarchLoading.R"
 
 
@@ -75,6 +77,7 @@ class ImmunarchBasic(Proc):
             generate a heatmap.
         overlap_redim: Plot the samples with these dimension reduction methods
     """
+
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.basic"
     lang = config.lang.rscript
@@ -89,40 +92,18 @@ class ImmunarchBasic(Proc):
         "rare_clone_marks": [1, 3, 10, 30, 100],
         "rare_clone_by": {},
         "hom_clone_marks": dict(
-            Small=.0001,
-            Medium=.001,
-            Large=.01,
+            Small=0.0001,
+            Medium=0.001,
+            Large=0.01,
             Hyperexpanded=1,
         ),
         "hom_clone_by": {},
         # overlapping
         "overlap_methods": ["public"],
         "overlap_redim": ["tsne", "mds"],
-        # # gene usage
-        # "gu_by": [],
-        # # gene usage analysis
-        # "gua_methods": [],
-        # # Spectratyping
-        # "spect": [dict(quant="id", col="nt"), dict(quant="count", col="aa+v")],
-        # # Diversity
-        # "div_methods": [],
-        # "div_by": {},
-        # "raref_by": [],
-        # # Clonotype tracking
-        # "tracking_target": [],
-        # "tracking_samples": [], # can specify order
-        # # Kmer analysis
-        # "kmer_len": [5],
-        # "kmer_heads": {5: [10, 20]},
-        # "kmer_positions": {5: ["dodge", "fill"]},
-        # "kmer_log": {}, # False by default
-        # # motif analysis
-        # "motif_methods": ["self"],
     }
     script = "file://../scripts/tcr/ImmunarchBasic.R"
-    plugin_opts = {
-        "report": "file://../reports/tcr/ImmunarchBasic.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/tcr/ImmunarchBasic.svelte"}
 
 
 class ImmunarchAdvanced(Proc):
@@ -162,7 +143,17 @@ class ImmunarchAdvanced(Proc):
             Other than the target supported by immunarch, you can also specify
             top shared clones. For example:
             `tracking_target = {"top_4": {"TOP": 4}}`
+        kmers: Arguments for kmer analysis.
+            Keys are the K of mers. Values are parameters:
+            - `head` specifies # of the most abundant kmers to visualise.
+            - `position`: positions of bars: `stack`, `dodge` and `fill`
+            - `log`: log-transformation of y-axis
+            - `motif`: Method for motif analysis
+            There can be multiple `head`s and `motif`s.
+            If you do want multiple parameter sets for the same K, You can use
+            a float number as the K. For example: `5.1` for K `5`.
     """
+
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.advanced"
     lang = config.lang.rscript
@@ -180,20 +171,15 @@ class ImmunarchAdvanced(Proc):
         "raref_by": {},
         # Clonotype tracking
         "tracking_target": {},
-        "tracking_samples": {}, # can specify order
+        "tracking_samples": {},  # can specify order
         # Kmer analysis
-        "kmer_len": [5],
-        "kmer_heads": {5: [10, 20]},
-        "kmer_positions": {5: ["dodge", "fill"]},
-        "kmer_log": {}, # False by default
-        # motif analysis
-        "motif_methods": ["self"],
+        "kmers": {
+            5: {"head": 10, "position": "stack", "log": False, "motif": "self"}
+        },
     }
     script = "file://../scripts/tcr/ImmunarchAdvanced.R"
     order = 1
-    plugin_opts = {
-        "report": "file://../reports/tcr/ImmunarchAdvanced.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/tcr/ImmunarchAdvanced.svelte"}
 
 
 class CloneResidency(Proc):
@@ -220,6 +206,7 @@ class CloneResidency(Proc):
             If there are more than 2 groups, for example, [A, B, C], the
             scatter plots will be drawn for pairs: B ~ A, C ~ B.
     """
+
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.cloneov"
     lang = config.lang.rscript
@@ -230,6 +217,4 @@ class CloneResidency(Proc):
     }
     script = "file://../scripts/tcr/CloneResidency.R"
     order = 2
-    plugin_opts = {
-        "report": "file://../reports/tcr/CloneResidency.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/tcr/CloneResidency.svelte"}

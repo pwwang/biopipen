@@ -60,6 +60,51 @@
 <Image src={{ job.out.outdir | joinpaths: "tracking", "tracking_" + name + ".png" | quote }} />
 {% endfor %}
 
+<h{{h}}>Kmer and sequence motif analysis</h{{h}}>
+{% for kmerdir in job.out.outdir | joinpaths: "kmer", "kmer_*" | glob %}
+{%  assign k = kmerdir | stem | replace: "kmer_", "" | float | int %}
+<h{{h+1}}>K = {{k}}</h{{h+1}}>
+
+{%  for kmerpng in kmerdir | joinpaths: "head_*.png" | glob %}
+        {% assign head = kmerpng | stem0 | replace: "head_", "" | int %}
+        <h{{h+2}}>The most {{head}} abundant kmers</h{{h+2}}>
+        <Image src={{kmerpng | quote}} />
+{%  endfor %}
+
+<h{{h+2}}>Motif analysis</h{{h+2}}>
+
+{% if job.index == 0 %}
+<Tile>
+<p>
+    The method determines which matrix to compute:
+</p>
+
+<UnorderedList style="padding-left: 1rem">
+    <ListItem>
+        `freq` - position frequency matrix (PFM);
+    </ListItem>
+    <ListItem>
+        `prob` - position probability matrix (PPM);
+    </ListItem>
+    <ListItem>
+        `wei` - position weight matrix (PWM)
+    </ListItem>
+    <ListItem>
+        `self` - self-information matrix.
+    </ListItem>
+</UnorderedList>
+</Tile>
+{% endif %}
+
+{%  for motdir in kmerdir | joinpaths: "motif_*" | glob %}
+{%      assign motmethod = motdir | stem | replace: "motif_", "" %}
+{%      assign motpngs = motdir | joinpaths: "*.png" | glob %}
+<h{{h+3}}>Method: {{ motmethod }}</h{{h+3}}>
+{{ table_of_images(motpngs) }}
+{%  endfor %}
+
+{% endfor %}
+
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
