@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List, Mapping
+from typing import Any, Mapping
 
 import cmdy
 from liquid.filters.manager import FilterManager

@@ -1,7 +1,6 @@
 """Tools to analyze single-cell TCR sequencing data"""
-from pipen import Pipen
-from pipen.channel import expand_dir
 
+from ..core.defaults import SCRIPT_DIR
 from ..core.proc import Proc
 from ..core.config import config
 
@@ -218,3 +217,36 @@ class CloneResidency(Proc):
     script = "file://../scripts/tcr/CloneResidency.R"
     order = 2
     plugin_opts = {"report": "file://../reports/tcr/CloneResidency.svelte"}
+
+
+class Immunarch2VDJtools(Proc):
+    """Convert immuarch format into VDJtools input formats
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+
+    Output:
+        outdir: The output directory containing the vdjtools input for each
+            sample
+    """
+    input = "immdata:file"
+    output = "outdir:dir:{{in.immdata | stem}}.vdjtools_input"
+    lang = config.lang.rscript
+    script = "file://../scripts/tcr/Immunarch2VDJtools.R"
+
+
+class VJUsage(Proc):
+    """Circos-style V-J usage plot displaying the frequency of
+    various V-J junctions.
+
+    """
+    input = "infile:file"
+    output = "outfile:file:{{ in.infile | stem | replace: '.vdjtools', '' }}.fancyvj.wt.png"
+    lang = config.lang.rscript
+    envs = {
+        "vdjtools": config.exe.vdjtools,
+        "vdjtools_patch": str(SCRIPT_DIR / "tcr" / "vdjtools-patch.sh"),
+    }
+    order = 3
+    script = "file://../scripts/tcr/VJUsage.R"
+    plugin_opts = {"report": "file://../reports/tcr/VJUsage.svelte"}

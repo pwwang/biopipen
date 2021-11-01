@@ -12,13 +12,16 @@
 {% endmacro %}
 
 
-{%- macro table_of_images(srcs, col=2, max_width="90%") -%}
+{%- macro table_of_images(srcs, caps=None, col=2, max_width="90%") -%}
 <table class="image-table">
 {% for i, src in enumerate(srcs) %}
 {%  if i % col == 0 %}
 <tr>
 {%  endif %}
 <td style="width: {{100.0/col}}%; background-color: var(--cds-background-hover); vertical-align:top;">
+    {% if caps %}
+    <div style="text-align: center">{{ caps[i] }}</div>
+    {% endif %}
     <Image src={{src | quote}} style="max-width: {{max_width}}" />
 </td>
 {%  if (i+1) % col == 0 %}

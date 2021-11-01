@@ -7,8 +7,9 @@ from tempfile import gettempdir
 
 from simpleconf import Config as SimConfig
 
-HERE = Path(__file__).parent.resolve()
-DEFAULT_CONFIG_FILE = HERE / "config.toml"
+from .defaults import BIOPIPEN_DIR
+
+DEFAULT_CONFIG_FILE = BIOPIPEN_DIR / "core" / "config.toml"
 USER_CONFIG_FILE = Path("~").expanduser() / ".biopipen.toml"
 PROJ_CONFIG_FILE = Path(".") / ".biopipen.toml"
 

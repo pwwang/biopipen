@@ -7,11 +7,11 @@
 <h{{h}}>Residency plots</h{{h}}>
 
 {% assign scatter_pngs = job.out.outdir | joinpaths: "scatter", "scatter_*.png" | glob %}
-{{ table_of_images(scatter_pngs, 3) }}
+{{ table_of_images(scatter_pngs, col=3) }}
 
 <h{{h}}>Clonotype overlapping</h{{h}}>
 {% assign venn_pngs = job.out.outdir | joinpaths: "venn", "*.png" | glob %}
-{{ table_of_images(venn_pngs, 3) }}
+{{ table_of_images(venn_pngs, col=3) }}
 
 {%- endmacro -%}
 

@@ -30,3 +30,7 @@ liftover_chain = ""
 reffa = ""
 # The reference sequence dictionary
 refdict = ""
+
+[misc]
+# Number of cores used for each job
+ncores = 1
