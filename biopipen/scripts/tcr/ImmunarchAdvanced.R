@@ -37,7 +37,7 @@ immdata = readRDS(immfile)
 
 gu_dir = file.path(outdir, "gene_usage")
 dir.create(gu_dir, showWarnings = FALSE)
-imm_gu = geneUsage(immdata$data, "hs.trbv") %>%
+imm_gu = geneUsage(immdata$single, "hs.trbv") %>%
     separate_rows(Names, sep=";") %>%
     group_by(Names) %>%
     summarise(across(everything(), ~ sum(., na.rm = TRUE))) %>%
@@ -109,7 +109,7 @@ for (sample in names(immdata$data)) {
     dir.create(spect_sam_dir, showWarnings = FALSE)
     for (idx in seq_along(spect)) {
         spec_obj = spectratype(
-            immdata$data[[sample]],
+            immdata$single[[sample]],
             .quant = spect[[idx]]$quant,
             .col = spect[[idx]]$col
         )
@@ -210,7 +210,7 @@ for (k in names(kmers_args)) {
     kmer_args = kmers_args[[k]]
     k = as.integer(k)
 
-    kmers = getKmers(immdata$data, k)
+    kmers = getKmers(immdata$single, k)
     head = kmer_args$head
     if (is.null(head)) { head = 10 }
     position = kmer_args$position
@@ -235,7 +235,7 @@ for (k in names(kmers_args)) {
         dir.create(mot_dir, showWarnings = FALSE)
         # multiple samples not supported as of 0.6.7
         for (sample in names(immdata$data)) {
-            kmers_sample = getKmers(immdata$data[[sample]], k)
+            kmers_sample = getKmers(immdata$single[[sample]], k)
             motif = kmer_profile(kmers_sample, mot)
             motpng = file.path(mot_dir, paste0("motif_", sample, ".png"))
             png(motpng, res=300, width=2000, height=2000)

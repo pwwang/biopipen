@@ -84,7 +84,7 @@ for (case in names(cases)) {
         if (length(bcodes) == 0) {
             exprdata[[i]] = NULL
         } else {
-            exprdata[[i]] = exprs[, bcodes] %>%
+            exprdata[[i]] = exprs[, bcodes, drop=F] %>%
                 as.data.frame() %>%
                 rownames_to_column("Gene") %>%
                 pivot_longer(-"Gene", names_to="Barcode", values_to="Log_Expression") %>%

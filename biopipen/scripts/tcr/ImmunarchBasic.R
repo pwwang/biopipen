@@ -64,7 +64,7 @@ for (col in c("aa", "nt")) {
     len_dir = file.path(outdir, paste0("len-", col))
     dir.create(len_dir, showWarnings = FALSE)
 
-    exp_len = repExplore(immdata$data, .method = "len", .col = col)
+    exp_len = repExplore(immdata$single, .method = "len", .col = col)
     png(file.path(len_dir, "len.png"), res = 300, width = 2500, height = 2000)
     print(vis(exp_len))
     dev.off()
@@ -82,35 +82,35 @@ for (col in c("aa", "nt")) {
     }
 
     # length distribution
-    lend_dir = file.path(outdir, paste0("lend-", col))
-    dir.create(lend_dir, showWarnings = FALSE)
+    # lend_dir = file.path(outdir, paste0("lend-", col))
+    # dir.create(lend_dir, showWarnings = FALSE)
 
-    lendata = list()
-    for (sample in names(immdata$data)) {
-        lendata[[sample]] = immdata$data[[sample]] %>%
-            select(CDR3=paste0("CDR3.", col)) %>%
-            mutate(Length = nchar(CDR3), Sample = sample) %>%
-            select(Sample, Length)
-    }
-    lendata = do.call(bind_rows, lendata) %>%
-        left_join(immdata$meta, by = "Sample")
+    # lendata = list()
+    # for (sample in names(immdata$data)) {
+    #     lendata[[sample]] = immdata$data[[sample]] %>%
+    #         select(CDR3=paste0("CDR3.", col)) %>%
+    #         mutate(Length = nchar(CDR3), Sample = sample) %>%
+    #         select(Sample, Length)
+    # }
+    # lendata = do.call(bind_rows, lendata) %>%
+    #     left_join(immdata$meta, by = "Sample")
 
-    p = ggplot(lendata, aes(x = Length))
-    png(file.path(lend_dir, "lend.png"), res = 300, width = 2500, height = 2000)
-    print(p + geom_histogram(bindwidth = .5))
-    dev.off()
+    # p = ggplot(lendata, aes(x = Length))
+    # png(file.path(lend_dir, "lend.png"), res = 300, width = 2500, height = 2000)
+    # print(p + geom_histogram(bindwidth = .5))
+    # dev.off()
 
-    # length distribution by
-    for (name in names(len_by)) {
-        png(
-            file.path(lend_dir, paste0("lend_", col, "-", name, ".png")),
-            res = 300,
-            width = 2000,
-            height = 2000
-        )
-        print(p + geom_histogram(aes_string(fill=len_by[[name]]), alpha=.5, position="dodge"))
-        dev.off()
-    }
+    # # length distribution by
+    # for (name in names(len_by)) {
+    #     png(
+    #         file.path(lend_dir, paste0("lend_", col, "-", name, ".png")),
+    #         res = 300,
+    #         width = 2000,
+    #         height = 2000
+    #     )
+    #     print(p + geom_histogram(aes_string(fill=len_by[[name]]), alpha=.5, position="dodge"))
+    #     dev.off()
+    # }
 }
 
 

@@ -1,6 +1,7 @@
 # Loading 10x data into immunarch
 library(immunarch)
 library(dplyr)
+library(tidyr)
 
 metafile = {{ in.metafile | quote }}
 rdsfile = {{ out.rdsfile | quote }}
@@ -48,6 +49,32 @@ for (i in seq_len(nrow(metadata))) {
 }
 
 immdata = repLoad(datadir)
+# drop TRAs for paired data
+immdata$single = list()
+for (sample in names(immdata$data)) {
+    immdata$single[[sample]] = immdata$data[[sample]] %>%
+        separate_rows(
+            CDR3.nt, CDR3.aa, V.name, D.name, J.name, Sequence, chain,
+            sep=";"
+        ) %>%
+        filter(chain != "TRA") %>%
+        group_by(CDR3.nt, CDR3.aa, V.name, D.name, J.name, Sequence, chain) %>%
+        summarise(
+            Clones=sum(Clones),
+            Proportion=sum(Proportion),
+            V.end=V.end[1],
+            D.start=D.start[1],
+            D.end =D.end[1],
+            J.start=J.start[1],
+            VJ.ins=VJ.ins[1],
+            VD.ins=VD.ins[1],
+            DJ.ins=DJ.ins[1],
+            Barcode=paste(Barcode, collapse=";"),
+            raw_clonotype_id=paste(raw_clonotype_id, collapse=";"),
+            ContigID=paste(ContigID, collapse=";"),
+        ) %>%
+        as.data.frame()
+}
 
 immdata$meta = left_join(
     immdata$meta,

@@ -9,7 +9,7 @@
 <h{{h}}>Exploratory analysis</h{{h}}>
 
 <h{{h+1}}>
-    CDR3 length distribution (against # clonotypes)
+    CDR3 length distribution
 </h{{h+1}}>
 
 <Tabs>
@@ -23,26 +23,6 @@
         <TabContent>
             {% assign lenpngs = job.out.outdir | joinpaths: "len-nt", "len*.png" | glob %}
             {{ table_of_images(lenpngs) }}
-        </TabContent>
-    </div>
-</Tabs>
-
-
-<h{{h+1}}>
-    CDR3 length distribution (by count)
-</h{{h+1}}>
-
-<Tabs>
-    <Tab label="By aa" />
-    <Tab label="By nt" />
-    <div slot="content">
-        <TabContent>
-            {% assign lendpngs = job.out.outdir | joinpaths: "lend-aa", "lend*.png" | glob %}
-            {{ table_of_images(lendpngs) }}
-        </TabContent>
-        <TabContent>
-            {% assign lendpngs = job.out.outdir | joinpaths: "lend-nt", "lend*.png" | glob %}
-            {{ table_of_images(lendpngs) }}
         </TabContent>
     </div>
 </Tabs>
