@@ -239,6 +239,15 @@ class VJUsage(Proc):
     """Circos-style V-J usage plot displaying the frequency of
     various V-J junctions.
 
+    Input:
+        infile: The input file, in vdjtools input format
+
+    Output:
+        outfile: The V-J usage plot
+
+    Envs:
+        vdjtools: The path to vdjtools
+        vdjtools_patch: A patch for vdjtools
     """
     input = "infile:file"
     output = "outfile:file:{{ in.infile | stem | replace: '.vdjtools', '' }}.fancyvj.wt.png"
