@@ -27,11 +27,12 @@ class GeneExpressionInvistigation(Proc):
 
     Input:
         srtobj: The seurat object loaded by SeuratLoading
-        genefile: The genes to show their expressions
-            Two columns without header. First the gene symbol, then the
-            name you want to show in the plot
         groupfile: The group of cells with rownames the groups and
             columns the cells in each sample.
+        genefile: The genes to show their expressions in boxplots
+            Two columns without header. First the gene symbol, then the
+            name you want to show in the plot
+        hmgenefile: The genes to plot in a heatmap
 
     Output:
         outdir: The output directory with the plots
@@ -43,13 +44,16 @@ class GeneExpressionInvistigation(Proc):
                 (the cells in the groupfile are converted into cell counts)
             - `target`: Which sample to pull expression from
                 could be multiple
-            - `ncol`: Split the plot to how many columns?
             - `slug`: The file name slug of the plot.
                 It may also determine the order of the plots to show in reports
-            - `devops`: The options for R plotting devides
-                (res, height and width)
+            - `plots`: Plots to generate for this case
+                `boxplot`:
+                    `ncol`: Split the plot to how many columns?
+                    `res`, `height` and `width` the parameters for `png()`
+                `heatmap`:
+                    `res`, `height` and `width` the parameters for `png()`
     """
-    input = "srtobj:file, genefile:file, groupfile:file"
+    input = "srtobj:file, groupfile:file, genefile:file, hmgenefile:file"
     output = "outdir:dir:{{in.groupfile | stem0}}.exprs"
     lang = config.lang.rscript
     envs = { "cases": {} }
