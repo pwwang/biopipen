@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.1.0"
+version = "0.1.1"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -8,12 +8,14 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.7.1"
 pipen = "^0.2"
+cmdy = "^0.4.3"
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.plugins.pipen_cli_run]
 bam = "biopipen.namespaces.bam"
 bed = "biopipen.namespaces.bed"
+csv = "biopipen.namespaces.csv"
 misc = "biopipen.namespaces.misc"
 scrna = "biopipen.namespaces.scrna"
 tcr = "biopipen.namespaces.tcr"

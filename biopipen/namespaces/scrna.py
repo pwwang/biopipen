@@ -3,8 +3,11 @@
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class SeuratLoading(Proc):
     """Seurat - Loading data
+
+    Deprecated, should be superseded by SeuratPreparing
 
     Input:
         metafile: The metadata of the samples
@@ -17,48 +20,173 @@ class SeuratLoading(Proc):
     Output:
         rdsfile: The RDS file with a list of Seurat object
     """
+
     input = "metafile:file"
     output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
     lang = config.lang.rscript
     script = "file://../scripts/scrna/SeuratLoading.R"
 
+
+class SeuratPreparing(Proc):
+    """Seurat - Loading and preparing data
+
+    What will be done ?
+    https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)
+    1. All samples with be integrated as a single seurat object
+    2. QC
+    3. Normalization
+    4. Feature selection
+    5. Scaling
+    6. Linear dimensional reduction
+
+    Input:
+        metafile: The metadata of the samples
+            A tab-delimited file
+            Two columns are required:
+            - `Sample` to specify the sample names.
+            - `RNADir` to assign the path of the data to the samples
+              The path will be read by `Read10X()` from `Seurat`
+
+    Output:
+        rdsfile: The RDS file with the Seurat object
+            Note that the cell ids are preficed with sample names
+
+    Envs:
+        ncores: Number of cores to use
+
+    """
+
+    input = "metafile:file"
+    output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+    }
+    script = "file://../scripts/scrna/SeuratPreparing.R"
+    # plugin_opts = {
+    #     "report": "file://../reports/scrna/SeuratPreparing.svelte"
+    # }
+
+class SeuratClustering(Proc):
+    """Seurat - Determine the clusters
+
+    Input:
+        srtobj: The seurat object loaded by SeuratPreparing
+
+    Output:
+        rdsfile: The seurat object with cluster information
+        groupfile: A groupfile with cells for future analysis
+
+    Envs:
+        FindClusters: Arguments to `FindClusters()`
+    """
+    input = "srtobj:file"
+    output = [
+        "rdsfile:file:{{in.srtobj | stem}}.RDS",
+        "groupfile:file:{{in.srtobj | stem | replace: '.seurat', ''}}"
+        ".clusters.txt"
+    ]
+    lang = config.lang.rscript
+    envs = { "FindClusters": {"resolution": 0.8 } }
+    script = "file://../scripts/scrna/SeuratClustering.R"
+
 class GeneExpressionInvistigation(Proc):
     """Investigation of expressions of genes of interest
 
     Input:
-        srtobj: The seurat object loaded by SeuratLoading
-        groupfile: The group of cells with rownames the groups and
-            columns the cells in each sample.
+        srtobj: The seurat object loaded by SeuratPreparing
+        groupfile: The group of cells with the first column the groups and
+            rest the cells in each sample.
         genefile: The genes to show their expressions in boxplots
             Two columns without header. First the gene symbol, then the
             name you want to show in the plot
         hmgenefile: The genes to plot in a heatmap
-
-    Output:
-        outdir: The output directory with the plots
-
-    Envs:
-        cases: The cases
-            A dict with keys as the case name and the values as configs:
-            - `condition`: The condition to select groups from the count matrix
-                (the cells in the groupfile are converted into cell counts)
+        configfile: The configuration file (toml)
+            - `name`: The name to name the job. Otherwise the stem of this file
+                will be used
             - `target`: Which sample to pull expression from
                 could be multiple
-            - `slug`: The file name slug of the plot.
-                It may also determine the order of the plots to show in reports
             - `plots`: Plots to generate for this case
                 `boxplot`:
                     `ncol`: Split the plot to how many columns?
                     `res`, `height` and `width` the parameters for `png()`
                 `heatmap`:
                     `res`, `height` and `width` the parameters for `png()`
+    Output:
+        outdir: The output directory with the plots
+
     """
-    input = "srtobj:file, groupfile:file, genefile:file, hmgenefile:file"
-    output = "outdir:dir:{{in.groupfile | stem0}}.exprs"
+
+    input = (
+        "srtobj:file, "
+        "groupfile:file, "
+        "genefile:file, "
+        "hmgenefile:file, "
+        "configfile:file"
+    )
+    output = "outdir:dir:{{in.configfile | stem0}}.exprs"
     lang = config.lang.rscript
-    envs = { "cases": {} }
     order = 4
     script = "file://../scripts/scrna/GeneExpressionInvistigation.R"
     plugin_opts = {
         "report": "file://../reports/scrna/GeneExpressionInvistigation.svelte"
     }
+
+
+class DimPlots(Proc):
+    """Seurat - Dimensional reduction plots"""
+    input = "srtobj:file, groupfile:file, configfile:file"
+    output = "outfile:file:{{in.groupfile | stem}}.dimplot.png"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/DimPlots.R"
+    plugin_opts = {
+        "report": "file://../reports/scrna/DimPlots.svelte",
+        "report_toc": False
+    }
+
+
+
+class MarkersFinder(Proc):
+    """Find markers between different groups of cells
+
+    Input:
+        srtobj: The seurat object loaded by SeuratLoading
+        groupfile: The group of cells with first column the groups and
+            rest the cells in each sample.
+        name: The name of the job (mostly used to show in report)
+
+    Output:
+        outdir: The output directory for the markers
+
+    Envs:
+        ncores: Number of cores to use to parallelize the groups
+        cases: The cases (the first ident) to find markers for
+            Values would be the arguments for `FindMarkers()`
+            If "ALL" or "ALL" in the keys, the process will run for all groups
+            in the groupfile. The other keys will be arguments to `FindMarkers`
+            When `ident.2` is not given and there is only one group or more
+            than two groups in groupfile, the rest cells in the object will
+            be used as the control
+            if it is `ident`, will igore the groupfile and find markers for all
+            idents.
+        dbs: The dbs to do enrichment analysis for significant markers
+            See below for all librarys
+            https://maayanlab.cloud/Enrichr/#libraries
+    """
+
+    input = "srtobj:file, groupfile:file, name:var"
+    output = "outdir:dir:{{in.groupfile | stem0}}.markers"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "cases": {"ALL": True},
+        "dbs": [
+            "GO_Biological_Process_2021",
+            "GO_Cellular_Component_2021",
+            "GO_Molecular_Function_2021",
+            "KEGG_2021_Human",
+        ],
+    }
+    order = 5
+    script = "file://../scripts/scrna/MarkersFinder.R"
+    plugin_opts = {"report": "file://../reports/scrna/MarkersFinder.svelte"}

@@ -5,7 +5,6 @@ library(tidyr)
 
 metafile = {{ in.metafile | quote }}
 rdsfile = {{ out.rdsfile | quote }}
-allclfile = {{ out.allclones | quote }}
 tmpdir = {{ envs.tmpdir | quote }}
 
 metadata = read.table(
@@ -83,17 +82,3 @@ immdata$meta = left_join(
 )
 
 saveRDS(immdata, file=rdsfile)
-
-cdr3aa = c()
-for (sample in names(immdata$data)) {
-    cdr3aa = unique(c(cdr3aa, immdata$data[[sample]]$CDR3.aa))
-}
-out = data.frame(CDR3.aa = cdr3aa)
-for (sample in names(immdata$data)) {
-    out = left_join(out, immdata$data[[sample]], by="CDR3.aa") %>%
-        select(all_of(colnames(out)), Barcode)
-    colnames(out)[ncol(out)] = sample
-}
-out = out %>% distinct(CDR3.aa, .keep_all = TRUE)
-
-write.table(out, allclfile, col.names=T, row.names=F, sep="\t", quote=F)

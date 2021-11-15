@@ -169,7 +169,7 @@ dir.create(pie_dir, showWarnings = FALSE)
 
 subjects = immdata$meta[, subject_key, drop=F] %>%
     distinct(.[, subject_key], .keep_all = TRUE)
-for (i in seq_along(subjects)) {
+for (i in seq_len(nrow(subjects))) {
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
     # | SEABESRWEFAEF | 0     | 10     |
