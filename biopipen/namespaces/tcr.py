@@ -28,21 +28,66 @@ class ImmunarchLoading(Proc):
 
     Output:
         rdsfile: The RDS file with the data and metadata
-        allclones: A text file with all clones across all samples with
-            the barcodes for each sample
 
     Envs:
         tmpdir: The temporary directory to link all data files.
     """
 
     input = "metafile:file"
-    output = [
-        "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS",
-        "allclones:file:{{in.metafile | stem}}.allclones.txt",
-    ]
+    output = "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS"
     lang = config.lang.rscript
     envs = {"tmpdir": config.path.tmpdir}
     script = "file://../scripts/tcr/ImmunarchLoading.R"
+
+
+class ImmunarchFilter(Proc):
+    """Immunarch - Filter data
+
+    See https://immunarch.com/articles/web_only/repFilter_v3.html
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+        filters: The filters in written in a json file
+            If not provided or empty, will generate the group file with
+            The entire dataset.
+            Keys could be methods supported by `immunarch::repFilter()`.
+            There is one more method `by.count` supported to filter the
+            count matrix. For `by.meta`, `by.repertoire`, `by.rep`,
+            `by.clonotype` or `by.col` the values will be passed to
+            `.query` of `repFilter()`.
+            You can also use the helper functions provided by `immunarch`,
+            including `morethan`, `lessthan`, `include`, `exclude` and
+            `interval`. If these functions are not used, `include(value)` will
+            be used by default.
+            For `by.count`, the value of `filter` will be passed to
+            `dplyr::filter()` to filter the count matrix.
+            You can also specify `ORDER` to define the filtration order, which
+            defaults to 0, higher `ORDER` gets later executed.
+            For example:
+            >>> ["by.meta"]
+            >>> Source = "BM"
+            >>> Status = "Post"
+            >>> ["by.count"]
+            >>> ORDER = 1
+            >>> filter = "!TOTAL %in% TOTAL[1:20]"
+        name: The name of the group
+            if the name endswith `@clonotype`, will generate a group file with
+            each row the cells of a clonotype. Otherwise, all cells will be
+            merged.
+
+    Output:
+        outfile: The filtered `immdata`
+        groupfile: Also a group file with first column the groups and other
+            columns the cell barcodes in the samples
+
+    """
+    input = "immdata:file, filters:file, name:var"
+    output = [
+        "outfile:file:{{in.immdata | stem}}.RDS",
+        "groupfile:file:{{in.name or 'filtered'}}.groups.txt"
+    ]
+    lang = config.lang.rscript
+    script = "file://../scripts/tcr/ImmunarchFilter.R"
 
 
 class ImmunarchBasic(Proc):
@@ -59,11 +104,11 @@ class ImmunarchBasic(Proc):
     Envs:
         volume_by: Groupings to show clonotype volume (sizes)
             Multiple groups supported, for example:
-            `volume_by = {0: "Status", 1: ["Status", "Sex"]}`
+            `volume_by = {{0: "Status", 1: ["Status", "Sex"]}}`
             Or label the groups:
-            `volume_by = {"Status": "Status", "Status_Sex": ["Status", "Sex"]}`
+            `volume_by = {{"Status": "Status", "Status_Sex": ["Status", "Sex"]}}`
             If a list or a single variable is given, it will be changed
-            into `{"Status": "Status"}`
+            into `{{"Status": "Status"}}`
         len_by: Groupings to show CDR3 length of both aa and nt
         count_by: Groupings to show clonotype counts per sample
         top_clone_marks: `.head` arguments of `repClonoality()`
@@ -120,11 +165,11 @@ class ImmunarchAdvanced(Proc):
     Envs:
         gu_by: Groupings to show gene usages
             Multiple groups supported, for example:
-            `volume_by = {0: "Status", 1: ["Status", "Sex"]}`
+            `volume_by = {{0: "Status", 1: ["Status", "Sex"]}}`
             Or label the groups:
-            `volume_by = {"Status": "Status", "Status_Sex": ["Status", "Sex"]}`
+            `volume_by = {{"Status": "Status", "Status_Sex": ["Status","Sex"]}}`
             If a list or a single variable is given, it will be changed
-            into `{"Status": "Status"}`
+            into `{{"Status": "Status"}}`
         gu_top: How many top (ranked by total usage across samples) genes to
             show in the plots
         gua_methods: controls how the data is going to be preprocessed and
@@ -141,7 +186,7 @@ class ImmunarchAdvanced(Proc):
             all samples will be used
             Other than the target supported by immunarch, you can also specify
             top shared clones. For example:
-            `tracking_target = {"top_4": {"TOP": 4}}`
+            `tracking_target = {{ "top_4": {{"TOP": 4}} }}`
         kmers: Arguments for kmer analysis.
             Keys are the K of mers. Values are parameters:
             - `head` specifies # of the most abundant kmers to visualise.

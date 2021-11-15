@@ -1,6 +1,7 @@
 # Advanced analysis
 library(immunarch)
 library(tidyr)
+library(tibble)
 library(ggplot2)
 library(ggprism)
 
@@ -31,6 +32,7 @@ if (!is.list(div_by)) { gu_by = vec_to_list(div_by) }
 if (!is.list(raref_by)) { gu_by = vec_to_list(raref_by) }
 
 immdata = readRDS(immfile)
+n_samples = length(immdata$data)
 
 # Gene usage
 # https://immunarch.com/articles/web_only/v5_gene_usage.html
@@ -47,7 +49,8 @@ imm_gu_top = imm_gu %>% head(gu_top)
 class(imm_gu) = append("immunr_gene_usage", class(imm_gu))
 class(imm_gu_top) = append("immunr_gene_usage", class(imm_gu_top))
 gupng = file.path(gu_dir, "gene_usage.png")
-png(gupng, res=300, height=1500, width=2500)
+width = 2000 + ceiling(n_samples / 15) * 500
+png(gupng, res=300, height=1500, width=width)
 print(vis(imm_gu_top))
 dev.off()
 
@@ -115,9 +118,9 @@ for (sample in names(immdata$data)) {
         )
         png(
             file.path(spect_sam_dir, paste0("spectratyping-", idx, ".png")),
-            res = 300,
-            width = 2000,
-            height = 2000
+            res = 150,
+            width = 1000,
+            height = 1000
         )
         print(vis(spec_obj))
         dev.off()
@@ -130,18 +133,64 @@ for (sample in names(immdata$data)) {
 div_dir = file.path(outdir, "diversity")
 dir.create(div_dir, showWarnings = FALSE)
 
+plot_div = function(div, method, ...) {
+    if (method != "gini") {
+        do.call(vis, list(div, ...))
+    } else {
+        ginidiv = as.data.frame(div) %>%
+            rownames_to_column("Sample") %>%
+            rename(`Gini-coefficient`=V1)
+        ggplot(ginidiv) +
+            geom_col(aes(x=Sample, y=`Gini-coefficient`, fill=Sample)) +
+            theme(
+                legend.position="none",
+                axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+            )
+    }
+}
+
 for (div_method in div_methods) {
     met_dir = file.path(div_dir, div_method)
     dir.create(met_dir, showWarnings = FALSE)
     div = repDiversity(immdata$data, div_method)
-    divpng = file.path(met_dir, paste0("diversity-.png"))
+    divpng = file.path(met_dir, paste0("diversity-1-.png"))
     png(divpng, res=300, height=2000, width=2000)
-    print(vis(div))
+    print(plot_div(div, div_method))
     dev.off()
+
+    # repFilter only supported in immunarch 0.6.7
+    div1 = repDiversity(
+        repFilter(immdata, .method = "by.clonotype", .query = list(Clones = morethan(1)))$data,
+        div_method
+    )
+    divpng1 = file.path(met_dir, paste0("diversity-2-.png"))
+    png(divpng1, res=300, height=2000, width=2000)
+    print(plot_div(div1, div_method))
+    dev.off()
+
+    div2 = repDiversity(
+        repFilter(immdata, .method = "by.clonotype", .query = list(Clones = morethan(2)))$data,
+        div_method
+    )
+    divpng2 = file.path(met_dir, paste0("diversity-3-.png"))
+    png(divpng2, res=300, height=2000, width=2000)
+    print(plot_div(div2, div_method))
+    dev.off()
+
     for (name in names(div_by)) {
-        divpng = file.path(met_dir, paste0("diversity-", name, ".png"))
+        divpng = file.path(met_dir, paste0("diversity-1-", name, ".png"))
         png(divpng, res=300, height=2000, width=2000)
-        print(vis(div, .by=div_by[[name]], .meta=immdata$data))
+        print(plot_div(div, div_method, .by=div_by[[name]], .meta=immdata$meta))
+        dev.off()
+
+        divpng = file.path(met_dir, paste0("diversity-2-", name, ".png"))
+        png(divpng, res=300, height=2000, width=2000)
+        print(plot_div(div1, div_method, .by=div_by[[name]], .meta=immdata$meta))
+        dev.off()
+
+        divpng = file.path(met_dir, paste0("diversity-3-", name, ".png"))
+        png(divpng, res=300, height=2000, width=2000)
+        print(plot_div(div2, div_method, .by=div_by[[name]], .meta=immdata$meta))
         dev.off()
     }
 }
@@ -149,15 +198,30 @@ for (div_method in div_methods) {
 # Rarefaction
 raref_dir = file.path(outdir, "raref")
 dir.create(raref_dir, showWarnings = FALSE)
-imm_raref = repDiversity(immdata$data, "raref", .verbose = F)
+imm_raref = tryCatch({
+    repDiversity(immdata$data, "raref", .verbose = F)
+}, error=function(e) {
+    # https://github.com/immunomind/immunarch/issues/44
+    valid_samples = c()
+    for (sam in names(immdata$data)) {
+        vsam = tryCatch({
+            repDiversity(immdata$data[sam], "raref", .verbose = F)
+            sam
+        }, error=function(e) {c()})
+        valid_samples = c(valid_samples, vsam)
+    }
+    repDiversity(immdata$data[valid_samples], "raref", .verbose = F)
+})
 rarefpng = file.path(raref_dir, "raref-.png")
-png(rarefpng, res=300, width=2200, height=2000)
+
+width = 1700 + ceiling(n_samples / 15) * 500
+png(rarefpng, res=300, width=width, height=2000)
 print(vis(imm_raref))
 dev.off()
 
 for (name in names(raref_by)) {
     rfpng = file.path(raref_dir, paste0("raref-", name, ".png"))
-    png(rfpng, res=300, height=2000, width=2000)
+    png(rfpng, res=300, width=width, height=2000)
     print(vis(imm_raref, .by=raref_by[[name]], .meta=immdata$data))
     dev.off()
 }
@@ -191,7 +255,7 @@ for (name in names(tracking_target)) {
 
             }
         }
-        target = top_clones %>% slice_max(Clones, n=target[[2]]) %>% head(n=4) %>% pull(CDR3.aa)
+        target = top_clones %>% slice_max(Clones, n=target[[2]]) %>% pull(CDR3.aa)
     }
 
     imm_tracking = trackClonotypes(immdata$data, target, .col = "aa")
@@ -223,7 +287,7 @@ for (k in names(kmers_args)) {
             k_dir,
             paste0("head_", h, ".position_", position, ".log_", logg, ".png")
         )
-        width = 200 * h
+        width = 200 * h + ceiling(n_samples / 15 - 1) * 500
         png(kmerpng, res=300, height=2000, width=width)
         print(vis(kmers, .head=h, .position=position, .log=logg))
         dev.off()

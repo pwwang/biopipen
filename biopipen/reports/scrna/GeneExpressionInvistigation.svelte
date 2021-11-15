@@ -6,11 +6,9 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-{% for titlefile in job.out.outdir | joinpaths: "*.title" | glob %}
-{%  assign idx = titlefile | stem %}
-{%  assign boxplotpng = job.out.outdir | joinpaths: idx + "-boxplot.png" %}
-{%  assign heatmappng = job.out.outdir | joinpaths: idx + "-heatmap.png" %}
-<h{{h}}>{{ titlefile | read }}</h{{h}}>
+
+{% assign boxplotpng = job.out.outdir | joinpaths: "boxplot.png" %}
+{% assign heatmappng = job.out.outdir | joinpaths: "heatmap.png" %}
 
 {% if path.exists(boxplotpng) %}
 <Image src={{boxplotpng | quote}} />
@@ -20,11 +18,12 @@
 <Image src={{heatmappng | quote}} />
 {% endif %}
 
-{% endfor %}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-<h1>{{job.out.outdir | stem | replace: ".exprs", ""}}</h1>
+{% assign config = job.in.configfile | read | toml_loads %}
+{% assign name = config.name or stem(job.out.outdir) %}
+<h1>{{name | escape}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}

@@ -30,10 +30,10 @@
 {% endfor %}
 
 <h{{h}}>Diversity estimation</h{{h}}>
-<h{{h+1}}>
-    Sample diversity
-</h{{h+1}}>
 {% assign div_met_dirs = job.out.outdir | joinpaths: "diversity", "*" | glob %}
+<h{{h+1}}>
+    Sample diversity (all_clones)
+</h{{h+1}}>
 <Tabs>
     {% for dm_dir in div_met_dirs %}
     <Tab label="Method: {{ dm_dir | basename }}" />
@@ -41,7 +41,41 @@
     <div slot="content">
         {% for dm_dir in div_met_dirs %}
         <TabContent>
-            {% assign divpngs = dm_dir| joinpaths: "diversity*.png" | glob %}
+            {% assign divpngs = dm_dir| joinpaths: "diversity-1-*.png" | glob %}
+            {{ table_of_images(divpngs) }}
+        </TabContent>
+        {% endfor %}
+    </div>
+</Tabs>
+
+<h{{h+1}}>
+    Sample diversity (clone size >= 2)
+</h{{h+1}}>
+<Tabs>
+    {% for dm_dir in div_met_dirs %}
+    <Tab label="Method: {{ dm_dir | basename }}" />
+    {% endfor %}
+    <div slot="content">
+        {% for dm_dir in div_met_dirs %}
+        <TabContent>
+            {% assign divpngs = dm_dir| joinpaths: "diversity-2-*.png" | glob %}
+            {{ table_of_images(divpngs) }}
+        </TabContent>
+        {% endfor %}
+    </div>
+</Tabs>
+
+<h{{h+1}}>
+    Sample diversity (clone size >= 3)
+</h{{h+1}}>
+<Tabs>
+    {% for dm_dir in div_met_dirs %}
+    <Tab label="Method: {{ dm_dir | basename }}" />
+    {% endfor %}
+    <div slot="content">
+        {% for dm_dir in div_met_dirs %}
+        <TabContent>
+            {% assign divpngs = dm_dir| joinpaths: "diversity-3-*.png" | glob %}
             {{ table_of_images(divpngs) }}
         </TabContent>
         {% endfor %}

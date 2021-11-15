@@ -20,7 +20,7 @@ if (!"RNADir" %in% meta_cols) {
 }
 
 out = list()
-for (i in seq_along(metadata)) {
+for (i in seq_len(nrow(metadata))) {
     sample = as.character(metadata[i, "Sample", drop=T])
     path = as.character(metadata[i, "RNADir", drop=T])
     if (is.na(path) || !is.character(path) || nchar(path) == 0) {

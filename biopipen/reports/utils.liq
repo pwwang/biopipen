@@ -3,7 +3,7 @@
 {{  job_report_macro(jobs[0], h=1) }}
 {% else %}
 {%  for job in jobs %}
-<div class="job_wrapper>
+<div class="job_wrapper">
 {{      job_head_macro(job)}}
 {{      job_report_macro(job, h=2) }}
 </div>
