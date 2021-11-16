@@ -19,10 +19,17 @@ class SeuratLoading(Proc):
 
     Output:
         rdsfile: The RDS file with a list of Seurat object
+
+    Envs:
+        qc: The QC filter for each sample.
+            This will be passed to `subset(obj, subset=<qc>)`.
+            For example
+            `nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5`
     """
 
     input = "metafile:file"
     output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
+    envs = {"qc": ""}
     lang = config.lang.rscript
     script = "file://../scripts/scrna/SeuratLoading.R"
 
