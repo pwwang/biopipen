@@ -48,6 +48,10 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
         obj = CreateSeuratObject(counts=exprs, project=sample)
         obj = SCTransform(object=obj, return.only.var.genes=FALSE, verbose=FALSE)
         obj = RenameCells(obj, add.cell.id = sample)
+        obj$percent.mt = PercentageFeatureSet(obj, pattern = "^MT-")
+        if (!is.null(envs$qc) && nchar(envs$qc) > 0) {
+            obj = subset(obj, subset = {{envs.qc}})
+        }
         obj_list[[sample]] = obj
     }
     saveRDS(obj_list, cached_file)
