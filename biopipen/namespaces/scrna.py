@@ -197,3 +197,37 @@ class MarkersFinder(Proc):
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
     plugin_opts = {"report": "file://../reports/scrna/MarkersFinder.svelte"}
+
+
+class SCImpute(Proc):
+    """Impute the dropout values in scRNA-seq data.
+
+    Input:
+        infile: The input file for imputation
+            Either a SeuratObject or a matrix of count/TPM
+        groupfile: The file to subset the matrix or label the cells
+            Could be an output from ImmunarchFilter
+
+    Output:
+        The output matrix
+
+    Envs:
+        infmt: The input format.
+            Either `seurat` or `matrix
+    """
+    input = "infile:file, groupfile:file"
+    output = [
+        "outfile:file:{{in.infile | stem | replace: '.seurat', ''}}."
+        "{{envs.outfmt}}"
+    ]
+    lang = config.lang.rscript
+    envs = {
+        "infmt": "seurat", # or matrix
+        "outfmt": "txt", # or csv, rds
+        "type": "count", # or TPM
+        "drop_thre": 0.5,
+        "kcluster": None, # or Kcluster
+        "ncores": config.misc.ncores,
+        "refgene": config.ref.refgene,
+    }
+

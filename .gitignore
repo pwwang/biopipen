@@ -109,6 +109,6 @@ poetry.lock
 .history/
 .xqute/
 .pipen/
-t-*.ipynb
+default-*.ipynb
 *-output/
 *_results/

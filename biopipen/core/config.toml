@@ -9,6 +9,10 @@ gatk4 = "gatk"
 vdjtools = "vdjtools"
 # cnvpytor
 cnvpytor = "cnvpytor"
+# wget
+wget = "wget"
+# aria2c
+aria2c = "aria2c"
 
 # Interpreters
 [lang]
@@ -32,6 +36,8 @@ liftover_chain = ""
 reffa = ""
 # The reference sequence dictionary
 refdict = ""
+# The reference genes in GTF format
+refgene = ""
 
 [misc]
 # Number of cores used for each job
