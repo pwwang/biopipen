@@ -32,7 +32,7 @@ if (!is.null(config$doc.string)) {
     envs$doc.string = config$doc.string
 }
 
-#
+# EXPORT
 runGSEA = function(
     # The expression file
     infile,
@@ -123,6 +123,7 @@ runGSEA = function(
 
     do.call(GSEA, envs)
 }
+# ENDEXPORT
 
 runGSEA(
     infile=infile,

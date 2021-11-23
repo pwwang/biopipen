@@ -38,6 +38,8 @@ reffa = ""
 refdict = ""
 # The reference genes in GTF format
 refgene = ""
+# The reference exon in GTF format
+refexon = ""
 
 [misc]
 # Number of cores used for each job

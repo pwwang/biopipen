@@ -44,3 +44,41 @@ class GSEA(Proc):
     plugin_opts = {
         "report": "file://../reports/gsea/GSEA.svelte"
     }
+
+
+# class FGSEA(Proc):
+
+
+class Enrichr(Proc):
+    """Gene set enrichment analysis using Enrichr
+
+    Need `devtools::install_github("wjawaid/enrichR")`
+
+    Input:
+        infile: The gene list file.
+            You can specify whether this file has header and the index (0-based)
+            of the columns where the genes are present
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        inheader: Whether the input file has header (first row skipped)
+        incol: Which column has the genes (0-based index)
+        dbs: The databases to enrich against.
+            See https://maayanlab.cloud/Enrichr/#libraries for all available
+            databases/libaries
+    """
+    input = "infile:file"
+    output = "outdir:dir:{{in.infile | stem}}.enrichr"
+    lang = config.lang.rscript
+    envs = {
+        "inheader": False,
+        "incol": 0,
+        "genename": "symbol",
+        "dbs": ["KEGG_2021_Human"],
+    }
+    script = "file://../scripts/gsea/Enrichr.R"
+    plugin_opts = {
+        "report": "file://../reports/gsea/Enrichr.svelte"
+    }

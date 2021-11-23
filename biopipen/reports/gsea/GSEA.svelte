@@ -20,13 +20,14 @@
 {% endfor %}
 
 <h{{h}}>Enrichment details</h{{h}}>
+{% set cutoff = envs.get("fdr.q.val.threshold", envs.get("fdr_q_val_threshold", 0.25)) %}
 {% for sumfile in job.out.outdir | joinpaths: "*.SUMMARY.RESULTS.REPORT.*.txt" | glob %}
 {%   set klass = stem(sumfile).split(".")[-1] %}
 <h{{h+1}}>{{klass}}</h{{h+1}}>
 {%   set sumdata = sumfile | datatable: sep="\t" | json_loads %}
 {%   set has_signif = [] %}
 {%   for row in sumdata %}
-{%      if row["FDR_q_val"] < 0.25 %}
+{%      if row["FDR_q_val"] < cutoff %}
 {%          set _ = has_signif.append(1) %}
 <embed src={{job.out.outdir | joinpaths: "*." + row["GS"] + ".plot." + klass + ".*.pdf" | glob | first | quote}}
     width="100%"
@@ -35,7 +36,7 @@
 {%      endif %}
 {%   endfor %}
 {%   if len(has_signif) == 0 %}
-<Tile>No significantly (FDR_q_val &lt; 0.25) enriched pathways found.</Tile>
+<Tile>No significantly (FDR_q_val &lt; {{cutoff}}) enriched pathways found.</Tile>
 {%   endif %}
 {% endfor %}
 
