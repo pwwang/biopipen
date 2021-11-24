@@ -1,6 +1,6 @@
 import pandas
 from datar.all import c, right_join, select, relocate
-from biopipen.utils.gene import GeneNormConversion
+from biopipen.utils.gene import gene_name_conversion
 
 infile = {{in.infile | quote}}
 outfile = {{out.outfile | quote}}
@@ -23,18 +23,15 @@ else:
 colname = genes.name
 genes = genes.tolist()
 
-gnc = GeneNormConversion(
-    genes,
-    species,
-)
-
 #        query  `outfmt`
 #     <object> <object>
 # 0  1255_g_at   GUCA1A
 # 1    1316_at     THRA
 # 2    1320_at   PTPN21
 # 3    1294_at  MIR5193
-converted = gnc.convert(
+converted = gene_name_conversion(
+    genes=genes,
+    species=species,
     infmt=infmt,
     outfmt=outfmt,
     notfound=notfound,

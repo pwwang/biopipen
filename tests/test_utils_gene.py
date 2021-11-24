@@ -1,10 +1,9 @@
-from biopipen.utils.gene import GeneNormConversion, QueryGenesNotFound
+from biopipen.utils.gene import gene_name_conversion
 
 
 def run_except(genes, infmt, outfmt, notfound, expect, species):
-    gnc = GeneNormConversion(genes, species)
     try:
-        gnc.convert(infmt, outfmt, notfound)
+        gene_name_conversion(genes, species, infmt, outfmt, notfound)
     except expect:
         pass
     else:
@@ -12,8 +11,7 @@ def run_except(genes, infmt, outfmt, notfound, expect, species):
 
 
 def run_expect(genes, infmt, outfmt, notfound, expect, species):
-    gnc = GeneNormConversion(genes, species)
-    out = gnc.convert(infmt, outfmt, notfound)
+    out = gene_name_conversion(genes, species, infmt, outfmt, notfound)
     assert out[outfmt].tolist() == expect
 
 def run(genes, infmt, outfmt, notfound, expect, species="human"):

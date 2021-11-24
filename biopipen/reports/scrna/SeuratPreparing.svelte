@@ -1,4 +1,4 @@
-{% from "utils.liq" import report_jobs -%}
+{% from "utils/misc.liq" import report_jobs -%}
 {% from_ os import path %}
 <script>
     import { Image } from "@@";

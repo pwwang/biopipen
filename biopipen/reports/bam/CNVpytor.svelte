@@ -1,4 +1,4 @@
-{% from "utils.liq" import table_of_images -%}
+{% from "utils/misc.liq" import table_of_images -%}
 <script>
     import { Image } from "@@";
     import { Tabs, Tab, TabContent } from "carbon-components-svelte";
