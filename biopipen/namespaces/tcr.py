@@ -47,7 +47,15 @@ class ImmunarchFilter(Proc):
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
-        filters: The filters in written in a json file
+        configfile: A config file in TOML.
+            A dict of configurations with keys as the names of the group and
+            values dicts with following keys. If you have multiple cases,
+            they must have the same set of samples after filtering.
+            `filterdata`: Use the filters of this config to filter the data
+            in `out.outfile`
+            `clonotype`: Use clonotype (CDR3.aa) as the group. The name will
+            be ignored
+            `filters`: The filters to filter the data
             If not provided or empty, will generate the group file with
             The entire dataset.
             Keys could be methods supported by `immunarch::repFilter()`.
@@ -70,10 +78,6 @@ class ImmunarchFilter(Proc):
             >>> ["by.count"]
             >>> ORDER = 1
             >>> filter = "!TOTAL %in% TOTAL[1:20]"
-        name: The name of the group
-            if the name endswith `@clonotype`, will generate a group file with
-            each row the cells of a clonotype. Otherwise, all cells will be
-            merged.
 
     Output:
         outfile: The filtered `immdata`
@@ -81,10 +85,10 @@ class ImmunarchFilter(Proc):
             columns the cell barcodes in the samples
 
     """
-    input = "immdata:file, filters:file, name:var"
+    input = "immdata:file, configfile:file"
     output = [
         "outfile:file:{{in.immdata | stem}}.RDS",
-        "groupfile:file:{{in.name or 'filtered'}}.groups.txt"
+        "groupfile:file:{{in.immdata | stem}}.groups.txt"
     ]
     lang = config.lang.rscript
     script = "file://../scripts/tcr/ImmunarchFilter.R"

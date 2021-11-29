@@ -16,11 +16,15 @@ cmdy = "^0.4.3"
 bam = "biopipen.namespaces.bam"
 bed = "biopipen.namespaces.bed"
 csv = "biopipen.namespaces.csv"
+gene = "biopipen.namespaces.gene"
 gsea = "biopipen.namespaces.gsea"
 misc = "biopipen.namespaces.misc"
+plot = "biopipen.namespaces.plot"
+rnaseq = "biopipen.namespaces.rnaseq"
 scrna = "biopipen.namespaces.scrna"
 tcr = "biopipen.namespaces.tcr"
 vcf = "biopipen.namespaces.vcf"
+web = "biopipen.namespaces.web"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

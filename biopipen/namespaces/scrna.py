@@ -109,16 +109,16 @@ class GeneExpressionInvistigation(Proc):
             name you want to show in the plot
         hmgenefile: The genes to plot in a heatmap
         configfile: The configuration file (toml)
-            - `name`: The name to name the job. Otherwise the stem of this file
-                will be used
-            - `target`: Which sample to pull expression from
-                could be multiple
-            - `plots`: Plots to generate for this case
-                `boxplot`:
-                    `ncol`: Split the plot to how many columns?
-                    `res`, `height` and `width` the parameters for `png()`
-                `heatmap`:
-                    `res`, `height` and `width` the parameters for `png()`
+            `name`: The name to name the job. Otherwise the stem of this file
+            will be used
+            `target`: Which sample to pull expression from
+            could be multiple
+            `plots`: Plots to generate for this case
+            - `boxplot`:
+                `ncol`: Split the plot to how many columns?
+                `res`, `height` and `width` the parameters for `png()`
+            - `heatmap`:
+                `res`, `height` and `width` the parameters for `png()`
     Output:
         outdir: The output directory with the plots
 
