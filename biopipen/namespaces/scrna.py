@@ -74,6 +74,7 @@ class SeuratPreparing(Proc):
     #     "report": "file://../reports/scrna/SeuratPreparing.svelte"
     # }
 
+
 class SeuratClustering(Proc):
     """Seurat - Determine the clusters
 
@@ -87,15 +88,17 @@ class SeuratClustering(Proc):
     Envs:
         FindClusters: Arguments to `FindClusters()`
     """
+
     input = "srtobj:file"
     output = [
         "rdsfile:file:{{in.srtobj | stem}}.RDS",
         "groupfile:file:{{in.srtobj | stem | replace: '.seurat', ''}}"
-        ".clusters.txt"
+        ".clusters.txt",
     ]
     lang = config.lang.rscript
-    envs = { "FindClusters": {"resolution": 0.8 } }
+    envs = {"FindClusters": {"resolution": 0.8}}
     script = "file://../scripts/scrna/SeuratClustering.R"
+
 
 class GeneExpressionInvistigation(Proc):
     """Investigation of expressions of genes of interest
@@ -104,36 +107,38 @@ class GeneExpressionInvistigation(Proc):
         srtobj: The seurat object loaded by SeuratPreparing
         groupfile: The group of cells with the first column the groups and
             rest the cells in each sample.
-        genefile: The genes to show their expressions in boxplots
-            Two columns without header. First the gene symbol, then the
-            name you want to show in the plot
-        hmgenefile: The genes to plot in a heatmap
-        configfile: The configuration file (toml)
-            `name`: The name to name the job. Otherwise the stem of this file
-            will be used
-            `target`: Which sample to pull expression from
-            could be multiple
-            `plots`: Plots to generate for this case
-            - `boxplot`:
-                `ncol`: Split the plot to how many columns?
-                `res`, `height` and `width` the parameters for `png()`
-            - `heatmap`:
-                `res`, `height` and `width` the parameters for `png()`
+        genefiles: The genes to show their expressions in the plots
+        configfile: The configuration file (toml). See `envs`
+            If not provided, use `envs`
     Output:
         outdir: The output directory with the plots
 
+    Envs:
+        name: The name to name the job. Otherwise the stem of groupfile
+            will be used
+        target` Which sample to pull expression from could be multiple
+        gopts: Options for `read.table()` to read the genefiles
+        plots: Plots to generate for this case
+            `boxplot`:
+            - `use`: Which gene file to use (1-based)
+            - `ncol`: Split the plot to how many columns?
+            - `res`, `height` and `width` the parameters for `png()`
+            `heatmap`:
+            - `use`: Which gene file to use (1-based)
+            - `res`, `height` and `width` the parameters for `png()`
+            - other arguments for `ComplexHeatmap::Heatmap()`
     """
 
-    input = (
-        "srtobj:file, "
-        "groupfile:file, "
-        "genefile:file, "
-        "hmgenefile:file, "
-        "configfile:file"
-    )
+    input = "srtobj:file, groupfile:file, genefiles:files, configfile:file"
     output = "outdir:dir:{{in.configfile | stem0}}.exprs"
     lang = config.lang.rscript
     order = 4
+    envs = {
+        "name": None,
+        "target": None,
+        "gopts": {},
+        "plots": {},
+    }
     script = "file://../scripts/scrna/GeneExpressionInvistigation.R"
     plugin_opts = {
         "report": "file://../reports/scrna/GeneExpressionInvistigation.svelte"
@@ -142,15 +147,15 @@ class GeneExpressionInvistigation(Proc):
 
 class DimPlots(Proc):
     """Seurat - Dimensional reduction plots"""
+
     input = "srtobj:file, groupfile:file, configfile:file"
     output = "outfile:file:{{in.groupfile | stem}}.dimplot.png"
     lang = config.lang.rscript
     script = "file://../scripts/scrna/DimPlots.R"
     plugin_opts = {
         "report": "file://../reports/scrna/DimPlots.svelte",
-        "report_toc": False
+        "report_toc": False,
     }
-
 
 
 class MarkersFinder(Proc):
@@ -215,6 +220,7 @@ class SCImpute(Proc):
         infmt: The input format.
             Either `seurat` or `matrix
     """
+
     input = "infile:file, groupfile:file"
     output = [
         "outfile:file:{{in.infile | stem | replace: '.seurat', ''}}."
@@ -222,12 +228,11 @@ class SCImpute(Proc):
     ]
     lang = config.lang.rscript
     envs = {
-        "infmt": "seurat", # or matrix
-        "outfmt": "txt", # or csv, rds
-        "type": "count", # or TPM
+        "infmt": "seurat",  # or matrix
+        "outfmt": "txt",  # or csv, rds
+        "type": "count",  # or TPM
         "drop_thre": 0.5,
-        "kcluster": None, # or Kcluster
+        "kcluster": None,  # or Kcluster
         "ncores": config.misc.ncores,
         "refgene": config.ref.refgene,
     }
-
