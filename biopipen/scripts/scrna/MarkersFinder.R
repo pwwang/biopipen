@@ -106,14 +106,21 @@ do_case = function(case) {
                 as.character() %>%
                 unique()
         }
-
-        case_cells = groups %>%
-            filter(.[[1]] == case) %>%
-            select(all_of(samples)) %>%
-            summarise(across(everything(), c)) %>%
-            mutate(across(everything(), ~ list(paste(cur_column(), unlist(.x), sep="_")))) %>%
-            unlist() %>%
-            unname()
+        if (samples == "ALL") {
+            case_cells = groups %>%
+                filter(.[[1]] == case) %>%
+                pull(ALL) %>%
+                unlist() %>%
+                unname()
+        } else {
+            case_cells = groups %>%
+                filter(.[[1]] == case) %>%
+                select(all_of(samples)) %>%
+                summarise(across(everything(), c)) %>%
+                mutate(across(everything(), ~ list(paste(cur_column(), unlist(.x), sep="_")))) %>%
+                unlist() %>%
+                unname()
+        }
         case_obj = subset(seurat_obj, cells = case_cells)
         case_obj$group = case
 
@@ -121,12 +128,20 @@ do_case = function(case) {
             ctrl_obj = subset(seurat_obj, cells = case_cells, invert = TRUE)
             ctrl_obj$group = paste0(case, "_2")
         } else {
-            ctrl_cells = groups %>% filter(.[[1]] == ident.2) %>%
-                select(all_of(samples)) %>%
-                summarise(across(everything(), c)) %>%
-                mutate(across(everything(), ~ list(paste(cur_column(), unlist(.x), sep="_")))) %>%
-                unlist() %>%
-                unname()
+            if (samples == "ALL") {
+                ctrl_cells = groups %>%
+                    filter(.[[1]] == ident.2) %>%
+                    pull(ALL) %>%
+                    unlist() %>%
+                    unname()
+            } else {
+                ctrl_cells = groups %>% filter(.[[1]] == ident.2) %>%
+                    select(all_of(samples)) %>%
+                    summarise(across(everything(), c)) %>%
+                    mutate(across(everything(), ~ list(paste(cur_column(), unlist(.x), sep="_")))) %>%
+                    unlist() %>%
+                    unname()
+            }
             ctrl_obj = subset(seurat_obj, cells = ctrl_cells)
             ctrl_obj$group = ident.2
         }

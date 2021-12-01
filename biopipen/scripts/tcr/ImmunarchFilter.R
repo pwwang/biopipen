@@ -2,31 +2,34 @@ library(dplyr)
 library(immunarch)
 
 immfile = {{in.immdata | quote}}
-config = {{in.configfile | read | toml_loads | r}}
+{% if in.filterfile %}
+filters = {{in.filterfile | read | toml_loads | r}}
+{% else %}
+filters = {{envs.filters | r}}
+{% endif %}
 outfile = {{out.outfile | quote}}
 groupfile = {{out.groupfile | quote}}
+domerge = {{envs.merge | r}}
+clonotype = {{envs.clonotype | r}}
 
 immdata0 = readRDS(immfile)
 
 groupdata = NULL
-for (name in names(config)) {
-    conf = config[[name]]
-    clonotype = if (is.null(conf$clonotype)) FALSE else conf$clonotype
-    filterdata = if (is.null(conf$filterdata)) TRUE else conf$filterdata
-    filters = if (is.null(conf$filters)) list() else conf$filters
+filterdata = TRUE
+for (name in names(filters)) {
+    filt = filters[[name]]
     immdata = immdata0
 
     filters_order = lapply(
-        filters,
+        filt,
         function(x) if(is.null(x$ORDER)) 0 else x$ORDER
     )
     by_order = names(filters_order[order(unlist(filters_order))])
 
     for (by in by_order) {
-        cond = filters[[by]]
+        cond = filt[[by]]
         cond$ORDER = NULL
         if (by == "by.count") {
-
             cdr3aa = c()
             for (sample in names(immdata$data)) {
                 cdr3aa = unique(c(cdr3aa, immdata$data[[sample]]$CDR3.aa))
@@ -76,16 +79,31 @@ for (name in names(config)) {
 
     if (filterdata) {
         saveRDS(immdata, file=outfile)
+        filterdata <<- FALSE
     }
 
     # Save a group file
     if (!clonotype) {
-        groupdf = list()
+        groupdf = if (domerge) list(ALL = "") else list()
         for (sample in names(immdata$data)) {
-            groupdf[[sample]] = paste(
-                immdata$data[[sample]]$Barcode,
-                collapse=";"
-            )
+            if (domerge) {
+                cellids = paste(
+                    sample,
+                    unlist(strsplit(immdata$data[[sample]]$Barcode, ";")),
+                    sep = "_",
+                    collapse = ";"
+                )
+                groupdf$ALL = if (nchar(groupdf$ALL) == 0) {
+                    cellids
+                } else {
+                    paste(groupdf$ALL, cellids, sep=";")
+                }
+            } else {
+                groupdf[[sample]] = paste(
+                    immdata$data[[sample]]$Barcode,
+                    collapse=";"
+                )
+            }
         }
         cnames = names(groupdf)
         groupdf = as.data.frame(groupdf)
@@ -95,22 +113,39 @@ for (name in names(config)) {
     } else {
         groupdf = NULL
         for (sample in names(immdata$data)) {
-            df = immdata$data[[sample]] %>% select(Clonotype=CDR3.aa, Barcode)
-            colnames(df)[2] = sample
-            if (is.null(groupdf)) {
-                groupdf = df
+            if (domerge) {
+                df = immdata$data[[sample]] %>%
+                    select(Clonotype=CDR3.aa, ALL=Barcode) %>%
+                    group_by(Clonotype) %>%
+                    summarise(ALL=paste(
+                        sample,
+                        unlist(strsplit(ALL, ";")),
+                        sep="_",
+                        collapse=";"
+                    ))
+                if (is.null(groupdf)) {
+                    groupdf = df
+                } else {
+                    groupdf = bind_rows(groupdf, df)
+                }
             } else {
-                groupdf = full_join(groupdf, df, by="Clonotype")
+                df = immdata$data[[sample]] %>% select(Clonotype=CDR3.aa, Barcode)
+                colnames(df)[2] = sample
+                if (is.null(groupdf)) {
+                    groupdf = df
+                } else {
+                    groupdf = full_join(groupdf, df, by="Clonotype")
+                }
             }
         }
     }
     if (is.null(groupdata)) {
         groupdata = groupdf
-    } else if (colnames(groupdata) != colnames(groupdf)) {
+    } else if (all(colnames(groupdata) != colnames(groupdf))) {
         stop("Samples are not the same after filtering")
     } else {
         groupdata = bind_rows(groupdata, groupdf)
     }
 }
 
-write.table(groupdf, groupfile, quote=F, row.names=F, col.names=T, sep="\t")
+write.table(groupdata, groupfile, quote=F, row.names=F, col.names=T, sep="\t")

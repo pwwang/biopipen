@@ -107,6 +107,8 @@ class GeneExpressionInvistigation(Proc):
         srtobj: The seurat object loaded by SeuratPreparing
         groupfile: The group of cells with the first column the groups and
             rest the cells in each sample.
+            Or the subset conditions using metadata of `srtobj`
+            See `envs.group_subset`
         genefiles: The genes to show their expressions in the plots
         configfile: The configuration file (toml). See `envs`
             If not provided, use `envs`
@@ -114,6 +116,8 @@ class GeneExpressionInvistigation(Proc):
         outdir: The output directory with the plots
 
     Envs:
+        group_subset: Is the `in.groupfile` subset conditions using metadata
+            Or the groupfile as described.
         name: The name to name the job. Otherwise the stem of groupfile
             will be used
         target` Which sample to pull expression from could be multiple
@@ -134,6 +138,7 @@ class GeneExpressionInvistigation(Proc):
     lang = config.lang.rscript
     order = 4
     envs = {
+        "group_subset": False,
         "name": None,
         "target": None,
         "gopts": {},
