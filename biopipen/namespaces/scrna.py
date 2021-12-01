@@ -100,7 +100,7 @@ class SeuratClustering(Proc):
     script = "file://../scripts/scrna/SeuratClustering.R"
 
 
-class GeneExpressionInvistigation(Proc):
+class GeneExpressionInvestigation(Proc):
     """Investigation of expressions of genes of interest
 
     Input:
