@@ -47,10 +47,27 @@ class ImmunarchFilter(Proc):
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
-        filters: The filters in written in a json file
-            If not provided or empty, will generate the group file with
-            The entire dataset.
-            Keys could be methods supported by `immunarch::repFilter()`.
+        filterfile: A config file in TOML.
+            A dict of configurations with keys as the names of the group and
+            values dicts with following keys.
+            See `envs.filters`
+
+
+    Output:
+        outfile: The filtered `immdata`
+        groupfile: Also a group file with first column the groups and other
+            columns the cell barcodes in the samples
+
+    Envs:
+        merge: Merge the cells from the samples, instead of list cells
+            for different samples. The cell ids will be preficed with the sample
+            name, connected with `_`. The column name will be `ALL` instead.
+        clonotype: Use clonotype (CDR3.aa) as the group. The name from
+            `envs.filters` will be ignored
+        filters: The filters to filter the data
+            You can have multiple cases (groups), the names will be the keys of
+            this dict, values are also dicts with keys the methods supported by
+            `immunarch::repFilter()`.
             There is one more method `by.count` supported to filter the
             count matrix. For `by.meta`, `by.repertoire`, `by.rep`,
             `by.clonotype` or `by.col` the values will be passed to
@@ -64,28 +81,23 @@ class ImmunarchFilter(Proc):
             You can also specify `ORDER` to define the filtration order, which
             defaults to 0, higher `ORDER` gets later executed.
             For example:
-            >>> ["by.meta"]
-            >>> Source = "BM"
-            >>> Status = "Post"
-            >>> ["by.count"]
-            >>> ORDER = 1
-            >>> filter = "!TOTAL %in% TOTAL[1:20]"
-        name: The name of the group
-            if the name endswith `@clonotype`, will generate a group file with
-            each row the cells of a clonotype. Otherwise, all cells will be
-            merged.
-
-    Output:
-        outfile: The filtered `immdata`
-        groupfile: Also a group file with first column the groups and other
-            columns the cell barcodes in the samples
-
+            >>> {
+            >>>   "Top20BM_Post": {
+            >>>     "by.meta": {"Source": "BM", "Status": "Post"},
+            >>>     "by.count": {"ORDER": 1, "filter": "TOTAL %in% TOTAL[1:20]"}
+            >>>   }
+            >>> }
     """
-    input = "immdata:file, filters:file, name:var"
+    input = "immdata:file, filterfile:file"
     output = [
         "outfile:file:{{in.immdata | stem}}.RDS",
-        "groupfile:file:{{in.name or 'filtered'}}.groups.txt"
+        "groupfile:file:{{in.immdata | stem}}.groups.txt"
     ]
+    envs = {
+        "merge": False,
+        "clonotype": False,
+        "filters": {},
+    }
     lang = config.lang.rscript
     script = "file://../scripts/tcr/ImmunarchFilter.R"
 

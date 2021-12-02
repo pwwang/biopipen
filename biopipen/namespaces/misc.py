@@ -43,3 +43,24 @@ class Config2File(Proc):
     envs = {"infmt": "toml", "outfmt": "toml"}
     lang = config.lang.python
     script = "file://../scripts/misc/Config2File.py"
+
+
+class Str2File(Proc):
+    """Write the given string to a file
+
+    Input:
+        str: The string to write to file
+        name: The name of the file
+            If not given, use `envs.name`
+
+    Output:
+        outfile: The output file
+
+    Envs:
+        name: The name of the output file
+    """
+    input = "str, name"
+    output = "outfile:file:{{in.name}}"
+    lang = config.lang.python
+    envs = {"name": None}
+    script = "file://../scripts/misc/Str2File.py"

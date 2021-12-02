@@ -1,4 +1,4 @@
-{% from "utils.liq" import report_jobs -%}
+{% from "utils/misc.liq" import report_jobs -%}
 <script>
     import { Image, DataTable } from "@@";
     import { Tabs, Tab, TabContent } from "carbon-components-svelte";

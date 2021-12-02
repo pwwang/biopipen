@@ -35,7 +35,8 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
     samples = c()
     print("- Reading samples individually ...")
     for (i in seq_len(nrow(metadata))) {
-        sample = as.character(metadata[i, "Sample", drop=T])
+        mdata = metadata[i,, drop=T] # list
+        sample = as.character(mdata$Sample)
         print(paste("  Reading", sample, "..."))
         path = as.character(metadata[i, "RNADir", drop=T])
         if (is.na(path) || !is.character(path) || nchar(path) == 0) {
@@ -52,7 +53,15 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
         if (!is.null(envs$qc) && nchar(envs$qc) > 0) {
             obj = subset(obj, subset = {{envs.qc}})
         }
-        obj_list[[sample]] = obj
+        # Attach meta data
+        for (mname in names(mdata)) {
+            if (mname %in% c("RNADir", "TCRDir")) { next }
+            mdt = mdata[[mname]]
+            if (is.factor(mdt)) {
+                mdt = levels(mdt)[mdt]
+            }
+            obj[[mname]] = mdt
+        }
     }
     saveRDS(obj_list, cached_file)
 }
