@@ -24,7 +24,6 @@ jobs:
       - name: Build docs
         run: |
           python -m pip install -r docs/requirements.txt
-          cd docs
           cp README.md docs/index.md
           mkdocs build
         if : success()
