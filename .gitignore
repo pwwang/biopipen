@@ -112,3 +112,5 @@ poetry.lock
 default-*.ipynb
 *-output/
 *_results/
+
+docs/index.md
