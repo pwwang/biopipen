@@ -1,3 +1,8 @@
+## 0.1.4
+
+- 🐛 Fix bam.CNVpytor when snpfile is not provided
+- ✨ Add metabolic pathway analysis for single-cell RNA-seq data
+
 ## 0.1.3
 
 - Add gsea.GSEA and scrna.SCImpute
