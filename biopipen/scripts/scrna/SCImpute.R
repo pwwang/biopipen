@@ -7,20 +7,26 @@ library(rtracklayer)
 infile = {{in.infile | r}}
 groupfile = {{in.groupfile | r}}
 outfile = {{out.outfile | r}}
-joboutdir = {{job.outdir | r}}
+joboutdir = "{{job.outdir}}/"
 infmt = {{envs.infmt | r}}
 outfmt = {{envs.outfmt | r}}
 datatype = {{envs.type | r}}
 drop_thre = {{envs.drop_thre | r}}
-kcluster = {{r(envs.kcluster or envs.Kcluster)}}
+kcluster = {{(envs.kcluster or envs.Kcluster or None) | r}}
+
 ncores = {{envs.ncores | r}}
 refgene = {{envs.refgene | r}}
 
+labels = NULL
 if (infmt == "seurat") {
     library(Seurat)
     sobj = readRDS(infile)
-    counts = as.data.frame(GetAssayData(object = sobj, slot = "counts"))
+    counts = as.data.frame(sobj@assays$RNA@counts)
     datatype = "count"
+    kc = length(unique(Idents(sobj)))
+    if (kc > 0) {
+        labels = as.integer(Idents(sobj))
+    }
 } else {
     if (infmt == "rds") {
         counts = readRDS(infile)
@@ -66,9 +72,8 @@ if (!is.null(groupfile)) {
 
     cells = intersect(names(labels), colnames(counts))
     labels = labels[cells]
+    labels = as.integer(as.factor(labels))
     counts = counts[, cells, drop=F]
-} else {
-    labels = NULL
 }
 
 if (datatype != "count") {

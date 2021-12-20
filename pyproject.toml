@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.1.3"
+version = "0.1.4"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -22,6 +22,7 @@ misc = "biopipen.namespaces.misc"
 plot = "biopipen.namespaces.plot"
 rnaseq = "biopipen.namespaces.rnaseq"
 scrna = "biopipen.namespaces.scrna"
+scrna_metabolic = "biopipen.namespaces.scrna_metabolic"
 tcr = "biopipen.namespaces.tcr"
 vcf = "biopipen.namespaces.vcf"
 web = "biopipen.namespaces.web"
