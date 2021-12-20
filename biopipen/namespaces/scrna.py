@@ -219,7 +219,7 @@ class SCImpute(Proc):
             Could be an output from ImmunarchFilter
 
     Output:
-        The output matrix
+        outfile: The output matrix
 
     Envs:
         infmt: The input format.
@@ -241,3 +241,50 @@ class SCImpute(Proc):
         "ncores": config.misc.ncores,
         "refgene": config.ref.refgene,
     }
+    script = "file://../scripts/scrna/SCImpute.R"
+
+
+class SeuratFilter(Proc):
+    """Filtering cells from a seurat object
+
+    Input:
+        srtobj: The seurat object in RDS
+        filterfile: The file with the filtering information
+            Either a group file (rows cases for filtering, columns are samples
+            or ALL for all cells with prefices), or config under
+            `subsetting` section in TOML with keys
+            and value that will be passed to `subset(...,subset = ...)`
+
+    Output:
+        out: The filtered seurat object in RDS if `envs.multicase` is False,
+            otherwise the directory with the filtered seurat objects
+
+    Envs:
+        filterfmt: `auto`, `subset` or `grouping`.
+            If `subset` then `in.filterfile` will be config in TOML, otherwise
+            if `grouping`, it is a groupfile. See `in.filterfile`.
+            If `auto`, test if there is `=` in the file. If so, it's `subset`
+            otherwise `grouping`
+        invert: Invert the selection?
+        multicase: If True, multiple seurat objects will be generated.
+            For `envs.filterfmt == "subset"`, each key-value pair will be a
+            case, otherwise, each row of `in.filterfile` will be a case.
+
+    """
+    input = "srtobj:file, filterfile:file"
+    output = """
+        {%- if envs.multicase -%}
+            out:dir:{{in.filterfile | stem}}.seuratfiltered
+        {%- elif envs.filterfmt == "subset" -%}
+            out:file:{{in.filterfile | read | toml_loads | list | first}}.RDS
+        {%- else -%}
+            out:file:{{in.filterfile | readlines | last | split | first}}.RDS
+        {%- endif -%}
+    """
+    envs = {
+        "filterfmt": "auto",  # subset or grouping
+        "invert": False,
+        "multicase": True,
+    }
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/SeuratFilter.R"

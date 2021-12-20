@@ -7,19 +7,21 @@ prerank = function(
     pos,
     neg,
     classes, # must be in the order of colnames(exprdata)
-    method
+    method = "signal_to_noise"
 ) {
     library(matrixStats)
+    set.seed(8525)
     # See: https://gseapy.readthedocs.io/en/latest/_modules/gseapy/algorithm.html#ranking_metric
     expr_pos_mean = rowMeans(exprdata[, classes == pos, drop=F], na.rm=TRUE)
     expr_neg_mean = rowMeans(exprdata[, classes == neg, drop=F], na.rm=TRUE)
     expr_pos_std = rowSds(as.matrix(exprdata[, classes == pos, drop=F]), na.rm=TRUE)
     expr_neg_std = rowSds(as.matrix(exprdata[, classes == neg, drop=F]), na.rm=TRUE)
+    rands = rnorm(length(expr_neg_std)) * 1e-6
 
     if (method %in% c("s2n", "signal_to_noise")) {
-        out = (expr_pos_mean - expr_neg_mean) / (expr_pos_std + expr_neg_std)
+        out = (expr_pos_mean - expr_neg_mean) / (expr_pos_std + expr_neg_std + rands)
     } else if (method %in% c("abs_s2n", "abs_signal_to_noise")) {
-        out = abs((expr_pos_mean - expr_neg_mean) / (expr_pos_std + expr_neg_std))
+        out = abs((expr_pos_mean - expr_neg_mean) / (expr_pos_std + expr_neg_std + rands))
     } else if (method == "t_test") {
         # ser = (df_mean[pos] - df_mean[neg])/ np.sqrt(df_std[pos]**2/len(df_std)+df_std[neg]**2/len(df_std) )
         out = (expr_pos_mean - expr_neg_mean) / sqrt(
@@ -80,7 +82,8 @@ runFGSEA = function(
     gmtfile,
     top,
     outdir,
-    envs
+    plot = TRUE, # only generate fgsea.txt?
+    envs = list()
 ) {
     library(data.table)
     library(fgsea)
@@ -88,11 +91,13 @@ runFGSEA = function(
 
     if (is.data.frame(ranks)) {
         ranks = setNames(ranks[[2]], ranks[[1]])
+    } else if (is.list(ranks)) {
+        ranks = unlist(ranks)
     }
 
     envs$pathways = gmtPathways(gmtfile)
     envs$stats = ranks
-    gsea_res = do.call(fgsea, envs)
+    gsea_res = do.call(fgsea::fgsea, envs)
     gsea_res = gsea_res[order(pval), ]
 
     write.table(
@@ -104,6 +109,7 @@ runFGSEA = function(
         sep = "\t",
         quote = FALSE
     )
+    if (!plot) {return (NULL)}
 
     if (top > 1) {
         topPathways = head(gsea_res, n=top)[, "pathway"]
@@ -113,7 +119,7 @@ runFGSEA = function(
     topPathways = unlist(topPathways)
 
     tablefig = file.path(outdir, "gsea_table.png")
-    png(tablefig, res=100, width=1000, height=)
+    png(tablefig, res=100, width=1000, height=200 + 40 * length(topPathways))
     print(plotGseaTable(
         envs$pathways[topPathways],
         ranks,
@@ -139,7 +145,7 @@ runGSEA = function(
     classes, # sample classes
     gmtfile, # the GMT file
     outdir,
-    envs # other arguments for GSEA()
+    envs = list() # other arguments for GSEA()
 ) {
     library(GSEA)
     # reproducibility
@@ -154,6 +160,7 @@ runGSEA = function(
     write(paste(dim(indata), collapse = "\t"), con)
     close(con)
     indata = indata %>%
+        as.data.frame() %>%
         mutate(Description = "na") %>%
         rownames_to_column("NAME") %>%
         select(NAME, Description, everything())
