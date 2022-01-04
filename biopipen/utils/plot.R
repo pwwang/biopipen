@@ -10,7 +10,7 @@ plotVenn = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = NULL,
+    devpars = list(res=100, width=1000, height=1000),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {
@@ -45,7 +45,7 @@ plotGG = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = NULL,
+    devpars = list(res=100, width=1000, height=1000),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {
@@ -77,11 +77,43 @@ plotViolin = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = NULL,
+    devpars = list(res=100, width=1000, height=1000),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {
     plotGG(data, "violin", args, ggs, devpars, outfile)
+}
+
+
+plotUpset = function(
+    # A named list with elements,
+    # e.g. list(A=paste0("R", 1:5), B=paste0("R": 3:7))
+    data,
+    # Arguments for `scale_x_upset()`
+    args = list(),
+    # Extra ggplot components in string
+    ggs = "geom_bar()",
+    # Parameters for device (res, width, height) for `png()`
+    devpars = list(res=100, width=1000, height=1000),
+    # The output file. If NULL, will return the plot object
+    outfile = NULL
+) {
+    library(ggupset)
+
+    p = ggplot(data)
+    for (gg in ggs) {
+        p = p + eval(parse(text=gg))
+    }
+    p = p + do.call(scale_x_upset, args)
+
+    if (is.null(outfile)) {
+        return (p)
+    } else {
+        devpars$filename = outfile
+        do.call(png, devpars)
+        print(p)
+        dev.off()
+    }
 }
 
 plotHeatmap = function(

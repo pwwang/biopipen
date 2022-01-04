@@ -9,7 +9,11 @@ setEnrichrSite("Enrichr")
 srtobjfile = {{in.srtobj | quote}}
 groupfile = {{in.groupfile | quote}}
 outdir = {{out.outdir | quote}}
+{% if in.casefile %}
+cases = {{in.casefile | read | toml_loads | r}}
+{% else %}
 cases = {{envs.cases | r}}
+{% endif %}
 dbs = {{envs.dbs | r}}
 ncores = {{envs.ncores | r}}
 
@@ -21,6 +25,10 @@ if (length(cases) == 0) {
 }
 
 seurat_obj = readRDS(srtobjfile)
+# Causing subsets failed to merge
+if ("SCT" %in% names(seurat_obj@assays)) {
+    seurat_obj[["SCT"]] = NULL
+}
 
 groups = read.table(groupfile, row.names=NULL, header=T, sep="\t", check.names = F)
 n_samples = ncol(groups) - 1
@@ -93,40 +101,64 @@ do_ident = function(ident) {
     do_enrich(ident, markers)
 }
 
+do_failure = function(case, error) {
+    casedir = file.path(outdir, case)
+    dir.create(casedir, showWarnings = FALSE)
+    write.table(
+        data.frame(Error=error),
+        file.path(casedir, "markers.txt"),
+        sep="\t",
+        row.names=FALSE,
+        col.names=TRUE,
+        quote=FALSE
+    )
+}
+
 do_case = function(case) {
+    print(paste("- Dealing with case:", case, "..."))
     casepms = cases[[case]]
     if (isTRUE(casepms$IDENT)) {
         do_ident(case)
     } else {
+        ident.1 = casepms$ident.1
         ident.2 = casepms$ident.2
         if (is.null(ident.2) && length(unique(as.character(groups[[1]]))) == 2) {
             ident.2 = groups %>%
-                filter(.[[1]] != case) %>%
+                filter(.[[1]] != ident.1) %>%
                 pull(1) %>%
                 as.character() %>%
                 unique()
         }
         if (samples == "ALL") {
             case_cells = groups %>%
-                filter(.[[1]] == case) %>%
+                filter(.[[1]] == ident.1) %>%
                 pull(ALL) %>%
                 unlist() %>%
                 unname()
         } else {
             case_cells = groups %>%
-                filter(.[[1]] == case) %>%
+                filter(.[[1]] == ident.1) %>%
                 select(all_of(samples)) %>%
                 summarise(across(everything(), c)) %>%
                 mutate(across(everything(), ~ list(paste(cur_column(), unlist(.x), sep="_")))) %>%
                 unlist() %>%
                 unname()
         }
-        case_obj = subset(seurat_obj, cells = case_cells)
-        case_obj$group = case
+        case_obj = tryCatch({
+            subset(seurat_obj, cells = case_cells)
+        }, error = function(e) {
+            # Not enough cells
+            do_failure(case, e$message)
+            NULL
+        })
+        if (is.null(case_obj)) {
+            return(NULL)
+        }
+        case_obj$group = ident.1
 
         if (is.null(ident.2)) {
             ctrl_obj = subset(seurat_obj, cells = case_cells, invert = TRUE)
-            ctrl_obj$group = paste0(case, "_2")
+            ctrl_obj$group = paste0(ident.1, "_2")
         } else {
             if (samples == "ALL") {
                 ctrl_cells = groups %>%
@@ -142,13 +174,23 @@ do_case = function(case) {
                     unlist() %>%
                     unname()
             }
-            ctrl_obj = subset(seurat_obj, cells = ctrl_cells)
+            ctrl_obj = tryCatch({
+                subset(seurat_obj, cells = ctrl_cells)
+            }, error = function(e) {
+                # Not enough cells
+                do_failure(case, e$message)
+                NULL
+            })
+            if (is.null(ctrl_obj)) {
+                return(NULL)
+            }
             ctrl_obj$group = ident.2
         }
 
         sobj = merge(case_obj, ctrl_obj)
         Idents(sobj) = "group"
-        markers = FindMarkers(object = sobj, ident.1 = case)
+        casepms$object = sobj
+        markers = do.call(FindMarkers, casepms)
         do_enrich(case, markers)
     }
 }

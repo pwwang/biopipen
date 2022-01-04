@@ -62,6 +62,7 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
             }
             obj[[mname]] = mdt
         }
+        obj_list[[sample]] = obj
     }
     saveRDS(obj_list, cached_file)
 }
