@@ -1,3 +1,8 @@
+## 0.1.5
+
+- ✨ Add features and fix issues for immunopipe 0.0.4
+- ✨ Add some vcf processes
+
 ## 0.1.4
 
 - 🐛 Fix bam.CNVpytor when snpfile is not provided
