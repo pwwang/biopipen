@@ -1,5 +1,7 @@
 # Executables or binaries
 [exe]
+# bcftools to handle bcf/vcf files
+bcftools = "bcftools"
 # liftover coordinates across genomes
 liftover = "liftOver"
 # gatk, installed via conda
@@ -13,6 +15,8 @@ cnvpytor = "cnvpytor"
 wget = "wget"
 # aria2c
 aria2c = "aria2c"
+# tabix
+tabix = "tabix"
 
 # Interpreters
 [lang]

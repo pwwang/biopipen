@@ -31,7 +31,10 @@ do_one_subset <- function(subset) {
     for (group in groups) {
         each_metabolic_sce <- metabolic_sce[, all_groups == group]
         each_metabolic_tpm <- assay(each_metabolic_sce, "exprs")
-        each_metabolic_tpm <- each_metabolic_tpm[rowSums(each_metabolic_tpm) > 0, ]
+        each_metabolic_tpm <- each_metabolic_tpm[rowSums(each_metabolic_tpm) > 0, , drop=F]
+        if (ncol(each_metabolic_tpm) == 1) {
+            next
+        }
         x <- each_metabolic_tpm
         ntop <- nrow(x)
         rv <- rowVars(x)
@@ -53,7 +56,7 @@ do_one_subset <- function(subset) {
         pc_plotdata <- rbind(pc_plotdata, tmp_plotdata)
 
         ####
-        pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:select_pcs])))
+        pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:select_pcs, drop=FALSE])))
         pre_rank_matrix <- as.list(as.data.frame(t(pre_rank_matrix)))
 
         odir = file.path(subset_dir, group)
@@ -140,4 +143,8 @@ do_one_subset <- function(subset) {
 }
 
 subsets <- unique(sceobj$.subset)
-mclapply(subsets, do_one_subset, mc.cores = envs$ncores)
+
+x = mclapply(subsets, do_one_subset, mc.cores = envs$ncores)
+if (any(unlist(lapply(x, class)) == "try-error")) {
+    stop("mclapply error")
+}

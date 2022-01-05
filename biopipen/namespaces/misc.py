@@ -19,6 +19,18 @@ class File2Proc(Proc):
     """
 
 
+class Glob2Dir(Proc):
+    """Create symbolic links in output directory for the files given
+    by the glob pattern"""
+    input = "pattern:var"
+    output = "outdir:dir:from_glob"
+    script = """
+        for infile in {{in.pattern}}; do
+            ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+        done
+    """
+
+
 class Config2File(Proc):
     """Write a configurationn in string to a configuration file
 
