@@ -81,12 +81,14 @@ class ImmunarchFilter(Proc):
             You can also specify `ORDER` to define the filtration order, which
             defaults to 0, higher `ORDER` gets later executed.
             For example:
-            >>> {
-            >>>   "Top20BM_Post": {
-            >>>     "by.meta": {"Source": "BM", "Status": "Post"},
-            >>>     "by.count": {"ORDER": 1, "filter": "TOTAL %in% TOTAL[1:20]"}
-            >>>   }
-            >>> }
+            >>> {{
+            >>>   "Top20BM_Post": {{
+            >>>     "by.meta": {{"Source": "BM", "Status": "Post"}},
+            >>>     "by.count": {{
+            >>>         "ORDER": 1, "filter": "TOTAL %in% TOTAL[1:20]"
+            >>>     }}
+            >>>   }}
+            >>> }}
     """
     input = "immdata:file, filterfile:file"
     output = [

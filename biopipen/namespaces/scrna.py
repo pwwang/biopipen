@@ -170,14 +170,19 @@ class MarkersFinder(Proc):
         srtobj: The seurat object loaded by SeuratLoading
         groupfile: The group of cells with first column the groups and
             rest the cells in each sample.
-        name: The name of the job (mostly used to show in report)
+        casefile: The config file in TOML that looks like
+            >>> [case1]
+            >>> "ident.1" = "ident.1"
+            >>> "ident.2" = "ident.2"
+            >>> # other arguments for Seruat::FindMarkers()
+        name: The name of the jobs, mosted used in report
 
     Output:
         outdir: The output directory for the markers
 
     Envs:
         ncores: Number of cores to use to parallelize the groups
-        cases: The cases (the first ident) to find markers for
+        cases: The cases to find markers for.
             Values would be the arguments for `FindMarkers()`
             If "ALL" or "ALL" in the keys, the process will run for all groups
             in the groupfile. The other keys will be arguments to `FindMarkers`
@@ -191,7 +196,7 @@ class MarkersFinder(Proc):
             https://maayanlab.cloud/Enrichr/#libraries
     """
 
-    input = "srtobj:file, groupfile:file, name:var"
+    input = "srtobj:file, groupfile:file, name:var, casefile:file"
     output = "outdir:dir:{{in.groupfile | stem0}}.markers"
     lang = config.lang.rscript
     envs = {

@@ -10,7 +10,7 @@ plotVenn = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = NULL,
+    devpars = list(res=100, width=1000, height=1000),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {
@@ -45,7 +45,7 @@ plotGG = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = NULL,
+    devpars = list(res=100, width=1000, height=1000),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {
@@ -77,11 +77,57 @@ plotViolin = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = NULL,
+    devpars = list(res=100, width=1000, height=1000),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {
     plotGG(data, "violin", args, ggs, devpars, outfile)
+}
+
+
+plotUpset = function(
+    # A named list with elements,
+    # e.g. list(A=paste0("R", 1:5), B=paste0("R": 3:7))
+    # Or a data frame
+    # https://cran.r-project.org/web/packages/ggupset/readme/README.html
+    data,
+    # Arguments for `scale_x_upset()`
+    args = list(),
+    # Extra ggplot components in string
+    ggs = "geom_bar(aes(x=V1))",
+    # Parameters for device (res, width, height) for `png()`
+    devpars = list(res=100, width=1000, height=1000),
+    # The output file. If NULL, will return the plot object
+    outfile = NULL
+) {
+    library(ggupset)
+    library(tidyr)
+    library(dplyr)
+
+    if (!is.data.frame(data) && is.list(data)) {
+        all_elems = unique(unlist(data))
+        df = data.frame(ALL_ELEMS = all_elems)
+        data = do.call(cbind, lapply(names(data), function(nd) {
+            df[df$ALL_ELEMS %in% data[[nd]], nd] = nd
+            df
+        })) %>% select(-ALL_ELEMS) %>% unite("V1", sep="; ", na.rm = TRUE) %>%
+            mutate(V1 = strsplit(V1, "; ", fixed=TRUE))
+    }
+
+    p = ggplot(data)
+    for (gg in ggs) {
+        p = p + eval(parse(text=gg))
+    }
+    p = p + do.call(scale_x_upset, args)
+
+    if (is.null(outfile)) {
+        return (p)
+    } else {
+        devpars$filename = outfile
+        do.call(png, devpars)
+        print(p)
+        dev.off()
+    }
 }
 
 plotHeatmap = function(
