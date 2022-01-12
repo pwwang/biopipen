@@ -38,10 +38,18 @@ genelen = glenFromGFFExons(refexon)
 genelen = as.numeric(as.vector(unlist(genelen[rownames(selected_impute_sce)])))
 selected_impute_counts = sweep(selected_impute_tpm, 1, genelen, FUN = "*")
 
-scran_sf = computeSumFactors(
-    SingleCellExperiment(list(counts=selected_impute_counts[low_dropout_genes,])),
-    clusters=selected_impute_sce[[config$grouping_name]]
-)
+scran_sf = tryCatch({
+    computeSumFactors(
+        SingleCellExperiment(list(counts=selected_impute_counts[low_dropout_genes,])),
+        clusters=selected_impute_sce[[config$grouping_name]]
+    )
+}, error = function(e) {
+    # in case it is a small subset, some clusters are missing...
+    computeSumFactors(
+        SingleCellExperiment(list(counts=selected_impute_counts[low_dropout_genes,]))
+    )
+})
+
 summary(scran_sf)
 selected_impute_tpm_norm <- t(t(selected_impute_tpm) / scran_sf$sizeFactor)
 selected_impute_exp_norm <- log2(selected_impute_tpm_norm+1)

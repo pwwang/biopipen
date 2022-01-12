@@ -129,7 +129,7 @@ runFGSEA = function(
     dev.off()
 
     for (pathway in topPathways) {
-        enrfig = file.path(outdir, paste0("fgsea_", pathway, ".png"))
+        enrfig = file.path(outdir, paste0("fgsea_", gsub("/", "-", pathway, fixed=T), ".png"))
         png(enrfig, res=100, width=1000, height=800)
         print(plotEnrichment(
             envs$pathways[[pathway]],

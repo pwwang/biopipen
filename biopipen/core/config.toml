@@ -48,3 +48,6 @@ refexon = ""
 [misc]
 # Number of cores used for each job
 ncores = 1
+
+[pipeline.scrna_metabolic]
+clustered = false

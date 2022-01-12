@@ -4,6 +4,11 @@ An abstract from https://github.com/LocasaleLab/Single-Cell-Metabolic-Landscape
 
 If you have clustering done somewhere else, you could use `replace_clustering()`
 
+See docs here
+
+https://pwwang.github.io/biopipen/pipelines/scrna_metabolic
+
+
 Reference:
     [1] Xiao, Zhengtao, Ziwei Dai, and Jason W. Locasale.
     "Metabolic landscape of the tumor microenvironment at
@@ -19,15 +24,14 @@ from datar.all import tibble, if_else
 from pipen import Pipen
 from ..core.config import config
 from ..core.proc import Proc
-from .scrna import SeuratPreparing, SeuratFilter, SeuratClustering, SCImpute
-
 
 OPTIONS = {
-    "clustered": False
+    "clustered": config.pipeline.scrna_metabolic.clustered
 }
 
 def build_processes(options: Mapping[str, Any] = None):
     """Build processes for metabolic landscape analysis pipeline"""
+    from .scrna import SeuratPreparing, SeuratFilter, SeuratClustering, SCImpute
     options = options or OPTIONS
 
     class MetabolicInputs(Proc):
@@ -291,7 +295,9 @@ def build_processes(options: Mapping[str, Any] = None):
 
     return MetabolicInputs
 
-MetabolicLandscape = (
-    Pipen(desc="Metabolic landscape analysis for scRNA-seq data")
-    .set_start(build_processes())
-)
+def metabolic_landscape() -> Pipen:
+    """Build a pipeline for `pipen run` to run"""
+    return Pipen(
+        name="metabolic-landscape",
+        desc="Metabolic landscape analysis for scRNA-seq data"
+    ).set_start(build_processes())

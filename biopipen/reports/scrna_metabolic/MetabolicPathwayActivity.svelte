@@ -5,7 +5,10 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-{{ table_of_images(sorted(glob(joinpaths(job.out.outdir, "*.png")))) }}
+{% for ssdir in job.out.outdir | joinpaths: "*" | glob %}
+<h{{h}}>{{ssdir | basename}}</h{{h}}>
+{{ table_of_images(sorted(glob(joinpaths(ssdir, "*.png")))) }}
+{% endfor %}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
