@@ -19,7 +19,9 @@
 <tr>
 {%  endif %}
 <td style="width: {{100.0/col}}%; background-color: var(--cds-background-hover); vertical-align:top;">
-    {% if caps %}
+    {% if caps is none %}
+    <div style="text-align: center; padding-top: 10px; margin-bottom: -10px;">{{ src | stem }}</div>
+    {% elif caps %}
     <div style="text-align: center; padding-top: 10px; margin-bottom: -10px;">{{ caps[i] }}</div>
     {% endif %}
     <Image src={{src | quote}} style="max-width: {{max_width}}" />

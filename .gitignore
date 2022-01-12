@@ -109,8 +109,10 @@ poetry.lock
 .history/
 .xqute/
 .pipen/
-default-*.ipynb
+*-jvsc-*-*-*-*-*.ipynb
+default-*-*-*-*-*.ipynb
 *-output/
 *_results/
+tests/test_data
 
 docs/index.md
