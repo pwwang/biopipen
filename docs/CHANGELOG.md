@@ -1,3 +1,8 @@
+## 0.1.6
+
+- ✨ Convert CNVpytor results to gff and bed
+- 🚑 Make scrna_metabolic pipeline work standalone
+
 ## 0.1.5
 
 - ✨ Add features and fix issues for immunopipe 0.0.4
