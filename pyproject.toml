@@ -9,6 +9,7 @@ license = "MIT"
 python = "^3.7.1"
 pipen = "^0.2.14"
 cmdy = "^0.4.3"
+datar = "^0.5"
 
 [tool.poetry.dev-dependencies]
 
