@@ -169,7 +169,7 @@ do_one_subset <- function(subset) {
         }
     }
     all_NA <- rowAlls(is.na(mean_expression_shuffle))
-    mean_expression_shuffle <- mean_expression_shuffle[!all_NA, ]
+    mean_expression_shuffle <- mean_expression_shuffle[!all_NA, , drop=F]
     # heatmap
     dat <- mean_expression_shuffle
 
@@ -181,12 +181,12 @@ do_one_subset <- function(subset) {
         tmp <- rownames(dat)[select_row][order(dat[select_row, i], decreasing = T)]
         sort_row <- c(sort_row, tmp)
     }
-    sort_column <- apply(dat[sort_row, ], 2, function(x) order(x)[nrow(dat)])
+    sort_column <- apply(dat[sort_row, , drop=F], 2, function(x) order(x)[nrow(dat)])
     sort_column <- names(sort_column)
     dat[is.na(dat)] <- 1
 
     heatmapfile = file.path(subset_dir, "KEGGpathway_activity_heatmap.png")
-    hmdata = dat[sort_row, sort_column]
+    hmdata = dat[sort_row, sort_column, drop=F]
     cnames = sapply(colnames(hmdata), function(x) {
         if (is.na(as.integer(x))) x else paste0("Cluster", x)
     })

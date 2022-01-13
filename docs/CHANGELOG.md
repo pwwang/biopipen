@@ -2,6 +2,9 @@
 
 - ✨ Convert CNVpytor results to gff and bed
 - 🚑 Make scrna_metabolic pipeline work standalone
+- ➕ Add datar dep for scrna_metabolic pipeline
+- 🚑 Fix scrna_metabolic.MetabolicPathwayActivity
+- ✨ Add bcftools.BcftoolsFilter
 
 ## 0.1.5
 
