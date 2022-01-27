@@ -1,13 +1,16 @@
 {% macro report_jobs(jobs, job_head_macro, job_report_macro) %}
+
 {% if len(jobs) == 1 %}
+
 {{  job_report_macro(jobs[0], h=1) }}
+
 {% else %}
+
 {%  for job in jobs %}
-<div class="job_wrapper">
 {{      job_head_macro(job)}}
 {{      job_report_macro(job, h=2) }}
-</div>
 {%  endfor %}
+
 {% endif %}
 {% endmacro %}
 

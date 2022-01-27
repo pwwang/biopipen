@@ -151,12 +151,32 @@ class GeneExpressionInvestigation(Proc):
 
 
 class DimPlots(Proc):
-    """Seurat - Dimensional reduction plots"""
+    """Seurat - Dimensional reduction plots
 
-    input = "srtobj:file, groupfile:file, configfile:file"
-    output = "outfile:file:{{in.groupfile | stem}}.dimplot.png"
+    Input:
+        srtobj: The seruat object in RDS format
+        configfile: A toml configuration file with "cases"
+            If this is given, `envs.cases` will be overriden
+        name: The name of the job, used in report
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        cases: The cases for the dim plots
+            Keys are the names and values are the arguments to
+            `Seurat::Dimplots`
+    """
+
+    input = "srtobj:file, configfile:file, name:var"
+    output = "outdir:dir:{{in.srtobj | stem}}.dimplots"
     lang = config.lang.rscript
     script = "file://../scripts/scrna/DimPlots.R"
+    envs = {
+        "cases": {
+            "Ident": {"group.by": "ident"}
+        }
+    }
     plugin_opts = {
         "report": "file://../reports/scrna/DimPlots.svelte",
         "report_toc": False,

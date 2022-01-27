@@ -1,3 +1,11 @@
+## 0.1.7
+
+- ➕ Add datar dep for scrna_metabolic pipeline
+- 🚑 Fix scrna_metabolic.MetabolicPathwayActivity
+- ✨ Add bcftools.BcftoolsFilter
+- 👽️ Don't wrap job report in `report_jobs` report macro (to adopt pipen-report 0.2)
+- ✨ Add more options for scrna.DimPlots
+
 ## 0.1.6
 
 - ✨ Convert CNVpytor results to gff and bed
