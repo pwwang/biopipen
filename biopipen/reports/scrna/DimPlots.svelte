@@ -1,15 +1,19 @@
-{% from "utils/misc.liq" import table_of_images -%}
+{% from "utils/misc.liq" import table_of_images, report_jobs -%}
 <script>
     import { Image } from "@@";
 </script>
 
-{% set images = [] %}
-{% set names = [] %}
+{%- macro report_job(job, h=1) -%}
+{% set images = job.out.outdir | joinpaths: "*.png" | glob %}
+{{ table_of_images(images) }}
+{%- endmacro -%}
 
-{% for job in jobs %}
-{% set _ = images.append(job.out.outfile) %}
-{% set config = job.in.configfile | read | toml_loads %}
-{% set _ = names.append(config.name or "") %}
-{% endfor %}
+{%- macro head_job(job) -%}
+{% if job.in.name %}
+<h1>{{job.in.name | escape}}</h1>
+{% else %}
+<h1>Case {{job.index | plus: 1 | str}}</h1>
+{% endif %}
+{%- endmacro -%}
 
-{{ table_of_images(images, names) }}
+{{ report_jobs(jobs, head_job, report_job) }}
