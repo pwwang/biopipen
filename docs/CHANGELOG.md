@@ -1,3 +1,7 @@
+## 0.1.8
+
+- ✨ Add tcr.Attach2Seurat
+
 ## 0.1.7
 
 - ➕ Add datar dep for scrna_metabolic pipeline
