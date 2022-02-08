@@ -318,3 +318,28 @@ class VJUsage(Proc):
     order = 3
     script = "file://../scripts/tcr/VJUsage.R"
     plugin_opts = {"report": "file://../reports/tcr/VJUsage.svelte"}
+
+
+class Attach2Seurat(Proc):
+    """Attach the clonal information to a Seurat object as metadata
+
+    Input:
+        immfile: The immunarch object in RDS
+        sobjfile: The Seurat object file in RDS
+
+    Output:
+        outfile: The Seurat object with the clonal information as metadata
+
+    Envs:
+        prefix: The prefix to the barcodes. You can use placeholder like
+            `{{Sample}}_` to use the meta data from the immunarch object
+        metacols: Which meta columns to attach
+    """
+    input = "immfile:file, sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | basename}}"
+    lang = config.lang.rscript
+    envs = {
+        "prefix": "{Sample}_",
+        "metacols": ["Clones", "Proportion", "CDR3.aa"],
+    }
+    script = "file://../scripts/tcr/Attach2Seurat.R"
