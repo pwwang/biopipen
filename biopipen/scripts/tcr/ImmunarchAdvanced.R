@@ -158,41 +158,48 @@ for (div_method in div_methods) {
     print(plot_div(div, div_method))
     dev.off()
 
-    # repFilter only supported in immunarch 0.6.7
-    div1 = repDiversity(
-        repFilter(immdata, .method = "by.clonotype", .query = list(Clones = morethan(1)))$data,
-        div_method
-    )
-    divpng1 = file.path(met_dir, paste0("diversity-2-.png"))
-    png(divpng1, res=300, height=2000, width=2000)
-    print(plot_div(div1, div_method))
-    dev.off()
-
-    div2 = repDiversity(
-        repFilter(immdata, .method = "by.clonotype", .query = list(Clones = morethan(2)))$data,
-        div_method
-    )
-    divpng2 = file.path(met_dir, paste0("diversity-3-.png"))
-    png(divpng2, res=300, height=2000, width=2000)
-    print(plot_div(div2, div_method))
-    dev.off()
-
     for (name in names(div_by)) {
         divpng = file.path(met_dir, paste0("diversity-1-", name, ".png"))
         png(divpng, res=300, height=2000, width=2000)
         print(plot_div(div, div_method, .by=div_by[[name]], .meta=immdata$meta))
         dev.off()
-
-        divpng = file.path(met_dir, paste0("diversity-2-", name, ".png"))
-        png(divpng, res=300, height=2000, width=2000)
-        print(plot_div(div1, div_method, .by=div_by[[name]], .meta=immdata$meta))
-        dev.off()
-
-        divpng = file.path(met_dir, paste0("diversity-3-", name, ".png"))
-        png(divpng, res=300, height=2000, width=2000)
-        print(plot_div(div2, div_method, .by=div_by[[name]], .meta=immdata$meta))
-        dev.off()
     }
+
+    tryCatch({
+        # repFilter only supported in immunarch 0.6.7
+        div1 = repDiversity(
+            repFilter(immdata, .method = "by.clonotype", .query = list(Clones = morethan(1)))$data,
+            div_method
+        )
+        divpng1 = file.path(met_dir, paste0("diversity-2-.png"))
+        png(divpng1, res=300, height=2000, width=2000)
+        print(plot_div(div1, div_method))
+        dev.off()
+
+        for (name in names(div_by)) {
+            divpng = file.path(met_dir, paste0("diversity-2-", name, ".png"))
+            png(divpng, res=300, height=2000, width=2000)
+            print(plot_div(div1, div_method, .by=div_by[[name]], .meta=immdata$meta))
+            dev.off()
+        }
+
+        div2 = repDiversity(
+            repFilter(immdata, .method = "by.clonotype", .query = list(Clones = morethan(2)))$data,
+            div_method
+        )
+        divpng2 = file.path(met_dir, paste0("diversity-3-.png"))
+        png(divpng2, res=300, height=2000, width=2000)
+        print(plot_div(div2, div_method))
+        dev.off()
+
+        for (name in names(div_by)) {
+            divpng = file.path(met_dir, paste0("diversity-3-", name, ".png"))
+            png(divpng, res=300, height=2000, width=2000)
+            print(plot_div(div2, div_method, .by=div_by[[name]], .meta=immdata$meta))
+            dev.off()
+        }
+    }, error=function(e) warning(as.character(e)))
+
 }
 
 # Rarefaction
