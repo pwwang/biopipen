@@ -34,11 +34,18 @@ for (i in seq_len(nrow(metadata))) {
         "filtered_contig_annotations.csv"
     )
     if (!file.exists(annofile)) {
-        stop(paste(
-            "Cannot find `filtered_contig_annotations.csv`",
-            "in given TCRDir for sample:",
-            sample
-        ))
+        annofile = file.path(
+            as.character(metadata[i, "TCRDir"]),
+            "all_contig_annotations.csv"
+        )
+        if (!file.exists(annofile)) {
+            stop(paste(
+                "Cannot find neither `filtered_contig_annotations.csv` nor",
+                "`all_contig_annotations.csv`",
+                "in given TCRDir for sample:",
+                sample
+            ))
+        }
     }
 
     file.symlink(
