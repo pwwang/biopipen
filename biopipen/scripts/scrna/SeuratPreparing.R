@@ -46,7 +46,13 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
 
         samples = c(samples, sample)
         exprs = Read10X(data.dir = path)
+        if ("Gene Expression" %in% names(exprs)) {
+            exprs = exprs[["Gene Expression"]]
+        }
         obj = CreateSeuratObject(counts=exprs, project=sample)
+        # filter the cells that don't have any gene expressions
+        cell_exprs = colSums(obj@assays$RNA)
+        obj = subset(obj, cells = names(cell_exprs[cell_exprs > 0]))
         obj = SCTransform(object=obj, return.only.var.genes=FALSE, verbose=FALSE)
         obj = RenameCells(obj, add.cell.id = sample)
         obj$percent.mt = PercentageFeatureSet(obj, pattern = "^MT-")
