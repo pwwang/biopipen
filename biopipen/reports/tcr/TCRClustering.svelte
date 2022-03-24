@@ -11,6 +11,9 @@
 
 <h{{h+1}}>Heatmap of samples by shared TCR clusters</h{{h+1}}>
 
+<DataTable src={{ job.outdir | joinpaths: "plotdata.csv" | quote }}
+    data={ {{ job.outdir | joinpaths: "plotdata.csv" | datatable: sep="\t", index_col=0 }} } />
+
 <Image src={{job.out.heatmap | quote}} />
 
 {%- endmacro -%}

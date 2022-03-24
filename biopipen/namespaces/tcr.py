@@ -378,6 +378,9 @@ class TCRClustering(Proc):
 
     Envs:
         tool: The tool used to do the clustering, either GIANA or ClusTCR
+            For GIANA, using TRBV mutations is not supported
+        on_raw: Whether to run clustering on raw seq or the seq read and
+            processed by immunarch
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
         tmpdir: The temporary directory to store the GIANA sources
@@ -387,6 +390,7 @@ class TCRClustering(Proc):
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
         heatmap_meta: The metadata to show in the heatmap for each sample
             Current only support categorical/character metadata
+        numbers_on_heatmap: Whether to show the numbers on the heatmap
     """
     input = "immfile:file"
     output = [
@@ -397,6 +401,7 @@ class TCRClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "GIANA",  # or ClusTCR
+        "on_raw": True,
         "python": config.lang.python,
         "tmpdir": config.path.tmpdir,
         "giana_source": {
@@ -419,6 +424,7 @@ class TCRClustering(Proc):
         },
         "args": {},
         "heatmap_meta": [],
+        "numbers_on_heatmap": True,
     }
     script = "file://../scripts/tcr/TCRClustering.R"
     plugin_opts = {
