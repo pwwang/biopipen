@@ -2,6 +2,8 @@
 [exe]
 # bcftools to handle bcf/vcf files
 bcftools = "bcftools"
+# Control-FREEC to call cnvs
+freec = "freec"
 # liftover coordinates across genomes
 liftover = "liftOver"
 # gatk, installed via conda
@@ -17,6 +19,10 @@ wget = "wget"
 aria2c = "aria2c"
 # tabix
 tabix = "tabix"
+# sambamba
+sambamba = "sambamba"
+# samtools
+samtools = "samtools"
 
 # Interpreters
 [lang]
@@ -38,6 +44,8 @@ liftover_chain = ""
 [ref]
 # The reference genome
 reffa = ""
+# The directory with reference for each chromosome
+refdir = ""
 # The reference sequence dictionary
 refdict = ""
 # The reference genes in GTF format
