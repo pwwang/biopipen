@@ -343,3 +343,91 @@ class Attach2Seurat(Proc):
         "metacols": ["Clones", "Proportion", "CDR3.aa"],
     }
     script = "file://../scripts/tcr/Attach2Seurat.R"
+
+
+class TCRClustering(Proc):
+    """Cluster the TCR clones by their CDR3 sequences
+
+    With GIANA
+
+    https://github.com/s175573/GIANA
+
+    > Zhang, Hongyi, Xiaowei Zhan, and Bo Li.
+    > "GIANA allows computationally-efficient TCR clustering and multi-disease
+    > repertoire classification by isometric transformation."
+    > Nature communications 12.1 (2021): 1-11.
+
+    Or ClusTCR
+
+    https://github.com/svalkiers/clusTCR
+
+    > Sebastiaan Valkiers, Max Van Houcke, Kris Laukens, Pieter Meysman,
+    > ClusTCR: a Python interface for rapid clustering of large sets of CDR3
+    > sequences with unknown antigen specificity,
+    > Bioinformatics, 2021.
+
+    Input:
+        immfile: The immunarch object in RDS
+
+    Output:
+        immfile: The immnuarch object in RDS with TCR cluster information
+        clusterfile: The cluster file.
+            Columns are CDR3.aa, TCR_Cluster, V.name, Sample
+        heatmap: The heatmap of the samples, in terms of their shared
+            TCR Clusters
+
+    Envs:
+        tool: The tool used to do the clustering, either GIANA or ClusTCR
+            For GIANA, using TRBV mutations is not supported
+        on_raw: Whether to run clustering on raw seq or the seq read and
+            processed by immunarch
+        python: The path of python with `GIANA`'s dependencies installed
+            or with `clusTCR` installed. Depending on the `tool` you choose.
+        tmpdir: The temporary directory to store the GIANA sources
+        giana_source: The URLs for the source code of GIANA
+        args: The arguments for the clustering tool
+            For GIANA, they will be passed to `python GIAna.py`
+            For ClusTCR, they will be passed to `clustcr.Clustering(...)`
+        heatmap_meta: The metadata to show in the heatmap for each sample
+            Current only support categorical/character metadata
+        numbers_on_heatmap: Whether to show the numbers on the heatmap
+    """
+    input = "immfile:file"
+    output = [
+        "immfile:file:{{in.immfile | basename}}",
+        "clusterfile:file:{{in.immfile | stem}}.clusters.txt",
+        "heatmap:file:{{in.immfile | stem}}.heatmap.png",
+    ]
+    lang = config.lang.rscript
+    envs = {
+        "tool": "GIANA",  # or ClusTCR
+        "on_raw": True,
+        "python": config.lang.python,
+        "tmpdir": config.path.tmpdir,
+        "giana_source": {
+            "url": (
+                "https://raw.githubusercontent.com/"
+                "s175573/GIANA/master/GIANA4.1.py"
+            ),
+            "giana4": (
+                "https://raw.githubusercontent.com/"
+                "s175573/GIANA/master/GIANA4.py"
+            ),
+            "query": (
+                "https://raw.githubusercontent.com/"
+                "s175573/GIANA/master/query.py"
+            ),
+            "trbv": (
+                "https://raw.githubusercontent.com/"
+                "s175573/GIANA/master/Imgt_Human_TRBV.fasta"
+            ),
+        },
+        "args": {},
+        "heatmap_meta": [],
+        "numbers_on_heatmap": True,
+    }
+    script = "file://../scripts/tcr/TCRClustering.R"
+    plugin_opts = {
+        "report": "file://../reports/tcr/TCRClustering.svelte",
+        "report_toc": False,
+    }

@@ -34,11 +34,18 @@ for (i in seq_len(nrow(metadata))) {
         "filtered_contig_annotations.csv"
     )
     if (!file.exists(annofile)) {
-        stop(paste(
-            "Cannot find `filtered_contig_annotations.csv`",
-            "in given TCRDir for sample:",
-            sample
-        ))
+        annofile = file.path(
+            as.character(metadata[i, "TCRDir"]),
+            "all_contig_annotations.csv"
+        )
+        if (!file.exists(annofile)) {
+            stop(paste(
+                "Cannot find neither `filtered_contig_annotations.csv` nor",
+                "`all_contig_annotations.csv`",
+                "in given TCRDir for sample:",
+                sample
+            ))
+        }
     }
 
     file.symlink(
@@ -50,7 +57,25 @@ for (i in seq_len(nrow(metadata))) {
 immdata = repLoad(datadir)
 # drop TRAs for paired data
 immdata$single = list()
+immdata$raw = list()
 for (sample in names(immdata$data)) {
+    annofile = file.path(
+        as.character(metadata[metadata$Sample == sample, "TCRDir"]),
+        "filtered_contig_annotations.csv"
+    )
+    if (!file.exists(annofile)) {
+        annofile = file.path(
+            as.character(metadata[i, "TCRDir"]),
+            "all_contig_annotations.csv"
+        )
+    }
+    immdata$raw[[sample]] = read.csv2(
+        annofile,
+        header = TRUE,
+        row.names = NULL,
+        sep = ",",
+        check.names = FALSE
+    )
     immdata$single[[sample]] = immdata$data[[sample]] %>%
         separate_rows(
             CDR3.nt, CDR3.aa, V.name, D.name, J.name, Sequence, chain,

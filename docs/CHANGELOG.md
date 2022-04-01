@@ -1,3 +1,13 @@
+## 0.1.9
+
+- 🐛 Load `all_config_annotations.csv` if `filtered_contig_annotations.csv` doesn't exist for `tcr.ImmunarchLoad`
+- 🐛 Calculate diversity for all clones only if filtering by clone sizes failed for `tcr.ImmunarchAdvanced`
+- 🚑 Fix seurat object creating when expressions are named "Gene Expression" for scrna.SeuratPreparing
+- ✨ Add `tcr.TCRClustering`
+- ✨ Add `raw` to immdata for `tcr.immunarchLoading`
+- ✨ Add `on_raw` env to `tcr.TCRClustering`
+- ✨ Add `bam.ControlFREEC`
+
 ## 0.1.8
 
 - ✨ Add tcr.Attach2Seurat
