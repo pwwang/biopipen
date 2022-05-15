@@ -43,7 +43,7 @@ imm_gu = geneUsage(immdata$single, "hs.trbv") %>%
     separate_rows(Names, sep=";") %>%
     group_by(Names) %>%
     summarise(across(everything(), ~ sum(., na.rm = TRUE))) %>%
-    arrange(desc(rowSums(select(., -"Names")), na.rm = TRUE))
+    arrange(desc(rowSums(select(., -"Names"), na.rm = TRUE)))
 imm_gu_top = imm_gu %>% head(gu_top)
 
 class(imm_gu) = append("immunr_gene_usage", class(imm_gu))

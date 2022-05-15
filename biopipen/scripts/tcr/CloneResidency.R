@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -93,7 +95,7 @@ plot_scatter = function(counts, subject, suf1, suf2) {
     }
     ggplot(plotdata) +
         geom_point(
-            aes_string(x=suf1, y=suf2, color="Type", size="Size", fill="Type"),
+            aes_string(x=bQuote(suf1), y=bQuote(suf2), color="Type", size="Size", fill="Type"),
             alpha=.6,
             shape=21
         ) +

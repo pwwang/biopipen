@@ -2,6 +2,7 @@
 library(immunarch)
 library(dplyr)
 library(tidyr)
+library(bracer)
 
 metafile = {{ in.metafile | quote }}
 rdsfile = {{ out.rdsfile | quote }}
@@ -23,35 +24,61 @@ if (!"TCRDir" %in% meta_cols) {
     stop("Error: Column `TCRDir` is not found in metafile.")
 }
 
+## --------------------------------------------------
+## Helpers
+
+get_contig_annofile = function(dir, sample, warn=TRUE) {
+    annofilepat = paste0(
+        "*", "{all,filtered}", "_contig_annotations.csv*"  # .gz
+    )
+    annofiles = glob(file.path(as.character(dir), annofilepat))
+    if (length(annofiles) == 0) {
+        stop(paste(
+            "Cannot find neither `filtered_contig_annotations.csv[.gz]` nor",
+            "`all_contig_annotations.csv[.gz]`",
+            "in given TCRDir for sample:",
+            sample
+        ))
+    } else if (length(annofiles) > 1) {
+        if (warn) {
+            warning(paste(
+                "Found more than one file in given TCRDir for sample:",
+                sample
+            ))
+        }
+        for (annofile in annofiles) {
+            # use filtered if both filtered_ and all_ are found
+            if (grepl("filtered", annofile)) {
+                annofiles = annofile
+                break
+            }
+            # give a warning if only all_ is found
+            if (warn) {
+                warning(paste(
+                    "Using all_contig_annotations as",
+                    "filtred_config_annotations not found",
+                    "in given TCRDir for sample:",
+                    sample
+                ))
+            }
+        }
+    }
+    annofiles[1]
+}
+
 datadir = tempfile(pattern = "immunarch-", tmpdir = tmpdir)
 dir.create(datadir, showWarnings = FALSE)
 
 # Find filtered_contig_annotations.csv and link then in datadir
 for (i in seq_len(nrow(metadata))) {
     sample = as.character(metadata[i, "Sample"])
-    annofile = file.path(
-        as.character(metadata[i, "TCRDir"]),
-        "filtered_contig_annotations.csv"
-    )
-    if (!file.exists(annofile)) {
-        annofile = file.path(
-            as.character(metadata[i, "TCRDir"]),
-            "all_contig_annotations.csv"
-        )
-        if (!file.exists(annofile)) {
-            stop(paste(
-                "Cannot find neither `filtered_contig_annotations.csv` nor",
-                "`all_contig_annotations.csv`",
-                "in given TCRDir for sample:",
-                sample
-            ))
-        }
-    }
 
-    file.symlink(
-        normalizePath(annofile),
-        file.path(datadir, paste0(sample, ".csv"))
-    )
+    annofile = get_contig_annofile(metadata[i, "TCRDir"], sample)
+    filename = basename(annofile)
+    stem = sub("\\.gz$", "", filename)
+    stem = sub("\\.csv", "", stem)
+    ext = substr(filename, nchar(stem) + 1, nchar(filename))
+    file.symlink(normalizePath(annofile), file.path(datadir, paste0(sample, ext)))
 }
 
 immdata = repLoad(datadir)
@@ -59,16 +86,11 @@ immdata = repLoad(datadir)
 immdata$single = list()
 immdata$raw = list()
 for (sample in names(immdata$data)) {
-    annofile = file.path(
-        as.character(metadata[metadata$Sample == sample, "TCRDir"]),
-        "filtered_contig_annotations.csv"
+    annofile = get_contig_annofile(
+        metadata[metadata$Sample == sample, "TCRDir"],
+        sample,
+        warn=FALSE
     )
-    if (!file.exists(annofile)) {
-        annofile = file.path(
-            as.character(metadata[i, "TCRDir"]),
-            "all_contig_annotations.csv"
-        )
-    }
     immdata$raw[[sample]] = read.csv2(
         annofile,
         header = TRUE,

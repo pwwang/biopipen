@@ -120,7 +120,7 @@ class GeneExpressionInvestigation(Proc):
             Or the groupfile as described.
         name: The name to name the job. Otherwise the stem of groupfile
             will be used
-        target` Which sample to pull expression from could be multiple
+        target: Which sample to pull expression from could be multiple
         gopts: Options for `read.table()` to read the genefiles
         plots: Plots to generate for this case
             `boxplot`:

@@ -5,7 +5,8 @@ from typing import Any
 from pathlib import Path
 from tempfile import gettempdir
 
-from simpleconf import Config as SimConfig
+from diot import Diot
+from simpleconf import Config
 
 from .defaults import BIOPIPEN_DIR
 
@@ -14,9 +15,10 @@ USER_CONFIG_FILE = Path("~").expanduser() / ".biopipen.toml"
 PROJ_CONFIG_FILE = Path(".") / ".biopipen.toml"
 
 
-class Config(SimConfig):
-    """Subclass the Config class to enables default value instead of
-    KeyError for non-exist keys"""
+class ConfigItems(Diot):
+    """Provides the envs from configuration files and defaults the
+    non-existing values to None."""
+
 
     def __getattr__(self, name: str) -> Any:
         try:
@@ -31,8 +33,6 @@ class Config(SimConfig):
             return None
 
 
-config = Config(with_profile=False)
-
 config_profiles = [
     {"path": {"tmpdir": gettempdir()}},
     DEFAULT_CONFIG_FILE,
@@ -44,4 +44,4 @@ if "+config" in sys.argv:
     cindex = sys.argv.index("+config")
     config_profiles.append(sys.argv[cindex + 1])
 
-config._load(*config_profiles)
+config = ConfigItems(Config.load(*config_profiles, ignore_nonexist=True))

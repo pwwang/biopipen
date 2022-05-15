@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.1.9"
+version = "0.2.0"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
-pipen = "^0.2.14"
-cmdy = "^0.4.3"
-datar = "^0.5"
+pipen = "^0.3"
+cmdy = "^0.5"
+datar = "^0.8"
 
 [tool.poetry.dev-dependencies]
 

@@ -26,7 +26,9 @@ class Glob2Dir(Proc):
     output = "outdir:dir:from_glob"
     script = """
         for infile in {{in.pattern}}; do
-            ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+            if [[ -e $infile ]]; then
+                ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+            fi
         done
     """
 
