@@ -1,5 +1,6 @@
 library(Seurat)
 library(future)
+library(bracer)
 
 metafile = {{in.metafile | quote}}
 rdsfile = {{out.rdsfile | quote}}
@@ -45,7 +46,35 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
         }
 
         samples = c(samples, sample)
-        exprs = Read10X(data.dir = path)
+        exprs = tryCatch(
+            # Read10X requires
+            # - barcodes.tsv.gz
+            # - genes.tsv.gz
+            # - matrix.mtx.gz
+            # But sometimes, they are prefixed with sample name
+            # e.g.GSM4143656_SAM24345863-ln1.barcodes.tsv.gz
+            { Read10X(data.dir = path) },
+            error = function(e) {
+                tmpdatadir = file.path(joboutdir, "renamed", sample)
+                dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
+                barcodefile = Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
+                file.symlink(
+                    normalizePath(barcodefile),
+                    file.path(tmpdatadir, "barcodes.tsv.gz")
+                )
+                genefile = glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
+                file.symlink(
+                    normalizePath(genefile),
+                    file.path(tmpdatadir, "features.tsv.gz")
+                )
+                matrixfile = Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
+                file.symlink(
+                    normalizePath(matrixfile),
+                    file.path(tmpdatadir, "matrix.mtx.gz")
+                )
+                Read10X(data.dir = tmpdatadir)
+            }
+        )
         if ("Gene Expression" %in% names(exprs)) {
             exprs = exprs[["Gene Expression"]]
         }
