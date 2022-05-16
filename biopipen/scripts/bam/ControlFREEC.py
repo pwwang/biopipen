@@ -1,7 +1,6 @@
 import os
 import glob
-import gzip
-import toml
+import rtoml
 import cmdy
 from diot import Diot
 
@@ -70,7 +69,7 @@ config.BAF |= Diot(
 
 os.makedirs(f"{outdir}/FREEC-output", exist_ok=True)
 
-config_ini = toml.dumps(config).replace('"', "")
+config_ini = rtoml.dumps(config).replace('"', "")
 
 with open(configfile, "w") as fconf:
     fconf.write(config_ini)

@@ -1,3 +1,16 @@
+## 0.2.1
+
+- User rtoml over toml
+
+## 0.2.0
+
+- 📌 Pin deps for docs
+- Don't link non-existing files for misc.Glob2Dir
+- Upgrade datar to 0.8
+- ⬆️ Upgrade pipen to v0.3
+- ⚡️ Load 10X TCR and RNA-seq data files more robustly for scrna.SeuratPreparing and tcr.ImmunarchLoading
+
+
 ## 0.1.9
 
 - 🐛 Load `all_config_annotations.csv` if `filtered_contig_annotations.csv` doesn't exist for `tcr.ImmunarchLoad`
