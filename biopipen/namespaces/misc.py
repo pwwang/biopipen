@@ -36,7 +36,7 @@ class Glob2Dir(Proc):
 class Config2File(Proc):
     """Write a configurationn in string to a configuration file
 
-    Requires python package `toml`
+    Requires python package `rtoml`
 
     Input:
         config: A string representation of configuration
