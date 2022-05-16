@@ -56,6 +56,9 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
             { Read10X(data.dir = path) },
             error = function(e) {
                 tmpdatadir = file.path(joboutdir, "renamed", sample)
+                if (dir.exists(tmpdatadir)) {
+                    unlink(tmpdatadir, recursive = TRUE)
+                }
                 dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
                 barcodefile = Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
                 file.symlink(
