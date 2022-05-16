@@ -28,6 +28,7 @@ if (!"RNADir" %in% meta_cols) {
 }
 
 cached_file = file.path(joboutdir, "obj_list.rds")
+# TODO: check the if input data files are newer than the cached file
 if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) {
     obj_list = readRDS(cached_file)
     samples = as.character(metadata$Sample)
