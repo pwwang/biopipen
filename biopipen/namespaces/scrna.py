@@ -100,6 +100,31 @@ class SeuratClustering(Proc):
     script = "file://../scripts/scrna/SeuratClustering.R"
 
 
+class SeuratMetadataMutater(Proc):
+    """Mutate the metadata of the seurat object
+
+    Input:
+        srtobj: The seurat object loaded by SeuratPreparing
+        metafile: Additional metadata
+            A tab-delimited file with columns as meta columns and rows as
+            cells.
+
+    Output:
+        rdsfile: The seurat object with the additional metadata
+
+    Envs:
+        mutaters: A dictionary of mutates with keys the new meta columns
+            and values the new meta values. They key-value will be evaluated
+            with `srtobj@meta.data |> mutate(<key> = <value>)`
+            The keys could be from `in.metafile`
+    """
+    input = "srtobj:file, metafile:file"
+    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {"mutaters": {}}
+    script = "file://../scripts/scrna/SeuratMetadataMutater.R"
+
+
 class GeneExpressionInvestigation(Proc):
     """Investigation of expressions of genes of interest
 
