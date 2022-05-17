@@ -313,3 +313,35 @@ class SeuratFilter(Proc):
     }
     lang = config.lang.rscript
     script = "file://../scripts/scrna/SeuratFilter.R"
+
+
+class Subset10X(Proc):
+    """Subset 10X data, mostly used for testing
+
+    Requires r-matrix to load matrix.mtx.gz
+
+    Input:
+        indir: The input directory
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        seed: The seed for random number generator
+        nfeats: The number of features to keep.
+            If <=1 then it will be the percentage of features to keep
+        ncells: The number of cells to keep.
+            If <=1 then it will be the percentage of cells to keep
+        feats_to_keep: The features/genes to keep.
+            The final features list will be `feats_to_keep` + `nfeats`
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}"
+    envs = {
+        "seed": 8525,
+        "nfeats": 0.1,
+        "ncells": 0.1,
+        "feats_to_keep": [],
+    }
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/Subset10X.R"
