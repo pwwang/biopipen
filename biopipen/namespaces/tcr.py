@@ -104,8 +104,8 @@ class ImmunarchFilter(Proc):
     script = "file://../scripts/tcr/ImmunarchFilter.R"
 
 
-class ImmunarchBasic(Proc):
-    """Immunarch - Basic statistics and clonality
+class Immunarch(Proc):
+    """Exploration of Single-cell and Bulk T-cell/Antibody Immune Repertoires
 
     See https://immunarch.com/articles/web_only/v3_basic_analysis.html
 
@@ -134,49 +134,6 @@ class ImmunarchBasic(Proc):
         overlap_methods: The methods used for `repOverlap()`, each will
             generate a heatmap.
         overlap_redim: Plot the samples with these dimension reduction methods
-    """
-
-    input = "immdata:file"
-    output = "outdir:dir:{{in.immdata | stem}}.basic"
-    lang = config.lang.rscript
-    envs = {
-        # basic statistics
-        "volume_by": {},
-        "len_by": {},
-        "count_by": {},
-        # clonality
-        "top_clone_marks": [10, 100, 1000, 3000, 10000],
-        "top_clone_by": {},
-        "rare_clone_marks": [1, 3, 10, 30, 100],
-        "rare_clone_by": {},
-        "hom_clone_marks": dict(
-            Small=0.0001,
-            Medium=0.001,
-            Large=0.01,
-            Hyperexpanded=1,
-        ),
-        "hom_clone_by": {},
-        # overlapping
-        "overlap_methods": ["public"],
-        "overlap_redim": ["tsne", "mds"],
-    }
-    script = "file://../scripts/tcr/ImmunarchBasic.R"
-    plugin_opts = {"report": "file://../reports/tcr/ImmunarchBasic.svelte"}
-
-
-class ImmunarchAdvanced(Proc):
-    """Immunarch - Advanced analysis
-
-    Including gene usage, diversity estimation, tracking clonotype changes and
-    kmer/motif analysis
-
-    Input:
-        immdata: The data loaded by `immunarch::repLoad()`
-
-    Output:
-        outdir: The output directory
-
-    Envs:
         gu_by: Groupings to show gene usages
             Multiple groups supported, for example:
             `volume_by = {{0: "Status", 1: ["Status", "Sex"]}}`
@@ -213,9 +170,28 @@ class ImmunarchAdvanced(Proc):
     """
 
     input = "immdata:file"
-    output = "outdir:dir:{{in.immdata | stem}}.advanced"
+    output = "outdir:dir:{{in.immdata | stem}}.immunarch"
     lang = config.lang.rscript
     envs = {
+        # basic statistics
+        "volume_by": {},
+        "len_by": {},
+        "count_by": {},
+        # clonality
+        "top_clone_marks": [10, 100, 1000, 3000, 10000],
+        "top_clone_by": {},
+        "rare_clone_marks": [1, 3, 10, 30, 100],
+        "rare_clone_by": {},
+        "hom_clone_marks": dict(
+            Small=0.0001,
+            Medium=0.001,
+            Large=0.01,
+            Hyperexpanded=1,
+        ),
+        "hom_clone_by": {},
+        # overlapping
+        "overlap_methods": ["public"],
+        "overlap_redim": ["tsne", "mds"],
         # gene usage
         "gu_by": {},
         "gu_top": 30,
@@ -235,9 +211,11 @@ class ImmunarchAdvanced(Proc):
             5: {"head": 10, "position": "stack", "log": False, "motif": "self"}
         },
     }
-    script = "file://../scripts/tcr/ImmunarchAdvanced.R"
-    order = 1
-    plugin_opts = {"report": "file://../reports/tcr/ImmunarchAdvanced.svelte"}
+    script = "file://../scripts/tcr/Immunarch.R"
+    plugin_opts = {
+        "report": "file://../reports/tcr/Immunarch.svelte",
+        "report_paging": 3,
+    }
 
 
 class CloneResidency(Proc):
