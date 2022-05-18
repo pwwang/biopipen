@@ -83,18 +83,13 @@ class SeuratClustering(Proc):
 
     Output:
         rdsfile: The seurat object with cluster information
-        groupfile: A groupfile with cells for future analysis
 
     Envs:
         FindClusters: Arguments to `FindClusters()`
     """
 
     input = "srtobj:file"
-    output = [
-        "rdsfile:file:{{in.srtobj | stem}}.RDS",
-        "groupfile:file:{{in.srtobj | stem | replace: '.seurat', ''}}"
-        ".clusters.txt",
-    ]
+    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
     envs = {"FindClusters": {"resolution": 0.8}}
     script = "file://../scripts/scrna/SeuratClustering.R"
@@ -129,45 +124,49 @@ class GeneExpressionInvestigation(Proc):
     """Investigation of expressions of genes of interest
 
     Input:
-        srtobj: The seurat object loaded by SeuratPreparing
-        groupfile: The group of cells with the first column the groups and
-            rest the cells in each sample.
-            Or the subset conditions using metadata of `srtobj`
-            See `envs.group_subset`
-        genefiles: The genes to show their expressions in the plots
-        configfile: The configuration file (toml). See `envs`
-            If not provided, use `envs`
+        srtobj: The seurat object loaded by `SeuratPreparing`
+        genefile: The genes to show their expressions in the plots
+            Either one column or two columns.
+            If one column, the column name will be used as both the gene names
+            to match the expressions and the names to show in the plots
+            If two columns, the first column will be used as the gene names
+            to match the expressions and the second column will be used to
+            show in the plots.
+        configfile: The configuration file (toml). See `envs.config`
+            If not provided, use `envs.config`
+
     Output:
         outdir: The output directory with the plots
 
     Envs:
-        group_subset: Is the `in.groupfile` subset conditions using metadata
-            Or the groupfile as described.
-        name: The name to name the job. Otherwise the stem of groupfile
-            will be used
-        target: Which sample to pull expression from could be multiple
-        gopts: Options for `read.table()` to read the genefiles
-        plots: Plots to generate for this case
-            `boxplot`:
-            - `use`: Which gene file to use (1-based)
-            - `ncol`: Split the plot to how many columns?
-            - `res`, `height` and `width` the parameters for `png()`
-            `heatmap`:
-            - `use`: Which gene file to use (1-based)
-            - `res`, `height` and `width` the parameters for `png()`
-            - other arguments for `ComplexHeatmap::Heatmap()`
+        gopts: Options for `read.table()` to read `in.genefile`
+        config: The configurations to do the plots
+            name: The name of the job, mostly used in report
+            mutaters: The mutater to mutate the metadata
+            groupby: Which meta columns to group the data
+            subset: Select a subset of cells, will be passed to
+                `subset(obj, subset=<subset>)`
+            plots: Plots to generate
+                Currently supported
+                `boxplot`:
+                - `ncol`: Split the plot to how many columns?
+                - `res`, `height` and `width` the parameters for `png()`
+                `heatmap`:
+                - `res`, `height` and `width` the parameters for `png()`
+                - other arguments for `ComplexHeatmap::Heatmap()`
     """
-
-    input = "srtobj:file, groupfile:file, genefiles:files, configfile:file"
-    output = "outdir:dir:{{in.configfile | stem0}}.exprs"
+    input = "srtobj:file, genefile:file, configfile:file"
+    output = "outdir:dir:{{in.configfile | stem0}}.gei"
     lang = config.lang.rscript
     order = 4
     envs = {
-        "group_subset": False,
-        "name": None,
-        "target": None,
-        "gopts": {},
-        "plots": {},
+        "config": {},
+        "gopts": {
+            "header": False,
+            "row.names": None,
+            "sep": "\t",
+            "check.names": False,
+        },
     }
     script = "file://../scripts/scrna/GeneExpressionInvistigation.R"
     plugin_opts = {
@@ -212,15 +211,32 @@ class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
     Input:
-        srtobj: The seurat object loaded by SeuratLoading
-        groupfile: The group of cells with first column the groups and
-            rest the cells in each sample.
+        srtobj: The seurat object loaded by `SeuratPreparing`
         casefile: The config file in TOML that looks like
-            >>> [case1]
-            >>> "ident.1" = "ident.1"
-            >>> "ident.2" = "ident.2"
+
+            >>> # The name of the job, used in report
+            >>> name = ""
+            >>> [cases.case1]
+            >>> "ident.1" = "Tumor"
+            >>> "ident.2" = "Normal"
+            >>> "group.by" = "Source"
             >>> # other arguments for Seruat::FindMarkers()
-        name: The name of the jobs, mosted used in report
+
+            We can also use a new group.by:
+            >>> [cases.case2]
+            >>> "ident.1" = "Case"
+            >>> "ident.2" = "Control"
+            >>> "group.by" = "Group"
+            >>> # other arguments for Seruat::FindMarkers()
+            >>> [cases.case2.mutaters]
+            >>> Group = '''
+            >>>   if_else(Source %in% c("Tumor", "Normal"), "Case", "Control")
+            >>> '''
+
+            If "ident.2" is not provided, it will use the rest of the cells
+            as "ident.2".
+
+            If only "group.by" is given, will call `FindAllMarkers()`
 
     Output:
         outdir: The output directory for the markers
@@ -228,25 +244,23 @@ class MarkersFinder(Proc):
     Envs:
         ncores: Number of cores to use to parallelize the groups
         cases: The cases to find markers for.
-            Values would be the arguments for `FindMarkers()`
-            If "ALL" or "ALL" in the keys, the process will run for all groups
-            in the groupfile. The other keys will be arguments to `FindMarkers`
-            When `ident.2` is not given and there is only one group or more
-            than two groups in groupfile, the rest cells in the object will
-            be used as the control
-            if it is `ident`, will igore the groupfile and find markers for all
-            idents.
+            See `in.casefile`.
         dbs: The dbs to do enrichment analysis for significant markers
             See below for all librarys
             https://maayanlab.cloud/Enrichr/#libraries
     """
 
-    input = "srtobj:file, groupfile:file, name:var, casefile:file"
-    output = "outdir:dir:{{in.groupfile | stem0}}.markers"
+    input = "srtobj:file, casefile:file"
+    output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.markers"
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "cases": {"ALL": True},
+        "cases": {
+            "name": "Markers for all clusters",
+            "cases": {
+                "Cluster": {"group.by": "seurat_clusters"},
+            }
+        },
         "dbs": [
             "GO_Biological_Process_2021",
             "GO_Cellular_Component_2021",

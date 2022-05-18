@@ -6,7 +6,7 @@ library(Seurat)
 srtobj = {{in.srtobj | quote}}
 metafile = {{in.metafile | r}}
 rdsfile = {{out.rdsfile | quote}}
-mutaters = {{in.mutaters | r}}
+mutaters = {{envs.mutaters | r}}
 
 srt = readRDS(srtobj)
 metadata = srt@meta.data
@@ -21,6 +21,6 @@ for (key in names(mutaters)) {
     expr[[key]] = parse_expr(mutaters[[key]])
 }
 
-srt@meta.data = metadata = mutate(metadata, !!!expr)
+srt@meta.data = mutate(metadata, !!!expr)
 
 saveRDS(srt, rdsfile)

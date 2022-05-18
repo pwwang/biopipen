@@ -41,11 +41,12 @@
 
 
 {%- macro head_job(job) -%}
-{% if job.in.name %}
-<h1>{{job.in.name | escape}}</h1>
+{% if in.casefile %}
+{%  set name = in.casefile | toml_load | attr: "name" %}
 {% else %}
-<h1>Case {{job.index | plus: 1 | str}}</h1>
+{%  set name = envs.cases | attr: "name" %}
 {% endif %}
+<h1>{{name | escape}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}

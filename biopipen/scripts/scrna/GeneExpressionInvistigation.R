@@ -4,183 +4,128 @@ library(Seurat)
 library(dplyr)
 library(tidyr)
 library(tibble)
+library(rlang)
 library(ggplot2)
 library(ggprism)
 library(ComplexHeatmap)
 
-{% addfilter compile_config %}
-def compile_config(tomldict):
-    out = {}
-    for key, val in tomldict.items():
-        if isinstance(val, str) and val[:2].lower() == "r:":
-            # modify "r:" to "@r:" to preserve the expression from "r()"
-            # since we don't have the context variable ready here
-            out[key] = f"@{val}"
-        elif isinstance(val, dict):
-            out[key] = compile_config(val)
-        else:
-            out[key] = val
-    return out
-{% endaddfilter %}
-
 srtobjfile = {{in.srtobj | quote}}
-groupfile = {{in.groupfile | quote}}
-genefiles = {{in.genefiles | r}}
+genefile = {{in.genefile | r}}
 outdir = {{out.outdir | quote}}
-envs = {{envs | r}}
-config = {{in.configfile | read | toml_loads | compile_config | r}}
-for (name in names(envs)) {
-    if (is.null(config[[name]])) {
-        config[[name]] = envs[[name]]
-    }
-}
-if (is.null(config$name)) {
-    config$name = {{in.groupfile | stem | r}}
-}
+gopts = {{envs.gopts | r}}
+{% if in.configfile %}
+config = {{in.configfile | toml_load | r}}
+{% set config = in.configfile | toml_load %}
+{% else %}
+config = {{envs.config | r}}
+{% set config = envs.config %}
+{% endif %}
 
 sobj = readRDS(srtobjfile)
-genes = lapply(genefiles, function(x) {
-    out = read.table.opts(x, config$gopts)
-    if (ncol(out) == 1) {
-        out$.Name = out[[1]]
-    }
-    colnames(out) = c("Gene", "Name")
-    return(out)
-})
-allgenes = do.call(bind_rows, genes) %>% distinct(Gene, .keep_all = T)
-
-groups = read.table(groupfile, row.names=NULL, header=T, sep="\t", check.names = F)
-groups = groups %>% rowwise() %>%
-    mutate(across(-1, ~ strsplit(.x, ";", fixed=TRUE))) %>%
-    as.data.frame()
-
-samples = config$target
-cells = c()
-# cells = paste(samples[1], unlist(groups[[ samples[1] ]]), sep="_")
-# merge seurat object and add cell ids
-
-# y = c()
-if (length(samples) > 1) {
-    for (i in 1:length(samples)) {
-        # y = c(y, seurat_obj[[samples[i]]])
-        cells = c(
-            cells,
-            paste(samples[i], unlist(groups[[ samples[i] ]]), sep="_")
-        )
-    }
+genes = read.table.opts(genefile, gopts)
+if (ncol(genes) == 1) {
+    genes$.Name = genes[[1]]
 }
-# if (length(y) == 0) {
-#     sobj = seurat_obj[[samples[1]]]
-#     sobj = RenameCells(sobj, add.cell.id = samples[1])
-# } else {
-#     sobj = merge(seurat_obj[[samples[1]]], y, add.cell.ids = samples)
-# }
-sobj = subset(sobj, cells = cells)
-# already Normalized by SeuratPreparing
-# sobj = NormalizeData(sobj, normalization.method = "LogNormalize")
+colnames(genes) = c("Gene", "Name")
+
+if (!is.null(config$mutaters)) {
+    expressions = list()
+    for (key in names(config$mutaters)) {
+        expressions[[key]] = parse_expr(config$mutaters[[key]])
+    }
+    sobj@meta.data = mutate(sobj@meta.data, !!!expressions)
+}
+
+if (!is.null(config$subset)) {
+    sobj = subset(sobj, subset = {{config.subset}})
+}
 
 DefaultAssay(sobj) <- "RNA"
 sobj = NormalizeData(sobj)
 
 exprs = as.data.frame(
     GetAssayData(sobj, slot = "data", assay = "RNA")
-)[allgenes$Gene,,drop=F]
-rownames(exprs) = allgenes$Name
+)[genes$Gene,,drop=F]
+rownames(exprs) = genes$Name
+exprs = rownames_to_column(exprs, "Gene")
 
-exprdata = list()
-i = 1
-for (group in unique(groups[[1]])) {
-    barcodes = groups %>% filter(.[[1]] == group)
-    bcodes = c()
-    for (sample in samples) {
-        bcodes = c(
-            bcodes,
-            paste(sample, unlist(barcodes[[sample]]), sep="_")
+plot_heatmap = function(plotconf, outfile) {
+    plotdata = exprs |>
+        pivot_longer(
+            names(exprs)[2:ncol(exprs)],
+            names_to = "Barcode",
+            values_to = "Log_Expression"
+        )
+    metadata = sobj@meta.data[plotdata$Barcode,,drop=F]
+    plotdata = cbind(plotdata, metadata)
+    plotdata = plotdata |>
+        group_by(Gene, !!sym(config$groupby)) |>
+        summarise(Log_Expression = mean(Log_Expression)) |>
+        pivot_wider(names_from = config$groupby, values_from = "Log_Expression") |>
+        column_to_rownames("Gene")
+
+    given_genes = rownames(plotdata)
+    plotdata = plotdata[complete.cases(plotdata),,drop=FALSE]
+    invalid_genes = setdiff(given_genes, rownames(plotdata))
+    if (length(invalid_genes) > 0) {
+        warning(
+            paste(
+                "The following genes were not found in the data:",
+                invalid_genes
+            )
         )
     }
-    bcodes = intersect(bcodes, colnames(exprs))
 
-    if (length(bcodes) == 0) {
-        exprdata[[i]] = NULL
-    } else {
-        exprdata[[i]] = exprs[, bcodes, drop=F] %>%
-            as.data.frame() %>%
-            rownames_to_column("Gene") %>%
-            pivot_longer(-"Gene", names_to="Barcode", values_to="Log_Expression") %>%
-            mutate(Group=group)
+    devpars = list(res=plotconf$res, width=plotconf$width, height=plotconf$height)
+    plotconf$res = NULL
+    plotconf$width = NULL
+    plotconf$height = NULL
+
+    for (name in names(plotconf)) {
+        plotconf[[name]] = parse_expr(plotconf[[name]])
     }
-    i = i + 1
+
+    plotHeatmap(
+        plotdata,
+        plotconf,
+        devpars = devpars,
+        outfile = outfile
+    )
 }
-plotdata = do.call(bind_rows, exprdata)
+
+plot_boxplot = function(plotconf, outfile) {
+    plotdata = exprs |>
+        pivot_longer(
+            names(exprs)[2:ncol(exprs)],
+            names_to = "Barcode",
+            values_to = "Log_Expression"
+        )
+    metadata = sobj@meta.data[plotdata$Barcode,,drop=F]
+    plotdata = cbind(plotdata, metadata)
+
+    cols = if (is.null(plotconf$ncol)) 3 else plotconf$ncol
+    p = ggplot(plotdata) +
+        geom_boxplot(aes_string(x=config$groupby, y="Log_Expression", fill=config$groupby)) +
+        facet_wrap(~Gene, ncol=cols) +
+        theme_prism(axis_text_angle = 90) + theme(legend.position = "none") +
+        xlab("")
+
+    devpars = list(filename = outfile, res = plotconf$res, width = plotconf$width, height = plotconf$height)
+    do.call(png, devpars)
+    print(p)
+    dev.off()
+}
+
 
 for (plottype in names(config$plots)) {
-    plotpms = config$plots[[plottype]]
-    if (is.null(plotpms)) { plotpms = list() }
-    if (is.null(plotpms$use)) {
-        plotgenes = genes[[1]]
+    plotconf = config$plots[[plottype]]
+    if (plottype == "heatmap") {
+        plotfile = file.path(outdir, "heatmap.png")
+        plot_heatmap(plotconf, plotfile)
+    } else if (plottype == "boxplot") {
+        plotfile = file.path(outdir, "boxplot.png")
+        plot_boxplot(plotconf, plotfile)
     } else {
-        plotgenes = genes[[plotpms$use]]
-        plotpms$use = NULL
-    }
-    myplotdata = plotdata %>%
-        filter(Gene %in% plotgenes$Name) %>%
-        mutate(Gene = factor(Gene, levels=as.character(plotgenes$Name)))
-
-    if (plottype == "boxplot") {
-        cols = plotpms$ncol
-        if (is.null(cols)) {
-            cols = 3
-        } else {
-            plotpms$ncol = NULL
-        }
-        p = ggplot(myplotdata) +
-            geom_boxplot(aes(x=Group, y=Log_Expression, fill=Group)) +
-            facet_wrap(~Gene, ncol=cols) +
-            theme_prism(axis_text_angle = 90) + theme(legend.position = "none") +
-            xlab("")
-
-        pngfile = file.path(outdir, paste0("boxplot.png"))
-        plotpms$filename = pngfile
-        do.call(png, plotpms)
-        print(p)
-        dev.off()
-
-    } else {
-        hmdata = myplotdata %>%
-            pivot_wider(
-                Group,
-                names_from = Gene,
-                values_from = Log_Expression,
-                values_fn = mean
-            ) %>%
-            select(Group, all_of(plotgenes$Name)) %>%
-            column_to_rownames("Group")
-
-        devpars = list()
-        devpars$res = plotpms$res
-        devpars$height = plotpms$height
-        devpars$width = plotpms$width
-        plotpms$res = NULL
-        plotpms$height = NULL
-        plotpms$width = NULL
-
-        for (name in names(plotpms)) {
-            if (is.character(plotpms[[name]]) &&
-                startsWith(plotpms[[name]], "@r:")) {
-                plotpms[[name]] = eval(
-                    parse(text=substring(plotpms[[name]], 4))
-                )
-            }
-        }
-
-        pngfile = file.path(outdir, paste0("heatmap.png"))
-        plotHeatmap(
-            hmdata,
-            plotpms,
-            devpars = devpars,
-            outfile = pngfile
-        )
-
+        stop(paste("Unknown plot type:", plottype))
     }
 }
-

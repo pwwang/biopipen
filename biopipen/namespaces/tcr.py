@@ -28,15 +28,31 @@ class ImmunarchLoading(Proc):
 
     Output:
         rdsfile: The RDS file with the data and metadata
+        metatxt: The meta data of the cells, used to attach to the Seurat object
 
     Envs:
         tmpdir: The temporary directory to link all data files.
+        prefix: The prefix to the barcodes. You can use placeholder like
+            `{{Sample}}_` to use the meta data from the immunarch object
+        mode: Either "single" for single chain data or "paired" for
+            paired chain data. For `single`, only TRB chain will be kept
+            at `immdata$data`, information for other chains will be
+            saved at `immdata$tra` and `immdata$multi`.
+        metacols: The columns to be exported from the metatxt.
     """
 
     input = "metafile:file"
-    output = "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS"
+    output = [
+        "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS",
+        "metatxt:file:{{in.metafile | stem}}.tcr.txt",
+    ]
     lang = config.lang.rscript
-    envs = {"tmpdir": config.path.tmpdir}
+    envs = {
+        "tmpdir": config.path.tmpdir,
+        "prefix": "{Sample}_",
+        "mode": "single",
+        "metacols": ["Clones", "Proportion", "CDR3.aa"],
+    }
     script = "file://../scripts/tcr/ImmunarchLoading.R"
 
 
@@ -55,15 +71,11 @@ class ImmunarchFilter(Proc):
 
     Output:
         outfile: The filtered `immdata`
-        groupfile: Also a group file with first column the groups and other
-            columns the cell barcodes in the samples
+        groupfile: Also a group file with rownames as cells and column names as
+            each of the keys in `in.filterfile` or `envs.filters`. The values
+            will be subkeys of the dicts in `in.filterfile` or `envs.filters`.
 
     Envs:
-        merge: Merge the cells from the samples, instead of list cells
-            for different samples. The cell ids will be preficed with the sample
-            name, connected with `_`. The column name will be `ALL` instead.
-        clonotype: Use clonotype (CDR3.aa) as the group. The name from
-            `envs.filters` will be ignored
         filters: The filters to filter the data
             You can have multiple cases (groups), the names will be the keys of
             this dict, values are also dicts with keys the methods supported by
@@ -80,25 +92,42 @@ class ImmunarchFilter(Proc):
             `dplyr::filter()` to filter the count matrix.
             You can also specify `ORDER` to define the filtration order, which
             defaults to 0, higher `ORDER` gets later executed.
+            Each subkey/subgroup must be exclusive
             For example:
-            >>> {{
-            >>>   "Top20BM_Post": {{
-            >>>     "by.meta": {{"Source": "BM", "Status": "Post"}},
-            >>>     "by.count": {{
-            >>>         "ORDER": 1, "filter": "TOTAL %in% TOTAL[1:20]"
-            >>>     }}
-            >>>   }}
-            >>> }}
+            >>> {
+            >>>   "name": "BM_Post_Clones",
+            >>>   "filters" {
+            >>>     "Top_20": {
+            >>>       "SAVE": True,  # Save the filtered data to immdata
+            >>>       "by.meta": {"Source": "BM", "Status": "Post"},
+            >>>       "by.count": {
+            >>>         "ORDER": 1, "filter": "TOTAL %%in%% TOTAL[1:20]"
+            >>>        }
+            >>>     },
+            >>>     "Rest": {
+            >>>       "by.meta": {"Source": "BM", "Status": "Post"},
+            >>>       "by.count": {
+            >>>         "ORDER": 1, "filter": "!TOTAL %%in%% TOTAL[1:20]"
+            >>>        }
+            >>>   }
+            >>> }
+        prefix: The prefix will be added to the cells in the output file
+            Placeholders like `{Sample}_` can be used to from the meta data
+        metacols: The extra columns to be exported to the group file.
     """
     input = "immdata:file, filterfile:file"
-    output = [
-        "outfile:file:{{in.immdata | stem}}.RDS",
-        "groupfile:file:{{in.immdata | stem}}.groups.txt"
-    ]
+    output = """
+        outfile:file:{{in.immdata | stem}}.RDS,
+        groupfile:file:{% if in.filterfile -%}
+            {{- in.filterfile | toml_load | attr: "name" | append: ".txt" -}}
+        {%- else -%}
+            {{- envs.filters | attr: "name" | append: ".txt" -}}
+        {%- endif -%}
+    """
     envs = {
-        "merge": False,
-        "clonotype": False,
+        "prefix": "{Sample}_",
         "filters": {},
+        "metacols": ["Clones", "Proportion", "CDR3.aa"],
     }
     lang = config.lang.rscript
     script = "file://../scripts/tcr/ImmunarchFilter.R"

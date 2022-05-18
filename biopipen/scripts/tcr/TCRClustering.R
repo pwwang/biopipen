@@ -217,7 +217,7 @@ attach_to_immdata = function(out) {
             )
         }
         if ("single" %in% names(immdata)) {
-            immdata$single[[sample]] = immdata$single[[sample]] %>% left_join(
+            immdata$data[[sample]] = immdata$data[[sample]] %>% left_join(
                 out, by = "CDR3.aa"
             )
         }
