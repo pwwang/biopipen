@@ -287,7 +287,7 @@ class SCImpute(Proc):
 
     Envs:
         infmt: The input format.
-            Either `seurat` or `matrix
+            Either `seurat` or `matrix`
     """
 
     input = "infile:file, groupfile:file"
