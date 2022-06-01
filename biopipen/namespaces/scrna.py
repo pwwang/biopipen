@@ -61,6 +61,16 @@ class SeuratPreparing(Proc):
     Envs:
         ncores: Number of cores to use
 
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-future
+          check: |
+            {{proc.lang}} <(echo "library(future)")
+        - name: r-bracer
+          check: |
+            {{proc.lang}} <(echo "library(bracer)")
     """
 
     input = "metafile:file"
@@ -83,66 +93,109 @@ class SeuratClustering(Proc):
 
     Output:
         rdsfile: The seurat object with cluster information
-        groupfile: A groupfile with cells for future analysis
 
     Envs:
         FindClusters: Arguments to `FindClusters()`
+
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-tidyr
+          check: |
+            {{proc.lang}} <(echo "library(tidyr)")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library(dplyr)")
     """
 
     input = "srtobj:file"
-    output = [
-        "rdsfile:file:{{in.srtobj | stem}}.RDS",
-        "groupfile:file:{{in.srtobj | stem | replace: '.seurat', ''}}"
-        ".clusters.txt",
-    ]
+    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
     envs = {"FindClusters": {"resolution": 0.8}}
     script = "file://../scripts/scrna/SeuratClustering.R"
+
+
+class SeuratMetadataMutater(Proc):
+    """Mutate the metadata of the seurat object
+
+    Input:
+        srtobj: The seurat object loaded by SeuratPreparing
+        metafile: Additional metadata
+            A tab-delimited file with columns as meta columns and rows as
+            cells.
+        mutaters: A TOML string, file or a python dict to create new columns
+            in metadata. They key-value will be evaluated
+            with `srtobj@meta.data |> mutate(<key> = <value>)`
+            The keys could be from `in.metafile`
+
+    Output:
+        rdsfile: The seurat object with the additional metadata
+
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-tibble
+          check: |
+            {{proc.lang}} <(echo "library(tibble)")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library(dplyr)")
+    """
+    input = "srtobj:file, metafile:file, mutaters:var"
+    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
 class GeneExpressionInvestigation(Proc):
     """Investigation of expressions of genes of interest
 
     Input:
-        srtobj: The seurat object loaded by SeuratPreparing
-        groupfile: The group of cells with the first column the groups and
-            rest the cells in each sample.
-            Or the subset conditions using metadata of `srtobj`
-            See `envs.group_subset`
-        genefiles: The genes to show their expressions in the plots
-        configfile: The configuration file (toml). See `envs`
-            If not provided, use `envs`
+        srtobj: The seurat object loaded by `SeuratPreparing`
+        genefile: The genes to show their expressions in the plots
+            Either one column or two columns.
+            If one column, the column name will be used as both the gene names
+            to match the expressions and the names to show in the plots
+            If two columns, the first column will be used as the gene names
+            to match the expressions and the second column will be used to
+            show in the plots.
+        configfile: The configuration file (toml). See `envs.config`
+            If not provided, use `envs.config`
+
     Output:
         outdir: The output directory with the plots
 
     Envs:
-        group_subset: Is the `in.groupfile` subset conditions using metadata
-            Or the groupfile as described.
-        name: The name to name the job. Otherwise the stem of groupfile
-            will be used
-        target: Which sample to pull expression from could be multiple
-        gopts: Options for `read.table()` to read the genefiles
-        plots: Plots to generate for this case
-            `boxplot`:
-            - `use`: Which gene file to use (1-based)
-            - `ncol`: Split the plot to how many columns?
-            - `res`, `height` and `width` the parameters for `png()`
-            `heatmap`:
-            - `use`: Which gene file to use (1-based)
-            - `res`, `height` and `width` the parameters for `png()`
-            - other arguments for `ComplexHeatmap::Heatmap()`
+        gopts: Options for `read.table()` to read `in.genefile`
+        config: The configurations to do the plots
+            name: The name of the job, mostly used in report
+            mutaters: The mutater to mutate the metadata
+            groupby: Which meta columns to group the data
+            subset: Select a subset of cells, will be passed to
+                `subset(obj, subset=<subset>)`
+            plots: Plots to generate
+                Currently supported
+                `boxplot`:
+                - `ncol`: Split the plot to how many columns?
+                - `res`, `height` and `width` the parameters for `png()`
+                `heatmap`:
+                - `res`, `height` and `width` the parameters for `png()`
+                - other arguments for `ComplexHeatmap::Heatmap()`
     """
-
-    input = "srtobj:file, groupfile:file, genefiles:files, configfile:file"
-    output = "outdir:dir:{{in.configfile | stem0}}.exprs"
+    input = "srtobj:file, genefile:file, configfile:file"
+    output = "outdir:dir:{{in.configfile | stem0}}.gei"
     lang = config.lang.rscript
     order = 4
     envs = {
-        "group_subset": False,
-        "name": None,
-        "target": None,
-        "gopts": {},
-        "plots": {},
+        "config": {},
+        "gopts": {
+            "header": False,
+            "row.names": None,
+            "sep": "\t",
+            "check.names": False,
+        },
     }
     script = "file://../scripts/scrna/GeneExpressionInvistigation.R"
     plugin_opts = {
@@ -187,15 +240,32 @@ class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
     Input:
-        srtobj: The seurat object loaded by SeuratLoading
-        groupfile: The group of cells with first column the groups and
-            rest the cells in each sample.
+        srtobj: The seurat object loaded by `SeuratPreparing`
         casefile: The config file in TOML that looks like
-            >>> [case1]
-            >>> "ident.1" = "ident.1"
-            >>> "ident.2" = "ident.2"
+
+            >>> # The name of the job, used in report
+            >>> name = ""
+            >>> [cases.case1]
+            >>> "ident.1" = "Tumor"
+            >>> "ident.2" = "Normal"
+            >>> "group.by" = "Source"
             >>> # other arguments for Seruat::FindMarkers()
-        name: The name of the jobs, mosted used in report
+
+            We can also use a new group.by:
+            >>> [cases.case2]
+            >>> "ident.1" = "Case"
+            >>> "ident.2" = "Control"
+            >>> "group.by" = "Group"
+            >>> # other arguments for Seruat::FindMarkers()
+            >>> [cases.case2.mutaters]
+            >>> Group = '''
+            >>>   if_else(Source %in% c("Tumor", "Normal"), "Case", "Control")
+            >>> '''
+
+            If "ident.2" is not provided, it will use the rest of the cells
+            as "ident.2".
+
+            If only "group.by" is given, will call `FindAllMarkers()`
 
     Output:
         outdir: The output directory for the markers
@@ -203,25 +273,23 @@ class MarkersFinder(Proc):
     Envs:
         ncores: Number of cores to use to parallelize the groups
         cases: The cases to find markers for.
-            Values would be the arguments for `FindMarkers()`
-            If "ALL" or "ALL" in the keys, the process will run for all groups
-            in the groupfile. The other keys will be arguments to `FindMarkers`
-            When `ident.2` is not given and there is only one group or more
-            than two groups in groupfile, the rest cells in the object will
-            be used as the control
-            if it is `ident`, will igore the groupfile and find markers for all
-            idents.
+            See `in.casefile`.
         dbs: The dbs to do enrichment analysis for significant markers
             See below for all librarys
             https://maayanlab.cloud/Enrichr/#libraries
     """
 
-    input = "srtobj:file, groupfile:file, name:var, casefile:file"
-    output = "outdir:dir:{{in.groupfile | stem0}}.markers"
+    input = "srtobj:file, casefile:file"
+    output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.markers"
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "cases": {"ALL": True},
+        "cases": {
+            "name": "Markers for all clusters",
+            "cases": {
+                "Cluster": {"group.by": "seurat_clusters"},
+            }
+        },
         "dbs": [
             "GO_Biological_Process_2021",
             "GO_Cellular_Component_2021",
@@ -234,8 +302,80 @@ class MarkersFinder(Proc):
     plugin_opts = {"report": "file://../reports/scrna/MarkersFinder.svelte"}
 
 
+class ExprImpute(Proc):
+    """Impute the dropout values in scRNA-seq data.
+
+    Input:
+        infile: The input file in RDS format of Seurat object
+
+    Output:
+        outfile: The output file in RDS format of Seurat object
+            Note that with Rmagic, the original RNA assay will be
+            renamed to `RAW_RNA` and the imputed RNA assay will be
+            renamed to `RNA`
+
+    Envs:
+        tool: Either scimpute or rmagic
+        scimpute_args: The arguments for scimpute
+            drop_thre: The dropout threshold
+            kcluster: Number of clusters to use
+            ncores: Number of cores to use
+            refgene: The reference gene file
+        rmagic_args: The arguments for rmagic
+            python: The python path where magic-impute is installed.
+
+    Requires:
+        - name: r-scimpute
+          message: Only required when envs.tool == "scimpute"
+          check: |
+            {{proc.lang}} <(echo "library(scImpute)")
+        - name: r-rmagic
+          message: Only required when envs.tool == "rmagic" (default)
+          check: |
+            {{proc.lang}} <(\
+                echo "\
+                    tryCatch(\
+                        { setwd(dirname(Sys.getenv('CONDA_PREFIX'))) }, \
+                        error = function(e) NULL \
+                    ); \
+                    library(Rmagic)\
+                "\
+            )
+        - name: magic-impute
+          message: Only required when envs.tool == "rmagic"
+          check: |
+            {{proc.envs.rmagic_args.python}} -c "import magic")
+        - name: r-dplyr
+          message: Only required when envs.tool == "scimpute"
+          check: |
+            {{proc.lang}} <(echo "library(dplyr)")
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+    """
+
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "tool": "rmagic",
+        "rmagic_args": {
+            "python": config.exe.magic_python
+        },
+        "scimpute_args": {
+            "drop_thre": 0.5,
+            "kcluster": None,
+            "ncores": config.misc.ncores,
+            "refgene": config.ref.refgene,
+        },
+    }
+    script = "file://../scripts/scrna/ExprImpute.R"
+
+
 class SCImpute(Proc):
     """Impute the dropout values in scRNA-seq data.
+
+    Deprecated. Use `ExprImpute` instead.
 
     Input:
         infile: The input file for imputation
@@ -248,7 +388,7 @@ class SCImpute(Proc):
 
     Envs:
         infmt: The input format.
-            Either `seurat` or `matrix
+            Either `seurat` or `matrix`
     """
 
     input = "infile:file, groupfile:file"
@@ -274,42 +414,96 @@ class SeuratFilter(Proc):
 
     Input:
         srtobj: The seurat object in RDS
-        filterfile: The file with the filtering information
-            Either a group file (rows cases for filtering, columns are samples
-            or ALL for all cells with prefices), or config under
-            `subsetting` section in TOML with keys
-            and value that will be passed to `subset(...,subset = ...)`
+        filters: The filters to apply. Could be a file or string in TOML, or
+            a python dictionary, with following keys:
+            - mutaters: Create new columns in the metadata
+            - filter: A R expression that will pass to
+              `subset(sobj, subset = ...)` to filter the cells
 
     Output:
-        out: The filtered seurat object in RDS if `envs.multicase` is False,
-            otherwise the directory with the filtered seurat objects
+        outfile: The filtered seurat object in RDS
 
     Envs:
-        filterfmt: `auto`, `subset` or `grouping`.
-            If `subset` then `in.filterfile` will be config in TOML, otherwise
-            if `grouping`, it is a groupfile. See `in.filterfile`.
-            If `auto`, test if there is `=` in the file. If so, it's `subset`
-            otherwise `grouping`
         invert: Invert the selection?
-        multicase: If True, multiple seurat objects will be generated.
-            For `envs.filterfmt == "subset"`, each key-value pair will be a
-            case, otherwise, each row of `in.filterfile` will be a case.
 
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library('Seurat')")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library('dplyr')")
     """
-    input = "srtobj:file, filterfile:file"
-    output = """
-        {%- if envs.multicase -%}
-            out:dir:{{in.filterfile | stem}}.seuratfiltered
-        {%- elif envs.filterfmt == "subset" -%}
-            out:file:{{in.filterfile | read | toml_loads | list | first}}.RDS
-        {%- else -%}
-            out:file:{{in.filterfile | readlines | last | split | first}}.RDS
-        {%- endif -%}
+    input = "srtobj:file, filters:var"
+    output = "outfile:file:{{in.srtobj | stem}}.filtered.RDS"
+    lang = config.lang.rscript
+    envs = { "invert": False }
+    script = "file://../scripts/scrna/SeuratFilter.R"
+
+
+class SeuratSubset(Proc):
+    """Subset a seurat object into multiple seruat objects
+
+    Input:
+        srtobj: The seurat object in RDS
+        subsets: The subsettings to apply. Could be a file or string in TOML, or
+            a python dictionary, with following keys:
+            - <name>: Name of the case
+                mutaters: Create new columns in the metadata
+                subset: A R expression that will pass to
+                    `subset(sobj, subset = ...)`
+                groupby: The column to group by, each value will be a case
+                    If groupby is given, subset will be ignored, each value
+                    of the groupby column will be a case
+
+    Output:
+        outdir: The output directory with the subset seurat objects
+
+    Envs:
+        ignore_nas: Ignore NA values?
+
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library('Seurat')")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library('dplyr')")
     """
+    input = "srtobj:file, subsets:var"
+    output = "outdir:dir:{{in.srtobj | stem}}.subsets"
+    envs = { "ignore_nas": True }
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/SeuratSubset.R"
+
+
+class Subset10X(Proc):
+    """Subset 10X data, mostly used for testing
+
+    Requires r-matrix to load matrix.mtx.gz
+
+    Input:
+        indir: The input directory
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        seed: The seed for random number generator
+        nfeats: The number of features to keep.
+            If <=1 then it will be the percentage of features to keep
+        ncells: The number of cells to keep.
+            If <=1 then it will be the percentage of cells to keep
+        feats_to_keep: The features/genes to keep.
+            The final features list will be `feats_to_keep` + `nfeats`
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}"
     envs = {
-        "filterfmt": "auto",  # subset or grouping
-        "invert": False,
-        "multicase": True,
+        "seed": 8525,
+        "nfeats": 0.1,
+        "ncells": 0.1,
+        "feats_to_keep": [],
     }
     lang = config.lang.rscript
-    script = "file://../scripts/scrna/SeuratFilter.R"
+    script = "file://../scripts/scrna/Subset10X.R"

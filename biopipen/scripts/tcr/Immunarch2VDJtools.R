@@ -12,7 +12,7 @@ for (sample in names(immdata$data)) {
     # see https://vdjtools-doc.readthedocs.io/en/master/input.html
     # for the input format
 
-    df = immdata$single[[sample]] %>%
+    df = immdata$data[[sample]] %>%
         transmute(
             count=Clones,
             frequency=Proportion,

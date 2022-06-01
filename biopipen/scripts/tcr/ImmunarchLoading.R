@@ -2,11 +2,16 @@
 library(immunarch)
 library(dplyr)
 library(tidyr)
+library(tibble)
+library(glue)
 library(bracer)
 
 metafile = {{ in.metafile | quote }}
 rdsfile = {{ out.rdsfile | quote }}
+metatxt = {{ out.metatxt | quote }}
 tmpdir = {{ envs.tmpdir | quote }}
+mode = {{ envs.mode | quote }}
+metacols = {{ envs.metacols | r}}
 
 metadata = read.table(
     metafile,
@@ -16,11 +21,10 @@ metadata = read.table(
     check.names = FALSE
 )
 
-meta_cols = colnames(metadata)
-if (!"Sample" %in% meta_cols) {
+if (!"Sample" %in% colnames(metadata)) {
     stop("Error: Column `Sample` is not found in metafile.")
 }
-if (!"TCRDir" %in% meta_cols) {
+if (!"TCRDir" %in% colnames(metadata)) {
     stop("Error: Column `TCRDir` is not found in metafile.")
 }
 
@@ -81,47 +85,29 @@ for (i in seq_len(nrow(metadata))) {
     file.symlink(normalizePath(annofile), file.path(datadir, paste0(sample, ext)))
 }
 
-immdata = repLoad(datadir)
-# drop TRAs for paired data
-immdata$single = list()
-immdata$raw = list()
-for (sample in names(immdata$data)) {
-    annofile = get_contig_annofile(
-        metadata[metadata$Sample == sample, "TCRDir"],
-        sample,
-        warn=FALSE
-    )
-    immdata$raw[[sample]] = read.csv2(
-        annofile,
-        header = TRUE,
-        row.names = NULL,
-        sep = ",",
-        check.names = FALSE
-    )
-    immdata$single[[sample]] = immdata$data[[sample]] %>%
-        separate_rows(
-            CDR3.nt, CDR3.aa, V.name, D.name, J.name, Sequence, chain,
-            sep=";"
-        ) %>%
-        filter(chain != "TRA") %>%
-        group_by(CDR3.nt, CDR3.aa, V.name, D.name, J.name, Sequence, chain) %>%
-        summarise(
-            Clones=sum(Clones),
-            Proportion=sum(Proportion),
-            V.end=V.end[1],
-            D.start=D.start[1],
-            D.end =D.end[1],
-            J.start=J.start[1],
-            VJ.ins=VJ.ins[1],
-            VD.ins=VD.ins[1],
-            DJ.ins=DJ.ins[1],
-            Barcode=paste(Barcode, collapse=";"),
-            raw_clonotype_id=paste(raw_clonotype_id, collapse=";"),
-            ContigID=paste(ContigID, collapse=";"),
-        ) %>%
-        as.data.frame()
+immdata = repLoad(datadir, .mode=mode)
+if (mode == "single") {
+    data = immdata$data
+    immdata$tra = list()
+    immdata$multi = list()
+    immdata$data = list()
+    for (name in names(data)) {
+        if (endsWith(name, "_TRA")) {
+            immdata$tra[substr(name, 1, nchar(name) - 4)] = data[name]
+        } else if (endsWith(name, "_TRB")) {
+            immdata$data[substr(name, 1, nchar(name) - 4)] = data[name]
+        } else {  # "X_Multi"
+            immdata$multi[substr(name, 1, nchar(name) - 6)] = data[name]
+        }
+
+    }
 }
 
+if (mode == "single") {
+    immdata$meta  = immdata$meta |>
+        filter(endsWith(Sample, "_TRB")) |>
+        mutate(Sample = substr(Sample, 1, nchar(Sample) - 4))
+}
 immdata$meta = left_join(
     immdata$meta,
     metadata %>% select(-"TCRDir"),
@@ -129,3 +115,26 @@ immdata$meta = left_join(
 )
 
 saveRDS(immdata, file=rdsfile)
+
+metadf = do.call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
+    # Clones  Proportion   CDR3.aa                       Barcode
+    # 5      4 0.008583691 CAVRDTGNTPLVF;CASSEYSNQPQHF   GTTCGGGCACTTACGA-1;TCTCTAAGTACCAGTT-1
+    # 6      4 0.008583691 CALTQAAGNKLTF;CASRPEDLRGQPQHF GCTTGAAGTCGGCACT-1;TACTCGCTCCTAAGTG-1
+    cldata = immdata$data[[i]][, unique(c(metacols, "Barcode"))]
+    # # A tibble: 4 × 5
+    # Sample                  Patient     Timepoint Tissue
+    # <chr>                   <chr>       <chr>     <chr>
+    # 1 MC1685Pt011-Baseline-PB MC1685Pt011 Baseline  PB
+    mdata = as.list(immdata$meta[i, ])
+    for (mname in names(mdata)) {
+        assign(mname, mdata[[mname]])
+    }
+
+    cldata |>
+        separate_rows(Barcode, sep=";") |>
+        distinct(Barcode, .keep_all = TRUE) |>
+        mutate(Barcode = glue("{{envs.prefix}}{Barcode}")) |>
+        column_to_rownames("Barcode")
+
+}))
+write.table(metadf, metatxt, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)

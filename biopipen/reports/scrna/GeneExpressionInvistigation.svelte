@@ -21,8 +21,11 @@
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{% assign config = job.in.configfile | read | toml_loads %}
-{% assign name = config.name or stem(job.out.outdir) %}
+{% if job.in.configfile %}
+{%  assign name = job.in.configfile | toml_load | attr: "name" %}
+{% else %}
+{%  assign name = job.ennvs.config | attr: "name" %}
+{% endif %}
 <h1>{{name | escape}}</h1>
 {%- endmacro -%}
 

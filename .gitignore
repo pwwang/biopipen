@@ -116,3 +116,5 @@ default-*-*-*-*-*.ipynb
 tests/test_data
 
 docs/index.md
+watch.sh
+.biopipen.toml

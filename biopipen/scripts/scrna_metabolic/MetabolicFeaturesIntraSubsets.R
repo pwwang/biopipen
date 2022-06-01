@@ -3,9 +3,9 @@ source("{{biopipen_dir}}/utils/gsea.R")
 library(parallel)
 library(scater)
 
-sceobjfile <- {{ in.sceobj | r }}
+sceobjfiles <- {{ in.sceobjs | r }}
 gmtfile <- {{ in.gmtfile | r }}
-config <- {{ in.configfile | read | toml_loads | r }}
+config <- {{ in.configfile | config: "toml" | r }}
 outdir <- {{ out.outdir | r }}
 ncores <- {{ envs.ncores | r }}
 fgsea <- {{ envs.fgsea | r }}
@@ -13,8 +13,12 @@ top <- {{ envs.top | r }}
 prerank_method <- {{ envs.prerank_method | r }}
 
 set.seed(8525)
+groupby = config$grouping$groupby
+if (grepl("^ident", groupby, ignore.case = TRUE)) {
+    groupby = "seurat_clusters"
+}
 
-sceobj <- readRDS(sceobjfile)
+sceobj <- do.call(cbind, lapply(sceobjfiles, readRDS))
 
 do_one_design <- function(sce, dsname, case, control, groupdir) {
     print(paste("  Design:", dsname, "(", case, ",", control, ")"))
@@ -22,12 +26,12 @@ do_one_design <- function(sce, dsname, case, control, groupdir) {
     sce_control = sce[, sce$.subset == control]
     exprs_case = assay(sce_case, "exprs")
     exprs_control = assay(sce_control, "exprs")
+    odir = file.path(groupdir, dsname)
+    dir.create(odir, showWarnings = FALSE)
     if (ncol(exprs_case) < 3 || ncol(exprs_control) < 3) {
         print("          Skip (not enough cells)")
         return (NULL)
     }
-    odir = file.path(groupdir, dsname)
-    dir.create(odir, showWarnings = FALSE)
     if (fgsea) {
         ranks = prerank(
             cbind(exprs_case, exprs_control),
@@ -55,7 +59,7 @@ do_one_design <- function(sce, dsname, case, control, groupdir) {
 
 do_one_group <- function(group) {
     print(paste("- Group:", group, "..."))
-    sce = sceobj[rowData(sceobj)$metabolic, as.character(sceobj[[config$grouping_name]]) == group]
+    sce = sceobj[rowData(sceobj)$metabolic, as.character(sceobj[[groupby]]) == group]
     groupname = if (is.na(as.integer(group))) group else paste0("Cluster", group)
     groupdir = file.path(outdir, groupname)
     dir.create(groupdir, showWarnings = FALSE)
@@ -71,8 +75,11 @@ do_one_group <- function(group) {
     }
 }
 
-mclapply(
-    as.character(unique(sceobj[[config$grouping_name]])),
+x = mclapply(
+    as.character(unique(sceobj[[groupby]])),
     do_one_group,
     mc.cores = ncores
 )
+if (any(unlist(lapply(x, class)) == "try-error")) {
+    stop("mclapply error")
+}

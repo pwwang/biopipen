@@ -28,15 +28,31 @@ class ImmunarchLoading(Proc):
 
     Output:
         rdsfile: The RDS file with the data and metadata
+        metatxt: The meta data of the cells, used to attach to the Seurat object
 
     Envs:
         tmpdir: The temporary directory to link all data files.
+        prefix: The prefix to the barcodes. You can use placeholder like
+            `{{Sample}}_` to use the meta data from the immunarch object
+        mode: Either "single" for single chain data or "paired" for
+            paired chain data. For `single`, only TRB chain will be kept
+            at `immdata$data`, information for other chains will be
+            saved at `immdata$tra` and `immdata$multi`.
+        metacols: The columns to be exported from the metatxt.
     """
 
     input = "metafile:file"
-    output = "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS"
+    output = [
+        "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS",
+        "metatxt:file:{{in.metafile | stem}}.tcr.txt",
+    ]
     lang = config.lang.rscript
-    envs = {"tmpdir": config.path.tmpdir}
+    envs = {
+        "tmpdir": config.path.tmpdir,
+        "prefix": "{Sample}_",
+        "mode": "single",
+        "metacols": ["Clones", "Proportion", "CDR3.aa"],
+    }
     script = "file://../scripts/tcr/ImmunarchLoading.R"
 
 
@@ -55,15 +71,11 @@ class ImmunarchFilter(Proc):
 
     Output:
         outfile: The filtered `immdata`
-        groupfile: Also a group file with first column the groups and other
-            columns the cell barcodes in the samples
+        groupfile: Also a group file with rownames as cells and column names as
+            each of the keys in `in.filterfile` or `envs.filters`. The values
+            will be subkeys of the dicts in `in.filterfile` or `envs.filters`.
 
     Envs:
-        merge: Merge the cells from the samples, instead of list cells
-            for different samples. The cell ids will be preficed with the sample
-            name, connected with `_`. The column name will be `ALL` instead.
-        clonotype: Use clonotype (CDR3.aa) as the group. The name from
-            `envs.filters` will be ignored
         filters: The filters to filter the data
             You can have multiple cases (groups), the names will be the keys of
             this dict, values are also dicts with keys the methods supported by
@@ -80,32 +92,49 @@ class ImmunarchFilter(Proc):
             `dplyr::filter()` to filter the count matrix.
             You can also specify `ORDER` to define the filtration order, which
             defaults to 0, higher `ORDER` gets later executed.
+            Each subkey/subgroup must be exclusive
             For example:
-            >>> {{
-            >>>   "Top20BM_Post": {{
-            >>>     "by.meta": {{"Source": "BM", "Status": "Post"}},
-            >>>     "by.count": {{
-            >>>         "ORDER": 1, "filter": "TOTAL %in% TOTAL[1:20]"
-            >>>     }}
-            >>>   }}
-            >>> }}
+            >>> {
+            >>>   "name": "BM_Post_Clones",
+            >>>   "filters" {
+            >>>     "Top_20": {
+            >>>       "SAVE": True,  # Save the filtered data to immdata
+            >>>       "by.meta": {"Source": "BM", "Status": "Post"},
+            >>>       "by.count": {
+            >>>         "ORDER": 1, "filter": "TOTAL %%in%% TOTAL[1:20]"
+            >>>        }
+            >>>     },
+            >>>     "Rest": {
+            >>>       "by.meta": {"Source": "BM", "Status": "Post"},
+            >>>       "by.count": {
+            >>>         "ORDER": 1, "filter": "!TOTAL %%in%% TOTAL[1:20]"
+            >>>        }
+            >>>   }
+            >>> }
+        prefix: The prefix will be added to the cells in the output file
+            Placeholders like `{Sample}_` can be used to from the meta data
+        metacols: The extra columns to be exported to the group file.
     """
     input = "immdata:file, filterfile:file"
-    output = [
-        "outfile:file:{{in.immdata | stem}}.RDS",
-        "groupfile:file:{{in.immdata | stem}}.groups.txt"
-    ]
+    output = """
+        outfile:file:{{in.immdata | stem}}.RDS,
+        groupfile:file:{% if in.filterfile -%}
+            {{- in.filterfile | toml_load | attr: "name" | append: ".txt" -}}
+        {%- else -%}
+            {{- envs.filters | attr: "name" | append: ".txt" -}}
+        {%- endif -%}
+    """
     envs = {
-        "merge": False,
-        "clonotype": False,
+        "prefix": "{Sample}_",
         "filters": {},
+        "metacols": ["Clones", "Proportion", "CDR3.aa"],
     }
     lang = config.lang.rscript
     script = "file://../scripts/tcr/ImmunarchFilter.R"
 
 
-class ImmunarchBasic(Proc):
-    """Immunarch - Basic statistics and clonality
+class Immunarch(Proc):
+    """Exploration of Single-cell and Bulk T-cell/Antibody Immune Repertoires
 
     See https://immunarch.com/articles/web_only/v3_basic_analysis.html
 
@@ -134,49 +163,6 @@ class ImmunarchBasic(Proc):
         overlap_methods: The methods used for `repOverlap()`, each will
             generate a heatmap.
         overlap_redim: Plot the samples with these dimension reduction methods
-    """
-
-    input = "immdata:file"
-    output = "outdir:dir:{{in.immdata | stem}}.basic"
-    lang = config.lang.rscript
-    envs = {
-        # basic statistics
-        "volume_by": {},
-        "len_by": {},
-        "count_by": {},
-        # clonality
-        "top_clone_marks": [10, 100, 1000, 3000, 10000],
-        "top_clone_by": {},
-        "rare_clone_marks": [1, 3, 10, 30, 100],
-        "rare_clone_by": {},
-        "hom_clone_marks": dict(
-            Small=0.0001,
-            Medium=0.001,
-            Large=0.01,
-            Hyperexpanded=1,
-        ),
-        "hom_clone_by": {},
-        # overlapping
-        "overlap_methods": ["public"],
-        "overlap_redim": ["tsne", "mds"],
-    }
-    script = "file://../scripts/tcr/ImmunarchBasic.R"
-    plugin_opts = {"report": "file://../reports/tcr/ImmunarchBasic.svelte"}
-
-
-class ImmunarchAdvanced(Proc):
-    """Immunarch - Advanced analysis
-
-    Including gene usage, diversity estimation, tracking clonotype changes and
-    kmer/motif analysis
-
-    Input:
-        immdata: The data loaded by `immunarch::repLoad()`
-
-    Output:
-        outdir: The output directory
-
-    Envs:
         gu_by: Groupings to show gene usages
             Multiple groups supported, for example:
             `volume_by = {{0: "Status", 1: ["Status", "Sex"]}}`
@@ -213,9 +199,28 @@ class ImmunarchAdvanced(Proc):
     """
 
     input = "immdata:file"
-    output = "outdir:dir:{{in.immdata | stem}}.advanced"
+    output = "outdir:dir:{{in.immdata | stem}}.immunarch"
     lang = config.lang.rscript
     envs = {
+        # basic statistics
+        "volume_by": {},
+        "len_by": {},
+        "count_by": {},
+        # clonality
+        "top_clone_marks": [10, 100, 1000, 3000, 10000],
+        "top_clone_by": {},
+        "rare_clone_marks": [1, 3, 10, 30, 100],
+        "rare_clone_by": {},
+        "hom_clone_marks": dict(
+            Small=0.0001,
+            Medium=0.001,
+            Large=0.01,
+            Hyperexpanded=1,
+        ),
+        "hom_clone_by": {},
+        # overlapping
+        "overlap_methods": ["public"],
+        "overlap_redim": ["tsne", "mds"],
         # gene usage
         "gu_by": {},
         "gu_top": 30,
@@ -235,9 +240,11 @@ class ImmunarchAdvanced(Proc):
             5: {"head": 10, "position": "stack", "log": False, "motif": "self"}
         },
     }
-    script = "file://../scripts/tcr/ImmunarchAdvanced.R"
-    order = 1
-    plugin_opts = {"report": "file://../reports/tcr/ImmunarchAdvanced.svelte"}
+    script = "file://../scripts/tcr/Immunarch.R"
+    plugin_opts = {
+        "report": "file://../reports/tcr/Immunarch.svelte",
+        "report_paging": 3,
+    }
 
 
 class CloneResidency(Proc):

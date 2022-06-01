@@ -3,8 +3,7 @@ source("{{biopipen_dir}}/utils/rnaseq.R")
 library(scater)
 library(Seurat)
 
-impdir = {{in.impdir | r}}
-srtdir = {{in.srtdir | r}}
+impfiles = {{in.impfiles | r}}
 gmtfile = {{in.gmtfile | r}}
 refexon = {{envs.refexon | r}}
 outfile = {{out.outfile | r}}
@@ -19,12 +18,10 @@ gmtPathways <- function(gmt.file) {
 pathways = gmtPathways(gmtfile)
 metabolics = unique(as.vector(unname(unlist(pathways))))
 
-impfiles = sort(Sys.glob(file.path(impdir, "*.RDS")))
-srtobjfiles = sort(Sys.glob(file.path(srtdir, "*.RDS")))
-
 sceobjs = list()
 for (i in seq_len(length(impfiles))) {
-    counts = readRDS(impfiles[i])
+    sobj = readRDS(impfiles[i])
+    counts = GetAssayData(sobj, "counts")
     tpms = unit_conversion(
         counts,
         "count",
@@ -32,9 +29,11 @@ for (i in seq_len(length(impfiles))) {
         args = list(genelen = glenFromGFFExons(refexon))
     )
     counts = counts[rownames(tpms),]
-    srt =  as.SingleCellExperiment(readRDS(srtobjfiles[i]), assay="RNA")
+    srt =  as.SingleCellExperiment(sobj, assay="RNA")
     cdata = colData(srt)
-    cdata$.subset = tools::file_path_sans_ext(basename(impfiles[i]))
+    bname = tools::file_path_sans_ext(basename(impfiles[i]))
+    # jobname.case_subset
+    cdata$.subset = sub("^.+?_", "", bname)
     rdata = rowData(srt)[rownames(tpms),,drop=F]
     rdata$metabolic = FALSE
     rdata[rownames(rdata) %in% metabolics, "metabolic"] = TRUE

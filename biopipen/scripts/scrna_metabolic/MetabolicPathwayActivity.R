@@ -8,7 +8,7 @@ library(ggprism)
 
 sceobjfile <- {{ in.sceobj | r }}
 gmtfile <- {{ in.gmtfile | r }}
-config <- {{ in.configfile | read | toml_loads | r }}
+config <- {{ in.configfile | config: "toml" | r }}
 outdir <- {{ out.outdir | r }}
 ntimes <- {{ envs.ntimes | r }}
 ncores <- {{ envs.ncores | r }}
@@ -16,6 +16,11 @@ heatmap_devpars <- {{ envs.heatmap_devpars | r }}
 violin_devpars <- {{ envs.violin_devpars | r }}
 
 set.seed(8525)
+
+groupby = config$grouping$groupby
+if (grepl("^ident", groupby, ignore.case = TRUE)) {
+    groupby = "seurat_clusters"
+}
 
 ## gmtPathways is copied from fgsea package.
 gmtPathways <- function(gmt.file) {
@@ -58,7 +63,7 @@ do_one_subset <- function(subset) {
     subset_sce <- sce[, sce$.subset == subset]
     norm_tpm <- assay(subset_sce, "tpm")
 
-    all_cell_types <- as.vector(subset_sce[[config$grouping_name]])
+    all_cell_types <- as.vector(subset_sce[[groupby]])
     cell_types <- unique(all_cell_types)
     metabolics <- unique(as.vector(unname(unlist(pathways))))
 
@@ -96,6 +101,7 @@ do_one_subset <- function(subset) {
 
         pathway_metabolic_tpm <- norm_tpm[genes_comm, , drop=FALSE]
         pathway_metabolic_tpm <- pathway_metabolic_tpm[rowSums(pathway_metabolic_tpm) > 0, , drop=FALSE]
+        if (nrow(pathway_metabolic_tpm) < 5) next
 
         mean_exp_eachCellType <- apply(pathway_metabolic_tpm, 1, function(x) by(x, all_cell_types, mean))
 
@@ -194,6 +200,8 @@ do_one_subset <- function(subset) {
     plotHeatmap(
         hmdata,
         args = list(
+            name = "Pathway activity",
+            rect_gp = gpar(col = "white", lwd = 0.5),
             row_names_side = "left",
             row_dend_side = "right",
             row_names_max_width = max_text_width(

@@ -15,30 +15,45 @@
 {% endmacro %}
 
 
-{%- macro table_of_images(srcs, caps=None, col=2, max_width="90%") -%}
-<table class="image-table">
-{% for i, src in enumerate(srcs) %}
-{%  if i % col == 0 %}
+{%- macro table_of_images_script() -%}
+import { Image } from "../components";
+{%- endmacro -%}
+
+{%- macro table_of_images(srcs, caps=None, col=2, table_width=100) -%}
+<table class="image-table" style="background-color: var(--cds-background-hover); width: 100%">
+
+{% for batch_srcs in srcs | batch: col, "" %}
+{% set outer_loop = loop %}
 <tr>
-{%  endif %}
-<td style="width: {{100.0/col}}%; background-color: var(--cds-background-hover); vertical-align:top;">
-    {% if caps is none %}
-    <div style="text-align: center; padding-top: 10px; margin-bottom: -10px;">{{ src | stem }}</div>
-    {% elif caps %}
-    <div style="text-align: center; padding-top: 10px; margin-bottom: -10px;">{{ caps[i] }}</div>
+    {% for src in batch_srcs %}
+        {% set i = col * outer_loop.index0 + loop.index0 %}
+        {% if i >= len(srcs) %}
+            <td style="width: {{table_width / col}}%"></td>
+        {% else %}
+        <td style="width: {{table_width / col}}%; vertical-align:top;">
+            {% if caps is none %}
+            <div
+                style="padding-left: 28px; font-weight: bold; padding-top: 10px; margin-bottom: -10px;">
+                {{ src | stem }}
+            </div>
+            {% elif caps %}
+            <div
+                style="padding-left: 28px; font-weight: bold; padding-top: 10px; margin-bottom: -10px;">
+                {{ caps[i] }}
+            </div>
+            {% endif %}
+            <Image
+                style="max-width: 90%"
+                src={{src | quote}}
+            />
+        </td>
+        {% endif %}
+    {% endfor %}
+    {% if table_width < 100 %}
+    <td style="width: {{100 - table_width}}%"></td>
     {% endif %}
-    <Image src={{src | quote}} style="max-width: {{max_width}}" />
-</td>
-{%  if (i+1) % col == 0 %}
 </tr>
-{%  endif %}
-{% endfor  %}
-{% if len(srcs) % col > 0 %}
-{%  for i in range(col - len(srcs) % col) %}
-<td style="width: {{100.0/col}}%; background-color: var(--cds-background-hover); vertical-align:top;">
-</td>
-{%  endfor %}
-</tr>
-{% endif %}
+{% endfor %}
+
 </table>
 {%- endmacro -%}
