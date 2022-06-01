@@ -5,7 +5,7 @@ library(Seurat)
 
 srtobj = {{in.srtobj | quote}}
 metafile = {{in.metafile | r}}
-mutaters = {{in.mutaters | config: "toml" | r}}
+mutaters = {{in.mutaters | default: {} | config: "toml" | r}}
 rdsfile = {{out.rdsfile | quote}}
 
 srt = readRDS(srtobj)
