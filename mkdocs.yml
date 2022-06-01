@@ -23,6 +23,6 @@ extra_css:
 nav:
     - 'Home': 'index.md'
     - 'Pipelines':
-        scrna_metabolic: pipelines/scrna_metabolic.md
+       - 'Single-cell Metabolic Landscape': pipelines/scrna_metabolic.md
     - 'API': mkapi/api/biopipen
     - 'Change log': 'CHANGELOG.md'
