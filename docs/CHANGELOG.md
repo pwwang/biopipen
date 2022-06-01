@@ -1,3 +1,20 @@
+## 0.3.0
+
+- ♻️ Refactor some processes for immunopipe
+- 🩹 [scrna.SeuratPreparing] Remove tmp datadir for scrna.SeuratPreparing if exsits
+- 🩹 [scrna.SeuratPreparing] Add a TODO comment in scrna.SeuratPreparing (#26)
+- ✨ [scrna.Subset10X] Add `scrna.Subset10X`
+- 💥 [tcr.Immunarch] Merge `tcr.ImmunarchBasic` and `tcr.ImmunarchAdvanced` into `tcr.Immunarch`
+- 🩹 [tcr.VJUsage] Fix R script being generated at current direct for `tcr.VJUsage`
+- ✨ [scrna.SeuratMetadataMutater] Add `scrna.SeuratMetadataMutater`
+- 🐛 [tcr.Immunarch] Fix clonotype tracking not selecting top clones by given top N
+- ♻️ [pipeline.scrna_metabolic] Refactor scrna_metabolic
+- 📝 [pipeline.scrna_metabolic] Update docs for scrna_metabolic pipeline
+- ✨ [pipeline.scrna_metabolic] Allow scrna_metabolic pipeline to handle multiple cases
+- 🚑 [scrna.ExprImpute] Fix reticulate not using right python
+- 🚑 [scrna.SeuratMetadataMutater] Fix error when input mutaters in None
+- 🚑 [scrna_metabolic.MetabolicInputs] Fix diot not imported in script
+
 ## 0.2.1
 
 - User rtoml over toml
