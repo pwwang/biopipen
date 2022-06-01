@@ -4,15 +4,27 @@
     import { Image } from "@@";
 </script>
 
+{%- macro report_job(job, h=2) -%}
+{%- set name = job.in.configfile | config: "toml" | attr: "name" -%}
+{%- if name or proc.size > 1 -%}
+{%- else -%}
+{%- set h = 1 -%}
+{%- endif -%}
 
-{%- macro report_job(job, h=1) -%}
-<h{{h}}>Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities</h{{h}}>
+{%- for ssdir in job.out.outdir | glob: "*" -%}
+<h{{h}}>{{ ssdir | stem }}</h{{h}}>
+
+<h{{h+1}}>Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities</h{{h+1}}>
 <Image src="{{job.out.outdir | glob: '*' | first | joinpaths: 'pathway_heterogeneity.png'}}" />
+
+{%- endfor -%}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{%- set name = job.out.outdir | glob: "*" | first | stem -%}
-<h1>{{name | escape}}</h1>
+{%- set name = job.in.configfile | config: "toml" | attr: "name" -%}
+{%- if name or proc.size > 1 -%}
+<h1>{{name | default: "Job #" + (job.index+1) | escape}}</h1>
+{%- endif -%}
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}

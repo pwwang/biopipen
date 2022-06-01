@@ -18,6 +18,7 @@ Start Process:
     MetabolicInputs
 """
 from typing import Any, Mapping
+from pathlib import Path
 
 from datar.all import tibble
 from pipen import Pipen
@@ -66,6 +67,7 @@ def build_processes(options: Mapping[str, Any] = None):
                 dictionary as config for the analysis
                 (based on `envs.config_fmt`)
                 They keys include:
+                - name: (optional) Used in reports
                 - grouping: How do we group the cells
                   groupby - The column used to group by if it exists
                   mutaters - Add new columns to the metadata to group by
@@ -132,25 +134,39 @@ def build_processes(options: Mapping[str, Any] = None):
                 ],
             )
 
+    def _get_subset_config(configfiles):
+        out = []
+        for i, conf in enumerate(configfiles):
+            conf = _as_config(conf)
+            alias = conf["subsetting"].get("alias", "subset")
+            key = f"{i}.{alias}"
+            out.append({key: conf["subsetting"]})
+        return out
+
     class MetabolicCellSubsets(SeuratSubset):
         requires = MetabolicCellGroups, MetabolicInputs
         input_data = lambda ch1, ch2: tibble(
             srtobj=ch1.rdsfile,
-            subsets=[
-                {
-                    _as_config(configfile)["subsetting"].get("alias", "subset"):
-                    _as_config(configfile)["subsetting"]
-                }
-                for configfile in ch2.configfile
-            ],
+            subsets=_get_subset_config(ch2.configfile),
         )
 
     class MetabolicExprImputation(ExprImpute):
         """Impute the dropout values in scRNA-seq data."""
+        #                      jobname.case_xxx.RDS
         requires = MetabolicCellSubsets
         input_data = lambda ch: tibble(
             infile=expand_dir(ch, pattern="*.RDS")
         )
+
+    def _group_imputed_files(impfiles):
+        """Use the index in the name to group the imputed files"""
+        out = {}
+        for impfile in impfiles:
+            idx, _ = Path(impfile).stem.split(".", 1)
+            idx = int(idx)
+            out.setdefault(idx, []).append(impfile)
+
+        return [out[key] for key in sorted(out)]
 
     class MetabolicPrepareSCE(Proc):
         """Prepare SingleCellExperiment objects
@@ -167,10 +183,13 @@ def build_processes(options: Mapping[str, Any] = None):
         requires = MetabolicExprImputation, MetabolicInputs
         input = "impfiles:files, gmtfile:file"
         input_data = lambda ch1, ch2: tibble(
-            impfiles=ch1.values.tolist(),
+            impfiles=_group_imputed_files(ch1.outfile),
             gmtfile=ch2.gmtfile,
         )
-        output = "outfile:file:metabolic.sce.RDS"
+        output = (
+            "outfile:file:"
+            "{{in.impfiles | first | stem | split: '.' | first}}.sce.RDS"
+        )
         lang = config.lang.rscript
         envs = {"refexon": config.ref.refexon}
         script = "file://../scripts/scrna_metabolic/MetabolicPrepareSCE.R"
@@ -187,7 +206,7 @@ def build_processes(options: Mapping[str, Any] = None):
 
         requires = MetabolicPrepareSCE, MetabolicInputs
         input = "sceobj:file, configfile:file"
-        output = "outfile:file:{{in.sceobj | stem}}.sce.RDS"
+        output = "outfile:file:{{in.sceobj | stem0}}.sce.RDS"
         input_data = lambda ch1, ch2: tibble(
             sceobj=ch1.outfile,
             configfile=ch2.configfile,

@@ -7,6 +7,7 @@ tryCatch({
     file.symlink(conda_prefix, "miniconda3")
 }, error=function(e) {})
 
+Sys.setenv(RETICULATE_PYTHON = {{envs.rmagic_args.python | r}})
 reticulate::use_python({{envs.rmagic_args.python | r}})
 
 library(Rmagic)

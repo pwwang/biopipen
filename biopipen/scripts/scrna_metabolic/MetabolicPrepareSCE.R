@@ -31,7 +31,9 @@ for (i in seq_len(length(impfiles))) {
     counts = counts[rownames(tpms),]
     srt =  as.SingleCellExperiment(sobj, assay="RNA")
     cdata = colData(srt)
-    cdata$.subset = tools::file_path_sans_ext(basename(impfiles[i]))
+    bname = tools::file_path_sans_ext(basename(impfiles[i]))
+    # jobname.case_subset
+    cdata$.subset = sub("^.+?_", "", bname)
     rdata = rowData(srt)[rownames(tpms),,drop=F]
     rdata$metabolic = FALSE
     rdata[rownames(rdata) %in% metabolics, "metabolic"] = TRUE

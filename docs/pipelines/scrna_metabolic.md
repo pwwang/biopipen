@@ -203,18 +203,24 @@ Save at `test_data/scrna_metabolic/config.toml`:
 [MetabolicInputs.in]
 metafile = ["test_data/scrna_metabolic/seurat_obj.rds"]
 gmtfile = ["test_data/scrna_metabolic/KEGG_metabolism.gmt"]
-config = [
-"""
-grouping = "Idents"
-grouping_name = "Cluster"
-[subsetting]
-post = "treatment == 'post' & patient == 'su001'"
-pre = "treatment == 'pre' & patient == 'su001'"
-[design]
+
+[[MetabolicInputs.in.config]]
+# optional, used to identify the subset objects from the same case
+name = "case1"
+
+[MetabolicInputs.in.config.grouping]
+groupby = "Idents"
+
+[MetabolicInputs.in.config.subsetting]
+alias = "Timepoint"
+groupby = "timepoint"
+
+[MetabolicInputs.in.config.subsetting.mutaters]
+timepoint = "if_else(patient != 'su001', NA_character_, treatment)"
+
+[MetabolicInputs.in.config.design]
 # we also want to do some intra-subset comparisons
 post_vs_pre = ["post", "pre"]
-""",
-]
 ```
 
 ### Run the pipeline
