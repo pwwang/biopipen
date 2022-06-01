@@ -10,52 +10,52 @@ An abstract from https://github.com/LocasaleLab/Single-Cell-Metabolic-Landscape
 
 ## Run the pipeline
 
+### Run from CLI:
+
 ```shell
 pipen run scrna_metabolic metabolic_landscape [options]
 ```
 
+### Serve as part of a pipeline:
+
+```python
+from biopipen.namespace.scrna_metabolic import build_processes
+
+MetabolicInputs = build_processes(<options>)
+
+# MetabolicInputs is a process
+# You can specify it's dependents so that the whole metabolic landscape pipeline
+# works as a part of another pipeline
+```
+
 ## Inputs
 
-- `metafile`: A metafile indicating the metadata
-
-    Two columns are required: `Sample` and `RNADir`
+- `metafile`: A metafile indicating the metadata or the rds file with seruat object if `config.pipeline.scrna_metabolic.clustered` is `True`.
+    For a meta file, Two columns are required: `Sample` and `RNADir`
     `Sample` should be the first column with unique identifiers
     for the samples and `RNADir` indicates where the expression
-    matrice are.
+    matrices are.
 
     Currently only 10X data is supported
 
-    You can also pass a `Seurat` with metadata attached.
-
-- `subsetfile`: A file with information to subset the cells.
-
-    Each subset of cells will be treated separately.
-    See `subsetting` of `in.config`
-
-- `groupfile`: The group file to group the cells.
-
-    Rows are groups, and columns are cell IDs
-    (without sample prefices)
-    from samples or a single column `ALL` but with all cell IDs with
-    sample prefices. Or it can be served as a config file for
-    subsetting the cells.
-    See `grouping` of `in.config`
-
 - `gmtfile`: The GMT file with the metabolic pathways
 
-- `config`: String of configurations in TOML for the pipeline
-
-    - `grouping_name`: The name of the groupings. Default: `Group`
-    - `grouping`: How the cells should be grouped.
-        If `"Input"`, use `in.groupfile` directly to group the cells
-        else if `Idents`, use `Idents(srtobj)` as groups. Otherwise
-        (`Config`), it is TOML config with
-        `name => condition` pairs. The `condition` will be passed to
-        `subset(srtobj, ...)` to get the subset of cells
-    - `subsetting`: Similar as `grouping`, indicating how to use
-        `in.subsetfile` to subset the cells.
-    - `design`: For intra-subset comparisons. For example:
-        `case1 = [<subset1>, <subset2>]`
+- `config`: The configuration file, string in TOML format or a python
+    dictionary as config for the analysis
+    (based on `envs.config_fmt`)
+    They keys include:
+    - grouping: How do we group the cells
+        groupby - The column used to group by if it exists
+        mutaters - Add new columns to the metadata to group by
+        They are passed to `sobj@meta.data |> mutate(...)`
+    - subsetting: How do we subset the data. The imputation
+        will be done in each subset separately
+        groupby - The column used to subset if it exists
+        alias - The alias of the subset working as a prefix to subset
+        names
+        mutaters - Add new columns to the metadata to subset by
+    - design: What kind of comparisons are we doing?
+        It should be the values of subsetting `groupby`s
 
 ## A step-by-step example
 
@@ -205,7 +205,6 @@ metafile = ["test_data/scrna_metabolic/seurat_obj.rds"]
 gmtfile = ["test_data/scrna_metabolic/KEGG_metabolism.gmt"]
 config = [
 """
-name = "Patient: su001"
 grouping = "Idents"
 grouping_name = "Cluster"
 [subsetting]
@@ -216,8 +215,6 @@ pre = "treatment == 'pre' & patient == 'su001'"
 post_vs_pre = ["post", "pre"]
 """,
 ]
-# you can have multiple cases
-# config = [<config1>, <config2>]
 ```
 
 ### Run the pipeline
@@ -250,4 +247,3 @@ There are 4 parts of the results:
 
     The pathway enrichment analysis in detail by the designs (defined by `design` in the configration) for each group.
     The designs are basically comparisons between subsets, and that'ss why this is called `intra-subsets`
-

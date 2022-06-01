@@ -59,7 +59,7 @@ def build_processes(options: Mapping[str, Any] = None):
                 For a meta file, Two columns are required: `Sample` and `RNADir`
                 `Sample` should be the first column with unique identifiers
                 for the samples and `RNADir` indicates where the expression
-                matrice are.
+                matrices are.
                 Currently only 10X data is supported
             gmtfile: The GMT file with the metabolic pathways
             config: The configuration file, string in TOML format or a python
