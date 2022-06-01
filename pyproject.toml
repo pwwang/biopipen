@@ -8,11 +8,15 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.7.1"
 pipen = "^0.3"
+pipen-filters = "^0.1"
 cmdy = "^0.5"
 datar = "^0.8"
+mygene = {version = "^3.2.2", optional = true}
+
+[tool.poetry.extras]
+test = ["mygene"]
 
 [tool.poetry.dev-dependencies]
-pytest = "^7"
 
 [tool.poetry.plugins.pipen_cli_run]
 bam = "biopipen.namespaces.bam"
