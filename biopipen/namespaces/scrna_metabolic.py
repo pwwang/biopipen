@@ -20,25 +20,27 @@ Start Process:
 from typing import Any, Mapping
 from pathlib import Path
 
-from datar.all import tibble
+from datar.tibble import tibble
 from pipen import Pipen
 from pipen.channel import expand_dir
-from pipen_filters.filters import FILTERS
 from ..core.config import config
 from ..core.proc import Proc
 
 OPTIONS = {
-    "clustered": config.pipeline.scrna_metabolic.clustered,
+    "clustered": False,
     "intra-subset": True,
 }
 
 
 def _as_config(conf):
+    from pipen_filters.filters import FILTERS
     return FILTERS["config"](conf, loader="toml")
 
 
 def build_processes(options: Mapping[str, Any] = None):
     """Build processes for metabolic landscape analysis pipeline"""
+
+
     from .scrna import (
         ExprImpute,
         SeuratPreparing,
