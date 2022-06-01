@@ -7,11 +7,15 @@ library(ggprism)
 
 sceobjfile <- {{ in.sceobj | r }}
 gmtfile <- {{ in.gmtfile | r }}
-config <- {{ in.configfile | read | toml_loads | r }}
+config <- {{ in.configfile | config: "toml" | r }}
 outdir <- {{ out.outdir | r }}
 envs <- {{envs | r}}
 
 set.seed(8525)
+groupby = config$grouping$groupby
+if (grepl("^ident", groupby, ignore.case = TRUE)) {
+    groupby = "seurat_clusters"
+}
 
 sceobj <- readRDS(sceobjfile)
 do_one_subset <- function(subset) {
@@ -19,7 +23,7 @@ do_one_subset <- function(subset) {
     dir.create(subset_dir, showWarnings = FALSE)
     subset_sce <- sceobj[, sceobj$.subset == subset]
     metabolic_sce <- subset_sce[rowData(subset_sce)$metabolic, ]
-    all_groups = as.character(metabolic_sce[[config$grouping_name]])
+    all_groups = as.character(metabolic_sce[[groupby]])
     groups <- unique(all_groups)
 
     enrich_data_df <- data.frame(x = NULL, y = NULL, NES = NULL, PVAL = NULL)

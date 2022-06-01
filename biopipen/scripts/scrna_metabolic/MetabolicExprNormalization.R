@@ -3,13 +3,17 @@ source("{{biopipen_dir}}/utils/rnaseq.R")
 library(scran)
 
 sceobjfile = {{in.sceobj | r}}
-config = {{in.configfile | read | toml_loads | r}}
+config = {{in.configfile | config: "toml" | r}}
 outfile = {{out.outfile | r}}
 dropout_cutoff = {{envs.dropout | r}}
 refexon = {{envs.refexon | r}}
+groupby = config$grouping$groupby
+if (grepl("^ident", groupby, ignore.case = TRUE)) {
+    groupby = "seurat_clusters"
+}
 
 selected_impute_sce = readRDS(sceobjfile)
-cell_types = unique(selected_impute_sce[[config$grouping_name]])
+cell_types = unique(selected_impute_sce[[groupby]])
 
 gene_select_mat = matrix(
     FALSE,
@@ -19,7 +23,7 @@ gene_select_mat = matrix(
 )
 
 for(c in cell_types){
-  each_sce = selected_impute_sce[,selected_impute_sce[[config$grouping_name]] == c]
+  each_sce = selected_impute_sce[,selected_impute_sce[[groupby]] == c]
   each_exp = assay(each_sce,"exprs")
   dropout_rate = apply(each_exp, 1, function(x) sum(x>0)/ncol(each_exp))
   select = dropout_rate >= dropout_cutoff
@@ -41,7 +45,7 @@ selected_impute_counts = sweep(selected_impute_tpm, 1, genelen, FUN = "*")
 scran_sf = tryCatch({
     computeSumFactors(
         SingleCellExperiment(list(counts=selected_impute_counts[low_dropout_genes,])),
-        clusters=selected_impute_sce[[config$grouping_name]]
+        clusters=selected_impute_sce[[groupby]]
     )
 }, error = function(e) {
     # in case it is a small subset, some clusters are missing...

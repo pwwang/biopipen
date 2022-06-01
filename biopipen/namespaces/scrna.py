@@ -61,6 +61,16 @@ class SeuratPreparing(Proc):
     Envs:
         ncores: Number of cores to use
 
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-future
+          check: |
+            {{proc.lang}} <(echo "library(future)")
+        - name: r-bracer
+          check: |
+            {{proc.lang}} <(echo "library(bracer)")
     """
 
     input = "metafile:file"
@@ -86,6 +96,17 @@ class SeuratClustering(Proc):
 
     Envs:
         FindClusters: Arguments to `FindClusters()`
+
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-tidyr
+          check: |
+            {{proc.lang}} <(echo "library(tidyr)")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library(dplyr)")
     """
 
     input = "srtobj:file"
@@ -103,20 +124,28 @@ class SeuratMetadataMutater(Proc):
         metafile: Additional metadata
             A tab-delimited file with columns as meta columns and rows as
             cells.
+        mutaters: A TOML string, file or a python dict to create new columns
+            in metadata. They key-value will be evaluated
+            with `srtobj@meta.data |> mutate(<key> = <value>)`
+            The keys could be from `in.metafile`
 
     Output:
         rdsfile: The seurat object with the additional metadata
 
-    Envs:
-        mutaters: A dictionary of mutates with keys the new meta columns
-            and values the new meta values. They key-value will be evaluated
-            with `srtobj@meta.data |> mutate(<key> = <value>)`
-            The keys could be from `in.metafile`
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-tibble
+          check: |
+            {{proc.lang}} <(echo "library(tibble)")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library(dplyr)")
     """
-    input = "srtobj:file, metafile:file"
+    input = "srtobj:file, metafile:file, mutaters:var"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
-    envs = {"mutaters": {}}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
@@ -273,8 +302,80 @@ class MarkersFinder(Proc):
     plugin_opts = {"report": "file://../reports/scrna/MarkersFinder.svelte"}
 
 
+class ExprImpute(Proc):
+    """Impute the dropout values in scRNA-seq data.
+
+    Input:
+        infile: The input file in RDS format of Seurat object
+
+    Output:
+        outfile: The output file in RDS format of Seurat object
+            Note that with Rmagic, the original RNA assay will be
+            renamed to `RAW_RNA` and the imputed RNA assay will be
+            renamed to `RNA`
+
+    Envs:
+        tool: Either scimpute or rmagic
+        scimpute_args: The arguments for scimpute
+            drop_thre: The dropout threshold
+            kcluster: Number of clusters to use
+            ncores: Number of cores to use
+            refgene: The reference gene file
+        rmagic_args: The arguments for rmagic
+            python: The python path where magic-impute is installed.
+
+    Requires:
+        - name: r-scimpute
+          message: Only required when envs.tool == "scimpute"
+          check: |
+            {{proc.lang}} <(echo "library(scImpute)")
+        - name: r-rmagic
+          message: Only required when envs.tool == "rmagic" (default)
+          check: |
+            {{proc.lang}} <(\
+                echo "\
+                    tryCatch(\
+                        { setwd(dirname(Sys.getenv('CONDA_PREFIX'))) }, \
+                        error = function(e) NULL \
+                    ); \
+                    library(Rmagic)\
+                "\
+            )
+        - name: magic-impute
+          message: Only required when envs.tool == "rmagic"
+          check: |
+            {{proc.envs.rmagic_args.python}} -c "import magic")
+        - name: r-dplyr
+          message: Only required when envs.tool == "scimpute"
+          check: |
+            {{proc.lang}} <(echo "library(dplyr)")
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library(Seurat)")
+    """
+
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "tool": "rmagic",
+        "rmagic_args": {
+            "python": config.exe.magic_python
+        },
+        "scimpute_args": {
+            "drop_thre": 0.5,
+            "kcluster": None,
+            "ncores": config.misc.ncores,
+            "refgene": config.ref.refgene,
+        },
+    }
+    script = "file://../scripts/scrna/ExprImpute.R"
+
+
 class SCImpute(Proc):
     """Impute the dropout values in scRNA-seq data.
+
+    Deprecated. Use `ExprImpute` instead.
 
     Input:
         infile: The input file for imputation
@@ -313,45 +414,67 @@ class SeuratFilter(Proc):
 
     Input:
         srtobj: The seurat object in RDS
-        filterfile: The file with the filtering information
-            Either a group file (rows cases for filtering, columns are samples
-            or ALL for all cells with prefices), or config under
-            `subsetting` section in TOML with keys
-            and value that will be passed to `subset(...,subset = ...)`
+        filters: The filters to apply. Could be a file or string in TOML, or
+            a python dictionary, with following keys:
+            - mutaters: Create new columns in the metadata
+            - filter: A R expression that will pass to
+              `subset(sobj, subset = ...)` to filter the cells
 
     Output:
-        out: The filtered seurat object in RDS if `envs.multicase` is False,
-            otherwise the directory with the filtered seurat objects
+        outfile: The filtered seurat object in RDS
 
     Envs:
-        filterfmt: `auto`, `subset` or `grouping`.
-            If `subset` then `in.filterfile` will be config in TOML, otherwise
-            if `grouping`, it is a groupfile. See `in.filterfile`.
-            If `auto`, test if there is `=` in the file. If so, it's `subset`
-            otherwise `grouping`
         invert: Invert the selection?
-        multicase: If True, multiple seurat objects will be generated.
-            For `envs.filterfmt == "subset"`, each key-value pair will be a
-            case, otherwise, each row of `in.filterfile` will be a case.
 
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library('Seurat')")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library('dplyr')")
     """
-    input = "srtobj:file, filterfile:file"
-    output = """
-        {%- if envs.multicase -%}
-            out:dir:{{in.filterfile | stem}}.seuratfiltered
-        {%- elif envs.filterfmt == "subset" -%}
-            out:file:{{in.filterfile | read | toml_loads | list | first}}.RDS
-        {%- else -%}
-            out:file:{{in.filterfile | readlines | last | split | first}}.RDS
-        {%- endif -%}
-    """
-    envs = {
-        "filterfmt": "auto",  # subset or grouping
-        "invert": False,
-        "multicase": True,
-    }
+    input = "srtobj:file, filters:var"
+    output = "outfile:file:{{in.srtobj | stem}}.filtered.RDS"
     lang = config.lang.rscript
+    envs = { "invert": False }
     script = "file://../scripts/scrna/SeuratFilter.R"
+
+
+class SeuratSubset(Proc):
+    """Subset a seurat object into multiple seruat objects
+
+    Input:
+        srtobj: The seurat object in RDS
+        subsets: The subsettings to apply. Could be a file or string in TOML, or
+            a python dictionary, with following keys:
+            - <name>: Name of the case
+                mutaters: Create new columns in the metadata
+                subset: A R expression that will pass to
+                    `subset(sobj, subset = ...)`
+                groupby: The column to group by, each value will be a case
+                    If groupby is given, subset will be ignored, each value
+                    of the groupby column will be a case
+
+    Output:
+        outdir: The output directory with the subset seurat objects
+
+    Envs:
+        ignore_nas: Ignore NA values?
+
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} <(echo "library('Seurat')")
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} <(echo "library('dplyr')")
+    """
+    input = "srtobj:file, subsets:var"
+    output = "outdir:dir:{{in.srtobj | stem}}.subsets"
+    envs = { "ignore_nas": True }
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/SeuratSubset.R"
 
 
 class Subset10X(Proc):

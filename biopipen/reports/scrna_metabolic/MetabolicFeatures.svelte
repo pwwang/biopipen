@@ -1,34 +1,25 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
-{% from "utils/gsea.liq" import fgsea_report, gsea_report -%}
+{% from "utils/gsea.liq" import fgsea_report_script, fgsea_report, gsea_report -%}
 
 <script>
-    import { Image, DataTable } from "@@";
+{{ fgsea_report_script() }}
 </script>
 
-{% python %}
-def python_map(func, iter):
-    return [func(elem) for elem in iter]
-{% endpython %}
+{%- macro report_job(job, h=2) -%}
 
-{%- macro report_job(job, h=1) -%}
-
-{%  for subset_dir in job.out.outdir | joinpaths: "*" | glob %}
-<h{{h}}>{{subset_dir | basename}}</h{{h}}>
-{%      for groupdir in subset_dir | joinpaths: "*" | glob %}
-<h{{h+1}}>{{ groupdir | basename }}</h{{h+1}}>
-{%          if envs.fgsea %}
-{{            fgsea_report(groupdir, h+2, envs, 8) }}
-{%          else %}
-{{            gsea_report(groupdir, h+2, envs, 8) }}
-{%          endif %}
-{%      endfor %}
+{%  for cldir in job.out.outdir | glob: "*" | first | glob: '*' %}
+<h{{h}}>{{ cldir | basename }}</h{{h}}>
+{%      if envs.fgsea %}
+{{        fgsea_report(cldir, h+1, envs, 10) }}
+{%      else %}
+{{        gsea_report(cldir, h+1, envs, 10) }}
+{%      endif %}
 {%  endfor %}
 
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{% assign config = job.in.configfile | read | toml_loads %}
-{% assign name = config.name or stem(job.out.outdir) %}
+{%- set name = job.out.outdir | glob: '*' | first | stem -%}
 <h1>{{name | escape}}</h1>
 {%- endmacro -%}
 

@@ -1,21 +1,42 @@
 {% from "utils/misc.liq" import table_of_images -%}
 
-
+{%- macro fgsea_report_script() -%}
+import { Image, DataTable } from "../components";
+{%- endmacro -%}
 
 {%- macro fgsea_report(fgsea_dir, h, envs, nrows=100) -%}
+{%- addfilter splitgenes -%}
+def splitgenes(data):
+    for dat in data:
+        dat["leadingEdge"] = dat["leadingEdge"].replace(",", " ")
+    return json_dumps(data)
+{%- endaddfilter -%}
 
 <h{{h}}>Enrichment table</h{{h}}>
 <Image src={{ fgsea_dir | joinpaths: "gsea_table.png" | quote }} />
 
+{% set data = fgsea_dir | joinpaths: "fgsea.txt" | datatable: sep="\t", nrows=nrows | json_loads %}
+
 <h{{h}}>Enrichment pathways</h{{h}}>
 <DataTable src={{ fgsea_dir | joinpaths: "fgsea.txt" | quote }}
-    data={ {{ fgsea_dir | joinpaths: "fgsea.txt" | datatable: sep="\t", nrows=nrows }} } />
+    data={ {{ data | splitgenes: }} } />
 
 <h{{h}}>Enrichment plot of pathways</h{{h}}>
-{{ table_of_images(glob(joinpaths(fgsea_dir, "fgsea_*.png"))[:nrows]) }}
+{%- python -%}
+def fgsea_plots(pathways, fgsea_dir):
+    out = []
+    for pathway in pathways:
+        pathway = pathway.replace("/", "-")
+        out.append(joinpaths(fgsea_dir, f"fgsea_{pathway}.png"))
+    return out
+{%- endpython -%}
+{{ table_of_images(
+    fgsea_plots(liquid_map(data, "pathway"), fgsea_dir),
+    liquid_map(data, "pathway"),
+    table_width=75
+) }}
 
 {%- endmacro -%}
-
 
 
 {%- macro gsea_report(gsea_dir, h, envs, nrows=100) -%}

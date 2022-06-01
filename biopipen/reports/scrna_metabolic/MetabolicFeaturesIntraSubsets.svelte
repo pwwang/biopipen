@@ -10,25 +10,29 @@ def python_map(func, iter):
     return [func(elem) for elem in iter]
 {% endpython %}
 
-{%- macro report_job(job, h=1) -%}
+{%- macro report_job(job, h=2) -%}
 
-{%  for groupdir in job.out.outdir | joinpaths: "*" | glob %}
+{%  for groupdir in job.out.outdir | glob: "*" %}
 <h{{h}}>{{groupdir | basename}}</h{{h}}>
-{%      for dsdir in groupdir | joinpaths: "*" | glob %}
-<h{{h+1}}>{{ dsdir | basename }}</h{{h+1}}>
-{%          if envs.fgsea %}
-{{            fgsea_report(dsdir, h+2, envs, 10) }}
-{%          else %}
-{{            gsea_report(dsdir, h+2, envs, 10) }}
-{%          endif %}
-{%      endfor %}
-{%  endfor %}
+    {%- set dsdirs = groupdir | glob: "*" -%}
+    {% for dsdir in groupdir | glob: "*" %}
+        <h{{h+1}}>{{ dsdir | basename }}</h{{h+1}}>
+        {% if envs.fgsea %}
+            {% if dsdir | joinpaths: "fgsea.txt" | as_path | attr: "is_file" | call %}
+                {{ fgsea_report(dsdir, h+2, envs, 10) }}
+            {% else %}
+                <p>Not enough events.</p>
+            {% endif %}
+        {% else %}
+            {{ gsea_report(dsdir, h+2, envs, 10) }}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
 
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{% assign config = job.in.configfile | read | toml_loads %}
-{% assign name = config.name or stem(job.out.outdir) %}
+{%- set name = job.out.outdir | glob: '*' | first | stem -%}
 <h1>{{name | escape}}</h1>
 {%- endmacro -%}
 

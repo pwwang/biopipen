@@ -23,6 +23,9 @@ tabix = "tabix"
 sambamba = "sambamba"
 # samtools
 samtools = "samtools"
+# python path where magic-impute is installed
+# for scrna.ExprImpute
+magic_python = "python"
 
 # Interpreters
 [lang]
