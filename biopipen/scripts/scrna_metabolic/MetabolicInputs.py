@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import rtoml
+from diot import Diot
 
 in_metafile = Path({{in.metafile | quote}})        # pyright: ignore
 in_gmtfile = Path({{in.gmtfile | quote}})          # pyright: ignore
