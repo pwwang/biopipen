@@ -7,8 +7,9 @@ tryCatch({
     file.symlink(conda_prefix, "miniconda3")
 }, error=function(e) {})
 
-Sys.setenv(RETICULATE_PYTHON = {{envs.rmagic_args.python | r}})
-reticulate::use_python({{envs.rmagic_args.python | r}})
+python = {{envs.rmagic_args.python | r}}
+Sys.setenv(RETICULATE_PYTHON = Sys.which(python))
+# reticulate::use_python(python)
 
 library(Rmagic)
 library(Seurat)
