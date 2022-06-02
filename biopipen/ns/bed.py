@@ -57,6 +57,14 @@ class Bed2Vcf(Proc):
             The key is the ID of an INFO or FORMAT, and the value is
         helpers: Raw code to be executed to provide some helper functions
             since only lambda functions are supported in converters
+
+    Requires:
+        - name: cyvcf2
+          check: |
+            {{proc.lang}} -c "import cyvcf2"
+        - name: pysam
+          check: |
+            {{proc.lang}} -c "import pysam"
     """
     input = "inbed:file"
     output = "outvcf:file:{{in.inbed | stem}}.vcf"

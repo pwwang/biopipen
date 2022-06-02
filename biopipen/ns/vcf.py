@@ -122,3 +122,74 @@ class VcfDownSample(Proc):
     output = "outfile:file:{{in.infile | basename}}"
     envs = {"n": 0}
     script = "file://../scripts/vcf/VcfDownSample.sh"
+
+
+class VcfFix(Proc):
+    """Fix some issues with VCF files
+
+    Input:
+        infile: The input VCF file
+
+    Output:
+        outfile: The output VCF file
+
+    Envs:
+        fixes: A list of fixes to apply.
+            Each one is a dict with keys `kind`, `id`, `regex` and `fix`
+            `kind`: The kind of fix. Including
+                `filter` the FILTERs in the header,
+                `info` the info INFOs in the header,
+                `contig` the contig lines in the header
+                `format` the FORMATs in the header,
+                `colnames` the column names in the header
+                `header` general header item
+                `variant` the variants
+                `None` matches everything
+            `id`: The ID the match. If `kind` is `filter`, `info`, `contig`
+                or `format`, then it matches the `ID` of the item. If `kind`
+                is `variant`, then it matches the `ID` of the variant.
+                If a list is given, then it matches any of the IDs in the list.
+            `regex`: The regular expression to match. When `id` is given,
+                this is ignored.
+            `append`: Whether to append a record instead of to replace an
+                existing one. When it is True, `kind` has to not be `None`
+            `fix`: The fix to apply in the format of a lambda function
+                (in string), with a single argument.
+                The function should either return a string (raw representation)
+                for the record, the record itself, `None`, `False`.
+                If `None` is returned, the original record is used. if `False`,
+                the record is removed.
+                If `append` is `True`, then the function should either return
+                a string or an object. And the argument is `None`
+                The argument is a different object based on different `kind`s.
+                When `kind` is `None`, the argument is the plain line of the
+                record with line ending.
+                When `kind` is `info` or `format`, the record is a dict with
+                keys `ID`, `Description`, `Type` and `Number`.
+                When `kind` is `filter`, the record is a dict with keys
+                `ID` and `Description`.
+                When `kind` is `contig`, the record is a dict with keys `ID`
+                and `length`.
+                When `kind` is `header`, the record is a dict
+                with `key` the name of the header and `value` the value of the
+                header.
+                When `kind` is `colnames`, the record is a list of column names.
+                When `kind` is `variant`, the record is a dict with
+                keys `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, `FILTER`, `INFO`,
+                `FORMAT` and `SAMPLES`. `INFO` is a dict with key-value pairs
+                and `SAMPLES` are a list of values for each sample. Each value
+                is also a list of values for each FORMAT.
+            If a record matches multiple fixes, the first one is applied.
+        helpers: raw code the provide some helpers for the fixes
+
+    Requires:
+        - name: biopipen
+          check: |
+            {{proc.lang}} -c "import biopipen"
+
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | basename}}"
+    lang = config.lang.python
+    envs = {"fixes": [], "helpers": ""}
+    script = "file://../scripts/vcf/VcfFix.py"
