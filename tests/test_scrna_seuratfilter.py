@@ -1,7 +1,7 @@
 from datar.tibble import tibble
 from pipen import Pipen, Proc
 from biopipen.core.config import config
-from biopipen.namespaces.scrna import SeuratFilter as SeuratFilter_
+from biopipen.ns.scrna import SeuratFilter as SeuratFilter_
 
 
 class PrepareSeurat(Proc):

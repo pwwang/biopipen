@@ -1,7 +1,7 @@
 from pipen import Pipen, Proc
-from biopipen.namespaces.web import Download
-from biopipen.namespaces.misc import Str2File
-from biopipen.namespaces.gsea import GSEA
+from biopipen.ns.web import Download
+from biopipen.ns.misc import Str2File
+from biopipen.ns.gsea import GSEA
 from datar.all import flatten, tibble, select
 
 GSEA = Proc.from_proc(

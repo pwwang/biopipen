@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from pipen import Pipen
-from biopipen.namespaces.bed import Bed2Vcf as Bed2Vcf_
+from biopipen.ns.bed import Bed2Vcf as Bed2Vcf_
 
 class Bed2Vcf(Bed2Vcf_):
 
