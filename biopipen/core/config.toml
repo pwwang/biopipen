@@ -26,6 +26,8 @@ samtools = "samtools"
 # python path where magic-impute is installed
 # for scrna.ExprImpute
 magic_python = "python"
+# truvari
+truvari = "truvari"
 
 # Interpreters
 [lang]

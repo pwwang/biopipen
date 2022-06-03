@@ -97,8 +97,10 @@ class VcfIndex(Proc):
             outidx:file:{{in.infile | basename | append: ".gz.tbi"}}
         {% endif -%}
     """
+    lang = config.lang.python
     envs = {
         "tabix": config.exe.tabix,
+        "ncores": config.misc.ncores,
     }
     script = "file://../scripts/vcf/VcfIndex.py"
 
@@ -193,3 +195,61 @@ class VcfFix(Proc):
     lang = config.lang.python
     envs = {"fixes": [], "helpers": ""}
     script = "file://../scripts/vcf/VcfFix.py"
+
+
+class TruvariBench(Proc):
+    """Run `truvari bench` to compare a VCF with CNV calls and
+    base CNV standards
+
+    See https://github.com/ACEnglish/truvari/wiki/bench
+
+    Input:
+        compvcf: The VCF file with CNV calls to compare
+        basevcf: The VCF file with standard CNVs
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        truvari: Path to truvari
+
+    Requires:
+        - name: truvari
+          check: |
+            {{proc.envs.truvari}} version
+    """
+    input = "compvcf:file, basevcf:file"
+    output = "outdir:dir:{{in.compvcf | stem0 | append: '.truvari_bench'}}"
+    envs = {
+        "truvari": config.exe.truvari,
+        "ref": config.ref.reffa,
+        "refdist": 500,
+        "pctsim": 0.7,
+        "pctsize": 0.7,
+        "pctovl": 0.0,
+        "typeignore": False,
+    }
+    script = "file://../scripts/vcf/TruvariBench.sh"
+
+
+class TruvariConsistency(Proc):
+    """Run `truvari consistency` to check consistency of CNV calls
+
+    See https://github.com/ACEnglish/truvari/wiki/consistency
+
+    Input:
+        vcfs: The vcf files with CNV calls
+
+    Output:
+        outfile: The output file with the report
+
+    Envs:
+        truvari: Path to truvari
+    """
+    input = "vcfs:files"
+    output = (
+        "outfile:file:"
+        "{{in.vcfs | first | stem0 | append: '.etc.truvari_consistency.txt'}}"
+    )
+    envs = {"truvari": config.exe.truvari}
+    script = "file://../scripts/vcf/TruvariConsistency.sh"
