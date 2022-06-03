@@ -78,3 +78,37 @@ class Str2File(Proc):
     lang = config.lang.python
     envs = {"name": None}
     script = "file://../scripts/misc/Str2File.py"
+
+
+class Shell(Proc):
+    """Run a shell command
+
+    Input:
+        infile: The input file
+
+    Output:
+        outfile: The output file
+
+    Envs:
+        cmd: The shell command to run
+            Use `$infile` and `$outfile` to refer to input and output files
+        outdir: Whether the `out.outfile` should be a directory.
+            If so a directory will be created before running the command.
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | basename}}"
+    envs = {"cmd": "", "outdir": False}
+    script = """
+        infile={{in.infile | quote}}
+        outfile={{out.outfile | quote}}
+        is_outdir={{envs.outdir | int}}
+        cmd={{envs.cmd | quote}}
+        if [[ -z "$cmd" ]]; then
+            echo "No command given." 1>&2
+            exit 1
+        fi
+        if [[ $is_outdir -eq 1 ]]; then
+            mkdir -p "$outfile"
+        fi
+        eval "$cmd"
+    """
