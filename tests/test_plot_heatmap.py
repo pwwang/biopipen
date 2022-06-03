@@ -1,7 +1,7 @@
 from pipen import Pipen, Proc
 from pipen_args import args
-from biopipen.namespaces.web import Download
-from biopipen.namespaces.plot import Heatmap
+from biopipen.ns.web import Download
+from biopipen.ns.plot import Heatmap
 from datar.all import tibble, flatten
 
 Heatmap = Proc.from_proc(

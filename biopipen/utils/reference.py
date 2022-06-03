@@ -51,7 +51,7 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
         # re-bgzip
         cmdy.gunzip(infile, c=True).r() > new_infile.with_suffix("")
         cmdy.bgzip(new_infile.with_suffix(""))
-    elif gt == "plain":
+    elif gt == "flat":
         cmdy.bgzip(infile, c=True).r() > new_infile
     else:
         # directory of infile may not have write permission

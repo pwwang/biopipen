@@ -5,8 +5,8 @@ from datar.datar import flatten
 from pipen import Pipen, Proc
 from pipen_args import args as _
 from biopipen.core.config import config
-from biopipen.namespaces.web import Download
-from biopipen.namespaces.scrna_metabolic import build_processes
+from biopipen.ns.web import Download
+from biopipen.ns.scrna_metabolic import build_processes
 
 
 class DownloadData(Download):

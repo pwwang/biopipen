@@ -1,6 +1,6 @@
 from pipen import Pipen, Proc
-from biopipen.namespaces.misc import Str2File
-from biopipen.namespaces.gene import GeneNameConversion
+from biopipen.ns.misc import Str2File
+from biopipen.ns.gene import GeneNameConversion
 
 GeneNameConversion1 = Proc.from_proc(
     GeneNameConversion,

@@ -1,3 +1,16 @@
+## 0.3.1
+
+- 🗑️ Deprecate `biopipen.namespaces`, use `biopipen.ns` instead
+- ✨ [bed.Bed2Vcf] Add bed.Bed2Vcf
+- ✨ [vcf.VcfFix] Add vcf.VcfFix
+- 🐛 [vcf.vcfFix] Fix when a flag in INFO
+- ✨ [vcf.TruvariBench] Add vcf.TruvariBench
+- ✨ [vcf.TruvariConsistency] Add vcf.TruvariConsistency
+- 🐛 [utils.reference] Fix typo in tabix_index
+- 🐛 [vcf.VcfIndex] Fix vcf.VcfIndex
+- ✨ [bed.Bed2Vcf] Allow to ignore non-existing contigs and index the output file
+- ✨ [misc.Shell] Add misc.Shell to run a shell command
+
 ## 0.3.0
 
 - ♻️ Refactor some processes for immunopipe
