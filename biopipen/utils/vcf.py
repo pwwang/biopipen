@@ -143,13 +143,23 @@ class Info(dict):
     def from_str(cls, infostr: str):
         obj = cls()
         for part in infostr.split(";"):
-            name, value = part.split("=", 1)
-            obj[name] = value
+            # a flag
+            if "=" not in part:
+                obj[part] = True
+            else:
+                name, value = part.split("=", 1)
+                obj[name] = value
 
         return obj
 
     def __str__(self) -> str:
-        return ";".join(f"{k}={v}" for k, v in self.items())
+        return ";".join(
+            k
+            if v is True
+            else f"{k}={v}"
+            for k, v in self.items()
+            if v is not False
+        )
 
 
 class Format(list):
