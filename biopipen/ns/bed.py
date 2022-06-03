@@ -55,8 +55,11 @@ class Bed2Vcf(Proc):
             The keys 'ID', 'Description', 'Type', and 'Number' are required.
         converters: A dict of converters to be used for each INFO or FORMAT
             The key is the ID of an INFO or FORMAT, and the value is
+        nonexisting_contigs: Whether to `keep` or `drop` the non-existing
+            contigs in `ref`.
         helpers: Raw code to be executed to provide some helper functions
             since only lambda functions are supported in converters
+        index: Sort and index output file
 
     Requires:
         - name: cyvcf2
@@ -65,15 +68,24 @@ class Bed2Vcf(Proc):
         - name: pysam
           check: |
             {{proc.lang}} -c "import pysam"
+        - name: bcftools
+          if: {{proc.envs.index}}
+          check: |
+            {{proc.envs.bcftools}} --version
     """
     input = "inbed:file"
-    output = "outvcf:file:{{in.inbed | stem}}.vcf"
+    output = (
+        "outvcf:file:{{in.inbed | stem}}.vcf{{'.gz' if envs.index else ''}}"
+    )
     lang = config.lang.python
     envs = {
+        "bcftools": config.exe.bcftools,
         "sample": "lambda stem: stem",
         "ref": config.ref.reffa,
         "genome": "",
+        "nonexisting_contigs": "drop",
         "base": 0,
+        "index": True,
         "headers": [],
         "infos": [],
         "formats": [],

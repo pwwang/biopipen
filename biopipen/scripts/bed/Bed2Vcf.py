@@ -1,18 +1,23 @@
 from datetime import date
 from pathlib import Path
 
+import cmdy
 import numpy as np
 from cyvcf2 import VCF, Writer
 from pysam import FastaFile
 
 inbed = {{in.inbed | quote}}  # pyright: ignore
 outvcf = {{out.outvcf | quote}}  # pyright: ignore
+tmpoutvcf = {{out.outvcf | append: ".tmp" | quote}}  # pyright: ignore
 joboutdir = Path({{job.outdir | quote}})  # pyright: ignore
 ref = {{envs.ref | quote}}  # pyright: ignore
 headers = {{envs.headers | repr}}  # pyright: ignore
 infos = {{envs.infos | repr}}  # pyright: ignore
 base = {{envs.base | int}}  # pyright: ignore
 formats = {{envs.formats | repr}}  # pyright: ignore
+index = {{envs.index | repr}}  # pyright: ignore
+bcftools = {{envs.bcftools | quote}}  # pyright: ignore
+nonexisting_contigs = {{envs.nonexisting_contigs | quote}}  # pyright: ignore
 genome = {{envs.genome | quote}}  # pyright: ignore
 {{envs.helpers}}  # pyright: ignore
 {% if envs.sample.startswith("lambda") %}  # pyright: ignore
@@ -70,9 +75,11 @@ vcf.add_format_to_header(
 )
 
 # Add contigs
+contigs = set()
 with open(fai) as f:
     for line in f:
         contig, length, *_ = line.strip().split("\t")
+        contigs.add(contig)
         vcf.add_to_header(f"##contig=<ID={contig},length={length}>")
 
 for header in headers:
@@ -93,13 +100,14 @@ for header in vcf.header_iter():
 
 refseq = FastaFile(ref)
 variant = next(vcf)
-writer = Writer(outvcf, vcf)
+writer = Writer(tmpoutvcf, vcf)
 try:
     with open(inbed) as f:
         for line in f:
             # chr,start,end,name,...
             items = line.rstrip("\n\r").split("\t")
-
+            if nonexisting_contigs == "drop" and items[0] not in contigs:
+                continue
             variant.CHROM = items[0]
             start = int(items[1])
             end = int(items[2])
@@ -140,3 +148,10 @@ try:
 finally:
     vcf.close()
     writer.close()
+
+if index:
+    cmdy.bcftools.sort(_=tmpoutvcf, O='z', o=outvcf, _exe=bcftools)
+    cmdy.bcftools.index(_=outvcf, t=True, _exe=bcftools)
+
+else:
+    Path(tmpoutvcf).replace(outvcf)
