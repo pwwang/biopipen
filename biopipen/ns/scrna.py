@@ -326,11 +326,11 @@ class ExprImpute(Proc):
 
     Requires:
         - name: r-scimpute
-          message: Only required when envs.tool == "scimpute"
+          if: {{proc.envs.tool == "scimpute"}}
           check: |
             {{proc.lang}} <(echo "library(scImpute)")
         - name: r-rmagic
-          message: Only required when envs.tool == "rmagic" (default)
+          if: {{proc.envs.tool == "rmagic"}}
           check: |
             {{proc.lang}} <(\
                 echo "\
@@ -342,11 +342,11 @@ class ExprImpute(Proc):
                 "\
             )
         - name: magic-impute
-          message: Only required when envs.tool == "rmagic"
+          if: {{proc.envs.tool == "rmagic"}}
           check: |
             {{proc.envs.rmagic_args.python}} -c "import magic")
         - name: r-dplyr
-          message: Only required when envs.tool == "scimpute"
+          if: {{proc.envs.tool == "scimpute"}}
           check: |
             {{proc.lang}} <(echo "library(dplyr)")
         - name: r-seurat
