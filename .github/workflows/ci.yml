@@ -21,6 +21,7 @@ jobs:
           poetry install -E test -v
       - name: Run tests
         run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} docker.io
           make VERBOSE=1
 
   deploy:
