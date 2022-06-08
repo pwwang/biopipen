@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /biopipen
+cd /workdir
 
 pip install -U poetry
 poetry config virtualenvs.create false
