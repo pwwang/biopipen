@@ -14,6 +14,7 @@ class File2Proc(Proc):
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     script = """
+        # in case of deadlink
         rm -f {{out.outfile | quote}}
         ln -s {{in.infile | quote}} {{out.outfile | quote}}
     """

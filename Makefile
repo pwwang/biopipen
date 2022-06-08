@@ -1,9 +1,20 @@
-test_targets := $(patsubst tests/test_%.py,%,$(wildcard tests/test_*.py))
+SHELL=/bin/bash
 
-test: $(test_targets)
+NS_TARGETS := $(patsubst tests/test_%,%,$(wildcard tests/test_*))
 
-%: tests/test_%.py
-	@echo $<
-	@# python $<
 
-.PHONY: test
+all: $(NS_TARGETS)
+
+.list:
+	@echo "Tests for namespaces: $(NS_TARGETS)"
+
+%: tests/test_%
+	@echo "Running tests for namespace: $@"; \
+	for procdir in $</*; do                  \
+		bash tests/run_test.sh $$procdir;    \
+	done
+
+$(NS_TARGETS).%: tests/test_$(NS_TARGETS)/%
+	@bash tests/run_test.sh $<
+
+.PHONY: all .list
