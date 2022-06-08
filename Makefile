@@ -9,12 +9,12 @@ all: $(NS_TARGETS)
 	@echo "Tests for namespaces: $(NS_TARGETS)"
 
 %: tests/test_%
-	@echo "Running tests for namespace: $@"; \
-	for procdir in $</*; do                  \
-		bash tests/run_test.sh $$procdir;    \
+	@echo "Running tests for namespace: $@";         \
+	for procdir in $</*; do                          \
+		bash tests/run_test.sh $$procdir $(VERBOSE); \
 	done
 
 $(NS_TARGETS).%: tests/test_$(NS_TARGETS)/%
-	@bash tests/run_test.sh $<
+	@bash tests/run_test.sh $< $(VERBOSE)
 
 .PHONY: all .list

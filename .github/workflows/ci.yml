@@ -21,7 +21,7 @@ jobs:
           poetry install -E test -v
       - name: Run tests
         run: |
-          make
+          make VERBOSE=1
 
   deploy:
     needs: build
