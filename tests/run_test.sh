@@ -19,7 +19,7 @@ if [[ ! -f $CONTAINER_FILE ]]; then
     cmd="python $PROC_TEST_DIR/pipeline.py"
     echo "  Running: $cmd"
 else
-    container="biopipen/$(cat $CONTAINER_FILE):master"
+    container="biopipen/$(cat $CONTAINER_FILE)"
     echo "  Using container: $container"
     cmd="docker run --rm -v $PWD:/workdir -w /workdir --entrypoint bash $container entrypoint.sh $PROC_TEST_DIR/pipeline.py"
     echo "  Running: $cmd"

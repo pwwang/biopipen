@@ -5,6 +5,7 @@ on:
     paths:
       - docs/
       - mkdocs.yml
+      - '**.py'
 
 jobs:
   docs:
