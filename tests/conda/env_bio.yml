@@ -14,3 +14,4 @@ dependencies:
   - tabix
   - samtools
   - openssl
+  - mygene
