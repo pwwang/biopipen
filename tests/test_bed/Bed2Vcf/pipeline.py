@@ -6,6 +6,13 @@ from biopipen.core.testing import get_pipeline
 class Bed2Vcf(Bed2Vcf):
 
     envs = {
+        "ref": str(
+            Path(__file__).parent.parent.parent
+            / "data"
+            / "reference"
+            / "hg19"
+            / "chrs.fa"
+        ),
         "infos": [
             {
                 "ID": "SVType",
