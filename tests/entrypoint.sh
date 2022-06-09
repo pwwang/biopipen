@@ -4,10 +4,9 @@ cd /workdir
 
 pip install -U pip
 pip install -U poetry
-poetry config virtualenvs.create false
+# poetry config virtualenvs.create false
+poetry export -f requirements.txt --output requirements.txt
 
-# Use wheel to skip building from rust, which takes too long
-pip install -U rtoml
-poetry install
+pip install -r requirements.txt
 
 python $1
