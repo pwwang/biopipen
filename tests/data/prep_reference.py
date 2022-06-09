@@ -40,6 +40,7 @@ def download_reffa(genome):
     )
     cmdy.seqkit.grep(p=CHROMS, _=outfile, _dupkey=True).r() > reffa
     cmdy.samtools.faidx(reffa)
+    cmdy.rm(f=True, _=outfile)
 
 
 if __name__ == "__main__":
