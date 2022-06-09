@@ -4,4 +4,4 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  - poetry=1.13
+  - poetry=1.1.13

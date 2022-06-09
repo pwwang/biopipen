@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python=3.9
   - cyvcf2
-  - poetry=1.13
+  - poetry=1.1.13
   - pysam
   - bcftools
   - seqkit
