@@ -4,9 +4,8 @@ cd /workdir
 
 pip install -U pip
 pip install -U poetry
-# poetry config virtualenvs.create false
-poetry export -f requirements.txt --output requirements.txt
+poetry config virtualenvs.create false
 
-pip install -r requirements.txt
+poetry install
 
 python $1
