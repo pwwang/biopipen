@@ -92,10 +92,15 @@ class Heatmap(Proc):
         devpars: The parameters for device.
         seed: The seed
         globals: Some globals for the expression in `args` to be evaluated
+
+    Requires:
+        - name: bioconductor-complexheatmap
+          check: |
+            {{proc.lang}} <(echo "library(ComplexHeatmap)")
     """
     input = "infile:file, annofiles:files"
     output = """
-        {%- set outdir = in.infile | stem | append: ".heatmap" -%}
+        {%- set outdir = in.infile | stem0 | append: ".heatmap" -%}
         outfile:file:{{outdir}}/{{outdir}}.png,
         outdir:dir:{{outdir}}
     """
