@@ -31,7 +31,14 @@ jobs:
             conda run --no-capture-output -n $envname poetry install -E verbose -v
             echo "::endgroup::"
           done
+      - name: Cache reference data
+        id: cache-reference
+        uses: actions/cache@v3
+        with:
+          path: tests/data/reference
+          key: reference-${{ hashFiles('tests/data/prep_reference.py') }}
       - name: Download reference data
+        if: steps.cache-reference.outputs.cache-hit != 'true'
         run: |
           conda run --no-capture-output -n bio python tests/data/prep_reference.py
       - name: Run tests
