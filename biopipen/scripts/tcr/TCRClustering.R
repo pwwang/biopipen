@@ -18,7 +18,7 @@ tool = {{envs.tool | r}}
 python = {{envs.python | r}}
 tmpdir = {{envs.tmpdir | r}}
 on_raw = {{envs.on_raw | r}}
-giana_source = {{envs.giana_source | r}}
+giana_repo = {{envs.giana_repo | r}}
 args = {{envs.args | r}}
 heatmap_meta = {{envs.heatmap_meta | r}}
 numbers_on_heatmap = {{envs.numbers_on_heatmap | r}}
@@ -106,10 +106,10 @@ prepare_giana = function() {
     giana_query = file.path(giana_srcdir, "query.py")
     giana_trbv = file.path(giana_srcdir, "Imgt_Human_TRBV.fasta")
     if (!file.exists(giana_file)) {
-        download.file(giana_source$url, giana_file)
-        download.file(giana_source$giana4, giana4_file)
-        download.file(giana_source$query, giana_query)
-        download.file(giana_source$trbv, giana_trbv)
+        download.file(paste(giana_repo, "GIANA4.1.py", sep="/"), giana_file)
+        download.file(paste(giana_repo, "GIANA4.py", sep="/"), giana4_file)
+        download.file(paste(giana_repo, "query.py", sep="/"), giana_query)
+        download.file(paste(giana_repo, "Imgt_Human_TRBV.fasta", sep="/"), giana_trbv)
     }
 
     giana_srcdir

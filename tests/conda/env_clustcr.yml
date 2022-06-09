@@ -1,0 +1,11 @@
+name: clustcr
+channels:
+  - svalkiers
+  - bioconda
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - poetry=1.1.13
+  - clustcr

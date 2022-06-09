@@ -411,24 +411,9 @@ class TCRClustering(Proc):
         "on_raw": True,
         "python": config.lang.python,
         "tmpdir": config.path.tmpdir,
-        "giana_source": {
-            "url": (
-                "https://raw.githubusercontent.com/"
-                "s175573/GIANA/master/GIANA4.1.py"
-            ),
-            "giana4": (
-                "https://raw.githubusercontent.com/"
-                "s175573/GIANA/master/GIANA4.py"
-            ),
-            "query": (
-                "https://raw.githubusercontent.com/"
-                "s175573/GIANA/master/query.py"
-            ),
-            "trbv": (
-                "https://raw.githubusercontent.com/"
-                "s175573/GIANA/master/Imgt_Human_TRBV.fasta"
-            ),
-        },
+        "giana_repo": (
+            "https://raw.githubusercontent.com/s175573/GIANA/master/"
+        ),
         "args": {},
         "heatmap_meta": [],
         "numbers_on_heatmap": True,
