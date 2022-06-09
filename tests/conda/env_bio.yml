@@ -1,7 +1,7 @@
 name: bio
 channels:
-  - conda-forge
   - bioconda
+  - conda-forge
   - defaults
 dependencies:
   - python=3.9
@@ -10,7 +10,7 @@ dependencies:
   - pysam
   - bcftools
   - seqkit
-  - aria2
+  - aria2=1.36
   - tabix
   - samtools
   - openssl
