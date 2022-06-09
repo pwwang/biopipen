@@ -14,7 +14,7 @@ jobs:
         run: |
           matrixstr=""
           for envfile in tests/conda/*.yml; do
-            matrixstr="$matrixstr,{\"envname\": \"$(basename envfile .yml)\", \"envfile\": \"$envfile\"}"
+            matrixstr="$matrixstr,{\"envname\": \"$(basename $envfile .yml)\", \"envfile\": \"$envfile\"}"
           done
           echo "::set-output name=matrix::{\"include\": [${matrixstr:1}]}"
 
