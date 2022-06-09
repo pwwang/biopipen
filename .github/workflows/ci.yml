@@ -12,6 +12,11 @@ jobs:
       - uses: actions/checkout@v3
       - id: set-matrix
         run: |
+          matrixstr=""
+          for envfile in tests/conda/*.yml; do
+            matrixstr="$matrixstr,{\"envname\": \"$(basename envfile .yml)\", \"envfile\": \"$envfile\"}"
+          done
+          echo "::set-output name=matrix::{\"include\": [${matrixstr:1}]}"
 
   setup-conda:
     needs: conda-matrix
@@ -24,13 +29,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: ${{ matrix.envname }}
+          environment-file: ${{ matrix.envfile }}
+          python-version: 3.9
+          auto-activate-base: false
+      - name: Install biopipen
         run: |
           pip install -U pip
           pip install -U poetry
           poetry install -v
         with:
           activate-environment: ${{ matrix.envname }}
-          environment-file: ${{ matrix.envfile }}
           python-version: 3.9
           auto-activate-base: false
       - name: Run tests
