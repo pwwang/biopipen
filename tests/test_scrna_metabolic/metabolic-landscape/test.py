@@ -28,7 +28,7 @@ class PrepareData(Proc):
     output = "outfile:file:{{in.metafile | stem}}.RDS"
     envs = {"seed": 8525}
     lang = config.lang.rscript
-    script = "file://scripts/scrna_metabolic/PrepareData.R"
+    script = "file://scripts/PrepareData.R"
 
 
 MetabolicInputs = build_processes({"clustered": True})
