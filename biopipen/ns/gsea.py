@@ -131,6 +131,11 @@ class FGSEA(Proc):
         top: Do gsea table and enrich plot for top N pathways. If it is < 1,
             will apply it to `padj`
         `<rest>`: Rest arguments for `fgsea()`
+
+    Requires:
+        - name: bioconductor-fgsea
+          check: |
+            {{proc.lang}} <(echo "library(fgsea)")
     """
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.fgsea"

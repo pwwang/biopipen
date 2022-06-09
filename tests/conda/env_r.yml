@@ -9,3 +9,4 @@ dependencies:
   - python=3.9
   - poetry
   - bioconductor-complexheatmap
+  - bioconductor-fgsea
