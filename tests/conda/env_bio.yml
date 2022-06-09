@@ -13,3 +13,4 @@ dependencies:
   - aria2
   - tabix
   - samtools
+  - openssl
