@@ -391,13 +391,19 @@ class TCRClustering(Proc):
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
         tmpdir: The temporary directory to store the GIANA sources
-        giana_source: The URLs for the source code of GIANA
+        giana_repo: The URL prefix for the source code of GIANA
         args: The arguments for the clustering tool
             For GIANA, they will be passed to `python GIAna.py`
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
         heatmap_meta: The metadata to show in the heatmap for each sample
             Current only support categorical/character metadata
         numbers_on_heatmap: Whether to show the numbers on the heatmap
+
+    Requires:
+        - name: clusTCR
+          if: {{ proc.envs.tool == 'ClusTCR' }}
+          check: |
+            {{ proc.envs.python }} -c "import clustcr"
     """
     input = "immfile:file"
     output = [

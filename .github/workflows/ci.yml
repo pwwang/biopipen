@@ -33,6 +33,10 @@ jobs:
             conda run --no-capture-output -n $envname poetry install -E verbose -v
             echo "::endgroup::"
           done
+      - name: List conda information
+        run: |
+          conda info
+          conda env list
       - name: Cache reference data
         id: cache-reference
         uses: actions/cache@v3

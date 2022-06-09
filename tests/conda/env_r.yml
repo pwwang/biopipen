@@ -1,7 +1,9 @@
 name: r
 channels:
+  - svalkiers
   - aroth85
   - pwwang
+  - pytorch
   - bioconda
   - conda-forge
   - r
@@ -37,3 +39,7 @@ dependencies:
   - bioconductor-scater
   - bioconductor-scran
   - bioconductor-singlecellexperiment
+  - biopython
+  - clustcr
+  - scikit-learn
+  - faiss-cpu
