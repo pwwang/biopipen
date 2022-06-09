@@ -4,41 +4,35 @@ on: [push]
 
 jobs:
 
-  build:
+  conda-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        run: |
+
+  setup-conda:
+    needs: conda-matrix
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        python-version: [3.9]
+      matrix: ${{ fromJson(needs.conda-matrix.outputs.matrix) }}
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python # Set Python version
-        uses: actions/setup-python@v2
-      - name: Install dependencies
+      - uses: actions/checkout@v3
+      - uses: conda-incubator/setup-miniconda@v2
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-          poetry config virtualenvs.create false
-          poetry install -E test -v
+          pip install -U pip
+          pip install -U poetry
+          poetry install -v
+        with:
+          activate-environment: ${{ matrix.envname }}
+          environment-file: ${{ matrix.envfile }}
+          python-version: 3.9
+          auto-activate-base: false
       - name: Run tests
         run: |
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} docker.io
           make VERBOSE=1
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    strategy:
-      matrix:
-        python-version: [3.9]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python # Set Python version
-        uses: actions/setup-python@v2
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-      - name: Publish to PyPI
-        run: poetry publish --build -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
-        if: success()

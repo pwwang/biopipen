@@ -13,17 +13,15 @@ fi
 
 echo "- Testing process: $PROCESS ..."
 
-CONTAINER_FILE=$PROC_TEST_DIR/container.txt
-if [[ ! -f $CONTAINER_FILE ]]; then
-    echo "  No container.txt found, using host to test"
-    cmd="python $PROC_TEST_DIR/pipeline.py"
-    echo "  Running: $cmd"
-else
-    container="biopipen/$(cat $CONTAINER_FILE)"
-    echo "  Using container: $container"
-    cmd="docker run --rm -v $PWD:/workdir -w /workdir --entrypoint bash $container tests/entrypoint.sh $PROC_TEST_DIR/pipeline.py"
-    echo "  Running: $cmd"
+RUNFILE=$PROC_TEST_DIR/run.toml
+ENVNAME="base"
+ARGS=""
+if [[ -f $RUNFILE ]]; then
+    source $RUNFILE
 fi
+
+CMD="conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/pipeline.py $ARGS"
+echo "  Running: $CMD"
 
 if [[ $VERBOSE -eq 1 ]]; then
     eval $cmd
