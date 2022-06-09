@@ -10,3 +10,4 @@ dependencies:
   - poetry
   - bioconductor-complexheatmap
   - bioconductor-fgsea
+  - r-ggplot2
