@@ -1,9 +1,7 @@
 name: base
 channels:
-  - bioconda
   - conda-forge
   - defaults
 dependencies:
-  - bcftools
   - python=3.9
   - poetry

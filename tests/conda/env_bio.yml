@@ -7,3 +7,5 @@ dependencies:
   - python=3.9
   - cyvcf2
   - poetry
+  - pysam
+  - bcftools
