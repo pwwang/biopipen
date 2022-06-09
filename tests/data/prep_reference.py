@@ -30,7 +30,14 @@ def download_reffa(genome):
     url = REFFA_URL % {"genome": genome}
     outfile = outdir / "allchrs.fa.gz"
     reffa = outdir / "chrs.fa"
-    cmdy.aria2c(a=2, x=2, o=outfile.name, d=outdir, _=url)
+    cmdy.aria2c(
+        s=2,
+        x=2,
+        o=outfile.name,
+        d=outdir,
+        _=url,
+        **{"file-allocation": "falloc"},
+    )
     cmdy.seqkit.grep(p=CHROMS, _=outfile, _dupkey=True).r() > reffa
     cmdy.samtools.faidx(reffa)
 
