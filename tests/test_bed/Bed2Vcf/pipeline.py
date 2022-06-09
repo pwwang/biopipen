@@ -39,10 +39,9 @@ def pipeline():
 
 def testing(pipen):
     outfile = (
-        pipen.procs[-1].workdir.joinpath("0", "output", Path(__file__).name)
+        pipen.procs[-1].workdir.joinpath("0", "output", "in.vcf.gz")
     )
-    assert outfile.exists()
-    assert outfile.is_symlink()
+    assert outfile.is_file()
 
 
 if __name__ == "__main__":

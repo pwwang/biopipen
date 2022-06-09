@@ -13,7 +13,7 @@ fi
 
 echo "- Testing process: $PROCESS ..."
 
-RUNFILE=$PROC_TEST_DIR/run.toml
+RUNFILE=$PROC_TEST_DIR/run.env
 ENVNAME="base"
 ARGS=""
 if [[ -f $RUNFILE ]]; then
@@ -24,14 +24,14 @@ CMD="conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/
 echo "  Running: $CMD"
 
 if [[ $VERBOSE -eq 1 ]]; then
-    eval $cmd
+    conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/pipeline.py $ARGS
 else
-    eval $cmd > /dev/null 2>&1
+    conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/pipeline.py $ARGS > /dev/null 2>&1
 fi
 
 if [[ $? -eq 0 ]]; then
     echo "  v Success :)"
 else
-    echo "  x Failed :("
+    echo "  x Failure :("
     exit 1
 fi
