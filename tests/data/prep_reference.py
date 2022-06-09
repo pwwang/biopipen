@@ -43,6 +43,26 @@ def download_reffa(genome):
     cmdy.rm(f=True, _=outfile)
 
 
+@echo("Downloading KEGG_metabolism.gmt")
+def download_kegg_metabolism():
+    """Download KEGG_metabolism.gmt"""
+    outfile = DESTDIR / "KEGG_metabolism.gmt"
+    url = (
+        "https://raw.githubusercontent.com/"
+        "LocasaleLab/Single-Cell-Metabolic-Landscape/"
+        "master/Data/KEGG_metabolism.gmt"
+    )
+    cmdy.aria2c(
+        s=2,
+        x=2,
+        o=outfile.name,
+        d=outfile.parent,
+        _=url,
+        **{"file-allocation": "falloc"},
+    )
+
+
 if __name__ == "__main__":
     download_reffa("hg19")
     download_reffa("hg38")
+    download_kegg_metabolism()

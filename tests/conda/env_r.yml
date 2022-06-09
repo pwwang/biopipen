@@ -1,16 +1,39 @@
 name: r
 channels:
+  - aroth85
+  - pwwang
   - bioconda
   - conda-forge
   - r
   - defaults
 dependencies:
-  - r-base=4.1.3
   - python=3.9
   - poetry
-  - bioconductor-complexheatmap
-  - bioconductor-fgsea
+  - r-base=4.1.3
   - r-ggplot2
   - r-tidyr
   - r-dplyr
   - r-tibble
+  - r-enrichr
+  - r-forcats
+  - r-future
+  - r-ggprism
+  - r-ggpubr
+  - r-ggradar
+  - r-ggrepel
+  - r-ggupset
+  - r-ggvenndiagram
+  - r-gtools
+  - r-immunarch
+  - r-matrix
+  - r-rmagic
+  - r-scimpute
+  - r-seurat
+  - r-snow
+  - r-upsetr
+  - r-vegan
+  - bioconductor-complexheatmap
+  - bioconductor-fgsea
+  - bioconductor-scater
+  - bioconductor-scran
+  - bioconductor-singlecellexperiment
