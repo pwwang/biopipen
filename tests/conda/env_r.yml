@@ -11,3 +11,6 @@ dependencies:
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - r-ggplot2
+  - r-tidyr
+  - r-dplyr
+  - r-tibble

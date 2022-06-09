@@ -32,6 +32,11 @@ class GSEA(Proc):
         clscol: The column of the metafile determining the classes
         doc.string: Documentation string used as a prefix to name result files
             Other configs passed to `GSEA()` directly
+
+    Requires:
+        - name: GSEA-MSigDB/GSEA_R
+          check: |
+            {{proc.lang}} <(echo "library(GSEA)")
     """
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.gsea"
