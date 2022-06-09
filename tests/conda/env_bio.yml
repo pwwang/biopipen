@@ -9,3 +9,7 @@ dependencies:
   - poetry
   - pysam
   - bcftools
+  - seqkit
+  - aria2
+  - tabix
+  - samtools
