@@ -18,6 +18,7 @@ jobs:
       - name: Update base environment and install biopipen
         run: |
           conda env update -n base -f tests/conda/base.yml
+          conda run --no-capture-output -n base bash tests/conda/patch_poetry.sh
           conda run --no-capture-output -n base poetry install -E verbose -v
       - name: Create conda environments and install biopipen
         run: |
@@ -28,6 +29,7 @@ jobs:
             conda env create -f $envfile
             echo "::endgroup::"
             echo "::group::Installing biopipen in environment: $envname"
+            conda run --no-capture-output -n $envname bash tests/conda/patch_poetry.sh
             conda run --no-capture-output -n $envname poetry install -E verbose -v
             echo "::endgroup::"
           done
