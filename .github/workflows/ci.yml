@@ -22,7 +22,7 @@ jobs:
             bname=$(basename $envfile .yml)
             envname=${bname:4}
             conda env create -f $envfile
-            conda run --no-capture-output -n $envname poetry install -v
+            conda run --no-capture-output -n $envname poetry install -E verbose -v
           done
       - name: Run tests
         run: |
