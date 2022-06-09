@@ -6,3 +6,4 @@ channels:
 dependencies:
   - bcftools
   - python=3.9
+  - poetry
