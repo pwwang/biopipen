@@ -36,13 +36,9 @@ jobs:
           auto-activate-base: false
       - name: Install biopipen
         run: |
-          pip install -U pip
-          pip install -U poetry
-          poetry install -v
+          conda run --no-capture-output -n ${{ envname }} poetry install -v
         with:
-          activate-environment: ${{ matrix.envname }}
-          python-version: 3.9
-          auto-activate-base: false
+          envname: ${{ matrix.envname }}
       - name: Run tests
         run: |
           make VERBOSE=1
