@@ -12,7 +12,17 @@ CHROMS = [
     "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY", "chrM",
 ]
 
+def echo(msg):
+    def _echo(func):
+        def wrapper(*args, **kwargs):
+            print(f"::group::{msg.format(*args, **kwargs)}")
+            func(*args, **kwargs)
+            print("::endgroup::")
+        return wrapper
+    return _echo
 
+
+@echo("Downloading {0} reference genome sequences")
 def download_reffa(genome):
     """Download genome reference sequences"""
     outdir = DESTDIR / genome
@@ -23,6 +33,7 @@ def download_reffa(genome):
     cmdy.aria2c(a=2, x=2, o=outfile, _=url)
     cmdy.seqkit.grep(p=CHROMS, _=outfile, _dupkey=True).r() > reffa
     cmdy.samtools.faidx(reffa)
+
 
 if __name__ == "__main__":
     download_reffa("hg19")

@@ -20,13 +20,17 @@ jobs:
         run: |
           for envfile in tests/conda/env_*.yml; do
             bname=$(basename $envfile .yml)
+            echo "::group::Creating environment: $bname"
             envname=${bname:4}
             conda env create -f $envfile
+            echo "::endgroup::"
+            echo "::group::Installing biopipen in environment: $bname"
             conda run --no-capture-output -n $envname poetry install -E verbose -v
+            echo "::endgroup::"
           done
       - name: Download reference data
         run: |
-          conda run --no-capture-output -n bio python tests/data/prep_refdata.py
+          conda run --no-capture-output -n bio python tests/data/prep_reference.py
       - name: Run tests
         run: |
           make VERBOSE=1

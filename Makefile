@@ -10,10 +10,11 @@ all: $(NS_TARGETS)
 	$(info Tests for processes: $(PROC_TARGETS))
 
 %: tests/test_%
-	@echo "Running tests for namespace: $@";               \
+	@echo "::group::Running tests for namespace: $@";      \
 	for procdir in $</*; do                                \
 		bash tests/conda/run_test.sh $$procdir $(VERBOSE); \
-	done
+	done;                                                  \
+	echo "::endgroup::"
 
 $(PROC_TARGETS): %: tests/test_%
 	@bash tests/conda/run_test.sh $< $(VERBOSE);

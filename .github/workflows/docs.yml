@@ -6,6 +6,8 @@ on:
       - docs/
       - mkdocs.yml
       - 'biopipen/ns/*.py'
+      - 'biopipen/core/*.py'
+      - 'biopipen/utils/*.py'
 
 jobs:
   docs:
