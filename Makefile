@@ -13,10 +13,7 @@ all: $(NS_TARGETS)
 	@echo "::group::Running tests for namespace: $@";      \
 	for procdir in $</*; do                                \
 		bash tests/conda/run_test.sh $$procdir $(VERBOSE); \
-		if [[ $$? -ne 0 ]]; then                           \
-			exit 1;                                        \
-		fi;                                                \
-	done;                                                  \
+	done || exit 1;                                        \
 	echo "::endgroup::"
 
 $(PROC_TARGETS): %: tests/test_%
