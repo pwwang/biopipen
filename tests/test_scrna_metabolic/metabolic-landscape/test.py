@@ -36,7 +36,7 @@ MetabolicInputs.requires = PrepareData
 MetabolicInputs.input_data = lambda ch: tibble(
     metafile=ch,
     gmtfile=Path(__file__).parent.parent.parent.joinpath(
-        "data/KEGG_metabolism.gmt"
+        "data/reference/KEGG_metabolism.gmt"
     ),
     config=[
         """

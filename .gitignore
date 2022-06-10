@@ -113,8 +113,7 @@ site/
 default-*-*-*-*-*.ipynb
 *-output/
 *_results/
-tests/data/reference/hg19/**
-tests/data/reference/hg38/**
+tests/data/
 
 docs/index.md
 watch.sh

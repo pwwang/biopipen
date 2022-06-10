@@ -9,7 +9,11 @@ from biopipen.core.testing import get_pipeline
 GSEA = Proc.from_proc(
     GSEA,
     requires=[Download, Str2File],
-    input_data=lambda ch1, ch2: tibble(*flatten(ch1), ch2) >> select(1, 3, 2),
+    input_data=lambda ch1, ch2: tibble(
+        *flatten(ch1),
+        ch2,
+        _name_repair="minimal",
+    ) >> select(1, 3, 2),
     envs={"clscol": "Group"}
 )
 
