@@ -1,8 +1,7 @@
 from pipen import Proc
 from biopipen.core.config import config
-from biopipen.ns.tcr import TCRClustering
+from biopipen.ns.tcr import TCRClustering, TCRClusteringStats
 from biopipen.core.testing import get_pipeline
-from datar.tibble import tibble
 
 
 class PrepareImmdata(Proc):
@@ -35,17 +34,27 @@ class TCRClusteringClusTCR(TCRClustering):
     envs = {"tool": "ClusTCR"}
 
 
+class TCRClusteringStatsGIANA(TCRClusteringStats):
+    requires = TCRClusteringGIANA
+
+
+class TCRClusteringStatsClusTCR(TCRClusteringStats):
+    requires = TCRClusteringClusTCR
+
+
 def pipeline():
     return get_pipeline(__file__).set_starts(PrepareImmdata)
 
 
 def testing(pipen):
-    for proc in pipen.procs[:-2]:
+    for proc in pipen.procs[-2:]:
         outfile = (
             proc.workdir.joinpath(
                 "0",
                 "output",
-                "immdata.heatmap.png",
+                "immdata.tcrclusters_stats",
+                "SharedClusters",
+                "shared_clusters.txt",
             )
         )
         assert outfile.is_file()

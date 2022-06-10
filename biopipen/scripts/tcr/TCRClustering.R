@@ -4,7 +4,6 @@
 # Sys.setenv(RETICULATE_PYTHON = python)
 # library(reticulate)
 
-library(ComplexHeatmap)
 library(immunarch)
 library(dplyr)
 library(tidyr)
@@ -13,19 +12,16 @@ immfile = {{in.immfile | r}}
 outdir = {{job.outdir | r}}
 outfile = {{out.immfile | r}}
 clusterfile = {{out.clusterfile | r}}
-heatmap = {{out.heatmap | r}}
 tool = {{envs.tool | r}}
 python = {{envs.python | r}}
 tmpdir = {{envs.tmpdir | r}}
-on_raw = {{envs.on_raw | r}}
+on_multi = {{envs.on_multi | r}}
 giana_repo = {{envs.giana_repo | r}}
 args = {{envs.args | r}}
-heatmap_meta = {{envs.heatmap_meta | r}}
-numbers_on_heatmap = {{envs.numbers_on_heatmap | r}}
 
 immdata = readRDS(immfile)
-if (on_raw) {
-    seqdata = immdata$raw
+if (on_multi) {
+    seqdata = immdata$multi
 } else {
     seqdata = immdata$data
 }
@@ -67,8 +63,8 @@ clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
         mutate(
             TCR_Cluster = if_else(
                 is.na(TCR_Cluster),
-                paste0("UNK_", row_number()),
-                as.character(TCR_Cluster)
+                paste0("S_", row_number()),
+                paste0("M_", as.character(TCR_Cluster))
             )
         )
     write.table(out, clusterfile, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
@@ -118,7 +114,8 @@ prepare_giana = function() {
 prepare_input = function() {
     # prepare input file for GIANA
     cdr3 = c()
-    cdr3col = if (on_raw) "cdr3" else "CDR3.aa"
+    # cdr3col = if (!on_multi) "cdr3" else "CDR3.aa"
+    cdr3col = "CDR3.aa"
     for (sample in names(seqdata)) {
         # cdr3 = bind_rows(cdr3, seqdata[[sample]] %>%
         #     transmute(aminoAcid=CDR3.aa, vMaxResolved=paste0(V.name, "*01"), Sample=sample))
@@ -152,8 +149,8 @@ clean_giana_output = function(giana_outfile, giana_infile) {
         mutate(
             TCR_Cluster = if_else(
                 is.na(TCR_Cluster),
-                paste0("UNK_", row_number()),
-                as.character(TCR_Cluster)
+                paste0("S_", row_number()),
+                paste0("M_", as.character(TCR_Cluster))
             )
         )
     write.table(out, clusterfile, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
@@ -203,83 +200,35 @@ run_giana = function() {
 
 attach_to_immdata = function(out) {
     seqdata2 = list()
-    by = if (on_raw) c(cdr3 = "CDR3.aa") else "CDR3.aa"
+    # by = if (!on_multi) c(cdr3 = "CDR3.aa") else "CDR3.aa"
+    by = "CDR3.aa"
     for (sample in names(seqdata)) {
         sample_out = left_join(seqdata[[sample]], out, by=by)
         seqdata2[[sample]] = sample_out
-        if (on_raw) {
+        if (!on_multi) {
             immdata$data[[sample]] = immdata$data[[sample]] %>% left_join(
                 out, by = "CDR3.aa"
             )
         } else {
-            immdata$raw[[sample]] = immdata$raw[[sample]] %>% left_join(
+            immdata$multi[[sample]] = immdata$multi[[sample]] %>% left_join(
                 out, by = c(cdr3 = "CDR3.aa")
             )
         }
-        if ("single" %in% names(immdata)) {
-            immdata$data[[sample]] = immdata$data[[sample]] %>% left_join(
-                out, by = "CDR3.aa"
-            )
-        }
+        # if ("single" %in% names(immdata)) {
+        #     immdata$data[[sample]] = immdata$data[[sample]] %>% left_join(
+        #         out, by = "CDR3.aa"
+        #     )
+        # }
     }
-    if (on_raw) {
-        immdata$raw = seqdata2
-    } else {
+    if (!on_multi) {
         immdata$data = seqdata2
+    } else {
+        immdata$multi = seqdata2
     }
     saveRDS(immdata, file = outfile)
-    seqdata2
+    # seqdata2
 }
 
-plot_heatmap = function(seqdata2) {
-    # Generate data for heatmap
-    tcr_clusters = list()
-    samples = names(seqdata2)
-    for (sample in samples) {
-        tcr_clusters[[sample]] = seqdata2[[sample]] %>% pull("TCR_Cluster") %>% unique()
-    }
-    plotdata = matrix(NA, ncol = length(samples), nrow = length(samples))
-    rownames(plotdata) = samples
-    colnames(plotdata) = samples
-    for (sample1 in samples) {
-        for (sample2 in samples) {
-            if (sample1 == sample2) {
-                plotdata[sample1, sample2] = NA
-            } else {
-                plotdata[sample1, sample2] = length(
-                    intersect(tcr_clusters[[sample1]], tcr_clusters[[sample2]])
-                )
-            }
-        }
-    }
-    write.table(
-        plotdata, file.path(outdir, "plotdata.csv"),
-        row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t"
-    )
-
-    if (length(heatmap_meta) == 0) {
-        anno = NULL
-    } else {
-        anno = as.list(immdata$meta[, heatmap_meta, drop=FALSE])
-        anno = do.call(HeatmapAnnotation, anno)
-    }
-
-    # Plot heatmap
-    hm = Heatmap(
-        plotdata,
-        name = "Shared TCR Clusters",
-        col = c("#ffe1e1", "red3"),
-        cluster_rows = FALSE,
-        top_annotation = anno,
-        cell_fun = if (!numbers_on_heatmap) NULL else function(j, i, x, y, width, height, fill) {
-            grid.text(plotdata[samples[i], samples[j]], x, y, gp = gpar(fontsize = 10))
-        }
-    )
-    png(heatmap, width = if (is.null(anno)) 1000 else 1200, height = 1000, res = 100)
-    print(hm)
-    dev.off()
-
-}
 
 if (tolower(tool) == "clustcr") {
     out = run_clustcr()
@@ -289,5 +238,4 @@ if (tolower(tool) == "clustcr") {
     stop(paste("Unknown tool:", tool))
 }
 
-seqdata2 = attach_to_immdata(out)
-plot_heatmap(seqdata2)
+attach_to_immdata(out)

@@ -1,5 +1,5 @@
 """Provide utilities for testing."""
-
+import sys
 import tempfile
 from pathlib import Path
 
@@ -10,20 +10,23 @@ TESTING_PARENT_DIR = tempfile.gettempdir()
 TESTING_DIR = f"{TESTING_PARENT_DIR}/biopipen-tests-%(index)s"
 
 
-def _find_testing_index():
+def _find_testing_index(new):
     """Find the next available testing index"""
     index = TESTING_INDEX_INIT
     while True:
         dir = TESTING_DIR % {"index": index}
         if not Path(dir).exists():
-            break
+            if new:
+                break
+            else:
+                return max(index - 1, TESTING_INDEX_INIT)
         index += 1
     return index
 
 
-def _get_test_dirs(testfile):
+def _get_test_dirs(testfile, new):
     """Get the workdir and outdir for a test pipeline"""
-    index = _find_testing_index()
+    index = _find_testing_index(new)
     workdir = TESTING_DIR % {"index": index}
     procname = Path(testfile).parent.stem
     nsname = Path(testfile).parent.parent.stem
@@ -37,7 +40,10 @@ def _get_test_dirs(testfile):
 
 def get_pipeline(testfile, loglevel="debug", **kwargs):
     """Get a pipeline for a test file"""
-    name, workdir, outdir = _get_test_dirs(testfile)
+    # Use --former to use previous workdir and outdir
+    # where caching takes effect
+    former = "--former" in sys.argv
+    name, workdir, outdir = _get_test_dirs(testfile, not former)
     kws = {
         "name": name,
         "workdir": workdir,
