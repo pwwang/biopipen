@@ -507,3 +507,55 @@ class Subset10X(Proc):
     }
     lang = config.lang.rscript
     script = "file://../scripts/scrna/Subset10X.R"
+
+
+class ScFGSEA(Proc):
+    """Fast gene set enrichment analysis (fgsea) for cells in different groups
+
+    Input:
+        srtobj: The seurat object loaded by `SeuratPreparing`
+        casefile: The config file in TOML that looks like
+            See `in.casefile` from `scrna.MarkersFinder`
+            `ident.2` is required for each case.
+
+    Output:
+        outdir: The output directory for the results
+
+    Envs:
+        ncores: Number of cores to use to parallelize the groups
+        cases: The cases to find markers for.
+            See `in.casefile`.
+        gmtfile: The pathways in GMT format
+        method: The method to do the preranking.
+            Supported: `s2n(signal_to_noise)`, `abs_s2n(abs_signal_to_noise)`,
+            `t_test`, `ratio_of_classes`, `diff_of_classes` and
+            `log2_ratio_of_classes`.
+        top: Do gsea table and enrich plot for top N pathways. If it is < 1,
+            will apply it to `padj`
+        `<rest>`: Rest arguments for `fgsea()`
+
+
+    Requires:
+        - name: bioconductor-fgsea
+          check: |
+            {{proc.lang}} -e "library(fgsea)"
+        - name: r-seurat
+          check: |
+            {{proc.lang}} -e "library(seurat)"
+    """
+
+    input = "srtobj:file, casefile:file"
+    output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.fgsea"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "cases": {},
+        "gmtfile": "",
+        "method": "s2n",
+        "top": 20,
+        "minSize": 10,
+        "maxSize": 100,
+        "eps": 0,
+    }
+    script = "file://../scripts/scrna/ScFGSEA.R"
+    # plugin_opts = {"report": "file://../reports/scrna/ScGSEA.svelte"}

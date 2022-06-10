@@ -140,7 +140,7 @@ class FGSEA(Proc):
     Requires:
         - name: bioconductor-fgsea
           check: |
-            {{proc.lang}} <(echo "library(fgsea)")
+            {{proc.lang}} -e "library(fgsea)"
     """
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.fgsea"

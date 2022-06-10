@@ -79,7 +79,7 @@ def testing(pipen):
             "index.html",
         )
     )
-    assert outfile.is_dir()
+    assert outfile.is_file()
 
 
 if __name__ == "__main__":
