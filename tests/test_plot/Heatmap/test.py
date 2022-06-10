@@ -37,7 +37,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "GSE179367_gene_count.heatmap/GSE179367_gene_count.heatmap.png",
+            "acc.heatmap/acc.heatmap.png",
         )
     )
     assert outfile.is_file()
