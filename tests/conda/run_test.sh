@@ -16,22 +16,28 @@ echo "- Testing process: $PROCESS ..."
 RUNFILE=$PROC_TEST_DIR/run.env
 ENVNAME="base"
 ARGS=""
+LOCAL_ONLY="false"
 if [[ -f $RUNFILE ]]; then
     source $RUNFILE
 fi
 
-CMD="conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS"
-echo "  Running: $CMD"
-
-if [[ $VERBOSE -eq 1 ]]; then
-    conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS
+if [[ "$LOCAL_ONLY" == "true" ]]; then
+    echo "  Skipped"
+    exit 0
 else
-    conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS > /dev/null 2>&1
-fi
+    CMD="conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS"
+    echo "  Running: $CMD"
 
-if [[ $? -eq 0 ]]; then
-    echo "  v Success :)"
-else
-    echo "  x Failure :("
-    exit 1
+    if [[ $VERBOSE -eq 1 ]]; then
+        conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS
+    else
+        conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS > /dev/null 2>&1
+    fi
+
+    if [[ $? -eq 0 ]]; then
+        echo "  v Success :)"
+    else
+        echo "  x Failure :("
+        exit 1
+    fi
 fi
