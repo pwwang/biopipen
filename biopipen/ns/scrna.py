@@ -558,4 +558,4 @@ class ScFGSEA(Proc):
         "eps": 0,
     }
     script = "file://../scripts/scrna/ScFGSEA.R"
-    # plugin_opts = {"report": "file://../reports/scrna/ScGSEA.svelte"}
+    plugin_opts = {"report": "file://../reports/scrna/ScFGSEA.svelte"}

@@ -61,12 +61,10 @@ do_case = function(case) {
 
     case_envs = envs
     top = case_envs$top
+    case_envs$cases = NULL
+    case_envs$gmtfile = NULL
     case_envs$nproc = case_envs$ncores
-    case_envs$inopts = NULL
-    case_envs$metaopts = NULL
     case_envs$method = NULL
-    case_envs$clscol = NULL
-    case_envs$classes = NULL
     case_envs$ncores = NULL
     case_envs$top = NULL
     # the rest are the arguments for `fgsea()`

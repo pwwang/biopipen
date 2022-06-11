@@ -82,8 +82,8 @@ runFGSEA = function(
     gmtfile,
     top,
     outdir,
-    plot = TRUE, # only generate fgsea.txt?
-    envs = list()
+    envs = list(),
+    plot = TRUE  # only generate fgsea.txt?
 ) {
     library(data.table)
     library(fgsea)
@@ -109,6 +109,7 @@ runFGSEA = function(
         sep = "\t",
         quote = FALSE
     )
+
     if (!plot) {return (NULL)}
 
     if (top > 1) {

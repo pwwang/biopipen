@@ -13,7 +13,7 @@ FGSEA = Proc.from_proc(
         *flatten(ch1),
         ch2,
         _name_repair="minimal",
-    ) >> select(1, 3, 2),
+    ) >> select(0, 2, 1),
     envs={"clscol": "Group", "classes": ["MMP9", "CTRL"]}
 )
 
@@ -48,7 +48,8 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "GSE179367_gene_count.real.txt.fgsea",
+            "acc.gse179367.format.file.file"
+            ".gse179367.5fgene.5fcount.real.txt.fgsea",
         )
     )
     assert outfile.is_dir()

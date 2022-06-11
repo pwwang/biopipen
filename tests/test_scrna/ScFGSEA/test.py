@@ -40,7 +40,7 @@ class ScFGSEA(ScFGSEA):
             }
         },
         "gmtfile": Path(__file__).parent.parent.parent.joinpath(
-            "data/KEGG_metabolism.gmt"
+            "data/reference/KEGG_metabolism.gmt"
         ),
     }
 

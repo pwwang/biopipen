@@ -43,7 +43,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small",
+            "pbmc_small.subsets",
         )
     )
     assert outfile.is_dir()
