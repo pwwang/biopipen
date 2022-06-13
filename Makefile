@@ -19,4 +19,17 @@ all: $(NS_TARGETS)
 $(PROC_TARGETS): %: tests/test_%
 	@bash tests/conda/run_test.sh $< $(VERBOSE);
 
+log:
+	@lasttag=$$(git describe --tags --abbrev=0);                        \
+	git --no-pager log --pretty=format:"%s" --reverse $$lasttag..HEAD | \
+	while read line; do                                                 \
+		echo $$line | tr ";" "\n" | while read log; do                  \
+			log=$$(echo $$log | sed 's/^\s\+//');                       \
+			if [[ "$$log" =~ ^[^:alnum:] ]]; then                       \
+				echo "- $$log";                                         \
+			fi;                                                         \
+		done;                                                           \
+	done;
+
+
 .PHONY: all .list
