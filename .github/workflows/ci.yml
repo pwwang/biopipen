@@ -15,11 +15,6 @@ jobs:
         with:
           python-version: 3.9
           auto-update-conda: true
-      - name: Update base environment and install biopipen
-        run: |
-          conda env update -n base -f tests/conda/base.yml
-          conda run --no-capture-output -n base bash tests/conda/patch_poetry.sh
-          conda run --no-capture-output -n base poetry install -E test -v
       - name: Create conda environments and install biopipen
         run: |
           for envfile in tests/conda/env_*.yml; do

@@ -1,4 +1,4 @@
-name: base
+name: bio
 channels:
   - bioconda
   - conda-forge
