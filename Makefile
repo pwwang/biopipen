@@ -25,7 +25,7 @@ log:
 	while read line; do                                                 \
 		echo $$line | tr ";" "\n" | while read log; do                  \
 			log=$$(echo $$log | sed 's/^\s\+//');                       \
-			if [[ "$$log" =~ ^[^:alnum:] ]]; then                       \
+			if [[ "$$log" =~ ^[^[:alnum:]] ]]; then                     \
 				echo "- $$log";                                         \
 			fi;                                                         \
 		done;                                                           \
