@@ -19,6 +19,7 @@
 - ✅ [misc.File2Proc] Use base container for test
 - ✅ [misc.File2Proc] Fix test
 - 🩹 [scrna.ExprImpute] Use if-statement for requirements
+- ✨ [scrna.SeuratClusterStats] Add process and test
 
 ## 0.3.1
 
