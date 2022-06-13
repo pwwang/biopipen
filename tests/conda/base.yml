@@ -9,9 +9,9 @@ dependencies:
   - cyvcf2
   - pysam
   - bcftools
+  - mygene
   - seqkit
   - aria2=1.36
   - tabix
   - samtools
   - openssl
-  - mygene

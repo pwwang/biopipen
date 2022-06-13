@@ -116,6 +116,47 @@ class SeuratClustering(Proc):
     script = "file://../scripts/scrna/SeuratClustering.R"
 
 
+class SeuratClusterStats(Proc):
+    """Seurat - Cluster statistics
+
+    Input:
+        srtobj: The seurat object loaded by SeuratClustering
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        ncores: Number of cores to use
+
+    Requires:
+        - name: r-seurat
+          check: |
+            {{proc.lang}} -e "library(Seurat)"
+    """
+
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
+    lang = config.lang.rscript
+    envs = {
+        "stats": {
+            "nCells": {
+                "devpars": {"res": 100, "height": 1000, "width": 1000}
+            },
+            "nCellsPerSample": {
+                "devpars": {"res": 100, "height": 1000, "width": 1000}
+            },
+            "percCellsPerSample": {
+                "devpars": {"res": 100, "height": 1000, "width": 1000}
+            },
+        },
+        "exprs": {},
+    }
+    script = "file://../scripts/scrna/SeuratClusterStats.R"
+    plugin_opts = {
+        "report": "file://../reports/scrna/SeuratClusterStats.svelte"
+    }
+
+
 class SeuratMetadataMutater(Proc):
     """Mutate the metadata of the seurat object
 
