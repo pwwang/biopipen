@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.3.1"
+version = "0.3.2"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"

@@ -1,7 +1,17 @@
 name: base
 channels:
+  - bioconda
   - conda-forge
   - defaults
 dependencies:
   - python=3.9
   - poetry=1.1.13
+  - cyvcf2
+  - pysam
+  - bcftools
+  - seqkit
+  - aria2=1.36
+  - tabix
+  - samtools
+  - openssl
+  - mygene
