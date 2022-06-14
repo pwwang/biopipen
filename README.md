@@ -12,7 +12,7 @@ pip install -U biopipen
 
 ```python
 from pipen import Proc, Pipen
-from biopipen.namespaces.bed import BedLiftOver
+from biopipen.ns.bed import BedLiftOver
 
 MyBedLiftOver = Proc.from_proc(BedLiftOver)
 

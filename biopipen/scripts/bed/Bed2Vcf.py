@@ -50,7 +50,7 @@ TEMPLATE_VCF_FILE.write_text(TEMPLATE_VCF)
 vcf = VCF(TEMPLATE_VCF_FILE)
 
 # Add source
-vcf.add_to_header(f"##source=biopipen.namespaces.bed.Bed2Vcf")
+vcf.add_to_header(f"##source=biopipen.ns.bed.Bed2Vcf")
 
 # Add genome assembly
 if genome:
