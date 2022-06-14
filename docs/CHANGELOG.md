@@ -1,3 +1,8 @@
+## 0.4.0
+
+- ✨ [scrna.CellsDistribution] Add process and test
+- 🗑️ Remove `namespaces` (use `ns` instead)
+
 ## 0.3.2
 
 - ✅ Allow tests to run locally only
