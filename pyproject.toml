@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.3.2"
+version = "0.4.0"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -20,20 +20,20 @@ test = ["pipen-verbose", "pipen-args"]
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.plugins.pipen_cli_run]
-bam = "biopipen.namespaces.bam"
-bcftools = "biopipen.namespaces.bcftools"
-bed = "biopipen.namespaces.bed"
-csv = "biopipen.namespaces.csv"
-gene = "biopipen.namespaces.gene"
-gsea = "biopipen.namespaces.gsea"
-misc = "biopipen.namespaces.misc"
-plot = "biopipen.namespaces.plot"
-rnaseq = "biopipen.namespaces.rnaseq"
-scrna = "biopipen.namespaces.scrna"
-scrna_metabolic = "biopipen.namespaces.scrna_metabolic"
-tcr = "biopipen.namespaces.tcr"
-vcf = "biopipen.namespaces.vcf"
-web = "biopipen.namespaces.web"
+bam = "biopipen.ns.bam"
+bcftools = "biopipen.ns.bcftools"
+bed = "biopipen.ns.bed"
+csv = "biopipen.ns.csv"
+gene = "biopipen.ns.gene"
+gsea = "biopipen.ns.gsea"
+misc = "biopipen.ns.misc"
+plot = "biopipen.ns.plot"
+rnaseq = "biopipen.ns.rnaseq"
+scrna = "biopipen.ns.scrna"
+scrna_metabolic = "biopipen.ns.scrna_metabolic"
+tcr = "biopipen.ns.tcr"
+vcf = "biopipen.ns.vcf"
+web = "biopipen.ns.web"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

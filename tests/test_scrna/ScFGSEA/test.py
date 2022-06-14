@@ -54,12 +54,13 @@ def pipeline():
 
 def testing(pipen):
     outfile = (
-        pipen.outdir.joinpath(
-            "REPORTS",
-            "index.html",
+        pipen.procs[-1].workdir.joinpath(
+            "0",
+            "output",
+            "pbmc_small.fgsea"
         )
     )
-    assert outfile.is_file()
+    assert outfile.is_dir()
 
 
 if __name__ == "__main__":
