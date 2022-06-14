@@ -2,7 +2,6 @@ from pipen import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import SeuratClustering, SeuratClusterStats
 from biopipen.core.testing import get_pipeline
-from datar.tibble import tibble
 
 
 class PrepareSeurat(Proc):
