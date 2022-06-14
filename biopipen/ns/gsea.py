@@ -32,6 +32,11 @@ class GSEA(Proc):
         clscol: The column of the metafile determining the classes
         doc.string: Documentation string used as a prefix to name result files
             Other configs passed to `GSEA()` directly
+
+    Requires:
+        - name: GSEA-MSigDB/GSEA_R
+          check: |
+            {{proc.lang}} <(echo "library(GSEA)")
     """
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.gsea"
@@ -131,6 +136,11 @@ class FGSEA(Proc):
         top: Do gsea table and enrich plot for top N pathways. If it is < 1,
             will apply it to `padj`
         `<rest>`: Rest arguments for `fgsea()`
+
+    Requires:
+        - name: bioconductor-fgsea
+          check: |
+            {{proc.lang}} -e "library(fgsea)"
     """
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.fgsea"

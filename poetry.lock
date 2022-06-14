@@ -29,22 +29,6 @@ six = "*"
 test = ["astroid", "pytest"]
 
 [[package]]
-name = "biothings-client"
-version = "0.2.6"
-description = "Python Client for BioThings API services."
-category = "main"
-optional = true
-python-versions = "*"
-
-[package.dependencies]
-requests = ">=2.3.0"
-
-[package.extras]
-caching = ["requests-cache (>=0.4.13)"]
-dataframe = ["pandas (>=0.18.0)"]
-jsonld = ["PyLD (>=0.7.2)"]
-
-[[package]]
 name = "blessed"
 version = "1.19.1"
 description = "Easy, practical library for making terminal apps, by providing an elegant, well-documented interface to Colors, Keyboard input, and screen Positioning capabilities."
@@ -64,25 +48,6 @@ description = "A decorator for caching properties in classes."
 category = "main"
 optional = false
 python-versions = "*"
-
-[[package]]
-name = "certifi"
-version = "2022.5.18.1"
-description = "Python package for providing Mozilla's CA Bundle."
-category = "main"
-optional = true
-python-versions = ">=3.6"
-
-[[package]]
-name = "charset-normalizer"
-version = "2.0.12"
-description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
-category = "main"
-optional = true
-python-versions = ">=3.5.0"
-
-[package.extras]
-unicode_backport = ["unicodedata2"]
 
 [[package]]
 name = "cmdy"
@@ -172,14 +137,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "idna"
-version = "3.3"
-description = "Internationalized Domain Names in Applications (IDNA)"
-category = "main"
-optional = true
-python-versions = ">=3.5"
-
-[[package]]
 name = "importlib-metadata"
 version = "4.11.4"
 description = "Read metadata from Python packages"
@@ -230,6 +187,19 @@ python-versions = "*"
 ansicon = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "lark-parser"
+version = "0.12.0"
+description = "a modern parsing library"
+category = "main"
+optional = true
+python-versions = "*"
+
+[package.extras]
+atomic_cache = ["atomicwrites"]
+nearley = ["js2py"]
+regex = ["regex"]
+
+[[package]]
 name = "liquidpy"
 version = "0.7.5"
 description = "A port of liquid template engine for python"
@@ -258,17 +228,6 @@ description = "More routines for operating on iterables, beyond itertools"
 category = "main"
 optional = false
 python-versions = ">=3.5"
-
-[[package]]
-name = "mygene"
-version = "3.2.2"
-description = "Python Client for MyGene.Info services."
-category = "main"
-optional = true
-python-versions = "*"
-
-[package.dependencies]
-biothings-client = ">=0.2.6"
 
 [[package]]
 name = "numpy"
@@ -308,6 +267,18 @@ pytz = ">=2017.3"
 test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
+name = "pardoc"
+version = "0.0.3"
+description = "Yet another docstring parser for python"
+category = "main"
+optional = true
+python-versions = ">=3.6,<4.0"
+
+[package.dependencies]
+diot = "*"
+lark-parser = "<1.0.0"
+
+[[package]]
 name = "pipda"
 version = "0.6.0"
 description = "A framework for data piping in python"
@@ -341,11 +312,34 @@ rich = ">=12,<13"
 xqute = ">=0.1,<0.2"
 
 [[package]]
+name = "pipen-args"
+version = "0.2.2"
+description = "Command-line argument parser for pipen."
+category = "main"
+optional = true
+python-versions = ">=3.7.1,<4.0.0"
+
+[package.dependencies]
+pardoc = ">=0.0,<0.1"
+pipen = ">=0.3,<0.4"
+
+[[package]]
 name = "pipen-filters"
 version = "0.1.2"
 description = "Add a set of useful filters for pipen templates"
 category = "main"
 optional = false
+python-versions = ">=3.7.1,<4.0.0"
+
+[package.dependencies]
+pipen = ">=0.3,<0.4"
+
+[[package]]
+name = "pipen-verbose"
+version = "0.1.0"
+description = "Add verbosal information in logs for pipen."
+category = "main"
+optional = true
 python-versions = ">=3.7.1,<4.0.0"
 
 [package.dependencies]
@@ -455,24 +449,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "requests"
-version = "2.27.1"
-description = "Python HTTP for Humans."
-category = "main"
-optional = true
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
-
-[package.dependencies]
-certifi = ">=2017.4.17"
-charset-normalizer = {version = ">=2.0.0,<2.1.0", markers = "python_version >= \"3\""}
-idna = {version = ">=2.5,<4", markers = "python_version >= \"3\""}
-urllib3 = ">=1.21.1,<1.27"
-
-[package.extras]
-socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
-use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
-
-[[package]]
 name = "rich"
 version = "12.4.4"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -531,19 +507,6 @@ description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
 python-versions = ">=3.7"
-
-[[package]]
-name = "urllib3"
-version = "1.26.9"
-description = "HTTP library with thread-safe connection pooling, file post, and more."
-category = "main"
-optional = true
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
-
-[package.extras]
-brotli = ["brotlicffi (>=0.8.0)", "brotli (>=1.0.9)", "brotlipy (>=0.6.0)"]
-secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
-socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "uvloop"
@@ -608,12 +571,12 @@ docs = ["sphinx", "jaraco.packaging (>=9)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy (>=0.9.1)"]
 
 [extras]
-test = ["mygene"]
+test = ["pipen-verbose", "pipen-args"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "b30647422e6f9eeb71e874c10167f842797e6bf8f198b837fd59c3ed2864afdc"
+content-hash = "3cacc99cc02e60f68edc2d52b8af03336cbcc048932effd05c9d2a5264659cef"
 
 [metadata.files]
 aiofiles = [
@@ -628,10 +591,6 @@ asttokens = [
     {file = "asttokens-2.0.5-py2.py3-none-any.whl", hash = "sha256:0844691e88552595a6f4a4281a9f7f79b8dd45ca4ccea82e5e05b4bbdb76705c"},
     {file = "asttokens-2.0.5.tar.gz", hash = "sha256:9a54c114f02c7a9480d56550932546a3f1fe71d8a02f1bc7ccd0ee3ee35cf4d5"},
 ]
-biothings-client = [
-    {file = "biothings_client-0.2.6-py2.py3-none-any.whl", hash = "sha256:f88f3dfcc962d84b3555a426ae59cf4752761c17b8968ae60532109b9e8a232e"},
-    {file = "biothings_client-0.2.6.tar.gz", hash = "sha256:84d9d577b8fb3963a2fa71c5a13b10411566f3bc2e8ba67bb15de9d2ced08c2d"},
-]
 blessed = [
     {file = "blessed-1.19.1-py2.py3-none-any.whl", hash = "sha256:63b8554ae2e0e7f43749b6715c734cc8f3883010a809bf16790102563e6cf25b"},
     {file = "blessed-1.19.1.tar.gz", hash = "sha256:9a0d099695bf621d4680dd6c73f6ad547f6a3442fbdbe80c4b1daa1edbc492fc"},
@@ -639,14 +598,6 @@ blessed = [
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
     {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
-]
-certifi = [
-    {file = "certifi-2022.5.18.1-py3-none-any.whl", hash = "sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a"},
-    {file = "certifi-2022.5.18.1.tar.gz", hash = "sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7"},
-]
-charset-normalizer = [
-    {file = "charset-normalizer-2.0.12.tar.gz", hash = "sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597"},
-    {file = "charset_normalizer-2.0.12-py3-none-any.whl", hash = "sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df"},
 ]
 cmdy = [
     {file = "cmdy-0.5.0-py3-none-any.whl", hash = "sha256:b82860493eace1c20e36f5e82175352e48c9fd855b01d4b9e2130078845ae805"},
@@ -675,10 +626,6 @@ executing = [
     {file = "executing-0.8.3-py2.py3-none-any.whl", hash = "sha256:d1eef132db1b83649a3905ca6dd8897f71ac6f8cac79a7e58a1a09cf137546c9"},
     {file = "executing-0.8.3.tar.gz", hash = "sha256:c6554e21c6b060590a6d3be4b82fb78f8f0194d809de5ea7df1c093763311501"},
 ]
-idna = [
-    {file = "idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
-    {file = "idna-3.3.tar.gz", hash = "sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d"},
-]
 importlib-metadata = [
     {file = "importlib_metadata-4.11.4-py3-none-any.whl", hash = "sha256:c58c8eb8a762858f49e18436ff552e83914778e50e9d2f1660535ffb364552ec"},
     {file = "importlib_metadata-4.11.4.tar.gz", hash = "sha256:5d26852efe48c0a32b0509ffbc583fda1a2266545a78d104a6f4aff3db17d700"},
@@ -694,6 +641,10 @@ jinja2 = [
 jinxed = [
     {file = "jinxed-1.2.0-py2.py3-none-any.whl", hash = "sha256:cfc2b2e4e3b4326954d546ba6d6b9a7a796ddcb0aef8d03161d005177eb0d48b"},
     {file = "jinxed-1.2.0.tar.gz", hash = "sha256:032acda92d5c57cd216033cbbd53de731e6ed50deb63eb4781336ca55f72cda5"},
+]
+lark-parser = [
+    {file = "lark-parser-0.12.0.tar.gz", hash = "sha256:15967db1f1214013dca65b1180745047b9be457d73da224fcda3d9dd4e96a138"},
+    {file = "lark_parser-0.12.0-py2.py3-none-any.whl", hash = "sha256:0eaf30cb5ba787fe404d73a7d6e61df97b21d5a63ac26c5008c78a494373c675"},
 ]
 liquidpy = [
     {file = "liquidpy-0.7.5-py3-none-any.whl", hash = "sha256:d79f4d48de7aed5b225c62200cc9862c821d1d741d13a164885324e9310a0852"},
@@ -744,10 +695,6 @@ markupsafe = [
 more-itertools = [
     {file = "more-itertools-8.13.0.tar.gz", hash = "sha256:a42901a0a5b169d925f6f217cd5a190e32ef54360905b9c39ee7db5313bfec0f"},
     {file = "more_itertools-8.13.0-py3-none-any.whl", hash = "sha256:c5122bffc5f104d37c1626b8615b511f3427aa5389b94d61e5ef8236bfbc3ddb"},
-]
-mygene = [
-    {file = "mygene-3.2.2-py2.py3-none-any.whl", hash = "sha256:18d85d1b28ecee2be31d844607fb0c5f7d7c58573278432df819ee2a5e88fe46"},
-    {file = "mygene-3.2.2.tar.gz", hash = "sha256:e729cabbc28cf5afb221bca1ab637883b375cb1a3e2f067587ec79f71affdaea"},
 ]
 numpy = [
     {file = "numpy-1.21.6-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8737609c3bbdd48e380d463134a35ffad3b22dc56295eff6f79fd85bd0eeeb25"},
@@ -831,6 +778,10 @@ pandas = [
     {file = "pandas-1.3.5-cp39-cp39-win_amd64.whl", hash = "sha256:32e1a26d5ade11b547721a72f9bfc4bd113396947606e00d5b4a5b79b3dcb006"},
     {file = "pandas-1.3.5.tar.gz", hash = "sha256:1e4285f5de1012de20ca46b188ccf33521bff61ba5c5ebd78b4fb28e5416a9f1"},
 ]
+pardoc = [
+    {file = "pardoc-0.0.3-py3-none-any.whl", hash = "sha256:f42bb6d05f80247e9205e562a2e5bbb707fc96938e839b30978c58b174b2e2d3"},
+    {file = "pardoc-0.0.3.tar.gz", hash = "sha256:f1561a38e3eb7c6712c615a6e6351f364c4008ac076c5d763d2fba1950ef3bf5"},
+]
 pipda = [
     {file = "pipda-0.6.0-py3-none-any.whl", hash = "sha256:26b4363ca9d1db73f1d1f95a04b6ce788e393a9ddaf910f0444d45146d3ffa77"},
     {file = "pipda-0.6.0.tar.gz", hash = "sha256:4a5655dae0c940126d4d43f198bfed493ed5830b4bdba73242ec79711710d749"},
@@ -839,9 +790,17 @@ pipen = [
     {file = "pipen-0.3.5-py3-none-any.whl", hash = "sha256:efe95f7a6af6b8cad7826717c09db35c1670f2c7a1f457f5f9de7b6e6fc04e1d"},
     {file = "pipen-0.3.5.tar.gz", hash = "sha256:9d7a5436447f82f5aab63f21a78751ead5df856f9edb1750924bf9eb05b91098"},
 ]
+pipen-args = [
+    {file = "pipen-args-0.2.2.tar.gz", hash = "sha256:103766b1fc2bcc09e195ff5a9673dd91bf3588968b64c2de29fd796cdbb84591"},
+    {file = "pipen_args-0.2.2-py3-none-any.whl", hash = "sha256:271b9420a31da34e7f2e3dde40307dc379ed75f87df61ca57af3e2cdc05faa02"},
+]
 pipen-filters = [
     {file = "pipen-filters-0.1.2.tar.gz", hash = "sha256:893686edfaac4a9487b25c8a5455a82f34d1bcb4617fbe362305cc31e8bf49ce"},
     {file = "pipen_filters-0.1.2-py3-none-any.whl", hash = "sha256:446e9ab6ac6fbad93f3c4a6c8bdb0c5148d7dfd4565e5701ca3f49d1de01c8be"},
+]
+pipen-verbose = [
+    {file = "pipen-verbose-0.1.0.tar.gz", hash = "sha256:28b9755a648fa3153182e9e9eeaff27bdeb629c33f269a7e2c4862a0900d9502"},
+    {file = "pipen_verbose-0.1.0-py3-none-any.whl", hash = "sha256:85f00c92f3881869da5ecf2e590987b8578e4440c71ad74c952ce8bc876509dd"},
 ]
 prefixed = [
     {file = "prefixed-0.3.2-py2.py3-none-any.whl", hash = "sha256:5e107306462d63f2f03c529dbf11b0026fdfec621a9a008ca639d71de22995c3"},
@@ -909,10 +868,6 @@ pytz = [
     {file = "pytz-2022.1-py2.py3-none-any.whl", hash = "sha256:e68985985296d9a66a881eb3193b0906246245294a881e7c8afe623866ac6a5c"},
     {file = "pytz-2022.1.tar.gz", hash = "sha256:1e760e2fe6a8163bc0b3d9a19c4f84342afa0a2affebfaa84b01b978a02ecaa7"},
 ]
-requests = [
-    {file = "requests-2.27.1-py2.py3-none-any.whl", hash = "sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d"},
-    {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
-]
 rich = [
     {file = "rich-12.4.4-py3-none-any.whl", hash = "sha256:d2bbd99c320a2532ac71ff6a3164867884357da3e3301f0240090c5d2fdac7ec"},
     {file = "rich-12.4.4.tar.gz", hash = "sha256:4c586de507202505346f3e32d1363eb9ed6932f0c2f63184dea88983ff4971e2"},
@@ -970,10 +925,6 @@ text-unidecode = [
 typing-extensions = [
     {file = "typing_extensions-4.2.0-py3-none-any.whl", hash = "sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708"},
     {file = "typing_extensions-4.2.0.tar.gz", hash = "sha256:f1c24655a0da0d1b67f07e17a5e6b2a105894e6824b92096378bb3668ef02376"},
-]
-urllib3 = [
-    {file = "urllib3-1.26.9-py2.py3-none-any.whl", hash = "sha256:44ece4d53fb1706f667c9bd1c648f5469a2ec925fcf3a776667042d645472c14"},
-    {file = "urllib3-1.26.9.tar.gz", hash = "sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e"},
 ]
 uvloop = [
     {file = "uvloop-0.16.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:6224f1401025b748ffecb7a6e2652b17768f30b1a6a3f7b44660e5b5b690b12d"},

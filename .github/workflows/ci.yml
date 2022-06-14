@@ -1,0 +1,47 @@
+name: CI
+
+on: [push]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.9
+          auto-update-conda: true
+      - name: Create conda environments and install biopipen
+        run: |
+          for envfile in tests/conda/env_*.yml; do
+            bname=$(basename $envfile .yml)
+            envname=${bname:4}
+            echo "::group::Creating environment: $envname"
+            conda env create -f $envfile
+            echo "::endgroup::"
+            echo "::group::Installing biopipen in environment: $envname"
+            conda run --no-capture-output -n $envname bash tests/conda/patch_poetry.sh
+            conda run --no-capture-output -n $envname poetry install -E test -v
+            echo "::endgroup::"
+          done
+      - name: List conda information
+        run: |
+          conda info
+          conda env list
+      - name: Cache reference data
+        id: cache-reference
+        uses: actions/cache@v3
+        with:
+          path: tests/data/reference
+          key: reference-${{ hashFiles('tests/data/prep_reference.py') }}
+      - name: Download reference data
+        if: steps.cache-reference.outputs.cache-hit != 'true'
+        run: |
+          conda run --no-capture-output -n bio python tests/data/prep_reference.py
+      - name: Run tests
+        run: |
+          make -k VERBOSE=1

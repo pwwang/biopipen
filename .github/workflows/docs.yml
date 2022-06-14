@@ -1,6 +1,13 @@
 name: Docs
 
-on: [push]
+on:
+  push:
+    paths:
+      - docs/
+      - mkdocs.yml
+      - 'biopipen/ns/*.py'
+      - 'biopipen/core/*.py'
+      - 'biopipen/utils/*.py'
 
 jobs:
   docs:

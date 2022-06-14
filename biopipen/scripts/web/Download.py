@@ -1,13 +1,13 @@
 from pathlib import Path
 import cmdy
 
-url = {{in.url | repr}}
-outfile = Path({{out.outfile | repr}})
-tool = {{envs.tool | repr}}
-wget = {{envs.wget | repr}}
-aria2c = {{envs.aria2c | repr}}
-ncores = {{envs.ncores | repr}}
-args = {{envs.args | repr}}
+url = {{in.url | repr}}  # pyright: ignore
+outfile = Path({{out.outfile | repr}})  # pyright: ignore
+tool = {{envs.tool | repr}}  # pyright: ignore
+wget = {{envs.wget | repr}}  # pyright: ignore
+aria2c = {{envs.aria2c | repr}}  # pyright: ignore
+ncores = {{envs.ncores | repr}}  # pyright: ignore
+args = {{envs.args | repr}}  # pyright: ignore
 
 if tool == "wget":
     args["_"] = url

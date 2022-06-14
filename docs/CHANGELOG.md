@@ -1,3 +1,26 @@
+## 0.3.2
+
+- ✅ Allow tests to run locally only
+- 💚 Add pipen-args for tests
+- ✅ [plot.Heatmap] Fix test
+- ✅ [pipeline.scrna_metabolic] Add ARGS in run.env
+- ✅ [scrna.ScFGSEA] Add test
+- ✨ [tcr.TCRClusteringStats] Add process
+- ✅ [tcr.TCRClustering] Use env r for testing
+- ✅ [tcr.TCRClustering] Add test
+- ✅ [pipeline.scrna_metabolic] Add test
+- ✅ [gsea.GSEA] Add tests
+- ✅ [gsea.FGSEA] Add tests
+- ✅ [plot.Heatmap] Add tests
+- ✅ [gene.GeneNameConversion] Add tests
+- ✅ [utils.gene] Add tests
+- 💚 [bed.Bed2Vcf] Fix test
+- ✅ [vcf.VcfFix] Add test
+- ✅ [misc.File2Proc] Use base container for test
+- ✅ [misc.File2Proc] Fix test
+- 🩹 [scrna.ExprImpute] Use if-statement for requirements
+- ✨ [scrna.SeuratClusterStats] Add process and test
+
 ## 0.3.1
 
 - 🗑️ Deprecate `biopipen.namespaces`, use `biopipen.ns` instead

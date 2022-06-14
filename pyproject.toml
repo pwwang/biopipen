@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.3.1"
+version = "0.3.2"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -11,10 +11,11 @@ pipen = "^0.3"
 pipen-filters = "^0.1"
 cmdy = "^0.5"
 datar = "^0.8"
-mygene = {version = "^3.2.2", optional = true}
+pipen-verbose = {version = "^0.1", optional = true}
+pipen-args = {version = "^0.2", optional = true}
 
 [tool.poetry.extras]
-test = ["mygene"]
+test = ["pipen-verbose", "pipen-args"]
 
 [tool.poetry.dev-dependencies]
 
