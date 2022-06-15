@@ -28,15 +28,13 @@ class PrepareSeurat(Proc):
 class ScFGSEA(ScFGSEA):
     requires = PrepareSeurat
     envs = {
+        "name": "GSEA analysis",
         "cases": {
-            "name": "GSEA analysis",
-            "cases": {
-                "Male_vs_Female": {
-                    "ident.1": "g1",
-                    "ident.2": "g2",
-                    "group.by": "Group",
-                    "mutaters": {"Group": "groups"},
-                }
+            "Male_vs_Female": {
+                "ident.1": "g1",
+                "ident.2": "g2",
+                "group.by": "Group",
+                "mutaters": {"Group": "groups"},
             }
         },
         "gmtfile": Path(__file__).parent.parent.parent.joinpath(

@@ -6,7 +6,7 @@ srtfile = {{in.srtobj | r}}
 {% if in.casefile %}
 cases = {{in.casefile | toml_load | r}}
 {% else %}
-cases = {{envs.cases | r}}
+cases = {{envs | r}}
 {% endif %}
 
 outdir = {{out.outdir | r}}
@@ -61,6 +61,7 @@ do_case = function(case) {
 
     case_envs = envs
     top = case_envs$top
+    case_envs$name = NULL
     case_envs$cases = NULL
     case_envs$gmtfile = NULL
     case_envs$nproc = case_envs$ncores

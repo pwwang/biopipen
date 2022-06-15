@@ -13,10 +13,10 @@
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{% if in.casefile %}
-{%  set name = in.casefile | toml_load | attr: "name" %}
+{% if job.in.casefile %}
+{%  set name = job.in.casefile | config: "toml" | attr: "name" %}
 {% else %}
-{%  set name = envs.cases | attr: "name" %}
+{%  set name = envs | attr: "name" %}
 {% endif %}
 <h1>{{name | escape}}</h1>
 {%- endmacro -%}
