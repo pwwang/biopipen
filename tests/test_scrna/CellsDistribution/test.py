@@ -39,27 +39,25 @@ class CellsDistribution(CellsDistribution):
     requires = PrepareSeurat
     envs = {
         "cases": {
-            "cases": {
-                "Case1": {
-                    "group": {
-                        "by": "Responder",
-                        "mutaters": {
-                            "Responder": """
-                                case_when(
-                                    response == 2 ~ "Responder",
-                                    response == 3 ~ "NonResponder",
-                                    TRUE ~ "CONTROL"
-                                )
-                            """
-                        },
-                        "order": ["CONTROL", "Responder", "NonResponder"],
+            "Case1": {
+                "group": {
+                    "by": "Responder",
+                    "mutaters": {
+                        "Responder": """
+                            case_when(
+                                response == 2 ~ "Responder",
+                                response == 3 ~ "NonResponder",
+                                TRUE ~ "CONTROL"
+                            )
+                        """
                     },
-                    "cells": {
-                        "by": "Clone",
-                        "n": 5,
-                        "orderby": "desc(.CloneSize)"
-                    },
-                }
+                    "order": ["CONTROL", "Responder", "NonResponder"],
+                },
+                "cells": {
+                    "by": "Clone",
+                    "n": 5,
+                    "orderby": "desc(.CloneSize)"
+                },
             }
         }
     }

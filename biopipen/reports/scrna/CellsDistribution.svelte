@@ -14,7 +14,7 @@
 {%- if job.in.casefile -%}
 {%-     set cases = job.in.casefile | config: "toml" -%}
 {%- else -%}
-{%-     set cases = env.cases -%}
+{%-     set cases = envs -%}
 {%- endif -%}
 <h1>{{cases | attr: "name" | escape}}</h1>
 {%- endmacro -%}

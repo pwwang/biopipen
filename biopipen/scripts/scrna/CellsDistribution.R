@@ -7,9 +7,9 @@ library(dplyr)
 srtfile = {{in.srtobj | r}}
 outdir = {{out.outdir | r}}
 {% if in.casefile %}
-cases = {{in.casefile | toml_load | r}}
+cases = {{in.casefile | config: "toml" | r}}
 {% else %}
-cases = {{envs.cases | r}}
+cases = {{envs | r}}
 {% endif %}
 
 if (length(cases) == 0) {

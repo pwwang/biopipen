@@ -212,8 +212,10 @@ class CellsDistribution(Proc):
         outdir: The output directory
 
     Envs:
+        name: The name of the job.
         cases: The cases to use.
-            If `in.casefile` is not provided, this will be used.
+            If `in.casefile` is not provided, `envs.name` and `envs.cases`
+            will be used.
 
     Requires:
         - name: r-seurat
@@ -223,7 +225,7 @@ class CellsDistribution(Proc):
     input = "srtobj:file, casefile:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
-    envs = {"cases": {}}
+    envs = {"name": None, "cases": {}}
     script = "file://../scripts/scrna/CellsDistribution.R"
     plugin_opts = {
         "report": "file://../reports/scrna/CellsDistribution.svelte"
@@ -636,6 +638,7 @@ class ScFGSEA(Proc):
         outdir: The output directory for the results
 
     Envs:
+        name: The name of the job, used in report
         ncores: Number of cores to use to parallelize the groups
         cases: The cases to find markers for.
             See `in.casefile`.
@@ -662,6 +665,7 @@ class ScFGSEA(Proc):
     output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.fgsea"
     lang = config.lang.rscript
     envs = {
+        "name": None,
         "ncores": config.misc.ncores,
         "cases": {},
         "gmtfile": "",
