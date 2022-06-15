@@ -440,6 +440,7 @@ class TCRClusteringStats(Proc):
         "shared_clusters": {
             "numbers_on_heatmap": True,
             "heatmap_meta": [],
+            "grouping": None,
         },
         "sample_diversity": {
             "gini": {},  # by = ["Status", "Sex"]

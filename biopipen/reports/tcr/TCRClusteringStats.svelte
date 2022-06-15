@@ -26,6 +26,9 @@
 </Tabs>
 
 
+<h{{h}}>Shared TCR clusters from groups</h{{h}}>
+<Image src={{job.out.outdir | joinpaths: "SharedClustersByGrouping/shared_clusters_by_grouping.png" | quote}} />
+
 
 <h{{h}}>Sample diversity using TCR clusters</h{{h}}>
 
