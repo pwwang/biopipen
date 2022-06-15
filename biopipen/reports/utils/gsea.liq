@@ -19,15 +19,19 @@ def splitgenes(data):
 
 <h{{h}}>Enrichment pathways</h{{h}}>
 <DataTable src={{ fgsea_dir | joinpaths: "fgsea.txt" | quote }}
-    data={ {{ data | splitgenes: }} } />
+    data={ {{ data | splitgenes: }} }
+    pageSize={10} />
 
 <h{{h}}>Enrichment plot of pathways</h{{h}}>
 {%- python -%}
+import os
 def fgsea_plots(pathways, fgsea_dir):
     out = []
     for pathway in pathways:
         pathway = pathway.replace("/", "-")
-        out.append(joinpaths(fgsea_dir, f"fgsea_{pathway}.png"))
+        pwfig = joinpaths(fgsea_dir, f"fgsea_{pathway}.png")
+        if os.path.exists(pwfig):
+            out.append(pwfig)
     return out
 {%- endpython -%}
 {{ table_of_images(
