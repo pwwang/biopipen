@@ -20,6 +20,12 @@ class PrepareImmdata(Proc):
     script = """
         library(immunarch)
         data(immdata)
+        set.seed(8525)
+        for (name in names(immdata$data)) {
+            immdata$data[[name]]$Barcode = paste0(
+                "Cell-", 1:nrow(immdata$data[[name]])
+            )
+        }
         saveRDS(immdata, {{out.outfile | quote}})
     """
 
