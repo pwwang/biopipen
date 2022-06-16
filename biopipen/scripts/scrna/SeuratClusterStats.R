@@ -134,7 +134,7 @@ do_exprs_ridgeplots = function(odir, pms) {
         pms$ncol = 2
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -166,7 +166,7 @@ do_exprs_vlnplots = function(odir, pms) {
         pms$ncol = 2
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -196,7 +196,7 @@ do_exprs_featureplots = function(odir, pms) {
         pms$ncol = 2
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -224,7 +224,7 @@ do_exprs_dotplot = function(odir, pms) {
         plus = c()
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -256,7 +256,7 @@ do_exprs_heatmap = function(odir, pms) {
         plus = c()
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
