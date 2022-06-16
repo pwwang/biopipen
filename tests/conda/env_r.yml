@@ -43,3 +43,4 @@ dependencies:
   - clustcr
   - scikit-learn
   - faiss-cpu
+  - truvari
