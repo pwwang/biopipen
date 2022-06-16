@@ -106,7 +106,8 @@ if (mode == "single") {
 if (mode == "single") {
     immdata$meta  = immdata$meta |>
         filter(endsWith(Sample, "_TRB")) |>
-        mutate(Sample = substr(Sample, 1, nchar(Sample) - 4))
+        mutate(Sample = substr(Sample, 1, nchar(Sample) - 4)) |>
+        select(-"Source")
 }
 immdata$meta = left_join(
     immdata$meta,
