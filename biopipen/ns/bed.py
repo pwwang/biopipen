@@ -40,7 +40,7 @@ class Bed2Vcf(Proc):
     Output:
         outvcf: The output VCF file
 
-    Args:
+    Envs:
         sample: The sample name to be used in the VCF file
             You can use a lambda function (in string) to generate
             the sample name from the stem of input file
