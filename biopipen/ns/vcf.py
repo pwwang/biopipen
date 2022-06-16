@@ -238,8 +238,6 @@ class TruvariBenchSummary(Proc):
     Input:
         indirs: The input directories, which should be the output directories
             of `TruvariBench`
-            When specify `the input_data` for this process, it's typically
-            `lambda ch: [flatten(ch)]`
 
     Output:
         outdir: The output directory, including the summary table and plots
@@ -269,6 +267,7 @@ class TruvariBenchSummary(Proc):
 
     """
     input = "indirs:files"
+    input_data = lambda ch: [list(ch.iloc[:, 0])]
     output = "outdir:dir:truvari_bench.summary"
     lang = config.lang.rscript
     envs = {

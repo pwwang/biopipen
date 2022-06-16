@@ -21,7 +21,6 @@ class TruvariBench(TruvariBench):
 
 class TruvariBenchSummary(TruvariBenchSummary):
     requires = TruvariBench
-    input_data = lambda ch: [list(ch.iloc[:, 0])]
 
 
 def pipeline():
