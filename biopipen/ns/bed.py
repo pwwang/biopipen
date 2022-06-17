@@ -55,6 +55,7 @@ class Bed2Vcf(Proc):
             The keys 'ID', 'Description', 'Type', and 'Number' are required.
         converters: A dict of converters to be used for each INFO or FORMAT
             The key is the ID of an INFO or FORMAT, and the value is
+            Any converts return `None` will skip the record
         nonexisting_contigs: Whether to `keep` or `drop` the non-existing
             contigs in `ref`.
         helpers: Raw code to be executed to provide some helper functions

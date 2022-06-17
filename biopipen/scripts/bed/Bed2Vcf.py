@@ -111,12 +111,18 @@ try:
             variant.CHROM = items[0]
             start = int(items[1])
             end = int(items[2])
-            variant.set_pos(start + 1 - base)
+            # The pos will be incremented by 1 with .set_pos()
+            variant.set_pos(start - base)
             # If it is not a SNP
             if end - start > base:
                 variant.INFO["END"] = end + 1 - base
+
+            skip = False
             for key, converter in converters.items():
                 val = converter(items)
+                if val is None:
+                    skip = True
+                    continue
                 if key == "ID":
                     variant.ID = val
                 elif key == "REF":
@@ -137,11 +143,14 @@ try:
                 elif header_types[key] == "INFO":
                     variant.INFO[key] = val
 
+            if skip:
+                continue
+
             if "REF" not in converters:
                 variant.REF = refseq.fetch(
                     variant.CHROM,
-                    variant.POS,
-                    variant.POS + 1
+                    variant.POS - 1,
+                    variant.POS
                 )
 
             writer.write_record(variant)
