@@ -37,10 +37,9 @@ prepare_exprmat = function(casepms) {
     list(exprs=exprs, allclasses=allclasses)
 }
 
-do_case = function(case) {
+do_case = function(case, casepms) {
     odir = file.path(outdir, case)
     dir.create(odir, showWarnings = FALSE)
-    casepms = cases$cases[[case]]
     exprinfo = prepare_exprmat(casepms)
     ranks = prerank(
         exprinfo$exprs,
@@ -73,5 +72,36 @@ do_case = function(case) {
 
 }
 
+.replace_placeholder = function(s, ident) {
+    s = sub("{ident}", ident, s, fixed = TRUE)
+    s = sub("{cluster}", ident, s, fixed = TRUE)
+    s
+}
+
+do_case_with_tpl = function(case_with_tpl) {
+    if (grepl("{", case_with_tpl, fixed = TRUE)) {
+        # has template in case names
+        # currently only cluster is supported
+        casepms = cases$cases[[case_with_tpl]]
+        for (ident in unique(Idents(srtobj))) {
+            case = .replace_placeholder(case_with_tpl, ident)
+            casepms$ident.1 = .replace_placeholder(casepms$ident.1, ident)
+            casepms$ident.2 = .replace_placeholder(casepms$ident.2, ident)
+            casepms$group.by = .replace_placeholder(casepms$group.by, ident)
+            if (!is.null(casepms$mutaters)) {
+                for (mutname in names(casepms$mutaters)) {
+                    casepms$mutaters[[mutname]] = .replace_placeholder(
+                        casepms$mutaters[[mutname]],
+                        ident
+                    )
+                }
+            }
+            do_case(case, casepms)
+        }
+    } else {
+        do_case(case_with_tpl, casepms)
+    }
+}
+
 # parallelize?
-sapply(names(cases$cases), do_case)
+sapply(names(cases$cases), do_case_with_tpl)

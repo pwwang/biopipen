@@ -21,6 +21,7 @@ class PrepareSeurat(Proc):
     lang = config.lang.rscript
     script = """
         library(Seurat)
+        pbmc_small = FindClusters(pbmc_small)
         saveRDS(pbmc_small, {{out.outfile | quote}})
     """
 
@@ -30,11 +31,16 @@ class ScFGSEA(ScFGSEA):
     envs = {
         "name": "GSEA analysis",
         "cases": {
-            "Male_vs_Female": {
+            "Male_vs_Female-Cluster{ident}": {
                 "ident.1": "g1",
                 "ident.2": "g2",
                 "group.by": "Group",
-                "mutaters": {"Group": "groups"},
+                "mutaters": {
+                    "Group": (
+                        'if_else(seurat_clusters != "{ident}", '
+                        'NA_character_, groups)'
+                    )
+                },
             }
         },
         "gmtfile": Path(__file__).parent.parent.parent.joinpath(

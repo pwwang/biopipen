@@ -662,6 +662,9 @@ class ScFGSEA(Proc):
         casefile: The config file in TOML that looks like
             See `in.casefile` from `scrna.MarkersFinder`
             `ident.2` is required for each case.
+            One could also use placeholders for the cases.
+            Currently only cluster is supported. One could use `{cluster}` or
+            `{ident}` to denote the clusters.
 
     Output:
         outdir: The output directory for the results
