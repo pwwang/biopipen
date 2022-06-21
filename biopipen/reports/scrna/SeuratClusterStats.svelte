@@ -1,4 +1,4 @@
-{% from "utils/misc.liq" import report_jobs -%}
+{% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from_ os import path %}
 <script>
     import { DataTable, Image } from "@@";
@@ -27,35 +27,71 @@
 <h{{h}}>Fraction of cells from each sample for clusters</h{{h}}>
 <Image src={{job.out.outdir | joinpaths: "stats/perccellspersample.png" | quote}} />
 
-{% set ridgeplots = job.out.outdir | joinpaths: "exprs/ridgeplots.png" %}
-{%- if ridgeplots | as_path | attr: "is_file" | call -%}
+{%- if job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
 <h{{h}}>Ridge plots of gene expressions</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "exprs/ridgeplots.png" | quote}} />
+    {%- set figures = job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
+    {%- for figure in figures -%}
+        {%- set title = figure | append: ".title" | read | escape -%}
+        {%- if not title.startswith("ridgeplots-") or len(figures) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><Image src={{figure | quote}} /></p>
+    {%- endfor -%}
 {%- endif -%}
 
-{% set vlnplots = job.out.outdir | joinpaths: "exprs/vlnplots.png" %}
-{%- if vlnplots | as_path | attr: "is_file" | call -%}
+{%- if job.out.outdir | glob: "exprs/vlnplots-*.png" -%}
 <h{{h}}>Violin plots of gene expressions</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "exprs/vlnplots.png" | quote}} />
+    {%- set figures = job.out.outdir | glob: "exprs/vlnplots-*.png" -%}
+    {%- for figure in figures -%}
+        {%- set title = figure | append: ".title" | read | escape -%}
+        {%- if not title.startswith("vlnplots-") or len(figures) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><Image src={{figure | quote}} /></p>
+    {%- endfor -%}
 {%- endif -%}
 
-{% set featureplots = job.out.outdir | joinpaths: "exprs/featureplots.png" %}
-{%- if featureplots | as_path | attr: "is_file" | call -%}
+{%- if job.out.outdir | glob: "exprs/featureplots-*.png" -%}
 <h{{h}}>Feature plots of gene expressions</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "exprs/featureplots.png" | quote}} />
+    {%- set figures = job.out.outdir | glob: "exprs/featureplots-*.png" -%}
+    {%- for figure in figures -%}
+        {%- set title = figure | append: ".title" | read | escape -%}
+        {%- if not title.startswith("featureplots-") or len(figures) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><Image src={{figure | quote}} /></p>
+    {%- endfor -%}
 {%- endif -%}
 
-{% set dotplot = job.out.outdir | joinpaths: "exprs/dotplot.png" %}
-{%- if dotplot | as_path | attr: "is_file" | call -%}
+{%- if job.out.outdir | glob: "exprs/dotplot-*.png" -%}
 <h{{h}}>Dot plot of gene expressions</h{{h}}>
-<p>Intuitive way of visualizing how feature expression changes across different identity classes (clusters). The size of the dot encodes the percentage of cells within a class, while the color encodes the AverageExpression level across all cells within a class (blue is high).</p>
-<Image src={{job.out.outdir | joinpaths: "exprs/dotplot.png" | quote}} />
+    {%- set figures = job.out.outdir | glob: "exprs/dotplot-*.png" -%}
+    {%- for figure in figures -%}
+        {%- set title = figure | append: ".title" | read | escape -%}
+        {%- if not title.startswith("dotplot-") or len(figures) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><Image src={{figure | quote}} /></p>
+    {%- endfor -%}
 {%- endif -%}
 
-{% set heatmap = job.out.outdir | joinpaths: "exprs/heatmap.png" %}
-{%- if heatmap | as_path | attr: "is_file" | call -%}
-<h{{h}}>Heatmap of gene expressions</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "exprs/heatmap.png" | quote}} />
+{%- if job.out.outdir | glob: "exprs/heatmap-*.png" -%}
+    <h{{h}}>Heatmap of gene expressions</h{{h}}>
+    {%- set figures = job.out.outdir | glob: "exprs/heatmap-*.png" -%}
+    {%- for figure in figures -%}
+        {%- set title = figure | append: ".title" | read | escape -%}
+        {%- if not title.startswith("heatmap-") or len(figures) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><Image src={{figure | quote}} /></p>
+    {%- endfor -%}
+{%- endif -%}
+
+
+{%- if job.out.outdir | joinpaths: "dimplots" | as_path | attr: "is_dir" | call -%}
+<h{{h}}>Dimensional reduction plots</h{{h}}>
+{%-   set dpimgs = job.out.outdir | glob: "dimplots", "*.png" -%}
+{{ table_of_images(dpimgs, caps=[]) }}
 {%- endif -%}
 
 {%- endmacro -%}

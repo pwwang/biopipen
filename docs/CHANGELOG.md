@@ -1,3 +1,27 @@
+## 0.4.1
+
+### General
+- 👷 [Housekeeping] Add deploy in CI
+- 🚚 [Housekeeping] Move tests/test_tcr/TCRClustering to tests/test_tcr/TCRClusteringStats
+- 🔧 [Tests] Add r-tidyseurat to env_r.toml
+
+### Processes
+- 🩹 [scrna.CellsDistribution] Reduce envs.cases levels
+- 🩹 [scrna.CellsDistribution] Allow acurate sizes to be used in orderby
+- 🩹 [scrna.ScFGSEA] Reduce envs.cases levels
+- ✨ [scrna.ScFGSEA] Allow `{ident}` or `{cluster}` as placeholder in cases
+- ✨ [scrna.SeuratClusterStats] Add dimplots
+- 🚑 [scrna.SeuratClusterStats] Limit 20 genes by default
+- 🐛 [tcr.ImmunarchLoading] Fix multiple "Source" columns in data
+- 🩹 [tcr.TCRClustering] Make clusterfile as a meta file that can be used by SeuratMetadataMutater
+- ✨ [tcr.TCRClusteringStats] Add shared clusters by grouping
+- 📝 [tcr.TCRClusteringStats] Don't show shared TCR clusters between groups if not configured
+- 📝 [gsea.FGSEA] Limit pagesize to 10 in report
+- ✨ [vcf.TruvariBenchSummary] Add process and test
+- ✨ [vcf.TruvariBenchSummary] Add default `input_data`
+- ✏️ [bed.Bed2Vcf] Fix typos in doc
+- ✨ [bed.Bed2Vcf] Allow records to be skipped
+
 ## 0.4.0
 
 - ✨ [scrna.CellsDistribution] Add process and test

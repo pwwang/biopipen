@@ -35,6 +35,11 @@ cluster_size_distribution = function() {
             "scale_y_continuous(trans='log10')",
             "labs(x='TCR cluster size', y='Count')"
         ),
+        devpars = list(
+            res = 100,
+            height = 1000,
+            width = 1000 + ceiling(length(immdata$data) / 16) * 150
+        ),
         outfile = outplot
     )
 }
@@ -67,7 +72,7 @@ shared_clusters = function() {
         row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t"
     )
 
-    if (length(envs$shared_clusters$heatmap_meta) == 0) {
+    if (is.null(envs$shared_clusters$heatmap_meta) || length(envs$shared_clusters$heatmap_meta) == 0) {
         anno = NULL
     } else {
         anno = as.list(immdata$meta[, heatmap_meta, drop=FALSE])
@@ -82,13 +87,53 @@ shared_clusters = function() {
             col = c("#ffe1e1", "red3"),
             cluster_rows = FALSE,
             top_annotation = anno,
-            cell_fun = if (!envs$shared_clusters$numbers_on_heatmap) NULL else function(j, i, x, y, width, height, fill) {
+            cell_fun = if (
+                is.null(envs$shared_clusters$numbers_on_heatmap) || !envs$shared_clusters$numbers_on_heatmap
+            ) NULL else function(j, i, x, y, width, height, fill) {
                 grid.text(plotdata[samples[i], samples[j]], x, y, gp = gpar(fontsize = 10))
             }
         ),
         devpars = list(res=100, width=1000, height=1000),
         outfile = file.path(odir, "shared_clusters.png")
 
+    )
+}
+
+
+shared_clusters_by_grouping = function() {
+    if (is.null(envs$shared_clusters$grouping)) {
+        return (NULL)
+    }
+    odir = file.path(outdir, "SharedClustersByGrouping")
+    dir.create(odir, showWarnings = FALSE)
+
+    data = list()
+    grouping = envs$shared_clusters$grouping
+    groups = immdata$meta |> pull(grouping) |> unique()
+    sample_groups = list()
+    for (group in groups) {
+        for (sample in immdata$meta[
+            immdata$meta[, grouping] == group,
+            "Sample",
+            drop = TRUE
+        ]) {
+            sample_groups[[sample]] = group
+        }
+        data[[group]] = c()
+    }
+
+    samples = names(immdata$data)
+    for (sample in samples) {
+        group = sample_groups[[sample]]
+        clusters = immdata$data[[sample]] |> pull("TCR_Cluster") %>% unique()
+        data[[group]] = unique(c(data[[group]], clusters))
+    }
+
+    outfile = file.path(odir, "shared_clusters_by_grouping.png")
+    plotVenn(
+        data,
+        ggs = 'ggtitle("Shared TCR Clusters")',
+        outfile = outfile
     )
 }
 
@@ -174,6 +219,9 @@ sample_diversity = function() {
 
     # Shared clusters
     shared_clusters()
+
+    # Shared clusters by grouping
+    shared_clusters_by_grouping()
 
     # Diversity
     sample_diversity()

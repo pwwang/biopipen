@@ -126,7 +126,30 @@ class SeuratClusterStats(Proc):
         outdir: The output directory
 
     Envs:
-        ncores: Number of cores to use
+        stats: The statistics to plot
+            nCells - Number of cells for each cluster
+            nCellsPerSample - Number of cells per sample for each cluster
+            percCellsPerSample - Percentage of cells per sample for each cluster
+        exprs: The expression values to plot
+            ridgeplots - The ridge plots for the gene expressions.
+            See `?Seurat::RidgePlot`.
+            vlnplots - Violin plots for the gene expressions.
+            See `?Seurat::VlnPlot`. You can have `boxplot` key to add
+            `geom_boxplot()` to the violin plots
+            featureplots - The feature plots for the gene expressions.
+            See `?Seurat::FeaturePlot`.
+            dotplot - Dot plots for the gene expressions.
+            See `?Seurat::DotPlot`.
+            heatmap - Heatmap for the gene expressions.
+            See `?Seurat::DoHeatmap`. You can specify `average=True` to plot on
+            the average of the expressions.
+            All the above with `devpars` to define the output figures
+            and `plus` to add elements to the `ggplot` object.
+            You can have `subset` to subset the data. Multiple cases can be
+            distinguished by `ridgeplots` and `ridgeplots.1`
+        dimplots: The dimensional reduction plots
+            `<case>` - The case to plot. Keys are the arguments for
+            `Seurat::Dimplot()`, add `devpars`.
 
     Requires:
         - name: r-seurat
@@ -150,6 +173,12 @@ class SeuratClusterStats(Proc):
             },
         },
         "exprs": {},
+        "dimplots": {
+            "Ident": {
+                "group.by": "ident",
+                "devpars": {"res": 100, "height": 1000, "width": 1000},
+            }
+        },
     }
     script = "file://../scripts/scrna/SeuratClusterStats.R"
     plugin_opts = {
@@ -212,8 +241,10 @@ class CellsDistribution(Proc):
         outdir: The output directory
 
     Envs:
+        name: The name of the job.
         cases: The cases to use.
-            If `in.casefile` is not provided, this will be used.
+            If `in.casefile` is not provided, `envs.name` and `envs.cases`
+            will be used.
 
     Requires:
         - name: r-seurat
@@ -223,7 +254,7 @@ class CellsDistribution(Proc):
     input = "srtobj:file, casefile:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
-    envs = {"cases": {}}
+    envs = {"name": None, "cases": {}}
     script = "file://../scripts/scrna/CellsDistribution.R"
     plugin_opts = {
         "report": "file://../reports/scrna/CellsDistribution.svelte"
@@ -631,11 +662,15 @@ class ScFGSEA(Proc):
         casefile: The config file in TOML that looks like
             See `in.casefile` from `scrna.MarkersFinder`
             `ident.2` is required for each case.
+            One could also use placeholders for the cases.
+            Currently only cluster is supported. One could use `{cluster}` or
+            `{ident}` to denote the clusters.
 
     Output:
         outdir: The output directory for the results
 
     Envs:
+        name: The name of the job, used in report
         ncores: Number of cores to use to parallelize the groups
         cases: The cases to find markers for.
             See `in.casefile`.
@@ -662,6 +697,7 @@ class ScFGSEA(Proc):
     output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.fgsea"
     lang = config.lang.rscript
     envs = {
+        "name": None,
         "ncores": config.misc.ncores,
         "cases": {},
         "gmtfile": "",

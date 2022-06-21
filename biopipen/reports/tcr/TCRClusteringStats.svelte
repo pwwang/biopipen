@@ -25,6 +25,10 @@
     </svelte:fragment>
 </Tabs>
 
+{%- if job.out.outdir | joinpaths: "SharedClustersByGrouping" | as_path | attr: "is_dir" | call -%}
+<h{{h}}>Shared TCR clusters from groups</h{{h}}>
+<Image src={{job.out.outdir | joinpaths: "SharedClustersByGrouping/shared_clusters_by_grouping.png" | quote}} />
+{%- endif -%}
 
 
 <h{{h}}>Sample diversity using TCR clusters</h{{h}}>

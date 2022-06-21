@@ -1,7 +1,9 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 library(Seurat)
 library(dplyr)
 library(ggprism)
+library(tidyseurat)
 
 srtfile = {{in.srtobj | r}}
 outdir = {{out.outdir | r}}
@@ -124,17 +126,42 @@ do_stats = function() {
 
 }
 
+.get_outfile = function(odir, prefix) {
+    i = 1
+    while (TRUE) {
+        outfile = file.path(odir, paste0(prefix, "-", i, ".png"))
+        if (!file.exists(outfile)) {
+            return(outfile)
+        }
+        i = i + 1
+    }
+    return(outfile)
+}
+
 
 do_exprs_ridgeplots = function(odir, pms) {
-    outfile = file.path(odir, "ridgeplots.png")
+    outfile = .get_outfile(odir, "ridgeplots")
 
     devpars = pms$devpars
     pms$devpars = NULL
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
+    plus = pms$plus
+    pms$plus = NULL
+    title = pms$title
+    pms$title = NULL
+    if (is.null(title)) {
+        title = tools::file_path_sans_ext(basename(outfile))
+    }
+    cat(title, file = paste0(outfile, ".title"))
+    subsetpms = pms$subset
+    pms$subset = NULL
+    if (is.null(plus)) {
+        plus = c()
+    }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -143,8 +170,15 @@ do_exprs_ridgeplots = function(odir, pms) {
             res = 100
         )
     }
-    pms$object = srtobj
+    if (is.null(subsetpms)) {
+        pms$object = srtobj
+    } else {
+        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+    }
     p = do.call(RidgePlot, pms)
+    for (pls in plus) {
+        p = p + eval(parse(text = pls))
+    }
     devpars$filename = outfile
     do.call(png, devpars)
     print(p)
@@ -153,12 +187,25 @@ do_exprs_ridgeplots = function(odir, pms) {
 
 
 do_exprs_vlnplots = function(odir, pms) {
-    outfile = file.path(odir, "vlnplots.png")
+    outfile = .get_outfile(odir, "vlnplots")
 
     devpars = pms$devpars
     pms$devpars = NULL
     boxplot = pms$boxplot
     pms$boxplot = NULL
+    plus = pms$plus
+    pms$plus = NULL
+    subsetpms = pms$subset
+    pms$subset = NULL
+    title = pms$title
+    pms$title = NULL
+    if (is.null(title)) {
+        title = tools::file_path_sans_ext(basename(outfile))
+    }
+    cat(title, file = paste0(outfile, ".title"))
+    if (is.null(plus)) {
+        plus = c()
+    }
     if (!is.null(boxplot) && length(boxplot) == 0) {
         boxplot = list(width = 0.1, fill = "white")
     }
@@ -166,7 +213,7 @@ do_exprs_vlnplots = function(odir, pms) {
         pms$ncol = 2
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -175,10 +222,17 @@ do_exprs_vlnplots = function(odir, pms) {
             res = 100
         )
     }
-    pms$object = srtobj
+    if (is.null(subsetpms)) {
+        pms$object = srtobj
+    } else {
+        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+    }
     p = do.call(VlnPlot, pms)
     if (!is.null(boxplot)) {
         p = p + do.call(geom_boxplot, boxplot)
+    }
+    for (pls in plus) {
+        p = p + eval(parse(text = pls))
     }
     devpars$filename = outfile
     do.call(png, devpars)
@@ -188,15 +242,21 @@ do_exprs_vlnplots = function(odir, pms) {
 
 
 do_exprs_featureplots = function(odir, pms) {
-    outfile = file.path(odir, "featureplots.png")
+    outfile = .get_outfile(odir, "featureplots")
 
     devpars = pms$devpars
     pms$devpars = NULL
+    title = pms$title
+    pms$title = NULL
+    if (is.null(title)) {
+        title = tools::file_path_sans_ext(basename(outfile))
+    }
+    cat(title, file = paste0(outfile, ".title"))
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -205,7 +265,13 @@ do_exprs_featureplots = function(odir, pms) {
             res = 100
         )
     }
-    pms$object = srtobj
+    subsetpms = pms$subset
+    pms$subset = NULL
+    if (is.null(subsetpms)) {
+        pms$object = srtobj
+    } else {
+        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+    }
     p = do.call(FeaturePlot, pms)
     devpars$filename = outfile
     do.call(png, devpars)
@@ -214,17 +280,25 @@ do_exprs_featureplots = function(odir, pms) {
 }
 
 do_exprs_dotplot = function(odir, pms) {
-    outfile = file.path(odir, "dotplot.png")
+    outfile = .get_outfile(odir, "dotplot")
 
     devpars = pms$devpars
     pms$devpars = NULL
     plus = pms$plus
     pms$plus = NULL
+    subsetpms = pms$subset
+    pms$subset = NULL
+    title = pms$title
+    pms$title = NULL
+    if (is.null(title)) {
+        title = tools::file_path_sans_ext(basename(outfile))
+    }
+    cat(title, file = paste0(outfile, ".title"))
     if (is.null(plus)) {
         plus = c()
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -233,7 +307,11 @@ do_exprs_dotplot = function(odir, pms) {
             res = 100
         )
     }
-    pms$object = srtobj
+    if (is.null(subsetpms)) {
+        pms$object = srtobj
+    } else {
+        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+    }
     p = do.call(DotPlot, pms)
     for (pls in plus) {
         p = p + eval(parse(text = pls))
@@ -246,17 +324,25 @@ do_exprs_dotplot = function(odir, pms) {
 
 
 do_exprs_heatmap = function(odir, pms) {
-    outfile = file.path(odir, "heatmap.png")
+    outfile = .get_outfile(odir, "heatmap")
 
     devpars = pms$devpars
     pms$devpars = NULL
     plus = pms$plus
     pms$plus = NULL
+    subsetpms = pms$subset
+    pms$subset = NULL
+    title = pms$title
+    pms$title = NULL
+    if (is.null(title)) {
+        title = tools::file_path_sans_ext(basename(outfile))
+    }
+    cat(title, file = paste0(outfile, ".title"))
     if (is.null(plus)) {
         plus = c()
     }
     if (is.null(pms$features)) {
-        pms$features = VariableFeatures(srtobj)
+        pms$features = VariableFeatures(srtobj)[1:20]
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -267,12 +353,18 @@ do_exprs_heatmap = function(odir, pms) {
     }
     downsample = pms$downsample
     pms$downsample = NULL
-    if (is.null(downsample)) {
-        pms$object = srtobj
-    } else if (downsample %in% c("average", "mean")) {
-        pms$object = AverageExpression(srtobj, return.seurat = TRUE)
+
+    if (is.null(subsetpms)) {
+        sobj = srtobj
     } else {
-        pms$object = subset(srtobj, downsample = downsample)
+        sobj = srtobj |> filter(eval(parse(text=subsetpms)))
+    }
+    if (is.null(downsample)) {
+        pms$object = sobj
+    } else if (downsample %in% c("average", "mean")) {
+        pms$object = AverageExpression(sobj, return.seurat = TRUE)
+    } else {
+        pms$object = subset(sobj, downsample = downsample)
     }
     p = do.call(DoHeatmap, pms)
     for (pls in plus) {
@@ -293,27 +385,68 @@ do_exprs = function() {
     dir.create(odir, showWarnings = FALSE)
 
     exprplots = names(envs$exprs)
-    if ("ridgeplots" %in% exprplots) {
-        do_exprs_ridgeplots(odir, envs$exprs$ridgeplots)
+    for (name in exprplots) {
+        if (startsWith(name, "ridgeplots")) {
+            do_exprs_ridgeplots(odir, envs$exprs[[name]])
+        } else if (startsWith(name, "vlnplots")) {
+            do_exprs_vlnplots(odir, envs$exprs[[name]])
+        } else if (startsWith(name, "featureplots")) {
+            do_exprs_featureplots(odir, envs$exprs[[name]])
+        } else if (startsWith(name, "dotplot")) {
+            do_exprs_dotplot(odir, envs$exprs[[name]])
+        } else if (startsWith(name, "heatmap")) {
+            do_exprs_heatmap(odir, envs$exprs[[name]])
+        } else {
+            print(paste("Unrecognized expression plot type: ", name))
+        }
+    }
+}
+
+do_dimplot = function(odir, dpname, dpenvs) {
+    devpars = dpenvs$devpars
+    dpenvs$devpars = NULL
+    if (is.null(devpars)) {
+        devpars = list(
+            width = 1000,
+            height = 1000,
+            res = 100
+        )
+    }
+    plus = dpenvs$plus
+    dpenvs$plus = NULL
+    if (is.null(plus)) {
+        plus = c()
+    }
+    if (!any(grepl("ggtitle(", plus, fixed=T))) {
+        plus = c(plus, paste0("ggtitle(", dQuote(dpname, q=F), ")"))
     }
 
-    if ("vlnplots" %in% exprplots) {
-        do_exprs_vlnplots(odir, envs$exprs$vlnplots)
+    dpenvs$object = srtobj
+    p = do.call(DimPlot, dpenvs)
+    for (pls in plus) {
+        p = p + eval(parse(text = pls))
     }
 
-    if ("featureplots" %in% exprplots) {
-        do_exprs_featureplots(odir, envs$exprs$featureplots)
-    }
+    devpars$filename = file.path(odir, paste0(slugify(dpname), ".png"))
+    do.call(png, devpars)
+    print(p)
+    dev.off()
+}
 
-    if ("dotplot" %in% exprplots) {
-        do_exprs_dotplot(odir, envs$exprs$dotplot)
+do_dimplots = function() {
+    if (length(envs$dimplots) == 0) {
+        return (NULL)
     }
+    odir = file.path(outdir, "dimplots")
+    dir.create(odir, showWarnings = FALSE)
 
-    if ("heatmap" %in% exprplots) {
-        do_exprs_heatmap(odir, envs$exprs$heatmap)
+    for (dpname in names(envs$dimplots)) {
+        dpenvs = envs$dimplots[[dpname]]
+        do_dimplot(odir, dpname, dpenvs)
     }
 }
 
 
 do_stats()
 do_exprs()
+do_dimplots()

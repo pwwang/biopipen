@@ -34,6 +34,7 @@ dependencies:
   - r-snow
   - r-upsetr
   - r-vegan
+  - r-tidyseurat
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater
@@ -43,3 +44,4 @@ dependencies:
   - clustcr
   - scikit-learn
   - faiss-cpu
+  - truvari

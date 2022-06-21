@@ -7,6 +7,7 @@
 library(immunarch)
 library(dplyr)
 library(tidyr)
+library(tibble)
 
 immfile = {{in.immfile | r}}
 outdir = {{job.outdir | r}}
@@ -25,6 +26,19 @@ if (on_multi) {
 } else {
     seqdata = immdata$data
 }
+
+get_cdr3aa_df = function() {
+    out = NULL
+    for (sample in names(immdata$data)) {
+        tmpdf = immdata$data[[sample]] |>
+            select(Barcode, CDR3.aa) |>
+            separate_rows(Barcode, sep = ";") |>
+            mutate(Barcode = paste0(sample, "_", Barcode))
+        out = bind_rows(out, tmpdf)
+    }
+    out
+}
+cdr3aa_df = get_cdr3aa_df()
 
 prepare_clustcr = function(clustcr_dir) {
     clustering_args = ""
@@ -67,7 +81,17 @@ clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
                 paste0("M_", as.character(TCR_Cluster))
             )
         )
-    write.table(out, clusterfile, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+    out = left_join(
+        cdr3aa_df,
+        out,
+        by = "CDR3.aa"
+    )
+    df = out |>
+        select(Barcode, TCR_Cluster) |>
+        distinct(Barcode, .keep_all = TRUE) |>
+        column_to_rownames("Barcode")
+
+    write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")
     out
 }
 
@@ -153,7 +177,18 @@ clean_giana_output = function(giana_outfile, giana_infile) {
                 paste0("M_", as.character(TCR_Cluster))
             )
         )
-    write.table(out, clusterfile, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+
+    out = left_join(
+        cdr3aa_df,
+        out,
+        by = "CDR3.aa"
+    )
+    df = out |>
+        select(Barcode, TCR_Cluster) |>
+        distinct(Barcode, .keep_all = TRUE) |>
+        column_to_rownames("Barcode")
+
+    write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")
     out
 }
 

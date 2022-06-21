@@ -232,6 +232,54 @@ class TruvariBench(Proc):
     script = "file://../scripts/vcf/TruvariBench.sh"
 
 
+class TruvariBenchSummary(Proc):
+    """Summarise the statistics from `TruvariBench` for multiple jobs (VCFs)
+
+    Input:
+        indirs: The input directories, which should be the output directories
+            of `TruvariBench`
+
+    Output:
+        outdir: The output directory, including the summary table and plots
+
+    Envs:
+        plots: The stats to plot with barplots.
+            Candidates are `TP-base`, `TP-call`, `FP`, `FN`, `precision`,
+            `recall`, `f1`, `base cnt`, `call cnt`, `TP-call_TP-gt`,
+            `TP-call_FP-gt`, `TP-base_TP-gt`, `TP-base_FP-gt`, and
+            `gt_concordance`
+            See https://github.com/ACEnglish/truvari/wiki/bench
+        devpars: The parameters to use for the plots.
+
+    Requires:
+        - name: r-ggprism
+          check: |
+            {{proc.lang}} -e "library(ggprism)"
+        - name: r-rjson
+          check: |
+            {{proc.lang}} -e "library(rjson)"
+        - name: r-dplyr
+          check: |
+            {{proc.lang}} -e "library(dplyr)"
+        - name: r-ggplot2
+          check: |
+            {{proc.lang}} -e "library(ggplot2)"
+
+    """
+    input = "indirs:files"
+    input_data = lambda ch: [list(ch.iloc[:, 0])]
+    output = "outdir:dir:truvari_bench.summary"
+    lang = config.lang.rscript
+    envs = {
+        "plots": ["call cnt", "base cnt", "precision", "recall", "f1"],
+        "devpars": None,
+    }
+    script = "file://../scripts/vcf/TruvariBenchSummary.R"
+    plugin_opts = {
+        "report": "file://../reports/vcf/TruvariBenchSummary.svelte"
+    }
+
+
 class TruvariConsistency(Proc):
     """Run `truvari consistency` to check consistency of CNV calls
 

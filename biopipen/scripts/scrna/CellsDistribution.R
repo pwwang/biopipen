@@ -7,9 +7,9 @@ library(dplyr)
 srtfile = {{in.srtobj | r}}
 outdir = {{out.outdir | r}}
 {% if in.casefile %}
-cases = {{in.casefile | toml_load | r}}
+cases = {{in.casefile | config: "toml" | r}}
 {% else %}
-cases = {{envs.cases | r}}
+cases = {{envs | r}}
 {% endif %}
 
 if (length(cases) == 0) {
@@ -43,23 +43,23 @@ do_case = function(case) {
     if (!is.null(clonepms$mutaters)) {
         meta = mutate_meta(meta, clonepms$mutaters)
     }
-    meta = meta |> filter(!is.na(grouppms$by), !is.na(clonepms$by))
+    meta = meta |> filter(!is.na(!!sym(grouppms$by)), !is.na(!!sym(clonepms$by)))
+
+    if (!is.null(grouppms$order)) {
+        meta[[grouppms$by]] = factor(meta[[grouppms$by]], levels = grouppms$order)
+        meta = meta[!is.na(meta[[grouppms$by]]),, drop = FALSE]
+    }
 
     # Sizes
     meta = meta |>
         add_count(!!sym(clonepms$by), name = ".CloneSize") |>
         add_count(!!sym(clonepms$by), !!sym(grouppms$by), name = ".CloneGroupSize") |>
         add_count(!!sym(clonepms$by), !!sym(grouppms$by), seurat_clusters, name = ".CloneGroupClusterSize")
-
-    if (!is.null(grouppms$order)) {
-        meta[[grouppms$by]] = factor(meta[[grouppms$by]], levels = grouppms$order)
-        meta = meta[!is.na(meta[[grouppms$by]]),, drop = FALSE]
-    }
     if (!is.null(clonepms$orderby)) {
         meta = meta |> arrange(eval(parse(text=clonepms$orderby)))
         order = unique(meta[[clonepms$by]])[1:clonepms$n]
+        meta = meta |> filter(!!sym(clonepms$by) %in% order)
         meta[[clonepms$by]] = factor(meta[[clonepms$by]], levels = order)
-        meta = meta[!is.na(meta[[clonepms$by]]),, drop = FALSE]
     }
     nrows = length(unique(meta[[clonepms$by]]))
     ncols = length(unique(meta[[grouppms$by]]))
