@@ -126,7 +126,30 @@ class SeuratClusterStats(Proc):
         outdir: The output directory
 
     Envs:
-        ncores: Number of cores to use
+        stats: The statistics to plot
+            nCells - Number of cells for each cluster
+            nCellsPerSample - Number of cells per sample for each cluster
+            percCellsPerSample - Percentage of cells per sample for each cluster
+        exprs: The expression values to plot
+            ridgeplots - The ridge plots for the gene expressions.
+            See `?Seurat::RidgePlot`.
+            vlnplots - Violin plots for the gene expressions.
+            See `?Seurat::VlnPlot`. You can have `boxplot` key to add
+            `geom_boxplot()` to the violin plots
+            featureplots - The feature plots for the gene expressions.
+            See `?Seurat::FeaturePlot`.
+            dotplot - Dot plots for the gene expressions.
+            See `?Seurat::DotPlot`.
+            heatmap - Heatmap for the gene expressions.
+            See `?Seurat::DoHeatmap`. You can specify `average=True` to plot on
+            the average of the expressions.
+            All the above with `devpars` to define the output figures
+            and `plus` to add elements to the `ggplot` object.
+            You can have `subset` to subset the data. Multiple cases can be
+            distinguished by `ridgeplots` and `ridgeplots.1`
+        dimplots: The dimensional reduction plots
+            `<case>` - The case to plot. Keys are the arguments for
+            `Seurat::Dimplot()`, add `devpars`.
 
     Requires:
         - name: r-seurat
@@ -150,6 +173,12 @@ class SeuratClusterStats(Proc):
             },
         },
         "exprs": {},
+        "dimplots": {
+            "Ident": {
+                "group.by": "ident",
+                "devpars": {"res": 100, "height": 1000, "width": 1000},
+            }
+        },
     }
     script = "file://../scripts/scrna/SeuratClusterStats.R"
     plugin_opts = {

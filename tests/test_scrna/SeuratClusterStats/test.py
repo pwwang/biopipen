@@ -32,8 +32,15 @@ class SeuratClusterStats(SeuratClusterStats):
     requires = SeuratClustering
     envs = {
         "exprs": {
-            "ridgeplots": {},
-            "vlnplots": {"boxplot": {}},
+            "ridgeplots.1": {
+                "title": "Gene expressions in g1",
+                "subset": "groups == 'g1'",
+            },
+            "ridgeplots.2": {
+                "title": "Gene expressions in g2",
+                "subset": "groups == 'g2'",
+            },
+            "vlnplots": {"boxplot": {}, "pt.size": 0},
             "dotplot": {"plus": "RotatedAxis()"},
             "heatmap": {"downsample": "average"},
         }
