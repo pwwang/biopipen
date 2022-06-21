@@ -17,6 +17,15 @@ class TruvariBench(TruvariBench):
         compvcf=expand_dir(ch, pattern="input*.vcf.gz"),
         basevcf=expand_dir(ch, pattern="multi*.vcf.gz").iloc[0, 0],
     )
+    envs = {
+        "ref": str(
+            Path(__file__).parent.parent.parent
+            / "data"
+            / "reference"
+            / "hg19"
+            / "chrs.fa"
+        ),
+    }
 
 
 class TruvariBenchSummary(TruvariBenchSummary):

@@ -21,6 +21,7 @@
 - ✨ [vcf.TruvariBenchSummary] Add default `input_data`
 - ✏️ [bed.Bed2Vcf] Fix typos in doc
 - ✨ [bed.Bed2Vcf] Allow records to be skipped
+- ✅ [vcf.TruvariBench] Add ref for test
 
 ## 0.4.0
 
