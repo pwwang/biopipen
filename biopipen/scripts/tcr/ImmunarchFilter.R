@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(dplyr)
 library(glue)
 library(tidyr)
@@ -93,7 +95,7 @@ for (name in names(filters$filters)) {
     }
 
     # Save a group file
-    groupdf = do.call(rbind, lapply(
+    groupdf = do_call(rbind, lapply(
         names(immdata$data),
         function(sample) {
             mdata = as.list(immdata$meta[immdata$meta$Sample == sample, ])

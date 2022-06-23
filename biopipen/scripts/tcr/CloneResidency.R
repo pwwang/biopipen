@@ -206,7 +206,7 @@ for (i in seq_len(nrow(subjects))) {
             immdata$data[[sample1]][, c("Clones", "CDR3.aa")]
         ) %>% mutate(Group = group)
     }
-    counts = do.call(bind_rows, counts) %>% pivot_wider(
+    counts = do_call(bind_rows, counts) %>% pivot_wider(
         CDR3.aa,
         names_from = Group,
         values_from = Clones,

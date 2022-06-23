@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/rnaseq.R")
 
 library(scater)
@@ -45,5 +46,5 @@ for (i in seq_len(length(impfiles))) {
     sceobjs[[i]] = sceobj
 }
 
-sce = do.call(cbind, sceobjs)
+sce = do_call(cbind, sceobjs)
 saveRDS(sce, file=outfile)
