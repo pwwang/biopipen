@@ -33,7 +33,7 @@ class ImmunarchLoading(Proc):
     Envs:
         tmpdir: The temporary directory to link all data files.
         prefix: The prefix to the barcodes. You can use placeholder like
-            `{{Sample}}_` to use the meta data from the immunarch object
+            `{Sample}_` to use the meta data from the immunarch object
         mode: Either "single" for single chain data or "paired" for
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
@@ -147,11 +147,11 @@ class Immunarch(Proc):
     Envs:
         volume_by: Groupings to show clonotype volume (sizes)
             Multiple groups supported, for example:
-            `volume_by = {{0: "Status", 1: ["Status", "Sex"]}}`
+            `volume_by = {0: "Status", 1: ["Status", "Sex"]}`
             Or label the groups:
-            `volume_by = {{"Status": "Status", "Status_Sex": ["Status", "Sex"]}}`
+            `volume_by = {"Status": "Status", "Status_Sex": ["Status", "Sex"]}`
             If a list or a single variable is given, it will be changed
-            into `{{"Status": "Status"}}`
+            into `{"Status": "Status"}`
         len_by: Groupings to show CDR3 length of both aa and nt
         count_by: Groupings to show clonotype counts per sample
         top_clone_marks: `.head` arguments of `repClonoality()`
@@ -165,11 +165,11 @@ class Immunarch(Proc):
         overlap_redim: Plot the samples with these dimension reduction methods
         gu_by: Groupings to show gene usages
             Multiple groups supported, for example:
-            `volume_by = {{0: "Status", 1: ["Status", "Sex"]}}`
+            `volume_by = {0: "Status", 1: ["Status", "Sex"]}`
             Or label the groups:
-            `volume_by = {{"Status": "Status", "Status_Sex": ["Status","Sex"]}}`
+            `volume_by = {"Status": "Status", "Status_Sex": ["Status","Sex"]}`
             If a list or a single variable is given, it will be changed
-            into `{{"Status": "Status"}}`
+            into `{"Status": "Status"}`
         gu_top: How many top (ranked by total usage across samples) genes to
             show in the plots
         gua_methods: controls how the data is going to be preprocessed and
@@ -179,14 +179,14 @@ class Immunarch(Proc):
         div_by: Groupings to show sample diversities
         raref_by: Groupings to show rarefactions
         tracking_target: and
-        tracking_samples: The target and samples to tracking
+        tracking_samples: The target and samples to track.
             You can do multiple trackings. To do that, you need to specify
             a key for each tracking. It will use the target and samples under
             the same key. If samples from `tracking_samples` cannot be found,
             all samples will be used
             Other than the target supported by immunarch, you can also specify
             top shared clones. For example:
-            `tracking_target = {{ "top_4": {{"TOP": 4}} }}`
+            `tracking_target = { "top_4": {"TOP": 4} }`
         kmers: Arguments for kmer analysis.
             Keys are the K of mers. Values are parameters:
             - `head` specifies # of the most abundant kmers to visualise.
@@ -339,7 +339,7 @@ class Attach2Seurat(Proc):
 
     Envs:
         prefix: The prefix to the barcodes. You can use placeholder like
-            `{{Sample}}_` to use the meta data from the immunarch object
+            `{Sample}_` to use the meta data from the immunarch object
         metacols: Which meta columns to attach
     """
     input = "immfile:file, sobjfile:file"
@@ -427,6 +427,15 @@ class TCRClusteringStats(Proc):
 
     Output:
         outdir: The output directory containing the stats and reports
+
+    Envs:
+        shared_clusters: Stats about shared TCR clusters
+            numbers_on_heatmap: Whether to show the numbers on the heatmap
+            heatmap_meta: The metadata to show on the heatmap
+            grouping: The groups to investigate the shared clusters
+        sample_diversity: Sample diversity using TCR clusters instead of clones
+            keys are the methods and values, currently, `by` to plot
+            the diversities by groups
 
     Requires:
         - name: r-immunarch
