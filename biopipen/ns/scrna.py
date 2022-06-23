@@ -60,6 +60,10 @@ class SeuratPreparing(Proc):
 
     Envs:
         ncores: Number of cores to use
+        use_sct: Whether use SCTransform routine or not
+            See https://satijalab.org/seurat/articles/integration_rpca.html
+        <Seurat::Function>: Arguments for the different Seurat functions
+            Note that `dims = 30` will be expanded as `dims = 1:30`
 
     Requires:
         - name: r-seurat
@@ -78,11 +82,19 @@ class SeuratPreparing(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
+        "use_sct": False,
+        "SCTransform": {"method": "glmGamPoi"},
+        "SelectIntegrationFeatures": {"nfeatures": 3000},
+        "PrepSCTIntegration": {},
+        "NormalizeData": {},
+        "FindVariableFeatures": {},
+        "FindIntegrationAnchors": {},
+        "IntegrateData": {},
+        "ScaleData": {"verbose": False},
+        "RunPCA": {"npcs": 30, "verbose": False},
+        "RunUMAP": {"reduction": "pca", "dims": 30},
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
-    # plugin_opts = {
-    #     "report": "file://../reports/scrna/SeuratPreparing.svelte"
-    # }
 
 
 class SeuratClustering(Proc):
@@ -112,7 +124,10 @@ class SeuratClustering(Proc):
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
-    envs = {"FindClusters": {"resolution": 0.8}}
+    envs = {
+        "FindNeighbors": {},
+        "FindClusters": {"resolution": 0.8},
+    }
     script = "file://../scripts/scrna/SeuratClustering.R"
 
 
@@ -429,11 +444,9 @@ class MarkersFinder(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
+        "name": "Markers for all clusters",
         "cases": {
-            "name": "Markers for all clusters",
-            "cases": {
-                "Cluster": {"group.by": "seurat_clusters"},
-            }
+            "Cluster": {"group.by": "seurat_clusters"},
         },
         "dbs": [
             "GO_Biological_Process_2021",
