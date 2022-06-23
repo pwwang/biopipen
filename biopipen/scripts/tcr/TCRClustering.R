@@ -10,7 +10,7 @@ library(tidyr)
 library(tibble)
 
 immfile = {{in.immfile | r}}
-outdir = {{job.outdir | r}}
+outdir = normalizePath({{job.outdir | r}})
 outfile = {{out.immfile | r}}
 clusterfile = {{out.clusterfile | r}}
 tool = {{envs.tool | r}}
@@ -19,6 +19,8 @@ tmpdir = {{envs.tmpdir | r}}
 on_multi = {{envs.on_multi | r}}
 giana_repo = {{envs.giana_repo | r}}
 args = {{envs.args | r}}
+
+setwd(outdir)
 
 immdata = readRDS(immfile)
 if (on_multi) {
