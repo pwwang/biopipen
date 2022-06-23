@@ -13,6 +13,10 @@ outdir = {{out.outdir | r}}
 gmtfile = {{envs.gmtfile | r}}
 envs = {{envs | r}}
 
+if (is.null(gmtfile) || nchar(gmtfile) == 0) {
+    stop("No `envs.gmtfile` provided.")
+}
+
 srtobj = readRDS(srtfile)
 
 prepare_exprmat = function(casepms) {
@@ -79,10 +83,10 @@ do_case = function(case, casepms) {
 }
 
 do_case_with_tpl = function(case_with_tpl) {
+    casepms = cases$cases[[case_with_tpl]]
     if (grepl("{", case_with_tpl, fixed = TRUE)) {
         # has template in case names
         # currently only cluster is supported
-        casepms = cases$cases[[case_with_tpl]]
         for (ident in unique(Idents(srtobj))) {
             case = .replace_placeholder(case_with_tpl, ident)
             casepms$ident.1 = .replace_placeholder(casepms$ident.1, ident)

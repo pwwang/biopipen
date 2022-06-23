@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(Seurat)
 library(immunarch)
 library(glue)
@@ -13,7 +15,7 @@ metacols = {{envs.metacols | r}}
 immdata = readRDS(immfile)
 sobj = readRDS(sobjfile)
 
-metadf = do.call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
+metadf = do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
     # Clones  Proportion   CDR3.aa                       Barcode
     # 5      4 0.008583691 CAVRDTGNTPLVF;CASSEYSNQPQHF   GTTCGGGCACTTACGA-1;TCTCTAAGTACCAGTT-1
     # 6      4 0.008583691 CALTQAAGNKLTF;CASRPEDLRGQPQHF GCTTGAAGTCGGCACT-1;TACTCGCTCCTAAGTG-1

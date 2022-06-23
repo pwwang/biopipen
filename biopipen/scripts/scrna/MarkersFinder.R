@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(rlang)
 library(dplyr)
 library(tidyr)
@@ -13,7 +15,7 @@ outdir = {{out.outdir | quote}}
 {% if in.casefile %}
 cases = {{in.casefile | toml_load | r}}
 {% else %}
-cases = {{envs.cases | r}}
+cases = {{envs | r}}
 {% endif %}
 dbs = {{envs.dbs | r}}
 ncores = {{envs.ncores | r}}
@@ -66,12 +68,13 @@ do_enrich = function(case, markers) {
 }
 
 mutate_meta = function(obj, mutaters) {
+    meta = obj@meta.data
     if (!is.null(mutaters)) {
         expr = list()
         for (key in names(mutaters)) {
             expr[[key]] = parse_expr(mutaters[[key]])
         }
-        obj@meta.data = obj@meta.data |> mutate(!!!expr)
+        obj@meta.data = meta |> mutate(!!!expr)
     }
     return(obj)
 }
@@ -87,14 +90,14 @@ do_case = function(case) {
         Idents(obj) = casepms$group.by
         casepms$group.by = NULL
         casepms$object = obj
-        allmarkers = do.call(FindAllMarkers, casepms)
+        allmarkers = do_call(FindAllMarkers, casepms)
         # Is it always cluster?
         for (group in sort(unique(allmarkers$cluster))) {
             do_enrich(paste(case, group, sep="_"), allmarkers |> filter(cluster == group))
         }
     } else {
         casepms$object = obj
-        markers = do.call(FindMarkers, casepms) |> rownames_to_column("gene")
+        markers = do_call(FindMarkers, casepms) |> rownames_to_column("gene")
         do_enrich(case, markers)
     }
 }

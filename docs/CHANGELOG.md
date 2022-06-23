@@ -1,3 +1,14 @@
+## 0.4.2
+
+- 💚 [Housekeeping] Fix CI deploy
+- ⚡️ [processes] Use faster do_call() instead of do.call()
+- 📝 [tcr] Fix some docstrings with `{{` and `}}`
+- ✅ [vcf.TruvariBench] Add ref for test
+- 🩹 [tcr.TCRClustering] FIx VGeneScores.txt being generated in current dir
+- 📝 [scrna.SeuratPreparing] Update docstring and refactor script
+- ✨ [scrna.SeuratClustering] Allow dims to be expanded in arguments
+- 📝 [scrna.MarkersFinder] Adopt reduced case configuration level
+
 ## 0.4.1
 
 ### General

@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/gsea.R")
 
 library(parallel)
@@ -18,7 +19,7 @@ if (grepl("^ident", groupby, ignore.case = TRUE)) {
     groupby = "seurat_clusters"
 }
 
-sceobj <- do.call(cbind, lapply(sceobjfiles, readRDS))
+sceobj <- do_call(cbind, lapply(sceobjfiles, readRDS))
 
 do_one_design <- function(sce, dsname, case, control, groupdir) {
     print(paste("  Design:", dsname, "(", case, ",", control, ")"))

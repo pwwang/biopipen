@@ -175,12 +175,12 @@ do_exprs_ridgeplots = function(odir, pms) {
     } else {
         pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
     }
-    p = do.call(RidgePlot, pms)
+    p = do_call(RidgePlot, pms)
     for (pls in plus) {
         p = p + eval(parse(text = pls))
     }
     devpars$filename = outfile
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }
@@ -227,15 +227,15 @@ do_exprs_vlnplots = function(odir, pms) {
     } else {
         pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
     }
-    p = do.call(VlnPlot, pms)
+    p = do_call(VlnPlot, pms)
     if (!is.null(boxplot)) {
-        p = p + do.call(geom_boxplot, boxplot)
+        p = p + do_call(geom_boxplot, boxplot)
     }
     for (pls in plus) {
         p = p + eval(parse(text = pls))
     }
     devpars$filename = outfile
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }
@@ -272,9 +272,9 @@ do_exprs_featureplots = function(odir, pms) {
     } else {
         pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
     }
-    p = do.call(FeaturePlot, pms)
+    p = do_call(FeaturePlot, pms)
     devpars$filename = outfile
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }
@@ -312,12 +312,12 @@ do_exprs_dotplot = function(odir, pms) {
     } else {
         pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
     }
-    p = do.call(DotPlot, pms)
+    p = do_call(DotPlot, pms)
     for (pls in plus) {
         p = p + eval(parse(text = pls))
     }
     devpars$filename = outfile
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }
@@ -366,12 +366,12 @@ do_exprs_heatmap = function(odir, pms) {
     } else {
         pms$object = subset(sobj, downsample = downsample)
     }
-    p = do.call(DoHeatmap, pms)
+    p = do_call(DoHeatmap, pms)
     for (pls in plus) {
         p = p + eval(parse(text = pls))
     }
     devpars$filename = outfile
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }
@@ -422,13 +422,13 @@ do_dimplot = function(odir, dpname, dpenvs) {
     }
 
     dpenvs$object = srtobj
-    p = do.call(DimPlot, dpenvs)
+    p = do_call(DimPlot, dpenvs)
     for (pls in plus) {
         p = p + eval(parse(text = pls))
     }
 
     devpars$filename = file.path(odir, paste0(slugify(dpname), ".png"))
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }
