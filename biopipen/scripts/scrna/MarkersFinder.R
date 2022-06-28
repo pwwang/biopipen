@@ -7,6 +7,7 @@ library(tibble)
 library(Seurat)
 library(enrichR)
 library(future)
+library(tidyseurat)
 
 setEnrichrSite("Enrichr")
 
@@ -86,6 +87,9 @@ do_case = function(case) {
     obj = mutate_meta(seurat_obj, casepms$mutaters)
     casepms$mutaters = NULL
 
+    if ("filter" %in% pmnames) {
+        obj = obj |> filter(eval(parse(text=casepms$filter)))
+    }
     if (!"ident.1" %in% pmnames && !"ident.2" %in% pmnames) {
         Idents(obj) = casepms$group.by
         casepms$group.by = NULL

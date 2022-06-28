@@ -21,7 +21,7 @@ class PrepareSeurat(Proc):
         library(Seurat)
         set.seed(8525)
         pbmc_small@meta.data$response = sample(
-            1:3,
+            1:4,
             nrow(pbmc_small@meta.data),
             replace=TRUE
         )
@@ -40,17 +40,19 @@ class CellsDistribution(CellsDistribution):
     envs = {
         "cases": {
             "Case1": {
+                "filter": "Responder != 'Other'",
+                "mutaters": {
+                    "Responder": """
+                        case_when(
+                            response == 1 ~ "CONTROL",
+                            response == 2 ~ "Responder",
+                            response == 3 ~ "NonResponder",
+                            TRUE ~ "Other"
+                        )
+                    """
+                },
                 "group": {
                     "by": "Responder",
-                    "mutaters": {
-                        "Responder": """
-                            case_when(
-                                response == 2 ~ "Responder",
-                                response == 3 ~ "NonResponder",
-                                TRUE ~ "CONTROL"
-                            )
-                        """
-                    },
                     "order": ["CONTROL", "Responder", "NonResponder"],
                 },
                 "cells": {

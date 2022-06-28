@@ -1,6 +1,7 @@
 source("{{biopipen_dir}}/utils/gsea.R")
 library(rlang)
 library(Seurat)
+library(tidyseurat)
 
 srtfile = {{in.srtobj | r}}
 {% if in.casefile %}
@@ -20,23 +21,26 @@ if (is.null(gmtfile) || nchar(gmtfile) == 0) {
 srtobj = readRDS(srtfile)
 
 prepare_exprmat = function(casepms) {
+    sobj = srtobj
     if (!is.null(casepms$mutaters)) {
         expr = list()
         for (key in names(casepms$mutaters)) {
             expr[[key]] = parse_expr(casepms$mutaters[[key]])
         }
-        metadata = srtobj@meta.data |> mutate(!!!expr)
-    } else {
-        metadata = srtobj@meta.data
+        sobj = sobj |> mutate(!!!expr)
     }
-    samples = rownames(metadata[
-        metadata[[casepms$group.by]] %in% c(casepms$ident.1, casepms$ident.2),
+    if (!is.null(casepms$filter)) {
+        sobj = sobj |> filter(eval(parse(text=casepms$filter)))
+    }
+
+    samples = rownames(sobj@meta.data[
+        sobj@meta.data[[casepms$group.by]] %in% c(casepms$ident.1, casepms$ident.2),
         ,
         drop=FALSE
     ])
-    allclasses = metadata[samples, casepms$group.by, drop=TRUE]
+    allclasses = sobj@meta.data[samples, casepms$group.by, drop=TRUE]
     exprs = as.data.frame(
-        GetAssayData(srtobj, slot = "data", assay = "RNA")
+        GetAssayData(sobj, slot = "data", assay = "RNA")
     )[, samples, drop=FALSE]
     list(exprs=exprs, allclasses=allclasses)
 }
