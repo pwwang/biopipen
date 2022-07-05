@@ -5,6 +5,7 @@ library(ggplot2)
 library(ggprism)
 library(dplyr)
 library(tidyr)
+library(tibble)
 
 theme_set(theme_prism())
 
