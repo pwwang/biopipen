@@ -6,7 +6,7 @@
 
 
 {%- macro report_job(job, h=1) -%}
-{% for casedir in job.out.outdir | joinpaths: "*" | glob %}
+{% for casedir in job.out.outdir | glob: "*" %}
 {%  set case = casedir | basename %}
 <h{{h}}>{{case}}</h{{h}}>
 
@@ -18,12 +18,12 @@
 
 <h{{h+1}}>Enrichment analysis</h{{h+1}}>
 <Tabs>
-    {% for enrtxt in casedir | joinpaths: "Enrichr-*.txt" | glob %}
+    {% for enrtxt in casedir | as_path | attr: "glob" | call: "Enrichr-*.txt"  %}
     {%  set db = enrtxt | stem | replace: "Enrichr-", "" %}
     <Tab label="{{db}}" title="{{db}}" />
     {% endfor %}
     <div slot="content">
-        {% for enrtxt in casedir | joinpaths: "Enrichr-*.txt" | glob %}
+        {% for enrtxt in casedir | as_path | attr: "glob" | call: "Enrichr-*.txt" %}
         {%  set db = enrtxt | stem | replace: "Enrichr-", "" %}
         <TabContent>
             <Image src={{casedir | joinpaths: "Enrichr-" + db + ".png" | quote}} />

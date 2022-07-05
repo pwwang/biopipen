@@ -84,12 +84,16 @@ do_case = function(case) {
     print(paste("- Dealing with case:", case, "..."))
     casepms = cases$cases[[case]]
     pmnames = names(casepms)
-    obj = mutate_meta(seurat_obj, casepms$mutaters)
-    casepms$mutaters = NULL
-
+    obj = seurat_obj
     if ("filter" %in% pmnames) {
         obj = obj |> filter(eval(parse(text=casepms$filter)))
     }
+    obj = mutate_meta(obj, casepms$mutaters)
+    casepms$mutaters = NULL
+    if ("filter2" %in% pmnames) {
+        obj = obj |> filter(eval(parse(text=casepms$filter2)))
+    }
+
     if (!"ident.1" %in% pmnames && !"ident.2" %in% pmnames) {
         Idents(obj) = casepms$group.by
         casepms$group.by = NULL
