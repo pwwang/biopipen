@@ -146,6 +146,9 @@ class SeuratClusterStats(Proc):
             nCellsPerSample - Number of cells per sample for each cluster
             percCellsPerSample - Percentage of cells per sample for each cluster
         exprs: The expression values to plot
+            genes - The set of genes for the plots, unless `features` for those
+            plots is specified. Could also specify a file with genes
+            (one per line)
             ridgeplots - The ridge plots for the gene expressions.
             See `?Seurat::RidgePlot`.
             vlnplots - Violin plots for the gene expressions.
@@ -424,6 +427,8 @@ class MarkersFinder(Proc):
             >>> "ident.2" = "Control"
             >>> "group.by" = "Group"
             >>> # other arguments for Seruat::FindMarkers()
+            >>> # Filter after mutaters
+            >>> filter2 = "SampleType != 'Control'"
             >>> [cases.case2.mutaters]
             >>> Group = '''
             >>>   if_else(Source %in% c("Tumor", "Normal"), "Case", "Control")
@@ -683,6 +688,7 @@ class ScFGSEA(Proc):
             See `in.casefile` from `scrna.MarkersFinder`
             `ident.2` is required for each case.
             One could also use placeholders for the cases.
+            To enable this, you need `percluster = True` in the config.
             Currently only cluster is supported. One could use `{cluster}` or
             `{ident}` to denote the clusters.
 
