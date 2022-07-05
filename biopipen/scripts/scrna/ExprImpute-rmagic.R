@@ -21,6 +21,6 @@ sobj = readRDS(infile)
 DefaultAssay(sobj) <- "RNA"
 
 sobj = magic(sobj)
-sobj = RenameAssays(sobj, RNA = "RAW_RNA", MAGIC_RNA = "RNA")
+sobj = RenameAssays(sobj, RNA = "UNIMPUTED_RNA", MAGIC_RNA = "RNA")
 
 saveRDS(sobj, outfile)

@@ -20,16 +20,24 @@ pathways = gmtPathways(gmtfile)
 metabolics = unique(as.vector(unname(unlist(pathways))))
 
 sceobjs = list()
+by.rmagic = FALSE
 for (i in seq_len(length(impfiles))) {
     sobj = readRDS(impfiles[i])
-    counts = GetAssayData(sobj, "counts")
-    tpms = unit_conversion(
-        counts,
-        "count",
-        "tpm",
-        args = list(genelen = glenFromGFFExons(refexon))
-    )
-    counts = counts[rownames(tpms),]
+    if ("UNIMPUTED_RNA" %in% Assays(sobj)) {
+        by.rmagic = TRUE
+    }
+    if (by.rmagic) {
+        tpms = GetAssayData(sobj, assay = "RNA", slot = "data")
+    } else {
+        counts = GetAssayData(sobj, "counts")
+        tpms = unit_conversion(
+            counts,
+            "count",
+            "tpm",
+            args = list(genelen = glenFromGFFExons(refexon))
+        )
+        # counts = counts[rownames(tpms),]
+    }
     srt =  as.SingleCellExperiment(sobj, assay="RNA")
     cdata = colData(srt)
     bname = tools::file_path_sans_ext(basename(impfiles[i]))
@@ -47,4 +55,7 @@ for (i in seq_len(length(impfiles))) {
 }
 
 sce = do_call(cbind, sceobjs)
+if (by.rmagic) {
+    attr(sce, "by.rmagic") = TRUE
+}
 saveRDS(sce, file=outfile)

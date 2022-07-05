@@ -1,3 +1,15 @@
+## 0.4.3
+
+- ✨ [scrna] Add `filter` for cases in CellsDistribution, MarkersFinder and ScFGSEA
+- ✨ [utils] Allow gg object for ggs in plot.R
+- 🐛 [scrna_metabolic] Fix reports
+- 🐛 [scrna_metabolic] Fix multiple cases
+- 🐛 [scrna_metabolic] Fix rmagic for normalization
+- ⚡️ [scrna.SeuratClusterStats] Add common gene list
+- ⚡️ [scrna.MarkersFinder] Add `filter2` to filter after mutaters
+- 🐛 [tcr.Immunarch] Fix missing library tibble in script
+- ⚡️ [scrna.ScFGSEA] Make ident hierarchical
+
 ## 0.4.2
 
 - 💚 [Housekeeping] Fix CI deploy

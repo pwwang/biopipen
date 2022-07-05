@@ -37,13 +37,14 @@ do_case = function(case) {
 
     # mutate meta data
     meta = srtobj@meta.data
-    if (!is.null(grouppms$mutaters)) {
-        meta = mutate_meta(meta, grouppms$mutaters)
+    if (!is.null(casepms$mutaters)) {
+        meta = mutate_meta(meta, casepms$mutaters)
     }
-    if (!is.null(clonepms$mutaters)) {
-        meta = mutate_meta(meta, clonepms$mutaters)
+    if (!is.null(casepms$filter)) {
+        meta = meta |> filter(eval(parse(text=casepms$filter)))
     }
-    meta = meta |> filter(!is.na(!!sym(grouppms$by)), !is.na(!!sym(clonepms$by)))
+
+    # meta = meta |> filter(!is.na(!!sym(grouppms$by)), !is.na(!!sym(clonepms$by)))
 
     if (!is.null(grouppms$order)) {
         meta[[grouppms$by]] = factor(meta[[grouppms$by]], levels = grouppms$order)

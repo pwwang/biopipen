@@ -157,7 +157,16 @@ def build_processes(options: Mapping[str, Any] = None):
         #                      jobname.case_xxx.RDS
         requires = MetabolicCellSubsets
         input_data = lambda ch: tibble(
-            infile=expand_dir(ch, pattern="*.RDS")
+            infile=sum(
+                (
+                    expand_dir(
+                        ch.iloc[i:i + 1, :],
+                        pattern="*.RDS",
+                    ).iloc[:, 0].to_list()
+                    for i in range(ch.shape[0])
+                ),
+                [],
+            )
         )
 
     def _group_imputed_files(impfiles):

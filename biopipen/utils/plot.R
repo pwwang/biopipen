@@ -20,7 +20,11 @@ plotVenn = function(
     p = do.call(ggVennDiagram, args)
     if (!is.null(ggs)) {
         for (gg in ggs) {
-            p = p + eval(parse(text=gg))
+            if (is.character(gg)) {
+                p = p + eval(parse(text=gg))
+            } else {
+                p = p + gg
+            }
         }
     }
 
@@ -54,7 +58,11 @@ plotGG = function(
     p = p + do.call(paste0("geom_", geom), args)
     if (!is.null(ggs)) {
         for (gg in ggs) {
-            p = p + eval(parse(text=gg))
+            if (is.character(gg)) {
+                p = p + eval(parse(text=gg))
+            } else {
+                p = p + gg
+            }
         }
     }
 
@@ -116,7 +124,11 @@ plotUpset = function(
 
     p = ggplot(data)
     for (gg in ggs) {
-        p = p + eval(parse(text=gg))
+        if (is.character(gg)) {
+            p = p + eval(parse(text=gg))
+        } else {
+            p = p + gg
+        }
     }
     p = p + do.call(scale_x_upset, args)
 

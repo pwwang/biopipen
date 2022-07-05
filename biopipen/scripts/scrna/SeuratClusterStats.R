@@ -139,7 +139,7 @@ do_stats = function() {
 }
 
 
-do_exprs_ridgeplots = function(odir, pms) {
+do_exprs_ridgeplots = function(odir, pms, genes) {
     outfile = .get_outfile(odir, "ridgeplots")
 
     devpars = pms$devpars
@@ -160,13 +160,15 @@ do_exprs_ridgeplots = function(odir, pms) {
     if (is.null(plus)) {
         plus = c()
     }
-    if (is.null(pms$features)) {
+    if (is.null(pms$features) && is.null(genes)) {
         pms$features = VariableFeatures(srtobj)[1:20]
+    } else if (is.null(pms$features) && !is.null(genes)) {
+        pms$features = genes
     }
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
-            height = ceiling(length(pms$features) / pms$ncol) * 500,
+            height = ceiling(length(pms$features) / pms$ncol) * 250,
             res = 100
         )
     }
@@ -186,7 +188,7 @@ do_exprs_ridgeplots = function(odir, pms) {
 }
 
 
-do_exprs_vlnplots = function(odir, pms) {
+do_exprs_vlnplots = function(odir, pms, genes) {
     outfile = .get_outfile(odir, "vlnplots")
 
     devpars = pms$devpars
@@ -212,13 +214,15 @@ do_exprs_vlnplots = function(odir, pms) {
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
-    if (is.null(pms$features)) {
+    if (is.null(pms$features) && is.null(genes)) {
         pms$features = VariableFeatures(srtobj)[1:20]
+    } else if (is.null(pms$features) && !is.null(genes)) {
+        pms$features = genes
     }
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
-            height = ceiling(length(pms$features) / pms$ncol) * 500,
+            height = ceiling(length(pms$features) / pms$ncol) * 250,
             res = 100
         )
     }
@@ -241,7 +245,7 @@ do_exprs_vlnplots = function(odir, pms) {
 }
 
 
-do_exprs_featureplots = function(odir, pms) {
+do_exprs_featureplots = function(odir, pms, genes) {
     outfile = .get_outfile(odir, "featureplots")
 
     devpars = pms$devpars
@@ -255,13 +259,15 @@ do_exprs_featureplots = function(odir, pms) {
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
-    if (is.null(pms$features)) {
+    if (is.null(pms$features) && is.null(genes)) {
         pms$features = VariableFeatures(srtobj)[1:20]
+    } else if (is.null(pms$features) && !is.null(genes)) {
+        pms$features = genes
     }
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
-            height = ceiling(length(pms$features) / pms$ncol) * 500,
+            height = ceiling(length(pms$features) / pms$ncol) * 250,
             res = 100
         )
     }
@@ -279,7 +285,7 @@ do_exprs_featureplots = function(odir, pms) {
     dev.off()
 }
 
-do_exprs_dotplot = function(odir, pms) {
+do_exprs_dotplot = function(odir, pms, genes) {
     outfile = .get_outfile(odir, "dotplot")
 
     devpars = pms$devpars
@@ -297,8 +303,10 @@ do_exprs_dotplot = function(odir, pms) {
     if (is.null(plus)) {
         plus = c()
     }
-    if (is.null(pms$features)) {
+    if (is.null(pms$features) && is.null(genes)) {
         pms$features = VariableFeatures(srtobj)[1:20]
+    } else if (is.null(pms$features) && !is.null(genes)) {
+        pms$features = genes
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -323,7 +331,7 @@ do_exprs_dotplot = function(odir, pms) {
 }
 
 
-do_exprs_heatmap = function(odir, pms) {
+do_exprs_heatmap = function(odir, pms, genes) {
     outfile = .get_outfile(odir, "heatmap")
 
     devpars = pms$devpars
@@ -341,8 +349,10 @@ do_exprs_heatmap = function(odir, pms) {
     if (is.null(plus)) {
         plus = c()
     }
-    if (is.null(pms$features)) {
+    if (is.null(pms$features) && is.null(genes)) {
         pms$features = VariableFeatures(srtobj)[1:20]
+    } else if (is.null(pms$features) && !is.null(genes)) {
+        pms$features = genes
     }
     if (is.null(devpars)) {
         devpars = list(
@@ -383,19 +393,25 @@ do_exprs = function() {
     }
     odir = file.path(outdir, "exprs")
     dir.create(odir, showWarnings = FALSE)
+    genes = envs$exprs$genes
+    envs$exprs$genes = NULL
+    if (!is.null(genes) && is.character(genes) && file.exists(genes)) {
+        genes = read.table(genes, header = FALSE, row.names = NULL, check.names = FALSE)
+        genes = genes[,1,drop=TRUE]
+    }
 
     exprplots = names(envs$exprs)
     for (name in exprplots) {
         if (startsWith(name, "ridgeplots")) {
-            do_exprs_ridgeplots(odir, envs$exprs[[name]])
+            do_exprs_ridgeplots(odir, envs$exprs[[name]], genes)
         } else if (startsWith(name, "vlnplots")) {
-            do_exprs_vlnplots(odir, envs$exprs[[name]])
+            do_exprs_vlnplots(odir, envs$exprs[[name]], genes)
         } else if (startsWith(name, "featureplots")) {
-            do_exprs_featureplots(odir, envs$exprs[[name]])
+            do_exprs_featureplots(odir, envs$exprs[[name]], genes)
         } else if (startsWith(name, "dotplot")) {
-            do_exprs_dotplot(odir, envs$exprs[[name]])
+            do_exprs_dotplot(odir, envs$exprs[[name]], genes)
         } else if (startsWith(name, "heatmap")) {
-            do_exprs_heatmap(odir, envs$exprs[[name]])
+            do_exprs_heatmap(odir, envs$exprs[[name]], genes)
         } else {
             print(paste("Unrecognized expression plot type: ", name))
         }
