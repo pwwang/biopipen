@@ -66,7 +66,7 @@ the groups that bring biological meaning (i.e. different timepoints or sample ty
 {%- macro head_job(job) -%}
 {%- set name = job.in.configfile | config: "toml" | attr: "name" -%}
 {%- if name or proc.size > 1 -%}
-<h1>{{name | default: "Job #" + (job.index+1) | escape}}</h1>
+<h1>{{name | default: "Job #" + str(job.index+1) | escape}}</h1>
 {%- endif -%}
 {%- endmacro -%}
 
