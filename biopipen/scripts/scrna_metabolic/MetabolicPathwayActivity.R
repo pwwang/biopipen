@@ -154,11 +154,15 @@ do_one_subset <- function(subset) {
         #####
         times <- 1:ntimes
         weight_values <- pathway_number_weight / sum(pathway_number_weight)
-        shuffle_cell_types_list <- mclapply(times, function(x) sample(all_cell_types), mc.cores = ncores)
+        # shuffle_cell_types_list <- mclapply(times, function(x) sample(all_cell_types), mc.cores = ncores)
+        shuffle_cell_types_list <- lapply(times, function(x) sample(all_cell_types))
         names(shuffle_cell_types_list) <- times
-        mean_exp_eachCellType_list <- mclapply(times, function(x) group_mean(x), mc.cores = ncores)
-        ratio_exp_eachCellType_list <- mclapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]), mc.cores = ncores)
-        mean_exp_pathway_list <- mclapply(times, function(x) column_weigth_mean(x), mc.cores = ncores)
+        # mean_exp_eachCellType_list <- mclapply(times, function(x) group_mean(x), mc.cores = ncores)
+        mean_exp_eachCellType_list <- lapply(times, function(x) group_mean(x))
+        # ratio_exp_eachCellType_list <- mclapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]), mc.cores = ncores)
+        ratio_exp_eachCellType_list <- lapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]))
+        # mean_exp_pathway_list <- mclapply(times, function(x) column_weigth_mean(x), mc.cores = ncores)
+        mean_exp_pathway_list <- lapply(times, function(x) column_weigth_mean(x))
 
         shuffle_results <- matrix(unlist(mean_exp_pathway_list), ncol = length(cell_types), byrow = T)
         rownames(shuffle_results) <- times
@@ -263,3 +267,4 @@ x = mclapply(subsets, do_one_subset, mc.cores = ncores)
 if (any(unlist(lapply(x, class)) == "try-error")) {
     stop("mclapply error")
 }
+# sapply(subsets, do_one_subset)
