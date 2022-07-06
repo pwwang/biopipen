@@ -113,3 +113,18 @@
 .mkapi-object-body.module.top * {
     font-size: .75rem !important;
 }
+
+/* process attributes */
+p:not(.proc-attr) + p.proc-attr {
+    padding-top: .6rem;
+}
+
+p.proc-attr .mkapi-section-body {
+    padding-left: 2rem;
+    line-height: 110%;
+}
+
+p.proc-attr .mkapi-section-body code.mkapi-item-name {
+    margin-left: -1rem;
+}
+

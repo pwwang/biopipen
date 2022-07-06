@@ -1,4 +1,9 @@
-"""Provide default settgins"""
+"""Provide default variables
+
+- `BIOPIPEN_DIR`: the root directory of the biopipen source
+- `REPORT_DIR`: the root directory of the report
+- `SCRIPTS_DIR`: the root directory of the scripts
+"""
 from pathlib import Path
 
 BIOPIPEN_DIR = Path(__file__).parent.parent.resolve()
