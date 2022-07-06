@@ -67,7 +67,7 @@ rename_files = function(e) {
 
 load_sample = function(sample) {
     print(paste("  Loading sample:", sample, "..."))
-    mdata = as.data.frame(metadata)[metadata[[Sample]] == sample, , drop=TRUE]
+    mdata = as.data.frame(metadata)[metadata$Sample == sample, , drop=TRUE]
     path = as.character(mdata$RNADir)
     if (is.na(path) || !is.character(path) || nchar(path) == 0) {
         warning(paste0("No path found for sample: ", sample))
