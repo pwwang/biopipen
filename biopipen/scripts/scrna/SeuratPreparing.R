@@ -67,13 +67,14 @@ rename_files = function(e) {
 
 load_sample = function(sample) {
     print(paste("  Loading sample:", sample, "..."))
-    mdata = as.data.frame(metadata)[metadata[[Sample]] == sample, , drop=TRUE]
+    mdata = as.data.frame(metadata)[metadata$Sample == sample, , drop=TRUE]
     path = as.character(mdata$RNADir)
     if (is.na(path) || !is.character(path) || nchar(path) == 0) {
         warning(paste0("No path found for sample: ", sample))
         return (NULL)
     }
 
+    # obj_list = list()
     exprs = tryCatch(
         # Read10X requires
         # - barcodes.tsv.gz
@@ -104,9 +105,10 @@ load_sample = function(sample) {
         if (is.factor(mdt)) { mdt = levels(mdt)[mdt] }
         obj[[mname]] = mdt
     }
-    obj_list[[sample]] = obj
+    # obj_list[[sample]] = obj
 
-    obj_list
+    # obj_list
+    obj
 }
 
 # Load data
@@ -119,9 +121,10 @@ if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) 
     print("- Reading samples individually ...")
     obj_list = lapply(samples, load_sample)
     names(obj_list) = samples
+    saveRDS(obj_list, file = cached_file)
 }
 
-{%- if envs.use_sct -%}
+{% if envs.use_sct -%}
 # https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1
 print("- Performing SCTransform on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {

@@ -422,6 +422,7 @@ class MarkersFinder(Proc):
             >>> # other arguments for Seruat::FindMarkers()
 
             We can also use a new group.by:
+
             >>> [cases.case2]
             >>> "ident.1" = "Case"
             >>> "ident.2" = "Control"

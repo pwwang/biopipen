@@ -1,3 +1,10 @@
+## 0.4.4
+
+- 🐛 [scrna.SeuratPreparing] Fix after tidyseurat being used
+- 🐛 [scrna.SeuratPreparing] Fix object `Sample` not found
+- 📝 [Housekeeping] Fix API docs
+- 📝 [Housekeeping] Make apis show neater docs
+
 ## 0.4.3
 
 - ✨ [scrna] Add `filter` for cases in CellsDistribution, MarkersFinder and ScFGSEA

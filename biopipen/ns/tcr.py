@@ -111,6 +111,7 @@ class ImmunarchFilter(Proc):
             >>>        }
             >>>   }
             >>> }
+
         prefix: The prefix will be added to the cells in the output file
             Placeholders like `{Sample}_` can be used to from the meta data
         metacols: The extra columns to be exported to the group file.

@@ -20,6 +20,9 @@ plugins:
         src_dirs: ['biopipen']
 extra_css:
     - style.css
+extra_javascript:
+    - jquery.js
+    - extra.js
 nav:
     - 'Home': 'index.md'
     - 'Pipelines':
