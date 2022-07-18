@@ -7,6 +7,7 @@ refdist={{envs.refdist | quote}}
 pctsim={{envs.pctsim | quote}}
 pctsize={{envs.pctsize | quote}}
 pctovl={{envs.pctovl | quote}}
+sizemax={{envs.sizemax | default: 50000 | quote}}
 {% if envs.typeignore %}
 typeignore="--typeignore"
 {% else %}
@@ -22,5 +23,6 @@ $truvari bench \
     --pctsim $pctsim \
     --pctsize $pctsize \
     --pctovl $pctovl \
+    --sizemax $sizemax \
     $typeignore \
     -o $outdir
