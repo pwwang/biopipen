@@ -9,6 +9,7 @@ dependencies:
   - cyvcf2
   - pysam
   - bcftools
+  - bedtools
   - mygene
   - seqkit
   - aria2=1.36
