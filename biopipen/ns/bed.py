@@ -136,6 +136,8 @@ class BedConsensus(Proc):
             they are merged into one bin using `bedtools merge -d`. `0` means
             no merging.
         chrsize: The chromosome size file, used to make windows
+        ncores: Number of cores to use to calculate the weights for
+            each bed file
     """
     input = "bedfiles:files"
     output = (
@@ -145,6 +147,7 @@ class BedConsensus(Proc):
     envs = {
         "bedtools": config.exe.bedtools,
         "binsize": 1000,
+        "ncores": config.misc.ncores,
         "ignore_scores": [],
         "cutoff": 0.5,
         "distance": 1,
