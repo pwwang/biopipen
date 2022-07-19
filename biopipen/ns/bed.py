@@ -83,7 +83,7 @@ class Bed2Vcf(Proc):
         "bcftools": config.exe.bcftools,
         "sample": "lambda stem: stem",
         "ref": config.ref.reffa,
-        "genome": "",
+        "genome": config.ref.genome,
         "nonexisting_contigs": "drop",
         "base": 0,
         "index": True,

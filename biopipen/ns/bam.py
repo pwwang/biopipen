@@ -37,7 +37,7 @@ class CNVpytor(Proc):
         "ncores": config.misc.ncores,
         "cnvnator2vcf": config.exe.cnvnator2vcf,
         "refdir": config.ref.refdir,
-        "genome": "hg19",
+        "genome": config.ref.genome,
         "chrsize": config.ref.chrsize,
         "chrom": [],
         "binsizes": [10000, 100000],

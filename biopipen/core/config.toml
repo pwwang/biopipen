@@ -61,6 +61,8 @@ refgene = ""
 refexon = ""
 # chromosome size file
 chrsize = ""
+# The name of the genome assembly
+genome = ""
 
 [misc]
 # Number of cores used for each job
