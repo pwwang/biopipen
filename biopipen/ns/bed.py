@@ -94,3 +94,60 @@ class Bed2Vcf(Proc):
         "helpers": "",
     }
     script = "file://../scripts/bed/Bed2Vcf.py"
+
+
+class BedConsensus(Proc):
+    """Find consensus regions from multiple BED files.
+
+    Unlike `bedtools merge/cluster`, it does not find the union regions nor
+    intersect regions. Instead, it finds the consensus regions using the
+    distributions of the scores of the bins
+
+                                         bedtools cluster
+    Bedfile A            |----------|    1
+    Bedfile B          |--------|        1
+    Bedfile C              |------|      1
+    BedConsensus         |--------|
+    bedtools intesect      |----|
+    bedtools merge     |------------|
+    Distribution       |1|2|3333|2|1|    (later normalized into 0~1)
+
+    If column #5 is provided, it can be used as weights to determine the
+    ends for the consensus regions. The weight score should be the sum of
+    all base pairs in the region.
+
+    Input:
+        bedfiles: Input BED files
+
+    Output:
+        outbed: The output BED file
+
+    Envs:
+        bedtools: The path to bedtools
+        binsize: The binsize to calculate the weights
+            The smaller the more accurate to determine the ends of
+            consensus regions.
+        ignore_scores: A list of indices of the BED files to ignore their
+            scores (column #5)
+            If scores are ignored or not provided, use `1.0`.
+        cutoff: The cutoff to determine the ends of consensus regions
+            The cutoff weights of bins are used to determine the ends
+        distance: When the distance between two bins is smaller than this value,
+            they are merged into one bin using `bedtools merge -d`. `0` means
+            no merging.
+        chrsize: The chromosome size file, used to make windows
+    """
+    input = "bedfiles:files"
+    output = (
+        "outbed:file:{{in.bedfiles | first | stem | append: '_consensus'}}.bed"
+    )
+    lang = config.lang.python
+    envs = {
+        "bedtools": config.exe.bedtools,
+        "binsize": 1000,
+        "ignore_scores": [],
+        "cutoff": 0.5,
+        "distance": 1,
+        "chrsize": config.ref.chrsize,
+    }
+    script = "file://../scripts/bed/BedConsensus.py"
