@@ -31,7 +31,8 @@ class ScFGSEA(ScFGSEA):
     envs = {
         "name": "GSEA analysis",
         "cases": {
-            "Male_vs_Female-Cluster{ident}": {
+            "Male_vs_Female-Cluster": {
+                "percluster": True,
                 "ident.1": "g1",
                 "ident.2": "g2",
                 "group.by": "Group",
