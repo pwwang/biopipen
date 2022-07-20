@@ -1,3 +1,16 @@
+## 0.4.5
+
+- ✨ [bam.CNVpytor] Generate and fix VCF file as result
+- 📝 [vcf.TruvariBench] Update docs to show other arguments for `truvari bench`
+- ✨ [vcf.TruvariBench] Allow `sizemax` to be passed
+- ✨ [bed.BedConsensus] Add process and tests
+- ✨ [core] Add `ref.genome` to configurations
+- ⚡️ [bed.BedConsensus] Parallelize and speed up
+- 💚 [test] Add bedtools to env `bio`
+- 💚 [test] Add chromsome sizes to reference
+- 💚 [test] Add r-gsea_r to env `r`
+- 💚 [scrna.ScFGSEA] Fix tests⏎
+
 ## 0.4.4
 
 - 🐛 [scrna.SeuratPreparing] Fix after tidyseurat being used
