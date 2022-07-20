@@ -1,12 +1,25 @@
 from pathlib import Path
-import cmdy
 
-bamfile = {{in.bamfile | quote}}
-snpfile = {{in.snpfile | repr}}
-outdir = Path({{out.outdir | quote}})
-cnvpytor = {{envs.cnvpytor | quote}}
-cases = {{envs.cases | repr}}
-ncores = {{envs.ncores | int}}
+import cmdy
+from biopipen.scripts.vcf.VcfFix_utils import HeaderContig, fix_vcffile
+
+bamfile = {{in.bamfile | quote}}  # pyright: ignore
+snpfile = {{in.snpfile | repr}}  # pyright: ignore
+outdir = Path({{out.outdir | quote}})  # pyright: ignore
+cnvpytor = {{envs.cnvpytor | quote}}  # pyright: ignore
+cnvnator2vcf = {{envs.cnvnator2vcf | quote}}  # pyright: ignore
+ncores = {{envs.ncores | int}}  # pyright: ignore
+refdir = {{envs.refdir | quote}}  # pyright: ignore
+genome = {{envs.genome | quote}}  # pyright: ignore
+chrsize = {{envs.chrsize | quote}}  # pyright: ignore
+args = {{envs | repr}}  # pyright: ignore
+
+del args['cnvpytor']
+del args['ncores']
+del args['cnvnator2vcf']
+del args['refdir']
+del args['genome']
+del args['chrsize']
 
 cmdy_args = {"_exe": cnvpytor, "_prefix": "-", "_deform": None}
 
@@ -163,16 +176,59 @@ def cnvpytor2other(infile, snp, out):
             fout.write(outline)
 
 
-def do_case(casename, case):
-    casedir = outdir / casename
-    casedir.mkdir(exist_ok=True)
+def load_chrsize():
+    with open(chrsize) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                chrom, size = line.split()
+                yield chrom, int(size)
+
+
+def cnvpytor2vcf(infile, snp):
+    unfixedfile = Path(infile).with_suffix(f".unfixed.vcf")
+    outfile = Path(infile).with_suffix(f".vcf")
+    cnvnator2vcf_cmd = cmdy.cnvnator2vcf(
+        reference=genome,
+        _=[infile, refdir],
+        _exe=cnvnator2vcf,
+        _prefix="-",
+    ).h()
+    print()
+    print(cnvnator2vcf_cmd.strcmd, flush=True)
+    out = cnvnator2vcf_cmd.run()
+    unfixedfile.write_text(out.stdout)
+
+    fixes = [
+        {
+            "kind": "format",
+            "id": "PE",
+            "fix": lambda obj: setattr(obj, 'Type', 'String')
+        },
+        {
+            "kind": "fields",
+            "fix": lambda items: items.__setitem__(-1, Path(bamfile).stem)
+        }
+    ]
+    for chrom, size in load_chrsize():
+        fixes.append({
+            "kind": "contig",
+            "append": True,
+            "fix": lambda obj: HeaderContig(ID=chrom, length=size)
+        })
+
+    fix_vcffile(unfixedfile, outfile, fixes)
+
+
+def do_case():
+    case = args.copy()
 
     chrom = case.pop("chrom", [])
     binsizes = case.pop("binsizes", [10000, 100000])
     snp = case.pop("snp", False)
     if snpfile is None:
         snp = False
-    rootfile = casedir / "file.pytor"
+    rootfile = outdir / "file.pytor"
     case["j"] = case.get("j", ncores)
 
     # read depth signal
@@ -243,7 +299,7 @@ def do_case(casename, case):
 
     # call
     for binsize in binsizes:
-        outfile = casedir / f"calls{'.combined' if snp is not False else ''}.{binsize}.tsv"
+        outfile = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.tsv"
         print()
         print(cmdy.cnvpytor(
             root=rootfile,
@@ -259,9 +315,10 @@ def do_case(casename, case):
         ).r > outfile
         cnvpytor2other(outfile, bool(snp), "gff")
         cnvpytor2other(outfile, bool(snp), "bed")
+        cnvpytor2vcf(outfile, bool(snp))
 
         # plots
-        manplot = casedir / f"manhattan.{binsize}.png"
+        manplot = outdir / f"manhattan.{binsize}.png"
         cmd = cmdy.cnvpytor(
             root=rootfile,
             plot=["manhattan", binsize],
@@ -273,7 +330,7 @@ def do_case(casename, case):
         print(cmd.strcmd, flush=True)
         cmd.fg().run()
 
-        circplot = casedir / f"circular.{binsize}.png"
+        circplot = outdir / f"circular.{binsize}.png"
         cmd = cmdy.cnvpytor(
             root=rootfile,
             plot=["circular", binsize],
@@ -287,5 +344,4 @@ def do_case(casename, case):
         cmd.fg().run()
 
 
-for casename, case in cases.items():
-    do_case(casename, case)
+do_case()

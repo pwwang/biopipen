@@ -35,6 +35,7 @@ dependencies:
   - r-upsetr
   - r-vegan
   - r-tidyseurat
+  - r-gsea_r
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater

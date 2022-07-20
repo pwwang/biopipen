@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from pipen import Proc
 from biopipen.ns.misc import Str2File

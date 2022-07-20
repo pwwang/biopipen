@@ -6,6 +6,10 @@ REFFA_URL = (
     "http://hgdownload.cse.ucsc.edu/"
     "goldenpath/%(genome)s/bigZips/%(genome)s.fa.gz"
 )
+CHRSIZE_URL = (
+    "http://hgdownload.cse.ucsc.edu/"
+    "goldenpath/%(genome)s/bigZips/%(genome)s.chrom.sizes"
+)
 CHROMS = [
     "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9",
     "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17",
@@ -43,6 +47,23 @@ def download_reffa(genome):
     cmdy.rm(f=True, _=outfile)
 
 
+@echo("Downloading {0} chromosome sizes")
+def download_chrsize(genome):
+    """Download genome size file"""
+    outdir = DESTDIR / genome
+    outdir.mkdir(exist_ok=True, parents=True)
+    url = CHRSIZE_URL % {"genome": genome}
+    outfile = outdir / "chrom.sizes"
+    cmdy.aria2c(
+        s=2,
+        x=2,
+        o=outfile.name,
+        d=outdir,
+        _=url,
+        **{"file-allocation": "falloc"},
+    )
+
+
 @echo("Downloading KEGG_metabolism.gmt")
 def download_kegg_metabolism():
     """Download KEGG_metabolism.gmt"""
@@ -65,4 +86,6 @@ def download_kegg_metabolism():
 if __name__ == "__main__":
     download_reffa("hg19")
     download_reffa("hg38")
+    download_chrsize("hg19")
+    download_chrsize("hg38")
     download_kegg_metabolism()

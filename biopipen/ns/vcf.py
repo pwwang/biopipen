@@ -212,6 +212,7 @@ class TruvariBench(Proc):
 
     Envs:
         truvari: Path to truvari
+        `<other>`: Ohter `truvari bench` arguments
 
     Requires:
         - name: truvari
