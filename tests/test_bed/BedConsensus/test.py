@@ -8,6 +8,10 @@ class BedConsensus(BedConsensus):
     envs = {
         "binsize": 400,
         "cutoff": 0.6,
+        "genome": "hg19",
+        "chrsize": Path(__file__).parent.parent.parent.joinpath(
+            "data/reference/hg19/chrom.sizes"
+        ).as_posix(),
     }
 
 class BedConsensus1(BedConsensus):
@@ -15,7 +19,11 @@ class BedConsensus1(BedConsensus):
     envs = {
         "binsize": 400,
         "cutoff": 0.6,
+        "genome": "hg19",
         "ignore_scores": [0, 1, 2],
+        "chrsize": Path(__file__).parent.parent.parent.joinpath(
+            "data/reference/hg19/chrom.sizes"
+        ).as_posix(),
     }
 
 
