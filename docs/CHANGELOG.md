@@ -1,3 +1,8 @@
+## 0.4.6
+
+- ✨  [vcf.TruvariBench] Allow `multimatch` to be passed
+- ✨  [vcf.TruvariConsistency] Add report
+
 ## 0.4.5
 
 - ✨ [bam.CNVpytor] Generate and fix VCF file as result

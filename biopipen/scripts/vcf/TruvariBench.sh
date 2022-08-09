@@ -13,6 +13,11 @@ typeignore="--typeignore"
 {% else %}
 typeignore=""
 {% endif %}
+{% if envs.multimatch %}
+multimatch="--multimatch"
+{% else %}
+multimatch=""
+{% endif %}
 
 rm -rf $outdir
 $truvari bench \
@@ -25,4 +30,5 @@ $truvari bench \
     --pctovl $pctovl \
     --sizemax $sizemax \
     $typeignore \
+    $multimatch \
     -o $outdir
