@@ -229,6 +229,7 @@ class TruvariBench(Proc):
         "pctsize": 0.7,
         "pctovl": 0.0,
         "typeignore": False,
+        "multimatch": False,
     }
     script = "file://../scripts/vcf/TruvariBench.sh"
 
@@ -294,11 +295,25 @@ class TruvariConsistency(Proc):
 
     Envs:
         truvari: Path to truvari
+        heatmap: Whether to generate a heatmap of the consistency
+            Set to False to disable
+            annofile: The annotation file for the heatmap, multiple columns
+            but the first column must be the sample name. Note that the stem of
+            the vcf file name from consistency file will be used. These
+            annotations will be added as row annotations.
+            Other options see also `biopipen.ns.plot.Heatmap`.
     """
     input = "vcfs:files"
     output = (
-        "outfile:file:"
-        "{{in.vcfs | first | stem0 | append: '.etc.truvari_consistency.txt'}}"
+        "outdir:dir:"
+        "{{in.vcfs | first | stem0 | append: '.etc.truvari_consistency'}}"
     )
-    envs = {"truvari": config.exe.truvari}
-    script = "file://../scripts/vcf/TruvariConsistency.sh"
+    lang = config.lang.rscript
+    envs = {
+        "truvari": config.exe.truvari,
+        "heatmap": {}
+    }
+    script = "file://../scripts/vcf/TruvariConsistency.R"
+    plugin_opts = {
+        "report": "file://../reports/vcf/TruvariConsistency.svelte"
+    }
