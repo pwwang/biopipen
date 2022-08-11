@@ -41,7 +41,7 @@ envs$FindIntegrationAnchors = .expand_dims(envs$FindIntegrationAnchors)
 envs$IntegrateData = .expand_dims(envs$IntegrateData)
 envs$RunUMAP = .expand_dims(envs$RunUMAP)
 
-rename_files = function(e) {
+rename_files = function(e, sample, path) {
     tmpdatadir = file.path(joboutdir, "renamed", sample)
     if (dir.exists(tmpdatadir)) {
         unlink(tmpdatadir, recursive = TRUE)
@@ -83,7 +83,7 @@ load_sample = function(sample) {
         # But sometimes, they are prefixed with sample name
         # e.g.GSM4143656_SAM24345863-ln1.barcodes.tsv.gz
         { Read10X(data.dir = path) },
-        error = rename_files
+        error = function(e) rename_files(e, sample, path)
     )
     if ("Gene Expression" %in% names(exprs)) {
         exprs = exprs[["Gene Expression"]]

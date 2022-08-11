@@ -1,3 +1,7 @@
+## 0.4.7
+
+- 🐛 [scrna.SeuratPreparing] Fix new data preparing when errored
+
 ## 0.4.6
 
 - ✨  [vcf.TruvariBench] Allow `multimatch` to be passed
