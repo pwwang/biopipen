@@ -26,7 +26,7 @@ dependencies:
   - r-ggupset
   - r-ggvenndiagram
   - r-gtools
-  - r-immunarch
+  - r-immunarch=0.6.7
   - r-matrix
   - r-rmagic
   - r-scimpute
