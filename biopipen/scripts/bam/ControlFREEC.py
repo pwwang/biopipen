@@ -4,20 +4,20 @@ import rtoml
 import cmdy
 from diot import Diot
 
-bamfile = {{ in.bamfile | repr }}
-snpfile = {{ in.snpfile | repr }}
-outdir = {{ out.outdir | repr }}
-freec = {{ envs.freec | repr }}
-ncores = {{ envs.ncores | repr }}
-bedtools = {{ envs.bedtools | repr }}
-sambamba = {{ envs.sambamba | repr }}
-samtools = {{ envs.samtools | repr }}
-tabix = {{ envs.tabix | repr }}
-rscript = {{ envs.rscript | repr }}
-ref = {{ envs.ref | repr }}
-refdir = {{ envs.refdir | repr }}
-binsize = {{ envs.binsize | repr }}
-args = {{ envs.args | repr }}
+bamfile = {{ in.bamfile | repr }}  # pyright: ignore
+snpfile = {{ in.snpfile | repr }}  # pyright: ignore
+outdir = {{ out.outdir | repr }}  # pyright: ignore
+freec = {{ envs.freec | repr }}  # pyright: ignore
+ncores = {{ envs.ncores | repr }}  # pyright: ignore
+bedtools = {{ envs.bedtools | repr }}  # pyright: ignore
+sambamba = {{ envs.sambamba | repr }}  # pyright: ignore
+samtools = {{ envs.samtools | repr }}  # pyright: ignore
+tabix = {{ envs.tabix | repr }}  # pyright: ignore
+rscript = {{ envs.rscript | repr }}  # pyright: ignore
+ref = {{ envs.ref | repr }}  # pyright: ignore
+refdir = {{ envs.refdir | repr }}  # pyright: ignore
+binsize = {{ envs.binsize | repr }}  # pyright: ignore
+args = {{ envs.args | repr }}  # pyright: ignore
 
 chrLenFile = f"{ref}.fai"
 if snpfile:

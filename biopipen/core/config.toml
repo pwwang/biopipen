@@ -1,5 +1,7 @@
 # Executables or binaries
 [exe]
+# bedtools to handle bed files
+bedtools = "bedtools"
 # bcftools to handle bcf/vcf files
 bcftools = "bcftools"
 # Control-FREEC to call cnvs
