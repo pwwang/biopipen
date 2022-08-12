@@ -1,3 +1,8 @@
+## 0.4.8
+
+- 🩹 [core] Add default for config.exe.bedtools
+- 🩹 [scrna.ScFGSEA] Don't convert sparse matrix to avoid "problem too large" error
+
 ## 0.4.7
 
 - 🐛 [scrna.SeuratPreparing] Fix new data preparing when errored
