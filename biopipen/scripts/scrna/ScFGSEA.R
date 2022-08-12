@@ -39,9 +39,7 @@ prepare_exprmat = function(casepms) {
         drop=FALSE
     ])
     allclasses = sobj@meta.data[samples, casepms$group.by, drop=TRUE]
-    exprs = as.data.frame(
-        GetAssayData(sobj, slot = "data", assay = "RNA")
-    )[, samples, drop=FALSE]
+    exprs = GetAssayData(sobj, slot = "data", assay = "RNA")[, samples]
     list(exprs=exprs, allclasses=allclasses)
 }
 
