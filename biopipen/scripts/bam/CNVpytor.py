@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import cmdy
+import pandas
 from biopipen.scripts.vcf.VcfFix_utils import HeaderContig, fix_vcffile
 
 bamfile = {{in.bamfile | quote}}  # pyright: ignore
@@ -12,6 +13,7 @@ ncores = {{envs.ncores | int}}  # pyright: ignore
 refdir = {{envs.refdir | quote}}  # pyright: ignore
 genome = {{envs.genome | quote}}  # pyright: ignore
 chrsize = {{envs.chrsize | quote}}  # pyright: ignore
+filters = {{envs.filters | repr}}  # pyright: ignore
 args = {{envs | repr}}  # pyright: ignore
 
 del args['cnvpytor']
@@ -20,6 +22,7 @@ del args['cnvnator2vcf']
 del args['refdir']
 del args['genome']
 del args['chrsize']
+del args['filters']
 
 cmdy_args = {"_exe": cnvpytor, "_prefix": "-", "_deform": None}
 
@@ -185,7 +188,7 @@ def load_chrsize():
                 yield chrom, int(size)
 
 
-def cnvpytor2vcf(infile, snp):
+def cnvpytor2vcf(infile, snp, fix=True):
     unfixedfile = Path(infile).with_suffix(f".unfixed.vcf")
     outfile = Path(infile).with_suffix(f".vcf")
     cnvnator2vcf_cmd = cmdy.cnvnator2vcf(
@@ -197,27 +200,30 @@ def cnvpytor2vcf(infile, snp):
     print()
     print(cnvnator2vcf_cmd.strcmd, flush=True)
     out = cnvnator2vcf_cmd.run()
-    unfixedfile.write_text(out.stdout)
+    if fix:
+        unfixedfile.write_text(out.stdout)
 
-    fixes = [
-        {
-            "kind": "format",
-            "id": "PE",
-            "fix": lambda obj: setattr(obj, 'Type', 'String')
-        },
-        {
-            "kind": "fields",
-            "fix": lambda items: items.__setitem__(-1, Path(bamfile).stem)
-        }
-    ]
-    for chrom, size in load_chrsize():
-        fixes.append({
-            "kind": "contig",
-            "append": True,
-            "fix": lambda obj: HeaderContig(ID=chrom, length=size)
-        })
+        fixes = [
+            {
+                "kind": "format",
+                "id": "PE",
+                "fix": lambda obj: setattr(obj, 'Type', 'String')
+            },
+            {
+                "kind": "fields",
+                "fix": lambda items: items.__setitem__(-1, Path(bamfile).stem)
+            }
+        ]
+        for chrom, size in load_chrsize():
+            fixes.append({
+                "kind": "contig",
+                "append": True,
+                "fix": lambda obj: HeaderContig(ID=chrom, length=size)
+            })
 
-    fix_vcffile(unfixedfile, outfile, fixes)
+        fix_vcffile(unfixedfile, outfile, fixes)
+    else:
+        outfile.write_text(out.stdout)
 
 
 def do_case():
@@ -300,6 +306,7 @@ def do_case():
     # call
     for binsize in binsizes:
         outfile = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.tsv"
+        outfile_filtered = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.filtered.tsv"
         print()
         print(cmdy.cnvpytor(
             root=rootfile,
@@ -313,9 +320,47 @@ def do_case():
             _=binsize,
             **cmdy_args,
         ).r > outfile
+
         cnvpytor2other(outfile, bool(snp), "gff")
         cnvpytor2other(outfile, bool(snp), "bed")
         cnvpytor2vcf(outfile, bool(snp))
+
+        # filter
+        df = pandas.read_csv(outfile, sep="\t", header=None)
+        df.columns = [
+            "CNVtype",
+            "CNVregion",
+            "CNVsize",
+            "CNVlevel",
+            "eval1",
+            "eval2",
+            "eval3",
+            "eval4",
+            "q0",
+            "pN",
+            "dG",
+        ]
+        for key in (
+            "CNVsize",
+            "eval1",
+            "eval2",
+            "eval3",
+            "eval4",
+            "q0",
+            "pN",
+            "dG",
+        ):
+
+            if key in filters and filters[key]:
+                q1, q2 = filters[key]
+                q1 = float(q1)
+                q2 = float(q2)
+                df = df[~((df[key] >= q1) & (df[key] <= q2))]
+
+        df.to_csv(outfile_filtered, sep="\t", index=False, header=False)
+        cnvpytor2other(outfile_filtered, bool(snp), "gff")
+        cnvpytor2other(outfile_filtered, bool(snp), "bed")
+        cnvpytor2vcf(outfile_filtered, bool(snp))
 
         # plots
         manplot = outdir / f"manhattan.{binsize}.png"

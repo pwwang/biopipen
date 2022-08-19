@@ -49,6 +49,18 @@ class CNVpytor(Proc):
             "gt": "GT",
             "noAD": False,
         },
+        "filters": {
+            # https://github.com/abyzovlab/CNVpytor/blob/master/
+            # GettingStarted.md#predicting-cnv-regions
+            "CNVsize": [50000, "inf"],  # CNV size
+            "eval1": [0, 0.0001],  # filter on e-val1
+            "eval2": [],  # filter on e-val2
+            "eval3": [],  # filter on e-val3
+            "eval4": [],  # filter on e-val4
+            "q0": [-1, 0.5],  # filter on Q0
+            "pN": [0, 0.5],  # filter on pN
+            "dG": [100000, "inf"],  # filter on dG
+        },
         "mask_snps": True,
         "baf_nomask": False,
         # other arguments for -rd
