@@ -1,3 +1,11 @@
+## 0.4.9
+
+- 👷 [test] Reverse immunarch in env_r
+- ✨ [bam.CNVpytor] Add filters
+- ✨ [cnvkit/cnvkit_pipeline] Add processes and pipeline
+- 🐛 [bam.cnvkit] Fix filter direction
+- 🚑 [scrna_metabolic] Fix nproc for runFGSEA for MetabolicPathwayHeterogeneity
+
 ## 0.4.8
 
 - 🩹 [core] Add default for config.exe.bedtools

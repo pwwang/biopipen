@@ -20,13 +20,14 @@ Start Process:
 from typing import Any, Mapping
 from pathlib import Path
 
+from diot import Diot
 from datar.tibble import tibble
 from pipen import Pipen
 from pipen.channel import expand_dir
 from ..core.config import config
 from ..core.proc import Proc
 
-OPTIONS = {
+DEFAULT = {
     "clustered": False,
     "intra-subset": True,
 }
@@ -37,9 +38,8 @@ def _as_config(conf):
     return FILTERS["config"](conf, loader="toml")
 
 
-def build_processes(options: Mapping[str, Any] = None):
+def build_processes(options: Mapping[str, Any] = None) -> Proc:
     """Build processes for metabolic landscape analysis pipeline"""
-
 
     from .scrna import (
         ExprImpute,
@@ -48,8 +48,15 @@ def build_processes(options: Mapping[str, Any] = None):
         SeuratClustering,
         SeuratMetadataMutater,
     )
-    options = options or {}
-    options = {**OPTIONS, **options}
+    options = (
+        Diot(DEFAULT)
+        | (
+            config
+            .get("pipeline", {})
+            .get("scrna_metabolic", {})
+        )
+        | (options or {})
+    )
 
     class MetabolicInputs(Proc):
         """Input for the metabolic pathway analysis pipeline for
@@ -420,9 +427,9 @@ def build_processes(options: Mapping[str, Any] = None):
 
     return MetabolicInputs
 
-def metabolic_landscape() -> Pipen:
+def main() -> Pipen:
     """Build a pipeline for `pipen run` to run"""
     return Pipen(
-        name="metabolic-landscape",
+        name="scrna-metabolic",
         desc="Metabolic landscape analysis for scRNA-seq data"
     ).set_start(build_processes())

@@ -13,10 +13,14 @@ gatk = "gatk"
 gatk4 = "gatk"
 # vdjtools, installed via conda
 vdjtools = "vdjtools"
+# cnvkit.py
+cnvkit = "cnvkit.py"
 # cnvpytor
 cnvpytor = "cnvpytor"
 # cnvnator2VCF.pl to convert cnvpytor/cnvnator to VCF
 cnvnator2vcf = "cnvnator2VCF.pl"
+# convert
+convert = "convert"
 # wget
 wget = "wget"
 # aria2c
@@ -61,6 +65,8 @@ refdict = ""
 refgene = ""
 # The reference exon in GTF format
 refexon = ""
+# refFlat file
+refflat = ""
 # chromosome size file
 chrsize = ""
 # The name of the genome assembly
