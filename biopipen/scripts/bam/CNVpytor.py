@@ -355,7 +355,7 @@ def do_case():
                 q1, q2 = filters[key]
                 q1 = float(q1)
                 q2 = float(q2)
-                df = df[~((df[key] >= q1) & (df[key] <= q2))]
+                df = df[(df[key] >= q1) & (df[key] <= q2)]
 
         df.to_csv(outfile_filtered, sep="\t", index=False, header=False)
         cnvpytor2other(outfile_filtered, bool(snp), "gff")
