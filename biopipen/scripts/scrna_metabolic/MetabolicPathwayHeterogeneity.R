@@ -71,7 +71,7 @@ do_one_subset <- function(subset) {
             top = 100,
             outdir = odir,
             plot = FALSE,
-            envs = list(scoreType = "pos")
+            envs = list(scoreType = "pos", nproc=1)
         )
         ############ Motify this
         result_file = file.path(odir, "fgsea.txt")
