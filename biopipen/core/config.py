@@ -39,7 +39,7 @@ config_profiles = [
     USER_CONFIG_FILE,
     PROJ_CONFIG_FILE,
 ]
-# scan sys.argv to see if --config <config file> passed in
+# scan sys.argv to see if +config <config file> passed in
 if "+config" in sys.argv:
     cindex = sys.argv.index("+config")
     config_profiles.append(sys.argv[cindex + 1])
