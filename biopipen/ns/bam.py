@@ -9,6 +9,7 @@ class CNVpytor(Proc):
 
     Input:
         bamfile: The bam file
+            Will try to index it if it's not indexed.
         snpfile: The snp file
 
     Output:
@@ -16,10 +17,18 @@ class CNVpytor(Proc):
 
     Envs:
         cnvpytor: Path to cnvpytor
+        cnvnator2vcf: Path to CNVnator2VCF.pl to convert the result to VCF file
+        samtools: Path to samtools, used to index bam file in case it's not
         ncores: Number of cores to use (`-j` for cnvpytor)
+        refdir: The directory containing the fasta file for each chromosome
+        genome: The genome assembly to put in the VCF file
+        chrsize: The geome size file to fix missing contigs in VCF header
         chrom: The chromosomes to run on
         binsizes: The binsizes
         snp: How to read snp data
+        filters: The filters to filter the result
+            See - https://github.com/abyzovlab/CNVpytor/blob/master
+            /GettingStarted.md#predicting-cnv-regions
         mask_snps: Whether mask 1000 Genome snps
         baf_nomask: Do not use P mask in BAF histograms
 
@@ -34,8 +43,9 @@ class CNVpytor(Proc):
     lang = config.lang.python
     envs = {
         "cnvpytor": config.exe.cnvpytor,
-        "ncores": config.misc.ncores,
         "cnvnator2vcf": config.exe.cnvnator2vcf,
+        "samtools": config.exe.samtools,
+        "ncores": config.misc.ncores,
         "refdir": config.ref.refdir,
         "genome": config.ref.genome,
         "chrsize": config.ref.chrsize,
