@@ -3,6 +3,24 @@ from pathlib import Path
 from biopipen.ns.vcf import VcfFix
 from biopipen.core.testing import get_pipeline
 
+CHRSIZE_FILE = Path(__file__).parent.parent.parent.joinpath(
+    "data/reference/hg19/chrom.sizes"
+)
+
+
+def _chrsize_fixes():
+    with open(CHRSIZE_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                chrom, size = line.split()
+                yield {
+                    "kind": "contig",
+                    "append": True,
+                    "fix":
+                    f"lambda obj: HeaderContig(ID='{chrom}', length='{size}')",
+                }
+
 
 class VcfFix(VcfFix):
 
@@ -38,6 +56,7 @@ class VcfFix(VcfFix):
                     '0/1:3',
                 )""",
             },
+            *_chrsize_fixes(),
         ],
     }
 
