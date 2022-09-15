@@ -105,6 +105,31 @@ class VcfIndex(Proc):
     script = "file://../scripts/vcf/VcfIndex.py"
 
 
+class Vcf2Bed(Proc):
+    """Convert Vcf file to Bed file
+
+    Input:
+        infile: The vcf file
+
+    Output:
+        outfile: The converted bed file
+
+    Envs:
+        inbase: The coordinate base of the vcf file
+        outbase: The coordinate base of the base file
+
+    Requires:
+        - name: cyvcf2
+          check: |
+            {{proc.lang}} -c "import cyvcf2"
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem0}}.bed"
+    lang = config.lang.python
+    envs = {"inbase": 1, "outbase": 0}
+    script = "file://../scripts/vcf/Vcf2Bed.py"
+
+
 class VcfDownSample(Proc):
     """Down-sample VCF files to keep only a subset of variants in there
 
