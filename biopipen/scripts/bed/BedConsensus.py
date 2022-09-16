@@ -121,29 +121,29 @@ def get_weights(windowfile, bedfile, bedidx):
     return owfile
 
 
-def avg_weights_and_filter(owfiles):
-    _log("- Averaging bin weights")
-    ofile = outfile.parent / "_avg_weights_filtered.bed"
-    df = None
-    for owfile in owfiles:
-        tmp = pandas.read_csv(owfile, sep="\t", header=0)
-        df = df >> bind_rows(tmp)
+# def avg_weights_and_filter(owfiles):
+#     _log("- Averaging bin weights")
+#     ofile = outfile.parent / "_avg_weights_filtered.bed"
+#     df = None
+#     for owfile in owfiles:
+#         tmp = pandas.read_csv(owfile, sep="\t", header=0)
+#         df = df >> bind_rows(tmp)
 
-    df = df >> group_by(f.chrom1, f.start1, f.end1) >> summarise(
-        chrom=f.chrom1,
-        start=f.start1,
-        end=f.end1,
-        name=paste(f.name, collapse=":"),
-        score=mean(f.weight),
-        strand="+",
-    ) >> filter_(
-        f.score >= cutoff
-    ) >> ungroup() >> select(
-        ~f.chrom1, ~f.start1, ~f.end1,
-    )
+#     df = df >> group_by(f.chrom1, f.start1, f.end1) >> summarise(
+#         chrom=f.chrom1,
+#         start=f.start1,
+#         end=f.end1,
+#         name=paste(f.name, collapse=":"),
+#         score=mean(f.weight),
+#         strand="+",
+#     ) >> filter_(
+#         f.score >= cutoff
+#     ) >> ungroup() >> select(
+#         ~f.chrom1, ~f.start1, ~f.end1,
+#     )
 
-    df.to_csv(ofile, sep="\t", index=False, header=False)
-    return ofile, len(df.columns)
+#     df.to_csv(ofile, sep="\t", index=False, header=False)
+#     return ofile, len(df.columns)
 
 
 def avg_weights_and_filter_fast(owfiles):
@@ -171,7 +171,7 @@ def avg_weights_and_filter_fast(owfiles):
 
     # loop and aggregate
     names = []
-    scores = []
+    score = 0
     key = None
     with open(sfile, "r") as fs, open(ofile, "w") as fo:
         for line in fs:
@@ -179,18 +179,19 @@ def avg_weights_and_filter_fast(owfiles):
             my_key = "\t".join(parts[:3])
             if my_key != key and key is not None:
                 name = ":".join(names)
-                score = sum(scores) / len(scores)
+                score /= len(owfiles)
                 if score >= cutoff:
                     fo.write(f"{key}\t{name}\t{score}\t+\n")
                 names = [parts[6]]
-                scores = [float(parts[-1])]
+                score = float(parts[-1])
             else:
                 names.append(parts[6])
-                scores.append(float(parts[-1]))
+                score += float(parts[-1])
             key = my_key
         name = ":".join(names)
-        score = sum(scores) / len(scores)
-        fo.write(f"{key}\t{name}\t{score}\t+\n")
+        score /= len(owfiles)
+        if score >= cutoff:
+            fo.write(f"{key}\t{name}\t{score}\t+\n")
 
     return ofile, 6
 
