@@ -22,7 +22,7 @@ jobs:
         run: |
           for envfile in tests/conda/env_*.yml; do
             bname=$(basename $envfile .yml)
-            envname=${bname:4}
+            envname=biopipen-${bname:4}
             echo "::group::Creating environment: $envname"
             conda env create -f $envfile
             echo "::endgroup::"
