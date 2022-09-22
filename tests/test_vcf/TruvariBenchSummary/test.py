@@ -34,7 +34,7 @@ class TruvariBenchSummary(TruvariBenchSummary):
 
 def pipeline():
     return (
-        get_pipeline(__file__)
+        get_pipeline(__file__, plugins=["no:report"])
         .set_start(DownloadList)
         .set_data([Path(__file__).parent / "data" / "vcfs.txt"])
     )

@@ -96,7 +96,7 @@ load_sample = function(sample) {
     obj = RenameCells(obj, add.cell.id = sample)
     obj$percent.mt = PercentageFeatureSet(obj, pattern = "^MT-")
     if (!is.null(envs$qc) && nchar(envs$qc) > 0) {
-        obj = obj |> filter(parse_expr(envs$qc))
+        obj = obj %>% filter(parse_expr(envs$qc))
     }
     # Attach meta data
     for (mname in names(mdata)) {

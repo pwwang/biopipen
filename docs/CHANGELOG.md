@@ -1,3 +1,15 @@
+## 0.5.0
+
+- ✅ [vcf.VcfFix] Add chrom size fixes
+- ✨ [utils.reference] Add bam_index
+- 🐛 [bam.CNVpytor] Fix vcf-fix only adds last contig and fix header with snp data
+- ✨ [vcf.Vcf2Bed] Add process and test
+- 🐛 [bed.BedConsensus] Fix final weighting issue
+- 🩹 [All] Use `%>%` instead of `|>` in all R scripts for backward compatibility
+- 🐛 [scrna_metabolic] Don't turn "Ident" to "seurat_clusters" for grouping.groupby in config
+- 🏗️ [tests] Add prefix "biopipen-" to conda environment names
+- ✅ [tests] Enable pipen-report only when necessary
+
 ## 0.4.9
 
 - 👷 [test] Reverse immunarch in env_r

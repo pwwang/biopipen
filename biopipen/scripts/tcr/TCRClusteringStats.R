@@ -18,7 +18,7 @@ cluster_size_distribution = function() {
     for (sample in names(immdata$data)) {
         clsizes = bind_rows(
             clsizes,
-            immdata$data[[sample]] |> count(TCR_Cluster) |> arrange(desc(n)) |> mutate(Sample = sample)
+            immdata$data[[sample]] %>% count(TCR_Cluster) %>% arrange(desc(n)) %>% mutate(Sample = sample)
         )
     }
 
@@ -109,7 +109,7 @@ shared_clusters_by_grouping = function() {
 
     data = list()
     grouping = envs$shared_clusters$grouping
-    groups = immdata$meta |> pull(grouping) |> unique()
+    groups = immdata$meta %>% pull(grouping) %>% unique()
     sample_groups = list()
     for (group in groups) {
         for (sample in immdata$meta[
@@ -125,7 +125,7 @@ shared_clusters_by_grouping = function() {
     samples = names(immdata$data)
     for (sample in samples) {
         group = sample_groups[[sample]]
-        clusters = immdata$data[[sample]] |> pull("TCR_Cluster") %>% unique()
+        clusters = immdata$data[[sample]] %>% pull("TCR_Cluster") %>% unique()
         data[[group]] = unique(c(data[[group]], clusters))
     }
 
@@ -143,7 +143,7 @@ sample_diversity = function() {
     dir.create(odir, showWarnings = FALSE)
     data = list()
     for (sample in names(immdata$data)) {
-        data[[sample]] = immdata$data[[sample]] |> mutate(CDR3.aa = TCR_Cluster)
+        data[[sample]] = immdata$data[[sample]] %>% mutate(CDR3.aa = TCR_Cluster)
     }
     for (method in names(envs$sample_diversity)) {
         outfile = file.path(odir, paste0("diversity_", method, ".txt"))
@@ -151,7 +151,7 @@ sample_diversity = function() {
         div = repDiversity(data, .method = method)
         write.table(div, outfile, row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t")
         if (method == "gini") {
-            div = as.data.frame(div) |> rownames_to_column("Sample")
+            div = as.data.frame(div) %>% rownames_to_column("Sample")
             colnames(div)[2] = "gini"
             div = left_join(div, immdata$meta, by="Sample")
             geom = "col"
@@ -174,7 +174,7 @@ sample_diversity = function() {
                     fill = envs$sample_diversity[[method]]$by
                 )
             } else {
-                div = div |> unite("Group", all_of(envs$sample_diversity[[method]]$by), sep="; ")
+                div = div %>% unite("Group", all_of(envs$sample_diversity[[method]]$by), sep="; ")
                 geom = "boxplot"
                 mapping = aes_string(
                     x = "Group",

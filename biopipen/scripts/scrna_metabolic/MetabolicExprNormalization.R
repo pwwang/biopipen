@@ -8,9 +8,6 @@ outfile = {{out.outfile | r}}
 dropout_cutoff = {{envs.dropout | r}}
 refexon = {{envs.refexon | r}}
 groupby = config$grouping$groupby
-if (grepl("^ident", groupby, ignore.case = TRUE)) {
-    groupby = "seurat_clusters"
-}
 
 selected_impute_sce = readRDS(sceobjfile)
 

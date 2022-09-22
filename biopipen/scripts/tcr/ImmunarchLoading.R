@@ -106,9 +106,9 @@ if (mode == "single") {
 }
 
 if (mode == "single") {
-    immdata$meta  = immdata$meta |>
-        filter(endsWith(Sample, "_TRB")) |>
-        mutate(Sample = substr(Sample, 1, nchar(Sample) - 4)) |>
+    immdata$meta  = immdata$meta %>%
+        filter(endsWith(Sample, "_TRB")) %>%
+        mutate(Sample = substr(Sample, 1, nchar(Sample) - 4)) %>%
         select(-"Source")
 }
 immdata$meta = left_join(
@@ -133,10 +133,10 @@ metadf = do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
         assign(mname, mdata[[mname]])
     }
 
-    cldata |>
-        separate_rows(Barcode, sep=";") |>
-        distinct(Barcode, .keep_all = TRUE) |>
-        mutate(Barcode = glue("{{envs.prefix}}{Barcode}")) |>
+    cldata %>%
+        separate_rows(Barcode, sep=";") %>%
+        distinct(Barcode, .keep_all = TRUE) %>%
+        mutate(Barcode = glue("{{envs.prefix}}{Barcode}")) %>%
         column_to_rownames("Barcode")
 
 }))

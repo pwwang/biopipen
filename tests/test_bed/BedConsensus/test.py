@@ -18,7 +18,7 @@ class BedConsensus1(BedConsensus):
 
     envs = {
         "binsize": 400,
-        "cutoff": 0.6,
+        "cutoff": 0.9,
         "genome": "hg19",
         "ignore_scores": [0, 1, 2],
         "chrsize": Path(__file__).parent.parent.parent.joinpath(
@@ -28,7 +28,7 @@ class BedConsensus1(BedConsensus):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(
+    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
         BedConsensus,
         BedConsensus1,
     ).set_data(

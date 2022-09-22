@@ -5,7 +5,9 @@ from biopipen.core.testing import get_pipeline
 
 
 def pipeline():
-    return get_pipeline(__file__).set_start(File2Proc).set_data([str(__file__)])
+    return get_pipeline(__file__, plugins=["no:report"]).set_start(
+        File2Proc
+    ).set_data([str(__file__)])
 
 def testing(pipen):
     outfile = (

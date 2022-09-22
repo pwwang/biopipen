@@ -14,7 +14,7 @@ if (!is.null(mutaters)) {
     for (key in names(mutaters)) {
         expr[[key]] = parse_expr(mutaters[[key]])
     }
-    srtobj@meta.data = srtobj@meta.data |> mutate(!!!expr)
+    srtobj@meta.data = srtobj@meta.data %>% mutate(!!!expr)
 }
 
 

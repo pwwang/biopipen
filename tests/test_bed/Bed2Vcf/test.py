@@ -39,8 +39,10 @@ class Bed2Vcf(Bed2Vcf):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(Bed2Vcf).set_data(
-        [Path(__file__).parent / "data" / "in.bed"]
+    return (
+        get_pipeline(__file__, plugins=["no:report"])
+        .set_starts(Bed2Vcf)
+        .set_data([Path(__file__).parent / "data" / "in.bed"])
     )
 
 

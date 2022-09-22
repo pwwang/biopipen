@@ -59,3 +59,60 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
 
     cmdy.tabix(p=preset, _=new_infile, _exe=tabix)
     return new_infile
+
+
+def bam_index(
+    bam,
+    bamdir=tempfile.gettempdir(),
+    samtools=config.exe.samtools,
+    ncores=1,
+    ext=".bam.bai",
+):
+    """Index a bam file
+
+    First look for the index file in the same directory as the bam file,
+    if found, return the bam file. Otherwise, generate a symbolic link of the
+    bam file in bamdir, and generate a index there, return the path to the
+    symbolic link
+
+    Args:
+        bam: The path to the bam file
+        bamdir: If index file can't be found in the directory as the bam file,
+            create a symbolic link to the bam file, and generate the index
+            here
+        samtools: The path to samtools
+        ncores: Number of cores (threads) used to generate the index file
+        ext: The ext of the index file, default `.bam.bai`, in case, `.bai` is
+            also treated as index file
+
+    Returns:
+        The bam file if index exists in the directory as the bam file.
+        Otherwise symbolic link to the bam file in bamdir.
+    """
+    bam = Path(bam)
+    indexfile = bam.with_suffix(ext)
+    if indexfile.is_file():
+        return str(bam)
+
+    linkfile = Path(bamdir).joinpath(bam.name)
+    indexfile = linkfile.with_suffix(ext)
+
+    if linkfile.exists() and not linkfile.samefile(bam):
+        linkfile.unlink()
+        if indexfile.exists():
+            indexfile.unlink()
+
+    if not linkfile.exists():
+        linkfile.symlink_to(bam)
+
+    if indexfile.is_file():
+        return linkfile
+
+    cmdy.samtools.index(
+        "-@",
+        ncores,
+        b=True,
+        _=[linkfile, linkfile.with_suffix(ext)],
+        _exe=samtools,
+    )
+    return linkfile

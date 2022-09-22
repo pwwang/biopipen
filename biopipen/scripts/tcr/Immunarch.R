@@ -104,12 +104,12 @@ for (col in c("aa", "nt")) {
 
     # lendata = list()
     # for (sample in names(immdata$data)) {
-    #     lendata[[sample]] = immdata$data[[sample]] |>
-    #         select(CDR3=paste0("CDR3.", col)) |>
-    #         mutate(Length = nchar(CDR3), Sample = sample) |>
+    #     lendata[[sample]] = immdata$data[[sample]] %>%
+    #         select(CDR3=paste0("CDR3.", col)) %>%
+    #         mutate(Length = nchar(CDR3), Sample = sample) %>%
     #         select(Sample, Length)
     # }
-    # lendata = do.call(bind_rows, lendata) |>
+    # lendata = do.call(bind_rows, lendata) %>%
     #     left_join(immdata$meta, by = "Sample")
 
     # p = ggplot(lendata, aes(x = Length))
@@ -268,13 +268,13 @@ for (method in overlap_methods) {
 
 gu_dir = file.path(outdir, "gene_usage")
 dir.create(gu_dir, showWarnings = FALSE)
-imm_gu = geneUsage(immdata$data, "hs.trbv") |>
-    separate_rows(Names, sep=";") |>
-    group_by(Names) |>
+imm_gu = geneUsage(immdata$data, "hs.trbv") %>%
+    separate_rows(Names, sep=";") %>%
+    group_by(Names) %>%
     summarise(across(everything(), ~ sum(., na.rm = TRUE)))
-imm_gu = imm_gu |>
+imm_gu = imm_gu %>%
     arrange(desc(rowSums(select(imm_gu, -"Names"), na.rm = TRUE)))
-imm_gu_top = imm_gu |> head(gu_top)
+imm_gu_top = imm_gu %>% head(gu_top)
 
 class(imm_gu) = append("immunr_gene_usage", class(imm_gu))
 class(imm_gu_top) = append("immunr_gene_usage", class(imm_gu_top))
@@ -367,8 +367,8 @@ plot_div = function(div, method, ...) {
     if (method != "gini") {
         do.call(vis, list(div, ...))
     } else {
-        ginidiv = as.data.frame(div) |>
-            rownames_to_column("Sample") |>
+        ginidiv = as.data.frame(div) %>%
+            rownames_to_column("Sample") %>%
             rename(`Gini-coefficient`=V1)
         ggplot(ginidiv) +
             geom_col(aes(x=Sample, y=`Gini-coefficient`, fill=Sample)) +
@@ -485,14 +485,14 @@ for (name in names(tracking_target)) {
             if (is.null(top_clones)) {
                 top_clones = immdata$data[[sample]]
             } else {
-                top_clones = inner_join(top_clones, immdata$data[[sample]], by = "CDR3.aa") |>
-                    rowwise() |>
-                    mutate(Clones=sum(Clones.x, Clones.y)) |>
-                    select(-c(Clones.x, Clones.y)) |>
+                top_clones = inner_join(top_clones, immdata$data[[sample]], by = "CDR3.aa") %>%
+                    rowwise() %>%
+                    mutate(Clones=sum(Clones.x, Clones.y)) %>%
+                    select(-c(Clones.x, Clones.y)) %>%
                     ungroup()
             }
         }
-        target = top_clones |> slice_max(Clones, n=target[[2]]) |> pull(CDR3.aa)
+        target = top_clones %>% slice_max(Clones, n=target[[2]]) %>% pull(CDR3.aa)
     }
 
     imm_tracking = trackClonotypes(immdata$data, target, .col = "aa")

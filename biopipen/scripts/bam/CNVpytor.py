@@ -3,12 +3,14 @@ from pathlib import Path
 import cmdy
 import pandas
 from biopipen.scripts.vcf.VcfFix_utils import HeaderContig, fix_vcffile
+from biopipen.utils.reference import bam_index
 
 bamfile = {{in.bamfile | quote}}  # pyright: ignore
 snpfile = {{in.snpfile | repr}}  # pyright: ignore
 outdir = Path({{out.outdir | quote}})  # pyright: ignore
 cnvpytor = {{envs.cnvpytor | quote}}  # pyright: ignore
 cnvnator2vcf = {{envs.cnvnator2vcf | quote}}  # pyright: ignore
+samtools = {{envs.samtools | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
 refdir = {{envs.refdir | quote}}  # pyright: ignore
 genome = {{envs.genome | quote}}  # pyright: ignore
@@ -19,12 +21,59 @@ args = {{envs | repr}}  # pyright: ignore
 del args['cnvpytor']
 del args['ncores']
 del args['cnvnator2vcf']
+del args['samtools']
 del args['refdir']
 del args['genome']
 del args['chrsize']
 del args['filters']
 
+
+bamfile = bam_index(bamfile, outdir, samtools, ncores)
 cmdy_args = {"_exe": cnvpytor, "_prefix": "-", "_deform": None}
+
+NOSNP_COLS = [
+    "CNVtype",
+    "CNVregion",
+    "CNVsize",
+    "CNVlevel",
+    "eval1",
+    "eval2",
+    "eval3",
+    "eval4",
+    "q0",
+    "pN",
+    "dG",
+]
+
+SNP_COLS = [
+    "CNVtype",
+    "CNVregion",
+    "CNVsize",
+    "CNVlevel",
+    "eval1",
+    "eval2",
+    "eval3",
+    "eval4",
+    "q0",
+    "pN",
+    "dNS",
+    "pP",
+    "bin_size",
+    "n",
+    "delta_BA",
+    "e",
+    "baf_eval",
+    "hets",
+    "homs",
+    "cn_1",
+    "genotype",
+    "likeliho",
+    "cf_1",
+    "cn_2",
+    "genotype",
+    "likeliho",
+    "cf_2",
+]
 
 ## Without snp
 #0 CNV type: "deletion" or "duplication",
@@ -218,7 +267,10 @@ def cnvpytor2vcf(infile, snp, fix=True):
             fixes.append({
                 "kind": "contig",
                 "append": True,
-                "fix": lambda obj: HeaderContig(ID=chrom, length=size)
+                "fix": (
+                    lambda obj, chrom=chrom, size=size:
+                    HeaderContig(ID=chrom, length=size)
+                )
             })
 
         fix_vcffile(unfixedfile, outfile, fixes)
@@ -327,19 +379,7 @@ def do_case():
 
         # filter
         df = pandas.read_csv(outfile, sep="\t", header=None)
-        df.columns = [
-            "CNVtype",
-            "CNVregion",
-            "CNVsize",
-            "CNVlevel",
-            "eval1",
-            "eval2",
-            "eval3",
-            "eval4",
-            "q0",
-            "pN",
-            "dG",
-        ]
+        df.columns = SNP_COLS if snp else NOSNP_COLS
         for key in (
             "CNVsize",
             "eval1",
@@ -350,7 +390,9 @@ def do_case():
             "pN",
             "dG",
         ):
-
+            # no `dG` column with snp data
+            if snp and key == "dG":
+                continue
             if key in filters and filters[key]:
                 q1, q2 = filters[key]
                 q1 = float(q1)

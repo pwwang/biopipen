@@ -21,14 +21,14 @@ srtobj = readRDS(srtobjfile)
         for (key in names(mutaters)) {
             expr[[key]] = parse_expr(mutaters[[key]])
         }
-        srtobj_copy@meta.data = srtobj_copy@meta.data |> mutate(!!!expr)
+        srtobj_copy@meta.data = srtobj_copy@meta.data %>% mutate(!!!expr)
     }
 
     if (!is.null(groupby)) {
         print(paste("  with groupby:", groupby))
         if (ignore_nas) {
-            cells = FetchData(srtobj_copy, vars = groupby) |>
-                filter(!is.na(.data[[groupby]])) |>
+            cells = FetchData(srtobj_copy, vars = groupby) %>%
+                filter(!is.na(.data[[groupby]])) %>%
                 rownames()
 
             srtobj_copy = subset(srtobj_copy, cells = cells)
