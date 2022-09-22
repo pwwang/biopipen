@@ -84,13 +84,13 @@ do_stats_perccellspersample = function(df_ncells, odir, pms) {
 
 
 do_stats = function() {
-    df_ncells = srtobj@meta.data |>
-        group_by(Sample, seurat_clusters) |>
-        summarize(nCells = n()) |>
-        group_by(seurat_clusters) |>
-        mutate(nCellsPerCluster = sum(nCells)) |>
-        ungroup() |>
-        group_by(Sample) |>
+    df_ncells = srtobj@meta.data %>%
+        group_by(Sample, seurat_clusters) %>%
+        summarize(nCells = n()) %>%
+        group_by(seurat_clusters) %>%
+        mutate(nCellsPerCluster = sum(nCells)) %>%
+        ungroup() %>%
+        group_by(Sample) %>%
         mutate(
             percCellsPerSample = nCells / sum(nCells),
             nCellsPerSample = sum(nCells),
@@ -175,7 +175,7 @@ do_exprs_ridgeplots = function(odir, pms, genes) {
     if (is.null(subsetpms)) {
         pms$object = srtobj
     } else {
-        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+        pms$object = srtobj %>% filter(eval(parse(text=subsetpms)))
     }
     p = do_call(RidgePlot, pms)
     for (pls in plus) {
@@ -229,7 +229,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
     if (is.null(subsetpms)) {
         pms$object = srtobj
     } else {
-        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+        pms$object = srtobj %>% filter(eval(parse(text=subsetpms)))
     }
     p = do_call(VlnPlot, pms)
     if (!is.null(boxplot)) {
@@ -276,7 +276,7 @@ do_exprs_featureplots = function(odir, pms, genes) {
     if (is.null(subsetpms)) {
         pms$object = srtobj
     } else {
-        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+        pms$object = srtobj %>% filter(eval(parse(text=subsetpms)))
     }
     p = do_call(FeaturePlot, pms)
     devpars$filename = outfile
@@ -318,7 +318,7 @@ do_exprs_dotplot = function(odir, pms, genes) {
     if (is.null(subsetpms)) {
         pms$object = srtobj
     } else {
-        pms$object = srtobj |> filter(eval(parse(text=subsetpms)))
+        pms$object = srtobj %>% filter(eval(parse(text=subsetpms)))
     }
     p = do_call(DotPlot, pms)
     for (pls in plus) {
@@ -367,7 +367,7 @@ do_exprs_heatmap = function(odir, pms, genes) {
     if (is.null(subsetpms)) {
         sobj = srtobj
     } else {
-        sobj = srtobj |> filter(eval(parse(text=subsetpms)))
+        sobj = srtobj %>% filter(eval(parse(text=subsetpms)))
     }
     if (is.null(downsample)) {
         pms$object = sobj

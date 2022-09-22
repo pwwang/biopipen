@@ -27,10 +27,10 @@ prepare_exprmat = function(casepms) {
         for (key in names(casepms$mutaters)) {
             expr[[key]] = parse_expr(casepms$mutaters[[key]])
         }
-        sobj = sobj |> mutate(!!!expr)
+        sobj = sobj %>% mutate(!!!expr)
     }
     if (!is.null(casepms$filter)) {
-        sobj = sobj |> filter(eval(parse(text=casepms$filter)))
+        sobj = sobj %>% filter(eval(parse(text=casepms$filter)))
     }
 
     samples = rownames(sobj@meta.data[

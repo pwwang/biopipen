@@ -58,7 +58,7 @@ main = function() {
 {
     summaries = read_summary()
     write.table(
-        summaries |> select(Sample, everything()),
+        summaries %>% select(Sample, everything()),
         file=file.path(outdir, "summary.txt"),
         sep="\t",
         quote=FALSE,

@@ -32,9 +32,9 @@ if (on_multi) {
 get_cdr3aa_df = function() {
     out = NULL
     for (sample in names(immdata$data)) {
-        tmpdf = immdata$data[[sample]] |>
-            select(Barcode, CDR3.aa) |>
-            separate_rows(Barcode, sep = ";") |>
+        tmpdf = immdata$data[[sample]] %>%
+            select(Barcode, CDR3.aa) %>%
+            separate_rows(Barcode, sep = ";") %>%
             mutate(Barcode = paste0(sample, "_", Barcode))
         out = bind_rows(out, tmpdf)
     }
@@ -88,9 +88,9 @@ clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
         out,
         by = "CDR3.aa"
     )
-    df = out |>
-        select(Barcode, TCR_Cluster) |>
-        distinct(Barcode, .keep_all = TRUE) |>
+    df = out %>%
+        select(Barcode, TCR_Cluster) %>%
+        distinct(Barcode, .keep_all = TRUE) %>%
         column_to_rownames("Barcode")
 
     write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")
@@ -185,9 +185,9 @@ clean_giana_output = function(giana_outfile, giana_infile) {
         out,
         by = "CDR3.aa"
     )
-    df = out |>
-        select(Barcode, TCR_Cluster) |>
-        distinct(Barcode, .keep_all = TRUE) |>
+    df = out %>%
+        select(Barcode, TCR_Cluster) %>%
+        distinct(Barcode, .keep_all = TRUE) %>%
         column_to_rownames("Barcode")
 
     write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")

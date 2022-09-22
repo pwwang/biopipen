@@ -50,7 +50,7 @@ rownames(exprs) = genes$Name
 exprs = rownames_to_column(exprs, "Gene")
 
 plot_heatmap = function(plotconf, outfile) {
-    plotdata = exprs |>
+    plotdata = exprs %>%
         pivot_longer(
             names(exprs)[2:ncol(exprs)],
             names_to = "Barcode",
@@ -58,10 +58,10 @@ plot_heatmap = function(plotconf, outfile) {
         )
     metadata = sobj@meta.data[plotdata$Barcode,,drop=F]
     plotdata = cbind(plotdata, metadata)
-    plotdata = plotdata |>
-        group_by(Gene, !!sym(config$groupby)) |>
-        summarise(Log_Expression = mean(Log_Expression)) |>
-        pivot_wider(names_from = config$groupby, values_from = "Log_Expression") |>
+    plotdata = plotdata %>%
+        group_by(Gene, !!sym(config$groupby)) %>%
+        summarise(Log_Expression = mean(Log_Expression)) %>%
+        pivot_wider(names_from = config$groupby, values_from = "Log_Expression") %>%
         column_to_rownames("Gene")
 
     given_genes = rownames(plotdata)
@@ -94,7 +94,7 @@ plot_heatmap = function(plotconf, outfile) {
 }
 
 plot_boxplot = function(plotconf, outfile) {
-    plotdata = exprs |>
+    plotdata = exprs %>%
         pivot_longer(
             names(exprs)[2:ncol(exprs)],
             names_to = "Barcode",

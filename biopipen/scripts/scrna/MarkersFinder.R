@@ -35,7 +35,7 @@ do_enrich = function(case, markers) {
     print(paste("  Running enrichment for case:", case))
     casedir = file.path(outdir, case)
     dir.create(casedir, showWarnings = FALSE)
-    markers_sig = markers |> filter(p_val_adj < 0.05)
+    markers_sig = markers %>% filter(p_val_adj < 0.05)
     write.table(
         markers_sig,
         file.path(casedir, "markers.txt"),
@@ -75,7 +75,7 @@ mutate_meta = function(obj, mutaters) {
         for (key in names(mutaters)) {
             expr[[key]] = parse_expr(mutaters[[key]])
         }
-        obj@meta.data = meta |> mutate(!!!expr)
+        obj@meta.data = meta %>% mutate(!!!expr)
     }
     return(obj)
 }
@@ -86,12 +86,12 @@ do_case = function(case) {
     pmnames = names(casepms)
     obj = seurat_obj
     if ("filter" %in% pmnames) {
-        obj = obj |> filter(eval(parse(text=casepms$filter)))
+        obj = obj %>% filter(eval(parse(text=casepms$filter)))
     }
     obj = mutate_meta(obj, casepms$mutaters)
     casepms$mutaters = NULL
     if ("filter2" %in% pmnames) {
-        obj = obj |> filter(eval(parse(text=casepms$filter2)))
+        obj = obj %>% filter(eval(parse(text=casepms$filter2)))
     }
 
     if (!"ident.1" %in% pmnames && !"ident.2" %in% pmnames) {
@@ -101,11 +101,11 @@ do_case = function(case) {
         allmarkers = do_call(FindAllMarkers, casepms)
         # Is it always cluster?
         for (group in sort(unique(allmarkers$cluster))) {
-            do_enrich(paste(case, group, sep="_"), allmarkers |> filter(cluster == group))
+            do_enrich(paste(case, group, sep="_"), allmarkers %>% filter(cluster == group))
         }
     } else {
         casepms$object = obj
-        markers = do_call(FindMarkers, casepms) |> rownames_to_column("gene")
+        markers = do_call(FindMarkers, casepms) %>% rownames_to_column("gene")
         do_enrich(case, markers)
     }
 }

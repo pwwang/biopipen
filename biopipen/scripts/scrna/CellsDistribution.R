@@ -24,7 +24,7 @@ mutate_meta = function(meta, mutaters) {
         expr[[key]] = parse_expr(mutaters[[key]])
     }
 
-    meta |> mutate(!!!expr)
+    meta %>% mutate(!!!expr)
 }
 
 do_case = function(case) {
@@ -41,10 +41,10 @@ do_case = function(case) {
         meta = mutate_meta(meta, casepms$mutaters)
     }
     if (!is.null(casepms$filter)) {
-        meta = meta |> filter(eval(parse(text=casepms$filter)))
+        meta = meta %>% filter(eval(parse(text=casepms$filter)))
     }
 
-    # meta = meta |> filter(!is.na(!!sym(grouppms$by)), !is.na(!!sym(clonepms$by)))
+    # meta = meta %>% filter(!is.na(!!sym(grouppms$by)), !is.na(!!sym(clonepms$by)))
 
     if (!is.null(grouppms$order)) {
         meta[[grouppms$by]] = factor(meta[[grouppms$by]], levels = grouppms$order)
@@ -52,14 +52,14 @@ do_case = function(case) {
     }
 
     # Sizes
-    meta = meta |>
-        add_count(!!sym(clonepms$by), name = ".CloneSize") |>
-        add_count(!!sym(clonepms$by), !!sym(grouppms$by), name = ".CloneGroupSize") |>
+    meta = meta %>%
+        add_count(!!sym(clonepms$by), name = ".CloneSize") %>%
+        add_count(!!sym(clonepms$by), !!sym(grouppms$by), name = ".CloneGroupSize") %>%
         add_count(!!sym(clonepms$by), !!sym(grouppms$by), seurat_clusters, name = ".CloneGroupClusterSize")
     if (!is.null(clonepms$orderby)) {
-        meta = meta |> arrange(eval(parse(text=clonepms$orderby)))
+        meta = meta %>% arrange(eval(parse(text=clonepms$orderby)))
         order = unique(meta[[clonepms$by]])[1:clonepms$n]
-        meta = meta |> filter(!!sym(clonepms$by) %in% order)
+        meta = meta %>% filter(!!sym(clonepms$by) %in% order)
         meta[[clonepms$by]] = factor(meta[[clonepms$by]], levels = order)
     }
     nrows = length(unique(meta[[clonepms$by]]))

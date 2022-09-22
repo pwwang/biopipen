@@ -99,8 +99,8 @@ for (name in names(filters$filters)) {
         names(immdata$data),
         function(sample) {
             mdata = as.list(immdata$meta[immdata$meta$Sample == sample, ])
-            data = immdata$data[[sample]] |>
-                separate_rows(Barcode, sep=";") |>
+            data = immdata$data[[sample]] %>%
+                separate_rows(Barcode, sep=";") %>%
                 distinct(Barcode, .keep_all = TRUE)
             for (mname in names(mdata)) {
                 data[[mname]] = mdata[[mname]]
@@ -108,8 +108,8 @@ for (name in names(filters$filters)) {
             }
             Barcode = data$Barcode
 
-            gdf = data |>
-                select(all_of(metacols)) |>
+            gdf = data %>%
+                select(all_of(metacols)) %>%
                 mutate(Cell = glue("{{envs.prefix}}{Barcode}"))
             gdf[[groupname]] = name
             gdf
@@ -126,7 +126,7 @@ for (name in names(filters$filters)) {
 if (!file.exists(outfile)) {
     saveRDS(immdata0, file=outfile)
 }
-groupdata = groupdata |>
-    as.data.frame() |>
+groupdata = groupdata %>%
+    as.data.frame() %>%
     column_to_rownames("Cell")
 write.table(groupdata, groupfile, quote=F, row.names=T, col.names=T, sep="\t")
