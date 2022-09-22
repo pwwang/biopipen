@@ -28,7 +28,7 @@ class BedConsensus1(BedConsensus):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(
+    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
         BedConsensus,
         BedConsensus1,
     ).set_data(

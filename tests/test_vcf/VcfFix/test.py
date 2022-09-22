@@ -66,7 +66,7 @@ INFILE = Path(__file__).parent / "data" / "tofix.vcf"
 
 def pipeline():
     return (
-        get_pipeline(__file__)
+        get_pipeline(__file__, plugins=["no:report"])
         .set_start(VcfFix)
         .set_data([str(INFILE)])
     )

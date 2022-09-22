@@ -66,7 +66,9 @@ class CellsDistribution(CellsDistribution):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareSeurat)
+    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+        PrepareSeurat
+    )
 
 
 def testing(pipen):

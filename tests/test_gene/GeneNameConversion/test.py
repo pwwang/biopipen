@@ -42,7 +42,9 @@ GeneNameConversion3 = Proc.from_proc(
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(Str2File).set_data(
+    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+        Str2File
+    ).set_data(
         [
             (
                 (

@@ -17,7 +17,7 @@ class CNVpytor(CNVpytor):
 
 def pipeline():
     return (
-        get_pipeline(__file__)
+        get_pipeline(__file__, plugins=["no:report"])
         .set_start(Download)
         .set_data([BAM_URL])
     )

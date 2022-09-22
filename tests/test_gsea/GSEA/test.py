@@ -19,7 +19,10 @@ GSEA = Proc.from_proc(
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(Download, Str2File).set_data(
+    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+        Download,
+        Str2File,
+    ).set_data(
         [
             "https://www.ncbi.nlm.nih.gov/geo/download/"
             "?acc=GSE179367"

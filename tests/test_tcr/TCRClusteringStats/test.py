@@ -49,7 +49,9 @@ class TCRClusteringStatsClusTCR(TCRClusteringStats):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareImmdata)
+    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+        PrepareImmdata
+    )
 
 
 def testing(pipen):
