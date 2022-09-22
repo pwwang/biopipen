@@ -1,4 +1,4 @@
-name: r
+name: biopipen-r
 channels:
   - svalkiers
   - aroth85

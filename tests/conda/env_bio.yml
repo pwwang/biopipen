@@ -1,4 +1,4 @@
-name: bio
+name: biopipen-bio
 channels:
   - bioconda
   - conda-forge
