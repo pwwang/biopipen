@@ -10,7 +10,7 @@ python = "^3.7.1"
 pipen = "^0.3"
 pipen-filters = "^0.1"
 cmdy = "^0.5"
-datar = "^0.8"
+datar = "^0.9"
 pipen-verbose = {version = "^0.1", optional = true}
 pipen-args = {version = "^0.2", optional = true}
 
