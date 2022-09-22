@@ -1,4 +1,4 @@
-## 0.4.10
+## 0.5.0
 
 - ✅ [vcf.VcfFix] Add chrom size fixes
 - ✨ [utils.reference] Add bam_index
@@ -8,6 +8,7 @@
 - 🩹 [All] Use `%>%` instead of `|>` in all R scripts for backward compatibility
 - 🐛 [scrna_metabolic] Don't turn "Ident" to "seurat_clusters" for grouping.groupby in config
 - 🏗️ [tests] Add prefix "biopipen-" to conda environment names
+- ✅ [tests] Enable pipen-report only when necessary
 
 ## 0.4.9
 
