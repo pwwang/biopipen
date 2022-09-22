@@ -10,7 +10,7 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  - poetry=1.1.13
+  - poetry=1.1.13  # awaiting 1.2 being released on conda
   - r-base=4.1.3
   - r-ggplot2
   - r-tidyr
@@ -42,11 +42,11 @@ dependencies:
   - bioconductor-scran
   - bioconductor-singlecellexperiment
   - biopython
-  - clustcr
   - scikit-learn
   # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2
   #         or libmkl_def.so.2.
   - libfaiss-avx2=1.7.2=h1234567_0_cpu
-  # - faiss=1.7.2=py39he004725_0_cpu
+  - libfaiss=1.7.2=hde9c08d_1_cpu
   - faiss-cpu
+  - clustcr
   - truvari
