@@ -18,9 +18,6 @@ violin_devpars <- {{ envs.violin_devpars | r }}
 set.seed(8525)
 
 groupby = config$grouping$groupby
-if (grepl("^ident", groupby, ignore.case = TRUE)) {
-    groupby = "seurat_clusters"
-}
 
 ## gmtPathways is copied from fgsea package.
 gmtPathways <- function(gmt.file) {

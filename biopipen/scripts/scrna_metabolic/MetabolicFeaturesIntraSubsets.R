@@ -15,9 +15,6 @@ prerank_method <- {{ envs.prerank_method | r }}
 
 set.seed(8525)
 groupby = config$grouping$groupby
-if (grepl("^ident", groupby, ignore.case = TRUE)) {
-    groupby = "seurat_clusters"
-}
 
 sceobj <- do_call(cbind, lapply(sceobjfiles, readRDS))
 

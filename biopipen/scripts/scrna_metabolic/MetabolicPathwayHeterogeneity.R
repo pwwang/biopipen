@@ -13,9 +13,6 @@ envs <- {{envs | r}}
 
 set.seed(8525)
 groupby = config$grouping$groupby
-if (grepl("^ident", groupby, ignore.case = TRUE)) {
-    groupby = "seurat_clusters"
-}
 
 sceobj <- readRDS(sceobjfile)
 do_one_subset <- function(subset) {
