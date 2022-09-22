@@ -1,3 +1,9 @@
+## 0.5.1
+
+- 💚 Fix CI
+- 🚨 Add and fix linting
+- ⬆️ Pump pipen-report to 0.4.5
+
 ## 0.5.0
 
 - ✅ [vcf.VcfFix] Add chrom size fixes
