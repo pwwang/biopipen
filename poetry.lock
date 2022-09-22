@@ -172,11 +172,22 @@ python-versions = "*"
 ansicon = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "json5"
+version = "0.9.10"
+description = "A Python implementation of the JSON5 data format."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+dev = ["hypothesis"]
+
+[[package]]
 name = "lark-parser"
 version = "0.12.0"
 description = "a modern parsing library"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [package.extras]
@@ -197,6 +208,20 @@ jinja2 = ">=3,<4"
 
 [package.extras]
 extra = ["markdown (>=3.3,<4.0)", "python-dateutil (>=2.8,<3.0)", "python-frontmatter (>=1.0,<2.0)", "python-slugify (>=6.1,<7.0)", "regex (>=2022.4,<2023.0)", "toml (>=0.10.2,<0.11.0)"]
+
+[[package]]
+name = "Markdown"
+version = "3.4.1"
+description = "Python implementation of Markdown."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+importlib-metadata = {version = ">=4.4", markers = "python_version < \"3.10\""}
+
+[package.extras]
+testing = ["coverage", "pyyaml"]
 
 [[package]]
 name = "MarkupSafe"
@@ -256,7 +281,7 @@ name = "pardoc"
 version = "0.0.3"
 description = "Yet another docstring parser for python"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
@@ -312,7 +337,7 @@ name = "pipen-args"
 version = "0.2.3"
 description = "Command-line argument parser for pipen."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7.1,<4.0.0"
 
 [package.dependencies]
@@ -328,6 +353,20 @@ optional = false
 python-versions = ">=3.7.1,<4.0.0"
 
 [package.dependencies]
+pipen = ">=0.3,<0.4"
+
+[[package]]
+name = "pipen-report"
+version = "0.4.4"
+description = "Report generation system for pipen"
+category = "main"
+optional = false
+python-versions = ">=3.7.1,<4.0.0"
+
+[package.dependencies]
+cmdy = ">=0.5,<0.6"
+json5 = ">=0.9,<0.10"
+Markdown = ">=3.3,<4.0"
 pipen = ">=0.3,<0.4"
 
 [[package]]
@@ -565,7 +604,7 @@ test = ["pipen-verbose", "pipen-args"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "a5ab18f64829b1eb66a216d3a4decfd2d229cc18c449001e4e741acd2667a870"
+content-hash = "f5501ca3d6bc1649867a50637c0e767307a5692975a19d3683a1c4e8945803b9"
 
 [metadata.files]
 aiofiles = [
@@ -627,6 +666,10 @@ jinxed = [
     {file = "jinxed-1.2.0-py2.py3-none-any.whl", hash = "sha256:cfc2b2e4e3b4326954d546ba6d6b9a7a796ddcb0aef8d03161d005177eb0d48b"},
     {file = "jinxed-1.2.0.tar.gz", hash = "sha256:032acda92d5c57cd216033cbbd53de731e6ed50deb63eb4781336ca55f72cda5"},
 ]
+json5 = [
+    {file = "json5-0.9.10-py2.py3-none-any.whl", hash = "sha256:993189671e7412e9cdd8be8dc61cf402e8e579b35f1d1bb20ae6b09baa78bbce"},
+    {file = "json5-0.9.10.tar.gz", hash = "sha256:ad9f048c5b5a4c3802524474ce40a622fae789860a86f10cc4f7e5f9cf9b46ab"},
+]
 lark-parser = [
     {file = "lark-parser-0.12.0.tar.gz", hash = "sha256:15967db1f1214013dca65b1180745047b9be457d73da224fcda3d9dd4e96a138"},
     {file = "lark_parser-0.12.0-py2.py3-none-any.whl", hash = "sha256:0eaf30cb5ba787fe404d73a7d6e61df97b21d5a63ac26c5008c78a494373c675"},
@@ -634,6 +677,10 @@ lark-parser = [
 liquidpy = [
     {file = "liquidpy-0.7.5-py3-none-any.whl", hash = "sha256:d79f4d48de7aed5b225c62200cc9862c821d1d741d13a164885324e9310a0852"},
     {file = "liquidpy-0.7.5.tar.gz", hash = "sha256:54725bcbd6d29db854ba053c803826769080a01d7e2681067af9472187e83bc8"},
+]
+Markdown = [
+    {file = "Markdown-3.4.1-py3-none-any.whl", hash = "sha256:08fb8465cffd03d10b9dd34a5c3fea908e20391a2a90b88d66362cb05beed186"},
+    {file = "Markdown-3.4.1.tar.gz", hash = "sha256:3b809086bb6efad416156e00a0da66fe47618a5d6918dd688f53f40c8e4cfeff"},
 ]
 MarkupSafe = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},
@@ -792,6 +839,10 @@ pipen-args = [
 pipen-filters = [
     {file = "pipen-filters-0.1.2.tar.gz", hash = "sha256:893686edfaac4a9487b25c8a5455a82f34d1bcb4617fbe362305cc31e8bf49ce"},
     {file = "pipen_filters-0.1.2-py3-none-any.whl", hash = "sha256:446e9ab6ac6fbad93f3c4a6c8bdb0c5148d7dfd4565e5701ca3f49d1de01c8be"},
+]
+pipen-report = [
+    {file = "pipen-report-0.4.4.tar.gz", hash = "sha256:d3c8c82bee4f12c4c3afda4b16da98230f22b8b696062893e311a0a31e66f013"},
+    {file = "pipen_report-0.4.4-py3-none-any.whl", hash = "sha256:e007a936e77bb8576de4f5df94fc20edb97ce73b0f3db5dc5ae7b31ffc63593a"},
 ]
 pipen-verbose = [
     {file = "pipen-verbose-0.1.1.tar.gz", hash = "sha256:e70654178d8bdd2d531ea225db6894ebc4536aa8dd125dd1aadd09f19e547238"},

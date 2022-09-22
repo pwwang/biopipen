@@ -6,6 +6,8 @@
 - ✨ [vcf.Vcf2Bed] Add process and test
 - 🐛 [bed.BedConsensus] Fix final weighting issue
 - 🩹 [All] Use `%>%` instead of `|>` in all R scripts for backward compatibility
+- 🐛 [scrna_metabolic] Don't turn "Ident" to "seurat_clusters" for grouping.groupby in config
+- 🏗️ [tests] Add prefix "biopipen-" to conda environment names
 
 ## 0.4.9
 
