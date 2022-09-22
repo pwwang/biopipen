@@ -35,6 +35,7 @@ DEFAULT = {
 
 def _as_config(conf):
     from pipen_filters.filters import FILTERS
+
     return FILTERS["config"](conf, loader="toml")
 
 
@@ -48,13 +49,10 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         SeuratClustering,
         SeuratMetadataMutater,
     )
+
     options = (
         Diot(DEFAULT)
-        | (
-            config
-            .get("pipeline", {})
-            .get("scrna_metabolic", {})
-        )
+        | (config.get("pipeline", {}).get("scrna_metabolic", {}))
         | (options or {})
     )
 
@@ -110,18 +108,16 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         lang = config.lang.python
         script = "file://../scripts/scrna_metabolic/MetabolicInputs.py"
 
-
     class MetabolicSeuratPreparing(SeuratPreparing):
         if not options["clustered"]:
             requires = MetabolicInputs
 
-
     class MetabolicSeuratClustering(SeuratClustering):
         requires = MetabolicSeuratPreparing
 
-
     class MetabolicCellGroups(SeuratMetadataMutater):
         """Group cells for metabolic landscape analysis"""
+
         if options["clustered"]:
             requires = MetabolicInputs
             input_data = lambda ch: tibble(
@@ -161,15 +157,18 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
     class MetabolicExprImputation(ExprImpute):
         """Impute the dropout values in scRNA-seq data."""
+
         #                      jobname.case_xxx.RDS
         requires = MetabolicCellSubsets
         input_data = lambda ch: tibble(
             infile=sum(
                 (
                     expand_dir(
-                        ch.iloc[i:i + 1, :],
+                        ch.iloc[i : i + 1, :],
                         pattern="*.RDS",
-                    ).iloc[:, 0].to_list()
+                    )
+                    .iloc[:, 0]
+                    .to_list()
                     for i in range(ch.shape[0])
                 ),
                 [],
@@ -212,7 +211,6 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         envs = {"refexon": config.ref.refexon}
         script = "file://../scripts/scrna_metabolic/MetabolicPrepareSCE.R"
 
-
     class MetabolicExprNormalization(Proc):
         """Normalize the expression data using deconvolution
 
@@ -234,7 +232,6 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         script = (
             "file://../scripts/scrna_metabolic/MetabolicExprNormalization.R"
         )
-
 
     class MetabolicPathwayActivity(Proc):
         """Pathway activities for each group
@@ -287,7 +284,6 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
             )
         }
 
-
     class MetabolicPathwayHeterogeneity(Proc):
         """Pathway heterogeneity
 
@@ -335,7 +331,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
             "select_pcs": 0.8,
             "pathway_pval_cutoff": 0.01,
             "ncores": config.misc.ncores,
-            "bubble_devpars": {"res": 100, "width": 1200, "height": 700}
+            "bubble_devpars": {"res": 100, "width": 1200, "height": 700},
         }
         script = (
             "file://../scripts/scrna_metabolic/MetabolicPathwayHeterogeneity.R"
@@ -346,7 +342,6 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
                 "MetabolicPathwayHeterogeneity.svelte"
             )
         }
-
 
     class MetabolicFeatures(Proc):
         """Inter-subset metabolic features - Enrichment analysis in details
@@ -383,7 +378,6 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
             )
         }
 
-
     class MetabolicFeaturesIntraSubsets(Proc):
         """Intra-subset metabolic features - Enrichment analysis in details
 
@@ -398,6 +392,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
               check: |
                 {{proc.lang}} <(echo "library(fgsea)")
         """
+
         if options["intra-subset"]:
             requires = MetabolicExprNormalization, MetabolicInputs
         input = "sceobjs:files, gmtfile:file, configfile:file"
@@ -427,9 +422,10 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
     return MetabolicInputs
 
+
 def main() -> Pipen:
     """Build a pipeline for `pipen run` to run"""
     return Pipen(
         name="scrna-metabolic",
-        desc="Metabolic landscape analysis for scRNA-seq data"
+        desc="Metabolic landscape analysis for scRNA-seq data",
     ).set_start(build_processes())

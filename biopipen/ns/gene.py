@@ -3,6 +3,7 @@
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class GeneNameConversion(Proc):
     """Convert gene names back and forth using MyGeneInfo
 
@@ -36,7 +37,8 @@ class GeneNameConversion(Proc):
         species: Limit gene query to certain species.
             Supported: human, mouse, rat, fruitfly, nematode, zebrafish,
             thale-cress, frog and pig
-    """
+    """  # noqa: E501
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python

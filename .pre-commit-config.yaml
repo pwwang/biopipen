@@ -1,0 +1,28 @@
+fail_fast: true
+exclude: '.+\.html$'
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 5df1a4bf6f04a1ed3a643167b38d502575e29aef
+    hooks:
+    -   id: trailing-whitespace
+-   repo: local
+    hooks:
+    -   id: flake8
+        name: Run flake8
+        files: ^biopipen/.+$
+        pass_filenames: false
+        entry: flake8
+        args: [biopipen]
+        types: [python]
+        language: system
+    -   id: versionchecker
+        name: Check version agreement in pyproject and __version__
+        entry: bash -c
+        language: system
+        args:
+            - get_ver() { echo $(egrep "^__version|^version " $1 | cut -d= -f2 | sed 's/\"\| //g'); };
+              v1=`get_ver pyproject.toml`;
+              v2=`get_ver biopipen/__init__.py`;
+              if [[ $v1 == $v2 ]]; then exit 0; else exit 1; fi
+        pass_filenames: false
+        files: ^pyproject\.toml|biopipen/__init__\.py$

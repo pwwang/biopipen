@@ -120,7 +120,7 @@ class ControlFREEC(Proc):
             "control": {},
             "BAF": {},
             "target": {},
-        }
+        },
     }
     script = "file://../scripts/bam/ControlFREEC.py"
     plugin_opts = {"report": "file://../reports/bam/ControlFREEC.svelte"}

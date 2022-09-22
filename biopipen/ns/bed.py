@@ -2,6 +2,7 @@
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class BedLiftOver(Proc):
     """Liftover a BED file using liftOver
 
@@ -20,6 +21,7 @@ class BedLiftOver(Proc):
           check: |
             {{proc.envs.liftover}} 2>&1 | grep "usage"
     """
+
     input = "inbed:file"
     output = "outbed:file:{{in.inbed | basename}}"
     envs = {
@@ -28,7 +30,6 @@ class BedLiftOver(Proc):
     }
     lang = config.lang.bash
     script = "file://../scripts/bed/BedLiftOver.sh"
-
 
 
 class Bed2Vcf(Proc):
@@ -74,6 +75,7 @@ class Bed2Vcf(Proc):
           check: |
             {{proc.envs.bcftools}} --version
     """
+
     input = "inbed:file"
     output = (
         "outvcf:file:{{in.inbed | stem}}.vcf{{'.gz' if envs.index else ''}}"
@@ -139,6 +141,7 @@ class BedConsensus(Proc):
         ncores: Number of cores to use to calculate the weights for
             each bed file
     """
+
     input = "bedfiles:files"
     output = (
         "outbed:file:{{in.bedfiles | first | stem | append: '_consensus'}}.bed"

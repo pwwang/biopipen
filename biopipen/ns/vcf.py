@@ -60,7 +60,7 @@ class VcfFilter(Proc):
             of the output vcf file
         helper: Some helper code for the filters
         keep: Keep the variants not passing the filters?
-    """
+    """  # noqa: E501
 
     input = "invcf:file"
     output = "outfile:file:{{in.invcf | basename}}"
@@ -87,6 +87,7 @@ class VcfIndex(Proc):
     Envs:
         tabix: Path to tabix
     """
+
     input = "infile:file"
     output = """
         {%- if in.infile.endswith(".gz") %}
@@ -123,6 +124,7 @@ class Vcf2Bed(Proc):
           check: |
             {{proc.lang}} -c "import cyvcf2"
     """
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem0}}.bed"
     lang = config.lang.python
@@ -145,6 +147,7 @@ class VcfDownSample(Proc):
             If `n > 1`, it is the number.
             If `n <= 1`, it is the fraction.
     """
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     envs = {"n": 0}
@@ -215,6 +218,7 @@ class VcfFix(Proc):
             {{proc.lang}} -c "import biopipen"
 
     """
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python
@@ -244,6 +248,7 @@ class TruvariBench(Proc):
           check: |
             {{proc.envs.truvari}} version
     """
+
     input = "compvcf:file, basevcf:file"
     output = "outdir:dir:{{in.compvcf | stem0 | append: '.truvari_bench'}}"
     envs = {
@@ -293,6 +298,7 @@ class TruvariBenchSummary(Proc):
             {{proc.lang}} -e "library(ggplot2)"
 
     """
+
     input = "indirs:files"
     input_data = lambda ch: [list(ch.iloc[:, 0])]
     output = "outdir:dir:truvari_bench.summary"
@@ -302,9 +308,7 @@ class TruvariBenchSummary(Proc):
         "devpars": None,
     }
     script = "file://../scripts/vcf/TruvariBenchSummary.R"
-    plugin_opts = {
-        "report": "file://../reports/vcf/TruvariBenchSummary.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/vcf/TruvariBenchSummary.svelte"}
 
 
 class TruvariConsistency(Proc):
@@ -328,17 +332,13 @@ class TruvariConsistency(Proc):
             annotations will be added as row annotations.
             Other options see also `biopipen.ns.plot.Heatmap`.
     """
+
     input = "vcfs:files"
     output = (
         "outdir:dir:"
         "{{in.vcfs | first | stem0 | append: '.etc.truvari_consistency'}}"
     )
     lang = config.lang.rscript
-    envs = {
-        "truvari": config.exe.truvari,
-        "heatmap": {}
-    }
+    envs = {"truvari": config.exe.truvari, "heatmap": {}}
     script = "file://../scripts/vcf/TruvariConsistency.R"
-    plugin_opts = {
-        "report": "file://../reports/vcf/TruvariConsistency.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/vcf/TruvariConsistency.svelte"}

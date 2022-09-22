@@ -1,8 +1,8 @@
 """Plotting data"""
 
-from email import header
 from ..core.proc import Proc
 from ..core.config import config
+
 
 class VennDiagram(Proc):
     """Plot Venn diagram
@@ -98,6 +98,7 @@ class Heatmap(Proc):
           check: |
             {{proc.lang}} <(echo "library(ComplexHeatmap)")
     """
+
     input = "infile:file, annofiles:files"
     output = """
         {%- set outdir = in.infile | stem0 | append: ".heatmap" -%}
@@ -112,6 +113,6 @@ class Heatmap(Proc):
         "devpars": {},
         "args": {"heatmap_legend_param": {}},
         "seed": None,
-        "globals": ""
+        "globals": "",
     }
     script = "file://../scripts/plot/Heatmap.R"

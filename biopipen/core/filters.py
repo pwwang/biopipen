@@ -6,6 +6,7 @@ from liquid.filters.manager import FilterManager
 
 filtermanager = FilterManager()
 
+
 @filtermanager.register
 def dict_to_cli_args(dic: Mapping[str, Any]) -> str:
     """Convert a python dict to a string of CLI arguments
@@ -37,36 +38,41 @@ def r(obj: Any, ignoreintkey: bool = True) -> str:
         Then converted string representation of the object
     """
     if obj is True:
-        return 'TRUE'
+        return "TRUE"
     if obj is False:
-        return 'FALSE'
+        return "FALSE"
     if obj is None:
-        return 'NULL'
+        return "NULL"
     if isinstance(obj, str):
-        if obj.upper() in ['+INF', 'INF']:
-            return 'Inf'
-        if obj.upper() == '-INF':
-            return '-Inf'
-        if obj.upper() == 'TRUE':
-            return 'TRUE'
-        if obj.upper() == 'FALSE':
-            return 'FALSE'
-        if obj.upper() == 'NA' or obj.upper() == 'NULL':
+        if obj.upper() in ["+INF", "INF"]:
+            return "Inf"
+        if obj.upper() == "-INF":
+            return "-Inf"
+        if obj.upper() == "TRUE":
+            return "TRUE"
+        if obj.upper() == "FALSE":
+            return "FALSE"
+        if obj.upper() == "NA" or obj.upper() == "NULL":
             return obj.upper()
-        if obj.startswith('r:') or obj.startswith('R:'):
+        if obj.startswith("r:") or obj.startswith("R:"):
             return str(obj)[2:]
         return repr(str(obj))
     if isinstance(obj, Path):
         return repr(str(obj))
     if isinstance(obj, (list, tuple, set)):
-        return 'c({})'.format(','.join([r(i) for i in obj]))
+        return "c({})".format(",".join([r(i) for i in obj]))
     if isinstance(obj, dict):
         # list allow repeated names
-        return 'list({})'.format(','.join([
-            '`{0}`={1}'.format(
-                k,
-                r(v)) if isinstance(k, int) and not ignoreintkey else \
-                r(v) if isinstance(k, int) and ignoreintkey else \
-                '`{0}`={1}'.format(str(k).split('#')[0], r(v))
-            for k, v in sorted(obj.items())]))
+        return "list({})".format(
+            ",".join(
+                [
+                    "`{0}`={1}".format(k, r(v))
+                    if isinstance(k, int) and not ignoreintkey
+                    else r(v)
+                    if isinstance(k, int) and ignoreintkey
+                    else "`{0}`={1}".format(str(k).split("#")[0], r(v))
+                    for k, v in sorted(obj.items())
+                ]
+            )
+        )
     return repr(obj)

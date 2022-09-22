@@ -116,6 +116,7 @@ class ImmunarchFilter(Proc):
             Placeholders like `{Sample}_` can be used to from the meta data
         metacols: The extra columns to be exported to the group file.
     """
+
     input = "immdata:file, filterfile:file"
     output = """
         outfile:file:{{in.immdata | stem}}.RDS,
@@ -296,6 +297,7 @@ class Immunarch2VDJtools(Proc):
         outdir: The output directory containing the vdjtools input for each
             sample
     """
+
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.vdjtools_input"
     lang = config.lang.rscript
@@ -316,8 +318,12 @@ class VJUsage(Proc):
         vdjtools: The path to vdjtools
         vdjtools_patch: A patch for vdjtools
     """
+
     input = "infile:file"
-    output = "outfile:file:{{ in.infile | stem | replace: '.vdjtools', '' }}.fancyvj.wt.png"
+    output = (
+        "outfile:file:{{ in.infile | stem | replace: '.vdjtools', '' }}"
+        ".fancyvj.wt.png"
+    )
     lang = config.lang.rscript
     envs = {
         "vdjtools": config.exe.vdjtools,
@@ -343,6 +349,7 @@ class Attach2Seurat(Proc):
             `{Sample}_` to use the meta data from the immunarch object
         metacols: Which meta columns to attach
     """
+
     input = "immfile:file, sobjfile:file"
     output = "outfile:file:{{in.sobjfile | basename}}"
     lang = config.lang.rscript
@@ -401,6 +408,7 @@ class TCRClustering(Proc):
           check: |
             {{ proc.envs.python }} -c "import clustcr"
     """
+
     input = "immfile:file"
     output = [
         "immfile:file:{{in.immfile | basename}}",
@@ -443,6 +451,7 @@ class TCRClusteringStats(Proc):
           check: |
             {{proc.lang}} -e "library(immunarch)"
     """
+
     input = "immfile:file"
     output = "outdir:dir:{{in.immfile | stem}}.tcrclusters_stats"
     lang = config.lang.rscript
