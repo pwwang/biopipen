@@ -357,7 +357,7 @@ pipen = ">=0.3,<0.4"
 
 [[package]]
 name = "pipen-report"
-version = "0.4.4"
+version = "0.4.5"
 description = "Report generation system for pipen"
 category = "main"
 optional = false
@@ -841,8 +841,8 @@ pipen-filters = [
     {file = "pipen_filters-0.1.2-py3-none-any.whl", hash = "sha256:446e9ab6ac6fbad93f3c4a6c8bdb0c5148d7dfd4565e5701ca3f49d1de01c8be"},
 ]
 pipen-report = [
-    {file = "pipen-report-0.4.4.tar.gz", hash = "sha256:d3c8c82bee4f12c4c3afda4b16da98230f22b8b696062893e311a0a31e66f013"},
-    {file = "pipen_report-0.4.4-py3-none-any.whl", hash = "sha256:e007a936e77bb8576de4f5df94fc20edb97ce73b0f3db5dc5ae7b31ffc63593a"},
+    {file = "pipen-report-0.4.5.tar.gz", hash = "sha256:255f3798e0e64b3b7319b61e8896f91f9af4660649f9bcb83f113e6e78b3a184"},
+    {file = "pipen_report-0.4.5-py3-none-any.whl", hash = "sha256:9b4a0caa87a02bfccc00ce4c2f8366b44b7103a5907a0377d08eaf9ef08da820"},
 ]
 pipen-verbose = [
     {file = "pipen-verbose-0.1.1.tar.gz", hash = "sha256:e70654178d8bdd2d531ea225db6894ebc4536aa8dd125dd1aadd09f19e547238"},

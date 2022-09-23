@@ -113,7 +113,8 @@ Other command options from `cnvkit.py batch`:
     bin number (within chromosome) instead of genomic position.
 - heatmap_cns.chromosome: Chromosome (e.g. 'chr1') or chromosomal range
     (e.g. 'chr1:2333000-2444000') to display.
-- heatmap_cns.desaturate: Tweak color saturation to focus on significant changes.
+- heatmap_cns.desaturate: Tweak color saturation to focus on significant
+    changes.
 - heatmap_cns.no_shift_xy: Don't adjust the X and Y chromosomes according to
     sample sex.
 - heatmap_cns.convert_args: The default arguments for convert
@@ -161,9 +162,7 @@ from diot import Diot
 from pipen import Proc, Pipen
 from datar.tibble import tibble
 
-DEFAULT = {
-
-}
+DEFAULT = {}
 
 
 def build_processes(options: Mapping[str, Any] = None) -> Proc:
@@ -185,11 +184,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
     options = (
         Diot(DEFAULT)
-        | (
-            config
-            .get("pipeline", {})
-            .get("cnvkit_pipeline", {})
-        )
+        | (config.get("pipeline", {}).get("cnvkit_pipeline", {}))
         | (options or {})
     )
 
@@ -208,11 +203,13 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
     class MetaFile(File2Proc):
         """Pass by the metafile"""
+
         if "metafile" in options:
             input_data = [options.metafile]
 
     access_opts = options.get("access", {})
     if "file" not in access_opts:
+
         class CNVkitAccess(CNVkitAccess):
             input_data = [access_opts.get("exclude", [])]
             envs = {
@@ -220,11 +217,14 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
                 "min_gap_size": access_opts.get("min_gap_size", 5000),
                 "ref": ref,
             }
+
     else:
+
         class CNVkitAccess(File2Proc):
             input_data = [access_opts.file]
 
     autobin_opts = options.get("autobin", {})
+
     class CNVkitAutobin(CNVkitAutobin):
         requires = [MetaFile, CNVkitAccess]
         input_data = lambda ch1, ch2: [
@@ -250,6 +250,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         }
 
     coverage_opts = options.get("coverage", {})
+
     class CNVkitCoverageTarget(CNVkitCoverage):
         requires = [MetaFile, CNVkitAutobin]
         input_data = lambda ch1, ch2: tibble(
@@ -277,6 +278,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         }
 
     reference_opts = options.get("reference", {})
+
     class CNVkitReference(CNVkitReference):
         def _get_input_data(ch1, ch2, ch3, ch4):
             metadf = _get_metadf(ch1)
@@ -318,6 +320,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         }
 
     fix_opts = options.get("fix", {})
+
     class CNVkitFix(CNVkitFix):
         def _get_input_data(ch1, ch2, ch3, ch4):
             metadf = _get_metadf(ch1)
@@ -349,6 +352,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         }
 
     segment_opts = options.get("segment", {})
+
     class CNVkitSegment(CNVkitSegment):
         def _get_input_data(ch1, ch2):
             metadf = _get_metadf(ch1)
@@ -388,6 +392,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         }
 
     scatter_opts = options.get("scatter", {})
+
     class CNVkitScatter(CNVkitScatter):
         def _get_input_data(ch1, ch2, ch3):
             metadf = _get_metadf(ch1)
@@ -415,13 +420,10 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
         requires = [MetaFile, CNVkitFix, CNVkitSegment]
         input_data = _get_input_data
-        envs={
-            "cnvkit": cnvkit,
-            "convert": convert,
-            **scatter_opts
-        }
+        envs = {"cnvkit": cnvkit, "convert": convert, **scatter_opts}
 
     diagram_opts = options.get("diagram", {})
+
     class CNVkitDiagram(CNVkitDiagram):
         def _get_input_data(ch1, ch2, ch3):
             metadf = _get_metadf(ch1)
@@ -438,13 +440,14 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
         requires = [MetaFile, CNVkitFix, CNVkitSegment]
         input_data = _get_input_data
-        envs={
+        envs = {
             "cnvkit": cnvkit,
             "convert": convert,
             **diagram_opts,
         }
 
     heatmap_cns_opts = options.get("heatmap_cns", {})
+
     class CNVkitHeatmapCns(CNVkitHeatmap):
         def _get_input_data(ch1, ch2):
             metadf = _get_metadf(ch1)
@@ -458,9 +461,9 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
                 ),
             )
 
-        requires = [MetaFile,  CNVkitSegment]
+        requires = [MetaFile, CNVkitSegment]
         input_data = _get_input_data
-        envs={
+        envs = {
             "cnvkit": cnvkit,
             "convert": convert,
             "male_reference": options.get("male_reference", False),
@@ -469,6 +472,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
 
     heatmap_cnr_opts = options.get("heatmap_cnr", {})
     if heatmap_cnr_opts:
+
         class CNVkitHeatmapCnr(CNVkitHeatmap):
             def _get_input_data(ch1, ch2):
                 metadf = _get_metadf(ch1)
@@ -482,9 +486,9 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
                     ),
                 )
 
-            requires = [MetaFile,  CNVkitFix]
+            requires = [MetaFile, CNVkitFix]
             input_data = _get_input_data
-            envs={
+            envs = {
                 "cnvkit": cnvkit,
                 "convert": convert,
                 "male_reference": options.get("male_reference", False),
@@ -492,6 +496,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
             }
 
     call_opts = options.get("call", {})
+
     class CNVkitCall(CNVkitCall):
         def _get_input_data(ch1, ch2, ch3):
             metadf = _get_metadf(ch1)
@@ -520,6 +525,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
                     else [None]
                 ),
             )
+
         requires = [MetaFile, CNVkitFix, CNVkitSegment]
         input_data = _get_input_data
         envs = {
@@ -538,6 +544,7 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
         }
 
     return MetaFile, CNVkitAccess
+
 
 def main() -> Pipen:
     """Build a pipeline for `pipen run` to run"""

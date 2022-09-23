@@ -2,7 +2,6 @@ from typing import Any, Sequence, Union
 
 
 class HeaderItem(dict):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.raw = None
@@ -138,7 +137,6 @@ class Fields(list):
 
 
 class Info(dict):
-
     @classmethod
     def from_str(cls, infostr: str):
         obj = cls()
@@ -154,16 +152,13 @@ class Info(dict):
 
     def __str__(self) -> str:
         return ";".join(
-            k
-            if v is True
-            else f"{k}={v}"
+            k if v is True else f"{k}={v}"
             for k, v in self.items()
             if v is not False
         )
 
 
 class Format(list):
-
     @classmethod
     def from_str(cls, formatstr: str):
         return cls(formatstr.split(":"))
@@ -173,7 +168,6 @@ class Format(list):
 
 
 class Alt(list):
-
     @classmethod
     def from_str(cls, altstr):
         return cls(altstr.split(","))
@@ -183,7 +177,6 @@ class Alt(list):
 
 
 class Filter(list):
-
     @classmethod
     def from_str(cls, filtstr: str):
         return cls(filtstr.split(";"))
@@ -197,7 +190,6 @@ class Sample(Format):
 
 
 class Samples(list):
-
     @classmethod
     def from_str(cls, sample_str: str):
         return cls(sample_str.split("\t"))
@@ -225,7 +217,7 @@ class Variant:
         filter: Filter,
         info: Info,
         format: Format,
-        samples: Samples
+        samples: Samples,
     ):
         self.chrom = chrom
         self.pos = pos
@@ -263,9 +255,7 @@ class Variant:
             Filter.from_str(filter)
             if isinstance(filter, str)
             else Filter(filter),
-            Info.from_str(info)
-            if isinstance(info, str)
-            else Info(info),
+            Info.from_str(info) if isinstance(info, str) else Info(info),
             Format.from_str(format)
             if isinstance(format, str)
             else Format(format),
@@ -276,7 +266,6 @@ class Variant:
             else Samples(samples),
         )
         return obj
-
 
     @classmethod
     def from_str(cls, variant_line: str):

@@ -19,7 +19,6 @@ class ConfigItems(Diot):
     """Provides the envs from configuration files and defaults the
     non-existing values to None."""
 
-
     def __getattr__(self, name: str) -> Any:
         try:
             return super().__getattr__(name)

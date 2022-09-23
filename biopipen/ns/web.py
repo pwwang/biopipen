@@ -3,6 +3,7 @@
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class Download(Proc):
     """Download data from URLs
 
@@ -30,6 +31,7 @@ class Download(Proc):
           check: |
             {{proc.envs.aria2c}} --version
     """
+
     input = "url"
     output = (
         "outfile:file:"
@@ -37,13 +39,14 @@ class Download(Proc):
     )
     lang = config.lang.python
     envs = {
-        "tool": "wget", # or aria2c, python
+        "tool": "wget",  # or aria2c, python
         "wget": config.exe.wget,
         "aria2c": config.exe.aria2c,
         "args": {},
         "ncores": config.misc.ncores,
     }
     script = "file://../scripts/web/Download.py"
+
 
 class DownloadList(Proc):
     """Download data from URLs in a file
@@ -72,11 +75,12 @@ class DownloadList(Proc):
           check: |
             {{proc.envs.aria2c}} --version
     """
+
     input = "urlfile:file"
     output = "outdir:dir:{{in.urlfile | stem}}.downloaded"
     lang = config.lang.python
     envs = {
-        "tool": "wget", # or aria2c
+        "tool": "wget",  # or aria2c
         "wget": config.exe.wget,
         "aria2c": config.exe.aria2c,
         "args": {},

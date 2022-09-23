@@ -4,16 +4,19 @@ from pathlib import Path
 import cmdy
 from ..core.config import config
 
+
 def gztype(gzfile):
     import binascii
-    with open(gzfile, 'rb') as f:
+
+    with open(gzfile, "rb") as f:
         flag = binascii.hexlify(f.read(4))
 
-    if flag == b'1f8b0804':
-        return 'bgzip'
-    if flag == b'1f8b0808':
-        return 'gzip'
-    return 'flat'
+    if flag == b"1f8b0804":
+        return "bgzip"
+    if flag == b"1f8b0808":
+        return "gzip"
+    return "flat"
+
 
 def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
     """Index input file using tabix

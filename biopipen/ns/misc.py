@@ -2,6 +2,7 @@
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class File2Proc(Proc):
     """Accept a file and pass it down with a symbolic link
 
@@ -11,6 +12,7 @@ class File2Proc(Proc):
     Output:
         outfile: The output symbolic link to the input file
     """
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     script = """
@@ -23,6 +25,7 @@ class File2Proc(Proc):
 class Glob2Dir(Proc):
     """Create symbolic links in output directory for the files given
     by the glob pattern"""
+
     input = "pattern:var"
     output = "outdir:dir:from_glob"
     script = """
@@ -51,10 +54,9 @@ class Config2File(Proc):
         infmt: The input format. `json` or `toml`.
         outfmt: The output format. `json` or `toml`.
     """
+
     input = "config:var, name:var"
-    output = (
-        "outfile:file:{{(in.name or 'config') | slugify}}.{{envs.outfmt}}"
-    )
+    output = "outfile:file:{{(in.name or 'config') | slugify}}.{{envs.outfmt}}"
     envs = {"infmt": "toml", "outfmt": "toml"}
     lang = config.lang.python
     script = "file://../scripts/misc/Config2File.py"
@@ -74,6 +76,7 @@ class Str2File(Proc):
     Envs:
         name: The name of the output file
     """
+
     input = "str, name"
     output = "outfile:file:{{in.name}}"
     lang = config.lang.python
@@ -96,6 +99,7 @@ class Shell(Proc):
         outdir: Whether the `out.outfile` should be a directory.
             If so a directory will be created before running the command.
     """
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     envs = {"cmd": "", "outdir": False}

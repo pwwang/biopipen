@@ -180,9 +180,7 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "stats": {
-            "nCells": {
-                "devpars": {"res": 100, "height": 1000, "width": 1000}
-            },
+            "nCells": {"devpars": {"res": 100, "height": 1000, "width": 1000}},
             "nCellsPerSample": {
                 "devpars": {"res": 100, "height": 1000, "width": 1000}
             },
@@ -274,14 +272,13 @@ class CellsDistribution(Proc):
           check: |
               {{proc.lang}} -e "library(tidyr)"
     """
+
     input = "srtobj:file, casefile:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
     envs = {"name": None, "cases": {}}
     script = "file://../scripts/scrna/CellsDistribution.R"
-    plugin_opts = {
-        "report": "file://../reports/scrna/CellsDistribution.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/scrna/CellsDistribution.svelte"}
 
 
 class SeuratMetadataMutater(Proc):
@@ -311,6 +308,7 @@ class SeuratMetadataMutater(Proc):
           check: |
             {{proc.lang}} <(echo "library(dplyr)")
     """
+
     input = "srtobj:file, metafile:file, mutaters:var"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -352,6 +350,7 @@ class GeneExpressionInvestigation(Proc):
                 - `res`, `height` and `width` the parameters for `png()`
                 - other arguments for `ComplexHeatmap::Heatmap()`
     """
+
     input = "srtobj:file, genefile:file, configfile:file"
     output = "outdir:dir:{{in.configfile | stem0}}.gei"
     lang = config.lang.rscript
@@ -393,11 +392,7 @@ class DimPlots(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}.dimplots"
     lang = config.lang.rscript
     script = "file://../scripts/scrna/DimPlots.R"
-    envs = {
-        "cases": {
-            "Ident": {"group.by": "ident"}
-        }
-    }
+    envs = {"cases": {"Ident": {"group.by": "ident"}}}
     plugin_opts = {
         "report": "file://../reports/scrna/DimPlots.svelte",
         "report_toc": False,
@@ -530,9 +525,7 @@ class ExprImpute(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "rmagic",
-        "rmagic_args": {
-            "python": config.exe.magic_python
-        },
+        "rmagic_args": {"python": config.exe.magic_python},
         "scimpute_args": {
             "drop_thre": 0.5,
             "kcluster": None,
@@ -605,10 +598,11 @@ class SeuratFilter(Proc):
           check: |
             {{proc.lang}} <(echo "library('dplyr')")
     """
+
     input = "srtobj:file, filters:var"
     output = "outfile:file:{{in.srtobj | stem}}.filtered.RDS"
     lang = config.lang.rscript
-    envs = { "invert": False }
+    envs = {"invert": False}
     script = "file://../scripts/scrna/SeuratFilter.R"
 
 
@@ -641,9 +635,10 @@ class SeuratSubset(Proc):
           check: |
             {{proc.lang}} <(echo "library('dplyr')")
     """
+
     input = "srtobj:file, subsets:var"
     output = "outdir:dir:{{in.srtobj | stem}}.subsets"
-    envs = { "ignore_nas": True }
+    envs = {"ignore_nas": True}
     lang = config.lang.rscript
     script = "file://../scripts/scrna/SeuratSubset.R"
 
@@ -668,6 +663,7 @@ class Subset10X(Proc):
         feats_to_keep: The features/genes to keep.
             The final features list will be `feats_to_keep` + `nfeats`
     """
+
     input = "indir:dir"
     output = "outdir:dir:{{in.indir | stem}}"
     envs = {

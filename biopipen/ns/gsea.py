@@ -3,6 +3,7 @@
 from ..core.proc import Proc
 from ..core.config import config
 
+
 class GSEA(Proc):
     """Gene set enrichment analysis
 
@@ -38,6 +39,7 @@ class GSEA(Proc):
           check: |
             {{proc.lang}} <(echo "library(GSEA)")
     """
+
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.gsea"
     lang = config.lang.rscript
@@ -48,9 +50,7 @@ class GSEA(Proc):
         "doc.string": "gsea_result",
     }
     script = "file://../scripts/gsea/GSEA.R"
-    plugin_opts = {
-        "report": "file://../reports/gsea/GSEA.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/gsea/GSEA.svelte"}
 
 
 class PreRank(Proc):
@@ -86,6 +86,7 @@ class PreRank(Proc):
             the first one is pos and second is neg. Or you can have multiple
             pairs of labels (e.g. `[["CASE1", "CNTRL"], ["CASE2", "CNTRL"]]`)
     """
+
     input = "infile:file, metafile:file, configfile:file"
     output = "outfile:file:{{in.infile | stem}}.rank"
     lang = config.lang.rscript
@@ -142,6 +143,7 @@ class FGSEA(Proc):
           check: |
             {{proc.lang}} -e "library(fgsea)"
     """
+
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.fgsea"
     lang = config.lang.rscript
@@ -158,9 +160,8 @@ class FGSEA(Proc):
         "eps": 0,
     }
     script = "file://../scripts/gsea/FGSEA.R"
-    plugin_opts = {
-        "report": "file://../reports/gsea/FGSEA.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/gsea/FGSEA.svelte"}
+
 
 class Enrichr(Proc):
     """Gene set enrichment analysis using Enrichr
@@ -182,6 +183,7 @@ class Enrichr(Proc):
             See https://maayanlab.cloud/Enrichr/#libraries for all available
             databases/libaries
     """
+
     input = "infile:file"
     output = "outdir:dir:{{in.infile | stem}}.enrichr"
     lang = config.lang.rscript
@@ -192,6 +194,4 @@ class Enrichr(Proc):
         "dbs": ["KEGG_2021_Human"],
     }
     script = "file://../scripts/gsea/Enrichr.R"
-    plugin_opts = {
-        "report": "file://../reports/gsea/Enrichr.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/gsea/Enrichr.svelte"}

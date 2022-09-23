@@ -23,6 +23,7 @@ class BcftoolsAnnotate(Proc):
         header: Headers to be added
         args: Other arguments for `bcftools annotate`
     """
+
     input = "infile:file, annfile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python
@@ -64,6 +65,7 @@ class BcftoolsFilter(Proc):
             - A dict is used when keys are filter names and values are
               expressions
     """
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python

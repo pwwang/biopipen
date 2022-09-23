@@ -225,6 +225,7 @@ class CNVkitFix(Proc):
           check: |
             {{proc.envs.cnvkit}} version
     """
+
     input = (
         "target_file:file, antitarget_file:file, reference:file, sample_id:var"
     )
@@ -372,6 +373,7 @@ class CNVkitScatter(Proc):
           check: |
             {{proc.envs.convert}} -version
     """
+
     input = (
         "cnrfile:file, cnsfile:file, config:var, "
         "vcf:file, sample_id:var, normal_id:var"
@@ -444,6 +446,7 @@ class CNVkitDiagram(Proc):
           check: |
             {{proc.envs.convert}} -version
     """
+
     input = "cnrfile:file, cnsfile:file, sample_sex:var"
     output = "outdir:dir:{{in.cnrfile | stem0}}.diagram"
     lang = config.lang.python
@@ -513,6 +516,7 @@ class CNVkitHeatmap(Proc):
           check: |
             {{proc.envs.convert}} -version
     """
+
     input = "segfiles:files, sample_sex: var"
     output = "outdir:dir:{{in.segfiles | first | stem0}}-etc.heatmap"
     lang = config.lang.python
@@ -585,6 +589,7 @@ class CNVkitCall(Proc):
           check: |
             {{proc.envs.cnvkit}} version
     """
+
     input = (
         "cnrfile:file, cnsfile:file, "
         "vcf:file, sample_id:var, normal_id:var, sample_sex:var"
@@ -687,6 +692,7 @@ class CNVkitBatch(Proc):
           check: |
             {{proc.envs.rscript}} <(echo "library(DNAcopy)")
     """
+
     input = "metafile:file"
     output = "outdir:dir:{{in.metafile | stem0}}.cnvkit"
     lang = config.lang.python
