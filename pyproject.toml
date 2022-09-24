@@ -13,7 +13,7 @@ pipen-report = "^0.4"
 cmdy = "^0.5"
 datar = "^0.9"
 pipen-verbose = {version = "^0.1", optional = true}
-pipen-args = {version = "^0.2", optional = true}
+pipen-args = {version = "^0.3", optional = true}
 
 [tool.poetry.extras]
 test = ["pipen-verbose", "pipen-args"]
