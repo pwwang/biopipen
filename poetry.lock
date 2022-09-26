@@ -301,7 +301,7 @@ pandas = ">=1.2,<2.0"
 
 [[package]]
 name = "pipda"
-version = "0.7.2"
+version = "0.7.3"
 description = "A framework for data piping in python"
 category = "main"
 optional = false
@@ -334,7 +334,7 @@ xqute = ">=0.1,<0.2"
 
 [[package]]
 name = "pipen-args"
-version = "0.2.3"
+version = "0.3.0"
 description = "Command-line argument parser for pipen."
 category = "main"
 optional = true
@@ -604,7 +604,7 @@ test = ["pipen-verbose", "pipen-args"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "f5501ca3d6bc1649867a50637c0e767307a5692975a19d3683a1c4e8945803b9"
+content-hash = "85f2d9f116996b9f0fbd7284df893608dd5a187fd50d21500b895d7789a63502"
 
 [metadata.files]
 aiofiles = [
@@ -825,16 +825,16 @@ pdtypes = [
     {file = "pdtypes-0.0.4.tar.gz", hash = "sha256:4f76fac05a785d558b809aa59d2ec13ee22e105267f2bde025007242fe8f4983"},
 ]
 pipda = [
-    {file = "pipda-0.7.2-py3-none-any.whl", hash = "sha256:46848308d9cc54a72631bb8502fca97dda7f751b538428b718f0300cf7fb3358"},
-    {file = "pipda-0.7.2.tar.gz", hash = "sha256:2a82508f32cd12ad0856a6e95c8362550085fef2d7e0c7d3a000e9e5f6b86ffa"},
+    {file = "pipda-0.7.3-py3-none-any.whl", hash = "sha256:c79e4fb28b599bb89ed6548625c6b1683336263b6142537a082f0451b8f32d7b"},
+    {file = "pipda-0.7.3.tar.gz", hash = "sha256:72d5fe18675035904643a6a46332de8d31e623fd6d22b7fc96c2b8a72063b3e0"},
 ]
 pipen = [
     {file = "pipen-0.3.6-py3-none-any.whl", hash = "sha256:af32d384b16b485d868ae6f7a9f97b64ad5a8f658ccbd9305269df4459f7741d"},
     {file = "pipen-0.3.6.tar.gz", hash = "sha256:ac8836b2b35faa97369a256833d3177aaae6048e37d05092b535b0034a8c57f3"},
 ]
 pipen-args = [
-    {file = "pipen-args-0.2.3.tar.gz", hash = "sha256:c91185f2b5b4a140f9f6a8612ce0165bbc34bd30b54f19c9e32fe2d0ba691433"},
-    {file = "pipen_args-0.2.3-py3-none-any.whl", hash = "sha256:56c69129484574d1eb3484ade677a6aeeb656a0afa00df375e15aa33bda3778c"},
+    {file = "pipen-args-0.3.0.tar.gz", hash = "sha256:b12082671e5b1dfffc26ea913d13433973cf85bc209a60b4b5df42a1da6d5028"},
+    {file = "pipen_args-0.3.0-py3-none-any.whl", hash = "sha256:2f700530387da16cf22e16cbf4e2b9d966eec9df34bc8cab5c479b694743c01a"},
 ]
 pipen-filters = [
     {file = "pipen-filters-0.1.2.tar.gz", hash = "sha256:893686edfaac4a9487b25c8a5455a82f34d1bcb4617fbe362305cc31e8bf49ce"},

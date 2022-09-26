@@ -51,6 +51,8 @@ do_case = function(case) {
         meta = meta[!is.na(meta[[grouppms$by]]),, drop = FALSE]
     }
 
+    meta = meta |> filter(!is.na(!!sym(clonepms$by)))
+
     # Sizes
     meta = meta %>%
         add_count(!!sym(clonepms$by), name = ".CloneSize") %>%

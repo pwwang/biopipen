@@ -1,3 +1,8 @@
+## 0.5.2
+
+- ⬆️ Pump pipen-args to 0.3
+- 🩹 [scrna.CellsDistribution] Filter NA `cells.by`
+
 ## 0.5.1
 
 - 💚 Fix CI
