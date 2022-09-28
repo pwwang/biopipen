@@ -1,3 +1,9 @@
+## 0.5.3
+
+- ✨ [scrna.SeuratClusterStats] Allow features to be a file for expression plots
+- ✨ [tcr.CloneSizeQQPlot] Add process
+- 🩹 [tcr.Immunarch] Fix bad characters in the “Motif Analysis” section in report (#43)
+
 ## 0.5.2
 
 - ⬆️ Pump pipen-args to 0.3
