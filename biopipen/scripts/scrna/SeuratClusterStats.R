@@ -138,6 +138,34 @@ do_stats = function() {
     return(outfile)
 }
 
+.get_features = function(features, genes, default = NULL) {
+    if (is.null(default)) {
+        default = VariableFeatures(srtobj)[1:20]
+    }
+    # When nothing passed, use the genes
+    if (is.null(features)) {
+        if (is.null(genes)) {
+            return (default)
+        } else {
+            return (genes)
+        }
+    }
+    # When multiple items passed, use them as features
+    if (length(features) > 1) {
+        return (features)
+    }
+    # See if it is "default"
+    if (features == "default") {
+        return (default)
+    }
+    # See if it is a file
+    if (!file.exists(features)) {
+        return (features)
+    }
+    # length(features) == 1 && file.exists(features[1])
+    feats = read.table(features, header = FALSE, row.names = NULL, check.names = FALSE)
+    feats$V1
+}
 
 do_exprs_ridgeplots = function(odir, pms, genes) {
     outfile = .get_outfile(odir, "ridgeplots")
@@ -160,11 +188,7 @@ do_exprs_ridgeplots = function(odir, pms, genes) {
     if (is.null(plus)) {
         plus = c()
     }
-    if (is.null(pms$features) && is.null(genes)) {
-        pms$features = VariableFeatures(srtobj)[1:20]
-    } else if (is.null(pms$features) && !is.null(genes)) {
-        pms$features = genes
-    }
+    pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
@@ -214,11 +238,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
-    if (is.null(pms$features) && is.null(genes)) {
-        pms$features = VariableFeatures(srtobj)[1:20]
-    } else if (is.null(pms$features) && !is.null(genes)) {
-        pms$features = genes
-    }
+    pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
@@ -259,11 +279,7 @@ do_exprs_featureplots = function(odir, pms, genes) {
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
-    if (is.null(pms$features) && is.null(genes)) {
-        pms$features = VariableFeatures(srtobj)[1:20]
-    } else if (is.null(pms$features) && !is.null(genes)) {
-        pms$features = genes
-    }
+    pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
@@ -280,9 +296,21 @@ do_exprs_featureplots = function(odir, pms, genes) {
     }
     p = do_call(FeaturePlot, pms)
     devpars$filename = outfile
-    do_call(png, devpars)
-    print(p)
-    dev.off()
+
+    tryCatch({
+        do_call(png, devpars)
+        print(p)
+        dev.off()
+    }, error = function(e) {
+        stop(
+            paste(
+                paste(names(devpars), collapse=" "),
+                paste(devpars, collapse=" "),
+                e,
+                sep = "\n"
+            )
+        )
+    })
 }
 
 do_exprs_dotplot = function(odir, pms, genes) {
@@ -303,11 +331,7 @@ do_exprs_dotplot = function(odir, pms, genes) {
     if (is.null(plus)) {
         plus = c()
     }
-    if (is.null(pms$features) && is.null(genes)) {
-        pms$features = VariableFeatures(srtobj)[1:20]
-    } else if (is.null(pms$features) && !is.null(genes)) {
-        pms$features = genes
-    }
+    pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
             height = length(unique(srtobj@meta.data$seurat_clusters)) * 80 + 150,
@@ -325,9 +349,20 @@ do_exprs_dotplot = function(odir, pms, genes) {
         p = p + eval(parse(text = pls))
     }
     devpars$filename = outfile
-    do_call(png, devpars)
-    print(p)
-    dev.off()
+    tryCatch({
+        do_call(png, devpars)
+        print(p)
+        dev.off()
+    }, error = function(e) {
+        stop(
+            paste(
+                paste(names(devpars), collapse=" "),
+                paste(devpars, collapse=" "),
+                e,
+                sep = "\n"
+            )
+        )
+    })
 }
 
 
@@ -349,11 +384,7 @@ do_exprs_heatmap = function(odir, pms, genes) {
     if (is.null(plus)) {
         plus = c()
     }
-    if (is.null(pms$features) && is.null(genes)) {
-        pms$features = VariableFeatures(srtobj)[1:20]
-    } else if (is.null(pms$features) && !is.null(genes)) {
-        pms$features = genes
-    }
+    pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
             width = length(unique(srtobj@meta.data$seurat_clusters)) * 80 + 150,
@@ -402,6 +433,7 @@ do_exprs = function() {
 
     exprplots = names(envs$exprs)
     for (name in exprplots) {
+        cat(paste0("Expr plot: ", name, " ...\n"), file = stderr())
         if (startsWith(name, "ridgeplots")) {
             do_exprs_ridgeplots(odir, envs$exprs[[name]], genes)
         } else if (startsWith(name, "vlnplots")) {

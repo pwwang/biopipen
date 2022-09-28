@@ -165,6 +165,10 @@ class SeuratClusterStats(Proc):
             and `plus` to add elements to the `ggplot` object.
             You can have `subset` to subset the data. Multiple cases can be
             distinguished by `ridgeplots` and `ridgeplots.1`
+            If no `features` specified, will use `genes`. If you want to use
+            the default gene list `VariantFeatures(srtobj)[1:20]`, specify
+            `features = "default"`. Or you can also specify the genes directly
+            to `features`.
         dimplots: The dimensional reduction plots
             `<case>` - The case to plot. Keys are the arguments for
             `Seurat::Dimplot()`, add `devpars`.

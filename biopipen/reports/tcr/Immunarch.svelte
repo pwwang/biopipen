@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
     import { Image } from "@@";
-    import { Tabs, Tab, TabContent, Tile, UnorderedList, ListItem } from "carbon-components-svelte";
+    import { Tabs, Tab, TabContent, Tile, UnorderedList, p } from "carbon-components-svelte";
 </script>
 
 {%- macro report_job(job, h=1) -%}
@@ -73,32 +73,29 @@
     immunarch provides several indices: - number of public clonotypes (.method = "public")
     - a classic measure of overlap similarity.
 </p>
-
-<UnorderedList style="padding-left: 1rem">
-    <ListItem>
-        overlap coefficient (.method = "overlap") - a normalised measure of overlap
-        similarity. It is defined as the size of the intersection divided by the smaller of the size of the two sets.
-    </ListItem>
-    <ListItem>
-        Jaccard index (.method = "jaccard") - it measures similarity between finite
-        sample sets, and is defined as the size of the intersection divided by the size of the union of the sample sets.
-    </ListItem>
-    <ListItem>
-        Tversky index (.method = "tversky") - an asymmetric similarity measure on sets
-        that compares a variant to a prototype. If using default arguments, it’s similar to Dice’s coefficient.
-    </ListItem>
-    <ListItem>
-        cosine similarity (.method = "cosine") - a measure of similarity between two non-zero vectors
-    </ListItem>
-    <ListItem>
-        Morisita’s overlap index (.method = "morisita") - a statistical measure of dispersion of individuals in a population.
-        It is used to compare overlap among samples.
-    </ListItem>
-    <ListItem>
-        incremental overlap - overlaps of the N most abundant clonotypes with incrementally growing N
-        (.method = "inc+METHOD", e.g., "inc+public" or "inc+morisita").
-    </ListItem>
-</UnorderedList>
+<p>
+    - overlap coefficient (.method = "overlap") - a normalised measure of overlap
+    similarity. It is defined as the size of the intersection divided by the smaller of the size of the two sets.
+</p>
+<p>
+    - Jaccard index (.method = "jaccard") - it measures similarity between finite
+    sample sets, and is defined as the size of the intersection divided by the size of the union of the sample sets.
+</p>
+<p>
+    - Tversky index (.method = "tversky") - an asymmetric similarity measure on sets
+    that compares a variant to a prototype. If using default arguments, it’s similar to Dice’s coefficient.
+</p>
+<p>
+    - cosine similarity (.method = "cosine") - a measure of similarity between two non-zero vectors
+</p>
+<p>
+    - Morisita’s overlap index (.method = "morisita") - a statistical measure of dispersion of individuals in a population.
+    It is used to compare overlap among samples.
+</p>
+<p>
+    - incremental overlap - overlaps of the N most abundant clonotypes with incrementally growing N
+    (.method = "inc+METHOD", e.g., "inc+public" or "inc+morisita").
+</p>
 </Tile>
 {% endif %}
 
@@ -228,21 +225,18 @@
 <p>
     The method determines which matrix to compute:
 </p>
-
-<UnorderedList style="padding-left: 1rem">
-    <ListItem>
-        `freq` - position frequency matrix (PFM);
-    </ListItem>
-    <ListItem>
-        `prob` - position probability matrix (PPM);
-    </ListItem>
-    <ListItem>
-        `wei` - position weight matrix (PWM)
-    </ListItem>
-    <ListItem>
-        `self` - self-information matrix.
-    </ListItem>
-</UnorderedList>
+<p>
+    - `freq` - position frequency matrix (PFM);
+</p>
+<p>
+    - `prob` - position probability matrix (PPM);
+</p>
+<p>
+    - `wei` - position weight matrix (PWM)
+</p>
+<p>
+    - `self` - self-information matrix.
+</p>
 </Tile>
 {% endif %}
 

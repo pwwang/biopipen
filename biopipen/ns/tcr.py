@@ -470,3 +470,47 @@ class TCRClusteringStats(Proc):
     plugin_opts = {
         "report": "file://../reports/tcr/TCRClusteringStats.svelte",
     }
+
+
+class CloneSizeQQPlot(Proc):
+    """QQ plot of the clone sizes
+
+    QQ plots for clones sizes of pairs of samples
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        subject: The key of subject in metadata, defining the pairs.
+            The clone residency will be examined for this subject/patient
+        group: The key of group in metadata. This usually marks the samples
+            that you want to compare. For example, Tumor vs Normal,
+            post-treatment vs baseline
+            It doesn't have to be 2 groups always. If there are more than 3
+            groups, for example, [A, B, C], the QQ plots will be generated
+            for all the combinations of 2 groups, i.e., [A, B], [A, C], [B, C]
+        order: The order of the values in `group`. Early-ordered group will
+            be used as x-axis in scatter plots
+            If there are more than 2 groups, for example, [A, B, C], the
+            QQ plots will be drawn for pairs: B ~ A, C ~ B.
+        diag: Whether to draw the diagonal line in the QQ plot
+        on: The key of the metadata to use for the QQ plot. One/Both of
+            `["Clones", "Proportion"]`
+    """
+
+    input = "immdata:file"
+    output = "outdir:dir:{{in.immdata | stem}}.qqplots"
+    lang = config.lang.rscript
+    envs = {
+        "subject": [],
+        "group": None,
+        "order": [],
+        "diag": True,
+        "on": ["Clones", "Proportion"],
+    }
+    script = "file://../scripts/tcr/CloneSizeQQPlot.R"
+    order = 3
+    plugin_opts = {"report": "file://../reports/tcr/CloneSizeQQPlot.svelte"}
