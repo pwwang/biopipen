@@ -115,11 +115,14 @@ prefixed = ">=0.3.2"
 
 [[package]]
 name = "executing"
-version = "1.0.0"
+version = "1.1.0"
 description = "Get the currently executing AST node of a frame, and other information"
 category = "main"
 optional = false
 python-versions = "*"
+
+[package.extras]
+tests = ["asttokens", "littleutils", "pytest", "rich"]
 
 [[package]]
 name = "importlib-metadata"
@@ -334,7 +337,7 @@ xqute = ">=0.1,<0.2"
 
 [[package]]
 name = "pipen-args"
-version = "0.3.0"
+version = "0.3.2"
 description = "Command-line argument parser for pipen."
 category = "main"
 optional = true
@@ -647,8 +650,8 @@ enlighten = [
     {file = "enlighten-1.10.2.tar.gz", hash = "sha256:7a5b83cd0f4d095e59d80c648ebb5f7ffca0cd8bcf7ae6639828ee1ad000632a"},
 ]
 executing = [
-    {file = "executing-1.0.0-py2.py3-none-any.whl", hash = "sha256:550d581b497228b572235e633599133eeee67073c65914ca346100ad56775349"},
-    {file = "executing-1.0.0.tar.gz", hash = "sha256:98daefa9d1916a4f0d944880d5aeaf079e05585689bebd9ff9b32e31dd5e1017"},
+    {file = "executing-1.1.0-py2.py3-none-any.whl", hash = "sha256:4a6d96ba89eb3dcc11483471061b42b9006d8c9f81c584dd04246944cd022530"},
+    {file = "executing-1.1.0.tar.gz", hash = "sha256:2c2c07d1ec4b2d8f9676b25170f1d8445c0ee2eb78901afb075a4b8d83608c6a"},
 ]
 importlib-metadata = [
     {file = "importlib_metadata-4.12.0-py3-none-any.whl", hash = "sha256:7401a975809ea1fdc658c3aa4f78cc2195a0e019c5cbc4c06122884e9ae80c23"},
@@ -833,8 +836,8 @@ pipen = [
     {file = "pipen-0.3.6.tar.gz", hash = "sha256:ac8836b2b35faa97369a256833d3177aaae6048e37d05092b535b0034a8c57f3"},
 ]
 pipen-args = [
-    {file = "pipen-args-0.3.0.tar.gz", hash = "sha256:b12082671e5b1dfffc26ea913d13433973cf85bc209a60b4b5df42a1da6d5028"},
-    {file = "pipen_args-0.3.0-py3-none-any.whl", hash = "sha256:2f700530387da16cf22e16cbf4e2b9d966eec9df34bc8cab5c479b694743c01a"},
+    {file = "pipen-args-0.3.2.tar.gz", hash = "sha256:f2b55ef86d6955a037519b560abfecbb18b61f4245feb9e5b615194e013302d3"},
+    {file = "pipen_args-0.3.2-py3-none-any.whl", hash = "sha256:77639b84de8b8f3edecf2b71b9193bda0b9d9f7aca7baad9333e13b668b1de89"},
 ]
 pipen-filters = [
     {file = "pipen-filters-0.1.2.tar.gz", hash = "sha256:893686edfaac4a9487b25c8a5455a82f34d1bcb4617fbe362305cc31e8bf49ce"},

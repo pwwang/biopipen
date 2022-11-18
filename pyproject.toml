@@ -24,6 +24,7 @@ test = ["pipen-verbose", "pipen-args"]
 bam = "biopipen.ns.bam"
 bcftools = "biopipen.ns.bcftools"
 bed = "biopipen.ns.bed"
+cnv = "biopipen.ns.cnv"
 cnvkit = "biopipen.ns.cnvkit"
 cnvkit_pipeline = "biopipen.ns.cnvkit_pipeline"
 csv = "biopipen.ns.csv"
