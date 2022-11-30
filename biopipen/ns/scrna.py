@@ -680,6 +680,28 @@ class Subset10X(Proc):
     script = "file://../scripts/scrna/Subset10X.R"
 
 
+class Write10X(Proc):
+    """Write a Seurat object to 10X format
+
+    using `write10xCounts` from `DropletUtils`
+
+    Input:
+        srtobj: The seurat object in RDS
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        version: The version of 10X format
+    """
+
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}"
+    envs = {"version": "3"}
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/Write10X.R"
+
+
 class ScFGSEA(Proc):
     """Fast gene set enrichment analysis (fgsea) for cells in different groups
 
