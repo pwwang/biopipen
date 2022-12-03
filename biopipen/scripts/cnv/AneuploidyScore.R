@@ -15,6 +15,7 @@ cn_col = {{envs.cn_col | r}}
 genome = {{envs.genome | r}}
 threshold = {{envs.threshold | r}}
 wgd_gf = {{envs.wgd_gf | r}}
+include_sex = {{envs.include_sex | r}}
 
 if (genome == "hg19") {
     data(ucsc.hg19.cytoband)
@@ -25,6 +26,105 @@ if (genome == "hg19") {
 } else {
     stop(paste("Genome ", genome, " not supported"))
 }
+
+### Rewrite getCAA, as it raises error when some regions cannot be assigned
+### to an arm
+getCAA <- function(segf, cytoarm, tcn_col,
+                   filter_centromere=FALSE, classifyCN=FALSE,
+                   ploidy=0, threshold=0.2, ...){
+  library(GenomicRanges)
+  library(GenomeInfoDb)
+
+  # tcn_col = 'Modal_Total_CN'
+  stopifnot(AneuploidyScore:::.validateSeg(segf))
+
+  ## Set up GenomicRange Objects of cytoband and seg files
+  cyto_gr <- lapply(cytoarm, GenomicRanges::makeGRangesFromDataFrame,
+                    keep.extra.columns=TRUE)
+  seg_gr <- GenomicRanges::makeGRangesFromDataFrame(segf, keep.extra.columns = TRUE)
+  seqlevelsStyle(seg_gr) <- 'UCSC'
+  seg_chr <- split(seg_gr, f=seqnames(seg_gr))
+
+  ## Goes through chr by chr,
+  seg_cyto_chr <- lapply(names(seg_chr), function(chr_id){
+    segc <- seg_chr[[chr_id]]
+    cytoc <- sort(cyto_gr[[chr_id]])
+
+    if(filter_centromere){
+      ## Remove any segment that sligthly overlaps the centromere
+      cen_ov <- findOverlaps(cytoc['cen',], segc)
+      if(length(cen_ov) > 0) segc <- segc[-subjectHits(cen_ov),]
+    }
+
+    ## Create a GRanges object with all unique intervals between segc and cytoc
+    starts <- sort(c(GenomicRanges::start(segc), GenomicRanges::start(cytoc)))
+    ends <- sort(c(GenomicRanges::end(segc), GenomicRanges::end(cytoc)))
+    combc <- GRanges(seqnames=chr_id,
+                     IRanges(start=unique(sort(c(starts, ends[-length(ends)]+1))),
+                             end=unique(sort(c(ends, starts[-1]-1)))))
+
+    # Map chr-arm to intervals
+    cyto_comb_ov <- findOverlaps(cytoc, combc)
+    ########### patched this line:
+    combc <- combc[subjectHits(cyto_comb_ov),]
+    mcols(combc)$arm <- names(cytoc[queryHits(cyto_comb_ov),])
+
+    # Map seg values to intervals
+    segc_comb_ov <- findOverlaps(segc, combc)
+    mcols(combc)$CN <- NA
+    mcols(combc[subjectHits(segc_comb_ov),])$CN <- mcols(segc[queryHits(segc_comb_ov),])[,tcn_col]
+
+    ## Get chromosomal arm or whole-chromosome fractions for each CN interval
+    .assembleFrac <- function(combc, assemble_method='arm', ...){
+      if(assemble_method == 'arm'){
+        X_fract <- lapply(split(combc, f=combc$arm), AneuploidyScore:::.getChrarmFractions, ...)
+        ord <- order(factor(names(X_fract), levels=c("p", "cen", "q")))
+        X_fract <- as.data.frame(do.call(rbind, X_fract[ord]))
+        colnames(X_fract)[1:2] <- c("CAA_frac_NA", "CAA_frac_nonNA")
+      } else {
+        X_fract <- AneuploidyScore:::.getChrarmFractions(combc, ...)
+        colnames(X_fract)[1:2] <- c("Chr_frac_NA", "Chr_frac_nonNA")
+      }
+      mcols(combc) <- cbind(mcols(combc), X_fract)
+      return(combc)
+    }
+
+    combc <- .assembleFrac(combc, assemble_method='chr') # Chromosome fractions
+    combc <- .assembleFrac(combc, assemble_method='arm', classifyCN=classifyCN,
+                           ploidy=ploidy, threshold=threshold) # Chromosome arm fractions
+
+    ## Handle intervals that have no CN value (NA; i.e. telomeric ends)
+    if(any(is.na(combc$CN))) {
+      combc$UID <- paste(combc$arm, round(combc$CN,2), sep="_")  ## Sets a unique arm_CN value
+      combc_na <- combc[which(is.na(combc$CN)),]
+      combc <- combc[-which(is.na(combc$CN)),] ## Removes intervals with no CN values (NA)
+    }
+
+    ## Reduce intervals where there is no CN change
+    # e.g. c(4,4,4,2,4,4) => list(c(4,4,4), c(2), c(4,4))
+    uid_int <- as.integer(factor(combc$UID))
+    combc_arms <- split(combc, cumsum(c(TRUE, diff(uid_int) != 0)))
+    combc_arms <- as(lapply(combc_arms, function(ca){
+      ca_red <- reduce(ca)
+      mcols(ca_red) <- mcols(ca)[1,]
+      return(ca_red)
+    }), "GRangesList")
+
+    combc_arms <- unlist(combc_arms)
+    mcols(combc_arms) <- mcols(combc_arms)[,-grep("^UID$", colnames(mcols(combc_arms)))]
+    if(classifyCN){
+      combc_arms$segCNclass <- AneuploidyScore:::.classifyCN(cn = combc_arms$CN, ploidy = ploidy,
+                                           threshold=threshold)
+    }
+
+
+    return(combc_arms)
+  })
+  names(seg_cyto_chr) <- names(seg_chr)
+
+  return(as(seg_cyto_chr, "GRangesList"))
+}
+
 
 {% if envs.segmean_transform %}
 segmean_transform = {{envs.segmean_transform}}
@@ -46,7 +146,7 @@ seg = data.frame(
     seg.mean = segments[, seg_col]
 )
 
-if (!is.null(cn_transform) && !is.null(cn_col)) {
+if (!is.null(cn_transform) && is.null(cn_col)) {
     seg$TCN = cn_transform(seg$seg.mean)
 }
 
@@ -76,24 +176,18 @@ seg_caa = getCAA(
 )
 
 caa = reduceArms(seg_caa, caa_method = c("arm", "seg"), arm_ids=c("p", "q"))
-AS = colSums(abs(caa), na.rm = TRUE)
+if (!include_sex) {
+  AS = colSums(abs(caa[!rownames(caa) %in% c("chrX_p", "chrX_q", "chrY_p", "chrY_q"), ]), na.rm = TRUE)
+} else {
+  AS = colSums(abs(caa), na.rm = TRUE)
+}
 caa = caa %>% as.data.frame() %>% tibble::rownames_to_column("Arms")
 
 write.table(caa, file.path(outdir, "CAA.txt"), sep="\t", quote=F, row.names=F, col.names=T)
 write.table(as.data.frame(AS), file.path(outdir, "AS.txt"), sep="\t", quote=F, row.names=T, col.names=F)
 
 # plots
-all_arms = c(
-    paste0("chr", c(1:22, "X", "Y"), "_p"),
-    paste0("chr", c(1:22, "X", "Y"), "_q")
-)
-plotdata = caa
-missing_arms = setdiff(all_arms, plotdata$Arms)
-for (arm in missing_arms) {
-    plotdata = bind_rows(plotdata, list(Arms=arm, arm=NA, seg=NA))
-}
-
-plotdata = plotdata |>
+plotdata = caa |>
     extract(Arms, c("arm_id", "arm_name"), "chr(\\d+)_(p|q)", remove=FALSE) |>
     mutate(arm_id = as.numeric(arm_id)) |>
     arrange(arm_id, arm_name) |>

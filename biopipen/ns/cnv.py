@@ -45,6 +45,7 @@ class AneuploidyScore(Proc):
         "genome": config.ref.genome,
         "threshold": 0.5,
         "wgd_gf": 0.5,
+        "include_sex": False,
     }
     script = "file://../scripts/cnv/AneuploidyScore.R"
     plugin_opts = {
