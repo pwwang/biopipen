@@ -501,6 +501,7 @@ class CNVkitHeatmap(Proc):
             male samples would have -1 chrX).
         no_shift_xy: Don't adjust the X and Y chromosomes according to
             sample sex.
+        order: A file with sample names in the desired order.
         cases: The cases for different plots with keys as case names and values
             to overwrite the default args given by `envs.<args>`, including -
             `convert_args`, `by_bin`, `chromosome`, `desaturate`,
@@ -534,6 +535,7 @@ class CNVkitHeatmap(Proc):
         "desaturate": False,
         "male_reference": False,
         "no_shift_xy": False,
+        "order": None,
         "cases": {},
     }
     script = "file://../scripts/cnvkit/CNVkitHeatmap.py"

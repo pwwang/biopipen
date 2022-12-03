@@ -489,7 +489,7 @@ class CNVkitPipeline(Pipeline):
                     metadf[self.options.type_col] == self.options.type_tumor
                 )
                 return tibble(
-                    segfiles=[ch2.outfile[tumor_masks].tolist()],
+                    segfiles=[ch2.outfile.tolist()],
                     sample_sex=(
                         ",".join(metadf.SampleSex[tumor_masks])
                         if "SampleSex" in metadf.columns
@@ -519,7 +519,7 @@ class CNVkitPipeline(Pipeline):
                         == self.options.type_tumor
                     )
                     return tibble(
-                        segfiles=[ch2.outfile[tumor_masks].tolist()],
+                        segfiles=[ch2.outfile.tolist()],
                         sample_sex=(
                             ",".join(metadf.SampleSex[tumor_masks])
                             if "SampleSex" in metadf.columns
