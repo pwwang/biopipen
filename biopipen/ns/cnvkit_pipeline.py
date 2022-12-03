@@ -158,325 +158,336 @@ To use this as a dependency for other pipelines:
 from typing import Mapping, Any
 
 import pandas
-from diot import Diot
-from pipen import Proc, Pipen
+from pipen import Pipen
 from datar.tibble import tibble
 
-DEFAULT = {}
+from ..core.proc import Pipeline
+from ..core.config import config
 
 
-def build_processes(options: Mapping[str, Any] = None) -> Proc:
-    """Build processes for CNVkit pipeline"""
-    from ..core.config import config
-    from .cnvkit import (
-        CNVkitAccess,
-        CNVkitAutobin,
-        CNVkitCoverage,
-        CNVkitReference,
-        CNVkitFix,
-        CNVkitSegment,
-        CNVkitScatter,
-        CNVkitDiagram,
-        CNVkitHeatmap,
-        CNVkitCall,
-    )
-    from .misc import File2Proc
+# channel modifier helpers
+def _get_metadf(ch):
+    return pandas.read_csv(ch.outfile.tolist()[0], sep="\t", header=0)
 
-    options = (
-        Diot(DEFAULT)
-        | (config.get("pipeline", {}).get("cnvkit_pipeline", {}))
-        | (options or {})
-    )
 
-    cnvkit = options.get("cnvkit", config.exe.cnvkit)
-    convert = options.get("cnvkit", config.exe.convert)
-    ref = options.get("reffa", config.ref.reffa)
-    rscript = options.get("rscript", config.lang.rscript)
-    ncores = options.get("ncores", config.misc.ncores)
+def _get_all_bams(ch):
+    return _get_metadf(ch)["BamFile"].tolist()
 
-    # channel modifier helpers
-    def _get_metadf(ch):
-        return pandas.read_csv(ch.outfile.tolist()[0], sep="\t", header=0)
 
-    def _get_all_bams(ch):
-        return _get_metadf(ch)["BamFile"].tolist()
+class CNVkitPipeline(Pipeline):
 
-    class MetaFile(File2Proc):
-        """Pass by the metafile"""
+    def build(self):
+        from .cnvkit import (
+            CNVkitAccess,
+            CNVkitAutobin,
+            CNVkitCoverage,
+            CNVkitReference,
+            CNVkitFix,
+            CNVkitSegment,
+            CNVkitScatter,
+            CNVkitDiagram,
+            CNVkitHeatmap,
+            CNVkitCall,
+        )
+        from .misc import File2Proc
 
-        if "metafile" in options:
-            input_data = [options.metafile]
+        cnvkit = self.options.get("cnvkit", config.exe.cnvkit)
+        convert = self.options.get("cnvkit", config.exe.convert)
+        ref = self.options.get("reffa", config.ref.reffa)
+        rscript = self.options.get("rscript", config.lang.rscript)
+        ncores = self.options.get("ncores", config.misc.ncores)
 
-    access_opts = options.get("access", {})
-    if "file" not in access_opts:
+        access_opts = self.options.get("access", {})
+        autobin_opts = self.options.get("autobin", {})
+        coverage_opts = self.options.get("coverage", {})
+        reference_opts = self.options.get("reference", {})
+        fix_opts = self.options.get("fix", {})
+        segment_opts = self.options.get("segment", {})
+        scatter_opts = self.options.get("scatter", {})
+        diagram_opts = self.options.get("diagram", {})
+        heatmap_cns_opts = self.options.get("heatmap_cns", {})
+        heatmap_cnr_opts = self.options.get("heatmap_cnr", {})
+        call_opts = self.options.get("call", {})
 
-        class CNVkitAccess(CNVkitAccess):
-            input_data = [access_opts.get("exclude", [])]
+        class MetaFile(File2Proc):
+            """Pass by the metafile"""
+            if "metafile" in self.options:
+                input_data = [self.options.metafile]
+
+        self.starts.append(MetaFile)
+        self.procs.MetaFile = MetaFile
+
+        if "file" not in access_opts:
+
+            class CNVkitAccess(CNVkitAccess):
+                input_data = [access_opts.get("exclude", [])]
+                envs = {
+                    "cnvkit": cnvkit,
+                    "min_gap_size": access_opts.get("min_gap_size", 5000),
+                    "ref": ref,
+                }
+
+        else:
+
+            class CNVkitAccess(File2Proc):
+                input_data = [access_opts.file]
+
+        self.starts.append(CNVkitAccess)
+        self.procs.CNVkitAccess = CNVkitAccess
+
+        class CNVkitAutobin(CNVkitAutobin):
+            requires = [MetaFile, CNVkitAccess]
+            input_data = lambda ch1, ch2: [
+                (
+                    _get_all_bams(ch1),
+                    ch2.iloc[0, 0],
+                    self.options.get("baitfile"),
+                ),
+            ]
             envs = {
                 "cnvkit": cnvkit,
-                "min_gap_size": access_opts.get("min_gap_size", 5000),
+                "method": self.options.get("method", "hybrid"),
+                "bp_per_bin": autobin_opts.get("bp_per_bin", 100000),
+                "target_max_size": autobin_opts.get("target_max_size", 20000),
+                "target_min_size": autobin_opts.get("target_min_size", 20),
+                "antitarget_max_size": autobin_opts.get(
+                    "antitarget_max_size",
+                    500000,
+                ),
+                "antitarget_min_size": autobin_opts.get(
+                    "antitarget_min_size",
+                    1000,
+                ),
+                "annotate": self.options.get(
+                    "annotate", config.ref.refflat
+                ),
+                "short_names": self.options.get("short_names", False),
                 "ref": ref,
             }
 
-    else:
+        self.procs.CNVkitAutobin = CNVkitAutobin
 
-        class CNVkitAccess(File2Proc):
-            input_data = [access_opts.file]
-
-    autobin_opts = options.get("autobin", {})
-
-    class CNVkitAutobin(CNVkitAutobin):
-        requires = [MetaFile, CNVkitAccess]
-        input_data = lambda ch1, ch2: [
-            (_get_all_bams(ch1), ch2.iloc[0, 0], options.get("baitfile")),
-        ]
-        envs = {
-            "cnvkit": cnvkit,
-            "method": options.get("method", "hybrid"),
-            "bp_per_bin": autobin_opts.get("bp_per_bin", 100000),
-            "target_max_size": autobin_opts.get("target_max_size", 20000),
-            "target_min_size": autobin_opts.get("target_min_size", 20),
-            "antitarget_max_size": autobin_opts.get(
-                "antitarget_max_size",
-                500000,
-            ),
-            "antitarget_min_size": autobin_opts.get(
-                "antitarget_min_size",
-                1000,
-            ),
-            "annotate": options.get("annotate", config.ref.refflat),
-            "short_names": options.get("short_names", False),
-            "ref": ref,
-        }
-
-    coverage_opts = options.get("coverage", {})
-
-    class CNVkitCoverageTarget(CNVkitCoverage):
-        requires = [MetaFile, CNVkitAutobin]
-        input_data = lambda ch1, ch2: tibble(
-            _get_all_bams(ch1),
-            target_file=ch2.target_file.tolist()[0],
-        )
-        envs = {
-            "cnvkit": cnvkit,
-            "count": coverage_opts.get("count", False),
-            "min_mapq": coverage_opts.get("min_mapq", 0),
-            "ncores": ncores,
-        }
-
-    class CNVkitCoverageAntitarget(CNVkitCoverage):
-        requires = [MetaFile, CNVkitAutobin]
-        input_data = lambda ch1, ch2: tibble(
-            _get_all_bams(ch1),
-            target_file=ch2.antitarget_file.tolist()[0],
-        )
-        envs = {
-            "cnvkit": cnvkit,
-            "count": coverage_opts.get("count", False),
-            "min_mapq": coverage_opts.get("min_mapq", 0),
-            "ncores": ncores,
-        }
-
-    reference_opts = options.get("reference", {})
-
-    class CNVkitReference(CNVkitReference):
-        def _get_input_data(ch1, ch2, ch3, ch4):
-            metadf = _get_metadf(ch1)
-            normal_masks = metadf[options.type_col] == options.type_normal
-            return tibble(
-                covfiles=(
-                    [None]
-                    if sum(normal_masks) == 0
-                    else [
-                        ch2.outfile[normal_masks].tolist()
-                        + ch3.outfile[normal_masks].tolist()
-                    ]
-                ),
-                target_file=ch4.target_file,
-                antitarget_file=ch4.antitarget_file,
-                sample_sex=(
-                    ",".join(metadf.SampleSex[normal_masks])
-                    if "SampleSex" in metadf.columns
-                    else [None]
-                ),
+        class CNVkitCoverageTarget(CNVkitCoverage):
+            requires = [MetaFile, CNVkitAutobin]
+            input_data = lambda ch1, ch2: tibble(
+                _get_all_bams(ch1),
+                target_file=ch2.target_file.tolist()[0],
             )
+            envs = {
+                "cnvkit": cnvkit,
+                "count": coverage_opts.get("count", False),
+                "min_mapq": coverage_opts.get("min_mapq", 0),
+                "ncores": ncores,
+            }
 
-        requires = [
-            MetaFile,
-            CNVkitCoverageTarget,
-            CNVkitCoverageAntitarget,
-            CNVkitAutobin,
-        ]
-        input_data = _get_input_data
-        envs = {
-            "cnvkit": cnvkit,
-            "cluster": reference_opts.get("cluster", False),
-            "min_cluster_size": reference_opts.get("min_cluster_size", False),
-            "male_reference": options.get("male_reference", False),
-            "no_gc": options.get("no_gc", False),
-            "no_edge": options.get("no_edge", False),
-            "no_rmask": options.get("no_rmask", False),
-            "ref": ref,
-        }
+        self.procs.CNVkitCoverageTarget = CNVkitCoverageTarget
 
-    fix_opts = options.get("fix", {})
-
-    class CNVkitFix(CNVkitFix):
-        def _get_input_data(ch1, ch2, ch3, ch4):
-            metadf = _get_metadf(ch1)
-            tumor_masks = metadf[options.type_col] == options.type_tumor
-            return tibble(
-                target_file=ch2.outfile[tumor_masks],
-                antitarget_file=ch3.outfile[tumor_masks],
-                reference=ch4.outfile,
-                sample_id=(
-                    metadf.SampleID[tumor_masks]
-                    if "SampleID" in metadf.columns
-                    else [None]
-                ),
+        class CNVkitCoverageAntitarget(CNVkitCoverage):
+            requires = [MetaFile, CNVkitAutobin]
+            input_data = lambda ch1, ch2: tibble(
+                _get_all_bams(ch1),
+                target_file=ch2.antitarget_file.tolist()[0],
             )
+            envs = {
+                "cnvkit": cnvkit,
+                "count": coverage_opts.get("count", False),
+                "min_mapq": coverage_opts.get("min_mapq", 0),
+                "ncores": ncores,
+            }
 
-        requires = [
-            MetaFile,
-            CNVkitCoverageTarget,
-            CNVkitCoverageAntitarget,
-            CNVkitReference,
-        ]
-        input_data = _get_input_data
-        envs = {
-            "cnvkit": cnvkit,
-            "cluster": fix_opts.get("cluster", False),
-            "no_gc": options.get("no_gc", False),
-            "no_edge": options.get("no_edge", False),
-            "no_rmask": options.get("no_rmask", False),
-        }
+        self.procs.CNVkitCoverageAntitarget = CNVkitCoverageAntitarget
 
-    segment_opts = options.get("segment", {})
+        class CNVkitReference(CNVkitReference):
+            def _get_input_data(ch1, ch2, ch3, ch4):
+                metadf = _get_metadf(ch1)
+                normal_masks = (
+                    metadf[self.options.type_col] == self.options.type_normal
+                )
+                return tibble(
+                    covfiles=(
+                        [None]
+                        if sum(normal_masks) == 0
+                        else [
+                            ch2.outfile[normal_masks].tolist()
+                            + ch3.outfile[normal_masks].tolist()
+                        ]
+                    ),
+                    target_file=ch4.target_file,
+                    antitarget_file=ch4.antitarget_file,
+                    sample_sex=(
+                        ",".join(metadf.SampleSex[normal_masks])
+                        if "SampleSex" in metadf.columns
+                        else [None]
+                    ),
+                )
 
-    class CNVkitSegment(CNVkitSegment):
-        def _get_input_data(ch1, ch2):
-            metadf = _get_metadf(ch1)
-            tumor_masks = metadf[options.type_col] == options.type_tumor
-            return tibble(
-                chrfile=ch2.outfile,
-                vcf=(
-                    metadf.SnpVcf[tumor_masks]
-                    if "SnpVcf" in metadf.columns
-                    else [None]
+            requires = [
+                MetaFile,
+                CNVkitCoverageTarget,
+                CNVkitCoverageAntitarget,
+                CNVkitAutobin,
+            ]
+            input_data = _get_input_data
+            envs = {
+                "cnvkit": cnvkit,
+                "cluster": reference_opts.get("cluster", False),
+                "min_cluster_size": reference_opts.get(
+                    "min_cluster_size", False
                 ),
-                sample_id=(
-                    metadf.VcfSampleID[tumor_masks]
-                    if "VcfSampleID" in metadf.columns
-                    else [None]
-                ),
-                normal_id=(
-                    metadf.NormalID[tumor_masks]
-                    if "NormalID" in metadf.columns
-                    else [None]
-                ),
-            )
+                "male_reference": self.options.get("male_reference", False),
+                "no_gc": self.options.get("no_gc", False),
+                "no_edge": self.options.get("no_edge", False),
+                "no_rmask": self.options.get("no_rmask", False),
+                "ref": ref,
+            }
 
-        requires = [MetaFile, CNVkitFix]
-        input_data = _get_input_data
-        envs = {
-            "cnvkit": cnvkit,
-            "method": segment_opts.get("method", "cbs"),
-            "threshold": segment_opts.get("threshold", False),
-            "drop_low_coverage": options.get("drop_low_coverage", False),
-            "drop_outliers": segment_opts.get("drop_outliers", 10),
-            "rscript": rscript,
-            "ncores": ncores,
-            "smooth_cbs": segment_opts.get("smooth_cbs", False),
-            "min_variant_depth": options.get("min_variant_depth", 20),
-            "zygosity_freq": options.get("zygosity_freq", 0.25),
-        }
+        self.procs.CNVkitReference = CNVkitReference
 
-    scatter_opts = options.get("scatter", {})
+        class CNVkitFix(CNVkitFix):
+            def _get_input_data(ch1, ch2, ch3, ch4):
+                metadf = _get_metadf(ch1)
+                tumor_masks = (
+                    metadf[self.options.type_col] == self.options.type_tumor
+                )
+                return tibble(
+                    target_file=ch2.outfile[tumor_masks],
+                    antitarget_file=ch3.outfile[tumor_masks],
+                    reference=ch4.outfile,
+                    sample_id=(
+                        metadf.SampleID[tumor_masks]
+                        if "SampleID" in metadf.columns
+                        else [None]
+                    ),
+                )
 
-    class CNVkitScatter(CNVkitScatter):
-        def _get_input_data(ch1, ch2, ch3):
-            metadf = _get_metadf(ch1)
-            tumor_masks = metadf[options.type_col] == options.type_tumor
+            requires = [
+                MetaFile,
+                CNVkitCoverageTarget,
+                CNVkitCoverageAntitarget,
+                CNVkitReference,
+            ]
+            input_data = _get_input_data
+            envs = {
+                "cnvkit": cnvkit,
+                "cluster": fix_opts.get("cluster", False),
+                "no_gc": self.options.get("no_gc", False),
+                "no_edge": self.options.get("no_edge", False),
+                "no_rmask": self.options.get("no_rmask", False),
+            }
 
-            return tibble(
-                chrfile=ch2.outfile,
-                cnsfile=ch3.outfile,
-                vcf=(
-                    metadf.SnpVcf[tumor_masks]
-                    if "SnpVcf" in metadf.columns
-                    else [None]
-                ),
-                sample_id=(
-                    metadf.VcfSampleID[tumor_masks]
-                    if "VcfSampleID" in metadf.columns
-                    else [None]
-                ),
-                normal_id=(
-                    metadf.NormalID[tumor_masks]
-                    if "NormalID" in metadf.columns
-                    else [None]
-                ),
-            )
+        self.procs.CNVkitFix = CNVkitFix
 
-        requires = [MetaFile, CNVkitFix, CNVkitSegment]
-        input_data = _get_input_data
-        envs = {"cnvkit": cnvkit, "convert": convert, **scatter_opts}
-
-    diagram_opts = options.get("diagram", {})
-
-    class CNVkitDiagram(CNVkitDiagram):
-        def _get_input_data(ch1, ch2, ch3):
-            metadf = _get_metadf(ch1)
-            tumor_masks = metadf[options.type_col] == options.type_tumor
-            return tibble(
-                chrfile=ch2.outfile,
-                cnsfile=ch3.outfile,
-                sample_sex=(
-                    metadf.SampleSex[tumor_masks]
-                    if "SampleSex" in metadf.columns
-                    else [None]
-                ),
-            )
-
-        requires = [MetaFile, CNVkitFix, CNVkitSegment]
-        input_data = _get_input_data
-        envs = {
-            "cnvkit": cnvkit,
-            "convert": convert,
-            **diagram_opts,
-        }
-
-    heatmap_cns_opts = options.get("heatmap_cns", {})
-
-    class CNVkitHeatmapCns(CNVkitHeatmap):
-        def _get_input_data(ch1, ch2):
-            metadf = _get_metadf(ch1)
-            tumor_masks = metadf[options.type_col] == options.type_tumor
-            return tibble(
-                segfiles=[ch2.outfile[tumor_masks].tolist()],
-                sample_sex=(
-                    ",".join(metadf.SampleSex[tumor_masks])
-                    if "SampleSex" in metadf.columns
-                    else [None]
-                ),
-            )
-
-        requires = [MetaFile, CNVkitSegment]
-        input_data = _get_input_data
-        envs = {
-            "cnvkit": cnvkit,
-            "convert": convert,
-            "male_reference": options.get("male_reference", False),
-            **heatmap_cns_opts,
-        }
-
-    heatmap_cnr_opts = options.get("heatmap_cnr", {})
-    if heatmap_cnr_opts:
-
-        class CNVkitHeatmapCnr(CNVkitHeatmap):
+        class CNVkitSegment(CNVkitSegment):
             def _get_input_data(ch1, ch2):
                 metadf = _get_metadf(ch1)
-                tumor_masks = metadf[options.type_col] == options.type_tumor
+                tumor_masks = (
+                    metadf[self.options.type_col] == self.options.type_tumor
+                )
+                return tibble(
+                    chrfile=ch2.outfile,
+                    vcf=(
+                        metadf.SnpVcf[tumor_masks]
+                        if "SnpVcf" in metadf.columns
+                        else [None]
+                    ),
+                    sample_id=(
+                        metadf.VcfSampleID[tumor_masks]
+                        if "VcfSampleID" in metadf.columns
+                        else [None]
+                    ),
+                    normal_id=(
+                        metadf.NormalID[tumor_masks]
+                        if "NormalID" in metadf.columns
+                        else [None]
+                    ),
+                )
+
+            requires = [MetaFile, CNVkitFix]
+            input_data = _get_input_data
+            envs = {
+                "cnvkit": cnvkit,
+                "method": segment_opts.get("method", "cbs"),
+                "threshold": segment_opts.get("threshold", False),
+                "drop_low_coverage": self.options.get(
+                    "drop_low_coverage", False
+                ),
+                "drop_outliers": segment_opts.get("drop_outliers", 10),
+                "rscript": rscript,
+                "ncores": ncores,
+                "smooth_cbs": segment_opts.get("smooth_cbs", False),
+                "min_variant_depth": self.options.get("min_variant_depth", 20),
+                "zygosity_freq": self.options.get("zygosity_freq", 0.25),
+            }
+
+        self.procs.CNVkitSegment = CNVkitSegment
+
+        class CNVkitScatter(CNVkitScatter):
+            def _get_input_data(ch1, ch2, ch3):
+                metadf = _get_metadf(ch1)
+                tumor_masks = (
+                    metadf[self.options.type_col] == self.options.type_tumor
+                )
+
+                return tibble(
+                    chrfile=ch2.outfile,
+                    cnsfile=ch3.outfile,
+                    vcf=(
+                        metadf.SnpVcf[tumor_masks]
+                        if "SnpVcf" in metadf.columns
+                        else [None]
+                    ),
+                    sample_id=(
+                        metadf.VcfSampleID[tumor_masks]
+                        if "VcfSampleID" in metadf.columns
+                        else [None]
+                    ),
+                    normal_id=(
+                        metadf.NormalID[tumor_masks]
+                        if "NormalID" in metadf.columns
+                        else [None]
+                    ),
+                )
+
+            requires = [MetaFile, CNVkitFix, CNVkitSegment]
+            input_data = _get_input_data
+            envs = {"cnvkit": cnvkit, "convert": convert, **scatter_opts}
+
+        self.ends.append(CNVkitScatter)
+        self.procs.CNVkitScatter = CNVkitScatter
+
+        class CNVkitDiagram(CNVkitDiagram):
+            def _get_input_data(ch1, ch2, ch3):
+                metadf = _get_metadf(ch1)
+                tumor_masks = (
+                    metadf[self.options.type_col] == self.options.type_tumor
+                )
+                return tibble(
+                    chrfile=ch2.outfile,
+                    cnsfile=ch3.outfile,
+                    sample_sex=(
+                        metadf.SampleSex[tumor_masks]
+                        if "SampleSex" in metadf.columns
+                        else [None]
+                    ),
+                )
+
+            requires = [MetaFile, CNVkitFix, CNVkitSegment]
+            input_data = _get_input_data
+            envs = {
+                "cnvkit": cnvkit,
+                "convert": convert,
+                **diagram_opts,
+            }
+
+        self.ends.append(CNVkitDiagram)
+        self.procs.CNVkitDiagram = CNVkitDiagram
+
+        class CNVkitHeatmapCns(CNVkitHeatmap):
+            def _get_input_data(ch1, ch2):
+                metadf = _get_metadf(ch1)
+                tumor_masks = (
+                    metadf[self.options.type_col] == self.options.type_tumor
+                )
                 return tibble(
                     segfiles=[ch2.outfile[tumor_masks].tolist()],
                     sample_sex=(
@@ -486,69 +497,109 @@ def build_processes(options: Mapping[str, Any] = None) -> Proc:
                     ),
                 )
 
-            requires = [MetaFile, CNVkitFix]
+            requires = [MetaFile, CNVkitSegment]
             input_data = _get_input_data
             envs = {
                 "cnvkit": cnvkit,
                 "convert": convert,
-                "male_reference": options.get("male_reference", False),
-                **heatmap_cnr_opts,
+                "male_reference": self.options.get("male_reference", False),
+                **heatmap_cns_opts,
             }
 
-    call_opts = options.get("call", {})
+        self.ends.append(CNVkitHeatmapCns)
+        self.procs.CNVkitHeatmapCns = CNVkitHeatmapCns
 
-    class CNVkitCall(CNVkitCall):
-        def _get_input_data(ch1, ch2, ch3):
-            metadf = _get_metadf(ch1)
-            tumor_masks = metadf[options.type_col] == options.type_tumor
-            return tibble(
-                cnrfile=ch2.outfile,
-                cnsfile=ch3.outfile,
-                vcf=(
-                    metadf.SnpVcf[tumor_masks]
-                    if "SnpVcf" in metadf.columns
-                    else [None]
+        if heatmap_cnr_opts:
+
+            class CNVkitHeatmapCnr(CNVkitHeatmap):
+                def _get_input_data(ch1, ch2):
+                    metadf = _get_metadf(ch1)
+                    tumor_masks = (
+                        metadf[self.options.type_col]
+                        == self.options.type_tumor
+                    )
+                    return tibble(
+                        segfiles=[ch2.outfile[tumor_masks].tolist()],
+                        sample_sex=(
+                            ",".join(metadf.SampleSex[tumor_masks])
+                            if "SampleSex" in metadf.columns
+                            else [None]
+                        ),
+                    )
+
+                requires = [MetaFile, CNVkitFix]
+                input_data = _get_input_data
+                envs = {
+                    "cnvkit": cnvkit,
+                    "convert": convert,
+                    "male_reference": self.options.get(
+                        "male_reference", False
+                    ),
+                    **heatmap_cnr_opts,
+                }
+
+            self.ends.append(CNVkitHeatmapCnr)
+            self.procs.CNVkitHeatmapCnr = CNVkitHeatmapCnr
+
+        class CNVkitCall(CNVkitCall):
+            def _get_input_data(ch1, ch2, ch3):
+                metadf = _get_metadf(ch1)
+                tumor_masks = (
+                    metadf[self.options.type_col] == self.options.type_tumor
+                )
+                return tibble(
+                    cnrfile=ch2.outfile,
+                    cnsfile=ch3.outfile,
+                    vcf=(
+                        metadf.SnpVcf[tumor_masks]
+                        if "SnpVcf" in metadf.columns
+                        else [None]
+                    ),
+                    sample_id=(
+                        metadf.VcfSampleID[tumor_masks]
+                        if "VcfSampleID" in metadf.columns
+                        else [None]
+                    ),
+                    normal_id=(
+                        metadf.VcfNormalID[tumor_masks]
+                        if "NormalID" in metadf.columns
+                        else [None]
+                    ),
+                    sample_sex=(
+                        metadf.SampleSex[tumor_masks]
+                        if "SampleSex" in _get_metadf(ch1).columns
+                        else [None]
+                    ),
+                )
+
+            requires = [MetaFile, CNVkitFix, CNVkitSegment]
+            input_data = _get_input_data
+            envs = {
+                "cnvkit": cnvkit,
+                "center": call_opts.get("center", "median"),
+                "center_at": call_opts.get("center_at", False),
+                "filter": call_opts.get("filter", False),
+                "method": call_opts.get("method", "threshold"),
+                "thresholds": call_opts.get(
+                    "thresholds", "-1.1,-0.25,0.2,0.7"
                 ),
-                sample_id=(
-                    metadf.VcfSampleID[tumor_masks]
-                    if "VcfSampleID" in metadf.columns
-                    else [None]
+                "ploidy": call_opts.get("ploidy", 2),
+                "purity": call_opts.get("purity", False),
+                "drop_low_coverage": self.options.get(
+                    "drop_low_coverage", False
                 ),
-                normal_id=(
-                    metadf.VcfNormalID[tumor_masks]
-                    if "NormalID" in metadf.columns
-                    else [None]
-                ),
-                sample_sex=(
-                    metadf.SampleSex[tumor_masks]
-                    if "SampleSex" in _get_metadf(ch1).columns
-                    else [None]
-                ),
-            )
+                "male_reference": self.options.get("male_reference", False),
+                "min_variant_depth": self.options.get("min_variant_depth", 20),
+                "zygosity_freq": self.options.get("zygosity_freq", 0.25),
+            }
 
-        requires = [MetaFile, CNVkitFix, CNVkitSegment]
-        input_data = _get_input_data
-        envs = {
-            "cnvkit": cnvkit,
-            "center": call_opts.get("center", "median"),
-            "center_at": call_opts.get("center_at", False),
-            "filter": call_opts.get("filter", False),
-            "method": call_opts.get("method", "threshold"),
-            "thresholds": call_opts.get("thresholds", "-1.1,-0.25,0.2,0.7"),
-            "ploidy": call_opts.get("ploidy", 2),
-            "purity": call_opts.get("purity", False),
-            "drop_low_coverage": options.get("drop_low_coverage", False),
-            "male_reference": options.get("male_reference", False),
-            "min_variant_depth": options.get("min_variant_depth", 20),
-            "zygosity_freq": options.get("zygosity_freq", 0.25),
-        }
-
-    return MetaFile, CNVkitAccess
+        self.ends.append(CNVkitCall)
+        self.procs.CNVkitCall = CNVkitCall
 
 
-def main() -> Pipen:
+def main(options: Mapping[str, Any] = None) -> Pipen:
     """Build a pipeline for `pipen run` to run"""
-    return Pipen(
+    return CNVkitPipeline(options).run(
         name="cnvkit-pipeline",
         desc="CNV calling pipeline using cnvkit",
-    ).set_start(build_processes())
+    )
