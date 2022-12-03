@@ -44,7 +44,8 @@ srtobj = readRDS(srtobjfile)
     } else {
         print(paste("  with subsetting:", subset_cond))
         outfile = file.path(outdir, paste0(casename, ".RDS"))
-        sobj = subset(srtobj_copy, subset = subset_cond)
+        subset_cmd = paste0("subset(srtobj_copy, subset = ", subset_cond, ")")
+        sobj = eval(parse(text = subset_cmd))
         saveRDS(sobj, outfile)
     }
 
