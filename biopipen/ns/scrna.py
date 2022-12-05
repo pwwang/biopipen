@@ -647,6 +647,32 @@ class SeuratSubset(Proc):
     script = "file://../scripts/scrna/SeuratSubset.R"
 
 
+class SeuratSplit(Proc):
+    """Split a seurat object into multiple seruat objects
+
+    Input:
+        srtobj: The seurat object in RDS
+        by: The metadata column to split by
+
+    Output:
+        outdir: The output directory with the subset seurat objects
+
+    Envs:
+        by: The metadata column to split by
+            Ignored if `by` is given in the input
+        recell: Rename the cell ids using the `by` column
+            A string of R function taking the original cell ids and `by`
+    """
+    input = "srtobj:file, by:var"
+    output = "outdir:dir:{{in.srtobj | stem}}.subsets"
+    envs = {
+        "by": None,
+        "recell": None,  # "function(cellid, by) {}",
+    }
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/SeuratSplit.R"
+
+
 class Subset10X(Proc):
     """Subset 10X data, mostly used for testing
 
