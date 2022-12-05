@@ -181,4 +181,7 @@ class CNAClinic(Proc):
         "plot_multi_args": False,
     }
     script = "file://../scripts/bam/CNAClinic.R"
-    # plugin_opts = {"report": "file://../reports/bam/CNAClinic.svelte"}
+    plugin_opts = {
+        "report": "file://../reports/bam/CNAClinic.svelte",
+        "report_paging": 20,
+    }
