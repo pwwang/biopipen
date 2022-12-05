@@ -125,19 +125,6 @@ getCAA <- function(segf, cytoarm, tcn_col,
   return(as(seg_cyto_chr, "GRangesList"))
 }
 
-
-{% if envs.segmean_transform %}
-segmean_transform = {{envs.segmean_transform}}
-{% else %}
-segmean_transform = NULL
-{% endif %}
-
-{% if envs.cn_transform %}
-cn_transform = {{envs.cn_transform}}
-{% else %}
-cn_transform = NULL
-{% endif %}
-
 segments = read.table(segfile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
 seg = data.frame(
     seqnames = segments[, chrom_col],
@@ -146,17 +133,40 @@ seg = data.frame(
     seg.mean = segments[, seg_col]
 )
 
-if (!is.null(cn_transform) && is.null(cn_col)) {
-    seg$TCN = cn_transform(seg$seg.mean)
-}
+{% if envs.segmean_transform %}
+segmean_transform = {{envs.segmean_transform}}
+seg$seg.mean = segmean_transform(seg$seg.mean)
+{% endif %}
 
 if (!is.null(cn_col)) {
     seg$TCN = segments[, cn_col]
 }
 
-if (!is.null(segmean_transform)) {
-    seg$seg.mean = segmean_transform(seg$seg.mean)
+{% if envs.cn_transform %}
+cn_transform = {{envs.cn_transform | r}}
+if (is.character(cn_transform)) {
+    cn_transform = eval(parse(text = cn_transform))
+    seg$TCN = cn_transform(seg$seg.mean)
+} else if (is.vector(cn_transform)) {
+    # Use cutoffs to transform
+    # See also https://cnvkit.readthedocs.io/en/stable/pipeline.html#calling-methods
+    # and https://github.com/etal/cnvkit/blob/9dd1e7c83705d1e1de6e6e4ab9fdc6973bf4002f/cnvlib/call.py#L98-L146
+    # cn_transform =  c(-1.1, -0.25, 0.2, 0.7)
+    # We assume neutral copy is 2
+    # Still have to consider sex chromosomes
+    neutral = 2
+    TCN = cut(seg$seg.mean, breaks=c(-999, cn_transform), labels=seq(0, length(cn_transform) - 1))
+    # Drop the factor structure
+    TCN = as.integer(as.character(TCN))
+    # Beyond the maximum cutoff, round it up
+    TCN[is.na(TCN)] = ceiling(neutral * 2 ^ seg$seg.mean[is.na(TCN)])
+    # If seg.mean is not available
+    TCN[is.na(seg$seg.mean)] = neutral
+    seg$TCN = TCN
 }
+{% endif %}
+
+write.table(seg, file.path(outdir, "seg.txt"), sep="\t", quote=F, row.names=F, col.names=T)
 
 wgd_ploidy = checkIfWGD(
     seg,
