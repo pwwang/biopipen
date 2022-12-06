@@ -29,13 +29,13 @@ class Pipeline(ABC):
 
     __slots__ = ("options", "starts", "ends", "procs")
 
-    _PIPELING = None
+    _PIPELINE = None
     defaults = Diot()
 
     def __new__(cls, *args, **kwargs):
-        if cls._PIPELING is None:
-            cls._PIPELING = super().__new__(cls)
-        return cls._PIPELING
+        if cls._PIPELINE is None:
+            cls._PIPELINE = super().__new__(cls)
+        return cls._PIPELINE
 
     def __init__(self, options: Mapping[str, Any] | None = None):
         self.options = (
