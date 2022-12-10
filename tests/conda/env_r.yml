@@ -3,11 +3,11 @@ channels:
   - svalkiers
   - aroth85
   - pwwang
+  - conda-forge
+  - defaults
   - pytorch
   - bioconda
-  - conda-forge
   - r
-  - defaults
 dependencies:
   - python=3.9
   - poetry=1.1.13  # awaiting 1.2 being released on conda
