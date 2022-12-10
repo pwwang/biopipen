@@ -19,7 +19,7 @@ jobs:
           python-version: 3.9
           auto-activate-base: true
           auto-update-conda: true
-          activate-environment: basic
+          activate-environment: base
           mamba-version: "*"
       - name: Create conda environments and install biopipen
         run: |
