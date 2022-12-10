@@ -8,7 +8,7 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -l {0}
@@ -17,14 +17,17 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: 3.9
+          auto-activate-base: true
           auto-update-conda: true
+          activate-environment: ""
+          mamba-version: "*"
       - name: Create conda environments and install biopipen
         run: |
           for envfile in tests/conda/env_*.yml; do
             bname=$(basename $envfile .yml)
             envname=biopipen-${bname:4}
             echo "::group::Creating environment: $envname"
-            conda env create -f $envfile
+            mamba env create -f $envfile
             echo "::endgroup::"
             echo "::group::Installing biopipen in environment: $envname"
             conda run --no-capture-output -n $envname bash tests/conda/patch_poetry.sh
@@ -51,7 +54,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.event_name == 'release'
     strategy:
       matrix:
