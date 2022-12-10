@@ -43,6 +43,7 @@ dependencies:
   - bioconductor-scater
   - bioconductor-scran
   - bioconductor-singlecellexperiment
+  - bioconductor-genomeinfodbdata=1.2.9
   - biopython
   - scikit-learn
   # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2

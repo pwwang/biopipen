@@ -21,7 +21,6 @@ jobs:
           activate-environment: mybase
           channels: conda-forge,defaults
           mamba-version: "*"
-          environment-file: tests/conda/mybase.yml
       - name: Create conda environments and install biopipen
         run: |
           for envfile in tests/conda/env_*.yml; do
