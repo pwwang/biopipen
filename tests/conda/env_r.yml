@@ -54,3 +54,7 @@ dependencies:
   - truvari
   - pip:
     - magic-impute
+    # For GIANA
+    - biopython==1.79
+    # For clustcr
+    - scikit-learn==1.1.3

@@ -1,8 +1,8 @@
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/input1.vcf.gz
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/input2.vcf.gz
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/input3.vcf.gz
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/multi.vcf.gz
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/input1.vcf.gz.tbi
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/input2.vcf.gz.tbi
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/input3.vcf.gz.tbi
-https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/multi.vcf.gz.tbi
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/input1.vcf.gz
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/input2.vcf.gz
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/input3.vcf.gz
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/multi.vcf.gz
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/input1.vcf.gz.tbi
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/input2.vcf.gz.tbi
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/input3.vcf.gz.tbi
+https://github.com/ACEnglish/truvari/raw/develop/repo_utils/test_files/variants/multi.vcf.gz.tbi

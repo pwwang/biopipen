@@ -1,4 +1,5 @@
-from biopipen.core.proc import Proc, Pipeline
+from biopipen.core.proc import Proc
+from pipen_cli_run import Pipeline
 
 
 class MyPipeline(Pipeline):
@@ -11,10 +12,10 @@ class MyPipeline(Pipeline):
             script = f"""echo '{self.options}' > {{{{out.outfile}}}}"""
 
         self.starts.append(MyProc)
-        self.procs.MyProc = Proc
+        self.procs.MyProc = MyProc
 
 
-pipe = MyPipeline(options={"a": "b"}).run(["var"])
+pipe = MyPipeline(options={"a": "b"}).run(["var"], plugins=["no:report"])
 
 outfile = pipe.workdir.joinpath("myproc", "0", "output", "var.out")
 
