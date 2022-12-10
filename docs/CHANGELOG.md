@@ -1,3 +1,18 @@
+## 0.6.0
+
+- ✨ [cnv] Add AneuploidyScore and AneuploidyScoreSummary
+- ✨ [scrna.Write10X] Add Write10X
+- ✨ [cnv.AneuploidyScore] Add envs.include_sex
+- 🐛 [scrna.SeuratSubset] Fix when envs.groupby is not given
+- ✨ [cnvkit.CNVkitHeatmap] Add envs.order for sample order in the heatmap
+- ✨ [bam.CNAClinic] Add bam.CNAClinic
+- ✨ [bam.CNAClinic] Add report
+- ✨ [cnv.AneuploidyScore] Allow a list of thresholds for `envs.cn_transform`
+- ✨ [scrna.SeuratSplit] Add scrna.SeuratSplit
+- ✏️ [core] Fix typo in core.proc.Pipeline
+- 👽️ Refactor pipeline modules with pipen-cli-run 0.3
+- 💚 Use mamba in CI
+
 ## 0.5.3
 
 - ✨ [scrna.SeuratClusterStats] Allow features to be a file for expression plots

@@ -78,3 +78,6 @@ ncores = 1
 
 [pipeline.scrna_metabolic]
 clustered = false
+intra-subset = true
+
+[pipeline.cnvkit_pipeline]

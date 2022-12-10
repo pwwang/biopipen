@@ -18,13 +18,16 @@ jobs:
         with:
           python-version: 3.9
           auto-update-conda: true
+          activate-environment: mybase
+          channels: conda-forge,defaults
+          mamba-version: "*"
       - name: Create conda environments and install biopipen
         run: |
           for envfile in tests/conda/env_*.yml; do
             bname=$(basename $envfile .yml)
             envname=biopipen-${bname:4}
             echo "::group::Creating environment: $envname"
-            conda env create -f $envfile
+            mamba env create -f $envfile
             echo "::endgroup::"
             echo "::group::Installing biopipen in environment: $envname"
             conda run --no-capture-output -n $envname bash tests/conda/patch_poetry.sh

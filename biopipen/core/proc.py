@@ -1,5 +1,4 @@
 """Provides a base class for the processes to subclass"""
-
 from liquid.defaults import SEARCH_PATHS
 from pipen import Proc as PipenProc
 

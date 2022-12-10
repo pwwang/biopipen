@@ -14,7 +14,32 @@ chromosome = {{ envs.chromosome | repr}}  # pyright: ignore
 desaturate= {{ envs.desaturate | repr}}  # pyright: ignore
 male_reference= {{ envs.male_reference | repr}}  # pyright: ignore
 no_shift_xy= {{ envs.no_shift_xy | repr}}  # pyright: ignore
+order = {{envs.order | repr}}  # pyright: ignore
 cases = {{envs.cases | repr}}  # pyright: ignore
+
+
+def parse_order(files, orderfile):
+    if not orderfile:
+        return files
+
+    def _match(path, sample):
+        p = Path(path)
+        return sample in (p.name, p.stem)
+
+    out = []
+    files = set(files)
+    orders = Path(orderfile).read_text().splitlines()
+    for od in orders:
+        matched = None
+        for fpath in files:
+            if _match(fpath, od):
+                matched = fpath
+                break
+        if matched:
+            out.append(matched)
+            files.remove(matched)
+
+    return out
 
 
 def do_case(name, case):
@@ -27,15 +52,20 @@ def do_case(name, case):
         sample_sex=sample_sex or False,
         no_shift_xy=no_shift_xy,
         convert_args=convert_args,
+        order=order,
     ) | case
 
     conv_args = case.pop("convert_args")
+    the_order = case.pop("order")
     pdffile = Path(outdir).joinpath(f"{name}.heatmap.pdf")
     pngfile = Path(outdir).joinpath(f"{name}.heatmap.png")
+
+    sfiles = parse_order(segfiles, the_order)
+
     cmdy.cnvkit.heatmap(
         **case,
         o=pdffile,
-        _=segfiles,
+        _=sfiles,
         _exe=cnvkit,
     ).fg()
 

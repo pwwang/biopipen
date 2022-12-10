@@ -124,3 +124,64 @@ class ControlFREEC(Proc):
     }
     script = "file://../scripts/bam/ControlFREEC.py"
     plugin_opts = {"report": "file://../reports/bam/ControlFREEC.svelte"}
+
+
+class CNAClinic(Proc):
+    """Detect CNVs using CNAClinic
+
+    Input:
+        metafile: The meta file, header included, tab-delimited, including
+            following columns:
+            "Bam": The path to bam file
+            "Sample": Optional. The sample names,
+                if you don't want filename of bam file to be used
+            "Group": Optional. The group names, either "Case" or "Control"
+            "Patient": Optional. The patient names. Since CNAClinic only
+                supports paired samples, you need to provide the patient names
+                for each sample. Required if "Group" is provided.
+            "Binsizer": Optional. Samples used to estimate the bin size
+                "Y", "Yes", "T", "True", will be treated as True
+                If not provided, will use `envs.binsizer` to get the samples
+                to use. Either this column or `envs.binsizer` should be
+                provided.
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        ncores: Number of cores to use
+        seed: The seed for random number generator for choosing samples
+            for estimating bin size
+        binsizer: The samples used to estimate the bin size, it could be:
+            - A list of sample names
+            - A float number (0 < x <= 1), the fraction of samples to use
+            - A integer number (x > 1), the number of samples to use
+        binsize: Directly use this binsize for CNAClinic, in kbp.
+        genome: The genome assembly
+        run_args: The arguments for CNAClinic::runSegmentation
+        plot_args: The arguments for CNAClinic::plotSampleData
+        plot_multi_args: The arguments for CNAClinic::plotMultiSampleData
+    """
+    input = "metafile:file"
+    output = "outdir:dir:{{in.metafile | stem}}.cnaclinic"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "binsizer": None,
+        "binsize": None,
+        "seed": 123,
+        "genome": config.ref.genome,
+        "run_args": {
+            # HMM is errored
+            "segmentType": ["CBS", "LACBS", "PLS"],
+            "segmentsToSummarise": ["CBS", "LACBS", "PLS"],
+            "summaryMethod": "mean",
+        },
+        "plot_args": {},
+        "plot_multi_args": False,
+    }
+    script = "file://../scripts/bam/CNAClinic.R"
+    plugin_opts = {
+        "report": "file://../reports/bam/CNAClinic.svelte",
+        "report_paging": 20,
+    }
