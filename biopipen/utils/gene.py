@@ -13,7 +13,7 @@ from datar.all import (
     is_na,
     across,
     if_else,
-    filter,
+    filter_,
     pull,
     select,
 )
@@ -78,9 +78,9 @@ def gene_name_conversion(
             )
         )
     elif notfound == "error" and any(is_na(out[outfmt[0]])):
-        nagenes = out >> filter(is_na(f[outfmt[0]])) >> pull(f.query)
+        nagenes = out >> filter_(is_na(f[outfmt[0]])) >> pull(f.query)
         raise QueryGenesNotFound(nagenes)
     elif notfound == "skip":
-        out = out >> filter(~is_na(f[outfmt[0]]))
+        out = out >> filter_(~is_na(f[outfmt[0]]))
 
     return out
