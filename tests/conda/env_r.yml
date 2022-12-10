@@ -13,7 +13,7 @@ dependencies:
   - poetry=1.1.13  # awaiting 1.2 being released on conda
   - nodejs  # for pipen-report
   - curl
-  - r-base=4.1.3
+  - r-base=4.2.2
   - r-ggplot2
   - r-tidyr
   - r-dplyr
@@ -43,7 +43,6 @@ dependencies:
   - bioconductor-scater
   - bioconductor-scran
   - bioconductor-singlecellexperiment
-  - bioconductor-genomeinfodbdata=1.2.9
   - biopython
   - scikit-learn
   # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2
