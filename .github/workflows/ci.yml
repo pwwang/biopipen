@@ -17,9 +17,8 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: 3.9
-          auto-activate-base: true
           auto-update-conda: true
-          activate-environment: base
+          activate-environment: mybase
           channels: conda-forge,defaults
           mamba-version: "*"
       - name: Create conda environments and install biopipen
