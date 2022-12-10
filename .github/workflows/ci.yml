@@ -20,6 +20,7 @@ jobs:
           auto-activate-base: true
           auto-update-conda: true
           activate-environment: base
+          channels: conda-forge,defaults
           mamba-version: "*"
       - name: Create conda environments and install biopipen
         run: |
