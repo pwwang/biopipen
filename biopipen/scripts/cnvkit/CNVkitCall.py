@@ -16,6 +16,7 @@ method = {{envs.method | quote}}  # pyright: ignore
 thresholds = {{envs.thresholds | repr}}  # pyright: ignore
 ploidy = {{envs.ploidy | repr}}  # pyright: ignore
 purity = {{envs.purity | repr}}  # pyright: ignore
+jobidx = {{job.index | int}}  # pyright: ignore
 drop_low_coverage = {{envs.drop_low_coverage | repr}}  # pyright: ignore
 male_reference = {{envs.male_reference | repr}}  # pyright: ignore
 min_variant_depth = {{envs.min_variant_depth | repr}}  # pyright: ignore
@@ -37,7 +38,7 @@ def main():
         filter=filter,
         m=method,
         ploidy=ploidy,
-        purity=purity,
+        purity=purity[jobidx] if isinstance(purity, (tuple, list)) else purity,
         drop_low_coverage=drop_low_coverage,
         male_reference=male_reference,
         sample_sex=sample_sex or False,

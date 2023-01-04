@@ -590,7 +590,23 @@ class CNVkitPipeline(Pipeline):
                     "thresholds", "-1.1,-0.25,0.2,0.7"
                 ),
                 "ploidy": call_opts.get("ploidy", 2),
-                "purity": call_opts.get("purity", False),
+                "purity": call_opts.get(
+                    "purity",
+                    pandas.read_csv(
+                        self.options["metafile"], sep="\t", header=0
+                    )
+                    .query(
+                        f"`{self.options.type_col}` "
+                        f"== '{self.options.type_tumor}'"
+                    )
+                    .Purity
+                    .tolist()
+                    if "metafile" in self.options
+                    and "Purity" in pandas.read_csv(
+                        self.options["metafile"], sep="\t", header=0
+                    )
+                    else False
+                ),
                 "drop_low_coverage": self.options.get(
                     "drop_low_coverage", False
                 ),
