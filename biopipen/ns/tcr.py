@@ -304,6 +304,39 @@ class Immunarch2VDJtools(Proc):
     script = "file://../scripts/tcr/Immunarch2VDJtools.R"
 
 
+class ImmunarchSplitIdents(Proc):
+    """Split the data into multiple immunarch datasets by Idents from Seurat
+
+    Note that only the cells in both the `immdata` and `sobjfile` will be
+    kept.
+
+    Requires `immunarch >= 0.9.0` to use `select_clusters()`
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+        sobjfile: The Seurat object file.
+            You can set a different ident by `Idents(sobj) <- "new_ident"` to
+            split the data by the new ident, where `"new_ident"` is the an
+            existing column in meta data
+
+    Output:
+        outdir: The output directory containing the RDS files of the splitted
+            immunarch datasets
+
+    Envs:
+        prefix: The prefix of the cell barcodes in the `Seurat` object.
+            Once could use a fixed prefix, or a placeholder with the column
+            name in meta data. For example, `"{Sample}_"` will replace the
+            placeholder with the value of the column `Sample` in meta data.
+        sample_col: The column name in meta data that contains the sample name
+    """
+    input = "immdata:file, sobjfile:file"
+    output = "outdir:dir:{{in.immdata | stem}}.splitidents"
+    lang = config.lang.rscript
+    envs = {"prefix": "{Sample}_", "sample_col": "Sample"}
+    script = "file://../scripts/tcr/ImmunarchSplitIdents.R"
+
+
 class VJUsage(Proc):
     """Circos-style V-J usage plot displaying the frequency of
     various V-J junctions.
