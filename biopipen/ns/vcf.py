@@ -165,9 +165,11 @@ class VcfSplitSamples(Proc):
 
     Envs:
         bcftools: Path to bcftools
-        gz: Gzip the output VCF files?
+        gz: Gzip the output VCF files? Has to be True if `envs.index` is True
         index: Index the output VCF files?
         ncores: Number of cores, used to extract samples, but not to index
+        private: Keep sites where only the sample carries an non-ref allele.
+            That means, sites with genotypes like `0/0` will be removed.
     """
     input = "infile:file"
     output = "outdir:dir:{{in.infile | stem}}.splitsamples"
@@ -177,8 +179,56 @@ class VcfSplitSamples(Proc):
         "gz": True,
         "index": True,
         "ncores": config.misc.ncores,
+        "private": True,
     }
     script = "file://../scripts/vcf/VcfSplitSamples.py"
+
+
+class VcfIntersect(Proc):
+    """Find variants in both VCF files
+
+    Input:
+        infile1: The first VCF file
+        infile2: The second VCF file
+
+    Output:
+        outfile: The output VCF file with subet variants in both files
+
+    Envs:
+        bcftools: Path to bcftools
+        gz: Gzip the output VCF files? Has to be True if `envs.index` is True
+        index: Index the output VCF files?
+        keep_as: Keep the variants as presented in the first (0) or
+            the second (1) file?
+        collapse: How to match the variants in the two files? Will be passed to
+            `bcftools isec -c` option. See also
+            https://samtools.github.io/bcftools/bcftools.html#common_options
+            - none: only records with identical REF and ALT alleles are
+                compatible
+            - some: only records where some subset of ALT alleles match are
+                compatible
+            - all: all records are compatible, regardless of whether the ALT
+                alleles match or not.
+            - snps: any SNP records are compatible, regardless of whether the
+                ALT alleles match or not.
+            - indels: any indel records are compatible, regardless of whether
+                the ALT alleles match or not.
+            - both: abbreviates `snps` and `indels`
+            - id: only records with identical ID are compatible
+    """
+    input = "infile1:file, infile2:file"
+    output = """
+        outfile:file:{{in.infile1 | stem0}}.intersect.{{in.infile2 | stem0}}.vcf
+        {%- if envs.gz -%}.gz{%- endif -%}
+    """
+    lang = config.lang.python
+    envs = {
+        "bcftools": config.exe.bcftools,
+        "gz": True,
+        "index": True,
+        "collapse": "all",
+    }
+    script = "file://../scripts/vcf/VcfIntersect.py"
 
 
 class VcfFix(Proc):
