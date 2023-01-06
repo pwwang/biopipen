@@ -7,6 +7,10 @@ bcftools = {{envs.bcftools | repr}}  # pyright: ignore
 gz = {{envs.gz | repr}}  # pyright: ignore
 index = {{envs.index | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
+private = {{envs.private | repr}}  # pyright: ignore
+
+if index:
+    gz = True
 
 # get sample list
 cmd = cmdy.bcftools.query(l=True, _=infile, _exe=bcftools)
@@ -27,6 +31,7 @@ def do_sample(sample):
         s=sample,
         O="z" if gz else "v",
         o=outfile,
+        private=private,
     ).hold()
     print("  running:")
     print("  ", cmd.strcmd)
