@@ -592,10 +592,15 @@ class CNVkitCall(Proc):
             {{proc.envs.cnvkit}} version
     """
 
-    input = (
-        "cnrfile:file, cnsfile:file, "
-        "vcf:file, sample_id:var, normal_id:var, sample_sex:var"
-    )
+    input = [
+        "cnrfile:file",
+        "cnsfile:file",
+        "vcf:file",
+        "sample_id:var",
+        "normal_id:var",
+        "sample_sex:var",
+        "purity:var",
+    ]
     output = "outdir:dir:{{in.cnsfile | stem0}}.cnvkit"
     lang = config.lang.python
     envs = {
@@ -606,7 +611,6 @@ class CNVkitCall(Proc):
         "method": "threshold",
         "thresholds": "-1.1,-0.25,0.2,0.7",
         "ploidy": 2,
-        "purity": False,
         "drop_low_coverage": False,
         "male_reference": False,
         "min_variant_depth": 20,

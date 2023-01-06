@@ -573,7 +573,12 @@ class CNVkitPipeline(Pipeline):
                     ),
                     sample_sex=(
                         metadf.SampleSex[tumor_masks]
-                        if "SampleSex" in _get_metadf(ch1).columns
+                        if "SampleSex" in metadf.columns
+                        else [None]
+                    ),
+                    purity=(
+                        metadf.Purity[tumor_masks]
+                        if "Purity" in metadf.columns
                         else [None]
                     ),
                 )
@@ -590,23 +595,6 @@ class CNVkitPipeline(Pipeline):
                     "thresholds", "-1.1,-0.25,0.2,0.7"
                 ),
                 "ploidy": call_opts.get("ploidy", 2),
-                "purity": call_opts.get(
-                    "purity",
-                    pandas.read_csv(
-                        self.options["metafile"], sep="\t", header=0
-                    )
-                    .query(
-                        f"`{self.options.type_col}` "
-                        f"== '{self.options.type_tumor}'"
-                    )
-                    .Purity
-                    .tolist()
-                    if "metafile" in self.options
-                    and "Purity" in pandas.read_csv(
-                        self.options["metafile"], sep="\t", header=0
-                    )
-                    else False
-                ),
                 "drop_low_coverage": self.options.get(
                     "drop_low_coverage", False
                 ),
