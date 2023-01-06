@@ -154,6 +154,33 @@ class VcfDownSample(Proc):
     script = "file://../scripts/vcf/VcfDownSample.sh"
 
 
+class VcfSplitSamples(Proc):
+    """Split a VCF file into multiple VCF files, one for each sample
+
+    Input:
+        infile: The input VCF file
+
+    Output:
+        outdir: The output directory containing the split VCF files
+
+    Envs:
+        bcftools: Path to bcftools
+        gz: Gzip the output VCF files?
+        index: Index the output VCF files?
+        ncores: Number of cores, used to extract samples, but not to index
+    """
+    input = "infile:file"
+    output = "outdir:dir:{{in.infile | stem}}.splitsamples"
+    lang = config.lang.python
+    envs = {
+        "bcftools": config.exe.bcftools,
+        "gz": True,
+        "index": True,
+        "ncores": config.misc.ncores,
+    }
+    script = "file://../scripts/vcf/VcfSplitSamples.py"
+
+
 class VcfFix(Proc):
     """Fix some issues with VCF files
 
