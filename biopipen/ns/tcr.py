@@ -249,6 +249,54 @@ class Immunarch(Proc):
     }
 
 
+class SampleDiversity(Proc):
+    """Sample diversity and rarefaction analysis
+
+    This is part of Immunarch, in case we have multiple dataset to compare.
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        div_methods: Methods to calculate diversities
+            It is a dict, keys are the method names, values are the groupings.
+            Each one is a case, multiple columns for a case are separated by `,`
+            For example: `{"div": ["Status", "Sex", "Status,Sex"]}` will run
+            true diversity for samples grouped by `Status`, `Sex`, and both.
+            The diversity for each sample without grouping will also be added
+            anyway.
+            Supported methods: `chao1`, `hill`, `div`, `gini.simp`, `inv.simp`,
+            `gini`, and `raref`. See also
+            https://immunarch.com/articles/web_only/v6_diversity.html
+        devpars: The parameters for the plotting device
+            It is a dict, and keys are the methods and values are dicts with
+            width, height and res that will be passed to `png()`
+            If not provided, 1000, 1000 and 100 will be used.
+    """
+    input = "immdata:file"
+    output = "outdir:dir:{{in.immdata | stem}}.diversity"
+    lang = config.lang.rscript
+    envs = {
+        "div_methods": {
+            "chao1": [],
+            "hill": [],
+            "div": [],
+            "gini.simp": [],
+            "inv.simp": [],
+            "gini": [],
+            "raref": [],
+        },
+        "devpars": {},
+    }
+    script = "file://../scripts/tcr/SampleDiversity.R"
+    plugin_opts = {
+        "report": "file://../reports/tcr/SampleDiversity.svelte",
+    }
+
+
 class CloneResidency(Proc):
     """Identification of clone residency
 
