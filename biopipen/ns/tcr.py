@@ -249,6 +249,54 @@ class Immunarch(Proc):
     }
 
 
+class SampleDiversity(Proc):
+    """Sample diversity and rarefaction analysis
+
+    This is part of Immunarch, in case we have multiple dataset to compare.
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        div_methods: Methods to calculate diversities
+            It is a dict, keys are the method names, values are the groupings.
+            Each one is a case, multiple columns for a case are separated by `,`
+            For example: `{"div": ["Status", "Sex", "Status,Sex"]}` will run
+            true diversity for samples grouped by `Status`, `Sex`, and both.
+            The diversity for each sample without grouping will also be added
+            anyway.
+            Supported methods: `chao1`, `hill`, `div`, `gini.simp`, `inv.simp`,
+            `gini`, and `raref`. See also
+            https://immunarch.com/articles/web_only/v6_diversity.html
+        devpars: The parameters for the plotting device
+            It is a dict, and keys are the methods and values are dicts with
+            width, height and res that will be passed to `png()`
+            If not provided, 1000, 1000 and 100 will be used.
+    """
+    input = "immdata:file"
+    output = "outdir:dir:{{in.immdata | stem}}.diversity"
+    lang = config.lang.rscript
+    envs = {
+        "div_methods": {
+            "chao1": [],
+            "hill": [],
+            "div": [],
+            "gini.simp": [],
+            "inv.simp": [],
+            "gini": [],
+            "raref": [],
+        },
+        "devpars": {},
+    }
+    script = "file://../scripts/tcr/SampleDiversity.R"
+    plugin_opts = {
+        "report": "file://../reports/tcr/SampleDiversity.svelte",
+    }
+
+
 class CloneResidency(Proc):
     """Identification of clone residency
 
@@ -302,6 +350,39 @@ class Immunarch2VDJtools(Proc):
     output = "outdir:dir:{{in.immdata | stem}}.vdjtools_input"
     lang = config.lang.rscript
     script = "file://../scripts/tcr/Immunarch2VDJtools.R"
+
+
+class ImmunarchSplitIdents(Proc):
+    """Split the data into multiple immunarch datasets by Idents from Seurat
+
+    Note that only the cells in both the `immdata` and `sobjfile` will be
+    kept.
+
+    Requires `immunarch >= 0.9.0` to use `select_clusters()`
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`
+        sobjfile: The Seurat object file.
+            You can set a different ident by `Idents(sobj) <- "new_ident"` to
+            split the data by the new ident, where `"new_ident"` is the an
+            existing column in meta data
+
+    Output:
+        outdir: The output directory containing the RDS files of the splitted
+            immunarch datasets
+
+    Envs:
+        prefix: The prefix of the cell barcodes in the `Seurat` object.
+            Once could use a fixed prefix, or a placeholder with the column
+            name in meta data. For example, `"{Sample}_"` will replace the
+            placeholder with the value of the column `Sample` in meta data.
+        sample_col: The column name in meta data that contains the sample name
+    """
+    input = "immdata:file, sobjfile:file"
+    output = "outdir:dir:{{in.immdata | stem}}.splitidents"
+    lang = config.lang.rscript
+    envs = {"prefix": "{Sample}_", "sample_col": "Sample"}
+    script = "file://../scripts/tcr/ImmunarchSplitIdents.R"
 
 
 class VJUsage(Proc):

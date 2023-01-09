@@ -13,8 +13,11 @@ repos:
         pass_filenames: false
         entry: flake8
         args: [biopipen]
-        types: [python]
-        language: system
+        # types: [python]
+        # language: system
+        # To fix the error in VScode UI: flake8: command not found
+        language: python
+        additional_dependencies: [flake8]
     -   id: versionchecker
         name: Check version agreement in pyproject and __version__
         entry: bash -c

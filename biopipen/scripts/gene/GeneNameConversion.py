@@ -2,16 +2,16 @@ import pandas
 from datar.all import c, right_join, select, relocate
 from biopipen.utils.gene import gene_name_conversion
 
-infile = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
-inopts = {{envs.inopts | repr}}
-outopts = {{envs.outopts | repr}}
-notfound = {{envs.notfound | repr}}
-genecol = {{envs.genecol | repr}}
-output = {{envs.output | repr}}
-infmt = {{envs.infmt | repr}}
-outfmt = {{envs.outfmt | repr}}
-species = {{envs.species | quote}}
+infile = {{in.infile | quote}}  # pyright: ignore
+outfile = {{out.outfile | quote}}  # pyright: ignore
+inopts = {{envs.inopts | repr}}  # pyright: ignore
+outopts = {{envs.outopts | repr}}  # pyright: ignore
+notfound = {{envs.notfound | repr}}  # pyright: ignore
+genecol = {{envs.genecol | repr}}  # pyright: ignore
+output = {{envs.output | repr}}  # pyright: ignore
+infmt = {{envs.infmt | repr}}  # pyright: ignore
+outfmt = {{envs.outfmt | repr}}  # pyright: ignore
+species = {{envs.species | quote}}  # pyright: ignore
 
 df = pandas.read_csv(infile, **inopts)
 

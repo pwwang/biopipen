@@ -1,3 +1,15 @@
+## 0.6.1
+
+- ✨ [cnvkit_pipeline] Allow purity for each sample
+- ✨ [tcr.ImmunarchSplitIdents] Add proc
+- ✨ [vcf.VcfSplitSamples] Add proc
+- 🏗️ [cnvkit.CNVkitCall] Pass purity as input instead of envs
+- ✨ [vcf.VcfIntersect] Add proc
+- ✨ [vcf.VcfSampleSplits] Add envs.private to keep only private sites for each sample
+- 🔧 Fix setup.py file type
+- ✅ Fix tests for utils.gene
+- 🚨 Ignore template strings in python scripts for pyright
+
 ## 0.6.0
 
 - ✨ [cnv] Add AneuploidyScore and AneuploidyScoreSummary

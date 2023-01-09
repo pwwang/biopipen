@@ -30,7 +30,7 @@ if __name__ == "__main__":
         infmt="reporter",
         outfmt="symbol",
         notfound="ignore",
-        expect=["GUCA1A", "UBA7", "THRA", "PTPN21"]
+        expect=["GUCA1A", "MIR5193", "THRA", "PTPN21"]
     )
     run(
         ['NM_003466', 'CDK2', "695", '1320_at', 'Q08345'],

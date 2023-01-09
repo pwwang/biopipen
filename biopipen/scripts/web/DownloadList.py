@@ -1,13 +1,13 @@
 from pathlib import Path
 import cmdy
 
-urlfile = {{in.urlfile | repr}}
-outdir = Path({{out.outdir | repr}})
-tool = {{envs.tool | repr}}
-wget = {{envs.wget | repr}}
-aria2c = {{envs.aria2c | repr}}
-ncores = {{envs.ncores | repr}}
-args = {{envs.args | repr}}
+urlfile = {{in.urlfile | repr}}  # pyright: ignore
+outdir = Path({{out.outdir | repr}})  # pyright: ignore
+tool = {{envs.tool | repr}}  # pyright: ignore
+wget = {{envs.wget | repr}}  # pyright: ignore
+aria2c = {{envs.aria2c | repr}}  # pyright: ignore
+ncores = {{envs.ncores | repr}}  # pyright: ignore
+args = {{envs.args | repr}}  # pyright: ignore
 
 if tool == "wget":
     args["i"] = urlfile
@@ -21,7 +21,7 @@ elif tool == "aria2c":
     args["s"] = ncores
     args["x"] = ncores
     args["_exe"] = aria2c
-    args["i"] = url
+    args["i"] = urlfile
     cmdy.aria2c(**args).fg()
 
 else: # use python

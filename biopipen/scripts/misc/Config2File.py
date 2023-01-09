@@ -1,10 +1,10 @@
 import json
 import rtoml
 
-configstr = {{in.config | repr}}
-outfile = {{out.outfile | quote}}
-infmt = {{envs.infmt | quote}}
-outfmt = {{envs.outfmt | quote}}
+configstr = {{in.config | repr}}  # pyright: ignore
+outfile = {{out.outfile | quote}}  # pyright: ignore
+infmt = {{envs.infmt | quote}}  # pyright: ignore
+outfmt = {{envs.outfmt | quote}}  # pyright: ignore
 
 data = rtoml.loads(configstr) if infmt == "toml" else json.loads(configstr)
 

@@ -3,15 +3,15 @@ from pathlib import Path
 from hashlib import md5
 import cmdy
 
-infile = {{in.infile | repr}}
-outfile = {{out.outfile | repr}}
-bcftools = {{envs.bcftools | repr}}
-keep = {{envs.keep | repr}}
-args = {{envs.args | repr}}
-ncores = {{envs.ncores | repr}}
-tmpdir = {{envs.tmpdir | repr}}
-includes = {{envs.includes | repr}}
-excludes = {{envs.excludes | repr}}
+infile = {{in.infile | repr}}  # pyright: ignore
+outfile = {{out.outfile | repr}}  # pyright: ignore
+bcftools = {{envs.bcftools | repr}}  # pyright: ignore
+keep = {{envs.keep | repr}}  # pyright: ignore
+args = {{envs.args | repr}}  # pyright: ignore
+ncores = {{envs.ncores | repr}}  # pyright: ignore
+tmpdir = {{envs.tmpdir | repr}}  # pyright: ignore
+includes = {{envs.includes | repr}}  # pyright: ignore
+excludes = {{envs.excludes | repr}}  # pyright: ignore
 
 args["_exe"] = bcftools
 args["_"] = infile
