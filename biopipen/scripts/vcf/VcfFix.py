@@ -21,7 +21,13 @@ infile = {{in.infile | quote}}  # pyright: ignore
 instem = {{in.infile | stem | quote}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
 
-{{envs.helpers}}  # pyright: ignore
+{% if envs.helpers | isinstance: str %}  # pyright: ignore
+{% import_ textwrap %} # pyright: ignore
+{{textwrap.dedent(envs.helpers.strip("\n"))}}  # pyright: ignore
+{% else %}  # pyright: ignore
+{{envs.helpers | join("\n")}}  # pyright: ignore
+{% endif %}  # pyright: ignore
+
 fixes = []
 {%- for fix_item in envs.fixes %}  # pyright: ignore
 

@@ -288,6 +288,8 @@ class VcfFix(Proc):
                 is also a list of values for each FORMAT.
             If a record matches multiple fixes, the first one is applied.
         helpers: raw code the provide some helpers for the fixes
+            The code will automatically dedented if given as a string. A list
+            of strings is also supported and will be joined with newlines.
 
     Requires:
         - name: biopipen
