@@ -20,6 +20,7 @@ cases = {{envs | r}}
 {% endif %}
 dbs = {{envs.dbs | r}}
 ncores = {{envs.ncores | r}}
+sigmarkers = {{envs.sigmarkers | r}}
 
 set.seed(8525)
 options(future.globals.maxSize = 80000 * 1024^2)
@@ -35,7 +36,7 @@ do_enrich = function(case, markers) {
     print(paste("  Running enrichment for case:", case))
     casedir = file.path(outdir, case)
     dir.create(casedir, showWarnings = FALSE)
-    markers_sig = markers %>% filter(p_val_adj < 0.05)
+    markers_sig = markers %>% filter(!!parse_expr(sigmarkers))
     write.table(
         markers_sig,
         file.path(casedir, "markers.txt"),
