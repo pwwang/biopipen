@@ -15,6 +15,7 @@ outdir = {{ out.outdir | quote }}
 subject_key = {{ envs.subject | r }}
 group_key = {{ envs.group | r }}
 sample_order = {{ envs.order | r }}
+sample_groups = {{ envs.sample_groups | r }}
 
 immdata = readRDS(immfile)
 
@@ -169,8 +170,11 @@ dir.create(venn_dir, showWarnings = FALSE)
 pie_dir = file.path(outdir, "pie")
 dir.create(pie_dir, showWarnings = FALSE)
 
-subjects = immdata$meta[, subject_key, drop=F] %>%
-    distinct(.[, subject_key], .keep_all = TRUE)
+# Counts
+counts_dir = file.path(outdir, "counts")
+dir.create(counts_dir, showWarnings = FALSE)
+
+subjects = immdata$meta[, subject_key, drop=F] %>% distinct()
 for (i in seq_len(nrow(subjects))) {
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
@@ -214,13 +218,39 @@ for (i in seq_len(nrow(subjects))) {
     )
     counts[is.na(counts)] = 0
 
+    # Save samples to group_by so they can be aligned accordingly in the report
+    if (!is.null(sample_groups)) {
+        group_dir = file.path(outdir, "sample_groups")
+        dir.create(group_dir, showWarnings = FALSE)
+
+        sgroups = subject_row %>%
+            left_join(immdata$meta) %>%
+            pull(sample_groups) %>%
+            unique() %>%
+            paste(collapse = "-")
+        group_file = file.path(group_dir, paste0(sgroups, ".txt"))
+        cat(subject, file = group_file, sep = "\n", append = TRUE)
+    }
+
+    # Save counts
+    write.table(
+        counts,
+        file=file.path(counts_dir, paste0(subject, ".txt")),
+        sep="\t",
+        row.names=TRUE,
+        col.names=TRUE,
+        quote=FALSE
+    )
+
     # scatter plot
-    for (j in seq_along(groups)) {
-        if (j == 1) next
-        scatter_p = plot_scatter(counts, subject, groups[j-1], groups[j])
+    # Make plots B ~ A, C ~ B, and C ~ A for order A, B, C
+    combns = combn(groups, 2, simplify=FALSE)
+    for (j in seq_along(combns)) {
+        pair = combns[[j]]
+        scatter_p = plot_scatter(counts, subject, pair[1], pair[2])
         scatter_png = file.path(
             scatter_dir,
-            paste0("scatter_", subject, ".png")
+            paste0("scatter_", subject, "_", pair[1], "_", pair[2], ".png")
         )
         png(scatter_png, res=300, height=2000, width=2500)
         print(scatter_p)

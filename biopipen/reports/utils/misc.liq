@@ -36,7 +36,8 @@ import { Image } from "../components";
                 style="padding-left: 28px; font-weight: bold; padding-top: 10px; margin-bottom: -10px;">
                 {{ src | stem }}
             </div>
-            {% elif caps %}
+            {% elif caps is false %}
+            {% else %}
             <div
                 style="padding-left: 28px; font-weight: bold; padding-top: 10px; margin-bottom: -10px;">
                 {{ caps[i] }}
