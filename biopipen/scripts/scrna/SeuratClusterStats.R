@@ -427,7 +427,7 @@ do_exprs = function() {
     genes = envs$exprs$genes
     envs$exprs$genes = NULL
     if (!is.null(genes) && is.character(genes) && file.exists(genes)) {
-        genes = read.table(genes, header = FALSE, row.names = NULL, check.names = FALSE)
+        genes = read.table(genes, header = FALSE, sep = "\t", row.names = NULL, check.names = FALSE)
         genes = genes[,1,drop=TRUE]
     }
 

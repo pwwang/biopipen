@@ -35,16 +35,12 @@ class SeuratLoading(Proc):
 
 
 class SeuratPreparing(Proc):
-    """Seurat - Loading and preparing data
+    """Seurat - Loading, preparing and applying QC to data
 
     What will be done ?
     https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)
-    1. All samples with be integrated as a single seurat object
-    2. QC
-    3. Normalization
-    4. Feature selection
-    5. Scaling
-    6. Linear dimensional reduction
+    and
+    https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Create_one_merged_object
 
     Input:
         metafile: The metadata of the samples
@@ -57,13 +53,22 @@ class SeuratPreparing(Proc):
     Output:
         rdsfile: The RDS file with the Seurat object
             Note that the cell ids are preficed with sample names
+            QC plots will be saved in `<job.outdir>/before-qc` and
+            `<job.outdir>/after-qc`
 
     Envs:
         ncores: Number of cores to use
-        use_sct: Whether use SCTransform routine or not
-            See https://satijalab.org/seurat/articles/integration_rpca.html
-        <Seurat::Function>: Arguments for the different Seurat functions
-            Note that `dims = 30` will be expanded as `dims = 1:30`
+        cell_qc: filter expression to filter cells, using
+            `tidyrseurat::filter()`.
+             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
+             `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`
+             For example: `nFeature_RNA > 200 & percent.mt < 5` will
+            keep cells with more than 200 genes and less than 5% mitochondrial
+            genes.
+        gene_qc: filter genes. Currently only `min_cells` is supported.
+            `min_cells` is the minimum number of cells that a gene must be
+            expressed in to be kept.
+            `gene_qc` is applied after `cell_qc`.
 
     Requires:
         - name: r-seurat
@@ -82,19 +87,13 @@ class SeuratPreparing(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "use_sct": False,
-        "SCTransform": {"method": "glmGamPoi"},
-        "SelectIntegrationFeatures": {"nfeatures": 3000},
-        "PrepSCTIntegration": {},
-        "NormalizeData": {},
-        "FindVariableFeatures": {},
-        "FindIntegrationAnchors": {},
-        "IntegrateData": {},
-        "ScaleData": {"verbose": False},
-        "RunPCA": {"npcs": 30, "verbose": False},
-        "RunUMAP": {"reduction": "pca", "dims": 30},
+        "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
+        "gene_qc": {"min_cells": 3},
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
+    plugin_opts = {
+        "report": "file://../reports/scrna/SeuratPreparing.svelte",
+    }
 
 
 class SeuratClustering(Proc):
@@ -107,7 +106,11 @@ class SeuratClustering(Proc):
         rdsfile: The seurat object with cluster information
 
     Envs:
-        FindClusters: Arguments to `FindClusters()`
+        ncores: Number of cores to use
+        use_sct: Whether use SCTransform routine or not
+            See https://satijalab.org/seurat/articles/integration_rpca.html
+        <Seurat::Function>: Arguments for the different Seurat functions
+            Note that `dims = 30` will be expanded as `dims = 1:30`
 
     Requires:
         - name: r-seurat
@@ -125,6 +128,18 @@ class SeuratClustering(Proc):
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
+        "use_sct": False,
+        "SCTransform": {"method": "glmGamPoi"},
+        "SelectIntegrationFeatures": {"nfeatures": 3000},
+        "PrepSCTIntegration": {},
+        "NormalizeData": {},
+        "FindVariableFeatures": {},
+        "FindIntegrationAnchors": {},
+        "IntegrateData": {},
+        "ScaleData": {"verbose": False},
+        "RunPCA": {"npcs": 30, "verbose": False},
+        "RunUMAP": {"reduction": "pca", "dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
     }
@@ -449,6 +464,11 @@ class MarkersFinder(Proc):
         dbs: The dbs to do enrichment analysis for significant markers
             See below for all librarys
             https://maayanlab.cloud/Enrichr/#libraries
+        sigmarkers: An expression passed to `dplyr::filter()` to filter the
+            significant markers for enrichment analysis
+            Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
+            `p_val_adj`
+            Example - `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
     """
 
     input = "srtobj:file, casefile:file"
@@ -466,6 +486,7 @@ class MarkersFinder(Proc):
             "GO_Molecular_Function_2021",
             "KEGG_2021_Human",
         ],
+        "sigmarkers": "p_val_adj < 0.05",
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
