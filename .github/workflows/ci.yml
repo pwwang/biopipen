@@ -20,7 +20,8 @@ jobs:
           auto-update-conda: true
           activate-environment: mybase
           channels: conda-forge,defaults
-          mamba-version: "*"
+          # mamba-version: "*"
+          miniforge-variant: Mambaforge
       - name: Create conda environments and install biopipen
         run: |
           for envfile in tests/conda/env_*.yml; do
