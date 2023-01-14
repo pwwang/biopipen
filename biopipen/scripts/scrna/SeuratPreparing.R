@@ -30,16 +30,6 @@ if (!"RNADir" %in% meta_cols) {
     stop("Error: Column `RNADir` is not found in metafile.")
 }
 
-.expand_dims = function(args, name = "dims") {
-    # Expand dims from 30 to 1:30
-    if (is.numeric(args[[name]]) && length(args[[name]] == 1)) {
-        args[[name]] = 1:args[[name]]
-    }
-    args
-}
-envs$FindIntegrationAnchors = .expand_dims(envs$FindIntegrationAnchors)
-envs$IntegrateData = .expand_dims(envs$IntegrateData)
-envs$RunUMAP = .expand_dims(envs$RunUMAP)
 
 rename_files = function(e, sample, path) {
     tmpdatadir = file.path(joboutdir, "renamed", sample)
@@ -94,10 +84,6 @@ load_sample = function(sample) {
     obj = subset(obj, cells = names(cell_exprs[cell_exprs > 0]))
     # obj = SCTransform(object=obj, return.only.var.genes=FALSE, verbose=FALSE)
     obj = RenameCells(obj, add.cell.id = sample)
-    obj$percent.mt = PercentageFeatureSet(obj, pattern = "^MT-")
-    if (!is.null(envs$qc) && nchar(envs$qc) > 0) {
-        obj = obj %>% filter(parse_expr(envs$qc))
-    }
     # Attach meta data
     for (mname in names(mdata)) {
         if (mname %in% c("RNADir", "TCRDir")) { next }
@@ -113,104 +99,58 @@ load_sample = function(sample) {
 
 # Load data
 samples = as.character(metadata$Sample)
-cached_file = file.path(joboutdir, "obj_list.rds")
-if (file.exists(cached_file) && file.mtime(cached_file) > file.mtime(metafile)) {
-    print("- Loading cached data ...")
-    obj_list = readRDS(cached_file)
-} else {
-    print("- Reading samples individually ...")
-    obj_list = lapply(samples, load_sample)
-    names(obj_list) = samples
-    saveRDS(obj_list, file = cached_file)
+
+print("- Reading samples individually ...")
+obj_list = lapply(samples, load_sample)
+
+print("- Merging samples ...")
+y = c()
+for (i in 2:length(obj_list)) y = c(y, obj_list[[i]])
+sobj = merge(obj_list[[1]], y)
+
+print("- Adding metadata for QC ...")
+sobj$percent.mt = PercentageFeatureSet(sobj, pattern = "^MT-")
+sobj$percent.ribo = PercentageFeatureSet(sobj, pattern = "^RP[SL]")
+sobj$percent.hb = PercentageFeatureSet(sobj, pattern = "^HB[^(P)]")
+sobj$percent.plat = PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
+
+print("- Plotting QC metrics before filtering ...")
+feats = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat")
+bqcdir = file.path(joboutdir, "before-qc")
+dir.create(bqcdir, recursive = TRUE, showWarnings = FALSE)
+for (feat in feats) {
+    png(file.path(bqcdir, paste0(feat, ".png")), width = 800 + length(samples) * 15, height = 600, res = 100)
+    print(VlnPlot(sobj, group.by = "Sample", features = feat, pt.size = 0.1) + NoLegend())
+    dev.off()
 }
+cat(paste(dim(sobj), collapse = " x "), file=file.path(bqcdir, "dim.txt"))
 
-{% if envs.use_sct -%}
-# https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1
-print("- Performing SCTransform on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    print(paste("  Performing SCTransform on sample:", x@project.name, "..."))
-    args = list_update(envs$SCTransform, list(object = x))
-    do_call(SCTransform, args)
-})
+print("- Applying cell QC filters ...")
+print(paste("  Dim before QC:", paste(dim(sobj), collapse="x")))
+if (!is.null(envs$cell_qc) && nchar(envs$cell_qc) > 0) {
+    sobj = sobj %>% filter(!!rlang::parse_expr(envs$cell_qc))
+}
+print(paste("  Dim after QC:", paste(dim(sobj), collapse="x")))
 
-print("- Running SelectIntegrationFeatures ...")
-envs$SelectIntegrationFeatures$object.list = obj_list
-features = do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
+print("- Applying gene QC filters ...")
+print(paste("  Dim before QC:", paste(dim(sobj), collapse="x")))
+if (is.list(envs$gene_qc)) {
+    if ("min_cells" %in% names(envs$gene_qc)) {
+        genes = rownames(sobj)[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
+        sobj = subset(sobj, features = genes)
+    }
+}
+print(paste("  Dim after QC:", paste(dim(sobj), collapse="x")))
 
-print("- Running PrepSCTIntegration ...")
-envs$PrepSCTIntegration$object.list = obj_list
-envs$PrepSCTIntegration$anchor.features = features
-obj_list = do_call(PrepSCTIntegration, envs$PrepSCTIntegration)
+print("- Plotting QC metrics after filtering ...")
+aqcdir = file.path(joboutdir, "after-qc")
+dir.create(aqcdir, recursive = TRUE, showWarnings = FALSE)
+for (feat in feats) {
+    png(file.path(aqcdir, paste0(feat, ".png")), width = 800 + length(samples) * 15, height = 600, res = 100)
+    print(VlnPlot(sobj, group.by = "Sample", features = feat, pt.size = 0.1) + NoLegend())
+    dev.off()
+}
+cat(paste(dim(sobj), collapse = " x "), file=file.path(aqcdir, "dim.txt"))
 
-print("- Running PCA on each sample ...")
-obj_list = lapply(X = obj_list, FUN = RunPCA, features = features)
-
-print("- Running FindIntegrationAnchors ...")
-fia_args = list_setdefault(
-    envs$FindIntegrationAnchors,
-    object.list = obj_list,
-    anchor.features = features,
-    normalization.method = "SCT",
-    reduction = "rpca"
-)
-anchors = do_call(FindIntegrationAnchors, fia_args)
-
-print("- Running IntegrateData ...")
-id_args = list_setdefault(envs$IntegrateData, normalization.method = "SCT")
-obj_list = do_call(IntegrateData, id_args)
-
-{%- else -%}
-# https://satijalab.org/seurat/articles/integration_rpca.html
-print("- Performing NormalizeData + FindVariableFeatures on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    print(paste("  On sample:", x@project.name, "..."))
-    args = list_update(envs$NormalizeData, list(object = x))
-    x <- do_call(NormalizeData, args)
-
-    args = list_update(envs$FindVariableFeatures, list(object = x))
-    do_call(FindVariableFeatures, args)
-})
-
-
-print("- Running SelectIntegrationFeatures ...")
-envs$SelectIntegrationFeatures$object.list = obj_list
-features = do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
-
-print("- Running ScaleData + RunPCA on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    print(paste("  On sample:", x@project.name, "..."))
-    args = list_setdefault(envs$ScaleData, object = x, features = features)
-    x <- do_call(ScaleData, args)
-
-    RunPCA(x, features = features, verbose = FALSE)
-})
-
-print("- Running FindIntegrationAnchors ...")
-fia_args = list_setdefault(
-    envs$FindIntegrationAnchors,
-    object.list = obj_list,
-    anchor.features = features,
-    reduction = "rpca"
-)
-anchors = do_call(FindIntegrationAnchors, fia_args)
-
-print("- Running IntegrateData ...")
-envs$IntegrateData$anchorset = anchors
-obj_list = do_call(IntegrateData, envs$IntegrateData)
-
-DefaultAssay(obj_list) <- "integrated"
-
-envs$ScaleData$object = obj_list
-obj_list = do_call(ScaleData, envs$ScaleData)
-
-{%- endif %}
-
-print("- Running RunPCA ...")
-envs$RunPCA$object = obj_list
-obj_list = do_call(RunPCA, envs$RunPCA)
-
-print("- Running RunUMAP ...")
-envs$RunUMAP$object = obj_list
-obj_list = do_call(RunUMAP, envs$RunUMAP)
-
-saveRDS(obj_list, rdsfile)
+print("- Saving results ...")
+saveRDS(sobj, rdsfile)

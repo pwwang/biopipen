@@ -1,7 +1,9 @@
-from typing import Any, Sequence, Union
+from __future__ import annotations
+from typing import Any, Sequence
 
 
 class HeaderItem(dict):
+    """The base class of header items"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.raw = None
@@ -29,6 +31,7 @@ class HeaderItem(dict):
 
 
 class HeaderInfo(HeaderItem):
+    """The INFO items in the header"""
 
     kind = "info"
 
@@ -46,6 +49,7 @@ class HeaderInfo(HeaderItem):
 
 
 class HeaderFormat(HeaderItem):
+    """The FORMAT items in the header"""
 
     kind = "format"
 
@@ -63,6 +67,7 @@ class HeaderFormat(HeaderItem):
 
 
 class HeaderFilter(HeaderItem):
+    """The FILTER items in the header"""
 
     kind = "filter"
 
@@ -78,6 +83,7 @@ class HeaderFilter(HeaderItem):
 
 
 class HeaderContig(HeaderItem):
+    """The contig items in the header"""
 
     kind = "contig"
 
@@ -90,6 +96,7 @@ class HeaderContig(HeaderItem):
 
 
 class HeaderGeneral(HeaderItem):
+    """The general items in the header"""
 
     kind = "header"
 
@@ -113,6 +120,7 @@ class HeaderGeneral(HeaderItem):
 
 
 class Fields(list):
+    """The fields/column names"""
 
     kind = "fields"
 
@@ -131,12 +139,17 @@ class Fields(list):
     def __str__(self):
         return "#" + "\t".join(self)
 
+    @property
+    def samples(self):
+        return self[9:]
+
     @staticmethod
     def is_type(raw: str) -> bool:
         return raw.startswith("#CHROM")
 
 
 class Info(dict):
+    """The INFO of the variant"""
     @classmethod
     def from_str(cls, infostr: str):
         obj = cls()
@@ -159,6 +172,8 @@ class Info(dict):
 
 
 class Format(list):
+    """The FORMAT of the variant"""
+
     @classmethod
     def from_str(cls, formatstr: str):
         return cls(formatstr.split(":"))
@@ -168,6 +183,8 @@ class Format(list):
 
 
 class Alt(list):
+    """The ALT of the variant"""
+
     @classmethod
     def from_str(cls, altstr):
         return cls(altstr.split(","))
@@ -177,6 +194,8 @@ class Alt(list):
 
 
 class Filter(list):
+    """The FILTER of the variant"""
+
     @classmethod
     def from_str(cls, filtstr: str):
         return cls(filtstr.split(";"))
@@ -185,18 +204,71 @@ class Filter(list):
         return ";".join(self)
 
 
-class Sample(Format):
-    ...
+class Sample(dict):
+    """One sample of the variant"""
+    def __init__(self, values: Sequence[str], format: Format):
+        super().__init__()
+        self._format = format
+        for name, value in zip(format, values):
+            self[name] = value
+
+    @property
+    def format(self):
+        return self._format
+
+    @classmethod
+    def from_str(cls, value_str: str, format: Format):
+        return cls(value_str.split(":"), format)
+
+    @classmethod
+    def from_strs(cls, value_strs: Sequence[str], format: Format):
+        return cls(value_strs, format)
+
+    def __str__(self) -> str:
+        values = [self[fmt] for fmt in self._format]
+        return ":".join(values)
 
 
 class Samples(list):
-    @classmethod
-    def from_str(cls, sample_str: str):
-        return cls(sample_str.split("\t"))
+    """The samples of the variant"""
+
+    def __init__(self, samples: Sequence[Sample], format: Format):
+        super().__init__(samples)
+        self._format = format
+
+    @property
+    def format(self):
+        return self._format
 
     @classmethod
-    def from_strs(cls, sample_strs: list):
-        return cls(Sample.from_str(s) for s in sample_strs)
+    def from_str(cls, sample_str: str, format: Format):
+        return cls(
+            [
+                Sample.from_str(sam_str, format)
+                for sam_str in sample_str.split("\t")
+            ],
+            format,
+        )
+
+    @classmethod
+    def from_strs(cls, sample_strs: Sequence[str], format: Format):
+        return cls(
+            [
+                Sample.from_str(sam_str, format)
+                for sam_str in sample_strs
+            ],
+            format,
+        )
+
+    @classmethod
+    def from_strss(cls, sample_strss: Sequence[Sequence[str]], format: Format):
+        return cls(
+            [
+                Sample.from_strs(sam_strs, format)
+                for sam_strs in sample_strss
+            ],
+            format,
+        )
 
     def __str__(self) -> str:
         return "\t".join(str(s) for s in self)
@@ -235,16 +307,29 @@ class Variant:
     def from_strs(
         cls,
         chrom: str,
-        pos: Union[int, str],
+        pos: int | str,
         id: str,
         ref: str,
-        alt: Union[str, Sequence[str]],
+        alt: str | Sequence[str],
         qual: str,
-        filter: Union[str, Sequence[str]],
-        info: Union[str, dict],
-        format: Union[str, Sequence[str]],
-        samples: Union[str, Sequence[str], Sequence[Sequence[str]]],
+        filter: str | Sequence[str],
+        info: str | dict,
+        format: str | Sequence[str],
+        samples: str | Sequence[str] | Sequence[Sequence[str]],
     ):
+        format = (
+            Format.from_str(format)
+            if isinstance(format, str)
+            else Format(format)
+        )
+
+        if isinstance(samples, str):
+            samples = Samples.from_str(samples, format)
+        elif isinstance(samples[0], str):
+            samples = Samples.from_strs(samples, format)
+        else:
+            samples = Samples.from_strss(samples, format)
+
         obj = cls(
             chrom,
             int(pos),
@@ -256,14 +341,8 @@ class Variant:
             if isinstance(filter, str)
             else Filter(filter),
             Info.from_str(info) if isinstance(info, str) else Info(info),
-            Format.from_str(format)
-            if isinstance(format, str)
-            else Format(format),
-            Samples.from_str(samples)
-            if isinstance(samples, str)
-            else Samples.from_strs(samples)
-            if isinstance(samples, Sequence) and isinstance(samples[0], str)
-            else Samples(samples),
+            format,
+            samples,
         )
         return obj
 
@@ -281,7 +360,7 @@ class Variant:
         filter = Filter.from_str(items[6])
         info = Info.from_str(items[7])
         format = Format.from_str(items[8])
-        samples = Samples.from_strs(items[9:])
+        samples = Samples.from_strs(items[9:], format)
         obj = cls(
             chrom,
             pos,

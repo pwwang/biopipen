@@ -319,7 +319,9 @@ class CloneResidency(Proc):
         order: The order of the values in `group`. Early-ordered group will
             be used as x-axis in scatter plots
             If there are more than 2 groups, for example, [A, B, C], the
-            scatter plots will be drawn for pairs: B ~ A, C ~ B.
+            scatter plots will be drawn for pairs: B ~ A, C ~ B and C ~ A.
+        sample_groups: How the samples aligned in the report.
+            Useful for cohort with large number of samples.
     """
 
     input = "immdata:file"
@@ -329,6 +331,7 @@ class CloneResidency(Proc):
         "subject": [],
         "group": None,
         "order": [],
+        "sample_groups": None,
     }
     script = "file://../scripts/tcr/CloneResidency.R"
     order = 2

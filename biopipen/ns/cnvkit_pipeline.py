@@ -1,9 +1,21 @@
 """The CNVkit pipeline."""
 import pandas
+from diot import Diot
 from datar.tibble import tibble
 from pipen_cli_run import Pipeline
 
 from ..core.config import config
+
+
+DEFAULT_COLS = Diot(
+    group="Group",
+    purity="Purity",
+    snpvcf="SnpVcf",
+    bam="Bam",
+    vcf_sample_id="VcfSampleId",
+    vcf_normal_id="VcfNormalId",
+    sex="Sex",
+)
 
 
 # channel modifier helpers
@@ -11,8 +23,8 @@ def _get_metadf(ch):
     return pandas.read_csv(ch.outfile.tolist()[0], sep="\t", header=0)
 
 
-def _get_all_bams(ch):
-    return _get_metadf(ch)["BamFile"].tolist()
+def _get_all_bams(ch, bamcol):
+    return _get_metadf(ch)[bamcol].tolist()
 
 
 class CNVkitPipeline(Pipeline):
@@ -29,9 +41,23 @@ class CNVkitPipeline(Pipeline):
         E.g. all possible exons for the reference genome.
         Format - BED, interval list, etc.
         Optional if `method` is `wgs`.
-    - type_col: The column name in the metafile that indicates the sample type.
-    - type_tumor: The type of tumor samples in `type_col` column of `metafile`
-    - type_normal: The type of normal samples in `type_col` column of `metafile`
+    - case: The group name of samples in `metacols.group` to call CNVs for.
+    - control: The group name of samples in `metacols.group` to use as reference
+    - metacols: The column names for each type of information in metafile
+        - group: The column name in the metafile that indicates the sample group
+        - purity: The column name in the metafile that indicates the sample
+            purity
+        - snpvcf: The column name in the metafile that indicates the path to
+            the SNP VCF file
+        - bam: The column name in the metafile that indicates the path to the
+            BAM file
+        - sample: The column name in the metafile that indicates the sample ID
+        - vcf_sample_id: The column name in the metafile that indicates the
+            sample ID in the VCF file
+        - vcf_normal_id: The column name in the metafile that indicates the
+            normal sample ID in the VCF file
+        - sex: The column name in the metafile that indicates the sample
+            sex
 
     Other command options from `cnvkit.py batch`:
     - method: Sequencing protocol: hybridization capture ('hybrid'),
@@ -160,14 +186,15 @@ class CNVkitPipeline(Pipeline):
     - Sample: The sample_id used for target/antitarget files. If not provided,
         the sample_id will be the first part of basename of the bam file.
         For exapmle: `D123.tumor.bam -> D123`
-    - BamFile: The path to the bam file, better using absolute path.
-    - `<type_col>`: The type of the sample, defining the tumor/normal samples.
-    - SampleSex: Guess each sample from coverage of X and Y chromosomes if
+    - `<bam>`: The path to the bam file, better using absolute path.
+    - `<group>`: The type of the sample, defining the tumor/normal samples.
+    - `<sex>`: Guess each sample from coverage of X and Y chromosomes if
         not given.
-    - VcfFile: file name containing variants for segmentation by allele
+    - `<purity>`: Estimated tumor cell fraction, a.k.a. purity or cellularity.
+    - `<snpvcf>`: file name containing variants for segmentation by allele
         frequencies.
-    - VcfSampleId: Sample ID in the VCF file.
-    - VcfNormalId: Normal sample ID in the VCF file.
+    - `<vcf_sample_id>`: Sample ID in the VCF file.
+    - `<vcf_normal_id>`: Normal sample ID in the VCF file.
 
     To run this pipeline from command line, with the `pipen-run` plugin:
     >>> # In this case, `pipeline.cnvkit_pipeline.metafile` must be provided
@@ -181,6 +208,10 @@ class CNVkitPipeline(Pipeline):
     """
 
     defaults = config.pipeline.cnvkit_pipeline
+
+    def col(self, name: str):
+        metacols = self.options.get("metacols", {})
+        return metacols.get(name, DEFAULT_COLS[name])
 
     def build(self):
         from .cnvkit import (
@@ -245,7 +276,7 @@ class CNVkitPipeline(Pipeline):
             requires = [MetaFile, CNVkitAccess]
             input_data = lambda ch1, ch2: [
                 (
-                    _get_all_bams(ch1),
+                    _get_all_bams(ch1, self.col("bam")),
                     ch2.iloc[0, 0],
                     self.options.get("baitfile"),
                 ),
@@ -276,7 +307,7 @@ class CNVkitPipeline(Pipeline):
         class CNVkitCoverageTarget(CNVkitCoverage):
             requires = [MetaFile, CNVkitAutobin]
             input_data = lambda ch1, ch2: tibble(
-                _get_all_bams(ch1),
+                _get_all_bams(ch1, self.col("bam")),
                 target_file=ch2.target_file.tolist()[0],
             )
             envs = {
@@ -291,7 +322,7 @@ class CNVkitPipeline(Pipeline):
         class CNVkitCoverageAntitarget(CNVkitCoverage):
             requires = [MetaFile, CNVkitAutobin]
             input_data = lambda ch1, ch2: tibble(
-                _get_all_bams(ch1),
+                _get_all_bams(ch1, self.col("bam")),
                 target_file=ch2.antitarget_file.tolist()[0],
             )
             envs = {
@@ -306,9 +337,8 @@ class CNVkitPipeline(Pipeline):
         class CNVkitReference(CNVkitReference):
             def _get_input_data(ch1, ch2, ch3, ch4):
                 metadf = _get_metadf(ch1)
-                normal_masks = (
-                    metadf[self.options.type_col] == self.options.type_normal
-                )
+                normal_masks = metadf[self.col("group")] == self.options.control
+
                 return tibble(
                     covfiles=(
                         [None]
@@ -321,8 +351,8 @@ class CNVkitPipeline(Pipeline):
                     target_file=ch4.target_file,
                     antitarget_file=ch4.antitarget_file,
                     sample_sex=(
-                        ",".join(metadf.SampleSex[normal_masks])
-                        if "SampleSex" in metadf.columns
+                        ",".join(metadf[self.col("sex")][normal_masks])
+                        if self.col("sex") in metadf.columns
                         else [None]
                     ),
                 )
@@ -352,18 +382,12 @@ class CNVkitPipeline(Pipeline):
         class CNVkitFix(CNVkitFix):
             def _get_input_data(ch1, ch2, ch3, ch4):
                 metadf = _get_metadf(ch1)
-                tumor_masks = (
-                    metadf[self.options.type_col] == self.options.type_tumor
-                )
+                tumor_masks = metadf[self.col("group")] == self.options.case
                 return tibble(
                     target_file=ch2.outfile[tumor_masks],
                     antitarget_file=ch3.outfile[tumor_masks],
                     reference=ch4.outfile,
-                    sample_id=(
-                        metadf.SampleID[tumor_masks]
-                        if "SampleID" in metadf.columns
-                        else [None]
-                    ),
+                    sample_id=metadf["Sample"][tumor_masks],
                 )
 
             requires = [
@@ -386,24 +410,22 @@ class CNVkitPipeline(Pipeline):
         class CNVkitSegment(CNVkitSegment):
             def _get_input_data(ch1, ch2):
                 metadf = _get_metadf(ch1)
-                tumor_masks = (
-                    metadf[self.options.type_col] == self.options.type_tumor
-                )
+                tumor_masks = metadf[self.col("group")] == self.options.case
                 return tibble(
                     chrfile=ch2.outfile,
                     vcf=(
-                        metadf.SnpVcf[tumor_masks]
-                        if "SnpVcf" in metadf.columns
+                        metadf[self.col("snpvcf")][tumor_masks]
+                        if self.col("snpvcf") in metadf.columns
                         else [None]
                     ),
                     sample_id=(
-                        metadf.VcfSampleID[tumor_masks]
-                        if "VcfSampleID" in metadf.columns
+                        metadf[self.col("vcf_sample_id")][tumor_masks]
+                        if self.col("vcf_sample_id") in metadf.columns
                         else [None]
                     ),
                     normal_id=(
-                        metadf.NormalID[tumor_masks]
-                        if "NormalID" in metadf.columns
+                        metadf[self.col("vcf_normal_id")][tumor_masks]
+                        if self.col("vcf_normal_id") in metadf.columns
                         else [None]
                     ),
                 )
@@ -430,26 +452,24 @@ class CNVkitPipeline(Pipeline):
         class CNVkitScatter(CNVkitScatter):
             def _get_input_data(ch1, ch2, ch3):
                 metadf = _get_metadf(ch1)
-                tumor_masks = (
-                    metadf[self.options.type_col] == self.options.type_tumor
-                )
+                tumor_masks = metadf[self.col("group")] == self.options.case
 
                 return tibble(
                     chrfile=ch2.outfile,
                     cnsfile=ch3.outfile,
                     vcf=(
-                        metadf.SnpVcf[tumor_masks]
-                        if "SnpVcf" in metadf.columns
+                        metadf[self.col("snpvcf")][tumor_masks]
+                        if self.col("snpvcf") in metadf.columns
                         else [None]
                     ),
                     sample_id=(
-                        metadf.VcfSampleID[tumor_masks]
-                        if "VcfSampleID" in metadf.columns
+                        metadf[self.col("vcf_sample_id")][tumor_masks]
+                        if self.col("vcf_sample_id") in metadf.columns
                         else [None]
                     ),
                     normal_id=(
-                        metadf.NormalID[tumor_masks]
-                        if "NormalID" in metadf.columns
+                        metadf[self.col("vcf_normal_id")][tumor_masks]
+                        if self.col("vcf_normal_id") in metadf.columns
                         else [None]
                     ),
                 )
@@ -464,15 +484,13 @@ class CNVkitPipeline(Pipeline):
         class CNVkitDiagram(CNVkitDiagram):
             def _get_input_data(ch1, ch2, ch3):
                 metadf = _get_metadf(ch1)
-                tumor_masks = (
-                    metadf[self.options.type_col] == self.options.type_tumor
-                )
+                tumor_masks = metadf[self.col("group")] == self.options.case
                 return tibble(
                     chrfile=ch2.outfile,
                     cnsfile=ch3.outfile,
                     sample_sex=(
-                        metadf.SampleSex[tumor_masks]
-                        if "SampleSex" in metadf.columns
+                        metadf[self.col("sex")][tumor_masks]
+                        if self.col("sex") in metadf.columns
                         else [None]
                     ),
                 )
@@ -491,14 +509,12 @@ class CNVkitPipeline(Pipeline):
         class CNVkitHeatmapCns(CNVkitHeatmap):
             def _get_input_data(ch1, ch2):
                 metadf = _get_metadf(ch1)
-                tumor_masks = (
-                    metadf[self.options.type_col] == self.options.type_tumor
-                )
+                tumor_masks = metadf[self.col("group")] == self.options.case
                 return tibble(
                     segfiles=[ch2.outfile.tolist()],
                     sample_sex=(
-                        ",".join(metadf.SampleSex[tumor_masks])
-                        if "SampleSex" in metadf.columns
+                        ",".join(metadf[self.col("sex")][tumor_masks])
+                        if self.col("sex") in metadf.columns
                         else [None]
                     ),
                 )
@@ -520,15 +536,12 @@ class CNVkitPipeline(Pipeline):
             class CNVkitHeatmapCnr(CNVkitHeatmap):
                 def _get_input_data(ch1, ch2):
                     metadf = _get_metadf(ch1)
-                    tumor_masks = (
-                        metadf[self.options.type_col]
-                        == self.options.type_tumor
-                    )
+                    tumor_masks = metadf[self.col("group")] == self.options.case
                     return tibble(
                         segfiles=[ch2.outfile.tolist()],
                         sample_sex=(
-                            ",".join(metadf.SampleSex[tumor_masks])
-                            if "SampleSex" in metadf.columns
+                            ",".join(metadf[self.col("sex")][tumor_masks])
+                            if self.col("sex") in metadf.columns
                             else [None]
                         ),
                     )
@@ -550,35 +563,33 @@ class CNVkitPipeline(Pipeline):
         class CNVkitCall(CNVkitCall):
             def _get_input_data(ch1, ch2, ch3):
                 metadf = _get_metadf(ch1)
-                tumor_masks = (
-                    metadf[self.options.type_col] == self.options.type_tumor
-                )
+                tumor_masks = metadf[self.col("group")] == self.options.case
                 return tibble(
                     cnrfile=ch2.outfile,
                     cnsfile=ch3.outfile,
                     vcf=(
-                        metadf.SnpVcf[tumor_masks]
-                        if "SnpVcf" in metadf.columns
+                        metadf[self.col("snpvcf")][tumor_masks]
+                        if self.col("snpvcf") in metadf.columns
                         else [None]
                     ),
                     sample_id=(
-                        metadf.VcfSampleID[tumor_masks]
-                        if "VcfSampleID" in metadf.columns
+                        metadf[self.col("vcf_sample_id")][tumor_masks]
+                        if self.col("vcf_sample_id") in metadf.columns
                         else [None]
                     ),
                     normal_id=(
-                        metadf.VcfNormalID[tumor_masks]
-                        if "NormalID" in metadf.columns
+                        metadf[self.col("vcf_normal_id")][tumor_masks]
+                        if self.col("vcf_normal_id") in metadf.columns
                         else [None]
                     ),
                     sample_sex=(
-                        metadf.SampleSex[tumor_masks]
-                        if "SampleSex" in metadf.columns
+                        metadf[self.col("sex")][tumor_masks]
+                        if self.col("sex") in metadf.columns
                         else [None]
                     ),
                     purity=(
-                        metadf.Purity[tumor_masks]
-                        if "Purity" in metadf.columns
+                        metadf[self.col("purity")][tumor_masks]
+                        if self.col("purity") in metadf.columns
                         else [None]
                     ),
                 )

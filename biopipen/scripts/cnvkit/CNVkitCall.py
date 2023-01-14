@@ -29,9 +29,13 @@ def main():
     vcffile = Path(outdir).joinpath(Path(cnsfile).name).with_suffix(".vcf")
     bedfile = Path(outdir).joinpath(Path(cnsfile).name).with_suffix(".bed")
 
+    args = []
+    if thresholds and method == "threshold":
+        args.append(f"-t={thresholds}")
+
     cmdy.cnvkit.call(
         # thresholds could be "-1.1...", starting `-` make it unregconizable
-        f"-t={thresholds}" if thresholds else "",
+        *args,
         center=center,
         center_at=center_at,
         filter=filter,
