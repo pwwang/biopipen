@@ -1,3 +1,14 @@
+## 0.6.2
+
+- 🎨 [scripts.utils.vcf] Use format keys for samples
+- ✨ [vcf.VcfFix] Dedent envs.helpers automatically and allow it to be list of strings
+- 🧑‍💻 [tcr.CloneResidency] Add count table and allow grouping samples in the report
+- 🧑‍💻 [cnvkit.CNVkitCall] Allow not passing threshold
+- 🧑‍💻 [cnvkit.CNVkitCall] Allow setting cutoff to fetch significant genes for enrichment analysis
+- 🧑‍💻 [scrna.SeuratPreparing/SeuratClustering] Do QC in SeuratPreparing only and prepare clustering in SeuratClustering
+- ✨ [cnvkit_pipeline] Allow customization of colnames in metafile
+- 💚 Fix CI (conda-incubator/setup-miniconda#274)
+
 ## 0.6.1
 
 - ✨ [cnvkit_pipeline] Allow purity for each sample
