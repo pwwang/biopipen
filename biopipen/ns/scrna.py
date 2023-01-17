@@ -161,21 +161,23 @@ class SeuratClusterStats(Proc):
             nCellsPerSample - Number of cells per sample for each cluster
             percCellsPerSample - Percentage of cells per sample for each cluster
         exprs: The expression values to plot
-            genes - The set of genes for the plots, unless `features` for those
-            plots is specified. Could also specify a file with genes
+            `genes` - The set of genes for the plots, unless `features` for
+            those plots is specified. Could also specify a file with genes
             (one per line)
-            ridgeplots - The ridge plots for the gene expressions.
+            `ridgeplots` - The ridge plots for the gene expressions.
             See `?Seurat::RidgePlot`.
-            vlnplots - Violin plots for the gene expressions.
+            `vlnplots` - Violin plots for the gene expressions.
             See `?Seurat::VlnPlot`. You can have `boxplot` key to add
             `geom_boxplot()` to the violin plots
-            featureplots - The feature plots for the gene expressions.
+            `featureplots` - The feature plots for the gene expressions.
             See `?Seurat::FeaturePlot`.
-            dotplot - Dot plots for the gene expressions.
+            `dotplot` - Dot plots for the gene expressions.
             See `?Seurat::DotPlot`.
-            heatmap - Heatmap for the gene expressions.
+            `heatmap` - Heatmap for the gene expressions.
             See `?Seurat::DoHeatmap`. You can specify `average=True` to plot on
             the average of the expressions.
+            `table` - The table for the gene expressions
+            (supported keys: title, log2, subset and features).
             All the above with `devpars` to define the output figures
             and `plus` to add elements to the `ggplot` object.
             You can have `subset` to subset the data. Multiple cases can be

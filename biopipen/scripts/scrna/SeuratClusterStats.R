@@ -2,6 +2,7 @@ source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 library(Seurat)
 library(dplyr)
+library(tibble)
 library(ggprism)
 library(tidyseurat)
 
@@ -126,10 +127,10 @@ do_stats = function() {
 
 }
 
-.get_outfile = function(odir, prefix) {
+.get_outfile = function(odir, prefix, ext = "png") {
     i = 1
     while (TRUE) {
-        outfile = file.path(odir, paste0(prefix, "-", i, ".png"))
+        outfile = file.path(odir, paste0(prefix, "-", i, ".", ext))
         if (!file.exists(outfile)) {
             return(outfile)
         }
@@ -418,6 +419,36 @@ do_exprs_heatmap = function(odir, pms, genes) {
 }
 
 
+do_exprs_table = function(odir, pms, genes) {
+    outfile = .get_outfile(odir, "table", "tsv")
+
+    subsetpms = pms$subset
+    log2_scale = pms$log2
+    if (is.null(log2_scale)) { log2_scale = TRUE }
+    features = .get_features(pms$features, genes)
+    title = pms$title
+    if (is.null(title)) { title = tools::file_path_sans_ext(basename(outfile)) }
+    cat(title, file = paste0(outfile, ".title"))
+
+    if (is.null(subsetpms)) {
+        sobj = srtobj
+    } else {
+        sobj = srtobj %>% filter(eval(parse(text=subsetpms)))
+    }
+    # default slot (data), assay
+    # values are exponentiated prior to averaging so that averaging is done in non-log space.
+    avgdata = AverageExpression(sobj, features = features)
+    edata = avgdata$RNA
+    # replace the missing genes
+    edata[rownames(avgdata$integrated), ] = avgdata$integrated
+    if (log2_scale) { edata = log2(edata) }
+    edata = as.data.frame(edata) %>%
+        rownames_to_column("Gene") %>%
+        select(Gene, everything())
+    write.table(edata, file = outfile, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+}
+
+
 do_exprs = function() {
     if (length(envs$exprs) == 0) {
         return (NULL)
@@ -444,6 +475,8 @@ do_exprs = function() {
             do_exprs_dotplot(odir, envs$exprs[[name]], genes)
         } else if (startsWith(name, "heatmap")) {
             do_exprs_heatmap(odir, envs$exprs[[name]], genes)
+        } else if (startsWith(name, "table")) {
+            do_exprs_table(odir, envs$exprs[[name]], genes)
         } else {
             print(paste("Unrecognized expression plot type: ", name))
         }

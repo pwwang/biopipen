@@ -27,6 +27,19 @@
 <h{{h}}>Fraction of cells from each sample for clusters</h{{h}}>
 <Image src={{job.out.outdir | joinpaths: "stats/perccellspersample.png" | quote}} />
 
+{%- if job.out.outdir | glob: "exprs/table-*.tsv" -%}
+<h{{h}}>Gene expression matrix</h{{h}}>
+    {%- set tabfiles = job.out.outdir | glob: "exprs/table-*.tsv" -%}
+    {%- for tabfile in tabfiles -%}
+        {%- set title = tabfile | append: ".title" | read | escape -%}
+        {%- if not title.startswith("table-") or len(tabfiles) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><DataTable src={{tabfile | quote}}
+            data={ {{tabfile | datatable: sep="\t", nrows=100 }} } /></p>
+    {%- endfor -%}
+{%- endif -%}
+
 {%- if job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
 <h{{h}}>Ridge plots of gene expressions</h{{h}}>
     {%- set figures = job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
