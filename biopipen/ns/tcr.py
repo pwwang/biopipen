@@ -187,6 +187,9 @@ class Immunarch(Proc):
             `separate_by`: The variable to separate samples, which will be
             plotted in separate figures. Currently only support one variable.
             `align_y`: Align max of y-axis if there are multiple figures
+            `align_x`: Align max of x-axis if there are multiple figures
+            `log`: Also plot log-transformed x-axis using `vis(.log = TRUE)`.
+            `<other>`: Other arguments for `repDiversity(.method="raref", ...)`
         tracking_target: and
         tracking_samples: The target and samples to track.
             You can do multiple trackings. To do that, you need to specify
@@ -243,7 +246,11 @@ class Immunarch(Proc):
         "raref": {
             "by": None,
             "separate_by": None,
+            "align_x": False,
             "align_y": False,
+            "log": False,
+            # ... other arguments for repDiversity()
+            # i.e. ".step", ".norm"
         },
         # Clonotype tracking
         "tracking_target": {},

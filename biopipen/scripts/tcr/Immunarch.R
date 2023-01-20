@@ -478,54 +478,126 @@ print("- Rarefaction")
 raref_dir = file.path(outdir, "raref")
 dir.create(raref_dir, showWarnings = FALSE)
 
+raref_x = NULL
 raref_y = NULL
-raref_analysis = function(idata, sepname, get_y = FALSE) {
+raref_log_x = NULL
+raref_analysis = function(idata, sepname, get_max = FALSE) {
+    raref_pms = raref  # copy the parameters
+    raref_by = raref_pms$by
+    raref_pms$by = NULL
+    raref_align_x = raref_pms$align_x
+    raref_pms$align_x = NULL
+    raref_align_y = raref_pms$align_y
+    raref_pms$align_y = NULL
+    raref_log = raref_pms$log
+    raref_pms$log = NULL
+    raref_pms$.method = "raref"
+
+    if (is.null(raref_pms$.verbose)) {
+        raref_pms$.verbose = F
+    }
+
     imm_raref = tryCatch({
-        repDiversity(idata$data, "raref", .verbose = F)
+        raref_pms$.data = idata$data
+        do.call(repDiversity, raref_pms)
     }, error=function(e) {
         # https://github.com/immunomind/immunarch/issues/44
         valid_samples = c()
         for (sam in names(idata$data)) {
+            raref_pms$.data = idata$data[sam]
             vsam = tryCatch({
-                repDiversity(idata$data[sam], "raref", .verbose = F)
+                do.call(repDiversity, raref_pms)
                 sam
-            }, error=function(e) {c()})
+            }, error=function(e) {
+                warning(
+                    paste("Rarefraction analysis failed for sample", sam, ":", as.character(e))
+                )
+                c()
+            })
             valid_samples = c(valid_samples, vsam)
         }
-        repDiversity(idata$data[valid_samples], "raref", .verbose = F)
+        raref_pms$.data = idata$data[valid_samples]
+        do.call(repDiversity, raref_pms)
     })
-    rarefpng = file.path(raref_dir, paste0("raref-", sepname, ".png"))
+    rarefpng = file.path(raref_dir, paste0("raref-", sub("-$", "", sepname), ".png"))
 
-    width = 1700 + ceiling(length(idata) / 15) * 500
+    width = 1800 + ceiling(length(idata$data) / 20) * 500
     png(rarefpng, res=300, width=width, height=2000)
-    p = vis(imm_raref)
+    p = vis(imm_raref) + xlab("Sample size (cells)")
+    if (get_max) {
+        raref_x <<- layer_scales(p)$x$range$range[2]
+        raref_y <<- layer_scales(p)$y$range$range[2]
+    } else {
+        if (!is.null(raref_x)) {
+            p = p + xlim(0, raref_x)
+        }
+        if (!is.null(raref_y)) {
+            p = p + ylim(0, raref_y)
+        }
+    }
     print(p)
     dev.off()
-    if (get_y) {
-        raref_y <<- layer_scales(p)$y$range$range[2]
+
+    if (isTRUE(raref_log)) {
+        rarefpng = file.path(raref_dir, paste0("raref-", sub("-$", "", sepname), "(log).png"))
+        png(rarefpng, res=300, width=width, height=2000)
+        p_log = vis(imm_raref, .log = TRUE) + xlab("Sample size (cells)")
+        if (get_max) {
+            raref_log_x <<- layer_scales(p_log)$x$range$range[2]
+        } else {
+            if (!is.null(raref_log_x)) {
+                p_log = p_log + scale_x_log10(limits = c(1, 10 ^ raref_log_x))
+            }
+            if (!is.null(raref_y)) {
+                p_log = p_log + ylim(0, raref_y)
+            }
+        }
+        print(p_log)
+        dev.off()
     }
 
-    for (name in names(raref$by)) {
+
+    for (name in names(raref_by)) {
         print(paste0("  * by ", name))
         rfpng = file.path(raref_dir, paste0("raref-", sepname, name, ".png"))
-        png(rfpng, res=300, width=width, height=2000)
-        p = vis(imm_raref, .by=raref$by[[name]], .meta=idata$meta)
+        png(rfpng, res=300, width=2200, height=2000)
+        p = vis(imm_raref, .by=raref_by[[name]], .meta=idata$meta) + xlab("Sample size (cells)")
+        if (!is.null(raref_x)) {
+            p = p + xlim(c(0, raref_x))
+        }
         if (!is.null(raref_y)) {
             p = p + ylim(c(0, raref_y))
         }
         print(p)
         dev.off()
+
+        if (isTRUE(raref_log)) {
+            rfpng = file.path(raref_dir, paste0("raref-", sepname, name, "(log).png"))
+            png(rfpng, res=300, width=2200, height=2000)
+            p_log = vis(imm_raref, .by=raref_by[[name]], .meta=idata$meta, .log=TRUE) + xlab("Sample size (cells)")
+            if (!is.null(raref_log_x)) {
+                p_log = p_log + scale_x_log10(limits = c(1, 10 ^ raref_log_x))
+            }
+            if (!is.null(raref_y)) {
+                p_log = p_log + ylim(c(0, raref_y))
+            }
+            print(p_log)
+            dev.off()
+        }
     }
 }
 
 print("  All samples")
+raref_sep_by = raref$separate_by
+raref$separate_by = NULL
 raref_analysis(immdata, "ALL-", TRUE)
-if (!is.null(raref$separate_by)) {
-    sepvars = unique(immdata$meta[[raref$separate_by]])
+if (!is.null(raref_sep_by)) {
+    sepvars = unique(immdata$meta[[raref_sep_by]])
+
     for (sepvar in sepvars) {
-        print(paste0("  ", raref$separate_by, ": ", sepvar))
+        print(paste0("  ", raref_sep_by, ": ", sepvar))
         q = list(include(sepvar))
-        names(q) = raref$separate_by
+        names(q) = raref_sep_by
         sepdata = repFilter(immdata, .method = "by.meta", .query = q)
         raref_analysis(sepdata, paste0(sepvar, "-"))
     }

@@ -60,10 +60,10 @@ class SeuratPreparing(Proc):
         ncores: Number of cores to use
         cell_qc: filter expression to filter cells, using
             `tidyrseurat::filter()`.
-             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
-             `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`
-             For example: `nFeature_RNA > 200 & percent.mt < 5` will
-            keep cells with more than 200 genes and less than 5% mitochondrial
+            Available QC keys include `nFeature_RNA`, `nCount_RNA`,
+            `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`
+            For example: `nFeature_RNA > 200 & percent.mt < 5` will
+            keep cells with more than 200 genes and less than 5%% mitochondrial
             genes.
         gene_qc: filter genes. Currently only `min_cells` is supported.
             `min_cells` is the minimum number of cells that a gene must be
