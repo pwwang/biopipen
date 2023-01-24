@@ -2,11 +2,14 @@ library(ggplot2)
 library(ggprism)
 library(dplyr)
 library(tidyr)
+library(tibble)
+source("{{biopipen_dir}}/utils/plot.R")
 
 asdirs = {{in.asdirs | r}}
 metafile  = {{in.metafile | r}}
 outdir = {{out.outdir | r}}
 group_col = {{envs.group_col | r}}
+heatmap_cases = {{envs.heatmap_cases | r}}
 
 meta = NULL
 if (file.exists(metafile)) {
@@ -104,3 +107,35 @@ if (!is.null(meta)) {
     dev.off()
 }
 
+# Heatmaps
+for (heatmap_name in names(heatmap_cases)) {
+    arms = heatmap_cases[[heatmap_name]]
+    if (all(arms != "ALL")) {
+        caa_df = caa_arm %>% select(Sample, Group, !!arms)
+    } else {
+        caa_df = caa_arm
+    }
+    caa_df = caa_df %>% column_to_rownames("Sample")
+    if (!is.null(meta)) {
+        caa_df = caa_df %>% select(-"Group")
+    }
+
+    width = 300 + 20 * ncol(caa_df)  # all arms: 300 + 30 * 46 = 1680
+    height = 300 + 30 * nrow(caa_df)  # 10 samples: 300 + 30 * 10 = 600
+    args = list(
+        name = "CAA",
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        row_names_side = "left",
+        rect_gp = grid::gpar(col = "#FFFFFF", lwd = 1)
+    )
+    if (!is.null(meta)) {
+        args$right_annotation = ComplexHeatmap::rowAnnotation(Group = caa_arm$Group)
+    }
+    plotHeatmap(
+        caa_df,
+        args = args,
+        devpars = list(width=width, height=height, res=100),
+        outfile = file.path(outdir, paste0("Heatmap_", heatmap_name, ".png"))
+    )
+}
