@@ -7,7 +7,7 @@ import pandas
 from diot import Diot
 from datar.tibble import tibble
 from biopipen.core.proc import Proc
-from pipen_cli_run import Pipeline
+from pipen_cli_run import Pipeline, process
 
 from ..core.config import config
 
@@ -44,6 +44,7 @@ DEFAULT_OPTS = Diot(
     short_names=True,
     method="hybrid",
     guessbaits=False,
+    heatmap_cnr=False,
     case=None,
     control=None,
     access_excludes=[],
@@ -93,33 +94,19 @@ class CNVkitPipeline(Pipeline):
     - accfile: The accessible genomic regions.
         If not given, use `cnvkit.py access` to generate one.
 
-    Global options that are used by multiple processes
-    (can be overriden individually by `[<proc>.envs.xxx]`):
-    - cnvkit: the path to the cnvkit.py executable, defaults to
-        `config.exe.cnvkit` from `./.biopipen.toml` or `~/.biopipen.toml`.
-    - rscript: Path to the Rscript excecutable to use for running R code.
-        Requires `DNAcopy` to be installed in R, defaults to
-        `config.lang.rscript`
-    - samtools: Path to samtools, used for guessing bait file.
-    - convert: Linux `convert` command to convert pdf to png
-        So that they can be embedded in the HTML report.
-    - ncores: number of cores to use, defaults to `config.misc.ncores`
-    - reffa: the reference genome (e.g. hg19.fa)
-        Used by `CNVkitAccess`, `CNVkitAutobin` and `CNVkitReference`
-    - annotate: Use gene models from this file to assign names to the
-        target regions. Format: UCSC refFlat.txt or ensFlat.txt file
-        (preferred), or BED, interval list, GFF, or similar.
-    - short_names: Reduce multi-accession bait labels to be short and consistent
-    - method: Sequencing protocol: hybridization capture ('hybrid'),
-        targeted amplicon sequencing ('amplicon'),
-        or whole genome sequencing ('wgs'). Determines
-        whether and how to use antitarget bins.
+    Special options:
+    - access_excludes: File(s) with regions to be excluded for
+        `cnvkit.py access`.
+    - guessbaits_guided: Whether to use guided mode for guessing baits.
     - guessbaits: Guess the bait file from the bam files, either guided or
         unguided.
         If False, `baitfile` is used. Otherwise, if `baitfile` is given, use it
         (guided), otherwise use `accfile` (unguided).
         The bam files with `metacols.guess_baits` column set to `True`, `TRUE`,
         `true`, `1`, `Yes`, `YES`, or `yes` will be used to guess the bait file.
+    - heatmap_cnr: Whether to generate a heatmap of the .cnr files
+        (bin-level signals). This is allowed to set to False, it will take
+        longer to run.
     - case: The group name of samples in `metacols.group` to call CNVs for.
         If not specified, use all samples. In such a case, `control` must not be
         specified, as we are using a flat reference.
@@ -142,6 +129,28 @@ class CNVkitPipeline(Pipeline):
             sex. Default: `Sex`
         - guess_baits: The column name in the metafile that indicates whether
             to guess the bait file from the bam files. Default: `GuessBaits`
+
+    Global options that are used by multiple processes
+    (can be overriden individually by `[<proc>.envs.xxx]`):
+    - cnvkit: the path to the cnvkit.py executable, defaults to
+        `config.exe.cnvkit` from `./.biopipen.toml` or `~/.biopipen.toml`.
+    - rscript: Path to the Rscript excecutable to use for running R code.
+        Requires `DNAcopy` to be installed in R, defaults to
+        `config.lang.rscript`
+    - samtools: Path to samtools, used for guessing bait file.
+    - convert: Linux `convert` command to convert pdf to png
+        So that they can be embedded in the HTML report.
+    - ncores: number of cores to use, defaults to `config.misc.ncores`
+    - reffa: the reference genome (e.g. hg19.fa)
+        Used by `CNVkitAccess`, `CNVkitAutobin` and `CNVkitReference`
+    - annotate: Use gene models from this file to assign names to the
+        target regions. Format: UCSC refFlat.txt or ensFlat.txt file
+        (preferred), or BED, interval list, GFF, or similar.
+    - short_names: Reduce multi-accession bait labels to be short and consistent
+    - method: Sequencing protocol: hybridization capture ('hybrid'),
+        targeted amplicon sequencing ('amplicon'),
+        or whole genome sequencing ('wgs'). Determines
+        whether and how to use antitarget bins.
     - male_reference: Use or assume a male reference (i.e. female samples
         will have +1 log-CNR of chrX; otherwise male samples would have
         -1 chrX).
@@ -160,9 +169,6 @@ class CNVkitPipeline(Pipeline):
     - zygosity_freq: Ignore VCF's genotypes (GT field) and instead infer
         zygosity from allele frequencies.
         Used by `CNVkitSegment` and `CNVkitCall`
-    - `access_excludes`: File(s) with regions to be excluded for
-        `cnvkit.py access`.
-    - `guessbaits_guided`: Whether to use guided mode for guessing baits.
 
     Options for different processes can be specified by `[CNVkitXXX.envs.xxx]`
     See `biopipen.ns.cnvkit.CNVkitXXX` for more details.
@@ -202,6 +208,7 @@ class CNVkitPipeline(Pipeline):
         """Get the column names by self.col.<colname>"""
         return _MetaCol(self.options.get("metacols"), DEFAULT_COLS)
 
+    @process(start=True)
     def build_metafile(self):
         """Build MetaFile process"""
         from .misc import File2Proc
@@ -213,13 +220,12 @@ class CNVkitPipeline(Pipeline):
             # Remember to set the dependency in the pipeline:
             # >>> pipeline.procs.MetaFile.requires = [other_pipeline.procs]
             # where other_pipeline.procs generate the metafile
-            if "metafile" in self.options:
+            if self.options.metafile:
                 input_data = [self.options.metafile]
 
-        self.starts.append(MetaFile)
-        self.procs.MetaFile = MetaFile
         return MetaFile
 
+    @process(start=True)
     def build_cnvkit_access(self):
         """Build CNVkitAccess process"""
         if self.options.get("accfile"):
@@ -242,10 +248,9 @@ class CNVkitPipeline(Pipeline):
                     "ref": self.options.reffa,
                 }
 
-        self.starts.append(CNVkitAccess)
-        self.procs.CNVkitAccess = CNVkitAccess
         return CNVkitAccess
 
+    @process
     def build_cnvkit_guessbaits(self, metafile_proc, access_proc):
         """Build CNVkitGuessBaits process"""
         from .cnvkit import CNVkitGuessBaits
@@ -312,9 +317,9 @@ class CNVkitPipeline(Pipeline):
                     "guided": False,
                 }
 
-        self.procs.CNVkitGuessBaits = CNVkitGuessBaits
         return CNVkitGuessBaits
 
+    @process
     def build_cnvkit_autobin(self, metafile_proc, access_proc, guessbaits_proc):
         """Build CNVkitAutobin process"""
         from .cnvkit import CNVkitAutobin
@@ -346,14 +351,14 @@ class CNVkitPipeline(Pipeline):
                 "ref": self.options.reffa,
             }
 
-        self.procs.CNVkitAutobin = CNVkitAutobin
         return CNVkitAutobin
 
+    @process
     def build_cnvkit_coverage(self, metafile_proc, autobin_proc, anti):
         """Build CNVkitTargetCoverage and CNVkitAntiTargetCoverage processes"""
         from .cnvkit import CNVkitCoverage
 
-        proc = Proc.from_proc(
+        return Proc.from_proc(
             CNVkitCoverage,
             name="CNVkitCoverageAnittarget" if anti else "CNVkitCoverageTarget",
             requires=[metafile_proc, autobin_proc],
@@ -370,9 +375,7 @@ class CNVkitPipeline(Pipeline):
             }
         )
 
-        self.procs[proc.name] = proc
-        return proc
-
+    @process
     def build_cnvkit_reference(
         self,
         metafile_proc,
@@ -429,9 +432,9 @@ class CNVkitPipeline(Pipeline):
                 "ref": self.options.reffa,
             }
 
-        self.procs.CNVkitReference = CNVkitReference
         return CNVkitReference
 
+    @process
     def build_cnvkit_fix(
         self,
         metafile_proc,
@@ -478,9 +481,9 @@ class CNVkitPipeline(Pipeline):
                 "no_rmask": self.options.no_rmask,
             }
 
-        self.procs.CNVkitFix = CNVkitFix
         return CNVkitFix
 
+    @process
     def build_cnvkit_segment(self, metafile_proc, fix_proc):
         """Build CNVkitSegment process"""
         from .cnvkit import CNVkitSegment
@@ -520,9 +523,9 @@ class CNVkitPipeline(Pipeline):
                 "ncores": self.options.ncores,
             }
 
-        self.procs.CNVkitSegment = CNVkitSegment
         return CNVkitSegment
 
+    @process(end=True)
     def build_cnvkit_scatter(self, metafile_proc, fix_proc, segment_proc):
         """Build CNVkitScatter process"""
         from .cnvkit import CNVkitScatter
@@ -562,9 +565,9 @@ class CNVkitPipeline(Pipeline):
                 "convert": self.options.convert,
             }
 
-        self.procs.CNVkitScatter = CNVkitScatter
         return CNVkitScatter
 
+    @process(end=True)
     def build_cnvkit_diagram(self, metafile_proc, fix_proc, segment_proc):
         """Build CNVkitDiagram process"""
         from .cnvkit import CNVkitDiagram
@@ -594,9 +597,9 @@ class CNVkitPipeline(Pipeline):
                 "convert": self.options.convert,
             }
 
-        self.procs.CNVkitDiagram = CNVkitDiagram
         return CNVkitDiagram
 
+    @process(end=True)
     def build_cnvkit_heatmap_cns(self, metafile_proc, segment_proc):
         """Build CNVkitHeatmapCns process"""
         from .cnvkit import CNVkitHeatmap
@@ -627,9 +630,9 @@ class CNVkitPipeline(Pipeline):
                 "male_reference": self.options.male_reference,
             }
 
-        self.procs.CNVkitHeatmapCns = CNVkitHeatmapCns
         return CNVkitHeatmapCns
 
+    @process(end=True)
     def build_cnvkit_heatmap_cnr(self, metafile_proc, fix_proc):
         """Build CNVkitHeatmapCnr process"""
         from .cnvkit import CNVkitHeatmap
@@ -660,9 +663,9 @@ class CNVkitPipeline(Pipeline):
                 "male_reference": self.options.male_reference,
             }
 
-        self.procs.CNVkitHeatmapCnr = CNVkitHeatmapCnr
         return CNVkitHeatmapCnr
 
+    @process(end=True)
     def build_cnvkit_call(self, metafile_proc, fix_proc, segment_proc):
         """Build CNVkitCall process"""
         from .cnvkit import CNVkitCall
@@ -715,7 +718,6 @@ class CNVkitPipeline(Pipeline):
                 "zygosity_freq": self.options.zygosity_freq,
             }
 
-        self.procs.CNVkitCall = CNVkitCall
         return CNVkitCall
 
     def build(self):
@@ -765,5 +767,6 @@ class CNVkitPipeline(Pipeline):
         self.build_cnvkit_scatter(MetaFile, CNVkitFix, CNVkitSegment)
         self.build_cnvkit_diagram(MetaFile, CNVkitFix, CNVkitSegment)
         self.build_cnvkit_heatmap_cns(MetaFile, CNVkitSegment)
-        self.build_cnvkit_heatmap_cnr(MetaFile, CNVkitFix)
+        if self.options.heatmap_cnr:
+            self.build_cnvkit_heatmap_cnr(MetaFile, CNVkitFix)
         self.build_cnvkit_call(MetaFile, CNVkitFix, CNVkitSegment)
