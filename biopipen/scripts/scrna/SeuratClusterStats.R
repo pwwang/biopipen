@@ -1,6 +1,7 @@
 source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 library(Seurat)
+library(rlang)
 library(dplyr)
 library(tibble)
 library(ggprism)
@@ -12,119 +13,100 @@ envs = {{envs | r}}
 
 srtobj = readRDS(srtfile)
 
+do_stats_cells = function(casename, devpars, odir, by = NULL, frac = FALSE) {
+    plotfile = file.path(odir, paste0(casename, ".png"))
+    txtfile = paste0(plotfile, ".txt")
+    if (is.null(devpars)) {
+        devpars = list(res = 100, height = 1000)
+    } else {
+        devpars$res = if (is.null(devpars$res)) default_devpars$res else devpars$res
+        devpars$height = if (is.null(devpars$height)) default_devpars$height else devpars$height
+    }
+    if (frac) {
+        ylab = paste("Fraction of cells")
+        mapping_y = "cellFraction"
+    } else {
+        ylab = paste("Number of cells")
+        mapping_y = "nCells"
+    }
+    if (is.null(by)) {
+        df_cells = srtobj@meta.data %>%
+            group_by(seurat_clusters) %>%
+            summarize(nCells = n(), .groups = "keep") %>%
+            mutate(cellFraction = nCells / sum(nCells))
 
-do_stats_ncells = function(df_ncells, odir, pms) {
-    outfile = file.path(odir, "ncells.png")
-    plotGG(
-        df_ncells,
-        "col",
-        list(
-            mapping = aes(
-                x=seurat_clusters,
-                y=nCellsPerCluster,
-                fill=seurat_clusters
-            )
-        ),
-        c(
-            'ggtitle("Total # cells for each cluster")',
-            'theme_prism()',
-            'labs(x="Seurat Cluster", y="# Cells Per Cluster")'
-        ),
-        pms$devpars,
-        outfile
-    )
-}
-
-
-do_stats_ncellspersample = function(df_ncells, odir, pms) {
-    outfile = file.path(odir, "ncellspersample.png")
-    plotGG(
-        df_ncells,
-        "col",
-        list(
-            mapping = aes(
-                x=seurat_clusters,
-                y=nCellsPerCluster,
-                fill=Sample
+        if (is.null(devpars$width)) { devpars$width = 1000 }
+        plotGG(
+            df_cells,
+            geom = "col",
+            args = list(
+                mapping = aes_string(x="seurat_clusters", y=mapping_y)
             ),
-            position="stack"
-        ),
-        c(
-            'ggtitle("Breakdown # cells from each samples for each cluster")',
-            'theme_prism()',
-            'labs(x="Seurat Cluster", y="# Cells Per Cluster From Samples")'
-        ),
-        pms$devpars,
-        outfile
-    )
-}
-
-
-do_stats_perccellspersample = function(df_ncells, odir, pms) {
-    outfile = file.path(odir, "perccellspersample.png")
-    plotGG(
-        df_ncells,
-        "col",
-        list(
-            mapping = aes(
-                x=seurat_clusters,
-                y=CellFraction,
-                fill=Sample
+            ggs = c(
+                paste0('ggtitle("', ylab, ' for each cluster")'),
+                'theme_prism()',
+                paste0('labs(x="Seurat Cluster", y="', ylab, '")')
             ),
-            position="stack"
-        ),
-        c(
-            'ggtitle("Fraction of cells from each samples for each cluster")',
-            'theme_prism()',
-            'labs(x="Seurat Cluster", y="Fraction of total cells")'
-        ),
-        pms$devpars,
-        outfile
-    )
-}
-
-
-do_stats = function() {
-    df_ncells = srtobj@meta.data %>%
-        group_by(Sample, seurat_clusters) %>%
-        summarize(nCells = n()) %>%
-        group_by(seurat_clusters) %>%
-        mutate(nCellsPerCluster = sum(nCells)) %>%
-        ungroup() %>%
-        group_by(Sample) %>%
-        mutate(
-            percCellsPerSample = nCells / sum(nCells),
-            nCellsPerSample = sum(nCells),
-            CellFraction = nCells / nCellsPerCluster
+            devpars = devpars,
+            outfile = plotfile
         )
+    } else {
+        df_cells = srtobj@meta.data %>%
+            group_by(!!sym(by), seurat_clusters) %>%
+            summarize(nCells = n()) %>%
+            group_by(seurat_clusters) %>%
+            mutate(cellFraction = nCells / sum(nCells))
 
-    # Sample seurat_clusters nCells nCellsPerCluster percCellsPerSample
-    # <chr>  <fct>           <int>  <int>            <dbl>
-    # s0301  0               397    2122             0.2296124928
-    # s0301  1               211    1885             0.1220358589
-    # ...
-    #
-    # nCellsPerSample CellFraction
-    # <int>           <dbl>
-    # 1729            397 / 2122
-    # 1729            211 / 1885
-
-    odir = file.path(outdir, "stats")
-    dir.create(odir, showWarnings = FALSE)
+        if (is.null(devpars$width)) {
+            devpars$width = 800 + 200 * ceiling(length(unique(df_cells[[by]])) / 20)
+        }
+        plotGG(
+            df_cells,
+            geom = "col",
+            args = list(
+                mapping = aes_string(x="seurat_clusters", y=mapping_y, fill=by),
+                position = "stack"
+            ),
+            ggs = c(
+                paste0('ggtitle("', ylab, ' for each cluster by ', by, '")'),
+                'theme_prism()',
+                paste0('labs(x="Seurat Cluster", y="', ylab, '")')
+            ),
+            devpars = devpars,
+            outfile = plotfile
+        )
+    }
 
     write.table(
-        df_ncells,
-        file = file.path(odir, "ncells.txt"),
+        df_cells,
+        file = txtfile,
         quote = FALSE,
         sep = "\t",
         row.names = FALSE,
         col.names = TRUE
     )
+}
 
-    do_stats_ncells(df_ncells, odir, envs$stats$nCells)
-    do_stats_ncellspersample(df_ncells, odir, envs$stats$nCellsPerSample)
-    do_stats_perccellspersample(df_ncells, odir, envs$stats$percCellsPerSample)
+do_stats = function() {
+    odir = file.path(outdir, "stats")
+    dir.create(odir, showWarnings = FALSE)
+    for (name in names(envs$stats)) {
+        stat_pars = envs$stats[[name]]
+        args = list(
+            casename = name,
+            devpars = stat_pars$devpars,
+            odir = odir,
+            by = stat_pars$by,
+            frac = FALSE
+        )
+        if (startsWith(name, "fracCells")) {
+            args$frac = TRUE
+        } else if (!startsWith(name, "nCells")) {
+            warning(paste("Unknown stat:", name, ", skipping"))
+        }
 
+        do.call(do_stats_cells, args)
+    }
 }
 
 .get_outfile = function(odir, prefix, ext = "png") {

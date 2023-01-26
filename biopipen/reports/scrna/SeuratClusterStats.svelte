@@ -6,26 +6,36 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-<h{{h}}>Number of cells for clusters</h{{h}}>
-<Tabs>
-    <Tab label="Bar Plot" />
-    <Tab label="Table" />
-    <svelte:fragment slot="content">
-        <TabContent>
-            <Image src={{job.out.outdir | joinpaths: "stats/ncells.png" | quote}} />
-        </TabContent>
-        <TabContent>
-            <DataTable src={{job.out.outdir | joinpaths: "stats/ncells.txt" | quote}}
-                data={ {{job.out.outdir | joinpaths: "stats/ncells.txt" | datatable: sep="\t", nrows=100 }} } />
-        </TabContent>
-    </svelte:fragment>
-</Tabs>
+{%- for statname in proc.envs.stats -%}
+    {%- if statname.startswith("nCells") -%}
+        {%- set num_or_frac = "Number" -%}
+    {%- else -%}
+        {%- set num_or_frac = "Fraction" -%}
+    {%- endif -%}
 
-<h{{h}}>Number of cells from each sample for clusters</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "stats/ncellspersample.png" | quote}} />
+    {%- if "by" in proc.envs.stats[statname] -%}
+        {%- set by = " by " + proc.envs.stats[statname]["by"] -%}
+    {%- else -%}
+        {%- set by = "" -%}
+    {%- endif -%}
 
-<h{{h}}>Fraction of cells from each sample for clusters</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "stats/perccellspersample.png" | quote}} />
+    {%- set plotfile = job.out.outdir | joinpaths: "stats", statname + ".png" -%}
+    {%- set tablefile = plotfile + ".txt" -%}
+    <h{{h}}>{{num_or_frac}} of cells for clusters{{by}}</h{{h}}>
+    <Tabs>
+        <Tab label="Plot" />
+        <Tab label="Table" />
+        <svelte:fragment slot="content">
+            <TabContent>
+                <Image src={{plotfile | quote}} />
+            </TabContent>
+            <TabContent>
+                <DataTable src={{tablefile | quote}}
+                    data={ {{tablefile | datatable: sep="\t", nrows=100 }} } />
+            </TabContent>
+        </svelte:fragment>
+    </Tabs>
+{%- endfor -%}
 
 {%- if job.out.outdir | glob: "exprs/table-*.tsv" -%}
 <h{{h}}>Gene expression matrix</h{{h}}>

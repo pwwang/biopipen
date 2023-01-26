@@ -157,9 +157,12 @@ class SeuratClusterStats(Proc):
 
     Envs:
         stats: The statistics to plot
-            nCells - Number of cells for each cluster
-            nCellsPerSample - Number of cells per sample for each cluster
-            percCellsPerSample - Percentage of cells per sample for each cluster
+            `nCells_*` - Number of cells for each cluster.
+                You can specify `by` to group the cells by a metadata column,
+                and `devpars` to specify the device parameters for the plot.
+            `fracCells_*` - Fraction of cells for each cluster.
+                Similar to `nCells_*`, but the fraction is calculated
+                instead of the number.
         exprs: The expression values to plot
             `genes` - The set of genes for the plots, unless `features` for
             those plots is specified. Could also specify a file with genes
@@ -201,13 +204,9 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "stats": {
-            "nCells": {"devpars": {"res": 100, "height": 1000, "width": 1000}},
-            "nCellsPerSample": {
-                "devpars": {"res": 100, "height": 1000, "width": 1000}
-            },
-            "percCellsPerSample": {
-                "devpars": {"res": 100, "height": 1000, "width": 1000}
-            },
+            "ncells_All": {},
+            "ncells_Sample": {"by": "Sample"},
+            "fracCells_Sample": {"by": "Sample"},
         },
         "exprs": {},
         "dimplots": {
@@ -508,7 +507,7 @@ class ExprImpute(Proc):
             renamed to `RNA`
 
     Envs:
-        tool: Either scimpute or rmagic
+        tool: Either alra, scimpute or rmagic
         scimpute_args: The arguments for scimpute
             drop_thre: The dropout threshold
             kcluster: Number of clusters to use
@@ -545,6 +544,10 @@ class ExprImpute(Proc):
         - name: r-seurat
           check: |
             {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-seuratwrappers
+          if: {{proc.envs.tool == "alra"}}
+          check: |
+            {{proc.lang}} <(echo "library(SeuratWrappers)")
     """
 
     input = "infile:file"
