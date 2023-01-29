@@ -4,63 +4,101 @@ source("{{biopipen_dir}}/utils/plot.R")
 library(gtools)
 library(parallel)
 library(ggprism)
+library(Matrix)
+library(sparseMatrixStats)
+library(Seurat)
 
-sceobjfile <- {{ in.sceobj | r }}
-gmtfile <- {{ in.gmtfile | r }}
-config <- {{ in.configfile | config: "toml" | r }}
+sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
-envs <- {{envs | r}}
+gmtfile <- {{ envs.gmtfile | r }}
+select_pcs <- {{ envs.select_pcs | r }}
+ncores <- {{ envs.ncores | r }}
+pathway_pval_cutoff <- {{ envs.pathway_pval_cutoff | r }}
+bubble_devpars <- {{ envs.bubble_devpars | r }}
+grouping <- {{ envs.grouping | r }}
+grouping_prefix <- {{ envs.grouping_prefix | r }}
+subsetting <- {{ envs.subsetting | r }}
+subsetting_prefix <- {{ envs.subsetting_prefix | r }}
+
+if (!is.null(grouping_prefix) && nchar(grouping_prefix) > 0) {
+    grouping_prefix = paste0(grouping_prefix, "_")
+}
+
+if (!is.null(subsetting_prefix) && nchar(subsetting_prefix) > 0) {
+    subsetting_prefix = paste0(subsetting_prefix, "_")
+}
 
 set.seed(8525)
-groupby = config$grouping$groupby
 
-sceobj <- readRDS(sceobjfile)
-do_one_subset <- function(subset) {
-    subset_dir = file.path(outdir, subset)
+## gmt_pathways is copied from fgsea package.
+gmt_pathways <- function(gmt_file) {
+    pathway_lines <- strsplit(readLines(gmt_file), "\t")
+    pathways <- lapply(pathway_lines, tail, -2)
+    names(pathways) <- sapply(pathway_lines, head, 1)
+    pathways
+}
+
+pathways <- gmt_pathways(gmtfile)
+metabolics <- unique(as.vector(unname(unlist(pathways))))
+sobj <- readRDS(sobjfile)
+
+do_one_subset <- function(s) {
+    if (is.null(s)) {
+        subset_dir = file.path(outdir, "ALL")
+        subset_obj = sobj
+    } else {
+        subset_dir = file.path(outdir, paste0(subsetting_prefix, s))
+        subset_code = paste0("subset(sobj, subset = ", subsetting, " == '", s, "')")
+        subset_obj = eval(parse(text = subset_code))
+    }
     dir.create(subset_dir, showWarnings = FALSE)
-    subset_sce <- sceobj[, sceobj$.subset == subset]
-    metabolic_sce <- subset_sce[rowData(subset_sce)$metabolic, ]
-    all_groups = as.character(metabolic_sce[[groupby]])
+
+    metabolic_obj <- subset(
+        subset_obj,
+        features = intersect(rownames(subset_obj), metabolics)
+    )
+    all_groups = as.character(metabolic_obj@meta.data[[grouping]])
     groups <- unique(all_groups)
 
     enrich_data_df <- data.frame(x = NULL, y = NULL, NES = NULL, PVAL = NULL)
     pc_plotdata <- data.frame(
-        x = numeric(), y = numeric(),
-        sel = character(), group = character()
+        x = numeric(),
+        y = numeric(),
+        sel = character(),
+        group = character()
     )
 
     for (group in groups) {
-        each_metabolic_sce <- metabolic_sce[, all_groups == group]
-        each_metabolic_tpm <- assay(each_metabolic_sce, "exprs")
-        each_metabolic_tpm <- each_metabolic_tpm[rowSums(each_metabolic_tpm) > 0, , drop=F]
-        if (ncol(each_metabolic_tpm) == 1) {
-            next
-        }
-        x <- each_metabolic_tpm
+        group_code = paste0("subset(metabolic_obj, subset = ", grouping, " == '", group, "')")
+        each_metabolic_obj <- eval(parse(text = group_code))
+        each_metabolic_exprs <- GetAssayData(each_metabolic_obj)
+        each_metabolic_exprs <- each_metabolic_exprs[rowSums(each_metabolic_exprs) > 0, , drop=F]
+        if (ncol(each_metabolic_exprs) == 1) { next }
+        x <- each_metabolic_exprs
         ntop <- nrow(x)
         rv <- rowVars(x)
         select <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
-        pca <- prcomp(t(x[select, ]))
+        pca <- prcomp(Matrix::t(x[select, ]))
         percentVar <- pca$sdev^2 / sum(pca$sdev^2)
-
 
         ### select PCs that explain at least 80% of the variance
         cum_var <- cumsum(percentVar)
-        select_pcs <- which(cum_var > envs$select_pcs)[1]
+        selected_pcs <- which(cum_var > select_pcs)[1]
 
         ### plot the PCA and explained variances
         tmp_plotdata <- data.frame(
-            x = 1:length(percentVar), y = percentVar,
-            sel = c(rep("y", select_pcs), rep("n", length(percentVar) - select_pcs)),
+            x = 1:length(percentVar),
+            y = percentVar,
+            sel = c(rep("y", selected_pcs), rep("n", length(percentVar) - selected_pcs)),
             group = rep(group, length(percentVar))
         )
         pc_plotdata <- rbind(pc_plotdata, tmp_plotdata)
 
         ####
-        pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:select_pcs, drop=FALSE])))
+        pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:selected_pcs, drop=FALSE])))
         pre_rank_matrix <- as.list(as.data.frame(t(pre_rank_matrix)))
 
-        odir = file.path(subset_dir, group)
+        odir = file.path(subset_dir, paste0(grouping_prefix, group))
         dir.create(odir, showWarnings = FALSE)
         runFGSEA(
             pre_rank_matrix,
@@ -80,9 +118,9 @@ do_one_subset <- function(subset) {
         )
     }
 
-    # remove pvalue <0.01 pathways
+    # remove pvalue < 0.01 pathways
     min_pval <- by(enrich_data_df$PVAL, enrich_data_df$y, FUN = min)
-    select_pathways <- names(min_pval)[(min_pval <= envs$pathway_pval_cutoff)]
+    select_pathways <- names(min_pval)[(min_pval <= pathway_pval_cutoff)]
     select_enrich_data_df <- enrich_data_df[enrich_data_df$y %in% select_pathways, ]
     # converto pvalue to -log10
     pvals <- select_enrich_data_df$PVAL
@@ -100,10 +138,23 @@ do_one_subset <- function(subset) {
     select_enrich_data_df$y <- factor(select_enrich_data_df$y, levels = pathway_order)
 
     ## buble plot
-    select_enrich_data_df$x = sapply(select_enrich_data_df$x, function(x) {
-        if (is.na(as.integer(x))) x else paste0("Cluster", x)
-    })
+    select_enrich_data_df$x = sapply(select_enrich_data_df$x, function(x) { paste0(grouping_prefix, x) })
     bubblefile = file.path(subset_dir, "pathway_heterogeneity.png")
+    bub_devpars = list() # bubble_devpars
+    if (is.null(bub_devpars$res)) {
+        bub_devpars$res = 100
+    }
+    if (is.null(bub_devpars$width)) {
+        bub_devpars$width = 300 +
+            max(nchar(as.character(select_enrich_data_df$y))) * 8 +
+            length(unique(select_enrich_data_df$x)) * 25
+    }
+    if (is.null(bub_devpars$height)) {
+        bub_devpars$height = 400 +
+            max(nchar(unique(select_enrich_data_df$x))) * 8 +
+            length(unique(select_enrich_data_df$y)) * 25
+    }
+    bub_devpars$height = max(bub_devpars$height, 480)
     plotGG(
         select_enrich_data_df,
         "point",
@@ -117,7 +168,7 @@ do_one_subset <- function(subset) {
             'theme_prism(axis_text_angle = 90)',
             'theme(legend.title = element_text())'
         ),
-        devpars = envs$bubble_devpars,
+        devpars = bub_devpars,
         outfile = bubblefile
     )
 
@@ -143,9 +194,16 @@ do_one_subset <- function(subset) {
     ggsave(file.path(subset_dir, "PC_variance_plot.pdf"), p, device = "pdf", useDingbats = FALSE)
 }
 
-subsets <- unique(sceobj$.subset)
-
-x = mclapply(subsets, do_one_subset, mc.cores = envs$ncores)
-if (any(unlist(lapply(x, class)) == "try-error")) {
-    stop("mclapply error")
+if (is.null(subsetting)) {
+    do_one_subset(NULL)
+} else {
+    subsets <- unique(sobj@meta.data[[subsetting]])
+    if (ncores == 1) {
+        lapply(subsets, do_one_subset)
+    } else {
+        x = mclapply(subsets, do_one_subset, mc.cores = ncores)
+        if (any(unlist(lapply(x, class)) == "try-error")) {
+            stop("mclapply error")
+        }
+    }
 }
