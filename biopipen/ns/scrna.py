@@ -502,8 +502,8 @@ class ExprImpute(Proc):
 
     Output:
         outfile: The output file in RDS format of Seurat object
-            Note that with Rmagic, the original RNA assay will be
-            renamed to `RAW_RNA` and the imputed RNA assay will be
+            Note that with rmagic and alra, the original RNA assay will be
+            renamed to `UNIMPUTED_RNA` and the imputed RNA assay will be
             renamed to `RNA`
 
     Envs:
@@ -554,7 +554,7 @@ class ExprImpute(Proc):
     output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
     lang = config.lang.rscript
     envs = {
-        "tool": "rmagic",
+        "tool": "alra",
         "rmagic_args": {"python": config.exe.magic_python},
         "scimpute_args": {
             "drop_thre": 0.5,
@@ -562,6 +562,7 @@ class ExprImpute(Proc):
             "ncores": config.misc.ncores,
             "refgene": config.ref.refgene,
         },
+        "alra_args": {},
     }
     script = "file://../scripts/scrna/ExprImpute.R"
 
