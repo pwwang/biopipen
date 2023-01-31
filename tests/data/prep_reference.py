@@ -41,6 +41,8 @@ def echo(msg):
 
 
 def md5sum(file):
+    if not Path(file).exists():
+        return None
     with open(file, "rb") as f:
         return hashlib.md5(f.read()).hexdigest()
 
