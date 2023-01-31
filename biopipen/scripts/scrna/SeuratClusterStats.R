@@ -13,7 +13,7 @@ envs = {{envs | r}}
 
 srtobj = readRDS(srtfile)
 
-do_stats_cells = function(casename, devpars, odir, by = NULL, frac = FALSE) {
+do_stats_cells = function(casename, devpars, odir, by = NULL, frac = FALSE, filtering = NULL) {
     plotfile = file.path(odir, paste0(casename, ".png"))
     txtfile = paste0(plotfile, ".txt")
     if (is.null(devpars)) {
@@ -29,8 +29,12 @@ do_stats_cells = function(casename, devpars, odir, by = NULL, frac = FALSE) {
         ylab = paste("Number of cells")
         mapping_y = "nCells"
     }
+    df_cells = srtobj@meta.data
+    if (!is.null(filtering)) {
+        df_cells = df_cells %>% filter(!!rlang::parse_expr(filtering))
+    }
     if (is.null(by)) {
-        df_cells = srtobj@meta.data %>%
+        df_cells = df_cells %>%
             group_by(seurat_clusters) %>%
             summarize(nCells = n(), .groups = "keep") %>%
             mutate(cellFraction = nCells / sum(nCells))
@@ -45,13 +49,14 @@ do_stats_cells = function(casename, devpars, odir, by = NULL, frac = FALSE) {
             ggs = c(
                 paste0('ggtitle("', ylab, ' for each cluster")'),
                 'theme_prism()',
+                'theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))',
                 paste0('labs(x="Seurat Cluster", y="', ylab, '")')
             ),
             devpars = devpars,
             outfile = plotfile
         )
     } else {
-        df_cells = srtobj@meta.data %>%
+        df_cells = df_cells %>%
             group_by(!!sym(by), seurat_clusters) %>%
             summarize(nCells = n()) %>%
             group_by(seurat_clusters) %>%
@@ -70,6 +75,7 @@ do_stats_cells = function(casename, devpars, odir, by = NULL, frac = FALSE) {
             ggs = c(
                 paste0('ggtitle("', ylab, ' for each cluster by ', by, '")'),
                 'theme_prism()',
+                'theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))',
                 paste0('labs(x="Seurat Cluster", y="', ylab, '")')
             ),
             devpars = devpars,
@@ -97,7 +103,8 @@ do_stats = function() {
             devpars = stat_pars$devpars,
             odir = odir,
             by = stat_pars$by,
-            frac = FALSE
+            frac = FALSE,
+            filtering = stat_pars$filter
         )
         if (startsWith(name, "fracCells")) {
             args$frac = TRUE
@@ -225,7 +232,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
-            height = ceiling(length(pms$features) / pms$ncol) * 250,
+            height = ceiling(length(pms$features) / pms$ncol) * 480,
             res = 100
         )
     }

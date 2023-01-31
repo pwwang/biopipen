@@ -9,19 +9,20 @@
 {%- for statname in proc.envs.stats -%}
     {%- if statname.startswith("nCells") -%}
         {%- set num_or_frac = "Number" -%}
+        {%- set rest_title = statname | replace: "nCells_", "" | replace: "_", " " -%}
     {%- else -%}
         {%- set num_or_frac = "Fraction" -%}
+        {%- set rest_title = statname | replace: "fracCells_", "" | replace: "_", " " -%}
     {%- endif -%}
-
-    {%- if "by" in proc.envs.stats[statname] -%}
-        {%- set by = " by " + proc.envs.stats[statname]["by"] -%}
+    {%- if rest_title == "All" or rest_title == "ALL" -%}
+        {%- set rest_title = "" -%}
     {%- else -%}
-        {%- set by = "" -%}
+        {%- set rest_title = "(" + rest_title + ")" -%}
     {%- endif -%}
 
     {%- set plotfile = job.out.outdir | joinpaths: "stats", statname + ".png" -%}
     {%- set tablefile = plotfile + ".txt" -%}
-    <h{{h}}>{{num_or_frac}} of cells for clusters{{by}}</h{{h}}>
+    <h{{h}}>{{num_or_frac}} of cells {{rest_title}}</h{{h}}>
     <Tabs>
         <Tab label="Plot" />
         <Tab label="Table" />
