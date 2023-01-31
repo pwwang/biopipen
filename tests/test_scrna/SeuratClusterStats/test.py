@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pipen import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
@@ -40,6 +42,9 @@ class CellTypeAnnotate(CellTypeAnnotate):
     requires = SeuratClustering
     envs = {
         "sctype_tissue": "Immune system",
+        "sctype_db": Path(__file__).parent.parent.parent.joinpath(
+            "data", "reference", "ScTypeDB_full.xlsx"
+        )
     }
 
 

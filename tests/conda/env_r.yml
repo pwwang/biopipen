@@ -38,6 +38,7 @@ dependencies:
   - r-vegan
   - r-tidyseurat
   - r-gsea_r
+  - r-hgnchelper
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater

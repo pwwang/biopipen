@@ -15,6 +15,9 @@ REFGENE_URL = (
     "http://hgdownload.cse.ucsc.edu/"
     "goldenPath/%(genome)s/bigZips/genes/%(genome)s.refGene.gtf.gz"
 )
+SCTYPE_DB_URL = (
+    "https://github.com/IanevskiAleksandr/sc-type/raw/master/ScTypeDB_full.xlsx"
+)
 CHROMS = [
     "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9",
     "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17",
@@ -101,7 +104,7 @@ def download_refgene(genome):
     )
     refgene_file = outdir / "refgene.gtf"
     refexon_file = outdir / "refexon.gtf"
-    cmdy.gunzip(outfile)
+    cmdy.gunzip(outfile, f=True)
     cmdy.awk('$3 == "exon"', refgene_file).r() > refexon_file
 
 
@@ -149,6 +152,19 @@ def download_reffa_hg38():
 
     return download_reffa(genome)
 
+
+@echo("Downloading scType database")
+def download_sctype_db():
+    """Download scType database"""
+    name = "ScTypeDB_full.xlsx"
+    cmdy.aria2c(
+        *ARIA2C_OPTS,
+        o=name,
+        d=DESTDIR,
+        _=SCTYPE_DB_URL,
+    )
+
+
 if __name__ == "__main__":
     download_reffa_hg19()
     download_reffa_hg38()
@@ -157,3 +173,4 @@ if __name__ == "__main__":
     download_refgene("hg19")
     download_refgene("hg38")
     download_kegg_metabolism()
+    download_sctype_db()
