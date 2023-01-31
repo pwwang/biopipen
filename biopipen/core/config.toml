@@ -71,13 +71,14 @@ refflat = ""
 chrsize = ""
 # The name of the genome assembly
 genome = ""
+# Database file for scType
+# https://github.com/IanevskiAleksandr/sc-type/
+sctype_db = ""
 
 [misc]
 # Number of cores used for each job
 ncores = 1
 
-[pipeline.scrna_metabolic]
-clustered = false
-intra-subset = true
+[pipeline.scrna_metabolic_landscape]
 
 [pipeline.cnvkit_pipeline]

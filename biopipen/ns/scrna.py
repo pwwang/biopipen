@@ -160,6 +160,8 @@ class SeuratClusterStats(Proc):
             `nCells_*` - Number of cells for each cluster.
                 You can specify `by` to group the cells by a metadata column,
                 and `devpars` to specify the device parameters for the plot.
+                You can also specify `filter` to filter the cells under certain
+                conditions using metadata columns.
             `fracCells_*` - Fraction of cells for each cluster.
                 Similar to `nCells_*`, but the fraction is calculated
                 instead of the number.
@@ -811,3 +813,53 @@ class ScFGSEA(Proc):
     }
     script = "file://../scripts/scrna/ScFGSEA.R"
     plugin_opts = {"report": "file://../reports/scrna/ScFGSEA.svelte"}
+
+
+class CellTypeAnnotate(Proc):
+    """Annotate cell types
+
+    Input:
+        sobjfile: The seurat object
+
+    Output:
+        outfile: The rds file of seurat object with cell type annotated
+
+    Envs:
+        tool: The tool to use for cell type annotation.
+            Available: `sctype`, `sccatch` or `direct`
+        sctype_tissue: The tissue to use for sctype.
+            E.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,
+            Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus
+        sctype_db: The database to use for sctype
+        cell_types: The cell types to use for direct annotation
+            Each a list of cell type names, or a dict with keys as the old
+            identity and values as the new cell type.
+
+    Requires:
+        - name: r-HGNChelper
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(HGNChelper)"
+        - name: r-seurat
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(Seurat)"
+        - name: r-dplyr
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(dplyr)"
+        - name: r-openxlsx
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(openxlsx)"
+    """
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.annotated.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "tool": "sctype",
+        "sctype_tissue": None,
+        "sctype_db": config.ref.sctype_db,
+        "cell_types": [],
+    }
+    script = "file://../scripts/scrna/CellTypeAnnotate.R"

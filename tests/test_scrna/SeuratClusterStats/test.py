@@ -1,6 +1,10 @@
 from pipen import Proc
 from biopipen.core.config import config
-from biopipen.ns.scrna import SeuratClustering, SeuratClusterStats
+from biopipen.ns.scrna import (
+    SeuratClustering,
+    SeuratClusterStats,
+    CellTypeAnnotate,
+)
 from biopipen.core.testing import get_pipeline
 
 
@@ -26,10 +30,21 @@ class PrepareSeurat(Proc):
 
 class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
+    envs = {
+        "FindIntegrationAnchors": {"reduction": "cca"},
+        "IntegrateData": {"k.weight": 5},
+    }
+
+
+class CellTypeAnnotate(CellTypeAnnotate):
+    requires = SeuratClustering
+    envs = {
+        "sctype_tissue": "Immune system",
+    }
 
 
 class SeuratClusterStats(SeuratClusterStats):
-    requires = SeuratClustering
+    requires = CellTypeAnnotate
     envs = {
         "exprs": {
             "ridgeplots.1": {
