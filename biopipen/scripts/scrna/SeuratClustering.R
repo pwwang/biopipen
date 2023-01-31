@@ -31,6 +31,8 @@ obj_list = SplitObject(sobj, split.by = "Sample")
 rm(sobj)
 
 {% if envs.use_sct -%}
+# ############################
+# Using SCT
 # https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1
 print("- Performing SCTransform on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {
@@ -51,7 +53,11 @@ envs$PrepSCTIntegration$anchor.features = features
 obj_list = do_call(PrepSCTIntegration, envs$PrepSCTIntegration)
 
 print("- Running PCA on each sample ...")
-obj_list = lapply(X = obj_list, FUN = RunPCA, features = features)
+obj_list = lapply(X = obj_list, FUN = function(x) {
+    print(paste("  On sample:", x@meta.data$Sample[1], "..."))
+    npcs = min(50, ncol(x) - 1)
+    RunPCA(x, features = features, verbose = FALSE, npcs = npcs)
+})
 
 print("- Running FindIntegrationAnchors ...")
 fia_args = list_setdefault(
@@ -59,16 +65,28 @@ fia_args = list_setdefault(
     object.list = obj_list,
     anchor.features = features,
     normalization.method = "SCT",
-    reduction = "rpca"
+    reduction = "rpca",
+    dims = 1:30,
+    k.score = 30
 )
+min_dim = min(unlist(lapply(obj_list, ncol))) - 1
+fia_args$dims = 1:min(min_dim, max(fia_args$dims))
+fia_args$k.score = min(30, min_dim - 1)
 anchors = do_call(FindIntegrationAnchors, fia_args)
 
 print("- Running IntegrateData ...")
 envs$IntegrateData$anchorset = anchors
-id_args = list_setdefault(envs$IntegrateData, normalization.method = "SCT")
+id_args = list_setdefault(
+    envs$IntegrateData,
+    normalization.method = "SCT",
+    dims = 1:30
+)
+id_args$dims = 1:min(min_dim, max(id_args$dims))
 obj_list = do_call(IntegrateData, id_args)
 
 {%- else -%}
+# ############################
+# Using rpca
 # https://satijalab.org/seurat/articles/integration_rpca.html
 print("- Performing NormalizeData + FindVariableFeatures on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {
@@ -92,7 +110,8 @@ obj_list <- lapply(X = obj_list, FUN = function(x) {
     args = list_setdefault(envs$ScaleData, object = x, features = features)
     x <- do_call(ScaleData, args)
 
-    RunPCA(x, features = features, verbose = FALSE)
+    npcs = min(50, ncol(x) - 1)
+    RunPCA(x, features = features, verbose = FALSE, npcs = npcs)
 })
 
 print("- Running FindIntegrationAnchors ...")
@@ -100,13 +119,20 @@ fia_args = list_setdefault(
     envs$FindIntegrationAnchors,
     object.list = obj_list,
     anchor.features = features,
-    reduction = "rpca"
+    reduction = "rpca",
+    dims = 1:30,
+    k.score = 30
 )
+min_dim = min(unlist(lapply(obj_list, ncol))) - 1
+fia_args$dims = 1:min(min_dim, max(fia_args$dims))
+fia_args$k.score = min(30, min_dim - 1)
 anchors = do_call(FindIntegrationAnchors, fia_args)
 
 print("- Running IntegrateData ...")
 envs$IntegrateData$anchorset = anchors
-obj_list = do_call(IntegrateData, envs$IntegrateData)
+id_args = list_setdefault(envs$IntegrateData, dims = 1:30)
+id_args$dims = 1:min(min_dim, max(id_args$dims))
+obj_list = do_call(IntegrateData, id_args)
 
 DefaultAssay(obj_list) <- "integrated"
 
@@ -116,12 +142,22 @@ obj_list = do_call(ScaleData, envs$ScaleData)
 {%- endif %}
 
 print("- Running RunPCA ...")
-envs$RunPCA$object = obj_list
-obj_list = do_call(RunPCA, envs$RunPCA)
+pca_args = list_setdefault(
+    envs$RunPCA,
+    object = obj_list,
+    npcs = 50
+)
+pca_args$npcs = min(pca_args$npcs, ncol(obj_list) - 1)
+obj_list = do_call(RunPCA, pca_args)
 
 print("- Running RunUMAP ...")
-envs$RunUMAP$object = obj_list
-obj_list = do_call(RunUMAP, envs$RunUMAP)
+umap_args = list_setdefault(
+    envs$RunUMAP,
+    object = obj_list,
+    dims = 1:30
+)
+umap_args$dims = 1:min(max(umap_args$dims), ncol(obj_list) - 1)
+obj_list = do_call(RunUMAP, umap_args)
 
 print("- Running FindNeighbors ...")
 envs$FindNeighbors$object = obj_list
