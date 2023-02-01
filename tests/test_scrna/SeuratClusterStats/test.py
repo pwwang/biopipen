@@ -78,7 +78,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small.cluster_stats",
+            "pbmc_small.annotated.cluster_stats",
         )
     )
     assert outfile.is_dir()

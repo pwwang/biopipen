@@ -4,7 +4,8 @@ from biopipen.ns.misc import Str2File
 from biopipen.ns.gsea import FGSEA
 from datar.all import flatten, tibble, select
 from biopipen.core.testing import get_pipeline
-
+import warnings
+warnings.filterwarnings("error")
 
 FGSEA = Proc.from_proc(
     FGSEA,

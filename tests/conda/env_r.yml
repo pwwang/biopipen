@@ -39,6 +39,7 @@ dependencies:
   - r-tidyseurat
   - r-gsea_r
   - r-hgnchelper
+  - r-seuratwrappers
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater
