@@ -9,6 +9,7 @@ celltypes = {{envs.cell_types | r}}
 
 sobj = readRDS(sobjfile)
 idents = as.character(unique(Idents(sobj)))
+idents = idents[order(as.numeric(idents))]
 
 if (!is.list(celltypes)) {
     celltypes = celltypes[1:length(idents)]
