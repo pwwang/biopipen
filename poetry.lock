@@ -338,7 +338,7 @@ executing = ">1.1.0,<2.0"
 
 [[package]]
 name = "pipen"
-version = "0.3.10"
+version = "0.3.11"
 description = "A pipeline framework for python"
 category = "main"
 optional = false
@@ -885,8 +885,8 @@ pipda = [
     {file = "pipda-0.11.1.tar.gz", hash = "sha256:b261b864a3b350fea02bc6ec149195ed987efda7c445defaaad0e276912e312e"},
 ]
 pipen = [
-    {file = "pipen-0.3.10-py3-none-any.whl", hash = "sha256:dd26f30471d96b0156ac74504d83461a9f2b5416ce410d3a046e871658260881"},
-    {file = "pipen-0.3.10.tar.gz", hash = "sha256:b3861679078ec62c76efb438cf9a7fe71395695628d4464dbc1c784d1e6900d4"},
+    {file = "pipen-0.3.11-py3-none-any.whl", hash = "sha256:5f7d27f490c61286ae18780691e03e83e542cc86bb06aba3a06ac759b98176c2"},
+    {file = "pipen-0.3.11.tar.gz", hash = "sha256:0dd00a73d3562f74314e659b6e1c0facfcf65ec3821f809440ac62cdf2e65b92"},
 ]
 pipen-args = [
     {file = "pipen_args-0.3.5-py3-none-any.whl", hash = "sha256:1fef15b53aa79035d7dea70bd6cfaf56315a90f16c291248d6d372290894481d"},
