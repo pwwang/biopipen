@@ -1,6 +1,12 @@
+from pathlib import Path
+
 from pipen import Proc
 from biopipen.core.config import config
-from biopipen.ns.scrna import SeuratClustering, SeuratClusterStats
+from biopipen.ns.scrna import (
+    SeuratClustering,
+    SeuratClusterStats,
+    CellTypeAnnotate,
+)
 from biopipen.core.testing import get_pipeline
 
 
@@ -26,10 +32,24 @@ class PrepareSeurat(Proc):
 
 class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
+    envs = {
+        "FindIntegrationAnchors": {"reduction": "cca"},
+        "IntegrateData": {"k.weight": 5},
+    }
+
+
+class CellTypeAnnotate(CellTypeAnnotate):
+    requires = SeuratClustering
+    envs = {
+        "sctype_tissue": "Immune system",
+        "sctype_db": Path(__file__).parent.parent.parent.joinpath(
+            "data", "reference", "ScTypeDB_full.xlsx"
+        )
+    }
 
 
 class SeuratClusterStats(SeuratClusterStats):
-    requires = SeuratClustering
+    requires = CellTypeAnnotate
     envs = {
         "exprs": {
             "ridgeplots.1": {
@@ -58,7 +78,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small.cluster_stats",
+            "pbmc_small.annotated.cluster_stats",
         )
     )
     assert outfile.is_dir()

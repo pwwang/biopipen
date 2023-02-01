@@ -1,0 +1,11 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20220602
+##source=biopipen.ns.bed.Bed2Vcf
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=SVType,Number=1,Type=Integer,Description="Type of structural variant">
+##FORMAT=<ID=Depth,Number=1,Type=Interger,Description="Depth of coverage">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
+chr1	12	S1	N	<DUP>	.	PASS	END=21;SVType=DUP	GT:Depth	0|0:1
+chr1	32	S2	N	<DEL>	.	PASS	END=41;SVType=DEL	GT:Depth	0|0:2

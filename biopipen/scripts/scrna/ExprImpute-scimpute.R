@@ -39,4 +39,5 @@ imputed = readRDS(file.path(joboutdir, "scimpute_count.rds"))
 outobj = CreateSeuratObject(counts = imputed)
 
 outobj@meta.data = sobj@meta.data[rownames(outobj@meta.data),,drop=FALSE]
+attr(outobj, "impute") = "scimpute"
 saveRDS(outobj, outfile)

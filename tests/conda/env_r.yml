@@ -10,7 +10,7 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  - poetry=1.1.13  # awaiting 1.2 being released on conda
+  - poetry  # =1.1.13  # awaiting 1.2 being released on conda
   - nodejs  # for pipen-report
   - curl
   - r-base=4.1.3
@@ -38,6 +38,8 @@ dependencies:
   - r-vegan
   - r-tidyseurat
   - r-gsea_r
+  - r-hgnchelper
+  - r-seuratwrappers
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater
@@ -52,6 +54,7 @@ dependencies:
   - faiss-cpu
   - clustcr
   - truvari
+  - pip
   - pip:
     - magic-impute
     # For GIANA

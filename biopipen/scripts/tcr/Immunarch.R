@@ -28,34 +28,54 @@ gua_methods = {{ envs.gua_methods | r }}
 spect = {{ envs.spect | enumerate | dict | r }}
 div_methods = {{ envs.div_methods | r }}
 div_by = {{ envs.div_by | r }}
-raref_by = {{ envs.raref_by | r }}
+raref = {{ envs.raref | r }}
 tracking_target = {{ envs.tracking_target | r }}
 tracking_samples = {{ envs.tracking_samples | r }}
 kmers_args = {{ envs.kmers | r: ignoreintkey=False }}
 
 hom_clone_marks = hom_clone_marks[order(unlist(hom_clone_marks))]
 
-vec_to_list = function(vec) {
-    key = paste(vec, sep = "_")
-    vec = list(vec)
-    names(vec) = key
-    vec
+# Convert {0 = "Sex", 1 = ["Status", "Sex"]}, to
+# {Sex = "Sex", "Status_Sex": ["Status", "Sex"]}
+# and ["Status", "Sex"] to
+# {"Status_Sex": ["Status", "Sex"]}
+norm_list = function(vec) {
+    if (is.null(vec)) {
+        return(vec)
+    }
+    if (!is.list(vec)) {
+        # ["Status", "Sex"]
+        key = paste(vec, sep = "_")
+        vec = list(vec)
+        names(vec) = key
+        return(vec)
+    }
+    any_na = anyNA(as.numeric(names(vec)))
+    if (any_na) {
+        return(vec)
+    }
+    newnames = sapply(names(vec), function(x) {
+        paste(vec[[x]], sep = "_")
+    })
+    names(vec) = newnames
+    return(vec)
 }
 
-if (!is.list(volume_by)) { volume_by = vec_to_list(volume_by) }
-if (!is.list(len_by)) { len_by = vec_to_list(len_by) }
-if (!is.list(count_by)) { count_by = vec_to_list(count_by) }
-if (!is.list(top_clone_by)) { top_clone_by = vec_to_list(top_clone_by) }
-if (!is.list(rare_clone_by)) { rare_clone_by = vec_to_list(rare_clone_by) }
-if (!is.list(hom_clone_by)) { hom_clone_by = vec_to_list(hom_clone_by) }
-if (!is.list(gu_by)) { gu_by = vec_to_list(gu_by) }
-if (!is.list(div_by)) { gu_by = vec_to_list(div_by) }
-if (!is.list(raref_by)) { gu_by = vec_to_list(raref_by) }
+volume_by = norm_list(volume_by)
+len_by = norm_list(len_by)
+count_by = norm_list(count_by)
+top_clone_by = norm_list(top_clone_by)
+rare_clone_by = norm_list(rare_clone_by)
+hom_clone_by = norm_list(hom_clone_by)
+gu_by = norm_list(gu_by)
+div_by = norm_list(div_by)
+raref$by = norm_list(raref$by)
 
 immdata = readRDS(immfile)
 n_samples = length(immdata$data)
 
 # volume
+print("- All samples volume")
 volume_dir = file.path(outdir, "volume")
 dir.create(volume_dir, showWarnings = FALSE)
 
@@ -65,6 +85,7 @@ print(vis(exp_vol))
 dev.off()
 
 # volume_by
+print("- Volume by")
 for (name in names(volume_by)) {
     png(
         file.path(volume_dir, paste0("volume-", name, ".png")),
@@ -78,6 +99,7 @@ for (name in names(volume_by)) {
 
 for (col in c("aa", "nt")) {
     # len
+    print(paste0("- len by ", col))
     len_dir = file.path(outdir, paste0("len-", col))
     dir.create(len_dir, showWarnings = FALSE)
 
@@ -87,7 +109,9 @@ for (col in c("aa", "nt")) {
     dev.off()
 
     # len_by
+    print(paste0("- len_by by ", col))
     for (name in names(len_by)) {
+        print(paste0("  ", name))
         png(
             file.path(len_dir, paste0("len_", col, "-", name, ".png")),
             res = 300,
@@ -132,6 +156,7 @@ for (col in c("aa", "nt")) {
 
 
 # count
+print("- All samples count")
 count_dir = file.path(outdir, "count")
 dir.create(count_dir, showWarnings = FALSE)
 
@@ -141,6 +166,7 @@ print(vis(exp_count))
 dev.off()
 
 # count_by
+print("- Count by")
 for (name in names(count_by)) {
     png(
         file.path(count_dir, paste0("count-", name, ".png")),
@@ -154,6 +180,7 @@ for (name in names(count_by)) {
 
 
 # top_clone
+print("- Top clones")
 imm_top = repClonality(immdata$data, .method = "top", .head = top_clone_marks)
 top_dir = file.path(outdir, "top_clones")
 dir.create(top_dir, showWarnings = FALSE)
@@ -168,6 +195,7 @@ print(vis(imm_top))
 dev.off()
 
 for (name in names(top_clone_by)) {
+    print(paste0("  by ", name))
     png(
         file.path(top_dir, paste0("top_clones-", name, ".png")),
         res = 300,
@@ -180,6 +208,7 @@ for (name in names(top_clone_by)) {
 
 
 # rare_clone
+print("- Rare clones")
 imm_rare = repClonality(immdata$data, .method = "rare", .bound = rare_clone_marks)
 rare_dir = file.path(outdir, "rare_clones")
 dir.create(rare_dir, showWarnings = FALSE)
@@ -194,6 +223,7 @@ print(vis(imm_rare))
 dev.off()
 
 for (name in names(rare_clone_by)) {
+    print(paste0("  by ", name))
     png(
         file.path(rare_dir, paste0("rare_clones-", name, ".png")),
         res = 300,
@@ -206,6 +236,7 @@ for (name in names(rare_clone_by)) {
 
 
 # homeo_clone
+print("- Homeo clones")
 imm_hom = repClonality(
     immdata$data,
     .method = "homeo",
@@ -224,6 +255,7 @@ print(vis(imm_hom))
 dev.off()
 
 for (name in names(hom_clone_by)) {
+    print(paste0("  by ", name))
     png(
         file.path(hom_dir, paste0("hom_clones-", name, ".png")),
         res = 300,
@@ -238,7 +270,9 @@ for (name in names(hom_clone_by)) {
 ov_dir = file.path(outdir, "overlap")
 dir.create(ov_dir, showWarnings = FALSE)
 
+print("- Overlap")
 for (method in overlap_methods) {
+    print(paste0("  ", method))
     ovpng = file.path(ov_dir, paste0("overlap-", method, ".png"))
     imm_ov = repOverlap(immdata$data, .method=method, .verbose=FALSE)
     png(ovpng, res=300, height = 2000, width = 2000)
@@ -265,7 +299,7 @@ for (method in overlap_methods) {
 
 # Gene usage
 # https://immunarch.com/articles/web_only/v5_gene_usage.html
-
+print("- Gene usage")
 gu_dir = file.path(outdir, "gene_usage")
 dir.create(gu_dir, showWarnings = FALSE)
 imm_gu = geneUsage(immdata$data, "hs.trbv") %>%
@@ -294,6 +328,7 @@ dev.off()
 # dev.off()
 
 for (name in names(gu_by)) {
+    print(paste0("  by ", name))
     png(
         file.path(gu_dir, paste0("gene_usage-", name, ".png")),
         res = 300,
@@ -305,6 +340,7 @@ for (name in names(gu_by)) {
 }
 
 # Gene usage analysis
+print("- Gene usage analysis")
 gua_dir = file.path(outdir, "gene_usage_analysis")
 dir.create(gua_dir, showWarnings = FALSE)
 gua_method_names = c(
@@ -316,6 +352,7 @@ gua_method_names = c(
     tsne = "T-Distributed Stochastic Neighbor Embedding"
 )
 for (gua_method in gua_methods) {
+    print(paste0("  ", gua_method))
     imm_gua = geneUsageAnalysis(imm_gu, .method = gua_method, .verbose = FALSE)
     p = vis(
         imm_gua,
@@ -334,10 +371,12 @@ for (gua_method in gua_methods) {
 }
 
 # Spectratyping
+print("- Spectratyping")
 spect_dir = file.path(outdir, "spectratyping")
 dir.create(spect_dir, showWarnings = FALSE)
 
 for (sample in names(immdata$data)) {
+    print(paste0("  ", sample))
     spect_sam_dir = file.path(spect_dir, sample)
     dir.create(spect_sam_dir, showWarnings = FALSE)
     for (idx in seq_along(spect)) {
@@ -363,6 +402,7 @@ for (sample in names(immdata$data)) {
 div_dir = file.path(outdir, "diversity")
 dir.create(div_dir, showWarnings = FALSE)
 
+print("- Diversity estimation")
 plot_div = function(div, method, ...) {
     if (method != "gini") {
         do.call(vis, list(div, ...))
@@ -380,6 +420,7 @@ plot_div = function(div, method, ...) {
 }
 
 for (div_method in div_methods) {
+    print(paste0("  ", div_method))
     met_dir = file.path(div_dir, div_method)
     dir.create(met_dir, showWarnings = FALSE)
     div = repDiversity(immdata$data, div_method)
@@ -433,41 +474,142 @@ for (div_method in div_methods) {
 }
 
 # Rarefaction
+print("- Rarefaction")
 raref_dir = file.path(outdir, "raref")
 dir.create(raref_dir, showWarnings = FALSE)
-imm_raref = tryCatch({
-    repDiversity(immdata$data, "raref", .verbose = F)
-}, error=function(e) {
-    # https://github.com/immunomind/immunarch/issues/44
-    valid_samples = c()
-    for (sam in names(immdata$data)) {
-        vsam = tryCatch({
-            repDiversity(immdata$data[sam], "raref", .verbose = F)
-            sam
-        }, error=function(e) {c()})
-        valid_samples = c(valid_samples, vsam)
+
+raref_x = NULL
+raref_y = NULL
+raref_log_x = NULL
+raref_analysis = function(idata, sepname, get_max = FALSE) {
+    raref_pms = raref  # copy the parameters
+    raref_by = raref_pms$by
+    raref_pms$by = NULL
+    raref_align_x = raref_pms$align_x
+    raref_pms$align_x = NULL
+    raref_align_y = raref_pms$align_y
+    raref_pms$align_y = NULL
+    raref_log = raref_pms$log
+    raref_pms$log = NULL
+    raref_pms$.method = "raref"
+
+    if (is.null(raref_pms$.verbose)) {
+        raref_pms$.verbose = F
     }
-    repDiversity(immdata$data[valid_samples], "raref", .verbose = F)
-})
-rarefpng = file.path(raref_dir, "raref-.png")
 
-width = 1700 + ceiling(n_samples / 15) * 500
-png(rarefpng, res=300, width=width, height=2000)
-print(vis(imm_raref))
-dev.off()
+    imm_raref = tryCatch({
+        raref_pms$.data = idata$data
+        do.call(repDiversity, raref_pms)
+    }, error=function(e) {
+        # https://github.com/immunomind/immunarch/issues/44
+        valid_samples = c()
+        for (sam in names(idata$data)) {
+            raref_pms$.data = idata$data[sam]
+            vsam = tryCatch({
+                do.call(repDiversity, raref_pms)
+                sam
+            }, error=function(e) {
+                warning(
+                    paste("Rarefraction analysis failed for sample", sam, ":", as.character(e))
+                )
+                c()
+            })
+            valid_samples = c(valid_samples, vsam)
+        }
+        raref_pms$.data = idata$data[valid_samples]
+        do.call(repDiversity, raref_pms)
+    })
+    rarefpng = file.path(raref_dir, paste0("raref-", sub("-$", "", sepname), ".png"))
 
-for (name in names(raref_by)) {
-    rfpng = file.path(raref_dir, paste0("raref-", name, ".png"))
-    png(rfpng, res=300, width=width, height=2000)
-    print(vis(imm_raref, .by=raref_by[[name]], .meta=immdata$data))
+    width = 1800 + ceiling(length(idata$data) / 20) * 500
+    png(rarefpng, res=300, width=width, height=2000)
+    p = vis(imm_raref) + xlab("Sample size (cells)")
+    if (get_max) {
+        raref_x <<- layer_scales(p)$x$range$range[2]
+        raref_y <<- layer_scales(p)$y$range$range[2]
+    } else {
+        if (!is.null(raref_x)) {
+            p = p + xlim(0, raref_x)
+        }
+        if (!is.null(raref_y)) {
+            p = p + ylim(0, raref_y)
+        }
+    }
+    print(p)
     dev.off()
+
+    if (isTRUE(raref_log)) {
+        rarefpng = file.path(raref_dir, paste0("raref-", sub("-$", "", sepname), "(log).png"))
+        png(rarefpng, res=300, width=width, height=2000)
+        p_log = vis(imm_raref, .log = TRUE) + xlab("Sample size (cells)")
+        if (get_max) {
+            raref_log_x <<- layer_scales(p_log)$x$range$range[2]
+        } else {
+            if (!is.null(raref_log_x)) {
+                p_log = p_log + scale_x_log10(limits = c(1, 10 ^ raref_log_x))
+            }
+            if (!is.null(raref_y)) {
+                p_log = p_log + ylim(0, raref_y)
+            }
+        }
+        print(p_log)
+        dev.off()
+    }
+
+
+    for (name in names(raref_by)) {
+        print(paste0("  * by ", name))
+        rfpng = file.path(raref_dir, paste0("raref-", sepname, name, ".png"))
+        png(rfpng, res=300, width=2200, height=2000)
+        p = vis(imm_raref, .by=raref_by[[name]], .meta=idata$meta) + xlab("Sample size (cells)")
+        if (!is.null(raref_x)) {
+            p = p + xlim(c(0, raref_x))
+        }
+        if (!is.null(raref_y)) {
+            p = p + ylim(c(0, raref_y))
+        }
+        print(p)
+        dev.off()
+
+        if (isTRUE(raref_log)) {
+            rfpng = file.path(raref_dir, paste0("raref-", sepname, name, "(log).png"))
+            png(rfpng, res=300, width=2200, height=2000)
+            p_log = vis(imm_raref, .by=raref_by[[name]], .meta=idata$meta, .log=TRUE) + xlab("Sample size (cells)")
+            if (!is.null(raref_log_x)) {
+                p_log = p_log + scale_x_log10(limits = c(1, 10 ^ raref_log_x))
+            }
+            if (!is.null(raref_y)) {
+                p_log = p_log + ylim(c(0, raref_y))
+            }
+            print(p_log)
+            dev.off()
+        }
+    }
+}
+
+print("  All samples")
+raref_sep_by = raref$separate_by
+raref$separate_by = NULL
+raref_analysis(immdata, "ALL-", TRUE)
+if (!is.null(raref_sep_by)) {
+    sepvars = unique(immdata$meta[[raref_sep_by]])
+
+    for (sepvar in sepvars) {
+        print(paste0("  ", raref_sep_by, ": ", sepvar))
+        q = list(include(sepvar))
+        names(q) = raref_sep_by
+        sepdata = repFilter(immdata, .method = "by.meta", .query = q)
+        raref_analysis(sepdata, paste0(sepvar, "-"))
+    }
 }
 
 
 # Clonotype tracking
+print("- Clonotype tracking")
 tracking_dir = file.path(outdir, "tracking")
 dir.create(tracking_dir, showWarnings = FALSE)
 for (name in names(tracking_target)) {
+    print(paste0("  ", name))
     target = tracking_target[[name]]
     samples = tracking_samples[[name]]
     if (is.null(samples)) {
@@ -503,9 +645,11 @@ for (name in names(tracking_target)) {
 }
 
 # K-mer analysis
+print("- K-mer analysis")
 kmer_dir = file.path(outdir, "kmer")
 dir.create(kmer_dir, showWarnings = FALSE)
 for (k in names(kmers_args)) {
+    print(paste0("  k=", k))
     k_dir = file.path(kmer_dir, paste0("kmer_", k))
     dir.create(k_dir, showWarnings = FALSE)
     kmer_args = kmers_args[[k]]
@@ -520,6 +664,7 @@ for (k in names(kmers_args)) {
     if (is.null(logg)) { logg = FALSE }
 
     for (h in head) {
+        print(paste0("    head: ", h))
         kmerpng = file.path(
             k_dir,
             paste0("head_", h, ".position_", position, ".log_", logg, ".png")
@@ -532,6 +677,7 @@ for (k in names(kmers_args)) {
 
     # motif analysis
     for (mot in kmer_args$motif) {
+        print(paste0("    motif: ", mot))
         mot_dir = file.path(k_dir, paste0("motif_", mot))
         dir.create(mot_dir, showWarnings = FALSE)
         # multiple samples not supported as of 0.6.7

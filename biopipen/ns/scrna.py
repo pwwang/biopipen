@@ -60,10 +60,10 @@ class SeuratPreparing(Proc):
         ncores: Number of cores to use
         cell_qc: filter expression to filter cells, using
             `tidyrseurat::filter()`.
-             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
-             `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`
-             For example: `nFeature_RNA > 200 & percent.mt < 5` will
-            keep cells with more than 200 genes and less than 5% mitochondrial
+            Available QC keys include `nFeature_RNA`, `nCount_RNA`,
+            `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`
+            For example: `nFeature_RNA > 200 & percent.mt < 5` will
+            keep cells with more than 200 genes and less than 5%% mitochondrial
             genes.
         gene_qc: filter genes. Currently only `min_cells` is supported.
             `min_cells` is the minimum number of cells that a gene must be
@@ -157,25 +157,32 @@ class SeuratClusterStats(Proc):
 
     Envs:
         stats: The statistics to plot
-            nCells - Number of cells for each cluster
-            nCellsPerSample - Number of cells per sample for each cluster
-            percCellsPerSample - Percentage of cells per sample for each cluster
+            `nCells_*` - Number of cells for each cluster.
+                You can specify `by` to group the cells by a metadata column,
+                and `devpars` to specify the device parameters for the plot.
+                You can also specify `filter` to filter the cells under certain
+                conditions using metadata columns.
+            `fracCells_*` - Fraction of cells for each cluster.
+                Similar to `nCells_*`, but the fraction is calculated
+                instead of the number.
         exprs: The expression values to plot
-            genes - The set of genes for the plots, unless `features` for those
-            plots is specified. Could also specify a file with genes
+            `genes` - The set of genes for the plots, unless `features` for
+            those plots is specified. Could also specify a file with genes
             (one per line)
-            ridgeplots - The ridge plots for the gene expressions.
+            `ridgeplots` - The ridge plots for the gene expressions.
             See `?Seurat::RidgePlot`.
-            vlnplots - Violin plots for the gene expressions.
+            `vlnplots` - Violin plots for the gene expressions.
             See `?Seurat::VlnPlot`. You can have `boxplot` key to add
             `geom_boxplot()` to the violin plots
-            featureplots - The feature plots for the gene expressions.
+            `featureplots` - The feature plots for the gene expressions.
             See `?Seurat::FeaturePlot`.
-            dotplot - Dot plots for the gene expressions.
+            `dotplot` - Dot plots for the gene expressions.
             See `?Seurat::DotPlot`.
-            heatmap - Heatmap for the gene expressions.
+            `heatmap` - Heatmap for the gene expressions.
             See `?Seurat::DoHeatmap`. You can specify `average=True` to plot on
             the average of the expressions.
+            `table` - The table for the gene expressions
+            (supported keys: title, log2, subset and features).
             All the above with `devpars` to define the output figures
             and `plus` to add elements to the `ggplot` object.
             You can have `subset` to subset the data. Multiple cases can be
@@ -199,13 +206,9 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "stats": {
-            "nCells": {"devpars": {"res": 100, "height": 1000, "width": 1000}},
-            "nCellsPerSample": {
-                "devpars": {"res": 100, "height": 1000, "width": 1000}
-            },
-            "percCellsPerSample": {
-                "devpars": {"res": 100, "height": 1000, "width": 1000}
-            },
+            "ncells_All": {},
+            "ncells_Sample": {"by": "Sample"},
+            "fracCells_Sample": {"by": "Sample"},
         },
         "exprs": {},
         "dimplots": {
@@ -501,12 +504,12 @@ class ExprImpute(Proc):
 
     Output:
         outfile: The output file in RDS format of Seurat object
-            Note that with Rmagic, the original RNA assay will be
-            renamed to `RAW_RNA` and the imputed RNA assay will be
+            Note that with rmagic and alra, the original RNA assay will be
+            renamed to `UNIMPUTED_RNA` and the imputed RNA assay will be
             renamed to `RNA`
 
     Envs:
-        tool: Either scimpute or rmagic
+        tool: Either alra, scimpute or rmagic
         scimpute_args: The arguments for scimpute
             drop_thre: The dropout threshold
             kcluster: Number of clusters to use
@@ -543,13 +546,17 @@ class ExprImpute(Proc):
         - name: r-seurat
           check: |
             {{proc.lang}} <(echo "library(Seurat)")
+        - name: r-seuratwrappers
+          if: {{proc.envs.tool == "alra"}}
+          check: |
+            {{proc.lang}} <(echo "library(SeuratWrappers)")
     """
 
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
     lang = config.lang.rscript
     envs = {
-        "tool": "rmagic",
+        "tool": "alra",
         "rmagic_args": {"python": config.exe.magic_python},
         "scimpute_args": {
             "drop_thre": 0.5,
@@ -557,6 +564,7 @@ class ExprImpute(Proc):
             "ncores": config.misc.ncores,
             "refgene": config.ref.refgene,
         },
+        "alra_args": {},
     }
     script = "file://../scripts/scrna/ExprImpute.R"
 
@@ -805,3 +813,53 @@ class ScFGSEA(Proc):
     }
     script = "file://../scripts/scrna/ScFGSEA.R"
     plugin_opts = {"report": "file://../reports/scrna/ScFGSEA.svelte"}
+
+
+class CellTypeAnnotate(Proc):
+    """Annotate cell types
+
+    Input:
+        sobjfile: The seurat object
+
+    Output:
+        outfile: The rds file of seurat object with cell type annotated
+
+    Envs:
+        tool: The tool to use for cell type annotation.
+            Available: `sctype`, `sccatch` or `direct`
+        sctype_tissue: The tissue to use for sctype.
+            E.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,
+            Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus
+        sctype_db: The database to use for sctype
+        cell_types: The cell types to use for direct annotation
+            Each a list of cell type names, or a dict with keys as the old
+            identity and values as the new cell type.
+
+    Requires:
+        - name: r-HGNChelper
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(HGNChelper)"
+        - name: r-seurat
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(Seurat)"
+        - name: r-dplyr
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(dplyr)"
+        - name: r-openxlsx
+          if: {{proc.envs.tool == 'sctype'}}
+          check: |
+            {{proc.lang}} -e "library(openxlsx)"
+    """
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.annotated.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "tool": "sctype",
+        "sctype_tissue": None,
+        "sctype_db": config.ref.sctype_db,
+        "cell_types": [],
+    }
+    script = "file://../scripts/scrna/CellTypeAnnotate.R"

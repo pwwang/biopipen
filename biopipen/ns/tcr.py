@@ -152,8 +152,11 @@ class Immunarch(Proc):
             `volume_by = {0: "Status", 1: ["Status", "Sex"]}`
             Or label the groups:
             `volume_by = {"Status": "Status", "Status_Sex": ["Status", "Sex"]}`
-            If a list or a single variable is given, it will be changed
-            into `{"Status": "Status"}`
+            If a single variable is given, for example, `"Status"` it will be
+            changed into `{"Status": "Status"}`.
+            If a list of variables is given, for example,
+            `["Status", "Sex"]` it will be changed into
+            `{"Status_Sex": ["Status", "Sex"]}`.
         len_by: Groupings to show CDR3 length of both aa and nt
         count_by: Groupings to show clonotype counts per sample
         top_clone_marks: `.head` arguments of `repClonoality()`
@@ -179,7 +182,14 @@ class Immunarch(Proc):
         spect: `.quant` and `.col` for `spectratype()` for each sample
         div_methods: Methods to calculate diversities
         div_by: Groupings to show sample diversities
-        raref_by: Groupings to show rarefactions
+        raref: Rarefraction parameters
+            `by`: The variables to group samples
+            `separate_by`: The variable to separate samples, which will be
+            plotted in separate figures. Currently only support one variable.
+            `align_y`: Align max of y-axis if there are multiple figures
+            `align_x`: Align max of x-axis if there are multiple figures
+            `log`: Also plot log-transformed x-axis using `vis(.log = TRUE)`.
+            `<other>`: Other arguments for `repDiversity(.method="raref", ...)`
         tracking_target: and
         tracking_samples: The target and samples to track.
             You can do multiple trackings. To do that, you need to specify
@@ -233,7 +243,15 @@ class Immunarch(Proc):
         # Diversity
         "div_methods": ["div", "gini.simp"],
         "div_by": {},
-        "raref_by": {},
+        "raref": {
+            "by": None,
+            "separate_by": None,
+            "align_x": False,
+            "align_y": False,
+            "log": False,
+            # ... other arguments for repDiversity()
+            # i.e. ".step", ".norm"
+        },
         # Clonotype tracking
         "tracking_target": {},
         "tracking_samples": {},  # can specify order

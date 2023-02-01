@@ -63,6 +63,15 @@ class AneuploidyScoreSummary(Proc):
 
     Output:
         outdir: The output directory containing the summary table and plots
+
+    Envs:
+        group_col: The column name in the metafile to group the samples
+        heatmap_cases: The cases to be included in the heatmap
+            By default, all arms are included. If specified, keys are the names
+            of the cases and values are the arms, which will be included in
+            the heatmap. The list of arms should be a subset of `chr<N>_p` and
+            `chr<N>_q`, where `<N>` is the chromosome number from 1 to 22, X, Y.
+            You can also use `ALL` to include all arms.
     """
     input = "asdirs:dirs, metafile:file"
     output = (
@@ -70,7 +79,7 @@ class AneuploidyScoreSummary(Proc):
     )
     lang = config.lang.rscript
     script = "file://../scripts/cnv/AneuploidyScoreSummary.R"
-    envs = {"group_col": None}
+    envs = {"group_col": None, "heatmap_cases": {"All-Arms": "ALL"}}
     plugin_opts = {
         "report": "file://../reports/cnv/AneuploidyScoreSummary.svelte",
     }

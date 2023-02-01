@@ -4,7 +4,7 @@ from biopipen.ns.vcf import Vcf2Bed
 from biopipen.core.testing import get_pipeline
 
 
-INFILE = Path(__file__).parent.parent / "VcfFix" / "data" / "tofix.vcf"
+INFILE = Path(__file__).parent / "data" / "tobed.vcf"
 
 
 def pipeline():
@@ -17,7 +17,7 @@ def pipeline():
 
 def testing(pipen):
     outfile = (
-        pipen.procs[-1].workdir.joinpath("0", "output", "tofix.bed")
+        pipen.procs[-1].workdir.joinpath("0", "output", "tobed.bed")
     )
     assert outfile.is_file()
 

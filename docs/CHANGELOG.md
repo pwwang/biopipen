@@ -1,3 +1,34 @@
+## 0.7.0
+
+- 🧑‍💻 [tcr.Immunarch] Allow separating samples for rarefraction analysis
+- ✨ [scrna.SeuratClusterStats] Add expression matrix to output
+- 🧑‍💻 [tcr.Immunarch] Allow align_x and log scale for rarefraction analysis
+- ✨ [cnv.AneuploidyScoreSummary] Add heatmaps
+- 🧑‍💻 [tcr.Immunarch] Allow separating samples for rarefraction analysis
+- ✨ [scrna.SeuratClusterStats] Add expression matrix to output
+- 🧑‍💻 [tcr.Immunarch] Allow align_x and log scale for rarefraction analysis
+- ✨ [cnv.AneuploidyScoreSummary] Add heatmaps
+- 🐛 [cnv.Aneuploidy] Fix when only one arm has signals for a chromosome
+- ✨ [cnvkit.CNVkitGuessBaits] Add proc
+- ♻️ [cnvkit_pipeline] Refactor and add docs
+- 🎨 [cnvkit_pipeline] Use process decorator to define processes
+- ✨ [scrna.SeuratClusterStats] Allow groupby other metadata column than Sample in cell stats
+- ✨ [scrna.ExprImput] Add ALRA and set as default
+- 🎨 [scrna.scrna_metabolic_landscape] Move from scrna_metabolic and use Seurat object directly instead of sce
+- 🐛 [scrna.SeuratClustering] Fix when there are fewer cells
+- ✨ [scrna.CellTypeAnnotate] Add proc and tests
+- ✨ [scrna.SeuratClusterStats] Allow subsetting for cell stats
+- ✅ [vcf.Vcf2Bed] Fix test
+- ✅ [tests] Add refgenes for testing
+- 🐛 [tests] Fix reference preparing
+- ✅ [tests] Add sctype db for tests
+- ✅ [tests] Try not patch  using lastest poetry
+- ✅ [tests] Build test deps and fix tests
+- 👷 [tests] Exclude test_scrna_metabolic_landscape from CI
+- ⬆️ Upgrade pipen-cli-run to 0.4.1
+- ⬆️ Upgrade pipen to 0.3.11
+-
+
 ## 0.6.2
 
 - 🎨 [scripts.utils.vcf] Use format keys for samples

@@ -7,6 +7,7 @@ meta_file <- {{in.metafile | quote}}
 count_file <- {{in.countfile | quote}}
 outfile <- {{out.outfile | quote}}
 seed = {{envs.seed}}
+patients = {{envs.patients | r}}
 
 set.seed(seed)
 
@@ -23,6 +24,9 @@ seurat_obj@meta.data = cbind(
     seurat_obj@meta.data,
     metadata[rownames(seurat_obj@meta.data),]
 )
+if (!is.null(patients)) {
+    seurat_obj = subset(seurat_obj, subset = patient %in% patients)
+}
 seurat_obj = NormalizeData(seurat_obj)
 all.genes <- rownames(seurat_obj)
 seurat_obj <- ScaleData(seurat_obj, features = all.genes)

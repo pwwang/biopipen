@@ -5,32 +5,46 @@ library(reshape2)
 library(RColorBrewer)
 library(parallel)
 library(ggprism)
+library(Seurat)
 
-sceobjfile <- {{ in.sceobj | r }}
-gmtfile <- {{ in.gmtfile | r }}
-config <- {{ in.configfile | config: "toml" | r }}
+sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
+gmtfile <- {{ envs.gmtfile | r }}
 ntimes <- {{ envs.ntimes | r }}
 ncores <- {{ envs.ncores | r }}
 heatmap_devpars <- {{ envs.heatmap_devpars | r }}
 violin_devpars <- {{ envs.violin_devpars | r }}
+grouping <- {{ envs.grouping | r }}
+grouping_prefix <- {{ envs.grouping_prefix | r }}
+subsetting <- {{ envs.subsetting | r }}
+subsetting_prefix <- {{ envs.subsetting_prefix | r }}
+
+if (!is.null(grouping_prefix) && nchar(grouping_prefix) > 0) {
+    grouping_prefix = paste0(grouping_prefix, "_")
+}
+
+if (!is.null(subsetting_prefix) && nchar(subsetting_prefix) > 0) {
+    subsetting_prefix = paste0(subsetting_prefix, "_")
+}
 
 set.seed(8525)
 
-groupby = config$grouping$groupby
-
-## gmtPathways is copied from fgsea package.
-gmtPathways <- function(gmt.file) {
-    pathwayLines <- strsplit(readLines(gmt.file), "\t")
-    pathways <- lapply(pathwayLines, tail, -2)
-    names(pathways) <- sapply(pathwayLines, head, 1)
+## gmt_pathways is copied from fgsea package.
+gmt_pathways <- function(gmt_file) {
+    pathway_lines <- strsplit(readLines(gmt_file), "\t")
+    pathways <- lapply(pathway_lines, tail, -2)
+    names(pathways) <- sapply(pathway_lines, head, 1)
     pathways
 }
 
+pathways <- gmt_pathways(gmtfile)
+pathway_names <- names(pathways)
+metabolics <- unique(as.vector(unname(unlist(pathways))))
+sobj <- readRDS(sobjfile)
+DefaultAssay(sobj) <- "RNA"
+
 ## calculate how many pathways of one gene involved.
 num_of_pathways <- function(gmtfile, overlapgenes) {
-    pathways <- gmtPathways(gmtfile)
-    pathway_names <- names(pathways)
     filter_pathways <- list()
     for (p in pathway_names) {
         genes <- pathways[[p]]
@@ -50,23 +64,25 @@ num_of_pathways <- function(gmtfile, overlapgenes) {
     gene_times
 }
 
-pathways <- gmtPathways(gmtfile)
-pathway_names <- names(pathways)
-sce <- readRDS(sceobjfile)
+do_one_subset <- function(s) {
+    if (is.null(s)) {
+        subset_dir <- file.path(outdir, "ALL")
+        dir.create(subset_dir, showWarnings = FALSE)
+        subset_obj <- sobj
+    } else {
+        subset_dir <- file.path(outdir, paste0(subsetting_prefix, s))
+        dir.create(subset_dir, showWarnings = FALSE)
 
-do_one_subset <- function(subset) {
-    subset_dir = file.path(outdir, subset)
-    dir.create(subset_dir, showWarnings = FALSE)
-    subset_sce <- sce[, sce$.subset == subset]
-    norm_tpm <- assay(subset_sce, "tpm")
+        subset_code = paste0("subset(sobj, subset = ", subsetting, " == '", s, "')")
+        subset_obj = eval(parse(text = subset_code))
+    }
 
-    all_cell_types <- as.vector(subset_sce[[groupby]])
+    all_cell_types <- subset_obj@meta.data[[grouping]]
     cell_types <- unique(all_cell_types)
-    metabolics <- unique(as.vector(unname(unlist(pathways))))
 
     gene_pathway_number <- num_of_pathways(
         gmtfile,
-        rownames(subset_sce)[rowData(subset_sce)$metabolic]
+        intersect(rownames(subset_obj), metabolics)
     )
 
     ## Calculate the pathway activities
@@ -93,31 +109,29 @@ do_one_subset <- function(subset) {
 
     for (p in pathway_names) {
         genes <- pathways[[p]]
-        genes_comm <- intersect(genes, rownames(norm_tpm))
+        genes_comm <- intersect(genes, rownames(subset_obj))
+        genes_expressed <- names(rowSums(subset_obj)[rowSums(subset_obj) > 0])
+        genes_comm <- intersect(genes_comm, genes_expressed)
         if (length(genes_comm) < 5) next
 
-        pathway_metabolic_tpm <- norm_tpm[genes_comm, , drop=FALSE]
-        pathway_metabolic_tpm <- pathway_metabolic_tpm[rowSums(pathway_metabolic_tpm) > 0, , drop=FALSE]
-        if (nrow(pathway_metabolic_tpm) < 5) next
-
-        mean_exp_eachCellType <- apply(pathway_metabolic_tpm, 1, function(x) by(x, all_cell_types, mean))
+        pathway_metabolic_obj <- subset(subset_obj, features = genes_comm)
+        mean_exp_eachCellType <- AverageExpression(pathway_metabolic_obj)$RNA
 
         # remove genes which are zeros in any celltype to avoid extreme ratio value
-        keep <- colnames(mean_exp_eachCellType)[colAlls(mean_exp_eachCellType > 0.001)]
-
+        keep <- rownames(mean_exp_eachCellType)[rowAlls(mean_exp_eachCellType > 0.001)]
         if (length(keep) < 3) next
 
         # using the loweset value to replace zeros for avoiding extreme ratio value
-        pathway_metabolic_tpm <- pathway_metabolic_tpm[keep, ]
-        pathway_metabolic_tpm <- t(apply(pathway_metabolic_tpm, 1, function(x) {
+        pathway_metabolic_obj <- subset(pathway_metabolic_obj, features = keep)
+        assay_data = GetAssayData(pathway_metabolic_obj)
+        assay_data <- t(apply(assay_data, 1, function(x) {
             x[x <= 0] <- min(x[x > 0])
             x
         }))
-
-
+        pathway_metabolic_obj <- SetAssayData(pathway_metabolic_obj, new.data = assay_data)
         pathway_number_weight <- 1 / gene_pathway_number[keep, ]
         #
-        mean_exp_eachCellType <- apply(pathway_metabolic_tpm, 1, function(x) by(x, all_cell_types, mean))
+        mean_exp_eachCellType <- t(AverageExpression(pathway_metabolic_obj)$RNA)
         ratio_exp_eachCellType <- t(mean_exp_eachCellType) / colMeans(mean_exp_eachCellType)
         # exclude the extreme ratios
         col_quantile <- apply(ratio_exp_eachCellType, 2, function(x) quantile(x, na.rm = T))
@@ -132,18 +146,22 @@ do_one_subset <- function(subset) {
         if (sum(!outliers) < 3) next
 
         keep <- names(outliers)[!outliers]
-        pathway_metabolic_tpm <- pathway_metabolic_tpm[keep, ]
+        pathway_metabolic_obj <- subset(pathway_metabolic_obj, features = keep)
         pathway_number_weight <- 1 / gene_pathway_number[keep, ]
-        mean_exp_eachCellType <- apply(pathway_metabolic_tpm, 1, function(x) by(x, all_cell_types, mean))
+        mean_exp_eachCellType <- t(AverageExpression(pathway_metabolic_obj)$RNA)
         ratio_exp_eachCellType <- t(mean_exp_eachCellType) / colMeans(mean_exp_eachCellType)
         mean_exp_pathway <- apply(ratio_exp_eachCellType, 2, function(x) weighted.mean(x, pathway_number_weight / sum(pathway_number_weight)))
         mean_expression_shuffle[p, ] <- mean_exp_pathway[cell_types]
         mean_expression_noshuffle[p, ] <- mean_exp_pathway[cell_types]
+        pathway_metabolic_data <- GetAssayData(pathway_metabolic_obj)
 
         ## shuffle 5000 times:
         ## define the functions
         group_mean <- function(x) {
-            sapply(cell_types, function(y) rowMeans(pathway_metabolic_tpm[, shuffle_cell_types_list[[x]] == y, drop = F]))
+            sapply(
+                cell_types,
+                function(y) rowMeans(pathway_metabolic_data[, shuffle_cell_types_list[[x]] == y, drop = F])
+            )
         }
         column_weigth_mean <- function(x) {
             apply(ratio_exp_eachCellType_list[[x]], 2, function(y) weighted.mean(y, weight_values))
@@ -176,7 +194,7 @@ do_one_subset <- function(subset) {
         }
     }
     all_NA <- rowAlls(is.na(mean_expression_shuffle))
-    mean_expression_shuffle <- mean_expression_shuffle[!all_NA, , drop=F]
+    mean_expression_shuffle <- mean_expression_shuffle[!all_NA, , drop = F]
     # heatmap
     dat <- mean_expression_shuffle
 
@@ -188,16 +206,24 @@ do_one_subset <- function(subset) {
         tmp <- rownames(dat)[select_row][order(dat[select_row, i], decreasing = T)]
         sort_row <- c(sort_row, tmp)
     }
-    sort_column <- apply(dat[sort_row, , drop=F], 2, function(x) order(x)[nrow(dat)])
+    sort_column <- apply(dat[sort_row, , drop = F], 2, function(x) order(x)[nrow(dat)])
     sort_column <- names(sort_column)
     dat[is.na(dat)] <- 1
 
-    heatmapfile = file.path(subset_dir, "KEGGpathway_activity_heatmap.png")
-    hmdata = dat[sort_row, sort_column, drop=F]
-    cnames = sapply(colnames(hmdata), function(x) {
-        if (is.na(as.integer(x))) x else paste0("Cluster", x)
-    })
-    colnames(hmdata) = cnames
+    heatmapfile <- file.path(subset_dir, "KEGGpathway_activity_heatmap.png")
+    hmdata <- dat[sort_row, sort_column, drop = F]
+    cnames <- sapply(colnames(hmdata), function(x) {paste0(grouping_prefix, x)})
+    colnames(hmdata) <- cnames
+    hm_devpars = heatmap_devpars
+    if (is.null(hm_devpars$res)) {
+        hm_devpars$res = 100
+    }
+    if (is.null(hm_devpars$width)) {
+        hm_devpars$width = 300 + max(nchar(rownames(hmdata))) * 8 + ncol(hmdata) * 12
+    }
+    if (is.null(hm_devpars$height)) {
+        hm_devpars$height = 400 + max(nchar(colnames(hmdata))) * 8 + nrow(hmdata) * 12
+    }
     plotHeatmap(
         hmdata,
         args = list(
@@ -212,7 +238,7 @@ do_one_subset <- function(subset) {
             row_dend_width = unit(30, "mm"),
             cluster_columns = FALSE
         ),
-        devpars = heatmap_devpars,
+        devpars = hm_devpars,
         outfile = heatmapfile
     )
 
@@ -227,11 +253,19 @@ do_one_subset <- function(subset) {
 
     scRNA_df <- melt(as.matrix(scRNA_dat))
     scRNA_df <- scRNA_df[!is.na(scRNA_df$value), ]
-    colnames(scRNA_df)[ncol(scRNA_df)-1] = "variable"
-    scRNA_df$variable = sapply(scRNA_df$variable, function(x) {
-        if (is.na(as.integer(x))) x else paste0("Cluster", x)
-    })
+    colnames(scRNA_df)[ncol(scRNA_df) - 1] <- "variable"
+    scRNA_df$variable <- sapply(scRNA_df$variable, function(x) {paste0(grouping_prefix, x)})
     violinfile <- file.path(subset_dir, "pathway_activity_violinplot.png")
+    vio_devpars = violin_devpars
+    if (is.null(vio_devpars$res)) {
+        vio_devpars$res = 100
+    }
+    if (is.null(vio_devpars$width)) {
+        vio_devpars$width = 100 + ncol(scRNA_df) * 50
+    }
+    if (is.null(hm_devpars$height)) {
+        vio_devpars$height = 1000
+    }
     plotViolin(
         scRNA_df,
         args = list(
@@ -242,7 +276,7 @@ do_one_subset <- function(subset) {
             width = 1.2
         ),
         ggs = c(
-            'scale_y_continuous(limits = c(0, 3), breaks = 0:3, labels = 0:3)',
+            "scale_y_continuous(limits = c(0, 3), breaks = 0:3, labels = 0:3)",
             'labs(y = "Metabolic Pathway Activity", x=NULL)',
             'stat_summary(
                 aes(x = variable, y = value),
@@ -251,17 +285,24 @@ do_one_subset <- function(subset) {
                 size = 1,
                 color = "black"
             )',
-            'theme_prism(axis_text_angle = 90)'
+            "theme_prism(axis_text_angle = 90)"
         ),
-        devpars = violin_devpars,
+        devpars = vio_devpars,
         outfile = violinfile
     )
 }
 
-subsets <- unique(sce$.subset)
+if (is.null(subsetting)) {
+    do_one_subset(NULL)
+} else {
+    subsets <- unique(sobj@meta.data[[subsetting]])
 
-x = mclapply(subsets, do_one_subset, mc.cores = ncores)
-if (any(unlist(lapply(x, class)) == "try-error")) {
-    stop("mclapply error")
+    if (ncores == 1) {
+        lapply(subsets, do_one_subset)
+    } else {
+        x <- mclapply(subsets, do_one_subset, mc.cores = ncores)
+        if (any(unlist(lapply(x, class)) == "try-error")) {
+            stop("mclapply error")
+        }
+    }
 }
-# sapply(subsets, do_one_subset)

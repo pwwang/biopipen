@@ -91,7 +91,7 @@ class CNVkitAutobin(Proc):
         "target_min_size": 20,
         "antitarget_max_size": 500000,
         "antitarget_min_size": 500,
-        "annotate": None,
+        "annotate": False,
         "short_names": False,
         "ref": config.ref.reffa,
     }
@@ -731,3 +731,47 @@ class CNVkitBatch(Proc):
         "type_col": "SampleType",
     }
     script = "file://../scripts/cnvkit/CNVkitBatch.py"
+
+
+class CNVkitGuessBaits(Proc):
+    """Guess the bait intervals from the bam files
+
+    It runs scripts/guess_baits.py from the cnvkit repo.
+
+    Input:
+        bamfiles: The bam files
+        atfile: The potential target file or access file
+            e.g. all known exons in the reference genome or
+            from `cnvkit.py access`
+
+    Output:
+        targetfile: The target file
+
+    Envs:
+        cnvkit: Path to cnvkit.py
+        guided: `in.atfile` is a potential target file when True, otherwise
+            it is an access file.
+        samtools: Path to samtools executable
+        ncores: Number of subprocesses to segment in parallel
+            False to use the maximum number of available CPUs.
+        ref: Path to a FASTA file containing the reference genome.
+        min_depth: Minimum sequencing read depth to accept as captured.
+            For guided only.
+        min_gap: Merge regions separated by gaps smaller than this.
+        min_length: Minimum region length to accept as captured.
+            `min_gap` and `min_length` are for unguided only.
+    """
+    input = "bamfiles:files, atfile:file"
+    output = "targetfile:file:{{in.bamfiles | first | stem}}_etc.baits.bed"
+    lang = config.lang.python
+    envs = {
+        "cnvkit": config.exe.cnvkit,
+        "samtools": config.exe.samtools,
+        "ncores": config.misc.ncores,
+        "ref": config.ref.reffa,
+        "guided": None,
+        "min_depth": 5,
+        "min_gap": 25,
+        "min_length": 50,
+    }
+    script = "file://../scripts/cnvkit/CNVkitGuessBaits.py"

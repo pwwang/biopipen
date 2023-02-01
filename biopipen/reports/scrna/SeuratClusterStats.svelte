@@ -6,26 +6,50 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-<h{{h}}>Number of cells for clusters</h{{h}}>
-<Tabs>
-    <Tab label="Bar Plot" />
-    <Tab label="Table" />
-    <svelte:fragment slot="content">
-        <TabContent>
-            <Image src={{job.out.outdir | joinpaths: "stats/ncells.png" | quote}} />
-        </TabContent>
-        <TabContent>
-            <DataTable src={{job.out.outdir | joinpaths: "stats/ncells.txt" | quote}}
-                data={ {{job.out.outdir | joinpaths: "stats/ncells.txt" | datatable: sep="\t", nrows=100 }} } />
-        </TabContent>
-    </svelte:fragment>
-</Tabs>
+{%- for statname in proc.envs.stats -%}
+    {%- if statname.startswith("nCells") -%}
+        {%- set num_or_frac = "Number" -%}
+        {%- set rest_title = statname | replace: "nCells_", "" | replace: "_", " " -%}
+    {%- else -%}
+        {%- set num_or_frac = "Fraction" -%}
+        {%- set rest_title = statname | replace: "fracCells_", "" | replace: "_", " " -%}
+    {%- endif -%}
+    {%- if rest_title == "All" or rest_title == "ALL" -%}
+        {%- set rest_title = "" -%}
+    {%- else -%}
+        {%- set rest_title = "(" + rest_title + ")" -%}
+    {%- endif -%}
 
-<h{{h}}>Number of cells from each sample for clusters</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "stats/ncellspersample.png" | quote}} />
+    {%- set plotfile = job.out.outdir | joinpaths: "stats", statname + ".png" -%}
+    {%- set tablefile = plotfile + ".txt" -%}
+    <h{{h}}>{{num_or_frac}} of cells {{rest_title}}</h{{h}}>
+    <Tabs>
+        <Tab label="Plot" />
+        <Tab label="Table" />
+        <svelte:fragment slot="content">
+            <TabContent>
+                <Image src={{plotfile | quote}} />
+            </TabContent>
+            <TabContent>
+                <DataTable src={{tablefile | quote}}
+                    data={ {{tablefile | datatable: sep="\t", nrows=100 }} } />
+            </TabContent>
+        </svelte:fragment>
+    </Tabs>
+{%- endfor -%}
 
-<h{{h}}>Fraction of cells from each sample for clusters</h{{h}}>
-<Image src={{job.out.outdir | joinpaths: "stats/perccellspersample.png" | quote}} />
+{%- if job.out.outdir | glob: "exprs/table-*.tsv" -%}
+<h{{h}}>Gene expression matrix</h{{h}}>
+    {%- set tabfiles = job.out.outdir | glob: "exprs/table-*.tsv" -%}
+    {%- for tabfile in tabfiles -%}
+        {%- set title = tabfile | append: ".title" | read | escape -%}
+        {%- if not title.startswith("table-") or len(tabfiles) > 1 -%}
+            <h{{h+1}}>{{ title | escape }}</h{{h+1}}>
+        {%- endif -%}
+        <p><DataTable src={{tabfile | quote}}
+            data={ {{tabfile | datatable: sep="\t", nrows=100 }} } /></p>
+    {%- endfor -%}
+{%- endif -%}
 
 {%- if job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
 <h{{h}}>Ridge plots of gene expressions</h{{h}}>

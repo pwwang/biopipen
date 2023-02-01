@@ -23,7 +23,7 @@ Metabolic landscape of single cells in the tumor microenvironment.
 The cells are grouped at 2 dimensions: `grouping`, usually the cell types, and `subsetting`, usually
 the groups that bring biological meaning (i.e. different timepoints or sample types (tumor/normal)).
 
-- **MetabolicPathwayActivity**
+- **MetabolicPathwayActivity (this page)**
 
     Investigating the metabolic pathways of the cells in different groups and subsets.
 
@@ -45,29 +45,20 @@ the groups that bring biological meaning (i.e. different timepoints or sample ty
 </div>
 
 {%- macro report_job(job, h=2) -%}
-{%- set name = job.in.configfile | config: "toml" | attr: "name" -%}
-{%- if name or proc.size > 1 -%}
-{%- else -%}
-{%- set h = 1 -%}
-{%- endif -%}
+  {%- for ssdir in job.out.outdir | glob: "*" -%}
+  <h{{h}}>{{ ssdir | stem }}</h{{h}}>
 
-{%- for ssdir in job.out.outdir | glob: "*" -%}
-<h{{h}}>{{ ssdir | stem }}</h{{h}}>
+  <h{{ h+1 }}>Metabolic pathway activities by {{envs.grouping}}</h{{ h+1 }}>
+  <Image src="{{ssdir | joinpaths: 'KEGGpathway_activity_heatmap.png'}}" />
 
-<h{{ h+1 }}>Metabolic pathway activities in cell types</h{{ h+1 }}>
-<Image src="{{ssdir | joinpaths: 'KEGGpathway_activity_heatmap.png'}}" />
+  <h{{ h+1 }}>Distributions of pathway activities by {{envs.grouping}}</h{{ h+1 }}>
+  <Image src="{{ssdir | joinpaths: 'pathway_activity_violinplot.png'}}" />
 
-<h{{ h+1 }}>Distributions of pathway activities in different cell types</h{{ h+1 }}>
-<Image src="{{ssdir | joinpaths: 'pathway_activity_violinplot.png'}}" />
-
-{%- endfor -%}
+  {%- endfor -%}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{%- set name = job.in.configfile | config: "toml" | attr: "name" -%}
-{%- if name or proc.size > 1 -%}
-<h1>{{name | default: "Job #" + str(job.index+1) | escape}}</h1>
-{%- endif -%}
+  <h1>{{job.in.sobjfile | stem | escape}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}

@@ -94,8 +94,8 @@ getCAA <- function(segf, cytoarm, tcn_col,
                            ploidy=ploidy, threshold=threshold) # Chromosome arm fractions
 
     ## Handle intervals that have no CN value (NA; i.e. telomeric ends)
+    combc$UID <- paste(combc$arm, round(combc$CN,2), sep="_")  ## Sets a unique arm_CN value
     if(any(is.na(combc$CN))) {
-      combc$UID <- paste(combc$arm, round(combc$CN,2), sep="_")  ## Sets a unique arm_CN value
       combc_na <- combc[which(is.na(combc$CN)),]
       combc <- combc[-which(is.na(combc$CN)),] ## Removes intervals with no CN values (NA)
     }
