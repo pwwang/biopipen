@@ -444,6 +444,8 @@ class MarkersFinder(Proc):
             >>> "ident.1" = "Case"
             >>> "ident.2" = "Control"
             >>> "group.by" = "Group"
+            >>> # Do the comparison in each cluster
+            >>> each = "seurat_clusters"
             >>> # other arguments for Seruat::FindMarkers()
             >>> # Filter after mutaters
             >>> filter2 = "SampleType != 'Control'"
@@ -479,7 +481,6 @@ class MarkersFinder(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "name": "Markers for all clusters",
         "cases": {
             "Cluster": {"group.by": "seurat_clusters"},
         },
