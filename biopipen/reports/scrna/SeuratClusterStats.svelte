@@ -112,7 +112,7 @@
 {%- endif -%}
 
 
-{%- if job.out.outdir | joinpaths: "dimplots" | as_path | attr: "is_dir" | call -%}
+{%- if job.out.outdir | joinpaths: "dimplots" | isdir -%}
 <h{{h}}>Dimensional reduction plots</h{{h}}>
 {%-   set dpimgs = job.out.outdir | glob: "dimplots", "*.png" -%}
 {{ table_of_images(dpimgs, caps=[]) }}

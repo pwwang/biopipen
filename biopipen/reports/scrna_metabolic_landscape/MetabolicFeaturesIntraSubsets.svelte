@@ -12,7 +12,7 @@
     {% for dsdir in groupdir | glob: "*" %}
         <h{{h+1}}>{{ dsdir | basename }}</h{{h+1}}>
         {% if envs.fgsea %}
-            {% if dsdir | joinpaths: "fgsea.txt" | as_path | attr: "is_file" | call %}
+            {% if dsdir | joinpaths: "fgsea.txt" | isfile %}
                 {{ fgsea_report(dsdir, h+2, envs, envs.top) }}
             {% else %}
                 <p>Not enough events.</p>

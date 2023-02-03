@@ -39,7 +39,7 @@
 
     <h{{h}}>Residency plots</h{{h}}>
 
-    {% if job.out.outdir | joinpaths: "sample_groups" | as_path | attr: "exists" | call %}
+    {% if job.out.outdir | joinpaths: "sample_groups" | exists %}
         {% for groupfile in job.out.outdir | glob: "sample_groups", "*.txt" %}
             {% set group = groupfile | stem %}
             <h{{h+1}}>{{group}}</h{{h+1}}>
@@ -57,7 +57,7 @@
 
     <h{{h}}>Clonotype overlapping</h{{h}}>
 
-    {% if job.out.outdir | joinpaths: "sample_groups" | as_path | attr: "exists" | call %}
+    {% if job.out.outdir | joinpaths: "sample_groups" | exists %}
         {% for groupfile in job.out.outdir | glob: "sample_groups", "*.txt" %}
             {% set group = groupfile | stem %}
             <h{{h+1}}>{{group}}</h{{h+1}}>

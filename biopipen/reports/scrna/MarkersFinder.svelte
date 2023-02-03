@@ -10,7 +10,7 @@
     {% set case = casedir | basename %}
     <h{{h}}>{{case}}</h{{h}}>
 
-    {% if casedir | joinpaths: "error.txt" | as_path | attr: "exists" | call %}
+    {% if casedir | joinpaths: "error.txt" | exists %}
       <InlineNotification
         hideCloseButton
         lowContrast
