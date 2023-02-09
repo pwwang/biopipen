@@ -45,6 +45,8 @@ bash = "bash"
 python = "python"
 # R
 rscript = "Rscript"
+# Perl
+perl = "perl"
 
 # Path to files/directories
 [path]
