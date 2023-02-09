@@ -79,3 +79,36 @@ class BcftoolsFilter(Proc):
         "args": {},
     }
     script = "file://../scripts/bcftools/BcftoolsFilter.py"
+
+
+class BcftoolsSort(Proc):
+    """Sort VCF files
+
+    Input:
+        infile: The input VCF file
+
+    Output:
+        outfile: The sorted VCF file.
+
+    Envs:
+        bcftools: Path to bcftools
+        gz: Whether to gzip the output file
+        index: Whether to index the output file (tbi) (`envs.gz` forced to True)
+        tmpdir: Path to save the intermediate files
+        args: Other arguments for `bcftools sort`. For example `max-mem`.
+            See also https://samtools.github.io/bcftools/bcftools.html#sort
+    """
+    input = "infile:file"
+    output = (
+        "outfile:file:{{in.infile | stem0}}.vcf"
+        "{% if envs.gz or envs.index %}.gz{% endif %}"
+    )
+    lang = config.lang.python
+    envs = {
+        "bcftools": config.exe.bcftools,
+        "gz": True,
+        "index": True,
+        "tmpdir": config.path.tmpdir,
+        "args": {},
+    }
+    script = "file://../scripts/bcftools/BcftoolsSort.py"
