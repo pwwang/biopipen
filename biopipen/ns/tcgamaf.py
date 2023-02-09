@@ -35,3 +35,18 @@ class Maf2Vcf(Proc):
         "args": {"per-tn-vcfs": True},
     }
     script = "file://../scripts/tcgamaf/Maf2Vcf.py"
+
+
+class MafAddChr(Proc):
+    """Adds the `chr` prefix to chromosome names in a MAF file if not present.
+
+    Input:
+        infile: The input MAF file
+
+    Output:
+        outfile: The output MAF file
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.maf"
+    lang = config.lang.python
+    script = "file://../scripts/tcgamaf/MafAddChr.py"
