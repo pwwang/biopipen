@@ -8,8 +8,8 @@
 {% for casedir in job.out.outdir | glob: "*" %}
     {%- set case = casedir | basename -%}
     <h{{h}}>{{case}}</h{{h}}>
-    {%- if casedir | joinpaths: "percluster" | as_path | attr: "is_file" | call -%}
-        {%- for cldir in casedir | as_path | attr: "glob" | call: "*" -%}
+    {%- if casedir | joinpaths: "percluster" | isfile -%}
+        {%- for cldir in casedir | glob: "*" -%}
             {%- if basename(cldir) == "percluster" -%}
                 {%- continue -%}
             {%- endif -%}

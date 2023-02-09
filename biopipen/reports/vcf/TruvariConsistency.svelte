@@ -13,7 +13,7 @@
 </pre>
 </Tile>
 
-{%- if job.out.outdir | joinpaths: "consistency.png" | as_path | attr: "exists" | call -%}
+{%- if job.out.outdir | joinpaths: "consistency.png" | exists -%}
 <h{{h}}>Heatmap of base CNV presence for each sample</h{{h}}>
 
 <Image src={{job.out.outdir | joinpaths: "consistency.png" | quote}} />

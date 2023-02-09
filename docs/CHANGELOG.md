@@ -1,9 +1,18 @@
+## 0.7.1
+
+- ⬆️ Upgrade pipen-filters to 0.2
+- 👽️ Adopt pipen-filters 0.2 in reports
+- 🔧 Rename `scrna_metabolic` namespace to `scrna_metabolic_landscape` in entry points
+- ✨ [scrna.MarkersFinder] Add `each` for cases to run on each value of metadata variable `each`
+- ✨ [tcgamaf.Maf2Vcf] Add proc
+- ✨ [bcftools.BcftoolsSort] Add proc
+
 ## 0.7.0
 
 - 🧑‍💻 [tcr.Immunarch] Allow separating samples for rarefraction analysis
 - ✨ [scrna.SeuratClusterStats] Add expression matrix to output
 - 🧑‍💻 [tcr.Immunarch] Allow align_x and log scale for rarefraction analysis
-- ✨ [cnv.AneuploidyScoreSummary] Add heatmaps
+- ✨ [cnv.AneuploidyScgitoreSummary] Add heatmaps
 - 🧑‍💻 [tcr.Immunarch] Allow separating samples for rarefraction analysis
 - ✨ [scrna.SeuratClusterStats] Add expression matrix to output
 - 🧑‍💻 [tcr.Immunarch] Allow align_x and log scale for rarefraction analysis
