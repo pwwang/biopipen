@@ -305,6 +305,44 @@ class VcfFix(Proc):
     script = "file://../scripts/vcf/VcfFix.py"
 
 
+class VcfAnno(Proc):
+    """Annotate a VCF file using vcfanno
+
+    https://github.com/brentp/vcfanno
+
+    Input:
+        infile: The input VCF file
+        conffile: The configuration file for vcfanno or configuration dict
+            itself
+
+    Output:
+        outfile: The output VCF file
+
+    Envs:
+        vcfanno: Path to vcfanno
+        ncores: Number of cores to use
+        conffile: configuration file for vcfanno or configuration dict itself
+            This is ignored when `conffile` is given as input
+        args: Additional arguments to pass to vcfanno
+
+    Requires:
+        - name: vcfanno
+          check: |
+            {{proc.envs.vcfanno}} --help
+    """
+
+    input = "infile:file, conffile"
+    output = "outfile:file:{{in.infile | stem0}}.{{envs.tool}}.vcf"
+    lang = config.lang.python
+    envs = {
+        "vcfanno": config.exe.vcfanno,
+        "ncores": config.misc.ncores,
+        "conffile": {},
+        "args": {"permissive-overlap": True},
+    }
+    script = "file://../scripts/vcf/VcfAnno.py"
+
+
 class TruvariBench(Proc):
     """Run `truvari bench` to compare a VCF with CNV calls and
     base CNV standards

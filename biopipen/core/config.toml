@@ -36,6 +36,8 @@ samtools = "samtools"
 magic_python = "python"
 # truvari
 truvari = "truvari"
+# vcfanno
+vcfanno = "vcfanno"
 
 # Interpreters
 [lang]
