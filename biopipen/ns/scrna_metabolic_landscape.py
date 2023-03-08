@@ -160,7 +160,9 @@ class ScrnaMetabolicLandscape(ProcGroup):
             "subsetting": None,
             "subsetting_prefix": "",
         }
-        script = "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
+        script = (
+            "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
+        )
         plugin_opts = {
             "report": (
                 "file://../reports/"
@@ -180,7 +182,9 @@ class ScrnaMetabolicLandscape(ProcGroup):
                 - check: {{proc.lang}} <(echo "library(fgsea)")
         """
         input = "sobjfile:file"
-        output = "outdir:dir:{{in.sobjfile | stem}}.intra-subset-pathwayfeatures"
+        output = (
+            "outdir:dir:{{in.sobjfile | stem}}.intra-subset-pathwayfeatures"
+        )
         lang = config.lang.rscript
         envs = {
             "ncores": config.misc.ncores,
