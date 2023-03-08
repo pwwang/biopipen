@@ -1,8 +1,8 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from_ os import path %}
 <script>
-    import { DataTable, Image } from "@@";
-    import { Tabs, Tab, TabContent } from "carbon-components-svelte";
+    import { DataTable, Image } from "$lib";
+    import { Tabs, Tab, TabContent } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}

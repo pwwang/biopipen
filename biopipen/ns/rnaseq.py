@@ -6,7 +6,6 @@ from ..core.config import config
 
 class UnitConversion(Proc):
     """Convert expression value units back and forth"""
-
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.rscript

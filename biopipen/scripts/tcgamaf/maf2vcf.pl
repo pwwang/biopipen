@@ -6,6 +6,7 @@
 # https://github.com/mskcc/vcf2maf
 # This is modified to:
 # - Add path to samtools to arguments
+# - Add Variant_Classification and Variant_Type to INFO field
 # - Fix https://github.com/mskcc/vcf2maf/issues/234
 # - Adding logs
 
@@ -189,6 +190,8 @@ while( my $line = $maf_fh->getline ) {
                 $tn_vcf{$vcf_file} .= "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
                 $tn_vcf{$vcf_file} .= "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic depths of REF and ALT(s) in the order listed\">\n";
                 $tn_vcf{$vcf_file} .= "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Total read depth across this site\">\n";
+                $tn_vcf{$vcf_file} .= "##INFO=<ID=VC,Number=1,Type=String,Description=\"Variant_Classification\">\n";
+                $tn_vcf{$vcf_file} .= "##INFO=<ID=VT,Number=1,Type=String,Description=\"Variant_Type\">\n";
                 $tn_vcf{$vcf_file} .= "##FILTER=<ID=$_,Description=\"$_\">\n" foreach ( sort keys %filter_tags );
                 $tn_vcf{$vcf_file} .= "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t$t_id\t$n_id\n";
             }
@@ -203,7 +206,7 @@ while( my $line = $maf_fh->getline ) {
     }
 
     # For each variant in the MAF, parse out data that can go into the output VCF
-    my ( $chr, $pos, $ref, $al1, $al2, $t_id, $n_id, $n_al1, $n_al2, $id, $qual, $filter ) = map{ my $c = lc; ( defined $col_idx{$c} ? $cols[$col_idx{$c}] : "" )} qw( Chromosome Start_Position Reference_Allele Tumor_Seq_Allele1 Tumor_Seq_Allele2 Tumor_Sample_Barcode Matched_Norm_Sample_Barcode Match_Norm_Seq_Allele1 Match_Norm_Seq_Allele2 variant_id variant_qual FILTER );
+    my ( $chr, $pos, $ref, $al1, $al2, $t_id, $n_id, $n_al1, $n_al2, $id, $qual, $filter, $vc, $vt ) = map{ my $c = lc; ( defined $col_idx{$c} ? $cols[$col_idx{$c}] : "" )} qw( Chromosome Start_Position Reference_Allele Tumor_Seq_Allele1 Tumor_Seq_Allele2 Tumor_Sample_Barcode Matched_Norm_Sample_Barcode Match_Norm_Seq_Allele1 Match_Norm_Seq_Allele2 variant_id variant_qual FILTER Variant_Classification Variant_Type );
     $filter =~ s/,/;/g;
     ++$line_count;
 
@@ -321,12 +324,12 @@ while( my $line = $maf_fh->getline ) {
     # Contruct a VCF formatted line and append it to the respective VCF
     if( $per_tn_vcfs ) {
         my $vcf_file = "$output_dir/$t_id\_vs_$n_id.vcf";
-        my $vcf_line = join( "\t", $chr, $pos, $id, $ref, $alt, $qual, $filter, ".", "GT:AD:DP", $t_fmt, $n_fmt );
+        my $vcf_line = join( "\t", $chr, $pos, $id, $ref, $alt, $qual, $filter, "VC=$vc:VT=$vt", "GT:AD:DP", $t_fmt, $n_fmt );
         $tn_vcf{$vcf_file} .= "$vcf_line\n";
     }
 
     # Store VCF formatted data for the multi-sample VCF
-    my $key = join( "\t", $chr, $pos, $ref, $alt );
+    my $key = join( "\t", $chr, $pos, $ref, $alt, $vc, $vt );
     push( @var_key, $key ) unless( exists $var_frmt{ $key } );
     $var_frmt{ $key }{ $vcf_col_idx{ $t_id }} = $t_fmt;
     $var_frmt{ $key }{ $vcf_col_idx{ $n_id }} = $n_fmt;
@@ -356,14 +359,16 @@ $vcf_fh->print( $ref_header );
 $vcf_fh->print( "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" );
 $vcf_fh->print( "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic Depths of REF and ALT(s) in the order listed\">\n" );
 $vcf_fh->print( "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read Depth\">\n" );
+$vcf_fh->print( "##INFO=<ID=VC,Number=1,Type=String,Description=\"Variant_Classification\">\n" );
+$vcf_fh->print( "##INFO=<ID=VT,Number=1,Type=String,Description=\"Variant_Type\">\n" );
 $vcf_fh->print( "##FILTER=<ID=$_,Description=\"$_\">\n" ) foreach ( sort keys %filter_tags );
 $vcf_fh->print( "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" . join("\t", @vcf_cols) . "\n" );
 
 # Write each variant into the multi-sample VCF
 print STDOUT "INFO: Writing multi-sample VCF\n";
 foreach my $key ( @var_key ) {
-    my ( $chr, $pos, $ref, $alt ) = split( "\t", $key );
-    $vcf_fh->print( join( "\t", $chr, $pos, $var_id{ $key }, $ref, $alt, $var_qual{ $key }, $var_fltr{ $key }, ".", "GT:AD:DP" ));
+    my ( $chr, $pos, $ref, $alt, $vc, $vt ) = split( "\t", $key );
+    $vcf_fh->print( join( "\t", $chr, $pos, $var_id{ $key }, $ref, $alt, $var_qual{ $key }, $var_fltr{ $key }, "VC=$vc;VT=$vt", "GT:AD:DP" ));
     map{ $vcf_fh->print( "\t" . (( exists $var_frmt{$key}{$_} ) ? $var_frmt{$key}{$_} : './.:.:.' ))}( 0..$#vcf_cols );
     $vcf_fh->print( "\n" );
 }

@@ -1,3 +1,4 @@
+"""Additional filters for pipen"""
 from pathlib import Path
 from typing import Any, Mapping
 

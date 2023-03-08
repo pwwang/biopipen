@@ -23,32 +23,39 @@ if __name__ == "__main__":
 ### Use as pipen-cli-run plugin
 
 ```shell
-❯ pipen run bed BedLiftOver
+❯ pipen run bed BedLiftOver --help
+Usage: pipen [-h | -h+] [options]
 
-DESCRIPTION:
-  Liftover a BED file using liftOver
+Liftover a BED file using liftOver
+Use `@configfile` to load default values for the options.
 
-USAGE:
-  pipen [OPTIONS]
+Pipeline Options:
+  --name NAME           The name for the pipeline, will affect the default workdir and
+                        outdir. [default: BedLiftOver_pipeline]
+  --profile PROFILE     The default profile from the configuration to run the pipeline.
+                        This profile will be used unless a profile is specified in the
+                        process or in the .run method of pipen. You can check the available
+                        profiles by running `pipen profile`
+  --outdir OUTDIR       The output directory of the pipeline [default: ./<name>_results]
+  --forks FORKS         How many jobs to run simultaneously by the scheduler
+  --scheduler SCHEDULER
+                        The scheduler to run the jobs
 
-OPTIONS FOR <BedLiftOver>:
-  --in.inbed <list>               - The input BED file Default: \[]
-  --out.outbed <auto>             - The output BED file Default: <awaiting compiling>
-  --envs.liftover <str>           - The path to liftOver Default: liftOver
-  --envs.chain <str>              - The map chain file for liftover
-                                    Default: ~/reference/hg38ToHg19.over.chain.gz
+Namespace <envs>:
+  --envs ENVS           Environment variables for the process [default: {'liftover':
+                        'liftOver', 'chain': ''}]
+  --envs.liftover LIFTOVER
+                        The path to liftOver [default: liftOver]
+  --envs.chain CHAIN    The map chain file for liftover [default: ]
 
-OPTIONAL OPTIONS:
-  --config <path>                 - Read options from a configuration file in TOML. Default: None
-  -h, --help                      - Print help information for this command
-  --full                          - Show full options for this command
+Namespace <in>:
+  --in.inbed INBED [INBED ...]
+                        The input BED file
 
-PIPELINE OPTIONS:
-  --profile <str>                 - The default profile from the configuration to run the pipeline.
-                                    This profile will be used unless a profile is specified in the
-                                    process or in the .run method of pipen. Default: default
-  --outdir <path>                 - The output directory of the pipeline
-                                    Default: ~/bedliftover_pipeline_results/
-  --workdir <str>                 - The workdir for the pipeline. Default: ./.pipen
-  --scheduler <str>               - The scheduler to run the jobs. Default: local
+Namespace <out>:
+  --out.outbed OUTBED   The output BED file [default: {{in.inbed | basename}}]
+
+Options:
+  -h, --help, -h+, --help+
+                        show help message (with + to show more options) and exit
 ```

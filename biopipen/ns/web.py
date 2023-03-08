@@ -1,5 +1,4 @@
 """Get data from the web"""
-
 from ..core.proc import Proc
 from ..core.config import config
 
@@ -22,16 +21,11 @@ class Download(Proc):
         ncores: The number of cores to use
 
     Requires:
-        - name: wget
-          message: Only required when envs.tool == "wget"
-          check: |
-            {{proc.envs.wget}} --version
-        - name: aria2c
-          message: Only required when envs.tool == "aria2c"
-          check: |
-            {{proc.envs.aria2c}} --version
+        wget: Only required when envs.tool == "wget"
+            - check: {{proc.envs.wget}} --version
+        aria2c: Only required when envs.tool == "aria2c"
+            - check: {{proc.envs.aria2c}} --version
     """
-
     input = "url"
     output = (
         "outfile:file:"
@@ -66,16 +60,11 @@ class DownloadList(Proc):
         ncores: The number of cores to use
 
     Requires:
-        - name: wget
-          message: Only required when envs.tool == "wget"
-          check: |
-            {{proc.envs.wget}} --version
-        - name: aria2c
-          message: Only required when envs.tool == "aria2c"
-          check: |
-            {{proc.envs.aria2c}} --version
+        wget: Only required when envs.tool == "wget"
+            - check: {{proc.envs.wget}} --version
+        aria2c: Only required when envs.tool == "aria2c"
+            - check: {{proc.envs.aria2c}} --version
     """
-
     input = "urlfile:file"
     output = "outdir:dir:{{in.urlfile | stem}}.downloaded"
     lang = config.lang.python

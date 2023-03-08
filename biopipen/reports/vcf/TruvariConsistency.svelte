@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs -%}
 <script>
-    import { Image } from "@@";
-    import { Tile } from "carbon-components-svelte";
+    import { Image } from "$lib";
+    import { Tile } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}

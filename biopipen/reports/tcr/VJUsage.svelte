@@ -1,6 +1,6 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
-    import { Image } from "@@";
+    import { Image } from "$lib";
 </script>
 
 <h1>V-J usage plots</h1>

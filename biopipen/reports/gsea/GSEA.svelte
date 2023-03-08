@@ -1,8 +1,8 @@
 {% from "utils/misc.liq" import report_jobs -%}
 {% from "utils/gsea.liq" import gsea_report -%}
 <script>
-    import { Image, DataTable } from "@@";
-    import { Tile } from "carbon-components-svelte";
+    import { Image, DataTable } from "$lib";
+    import { Tile } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}

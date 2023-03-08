@@ -2,7 +2,7 @@
 {% from "utils/gsea.liq" import fgsea_report, gsea_report -%}
 
 <script>
-  import { Image, DataTable } from "@@";
+  import { Image, DataTable } from "$lib";
 </script>
 
 {%- macro report_job(job, h=2) -%}

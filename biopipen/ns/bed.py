@@ -17,11 +17,9 @@ class BedLiftOver(Proc):
         chain: The map chain file for liftover
 
     Requires:
-        - name: liftOver
-          check: |
-            {{proc.envs.liftover}} 2>&1 | grep "usage"
+        liftOver:
+            - check: {{proc.envs.liftover}} 2>&1 | grep "usage"
     """
-
     input = "inbed:file"
     output = "outbed:file:{{in.inbed | basename}}"
     envs = {
@@ -64,18 +62,14 @@ class Bed2Vcf(Proc):
         index: Sort and index output file
 
     Requires:
-        - name: cyvcf2
-          check: |
-            {{proc.lang}} -c "import cyvcf2"
-        - name: pysam
-          check: |
-            {{proc.lang}} -c "import pysam"
-        - name: bcftools
-          if: {{proc.envs.index}}
-          check: |
-            {{proc.envs.bcftools}} --version
+        cyvcf2:
+            - check: {{proc.lang}} -c "import cyvcf2"
+        pysam:
+            - check: {{proc.lang}} -c "import pysam"
+        bcftools:
+            - if: {{proc.envs.index}}
+            - check: {{proc.envs.bcftools}} --version
     """
-
     input = "inbed:file"
     output = (
         "outvcf:file:{{in.inbed | stem}}.vcf{{'.gz' if envs.index else ''}}"
@@ -141,7 +135,6 @@ class BedConsensus(Proc):
         ncores: Number of cores to use to calculate the weights for
             each bed file
     """
-
     input = "bedfiles:files"
     output = (
         "outbed:file:{{in.bedfiles | first | stem | append: '_consensus'}}.bed"

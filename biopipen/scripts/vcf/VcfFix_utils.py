@@ -1,5 +1,5 @@
 import re
-
+import gzip
 from biopipen.utils.vcf import *  # noqa: F401, F403
 
 
@@ -63,7 +63,8 @@ def fix_vcffile(vcffile, outfile, fixes):
         else:
             modify_fixes.append(fix)
 
-    with open(vcffile, "r") as fin, open(outfile, "w") as fout:
+    inopen = gzip.open if vcffile.endswith(".gz") else open
+    with inopen(vcffile, "rt") as fin, open(outfile, "w") as fout:
         for line in fin:
             obj = line_to_obj(line)
             out = handle_obj(obj, modify_fixes)

@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
-    import { Image, DataTable } from "@@";
-    import { Dropdown } from "carbon-components-svelte";
+    import { Image, DataTable } from "$lib";
+    import { Dropdown } from "$ccs";
 
     let count_sample;
 

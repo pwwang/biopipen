@@ -1,8 +1,8 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from_ os import path %}
 <script>
-    import { Image } from "@@";
-    import { Tile } from "carbon-components-svelte";
+    import { Image } from "$lib";
+    import { Tile } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
