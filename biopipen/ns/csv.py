@@ -1,6 +1,4 @@
 """Tools to deal with csv/tsv files"""
-
-
 from ..core.proc import Proc
 
 

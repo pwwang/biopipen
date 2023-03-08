@@ -19,17 +19,14 @@ class AneuploidyScore(Proc):
             plot to show the CAAs for each chromosome arm
 
     Requires:
-        - name: AneuploidyScore
-          check: |
-            {{proc.lang}} <(echo "library(AneuploidyScore)")
-        - name: ucsc.hg19.cytoband
-          if: {{ proc.envs.genome == 'hg19' }}
-          check: |
-            {{proc.lang}} <(echo "library(ucsc.hg19.cytoband)")
-        - name: ucsc.hg38.cytoband
-          if: {{ proc.envs.genome == 'hg38' }}
-          check: |
-            {{proc.lang}} <(echo "library(ucsc.hg38.cytoband)")
+        AneuploidyScore:
+            - check: {{proc.lang}} <(echo "library(AneuploidyScore)")
+        ucsc.hg19.cytoband:
+            - if: {{ proc.envs.genome == 'hg19' }}
+            - check: {{proc.lang}} <(echo "library(ucsc.hg19.cytoband)")
+        ucsc.hg38.cytoband:
+            - if: {{ proc.envs.genome == 'hg38' }}
+            - check: {{proc.lang}} <(echo "library(ucsc.hg38.cytoband)")
     """
     input = "segfile:file"
     output = "outdir:dir:{{in.segfile | stem}}.aneuploidy_score"

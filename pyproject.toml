@@ -7,14 +7,14 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
-pipen = "^0.3"
-pipen-filters = "^0.2"
-pipen-report = "^0.4"
+pipen = "^0.5"
+pipen-filters = "^0.4"
+pipen-report = "^0.6"
 cmdy = "^0.5"
 datar = {version = "^0.11", extras = ["pandas"]}
-pipen-cli-run = "^0.4"
-pipen-verbose = {version = "^0.1", optional = true}
-pipen-args = {version = "^0.3", optional = true}
+pipen-cli-run = "^0.5"
+pipen-verbose = {version = "^0.3", optional = true}
+pipen-args = {version = "^0.6", optional = true}
 
 [tool.poetry.extras]
 test = ["pipen-verbose", "pipen-args"]

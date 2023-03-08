@@ -38,7 +38,6 @@ class GeneNameConversion(Proc):
             Supported: human, mouse, rat, fruitfly, nematode, zebrafish,
             thale-cress, frog and pig
     """  # noqa: E501
-
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python

@@ -16,7 +16,7 @@
 
 
 {%- macro table_of_images_script() -%}
-import { Image } from "../components";
+import { Image } from "$lib";
 {%- endmacro -%}
 
 {%- macro table_of_images(srcs, caps=None, col=2, table_width=100) -%}

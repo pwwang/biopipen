@@ -1,6 +1,5 @@
 """Provides the envs from configuration files"""
 
-import sys
 from typing import Any
 from pathlib import Path
 from tempfile import gettempdir
@@ -38,9 +37,5 @@ config_profiles = [
     USER_CONFIG_FILE,
     PROJ_CONFIG_FILE,
 ]
-# scan sys.argv to see if +config <config file> passed in
-if "+config" in sys.argv:
-    cindex = sys.argv.index("+config")
-    config_profiles.append(sys.argv[cindex + 1])
 
 config = ConfigItems(Config.load(*config_profiles, ignore_nonexist=True))

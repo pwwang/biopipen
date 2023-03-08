@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs -%}
 <script>
-    import { Image, DataTable } from "@@";
-    import { Tabs, Tab, TabContent, InlineNotification } from "carbon-components-svelte";
+    import { Image, DataTable } from "$lib";
+    import { Tabs, Tab, TabContent, InlineNotification } from "$ccs";
 </script>
 
 

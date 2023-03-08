@@ -19,11 +19,9 @@ class CNVkitAccess(Proc):
         ref: The reference genome fasta file
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
     """
-
     input = "excfiles:files"
     output = (
         "outfile:file:{{envs.ref | stem0}}.access.{{envs.min_gap_size}}.bed"
@@ -71,11 +69,9 @@ class CNVkitAutobin(Proc):
         ref: The reference genome fasta file
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
     """
-
     input = "bamfiles:files, accfile:file, baitfile:file"
     output = [
         "target_file:file:{{in.bamfiles | first | stem0}}-etc.target.bed",
@@ -117,11 +113,9 @@ class CNVkitCoverage(Proc):
         ref: The reference genome fasta file
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
     """
-
     input = "bamfile:file, target_file:file"
     output = """
         {%- if "antitarget" in basename(in.target_file) -%}
@@ -174,11 +168,9 @@ class CNVkitReference(Proc):
         ref: The reference genome fasta file
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
     """
-
     input = (
         "covfiles:files, target_file:file, antitarget_file:file, sample_sex:var"
     )
@@ -221,11 +213,9 @@ class CNVkitFix(Proc):
         no_rmask: Skip RepeatMasker correction.
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
     """
-
     input = (
         "target_file:file, antitarget_file:file, reference:file, sample_id:var"
     )
@@ -286,14 +276,11 @@ class CNVkitSegment(Proc):
             zygosity from allele frequencies.
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
-        - name: r-DNAcopy
-          check: |
-            {{proc.envs.rscript}} <(echo "library(DNAcopy)")
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
+        r-DNAcopy:
+            - check: {{proc.envs.rscript}} <(echo "library(DNAcopy)")
     """
-
     input = "cnrfile:file, vcf:file, sample_id:var, normal_id:var"
     output = "outfile:file:{{in.cnrfile | stem0}}.cns"
     lang = config.lang.python
@@ -366,14 +353,11 @@ class CNVkitScatter(Proc):
             if no case specified
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
-        - name: convert
-          check: |
-            {{proc.envs.convert}} -version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
+        convert:
+            - check: {{proc.envs.convert}} -version
     """
-
     input = (
         "cnrfile:file, cnsfile:file, config:var, "
         "vcf:file, sample_id:var, normal_id:var"
@@ -439,14 +423,11 @@ class CNVkitDiagram(Proc):
             and `title`
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
-        - name: convert
-          check: |
-            {{proc.envs.convert}} -version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
+        convert:
+            - check: {{proc.envs.convert}} -version
     """
-
     input = "cnrfile:file, cnsfile:file, sample_sex:var"
     output = "outdir:dir:{{in.cnrfile | stem0}}.diagram"
     lang = config.lang.python
@@ -510,14 +491,11 @@ class CNVkitHeatmap(Proc):
             if no case specified
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
-        - name: convert
-          check: |
-            {{proc.envs.convert}} -version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
+        convert:
+            - check: {{proc.envs.convert}} -version
     """
-
     input = "segfiles:files, sample_sex: var"
     output = "outdir:dir:{{in.segfiles | first | stem0}}-etc.heatmap"
     lang = config.lang.python
@@ -587,11 +565,9 @@ class CNVkitCall(Proc):
             zygosity from allele frequencies.
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
     """
-
     input = [
         "cnrfile:file",
         "cnsfile:file",
@@ -691,14 +667,11 @@ class CNVkitBatch(Proc):
             `in.metafile`
 
     Requires:
-        - name: cnvkit
-          check: |
-            {{proc.envs.cnvkit}} version
-        - name: r-DNAcopy
-          check: |
-            {{proc.envs.rscript}} <(echo "library(DNAcopy)")
+        cnvkit:
+            - check: {{proc.envs.cnvkit}} version
+        r-DNAcopy:
+            - check: {{proc.envs.rscript}} <(echo "library(DNAcopy)")
     """
-
     input = "metafile:file"
     output = "outdir:dir:{{in.metafile | stem0}}.cnvkit"
     lang = config.lang.python

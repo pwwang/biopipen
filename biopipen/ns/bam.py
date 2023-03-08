@@ -33,11 +33,9 @@ class CNVpytor(Proc):
         baf_nomask: Do not use P mask in BAF histograms
 
     Requires:
-        - name: cnvpytor
-          check: |
-            {{proc.envs.cnvpytor}} --version
+        cnvpytor:
+           - check: {{proc.envs.cnvpytor}} --version
     """
-
     input = "bamfile:file, snpfile:file"
     output = "outdir:dir:{{in.bamfile | stem}}.cnvpytor"
     lang = config.lang.python
@@ -93,9 +91,7 @@ class ControlFREEC(Proc):
         freec: Path to Control-FREEC executable
         ncores: Number of cores to use
         arggs: Other arguments for Control-FREEC
-
     """
-
     input = "bamfile:file, snpfile:file"
     output = "outdir:dir:{{in.bamfile | stem}}.freec"
     lang = config.lang.python
@@ -132,14 +128,14 @@ class CNAClinic(Proc):
     Input:
         metafile: The meta file, header included, tab-delimited, including
             following columns:
-            "Bam": The path to bam file
-            "Sample": Optional. The sample names,
+            - Bam: The path to bam file
+            - Sample: Optional. The sample names,
                 if you don't want filename of bam file to be used
-            "Group": Optional. The group names, either "Case" or "Control"
-            "Patient": Optional. The patient names. Since CNAClinic only
+            - Group: Optional. The group names, either "Case" or "Control"
+            - Patient: Optional. The patient names. Since CNAClinic only
                 supports paired samples, you need to provide the patient names
                 for each sample. Required if "Group" is provided.
-            "Binsizer": Optional. Samples used to estimate the bin size
+            - Binsizer: Optional. Samples used to estimate the bin size
                 "Y", "Yes", "T", "True", will be treated as True
                 If not provided, will use `envs.binsizer` to get the samples
                 to use. Either this column or `envs.binsizer` should be
@@ -153,9 +149,9 @@ class CNAClinic(Proc):
         seed: The seed for random number generator for choosing samples
             for estimating bin size
         binsizer: The samples used to estimate the bin size, it could be:
-            - A list of sample names
-            - A float number (0 < x <= 1), the fraction of samples to use
-            - A integer number (x > 1), the number of samples to use
+            A list of sample names
+            A float number (0 < x <= 1), the fraction of samples to use
+            A integer number (x > 1), the number of samples to use
         binsize: Directly use this binsize for CNAClinic, in kbp.
         genome: The genome assembly
         run_args: The arguments for CNAClinic::runSegmentation

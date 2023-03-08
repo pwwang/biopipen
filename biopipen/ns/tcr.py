@@ -116,7 +116,6 @@ class ImmunarchFilter(Proc):
             Placeholders like `{Sample}_` can be used to from the meta data
         metacols: The extra columns to be exported to the group file.
     """
-
     input = "immdata:file, filterfile:file"
     output = """
         outfile:file:{{in.immdata | stem}}.RDS,
@@ -209,7 +208,6 @@ class Immunarch(Proc):
             If you do want multiple parameter sets for the same K, You can use
             a float number as the K. For example: `5.1` for K `5`.
     """
-
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.immunarch"
     lang = config.lang.rscript
@@ -341,7 +339,6 @@ class CloneResidency(Proc):
         sample_groups: How the samples aligned in the report.
             Useful for cohort with large number of samples.
     """
-
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.cloneov"
     lang = config.lang.rscript
@@ -366,7 +363,6 @@ class Immunarch2VDJtools(Proc):
         outdir: The output directory containing the vdjtools input for each
             sample
     """
-
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.vdjtools_input"
     lang = config.lang.rscript
@@ -451,7 +447,6 @@ class Attach2Seurat(Proc):
             `{Sample}_` to use the meta data from the immunarch object
         metacols: Which meta columns to attach
     """
-
     input = "immfile:file, sobjfile:file"
     output = "outfile:file:{{in.sobjfile | basename}}"
     lang = config.lang.rscript
@@ -505,12 +500,10 @@ class TCRClustering(Proc):
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
 
     Requires:
-        - name: clusTCR
-          if: {{ proc.envs.tool == 'ClusTCR' }}
-          check: |
-            {{ proc.envs.python }} -c "import clustcr"
+        clusTCR:
+            - if: {{ proc.envs.tool == 'ClusTCR' }}
+            - check: {{ proc.envs.python }} -c "import clustcr"
     """
-
     input = "immfile:file"
     output = [
         "immfile:file:{{in.immfile | basename}}",
@@ -549,11 +542,9 @@ class TCRClusteringStats(Proc):
             the diversities by groups
 
     Requires:
-        - name: r-immunarch
-          check: |
-            {{proc.lang}} -e "library(immunarch)"
+        r-immunarch:
+            - check: {{proc.lang}} -e "library(immunarch)"
     """
-
     input = "immfile:file"
     output = "outdir:dir:{{in.immfile | stem}}.tcrclusters_stats"
     lang = config.lang.rscript
@@ -602,7 +593,6 @@ class CloneSizeQQPlot(Proc):
         on: The key of the metadata to use for the QQ plot. One/Both of
             `["Clones", "Proportion"]`
     """
-
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.qqplots"
     lang = config.lang.rscript

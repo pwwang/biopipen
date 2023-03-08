@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import table_of_images -%}
 <script>
-    import { Image } from "@@";
-    import { Tabs, Tab, TabContent } from "carbon-components-svelte";
+    import { Image } from "$lib";
+    import { Tabs, Tab, TabContent } from "$ccs";
 </script>
 
 {% for case in envs.cases %}

@@ -1,6 +1,6 @@
 {% from "utils/misc.liq" import table_of_images, report_jobs -%}
 <script>
-    import { Image } from "@@";
+    import { Image } from "$lib";
 </script>
 
 {%- macro report_job(job, h=1) -%}

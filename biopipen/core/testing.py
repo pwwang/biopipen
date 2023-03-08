@@ -51,5 +51,4 @@ def get_pipeline(testfile, loglevel="debug", **kwargs):
         "loglevel": loglevel,
     }
     kws.update(kwargs)
-    pipen = Pipen(**kws)
-    return pipen
+    return Pipen(**kws)

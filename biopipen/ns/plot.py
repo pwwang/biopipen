@@ -94,11 +94,9 @@ class Heatmap(Proc):
         globals: Some globals for the expression in `args` to be evaluated
 
     Requires:
-        - name: bioconductor-complexheatmap
-          check: |
-            {{proc.lang}} <(echo "library(ComplexHeatmap)")
+        bioconductor-complexheatmap:
+            - check: {{proc.lang}} <(echo "library(ComplexHeatmap)")
     """
-
     input = "infile:file, annofiles:files"
     output = """
         {%- set outdir = in.infile | stem0 | append: ".heatmap" -%}

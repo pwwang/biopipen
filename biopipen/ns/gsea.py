@@ -1,5 +1,4 @@
 """Gene set enrichment analysis"""
-
 from ..core.proc import Proc
 from ..core.config import config
 
@@ -35,9 +34,8 @@ class GSEA(Proc):
             Other configs passed to `GSEA()` directly
 
     Requires:
-        - name: GSEA-MSigDB/GSEA_R
-          check: |
-            {{proc.lang}} <(echo "library(GSEA)")
+        GSEA-MSigDB/GSEA_R:
+            - check: {{proc.lang}} <(echo "library(GSEA)")
     """
 
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
@@ -86,7 +84,6 @@ class PreRank(Proc):
             the first one is pos and second is neg. Or you can have multiple
             pairs of labels (e.g. `[["CASE1", "CNTRL"], ["CASE2", "CNTRL"]]`)
     """
-
     input = "infile:file, metafile:file, configfile:file"
     output = "outfile:file:{{in.infile | stem}}.rank"
     lang = config.lang.rscript
@@ -139,11 +136,9 @@ class FGSEA(Proc):
         `<rest>`: Rest arguments for `fgsea()`
 
     Requires:
-        - name: bioconductor-fgsea
-          check: |
-            {{proc.lang}} -e "library(fgsea)"
+        bioconductor-fgsea:
+            - check: {{proc.lang}} -e "library(fgsea)"
     """
-
     input = "infile:file, metafile:file, gmtfile:file, configfile:file"
     output = "outdir:dir:{{in.infile | stem}}.fgsea"
     lang = config.lang.rscript
@@ -183,7 +178,6 @@ class Enrichr(Proc):
             See https://maayanlab.cloud/Enrichr/#libraries for all available
             databases/libaries
     """
-
     input = "infile:file"
     output = "outdir:dir:{{in.infile | stem}}.enrichr"
     lang = config.lang.rscript

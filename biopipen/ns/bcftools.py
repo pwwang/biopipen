@@ -23,7 +23,6 @@ class BcftoolsAnnotate(Proc):
         header: Headers to be added
         args: Other arguments for `bcftools annotate`
     """
-
     input = "infile:file, annfile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python
@@ -59,13 +58,11 @@ class BcftoolsFilter(Proc):
             Since the filters need to be applied one by one by bcftools
         includes: and
         excludes: include/exclude only sites for which EXPRESSION is true.
-            - See: https://samtools.github.io/bcftools/bcftools.html#expressions
-            - If provided, `envs.args.include/exclude` will be ignored.
-            - If `str`/`list` used, The filter names will be `Filter%d`
-            - A dict is used when keys are filter names and values are
-              expressions
+            See: https://samtools.github.io/bcftools/bcftools.html#expressions
+            If provided, `envs.args.include/exclude` will be ignored.
+            If `str`/`list` used, The filter names will be `Filter%d`
+            A dict is used when keys are filter names and values are expressions
     """
-
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.python

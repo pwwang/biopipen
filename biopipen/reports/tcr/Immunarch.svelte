@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
-    import { Image } from "@@";
-    import { Tabs, Tab, TabContent, Tile, UnorderedList, p } from "carbon-components-svelte";
+    import { Image } from "$lib";
+    import { Tabs, Tab, TabContent, Tile, UnorderedList, p } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}

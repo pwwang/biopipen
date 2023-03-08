@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import table_of_images -%}
 
 {%- macro fgsea_report_script() -%}
-import { Image, DataTable } from "../components";
+import { Image, DataTable } from "$lib";
 {%- endmacro -%}
 
 {%- macro fgsea_report(fgsea_dir, h, envs, nrows=100) -%}

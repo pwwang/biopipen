@@ -1,8 +1,8 @@
 """Provide default variables
 
-- `BIOPIPEN_DIR`: the root directory of the biopipen source
-- `REPORT_DIR`: the root directory of the report
-- `SCRIPTS_DIR`: the root directory of the scripts
+- BIOPIPEN_DIR: the root directory of the biopipen source
+- REPORT_DIR: the root directory of the report
+- SCRIPTS_DIR: the root directory of the scripts
 """
 from pathlib import Path
 
