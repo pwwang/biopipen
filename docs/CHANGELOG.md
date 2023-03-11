@@ -1,9 +1,12 @@
+## 0.9.0
+
+- ⬆️ Bump up pipen to 0.6
+
 ## 0.8.0
 
 - 🚀 [vcf.VcfAnno] Add VcfAnno to use vcfanno to annotate VCF files
 - ✨ [tcgamaf.Maf2Vcf] Add Variant_Classification and Variant_Type to output vcf
 - ✨ [vcf.VcfFix] Allow gziped vcf as input
-- ⬆️ Bump up pipen to 0.5
 - 🧹 Remove tests for core pipeline (not needed any more)
 
 ## 0.7.1
