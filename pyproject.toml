@@ -7,12 +7,12 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
-pipen = "^0.5"
-pipen-filters = "^0.4"
-pipen-report = "^0.6"
-pipen-cli-run = "^0.5"
-pipen-verbose = "^0.3"
-pipen-args = "^0.6"
+pipen = "^0.6"
+pipen-filters = "^0.5"
+pipen-report = "^0.7"
+pipen-cli-run = "^0.6"
+pipen-verbose = "^0.4"
+pipen-args = "^0.7"
 cmdy = "^0.5"
 datar = {version = "^0.11", extras = ["pandas"]}
 
