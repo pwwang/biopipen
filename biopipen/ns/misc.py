@@ -14,6 +14,7 @@ class File2Proc(Proc):
     """
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
+    lang = config.lang.bash
     script = """
         # in case of deadlink
         rm -f {{out.outfile | quote}}
@@ -26,6 +27,7 @@ class Glob2Dir(Proc):
     by the glob pattern"""
     input = "pattern:var"
     output = "outdir:dir:from_glob"
+    lang = config.lang.bash
     script = """
         for infile in {{in.pattern}}; do
             if [[ -e $infile ]]; then
@@ -98,6 +100,7 @@ class Shell(Proc):
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     envs = {"cmd": "", "outdir": False}
+    lang = config.lang.bash
     script = """
         infile={{in.infile | quote}}
         outfile={{out.outfile | quote}}
