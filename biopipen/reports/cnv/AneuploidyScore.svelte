@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs -%}
 
 <script>
-    import { Image, DataTable } from "$lib";
+    import { Image, DataTable } from "$libs";
     import { Tabs, Tab, TabContent, Tile } from "$ccs";
 </script>
 
