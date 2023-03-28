@@ -15,9 +15,9 @@ setEnrichrSite("Enrichr")
 srtobjfile = {{in.srtobj | quote}}
 outdir = {{out.outdir | quote}}
 {% if in.casefile %}
-cases = {{in.casefile | toml_load | r}}
+cases = {{in.casefile | toml_load | r: todot="-"}}
 {% else %}
-cases = {{envs | r}}
+cases = {{envs | r: todot="-"}}
 {% endif %}
 dbs = {{envs.dbs | r}}
 ncores = {{envs.ncores | r}}

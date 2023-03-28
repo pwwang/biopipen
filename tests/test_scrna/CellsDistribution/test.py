@@ -58,7 +58,7 @@ class CellsDistribution(CellsDistribution):
                 "cells": {
                     "by": "Clone",
                     "n": 5,
-                    "orderby": "desc(.CloneSize)"
+                    "orderby": "desc(CloneSize)"
                 },
             }
         }

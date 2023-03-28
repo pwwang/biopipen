@@ -5,14 +5,14 @@ library(tidyseurat)
 
 srtfile = {{in.srtobj | r}}
 {% if in.casefile %}
-cases = {{in.casefile | toml_load | r}}
+cases = {{in.casefile | toml_load | r: todot="-"}}
 {% else %}
-cases = {{envs | r}}
+cases = {{envs | r: todot="-"}}
 {% endif %}
 
 outdir = {{out.outdir | r}}
 gmtfile = {{envs.gmtfile | r}}
-envs = {{envs | r}}
+envs = {{envs | r: todot="-"}}
 
 if (is.null(gmtfile) || nchar(gmtfile) == 0) {
     stop("No `envs.gmtfile` provided.")
