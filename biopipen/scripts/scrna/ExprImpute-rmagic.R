@@ -23,5 +23,7 @@ DefaultAssay(sobj) <- "RNA"
 sobj = magic(sobj)
 sobj = RenameAssays(sobj, RNA = "UNIMPUTED_RNA", MAGIC_RNA = "RNA")
 
-attr(outobj, "impute") = "rmagic"
+DefaultAssay(sobj) <- "RNA"
+
+attr(sobj, "impute") = "rmagic"
 saveRDS(sobj, outfile)
