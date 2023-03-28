@@ -1,3 +1,12 @@
+## 0.10.0
+
+- ⬆️ Adopt pipen-report 0.7 for report templates
+- ⚡️ Add todot and sortkeys arguments for filter r
+- 🐛 Set default lang for processes using bash
+- ⚡️ Update docstrings for processes for pipen-cli-config
+- ⚡️ [scrna.ExprImpute] Add progress indicators for alra
+- 🐛 [scrna.ExprImpute] Set default assay to RNA for rmagic
+
 ## 0.9.0
 
 - ⬆️ Bump up pipen to 0.6
