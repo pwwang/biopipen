@@ -55,9 +55,9 @@ do_case = function(case) {
 
     # Sizes
     meta = meta %>%
-        add_count(!!sym(clonepms$by), name = ".CloneSize") %>%
-        add_count(!!sym(clonepms$by), !!sym(grouppms$by), name = ".CloneGroupSize") %>%
-        add_count(!!sym(clonepms$by), !!sym(grouppms$by), seurat_clusters, name = ".CloneGroupClusterSize")
+        add_count(!!sym(clonepms$by), name = "CloneSize") %>%
+        add_count(!!sym(clonepms$by), !!sym(grouppms$by), name = "CloneGroupSize") %>%
+        add_count(!!sym(clonepms$by), !!sym(grouppms$by), seurat_clusters, name = "CloneGroupClusterSize")
     if (!is.null(clonepms$orderby)) {
         meta = meta %>% arrange(eval(parse(text=clonepms$orderby)))
         order = unique(meta[[clonepms$by]])[1:clonepms$n]
@@ -78,9 +78,9 @@ do_case = function(case) {
         "bar",
         list(
             mapping = aes(
-                x = sqrt(.CloneGroupSize)/2,
-                y = .CloneSize,
-                width = sqrt(.CloneGroupSize),
+                x = sqrt(CloneGroupSize)/2,
+                y = CloneSize,
+                width = sqrt(CloneGroupSize),
                 fill = seurat_clusters
             ),
             stat = "identity",
