@@ -155,6 +155,14 @@ do_one_subset <- function(s) {
             length(unique(select_enrich_data_df$y)) * 25
     }
     bub_devpars$height = max(bub_devpars$height, 480)
+    # For debug purposes
+    write.table(
+        select_enrich_data_df,
+        file.path(subset_dir, "pathway_heterogeneity.txt"),
+        sep="\t",
+        quote=F,
+        row.names=F
+    )
     plotGG(
         select_enrich_data_df,
         "point",
