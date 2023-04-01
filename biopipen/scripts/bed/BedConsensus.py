@@ -1,232 +1,78 @@
 import sys
-from multiprocessing import Pool
+from math import ceil
 from pathlib import Path
 
 import cmdy
-import pandas
-
-from datar import f
-from datar.base import as_double, mean, paste
-from datar.dplyr import (
-    mutate,
-    bind_rows,
-    group_by,
-    summarise,
-    filter_,
-    select,
-    ungroup,
-)
 
 bedfiles = {{in.bedfiles | repr}}  # pyright: ignore
 outfile = Path({{out.outbed | repr}})  # pyright: ignore
 bedtools_path = {{envs.bedtools | repr}}  # pyright: ignore
-binsize = {{envs.binsize | repr}}  # pyright: ignore
-ignore_scores = {{envs.ignore_scores | repr}}  # pyright: ignore
 cutoff = {{envs.cutoff | repr}}  # pyright: ignore
 distance = {{envs.distance | repr}}  # pyright: ignore
 chrsize = {{envs.chrsize | repr}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
 bedfiles = [Path(bedfile) for bedfile in bedfiles]
 # In case there are duplicated stems
 stems = [f"{bedfile.stem}__{i}" for i, bedfile in enumerate(bedfiles)]
+
+if cutoff < 1:
+    cutoff = ceil(len(bedfiles) * cutoff)
 
 
 def _log(*msg):
     print(*[str(m) for m in msg], file=sys.stderr)
 
 
-def read_bed(bedfile, bedidx):
-    """Read BED file."""
-    _log("- Reading BED file:", bedfile)
-    ofile = outfile.parent / f"_{stems[bedidx]}.bed"
-    df = pandas.read_csv(bedfile, sep="\t", header=None)
-    header = [
-        "chrom",
-        "start",
-        "end",
-        "name",
-        "score",
-        "strand",
-        "thickStart",
-        "thickEnd",
-        "itemRgb",
-        "blockCount",
-        "blockSizes",
-        "blockStarts",
-    ]
-    df.columns = header[:len(df.columns)]
-    if "score" in df.columns and bedidx not in ignore_scores:
-        ofile = bedfile
-    else:
-        df = df >> mutate(score=f.end - f.start)
-        df.to_csv(ofile, sep="\t", index=False, header=False)
+def concat_bedfiles():
+    """Concatenate and merge bedfiles."""
+    concatfile = outfile.parent / "_concatenated.bed"
+    sortedfile = outfile.parent / "_sorted.bed"
+    concatfile.write_text("")
 
-    return ofile
+    _log("- Concatenating BED files")
+    with open(concatfile, "a") as fout:
+        for bedfile in bedfiles:
+            fout.write(bedfile.read_text())
+
+    _log("- Sorting the concatenated BED file")
+    cmdy.bedtools.sort(i=concatfile, _exe=bedtools_path).r() > sortedfile
+
+    return sortedfile
 
 
-def makewindows():
-    """Make windows using binsize."""
-    _log("- Making windows with binsize:", binsize)
-    cmdy.bedtools.makewindows(
+def genomecov():
+    """Calculate genome coverage."""
+    _log("- Calculating genome coverage")
+    genomecovfile = outfile.parent / "_genomecov.bed"
+    filteredfile = outfile.parent / "_filtered.bed"
+    cmdy.bedtools.genomecov(
+        i=concat_bedfiles(),
         g=chrsize,
-        w=binsize,
+        bg=True,
         _exe=bedtools_path,
-    ).r() > (outfile.parent / "windows.bed")
-
-    return outfile.parent / "windows.bed"
-
-
-def get_weights(windowfile, bedfile, bedidx):
-    """Get weights."""
-    _log("- Getting bin weights for:", bedfile)
-    ofile = outfile.parent / f"_{stems[bedidx]}_binned.bed"
-    owfile = outfile.parent / f"_{stems[bedidx]}_weighted_bin.bed"
-
-    bedfile = read_bed(bedfile, bedidx)
-
-    cmdy.bedtools.intersect(
-        a=windowfile,
-        b=bedfile,
-        wo=True,
         _prefix="-",
-        _exe=bedtools_path,
-    ).r() > ofile
-
-    df = pandas.read_csv(ofile, sep="\t", header=None)
-    header = [
-        "chrom1",
-        "start1",
-        "end1",
-        "chrom2",
-        "start2",
-        "end2",
-        "name",
-        "score",
-        "strand",
-        "thickStart",
-        "thickEnd",
-        "itemRgb",
-        "blockCount",
-        "blockSizes",
-        "blockStarts",
-    ]
-    df.columns = header[:len(df.columns) - 1] + ["overlap"]
-    df = df >> mutate(
-        weight=as_double(f.score) *
-        (f.overlap / binsize) /
-        (f.end2 - f.start2)
-    )
-    df.to_csv(owfile, sep="\t", index=False, header=True)
-
-    return owfile
+    ).r() > genomecovfile
+    cmdy.awk(f'$4 >= {cutoff}', genomecovfile).r() > filteredfile
+    return filteredfile
 
 
-# def avg_weights_and_filter(owfiles):
-#     _log("- Averaging bin weights")
-#     ofile = outfile.parent / "_avg_weights_filtered.bed"
-#     df = None
-#     for owfile in owfiles:
-#         tmp = pandas.read_csv(owfile, sep="\t", header=0)
-#         df = df >> bind_rows(tmp)
-
-#     df = df >> group_by(f.chrom1, f.start1, f.end1) >> summarise(
-#         chrom=f.chrom1,
-#         start=f.start1,
-#         end=f.end1,
-#         name=paste(f.name, collapse=":"),
-#         score=mean(f.weight),
-#         strand="+",
-#     ) >> filter_(
-#         f.score >= cutoff
-#     ) >> ungroup() >> select(
-#         ~f.chrom1, ~f.start1, ~f.end1,
-#     )
-
-#     df.to_csv(ofile, sep="\t", index=False, header=False)
-#     return ofile, len(df.columns)
-
-
-def avg_weights_and_filter_fast(owfiles):
-    """A faster version of avg_weights_and_filter."""
-    _log("- Averaging bin weights")
-    ofile = outfile.parent / "_avg_weights_filtered.bed"
-    mfile = outfile.parent / "_avg_weights_merged.bed"
-    sfile = outfile.parent / "_avg_weights_merged_sorted.bed"
-    # merge the files
-    header = None
-    with open(mfile, "w") as fm:
-        for owfile in owfiles:
-            with open(owfile, "r") as fow:
-                for i, line in enumerate(fow):
-                    if i > 0:
-                        fm.write(line)
-                    elif header is None:
-                        header = line
-
-    cmdy.sort(
-        _prefix="-",
-        _=mfile,
-        **{"k1,1": True, "k2,2n": True}
-    ).r() > sfile
-
-    # loop and aggregate
-    names = []
-    score = 0
-    key = None
-    with open(sfile, "r") as fs, open(ofile, "w") as fo:
-        for line in fs:
-            parts = line.rstrip("\n").split("\t")
-            my_key = "\t".join(parts[:3])
-            if my_key != key and key is not None:
-                name = ":".join(names)
-                score /= len(owfiles)
-                if score >= cutoff:
-                    fo.write(f"{key}\t{name}\t{score}\t+\n")
-                names = [parts[6]]
-                score = float(parts[-1])
-            else:
-                names.append(parts[6])
-                score += float(parts[-1])
-            key = my_key
-        name = ":".join(names)
-        score /= len(owfiles)
-        if score >= cutoff:
-            fo.write(f"{key}\t{name}\t{score}\t+\n")
-
-    return ofile, 6
-
-
-def merge_if_needed(awfile, ncols):
+def merge_if_needed(awfile):
     _log("- Merging results if needed using distance:", distance)
     if distance == 0:
-        cmdy.cp(awfile, outfile)
-    else:
-        awfile_sorted = outfile.parent / f"{awfile.stem}_sorted{awfile.suffix}"
-        cmdy.sort(
-            _prefix="-",
-            _=awfile,
-            **{"k1,1": True, "k2,2n": True}
-        ).r() > awfile_sorted
-        cmdy.bedtools.merge(
-            i=awfile_sorted,
-            d=distance,
-            c=f"{ncols-2},{ncols-1}",
-            o="distinct,mean",
-            _exe=bedtools_path,
-        ).r() > outfile
+        awfile.rename(outfile)
+        return
+
+    cmdy.bedtools.merge(
+        i=awfile,
+        d=distance,
+        c=4,
+        o="collapse",
+        _exe=bedtools_path,
+    ).r() > outfile
 
 
 def main():
-    binfile = makewindows()
-
-    with Pool(ncores) as pool:
-        owfiles = pool.starmap(
-            get_weights,
-            [(binfile, bedfile, i) for i, bedfile in enumerate(bedfiles)],
-        )
-
-    awfile, ncols = avg_weights_and_filter_fast(owfiles)
-    merge_if_needed(awfile, ncols)
+    filteredfile = genomecov()
+    merge_if_needed(filteredfile)
 
 
 if __name__ == "__main__":
