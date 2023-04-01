@@ -76,7 +76,16 @@ def r(
     if isinstance(obj, Path):
         return repr(str(obj))
     if isinstance(obj, (list, tuple, set)):
-        return "c({})".format(",".join([r(i) for i in obj]))
+        if any(isinstance(i, dict) for i in obj):
+            # c(list(a=1), list(b=2)) will be combined as list(a=1, b=2)
+            # but we want list(list(a=1), list(b=2))
+            wrapper = "list"
+        else:
+            wrapper = "c"
+        return "{}({})".format(
+            wrapper,
+            ",".join([r(i, ignoreintkey, todot, sortkeys) for i in obj]),
+        )
     if isinstance(obj, dict):
         # list allow repeated names
         return "list({})".format(
