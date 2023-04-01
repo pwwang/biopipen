@@ -117,11 +117,11 @@ class CNVkitCoverage(Proc):
             - check: {{proc.envs.cnvkit}} version
     """
     input = "bamfile:file, target_file:file"
-    output = """
+    output = """outfile:file:
         {%- if "antitarget" in basename(in.target_file) -%}
-            outfile:file:{{in.bamfile | stem0}}.antitargetcoverage.cnn
+            {{in.bamfile | stem0}}.antitargetcoverage.cnn
         {%- else -%}
-            outfile:file:{{in.bamfile | stem0}}.targetcoverage.cnn
+            {{in.bamfile | stem0}}.targetcoverage.cnn
         {%- endif -%}
     """
     lang = config.lang.python
@@ -171,10 +171,19 @@ class CNVkitReference(Proc):
         cnvkit:
             - check: {{proc.envs.cnvkit}} version
     """
-    input = (
-        "covfiles:files, target_file:file, antitarget_file:file, sample_sex:var"
-    )
-    output = "outfile:file:{{in.covfiles | first | stem0 }}-etc.reference.cnn"
+    input = [
+        "covfiles:files",
+        "target_file:file",
+        "antitarget_file:file",
+        "sample_sex:var",
+    ]
+    output = """outfile:file:
+        {%- if not in.covfiles -%}
+            flat.reference.cnn
+        {%- else -%}
+            {{in.covfiles | first | stem0 }}-etc.reference.cnn
+        {%- endif -%}
+    """
     lang = config.lang.python
     envs = {
         "cnvkit": config.exe.cnvkit,
