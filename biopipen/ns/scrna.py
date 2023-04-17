@@ -454,17 +454,17 @@ class MarkersFinder(Proc):
             >>> # The name of the job, used in report
             >>> name = ""
             >>> [cases.case1]
-            >>> "ident.1" = "Tumor"
-            >>> "ident.2" = "Normal"
-            >>> "group.by" = "Source"
+            >>> "ident-1" = "Tumor"
+            >>> "ident-2" = "Normal"
+            >>> "group-by" = "Source"
             >>> # focus on a subset of cells
             >>> filter = "SampleType != 'Control'"
             >>> # other arguments for Seruat::FindMarkers()
             We can also use a new group.by:
             >>> [cases.case2]
-            >>> "ident.1" = "Case"
-            >>> "ident.2" = "Control"
-            >>> "group.by" = "Group"
+            >>> "ident-1" = "Case"
+            >>> "ident-2" = "Control"
+            >>> "group-by" = "Group"
             >>> # Do the comparison in each cluster
             >>> each = "seurat_clusters"
             >>> # other arguments for Seruat::FindMarkers()
@@ -472,10 +472,10 @@ class MarkersFinder(Proc):
             >>> filter2 = "SampleType != 'Control'"
             >>> [cases.case2.mutaters]
             >>> Group = '''
-            >>>   if_else(Source %in% c("Tumor", "Normal"), "Case", "Control")
+            >>>   if_else(Source %%in%% c("Tumor", "Normal"), "Case", "Control")
             >>> '''
-            If "ident.2" is not provided, it will use the rest of the cells
-            as "ident.2".
+            If "ident-2" is not provided, it will use the rest of the cells
+            as "ident-2".
             If only "group.by" is given, will call `FindAllMarkers()`
         dbs (ctype=list): The dbs to do enrichment analysis for significant
             markers See below for all librarys
@@ -492,7 +492,7 @@ class MarkersFinder(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "cases": {
-            "Cluster": {"group.by": "seurat_clusters"},
+            "Cluster": {"group-by": "seurat_clusters"},
         },
         "dbs": [
             "GO_Biological_Process_2021",
@@ -840,13 +840,17 @@ class CellTypeAnnotate(Proc):
         outfile: The rds file of seurat object with cell type annotated
 
     Envs:
-        tool: The tool to use for cell type annotation.
-            Available: `sctype`, `sccatch` or `direct`
+        tool (choice): The tool to use for cell type annotation.
+            sctype: https://github.com/IanevskiAleksandr/sc-type .
+            scCATCH: https://github.com/ZJUFanLab/scCATCH
+            - sctype: Use `scType` to annotate cell types
+            - sccatch: Use `scCATCH` to annotate cell types
+            - direct: Directly assign cell types
         sctype_tissue: The tissue to use for sctype.
             E.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,
             Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus
         sctype_db: The database to use for sctype
-        cell_types: The cell types to use for direct annotation
+        cell_types (list): The cell types to use for direct annotation
             Each a list of cell type names, or a dict with keys as the old
             identity and values as the new cell type.
 
@@ -874,3 +878,53 @@ class CellTypeAnnotate(Proc):
         "cell_types": [],
     }
     script = "file://../scripts/scrna/CellTypeAnnotate.R"
+
+
+class SeuratMap2Ref(Proc):
+    """Map the seurat object to reference
+
+    See: https://satijalab.org/seurat/articles/integration_mapping.html
+    and https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+
+    Input:
+        sobjfile: The seurat object
+
+    Output:
+        outfile: The rds file of seurat object with cell type annotated
+
+    Envs:
+        use (choice): Which level of cell type to use for further analysis and
+            being aliased to `alias`
+            - predicted.celltype.l1: The first level of predicted cell type
+            - predicted.celltype.l2: The second level of predicted cell type
+        alias: The name of an aliasied column to `use`
+            This is helpful for the downstream analysis where the column name
+            is used as the cluster.
+        ref (required): The reference seurat object file.
+            Either an RDS file or a h5seurat file that can be loaded by
+            `Seurat::LoadH5Seurat()`.
+            The file type is determined by the extension. `.rds` or `.RDS` for
+            RDS file, `.h5seurat` or `.h5` for h5seurat file.
+        SCTransform (ns): Arguments for `SCTransform()`
+            - <more>: See https://satijalab.org/seurat/reference/sctransform
+        FindTransferAnchors (ns): Arguments for `FindTransferAnchors()`
+            - <more>: See https://satijalab.org/seurat/reference/findtransferanchors
+        MapQuery (ns): Arguments for `MapQuery()`
+            - <more>: See https://satijalab.org/seurat/reference/mapquery
+
+    Requires:
+        r-seurat:
+            - check: {{proc.lang}} -e "library(Seurat)"
+    """
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "use": "predicted.celltype.l2",
+        "alias": "seurat_clusters",
+        "ref": None,
+        "SCTransform": {},
+        "FindTransferAnchors": {},
+        "MapQuery": {},
+    }
+    script = "file://../scripts/scrna/SeuratMap2Ref.R"
