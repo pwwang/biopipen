@@ -13,7 +13,7 @@ top <- {{ envs.top | r }}
 prerank_method <- {{ envs.prerank_method | r }}
 grouping <- {{ envs.grouping | r }}
 grouping_prefix <- {{ envs.grouping_prefix | r }}
-subsetting <- {{ envs.subsetting | r }}
+subsetting_cols <- {{ envs.subsetting | r }}
 subsetting_prefix <- {{ envs.subsetting_prefix | r }}
 subsetting_comparison <- {{ envs.subsetting_comparison | r }}
 
@@ -39,16 +39,41 @@ pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
-do_one_comparison <- function(obj, compname, case, control, groupdir) {
+do_one_comparison <- function(
+    obj,
+    compname,
+    case,
+    control,
+    groupdir,
+    subset_col,
+    subset_prefix
+) {
     print(paste("  Design:", compname, "(", case, ",", control, ")"))
-    case_code = paste0("subset(obj, subset = ", subsetting, " == '", case, "')")
+    case_code = paste0("subset(obj, subset = ", subset_col, " == '", case, "')")
+    case_obj = tryCatch({
+        eval(parse(text = case_code))
+    }, error = function(e) {
+        NULL
+    })
+    if (is.null(case_obj)) {
+        print("          Skip (not enough cells in case)")
+        return (NULL)
+    }
     case_obj = eval(parse(text = case_code))
-    control_code = paste0("subset(obj, subset = ", subsetting, " == '", control, "')")
-    control_obj = eval(parse(text = control_code))
+    control_code = paste0("subset(obj, subset = ", subset_col, " == '", control, "')")
+    control_obj = tryCatch({
+        eval(parse(text = control_code))
+    }, error = function(e) {
+        NULL
+    })
+    if (is.null(control_obj)) {
+        print("          Skip (not enough cells in control)")
+        return (NULL)
+    }
     exprs_case = GetAssayData(case_obj)
     exprs_control = GetAssayData(control_obj)
 
-    odir = file.path(groupdir, paste0(subsetting_prefix, compname))
+    odir = file.path(groupdir, paste0(subset_prefix, compname))
     dir.create(odir, showWarnings = FALSE)
     if (ncol(exprs_case) < 3 || ncol(exprs_control) < 3) {
         print("          Skip (not enough cells)")
@@ -91,18 +116,22 @@ do_one_group <- function(group) {
     groupdir = file.path(outdir, groupname)
     dir.create(groupdir, showWarnings = FALSE)
 
-    sapply(
-        names(subsetting_comparison),
-        function(compname) {
-            do_one_comparison(
-                obj,
-                compname,
-                subsetting_comparison[[compname]][1],
-                subsetting_comparison[[compname]][2],
-                groupdir
-            )
-        }
-    )
+    for (i in seq_along(subsetting_comparison)) {
+        sapply(
+            names(subsetting_comparison[i]),
+            function(compname) {
+                do_one_comparison(
+                    obj,
+                    compname,
+                    subsetting_comparison[i][[compname]][1],
+                    subsetting_comparison[i][[compname]][2],
+                    groupdir,
+                    subsetting_cols[i],
+                    subsetting_prefix[i]
+                )
+            }
+        )
+    }
 }
 
 groups = as.character(unique(sobj@meta.data[[grouping]]))

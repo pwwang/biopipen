@@ -16,7 +16,7 @@ heatmap_devpars <- {{ envs.heatmap_devpars | r }}
 violin_devpars <- {{ envs.violin_devpars | r }}
 grouping <- {{ envs.grouping | r }}
 grouping_prefix <- {{ envs.grouping_prefix | r }}
-subsetting <- {{ envs.subsetting | r }}
+subsetting_cols <- {{ envs.subsetting | r }}
 subsetting_prefix <- {{ envs.subsetting_prefix | r }}
 
 if (!is.null(grouping_prefix) && nchar(grouping_prefix) > 0) {
@@ -64,16 +64,16 @@ num_of_pathways <- function(gmtfile, overlapgenes) {
     gene_times
 }
 
-do_one_subset <- function(s) {
+do_one_subset <- function(s, subset_col, subset_prefix) {
     if (is.null(s)) {
         subset_dir <- file.path(outdir, "ALL")
         dir.create(subset_dir, showWarnings = FALSE)
         subset_obj <- sobj
     } else {
-        subset_dir <- file.path(outdir, paste0(subsetting_prefix, s))
+        subset_dir <- file.path(outdir, paste0(subset_prefix, s))
         dir.create(subset_dir, showWarnings = FALSE)
 
-        subset_code = paste0("subset(sobj, subset = ", subsetting, " == '", s, "')")
+        subset_code = paste0("subset(sobj, subset = ", subset_col, " == '", s, "')")
         subset_obj = eval(parse(text = subset_code))
     }
 
@@ -292,17 +292,26 @@ do_one_subset <- function(s) {
     )
 }
 
-if (is.null(subsetting)) {
-    do_one_subset(NULL)
-} else {
-    subsets <- unique(sobj@meta.data[[subsetting]])
+do_one_subset_col <- function(subset_col, subset_prefix) {
+    if (is.null(subset_col)) {
+        do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
+    }
+    subsets <- unique(sobj@meta.data[[subset_col]])
 
     if (ncores == 1) {
-        lapply(subsets, do_one_subset)
+        lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
     } else {
-        x <- mclapply(subsets, do_one_subset, mc.cores = ncores)
+        x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
         if (any(unlist(lapply(x, class)) == "try-error")) {
             stop("mclapply error")
         }
+    }
+}
+
+if (is.null(subsetting_cols)) {
+    do_one_subset_col(NULL)
+} else {
+    for (i in seq_along(subsetting_cols)) {
+        do_one_subset_col(subsetting_cols[i], subsetting_prefix[i])
     }
 }

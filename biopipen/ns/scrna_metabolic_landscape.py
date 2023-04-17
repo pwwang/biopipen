@@ -51,12 +51,16 @@ class ScrnaMetabolicLandscape(ProcGroup):
             For example, if we have `grouping_prefix = "cluster"` and
             we have `1` and `2` in the `grouping` column, the groups
             will be named as `cluster_1` and `cluster_2`
-        subsetting: How do we subset the data. Other columns in the metadata
-            to do comparisons.
-        subsetting_prefix: Working as a prefix to subset names
+        subsetting (ctype=auto): How do we subset the data. Other columns in the
+            metadata to do comparisons. For example, `"TimePoint"` or
+            `["TimePoint", "Response"]`
+        subsetting_prefix (ctype=auto): Working as a prefix to subset names
             For example, if we have `subsetting_prefix = "timepoint"` and
             we have `pre` and `post` in the `subsetting` column, the subsets
             will be named as `timepoint_pre` and `timepoint_post`
+            If `subsetting` is a list, then this should also be a same-length
+            list. If a single string is given, it will be repeated to a list
+            with the same length as `subsetting`
         subsetting_comparison (ctype=json): What kind of comparisons are we
             doing to compare cells from different subsets.
             It should be dict with keys as the names of the comparisons and
@@ -75,6 +79,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             compare cells from different subsets within each group. With the
             example above, we will have `pre_vs_post` comparisons within
             each group.
+            If `subsetting` is a list, this must be a list with the same length.
         mutaters (ctype=json): Add new columns to the metadata for
             grouping/subsetting.
             They are passed to `sobj@meta.data |> mutate(...)`. For example,
@@ -403,6 +408,40 @@ class ScrnaMetabolicLandscape(ProcGroup):
         if self.opts.metafile:
             suffix = Path(self.opts.metafile).suffix
             self.opts.is_seurat = suffix in (".rds", ".RDS")
+
+        # Make sure the grouping is a list
+        if self.opts.subsetting and not isinstance(self.opts.subsetting, list):
+            self.opts.subsetting = [self.opts.subsetting]
+
+        # Make sure the grouping is a list with the same length as subsetting
+        if (
+            self.opts.subsetting
+            and not isinstance(self.opts.subsetting_prefix, list)
+        ):
+            self.opts.subsetting_prefix = [
+                self.opts.subsetting_prefix
+            ] * len(self.opts.subsetting)
+
+        # Make sure the lengths of subsetting and subsetting_prefix are the same
+        if (
+            self.opts.subsetting
+            and len(self.opts.subsetting) != len(self.opts.subsetting_prefix)
+        ):
+            raise ValueError(
+                "The length of `subsetting` and `subsetting_prefix` "
+                "are not the same"
+            )
+
+        # Make sure the lengths of subsetting and subsetting_comparison the same
+        if (
+            self.opts.subsetting
+            and len(self.opts.subsetting)
+            != len(self.opts.subsetting_comparison)
+        ):
+            raise ValueError(
+                "The length of `subsetting` and `subsetting_comparison` "
+                "are not the same"
+            )
 
     @ProcGroup.add_proc
     def p_input(self) -> Type[Proc]:
