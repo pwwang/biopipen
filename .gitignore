@@ -120,3 +120,5 @@ docs/api/
 watch.sh
 .biopipen.toml
 t.py
+local_tests/
+*.config.toml
