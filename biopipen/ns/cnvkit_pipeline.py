@@ -11,10 +11,7 @@ from pipen_args.procgroup import ProcGroup
 
 from ..core.config import config
 
-try:
-    from functools import cached_property
-except ImportError:
-    from cached_property import cached_property
+from functools import cached_property
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -723,6 +720,4 @@ class CNVkitPipeline(ProcGroup):
 
 
 if __name__ == "__main__":
-    from pipen_args import install  # noqa: F401
-
     CNVkitPipeline().as_pipen().run()
