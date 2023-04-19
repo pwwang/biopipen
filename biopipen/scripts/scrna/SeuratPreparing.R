@@ -104,9 +104,13 @@ print("- Reading samples individually ...")
 obj_list = lapply(samples, load_sample)
 
 print("- Merging samples ...")
-y = c()
-for (i in 2:length(obj_list)) y = c(y, obj_list[[i]])
-sobj = merge(obj_list[[1]], y)
+if (length(obj_list) >= 2) {
+    y = c()
+    for (i in 2:length(obj_list)) y = c(y, obj_list[[i]])
+    sobj = merge(obj_list[[1]], y)
+} else {
+    sobj = obj_list[[1]]
+}
 
 print("- Adding metadata for QC ...")
 sobj$percent.mt = PercentageFeatureSet(sobj, pattern = "^MT-")
