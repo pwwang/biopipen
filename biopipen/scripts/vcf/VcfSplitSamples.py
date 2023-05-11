@@ -1,47 +1,56 @@
+import sys
+import shlex
 import concurrent.futures
-import cmdy
+from subprocess import Popen, check_output
 
 infile = {{in.infile | repr}}  # pyright: ignore
 outdir = {{out.outdir | repr}}  # pyright: ignore
 bcftools = {{envs.bcftools | repr}}  # pyright: ignore
 gz = {{envs.gz | repr}}  # pyright: ignore
 index = {{envs.index | repr}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
+ncores = {{envs.ncores | int}}  # pyright: ignore
 private = {{envs.private | repr}}  # pyright: ignore
 
 if index:
     gz = True
 
 # get sample list
-cmd = cmdy.bcftools.query(l=True, _=infile, _exe=bcftools)
-samples = cmd.stdout.splitlines()
+o = check_output([bcftools, "query", "-l", infile])
+samples = o.decode().strip().splitlines()
 
 
 def do_sample(sample):
     """Do one sample"""
-    print(f"Processing sample {sample} ...")
+    print(f"- Processing sample {sample} ...")
     if gz:
         outfile = f"{outdir}/{sample}.vcf.gz"
     else:
         outfile = f"{outdir}/{sample}.vcf"
 
-    cmd = cmdy.bcftools.view(
-        _=infile,
-        _exe=bcftools,
-        s=sample,
-        O="z" if gz else "v",
-        o=outfile,
-        private=private,
-    ).hold()
+    # Get the index of the sample in the vcf file: sample in samples
+    sample_idx = samples.index(sample)
+    cmd = [
+        bcftools,
+        "view",
+        "-e",
+        f'GT[{sample_idx}]="RR" | GT[{sample_idx}]="mis"',
+        "-Oz" if gz else "-Ov",
+        "-s",
+        sample,
+        "-o",
+        outfile,
+        infile,
+    ]
     print("  running:")
-    print("  ", cmd.strcmd)
-    cmd.run(wait=True)
+    print("  ", shlex.join(cmd))
+    p = Popen(cmd, stdout=sys.stdout, stderr=sys.stderr)
+    p.wait()
 
     if index:
-        cmd = cmdy.bcftools.index(_=outfile, t=True, _exe=bcftools).hold()
+        cmd = [bcftools, "index", "-t", outfile]
         print("  running:")
-        print("  ", cmd.strcmd)
-        cmd.run(wait=True)
+        print("  ", shlex.join(cmd))
+        Popen(cmd).wait()
 
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=ncores) as executor:
