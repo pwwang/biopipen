@@ -900,7 +900,7 @@ class SeuratMap2Ref(Proc):
         alias: The name of an aliasied column to `use`
             This is helpful for the downstream analysis where the column name
             is used as the cluster.
-        ref (required): The reference seurat object file.
+        ref: The reference seurat object file.
             Either an RDS file or a h5seurat file that can be loaded by
             `Seurat::LoadH5Seurat()`.
             The file type is determined by the extension. `.rds` or `.RDS` for
@@ -910,12 +910,13 @@ class SeuratMap2Ref(Proc):
         FindTransferAnchors (ns): Arguments for `FindTransferAnchors()`
             - <more>: See https://satijalab.org/seurat/reference/findtransferanchors
         MapQuery (ns): Arguments for `MapQuery()`
+            - refdata (ctype=json): Data to transfer
             - <more>: See https://satijalab.org/seurat/reference/mapquery
 
     Requires:
         r-seurat:
             - check: {{proc.lang}} -e "library(Seurat)"
-    """
+    """  # noqa: E501
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript
@@ -923,8 +924,23 @@ class SeuratMap2Ref(Proc):
         "use": "predicted.celltype.l2",
         "alias": "seurat_clusters",
         "ref": None,
-        "SCTransform": {},
-        "FindTransferAnchors": {},
-        "MapQuery": {},
+        "SCTransform": {
+            "do-correct-umi": False,
+            "do-scale": False,
+            "do-center": True,
+        },
+        "FindTransferAnchors": {
+            "normalization-method": "SCT",
+            "reference-reduction": "spca",
+        },
+        "MapQuery": {
+            "reference-reduction": "spca",
+            "reduction-model": "wnn.umap",
+            "refdata": {
+                "celltype-l1": "celltype.l1",
+                "celltype-l2": "celltype.l2",
+                "predicted_ADT": "ADT",
+            }
+        },
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"
