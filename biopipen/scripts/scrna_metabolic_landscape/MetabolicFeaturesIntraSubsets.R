@@ -3,6 +3,7 @@ source("{{biopipen_dir}}/utils/gsea.R")
 
 library(parallel)
 library(scater)
+library(Seurat)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
@@ -59,7 +60,6 @@ do_one_comparison <- function(
         print("          Skip (not enough cells in case)")
         return (NULL)
     }
-    case_obj = eval(parse(text = case_code))
     control_code = paste0("subset(obj, subset = ", subset_col, " == '", control, "')")
     control_obj = tryCatch({
         eval(parse(text = control_code))
@@ -92,7 +92,8 @@ do_one_comparison <- function(
             ranks,
             gmtfile,
             top = top,
-            outdir = odir
+            outdir = odir,
+            envs = list(nproc = 1)
         )
     } else {
         runGSEA(
@@ -117,14 +118,18 @@ do_one_group <- function(group) {
     dir.create(groupdir, showWarnings = FALSE)
 
     for (i in seq_along(subsetting_comparison)) {
+        sci = subsetting_comparison[[i]]
+        if (is.null(sci) || length(sci) == 0) {
+            next
+        }
         sapply(
-            names(subsetting_comparison[i]),
+            names(sci),
             function(compname) {
                 do_one_comparison(
                     obj,
                     compname,
-                    subsetting_comparison[i][[compname]][1],
-                    subsetting_comparison[i][[compname]][2],
+                    sci[[compname]][1],
+                    sci[[compname]][2],
                     groupdir,
                     subsetting_cols[i],
                     subsetting_prefix[i]
