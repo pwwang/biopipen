@@ -599,6 +599,4 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
 
 if __name__ == "__main__":
-    from pipen_args import install  # noqa: F401
-
     ScrnaMetabolicLandscape().as_pipen().run()
