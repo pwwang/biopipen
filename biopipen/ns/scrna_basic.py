@@ -11,7 +11,7 @@ from typing import Type
 
 from pipen.utils import mark
 from pipen_args import ProcGroup
-from pipen_cli_config.utils import from_pipen_cli_config
+from pipen_board import from_pipen_board
 
 from ..core.proc import Proc
 
@@ -70,9 +70,13 @@ class ScrnaBasic(ProcGroup):
         """Build the input for the process group"""
         from .misc import File2Proc
 
-        @mark(config_no_input=True)
+        @mark(board_config_hidden=True)
         class ScrnaBasicInput(File2Proc):
-            """Input file for scrna_basic process group11"""
+            """Input file for scrna_basic process group
+
+            To specify the input file, use the `infile` argument of the
+            process group.
+            """
 
             if self.opts.infile:
                 input_data = [self.opts.infile]
@@ -82,7 +86,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_prepare(self) -> Type[Proc]:
-        """Prepare the input data"""
+        """Prepare the input data into a Seurat object and do QC"""
         if self.opts.is_seurat:
             return self.p_input
 
@@ -97,13 +101,19 @@ class ScrnaBasic(ProcGroup):
     def p_supervised(self) -> Type[Proc]:
         if (
             self.opts.clustering == "unsupervised"
-            and not from_pipen_cli_config()
+            and not from_pipen_board()
         ):
             return None
 
         from .scrna import SeuratMap2Ref
 
         class ScrnaBasicSupervised(SeuratMap2Ref):
+            """%s
+
+            Envs:
+                ref (readonly): The reference file for supervised clustering.
+                    Use the `ref` argument of the process group.
+            """ % SeuratMap2Ref.__doc__.splitlines()[0]
             requires = self.p_prepare
             envs = {
                 "ref": self.opts.ref,
@@ -113,7 +123,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_supervised_stats(self) -> Type[Proc]:
-        if not self.p_supervised and not from_pipen_cli_config():
+        if not self.p_supervised and not from_pipen_board():
             return None
 
         from .scrna import SeuratClusterStats
@@ -127,7 +137,7 @@ class ScrnaBasic(ProcGroup):
     def p_unsupervised(self) -> Type[Proc]:
         if (
             self.opts.clustering == "supervised"
-            and not from_pipen_cli_config()
+            and not from_pipen_board()
         ):
             return None
 
@@ -140,7 +150,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_unsupervised_annotate(self) -> Type[Proc]:
-        if not self.p_unsupervised and not from_pipen_cli_config():
+        if not self.p_unsupervised and not from_pipen_board():
             return None
 
         from .scrna import CellTypeAnnotate
@@ -152,7 +162,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_unsupervised_stats(self) -> Type[Proc]:
-        if not self.p_unsupervised_annotate and not from_pipen_cli_config():
+        if not self.p_unsupervised_annotate and not from_pipen_board():
             return None
 
         from .scrna import SeuratClusterStats
@@ -170,7 +180,7 @@ class ScrnaBasic(ProcGroup):
         if self.opts.clustering == "unsupervised":
             return self.p_unsupervised_annotate
 
-        @mark(config_hidden=True)
+        @mark(board_config_hidden=True)
         class ScrnaBasicMerge(Proc):
             """Add unsupervised clustering as metadata to the seurat object
             with supervised clustering
@@ -225,6 +235,4 @@ class ScrnaBasic(ProcGroup):
 
 
 if __name__ == "__main__":
-    from pipen_args import install  # noqa: F401
-
     ScrnaBasic().as_pipen().run()
