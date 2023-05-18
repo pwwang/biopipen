@@ -30,6 +30,20 @@ sobj = readRDS(srtfile)
 obj_list = SplitObject(sobj, split.by = "Sample")
 rm(sobj)
 
+# Convert envs$FindIntegrationAnchors$reference to index of given as sample names
+samples = unlist(lapply(obj_list, function(x) x@meta.data$Sample[1]))
+if (!is.null(envs$FindIntegrationAnchors$reference)) {
+    ref = envs$FindIntegrationAnchors$reference
+    ref = sapply(ref, function(x) {
+        x_int = as.integer(x)
+        if (!is.na(x_int)) {
+            return(x_int)
+        }
+        which(samples == x)
+    })
+    envs$FindIntegrationAnchors$reference = ref
+}
+
 {% if envs.use_sct -%}
 # ############################
 # Using SCT
@@ -60,6 +74,14 @@ obj_list = lapply(X = obj_list, FUN = function(x) {
 })
 
 print("- Running FindIntegrationAnchors ...")
+if (!is.null(envs$FindIntegrationAnchors$reference)) {
+    print(
+        paste(
+            "  Using samples as reference:",
+            paste(envs$FindIntegrationAnchors$reference, collapse = ", ")
+        )
+    )
+}
 fia_args = list_setdefault(
     envs$FindIntegrationAnchors,
     object.list = obj_list,
@@ -115,6 +137,14 @@ obj_list <- lapply(X = obj_list, FUN = function(x) {
 })
 
 print("- Running FindIntegrationAnchors ...")
+if (!is.null(envs$FindIntegrationAnchors$reference)) {
+    print(
+        paste(
+            "  Using samples as reference:",
+            paste(envs$FindIntegrationAnchors$reference, collapse = ", ")
+        )
+    )
+}
 fia_args = list_setdefault(
     envs$FindIntegrationAnchors,
     object.list = obj_list,
