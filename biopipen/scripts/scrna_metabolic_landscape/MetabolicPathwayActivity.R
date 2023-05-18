@@ -6,6 +6,7 @@ library(RColorBrewer)
 library(parallel)
 library(ggprism)
 library(Seurat)
+library(ComplexHeatmap)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
@@ -55,7 +56,10 @@ num_of_pathways <- function(gmtfile, overlapgenes) {
     }
 
     all_genes <- unique(as.vector(unlist(filter_pathways)))
-    gene_times <- data.frame(num = rep(0, length(all_genes)), row.names = all_genes)
+    gene_times <- data.frame(
+        num = rep(0, length(all_genes)),
+        row.names = all_genes
+    )
     for (p in pathway_names) {
         for (g in filter_pathways[[p]]) {
             gene_times[g, "num"] <- gene_times[g, "num"] + 1
@@ -65,6 +69,7 @@ num_of_pathways <- function(gmtfile, overlapgenes) {
 }
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
+    print(paste0("  Processing subset: ", s, "..."))
     if (is.null(s)) {
         subset_dir <- file.path(outdir, "ALL")
         dir.create(subset_dir, showWarnings = FALSE)
@@ -73,7 +78,9 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         subset_dir <- file.path(outdir, paste0(subset_prefix, s))
         dir.create(subset_dir, showWarnings = FALSE)
 
-        subset_code = paste0("subset(sobj, subset = ", subset_col, " == '", s, "')")
+        subset_code = paste0(
+            "subset(sobj, subset = ", subset_col, " == '", s, "')"
+        )
         subset_obj = eval(parse(text = subset_code))
     }
 
@@ -107,7 +114,9 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         dimnames = (list(pathway_names, cell_types))
     )
 
-    for (p in pathway_names) {
+    for (pi in seq_along(pathway_names)) {
+        p <- pathway_names[pi]
+        print(paste0("  * Pathway (", pi, "): ", p, "..."))
         genes <- pathways[[p]]
         genes_comm <- intersect(genes, rownames(subset_obj))
         genes_expressed <- names(rowSums(subset_obj)[rowSums(subset_obj) > 0])
@@ -169,15 +178,15 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         #####
         times <- 1:ntimes
         weight_values <- pathway_number_weight / sum(pathway_number_weight)
-        # shuffle_cell_types_list <- mclapply(times, function(x) sample(all_cell_types), mc.cores = ncores)
-        shuffle_cell_types_list <- lapply(times, function(x) sample(all_cell_types))
+        shuffle_cell_types_list <- mclapply(times, function(x) sample(all_cell_types), mc.cores = ncores)
+        # shuffle_cell_types_list <- lapply(times, function(x) sample(all_cell_types))
         names(shuffle_cell_types_list) <- times
-        # mean_exp_eachCellType_list <- mclapply(times, function(x) group_mean(x), mc.cores = ncores)
-        mean_exp_eachCellType_list <- lapply(times, function(x) group_mean(x))
-        # ratio_exp_eachCellType_list <- mclapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]), mc.cores = ncores)
-        ratio_exp_eachCellType_list <- lapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]))
-        # mean_exp_pathway_list <- mclapply(times, function(x) column_weigth_mean(x), mc.cores = ncores)
-        mean_exp_pathway_list <- lapply(times, function(x) column_weigth_mean(x))
+        mean_exp_eachCellType_list <- mclapply(times, function(x) group_mean(x), mc.cores = ncores)
+        # mean_exp_eachCellType_list <- lapply(times, function(x) group_mean(x))
+        ratio_exp_eachCellType_list <- mclapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]), mc.cores = ncores)
+        # ratio_exp_eachCellType_list <- lapply(times, function(x) mean_exp_eachCellType_list[[x]] / rowMeans(mean_exp_eachCellType_list[[x]]))
+        mean_exp_pathway_list <- mclapply(times, function(x) column_weigth_mean(x), mc.cores = ncores)
+        # mean_exp_pathway_list <- lapply(times, function(x) column_weigth_mean(x))
 
         shuffle_results <- matrix(unlist(mean_exp_pathway_list), ncol = length(cell_types), byrow = T)
         rownames(shuffle_results) <- times
@@ -214,15 +223,16 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     hmdata <- dat[sort_row, sort_column, drop = F]
     cnames <- sapply(colnames(hmdata), function(x) {paste0(grouping_prefix, x)})
     colnames(hmdata) <- cnames
+    hmdata = hmdata[, sort(cnames), drop=FALSE]
     hm_devpars = heatmap_devpars
     if (is.null(hm_devpars$res)) {
         hm_devpars$res = 100
     }
     if (is.null(hm_devpars$width)) {
-        hm_devpars$width = 300 + max(nchar(rownames(hmdata))) * 8 + ncol(hmdata) * 12
+        hm_devpars$width = 300 + max(nchar(rownames(hmdata))) * 8 + ncol(hmdata) * 15
     }
     if (is.null(hm_devpars$height)) {
-        hm_devpars$height = 400 + max(nchar(colnames(hmdata))) * 8 + nrow(hmdata) * 12
+        hm_devpars$height = 400 + max(nchar(colnames(hmdata))) * 8 + nrow(hmdata) * 20
     }
     plotHeatmap(
         hmdata,
@@ -261,7 +271,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         vio_devpars$res = 100
     }
     if (is.null(vio_devpars$width)) {
-        vio_devpars$width = 100 + ncol(scRNA_df) * 50
+        vio_devpars$width = 100 + ncol(scRNA_df) * 100
     }
     if (is.null(hm_devpars$height)) {
         vio_devpars$height = 1000
@@ -290,20 +300,81 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         devpars = vio_devpars,
         outfile = violinfile
     )
+
+    list(hmdata=as.data.frame(hmdata), hm_devpars=hm_devpars)
 }
 
 do_one_subset_col <- function(subset_col, subset_prefix) {
+    print(paste0("- Handling subset column: ", subset_col, " ..."))
     if (is.null(subset_col)) {
         do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
-    }
-    subsets <- unique(sobj@meta.data[[subset_col]])
-
-    if (ncores == 1) {
-        lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
     } else {
-        x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
-        if (any(unlist(lapply(x, class)) == "try-error")) {
-            stop("mclapply error")
+        subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
+
+        # if (ncores == 1) {
+        x = lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
+        # } else {
+        #     x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
+        #     if (any(unlist(lapply(x, class)) == "try-error")) {
+        #         stop("mclapply error")
+        #     }
+        # }
+        # x is a list of hmdata
+        # merge all hmdata
+        if (length(x) > 1) {
+            pws = c()
+            for (i in 1:length(x)) {
+                pws <- unique(c(pws, rownames(x[[i]]$hmdata)))
+            }
+            for (i in 1:length(x)) {
+                x[[i]]$hmdata[setdiff(pws, rownames(x[[i]]$hmdata)), ] <- NA
+                colnames(x[[i]]$hmdata) <- paste0(subsets[i], "_", colnames(x[[i]]$hmdata))
+            }
+            hm_devpars = x[[1]]$hm_devpars
+            hm_devpars$height = hm_devpars$height * length(pws) / nrow(x[[1]]$hmdata)
+            hmdata <- x[[1]]$hmdata[pws, ]
+            for (i in 2:length(x)) {
+                hmdata <- cbind(hmdata, x[[i]]$hmdata[pws, ])
+                if (hm_devpars$res != x[[i]]$hm_devpars$res) {
+                    stop("hm_devpars$res not equal for group heatmaps")
+                }
+                hm_devpars$width = sum(hm_devpars$width, x[[i]]$hm_devpars$width / 2)
+                hm_devpars$height = max(hm_devpars$height, x[[i]]$hm_devpars$height * length(pws) / nrow(x[[i]]$hmdata))
+            }
+            # Plot heatmap of the merged hmdata
+            subset_heatmap_file <- file.path(outdir, paste0(subset_col, ".group-unclustered.png"))
+            plotHeatmap(
+                hmdata,
+                args = list(
+                    name = "Pathway activity",
+                    rect_gp = gpar(col = "white", lwd = 0.5),
+                    row_names_side = "left",
+                    row_dend_side = "right",
+                    row_names_max_width = max_text_width(pws, gp = gpar(fontsize = 12)),
+                    row_dend_reorder = TRUE,
+                    row_dend_width = unit(30, "mm"),
+                    column_split = do.call(c, lapply(1:length(subsets), function(i) {rep(subsets[i], ncol(x[[i]]$hmdata))})),
+                    cluster_columns = FALSE
+                ),
+                devpars = hm_devpars,
+                outfile = subset_heatmap_file
+            )
+            subset_heatmap_file <- file.path(outdir, paste0(subset_col, ".group-clustered.png"))
+            plotHeatmap(
+                hmdata,
+                args = list(
+                    name = "Pathway activity",
+                    rect_gp = gpar(col = "white", lwd = 0.5),
+                    row_names_side = "left",
+                    row_dend_side = "right",
+                    row_names_max_width = max_text_width(pws, gp = gpar(fontsize = 12)),
+                    row_dend_reorder = TRUE,
+                    row_dend_width = unit(30, "mm"),
+                    cluster_columns = TRUE
+                ),
+                devpars = hm_devpars,
+                outfile = subset_heatmap_file
+            )
         }
     }
 }
