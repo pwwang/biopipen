@@ -3,6 +3,7 @@ from pathlib import Path
 
 import cmdy
 from ..core.config import config
+from biopipen.utils.misc import run_command
 
 
 def gztype(gzfile):
@@ -67,7 +68,9 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
 def bam_index(
     bam,
     bamdir=tempfile.gettempdir(),
+    tool="samtools",
     samtools=config.exe.samtools,
+    sambamba=config.exe.sambamba,
     ncores=1,
     ext=".bam.bai",
 ):
@@ -83,7 +86,10 @@ def bam_index(
         bamdir: If index file can't be found in the directory as the bam file,
             create a symbolic link to the bam file, and generate the index
             here
+        tool: The tool used to generate the index file, either `samtools` or
+            `sambamba`
         samtools: The path to samtools
+        sambamba: The path to sambamba
         ncores: Number of cores (threads) used to generate the index file
         ext: The ext of the index file, default `.bam.bai`, in case, `.bai` is
             also treated as index file
@@ -111,11 +117,27 @@ def bam_index(
     if indexfile.is_file():
         return linkfile
 
-    cmdy.samtools.index(
-        "-@",
-        ncores,
-        b=True,
-        _=[linkfile, linkfile.with_suffix(ext)],
-        _exe=samtools,
-    )
+    if tool == "samtools":
+        cmd = [
+            samtools,
+            "index",
+            "-@",
+            str(ncores),
+            "-b",
+            str(linkfile),
+            str(linkfile.with_suffix(ext)),
+        ]
+    elif tool == "sambamba":
+        cmd = [
+            sambamba,
+            "index",
+            "-t",
+            str(ncores),
+            str(linkfile),
+            str(linkfile.with_suffix(ext)),
+        ]
+    else:
+        raise ValueError("tool must be either samtools or sambamba")
+
+    run_command(cmd, print_command=True)
     return linkfile
