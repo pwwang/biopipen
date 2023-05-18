@@ -43,6 +43,7 @@ metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
+    print(paste0("  Handling subset value: ", s, " ..."))
     if (is.null(s)) {
         subset_dir = file.path(outdir, "ALL")
         subset_obj = sobj
@@ -106,7 +107,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
             top = 100,
             outdir = odir,
             plot = FALSE,
-            envs = list(scoreType = "pos", nproc=1)
+            envs = list(scoreType = "std", nproc=1)
         )
         ############ Motify this
         result_file = file.path(odir, "fgsea.txt")
@@ -168,7 +169,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         "point",
         args = list(aes(x=x, y=y, size=PVAL, color=NES), shape=19),
         ggs = c(
-            'scale_size(range = c(0, 5))',
+            'scale_size(range = c(2, 10))',
             'scale_color_gradient(low = "white", high = "red")',
             'labs(
                 x = NULL, y = NULL, color="NES", size="-log10(pval)"
@@ -203,10 +204,11 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
 }
 
 do_one_subset_col <- function(subset_col, subset_prefix) {
+    print(paste0("- Handling subset column: ", subset_col, " ..."))
     if (is.null(subset_col)) {
         do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
     }
-    subsets <- unique(sobj@meta.data[[subset_col]])
+    subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
 
     if (ncores == 1) {
         lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)

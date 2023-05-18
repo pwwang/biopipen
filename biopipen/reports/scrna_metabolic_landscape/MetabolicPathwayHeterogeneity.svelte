@@ -9,7 +9,7 @@
   <h{{h}}>{{ ssdir | stem }}</h{{h}}>
 
   <h{{h+1}}>Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities</h{{h+1}}>
-  <Image src="{{job.out.outdir | glob: '*' | first | joinpaths: 'pathway_heterogeneity.png'}}" />
+  <Image src="{{ssdir | joinpaths: 'pathway_heterogeneity.png'}}" />
 
   {%- endfor -%}
 {%- endmacro -%}
