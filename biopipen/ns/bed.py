@@ -139,3 +139,26 @@ class BedConsensus(Proc):
         "chrsize": config.ref.chrsize,
     }
     script = "file://../scripts/bed/BedConsensus.py"
+
+
+class BedtoolsMerge(Proc):
+    """Merge overlapping intervals in a BED file, using `bedtools merge`
+
+    Input:
+        inbed: The input BED file
+
+    Output:
+        outbed: The output BED file
+
+    Envs:
+        bedtools: The path to bedtools
+        <more>: Other options to be passed to `bedtools merge`
+            See https://bedtools.readthedocs.io/en/latest/content/tools/merge.html
+    """  # noqa: E501
+    input = "inbed:file"
+    output = "outbed:file:{{in.inbed | stem}}_merged.bed"
+    lang = config.lang.python
+    envs = {
+        "bedtools": config.exe.bedtools,
+    }
+    script = "file://../scripts/bed/BedtoolsMerge.py"
