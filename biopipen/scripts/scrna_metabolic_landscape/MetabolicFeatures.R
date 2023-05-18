@@ -95,7 +95,7 @@ do_one_subset_col <- function(subset_col, subset_prefix) {
     if (is.null(subset_col)) {
         do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
     }
-    subsets <- unique(sobj@meta.data[[subset_col]])
+    subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
     lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
 }
 
