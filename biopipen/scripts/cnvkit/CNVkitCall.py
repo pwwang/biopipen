@@ -1,5 +1,5 @@
 from pathlib import Path
-import cmdy
+from biopipen.utils.misc import run_command
 
 cnsfile = {{in.cnsfile | quote}}  # pyright: ignore
 cnrfile = {{in.cnrfile | quote}}  # pyright: ignore
@@ -29,58 +29,72 @@ def main():
     vcffile = Path(outdir).joinpath(Path(cnsfile).name).with_suffix(".vcf")
     bedfile = Path(outdir).joinpath(Path(cnsfile).name).with_suffix(".bed")
 
-    args = []
+    cmd = [cnvkit, "call"]
+    cmd.extend(["--center", center])
+    cmd.extend(["--method", method])
+    cmd.extend(["--ploidy", ploidy])
+    cmd.extend(["--output", outfile])
+    if filter is not False:
+        cmd.extend(["--filter", filter])
+    if center_at is not False:
+        cmd.extend(["--center-at", center_at])
     if thresholds and method == "threshold":
-        args.append(f"-t={thresholds}")
+        cmd.append(f"--thresholds={thresholds}")
+    if purity is not None:
+        cmd.extend(["--purity", purity])
+    if drop_low_coverage:
+        cmd.append("--drop-low-coverage")
+    if male_reference:
+        cmd.append("--male-reference")
+    if sample_sex:
+        cmd.extend(["--sample-sex", sample_sex])
+    if min_variant_depth is not None:
+        cmd.extend(["--min-variant-depth", min_variant_depth])
+    if zygosity_freq is True:
+        cmd.append("--zygosity-freq")
+    elif zygosity_freq is not None:
+        cmd.extend(["--zygosity-freq", zygosity_freq])
+    if vcf:
+        cmd.extend(["--vcf", vcf])
+    if sample_id:
+        cmd.extend(["--sample-id", sample_id])
+    if normal_id:
+        cmd.extend(["--normal-id", normal_id])
+    cmd.append(cnsfile)
 
-    cmdy.cnvkit.call(
-        # thresholds could be "-1.1...", starting `-` make it unregconizable
-        *args,
-        center=center,
-        center_at=center_at,
-        filter=filter,
-        m=method,
-        ploidy=ploidy,
-        purity=False if purity is None else purity,
-        drop_low_coverage=drop_low_coverage,
-        male_reference=male_reference,
-        sample_sex=sample_sex or False,
-        o=outfile,
-        v=vcf or False,
-        i=sample_id or False,
-        n=normal_id or False,
-        min_variant_depth=min_variant_depth,
-        zygosity_freq=zygosity_freq,
-        _=cnsfile,
-        _exe=cnvkit,
-    ).fg()
+    run_command(cmd, fg=True)
 
     # conver to vcf
-    cmdy.cnvkit.export(
-        "vcf",
-        cnr=cnrfile,
-        i=sample_id or False,
-        ploidy=ploidy,
-        sample_sex=sample_sex or False,
-        male_reference=male_reference,
-        o=vcffile,
-        _=cnsfile,
-        _exe=cnvkit,
-    ).fg()
+    # If this errored, see:
+    # https://github.com/etal/cnvkit/pull/818
+    cmd = [cnvkit, "export", "vcf"]
+    cmd.extend(["--ploidy", ploidy])
+    cmd.extend(["--output", vcffile])
+    if sample_id:
+        cmd.extend(["--sample-id", sample_id])
+    if sample_sex:
+        cmd.extend(["--sample-sex", sample_sex])
+    if male_reference:
+        cmd.append("--male-reference")
+    cmd.append(cnsfile)
+
+    run_command(cmd, fg=True)
 
     # convert to bed
-    cmdy.cnvkit.export(
-        "bed",
-        i=sample_id or False,
-        ploidy=ploidy,
-        sample_sex=sample_sex or False,
-        male_reference=male_reference,
-        label_genes=True,
-        show="ploidy",  # all, variant, ploidy
-        o=bedfile,
-        _=cnsfile,
-        _exe=cnvkit,
-    ).fg()
+    cmd = [cnvkit, "export", "bed"]
+    cmd.extend(["--ploidy", ploidy])
+    cmd.extend(["--output", bedfile])
+    cmd.append("--label-genes")
+    cmd.extend(["--show", "ploidy"])  # all, variant, ploidy
+    if sample_id:
+        cmd.extend(["--sample-id", sample_id])
+    if sample_sex:
+        cmd.extend(["--sample-sex", sample_sex])
+    if male_reference:
+        cmd.append("--male-reference")
+    cmd.append(cnsfile)
+
+    run_command(cmd, fg=True)
 
 
 if __name__ == "__main__":
