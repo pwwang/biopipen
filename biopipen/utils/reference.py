@@ -65,6 +65,21 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
     return new_infile
 
 
+def _run_bam_index(
+    bam,
+    idxfile=None,
+    tool="samtools",
+    samtools=config.exe.samtools,
+    sambamba=config.exe.sambamba,
+    ncores=1,
+):
+    if tool == "samtools":
+        cmd = [samtools, "index", "-@", ncores, bam, idxfile]
+    else:
+        cmd = [sambamba, "index", "-t", ncores, bam, idxfile]
+    run_command(cmd)
+
+
 def bam_index(
     bam,
     bamdir=tempfile.gettempdir(),
@@ -73,6 +88,7 @@ def bam_index(
     sambamba=config.exe.sambamba,
     ncores=1,
     ext=".bam.bai",
+    force=False,
 ):
     """Index a bam file
 
@@ -93,6 +109,8 @@ def bam_index(
         ncores: Number of cores (threads) used to generate the index file
         ext: The ext of the index file, default `.bam.bai`, in case, `.bai` is
             also treated as index file
+        force: Force to generate the index file, with given bamfile.
+            Don't check if the index file exists.
 
     Returns:
         The bam file if index exists in the directory as the bam file.
@@ -100,6 +118,17 @@ def bam_index(
     """
     bam = Path(bam)
     indexfile = bam.with_suffix(ext)
+    if force:
+        _run_bam_index(
+            bam,
+            indexfile,
+            tool,
+            samtools,
+            sambamba,
+            ncores,
+        )
+        return bam
+
     if indexfile.is_file():
         return str(bam)
 
@@ -117,27 +146,12 @@ def bam_index(
     if indexfile.is_file():
         return linkfile
 
-    if tool == "samtools":
-        cmd = [
-            samtools,
-            "index",
-            "-@",
-            str(ncores),
-            "-b",
-            str(linkfile),
-            str(linkfile.with_suffix(ext)),
-        ]
-    elif tool == "sambamba":
-        cmd = [
-            sambamba,
-            "index",
-            "-t",
-            str(ncores),
-            str(linkfile),
-            str(linkfile.with_suffix(ext)),
-        ]
-    else:
-        raise ValueError("tool must be either samtools or sambamba")
-
-    run_command(cmd, print_command=True)
+    _run_bam_index(
+        linkfile,
+        indexfile,
+        tool,
+        samtools,
+        sambamba,
+        ncores,
+    )
     return linkfile
