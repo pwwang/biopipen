@@ -1,6 +1,7 @@
 from __future__ import annotations
-from ast import List
+
 import sys
+from typing import Callable, List, Any
 
 
 def exec_code(code, global_vars = None, local_vars = None, return_var = None):
@@ -17,7 +18,8 @@ def exec_code(code, global_vars = None, local_vars = None, return_var = None):
 def run_command(
     cmd: str | List[str],
     fg: bool = False,
-    print_command: bool = False,
+    wait: bool = True,
+    print_command: bool = True,
     print_command_handler: callable = print,
     **kwargs,
 ):
@@ -47,7 +49,10 @@ def run_command(
         kwargs["stderr"] = sys.stderr
         kwargs["universal_newlines"] = True
     p = Popen(cmd, **kwargs)
-    if fg:
-        p.wait()
+    if fg or wait:
+        rc = p.wait()
+        if rc != 0:
+            raise RuntimeError(f"Failed to run command: {cmd}")
+        return rc
 
     return p

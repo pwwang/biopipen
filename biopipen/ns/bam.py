@@ -181,3 +181,38 @@ class CNAClinic(Proc):
         "report": "file://../reports/bam/CNAClinic.svelte",
         "report_paging": 20,
     }
+
+
+class BamSplitChroms(Proc):
+    """Split bam file by chromosomes
+
+    Input:
+        bamfile: The bam file
+
+    Output:
+        outdir: The output directory with bam files for each chromosome
+
+    Envs:
+        ncores: Number of cores to use
+        samtools: Path to samtools executable
+        sambamba: Path to sambamba executable
+        tool: The tool to use, either "samtools" or "sambamba"
+        keep_other_sq: Keep other chromosomes in "@SQ" field in header
+        chroms: The chromosomes to keep, if not provided, will use all
+        index: Whether to index the output bam files. Requires the input bam
+            file to be sorted.
+    """
+    input = "bamfile:file"
+    output = "outdir:dir:{{in.bamfile | stem}}.split"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "samtools": config.exe.samtools,
+        "sambamba": config.exe.sambamba,
+        "tool": "samtools",
+        "keep_other_sq": False,
+        "chroms": [],
+        "index": True,
+    }
+    script = "file://../scripts/bam/BamSplitChroms.py"
+
