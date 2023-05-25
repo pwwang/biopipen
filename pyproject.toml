@@ -18,6 +18,10 @@ pipen-verbose = "^0.6"
 pipen-args = "^0.9"
 cmdy = "^0.5"
 datar = {version = "^0.12", extras = ["pandas"]}
+pipen-board = { optional = true, version = "^0.2" }
+
+[tool.poetry.extras]
+board = ["pipen-board"]
 
 [tool.poetry.dev-dependencies]
 
