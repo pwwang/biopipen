@@ -7,7 +7,7 @@ tool = {{envs.tool | repr}}  # pyright: ignore
 wget = {{envs.wget | repr}}  # pyright: ignore
 aria2c = {{envs.aria2c | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
-args = {{envs.args | repr}}  # pyright: ignore
+args = {{envs.args | dict}}  # pyright: ignore
 
 if tool == "wget":
     args["_"] = url

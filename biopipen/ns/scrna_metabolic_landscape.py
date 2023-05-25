@@ -41,6 +41,8 @@ class ScrnaMetabolicLandscape(ProcGroup):
             not specified, meaning `<pipeline>.procs.MetabolicInput` is
             dependent on other processes, this option will be used to determine
             whether the input is a seurat object or not.
+        noimpute (action=store_true): Whether to do imputation for the dropouts.
+            If False, the values will be left as is.
         gmtfile: The GMT file with the metabolic pathways. The gene names should
             match the gene names in the gene list in RNADir or the Seurat object
         grouping: defines the basic groups to investigate the metabolic activity
@@ -49,14 +51,18 @@ class ScrnaMetabolicLandscape(ProcGroup):
             For example, if we have `grouping_prefix = "cluster"` and
             we have `1` and `2` in the `grouping` column, the groups
             will be named as `cluster_1` and `cluster_2`
-        subsetting: How do we subset the data. Another column in the metadata
-            to do comparisons.
-        subsetting_prefix: Working as a prefix to subset names
+        subsetting (ctype=auto): How do we subset the data. Other columns in the
+            metadata to do comparisons. For example, `"TimePoint"` or
+            `["TimePoint", "Response"]`
+        subsetting_prefix (ctype=auto): Working as a prefix to subset names
             For example, if we have `subsetting_prefix = "timepoint"` and
             we have `pre` and `post` in the `subsetting` column, the subsets
             will be named as `timepoint_pre` and `timepoint_post`
-        subsetting_comparison: What kind of comparisons are we doing to compare
-            cells from different subsets.
+            If `subsetting` is a list, then this should also be a same-length
+            list. If a single string is given, it will be repeated to a list
+            with the same length as `subsetting`
+        subsetting_comparison (ctype=json): What kind of comparisons are we
+            doing to compare cells from different subsets.
             It should be dict with keys as the names of the comparisons and
             values as the 2 comparison groups from the `subsetting` column.
             For example, if we have `pre` and `post` in the `subsetting` column,
@@ -73,12 +79,15 @@ class ScrnaMetabolicLandscape(ProcGroup):
             compare cells from different subsets within each group. With the
             example above, we will have `pre_vs_post` comparisons within
             each group.
-        mutaters: Add new columns to the metadata for grouping/subsetting.
+            If `subsetting` is a list, this must be a list with the same length.
+        mutaters (ctype=json): Add new columns to the metadata for
+            grouping/subsetting.
             They are passed to `sobj@meta.data |> mutate(...)`. For example,
             `{"timepoint": "if_else(treatment == 'control', 'pre', 'post')"}`
             will add a new column `timepoint` to the metadata with values of
             `pre` and `post` based on the `treatment` column.
-        ncores: Number of cores to use for parallelization for each process
+        ncores (type=int): Number of cores to use for parallelization for
+            each process
     """
     DEFAULTS = Diot(
         metafile=None,
@@ -90,11 +99,37 @@ class ScrnaMetabolicLandscape(ProcGroup):
         subsetting_prefix=None,
         subsetting_comparison={},
         mutaters=None,
+        noimpute=False,
         ncores=config.misc.ncores,
     )
 
     class MetabolicPathwayActivity(Proc):
         """Pathway activities for each group
+
+        Envs:
+            ntimes (type=int): Number of times to do the permutation
+            ncores (type=int): Number of cores to use for parallelization
+                Defaults to `ScrnaMetabolicLandscape.ncores`
+            heatmap_devpars (ns): Device parameters for the heatmap
+                - width (type=int): Width of the heatmap
+                - height (type=int): Height of the heatmap
+                - res (type=int): Resolution of the heatmap
+            violin_devpars (ns): Device parameters for the violin plot
+                - width (type=int): Width of the violin plot
+                - height (type=int): Height of the violin plot
+                - res (type=int): Resolution of the violin plot
+            gmtfile: The GMT file with the metabolic pathways.
+                Defaults to `ScrnaMetabolicLandscape.gmtfile`
+            grouping: Defines the basic groups to investigate the metabolic
+                activity.
+                Defaults to `ScrnaMetabolicLandscape.grouping`
+            grouping_prefix: Working as a prefix to group names.
+                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+            subsetting: How do we subset the data. Another column in the
+                metadata.
+                Defaults to `ScrnaMetabolicLandscape.subsetting`
+            subsetting_prefix: Working as a prefix to subset names.
+                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
 
         Requires:
             r-scater:
@@ -140,6 +175,49 @@ class ScrnaMetabolicLandscape(ProcGroup):
     class MetabolicFeatures(Proc):
         """Inter-subset metabolic features - Enrichment analysis in details
 
+        Envs:
+            ncores (type=int): Number of cores to use for parallelization
+                Defaults to `ScrnaMetabolicLandscape.ncores`
+            fgsea (action=store_true): Whether to do fast gsea analysis
+            prerank_method (choice): Method to use for gene preranking
+                Signal to noise: the larger the differences of the means
+                (scaled by the standard deviations); that is, the more distinct
+                the gene expression is in each phenotype and the more the gene
+                acts as a “class marker.”.
+                Absolute signal to noise: the absolute value of the signal to
+                noise.
+                T test: Uses the difference of means scaled by the standard
+                deviation and number of samples.
+                Ratio of classes: Uses the ratio of class means to calculate
+                fold change for natural scale data.
+                Diff of classes: Uses the difference of class means to calculate
+                fold change for nature scale data
+                Log2 ratio of classes: Uses the log2 ratio of class means to
+                calculate fold change for natural scale data. This is the
+                recommended statistic for calculating fold change for log scale
+                data.
+                - signal_to_noise: Signal to noise
+                - s2n: Alias of signal_to_noise
+                - abs_signal_to_noise: absolute signal to noise
+                - abs_s2n: Alias of abs_signal_to_noise
+                - t_test: T test
+                - ratio_of_classes: Also referred to as fold change
+                - diff_of_classes: Difference of class means
+                - log2_ratio_of_classes: Log2 ratio of class means
+            top (type=int): N top of enriched pathways to show
+            gmtfile: The GMT file with the metabolic pathways.
+                Defaults to `ScrnaMetabolicLandscape.gmtfile`
+            grouping: Defines the basic groups to investigate the metabolic
+                activity.
+                Defaults to `ScrnaMetabolicLandscape.grouping`
+            grouping_prefix: Working as a prefix to group names.
+                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+            subsetting: How do we subset the data. Another column in the
+                metadata.
+                Defaults to `ScrnaMetabolicLandscape.subsetting`
+            subsetting_prefix: Working as a prefix to subset names.
+                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
+
         Requires:
             r-parallel:
                 - check: {{proc.lang}} <(echo "library(parallel)")
@@ -172,6 +250,51 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
     class MetabolicFeaturesIntraSubset(Proc):
         """Intra-subset metabolic features - Enrichment analysis in details
+
+        Envs:
+            ncores (type=int): Number of cores to use for parallelization
+                Defaults to `ScrnaMetabolicLandscape.ncores`
+            fgsea (action=store_true): Whether to do fast gsea analysis
+            prerank_method (choice): Method to use for gene preranking
+                Signal to noise: the larger the differences of the means
+                (scaled by the standard deviations); that is, the more distinct
+                the gene expression is in each phenotype and the more the gene
+                acts as a “class marker.”.
+                Absolute signal to noise: the absolute value of the signal to
+                noise.
+                T test: Uses the difference of means scaled by the standard
+                deviation and number of samples.
+                Ratio of classes: Uses the ratio of class means to calculate
+                fold change for natural scale data.
+                Diff of classes: Uses the difference of class means to calculate
+                fold change for nature scale data
+                Log2 ratio of classes: Uses the log2 ratio of class means to
+                calculate fold change for natural scale data. This is the
+                recommended statistic for calculating fold change for log scale
+                data.
+                - signal_to_noise: Signal to noise
+                - s2n: Alias of signal_to_noise
+                - abs_signal_to_noise: absolute signal to noise
+                - abs_s2n: Alias of abs_signal_to_noise
+                - t_test: T test
+                - ratio_of_classes: Also referred to as fold change
+                - diff_of_classes: Difference of class means
+                - log2_ratio_of_classes: Log2 ratio of class means
+            top (type=int): N top of enriched pathways to show
+            gmtfile: The GMT file with the metabolic pathways.
+                Defaults to `ScrnaMetabolicLandscape.gmtfile`
+            grouping: Defines the basic groups to investigate the metabolic
+                activity.
+                Defaults to `ScrnaMetabolicLandscape.grouping`
+            grouping_prefix: Working as a prefix to group names.
+                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+            subsetting: How do we subset the data. Another column in the
+                metadata.
+                Defaults to `ScrnaMetabolicLandscape.subsetting`
+            subsetting_prefix: Working as a prefix to subset names.
+                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
+            subsetting_comparison: How do we compare the subsets.
+                Defaults to `ScrnaMetabolicLandscape.subsetting_comparison`
 
         Requires:
             r-parallel:
@@ -211,6 +334,29 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
     class MetabolicPathwayHeterogeneity(Proc):
         """Pathway heterogeneity
+
+        Envs:
+            gmtfile: The GMT file with the metabolic pathways.
+                Defaults to `ScrnaMetabolicLandscape.gmtfile`
+            select_pcs (type=float): Select the PCs to use for the analysis.
+            pathway_pval_cutoff (type=float): The p-value cutoff to select
+                the enriched pathways
+            ncores (type=int): Number of cores to use for parallelization
+                Defaults to `ScrnaMetabolicLandscape.ncores`
+            bubble_devpars (ns): The devpars for the bubble plot
+                - width: The width of the plot
+                - height: The height of the plot
+                - res: The resolution of the plot
+            grouping: Defines the basic groups to investigate the metabolic
+                activity.
+                Defaults to `ScrnaMetabolicLandscape.grouping`
+            grouping_prefix: Working as a prefix to group names.
+                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+            subsetting: How do we subset the data. Another column in the
+                metadata.
+                Defaults to `ScrnaMetabolicLandscape.subsetting`
+            subsetting_prefix: Working as a prefix to subset names.
+                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
 
         Requires:
             r-gtools:
@@ -263,6 +409,40 @@ class ScrnaMetabolicLandscape(ProcGroup):
             suffix = Path(self.opts.metafile).suffix
             self.opts.is_seurat = suffix in (".rds", ".RDS")
 
+        # Make sure the grouping is a list
+        if self.opts.subsetting and not isinstance(self.opts.subsetting, list):
+            self.opts.subsetting = [self.opts.subsetting]
+
+        # Make sure the grouping is a list with the same length as subsetting
+        if (
+            self.opts.subsetting
+            and not isinstance(self.opts.subsetting_prefix, list)
+        ):
+            self.opts.subsetting_prefix = [
+                self.opts.subsetting_prefix
+            ] * len(self.opts.subsetting)
+
+        # Make sure the lengths of subsetting and subsetting_prefix are the same
+        if (
+            self.opts.subsetting
+            and len(self.opts.subsetting) != len(self.opts.subsetting_prefix)
+        ):
+            raise ValueError(
+                "The length of `subsetting` and `subsetting_prefix` "
+                "are not the same"
+            )
+
+        # Make sure the lengths of subsetting and subsetting_comparison the same
+        if (
+            self.opts.subsetting
+            and len(self.opts.subsetting)
+            != len(self.opts.subsetting_comparison)
+        ):
+            raise ValueError(
+                "The length of `subsetting` and `subsetting_comparison` "
+                "are not the same"
+            )
+
     @ProcGroup.add_proc
     def p_input(self) -> Type[Proc]:
         """Build MetabolicInputs process"""
@@ -271,13 +451,6 @@ class ScrnaMetabolicLandscape(ProcGroup):
         class MetabolicInput(File2Proc):
             """Input for the metabolic pathway analysis pipeline for
             scRNA-seq data
-
-            Input:
-                metafile: A metafile indicating the metadata or the rds file
-                    with seruat object
-
-            Output:
-                metafile: Soft link to `in.metafile`
             """
 
             if self.opts.metafile:
@@ -288,12 +461,15 @@ class ScrnaMetabolicLandscape(ProcGroup):
     @ProcGroup.add_proc
     def p_preparing(self) -> Type[Proc]:
         """Build SeuratPreparing process"""
+        if self.opts.is_seurat:
+            return None
+
         from .scrna import SeuratPreparing
 
-        class SeuratPreparing(SeuratPreparing):
+        class MetabolicSeuratPreparing(SeuratPreparing):
             requires = self.p_input
 
-        return SeuratPreparing
+        return MetabolicSeuratPreparing
 
     @ProcGroup.add_proc
     def p_clustering(self) -> Type[Proc]:
@@ -303,20 +479,20 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         from .scrna import SeuratClustering
 
-        class SeuratClustering(SeuratClustering):
+        class MetabolicSeuratClustering(SeuratClustering):
             requires = self.p_preparing
 
-        return SeuratClustering
+        return MetabolicSeuratClustering
 
     @ProcGroup.add_proc
     def p_mutater(self) -> Type[Proc]:
         """Build SeuratMetadataMutater process"""
-        if self.opts.mutaters:
+        if not self.opts.mutaters:
             return self.p_clustering
 
         from .scrna import SeuratMetadataMutater
 
-        class SeuratMetadataMutater(SeuratMetadataMutater):
+        class MetabolicSeuratMetadataMutater(SeuratMetadataMutater):
             requires = self.p_clustering
             input_data = lambda ch: tibble(
                 srtobj=ch.iloc[:, 0],
@@ -324,14 +500,24 @@ class ScrnaMetabolicLandscape(ProcGroup):
                 mutaters=[self.opts.mutaters],
             )
 
-        return SeuratMetadataMutater
+        return MetabolicSeuratMetadataMutater
 
     @ProcGroup.add_proc
     def p_expr_impute(self) -> Type[Proc]:
         """Build MetabolicExprImpute process"""
+        if self.opts.noimpute:
+            return self.p_mutater
+
         from .scrna import ExprImpute
 
         class MetabolicExprImpute(ExprImpute):
+            """
+            Impute missing values in the expression matrix
+
+            You can turn off the imputation by setting the `noimpute` option
+            of the process group to `True`.
+            """
+            __doc__ += ExprImpute.__doc__.split("\n", 1)[1]
             requires = self.p_mutater
 
         return MetabolicExprImpute
@@ -413,6 +599,4 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
 
 if __name__ == "__main__":
-    from pipen_args import install  # noqa: F401
-
     ScrnaMetabolicLandscape().as_pipen().run()

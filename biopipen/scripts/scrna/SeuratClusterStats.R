@@ -9,7 +9,7 @@ library(tidyseurat)
 
 srtfile = {{in.srtobj | r}}
 outdir = {{out.outdir | r}}
-envs = {{envs | r}}
+envs = {{envs | r: todot="-"}}
 
 srtobj = readRDS(srtfile)
 

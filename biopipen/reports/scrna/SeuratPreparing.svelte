@@ -1,14 +1,14 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from_ os import path %}
 <script>
-    import { Image } from "$lib";
+    import { Image } from "$libs";
     import { Tile } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
     <h{{h}}>Applied filters</h{{h}}>
     <Tile>
-        <p>Cell filters: {{proc.envs.cell_qc | escape}}</p>
+        <p>Cell filters: {{envs.cell_qc | str | escape}}</p>
         <p>Gene filters: {{
             proc.envs.gene_qc
             | str

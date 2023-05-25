@@ -6,3 +6,5 @@ mkdocs
 mkdocs-material
 pymdown-extensions
 mkapi-fix
+# in order to build biopipen.utils.gene
+mygene

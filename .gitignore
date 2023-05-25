@@ -119,3 +119,7 @@ docs/index.md
 docs/api/
 watch.sh
 .biopipen.toml
+t.py
+t.ipynb
+local_tests/
+*.config.toml

@@ -11,7 +11,7 @@ top <- {{ envs.top | r }}
 prerank_method <- {{ envs.prerank_method | r }}
 grouping <- {{ envs.grouping | r }}
 grouping_prefix <- {{ envs.grouping_prefix | r }}
-subsetting <- {{ envs.subsetting | r }}
+subsetting_cols <- {{ envs.subsetting | r }}
 subsetting_prefix <- {{ envs.subsetting_prefix | r }}
 
 if (!is.null(grouping_prefix) && nchar(grouping_prefix) > 0) {
@@ -69,13 +69,13 @@ do_one_group <- function(obj, group, outputdir) {
 
 }
 
-do_one_subset <- function(s) {
+do_one_subset <- function(s, subset_col, subset_prefix) {
     if (is.null(s)) {
         outputdir <- file.path(outdir, "ALL")
         subset_obj <- sobj
     } else {
-        outputdir <- file.path(outdir, paste0(subsetting_prefix, s))
-        subset_code <- paste0("subset(sobj, subset = ", subsetting, "=='", s, "')")
+        outputdir <- file.path(outdir, paste0(subset_prefix, s))
+        subset_code <- paste0("subset(sobj, subset = ", subset_col, "=='", s, "')")
         subset_obj <- eval(parse(text = subset_code))
     }
     dir.create(outputdir, showWarnings = FALSE)
@@ -91,9 +91,19 @@ do_one_subset <- function(s) {
     }
 }
 
-if (is.null(subsetting)) {
-    do_one_subset(NULL)
-} else {
-    subsets <- unique(sobj@meta.data[[subsetting]])
-    sapply(subsets, do_one_subset)
+do_one_subset_col <- function(subset_col, subset_prefix) {
+    if (is.null(subset_col)) {
+        do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
+    }
+    subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
+    lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
 }
+
+if (is.null(subsetting_cols)) {
+    do_one_subset_col(NULL)
+} else {
+    for (i in seq_along(subsetting_cols)) {
+        do_one_subset_col(subsetting_cols[i], subsetting_prefix[i])
+    }
+}
+

@@ -2,6 +2,7 @@ from datetime import date
 from pathlib import Path
 
 import cmdy
+from diot import OrderedDiot
 import numpy as np
 from cyvcf2 import VCF, Writer
 from pysam import FastaFile

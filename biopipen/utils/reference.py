@@ -3,6 +3,7 @@ from pathlib import Path
 
 import cmdy
 from ..core.config import config
+from biopipen.utils.misc import run_command
 
 
 def gztype(gzfile):
@@ -64,12 +65,30 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
     return new_infile
 
 
+def _run_bam_index(
+    bam,
+    idxfile=None,
+    tool="samtools",
+    samtools=config.exe.samtools,
+    sambamba=config.exe.sambamba,
+    ncores=1,
+):
+    if tool == "samtools":
+        cmd = [samtools, "index", "-@", ncores, bam, idxfile]
+    else:
+        cmd = [sambamba, "index", "-t", ncores, bam, idxfile]
+    run_command(cmd)
+
+
 def bam_index(
     bam,
     bamdir=tempfile.gettempdir(),
+    tool="samtools",
     samtools=config.exe.samtools,
+    sambamba=config.exe.sambamba,
     ncores=1,
     ext=".bam.bai",
+    force=False,
 ):
     """Index a bam file
 
@@ -83,10 +102,15 @@ def bam_index(
         bamdir: If index file can't be found in the directory as the bam file,
             create a symbolic link to the bam file, and generate the index
             here
+        tool: The tool used to generate the index file, either `samtools` or
+            `sambamba`
         samtools: The path to samtools
+        sambamba: The path to sambamba
         ncores: Number of cores (threads) used to generate the index file
         ext: The ext of the index file, default `.bam.bai`, in case, `.bai` is
             also treated as index file
+        force: Force to generate the index file, with given bamfile.
+            Don't check if the index file exists.
 
     Returns:
         The bam file if index exists in the directory as the bam file.
@@ -94,6 +118,17 @@ def bam_index(
     """
     bam = Path(bam)
     indexfile = bam.with_suffix(ext)
+    if force:
+        _run_bam_index(
+            bam,
+            indexfile,
+            tool,
+            samtools,
+            sambamba,
+            ncores,
+        )
+        return bam
+
     if indexfile.is_file():
         return str(bam)
 
@@ -111,11 +146,12 @@ def bam_index(
     if indexfile.is_file():
         return linkfile
 
-    cmdy.samtools.index(
-        "-@",
+    _run_bam_index(
+        linkfile,
+        indexfile,
+        tool,
+        samtools,
+        sambamba,
         ncores,
-        b=True,
-        _=[linkfile, linkfile.with_suffix(ext)],
-        _exe=samtools,
     )
     return linkfile

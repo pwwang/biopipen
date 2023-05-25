@@ -53,7 +53,7 @@ dependencies:
   - libfaiss=1.7.2=hde9c08d_1_cpu
   - faiss-cpu
   - clustcr
-  - truvari
+  - truvari==3.4.0
   - pip
   - pip:
     - magic-impute

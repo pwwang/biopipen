@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 import cmdy
+from argx import Namespace
 from liquid.filters.manager import FilterManager
 
 filtermanager = FilterManager()
@@ -20,7 +21,12 @@ def dict_to_cli_args(dic: Mapping[str, Any]) -> str:
 
 
 @filtermanager.register
-def r(obj: Any, ignoreintkey: bool = True) -> str:
+def r(
+    obj: Any,
+    ignoreintkey: bool = True,
+    todot: str = None,
+    sortkeys: bool = True,
+) -> str:
     """Convert a python object into R repr
 
     Examples:
@@ -34,6 +40,15 @@ def r(obj: Any, ignoreintkey: bool = True) -> str:
             ignore them. For example, when `True`, `{1: 1, 2: 2}` will be
             translated into `"list(1, 2)"`, but `"list(`1` = 1, `2` = 2)"`
             when `False`
+        todot: If not None, the string will be converted to a dot
+            For example, `todot="-"` will convert `"a-b"` to `"a.b"`
+            Only applies to the keys of obj when it is a dict
+        sortkeys: Whether to sort the keys of a dict.
+            True by default, in case the order of keys matters, for example,
+            it could affect whether a job is cached.
+            But sometimes, you want to keep orginal order, for example,
+            arguments passed the `dplyr::mutate` function. Because the later
+            arguments can refer to the earlier ones.
 
     Returns:
         Then converted string representation of the object
@@ -61,19 +76,39 @@ def r(obj: Any, ignoreintkey: bool = True) -> str:
     if isinstance(obj, Path):
         return repr(str(obj))
     if isinstance(obj, (list, tuple, set)):
-        return "c({})".format(",".join([r(i) for i in obj]))
+        if any(isinstance(i, dict) for i in obj):
+            # c(list(a=1), list(b=2)) will be combined as list(a=1, b=2)
+            # but we want list(list(a=1), list(b=2))
+            wrapper = "list"
+        else:
+            wrapper = "c"
+        return "{}({})".format(
+            wrapper,
+            ",".join([r(i, ignoreintkey, todot, sortkeys) for i in obj]),
+        )
     if isinstance(obj, dict):
         # list allow repeated names
         return "list({})".format(
             ",".join(
                 [
-                    "`{0}`={1}".format(k, r(v))
+                    "`{0}`={1}".format(k, r(v, ignoreintkey, todot, sortkeys))
                     if isinstance(k, int) and not ignoreintkey
-                    else r(v)
+                    else r(v, ignoreintkey, todot, sortkeys)
                     if isinstance(k, int) and ignoreintkey
-                    else "`{0}`={1}".format(str(k).split("#")[0], r(v))
-                    for k, v in sorted(obj.items())
+                    else "`{0}`={1}".format(
+                        (
+                            str(k)
+                            if not todot
+                            else str(k).replace(todot, ".")
+                        ).split("#")[0],
+                        r(v, ignoreintkey, todot, sortkeys),
+                    )
+                    for k, v in (
+                        sorted(obj.items()) if sortkeys else obj.items()
+                    )
                 ]
             )
         )
+    if isinstance(obj, Namespace):
+        return r(vars(obj), ignoreintkey, todot, sortkeys)
     return repr(obj)

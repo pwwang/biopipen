@@ -1,6 +1,6 @@
 {% from "utils/misc.liq" import table_of_images -%}
 <script>
-    import { Image } from "$lib";
+    import { Image } from "$libs";
     import { Tabs, Tab, TabContent } from "$ccs";
 </script>
 

@@ -1,5 +1,5 @@
 <script>
-    import { Image, DataTable } from "$lib";
+    import { Image, DataTable } from "$libs";
 </script>
 
 <h1>Total number of arm-level gains/losses</h1>

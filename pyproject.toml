@@ -1,20 +1,24 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.9.0"
+version = "0.11.0"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
 
+[tool.poetry.build]
+generate-setup-file = true
+
 [tool.poetry.dependencies]
-python = "^3.7.1"
-pipen = "^0.6"
-pipen-filters = "^0.5"
-pipen-report = "^0.7"
-pipen-cli-run = "^0.6"
-pipen-verbose = "^0.4"
-pipen-args = "^0.7"
+python = "^3.8"
+pipen = "^0.9"
+pipen-filters = "^0.7"
+pipen-report = "^0.9"
+pipen-cli-run = "^0.8"
+pipen-verbose = "^0.6"
+pipen-args = "^0.9"
 cmdy = "^0.5"
-datar = {version = "^0.11", extras = ["pandas"]}
+datar = {version = "^0.12", extras = ["pandas"]}
+pipen-board = "^0.2"
 
 [tool.poetry.dev-dependencies]
 
@@ -32,6 +36,7 @@ misc = "biopipen.ns.misc"
 plot = "biopipen.ns.plot"
 rnaseq = "biopipen.ns.rnaseq"
 scrna = "biopipen.ns.scrna"
+scrna_basic = "biopipen.ns.scrna_basic"
 scrna_metabolic_landscape = "biopipen.ns.scrna_metabolic_landscape"
 tcgamaf = "biopipen.ns.tcgamaf"
 tcr = "biopipen.ns.tcr"
@@ -44,5 +49,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 80
-target-version = ['py37', 'py38', 'py39']
+target-version = ['py38', 'py39', 'py310']
 include = '\.pyi?$'

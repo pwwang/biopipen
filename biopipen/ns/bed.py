@@ -103,14 +103,11 @@ class BedConsensus(Proc):
     Bedfile A            |----------|    1
     Bedfile B          |--------|        1
     Bedfile C              |------|      1
-    BedConsensus         |--------|
+
+    BedConsensus         |--------|      with cutoff >= 2
     bedtools intesect      |----|
     bedtools merge     |------------|
     Distribution       |1|2|3333|2|1|    (later normalized into 0~1)
-
-    If column #5 is provided, it can be used as weights to determine the
-    ends for the consensus regions. The weight score should be the sum of
-    all base pairs in the region.
 
     Input:
         bedfiles: Input BED files
@@ -120,20 +117,15 @@ class BedConsensus(Proc):
 
     Envs:
         bedtools: The path to bedtools
-        binsize: The binsize to calculate the weights
-            The smaller the more accurate to determine the ends of
-            consensus regions.
-        ignore_scores: A list of indices of the BED files to ignore their
-            scores (column #5)
-            If scores are ignored or not provided, use `1.0`.
         cutoff: The cutoff to determine the ends of consensus regions
-            The cutoff weights of bins are used to determine the ends
+            If `cutoff` < 1, it applies to the normalized scores (0~1), which
+            is the percentage of the number of files that cover the region.
+            If `cutoff` >= 1, it applies to the number of files that cover the
+            region directly.
+        chrsize: The chromosome sizes file
         distance: When the distance between two bins is smaller than this value,
             they are merged into one bin using `bedtools merge -d`. `0` means
             no merging.
-        chrsize: The chromosome size file, used to make windows
-        ncores: Number of cores to use to calculate the weights for
-            each bed file
     """
     input = "bedfiles:files"
     output = (
@@ -142,11 +134,31 @@ class BedConsensus(Proc):
     lang = config.lang.python
     envs = {
         "bedtools": config.exe.bedtools,
-        "binsize": 1000,
-        "ncores": config.misc.ncores,
-        "ignore_scores": [],
         "cutoff": 0.5,
         "distance": 1,
         "chrsize": config.ref.chrsize,
     }
     script = "file://../scripts/bed/BedConsensus.py"
+
+
+class BedtoolsMerge(Proc):
+    """Merge overlapping intervals in a BED file, using `bedtools merge`
+
+    Input:
+        inbed: The input BED file
+
+    Output:
+        outbed: The output BED file
+
+    Envs:
+        bedtools: The path to bedtools
+        <more>: Other options to be passed to `bedtools merge`
+            See https://bedtools.readthedocs.io/en/latest/content/tools/merge.html
+    """  # noqa: E501
+    input = "inbed:file"
+    output = "outbed:file:{{in.inbed | stem}}_merged.bed"
+    lang = config.lang.python
+    envs = {
+        "bedtools": config.exe.bedtools,
+    }
+    script = "file://../scripts/bed/BedtoolsMerge.py"

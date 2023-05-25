@@ -40,10 +40,7 @@ def _get_test_dirs(testfile, new):
 
 def get_pipeline(testfile, loglevel="debug", **kwargs):
     """Get a pipeline for a test file"""
-    # Use --former to use previous workdir and outdir
-    # where caching takes effect
-    former = "--former" in sys.argv
-    name, workdir, outdir = _get_test_dirs(testfile, not former)
+    name, workdir, outdir = _get_test_dirs(testfile, False)
     kws = {
         "name": name,
         "workdir": workdir,

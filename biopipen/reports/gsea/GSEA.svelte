@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs -%}
 {% from "utils/gsea.liq" import gsea_report -%}
 <script>
-    import { Image, DataTable } from "$lib";
+    import { Image, DataTable } from "$libs";
     import { Tile } from "$ccs";
 </script>
 

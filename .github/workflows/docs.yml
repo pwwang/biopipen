@@ -5,6 +5,7 @@ on:
     paths:
       - docs/
       - mkdocs.yml
+      - pyproject.toml
       - 'biopipen/ns/*.py'
       - 'biopipen/core/*.py'
       - 'biopipen/utils/*.py'
@@ -15,7 +16,7 @@ jobs:
     # if: github.ref == 'refs/heads/master'
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: ["3.10"]
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python # Set Python version
@@ -45,7 +46,7 @@ jobs:
     # if: github.ref == 'refs/heads/master'
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: ["3.10"]
     steps:
       - uses: actions/checkout@v3
         with:

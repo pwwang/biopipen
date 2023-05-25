@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs -%}
 
 <script>
-    import { Image } from "$lib";
+    import { Image } from "$libs";
 </script>
 
 <h1>Introduction</h1>
@@ -46,6 +46,9 @@ the groups that bring biological meaning (i.e. different timepoints or sample ty
 
 {%- macro report_job(job, h=2) -%}
   {%- for ssdir in job.out.outdir | glob: "*" -%}
+  {%- if not isdir(ssdir) -%}
+    {%- continue -%}
+  {%- endif -%}
   <h{{h}}>{{ ssdir | stem }}</h{{h}}>
 
   <h{{ h+1 }}>Metabolic pathway activities by {{envs.grouping}}</h{{ h+1 }}>
@@ -53,8 +56,20 @@ the groups that bring biological meaning (i.e. different timepoints or sample ty
 
   <h{{ h+1 }}>Distributions of pathway activities by {{envs.grouping}}</h{{ h+1 }}>
   <Image src="{{ssdir | joinpaths: 'pathway_activity_violinplot.png'}}" />
-
   {%- endfor -%}
+
+  {% if job.out.outdir | glob: "*.group-*.png" -%}
+  <h{{h}}>Merged heatmaps</h{{h}}>
+  {% for group_hm in job.out.outdir | glob: "*.group-*.png" -%}
+    {%- if group_hm.endswith(".group-unclustered.png") -%}
+        <h{{h+1}}>{{group_hm | stem | replace: ".group-unclustered", " (Group Unclustered)"}}</h{{h+1}}>
+        <Image src="{{group_hm}}" />
+    {%- else -%}
+        <h{{h+1}}>{{group_hm | stem | replace: ".group-clustered", " (Group Clustered)"}}</h{{h+1}}>
+        <Image src="{{group_hm}}" />
+    {%- endif -%}
+  {%- endfor -%}
+  {%- endif -%}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

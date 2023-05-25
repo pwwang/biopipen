@@ -1,18 +1,20 @@
 """Tools to deal with csv/tsv files"""
+from ..core.config import config
 from ..core.proc import Proc
 
 
 class BindRows(Proc):
     """Bind rows of input files"""
-
     input = "infiles:files"
     output = (
-        "outfile:file:{{in.infiles[0] | stem}}.bound{{in.infiles[0] | ext}}"
+        "outfile:file:"
+        "{{in.infiles | first | stem}}_rbind.{{in.infiles | first | ext}}"
     )
-    script = """
-        outfile={{out.outfile | quote}}
-        head -n 1 {{in.infiles[0] | quote}} > $outfile
-        {% for infile in in.infiles %}
-        tail -n +2 {{infile | quote}} >> $outfile
-        {% endfor %}
-    """
+    envs = {
+        "sep": "\t",
+        "header": False,
+        "helper_code": None,
+        "add_filename": None,
+    }
+    lang = config.lang.python
+    script = "file://../scripts/csv/BindRows.py"

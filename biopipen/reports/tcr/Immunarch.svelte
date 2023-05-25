@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
-    import { Image } from "$lib";
-    import { Tabs, Tab, TabContent, Tile, UnorderedList, p } from "$ccs";
+    import { Image } from "$libs";
+    import { Tabs, Tab, TabContent, Tile, UnorderedList } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
