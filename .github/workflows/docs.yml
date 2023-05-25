@@ -5,6 +5,7 @@ on:
     paths:
       - docs/
       - mkdocs.yml
+      - pyproject.toml
       - 'biopipen/ns/*.py'
       - 'biopipen/core/*.py'
       - 'biopipen/utils/*.py'
