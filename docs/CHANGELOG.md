@@ -1,3 +1,39 @@
+## 0.11.0
+
+- ⬆️ Bump pipen to 0.9
+- ⬆️ Drop support for python3.7
+- ➕ Add pipen-board as dependency
+- ✨ Add board.toml for pipen-board to run
+- 🐛 [cnvkit.CNVkitCoverage] Fix error when generating flat reference
+- 🎨 [bed.BedConsensus] Use bedtools genomecov to calculate the consensus regions
+- 🐛 [core.filters] Keep list of dict in python as list of list in R
+- ✨ [scrna_metabolic_landscape] Allow multiple subsettings for the data
+- ✨ [scrna_basic] Initialize the pipeline
+- 🐛 [bed.Bed2Vcf] Fix OrderedDiot not found
+- 🎨 [cnvkit_pipeline] Import cached_property directly
+- 🐛 [scrna.SeuratPerparing] Fix when input contains a single sample
+- 🎨 [tests] Use --reuse instead of --former
+- 🐛 [vcf.VcfSplitSamples] Fix missing mutations for extract samples
+- 🎨 [scrna_metabolic_landscape.MetabolicPathwayHeterogeneity] Add progress indicator
+- 🎨 [scrna.SeuratClustering] Allow sample names to be assigned for reference for FindIntegrationAnchors
+- 🎨 [scrna_metabolic_landscape.MetabolicPathwayActivity] Add merged heatmaps for subsets
+- 🐛 [scrna_metabolic_landscape.MetabolicPathwayIntraSubsets] Fix fetching subsetting_comparison and limit nproc for FGSEA to 1
+- 🎨 [scrna_metabolic_landscape.MetabolicPathwayFeatures] Ignore NAs in subsets
+- 🎨 [scrna_metabolic_landscape] Adopt pipen-args 0.9.7
+- ✨ [scrna.SeuratMap2Ref] Add process
+- ➖ [utils] Retire cmdy
+- ✨ [bed.BedtoolsMerge] Add process
+- 🎨 [core.testing] Use --cache to control of reusing previous run
+- 🎨 [csv.BindRows] Allow to add filename
+- 📌 [scrna_basic] Adopt pipen-board 0.1.2
+- 🐛 [web.Download] Fix when args is Diot
+- 🎨 [cnvkit.CNVkitCall] Detach cmdy
+- ✨ [bam.BamSplitChroms] Add process
+- ✨ [bam.Merge] Add process and test
+- 🐛 [core] Fix repr filter in templates for Diot objects
+- 🐛 [docs] Add mygene dep for building utils.gene
+- ✅ [vcf.TruvariBench] Pin truvari to v3.4.0 for tests
+
 ## 0.10.0
 
 - ⬆️ Adopt pipen-report 0.7 for report templates
