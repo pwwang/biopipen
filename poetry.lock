@@ -885,14 +885,14 @@ pipen = ">=0.9,<0.10"
 
 [[package]]
 name = "pipen-args"
-version = "0.9.8"
+version = "0.9.9"
 description = "Command-line argument parser for pipen."
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_args-0.9.8-py3-none-any.whl", hash = "sha256:feeb78b0605e9b5d8cfb2217837e97789ac818e1a908c019118ed0985e702446"},
-    {file = "pipen_args-0.9.8.tar.gz", hash = "sha256:92c2390f36b32e2bb7dc2bfa2965ade4905316ee8e5a2d1e90cd2991a86d872a"},
+    {file = "pipen_args-0.9.9-py3-none-any.whl", hash = "sha256:a691f8d662d4a778d675198390da3661edfcf119400a188e1afd7eea6f465282"},
+    {file = "pipen_args-0.9.9.tar.gz", hash = "sha256:25a5821bf3f1e476d8fcd135d530f45393f58f1ec9a129bfe28c73b1da25da6c"},
 ]
 
 [package.dependencies]
@@ -900,18 +900,18 @@ pipen-annotate = ">=0.7.1,<0.8.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.2.0"
+version = "0.2.6"
 description = "Visualization configuration and running of pipen pipelines on the web"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.2.0-py3-none-any.whl", hash = "sha256:8bae5be03f33f6abdcf20841ca9f7888b1d2e0dd11a54d5396eb939d4caa8b52"},
-    {file = "pipen_board-0.2.0.tar.gz", hash = "sha256:5afa1315ea639a8273d41d8eb02176d947b8d3fdda9b2a0d6ba75cb22c6b6af2"},
+    {file = "pipen_board-0.2.6-py3-none-any.whl", hash = "sha256:688f72ba6b7fdbf12ee939357e54fbf9ceaf5833d6fa7a6112f14504bffc97c7"},
+    {file = "pipen_board-0.2.6.tar.gz", hash = "sha256:8e8ab82095f45c077377d1dd7e187eb2a0242026b80580577063061e5a3b0c05"},
 ]
 
 [package.dependencies]
-pipen-args = ">=0.9.8,<0.10.0"
+pipen-args = ">=0.9.9,<0.10.0"
 pipen-log2file = ">=0.2.1,<0.3.0"
 psutil = ">=5.9.5,<6.0.0"
 quart = ">=0.18,<0.19"

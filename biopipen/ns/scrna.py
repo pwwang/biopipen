@@ -183,7 +183,7 @@ class SeuratClusterStats(Proc):
         outdir: The output directory
 
     Envs:
-        stats (ctype=json): The statistics to plot
+        stats (type=json): The statistics to plot
             `nCells_*` - Number of cells for each cluster.
             You can specify `by` to group the cells by a metadata column,
             and `devpars` to specify the device parameters for the plot.
@@ -192,7 +192,7 @@ class SeuratClusterStats(Proc):
             `fracCells_*` - Fraction of cells for each cluster.
             Similar to `nCells_*`, but the fraction is calculated
             instead of the number.
-        exprs (ctype=json): The expression values to plot.
+        exprs (type=json): The expression values to plot.
             `genes` - The set of genes for the plots, unless `features` for
             those plots is specified. Could also specify a file with genes
             (one per line).
@@ -218,7 +218,7 @@ class SeuratClusterStats(Proc):
             the default gene list `VariantFeatures(srtobj)[1:20]`, specify
             `features = "default"`. Or you can also specify the genes directly
             to `features`.
-        dimplots (ctype=json): The dimensional reduction plots.
+        dimplots (type=json): The dimensional reduction plots.
             `<case>` - The case to plot. Keys are the arguments for
             `Seurat::Dimplot()`, add `devpars`.
 
@@ -268,7 +268,7 @@ class CellsDistribution(Proc):
 
     Envs:
         name: The name of the job.
-        cases (ctype=json): The cases to use.
+        cases (type=json): The cases to use.
             If `in.casefile` is not provided, `envs.name` and `envs.cases`
             will be used.
             >>> # The name of the job, used in report, optional
@@ -450,7 +450,7 @@ class MarkersFinder(Proc):
 
     Envs:
         ncores: Number of cores to use to parallelize the groups
-        cases (ctype=json): The cases to find markers for.
+        cases (type=json): The cases to find markers for.
             >>> # The name of the job, used in report
             >>> name = ""
             >>> [cases.case1]
@@ -477,7 +477,7 @@ class MarkersFinder(Proc):
             If "ident-2" is not provided, it will use the rest of the cells
             as "ident-2".
             If only "group.by" is given, will call `FindAllMarkers()`
-        dbs (ctype=list): The dbs to do enrichment analysis for significant
+        dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all librarys
             https://maayanlab.cloud/Enrichr/#libraries
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
@@ -531,7 +531,7 @@ class ExprImpute(Proc):
             - refgene: The reference gene file
         rmagic_args (ns): The arguments for rmagic
             - python: The python path where magic-impute is installed.
-        alra_args (ctype=json): The arguments for `RunALRA()`
+        alra_args (type=json): The arguments for `RunALRA()`
 
     Requires:
         r-scimpute:
@@ -771,7 +771,7 @@ class ScFGSEA(Proc):
     Envs:
         name: The name of the job, used in report
         ncores: Number of cores to use to parallelize the groups
-        cases (ctype=json): The cases to find markers for.
+        cases (type=json): The cases to find markers for.
             `ident-2` is required for each case.
             One could also use placeholders for the cases.
             To enable this, you need `percluster = True` in the config.
@@ -802,7 +802,7 @@ class ScFGSEA(Proc):
             - ratio_of_classes: Also referred to as fold change
             - diff_of_classes: Difference of class means
             - log2_ratio_of_classes: Log2 ratio of class means
-        top (ctype=auto): Do gsea table and enrich plot for top N pathways.
+        top (type=auto): Do gsea table and enrich plot for top N pathways.
             If it is < 1, will apply it to `padj`
         <rest>: Rest arguments for `fgsea()`
 
@@ -910,7 +910,7 @@ class SeuratMap2Ref(Proc):
         FindTransferAnchors (ns): Arguments for `FindTransferAnchors()`
             - <more>: See https://satijalab.org/seurat/reference/findtransferanchors
         MapQuery (ns): Arguments for `MapQuery()`
-            - refdata (ctype=json): Data to transfer
+            - refdata (type=json): Data to transfer
             - <more>: See https://satijalab.org/seurat/reference/mapquery
         MappingScore (ns): Arguments for `MappingScore()`
             - <more>: See https://satijalab.org/seurat/reference/mappingscore
