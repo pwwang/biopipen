@@ -777,7 +777,7 @@ class ScFGSEA(Proc):
             To enable this, you need `percluster = True` in the config.
             Currently only cluster is supported. One could use `{cluster}` or
             `{ident}` to denote the clusters.
-        gmtfile: The pathways in GMT format
+        gmtfile (required): The pathways in GMT format
         method (choice): The method to do the preranking.
             Signal to noise: the larger the differences of the means
             (scaled by the standard deviations); that is, the more distinct
@@ -912,6 +912,8 @@ class SeuratMap2Ref(Proc):
         MapQuery (ns): Arguments for `MapQuery()`
             - refdata (ctype=json): Data to transfer
             - <more>: See https://satijalab.org/seurat/reference/mapquery
+        MappingScore (ns): Arguments for `MappingScore()`
+            - <more>: See https://satijalab.org/seurat/reference/mappingscore
 
     Requires:
         r-seurat:
@@ -942,5 +944,6 @@ class SeuratMap2Ref(Proc):
                 "predicted_ADT": "ADT",
             }
         },
+        "MappingScore": {},
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"

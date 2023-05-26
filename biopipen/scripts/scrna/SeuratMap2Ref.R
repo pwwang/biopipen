@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(Seurat)
 library(SeuratDisk)
 
@@ -9,6 +11,7 @@ ref = {{envs.ref | r}}
 sctransform_args = {{envs.SCTransform | r: todot="-"}}
 findtransferanchors_args = {{envs.FindTransferAnchors | r: todot="-"}}
 mapquery_args = {{envs.MapQuery | r: todot="-"}}
+mappingscore_args = {{envs.MappingScore | r: todot="-"}}
 
 outdir = dirname(outfile)
 
@@ -44,26 +47,42 @@ sobj = readRDS(sobjfile)
 print("Normalizing data")
 sctransform_args$object = sobj
 sctransform_args$residual.features = rownames(x = reference)
-query = do.call(SCTransform, sctransform_args)
+query = do_call(SCTransform, sctransform_args)
 
 # Find anchors between query and reference
 print("Finding anchors")
 findtransferanchors_args$reference = reference
 findtransferanchors_args$query = query
-anchors = do.call(FindTransferAnchors, findtransferanchors_args)
+anchors = do_call(FindTransferAnchors, findtransferanchors_args)
 
 # Map query to reference
 print("Mapping query to reference")
 mapquery_args$reference = reference
 mapquery_args$query = query
 mapquery_args$anchorset = anchors
-query = do.call(MapQuery, mapquery_args)
+query = do_call(MapQuery, mapquery_args)
+
+# Calculating mapping score
+print("Calculating mapping score")
+mappingscore_args$anchors = anchors
+mappingscore = tryCatch({
+    do_call(MappingScore, mappingscore_args)
+}, error = function(e) {
+    if (e$message == "subscript out of bounds") {
+        stop(paste0(
+            "While calculating mapping score, the following error was encountered: \n",
+            "subscript out of bounds.  \n\n",
+            "You may want to try a smaller `ndim` (default: 50) in `envs.MappingScore`."
+        ))
+    }
+    stop(e)
+})
 
 # Calculate mapping score and add to metadata
 print("Calculating mapping score")
 query = AddMetaData(
   object = query,
-  metadata = MappingScore(anchors = anchors),
+  metadata = mappingscore,
   col.name = "mapping.score"
 )
 
@@ -85,7 +104,8 @@ saveRDS(query, file = outfile)
 # ############################
 
 # # Plot the UMAP
-for (refname in names(MapQuery$refdata)) {
+print("Plotting")
+for (refname in names(mapquery_args$refdata)) {
     if (refname == "predicted_ADT") {
         next
     }
