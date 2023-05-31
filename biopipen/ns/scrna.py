@@ -964,3 +964,4 @@ class SeuratMap2Ref(Proc):
         "MappingScore": {},
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"
+    plugin_opts = { "report": "file://../reports/scrna/SeuratMap2Ref.svelte" }
