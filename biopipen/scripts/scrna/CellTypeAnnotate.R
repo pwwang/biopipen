@@ -1,5 +1,7 @@
 {% if envs.tool == "sctype" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotate-sctype.R" %}
+{% elif envs.tool == "sccatch" %}
+{% include biopipen_dir + "/scripts/scrna/CellTypeAnnotate-sccatch.R" %}
 {% elif envs.tool == "direct" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotate-direct.R" %}
 {% else %}

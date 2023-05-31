@@ -833,6 +833,9 @@ class ScFGSEA(Proc):
 class CellTypeAnnotate(Proc):
     """Annotate cell types
 
+    Either use `scType` or `scCATCH` to annotate cell types, or directly
+    assign cell types.
+
     Input:
         sobjfile: The seurat object
 
@@ -841,18 +844,32 @@ class CellTypeAnnotate(Proc):
 
     Envs:
         tool (choice): The tool to use for cell type annotation.
-            sctype: https://github.com/IanevskiAleksandr/sc-type .
-            scCATCH: https://github.com/ZJUFanLab/scCATCH
-            - sctype: Use `scType` to annotate cell types
-            - sccatch: Use `scCATCH` to annotate cell types
+            - sctype: Use `scType` to annotate cell types.
+                See https://github.com/IanevskiAleksandr/sc-type
+            - sccatch: Use `scCATCH` to annotate cell types.
+                See https://github.com/ZJUFanLab/scCATCH
             - direct: Directly assign cell types
-        sctype_tissue: The tissue to use for sctype.
-            E.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,
-            Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus
-        sctype_db: The database to use for sctype
-        cell_types (list): The cell types to use for direct annotation
+        sctype_tissue: The tissue to use for `sctype`.
+            Avaiable tissues should be the first column (`tissueType`) of
+            `sctype_db`.
+            Examples are `Immune system`, `Pancreas`, `Liver`, `Eye`, `Kidney`,
+            `Brain`, `Lung`, `Adrenal`, `Heart`, `Intestine`, `Muscle`,
+            `Placenta`, `Spleen`, `Stomach` and `Thymus`.
+        sctype_db: The database to use for sctype.
+            Check examples at https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx
+        cell_types (type=json): The cell types to use for direct annotation
             Each a list of cell type names, or a dict with keys as the old
             identity and values as the new cell type.
+        sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
+            - species (choice): The specie of cells.
+                - Human:
+                - Mouse:
+            - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
+            - tissue: Tissue origin of cells must be defined.
+            - <more>: Other arguments for `scCATCH::findmarkergene()`
+                See https://www.rdocumentation.org/packages/scCATCH/versions/3.2.2/topics/findmarkergene.
+                You can pass an RDS file to `marker` to work as custom marker. If so,
+                `if_use_custom_marker` will be set to `TRUE` automatically.
 
     Requires:
         r-HGNChelper:
@@ -867,7 +884,7 @@ class CellTypeAnnotate(Proc):
         r-openxlsx:
             - if: {{proc.envs.tool == 'sctype'}}
             - check: {{proc.lang}} -e "library(openxlsx)"
-    """
+    """  # noqa: E501
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.annotated.RDS"
     lang = config.lang.rscript
