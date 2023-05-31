@@ -32,20 +32,26 @@ class ScrnaBasic(ProcGroup):
             barcodes, genes, expression matrices are.
         is_seurat (action=store_true): Whether the input file is a seurat object
             in RDS format.
-            If this process group is run independently, this argument should
+            If this process group runs independently, this argument should
             not be set. It will be recognized automatically by the extension
             of `infile`. However, if this process group is run as a part of
             a pipeline, this argument should be set manually since `infile`
             should not be set in this case. It will be passed by other processes
         clustering (choice): Which clustering method to use.
-            - supervised: Mapping the cells to given reference
-            - unsupervised: Clustering the cells without reference
-            - both: Both supervised and unsupervised clustering
+            - supervised: Mapping the cells to given reference.
+                Using Seurat Reference Mapping procedure.
+                See: https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+            - unsupervised: Clustering the cells without reference.
+                Using Seurat FindClusters procedure.
+            - both: Both supervised and unsupervised clustering.
+                Performing both of the above procedures. The unsupervised
+                clustering will be added as `seurat_clusters_unsupervised`
+                to the metadata.
         ref: The reference file for supervised clustering. It should be an
             RDS file (with extension `.rds` or `.RDS`) containing a seurat
             object, or a h5 file (with extension `.h5` or `.h5seurat`) that
             can be loaded by `Seurat::LoadH5Seurat()`.
-    """
+    """  # noqa: E501
 
     DEFAULTS = {
         "infile": None,
@@ -108,12 +114,18 @@ class ScrnaBasic(ProcGroup):
         from .scrna import SeuratMap2Ref
 
         class ScrnaBasicSupervised(SeuratMap2Ref):
-            """%s
+            """Map the seurat object to reference
+
+            See: https://satijalab.org/seurat/articles/integration_mapping.html
+            and https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+
+            **Only available when the group argument `clustering` is set to
+            `supervised` or `both`.**
 
             Envs:
                 ref (readonly): The reference file for supervised clustering.
                     Use the `ref` argument of the process group.
-            """ % SeuratMap2Ref.__doc__.splitlines()[0]
+            """  # noqa: E501
             requires = self.p_prepare
             envs = {
                 "ref": self.opts.ref,
@@ -129,6 +141,14 @@ class ScrnaBasic(ProcGroup):
         from .scrna import SeuratClusterStats
 
         class ScrnaBasicSupervisedStats(SeuratClusterStats):
+            """Statistics of the supervised clustering.
+
+            Including the number/fraction of cells in each cluster,
+            the gene expression values and dimension reduction plots.
+
+            **Only available when the group argument `clustering` is set to
+            `supervised` or `both`.**
+            """
             requires = self.p_supervised
 
         return ScrnaBasicSupervisedStats
@@ -144,6 +164,10 @@ class ScrnaBasic(ProcGroup):
         from .scrna import SeuratClustering
 
         class ScrnaBasicUnsupervised(SeuratClustering):
+            __doc__ = """Clustering the cells without reference
+
+            Generally using Seurat FindClusters procedure.
+            """
             requires = self.p_prepare
 
         return ScrnaBasicUnsupervised
@@ -174,16 +198,24 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_merge(self) -> Type[Proc]:
-        if self.opts.clustering == "supervised":
+        if self.opts.clustering == "supervised" and not from_pipen_board():
             return self.p_supervised
 
-        if self.opts.clustering == "unsupervised":
+        if self.opts.clustering == "unsupervised" and not from_pipen_board():
             return self.p_unsupervised_annotate
 
         @mark(board_config_hidden=True)
         class ScrnaBasicMerge(Proc):
-            """Add unsupervised clustering as metadata to the seurat object
-            with supervised clustering
+            """Merge the supervised and unsupervised clustering results
+
+            Add unsupervised clustering as metadata to the seurat object
+            with supervised clustering.
+
+            The unsupervised clustering results are stored in the metadata
+            `seurat_clusters_unsupervised`.
+
+            **Only available when the group argument `clustering` is set to
+            `both`.**
             """
             requires = [self.p_supervised, self.p_unsupervised_annotate]
             lang = self.p_supervised.lang
@@ -210,6 +242,19 @@ class ScrnaBasic(ProcGroup):
         from .scrna import MarkersFinder
 
         class ScrnaBasicMarkers(MarkersFinder):
+            """Find markers between different groups of cells
+
+            When only `group-by` is specified as `"seurat_clusters"` in
+            `envs.cases`, the markers will be found for all the clusters.
+
+            If the group argument `clustering` is set to `"both"`,
+            you can set `group-by` to `"seurat_clusters_unsupervised"` in
+            a different case to find the markers for the unsupervised clusters.
+
+            You can also find the differentially expressed genes between
+            any two groups of cells by setting `group-by` to a different
+            column name in metadata. Follow `envs.cases` for more details.
+            """
             requires = self.p_merge
 
         return ScrnaBasicMarkers
@@ -222,16 +267,6 @@ class ScrnaBasic(ProcGroup):
             requires = self.p_merge
 
         return ScrnaBasicScGSEA
-
-    @ProcGroup.add_proc
-    def p_deg(self) -> Type[Proc]:
-        from .scrna import MarkersFinder
-
-        class ScrnaBasicDEG(MarkersFinder):
-            requires = self.p_merge
-            envs = {"cases": None}
-
-        return ScrnaBasicDEG
 
 
 if __name__ == "__main__":

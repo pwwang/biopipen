@@ -23,12 +23,7 @@
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{% if job.in.casefile %}
-{%  set name = job.in.casefile | config: "toml" | attr: "name" %}
-{% else %}
-{%  set name = envs | attr: "name" %}
-{% endif %}
-<h1>{{name | escape}}</h1>
+<h1>{{job.in.srtobj | stem0 | escape}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}

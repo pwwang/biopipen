@@ -9,7 +9,7 @@ set.seed(8525)
 
 srtfile = {{in.srtobj | quote}}
 rdsfile = {{out.rdsfile | quote}}
-envs = {{envs | r}}
+envs = {{envs | r: todot="-"}}
 
 options(future.globals.maxSize = 80000 * 1024^2)
 plan(strategy = "multicore", workers = envs$ncores)
