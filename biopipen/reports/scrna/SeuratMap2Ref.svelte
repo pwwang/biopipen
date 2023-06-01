@@ -1,18 +1,16 @@
-{% from "utils/misc.liq" import report_jobs -%}
+{% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
     import { Image } from "$libs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
 <h{{h}}>Reference UMAP</h{{h}}>
-{% for refumap in job.outdir | glob: "Reference_UMAP_*.png" %}
-    <Image src="{{refumap}}" />
-{% endfor %}
+{% set imgs = job.outdir | glob: "Reference_UMAP_*.png" %}
+{{ table_of_images(imgs) }}
 
 <h{{h}}>Query UMAP</h{{h}}>
-{% for qryumap in job.outdir | glob: "Query_UMAP_*.png" %}
-    <Image src="{{qryumap}}" />
-{% endfor %}
+{% set imgs = job.outdir | glob: "Query_UMAP_*.png" %}
+{{ table_of_images(imgs) }}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
