@@ -12,7 +12,7 @@ WORKDIR /tmp
 RUN python -m pip install -U poetry && \
     python -m poetry config virtualenvs.create false && \
     python -m poetry install -v && \
-    bash /tmp/docker/scrna_basic/make-examples.sh
+    bash docker/scrna_basic/make-examples.sh
 
 WORKDIR /workdir
 COPY docker/scrna_basic/board.toml /workdir/board.toml
