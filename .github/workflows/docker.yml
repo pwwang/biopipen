@@ -20,5 +20,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
+          context: .
           file: docker/scrna_basic/Dockerfile
-          tags: justold/biopipen-scrna-basic:${{ github.ref_name }}
+          tags: biopipen/scrna-basic:${{ github.ref_name }}
