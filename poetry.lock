@@ -912,13 +912,13 @@ pipen = ">=0.10,<0.11"
 
 [[package]]
 name = "pipen-log2file"
-version = "0.3.0"
+version = "0.3.1"
 description = "Add verbosal information in logs for pipen."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_log2file-0.3.0-py3-none-any.whl", hash = "sha256:062ed0476ff3ec9074e757ebd71a44dad9e0108264db22bbf38c38da8b3d844a"},
-    {file = "pipen_log2file-0.3.0.tar.gz", hash = "sha256:be1a028c6c80f6238d11cb7eb21f10d198dd6fe476c784891a4ef61ad0671f82"},
+    {file = "pipen_log2file-0.3.1-py3-none-any.whl", hash = "sha256:c6eb603552303ea108a80225b92f0ecc5d220a314da33b552c95f266224928fe"},
+    {file = "pipen_log2file-0.3.1.tar.gz", hash = "sha256:a451bd7093723a16aae0b2f995ac0c8ddefaf1a894b756b6c2210a54bf4c5e21"},
 ]
 
 [package.dependencies]
@@ -1605,4 +1605,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "c797beebbafa987fe6b20370daf99598789b07a64ed2dbea55ce076e7f25e0b8"
+content-hash = "e600e5482c26295a9f3f18eb5c52479d870ac4205d56a51ed3ac7b74201ac981"

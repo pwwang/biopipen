@@ -9,7 +9,7 @@ channels:
   - r
   - defaults
 dependencies:
-  - python=3.9
+  - python=3.10
   - poetry  # =1.1.13  # awaiting 1.2 being released on conda
   - nodejs  # for pipen-report
   - curl
