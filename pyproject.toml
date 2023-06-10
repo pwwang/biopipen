@@ -19,7 +19,7 @@ pipen-args = "^0.10"
 cmdy = "^0.5"
 datar = {version = "^0.12", extras = ["pandas"]}
 pipen-board = "^0.5"
-pipen-runinfo = {version = "^0.1", optional = true}
+pipen-runinfo = {version = "^0.1.1", optional = true}
 
 [tool.poetry.dev-dependencies]
 
