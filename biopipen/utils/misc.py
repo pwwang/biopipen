@@ -48,7 +48,12 @@ def run_command(
         kwargs["stdout"] = sys.stdout
         kwargs["stderr"] = sys.stderr
         kwargs["universal_newlines"] = True
-    p = Popen(cmd, **kwargs)
+
+    try:
+        p = Popen(cmd, **kwargs)
+    except Exception as e:
+        raise RuntimeError(f"Failed to run command: {e}")
+
     if fg or wait:
         rc = p.wait()
         if rc != 0:

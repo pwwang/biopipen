@@ -4,8 +4,8 @@ from biopipen.ns.bam import BamMerge, BamSplitChroms
 from biopipen.core.testing import get_pipeline
 
 
-# TOOL = "samtools"
-TOOL = "sambamba"
+TOOL = "samtools"
+# TOOL = "sambamba"
 BAM_URL = (
     "https://github.com/VCCRI/SVPV/raw/master/example/NA12877_S1.partial.bam"
 )
@@ -21,17 +21,8 @@ def bammerge_input_data(ch):
     # we try to merge them by chromosomes
     # get chromosomes
     outdirs = [Path(p) for p in ch.iloc[:, 0]]
-    print(outdirs)
-    import os
-    print(os.listdir(outdirs[0]))
-    print("STDOUT")
-    print(outdirs[0].parent.parent.joinpath("job.stdout").read_text())
-    print("STDERR")
-    print(outdirs[0].parent.parent.joinpath("job.stderr").read_text())
     bamfiles = outdirs[0].glob("*.bam")
-    print(bamfiles)
     chroms = [bamfile.stem for bamfile in bamfiles]
-    print(chroms)
     out = []
     for chrom in chroms:
         if chrom not in ["chr1", "chr2"]:
