@@ -99,9 +99,8 @@ class Heatmap(Proc):
     """
     input = "infile:file, annofiles:files"
     output = """
-        {%- set outdir = in.infile | stem0 | append: ".heatmap" -%}
-        outfile:file:{{outdir}}/{{outdir}}.png,
-        outdir:dir:{{outdir}}
+        outfile:file:{{in.infile | stem0 | append: ".heatmap"}}/{{outdir}}.png,
+        outdir:dir:{{in.infile | stem0 | append: ".heatmap"}}
     """
     lang = config.lang.rscript
     envs = {

@@ -21,8 +21,13 @@ def bammerge_input_data(ch):
     # we try to merge them by chromosomes
     # get chromosomes
     outdirs = [Path(p) for p in ch.iloc[:, 0]]
+    print(outdirs)
+    import os
+    print(os.listdir(outdirs[0]))
     bamfiles = outdirs[0].glob("*.bam")
+    print(bamfiles)
     chroms = [bamfile.stem for bamfile in bamfiles]
+    print(chroms)
     out = []
     for chrom in chroms:
         if chrom not in ["chr1", "chr2"]:
