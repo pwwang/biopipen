@@ -28,7 +28,7 @@ def do_case(name, case):
         male_reference=male_reference,
         sample_sex=sample_sex or False,
         no_shift_xy=no_shift_xy,
-        title=title,
+        title=False if title is None else title,
     ) | case
 
     conv_args = case.pop("convert_args")

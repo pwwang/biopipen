@@ -34,15 +34,15 @@ def do_case(name, case):
         width=width,
         antitarget_marker=antitarget_marker,
         by_bin=by_bin,
-        segment_color=segment_color,
+        segment_color=False if segment_color is None else segment_color,
         trend=trend,
-        y_max=y_max,
-        y_min=y_min,
+        y_max=False if y_max is None else y_max,
+        y_min=False if y_min is None else y_min,
         min_variant_depth=min_variant_depth,
         zygosity_freq=zygosity_freq,
-        title=title,
-        chromosome=chromosome,
-        gene=gene,
+        title=False if title is None else title,
+        chromosome=False if chromosome is None else chromosome,
+        gene=False if gene is None else gene,
     ) | case
 
     conv_args = case.pop("convert_args")
