@@ -30,7 +30,7 @@ class ScrnaBasic(ProcGroup):
             `Sample` and `RNADir`. `Sample` should be the first column with
             unique identifiers for the samples and `RNADir` indicates where the
             barcodes, genes, expression matrices are.
-        is_seurat (action=store_true): Whether the input file is a seurat object
+        is_seurat (flag): Whether the input file is a seurat object
             in RDS format.
             If this process group runs independently, this argument should
             not be set. It will be recognized automatically by the extension

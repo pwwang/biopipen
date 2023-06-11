@@ -30,7 +30,7 @@ class AneuploidyScore(Proc):
     """
     input = "segfile:file"
     output = "outdir:dir:{{in.segfile | stem}}.aneuploidy_score"
-    lang = config.lang.rscript
+    lang = config.lanflag
     envs = {
         "chrom_col": "chrom",
         "start_col": "loc.start",

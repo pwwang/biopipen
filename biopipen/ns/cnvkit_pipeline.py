@@ -97,17 +97,17 @@ class CNVkitPipeline(ProcGroup):
             If not specified, use all samples. In such a case, `control` must
             not be specified, as we are using a flat reference.
         control: The group name of samples in `metacols.group` to use as
-            reference if not specified, use a flat reference.
+            reference if noflaga flat reference.
         cnvkit: the path to the cnvkit.py executable, defaults to
             `config.exe.cnvkit` from `./.biopipen.toml` or `~/.biopipen.toml`.
-        rscript: Path to the Rscript excecutable to use for running R code.
+        rscript: Patflagexcecutable to use for running R code.
             Requires `DNAcopy` to be installed in R, defaults to
             `config.lang.rscript`
         samtools: Path to samtools, used for guessing bait file.
         convert: Linux `convert` command to convert pdf to png
             So that they can be embedded in the HTML report.
         ncores: number of cores to use, defaults to `config.misc.ncores`
-        reffa: the reference genome (e.g. hg19.fa)
+        reffa: the reflag.g. hg19.fa)
             Used by `CNVkitAccess`, `CNVkitAutobin` and `CNVkitReference`
         annotate: Use gene models from this file to assign names to the
             target regions. Format: UCSC refFlat.txt or ensFlat.txt file
@@ -130,26 +130,26 @@ class CNVkitPipeline(ProcGroup):
         no_edge: Skip edge-effect correction for `cnvkit.py reference/fix`.
         no_rmask: Skip RepeatMasker correction for `cnvkit.py reference/fix`.
             no_* options are used by `CNVkitReference` and `CNVkitFix`
-        min_variant_depth: Minimum read depth for a SNV to be displayed
+        min_variant_dflagd depth for a SNV to be displayed
             in the b-allele frequency plot.
             Used by `CNVkitSegment` and `CNVkitCall`
         zygosity_freq: Ignore VCF's genotypes (GT field) and instead infer
             zygosity from allele frequencies.
             Used by `CNVkitSegment` and `CNVkitCall`
         metacols: The column names for each type of information in metafile
-            - group: The column name in the metafile that indicates the sample
+            - group: Theflaghe metafile that indicates the sample
                 group
             - purity: The column name in the metafile that indicates the sample
                 purity
             - snpvcf: The column name in the metafile that indicates the path to
-                the SNP VCF file
+                the SNP VCFflag
             - bam: The column name in the metafile that indicates the path to
                 the BAM file
-            - vcf_sample_id: The column name in the metafile that indicates the
+            - vflag column name in the metafile that indicates the
                 sample ID in the VCF file
-            - vcf_normal_id: The column name in the metafile that indicates the
+            - vcfflagolumn name in the metafile that indicates the
                 normal sample ID in the VCF file
-            - sex: The column name in the metafile that indicates the sample sex
+            - sex:flagin the metafile that indicates the sample sex
             - guess_baits: The column name in the metafile that indicates
                 whether to guess the bait file from the bam files
     """

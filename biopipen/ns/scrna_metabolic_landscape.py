@@ -41,7 +41,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             not specified, meaning `<pipeline>.procs.MetabolicInput` is
             dependent on other processes, this option will be used to determine
             whether the input is a seurat object or not.
-        noimpute (action=store_true): Whether to do imputation for the dropouts.
+        noimpute (flag): Whether to do imputation for the dropouts.
             If False, the values will be left as is.
         gmtfile: The GMT file with the metabolic pathways. The gene names should
             match the gene names in the gene list in RNADir or the Seurat object
@@ -178,7 +178,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
         Envs:
             ncores (type=int): Number of cores to use for parallelization
                 Defaults to `ScrnaMetabolicLandscape.ncores`
-            fgsea (action=store_true): Whether to do fast gsea analysis
+            fgsea (flag): Whether to do fast gsea analysis
             prerank_method (choice): Method to use for gene preranking
                 Signal to noise: the larger the differences of the means
                 (scaled by the standard deviations); that is, the more distinct
@@ -254,7 +254,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
         Envs:
             ncores (type=int): Number of cores to use for parallelization
                 Defaults to `ScrnaMetabolicLandscape.ncores`
-            fgsea (action=store_true): Whether to do fast gsea analysis
+            fgsea (flag): Whether to do fast gsea analysis
             prerank_method (choice): Method to use for gene preranking
                 Signal to noise: the larger the differences of the means
                 (scaled by the standard deviations); that is, the more distinct

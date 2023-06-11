@@ -267,11 +267,11 @@ class Immunarch(Proc):
             - by: The variables to group samples
             - separate_by: The variable to separate samples, which will be
                 plotted in separate figures. Currently only support one variable
-            - align_y (action=store_true): Align max of y-axis if there are
+            - align_y (flag): Align max of y-axis if there are
                 multiple figures
-            - align_x (action=store_true): Align max of x-axis if there are
+            - align_x (flag): Align max of x-axis if there are
                 multiple figures
-            - log (action=store_true): Also plot log-transformed x-axis using
+            - log (flag): Also plot log-transformed x-axis using
                 `vis(.log = TRUE)`.
             - <other>: Other arguments for `repDiversity(.method="raref", ...)`
                 i.e. ".step", ".norm"
@@ -578,7 +578,7 @@ class TCRClustering(Proc):
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
-        on_multi (action=store_true;hidden): Whether to run clustering on
+        on_multi (flag;hidden): Whether to run clustering on
             multi-chain seq or the seq read and processed by immunarch
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
@@ -625,7 +625,7 @@ class TCRClusteringStats(Proc):
 
     Envs:
         shared_clusters (ns): Stats about shared TCR clusters
-            - numbers_on_heatmap (action=store_true): Whether to show the
+            - numbers_on_heatmap (flag): Whether to show the
                 numbers on the heatmap
             - heatmap_meta (list): The metadata to show on the heatmap
             - grouping: The groups to investigate the shared clusters

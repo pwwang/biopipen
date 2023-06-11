@@ -110,7 +110,7 @@ class SeuratClustering(Proc):
         ncores: Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
-        use_sct (action=store_true;order=-99): Whether use SCTransform routine or not
+        use_sct (flag;order=-99): Whether use SCTransform routine or not
             If `True`, following procedures will be performed in the order:
             * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
             * [`SCTransform*`](https://satijalab.org/seurat/reference/sctransform).
@@ -172,13 +172,13 @@ class SeuratClustering(Proc):
             - <more>: See https://satijalab.org/seurat/reference/integratedata
         ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - verbose (action=store_true): Whether to print the progress
+            - verbose (flag): Whether to print the progress
             - <more>: See https://satijalab.org/seurat/reference/scaledata
         RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - npcs (type=int): The number of PCs to compute.
                 For each sample, `npcs` will be no larger than the number of columns - 1.
-            - verbose (action=store_true): Whether to print the progress
+            - verbose (flag): Whether to print the progress
             - <more>: See https://satijalab.org/seurat/reference/runpca
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
@@ -988,9 +988,9 @@ class SeuratMap2Ref(Proc):
             The file type is determined by the extension. `.rds` or `.RDS` for
             RDS file, `.h5seurat` or `.h5` for h5seurat file.
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
-            - do-correct-umi (action=store_true): Place corrected UMI matrix in assay counts slot?
-            - do-scale (action=store_true): Whether to scale residuals to have unit variance?
-            - do-center (action=store_true): Whether to center residuals to have mean zero?
+            - do-correct-umi (flag): Place corrected UMI matrix in assay counts slot?
+            - do-scale (flag): Whether to scale residuals to have unit variance?
+            - do-center (flag): Whether to center residuals to have mean zero?
             - <more>: See https://satijalab.org/seurat/reference/sctransform
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         FindTransferAnchors (ns): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
