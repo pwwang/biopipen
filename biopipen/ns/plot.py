@@ -98,10 +98,11 @@ class Heatmap(Proc):
             - check: {{proc.lang}} <(echo "library(ComplexHeatmap)")
     """
     input = "infile:file, annofiles:files"
-    output = """
-        outfile:file:{{in.infile | stem0 | append: ".heatmap"}}/{{outdir}}.png,
-        outdir:dir:{{in.infile | stem0 | append: ".heatmap"}}
-    """
+    output = [
+        "outfile:file:{{in.infile | stem0 | append: ".heatmap"}}/"
+        "{{in.infile | stem0 | append: ".heatmap"}}.png",
+        "outdir:dir:{{in.infile | stem0 | append: ".heatmap"}}",
+    ]
     lang = config.lang.rscript
     envs = {
         "inopts": {"header": True, "row.names": -1},

@@ -24,6 +24,10 @@ def bammerge_input_data(ch):
     print(outdirs)
     import os
     print(os.listdir(outdirs[0]))
+    print("STDOUT")
+    print(outdirs[0].parent.parent.joinpath("job.stdout").read_text())
+    print("STDERR")
+    print(outdirs[0].parent.parent.joinpath("job.stderr").read_text())
     bamfiles = outdirs[0].glob("*.bam")
     print(bamfiles)
     chroms = [bamfile.stem for bamfile in bamfiles]
