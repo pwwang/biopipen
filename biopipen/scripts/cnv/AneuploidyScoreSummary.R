@@ -12,7 +12,7 @@ group_col = {{envs.group_col | r}}
 heatmap_cases = {{envs.heatmap_cases | r}}
 
 meta = NULL
-if (file.exists(metafile)) {
+if (file.exists(metafile) && !is.null(group_col)) {
     metadf = read.table(metafile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
     meta = as.list(metadf[[group_col]])
     names(meta) = metadf[, 1, drop=TRUE]
