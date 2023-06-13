@@ -18,6 +18,20 @@ class AneuploidyScore(Proc):
         outdir: The output directory containing the CAAs, AS and a histogram
             plot to show the CAAs for each chromosome arm
 
+    Envs:
+        chrom_col: The column name for chromosome
+        start_col: The column name for start position
+        end_col: The column name for end position
+        seg_col: The column name for seg.mean
+        cn_col: The column name for copy number
+        segmean_transform: The transformation function for seg.mean
+        cn_transform: The transformation function for copy number
+        genome: The genome version, hg19 or hg38
+        threshold (type=float): The threshold to determine whether a chromosome
+            arm is gained or lost.
+        wgd_gf (type=float): The fraction of the genome that is affected by WGD
+        include_sex (action=store_true): Should we include sex chromosomes?
+
     Requires:
         AneuploidyScore:
             - check: {{proc.lang}} <(echo "library(AneuploidyScore)")
@@ -30,7 +44,7 @@ class AneuploidyScore(Proc):
     """
     input = "segfile:file"
     output = "outdir:dir:{{in.segfile | stem}}.aneuploidy_score"
-    lang = config.lanflag
+    lang = config.lang.rscript
     envs = {
         "chrom_col": "chrom",
         "start_col": "loc.start",
@@ -63,7 +77,7 @@ class AneuploidyScoreSummary(Proc):
 
     Envs:
         group_col: The column name in the metafile to group the samples
-        heatmap_cases: The cases to be included in the heatmap
+        heatmap_cases (type=json): The cases to be included in the heatmap
             By default, all arms are included. If specified, keys are the names
             of the cases and values are the arms, which will be included in
             the heatmap. The list of arms should be a subset of `chr<N>_p` and
