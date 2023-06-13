@@ -28,5 +28,6 @@ nav:
     - 'Pipelines':
        - 'Single-cell Metabolic Landscape': pipelines/scrna_metabolic.md
        - 'CNVkit Pipeline': pipelines/cnvkit_pipeline.md
+       - 'Basic single-cell RNA-seq analysis': pipelines/scrna_basic.md
     - 'API': mkapi/api/biopipen
     - 'Change log': 'CHANGELOG.md'
