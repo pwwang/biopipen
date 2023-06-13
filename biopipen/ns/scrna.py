@@ -35,7 +35,7 @@ class SeuratLoading(Proc):
 
 
 class SeuratPreparing(Proc):
-    """Seurat - Loading, preparing and applying QC to data
+    """Load, prepare and apply QC to data, using `Seurat`
 
     This process will -
     - Prepare the seurat object
@@ -98,7 +98,9 @@ class SeuratPreparing(Proc):
 
 
 class SeuratClustering(Proc):
-    """Seurat - Determine the clusters
+    """Determine the clusters of cells without reference
+
+    Generally using Seurat FindClusters procedure.
 
     Input:
         srtobj: The seurat object loaded by SeuratPreparing
@@ -225,7 +227,10 @@ class SeuratClustering(Proc):
 
 
 class SeuratClusterStats(Proc):
-    """Seurat - Cluster statistics
+    """Statistics of the supervised clustering.
+
+    Including the number/fraction of cells in each cluster,
+    the gene expression values and dimension reduction plots.
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -495,6 +500,13 @@ class DimPlots(Proc):
 
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
+
+    When only `group-by` is specified as `"seurat_clusters"` in
+    `envs.cases`, the markers will be found for all the clusters.
+
+    You can also find the differentially expressed genes between
+    any two groups of cells by setting `group-by` to a different
+    column name in metadata. Follow `envs.cases` for more details.
 
     Input:
         srtobj: The seurat object loaded by `SeuratPreparing`

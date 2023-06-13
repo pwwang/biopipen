@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Type
 
 from pipen.utils import mark
+from pipen_annotate import annotate
 from pipen_args import ProcGroup
 from pipen_board import from_pipen_board
 
@@ -113,19 +114,17 @@ class ScrnaBasic(ProcGroup):
 
         from .scrna import SeuratMap2Ref
 
+        @annotate.format_doc(indent=3)
         class ScrnaBasicSupervised(SeuratMap2Ref):
-            """Map the seurat object to reference
-
-            See: https://satijalab.org/seurat/articles/integration_mapping.html
-            and https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+            """{{Summary}}
 
             **Only available when the group argument `clustering` is set to
             `supervised` or `both`.**
 
             Envs:
-                ref (readonly): The reference file for supervised clustering.
-                    Use the `ref` argument of the process group.
-            """  # noqa: E501
+                ref (pgarg): {{Envs.ref.help | indent(20)}}.
+                    Defaults to the `ref` argument of the process group.
+            """
             requires = self.p_prepare
             envs = {
                 "ref": self.opts.ref,
@@ -140,11 +139,9 @@ class ScrnaBasic(ProcGroup):
 
         from .scrna import SeuratClusterStats
 
+        @annotate.format_doc(indent=3)
         class ScrnaBasicSupervisedStats(SeuratClusterStats):
-            """Statistics of the supervised clustering.
-
-            Including the number/fraction of cells in each cluster,
-            the gene expression values and dimension reduction plots.
+            """{{Summary}}
 
             **Only available when the group argument `clustering` is set to
             `supervised` or `both`.**
@@ -164,10 +161,6 @@ class ScrnaBasic(ProcGroup):
         from .scrna import SeuratClustering
 
         class ScrnaBasicUnsupervised(SeuratClustering):
-            __doc__ = """Clustering the cells without reference
-
-            Generally using Seurat FindClusters procedure.
-            """
             requires = self.p_prepare
 
         return ScrnaBasicUnsupervised
@@ -241,19 +234,13 @@ class ScrnaBasic(ProcGroup):
     def p_findmarkers(self) -> Type[Proc]:
         from .scrna import MarkersFinder
 
+        @annotate.format_doc(indent=3)
         class ScrnaBasicMarkers(MarkersFinder):
-            """Find markers between different groups of cells
-
-            When only `group-by` is specified as `"seurat_clusters"` in
-            `envs.cases`, the markers will be found for all the clusters.
+            """{{Summary}}
 
             If the group argument `clustering` is set to `"both"`,
             you can set `group-by` to `"seurat_clusters_unsupervised"` in
             a different case to find the markers for the unsupervised clusters.
-
-            You can also find the differentially expressed genes between
-            any two groups of cells by setting `group-by` to a different
-            column name in metadata. Follow `envs.cases` for more details.
             """
             requires = self.p_merge
 
