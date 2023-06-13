@@ -588,13 +588,13 @@ testing = ["coverage", "pyyaml"]
 
 [[package]]
 name = "markdown-it-py"
-version = "2.2.0"
+version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "markdown-it-py-2.2.0.tar.gz", hash = "sha256:7c9a5e412688bc771c67432cbfebcdd686c93ce6484913dccf06cb5a0bea35a1"},
-    {file = "markdown_it_py-2.2.0-py3-none-any.whl", hash = "sha256:5a35f8d1870171d9acc47b99612dc146129b631baf04970128b568f190d0cc30"},
+    {file = "markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb"},
+    {file = "markdown_it_py-3.0.0-py3-none-any.whl", hash = "sha256:355216845c60bd96232cd8d8c40e8f9765cc86f46880e43a8fd22dc1a1a8cab1"},
 ]
 
 [package.dependencies]
@@ -607,7 +607,7 @@ compare = ["commonmark (>=0.9,<1.0)", "markdown (>=3.4,<4.0)", "mistletoe (>=1.0
 linkify = ["linkify-it-py (>=1,<3)"]
 plugins = ["mdit-py-plugins"]
 profiling = ["gprof2dot"]
-rtd = ["attrs", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
+rtd = ["jupyter_sphinx", "mdit-py-plugins", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
 testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
 
 [[package]]
@@ -838,13 +838,13 @@ xqute = ">=0.2.1,<0.3.0"
 
 [[package]]
 name = "pipen-annotate"
-version = "0.9.0"
+version = "0.9.1"
 description = "Use docstring to annotate pipen processes"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_annotate-0.9.0-py3-none-any.whl", hash = "sha256:c2c0128ea8b07f291562b4757dc0a5493b93e71898ad590d6a366a3e8b66ab11"},
-    {file = "pipen_annotate-0.9.0.tar.gz", hash = "sha256:f49bc017c6238a98366775df6b50dc6acbe1f16f9dd0a320a4b5748e542e8b37"},
+    {file = "pipen_annotate-0.9.1-py3-none-any.whl", hash = "sha256:d59a2cad34f4ce7bd8f0dba5c4ca43d5c128328685dab742628705dc2bb11732"},
+    {file = "pipen_annotate-0.9.1.tar.gz", hash = "sha256:a04a851fa11d2b9c3edca860203084719465d160b558576bb29c23079ee387dc"},
 ]
 
 [package.dependencies]
@@ -866,13 +866,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.5.0"
+version = "0.5.4"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.5.0-py3-none-any.whl", hash = "sha256:689bc03d2c6dfa1ffe390f8a7b8286ab7a6148f1a91302031028c43c36869d6e"},
-    {file = "pipen_board-0.5.0.tar.gz", hash = "sha256:7e432407be48ec5f4670a4272b0d6400e8a80d2909a04303391d69290814dab3"},
+    {file = "pipen_board-0.5.4-py3-none-any.whl", hash = "sha256:ef2625415280a2574f17c904954c50bd7a6308aa3c8b178f31264f3d80125f79"},
+    {file = "pipen_board-0.5.4.tar.gz", hash = "sha256:5efcd81effdca26c41c875b7c58c9e7aefec626393fc1590474ae60bdd00bd18"},
 ]
 
 [package.dependencies]
@@ -1316,17 +1316,17 @@ docs = ["Sphinx (>=3.3,<4.0)", "sphinx-autobuild (>=2020.9.1,<2021.0.0)", "sphin
 
 [[package]]
 name = "rich"
-version = "13.4.1"
+version = "13.4.2"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "rich-13.4.1-py3-none-any.whl", hash = "sha256:d204aadb50b936bf6b1a695385429d192bc1fdaf3e8b907e8e26f4c4e4b5bf75"},
-    {file = "rich-13.4.1.tar.gz", hash = "sha256:76f6b65ea7e5c5d924ba80e322231d7cb5b5981aa60bfc1e694f1bc097fe6fe1"},
+    {file = "rich-13.4.2-py3-none-any.whl", hash = "sha256:8f87bc7ee54675732fa66a05ebfe489e27264caeeff3728c945d25971b6485ec"},
+    {file = "rich-13.4.2.tar.gz", hash = "sha256:d653d6bccede5844304c605d5aac802c7cf9621efd700b46c7ec2b51ea914898"},
 ]
 
 [package.dependencies]
-markdown-it-py = ">=2.2.0,<3.0.0"
+markdown-it-py = ">=2.2.0"
 pygments = ">=2.13.0,<3.0.0"
 typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.9\""}
 
