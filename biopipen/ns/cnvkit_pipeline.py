@@ -6,8 +6,11 @@ from functools import lru_cache
 import pandas
 from diot import Diot
 from datar.tibble import tibble
+from pipen.utils import mark
 from biopipen.core.proc import Proc
+from pipen_annotate import annotate
 from pipen_args.procgroup import ProcGroup
+from pipen_board import from_pipen_board
 
 from ..core.config import config
 
@@ -42,31 +45,14 @@ class CNVkitPipeline(ProcGroup):
     Unlike `cnvkit.py batch`, this decouples the steps of the `batch` command so
     that we can control the details of each step.
 
-    The pipeline requires following options:
-
     Options for different processes can be specified by `[CNVkitXXX.envs.xxx]`
     See `biopipen.ns.cnvkit.CNVkitXXX` for more details.
-
-    A metafile should be with the following columns:
-    - Sample: The sample_id used for target/antitarget files. If not provided,
-        the sample_id will be the first part of basename of the bam file.
-        For exapmle: `D123.tumor.bam -> D123`
-    - `<bam>`: The path to the bam file, better using absolute path.
-    - `<group>`: The type of the sample, defining the tumor/normal samples.
-    - `<sex>`: Guess each sample from coverage of X and Y chromosomes if
-        not given.
-    - `<purity>`: Estimated tumor cell fraction, a.k.a. purity or cellularity.
-    - `<snpvcf>`: file name containing variants for segmentation by allele
-        frequencies.
-    - `<vcf_sample_id>`: Sample ID in the VCF file.
-    - `<vcf_normal_id>`: Normal sample ID in the VCF file.
-    - `<guess_baits>`: Guess the bait file from the bam file
 
     To run this pipeline from command line, with the `pipen-run` plugin:
     >>> # In this case, `pipeline.cnvkit_pipeline.metafile` must be provided
     >>> pipen run cnvkit_pipeline CNVkitPipeline <other pipeline args>
 
-    To use this as a dependency for other pipelines:
+    To use this as a dependency for other pipelines -
     >>> from biopipen.ns.cnvkit_pipeline import CNVkitPipeline
     >>> pipeline = CNVkitPipeline(<options>)
     >>> # pipeline.starts: Start processes of the pipeline
@@ -74,84 +60,105 @@ class CNVkitPipeline(ProcGroup):
     >>> # pipeline.procs.<proc>: The process with name <proc>
 
     Args:
-        metafile: a tab-separated file (see the next section)
-        baitfile: Potentially targeted genomic regions.
-            E.g. all possible exons for the reference genome.
-            This is optional when `method` is `wgs`.
-        accfile: The accessible genomic regions.
-            If not given, use `cnvkit.py access` to generate one.
-        access_excludes: File(s) with regions to be excluded for
-            `cnvkit.py access`.
-        guessbaits_guided: Whether to use guided mode for guessing baits.
-        guessbaits: Guess the bait file from the bam files, either guided or
-            unguided.
-            If False, `baitfile` is used. Otherwise, if `baitfile` is given,
-            use it (guided), otherwise use `accfile` (unguided).
-            The bam files with `metacols.guess_baits` column set to
-            `True`, `TRUE`, `true`, `1`, `Yes`, `YES`, or `yes`
-            will be used to guess the bait file.
-        heatmap_cnr: Whether to generate a heatmap of the .cnr files
-            (bin-level signals). This is allowed to set to False, it will take
-            longer to run.
-        case: The group name of samples in `metacols.group` to call CNVs for.
-            If not specified, use all samples. In such a case, `control` must
-            not be specified, as we are using a flat reference.
-        control: The group name of samples in `metacols.group` to use as
-            reference if noflaga flat reference.
-        cnvkit: the path to the cnvkit.py executable, defaults to
-            `config.exe.cnvkit` from `./.biopipen.toml` or `~/.biopipen.toml`.
-        rscript: Patflagexcecutable to use for running R code.
-            Requires `DNAcopy` to be installed in R, defaults to
-            `config.lang.rscript`
-        samtools: Path to samtools, used for guessing bait file.
-        convert: Linux `convert` command to convert pdf to png
-            So that they can be embedded in the HTML report.
-        ncores: number of cores to use, defaults to `config.misc.ncores`
-        reffa: the reflag.g. hg19.fa)
-            Used by `CNVkitAccess`, `CNVkitAutobin` and `CNVkitReference`
-        annotate: Use gene models from this file to assign names to the
-            target regions. Format: UCSC refFlat.txt or ensFlat.txt file
-            (preferred), or BED, interval list, GFF, or similar.
-        short_names: Reduce multi-accession bait labels to be short and
-            consistent
-        method: Sequencing protocol: hybridization capture ('hybrid'),
-            targeted amplicon sequencing ('amplicon'),
-            or whole genome sequencing ('wgs'). Determines
-            whether and how to use antitarget bins.
-        male_reference: Use or assume a male reference (i.e. female samples
-            will have +1 log-CNR of chrX; otherwise male samples would have
-            -1 chrX).
-            Used by `CNVkitReference`, `CNVkitCall`, `CNVkitHeatmapCns` and
-            `CNVkitHeatmapCnr`.
-        drop_low_coverage: Drop very-low-coverage bins before segmentation to
-            avoid false-positive deletions in poor-quality tumor samples.
-            Used by `CNVkitSegment` and `CNVkitCall`
-        no_gc: Skip GC correction for `cnvkit.py reference/fix`.
-        no_edge: Skip edge-effect correction for `cnvkit.py reference/fix`.
-        no_rmask: Skip RepeatMasker correction for `cnvkit.py reference/fix`.
-            no_* options are used by `CNVkitReference` and `CNVkitFix`
-        min_variant_dflagd depth for a SNV to be displayed
-            in the b-allele frequency plot.
-            Used by `CNVkitSegment` and `CNVkitCall`
-        zygosity_freq: Ignore VCF's genotypes (GT field) and instead infer
-            zygosity from allele frequencies.
-            Used by `CNVkitSegment` and `CNVkitCall`
-        metacols: The column names for each type of information in metafile
-            - group: Theflaghe metafile that indicates the sample
-                group
+        metafile (order=-99): A tab-separated file
+            * Sample: Unique IDs of the samples. Required.
+            * `<bam>`: The path to the bam file, better using absolute path.
+            * `<group>`: The type of the sample, defining the tumor/normal
+                samples.
+            * `<sex>`: Guess each sample from coverage of X and Y chromosomes
+                if not given.
+            * `<purity>`: Estimated tumor cell fraction, a.k.a. purity or
+                cellularity.
+            * `<snpvcf>`: file name containing variants for segmentation by
+                allele frequencies.
+            * `<vcf_sample_id>`: Sample ID in the VCF file.
+            * `<vcf_normal_id>`: Normal sample ID in the VCF file.
+            * `<guess_baits>`: Whether use this bam file to guess the baits
+        metacols (ns;order=-98): The column names for each type of information
+            in metafile.
+            - group (default=Group): The column name in the metafile that
+                indicates the sample group
             - purity: The column name in the metafile that indicates the sample
                 purity
             - snpvcf: The column name in the metafile that indicates the path to
                 the SNP VCFflag
             - bam: The column name in the metafile that indicates the path to
                 the BAM file
-            - vflag column name in the metafile that indicates the
+            - vcf_sample_id: column name in the metafile that indicates the
                 sample ID in the VCF file
-            - vcfflagolumn name in the metafile that indicates the
+            - vcf_normal_id: olumn name in the metafile that indicates the
                 normal sample ID in the VCF file
             - sex:flagin the metafile that indicates the sample sex
             - guess_baits: The column name in the metafile that indicates
                 whether to guess the bait file from the bam files
+        baitfile: Potentially targeted genomic regions.
+            E.g. all possible exons for the reference genome.
+            This is optional when `method` is `wgs`.
+        accfile: The accessible genomic regions.
+            If not given, use `cnvkit.py access` to generate one.
+        access_excludes (list): File(s) with regions to be excluded for
+            `cnvkit.py access`.
+        guessbaits_guided (flag): Whether to use guided mode for
+            guessing baits using `baitfile`, otherwise unguided, using the
+            `accfile`.
+        guessbaits (flag): Guess the bait file from the bam files,
+            either guided or unguided.
+            If False, `baitfile` is used. Otherwise, if `baitfile` is given,
+            use it (guided), otherwise use `accfile` (unguided).
+            The bam files with `metacols.guess_baits` column set to
+            `True`, `TRUE`, `true`, `1`, `Yes`, `YES`, or `yes`
+            will be used to guess the bait file.
+        heatmap_cnr (flag): Whether to generate a heatmap of the
+            `.cnr` files (bin-level signals). This is allowed to set to `False`,
+            it will take longer to run.
+        case: The group name of samples in `metacols.group` to call CNVs for.
+            If not specified, use all samples. In such a case, `control` must
+            not be specified, as we are using a flat reference.
+        control: The group name of samples in `metacols.group` to use as
+            reference if not specified, use a flat reference.
+        cnvkit: the path to the cnvkit.py executable, defaults to
+            `config.exe.cnvkit` from `./.biopipen.toml` or `~/.biopipen.toml`.
+        rscript: Path to the Rscript excecutable to use for running R code.
+            Requires `DNAcopy` to be installed in R, defaults to
+            `config.lang.rscript`
+        samtools: Path to samtools, used for guessing bait file.
+        convert: Linux `convert` command to convert pdf to png
+            So that they can be embedded in the HTML report.
+        ncores: Default number of cores to use for all processes with
+            `envs.ncores`, defaults to `config.misc.ncores`
+        reffa: the reference genome (e.g. hg19.fa).
+            Used by `CNVkitAccess`, `CNVkitAutobin` and `CNVkitReference`
+        annotate: Use gene models from this file to assign names to the
+            target regions. Format: UCSC `refFlat.txt` or `ensFlat.txt` file
+            (preferred), or BED, interval list, GFF, or similar.
+        short_names (flag): Reduce multi-accession bait labels to
+            be short and consistent.
+        method (choice): Sequencing protocol, determines whether and how to
+            use antitarget bins.
+            - hybrid: hybridization capture
+            - amplicon: targeted amplicon sequencing
+            - wgs: whole genome sequencing
+        male_reference (flag): Use or assume a male reference
+            (i.e. female samples will have +1 log-CNR of chrX; otherwise
+            male samples would have -1 chrX).
+            Used by `CNVkitReference`, `CNVkitCall`, `CNVkitHeatmapCns` and
+            `CNVkitHeatmapCnr`.
+        drop_low_coverage (flag): Drop very-low-coverage bins
+            before segmentation to avoid false-positive deletions in
+            poor-quality tumor samples. Used by `CNVkitSegment` and `CNVkitCall`
+        no_gc (flag): Skip GC correction for
+            `cnvkit.py reference/fix`.
+        no_edge (flag): Skip edge-effect correction for
+            `cnvkit.py reference/fix`.
+        no_rmask (flag): Skip RepeatMasker correction for
+            `cnvkit.py reference/fix`.
+            no_* options are used by `CNVkitReference` and `CNVkitFix`
+        min_variant_depth (type=int): Minimum read depth for a SNV to be
+            displayed in the b-allele frequency plot.
+            Used by `CNVkitSegment` and `CNVkitCall`
+        zygosity_freq (type=float): Ignore VCF's genotypes (GT field) and
+            instead infer zygosity from allele frequencies.
+            Used by `CNVkitSegment` and `CNVkitCall`
     """
     DEFAULTS = Diot(
         metafile=None,
@@ -171,7 +178,7 @@ class CNVkitPipeline(ProcGroup):
         case=None,
         control=None,
         access_excludes=[],
-        guessbaits_guided=None,
+        guessbaits_guided=False,
         male_reference=False,
         drop_low_coverage=False,
         min_variant_depth=20,
@@ -204,8 +211,15 @@ class CNVkitPipeline(ProcGroup):
         """Build MetaFile process"""
         from .misc import File2Proc
 
+        @mark(board_config_hidden=True)
         class MetaFile(File2Proc):
-            """Pass by the metafile"""
+            """Pass by the metafile to the next process.
+
+            When the group argument `metafile` is provided, it will be used
+            as the input data, otherwise, this process group should be a
+            part of a pipeline, and the metafile will be passed by its
+            required processes.
+            """
             # Do not require metafile, as we could use the pipeline as part of
             # another pipeline, which can generate a metafile
             # Remember to set the dependency in the pipeline:
@@ -222,7 +236,9 @@ class CNVkitPipeline(ProcGroup):
         if self.opts.get("accfile"):
             from .misc import File2Proc
 
+            @mark(board_config_hidden=True)
             class CNVkitAccess(File2Proc):
+                """Pass by the access file to the next process."""
                 input_data = [self.opts.accfile]
         else:
             from .cnvkit import CNVkitAccess
@@ -231,8 +247,20 @@ class CNVkitPipeline(ProcGroup):
             if not isinstance(excludes, (list, tuple)):
                 excludes = [excludes]
 
+            @annotate.format_doc(indent=4)
             class CNVkitAccess(CNVkitAccess):
-                # can be overwritten by [CNVkitAccess.in.exludes]
+                """{{Summary}}
+
+                **When group argument `accfile` is provided, the arguments won't
+                work. The `accfile` will just be passed by to the next
+                process.**
+
+                Envs:
+                    cnvkit (pgarg): {{Envs.cnvkit.help | indent: 24}}.
+                        Defaults to group argument `cnvkit`.
+                    ref (pgarg=reffa): {{Envs.ref.help | indent: 24}}.
+                        Defaults group argument `reffa`.
+                """
                 input_data = [excludes]
                 envs = {
                     "cnvkit": self.opts.cnvkit,
@@ -246,13 +274,8 @@ class CNVkitPipeline(ProcGroup):
         """Build CNVkitGuessBaits process"""
         from .cnvkit import CNVkitGuessBaits
 
-        if not self.opts.guessbaits:
+        if not self.opts.guessbaits and not from_pipen_board():
             return None
-
-        if self.opts.guessbaits_guided is None:
-            raise ValueError(
-                "`guessbaits.guided` must be specified, expecting True or False"
-            )
 
         def _guess_baits_bams(ch):
             df = _metadf(_1st(ch))
@@ -283,7 +306,22 @@ class CNVkitPipeline(ProcGroup):
                     "https://cnvkit.readthedocs.io/en/stable/scripts.html"
                 )
 
+            @annotate.format_doc(indent=4)
             class CNVkitGuessBaits(CNVkitGuessBaits):
+                """{{Summary}}
+
+                Envs:
+                    cnvkit (pgarg): {{Envs.cnvkit.help | indent: 24}}.
+                        Defaults to group argument `cnvkit`.
+                    samtools (pgarg): {{Envs.samtools.help | indent: 24}}.
+                        Defaults to group argument `samtools`.
+                    ncores (pgarg): {{Envs.ncores.help | indent: 24}}.
+                        Defaults to group argument `ncores`.
+                    ref (pgarg=reffa): {{Envs.ref.help | indent: 24}}.
+                        Defaults to group argument `reffa`.
+                    guided (pgarg): {{Envs.guided.help | indent: 24}}.
+                        Defaults to group argument `guessbaits_guided`.
+                """
                 requires = self.p_metafile
                 input_data = lambda metafile_ch: tibble(
                     bamfiles=[_guess_baits_bams(metafile_ch)],
@@ -297,7 +335,22 @@ class CNVkitPipeline(ProcGroup):
                     "guided": True,
                 }
         else:  # unguided
+            @annotate.format_doc(indent=4)
             class CNVkitGuessBaits(CNVkitGuessBaits):
+                """{{Summary}}
+
+                Envs:
+                    cnvkit (pgarg): {{Envs.cnvkit.help | indent: 24}}.
+                        Defaults to group argument `cnvkit`.
+                    samtools (pgarg): {{Envs.samtools.help | indent: 24}}.
+                        Defaults to group argument `samtools`.
+                    ncores (pgarg): {{Envs.ncores.help | indent: 24}}.
+                        Defaults to group argument `ncores`.
+                    ref (pgarg=reffa): {{Envs.ref.help | indent: 24}}.
+                        Defaults to group argument `reffa`.
+                    guided (pgarg): {{Envs.guided.help | indent: 24}}.
+                        Defaults to group argument `guessbaits_guided`.
+                """
                 requires = self.p_metafile, self.p_cnvkit_access
                 input_data = lambda metafile_ch, access_ch: tibble(
                     bamfiles=[_guess_baits_bams(metafile_ch)],
@@ -318,7 +371,21 @@ class CNVkitPipeline(ProcGroup):
         """Build CNVkitAutobin process"""
         from .cnvkit import CNVkitAutobin
 
+        @annotate.format_doc(indent=3)
         class CNVkitAutobin(CNVkitAutobin):
+            """{{Summary}}
+
+            Envs:
+                method (pgarg): {{Envs.method.help | indent: 20}}.
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                ref (pgarg=reffa): {{Envs.ref.help | indent: 20}}.
+                    Defaults to group argument `reffa`.
+                annotate (pgarg): {{Envs.annotate.help | indent: 20}}.
+                    Defaults to group argument `annotate`.
+                short_names (pgarg): {{Envs.short_names.help | indent:20}}.
+                    Defaults to group argument `short_names`.
+            """
             if self.p_cnvkit_guessbaits:
                 requires = (
                     self.p_metafile,
@@ -355,7 +422,7 @@ class CNVkitPipeline(ProcGroup):
         """Build CNVkitTargetCoverage and CNVkitAntiTargetCoverage processes"""
         from .cnvkit import CNVkitCoverage
 
-        return Proc.from_proc(
+        p = Proc.from_proc(
             CNVkitCoverage,
             name="CNVkitCoverageAnittarget" if anti else "CNVkitCoverageTarget",
             requires=[self.p_metafile, self.p_cnvkit_autobin],
@@ -371,6 +438,24 @@ class CNVkitPipeline(ProcGroup):
                 "ref": self.opts.reffa,
             }
         )
+        if anti:
+            p.__doc__ = """Build the coverage for the anti-target regions"""
+        else:
+            p.__doc__ = """Build the coverage for the target regions"""
+
+        p.__doc__ += """
+
+        {{* Summary.long }}
+
+        Envs:
+            cnvkit (pgarg): {{Envs.cnvkit.help | indent: 16}}.
+                Defaults to group argument `cnvkit`.
+            ncores (pgarg): {{Envs.ncores.help | indent: 16}}.
+                Defaults to group argument `ncores`.
+            ref (pgarg=reffa): {{Envs.ref.help | indent: 16}}.
+                Defaults to group argument `reffa`.
+        """
+        return annotate.format_doc(indent=2)(p)
 
     @ProcGroup.add_proc
     def p_cnvkit_coverage_target(self):
@@ -417,7 +502,25 @@ class CNVkitPipeline(ProcGroup):
                 sample_sex=sample_sex,
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitReference(CNVkitReference):
+            """{{Summary}}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                no_gc (pgarg): {{Envs.no_gc.help | indent: 20}}.
+                    Defaults to group argument `no_gc`.
+                no_edge (pgarg): {{Envs.no_edge.help | indent: 20}}.
+                    Defaults to group argument `no_edge`.
+                no_rmask (pgarg): {{Envs.no_rmask.help | indent: 20}}.
+                    Defaults to group argument `no_rmask`.
+                ref (pgarg=reffa): {{Envs.ref.help | indent: 20}}.
+                    Defaults to group argument `reffa`.
+                male_reference (pgarg): {{
+                    Envs.male_reference.help | indent: 20 }}.
+                    Defaults to group argument `male_reference`.
+            """
             requires = [
                 self.p_metafile,
                 self.p_cnvkit_coverage_target,
@@ -431,6 +534,7 @@ class CNVkitPipeline(ProcGroup):
                 "no_edge": self.opts.no_edge,
                 "no_rmask": self.opts.no_rmask,
                 "ref": self.opts.reffa,
+                "male_reference": self.opts.male_reference,
             }
 
         return CNVkitReference
@@ -461,7 +565,20 @@ class CNVkitPipeline(ProcGroup):
                 sample_id=metadf["Sample"][tumor_masks],
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitFix(CNVkitFix):
+            """{{Summary}}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                no_gc (pgarg): {{Envs.no_gc.help | indent: 20}}.
+                    Defaults to group argument `no_gc`.
+                no_edge (pgarg): {{Envs.no_edge.help | indent: 20}}.
+                    Defaults to group argument `no_edge`.
+                no_rmask (pgarg): {{Envs.no_rmask.help | indent: 20}}.
+                    Defaults to group argument `no_rmask`.
+            """
             requires = [
                 self.p_metafile,
                 self.p_cnvkit_coverage_target,
@@ -509,13 +626,36 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitSegment(CNVkitSegment):
+            """{{Summary}}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                rscript (pgarg): {{Envs.rscript.help | indent: 20}}.
+                    Defaults to group argument `rscript`.
+                ncores (pgarg): {{Envs.ncores.help | indent: 20}}.
+                    Defaults to group argument `ncores`.
+                drop_low_coverage (pgarg): {{
+                    Envs.drop_low_coverage.help | indent: 20}}.
+                    Defaults to group argument `drop_low_coverage`.
+                min_variant_depth (pgarg): {{
+                    Envs.min_variant_depth.help | indent: 20}}.
+                    Defaults to group argument `min_variant_depth`.
+                zygosity_freq (pgarg): {{
+                    Envs.zygosity_freq.help | indent: 20}}.
+                    Defaults to group argument `zygosity_freq`.
+            """
             requires = self.p_metafile, self.p_cnvkit_fix
             input_data = _input_data
             envs = {
                 "cnvkit": self.opts.cnvkit,
                 "rscript": self.opts.rscript,
                 "ncores": self.opts.ncores,
+                "drop_low_coverage": self.opts.drop_low_coverage,
+                "min_variant_depth": self.opts.min_variant_depth,
+                "zygosity_freq": self.opts.zygosity_freq,
             }
 
         return CNVkitSegment
@@ -552,12 +692,25 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitScatter(CNVkitScatter):
+            """{{Summary}}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                convert (pgarg): {{Envs.convert.help | indent: 20}}.
+                    Defaults to group argument `convert`.
+                min_variant_depth (pgarg): {{
+                    Envs.min_variant_depth.help | indent: 20}}.
+                    Defaults to group argument `min_variant_depth`.
+            """
             requires = self.p_metafile, self.p_cnvkit_fix, self.p_cnvkit_segment
             input_data = _input_data
             envs = {
                 "cnvkit": self.opts.cnvkit,
                 "convert": self.opts.convert,
+                "min_variant_depth": self.opts.min_variant_depth,
             }
 
         return CNVkitScatter
@@ -584,12 +737,25 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitDiagram(CNVkitDiagram):
+            """{{Summary}}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                convert (pgarg): {{Envs.convert.help | indent: 20}}.
+                    Defaults to group argument `convert`.
+                male_reference (pgarg): {{
+                    Envs.male_reference.help | indent: 20}}.
+                    Defaults to group argument `male_reference`.
+            """
             requires = self.p_metafile, self.p_cnvkit_fix, self.p_cnvkit_segment
             input_data = _input_data
             envs = {
                 "cnvkit": self.opts.cnvkit,
                 "convert": self.opts.convert,
+                "male_reference": self.opts.male_reference,
             }
 
         return CNVkitDiagram
@@ -615,8 +781,21 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitHeatmapCns(CNVkitHeatmap):
-            """Heatmap of segment-level signals of multiple samples"""
+            """Generate heatmaps of segment-level signals of multiple samples
+
+            {{* Summary.long }}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                convert (pgarg): {{Envs.convert.help | indent: 20}}.
+                    Defaults to group argument `convert`.
+                male_reference (pgarg): {{
+                    Envs.male_reference.help | indent: 20}}.
+                    Defaults to group argument `male_reference`.
+            """
             requires = self.p_metafile, self.p_cnvkit_segment
             input_data = _input_data
             envs = {
@@ -651,8 +830,19 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitHeatmapCnr(CNVkitHeatmap):
-            """Heatmap of bin-level signals of multiple samples"""
+            """Heatmap of bin-level signals of multiple samples
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                convert (pgarg): {{Envs.convert.help | indent: 20}}.
+                    Defaults to group argument `convert`.
+                male_reference (pgarg): {{
+                    Envs.male_reference.help | indent: 20}}.
+                    Defaults to group argument `male_reference`.
+            """
             requires = self.p_metafile, self.p_cnvkit_fix
             input_data = _input_data
             envs = {
@@ -705,7 +895,26 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
+        @annotate.format_doc(indent=3)
         class CNVkitCall(CNVkitCall):
+            """{{Summary}}
+
+            Envs:
+                cnvkit (pgarg): {{Envs.cnvkit.help | indent: 20}}.
+                    Defaults to group argument `cnvkit`.
+                drop_low_coverage (pgarg): {{
+                    Envs.drop_low_coverage.help | indent: 20}}.
+                    Defaults to group argument `drop_low_coverage`.
+                male_reference (pgarg): {{
+                    Envs.male_reference.help | indent: 20}}.
+                    Defaults to group argument `male_reference`.
+                min_variant_depth (pgarg): {{
+                    Envs.min_variant_depth.help | indent: 20}}.
+                    Defaults to group argument `min_variant_depth`.
+                zygosity_freq (pgarg): {{
+                    Envs.zygosity_freq.help | indent: 20}}.
+                    Defaults to group argument `zygosity_freq`.
+            """
             requires = self.p_metafile, self.p_cnvkit_fix, self.p_cnvkit_segment
             input_data = _input_data
             envs = {
@@ -720,4 +929,8 @@ class CNVkitPipeline(ProcGroup):
 
 
 if __name__ == "__main__":
-    CNVkitPipeline().as_pipen().run()
+    CNVkitPipeline().as_pipen(
+        # If we run this procgroup as a whole, we don't want to collapse
+        # the processes in the index page of report.
+        plugin_opts={"report_no_collapse_pgs": True}
+    ).run()
