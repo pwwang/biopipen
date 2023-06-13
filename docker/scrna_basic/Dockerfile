@@ -14,7 +14,7 @@ RUN python -m pip install -U poetry && \
     python -m poetry install -v
 
 WORKDIR /example
-RUN bash docker/scrna_basic/make-examples.sh
+RUN bash /biopipen/docker/scrna_basic/make-examples.sh
 
 WORKDIR /workdir
 COPY docker/scrna_basic/board.toml /workdir/board.toml
