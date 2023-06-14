@@ -12,14 +12,14 @@ generate-setup-file = true
 python = "^3.8"
 pipen = "^0.10"
 pipen-filters = "^0.8"
-pipen-report = "^0.11"
+pipen-report = "^0.12"
 pipen-cli-run = "^0.9"
 pipen-verbose = "^0.7"
 pipen-args = "^0.10"
 cmdy = "^0.5"
 datar = {version = "^0.12", extras = ["pandas"]}
 pipen-board = "^0.5"
-pipen-runinfo = {version = "^0.1.1", optional = true}
+pipen-runinfo = {version = "^0.2", optional = true}
 
 [tool.poetry.dev-dependencies]
 
