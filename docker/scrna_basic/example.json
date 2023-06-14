@@ -790,8 +790,8 @@
                                     "desc": "The cases to find markers for.<br />\n`ident-2` is required for each case. One could also use placeholders for the cases.<br />\nTo enable this, you need `percluster = True` in the config. Currently only cluster is supported.<br />\nOne could use `{cluster}` or `{ident}` to denote the clusters.<br />\nFor example:<br />\n>>> {\n>>>     \"case1\": {\n>>>         # Add a new column in metadata\n>>>         \"mutaters\": { \"Group\" = \"if_else(Response == 'PD1' | Response == 'PD2', 'PD1PD2', Response)\" },\n>>>         # Only on cluster 0\n>>>         \"filter\": \"seurat_clusters == '0'\",\n>>>         # Groups\n>>>         \"ident-1\" = \"CR\",\n>>>         \"ident-2\" = \"PD1PD2\",\n>>>         \"group-by\" = \"Group\"\n>>>     }\n>>> }",
                                     "type": "json",
                                     "value": {
-                                        "STIM_vs_CTRL_uclst_0": {
-                                            "filter": "seurat_clusters == '0'",
+                                        "STIM_vs_CTRL_mono": {
+                                            "filter": "seurat_clusters == 'Classical Monocytes'",
                                             "group-by": "Sample",
                                             "ident-1": "STIM",
                                             "ident-2": "CTRL"
