@@ -852,13 +852,13 @@ pipen = ">=0.10,<0.11"
 
 [[package]]
 name = "pipen-args"
-version = "0.10.1"
+version = "0.10.2"
 description = "Command-line argument parser for pipen."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_args-0.10.1-py3-none-any.whl", hash = "sha256:27dc4919428316bd8a6161b7594f5ce8471c2fc570d4152408260cf12617e15a"},
-    {file = "pipen_args-0.10.1.tar.gz", hash = "sha256:1055f2c785768793a6c32b64e165e6de55a5fc21da85c2284aa109640d2f9af2"},
+    {file = "pipen_args-0.10.2-py3-none-any.whl", hash = "sha256:46175f11949e75afb1a6693d1a55aaef66723a506042d990796951cdbbf4f13f"},
+    {file = "pipen_args-0.10.2.tar.gz", hash = "sha256:38d2bbc5a8dc92ab5150750b82c4d684d1b294f6b337c7670675257b936f8738"},
 ]
 
 [package.dependencies]
