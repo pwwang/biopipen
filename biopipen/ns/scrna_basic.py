@@ -12,6 +12,7 @@ from typing import Type
 from pipen.utils import mark
 from pipen_annotate import annotate
 from pipen_args import ProcGroup
+from pipen_args.defaults import pipen_load_only
 from pipen_board import from_pipen_board
 
 from ..core.proc import Proc
@@ -38,7 +39,7 @@ class ScrnaBasic(ProcGroup):
             of `infile`. However, if this process group is run as a part of
             a pipeline, this argument should be set manually since `infile`
             should not be set in this case. It will be passed by other processes
-        clustering (choice): Which clustering method to use.
+        clustering (choice;required): Which clustering method to use.
             - supervised: Mapping the cells to given reference.
                 Using Seurat Reference Mapping procedure.
                 See: https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
@@ -57,7 +58,7 @@ class ScrnaBasic(ProcGroup):
     DEFAULTS = {
         "infile": None,
         "is_seurat": False,
-        "clustering": "unsupervised",
+        "clustering": None,
         "ref": None,
     }
 
@@ -66,7 +67,7 @@ class ScrnaBasic(ProcGroup):
             suffix = Path(self.opts.infile).suffix
             self.opts.is_seurat = suffix in (".rds", ".RDS")
 
-        if self.opts.clustering is None:
+        if self.opts.clustering is None and not pipen_load_only():
             raise ValueError(
                 "`clustering` is not set. Please choose one of "
                 "supervised, unsupervised, or both"
