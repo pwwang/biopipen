@@ -22,13 +22,14 @@ if [[ ! -f $WORKDIR/ifnb.rda ]]; then
     rm -f $WORKDIR/ifnb.SeuratData_3.1.0.tar.gz
 fi
 
-echo "+----------------------------------------+"
-echo "| Downloading ref data for clustering    |"
-echo "+----------------------------------------+"
-echo ""
-if [[ ! -f $WORKDIR/pbmc_multimodal.h5seurat ]]; then
-    wget https://atlas.fredhutch.org/data/nygc/multimodal/pbmc_multimodal.h5seurat -O $WORKDIR/pbmc_multimodal.h5seurat
-fi
+## Skip it for now, it's too big
+# echo "+----------------------------------------+"
+# echo "| Downloading ref data for clustering    |"
+# echo "+----------------------------------------+"
+# echo ""
+# if [[ ! -f $WORKDIR/pbmc_multimodal.h5seurat ]]; then
+#     wget https://atlas.fredhutch.org/data/nygc/multimodal/pbmc_multimodal.h5seurat -O $WORKDIR/pbmc_multimodal.h5seurat
+# fi
 
 echo "+----------------------------------------+"
 echo "| Downloading KEGG pathways              |"
@@ -93,4 +94,4 @@ echo "| Preparing the data for pipen-board     |"
 echo "+----------------------------------------+"
 echo ""
 mkdir -p ~/.pipen-board/
-cp /biopipen/docker/scrna_basic/example.json biopipen-ns-scrna-basic-scrnabasic.Example.1.json
+cp /biopipen/docker/scrna_basic/example.json ~/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json

@@ -17,6 +17,5 @@ WORKDIR /example
 RUN bash /biopipen/docker/scrna_basic/make-examples.sh
 
 WORKDIR /workdir
-COPY docker/scrna_basic/board.toml /workdir/board.toml
 
 ENTRYPOINT [ "/usr/local/bin/_entrypoint.sh", "bash", "/biopipen/docker/scrna_basic/entry.sh" ]
