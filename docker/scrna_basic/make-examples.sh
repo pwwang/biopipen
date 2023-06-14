@@ -93,5 +93,4 @@ echo "+----------------------------------------+"
 echo "| Preparing the data for pipen-board     |"
 echo "+----------------------------------------+"
 echo ""
-mkdir -p ~/.pipen-board/
-cp /biopipen/docker/scrna_basic/example.json ~/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
+cp /biopipen/docker/scrna_basic/example.json /biopipen/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
