@@ -2124,9 +2124,9 @@
                 "tag": {
                     "changed": true,
                     "desc": "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/scrna-basic/tags",
-                    "placeholder": "dev",
+                    "placeholder": "master",
                     "required": true,
-                    "value": "dev"
+                    "value": "master"
                 }
             }
         },
@@ -2165,9 +2165,9 @@
                 "tag": {
                     "changed": false,
                     "desc": "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/scrna-basic/tags",
-                    "placeholder": "dev",
+                    "placeholder": "master",
                     "required": true,
-                    "value": "dev"
+                    "value": "master"
                 }
             }
         }

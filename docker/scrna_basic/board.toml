@@ -44,8 +44,8 @@ placeholder = "{{name}}.config.toml"
 [RUNNING_OPTIONS.SINGULARITY.value.tag]
 desc = "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/scrna-basic/tags"
 required = true
-value = "dev"
-placeholder = "dev"
+value = "master"
+placeholder = "master"
 
 
 [RUNNING_OPTIONS.DOCKER]
@@ -73,5 +73,5 @@ placeholder = "{{name}}.config.toml"
 [RUNNING_OPTIONS.DOCKER.value.tag]
 desc = "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/scrna-basic/tags"
 required = true
-value = "dev"
-placeholder = "dev"
+value = "master"
+placeholder = "master"
