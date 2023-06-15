@@ -12,7 +12,6 @@ from typing import Type
 from pipen.utils import mark
 from pipen_annotate import annotate
 from pipen_args import ProcGroup
-from pipen_args.defaults import pipen_load_only
 from pipen_board import from_pipen_board
 
 from ..core.proc import Proc
@@ -66,12 +65,6 @@ class ScrnaBasic(ProcGroup):
         if self.opts.infile:
             suffix = Path(self.opts.infile).suffix
             self.opts.is_seurat = suffix in (".rds", ".RDS")
-
-        if self.opts.clustering is None and not pipen_load_only():
-            raise ValueError(
-                "`clustering` is not set. Please choose one of "
-                "supervised, unsupervised, or both"
-            )
 
     @ProcGroup.add_proc
     def p_input(self) -> Type[Proc]:

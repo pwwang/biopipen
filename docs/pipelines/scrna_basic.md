@@ -9,17 +9,69 @@ This pipeline is used to process single-cell RNA-seq data with some basic analys
 - Marker gene identification
 - Gene set enrichment analysis
 
+## Installing the pipeline and dependencies
+
+### Installing the pipeline
+
+The pipeline is available with the biopipen package, so you can install it with `pip`:
+
+```bash
+pip install biopipen
+```
+
+### Installing the dependencies
+
+Other tools and packages are required to run the pipeline. They are listed in `https://github.com/pwwang/biopipen/blob/dev/docker/scrna_basic/env.yml`. You can install them with `conda`:
+
+```bash
+conda env create -n scrna-basic -f env.yml
+```
+
+But we recommend you use `mamba` instead of `conda` to speed up the installation and solve potential conflicts:
+
+```bash
+mamba env create -n scrna-basic -f env.yml
+```
+
+Note that if you are using `conda`, you need to activate the environment before running the pipeline:
+
+```bash
+conda activate scrna-basic
+```
+
+And if you are running the pipeline under the environment, you need install `biopipen` in the environment as well.
+
 ## Running the pipeline
 
-There are different ways to run the pipeline:
+The pipeline can be run directly with `pipen` from the command line or via the `pipen-board` plugin, which is a web UI for `pipen` to configure and run pipelines.
 
 - Via the command line:
 
     ```bash
-    pipen run scrna_basic ScrnaBasic
+    pipen run scrna_basic ScrnaBasic [options]
     ```
 
-- Via the `pipen-board` plugin:
+    To see the brief help, run:
+
+    ```bash
+    pipen run scrna_basic ScrnaBasic --help
+    ```
+
+    To see the full help, run:
+
+    ```bash
+    pipen run scrna_basic ScrnaBasic --help+
+    ```
+
+    You can also put the in a file, say `scrna_basic.toml`, and run it:
+
+    ```bash
+    pipen run scrna_basic ScrnaBasic @scrna_basic.toml
+    ```
+
+    [`TOML`][1] is recommended for the configuration file format. You can also use `YAML` or `JSON`.
+
+- Via the `pipen-board` web UI:
 
     Start the board:
 
@@ -31,11 +83,186 @@ There are different ways to run the pipeline:
 
 - Via docker/singularity:
 
+    ```shell
+    docker run \
+        --rm \
+        # Map current directory to /workdir in the container, and set it as the working directory
+        -v .:/workdir -w /workdir \
+        biopipen/scrna_basic:dev \
+        pipen run scrna_basic @scrna_basic.toml
     ```
-    docker run [options] biopipen/scrna_basic:dev
-    # or
-    singularity run [options] docker://biopipen/scrna_basic:dev
+
+    or using singularity:
+
+    ```shell
+    singularity run \
+        -c -e -w \
+        # Map current directory to /workdir in the container, and set it as the working directory
+        --pwd /workdir -B .:/workdir \
+        docker://biopipen/scrna_basic:dev \
+        pipen run scrna_basic @scrna_basic.toml
     ```
+
+- Via `pipen-board` from the container:
+
+    ```shell
+    docker run \
+        --rm \
+        -p 18521:18521 \
+        # Map current directory to /workdir in the container, and set it as the working directory
+        -v .:/workdir -w /workdir \
+        biopipen/scrna_basic:dev \
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic
+    ```
+
+    or using singularity:
+
+    ```shell
+    singularity run \
+        -c -e -w \
+        # Map current directory to /workdir in the container, and set it as the working directory
+        --pwd /workdir -B .:/workdir \
+        docker://biopipen/scrna_basic:dev \
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic
+    ```
+
+    !!! Note
+        If you run the pipeline via `pipen-board` from the container, and you want to run it inside
+        the same container, you should choose "LOCAL" from the running options to run it.
+        Otherwise, you can either choose "DOCKER" or "SINGULARITY" to generate the command and run it
+        via the command line.
+
+## An example
+
+### Preparing the input data
+
+Supposing you have the dependencies installed, you can run the following command to parepare the input data:
+
+```bash
+curl -fsSL https://github.com/pwwang/biopipen/raw/dev/docker/scrna_basic/make-examples.sh | bash
+```
+
+This will prepare the input data in the current directory, so make sure your current directory is clean.
+
+Files prepared with the above command:
+
+- `KEGG_pathways.gmt`: The gene set file for KEGG pathways, used for `ScrnaBasicScGSEA`.
+- `ScTypeDB_full.xlsx`: The cell type database, used for `ScrnaBasicAnnotate` by `ScType` to annotate the cell types if you are using unsuperivsed clustering.
+- `data/CTRL`, `data/STIM`: Output of `cellranger`, for the two samples.
+  It's from `ifnb` dataset in `SeuratData` package. We separated `CTRL` and `STIM` as two samples for demonstration.
+- `example.txt`: The input file for `ScrnaBasic` pipeline. See `infile` below for details.
+
+The example data are builtin in the docker image, so you do need to prepare them if you are running the pipeline via docker/singularity.
+
+!!! Note
+    Only `unsupervised` clustering is supported for now. If you want to use `supervised` clustering, you need to prepare the cell type database by yourself.
+
+### Running the pipeline with the example data
+
+A configuration file with the above example input files will be like (supposing you current directory is `/example`):
+
+```toml
+name = "Example"
+
+[plugin_opts]
+report_no_collapse_pgs = true
+
+[ScrnaBasic]
+clustering = "unsupervised"
+infile = "/example/example.txt"
+
+[ScrnaBasicAnnotate.envs]
+sctype_db = "/example/ScTypeDB_full.xlsx"
+sctype_tissue = "Immune system"
+
+[ScrnaBasicMarkers.plugin_opts]
+report_paging = 5
+
+[ScrnaBasicPrepareAndQC.envs]
+cell_qc = "nFeature_RNA > 200"
+
+[ScrnaBasicScGSEA.envs]
+gmtfile = "/example/KEGG_pathways.gmt"
+
+[ScrnaBasicScGSEA.envs.cases.STIM_vs_CTRL_mono]
+filter = "seurat_clusters == 'Classical Monocytes'"
+group-by = "Sample"
+ident-1 = "STIM"
+ident-2 = "CTRL"
+```
+
+You can also fill in those information via the web UI. To launch the web UI, run:
+
+```bash
+pipen board biopipen.ns.scrna_basic:ScrnaBasic -a gh:pwwang/biopipen/board.toml
+```
+
+Then configure the pipeline and run it.
+
+### Running the pipeline with the example data via docker/singularity
+
+Remember that the example data are builtin under `/example` in the docker image, so you do need to prepare them if you are running the pipeline via docker/singularity.
+
+So you can reuse the above configuration file, and run the pipeline via docker/singularity:
+
+```shell
+docker run \
+    --rm \
+    -v .:/workdir -w /workdir \
+    biopipen/scrna_basic:dev \
+    pipen run scrna_basic @scrna_basic.toml
+```
+
+or using singularity:
+
+```shell
+singularity run \
+    -c -e -w \
+    --pwd /workdir -B .:/workdir \
+    docker://biopipen/scrna_basic:dev \
+    pipen run scrna_basic @scrna_basic.toml
+```
+
+But you are recommended to run the pipeline via `pipen-board` from the container, and run it inside the container:
+
+```shell
+docker run \
+    --rm \
+    -v .:/workdir -w /workdir \
+    biopipen/scrna_basic:dev \
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example
+```
+
+or using singularity:
+
+```shell
+singularity run \
+    -c -e -w \
+    --pwd /workdir -B .:/workdir \
+    docker://biopipen/scrna_basic:dev \
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example
+```
+
+And then load the `Example` configuration file and run it.
+
+!!! Tip
+    If you are creating a new instance and run your own data, you probably want to pass an additional configuration to be able to run the pipeline on the web UI. For example, using docker:
+
+    ```shell
+    docker run \
+        --rm \
+        -v .:/workdir -w /workdir \
+        biopipen/scrna_basic:dev \
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example -a /biopipen/board.toml
+    ```
+
+    `/biopipen/board.toml` is the configuration file for `pipen-board` in the container. You can find it in the docker image. It only has options to generate command to run the pipeline locally (`LOCAL`, inside the same container in this case, if you run the pipeline via the web UI).
+
+    If you need the command to run the pipeline via docker/singularity, you can use the configuration file `/biopipen/docker/scrna_basic/board.toml` inside the container.
+
+    `pipen board` can also take the configuration file from GitHub, with a format like `gh:owner/repo/path/to/file.toml`. For example, `gh:pwwang/biopipen/board.toml` or `gh:pwwang/biopipen/docker/scrna_basic/board.toml`.
+
+    The default branch is `master`, but you can specify a branch with `gh:owner/repo/path/to/file.toml@branch`.
 
 ## Input
 
@@ -464,3 +691,6 @@ Available environment arguments:
 - maxSize (type=int): Maximal size of a gene set to test. All pathways above the threshold are excluded.
 - `<rest>`: Rest arguments for [`fgsea()`](https://rdrr.io/bioc/fgsea/man/fgsea.html)
     See also https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html
+
+
+[1]: https://toml.io/en/
