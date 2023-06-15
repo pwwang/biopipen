@@ -6,8 +6,8 @@ if [ $# -eq 0 ]; then
     echo "1. Run the pipeline from the command line"
     echo "   docker/singularity run <options> pipen run scrna_basic ScrnaBasic @<configfile> [options]"
     echo "2. Run the pipeline using pipen-board:"
-    echo "   docker run <options> pipen board biopipen/scrna_basic:dev -a /workdir/board.toml [options]"
-    echo "   singularity run <options> pipen board docker://biopipen/scrna_basic:dev -a /workdir/board.toml [options]"
+    echo "   docker run <options> pipen board biopipen/scrna-basic:master -a /workdir/board.toml [options]"
+    echo "   singularity run <options> pipen board docker://biopipen/scrna-basic:master -a /workdir/board.toml [options]"
     exit 1
 else
     # Run the command passed from the command line
