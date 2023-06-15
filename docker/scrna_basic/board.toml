@@ -7,6 +7,7 @@
 configfile = "configfile"
 editable = true
 allow_run = true
+order = -1
 desc = "Compose a command to run the pipeline locally"
 command = "pipen run {{pipeline_module}} {{pipeline_class}} @${configfile}"
 
@@ -21,7 +22,8 @@ placeholder = "{{name}}.config.toml"
 # Which option to use for saving the config file
 configfile = "configfile"
 editable = true
-allow_run = true
+allow_run = false
+order = 9
 desc = """
 Compose a command to the pipeline using singularity.
 
@@ -50,7 +52,7 @@ placeholder = "dev"
 # Which option to use for saving the config file
 configfile = "configfile"
 editable = true
-allow_run = true
+allow_run = false
 desc = """
 Compose a command to the pipeline using docker.
 
