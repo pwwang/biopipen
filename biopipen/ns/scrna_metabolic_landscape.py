@@ -5,10 +5,331 @@ from typing import Type
 
 from diot import Diot
 from datar.tibble import tibble
+from pipen.utils import mark
 from pipen_args import ProcGroup
+from pipen_annotate import annotate
 
 from ..core.config import config
 from ..core.proc import Proc
+
+
+class _MetabolicPathwayActivity(Proc):
+    """Pathway activities for each group
+
+    Envs:
+        ntimes (type=int): Number of times to do the permutation
+        ncores (type=int;pgarg): Number of cores to use for parallelization
+            Defaults to `ScrnaMetabolicLandscape.ncores`
+        heatmap_devpars (ns): Device parameters for the heatmap
+            - width (type=int): Width of the heatmap
+            - height (type=int): Height of the heatmap
+            - res (type=int): Resolution of the heatmap
+        violin_devpars (ns): Device parameters for the violin plot
+            - width (type=int): Width of the violin plot
+            - height (type=int): Height of the violin plot
+            - res (type=int): Resolution of the violin plot
+        gmtfile (pgarg): The GMT file with the metabolic pathways.
+            Defaults to `ScrnaMetabolicLandscape.gmtfile`
+        grouping (type=auto;pgarg): Defines the basic groups to investigate
+            the metabolic activity, typically the clusters.
+            Defaults to `ScrnaMetabolicLandscape.grouping`
+        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+            names. For example, if we have `grouping_prefix = "cluster"` and
+            we have `1` and `2` in the `grouping` column, the groups
+            will be named as `cluster_1` and `cluster_2`.
+            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+        subsetting (type=auto;pgarg): How do we subset the data. Other
+            columns in the metadata to do comparisons. For example,
+            `"TimePoint"` or `["TimePoint", "Response"]`.
+            Defaults to `ScrnaMetabolicLandscape.subsetting`
+        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
+            names.
+            For example, if we have `subsetting_prefix = "timepoint"` and
+            we have `pre` and `post` in the `subsetting` column, the subsets
+            will be named as `timepoint_pre` and `timepoint_post`.
+            If `subsetting` is a list, then this should also be a
+            same-length list. If a single string is given, it will be
+            repeated to a list with the same length as `subsetting`.
+            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
+
+    Requires:
+        r-scater:
+            - check: {{proc.lang}} <(echo "library(scater)")
+        r-reshape2:
+            - check: {{proc.lang}} <(echo "library(reshape2)")
+        r-rcolorbrewer:
+            - check: {{proc.lang}} <(echo "library(RColorBrewer)")
+        r-ggplot2:
+            - check: {{proc.lang}} <(echo "library(ggplot2)")
+        r-ggprism:
+            - check: {{proc.lang}} <(echo "library(ggprism)")
+        r-complexheatmap:
+            - check: {{proc.lang}} <(echo "library(ComplexHeatmap)")
+        r-parallel:
+            - check: {{proc.lang}} <(echo "library(parallel)")
+    """
+    input = "sobjfile:file"
+    output = "outdir:dir:{{in.sobjfile | stem}}.pathwayactivity"
+    envs = {
+        "ntimes": 5000,
+        "ncores": config.misc.ncores,
+        "heatmap_devpars": {},
+        "violin_devpars": {},
+        "gmtfile": None,
+        "grouping": None,
+        "grouping_prefix": "",
+        "subsetting": None,
+        "subsetting_prefix": "",
+    }
+    lang = config.lang.rscript
+    script = (
+        "file://../scripts/"
+        "scrna_metabolic_landscape/MetabolicPathwayActivity.R"
+    )
+    plugin_opts = {
+        "report": (
+            "file://../reports/"
+            "scrna_metabolic_landscape/MetabolicPathwayActivity.svelte"
+        )
+    }
+
+class _MetabolicFeatures(Proc):
+    """Inter-subset metabolic features - Enrichment analysis in details
+
+    Envs:
+        ncores (type=int;pgarg): Number of cores to use for parallelization
+            Defaults to `ScrnaMetabolicLandscape.ncores`
+        fgsea (flag): Whether to do fast gsea analysis
+        prerank_method (choice): Method to use for gene preranking
+            Signal to noise: the larger the differences of the means
+            (scaled by the standard deviations); that is, the more distinct
+            the gene expression is in each phenotype and the more the gene
+            acts as a “class marker.”.
+            Absolute signal to noise: the absolute value of the signal to
+            noise.
+            T test: Uses the difference of means scaled by the standard
+            deviation and number of samples.
+            Ratio of classes: Uses the ratio of class means to calculate
+            fold change for natural scale data.
+            Diff of classes: Uses the difference of class means to calculate
+            fold change for nature scale data
+            Log2 ratio of classes: Uses the log2 ratio of class means to
+            calculate fold change for natural scale data. This is the
+            recommended statistic for calculating fold change for log scale
+            data.
+            - signal_to_noise: Signal to noise
+            - s2n: Alias of signal_to_noise
+            - abs_signal_to_noise: absolute signal to noise
+            - abs_s2n: Alias of abs_signal_to_noise
+            - t_test: T test
+            - ratio_of_classes: Also referred to as fold change
+            - diff_of_classes: Difference of class means
+            - log2_ratio_of_classes: Log2 ratio of class means
+        top (type=int): N top of enriched pathways to show
+        gmtfile (pgarg): The GMT file with the metabolic pathways.
+            Defaults to `ScrnaMetabolicLandscape.gmtfile`
+        grouping (type=auto;pgarg): Defines the basic groups to investigate
+            the metabolic activity.
+            Defaults to `ScrnaMetabolicLandscape.grouping`
+        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+            names.
+            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+        subsetting (type=auto;pgarg): How do we subset the data. Another
+            column in the metadata.
+            Defaults to `ScrnaMetabolicLandscape.subsetting`
+        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
+            names.
+            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
+
+    Requires:
+        r-parallel:
+            - check: {{proc.lang}} <(echo "library(parallel)")
+        r-fgsea:
+            - check: {{proc.lang}} <(echo "library(fgsea)")
+    """
+    input = "sobjfile:file"
+    output = "outdir:dir:{{in.sobjfile | stem}}.pathwayfeatures"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "fgsea": True,
+        "prerank_method": "signal_to_noise",
+        "top": 10,
+        "gmtfile": None,
+        "grouping": None,
+        "grouping_prefix": "",
+        "subsetting": None,
+        "subsetting_prefix": "",
+    }
+    script = (
+        "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
+    )
+    plugin_opts = {
+        "report": (
+            "file://../reports/"
+            "scrna_metabolic_landscape/MetabolicFeatures.svelte"
+        )
+    }
+
+class _MetabolicFeaturesIntraSubset(Proc):
+    """Intra-subset metabolic features - Enrichment analysis in details
+
+    Envs:
+        ncores (type=int; pgarg): Number of cores to use for parallelization
+            Defaults to `ScrnaMetabolicLandscape.ncores`
+        fgsea (flag): Whether to do fast gsea analysis
+        prerank_method (choice): Method to use for gene preranking
+            Signal to noise: the larger the differences of the means
+            (scaled by the standard deviations); that is, the more distinct
+            the gene expression is in each phenotype and the more the gene
+            acts as a “class marker.”.
+            Absolute signal to noise: the absolute value of the signal to
+            noise.
+            T test: Uses the difference of means scaled by the standard
+            deviation and number of samples.
+            Ratio of classes: Uses the ratio of class means to calculate
+            fold change for natural scale data.
+            Diff of classes: Uses the difference of class means to calculate
+            fold change for nature scale data
+            Log2 ratio of classes: Uses the log2 ratio of class means to
+            calculate fold change for natural scale data. This is the
+            recommended statistic for calculating fold change for log scale
+            data.
+            - signal_to_noise: Signal to noise
+            - s2n: Alias of signal_to_noise
+            - abs_signal_to_noise: absolute signal to noise
+            - abs_s2n: Alias of abs_signal_to_noise
+            - t_test: T test
+            - ratio_of_classes: Also referred to as fold change
+            - diff_of_classes: Difference of class means
+            - log2_ratio_of_classes: Log2 ratio of class means
+        top (type=int): N top of enriched pathways to show
+        gmtfile (pgarg): The GMT file with the metabolic pathways.
+            Defaults to `ScrnaMetabolicLandscape.gmtfile`
+        grouping (type=auto;pgarg): Defines the basic groups to investigate
+            the metabolic activity.
+            Defaults to `ScrnaMetabolicLandscape.grouping`
+        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+            names.
+            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+        subsetting (type=auto;pgarg): How do we subset the data. Another
+            column in the metadata.
+            Defaults to `ScrnaMetabolicLandscape.subsetting`
+        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
+            names.
+            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
+        subsetting_comparison (type=json;pgarg): How do we compare the
+            subsets.
+            Defaults to `ScrnaMetabolicLandscape.subsetting_comparison`
+
+    Requires:
+        r-parallel:
+            - check: {{proc.lang}} <(echo "library(parallel)")
+        r-scater:
+            - check: {{proc.lang}} <(echo "library(scater)")
+        r-fgsea:
+            - check: {{proc.lang}} <(echo "library(fgsea)")
+    """
+    input = "sobjfile:file"
+    output = (
+        "outdir:dir:{{in.sobjfile | stem}}.intra-subset-pathwayfeatures"
+    )
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "gmtfile": None,
+        "fgsea": True,
+        "prerank_method": "signal_to_noise",
+        "top": 10,
+        "grouping": None,
+        "grouping_prefix": "",
+        "subsetting": None,
+        "subsetting_prefix": "",
+        "subsetting_comparison": {},
+    }
+    script = (
+        "file://../scripts/scrna_metabolic_landscape/"
+        "MetabolicFeaturesIntraSubset.R"
+    )
+    plugin_opts = {
+        "report": (
+            "file://../reports/scrna_metabolic_landscape/"
+            "MetabolicFeaturesIntraSubset.svelte"
+        )
+    }
+
+class _MetabolicPathwayHeterogeneity(Proc):
+    """Pathway heterogeneity
+
+    Envs:
+        gmtfile (pgarg): The GMT file with the metabolic pathways.
+            Defaults to `ScrnaMetabolicLandscape.gmtfile`
+        select_pcs (type=float): Select the PCs to use for the analysis.
+        pathway_pval_cutoff (type=float): The p-value cutoff to select
+            the enriched pathways
+        ncores (type=int;pgarg): Number of cores to use for parallelization
+            Defaults to `ScrnaMetabolicLandscape.ncores`
+        bubble_devpars (ns): The devpars for the bubble plot
+            - width: The width of the plot
+            - height: The height of the plot
+            - res: The resolution of the plot
+        grouping (type=auto;pgarg): Defines the basic groups to investigate
+            the metabolic activity.
+            Defaults to `ScrnaMetabolicLandscape.grouping`
+        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+            names.
+            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
+        subsetting (type=auto;pgarg): How do we subset the data. Another
+            column in the metadata.
+            Defaults to `ScrnaMetabolicLandscape.subsetting`
+        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
+            names.
+            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
+
+    Requires:
+        r-gtools:
+            - check: {{proc.lang}} <(echo "library(gtools)")
+        r-ggplot2:
+            - check: {{proc.lang}} <(echo "library(ggplot2)")
+        r-ggprism:
+            - check: {{proc.lang}} <(echo "library(ggprism)")
+        r-parallel:
+            - check: {{proc.lang}} <(echo "library(parallel)")
+        r-dplyr:
+            - check: {{proc.lang}} <(echo "library(dplyr)")
+        r-tibble:
+            - check: {{proc.lang}} <(echo "library(tibble)")
+        r-enrichr:
+            - check: {{proc.lang}} <(echo "library(enrichR)")
+        r-data.table:
+            - check: {{proc.lang}} <(echo "library(data.table)")
+        r-fgsea:
+            - check: {{proc.lang}} <(echo "library(fgsea)")
+    """
+    input = "sobjfile:file"
+    output = "outdir:dir:{{in.sobjfile | stem}}.pathwayhetero"
+    lang = config.lang.rscript
+    envs = {
+        "gmtfile": None,
+        "select_pcs": 0.8,
+        "pathway_pval_cutoff": 0.01,
+        "ncores": config.misc.ncores,
+        "bubble_devpars": {},
+        "grouping": None,
+        "grouping_prefix": "",
+        "subsetting": None,
+        "subsetting_prefix": "",
+    }
+    script = (
+        "file://../scripts/scrna_metabolic_landscape/"
+        "MetabolicPathwayHeterogeneity.R"
+    )
+    plugin_opts = {
+        "report": (
+            "file://../reports/scrna_metabolic_landscape/"
+            "MetabolicPathwayHeterogeneity.svelte"
+        )
+    }
 
 
 class ScrnaMetabolicLandscape(ProcGroup):
@@ -35,7 +356,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             and an unsupervised clustering will be done.
             Currently only 10X data is supported.
             If it is an rds file, the seurat object will be used directly
-        is_seurat: Whether the input `metafile` is a seurat object.
+        is_seurat (flag): Whether the input `metafile` is a seurat object.
             If `metafile` is specified directly, this option will be ignored
             and will be inferred from the file extension. If `metafile` is
             not specified, meaning `<pipeline>.procs.MetabolicInput` is
@@ -103,306 +424,6 @@ class ScrnaMetabolicLandscape(ProcGroup):
         ncores=config.misc.ncores,
     )
 
-    class MetabolicPathwayActivity(Proc):
-        """Pathway activities for each group
-
-        Envs:
-            ntimes (type=int): Number of times to do the permutation
-            ncores (type=int): Number of cores to use for parallelization
-                Defaults to `ScrnaMetabolicLandscape.ncores`
-            heatmap_devpars (ns): Device parameters for the heatmap
-                - width (type=int): Width of the heatmap
-                - height (type=int): Height of the heatmap
-                - res (type=int): Resolution of the heatmap
-            violin_devpars (ns): Device parameters for the violin plot
-                - width (type=int): Width of the violin plot
-                - height (type=int): Height of the violin plot
-                - res (type=int): Resolution of the violin plot
-            gmtfile: The GMT file with the metabolic pathways.
-                Defaults to `ScrnaMetabolicLandscape.gmtfile`
-            grouping: Defines the basic groups to investigate the metabolic
-                activity.
-                Defaults to `ScrnaMetabolicLandscape.grouping`
-            grouping_prefix: Working as a prefix to group names.
-                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-            subsetting: How do we subset the data. Another column in the
-                metadata.
-                Defaults to `ScrnaMetabolicLandscape.subsetting`
-            subsetting_prefix: Working as a prefix to subset names.
-                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-
-        Requires:
-            r-scater:
-                - check: {{proc.lang}} <(echo "library(scater)")
-            r-reshape2:
-                - check: {{proc.lang}} <(echo "library(reshape2)")
-            r-rcolorbrewer:
-                - check: {{proc.lang}} <(echo "library(RColorBrewer)")
-            r-ggplot2:
-                - check: {{proc.lang}} <(echo "library(ggplot2)")
-            r-ggprism:
-                - check: {{proc.lang}} <(echo "library(ggprism)")
-            r-complexheatmap:
-                - check: {{proc.lang}} <(echo "library(ComplexHeatmap)")
-            r-parallel:
-                - check: {{proc.lang}} <(echo "library(parallel)")
-        """
-        input = "sobjfile:file"
-        output = "outdir:dir:{{in.sobjfile | stem}}.pathwayactivity"
-        envs = {
-            "ntimes": 5000,
-            "ncores": config.misc.ncores,
-            "heatmap_devpars": {},
-            "violin_devpars": {},
-            "gmtfile": None,
-            "grouping": None,
-            "grouping_prefix": "",
-            "subsetting": None,
-            "subsetting_prefix": "",
-        }
-        lang = config.lang.rscript
-        script = (
-            "file://../scripts/"
-            "scrna_metabolic_landscape/MetabolicPathwayActivity.R"
-        )
-        plugin_opts = {
-            "report": (
-                "file://../reports/"
-                "scrna_metabolic_landscape/MetabolicPathwayActivity.svelte"
-            )
-        }
-
-    class MetabolicFeatures(Proc):
-        """Inter-subset metabolic features - Enrichment analysis in details
-
-        Envs:
-            ncores (type=int): Number of cores to use for parallelization
-                Defaults to `ScrnaMetabolicLandscape.ncores`
-            fgsea (flag): Whether to do fast gsea analysis
-            prerank_method (choice): Method to use for gene preranking
-                Signal to noise: the larger the differences of the means
-                (scaled by the standard deviations); that is, the more distinct
-                the gene expression is in each phenotype and the more the gene
-                acts as a “class marker.”.
-                Absolute signal to noise: the absolute value of the signal to
-                noise.
-                T test: Uses the difference of means scaled by the standard
-                deviation and number of samples.
-                Ratio of classes: Uses the ratio of class means to calculate
-                fold change for natural scale data.
-                Diff of classes: Uses the difference of class means to calculate
-                fold change for nature scale data
-                Log2 ratio of classes: Uses the log2 ratio of class means to
-                calculate fold change for natural scale data. This is the
-                recommended statistic for calculating fold change for log scale
-                data.
-                - signal_to_noise: Signal to noise
-                - s2n: Alias of signal_to_noise
-                - abs_signal_to_noise: absolute signal to noise
-                - abs_s2n: Alias of abs_signal_to_noise
-                - t_test: T test
-                - ratio_of_classes: Also referred to as fold change
-                - diff_of_classes: Difference of class means
-                - log2_ratio_of_classes: Log2 ratio of class means
-            top (type=int): N top of enriched pathways to show
-            gmtfile: The GMT file with the metabolic pathways.
-                Defaults to `ScrnaMetabolicLandscape.gmtfile`
-            grouping: Defines the basic groups to investigate the metabolic
-                activity.
-                Defaults to `ScrnaMetabolicLandscape.grouping`
-            grouping_prefix: Working as a prefix to group names.
-                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-            subsetting: How do we subset the data. Another column in the
-                metadata.
-                Defaults to `ScrnaMetabolicLandscape.subsetting`
-            subsetting_prefix: Working as a prefix to subset names.
-                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-
-        Requires:
-            r-parallel:
-                - check: {{proc.lang}} <(echo "library(parallel)")
-            r-fgsea:
-                - check: {{proc.lang}} <(echo "library(fgsea)")
-        """
-        input = "sobjfile:file"
-        output = "outdir:dir:{{in.sobjfile | stem}}.pathwayfeatures"
-        lang = config.lang.rscript
-        envs = {
-            "ncores": config.misc.ncores,
-            "fgsea": True,
-            "prerank_method": "signal_to_noise",
-            "top": 10,
-            "gmtfile": None,
-            "grouping": None,
-            "grouping_prefix": "",
-            "subsetting": None,
-            "subsetting_prefix": "",
-        }
-        script = (
-            "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
-        )
-        plugin_opts = {
-            "report": (
-                "file://../reports/"
-                "scrna_metabolic_landscape/MetabolicFeatures.svelte"
-            )
-        }
-
-    class MetabolicFeaturesIntraSubset(Proc):
-        """Intra-subset metabolic features - Enrichment analysis in details
-
-        Envs:
-            ncores (type=int): Number of cores to use for parallelization
-                Defaults to `ScrnaMetabolicLandscape.ncores`
-            fgsea (flag): Whether to do fast gsea analysis
-            prerank_method (choice): Method to use for gene preranking
-                Signal to noise: the larger the differences of the means
-                (scaled by the standard deviations); that is, the more distinct
-                the gene expression is in each phenotype and the more the gene
-                acts as a “class marker.”.
-                Absolute signal to noise: the absolute value of the signal to
-                noise.
-                T test: Uses the difference of means scaled by the standard
-                deviation and number of samples.
-                Ratio of classes: Uses the ratio of class means to calculate
-                fold change for natural scale data.
-                Diff of classes: Uses the difference of class means to calculate
-                fold change for nature scale data
-                Log2 ratio of classes: Uses the log2 ratio of class means to
-                calculate fold change for natural scale data. This is the
-                recommended statistic for calculating fold change for log scale
-                data.
-                - signal_to_noise: Signal to noise
-                - s2n: Alias of signal_to_noise
-                - abs_signal_to_noise: absolute signal to noise
-                - abs_s2n: Alias of abs_signal_to_noise
-                - t_test: T test
-                - ratio_of_classes: Also referred to as fold change
-                - diff_of_classes: Difference of class means
-                - log2_ratio_of_classes: Log2 ratio of class means
-            top (type=int): N top of enriched pathways to show
-            gmtfile: The GMT file with the metabolic pathways.
-                Defaults to `ScrnaMetabolicLandscape.gmtfile`
-            grouping: Defines the basic groups to investigate the metabolic
-                activity.
-                Defaults to `ScrnaMetabolicLandscape.grouping`
-            grouping_prefix: Working as a prefix to group names.
-                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-            subsetting: How do we subset the data. Another column in the
-                metadata.
-                Defaults to `ScrnaMetabolicLandscape.subsetting`
-            subsetting_prefix: Working as a prefix to subset names.
-                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-            subsetting_comparison: How do we compare the subsets.
-                Defaults to `ScrnaMetabolicLandscape.subsetting_comparison`
-
-        Requires:
-            r-parallel:
-                - check: {{proc.lang}} <(echo "library(parallel)")
-            r-scater:
-                - check: {{proc.lang}} <(echo "library(scater)")
-            r-fgsea:
-                - check: {{proc.lang}} <(echo "library(fgsea)")
-        """
-        input = "sobjfile:file"
-        output = (
-            "outdir:dir:{{in.sobjfile | stem}}.intra-subset-pathwayfeatures"
-        )
-        lang = config.lang.rscript
-        envs = {
-            "ncores": config.misc.ncores,
-            "gmtfile": None,
-            "fgsea": True,
-            "prerank_method": "signal_to_noise",
-            "top": 10,
-            "grouping": None,
-            "grouping_prefix": "",
-            "subsetting": None,
-            "subsetting_prefix": "",
-            "subsetting_comparison": {},
-        }
-        script = (
-            "file://../scripts/scrna_metabolic_landscape/"
-            "MetabolicFeaturesIntraSubsets.R"
-        )
-        plugin_opts = {
-            "report": (
-                "file://../reports/scrna_metabolic_landscape/"
-                "MetabolicFeaturesIntraSubsets.svelte"
-            )
-        }
-
-    class MetabolicPathwayHeterogeneity(Proc):
-        """Pathway heterogeneity
-
-        Envs:
-            gmtfile: The GMT file with the metabolic pathways.
-                Defaults to `ScrnaMetabolicLandscape.gmtfile`
-            select_pcs (type=float): Select the PCs to use for the analysis.
-            pathway_pval_cutoff (type=float): The p-value cutoff to select
-                the enriched pathways
-            ncores (type=int): Number of cores to use for parallelization
-                Defaults to `ScrnaMetabolicLandscape.ncores`
-            bubble_devpars (ns): The devpars for the bubble plot
-                - width: The width of the plot
-                - height: The height of the plot
-                - res: The resolution of the plot
-            grouping: Defines the basic groups to investigate the metabolic
-                activity.
-                Defaults to `ScrnaMetabolicLandscape.grouping`
-            grouping_prefix: Working as a prefix to group names.
-                Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-            subsetting: How do we subset the data. Another column in the
-                metadata.
-                Defaults to `ScrnaMetabolicLandscape.subsetting`
-            subsetting_prefix: Working as a prefix to subset names.
-                Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-
-        Requires:
-            r-gtools:
-                - check: {{proc.lang}} <(echo "library(gtools)")
-            r-ggplot2:
-                - check: {{proc.lang}} <(echo "library(ggplot2)")
-            r-ggprism:
-                - check: {{proc.lang}} <(echo "library(ggprism)")
-            r-parallel:
-                - check: {{proc.lang}} <(echo "library(parallel)")
-            r-dplyr:
-                - check: {{proc.lang}} <(echo "library(dplyr)")
-            r-tibble:
-                - check: {{proc.lang}} <(echo "library(tibble)")
-            r-enrichr:
-                - check: {{proc.lang}} <(echo "library(enrichR)")
-            r-data.table:
-                - check: {{proc.lang}} <(echo "library(data.table)")
-            r-fgsea:
-                - check: {{proc.lang}} <(echo "library(fgsea)")
-        """
-        input = "sobjfile:file"
-        output = "outdir:dir:{{in.sobjfile | stem}}.pathwayhetero"
-        lang = config.lang.rscript
-        envs = {
-            "gmtfile": None,
-            "select_pcs": 0.8,
-            "pathway_pval_cutoff": 0.01,
-            "ncores": config.misc.ncores,
-            "bubble_devpars": {},
-            "grouping": None,
-            "grouping_prefix": "",
-            "subsetting": None,
-            "subsetting_prefix": "",
-        }
-        script = (
-            "file://../scripts/scrna_metabolic_landscape/"
-            "MetabolicPathwayHeterogeneity.R"
-        )
-        plugin_opts = {
-            "report": (
-                "file://../reports/scrna_metabolic_landscape/"
-                "MetabolicPathwayHeterogeneity.svelte"
-            )
-        }
-
     def post_init(self):
         """Load runtime processes"""
         if self.opts.metafile:
@@ -448,6 +469,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
         """Build MetabolicInputs process"""
         from .misc import File2Proc
 
+        @mark(board_config_hidden=True)
         class MetabolicInput(File2Proc):
             """Input for the metabolic pathway analysis pipeline for
             scRNA-seq data
@@ -510,14 +532,13 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         from .scrna import ExprImpute
 
+        @annotate.format_doc(indent=3)
         class MetabolicExprImpute(ExprImpute):
-            """
-            Impute missing values in the expression matrix
+            """{{Summary}}
 
             You can turn off the imputation by setting the `noimpute` option
             of the process group to `True`.
             """
-            __doc__ += ExprImpute.__doc__.split("\n", 1)[1]
             requires = self.p_mutater
 
         return MetabolicExprImpute
@@ -526,7 +547,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     def p_pathway_activity(self) -> Type[Proc]:
         """Build MetabolicPathwayActivity process"""
         return Proc.from_proc(
-            ScrnaMetabolicLandscape.MetabolicPathwayActivity,
+            _MetabolicPathwayActivity,
             "MetabolicPathwayActivity",
             requires=self.p_expr_impute,
             order=-1,
@@ -544,7 +565,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     def p_pathway_heterogeneity(self) -> Type[Proc]:
         """Build MetabolicPathwayHeterogeneity process"""
         return Proc.from_proc(
-            ScrnaMetabolicLandscape.MetabolicPathwayHeterogeneity,
+            _MetabolicPathwayHeterogeneity,
             "MetabolicPathwayHeterogeneity",
             requires=self.p_expr_impute,
             envs={
@@ -561,7 +582,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     def p_features(self) -> Type[Proc]:
         """Build MetabolicFeatures process"""
         return Proc.from_proc(
-            ScrnaMetabolicLandscape.MetabolicFeatures,
+            _MetabolicFeatures,
             "MetabolicFeatures",
             requires=self.p_expr_impute,
             envs={
@@ -583,7 +604,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             )
 
         return Proc.from_proc(
-            ScrnaMetabolicLandscape.MetabolicFeaturesIntraSubset,
+            _MetabolicFeaturesIntraSubset,
             "MetabolicFeaturesIntraSubset",
             requires=self.p_expr_impute,
             envs={
