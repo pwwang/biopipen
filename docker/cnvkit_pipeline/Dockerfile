@@ -15,8 +15,15 @@ RUN python -m pip install -U poetry && \
     mkdir /biopipen/.pipen-board && \
     pipen report update && \
     patch $(python -c 'from pipen_board import defaults; print(defaults.__file__)') \
-        /biopipen/docker/cnvkit_pipeline/pipen-board.patch
+        /biopipen/docker/cnvkit_pipeline/pipen-board.patch && \
+    patch $(python -c 'from cnvlib.segmentation import cbs; print(cbs.__file__)') \
+        /biopipen/docker/cnvkit_pipeline/cnvkit-cbs.patch && \
+    patch $(python -c 'from cnvlib import export; print(export.__file__)') \
+        /biopipen/docker/cnvkit_pipeline/cnvkit-export.patch
     # Patch pipen-board to use a non-home directory to avoid failure in singularity
+
+WORKDIR /example
+RUN bash /biopipen/docker/cnvkit_pipeline/make-examples.sh
 
 WORKDIR /workdir
 

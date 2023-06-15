@@ -1,0 +1,4 @@
+14c14
+<     tbl = tbl[tbl$weight > 0,]
+---
+>     tbl = tbl[tbl$weight > 0 & !is.na(tbl$weight),]
