@@ -93,4 +93,10 @@ echo "+----------------------------------------+"
 echo "| Preparing the data for pipen-board     |"
 echo "+----------------------------------------+"
 echo ""
-cp /biopipen/docker/scrna_basic/example.json /biopipen/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
+if [ -d /biopipen ]; then
+    # Only works in the docker container
+    cp /biopipen/docker/scrna_basic/example.json /biopipen/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
+else
+    mkdir -p ~/.pipen-board
+    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/scrna_basic/example.json -O ~/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
+fi
