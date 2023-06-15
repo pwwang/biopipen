@@ -866,13 +866,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.5.5"
+version = "0.5.6"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.5.5-py3-none-any.whl", hash = "sha256:c8d5ae18b3b6a4cec82c0d40de46fd6e97613cde1b2a70a4302814d54cfc264f"},
-    {file = "pipen_board-0.5.5.tar.gz", hash = "sha256:c66c63c1246bfc472959de722406163bc903471bfd301724288eb9f354f9cfbb"},
+    {file = "pipen_board-0.5.6-py3-none-any.whl", hash = "sha256:31ebbea7798a47bac59168165a26ab3042bb93ae853f847bf516ab4c68361c87"},
+    {file = "pipen_board-0.5.6.tar.gz", hash = "sha256:676b3af2c905be413f64ae18b3d5d38395c1ee1a9b7efa20e5b72d4d1ccf8370"},
 ]
 
 [package.dependencies]
@@ -1605,4 +1605,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "9907ab13501202e9b03d783bd156912639931edcf7d44e2676e8a6b7c2a10136"
+content-hash = "34c96321d987e40888b88b19176dacaf34fb0930da4ffefa366c71b5adaa4121"
