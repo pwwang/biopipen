@@ -25,7 +25,7 @@ def main():
         o=outfile,
         d=Path(outfile).parent / "intermediate.rds",
         m=method,
-        t=threshold,
+        t=False if threshold is None else threshold,
         drop_low_coverage=drop_low_coverage,
         drop_outliers=drop_outliers,
         rscript_path=rscript,

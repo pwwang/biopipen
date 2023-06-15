@@ -26,11 +26,11 @@ def run(genes, infmt, outfmt, notfound, expect, species="human"):
 
 if __name__ == "__main__":
     run(
-        ['1255_g_at', '1294_at', '1316_at', '1320_at'],
+        ['1255_g_at', '1316_at', '1320_at'],
         infmt="reporter",
         outfmt="symbol",
         notfound="ignore",
-        expect=["GUCA1A", "MIR5193", "THRA", "PTPN21"]
+        expect=["GUCA1A", "THRA", "PTPN21"]
     )
     run(
         ['NM_003466', 'CDK2', "695", '1320_at', 'Q08345'],

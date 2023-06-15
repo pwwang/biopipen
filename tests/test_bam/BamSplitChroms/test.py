@@ -4,8 +4,8 @@ from biopipen.ns.bam import BamMerge, BamSplitChroms
 from biopipen.core.testing import get_pipeline
 
 
-# TOOL = "samtools"
-TOOL = "sambamba"
+TOOL = "samtools"
+# TOOL = "sambamba"
 BAM_URL = (
     "https://github.com/VCCRI/SVPV/raw/master/example/NA12877_S1.partial.bam"
 )

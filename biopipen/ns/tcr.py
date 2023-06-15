@@ -38,7 +38,7 @@ class ImmunarchLoading(Proc):
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
             saved at `immdata$tra` and `immdata$multi`.
-        metacols (type=list; hidden): The columns to be exported from the
+        metacols (list; hidden): The columns to be exported from the
             metatxt.
     """
 
@@ -159,7 +159,7 @@ class Immunarch(Proc):
         outdir: The output directory
 
     Envs:
-        volume_by (ctype=auto): Groupings to show clonotype volume (sizes)
+        volume_by (type=auto): Groupings to show clonotype volume (sizes)
             >>> exp_vol <- repExplore(immdata$data, .method = "volume")
             >>> vis(exp_vol, .by = c("Status"), .meta = immdata$meta)
             >>> vis(exp_vol, .by = c("Status", "Sex"), .meta = immdata$meta)
@@ -172,21 +172,21 @@ class Immunarch(Proc):
             be compiled to `{"Status_Sex": ["Status", "Sex"]}`
             a string, for example, `"Status"`, which will be compiled to
             `{"Status": "Status"}`
-        len_by (ctype=auto): Groupings to show CDR3 length of both aa and nt
+        len_by (type=auto): Groupings to show CDR3 length of both aa and nt
             Supported types of values are the same as `volume_by`.
-        count_by (ctype=auto): Groupings to show clonotype counts per sample
+        count_by (type=auto): Groupings to show clonotype counts per sample
             Supported types of values are the same as `volume_by`.
-        top_clone_marks (ctype=list): A numerical vector with ranges
+        top_clone_marks (list): A numerical vector with ranges
             of the top clonotypes. Passed to the `.head` argument of
             `repClonoality()`
         top_clone_by (type=auto): Groupings when visualize top clones.
             Supported types of values are the same as `volume_by`.
-        rare_clone_marks (ctype=list): A numerical vector with ranges of
+        rare_clone_marks (list): A numerical vector with ranges of
             abundance for the rare clonotypes in the dataset. Passed to
             the `.bound` argument of `repClonoality()`
-        rare_clone_by (ctype=auto): Groupings when visualize rare clones
+        rare_clone_by (type=auto): Groupings when visualize rare clones
             Supported types of values are the same as `volume_by`.
-        hom_clone_marks (ctype=ns): A dict with the threshold of the
+        hom_clone_marks (ns): A dict with the threshold of the
             half-closed intervals that mark off clonal groups. Passed to the
             `.clone.types` arguments of `repClonoality()`. The keys could be:
             - Rare: the rare clonotypes
@@ -194,9 +194,9 @@ class Immunarch(Proc):
             - Medium: the medium clonotypes
             - Large: the large clonotypes
             - Hyperexpanded: the hyperexpanded clonotypes
-        hom_clone_by (ctype=auto): Groupings when visualize homeo clones
+        hom_clone_by (type=auto): Groupings when visualize homeo clones
             Supported types of values are the same as `volume_by`.
-        overlap_methods (ctype=mchoice): The methods used for `repOverlap()`,
+        overlap_methods (mchoice): The methods used for `repOverlap()`,
             each will generate a heatmap.
             - public: number of public clonotypes between two samples.
             - overlap: a normalised measure of overlap similarity.
@@ -219,21 +219,21 @@ class Immunarch(Proc):
             - inc+morisita: incremental overlaps of the N most abundant
                 clonotypes with incrementally growing N using the morisita
                 method.
-        overlap_redim (ctype=list): Plot the samples with these dimension
+        overlap_redim (list): Plot the samples with these dimension
             reduction methods. The methods could be `hclust`, `tsne` or `mds`.
             They could also be combined, for example, `mds+hclust`.
             See https://immunarch.com/reference/repOverlapAnalysis.html
-        gu_by (ctype=auto): Groupings to show gene usages
+        gu_by (type=auto): Groupings to show gene usages
             Supported types of values are the same as `volume_by`.
         gu_top (type=int): How many top (ranked by total usage across samples)
             genes to show in the plots
-        gua_methods (type=list): controls how the data is going to be
+        gua_methods (list): controls how the data is going to be
             preprocessed and analysed. One of js, cor, cosine, pca, mds,
             and tsne. Can also be combined with following methods for the
             actual analysis: hclust, kmeans, dbscan, kruskal. For example:
             `cosine+hclust`.
             See https://immunarch.com/articles/web_only/v5_gene_usage.html
-        spect (ctype=json): A list of values for `.quant` and `.col` for
+        spect (type=json): A list of values for `.quant` and `.col` for
             `spectratype()` for each sample.
         div_methods (mchoice): Methods to calculate diversities
             - chao1: a nonparameteric asymptotic estimator of species richness
@@ -261,29 +261,29 @@ class Immunarch(Proc):
                 only one person has all the income).
             - raref: a technique to assess species richness from the results of
                 sampling through extrapolation.
-        div_by (ctype=auto): Groupings to show sample diversities
+        div_by (type=auto): Groupings to show sample diversities
             Supported types of values are the same as `volume_by`.
         raref (ns): Parameters to control the rarefaction analysis
             - by: The variables to group samples
             - separate_by: The variable to separate samples, which will be
                 plotted in separate figures. Currently only support one variable
-            - align_y (action=store_true): Align max of y-axis if there are
+            - align_y (flag): Align max of y-axis if there are
                 multiple figures
-            - align_x (action=store_true): Align max of x-axis if there are
+            - align_x (flag): Align max of x-axis if there are
                 multiple figures
-            - log (action=store_true): Also plot log-transformed x-axis using
+            - log (flag): Also plot log-transformed x-axis using
                 `vis(.log = TRUE)`.
             - <other>: Other arguments for `repDiversity(.method="raref", ...)`
                 i.e. ".step", ".norm"
-        tracking_target (ctype=json): Either a list of AA seq of clonotypes
+        tracking_target (type=json): Either a list of AA seq of clonotypes
             to track, or a dict of those lists. The keys will be used as
             the names of the tracks. If you want to track the top N clonotypes,
             you can use `{"TOP": N}`.
-        tracking_samples (ctype=json): The samples to track. If not specified,
+        tracking_samples (type=json): The samples to track. If not specified,
             all samples will be used. Make sure the keys in `tracking_target`
             and `tracking_samples` are the same, if you want to track multiple
             cases at the same time.
-        kmers (ctype=json): Arguments for kmer analysis.
+        kmers (type=json): Arguments for kmer analysis.
             There can be multiple `head`s and `motif`s.
             If you do want multiple parameter sets for the same K, You can use
             a float number as the K. For example: `5.1` for K `5`.
@@ -410,14 +410,14 @@ class CloneResidency(Proc):
         outdir: The output directory
 
     Envs:
-        subject (ctyle=list): The key of subject in metadata. The clone
+        subject (list): The key of subject in metadata. The clone
             residency will be examined for this subject/patient
         group: The key of group in metadata. This usually marks the samples
             that you want to compare. For example, Tumor vs Normal,
             post-treatment vs baseline
             It doesn't have to be 2 groups always. If there are more than 3
             groups, instead of venn diagram, upset plots will be used.
-        order (ctyle=list): The order of the values in `group`. Early-ordered
+        order (list): The order of the values in `group`. Early-ordered
             group will be used as x-axis in scatter plots
             If there are more than 2 groups, for example, [A, B, C], the
             scatter plots will be drawn for pairs: B ~ A, C ~ B and C ~ A.
@@ -578,7 +578,7 @@ class TCRClustering(Proc):
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
-        on_multi (action=store_true;hidden): Whether to run clustering on
+        on_multi (flag;hidden): Whether to run clustering on
             multi-chain seq or the seq read and processed by immunarch
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
@@ -625,11 +625,11 @@ class TCRClusteringStats(Proc):
 
     Envs:
         shared_clusters (ns): Stats about shared TCR clusters
-            - numbers_on_heatmap (action=store_true): Whether to show the
+            - numbers_on_heatmap (flag): Whether to show the
                 numbers on the heatmap
             - heatmap_meta (list): The metadata to show on the heatmap
             - grouping: The groups to investigate the shared clusters
-        sample_diversity (ctype=json): Sample diversity using TCR clusters
+        sample_diversity (type=json): Sample diversity using TCR clusters
             instead of clones keys are the methods and values, currently, `by`
             to plot the diversities by groups
 

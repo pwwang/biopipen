@@ -5,7 +5,8 @@ from ..core.config import config
 
 
 class CNVkitAccess(Proc):
-    """Run cnvkit access
+    """Calculate the sequence-accessible coordinates in chromosomes from the
+    given reference genome using `cnvkit.py access`
 
     Input:
         excfiles: Additional regions to exclude, in BED format
@@ -14,8 +15,9 @@ class CNVkitAccess(Proc):
         outfile: The output file
 
     Envs:
-        cnvkit: Path to cnvkit.py
-        min_gap_size: Minimum gap size between accessible sequence regions
+        cnvkit: Path to `cnvkit.py`
+        min_gap_size (type=int): Minimum gap size between accessible sequence
+            regions
         ref: The reference genome fasta file
 
     Requires:
@@ -36,7 +38,12 @@ class CNVkitAccess(Proc):
 
 
 class CNVkitAutobin(Proc):
-    """Run cnvkit autobin
+    """Quickly estimate read counts or depths in a BAM file to estimate
+    reasonable on- and (if relevant) off-target bin sizes.
+
+    Using `cnvkit.py autobin`.
+
+    If multiple BAMs are given, use the BAM with median file size.
 
     Input:
         bamfiles: The bamfiles
@@ -50,22 +57,23 @@ class CNVkitAutobin(Proc):
         antitarget_file: The antitarget BED output
 
     Envs:
-        cnvkit: Path to cnvkit.py
-        method: Sequencing protocol: hybridization capture ('hybrid'),
-            targeted amplicon sequencing ('amplicon'),
-            or whole genome sequencing ('wgs'). Determines
-            whether and how to use antitarget bins.
-        bp_per_bin: Desired average number of sequencing read bases mapped to
-            each bin.
-        target_max_size: Maximum size of target bins.
-        target_min_size: Minimum size of target bins.
-        antitarget_max_size: Maximum size of antitarget bins.
-        antitarget_min_size: Minimum size of antitarget bins.
+        cnvkit: Path to `cnvkit.py`
+        method (choice): Sequencing protocol. Determines whether and how to use
+            antitarget bins.
+            - hybrid: Hybridization capture
+            - amplicon: Targeted amplicon sequencing
+            - wgs: Whole genome sequencing
+        bp_per_bin (type=int): Desired average number of sequencing read bases
+            mapped to each bin.
+        target_max_size (type=int): Maximum size of target bins.
+        target_min_size (type=int): Minimum size of target bins.
+        antitarget_max_size (type=int): Maximum size of antitarget bins.
+        antitarget_min_size (type=int): Minimum size of antitarget bins.
         annotate: Use gene models from this file to assign names to the target
             regions. Format: UCSC refFlat.txt or ensFlat.txt file (preferred),
             or BED, interval list, GFF, or similar.
-        short_names: Reduce multi-accession bait labels to be short and
-            consistent.
+        short_names (flag): Reduce multi-accession bait labels to
+            be short and consistent.
         ref: The reference genome fasta file
 
     Requires:
@@ -87,7 +95,7 @@ class CNVkitAutobin(Proc):
         "target_min_size": 20,
         "antitarget_max_size": 500000,
         "antitarget_min_size": 500,
-        "annotate": False,
+        "annotate": None,
         "short_names": False,
         "ref": config.ref.reffa,
     }
@@ -106,10 +114,11 @@ class CNVkitCoverage(Proc):
 
     Envs:
         cnvkit: Path to cnvkit.py
-        count: Get read depths by counting read midpoints within each bin. (An
-            alternative algorithm).
-        min_mapq: Minimum mapping quality to include a read.
-        ncores: Number of subprocesses to calculate coverage in parallel
+        count (flag): Get read depths by counting read midpoints
+            within each bin. (An alternative algorithm).
+        min_mapq (type=int): Minimum mapping quality to include a read.
+        ncores (type=int): Number of subprocesses to calculate coverage
+            in parallel
         ref: The reference genome fasta file
 
     Requires:
@@ -155,16 +164,18 @@ class CNVkitReference(Proc):
 
     Envs:
         cnvkit: Path to cnvkit.py
-        cluster: Calculate and store summary stats for clustered subsets of
-            the normal samples with similar coverage profiles.
-        min_cluster_size: Minimum cluster size to keep in reference profiles.
-        male_reference: Create a male reference: shift female samples
-            chrX log-coverage by -1, so the reference chrX average is -1.
-            Otherwise, shift male samples chrX by +1, so the reference
-            chrX average is 0.
-        no_gc: Skip GC correction.
-        no_edge: Skip edge-effect correction.
-        no_rmask: Skip RepeatMasker correction.
+        cluster (flag): Calculate and store summary stats for
+            clustered subsets of the normal samples with similar coverage
+            profiles.
+        min_cluster_size (type=int): Minimum cluster size to keep in reference
+            profiles.
+        male_reference (flag): Create a male reference: shift
+            female samples chrX log-coverage by -1, so the reference chrX
+            average is -1. Otherwise, shift male samples chrX by +1, so the
+            reference chrX average is 0.
+        no_gc (flag): Skip GC correction.
+        no_edge (flag): Skip edge-effect correction.
+        no_rmask (flag): Skip RepeatMasker correction.
         ref: The reference genome fasta file
 
     Requires:
@@ -188,8 +199,7 @@ class CNVkitReference(Proc):
     envs = {
         "cnvkit": config.exe.cnvkit,
         "cluster": False,
-        "min_cluster_size": False,
-        "sample_sex": False,
+        "min_cluster_size": 4,
         "male_reference": False,
         "no_gc": False,
         "no_edge": False,
@@ -214,12 +224,12 @@ class CNVkitFix(Proc):
 
     Envs:
         cnvkit: Path to cnvkit.py
-        cluster: Compare and use cluster-specific values present in the
-            reference profile
+        cluster (flag): Compare and use cluster-specific values
+            present in the reference profile.
             (requires `envs.cluster=True` for `CNVkitReference`).
-        no_gc: Skip GC correction.
-        no_edge: Skip edge-effect correction.
-        no_rmask: Skip RepeatMasker correction.
+        no_gc (flag): Skip GC correction.
+        no_edge (flag): Skip edge-effect correction.
+        no_rmask (flag): Skip RepeatMasker correction.
 
     Requires:
         cnvkit:
@@ -268,21 +278,22 @@ class CNVkitSegment(Proc):
         threshold: Significance threshold (p-value or FDR, depending on method)
             to accept breakpoints during segmentation. For HMM methods,
             this is the smoothing window size.
-        drop_low_coverage: Drop very-low-coverage bins before segmentation to
-            avoid false-positive deletions in poor-quality tumor samples.
-        drop_outliers: Drop outlier bins more than this many multiples of
-            the 95th quantile away from the average within a rolling window.
-            Set to 0 for no outlier filtering.
+        drop_low_coverage (flag): Drop very-low-coverage bins
+            before segmentation to avoid false-positive deletions in
+            poor-quality tumor samples.
+        drop_outliers (type=int): Drop outlier bins more than this many
+            multiples of the 95th quantile away from the average within a
+            rolling window. Set to 0 for no outlier filtering.
         rscript: Path to Rscript
-        ncores: Number of subprocesses to segment in parallel
+        ncores (type=int): Number of subprocesses to segment in parallel.
             0 or negative for all available cores
-        smooth_cbs: Perform an additional smoothing before CBS segmentation,
-            which in some cases may increase the sensitivity. Used only for
-            CBS method.
-        min_variant_depth: Minimum read depth for a SNV to be displayed
-            in the b-allele frequency plot.
-        zygosity_freq: Ignore VCF's genotypes (GT field) and instead infer
-            zygosity from allele frequencies.
+        smooth_cbs (flag): Perform an additional smoothing before
+            CBS segmentation, which in some cases may increase the sensitivity.
+            Used only for CBS method.
+        min_variant_depth (type=int): Minimum read depth for a SNV to be
+            displayed in the b-allele frequency plot.
+        zygosity_freq (type=float): Ignore VCF's genotypes (GT field) and
+            instead infer zygosity from allele frequencies.
 
     Requires:
         cnvkit:
@@ -296,7 +307,7 @@ class CNVkitSegment(Proc):
     envs = {
         "cnvkit": config.exe.cnvkit,
         "method": "cbs",
-        "threshold": False,
+        "threshold": None,
         "drop_low_coverage": False,
         "drop_outliers": 10,
         "rscript": config.lang.rscript,
@@ -328,34 +339,41 @@ class CNVkitScatter(Proc):
     Envs:
         cnvkit: Path to cnvkit.py
         convert: Path to `convert` to convert pdf to png file
-        convert_args: The arguments for `convert`
+        convert_args (ns): The arguments for `convert`
+            - density (type=int): Horizontal and vertical density of the image
+            - quality (type=int): JPEG/MIFF/PNG compression level
+            - background: Background color
+            - alpha: Activate, deactivate, reset, or set the alpha channel
+            - <more>: See `convert -help` and also:
+                https://linux.die.net/man/1/convert
         chromosome: Chromosome or chromosomal range,
             e.g. 'chr1' or 'chr1:2333000-2444000', to display.
             If a range is given, all targeted genes in this range will be
             shown, unless -g/--gene is also given.
         gene: Name of gene or genes (comma-separated) to display.
-        width: Width of margin to show around the selected gene(s) (-g/--gene)
-            or small chromosomal region (-c/--chromosome).
-        antitarget_marker: Plot antitargets using this symbol when plotting
-            in a selected chromosomal region (-g/--gene or -c/--chromosome).
-            Same as targets if not given
-        by_bin: Plot data x-coordinates by bin indices instead of genomic
-            coordinates. All bins will be shown with equal width, no blank
-            regions will be shown, and x-axis values indicate bin number
-            (within chromosome) instead of genomic position.
+        width (type=int): Width of margin to show around the selected gene(s)
+            (-g/--gene) or small chromosomal region (-c/--chromosome).
+        antitarget_marker (flag): Plot antitargets using this
+            symbol when plotting in a selected chromosomal region
+            (-g/--gene or -c/--chromosome).
+        by_bin (flag): Plot data x-coordinates by bin indices
+            instead of genomic coordinates. All bins will be shown with equal
+            width, no blank regions will be shown, and x-axis values indicate
+            bin number (within chromosome) instead of genomic position.
         segment_color: Plot segment lines in this color. Value can be
             any string accepted by matplotlib, e.g. 'red' or '#CC0000'.
-        trend: Draw a smoothed local trendline on the scatter plot.
-        y_max: y-axis upper limit.
-        y_min: y-axis lower limit.
-        min_variant_depth: Minimum read depth for a SNV to be displayed
-            in the b-allele frequency plot.
-        zygosity_freq: Ignore VCF's genotypes (GT field) and instead infer
-            zygosity from allele frequencies.
+        trend (flag): Draw a smoothed local trendline on the
+            scatter plot.
+        y_max (type=int): y-axis upper limit.
+        y_min (tyoe=int): y-axis lower limit.
+        min_variant_depth (type=int): Minimum read depth for a SNV to be
+            displayed in the b-allele frequency plot.
+        zygosity_freq (typ=float): Ignore VCF's genotypes (GT field) and
+            instead infer zygosity from allele frequencies.
         title: Plot title. Sample ID if not provided.
-        cases: The cases for different plots with keys as case names and values
-            to overwrite the default args given by `envs.<args>`, including -
-            `convert_args`, `by_bin`, `chromosome`, `gene`, `width`
+        cases (type=json): The cases for different plots with keys as case names
+            and values to overwrite the default args given by `envs.<args>`,
+            including  `convert_args`, `by_bin`, `chromosome`, `gene`, `width`
             `antitarget_marker`, `segment_color`, `trend`, `y_max`, `y_min`,
             `min_variant_depth`, `zygosity_freq` and `title.
             By default, an `all` case will be created with default arguments
@@ -382,18 +400,18 @@ class CNVkitScatter(Proc):
             "background": "white",
             "alpha": "remove",
         },
-        "chromosome": False,
-        "gene": False,
+        "chromosome": None,
+        "gene": None,
         "width": 1000000,
         "antitarget_marker": False,
         "by_bin": False,
-        "segment_color": False,
+        "segment_color": None,
         "trend": False,
-        "y_max": False,
-        "y_min": False,
+        "y_max": None,
+        "y_min": None,
         "min_variant_depth": 20,
         "zygosity_freq": 0.25,
-        "title": False,
+        "title": None,
         "cases": {},
     }
     script = "file://../scripts/cnvkit/CNVkitScatter.py"
@@ -417,19 +435,25 @@ class CNVkitDiagram(Proc):
 
     Envs:
         cnvkit: Path to cnvkit.py
-        convert: Path to `convert` to convert PDF to png
-        convert_args: The default arguments for convert
-        threshold: Copy number change threshold to label genes.
-        min_probes: Minimum number of covered probes to label a gene.
-        male_reference: Assume inputs were normalized to a male reference
-            (i.e. female samples will have +1 log-CNR of chrX; otherwise
-            male samples would have -1 chrX).
-        no_shift_xy: Don't adjust the X and Y chromosomes according
-            to sample sex.
+        convert: Path to `convert` to convert pdf to png file
+        convert_args (ns): The arguments for `convert`
+            - density (type=int): Horizontal and vertical density of the image
+            - quality (type=int): JPEG/MIFF/PNG compression level
+            - background: Background color
+            - alpha: Activate, deactivate, reset, or set the alpha channel
+            - <more>: See `convert -help` and also:
+                https://linux.die.net/man/1/convert
+        threshold (type=float): Copy number change threshold to label genes.
+        min_probes (type=int): Minimum number of covered probes to label a gene.
+        male_reference (flag): Assume inputs were normalized to a
+            male reference (i.e. female samples will have +1 log-CNR of chrX;
+            otherwise male samples would have -1 chrX).
+        no_shift_xy (flag): Don't adjust the X and Y chromosomes
+            according to sample sex.
         title: Plot title. Sample ID if not provided.
-        cases: The cases with keys as names and values as different configs,
-            including `threshold`, `min_probes`, `male_reference`, `no_shift_xy`
-            and `title`
+        cases (type=json): The cases with keys as names and values as different
+            configs, including `threshold`, `min_probes`, `male_reference`,
+            `no_shift_xy` and `title`
 
     Requires:
         cnvkit:
@@ -453,7 +477,7 @@ class CNVkitDiagram(Proc):
         "min_probes": 3,
         "male_reference": False,
         "no_shift_xy": False,
-        "title": False,
+        "title": None,
         "cases": {},
     }
     script = "file://../scripts/cnvkit/CNVkitDiagram.py"
@@ -477,24 +501,31 @@ class CNVkitHeatmap(Proc):
 
     Envs:
         cnvkit: Path to cnvkit.py
-        convert: Path to `convert` to convert PDF to png
-        convert_args: The default arguments for convert
-        by_bin: Plot data x-coordinates by bin indices instead of genomic
-            coordinates. All bins will be shown with equal width,
-            no blank regions will be shown, and x-axis values indicate
+        convert: Path to `convert` to convert pdf to png file
+        convert_args (ns): The arguments for `convert`
+            - density (type=int): Horizontal and vertical density of the image
+            - quality (type=int): JPEG/MIFF/PNG compression level
+            - background: Background color
+            - alpha: Activate, deactivate, reset, or set the alpha channel
+            - <more>: See `convert -help` and also:
+                https://linux.die.net/man/1/convert
+        by_bin (flag): Plot data x-coordinates by bin indices
+            instead of genomic coordinates. All bins will be shown with equal
+            width, no blank regions will be shown, and x-axis values indicate
             bin number (within chromosome) instead of genomic position.
         chromosome: Chromosome (e.g. 'chr1') or chromosomal range
             (e.g. 'chr1:2333000-2444000') to display.
-        desaturate: Tweak color saturation to focus on significant changes.
-        male_reference: Assume inputs were normalized to a male reference
-            (i.e. female samples will have +1 log-CNR of chrX; otherwise
-            male samples would have -1 chrX).
-        no_shift_xy: Don't adjust the X and Y chromosomes according to
-            sample sex.
+        desaturate (flag): Tweak color saturation to focus on
+            significant changes.
+        male_reference (flag): Assume inputs were normalized to
+            a male reference. (i.e. female samples will have +1 log-CNR of chrX;
+            otherwise male samples would have -1 chrX).
+        no_shift_xy (flag): Don't adjust the X and Y chromosomes
+            according to sample sex.
         order: A file with sample names in the desired order.
-        cases: The cases for different plots with keys as case names and values
-            to overwrite the default args given by `envs.<args>`, including -
-            `convert_args`, `by_bin`, `chromosome`, `desaturate`,
+        cases (type=json): The cases for different plots with keys as case names
+            and values to overwrite the default args given by `envs.<args>`,
+            including `convert_args`, `by_bin`, `chromosome`, `desaturate`,
             `male_reference`, and, `no_shift_xy`.
             By default, an `all` case will be created with default arguments
             if no case specified
@@ -544,6 +575,7 @@ class CNVkitCall(Proc):
             b-allele frequencies.
         sample_sex: Specify the sample's chromosomal sex as male or female.
             (Otherwise guessed from X and Y coverage).
+        purity: Estimated tumor cell fraction, a.k.a. purity or cellularity.
 
     Output:
         outdir: The output directory including the call file (.call.cns)
@@ -553,25 +585,36 @@ class CNVkitCall(Proc):
         cnvkit: Path to cnvkit.py
         center: Re-center the log2 ratio values using this estimator of
             the center or average value.
-        center_at: Subtract a constant number from all log2 ratios.
+        center_at (type=float): Subtract a constant number from all log2 ratios.
             For "manual" re-centering, in case the --center option gives
             unsatisfactory results.)
-        filter: Merge segments flagged by the specified filter(s) with
-            the adjacent segment(s).
-        method: Calling method (threshold, clonal or none).
+        filter: Merge segments flagged by the specified
+            filter(s) with the adjacent segment(s).
+        method (choice): Calling method (threshold, clonal or none).
+            - threshold: Using hard thresholds for calling each integer copy
+                number.
+                Use `thresholds` to set a list of threshold log2 values for
+                each copy number state
+            - clonal: Rescaling and rounding.
+                For a given known tumor cell fraction and normal ploidy,
+                then simple rounding to the nearest integer copy number
+            - none: Do not add a “cn” column or allele copy numbers.
+                But still performs rescaling, re-centering, and extracting
+                b-allele frequencies from a VCF (if requested).
         thresholds: Hard thresholds for calling each integer copy number,
             separated by commas.
-        ploidy: Ploidy of the sample cells.
-        purity: Estimated tumor cell fraction, a.k.a. purity or cellularity.
-        drop_low_coverage: Drop very-low-coverage bins before segmentation
-            to avoid false-positive deletions in poor-quality tumor samples.
-        male_reference: Assume inputs were normalized to a male reference
+        ploidy (type=float): Ploidy of the sample cells.
+        drop_low_coverage (flag): Drop very-low-coverage bins
+            before segmentation to avoid false-positive deletions in
+            poor-quality tumor samples.
+        male_reference (flag): Assume inputs were normalized to a
+            male reference.
             (i.e. female samples will have +1 log-CNR of chrX; otherwise
             male samples would have -1 chrX).
-        min_variant_depth: Minimum read depth for a SNV to be displayed
-            in the b-allele frequency plot.
-        zygosity_freq: Ignore VCF's genotypes (GT field) and instead infer
-            zygosity from allele frequencies.
+        min_variant_depth (type=int): Minimum read depth for a SNV to be
+            displayed in the b-allele frequency plot.
+        zygosity_freq (type=float): Ignore VCF's genotypes (GT field) and
+            instead infer zygosity from allele frequencies.
 
     Requires:
         cnvkit:
@@ -591,8 +634,8 @@ class CNVkitCall(Proc):
     envs = {
         "cnvkit": config.exe.cnvkit,
         "center": "median",
-        "center_at": False,
-        "filter": False,
+        "center_at": None,
+        "filter": None,
         "method": "threshold",
         "thresholds": "-1.1,-0.25,0.2,0.7",
         "ploidy": 2,
@@ -731,16 +774,16 @@ class CNVkitGuessBaits(Proc):
 
     Envs:
         cnvkit: Path to cnvkit.py
-        guided: `in.atfile` is a potential target file when True, otherwise
-            it is an access file.
+        guided (flag): `in.atfile` is a potential target file when
+            `True`, otherwise it is an access file.
         samtools: Path to samtools executable
-        ncores: Number of subprocesses to segment in parallel
-            False to use the maximum number of available CPUs.
+        ncores (type=int): Number of subprocesses to segment in parallel
+            `0` to use the maximum number of available CPUs.
         ref: Path to a FASTA file containing the reference genome.
-        min_depth: Minimum sequencing read depth to accept as captured.
-            For guided only.
-        min_gap: Merge regions separated by gaps smaller than this.
-        min_length: Minimum region length to accept as captured.
+        min_depth (type=int): Minimum sequencing read depth to accept as
+            captured. For guided only.
+        min_gap (type=int): Merge regions separated by gaps smaller than this.
+        min_length (type=int): Minimum region length to accept as captured.
             `min_gap` and `min_length` are for unguided only.
     """
     input = "bamfiles:files, atfile:file"

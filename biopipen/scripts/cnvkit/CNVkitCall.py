@@ -34,9 +34,9 @@ def main():
     cmd.extend(["--method", method])
     cmd.extend(["--ploidy", ploidy])
     cmd.extend(["--output", outfile])
-    if filter is not False:
+    if filter is not None:
         cmd.extend(["--filter", filter])
-    if center_at is not False:
+    if center_at is not None:
         cmd.extend(["--center-at", center_at])
     if thresholds and method == "threshold":
         cmd.append(f"--thresholds={thresholds}")

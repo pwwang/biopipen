@@ -1,3 +1,27 @@
+## 0.12.0
+
+- ⬆️ Bump `pipen` to 0.10
+- ⬆️ Bump pipen-runinfo to 0.1.1
+- ⬆️ Bump pipen-report to 0.12 and pipen-runinfo to 0.2
+- ⬆️ Bump pipen-args to 0.10.2
+- ⬆️ Bump pipen-board to 0.5.6
+- 📝 Use `flag` instead `action=store_true` in docstring
+- ✅ [utils.gene] Fix tests
+- 🎨 [scrna.SeuratMap2Ref] Add envs.MappingScore
+- ✨ [scrna.SeuratMap2Ref] Add report template
+- 💄 [scrna.SeuratMap2Ref] Make figures in 2 columns in report
+- ✨ [scrna.CellTypeAnnotate] Add ScCATCH for cell type annotation
+- 🎨 [scrna.CellTypeAnnotate] Warn when no cell types are given
+- 🐛 [cnvkit] Fix when some arguments are `None`
+- 📝 [cnvkit_pipeline] Update docstrings to adopt latest pipen-annotate and pipen-board
+- 📝 [cnv] Update docstring
+- 🚑 [cnv.AneuploidyScoreSummary] Fix when envs.group_col is None but in.metafile is given
+- 👷 [scrna_basic] Init docker image building action
+- 👷 [scrna_basic] Fix dockhub credentials
+- 📝 [scrna_basic] Update docstrings to adopt latest pipen-annotate and pipen-board
+- 📝 [scrna_basic] Add documentation
+- 🔧 [scrna_basic] Update configuration for docker image building
+
 ## 0.11.0
 
 - ⬆️ Bump pipen to 0.9

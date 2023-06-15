@@ -7,7 +7,7 @@
 configfile = "configfile"
 editable = true
 allow_run = true
-desc = "Compose a command to the pipeline locally"
+desc = "Compose a command to run the pipeline locally"
 command = "pipen run {{pipeline_module}} {{pipeline_class}} @${configfile}"
 
 

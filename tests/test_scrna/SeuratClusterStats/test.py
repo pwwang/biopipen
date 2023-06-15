@@ -34,7 +34,7 @@ class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
     envs = {
         "FindIntegrationAnchors": {"reduction": "cca"},
-        "IntegrateData": {"k.weight": 5},
+        "IntegrateData": {"k-weight": 5},
     }
 
 

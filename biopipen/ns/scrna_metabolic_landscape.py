@@ -41,7 +41,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             not specified, meaning `<pipeline>.procs.MetabolicInput` is
             dependent on other processes, this option will be used to determine
             whether the input is a seurat object or not.
-        noimpute (action=store_true): Whether to do imputation for the dropouts.
+        noimpute (flag): Whether to do imputation for the dropouts.
             If False, the values will be left as is.
         gmtfile: The GMT file with the metabolic pathways. The gene names should
             match the gene names in the gene list in RNADir or the Seurat object
@@ -51,17 +51,17 @@ class ScrnaMetabolicLandscape(ProcGroup):
             For example, if we have `grouping_prefix = "cluster"` and
             we have `1` and `2` in the `grouping` column, the groups
             will be named as `cluster_1` and `cluster_2`
-        subsetting (ctype=auto): How do we subset the data. Other columns in the
+        subsetting (type=auto): How do we subset the data. Other columns in the
             metadata to do comparisons. For example, `"TimePoint"` or
             `["TimePoint", "Response"]`
-        subsetting_prefix (ctype=auto): Working as a prefix to subset names
+        subsetting_prefix (type=auto): Working as a prefix to subset names
             For example, if we have `subsetting_prefix = "timepoint"` and
             we have `pre` and `post` in the `subsetting` column, the subsets
             will be named as `timepoint_pre` and `timepoint_post`
             If `subsetting` is a list, then this should also be a same-length
             list. If a single string is given, it will be repeated to a list
             with the same length as `subsetting`
-        subsetting_comparison (ctype=json): What kind of comparisons are we
+        subsetting_comparison (type=json): What kind of comparisons are we
             doing to compare cells from different subsets.
             It should be dict with keys as the names of the comparisons and
             values as the 2 comparison groups from the `subsetting` column.
@@ -80,7 +80,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             example above, we will have `pre_vs_post` comparisons within
             each group.
             If `subsetting` is a list, this must be a list with the same length.
-        mutaters (ctype=json): Add new columns to the metadata for
+        mutaters (type=json): Add new columns to the metadata for
             grouping/subsetting.
             They are passed to `sobj@meta.data |> mutate(...)`. For example,
             `{"timepoint": "if_else(treatment == 'control', 'pre', 'post')"}`
@@ -178,7 +178,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
         Envs:
             ncores (type=int): Number of cores to use for parallelization
                 Defaults to `ScrnaMetabolicLandscape.ncores`
-            fgsea (action=store_true): Whether to do fast gsea analysis
+            fgsea (flag): Whether to do fast gsea analysis
             prerank_method (choice): Method to use for gene preranking
                 Signal to noise: the larger the differences of the means
                 (scaled by the standard deviations); that is, the more distinct
@@ -254,7 +254,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
         Envs:
             ncores (type=int): Number of cores to use for parallelization
                 Defaults to `ScrnaMetabolicLandscape.ncores`
-            fgsea (action=store_true): Whether to do fast gsea analysis
+            fgsea (flag): Whether to do fast gsea analysis
             prerank_method (choice): Method to use for gene preranking
                 Signal to noise: the larger the differences of the means
                 (scaled by the standard deviations); that is, the more distinct

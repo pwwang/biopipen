@@ -1,7 +1,4 @@
-library(dplyr)
-library(HGNChelper)
 library(Seurat)
-source("{{biopipen_dir}}/scripts/scrna/sctype.R")
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
@@ -16,9 +13,14 @@ if (!is.list(celltypes)) {
     celltypes = as.list(celltypes)
     names(celltypes) = idents
 }
-celltypes$object = sobj
 
-sobj = do.call(RenameIdents, celltypes)
-sobj$seurat_clusters = Idents(sobj)
+if (length(celltypes) == 0) {
+    warning("No cell types are given!")
+} else {
+    celltypes$object = sobj
+    sobj = do_call(RenameIdents, celltypes)
+    sobj$seurat_clusters = Idents(sobj)
+
+}
 
 saveRDS(sobj, outfile)
