@@ -484,7 +484,7 @@
                     "changed": true,
                     "default": null,
                     "desc": "The accessible genomic regions.<br />\nIf not given, use `cnvkit.py access` to generate one.",
-                    "value": "/home/mayo/m161047/workspace/s208681.Insilico_data_mining/MAPPS/.pipen/CNVkitCAA/CNVkitAccess/0/output/ucsc_hg19.access.5000.bed"
+                    "value": null
                 },
                 "annotate": {
                     "changed": false,
@@ -750,7 +750,7 @@
                             "default": {
                                 "cnvkit": "cnvkit.py",
                                 "min_gap_size": 5000,
-                                "ref": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                "ref": "/example/example-data/genome.fasta"
                             },
                             "desc": "Environment variables for the process, used across jobs",
                             "value": {
@@ -770,10 +770,10 @@
                                 },
                                 "ref": {
                                     "changed": false,
-                                    "default": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                    "default": "/example/example-data/genome.fasta",
                                     "desc": "The reference genome fasta file.<br />\nDefaults group argument `reffa`.",
                                     "pgarg": "reffa",
-                                    "value": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                    "value": "/example/example-data/genome.fasta"
                                 }
                             }
                         },
@@ -901,13 +901,13 @@
                         },
                         "envs": {
                             "default": {
-                                "annotate": "/home/mayo/m161047/reference/hg19/refFlat.txt",
+                                "annotate": "/example/example-data/refFlat.txt",
                                 "antitarget_max_size": 500000,
                                 "antitarget_min_size": 500,
                                 "bp_per_bin": 100000,
                                 "cnvkit": "cnvkit.py",
                                 "method": "hybrid",
-                                "ref": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                "ref": "/example/example-data/genome.fasta",
                                 "short_names": true,
                                 "target_max_size": 20000,
                                 "target_min_size": 20
@@ -915,10 +915,10 @@
                             "desc": "Environment variables for the process, used across jobs",
                             "value": {
                                 "annotate": {
-                                    "default": "/home/mayo/m161047/reference/hg19/refFlat.txt",
+                                    "default": "/example/example-data/refFlat.txt",
                                     "desc": "Use gene models from this file to assign names to the target regions. Format: UCSC refFlat.txt or ensFlat.txt file (preferred), or BED, interval list, GFF, or similar..<br />\nDefaults to group argument `annotate`.",
                                     "pgarg": true,
-                                    "value": "/home/mayo/m161047/reference/hg19/refFlat.txt"
+                                    "value": "/example/example-data/refFlat.txt"
                                 },
                                 "antitarget_max_size": {
                                     "default": 500000,
@@ -963,10 +963,10 @@
                                     "value": "hybrid"
                                 },
                                 "ref": {
-                                    "default": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                    "default": "/example/example-data/genome.fasta",
                                     "desc": "The reference genome fasta file.<br />\nDefaults to group argument `reffa`.",
                                     "pgarg": "reffa",
-                                    "value": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                    "value": "/example/example-data/genome.fasta"
                                 },
                                 "short_names": {
                                     "default": true,
@@ -1276,7 +1276,7 @@
                                 "count": false,
                                 "min_mapq": 0,
                                 "ncores": 1,
-                                "ref": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                "ref": "/example/example-data/genome.fasta"
                             },
                             "desc": "Environment variables for the process, used across jobs",
                             "value": {
@@ -1307,10 +1307,10 @@
                                     "value": 1
                                 },
                                 "ref": {
-                                    "default": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                    "default": "/example/example-data/genome.fasta",
                                     "desc": "The reference genome fasta file.<br />\nDefaults to group argument `reffa`.",
                                     "pgarg": "reffa",
-                                    "value": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                    "value": "/example/example-data/genome.fasta"
                                 }
                             }
                         },
@@ -1411,7 +1411,7 @@
                                 "count": false,
                                 "min_mapq": 0,
                                 "ncores": 1,
-                                "ref": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                "ref": "/example/example-data/genome.fasta"
                             },
                             "desc": "Environment variables for the process, used across jobs",
                             "value": {
@@ -1442,10 +1442,10 @@
                                     "value": 1
                                 },
                                 "ref": {
-                                    "default": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                    "default": "/example/example-data/genome.fasta",
                                     "desc": "The reference genome fasta file.<br />\nDefaults to group argument `reffa`.",
                                     "pgarg": "reffa",
-                                    "value": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                    "value": "/example/example-data/genome.fasta"
                                 }
                             }
                         },
@@ -1890,7 +1890,7 @@
                                 "min_gap": 25,
                                 "min_length": 50,
                                 "ncores": 1,
-                                "ref": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                "ref": "/example/example-data/genome.fasta",
                                 "samtools": "samtools"
                             },
                             "desc": "Environment variables for the process, used across jobs",
@@ -1935,10 +1935,10 @@
                                     "value": 1
                                 },
                                 "ref": {
-                                    "default": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                    "default": "/example/example-data/genome.fasta",
                                     "desc": "Path to a FASTA file containing the reference genome..<br />\nDefaults to group argument `reffa`.",
                                     "pgarg": "reffa",
-                                    "value": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                    "value": "/example/example-data/genome.fasta"
                                 },
                                 "samtools": {
                                     "default": "samtools",
@@ -2258,7 +2258,7 @@
                                 "no_edge": false,
                                 "no_gc": false,
                                 "no_rmask": false,
-                                "ref": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                "ref": "/example/example-data/genome.fasta"
                             },
                             "desc": "Environment variables for the process, used across jobs",
                             "value": {
@@ -2314,10 +2314,10 @@
                                     "value": false
                                 },
                                 "ref": {
-                                    "default": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa",
+                                    "default": "/example/example-data/genome.fasta",
                                     "desc": "The reference genome fasta file.<br />\nDefaults to group argument `reffa`.",
                                     "pgarg": "reffa",
-                                    "value": "/home/mayo/m161047/reference/hg19/ucsc_hg19.fa"
+                                    "value": "/example/example-data/genome.fasta"
                                 }
                             }
                         },
