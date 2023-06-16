@@ -23,6 +23,22 @@ def run_command(
     print_command_handler: callable = print,
     **kwargs,
 ):
+    """Run a command.
+
+    Args:
+        cmd: A string or list of strings representing the command to run.
+        fg: Whether to run the command in the foreground.
+            Redirects stdout and stderr to the current process.
+        wait: Whether to wait for the command to finish.
+            The command will be waited for if `fg` is `True`.
+        print_command: Whether to print the command before running it.
+        print_command_handler: The function to use to print the command.
+        kwargs: Keyword arguments to pass to `subprocess.Popen`.
+
+    Returns:
+        The return code of the command if `wait` is `True` or `fg` is `False`.
+        Otherwise, returns the `Popen` object.
+    """
     import shlex
     from subprocess import Popen, PIPE
 
