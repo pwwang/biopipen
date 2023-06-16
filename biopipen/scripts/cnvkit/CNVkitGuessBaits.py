@@ -1,6 +1,9 @@
+import time
+import subprocess
+from shutil import which
 from pathlib import Path, PosixPath  # for as_path
 
-import cmdy
+from biopipen.utils.misc import run_command
 
 bamfiles = {{in.bamfiles | repr}}  # pyright: ignore
 atfile = {{in.atfile | repr}}  # pyright: ignore
@@ -32,9 +35,24 @@ else:
 biopipen_dir = {{biopipen_dir | repr}}  # pyright: ignore
 
 # get the python path from cnvkit.py
-python = Path(
-    cmdy.which(cnvkit).stdout.strip()
-).resolve().read_text().splitlines()[0][2:].strip()
+cnvkit_path = Path(which(cnvkit))
+# Modify cnvkit.py to a unique tmp path, named with timestamp
+# to find the python path
+tmp_cnvkit_path = Path("/tmp/cnvkit-{}.py".format(time.time()))
+with tmp_cnvkit_path.open("w") as f:
+    for line in cnvkit_path.read_text().splitlines():
+        if line.startswith("if __name__ == "):
+            f.write(line + "\n")
+            f.write("    import sys\n")
+            f.write("    print(sys.executable)\n")
+            break
+        else:
+            f.write(line + "\n")
+# make tmp_cnvkit_path executable
+tmp_cnvkit_path.chmod(0o755)
+# run tmp_cnvkit_path to get the python path
+python = subprocess.check_output([tmp_cnvkit_path]).decode("utf-8").strip()
+
 guess_baits = Path(biopipen_dir).joinpath("scripts", "cnvkit", "guess_baits.py")
 
 params.update({
@@ -43,11 +61,17 @@ params.update({
     "p": ncores,
     "f": ref,
     "s": samtools,
-    "_": bamfiles,
-    "_exe": python
 })
 
-cmd = cmdy.python(guess_baits, **params).hold()
-print("Running command:")
-print(cmd.strcmd)
-cmd.fg().run()
+cmd = [python, guess_baits]
+for k, v in params.items():
+    if len(k) == 1:
+        cmd.append("-{}".format(k))
+        cmd.append(v)
+    else:
+        cmd.append("--{}".format(k))
+        cmd.append(v)
+
+cmd.extend(bamfiles)
+
+run_command(cmd, fg=True)

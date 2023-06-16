@@ -60,7 +60,7 @@ class CNVkitPipeline(ProcGroup):
     >>> # pipeline.procs.<proc>: The process with name <proc>
 
     Args:
-        metafile (order=-99): A tab-separated file
+        metafile (order=-99): A tab-separated file.
             * Sample: Unique IDs of the samples. Required.
             * `<bam>`: The path to the bam file, better using absolute path.
             * `<group>`: The type of the sample, defining the tumor/normal
@@ -286,15 +286,15 @@ class CNVkitPipeline(ProcGroup):
             # Use only specified
             guess_baits = df[self.col.guess_baits]
             return df.loc[
-                guess_baits == True  # noqa
-                | guess_baits == "True"
-                | guess_baits == "TRUE"
-                | guess_baits == "true"
-                | guess_baits == "1"
-                | guess_baits == 1
-                | guess_baits == "yes"
-                | guess_baits == "YES"
-                | guess_baits == "Yes",
+                (guess_baits == True)  # noqa
+                | (guess_baits == "True")
+                | (guess_baits == "TRUE")
+                | (guess_baits == "true")
+                | (guess_baits == "1")
+                | (guess_baits == 1)
+                | (guess_baits == "yes")
+                | (guess_baits == "YES")
+                | (guess_baits == "Yes"),
                 self.col.bam,
             ].tolist()
 

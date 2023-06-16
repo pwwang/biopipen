@@ -21,7 +21,7 @@ pip install biopipen
 
 ### Installing the dependencies
 
-Other tools and packages are required to run the pipeline. They are listed in `https://github.com/pwwang/biopipen/blob/dev/docker/scrna_basic/env.yml`. You can install them with `conda`:
+Other tools and packages are required to run the pipeline. They are listed in `https://github.com/pwwang/biopipen/blob/master/docker/scrna_basic/env.yml`. You can install them with `conda`:
 
 ```bash
 conda env create -n scrna-basic -f env.yml
@@ -88,7 +88,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         --rm \
         # Map current directory to /workdir in the container, and set it as the working directory
         -v .:/workdir -w /workdir \
-        biopipen/scrna_basic:dev \
+        biopipen/scrna_basic:master \
         pipen run scrna_basic @scrna_basic.toml
     ```
 
@@ -99,7 +99,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         -c -e -w \
         # Map current directory to /workdir in the container, and set it as the working directory
         --pwd /workdir -B .:/workdir \
-        docker://biopipen/scrna_basic:dev \
+        docker://biopipen/scrna_basic:master \
         pipen run scrna_basic @scrna_basic.toml
     ```
 
@@ -111,7 +111,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         -p 18521:18521 \
         # Map current directory to /workdir in the container, and set it as the working directory
         -v .:/workdir -w /workdir \
-        biopipen/scrna_basic:dev \
+        biopipen/scrna_basic:master \
         pipen board biopipen.ns.scrna_basic:ScrnaBasic
     ```
 
@@ -122,7 +122,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         -c -e -w \
         # Map current directory to /workdir in the container, and set it as the working directory
         --pwd /workdir -B .:/workdir \
-        docker://biopipen/scrna_basic:dev \
+        docker://biopipen/scrna_basic:master \
         pipen board biopipen.ns.scrna_basic:ScrnaBasic
     ```
 
@@ -139,7 +139,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
 Supposing you have the dependencies installed, you can run the following command to parepare the input data:
 
 ```bash
-curl -fsSL https://github.com/pwwang/biopipen/raw/dev/docker/scrna_basic/make-examples.sh | bash
+curl -fsSL https://github.com/pwwang/biopipen/raw/master/docker/scrna_basic/make-examples.sh | bash
 ```
 
 This will prepare the input data in the current directory, so make sure your current directory is clean.
@@ -209,7 +209,7 @@ So you can reuse the above configuration file, and run the pipeline via docker/s
 docker run \
     --rm \
     -v .:/workdir -w /workdir \
-    biopipen/scrna_basic:dev \
+    biopipen/scrna_basic:master \
     pipen run scrna_basic @scrna_basic.toml
 ```
 
@@ -219,7 +219,7 @@ or using singularity:
 singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
-    docker://biopipen/scrna_basic:dev \
+    docker://biopipen/scrna_basic:master \
     pipen run scrna_basic @scrna_basic.toml
 ```
 
@@ -229,7 +229,7 @@ But you are recommended to run the pipeline via `pipen-board` from the container
 docker run \
     --rm \
     -v .:/workdir -w /workdir \
-    biopipen/scrna_basic:dev \
+    biopipen/scrna_basic:master \
     pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example
 ```
 
@@ -239,7 +239,7 @@ or using singularity:
 singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
-    docker://biopipen/scrna_basic:dev \
+    docker://biopipen/scrna_basic:master \
     pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example
 ```
 
@@ -252,7 +252,7 @@ And then load the `Example` configuration file and run it.
     docker run \
         --rm \
         -v .:/workdir -w /workdir \
-        biopipen/scrna_basic:dev \
+        biopipen/scrna_basic:master \
         pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example -a /biopipen/board.toml
     ```
 

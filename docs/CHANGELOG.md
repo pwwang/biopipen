@@ -1,3 +1,19 @@
+## 0.13.0
+
+- ⬆️ Bump pipen-board to 0.5.8
+- ♻️ [scrna_basic] Change detault tag from dev to master for docker image
+- 📝 [scrna_basic] Change detault tag from dev to master in docs
+- 🔧 [scrna_basic] Change detault tag from dev to master in entry.sh
+- 🔧 [scrna_basic] Fix make-examples.sh when running indenpendently
+- 🔧 [scrna_basic] Add plugin_opts.report_no_collapse in board.html
+- 🚧 [cnvkit_pipeline] Init docker building
+- ⚙️ [cnvkit_pipeline] Make examples
+- ⚙️ [cnvkit_pipeline] Update example.json for pipen-board
+- 🔧 [cnvkit_pipeline] Fix example in docker image
+- 📝 [scrna_metabolic_landscape] Update docstrings to adopt pipen-board
+- 📝 [utils.misc] Add docstring for run_command
+- 🐛 [cnvkit.CNVkitGuessBaits] Use a better way to determine python of `cnvkit.py`
+
 ## 0.12.0
 
 - ⬆️ Bump `pipen` to 0.10

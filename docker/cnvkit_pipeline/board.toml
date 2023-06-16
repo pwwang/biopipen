@@ -37,7 +37,7 @@ Note that if pipen-board (the web interface) is running via singularity, you sho
 
 Otherwise, you can copy the command and run it in the terminal.
 """
-command = "singularity run --pwd /workdir -B .:/workdir -c -e -w docker://biopipen/scrna-basic:${tag} pipen run {{pipeline_module}} {{pipeline_class}} @${configfile}"
+command = "singularity run --pwd /workdir -B .:/workdir -c -e -w docker://biopipen/cnvkit-pipeline:${tag} pipen run {{pipeline_module}} {{pipeline_class}} @${configfile}"
 
 
 [RUNNING_OPTIONS.SINGULARITY.value.configfile]
@@ -48,7 +48,7 @@ placeholder = "{{name}}.config.toml"
 
 
 [RUNNING_OPTIONS.SINGULARITY.value.tag]
-desc = "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/scrna-basic/tags"
+desc = "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/cnvkit-pipeline/tags"
 required = true
 value = "master"
 placeholder = "master"
@@ -66,7 +66,7 @@ Note that if pipen-board (the web interface) is running via docker, you should c
 
 Otherwise, you can copy the command and run it in the terminal.
 """
-command = "docker run -p 18521:18521 --rm -w /workdir -v .:/workdir biopipen/scrna-basic:${tag} pipen run {{pipeline_module}} {{pipeline_class}} @${configfile}"
+command = "docker run -p 18521:18521 --rm -w /workdir -v .:/workdir biopipen/cnvkit-pipeline:${tag} pipen run {{pipeline_module}} {{pipeline_class}} @${configfile}"
 
 
 [RUNNING_OPTIONS.DOCKER.value.configfile]
@@ -77,7 +77,7 @@ placeholder = "{{name}}.config.toml"
 
 
 [RUNNING_OPTIONS.DOCKER.value.tag]
-desc = "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/scrna-basic/tags"
+desc = "The tag of the docker image on dockerhub.\nYou can find the available tags at https://hub.docker.com/r/biopipen/cnvkit-pipeline/tags"
 required = true
 value = "master"
 placeholder = "master"
