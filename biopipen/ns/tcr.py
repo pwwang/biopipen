@@ -698,3 +698,80 @@ class CloneSizeQQPlot(Proc):
     script = "file://../scripts/tcr/CloneSizeQQPlot.R"
     order = 3
     plugin_opts = {"report": "file://../reports/tcr/CloneSizeQQPlot.svelte"}
+
+
+class CDR3AAPhyschem(Proc):
+    """CDR3 AA physicochemical feature analysis
+
+    The idea is to perform a regression between two groups of cells
+    (e.g. Treg vs Tconv) at different length of CDR3 AA sequences.
+    The regression will be performed for each physicochemical feature of the
+    AA (hydrophobicity, volume and isolectric point).
+
+    Reference:
+        - https://www.nature.com/articles/ni.3491
+        - https://www.nature.com/articles/s41590-022-01129-x
+        - Wimley, W. C. & White, S. H. Experimentally determined hydrophobicity
+            scale for proteins at membrane - interfaces. Nat. Struct. Biol. 3,
+            842-848 (1996).
+        - Hdbk of chemistry & physics 72nd edition. (CRC Press, 1991).
+        - Zamyatnin, A. A. Protein volume in solution. Prog. Biophys. Mol. Biol.
+            24, 107-123 (1972).
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`, saved in RDS format
+        srtobj: The `Seurat` object, saved in RDS format, used to get the
+            metadata for each cell (e.g. cell type)
+            It could also be a tab delimited file with `meta.data` of the
+            `Seurat` object.
+            It has to have a `Sample` column, which is used to match the
+            `immdata` object.
+            It is optional, if not provided, the metadata from the `immdata`
+            object will be used.
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        group (required): The key of group in metadata to define the groups to
+            compare. For example, `CellType`, which has cell types annotated
+            for each cell in the combined object (immdata + Seurat metadata)
+        comparison (required;type=json): A dict of two groups, with keys as the
+            group names and values as the group labels. For example,
+            >>> {
+            >>>     "Treg": ["CD4 CTL", "CD4 Naive", "CD4 TCM", "CD4 TEM"],
+            >>>     "Tconv": "Tconv"
+            >>> }
+            It could also be a list of two groups, e.g., `["Treg", "Tconv"]`,
+            which will be expanded as `{"Treg": "Treg", "Tconv": "Tconv"}`
+        prefix: The prefix of the cell names (rownames) in the metadata.
+            The prefix is usually not needed in immdata, as the data is stored
+            in the `immdata` object separately for each sample. However, the
+            `Seurat` object has a combined `meta.data` for all the samples,
+            so the prefix is needed. Usually, the prefix is the sample name.
+            For example, `Sample1-AACGTTGAGGCTACGT-1`.
+            We need this prefix to add the sample name to the cell names in
+            immdata, so that we can match the cells in `immdata` and
+            `Seurat` object. Set it to `None` or an empty string if the
+            `Seurat` object has the same cell names as `immdata`. You can use
+            placeholders to specify the prefix, e.g., `{Sample}_`. In such a
+            case, the `Sample` column must exist in the `Seurat` object.
+        target (required): Which group to use as the target group. The target
+            group will be labeled as 1, and the other group will be labeled as
+            0 in the regression.
+        subset: A column, or a list of columns, in the merged object to subset
+            the cells to perform the regression, oneach group in the columns.
+            If not provided, all the cells will be used.
+    """
+    input = "immdata:file,srtobj:file"
+    output = "outdir:dir:{{in.immdata | stem}}.cdr3aaphyschem"
+    lang = config.lang.rscript
+    envs = {
+        "group": None,
+        "comparison": None,
+        "prefix": "{Sample}_",
+        "target": None,
+        "subset": None,
+    }
+    script = "file://../scripts/tcr/CDR3AAPhyschem.R"
+    plugin_opts = {"report": "file://../reports/tcr/CDR3AAPhyschem.svelte"}
