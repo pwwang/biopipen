@@ -2,6 +2,12 @@
 {% assign pipeline_module = pipeline | split: ":" | first | split: "." | last %}
 {% assign pipeline_class = pipeline | split: ":" | last %}
 
+[PIPELINE_OPTIONS.plugin_opts.value.report_no_collapse_pgs]
+desc = "Proc groups that are not collapsed in report index page. `true` to collapse all proc groups and `false` to collapse none."
+type = "bool"
+default = false
+value = true
+
 [RUNNING_OPTIONS.LOCAL]
 # Which option to use for saving the config file
 configfile = "configfile"
