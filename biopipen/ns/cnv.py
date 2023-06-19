@@ -94,3 +94,66 @@ class AneuploidyScoreSummary(Proc):
     plugin_opts = {
         "report": "file://../reports/cnv/AneuploidyScoreSummary.svelte",
     }
+
+
+class TMADScore(Proc):
+    """Trimmed Median Absolute Deviation (TMAD) score for CNV
+
+    Reference:
+        Mouliere, Chandrananda, Piskorz and Moore et al. Enhanced detection of
+        circulating tumor DNA by fragment size analysis Science Translational
+        Medicine (2018).
+
+    Input:
+        segfile: The seg file, two columns are required:
+            * chrom: The chromosome name, used for filtering
+            * seg.mean: The log2 ratio
+
+    Output:
+        outfile: The output file containing the TMAD score
+
+    Envs:
+        chrom_col: The column name for chromosome
+        seg_col: The column name for seg.mean
+        segmean_transform: The transformation function for seg.mean
+        excl_chroms (list): The chromosomes to be excluded
+    """
+    input = "segfile:file"
+    output = "outfile:file:{{in.segfile | stem0}}.tmad.txt"
+    lang = config.lang.rscript
+    envs = {
+        "chrom_col": "chrom",
+        "seg_col": "seg.mean",
+        "segmean_transform": None,
+        "excl_chroms": ["chrX", "chrY"],
+    }
+    script = "file://../scripts/cnv/TMADScore.R"
+
+
+class TMADScoreSummary(Proc):
+    """Summary table and plots for TMADScore
+
+    Input:
+        tmadfiles: The output files from TMADScore
+        metafile: The metafile containing the sample information
+            The first column must be the sample ID
+
+    Output:
+        outdir: The output directory containing the summary table and plots
+
+    Envs:
+        group_cols (type=auto): The column name in the metafile to group the
+            samples Could also be a list of column names
+            If not specified, samples will be plotted individually as a barplot
+        sample_name (text): An R function to extract the sample name from
+            the file stem, not including `.tmad.txt` part
+            (`stem.tmad.txt` -> `stem`)
+    """
+    input = "tmadfiles:files, metafile:file"
+    output = "outdir:dir:{{in.tmadfiles | first | stem0}}_etc.tmad_summary"
+    lang = config.lang.rscript
+    script = "file://../scripts/cnv/TMADScoreSummary.R"
+    envs = {"group_cols": None, "sample_name": "function(x) x"}
+    # plugin_opts = {
+    #     "report": "file://../reports/cnv/TMADScoreSummary.svelte",
+    # }

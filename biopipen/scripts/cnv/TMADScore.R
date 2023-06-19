@@ -1,0 +1,35 @@
+library(dplyr)
+
+segfile = {{in.segfile | quote}}
+outfile = {{out.outfile | quote}}
+chrom_col = {{envs.chrom_col | quote}}
+excl_chroms = {{envs.excl_chroms | r}}
+seg_col = {{envs.seg_col | quote}}
+seg_transform = {{envs.seg_col | r}}
+
+if (is.character(seg_transform)) {
+    seg_transform = eval(parse(text=seg_transform))
+} # otherwise NULL
+
+segments = read.table(segfile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
+seg = data.frame(
+    chrom = segments[, chrom_col],
+    log2 = segments[, seg_col]
+)
+rm(segments)
+
+if (!is.null(excl_chroms) && length(excl_chroms) > 0) {
+    excl_chroms = sapply(excl_chroms, function(x) ifelse(startsWith(x, "chr"), x, paste0("chr", x)))
+    seg = seg %>%
+        mutate(.chrom = if_else(startsWith(chrom, "chr"), chrom, paste0("chr", chrom))) %>%
+        filter(!.chrom %in% excl_chroms) %>%
+        select(-.chrom)
+}
+
+if (!is.null(seg_transform)) {
+    seg$log2 = seg_transform(seg$log2)
+}
+
+tmad = abs(mad(x = as.numeric(seg$log2), center=0, na.rm = TRUE))
+
+cat(tmad, file=outfile)
