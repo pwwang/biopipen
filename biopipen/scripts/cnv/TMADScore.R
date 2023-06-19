@@ -5,7 +5,7 @@ outfile = {{out.outfile | quote}}
 chrom_col = {{envs.chrom_col | quote}}
 excl_chroms = {{envs.excl_chroms | r}}
 seg_col = {{envs.seg_col | quote}}
-seg_transform = {{envs.seg_col | r}}
+seg_transform = {{envs.seg_transform | r}}
 
 if (is.character(seg_transform)) {
     seg_transform = eval(parse(text=seg_transform))
