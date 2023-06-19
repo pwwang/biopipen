@@ -93,13 +93,13 @@ trio = ["trio (<0.22)"]
 
 [[package]]
 name = "argx"
-version = "0.2.6"
+version = "0.2.8"
 description = "Super-charged argparse for python"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "argx-0.2.6-py3-none-any.whl", hash = "sha256:8f86ce9040b57e5e24b48f02710b31671e342fce0af56e0a990593e3b35bbdff"},
-    {file = "argx-0.2.6.tar.gz", hash = "sha256:d4a9107558b392686f5828932d39b3f4d00cd4134ecdf481c076d564ff0ec767"},
+    {file = "argx-0.2.8-py3-none-any.whl", hash = "sha256:0d7f5f8cc73f4bcbdc7b9598ebd8c1c80b8c85824d56a731b32280d72b333884"},
+    {file = "argx-0.2.8.tar.gz", hash = "sha256:067b2dddb1bf03b80acf905525869f7225f1b9007c48db14f73cc918c982d9a0"},
 ]
 
 [package.dependencies]
@@ -900,18 +900,19 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.6.0"
+version = "0.6.1"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.6.0-py3-none-any.whl", hash = "sha256:f585666d1b54c813eca19f6c2c58abbd29161d14408a1d749e4d6fa0a8650d28"},
-    {file = "pipen_board-0.6.0.tar.gz", hash = "sha256:4ac23863bbabb29e3d20987daf46caf537c1952b6557bae10b812f7cc285aa15"},
+    {file = "pipen_board-0.6.1-py3-none-any.whl", hash = "sha256:3fd5c7f4e416de178ddf8e8c0c53b04a6df1ab1daa6b449858a895eb40efd749"},
+    {file = "pipen_board-0.6.1.tar.gz", hash = "sha256:276cb76debd57ac1363aee929e86484ccf86196ce24ea0faa43b2a4e2871bee1"},
 ]
 
 [package.dependencies]
 pipen-args = ">=0.10.0,<0.11.0"
 pipen-log2file = ">=0.3.0,<0.4.0"
+pipen-report = ">=0.12.2,<0.13.0"
 psutil = ">=5.9.5,<6.0.0"
 quart = ">=0.18,<0.19"
 websocket-client = ">=1.5,<2.0"
@@ -960,13 +961,13 @@ pipen = ">=0.10.0,<0.11.0"
 
 [[package]]
 name = "pipen-report"
-version = "0.12.1"
+version = "0.12.2"
 description = "Report generation system for pipen"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_report-0.12.1-py3-none-any.whl", hash = "sha256:06d72c8c3a2f316853cdd35dbcb442a752f921fd3e5f0ed6f8a140e3c021ad29"},
-    {file = "pipen_report-0.12.1.tar.gz", hash = "sha256:4c74f534f4737fdcf54b784b5886a6471e7457901f23208aa18e85c9cdd1e79a"},
+    {file = "pipen_report-0.12.2-py3-none-any.whl", hash = "sha256:d0a130e4499bef90e2b38ae3993bf5467ae64aa3c6e4293128c96f3181d722fb"},
+    {file = "pipen_report-0.12.2.tar.gz", hash = "sha256:c2054eac0d18674c0533ade6511df2b42ef722131c1c76448a57393a724daf0a"},
 ]
 
 [package.dependencies]
