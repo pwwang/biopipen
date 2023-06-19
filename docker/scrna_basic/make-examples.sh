@@ -95,8 +95,9 @@ echo "+----------------------------------------+"
 echo ""
 if [ -d /biopipen ]; then
     # Only works in the docker container
-    cp /biopipen/docker/scrna_basic/example.json /biopipen/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
+    # L3dvcmtkaXIvLnBpcGVu is the base64 encoded string of "/workdir/.pipen"
+    cp /biopipen/docker/scrna_basic/example.json /biopipen/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.L3dvcmtkaXIvLnBpcGVu.json
 else
     mkdir -p ~/.pipen-board
-    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/scrna_basic/example.json -O ~/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.0000-00-00_00-00-00.json
+    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/scrna_basic/example.json -O ~/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.L3dvcmtkaXIvLnBpcGVu.json
 fi
