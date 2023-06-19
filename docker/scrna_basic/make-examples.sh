@@ -17,7 +17,7 @@ echo "| Donwloading example data               |"
 echo "+----------------------------------------+"
 echo ""
 if [[ ! -f $WORKDIR/ifnb.rda ]]; then
-    wget -q https://seurat.nygenome.org/src/contrib/ifnb.SeuratData_3.1.0.tar.gz -O $WORKDIR/ifnb.SeuratData_3.1.0.tar.gz
+    wget --no-check-certificate https://seurat.nygenome.org/src/contrib/ifnb.SeuratData_3.1.0.tar.gz -O $WORKDIR/ifnb.SeuratData_3.1.0.tar.gz
     tar zxvf ifnb.SeuratData_3.1.0.tar.gz -C $WORKDIR --strip-components=2 ifnb.SeuratData/data/ifnb.rda
     rm -f $WORKDIR/ifnb.SeuratData_3.1.0.tar.gz
 fi
