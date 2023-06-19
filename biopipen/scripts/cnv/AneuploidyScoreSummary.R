@@ -81,7 +81,7 @@ write.table(caa_seg, file.path(outdir, "CAA_seg.txt"), sep="\t", quote=F, row.na
 write.table(plotdata %>% filter(SignalType == "arm"), file.path(outdir, "AS_arm.txt"), sep="\t", quote=F, row.names=F, col.names=T)
 write.table(plotdata %>% filter(SignalType == "seg"), file.path(outdir, "AS_seg.txt"), sep="\t", quote=F, row.names=F, col.names=T)
 
-png(file.path(outdir, "CAAs.png"), width=1000, height=600, res=100)
+png(file.path(outdir, "CAAs.png"), width=400 + nrow(caa_arm) * 10, height=600, res=100)
 if (!is.null(meta)) {
     mapping = aes_string(x="Sample", y="Signal", fill="Group")
 } else {
