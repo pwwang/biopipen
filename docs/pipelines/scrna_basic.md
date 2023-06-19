@@ -230,7 +230,7 @@ docker run \
     --rm \
     -v .:/workdir -w /workdir \
     biopipen/scrna_basic:master \
-    pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic
 ```
 
 or using singularity:
@@ -240,7 +240,7 @@ singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
     docker://biopipen/scrna_basic:master \
-    pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic
 ```
 
 And then load the `Example` configuration file and run it.
@@ -253,7 +253,7 @@ And then load the `Example` configuration file and run it.
         --rm \
         -v .:/workdir -w /workdir \
         biopipen/scrna_basic:master \
-        pipen board biopipen.ns.scrna_basic:ScrnaBasic --name Example -a /biopipen/board.toml
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
     ```
 
     `/biopipen/board.toml` is the configuration file for `pipen-board` in the container. You can find it in the docker image. It only has options to generate command to run the pipeline locally (`LOCAL`, inside the same container in this case, if you run the pipeline via the web UI).
