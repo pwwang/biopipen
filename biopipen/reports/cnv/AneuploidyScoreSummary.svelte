@@ -1,41 +1,123 @@
+{% from "utils/misc.liq" import report_jobs -%}
+
 <script>
     import { Image, DataTable } from "$libs";
+    import { Tabs, Tab, TabContent } from "$ccs";
 </script>
 
-<h1>Total number of arm-level gains/losses</h1>
+{%- macro report_job(job, h=1) -%}
+<h{{h}}>Aneuploidy Score for each sample</h{{h}}>
+<Tabs>
+    <Tab label="Barplot (arm)" />
+    <Tab label="Table (arm)" />
+    <Tab label="Barplot (seg)" />
+    <Tab label="Table (seg)" />
+    <svelte:fragment slot="content">
+        <TabContent>
+            <Image src="{{job.out.outdir | joinpaths: 'AS_arm.png'}}" />
+        </TabContent>
+        <TabContent>
+            <DataTable src="{{job.out.outdir | joinpaths: 'AS_arm.txt'}}"
+                data={ {{ job.out.outdir | joinpaths: 'AS_arm.txt' | datatable: sep="\t" }} } />
+        </TabContent>
+        <TabContent>
+            <Image src="{{job.out.outdir | joinpaths: 'AS_seg.png'}}" />
+        </TabContent>
+        <TabContent>
+            <DataTable src="{{job.out.outdir | joinpaths: 'AS_seg.txt'}}"
+                data={ {{ job.out.outdir | joinpaths: 'AS_seg.txt' | datatable: sep="\t" }} } />
+        </TabContent>
+    </svelte:fragment>
+</Tabs>
 
-<h2>Plots</h2>
-<Image src="{{job.out.outdir}}/CAAs.png" />
+{% if envs.group_cols | isinstance: str %}
+    <h{{h}}>Aneuploidy Score By {{envs.group_cols | replace: ",", ", then "}}</h{{h}}>
 
-{% if job.in.metafile %}
-<Image src="{{job.out.outdir}}/CAAs_group.png" />
+    <Tabs>
+        <Tab label="Barplot (arm)" />
+        <Tab label="Voilin Plot (arm)" />
+        <Tab label="Barplot (seg)" />
+        <Tab label="Voilin Plot (seg)" />
+        <svelte:fragment slot="content">
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_arm_bar_' + envs.group_cols + '.png'}}" />
+            </TabContent>
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_arm_violin' + envs.group_cols + '.png'}}" />
+            </TabContent>
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_seg_bar_' + envs.group_cols + '.png'}}" />
+            </TabContent>
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_seg_violin' + envs.group_cols + '.png'}}" />
+            </TabContent>
+        </svelte:fragment>
+    </Tabs>
+{% elif envs.group_cols %}
+    {% for group_col in envs.group_cols %}
+    <h{{h}}>Aneuploidy Score By {{group_col | replace: ",", ", then "}}</h{{h}}>
+
+    <Tabs>
+        <Tab label="Barplot (arm)" />
+        <Tab label="Voilin Plot (arm)" />
+        <Tab label="Barplot (seg)" />
+        <Tab label="Voilin Plot (seg)" />
+        <svelte:fragment slot="content">
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_arm_bar_' + group_col + '.png'}}" />
+            </TabContent>
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_arm_violin_' + group_col + '.png'}}" />
+            </TabContent>
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_seg_bar_' + group_col + '.png'}}" />
+            </TabContent>
+            <TabContent>
+                <Image src="{{job.out.outdir | joinpaths: 'AS_seg_violin_' + group_col + '.png'}}" />
+            </TabContent>
+        </svelte:fragment>
+    </Tabs>
+    {% endfor %}
 {% endif %}
 
-<h2>Tables</h2>
-<h3>arm</h3>
-<DataTable src="{{ job.out.outdir | joinpaths: 'AS_arm.txt' }}"
-    data={ {{ job.out.outdir | joinpaths: 'AS_arm.txt' | datatable: sep="\t" }} } />
+<h{{h}}>Arm Aneuploidy for each chromosome</h{{h}}>
+<Tabs>
+    <Tab label="arm" />
+    <Tab label="seg" />
+    <svelte:fragment slot="content">
+        <TabContent>
+            <DataTable src="{{job.out.outdir | joinpaths: 'CAA_arm.txt'}}"
+                data={ {{ job.out.outdir | joinpaths: 'CAA_arm.txt' | datatable: sep="\t" }} } />
+        </TabContent>
+        <TabContent>
+            <DataTable src="{{job.out.outdir | joinpaths: 'CAA_seg.txt'}}"
+                data={ {{ job.out.outdir | joinpaths: 'CAA_seg.txt' | datatable: sep="\t" }} } />
+        </TabContent>
+    </svelte:fragment>
+</Tabs>
 
-<h3>seg</h3>
-<DataTable src="{{ job.out.outdir | joinpaths: 'AS_seg.txt' }}"
-    data={ {{ job.out.outdir | joinpaths: 'AS_seg.txt' | datatable: sep="\t" }} } />
+{% set hms = job.out.outdir | glob: "Heatmap_*.png" %}
+{% if hms %}
+    <h{{h+1}}>Heatmaps</h{{h+1}}>
+    <Tabs>
+        {% for hmfile in hms %}
+        <Tab label={{hmfile | stem | replace: "Heatmap_", "" | quote}} />
+        {% endfor %}
+        <svelte:fragment slot="content">
+            {% for hmfile in hms %}
+            <TabContent>
+                <Image src="{{hmfile}}" />
+            </TabContent>
+            {% endfor %}
+        </svelte:fragment>
+    </Tabs>
+{% endif %}
 
-<h1>Arm-level gain/loss breakdown</h1>
+{%- endmacro -%}
 
-<h2>arm</h2>
+{%- macro head_job(job) -%}
+<h1>{{job.in.metafile | stem0 }}</h1>
+{%- endmacro -%}
 
-<DataTable src="{{ job.out.outdir | joinpaths: 'CAA_arm.txt' }}"
-    data={ {{ job.out.outdir | joinpaths: 'CAA_arm.txt' | datatable: sep="\t" }} } />
+{{ report_jobs(jobs, head_job, report_job) }}
 
-<h2>seg</h2>
-
-<DataTable src="{{ job.out.outdir | joinpaths: 'CAA_seg.txt' }}"
-    data={ {{ job.out.outdir | joinpaths: 'CAA_seg.txt' | datatable: sep="\t" }} } />
-
-<h1>CAA Heatmaps</h1>
-
-{% for name in proc.envs.heatmap_cases %}
-<h2>{{name}}</h2>
-
-<Image src="{{job.out.outdir}}/Heatmap_{{name}}.png" />
-{% endfor %}
