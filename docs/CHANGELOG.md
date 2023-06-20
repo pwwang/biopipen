@@ -1,3 +1,18 @@
+## 0.14.0
+
+- ⬆️ Bump pipen-board to 0.6.3
+- 🔧 Fix make-examples.sh for docker images for pipelines
+- 🚑 [scrna_basic] Fix "Issued certificate has expired" in making examples for docker
+- ✨ [tcr.CDR3AAphyschem] Add process
+- ✨ [cnv.TMADScore] Add TMADScore and TMADScoreSummary
+- 🚑 [cnv.TMADScore] Fix wrong `envs.seg_transform` received in script
+- 📝 [cnv.TMADScoreSummary] Add report template
+- ✨ [cnv.TMADScoreSummary] Support grouping by 2 groups hierarchically
+- 💥 [cnv.AneuploidyScore] Change `envs.include_sex` to `envs.excl_chroms` so exclusion of chroms is more flexible
+- 🚑 [cnv.AneuploidyScoreSummary] Adjust with of CAA plot based on number of samples
+- ✨ [cnv.AneuploidyScoreSummary] Support grouping by 2 groups hierarchically
+- ⬆️ Bump pipen-board to 0.6.3
+
 ## 0.13.0
 
 - ⬆️ Bump pipen-board to 0.5.8
