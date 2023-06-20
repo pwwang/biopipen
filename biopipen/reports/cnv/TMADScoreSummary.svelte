@@ -22,7 +22,7 @@
 </Tabs>
 
 {% if envs.group_cols | isinstance: str %}
-    <h{{h}}>By {{envs.group_cols}}</h{{h}}>
+    <h{{h}}>By {{envs.group_cols | replace: ",", ", then "}}</h{{h}}>
 
     <Tabs>
         <Tab label="Barplot" />
@@ -38,7 +38,7 @@
     </Tabs>
 {% elif envs.group_cols %}
     {% for group_col in envs.group_cols %}
-    <h{{h}}>By {group_col}</h{{h}}>
+    <h{{h}}>By {{group_col | replace: ",", ", then "}}</h{{h}}>
 
     <Tabs>
         <Tab label="Barplot" />

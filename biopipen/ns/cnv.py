@@ -146,15 +146,17 @@ class TMADScoreSummary(Proc):
         group_cols (type=auto): The column name in the metafile to group the
             samples Could also be a list of column names
             If not specified, samples will be plotted individually as a barplot
+            We also support multiple columns, e.g. `["group1", "group2"]`
+            You can also use `group1,group2` to add a secondary grouping
+            based on `group2` within each `group1` (only works for 2 groups)
         sample_name (text): An R function to extract the sample name from
-            the file stem, not including `.tmad.txt` part
-            (`stem.tmad.txt` -> `stem`)
+            the file stem (not including `.tmad.txt` part)
     """
     input = "tmadfiles:files, metafile:file"
     output = "outdir:dir:{{in.tmadfiles | first | stem0}}_etc.tmad_summary"
     lang = config.lang.rscript
     script = "file://../scripts/cnv/TMADScoreSummary.R"
-    envs = {"group_cols": None, "sample_name": "function(x) x"}
+    envs = {"group_cols": None, "sample_name": None}
     plugin_opts = {
         "report": "file://../reports/cnv/TMADScoreSummary.svelte",
     }
