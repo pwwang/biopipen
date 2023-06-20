@@ -18,7 +18,7 @@ pipen-verbose = "^0.7"
 pipen-args = "^0.10"
 cmdy = "^0.5"
 datar = {version = "^0.12", extras = ["pandas"]}
-pipen-board = "^0.6"
+pipen-board = "^0.6.3"
 pipen-runinfo = {version = "^0.2", optional = true}
 
 [tool.poetry.dev-dependencies]
