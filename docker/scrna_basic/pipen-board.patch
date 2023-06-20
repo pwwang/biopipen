@@ -1,4 +1,4 @@
-76c76
+75c75
 < PIPEN_BOARD_DIR = Path("~/.pipen-board").expanduser()
 ---
 > PIPEN_BOARD_DIR = Path("/biopipen/.pipen-board")

@@ -51,9 +51,10 @@ echo "+----------------------------------------+"
 echo ""
 # Only works in the docker container
 if [ -d /biopipen ]; then
+    # L3dvcmtkaXIvLnBpcGVu is the base64 encoded string of "/workdir/.pipen"
     cp /biopipen/docker/cnvkit_pipeline/example.json \
-        /biopipen/.pipen-board/biopipen-ns-cnvkit-pipeline-cnvkitpipeline.Example.0000-00-00_00-00-00.json
+        /biopipen/.pipen-board/biopipen-ns-cnvkit-pipeline-cnvkitpipeline.Example.L3dvcmtkaXIvLnBpcGVu.json
 else
     mkdir -p ~/.pipen-board
-    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/cnvkit_pipeline/example.json -O ~/.pipen-board/biopipen-ns-cnvkit-pipeline-cnvkitpipeline.Example.0000-00-00_00-00-00.json
+    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/cnvkit_pipeline/example.json -O ~/.pipen-board/biopipen-ns-cnvkit-pipeline-cnvkitpipeline.Example.L3dvcmtkaXIvLnBpcGVu.json
 fi

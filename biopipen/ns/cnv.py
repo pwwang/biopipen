@@ -30,7 +30,8 @@ class AneuploidyScore(Proc):
         threshold (type=float): The threshold to determine whether a chromosome
             arm is gained or lost.
         wgd_gf (type=float): The fraction of the genome that is affected by WGD
-        include_sex (action=store_true): Should we include sex chromosomes?
+        excl_chroms (list): The chromosomes to be excluded
+            Works with/without `chr` prefix.
 
     Requires:
         AneuploidyScore:
@@ -56,7 +57,7 @@ class AneuploidyScore(Proc):
         "genome": config.ref.genome,
         "threshold": 0.5,
         "wgd_gf": 0.5,
-        "include_sex": False,
+        "excl_chroms": ['chrX', 'chrY'],
     }
     script = "file://../scripts/cnv/AneuploidyScore.R"
     plugin_opts = {
@@ -76,13 +77,19 @@ class AneuploidyScoreSummary(Proc):
         outdir: The output directory containing the summary table and plots
 
     Envs:
-        group_col: The column name in the metafile to group the samples
+        group_cols (type=auto): The column name in the metafile to group the
+            samples.
+            We also support multiple columns, e.g. `["group1", "group2"]`
+            You can also use `group1,group2` to add a secondary grouping
+            based on `group2` within each `group1` (only works for 2 groups)
         heatmap_cases (type=json): The cases to be included in the heatmap
             By default, all arms are included. If specified, keys are the names
             of the cases and values are the arms, which will be included in
             the heatmap. The list of arms should be a subset of `chr<N>_p` and
             `chr<N>_q`, where `<N>` is the chromosome number from 1 to 22, X, Y.
             You can also use `ALL` to include all arms.
+        sample_name (text): An R function to extract the sample name from
+            the file stem (not including `.aneuploidy_score` part)
     """
     input = "asdirs:dirs, metafile:file"
     output = (
@@ -90,7 +97,76 @@ class AneuploidyScoreSummary(Proc):
     )
     lang = config.lang.rscript
     script = "file://../scripts/cnv/AneuploidyScoreSummary.R"
-    envs = {"group_col": None, "heatmap_cases": {"All-Arms": "ALL"}}
+    envs = {
+        "group_cols": None,
+        "heatmap_cases": {"All-Arms": "ALL"},
+        "sample_name": None,
+    }
     plugin_opts = {
         "report": "file://../reports/cnv/AneuploidyScoreSummary.svelte",
+    }
+
+
+class TMADScore(Proc):
+    """Trimmed Median Absolute Deviation (TMAD) score for CNV
+
+    Reference:
+        Mouliere, Chandrananda, Piskorz and Moore et al. Enhanced detection of
+        circulating tumor DNA by fragment size analysis Science Translational
+        Medicine (2018).
+
+    Input:
+        segfile: The seg file, two columns are required:
+            * chrom: The chromosome name, used for filtering
+            * seg.mean: The log2 ratio
+
+    Output:
+        outfile: The output file containing the TMAD score
+
+    Envs:
+        chrom_col: The column name for chromosome
+        seg_col: The column name for seg.mean
+        segmean_transform: The transformation function for seg.mean
+        excl_chroms (list): The chromosomes to be excluded
+    """
+    input = "segfile:file"
+    output = "outfile:file:{{in.segfile | stem0}}.tmad.txt"
+    lang = config.lang.rscript
+    envs = {
+        "chrom_col": "chrom",
+        "seg_col": "seg.mean",
+        "segmean_transform": None,
+        "excl_chroms": ["chrX", "chrY"],
+    }
+    script = "file://../scripts/cnv/TMADScore.R"
+
+
+class TMADScoreSummary(Proc):
+    """Summary table and plots for TMADScore
+
+    Input:
+        tmadfiles: The output files from TMADScore
+        metafile: The metafile containing the sample information
+            The first column must be the sample ID
+
+    Output:
+        outdir: The output directory containing the summary table and plots
+
+    Envs:
+        group_cols (type=auto): The column name in the metafile to group the
+            samples Could also be a list of column names
+            If not specified, samples will be plotted individually as a barplot
+            We also support multiple columns, e.g. `["group1", "group2"]`
+            You can also use `group1,group2` to add a secondary grouping
+            based on `group2` within each `group1` (only works for 2 groups)
+        sample_name (text): An R function to extract the sample name from
+            the file stem (not including `.tmad.txt` part)
+    """
+    input = "tmadfiles:files, metafile:file"
+    output = "outdir:dir:{{in.tmadfiles | first | stem0}}_etc.tmad_summary"
+    lang = config.lang.rscript
+    script = "file://../scripts/cnv/TMADScoreSummary.R"
+    envs = {"group_cols": None, "sample_name": None}
+    plugin_opts = {
+        "report": "file://../reports/cnv/TMADScoreSummary.svelte",
     }

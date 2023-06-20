@@ -15,7 +15,7 @@ cn_col = {{envs.cn_col | r}}
 genome = {{envs.genome | r}}
 threshold = {{envs.threshold | r}}
 wgd_gf = {{envs.wgd_gf | r}}
-include_sex = {{envs.include_sex | r}}
+excl_chroms = {{envs.excl_chroms | r}}
 
 if (genome == "hg19") {
     data(ucsc.hg19.cytoband)
@@ -185,9 +185,22 @@ seg_caa = getCAA(
     threshold = threshold
 )
 
+norm_chrom = function(chr) {
+    if (grepl("^chr", chr)) {
+        chr = gsub("^chr", "", chr)
+    }
+    return(chr)
+}
+
 caa = reduceArms(seg_caa, caa_method = c("arm", "seg"), arm_ids=c("p", "q"))
-if (!include_sex) {
-  AS = colSums(abs(caa[!rownames(caa) %in% c("chrX_p", "chrX_q", "chrY_p", "chrY_q"), ]), na.rm = TRUE)
+if (length(excl_chroms) > 0) {
+  excl_chroms = paste0(excl_chroms, "_")
+  excluded = sapply(rownames(caa), function(chr) {
+    any(sapply(excl_chroms, function(excl_chr) {
+      startsWith(norm_chrom(chr), norm_chrom(excl_chr))
+    }))
+  })
+  AS = colSums(abs(caa[!excluded, ]), na.rm = TRUE)
 } else {
   AS = colSums(abs(caa), na.rm = TRUE)
 }
