@@ -154,6 +154,6 @@ class TMADScoreSummary(Proc):
     lang = config.lang.rscript
     script = "file://../scripts/cnv/TMADScoreSummary.R"
     envs = {"group_cols": None, "sample_name": "function(x) x"}
-    # plugin_opts = {
-    #     "report": "file://../reports/cnv/TMADScoreSummary.svelte",
-    # }
+    plugin_opts = {
+        "report": "file://../reports/cnv/TMADScoreSummary.svelte",
+    }
