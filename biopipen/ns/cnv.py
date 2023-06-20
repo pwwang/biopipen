@@ -30,7 +30,8 @@ class AneuploidyScore(Proc):
         threshold (type=float): The threshold to determine whether a chromosome
             arm is gained or lost.
         wgd_gf (type=float): The fraction of the genome that is affected by WGD
-        include_sex (action=store_true): Should we include sex chromosomes?
+        excl_chroms (list): The chromosomes to be excluded
+            Works with/without `chr` prefix.
 
     Requires:
         AneuploidyScore:
@@ -56,7 +57,7 @@ class AneuploidyScore(Proc):
         "genome": config.ref.genome,
         "threshold": 0.5,
         "wgd_gf": 0.5,
-        "include_sex": False,
+        "excl_chroms": ['chrX', 'chrY'],
     }
     script = "file://../scripts/cnv/AneuploidyScore.R"
     plugin_opts = {
