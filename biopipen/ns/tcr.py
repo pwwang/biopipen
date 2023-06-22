@@ -287,11 +287,11 @@ class Immunarch(Proc):
             There can be multiple `head`s and `motif`s.
             If you do want multiple parameter sets for the same K, You can use
             a float number as the K. For example: `5.1` for K `5`.
-            Keys are the K of mers. Values are parameters
-            - head: specifies # of the most abundant kmers to visualise.
-            - position: positions of bars: `stack`, `dodge` and `fill`
-            - log: log-transformation of y-axis
-            - motif: Method for motif analysis
+            Keys are the K of mers. Values are parameters.
+            * head: specifies # of the most abundant kmers to visualise.
+            * position: positions of bars: `stack`, `dodge` and `fill`.
+            * log: log-transformation of y-axis.
+            * motif: Method for motif analysis.
     """  # noqa: E501
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.immunarch"
