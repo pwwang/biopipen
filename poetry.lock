@@ -900,13 +900,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.7.2"
+version = "0.7.3"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.7.2-py3-none-any.whl", hash = "sha256:bce4eca85e43fc40f64e797d26ee4eb92d25577d350c0f7a8eaa9311d979fd9d"},
-    {file = "pipen_board-0.7.2.tar.gz", hash = "sha256:1de17f6c289e9f4a833f3a829c99e51f67876b18167c5bc68392e72f4258597c"},
+    {file = "pipen_board-0.7.3-py3-none-any.whl", hash = "sha256:9da7f4ead1f0ec6d90dd887db8077510be5456dd4212486735c44435421e90df"},
+    {file = "pipen_board-0.7.3.tar.gz", hash = "sha256:e87967470641892938ef7b5407c60bddf5efcaeb49b2b6bf2506bd0ce1a6c2dc"},
 ]
 
 [package.dependencies]
@@ -1556,13 +1556,13 @@ files = [
 
 [[package]]
 name = "websocket-client"
-version = "1.6.0"
+version = "1.6.1"
 description = "WebSocket client for Python with low level API options"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "websocket-client-1.6.0.tar.gz", hash = "sha256:e84c7eafc66aade6d1967a51dfd219aabdf81d15b9705196e11fd81f48666b78"},
-    {file = "websocket_client-1.6.0-py3-none-any.whl", hash = "sha256:72d7802608745b0a212f79b478642473bd825777d8637b6c8c421bf167790d4f"},
+    {file = "websocket-client-1.6.1.tar.gz", hash = "sha256:c951af98631d24f8df89ab1019fc365f2227c0892f12fd150e935607c79dd0dd"},
+    {file = "websocket_client-1.6.1-py3-none-any.whl", hash = "sha256:f1f9f2ad5291f0225a49efad77abf9e700b6fef553900623060dad6e26503b9d"},
 ]
 
 [package.extras]
@@ -1640,4 +1640,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "9f4b0df310fe46ef44505a0be944d84d099a49da18b735be032db87f067d6708"
+content-hash = "269adae829ecf34445db154c35100a45d909919dccabfe6244755e292a9c694f"
