@@ -299,13 +299,13 @@ pdtypes = ">=0.0.4,<0.0.5"
 
 [[package]]
 name = "diot"
-version = "0.1.8"
+version = "0.2.1"
 description = "Python dictionary with dot notation."
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "diot-0.1.8-py3-none-any.whl", hash = "sha256:f2d7d2f121e8a60cd06b7d1b476765e25c37002d0db44e0f5ef72dca98d22640"},
-    {file = "diot-0.1.8.tar.gz", hash = "sha256:21408f8a09628bfb8c88791eaab1558a71692adff4e237c96b4b31a54d3cb2f5"},
+    {file = "diot-0.2.1-py3-none-any.whl", hash = "sha256:d37bf5df36a257386e4836ab33f393f7ee945f262587b8c5b88ad86e1d3eb261"},
+    {file = "diot-0.2.1.tar.gz", hash = "sha256:e8767e712f29886d7dcff1866a383a2ed9eeb9699ae58486ec58f3e6247afa06"},
 ]
 
 [package.dependencies]
@@ -851,13 +851,13 @@ executing = ">1.1.0,<2.0"
 
 [[package]]
 name = "pipen"
-version = "0.10.3"
+version = "0.10.4"
 description = "A pipeline framework for python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen-0.10.3-py3-none-any.whl", hash = "sha256:3c36364f07644f790902de7e8b6b9ec1733459cee0a42cf70605b127b62d6d86"},
-    {file = "pipen-0.10.3.tar.gz", hash = "sha256:a54e4d6db56d25ea493d5dd3c8aedaa4585d82fea3cf2c394cac776291c2df4d"},
+    {file = "pipen-0.10.4-py3-none-any.whl", hash = "sha256:9f0747762da4deaa381e783fc95bcba26ac92ef62ece52c94682cf69c3be54d9"},
+    {file = "pipen-0.10.4.tar.gz", hash = "sha256:67671c33da459b925875243773a2fa8d7eabfef841613d84b27f3f3802cc83d1"},
 ]
 
 [package.dependencies]
@@ -868,7 +868,7 @@ pandas = ">=1.4,<2.0"
 pipda = ">=0.12,<0.13"
 python-simpleconf = {version = ">=0.5,<0.6", extras = ["toml"]}
 varname = ">=0.11,<0.12"
-xqute = ">=0.2.2,<0.3.0"
+xqute = ">=0.2.3,<0.3.0"
 
 [[package]]
 name = "pipen-annotate"
@@ -886,13 +886,13 @@ pipen = ">=0.10,<0.11"
 
 [[package]]
 name = "pipen-args"
-version = "0.10.2"
+version = "0.10.3"
 description = "Command-line argument parser for pipen."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_args-0.10.2-py3-none-any.whl", hash = "sha256:46175f11949e75afb1a6693d1a55aaef66723a506042d990796951cdbbf4f13f"},
-    {file = "pipen_args-0.10.2.tar.gz", hash = "sha256:38d2bbc5a8dc92ab5150750b82c4d684d1b294f6b337c7670675257b936f8738"},
+    {file = "pipen_args-0.10.3-py3-none-any.whl", hash = "sha256:7977cde068997bfc1cfb5391d5e112b12a42c0750665388eda187e562e8fcc03"},
+    {file = "pipen_args-0.10.3.tar.gz", hash = "sha256:503b47df0f3f5902083215e23b80a47471306ca723285d027822d1f17ebb99db"},
 ]
 
 [package.dependencies]
@@ -900,13 +900,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.6.3"
+version = "0.7.3"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.6.3-py3-none-any.whl", hash = "sha256:2fff8020f9d7e7520534e8fb29ae5edd6e67676470fe78505f318380378a8a4b"},
-    {file = "pipen_board-0.6.3.tar.gz", hash = "sha256:bef3c53354ac7a53cda7de08aa1153915b4d2fce3f5ce3c3094d214842abb687"},
+    {file = "pipen_board-0.7.3-py3-none-any.whl", hash = "sha256:9da7f4ead1f0ec6d90dd887db8077510be5456dd4212486735c44435421e90df"},
+    {file = "pipen_board-0.7.3.tar.gz", hash = "sha256:e87967470641892938ef7b5407c60bddf5efcaeb49b2b6bf2506bd0ce1a6c2dc"},
 ]
 
 [package.dependencies]
@@ -979,13 +979,13 @@ python-slugify = ">=8.0.1,<9.0.0"
 
 [[package]]
 name = "pipen-runinfo"
-version = "0.2.0"
+version = "0.2.1"
 description = "Generate running information for jobs in pipen pipelines"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_runinfo-0.2.0-py3-none-any.whl", hash = "sha256:91f6936814510fca49467af821599e535b4295997746433834cf8037670cf387"},
-    {file = "pipen_runinfo-0.2.0.tar.gz", hash = "sha256:305cb3187c9dbceb2c1ec087f1f5822f62f5612c3de6ab018179636ea89a2904"},
+    {file = "pipen_runinfo-0.2.1-py3-none-any.whl", hash = "sha256:8bcf64412617f982ff01f2c0d5d6d818de313f4ecbff7d6a591daa924500dd44"},
+    {file = "pipen_runinfo-0.2.1.tar.gz", hash = "sha256:1b41878622c91ae2498435ab5673301ea276525a5a90404f8bf3fc7ada37c143"},
 ]
 
 [package.dependencies]
@@ -1168,23 +1168,23 @@ six = ">=1.5"
 
 [[package]]
 name = "python-simpleconf"
-version = "0.5.7"
+version = "0.5.9"
 description = "Simple configuration management with python."
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "python-simpleconf-0.5.7.tar.gz", hash = "sha256:e8c41be99cc835d59efe6a0d1617cffcfa6c7661142c5299d7ae39ecc06b3f14"},
-    {file = "python_simpleconf-0.5.7-py3-none-any.whl", hash = "sha256:e44f2ef56ee931607f2e6a836e5a3b77457abea8dc0e536e8ba8403751f07b2c"},
+    {file = "python_simpleconf-0.5.9-py3-none-any.whl", hash = "sha256:c65b59fb1e3ff4f2bd02f201172f3d310f67845644d6d3941a814e3e7878f62b"},
+    {file = "python_simpleconf-0.5.9.tar.gz", hash = "sha256:e1c84fe5c2a29aecbba19dbb5cc3be116bbc0d29ac46e839bf03661fc503f87b"},
 ]
 
 [package.dependencies]
-diot = ">=0.1,<0.2"
+diot = ">=0.2.1,<0.3.0"
 rtoml = {version = ">=0.8,<0.9", optional = true, markers = "extra == \"toml\" or extra == \"all\""}
 
 [package.extras]
-all = ["iniconfig (>=1.1,<2.0)", "python-dotenv (>=0.20,<0.21)", "pyyaml (>=6,<7)", "rtoml (>=0.8,<0.9)"]
-env = ["python-dotenv (>=0.20,<0.21)"]
-ini = ["iniconfig (>=1.1,<2.0)"]
+all = ["iniconfig (>=2.0,<3.0)", "python-dotenv (>=0.21,<0.22)", "pyyaml (>=6,<7)", "rtoml (>=0.8,<0.9)"]
+env = ["python-dotenv (>=0.21,<0.22)"]
+ini = ["iniconfig (>=2.0,<3.0)"]
 toml = ["rtoml (>=0.8,<0.9)"]
 yaml = ["pyyaml (>=6,<7)"]
 
@@ -1415,17 +1415,17 @@ files = [
 
 [[package]]
 name = "simplug"
-version = "0.3.0"
+version = "0.3.2"
 description = "A simple plugin system for python with async hooks supported"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "simplug-0.3.0-py3-none-any.whl", hash = "sha256:818ae5a58ffd5024b64cebf3d240584b47580c688fbbfd2e9147fa7e112f8df1"},
-    {file = "simplug-0.3.0.tar.gz", hash = "sha256:6fe185037e8530e2db1c6c003bfba70aaec8c2dc5ed34fffabde872c0219e482"},
+    {file = "simplug-0.3.2-py3-none-any.whl", hash = "sha256:8897b7bb41c0527bc58cdad11d19d6b4bc9efe4e5076363eb25b514e6f83beaa"},
+    {file = "simplug-0.3.2.tar.gz", hash = "sha256:a940503e3ce4bb8f381403383eb47ba1b38fc2360c66f6c3b930da03bcb841c0"},
 ]
 
 [package.dependencies]
-diot = ">=0.1,<0.2"
+diot = ">=0.2,<0.3"
 
 [[package]]
 name = "six"
@@ -1556,13 +1556,13 @@ files = [
 
 [[package]]
 name = "websocket-client"
-version = "1.6.0"
+version = "1.6.1"
 description = "WebSocket client for Python with low level API options"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "websocket-client-1.6.0.tar.gz", hash = "sha256:e84c7eafc66aade6d1967a51dfd219aabdf81d15b9705196e11fd81f48666b78"},
-    {file = "websocket_client-1.6.0-py3-none-any.whl", hash = "sha256:72d7802608745b0a212f79b478642473bd825777d8637b6c8c421bf167790d4f"},
+    {file = "websocket-client-1.6.1.tar.gz", hash = "sha256:c951af98631d24f8df89ab1019fc365f2227c0892f12fd150e935607c79dd0dd"},
+    {file = "websocket_client-1.6.1-py3-none-any.whl", hash = "sha256:f1f9f2ad5291f0225a49efad77abf9e700b6fef553900623060dad6e26503b9d"},
 ]
 
 [package.extras]
@@ -1603,13 +1603,13 @@ h11 = ">=0.9.0,<1"
 
 [[package]]
 name = "xqute"
-version = "0.2.2"
+version = "0.2.4"
 description = "A job management system for python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "xqute-0.2.2-py3-none-any.whl", hash = "sha256:941beb6b5d8babce82bd0716f69fa6eb1189dc2b8fb785726f9e3923e00f7559"},
-    {file = "xqute-0.2.2.tar.gz", hash = "sha256:54b1f1d1a71f12d41d0710bb47b452387413bc0de8b63e85178b99f7e8f884b4"},
+    {file = "xqute-0.2.4-py3-none-any.whl", hash = "sha256:074ff02b0ff3ea0231deebb31db43f79bd120afe81fc2e64e955e0c66c3a2167"},
+    {file = "xqute-0.2.4.tar.gz", hash = "sha256:a226641f97455e25781bb1a1b549a79a0082cb3da90625c1d69b14e21afc8941"},
 ]
 
 [package.dependencies]
@@ -1617,7 +1617,7 @@ aiopath = [
     {version = "==0.5.*", markers = "python_version < \"3.10\""},
     {version = ">=0.6,<0.7", markers = "python_version >= \"3.10\""},
 ]
-diot = ">=0.1,<0.2"
+diot = ">=0.2,<0.3"
 rich = ">=13,<14"
 simplug = ">=0.3,<0.4"
 uvloop = ">=0,<1"
@@ -1640,4 +1640,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "db7aedef6c0e193949dec8a6083d9d7803436274d448fc4cf3478ee2832ed4ab"
+content-hash = "269adae829ecf34445db154c35100a45d909919dccabfe6244755e292a9c694f"

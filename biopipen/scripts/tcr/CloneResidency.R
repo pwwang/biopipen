@@ -211,7 +211,7 @@ for (i in seq_len(nrow(subjects))) {
         ) %>% mutate(Group = group)
     }
     counts = do_call(bind_rows, counts) %>% pivot_wider(
-        CDR3.aa,
+        id_cols = CDR3.aa,
         names_from = Group,
         values_from = Clones,
         values_fn = function(x) mean(x, na.rm=TRUE)

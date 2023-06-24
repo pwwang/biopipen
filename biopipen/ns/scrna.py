@@ -60,7 +60,7 @@ class SeuratPreparing(Proc):
             `<job.outdir>/after-qc`
 
     Envs:
-        ncores: Number of cores to use.
+        ncores (type=int): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
         cell_qc: Filter expression to filter cells, using
@@ -109,7 +109,7 @@ class SeuratClustering(Proc):
         rdsfile: The seurat object with cluster information
 
     Envs:
-        ncores: Number of cores to use.
+        ncores (type=int): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
         use_sct (flag;order=-99): Whether use SCTransform routine or not
@@ -516,7 +516,8 @@ class MarkersFinder(Proc):
         outdir: The output directory for the markers
 
     Envs:
-        ncores: Number of cores to use to parallelize Seurat functions using
+        ncores (type=int): Number of cores to use to parallelize Seurat
+            functions using
             `future::plan(strategy = "multicore", workers = ncores)`
         cases (type=json): The cases to find markers for.
             For example:
@@ -840,7 +841,7 @@ class ScFGSEA(Proc):
         outdir: The output directory for the results
 
     Envs:
-        ncores: Number of cores to use to parallelize the groups
+        ncores (type=int): Number of cores to use to parallelize the groups
         cases (type=json): The cases to find markers for.
             `ident-2` is required for each case. One could also use placeholders for the cases.
             To enable this, you need `percluster = True` in the config. Currently only cluster is supported.
