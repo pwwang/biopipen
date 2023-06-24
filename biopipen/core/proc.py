@@ -2,6 +2,7 @@
 from diot import Diot
 from liquid.defaults import SEARCH_PATHS
 from pipen import Proc as PipenProc
+from pipen_filters.filters import FILTERS
 
 from .filters import filtermanager
 from .defaults import BIOPIPEN_DIR, REPORT_DIR
@@ -20,7 +21,7 @@ class Proc(PipenProc):
     """Base class for all processes in biopipen to subclass"""
 
     template_opts = {
-        "globals": {"biopipen_dir": str(BIOPIPEN_DIR)},
-        "filters": filtermanager.filters.copy(),
+        "globals": {**FILTERS, "biopipen_dir": str(BIOPIPEN_DIR)},
+        "filters": {**FILTERS, **filtermanager.filters},
         "search_paths": SEARCH_PATHS + [str(REPORT_DIR)],
     }

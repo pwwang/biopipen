@@ -1,3 +1,10 @@
+## 0.14.1
+
+- ⬆️ Bump pipen-board to 0.7.3
+- ⬆️ Bump other dependencies
+- 🎨 [scrna] Add type=int for envs.ncores in docstrings
+- 🚑 [tcr.CloneResidency] Dismiss warnings from pivot_wider
+
 ## 0.14.0
 
 - ⬆️ Bump pipen-board to 0.6.3
