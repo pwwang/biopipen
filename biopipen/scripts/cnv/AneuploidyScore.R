@@ -147,7 +147,7 @@ cn_transform = {{envs.cn_transform | r}}
 if (is.character(cn_transform)) {
     cn_transform = eval(parse(text = cn_transform))
     seg$TCN = cn_transform(seg$seg.mean)
-} else if (is.vector(cn_transform)) {
+} else if (is.numeric(cn_transform) && length(cn_transform) > 1) {
     # Use cutoffs to transform
     # See also https://cnvkit.readthedocs.io/en/stable/pipeline.html#calling-methods
     # and https://github.com/etal/cnvkit/blob/9dd1e7c83705d1e1de6e6e4ab9fdc6973bf4002f/cnvlib/call.py#L98-L146

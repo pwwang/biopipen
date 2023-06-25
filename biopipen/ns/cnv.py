@@ -24,8 +24,12 @@ class AneuploidyScore(Proc):
         end_col: The column name for end position
         seg_col: The column name for seg.mean
         cn_col: The column name for copy number
-        segmean_transform: The transformation function for seg.mean
-        cn_transform: The transformation function for copy number
+        segmean_transform (text): A R function to transform `seg.mean`
+            The transformed value will be used to calculate the CAAs
+        cn_transform (type=auto): A R function to transform `seg.mean` into
+            copy number, or a list of cutoffs to determine the copy number.
+            See https://cnvkit.readthedocs.io/en/stable/pipeline.html#calling-methods.
+            If this is give, `cn_col` will be ignored.
         genome: The genome version, hg19 or hg38
         threshold (type=float): The threshold to determine whether a chromosome
             arm is gained or lost.
@@ -42,7 +46,7 @@ class AneuploidyScore(Proc):
         ucsc.hg38.cytoband:
             - if: {{ proc.envs.genome == 'hg38' }}
             - check: {{proc.lang}} <(echo "library(ucsc.hg38.cytoband)")
-    """
+    """  # noqa: E501
     input = "segfile:file"
     output = "outdir:dir:{{in.segfile | stem}}.aneuploidy_score"
     lang = config.lang.rscript
