@@ -961,13 +961,13 @@ pipen = ">=0.10.0,<0.11.0"
 
 [[package]]
 name = "pipen-report"
-version = "0.12.2"
+version = "0.12.3"
 description = "Report generation system for pipen"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_report-0.12.2-py3-none-any.whl", hash = "sha256:d0a130e4499bef90e2b38ae3993bf5467ae64aa3c6e4293128c96f3181d722fb"},
-    {file = "pipen_report-0.12.2.tar.gz", hash = "sha256:c2054eac0d18674c0533ade6511df2b42ef722131c1c76448a57393a724daf0a"},
+    {file = "pipen_report-0.12.3-py3-none-any.whl", hash = "sha256:3490e6a9f158697c2e15f2322ec34a57413cf62c1b66d48e90250c5437dc2bd9"},
+    {file = "pipen_report-0.12.3.tar.gz", hash = "sha256:50329f760be9fe1feb378b440c9190e0e48be081760352694a91d20702fd961b"},
 ]
 
 [package.dependencies]
