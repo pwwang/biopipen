@@ -900,13 +900,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.7.3"
+version = "0.7.4"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.7.3-py3-none-any.whl", hash = "sha256:9da7f4ead1f0ec6d90dd887db8077510be5456dd4212486735c44435421e90df"},
-    {file = "pipen_board-0.7.3.tar.gz", hash = "sha256:e87967470641892938ef7b5407c60bddf5efcaeb49b2b6bf2506bd0ce1a6c2dc"},
+    {file = "pipen_board-0.7.4-py3-none-any.whl", hash = "sha256:b5475c7e3ad4ee01bf08ede568e60f387b1a8b98d66749c6c4ca0eadbc14a60f"},
+    {file = "pipen_board-0.7.4.tar.gz", hash = "sha256:1e1467057f75df0c78c421b34442821ed88e6db079bf82d0eaf9921c7ff9043e"},
 ]
 
 [package.dependencies]
