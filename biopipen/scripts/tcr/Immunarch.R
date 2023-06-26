@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 # Basic analysis and clonality
 # TODO: How about TRA chain?
 library(immunarch)
@@ -133,7 +134,7 @@ for (col in c("aa", "nt")) {
     #         mutate(Length = nchar(CDR3), Sample = sample) %>%
     #         select(Sample, Length)
     # }
-    # lendata = do.call(bind_rows, lendata) %>%
+    # lendata = do_call(bind_rows, lendata) %>%
     #     left_join(immdata$meta, by = "Sample")
 
     # p = ggplot(lendata, aes(x = Length))
@@ -405,7 +406,7 @@ dir.create(div_dir, showWarnings = FALSE)
 print("- Diversity estimation")
 plot_div = function(div, method, ...) {
     if (method != "gini") {
-        do.call(vis, list(div, ...))
+        do_call(vis, list(div, ...))
     } else {
         ginidiv = as.data.frame(div) %>%
             rownames_to_column("Sample") %>%
@@ -499,14 +500,14 @@ raref_analysis = function(idata, sepname, get_max = FALSE) {
 
     imm_raref = tryCatch({
         raref_pms$.data = idata$data
-        do.call(repDiversity, raref_pms)
+        do_call(repDiversity, raref_pms)
     }, error=function(e) {
         # https://github.com/immunomind/immunarch/issues/44
         valid_samples = c()
         for (sam in names(idata$data)) {
             raref_pms$.data = idata$data[sam]
             vsam = tryCatch({
-                do.call(repDiversity, raref_pms)
+                do_call(repDiversity, raref_pms)
                 sam
             }, error=function(e) {
                 warning(
@@ -517,7 +518,7 @@ raref_analysis = function(idata, sepname, get_max = FALSE) {
             valid_samples = c(valid_samples, vsam)
         }
         raref_pms$.data = idata$data[valid_samples]
-        do.call(repDiversity, raref_pms)
+        do_call(repDiversity, raref_pms)
     })
     rarefpng = file.path(raref_dir, paste0("raref-", sub("-$", "", sepname), ".png"))
 

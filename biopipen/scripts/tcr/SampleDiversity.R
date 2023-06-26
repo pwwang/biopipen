@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 library(immunarch)
 
 immdatafile = {{in.immdata | r}}
@@ -61,7 +62,7 @@ do_method = function(method) {
         args = list(width = 1000, height = 1000, res = 100)
     }
     args$filename = file.path(outdir, "_nogrouping.png")
-    do.call(png, args)
+    do_call(png, args)
     print(p)
     dev.off()
 
@@ -79,7 +80,7 @@ do_method = function(method) {
             next
         }
         args$filename = file.path(outdir, paste0("By ", by, ".png"))
-        do.call(png, args)
+        do_call(png, args)
         print(p)
         dev.off()
     }

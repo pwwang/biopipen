@@ -1,6 +1,8 @@
 library(Seurat)
 library(dplyr)
 
+source("{{biopipen_dir}}/utils/misc.R")
+
 srtfile = {{in.srtobj | r}}
 {% if in.configfile %}
 config = {{in.configfile | read | toml_loads | r}}
@@ -46,7 +48,7 @@ for (case in names(cases)) {
         }
     }
     args$object = sobj
-    p = do.call(DimPlot, args)
+    p = do_call(DimPlot, args)
     outfile = file.path(outdir, paste0(case, ".png"))
     png(outfile, res=100, width=1000, height=1000)
     print(p)

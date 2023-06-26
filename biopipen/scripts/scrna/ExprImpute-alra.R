@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(SeuratWrappers)
 library(Seurat)
 
@@ -11,7 +13,7 @@ DefaultAssay(sobj) <- "RNA"
 
 print("Imputing expression values, using ALRA")
 envs$object = sobj
-sobj = do.call(RunALRA, envs)
+sobj = do_call(RunALRA, envs)
 
 # sobj = RunALRA(sobj)
 print("Renaming assays")

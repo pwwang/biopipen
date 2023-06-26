@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/io.R")
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 
 # to compile the expressions
@@ -28,8 +29,8 @@ args = {{envs.args | r}}
 
 hm = plotHeatmap(data, args = args)
 
-do.call(png, c(list(filename=outfile), devpars))
-do.call(draw, c(list(hm), drawargs))
+do_call(png, c(list(filename=outfile), devpars))
+do_call(draw, c(list(hm), drawargs))
 dev.off()
 
 saveRDS(hm, file.path(outdir, "heatmap.RDS"))

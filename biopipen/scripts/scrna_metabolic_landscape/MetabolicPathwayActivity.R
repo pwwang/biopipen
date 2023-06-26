@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 
 library(scater)
@@ -353,7 +354,7 @@ do_one_subset_col <- function(subset_col, subset_prefix) {
                     row_names_max_width = max_text_width(pws, gp = gpar(fontsize = 12)),
                     row_dend_reorder = TRUE,
                     row_dend_width = unit(30, "mm"),
-                    column_split = do.call(c, lapply(1:length(subsets), function(i) {rep(subsets[i], ncol(x[[i]]$hmdata))})),
+                    column_split = do_call(c, lapply(1:length(subsets), function(i) {rep(subsets[i], ncol(x[[i]]$hmdata))})),
                     cluster_columns = FALSE
                 ),
                 devpars = hm_devpars,

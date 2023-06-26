@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(AneuploidyScore)
 library(dplyr)
 library(tidyr)
@@ -79,7 +81,7 @@ getCAA <- function(segf, cytoarm, tcn_col,
       if(assemble_method == 'arm'){
         X_fract <- lapply(split(combc, f=combc$arm), AneuploidyScore:::.getChrarmFractions, ...)
         ord <- order(factor(names(X_fract), levels=c("p", "cen", "q")))
-        X_fract <- as.data.frame(do.call(rbind, X_fract[ord]))
+        X_fract <- as.data.frame(do_call(rbind, X_fract[ord]))
         colnames(X_fract)[1:2] <- c("CAA_frac_NA", "CAA_frac_nonNA")
       } else {
         X_fract <- AneuploidyScore:::.getChrarmFractions(combc, ...)
@@ -147,7 +149,7 @@ cn_transform = {{envs.cn_transform | r}}
 if (is.character(cn_transform)) {
     cn_transform = eval(parse(text = cn_transform))
     seg$TCN = cn_transform(seg$seg.mean)
-} else if (is.vector(cn_transform)) {
+} else if (is.numeric(cn_transform) && length(cn_transform) > 1) {
     # Use cutoffs to transform
     # See also https://cnvkit.readthedocs.io/en/stable/pipeline.html#calling-methods
     # and https://github.com/etal/cnvkit/blob/9dd1e7c83705d1e1de6e6e4ab9fdc6973bf4002f/cnvlib/call.py#L98-L146

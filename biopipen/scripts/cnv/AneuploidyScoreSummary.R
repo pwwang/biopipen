@@ -1,10 +1,12 @@
+source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/plot.R")
+
 library(ggplot2)
 library(ggprism)
 library(dplyr)
 library(tidyr)
 library(tibble)
 library(patchwork)
-source("{{biopipen_dir}}/utils/plot.R")
 
 asdirs = {{in.asdirs | r}}
 metafile  = {{in.metafile | r}}
@@ -92,9 +94,9 @@ read_as = function(asdir) {
 }
 
 # Sample Arms arm seg
-caa = do.call(rbind, lapply(asdirs, read_caa))
+caa = do_call(rbind, lapply(asdirs, read_caa))
 # Sample SignalType Signal
-as = do.call(rbind, lapply(asdirs, read_as))
+as = do_call(rbind, lapply(asdirs, read_as))
 
 # Sample chr1_p chr1_q chr2_p chr2_q ...
 caa_arm = caa %>%
@@ -321,7 +323,7 @@ for (heatmap_name in names(heatmap_cases)) {
         for (meta_col in meta_cols) {
             row_annos[[meta_col]] = metadf[[meta_col]]
         }
-        args$right_annotation = do.call(ComplexHeatmap::rowAnnotation, row_annos)
+        args$right_annotation = do_call(ComplexHeatmap::rowAnnotation, row_annos)
     }
     plotHeatmap(
         caa_df,

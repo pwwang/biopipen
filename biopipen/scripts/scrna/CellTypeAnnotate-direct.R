@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 library(Seurat)
 
 sobjfile = {{in.sobjfile | r}}
@@ -8,7 +9,7 @@ sobj = readRDS(sobjfile)
 idents = as.character(unique(Idents(sobj)))
 idents = idents[order(as.numeric(idents))]
 
-if (!is.list(celltypes)) {
+if (!is.list(celltypes) && length(celltypes) > 0) {
     celltypes = celltypes[1:length(idents)]
     celltypes = as.list(celltypes)
     names(celltypes) = idents

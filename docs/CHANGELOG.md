@@ -1,3 +1,11 @@
+## 0.14.2
+
+- ⬆️ Bump pipen-board to 0.7.4
+- ⬆️ Bump pipen-report to 0.12.3
+- ⚡️ Replace `do.call` with `do_call` in R scripts to improve performance
+- 🐛 [scrna.CellTypeAnnotate] Fix when no cell types is given for direct annotation
+- 🐛 [cnv.AneuploidyScore] Fix when `envs.cn_tranform` is a list of thresholds
+
 ## 0.14.1
 
 - ⬆️ Bump pipen-board to 0.7.3
