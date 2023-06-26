@@ -112,7 +112,7 @@ do_stats = function() {
             warning(paste("Unknown stat:", name, ", skipping"))
         }
 
-        do.call(do_stats_cells, args)
+        do_call(do_stats_cells, args)
     }
 }
 

@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 library(tibble)
 library(tidyr)
@@ -76,7 +77,7 @@ shared_clusters = function() {
         anno = NULL
     } else {
         anno = as.list(immdata$meta[, heatmap_meta, drop=FALSE])
-        anno = do.call(HeatmapAnnotation, anno)
+        anno = do_call(HeatmapAnnotation, anno)
     }
 
     # Plot heatmap

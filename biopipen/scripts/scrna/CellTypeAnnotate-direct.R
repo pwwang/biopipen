@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 library(Seurat)
 
 sobjfile = {{in.sobjfile | r}}

@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/io.R")
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/plot.R")
 library(Seurat)
 library(dplyr)
@@ -111,7 +112,7 @@ plot_boxplot = function(plotconf, outfile) {
         xlab("")
 
     devpars = list(filename = outfile, res = plotconf$res, width = plotconf$width, height = plotconf$height)
-    do.call(png, devpars)
+    do_call(png, devpars)
     print(p)
     dev.off()
 }

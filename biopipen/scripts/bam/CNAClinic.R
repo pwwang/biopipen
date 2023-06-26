@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 library(parallel)
 library(dplyr)
 library(CNAclinic)
@@ -113,11 +114,11 @@ do_one_sample = function(i) {
     run_args_i = run_args
     run_args_i$x = processedData
     run_args_i$genome = genome
-    CNAData = do.call(runSegmentation, run_args_i)
+    CNAData = do_call(runSegmentation, run_args_i)
 
     plot_args_i = plot_args
     plot_args_i$object = CNAData
-    genomewide_plot = do.call(plotSampleData, plot_args_i)
+    genomewide_plot = do_call(plotSampleData, plot_args_i)
 
     odir = file.path(outdir, sample)
     dir.create(odir, recursive = TRUE, showWarnings = FALSE)
@@ -159,7 +160,7 @@ if (is.list(plot_multi_args)) {
     }
 
     plot_multi_args$object = combined
-    multiplot = do.call(plotMultiSampleData, plot_multi_args)
+    multiplot = do_call(plotMultiSampleData, plot_multi_args)
     png(file.path(outdir, "multiplot.png"), width = 1000, height = 1000, res = 100)
     print(multiplot)
     dev.off()

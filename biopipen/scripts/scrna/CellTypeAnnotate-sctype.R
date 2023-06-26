@@ -1,6 +1,8 @@
 library(dplyr)
 library(HGNChelper)
 library(Seurat)
+
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/scripts/scrna/sctype.R")
 
 sobjfile = {{in.sobjfile | r}}
@@ -31,7 +33,7 @@ es.max = sctype_score(
 idents = as.character(unique(Idents(sobj)))
 idents = idents[order(as.numeric(idents))]
 # merge by cluster
-cl_resutls = do.call(
+cl_resutls = do_call(
     "rbind",
     lapply(
         idents,
@@ -69,7 +71,7 @@ celltypes = make.unique(celltypes)
 names(celltypes) = idents
 celltypes$object = sobj
 
-sobj = do.call(RenameIdents, celltypes)
+sobj = do_call(RenameIdents, celltypes)
 sobj$seurat_clusters = Idents(sobj)
 
 saveRDS(sobj, outfile)

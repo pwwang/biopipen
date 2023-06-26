@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(AneuploidyScore)
 library(dplyr)
 library(tidyr)
@@ -79,7 +81,7 @@ getCAA <- function(segf, cytoarm, tcn_col,
       if(assemble_method == 'arm'){
         X_fract <- lapply(split(combc, f=combc$arm), AneuploidyScore:::.getChrarmFractions, ...)
         ord <- order(factor(names(X_fract), levels=c("p", "cen", "q")))
-        X_fract <- as.data.frame(do.call(rbind, X_fract[ord]))
+        X_fract <- as.data.frame(do_call(rbind, X_fract[ord]))
         colnames(X_fract)[1:2] <- c("CAA_frac_NA", "CAA_frac_nonNA")
       } else {
         X_fract <- AneuploidyScore:::.getChrarmFractions(combc, ...)
