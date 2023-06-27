@@ -1,3 +1,9 @@
+## 0.14.3
+
+- ⬆️ Bump pipen to 0.10.5
+- 🔧 [scrna_metabolic_landscape] Make proc group options for process readonly
+- 🎨 [scrna_metabolic_landscape.MetabolicFeatures] Add indicators during computation
+
 ## 0.14.2
 
 - ⬆️ Bump pipen-board to 0.7.4
