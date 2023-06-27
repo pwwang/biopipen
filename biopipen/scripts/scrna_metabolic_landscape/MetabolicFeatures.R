@@ -37,6 +37,7 @@ metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
 do_one_group <- function(obj, group, outputdir) {
+    print(paste("- Processing group", grouping, ":", group))
     groupname = paste0(grouping_prefix, group)
     odir = file.path(outputdir, groupname)
     dir.create(odir, showWarnings = FALSE)
@@ -70,6 +71,7 @@ do_one_group <- function(obj, group, outputdir) {
 }
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
+    print(paste("Processing subset", subset_col, ":", s))
     if (is.null(s)) {
         outputdir <- file.path(outdir, "ALL")
         subset_obj <- sobj
