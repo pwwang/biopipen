@@ -30,20 +30,20 @@ class _MetabolicPathwayActivity(Proc):
             - res (type=int): Resolution of the violin plot
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        grouping (type=auto;pgarg): Defines the basic groups to investigate
-            the metabolic activity, typically the clusters.
+        grouping (type=auto;pgarg;readonly): Defines the basic groups to
+            investigate the metabolic activity, typically the clusters.
             Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to group
             names. For example, if we have `grouping_prefix = "cluster"` and
             we have `1` and `2` in the `grouping` column, the groups
             will be named as `cluster_1` and `cluster_2`.
             Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg): How do we subset the data. Other
+        subsetting (type=auto;pgarg;readonly): How do we subset the data. Other
             columns in the metadata to do comparisons. For example,
             `"TimePoint"` or `["TimePoint", "Response"]`.
             Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
-            names.
+        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
+            subset names.
             For example, if we have `subsetting_prefix = "timepoint"` and
             we have `pre` and `post` in the `subsetting` column, the subsets
             will be named as `timepoint_pre` and `timepoint_post`.
@@ -128,17 +128,17 @@ class _MetabolicFeatures(Proc):
         top (type=int): N top of enriched pathways to show
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        grouping (type=auto;pgarg): Defines the basic groups to investigate
-            the metabolic activity.
+        grouping (type=auto;pgarg;readonly): Defines the basic groups to
+            investigate the metabolic activity.
             Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg): Working as a prefix to group
-            names.
+        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to
+            group names.
             Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg): How do we subset the data. Another
-            column in the metadata.
+        subsetting (type=auto;pgarg;readonly): How do we subset the data.
+            Another column(s) in the metadata.
             Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
-            names.
+        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
+            subset names.
             Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
 
     Requires:
@@ -206,19 +206,19 @@ class _MetabolicFeaturesIntraSubset(Proc):
         top (type=int): N top of enriched pathways to show
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        grouping (type=auto;pgarg): Defines the basic groups to investigate
-            the metabolic activity.
+        grouping (type=auto;pgarg;readonly): Defines the basic groups to
+            investigate the metabolic activity.
             Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to group
             names.
             Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg): How do we subset the data. Another
-            column in the metadata.
+        subsetting (type=auto;pgarg;readonly): How do we subset the data.
+            Another column(s) in the metadata.
             Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
-            names.
+        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
+            subset names.
             Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-        subsetting_comparison (type=json;pgarg): How do we compare the
+        subsetting_comparison (type=json;pgarg;readonly): How do we compare the
             subsets.
             Defaults to `ScrnaMetabolicLandscape.subsetting_comparison`
 
@@ -273,17 +273,17 @@ class _MetabolicPathwayHeterogeneity(Proc):
             - width: The width of the plot
             - height: The height of the plot
             - res: The resolution of the plot
-        grouping (type=auto;pgarg): Defines the basic groups to investigate
-            the metabolic activity.
+        grouping (type=auto;pgarg;readonly): Defines the basic groups to
+            investigate the metabolic activity.
             Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg): Working as a prefix to group
+        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to group
             names.
             Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg): How do we subset the data. Another
-            column in the metadata.
+        subsetting (type=auto;pgarg;readonly): How do we subset the data.
+            Another column(s) in the metadata.
             Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg): Working as a prefix to subset
-            names.
+        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
+            subset names.
             Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
 
     Requires:
@@ -400,7 +400,8 @@ class ScrnaMetabolicLandscape(ProcGroup):
             compare cells from different subsets within each group. With the
             example above, we will have `pre_vs_post` comparisons within
             each group.
-            If `subsetting` is a list, this must be a list with the same length.
+            If `subsetting` is a list, this must be a list of dicts with the
+            same length.
         mutaters (type=json): Add new columns to the metadata for
             grouping/subsetting.
             They are passed to `sobj@meta.data |> mutate(...)`. For example,
@@ -443,26 +444,30 @@ class ScrnaMetabolicLandscape(ProcGroup):
                 self.opts.subsetting_prefix
             ] * len(self.opts.subsetting)
 
-        # Make sure the lengths of subsetting and subsetting_prefix are the same
-        if (
-            self.opts.subsetting
-            and len(self.opts.subsetting) != len(self.opts.subsetting_prefix)
-        ):
-            raise ValueError(
-                "The length of `subsetting` and `subsetting_prefix` "
-                "are not the same"
-            )
-
         # Make sure the lengths of subsetting and subsetting_comparison the same
-        if (
-            self.opts.subsetting
-            and len(self.opts.subsetting)
-            != len(self.opts.subsetting_comparison)
-        ):
-            raise ValueError(
-                "The length of `subsetting` and `subsetting_comparison` "
-                "are not the same"
-            )
+        if self.opts.subsetting:
+            if len(self.opts.subsetting) == 1 and isinstance(
+                self.opts.subsetting_comparison, dict
+            ):
+                self.opts.subsetting_comparison = [
+                    self.opts.subsetting_comparison
+                ]
+
+            if len(self.opts.subsetting) > 1 and not isinstance(
+                self.opts.subsetting_comparison, list
+            ):
+                raise ValueError(
+                    "The length of `subsetting` is larger than 1, "
+                    "but `subsetting_comparison` is not a list of dicts."
+                )
+
+            if len(self.opts.subsetting) != len(
+                self.opts.subsetting_comparison
+            ):
+                raise ValueError(
+                    "The length of `subsetting` and `subsetting_comparison` "
+                    "are not the same"
+                )
 
     @ProcGroup.add_proc
     def p_input(self) -> Type[Proc]:
