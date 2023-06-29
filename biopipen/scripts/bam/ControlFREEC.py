@@ -1,8 +1,9 @@
 import os
 import glob
 import rtoml
-import cmdy
+import shutil
 from diot import Diot
+from biopipen.utils.misc import dict_to_cli_args, run_command
 
 bamfile = {{ in.bamfile | repr }}  # pyright: ignore
 snpfile = {{ in.snpfile | repr }}  # pyright: ignore
@@ -24,7 +25,16 @@ if snpfile:
     chrLenFile2 = f"{outdir}/chrLenFile.fai.txt"
     # Filter chrs in chrLenFile based on snps
     # get seqs from snpfile
-    seqs = cmdy.tabix(snpfile, _exe=tabix, l=True).stdout.strip().splitlines()
+    seqs = run_command(
+        dict_to_cli_args(
+            {
+                "": [tabix, snpfile],
+                "l": True,
+            }
+        ),
+        stdout="return",
+    ).strip().splitlines()
+
     kept_seqs = []
     with open(chrLenFile, "r") as fin, open(chrLenFile2, "w") as fout:
         for line in fin:
@@ -74,18 +84,18 @@ config_ini = rtoml.dumps(config).replace('"', "")
 with open(configfile, "w") as fconf:
     fconf.write(config_ini)
 
-cmdy_args = {"_exe": freec, "_prefix": "-"}
-
-cmd = cmdy.freec(conf=configfile, **cmdy_args).hold()
-print()
-print(cmd.strcmd, flush=True)
-
-# freec not terminate when done
-os.system(cmd.strcmd)
+# Does it terminate when freec is done?
+run_command(
+    dict_to_cli_args(
+        {"": freec, "conf": configfile},
+        prefix="-",
+    ),
+    fg=True,
+)
 
 # plot cnvs
 # get makeGraph.R
-freec_path = os.path.realpath(cmdy.which(freec).stdout.strip())
+freec_path = os.path.realpath(shutil.which(freec).strip())
 mkgraph = os.path.join(os.path.dirname(freec_path), "makeGraph.R")
 if not os.path.exists(mkgraph):
     raise RuntimeError("makeGraph.R not found")
@@ -95,7 +105,7 @@ try:
 except IndexError:
     raise RuntimeError("Control-FREEC failed to run") from None
 
-rscript_path = os.path.realpath(cmdy.which(rscript).stdout.strip())
+rscript_path = os.path.realpath(shutil.which(rscript).strip())
 rpath = os.path.join(os.path.dirname(rscript_path), "R")
 
 plotcmd = f"cat {mkgraph} | R --slave --args {config.general.ploidy} {ratiofile}"

@@ -180,22 +180,6 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
-name = "cmdy"
-version = "0.5.5"
-description = "Shell language to run command in python"
-optional = false
-python-versions = ">=3.7,<4.0"
-files = [
-    {file = "cmdy-0.5.5-py3-none-any.whl", hash = "sha256:358897b306d318e3dcd42e56afdc5bf63d276f37d42a98481237823e7fa66f67"},
-    {file = "cmdy-0.5.5.tar.gz", hash = "sha256:7057d814bca367513475ab004c3565f85259affd26a0e47db7cee436559f1258"},
-]
-
-[package.dependencies]
-curio = ">=1.6,<2.0"
-python-simpleconf = {version = ">=0.6,<0.7", extras = ["toml"]}
-varname = {version = ">=0.11,<0.12", markers = "python_version >= \"3.8\" and python_version < \"4.0\""}
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -231,19 +215,6 @@ pygments = ">=2.7.1"
 pyyaml = ">=5.3.1"
 pyyaml-include = ">=1.2"
 questionary = ">=1.8.1"
-
-[[package]]
-name = "curio"
-version = "1.6"
-description = "Curio"
-optional = false
-python-versions = ">= 3.7"
-files = [
-    {file = "curio-1.6.tar.gz", hash = "sha256:562a586db20216ba7d2be8263deb9eb079e56048f9b8906d11d5f45aa81c5247"},
-]
-
-[package.extras]
-test = ["Sphinx", "pytest"]
 
 [[package]]
 name = "datar"
@@ -1487,13 +1458,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.6.3"
+version = "4.7.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typing_extensions-4.6.3-py3-none-any.whl", hash = "sha256:88a4153d8505aabbb4e13aacb7c486c2b4a33ca3b3f807914a9b4c844c471c26"},
-    {file = "typing_extensions-4.6.3.tar.gz", hash = "sha256:d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5"},
+    {file = "typing_extensions-4.7.0-py3-none-any.whl", hash = "sha256:5d8c9dac95c27d20df12fb1d97b9793ab8b2af8a3a525e68c80e21060c161771"},
+    {file = "typing_extensions-4.7.0.tar.gz", hash = "sha256:935ccf31549830cda708b42289d44b6f74084d616a00be651601a4f968e77c82"},
 ]
 
 [[package]]
@@ -1654,4 +1625,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "269adae829ecf34445db154c35100a45d909919dccabfe6244755e292a9c694f"
+content-hash = "915ca13729840209e59ae58b42d3cf16eda2dd2546e08456a996ebffb7b1f21b"

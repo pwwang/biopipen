@@ -1,11 +1,12 @@
 from datetime import date
 from pathlib import Path
 
-import cmdy
 from diot import Diot, OrderedDiot
 import numpy as np
 from cyvcf2 import VCF, Writer
 from pysam import FastaFile
+
+from biopipen.utils.misc import run_command
 
 inbed = {{in.inbed | quote}}  # pyright: ignore
 outvcf = {{out.outvcf | quote}}  # pyright: ignore
@@ -160,8 +161,16 @@ finally:
     writer.close()
 
 if index:
-    cmdy.bcftools.sort(_=tmpoutvcf, O='z', o=outvcf, _exe=bcftools)
-    cmdy.bcftools.index(_=outvcf, t=True, _exe=bcftools)
+    run_command(
+        [bcftools, "sort", "-O", "z", "-o", outvcf, tmpoutvcf],
+        fg=True,
+    )
+
+    run_command(
+        [bcftools, "index", "-t", outvcf],
+        fg=True,
+    )
+
 
 else:
     Path(tmpoutvcf).replace(outvcf)

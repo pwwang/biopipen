@@ -1,7 +1,9 @@
 from __future__ import annotations
+from pathlib import Path
 
 import sys
-from typing import Callable, List, Any
+from typing import List
+from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
 
 def exec_code(code, global_vars = None, local_vars = None, return_var = None):
@@ -36,11 +38,10 @@ def run_command(
         kwargs: Keyword arguments to pass to `subprocess.Popen`.
 
     Returns:
-        The return code of the command if `wait` is `True` or `fg` is `False`.
-        Otherwise, returns the `Popen` object.
+        The `Popen` object, or str when `stdout` is `RETURN` or `return`.
     """
     import shlex
-    from subprocess import Popen, PIPE
+    from subprocess import Popen, PIPE, STDOUT
 
     if isinstance(cmd, list):
         cmd = [str(c) for c in cmd]
@@ -54,13 +55,32 @@ def run_command(
 
     if isinstance(cmd, str):
         kwargs["shell"] = True
+
     if kwargs.get("stdin") is True:
         kwargs["stdin"] = PIPE
+
+    return_stdout = False
     if kwargs.get("stdout") is True:
         kwargs["stdout"] = PIPE
+    elif kwargs.get("stdout") in ("RETURN", "return"):
+        kwargs["stdout"] = PIPE
+        return_stdout = True
+    elif isinstance(kwargs.get("stdout"), (str, Path)):
+        if isinstance(kwargs["stdout"], str):
+            kwargs["stdout"] = Path(kwargs["stdout"])
+        kwargs["stdout"] = kwargs["stdout"].open("w")
+        kwargs["close_fds"] = True
+
     if kwargs.get("stderr") is True:
         kwargs["stderr"] = PIPE
+    elif kwargs.get("stderr") in ("STDOUT", "stdout"):
+        kwargs["stderr"] = STDOUT
+
     if fg:
+        if kwargs.get("stdout") or kwargs.get("stderr"):
+            raise ValueError(
+                "Cannot redirect stdout or stderr when running in foreground"
+            )
         kwargs["stdout"] = sys.stdout
         kwargs["stderr"] = sys.stderr
         kwargs["universal_newlines"] = True
@@ -70,10 +90,14 @@ def run_command(
     except Exception as e:
         raise RuntimeError(f"Failed to run command: {e}")
 
-    if fg or wait:
+    if fg or wait or return_stdout:
         rc = p.wait()
         if rc != 0:
             raise RuntimeError(f"Failed to run command: {cmd}")
-        return rc
+
+        if return_stdout:
+            return p.stdout.read().decode()
+
+        return p
 
     return p

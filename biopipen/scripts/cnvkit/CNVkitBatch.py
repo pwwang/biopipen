@@ -1,6 +1,7 @@
 from pathlib import Path
-import cmdy
+
 import pandas
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 metafile = {{in.cnsfile | quote}}  # pyright: ignore
 outdir = {{out.outdir | quote}}  # pyright: ignore
@@ -37,13 +38,14 @@ def gen_access():
         return access
 
     accessfile = Path(outdir) / "access.bed"
-    cmdy.cnvkit.access(
+    args = dict(
         exclude=access_excludes or False,
         s=access_min_gap_size or False,
         o=accessfile,
         _=ref,
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "access"]
+    run_command(dict_to_cli_args(args), fg=True)
 
     return accessfile
 
@@ -74,7 +76,7 @@ def main():
     accessfile = gen_access()
     tumor_bams, normal_bams = parse_metafile()
 
-    cmdy.cnvkit.batch(
+    args = dict(
         method=method,
         segment_method=segment_method,
         y=male_reference,
@@ -98,8 +100,9 @@ def main():
         diagram=diagram,
         d=outdir,
         _=tumor_bams,
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "batch"]
+    run_command(dict_to_cli_args(args), fg=True)
 
 
 if __name__ == "__main__":

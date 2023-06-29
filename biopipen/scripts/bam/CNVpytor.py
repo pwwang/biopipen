@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import cmdy
 import pandas
 from biopipen.scripts.vcf.VcfFix_utils import HeaderContig, fix_vcffile
 from biopipen.utils.reference import bam_index
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfile = {{in.bamfile | quote}}  # pyright: ignore
 snpfile = {{in.snpfile | repr}}  # pyright: ignore
@@ -29,7 +29,6 @@ del args['filters']
 
 
 bamfile = bam_index(bamfile, outdir, samtools, ncores)
-cmdy_args = {"_exe": cnvpytor, "_prefix": "-", "_deform": None}
 
 NOSNP_COLS = [
     "CNVtype",
@@ -240,17 +239,19 @@ def load_chrsize():
 def cnvpytor2vcf(infile, snp, fix=True):
     unfixedfile = Path(infile).with_suffix(f".unfixed.vcf")
     outfile = Path(infile).with_suffix(f".vcf")
-    cnvnator2vcf_cmd = cmdy.cnvnator2vcf(
-        reference=genome,
-        _=[infile, refdir],
-        _exe=cnvnator2vcf,
-        _prefix="-",
-    ).h()
-    print()
-    print(cnvnator2vcf_cmd.strcmd, flush=True)
-    out = cnvnator2vcf_cmd.run()
+    stdout = run_command(
+        dict_to_cli_args(
+            {
+                "": cnvpytor2vcf,
+                "reference": genome,
+                "_": [infile, refdir],
+            },
+            prefix="-",
+        ),
+        stdout="return",
+    )
     if fix:
-        unfixedfile.write_text(out.stdout)
+        unfixedfile.write_text(stdout)
 
         fixes = [
             {
@@ -275,7 +276,7 @@ def cnvpytor2vcf(infile, snp, fix=True):
 
         fix_vcffile(unfixedfile, outfile, fixes)
     else:
-        outfile.write_text(out.stdout)
+        outfile.write_text(stdout)
 
 
 def do_case():
@@ -290,88 +291,106 @@ def do_case():
     case["j"] = case.get("j", ncores)
 
     # read depth signal
-    cmd = cmdy.cnvpytor(
-        root=rootfile,
-        rd=bamfile,
-        chrom=False if not chrom else chrom,
-        **case,
-        **cmdy_args,
-    ).h()
-    print()
-    print(cmd.strcmd, flush=True)
-    cmd.fg().run()
+    run_command(
+        dict_to_cli_args(
+            {
+                "": cnvpytor,
+                "root": rootfile,
+                "rd": bamfile,
+                "chrom": chrom,
+                **case,
+            },
+            prefix="-",
+        ),
+        fg=True,
+    )
 
     # predicting cnv
-    cmd = cmdy.cnvpytor(
-        root=rootfile,
-        his=binsizes,
-        **cmdy_args,
-    ).h()
-    print()
-    print(cmd.strcmd, flush=True)
-    cmd.fg().run()
+    run_command(
+        dict_to_cli_args(
+            {
+                "": cnvpytor,
+                "root": rootfile,
+                "his": binsizes,
+            },
+            prefix="-",
+        ),
+        fg=True,
+    )
 
-    cmd = cmdy.cnvpytor(
-        root=rootfile,
-        partition=binsizes,
-        **cmdy_args,
-    ).h()
-    print()
-    print(cmd.strcmd, flush=True)
-    cmd.fg().run()
+    run_command(
+        dict_to_cli_args(
+            {
+                "": cnvpytor,
+                "root": rootfile,
+                "partition": binsizes,
+            },
+            prefix="-",
+        ),
+        fg=True,
+    )
 
     if snp is not False:
         snp["chrom"] = snp.get("chrom", chrom)
         snp["sample"] = False if not snp.get("sample", False) else snp["sample"]
         mask_snps = snp.pop("mask_snps", True)
         baf_nomask = snp.pop("baf_nomask", False)
-        cmd = cmdy.cnvpytor(
-            root=rootfile,
-            snp=snpfile,
-            **snp,
-            **cmdy_args,
-        ).h()
-        print()
-        print(cmd.strcmd, flush=True)
-        cmd.fg().run()
+
+        run_command(
+            dict_to_cli_args(
+                {
+                    "": cnvpytor,
+                    "root": rootfile,
+                    "snp": snpfile,
+                    **snp,
+                },
+                prefix="-",
+            ),
+            fg=True,
+        )
 
         if mask_snps:
-            cmd = cmdy.cnvpytor(
-                root=rootfile,
-                mask_snps=True,
-                **cmdy_args,
-            ).h()
-            print()
-            print(cmd.strcmd)
-            cmd.fg().run()
+            run_command(
+                dict_to_cli_args(
+                    {
+                        "": cnvpytor,
+                        "root": rootfile,
+                        "mask_snps": True,
+                    },
+                    prefix="-",
+                ),
+                fg=True,
+            )
 
-        cmd = cmdy.cnvpytor(
-            root=rootfile,
-            baf=binsizes,
-            nomask=baf_nomask,
-            **cmdy_args,
-        ).h()
-        print()
-        print(cmd.strcmd, flush=True)
-        cmd.fg().run()
+        run_command(
+            dict_to_cli_args(
+                {
+                    "": cnvpytor,
+                    "root": rootfile,
+                    "baf": binsizes,
+                    "nomask": baf_nomask,
+                },
+                prefix="-",
+            ),
+            fg=True,
+        )
 
     # call
     for binsize in binsizes:
         outfile = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.tsv"
         outfile_filtered = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.filtered.tsv"
-        print()
-        print(cmdy.cnvpytor(
-            root=rootfile,
-            call="combined" if snp is not False else True,
-            _=binsize,
-            **cmdy_args,
-        ).h.strcmd, flush=True)
-        cmdy.cnvpytor(
-            root=rootfile,
-            call="combined" if snp is not False else True,
-            _=binsize,
-            **cmdy_args,
-        ).r > outfile
+        run_command(
+            dict_to_cli_args(
+                {
+                    "": cnvpytor,
+                    "root": rootfile,
+                    "call": "combined" if snp is not False else True,
+                    "_": binsize,
+                },
+                prefix="-",
+            ),
+            stdout=outfile,
+        )
 
         cnvpytor2other(outfile, bool(snp), "gff")
         cnvpytor2other(outfile, bool(snp), "bed")
@@ -406,29 +425,37 @@ def do_case():
 
         # plots
         manplot = outdir / f"manhattan.{binsize}.png"
-        cmd = cmdy.cnvpytor(
-            root=rootfile,
-            plot=["manhattan", binsize],
-            chrom=False if not chrom else chrom,
-            o=manplot,
-            **cmdy_args,
-        ).h()
-        print()
-        print(cmd.strcmd, flush=True)
-        cmd.fg().run()
+        run_command(
+            dict_to_cli_args(
+                {
+                    "": cnvpytor,
+                    "root": rootfile,
+                    "plot": ["manhattan", binsize],
+                    "chrom": chrom,
+                    "o": manplot,
+                },
+                prefix="-",
+            ),
+            fg=True,
+        )
 
         circplot = outdir / f"circular.{binsize}.png"
-        cmd = cmdy.cnvpytor(
-            root=rootfile,
-            plot=["circular", binsize],
-            chrom=False if not chrom else chrom,
-            o=circplot,
-            _raise=False, # ZeroDivisionError
-            **cmdy_args,
-        ).h()
-        print()
-        print(cmd.strcmd, flush=True)
-        cmd.fg().run()
+        try:
+            run_command(
+                dict_to_cli_args(
+                    {
+                        "": cnvpytor,
+                        "root": rootfile,
+                        "plot": ["circular", binsize],
+                        "chrom": chrom,
+                        "o": circplot,
+                    },
+                    prefix="-",
+                ),
+                fg=True,
+            )
+        except RuntimeError as e:
+            pass
 
 
 do_case()

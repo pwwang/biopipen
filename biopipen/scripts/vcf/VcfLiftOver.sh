@@ -4,7 +4,7 @@ rejfile={{ job.outdir | joinpaths: "rejected.vcf" | quote }}
 gatk={{ envs.gatk | quote }}
 chain={{ envs.chain | quote }}
 reffa={{ envs.reffa | quote }}
-args={{ envs.args | dict_to_cli_args | quote }}
+args={{ envs.args | dict_to_cli_args: join=True }}
 
 refdict="${reffa%.fa}.dict"
 if [[ ! -e "$refdict" ]]; then

@@ -1,8 +1,10 @@
 """Additional filters for pipen"""
-from pathlib import Path
-from typing import Any, Mapping
+from __future__ import annotations
 
-import cmdy
+import shlex
+from pathlib import Path
+from typing import Any, List, Mapping
+
 from argx import Namespace
 from liquid.filters.manager import FilterManager
 
@@ -10,14 +12,91 @@ filtermanager = FilterManager()
 
 
 @filtermanager.register
-def dict_to_cli_args(dic: Mapping[str, Any]) -> str:
+def dict_to_cli_args(
+    dic: Mapping[str, Any],
+    prefix: str | None = None,
+    sep: str | None = " ",
+    dup_key: bool = True,
+    join: bool = False,
+    start_key: str = "",
+    end_key: str = "_",
+) -> str | List[str]:
     """Convert a python dict to a string of CLI arguments
 
-    Examples:
-        >>> {"a": 1, "ab": 2}
-        >>> "-a 1 --ab 2"
+    Args:
+        dic: The dict to convert
+        prefix: The prefix of the keys after conversion
+            Defaults to `None`, mean `-` for short keys and `--` for long keys
+        sep: The separator between key and value
+            If `None`, using `" "` for short keys and `"="` for long keys
+        dup_key: Whether to duplicate the key in cli arguments for list values
+            When `True`, `{"a": [1, 2]}` will be converted to `"-a 1 -a 2"`
+            When `False`, `{"a": [1, 2]}` will be converted to `"-a 1 2"`
+            If `sep` is `None` or `=`, this must be True, otherwise an error
+            will be raised
+        join: Whether to join the arguments into a single string
+
+    Returns:
+        The converted string or list of strings
     """
-    return cmdy.echo(dic).stdout.strip()
+    if sep in [None, "="] and not dup_key:
+        raise ValueError("`dup_key` must be True when sep is `None` or `=`")
+
+    starts = []
+    ends = []
+    out = []
+    for k, v in dic.items():
+        if k == start_key:
+            container = starts
+        elif k == end_key:
+            container = ends
+        else:
+            container = out
+
+        k = str(k)
+        if v is None or v is False:
+            continue
+
+        if prefix is None:
+            pref = "--" if len(k) > 1 else "-"
+        else:
+            pref = prefix
+
+        if sep is None:
+            s = "=" if len(k) > 1 else " "
+        else:
+            s = sep
+
+        if v is True:
+            # You can use {'-': True} to introduce a separator
+            # like `--`
+            if k in [start_key, end_key]:
+                raise ValueError(
+                    f"Cannot use `{start_key}` or `{end_key}` as key for True"
+                )
+            container.append(f"{pref}{k}")
+
+        elif isinstance(v, (list, tuple)):
+            for i, val in enumerate(v):
+                if s == " ":
+                    if (i == 0 or dup_key) and k not in [start_key, end_key]:
+                        container.append(f"{pref}{k}")
+                    container.append(str(val))
+                else:
+                    if (i == 0 or dup_key) and k not in [start_key, end_key]:
+                        container.append(f"{pref}{k}{s}{val}")
+                    else:
+                        container.append(str(val))
+        elif k in [start_key, end_key]:
+            container.append(str(v))
+        elif s == " ":
+            container.append(f"{pref}{k}")
+            container.append(str(v))
+        else:
+            container.append(f"{pref}{k}{s}{v}")
+
+    out = starts + out + ends
+    return shlex.join(out) if join else out
 
 
 @filtermanager.register

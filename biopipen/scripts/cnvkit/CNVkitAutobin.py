@@ -1,4 +1,4 @@
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfiles = {{in.bamfiles | repr}}  # pyright: ignore
 accfile = {{in.accfile | quote}}  # pyright: ignore
@@ -19,23 +19,25 @@ short_names = {{envs.short_names | repr}}  # pyright: ignore
 
 def main():
 
-    cmdy.cnvkit.autobin(
+    args = dict(
         f=reffile,
         m=method,
         g=accfile,
-        t=baitfile or False,
+        t=baitfile,
         b=bp_per_bin,
         target_max_size=target_max_size,
         target_min_size=target_min_size,
         antitarget_max_size=antitarget_max_size,
         antitarget_min_size=antitarget_min_size,
-        annotate=annotate or False,
+        annotate=annotate,
         short_names=short_names,
         target_output_bed=target_file,
         antitarget_output_bed=antitarget_file,
         _=bamfiles,
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "autobin"]
+
+    run_command(dict_to_cli_args(args), fg=True)
 
 
 if __name__ == "__main__":

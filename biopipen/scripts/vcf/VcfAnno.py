@@ -1,5 +1,6 @@
 from os import path
-import cmdy
+
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 infile = {{in.infile | quote}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
@@ -20,7 +21,6 @@ conffile = {{conf | quote}}
 
 args["p"] = ncores
 args["_"] = [conffile, infile]
-args["_exe"] = vcfanno
-args["_prefix"] = "-"
+args[""] = vcfanno
 
-cmdy.vcfanno(**args).r() > outfile
+run_command(dict_to_cli_args(args, prefix="-"), stdout=outfile)

@@ -1,4 +1,4 @@
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 infile1 = {{in.infile1 | repr}}  # pyright: ignore
 infile2 = {{in.infile2 | repr}}  # pyright: ignore
@@ -17,16 +17,10 @@ args = {
     "o": outfile,
     "write": 1,
     "_": ["-n=2", infile1, infile2],
-    "_exe": bcftools,
+    "": [bcftools, "isec"],
 }
 
-cmd = cmdy.bcftools.isec(**args).hold()
-print("  running:")
-print("  ", cmd.strcmd)
-cmd.run(wait=True)
+run_command(dict_to_cli_args(args), fg=True)
 
 if index:
-    cmd = cmdy.bcftools.index(_=outfile, t=True, _exe=bcftools).hold()
-    print("  running:")
-    print("  ", cmd.strcmd)
-    cmd.run(wait=True)
+    run_command([bcftools, "index", "-t", outfile], fg=True)

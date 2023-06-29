@@ -1,7 +1,8 @@
 from pathlib import Path
 
-import cmdy
 from diot import Diot
+
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 segfiles = {{in.segfiles | repr}}  # pyright: ignore
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
@@ -61,20 +62,17 @@ def do_case(name, case):
     pngfile = Path(outdir).joinpath(f"{name}.heatmap.png")
 
     sfiles = parse_order(segfiles, the_order)
-
-    cmdy.cnvkit.heatmap(
+    args = dict(
         **case,
         o=pdffile,
         _=sfiles,
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "heatmap"]
+    run_command(dict_to_cli_args(args), fg=True)
 
-    cmdy.convert(
-        **conv_args,
-        _=[pdffile, pngfile],
-        _prefix="-",
-        _exe=convert,
-    ).fg()
+    convert_args = dict(**conv_args, _=[pdffile, pngfile])
+    convert_args[""] = [convert]
+    run_command(dict_to_cli_args(convert_args, prefix="-"), fg=True)
 
 
 if __name__ == "__main__":

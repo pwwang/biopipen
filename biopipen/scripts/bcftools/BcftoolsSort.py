@@ -1,4 +1,4 @@
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 infile = {{in.infile | quote}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
@@ -8,12 +8,12 @@ args = {{envs.args | repr}}  # pyright: ignore
 tmpdir = {{envs.tmpdir | quote}}  # pyright: ignore
 index = {{envs.index | repr}}  # pyright: ignore
 
-args["_exe"] = bcftools
+args[""] = bcftools
 args["_"] = infile
 args["o"] = outfile
 args["O"] = "z" if gz or index else "v"
 
-cmdy.bcftools.sort(**args).fg()
+run_command(dict_to_cli_args(args), fg=True)
 
 if index:
-    cmdy.bcftools.index(outfile).fg()
+    run_command([bcftools, "index", outfile], fg=True)

@@ -1,7 +1,8 @@
-import tempfile
+import shutil
 from pathlib import Path
 from hashlib import md5
-import cmdy
+
+from biopipen.core.filters import dict_to_cli_args, run_command
 
 infile = {{in.infile | repr}}  # pyright: ignore
 outfile = {{out.outfile | repr}}  # pyright: ignore
@@ -13,7 +14,7 @@ tmpdir = {{envs.tmpdir | repr}}  # pyright: ignore
 includes = {{envs.includes | repr}}  # pyright: ignore
 excludes = {{envs.excludes | repr}}  # pyright: ignore
 
-args["_exe"] = bcftools
+args[""] = bcftools
 args["_"] = infile
 args["o"] = outfile
 args["threads"] = ncores
@@ -47,10 +48,7 @@ def handle_filter(vcf, fname, filt, flag):
     if keep:
         arguments["s"] = fname
 
-    cmd = cmdy.bcftools.filter(**arguments).hold()
-    print("  running:")
-    print("  ", cmd.strcmd)
-    cmd.run(wait=True)
+    run_command(dict_to_cli_args(arguments), fg=True)
     return arguments["o"]
 
 
@@ -78,4 +76,4 @@ includes.update(excludes)
 for fname, (filt, flag) in includes.items():
     infile = handle_filter(infile, fname, filt, flag)
 
-cmdy.cp(infile, outfile)
+shutil.copy2(infile, outfile)
