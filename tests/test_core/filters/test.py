@@ -82,6 +82,12 @@ def test_dict_to_cli_args():
         ["2", "-a", "1", "3"]
     )
 
+    # Test dashify
+    assert_equal(
+        dict_to_cli_args({"a": 1, "_": 3, "a_b": 4, "": 2}, dashify=True),
+        ["2", "-a", "1", "--a-b", "4", "3"]
+    )
+
 
 if __name__ == "__main__":
     test_dict_to_cli_args()
