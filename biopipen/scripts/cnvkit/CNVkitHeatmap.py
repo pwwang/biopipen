@@ -70,10 +70,10 @@ def do_case(name, case):
     args[""] = [cnvkit, "heatmap"]
     run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
-    convert_args = dict(**conv_args, _=[pdffile, pngfile])
-    convert_args[""] = [convert]
+    conv_args = dict(**conv_args, _=[pdffile, pngfile])
+    conv_args[""] = [convert]
     run_command(
-        dict_to_cli_args(convert_args, dashify=True, prefix="-"),
+        dict_to_cli_args(conv_args, dashify=True, prefix="-"),
         fg=True,
     )
 

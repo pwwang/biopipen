@@ -44,10 +44,10 @@ def do_case(name, case):
     args[""] = [cnvkit, "diagram"]
     run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
-    convert_args = dict(**conv_args, _=[pdffile, pngfile])
-    convert_args[""] = [convert]
+    conv_args = dict(**conv_args, _=[pdffile, pngfile])
+    conv_args[""] = [convert]
     run_command(
-        dict_to_cli_args(convert_args, prefix="-", dashify=True),
+        dict_to_cli_args(conv_args, prefix="-", dashify=True),
         fg=True,
     )
 
