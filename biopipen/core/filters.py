@@ -20,6 +20,7 @@ def dict_to_cli_args(
     join: bool = False,
     start_key: str = "",
     end_key: str = "_",
+    dashify: bool = False,
 ) -> str | List[str]:
     """Convert a python dict to a string of CLI arguments
 
@@ -54,6 +55,7 @@ def dict_to_cli_args(
             container = out
 
         k = str(k)
+        dashified_k = k.replace("_", "-") if dashify else k
         if v is None or v is False:
             continue
 
@@ -74,26 +76,26 @@ def dict_to_cli_args(
                 raise ValueError(
                     f"Cannot use `{start_key}` or `{end_key}` as key for True"
                 )
-            container.append(f"{pref}{k}")
+            container.append(f"{pref}{dashified_k}")
 
         elif isinstance(v, (list, tuple)):
             for i, val in enumerate(v):
                 if s == " ":
                     if (i == 0 or dup_key) and k not in [start_key, end_key]:
-                        container.append(f"{pref}{k}")
+                        container.append(f"{pref}{dashified_k}")
                     container.append(str(val))
                 else:
                     if (i == 0 or dup_key) and k not in [start_key, end_key]:
-                        container.append(f"{pref}{k}{s}{val}")
+                        container.append(f"{pref}{dashified_k}{s}{val}")
                     else:
                         container.append(str(val))
         elif k in [start_key, end_key]:
             container.append(str(v))
         elif s == " ":
-            container.append(f"{pref}{k}")
+            container.append(f"{pref}{dashified_k}")
             container.append(str(v))
         else:
-            container.append(f"{pref}{k}{s}{v}")
+            container.append(f"{pref}{dashified_k}{s}{v}")
 
     out = starts + out + ends
     return shlex.join(out) if join else out

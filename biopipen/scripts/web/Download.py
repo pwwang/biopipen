@@ -15,7 +15,7 @@ if tool == "wget":
     args["O"] = outfile
     args["no-directories"] = True
     args[""] = wget
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 elif tool == "aria2c":
     args["d"] = outfile.parent
@@ -24,7 +24,7 @@ elif tool == "aria2c":
     args["x"] = ncores
     args[""] = aria2c
     args["_"] = url
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 else: # use python
     import urllib

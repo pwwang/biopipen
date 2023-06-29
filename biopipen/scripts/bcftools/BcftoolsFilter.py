@@ -48,7 +48,7 @@ def handle_filter(vcf, fname, filt, flag):
     if keep:
         arguments["s"] = fname
 
-    run_command(dict_to_cli_args(arguments), fg=True)
+    run_command(dict_to_cli_args(arguments, dashify=True), fg=True)
     return arguments["o"]
 
 

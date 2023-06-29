@@ -67,12 +67,15 @@ def download_reffa(genome):
         _=url,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
-    run_command(dict_to_cli_args(aria2c_args), fg=True)
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
     seqkit_args = {"": ["seqkit", "grep"]}
     seqkit_args["p"] = CHROMS
     seqkit_args["_"] = outfile
-    run_command(dict_to_cli_args(seqkit_args, dup_key=True), stdout=reffa)
+    run_command(
+        dict_to_cli_args(seqkit_args, dashify=True, dup_key=True),
+        stdout=reffa,
+    )
     run_command(["samtools", "faidx", reffa])
     run_command(["rm", "-f", outfile])
 
@@ -93,7 +96,7 @@ def download_chrsize(genome):
         _=url,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
-    run_command(dict_to_cli_args(aria2c_args), fg=True)
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 @echo("Downloading {0} refgenes")
@@ -112,7 +115,7 @@ def download_refgene(genome):
         _=url,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
-    run_command(dict_to_cli_args(aria2c_args), fg=True)
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
     refgene_file = outdir / "refgene.gtf"
     refexon_file = outdir / "refexon.gtf"
@@ -137,7 +140,7 @@ def download_kegg_metabolism():
         _=url,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
-    run_command(dict_to_cli_args(aria2c_args), fg=True)
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 @echo("Downloading hg19 reference genome sequences")
@@ -176,7 +179,7 @@ def download_sctype_db():
         _=SCTYPE_DB_URL,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
-    run_command(dict_to_cli_args(aria2c_args), fg=True)
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

@@ -23,4 +23,4 @@ args["p"] = ncores
 args["_"] = [conffile, infile]
 args[""] = vcfanno
 
-run_command(dict_to_cli_args(args, prefix="-"), stdout=outfile)
+run_command(dict_to_cli_args(args, dashify=True, prefix="-"), stdout=outfile)

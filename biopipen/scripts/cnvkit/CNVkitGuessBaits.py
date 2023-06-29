@@ -3,7 +3,7 @@ import subprocess
 from shutil import which
 from pathlib import Path, PosixPath  # for as_path
 
-from biopipen.utils.misc import run_command
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfiles = {{in.bamfiles | repr}}  # pyright: ignore
 atfile = {{in.atfile | repr}}  # pyright: ignore
@@ -56,22 +56,13 @@ python = subprocess.check_output([tmp_cnvkit_path]).decode("utf-8").strip()
 guess_baits = Path(biopipen_dir).joinpath("scripts", "cnvkit", "guess_baits.py")
 
 params.update({
+    "": [python, guess_baits],
     "o": targetfile,
     "c": covfile,
     "p": ncores,
     "f": ref,
     "s": samtools,
+    "_": bamfiles,
 })
 
-cmd = [python, guess_baits]
-for k, v in params.items():
-    if len(k) == 1:
-        cmd.append("-{}".format(k))
-        cmd.append(v)
-    else:
-        cmd.append("--{}".format(k))
-        cmd.append(v)
-
-cmd.extend(bamfiles)
-
-run_command(cmd, fg=True)
+run_command(dict_to_cli_args(params), fg=True)

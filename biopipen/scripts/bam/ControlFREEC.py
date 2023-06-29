@@ -86,10 +86,7 @@ with open(configfile, "w") as fconf:
 
 # Does it terminate when freec is done?
 run_command(
-    dict_to_cli_args(
-        {"": freec, "conf": configfile},
-        prefix="-",
-    ),
+    dict_to_cli_args({"": freec, "conf": configfile}, prefix="-"),
     fg=True,
 )
 

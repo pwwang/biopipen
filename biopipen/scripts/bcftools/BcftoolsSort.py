@@ -13,7 +13,7 @@ args["_"] = infile
 args["o"] = outfile
 args["O"] = "z" if gz or index else "v"
 
-run_command(dict_to_cli_args(args), fg=True)
+run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 if index:
     run_command([bcftools, "index", outfile], fg=True)

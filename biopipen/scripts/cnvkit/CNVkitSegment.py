@@ -39,7 +39,7 @@ def main():
         _=cnrfile,
     )
     args[""] = [cnvkit, "segment"]
-    args = dict_to_cli_args(args)
+    args = dict_to_cli_args(args, dashify=True)
     run_command(args, fg=True)
 
 

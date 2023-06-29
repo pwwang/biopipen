@@ -166,10 +166,7 @@ if index:
         fg=True,
     )
 
-    run_command(
-        [bcftools, "index", "-t", outvcf],
-        fg=True,
-    )
+    run_command([bcftools, "index", "-t", outvcf], fg=True)
 
 
 else:

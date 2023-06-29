@@ -45,7 +45,7 @@ def gen_access():
         _=ref,
     )
     args[""] = [cnvkit, "access"]
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
     return accessfile
 
@@ -102,7 +102,7 @@ def main():
         _=tumor_bams,
     )
     args[""] = [cnvkit, "batch"]
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

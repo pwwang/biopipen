@@ -39,4 +39,4 @@ if header:
             fh.write(f"{head}\n")
     args["h"] = headerfile
 
-run_command(dict_to_cli_args(args), fg=True)
+run_command(dict_to_cli_args(args, dashify=True), fg=True)

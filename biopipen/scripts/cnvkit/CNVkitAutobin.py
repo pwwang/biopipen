@@ -37,7 +37,7 @@ def main():
     )
     args[""] = [cnvkit, "autobin"]
 
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

@@ -68,11 +68,14 @@ def do_case(name, case):
         _=sfiles,
     )
     args[""] = [cnvkit, "heatmap"]
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
     convert_args = dict(**conv_args, _=[pdffile, pngfile])
     convert_args[""] = [convert]
-    run_command(dict_to_cli_args(convert_args, prefix="-"), fg=True)
+    run_command(
+        dict_to_cli_args(convert_args, dashify=True, prefix="-"),
+        fg=True,
+    )
 
 
 if __name__ == "__main__":

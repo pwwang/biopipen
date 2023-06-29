@@ -28,7 +28,7 @@ def main():
         _=[target_file, antitarget_file or emptyfile, reference_file],
     )
     args[""] = [cnvkit, "fix"]
-    run_command(dict_to_cli_args(args), fg=True)
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

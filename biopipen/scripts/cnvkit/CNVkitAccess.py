@@ -17,7 +17,7 @@ def main():
     if excfiles:
         other_args["exclude"] = excfiles
 
-    run_command(dict_to_cli_args(other_args), fg=True)
+    run_command(dict_to_cli_args(other_args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

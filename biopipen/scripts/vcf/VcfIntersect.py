@@ -20,7 +20,7 @@ args = {
     "": [bcftools, "isec"],
 }
 
-run_command(dict_to_cli_args(args), fg=True)
+run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 if index:
     run_command([bcftools, "index", "-t", outfile], fg=True)
