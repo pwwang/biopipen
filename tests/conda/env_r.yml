@@ -53,9 +53,9 @@ dependencies:
   - faiss-cpu
   - clustcr
   - truvari==3.4.0
+  - numpy=1.24
   - pip
   - pip:
-    - numpy==1.24.4
     - magic-impute
     # For GIANA
     - biopython==1.79
