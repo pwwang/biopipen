@@ -1,3 +1,12 @@
+## 0.15.0
+
+- ⬆️ Bump pipen to 0.10.6
+- ⬆️ Bump pipen-board to 0.7.8
+- ➖ Retire cmdy at all places (#54)
+- ✅ [core.filters] Add run.env to test
+- ✅ [core.filters] Add test for `dashify=True`
+- 🎨 [scrna.MarkersFinder] Make envs.sigmarkers case wise for scrna.MarkersFinder (#53)
+
 ## 0.14.3
 
 - ⬆️ Bump pipen to 0.10.5
