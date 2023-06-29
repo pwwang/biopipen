@@ -1,4 +1,4 @@
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfile = {{in.bamfile | quote}}  # pyright: ignore
 target_file = {{in.target_file | quote}}  # pyright: ignore
@@ -12,15 +12,16 @@ ncores = {{envs.ncores | repr}}  # pyright: ignore
 
 def main():
 
-    cmdy.cnvkit.coverage(
+    args = dict(
         f=reffile,
         c=count,
         q=min_mapq,
         p=ncores,
         o=outfile,
         _=[bamfile, target_file],
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "coverage"]
+    run_command(dict_to_cli_args(args), fg=True)
 
 
 if __name__ == "__main__":

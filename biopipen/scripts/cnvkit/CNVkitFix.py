@@ -1,5 +1,6 @@
 from pathlib import Path
-import cmdy
+
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 target_file = {{in.target_file | quote}}  # pyright: ignore
 antitarget_file = {{in.antitarget_file | quote}}  # pyright: ignore
@@ -17,16 +18,17 @@ emptyfile.touch()
 
 def main():
 
-    cmdy.cnvkit.fix(
-        i=sample_id or False,
+    args = dict(
+        i=sample_id,
         o=outfile,
         c=cluster,
         no_gc=False,
         no_edge=False,
         no_rmask=False,
         _=[target_file, antitarget_file or emptyfile, reference_file],
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "fix"]
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

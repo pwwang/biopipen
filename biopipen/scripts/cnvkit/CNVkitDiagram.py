@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import cmdy
 from diot import Diot
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 
 cnrfile = {{in.cnrfile | quote}}  # pyright: ignore
@@ -35,20 +35,21 @@ def do_case(name, case):
     pdffile = Path(outdir).joinpath(f"{name}.heatmap.pdf")
     pngfile = Path(outdir).joinpath(f"{name}.heatmap.png")
 
-    cmdy.cnvkit.diagram(
+    args = dict(
         **case,
         s=cnsfile,
         o=pdffile,
         _=cnrfile,
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "diagram"]
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
-    cmdy.convert(
-        **conv_args,
-        _=[pdffile, pngfile],
-        _prefix="-",
-        _exe=convert,
-    ).fg()
+    conv_args = dict(**conv_args, _=[pdffile, pngfile])
+    conv_args[""] = [convert]
+    run_command(
+        dict_to_cli_args(conv_args, prefix="-", dashify=True),
+        fg=True,
+    )
 
 
 if __name__ == "__main__":

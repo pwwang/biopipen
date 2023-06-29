@@ -1,6 +1,7 @@
-import cmdy
 import hashlib
 from pathlib import Path
+
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 DESTDIR = Path(__file__).parent / "reference"
 REFFA_URL = (
@@ -57,17 +58,26 @@ def download_reffa(genome):
     url = REFFA_URL % {"genome": genome}
     outfile = outdir / "allchrs.fa.gz"
     reffa = outdir / "chrs.fa"
-    cmdy.aria2c(
-        *ARIA2C_OPTS,
+
+    aria2c_args = dict(
         s=2,
         x=2,
         o=outfile.name,
         d=outdir,
         _=url,
     )
-    cmdy.seqkit.grep(p=CHROMS, _=outfile, _dupkey=True).r() > reffa
-    cmdy.samtools.faidx(reffa)
-    cmdy.rm(f=True, _=outfile)
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
+
+    seqkit_args = {"": ["seqkit", "grep"]}
+    seqkit_args["p"] = CHROMS
+    seqkit_args["_"] = outfile
+    run_command(
+        dict_to_cli_args(seqkit_args, dashify=True, dup_key=True),
+        stdout=reffa,
+    )
+    run_command(["samtools", "faidx", reffa])
+    run_command(["rm", "-f", outfile])
 
 
 @echo("Downloading {0} chromosome sizes")
@@ -77,14 +87,16 @@ def download_chrsize(genome):
     outdir.mkdir(exist_ok=True, parents=True)
     url = CHRSIZE_URL % {"genome": genome}
     outfile = outdir / "chrom.sizes"
-    cmdy.aria2c(
-        *ARIA2C_OPTS,
+
+    aria2c_args = dict(
         s=2,
         x=2,
         o=outfile.name,
         d=outdir,
         _=url,
     )
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 @echo("Downloading {0} refgenes")
@@ -94,18 +106,21 @@ def download_refgene(genome):
     outdir.mkdir(exist_ok=True, parents=True)
     url = REFGENE_URL % {"genome": genome}
     outfile = outdir / "refgene.gtf.gz"
-    cmdy.aria2c(
-        *ARIA2C_OPTS,
+
+    aria2c_args = dict(
         s=2,
         x=2,
         o=outfile.name,
         d=outdir,
         _=url,
     )
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
+
     refgene_file = outdir / "refgene.gtf"
     refexon_file = outdir / "refexon.gtf"
-    cmdy.gunzip(outfile, f=True)
-    cmdy.awk('$3 == "exon"', refgene_file).r() > refexon_file
+    run_command(["gunzip", "-f", outfile])
+    run_command(["awk", '$3 == "exon"', refgene_file], stdout=refexon_file)
 
 
 @echo("Downloading KEGG_metabolism.gmt")
@@ -117,14 +132,15 @@ def download_kegg_metabolism():
         "LocasaleLab/Single-Cell-Metabolic-Landscape/"
         "master/Data/KEGG_metabolism.gmt"
     )
-    cmdy.aria2c(
-        *ARIA2C_OPTS,
+    aria2c_args = dict(
         s=2,
         x=2,
         o=outfile.name,
         d=outfile.parent,
         _=url,
     )
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 @echo("Downloading hg19 reference genome sequences")
@@ -157,12 +173,13 @@ def download_reffa_hg38():
 def download_sctype_db():
     """Download scType database"""
     name = "ScTypeDB_full.xlsx"
-    cmdy.aria2c(
-        *ARIA2C_OPTS,
+    aria2c_args = dict(
         o=name,
         d=DESTDIR,
         _=SCTYPE_DB_URL,
     )
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":

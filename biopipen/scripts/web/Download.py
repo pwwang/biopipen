@@ -1,5 +1,6 @@
 from pathlib import Path
-import cmdy
+
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 url = {{in.url | repr}}  # pyright: ignore
 outfile = Path({{out.outfile | repr}})  # pyright: ignore
@@ -13,17 +14,17 @@ if tool == "wget":
     args["_"] = url
     args["O"] = outfile
     args["no-directories"] = True
-    args["_exe"] = wget
-    cmdy.wget(**args).fg()
+    args[""] = wget
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 elif tool == "aria2c":
     args["d"] = outfile.parent
     args["o"] = outfile.name
     args["s"] = ncores
     args["x"] = ncores
-    args["_exe"] = aria2c
+    args[""] = aria2c
     args["_"] = url
-    cmdy.aria2c(**args).fg()
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 else: # use python
     import urllib

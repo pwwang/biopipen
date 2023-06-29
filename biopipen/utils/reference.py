@@ -1,7 +1,6 @@
 import tempfile
 from pathlib import Path
 
-import cmdy
 from ..core.config import config
 from biopipen.utils.misc import run_command
 
@@ -53,15 +52,17 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
     new_infile = tmpdir / (basename + ".gz")
     if gt == "gzip":
         # re-bgzip
-        cmdy.gunzip(infile, c=True).r() > new_infile.with_suffix("")
-        cmdy.bgzip(new_infile.with_suffix(""))
+        run_command(
+            ["gunzip", "-c", infile], stdout=new_infile.with_suffix(""),
+        )
+        run_command(["bgzip", new_infile.with_suffix("")], fg=True)
     elif gt == "flat":
-        cmdy.bgzip(infile, c=True).r() > new_infile
+        run_command(["bgzip", "-c", infile], stdout=new_infile)
     else:
         # directory of infile may not have write permission
         new_infile.symlink_to(infile)
 
-    cmdy.tabix(p=preset, _=new_infile, _exe=tabix)
+    run_command([tabix, "-p", preset, new_infile], fg=True)
     return new_infile
 
 
@@ -77,7 +78,7 @@ def _run_bam_index(
         cmd = [samtools, "index", "-@", ncores, bam, idxfile]
     else:
         cmd = [sambamba, "index", "-t", ncores, bam, idxfile]
-    run_command(cmd)
+    run_command(cmd, fg=True)
 
 
 def bam_index(

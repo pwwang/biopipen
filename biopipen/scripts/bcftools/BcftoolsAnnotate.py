@@ -1,7 +1,7 @@
 from os import path
 
-import cmdy
 from biopipen.utils.reference import tabix_index
+from biopipen.utils.misc import dict_to_cli_args, run_command
 
 infile = {{in.infile | repr}}  # pyright: ignore
 annfile = {{(in.annfile or envs.annfile) | repr}}  # pyright: ignore
@@ -14,7 +14,7 @@ cols = {{envs.cols | repr}}  # pyright: ignore
 header = {{envs.header | repr}}  # pyright: ignore
 args = {{envs.args | repr}}  # pyright: ignore
 
-args["_exe"] = bcftools
+args[""] = bcftools
 args["_"] = tabix_index(infile, "vcf")
 args["o"] = outfile
 args["threads"] = ncores
@@ -39,8 +39,4 @@ if header:
             fh.write(f"{head}\n")
     args["h"] = headerfile
 
-cmd = cmdy.bcftools.annotate(**args).h()
-print("Running:")
-print("-------")
-print(cmd.strcmd)
-cmd.fg().run()
+run_command(dict_to_cli_args(args, dashify=True), fg=True)

@@ -2,7 +2,7 @@ import sys
 from math import ceil
 from pathlib import Path
 
-import cmdy
+from biopipen.utils.misc import run_command
 
 bedfiles = {{in.bedfiles | repr}}  # pyright: ignore
 outfile = Path({{out.outbed | repr}})  # pyright: ignore
@@ -34,7 +34,10 @@ def concat_bedfiles():
             fout.write(bedfile.read_text())
 
     _log("- Sorting the concatenated BED file")
-    cmdy.bedtools.sort(i=concatfile, _exe=bedtools_path).r() > sortedfile
+    run_command(
+        [bedtools_path, "sort", "-i", concatfile, "-faidx", chrsize],
+        stdout=sortedfile,
+    )
 
     return sortedfile
 
@@ -44,14 +47,22 @@ def genomecov():
     _log("- Calculating genome coverage")
     genomecovfile = outfile.parent / "_genomecov.bed"
     filteredfile = outfile.parent / "_filtered.bed"
-    cmdy.bedtools.genomecov(
-        i=concat_bedfiles(),
-        g=chrsize,
-        bg=True,
-        _exe=bedtools_path,
-        _prefix="-",
-    ).r() > genomecovfile
-    cmdy.awk(f'$4 >= {cutoff}', genomecovfile).r() > filteredfile
+    run_command(
+        [
+            bedtools_path,
+            "genomecov",
+            "-i",
+            concat_bedfiles(),
+            "-g",
+            chrsize,
+            "-bg",
+        ],
+        stdout=genomecovfile,
+    )
+    run_command(
+        ["awk", f'$4 >= {cutoff}', genomecovfile],
+        stdout=filteredfile,
+    )
     return filteredfile
 
 
@@ -61,13 +72,21 @@ def merge_if_needed(awfile):
         awfile.rename(outfile)
         return
 
-    cmdy.bedtools.merge(
-        i=awfile,
-        d=distance,
-        c=4,
-        o="collapse",
-        _exe=bedtools_path,
-    ).r() > outfile
+    run_command(
+        [
+            bedtools_path,
+            "merge",
+            "-i",
+            awfile,
+            "-d",
+            distance,
+            "-c",
+            "4",
+            "-o",
+            "collapse",
+        ],
+        stdout=outfile,
+    )
 
 
 def main():

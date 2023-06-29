@@ -1,4 +1,4 @@
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 infile = {{in.infile | quote}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
@@ -13,10 +13,6 @@ args['input-maf']  = infile
 args['output-vcf'] = outfile
 args['output-dir'] = outdir
 args['ref-fasta']  = ref
+args[''] = [perl, maf2vcf]
 
-cmd = cmdy.perl(maf2vcf, _exe=perl, **args).hold()
-
-print("Running:")
-print(cmd.strcmd)
-
-cmd.fg().run()
+run_command(dict_to_cli_args(args, dashify=True), fg=True)

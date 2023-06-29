@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 cnrfile = {{in.cnrfile | quote}}  # pyright: ignore
 vcf = {{in.vcf | repr}}  # pyright: ignore
@@ -21,7 +21,7 @@ zygosity_freq = {{envs.zygosity_freq | repr}}  # pyright: ignore
 
 def main():
 
-    cmdy.cnvkit.segment(
+    args = dict(
         o=outfile,
         d=Path(outfile).parent / "intermediate.rds",
         m=method,
@@ -37,8 +37,10 @@ def main():
         min_variant_depth=min_variant_depth,
         zygosity_freq=zygosity_freq,
         _=cnrfile,
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "segment"]
+    args = dict_to_cli_args(args, dashify=True)
+    run_command(args, fg=True)
 
 
 if __name__ == "__main__":

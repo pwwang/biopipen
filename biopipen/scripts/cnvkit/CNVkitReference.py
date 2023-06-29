@@ -1,4 +1,4 @@
-import cmdy
+from biopipen.utils.misc import run_command, dict_to_cli_args
 
 covfiles = {{in.covfiles | repr}}  # pyright: ignore
 target_file = {{in.target_file | repr}}  # pyright: ignore
@@ -17,12 +17,12 @@ no_rmask = {{envs.no_rmask | repr}}  # pyright: ignore
 
 def main():
 
-    cmdy.cnvkit.reference(
+    args = dict(
         f=reffile,
         o=outfile,
         c=cluster,
         min_cluster_size=min_cluster_size,
-        x=sample_sex or False,
+        x=sample_sex,
         y=male_reference,
         t=False if not target_file or covfiles else target_file,
         a=False if not antitarget_file or covfiles else antitarget_file,
@@ -30,8 +30,9 @@ def main():
         no_edge=False,
         no_rmask=False,
         _=covfiles or [],
-        _exe=cnvkit,
-    ).fg()
+    )
+    args[""] = [cnvkit, "reference"]
+    run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
 
 if __name__ == "__main__":
