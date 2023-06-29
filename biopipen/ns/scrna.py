@@ -557,6 +557,8 @@ class MarkersFinder(Proc):
             significant markers for enrichment analysis.
             Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
             `p_val_adj`. For example, `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
+            You can also set different value for this option in different cases.
+            If not, this one will be used.
     """  # noqa: E501
     input = "srtobj:file, casefile:file"
     output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.markers"

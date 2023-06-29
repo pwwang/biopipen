@@ -33,7 +33,7 @@ if (length(cases) == 0) {
 
 seurat_obj = readRDS(srtobjfile)
 
-do_enrich = function(case, markers) {
+do_enrich = function(case, markers, sig) {
     print(paste("  Running enrichment for case:", case))
     casedir = file.path(outdir, case)
     dir.create(casedir, showWarnings = FALSE)
@@ -42,7 +42,7 @@ do_enrich = function(case, markers) {
         cat("No markers found.", file=file.path(casedir, "error.txt"))
         return()
     }
-    markers_sig = markers %>% filter(!!parse_expr(sigmarkers))
+    markers_sig = markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
         print(paste("  No significant markers found for case:", case))
         cat("No significant markers.", file=file.path(casedir, "error.txt"))
@@ -113,6 +113,7 @@ mutate_meta = function(obj, mutaters) {
 do_case = function(case) {
     cat(paste("- Dealing with case:", case, "...\n"))
     casepms = cases$cases[[case]]
+    smarkers = if (is.null(casepms$sigmarkers)) sigmarkers else casepms$sigmarkers
     obj = seurat_obj
     if (!is.null(casepms$filter)) {
         obj = obj %>% filter(eval(parse(text=casepms$filter)))
@@ -129,7 +130,7 @@ do_case = function(case) {
             eachobj = obj %>% filter(!!parse_expr(casepms$each) == each)
             casepms$object = eachobj
             markers = do_call(FindMarkers, casepms) %>% rownames_to_column("gene")
-            do_enrich(paste0(case, " (", each, ")"), markers)
+            do_enrich(paste0(case, " (", each, ")"), markers, smarkers)
         }
     } else {
         if (is.null(casepms$ident.1) && is.null(casepms$ident.2)) {
@@ -139,12 +140,12 @@ do_case = function(case) {
             allmarkers = do_call(FindAllMarkers, casepms)
             # Is it always cluster?
             for (group in sort(unique(allmarkers$cluster))) {
-                do_enrich(paste(case, group, sep="_"), allmarkers %>% filter(cluster == group))
+                do_enrich(paste(case, group, sep="_"), allmarkers %>% filter(cluster == group), smarkers)
             }
         } else {
             casepms$object = obj
             markers = do_call(FindMarkers, casepms) %>% rownames_to_column("gene")
-            do_enrich(case, markers)
+            do_enrich(case, markers, smarkers)
         }
     }
 }
