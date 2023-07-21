@@ -175,7 +175,8 @@ counts_dir = file.path(outdir, "counts")
 dir.create(counts_dir, showWarnings = FALSE)
 
 subjects = immdata$meta[, subject_key, drop=F] %>% distinct()
-for (i in seq_len(nrow(subjects))) {
+
+handle_subject = function(i) {
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
     # | SEABESRWEFAEF | 0     | 10     |
@@ -187,13 +188,17 @@ for (i in seq_len(nrow(subjects))) {
         as.character() %>%
         paste(collapse="-")
 
+    print(paste("Handling", i, subject, "..."))
+
     groups = subject_row %>%
         left_join(immdata$meta, by=subject_key) %>%
         pull(group_key)
     groups = intersect(sample_order, groups)
     if (length(groups) < 2) {
         warning(paste0("Subject doesn't have enough groups:", subject))
-        next
+        # In case warnings being collapsed by R
+        print(paste0("WARNING: Subject doesn't have enough groups:", subject))
+        return()
     }
 
     counts = list()
@@ -290,4 +295,4 @@ for (i in seq_len(nrow(subjects))) {
 
 }
 
-
+sapply(seq_len(nrow(subjects)), handle_subject)
