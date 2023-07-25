@@ -451,6 +451,17 @@ class CloneResidency(Proc):
             scatter plots will be drawn for pairs: B ~ A, C ~ B and C ~ A.
         sample_groups: How the samples aligned in the report.
             Useful for cohort with large number of samples.
+        mutaters (type=json): The mutaters passed to `dplyr::mutate()` on
+            `immdata$meta` to add new columns. The keys will be the names of
+            the columns, and the values will be the expressions. The new names
+            can be used in `subject`, `group`, `order` and `sample_groups`.
+        cases (type=json): If you have multiple cases, you can use this argument
+            to specify them. The keys will be used as the names of the cases.
+            The values will be passed to the corresponding arguments.
+            If no cases are specified, the default case will be added, with
+            the name `DEFAULT` and the values of `envs.subject`, `envs.group`,
+            `envs.order` and `envs.sample_groups`. These values are also the
+            defaults for the other cases.
     """
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.cloneov"
@@ -460,6 +471,8 @@ class CloneResidency(Proc):
         "group": None,
         "order": [],
         "sample_groups": None,
+        "mutaters": {},
+        "cases": {},
     }
     script = "file://../scripts/tcr/CloneResidency.R"
     order = 2
