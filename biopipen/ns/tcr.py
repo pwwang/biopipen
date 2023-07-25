@@ -159,6 +159,11 @@ class Immunarch(Proc):
         outdir: The output directory
 
     Envs:
+        mutaters (type=json): The mutaters passed to `dplyr::mutate()` on
+            `immdata$meta` to add new columns. The keys will be the names of
+            the columns, and the values will be the expressions. The new names
+            can be used in `volume_by`, `len_by`, `count_by`, `top_clone_by`,
+            `rare_clone_by`, `hom_clone_by`, `gu_by`, `div_by` and `div_test`.
         volume_by (type=auto): Groupings to show clonotype volume (sizes)
             >>> exp_vol <- repExplore(immdata$data, .method = "volume")
             >>> vis(exp_vol, .by = c("Status"), .meta = immdata$meta)
@@ -263,6 +268,10 @@ class Immunarch(Proc):
                 sampling through extrapolation.
         div_by (type=auto): Groupings to show sample diversities
             Supported types of values are the same as `volume_by`.
+        div_test (type=json): For each div_by, perform a statistical test
+            between each pair of groups. The keys are the names from div_by,
+            and the values are the methods to perform the test. The methods
+            could be `t.test` or `wilcox.test`
         raref (ns): Parameters to control the rarefaction analysis
             - by: The variables to group samples
             - separate_by: The variable to separate samples, which will be
@@ -275,14 +284,27 @@ class Immunarch(Proc):
                 `vis(.log = TRUE)`.
             - <other>: Other arguments for `repDiversity(.method="raref", ...)`
                 i.e. ".step", ".norm"
-        tracking_target (type=json): Either a list of AA seq of clonotypes
-            to track, or a dict of those lists. The keys will be used as
-            the names of the tracks. If you want to track the top N clonotypes,
-            you can use `{"TOP": N}`.
-        tracking_samples (type=json): The samples to track. If not specified,
-            all samples will be used. Make sure the keys in `tracking_target`
-            and `tracking_samples` are the same, if you want to track multiple
-            cases at the same time.
+        trackings (ns): Parameters to control the clonotype tracking analysis.
+            - targets (type=auto): Either a list of CDR3AA seq of clonotypes to
+                track, or simply an integer to track the top N clonotypes.
+            - subject_col: The column name in meta data that contains the
+                subjects/samples on the x-axis of the alluvial plot.
+                If the values in this column are not unique, the values will
+                be merged with the values in `subject_col` to form the x-axis.
+                This defaults to `Sample`.
+            - subjects (list): A list of values from `subject_col` to show in the
+                alluvial plot on the x-axis. If not specified, all values in
+                `subject_col` will be used. This also specifies the order of
+                the x-axis.
+            - cases (type=json): If you have multiple cases, you can use this
+                argument to specify them. The keys will be used as the names of
+                the cases. The values will be passed to the corresponding
+                arguments (`target`, `subject_col`, and `subjects`). If any
+                of these arguments are not specified, the values in
+                `envs.trackings` will be used. If NO cases are specified, the
+                default case will be added, with the name `DEFAULT` and the
+                values of `envs.trackings.target`, `envs.trackings.subject_col`,
+                and `envs.trackings.subjects`.
         kmers (type=json): Arguments for kmer analysis.
             There can be multiple `head`s and `motif`s.
             If you do want multiple parameter sets for the same K, You can use
@@ -297,6 +319,7 @@ class Immunarch(Proc):
     output = "outdir:dir:{{in.immdata | stem}}.immunarch"
     lang = config.lang.rscript
     envs = {
+        "mutaters": {},
         # basic statistics
         "volume_by": {},
         "len_by": {},
@@ -326,6 +349,7 @@ class Immunarch(Proc):
         # Diversity
         "div_methods": ["div", "gini.simp"],
         "div_by": {},
+        "div_test": {},
         "raref": {
             "by": None,
             "separate_by": None,
@@ -336,8 +360,12 @@ class Immunarch(Proc):
             # i.e. ".step", ".norm"
         },
         # Clonotype tracking
-        "tracking_target": {},
-        "tracking_samples": {},  # can specify order
+        "trackings": {
+            "targets": None,  # Do not do trackings by default
+            "subject_col": "Sample",
+            "subjects": None,
+            "cases": {},
+        },
         # Kmer analysis
         "kmers": {
             "5": {"head": 10, "position": "stack", "log": False, "motif": "self"}
