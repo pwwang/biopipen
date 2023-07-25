@@ -1,5 +1,6 @@
 source("{{biopipen_dir}}/utils/misc.R")
 
+library(rlang)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -16,19 +17,48 @@ subject_key = {{ envs.subject | r }}
 group_key = {{ envs.group | r }}
 sample_order = {{ envs.order | r }}
 sample_groups = {{ envs.sample_groups | r }}
+mutaters = {{ envs.mutaters | r }}
+cases = {{ envs.cases | r }}
 
 immdata = readRDS(immfile)
+meta = immdata$meta
 
-if (is.null(subject_key) || length(subject_key) == 0) {
-    stop("`envs.subject` is required.")
-}
-if (is.null(group_key)) {
-    stop("`envs.group` is required.")
-}
-if (is.null(sample_order) || length(sample_order) == 0) {
-    stop("`envs.order` is required.")
+if (!is.null(mutaters) && length(mutaters) > 0) {
+    print("Applying the mutaters ...")
+    expr = list()
+    for (key in names(mutaters)) {
+        expr[[key]] = parse_expr(mutaters[[key]])
+    }
+    meta = meta %>% mutate(!!!expr)
 }
 
+# Fill up cases using `envs.xxx` if not provided and compose a DEFAULT case
+# if no cases are provided
+if (is.null(cases) || length(cases) == 0) {
+    cases = list(
+        DEFAULT = list(
+            subject = subject_key,
+            group = group_key,
+            order = sample_order,
+            sample_groups = sample_groups
+        )
+    )
+} else {
+    for (key in names(cases)) {
+        if (is.null(cases[[key]]$subject)) {
+            cases[[key]]$subject = subject_key
+        }
+        if (is.null(cases[[key]]$group)) {
+            cases[[key]]$group = group_key
+        }
+        if (is.null(cases[[key]]$order)) {
+            cases[[key]]$order = sample_order
+        }
+        if (is.null(cases[[key]]$sample_groups)) {
+            cases[[key]]$sample_groups = sample_groups
+        }
+    }
+}
 # Scatter plot functions
 exponent <- function (x) {
     floor(log10(abs(x)))
@@ -37,6 +67,33 @@ exponent <- function (x) {
 mantissa <- function (x) {
     mant <- log10(abs(x))
     10^(mant - floor(mant))
+}
+
+perpare_case = function(casename, case) {
+    print(paste("Preparing case:", casename, "..."))
+    # Check if required keys are provided
+    if (is.null(case$subject) || length(case$subject) == 0) {
+        stop(paste("`subject` is required for case:", casename))
+    }
+    if (is.null(case$group) || length(case$group) == 0) {
+        stop(paste("`group` is required for case:", casename))
+    }
+    if (is.null(case$order) || length(case$order) == 0) {
+        stop(paste("`order` is required for case:", casename))
+    }
+
+    # Create case-specific directories
+    # Scatter plots
+    scatter_dir = file.path(outdir, casename, "scatter")
+    dir.create(scatter_dir, recursive = TRUE, showWarnings = FALSE)
+
+    # Venn diagrams/Upset plots
+    venn_dir = file.path(outdir, casename, "venn")
+    dir.create(venn_dir, recursive = TRUE, showWarnings = FALSE)
+
+    # Counts
+    counts_dir = file.path(outdir, casename, "counts")
+    dir.create(counts_dir, recursive = TRUE, showWarnings = FALSE)
 }
 
 plot_scatter = function(counts, subject, suf1, suf2) {
@@ -158,24 +215,7 @@ plot_scatter = function(counts, subject, suf1, suf2) {
 
 }
 
-# Scatter plots
-scatter_dir = file.path(outdir, "scatter")
-dir.create(scatter_dir, showWarnings = FALSE)
-
-# Venn diagrams/Upset plots
-venn_dir = file.path(outdir, "venn")
-dir.create(venn_dir, showWarnings = FALSE)
-
-# Pie charts
-pie_dir = file.path(outdir, "pie")
-dir.create(pie_dir, showWarnings = FALSE)
-
-# Counts
-counts_dir = file.path(outdir, "counts")
-dir.create(counts_dir, showWarnings = FALSE)
-
-subjects = immdata$meta[, subject_key, drop=F] %>% distinct()
-for (i in seq_len(nrow(subjects))) {
+handle_subject = function(i, subjects, casename, case) {
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
     # | SEABESRWEFAEF | 0     | 10     |
@@ -183,32 +223,38 @@ for (i in seq_len(nrow(subjects))) {
     # | GREWFQQWFEWF  | 34    | 0      |
     subject_row = subjects[i, , drop=FALSE]
     subject = subject_row %>%
-        select(all_of(subject_key)) %>%
+        select(all_of(case$subject)) %>%
         as.character() %>%
         paste(collapse="-")
 
+    print(paste("- Handling", i, case$subject, "..."))
+
     groups = subject_row %>%
-        left_join(immdata$meta, by=subject_key) %>%
-        pull(group_key)
-    groups = intersect(sample_order, groups)
+        left_join(meta, by=case$subject) %>%
+        pull(case$group)
+    groups = intersect(case$order, groups)
     if (length(groups) < 2) {
-        warning(paste0("Subject doesn't have enough groups:", subject))
-        next
+        warning(paste0("-", casename, ", Subject doesn't have enough groups:", subject), immediate. = TRUE)
+        return()
     }
 
     counts = list()
     for (group in groups) {
         sample1 = subject_row %>%
-            left_join(immdata$meta) %>%
-            filter(.[[group_key]] == group) %>%
+            left_join(meta) %>%
+            filter(.[[case$group]] == group) %>%
             pull(Sample)
         if (length(sample1) == 0) next
         if (length(sample1) > 1) {
-            stop(paste0("Group ", suf1, " is not unique for subject:", subject))
+            warning(paste0(casename, ", Group ", group, " is not unique for subject:", subject), immediate. = TRUE)
         }
-        counts[[group]] = as.data.frame(
-            immdata$data[[sample1]][, c("Clones", "CDR3.aa")]
-        ) %>% mutate(Group = group)
+        for (s in sample1) {
+            counts[[group]] = bind_rows(
+                counts[[group]],
+                immdata$data[[s]][, c("Clones", "CDR3.aa")]
+            )
+        }
+        counts[[group]] = counts[[group]] %>% mutate(Group = group)
     }
     counts = do_call(bind_rows, counts) %>% pivot_wider(
         id_cols = CDR3.aa,
@@ -220,11 +266,11 @@ for (i in seq_len(nrow(subjects))) {
 
     # Save samples to group_by so they can be aligned accordingly in the report
     if (!is.null(sample_groups)) {
-        group_dir = file.path(outdir, "sample_groups")
+        group_dir = file.path(outdir, casename, "sample_groups")
         dir.create(group_dir, showWarnings = FALSE)
 
         sgroups = subject_row %>%
-            left_join(immdata$meta) %>%
+            left_join(meta) %>%
             pull(sample_groups) %>%
             unique() %>%
             paste(collapse = "-")
@@ -233,6 +279,7 @@ for (i in seq_len(nrow(subjects))) {
     }
 
     # Save counts
+    counts_dir = file.path(outdir, casename, "counts")
     write.table(
         counts,
         file=file.path(counts_dir, paste0(subject, ".txt")),
@@ -245,6 +292,7 @@ for (i in seq_len(nrow(subjects))) {
     # scatter plot
     # Make plots B ~ A, C ~ B, and C ~ A for order A, B, C
     combns = combn(groups, 2, simplify=FALSE)
+    scatter_dir = file.path(outdir, casename, "scatter")
     for (j in seq_along(combns)) {
         pair = combns[[j]]
         scatter_p = plot_scatter(counts, subject, pair[1], pair[2])
@@ -258,6 +306,7 @@ for (i in seq_len(nrow(subjects))) {
     }
 
     # upset/venn
+    venn_dir = file.path(outdir, casename, "venn")
     if (length(groups) > 3) {
         venn_p = counts %>%
             mutate(across(groups), ~ if_else(.x == 0, NA, cur_column())) %>%
@@ -265,29 +314,27 @@ for (i in seq_len(nrow(subjects))) {
             rowwise() %>%
             mutate(Groups = strsplit(Groups, ":::", fixed = TRUE))
             group_by(CDR3.aa)
-        venn_png = file.path(
-            venn_dir,
-            paste0("upset_", subject, ".png")
-        )
-        # TODO Upset
-    } else {
 
+        venn_png = file.path(venn_dir, paste0("upset_", subject, ".png"))
+    } else {
         venn_data = list()
         for (group in groups) {
             venn_data[[group]] = counts %>% filter(.[[group]] > 0) %>% pull(CDR3.aa)
         }
         venn_p = ggVennDiagram(venn_data)
-        venn_png = file.path(
-            venn_dir,
-            paste0("venn_", subject, ".png")
-        )
+        venn_png = file.path(venn_dir, paste0("venn_", subject, ".png"))
     }
     png(venn_png, res=300, height=2000, width=2000)
     print(venn_p)
     dev.off()
-
-    # Pie chart
-
 }
 
+handle_case = function(casename, case) {
+    perpare_case(casename, case)
+    subjects = meta[, case$subject, drop=F] %>% distinct() %>% drop_na()
+    sapply(seq_len(nrow(subjects)), handle_subject, subjects, casename, case)
+}
 
+for (casename in names(cases)) {
+    handle_case(casename, cases[[casename]])
+}

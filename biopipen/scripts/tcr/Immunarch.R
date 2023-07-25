@@ -1,6 +1,7 @@
 source("{{biopipen_dir}}/utils/misc.R")
 # Basic analysis and clonality
 # TODO: How about TRA chain?
+library(rlang)
 library(immunarch)
 library(ggplot2)
 library(ggprism)
@@ -12,6 +13,7 @@ theme_set(theme_prism())
 
 immfile = {{ in.immdata | quote }}
 outdir = {{ out.outdir | quote }}
+mutaters = {{ envs.mutaters | r }}
 volume_by = {{ envs.volume_by | r }}
 len_by = {{ envs.len_by | r }}
 count_by = {{ envs.count_by | r }}
@@ -29,9 +31,9 @@ gua_methods = {{ envs.gua_methods | r }}
 spect = {{ envs.spect | enumerate | dict | r }}
 div_methods = {{ envs.div_methods | r }}
 div_by = {{ envs.div_by | r }}
+div_test = {{ envs.div_test | r }}
 raref = {{ envs.raref | r }}
-tracking_target = {{ envs.tracking_target | r }}
-tracking_samples = {{ envs.tracking_samples | r }}
+trackings = {{ envs.trackings | r }}
 kmers_args = {{ envs.kmers | r: ignoreintkey=False }}
 
 hom_clone_marks = hom_clone_marks[order(unlist(hom_clone_marks))]
@@ -71,8 +73,38 @@ hom_clone_by = norm_list(hom_clone_by)
 gu_by = norm_list(gu_by)
 div_by = norm_list(div_by)
 raref$by = norm_list(raref$by)
+if (is.null(trackings$subjects)) {
+    trackings$subjects = c()
+}
+if (length(trackings$cases) == 0) {
+    trackings$cases$DEFAULT = list(
+        targets = trackings$targets,
+        subject_col = trackings$subject_col,
+        subjects = trackings$subjects
+    )
+} else {
+    for (name in names(trackings$cases)) {
+        if (is.null(trackings$cases[[name]]$targets)) {
+            trackings$cases[[name]]$targets = trackings$targets
+        }
+        if (is.null(trackings$cases[[name]]$subject_col)) {
+            trackings$cases[[name]]$subject_col = trackings$subject_col
+        }
+        if (is.null(trackings$cases[[name]]$subjects)) {
+            trackings$cases[[name]]$subjects = trackings$subjects
+        }
+    }
+}
 
 immdata = readRDS(immfile)
+if (!is.null(mutaters) && length(mutaters) > 0) {
+    expr = list()
+    for (key in names(mutaters)) {
+        expr[[key]] = parse_expr(mutaters[[key]])
+    }
+    immdata$meta = mutate(immdata$meta, !!!expr)
+}
+
 n_samples = length(immdata$data)
 
 # volume
@@ -154,7 +186,6 @@ for (col in c("aa", "nt")) {
     #     dev.off()
     # }
 }
-
 
 # count
 print("- All samples count")
@@ -408,15 +439,41 @@ plot_div = function(div, method, ...) {
     if (method != "gini") {
         do_call(vis, list(div, ...))
     } else {
+        args = list(...)
         ginidiv = as.data.frame(div) %>%
             rownames_to_column("Sample") %>%
-            rename(`Gini-coefficient`=V1)
-        ggplot(ginidiv) +
-            geom_col(aes(x=Sample, y=`Gini-coefficient`, fill=Sample)) +
-            theme(
-                legend.position="none",
-                axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
-            )
+            rename(`GiniCoefficient`=V1)
+        if (!is.null(args$.by)) {
+            ginidiv = ginidiv %>%
+                left_join(
+                    args$.meta %>% unite(!!args$.by, all_of(args$.by), sep="-") %>% select(all_of(c("Sample", args$.by))),
+                    by = "Sample"
+                )
+            ggplot(ginidiv) +
+                geom_boxplot(aes(x=!!sym(args$.by), y=`GiniCoefficient`, fill=!!sym(args$.by)), alpha = 0.5) +
+                geom_jitter(aes(x=!!sym(args$.by), y=`GiniCoefficient`), color="black", width=0.2, alpha=0.5) +
+                theme(
+                    legend.position="none",
+                    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+                )
+        } else {
+            ggplot(ginidiv) +
+                geom_col(aes(x=Sample, y=`GiniCoefficient`, fill=Sample)) +
+                theme(
+                    legend.position="none",
+                    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+                )
+        }
+    }
+}
+
+test_div = function(df, col, test, name) {
+    if (test == "t.test") {
+        pairwise.t.test(df[[col]], df[[name]], p.adjust.method = "none")
+    } else if (test == "wilcox.test") {
+        pairwise.wilcox.test(df[[col]], df[[name]], p.adjust.method = "none")
+    } else {
+        stop(paste0("Unknown test: ", test))
     }
 }
 
@@ -435,6 +492,33 @@ for (div_method in div_methods) {
         png(divpng, res=300, height=2000, width=2000)
         print(plot_div(div, div_method, .by=div_by[[name]], .meta=immdata$meta))
         dev.off()
+
+        if (!is.null(div_test[[name]])) {
+            if (div_method == "gini") {
+                div_name = "GiniCoefficient"
+                # Sample, GiniCoefficient, `name`
+                div_df = as.data.frame(div) %>%
+                    rownames_to_column("Sample") %>%
+                    rename(`GiniCoefficient`=V1) %>%
+                    left_join(
+                        immdata$meta %>% unite(!!name, all_of(div_by[[name]]), sep="-") %>% select(all_of(c("Sample", name))),
+                        by = "Sample"
+                    )
+                test_div(div_df, div_name, div_test[[name]], name)
+            } else {
+                stop("div_test only supported for gini, yet")
+            }
+
+            test_res = test_div(div_df, div_name, div_test[[name]], name)
+            write.table(
+                test_res$p.value,
+                file = file.path(met_dir, paste0("diversity-1-", name, ".", div_test[[name]], ".tsv")),
+                sep = "\t",
+                quote = FALSE,
+                col.names=TRUE,
+                row.names = TRUE
+            )
+        }
     }
 
     tryCatch({
@@ -609,40 +693,51 @@ if (!is.null(raref_sep_by)) {
 print("- Clonotype tracking")
 tracking_dir = file.path(outdir, "tracking")
 dir.create(tracking_dir, showWarnings = FALSE)
-for (name in names(tracking_target)) {
-    print(paste0("  ", name))
-    target = tracking_target[[name]]
-    samples = tracking_samples[[name]]
-    if (is.null(samples)) {
-        samples = names(immdata$data)
-    }
-    if (length(samples) == 1) {
-        stop(paste0("Cannot track clonotypes for only one sample: ", samples))
-    }
-    if (is.list(target)) {
-        target = list(names(target), unname(unlist(target)))
-    }
-    if (target[[1]] == "TOP") {
-        top_clones = NULL
-        for (sample in samples) {
-            if (is.null(top_clones)) {
-                top_clones = immdata$data[[sample]]
-            } else {
-                top_clones = inner_join(top_clones, immdata$data[[sample]], by = "CDR3.aa") %>%
-                    rowwise() %>%
-                    mutate(Clones=sum(Clones.x, Clones.y)) %>%
-                    select(-c(Clones.x, Clones.y)) %>%
-                    ungroup()
-            }
+for (name in names(trackings$cases)) {
+    case = trackings$cases[[name]]
+    if (is.null(case$targets)) {
+        print(paste0("  ", name, ", skip, no targets"))
+    } else {
+        print(paste0("  ", name))
+        allsubjects = immdata$meta %>% pull(case$subject_col) %>% unlist() %>% unique() %>% na.omit()
+        if (is.null(case$subjects) || length(case$subjects) == 0) {
+            subjects = allsubjects
+        } else {
+            subjects = intersect(case$subjects, allsubjects)
         }
-        target = top_clones %>% slice_max(Clones, n=target[[2]]) %>% pull(CDR3.aa)
-    }
+        if (length(allsubjects) == 1) {
+            stop(paste0("Cannot track clonotypes for only one subject: ", subjects))
+        }
+        samples = immdata$meta[immdata$meta[[case$subject_col]] %in% subjects, ] %>% pull(Sample) %>% unlist()
+        if (is.numeric(case$targets)) {
+            targets = do_call(rbind, lapply(samples, function(s) immdata$data[[s]])) %>%
+                group_by(CDR3.aa) %>%
+                summarise(Clones = sum(Clones)) %>%
+                arrange(desc(Clones)) %>%
+                slice_max(Clones, n=case$target) %>%
+                pull(CDR3.aa)
+        } else {
+            targets = case$targets
+        }
+        if (case$subject_col == "Sample") {
+            imm_tracking = trackClonotypes(immdata$data, targets, .col = "aa")
+        } else {
+            # Construct a data with names as subjects
+            # For each subject, get the samples and merge the data
+            # Then track
+            newdata = list()
+            for (subject in subjects) {
+                subject_samples = immdata$meta[immdata$meta[[case$subject_col]] == subject, ] %>% pull(Sample) %>% na.omit()
+                newdata[[subject]] = do_call(rbind, lapply(subject_samples, function(s) immdata$data[[s]]))
+            }
+            imm_tracking = trackClonotypes(newdata, targets, .col = "aa")
+        }
 
-    imm_tracking = trackClonotypes(immdata$data, target, .col = "aa")
-    tracking_png = file.path(tracking_dir, paste0("tracking_", name, ".png"))
-    png(tracking_png, res=300, height=2000, width=3000)
-    print(vis(imm_tracking, .order = samples))
-    dev.off()
+        tracking_png = file.path(tracking_dir, paste0("tracking_", name, ".png"))
+        png(tracking_png, res=100, height=1000, width=600 + 150 * length(subjects))
+        print(vis(imm_tracking))
+        dev.off()
+    }
 }
 
 # K-mer analysis

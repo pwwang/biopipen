@@ -18,6 +18,10 @@ class File2Proc(Proc):
     script = """
         # in case of deadlink
         rm -f {{out.outfile | quote}}
+        if [[ ! -e {{in.infile | quote}} ]]; then
+            echo "File {{in.infile | quote}} does not exist." 1>&2
+            exit 1
+        fi
         ln -s {{in.infile | quote}} {{out.outfile | quote}}
     """
 

@@ -1,6 +1,6 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
-    import { Image } from "$libs";
+    import { Image, DataTable } from "$libs";
     import { Tabs, Tab, TabContent, Tile, UnorderedList } from "$ccs";
 </script>
 
@@ -154,8 +154,16 @@
     <div slot="content">
         {% for dm_dir in div_met_dirs %}
         <TabContent>
-            {% assign divpngs = dm_dir| joinpaths: "diversity-1-*.png" | glob %}
+            {% assign divpngs = dm_dir | joinpaths: "diversity-1-*.png" | glob %}
             {{ table_of_images(divpngs) }}
+
+            {% assign testfiles = dm_dir | glob: "diversity-1-*.*.tsv" %}
+            {%- for testfile in testfiles -%}
+            <h{{h+2}}>{{ testfile | stem | replace: "diversity-1-", "" }}</h{{h+2}}>
+            <DataTable src={{testfile | quote}} data={ {{
+                testfile | datatable: sep="\t", nrows=20, index_col=None
+            }} } />
+            {%- endfor -%}
         </TabContent>
         {% endfor %}
     </div>
@@ -202,8 +210,8 @@
 {{ table_of_images(rfpngs) }}
 
 <h{{h}}>Tracking of clonotypes</h{{h}}>
-{% for name, value in envs.tracking_target.items() %}
-<h{{h+1}}>Clonotypes: {{name}}</h{{h+1}}>
+{% for name in envs.trackings.cases %}
+<h{{h+1}}>Case: {{name}}</h{{h+1}}>
 <Image src={{ job.out.outdir | joinpaths: "tracking", "tracking_" + name + ".png" | quote }} />
 {% endfor %}
 

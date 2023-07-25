@@ -1,3 +1,12 @@
+## 0.15.1
+
+- ⬆️ Bump pipen-board to 0.8.0
+- ⬆️ Bump pipen-report to 0.12.5 (to fix the pydantic error)
+- 🎨 [tcr.CloneResidency] Add indicators during running
+- 🎨 [tcr.CloneResidency] Allow multiple cases add mutaters for metadata
+- 🐛 [misc.File2Proc] Check if input file exists
+- 🎨 [tcr.Immunarch] Allow cases for trackings and add mutaters for metadata
+
 ## 0.15.0
 
 - ⬆️ Bump pipen to 0.10.6
