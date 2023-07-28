@@ -886,23 +886,26 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.8.0"
+version = "0.8.1"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.8.0-py3-none-any.whl", hash = "sha256:793e421b709dec419705558b532fc4ea13249fc2132819d2329b6cba67a71a76"},
-    {file = "pipen_board-0.8.0.tar.gz", hash = "sha256:9e3575f0204065227c4f2142fd85d0907874df13eaaee7ea1a6f4c6ebdc732f4"},
+    {file = "pipen_board-0.8.1-py3-none-any.whl", hash = "sha256:5ff00a3f00d1af59bb96da4241c390daa17870cfaa86d5bbe677982b31f29576"},
+    {file = "pipen_board-0.8.1.tar.gz", hash = "sha256:c85a5eb261b7ee8ba1c8badb7654212f880a2cc53fc21b4b2f499ad52b4c8c3d"},
 ]
 
 [package.dependencies]
 pipen-args = ">=0.10.0,<0.11.0"
 pipen-log2file = ">=0.3.0,<0.4.0"
-pipen-report = ">=0.12.2,<0.13.0"
+pipen-report = {version = ">=0.12.6,<0.13.0", optional = true, markers = "extra == \"report\""}
 psutil = ">=5.9.5,<6.0.0"
 python-slugify = ">=8.0.1,<9.0.0"
 quart = ">=0.18,<0.19"
 websocket-client = ">=1.5,<2.0"
+
+[package.extras]
+report = ["pipen-report (>=0.12.6,<0.13.0)"]
 
 [[package]]
 name = "pipen-cli-run"
@@ -948,13 +951,13 @@ pipen = ">=0.10.0,<0.11.0"
 
 [[package]]
 name = "pipen-report"
-version = "0.12.5"
+version = "0.12.6"
 description = "Report generation system for pipen"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_report-0.12.5-py3-none-any.whl", hash = "sha256:85d25f22fa33f7db83daac7225be727c8ac7bbf828c181193031d96f624bf6b5"},
-    {file = "pipen_report-0.12.5.tar.gz", hash = "sha256:81ab2940b638a67bdcd0e0c5c42256d7e7d6a9ead5eba875311821a988edb118"},
+    {file = "pipen_report-0.12.6-py3-none-any.whl", hash = "sha256:7a9a636c3ed363086807c3312eb1f5f5f8110b4f45053c9343df0d975b77c135"},
+    {file = "pipen_report-0.12.6.tar.gz", hash = "sha256:cb0b29b5c28d8c02cfa35cf87fc137612b9cf2339958e6ce78dab0d6ce1e035b"},
 ]
 
 [package.dependencies]
@@ -962,6 +965,7 @@ copier = ">=8.1,<9.0"
 Markdown = ">=3,<4"
 pipen = ">=0.10,<0.11"
 pipen-runinfo = ">=0.2,<0.3"
+pydantic = ">=1.10.8,<2.0.0"
 python-slugify = ">=8.0.1,<9.0.0"
 
 [[package]]
@@ -1627,4 +1631,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "4fe45577a093c6d19c011f67409b42c7db8fa67ab1bfea73ddec69a3b479f4d7"
+content-hash = "6f4dac256af81b567c0f62a9284737dd670962ca79113bd609ca3340c9122b8b"
