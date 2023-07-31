@@ -3,13 +3,14 @@ library(Seurat)
 library(rlang)
 library(tidyr)
 library(dplyr)
+library(ggsci)
 
 srtfile = {{in.srtobj | r}}
 outdir = {{out.outdir | r}}
 {% if in.casefile %}
-cases = {{in.casefile | config: "toml" | r}}
+cases = {{in.casefile | config: "toml" | r: todot="-"}}
 {% else %}
-cases = {{envs | r}}
+cases = {{envs | r: todot="-"}}
 {% endif %}
 
 if (length(cases) == 0) {
@@ -26,6 +27,19 @@ mutate_meta = function(meta, mutaters) {
 
     meta %>% mutate(!!!expr)
 }
+
+# gg_color_hue <- function(n) {
+#     hues = seq(15, 375, length = n + 1)
+#     hcl(h = hues, l = 65, c = 100)[1:n]
+# }
+
+all_clusters = srtobj@meta.data %>% pull(seurat_clusters)
+if (!is.factor(all_clusters)) {
+    all_clusters = factor(all_clusters, levels = sort(unique(all_clusters)))
+}
+# pal = gg_color_hue(nlevels(all_clusters))
+# names(pal) = levels(all_clusters)
+
 
 do_case = function(case) {
     print(paste("- Running for case:", case))
@@ -68,7 +82,7 @@ do_case = function(case) {
     ncols = length(unique(meta[[grouppms$by]]))
     if (is.null(casepms$devpars)) {
         casepms$devpars = list(
-            res = 100, width = ncols * 100 + 120, height = nrows * 100
+            res = 100, width = ncols * 100 + 240, height = max(nrows * 100, 600)
         )
     }
 
@@ -87,9 +101,15 @@ do_case = function(case) {
             position = "fill"
         ),
         c(
+            'geom_col(aes(x=sqrt(CloneGroupSize), y=CloneSize), width=.01, position="fill", color = "#888888")',
             'coord_polar("y", start=0)',
             paste0('facet_grid(vars(', clonepms$by, '), vars(', grouppms$by, '), switch="y")'),
-            'theme_void()'
+            # 'scale_fill_manual(name = "Cluster", values = pal)',
+            # 26-color palette
+            'scale_fill_ucscgb(name = "Cluster", limits = levels(all_clusters))',
+            'theme_void()',
+            'theme(plot.margin = unit(c(1,1,1,1), "cm"))',
+            'theme(legend.text=element_text(size=8), legend.title=element_text(size=10))'
         ),
         casepms$devpars,
         outfile
