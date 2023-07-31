@@ -551,7 +551,7 @@ class MarkersFinder(Proc):
             If "ident-2" is not provided, it will use the rest of the cells as "ident-2".
             If only "group-by" is given, will call `FindAllMarkers()`.
         dbs (list): The dbs to do enrichment analysis for significant
-            markers See below for all librarys.
+            markers See below for all libraries.
             https://maayanlab.cloud/Enrichr/#libraries
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
             significant markers for enrichment analysis.
@@ -1058,4 +1058,118 @@ class SeuratMap2Ref(Proc):
         "MappingScore": {},
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"
-    plugin_opts = { "report": "file://../reports/scrna/SeuratMap2Ref.svelte" }
+    plugin_opts = {"report": "file://../reports/scrna/SeuratMap2Ref.svelte"}
+
+
+class RadarPlots(Proc):
+    """Radar plots for cell proportion in different clusters
+
+    Input:
+        srtobj: The seurat object in RDS format
+
+    Output:
+        outdir: The output directory for the plots
+
+    Envs:
+        mutaters (type=json): Mutaters to mutate the metadata of the
+            seurat object. Keys are the column names and values are the
+            expressions to mutate the columns. These new columns will be
+            used to define your cases.
+        by: Which column to use to separate the cells in different groups.
+            `NA`s will be ignored.
+        each: A column with values to separate all cells in different cases
+            When specified, the case will be expanded to multiple cases for
+            each value in the column.
+            If specified, `section` will be ignored, and the case name will
+            be used as the section name.
+        order (list): The order of the values in `by`. You can also limit
+            (filter) the values we have in `by`.
+        cluster_col: The column name of the cluster information.
+        cluster_order (list): The order of the clusters.
+            You may also use it to filter the clusters. If not given,
+            all clusters will be used.
+            If the cluster names are integers, use them directly for the order,
+            even though a prefix `Cluster` is added on the plot.
+        breaks (list;itype=int): breaks of the radar plots, from 0 to 100.
+            If not given, the breaks will be calculated automatically.
+        direction (choice): Direction to calculate the percentages.
+            - inter-cluster: the percentage of the cells in all groups
+                in each cluster (percentage adds up to 1 for each cluster).
+            - intra-cluster: the percentage of the cells in all clusters.
+                (percentage adds up to 1 for each group).
+        section: If you want to put multiple cases into a same section
+            in the report, you can set this option to the name of the section.
+            Only used in the report.
+        devpars (ns): The parameters for `png()`
+            - res (type=int): The resolution of the plot
+            - height (type=int): The height of the plot
+            - width (type=int): The width of the plot
+        cases (type=json): The cases for the multiple radar plots.
+            Keys are the names of the cases and values are the arguments for
+            the plots (`each`, `by`, `order`, `breaks`, `direction`,
+            `cluster_col`, `cluster_order` and `devpars`).
+            If not cases are given, a default case will be used, with the
+            key `DEFAULT`.
+            The keys must be valid string as part of the file name.
+    """
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}.radar_plots"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/RadarPlots.R"
+    envs = {
+        "mutaters": {},
+        "by": None,
+        "each": None,
+        "order": None,
+        "cluster_col": "seurat_clusters",
+        "cluster_order": [],
+        "breaks": [],
+        "direction": "intra-cluster",
+        "section": None,
+        "devpars": {
+            "res": 100,
+            "width": 1200,
+            "height": 1200,
+        },
+        "cases": {},
+    }
+    plugin_opts = {
+        "report": "file://../reports/scrna/RadarPlots.svelte",
+    }
+
+
+class TopExpressingGenes(Proc):
+    """Find the top expressing genes in each cluster
+
+    Input:
+        srtobj: The seurat object in RDS format
+
+    Output:
+        outdir: The output directory for the tables and plots
+
+    Envs:
+        cluster_col: The column name of the cluster information.
+        assay: The assay to use to find the top expressing genes.
+        dbs (list): The dbs to do enrichment analysis for significant
+            markers See below for all libraries.
+            https://maayanlab.cloud/Enrichr/#libraries
+        n (int): The number of genes to find for each cluster
+    """
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/TopExpressingGenes.R"
+    envs = {
+        "cluster_col": "seurat_clusters",
+        "assay": "RNA",
+        "dbs": [
+            "GO_Biological_Process_2021",
+            "GO_Cellular_Component_2021",
+            "GO_Molecular_Function_2021",
+            "KEGG_2021_Human",
+        ],
+        "n": 250,
+    }
+    plugin_opts = {
+        "report": "file://../reports/scrna/TopExpressingGenes.svelte",
+    }
