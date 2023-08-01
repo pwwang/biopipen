@@ -1,3 +1,12 @@
+## 0.15.2
+
+- ⬆️ Bump pipen-board to 0.9.1
+- ✨ [scrna.RadarPlots] Add process
+- 🎨 [tcr.Immunarch] Separate diversity in script into a different file
+- ✨ [scrna.TopExpressingGenes] Add process
+- 🎨 [scrna.CellsDistribution] Use a different color palette
+- 🎨 [scrna.SeuratClusterStats] Warn about heatmap without downsampling
+
 ## 0.15.1
 
 - ⬆️ Bump pipen-board to 0.8.0

@@ -240,50 +240,98 @@ class Immunarch(Proc):
             See https://immunarch.com/articles/web_only/v5_gene_usage.html
         spect (type=json): A list of values for `.quant` and `.col` for
             `spectratype()` for each sample.
-        div_methods (mchoice): Methods to calculate diversities
-            - chao1: a nonparameteric asymptotic estimator of species richness
-                (number of species in a population).
-            - hill: Hill numbers are a mathematically unified family of
-                diversity indices (differing only by an exponent q).
-            - div: true diversity, or the effective number of types, refers to
-                the number of equally abundant types needed for the average
-                proportional abundance of the types to equal that observed in
-                the dataset of interest where all types may not be equally
-                abundant.
-            - gini.simp: The Gini-Simpson index is the probability of
-                interspecific encounter, i.e., probability that two entities
-                represent different types.
-            - inv.simp: Inverse Simpson index is the effective number of types
-                that is obtained when the weighted arithmetic mean is used to
-                quantify average proportional abundance of types in the dataset
-                of interest.
-            - gini: The Gini coefficient measures the inequality among values
-                of a frequency distribution (for example levels of income).
-                A Gini coefficient of zero expresses perfect equality,
-                where all values are the same (for example, where everyone has
-                the same income). A Gini coefficient of one (or 100 percents)
-                expresses maximal inequality among values (for example where
-                only one person has all the income).
-            - raref: a technique to assess species richness from the results of
-                sampling through extrapolation.
-        div_by (type=auto): Groupings to show sample diversities
-            Supported types of values are the same as `volume_by`.
-        div_test (type=json): For each div_by, perform a statistical test
-            between each pair of groups. The keys are the names from div_by,
-            and the values are the methods to perform the test. The methods
-            could be `t.test` or `wilcox.test`
-        raref (ns): Parameters to control the rarefaction analysis
-            - by: The variables to group samples
-            - separate_by: The variable to separate samples, which will be
-                plotted in separate figures. Currently only support one variable
-            - align_y (flag): Align max of y-axis if there are
-                multiple figures
-            - align_x (flag): Align max of x-axis if there are
-                multiple figures
-            - log (flag): Also plot log-transformed x-axis using
-                `vis(.log = TRUE)`.
-            - <other>: Other arguments for `repDiversity(.method="raref", ...)`
-                i.e. ".step", ".norm"
+        divs (ns): Parameters to control the diversity analysis.
+            - filter: The filter passed to `dplyr::filter()` to filter the data
+                for each sample before calculating diversity. For example,
+                `Clones > 1` to filter out singletons.
+                To check which columns are available, use
+                `immdata$data[[1]] |> colnames()` in R.
+                You may also check quickly here:
+                https://immunarch.com/articles/v2_data.html#basic-data-manipulations-with-dplyr-and-immunarch
+                To use the top 10 clones, you can try `rank(desc(Clones)) <= 10`
+            - method (choice): The method to calculate diversity.
+                - chao1: a nonparameteric asymptotic estimator of species
+                    richness.
+                    (number of species in a population).
+                - hill: Hill numbers are a mathematically unified family of
+                    diversity indices.
+                    (differing only by an exponent q).
+                - div: true diversity, or the effective number of types.
+                    It refers to the number of equally abundant types needed
+                    for the average proportional abundance of the types to equal
+                    that observed in the dataset of interest where all types
+                    may not be equally abundant.
+                - gini.simp: The Gini-Simpson index.
+                    It is the probability of interspecific encounter, i.e.,
+                    probability that two entities represent different types.
+                - inv.simp: Inverse Simpson index.
+                    It is the effective number of types that is obtained
+                    when the weighted arithmetic mean is used to quantify
+                    average proportional abundance of types in the dataset
+                    of interest.
+                - gini: The Gini coefficient.
+                    It measures the inequality among values
+                    of a frequency distribution (for example levels of income).
+                    A Gini coefficient of zero expresses perfect equality,
+                    where all values are the same (for example, where everyone
+                    has the same income). A Gini coefficient of one
+                    (or 100 percents) expresses maximal inequality among values
+                    (for example where only one person has all the income).
+                - d50: The D50 index.
+                    It is the number of types that are needed to cover 50%% of
+                    the total abundance.
+                - dxx: The Dxx index.
+                    It is the number of types that are needed to cover xx%% of
+                    the total abundance.
+                    The percentage should be specified in the `args` argument
+                    using `perc` key.
+                - raref: Species richness from the results of sampling through
+                    extrapolation.
+            - by: The variables (column names) to group samples.
+                Multiple columns should be separated by
+            - args (type=json): Other arguments for `repDiversity()`.
+                Do not include the preceding `.` and use `-` instead of `.` in
+                the argument names. For example, `do-norm` will be compiled to
+                `.do.norm`.
+                See all arguments at
+                https://immunarch.com/reference/repDiversity.html
+            - order (list): The order of the values in `by` on the x-axis of
+                the plots. If not specified, the values will be used as-is.
+            - test (ns): Perform statistical tests between each pair of groups.
+                Do NOT work for `raref`.
+                - method (choice): The method to perform the test
+                    - none: No test
+                    - t.test: Welch's t-test
+                    - wilcox.test: Wilcoxon rank sum test
+                - padjust (choice): The method to adjust p-values.
+                    Defaults to `none`.
+                    - bonferroni: one-step correction
+                    - holm: step-down method using Bonferroni adjustments
+                    - hochberg: step-up method (independent)
+                    - hommel: closed method based on Simes tests (non-negative)
+                    - BH: Benjamini & Hochberg (non-negative)
+                    - BY: Benjamini & Yekutieli (negative)
+                    - fdr: Benjamini & Hochberg (non-negative)
+                    - none: no correction.
+            - separate_by: A column name used to separate the samples into
+                different plots. Only works for `raref`.
+            - align_x (flag): Align the x-axis of multiple plots.
+                Only works for `raref`.
+            - align_y (flag): Align the y-axis of multiple plots.
+                Only works for `raref`.
+            - log (flag): Indicate whether we should plot with log-transformed
+                x-axis using `vis(.log = TRUE)`. Only works for `raref`.
+            - devpars (ns): The parameters for the plotting device
+                - width (int): The width of the device
+                - height (int): The height of the device
+                - res (int): The resolution of the device
+            - cases (type=json): If you have multiple cases, you can use this
+                argument to specify them. The keys will be used as the names
+                of the cases. The values will be passed to the corresponding
+                arguments above. If NO cases are specified, the default
+                case will be added, with the name of `envs.div.method`.
+                The values specified in `envs.div` will be used as the
+                defaults for the cases here.
         trackings (ns): Parameters to control the clonotype tracking analysis.
             - targets (type=auto): Either a list of CDR3AA seq of clonotypes to
                 track, or simply an integer to track the top N clonotypes.
@@ -347,17 +395,26 @@ class Immunarch(Proc):
         # Spectratyping
         "spect": [dict(quant="id", col="nt"), dict(quant="count", col="aa+v")],
         # Diversity
-        "div_methods": ["div", "gini.simp"],
-        "div_by": {},
-        "div_test": {},
-        "raref": {
+        "divs": {
+            "filter": None,
+            "method": "gini",
             "by": None,
+            "args": {},
+            "order": [],
+            "test": {
+                "method": "none",
+                "padjust": "none",
+            },
             "separate_by": None,
             "align_x": False,
             "align_y": False,
             "log": False,
-            # ... other arguments for repDiversity()
-            # i.e. ".step", ".norm"
+            "devpars": {
+                "width": 1000,
+                "height": 1000,
+                "res": 100,
+            },
+            "cases": {},
         },
         # Clonotype tracking
         "trackings": {
@@ -368,7 +425,12 @@ class Immunarch(Proc):
         },
         # Kmer analysis
         "kmers": {
-            "5": {"head": 10, "position": "stack", "log": False, "motif": "self"}
+            "5": {
+                "head": 10,
+                "position": "stack",
+                "log": False,
+                "motif": "self",
+            }
         },
     }
     script = "file://../scripts/tcr/Immunarch.R"

@@ -144,69 +144,32 @@
 
 <h{{h}}>Diversity estimation</h{{h}}>
 {% assign div_met_dirs = job.out.outdir | joinpaths: "diversity", "*" | glob %}
-<h{{h+1}}>
-    Sample diversity (all_clones)
-</h{{h+1}}>
+{% for dm_dir in div_met_dirs %}
+<h{{h+1}}>{{dm_dir | basename}}</h{{h+1}}>
+{% if dm_dir | glob: "diversity.test.*.txt" %}
+{%   assign dm_test_file = dm_dir | glob0: "diversity.test.*.txt" %}
+{%   assign dm_test_method = dm_test_file | stem | replace: "diversity.test.", "" %}
 <Tabs>
-    {% for dm_dir in div_met_dirs %}
-    <Tab label="Method: {{ dm_dir | basename }}" />
-    {% endfor %}
+    <Tab label="Plot" />
+    <Tab label="Test: {{dm_test_method}}" />
     <div slot="content">
-        {% for dm_dir in div_met_dirs %}
         <TabContent>
-            {% assign divpngs = dm_dir | joinpaths: "diversity-1-*.png" | glob %}
-            {{ table_of_images(divpngs) }}
-
-            {% assign testfiles = dm_dir | glob: "diversity-1-*.*.tsv" %}
-            {%- for testfile in testfiles -%}
-            <h{{h+2}}>{{ testfile | stem | replace: "diversity-1-", "" }}</h{{h+2}}>
-            <DataTable src={{testfile | quote}} data={ {{
-                testfile | datatable: sep="\t", nrows=20, index_col=None
-            }} } />
-            {%- endfor -%}
+            <Image src={{ dm_dir | joinpaths: "diversity.png" | quote }} />
         </TabContent>
-        {% endfor %}
+        <TabContent>
+            <DataTable src={{ dm_test_file | quote }} data={ {{ dm_test_file | datatable: sep="\t" }} } />
+        </TabContent>
     </div>
 </Tabs>
-
-<h{{h+1}}>
-    Sample diversity (clone size >= 2)
-</h{{h+1}}>
-<Tabs>
-    {% for dm_dir in div_met_dirs %}
-    <Tab label="Method: {{ dm_dir | basename }}" />
-    {% endfor %}
-    <div slot="content">
-        {% for dm_dir in div_met_dirs %}
-        <TabContent>
-            {% assign divpngs = dm_dir| joinpaths: "diversity-2-*.png" | glob %}
-            {{ table_of_images(divpngs) }}
-        </TabContent>
-        {% endfor %}
-    </div>
-</Tabs>
-
-<h{{h+1}}>
-    Sample diversity (clone size >= 3)
-</h{{h+1}}>
-<Tabs>
-    {% for dm_dir in div_met_dirs %}
-    <Tab label="Method: {{ dm_dir | basename }}" />
-    {% endfor %}
-    <div slot="content">
-        {% for dm_dir in div_met_dirs %}
-        <TabContent>
-            {% assign divpngs = dm_dir| joinpaths: "diversity-3-*.png" | glob %}
-            {{ table_of_images(divpngs) }}
-        </TabContent>
-        {% endfor %}
-    </div>
-</Tabs>
+{% else %}
+<Image src={{ dm_dir | joinpaths: "diversity.png" | quote }} />
+{% endif %}
+{% endfor %}
 
 <h{{h+1}}>
     Rarefaction analysis
 </h{{h+1}}>
-{% assign rfpngs = job.out.outdir | joinpaths: "raref", "raref*.png" | glob %}
+{% assign rfpngs = job.out.outdir | glob: "rarefraction", "*", "raref*.png" %}
 {{ table_of_images(rfpngs) }}
 
 <h{{h}}>Tracking of clonotypes</h{{h}}>

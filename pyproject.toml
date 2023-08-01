@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.15.1"
+version = "0.15.2"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -12,13 +12,11 @@ generate-setup-file = true
 python = "^3.8"
 pipen = "^0.10"
 pipen-filters = "^0.8"
-pipen-report = "^0.12.5"
 pipen-cli-run = "^0.9"
 pipen-verbose = "^0.7"
-pipen-args = "^0.10"
-datar = {version = "^0.12", extras = ["pandas"]}
-pipen-board = "^0.8"
-pipen-runinfo = {version = "^0.2", optional = true}
+datar = { version = "^0.12", extras = ["pandas"] }
+pipen-board = { version = "^0.9.1", extras = ["report"] }
+pipen-runinfo = { version = "^0.2", optional = true }
 
 [tool.poetry.dev-dependencies]
 

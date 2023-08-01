@@ -223,7 +223,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
         plus = c()
     }
     if (!is.null(boxplot) && length(boxplot) == 0) {
-        boxplot = list(width = 0.1, fill = "white")
+        boxplot = list(width = .1, fill = "white")
     }
     if (is.null(pms$ncol)) {
         pms$ncol = 2
@@ -231,7 +231,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
     pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
-            width = 1000,
+            width = pms$ncol * 480,
             height = ceiling(length(pms$features) / pms$ncol) * 480,
             res = 100
         )
@@ -377,8 +377,8 @@ do_exprs_heatmap = function(odir, pms, genes) {
     pms$features = .get_features(pms$features, genes)
     if (is.null(devpars)) {
         devpars = list(
-            width = length(unique(srtobj@meta.data$seurat_clusters)) * 80 + 150,
-            height = length(pms$features) * 50 + 150,
+            width = length(unique(srtobj@meta.data$seurat_clusters)) * 60 + 150,
+            height = length(pms$features) * 40 + 150,
             res = 100
         )
     }
@@ -392,6 +392,14 @@ do_exprs_heatmap = function(odir, pms, genes) {
     }
     if (is.null(downsample)) {
         pms$object = sobj
+        warn(
+            paste0(
+                "DoHeatmap: `downsample` not specified, using full data. ",
+                "This may cause a blank heatmap. ",
+                "See: https://github.com/satijalab/seurat/issues/2724"
+            ),
+            immediate. = TRUE
+        )
     } else if (downsample %in% c("average", "mean")) {
         pms$object = AverageExpression(sobj, return.seurat = TRUE)
     } else {
@@ -401,6 +409,8 @@ do_exprs_heatmap = function(odir, pms, genes) {
     for (pls in plus) {
         p = p + eval(parse(text = pls))
     }
+    mapal = colorRampPalette(RColorBrewer::brewer.pal(11,"RdBu"))(256)
+    p = p + scale_fill_gradientn(colours = rev(mapal))
     devpars$filename = outfile
     do_call(png, devpars)
     print(p)
