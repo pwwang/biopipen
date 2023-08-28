@@ -26,8 +26,8 @@ meta_cols = colnames(metadata)
 if (!"Sample" %in% meta_cols) {
     stop("Error: Column `Sample` is not found in metafile.")
 }
-if (!"RNADir" %in% meta_cols) {
-    stop("Error: Column `RNADir` is not found in metafile.")
+if (!"RNAData" %in% meta_cols) {
+    stop("Error: Column `RNAData` is not found in metafile.")
 }
 
 
@@ -58,23 +58,27 @@ rename_files = function(e, sample, path) {
 load_sample = function(sample) {
     print(paste("  Loading sample:", sample, "..."))
     mdata = as.data.frame(metadata)[metadata$Sample == sample, , drop=TRUE]
-    path = as.character(mdata$RNADir)
+    path = as.character(mdata$RNAData)
     if (is.na(path) || !is.character(path) || nchar(path) == 0) {
         warning(paste0("No path found for sample: ", sample))
         return (NULL)
     }
 
     # obj_list = list()
-    exprs = tryCatch(
-        # Read10X requires
-        # - barcodes.tsv.gz
-        # - genes.tsv.gz
-        # - matrix.mtx.gz
-        # But sometimes, they are prefixed with sample name
-        # e.g.GSM4143656_SAM24345863-ln1.barcodes.tsv.gz
-        { Read10X(data.dir = path) },
-        error = function(e) rename_files(e, sample, path)
-    )
+    if (dir.exists(path)) {
+        exprs = tryCatch(
+            # Read10X requires
+            # - barcodes.tsv.gz
+            # - genes.tsv.gz
+            # - matrix.mtx.gz
+            # But sometimes, they are prefixed with sample name
+            # e.g.GSM4143656_SAM24345863-ln1.barcodes.tsv.gz
+            { Read10X(data.dir = path) },
+            error = function(e) rename_files(e, sample, path)
+        )
+    } else {
+        exprs = Read10X_h5(path)
+    }
     if ("Gene Expression" %in% names(exprs)) {
         exprs = exprs[["Gene Expression"]]
     }
@@ -86,7 +90,7 @@ load_sample = function(sample) {
     obj = RenameCells(obj, add.cell.id = sample)
     # Attach meta data
     for (mname in names(mdata)) {
-        if (mname %in% c("RNADir", "TCRDir")) { next }
+        if (mname %in% c("RNAData", "TCRData")) { next }
         mdt = mdata[[mname]]
         if (is.factor(mdt)) { mdt = levels(mdt)[mdt] }
         obj[[mname]] = mdt

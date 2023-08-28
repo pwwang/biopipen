@@ -31,9 +31,9 @@ MetabolicInputs = build_processes(<options>)
 ## Inputs
 
 - `metafile`: A metafile indicating the metadata or the rds file with seruat object if `config.pipeline.scrna_metabolic.clustered` is `True`.
-    For a meta file, Two columns are required: `Sample` and `RNADir`
+    For a meta file, Two columns are required: `Sample` and `RNAData`
     `Sample` should be the first column with unique identifiers
-    for the samples and `RNADir` indicates where the expression
+    for the samples and `RNAData` indicates where the expression
     matrices are.
 
     Currently only 10X data is supported

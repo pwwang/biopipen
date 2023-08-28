@@ -28,8 +28,8 @@ class ScrnaBasic(ProcGroup):
             or a seurat object has been saved as RDS file (with extension
             `.rds` or `.RDS`), which QC is assumed to be done.
             As for the tab-delimited file, it should have two columns:
-            `Sample` and `RNADir`. `Sample` should be the first column with
-            unique identifiers for the samples and `RNADir` indicates where the
+            `Sample` and `RNAData`. `Sample` should be the first column with
+            unique identifiers for the samples and `RNAData` indicates where the
             barcodes, genes, expression matrices are.
         is_seurat (flag): Whether the input file is a seurat object
             in RDS format.

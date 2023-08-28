@@ -93,6 +93,7 @@ class _MetabolicPathwayActivity(Proc):
         )
     }
 
+
 class _MetabolicFeatures(Proc):
     """Inter-subset metabolic features - Enrichment analysis in details
 
@@ -170,6 +171,7 @@ class _MetabolicFeatures(Proc):
             "scrna_metabolic_landscape/MetabolicFeatures.svelte"
         )
     }
+
 
 class _MetabolicFeaturesIntraSubset(Proc):
     """Intra-subset metabolic features - Enrichment analysis in details
@@ -257,6 +259,7 @@ class _MetabolicFeaturesIntraSubset(Proc):
             "MetabolicFeaturesIntraSubset.svelte"
         )
     }
+
 
 class _MetabolicPathwayHeterogeneity(Proc):
     """Pathway heterogeneity
@@ -350,8 +353,8 @@ class ScrnaMetabolicLandscape(ProcGroup):
     Args:
         metafile: Either a metafile or an rds file of a Seurat object.
             If it is a metafile, it should have two columns: `Sample` and
-            `RNADir`. `Sample` should be the first column with unique
-            identifiers for the samples and `RNADir` indicates where the
+            `RNAData`. `Sample` should be the first column with unique
+            identifiers for the samples and `RNAData` indicates where the
             barcodes, genes, expression matrices are. The data will be loaded
             and an unsupervised clustering will be done.
             Currently only 10X data is supported.
@@ -365,7 +368,8 @@ class ScrnaMetabolicLandscape(ProcGroup):
         noimpute (flag): Whether to do imputation for the dropouts.
             If False, the values will be left as is.
         gmtfile: The GMT file with the metabolic pathways. The gene names should
-            match the gene names in the gene list in RNADir or the Seurat object
+            match the gene names in the gene list in RNAData or
+            the Seurat object
         grouping: defines the basic groups to investigate the metabolic activity
             Typically the clusters.
         grouping_prefix: Working as a prefix to group names
@@ -531,14 +535,14 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
     @ProcGroup.add_proc
     def p_expr_impute(self) -> Type[Proc]:
-        """Build MetabolicExprImpute process"""
+        """Build  process"""
         if self.opts.noimpute:
             return self.p_mutater
 
         from .scrna import ExprImpute
 
         @annotate.format_doc(indent=3)
-        class MetabolicExprImpute(ExprImpute):
+        class MetabolicExprImpution(ExprImpute):
             """{{Summary}}
 
             You can turn off the imputation by setting the `noimpute` option
@@ -546,7 +550,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             """
             requires = self.p_mutater
 
-        return MetabolicExprImpute
+        return MetabolicExprImpution
 
     @ProcGroup.add_proc
     def p_pathway_activity(self) -> Type[Proc]:
