@@ -10,12 +10,12 @@ if (is.null(sccatch_args$tissue)) { stop("`envs.sccatch_args.tissue` origin of c
 if (is.null(sccatch_args$species)) {
     sccatch_args$species = "Human"
 }
-if (is.null(sccatch_args$marker)) {
-    sccatch_args$marker = cellmatch
-} else {
+if (!is.null(sccatch_args$marker)) {
     cellmatch = readRDS(sccatch_args$marker)
     sccatch_args$if_use_custom_marker = TRUE
 }
+sccatch_args$marker = cellmatch
+
 if (is.null(sccatch_args$cancer)) {
     sccatch_args$cancer = "Normal"
 }

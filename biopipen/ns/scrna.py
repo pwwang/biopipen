@@ -14,7 +14,7 @@ class SeuratLoading(Proc):
             A tab-delimited file
             Two columns are required:
             - `Sample` to specify the sample names.
-            - `RNADir` to assign the path of the data to the samples
+            - `RNAData` to assign the path of the data to the samples
               The path will be read by `Read10X()` from `Seurat`
 
     Output:
@@ -50,8 +50,9 @@ class SeuratPreparing(Proc):
             A tab-delimited file
             Two columns are required:
             `Sample` to specify the sample names.
-            `RNADir` to assign the path of the data to the samples
-            The path will be read by `Read10X()` from `Seurat`
+            `RNAData` to assign the path of the data to the samples
+            The path will be read by `Read10X()` from `Seurat`, or the path
+            to the h5 file that can be read by `Read10X_h5()` from `Seurat`.
 
     Output:
         rdsfile: The RDS file with the Seurat object
@@ -109,9 +110,10 @@ class SeuratClustering(Proc):
         rdsfile: The seurat object with cluster information
 
     Envs:
-        ncores (type=int): Number of cores to use.
+        ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
+            See also: https://satijalab.org/seurat/articles/future_vignette.html
         use_sct (flag;order=-99): Whether use SCTransform routine or not
             If `True`, following procedures will be performed in the order:
             * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
@@ -176,7 +178,17 @@ class SeuratClustering(Proc):
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - verbose (flag): Whether to print the progress
             - <more>: See https://satijalab.org/seurat/reference/scaledata
+        ScaleData1 (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata) that runs on each sample.
+            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            - verbose (flag): Whether to print the progress
+            - <more>: See https://satijalab.org/seurat/reference/scaledata
         RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
+            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            - npcs (type=int): The number of PCs to compute.
+                For each sample, `npcs` will be no larger than the number of columns - 1.
+            - verbose (flag): Whether to print the progress
+            - <more>: See https://satijalab.org/seurat/reference/runpca
+        RunPCA1 (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca) on each sample.
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - npcs (type=int): The number of PCs to compute.
                 For each sample, `npcs` will be no larger than the number of columns - 1.
@@ -218,7 +230,9 @@ class SeuratClustering(Proc):
         "FindIntegrationAnchors": {},
         "IntegrateData": {},
         "ScaleData": {"verbose": False},
-        "RunPCA": {"npcs": 30, "verbose": False},
+        "ScaleData1": {"verbose": False},
+        "RunPCA": {"verbose": False},
+        "RunPCA1": {"verbose": False},
         "RunUMAP": {"reduction": "pca", "dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
@@ -510,7 +524,6 @@ class MarkersFinder(Proc):
 
     Input:
         srtobj: The seurat object loaded by `SeuratPreparing`
-        casefile: The config file in TOML that looks like. See `envs.cases`
 
     Output:
         outdir: The output directory for the markers
@@ -518,38 +531,21 @@ class MarkersFinder(Proc):
     Envs:
         ncores (type=int): Number of cores to use to parallelize Seurat
             functions using
-            `future::plan(strategy = "multicore", workers = ncores)`
-        cases (type=json): The cases to find markers for.
-            For example:
-            >>> {
-            >>>     "case1": {
-            >>>         "ident-1": "Tumor",
-            >>>         "ident-2": "Normal",
-            >>>         "group-by": "Source",
-            >>>         # focus on a subset of cells
-            >>>         "filter": "SampleType != 'Control'"
-            >>>         # other arguments for Seruat::FindMarkers()
-            >>>     }
-            >>> }
-            We can also use a new `group.by`:
-            >>> {
-            >>>     "case2": {
-            >>>         "ident-1": "Case",
-            >>>         "ident-2": "Control",
-            >>>         "group-by": "Group",
-            >>>         # Do the comparison in each cluster
-            >>>         "each": "seurat_clusters",
-            >>>         # other arguments for Seruat::FindMarkers()
-            >>>         # Filter after mutaters
-            >>>         "filter2": "SampleType != 'Control'",
-            >>>         # Use `filer` to filter before mutaters
-            >>>         "mutaters": {
-            >>>             "Group" = "if_else(Source %%in%% c('Tumor', 'Normal'), 'Case', 'Control')"
-            >>>         }
-            >>>     }
-            >>> }
-            If "ident-2" is not provided, it will use the rest of the cells as "ident-2".
-            If only "group-by" is given, will call `FindAllMarkers()`.
+            `future::plan(strategy = "multicore", workers = ncores)`.
+            See also: https://satijalab.org/seurat/articles/future_vignette.html
+        mutaters (type=json): The mutaters to mutate the metadata
+        ident-1: The first group of cells to compare
+        ident-2: The second group of cells to compare
+            If not provided, the rest of the cells are used for `ident-2`.
+        group-by: The column name in metadata to group the cells.
+            If only `group-by` is specified, and `ident-1` and `ident-2` are
+            not specified, markers will be found for all groups in this column
+            in the manner of "group vs rest" comparison.
+            `NA` group will be ignored.
+        each: The column name in metadata to separate the cells into different
+            cases.
+        prefix_each (flag): Whether to prefix the `each` column name to the
+            value as the case/section name.
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             https://maayanlab.cloud/Enrichr/#libraries
@@ -557,17 +553,38 @@ class MarkersFinder(Proc):
             significant markers for enrichment analysis.
             Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
             `p_val_adj`. For example, `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
-            You can also set different value for this option in different cases.
-            If not, this one will be used.
+            to select markers with adjusted p-value < 0.05 and absolute log2
+            fold change > 1.
+        section: The section name for the report.
+            Worked only when `each` is not specified and `ident-2` is specified.
+            Otherwise, the section name will be constructed from `each` and
+            `group-by`.
+            If `DEFAULT`, and it's the only section, it not included in the
+            case/section names.
+        rest (ns): Rest arguments for `Seurat::FindMarkers()`.
+            Use `-` to replace `.` in the argument name. For example,
+            use `min-pct` instead of `min.pct`.
+            - <more>: See https://satijalab.org/seurat/reference/findmarkers
+        cases (type=json): If you have multiple cases, you can specify them
+            here. The keys are the names of the cases and the values are the
+            above options except `ncores` and `mutaters`. If some options are
+            not specified, the default values specified above will be used.
+            If no cases are specified, the default case will be added with
+            the default values under `envs` with the name `Cluster`.
     """  # noqa: E501
     input = "srtobj:file, casefile:file"
     output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.markers"
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "cases": {
-            "Cluster": {"group-by": "seurat_clusters"},
-        },
+        "mutaters": {},
+        "ident-1": None,
+        "ident-2": None,
+        "group-by": "seurat_clusters",
+        "each": None,
+        "prefix_each": False,
+        "section": "DEFAULT",
+        "rest": {},
         "dbs": [
             "GO_Biological_Process_2021",
             "GO_Cellular_Component_2021",
@@ -575,10 +592,74 @@ class MarkersFinder(Proc):
             "KEGG_2021_Human",
         ],
         "sigmarkers": "p_val_adj < 0.05",
+        "cases": {},
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
     plugin_opts = {"report": "file://../reports/scrna/MarkersFinder.svelte"}
+
+
+class TopExpressingGenes(Proc):
+    """Find the top expressing genes in each cluster
+
+    Input:
+        srtobj: The seurat object in RDS format
+
+    Output:
+        outdir: The output directory for the tables and plots
+
+    Envs:
+        mutaters (type=json): The mutaters to mutate the metadata
+        ident: The group of cells to find the top expressing genes.
+            The cells will be selected by the `group-by` column with this
+            `ident` value in metadata.
+            If not provided, the top expressing genes will be found for all
+            groups of cells in the `group-by` column.
+        group-by: The column name in metadata to group the cells.
+        each: The column name in metadata to separate the cells into different
+            cases.
+        prefix_each (flag): Whether to prefix the `each` column name to the
+            value as the case/section name.
+        section: The section name for the report.
+            Worked only when `each` is not specified and `ident` is specified.
+            Otherwise, the section name will be constructed from `each` and
+            `group-by`.
+            If `DEFAULT`, and it's the only section, it not included in the
+            case/section names.
+        dbs (list): The dbs to do enrichment analysis for significant
+            markers See below for all libraries.
+            https://maayanlab.cloud/Enrichr/#libraries
+        n (type=int): The number of top expressing genes to find.
+        cases (type=json): If you have multiple cases, you can specify them
+            here. The keys are the names of the cases and the values are the
+            above options except `mutaters`. If some options are
+            not specified, the default values specified above will be used.
+            If no cases are specified, the default case will be added with
+            the default values under `envs` with the name `Cluster`.
+    """
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/TopExpressingGenes.R"
+    envs = {
+        "mutaters": {},
+        "ident": None,
+        "group-by": "seurat_clusters",
+        "each": None,
+        "prefix_each": False,
+        "section": "DEFAULT",
+        "dbs": [
+            "GO_Biological_Process_2021",
+            "GO_Cellular_Component_2021",
+            "GO_Molecular_Function_2021",
+            "KEGG_2021_Human",
+        ],
+        "n": 250,
+        "cases": {},
+    }
+    plugin_opts = {
+        "report": "file://../reports/scrna/TopExpressingGenes.svelte",
+    }
 
 
 class ExprImpute(Proc):
@@ -861,7 +942,7 @@ class ScFGSEA(Proc):
             >>>         "group-by" = "Group"
             >>>     }
             >>> }
-        gmtfile (required): The pathways in GMT format, with the gene names/ids in the same format as the seurat object
+        gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object
         method (choice): The method to do the preranking.
             - signal_to_noise: Signal to noise.
                 The larger the differences of the means (scaled by the standard deviations);
@@ -910,7 +991,7 @@ class ScFGSEA(Proc):
     plugin_opts = {"report": "file://../reports/scrna/ScFGSEA.svelte"}
 
 
-class CellTypeAnnotate(Proc):
+class CellTypeAnnotation(Proc):
     """Annotate cell types
 
     Either use `scType` or `scCATCH` to annotate cell types, or directly
@@ -926,29 +1007,40 @@ class CellTypeAnnotate(Proc):
         tool (choice): The tool to use for cell type annotation.
             - sctype: Use `scType` to annotate cell types.
                 See https://github.com/IanevskiAleksandr/sc-type
+            - hitype: Use `hitype` to annotate cell types.
+                See https://github.com/pwwang/hitype
             - sccatch: Use `scCATCH` to annotate cell types.
                 See https://github.com/ZJUFanLab/scCATCH
             - direct: Directly assign cell types
         sctype_tissue: The tissue to use for `sctype`.
-            Avaiable tissues should be the first column (`tissueType`) of
-            `sctype_db`.
-            Examples are `Immune system`, `Pancreas`, `Liver`, `Eye`, `Kidney`,
-            `Brain`, `Lung`, `Adrenal`, `Heart`, `Intestine`, `Muscle`,
-            `Placenta`, `Spleen`, `Stomach` and `Thymus`.
+            Avaiable tissues should be the first column (`tissueType`) of `sctype_db`.
+            If not specified, all rows in `sctype_db` will be used.
         sctype_db: The database to use for sctype.
             Check examples at https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx
-        cell_types (type=json): The cell types to use for direct annotation
-            Each a list of cell type names, or a dict with keys as the old
-            identity and values as the new cell type.
+        hitype_tissue: The tissue to use for `hitype`.
+            Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
+            If not specified, all rows in `hitype_db` will be used.
+        hitype_db: The database to use for hitype.
+            Compatible with `sctype_db`.
+            See also https://pwwang.github.io/hitype/articles/prepare-gene-sets.html
+            You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
+        cell_types (list): The cell types to use for direct annotation.
+            You can use `"-"` or `""` as the placeholder for the clusters that
+            you want to keep the original cell types (`seurat_clusters`).
+            If the length of `cell_types` is shorter than the number of
+            clusters, the remaining clusters will be kept as the original cell
+            types. If `tool` is `direct` and `cell_types` is not specified or
+            an empty list, the original cell types will be kept and nothing
+            will be changed.
         sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species (choice): The specie of cells.
-                - Human:
-                - Mouse:
+                - Human: Human cells
+                - Mouse: Mouse cells
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
             - tissue: Tissue origin of cells must be defined.
             - <more>: Other arguments for `scCATCH::findmarkergene()`
                 See https://www.rdocumentation.org/packages/scCATCH/versions/3.2.2/topics/findmarkergene.
-                You can pass an RDS file to `marker` to work as custom marker. If so,
+                You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
 
     Requires:
@@ -969,12 +1061,15 @@ class CellTypeAnnotate(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.annotated.RDS"
     lang = config.lang.rscript
     envs = {
-        "tool": "sctype",
+        "tool": "hitype",
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
         "cell_types": [],
+        "sccatch_args": {},
+        "hitype_tissue": None,
+        "hitype_db": None,
     }
-    script = "file://../scripts/scrna/CellTypeAnnotate.R"
+    script = "file://../scripts/scrna/CellTypeAnnotation.R"
 
 
 class SeuratMap2Ref(Proc):
@@ -1135,41 +1230,4 @@ class RadarPlots(Proc):
     }
     plugin_opts = {
         "report": "file://../reports/scrna/RadarPlots.svelte",
-    }
-
-
-class TopExpressingGenes(Proc):
-    """Find the top expressing genes in each cluster
-
-    Input:
-        srtobj: The seurat object in RDS format
-
-    Output:
-        outdir: The output directory for the tables and plots
-
-    Envs:
-        cluster_col: The column name of the cluster information.
-        assay: The assay to use to find the top expressing genes.
-        dbs (list): The dbs to do enrichment analysis for significant
-            markers See below for all libraries.
-            https://maayanlab.cloud/Enrichr/#libraries
-        n (int): The number of genes to find for each cluster
-    """
-    input = "srtobj:file"
-    output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
-    lang = config.lang.rscript
-    script = "file://../scripts/scrna/TopExpressingGenes.R"
-    envs = {
-        "cluster_col": "seurat_clusters",
-        "assay": "RNA",
-        "dbs": [
-            "GO_Biological_Process_2021",
-            "GO_Cellular_Component_2021",
-            "GO_Molecular_Function_2021",
-            "KEGG_2021_Human",
-        ],
-        "n": 250,
-    }
-    plugin_opts = {
-        "report": "file://../reports/scrna/TopExpressingGenes.svelte",
     }
