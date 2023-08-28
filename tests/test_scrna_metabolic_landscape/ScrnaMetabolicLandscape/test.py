@@ -58,7 +58,7 @@ scrna_ml_pipe = ScrnaMetabolicLandscape(
     }
 )
 
-scrna_ml_pipe.procs.MetabolicExprImpute.envs["alra_args"] = {
+scrna_ml_pipe.procs.MetabolicExprImputation.envs["alra_args"] = {
     "use.mkl": True,
     "mkl.seed": 8525,
 }
