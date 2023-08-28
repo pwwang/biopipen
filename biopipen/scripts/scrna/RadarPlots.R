@@ -153,7 +153,8 @@ if (length(cases) == 0) {
         cluster_order = cluster_order,
         breaks = breaks,
         direction = direction,
-        section = section
+        section = section,
+        devpars = devpars
     )
 } else {
     # Use the values given directly under `envs` as default
