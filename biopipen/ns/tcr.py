@@ -19,7 +19,7 @@ class ImmunarchLoading(Proc):
             A tab-delimited file
             Two columns are required:
             * `Sample` to specify the sample names.
-            * `TCRDir` to assign the path of the data to the samples,
+            * `TCRData` to assign the path of the data to the samples,
             and this column will be excluded as metadata.
             Immunarch is able to fetch the sample names from the names of
             the target files. However, 10x data yields result like
@@ -159,146 +159,233 @@ class Immunarch(Proc):
         outdir: The output directory
 
     Envs:
-        mutaters (type=json): The mutaters passed to `dplyr::mutate()` on
-            `immdata$meta` to add new columns. The keys will be the names of
-            the columns, and the values will be the expressions. The new names
-            can be used in `volume_by`, `len_by`, `count_by`, `top_clone_by`,
-            `rare_clone_by`, `hom_clone_by`, `gu_by`, `div_by` and `div_test`.
-        volume_by (type=auto): Groupings to show clonotype volume (sizes)
-            >>> exp_vol <- repExplore(immdata$data, .method = "volume")
-            >>> vis(exp_vol, .by = c("Status"), .meta = immdata$meta)
-            >>> vis(exp_vol, .by = c("Status", "Sex"), .meta = immdata$meta)
-            This argument will be passed to `.by` of `vis(exp_vol, ...)`.
-            It will be finally compiled into a dict with keys the names of
-            cases and values the groupings, such as `"Status"` or
-            `["Status", "Sex"]`. The value of this argument can be:
-            a dict, for example, `{"By_Status": "Status"}`
-            a list of strings, for example, `["Status", "Sex"]`, which will
-            be compiled to `{"Status_Sex": ["Status", "Sex"]}`
-            a string, for example, `"Status"`, which will be compiled to
-            `{"Status": "Status"}`
-        len_by (type=auto): Groupings to show CDR3 length of both aa and nt
-            Supported types of values are the same as `volume_by`.
-        count_by (type=auto): Groupings to show clonotype counts per sample
-            Supported types of values are the same as `volume_by`.
-        top_clone_marks (list): A numerical vector with ranges
-            of the top clonotypes. Passed to the `.head` argument of
-            `repClonoality()`
-        top_clone_by (type=auto): Groupings when visualize top clones.
-            Supported types of values are the same as `volume_by`.
-        rare_clone_marks (list): A numerical vector with ranges of
-            abundance for the rare clonotypes in the dataset. Passed to
-            the `.bound` argument of `repClonoality()`
-        rare_clone_by (type=auto): Groupings when visualize rare clones
-            Supported types of values are the same as `volume_by`.
-        hom_clone_marks (ns): A dict with the threshold of the
-            half-closed intervals that mark off clonal groups. Passed to the
-            `.clone.types` arguments of `repClonoality()`. The keys could be:
-            - Rare: the rare clonotypes
-            - Small: the small clonotypes
-            - Medium: the medium clonotypes
-            - Large: the large clonotypes
-            - Hyperexpanded: the hyperexpanded clonotypes
-        hom_clone_by (type=auto): Groupings when visualize homeo clones
-            Supported types of values are the same as `volume_by`.
-        overlap_methods (mchoice): The methods used for `repOverlap()`,
-            each will generate a heatmap.
-            - public: number of public clonotypes between two samples.
-            - overlap: a normalised measure of overlap similarity.
-                It is defined as the size of the intersection divided by the
-                smaller of the size of the two sets.
-            - jaccard: conceptually a percentage of how many objects two sets
-                have in common out of how many objects they have total.
-            - tversky: an asymmetric similarity measure on sets that compares
-                a variant to a prototype.
-            - cosine: a measure of similarity between two non-zero vectors of
-                an inner product space that measures the cosine of the angle
-                between them.
-            - morisita: how many times it is more likely to randomly select two
-                sampled points from the same quadrat (the dataset is covered by
-                a regular grid of changing size) then it would be in the case
-                of a random distribution generated from a Poisson process.
-                Duplicate objects are merged with their counts are summed up.
-            - inc+public: incremental overlaps of the N most abundant clonotypes
-                with incrementally growing N using the public method.
-            - inc+morisita: incremental overlaps of the N most abundant
-                clonotypes with incrementally growing N using the morisita
-                method.
-        overlap_redim (list): Plot the samples with these dimension
-            reduction methods. The methods could be `hclust`, `tsne` or `mds`.
-            They could also be combined, for example, `mds+hclust`.
-            See https://immunarch.com/reference/repOverlapAnalysis.html
-        gu_by (type=auto): Groupings to show gene usages
-            Supported types of values are the same as `volume_by`.
-        gu_top (type=int): How many top (ranked by total usage across samples)
-            genes to show in the plots
-        gua_methods (list): controls how the data is going to be
-            preprocessed and analysed. One of js, cor, cosine, pca, mds,
-            and tsne. Can also be combined with following methods for the
-            actual analysis: hclust, kmeans, dbscan, kruskal. For example:
-            `cosine+hclust`.
-            See https://immunarch.com/articles/web_only/v5_gene_usage.html
-        spect (type=json): A list of values for `.quant` and `.col` for
-            `spectratype()` for each sample.
+        mutaters (type=json;order=-9): The mutaters passed to `dplyr::mutate()` on `immdata$meta` to add new columns.
+            The keys will be the names of the columns, and the values will be the expressions.
+            The new names can be used in `volumes`, `lens`, `counts`, `top_clones`, `rare_clones`, `hom_clones`, `gene_usages`, `divs`, etc.
+        volumes (ns): Explore clonotype volume (sizes).
+            - by: Groupings when visualize clonotype volumes, passed to the `.by` argument of `vis(imm_vol, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.volumes` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.volume.by`, `envs.volume.devpars`.
+        lens (ns): Explore clonotype CDR3 lengths.
+            - by: Groupings when visualize clonotype lengths, passed to the `.by` argument of `vis(imm_len, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.lens` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.lens.by`, `envs.lens.devpars`.
+        counts (ns): Explore clonotype counts.
+            - by: Groupings when visualize clonotype counts, passed to the `.by` argument of `vis(imm_count, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.counts` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.counts.by`, `envs.counts.devpars`.
+        top_clones (ns): Explore top clonotypes.
+            - by: Groupings when visualize top clones, passed to the `.by` argument of `vis(imm_top, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - marks (list;itype=int): A numerical vector with ranges of the top clonotypes. Passed to the `.head` argument of `repClonoality()`.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.top_clones` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.top_clones.by`, `envs.top_clones.marks` and `envs.top_clones.devpars`.
+        rare_clones (ns): Explore rare clonotypes.
+            - by: Groupings when visualize rare clones, passed to the `.by` argument of `vis(imm_rare, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - marks (list;itype=int): A numerical vector with ranges of abundance for the rare clonotypes in the dataset.
+                Passed to the `.bound` argument of `repClonoality()`.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.rare_clones` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.rare_clones.by`, `envs.rare_clones.marks` and `envs.rare_clones.devpars`.
+        hom_clones (ns): Explore homeo clonotypes.
+            - by: Groupings when visualize homeo clones, passed to the `.by` argument of `vis(imm_hom, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - marks (ns): A dict with the threshold of the half-closed intervals that mark off clonal groups.
+                Passed to the `.clone.types` arguments of `repClonoality()`.
+                The keys could be:
+                - Rare (type=float): the rare clonotypes
+                - Small (type=float): the small clonotypes
+                - Medium (type=float): the medium clonotypes
+                - Large (type=float): the large clonotypes
+                - Hyperexpanded (type=float): the hyperexpanded clonotypes
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.hom_clones` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.hom_clones.by`, `envs.hom_clones.marks` and `envs.hom_clones.devpars`.
+        overlaps (ns): Explore clonotype overlaps.
+            - method (choice): The method to calculate overlaps.
+                - public: number of public clonotypes between two samples.
+                - overlap: a normalised measure of overlap similarity.
+                    It is defined as the size of the intersection divided by the smaller of the size of the two sets.
+                - jaccard: conceptually a percentage of how many objects two sets have in common out of how many objects they have total.
+                - tversky: an asymmetric similarity measure on sets that compares a variant to a prototype.
+                - cosine: a measure of similarity between two non-zero vectors of an inner product space that measures the cosine of the angle between them.
+                - morisita: how many times it is more likely to randomly select two sampled points from the same quadrat (the dataset is
+                    covered by a regular grid of changing size) then it would be in the case of a random distribution generated from
+                    a Poisson process. Duplicate objects are merged with their counts are summed up.
+                - inc+public: incremental overlaps of the N most abundant clonotypes with incrementally growing N using the public method.
+                - inc+morisita: incremental overlaps of the N most abundant clonotypes with incrementally growing N using the morisita method.
+            - vis_args (type=json): Other arguments for the plotting functions `vis(imm_ov, ...)`.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - analyses (ns;order=8): Perform overlap analyses.
+                - method: Plot the samples with these dimension reduction methods.
+                    The methods could be `hclust`, `tsne` or `mds`.
+                    They could also be combined, for example, `mds+hclust`.
+                    See https://immunarch.com/reference/repOverlapAnalysis.html
+                - vis_args (type=json): Other arguments for the plotting functions.
+                - devpars (ns): The parameters for the plotting device.
+                    - width (type=int): The width of the plot.
+                    - height (type=int): The height of the plot.
+                    - res (type=int): The resolution of the plot.
+                - cases (type=json): If you have multiple cases, you can use this argument to specify them.
+                    The keys will be the names of the cases.
+                    The values will be passed to the corresponding arguments above.
+                    If any of these arguments are not specified, the values in `envs.overlaps.analyses` will be used.
+                    If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                    values of `envs.overlaps.analyses.method`, `envs.overlaps.analyses.vis_args` and `envs.overlaps.analyses.devpars`.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.overlaps` will be used.
+                If NO cases are specified, the default case will be added, with the key the default method and the
+                values of `envs.overlaps.method`, `envs.overlaps.vis_args`, `envs.overlaps.devpars` and `envs.overlaps.analyses`.
+        gene_usages (ns): Explore gene usages.
+            - top (type=int): How many top (ranked by total usage across samples) genes to show in the plots.
+                Use `0` to use all genes.
+            - norm (flag): If True then use proportions of genes, else use counts of genes.
+            - by: Groupings to show gene usages, passed to the `.by` argument of `vis(imm_gu_top, .by = <values>)`.
+                Multiple columns should be separated by `,`.
+            - vis_args (type=json): Other arguments for the plotting functions.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - analyses (ns;order=8): Perform gene usage analyses.
+                - method: The method to control how the data is going to be preprocessed and analysed.
+                    One of `js`, `cor`, `cosine`, `pca`, `mds` and `tsne`. Can also be combined with following methods
+                    for the actual analyses: `hclust`, `kmeans`, `dbscan`, and `kruskal`. For example: `cosine+hclust`.
+                    See https://immunarch.com/articles/web_only/v5_gene_usage.html.
+                - vis_args (type=json): Other arguments for the plotting functions.
+                - devpars (ns): The parameters for the plotting device.
+                    - width (type=int): The width of the plot.
+                    - height (type=int): The height of the plot.
+                    - res (type=int): The resolution of the plot.
+                - cases (type=json): If you have multiple cases, you can use this argument to specify them.
+                    The keys will be the names of the cases.
+                    The values will be passed to the corresponding arguments above.
+                    If any of these arguments are not specified, the values in `envs.gene_usages.analyses` will be used.
+                    If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                    values of `envs.gene_usages.analyses.method`, `envs.gene_usages.analyses.vis_args` and `envs.gene_usages.analyses.devpars`.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be used as the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.gene_usages` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.gene_usages.top`, `envs.gene_usages.norm`, `envs.gene_usages.by`, `envs.gene_usages.vis_args`, `envs.gene_usages.devpars` and `envs.gene_usages.analyses`.
+        spects (ns): Spectratyping analysis.
+            - quant: Select the column with clonal counts to evaluate.
+                Set to `id` to count every clonotype once.
+                Set to `count` to take into the account number of clones per clonotype.
+                Multiple columns should be separated by `,`.
+            - col: A string that specifies the column(s) to be processed.
+                The output is one of the following strings, separated by the plus sign: "nt" for nucleotide sequences,
+                "aa" for amino acid sequences, "v" for V gene segments, "j" for J gene segments.
+                E.g., pass "aa+v" for spectratyping on CDR3 amino acid sequences paired with V gene segments,
+                i.e., in this case a unique clonotype is a pair of CDR3 amino acid and V gene segment.
+                Clonal counts of equal clonotypes will be summed up.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.spects` will be used.
+                By default, a `By_Clonotype` case will be added, with the values of `quant = "id"` and `col = "nt"`, and
+                a `By_Num_Clones` case will be added, with the values of `quant = "count"` and `col = "aa+v"`.
         divs (ns): Parameters to control the diversity analysis.
-            - filter: The filter passed to `dplyr::filter()` to filter the data
-                for each sample before calculating diversity. For example,
-                `Clones > 1` to filter out singletons.
-                To check which columns are available, use
-                `immdata$data[[1]] |> colnames()` in R.
+            - filter: The filter passed to `dplyr::filter()` to filter the data for each sample before calculating diversity.
+                For example, `Clones > 1` to filter out singletons.
+                To check which columns are available, use `immdata$data[[1]] |> colnames()` in R.
                 You may also check quickly here:
                 https://immunarch.com/articles/v2_data.html#basic-data-manipulations-with-dplyr-and-immunarch
                 To use the top 10 clones, you can try `rank(desc(Clones)) <= 10`
             - method (choice): The method to calculate diversity.
-                - chao1: a nonparameteric asymptotic estimator of species
-                    richness.
+                - chao1: a nonparameteric asymptotic estimator of species richness.
                     (number of species in a population).
-                - hill: Hill numbers are a mathematically unified family of
-                    diversity indices.
+                - hill: Hill numbers are a mathematically unified family of diversity indices.
                     (differing only by an exponent q).
                 - div: true diversity, or the effective number of types.
-                    It refers to the number of equally abundant types needed
-                    for the average proportional abundance of the types to equal
-                    that observed in the dataset of interest where all types
-                    may not be equally abundant.
+                    It refers to the number of equally abundant types needed for the average proportional abundance of the types to equal
+                    that observed in the dataset of interest where all types may not be equally abundant.
                 - gini.simp: The Gini-Simpson index.
-                    It is the probability of interspecific encounter, i.e.,
-                    probability that two entities represent different types.
+                    It is the probability of interspecific encounter, i.e., probability that two entities represent different types.
                 - inv.simp: Inverse Simpson index.
-                    It is the effective number of types that is obtained
-                    when the weighted arithmetic mean is used to quantify
-                    average proportional abundance of types in the dataset
-                    of interest.
+                    It is the effective number of types that is obtained when the weighted arithmetic mean is used to quantify
+                    average proportional abundance of types in the dataset of interest.
                 - gini: The Gini coefficient.
-                    It measures the inequality among values
-                    of a frequency distribution (for example levels of income).
-                    A Gini coefficient of zero expresses perfect equality,
-                    where all values are the same (for example, where everyone
-                    has the same income). A Gini coefficient of one
-                    (or 100 percents) expresses maximal inequality among values
-                    (for example where only one person has all the income).
+                    It measures the inequality among values of a frequency distribution (for example levels of income).
+                    A Gini coefficient of zero expresses perfect equality, where all values are the same (for example, where everyone has the same income).
+                    A Gini coefficient of one (or 100 percents) expresses maximal inequality among values (for example where only one person has all the income).
                 - d50: The D50 index.
-                    It is the number of types that are needed to cover 50%% of
-                    the total abundance.
+                    It is the number of types that are needed to cover 50%% of the total abundance.
                 - dxx: The Dxx index.
-                    It is the number of types that are needed to cover xx%% of
-                    the total abundance.
-                    The percentage should be specified in the `args` argument
-                    using `perc` key.
-                - raref: Species richness from the results of sampling through
-                    extrapolation.
+                    It is the number of types that are needed to cover xx%% of the total abundance.
+                    The percentage should be specified in the `args` argument using `perc` key.
+                - raref: Species richness from the results of sampling through extrapolation.
             - by: The variables (column names) to group samples.
-                Multiple columns should be separated by
+                Multiple columns should be separated by `,`.
             - args (type=json): Other arguments for `repDiversity()`.
-                Do not include the preceding `.` and use `-` instead of `.` in
-                the argument names. For example, `do-norm` will be compiled to
-                `.do.norm`.
+                Do not include the preceding `.` and use `-` instead of `.` in the argument names.
+                For example, `-do-norm` will be compiled to `.do.norm`.
                 See all arguments at
                 https://immunarch.com/reference/repDiversity.html
-            - order (list): The order of the values in `by` on the x-axis of
-                the plots. If not specified, the values will be used as-is.
+            - order (list): The order of the values in `by` on the x-axis of the plots.
+                If not specified, the values will be used as-is.
             - test (ns): Perform statistical tests between each pair of groups.
-                Do NOT work for `raref`.
+                Does NOT work for `raref`.
                 - method (choice): The method to perform the test
                     - none: No test
                     - t.test: Welch's t-test
@@ -313,55 +400,64 @@ class Immunarch(Proc):
                     - BY: Benjamini & Yekutieli (negative)
                     - fdr: Benjamini & Hochberg (non-negative)
                     - none: no correction.
-            - separate_by: A column name used to separate the samples into
-                different plots. Only works for `raref`.
-            - align_x (flag): Align the x-axis of multiple plots.
-                Only works for `raref`.
-            - align_y (flag): Align the y-axis of multiple plots.
-                Only works for `raref`.
-            - log (flag): Indicate whether we should plot with log-transformed
-                x-axis using `vis(.log = TRUE)`. Only works for `raref`.
-            - devpars (ns): The parameters for the plotting device
+            - separate_by: A column name used to separate the samples into different plots. Only works for `raref`.
+            - align_x (flag): Align the x-axis of multiple plots. Only works for `raref`.
+            - align_y (flag): Align the y-axis of multiple plots. Only works for `raref`.
+            - log (flag): Indicate whether we should plot with log-transformed x-axis using `vis(.log = TRUE)`. Only works for `raref`.
+            - devpars (ns): The parameters for the plotting device.
                 - width (int): The width of the device
                 - height (int): The height of the device
                 - res (int): The resolution of the device
-            - cases (type=json): If you have multiple cases, you can use this
-                argument to specify them. The keys will be used as the names
-                of the cases. The values will be passed to the corresponding
-                arguments above. If NO cases are specified, the default
-                case will be added, with the name of `envs.div.method`.
-                The values specified in `envs.div` will be used as the
-                defaults for the cases here.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be used as the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If NO cases are specified, the default case will be added, with the name of `envs.div.method`.
+                The values specified in `envs.div` will be used as the defaults for the cases here.
         trackings (ns): Parameters to control the clonotype tracking analysis.
-            - targets (type=auto): Either a list of CDR3AA seq of clonotypes to
-                track, or simply an integer to track the top N clonotypes.
-            - subject_col: The column name in meta data that contains the
-                subjects/samples on the x-axis of the alluvial plot.
-                If the values in this column are not unique, the values will
-                be merged with the values in `subject_col` to form the x-axis.
+            - targets: Either a set of CDR3AA seq of clonotypes to track (separated by `,`), or simply an integer to track the top N clonotypes.
+            - subject_col: The column name in meta data that contains the subjects/samples on the x-axis of the alluvial plot.
+                If the values in this column are not unique, the values will be merged with the values in `subject_col` to form the x-axis.
                 This defaults to `Sample`.
-            - subjects (list): A list of values from `subject_col` to show in the
-                alluvial plot on the x-axis. If not specified, all values in
-                `subject_col` will be used. This also specifies the order of
-                the x-axis.
-            - cases (type=json): If you have multiple cases, you can use this
-                argument to specify them. The keys will be used as the names of
-                the cases. The values will be passed to the corresponding
-                arguments (`target`, `subject_col`, and `subjects`). If any
-                of these arguments are not specified, the values in
-                `envs.trackings` will be used. If NO cases are specified, the
-                default case will be added, with the name `DEFAULT` and the
-                values of `envs.trackings.target`, `envs.trackings.subject_col`,
-                and `envs.trackings.subjects`.
-        kmers (type=json): Arguments for kmer analysis.
-            There can be multiple `head`s and `motif`s.
-            If you do want multiple parameter sets for the same K, You can use
-            a float number as the K. For example: `5.1` for K `5`.
-            Keys are the K of mers. Values are parameters.
-            * head: specifies # of the most abundant kmers to visualise.
-            * position: positions of bars: `stack`, `dodge` and `fill`.
-            * log: log-transformation of y-axis.
-            * motif: Method for motif analysis.
+            - subjects (list): A list of values from `subject_col` to show in the alluvial plot on the x-axis.
+                If not specified, all values in `subject_col` will be used.
+                This also specifies the order of the x-axis.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be used as the names of the cases.
+                The values will be passed to the corresponding arguments (`target`, `subject_col`, and `subjects`).
+                If any of these arguments are not specified, the values in `envs.trackings` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.trackings.target`, `envs.trackings.subject_col`, and `envs.trackings.subjects`.
+        kmers (ns): Arguments for kmer analysis.
+            - k (type=int): The length of kmer.
+            - head (type=int): The number of top kmers to show.
+            - vis_args (type=json): Other arguments for the plotting functions.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - profiles (ns;order=8): Arguments for sequence profilings.
+                - method (choice): The method for the position matrix.
+                    For more information see https://en.wikipedia.org/wiki/Position_weight_matrix.
+                    - freq: position frequency matrix (PFM) - a matrix with occurences of each amino acid in each position.
+                    - prob: position probability matrix (PPM) - a matrix with probabilities of each amino acid in each position.
+                    - wei: position weight matrix (PWM) - a matrix with log likelihoods of PPM elements.
+                    - self: self-information matrix (SIM) - a matrix with self-information of elements in PWM.
+                - vis_args (type=json): Other arguments for the plotting functions.
+                - devpars (ns): The parameters for the plotting device.
+                    - width (type=int): The width of the plot.
+                    - height (type=int): The height of the plot.
+                    - res (type=int): The resolution of the plot.
+                - cases (type=json): If you have multiple cases, you can use this argument to specify them.
+                    The keys will be the names of the cases.
+                    The values will be passed to the corresponding arguments above.
+                    If any of these arguments are not specified, the values in `envs.kmers.profiles` will be used.
+                    If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                    values of `envs.kmers.profiles.method`, `envs.kmers.profiles.vis_args` and `envs.kmers.profiles.devpars`.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be used as the names of the cases.
+                The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.kmers.k`, `envs.kmers.head`, `envs.kmers.vis_args` and `envs.kmers.devpars`.
     """  # noqa: E501
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.immunarch"
@@ -369,31 +465,84 @@ class Immunarch(Proc):
     envs = {
         "mutaters": {},
         # basic statistics
-        "volume_by": {},
-        "len_by": {},
-        "count_by": {},
+        "volumes": {
+            "by": None,
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
+        },
+        "lens": {
+            "by": None,
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
+        },
+        "counts": {
+            "by": None,
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
+        },
         # clonality
-        "top_clone_marks": [10, 100, 1000, 3000, 10000],
-        "top_clone_by": {},
-        "rare_clone_marks": [1, 3, 10, 30, 100],
-        "rare_clone_by": {},
-        "hom_clone_marks": dict(
-            Small=0.0001,
-            Medium=0.001,
-            Large=0.01,
-            Hyperexpanded=1,
-        ),
-        "hom_clone_by": {},
+        "top_clones": {
+            "by": None,
+            "marks": [10, 100, 1000, 3000, 10000, 30000, 1e5],
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
+        },
+        "rare_clones": {
+            "by": None,
+            "marks": [1, 3, 10, 30, 100],
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
+        },
+        "hom_clones": {
+            "by": None,
+            "marks": dict(
+                Rare=1e-5,
+                Small=1e-4,
+                Medium=1e-3,
+                Large=0.01,
+                Hyperexpanded=1.0,
+            ),
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
+        },
         # overlapping
-        "overlap_methods": ["public"],
-        "overlap_redim": ["tsne", "mds"],
+        "overlaps": {
+            "method": "public",
+            "vis_args": {},
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "analyses": {
+                "method": "mds",
+                "vis_args": {},
+                "devpars": {"width": 1000, "height": 1000, "res": 100},
+                "cases": {},
+            },
+            "cases": {},
+        },
         # gene usage
-        "gu_by": {},
-        "gu_top": 30,
-        # gene usage analysis
-        "gua_methods": ["js", "cor"],
+        "gene_usages": {
+            "top": 30,
+            "norm": False,
+            "by": None,
+            "vis_args": {},
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "analyses": {
+                "method": "cor",
+                "vis_args": {},
+                "devpars": {"width": 1000, "height": 1000, "res": 100},
+                "cases": {},
+            },
+            "cases": {},
+        },
         # Spectratyping
-        "spect": [dict(quant="id", col="nt"), dict(quant="count", col="aa+v")],
+        "spects": {
+            "quant": None,
+            "col": None,
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {
+                "By_Clonotype": dict(quant="id", col="nt"),
+                "By_Num_Clones": dict(quant="count", col="aa+v"),
+            },
+        },
         # Diversity
         "divs": {
             "filter": None,
@@ -420,17 +569,22 @@ class Immunarch(Proc):
         "trackings": {
             "targets": None,  # Do not do trackings by default
             "subject_col": "Sample",
-            "subjects": None,
+            "subjects": [],
             "cases": {},
         },
         # Kmer analysis
         "kmers": {
-            "5": {
-                "head": 10,
-                "position": "stack",
-                "log": False,
-                "motif": "self",
-            }
+            "k": 5,
+            "head": 10,
+            "vis_args": {},
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "profiles": {
+                "method": "self",
+                "vis_args": {},
+                "devpars": {"width": 1000, "height": 1000, "res": 100},
+                "cases": {},
+            },
+            "cases": {},
         },
     }
     script = "file://../scripts/tcr/Immunarch.R"
