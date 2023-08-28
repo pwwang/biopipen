@@ -52,7 +52,7 @@ update_case = function(case) {
     if (is.null(case$test$method)) {
         case$test$method = div_test$method
     }
-    if (!case$test$method %in% c("t.test", "wilcox.test")) {
+    if (!case$test$method %in% c("none", "t.test", "wilcox.test")) {
         stop(paste0(
             "Diversity estimation: Unknown test method: ",
             case$test$method,
@@ -89,7 +89,7 @@ update_case = function(case) {
     if (!is.null(case$args) && length(case$args) > 0) {
         names(case$args) = paste0(".", names(case$args))
     }
-    if (!is.null(case$test) && (is.null(case$by) || length(case$by) == 0)) {
+    if (!is.null(case$test) && case$test != "none" && (is.null(case$by) || length(case$by) == 0)) {
         stop("For diversity estimation, `test` is only supported when `by` is specified")
     }
     # Just ignore them for rarefraction

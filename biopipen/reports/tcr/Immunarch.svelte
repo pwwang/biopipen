@@ -1,225 +1,160 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
     import { Image, DataTable } from "$libs";
-    import { Tabs, Tab, TabContent, Tile, UnorderedList } from "$ccs";
+    import { Tabs, Tab, TabContent, Accordion, AccordionItem } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
 
 <h{{h}}>Exploratory analysis</h{{h}}>
 
-<h{{h+1}}>CDR3 length distribution</h{{h+1}}>
+    <h{{h+1}}>CDR3 length distribution</h{{h+1}}>
 
-<Tabs>
-    <Tab label="By aa" />
-    <Tab label="By nt" />
-    <div slot="content">
-        <TabContent>
-            {% assign lenpngs = job.out.outdir | joinpaths: "len-aa", "len*.png" | glob %}
-            {{ table_of_images(lenpngs) }}
-        </TabContent>
-        <TabContent>
-            {% assign lenpngs = job.out.outdir | joinpaths: "len-nt", "len*.png" | glob %}
-            {{ table_of_images(lenpngs) }}
-        </TabContent>
-    </div>
-</Tabs>
+    {% assign lenpngs = job.out.outdir | glob: "len", "*.png" %}
+    {{ table_of_images(lenpngs) }}
 
+    <h{{h+1}}>Clonotype volume (# clonotypes)</h{{h+1}}>
 
-<h{{h+1}}>Clonotype volume (# clonotypes)</h{{h+1}}>
+    {% assign volpngs = job.out.outdir | glob: "volume", "*.png" %}
+    {{ table_of_images(volpngs) }}
 
-<p>Number of clonotypes in (groups of) samples.
+    <h{{h+1}}>Clonotype abundances</h{{h+1}}>
 
-{% assign volpngs = job.out.outdir | joinpaths: "volume", "volume*.png" | glob %}
-{{ table_of_images(volpngs) }}
-
-
-<h{{h+1}}>Clonotype abundances</h{{h+1}}>
-
-{% assign cntpngs = job.out.outdir | joinpaths: "count", "count*.png" | glob %}
-{{ table_of_images(cntpngs) }}
+    {% assign cntpngs = job.out.outdir | glob: "count", "*.png" %}
+    {{ table_of_images(cntpngs) }}
 
 <h{{h}}>Clonality</h{{h}}>
 
-<h{{h+1}}>
-    Top clones
-</h{{h+1}}>
+    <h{{h+1}}>Top clones</h{{h+1}}>
 
-{% assign tcpngs = job.out.outdir | joinpaths: "top_clones", "top_clones*.png" | glob %}
-{{ table_of_images(tcpngs) }}
+    {% assign tcpngs = job.out.outdir | glob: "top_clones", "*.png" %}
+    {{ table_of_images(tcpngs) }}
 
-<h{{h+1}}>Rare clones</h{{h+1}}>
+    <h{{h+1}}>Rare clones</h{{h+1}}>
 
-{% assign rcpngs = job.out.outdir | joinpaths: "rare_clones", "rare_clones*.png" | glob %}
-{{ table_of_images(rcpngs) }}
+    {% assign rcpngs = job.out.outdir | glob: "rare_clones", "*.png" %}
+    {{ table_of_images(rcpngs) }}
 
-<h{{h+1}}>
-    Clonal space homeostasis
-</h{{h+1}}>
+    <h{{h+1}}>Clonal space homeostasis</h{{h+1}}>
 
-<p>The proportion of the repertoire occupied by the clones of a given size</p>
+    <p>The proportion of the repertoire occupied by the clones of a given size</p>
 
-{% assign hcpngs = job.out.outdir | joinpaths: "homeo_clones", "hom_clones*.png" | glob %}
+    {% assign hcpngs = job.out.outdir | glob: "homeo_clones", "*.png" %}
 {{ table_of_images(hcpngs) }}
 
 <h{{h}}>Repertoire overlaps</h{{h}}>
 
-{% if job.index == 0 %}
-<Tile>
-<p>
-    Repertoire overlap is the most common approach to measure repertoire similarity.
-    It is achieved by computation of specific statistics on clonotypes shared between
-    given repertoires, also called “public” clonotypes.
-    immunarch provides several indices: - number of public clonotypes (.method = "public")
-    - a classic measure of overlap similarity.
-</p>
-<p>
-    - overlap coefficient (.method = "overlap") - a normalised measure of overlap
-    similarity. It is defined as the size of the intersection divided by the smaller of the size of the two sets.
-</p>
-<p>
-    - Jaccard index (.method = "jaccard") - it measures similarity between finite
-    sample sets, and is defined as the size of the intersection divided by the size of the union of the sample sets.
-</p>
-<p>
-    - Tversky index (.method = "tversky") - an asymmetric similarity measure on sets
-    that compares a variant to a prototype. If using default arguments, it’s similar to Dice’s coefficient.
-</p>
-<p>
-    - cosine similarity (.method = "cosine") - a measure of similarity between two non-zero vectors
-</p>
-<p>
-    - Morisita’s overlap index (.method = "morisita") - a statistical measure of dispersion of individuals in a population.
-    It is used to compare overlap among samples.
-</p>
-<p>
-    - incremental overlap - overlaps of the N most abundant clonotypes with incrementally growing N
-    (.method = "inc+METHOD", e.g., "inc+public" or "inc+morisita").
-</p>
-</Tile>
-{% endif %}
+    {% if job.index == 0 %}
+    <Accordion>
+        <AccordionItem title="Overlapping methods">
+            <p>
+                Repertoire overlap is the most common approach to measure repertoire similarity.
+                Immunarch provides several indices:
+            </p>
+            <p>
+                - number of public clonotypes (.method = "public") - a classic measure of overlap similarity.
+            </p>
+            <p>
+                - overlap coefficient (.method = "overlap") - a normalised measure of overlap
+                similarity. It is defined as the size of the intersection divided by the smaller of the size of the two sets.
+            </p>
+            <p>
+                - Jaccard index (.method = "jaccard") - it measures similarity between finite
+                sample sets, and is defined as the size of the intersection divided by the size of the union of the sample sets.
+            </p>
+            <p>
+                - Tversky index (.method = "tversky") - an asymmetric similarity measure on sets
+                that compares a variant to a prototype. If using default arguments, it’s similar to Dice’s coefficient.
+            </p>
+            <p>
+                - cosine similarity (.method = "cosine") - a measure of similarity between two non-zero vectors
+            </p>
+            <p>
+                - Morisita’s overlap index (.method = "morisita") - a statistical measure of dispersion of individuals in a population.
+                It is used to compare overlap among samples.
+            </p>
+            <p>
+                - incremental overlap - overlaps of the N most abundant clonotypes with incrementally growing N
+                (.method = "inc+METHOD", e.g., "inc+public" or "inc+morisita").
+            </p>
+        </AccordionItem>
+    </Accordion>
+    {% endif %}
 
-{% assign ovpngs = job.out.outdir | joinpaths: "overlap", "overlap-*.png" | glob %}
-<Tabs>
-    {% for ovpng in ovpngs %}
-    {%  assign ovmethod = ovpng | stem | replace: "overlap-", "" %}
-    <Tab label="Method: {{ovmethod}}" />
+    {% for ovdir in job.out.outdir | glob: "overlap", "*" | sort %}
+        {% set ovname = ovdir | basename %}
+        <h{{h+1}}>{{ovname}}</h{{h+1}}>
+        {% assign ovpngs = ovdir | glob: "*.png" | sort %}
+        {{ table_of_images(ovpngs) }}
     {% endfor %}
 
-    <div slot="content">
-        {% for ovpng in ovpngs %}
-        {%  assign ovmethod = ovpng | stem | replace: "overlap-", "" %}
-        {%  assign ovredpngs = job.out.outdir | joinpaths: "overlap", "overlapanalysis-"+ ovmethod +"-*.png" | glob %}
-        <TabContent>
-            <Image src={{ovpng | quote}} />
-            {{ table_of_images(ovredpngs) }}
-        </TabContent>
-        {% endfor %}
-    </div>
-</Tabs>
-
-
 <h{{h}}>Gene usage</h{{h}}>
-<h{{h+1}}>
-    Top {{envs.gu_top}} genes
-</h{{h+1}}>
-{% for gupng in job.out.outdir | joinpaths: "gene_usage", "gene_usage*.png" | glob %}
-<Image src={{gupng | quote}} />
-{% endfor %}
-
-<h{{h+1}}>
-    Gene usage analysis
-</h{{h+1}}>
-{% assign guapngs = job.out.outdir | joinpaths: "gene_usage_analysis", "gene_usage_analysis*.png" | glob %}
-{{ table_of_images(guapngs) }}
+    {% for gu_dir in job.out.outdir | glob: "gene_usage", "*" | sort %}
+        {% set gu_name = gu_dir | basename %}
+        {% if gu_name != "DEFAULT" %}
+            <h{{h+1}}>{{gu_name}}</h{{h+1}}>
+        {% endif %}
+        {% assign gupngs = gu_dir | glob: "*.png" | sort %}
+        {{ table_of_images(gupngs) }}
+    {% endfor %}
 
 <h{{h}}>Spectratyping</h{{h}}>
-{% for spect_sam_dir in job.out.outdir | joinpaths: "spectratyping", "*" | glob %}
-<h{{h+1}}>
-    {{ spect_sam_dir | basename }}
-</h{{h+1}}>
-{% assign spectpngs = spect_sam_dir | joinpaths: "spectratyping*.png" | glob %}
-{{ table_of_images(spectpngs) }}
-{% endfor %}
+    {% for spect_sam_dir in job.out.outdir | glob: "spectratyping", "*" | sort %}
+        <h{{h+1}}>{{ spect_sam_dir | basename }}</h{{h+1}}>
+        {% assign spectpngs = spect_sam_dir | glob: "*.png" | sort %}
+        {{ table_of_images(spectpngs) }}
+    {% endfor %}
 
 <h{{h}}>Diversity estimation</h{{h}}>
-{% assign div_met_dirs = job.out.outdir | joinpaths: "diversity", "*" | glob %}
-{% for dm_dir in div_met_dirs %}
-<h{{h+1}}>{{dm_dir | basename}}</h{{h+1}}>
-{% if dm_dir | glob: "diversity.test.*.txt" %}
-{%   assign dm_test_file = dm_dir | glob0: "diversity.test.*.txt" %}
-{%   assign dm_test_method = dm_test_file | stem | replace: "diversity.test.", "" %}
-<Tabs>
-    <Tab label="Plot" />
-    <Tab label="Test: {{dm_test_method}}" />
-    <div slot="content">
-        <TabContent>
+    {% assign div_met_dirs = job.out.outdir | glob: "diversity", "*" | sort %}
+    {% for dm_dir in div_met_dirs %}
+        <h{{h+1}}>{{dm_dir | basename}}</h{{h+1}}>
+        {% if dm_dir | glob: "diversity.test.*.txt" %}
+            {% assign dm_test_file = dm_dir | glob0: "diversity.test.*.txt" %}
+            {% assign dm_test_method = dm_test_file | stem | replace: "diversity.test.", "" %}
+            <Tabs>
+                <Tab label="Plot" />
+                <Tab label="Test: {{dm_test_method}}" />
+                <div slot="content">
+                    <TabContent>
+                        <Image src={{ dm_dir | joinpaths: "diversity.png" | quote }} />
+                    </TabContent>
+                    <TabContent>
+                        <DataTable src={{ dm_test_file | quote }} data={ {{ dm_test_file | datatable: sep="\t" }} } />
+                    </TabContent>
+                </div>
+            </Tabs>
+        {% else %}
             <Image src={{ dm_dir | joinpaths: "diversity.png" | quote }} />
-        </TabContent>
-        <TabContent>
-            <DataTable src={{ dm_test_file | quote }} data={ {{ dm_test_file | datatable: sep="\t" }} } />
-        </TabContent>
-    </div>
-</Tabs>
-{% else %}
-<Image src={{ dm_dir | joinpaths: "diversity.png" | quote }} />
+        {% endif %}
+    {% endfor %}
+
+{% if job.out.outdir | glob: "rarefraction", "*" %}
+<h{{h}}>Rarefaction analysis</h{{h}}>
+    {% assign rfdir = job.out.outdir | glob: "rarefraction", "*" | sort %}
+    {% assign rfname = rfdir | basename %}
+    {% if rfname != "DEFAULT" %}
+        <h{{h+1}}>{{rfname}}</h{{h+1}}>
+    {% endif %}
+    {% assign rfpngs = rfdir | glob: "*.png" | sort %}
+    {{ table_of_images(rfpngs) }}
 {% endif %}
-{% endfor %}
 
-<h{{h+1}}>
-    Rarefaction analysis
-</h{{h+1}}>
-{% assign rfpngs = job.out.outdir | glob: "rarefraction", "*", "raref*.png" %}
-{{ table_of_images(rfpngs) }}
-
+{% if job.out.outdir | glob: "tracking", "*.png" %}
 <h{{h}}>Tracking of clonotypes</h{{h}}>
-{% for name in envs.trackings.cases %}
-<h{{h+1}}>Case: {{name}}</h{{h+1}}>
-<Image src={{ job.out.outdir | joinpaths: "tracking", "tracking_" + name + ".png" | quote }} />
-{% endfor %}
+    {% assign trackpngs = job.out.outdir | glob: "tracking", "*.png" | sort %}
+    {{ table_of_images(trackpngs) }}
+{% endif %}
 
 <h{{h}}>Kmer and sequence motif analysis</h{{h}}>
-{% for kmerdir in job.out.outdir | joinpaths: "kmer", "kmer_*" | glob %}
-{%  assign k = kmerdir | stem | replace: "kmer_", "" | float | int %}
-<h{{h+1}}>K = {{k}}</h{{h+1}}>
-
-{%  for kmerpng in kmerdir | joinpaths: "head_*.png" | glob %}
-        {% assign head = kmerpng | stem0 | replace: "head_", "" | int %}
-        <h{{h+2}}>The most {{head}} abundant kmers</h{{h+2}}>
-        <Image src={{kmerpng | quote}} />
-{%  endfor %}
-
-<h{{h+2}}>Motif analysis</h{{h+2}}>
-
-{% if job.index == 0 %}
-<Tile>
-<p>
-    The method determines which matrix to compute:
-</p>
-<p>
-    - `freq` - position frequency matrix (PFM);
-</p>
-<p>
-    - `prob` - position probability matrix (PPM);
-</p>
-<p>
-    - `wei` - position weight matrix (PWM)
-</p>
-<p>
-    - `self` - self-information matrix.
-</p>
-</Tile>
-{% endif %}
-
-{%  for motdir in kmerdir | joinpaths: "motif_*" | glob %}
-{%      assign motmethod = motdir | stem | replace: "motif_", "" %}
-{%      assign motpngs = motdir | joinpaths: "*.png" | glob %}
-<h{{h+3}}>Method: {{ motmethod }}</h{{h+3}}>
-{{ table_of_images(motpngs) }}
-{%  endfor %}
-
-{% endfor %}
-
+    {% for kmerdir in job.out.outdir | glob: "kmer", "*" | sort %}
+        {% assign kmercase = kmerdir | basename %}
+        {% if kmercase != "DEFAULT" %}
+            <h{{h+1}}>{{kmercase}}</h{{h+1}}>
+        {% endif %}
+        {% assign kmerpngs = kmerdir | glob: "*.png" | sort %}
+        {{ table_of_images(kmerpngs) }}
+    {% endfor %}
 
 {%- endmacro -%}
 
