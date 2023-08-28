@@ -662,7 +662,7 @@ class TopExpressingGenes(Proc):
     }
 
 
-class ExprImpute(Proc):
+class ExprImpution(Proc):
     """Impute the dropout values in scRNA-seq data.
 
     Input:
@@ -730,13 +730,13 @@ class ExprImpute(Proc):
         },
         "alra_args": {},
     }
-    script = "file://../scripts/scrna/ExprImpute.R"
+    script = "file://../scripts/scrna/ExprImpution.R"
 
 
 class SCImpute(Proc):
     """Impute the dropout values in scRNA-seq data.
 
-    Deprecated. Use `ExprImpute` instead.
+    Deprecated. Use `ExprImpution` instead.
 
     Input:
         infile: The input file for imputation

@@ -539,10 +539,10 @@ class ScrnaMetabolicLandscape(ProcGroup):
         if self.opts.noimpute:
             return self.p_mutater
 
-        from .scrna import ExprImpute
+        from .scrna import ExprImpution
 
         @annotate.format_doc(indent=3)
-        class MetabolicExprImpution(ExprImpute):
+        class MetabolicExprImpution(ExprImpution):
             """{{Summary}}
 
             You can turn off the imputation by setting the `noimpute` option
