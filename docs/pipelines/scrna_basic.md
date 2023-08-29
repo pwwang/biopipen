@@ -11,6 +11,10 @@ This pipeline is used to process single-cell RNA-seq data with some basic analys
 
 ## Installing the pipeline and dependencies
 
+!!! Tip
+
+    If you plan to run the pipeline via docker/singularity, you can skip this section and go to [Running the pipeline](#running-the-pipeline), and refer to "Via docker/singularity" or "Via `pipen-board` from the container".
+
 ### Installing the pipeline
 
 The pipeline is available with the biopipen package, so you can install it with `pip`:

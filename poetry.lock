@@ -214,13 +214,13 @@ questionary = ">=1.8.1"
 
 [[package]]
 name = "datar"
-version = "0.12.2"
+version = "0.13.1"
 description = "A Grammar of Data Manipulation in python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar-0.12.2-py3-none-any.whl", hash = "sha256:26a1024bdbd08c9bb69b0d065e417aabcafb33a5cc7c795e156b1b7f12e5ef47"},
-    {file = "datar-0.12.2.tar.gz", hash = "sha256:bc8fe40936a3604afe9e6a8766db6c24d726a34c9ac4701aab0694c0fc50a475"},
+    {file = "datar-0.13.1-py3-none-any.whl", hash = "sha256:c873b97246ac251200d46be097eb390ae0a9d737afb07c821f0455a6a43f33b4"},
+    {file = "datar-0.13.1.tar.gz", hash = "sha256:323f89b36590c76968fcc3752272e0b90a42d26bbed7c949847c1c815b7f5097"},
 ]
 
 [package.dependencies]
@@ -236,32 +236,32 @@ pandas = ["datar-pandas (>=0.3,<0.4)"]
 
 [[package]]
 name = "datar-numpy"
-version = "0.2.0"
+version = "0.2.1"
 description = "The numpy backend for datar"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar_numpy-0.2.0-py3-none-any.whl", hash = "sha256:2369f3d8419e7ffbbe950ad6b459a3f75ae6571155fab09f63874d49e96bab6b"},
-    {file = "datar_numpy-0.2.0.tar.gz", hash = "sha256:a0e119f3ec208ba45100e31b22a8dc1d0a926a42f144bb5b2b859e2897d2e320"},
+    {file = "datar_numpy-0.2.1-py3-none-any.whl", hash = "sha256:f9a85e514c612d6c400514f75242648d17c340aff188d8b8cf94d0a0de157bab"},
+    {file = "datar_numpy-0.2.1.tar.gz", hash = "sha256:49d835f6fdbd856cd7ea00d2829da664b2138be40892d72be464d0df79b5252a"},
 ]
 
 [package.dependencies]
-datar = ">=0.12,<0.13"
+datar = ">=0.13,<0.14"
 numpy = ">=1.20,<2.0"
 
 [[package]]
 name = "datar-pandas"
-version = "0.3.0"
+version = "0.3.1"
 description = "The pandas backend for datar"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar_pandas-0.3.0-py3-none-any.whl", hash = "sha256:738190a54c816dd3fa1529d0f48a601b134edc52a3e1d11ce6d3d0bcec91c2a7"},
-    {file = "datar_pandas-0.3.0.tar.gz", hash = "sha256:97803e124f0e3ac2f6b65ddd087859fabb47e5d510fc1f4d3772a882853dbea9"},
+    {file = "datar_pandas-0.3.1-py3-none-any.whl", hash = "sha256:ccd5db148b2d5a5d76aa408ea8b2b33b6bb4b4cc0a47d84062de980ef42a91f2"},
+    {file = "datar_pandas-0.3.1.tar.gz", hash = "sha256:2d683cca9eb1991fe19e0669b41242dfed66e0d65d183e3c76a0014376e1a051"},
 ]
 
 [package.dependencies]
-datar = ">=0.12,<0.13"
+datar = ">=0.13,<0.14"
 datar-numpy = ">=0.2,<0.3"
 pdtypes = ">=0.0.4,<0.0.5"
 
@@ -881,13 +881,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.9.3"
+version = "0.10.0"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.9.3-py3-none-any.whl", hash = "sha256:adc182503118335c4e5faa2aada535c17151c1a8d6b74c3b90e7d1f31a603e6d"},
-    {file = "pipen_board-0.9.3.tar.gz", hash = "sha256:da01b8d05cddeea7c5c5fea2f4518541226b3e9beb2da210c6d922eb66dc5b13"},
+    {file = "pipen_board-0.10.0-py3-none-any.whl", hash = "sha256:c85717b47921ecbf81802596bbf21748f3196f1b964157128adb09a28674afb2"},
+    {file = "pipen_board-0.10.0.tar.gz", hash = "sha256:e72d7807d619d86cbd6ed134e540e9da4dad569ad944777afba5c70073d55245"},
 ]
 
 [package.dependencies]
@@ -1624,4 +1624,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "50d0037c73314b78e047ee42e27583a76299c68d1534d6d6779ea56625e6b9a6"
+content-hash = "0184992adb4ab47eafc90ba8cb36d74654c5abaa7285e9df976376f1567fcf74"
