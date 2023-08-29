@@ -3,12 +3,11 @@ library(dplyr)
 library(hitype)
 
 source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/scripts/scrna/sctype.R")
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
-tissue = {{envs.sctype_tissue | r}}
-db = {{envs.sctype_db | r}}
+tissue = {{envs.hitype_tissue | r}}
+db = {{envs.hitype_db | r}}
 
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
 
