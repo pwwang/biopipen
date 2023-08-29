@@ -16,7 +16,7 @@ sobj = readRDS(sobjfile)
 
 # prepare gene sets
 print("- Preparing gene sets...")
-if (startsWith("hitypedb_", db)) {
+if (startsWith(db, "hitypedb_")) {
     gs_list = gs_prepare(eval(as.symbol(db)), tissue)
 } else {
     gs_list = gs_prepare(db, tissue)
