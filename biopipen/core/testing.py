@@ -1,5 +1,4 @@
 """Provide utilities for testing."""
-import sys
 import tempfile
 from pathlib import Path
 

@@ -32,7 +32,7 @@ sambamba = "sambamba"
 # samtools
 samtools = "samtools"
 # python path where magic-impute is installed
-# for scrna.ExprImpute
+# for scrna.ExprImpution
 magic_python = "python"
 # truvari
 truvari = "truvari"

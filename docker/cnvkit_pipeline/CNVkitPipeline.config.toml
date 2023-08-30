@@ -1,0 +1,9 @@
+[plugin_opts]
+diagram_theme = "fancy"
+report_no_collapse_pgs = true
+
+[CNVkitPipeline]
+annotate = "example-data/refFlat.txt"
+guessbaits = true
+metafile = "example-data/metadata.txt"
+reffa = "example-data/genome.fasta"

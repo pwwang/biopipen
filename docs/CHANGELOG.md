@@ -1,3 +1,26 @@
+## 0.16.0
+
+- ⬆️ Bump pipen-board to 0.10
+- 💄 [docs] Update docs styles
+- 🚨 [core/testing] Remove unused importings
+- 🎨 [scrna] Rename RNADir to RNAData for input data
+- 🐛 [gsea.GSEA] Replace `doc.string` with `doc_string` to avoid over parsing by pipen-args
+- 🎨 [tcr.Immunarch] Refactor and split into modules
+- 🎨 [scrna.CellTypeAnnotation] Rename CellTypeAnnotate to CellTypeAnnotation and add hitype
+- 🎨 [tcr.ImmunarchLoading] Make it compatible with immunarch 0.9
+- 🎨 [scrna.MakersFinder] Support multiple cases
+- 🎨 [scrna.TopExpressionGenes] Support multiple cases
+- 🐛 [scrna.RadarPlots] Fix section and devpars not passed to script
+- 🐛 [scrna.SeuratClustering] Fix PCA on each sample
+- 🎨 [scrna.ExprImpution] Rename from ExprImpute to ExprImputation
+- 👷 [scrna.CellTypeAnnotation] Add r-hitype to env_r.yml for testing
+- 🐛 [scrna.CellTypeAnnotation] Fix typos for hitype script
+- 🐛 [scrna.CellTypeAnnotation] Fix startsWith in hitype script
+- 🎨 [scrna_basic] Rename `ScrnaBasicAnnotate` to `ScrnaBasicAnnotation`
+- 📝 [scrna_basic] Update docs
+- 🐛 [cnvkit_pipeline] Fix docker image building
+- 📝 [cnvkit_pipeline] Fix docs
+
 ## 0.15.2
 
 - ⬆️ Bump pipen-board to 0.9.1

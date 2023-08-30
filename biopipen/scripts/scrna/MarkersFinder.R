@@ -12,142 +12,248 @@ library(tidyseurat)
 
 setEnrichrSite("Enrichr")
 
-srtobjfile = {{in.srtobj | quote}}
-outdir = {{out.outdir | quote}}
-{% if in.casefile %}
-cases = {{in.casefile | toml_load | r: todot="-"}}
-{% else %}
-cases = {{envs | r: todot="-"}}
-{% endif %}
-dbs = {{envs.dbs | r}}
-ncores = {{envs.ncores | r}}
-sigmarkers = {{envs.sigmarkers | r}}
+srtfile <- {{ in.srtobj | quote }}
+outdir <- {{ out.outdir | quote }}
+ncores <- {{ envs.ncores | int }}
+mutaters <- {{ envs.mutaters | r }}
+ident.1 <- {{ envs["ident-1"] | r }}
+ident.2 <- {{ envs["ident-2"] | r }}
+group.by <- {{ envs["group-by"] | r }}
+each <- {{ envs.each | r }}
+prefix_each <- {{ envs.prefix_each | r }}
+section <- {{ envs.section | r }}
+dbs <- {{ envs.dbs | r }}
+sigmarkers <- {{ envs.sigmarkers | r }}
+rest <- {{ envs.rest | r: todot="-" }}
+cases <- {{ envs.cases | r: todot="-" }}
 
 set.seed(8525)
-options(future.globals.maxSize = 80000 * 1024^2)
-plan(strategy = "multicore", workers = ncores)
-
-if (length(cases) == 0) {
-    stop("No `envs.cases` or `in.casefile` provided.")
+if (ncores > 1) {
+    options(future.globals.maxSize = 80000 * 1024^2)
+    plan(strategy = "multicore", workers = ncores)
 }
 
-seurat_obj = readRDS(srtobjfile)
+print("- Reading Seurat object ...")
+srtobj <- readRDS(srtfile)
 
-do_enrich = function(case, markers, sig) {
+print("- Mutate meta data if needed ...")
+if (!is.null(mutaters) && length(mutaters)) {
+    srtobj@meta.data <- srtobj@meta.data %>%
+        mutate(!!!lapply(mutaters, parse_expr))
+}
+
+print("- Expanding cases ...")
+if (is.null(cases) || length(cases) == 0) {
+    cases <- list(
+        Cluster = list(
+            ident.1 = ident.1,
+            ident.2 = ident.2,
+            group.by = group.by,
+            each = each,
+            prefix_each = prefix_each,
+            section = section,
+            dbs = dbs,
+            sigmarkers = sigmarkers,
+            rest = rest
+        )
+    )
+} else {
+    for (case in names(cases)) {
+        if (is.null(cases[[case]]$ident.1)) cases[[case]]$ident.1 <- ident.1
+        if (is.null(cases[[case]]$ident.2)) cases[[case]]$ident.2 <- ident.2
+        if (is.null(cases[[case]]$group.by)) cases[[case]]$group.by <- group.by
+        if (is.null(cases[[case]]$each)) cases[[case]]$each <- each
+        if (is.null(cases[[case]]$prefix_each)) cases[[case]]$prefix_each <- prefix_each
+        if (is.null(cases[[case]]$section)) cases[[case]]$section <- section
+        if (is.null(cases[[case]]$dbs)) cases[[case]]$dbs <- dbs
+        if (is.null(cases[[case]]$sigmarkers)) {
+            cases[[case]]$sigmarkers <- sigmarkers
+        }
+        if (is.null(cases[[case]]$rest)) cases[[case]]$rest <- rest
+        for (key in names(cases[[case]]$rest)) {
+            if (is.null(cases[[case]]$rest[[key]])) {
+                cases[[case]]$rest[[key]] <- rest[[key]]
+            }
+        }
+    }
+}
+# Expand each and with ident.1
+#  list(Cluster0 = list(each = "Sample", group.by = "seurat_clusters", ident.1 = "0"))
+# to
+#  list(
+#   `Sample-Sample1:Cluster0` = list(...),
+#   `Sample-Sample2:Cluster0` = list(...),
+#   ...
+#  )
+# Expand each and without ident.1
+#  list(Cluster = list(each = "Sample", group.by = "seurat_clusters"))
+# to
+#  list(
+#   `Sample-Sample1-Cluster:0` = list(...),
+#   `Sample-Sample1-Cluster:1` = list(...),
+#   ...
+#   `Sample2-Cluster:0` = list(...),
+#   `Sample2-Cluster:1` = list(...),
+#   ...
+#  )
+# If no each, and not ident.1
+#  list(Cluster = list(group.by = "seurat_clusters"))
+# to
+#  list(
+#   `Cluster:0` = list(...),
+#   `Cluster:1` = list(...),
+#   ...
+#  )
+# Otherwise if section is specified, the case name will be changed to `section:case`
+
+newcases <- list()
+for (name in names(cases)) {
+    case <- cases[[name]]
+    if (is.null(case$each) && !is.null(case$ident.1)) {
+        newcases[[paste0(case$section, ":", name)]] <- case
+    } else if (is.null(case$each)) {
+        # is.null(case$ident.1)
+        idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
+        for (ident in idents) {
+            newcases[[paste0(name, ":", ident)]] <- case
+            newcases[[paste0(name, ":", ident)]]$ident.1 <- ident
+        }
+    } else {
+        eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
+        for (each in eachs) {
+            by = paste0(".", name, "_", each)
+            srtobj@meta.data = srtobj@meta.data %>% mutate(
+                !!sym(by) := if_else(
+                    !!sym(case$each) == each,
+                    !!sym(case$group.by),
+                    NA_character_
+                )
+            )
+            case$group.by = by
+            if (is.null(case$ident.1)) {
+                idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
+                for (ident in idents) {
+                    key = if (case$prefix_each) {
+                        paste0(case$each, "-", each, "-", name, ":", ident)
+                    } else {
+                        paste0(each, "-", name, ":", ident)
+                    }
+                    newcases[[key]] <- case
+                    newcases[[key]]$ident.1 = ident
+                }
+            } else {
+                key = if (case$prefix_each) {
+                    paste0(case$each, "-", each, ":", name)
+                } else {
+                    paste0(each, ":", name)
+                }
+                newcase[[key]] <- case
+            }
+        }
+    }
+}
+cases <- newcases
+
+
+# Do enrichment analysis for a case using Enrichr
+# Args:
+#   case: case name
+#   markers: markers dataframe
+#   sig: The expression to filter significant markers
+do_enrich <- function(case, markers, sig) {
     print(paste("  Running enrichment for case:", case))
-    casedir = file.path(outdir, case)
+    casedir <- file.path(outdir, case)
     dir.create(casedir, showWarnings = FALSE)
     if (nrow(markers) == 0) {
         print(paste("  No markers found for case:", case))
-        cat("No markers found.", file=file.path(casedir, "error.txt"))
+        cat("No markers found.", file = file.path(casedir, "error.txt"))
         return()
     }
-    markers_sig = markers %>% filter(!!parse_expr(sig))
+    markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
         print(paste("  No significant markers found for case:", case))
-        cat("No significant markers.", file=file.path(casedir, "error.txt"))
+        cat("No significant markers.", file = file.path(casedir, "error.txt"))
         return()
     }
     write.table(
         markers_sig,
         file.path(casedir, "markers.txt"),
-        sep="\t",
-        row.names=FALSE,
-        col.names=TRUE,
-        quote=FALSE
+        sep = "\t",
+        row.names = FALSE,
+        col.names = TRUE,
+        quote = FALSE
     )
     if (nrow(markers_sig) < 5) {
         for (db in dbs) {
             write.table(
                 data.frame(Warning = "Not enough significant markers."),
                 file.path(casedir, paste0("Enrichr-", db, ".txt")),
-                sep="\t",
-                row.names=FALSE,
-                col.names=TRUE,
-                quote=FALSE
+                sep = "\t",
+                row.names = FALSE,
+                col.names = TRUE,
+                quote = FALSE
             )
             png(
                 file.path(casedir, paste0("Enrichr-", db, ".png")),
-                res=100, height=200, width=1000
+                res = 100, height = 200, width = 1000
             )
             print(
                 ggplot() +
-                annotate("text", x=1, y=1, label="Not enough significant markers.") +
-                theme_classic()
+                    annotate(
+                        "text",
+                        x = 1,
+                        y = 1,
+                        label = "Not enough significant markers."
+                    ) +
+                    theme_classic()
             )
             dev.off()
         }
     } else {
-        enriched = enrichr(markers_sig$gene, dbs)
+        enriched <- enrichr(markers_sig$gene, dbs)
         for (db in dbs) {
             write.table(
                 enriched[[db]],
                 file.path(casedir, paste0("Enrichr-", db, ".txt")),
-                sep="\t",
-                row.names=FALSE,
-                col.names=TRUE,
-                quote=FALSE
+                sep = "\t",
+                row.names = FALSE,
+                col.names = TRUE,
+                quote = FALSE
             )
             png(
                 file.path(casedir, paste0("Enrichr-", db, ".png")),
-                res=100, height=1000, width=1000
+                res = 100, height = 1000, width = 1000
             )
-            print(plotEnrich(enriched[[db]], showTerms = 20, title=db))
+            print(plotEnrich(enriched[[db]], showTerms = 20, title = db))
             dev.off()
         }
     }
 }
 
-mutate_meta = function(obj, mutaters) {
-    meta = obj@meta.data
-    if (!is.null(mutaters)) {
-        expr = list()
-        for (key in names(mutaters)) {
-            expr[[key]] = parse_expr(mutaters[[key]])
-        }
-        obj@meta.data = meta %>% mutate(!!!expr)
-    }
-    return(obj)
-}
 
-do_case = function(case) {
-    cat(paste("- Dealing with case:", case, "...\n"))
-    casepms = cases$cases[[case]]
-    smarkers = if (is.null(casepms$sigmarkers)) sigmarkers else casepms$sigmarkers
-    obj = seurat_obj
-    if (!is.null(casepms$filter)) {
-        obj = obj %>% filter(eval(parse(text=casepms$filter)))
-    }
-    obj = mutate_meta(obj, casepms$mutaters)
-    casepms$mutaters = NULL
-    if (!is.null(casepms$filter2)) {
-        obj = obj %>% filter(eval(parse(text=casepms$filter2)))
-    }
-    if (!is.null(casepms$each)) {
-        eachs = unique(obj@meta.data[[casepms$each]])
-        for (each in eachs) {
-            print(paste("  Dealing with unit:", each, "..."))
-            eachobj = obj %>% filter(!!parse_expr(casepms$each) == each)
-            casepms$object = eachobj
-            markers = do_call(FindMarkers, casepms) %>% rownames_to_column("gene")
-            do_enrich(paste0(case, " (", each, ")"), markers, smarkers)
-        }
+do_case <- function(casename) {
+    cat(paste("- Dealing with case:", casename, "...\n"))
+    case <- cases[[casename]]
+    # ident1
+    # ident2
+    # groupby
+    # each  # expanded
+    # prefix_each
+    # dbs
+    # sigmarkers
+    # rest
+    args <- case$rest
+    args$group.by = case$group.by
+    args$ident.1 = case$ident.1
+    args$ident2. = case$ident.2
+    idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique()
+    if (anyNA(idents)) {
+        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
     } else {
-        if (is.null(casepms$ident.1) && is.null(casepms$ident.2)) {
-            Idents(obj) = casepms$group.by
-            casepms$group.by = NULL
-            casepms$object = obj
-            allmarkers = do_call(FindAllMarkers, casepms)
-            # Is it always cluster?
-            for (group in sort(unique(allmarkers$cluster))) {
-                do_enrich(paste(case, group, sep="_"), allmarkers %>% filter(cluster == group), smarkers)
-            }
-        } else {
-            casepms$object = obj
-            markers = do_call(FindMarkers, casepms) %>% rownames_to_column("gene")
-            do_enrich(case, markers, smarkers)
-        }
+        args$object <- srtobj
     }
+    markers <- do_call(FindMarkers, args) %>% rownames_to_column("gene")
+    do_enrich(casename, markers, case$sigmarkers)
 }
 
-sapply(names(cases$cases), do_case)
+sapply(names(cases), do_case)

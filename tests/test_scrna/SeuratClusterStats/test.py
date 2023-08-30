@@ -1,11 +1,9 @@
-from pathlib import Path
-
 from pipen import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
     SeuratClustering,
     SeuratClusterStats,
-    CellTypeAnnotate,
+    CellTypeAnnotation,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -38,18 +36,17 @@ class SeuratClustering(SeuratClustering):
     }
 
 
-class CellTypeAnnotate(CellTypeAnnotate):
+class CellTypeAnnotation(CellTypeAnnotation):
     requires = SeuratClustering
     envs = {
-        "sctype_tissue": "Immune system",
-        "sctype_db": Path(__file__).parent.parent.parent.joinpath(
-            "data", "reference", "ScTypeDB_full.xlsx"
-        )
+        "tool": "hitype",
+        "hitype_tissue": None,
+        "hitype_db": "hitypedb_pbmc3k",
     }
 
 
 class SeuratClusterStats(SeuratClusterStats):
-    requires = CellTypeAnnotate
+    requires = CellTypeAnnotation
     envs = {
         "exprs": {
             "ridgeplots.1": {

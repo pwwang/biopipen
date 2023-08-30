@@ -44,17 +44,3 @@ metafile=$WORKDIR/metadata.txt
 echo -e "Sample\tBam\tGuessBaits" > $metafile
 echo -e "Test\t$WORKDIR/test.paired_end.sorted.bam\t1" >> $metafile
 echo -e "Test2\t$WORKDIR/test2.paired_end.sorted.bam\t1" >> $metafile
-
-echo "+----------------------------------------+"
-echo "| Preparing the data for pipen-board     |"
-echo "+----------------------------------------+"
-echo ""
-# Only works in the docker container
-if [ -d /biopipen ]; then
-    # L3dvcmtkaXIvLnBpcGVu is the base64 encoded string of "/workdir/.pipen"
-    cp /biopipen/docker/cnvkit_pipeline/example.json \
-        /biopipen/.pipen-board/biopipen-ns-cnvkit-pipeline-cnvkitpipeline.Example.L3dvcmtkaXIvLnBpcGVu.json
-else
-    mkdir -p ~/.pipen-board
-    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/cnvkit_pipeline/example.json -O ~/.pipen-board/biopipen-ns-cnvkit-pipeline-cnvkitpipeline.Example.L3dvcmtkaXIvLnBpcGVu.json
-fi

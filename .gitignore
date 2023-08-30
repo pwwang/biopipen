@@ -95,7 +95,7 @@ node_modules/
 _book/
 .vscode
 export/
-*.svg
+# *.svg
 *.dot
 *.queue.txt
 site/
@@ -122,5 +122,5 @@ watch.sh
 t.py
 t.ipynb
 local_tests/
-*.config.toml
+/*.config.toml
 t.R

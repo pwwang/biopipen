@@ -71,7 +71,7 @@ run_tracking_case = function(casename) {
             imm_tracking = trackClonotypes(newdata, targets, .col = "aa")
         }
 
-        tracking_png = file.path(tracking_dir, paste0("tracking_", casename, ".png"))
+        tracking_png = file.path(tracking_dir, paste0(casename, ".png"))
         png(tracking_png, res=100, height=1000, width=600 + 150 * length(subjects))
         print(vis(imm_tracking))
         dev.off()

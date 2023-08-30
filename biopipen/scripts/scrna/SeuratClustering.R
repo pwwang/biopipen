@@ -69,8 +69,15 @@ obj_list = do_call(PrepSCTIntegration, envs$PrepSCTIntegration)
 print("- Running PCA on each sample ...")
 obj_list = lapply(X = obj_list, FUN = function(x) {
     print(paste("  On sample:", x@meta.data$Sample[1], "..."))
-    npcs = min(50, ncol(x) - 1)
-    RunPCA(x, features = features, verbose = FALSE, npcs = npcs)
+    npcs = if (is.null(envs$RunPCA1$npcs)) 50 else envs$RunPCA1$npcs
+    args = list_setdefault(
+        envs$RunPCA1,
+        object = x,
+        features = features,
+        verbose = FALSE,
+        npcs = min(npcs, ncol(x) - 1)
+    )
+    do_call(RunPCA, args)
 })
 
 print("- Running FindIntegrationAnchors ...")
@@ -129,11 +136,18 @@ features = do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
 print("- Running ScaleData + RunPCA on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {
     print(paste("  On sample:", x@meta.data$Sample[1], "..."))
-    args = list_setdefault(envs$ScaleData, object = x, features = features)
+    args = list_setdefault(envs$ScaleData1, object = x, features = features)
     x <- do_call(ScaleData, args)
 
-    npcs = min(50, ncol(x) - 1)
-    RunPCA(x, features = features, verbose = FALSE, npcs = npcs)
+    npcs = if (is.null(envs$RunPCA1$npcs)) 50 else envs$RunPCA1$npcs
+    args = list_setdefault(
+        envs$RunPCA1,
+        object = x,
+        features = features,
+        verbose = FALSE,
+        npcs = min(npcs, ncol(x) - 1)
+    )
+    do_call(RunPCA, args)
 })
 
 print("- Running FindIntegrationAnchors ...")

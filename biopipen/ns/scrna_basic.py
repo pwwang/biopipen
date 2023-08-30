@@ -28,8 +28,8 @@ class ScrnaBasic(ProcGroup):
             or a seurat object has been saved as RDS file (with extension
             `.rds` or `.RDS`), which QC is assumed to be done.
             As for the tab-delimited file, it should have two columns:
-            `Sample` and `RNADir`. `Sample` should be the first column with
-            unique identifiers for the samples and `RNADir` indicates where the
+            `Sample` and `RNAData`. `Sample` should be the first column with
+            unique identifiers for the samples and `RNAData` indicates where the
             barcodes, genes, expression matrices are.
         is_seurat (flag): Whether the input file is a seurat object
             in RDS format.
@@ -83,7 +83,6 @@ class ScrnaBasic(ProcGroup):
                 input_data = [self.opts.infile]
 
         return ScrnaBasicInput
-
 
     @ProcGroup.add_proc
     def p_prepare(self) -> Type[Proc]:
@@ -160,26 +159,26 @@ class ScrnaBasic(ProcGroup):
         return ScrnaBasicUnsupervised
 
     @ProcGroup.add_proc
-    def p_unsupervised_annotate(self) -> Type[Proc]:
+    def p_unsupervised_anno(self) -> Type[Proc]:
         if not self.p_unsupervised and not from_pipen_board():
             return None
 
-        from .scrna import CellTypeAnnotate
+        from .scrna import CellTypeAnnotation
 
-        class ScrnaBasicAnnotate(CellTypeAnnotate):
+        class ScrnaBasicAnnotation(CellTypeAnnotation):
             requires = self.p_unsupervised
 
-        return ScrnaBasicAnnotate
+        return ScrnaBasicAnnotation
 
     @ProcGroup.add_proc
     def p_unsupervised_stats(self) -> Type[Proc]:
-        if not self.p_unsupervised_annotate and not from_pipen_board():
+        if not self.p_unsupervised_anno and not from_pipen_board():
             return None
 
         from .scrna import SeuratClusterStats
 
         class ScrnaBasicUnsupervisedStats(SeuratClusterStats):
-            requires = self.p_unsupervised_annotate
+            requires = self.p_unsupervised_anno
 
         return ScrnaBasicUnsupervisedStats
 
@@ -189,7 +188,7 @@ class ScrnaBasic(ProcGroup):
             return self.p_supervised
 
         if self.opts.clustering == "unsupervised" and not from_pipen_board():
-            return self.p_unsupervised_annotate
+            return self.p_unsupervised_anno
 
         @mark(board_config_hidden=True)
         class ScrnaBasicMerge(Proc):
@@ -204,7 +203,7 @@ class ScrnaBasic(ProcGroup):
             **Only available when the group argument `clustering` is set to
             `both`.**
             """
-            requires = [self.p_supervised, self.p_unsupervised_annotate]
+            requires = [self.p_supervised, self.p_unsupervised_anno]
             lang = self.p_supervised.lang
             input = "sobjfile:file, uobjfile:file"
             output = "outfile:file:{{in.sobjfile | stem}}.rds"
