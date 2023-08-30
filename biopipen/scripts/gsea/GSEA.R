@@ -29,6 +29,7 @@ envs$clscol <- NULL
 if (!is.null(config$doc_string)) {
     envs$doc.string = config$doc_string
 }
+envs$doc_string <- NULL
 
 if (is.character(inopts) && inopts == "rds") {
     indata = readRDS(infile)
