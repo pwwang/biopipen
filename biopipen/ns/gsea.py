@@ -30,7 +30,7 @@ class GSEA(Proc):
             If `rds` will use `readRDS()`
         metaopts: The options for `read.table()` to read the meta file
         clscol: The column of the metafile determining the classes
-        doc.string: Documentation string used as a prefix to name result files
+        doc_string: Documentation string used as a prefix to name result files
             Other configs passed to `GSEA()` directly
 
     Requires:
@@ -45,7 +45,7 @@ class GSEA(Proc):
         "inopts": {"header": True, "row.names": -1},
         "metaopts": {"header": True, "row.names": -1},
         "clscol": None,
-        "doc.string": "gsea_result",
+        "doc_string": "gsea_result",
     }
     script = "file://../scripts/gsea/GSEA.R"
     plugin_opts = {"report": "file://../reports/gsea/GSEA.svelte"}

@@ -26,8 +26,8 @@ envs$inopts <- NULL
 metaopts <- envs$metaopts
 envs$metaopts <- NULL
 envs$clscol <- NULL
-if (!is.null(config$doc.string)) {
-    envs$doc.string = config$doc.string
+if (!is.null(config$doc_string)) {
+    envs$doc.string = config$doc_string
 }
 
 if (is.character(inopts) && inopts == "rds") {
