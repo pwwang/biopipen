@@ -31,7 +31,7 @@ sccatch_args$object = obj
 obj = do_call(findmarkergene, sccatch_args)
 write.table(
     obj@celltype,
-    file = outfile,
+    file = file.path(dirname(outfile), "cluster2celltype.tsv"),
     sep = "\t",
     quote = FALSE,
     row.names = FALSE)
