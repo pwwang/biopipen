@@ -121,7 +121,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # and set it as the working directory
         -v .:/workdir -w /workdir \
         biopipen/scrna_basic:master \
-        pipen run scrna_basic @ScrnaBasic.config.toml
+        pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
     ```
 
     or using singularity:
@@ -132,8 +132,8 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # Map current directory to /workdir in the container,
         # and set it as the working directory
         --pwd /workdir -B .:/workdir \
-        docker://biopipen/scrna_basic:master \
-        pipen run scrna_basic @ScrnaBasic.config.toml
+        docker://biopipen/scrna-basic:master \
+        pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
     ```
 
 - Via `pipen-board` from the container:
@@ -159,7 +159,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # Map current directory to /workdir in the container,
         # and set it as the working directory
         --pwd /workdir -B .:/workdir \
-        docker://biopipen/scrna_basic:master \
+        docker://biopipen/scrna-basic:master \
         pipen board biopipen.ns.scrna_basic:ScrnaBasic \
             -a /biopipen/board.toml \
             -s ./.pipen-board
@@ -269,7 +269,7 @@ docker run \
     --rm \
     -v .:/workdir -w /workdir \
     biopipen/scrna_basic:master \
-    pipen run scrna_basic @ScrnaBasic.config.toml
+    pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
 ```
 
 or using singularity:
@@ -278,8 +278,8 @@ or using singularity:
 singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
-    docker://biopipen/scrna_basic:master \
-    pipen run scrna_basic @ScrnaBasic.config.toml
+    docker://biopipen/scrna-basic:master \
+    pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
 ```
 
 You can also run the pipeline via `pipen-board` from the container, and run it inside the container:
@@ -300,7 +300,7 @@ or using singularity:
 singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
-    docker://biopipen/scrna_basic:master \
+    docker://biopipen/scrna-basic:master \
     pipen board biopipen.ns.scrna_basic:ScrnaBasic \
         -a /biopipen/board.toml \
         -s ./.pipen-board
