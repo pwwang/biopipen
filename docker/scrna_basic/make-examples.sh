@@ -85,19 +85,6 @@ echo "| Generating the sample file             |"
 echo "+----------------------------------------+"
 echo ""
 sample_file="$WORKDIR/example.txt"
-echo -e "Sample\tRNADir" > $sample_file
+echo -e "Sample\tRNAData" > $sample_file
 echo -e "CTRL\t$WORKDIR/data/CTRL" >> $sample_file
 echo -e "STIM\t$WORKDIR/data/STIM" >> $sample_file
-
-echo "+----------------------------------------+"
-echo "| Preparing the data for pipen-board     |"
-echo "+----------------------------------------+"
-echo ""
-if [ -d /biopipen ]; then
-    # Only works in the docker container
-    # L3dvcmtkaXIvLnBpcGVu is the base64 encoded string of "/workdir/.pipen"
-    cp /biopipen/docker/scrna_basic/example.json /biopipen/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.L3dvcmtkaXIvLnBpcGVu.json
-else
-    mkdir -p ~/.pipen-board
-    wget https://raw.githubusercontent.com/pwwang/biopipen/master/docker/scrna_basic/example.json -O ~/.pipen-board/biopipen-ns-scrna-basic-scrnabasic.Example.L3dvcmtkaXIvLnBpcGVu.json
-fi

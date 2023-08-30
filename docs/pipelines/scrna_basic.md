@@ -9,41 +9,68 @@ This pipeline is used to process single-cell RNA-seq data with some basic analys
 - Marker gene identification
 - Gene set enrichment analysis
 
+You may also want to check the processes included in this pipeline in the [processes](#processes) section.
+
 ## Installing the pipeline and dependencies
 
 !!! Tip
 
-    If you plan to run the pipeline via docker/singularity, you can skip this section and go to [Running the pipeline](#running-the-pipeline), and refer to "Via docker/singularity" or "Via `pipen-board` from the container".
+    If you plan to run the pipeline via `docker`/`singularity`, you can skip this section and go to [Running the pipeline](#running-the-pipeline), and refer to "Via docker/singularity" or "Via `pipen-board` from the container".
 
-### Installing the pipeline
+### Using `conda`/`mamba`
 
-The pipeline is available with the biopipen package, so you can install it with `pip`:
+The pipeline and the dependencies can be installed one by one [manually](#manually). However, we recommend you use `conda`/`mamba` to use the compiled packages, solve potential conflicts, and to separate the dependencies from your system.
+
+- Installing the dependencies
+
+    A set tools and packages are required to run the pipeline. They are listed in <https://github.com/pwwang/biopipen/blob/master/docker/scrna_basic/env.yml>. You can install them with `conda`:
+
+    ```bash
+    conda env create -n scrna-basic -f env.yml
+    ```
+
+    But we recommend you use [`mamba`](https://anaconda.org/conda-forge/mamba) instead of `conda` to speed up the installation and solve potential conflicts:
+
+    ```bash
+    mamba env create -n scrna-basic -f env.yml
+    ```
+
+    !!! Remember
+        If the dependencies are installed using `conda`/`mamba`, you need to activate the environment before running the pipeline:
+
+        ```bash
+        conda activate scrna-basic
+        ```
+
+- Installing the pipeline itself
+
+    When the environment is activated, you can install the pipeline with `pip`:
+
+    ```bash
+    pip install -U biopipen
+    ```
+
+    You may also need to install the frontend dependencies for report generation:
+
+    ```bash
+    pipen report update
+    ```
+
+### Manually
+
+Again, we recommend you use `conda`/`mamba` to install the dependencies. To install the pipeline itself:
 
 ```bash
-pip install biopipen
+pip install -U biopipen
 ```
 
-### Installing the dependencies
-
-Other tools and packages are required to run the pipeline. They are listed in `https://github.com/pwwang/biopipen/blob/master/docker/scrna_basic/env.yml`. You can install them with `conda`:
+You may also need to install the frontend dependencies for report generation:
 
 ```bash
-conda env create -n scrna-basic -f env.yml
+pipen report update
 ```
 
-But we recommend you use `mamba` instead of `conda` to speed up the installation and solve potential conflicts:
-
-```bash
-mamba env create -n scrna-basic -f env.yml
-```
-
-Note that if you are using `conda`, you need to activate the environment before running the pipeline:
-
-```bash
-conda activate scrna-basic
-```
-
-And if you are running the pipeline under the environment, you need install `biopipen` in the environment as well.
+To install the dependencies manually, you can check the environment file <https://github.com/pwwang/biopipen/blob/master/docker/scrna_basic/env.yml> and install them one by one.
 
 ## Running the pipeline
 
@@ -90,10 +117,11 @@ The pipeline can be run directly with `pipen` from the command line or via the `
     ```shell
     docker run \
         --rm \
-        # Map current directory to /workdir in the container, and set it as the working directory
+        # Map current directory to /workdir in the container,
+        # and set it as the working directory
         -v .:/workdir -w /workdir \
         biopipen/scrna_basic:master \
-        pipen run scrna_basic @scrna_basic.toml
+        pipen run scrna_basic @ScrnaBasic.config.toml
     ```
 
     or using singularity:
@@ -101,10 +129,11 @@ The pipeline can be run directly with `pipen` from the command line or via the `
     ```shell
     singularity run \
         -c -e -w \
-        # Map current directory to /workdir in the container, and set it as the working directory
+        # Map current directory to /workdir in the container,
+        # and set it as the working directory
         --pwd /workdir -B .:/workdir \
         docker://biopipen/scrna_basic:master \
-        pipen run scrna_basic @scrna_basic.toml
+        pipen run scrna_basic @ScrnaBasic.config.toml
     ```
 
 - Via `pipen-board` from the container:
@@ -113,10 +142,13 @@ The pipeline can be run directly with `pipen` from the command line or via the `
     docker run \
         --rm \
         -p 18521:18521 \
-        # Map current directory to /workdir in the container, and set it as the working directory
+        # Map current directory to /workdir in the container,
+        # and set it as the working directory
         -v .:/workdir -w /workdir \
         biopipen/scrna_basic:master \
-        pipen board biopipen.ns.scrna_basic:ScrnaBasic
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic \
+            -a /biopipen/board.toml \
+            -s ./.pipen-board
     ```
 
     or using singularity:
@@ -124,10 +156,13 @@ The pipeline can be run directly with `pipen` from the command line or via the `
     ```shell
     singularity run \
         -c -e -w \
-        # Map current directory to /workdir in the container, and set it as the working directory
+        # Map current directory to /workdir in the container,
+        # and set it as the working directory
         --pwd /workdir -B .:/workdir \
         docker://biopipen/scrna_basic:master \
-        pipen board biopipen.ns.scrna_basic:ScrnaBasic
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic \
+            -a /biopipen/board.toml \
+            -s ./.pipen-board
     ```
 
     !!! Note
@@ -136,17 +171,35 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         Otherwise, you can either choose "DOCKER" or "SINGULARITY" to generate the command and run it
         via the command line.
 
+    !!! Tip
+        Other than `master`, there are also other tags for the docker image, which are `dev` and the versions of `biopipen`. They are listed here:
+
+        <https://hub.docker.com/repository/docker/biopipen/scrna-basic/tags?page=1&ordering=last_updated>
+
+        You can use them to run the pipeline with a specific version of `biopipen`.
+
+        Generally, `master` is the latest stable version, `dev` is the latest development version, and the versions of `biopipen` are the stable versions of `biopipen`.
+
 ## An example
+
+!!! Tip
+    You don't need to prepare the example data if you are running the pipeline via `docker`/`singularity`. The example data are builtin in the docker image at `/example`.
 
 ### Preparing the input data
 
-Supposing you have the dependencies installed, you can run the following command to parepare the input data:
+You can run the following command to parepare the input data:
 
 ```bash
-curl -fsSL https://github.com/pwwang/biopipen/raw/master/docker/scrna_basic/make-examples.sh | bash
+curl -fsSL \
+  https://github.com/pwwang/biopipen/raw/master/docker/scrna_basic/make-examples.sh | \
+  bash
 ```
 
-This will prepare the input data in the current directory, so make sure your current directory is clean.
+!!! note
+    You should have the dependencies installed before running the above command.
+
+!!! danger
+    This will prepare the input data in the current directory, so make sure your current directory is clean.
 
 Files prepared with the above command:
 
@@ -156,14 +209,12 @@ Files prepared with the above command:
   It's from `ifnb` dataset in `SeuratData` package. We separated `CTRL` and `STIM` as two samples for demonstration.
 - `example.txt`: The input file for `ScrnaBasic` pipeline. See `infile` below for details.
 
-The example data are builtin in the docker image, so you do need to prepare them if you are running the pipeline via docker/singularity.
-
 !!! Note
-    Only `unsupervised` clustering is supported for now. If you want to use `supervised` clustering, you need to prepare the cell type database by yourself.
+    Only `unsupervised` clustering is supported for now. If you want to use `supervised` clustering, you need to prepare the cell type reference by yourself.
 
 ### Running the pipeline with the example data
 
-A configuration file with the above example input files will be like (supposing you current directory is `/example`):
+A configuration file with the above example input files will be like (suppose the input files are in `/example` directory):
 
 ```toml
 name = "Example"
@@ -173,14 +224,11 @@ report_no_collapse_pgs = true
 
 [ScrnaBasic]
 clustering = "unsupervised"
+# Make sure the RNAData column has the right paths to the data
 infile = "/example/example.txt"
 
-[ScrnaBasicAnnotate.envs]
-sctype_db = "/example/ScTypeDB_full.xlsx"
-sctype_tissue = "Immune system"
-
-[ScrnaBasicMarkers.plugin_opts]
-report_paging = 5
+[ScrnaBasicAnnotation.envs]
+hitype_db = "hitypedb_pbmc3k"
 
 [ScrnaBasicPrepareAndQC.envs]
 cell_qc = "nFeature_RNA > 200"
@@ -188,33 +236,42 @@ cell_qc = "nFeature_RNA > 200"
 [ScrnaBasicScGSEA.envs]
 gmtfile = "/example/KEGG_pathways.gmt"
 
-[ScrnaBasicScGSEA.envs.cases.STIM_vs_CTRL_mono]
-filter = "seurat_clusters == 'Classical Monocytes'"
+[ScrnaBasicScGSEA.envs.cases.STIM_vs_CTRL_CD14mono]
+filter = "seurat_clusters == 'CD14+ Mono'"
 group-by = "Sample"
 ident-1 = "STIM"
 ident-2 = "CTRL"
+
+[ScrnaBasicScGSEA.plugin_opts]
+report_paging = 5
 ```
 
-You can also fill in those information via the web UI. To launch the web UI, run:
+Save the above configuration file as `ScrnaBasic.config.toml` in the current directory.
+
+Then run the pipeline:
+
+```bash
+pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
+```
+
+You can also run the pipeline via `pipen-board`:
 
 ```bash
 pipen board biopipen.ns.scrna_basic:ScrnaBasic -a gh:pwwang/biopipen/board.toml
 ```
 
-Then configure the pipeline and run it.
+Then load the above configuration via "From Generated TOML" on the web UI. You may change the configuration if you want. Then run the pipeline via "LOCAL" from the running options on the left sidebar.
 
-### Running the pipeline with the example data via docker/singularity
+### Running the example via docker/singularity
 
-Remember that the example data are builtin under `/example` in the docker image, so you do need to prepare them if you are running the pipeline via docker/singularity.
-
-So you can reuse the above configuration file, and run the pipeline via docker/singularity:
+Again, remember that the example data are builtin under `/example` in the docker image, so you don't need to prepare them if you are running the pipeline via `docker`/`singularity`.
 
 ```shell
 docker run \
     --rm \
     -v .:/workdir -w /workdir \
     biopipen/scrna_basic:master \
-    pipen run scrna_basic @scrna_basic.toml
+    pipen run scrna_basic @ScrnaBasic.config.toml
 ```
 
 or using singularity:
@@ -224,17 +281,19 @@ singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
     docker://biopipen/scrna_basic:master \
-    pipen run scrna_basic @scrna_basic.toml
+    pipen run scrna_basic @ScrnaBasic.config.toml
 ```
 
-But you are recommended to run the pipeline via `pipen-board` from the container, and run it inside the container:
+You can also run the pipeline via `pipen-board` from the container, and run it inside the container:
 
 ```shell
 docker run \
     --rm \
     -v .:/workdir -w /workdir \
     biopipen/scrna_basic:master \
-    pipen board biopipen.ns.scrna_basic:ScrnaBasic
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic \
+        -a /biopipen/board.toml \
+        -s ./.pipen-board
 ```
 
 or using singularity:
@@ -244,12 +303,15 @@ singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
     docker://biopipen/scrna_basic:master \
-    pipen board biopipen.ns.scrna_basic:ScrnaBasic
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic \
+        -a /biopipen/board.toml \
+        -s ./.pipen-board
 ```
 
-And then load the `Example` configuration file and run it.
+Then load the above configuration via "From Generated TOML" on the web UI. You may change the configuration if you want. Then run the pipeline via "LOCAL" from the running options on the left sidebar.
 
 !!! Tip
+
     If you are creating a new instance and run your own data, you probably want to pass an additional configuration to be able to run the pipeline on the web UI. For example, using docker:
 
     ```shell
@@ -275,7 +337,7 @@ The pipeline is actually a single process group `ScrnaBasic`. The arguments for 
 - `clustering`: Which clustering method to use.
     - supervised: Mapping the cells to given reference.
         Using Seurat Reference Mapping procedure.
-        See: https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+        See: <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
     - unsupervised: Clustering the cells without reference.
         Using Seurat FindClusters procedure.
     - both: Both supervised and unsupervised clustering.
@@ -304,7 +366,7 @@ The pipeline is actually a single process group `ScrnaBasic`. The arguments for 
 
 ## Processes
 
-![scRNA-seq basic pipeline](./scrna_basic.png)
+![scRNA-seq basic pipeline](./ScrnaBasic.svg)
 
 ### `ScrnaBasicInput`
 
@@ -319,8 +381,9 @@ This process will:
 - Apply QC to the data
 
 See also:
-- https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)
-- https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Create_one_merged_object
+
+- <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow>
+- <https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Create_one_merged_object>
 
 Available environment arguments:
 
@@ -363,7 +426,7 @@ Available environment arguments:
     * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
     * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
     * `*`: On each sample
-    See https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1.
+    See <https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1>.
     If `False`, fast integration will be performed, using reciprocal PCA (RPCA) and
     following procedures will be performed in the order:
     * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
@@ -380,65 +443,65 @@ Available environment arguments:
     * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
     * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
     * `*`: On each sample.
-    See https://satijalab.org/seurat/articles/integration_rpca.html.
+    See <https://satijalab.org/seurat/articles/integration_rpca.html>.
 - SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
     `object` is specified internally, and `-` in the key will be replaced with `.`.
-    - `<more>`: See https://satijalab.org/seurat/reference/sctransform
+    - `<more>`: See <https://satijalab.org/seurat/reference/sctransform>
 - SelectIntegrationFeatures (ns): Arguments for [`SelectIntegrationFeatures()`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
     `object.list` is specified internally, and `-` in the key will be replaced with `.`.
     - nfeatures (type=int): The number of features to select
-    - `<more>`: See https://satijalab.org/seurat/reference/selectintegrationfeatures
+    - `<more>`: See <https://satijalab.org/seurat/reference/selectintegrationfeatures>
 - PrepSCTIntegration (ns): Arguments for [`PrepSCTIntegration()`](https://satijalab.org/seurat/reference/prepsctintegration).
     `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
-    - `<more>`: See https://satijalab.org/seurat/reference/prepsctintegration
+    - `<more>`: See <https://satijalab.org/seurat/reference/prepsctintegration>
 - NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
     `object` is specified internally, and `-` in the key will be replaced with `.`.
-    - `<more>`: See https://satijalab.org/seurat/reference/normalizedata
+    - `<more>`: See <https://satijalab.org/seurat/reference/normalizedata>
 - FindVariableFeatures (ns): Arguments for [`FindVariableFeatures()`](https://satijalab.org/seurat/reference/findvariablefeatures).
     `object` is specified internally, and `-` in the key will be replaced with `.`.
-    - `<more>`: See https://satijalab.org/seurat/reference/findvariablefeatures
+    - `<more>`: See <https://satijalab.org/seurat/reference/findvariablefeatures>
 - FindIntegrationAnchors (ns): Arguments for [`FindIntegrationAnchors()`](https://satijalab.org/seurat/reference/findintegrationanchors).
     `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
     `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
     Sample names can also be specified in `reference` instead of indices only.
     `reduction` defaults to `rpca`.
     `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-    - `<more>`: See https://satijalab.org/seurat/reference/findintegrationanchors
+    - `<more>`: See <https://satijalab.org/seurat/reference/findintegrationanchors>
 - IntegrateData (ns): Arguments for [`IntegrateData()`](https://satijalab.org/seurat/reference/integratedata).
     `anchorset` is specified internally, and `-` in the key will be replaced with `.`.
     `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
     `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-    - `<more>`: See https://satijalab.org/seurat/reference/integratedata
+    - `<more>`: See <https://satijalab.org/seurat/reference/integratedata>
 - ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
     `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
     - verbose (flag): Whether to print the progress
-    - `<more>`: See https://satijalab.org/seurat/reference/scaledata
+    - `<more>`: See <https://satijalab.org/seurat/reference/scaledata>
 - RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
     `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
     - npcs (type=int): The number of PCs to compute.
         For each sample, `npcs` will be no larger than the number of columns - 1.
     - verbose (flag): Whether to print the progress
-    - `<more>`: See https://satijalab.org/seurat/reference/runpca
+    - `<more>`: See <https://satijalab.org/seurat/reference/runpca>
 - RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
     `object` is specified internally, and `-` in the key will be replaced with `.`.
     `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
     - dims (type=int): The number of PCs to use
     - reduction: The reduction to use for UMAP
-    - `<more>`: See https://satijalab.org/seurat/reference/runumap
+    - `<more>`: See <https://satijalab.org/seurat/reference/runumap>
 - FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
     `object` is specified internally, and `-` in the key will be replaced with `.`.
-    - `<more>`: See https://satijalab.org/seurat/reference/findneighbors
+    - `<more>`: See <https://satijalab.org/seurat/reference/findneighbors>
 - FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
     `object` is specified internally, and `-` in the key will be replaced with `.`.
     - resolution (type=float): The resolution of the clustering
-    - `<more>`: See https://satijalab.org/seurat/reference/findclusters
+    - `<more>`: See <https://satijalab.org/seurat/reference/findclusters>
 
 ### `ScrnaBasicSupervised`
 
 Map the seurat object to reference
 
-See: https://satijalab.org/seurat/articles/integration_mapping.html
-and https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+See: <https://satijalab.org/seurat/articles/integration_mapping.html>
+and <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
 
 Available environment arguments:
 
@@ -459,7 +522,7 @@ Available environment arguments:
     - do-correct-umi (flag): Place corrected UMI matrix in assay counts slot?
     - do-scale (flag): Whether to scale residuals to have unit variance?
     - do-center (flag): Whether to center residuals to have mean zero?
-    - `<more>`: See https://satijalab.org/seurat/reference/sctransform
+    - `<more>`: See <https://satijalab.org/seurat/reference/sctransform>
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
 - FindTransferAnchors (ns): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
     - normalization-method (choice): Name of normalization method used.
@@ -467,19 +530,19 @@ Available environment arguments:
         - SCT: Scale data using the SCTransform method
     - reference-reduction: Name of dimensional reduction to use from the reference if running the pcaproject workflow.
         Optionally enables reuse of precomputed reference dimensional reduction.
-    - `<more>`: See https://satijalab.org/seurat/reference/findtransferanchors.
+    - `<more>`: See <https://satijalab.org/seurat/reference/findtransferanchors>.
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
 - MapQuery (ns): Arguments for [`MapQuery()`](https://satijalab.org/seurat/reference/mapquery)
     - reference-reduction: Name of reduction to use from the reference for neighbor finding
     - reduction-model: `DimReduc` object that contains the umap model
     - refdata (type=json): Data to transfer
-    - `<more>`: See https://satijalab.org/seurat/reference/mapquery
+    - `<more>`: See <https://satijalab.org/seurat/reference/mapquery>
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
 - MappingScore (ns): Arguments for [`MappingScore()`](https://satijalab.org/seurat/reference/mappingscore)
-    - `<more>`: See https://satijalab.org/seurat/reference/mappingscore
+    - `<more>`: See <https://satijalab.org/seurat/reference/mappingscore>
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
 
-### `ScrnaBasicAnnotate`
+### `ScrnaBasicAnnotation`
 
 Annotate cell types
 
@@ -490,9 +553,11 @@ Available environment arguments:
 
 - tool (choice): The tool to use for cell type annotation.
     - sctype: Use `scType` to annotate cell types.
-        See https://github.com/IanevskiAleksandr/sc-type
+        See <https://github.com/IanevskiAleksandr/sc-type>
+    - hitype: Use `hitype` to annotate cell types.
+        See <https://github.com/pwwang/hitype>
     - sccatch: Use `scCATCH` to annotate cell types.
-        See https://github.com/ZJUFanLab/scCATCH
+        See <https://github.com/ZJUFanLab/scCATCH>
     - direct: Directly assign cell types
 - sctype_tissue: The tissue to use for `sctype`.
     Avaiable tissues should be the first column (`tissueType`) of
@@ -501,7 +566,14 @@ Available environment arguments:
     `Brain`, `Lung`, `Adrenal`, `Heart`, `Intestine`, `Muscle`,
     `Placenta`, `Spleen`, `Stomach` and `Thymus`.
 - sctype_db: The database to use for sctype.
-    Check examples at https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx
+    Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
+- hitype_tissue: The tissue to use for `hitype`.
+    Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
+    If not specified, all rows in `hitype_db` will be used.
+- hitype_db: The database to use for hitype.
+    Compatible with `sctype_db`.
+    See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
+    You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
 - cell_types (type=json): The cell types to use for direct annotation
     Each a list of cell type names, or a dict with keys as the old
     identity and values as the new cell type.
@@ -512,7 +584,7 @@ Available environment arguments:
     - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
     - tissue: Tissue origin of cells must be defined.
     - `<more>`: Other arguments for `scCATCH::findmarkergene()`
-        See https://www.rdocumentation.org/packages/scCATCH/versions/3.2.2/topics/findmarkergene.
+        See <https://www.rdocumentation.org/packages/scCATCH/versions/3.2.2/topics/findmarkergene>.
         You can pass an RDS file to `marker` to work as custom marker. If so,
         `if_use_custom_marker` will be set to `TRUE` automatically.
 
@@ -638,7 +710,7 @@ Available environment arguments:
     If only "group-by" is given, will call `FindAllMarkers()`.
 - dbs (list): The dbs to do enrichment analysis for significant
     markers See below for all librarys.
-    https://maayanlab.cloud/Enrichr/#libraries
+    <https://maayanlab.cloud/Enrichr/#libraries>
 - sigmarkers: An expression passed to `dplyr::filter()` to filter the
     significant markers for enrichment analysis.
     Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
@@ -694,7 +766,7 @@ Available environment arguments:
 - minSize (type=int): Minimal size of a gene set to test. All pathways below the threshold are excluded.
 - maxSize (type=int): Maximal size of a gene set to test. All pathways above the threshold are excluded.
 - `<rest>`: Rest arguments for [`fgsea()`](https://rdrr.io/bioc/fgsea/man/fgsea.html)
-    See also https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html
+    See also <https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html>
 
 
 [1]: https://toml.io/en/

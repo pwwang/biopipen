@@ -18,6 +18,9 @@ datar = { version = "^0.13", extras = ["pandas"] }
 pipen-board = { version = "^0.10", extras = ["report"] }
 pipen-runinfo = { version = "^0.2", optional = true }
 
+[tool.poetry.extras]
+runinfo = ["pipen-runinfo"]
+
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.plugins.pipen_cli_run]

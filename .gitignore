@@ -122,5 +122,5 @@ watch.sh
 t.py
 t.ipynb
 local_tests/
-*.config.toml
+/*.config.toml
 t.R

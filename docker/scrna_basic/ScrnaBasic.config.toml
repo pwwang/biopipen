@@ -1,0 +1,25 @@
+[plugin_opts]
+diagram_theme = "fancy"
+report_no_collapse_pgs = true
+
+[ScrnaBasic]
+clustering = "unsupervised"
+infile = "example.txt"
+
+[ScrnaBasicAnnotation.envs]
+hitype_db = "hitypedb_pbmc3k"
+
+[ScrnaBasicPrepareAndQC.envs]
+cell_qc = "nFeature_RNA > 200"
+
+[ScrnaBasicScGSEA.envs]
+gmtfile = "KEGG_pathways.gmt"
+
+[ScrnaBasicScGSEA.envs.cases.STIM_vs_CTRL_CD14mono]
+filter = "seurat_clusters == 'CD14+ Mono'"
+group-by = "Sample"
+ident-1 = "STIM"
+ident-2 = "CTRL"
+
+[ScrnaBasicScGSEA.plugin_opts]
+report_paging = 5
