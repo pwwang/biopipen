@@ -132,6 +132,7 @@ The options that are used by a single process. See the process-specific document
 ## The metafile
 
 A metafile should be with the following columns:
+
 - Sample: The sample_id used for target/antitarget files. If not provided,
     the sample_id will be the first part of basename of the bam file.
     For exapmle: `D123.tumor.bam -> D123`

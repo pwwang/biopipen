@@ -1,4 +1,5 @@
 [plugin_opts]
+diagram_theme = "fancy"
 report_no_collapse_pgs = true
 
 [CNVkitPipeline]
