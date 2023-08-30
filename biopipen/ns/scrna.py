@@ -241,7 +241,7 @@ class SeuratClustering(Proc):
 
 
 class SeuratClusterStats(Proc):
-    """Statistics of the supervised clustering.
+    """Statistics of the clustering.
 
     Including the number/fraction of cells in each cluster,
     the gene expression values and dimension reduction plots.
@@ -263,9 +263,9 @@ class SeuratClusterStats(Proc):
                 Similar to `nCells_*`, but the fraction is calculated
                 instead of the absolute number.
         exprs (type=json): The expression values to plot.
-            * `genes` - The set of genes for the plots, unless `features` for
-                those plots is specified. Could also specify a file with genes
-                (one per line).
+            * `genes` - The set of genes (separated by comma) for the plots,
+                unless `features` for those plots is specified.
+                One could also specify a file with genes (one per line).
             * `ridgeplots` - The ridge plots for the gene expressions.
                 See [`Seurat::RidgePlot`](https://satijalab.org/seurat/reference/ridgeplot).
             * `vlnplots` - Violin plots for the gene expressions.
@@ -994,8 +994,8 @@ class ScFGSEA(Proc):
 class CellTypeAnnotation(Proc):
     """Annotate cell types
 
-    Either use `scType` or `scCATCH` to annotate cell types, or directly
-    assign cell types.
+    Either use `scType`, `hitype` or `scCATCH` to annotate cell types,
+    or directly assign cell types.
 
     Input:
         sobjfile: The seurat object
@@ -1039,7 +1039,7 @@ class CellTypeAnnotation(Proc):
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
             - tissue: Tissue origin of cells must be defined.
             - <more>: Other arguments for `scCATCH::findmarkergene()`
-                See https://www.rdocumentation.org/packages/scCATCH/versions/3.2.2/topics/findmarkergene.
+                See https://rdrr.io/cran/scCATCH/man/findmarkergene.html.
                 You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
 
