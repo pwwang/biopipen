@@ -4,7 +4,7 @@ report_no_collapse_pgs = true
 
 [ScrnaBasic]
 clustering = "unsupervised"
-infile = "example.txt"
+infile = "/example/example.txt"
 
 [ScrnaBasicAnnotation.envs]
 hitype_db = "hitypedb_pbmc3k"
@@ -13,7 +13,7 @@ hitype_db = "hitypedb_pbmc3k"
 cell_qc = "nFeature_RNA > 200"
 
 [ScrnaBasicScGSEA.envs]
-gmtfile = "KEGG_pathways.gmt"
+gmtfile = "/example/KEGG_pathways.gmt"
 
 [ScrnaBasicScGSEA.envs.cases.STIM_vs_CTRL_CD14mono]
 filter = "seurat_clusters == 'CD14+ Mono'"

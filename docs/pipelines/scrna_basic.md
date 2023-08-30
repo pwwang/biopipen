@@ -217,8 +217,6 @@ Files prepared with the above command:
 A configuration file with the above example input files will be like (suppose the input files are in `/example` directory):
 
 ```toml
-name = "Example"
-
 [plugin_opts]
 report_no_collapse_pgs = true
 
