@@ -146,9 +146,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # and set it as the working directory
         -v .:/workdir -w /workdir \
         biopipen/scrna_basic:master \
-        pipen board biopipen.ns.scrna_basic:ScrnaBasic \
-            -a /biopipen/board.toml \
-            -s ./.pipen-board
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
     ```
 
     or using singularity:
@@ -160,9 +158,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # and set it as the working directory
         --pwd /workdir -B .:/workdir \
         docker://biopipen/scrna-basic:master \
-        pipen board biopipen.ns.scrna_basic:ScrnaBasic \
-            -a /biopipen/board.toml \
-            -s ./.pipen-board
+        pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
     ```
 
     !!! Note
@@ -289,9 +285,7 @@ docker run \
     --rm \
     -v .:/workdir -w /workdir \
     biopipen/scrna_basic:master \
-    pipen board biopipen.ns.scrna_basic:ScrnaBasic \
-        -a /biopipen/board.toml \
-        -s ./.pipen-board
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
 ```
 
 or using singularity:
@@ -301,9 +295,7 @@ singularity run \
     -c -e -w \
     --pwd /workdir -B .:/workdir \
     docker://biopipen/scrna-basic:master \
-    pipen board biopipen.ns.scrna_basic:ScrnaBasic \
-        -a /biopipen/board.toml \
-        -s ./.pipen-board
+    pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
 ```
 
 Then load the above configuration via "From Generated TOML" on the web UI. You may change the configuration if you want. Then run the pipeline via "LOCAL" from the running options on the left sidebar.
