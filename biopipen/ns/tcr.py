@@ -835,17 +835,15 @@ class TCRClustering(Proc):
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
-        on_multi (flag;hidden): Whether to run clustering on
-            multi-chain seq or the seq read and processed by immunarch
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
-        tmpdir: The temporary directory to store the GIANA sources
-        giana_repo: The URL prefix for the source code of GIANA
         args (type=json): The arguments for the clustering tool
             For GIANA, they will be passed to `python GIAna.py`
             See https://github.com/s175573/GIANA#usage
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
             See https://svalkiers.github.io/clusTCR/docs/clustering/how-to-use.html#clustering
+        on_multi (flag;hidden): Whether to run clustering on
+            multi-chain seq or the seq read and processed by immunarch
 
     Requires:
         clusTCR:
@@ -862,10 +860,6 @@ class TCRClustering(Proc):
         "tool": "GIANA",  # or ClusTCR
         "on_multi": False,
         "python": config.lang.python,
-        "tmpdir": config.path.tmpdir,
-        "giana_repo": (
-            "https://raw.githubusercontent.com/s175573/GIANA/master/"
-        ),
         "args": {},
     }
     script = "file://../scripts/tcr/TCRClustering.R"
