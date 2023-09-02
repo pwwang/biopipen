@@ -38,8 +38,7 @@ class ImmunarchLoading(Proc):
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
             saved at `immdata$tra` and `immdata$multi`.
-        metacols (list; hidden): The columns to be exported from the
-            metatxt.
+        metacols (list; hidden): The columns to be exported to the metatxt.
     """
 
     input = "metafile:file"
