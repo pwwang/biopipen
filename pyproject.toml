@@ -15,7 +15,7 @@ pipen-filters = "^0.8"
 pipen-cli-run = "^0.9"
 pipen-verbose = "^0.7"
 datar = { version = "^0.13", extras = ["pandas"] }
-pipen-board = { version = "^0.10", extras = ["report"] }
+pipen-board = { version = "^0.11", extras = ["report"] }
 pipen-runinfo = { version = "^0.2", optional = true }
 
 [tool.poetry.extras]
