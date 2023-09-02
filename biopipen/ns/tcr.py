@@ -405,9 +405,9 @@ class Immunarch(Proc):
             - align_y (flag): Align the y-axis of multiple plots. Only works for `raref`.
             - log (flag): Indicate whether we should plot with log-transformed x-axis using `vis(.log = TRUE)`. Only works for `raref`.
             - devpars (ns): The parameters for the plotting device.
-                - width (int): The width of the device
-                - height (int): The height of the device
-                - res (int): The resolution of the device
+                - width (type=int): The width of the device
+                - height (type=int): The height of the device
+                - res (type=int): The resolution of the device
             - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
                 The keys will be used as the names of the cases.
                 The values will be passed to the corresponding arguments above.
@@ -875,14 +875,71 @@ class TCRClusteringStats(Proc):
         outdir: The output directory containing the stats and reports
 
     Envs:
+        cluster_size (ns): The distribution of size of each cluster.
+            - by: The variables (column names) used to fill the histogram.
+                Only a single column is supported.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the device
+                - height (type=int): The height of the device
+                - res (type=int): The resolution of the device
+            - cases (type=json): If you have multiple cases, you can use this
+                argument to specify them. The keys will be the names of the
+                cases. The values will be passed to the corresponding arguments
+                above. If any of these arguments are not specified, the values
+                in `envs.cluster_size` will be used. If NO cases are
+                specified, the default case will be added, with the name
+                `DEFAULT`.
         shared_clusters (ns): Stats about shared TCR clusters
             - numbers_on_heatmap (flag): Whether to show the
-                numbers on the heatmap
-            - heatmap_meta (list): The metadata to show on the heatmap
-            - grouping: The groups to investigate the shared clusters
-        sample_diversity (type=json): Sample diversity using TCR clusters
-            instead of clones keys are the methods and values, currently, `by`
-            to plot the diversities by groups
+                numbers on the heatmap.
+            - heatmap_meta (list): The columns of metadata to show on the
+                heatmap.
+            - grouping: The groups to investigate the shared clusters.
+                If specified, venn diagrams will be drawn instead of heatmaps.
+                In such case, `numbers_on_heatmap` and `heatmap_meta` will be
+                ignored.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the device
+                - height (type=int): The height of the device
+                - res (type=int): The resolution of the device
+            - cases (type=json): If you have multiple cases, you can use this
+                argument to specify them. The keys will be the names of the
+                cases. The values will be passed to the corresponding arguments
+                above. If any of these arguments are not specified, the values
+                in `envs.shared_clusters` will be used. If NO cases are
+                specified, the default case will be added, with the name
+                `DEFAULT`.
+        sample_diversity (ns): Sample diversity using TCR clusters instead of
+            clones.
+            - by: The variables (column names) to group samples.
+                Multiple columns should be separated by `,`.
+            - method (choice): The method to calculate diversity.
+                - gini: The Gini coefficient.
+                    It measures the inequality among values of a frequency
+                    distribution (for example levels of income).
+                - gini.simp: The Gini-Simpson index.
+                    It is the probability of interspecific encounter, i.e.,
+                    probability that two entities represent different types.
+                - inv.simp: Inverse Simpson index.
+                    It is the effective number of types that is obtained when
+                    the weighted arithmetic mean is used to quantify average
+                    proportional abundance of types in the dataset of interest.
+                - div: true diversity, or the effective number of types.
+                    It refers to the number of equally abundant types needed
+                    for the average proportional abundance of the types to
+                    equal that observed in the dataset of interest where all
+                    types may not be equally abundant.
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the device
+                - height (type=int): The height of the device
+                - res (type=int): The resolution of the device
+            - cases (type=json): If you have multiple cases, you can use this
+                argument to specify them. The keys will be the names of the
+                cases. The values will be passed to the corresponding arguments
+                above. If any of these arguments are not specified, the values
+                in `envs.sample_diversity` will be used. If NO cases are
+                specified, the default case will be added, with the name
+                `DEFAULT`.
 
     Requires:
         r-immunarch:
@@ -892,14 +949,23 @@ class TCRClusteringStats(Proc):
     output = "outdir:dir:{{in.immfile | stem}}.tcrclusters_stats"
     lang = config.lang.rscript
     envs = {
+        "cluster_size": {
+            "by": "Sample",
+            "devpars": {"width": 1000, "height": 900, "res": 100},
+            "cases": {},
+        },
         "shared_clusters": {
             "numbers_on_heatmap": True,
             "heatmap_meta": [],
             "grouping": None,
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
         },
         "sample_diversity": {
-            "gini": {},  # by = ["Status", "Sex"]
-            "gini.simp": {},
+            "by": None,
+            "method": "gini",
+            "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "cases": {},
         },
     }
     script = "file://../scripts/tcr/TCRClusteringStats.R"
