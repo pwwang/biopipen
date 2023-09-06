@@ -5,20 +5,18 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-{% for casedir in job.out.outdir | glob: "*" %}
-    {%- set case = casedir | basename -%}
-    <h{{h}}>{{case}}</h{{h}}>
-    {%- if casedir | joinpaths: "percluster" | isfile -%}
-        {%- for cldir in casedir | glob: "*" -%}
-            {%- if basename(cldir) == "percluster" -%}
-                {%- continue -%}
-            {%- endif -%}
-            <h{{h+1}}>{{cldir | basename}}</h{{h+1}}>
-            {{ fgsea_report(cldir, h + 2) }}
-        {%- endfor -%}
+{% for secdir in job.out.outdir | glob: "*" %}
+    {%- set section = secdir | basename -%}
+    {%- if section != "DEFAULT" -%}
+    <h{{h}}>{{section}}</h{{h}}>
     {%- else -%}
-        {{ fgsea_report(casedir, h + 1) }}
+    {%- set h = h - 1 -%}
     {%- endif -%}
+    {% for casedir in secdir | glob: "*" %}
+        {%- set case = casedir | basename -%}
+        <h{{h+1}}>{{case}}</h{{h+1}}>
+        {{ fgsea_report(casedir, h + 2) }}
+    {%- endfor -%}
 {% endfor %}
 {%- endmacro -%}
 
