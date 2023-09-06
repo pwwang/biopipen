@@ -1,165 +1,146 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/gsea.R")
+source("{{biopipen_dir}}/utils/mutate_helpers.R")
 library(rlang)
 library(Seurat)
 library(tidyseurat)
 
-srtfile = {{in.srtobj | r}}
-{% if in.casefile %}
-cases = {{in.casefile | toml_load | r: todot="-"}}
-{% else %}
-cases = {{envs | r: todot="-"}}
-{% endif %}
+srtfile <- {{in.srtobj | r}}  # nolint
+outdir <- {{out.outdir | r}}  # nolint
+mutaters <- {{envs.mutaters | r}}  # nolint
+group.by <- {{envs["group-by"] | r}}  # nolint
+ident.1 <- {{envs["ident-1"] | r}}  # nolint
+ident.2 <- {{envs["ident-2"] | r}}  # nolint
+each <- {{envs.each | r}}  # nolint
+section <- {{envs.section | r}}  # nolint
+gmtfile <- {{envs.gmtfile | r}}  # nolint
+method <- {{envs.method | r}}  # nolint
+top <- {{envs.top | r}}  # nolint
+minsize <- {{envs.minsize | r}}  # nolint
+maxsize <- {{envs.maxsize | r}}  # nolint
+eps <- {{envs.eps | r}}  # nolint
+ncores <- {{envs.ncores | r}}  # nolint
+rest <- {{envs.rest | r: todot="-"}}  # nolint
+cases <- {{envs.cases | r: todot="-"}}  # nolint
 
-outdir = {{out.outdir | r}}
-gmtfile = {{envs.gmtfile | r}}
-envs = {{envs | r: todot="-"}}
-
-if (is.null(gmtfile) || nchar(gmtfile) == 0) {
-    stop("No `envs.gmtfile` provided.")
+srtobj <- readRDS(srtfile)
+if (!is.null(mutaters) && length(mutaters) > 0) {
+    srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
-srtobj = readRDS(srtfile)
-
-prepare_exprmat = function(casepms) {
-    sobj = srtobj
-    if (!is.null(casepms$mutaters)) {
-        expr = list()
-        for (key in names(casepms$mutaters)) {
-            expr[[key]] = parse_expr(casepms$mutaters[[key]])
-        }
-        sobj = sobj %>% mutate(!!!expr)
-    }
-    if (!is.null(casepms$filter)) {
-        sobj = sobj %>% filter(eval(parse(text=casepms$filter)))
-    }
-
-    samples = rownames(sobj@meta.data[
-        sobj@meta.data[[casepms$group.by]] %in% c(casepms$ident.1, casepms$ident.2),
-        ,
-        drop=FALSE
-    ])
-    allclasses = sobj@meta.data[samples, casepms$group.by, drop=TRUE]
-    exprs = GetAssayData(sobj, slot = "data", assay = "RNA")[, samples]
-    list(exprs=exprs, allclasses=allclasses)
-}
-
-do_case = function(case, casepms) {
-    print(paste("- Processing case:", case, "..."))
-    odir = file.path(outdir, case)
-    dir.create(odir, showWarnings = FALSE)
-
-    exprinfo = prepare_exprmat(casepms)
-    ranks = prerank(
-        exprinfo$exprs,
-        casepms$ident.1,
-        casepms$ident.2,
-        exprinfo$allclasses,
-        envs$method
-    )
-
-    write.table(
-        ranks,
-        file.path(odir, "fgsea.rank"),
-        row.names=F,
-        col.names=T,
-        sep="\t",
-        quote=F
-    )
-
-    case_envs = envs
-    top = case_envs$top
-    case_envs$name = NULL
-    case_envs$cases = NULL
-    case_envs$gmtfile = NULL
-    case_envs$nproc = case_envs$ncores
-    case_envs$method = NULL
-    case_envs$ncores = NULL
-    case_envs$top = NULL
-    # the rest are the arguments for `fgsea()`
-    runFGSEA(ranks, gmtfile, top, odir, case_envs)
-
-}
-
-do_case_with_ident = function(case, casepms, ident) {
-    print(paste("- Processing case:", case, "..."))
-    print(paste("  Cluster:", ident, "..."))
-    ident_name = as.integer(ident)
-    if (is.integer(ident_name)) {
-        ident_name = paste0("Cluster", ident)
-    }
-    odir = file.path(outdir, case, ident_name)
-    dir.create(odir, showWarnings = FALSE, recursive = TRUE)
-    cat("", file = file.path(outdir, case, "percluster"))
-
-    exprinfo = prepare_exprmat(casepms)
-    ranks = prerank(
-        exprinfo$exprs,
-        casepms$ident.1,
-        casepms$ident.2,
-        exprinfo$allclasses,
-        envs$method
-    )
-
-    write.table(
-        ranks,
-        file.path(odir, "fgsea.rank"),
-        row.names=F,
-        col.names=T,
-        sep="\t",
-        quote=F
-    )
-
-    case_envs = envs
-    top = case_envs$top
-    case_envs$name = NULL
-    case_envs$cases = NULL
-    case_envs$gmtfile = NULL
-    case_envs$nproc = case_envs$ncores
-    case_envs$method = NULL
-    case_envs$ncores = NULL
-    case_envs$top = NULL
-    # the rest are the arguments for `fgsea()`
-    runFGSEA(ranks, gmtfile, top, odir, case_envs)
-
-}
-
-
-
-.replace_placeholder = function(s, ident) {
-    if (is.null(s)) {
-        return(s)
-    }
-    s = sub("{ident}", ident, s, fixed = TRUE)
-    s = sub("{cluster}", ident, s, fixed = TRUE)
-    s
-}
-
-do_case_with_tpl = function(case_with_tpl) {
-    casepms = cases$cases[[case_with_tpl]]
-    if (isTRUE(casepms$percluster)) {
-        # has template in case names
-        # currently only cluster is supported
-        casepms1 = casepms
-        casepms1$percluster = NULL
-        for (ident in sort(unique(Idents(srtobj)))) {
-            casepms1$ident.1 = .replace_placeholder(casepms$ident.1, ident)
-            casepms1$ident.2 = .replace_placeholder(casepms$ident.2, ident)
-            casepms1$group.by = .replace_placeholder(casepms$group.by, ident)
-            casepms1$filter = .replace_placeholder(casepms$filter, ident)
-            if (!is.null(casepms$mutaters)) {
-                for (mutname in names(casepms$mutaters)) {
-                    casepms1$mutaters[[mutname]] = .replace_placeholder(
-                        casepms$mutaters[[mutname]],
-                        ident
-                    )
-                }
-            }
-            do_case_with_ident(case_with_tpl, casepms1, ident)
-        }
+expand_cases <- function() {
+    # fill up cases with missing parameters
+    if (is.null(cases) || length(cases) == 0) {
+        filled_cases <- list(
+            DEFAULT = list(
+                group.by = group.by,
+                ident.1 = ident.1,
+                ident.2 = ident.2,
+                each = each,
+                section = section,
+                gmtfile = gmtfile,
+                method = method,
+                top = top,
+                minsize = minsize,
+                maxsize = maxsize,
+                eps = eps,
+                ncores = ncores,
+                rest = rest
+            )
+        )
     } else {
-        do_case(case_with_tpl, casepms)
+        filled_cases <- list()
+        for (name in names(cases)) {
+            case <- list_setdefault(
+                cases[[name]],
+                group.by = group.by,
+                ident.1 = ident.1,
+                ident.2 = ident.2,
+                each = each,
+                section = section,
+                gmtfile = gmtfile,
+                method = method,
+                top = top,
+                minsize = minsize,
+                maxsize = maxsize,
+                eps = eps,
+                ncores = ncores,
+                rest = rest
+            )
+            case$rest <- list_setdefault(case$rest, rest)
+            filled_cases[[name]] <- case
+        }
     }
+
+    outcases <- list()
+    # expand each
+    for (name in names(filled_cases)) {
+        case <- filled_cases[[name]]
+        if (is.null(case$each) || nchar(case$each) == 0) {
+            outcases[[paste0(case$section, ":", name)]] <- case
+        } else {
+            eachs <- srtobj@meta.data %>% pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+            for (each in eachs) {
+                by <- make.names(paste0(".", name, "_", case$each,"_", each))
+                srtobj@meta.data <<- srtobj@meta.data %>%
+                    mutate(!!sym(by) := if_else(
+                        !!sym(case$each) == each,
+                        !!sym(case$group.by),
+                        NA
+                    ))
+                key <- paste0(case$each, ":", name, " (", each, ")")
+                outcases[[key]] <- case
+                outcases[[key]]$group.by <- by
+            }
+        }
+    }
+    outcases
 }
 
-# parallelize?
-sapply(names(cases$cases), do_case_with_tpl)
+do_case <- function(name, case) {
+    print(paste("- Processing case:", name, "..."))
+    section_case <- unlist(strsplit(name, ":"))
+    section <- section_case[1]
+    casename <- paste(section_case[-1], collapse = ":")
+    sec_dir <- file.path(outdir, section)
+    dir.create(sec_dir, showWarnings = FALSE, recursive = TRUE)
+    case_dir <- file.path(sec_dir, casename)
+    dir.create(case_dir, showWarnings = FALSE)
+
+    # prepare expression matrix
+    print("  Preparing expression matrix...")
+    sobj <- srtobj %>% tidyseurat::filter(!is.na(!!sym(case$group.by)))
+    if (!is.null(case$ident.2)) {
+        sobj <- sobj %>% tidyseurat::filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
+    }
+
+    allclasses <- sobj@meta.data[, case$group.by, drop = TRUE]
+    if (is.null(case$ident.2)) {
+        case$ident.2 <- ".rest"
+        allclasses[allclasses != case$ident.1] <- ".rest"
+    }
+    exprs <- GetAssayData(sobj, slot = "data", assay = "RNA")
+
+    # get preranks
+    print("  Getting preranks...")
+    ranks <- prerank(exprs, case$ident.1, case$ident.2, allclasses, case$method)
+    write.table(
+        ranks,
+        file.path(case_dir, "fgsea.rank"),
+        row.names = FALSE,
+        col.names = TRUE,
+        sep = "\t",
+        quote = FALSE
+    )
+
+    # run fgsea
+    print("  Running fgsea...")
+    case$rest$minSize <- case$minsize
+    case$rest$maxSize <- case$maxsize
+    case$rest$eps <- case$eps
+    case$rest$nproc <- case$ncores
+    runFGSEA(ranks, gmtfile, case$top, case_dir, case$rest)
+}
+
+cases <- expand_cases()
+sapply(names(cases), function(name) do_case(name, cases[[name]]))
