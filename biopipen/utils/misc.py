@@ -6,7 +6,7 @@ from typing import List
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
 
-def exec_code(code, global_vars = None, local_vars = None, return_var = None):
+def exec_code(code, global_vars=None, local_vars=None, return_var=None):
     global_vars = global_vars or {}
     local_vars = local_vars or {}
     exec(code, global_vars, local_vars)
