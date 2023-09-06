@@ -510,7 +510,7 @@ class Immunarch(Proc):
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
             "analyses": {
-                "method": "mds",
+                "method": "tsne",
                 "vis_args": {},
                 "devpars": {"width": 1000, "height": 1000, "res": 100},
                 "cases": {},
@@ -525,7 +525,7 @@ class Immunarch(Proc):
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
             "analyses": {
-                "method": "cor",
+                "method": "tsne",
                 "vis_args": {},
                 "devpars": {"width": 1000, "height": 1000, "res": 100},
                 "cases": {},
