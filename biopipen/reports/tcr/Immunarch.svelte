@@ -131,13 +131,14 @@
 
 {% if job.out.outdir | glob: "rarefraction", "*" %}
 <h{{h}}>Rarefaction analysis</h{{h}}>
-    {% assign rfdir = job.out.outdir | glob: "rarefraction", "*" | sort %}
-    {% assign rfname = rfdir | basename %}
-    {% if rfname != "DEFAULT" %}
-        <h{{h+1}}>{{rfname}}</h{{h+1}}>
-    {% endif %}
-    {% assign rfpngs = rfdir | glob: "*.png" | sort %}
-    {{ table_of_images(rfpngs) }}
+    {% for rfdir in job.out.outdir | glob: "rarefraction", "*" | sort %}
+        {% assign rfname = rfdir | basename %}
+        {% if rfname != "DEFAULT" %}
+            <h{{h+1}}>{{rfname}}</h{{h+1}}>
+        {% endif %}
+        {% assign rfpngs = rfdir | glob: "*.png" | sort %}
+        {{ table_of_images(rfpngs) }}
+    {% endfor %}
 {% endif %}
 
 {% if job.out.outdir | glob: "tracking", "*.png" %}

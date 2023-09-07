@@ -34,6 +34,9 @@ rm(sobj)
 samples = unlist(lapply(obj_list, function(x) x@meta.data$Sample[1]))
 if (!is.null(envs$FindIntegrationAnchors$reference)) {
     ref = envs$FindIntegrationAnchors$reference
+    if (length(ref) == 1) {
+        ref = trimws(strsplit(ref, ",")[[1]])
+    }
     ref = sapply(ref, function(x) {
         x_int = as.integer(x)
         if (!is.na(x_int)) {

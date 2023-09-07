@@ -1,3 +1,5 @@
+source("{{biopipen_dir}}/utils/misc.R")
+
 library(Seurat)
 library(tibble)
 library(enrichR)
@@ -44,14 +46,16 @@ if (is.null(cases) || length(cases) == 0) {
     )
 } else {
     cases = lapply(cases, function(cs) {
-        if (is.null(cs$ident)) cs$ident = ident
-        if (is.null(cs$group.by)) cs$group.by = group.by
-        if (is.null(cs$each)) cs$each = each
-        if (is.null(cs$prefix_each)) cs$prefix_each = prefix_each
-        if (is.null(cs$section)) cs$section = section
-        if (is.null(cs$dbs)) cs$dbs = dbs
-        if (is.null(cs$n)) cs$n = n
-        cs
+        list_setdefault(
+            cs,
+            ident = ident,
+            group.by = group.by,
+            each = each,
+            prefix_each = prefix_each,
+            section = section,
+            dbs = dbs,
+            n = n
+        )
     })
 }
 
@@ -71,12 +75,12 @@ for (name in names(cases)) {
     } else {
         eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
         for (each in eachs) {
-            by <- paste0(".", name, "_", each)
+            by <- make.names(paste0(".", name, "_", each))
             srtobj@meta.data = srtobj@meta.data %>% mutate(
                 !!sym(by) := if_else(
                     !!sym(case$each) == each,
                     !!sym(case$group.by),
-                    NA_character_
+                    NA
                 )
             )
             case$group.by <- by
@@ -92,11 +96,7 @@ for (name in names(cases)) {
                     newcases[[key]]$ident <- ident
                 }
             } else {
-                key = if (case$prefix_each) {
-                    paste0(case$each, "-", each, ":", name)
-                } else {
-                    paste0(each, ":", name)
-                }
+                key = paste0(case$each, ":", name, "(", each, ")")
                 newcases[[key]] <- case
             }
         }

@@ -31,7 +31,7 @@ sccatch_args$object = obj
 obj = do_call(findmarkergene, sccatch_args)
 write.table(
     obj@celltype,
-    file = outfile,
+    file = file.path(dirname(outfile), "cluster2celltype.tsv"),
     sep = "\t",
     quote = FALSE,
     row.names = FALSE)
@@ -39,6 +39,7 @@ write.table(
 celltypes = as.list(obj@celltype$cell_type)
 names(celltypes) = obj@celltype$cluster
 
+sobj$seurat_clusters_old = Idents(sobj)
 if (length(celltypes) == 0) {
     warning("No cell types annotated from the database!")
 } else {

@@ -37,15 +37,70 @@ div.document ul {
     padding: .75em 1.25em !important;
 }
 
+:root {
+    --mkapi-node-border: #559bc9;
+    --mkapi-node-background: #f0f6fa;
+    --mkapi-object-container-background: #b4d4e9;
+    --mkapi-item-name: #555;
+    --mkapi-section-name: #333;
+    --mkapi-package: #111;
+    --mkapi-module: #222;
+    --mkapi-code-bg: #f0f6fa;
+    --mkapi-example-bg: #eee;
+    --mkapi-object-sig: #2980B9;
+    --mkapi-type: #8888EE;
+}
+
+body[data-md-color-scheme="slate"] {
+    --mkapi-node-border: #5768c3;
+    --mkapi-node-background: #555f66;
+    --mkapi-object-container-background: #445288;
+    --mkapi-item-name: #d9e1e9;
+    --mkapi-section-name: #e4e4e4;
+    --mkapi-package: #fff;
+    --mkapi-module: #eee;
+    --mkapi-code-bg: #445288;
+    --mkapi-example-bg: #3a3a3a;
+    --mkapi-object-sig: #a3c3f3;
+    --mkapi-type: #c5c5ee;
+}
+
+.md-typeset code {
+    background-color: var(--mkapi-code-bg);
+}
+
+.mkapi-node .function code,
+.mkapi-node .method code,
+.mkapi-node .class code,
+.mkapi-node .classmethod code,
+.mkapi-node .staticmethod code,
+.mkapi-node .property code,
+.mkapi-node .attribute code,
+.mkapi-node .generator code {
+    color: var(--mkapi-item-name);
+}
+
+div.mkapi-section-body.example, div.mkapi-section-body.examples {
+    background-color: var(--mkapi-example-bg);
+}
+
+.mkapi-item-type {
+    color: var(--mkapi-type);
+}
+
+.mkapi-node .mkapi-object-body.top code.mkapi-object-parenthesis, .mkapi-node .mkapi-object-body.top code.mkapi-object-signature {
+    color: var(--mkapi-object-sig);
+}
+
 .mkapi-docstring{
     line-height: 1;
 }
 .mkapi-node {
-    background-color: #f0f6fa;
-    border-top: 3px solid #559bc9;
+    background-color: var(--mkapi-node-background);
+    border-top: 3px solid var(--mkapi-node-border);
 }
 .mkapi-node .mkapi-object-container {
-    background-color: #b4d4e9;
+    background-color: var(--mkapi-object-container-background);
     padding: .12em .4em;
 }
 .mkapi-node .mkapi-object-container .mkapi-object.code {
@@ -64,6 +119,9 @@ div.document ul {
 }
 .mkapi-docstring .md-typeset pre>code {
     font-size: 0.1rem !important;
+}
+.mkapi-section-name {
+    color: var(--mkapi-section-name);
 }
 .mkapi-section-name.bases {
     margin-top: .2em;
@@ -109,9 +167,9 @@ div.document ul {
     font-style: normal;
     margin-right: 16px;
 }
-.mkapi-node .mkapi-item-name {
+.mkapi-node code.mkapi-item-name {
     font-size: .7rem !important;
-    color: #555;
+    color: var(--mkapi-item-name);
     padding-right: 4px;
 }
 .md-typeset {
@@ -120,8 +178,7 @@ div.document ul {
 }
 .mkapi-object-kind.package.top {
     font-size: .8rem !important;
-    color: #111;
-
+    color: var(--mkapi-package);
 }
 .mkapi-object.package.top > h2 {
     font-size: .8rem !important;
@@ -132,7 +189,7 @@ div.document ul {
 }
 .mkapi-object-kind.module.top {
     font-size: .75rem !important;
-    color: #222;
+    color: var(--mkapi-module);
 }
 
 .mkapi-object-body.module.top * {

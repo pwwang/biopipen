@@ -14,6 +14,7 @@ def run_expect(genes, infmt, outfmt, notfound, expect, species):
     out = gene_name_conversion(genes, species, infmt, outfmt, notfound)
     assert out[outfmt].tolist() == expect
 
+
 def run(genes, infmt, outfmt, notfound, expect, species="human"):
     print(f">>> TESTING {genes} - {infmt} - {outfmt} - {notfound} ")
     if isinstance(expect, Exception):
@@ -23,6 +24,7 @@ def run(genes, infmt, outfmt, notfound, expect, species="human"):
         run_expect(genes, infmt, outfmt, notfound, expect, species)
     print(">>> PASSED")
     print(">>> ")
+
 
 if __name__ == "__main__":
     run(

@@ -459,6 +459,8 @@ do_exprs = function() {
     if (!is.null(genes) && is.character(genes) && file.exists(genes)) {
         genes = read.table(genes, header = FALSE, sep = "\t", row.names = NULL, check.names = FALSE)
         genes = genes[,1,drop=TRUE]
+    } else if (!is.null(genes) && is.character(genes)) {
+        genes = trimws(strsplit(genes, ",")[[1]])
     }
 
     exprplots = names(envs$exprs)

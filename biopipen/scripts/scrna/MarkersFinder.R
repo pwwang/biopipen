@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/mutate_helpers.R")
 
 library(rlang)
 library(dplyr)
@@ -58,23 +59,21 @@ if (is.null(cases) || length(cases) == 0) {
         )
     )
 } else {
-    for (case in names(cases)) {
-        if (is.null(cases[[case]]$ident.1)) cases[[case]]$ident.1 <- ident.1
-        if (is.null(cases[[case]]$ident.2)) cases[[case]]$ident.2 <- ident.2
-        if (is.null(cases[[case]]$group.by)) cases[[case]]$group.by <- group.by
-        if (is.null(cases[[case]]$each)) cases[[case]]$each <- each
-        if (is.null(cases[[case]]$prefix_each)) cases[[case]]$prefix_each <- prefix_each
-        if (is.null(cases[[case]]$section)) cases[[case]]$section <- section
-        if (is.null(cases[[case]]$dbs)) cases[[case]]$dbs <- dbs
-        if (is.null(cases[[case]]$sigmarkers)) {
-            cases[[case]]$sigmarkers <- sigmarkers
-        }
-        if (is.null(cases[[case]]$rest)) cases[[case]]$rest <- rest
-        for (key in names(cases[[case]]$rest)) {
-            if (is.null(cases[[case]]$rest[[key]])) {
-                cases[[case]]$rest[[key]] <- rest[[key]]
-            }
-        }
+    for (name in names(cases)) {
+        case <- list_setdefault(
+            cases[[name]],
+            ident.1 = ident.1,
+            ident.2 = ident.2,
+            group.by = group.by,
+            each = each,
+            prefix_each = prefix_each,
+            section = section,
+            dbs = dbs,
+            sigmarkers = sigmarkers,
+            rest = rest
+        )
+        case$rest <- list_setdefault(case$rest, rest)
+        cases[[name]] <- case
     }
 }
 # Expand each and with ident.1
@@ -121,12 +120,12 @@ for (name in names(cases)) {
     } else {
         eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
         for (each in eachs) {
-            by = paste0(".", name, "_", each)
+            by = make.names(paste0(".", name, "_", each))
             srtobj@meta.data = srtobj@meta.data %>% mutate(
                 !!sym(by) := if_else(
                     !!sym(case$each) == each,
                     !!sym(case$group.by),
-                    NA_character_
+                    NA
                 )
             )
             case$group.by = by
@@ -142,12 +141,8 @@ for (name in names(cases)) {
                     newcases[[key]]$ident.1 = ident
                 }
             } else {
-                key = if (case$prefix_each) {
-                    paste0(case$each, "-", each, ":", name)
-                } else {
-                    paste0(each, ":", name)
-                }
-                newcase[[key]] <- case
+                key = paste0(case$each, ":", name, "(", each, ")")
+                newcases[[key]] <- case
             }
         }
     }
@@ -243,9 +238,9 @@ do_case <- function(casename) {
     # sigmarkers
     # rest
     args <- case$rest
-    args$group.by = case$group.by
-    args$ident.1 = case$ident.1
-    args$ident2. = case$ident.2
+    args$group.by <- case$group.by
+    args$ident.1 <- case$ident.1
+    args$ident.2 <- case$ident.2
     idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique()
     if (anyNA(idents)) {
         args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))

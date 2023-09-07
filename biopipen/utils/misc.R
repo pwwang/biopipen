@@ -1,11 +1,11 @@
 # Misc utilities for R
 
-.isBQuoted = function(x) {
+.isBQuoted <- function(x) {
     # Check if x is backtick-quoted
     nchar(x) >= 2 && x[1] == "`" && x[length(x)] == "`"
 }
 
-bQuote = function(x) {
+bQuote <- function(x) {
     if (.isBQuoted(x)) {
         x
     } else {
@@ -68,7 +68,7 @@ do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {
 
 }
 
-list_setdefault = function(x, ...) {
+list_setdefault <- function(x, ...) {
     # Set the default value of a key in a list
     if (is.null(x)) {
         x <- list()
@@ -76,16 +76,17 @@ list_setdefault = function(x, ...) {
     if (!is.list(x)) {
         stop("list_setdefault: list expected")
     }
-    y = list(...)
+    y <- list(...)
     for (k in names(y)) {
-        if (is.null(x[[k]])) {
-            x[[k]] <- y[[k]]
+        if (!k %in% names(x)) {
+            # x[[k]] <- y[[k]]
+            x <- c(x, y[k])
         }
     }
     x
 }
 
-list_update = function(x, y) {
+list_update <- function(x, y) {
     # Update the value in x from y
     if (is.null(x)) {
         x <- list()
@@ -94,7 +95,7 @@ list_update = function(x, y) {
         y <- list()
     }
     for (k in names(y)) {
-        x[[k]] <- y[[k]]
+        x <- c(x, y[k])
     }
     x
 }

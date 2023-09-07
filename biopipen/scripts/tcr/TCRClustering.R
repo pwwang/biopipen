@@ -15,9 +15,7 @@ outfile = {{out.immfile | r}}
 clusterfile = {{out.clusterfile | r}}
 tool = {{envs.tool | r}}
 python = {{envs.python | r}}
-tmpdir = {{envs.tmpdir | r}}
 on_multi = {{envs.on_multi | r}}
-giana_repo = {{envs.giana_repo | r}}
 args = {{envs.args | r}}
 
 setwd(outdir)
@@ -120,19 +118,19 @@ run_clustcr = function() {
 }
 
 prepare_giana = function() {
-    giana_srcdir = file.path(tmpdir, "GIANA_SOURCE")
-    dir.create(giana_srcdir, showWarnings = FALSE)
+    giana_srcdir = "{{biopipen_dir}}/scripts/tcr/GIANA"
 
-    giana_file = file.path(giana_srcdir, "GIANA.py")
-    giana4_file = file.path(giana_srcdir, "GIANA4.py")
-    giana_query = file.path(giana_srcdir, "query.py")
-    giana_trbv = file.path(giana_srcdir, "Imgt_Human_TRBV.fasta")
-    if (!file.exists(giana_file)) {
-        download.file(paste(giana_repo, "GIANA4.1.py", sep="/"), giana_file)
-        download.file(paste(giana_repo, "GIANA4.py", sep="/"), giana4_file)
-        download.file(paste(giana_repo, "query.py", sep="/"), giana_query)
-        download.file(paste(giana_repo, "Imgt_Human_TRBV.fasta", sep="/"), giana_trbv)
-    }
+    # # The source code of GIANA is downloaded now to giana_srcdir
+    # giana_file = file.path(giana_srcdir, "GIANA.py")
+    # giana4_file = file.path(giana_srcdir, "GIANA4.py")
+    # giana_query = file.path(giana_srcdir, "query.py")
+    # giana_trbv = file.path(giana_srcdir, "Imgt_Human_TRBV.fasta")
+    # if (!file.exists(giana_file)) {
+    #     download.file(paste(giana_repo, "GIANA4.1.py", sep="/"), giana_file)
+    #     download.file(paste(giana_repo, "GIANA4.py", sep="/"), giana4_file)
+    #     download.file(paste(giana_repo, "query.py", sep="/"), giana_query)
+    #     download.file(paste(giana_repo, "Imgt_Human_TRBV.fasta", sep="/"), giana_trbv)
+    # }
 
     giana_srcdir
 }

@@ -32,6 +32,7 @@ if (is.null(celltypes) || length(celltypes) == 0) {
     }
     names(celltypes) = idents
 
+    sobj$seurat_clusters_old = Idents(sobj)
     celltypes$object = sobj
     sobj = do_call(RenameIdents, celltypes)
     sobj$seurat_clusters = Idents(sobj)

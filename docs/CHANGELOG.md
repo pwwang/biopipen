@@ -1,3 +1,30 @@
+## 0.16.1
+
+- 🚨 Fix some linting issues
+- ⬆️ Bump pipen-board to 0.11
+- 🎨 [scrna.CellTypeAnnotation] Rename `seurat_clusters.old` to `seurat_clusters_old` to save the old clusters for sctype
+- 🐛 [scrna.CellTypeAnnotation] Fix saving annotated cell type to text file for sccatch
+- 🎨 [scrna.CellTypeAnnotation] Save old clustering to `seurat_clusters_old` for sccatch
+- 🎨 [scrna.CellTypeAnnotation] Save old clustering to `seurat_clusters_old` for direct method
+- 📝 [scrna.CellTypeAnnotation] Fix links in docs for sccatch
+- ✨ [scrna.SeuratClusterStats] Allow `envs.exprs.genes` to be genes directly (separated by ",")
+- 💄 [docs] Update API doc styles for dark mode
+- ✨ [tcr.TCRClustering] Save the souce code of GIANA with this package
+- ✨ [tcr.TCRClusteringStats] Allow multiple cases
+- 📝 [tcr.ImmunarchLoading] Update docstring
+- ✨ [utils] Add mutate_helpers to identify expanded, collapsed, emerged and vanished clones
+- 🐛 [utils/misc.R] Fix list_setdefault and list_update when value is NULL
+- 🐛 [scrna.TopExpressionGenes] Fix expanding cases
+- ✨ [scrna.SeuratClustering] Allow envs.FindIntegrationAnchors.reference to be a string separated by comma
+- ✨ [scrna.ScFGSEA] Allow multiple cases
+- ✨ [scrna.MarkersFinder] Allow to use mutate_helpers in envs.mutaters
+- 🎨 [scrna.CellsDistribution] Redesign envs to support multiple cases
+- 💄 [tcr.Immunarch] Fix report generation for rarefraction analysis
+- 🔧 [tcr.Immunarch] Change envs to be less error prone
+- 💄 [scrna.CellsDistribution] Fix reports
+- 💄 [scrna.ScFGSEA] Fix reports
+- ✅ [tests] Fix tests
+
 ## 0.16.0
 
 - ⬆️ Bump pipen-board to 0.10

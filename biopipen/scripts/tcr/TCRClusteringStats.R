@@ -8,12 +8,52 @@ library(ggprism)
 
 immfile = {{in.immfile | quote}}
 outdir = {{out.outdir | quote}}
-envs = {{envs | r}}
+cluster_size_envs = {{envs.cluster_size | r}}
+shared_clusters_envs = {{envs.shared_clusters | r}}
+sample_diversity_envs = {{envs.sample_diversity | r}}
 
+expand_cases = function(envs) {
+    cases = envs$cases
+    envs$cases = NULL
+    if (is.null(cases) || length(cases) == 0) {
+        cases = list(DEFAULT = list())
+    }
+    for (name in names(cases)) {
+        case = cases[[name]]
+        for (argname in names(envs)) {
+            if (is.null(case[[argname]])) {
+                case[[argname]] = envs[[argname]]
+            }
+        }
+        for (n in c("height", "width", "res")) {
+            if (is.null(case$devpars[[n]])) {
+                case$devpars[[n]] = envs$devpars[[n]]
+            }
+        }
+        if (is.null(case$devpars$height)) {
+            case$devpars$height = 1000
+        }
+        if (is.null(case$devpars$width)) {
+            case$devpars$width = 1000
+        }
+        if (is.null(case$devpars$res)) {
+            case$devpars$res = 100
+        }
+        cases[[name]] = case
+    }
 
-cluster_size_distribution = function() {
-    odir = file.path(outdir, "ClusterSizeDistribution")
-    dir.create(odir, showWarnings = FALSE)
+    return (cases)
+}
+
+cluster_size_cases = expand_cases(cluster_size_envs)
+shared_clusters_cases = expand_cases(shared_clusters_envs)
+sample_diversity_cases = expand_cases(sample_diversity_envs)
+
+cluster_size_distribution = function(name) {
+    print(paste0("- Working on cluster size distribution: ", name))
+    odir = file.path(outdir, "ClusterSizeDistribution", name)
+    dir.create(odir, showWarnings = FALSE, recursive = TRUE)
+    case = cluster_size_cases[[name]]
 
     clsizes = NULL
     for (sample in names(immdata$data)) {
@@ -30,25 +70,26 @@ cluster_size_distribution = function() {
     plotGG(
         clsizes,
         "histogram",
-        args = list(mapping = aes(x=n, fill=Sample)),
+        args = list(mapping = aes_string(x="n", fill=case$by)),
         ggs = c(
             "theme_prism()",
             "scale_y_continuous(trans='log10')",
             "labs(x='TCR cluster size', y='Count')"
         ),
-        devpars = list(
-            res = 100,
-            height = 1000,
-            width = 1000 + ceiling(length(immdata$data) / 16) * 150
-        ),
+        devpars = case$devpars,
         outfile = outplot
     )
 }
 
+shared_clusters = function(name) {
+    print(paste0("- Working on shared clusters: ", name))
+    odir = file.path(outdir, "SharedClusters", name)
+    dir.create(odir, showWarnings = FALSE, recursive = TRUE)
+    case = shared_clusters_cases[[name]]
+    if (!is.null(case$grouping)) {
+        return(shared_clusters_by_grouping(name))
+    }
 
-shared_clusters = function() {
-    odir = file.path(outdir, "SharedClusters")
-    dir.create(odir, showWarnings = FALSE)
     tcr_clusters = list()
     samples = names(immdata$data)
     for (sample in samples) {
@@ -73,11 +114,11 @@ shared_clusters = function() {
         row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t"
     )
 
-    if (is.null(envs$shared_clusters$heatmap_meta) || length(envs$shared_clusters$heatmap_meta) == 0) {
+    if (is.null(case$heatmap_meta) || length(case$heatmap_meta) == 0) {
         anno = NULL
     } else {
-        anno = as.list(immdata$meta[, heatmap_meta, drop=FALSE])
-        anno = do_call(HeatmapAnnotation, anno)
+        anno = as.list(immdata$meta[, case$heatmap_meta, drop=FALSE])
+        anno = do_call(ComplexHeatmap::HeatmapAnnotation, anno)
     }
 
     # Plot heatmap
@@ -86,30 +127,26 @@ shared_clusters = function() {
         args = list(
             name = "Shared TCR Clusters",
             col = c("#ffe1e1", "red3"),
-            cluster_rows = FALSE,
+            cluster_columns = FALSE,
             top_annotation = anno,
             cell_fun = if (
-                is.null(envs$shared_clusters$numbers_on_heatmap) || !envs$shared_clusters$numbers_on_heatmap
+                is.null(case$numbers_on_heatmap) || !case$numbers_on_heatmap
             ) NULL else function(j, i, x, y, width, height, fill) {
                 grid.text(plotdata[samples[i], samples[j]], x, y, gp = gpar(fontsize = 10))
             }
         ),
-        devpars = list(res=100, width=1000, height=1000),
+        devpars = case$devpars,
         outfile = file.path(odir, "shared_clusters.png")
 
     )
 }
 
-
-shared_clusters_by_grouping = function() {
-    if (is.null(envs$shared_clusters$grouping)) {
-        return (NULL)
-    }
-    odir = file.path(outdir, "SharedClustersByGrouping")
-    dir.create(odir, showWarnings = FALSE)
+shared_clusters_by_grouping = function(name) {
+    odir = file.path(outdir, "SharedClusters", name)
+    case = shared_clusters_cases[[name]]
 
     data = list()
-    grouping = envs$shared_clusters$grouping
+    grouping = case$grouping
     groups = immdata$meta %>% pull(grouping) %>% unique()
     sample_groups = list()
     for (group in groups) {
@@ -130,52 +167,53 @@ shared_clusters_by_grouping = function() {
         data[[group]] = unique(c(data[[group]], clusters))
     }
 
-    outfile = file.path(odir, "shared_clusters_by_grouping.png")
+    outfile = file.path(odir, "shared_clusters.png")
     plotVenn(
         data,
         ggs = 'ggtitle("Shared TCR Clusters")',
+        devpars = case$devpars,
         outfile = outfile
     )
 }
 
 
-sample_diversity = function() {
-    odir = file.path(outdir, "SampleDiversity")
-    dir.create(odir, showWarnings = FALSE)
+sample_diversity = function(name) {
+    print(paste0("- Working on sample diversity: ", name))
+    odir = file.path(outdir, "SampleDiversity", name)
+    dir.create(odir, showWarnings = FALSE, recursive = TRUE)
+    case = sample_diversity_cases[[name]]
+
     data = list()
     for (sample in names(immdata$data)) {
         data[[sample]] = immdata$data[[sample]] %>% mutate(CDR3.aa = TCR_Cluster)
     }
-    for (method in names(envs$sample_diversity)) {
-        outfile = file.path(odir, paste0("diversity_", method, ".txt"))
-        outplot = file.path(odir, paste0("diversity_", method, ".png"))
-        div = repDiversity(data, .method = method)
-        write.table(div, outfile, row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t")
-        if (method == "gini") {
-            div = as.data.frame(div) %>% rownames_to_column("Sample")
-            colnames(div)[2] = "gini"
-            div = left_join(div, immdata$meta, by="Sample")
-            geom = "col"
-            mapping = aes_string(
-                x = "Sample",
-                y = "gini",
-                fill = "Sample"
-            )
-            ggs = c(
-                "theme_prism(axis_text_angle = 90)",
-                "labs(title='Gini coefficient', subtitle='Sample diversity estimation using the Gini coefficient')"
-            )
-            if (is.null(envs$sample_diversity[[method]]) || length(envs$sample_diversity[[method]]) == 0) {
+    outfile = file.path(odir, "diversity.txt")
+    outplot = file.path(odir, "diversity.png")
+    div = repDiversity(data, .method = case$method)
+    write.table(div, outfile, row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t")
+    if (case$method == "gini") {
+        div = as.data.frame(div) %>% rownames_to_column("Sample")
+        colnames(div)[2] = "gini"
+        div = left_join(div, immdata$meta, by="Sample")
+        geom = "col"
+        mapping = aes_string(
+            x = "Sample",
+            y = "gini",
+            fill = "Sample"
+        )
+        ggs = c(
+            "theme_prism(axis_text_angle = 90)",
+            "labs(title='Gini coefficient', subtitle='Sample diversity estimation using the Gini coefficient')"
+        )
+        if (is.null(case$by) || length(case$by) == 0) {
 
-            } else if (length(envs$sample_diversity[[method]]$by) == 1) {
+        } else {
+            case$by = trimws(strsplit(case$by, ",")[[1]])
+            if (length(case$by) == 1) {
                 geom = "boxplot"
-                mapping = aes_string(
-                    x = envs$sample_diversity[[method]]$by,
-                    y = "gini",
-                    fill = envs$sample_diversity[[method]]$by
-                )
+                mapping = aes_string(x = case$by, y = "gini", fill = case$by)
             } else {
-                div = div %>% unite("Group", all_of(envs$sample_diversity[[method]]$by), sep="; ")
+                div = div %>% unite("Group", all_of(case$by), sep="; ")
                 geom = "boxplot"
                 mapping = aes_string(
                     x = "Group",
@@ -183,28 +221,33 @@ sample_diversity = function() {
                     fill = "Group"
                 )
             }
-            plotGG(
-                div,
-                geom,
-                args = list(mapping = mapping),
-                ggs = ggs,
-                outfile = outplot
-            )
-
-        } else {
-            if (is.null(envs$sample_diversity[[method]]) || length(envs$sample_diversity[[method]]) == 0) {
-                p = vis(div)
-            } else {
-                p = vis(
-                    div,
-                    .by = envs$sample_diversity[[method]]$by,
-                    .meta = immdata$meta
-                )
-            }
-            png(outplot, width=1000, height=1000, res=100)
-            print(p)
-            dev.off()
         }
+
+        plotGG(
+            div,
+            geom,
+            args = list(mapping = mapping),
+            ggs = ggs,
+            devpars = case$devpars,
+            outfile = outplot
+        )
+
+    } else {
+        if (is.null(case$by) || length(case$by) == 0) {
+            p = vis(div)
+        } else {
+            p = vis(
+                div,
+                .by = trimws(strsplit(case$by, ",")[[1]]),
+                .meta = immdata$meta
+            )
+        }
+        png(
+            outplot,
+            width=case$devpars$width, height=case$devpars$height, res=case$devpars$res
+        )
+        print(p)
+        dev.off()
     }
 }
 
@@ -216,14 +259,11 @@ sample_diversity = function() {
     immdata = readRDS(immfile)
 
     # Cluster size distribution
-    cluster_size_distribution()
+    sapply(names(cluster_size_cases), cluster_size_distribution)
 
     # Shared clusters
-    shared_clusters()
-
-    # Shared clusters by grouping
-    shared_clusters_by_grouping()
+    sapply(names(shared_clusters_cases), shared_clusters)
 
     # Diversity
-    sample_diversity()
+    sapply(names(sample_diversity_cases), sample_diversity)
 }

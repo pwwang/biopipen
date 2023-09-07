@@ -38,30 +38,21 @@ class PrepareSeurat(Proc):
 class CellsDistribution(CellsDistribution):
     requires = PrepareSeurat
     envs = {
-        "cases": {
-            "Case1": {
-                "filter": "Responder != 'Other'",
-                "mutaters": {
-                    "Responder": """
-                        case_when(
-                            response == 1 ~ "CONTROL",
-                            response == 2 ~ "Responder",
-                            response == 3 ~ "NonResponder",
-                            TRUE ~ "Other"
-                        )
-                    """
-                },
-                "group": {
-                    "by": "Responder",
-                    "order": ["CONTROL", "Responder", "NonResponder"],
-                },
-                "cells": {
-                    "by": "Clone",
-                    "n": 5,
-                    "orderby": "desc(CloneSize)"
-                },
-            }
-        }
+        "mutaters": {
+            "Responder": """
+                case_when(
+                    response == 1 ~ "CONTROL",
+                    response == 2 ~ "Responder",
+                    response == 3 ~ "NonResponder",
+                    TRUE ~ NA
+                )
+            """
+        },
+        "group_by": "Responder",
+        "group_order": ["CONTROL", "Responder", "NonResponder"],
+        "cells_by": "Clone",
+        "cells_n": 5,
+        "cells_orderby": "desc(CloneSize)",
     }
 
 

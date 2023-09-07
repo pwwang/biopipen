@@ -4,19 +4,24 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-{%- for casefile in job.out.outdir | glob: "*.png" -%}
-<h{{h}}>{{casefile | stem | escape}}</h{{h}}>
-<Image src={{casefile | quote}} />
-{%- endfor -%}
+    {%- for secdir in job.out.outdir | glob: "*" -%}
+        {%- set sec = secdir | basename -%}
+
+        {%- if sec != "DEFAULT" -%}
+            <h{{h}}>{{sec | escape}}</h{{h}}>
+        {%- else -%}
+            {%- set h = h - 1 -%}
+        {%- endif -%}
+
+        {%- for plotfile in secdir | glob: "*.png" -%}
+            <h{{h+1}}>{{ plotfile | stem }}</h{{h+1}}>
+            <Image src={{plotfile | quote}} />
+        {%- endfor -%}
+    {%- endfor -%}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-{%- if job.in.casefile -%}
-{%-     set cases = job.in.casefile | config: "toml" -%}
-{%- else -%}
-{%-     set cases = envs -%}
-{%- endif -%}
-<h1>{{cases | attr: "name" | escape}}</h1>
+<h1>{{job.in.srtobj | stem0 | escape}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}
