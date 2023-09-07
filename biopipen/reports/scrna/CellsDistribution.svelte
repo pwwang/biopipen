@@ -14,7 +14,7 @@
         {%- endif -%}
 
         {%- for plotfile in secdir | glob: "*.png" -%}
-            <h{{h+1}}>{{ plotfile | stem }}</h{{h+1}}
+            <h{{h+1}}>{{ plotfile | stem }}</h{{h+1}}>
             <Image src={{plotfile | quote}} />
         {%- endfor -%}
     {%- endfor -%}
