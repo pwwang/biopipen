@@ -29,21 +29,10 @@ class PrepareSeurat(Proc):
 class ScFGSEA(ScFGSEA):
     requires = PrepareSeurat
     envs = {
-        "name": "GSEA analysis",
-        "cases": {
-            "Male_vs_Female-Cluster": {
-                "percluster": True,
-                "ident.1": "g1",
-                "ident.2": "g2",
-                "group.by": "Group",
-                "mutaters": {
-                    "Group": (
-                        'if_else(seurat_clusters != "{ident}", '
-                        'NA_character_, groups)'
-                    )
-                },
-            }
-        },
+        "each": "seurat_clusters",
+        "ident-1": "g1",
+        "ident-2": "g2",
+        "group-by": "groups",
         "gmtfile": Path(__file__).parent.parent.parent.joinpath(
             "data/reference/KEGG_metabolism.gmt"
         ),

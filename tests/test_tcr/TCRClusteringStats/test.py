@@ -62,6 +62,7 @@ def testing(pipen):
                 "output",
                 "immdata.tcrclusters_stats",
                 "SharedClusters",
+                "DEFAULT",
                 "shared_clusters.txt",
             )
         )
