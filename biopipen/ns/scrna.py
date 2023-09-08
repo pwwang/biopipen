@@ -410,7 +410,10 @@ class CellsDistribution(Proc):
         "cases": {},
     }
     script = "file://../scripts/scrna/CellsDistribution.R"
-    plugin_opts = {"report": "file://../reports/scrna/CellsDistribution.svelte"}
+    plugin_opts = {
+        "report": "file://../reports/scrna/CellsDistribution.svelte",
+        "report_paging": 8,
+    }
 
 
 class SeuratMetadataMutater(Proc):
@@ -627,7 +630,10 @@ class MarkersFinder(Proc):
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
-    plugin_opts = {"report": "file://../reports/scrna/MarkersFinder.svelte"}
+    plugin_opts = {
+        "report": "file://../reports/scrna/MarkersFinder.svelte",
+        "report_paging": 8,
+    }
 
 
 class TopExpressingGenes(Proc):
@@ -690,6 +696,7 @@ class TopExpressingGenes(Proc):
     }
     plugin_opts = {
         "report": "file://../reports/scrna/TopExpressingGenes.svelte",
+        "report_paging": 8,
     }
 
 
@@ -1039,7 +1046,10 @@ class ScFGSEA(Proc):
         "cases": {},
     }
     script = "file://../scripts/scrna/ScFGSEA.R"
-    plugin_opts = {"report": "file://../reports/scrna/ScFGSEA.svelte"}
+    plugin_opts = {
+        "report": "file://../reports/scrna/ScFGSEA.svelte",
+        "report_paging": 8,
+    }
 
 
 class CellTypeAnnotation(Proc):
