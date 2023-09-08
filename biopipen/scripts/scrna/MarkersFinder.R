@@ -46,7 +46,7 @@ if (!is.null(mutaters) && length(mutaters)) {
 print("- Expanding cases ...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
-        Cluster = list(
+        DEFAULT = list(
             ident.1 = ident.1,
             ident.2 = ident.2,
             group.by = group.by,
@@ -128,21 +128,25 @@ for (name in names(cases)) {
                     NA
                 )
             )
-            case$group.by = by
             if (is.null(case$ident.1)) {
                 idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
                 for (ident in idents) {
-                    key = if (case$prefix_each) {
-                        paste0(case$each, "-", each, "-", name, ":", ident)
-                    } else {
-                        paste0(each, "-", name, ":", ident)
+                    kname <- if (name == "DEFAULT") "" else paste0("-", name)
+                    key <- paste0(each, kname, ":", ident)
+                    if (case$prefix_each) {
+                        key <- paste0(case$each, "-", key)
                     }
                     newcases[[key]] <- case
-                    newcases[[key]]$ident.1 = ident
+                    newcases[[key]]$ident.1 <- ident
+                    newcases[[key]]$group.by <- by
                 }
             } else {
-                key = paste0(case$each, ":", name, "(", each, ")")
+                key <- paste0(case$each, ":", each)
+                if (name != "DEFAULT") {
+                    key <- paste0(key, " - ", name)
+                }
                 newcases[[key]] <- case
+                newcases[[key]]$group.by <- by
             }
         }
     }
@@ -157,8 +161,11 @@ cases <- newcases
 #   sig: The expression to filter significant markers
 do_enrich <- function(case, markers, sig) {
     print(paste("  Running enrichment for case:", case))
-    casedir <- file.path(outdir, case)
-    dir.create(casedir, showWarnings = FALSE)
+    parts = strsplit(case, ":")[[1]]
+    sec = parts[1]
+    case = paste0(parts[-1], collapse = ":")
+    casedir <- file.path(outdir, sec, case)
+    dir.create(casedir, showWarnings = FALSE, recursive = TRUE)
     if (nrow(markers) == 0) {
         print(paste("  No markers found for case:", case))
         cat("No markers found.", file = file.path(casedir, "error.txt"))
@@ -251,4 +258,4 @@ do_case <- function(casename) {
     do_enrich(casename, markers, case$sigmarkers)
 }
 
-sapply(names(cases), do_case)
+sapply(sort(names(cases)), do_case)
