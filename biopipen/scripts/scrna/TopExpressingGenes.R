@@ -146,15 +146,18 @@ do_enrich = function(expr, odir) {
 do_case <- function(casename) {
     print(paste("- Running for case:", casename))
     case <- cases[[casename]]
+    parts <- unlist(strsplit(casename, ":"))
+    section <- parts[1]
+    casename <- paste(parts[-1], collapse = ":")
 
     print("  Calculating average expression ...")
     avgexpr <- AverageExpression(srtobj, group.by = case$group.by)$RNA[, case$ident, drop = FALSE]
     avgexpr <- avgexpr[order(-avgexpr), , drop = FALSE]
 
-    odir = file.path(outdir, casename)
+    odir = file.path(outdir, section, casename)
     dir.create(odir, recursive = TRUE, showWarnings = FALSE)
 
     do_enrich(avgexpr, odir)
 }
 
-sapply(names(cases), do_case)
+sapply(sort(names(cases)), do_case)

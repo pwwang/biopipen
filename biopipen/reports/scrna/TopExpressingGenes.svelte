@@ -1,4 +1,5 @@
 {% from "utils/misc.liq" import report_jobs -%}
+{% from "utils/gsea.liq" import enrichr_report -%}
 <script>
     import { Image, DataTable } from "$libs";
     import { Tabs, Tab, TabContent, InlineNotification } from "$ccs";
@@ -6,66 +7,49 @@
 
 
 {%- macro report_job(job, h=1) -%}
-  {% set cases = {} %}
-  {% for casedir in job.out.outdir | glob: "*:*" %}
-    {% set case = casedir | basename %}
-    {% set section = case | split: ":" | first %}
-    {% set name = case | split: ":" | last %}
-    {% set _ = cases.setdefault(section, []) %}
-    {% set _ = cases[section].append(name) %}
-  {% endfor %}
+    {%- set secdirs = job.out.outdir | glob: "*" -%}
+    {%- if len(secdirs) == 1 -%}
+        {%- set secname = secdirs | first | basename -%}
+        {%- for casedir in secdirs[0] | glob: "*" -%}
+            {%- if secname == "DEFAULT" -%}
+                <h{{h}}>{{casedir | basename | escape}}</h{{h}}>
+            {%- else -%}
+                <h{{h}}>{{secname | escape}} - {{casedir | basename | escape}}</h{{h}}>
+            {%- endif -%}
 
-  {% for section, names in cases.items() %}
-    {% if section != "DEFAULT" or len(cases) > 1 %}
-    <h{{h}}>{{section}}</h{{h}}>
-    {% else %}
-    {% set h = h - 1 %}
-    {% endif %}
+            <h{{h+1}}>Markers</h{{h+1}}>
+            <DataTable
+                src={{ casedir | joinpaths: "exprn.txt" | quote }}
+                data={ {{ casedir | joinpaths: "exprn.txt" | datatable: sep="\t", nrows=100 }} }
+                />
 
-    {% for name in names %}
-      {% set casedir = job.out.outdir | joinpaths: section + ":" + name %}
-      <h{{h+1}}>{{name}}</h{{h+1}}>
-      {% if casedir | joinpaths: "error.txt" | exists %}
-        <InlineNotification
-          hideCloseButton
-          lowContrast
-          kind="warning"
-          subtitle={{ casedir | joinpaths: "error.txt" | read | quote }}
-          />
-      {% else %}
-        <h{{h+2}}>Markers</h{{h+2}}>
-        <DataTable
-            src={{ casedir | joinpaths: "exprn.txt" | quote }}
-            data={ {{ casedir | joinpaths: "exprn.txt" | datatable: sep="\t" }} }
-            />
+            <h{{h+1}}>Enrichment analysis</h{{h+1}}>
+            {{ enrichr_report(casedir) }}
 
-        <h{{h+2}}>Enrichment analysis</h{{h+2}}>
-        <Tabs>
-            {% for enrtxt in casedir | glob: "Enrichr-*.txt"  %}
-              {% set db = enrtxt | stem | replace: "Enrichr-", "" %}
-              <Tab label="{{db}}" title="{{db}}" />
-            {% endfor %}
-            <div slot="content">
-                {% for enrtxt in casedir | glob: "Enrichr-*.txt" %}
-                  {% set db = enrtxt | stem | replace: "Enrichr-", "" %}
-                  <TabContent>
-                      <Image src={{casedir | joinpaths: "Enrichr-" + db + ".png" | quote}} />
-                      <DataTable
-                          src={{ enrtxt | quote }}
-                          data={ {{ enrtxt | datatable: sep="\t", nrows=100 }} }
-                          />
-                  </TabContent>
-                {% endfor %}
-            </div>
-        </Tabs>
-      {% endif %}
-    {% endfor %}
-  {% endfor %}
+        {%- endfor -%}
+    {%- else -%}
+        {%- for secdir in secdirs -%}
+            {%- set sec = secdir | basename -%}
+            <h{{h}}>{{sec | escape}}</h{{h}}>
+            {%- for casedir in secdir | glob: "*" -%}
+                <h{{h+1}}>{{casedir | basename | escape}}</h{{h+1}}>
+
+                <h{{h+2}}>Markers</h{{h+2}}>
+                <DataTable
+                    src={{ casedir | joinpaths: "exprn.txt" | quote }}
+                    data={ {{ casedir | joinpaths: "exprn.txt" | datatable: sep="\t", nrows=100 }} }
+                    />
+
+                <h{{h+2}}>Enrichment analysis</h{{h+2}}>
+                {{ enrichr_report(casedir) }}
+
+            {%- endfor -%}
+        {%- endfor -%}
+    {%- endif -%}
 {%- endmacro -%}
 
-
 {%- macro head_job(job) -%}
-  <h1>{{job.in.srtobj | stem | escape}}</h1>
+  <h1>{{job.in.srtobj | stem0 | escape}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}
