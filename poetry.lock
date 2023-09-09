@@ -853,13 +853,13 @@ xqute = ">=0.2.4,<0.3.0"
 
 [[package]]
 name = "pipen-annotate"
-version = "0.9.1"
+version = "0.9.2"
 description = "Use docstring to annotate pipen processes"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_annotate-0.9.1-py3-none-any.whl", hash = "sha256:d59a2cad34f4ce7bd8f0dba5c4ca43d5c128328685dab742628705dc2bb11732"},
-    {file = "pipen_annotate-0.9.1.tar.gz", hash = "sha256:a04a851fa11d2b9c3edca860203084719465d160b558576bb29c23079ee387dc"},
+    {file = "pipen_annotate-0.9.2-py3-none-any.whl", hash = "sha256:1b8f2746fcda9534d9e26d6ce8e8529e8022e134af9132b63e5ee431ad6fee38"},
+    {file = "pipen_annotate-0.9.2.tar.gz", hash = "sha256:80b637ae112816d7f13b1389720c4e7cb79c11140178008027817a731d075c0e"},
 ]
 
 [package.dependencies]
@@ -881,13 +881,13 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.11.0"
+version = "0.11.1"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.11.0-py3-none-any.whl", hash = "sha256:3f4be40319059c489f861f543f010bb4e60c4dfaa3b00d42ad3a1c562a26c549"},
-    {file = "pipen_board-0.11.0.tar.gz", hash = "sha256:01c805f781b30672ae7cd72069fcc5df1c983a8a2b36b996572ee6dd6e07302a"},
+    {file = "pipen_board-0.11.1-py3-none-any.whl", hash = "sha256:9866e6a62ea36466530f45ab493bbfde639a3dca709724cb3c69b9a2a38e981d"},
+    {file = "pipen_board-0.11.1.tar.gz", hash = "sha256:8b6d02f5010deb75510172471ccae3faa84332629fca4a44618b921c2ddde397"},
 ]
 
 [package.dependencies]
@@ -1196,13 +1196,13 @@ unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
 name = "pytz"
-version = "2023.3"
+version = "2023.3.post1"
 description = "World timezone definitions, modern and historical"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytz-2023.3-py2.py3-none-any.whl", hash = "sha256:a151b3abb88eda1d4e34a9814df37de2a80e301e68ba0fd856fb9b46bfbbbffb"},
-    {file = "pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},
+    {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
+    {file = "pytz-2023.3.post1.tar.gz", hash = "sha256:7b4fddbeb94a1eba4b557da24f19fdf9db575192544270a9101d8509f9f43d7b"},
 ]
 
 [[package]]
@@ -1322,13 +1322,13 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "questionary"
-version = "2.0.0"
+version = "2.0.1"
 description = "Python library to build pretty command line user prompts ⭐️"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "questionary-2.0.0-py3-none-any.whl", hash = "sha256:564ae8917f141c9ef0ed131bb2671397fcaba7a901988b39cdbb569b8f29ce94"},
-    {file = "questionary-2.0.0.tar.gz", hash = "sha256:8681b9d9ec751347ab11af2204d063b856d06845b07b442951e081780e8cb8a6"},
+    {file = "questionary-2.0.1-py3-none-any.whl", hash = "sha256:8ab9a01d0b91b68444dff7f6652c1e754105533f083cbe27597c8110ecc230a2"},
+    {file = "questionary-2.0.1.tar.gz", hash = "sha256:bcce898bf3dbb446ff62830c86c5c6fb9a22a54146f0f5597d3da43b10d8fc8b"},
 ]
 
 [package.dependencies]
