@@ -5,19 +5,27 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-{% for secdir in job.out.outdir | glob: "*" %}
-    {%- set section = secdir | basename -%}
-    {%- if section != "DEFAULT" -%}
-    <h{{h}}>{{section}}</h{{h}}>
+    {%- set secdirs = job.out.outdir | glob: "*" -%}
+    {%- if len(secdirs) == 1 -%}
+        {%- set secname = secdirs | first | basename -%}
+        {%- for casedir in secdirs | first | glob: "*" -%}
+            {%- if secname == "DEFAULT" -%}
+                <h{{h}}>{{ casedir | basename | escape }}</h{{h}}>
+            {%- else -%}
+                <h{{h}}>{{secname | escape }} - {{ casedir | basename | escape }}</h{{h}}>
+            {%- endif -%}
+            {{ fgsea_report(casedir, h + 1) }}
+        {%- endfor -%}
     {%- else -%}
-    {%- set h = h - 1 -%}
+        {%- for secdir in secdirs -%}
+            {%- set sec = secdir | basename -%}
+            <h{{h}}>{{sec | escape}}</h{{h}}>
+            {%- for casedir in secdir | glob: "*" -%}
+                <h{{h+1}}>{{casedir | basename | escape}}</h{{h+1}}>
+                {{ fgsea_report(casedir, h + 2) }}
+            {%- endfor -%}
+        {%- endfor -%}
     {%- endif -%}
-    {% for casedir in secdir | glob: "*" %}
-        {%- set case = casedir | basename -%}
-        <h{{h+1}}>{{case}}</h{{h+1}}>
-        {{ fgsea_report(casedir, h + 2) }}
-    {%- endfor -%}
-{% endfor %}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

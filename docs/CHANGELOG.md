@@ -1,3 +1,18 @@
+## 0.16.2
+
+- 🚨 Add .lintr for R lintr
+- ⬆️ Bump pipen-board to 0.11.1
+- 💄 [report] Separate enrichr_report
+- 💄 [scrna.CellsDistribution] Fix reports
+- 💄 [scrna.CellsDistribution] Reorganize report
+- 💄 [scrna.MarkersFinder] Reorganize report
+- 💄 [scrna.ScFGSEA] Reorganize report
+- 💄 [scrna.TopExpressingGenes] Reorganize report
+- 🚨 [scrna.TopExpressingGenes] Fix linting issues in script
+- 🔧 [scrna.MarkersFinder] Set envs.prefix_each to True by default
+- 🔧 [scrna.TopExpressingGenes] Set envs.prefix_each to True by default
+- ✨ [scrna.MetaMarkers] Add proc⏎
+
 ## 0.16.1
 
 - 🚨 Fix some linting issues

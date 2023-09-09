@@ -1,4 +1,4 @@
-{% from "utils/misc.liq" import report_jobs -%}
+{% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from "utils/gsea.liq" import enrichr_report -%}
 <script>
     import { Image, DataTable } from "$libs";
@@ -25,10 +25,21 @@
                     />
             {%- else -%}
                 <h{{h+1}}>Markers</h{{h+1}}>
-                <DataTable
-                    src={{ casedir | joinpaths: "markers.txt" | quote }}
-                    data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
-                    />
+                <Tabs>
+                    <Tab label="Top 10 genes" />
+                    <Tab label="Table of top 100 genes" />
+                    <div slot="content">
+                    <TabContent>
+                        {{ table_of_images(glob(casedir, "plots", "*.png"), col = 4) }}
+                    </TabContent>
+                    <TabContent>
+                        <DataTable
+                            src={{ casedir | joinpaths: "markers.txt" | quote }}
+                            data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
+                            />
+                    </TabContent>
+                    </div>
+                </Tabs>
 
                 <h{{h+1}}>Enrichment analysis</h{{h+1}}>
                 {{ enrichr_report(casedir) }}
@@ -49,10 +60,19 @@
                         />
                 {%- else -%}
                     <h{{h+2}}>Markers</h{{h+2}}>
-                    <DataTable
-                        src={{ casedir | joinpaths: "markers.txt" | quote }}
-                        data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
-                        />
+                    <Tabs>
+                        <Tab label="Top 10 genes" />
+                        <Tab label="Table of top 100 genes" />
+                        <TabContent>
+                            {{ table_of_images(glob(casedir, "plots", "*.png"), col = 4) }}
+                        </TabContent>
+                        <TabContent>
+                            <DataTable
+                                src={{ casedir | joinpaths: "markers.txt" | quote }}
+                                data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
+                                />
+                        </TabContent>
+                    </Tabs>
 
                     <h{{h+2}}>Enrichment analysis</h{{h+2}}>
                     {{ enrichr_report(casedir) }}

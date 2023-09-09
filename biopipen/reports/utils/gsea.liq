@@ -80,3 +80,31 @@ def fgsea_plots(pathways, fgsea_dir):
 {% endfor %}
 
 {%- endmacro -%}
+
+
+{%- macro enrichr_report_script() -%}
+import { Image, DataTable } from "$libs";
+import { Tabs, Tab, TabContent, InlineNotification } from "$ccs";
+{%- endmacro -%}
+
+{%- macro enrichr_report(enrichr_dir) -%}
+<Tabs>
+    {% for enrtxt in enrichr_dir | glob: "Enrichr-*.txt"  %}
+        {% set db = enrtxt | stem | replace: "Enrichr-", "" %}
+        <Tab label="{{db}}" title="{{db}}" />
+    {% endfor %}
+    <div slot="content">
+        {% for enrtxt in enrichr_dir | glob: "Enrichr-*.txt" %}
+            {% set db = enrtxt | stem | replace: "Enrichr-", "" %}
+            <TabContent>
+                <Image src={{enrichr_dir | joinpaths: "Enrichr-" + db + ".png" | quote}} />
+                <DataTable
+                    src={{ enrtxt | quote }}
+                    data={ {{ enrtxt | datatable: sep="\t", nrows=100 }} }
+                    />
+            </TabContent>
+        {% endfor %}
+    </div>
+</Tabs>
+{%- endmacro -%}
+

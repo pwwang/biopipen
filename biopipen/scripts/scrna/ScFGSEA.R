@@ -88,7 +88,11 @@ expand_cases <- function() {
                         !!sym(case$group.by),
                         NA
                     ))
-                key <- paste0(case$each, ":", name, " (", each, ")")
+
+                key <- paste0(case$each, ":", each)
+                if (name != "DEFAULT") {
+                    key <- paste0(key, " - ", name)
+                }
                 outcases[[key]] <- case
                 outcases[[key]]$group.by <- by
             }
@@ -102,10 +106,8 @@ do_case <- function(name, case) {
     section_case <- unlist(strsplit(name, ":"))
     section <- section_case[1]
     casename <- paste(section_case[-1], collapse = ":")
-    sec_dir <- file.path(outdir, section)
-    dir.create(sec_dir, showWarnings = FALSE, recursive = TRUE)
-    case_dir <- file.path(sec_dir, casename)
-    dir.create(case_dir, showWarnings = FALSE)
+    case_dir <- file.path(outdir, section, casename)
+    dir.create(case_dir, showWarnings = FALSE, recursive = TRUE)
 
     # prepare expression matrix
     print("  Preparing expression matrix...")
@@ -143,4 +145,4 @@ do_case <- function(name, case) {
 }
 
 cases <- expand_cases()
-sapply(names(cases), function(name) do_case(name, cases[[name]]))
+sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))

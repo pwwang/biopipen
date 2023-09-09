@@ -5,10 +5,12 @@ library(rlang)
 library(dplyr)
 library(tidyr)
 library(tibble)
+library(Matrix)
 library(Seurat)
 library(enrichR)
 library(ggplot2)
-library(future)
+library(ggprism)
+library(parallel)
 library(tidyseurat)
 
 setEnrichrSite("Enrichr")
@@ -17,137 +19,94 @@ srtfile <- {{ in.srtobj | quote }}
 outdir <- {{ out.outdir | quote }}
 ncores <- {{ envs.ncores | int }}
 mutaters <- {{ envs.mutaters | r }}
-ident.1 <- {{ envs["ident-1"] | r }}
-ident.2 <- {{ envs["ident-2"] | r }}
-group.by <- {{ envs["group-by"] | r }}
+idents <- {{ envs.idents | r }}
+group_by <- {{ envs["group-by"] | r }}
 each <- {{ envs.each | r }}
 prefix_each <- {{ envs.prefix_each | r }}
+p_adjust <- {{ envs.p_adjust | r }}
 section <- {{ envs.section | r }}
 dbs <- {{ envs.dbs | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
-rest <- {{ envs.rest | r: todot="-" }}
-cases <- {{ envs.cases | r: todot="-" }}
+method <- {{ envs.method | r }}
+cases <- {{ envs.cases | r: todot = "-" }}
 
 set.seed(8525)
-if (ncores > 1) {
-    options(future.globals.maxSize = 80000 * 1024^2)
-    plan(strategy = "multicore", workers = ncores)
-}
 
 print("- Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
 print("- Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters)) {
-    srtobj@meta.data <- srtobj@meta.data %>%
-        mutate(!!!lapply(mutaters, parse_expr))
+    srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
 print("- Expanding cases ...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
         DEFAULT = list(
-            ident.1 = ident.1,
-            ident.2 = ident.2,
-            group.by = group.by,
+            idents = idents,
+            group_by = group_by,
             each = each,
             prefix_each = prefix_each,
+            p_adjust = p_adjust,
             section = section,
             dbs = dbs,
             sigmarkers = sigmarkers,
-            rest = rest
+            method = method
         )
     )
 } else {
     for (name in names(cases)) {
         case <- list_setdefault(
             cases[[name]],
-            ident.1 = ident.1,
-            ident.2 = ident.2,
-            group.by = group.by,
+            idents = idents,
+            group_by = group_by,
             each = each,
             prefix_each = prefix_each,
+            p_adjust = p_adjust,
             section = section,
             dbs = dbs,
             sigmarkers = sigmarkers,
-            rest = rest
+            method = method
         )
-        case$rest <- list_setdefault(case$rest, rest)
         cases[[name]] <- case
     }
 }
-# Expand each and with ident.1
-#  list(Cluster0 = list(each = "Sample", group.by = "seurat_clusters", ident.1 = "0"))
-# to
-#  list(
-#   `Sample-Sample1:Cluster0` = list(...),
-#   `Sample-Sample2:Cluster0` = list(...),
-#   ...
-#  )
-# Expand each and without ident.1
-#  list(Cluster = list(each = "Sample", group.by = "seurat_clusters"))
-# to
-#  list(
-#   `Sample-Sample1-Cluster:0` = list(...),
-#   `Sample-Sample1-Cluster:1` = list(...),
-#   ...
-#   `Sample2-Cluster:0` = list(...),
-#   `Sample2-Cluster:1` = list(...),
-#   ...
-#  )
-# If no each, and not ident.1
-#  list(Cluster = list(group.by = "seurat_clusters"))
-# to
-#  list(
-#   `Cluster:0` = list(...),
-#   `Cluster:1` = list(...),
-#   ...
-#  )
-# Otherwise if section is specified, the case name will be changed to `section:case`
 
 newcases <- list()
 for (name in names(cases)) {
     case <- cases[[name]]
-    if (is.null(case$each) && !is.null(case$ident.1)) {
+    if (is.null(case$each)) {
         newcases[[paste0(case$section, ":", name)]] <- case
-    } else if (is.null(case$each)) {
-        # is.null(case$ident.1)
-        idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
-        for (ident in idents) {
-            newcases[[paste0(name, ":", ident)]] <- case
-            newcases[[paste0(name, ":", ident)]]$ident.1 <- ident
-        }
     } else {
         eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
         for (each in eachs) {
-            by = make.names(paste0(".", name, "_", each))
-            srtobj@meta.data = srtobj@meta.data %>% mutate(
-                !!sym(by) := if_else(
-                    !!sym(case$each) == each,
-                    !!sym(case$group.by),
-                    NA
-                )
-            )
-            if (is.null(case$ident.1)) {
-                idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
-                for (ident in idents) {
-                    kname <- if (name == "DEFAULT") "" else paste0("-", name)
-                    key <- paste0(each, kname, ":", ident)
-                    if (case$prefix_each) {
-                        key <- paste0(case$each, "-", key)
-                    }
-                    newcases[[key]] <- case
-                    newcases[[key]]$ident.1 <- ident
-                    newcases[[key]]$group.by <- by
-                }
+            by = make.names(paste0(".", name, "_", case$each, "_", each))
+            idents <- case$idents
+            if (is.null(idents) || length(idents) == 0) {
+                srtobj@meta.data = srtobj@meta.data %>%
+                    mutate(
+                        !!sym(by) := if_else(!!sym(case$each) == each, !!sym(case$group_by), NA)
+                    )
+                idents <- srtobj@meta.data %>% pull(case$group_by) %>% unique() %>% na.omit()
             } else {
-                key <- paste0(case$each, ":", each)
-                if (name != "DEFAULT") {
-                    key <- paste0(key, " - ", name)
-                }
-                newcases[[key]] <- case
-                newcases[[key]]$group.by <- by
+                srtobj@meta.data = srtobj@meta.data %>%
+                    mutate(
+                        !!sym(by) := if_else(
+                            !!sym(case$each) == each & !!sym(case$group_by) %in% case$idents,
+                            !!sym(case$group_by),
+                            NA
+                        )
+                    )
             }
+
+            key <- paste0(case$each, ":", each)
+            if (name != "DEFAULT") {
+                key <- paste0(key, " - ", name)
+            }
+            newcases[[key]] <- case
+            newcases[[key]]$group_by <- by
+            newcases[[key]]$idents <- idents
         }
     }
 }
@@ -236,26 +195,63 @@ do_enrich <- function(case, markers, sig) {
 do_case <- function(casename) {
     cat(paste("- Dealing with case:", casename, "...\n"))
     case <- cases[[casename]]
-    # ident1
-    # ident2
-    # groupby
-    # each  # expanded
-    # prefix_each
-    # dbs
-    # sigmarkers
-    # rest
-    args <- case$rest
-    args$group.by <- case$group.by
-    args$ident.1 <- case$ident.1
-    args$ident.2 <- case$ident.2
-    idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique()
-    if (anyNA(idents)) {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
-    } else {
-        args$object <- srtobj
-    }
-    markers <- do_call(FindMarkers, args) %>% rownames_to_column("gene")
+    sobj <- srtobj %>% tidyseurat::filter(!is.na(!!sym(case$group_by)))
+    df <- GetAssayData(sobj, slot = "data", assay = "RNA")
+    genes <- rownames(df)
+    # rows: cells, cols: genes
+    df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
+    colnames(df)[ncol(df)] <- "GROUP"
+
+    cat(paste("  Running tests for case...\n"))
+    test_result <- mclapply(genes, function(gene) {
+        fm <- as.formula(paste(bQuote(gene), "~ GROUP"))
+        res <- tryCatch({
+            if (case$method == "anova") {
+                r <- summary(aov(fm, data = df))[[1]]
+                data.frame(
+                    statistic = r[1, "F value"],
+                    p.value = r[1, "Pr(>F)"],
+                    sumsq = r[1, "Sum Sq"],
+                    meansq = r[1, "Mean Sq"]
+                )
+            } else {
+                r <- kruskal.test(fm, data = df)
+                data.frame(statistic = r$statistic, p.value = r$p.value)
+            }
+        }, error = function(e) NULL)
+        if (is.null(res)) {
+            return(NULL)
+        }
+        res$gene <- gene
+        res$method <- case$method
+        rownames(res) <- NULL
+        res
+    }, mc.cores = ncores)
+    markers <- do_call(rbind, test_result)
+    markers$p_adjust <- p.adjust(markers$p.value, method = case$p_adjust)
+    markers <- markers %>% arrange(p_adjust)
     do_enrich(casename, markers, case$sigmarkers)
+
+    print(paste("  Plotting top 10 genes ...\n"))
+    markers <- markers %>% head(10)
+    parts <- strsplit(casename, ":")[[1]]
+    sec <- parts[1]
+    casename <- paste0(parts[-1], collapse = ":")
+    plotdir <- file.path(outdir, sec, casename, "plots")
+    dir.create(plotdir, showWarnings = FALSE, recursive = TRUE)
+
+    # Plot the top 10 genes in each group with violin plots
+    for (gene in markers$gene) {
+        outfile = file.path(plotdir, paste0(gene, ".png"))
+        p = ggplot(df, aes_string(x="GROUP", y=bQuote(gene), fill="GROUP")) +
+            geom_violin(alpha = .8) +
+            geom_boxplot(width=0.1, fill="white") +
+            theme_prism() +
+            ylab(paste0("Expression of ", gene))
+        png(outfile, res = 100, height = 800, width = 1000)
+        print(p)
+        dev.off()
+    }
 }
 
 sapply(sort(names(cases)), do_case)

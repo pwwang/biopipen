@@ -192,4 +192,4 @@ do_case <- function(name, case) {
 }
 
 cases <- expand_cases()
-sapply(names(cases), function(name) do_case(name, cases[[name]]))
+sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
