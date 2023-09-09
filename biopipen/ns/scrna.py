@@ -672,7 +672,7 @@ class TopExpressingGenes(Proc):
             above options except `mutaters`. If some options are
             not specified, the default values specified above will be used.
             If no cases are specified, the default case will be added with
-            the default values under `envs` with the name `Cluster`.
+            the default values under `envs` with the name `DEFAULT`.
     """
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
@@ -683,7 +683,7 @@ class TopExpressingGenes(Proc):
         "ident": None,
         "group-by": "seurat_clusters",
         "each": None,
-        "prefix_each": False,
+        "prefix_each": True,
         "section": "DEFAULT",
         "dbs": [
             "GO_Biological_Process_2021",
