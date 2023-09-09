@@ -161,9 +161,9 @@ cases <- newcases
 #   sig: The expression to filter significant markers
 do_enrich <- function(case, markers, sig) {
     print(paste("  Running enrichment for case:", case))
-    parts = strsplit(case, ":")[[1]]
-    sec = parts[1]
-    case = paste0(parts[-1], collapse = ":")
+    parts <- strsplit(case, ":")[[1]]
+    sec <- parts[1]
+    case <- paste0(parts[-1], collapse = ":")
     casedir <- file.path(outdir, sec, case)
     dir.create(casedir, showWarnings = FALSE, recursive = TRUE)
     if (nrow(markers) == 0) {

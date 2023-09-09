@@ -604,7 +604,7 @@ class MarkersFinder(Proc):
             above options except `ncores` and `mutaters`. If some options are
             not specified, the default values specified above will be used.
             If no cases are specified, the default case will be added with
-            the default values under `envs` with the name `Cluster`.
+            the default values under `envs` with the name `DEFAULT`.
     """  # noqa: E501
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem0}}.markers"
@@ -616,7 +616,7 @@ class MarkersFinder(Proc):
         "ident-2": None,
         "group-by": "seurat_clusters",
         "each": None,
-        "prefix_each": False,
+        "prefix_each": True,
         "section": "DEFAULT",
         "rest": {},
         "dbs": [
