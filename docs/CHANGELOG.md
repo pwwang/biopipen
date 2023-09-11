@@ -1,3 +1,9 @@
+## 0.16.3
+
+- 📝 [scrna_metabolic_landscape] Update docstring
+- ✨ [tcr.CDR3AAPhyschem] Allow envs.subset_cols to be separated by comma
+- ✨ [scrna.CellTypeAnnotation] Add `envs.newcol` to keep original idents
+
 ## 0.16.2
 
 - 🚨 Add .lintr for R lintr
