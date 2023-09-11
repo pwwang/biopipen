@@ -1,3 +1,8 @@
+## 0.16.4
+
+- 🚑 [scrna.CellTypeAnnotation] Hotfix passing `envs.newcol`
+- ⬆️ Bump pipen-report to 0.12.7
+
 ## 0.16.3
 
 - 📝 [scrna_metabolic_landscape] Update docstring
