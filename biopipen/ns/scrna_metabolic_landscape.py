@@ -273,9 +273,9 @@ class _MetabolicPathwayHeterogeneity(Proc):
         ncores (type=int;pgarg): Number of cores to use for parallelization
             Defaults to `ScrnaMetabolicLandscape.ncores`
         bubble_devpars (ns): The devpars for the bubble plot
-            - width: The width of the plot
-            - height: The height of the plot
-            - res: The resolution of the plot
+            - width (type=int): The width of the plot
+            - height (type=int): The height of the plot
+            - res (type=int): The resolution of the plot
         grouping (type=auto;pgarg;readonly): Defines the basic groups to
             investigate the metabolic activity.
             Defaults to `ScrnaMetabolicLandscape.grouping`

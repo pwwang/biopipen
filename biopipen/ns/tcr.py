@@ -1049,17 +1049,13 @@ class CDR3AAPhyschem(Proc):
         outdir: The output directory
 
     Envs:
-        group (required): The key of group in metadata to define the groups to
+        group: The key of group in metadata to define the groups to
             compare. For example, `CellType`, which has cell types annotated
             for each cell in the combined object (immdata + Seurat metadata)
-        comparison (required;type=json): A dict of two groups, with keys as the
+        comparison (type=json): A dict of two groups, with keys as the
             group names and values as the group labels. For example,
-            >>> {
-            >>>     "Treg": ["CD4 CTL", "CD4 Naive", "CD4 TCM", "CD4 TEM"],
-            >>>     "Tconv": "Tconv"
-            >>> }
-            It could also be a list of two groups, e.g., `["Treg", "Tconv"]`,
-            which will be expanded as `{"Treg": "Treg", "Tconv": "Tconv"}`
+            >>> Treg = ["CD4 CTL", "CD4 Naive", "CD4 TCM", "CD4 TEM"]
+            >>> Tconv = "Tconv"
         prefix: The prefix of the cell names (rownames) in the metadata.
             The prefix is usually not needed in immdata, as the data is stored
             in the `immdata` object separately for each sample. However, the
@@ -1072,11 +1068,12 @@ class CDR3AAPhyschem(Proc):
             `Seurat` object has the same cell names as `immdata`. You can use
             placeholders to specify the prefix, e.g., `{Sample}_`. In such a
             case, the `Sample` column must exist in the `Seurat` object.
-        target (required): Which group to use as the target group. The target
+        target: Which group to use as the target group. The target
             group will be labeled as 1, and the other group will be labeled as
             0 in the regression.
-        subset: A column, or a list of columns, in the merged object to subset
-            the cells to perform the regression, oneach group in the columns.
+        subset: A column, or a list of columns separated by comma,
+            in the merged object to subset the cells to perform the regression,
+            for each group in the columns.
             If not provided, all the cells will be used.
     """
     input = "immdata:file,srtobj:file"

@@ -1103,6 +1103,9 @@ class CellTypeAnnotation(Proc):
                 See https://rdrr.io/cran/scCATCH/man/findmarkergene.html.
                 You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
+        newcol: The new column name to store the cell types.
+            If not specified, the `seurat_clusters` column will be overwritten.
+            If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
 
     Requires:
         r-HGNChelper:
@@ -1129,6 +1132,7 @@ class CellTypeAnnotation(Proc):
         "sccatch_args": {},
         "hitype_tissue": None,
         "hitype_db": None,
+        "newcol": None,
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"
 

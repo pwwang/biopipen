@@ -9,6 +9,7 @@ sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 tissue = {{envs.sctype_tissue | r}}
 db = {{envs.sctype_db | r}}
+newcol = {{args.newcol | r}}
 
 if (is.null(db)) { stop("`envs.sctype_args.db` is not set") }
 
@@ -95,12 +96,19 @@ if (length(cell_types_list) == 1) {
     }
 }
 
-celltypes$object = sobj
 
 print("- Renaming cell types...")
-sobj$seurat_clusters_old = Idents(sobj)
-sobj = do_call(RenameIdents, celltypes)
-sobj$seurat_clusters = Idents(sobj)
+if (is.null(newcol)) {
+    sobj$seurat_clusters_old = sobj$seurat_clusters
+    celltypes$object = sobj
+    sobj = do_call(RenameIdents, celltypes)
+    sobj$seurat_clusters = Idents(sobj)
+} else {
+    celltypes$object = sobj
+    sobj = do_call(RenameIdents, celltypes)
+    sobj[[newcol]] = Idents(sobj)
+    Idents(sobj) = "seurat_clusters"
+}
 
 print("- Saving Seurat object...")
 saveRDS(sobj, outfile)

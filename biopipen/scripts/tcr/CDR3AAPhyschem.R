@@ -26,9 +26,8 @@ if (is.null(target)) {
     stop("envs.target must be specified, which should be one of the keys in `envs.comparison`")
 }
 
-if (!is.list(comparison)) {
-    comparison = as.list(comparison)
-    names(comparison) = unlist(comparison)
+if (is.character(subset_cols) && length(subset_cols) == 1) {
+    subset_cols = trimws(strsplit(subset_cols, ",")[[1]])
 }
 
 ### Helpers
