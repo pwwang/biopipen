@@ -8,6 +8,7 @@ sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 tissue = {{envs.hitype_tissue | r}}
 db = {{envs.hitype_db | r}}
+newcol = {{args.newcol | r}}
 
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
 
@@ -27,8 +28,12 @@ print("- Running RunHitype...")
 sobj = RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
 
 print("- Renaming cell types...")
-sobj$seurat_clusters_old = sobj$seurat_clusters
-sobj$seurat_clusters = sobj$hitype
+if (is.null(newcol)) {
+    sobj$seurat_clusters_old = sobj$seurat_clusters
+    sobj$seurat_clusters = sobj$hitype
+} else {
+    sobj[[newcol]] = sobj$hitype
+}
 
 print("- Saving Seurat object...")
 saveRDS(sobj, outfile)

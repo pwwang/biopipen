@@ -5,6 +5,7 @@ library(Seurat)
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 sccatch_args = {{envs.sccatch_args | r}}
+newcol = {{envs.newcol | r}}
 
 if (is.null(sccatch_args$tissue)) { stop("`envs.sccatch_args.tissue` origin of cells must be defined.") }
 if (is.null(sccatch_args$species)) {
@@ -39,13 +40,19 @@ write.table(
 celltypes = as.list(obj@celltype$cell_type)
 names(celltypes) = obj@celltype$cluster
 
-sobj$seurat_clusters_old = Idents(sobj)
 if (length(celltypes) == 0) {
     warning("No cell types annotated from the database!")
 } else {
-    celltypes$object = sobj
-    sobj = do_call(RenameIdents, celltypes)
-    sobj$seurat_clusters = Idents(sobj)
-
+    if (is.null(newcol)) {
+        sobj$seurat_clusters_old = Idents(sobj)
+        celltypes$object = sobj
+        sobj = do_call(RenameIdents, celltypes)
+        sobj$seurat_clusters = Idents(sobj)
+    } else {
+        celltypes$object = sobj
+        sobj = do_call(RenameIdents, celltypes)
+        sobj[[newcol]] = Idents(sobj)
+        Idents(sobj) = "seurat_clusters"
+    }
 }
 saveRDS(sobj, outfile)

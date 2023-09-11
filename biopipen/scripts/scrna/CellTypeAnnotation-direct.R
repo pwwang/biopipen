@@ -4,7 +4,7 @@ library(Seurat)
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 celltypes = {{envs.cell_types | r}}
-
+newcol = {{args.newcol | r}}
 
 if (is.null(celltypes) || length(celltypes) == 0) {
     warning("No cell types are given!")
@@ -32,10 +32,17 @@ if (is.null(celltypes) || length(celltypes) == 0) {
     }
     names(celltypes) = idents
 
-    sobj$seurat_clusters_old = Idents(sobj)
-    celltypes$object = sobj
-    sobj = do_call(RenameIdents, celltypes)
-    sobj$seurat_clusters = Idents(sobj)
+    if (is.null(newcol)) {
+        sobj$seurat_clusters_old = Idents(sobj)
+        celltypes$object = sobj
+        sobj = do_call(RenameIdents, celltypes)
+        sobj$seurat_clusters = Idents(sobj)
+    } else {
+        celltypes$object = sobj
+        sobj = do_call(RenameIdents, celltypes)
+        sobj[[newcol]] = Idents(sobj)
+        Idents(sobj) = "seurat_clusters"
+    }
 
     saveRDS(sobj, outfile)
 }
