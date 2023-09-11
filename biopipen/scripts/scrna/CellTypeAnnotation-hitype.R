@@ -8,7 +8,7 @@ sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 tissue = {{envs.hitype_tissue | r}}
 db = {{envs.hitype_db | r}}
-newcol = {{args.newcol | r}}
+newcol = {{envs.newcol | r}}
 
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
 
