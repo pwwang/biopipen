@@ -393,7 +393,7 @@ class CellsDistribution(Proc):
         r-tidyr:
             - check: {{proc.lang}} -e "library(tidyr)"
     """  # noqa: E501
-    input = "srtobj:file, casefile:file"
+    input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
     envs = {
@@ -424,13 +424,31 @@ class SeuratMetadataMutater(Proc):
         metafile: Additional metadata
             A tab-delimited file with columns as meta columns and rows as
             cells.
-        mutaters: A TOML string, file or a python dict to create new columns
-            in metadata. They key-value will be evaluated
-            with `srtobj@meta.data |> mutate(<key> = <value>)`
-            The keys could be from `in.metafile`
 
     Output:
         rdsfile: The seurat object with the additional metadata
+
+    Envs:
+        mutaters (type=json): The mutaters to mutate the metadata.
+            The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+            There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
+            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+            to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
+            with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
+            Those functions take following arguments:
+            * `df`: The metadata data frame. You can use the `.` to refer to it.
+            * `group-by`: The column name in metadata to group the cells.
+            * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
+            * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
+            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
+            * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
+            * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df %>% mutate(expanded = expanded(...))`.
+            * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
+                Two kinds of modifiers can be added, including `desc` and `abs`.
+                For example, `sum,desc` means the sum of `compare` between idents in descending order.
+                Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
+                ids will be in the same order as in `df`.
+            Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
 
     Requires:
         r-seurat:
@@ -439,10 +457,11 @@ class SeuratMetadataMutater(Proc):
             - check: {{proc.lang}} <(echo "library(tibble)")
         r-dplyr:
             - check: {{proc.lang}} <(echo "library(dplyr)")
-    """
+    """  # noqa: E501
     input = "srtobj:file, metafile:file, mutaters:var"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
+    envs = {"mutaters": {}}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 

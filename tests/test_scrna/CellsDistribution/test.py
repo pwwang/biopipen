@@ -1,6 +1,6 @@
 from pipen import Proc
 from biopipen.core.config import config
-from biopipen.ns.scrna import CellsDistribution
+from biopipen.ns.scrna import CellsDistribution, SeuratMetadataMutater
 from biopipen.core.testing import get_pipeline
 
 
@@ -35,7 +35,7 @@ class PrepareSeurat(Proc):
     """
 
 
-class CellsDistribution(CellsDistribution):
+class SeuratMetadataMutater(SeuratMetadataMutater):
     requires = PrepareSeurat
     envs = {
         "mutaters": {
@@ -47,7 +47,23 @@ class CellsDistribution(CellsDistribution):
                     TRUE ~ NA
                 )
             """
-        },
+        }
+    }
+
+
+class CellsDistribution(CellsDistribution):
+    requires = SeuratMetadataMutater
+    envs = {
+        # "mutaters": {
+        #     "Responder": """
+        #         case_when(
+        #             response == 1 ~ "CONTROL",
+        #             response == 2 ~ "Responder",
+        #             response == 3 ~ "NonResponder",
+        #             TRUE ~ NA
+        #         )
+        #     """
+        # },
         "group_by": "Responder",
         "group_order": ["CONTROL", "Responder", "NonResponder"],
         "cells_by": "Clone",

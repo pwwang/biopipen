@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/mutate_helpers.R")
 library(rlang)
 library(tibble)
 library(dplyr)
@@ -5,7 +6,7 @@ library(Seurat)
 
 srtobj = {{in.srtobj | quote}}
 metafile = {{in.metafile | r}}
-mutaters = {{in.mutaters | default: {} | config: "toml" | r}}
+mutaters = {{envs.mutaters | r}}
 rdsfile = {{out.rdsfile | quote}}
 
 srt = readRDS(srtobj)
@@ -21,6 +22,10 @@ for (key in names(mutaters)) {
     expr[[key]] = parse_expr(mutaters[[key]])
 }
 
-srt@meta.data = mutate(metadata, !!!expr)
+if (!is.null(expr) && length(expr) > 0) {
+    srt@meta.data = mutate(metadata, !!!expr)
+} else {
+    srt@meta.data = metadata
+}
 
 saveRDS(srt, rdsfile)
