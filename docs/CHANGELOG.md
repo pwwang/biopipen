@@ -1,3 +1,8 @@
+## 0.16.5
+
+- 💥 [scrna.SeuratMetadataMutater] Move mutaters from in to envs
+- 🔥 [scrna.CellsDistribution] Remove unnecessary in.casefile
+
 ## 0.16.4
 
 - 🚑 [scrna.CellTypeAnnotation] Hotfix passing `envs.newcol`
