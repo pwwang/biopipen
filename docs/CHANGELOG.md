@@ -1,3 +1,7 @@
+## 0.16.6
+
+- 🚑 [scrna] Hotfix for docstring when parsed by argparse help
+
 ## 0.16.5
 
 - 💥 [scrna.SeuratMetadataMutater] Move mutaters from in to envs
