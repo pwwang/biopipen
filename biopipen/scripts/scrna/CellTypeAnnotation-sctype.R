@@ -9,7 +9,7 @@ sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 tissue = {{envs.sctype_tissue | r}}
 db = {{envs.sctype_db | r}}
-newcol = {{args.newcol | r}}
+newcol = {{envs.newcol | r}}
 
 if (is.null(db)) { stop("`envs.sctype_args.db` is not set") }
 

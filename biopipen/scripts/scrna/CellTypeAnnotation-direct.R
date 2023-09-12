@@ -4,7 +4,7 @@ library(Seurat)
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 celltypes = {{envs.cell_types | r}}
-newcol = {{args.newcol | r}}
+newcol = {{envs.newcol | r}}
 
 if (is.null(celltypes) || length(celltypes) == 0) {
     warning("No cell types are given!")
