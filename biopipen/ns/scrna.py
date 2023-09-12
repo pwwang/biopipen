@@ -393,7 +393,7 @@ class CellsDistribution(Proc):
         r-tidyr:
             - check: {{proc.lang}} -e "library(tidyr)"
     """  # noqa: E501
-    input = "srtobj:file, casefile:file"
+    input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
     envs = {
