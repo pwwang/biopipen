@@ -17,7 +17,7 @@ sobj = readRDS(sobjfile)
 
 # prepare gene sets
 print("- Preparing gene sets...")
-if (startsWith(db, "hitypedb_")) {
+if (startsWith(db, "hitypedb_") && !grepl(".", db, fixed = TRUE)) {
     gs_list = gs_prepare(eval(as.symbol(db)), tissue)
 } else {
     gs_list = gs_prepare(db, tissue)
@@ -39,11 +39,19 @@ print("- Saving Seurat object...")
 saveRDS(sobj, outfile)
 
 print("- Saving the mappings ...")
-celltypes = sobj@meta.data %>%
-    group_by(seurat_clusters_old) %>%
-    summarize(CellType = hitype[1]) %>%
-    select(Cluster = seurat_clusters_old, CellType) %>%
-    ungroup()
+if (is.null(newcol)) {
+    celltypes = sobj@meta.data %>%
+        group_by(seurat_clusters_old) %>%
+        summarize(CellType = hitype[1]) %>%
+        select(Cluster = seurat_clusters_old, CellType) %>%
+        ungroup()
+} else {
+    celltypes = sobj@meta.data %>%
+        group_by(seurat_clusters) %>%
+        summarize(CellType = (!!sym(newcol))[1]) %>%
+        select(Cluster = seurat_clusters, CellType) %>%
+        ungroup()
+}
 
 write.table(
     celltypes,

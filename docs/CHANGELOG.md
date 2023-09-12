@@ -2,6 +2,7 @@
 
 - 💥 [scrna.SeuratMetadataMutater] Move mutaters from in to envs
 - 🔥 [scrna.CellsDistribution] Remove unnecessary in.casefile
+- 🚑 [scrna.CellTypeAnnotation] Hotfix when envs.hitype_db as a file starts with "hitypedb_"
 
 ## 0.16.4
 
