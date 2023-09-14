@@ -3,6 +3,7 @@ name: Docs
 on:
   push:
     paths:
+      - .github/workflows/docs.yml
       - docs/**
       - mkdocs.yml
       - pyproject.toml
