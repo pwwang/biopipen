@@ -34,20 +34,14 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
 }
 .mkapi-node .mkapi-object-container {
     background-color: var(--mkapi-object-container-background);
-    padding: .12em .4em;
+    padding: .12rem .4rem;
 }
 .mkapi-node .mkapi-object-container .mkapi-object.code {
     background: none;
     border: none;
 }
-.mkapi-node .mkapi-object-container .mkapi-object.code * {
-    font-size: .65rem !important;
-}
 .mkapi-node pre {
     line-height: 1.5;
-}
-.mkapi-docstring .md-typeset pre>code {
-    font-size: 0.1rem !important;
 }
 .mkapi-section-name {
     color: var(--mkapi-section-name);
@@ -62,32 +56,26 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
 .mkapi-section.bases {
     margin-bottom: .8em;
 }
-.mkapi-node * {
-    font-size: .7rem;
-}
 .mkapi-node a.mkapi-src-link {
     word-break: keep-all;
 }
 .mkapi-docstring {
     padding: .4em .15em !important;
 }
-.mkapi-section-name-body {
-    font-size: .72rem !important;
+.mkapi-docstring * {
+    font-size: 96%;
+}
+.mkapi-node h2 {
+    font-size: 100%;
+}
+.mkapi-node h3 {
+    font-size: 90%;
 }
 .mkapi-node ul.mkapi-items li {
     line-height: 1.4 !important;
 }
-.mkapi-node ul.mkapi-items li * {
-    font-size: .65rem !important;
-}
 .mkapi-node code.mkapi-object-signature {
     padding-right: 2px;
-}
-.mkapi-node .mkapi-code * {
-    font-size: .65rem;
-}
-.mkapi-node a.mkapi-docs-link {
-    font-size: .6rem;
 }
 .mkapi-node h1.mkapi-object.mkapi-object-code {
     margin: .2em .3em;
@@ -97,28 +85,14 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
     margin-right: 16px;
 }
 .mkapi-node code.mkapi-item-name {
-    font-size: .7rem !important;
     color: var(--mkapi-item-name);
     padding-right: 4px;
 }
 .mkapi-object-kind.package.top {
-    font-size: .8rem !important;
     color: var(--mkapi-package);
 }
-.mkapi-object.package.top > h2 {
-    font-size: .8rem !important;
-}
-
-.mkapi-object-body.package.top * {
-    font-size: .75rem !important;
-}
 .mkapi-object-kind.module.top {
-    font-size: .75rem !important;
     color: var(--mkapi-module);
-}
-
-.mkapi-object-body.module.top * {
-    font-size: .75rem !important;
 }
 
 /* process attributes */
