@@ -1,4 +1,4 @@
-# Basic Analysis of scRNA-seq data
+scrna-basic# Basic Analysis of scRNA-seq data
 
 This pipeline is used to process single-cell RNA-seq data with some basic analysis, including:
 
@@ -120,7 +120,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # Map current directory to /workdir in the container,
         # and set it as the working directory
         -v .:/workdir -w /workdir \
-        biopipen/scrna_basic:master \
+        biopipen/scrna-basic:master \
         pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
     ```
 
@@ -145,7 +145,7 @@ The pipeline can be run directly with `pipen` from the command line or via the `
         # Map current directory to /workdir in the container,
         # and set it as the working directory
         -v .:/workdir -w /workdir \
-        biopipen/scrna_basic:master \
+        biopipen/scrna-basic:master \
         pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
     ```
 
@@ -264,7 +264,7 @@ Again, remember that the example data are builtin under `/example` in the docker
 docker run \
     --rm \
     -v .:/workdir -w /workdir \
-    biopipen/scrna_basic:master \
+    biopipen/scrna-basic:master \
     pipen run scrna_basic ScrnaBasic @ScrnaBasic.config.toml
 ```
 
@@ -284,7 +284,7 @@ You can also run the pipeline via `pipen-board` from the container, and run it i
 docker run \
     --rm \
     -v .:/workdir -w /workdir \
-    biopipen/scrna_basic:master \
+    biopipen/scrna-basic:master \
     pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
 ```
 
@@ -308,7 +308,7 @@ Then load the above configuration via "From Generated TOML" on the web UI. You m
     docker run \
         --rm \
         -v .:/workdir -w /workdir \
-        biopipen/scrna_basic:master \
+        biopipen/scrna-basic:master \
         pipen board biopipen.ns.scrna_basic:ScrnaBasic -a /biopipen/board.toml
     ```
 
