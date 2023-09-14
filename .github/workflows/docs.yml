@@ -3,7 +3,7 @@ name: Docs
 on:
   push:
     paths:
-      - docs/
+      - docs/**
       - mkdocs.yml
       - pyproject.toml
       - 'biopipen/ns/*.py'
