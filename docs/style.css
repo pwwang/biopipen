@@ -1,74 +1,3 @@
-.rst-content div[class^=highlight] pre {
-    padding: 0 !important;
-}
-
-div.wy-side-scroll div.wy-side-nav-search {
-    position: fixed;
-}
-
-div.wy-side-scroll div.wy-menu.wy-menu-vertical {
-    margin-top: 7rem;
-    margin-bottom: 1rem;
-}
-
-div.wy-side-scroll p.caption + ul > li > a::before {
-    content: "▪";
-    padding-right: 0.5rem;
-}
-div.wy-side-scroll p.caption + ul > li > a.current {
-    padding-left: 2.375rem;
-}
-div.wy-side-scroll p.caption + ul > li > a.current::before {
-    display: none;
-}
-div.document ul {
-    margin-top: 2px !important;
-}
-
-.md-typeset .admonition, .md-typeset details {
-    font-size: .7rem !important;
-}
-
-.md-typeset table:not([class]) td {
-    padding: .55em 1.25em !important;
-}
-
-.md-typeset table:not([class]) th {
-    padding: .75em 1.25em !important;
-}
-
-:root {
-    --mkapi-node-border: #559bc9;
-    --mkapi-node-background: #f0f6fa;
-    --mkapi-object-container-background: #b4d4e9;
-    --mkapi-item-name: #555;
-    --mkapi-section-name: #333;
-    --mkapi-package: #111;
-    --mkapi-module: #222;
-    --mkapi-code-bg: #f0f6fa;
-    --mkapi-example-bg: #eee;
-    --mkapi-object-sig: #2980B9;
-    --mkapi-type: #8888EE;
-}
-
-body[data-md-color-scheme="slate"] {
-    --mkapi-node-border: #5768c3;
-    --mkapi-node-background: #555f66;
-    --mkapi-object-container-background: #445288;
-    --mkapi-item-name: #d9e1e9;
-    --mkapi-section-name: #e4e4e4;
-    --mkapi-package: #fff;
-    --mkapi-module: #eee;
-    --mkapi-code-bg: #445288;
-    --mkapi-example-bg: #3a3a3a;
-    --mkapi-object-sig: #a3c3f3;
-    --mkapi-type: #c5c5ee;
-}
-
-.md-typeset code {
-    background-color: var(--mkapi-code-bg);
-}
-
 .mkapi-node .function code,
 .mkapi-node .method code,
 .mkapi-node .class code,
@@ -112,10 +41,6 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
 }
 .mkapi-node pre {
     line-height: 1.5;
-}
-.md-typeset pre>code {
-    overflow: visible;
-    line-height: 1.2;
 }
 .mkapi-docstring .md-typeset pre>code {
     font-size: 0.1rem !important;
@@ -171,10 +96,6 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
     font-size: .7rem !important;
     color: var(--mkapi-item-name);
     padding-right: 4px;
-}
-.md-typeset {
-    font-size: .75rem !important;
-    line-height: 1.5 !important;
 }
 .mkapi-object-kind.package.top {
     font-size: .8rem !important;
