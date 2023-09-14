@@ -14,9 +14,12 @@ cell_qc = "nFeature_RNA > 200"
 
 [ScrnaBasicScGSEA.envs]
 gmtfile = "/example/KEGG_pathways.gmt"
-
-[ScrnaBasicScGSEA.envs.cases.STIM_vs_CTRL_CD14mono]
-filter = "seurat_clusters == 'CD14+ Mono'"
-group-by = "Sample"
+group-by = "CD14M_Sample"
 ident-1 = "STIM"
 ident-2 = "CTRL"
+
+  [ScrnaBasicScGSEA.envs.cases]
+  STIM_vs_CTRL_CD14mono = { }
+
+  [ScrnaBasicScGSEA.envs.mutaters]
+  CD14M_Sample = "if_else(seurat_clusters == 'CD14+ Mono', Sample, NA)"

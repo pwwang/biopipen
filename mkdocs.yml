@@ -2,24 +2,26 @@ site_name: biopipen
 repo_url: https://github.com/pwwang/biopipen
 repo_name: pwwang/biopipen
 theme:
-    palette:
-        # Palette toggle for light mode
-        - scheme: default
-          toggle:
-            icon: material/brightness-7
-            name: Switch to dark mode
+    name: 'rtd'
+    logo: 'img/logo.png'
+    # palette:
+    #     # Palette toggle for light mode
+    #     - scheme: default
+    #       toggle:
+    #         icon: material/brightness-7
+    #         name: Switch to dark mode
 
-        # Palette toggle for dark mode
-        - scheme: slate
-          toggle:
-            icon: material/brightness-4
-            name: Switch to light mode
-    name: 'material'
-    # font:
-    #     text: 'Ubuntu'
-    #     code: 'Ubuntu Mono'
-    features:
-        - navigation.footer
+    #     # Palette toggle for dark mode
+    #     - scheme: slate
+    #       toggle:
+    #         icon: material/brightness-4
+    #         name: Switch to light mode
+    # name: 'material'
+    # # font:
+    # #     text: 'Ubuntu'
+    # #     code: 'Ubuntu Mono'
+    # features:
+    #     - navigation.footer
 markdown_extensions:
     - markdown.extensions.admonition
     - pymdownx.superfences:
@@ -33,7 +35,6 @@ plugins:
 extra_css:
     - style.css
 extra_javascript:
-    - jquery.js
     - extra.js
 nav:
     - 'Home': 'index.md'

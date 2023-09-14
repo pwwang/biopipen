@@ -1,3 +1,16 @@
+## 0.16.7
+
+- 🔥 [scrna.SeuratMetadataMutater] Remove unnecessary in.mutaters
+- 📝 [docs] Use kmdocs-rtd for documentation
+- 📝 [scrna_basic] Fix docs
+- 📝 [docs] Fix CI when files in docs/ changes
+- 📝 [docs] Fix CI when CI config file changes
+- 📝 [scrna_basic] Update docs for processes
+- 🔧 [scrna_basic] Update example config file
+- 📝 [docs] Add logo and favicon
+- 📝 [docs] Fix font-sizes in APIs
+- 📝 [docs] Fix logo size in README
+
 ## 0.16.6
 
 - 🚑 [scrna] Hotfix for docstring when parsed by argparse help

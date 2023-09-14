@@ -3,7 +3,8 @@ mkdocs
 # AttributeError: module 'jinja2' has no attribute 'contextfilter'
 # jinja2==3.1.0
 # jinja2==3.0.3
-mkdocs-material
+# mkdocs-material
+mkdocs-rtd
 pymdown-extensions
 mkapi-fix
 # in order to build biopipen.utils.gene

@@ -1,4 +1,11 @@
-# biopipen - A set of processes/pipelines for bioinformatics
+<p align="center">
+  <img height="60" style="height: 60px" src="https://github.com/pwwang/biopipen/blob/dev/docs/img/logo.png?raw=true">
+</p>
+<p align="center">
+  A set of processes/pipelines for bioinformatics based on
+  <a href="https://github.com/pwwang/pipen" target="_blank">pipen</a>
+</p>
+<hr />
 
 ## Installation
 

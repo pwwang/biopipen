@@ -458,7 +458,7 @@ class SeuratMetadataMutater(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library(dplyr)")
     """  # noqa: E501
-    input = "srtobj:file, metafile:file, mutaters:var"
+    input = "srtobj:file, metafile:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
     envs = {"mutaters": {}}
