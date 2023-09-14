@@ -495,40 +495,40 @@ and <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
 
 Available environment arguments:
 
-- use (choice): Which level of cell type to use for further analysis and
+- `use` (`choice`): Which level of cell type to use for further analysis and
     being aliased to `alias`
     - predicted.celltype.l1: The first level of predicted cell type
     - predicted.celltype.l2: The second level of predicted cell type
-- alias: The name of an aliasied column to `use`.
+- `alias`: The name of an aliasied column to `use`.
     This is helpful for the downstream analysis where the column name
     is used as the cluster.
-- ref: The reference seurat object file.
+- `ref`: The reference seurat object file.
     Either an RDS file or a h5seurat file that can be loaded by
     `Seurat::LoadH5Seurat()`.
     The file type is determined by the extension. `.rds` or `.RDS` for
     RDS file, `.h5seurat` or `.h5` for h5seurat file.
     Defaults to the group argument `ref`
-- SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
-    - do-correct-umi (flag): Place corrected UMI matrix in assay counts slot?
-    - do-scale (flag): Whether to scale residuals to have unit variance?
-    - do-center (flag): Whether to center residuals to have mean zero?
+- `SCTransform` (`ns`): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
+    - `do-correct-umi` (`flag`): Place corrected UMI matrix in assay counts slot?
+    - `do-scale` (`flag`): Whether to scale residuals to have unit variance?
+    - `do-center` (`flag`): Whether to center residuals to have mean zero?
     - `<more>`: See <https://satijalab.org/seurat/reference/sctransform>
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
-- FindTransferAnchors (ns): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
-    - normalization-method (choice): Name of normalization method used.
-        - LogNormalize: Log-normalize the data matrix
-        - SCT: Scale data using the SCTransform method
-    - reference-reduction: Name of dimensional reduction to use from the reference if running the pcaproject workflow.
+- `FindTransferAnchors` (`ns`): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
+    - `normalization-method` (`choice`): Name of normalization method used.
+        - `LogNormalize`: Log-normalize the data matrix
+        - `SCT`: Scale data using the SCTransform method
+    - `reference-reduction`: Name of dimensional reduction to use from the reference if running the pcaproject workflow.
         Optionally enables reuse of precomputed reference dimensional reduction.
     - `<more>`: See <https://satijalab.org/seurat/reference/findtransferanchors>.
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
-- MapQuery (ns): Arguments for [`MapQuery()`](https://satijalab.org/seurat/reference/mapquery)
-    - reference-reduction: Name of reduction to use from the reference for neighbor finding
-    - reduction-model: `DimReduc` object that contains the umap model
-    - refdata (type=json): Data to transfer
+- `MapQuery` (`ns`): Arguments for [`MapQuery()`](https://satijalab.org/seurat/reference/mapquery)
+    - `reference-reduction`: Name of reduction to use from the reference for neighbor finding
+    - `reduction-model`: `DimReduc` object that contains the umap model
+    - `refdata` (`type=json`): Data to transfer
     - `<more>`: See <https://satijalab.org/seurat/reference/mapquery>
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
-- MappingScore (ns): Arguments for [`MappingScore()`](https://satijalab.org/seurat/reference/mappingscore)
+- `MappingScore` (`ns`): Arguments for [`MappingScore()`](https://satijalab.org/seurat/reference/mappingscore)
     - `<more>`: See <https://satijalab.org/seurat/reference/mappingscore>
         Note that the hyphen (`-`) will be transformed into `.` for the keys.
 
@@ -541,42 +541,45 @@ assign cell types.
 
 Available environment arguments:
 
-- tool (choice): The tool to use for cell type annotation.
-    - sctype: Use `scType` to annotate cell types.
+- `tool` (`choice`): The tool to use for cell type annotation.
+    - `sctype`: Use `scType` to annotate cell types.
         See <https://github.com/IanevskiAleksandr/sc-type>
-    - hitype: Use `hitype` to annotate cell types.
+    - `hitype`: Use `hitype` to annotate cell types.
         See <https://github.com/pwwang/hitype>
-    - sccatch: Use `scCATCH` to annotate cell types.
+    - `sccatch`: Use `scCATCH` to annotate cell types.
         See <https://github.com/ZJUFanLab/scCATCH>
-    - direct: Directly assign cell types
-- sctype_tissue: The tissue to use for `sctype`.
+    - `direct`: Directly assign cell types
+- `sctype_tissue`: The tissue to use for `sctype`.
     Avaiable tissues should be the first column (`tissueType`) of
     `sctype_db`.
     Examples are `Immune system`, `Pancreas`, `Liver`, `Eye`, `Kidney`,
     `Brain`, `Lung`, `Adrenal`, `Heart`, `Intestine`, `Muscle`,
     `Placenta`, `Spleen`, `Stomach` and `Thymus`.
-- sctype_db: The database to use for sctype.
+- `sctype_db`: The database to use for sctype.
     Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
-- hitype_tissue: The tissue to use for `hitype`.
+- `hitype_tissue`: The tissue to use for `hitype`.
     Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
     If not specified, all rows in `hitype_db` will be used.
-- hitype_db: The database to use for hitype.
+- `hitype_db`: The database to use for hitype.
     Compatible with `sctype_db`.
     See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
     You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
-- cell_types (type=json): The cell types to use for direct annotation
+- `cell_types` (`type=json`): The cell types to use for direct annotation
     Each a list of cell type names, or a dict with keys as the old
     identity and values as the new cell type.
-- sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
-    - species (choice): The specie of cells.
-        - Human:
-        - Mouse:
-    - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
-    - tissue: Tissue origin of cells must be defined.
+- `sccatch_args` (`ns`): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
+    - `species` (`choice`): The specie of cells.
+        - `Human`: For human
+        - `Mouse`: For mouse
+    - `cancer`: If the sample is from cancer tissue, then the cancer type may be defined.
+    - `tissue`: Tissue origin of cells must be defined.
     - `<more>`: Other arguments for `scCATCH::findmarkergene()`
         See <https://www.rdocumentation.org/packages/scCATCH/versions/3.2.2/topics/findmarkergene>.
         You can pass an RDS file to `marker` to work as custom marker. If so,
         `if_use_custom_marker` will be set to `TRUE` automatically.
+- `newcol`: The new column name to store the cell types.
+    If not specified, the `seurat_clusters` column will be overwritten.
+    If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
 
 ### `ScrnaBasicSupervisedStats`/`ScrnaBasicUnsupervisedStats`
 
@@ -587,7 +590,7 @@ the gene expression values and dimension reduction plots.
 
 Available environment arguments:
 
-- stats (type=json): The number/fraction of cells to plot.
+- `stats` (`type=json`): The number/fraction of cells to plot.
     * `nCells_*` - Number of cells for each cluster.
         You can specify `by` to group the cells by a metadata column,
         and `devpars` to specify the device parameters for the plot.
@@ -596,7 +599,7 @@ Available environment arguments:
     * `fracCells_*` - Fraction of cells for each cluster.
         Similar to `nCells_*`, but the fraction is calculated
         instead of the absolute number.
-- exprs (type=json): The expression values to plot.
+- `exprs` (`type=json`): The expression values to plot.
     * `genes` - The set of genes for the plots, unless `features` for
         those plots is specified. Could also specify a file with genes
         (one per line).
@@ -623,7 +626,7 @@ Available environment arguments:
         the default gene list `VariantFeatures(srtobj)[1:20]`, specify
         `features = "default"`. Or you can also specify the genes
         directly to `features`.
-- dimplots (type=json): The dimensional reduction plots.
+- `dimplots` (`type=json`): The dimensional reduction plots.
     * `<case>` - The case to plot.
         Keys are the arguments for `Seurat::Dimplot()`, plus `devpars`
         for the plots. `devpars` is a dictionary with keys `res`,
@@ -661,50 +664,66 @@ a different case to find the markers for the unsupervised clusters.
 
 Available environment arguments:
 
-- ncores: Number of cores to use to parallelize Seurat functions using
-    `future::plan(strategy = "multicore", workers = ncores)`
-- cases (type=json): The cases to find markers for.
-    For example:
-    ```json
-    {
-        "case1": {
-            "ident-1": "Tumor",
-            "ident-2": "Normal",
-            "group-by": "Source",
-            # focus on a subset of cells
-            "filter": "SampleType != 'Control'"
-            # other arguments for Seruat::FindMarkers()
-        }
-    }
-    ```
-    We can also use a new `group.by`:
-    ```json
-    {
-        "case2": {
-            "ident-1": "Case",
-            "ident-2": "Control",
-            "group-by": "Group",
-            # Do the comparison in each cluster
-            "each": "seurat_clusters",
-            # other arguments for Seruat::FindMarkers()
-            # Filter after mutaters
-            "filter2": "SampleType != 'Control'",
-            # Use `filer` to filter before mutaters
-            "mutaters": {
-                "Group" = "if_else(Source %%in%% c('Tumor', 'Normal'), 'Case', 'Control')"
-            }
-        }
-    }
-    ```
-    If "ident-2" is not provided, it will use the rest of the cells as "ident-2".
-    If only "group-by" is given, will call `FindAllMarkers()`.
-- dbs (list): The dbs to do enrichment analysis for significant
-    markers See below for all librarys.
+- `ncores` (`type=int`): Number of cores to use to parallelize Seurat
+    functions using
+    `future::plan(strategy = "multicore", workers = ncores)`.
+    See also: https://satijalab.org/seurat/articles/future_vignette.html
+- `mutaters` (`type=json`): The mutaters to mutate the metadata
+    There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
+    For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+    to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
+    with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
+    Those functions take following arguments:
+    * `df`: The metadata data frame. You can use the `.` to refer to it.
+    * `group-by`: The column name in metadata to group the cells.
+    * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
+    * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
+    * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
+    * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
+    * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
+    * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
+        Two kinds of modifiers can be added, including `desc` and `abs`.
+        For example, `sum,desc` means the sum of `compare` between idents in descending order.
+        Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
+        ids will be in the same order as in `df`.
+    Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+- `ident-1`: The first group of cells to compare
+- `ident-2`: The second group of cells to compare
+    If not provided, the rest of the cells are used for `ident-2`.
+- `group-by`: The column name in metadata to group the cells.
+    If only `group-by` is specified, and `ident-1` and `ident-2` are
+    not specified, markers will be found for all groups in this column
+    in the manner of "group vs rest" comparison.
+    `NA` group will be ignored.
+- `each`: The column name in metadata to separate the cells into different
+    cases.
+- `prefix_each` (`flag`): Whether to prefix the `each` column name to the
+    value as the case/section name.
+- `dbs` (`list`): The dbs to do enrichment analysis for significant
+    markers See below for all libraries.
     <https://maayanlab.cloud/Enrichr/#libraries>
-- sigmarkers: An expression passed to `dplyr::filter()` to filter the
+- `sigmarkers`: An expression passed to `dplyr::filter()` to filter the
     significant markers for enrichment analysis.
     Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
     `p_val_adj`. For example, `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
+    to select markers with adjusted p-value < 0.05 and absolute log2
+    fold change > 1.
+- `section`: The section name for the report.
+    Worked only when `each` is not specified and `ident-2` is specified.
+    Otherwise, the section name will be constructed from `each` and
+    `group-by`.
+    If `DEFAULT`, and it's the only section, it not included in the
+    case/section names.
+- `rest` (`ns`): Rest arguments for `Seurat::FindMarkers()`.
+    Use `-` to replace `.` in the argument name. For example,
+    use `min-pct` instead of `min.pct`.
+    - <more>: See https://satijalab.org/seurat/reference/findmarkers
+- `cases` (`type=json`): If you have multiple cases, you can specify them
+    here. The keys are the names of the cases and the values are the
+    above options except `ncores` and `mutaters`. If some options are
+    not specified, the default values specified above will be used.
+    If no cases are specified, the default case will be added with
+    the default values under `envs` with the name `DEFAULT`.
 
 ### `ScrnaBasicScGSEA`
 
@@ -712,51 +731,65 @@ Gene set enrichment analysis for cells in different groups using `fgsea`
 
 Available environment arguments:
 
-- ncores: Number of cores to use to parallelize the groups
-- cases (type=json): The cases to find markers for.
-    `ident-2` is required for each case. One could also use placeholders for the cases.
-    To enable this, you need `percluster = True` in the config. Currently only cluster is supported.
-    One could use `{cluster}` or `{ident}` to denote the clusters.
-    For example:
-    ```json
-    {
-        "case1": {
-            # Add a new column in metadata
-            "mutaters": { "Group" = "if_else(Response == 'PD1' | Response == 'PD2', 'PD1PD2', Response)" },
-            # Only on cluster 0
-            "filter": "seurat_clusters == '0'",
-            # Groups
-            "ident-1" = "CR",
-            "ident-2" = "PD1PD2",
-            "group-by" = "Group"
-        }
-    }
-    ```
-- gmtfile (required): The pathways in GMT format, with the gene names/ids in the same format as the seurat object
-- method (choice): The method to do the preranking.
-    - signal_to_noise: Signal to noise.
+- `ncores` (`type=int`): Number of cores for parallelization
+    Passed to `nproc` of `fgseaMultilevel()`.
+- `mutaters` (`type=json`): The mutaters to mutate the metadata.
+    The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+    There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
+    For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+    to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
+    with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
+    Those functions take following arguments:
+    * `df`: The metadata data frame. You can use the `.` to refer to it.
+    * `group-by`: The column name in metadata to group the cells.
+    * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
+    * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
+    * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
+    * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
+    * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
+    * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
+        Two kinds of modifiers can be added, including `desc` and `abs`.
+        For example, `sum,desc` means the sum of `compare` between idents in descending order.
+        Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
+        ids will be in the same order as in `df`.
+    Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+- `group-by`: The column name in metadata to group the cells.
+- `ident-1`: The first group of cells to compare
+- `ident-2`: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
+- `each`: The column name in metadata to separate the cells into different subsets to do the analysis.
+- `section`: The section name for the report. Worked only when `each` is not specified. Otherwise, the section name will be constructed from `each` and its value.
+    This allows different cases to be put into the same section in the report.
+- `gmtfile`: The pathways in GMT format, with the gene names/ids in the same format as the seurat object
+- `method` (`choice`): The method to do the preranking.
+    - `signal_to_noise`: Signal to noise.
         The larger the differences of the means (scaled by the standard deviations);
         that is, the more distinct the gene expression is in each phenotype and the more the gene
         acts as a "class marker".
-    - s2n: Alias of signal_to_noise.
-    - abs_signal_to_noise: The absolute value of signal_to_noise.
-    - abs_s2n: Alias of abs_signal_to_noise.
-    - t_test: T test.
+    - `s2n`: Alias of signal_to_noise.
+    - `abs_signal_to_noise`: The absolute value of signal_to_noise.
+    - `abs_s2n`: Alias of abs_signal_to_noise.
+    - `t_test`: T test.
         Uses the difference of means scaled by the standard deviation and number of samples.
-    - ratio_of_classes: Also referred to as fold change.
+    - `ratio_of_classes`: Also referred to as fold change.
         Uses the ratio of class means to calculate fold change for natural scale data.
-    - diff_of_classes: Difference of class means.
+    - `diff_of_classes`: Difference of class means.
         Uses the difference of class means to calculate fold change for nature scale data
-    - log2_ratio_of_classes: Log2 ratio of class means.
+    - `log2_ratio_of_classes`: Log2 ratio of class means.
         Uses the log2 ratio of class means to calculate fold change for natural scale data.
         This is the recommended statistic for calculating fold change for log scale data.
-- top (type=auto): Do gsea table and enrich plot for top N pathways.
+- `top` (`type=auto`): Do gsea table and enrich plot for top N pathways.
     If it is < 1, will apply it to `padj`, selecting pathways with `padj` < `top`.
-- eps (type=float): This parameter sets the boundary for calculating the p value.
-- minSize (type=int): Minimal size of a gene set to test. All pathways below the threshold are excluded.
-- maxSize (type=int): Maximal size of a gene set to test. All pathways above the threshold are excluded.
-- `<rest>`: Rest arguments for [`fgsea()`](https://rdrr.io/bioc/fgsea/man/fgsea.html)
+- `eps` (`type=float`): This parameter sets the boundary for calculating the p value.
+    See <https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html>
+- `minsize` (`type=int`): Minimal size of a gene set to test. All pathways below the threshold are excluded.
+- `maxsize` (`type=int`): Maximal size of a gene set to test. All pathways above the threshold are excluded.
+- `rest` (`type=json`): Rest arguments for [`fgsea()`](https://rdrr.io/bioc/fgsea/man/fgsea.html)
     See also <https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html>
+- `cases` (`type=json`): If you have multiple cases, you can specify them here.
+    The keys are the names of the cases and the values are the above options except `mutaters`.
+    If some options are not specified, the default values specified above will be used.
+    If no cases are specified, the default case will be added with the name `DEFAULT`.
+
 
 
 [1]: https://toml.io/en/
