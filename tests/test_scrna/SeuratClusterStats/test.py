@@ -4,6 +4,7 @@ from biopipen.ns.scrna import (
     SeuratClustering,
     SeuratClusterStats,
     CellTypeAnnotation,
+    ModuleScoreCalculator,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -45,8 +46,21 @@ class CellTypeAnnotation(CellTypeAnnotation):
     }
 
 
-class SeuratClusterStats(SeuratClusterStats):
+class ModuleScoreCalculator(ModuleScoreCalculator):
     requires = CellTypeAnnotation
+    envs = {
+        "modules": {
+            # "CellCycle": {"features": "cc.genes.updated.2019"},
+            # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
+            # "Activation": {"features": "IFNG"},
+            # "Proliferation": {"features": "STMN1,TUBB"},
+            "SomeModule": {"features": "CD3D,GZMM,CD8A,GNLY", "ctrl": 4},
+        }
+    }
+
+
+class SeuratClusterStats(SeuratClusterStats):
+    requires = ModuleScoreCalculator
     envs = {
         "exprs": {
             "ridgeplots.1": {

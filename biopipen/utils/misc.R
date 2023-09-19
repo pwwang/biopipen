@@ -95,7 +95,12 @@ list_update <- function(x, y) {
         y <- list()
     }
     for (k in names(y)) {
-        x <- c(x, y[k])
+        if (is.null(y[[k]])) {
+            x[[k]] <- NULL
+            x <- c(x, y[k])
+        } else {
+            x[[k]] <- y[[k]]
+        }
     }
     x
 }
