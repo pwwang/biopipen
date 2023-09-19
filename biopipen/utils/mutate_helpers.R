@@ -218,6 +218,10 @@ expanded <- function(
     uniq = TRUE,
     order = "diff+desc"
 ) {
+    lbl <- as_label(enquo(df))
+    if (length(lbl) == 1 && lbl == ".") {
+        df <- across(everything())
+    }
     .compare(
         df,
         enquo(group.by),
@@ -242,6 +246,10 @@ collapsed <- function(
     uniq = TRUE,
     order = "diff+desc"
 ) {
+    lbl <- as_label(enquo(df))
+    if (length(lbl) == 1 && lbl == ".") {
+        df <- across(everything())
+    }
     .compare(
         df,
         enquo(group.by),
@@ -266,6 +274,10 @@ emerged <- function(
     uniq = TRUE,
     order = "diff+desc"
 ) {
+    lbl <- as_label(enquo(df))
+    if (length(lbl) == 1 && lbl == ".") {
+        df <- across(everything())
+    }
     .compare(
         df,
         enquo(group.by),
@@ -281,7 +293,7 @@ emerged <- function(
 
 #' @export
 vanished <- function(
-    df = NULL,
+    df,
     group.by, # nolint
     idents,
     subset = TRUE,
@@ -290,6 +302,10 @@ vanished <- function(
     uniq = TRUE,
     order = "diff+desc"
 ) {
+    lbl <- as_label(enquo(df))
+    if (length(lbl) == 1 && lbl == ".") {
+        df <- across(everything())
+    }
     .compare(
         df,
         enquo(group.by),
