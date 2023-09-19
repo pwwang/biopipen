@@ -435,7 +435,7 @@ class CellsDistribution(Proc):
             * `group-by`: The column name in metadata to group the cells.
             * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
             * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
+            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`).
             * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
             * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
             * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.

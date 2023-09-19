@@ -178,7 +178,7 @@ do_case <- function(name, case) {
         c(
             'geom_col(aes(x=sqrt(CloneGroupSize), y=CloneSize), width=.01, position="fill", color = "#888888")',
             'coord_polar("y", start=0)',
-            paste0('facet_grid(vars(', case$cells_by, '), vars(', case$group_by, '), switch="y")'),
+            paste0('facet_grid(vars(', bQuote(case$cells_by), '), vars(', bQuote(case$group_by), '), switch="y")'),
             # 'scale_fill_manual(name = "Cluster", values = pal)',
             # 26-color palette
             'scale_fill_ucscgb(name = "Cluster", limits = levels(all_clusters))',
