@@ -69,14 +69,16 @@ for (key in names(modules)) {
             }
         })
 
-        sobj@meta.data <- sobj@meta.data %>%
+        sobj[[key]] <- sobj@meta.data %>%
             rowwise() %>%
             mutate(
                 !!sym(key) := agg(
                     c_across(matches(paste0("^", key, "\\d+$"))),
                     na.rm = TRUE
                 )
-            )
+            ) %>%
+            ungroup() %>%
+            pull(key)
 
         if (!isTRUE(keep)) {
             sobj@meta.data <- sobj@meta.data %>%
