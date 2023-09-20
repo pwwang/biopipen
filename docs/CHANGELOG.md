@@ -1,3 +1,16 @@
+## 0.17.0
+
+- ⬆️ Bump pipen-board to 0.11.4
+- 📝 [docs] Update logo
+- 📝 [docs] Add css due to mkdocs-rtd change
+- 💥 [core.filters] Default `sortkeys` to `False` for filter `r`
+- 🐛 [scrna.ModuleScoreCalculator] Fix aggregation values of programs
+- 🐛 [scrna.SeuratClusterStats] Fix typo for default stats
+- 🐛 [scrna.ModuleScoreCalculator] Fix name for cell cycle scores
+- 🐛 [scrna.CellsDistribution] Fix when `cells_by` or `group_by` is not an identifier
+- 🚑 [utils.mutate_helpers.R] Allow accessing metadata using `.`
+- ✨ [scrna.ModuleScoreCalculator] Add proc
+
 ## 0.16.7
 
 - 🔥 [scrna.SeuratMetadataMutater] Remove unnecessary in.mutaters

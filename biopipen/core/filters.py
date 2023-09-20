@@ -106,7 +106,7 @@ def r(
     obj: Any,
     ignoreintkey: bool = True,
     todot: str = None,
-    sortkeys: bool = True,
+    sortkeys: bool = False,
 ) -> str:
     """Convert a python object into R repr
 

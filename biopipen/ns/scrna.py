@@ -306,8 +306,8 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "stats": {
-            "ncells_All": {},
-            "ncells_Sample": {"by": "Sample"},
+            "nCells_All": {},
+            "nCells_Sample": {"by": "Sample"},
             "fracCells_Sample": {"by": "Sample"},
         },
         "exprs": {},
@@ -322,6 +322,88 @@ class SeuratClusterStats(Proc):
     plugin_opts = {
         "report": "file://../reports/scrna/SeuratClusterStats.svelte"
     }
+
+
+class ModuleScoreCalculator(Proc):
+    """Calculate the module scores for each cell
+
+    The module scores are calculated by `Seurat::AddModuleScore()`.
+    See <https://satijalab.org/seurat/reference/addmodulescore>
+
+    The module scores are calculated as the average expression levels of each
+    program on single cell level, subtracted by the aggregated expression of
+    control feature sets. All analyzed features are binned based on averaged
+    expression, and the control features are randomly selected from each bin.
+
+    Input:
+        srtobj: The seurat object loaded by `SeuratClustering`
+
+    Output:
+        rdsfile: The seurat object with module scores
+
+    Envs:
+        defaults (ns): The default parameters for `modules`.
+            - features: The features to calculate the scores. Multiple features
+                should be separated by comma.
+                You can also specify `cc.genes` or `cc.genes.updated.2019` to
+                use the cell cycle genes to calculate cell cycle scores.
+                If so, three columns will be added to the metadata, including
+                `S.Score`, `G2M.Score` and `Phase`.
+                Only one type of cell cycle scores can be calculated at a time.
+            - nbin (type=int): Number of bins of aggregate expression levels
+                for all analyzed features.
+            - ctrl (type=int): Number of control features selected from
+                the same bin per analyzed feature.
+            - k (flag): Use feature clusters returned from `DoKMeans`.
+            - assay: The assay to use.
+            - seed (type=int): Set a random seed.
+            - search (flag): Search for symbol synonyms for features in
+                features that don't match features in object?
+            - keep (flag): Keep the scores for each feature?
+                Only works for non-cell cycle scores.
+            - agg (choice): The aggregation function to use.
+                Only works for non-cell cycle scores.
+                - mean: The mean of the expression levels
+                - median: The median of the expression levels
+                - sum: The sum of the expression levels
+                - max: The max of the expression levels
+                - min: The min of the expression levels
+                - var: The variance of the expression levels
+                - sd: The standard deviation of the expression levels
+        modules (type=json): The modules to calculate the scores.
+            Keys are the names of the expression programs and values are the
+            dicts inherited from `env.defaults`.
+            Here are some examples -
+            >>> {
+            >>>     "CellCycle": {"features": "cc.genes.updated.2019"},
+            >>>     "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
+            >>>     "Activation": {"features": "IFNG"},
+            >>>     "Proliferation": {"features": "STMN1,TUBB"}
+            >>> }
+    """
+    input = "srtobj:file"
+    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "defaults": {
+            "features": None,
+            "nbin": 24,
+            "ctrl": 100,
+            "k": False,
+            "assay": None,
+            "seed": 8525,
+            "search": False,
+            "keep": False,
+            "agg": "mean",
+        },
+        "modules": {
+            # "CellCycle": {"features": "cc.genes.updated.2019"},
+            # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
+            # "Activation": {"features": "IFNG"},
+            # "Proliferation": {"features": "STMN1,TUBB"},
+        },
+    }
+    script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
 
 class CellsDistribution(Proc):
@@ -351,7 +433,7 @@ class CellsDistribution(Proc):
             * `group-by`: The column name in metadata to group the cells.
             * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
             * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
+            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`).
             * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
             * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
             * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.

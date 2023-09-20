@@ -4,6 +4,7 @@ from biopipen.ns.scrna import (
     SeuratClustering,
     SeuratClusterStats,
     CellTypeAnnotation,
+    ModuleScoreCalculator,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -45,19 +46,32 @@ class CellTypeAnnotation(CellTypeAnnotation):
     }
 
 
-class SeuratClusterStats(SeuratClusterStats):
+class ModuleScoreCalculator(ModuleScoreCalculator):
     requires = CellTypeAnnotation
     envs = {
+        "modules": {
+            # "CellCycle": {"features": "cc.genes.updated.2019"},
+            # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
+            # "Activation": {"features": "IFNG"},
+            # "Proliferation": {"features": "STMN1,TUBB"},
+            "SomeModule": {"features": "CD3D,GZMM,CD8A,GNLY", "ctrl": 4},
+        }
+    }
+
+
+class SeuratClusterStats(SeuratClusterStats):
+    requires = ModuleScoreCalculator
+    envs = {
         "exprs": {
-            "ridgeplots.1": {
+            "ridgeplots_1": {
                 "title": "Gene expressions in g1",
                 "subset": "groups == 'g1'",
             },
-            "ridgeplots.2": {
+            "ridgeplots_2": {
                 "title": "Gene expressions in g2",
                 "subset": "groups == 'g2'",
             },
-            "vlnplots": {"boxplot": {}, "pt.size": 0},
+            "vlnplots": {"boxplot": {}, "pt-size": 0},
             "dotplot": {"plus": "RotatedAxis()"},
             "heatmap": {"downsample": "average"},
         }
@@ -76,9 +90,11 @@ def testing(pipen):
             "0",
             "output",
             "pbmc_small.annotated.cluster_stats",
+            "exprs",
+            "ridgeplots-1.png",
         )
     )
-    assert outfile.is_dir()
+    assert outfile.is_file(), str(outfile)
 
 
 if __name__ == "__main__":
