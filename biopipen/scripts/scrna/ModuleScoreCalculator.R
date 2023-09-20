@@ -27,7 +27,6 @@ for (key in names(modules)) {
     }
 
     module <- list_update(defaults, modules[[key]])
-    module$name <- key
     module$object <- sobj
     if (is.null(module$features) || length(module$features) == 0) {
         stop(paste0("Module '", key, "' has no features"))
@@ -43,13 +42,14 @@ for (key in names(modules)) {
         is_cc <- TRUE
         module$features <- NULL
         module$s.features <- cc.genes$s.genes
-        module$g2m.genes <- cc.genes$g2m.genes
+        module$g2m.features <- cc.genes$g2m.genes
     } else if (module$features == "cc.genes.updated.2019") {
         is_cc <- TRUE
         module$features <- NULL
         module$s.features <- cc.genes.updated.2019$s.genes
-        module$g2m.genes <- cc.genes.updated.2019$g2m.genes
+        module$g2m.features <- cc.genes.updated.2019$g2m.genes
     } else {
+        module$name <- key
         module$features <- trimws(strsplit(module$features, ",")[[1]])
     }
     if (isTRUE(is_cc)) {

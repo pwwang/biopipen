@@ -374,14 +374,12 @@ class ModuleScoreCalculator(Proc):
             Keys are the names of the expression programs and values are the
             dicts inherited from `env.defaults`.
             Here are some examples -
-            ```json
-            {
-                "CellCycle": {"features": "cc.genes.updated.2019"},
-                "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
-                "Activation": {"features": "IFNG"},
-                "Proliferation": {"features": "STMN1,TUBB"},
-            }
-            ```
+            >>> {
+            >>>     "CellCycle": {"features": "cc.genes.updated.2019"},
+            >>>     "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
+            >>>     "Activation": {"features": "IFNG"},
+            >>>     "Proliferation": {"features": "STMN1,TUBB"}
+            >>> }
     """
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
