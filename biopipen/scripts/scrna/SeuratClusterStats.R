@@ -110,6 +110,7 @@ do_stats = function() {
             args$frac = TRUE
         } else if (!startsWith(name, "nCells")) {
             warning(paste("Unknown stat:", name, ", skipping"))
+            next
         }
 
         do_call(do_stats_cells, args)
@@ -239,7 +240,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
     if (is.null(subsetpms)) {
         pms$object = srtobj
     } else {
-        pms$object = srtobj %>% filter(eval(parse(text=subsetpms)))
+        pms$object = srtobj %>% tidyseurat::filter(eval(parse(text=subsetpms)))
     }
     p = do_call(VlnPlot, pms)
     if (!is.null(boxplot)) {

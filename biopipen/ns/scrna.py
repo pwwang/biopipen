@@ -306,8 +306,8 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "stats": {
-            "ncells_All": {},
-            "ncells_Sample": {"by": "Sample"},
+            "nCells_All": {},
+            "nCells_Sample": {"by": "Sample"},
             "fracCells_Sample": {"by": "Sample"},
         },
         "exprs": {},
