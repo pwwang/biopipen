@@ -29,8 +29,9 @@ sobj = RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
 
 print("- Renaming cell types...")
 if (is.null(newcol)) {
-    sobj$seurat_clusters_old = sobj$seurat_clusters
+    sobj$seurat_clusters_id = sobj$seurat_clusters
     sobj$seurat_clusters = sobj$hitype
+    Idents(sobj) = "seurat_clusters"
 } else {
     sobj[[newcol]] = sobj$hitype
 }
@@ -41,9 +42,9 @@ saveRDS(sobj, outfile)
 print("- Saving the mappings ...")
 if (is.null(newcol)) {
     celltypes = sobj@meta.data %>%
-        group_by(seurat_clusters_old) %>%
+        group_by(seurat_clusters_id) %>%
         summarize(CellType = hitype[1]) %>%
-        select(Cluster = seurat_clusters_old, CellType) %>%
+        select(Cluster = seurat_clusters_id, CellType) %>%
         ungroup()
 } else {
     celltypes = sobj@meta.data %>%

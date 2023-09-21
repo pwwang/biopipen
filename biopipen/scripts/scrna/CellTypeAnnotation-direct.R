@@ -33,7 +33,7 @@ if (is.null(celltypes) || length(celltypes) == 0) {
     names(celltypes) = idents
 
     if (is.null(newcol)) {
-        sobj$seurat_clusters_old = Idents(sobj)
+        sobj$seurat_clusters_id = Idents(sobj)
         celltypes$object = sobj
         sobj = do_call(RenameIdents, celltypes)
         sobj$seurat_clusters = Idents(sobj)
