@@ -1,0 +1,7 @@
+Subject	Sample	Source	Score
+A	A1	Tumor	1
+A	A2	Normal	8
+B	B1	Tumor	2
+B	B2	Normal	8
+C	C1	Tumor	9
+C	C2	Normal	3
