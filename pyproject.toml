@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.17.0"
+version = "0.17.1"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -30,7 +30,7 @@ bed = "biopipen.ns.bed"
 cnv = "biopipen.ns.cnv"
 cnvkit = "biopipen.ns.cnvkit"
 cnvkit_pipeline = "biopipen.ns.cnvkit_pipeline"
-csv = "biopipen.ns.csv"
+delim = "biopipen.ns.delim"
 gene = "biopipen.ns.gene"
 gsea = "biopipen.ns.gsea"
 misc = "biopipen.ns.misc"

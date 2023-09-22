@@ -70,7 +70,7 @@ suppressPackageStartupMessages(library(dplyr))
 #' # Get vanished clones
 #' vanished(df, Source, c("Tumor", "Normal"))
 #' # [1] "B" "C"
-.compare <- function(
+.size_compare <- function(
     df,
     group.by, # nolint
     idents,
@@ -222,7 +222,7 @@ expanded <- function(
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
-    .compare(
+    .size_compare(
         df,
         enquo(group.by),
         idents,
@@ -250,7 +250,7 @@ collapsed <- function(
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
-    .compare(
+    .size_compare(
         df,
         enquo(group.by),
         idents,
@@ -278,7 +278,7 @@ emerged <- function(
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
-    .compare(
+    .size_compare(
         df,
         enquo(group.by),
         idents,
@@ -306,7 +306,7 @@ vanished <- function(
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
-    .compare(
+    .size_compare(
         df,
         enquo(group.by),
         idents,
@@ -317,4 +317,105 @@ vanished <- function(
         uniq = uniq,
         order = order
     )
+}
+
+#' Get paired entities from a data frame based on the other column
+#'
+#' @rdname Get paired entities
+#' @param df The data frame. Use `.` if the function is called in a dplyr pipe.
+#' @param id_col The column name in `df` for the ids to be returned in the
+#'   final output
+#' @param compare_col The column name in `df` to compare the values for each
+#'   id in `id_col`.
+#' @param idents The values in `compare_col` to compare. It could be either an
+#'   an integer or a vector. If it is an integer, the number of values in
+#'   `compare_col` must be the same as the integer for the `id` to be regarded
+#'   as paired. If it is a vector, the values in `compare_col` must be the same
+#'   as the values in `idents` for the `id` to be regarded as paired.
+#' @param uniq Whether to return unique ids or not. Default is `TRUE`.
+#'   If `FALSE`, you can mutate the meta data frame with the returned ids.
+#'   Non-paired ids will be `NA`.
+#' @return A vector of paired ids (in `id_col` column)
+#' @examples
+#' df <- tibble(
+#'   id = c("A", "A", "B", "B", "C", "C", "D", "D"),
+#'   compare = c(1, 2, 1, 1, 1, 2, 1, 2)
+#' )
+#' paired(df, id, compare, 2)
+#' # [1] "A" "B" "C" "D"
+#' paired(df, id, compare, c(1, 2))
+#' # [1] "A" "C" "D"
+#' paired(df, id, compare, c(1, 2), uniq = FALSE)
+#' # [1] "A" "A" NA NA "C" "C" "D" "D"
+#'
+paired <- function(
+    df,
+    id_col,
+    compare_col,
+    idents = 2,
+    uniq = TRUE
+) {
+    lbl <- as_label(enquo(df))
+    if (length(lbl) == 1 && lbl == ".") {
+        df <- across(everything())
+    }
+
+    id_col <- enquo(id_col)
+    compare_col <- enquo(compare_col)
+    if (is_empty(attr(id_col, ".Environment"))) {
+        id_col <- sym(as_name(id_col))
+    }
+    if (is_empty(attr(compare_col, ".Environment"))) {
+        compare_col <- sym(as_name(compare_col))
+    }
+    if (!as_name(id_col) %in% colnames(df)) {
+        stop(paste0(
+            '`id_col` must be a column name in df. Got "',
+            as_name(id_col),
+            '"'
+        ))
+    }
+    if (!as_name(compare_col) %in% colnames(df)) {
+        stop(paste0(
+            '`compare_col` must be a column name in df. Got "',
+            as_name(compare_col),
+            '"'
+        ))
+    }
+
+    if (is.numeric(idents) && length(idents) == 1) {
+        if (idents <= 1) {
+            stop(paste0(
+                '`idents` must be greater than 1. Got ',
+                idents
+            ))
+        }
+        out <- df %>%
+            add_count(!!id_col, name = "..count") %>%
+            mutate(..paired = if_else(..count == idents, !!id_col, NA))
+    } else {
+        if (length(idents) <= 1) {
+            stop(paste0(
+                '`idents` must be a vector with length greater than 1. Got ',
+                length(idents)
+            ))
+        }
+        out <- df %>%
+            group_by(!!id_col) %>%
+            mutate(
+                ..paired = if_else(
+                    rep(setequal(!!compare_col, idents), n()),
+                    !!id_col,
+                    NA
+                )
+            ) %>%
+            ungroup()
+    }
+
+    out <- out %>% pull(..paired)
+    if (uniq) {
+        return(out %>% na.omit() %>% unique() %>% as.vector())
+    } else {
+        return(out)
+    }
 }

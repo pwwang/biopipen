@@ -38,7 +38,7 @@ print("- Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
 print("- Mutate meta data if needed ...")
-if (!is.null(mutaters) && length(mutaters)) {
+if (!is.null(mutaters) && length(mutaters) > 0) {
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }

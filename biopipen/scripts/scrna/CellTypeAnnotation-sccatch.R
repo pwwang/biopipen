@@ -44,7 +44,7 @@ if (length(celltypes) == 0) {
     warning("No cell types annotated from the database!")
 } else {
     if (is.null(newcol)) {
-        sobj$seurat_clusters_old = Idents(sobj)
+        sobj$seurat_clusters_id = Idents(sobj)
         celltypes$object = sobj
         sobj = do_call(RenameIdents, celltypes)
         sobj$seurat_clusters = Idents(sobj)

@@ -1,3 +1,5 @@
+set.seed(8525)
+
 {% if envs.tool == "hitype" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-hitype.R" %}
 {% elif envs.tool == "sctype" %}

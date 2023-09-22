@@ -99,7 +99,7 @@ if (length(cell_types_list) == 1) {
 
 print("- Renaming cell types...")
 if (is.null(newcol)) {
-    sobj$seurat_clusters_old = sobj$seurat_clusters
+    sobj$seurat_clusters_id = sobj$seurat_clusters
     celltypes$object = sobj
     sobj = do_call(RenameIdents, celltypes)
     sobj$seurat_clusters = Idents(sobj)
