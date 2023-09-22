@@ -107,8 +107,7 @@ class SampleInfo(SampleInfo_):
 
 def pipeline():
     return (
-        # get_pipeline(__file__, plugins=["no:report"])
-        get_pipeline(__file__)
+        get_pipeline(__file__, plugins=["no:report"])
         .set_starts(
             RowsBinder,
             RowsBinderWithFilenames,
