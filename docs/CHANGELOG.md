@@ -1,3 +1,7 @@
+## 0.17.2
+
+- 📝 [delim.SampleInfo] Add report template
+
 ## 0.17.1
 
 - 🎨 [scrna.CellTypeAnnotation] Change `seurat_clusters_old` to `seurat_clusters_id` to save old seurat_clusters
