@@ -1,3 +1,11 @@
+## 0.17.1
+
+- 🎨 [scrna.CellTypeAnnotation] Change `seurat_clusters_old` to `seurat_clusters_id` to save old seurat_clusters
+- 💥 [csv] Rename to `delim`
+- 🚚 [csv.BindRows] Rename to `delim.RowsBinder`
+- ✨ [utils.mutate_helpers.R] Add `paired()` to identify paired records
+- ✨ [delim.SampleInfo] Add process
+
 ## 0.17.0
 
 - ⬆️ Bump pipen-board to 0.11.4
