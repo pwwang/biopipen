@@ -76,6 +76,8 @@ class SampleInfo(Proc):
                 If `FALSE`, you can mutate the meta data frame with the
                 returned ids. Non-paired ids will be `NA`.
         save_mutated (flag): Whether to save the mutated columns.
+        exclude_cols: The columns to exclude in the table in the report.
+            Could be a list or a string separated by comma.
         defaults (ns): The default parameters for `envs.stats`.
             - on: The column name in the data for the stats.
                 Default is `Sample`.
@@ -109,6 +111,7 @@ class SampleInfo(Proc):
         "sep": "\t",
         "mutaters": {},
         "save_mutated": False,
+        "exclude_cols": None,
         "defaults": {
             "on": "Sample",
             "group": None,
@@ -123,3 +126,4 @@ class SampleInfo(Proc):
     }
     lang = config.lang.rscript
     script = "file://../scripts/delim/SampleInfo.R"
+    plugin_opts = {"report": "file://../reports/delim/SampleInfo.svelte"}
