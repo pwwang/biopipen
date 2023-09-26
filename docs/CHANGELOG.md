@@ -1,3 +1,9 @@
+## 0.17.3
+
+- ⬆️ Bump pipen-report to 0.12.8
+- 📝 [delim.SampleInfo] Show h1 in report only when stats specified
+- 📝 [delim.SampleInfo] Fix parsing excluded_cols in report
+
 ## 0.17.2
 
 - 📝 [delim.SampleInfo] Add report template
