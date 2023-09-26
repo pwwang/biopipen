@@ -6,9 +6,11 @@
 
 {%- macro report_job(job, h=1) -%}
 
+    {% if envs.stats %}
     <h{{h}}>Sample Information</h{{h}}>
+    {% endif %}
     {% if envs.exclude_cols and isinstance(envs.exclude_cols, str) %}
-        {% set excluded_cols = envs.exclude_cols.split(",") | map: str.strip %}
+        {% set excluded_cols = envs.exclude_cols | replace: " ", "" | split: "," %}
     {% else %}
         {% set excluded_cols = envs.exclude_cols %}
     {% endif %}

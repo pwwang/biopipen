@@ -105,9 +105,15 @@ class SampleInfo(SampleInfo_):
     }
 
 
+class SampleInfo2(SampleInfo_):
+    requires = RowsBinderWithFilenameFuns
+    envs = {"exclude_cols": "Score,Filename"}
+
+
 def pipeline():
     return (
         get_pipeline(__file__, plugins=["no:report"])
+        # get_pipeline(__file__)
         .set_starts(
             RowsBinder,
             RowsBinderWithFilenames,
