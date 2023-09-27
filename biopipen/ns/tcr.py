@@ -825,7 +825,10 @@ class TCRClustering(Proc):
     Output:
         immfile: The immnuarch object in RDS with TCR cluster information
         clusterfile: The cluster file.
-            Columns are CDR3.aa, TCR_Cluster and TCR_Cluster_Size
+            Columns are CDR3.aa, TCR_Cluster, TCR_Cluster_Size and
+            TCR_Cluster_Size1.
+            TCR_Cluster_Size is the number of cells in the cluster.
+            TCR_Cluster_Size1 is the unique CDR3 sequences in the cluster.
 
     Envs:
         tool (choice): The tool used to do the clustering, either
