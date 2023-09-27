@@ -244,7 +244,7 @@ class SeuratClusterStats(Proc):
     """Statistics of the clustering.
 
     Including the number/fraction of cells in each cluster,
-    the gene expression values and dimension reduction plots.
+    the gene expression values, features and dimension reduction plots.
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -262,32 +262,33 @@ class SeuratClusterStats(Proc):
             * `fracCells_*` - Fraction of cells for each cluster.
                 Similar to `nCells_*`, but the fraction is calculated
                 instead of the absolute number.
-        exprs (type=json): The expression values to plot.
-            * `genes` - The set of genes (separated by comma) for the plots,
+        features (type=json): The plots for features, include gene expressions,
+            and columns from metadata.
+            * `features` - The set of features (separated by comma) for the plots,
                 unless `features` for those plots is specified.
-                One could also specify a file with genes (one per line).
-            * `ridgeplots` - The ridge plots for the gene expressions.
+                One could also specify a file with features (one per line).
+            * `ridgeplots` - The ridge plots for the features.
                 See [`Seurat::RidgePlot`](https://satijalab.org/seurat/reference/ridgeplot).
-            * `vlnplots` - Violin plots for the gene expressions.
+            * `vlnplots` - Violin plots for the features.
                 See [`Seurat::VlnPlot`](https://satijalab.org/seurat/reference/vlnplot).
                 You can have `boxplot` key to add `geom_boxplot()` to the violin plots.
-            * `featureplots` - The feature plots for the gene expressions.
+            * `featureplots` - The feature plots for the features.
                 See [`Seurat::FeaturePlot`](https://satijalab.org/seurat/reference/featureplot).
-            * `dotplot` - Dot plots for the gene expressions.
+            * `dotplot` - Dot plots for the features.
                 See [`Seurat::DotPlot`](https://satijalab.org/seurat/reference/dotplot).
-            * `heatmap` - Heatmap for the gene expressions.
+            * `heatmap` - Heatmap for the features.
                 See [`Seurat::DoHeatmap`](https://satijalab.org/seurat/reference/doheatmap).
                 You can specify `average=True` to plot on the average of the expressions.
-            * `table` - The table for the gene expressions.
+            * `table` - The table for the features, only gene expressions are supported.
                 (supported keys: title, log2, subset and features).
             * All the above can have `devpars` to define the output figures
                 and `plus` to add elements to the `ggplot` object.
                 You can also have `subset` to subset the data.
                 Multiple cases can be distinguished by `ridgeplots` and
                 `ridgeplots_1`.
-                If no `features` specified, will use `genes`. If you want to use
-                the default gene list `VariantFeatures(srtobj)[1:20]`, specify
-                `features = "default"`. Or you can also specify the genes
+                If no `features` specified, will use `envs.features`. If you want to use
+                the default variant features `VariantFeatures(srtobj)`, specify
+                `features = 20` for the first 20. Or you can also specify the features
                 directly to `features`.
         dimplots (type=json): The dimensional reduction plots.
             * `<case>` - The case to plot.
@@ -310,7 +311,7 @@ class SeuratClusterStats(Proc):
             "nCells_Sample": {"by": "Sample"},
             "fracCells_Sample": {"by": "Sample"},
         },
-        "exprs": {},
+        "features": {},
         "dimplots": {
             "Ident": {
                 "group-by": "ident",

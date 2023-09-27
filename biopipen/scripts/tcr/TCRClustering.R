@@ -89,6 +89,7 @@ clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
     df = out %>%
         select(Barcode, TCR_Cluster) %>%
         distinct(Barcode, .keep_all = TRUE) %>%
+        add_count(TCR_Cluster, name="TCR_Cluster_Size") %>%
         column_to_rownames("Barcode")
 
     write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")
@@ -186,6 +187,7 @@ clean_giana_output = function(giana_outfile, giana_infile) {
     df = out %>%
         select(Barcode, TCR_Cluster) %>%
         distinct(Barcode, .keep_all = TRUE) %>%
+        add_count(TCR_Cluster, name="TCR_Cluster_Size") %>%
         column_to_rownames("Barcode")
 
     write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")

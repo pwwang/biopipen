@@ -129,16 +129,16 @@ do_stats = function() {
     return(outfile)
 }
 
-.get_features = function(features, genes, default = NULL) {
+.get_features = function(features, default_features, default = NULL) {
     if (is.null(default)) {
-        default = VariableFeatures(srtobj)[1:20]
+        default = VariableFeatures(srtobj)
     }
     # When nothing passed, use the genes
     if (is.null(features)) {
-        if (is.null(genes)) {
-            return (default)
+        if (is.null(default_features)) {
+            return (default[1:20])
         } else {
-            return (genes)
+            return (default_features)
         }
     }
     # When multiple items passed, use them as features
@@ -146,8 +146,8 @@ do_stats = function() {
         return (features)
     }
     # See if it is "default"
-    if (features == "default") {
-        return (default)
+    if (is.integer(features)) {
+        return (default[1:features])
     }
     # See if it is a file
     if (!file.exists(features)) {
@@ -158,7 +158,7 @@ do_stats = function() {
     feats$V1
 }
 
-do_exprs_ridgeplots = function(odir, pms, genes) {
+do_feats_ridgeplots = function(odir, pms, default_features) {
     outfile = .get_outfile(odir, "ridgeplots")
 
     devpars = pms$devpars
@@ -179,7 +179,7 @@ do_exprs_ridgeplots = function(odir, pms, genes) {
     if (is.null(plus)) {
         plus = c()
     }
-    pms$features = .get_features(pms$features, genes)
+    pms$features = .get_features(pms$features, default_features)
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
@@ -203,7 +203,7 @@ do_exprs_ridgeplots = function(odir, pms, genes) {
 }
 
 
-do_exprs_vlnplots = function(odir, pms, genes) {
+do_feats_vlnplots = function(odir, pms, default_features) {
     outfile = .get_outfile(odir, "vlnplots")
 
     devpars = pms$devpars
@@ -229,7 +229,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
-    pms$features = .get_features(pms$features, genes)
+    pms$features = .get_features(pms$features, default_features)
     if (is.null(devpars)) {
         devpars = list(
             width = pms$ncol * 480,
@@ -256,7 +256,7 @@ do_exprs_vlnplots = function(odir, pms, genes) {
 }
 
 
-do_exprs_featureplots = function(odir, pms, genes) {
+do_feats_featureplots = function(odir, pms, default_features) {
     outfile = .get_outfile(odir, "featureplots")
 
     devpars = pms$devpars
@@ -270,7 +270,7 @@ do_exprs_featureplots = function(odir, pms, genes) {
     if (is.null(pms$ncol)) {
         pms$ncol = 2
     }
-    pms$features = .get_features(pms$features, genes)
+    pms$features = .get_features(pms$features, default_features)
     if (is.null(devpars)) {
         devpars = list(
             width = 1000,
@@ -304,7 +304,7 @@ do_exprs_featureplots = function(odir, pms, genes) {
     })
 }
 
-do_exprs_dotplot = function(odir, pms, genes) {
+do_feats_dotplot = function(odir, pms, default_features) {
     outfile = .get_outfile(odir, "dotplot")
 
     devpars = pms$devpars
@@ -322,7 +322,7 @@ do_exprs_dotplot = function(odir, pms, genes) {
     if (is.null(plus)) {
         plus = c()
     }
-    pms$features = .get_features(pms$features, genes)
+    pms$features = .get_features(pms$features, default_features)
     if (is.null(devpars)) {
         devpars = list(
             height = length(unique(srtobj@meta.data$seurat_clusters)) * 80 + 150,
@@ -357,7 +357,7 @@ do_exprs_dotplot = function(odir, pms, genes) {
 }
 
 
-do_exprs_heatmap = function(odir, pms, genes) {
+do_feats_heatmap = function(odir, pms, default_features) {
     outfile = .get_outfile(odir, "heatmap")
 
     devpars = pms$devpars
@@ -375,7 +375,7 @@ do_exprs_heatmap = function(odir, pms, genes) {
     if (is.null(plus)) {
         plus = c()
     }
-    pms$features = .get_features(pms$features, genes)
+    pms$features = .get_features(pms$features, default_features)
     if (is.null(devpars)) {
         devpars = list(
             width = length(unique(srtobj@meta.data$seurat_clusters)) * 60 + 150,
@@ -419,13 +419,13 @@ do_exprs_heatmap = function(odir, pms, genes) {
 }
 
 
-do_exprs_table = function(odir, pms, genes) {
+do_feats_table = function(odir, pms, default_features) {
     outfile = .get_outfile(odir, "table", "tsv")
 
     subsetpms = pms$subset
     log2_scale = pms$log2
     if (is.null(log2_scale)) { log2_scale = TRUE }
-    features = .get_features(pms$features, genes)
+    features = .get_features(pms$features, default_features)
     title = pms$title
     if (is.null(title)) { title = tools::file_path_sans_ext(basename(outfile)) }
     cat(title, file = paste0(outfile, ".title"))
@@ -449,36 +449,36 @@ do_exprs_table = function(odir, pms, genes) {
 }
 
 
-do_exprs = function() {
-    if (length(envs$exprs) == 0) {
+do_feats = function() {
+    if (length(envs$features) == 0) {
         return (NULL)
     }
-    odir = file.path(outdir, "exprs")
+    odir = file.path(outdir, "features")
     dir.create(odir, showWarnings = FALSE)
-    genes = envs$exprs$genes
-    envs$exprs$genes = NULL
-    if (!is.null(genes) && is.character(genes) && file.exists(genes)) {
-        genes = read.table(genes, header = FALSE, sep = "\t", row.names = NULL, check.names = FALSE)
-        genes = genes[,1,drop=TRUE]
-    } else if (!is.null(genes) && is.character(genes)) {
-        genes = trimws(strsplit(genes, ",")[[1]])
+    default_features = envs$features$features
+    envs$features$features = NULL
+    if (!is.null(default_features) && is.character(default_features) && file.exists(default_features)) {
+        default_features = read.table(default_features, header = FALSE, sep = "\t", row.names = NULL, check.names = FALSE)
+        default_features = default_features[,1,drop=TRUE]
+    } else if (!is.null(default_features) && is.character(default_features)) {
+        default_features = trimws(strsplit(default_features, ",")[[1]])
     }
 
-    exprplots = names(envs$exprs)
+    exprplots = names(envs$features)
     for (name in exprplots) {
         cat(paste0("Expr plot: ", name, " ...\n"), file = stderr())
         if (startsWith(name, "ridgeplots")) {
-            do_exprs_ridgeplots(odir, envs$exprs[[name]], genes)
+            do_feats_ridgeplots(odir, envs$features[[name]], default_features)
         } else if (startsWith(name, "vlnplots")) {
-            do_exprs_vlnplots(odir, envs$exprs[[name]], genes)
+            do_feats_vlnplots(odir, envs$features[[name]], default_features)
         } else if (startsWith(name, "featureplots")) {
-            do_exprs_featureplots(odir, envs$exprs[[name]], genes)
+            do_feats_featureplots(odir, envs$features[[name]], default_features)
         } else if (startsWith(name, "dotplot")) {
-            do_exprs_dotplot(odir, envs$exprs[[name]], genes)
+            do_feats_dotplot(odir, envs$features[[name]], default_features)
         } else if (startsWith(name, "heatmap")) {
-            do_exprs_heatmap(odir, envs$exprs[[name]], genes)
+            do_feats_heatmap(odir, envs$features[[name]], default_features)
         } else if (startsWith(name, "table")) {
-            do_exprs_table(odir, envs$exprs[[name]], genes)
+            do_feats_table(odir, envs$features[[name]], default_features)
         } else {
             print(paste("Unrecognized expression plot type: ", name))
         }
@@ -531,5 +531,5 @@ do_dimplots = function() {
 
 
 do_stats()
-do_exprs()
+do_feats()
 do_dimplots()
