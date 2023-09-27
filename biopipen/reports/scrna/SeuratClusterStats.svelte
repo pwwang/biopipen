@@ -38,9 +38,9 @@
     </Tabs>
 {%- endfor -%}
 
-{%- if job.out.outdir | glob: "exprs/table-*.tsv" -%}
-<h{{h}}>Gene expression matrix</h{{h}}>
-    {%- set tabfiles = job.out.outdir | glob: "exprs/table-*.tsv" -%}
+{%- if job.out.outdir | glob: "features/table-*.tsv" -%}
+<h{{h}}>Feature matrix</h{{h}}>
+    {%- set tabfiles = job.out.outdir | glob: "features/table-*.tsv" -%}
     {%- for tabfile in tabfiles -%}
         {%- set title = tabfile | append: ".title" | read | escape -%}
         {%- if not title.startswith("table-") or len(tabfiles) > 1 -%}
@@ -51,9 +51,9 @@
     {%- endfor -%}
 {%- endif -%}
 
-{%- if job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
-<h{{h}}>Ridge plots of gene expressions</h{{h}}>
-    {%- set figures = job.out.outdir | glob: "exprs/ridgeplots-*.png" -%}
+{%- if job.out.outdir | glob: "features/ridgeplots-*.png" -%}
+<h{{h}}>Ridge plots of features</h{{h}}>
+    {%- set figures = job.out.outdir | glob: "features/ridgeplots-*.png" -%}
     {%- for figure in figures -%}
         {%- set title = figure | append: ".title" | read | escape -%}
         {%- if not title.startswith("ridgeplots-") or len(figures) > 1 -%}
@@ -63,9 +63,9 @@
     {%- endfor -%}
 {%- endif -%}
 
-{%- if job.out.outdir | glob: "exprs/vlnplots-*.png" -%}
-<h{{h}}>Violin plots of gene expressions</h{{h}}>
-    {%- set figures = job.out.outdir | glob: "exprs/vlnplots-*.png" -%}
+{%- if job.out.outdir | glob: "features/vlnplots-*.png" -%}
+<h{{h}}>Violin plots of features</h{{h}}>
+    {%- set figures = job.out.outdir | glob: "features/vlnplots-*.png" -%}
     {%- for figure in figures -%}
         {%- set title = figure | append: ".title" | read | escape -%}
         {%- if not title.startswith("vlnplots-") or len(figures) > 1 -%}
@@ -75,9 +75,9 @@
     {%- endfor -%}
 {%- endif -%}
 
-{%- if job.out.outdir | glob: "exprs/featureplots-*.png" -%}
-<h{{h}}>Feature plots of gene expressions</h{{h}}>
-    {%- set figures = job.out.outdir | glob: "exprs/featureplots-*.png" -%}
+{%- if job.out.outdir | glob: "features/featureplots-*.png" -%}
+<h{{h}}>Feature plots of features</h{{h}}>
+    {%- set figures = job.out.outdir | glob: "features/featureplots-*.png" -%}
     {%- for figure in figures -%}
         {%- set title = figure | append: ".title" | read | escape -%}
         {%- if not title.startswith("featureplots-") or len(figures) > 1 -%}
@@ -87,9 +87,9 @@
     {%- endfor -%}
 {%- endif -%}
 
-{%- if job.out.outdir | glob: "exprs/dotplot-*.png" -%}
-<h{{h}}>Dot plot of gene expressions</h{{h}}>
-    {%- set figures = job.out.outdir | glob: "exprs/dotplot-*.png" -%}
+{%- if job.out.outdir | glob: "features/dotplot-*.png" -%}
+<h{{h}}>Dot plot of features</h{{h}}>
+    {%- set figures = job.out.outdir | glob: "features/dotplot-*.png" -%}
     {%- for figure in figures -%}
         {%- set title = figure | append: ".title" | read | escape -%}
         {%- if not title.startswith("dotplot-") or len(figures) > 1 -%}
@@ -99,9 +99,9 @@
     {%- endfor -%}
 {%- endif -%}
 
-{%- if job.out.outdir | glob: "exprs/heatmap-*.png" -%}
-    <h{{h}}>Heatmap of gene expressions</h{{h}}>
-    {%- set figures = job.out.outdir | glob: "exprs/heatmap-*.png" -%}
+{%- if job.out.outdir | glob: "features/heatmap-*.png" -%}
+    <h{{h}}>Heatmap of features</h{{h}}>
+    {%- set figures = job.out.outdir | glob: "features/heatmap-*.png" -%}
     {%- for figure in figures -%}
         {%- set title = figure | append: ".title" | read | escape -%}
         {%- if not title.startswith("heatmap-") or len(figures) > 1 -%}

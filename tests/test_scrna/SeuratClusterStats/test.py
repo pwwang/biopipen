@@ -62,7 +62,7 @@ class ModuleScoreCalculator(ModuleScoreCalculator):
 class SeuratClusterStats(SeuratClusterStats):
     requires = ModuleScoreCalculator
     envs = {
-        "exprs": {
+        "features": {
             "ridgeplots_1": {
                 "title": "Gene expressions in g1",
                 "subset": "groups == 'g1'",
@@ -79,6 +79,7 @@ class SeuratClusterStats(SeuratClusterStats):
 
 
 def pipeline():
+    # return get_pipeline(__file__).set_starts(
     return get_pipeline(__file__, plugins=["no:report"]).set_starts(
         PrepareSeurat
     )
@@ -90,7 +91,7 @@ def testing(pipen):
             "0",
             "output",
             "pbmc_small.annotated.cluster_stats",
-            "exprs",
+            "features",
             "ridgeplots-1.png",
         )
     )
