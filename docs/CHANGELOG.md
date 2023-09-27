@@ -1,3 +1,8 @@
+## 0.17.4
+
+- ✨ [tcr.TCRClustering] Add `TCR_Cluster_Size` in `out.clusterfile`
+- 💥 [scrna.SeuratClusterStats] Rename `envs.exprs` to `envs.features`
+
 ## 0.17.3
 
 - ⬆️ Bump pipen-report to 0.12.8
