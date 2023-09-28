@@ -163,9 +163,6 @@ do_feats_ridgeplots = function(odir, pms, default_features) {
 
     devpars = pms$devpars
     pms$devpars = NULL
-    if (is.null(pms$ncol)) {
-        pms$ncol = 2
-    }
     plus = pms$plus
     pms$plus = NULL
     title = pms$title
@@ -180,10 +177,13 @@ do_feats_ridgeplots = function(odir, pms, default_features) {
         plus = c()
     }
     pms$features = .get_features(pms$features, default_features)
+    if (is.null(pms$ncol)) {
+        pms$ncol = min(2, length(pms$features))
+    }
     if (is.null(devpars)) {
         devpars = list(
-            width = 1000,
-            height = ceiling(length(pms$features) / pms$ncol) * 250,
+            width = 400 * pms$ncol,
+            height = ceiling(length(pms$features) / pms$ncol) * 400,
             res = 100
         )
     }
@@ -226,14 +226,14 @@ do_feats_vlnplots = function(odir, pms, default_features) {
     if (!is.null(boxplot) && length(boxplot) == 0) {
         boxplot = list(width = .1, fill = "white")
     }
-    if (is.null(pms$ncol)) {
-        pms$ncol = 2
-    }
     pms$features = .get_features(pms$features, default_features)
+    if (is.null(pms$ncol)) {
+        pms$ncol = min(2, length(pms$features))
+    }
     if (is.null(devpars)) {
         devpars = list(
-            width = pms$ncol * 480,
-            height = ceiling(length(pms$features) / pms$ncol) * 480,
+            width = 400 * pms$ncol,
+            height = ceiling(length(pms$features) / pms$ncol) * 400,
             res = 100
         )
     }
@@ -267,14 +267,14 @@ do_feats_featureplots = function(odir, pms, default_features) {
         title = tools::file_path_sans_ext(basename(outfile))
     }
     cat(title, file = paste0(outfile, ".title"))
-    if (is.null(pms$ncol)) {
-        pms$ncol = 2
-    }
     pms$features = .get_features(pms$features, default_features)
+    if (is.null(pms$ncol)) {
+        pms$ncol = min(2, length(pms$features))
+    }
     if (is.null(devpars)) {
         devpars = list(
-            width = 1000,
-            height = ceiling(length(pms$features) / pms$ncol) * 250,
+            width = 400 * pms$ncol,
+            height = ceiling(length(pms$features) / pms$ncol) * 300,
             res = 100
         )
     }
