@@ -28,12 +28,18 @@ print("- Running RunHitype...")
 sobj = RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
 
 print("- Renaming cell types...")
+hitype_levels = sobj@meta.data %>%
+    select(seurat_clusters, hitype) %>%
+    distinct(seurat_clusters, .keep_all = TRUE) %>%
+    arrange(as.numeric(seurat_clusters)) %>%
+    pull("hitype")
+
 if (is.null(newcol)) {
     sobj$seurat_clusters_id = sobj$seurat_clusters
-    sobj$seurat_clusters = sobj$hitype
+    sobj$seurat_clusters = factor(sobj$hitype, levels = hitype_levels)
     Idents(sobj) = "seurat_clusters"
 } else {
-    sobj[[newcol]] = sobj$hitype
+    sobj[[newcol]] = factor(sobj$hitype, levels = hitype_levels)
 }
 
 print("- Saving Seurat object...")

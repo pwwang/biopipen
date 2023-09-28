@@ -55,7 +55,6 @@ jobs:
           make -k VERBOSE=1
 
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     strategy:
