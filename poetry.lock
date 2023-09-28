@@ -922,28 +922,28 @@ pipen-annotate = ">=0.9.0,<0.10.0"
 
 [[package]]
 name = "pipen-board"
-version = "0.11.4"
+version = "0.11.5"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.11.4-py3-none-any.whl", hash = "sha256:c6756cb9832ff1081e567e9f9c32de29bdd8da62e8e772bd8764dba62a793c35"},
-    {file = "pipen_board-0.11.4.tar.gz", hash = "sha256:e3e82d4ab50d6bd89eb7f9f4d73b4fcf8bd914a4766157afa560173dcfe5cb1e"},
+    {file = "pipen_board-0.11.5-py3-none-any.whl", hash = "sha256:9d1b910cf9f18f61fe39494c0c8fe5aa4f667e70966c68be90a6c7f5618f2e8c"},
+    {file = "pipen_board-0.11.5.tar.gz", hash = "sha256:2e405f1ad934e4d604394ede7ba2c1dea9dea08551551d93553e1674eb756e90"},
 ]
 
 [package.dependencies]
-pipen-args = ">=0.10.0,<0.11.0"
+pipen-args = ">=0.10.4,<0.11.0"
 pipen-log2file = ">=0.3.4,<0.4.0"
-pipen-report = {version = ">=0.12.6,<0.13.0", optional = true, markers = "extra == \"report\""}
+pipen-report = {version = ">=0.12.8,<0.13.0", optional = true, markers = "extra == \"report\""}
 psutil = ">=5.9.5,<6.0.0"
 python-slugify = ">=8.0.1,<9.0.0"
 quart = ">=0.18,<0.19"
-websocket-client = ">=1.5,<2.0"
+websocket-client = ">=1.6,<2.0"
 
 [package.extras]
 diagram = ["pipen-diagram (>=0.7,<0.8)"]
 filters = ["pipen-filters (>=0.8,<0.9)"]
-report = ["pipen-report (>=0.12.6,<0.13.0)"]
+report = ["pipen-report (>=0.12.8,<0.13.0)"]
 
 [[package]]
 name = "pipen-cli-run"
