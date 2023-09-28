@@ -1,3 +1,10 @@
+## 0.17.6
+
+- 👷 Fix CI for publishing the package
+- ⬆️ Bump pipen-board to 0.11.5
+- 🚑 [scrna.SeuratClusterStats] Adjust default width and height for plots
+- 🚑 [scrna.CellTypeAnnotation] Keep order of clusters after hitype annotation
+
 ## 0.17.5
 
 - 👷 Do not run CI build for publish job
