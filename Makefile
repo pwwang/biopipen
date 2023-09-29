@@ -12,12 +12,12 @@ all: $(NS_TARGETS)
 %: tests/test_%
 	@echo "::group::Running tests for namespace: $@";      \
 	for procdir in $</*; do                                \
-		bash tests/conda/run_test.sh $$procdir $(VERBOSE); \
+		bash tests/conda/run_test.sh $$procdir VERBOSE=$(VERBOSE) FORCE=$(FORCE); \
 	done || exit 1;                                        \
 	echo "::endgroup::"
 
 $(PROC_TARGETS): %: tests/test_%
-	@bash tests/conda/run_test.sh $< $(VERBOSE);
+	@bash tests/conda/run_test.sh $< VERBOSE=$(VERBOSE) FORCE=$(FORCE);
 
 log:
 	@lasttag=$$(git describe --tags --abbrev=0);                        \
