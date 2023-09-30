@@ -1,3 +1,10 @@
+## 0.17.7
+
+- ✅ [tests] Allow pass FORCE=true to run local-only tests
+- ✅ [tests] Fix receiving VERBOSE and FORCE in test script
+- 🚑 [tcr.ImmunarchLoading] Fix when `Sample` is the only column in meta
+- ✨ [tcr.TESSA] Add process and test
+
 ## 0.17.6
 
 - 👷 Fix CI for publishing the package

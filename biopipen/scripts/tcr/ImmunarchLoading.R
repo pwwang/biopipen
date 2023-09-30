@@ -175,7 +175,7 @@ metadf = do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
     # Sample                  Patient     Timepoint Tissue
     # <chr>                   <chr>       <chr>     <chr>
     # 1 MC1685Pt011-Baseline-PB MC1685Pt011 Baseline  PB
-    mdata = as.list(immdata$meta[i, ])
+    mdata = as.list(immdata$meta[i, , drop=FALSE])
     for (mname in names(mdata)) {
         assign(mname, mdata[[mname]])
     }
