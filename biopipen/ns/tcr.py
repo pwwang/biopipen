@@ -1129,7 +1129,7 @@ class TESSA(Proc):
         predefined_b (flag): Whether use the predefined `b` or not.
             Please check the paper of tessa for more details about the b vector.
             If True, the tessa will not update b in the MCMC iterations.
-        max_iter (int): The maximum number of iterations for MCMC.
+        max_iter (type=int): The maximum number of iterations for MCMC.
     """
     input = "immdata:file,srtobj:file"
     output = """outfile:file:
