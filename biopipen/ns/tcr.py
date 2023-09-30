@@ -1091,3 +1091,61 @@ class CDR3AAPhyschem(Proc):
     }
     script = "file://../scripts/tcr/CDR3AAPhyschem.R"
     plugin_opts = {"report": "file://../reports/tcr/CDR3AAPhyschem.svelte"}
+
+
+class TESSA(Proc):
+    """Tessa is a Bayesian model to integrate T cell receptor (TCR) sequence
+    profiling with transcriptomes of T cells.
+
+    See <https://github.com/jcao89757/TESSA>
+
+    Reference:
+        - 'Mapping the Functional Landscape of TCR Repertoire.',
+            Zhang, Z., Xiong, D., Wang, X. et al. 2021.
+        - 'Deep learning-based prediction of the T cell receptor-antigen
+            binding specificity.', Lu, T., Zhang, Z., Zhu, J. et al. 2021.
+
+    Input:
+        immdata: The data loaded by `immunarch::repLoad()`, saved in RDS format
+        srtobj: The `Seurat` object, saved in RDS format, with dimension
+            reduction performed if you want to use them to represent the
+            transcriptome of T cells.
+            This could also be a tab delimited file (can be gzipped) with
+            expression matrix or dimension reduction results.
+
+    Output:
+        outfile: The tab-delimited file with three columns
+            (`barcode`, `TESSA_Cluster` and `TESSA_Cluster_Size`) or
+            an RDS file if  `in.srtobj` is an RDS file of a Seurat object, with
+            `TESSA_Cluster` and `TESSA_Cluster_Size` added to the `meta.data`
+
+    Envs:
+        python: The path of python with `TESSA`'s dependencies installed
+        prefix: The prefix to the barcodes of TCR data. You can use placeholder
+            like `{Sample}_` to use the meta data from the immunarch object.
+        within_sample (flag): Whether the TCR networks are constructed only
+            within TCRs from the same sample/patient (True) or with all the
+            TCRs in the meta data matrix (False).
+        predefined_b (flag): Whether use the predefined `b` or not.
+            Please check the paper of tessa for more details about the b vector.
+            If True, the tessa will not update b in the MCMC iterations.
+        max_iter (int): The maximum number of iterations for MCMC.
+    """
+    input = "immdata:file,srtobj:file"
+    output = """outfile:file:
+        {%- if in.srtobj.lower().endswith(".rds") -%}
+        {{in.srtobj | stem}}.tessa.RDS
+        {%- else -%}
+        {{in.immdata | stem}}.tessa.txt
+        {%- endif -%}
+    """
+    lang = config.lang.rscript
+    envs = {
+        "python": config.lang.python,
+        "prefix": "{Sample}_",
+        "within_sample": False,
+        "predefined_b": False,
+        "max_iter": 1000,
+    }
+    script = "file://../scripts/tcr/TESSA.R"
+    plugin_opts = {"report": "file://../reports/tcr/TESSA.svelte"}

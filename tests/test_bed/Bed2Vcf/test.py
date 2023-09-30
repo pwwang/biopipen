@@ -1,9 +1,10 @@
 from pathlib import Path
 
-from biopipen.ns.bed import Bed2Vcf
+from biopipen.ns.bed import Bed2Vcf as Bed2Vcf_
 from biopipen.core.testing import get_pipeline
 
-class Bed2Vcf(Bed2Vcf):
+
+class Bed2Vcf(Bed2Vcf_):
 
     envs = {
         "ref": str(
