@@ -18,7 +18,7 @@ plot_tessa<-function(tessa_results,folder,labels=NA)
   phi=tessa_results$phi
   if (!file.exists(folder)) {dir.create(folder)}
   # are cluster centers more expanded than other members of the clusters?
-  png(paste(folder,"/clone_size.png",sep=""), width=4, height=4, units="in", res=100)
+  png(paste(folder,"/clone_size.png",sep=""), width=8, height=8, units="in", res=100)
   tmp=aggregate(meta$barcode,by=list(meta$group_ID),length)
   meta_dedup$n=NA
   meta_dedup[tmp$Group.1,"n"]=tmp$x
@@ -51,11 +51,13 @@ plot_tessa<-function(tessa_results,folder,labels=NA)
   mean(meta_dedup0[non_center_n$Group.1,"n"])
 
   # expression-TCR distance plot
-  png(paste(folder,"/exp_TCR_pair_plot.png",sep=""),width=6,height=6, units="in", res=100)
+  png(paste(folder,"/exp_TCR_pair_plot.png",sep=""),width=8,height=12, units="in", res=100)
   par(mfrow=c(3,2))
-  for (k in 1:K)
+  de_dt_ak=as.data.frame(cbind(de_len=sapply(de,length),dt_len=sapply(dt,length),ak))
+  de_dt_ak=de_dt_ak[order(-de_dt_ak$de_len),]
+  for (k in rownames(de_dt_ak)[1:min(6,K)])
   {
-    plot(de[[k]],dt[[k]],main=paste("Cluster:",names(dt)[k]),pch=19,
+    plot(de[[k]],dt[[k]],main=paste("Cluster:",k),pch=19,
       col=1+as.numeric(as.factor(names(de[[k]]))),xlab="Expression dist.",
       ylab="TCR dist.")
     segments(x0=0,y0=0,y1=max(dt[[k]]),x1=ak[k]*max(dt[[k]]),lwd=2,lty=2)
@@ -63,13 +65,13 @@ plot_tessa<-function(tessa_results,folder,labels=NA)
   dev.off()
 
   # density of TCR distances
-  png(paste(folder,"/TCR_dist_density.png",sep=""),width=4,height=3, units="in", res=100)
-  plot(density(as.matrix(dist(t(t/sqrt(b))))^2/2),xlab="TCR distances",ylab="",lwd=3)
+  png(paste(folder,"/TCR_dist_density.png",sep=""),width=8,height=6, units="in", res=100)
+  plot(density(as.matrix(dist(t(t/sqrt(b))))^2/2),xlab="TCR distances",ylab="",lwd=3,main="")
   lines(density(unlist(dt)),lwd=3,col="red")
   dev.off()
 
   # exploratory plot at the TCR level
-  png(paste(folder,"/TCR_explore.png",sep=""),width=20,height=20, units="in", res=100)
+  png(paste(folder,"/TCR_explore.png",sep=""),width=12,height=12, units="in", res=100)
   pca_t=prcomp(t(t/sqrt(b)),scale.=F)$x
   plot(pca_t[,1],pca_t[,2],type="n",xlab="PC1",ylab="PC2")
   tmp=as.numeric(as.factor(meta_dedup$cluster_number))
@@ -107,7 +109,7 @@ plot_Tessa_clusters=function(tessa_results,folder){
   node_size=node_size[verticies$name]
   g=graph_from_data_frame(relations,directed=F,vertices = verticies)
   verticies$group=edge.betweenness.community(g)$membership
-  png(paste(folder,"/TCR_explore_clusters.png",sep=""),width=20,height=20, units="in", res=100)
+  png(paste(folder,"/TCR_explore_clusters.png",sep=""),width=12,height=12, units="in", res=100)
   plot.igraph(g,
        #mark.groups=verticies$group, # group vertices by betweeness indicator (redish blob background)
        layout=layout.auto,

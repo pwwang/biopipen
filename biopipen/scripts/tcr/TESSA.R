@@ -89,16 +89,16 @@ cell_ids <- intersect(tcrdata$contig_id, colnames(expr))
 unused_tcr_cells <- setdiff(tcrdata$contig_id, cell_ids)
 unused_expr_cells <- setdiff(colnames(expr), cell_ids)
 if (length(unused_tcr_cells) > 0) {
-    warning(glue("Warning: {length(unused_tcr_cells)} TCR cells are not used."), .immediate = TRUE)
+    warning(glue("{length(unused_tcr_cells)}/{nrow(tcrdata)} TCR cells are not used."), immediate. = TRUE)
 }
 if (length(unused_expr_cells) > 0) {
-    warning(glue("Warning: {length(unused_expr_cells)} expression cells are not used."), .immediate = TRUE)
+    warning(glue("{length(unused_expr_cells)}/{ncol(expr)} expression cells are not used."), immediate. = TRUE)
 }
 if (length(cell_ids) == 0) {
     stop("No common cells between TCR and expression data. Are you using the correct prefix?")
 }
 tcrdata <- tcrdata[tcrdata$contig_id %in% cell_ids, , drop=FALSE]
-expr <- expr[, tcrdata$contig_id, drop=FALSE]
+expr <- as.matrix(expr)[, tcrdata$contig_id, drop=FALSE]
 
 # Write input files
 print("Writing input files ...")
@@ -152,21 +152,23 @@ tessa <- run_tessa(
     file.path(tessa_dir, "tcrdata.txt"),
     result_dir,
     within_sample,
-    (if (!predefined_b) NULL else file.path(tessa_srcdir, "fixed_b.txt")),
+    (if (!predefined_b) NULL else file.path(tessa_srcdir, "fixed_b.csv")),
     max_iter = max_iter
 )
 
 # Save TESSA results
 print("Saving TESSA results ...")
 if (is_seurat) {
+    cells <- rownames(sobj@meta.data)
     sobj@meta.data <- sobj@meta.data %>%
         mutate(
             TESSA_Cluster = tessa$meta[
-                match(rownames(sobj), tessa$meta$barcode),
+                match(cells, tessa$meta$barcode),
                 "cluster_number"
             ]
         ) %>%
         add_count(TESSA_Cluster, name = "TESSA_Cluster_Size")
+    rownames(sobj@meta.data) <- cells
     saveRDS(sobj, outfile)
 } else {
     out <- tessa$meta %>%
@@ -187,6 +189,6 @@ p <- tessa$meta %>%
     geom_histogram(binwidth = 1) +
     theme_prism()
 
-png(file.path(result_dir, "Cluster_size_dist.png"), width=4, height=4, units="in", res=100)
+png(file.path(result_dir, "Cluster_size_dist.png"), width=8, height=8, units="in", res=100)
 print(p)
 dev.off()
