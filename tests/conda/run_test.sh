@@ -26,6 +26,12 @@ if [[ "$FORCE_OR_VERBOSE" == "FORCE="* ]]; then
     # remove the "FORCE=" prefix
     FORCE=${FORCE_OR_VERBOSE:6}
 fi
+if [[ -z "$VERBOSE" ]]; then
+    VERBOSE="false"
+fi
+if [[ -z "$FORCE" ]]; then
+    FORCE="false"
+fi
 
 echo "- Testing process: $PROCESS ..."
 
