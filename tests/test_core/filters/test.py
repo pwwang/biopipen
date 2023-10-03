@@ -1,4 +1,5 @@
-from biopipen.core.filters import dict_to_cli_args
+from pathlib import Path
+from biopipen.core.filters import dict_to_cli_args, r
 
 
 def assert_equal(expected, result):
@@ -44,7 +45,7 @@ def test_dict_to_cli_args():
 
     # Test dictionary with non-string keys
     assert_equal(
-        dict_to_cli_args({1: "a", True: "b"}),
+        dict_to_cli_args({1: "a", True: "b"}),  # noqa: F601
         ["-1", "b"],
     )
 
@@ -89,5 +90,48 @@ def test_dict_to_cli_args():
     )
 
 
+def test_r():
+    assert_equal(r(True), "TRUE")
+    assert_equal(r(False), "FALSE")
+    assert_equal(r(None), "NULL")
+    assert_equal(r("+INF"), "Inf")
+    assert_equal(r("-INF"), "-Inf")
+    assert_equal(r("TRUE"), "TRUE")
+    assert_equal(r("FALSE"), "FALSE")
+    assert_equal(r("na"), "NA")
+    assert_equal(r("null"), "NULL")
+    assert_equal(r("r:c(1, 2, 3)"), "c(1, 2, 3)")
+    assert_equal(r("R:abc"), "abc")
+    assert_equal(r(Path("/x/y/z")), "'/x/y/z'")
+    assert_equal(r([1, 2, 3]), "c(1, 2, 3)")
+    assert_equal(r(({"a": 1}, 2, 3)), "list(list(`a`=1), 2, 3)")
+    assert_equal(r(({"a": 1}, 2, 3)), "list(list(`a`=1), 2, 3)")
+    assert_equal(
+        r({2: 0, 0: 1, 1: 2}, ignoreintkey=False, sortkeys=True),
+        "list(`0`=1, `1`=2, `2`=0)",
+    )
+    assert_equal(
+        r({2: 0, 0: 1, 1: 2}, ignoreintkey=True, sortkeys=True),
+        "list(1, 2, 0)",
+    )
+    assert_equal(
+        r({2: 0, 0: 1, 1: 2}, ignoreintkey=False, sortkeys=False),
+        "list(`2`=0, `0`=1, `1`=2)",
+    )
+    assert_equal(
+        r({2: 0, 0: 1, 1: 2}, ignoreintkey=True, sortkeys=False),
+        "list(0, 1, 2)",
+    )
+    assert_equal(
+        r({"a-b": {"c-d": 1}}, todot="-", skip=0),
+        "list(`a.b`=list(`c.d`=1))",
+    )
+    assert_equal(
+        r({"a-b": {"c-d": 1}}, todot="-", skip=1),
+        "list(`a-b`=list(`c.d`=1))",
+    )
+
+
 if __name__ == "__main__":
     test_dict_to_cli_args()
+    test_r()
