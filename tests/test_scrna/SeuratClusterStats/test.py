@@ -5,6 +5,7 @@ from biopipen.ns.scrna import (
     SeuratClusterStats,
     CellTypeAnnotation,
     ModuleScoreCalculator,
+    MarkersFinder,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -44,6 +45,10 @@ class CellTypeAnnotation(CellTypeAnnotation):
         "hitype_tissue": None,
         "hitype_db": "hitypedb_pbmc3k",
     }
+
+
+class MarkersFinder(MarkersFinder):
+    requires = CellTypeAnnotation
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator):

@@ -767,6 +767,12 @@ class MarkersFinder(Proc):
             `p_val_adj`. For example, `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
             to select markers with adjusted p-value < 0.05 and absolute log2
             fold change > 1.
+        volcano_genes (type=auto): The genes to label in the volcano plot if they are
+            significant markers.
+            If `True`, all significant markers will be labeled. If `False`, no
+            genes will be labeled. Otherwise, specify the genes to label.
+            It could be either a string with comma separated genes, or a list
+            of genes.
         section: The section name for the report.
             Worked only when `each` is not specified and `ident-2` is specified.
             Otherwise, the section name will be constructed from `each` and
@@ -804,6 +810,7 @@ class MarkersFinder(Proc):
             "KEGG_2021_Human",
         ],
         "sigmarkers": "p_val_adj < 0.05",
+        "volcano_genes": True,
         "cases": {},
     }
     order = 5
