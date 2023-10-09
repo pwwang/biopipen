@@ -253,50 +253,88 @@ class SeuratClusterStats(Proc):
         outdir: The output directory
 
     Envs:
+        stats_defaults (ns): The default parameters for `stats`.
+            The parameters from the cases can overwrite the default parameters.
+            - frac (flag): Whether to output the fraction of cells instead of number.
+            - pie (flag): Also output a pie chart?
+            - table (flag): Whether to output a table (in tab-delimited format) and in the report.
+            - ident: The column name in metadata to use as the identity.
+            - group-by: The column name in metadata to group the cells.
+                Does NOT support for pie charts.
+            - split-by: The column name in metadata to split the cells into
+                different plots.
+            - subset: An expression to subset the cells, will be passed to
+                `dplyr::filter()` on metadata.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
         stats (type=json): The number/fraction of cells to plot.
-            * `nCells_*` - Number of cells for each cluster.
-                You can specify `by` to group the cells by a metadata column,
-                and `devpars` to specify the device parameters for the plot.
-                You can also specify `filter` to filter the cells under certain
-                conditions using metadata columns.
-            * `fracCells_*` - Fraction of cells for each cluster.
-                Similar to `nCells_*`, but the fraction is calculated
-                instead of the absolute number.
-        features (type=json): The plots for features, include gene expressions,
-            and columns from metadata.
-            * `features` - The set of features (separated by comma) for the plots,
-                unless `features` for those plots is specified.
-                One could also specify a file with features (one per line).
-            * `ridgeplots` - The ridge plots for the features.
-                See [`Seurat::RidgePlot`](https://satijalab.org/seurat/reference/ridgeplot).
-            * `vlnplots` - Violin plots for the features.
-                See [`Seurat::VlnPlot`](https://satijalab.org/seurat/reference/vlnplot).
-                You can have `boxplot` key to add `geom_boxplot()` to the violin plots.
-            * `featureplots` - The feature plots for the features.
-                See [`Seurat::FeaturePlot`](https://satijalab.org/seurat/reference/featureplot).
-            * `dotplot` - Dot plots for the features.
-                See [`Seurat::DotPlot`](https://satijalab.org/seurat/reference/dotplot).
-            * `heatmap` - Heatmap for the features.
-                See [`Seurat::DoHeatmap`](https://satijalab.org/seurat/reference/doheatmap).
-                You can specify `average=True` to plot on the average of the expressions.
-            * `table` - The table for the features, only gene expressions are supported.
-                (supported keys: title, log2, subset and features).
-            * All the above can have `devpars` to define the output figures
-                and `plus` to add elements to the `ggplot` object.
-                You can also have `subset` to subset the data.
-                Multiple cases can be distinguished by `ridgeplots` and
-                `ridgeplots_1`.
-                If no `features` specified, will use `envs.features`. If you want to use
-                the default variant features `VariantFeatures(srtobj)`, specify
-                `features = 20` for the first 20. Or you can also specify the features
-                directly to `features`.
+            Keys are the names of the plots and values are the dicts inherited from `env.stats_defaults`.
+            Here are some examples -
+            >>> {
+            >>>     "nCells_All": {},
+            >>>     "nCells_Sample": {"kind": "num", "group-by": "Sample"},
+            >>>     "fracCells_Sample": {"kind": "frac", "group-by": "Sample"},
+            >>> }
+        features_defaults (ns): The default parameters for `features`.
+            - features: The features to plot.
+                It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
+                (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
+            - ident: The column name in metadata to use as the identity.
+            - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
+            - devpars (ns): The device parameters for the plots. Does not work for `table`.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - plus: The extra elements to add to the `ggplot` object. Does not work for `table`.
+            - group-by: Group cells in different ways (for example, orig.ident). Works for `ridge`, `vln`, and `dot`.
+                It also works for `feature` as `shape.by` being passed to [`Seurat::FeaturePlot`](https://satijalab.org/seurat/reference/featureplot).
+            - split-by: The column name in metadata to split the cells into different plots.
+                It works for `vln`, `feature`, and `dot`.
+            - assay: The assay to use.
+            - slot: The slot to use.
+            - section: The section to put the plot in the report.
+                If not specified, the case title will be used.
+            - ncol: The number of columns for the plots.
+            - kind (choice): The kind of the plot or table.
+                - ridge: Use `Seurat::RidgePlot`.
+                - ridgeplot: Same as `ridge`.
+                - vln: Use `Seurat::VlnPlot`.
+                - vlnplot: Same as `vln`.
+                - violin: Same as `vln`.
+                - violinplot: Same as `vln`.
+                - feature: Use `Seurat::FeaturePlot`.
+                - featureplot: Same as `feature`.
+                - dot: Use `Seurat::DotPlot`.
+                - dotplot: Same as `dot`.
+                - heatmap: Use `Seurat::DoHeatmap`.
+                    You can specify `average=True` to plot on the average of the expressions.
+                - table: The table for the features, only gene expressions are supported.
+                    (supported keys: ident, subset, and features).
+        features (type=json): The plots for features, include gene expressions, and columns from metadata.
+            Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`. It can also have other parameters from
+            each Seurat function used by `kind`. Note that for argument name with `.`, you should use `-` instead.
+        dimplots_defaults (ns): The default parameters for `dimplots`.
+            - ident: The column name in metadata to use as the identity.
+            - group-by: Same as `ident`. How the points are colored.
+            - split-by: The column name in metadata to split the cells into different plots.
+            - shape-by: The column name in metadata to use as the shape.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - reduction (choice): Which dimensionality reduction to use.
+                - dim: Use `Seurat::DimPlot`.
+                    First searches for `umap`, then `tsne`, then `pca`.
+                - auto: Same as `dim`
+                - umap: Use `Seurat::UMAPPlot`.
+                - tsne: Use `Seurat::TSNEPlot`.
+                - pca: Use `Seurat::PCAPlot`.
+            - <more>: See <https://satijalab.org/seurat/reference/dimplot>
         dimplots (type=json): The dimensional reduction plots.
-            * `<case>` - The case to plot.
-                Keys are the arguments for `Seurat::Dimplot()`, plus `devpars`
-                for the plots. `devpars` is a dictionary with keys `res`,
-                `height` and `width` to specify the resolution, height and
-                width of the plot. The hyphen (`-`) in the keys will be replaced
-                by `.`.
+            Keys are the titles of the plots and values are the dicts inherited from `env.dimplots_defaults`. It can also have other parameters from
+            [`Seurat::DimPlot`](https://satijalab.org/seurat/reference/dimplot).
 
     Requires:
         r-seurat:
@@ -306,17 +344,55 @@ class SeuratClusterStats(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
     envs = {
+        "stats_defaults": {
+            "frac": False,
+            "pie": False,
+            "table": False,
+            "ident": "seurat_clusters",
+            "group-by": None,
+            "split-by": None,
+            "subset": None,
+            "devpars": {"res": 100, "height": 800, "width": 1000},
+        },
         "stats": {
-            "nCells_All": {},
-            "nCells_Sample": {"by": "Sample"},
-            "fracCells_Sample": {"by": "Sample"},
+            "Number of cells in each cluster": {
+                "pie": True,
+            },
+            "Number of cells in each cluster by Sample": {
+                "group-by": "Sample",
+                "table": True,
+                "frac": True,
+            },
+        },
+        "features_defaults": {
+            "features": None,
+            "ident": "seurat_clusters",
+            "subset": None,
+            "devpars": {"res": 100},
+            "plus": None,
+            "group-by": None,
+            "split-by": None,
+            "assay": None,
+            "section": None,
+            "slot": None,
+            "kind": None,
+            "ncol": 2,
         },
         "features": {},
+        "dimplots_defaults": {
+            "ident": "seurat_clusters",
+            "group-by": None,
+            "split-by": None,
+            "shape-by": None,
+            "reduction": "dim",
+            "devpars": {"res": 100, "height": 800, "width": 1000},
+        },
         "dimplots": {
-            "Ident": {
-                "group-by": "ident",
-                "devpars": {"res": 100, "height": 1000, "width": 1000},
-            }
+            "Dimensional reduction plot": {
+                "label": True,
+                "label-box": True,
+                "repel": True,
+            },
         },
     }
     script = "file://../scripts/scrna/SeuratClusterStats.R"
