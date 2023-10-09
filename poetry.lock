@@ -229,17 +229,17 @@ typing-extensions = {version = ">=3.7.4,<5.0.0", markers = "python_version < \"3
 
 [[package]]
 name = "datar"
-version = "0.15.1"
+version = "0.15.2"
 description = "A Grammar of Data Manipulation in python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar-0.15.1-py3-none-any.whl", hash = "sha256:6503b5c8cabead25bfe9231fbd9e1b221f374d2e4b29096a83ed69af0cd4ed6d"},
-    {file = "datar-0.15.1.tar.gz", hash = "sha256:d578761b6cb8e1517f066dd00fa1665b8626d3faef1e57d69908c3b9e2748a5f"},
+    {file = "datar-0.15.2-py3-none-any.whl", hash = "sha256:76a09f7ff6ed68dee766fb5e21b86f056fb150d58dc3445ffc0d678b9e747979"},
+    {file = "datar-0.15.2.tar.gz", hash = "sha256:c9ab05bd3f41b27ffc638278487386a1c4e123f63deec4b43519a8f27ea1a937"},
 ]
 
 [package.dependencies]
-datar-pandas = {version = ">=0.5.1,<0.6.0", optional = true, markers = "extra == \"pandas\""}
+datar-pandas = {version = ">=0.5.2,<0.6.0", optional = true, markers = "extra == \"pandas\""}
 pipda = ">=0.13,<0.14"
 python-simpleconf = {version = ">=0.6,<0.7", extras = ["toml"]}
 simplug = ">=0.3,<0.4"
@@ -247,25 +247,44 @@ simplug = ">=0.3,<0.4"
 [package.extras]
 arrow = ["datar-arrow (>=0.1,<0.2)"]
 numpy = ["datar-numpy (>=0.3.2,<0.4.0)"]
-pandas = ["datar-pandas (>=0.5.1,<0.6.0)"]
+pandas = ["datar-pandas (>=0.5.2,<0.6.0)"]
 
 [[package]]
-name = "datar-pandas"
-version = "0.5.1"
-description = "The pandas backend for datar"
+name = "datar-numpy"
+version = "0.3.2"
+description = "The numpy backend for datar"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar_pandas-0.5.1-py3-none-any.whl", hash = "sha256:278d7e6be4c9b860abf7c1390efe9e10c92750fafb8f76d84a9de2a7ce19bb7e"},
-    {file = "datar_pandas-0.5.1.tar.gz", hash = "sha256:07e38a775e25e0f446a2b8a6dc6bc7118dbd01437614cd9395c19edfa368f1e7"},
+    {file = "datar_numpy-0.3.2-py3-none-any.whl", hash = "sha256:0d221d8b8dd4d2abc5df764e79901a39a55012dad5712aa8972a20e4912379af"},
+    {file = "datar_numpy-0.3.2.tar.gz", hash = "sha256:723320b813320571f7487c74594d85e6c9e16f9251f5da0ed60fb948a6292a47"},
 ]
 
 [package.dependencies]
 datar = ">=0.15,<0.16"
+numpy = ">=1.20,<2.0"
+
+[package.extras]
+all = ["scipy (>=1.8,<2.0)", "wcwidth (>=0.2,<0.3)"]
+
+[[package]]
+name = "datar-pandas"
+version = "0.5.2"
+description = "The pandas backend for datar"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "datar_pandas-0.5.2-py3-none-any.whl", hash = "sha256:8bae404f7abd2aee9297dc98c0adf8a0219ab003a892e3a8bb2443d103ccdb33"},
+    {file = "datar_pandas-0.5.2.tar.gz", hash = "sha256:0ab22908a35aec8d257e1567270e78b25f774bb6fa729c5991e8a2adb31713a9"},
+]
+
+[package.dependencies]
+datar = ">=0.15,<0.16"
+datar-numpy = ">=0.3.2,<0.4.0"
 pdtypes = ">=0.2,<0.3"
 
 [package.extras]
-all = ["datar-numpy (>=0.3.2,<0.4.0)", "datar-numpy[all] (>=0.3.2,<0.4.0)"]
+all = ["scipy (>=1.8,<2.0)", "wcwidth (>=0.2,<0.3)"]
 
 [[package]]
 name = "decorator"
@@ -1810,4 +1829,4 @@ runinfo = ["pipen-runinfo"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "9b2a19a60b9e9401e931f95a00fac0e632d9319acb68b6a8aac1253ece0b2d7b"
+content-hash = "4cd84f9e14b2cf323bb70bb7a2d4b2265ea70ccdf41814ec279429e89a529dce"
