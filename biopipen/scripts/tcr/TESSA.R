@@ -13,6 +13,7 @@ exprfile <- {{in.srtobj | r}}
 outfile <- {{out.outfile | r}}
 python <- {{envs.python | r}}
 within_sample <- {{envs.within_sample | r}}
+assay <- {{envs.assay | r}}
 predefined_b <- {{envs.predefined_b | r}}
 max_iter <- {{envs.max_iter | int}}
 tessa_srcdir <- "{{biopipen_dir}}/scripts/tcr/TESSA_source"
@@ -55,15 +56,18 @@ tcrdata <- do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
         mutate(Barcode = glue("{{envs.prefix}}{Barcode}"), sample = Sample)
 }))
 if (has_VJ) {
-    tcrdata <- tcrdata %>% select(
+    tcrdata <- tcrdata %>% dplyr::mutate(
+        v_gene = sub("-\\d+$", "", V.name),
+        j_gene = sub("-\\d+$", "", J.name)
+    ) %>% dplyr::select(
         contig_id = Barcode,
         cdr3 = CDR3.aa,
-        v_gene = V.name,
-        j_gene = J.name,
+        v_gene,
+        j_gene,
         sample
     )
 } else {
-    tcrdata <- tcrdata %>% select(
+    tcrdata <- tcrdata %>% dplyr::select(
         contig_id = Barcode,
         cdr3 = CDR3.aa,
         sample
@@ -77,7 +81,7 @@ is_gz <- endsWith(tolower(exprfile), ".gz")
 
 if (is_seurat) {
     sobj <- readRDS(exprfile)
-    expr <- GetAssayData(sobj)
+    expr <- GetAssayData(sobj, slot = "data", assay = assay)
 } else if (is_gz) {
     expr <- read.table(gzfile(exprfile), sep="\t", header=TRUE, row.names=1)
 } else {

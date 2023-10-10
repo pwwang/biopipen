@@ -8,6 +8,8 @@ library(tibble)
 library(Seurat)
 library(enrichR)
 library(ggplot2)
+library(ggprism)
+library(ggrepel)
 library(future)
 library(tidyseurat)
 
@@ -25,8 +27,13 @@ prefix_each <- {{ envs.prefix_each | r }}
 section <- {{ envs.section | r }}
 dbs <- {{ envs.dbs | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
+volcano_genes <- {{ envs.volcano_genes | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
+
+if (is.character(volcano_genes) && length(volcano_genes) == 1) {
+    volcano_genes <- trimws(strsplit(volcano_genes, ",")[[1]])
+}
 
 set.seed(8525)
 if (ncores > 1) {
@@ -55,6 +62,7 @@ if (is.null(cases) || length(cases) == 0) {
             section = section,
             dbs = dbs,
             sigmarkers = sigmarkers,
+            volcano_genes = volcano_genes,
             rest = rest
         )
     )
@@ -70,6 +78,7 @@ if (is.null(cases) || length(cases) == 0) {
             section = section,
             dbs = dbs,
             sigmarkers = sigmarkers,
+            volcano_genes = volcano_genes,
             rest = rest
         )
         case$rest <- list_setdefault(case$rest, rest)
@@ -153,13 +162,59 @@ for (name in names(cases)) {
 }
 cases <- newcases
 
+plot_volcano = function(markers, volfile, sig, volgenes) {
+    # markers
+    #                  gene        p_val avg_log2FC pct.1 pct.2    p_val_adj
+    # 1            CCL5 1.883596e-11 -4.8282535 0.359 0.927 4.332270e-09
+    # 2        HLA-DQB1 3.667713e-09  6.1543174 0.718 0.098 8.435740e-07
+    # 3        HLA-DRB5 1.242993e-07  3.9032231 0.744 0.195 2.858885e-05
+    # 4           CD79B 2.036731e-07  4.2748835 0.692 0.146 4.684482e-05
+    markers = markers %>%
+        mutate(
+            Significant = if_else(
+                !!parse_expr(sig),
+                if_else(avg_log2FC > 0, "Up", "Down"),
+                "No"
+            ),
+            Label = if_else(
+                Significant != "No" & (isTRUE(volgenes) | (gene %in% volgenes)),
+                gene,
+                ""
+            )
+        )
+
+    p_vol = ggplot(markers, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
+        geom_point(aes(color = Significant), alpha = 0.75) +
+        scale_color_manual(
+            values = c(Up = "#FF3333", Down = "#3333FF", No = "#AAAAAA"),
+            labels = c(Up = "Up", Down = "Down", No = "Non-Significant")
+        ) +
+        geom_text_repel(
+            aes(label = Label),
+            size = 3,
+            color = "#000000",
+            box.padding = unit(0.35, "lines"),
+            point.padding = unit(0.5, "lines"),
+            segment.color = "#000000"
+        ) +
+        theme_prism() +
+        theme(legend.title=element_blank()) +
+        labs(
+            x = "log2 Fold Change",
+            y = "-log10 Adjusted P-value"
+        )
+
+    png(volfile, res = 100, height = 800, width = 900)
+    print(p_vol)
+    dev.off()
+}
 
 # Do enrichment analysis for a case using Enrichr
 # Args:
 #   case: case name
 #   markers: markers dataframe
 #   sig: The expression to filter significant markers
-do_enrich <- function(case, markers, sig) {
+do_enrich <- function(case, markers, sig, volgenes) {
     print(paste("  Running enrichment for case:", case))
     parts <- strsplit(case, ":")[[1]]
     sec <- parts[1]
@@ -171,6 +226,7 @@ do_enrich <- function(case, markers, sig) {
         cat("No markers found.", file = file.path(casedir, "error.txt"))
         return()
     }
+    plot_volcano(markers, file.path(casedir, "volcano.png"), sig, volgenes)
     markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
         print(paste("  No significant markers found for case:", case))
@@ -255,7 +311,7 @@ do_case <- function(casename) {
         args$object <- srtobj
     }
     markers <- do_call(FindMarkers, args) %>% rownames_to_column("gene")
-    do_enrich(casename, markers, case$sigmarkers)
+    do_enrich(casename, markers, case$sigmarkers, case$volcano_genes)
 }
 
 sapply(sort(names(cases)), do_case)

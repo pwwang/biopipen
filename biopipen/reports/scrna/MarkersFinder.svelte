@@ -25,10 +25,21 @@
                     />
             {%- else -%}
                 <h{{h+1}}>Markers</h{{h+1}}>
-                <DataTable
-                    src={{ casedir | joinpaths: "markers.txt" | quote }}
-                    data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
-                    />
+                <Tabs>
+                    <Tab label="Markers" />
+                    <Tab label="Volcano Plot" />
+                    <svelte:fragment slot="content">
+                        <TabContent>
+                            <DataTable
+                                src={{ casedir | joinpaths: "markers.txt" | quote }}
+                                data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
+                                />
+                        </TabContent>
+                        <TabContent>
+                            <Image src={{ casedir | joinpaths: "volcano.png" | quote }} />
+                        </TabContent>
+                    </svelte:fragment>
+                </Tabs>
 
                 <h{{h+1}}>Enrichment analysis</h{{h+1}}>
                 {{ enrichr_report(casedir) }}
@@ -49,10 +60,21 @@
                         />
                 {%- else -%}
                     <h{{h+2}}>Markers</h{{h+2}}>
-                    <DataTable
-                        src={{ casedir | joinpaths: "markers.txt" | quote }}
-                        data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
-                        />
+                    <Tabs>
+                        <Tab label="Markers" />
+                        <Tab label="Volcano Plot" />
+                        <svelte:fragment slot="content">
+                            <TabContent>
+                                <DataTable
+                                    src={{ casedir | joinpaths: "markers.txt" | quote }}
+                                    data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t", nrows=100 }} }
+                                    />
+                            </TabContent>
+                            <TabContent>
+                                <Image src={{ casedir | joinpaths: "volcano.png" | quote }} />
+                            </TabContent>
+                        </svelte:fragment>
+                    </Tabs>
 
                     <h{{h+2}}>Enrichment analysis</h{{h+2}}>
                     {{ enrichr_report(casedir) }}

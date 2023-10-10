@@ -82,7 +82,7 @@ class SampleInfo(Proc):
             - on: The column name in the data for the stats.
                 Default is `Sample`.
                 If there are duplicated values in `on`, and you want to do stats
-                on the unique values, you can use `distinct:` prefix.
+                on the unique values, you can use `distinct:`/`unique:` prefix.
                 For example, `distinct:Patient` will keep only the first
                 duplicated value in `Patient` and do stats on the unique values.
             - group: The column name in the data for the group ids.

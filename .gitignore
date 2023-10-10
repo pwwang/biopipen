@@ -119,10 +119,8 @@ docs/index.md
 docs/api/
 watch.sh
 .biopipen.toml
-t.py
-t.ipynb
+/t.*
 local_tests/
 /*.config.toml
-t.R
 
 docker/*/images

@@ -107,6 +107,8 @@ def r(
     ignoreintkey: bool = True,
     todot: str = None,
     sortkeys: bool = False,
+    skip: int = 0,
+    _i: int = 0,
 ) -> str:
     """Convert a python object into R repr
 
@@ -117,6 +119,7 @@ def r(
         >>> {"a": 1, "b": 2} -> list(a = 1, b = 2)
 
     Args:
+        obj: The object to convert
         ignoreintkey: When keys of a dict are integers, whether we should
             ignore them. For example, when `True`, `{1: 1, 2: 2}` will be
             translated into `"list(1, 2)"`, but `"list(`1` = 1, `2` = 2)"`
@@ -130,6 +133,10 @@ def r(
             But sometimes, you want to keep orginal order, for example,
             arguments passed the `dplyr::mutate` function. Because the later
             arguments can refer to the earlier ones.
+        skip: Levels to skip for `todot`. For example, `skip=1` will skip
+            the first level of the keys. When `todot` is `"-"`, `skip=1` will
+            convert `{"a-b": {"c-d": 1}}` to ``list(`a-b` = list(`c.d` = 1))``
+        _i: Current level of the keys. Used internally
 
     Returns:
         Then converted string representation of the object
@@ -165,31 +172,37 @@ def r(
             wrapper = "c"
         return "{}({})".format(
             wrapper,
-            ",".join([r(i, ignoreintkey, todot, sortkeys) for i in obj]),
+            ", ".join(
+                [r(i, ignoreintkey, todot, sortkeys, skip, _i + 1) for i in obj]
+            ),
         )
     if isinstance(obj, dict):
         # list allow repeated names
-        return "list({})".format(
-            ",".join(
-                [
-                    "`{0}`={1}".format(k, r(v, ignoreintkey, todot, sortkeys))
-                    if isinstance(k, int) and not ignoreintkey
-                    else r(v, ignoreintkey, todot, sortkeys)
-                    if isinstance(k, int) and ignoreintkey
-                    else "`{0}`={1}".format(
-                        (
-                            str(k)
-                            if not todot
-                            else str(k).replace(todot, ".")
-                        ).split("#")[0],
-                        r(v, ignoreintkey, todot, sortkeys),
-                    )
-                    for k, v in (
-                        sorted(obj.items()) if sortkeys else obj.items()
-                    )
-                ]
-            )
-        )
+        items = []
+        keys = obj.keys()
+        if sortkeys:
+            keys = sorted(keys)
+        for k in keys:
+            v = obj[k]
+            if isinstance(k, int) and not ignoreintkey:
+                item = (
+                    f"`{k}`={r(v, ignoreintkey, todot, sortkeys, skip, _i + 1)}"
+                )
+            elif isinstance(k, int) and ignoreintkey:
+                item = r(v, ignoreintkey, todot, sortkeys, skip, _i + 1)
+            else:
+                key = str(k)
+                if todot and _i >= skip:
+                    key = key.replace(todot, ".")
+                item = (
+                    f"`{key}`="
+                    f"{r(v, ignoreintkey, todot, sortkeys, skip, _i + 1)}"
+                )
+            items.append(item)
+
+        return f"list({', '.join(items)})"
+
     if isinstance(obj, Namespace):
-        return r(vars(obj), ignoreintkey, todot, sortkeys)
+        return r(vars(obj), ignoreintkey, todot, sortkeys, skip, _i)
+
     return repr(obj)

@@ -5,6 +5,7 @@ from biopipen.ns.scrna import (
     SeuratClusterStats,
     CellTypeAnnotation,
     ModuleScoreCalculator,
+    MarkersFinder,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -46,6 +47,10 @@ class CellTypeAnnotation(CellTypeAnnotation):
     }
 
 
+class MarkersFinder(MarkersFinder):
+    requires = CellTypeAnnotation
+
+
 class ModuleScoreCalculator(ModuleScoreCalculator):
     requires = CellTypeAnnotation
     envs = {
@@ -63,17 +68,31 @@ class SeuratClusterStats(SeuratClusterStats):
     requires = ModuleScoreCalculator
     envs = {
         "features": {
-            "ridgeplots_1": {
-                "title": "Gene expressions in g1",
+            "Gene expressions in g1": {
+                "kind": "ridge",
                 "subset": "groups == 'g1'",
             },
-            "ridgeplots_2": {
-                "title": "Gene expressions in g2",
+            "Gene expressions in g2": {
+                "kind": "ridge",
+                "ncol": 4,
                 "subset": "groups == 'g2'",
             },
-            "vlnplots": {"boxplot": {}, "pt-size": 0},
-            "dotplot": {"plus": "RotatedAxis()"},
-            "heatmap": {"downsample": "average"},
+            "Ridge plots with ident groups": {
+                "kind": "ridge",
+                "ident": "groups",
+                "features": "CD1C,RGS1",
+            },
+            "Ridge plots with single feature": {
+                # ncol automatically set to 1
+                "kind": "ridge",
+                "features": "SRSF7",
+                "plus": "theme_gray(base_size=10)",
+            },
+            "Violin plots": {"kind": "violin", "pt-size": 0},
+            "Feature plot": {"kind": "feature", "features": "SRSF7"},
+            "Dot plot": {"kind": "dot", "plus": "RotatedAxis()"},
+            "Heatmap": {"kind": "heatmap"},
+            "Gene expression table": {"kind": "table"},
         }
     }
 
@@ -90,9 +109,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small.annotated.cluster_stats",
-            "features",
-            "ridgeplots-1.png",
+            "pbmc_small.markers/DEFAULT/B/markers.txt",
         )
     )
     assert outfile.is_file(), str(outfile)
