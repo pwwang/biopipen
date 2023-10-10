@@ -56,15 +56,18 @@ tcrdata <- do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
         mutate(Barcode = glue("{{envs.prefix}}{Barcode}"), sample = Sample)
 }))
 if (has_VJ) {
-    tcrdata <- tcrdata %>% select(
+    tcrdata <- tcrdata %>% dplyr::mutate(
+        v_gene = sub("-\\d+$", "", V.name),
+        j_gene = sub("-\\d+$", "", J.name)
+    ) %>% dplyr::select(
         contig_id = Barcode,
         cdr3 = CDR3.aa,
-        v_gene = V.name,
-        j_gene = J.name,
+        v_gene,
+        j_gene,
         sample
     )
 } else {
-    tcrdata <- tcrdata %>% select(
+    tcrdata <- tcrdata %>% dplyr::select(
         contig_id = Barcode,
         cdr3 = CDR3.aa,
         sample

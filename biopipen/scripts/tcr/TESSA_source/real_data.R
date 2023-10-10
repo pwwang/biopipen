@@ -31,7 +31,7 @@ run_tessa <- function(
     # (optional) sample_id: a column vector of sample categories. If is_sampleCluster=TRUE, users must provide an additional
     #   column next to the cdr3 column.
     # (optional) fixed_b: a vector of pre-defined b. The vector must be numerical and has the length of TCR embeddings.
-    exp_data <- read.csv(exp_file, row.names=1, stringsAsFactors=F)
+    exp_data <- read.csv(exp_file, row.names=1, stringsAsFactors=F, check.names = FALSE)
     n <- ncol(exp_data)
     tmp <- apply(exp_data, 1, sd)
     # Run TSNE

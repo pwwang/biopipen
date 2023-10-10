@@ -59,7 +59,7 @@ def preprocess(filedir):
     dataset = pd.read_csv(filedir, header=0)
     if dataset.isnull().values.any():
         print("Input data contains NAs.")
-        dataset = dataset.dropna()
+        # dataset = dataset.dropna()
     data_new = pd.DataFrame(
         {
             "contig_id": dataset["contig_id"],
@@ -119,7 +119,7 @@ def embedVJ(genelist, maplist):
             ind[find] = 1
             VJ_array.append(ind)
         except ValueError:
-            print("Gene out of bound!" + gene)
+            print("Gene out of bound!" + str(gene))
             VJ_array.append(ind)
             next
     return np.asarray(VJ_array)
