@@ -13,6 +13,7 @@ exprfile <- {{in.srtobj | r}}
 outfile <- {{out.outfile | r}}
 python <- {{envs.python | r}}
 within_sample <- {{envs.within_sample | r}}
+assay <- {{envs.assay | r}}
 predefined_b <- {{envs.predefined_b | r}}
 max_iter <- {{envs.max_iter | int}}
 tessa_srcdir <- "{{biopipen_dir}}/scripts/tcr/TESSA_source"
@@ -77,7 +78,7 @@ is_gz <- endsWith(tolower(exprfile), ".gz")
 
 if (is_seurat) {
     sobj <- readRDS(exprfile)
-    expr <- GetAssayData(sobj)
+    expr <- GetAssayData(sobj, slot = "data", assay = assay)
 } else if (is_gz) {
     expr <- read.table(gzfile(exprfile), sep="\t", header=TRUE, row.names=1)
 } else {

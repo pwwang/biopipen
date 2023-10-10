@@ -1126,6 +1126,9 @@ class TESSA(Proc):
         within_sample (flag): Whether the TCR networks are constructed only
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
+        assay: Which assay to use to extract the expression matrix.
+            Only works if `in.srtobj` is an RDS file of a Seurat object and
+            `envs.reduction` is not provided.
         predefined_b (flag): Whether use the predefined `b` or not.
             Please check the paper of tessa for more details about the b vector.
             If True, the tessa will not update b in the MCMC iterations.
@@ -1143,6 +1146,7 @@ class TESSA(Proc):
     envs = {
         "python": config.lang.python,
         "prefix": "{Sample}_",
+        "assay": "RNA",
         "within_sample": False,
         "predefined_b": False,
         "max_iter": 1000,
