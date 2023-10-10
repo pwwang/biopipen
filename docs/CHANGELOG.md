@@ -1,3 +1,19 @@
+## 0.18.0
+
+- 🔧 Update .gitignore
+- ⬆️ Bump pipen to 0.11
+- ⬆️ Bump datar to 0.15.2
+- 🚨 Make line length to 88 for linting
+- ✨ [core.filters] Add `skip` argument to `r()`
+- 🚑 [tcr.TESSA] Fix type annotation for envs.max_iter
+- 🐛 [delim.SampleInfo] Allow `unique:` prefix for `on` in stats cases;  fix sample order in plots
+- ♻️ [scrna.SeuratClusterStats] Redesign envs
+- ✨ [scrna.MarkersFinder] Add volcano plot
+- ✨ [tcr.TESSA] Add `envs.assay` for seurat object input
+- 🐛 [tcr.TESSA] Fix when a V-gene/J-gene is missing
+- ✅ [gsea.FGSEA] Fix tests
+- 🚸 [scrna.SeuratClustering] Add clear message when `k.weight` is too large for `IntegrateData`⏎
+
 ## 0.17.7
 
 - ✅ [tests] Allow pass FORCE=true to run local-only tests
