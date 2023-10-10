@@ -114,7 +114,26 @@ id_args = list_setdefault(
     dims = 1:30
 )
 id_args$dims = 1:min(min_dim, max(id_args$dims))
-obj_list = do_call(IntegrateData, id_args)
+tryCatch({
+    obj_list = do_call(IntegrateData, id_args)
+}, error = function(e) {
+    msg = ""
+    if (grepl("number of items to replace is not a multiple of replacement length", e)) {
+        default_kweight = 100
+        if (!is.null(envs$IntegrateData$k.weight)) {
+            default_kweight = envs$IntegrateData$k.weight
+        }
+        msg = paste0(
+            "It's possible that you have too few cells in some samples, ",
+            "causing a small number of anchor cells in the anchorset. \n",
+            "  Try changing `k.weight` for `IntegrateData` by setting ",
+            "`envs.IntegrateData.k-weight` to a smaller number (it's now ",
+            default_kweight, "). \n",
+            "  See also https://github.com/satijalab/seurat/issues/6341"
+        )
+    }
+    stop(paste0(msg, "\n", e))
+})
 
 {%- else -%}
 # ############################
