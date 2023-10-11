@@ -1127,8 +1127,7 @@ class TESSA(Proc):
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
         assay: Which assay to use to extract the expression matrix.
-            Only works if `in.srtobj` is an RDS file of a Seurat object and
-            `envs.reduction` is not provided.
+            Only works if `in.srtobj` is an RDS file of a Seurat object.
         predefined_b (flag): Whether use the predefined `b` or not.
             Please check the paper of tessa for more details about the b vector.
             If True, the tessa will not update b in the MCMC iterations.
