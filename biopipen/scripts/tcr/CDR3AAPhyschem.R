@@ -293,6 +293,7 @@ do_one_subset = function(s) {
             }
         }
         y = ifelse(data_fit$.Group == target, 1, 0)
+        # one multinomial or binomial class has 1 or 0 observations; not allowed
         if (any(table(y) <= 1)) { next }
         fit = glmnet(x, y, data=data_fit, alpha=0, lambda=0.01, family="binomial")
         fits[[len]] = tidy(fit)
