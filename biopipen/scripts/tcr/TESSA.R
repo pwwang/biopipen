@@ -16,6 +16,7 @@ within_sample <- {{envs.within_sample | r}}
 assay <- {{envs.assay | r}}
 predefined_b <- {{envs.predefined_b | r}}
 max_iter <- {{envs.max_iter | int}}
+save_tessa <- {{envs.save_tessa | r}}
 tessa_srcdir <- "{{biopipen_dir}}/scripts/tcr/TESSA_source"
 
 outdir <- dirname(outfile)
@@ -173,6 +174,10 @@ if (is_seurat) {
         ) %>%
         add_count(TESSA_Cluster, name = "TESSA_Cluster_Size")
     rownames(sobj@meta.data) <- cells
+
+    if (save_tessa) {
+        sobj@misc$tessa <- tessa
+    }
     saveRDS(sobj, outfile)
 } else {
     out <- tessa$meta %>%

@@ -111,9 +111,9 @@ do_case <- function(name, case) {
 
     # prepare expression matrix
     print("  Preparing expression matrix...")
-    sobj <- srtobj %>% tidyseurat::filter(!is.na(!!sym(case$group.by)))
+    sobj <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
     if (!is.null(case$ident.2)) {
-        sobj <- sobj %>% tidyseurat::filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
+        sobj <- sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
     }
 
     allclasses <- sobj@meta.data[, case$group.by, drop = TRUE]

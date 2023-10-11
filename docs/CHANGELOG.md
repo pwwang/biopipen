@@ -1,3 +1,10 @@
+## 0.18.1
+
+- ⬆️ Bump datar to 0.15.3
+- 🎨 [scrna.MetaMarkers/ScFGSEA/SeuratClusterStats] Remove `tidyseurat::` prefix for `filter`
+- ✨ [tcr.TESSA] Allow the results to be saved to seurat object
+- 📝 [tcr.TESSA] Fix docs about envs.assay
+
 ## 0.18.0
 
 - 🔧 Update .gitignore

@@ -168,7 +168,7 @@ do_one_features = function(name) {
     }
 
     if (is.character(subset)) {
-        case$object = srtobj %>% tidyseurat::filter(!!rlang::parse_expr(subset))
+        case$object = srtobj %>% filter(!!rlang::parse_expr(subset))
     } else {
         case$object = srtobj
     }

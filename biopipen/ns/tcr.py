@@ -1127,12 +1127,14 @@ class TESSA(Proc):
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
         assay: Which assay to use to extract the expression matrix.
-            Only works if `in.srtobj` is an RDS file of a Seurat object and
-            `envs.reduction` is not provided.
+            Only works if `in.srtobj` is an RDS file of a Seurat object.
         predefined_b (flag): Whether use the predefined `b` or not.
             Please check the paper of tessa for more details about the b vector.
             If True, the tessa will not update b in the MCMC iterations.
         max_iter (type=int): The maximum number of iterations for MCMC.
+        save_tessa (flag): Save tessa detailed results to seurat object?
+            Only works if `in.srtobj` is an RDS file of a Seurat object.
+            It will be saved to `sobj@misc$tessa`.
     """
     input = "immdata:file,srtobj:file"
     output = """outfile:file:
@@ -1150,6 +1152,7 @@ class TESSA(Proc):
         "within_sample": False,
         "predefined_b": False,
         "max_iter": 1000,
+        "save_tessa": False,
     }
     script = "file://../scripts/tcr/TESSA.R"
     plugin_opts = {"report": "file://../reports/tcr/TESSA.svelte"}

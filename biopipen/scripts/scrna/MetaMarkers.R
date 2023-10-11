@@ -195,7 +195,7 @@ do_enrich <- function(case, markers, sig) {
 do_case <- function(casename) {
     cat(paste("- Dealing with case:", casename, "...\n"))
     case <- cases[[casename]]
-    sobj <- srtobj %>% tidyseurat::filter(!is.na(!!sym(case$group_by)))
+    sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
     df <- GetAssayData(sobj, slot = "data", assay = "RNA")
     genes <- rownames(df)
     # rows: cells, cols: genes
