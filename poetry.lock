@@ -229,25 +229,25 @@ typing-extensions = {version = ">=3.7.4,<5.0.0", markers = "python_version < \"3
 
 [[package]]
 name = "datar"
-version = "0.15.2"
+version = "0.15.3"
 description = "A Grammar of Data Manipulation in python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar-0.15.2-py3-none-any.whl", hash = "sha256:76a09f7ff6ed68dee766fb5e21b86f056fb150d58dc3445ffc0d678b9e747979"},
-    {file = "datar-0.15.2.tar.gz", hash = "sha256:c9ab05bd3f41b27ffc638278487386a1c4e123f63deec4b43519a8f27ea1a937"},
+    {file = "datar-0.15.3-py3-none-any.whl", hash = "sha256:97b5446b64acaa59525d1dee81b9a43e50aeee60b4cbc77a7dcfac709f347d19"},
+    {file = "datar-0.15.3.tar.gz", hash = "sha256:ac6a2000f7d527527e2fe534a763becba915ddac0fa8143ced69e14d486598fa"},
 ]
 
 [package.dependencies]
-datar-pandas = {version = ">=0.5.2,<0.6.0", optional = true, markers = "extra == \"pandas\""}
-pipda = ">=0.13,<0.14"
+datar-pandas = {version = ">=0.5.3,<0.6.0", optional = true, markers = "extra == \"pandas\""}
+pipda = ">=0.13.1,<0.14.0"
 python-simpleconf = {version = ">=0.6,<0.7", extras = ["toml"]}
 simplug = ">=0.3,<0.4"
 
 [package.extras]
 arrow = ["datar-arrow (>=0.1,<0.2)"]
 numpy = ["datar-numpy (>=0.3.2,<0.4.0)"]
-pandas = ["datar-pandas (>=0.5.2,<0.6.0)"]
+pandas = ["datar-pandas (>=0.5.3,<0.6.0)"]
 
 [[package]]
 name = "datar-numpy"
@@ -269,17 +269,17 @@ all = ["scipy (>=1.8,<2.0)", "wcwidth (>=0.2,<0.3)"]
 
 [[package]]
 name = "datar-pandas"
-version = "0.5.2"
+version = "0.5.3"
 description = "The pandas backend for datar"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar_pandas-0.5.2-py3-none-any.whl", hash = "sha256:8bae404f7abd2aee9297dc98c0adf8a0219ab003a892e3a8bb2443d103ccdb33"},
-    {file = "datar_pandas-0.5.2.tar.gz", hash = "sha256:0ab22908a35aec8d257e1567270e78b25f774bb6fa729c5991e8a2adb31713a9"},
+    {file = "datar_pandas-0.5.3-py3-none-any.whl", hash = "sha256:dd0c1519ffdde4093aefb724b208265c54cca5f67977d0df1991bd79bfb72626"},
+    {file = "datar_pandas-0.5.3.tar.gz", hash = "sha256:22e73291bc8060c11f9ced571ac2507225cfb6f7ab4993db239346204cdcf3c3"},
 ]
 
 [package.dependencies]
-datar = ">=0.15,<0.16"
+datar = ">=0.15.3,<0.16.0"
 datar-numpy = ">=0.3.2,<0.4.0"
 pdtypes = ">=0.2,<0.3"
 
@@ -921,13 +921,13 @@ pandas = ">=2.0,<3.0"
 
 [[package]]
 name = "pipda"
-version = "0.13.0"
+version = "0.13.1"
 description = "A framework for data piping in python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipda-0.13.0-py3-none-any.whl", hash = "sha256:d4740e02e0b600082d091af4f621ffa1e84ef66b4feb5e319c5cd855515fd5fc"},
-    {file = "pipda-0.13.0.tar.gz", hash = "sha256:1d9ab1a1c9fa308bee9133baa01d505eab8b3b543acd057c66d30421b4ed2158"},
+    {file = "pipda-0.13.1-py3-none-any.whl", hash = "sha256:9e9046ac507ad03ced7b63e09e2468bdc2c863c01d44233c5502b4f450461893"},
+    {file = "pipda-0.13.1.tar.gz", hash = "sha256:56420cbb285a085db385a37ad267f59ba090ec1e901eb122132bd64ad5f515f9"},
 ]
 
 [package.dependencies]
