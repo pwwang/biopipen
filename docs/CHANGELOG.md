@@ -1,3 +1,7 @@
+## 0.18.3
+
+- 🐛 [scrna.MarkersFinder] Fix when either ident is empty
+
 ## 0.18.2
 
 - 🐛 [tcr.CDR3AAphyschem.R] Fix a bug when the min length of CDR3 seqs > 12
