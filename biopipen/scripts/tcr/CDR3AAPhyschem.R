@@ -276,6 +276,7 @@ do_one_subset = function(s) {
     fits = list()
     for (len in CDR3_MINLEN:CDR3_MAXLEN){
         data_fit = data[data$length==len,]
+        if (nrow(data_fit) == 0) { next }
         poss = get_positions(seq_length=as.numeric(as.character(len)))
         poss = paste("p", poss, sep="")
         feats = c("pI", "hydrophob", "volume")
@@ -292,6 +293,8 @@ do_one_subset = function(s) {
             }
         }
         y = ifelse(data_fit$.Group == target, 1, 0)
+        # one multinomial or binomial class has 1 or 0 observations; not allowed
+        if (any(table(y) <= 1)) { next }
         fit = glmnet(x, y, data=data_fit, alpha=0, lambda=0.01, family="binomial")
         fits[[len]] = tidy(fit)
     }
@@ -302,6 +305,7 @@ do_one_subset = function(s) {
     colnames(alldf) = c("length", "imgt_pos", "feature", "estimate")
     for (len in CDR3_MINLEN:CDR3_MAXLEN){
         res = fits[[len]]
+        if (is.null(res)) { next }
         res$length = len
         res$imgt_pos = sapply(res$term, function(x) strsplit(x, "_")[[1]][1])
         res$feature = sapply(res$term, function(x) strsplit(x, "_")[[1]][2])

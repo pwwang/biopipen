@@ -1,3 +1,7 @@
+## 0.18.2
+
+- 🐛 [tcr.CDR3AAphyschem.R] Fix a bug when the min length of CDR3 seqs > 12
+
 ## 0.18.1
 
 - ⬆️ Bump datar to 0.15.3
