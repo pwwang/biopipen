@@ -310,7 +310,12 @@ do_case <- function(casename) {
     } else {
         args$object <- srtobj
     }
-    markers <- do_call(FindMarkers, args) %>% rownames_to_column("gene")
+    markers <- tryCatch({
+        do_call(FindMarkers, args) %>% rownames_to_column("gene")
+    }, error = function(e) {
+        warning(e$message, immediate. = TRUE)
+        data.frame()
+    })
     do_enrich(casename, markers, case$sigmarkers, case$volcano_genes)
 }
 
