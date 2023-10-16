@@ -339,10 +339,10 @@ class ScrnaMetabolicLandscape(ProcGroup):
     """Metabolic landscape analysis for scRNA-seq data
 
     An abstract from
-    https://github.com/LocasaleLab/Single-Cell-Metabolic-Landscape
+    <https://github.com/LocasaleLab/Single-Cell-Metabolic-Landscape>
 
     See docs here for more details
-    https://pwwang.github.io/biopipen/pipelines/scrna_metabolic_landscape
+    <https://pwwang.github.io/biopipen/pipelines/scrna_metabolic_landscape>
 
 
     Reference:

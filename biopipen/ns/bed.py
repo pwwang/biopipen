@@ -98,7 +98,7 @@ class BedConsensus(Proc):
     Unlike `bedtools merge/cluster`, it does not find the union regions nor
     intersect regions. Instead, it finds the consensus regions using the
     distributions of the scores of the bins
-
+    ```
                                          bedtools cluster
     Bedfile A            |----------|    1
     Bedfile B          |--------|        1
@@ -108,6 +108,7 @@ class BedConsensus(Proc):
     bedtools intesect      |----|
     bedtools merge     |------------|
     Distribution       |1|2|3333|2|1|    (later normalized into 0~1)
+    ```
 
     Input:
         bedfiles: Input BED files

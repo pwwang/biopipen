@@ -59,6 +59,9 @@ class CNVkitPipeline(ProcGroup):
     >>> # pipeline.ends: End processes of the pipeline
     >>> # pipeline.procs.<proc>: The process with name <proc>
 
+    See also the docs for details
+    <https://pwwang.github.io/biopipen/pipelines/cnvkit_pipeline/>
+
     Args:
         metafile (order=-99): A tab-separated file.
             * Sample: Unique IDs of the samples. Required.
