@@ -150,3 +150,7 @@ div.mkapi-section.pipen-requires .mkapi-section-body code.mkapi-item-first {
 div.mkapi-section.pipen-requires .mkapi-section-body code.pipen-requires-check-code {
     display: block;
 }
+
+a.reference.internal[href^="#biopipenns"] + ul {
+    display: none !important;
+}
