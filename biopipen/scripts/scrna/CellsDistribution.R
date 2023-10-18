@@ -1,10 +1,10 @@
 source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/plot.R")
 source("{{biopipen_dir}}/utils/mutate_helpers.R")
 library(Seurat)
 library(rlang)
 library(tidyr)
 library(dplyr)
+library(ggplot2)
 library(ggsci)
 
 srtfile <- {{in.srtobj | r}}  # nolint
@@ -162,33 +162,29 @@ do_case <- function(name, case) {
     if (is.null(devpars$height)) { devpars$height = max(nrows * 100, 600) }
 
     # plot
-    plotGG(
-        meta,
-        "bar",
-        list(
-            mapping = aes(
+    p = meta %>% ggplot(
+            aes(
                 x = sqrt(CloneGroupSize)/2,
                 y = CloneSize,
                 width = sqrt(CloneGroupSize),
                 fill = seurat_clusters
-            ),
-            stat = "identity",
-            position = "fill"
-        ),
-        c(
-            'geom_col(aes(x=sqrt(CloneGroupSize), y=CloneSize), width=.01, position="fill", color = "#888888")',
-            'coord_polar("y", start=0)',
-            paste0('facet_grid(vars(', bQuote(case$cells_by), '), vars(', bQuote(case$group_by), '), switch="y")'),
-            # 'scale_fill_manual(name = "Cluster", values = pal)',
-            # 26-color palette
-            'scale_fill_ucscgb(name = "Cluster", limits = levels(all_clusters))',
-            'theme_void()',
-            'theme(plot.margin = unit(c(1,1,1,1), "cm"))',
-            'theme(legend.text=element_text(size=8), legend.title=element_text(size=10))'
-        ),
-        devpars,
-        outfile
-    )
+            )
+        ) +
+        geom_col(width=.01, position="fill", color = "#888888") +
+        geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
+        coord_polar("y", start = 0) +
+        scale_fill_ucscgb(name = "Cluster", alpha = 1, limits = levels(all_clusters)) +
+        theme_void() +
+        theme(
+            plot.margin = unit(c(1,1,1,1), "cm"),
+            legend.text = element_text(size=8),
+            legend.title = element_text(size=10)
+        )  +
+        facet_grid(vars(!!sym(case$cells_by)), vars(!!sym(case$group_by)), switch="y")
+
+    png(outfile, res = devpars$res, width = devpars$width, height = devpars$height)
+    print(p)
+    dev.off()
 }
 
 cases <- expand_cases()
