@@ -296,7 +296,7 @@ class SeuratClusterStats(Proc):
             - slot: The slot to use.
             - section: The section to put the plot in the report.
                 If not specified, the case title will be used.
-            - ncol: The number of columns for the plots.
+            - ncol (type=int): The number of columns for the plots.
             - kind (choice): The kind of the plot or table.
                 - ridge: Use `Seurat::RidgePlot`.
                 - ridgeplot: Same as `ridge`.
