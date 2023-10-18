@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from_ os import path %}
 <script>
-    import { Image } from "$libs";
+    import { Image, DataTable } from "$libs";
     import { Tile } from "$ccs";
 </script>
 
@@ -15,17 +15,19 @@
             | replace: "{", "&#123"
             | replace: "}", "&#125"
         }}</p>
-        <p>Dimension (genes x cells) before filtering: {{job.outdir | joinpaths: "before-qc", "dim.txt" | read}}</p>
-        <p>Dimension (genes x cells) after filtering: {{job.outdir | joinpaths: "after-qc", "dim.txt" | read}}</p>
+
+        <DataTable
+            src={{job.outdir | joinpaths: 'plots', 'dim.txt' | quote}}
+            data={ {{job.outdir | joinpaths: 'plots', 'dim.txt' | datatable: sep="\t"}} } />
     </Tile>
 
-    <h{{h}}>QC features before filtering</h{{h}}>
-    {% set qcimgs = job.outdir | glob: "before-qc", "*.png" %}
-    {{ table_of_images(qcimgs, 3) }}
+    <h{{h}}>Violin plots</h{{h}}>
+    {% set qcimgs = job.outdir | glob: "plots", "*.vln.png" %}
+    {{ table_of_images(qcimgs) }}
 
-    <h{{h}}>QC features after filtering</h{{h}}>
-    {% set qcimgs = job.outdir | glob: "after-qc", "*.png" %}
-    {{ table_of_images(qcimgs, 3) }}
+    <h{{h}}>Scatter plots</h{{h}}>
+    {% set qcimgs = job.outdir | glob: "plots", "*.scatter.png" %}
+    {{ table_of_images(qcimgs) }}
 
 {%- endmacro -%}
 
