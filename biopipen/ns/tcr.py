@@ -378,7 +378,7 @@ class Immunarch(Proc):
                 Multiple columns should be separated by `,`.
             - args (type=json): Other arguments for `repDiversity()`.
                 Do not include the preceding `.` and use `-` instead of `.` in the argument names.
-                For example, `-do-norm` will be compiled to `.do.norm`.
+                For example, `do-norm` will be compiled to `.do.norm`.
                 See all arguments at
                 https://immunarch.com/reference/repDiversity.html
             - order (list): The order of the values in `by` on the x-axis of the plots.
