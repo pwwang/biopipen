@@ -25,7 +25,7 @@ do_one_stats = function(name) {
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
-        stop("pie charts are not supported for group-by")
+        stop(paste0(name, ": pie charts are not supported for group-by"))
     }
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
