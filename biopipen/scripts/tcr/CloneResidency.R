@@ -78,9 +78,9 @@ perpare_case = function(casename, case) {
     if (is.null(case$group) || length(case$group) == 0) {
         stop(paste("`group` is required for case:", casename))
     }
-    if (is.null(case$order) || length(case$order) == 0) {
-        stop(paste("`order` is required for case:", casename))
-    }
+    # if (is.null(case$order) || length(case$order) == 0) {
+    #     stop(paste("`order` is required for case:", casename))
+    # }
 
     # Create case-specific directories
     # Scatter plots
@@ -232,7 +232,11 @@ handle_subject = function(i, subjects, casename, case) {
     groups = subject_row %>%
         left_join(meta, by=case$subject) %>%
         pull(case$group)
-    groups = intersect(case$order, groups)
+    if (is.null(case$order) || length(case$order) == 0) {
+        groups = sort(groups)
+    } else {
+        groups = intersect(case$order, groups)
+    }
     if (length(groups) < 2) {
         warning(paste0("-", casename, ", Subject doesn't have enough groups:", subject), immediate. = TRUE)
         return()
