@@ -164,22 +164,35 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         quote=F,
         row.names=F
     )
-    plotGG(
-        select_enrich_data_df,
-        "point",
-        args = list(aes(x=x, y=y, size=PVAL, color=NES), shape=19),
-        ggs = c(
-            'scale_size(range = c(2, 10))',
-            'scale_color_gradient(low = "white", high = "red")',
-            'labs(
-                x = NULL, y = NULL, color="NES", size="-log10(pval)"
-            )',
-            'theme_prism(axis_text_angle = 90)',
-            'theme(legend.title = element_text())'
-        ),
-        devpars = bub_devpars,
-        outfile = bubblefile
-    )
+    if (nrow(select_enrich_data_df) == 0) {
+        p = ggplot(data.frame(text = "No significant pathways found")) +
+            geom_text(aes(x = 0, y = 0, label = text), size = 10) +
+            theme_void() +
+            theme(
+                plot.margin = unit(c(0, 0, 0, 0), "cm"),
+                plot.background = element_rect(fill = "white", colour = NA)
+            )
+        png(bubblefile, width = 600, height = 100, res = 70)
+        print(p)
+        dev.off()
+    } else {
+        plotGG(
+            select_enrich_data_df,
+            "point",
+            args = list(aes(x=x, y=y, size=PVAL, color=NES), shape=19),
+            ggs = c(
+                'scale_size(range = c(2, 10))',
+                'scale_color_gradient(low = "white", high = "red")',
+                'labs(
+                    x = NULL, y = NULL, color="NES", size="-log10(pval)"
+                )',
+                'theme_prism(axis_text_angle = 90)',
+                'theme(legend.title = element_text())'
+            ),
+            devpars = bub_devpars,
+            outfile = bubblefile
+        )
+    }
 
     ## plot variance
     pc_plotdata$group <- factor(pc_plotdata$group, levels = mixedsort(groups))
@@ -192,11 +205,11 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         theme(
             legend.position = "none", panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
-            axis.line = element_line(size = 0.2, colour = "black"),
-            axis.ticks = element_line(colour = "black", size = 0.2),
+            axis.line = element_line(linewidth = 0.2, colour = "black"),
+            axis.ticks = element_line(colour = "black", linewidth = 0.2),
             axis.text.x = element_text(colour = "black", size = 6),
             axis.text.y = element_text(colour = "black", size = 6),
-            strip.background = element_rect(fill = "white", size = 0.2, colour = NULL),
+            strip.background = element_rect(fill = "white", linewidth = 0.2, colour = NULL),
             strip.text = element_text(size = 6)
         )
 
@@ -215,7 +228,7 @@ do_one_subset_col <- function(subset_col, subset_prefix) {
     } else {
         x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
         if (any(unlist(lapply(x, class)) == "try-error")) {
-            stop("mclapply error")
+            stop(paste0("\nmclapply error:", x))
         }
     }
 }
