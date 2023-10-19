@@ -342,6 +342,8 @@ do_one_subset_col <- function(subset_col, subset_prefix) {
                 hm_devpars$width = sum(hm_devpars$width, x[[i]]$hm_devpars$width / 2)
                 hm_devpars$height = max(hm_devpars$height, x[[i]]$hm_devpars$height * length(pws) / nrow(x[[i]]$hmdata))
             }
+            # In case of NA values
+            hmdata[is.na(hmdata)] = 0
             # Plot heatmap of the merged hmdata
             subset_heatmap_file <- file.path(outdir, paste0(subset_col, ".group-unclustered.png"))
             plotHeatmap(
