@@ -270,7 +270,8 @@ class Immunarch(Proc):
                 - res (type=int): The resolution of the plot.
             - analyses (ns;order=8): Perform overlap analyses.
                 - method: Plot the samples with these dimension reduction methods.
-                    The methods could be `hclust`, `tsne` or `mds`.
+                    The methods could be `hclust`, `tsne`, `mds` or combination of them, such as `mds+hclust`.
+                    You can also set to `none` to skip the analyses.
                     They could also be combined, for example, `mds+hclust`.
                     See https://immunarch.com/reference/repOverlapAnalysis.html
                 - vis_args (type=json): Other arguments for the plotting functions.
@@ -305,6 +306,7 @@ class Immunarch(Proc):
                 - method: The method to control how the data is going to be preprocessed and analysed.
                     One of `js`, `cor`, `cosine`, `pca`, `mds` and `tsne`. Can also be combined with following methods
                     for the actual analyses: `hclust`, `kmeans`, `dbscan`, and `kruskal`. For example: `cosine+hclust`.
+                    You can also set to `none` to skip the analyses.
                     See https://immunarch.com/articles/web_only/v5_gene_usage.html.
                 - vis_args (type=json): Other arguments for the plotting functions.
                 - devpars (ns): The parameters for the plotting device.
@@ -510,7 +512,7 @@ class Immunarch(Proc):
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
             "analyses": {
-                "method": "tsne",
+                "method": "none",
                 "vis_args": {},
                 "devpars": {"width": 1000, "height": 1000, "res": 100},
                 "cases": {},
@@ -525,7 +527,7 @@ class Immunarch(Proc):
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
             "analyses": {
-                "method": "tsne",
+                "method": "none",
                 "vis_args": {},
                 "devpars": {"width": 1000, "height": 1000, "res": 100},
                 "cases": {},
