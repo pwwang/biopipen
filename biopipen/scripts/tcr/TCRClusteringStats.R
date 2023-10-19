@@ -3,6 +3,7 @@ source("{{biopipen_dir}}/utils/plot.R")
 library(tibble)
 library(tidyr)
 library(dplyr)
+library(rlang)
 library(immunarch)
 library(ggprism)
 
@@ -70,7 +71,7 @@ cluster_size_distribution = function(name) {
     plotGG(
         clsizes,
         "histogram",
-        args = list(mapping = aes_string(x="n", fill=case$by)),
+        args = list(mapping = aes(x=n, fill=!!sym(case$by))),
         ggs = c(
             "theme_prism()",
             "scale_y_continuous(trans='log10')",
@@ -128,6 +129,7 @@ shared_clusters = function(name) {
             name = "Shared TCR Clusters",
             col = c("#ffe1e1", "red3"),
             cluster_columns = FALSE,
+            cluster_rows = nrow(plotdata) > 2,
             top_annotation = anno,
             cell_fun = if (
                 is.null(case$numbers_on_heatmap) || !case$numbers_on_heatmap
@@ -196,11 +198,7 @@ sample_diversity = function(name) {
         colnames(div)[2] = "gini"
         div = left_join(div, immdata$meta, by="Sample")
         geom = "col"
-        mapping = aes_string(
-            x = "Sample",
-            y = "gini",
-            fill = "Sample"
-        )
+        mapping = aes(x = Sample, y = gini, fill = Sample)
         ggs = c(
             "theme_prism(axis_text_angle = 90)",
             "labs(title='Gini coefficient', subtitle='Sample diversity estimation using the Gini coefficient')"
@@ -211,15 +209,11 @@ sample_diversity = function(name) {
             case$by = trimws(strsplit(case$by, ",")[[1]])
             if (length(case$by) == 1) {
                 geom = "boxplot"
-                mapping = aes_string(x = case$by, y = "gini", fill = case$by)
+                mapping = aes(x = !!sym(case$by), y = gini, fill = !!sym(case$by))
             } else {
                 div = div %>% unite("Group", all_of(case$by), sep="; ")
                 geom = "boxplot"
-                mapping = aes_string(
-                    x = "Group",
-                    y = "gini",
-                    fill = "Group"
-                )
+                mapping = aes(x = Group, y = gini, fill = Group)
             }
         }
 
