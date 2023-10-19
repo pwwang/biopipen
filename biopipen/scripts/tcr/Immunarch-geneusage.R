@@ -114,8 +114,23 @@ do_one_case = function(name, case, gu_dir) {
 
     if (!is.null(case$analyses$cases) && length(case$analyses$cases) > 0) {
         for (aname in names(case$analyses$cases)) {
+            if (case$analyses$cases[[aname]]$method == "none") {
+                next
+            }
             print(paste0("    Analysis: ", aname))
-            imm_gua = geneUsageAnalysis(imm_gu, .method = case$analyses$cases[[aname]]$method)
+            tryCatch({
+                imm_gua = geneUsageAnalysis(imm_gu, .method = case$analyses$cases[[aname]]$method)
+            }, error = function(e) {
+                if (grepl("cmdscale", e)) {
+                    stop(paste0(
+                        "Too few samples (", n_samples, ") for gene usage analyses.\n",
+                        "You can use a different method or set it to `none` to skip it.\n",
+                        "(Orginal error: ", e, ")"
+                    ))
+                } else {
+                    stop(e)
+                }
+            })
             avis_args = case$analyses$cases[[aname]]$vis_args
             avis_args$.data = imm_gua
             ap = do_call(vis, avis_args)

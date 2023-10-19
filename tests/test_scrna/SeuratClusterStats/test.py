@@ -67,6 +67,20 @@ class ModuleScoreCalculator(ModuleScoreCalculator):
 class SeuratClusterStats(SeuratClusterStats):
     requires = ModuleScoreCalculator
     envs = {
+        "stats": {
+            "Number of cells in each cluster": {
+                "pie": True,
+            },
+            "Number of cells in each cluster by Sample": {
+                "group-by": "Sample",
+                "table": True,
+                "frac": True,
+            },
+            "Number of cells in each old cluster": {
+                "pie": True,
+                "ident": "seurat_clusters_id",
+            },
+        },
         "features": {
             "Gene expressions in g1": {
                 "kind": "ridge",

@@ -3,6 +3,7 @@ source("{{biopipen_dir}}/utils/misc.R")
 library(Seurat)
 library(future)
 library(bracer)
+library(ggplot2)
 library(tidyseurat)
 
 metafile = {{in.metafile | quote}}
@@ -122,43 +123,82 @@ sobj$percent.ribo = PercentageFeatureSet(sobj, pattern = "^RP[SL]")
 sobj$percent.hb = PercentageFeatureSet(sobj, pattern = "^HB[^(P)]")
 sobj$percent.plat = PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
 
-print("- Plotting QC metrics before filtering ...")
+dim_df = data.frame(When = "Before_QC", nCells = ncol(sobj), nGenes = nrow(sobj))
+
+sobj = sobj %>% mutate(.QC = !!rlang::parse_expr(envs$cell_qc))
 feats = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat")
-bqcdir = file.path(joboutdir, "before-qc")
-dir.create(bqcdir, recursive = TRUE, showWarnings = FALSE)
+plotsdir = file.path(joboutdir, "plots")
+dir.create(plotsdir, showWarnings = FALSE)
+
+# Violin plots
+print("- Plotting violin plots ...")
 for (feat in feats) {
-    png(file.path(bqcdir, paste0(feat, ".png")), width = 800 + length(samples) * 15, height = 600, res = 100)
-    print(VlnPlot(sobj, group.by = "Sample", features = feat, pt.size = 0.1) + NoLegend())
+    print(paste0("  ", feat, "..."))
+    vln_p = VlnPlot(
+        sobj,
+        cols = rep("white", length(samples)),
+        group.by = "Sample",
+        features = feat,
+        pt.size = 0) + NoLegend()
+    vln_p$data$.QC = sobj@meta.data$.QC
+    vln_p = vln_p + geom_jitter(
+            aes(color = .QC),
+            data = vln_p$data,
+            position = position_jitterdodge(jitter.width = 0.4, dodge.width = 0.9)
+        ) + scale_color_manual(values = c("black", "red"), breaks = c(TRUE, FALSE))
+
+    png(
+        file.path(plotsdir, paste0(feat, ".vln.png")),
+        width = 800 + length(samples) * 15, height = 600, res = 100
+    )
+    print(vln_p)
     dev.off()
 }
-cat(paste(dim(sobj), collapse = " x "), file=file.path(bqcdir, "dim.txt"))
 
-print("- Applying cell QC filters ...")
-print(paste("  Dim before QC:", paste(dim(sobj), collapse="x")))
-if (!is.null(envs$cell_qc) && nchar(envs$cell_qc) > 0) {
-    sobj = sobj %>% filter(!!rlang::parse_expr(envs$cell_qc))
+# Scatter plots against nCount_RNA
+print("- Plotting scatter plots ...")
+for (feat in setdiff(feats, "nCount_RNA")) {
+    print(paste0("  ", feat, "..."))
+    scat_p = FeatureScatter(
+        sobj,
+        feature1 = "nCount_RNA",
+        feature2 = feat,
+        group.by = ".QC"
+    ) +
+    NoLegend() +
+    scale_color_manual(values = c("black", "red"), breaks = c(TRUE, FALSE))
+
+    png(
+        file.path(plotsdir, paste0(feat, "-nCount_RNA.scatter.png")),
+        width = 800, height = 600, res = 100
+    )
+    print(scat_p)
+    dev.off()
 }
-print(paste("  Dim after QC:", paste(dim(sobj), collapse="x")))
 
-print("- Applying gene QC filters ...")
-print(paste("  Dim before QC:", paste(dim(sobj), collapse="x")))
+# Do the filtering
+print("- Filtering cells ...")
+sobj = sobj %>% filter(.QC)
+sobj$.QC = NULL
+
+print("- Filtering genes ...")
 if (is.list(envs$gene_qc)) {
     if ("min_cells" %in% names(envs$gene_qc)) {
         genes = rownames(sobj)[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
         sobj = subset(sobj, features = genes)
     }
 }
-print(paste("  Dim after QC:", paste(dim(sobj), collapse="x")))
+dim_df = rbind(
+    dim_df,
+    data.frame(
+        When = "After_Gene_QC",
+        nCells = ncol(sobj),
+        nGenes = nrow(sobj)
+    )
+)
 
-print("- Plotting QC metrics after filtering ...")
-aqcdir = file.path(joboutdir, "after-qc")
-dir.create(aqcdir, recursive = TRUE, showWarnings = FALSE)
-for (feat in feats) {
-    png(file.path(aqcdir, paste0(feat, ".png")), width = 800 + length(samples) * 15, height = 600, res = 100)
-    print(VlnPlot(sobj, group.by = "Sample", features = feat, pt.size = 0.1) + NoLegend())
-    dev.off()
-}
-cat(paste(dim(sobj), collapse = " x "), file=file.path(aqcdir, "dim.txt"))
+write.table(dim_df, file = file.path(plotsdir, "dim.txt"),
+            row.names = FALSE, quote = FALSE, sep = "\t")
 
 print("- Saving results ...")
 saveRDS(sobj, rdsfile)

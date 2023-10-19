@@ -25,7 +25,7 @@ do_one_stats = function(name) {
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
-        stop("pie charts are not supported for group-by")
+        stop(paste0(name, ": pie charts are not supported for group-by"))
     }
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
@@ -51,19 +51,22 @@ do_one_stats = function(name) {
     if (isTRUE(case$pie)) {
         p_pie = df_cells %>%
             arrange(!!sym(case$ident)) %>%
-            ggplot(aes(x="", y=.n, fill=rev(!!sym(case$ident)))) +
-            geom_bar(stat="identity", width=1, alpha=.8) +
+            ggplot(aes(x="", y=.n, fill=!!sym(case$ident))) +
+            geom_bar(stat="identity", width=1, alpha=.8, position = position_stack(reverse = TRUE)) +
             coord_polar("y", start=0) +
-            guides(fill = guide_legend(reverse = TRUE, title = NULL)) +
+            scale_fill_ucscgb(alpha=.8) +
+            guides(fill = guide_legend(title = case$ident)) +
             theme_void() +
-            geom_label_repel(
-                if (isTRUE(case$frac)) aes(label=sprintf("%.1f%%", .frac * 100)) else aes(label=.n),
+            geom_label(
+                if (isTRUE(case$frac))
+                    aes(label=sprintf("%.1f%%", .frac * 100))
+                else
+                    aes(label=.n),
                 position = position_stack(vjust = 0.5),
                 color="#333333",
                 fill="#EEEEEE",
                 size=5
-            ) +
-            scale_fill_ucscgb(alpha=.8)
+            )
 
         if (!is.null(case$split.by)) {
             p_pie = p_pie + facet_wrap(case$split.by)

@@ -22,6 +22,9 @@ class ScrnaBasic(ProcGroup):
 
     Including QC, clustering, marker genes, and enrichment analysis.
 
+    See also the docs for details
+    <https://pwwang.github.io/biopipen/pipelines/scrna_basic/>
+
     Args:
         infile: The input file. Either a tab-delimited file containing
             the information of metadata and paths to results of cellranger

@@ -16,7 +16,11 @@ defaults <- {{envs.defaults | r}}
 stats <- {{envs.stats | r}}
 
 outdir <- dirname(outfile)
-indata <- read.delim(infile, sep = sep, header = TRUE)
+indata <- read.delim(infile, sep = sep, header = TRUE, row.names = NULL)
+
+if (colnames(indata)[1] == "row.names") {
+    stop("Wrong number of column names. Do you have the right `sep`?")
+}
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     mutdata <- indata %>%
@@ -123,9 +127,9 @@ for (name in names(stats)) {
         }
         p <- ggplot(
             data %>% arrange(!!group),
-            aes(x = "", y = !!sym(count_on), fill = rev(!!group), label = !!sym(count_on))
+            aes(x = "", y = !!sym(count_on), fill = !!group, label = !!sym(count_on))
         ) +
-            geom_bar(stat="identity", width=1, color="white") +
+            geom_bar(stat="identity", width=1, color="white", position = position_stack(reverse = TRUE)) +
             coord_polar("y", start = 0) +
             theme_void() +
             theme(plot.title = element_text(hjust = 0.5)) +
@@ -135,7 +139,7 @@ for (name in names(stats)) {
                 fill="#EEEEEE",
                 size=4
             ) +
-            scale_fill_ucscgb(alpha = .8, name = group) +
+            scale_fill_ucscgb(alpha = .7, name = group) +
             ggtitle(paste0("# ", stat$on))
     } else if (stat$plot == "bar" || stat$plot == "barplot") {
         if (is.null(stat$each)) {

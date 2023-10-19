@@ -233,5 +233,8 @@ print("- Running FindClusters ...")
 envs$FindClusters$object = obj_list
 obj_list = do_call(FindClusters, envs$FindClusters)
 
+nclusters = length(unique(Idents(obj_list)))
+print(paste0("- Identified ", nclusters, " clusters."))
+
 print("- Saving results ...")
 saveRDS(obj_list, file = rdsfile)

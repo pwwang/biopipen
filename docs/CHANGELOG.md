@@ -1,3 +1,27 @@
+## 0.19.0
+
+- ⬆️ Bump pipen-report 0.13.1 (pwwang/immunopipe#9, 2)
+- ⬆️ Bump pipen-board to 0.12.5
+- 💄 [docs] Hide unnecessary items in nav bar
+- 💄 [docs] Get docs, especially API docs, formatted better
+- 🐛 [delim.SampleInfo] Fix order in pie charts
+- 🎨 [delim.SampleInfo] Add stricter checker for input file (pwwang/immunopipe#13)
+- 🎨 [scrna.SeuratPreparing] Improve QC plots
+- 📝 [scrna.SeuratPreparing] Fix type annotation for `envs.features_defaults.ncol` in docstring
+- 🐛 [scrna.CellsDistribution] Fix the cluster order in pie charts
+- 🐛 [scrna.SeuratClusterStats] Fix the cluster order in pie charts
+- 🎨 [scrna.SeuratClusterStats] Indicate the case name in logs when pie is enable for group-by
+- ✨ [scrna.SeuratClusterStats] Allow mutiple columns in the file for `envs.features_defaults.features`
+- ✨ [scrna.SeuratClustering] Add number of clusters at the end of log
+- 🩹 [scrna.ModuleScoreCalculator] Set default assay to RNA in case module scores only caculated using integrated features
+- 📝 [tcr.Immunarch] Fix docstring for `envs.div.args`
+- 🎨 [tcr.CloneResidency] Allow order to be optional
+- 🎨 [tcr.Immunarch] Allow to skip overlap and gene usage analyses by setting method to `none` (pwwang/immunopipe#11, pwwang/immunopipe#12)
+- 🐛 [tcr.TCRClusteringStats] Don't cluster on heatmap when there are only 2 samples
+- 🐛 [scrna_metabolic_landscape.MetabolicFeatures] Import Seurat explictly to avoid satijalab/seurat#2853
+- 🐛 [scrna_metabolic_landscape.MetabolicPathwayActivity] Fix when NA values in data for heatmap
+- 🐛 [scrna_metabolic_landscape.MetabolicPathwayHeterogeneity] Fix error when no significant pathways selected
+
 ## 0.18.3
 
 - 🐛 [scrna.MarkersFinder] Fix when either ident is empty

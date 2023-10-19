@@ -1,6 +1,7 @@
 source("{{biopipen_dir}}/utils/gsea.R")
 
 library(parallel)
+library(Seurat)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}

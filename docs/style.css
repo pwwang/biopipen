@@ -48,7 +48,13 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
 .mkapi-item-type {
     color: var(--mkapi-type);
 }
+.mkapi-item-type.sub {
+    font-size: 84%;
+}
 
+.mkapi-node .mkapi-object-body.top code {
+    font-size: 100%;
+}
 .mkapi-node .mkapi-object-body.top code.mkapi-object-parenthesis, .mkapi-node .mkapi-object-body.top code.mkapi-object-signature {
     color: var(--mkapi-object-sig);
 }
@@ -91,7 +97,7 @@ div.mkapi-section-body.example, div.mkapi-section-body.examples {
     padding: .4em .15em !important;
 }
 .mkapi-docstring * {
-    font-size: 96%;
+    font-size: 98%;
 }
 .mkapi-node h2 {
     font-size: 100%;
@@ -149,4 +155,34 @@ div.mkapi-section.pipen-requires .mkapi-section-body code.mkapi-item-first {
 
 div.mkapi-section.pipen-requires .mkapi-section-body code.pipen-requires-check-code {
     display: block;
+}
+
+a.reference.internal[href^="#biopipenns"] + ul {
+    display: none !important;
+}
+
+div.mkapi-section.envs span.mkapi-item-description li,
+div.mkapi-section.input span.mkapi-item-description li,
+div.mkapi-section.output span.mkapi-item-description li,
+div.mkapi-section.requires span.mkapi-item-description li {
+    padding-left: 8px;
+    text-indent: -12px;
+}
+div.mkapi-section.envs span.mkapi-item-description li::before,
+div.mkapi-section.input span.mkapi-item-description li::before,
+div.mkapi-section.output span.mkapi-item-description li::before,
+div.mkapi-section.requires span.mkapi-item-description li::before {
+    display: none !important;
+}
+
+.rst-content code, .rst-content tt, code {
+    font-size: 80%;
+}
+
+.mkapi-node ul.mkapi-items li::before {
+    line-height: 2.2;
+}
+
+.mkapi-node ul.mkapi-items {
+    margin-left: 36px;
 }

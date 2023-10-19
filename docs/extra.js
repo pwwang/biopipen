@@ -65,6 +65,55 @@ $('div[id^="biopipen.ns."]').each(function() {
     });
 });
 
+// sub-list items
+
+const linkify = function(inputText) {
+    var replacedText, replacePattern1, replacePattern2, replacePattern3;
+
+    //URLs starting with http://, https://, or ftp://
+    replacePattern1 = /(?<!href=")(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+    replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+
+    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+    // replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+    // replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+
+    //Change email addresses to mailto:: links.
+    // replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+    // replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+
+    return replacedText;
+}
+
+const replacer = function(match, p1, p2, offset, string, groups) {
+    p1 = p1.replace("<", "&lt;").replace(">", "&gt;");
+    return p2
+        ? `<code>${p1}</code><span class="mkapi-item-type sub">${p2}</span>:`
+        : `<code>${p1}</code>:`;
+};
+
+$(
+    "div.mkapi-section.envs span.mkapi-item-description li, " +
+    "div.mkapi-section.input span.mkapi-item-description li, " +
+    "div.mkapi-section.output span.mkapi-item-description li " +
+    "div.mkapi-section.requires span.mkapi-item-description li"
+).each(function() {
+    let html = $(this).html();
+    // sub list items
+    html = linkify(html).replaceAll(
+        /<br>&nbsp;\s+- (.+?)( \(.+?\))?:/g,
+        (m, p1, p2) => `<br />- ${replacer(m, p1, p2)}`
+    ).replace(
+        /^- (.+?)( \(.+?\))?:/,
+        replacer
+    );
+    $(this).html(html);
+});
+
+$("blockquote:has(>blockquote>blockquote)").each(function(){
+    $(this).replaceWith(`<pre><code>${$(this).text().replace(/\n{2,}/g, "\n")}</code></pre>`);
+});
+
 // TOC
 $('div.md-sidebar--secondary nav.md-nav--secondary nav.md-nav a.md-nav__link[href^="#biopipenns"]')
     .next()

@@ -31,6 +31,7 @@ report_toc = list()
     if (is.character(features) && startsWith(features, "file://")) {
         return (read.table(
             substring(features, 8),
+            sep = "\t",
             header = FALSE,
             row.names = NULL,
             check.names = FALSE
