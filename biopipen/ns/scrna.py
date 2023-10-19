@@ -467,7 +467,7 @@ class ModuleScoreCalculator(Proc):
             "nbin": 24,
             "ctrl": 100,
             "k": False,
-            "assay": None,
+            "assay": "RNA",
             "seed": 8525,
             "search": False,
             "keep": False,
