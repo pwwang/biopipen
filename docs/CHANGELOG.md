@@ -1,3 +1,7 @@
+## 0.20.0
+
+- ⬆️ Bump pipen to 0.12
+
 ## 0.19.0
 
 - ⬆️ Bump pipen-report 0.13.1 (pwwang/immunopipe#9, 2)
