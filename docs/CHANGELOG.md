@@ -1,3 +1,7 @@
+## 0.20.2
+
+- 🚑 [scrna.SeuratPreparing] Fix % in docstring to crash the pipeline
+
 ## 0.20.1
 
 - 📝 [scrna_basic/scrna_metabolic_landscape/scrna/tcr] Update docstring
