@@ -1,3 +1,10 @@
+## 0.20.1
+
+- 📝 [scrna_basic/scrna_metabolic_landscape/scrna/tcr] Update docstring
+- 🎨 [scrna.MarkersFinder] Try include more genes in volcano plot (pwwang/immunopipe#17)
+- 🎨 [scrna.CellsDistribution] Give better error message in CellsDistribution if group value not found (pwwang/immunopipe#16)
+- 🚚 [tcr.TCRClusterStats] Rename TCRClusteringStats to TCRClusterStats (pwwang/immunopipe#15)
+
 ## 0.20.0
 
 - ⬆️ Bump pipen to 0.12

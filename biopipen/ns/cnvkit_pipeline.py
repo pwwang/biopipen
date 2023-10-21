@@ -6,11 +6,10 @@ from functools import lru_cache
 import pandas
 from diot import Diot
 from datar.tibble import tibble
-from pipen.utils import mark
+from pipen.utils import mark, is_loading_pipeline
 from biopipen.core.proc import Proc
 from pipen_annotate import annotate
 from pipen_args.procgroup import ProcGroup
-from pipen_board import from_pipen_board
 
 from ..core.config import config
 
@@ -277,7 +276,7 @@ class CNVkitPipeline(ProcGroup):
         """Build CNVkitGuessBaits process"""
         from .cnvkit import CNVkitGuessBaits
 
-        if not self.opts.guessbaits and not from_pipen_board():
+        if not self.opts.guessbaits and not is_loading_pipeline():
             return None
 
         def _guess_baits_bams(ch):

@@ -299,13 +299,13 @@ files = [
 
 [[package]]
 name = "diot"
-version = "0.2.2"
+version = "0.2.3"
 description = "Python dictionary with dot notation."
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "diot-0.2.2-py3-none-any.whl", hash = "sha256:8e2bc7191fe84948b587bb6bd132b08be66019667338d97a4168cc5bdcb0c55a"},
-    {file = "diot-0.2.2.tar.gz", hash = "sha256:ecb0123a8295ce3403ad3d194bc16d2593e8ee9377600e8d1a2fb6190ec8a388"},
+    {file = "diot-0.2.3-py3-none-any.whl", hash = "sha256:defd4556bd961327cbfd497f63fcb9d0d79a649bbc8932f26d94dd25a7832e1c"},
+    {file = "diot-0.2.3.tar.gz", hash = "sha256:0b8ccbe3813acda67665ea9025d4eea7f73b2df4e2ab16c5c3f1da8b0dbba4cf"},
 ]
 
 [package.dependencies]
@@ -935,13 +935,13 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.12.3"
+version = "0.12.4"
 description = "A pipeline framework for python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen-0.12.3-py3-none-any.whl", hash = "sha256:f75ca1afb8284bc493e875e3b0c9ebb10c896aa3f19198c8d9f1768fe4781c8a"},
-    {file = "pipen-0.12.3.tar.gz", hash = "sha256:88ef0bc641fca85a3f234b88ae15c2ea2dfc646078f58234507175cf0121ae56"},
+    {file = "pipen-0.12.4-py3-none-any.whl", hash = "sha256:ab534c43c4305dd45da3ad190ee701e51ffb1c7294162b500f2cf85f8bcff7ea"},
+    {file = "pipen-0.12.4.tar.gz", hash = "sha256:c477aa20ec9849f8466eed382c583ca3ee2bc459268421292f9b6c73f28536a4"},
 ]
 
 [package.dependencies]
@@ -957,13 +957,13 @@ xqute = ">=0.2.4,<0.3.0"
 
 [[package]]
 name = "pipen-annotate"
-version = "0.11.0"
+version = "0.11.5"
 description = "Use docstring to annotate pipen processes"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_annotate-0.11.0-py3-none-any.whl", hash = "sha256:5f90c618d0ed3336b0b73d6521034d1c40e31195fdc89638ac0e68b2b5e8c5d9"},
-    {file = "pipen_annotate-0.11.0.tar.gz", hash = "sha256:a0a744b7217f6a436bac2c36abafb3638aaad1fc9fe369120416d99a0ccacada"},
+    {file = "pipen_annotate-0.11.5-py3-none-any.whl", hash = "sha256:4668104b9ad200fd5885f494ae96efb4887618fe71914b404858d6366b53e19a"},
+    {file = "pipen_annotate-0.11.5.tar.gz", hash = "sha256:e0b490449dd42e35c6e94e4363e1bd16c4e8b8b9a65eb5b313b6a3e912511fc5"},
 ]
 
 [package.dependencies]
@@ -985,13 +985,13 @@ pipen-annotate = ">=0.11,<0.12"
 
 [[package]]
 name = "pipen-board"
-version = "0.13.0"
+version = "0.13.1"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.13.0-py3-none-any.whl", hash = "sha256:7488109713275f922c800d71850f07e7ab8afa97c916aa4a6254c396a4649270"},
-    {file = "pipen_board-0.13.0.tar.gz", hash = "sha256:a6d8df9a82396560ed4ee62df30bfd4098bcec8f43eb2a6853450426f92bb413"},
+    {file = "pipen_board-0.13.1-py3-none-any.whl", hash = "sha256:d837989e62a8e675b50d7225466e6d9a518dfcad21b2bd7e30a516ea1a34b56b"},
+    {file = "pipen_board-0.13.1.tar.gz", hash = "sha256:92ae1ab9131764a7f280bda75dec8769642c9e1449da939304af5894bfd3dc93"},
 ]
 
 [package.dependencies]

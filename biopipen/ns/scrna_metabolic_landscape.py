@@ -14,7 +14,19 @@ from ..core.proc import Proc
 
 
 class _MetabolicPathwayActivity(Proc):
-    """Pathway activities for each group
+    """This process calculates the pathway activities in different groups and subsets.
+
+    The cells are first grouped by subsets and then the metabolic activities are
+    examined for each groups in different subsets.
+
+    For each subset, a heatmap and a violin plot will be generated.
+    The heatmap shows the pathway activities for each group and each metabolic pathway
+
+    ![MetabolicPathwayActivity_heatmap](https://pwwang.github.io/immunopipe/processes/images/MetabolicPathwayActivity_heatmap.png){: width="80%"}
+
+    The violin plot shows the distribution of the pathway activities for each group
+
+    ![MetabolicPathwayActivity_violin](https://pwwang.github.io/immunopipe/processes/images/MetabolicPathwayActivity_violin.png){: width="45%"}
 
     Envs:
         ntimes (type=int): Number of times to do the permutation
@@ -67,7 +79,7 @@ class _MetabolicPathwayActivity(Proc):
             - check: {{proc.lang}} <(echo "library(ComplexHeatmap)")
         r-parallel:
             - check: {{proc.lang}} <(echo "library(parallel)")
-    """
+    """  # noqa: E501
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pathwayactivity"
     envs = {
@@ -95,13 +107,18 @@ class _MetabolicPathwayActivity(Proc):
 
 
 class _MetabolicFeatures(Proc):
-    """Inter-subset metabolic features - Enrichment analysis in details
+    """This process performs enrichment analysis for the metabolic pathways
+    for each group in each subset.
+
+    The enrichment analysis is done with [`fgsea`](https://bioconductor.org/packages/release/bioc/html/fgsea.html)
+    package or the [`GSEA_R`](https://github.com/GSEA-MSigDB/GSEA_R) package.
 
     Envs:
-        ncores (type=int;pgarg): Number of cores to use for parallelization
+        ncores (type=int;pgarg): Number of cores to use for parallelization.
             Defaults to `ScrnaMetabolicLandscape.ncores`
-        fgsea (flag): Whether to do fast gsea analysis
-        prerank_method (choice): Method to use for gene preranking
+        fgsea (flag): Whether to do fast gsea analysis using `fgsea` package.
+            If `False`, the `GSEA_R` package will be used.
+        prerank_method (choice): Method to use for gene preranking.
             Signal to noise: the larger the differences of the means
             (scaled by the standard deviations); that is, the more distinct
             the gene expression is in each phenotype and the more the gene
@@ -147,7 +164,7 @@ class _MetabolicFeatures(Proc):
             - check: {{proc.lang}} <(echo "library(parallel)")
         r-fgsea:
             - check: {{proc.lang}} <(echo "library(fgsea)")
-    """
+    """  # noqa: E501
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pathwayfeatures"
     lang = config.lang.rscript
@@ -175,6 +192,12 @@ class _MetabolicFeatures(Proc):
 
 class _MetabolicFeaturesIntraSubset(Proc):
     """Intra-subset metabolic features - Enrichment analysis in details
+
+    Similar to the [`MetabolicFeatures`](./MetabolicFeatures.md) process,
+    this process performs enrichment analysis for the metabolic pathways for
+    each subset in each group, instead of each group in each subset.
+
+    See also: [`MetabolicFeatures`](./MetabolicFeatures.md)
 
     Envs:
         ncores (type=int; pgarg): Number of cores to use for parallelization
@@ -262,7 +285,19 @@ class _MetabolicFeaturesIntraSubset(Proc):
 
 
 class _MetabolicPathwayHeterogeneity(Proc):
-    """Pathway heterogeneity
+    """Calculate Metabolic Pathway heterogeneity.
+
+    For each subset, the normalized enrichment score (NES) of each metabolic pathway
+    is calculated for each group.
+    The NES is calculated by comparing the enrichment score of the subset to the
+    enrichment scores of the same subset in the permutations.
+    The p-value is calculated by comparing the NES to the NESs of the same subset
+    in the permutations.
+    The heterogeneity can be reflected by the NES values and the p-values in
+    different groups for the metabolic pathways.
+
+    ![MetabolicPathwayHeterogeneity](https://pwwang.github.io/immunopipe/processes/images/MetabolicPathwayHeterogeneity.png)
+
 
     Envs:
         gmtfile (pgarg): The GMT file with the metabolic pathways.
@@ -308,7 +343,7 @@ class _MetabolicPathwayHeterogeneity(Proc):
             - check: {{proc.lang}} <(echo "library(data.table)")
         r-fgsea:
             - check: {{proc.lang}} <(echo "library(fgsea)")
-    """
+    """  # noqa: E501
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pathwayhetero"
     lang = config.lang.rscript
@@ -480,8 +515,10 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         @mark(board_config_hidden=True)
         class MetabolicInput(File2Proc):
-            """Input for the metabolic pathway analysis pipeline for
-            scRNA-seq data
+            """This process takes Seurat object as input and pass it to the next
+            processes in the `ScrnaMetabolicLandscape` group.
+
+            There is no configuration for this process.
             """
 
             if self.opts.metafile:

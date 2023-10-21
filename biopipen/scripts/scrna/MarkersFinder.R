@@ -304,6 +304,18 @@ do_case <- function(casename) {
     args$group.by <- case$group.by
     args$ident.1 <- case$ident.1
     args$ident.2 <- case$ident.2
+    if (is.null(args$logfc.threshold)) {
+        args$locfc.threshold <- 0
+    }
+    if (is.null(args$min.cells.group)) {
+        args$min.cells.group <- 1
+    }
+    if (is.null(args$min.cells.feature)) {
+        args$min.cells.feature <- 1
+    }
+    if (is.null(args$min.pct)) {
+        args$min.pct <- 0
+    }
     idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique()
     if (anyNA(idents)) {
         args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))

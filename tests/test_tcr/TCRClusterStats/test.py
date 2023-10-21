@@ -1,6 +1,6 @@
 from pipen import Proc
 from biopipen.core.config import config
-from biopipen.ns.tcr import TCRClustering, TCRClusteringStats
+from biopipen.ns.tcr import TCRClustering, TCRClusterStats
 from biopipen.core.testing import get_pipeline
 
 
@@ -40,11 +40,11 @@ class TCRClusteringClusTCR(TCRClustering):
     envs = {"tool": "ClusTCR"}
 
 
-class TCRClusteringStatsGIANA(TCRClusteringStats):
+class TCRClusterStatsGIANA(TCRClusterStats):
     requires = TCRClusteringGIANA
 
 
-class TCRClusteringStatsClusTCR(TCRClusteringStats):
+class TCRClusterStatsClusTCR(TCRClusterStats):
     requires = TCRClusteringClusTCR
 
 
