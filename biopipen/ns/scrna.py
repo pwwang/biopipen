@@ -42,8 +42,25 @@ class SeuratPreparing(Proc):
     - Apply QC to the data
 
     See also
-    - https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)
-    - https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Create_one_merged_object
+    - <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)>
+    - <https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Create_one_merged_object>
+
+    This process will read the scRNA-seq data, based on the information provided by
+    `SampleInfo`, specifically, the paths specified by the `RNAData` column.
+    Those paths should be either paths to directoies containing `matrix.mtx`,
+    `barcodes.tsv` and `features.tsv` files that can be loaded by
+    [`Seurat::Read10X()`](https://satijalab.org/seurat/reference/read10x),
+    or paths to `h5` files that can be loaded by
+    [`Seurat::Read10X_h5()`](https://satijalab.org/seurat/reference/read10x_h5).
+
+    Each sample will be loaded individually and then merged into one `Seurat` object, and then perform QC.
+
+    In order to perform QC, some additional columns are added to the meta data of the `Seurat` object. They are:
+
+    - `precent.mt`: The percentage of mitochondrial genes.
+    - `percent.ribo`: The percentage of ribosomal genes.
+    - `precent.hb`: The percentage of hemoglobin genes.
+    - `percent.plat`: The percentage of platelet genes.
 
     Input:
         metafile: The metadata of the samples
@@ -71,10 +88,32 @@ class SeuratPreparing(Proc):
             For example: `nFeature_RNA > 200 & percent.mt < 5` will
             keep cells with more than 200 genes and less than 5%% mitochondrial
             genes.
+
+            /// Tip | Example
+            Including the columns added above, all available QC keys include
+            `nFeature_RNA`, `nCount_RNA`, `percent.mt`, `percent.ribo`, `percent.hb`,
+            and `percent.plat`. For example:
+
+            ```toml
+            [SeuratPreparing.envs]
+            cell_qc = "nFeature_RNA > 200 & percent.mt < 5"
+            ```
+            will keep cells with more than 200 genes and less than 5% mitochondrial
+            genes.
+            ///
+
         gene_qc (ns): Filter genes. Currently only `min_cells` is supported.
             `gene_qc` is applied after `cell_qc`.
             - min_cells: The minimum number of cells that a gene must be
                 expressed in to be kept.
+
+            /// Tip | Example
+            ```toml
+            [SeuratPreparing.envs]
+            gene_qc = { min_cells = 3 }
+            ```
+            will keep genes that are expressed in at least 3 cells.
+            ///
 
     Requires:
         r-seurat:
@@ -99,9 +138,15 @@ class SeuratPreparing(Proc):
 
 
 class SeuratClustering(Proc):
-    """Determine the clusters of cells without reference
+    """Determine the clusters of cells without reference using Seurat FindClusters
+    procedure.
 
-    Generally using Seurat FindClusters procedure.
+    To perform the clustering, you have two routes to choose from:
+
+    1. Performing integration on datasets normalized with `SCTransform`
+        - See: [https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1](https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1)
+    2. Fast integration using reciprocal PCA (`RPCA`)
+        - See: [https://satijalab.org/seurat/articles/integration_rpca.html](https://satijalab.org/seurat/articles/integration_rpca.html)
 
     Input:
         srtobj: The seurat object loaded by SeuratPreparing
@@ -113,7 +158,7 @@ class SeuratClustering(Proc):
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
-            See also: https://satijalab.org/seurat/articles/future_vignette.html
+            See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         use_sct (flag;order=-99): Whether use SCTransform routine or not
             If `True`, following procedures will be performed in the order:
             * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
@@ -128,7 +173,7 @@ class SeuratClustering(Proc):
             * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
             * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
             * `*`: On each sample
-            See https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1.
+            See <https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1>.
             If `False`, fast integration will be performed, using reciprocal PCA (RPCA) and
             following procedures will be performed in the order:
             * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
@@ -145,68 +190,69 @@ class SeuratClustering(Proc):
             * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
             * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
             * `*`: On each sample.
-            See https://satijalab.org/seurat/articles/integration_rpca.html.
+            See <https://satijalab.org/seurat/articles/integration_rpca.html>.
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See https://satijalab.org/seurat/reference/sctransform
+            - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
         SelectIntegrationFeatures (ns): Arguments for [`SelectIntegrationFeatures()`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
             `object.list` is specified internally, and `-` in the key will be replaced with `.`.
             - nfeatures (type=int): The number of features to select
-            - <more>: See https://satijalab.org/seurat/reference/selectintegrationfeatures
+            - <more>: See <https://satijalab.org/seurat/reference/selectintegrationfeatures>
         PrepSCTIntegration (ns): Arguments for [`PrepSCTIntegration()`](https://satijalab.org/seurat/reference/prepsctintegration).
             `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See https://satijalab.org/seurat/reference/prepsctintegration
+            - <more>: See <https://satijalab.org/seurat/reference/prepsctintegration>
         NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See https://satijalab.org/seurat/reference/normalizedata
+            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
         FindVariableFeatures (ns): Arguments for [`FindVariableFeatures()`](https://satijalab.org/seurat/reference/findvariablefeatures).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See https://satijalab.org/seurat/reference/findvariablefeatures
+            - <more>: See <https://satijalab.org/seurat/reference/findvariablefeatures>
         FindIntegrationAnchors (ns): Arguments for [`FindIntegrationAnchors()`](https://satijalab.org/seurat/reference/findintegrationanchors).
             `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
             Sample names can also be specified in `reference` instead of indices only.
             `reduction` defaults to `rpca`.
             `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-            - <more>: See https://satijalab.org/seurat/reference/findintegrationanchors
+            **If you want to use reference-based integration, you can also set `reference` to a list of sample names, instead of a list of indices.**
+            - <more>: See <https://satijalab.org/seurat/reference/findintegrationanchors>
         IntegrateData (ns): Arguments for [`IntegrateData()`](https://satijalab.org/seurat/reference/integratedata).
             `anchorset` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
             `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-            - <more>: See https://satijalab.org/seurat/reference/integratedata
+            - <more>: See <https://satijalab.org/seurat/reference/integratedata>
         ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - verbose (flag): Whether to print the progress
-            - <more>: See https://satijalab.org/seurat/reference/scaledata
+            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
         ScaleData1 (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata) that runs on each sample.
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - verbose (flag): Whether to print the progress
-            - <more>: See https://satijalab.org/seurat/reference/scaledata
+            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
         RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - npcs (type=int): The number of PCs to compute.
                 For each sample, `npcs` will be no larger than the number of columns - 1.
             - verbose (flag): Whether to print the progress
-            - <more>: See https://satijalab.org/seurat/reference/runpca
+            - <more>: See <https://satijalab.org/seurat/reference/runpca>
         RunPCA1 (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca) on each sample.
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
             - npcs (type=int): The number of PCs to compute.
                 For each sample, `npcs` will be no larger than the number of columns - 1.
             - verbose (flag): Whether to print the progress
-            - <more>: See https://satijalab.org/seurat/reference/runpca
+            - <more>: See <https://satijalab.org/seurat/reference/runpca>
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
             - dims (type=int): The number of PCs to use
             - reduction: The reduction to use for UMAP
-            - <more>: See https://satijalab.org/seurat/reference/runumap
+            - <more>: See <https://satijalab.org/seurat/reference/runumap>
         FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See https://satijalab.org/seurat/reference/findneighbors
+            - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - resolution (type=float): The resolution of the clustering
-            - <more>: See https://satijalab.org/seurat/reference/findclusters
+            - <more>: See <https://satijalab.org/seurat/reference/findclusters>
 
     Requires:
         r-seurat:
@@ -243,8 +289,55 @@ class SeuratClustering(Proc):
 class SeuratClusterStats(Proc):
     """Statistics of the clustering.
 
-    Including the number/fraction of cells in each cluster,
-    the gene expression values, features and dimension reduction plots.
+    Including the number/fraction of cells in each cluster, the gene expression values
+    and dimension reduction plots. It's also possible to perform stats on
+    TCR clones/clusters or other metadata for each T-cell cluster.
+
+    Examples:
+        ### Number of cells in each cluster
+
+        ```toml
+        [SeuratClusterStats.envs.stats]
+        # suppose you have nothing set in `envs.stats_defaults`
+        # otherwise, the settings will be inherited here
+        nCells_All = { }
+        ```
+
+        ![nCells_All](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_nCells_All.png){: width="80%" }
+
+        ### Number of cells in each cluster by groups
+
+        ```toml
+        [SeuratClusterStats.envs.stats]
+        nCells_Sample = { group-by = "Sample" }
+        ```
+
+        ![nCells_Sample](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_nCells_Sample.png){: width="80%" }
+
+        ### Violin plots for the gene expressions
+
+        ```toml
+        [SeuratClusterStats.envs.features]
+        features = "CD4,CD8A"
+        # Remove the dots in the violin plots
+        vlnplots = { pt-size = 0, kind = "vln" }
+        # Don't use the default genes
+        vlnplots_1 = { features = ["FOXP3", "IL2RA"], pt-size = 0, kind = "vln" }
+        ```
+
+        ![vlnplots](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_vlnplots.png){: width="80%" }
+        ![vlnplots_1](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_vlnplots_1.png){: width="80%" }
+
+        ### Dimension reduction plot with labels
+
+        ```toml
+        [SeuratClusterStats.envs.dimplots.Idents]
+        label = true
+        label-box = true
+        repel = true
+        ```
+
+        ![dimplots](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_dimplots.png){: width="80%" }
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -404,8 +497,10 @@ class SeuratClusterStats(Proc):
 class ModuleScoreCalculator(Proc):
     """Calculate the module scores for each cell
 
-    The module scores are calculated by `Seurat::AddModuleScore()`.
-    See <https://satijalab.org/seurat/reference/addmodulescore>
+    The module scores are calculated by
+    [`Seurat::AddModuleScore()`](https://satijalab.org/seurat/reference/addmodulescore)
+    or [`Seurat::CellCycleScoring()`](https://satijalab.org/seurat/reference/cellcyclescoring)
+    for cell cycle scores.
 
     The module scores are calculated as the average expression levels of each
     program on single cell level, subtracted by the aggregated expression of
@@ -457,7 +552,7 @@ class ModuleScoreCalculator(Proc):
             >>>     "Activation": {"features": "IFNG"},
             >>>     "Proliferation": {"features": "STMN1,TUBB"}
             >>> }
-    """
+    """  # noqa: E501
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -491,6 +586,24 @@ class CellsDistribution(Proc):
     Rows are the cells identities (i.e. TCR clones or TCR clusters), columns
     are groups (i.e. clinic groups).
 
+    Examples:
+        ```toml
+        [CellsDistribution.envs.mutaters]
+        # Add Patient1_Tumor_Expanded column with CDR3.aa that
+        # expands in Tumor of patient 1
+        Patient1_Tumor_Expanded = '''
+          expanded(., region, "Tumor", subset = patient == "Lung1", uniq = FALSE)
+        '''
+
+        [CellsDistribution.envs.cases.Patient1_Tumor_Expanded]
+        cells_by = "Patient1_Tumor_Expanded"
+        cells_orderby = "desc(CloneSize)"
+        group_by = "region"
+        group_order = [ "Tumor", "Normal" ]
+        ```
+
+        ![CellsDistribution_example](https://pwwang.github.io/immunopipe/processes/images/CellsDistribution_example.png)
+
     Input:
         srtobj: The seurat object in RDS format
 
@@ -502,7 +615,7 @@ class CellsDistribution(Proc):
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
             There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
             to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
             with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
             Those functions take following arguments:
@@ -591,7 +704,7 @@ class SeuratMetadataMutater(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
             to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
             with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
             Those functions take following arguments:
@@ -607,7 +720,11 @@ class SeuratMetadataMutater(Proc):
                 For example, `sum,desc` means the sum of `compare` between idents in descending order.
                 Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
                 ids will be in the same order as in `df`.
-            Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+
+            /// Note
+            Note that the numeric column should be the same for all cells in the same group.
+            This will not be checked (only the first value is used).
+            ///
 
     Requires:
         r-seurat:
@@ -723,13 +840,12 @@ class MarkersFinder(Proc):
         outdir: The output directory for the markers
 
     Envs:
-        ncores (type=int): Number of cores to use to parallelize Seurat
-            functions using
-            `future::plan(strategy = "multicore", workers = ncores)`.
-            See also: https://satijalab.org/seurat/articles/future_vignette.html
+        ncores (type=int): Number of cores to use for parallel computing for some `Seurat` procedures.
+            * Used in `future::plan(strategy = "multicore", workers = <ncores>)` to parallelize some Seurat procedures.
+            * See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         mutaters (type=json): The mutaters to mutate the metadata
             There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
             to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
             with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
             Those functions take following arguments:
@@ -760,7 +876,7 @@ class MarkersFinder(Proc):
             value as the case/section name.
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
-            https://maayanlab.cloud/Enrichr/#libraries
+            <https://maayanlab.cloud/Enrichr/#libraries>
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
             significant markers for enrichment analysis.
             Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
@@ -782,7 +898,7 @@ class MarkersFinder(Proc):
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
-            - <more>: See https://satijalab.org/seurat/reference/findmarkers
+            - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
             above options except `ncores` and `mutaters`. If some options are
@@ -850,7 +966,7 @@ class TopExpressingGenes(Proc):
             case/section names.
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
-            https://maayanlab.cloud/Enrichr/#libraries
+            <https://maayanlab.cloud/Enrichr/#libraries>
         n (type=int): The number of top expressing genes to find.
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
@@ -886,7 +1002,15 @@ class TopExpressingGenes(Proc):
 
 
 class ExprImpution(Proc):
-    """Impute the dropout values in scRNA-seq data.
+    """This process imputes the dropout values in scRNA-seq data.
+
+    It takes the Seurat object as input and outputs the Seurat object with
+    imputed expression data.
+
+    Reference:
+    - [Linderman, George C., Jun Zhao, and Yuval Kluger. "Zero-preserving imputation of scRNA-seq data using low-rank approximation." BioRxiv (2018): 397588.](https://www.nature.com/articles/s41467-021-27729-z)
+    - [Li, Wei Vivian, and Jingyi Jessica Li. "An accurate and robust imputation method scImpute for single-cell RNA-seq data." Nature communications 9.1 (2018): 997.](https://www.nature.com/articles/s41467-018-03405-7)
+    - [Dijk, David van, et al. "MAGIC: A diffusion-based imputation method reveals gene-gene interactions in single-cell RNA-sequencing data." BioRxiv (2017): 111591.](https://www.cell.com/cell/abstract/S0092-8674(18)30724-4)
 
     Input:
         infile: The input file in RDS format of Seurat object
@@ -938,7 +1062,7 @@ class ExprImpution(Proc):
         r-seuratwrappers:
             - if: {{proc.envs.tool == "alra"}}
             - check: {{proc.lang}} <(echo "library(SeuratWrappers)")
-    """
+    """  # noqa: E501
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
     lang = config.lang.rscript
@@ -1136,7 +1260,22 @@ class Write10X(Proc):
 
 
 class ScFGSEA(Proc):
-    """Gene set enrichment analysis for cells in different groups using `fgsea`
+    """Gene set enrichment analysis for cells in different groups using
+    [`fgsea`](https://bioconductor.org/packages/release/bioc/html/fgsea.html).
+
+    This process allows us to do Gene Set Enrichment Analysis (GSEA) on the expression data,
+    but based on variaties of grouping, including the from the meta data and the
+    scTCR-seq data as well.
+
+    The GSEA is done using the
+    [fgsea](https://bioconductor.org/packages/release/bioc/html/fgsea.html) package,
+    which allows to quickly and accurately calculate arbitrarily low GSEA P-values
+    for a collection of gene sets.
+    The fgsea package is based on the fast algorithm for preranked GSEA described in
+    [Subramanian et al. 2005](https://www.pnas.org/content/102/43/15545).
+
+    For each case, the process will generate a table with the enrichment scores for
+    each gene set, and GSEA plots for the top gene sets.
 
     Input:
         srtobj: The seurat object in RDS format
@@ -1150,7 +1289,7 @@ class ScFGSEA(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
             to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
             with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
             Those functions take following arguments:
@@ -1238,10 +1377,37 @@ class ScFGSEA(Proc):
 
 
 class CellTypeAnnotation(Proc):
-    """Annotate cell types
+    """Annotate the cell clusters. Currently, four ways are supported:
 
-    Either use `scType`, `hitype` or `scCATCH` to annotate cell types,
-    or directly assign cell types.
+    1. Pass the cell type annotation directly
+    2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type)
+    3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH)
+    4. Use [`hitype`](https://github.com/pwwang/hitype)
+
+    The annotated cell types will replace the original `seurat_clusters` column in the metadata,
+    so that the downstream processes will use the annotated cell types.
+
+    The old `seurat_clusters` column will be renamed to `seurat_clusters_old`.
+
+    If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
+    the old `seurat_clusters` to the new cell types will be generated and saved to
+    `cluster2celltype.tsv` under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
+
+    Examples:
+        ```toml
+        [CellTypeAnnotation.envs]
+        tool = "direct"
+        cell_types = ["CellType1", "CellType2", "-", "CellType4"]
+        ```
+
+        The cell types will be assigned as:
+
+        ```
+        0 -> CellType1
+        1 -> CellType2
+        2 -> 2
+        3 -> CellType4
+        ```
 
     Input:
         sobjfile: The seurat object
@@ -1252,40 +1418,43 @@ class CellTypeAnnotation(Proc):
     Envs:
         tool (choice): The tool to use for cell type annotation.
             - sctype: Use `scType` to annotate cell types.
-                See https://github.com/IanevskiAleksandr/sc-type
+                See <https://github.com/IanevskiAleksandr/sc-type>
             - hitype: Use `hitype` to annotate cell types.
-                See https://github.com/pwwang/hitype
+                See <https://github.com/pwwang/hitype>
             - sccatch: Use `scCATCH` to annotate cell types.
-                See https://github.com/ZJUFanLab/scCATCH
+                See <https://github.com/ZJUFanLab/scCATCH>
             - direct: Directly assign cell types
         sctype_tissue: The tissue to use for `sctype`.
             Avaiable tissues should be the first column (`tissueType`) of `sctype_db`.
             If not specified, all rows in `sctype_db` will be used.
         sctype_db: The database to use for sctype.
-            Check examples at https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx
+            Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
         hitype_tissue: The tissue to use for `hitype`.
             Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
             If not specified, all rows in `hitype_db` will be used.
         hitype_db: The database to use for hitype.
             Compatible with `sctype_db`.
-            See also https://pwwang.github.io/hitype/articles/prepare-gene-sets.html
+            See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
             You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
         cell_types (list): The cell types to use for direct annotation.
             You can use `"-"` or `""` as the placeholder for the clusters that
             you want to keep the original cell types (`seurat_clusters`).
             If the length of `cell_types` is shorter than the number of
             clusters, the remaining clusters will be kept as the original cell
-            types. If `tool` is `direct` and `cell_types` is not specified or
-            an empty list, the original cell types will be kept and nothing
-            will be changed.
+            types.
+
+            /// Note
+            If `tool` is `direct` and `cell_types` is not specified or an empty list,
+            the original cell types will be kept and nothing will be changed.
+            ///
+
         sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species (choice): The specie of cells.
-                - Human: Human cells
-                - Mouse: Mouse cells
+                - Human: Human cells.
+                - Mouse: Mouse cells.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
             - tissue: Tissue origin of cells must be defined.
-            - <more>: Other arguments for `scCATCH::findmarkergene()`
-                See https://rdrr.io/cran/scCATCH/man/findmarkergene.html.
+            - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
                 You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
         newcol: The new column name to store the cell types.
@@ -1325,8 +1494,8 @@ class CellTypeAnnotation(Proc):
 class SeuratMap2Ref(Proc):
     """Map the seurat object to reference
 
-    See: https://satijalab.org/seurat/articles/integration_mapping.html
-    and https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+    See: <https://satijalab.org/seurat/articles/integration_mapping.html>
+    and <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
 
     Input:
         sobjfile: The seurat object
@@ -1351,7 +1520,7 @@ class SeuratMap2Ref(Proc):
             - do-correct-umi (flag): Place corrected UMI matrix in assay counts slot?
             - do-scale (flag): Whether to scale residuals to have unit variance?
             - do-center (flag): Whether to center residuals to have mean zero?
-            - <more>: See https://satijalab.org/seurat/reference/sctransform
+            - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         FindTransferAnchors (ns): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
             - normalization-method (choice): Name of normalization method used.
@@ -1359,16 +1528,16 @@ class SeuratMap2Ref(Proc):
                 - SCT: Scale data using the SCTransform method
             - reference-reduction: Name of dimensional reduction to use from the reference if running the pcaproject workflow.
                 Optionally enables reuse of precomputed reference dimensional reduction.
-            - <more>: See https://satijalab.org/seurat/reference/findtransferanchors.
+            - <more>: See <https://satijalab.org/seurat/reference/findtransferanchors>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         MapQuery (ns): Arguments for [`MapQuery()`](https://satijalab.org/seurat/reference/mapquery)
             - reference-reduction: Name of reduction to use from the reference for neighbor finding
             - reduction-model: `DimReduc` object that contains the umap model
             - refdata (type=json): Data to transfer
-            - <more>: See https://satijalab.org/seurat/reference/mapquery
+            - <more>: See <https://satijalab.org/seurat/reference/mapquery>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         MappingScore (ns): Arguments for [`MappingScore()`](https://satijalab.org/seurat/reference/mappingscore)
-            - <more>: See https://satijalab.org/seurat/reference/mappingscore
+            - <more>: See <https://satijalab.org/seurat/reference/mappingscore>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
 
     Requires:
@@ -1407,7 +1576,64 @@ class SeuratMap2Ref(Proc):
 
 
 class RadarPlots(Proc):
-    """Radar plots for cell proportion in different clusters
+    """Radar plots for cell proportion in different clusters.
+
+    This process generates the radar plots for the clusters of T cells.
+    It explores the proportion of cells in different groups (e.g. Tumor vs Blood)
+    in different T-cell clusters.
+
+    Examples:
+        Let's say we have a metadata like this:
+
+        | Cell | Source | Timepoint | seurat_clusters |
+        | ---- | ------ | --------- | --------------- |
+        | A    | Blood  | Pre       | 0               |
+        | B    | Blood  | Pre       | 0               |
+        | C    | Blood  | Post      | 1               |
+        | D    | Blood  | Post      | 1               |
+        | E    | Tumor  | Pre       | 2               |
+        | F    | Tumor  | Pre       | 2               |
+        | G    | Tumor  | Post      | 3               |
+        | H    | Tumor  | Post      | 3               |
+
+        With configurations:
+
+        ```toml
+        [RadarPlots.envs]
+        by = "Source"
+        ```
+
+        Then we will have a radar plots like this:
+
+        ![Radar plots](https://pwwang.github.io/immunopipe/processes/images/RadarPlots-default.png)
+
+        We can use `each` to separate the cells into different cases:
+
+        ```toml
+        [RadarPlots.envs]
+        by = "Source"
+        each = "Timepoint"
+        ```
+
+        Then we will have two radar plots, one for `Pre` and one for `Post`:
+
+        ![Radar plots](https://pwwang.github.io/immunopipe/processes/images/RadarPlots-each.png)
+
+        Using `cluster_order` to change the order of the clusters and show only the first 3 clusters:
+
+        ```toml
+        [RadarPlots.envs]
+        by = "Source"
+        cluster_order = ["2", "0", "1"]
+        breaks = [0, 50, 100]  # also change the breaks
+        ```
+
+        ![Radar plots cluster_order](https://pwwang.github.io/immunopipe/processes/images/RadarPlots-cluster_order.png)
+
+
+        /// Attention
+        All the plots used in the examples are just for demonstration purpose. The real plots will have different appearance.
+        ///
 
     Input:
         srtobj: The seurat object in RDS format
@@ -1421,14 +1647,22 @@ class RadarPlots(Proc):
             expressions to mutate the columns. These new columns will be
             used to define your cases.
         by: Which column to use to separate the cells in different groups.
-            `NA`s will be ignored.
+            `NA`s will be ignored. For example, If you have a column named `Source`
+            that marks the source of the cells, and you want to separate the cells
+            into `Tumor` and `Blood` groups, you can set `by` to `Source`.
+            The there will be two curves in the radar plot, one for `Tumor` and
+            one for `Blood`.
         each: A column with values to separate all cells in different cases
             When specified, the case will be expanded to multiple cases for
             each value in the column.
             If specified, `section` will be ignored, and the case name will
             be used as the section name.
         order (list): The order of the values in `by`. You can also limit
-            (filter) the values we have in `by`.
+            (filter) the values we have in `by`. For example, if column `Source`
+            has values `Tumor`, `Blood`, `Spleen`, and you only want to plot
+            `Tumor` and `Blood`, you can set `order` to `["Tumor", "Blood"]`.
+            This will also have `Tumor` as the first item in the legend and `Blood`
+            as the second item.
         cluster_col: The column name of the cluster information.
         cluster_order (list): The order of the clusters.
             You may also use it to filter the clusters. If not given,
@@ -1456,7 +1690,7 @@ class RadarPlots(Proc):
             If not cases are given, a default case will be used, with the
             key `DEFAULT`.
             The keys must be valid string as part of the file name.
-    """
+    """  # noqa: E501
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.radar_plots"
     lang = config.lang.rscript
@@ -1487,6 +1721,17 @@ class MetaMarkers(Proc):
     """Find markers between three or more groups of cells, using one-way ANOVA
     or Kruskal-Wallis test.
 
+    Sometimes, you may want to find the markers for cells from more than 2 groups.
+    In this case, you can use this process to find the markers for the groups and
+    do enrichment analysis for the markers. Each marker is examined using either
+    one-way ANOVA or Kruskal-Wallis test.
+    The p values are adjusted using the specified method. The significant markers
+    are then used for enrichment analysis using
+    [enrichr](https://maayanlab.cloud/Enrichr/) api.
+
+    Other than the markers and the enrichment analysis as outputs, this process also
+    generates violin plots for the top 10 markers.
+
     Input:
         srtobj: The seurat object loaded by `SeuratPreparing`
 
@@ -1497,7 +1742,7 @@ class MetaMarkers(Proc):
         ncores (type=int): Number of cores to use to parallelize for genes
         mutaters (type=json): The mutaters to mutate the metadata
             There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(Source, 'Tumor', subset = Patent == 'Patient1')"}`
+            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
             to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
             with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
             Those functions take following arguments:
@@ -1523,7 +1768,7 @@ class MetaMarkers(Proc):
         prefix_each (flag): Whether to add the `each` value as prefix to the case name.
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
-            https://maayanlab.cloud/Enrichr/#libraries
+            <https://maayanlab.cloud/Enrichr/#libraries>
         p_adjust (choice): The method to adjust the p values, which can be used to filter the significant markers.
             See also <https://rdrr.io/r/stats/p.adjust.html>
             - holm: Holm-Bonferroni method

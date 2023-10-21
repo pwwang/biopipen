@@ -8,11 +8,23 @@ from ..core.config import config
 class ImmunarchLoading(Proc):
     """Immuarch - Loading data
 
-    Build based on immunarch 0.6.7
-    See https://immunarch.com/articles/v2_data.html for supported data formats
-    Currently only 10x data format is supported
+    Load the raw data into [`immunarch`](https://immunarch.com) object,
+    using [`immunarch::repLoad()`](https://immunarch.com/reference/repLoad.html).
 
-    Library `dplyr` is also required to manipulate the meta data.
+    For the data path specified at `TCRData` in the input file, we will first find
+    `filtered_contig_annotations.csv` and `filtered_config_annotations.csv.gz` in the
+    path. If neighter of them exists, we will find `all_contig_annotations.csv` and
+    `all_contig_annotations.csv.gz` in the path and a warning will be raised
+    (You can find it at `./.pipen/<pipeline-name>/ImmunarchLoading/0/job.stderr`).
+
+    If none of the files exists, an error will be raised.
+
+    This process will also generate a text file with the information for each cell.
+    The file will be saved at
+    `./.pipen/<pipeline-name>/ImmunarchLoading/0/output/<prefix>.tcr.txt`.
+    The file can be used by the `SeuratMetadataMutater` process to integrate the
+    TCR-seq data into the `Seurat` object for further integrative analysis.
+    `envs.metacols` can be used to specify the columns to be exported to the text file.
 
     Input:
         metafile: The meta data of the samples
@@ -31,16 +43,33 @@ class ImmunarchLoading(Proc):
         metatxt: The meta data of the cells, used to attach to the Seurat object
 
     Envs:
-        prefix: The prefix to the barcodes. You can use placeholder like
-            `{Sample}_` to use the meta data from the immunarch object
-        tmpdir (hidden): The temporary directory to link all data files.
+        prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
+            to use the meta data from the `immunarch` object.
+
+            /// Note
+            This option is useful because the barcodes for the cells from scRNA-seq
+            data are usually prefixed with the sample name, for example,
+            `Sample1_AAACCTGAGAAGGCTA-1`. However, the barcodes for the cells from
+            scTCR-seq data are usually not prefixed with the sample name, for example,
+            `AAACCTGAGAAGGCTA-1`. So we need to add the prefix to the barcodes for
+            the scTCR-seq data, and it is easier for us to integrate the data from
+            different sources later.
+            ///
+
+        tmpdir: The temporary directory to link all data files.
+            `Immunarch` scans a directory to find the data files. If the data files
+            are not in the same directory, we can link them to a temporary directory
+            and pass the temporary directory to `Immunarch`.
+            This option is useful when the data files are in different directories.
         mode (hidden): Either "single" for single chain data or "paired" for
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
             saved at `immdata$tra` and `immdata$multi`.
-        metacols (list; hidden): The columns to be exported to the metatxt.
-    """
-
+        metacols (list): The columns to be exported to the text file.
+            You can refer to the
+            [immunarch documentation](https://immunarch.com/articles/v2_data.html#immunarch-data-format)
+            for the full list of the columns.
+    """  # noqa: E501
     input = "metafile:file"
     output = [
         "rdsfile:file:{{in.metafile | stem}}.immunarch.RDS",
@@ -59,7 +88,7 @@ class ImmunarchLoading(Proc):
 class ImmunarchFilter(Proc):
     """Immunarch - Filter data
 
-    See https://immunarch.com/articles/web_only/repFilter_v3.html
+    See <https://immunarch.com/articles/web_only/repFilter_v3.html>
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
@@ -137,19 +166,140 @@ class ImmunarchFilter(Proc):
 class Immunarch(Proc):
     """Exploration of Single-cell and Bulk T-cell/Antibody Immune Repertoires
 
-    See https://immunarch.com/articles/web_only/v3_basic_analysis.html
+    See <https://immunarch.com/articles/web_only/v3_basic_analysis.html>
 
-    Analyses include -
-    - basic statistics, provided by [`immunarch::repExplore`](https://immunarch.com/reference/repExplore.html)
-    such as number of clones or distributions of lengths and counts.
-    - the clonality of repertoires, provided by [`immunarch::repClonality`](https://immunarch.com/reference/repClonality.html)
-    - the repertoire overlap, provided by [`immunarch::repOverlap`](https://immunarch.com/reference/repOverlap.html)
-    - the repertoire overlap, including different clustering procedures and PCA, provided by [`immunarch::repOverlapAnalysis`](https://immunarch.com/reference/repOverlapAnalysis.html)
-    - the distributions of V or J genes, provided by [`immunarch::geneUsage`](https://immunarch.com/reference/geneUsage.html)
-    - the diversity of repertoires, provided by [`immunarch::repDiversity`](https://immunarch.com/reference/repDiversity.html)
-    - the dynamics of repertoires across time points/samples, provided by [`immunarch::trackClonotypes`](https://immunarch.com/reference/trackClonotypes.html)
-    - the spectratype of clonotypes, provided by [`immunarch::spectratype`](https://immunarch.com/reference/spectratype.html)
-    - the distributions of kmers and sequence profiles, provided by [`immunarch::getKmers`](https://immunarch.com/reference/getKmers.html)
+    After [`ImmunarchLoading`](./ImmunarchLoading.md) loads the raw data into an [immunarch](https://immunarch.com) object,
+    this process wraps the functions from [`immunarch`](https://immunarch.com) to do the following:
+
+    - Basic statistics, provided by [`immunarch::repExplore`](https://immunarch.com/reference/repExplore.html), such as number of clones or distributions of lengths and counts.
+    - The clonality of repertoires, provided by [`immunarch::repClonality`](https://immunarch.com/reference/repClonality.html)
+    - The repertoire overlap, provided by [`immunarch::repOverlap`](https://immunarch.com/reference/repOverlap.html)
+    - The repertoire overlap, including different clustering procedures and PCA, provided by [`immunarch::repOverlapAnalysis`](https://immunarch.com/reference/repOverlapAnalysis.html)
+    - The distributions of V or J genes, provided by [`immunarch::geneUsage`](https://immunarch.com/reference/geneUsage.html)
+    - The diversity of repertoires, provided by [`immunarch::repDiversity`](https://immunarch.com/reference/repDiversity.html)
+    - The dynamics of repertoires across time points/samples, provided by [`immunarch::trackClonotypes`](https://immunarch.com/reference/trackClonotypes.html)
+    - The spectratype of clonotypes, provided by [`immunarch::spectratype`](https://immunarch.com/reference/spectratype.html)
+    - The distributions of kmers and sequence profiles, provided by [`immunarch::getKmers`](https://immunarch.com/reference/getKmers.html)
+
+    Environment Variable Design:
+        With different sets of arguments, a single function of the above can perform different tasks.
+        For example, `repExplore` can be used to get the statistics of the size of the repertoire,
+        the statistics of the length of the CDR3 region, or the statistics of the number of
+        the clonotypes. Other than that, you can also have different ways to visualize the results,
+        by passing different arguments to the [`immunarch::vis`](https://immunarch.com/reference/vis.html) function.
+        For example, you can pass `.by` to `vis` to visualize the results of `repExplore` by different groups.
+
+        Before we explain each environment variable in details in the next section, we will give some examples here to show how the environment variables are organized in order for a single function to perform different tasks.
+
+        ```toml
+        # Repertoire overlapping
+        [Immunarch.envs.overlaps]
+        # The method to calculate the overlap, passed to `repOverlap`
+        method = "public"
+        ```
+
+        What if we want to calculate the overlap by different methods at the same time? We can use the following configuration:
+
+        ```toml
+        [Immunarch.envs.overlaps.cases]
+        Public = { method = "public" }
+        Jaccard = { method = "jaccard" }
+        ```
+
+        Then, the `repOverlap` function will be called twice, once with `method = "public"` and once with `method = "jaccard"`. We can also use different arguments to visualize the results. These arguments will be passed to the `vis` function:
+
+        ```toml
+        [Immunarch.envs.overlaps.cases.Public]
+        method = "public"
+        vis_args = { "-plot": "heatmap2" }
+
+        [Immunarch.envs.overlaps.cases.Jaccard]
+        method = "jaccard"
+        vis_args = { "-plot": "heatmap2" }
+        ```
+
+        `-plot` will be translated to `.plot` and then passed to `vis`. See also [Namespace and Environment Variables](../configurations.md#namespace-environment-variables).
+
+        If multiple cases share the same arguments, we can use the following configuration:
+
+        ```toml
+        [Immunarch.envs.overlaps]
+        vis_args = { "-plot": "heatmap2" }
+
+        [Immunarch.envs.overlaps.cases]
+        Public = { method = "public" }
+        Jaccard = { method = "jaccard" }
+        ```
+
+        For some results, there are futher analysis that can be performed. For example, for the repertoire overlap, we can perform clustering and PCA (see also <https://immunarch.com/articles/web_only/v4_overlap.html>):
+
+        ```R
+        imm_ov1 <- repOverlap(immdata$data, .method = "public", .verbose = F)
+        repOverlapAnalysis(imm_ov1, "mds") %>% vis()
+        repOverlapAnalysis(imm_ov1, "tsne") %>% vis()
+        ```
+
+        In such a case, we can use the following configuration:
+
+        ```toml
+        [Immunarch.envs.overlaps]
+        method = "public"
+
+        [Immunarch.envs.overlaps.analyses.cases]
+        MDS = { "-method": "mds" }
+        TSNE = { "-method": "tsne" }
+        ```
+
+        Then, the `repOverlapAnalysis` function will be called twice on the result generated by `repOverlap(immdata$data, .method = "public")`, once with `.method = "mds"` and once with `.method = "tsne"`. We can also use different arguments to visualize the results. These arguments will be passed to the `vis` function:
+
+        ```toml
+        [Immunarch.envs.overlaps]
+        method = "public"
+
+        [Immunarch.envs.overlaps.analyses]
+        # See: <https://immunarch.com/reference/vis.immunr_hclust.html>
+        vis_args = { "-plot": "best" }
+
+        [Immunarch.envs.overlaps.analyses.cases]
+        MDS = { "-method": "mds" }
+        TSNE = { "-method": "tsne" }
+        ```
+
+        Generally, you don't need to specify `cases` if you only have one case. A default case will be created for you. For multiple cases, the arguments at the same level as `cases` will be inherited by all cases.
+
+    Examples:
+        ```toml
+        [Immunarch.envs.kmers]
+        k = 5
+        ```
+
+        ![Immunarch kmers](https://immunarch.com/articles/web_only/v9_kmers_files/figure-html/unnamed-chunk-4-1.png)
+
+        ```toml
+        [Immunarch.envs.kmers]
+        # Shared by cases
+        k = 5
+
+        [Immunarch.envs.kmers.cases]
+        Head5 = { head = 5, -position = "stack" }
+        Head10 = { head = 10, -position = "fill" }
+        Head30 = { head = 30, -position = "dodge" }
+        ```
+
+        ![Immunarch kmers](https://immunarch.com/articles/web_only/v9_kmers_files/figure-html/unnamed-chunk-6-1.png)
+
+        With motif profiling:
+
+        ```toml
+        [Immunarch.envs.kmers]
+        k = 5
+
+        [Immnuarch.envs.kmers.profiles.cases]
+        TextPlot = { method = "self", vis_args = { "-plot": "text" } }
+        SeqPlot = { method = "self", vis_args = { "-plot": "seq" } }
+        ```
+
+        ![Immunarch kmers](https://immunarch.com/articles/web_only/v9_kmers_files/figure-html/unnamed-chunk-10-1.png)
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
@@ -273,7 +423,7 @@ class Immunarch(Proc):
                     The methods could be `hclust`, `tsne`, `mds` or combination of them, such as `mds+hclust`.
                     You can also set to `none` to skip the analyses.
                     They could also be combined, for example, `mds+hclust`.
-                    See https://immunarch.com/reference/repOverlapAnalysis.html
+                    See <https://immunarch.com/reference/repOverlapAnalysis.html>.
                 - vis_args (type=json): Other arguments for the plotting functions.
                 - devpars (ns): The parameters for the plotting device.
                     - width (type=int): The width of the plot.
@@ -307,7 +457,7 @@ class Immunarch(Proc):
                     One of `js`, `cor`, `cosine`, `pca`, `mds` and `tsne`. Can also be combined with following methods
                     for the actual analyses: `hclust`, `kmeans`, `dbscan`, and `kruskal`. For example: `cosine+hclust`.
                     You can also set to `none` to skip the analyses.
-                    See https://immunarch.com/articles/web_only/v5_gene_usage.html.
+                    See <https://immunarch.com/articles/web_only/v5_gene_usage.html>.
                 - vis_args (type=json): Other arguments for the plotting functions.
                 - devpars (ns): The parameters for the plotting device.
                     - width (type=int): The width of the plot.
@@ -351,7 +501,7 @@ class Immunarch(Proc):
                 For example, `Clones > 1` to filter out singletons.
                 To check which columns are available, use `immdata$data[[1]] |> colnames()` in R.
                 You may also check quickly here:
-                https://immunarch.com/articles/v2_data.html#basic-data-manipulations-with-dplyr-and-immunarch
+                <https://immunarch.com/articles/v2_data.html#basic-data-manipulations-with-dplyr-and-immunarch>.
                 To use the top 10 clones, you can try `rank(desc(Clones)) <= 10`
             - method (choice): The method to calculate diversity.
                 - chao1: a nonparameteric asymptotic estimator of species richness.
@@ -382,7 +532,7 @@ class Immunarch(Proc):
                 Do not include the preceding `.` and use `-` instead of `.` in the argument names.
                 For example, `do-norm` will be compiled to `.do.norm`.
                 See all arguments at
-                https://immunarch.com/reference/repDiversity.html
+                <https://immunarch.com/reference/repDiversity.html>.
             - order (list): The order of the values in `by` on the x-axis of the plots.
                 If not specified, the values will be used as-is.
             - test (ns): Perform statistical tests between each pair of groups.
@@ -438,7 +588,7 @@ class Immunarch(Proc):
                 - res (type=int): The resolution of the plot.
             - profiles (ns;order=8): Arguments for sequence profilings.
                 - method (choice): The method for the position matrix.
-                    For more information see https://en.wikipedia.org/wiki/Position_weight_matrix.
+                    For more information see <https://en.wikipedia.org/wiki/Position_weight_matrix>.
                     - freq: position frequency matrix (PFM) - a matrix with occurences of each amino acid in each position.
                     - prob: position probability matrix (PPM) - a matrix with probabilities of each amino acid in each position.
                     - wei: position weight matrix (PWM) - a matrix with log likelihoods of PPM elements.
@@ -616,7 +766,7 @@ class SampleDiversity(Proc):
             anyway.
             Supported methods: `chao1`, `hill`, `div`, `gini.simp`, `inv.simp`,
             `gini`, and `raref`. See also
-            https://immunarch.com/articles/web_only/v6_diversity.html
+            <https://immunarch.com/articles/web_only/v6_diversity.html>.
         devpars: The parameters for the plotting device
             It is a dict, and keys are the methods and values are dicts with
             width, height and res that will be passed to `png()`
@@ -646,7 +796,40 @@ class SampleDiversity(Proc):
 class CloneResidency(Proc):
     """Identification of clone residency
 
-    Typically, where the clones are located for the sample patient.
+    This process is used to investigate the residency of clones in groups, typically two samples (e.g. tumor and normal) from the same patient. But it can be used for any two groups of clones.
+
+    There are three types of output from this process
+
+    - Count tables of the clones in the two groups
+
+        | CDR3_aa          | Tumor | Normal |
+        |------------------|-------|--------|
+        | CASSYGLSWGSYEQYF | 306   | 55     |
+        | CASSVTGAETQYF    | 295   | 37     |
+        | CASSVPSAHYNEQFF  | 197   | 9      |
+        | ...              | ...   | ...    |
+
+    - Residency plots showing the residency of clones in the two groups
+
+        ![CloneResidency_residency](https://pwwang.github.io/immunopipe/processes/images/CloneResidency.png)
+
+        The points in the plot are jittered to avoid overplotting. The x-axis is the residency in the first group and the y-axis is the residency in the second group. The size of the points are relative to the normalized size of the clones. You may identify different types of clones in the plot based on their residency in the two groups:
+
+        - Collapsed (The clones that are collapsed in the second group)
+        - Dual (The clones that are present in both groups with equal size)
+        - Expanded (The clones that are expanded in the second group)
+        - First Group Multiplet (The clones only in the First Group with size > 1)
+        - Second Group Multiplet (The clones only in the Second Group with size > 1)
+        - First Group Singlet (The clones only in the First Group with size = 1)
+        - Second Group Singlet (The clones only in the Second Group with size = 1)
+
+        This idea is borrowed from this paper:
+
+        > [Wu, Thomas D., et al. "Peripheral T cell expansion predicts tumour infiltration and clinical response." Nature 579.7798 (2020): 274-278.](https://www.nature.com/articles/s41586-020-2056-8)
+
+    - Venn diagrams showing the overlap of the clones in the two groups
+
+        ![CloneResidency_venn](https://pwwang.github.io/immunopipe/processes/images/CloneResidency_venn.png){: width="60%"}
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
@@ -679,7 +862,7 @@ class CloneResidency(Proc):
             the name `DEFAULT` and the values of `envs.subject`, `envs.group`,
             `envs.order` and `envs.sample_groups`. These values are also the
             defaults for the other cases.
-    """
+    """  # noqa: E501
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.cloneov"
     lang = config.lang.rscript
@@ -697,7 +880,26 @@ class CloneResidency(Proc):
 
 
 class Immunarch2VDJtools(Proc):
-    """Convert immuarch format into VDJtools input formats
+    """Convert immuarch format into VDJtools input formats.
+
+    This process converts the [`immunarch`](https://immunarch.com/) object to the
+    [`VDJtools`](https://vdjtools-doc.readthedocs.io/en/master/) input files,
+    in order to perform the VJ gene usage analysis by [`VJUsage`](./VJUsage.md) process.
+
+    This process will generally generate a tab-delimited file for each sample,
+    with the following columns.
+
+    - `count`: The number of reads for this clonotype
+    - `frequency`: The frequency of this clonotype
+    - `CDR3nt`: The nucleotide sequence of the CDR3 region
+    - `CDR3aa`: The amino acid sequence of the CDR3 region
+    - `V`: The V gene
+    - `D`: The D gene
+    - `J`: The J gene
+
+    See also: <https://vdjtools-doc.readthedocs.io/en/master/input.html#vdjtools-format>.
+
+    This process has no environment variables.
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
@@ -705,7 +907,7 @@ class Immunarch2VDJtools(Proc):
     Output:
         outdir: The output directory containing the vdjtools input for each
             sample
-    """
+    """  # noqa: E501
     input = "immdata:file"
     output = "outdir:dir:{{in.immdata | stem}}.vdjtools_input"
     lang = config.lang.rscript
@@ -747,7 +949,17 @@ class ImmunarchSplitIdents(Proc):
 
 class VJUsage(Proc):
     """Circos-style V-J usage plot displaying the frequency of
-    various V-J junctions using vdjtools
+    various V-J junctions using vdjtools.
+
+    This process performs the VJ gene usage analysis using
+    [`VDJtools`](https://vdjtools-doc.readthedocs.io/en/master/).
+    It wraps the [`PlotFancyVJUsage`](https://vdjtools-doc.readthedocs.io/en/master/basic.html#plotfancyvjusage) command in `VDJtools`.
+    The output will be a V-J junction circos plot for a single sample.
+    Arcs correspond to different V and J segments, scaled to their frequency in sample.
+    Ribbons represent V-J pairings and their size is scaled to the pairing frequency
+    (weighted in present case).
+
+    ![VJUsage](https://vdjtools-doc.readthedocs.io/en/master/_images/basic-fancyvj.png){: width="80%" }
 
     Input:
         infile: The input file, in vdjtools input format
@@ -756,9 +968,11 @@ class VJUsage(Proc):
         outfile: The V-J usage plot
 
     Envs:
-        vdjtools: The path to vdjtools
-        vdjtools_patch (hidden): A patch for vdjtools
-    """
+        vdjtools: The path to the `VDJtools` executable.
+        vdjtools_patch (hidden): The patch file for `VDJtools`. It's delivered with the pipeline ([`biopipen`][3] package).
+            * You don't need to provide this file, unless you want to use a different patch file by yourself.
+            * See the issue with `VDJtools` [here](https://github.com/mikessh/vdjtools/issues/139).
+    """  # noqa: E501
 
     input = "infile:file"
     output = (
@@ -803,23 +1017,39 @@ class Attach2Seurat(Proc):
 class TCRClustering(Proc):
     """Cluster the TCR clones by their CDR3 sequences
 
-    With GIANA
+    This process is used to cluster TCR clones based on their CDR3 sequences.
 
-    https://github.com/s175573/GIANA
+    It uses either
+
+    [GIANA](https://github.com/s175573/GIANA)
 
     > Zhang, Hongyi, Xiaowei Zhan, and Bo Li.
     > "GIANA allows computationally-efficient TCR clustering and multi-disease
     > repertoire classification by isometric transformation."
     > Nature communications 12.1 (2021): 1-11.
 
-    Or ClusTCR
-
-    https://github.com/svalkiers/clusTCR
+    Or [ClusTCR](https://github.com/svalkiers/clusTCR)
 
     > Sebastiaan Valkiers, Max Van Houcke, Kris Laukens, Pieter Meysman,
     > ClusTCR: a Python interface for rapid clustering of large sets of CDR3
     > sequences with unknown antigen specificity,
     > Bioinformatics, 2021.
+
+    Both methods are based on the
+    [Faiss Clustering Library](https://github.com/facebookresearch/faiss),
+    for efficient similarity search and clustering of dense vectors, so both methods
+    yield similar results.
+
+    A text file will be generated with the cluster assignments for each cell, together
+    with the `immunarch` object (in `R`) with the cluster assignments at `TCR_Clsuter`
+    column. This information will then be merged to the `Seurat` object by
+    [TCRClusters2Seurat](./TCRClusters2Seurat.md).
+    Futher downstream analysis can be performed using the cluster assignments.
+
+    The cluster assignments are prefixed with `S_` or `M_` to indicate whether a
+    cluster has only one unique CDR3 sequence or multiple CDR3 sequences.
+    Note that a cluster with `S_` prefix may still have multiple cells, as the same
+    CDR3 sequence may be shared by multiple cells.
 
     Input:
         immfile: The immunarch object in RDS
@@ -843,9 +1073,9 @@ class TCRClustering(Proc):
             or with `clusTCR` installed. Depending on the `tool` you choose.
         args (type=json): The arguments for the clustering tool
             For GIANA, they will be passed to `python GIAna.py`
-            See https://github.com/s175573/GIANA#usage
+            See <https://github.com/s175573/GIANA#usage>.
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
-            See https://svalkiers.github.io/clusTCR/docs/clustering/how-to-use.html#clustering
+            See <https://svalkiers.github.io/clusTCR/docs/clustering/how-to-use.html#clustering>.
         on_multi (flag;hidden): Whether to run clustering on
             multi-chain seq or the seq read and processed by immunarch
 
@@ -870,7 +1100,46 @@ class TCRClustering(Proc):
 
 
 class TCRClusteringStats(Proc):
-    """Statistics of TCR clusters, generated by biopipen.ns.tcr.TCRClustering
+    """Statistics of TCR clusters, generated by `TCRClustering`.
+
+    The statistics include
+
+    - The number of cells in each cluster (cluster size)
+    - Sample diversity using TCR clusters instead of TCR clones
+    - Shared TCR clusters between samples
+
+    Examples:
+        ### Cluster size
+
+        ```toml
+        [TCRClusteringStats.envs.cluster_size]
+        by = "Sample"
+        ```
+
+        ![Cluster_size](https://pwwang.github.io/immunopipe/processes/images/TCRClusteringStats_cluster_size.png){: width="80%"}
+
+        ### Shared clusters
+
+        ```toml
+        [TCRClusteringStats.envs.shared_clusters]
+        numbers_on_heatmap = true
+        heatmap_meta = ["region"]
+        ```
+
+        ![Shared_clusters](https://pwwang.github.io/immunopipe/processes/images/TCRClusteringStats_shared_clusters.png){: width="80%"}
+
+        ### Sample diversity
+
+        ```toml
+        [TCRClusteringStats.envs.sample_diversity]
+        method = "gini"
+        ```
+
+        ![Sample_diversity](https://pwwang.github.io/immunopipe/processes/images/TCRClusteringStats_sample_diversity.png){: width="80%"}
+
+        Compared to the sample diversity using TCR clones:
+
+        ![Sample_diversity](https://pwwang.github.io/immunopipe/processes/images/Immunarch_sample_diversity.png){: width="80%"}
 
     Input:
         immfile: The immunarch object with TCR clusters attached
@@ -948,7 +1217,7 @@ class TCRClusteringStats(Proc):
     Requires:
         r-immunarch:
             - check: {{proc.lang}} -e "library(immunarch)"
-    """
+    """  # noqa: E501
     input = "immfile:file"
     output = "outdir:dir:{{in.immfile | stem}}.tcrclusters_stats"
     lang = config.lang.rscript
@@ -1030,14 +1299,11 @@ class CDR3AAPhyschem(Proc):
     AA (hydrophobicity, volume and isolectric point).
 
     Reference:
-        - https://www.nature.com/articles/ni.3491
-        - https://www.nature.com/articles/s41590-022-01129-x
-        - Wimley, W. C. & White, S. H. Experimentally determined hydrophobicity
-            scale for proteins at membrane - interfaces. Nat. Struct. Biol. 3,
-            842-848 (1996).
-        - Hdbk of chemistry & physics 72nd edition. (CRC Press, 1991).
-        - Zamyatnin, A. A. Protein volume in solution. Prog. Biophys. Mol. Biol.
-            24, 107-123 (1972).
+    - [Stadinski, Brian D., et al. "Hydrophobic CDR3 residues promote the development of self-reactive T cells." Nature immunology 17.8 (2016): 946-955.](https://www.nature.com/articles/ni.3491)
+    - [Lagattuta, Kaitlyn A., et al. "Repertoire analyses reveal T cell antigen receptor sequence features that influence T cell fate." Nature immunology 23.3 (2022): 446-457.](https://www.nature.com/articles/s41590-022-01129-x)
+    - [Wimley, W. C. & White, S. H. Experimentally determined hydrophobicity scale for proteins at membrane - interfaces. Nat. Struct. Biol. 3, 842-848 (1996).](https://www.nature.com/articles/nsb1096-842)
+    - [Handbook of chemistry & physics 72nd edition. (CRC Press, 1991).](https://books.google.com/books?hl=en&lr=&id=bNDMBQAAQBAJ&oi=fnd&pg=PP1&dq=Hdbk+of+chemistry+%26+physics&ots=H9fzwhwz-C&sig=EXHI9N3q4OW9TYEBWlldqkvADfM#v=onepage&q=Hdbk%20of%20chemistry%20%26%20physics&f=false)
+    - [Zamyatnin, A. A. Protein volume in solution. Prog. Biophys. Mol. Biol. 24, 107-123 (1972).](https://www.sciencedirect.com/science/article/pii/0079610772900053)
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`, saved in RDS format
@@ -1059,8 +1325,10 @@ class CDR3AAPhyschem(Proc):
             for each cell in the combined object (immdata + Seurat metadata)
         comparison (type=json): A dict of two groups, with keys as the
             group names and values as the group labels. For example,
-            >>> Treg = ["CD4 CTL", "CD4 Naive", "CD4 TCM", "CD4 TEM"]
-            >>> Tconv = "Tconv"
+            ```toml
+            Treg = ["CD4 CTL", "CD4 Naive", "CD4 TCM", "CD4 TEM"]
+            Tconv = "Tconv"
+            ```
         prefix: The prefix of the cell names (rownames) in the metadata.
             The prefix is usually not needed in immdata, as the data is stored
             in the `immdata` object separately for each sample. However, the
@@ -1080,7 +1348,7 @@ class CDR3AAPhyschem(Proc):
             in the merged object to subset the cells to perform the regression,
             for each group in the columns.
             If not provided, all the cells will be used.
-    """
+    """  # noqa: E501
     input = "immdata:file,srtobj:file"
     output = "outdir:dir:{{in.immdata | stem}}.cdr3aaphyschem"
     lang = config.lang.rscript
@@ -1099,13 +1367,34 @@ class TESSA(Proc):
     """Tessa is a Bayesian model to integrate T cell receptor (TCR) sequence
     profiling with transcriptomes of T cells.
 
+    Enabled by the recently developed single cell sequencing techniques, which provide
+    both TCR sequences and RNA sequences of each T cell concurrently, Tessa maps the
+    functional landscape of the TCR repertoire, and generates insights into
+    understanding human immune response to diseases. As the first part of tessa,
+    BriseisEncoder is employed prior to the Bayesian algorithm to capture the TCR
+    sequence features and create numerical embeddings. We showed that the reconstructed
+    Atchley Factor matrices and CDR3 sequences, generated through the numerical
+    embeddings, are highly similar to their original counterparts. The CDR3 peptide
+    sequences are constructed via a RandomForest model applied on the reconstructed
+    Atchley Factor matrices.
+
     See <https://github.com/jcao89757/TESSA>
+
+    When finished, two columns will be added to the `meta.data` of the `Seurat` object:
+
+    - `TESSA_Cluster`: The cluster assignments from TESSA.
+    - `TESSA_Cluster_Size`: The number of cells in each cluster.
+
+    These columns can be then used for further downstream analysis to explore the
+    functional landscape of the TCR repertoire.
 
     Reference:
         - 'Mapping the Functional Landscape of TCR Repertoire.',
             Zhang, Z., Xiong, D., Wang, X. et al. 2021.
+            [link](https://www.nature.com/articles/s41592-020-01020-3)
         - 'Deep learning-based prediction of the T cell receptor-antigen
             binding specificity.', Lu, T., Zhang, Z., Zhu, J. et al. 2021.
+            [link](https://www.nature.com/articles/s42256-021-00383-2)
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`, saved in RDS format

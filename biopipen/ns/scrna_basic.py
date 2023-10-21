@@ -44,7 +44,7 @@ class ScrnaBasic(ProcGroup):
         clustering (choice;required): Which clustering method to use.
             - supervised: Mapping the cells to given reference.
                 Using Seurat Reference Mapping procedure.
-                See: https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+                See: <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
             - unsupervised: Clustering the cells without reference.
                 Using Seurat FindClusters procedure.
             - both: Both supervised and unsupervised clustering.
