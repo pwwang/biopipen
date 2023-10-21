@@ -9,10 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Type
 
-from pipen.utils import mark
+from pipen.utils import mark, is_loading_pipeline
 from pipen_annotate import annotate
 from pipen_args import ProcGroup
-from pipen_board import from_pipen_board
 
 from ..core.proc import Proc
 
@@ -104,7 +103,7 @@ class ScrnaBasic(ProcGroup):
     def p_supervised(self) -> Type[Proc]:
         if (
             self.opts.clustering == "unsupervised"
-            and not from_pipen_board()
+            and not is_loading_pipeline()
         ):
             return None
 
@@ -130,7 +129,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_supervised_stats(self) -> Type[Proc]:
-        if not self.p_supervised and not from_pipen_board():
+        if not self.p_supervised and not is_loading_pipeline():
             return None
 
         from .scrna import SeuratClusterStats
@@ -150,7 +149,7 @@ class ScrnaBasic(ProcGroup):
     def p_unsupervised(self) -> Type[Proc]:
         if (
             self.opts.clustering == "supervised"
-            and not from_pipen_board()
+            and not is_loading_pipeline()
         ):
             return None
 
@@ -163,7 +162,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_unsupervised_anno(self) -> Type[Proc]:
-        if not self.p_unsupervised and not from_pipen_board():
+        if not self.p_unsupervised and not is_loading_pipeline():
             return None
 
         from .scrna import CellTypeAnnotation
@@ -175,7 +174,7 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_unsupervised_stats(self) -> Type[Proc]:
-        if not self.p_unsupervised_anno and not from_pipen_board():
+        if not self.p_unsupervised_anno and not is_loading_pipeline():
             return None
 
         from .scrna import SeuratClusterStats
@@ -187,10 +186,10 @@ class ScrnaBasic(ProcGroup):
 
     @ProcGroup.add_proc
     def p_merge(self) -> Type[Proc]:
-        if self.opts.clustering == "supervised" and not from_pipen_board():
+        if self.opts.clustering == "supervised" and not is_loading_pipeline():
             return self.p_supervised
 
-        if self.opts.clustering == "unsupervised" and not from_pipen_board():
+        if self.opts.clustering == "unsupervised" and not is_loading_pipeline():
             return self.p_unsupervised_anno
 
         @mark(board_config_hidden=True)
