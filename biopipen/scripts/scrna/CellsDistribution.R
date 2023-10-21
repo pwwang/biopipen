@@ -116,6 +116,10 @@ do_case <- function(name, case) {
         !is.na(!!sym(case$cells_by))
     )
 
+    if (nrow(meta) == 0) {
+        stop(paste0("No cells left after filtering NAs for group_by and cells_by for case: ", name))
+    }
+
     # add sizes
     meta <- meta %>%
         add_count(!!sym(case$cells_by), name = "CloneSize") %>%
@@ -128,7 +132,18 @@ do_case <- function(name, case) {
         meta <- meta %>%
             dplyr::filter(!!sym(case$group_by) %in% case$group_order) %>%
             mutate(!!sym(case$group_by) := factor(!!sym(case$group_by), levels = case$group_order))
+
+        if (nrow(meta) == 0) {
+            stop(paste0(
+                "No items in `group_order` (",
+                paste0(case$group_order, collapse=", "),
+                ") in column `", case$group_by , "` for case: ",
+                name,
+                ". Did you specify the correct `group_by` and `group_order`?"
+            ))
+        }
     }
+
 
     if (!is.null(case$cells_order) && length(case$cells_order) > 0) {
         # filter cells_by values not in cells_order
