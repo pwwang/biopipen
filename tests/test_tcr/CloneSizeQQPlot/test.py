@@ -5,7 +5,8 @@ from biopipen.ns.tcr import CloneSizeQQPlot
 from biopipen.core.testing import get_pipeline
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from TCRClusteringStats.test import PrepareImmdata
+from TCRClusterStats.test import PrepareImmdata
+
 
 class PrepareImmdata(PrepareImmdata):
     ...
