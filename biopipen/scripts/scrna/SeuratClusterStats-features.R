@@ -14,7 +14,7 @@ report_toc = list()
 
 .add_toc = function(section, toc) {
     if (section %in% names(report_toc)) {
-        report_toc[[section]][length(report_toc[[section]])] <<- toc
+        report_toc[[section]][[length(report_toc[[section]]) + 1]] <<- toc
     } else {
         report_toc[[section]] <<- list(toc)
     }

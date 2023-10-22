@@ -1,3 +1,7 @@
+## 0.20.4
+
+- 🐛 [scrna.SeuratClusterStats] Fix toc not saved correct (causing report not including the right sections)
+
 ## 0.20.3
 
 - 🐛 [scrna.SeuratPreparing] Fix when cell_qc is None
