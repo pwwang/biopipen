@@ -1,3 +1,9 @@
+## 0.20.3
+
+- 🐛 [scrna.SeuratPreparing] Fix when cell_qc is None
+- 🎨 [scrna.MarkersFinder] Add margins to volcano plot
+- 🐛 [scrna.SeuratClusterStats] Fix `ident` in cases of `envs.dimplots` not working
+
 ## 0.20.2
 
 - 🚑 [scrna.SeuratPreparing] Fix % in docstring to crash the pipeline
