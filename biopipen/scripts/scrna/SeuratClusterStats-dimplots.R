@@ -25,6 +25,10 @@ do_one_dimplot = function(name) {
         case[[arg]] = NULL
     }
 
+    if (is.null(case$group.by) && !is.null(ident)) {
+        case$group.by = ident
+    }
+
     if (case$reduction %in% c("dim", "auto")) {
         case$reduction = NULL
     }

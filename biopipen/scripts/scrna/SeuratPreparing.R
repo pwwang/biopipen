@@ -125,6 +125,11 @@ sobj$percent.plat = PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
 
 dim_df = data.frame(When = "Before_QC", nCells = ncol(sobj), nGenes = nrow(sobj))
 
+if (is.null(envs$cell_qc) || length(envs$cell_qc) == 0) {
+    warning("No cell QC criteria is provided. All cells will be kept.", immediate. = TRUE)
+    envs$cell_qc = "TRUE"
+}
+
 sobj = sobj %>% mutate(.QC = !!rlang::parse_expr(envs$cell_qc))
 feats = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat")
 plotsdir = file.path(joboutdir, "plots")

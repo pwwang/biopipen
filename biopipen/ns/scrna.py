@@ -407,6 +407,7 @@ class SeuratClusterStats(Proc):
             each Seurat function used by `kind`. Note that for argument name with `.`, you should use `-` instead.
         dimplots_defaults (ns): The default parameters for `dimplots`.
             - ident: The column name in metadata to use as the identity.
+                Ignored if `group-by` is specified.
             - group-by: Same as `ident`. How the points are colored.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.

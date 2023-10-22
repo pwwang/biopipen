@@ -198,7 +198,7 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
             segment.color = "#000000"
         ) +
         theme_prism() +
-        theme(legend.title=element_blank()) +
+        theme(legend.title=element_blank(), plot.margin=unit(c(1,1,1,1), "cm")) +
         labs(
             x = "log2 Fold Change",
             y = "-log10 Adjusted P-value"
