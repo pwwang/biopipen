@@ -845,11 +845,8 @@ class CloneResidency(Proc):
             post-treatment vs baseline
             It doesn't have to be 2 groups always. If there are more than 3
             groups, instead of venn diagram, upset plots will be used.
-        order (list): The order of the values in `group`. Early-ordered
-            group will be used as x-axis in scatter plots
-            If there are more than 2 groups, for example, [A, B, C], the
-            scatter plots will be drawn for pairs: B ~ A, C ~ B and C ~ A.
-        sample_groups: How the samples aligned in the report.
+        section: How the subjects aligned in the report. Multiple subjects with
+            the same value will be grouped together.
             Useful for cohort with large number of samples.
         mutaters (type=json): The mutaters passed to `dplyr::mutate()` on
             `immdata$meta` to add new columns. The keys will be the names of
@@ -870,7 +867,7 @@ class CloneResidency(Proc):
         "subject": [],
         "group": None,
         "order": [],
-        "sample_groups": None,
+        "section": None,
         "mutaters": {},
         "cases": {},
     }
