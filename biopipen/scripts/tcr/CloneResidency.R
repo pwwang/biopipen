@@ -3,74 +3,119 @@ source("{{biopipen_dir}}/utils/misc.R")
 library(rlang)
 library(dplyr)
 library(tidyr)
+library(tibble)
+library(glue)
+library(ggnewscale)
 library(ggplot2)
 library(ggprism)
 library(ggVennDiagram)
+library(UpSetR)
 
 theme_set(theme_prism())
 
 
-immfile = {{ in.immdata | quote }}
-outdir = {{ out.outdir | quote }}
+immfile <- {{ in.immdata | quote }}
+metafile <- {{ in.metafile | r }}
+outdir <- {{ out.outdir | quote }}
 
-subject_key = {{ envs.subject | r }}
-group_key = {{ envs.group | r }}
-sample_order = {{ envs.order | r }}
-sample_groups = {{ envs.sample_groups | r }}
-mutaters = {{ envs.mutaters | r }}
-cases = {{ envs.cases | r }}
-
-immdata = readRDS(immfile)
-meta = immdata$meta
-
-if (!is.null(mutaters) && length(mutaters) > 0) {
-    print("Applying the mutaters ...")
-    expr = list()
-    for (key in names(mutaters)) {
-        expr[[key]] = parse_expr(mutaters[[key]])
-    }
-    meta = meta %>% mutate(!!!expr)
-}
+subject_key <- {{ envs.subject | r }}
+group_key <- {{ envs.group | r }}
+sample_order <- {{ envs.order | r }}
+section <- {{ envs.section | r }}
+mutaters <- {{ envs.mutaters | r }}
+subset <- {{ envs.subset | r }}
+prefix <- {{ envs.prefix | r }}
+cases <- {{ envs.cases | r }}
 
 # Fill up cases using `envs.xxx` if not provided and compose a DEFAULT case
 # if no cases are provided
+print("- Preparing cases...")
 if (is.null(cases) || length(cases) == 0) {
-    cases = list(
+    cases <- list(
         DEFAULT = list(
             subject = subject_key,
             group = group_key,
             order = sample_order,
-            sample_groups = sample_groups
+            subset = subset,
+            section = section
         )
     )
 } else {
     for (key in names(cases)) {
         if (is.null(cases[[key]]$subject)) {
-            cases[[key]]$subject = subject_key
+            cases[[key]]$subject <- subject_key
         }
         if (is.null(cases[[key]]$group)) {
-            cases[[key]]$group = group_key
+            cases[[key]]$group <- group_key
         }
         if (is.null(cases[[key]]$order)) {
-            cases[[key]]$order = sample_order
+            cases[[key]]$order <- sample_order
         }
-        if (is.null(cases[[key]]$sample_groups)) {
-            cases[[key]]$sample_groups = sample_groups
+        if (is.null(cases[[key]]$section)) {
+            cases[[key]]$section <- section
+        }
+        if (is.null(cases[[key]]$subset)) {
+            cases[[key]]$subset <- subset
         }
     }
 }
+
+print("- Preparing data ...")
+print("  Loading immdata ...")
+immdata <- readRDS(immfile)
+
+print("  Expanding immdata$data to cell-level ...")
+cldata <- do_call(rbind, lapply(names(immdata$data), function(name) {
+    dat <- immdata$data[[name]] %>% separate_rows(Barcode, sep = ";") # Split barcodes
+    dat$Sample <- name
+    dat <- dat %>% left_join(immdata$meta, by = "Sample", suffix = c("", "_meta"))
+
+    if (!is.null(prefix) && nchar(prefix) > 0) {
+        dat <- dat %>% mutate(Barcode = glue(paste0(prefix, "{Barcode}")))
+    }
+}))
+
+if (!is.null(metafile)) {
+    print("  Loading metafile ...")
+    # Check if extension is rds/RDS, if so, it should be a Seurat object
+    if (endsWith(metafile, ".rds") || endsWith(metafile, ".RDS")) {
+        meta <- readRDS(metafile)@meta.data
+    } else {
+        meta <- read.table(
+            metafile, row.names = 1, sep = "\t", header = TRUE, stringsAsFactors = FALSE
+        )
+    }
+
+    print("  Merging metafile to cldata ...")
+    cldata <- cbind(
+        cldata,
+        meta[cldata$Barcode, setdiff(colnames(meta), colnames(cldata)), drop = FALSE]
+    )
+}
+
+print("- Applying mutaters ...")
+if (!is.null(mutaters) && length(mutaters) > 0) {
+    cldata <- cldata %>% mutate(!!!lapply(mutaters, parse_expr))
+}
+
 # Scatter plot functions
-exponent <- function (x) {
+exponent <- function(x) {
     floor(log10(abs(x)))
 }
 
-mantissa <- function (x) {
+mantissa <- function(x) {
     mant <- log10(abs(x))
-    10^(mant - floor(mant))
+    10 ^ (mant - floor(mant))
 }
 
-perpare_case = function(casename, case) {
-    print(paste("Preparing case:", casename, "..."))
+get_groups <- function(order) {
+    # order is something like [`A,B`, `A,C`, `B,C`]
+    # return `A`, `B`, `C`
+    unique(unlist(strsplit(order, ",")))
+}
+
+perpare_case <- function(casename, case) {
+    print(paste("- Preparing case:", casename, "..."))
     # Check if required keys are provided
     if (is.null(case$subject) || length(case$subject) == 0) {
         stop(paste("`subject` is required for case:", casename))
@@ -78,44 +123,83 @@ perpare_case = function(casename, case) {
     if (is.null(case$group) || length(case$group) == 0) {
         stop(paste("`group` is required for case:", casename))
     }
-    # if (is.null(case$order) || length(case$order) == 0) {
-    #     stop(paste("`order` is required for case:", casename))
-    # }
+    if (!is.null(case$order) && length(case$order) > 0) {
+        has_comma <- grepl(",", case$order)
+        if (all(has_comma)) {
+            # It's recommended
+            case$order <- unname(sapply(
+                case$order,
+                function(x) paste(trimws(strsplit(x, ",")[[1]]), collapse=",")
+            ))
+        } else if (!any(has_comma)) {
+            if (length(case$order) > 2) {
+                warning(
+                    paste0(
+                        "- Order of groups in case:", casename,
+                        " is not recommended, please use comma to separate groups. \n",
+                        "Instead of `['A', 'B', 'C']`, use `['A,B', 'A,C', 'B,C']`."
+                    ),
+                    immediate. = TRUE
+                )
+                case$order <- sapply(
+                    combn(case$order, 2, simplify = FALSE),
+                    function(x) paste(x, collapse = ",")
+                )
+            } else {
+                case$order <- paste(case$order, collapse = ",")
+            }
+        } else {
+            stop(
+                paste0(
+                    "- Order of groups in case:", casename,
+                    " is not consistent, please use comma to separate groups. \n",
+                    "Instead of `['A', 'B', 'C']`, use `['A,B', 'A,C', 'B,C']`, ",
+                    "however, this is inconsistent: `['A,B', 'C']`"
+                )
+            )
+        }
+    }
 
     # Create case-specific directories
     # Scatter plots
-    scatter_dir = file.path(outdir, casename, "scatter")
+    scatter_dir <- file.path(outdir, casename, "scatter")
     dir.create(scatter_dir, recursive = TRUE, showWarnings = FALSE)
 
-    # Venn diagrams/Upset plots
-    venn_dir = file.path(outdir, casename, "venn")
+    # Venn diagrams
+    venn_dir <- file.path(outdir, casename, "venn")
     dir.create(venn_dir, recursive = TRUE, showWarnings = FALSE)
 
+    # Upset plots
+    upset_dir <- file.path(outdir, casename, "upset")
+    dir.create(upset_dir, recursive = TRUE, showWarnings = FALSE)
+
     # Counts
-    counts_dir = file.path(outdir, casename, "counts")
+    counts_dir <- file.path(outdir, casename, "counts")
     dir.create(counts_dir, recursive = TRUE, showWarnings = FALSE)
+
+    case
 }
 
-plot_scatter = function(counts, subject, suf1, suf2) {
+plot_scatter <- function(counts, subject, suf1, suf2) {
     # options(repr.plot.width=9, repr.plot.height=7)
 
-    dual = which(counts[[suf1]] > 0 & counts[[suf2]] > 0)
+    dual <- which(counts[[suf1]] > 0 & counts[[suf2]] > 0)
     if (length(dual) <= 2) {
-        test = list(estimate=NA, p.value=NA)
+        test <- list(estimate = NA, p.value = NA)
     } else {
-        test <- cor.test(log(counts[[suf1]][dual]),log(counts[[suf2]][dual]))
+        test <- cor.test(log(counts[[suf1]][dual]), log(counts[[suf2]][dual]))
     }
     sum_counts1 <- sum(counts[[suf1]])
     sum_counts2 <- sum(counts[[suf2]])
 
-    counts1.norm <- jitter(1+counts[[suf1]], amount=0.25)/sum_counts1
-    counts2.norm <- jitter(1+counts[[suf2]], amount=0.25)/sum_counts2
+    counts1_norm <- jitter(1 + counts[[suf1]], amount = 0.25) / sum_counts1
+    counts2_norm <- jitter(1 + counts[[suf2]], amount = 0.25) / sum_counts2
 
-    oo <- sample(length(counts1.norm))
-    plotdata = data.frame(x=counts1.norm[oo], y=counts2.norm[oo])
+    oo <- sample(length(counts1_norm))
+    plotdata <- data.frame(x = counts1_norm[oo], y = counts2_norm[oo])
     # plotdata$color = cl.colors[oo]
-    names(plotdata) = c(suf1, suf2)
-    plotdata = plotdata %>% mutate(
+    names(plotdata) <- c(suf1, suf2)
+    plotdata <- plotdata %>% mutate(
         Type = case_when(
             counts[[suf1]][oo] == 1 & counts[[suf2]][oo] == 0 ~ paste(suf1, "Singleton"),
             counts[[suf1]][oo] == 0 & counts[[suf2]][oo] == 1 ~ paste(suf2, "Singleton"),
@@ -126,216 +210,309 @@ plot_scatter = function(counts, subject, suf1, suf2) {
             TRUE ~ "Dual"
         ),
         Type = as.factor(Type),
-        Size = pmax(counts1.norm[oo], counts2.norm[oo])
+        Size = pmax(counts1_norm[oo], counts2_norm[oo])
     )
 
-    xbreaks = c(1/sum_counts1, 0.001+1/sum_counts1, 0.01+1/sum_counts1, 0.1+1/sum_counts1)
-    ybreaks = c(1/sum_counts2, 0.001+1/sum_counts2, 0.01+1/sum_counts2, 0.1+1/sum_counts2)
+    xbreaks <- c(
+        1 / sum_counts1,
+        0.001 + 1 / sum_counts1,
+        0.01 + 1 / sum_counts1,
+        0.1 + 1 / sum_counts1
+    )
+    ybreaks <- c(
+        1 / sum_counts2,
+        0.001 + 1 / sum_counts2,
+        0.01 + 1 / sum_counts2,
+        0.1 + 1 / sum_counts2
+    )
 
-    minx = min(plotdata[[suf1]])
-    miny = min(plotdata[[suf2]])
-    maxx = max(plotdata[[suf1]])
-    maxy = max(plotdata[[suf2]])
+    minx <- min(plotdata[[suf1]])
+    miny <- min(plotdata[[suf2]])
+    maxx <- max(plotdata[[suf1]])
+    maxy <- max(plotdata[[suf2]])
     # color = plotdata$color
     # names(color) = color
     # patient = as.character(patient)
-    n.formatted <- formatC(length(oo), format="f", big.mark=",", digits=0)
-    r.formatted <- format(test$estimate,digits=2,scientific=F)
+    n_formatted <- formatC(length(oo), format = "f", big.mark = ",", digits = 0)
+    r_formatted <- format(test$estimate, digits = 2, scientific = F)
     if (is.na(test$p.value)) {
-        subtitle = bquote(italic(n)[D] == .(length(dual)) ~~ italic(r) == .(r.formatted) ~~ italic(P) == "NA")
+        subtitle <- bquote(
+            italic(n)[D] == .(length(dual)) ~ ~ italic(r) == .(r_formatted) ~ ~ italic(P) == "NA"
+        )
     } else if (test$p.value < 1e-4) {
-        P.mant <- format(mantissa(test$p.value),digits=2)
-        P.exp <- exponent(test$p.value)
-        subtitle = bquote(italic(n)[D] == .(length(dual)) ~~ italic(r) == .(r.formatted) ~~ italic(P) == .(P.mant) %*% 10^.(P.exp))
+        P_mant <- format(mantissa(test$p.value), digits = 2)
+        P_exp <- exponent(test$p.value)
+        subtitle <- bquote(
+            italic(n)[D] == .(length(dual)) ~ ~ italic(r) ==
+            .(r_formatted) ~ ~ italic(P) == .(P_mant) %*% 10^.(P_exp)
+        )
     } else {
-        P.formatted <- format(test$p.value,digits=2)
-        subtitle = bquote(italic(n)[D] == .(length(dual)) ~~ italic(r) == .(r.formatted) ~~ italic(P) == .(P.formatted))
+        P_formatted <- format(test$p.value, digits = 2)
+        subtitle <- bquote(
+            italic(n)[D] == .(length(dual)) ~ ~ italic(r) ==
+            .(r_formatted) ~ ~ italic(P) == .(P_formatted)
+        )
     }
     ggplot(plotdata) +
         geom_point(
-            aes_string(x=bQuote(suf1), y=bQuote(suf2), color="Type", size="Size", fill="Type"),
-            alpha=.6,
-            shape=21
+            aes_string(
+                x = bQuote(suf1), y = bQuote(suf2), color = "Type", size = "Size", fill = "Type"
+            ),
+            alpha = .6,
+            shape = 21
         ) +
         # geom_point(aes_string(x=x, y=y, color='color'), shape=1) +
         # scale_color_manual(values=color) +
         scale_x_continuous(
-            trans="log2",
-            limits=c(minx, maxx),
-            breaks=xbreaks,
-            labels=c("0","0.001","0.01","0.1")
+            trans = "log2",
+            limits = c(minx, maxx),
+            breaks = xbreaks,
+            labels = c("0", "0.001", "0.01", "0.1")
         ) +
         scale_y_continuous(
-            trans="log2",
-            limits=c(miny, maxy),
-            breaks=ybreaks,
-            labels=c("0","0.001","0.01","0.1")
+            trans = "log2",
+            limits = c(miny, maxy),
+            breaks = ybreaks,
+            labels = c("0", "0.001", "0.01", "0.1")
         ) +
         theme_prism(base_size = 16) +
-        scale_size(guide="none") +
+        scale_size(guide = "none") +
         # theme(legend.position = "none") +
         labs(
-            title=bquote(.(subject)~(italic(n) == .(n.formatted))),
-            subtitle=subtitle
+            title = bquote(.(subject) ~ (italic(n) == .(n_formatted))),
+            subtitle = subtitle
         ) +
         geom_segment(
-            data=data.frame(
-                x=c(
-                    1.5/sum_counts1,
-                    minx,
-                    1.5/sum_counts1,
-                    minx,
-                    2.5/sum_counts1
-                ),
-                xend=c(
-                    maxx, # diagnal
-                    maxx,  # horizontal
-                    1.5/sum_counts1,   # vertical
-                    1.5/sum_counts1,  # horizontal short
-                    2.5/sum_counts1  # vertical short
-
-                ),
-                y=c(
-                    1.5/sum_counts2,
-                    1.5/sum_counts2,
-                    miny,
-                    2.5/sum_counts2,
-                    miny
-                ),
-                yend=c(
-                    maxy,
-                    1.5/sum_counts2,
-                    maxy,
-                    2.5/sum_counts2,
-                    1.5/sum_counts2
-                )
+            data = data.frame(
+                # diagnal, horizontal, vertical, horizontal short, vertical short
+                x = c(1.5 / sum_counts1, minx, 1.5 / sum_counts1, minx, 2.5 / sum_counts1),
+                xend = c(maxx, maxx, 1.5 / sum_counts1, 1.5 / sum_counts1, 2.5 / sum_counts1),
+                y = c(1.5 / sum_counts2, 1.5 / sum_counts2, miny, 2.5 / sum_counts2, miny),
+                yend = c(maxy, 1.5 / sum_counts2, maxy, 2.5 / sum_counts2, 1.5 / sum_counts2)
             ),
-            aes(x=x, y=y, xend=xend, yend=yend), color='gray'
+            aes(x = x, y = y, xend = xend, yend = yend), color = "gray"
         )
-
 }
 
-handle_subject = function(i, subjects, casename, case) {
+plot_venndg <- function(counts, groups, singletons) {
+    venn_data <- list()
+    for (group in groups) {
+        venn_data[[group]] <- counts %>% filter(!!sym(group) > 0) %>% pull(CDR3.aa)
+    }
+    venn <- Venn(venn_data)
+    vdata <- process_data(venn)
+    vregion <- venn_region(vdata)
+    sregion <- head(vregion, length(groups))
+    sregion$count = singletons[sregion$name, "count"]
+    sregion <- sregion %>% mutate(name = paste0(name, " singletons"))
+    vregion <- vregion %>% mutate(
+        count_perc = round(count / sum(count) * 100, 1),
+        count_str = paste0(count, " (", count_perc, "%)")
+    )
+
+    # Align the catagory labels
+    cat_nudge_y <- 0
+    if (length(groups) == 3) { cat_nudge_y <- c(-400, 0, -400) }
+    # Shift Count labels
+    count_nudge_y <- -10
+    if (length(groups) == 3) { count_nudge_y <- c(20, -20, 20, rep(0, nrow(vregion) - 3))  }
+    # Shift the singletons stat labels
+    label_nudge_y <- 60
+    if (length(groups) == 3) { label_nudge_y <- c(60, -60, -60) }
+
+    venn_p <- ggplot() +
+        # 1. region count layer
+        geom_sf(aes(fill = count), data = venn_region(vdata)) +
+        # 2. set edge layer
+        # geom_sf(aes(color = factor(id)), data = venn_setedge(data), show.legend = FALSE) +
+        # 3. set label layer
+        geom_sf_text(aes(label = name), data = venn_setlabel(vdata), nudge_y = cat_nudge_y) +
+        # 4. region label layer
+        geom_sf_label(
+            aes(label = count_str),
+            alpha = .8,
+            label.padding = unit(.2, "lines"),
+            data = vregion,
+            nudge_y = count_nudge_y
+        ) +
+        # 5. singletons label layer
+        scale_fill_distiller(palette = "Oranges", direction = 1) +
+        new_scale_fill() +
+        geom_sf_label(
+            aes(label = count, fill = name),
+            alpha = .6,
+            data = sregion,
+            nudge_y = label_nudge_y,
+            label.padding = unit(1, "lines"),
+            label.r = unit(1.2, "lines"),
+            label.size = 0.05,
+            show.legend = TRUE
+        ) +
+        theme_void() +
+        theme(plot.margin = margin(1,1,1,1, "cm")) +
+        scale_fill_brewer(palette = "Reds", name = "Singletons")
+
+    venn_p
+}
+
+plot_upset <- function(counts, singletons) {
+    query_singleton <- function(row) { row["Singletons"] == "true" }
+
+    cnts <- column_to_rownames(counts, "CDR3.aa") %>%
+        mutate(across(everything(), ~ as.integer(as.logical(.x))))
+    sgltns <- unlist(singletons$CDR3.aa)
+    cnts$Singletons <- "none"
+    cnts[sgltns, "Singletons"] <- "true"
+    sets <- setdiff(colnames(cnts), "Singletons")
+
+    upset(cnts, sets = sets, query.legend = "top", sets.x.label = "# clones", queries = list(
+        list(
+            query = query_singleton,
+            color = "orange",
+            active = TRUE,
+            query.name = "Singletons"
+        )
+    ))
+}
+
+handle_subject <- function(i, subjects, casename, case) {
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
     # | SEABESRWEFAEF | 0     | 10     |
     # | AWEARWGAWGGGR | 21    | 1      |
     # | GREWFQQWFEWF  | 34    | 0      |
-    subject_row = subjects[i, , drop=FALSE]
-    subject = subject_row %>%
+    subject_row <- subjects[i, , drop = FALSE]
+    subject <- subject_row %>%
         select(all_of(case$subject)) %>%
         as.character() %>%
-        paste(collapse="-")
+        paste(collapse = "-")
 
     print(paste("- Handling", i, case$subject, "..."))
 
-    groups = subject_row %>%
-        left_join(meta, by=case$subject) %>%
-        pull(case$group)
-    if (is.null(case$order) || length(case$order) == 0) {
-        groups = sort(groups)
+    if (!is.null(case$subset)) {
+        counts <- cldata %>% filter(!!parse_expr(case$subset))
     } else {
-        groups = intersect(case$order, groups)
+        counts <- cldata
     }
-    if (length(groups) < 2) {
-        warning(paste0("-", casename, ", Subject doesn't have enough groups:", subject), immediate. = TRUE)
+    # CDR3.aa | Group | .n
+    # --------+-------+----
+    # AAAAAAA | Tumor | 10
+    # AAAAAAA | Normal| 20
+    counts <- subject_row %>%
+        left_join(counts, by = case$subject) %>%
+        group_by(CDR3.aa, !!sym(case$group)) %>%
+        summarise(.n = n())
+
+    if (!is.null(case$order)) {
+        groups <- get_groups(case$order)
+        counts <- counts %>% filter(!!sym(case$group) %in% groups)
+        groups <- intersect(groups, unique(counts[[case$group]]))
+    } else {
+        groups <- counts %>% pull(!!sym(case$group)) %>% unique()
+        case$order <- sapply(combn(groups, 2, simplify = FALSE), function(x) paste(x, collapse = ","))
+    }
+    if (length(unique(counts[[case$group]])) < 2) {
+        warning(
+            paste0("-", casename, ", Subject doesn't have enough groups:", subject),
+            immediate. = TRUE
+        )
         return()
     }
+    singletons = counts %>%
+        group_by(CDR3.aa) %>%
+        summarise(name = if_else(sum(.n) == 1, paste(!!sym(case$group), collapse=""), "")) %>%
+        filter(name != "") %>%
+        group_by(name) %>%
+        summarise(count = length(CDR3.aa), CDR3.aa = list(CDR3.aa)) %>%
+        column_to_rownames("name")
 
-    counts = list()
-    for (group in groups) {
-        sample1 = subject_row %>%
-            left_join(meta) %>%
-            filter(.[[case$group]] == group) %>%
-            pull(Sample)
-        if (length(sample1) == 0) next
-        if (length(sample1) > 1) {
-            warning(paste0(casename, ", Group ", group, " is not unique for subject:", subject), immediate. = TRUE)
-        }
-        for (s in sample1) {
-            counts[[group]] = bind_rows(
-                counts[[group]],
-                immdata$data[[s]][, c("Clones", "CDR3.aa")]
-            )
-        }
-        counts[[group]] = counts[[group]] %>% mutate(Group = group)
-    }
-    counts = do_call(bind_rows, counts) %>% pivot_wider(
-        id_cols = CDR3.aa,
-        names_from = Group,
-        values_from = Clones,
-        values_fn = function(x) mean(x, na.rm=TRUE)
-    )
-    counts[is.na(counts)] = 0
+    counts <- counts %>%
+        pivot_wider(
+            id_cols = CDR3.aa,
+            names_from = !!sym(case$group),
+            values_from = .n
+        ) %>%
+        select(CDR3.aa, !!!syms(groups))
+    counts[is.na(counts)] <- 0
 
     # Save samples to group_by so they can be aligned accordingly in the report
-    if (!is.null(sample_groups)) {
-        group_dir = file.path(outdir, casename, "sample_groups")
+    if (!is.null(section)) {
+        group_dir <- file.path(outdir, casename, "section")
         dir.create(group_dir, showWarnings = FALSE)
 
-        sgroups = subject_row %>%
-            left_join(meta) %>%
-            pull(sample_groups) %>%
+        sgroups <- subject_row %>%
+            left_join(cldata) %>%
+            pull(section) %>%
             unique() %>%
             paste(collapse = "-")
-        group_file = file.path(group_dir, paste0(sgroups, ".txt"))
+        group_file <- file.path(group_dir, paste0(sgroups, ".txt"))
         cat(subject, file = group_file, sep = "\n", append = TRUE)
     }
 
     # Save counts
-    counts_dir = file.path(outdir, casename, "counts")
+    counts_dir <- file.path(outdir, casename, "counts")
     write.table(
         counts,
-        file=file.path(counts_dir, paste0(subject, ".txt")),
-        sep="\t",
-        row.names=TRUE,
-        col.names=TRUE,
-        quote=FALSE
+        file = file.path(counts_dir, paste0(subject, ".txt")),
+        sep = "\t",
+        row.names = TRUE,
+        col.names = TRUE,
+        quote = FALSE
     )
 
     # scatter plot
     # Make plots B ~ A, C ~ B, and C ~ A for order A, B, C
-    combns = combn(groups, 2, simplify=FALSE)
-    scatter_dir = file.path(outdir, casename, "scatter")
-    for (j in seq_along(combns)) {
-        pair = combns[[j]]
-        scatter_p = plot_scatter(counts, subject, pair[1], pair[2])
-        scatter_png = file.path(
+    # combns <- combn(groups, 2, simplify = FALSE)
+    scatter_dir <- file.path(outdir, casename, "scatter")
+    for (j in seq_along(case$order)) {
+        pair <- strsplit(case$order[j], ",")[[1]]
+        if (length(setdiff(pair, groups)) > 0) {
+            warning(
+                paste0(
+                    "- One of the comparisons doesn't exist in case (", casename,
+                    ") for subject (", subject, "): ",
+                    case$order[j]
+                ),
+                immediate. = TRUE
+            )
+            next
+        }
+        scatter_p <- plot_scatter(counts, subject, pair[1], pair[2])
+        scatter_png <- file.path(
             scatter_dir,
             paste0("scatter_", subject, "_", pair[1], "_", pair[2], ".png")
         )
-        png(scatter_png, res=300, height=2000, width=2500)
+        png(scatter_png, res = 100, height = 800, width = 1000)
         print(scatter_p)
         dev.off()
     }
 
     # upset/venn
-    venn_dir = file.path(outdir, casename, "venn")
-    if (length(groups) > 3) {
-        venn_p = counts %>%
-            mutate(across(groups), ~ if_else(.x == 0, NA, cur_column())) %>%
-            unite(Groups, na.rm=TRUE, sep=":::") %>%
-            rowwise() %>%
-            mutate(Groups = strsplit(Groups, ":::", fixed = TRUE))
-            group_by(CDR3.aa)
+    venn_dir <- file.path(outdir, casename, "venn")
+    venn_png <- file.path(venn_dir, paste0("venn_", subject, ".png"))
+    png(venn_png, res = 100, height = 600, width = 800)
+    print(plot_venndg(counts, groups, singletons))
+    dev.off()
 
-        venn_png = file.path(venn_dir, paste0("upset_", subject, ".png"))
-    } else {
-        venn_data = list()
-        for (group in groups) {
-            venn_data[[group]] = counts %>% filter(.[[group]] > 0) %>% pull(CDR3.aa)
-        }
-        venn_p = ggVennDiagram(venn_data)
-        venn_png = file.path(venn_dir, paste0("venn_", subject, ".png"))
-    }
-    png(venn_png, res=300, height=2000, width=2000)
-    print(venn_p)
+    upset_dir <- file.path(outdir, casename, "upset")
+    upset_png <- file.path(upset_dir, paste0("upset_", subject, ".png"))
+    png(upset_png, res = 100, height = 600, width = 800)
+    print(plot_upset(counts, singletons))
     dev.off()
 }
 
-handle_case = function(casename, case) {
-    perpare_case(casename, case)
-    subjects = meta[, case$subject, drop=F] %>% distinct() %>% drop_na()
+handle_case <- function(casename, case) {
+    case <- perpare_case(casename, case)
+    if (!is.null(case$subset)) {
+        subjects <- cldata %>%
+            filter(!!parse_expr(case$subset)) %>%
+            distinct(!!!syms(case$subject)) %>%
+            drop_na()
+    } else {
+        subjects <- cldata %>%
+            distinct(!!!syms(case$subject)) %>%
+            drop_na()
+    }
     sapply(seq_len(nrow(subjects)), handle_subject, subjects, casename, case)
 }
 

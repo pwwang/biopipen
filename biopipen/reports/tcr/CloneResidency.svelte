@@ -3,7 +3,7 @@
     import { Image, DataTable } from "$libs";
     import { Dropdown } from "$ccs";
 
-    let count_sample;
+    let count_subject;
 
 </script>
 
@@ -12,17 +12,17 @@
     <Dropdown
         selectedId="-1"
         items={[
-            { id: "-1", text: "Select a sample" },
+            { id: "-1", text: "Select a subject" },
             {% for i, countfile in job.out.outdir | glob: casename, "counts", "*.txt" | enumerate -%}
                 { id: "{{i}}", text: "{{countfile | stem}}" },
             {% endfor %}
         ]}
         on:select={({ detail }) => {
-            count_sample = `{{casename}}-${detail.selectedItem.text}`;
+            count_subject = `{{casename}}-${detail.selectedItem.text}`;
         }}
     />
     {% for countfile in job.out.outdir | glob: casename, "counts", "*.txt" -%}
-        {#if count_sample == {{ countfile | stem | prepend: casename + '-' | quote }} }
+        {#if count_subject == {{ countfile | stem | prepend: casename + '-' | quote }} }
         <DataTable src={{
             job.out.outdir
             | joinpaths: casename, "counts", stem(countfile) + ".txt"
@@ -37,8 +37,8 @@
 
     <h{{h}}>Residency plots</h{{h}}>
 
-    {% if job.out.outdir | joinpaths: casename, "sample_groups" | exists %}
-        {% for groupfile in job.out.outdir | glob: casename, "sample_groups", "*.txt" %}
+    {% if job.out.outdir | joinpaths: casename, "section" | exists %}
+        {% for groupfile in job.out.outdir | glob: casename, "section", "*.txt" %}
             {% set group = groupfile | stem %}
             <h{{h+1}}>{{group}}</h{{h+1}}>
             {% set scatter_pngs = [] %}
@@ -53,10 +53,10 @@
         {{ table_of_images(scatter_pngs, col=3, caps=false) }}
     {% endif %}
 
-    <h{{h}}>Clonotype overlapping</h{{h}}>
+    <h{{h}}>Clonotype overlapping (Venn plots)</h{{h}}>
 
-    {% if job.out.outdir | joinpaths: casename, "sample_groups" | exists %}
-        {% for groupfile in job.out.outdir | glob: casename, "sample_groups", "*.txt" %}
+    {% if job.out.outdir | joinpaths: casename, "section" | exists %}
+        {% for groupfile in job.out.outdir | glob: casename, "section", "*.txt" %}
             {% set group = groupfile | stem %}
             <h{{h+1}}>{{group}}</h{{h+1}}>
             {% set venn_pngs = [] %}
@@ -68,6 +68,24 @@
         {% endfor %}
     {% else %}
         {% assign venn_pngs = job.out.outdir | joinpaths: casename, "venn", "*.png" | glob %}
+        {{ table_of_images(venn_pngs, col=3) }}
+    {% endif %}
+
+    <h{{h}}>Clonotype overlapping (Upset plots)</h{{h}}>
+
+    {% if job.out.outdir | joinpaths: casename, "section" | exists %}
+        {% for groupfile in job.out.outdir | glob: casename, "section", "*.txt" %}
+            {% set group = groupfile | stem %}
+            <h{{h+1}}>{{group}}</h{{h+1}}>
+            {% set venn_pngs = [] %}
+            {% for sample in groupfile | readlines %}
+                {% set spng = job.out.outdir | glob0: casename, "upset", "upset_" + sample + ".png" %}
+                {% set _ = venn_pngs.append(spng) %}
+            {% endfor %}
+            {{ table_of_images(venn_pngs, col=3) }}
+        {% endfor %}
+    {% else %}
+        {% assign venn_pngs = job.out.outdir | joinpaths: casename, "upset", "*.png" | glob %}
         {{ table_of_images(venn_pngs, col=3) }}
     {% endif %}
 {%- endmacro -%}

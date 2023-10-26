@@ -796,7 +796,8 @@ class SampleDiversity(Proc):
 class CloneResidency(Proc):
     """Identification of clone residency
 
-    This process is used to investigate the residency of clones in groups, typically two samples (e.g. tumor and normal) from the same patient. But it can be used for any two groups of clones.
+    This process is used to investigate the residency of clones in groups, typically two
+    samples (e.g. tumor and normal) from the same patient. But it can be used for any two groups of clones.
 
     There are three types of output from this process
 
@@ -813,7 +814,9 @@ class CloneResidency(Proc):
 
         ![CloneResidency_residency](https://pwwang.github.io/immunopipe/processes/images/CloneResidency.png)
 
-        The points in the plot are jittered to avoid overplotting. The x-axis is the residency in the first group and the y-axis is the residency in the second group. The size of the points are relative to the normalized size of the clones. You may identify different types of clones in the plot based on their residency in the two groups:
+        The points in the plot are jittered to avoid overplotting. The x-axis is the residency in the first group and
+        the y-axis is the residency in the second group. The size of the points are relative to the normalized size of
+        the clones. You may identify different types of clones in the plot based on their residency in the two groups:
 
         - Collapsed (The clones that are collapsed in the second group)
         - Dual (The clones that are present in both groups with equal size)
@@ -833,6 +836,12 @@ class CloneResidency(Proc):
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
+        metafile: A cell-level metafile, where the first column must be the cell barcodes
+            that match the cell barcodes in `immdata`. The other columns can be any
+            metadata that you want to use for the analysis. The loaded metadata will be
+            left-joined to the converted cell-level data from `immdata`.
+            This can also be a Seurat object RDS file. If so, the `sobj@meta.data` will
+            be used as the metadata.
 
     Output:
         outdir: The output directory
@@ -845,33 +854,43 @@ class CloneResidency(Proc):
             post-treatment vs baseline
             It doesn't have to be 2 groups always. If there are more than 3
             groups, instead of venn diagram, upset plots will be used.
-        order (list): The order of the values in `group`. Early-ordered
-            group will be used as x-axis in scatter plots
-            If there are more than 2 groups, for example, [A, B, C], the
-            scatter plots will be drawn for pairs: B ~ A, C ~ B and C ~ A.
-        sample_groups: How the samples aligned in the report.
+        order (list): The order of the values in `group`. In scatter/residency plots,
+            `X` in `X,Y` will be used as x-axis and `Y` will be used as y-axis.
+            You can also have multiple orders. For example: `["X,Y", "X,Z"]`.
+            If you only have two groups, you can set `order = ["X", "Y"]`, which will
+            be the same as `order = ["X,Y"]`.
+        section: How the subjects aligned in the report. Multiple subjects with
+            the same value will be grouped together.
             Useful for cohort with large number of samples.
         mutaters (type=json): The mutaters passed to `dplyr::mutate()` on
-            `immdata$meta` to add new columns. The keys will be the names of
-            the columns, and the values will be the expressions. The new names
-            can be used in `subject`, `group`, `order` and `sample_groups`.
+            the cell-level data converted from `in.immdata`. If `in.metafile` is
+            provided, the mutaters will be applied to the joined data.
+            The keys will be the names of the new columns, and the values will be the
+            expressions. The new names can be used in `subject`, `group`, `order` and
+            `section`.
+        subset: The filter passed to `dplyr::filter()` to filter the data for the cells
+            before calculating the clone residency. For example, `Clones > 1` to filter
+            out singletons.
+        prefix: The prefix of the cell barcodes in the `Seurat` object.
         cases (type=json): If you have multiple cases, you can use this argument
             to specify them. The keys will be used as the names of the cases.
             The values will be passed to the corresponding arguments.
             If no cases are specified, the default case will be added, with
             the name `DEFAULT` and the values of `envs.subject`, `envs.group`,
-            `envs.order` and `envs.sample_groups`. These values are also the
+            `envs.order` and `envs.section`. These values are also the
             defaults for the other cases.
     """  # noqa: E501
-    input = "immdata:file"
+    input = "immdata:file,metafile:file"
     output = "outdir:dir:{{in.immdata | stem}}.cloneov"
     lang = config.lang.rscript
     envs = {
         "subject": [],
         "group": None,
         "order": [],
-        "sample_groups": None,
+        "section": None,
         "mutaters": {},
+        "subset": None,
+        "prefix": "{Sample}_",
         "cases": {},
     }
     script = "file://../scripts/tcr/CloneResidency.R"

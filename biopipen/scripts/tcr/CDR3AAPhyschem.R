@@ -199,6 +199,12 @@ merge_data = function(sam) {
     out = out %>% left_join(sdata, by = "Barcode", suffix = c("", "_seurat"))
     out$.Group = NA_character_
     for (k in names(comparison)) {
+        group_mask = out[[group_name]] %in% comparison[[k]]
+        if (sum(group_mask) == 0) {
+            stop(
+                glue("No cells in comparison group {k}. Please check if the group items {comparison[[k]]} exist.")
+            )
+        }
         out$.Group[out[[group_name]] %in% comparison[[k]]] = k
     }
     if (!is.null(subset_cols)) {

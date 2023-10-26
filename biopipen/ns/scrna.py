@@ -1258,8 +1258,7 @@ class Write10X(Proc):
 
 
 class ScFGSEA(Proc):
-    """Gene set enrichment analysis for cells in different groups using
-    [`fgsea`](https://bioconductor.org/packages/release/bioc/html/fgsea.html).
+    """Gene set enrichment analysis for cells in different groups using `fgsea`
 
     This process allows us to do Gene Set Enrichment Analysis (GSEA) on the expression data,
     but based on variaties of grouping, including the from the meta data and the
