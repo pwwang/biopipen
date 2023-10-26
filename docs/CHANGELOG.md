@@ -1,3 +1,11 @@
+## 0.20.5
+
+- ⬆️ Bump pipen-board to 0.13.3
+- 🏗️ [tcr.CloneResidency] Rename `envs.sample_groups` to `envs.section` to be consistent with other processes
+- 🏗️ [tcr.CloneResidency] Allow additional metadata from input for more flexible case definition (i.e. analysis for specific seurat clusters)
+- 📝 [scrna.ScFGSEA] Remove the link in the summary of the docstring (since they are not transformed in the report)
+- 🎨 [tcr.CDR3AAPhyschem] Give better error message when wrong group items are given
+
 ## 0.20.4
 
 - 🐛 [scrna.SeuratClusterStats] Fix toc not saved correct (causing report not including the right sections)
