@@ -1,3 +1,8 @@
+## 0.20.7
+
+- (delim.SampleInfo) Add `distinct` to case to perform stats on distinct records
+- (scrna_basic) Fix docker image building
+
 ## 0.20.6
 
 - ⬆️ Bump pipen-board to 0.13.4

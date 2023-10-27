@@ -46,6 +46,7 @@ class SampleInfo(SampleInfo_):
             },
             "Score": {
                 "on": "Score",
+                "distinct": "Subject",
             },
             "Score_Source": {
                 "on": "Score",
@@ -59,6 +60,7 @@ class SampleInfo(SampleInfo_):
             "Score_violin": {
                 "on": "Score",
                 "plot": "violin",
+                "distinct": "Subject",
             },
             "Score_Source_violin": {
                 "on": "Score",
