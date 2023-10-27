@@ -80,11 +80,17 @@ class SampleInfo(Proc):
             Could be a list or a string separated by comma.
         defaults (ns): The default parameters for `envs.stats`.
             - on: The column name in the data for the stats.
-                Default is `Sample`.
-                If there are duplicated values in `on`, and you want to do stats
-                on the unique values, you can use `distinct:`/`unique:` prefix.
-                For example, `distinct:Patient` will keep only the first
-                duplicated value in `Patient` and do stats on the unique values.
+                Default is `Sample`. The column could be either continuous or not.
+            - distinct: The column name in the data for the distinct records.
+                For example, you may have multiple `Sample`s for each patient.
+                In this case, you can set `distinct` to `Patient` to get the
+                stats for each patient, instead of each sample with duplicated
+                values. Default is `None`, which means all records are distinct.
+                Note that when `distinct` is provided, your `group` and `each` should
+                be the same for each distinct record. For example, it doesn't make
+                sense if you are doing statistics for each patient (`on = "Sample"`),
+                but your `group` is `SampleSource`, defining the source of each
+                sample.
             - group: The column name in the data for the group ids.
                 If not provided, all records will be regarded as one group.
             - na_group (flag): Whether to include `NA`s in the group.
@@ -114,6 +120,7 @@ class SampleInfo(Proc):
         "exclude_cols": None,
         "defaults": {
             "on": "Sample",
+            "distinct": None,
             "group": None,
             "na_group": False,
             "each": None,

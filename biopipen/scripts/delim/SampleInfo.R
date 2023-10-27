@@ -44,17 +44,15 @@ for (name in names(stats)) {
     plotfile <- file.path(outdir, paste0(name, ".png"))
 
     is_continuous <- FALSE
-    if (startsWith(stat$on, "distinct:") || startsWith(stat$on, "unique:")) {
-        stat$on <- gsub("distinct:", "", stat$on)
-        stat$on <- gsub("unique:", "", stat$on)
-        data <- mutdata %>% distinct(!!sym(stat$on), .keep_all = TRUE)
+    if (!is.null(stat$distinct)) {
+        data <- mutdata %>% distinct(!!sym(stat$distinct), .keep_all = TRUE)
     } else {
         data <- mutdata
     }
-    if (!is.null(stat$group)) {
+    if (!is.null(stat$group) && !stat$na_group) {
         data <- data %>% filter(!is.na(!!sym(stat$group)))
     }
-    if (!is.null(stat$each)) {
+    if (!is.null(stat$each) && !stat$na_each) {
         data <- data %>% filter(!is.na(!!sym(stat$each)))
     }
 
