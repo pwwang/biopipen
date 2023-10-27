@@ -27,7 +27,7 @@ class PrepareSeurat(Proc):
         )
         pbmc_small@meta.data$Clone = paste0(
             "C",
-            sample(1:10, nrow(pbmc_small@meta.data), replace=TRUE)
+            sample(1:40, nrow(pbmc_small@meta.data), replace=TRUE)
         )
         pbmc_small$Sample = pbmc_small$letter.idents
         pbmc_small$seurat_clusters = pbmc_small$groups
@@ -69,6 +69,8 @@ class CellsDistribution(CellsDistribution):
         "cells_by": "Clone",
         "cells_n": 5,
         "cells_orderby": "desc(CloneSize)",
+        "each": "seurat_clusters",
+        "overlap": "seurat_clusters",
     }
 
 

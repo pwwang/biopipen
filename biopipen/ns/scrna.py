@@ -636,6 +636,8 @@ class CellsDistribution(Proc):
         cells_order (list): The order of the cells (rows) to show on the plot
         cells_orderby: An expression passed to `dplyr::arrange()` to order the cells (rows) of the plot.
             Only works when `cells-order` is not specified.
+            The data frame passed to `dplyr::arrange()` is grouped by `cells_by` before ordering.
+            You can have multiple expressions separated by semicolon (`;`). The expessions will be parsed by `rlang::parse_exprs()`.
             4 extra columns were added to the metadata for ordering the rows in the plot:
             * `CloneSize`: The size (number of cells) of clones (identified by `cells_by`)
             * `CloneGroupSize`: The clone size in each group (identified by `group_by`)
@@ -650,6 +652,8 @@ class CellsDistribution(Proc):
         each: The column name in metadata to separate the cells into different plots.
         section: The section to show in the report. This allows different cases to be put in the same section in report.
             Only works when `each` is not specified.
+        overlap (list): Plot the overlap of cells in different cases under the same section.
+            The section must have at least 2 cases.
         cases (type=json;order=99): If you have multiple cases, you can specify them here.
             Keys are the names of the cases and values are the options above except `mutaters`.
             If some options are not specified, the options in `envs` will be used.
@@ -677,6 +681,7 @@ class CellsDistribution(Proc):
         "devpars": {},
         "each": None,
         "section": "DEFAULT",
+        "overlap": [],
         "cases": {},
     }
     script = "file://../scripts/scrna/CellsDistribution.R"
@@ -881,6 +886,7 @@ class MarkersFinder(Proc):
             `p_val_adj`. For example, `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
             to select markers with adjusted p-value < 0.05 and absolute log2
             fold change > 1.
+        assay: The assay to use.
         volcano_genes (type=auto): The genes to label in the volcano plot if they are
             significant markers.
             If `True`, all significant markers will be labeled. If `False`, no
@@ -916,6 +922,7 @@ class MarkersFinder(Proc):
         "each": None,
         "prefix_each": True,
         "section": "DEFAULT",
+        "assay": None,
         "rest": {},
         "dbs": [
             "GO_Biological_Process_2021",
@@ -1705,7 +1712,7 @@ class RadarPlots(Proc):
         "devpars": {
             "res": 100,
             "width": 1200,
-            "height": 1200,
+            "height": 1000,
         },
         "cases": {},
     }

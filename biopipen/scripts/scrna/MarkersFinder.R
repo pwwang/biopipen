@@ -26,6 +26,7 @@ each <- {{ envs.each | r }}
 prefix_each <- {{ envs.prefix_each | r }}
 section <- {{ envs.section | r }}
 dbs <- {{ envs.dbs | r }}
+assay <- {{ envs.assay | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
 volcano_genes <- {{ envs.volcano_genes | r }}
 rest <- {{ envs.rest | r: todot="-" }}
@@ -61,6 +62,7 @@ if (is.null(cases) || length(cases) == 0) {
             prefix_each = prefix_each,
             section = section,
             dbs = dbs,
+            assay = assay,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
             rest = rest
@@ -77,6 +79,7 @@ if (is.null(cases) || length(cases) == 0) {
             prefix_each = prefix_each,
             section = section,
             dbs = dbs,
+            assay = assay,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
             rest = rest
