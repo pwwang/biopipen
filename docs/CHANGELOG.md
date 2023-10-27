@@ -1,3 +1,9 @@
+## 0.20.6
+
+- ⬆️ Bump pipen-board to 0.13.4
+- ✨ [scrna.MarkersFinder] Allow to set assay for `Seurat::FindMarkers()`
+- ✨ [scrna.CellsDistribution] Add venn/upset plot for overlapping cell groups in different cases
+
 ## 0.20.5
 
 - ⬆️ Bump pipen-board to 0.13.3
