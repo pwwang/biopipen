@@ -60,14 +60,15 @@ echo "+----------------------------------------+"
 echo ""
 
 echo "
-library(Seurat)
-library(DropletUtils)
+suppressPackageStartupMessages(library(Seurat))
+suppressPackageStartupMessages(library(DropletUtils))
 
 set.seed(123)
 setwd('$WORKDIR')
 
 # Load the data
 load('ifnb.rda')
+ifnb = UpdateSeuratObject(ifnb)
 
 # Split the data into two
 objs <- SplitObject(ifnb, split.by = 'stim')
