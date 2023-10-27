@@ -6,6 +6,8 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(ggsci)
+library(ggVennDiagram)
+library(UpSetR)
 
 srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
@@ -19,11 +21,16 @@ cells_n <- {{envs.cells_n | r}}  # nolint
 devpars <- {{envs.devpars | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
+overlap <- {{envs.overlap | r}}  # nolint
 cases <- {{envs.cases | r}}  # nolint
 
+if (is.null(overlap)) { overlap = c() }
+overlaps <- list()
+print("- Loading seurat object ...")
 srtobj <- readRDS(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
+    print("- Mutating seurat object ...")
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
@@ -77,15 +84,15 @@ expand_cases <- function() {
             outcases[[paste0(case$section, ":", name)]] <- case
         } else {
             eachs <- srtobj@meta.data %>% pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
-            for (each in eachs) {
-                by <- make.names(paste0(".", name, "_", case$each,"_", each))
+            for (ea in eachs) {
+                by <- make.names(paste0(".", name, "_", case$each,"_", ea))
                 srtobj@meta.data <<- srtobj@meta.data %>%
                     mutate(!!sym(by) := if_else(
-                        !!sym(case$each) == each,
-                        !!sym(case$group.by),
+                        !!sym(case$each) == ea,
+                        !!sym(case$group_by),
                         NA
                     ))
-                key <- paste0(case$each, ":", name, " (", each, ")")
+                key <- paste0(case$each, ":", name, " (", ea, ")")
                 outcases[[key]] <- case
                 outcases[[key]]$group_by <- by
             }
@@ -107,8 +114,8 @@ do_case <- function(name, case) {
     sec_dir <- file.path(outdir, sec_case_names[1])
     casename <- paste(sec_case_names[-1], collapse = ":")
     dir.create(sec_dir, showWarnings = FALSE, recursive = TRUE)
-    outfile <- file.path(sec_dir, paste0(casename, ".png"))
-    txtfile <- file.path(sec_dir, paste0(casename, ".txt"))
+    outfile <- file.path(sec_dir, paste0("case-", casename, ".png"))
+    txtfile <- file.path(sec_dir, paste0("case-", casename, ".txt"))
 
     # subset the seurat object
     meta <- srtobj@meta.data %>% dplyr::filter(
@@ -118,6 +125,13 @@ do_case <- function(name, case) {
 
     if (nrow(meta) == 0) {
         stop(paste0("No cells left after filtering NAs for group_by and cells_by for case: ", name))
+    }
+
+    if (sec_case_names[1] %in% overlap) {
+        if (is.null(overlaps[[sec_case_names[1]]])) {
+            overlaps[[sec_case_names[1]]] <<- list()
+        }
+        overlaps[[sec_case_names[1]]][[casename]] <<- meta %>% pull(case$cells_by) %>% unique()
     }
 
     # add sizes
@@ -131,7 +145,8 @@ do_case <- function(name, case) {
     if (!is.null(case$group_order) && length(case$group_order) > 0) {
         meta <- meta %>%
             dplyr::filter(!!sym(case$group_by) %in% case$group_order) %>%
-            mutate(!!sym(case$group_by) := factor(!!sym(case$group_by), levels = case$group_order))
+            mutate(!!sym(case$group_by) := factor(!!sym(case$group_by), levels = case$group_order)) %>%
+            arrange(!!sym(case$group_by))
 
         if (nrow(meta) == 0) {
             stop(paste0(
@@ -142,8 +157,9 @@ do_case <- function(name, case) {
                 ". Did you specify the correct `group_by` and `group_order`?"
             ))
         }
+    } else {
+        meta <- meta %>% arrange(!!sym(case$group_by))
     }
-
 
     if (!is.null(case$cells_order) && length(case$cells_order) > 0) {
         # filter cells_by values not in cells_order
@@ -152,7 +168,10 @@ do_case <- function(name, case) {
             mutate(!!sym(case$cells_by) := factor(!!sym(case$cells_by), levels = case$cells_order))
     } else if (!is.null(case$cells_orderby)) {
         # otherwise use cells_orderby to order cells_by
-        ordered_meta <- meta %>% dplyr::arrange(eval(parse(text = case$cells_orderby)))
+        ordered_meta <- meta %>%
+            group_by(!!sym(case$cells_by)) %>%
+            arrange(!!!parse_exprs(case$cells_orderby)) %>%
+            ungroup()
         cells <- ordered_meta %>% pull(case$cells_by) %>% unique() %>% head(case$cells_n)
         meta <- ordered_meta %>% dplyr::filter(!!sym(case$cells_by) %in% cells)
         meta[[case$cells_by]] = factor(meta[[case$cells_by]], levels = cells)
@@ -167,8 +186,8 @@ do_case <- function(name, case) {
         quote = FALSE
     )
 
-    nrows = length(unique(meta[[case$cells_by]]))
-    ncols = length(unique(meta[[case$group_by]]))
+    nrows <- length(unique(meta[[case$cells_by]]))
+    ncols <- length(unique(meta[[case$group_by]]))
 
     devpars <- case$devpars
     if (is.null(devpars)) { devpars = list() }
@@ -202,5 +221,29 @@ do_case <- function(name, case) {
     dev.off()
 }
 
+do_overlap <- function(section) {
+    print(paste("- Running overlaps for section:", section))
+    overlap_cases <- overlaps[[section]]
+    if (length(overlap_cases) < 2) {
+        stop(paste0("Not enough cases for overlap for section: ", section))
+    }
+
+    sec_dir <- file.path(outdir, section)
+    venn_plot <- file.path(sec_dir, "venn.png")
+    venn_p <- ggVennDiagram(overlap_cases, label_percent_digit = 1) +
+        scale_fill_distiller(palette = "Reds", direction = 1) +
+        scale_x_continuous(expand = expansion(mult = .2))
+    png(venn_plot, res = 100, width = 1000, height = 600)
+    print(venn_p)
+    dev.off()
+
+    upset_plot <- file.path(sec_dir, "upset.png")
+    upset_p <- upset(fromList(overlap_cases))
+    png(upset_plot, res = 100, width = 800, height = 600)
+    print(upset_p)
+    dev.off()
+}
+
 cases <- expand_cases()
 sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
+sapply(sort(names(overlaps)), do_overlap)
