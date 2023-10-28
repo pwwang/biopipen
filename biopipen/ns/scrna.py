@@ -633,6 +633,10 @@ class CellsDistribution(Proc):
         group_by: The column name in metadata to group the cells for the columns of the plot.
         group_order (list): The order of the groups (columns) to show on the plot
         cells_by: The column name in metadata to group the cells for the rows of the plot.
+            If your cell groups have overlapping cells, you can also use multiple columns, separated by comma (`,`).
+            These columns will be concatenated to form the cell groups. For the overlapping cells, they will be
+            counted multiple times for different groups. So make sure the cell group names in different columns
+            are unique.
         cells_order (list): The order of the cells (rows) to show on the plot
         cells_orderby: An expression passed to `dplyr::arrange()` to order the cells (rows) of the plot.
             Only works when `cells-order` is not specified.
