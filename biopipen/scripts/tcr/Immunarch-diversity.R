@@ -169,7 +169,7 @@ run_general = function(
     #  by, order
     if (is.character(plotting) && plotting == "auto") {
         if (!is.null(case$by) && length(case$by) > 0) {
-            p = vis(div, .by = case$by, .meta = immdata$meta)
+            p = vis(div, .by = case$by, .meta = immdata$meta %>% filter(Sample %in% names(data)))
         } else {
             p = vis(div)
         }
@@ -270,6 +270,7 @@ run_gini = function(data, case, ddir) {
             p = ggplot(df) +
                 geom_boxplot(aes(x=!!sym(groupname), y=Value, fill=!!sym(groupname)), alpha = 0.5) +
                 geom_jitter(aes(x=!!sym(groupname), y=Value), color="black", width=0.2, alpha=0.5) +
+                ggtitle("Gini Coefficient") +
                 theme(
                     legend.position="none",
                     axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
@@ -425,7 +426,14 @@ run_div_case = function(casename) {
     data = immdata$data
     if (!is.null(case$filter) && length(case$filter) > 0 && nchar(case$filter) > 0) {
         for (n in names(data)) {
-            data[[n]] = data[[n]] %>% filter(!!parse_expr(case$filter))
+            data[[n]] = data[[n]] %>%
+                bind_cols(
+                    immdata$meta %>% filter(Sample == n) %>% slice(rep(1, nrow(data[[n]])))
+                ) %>%
+                filter(!!parse_expr(case$filter))
+            if (nrow(data[[n]]) == 0) {
+                data[[n]] = NULL
+            }
         }
     }
 
