@@ -43,13 +43,13 @@
                 <Image src="{{job.out.outdir | joinpaths: 'AS_arm_bar_' + envs.group_cols + '.png'}}" />
             </TabContent>
             <TabContent>
-                <Image src="{{job.out.outdir | joinpaths: 'AS_arm_violin' + envs.group_cols + '.png'}}" />
+                <Image src="{{job.out.outdir | joinpaths: 'AS_arm_violin_' + envs.group_cols + '.png'}}" />
             </TabContent>
             <TabContent>
                 <Image src="{{job.out.outdir | joinpaths: 'AS_seg_bar_' + envs.group_cols + '.png'}}" />
             </TabContent>
             <TabContent>
-                <Image src="{{job.out.outdir | joinpaths: 'AS_seg_violin' + envs.group_cols + '.png'}}" />
+                <Image src="{{job.out.outdir | joinpaths: 'AS_seg_violin_' + envs.group_cols + '.png'}}" />
             </TabContent>
         </svelte:fragment>
     </Tabs>
