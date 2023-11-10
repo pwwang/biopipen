@@ -24,6 +24,9 @@ get_sample_from_asdir = function(asdir) {
     if (endsWith(x, ".aneuploidy_score")) {
         x = substr(x, 1, nchar(x) - 17)
     }
+    if (endsWith(x, ".call")) {
+        x = substr(x, 1, nchar(x) - 5)
+    }
     if (!is.null(sample_name_fun)) {
         x = sample_name_fun(x)
     }
@@ -323,7 +326,9 @@ for (heatmap_name in names(heatmap_cases)) {
         for (meta_col in meta_cols) {
             row_annos[[meta_col]] = metadf[[meta_col]]
         }
-        args$right_annotation = do_call(ComplexHeatmap::rowAnnotation, row_annos)
+        if (length(row_annos) > 0) {
+            args$right_annotation = do_call(ComplexHeatmap::rowAnnotation, row_annos)
+        }
     }
     plotHeatmap(
         caa_df,
