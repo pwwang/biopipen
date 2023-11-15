@@ -303,14 +303,24 @@ class Immunarch(Proc):
 
     Input:
         immdata: The data loaded by `immunarch::repLoad()`
+        metafile: A cell-level metafile, where the first column must be the cell barcodes
+            that match the cell barcodes in `immdata`. The other columns can be any
+            metadata that you want to use for the analysis. The loaded metadata will be
+            left-joined to the converted cell-level data from `immdata`.
+            This can also be a Seurat object RDS file. If so, the `sobj@meta.data` will
+            be used as the metadata.
 
     Output:
         outdir: The output directory
 
     Envs:
-        mutaters (type=json;order=-9): The mutaters passed to `dplyr::mutate()` on `immdata$meta` to add new columns.
+        mutaters (type=json;order=-9): The mutaters passed to `dplyr::mutate()` on expanded cell-level data
+            to add new columns.
             The keys will be the names of the columns, and the values will be the expressions.
             The new names can be used in `volumes`, `lens`, `counts`, `top_clones`, `rare_clones`, `hom_clones`, `gene_usages`, `divs`, etc.
+        prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
+            The prefixed barcodes will be used to match the barcodes in `in.metafile`.
+            Not used if `in.metafile` is not specified.
         volumes (ns): Explore clonotype volume (sizes).
             - by: Groupings when visualize clonotype volumes, passed to the `.by` argument of `vis(imm_vol, .by = <values>)`.
                 Multiple columns should be separated by `,`.
@@ -318,6 +328,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
                 The keys will be the names of the cases.
                 The values will be passed to the corresponding arguments above.
@@ -331,6 +344,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
                 The keys will be the names of the cases.
                 The values will be passed to the corresponding arguments above.
@@ -344,6 +360,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
                 The keys will be the names of the cases.
                 The values will be passed to the corresponding arguments above.
@@ -358,6 +377,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
                 The keys will be the names of the cases.
                 The values will be passed to the corresponding arguments above.
@@ -373,6 +395,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
                 The keys will be the names of the cases.
                 The values will be passed to the corresponding arguments above.
@@ -390,6 +415,9 @@ class Immunarch(Proc):
                 - Medium (type=float): the medium clonotypes
                 - Large (type=float): the large clonotypes
                 - Hyperexpanded (type=float): the hyperexpanded clonotypes
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - devpars (ns): The parameters for the plotting device.
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
@@ -413,6 +441,9 @@ class Immunarch(Proc):
                     a Poisson process. Duplicate objects are merged with their counts are summed up.
                 - inc+public: incremental overlaps of the N most abundant clonotypes with incrementally growing N using the public method.
                 - inc+morisita: incremental overlaps of the N most abundant clonotypes with incrementally growing N using the morisita method.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - vis_args (type=json): Other arguments for the plotting functions `vis(imm_ov, ...)`.
             - devpars (ns): The parameters for the plotting device.
                 - width (type=int): The width of the plot.
@@ -452,6 +483,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - analyses (ns;order=8): Perform gene usage analyses.
                 - method: The method to control how the data is going to be preprocessed and analysed.
                     One of `js`, `cor`, `cosine`, `pca`, `mds` and `tsne`. Can also be combined with following methods
@@ -486,6 +520,9 @@ class Immunarch(Proc):
                 E.g., pass "aa+v" for spectratyping on CDR3 amino acid sequences paired with V gene segments,
                 i.e., in this case a unique clonotype is a pair of CDR3 amino acid and V gene segment.
                 Clonal counts of equal clonotypes will be summed up.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - devpars (ns): The parameters for the plotting device.
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
@@ -497,12 +534,6 @@ class Immunarch(Proc):
                 By default, a `By_Clonotype` case will be added, with the values of `quant = "id"` and `col = "nt"`, and
                 a `By_Num_Clones` case will be added, with the values of `quant = "count"` and `col = "aa+v"`.
         divs (ns): Parameters to control the diversity analysis.
-            - filter: The filter passed to `dplyr::filter()` to filter the data for each sample before calculating diversity.
-                For example, `Clones > 1` to filter out singletons.
-                To check which columns are available, use `immdata$data[[1]] |> colnames()` in R.
-                You may also check quickly here:
-                <https://immunarch.com/articles/v2_data.html#basic-data-manipulations-with-dplyr-and-immunarch>.
-                To use the top 10 clones, you can try `rank(desc(Clones)) <= 10`
             - method (choice): The method to calculate diversity.
                 - chao1: a nonparameteric asymptotic estimator of species richness.
                     (number of species in a population).
@@ -528,6 +559,9 @@ class Immunarch(Proc):
                 - raref: Species richness from the results of sampling through extrapolation.
             - by: The variables (column names) to group samples.
                 Multiple columns should be separated by `,`.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - args (type=json): Other arguments for `repDiversity()`.
                 Do not include the preceding `.` and use `-` instead of `.` in the argument names.
                 For example, `do-norm` will be compiled to `.do.norm`.
@@ -551,10 +585,18 @@ class Immunarch(Proc):
                     - BY: Benjamini & Yekutieli (negative)
                     - fdr: Benjamini & Hochberg (non-negative)
                     - none: no correction.
-            - separate_by: A column name used to separate the samples into different plots. Only works for `raref`.
+            - separate_by: A column name used to separate the samples into different plots.
             - align_x (flag): Align the x-axis of multiple plots. Only works for `raref`.
-            - align_y (flag): Align the y-axis of multiple plots. Only works for `raref`.
+            - align_y (flag): Align the y-axis of multiple plots.
+            - ymin (type=float): The minimum value of the y-axis.
+                The minimum value of the y-axis for plots splitting by `separate_by`.
+                `align_y` is forced `True` when both `ymin` and `ymax` are specified.
+            - ymax (type=float): The maximum value of the y-axis.
+                The maximum value of the y-axis for plots splitting by `separate_by`.
+                `align_y` is forced `True` when both `ymin` and `ymax` are specified.
+                Works when both `ymin` and `ymax` are specified.
             - log (flag): Indicate whether we should plot with log-transformed x-axis using `vis(.log = TRUE)`. Only works for `raref`.
+            - ncol (type=int): The number of columns of the plots.
             - devpars (ns): The parameters for the plotting device.
                 - width (type=int): The width of the device
                 - height (type=int): The height of the device
@@ -569,6 +611,9 @@ class Immunarch(Proc):
             - subject_col: The column name in meta data that contains the subjects/samples on the x-axis of the alluvial plot.
                 If the values in this column are not unique, the values will be merged with the values in `subject_col` to form the x-axis.
                 This defaults to `Sample`.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - subjects (list): A list of values from `subject_col` to show in the alluvial plot on the x-axis.
                 If not specified, all values in `subject_col` will be used.
                 This also specifies the order of the x-axis.
@@ -586,6 +631,9 @@ class Immunarch(Proc):
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - subset: Subset the data before calculating the clonotype volumes.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data.
             - profiles (ns;order=8): Arguments for sequence profilings.
                 - method (choice): The method for the position matrix.
                     For more information see <https://en.wikipedia.org/wiki/Position_weight_matrix>.
@@ -610,25 +658,29 @@ class Immunarch(Proc):
                 If any of these arguments are not specified, the default case will be added, with the name `DEFAULT` and the
                 values of `envs.kmers.k`, `envs.kmers.head`, `envs.kmers.vis_args` and `envs.kmers.devpars`.
     """  # noqa: E501
-    input = "immdata:file"
+    input = "immdata:file,metafile:file"
     output = "outdir:dir:{{in.immdata | stem}}.immunarch"
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "prefix": "{Sample}_",
         # basic statistics
         "volumes": {
             "by": None,
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "cases": {},
         },
         "lens": {
             "by": None,
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "cases": {},
         },
         "counts": {
             "by": None,
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "cases": {},
         },
         # clonality
@@ -636,12 +688,14 @@ class Immunarch(Proc):
             "by": None,
             "marks": [10, 100, 1000, 3000, 10000, 30000, 1e5],
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "cases": {},
         },
         "rare_clones": {
             "by": None,
             "marks": [1, 3, 10, 30, 100],
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "cases": {},
         },
         "hom_clones": {
@@ -653,6 +707,7 @@ class Immunarch(Proc):
                 Large=0.01,
                 Hyperexpanded=1.0,
             ),
+            "subset": None,
             "devpars": {"width": 1000, "height": 1000, "res": 100},
             "cases": {},
         },
@@ -661,6 +716,7 @@ class Immunarch(Proc):
             "method": "public",
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "analyses": {
                 "method": "none",
                 "vis_args": {},
@@ -676,6 +732,7 @@ class Immunarch(Proc):
             "by": None,
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "analyses": {
                 "method": "none",
                 "vis_args": {},
@@ -689,6 +746,7 @@ class Immunarch(Proc):
             "quant": None,
             "col": None,
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "cases": {
                 "By_Clonotype": dict(quant="id", col="nt"),
                 "By_Num_Clones": dict(quant="count", col="aa+v"),
@@ -714,6 +772,10 @@ class Immunarch(Proc):
                 "height": 1000,
                 "res": 100,
             },
+            "subset": None,
+            "ncol": 2,
+            "ymin": None,
+            "ymax": None,
             "cases": {},
         },
         # Clonotype tracking
@@ -721,6 +783,7 @@ class Immunarch(Proc):
             "targets": None,  # Do not do trackings by default
             "subject_col": "Sample",
             "subjects": [],
+            "subset": None,
             "cases": {},
         },
         # Kmer analysis
@@ -729,6 +792,7 @@ class Immunarch(Proc):
             "head": 10,
             "vis_args": {},
             "devpars": {"width": 1000, "height": 1000, "res": 100},
+            "subset": None,
             "profiles": {
                 "method": "self",
                 "vis_args": {},

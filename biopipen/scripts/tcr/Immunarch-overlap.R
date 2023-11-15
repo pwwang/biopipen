@@ -35,6 +35,9 @@ if (is.null(cases) || length(cases) == 0) {
         if (is.null(cases[[name]]$devpars$res)) {
             cases[[name]]$devpars$res = overlaps$devpars$res
         }
+        if (is.null(cases[[name]]$subset)) {
+            cases[[name]]$subset = overlaps$subset
+        }
     }
 }
 
@@ -72,12 +75,18 @@ for (name in names(cases)) {
     cases[[name]]$analyses = analyses
 }
 
-do_one_case = function(name, case, ov_dir) {
+do_one_case_overlap = function(name, case, ov_dir) {
     print(paste0("  Case: ", name))
     odir = file.path(ov_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
-    imm_ov = repOverlap(immdata$data, .method = case$method, .verbose = FALSE)
+    if (!is.null(case$subset)) {
+        d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
+    } else {
+        d = immdata
+    }
+
+    imm_ov = repOverlap(d$data, .method = case$method, .verbose = FALSE)
     vis_args = case$vis_args
     vis_args$.data = imm_ov
     p = do_call(vis, vis_args)
@@ -128,5 +137,5 @@ dir.create(ov_dir, showWarnings = FALSE)
 
 print("- Overlap")
 for (name in names(cases)) {
-    do_one_case(name, cases[[name]], ov_dir)
+    do_one_case_overlap(name, cases[[name]], ov_dir)
 }

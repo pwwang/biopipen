@@ -12,7 +12,8 @@ if (is.null(cases) || length(cases) == 0) {
         by = gene_usages$by,
         vis_args = gene_usages$vis_args,
         devpars = gene_usages$devpars,
-        analyses = gene_usages$analyses
+        analyses = gene_usages$analyses,
+        subset = gene_usages$subset
     )
 } else {
     for (name in names(cases)) {
@@ -42,6 +43,9 @@ if (is.null(cases) || length(cases) == 0) {
         }
         if (is.null(cases[[name]]$analyses)) {
             cases[[name]]$analyses = gene_usages$analyses
+        }
+        if (is.null(cases[[name]]$subset)) {
+            cases[[name]]$subset = gene_usages$subset
         }
     }
 }
@@ -87,12 +91,18 @@ for (name in names(cases)) {
     cases[[name]]$analyses = analyses
 }
 
-do_one_case = function(name, case, gu_dir) {
+do_one_case_geneusage = function(name, case, gu_dir) {
     print(paste0("  Case: ", name))
     odir = file.path(gu_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
-    imm_gu = geneUsage(immdata$data, .norm = case$norm)
+    if (!is.null(case$subset)) {
+        d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
+    } else {
+        d = immdata
+    }
+
+    imm_gu = geneUsage(d$data, .norm = case$norm)
     if (case$top > 0) {
         imm_gu = imm_gu %>%
             arrange(desc(rowSums(select(imm_gu, -"Names"), na.rm = TRUE))) %>%
@@ -103,7 +113,7 @@ do_one_case = function(name, case, gu_dir) {
     vis_args$.data = imm_gu
     if (!is.null(case$by)) {
         vis_args$.by = case$by
-        vis_args$.meta = immdata$meta
+        vis_args$.meta = d$meta
     }
     p = do_call(vis, vis_args)
 
@@ -151,5 +161,5 @@ dir.create(gu_dir, showWarnings = FALSE)
 
 print("- Gene usage")
 for (name in names(cases)) {
-    do_one_case(name, cases[[name]], gu_dir)
+    do_one_case_geneusage(name, cases[[name]], gu_dir)
 }

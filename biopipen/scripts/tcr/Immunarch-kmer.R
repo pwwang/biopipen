@@ -39,6 +39,9 @@ if (is.null(cases) || length(cases) == 0) {
         if (is.null(cases[[name]]$profiles)) {
             cases[[name]]$profiles = kmers$profiles
         }
+        if (is.null(cases[[name]]$subset)) {
+            cases[[name]]$subset = kmers$subset
+        }
     }
 }
 
@@ -76,12 +79,18 @@ for (name in names(cases)) {
     cases[[name]]$profiles = profiles
 }
 
-do_one_case = function(name, case, kmer_dir) {
+do_one_case_kmer = function(name, case, kmer_dir) {
     print(paste0("  Case: ", name))
     odir = file.path(kmer_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
-    imm_kmers = getKmers(immdata$data, case$k)
+    if (!is.null(case$subset)) {
+        d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
+    } else {
+        d = immdata
+    }
+
+    imm_kmers = getKmers(d$data, case$k)
     vis_args = case$vis_args
     vis_args$.data = imm_kmers
     vis_args$.head = case$head
@@ -92,9 +101,9 @@ do_one_case = function(name, case, kmer_dir) {
     print(p)
     dev.off()
 
-    for (sample in names(immdata$data)) {
+    for (sample in names(d$data)) {
         print(paste0("    Sample: ", sample))
-        imm_kmer = getKmers(immdata$data[[sample]], case$k)
+        imm_kmer = getKmers(d$data[[sample]], case$k)
 
         if (!is.null(case$profiles$cases) && length(case$profiles$cases) > 0) {
             for (aname in names(case$profiles$cases)) {
@@ -121,5 +130,5 @@ dir.create(kmer_dir, showWarnings = FALSE)
 
 print("- K-mer analysis")
 for (name in names(cases)) {
-    do_one_case(name, cases[[name]], kmer_dir)
+    do_one_case_kmer(name, cases[[name]], kmer_dir)
 }

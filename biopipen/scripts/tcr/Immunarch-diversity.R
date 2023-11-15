@@ -3,7 +3,6 @@
 
 # Other variables are loaded in the parent template
 # immdata is already loaded, meta is mutated
-div_filter = {{envs.divs.filter | r}}
 div_method = {{envs.divs.method | r}}
 div_by = {{envs.divs.by | r}}
 div_order = {{envs.divs.order | r}}
@@ -14,7 +13,11 @@ div_devpars = {{envs.divs.devpars | r}}
 div_separate_by = {{envs.divs.separate_by | r}}
 div_align_x = {{envs.divs.align_x | r}}
 div_align_y = {{envs.divs.align_y | r}}
+div_subset = {{envs.divs.subset | r}}
 div_log = {{envs.divs.log | r}}
+div_ncol = {{envs.divs.ncol | r}}
+div_ymin = {{envs.divs.ymin | r}}
+div_ymax = {{envs.divs.ymax | r}}
 
 div_dir = file.path(outdir, "diversity")
 dir.create(div_dir, showWarnings = FALSE)
@@ -23,8 +26,8 @@ print("- Diversity estimation ...")
 
 # Fill up the cases
 update_case = function(case) {
-    if (is.null(case$filter)) {
-        case$filter = div_filter
+    if (is.null(case$subset)) {
+        case$subset = div_subset
     }
     if (is.null(case$method)) {
         case$method = div_method
@@ -86,6 +89,15 @@ update_case = function(case) {
     if (is.null(case$log)) {
         case$log = div_log
     }
+    if (is.null(case$ncol)) {
+        case$ncol = div_ncol
+    }
+    if (is.null(case$ymin)) {
+        case$ymin = div_ymin
+    }
+    if (is.null(case$ymax)) {
+        case$ymax = div_ymax
+    }
     if (!is.null(case$args) && length(case$args) > 0) {
         names(case$args) = paste0(".", names(case$args))
     }
@@ -102,6 +114,23 @@ update_case = function(case) {
     return (case)
 }
 
+# See https://github.com/immunomind/immunarch/pull/341
+vis.immunr_gini <- function(.data, .by = NA, .meta = NA,
+                            .errorbars = c(0.025, 0.975), .errorbars.off = FALSE,
+                            .points = TRUE, .test = TRUE, .signif.label.size = 3.5, ...) {
+  # repDiversity(..., .method = "gini") generates a matrix
+  .data = data.frame(Sample = rownames(.data), Value = .data[, 1])
+  vis_bar(
+    .data = .data, .by = .by, .meta = .meta,
+    .errorbars = .errorbars, .errorbars.off = .errorbars.off, .stack = FALSE,
+    .points = .points, .test = .test, .signif.label.size = .signif.label.size,
+    .defgroupby = "Sample", .grouping.var = "Group",
+    .labs = c(NA, "Gini coefficient"),
+    .title = "Gini coefficient", .subtitle = "Sample diversity estimation using the Gini coefficient",
+    .legend = NA, .leg.title = NA
+  )
+}
+
 if (is.null(div_cases) || length(div_cases) == 0) {
     if (is.null(div_method) || length(div_method) == 0 || nchar(div_method) == 0) {
         stop("No method is specified for diversity estimation")
@@ -115,45 +144,48 @@ if (is.null(div_cases) || length(div_cases) == 0) {
     }
 }
 
+filter_div = function(div, samples) {
+    if ("Sample" %in% colnames(div)) {
+        dv = div[div$Sample %in% samples, , drop = FALSE]
+    } else {
+        dv = div[rownames(div) %in% samples, , drop = FALSE]
+    }
+    class(dv) = class(div)
+    dv
+}
+
 # Run different diversity estimation methods
 # For general cases
 # Args:
-#   data: the data to be used
+#   d: the data to be used
 #   case: the case with argument to be run
 #   ddir: the directory to save the results
-#   trans_div: the transformation to be applied to the diversity matrix
-#     note that the transformation must include the case$by columns
-#   plotting: the plotting function to be used (if not "auto")
-#   plot_modifier: A function to modify the plot before saving it
-#   return_p: whether to return the plot
-run_general = function(
-    data,
-    case,
-    ddir,
-    value_col = "Value",
-    trans_div = "auto",
-    plotting = "auto"
-) {
+#   value_col: the column name of the value
+run_general = function(d, case, ddir, value_col = "Value") {
     args = case$args
-    args$.data = data
+    args$.data = d$data
     args$.method = case$method
     div = do_call(repDiversity, args)
-    if (is.character(trans_div) && trans_div == "auto") {
-        # let's see if div has Sample column, otherwise, it should have rownames
-        # as Sample
-        newdiv = as.data.frame(div)
-        if (!"Sample" %in% colnames(newdiv)) {
-            newdiv = newdiv %>% rownames_to_column("Sample")
-        }
-        if (!is.null(case$by) && length(case$by) > 0) {
-            newdiv = newdiv %>% left_join(
-                immdata$meta[, c("Sample", case$by)],
-                by = "Sample",
-                suffix = c(".div", "")
-            )
-        }
-    } else if (is.function(trans_div)) {
-        newdiv = trans_div(div)
+    # let's see if div has Sample column, otherwise, it should have rownames
+    # as Sample
+    newdiv = as.data.frame(div)
+    if (!"Sample" %in% colnames(newdiv)) {
+        newdiv = newdiv %>% rownames_to_column("Sample")
+    }
+    if (!is.null(case$by) && length(case$by) > 0) {
+        newdiv = newdiv %>% left_join(
+            d$meta[, c("Sample", case$by), drop = FALSE],
+            by = "Sample",
+            suffix = c(".div", "")
+        )
+    }
+
+    if (!is.null(case$separate_by)) {
+        newdiv = newdiv %>% left_join(
+            d$meta[, c("Sample", case$separate_by), drop = FALSE],
+            by = "Sample",
+            suffix = c(".div", "")
+        )
     }
 
     write.table(
@@ -166,30 +198,80 @@ run_general = function(
     )
 
     # plot
-    #  by, order
-    if (is.character(plotting) && plotting == "auto") {
-        if (!is.null(case$by) && length(case$by) > 0) {
-            p = vis(div, .by = case$by, .meta = immdata$meta %>% filter(Sample %in% names(data)))
+    #  by, order, separate_by, align_y
+    n_seps = 1
+    if (!is.null(case$by) && length(case$by) > 0) {
+        if (!is.null(case$separate_by)) {
+            metas = split(d$meta, d$meta[[case$separate_by]])
+            ps = lapply(metas, function(meta) {
+                .test = length(unique(meta[[case$by]])) > 1
+                p = vis(filter_div(div, meta$Sample), .by = case$by, .meta = meta, .test = .test)
+                p = p + ggtitle(paste0(p$labels$title, " (" , case$separate_by, ": ", meta[[case$separate_by]][1], ")"))
+                if (!is.null(case$order) && length(case$order) > 0) {
+                    p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
+                }
+                if (!is.null(case$ymin) && !is.null(case$ymax)) {
+                    p = p + ylim(c(case$ymin, case$ymax))
+                } else if (case$align_y) {
+                    m1 = min(newdiv[[value_col]])
+                    m2 = max(newdiv[[value_col]])
+                    margin = (m2 - m1) * 0.1
+                    p = p + ylim(c(m1 - margin, m2 + margin))
+                }
+                p
+            })
+            n_seps = length(ps)
+            p = wrap_plots(ps, ncol = case$ncol)
         } else {
-            p = vis(div)
+            .test = length(unique(d$meta[[case$by]])) > 1
+            p = vis(div, .by = case$by, .meta = d$meta, .test = .test)
+            if (!is.null(case$order) && length(case$order) > 0) {
+                p = p + scale_x_discrete(limits = intersect(case$order, unique(d$meta[[case$by]])))
+            }
         }
-        if (!is.null(case$order) && length(case$order) > 0) {
-            p = p + scale_x_discrete(limits = case$order)
-        }
+    } else if (!is.null(case$separate_by)) {
+        metas = split(d$meta, d$meta[[case$separate_by]])
+        ps = lapply(metas, function(meta) {
+            p = vis(filter_div(div, meta$Sample))
+            p = p + ggtitle(paste0(p$labels$title, " (" , case$separate_by, ": ", meta[[case$separate_by]][1], ")"))
+            if (!is.null(case$order) && length(case$order) > 0) {
+                p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
+            }
+            if (!is.null(case$ymin) && !is.null(case$ymax)) {
+                p = p + ylim(c(case$ymin, case$ymax))
+            } else if (case$align_y) {
+                m1 = min(newdiv[[value_col]])
+                m2 = max(newdiv[[value_col]])
+                margin = (m2 - m1) * 0.1
+                p = p + ylim(c(m1 - margin, m2 + margin))
+            }
+            p
+        })
+        n_seps = length(ps)
+        p = wrap_plots(ps, ncol = case$ncol)
     } else {
-        p = plotting(newdiv)
+        p = vis(div)
+        if (!is.null(case$order) && length(case$order) > 0) {
+            p = p + scale_x_discrete(limits = intersect(case$order, unique(d$meta[[case$by]])))
+        }
     }
+
     # calculate the width, height and res if not specified
     width = case$devpars$width
     height = case$devpars$height
     res = case$devpars$res
     if (is.null(res)) { res = 100 }
-    if (is.null(height)) { height = 1000 }
+    if (is.null(height)) {
+        height = if (n_seps == 1) 800 else 600 * ceiling(n_seps / case$ncol)
+    }
     if (is.null(width)) {
         if (!is.null(case$by) && length(case$by) > 0) {
-            width = 200 * length(unique(immdata$meta[[case$by]])) + 120
+            width = 200 * length(unique(d$meta[[case$by]])) + 120
         } else {
-            width = 100 * length(unique(immdata$meta$Sample)) + 120
+            width = 100 * length(unique(d$meta$Sample)) + 120
+        }
+        if (n_seps > 1) {
+            width = width * case$ncol
         }
     }
     png(file.path(ddir, "diversity.png"), width = width, height = height, res = res)
@@ -210,29 +292,46 @@ run_general = function(
             groupname = paste(groupname, collapse = "_")
             newdiv = newdiv %>% mutate(!!sym(groupname) := paste(!!!syms(case$by), collapse = "_"))
         }
-        tested = testfun(newdiv[[value_col]], newdiv[[groupname]], p.adjust.method = if (is.null(case$test$padjust)) "none" else case$test$padjust)
-        pv = as.data.frame(tested$p.value)
-        # Make pv symmetric
-        #  From
-        #         A            B
-        # B 0.4322773         NA
-        # C 0.1088602 0.08353865
-        #  To
-        #         A            B            C
-        # A        NA 0.432277300 0.108860200
-        # B 0.4322773           NA 0.083538650
-        # C 0.1088602 0.083538650           NA
-        rname_to_add = colnames(pv)[1]
-        cname_to_add = rownames(pv)[nrow(pv)]
-        pv[[cname_to_add]] = pv[nrow(pv), ] %>% unlist() %>% unname()
-        pv = rbind(NA, pv)
-        rownames(pv)[1] = rname_to_add
-        pv[[cname_to_add]] = shift(pv[[cname_to_add]], n = -1, fill = NA)
-        pv[upper.tri(pv)] = pv[lower.tri(pv)]
-        pv = formatC(as.matrix(pv), format = "e", digits = 2) %>%
-            trimws() %>%
-            as.data.frame() %>%
-            rownames_to_column("Group")
+
+        get_pv = function(nd) {
+            if (length(unique(nd[[groupname]])) <= 1) {
+                return (NULL)
+            }
+            tested = testfun(nd[[value_col]], nd[[groupname]], p.adjust.method = if (is.null(case$test$padjust)) "none" else case$test$padjust)
+            pv = as.data.frame(tested$p.value)
+            # Make pv symmetric
+            #  From
+            #         A            B
+            # B 0.4322773         NA
+            # C 0.1088602 0.08353865
+            #  To
+            #         A            B            C
+            # A        NA 0.432277300 0.108860200
+            # B 0.4322773           NA 0.083538650
+            # C 0.1088602 0.083538650           NA
+            rname_to_add = colnames(pv)[1]
+            cname_to_add = rownames(pv)[nrow(pv)]
+            pv[[cname_to_add]] = pv[nrow(pv), ] %>% unlist() %>% unname()
+            pv = rbind(NA, pv)
+            rownames(pv)[1] = rname_to_add
+            pv[[cname_to_add]] = shift(pv[[cname_to_add]], n = -1, fill = NA)
+            pv[upper.tri(pv)] = pv[lower.tri(pv)]
+            pv = formatC(as.matrix(pv), format = "e", digits = 2) %>%
+                trimws() %>%
+                as.data.frame() %>%
+                rownames_to_column("Group")
+        }
+        if (!is.null(case$separate_by)) {
+            pvs = lapply(split(newdiv, newdiv[[case$separate_by]]), function(nd) {
+                pv = get_pv(nd)
+                pv[[case$separate_by]] = nd[[case$separate_by]][1]
+                pv
+            })
+            pv = do.call(rbind, pvs)
+        } else {
+            pv = get_pv(newdiv)
+        }
+
         write.table(
             pv,
             file = file.path(ddir, paste0("diversity.test.", case$test$method, ".txt")),
@@ -242,55 +341,6 @@ run_general = function(
             col.names = TRUE
         )
     }
-}
-
-# gini plotting is not supported by vis()
-run_gini = function(data, case, ddir) {
-    trans_div = function(df) {
-        df = df %>% as.data.frame() %>% rownames_to_column("Sample") %>% rename(Value = V1)
-
-        groupname = case$by
-        if (!is.null(groupname) && length(groupname) > 0) {
-            df = df %>% left_join(
-                immdata$meta[, c("Sample", groupname)],
-                by = "Sample",
-                suffix = c(".div", "")
-            )
-            if (length(groupname) > 1) {
-                groupname = paste(groupname, collapse = "_")
-                newdiv = newdiv %>% mutate(!!sym(groupname) := paste(!!!syms(case$by), collapse = "_"))
-            }
-        }
-        return (df)
-    }
-
-    plotting = function(df) {
-        if (!is.null(case$by) && length(case$by) > 0) {
-            groupname = paste(case$by, collapse = "_")
-            p = ggplot(df) +
-                geom_boxplot(aes(x=!!sym(groupname), y=Value, fill=!!sym(groupname)), alpha = 0.5) +
-                geom_jitter(aes(x=!!sym(groupname), y=Value), color="black", width=0.2, alpha=0.5) +
-                ggtitle("Gini Coefficient") +
-                theme(
-                    legend.position="none",
-                    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
-                )
-        } else {
-            p = ggplot(df) +
-                geom_col(aes(x=Sample, y=Value, fill=Sample)) +
-                ggtitle("Gini Coefficient") +
-                theme(
-                    legend.position="none",
-                    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
-                )
-        }
-        if (!is.null(case$order) && length(case$order) > 0) {
-            p = p + scale_x_discrete(limits = case$order)
-        }
-        return (p)
-    }
-
-    run_general(data, case, ddir, trans_div = trans_div, plotting = plotting)
 }
 
 # rarefraction
@@ -303,8 +353,8 @@ raref_rep_diversity = function(args) {
     }, error = function(e) {
         # https://github.com/immunomind/immunarch/issues/44
         valid_samples = c()
-        for (sam in names(idata$data)) {
-            args$.data = idata$data[sam]
+        for (sam in names(idata)) {
+            args$.data = idata[sam]
             vsam = tryCatch({
                 do_call(repDiversity, args)
                 sam
@@ -322,7 +372,7 @@ raref_rep_diversity = function(args) {
             })
             valid_samples = c(valid_samples, vsam)
         }
-        args$.data = idata$data[valid_samples]
+        args$.data = idata[valid_samples]
         do_call(repDiversity, args)
     })
 }
@@ -332,9 +382,9 @@ plot_raref = function(df, log) {
     p + xlab("Sample size (cells)")
 }
 
-run_raref_single = function(data, case, ddir, suffix = "", save_p = TRUE) {
+run_raref_single = function(d, case, ddir, suffix = "", save_p = TRUE) {
     args = case$args
-    args$.data = data
+    args$.data = d$data
     args$.method = case$method
     div = raref_rep_diversity(args)
     write.table(
@@ -350,7 +400,7 @@ run_raref_single = function(data, case, ddir, suffix = "", save_p = TRUE) {
     if (is.null(devpars$res)) { devpars$res = 100 }
     if (is.null(devpars$height)) { devpars$height = 1000 }
     if (is.null(devpars$width)) {
-        devpars$width =  750 + ceiling(length(data) / 20) * 250
+        devpars$width =  750 + ceiling(length(args$.data) / 20) * 250
     }
     if (save_p) {
         png(file.path(ddir, "raref.png"), width = devpars$width, height = devpars$height, res = devpars$res)
@@ -361,13 +411,13 @@ run_raref_single = function(data, case, ddir, suffix = "", save_p = TRUE) {
     }
 }
 
-run_raref_multi = function(data, case, ddir) {
+run_raref_multi = function(d, case, ddir) {
     maxx = 0
     maxy = 0
     res = if (is.null(case$devpars$res)) 100 else case$devpars$res
-    height = if (is.null(case$devpars$height)) 1000 else case$devpars$height
-    sepvars = unique(immdata$meta[[case$separate_by]])
-    width = 0
+    sepvars = unique(d$meta[[case$separate_by]])
+    ncol = if (is.null(case$ncol)) 2 else case$ncol
+    running_width = 0
     widths = list()
     plots = list()
     for (sepvar in sepvars) {
@@ -375,7 +425,7 @@ run_raref_multi = function(data, case, ddir) {
         q = list(include(sepvar))
         names(q) = case$separate_by
         single_run = run_raref_single(
-            repFilter(list(data=data, meta=immdata$meta), .method = "by.meta", .query = q, .match = "exact"),
+            repFilter(list(data=d$data, meta=d$meta), .method = "by.meta", .query = q, .match = "exact"),
             case,
             ddir,
             suffix = paste0("-", sepvar),
@@ -384,7 +434,7 @@ run_raref_multi = function(data, case, ddir) {
         plots[[sepvar]] = single_run$p
         if (case$align_x) {
             maxx = max(maxx, layer_scales(single_run$p)$x$range$range[2])
-            width = max(width, single_run$width)
+            running_width = max(running_width, single_run$width)
         } else {
             widths[[sepvar]] = single_run$width
         }
@@ -399,16 +449,26 @@ run_raref_multi = function(data, case, ddir) {
             } else {
                 plots[[sepvar]] = plots[[sepvar]] + xlim(c(0, maxx))
             }
-        } else {
-            width = widths[[sepvar]]
         }
         if (case$align_y) {
             plots[[sepvar]] = plots[[sepvar]] + ylim(c(0, maxy))
         }
-        png(file.path(ddir, paste0("raref-", sepvar, ".png")), width = width, height = height, res = res)
-        print(plots[[sepvar]])
-        dev.off()
     }
+    p = wrap_plots(plots, ncol = ncol)
+    if (is.null(case$devpars$width)) {
+        width = if (case$align_x) running_width * ncol else max(unlist(widths)) * ncol
+    } else {
+        width = case$devpars$width
+    }
+    if (is.null(case$devpars$height)) {
+        nrow = ceiling(length(plots) / ncol)
+        height = if (case$align_y) maxy * nrow else 600 * nrow
+    } else {
+        height = case$devpars$height
+    }
+    png(file.path(ddir, paste0("raref-", case$separate_by, ".png")), width = width, height = height, res = res)
+    print(p)
+    dev.off()
 }
 
 # Run the diversity estimation for one case
@@ -423,44 +483,35 @@ run_div_case = function(casename) {
     dir.create(ddir, recursive = TRUE, showWarnings = FALSE)
 
     # Filter
-    data = immdata$data
-    if (!is.null(case$filter) && length(case$filter) > 0 && nchar(case$filter) > 0) {
-        for (n in names(data)) {
-            data[[n]] = data[[n]] %>%
-                bind_cols(
-                    immdata$meta %>% filter(Sample == n) %>% slice(rep(1, nrow(data[[n]])))
-                ) %>%
-                filter(!!parse_expr(case$filter))
-            if (nrow(data[[n]]) == 0) {
-                data[[n]] = NULL
-            }
-        }
+    if (!is.null(case$subset)) {
+        d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
+    } else {
+        d = immdata
     }
 
     # Run repDiversity
     if (case$method == "chao1") {
-        run_general(data, case, ddir, "Estimator")
+        run_general(d, case, ddir, "Estimator")
     } else if (case$method == "hill") {
-        run_general(data, case, ddir)
+        run_general(d, case, ddir)
     } else if (case$method == "div") {
-        run_general(data, case, ddir)
+        run_general(d, case, ddir)
     } else if (case$method == "gini.simp") {
-        run_general(data, case, ddir)
+        run_general(d, case, ddir)
     } else if (case$method == "inv.simp") {
-        run_general(data, case, ddir)
+        run_general(d, case, ddir)
     } else if (case$method == "gini") {
-        run_gini(data, case, ddir)
+        run_general(d, case, ddir, "V1")
     } else if (case$method == "raref") {
         if (!is.null(case$separate_by)) {
-            run_raref_multi(data, case, ddir)
+            run_raref_multi(d, case, ddir)
         } else {
-            run_raref_single(data, case, ddir)
+            run_raref_single(d, case, ddir)
         }
     } else {
         stop(paste0("Unknown diversity method: ", case$method))
     }
 }
 
-# Run all cases
-casenames = names(div_cases)
-sapply(casenames, run_div_case)
+# Run all diversity cases
+sapply(names(div_cases), run_div_case)
