@@ -649,6 +649,8 @@ class CellsDistribution(Proc):
             * `CloneGroupClusterSize`: The clone size in each group and cluster (identified by `group_by` and `seurat_clusters`)
         cells_n (type=int): The max number of groups to show for each cell group identity (row).
             Ignored if `cells_order` is specified.
+        subset: An expression to subset the cells, will be passed to `dplyr::filter()` on metadata.
+            This will be applied prior to `each`.
         devpars (ns): The device parameters for the plots.
             - res (type=int): The resolution of the plots
             - height (type=int): The height of the plots
@@ -682,6 +684,7 @@ class CellsDistribution(Proc):
         "cells_order": [],
         "cells_orderby": None,
         "cells_n": 10,
+        "subset": None,
         "devpars": {},
         "each": None,
         "section": "DEFAULT",

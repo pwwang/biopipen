@@ -18,6 +18,7 @@ cells_by <- {{envs.cells_by | r}}  # nolint
 cells_order <- {{envs.cells_order | r}}  # nolint
 cells_orderby <- {{envs.cells_orderby | r}}  # nolint
 cells_n <- {{envs.cells_n | r}}  # nolint
+subset <- {{envs.subset | r}}  # nolint
 devpars <- {{envs.devpars | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
@@ -53,7 +54,8 @@ expand_cases <- function() {
                 cells_n = cells_n,
                 devpars = devpars,
                 each = each,
-                section = section
+                section = section,
+                subset = subset
             )
         )
     } else {
@@ -69,7 +71,8 @@ expand_cases <- function() {
                 cells_n = cells_n,
                 devpars = devpars,
                 each = each,
-                section = section
+                section = section,
+                subset = subset
             )
             case$devpars <- list_setdefault(case$devpars, devpars)
             filled_cases[[name]] <- case
@@ -119,9 +122,13 @@ do_case <- function(name, case) {
     txtfile <- file.path(sec_dir, paste0("case-", casename, ".txt"))
 
     # subset the seurat object
-    meta <- srtobj@meta.data %>%
+    meta <- srtobj@meta.data
+    if (!is.null(case$subset) && nchar(case$subset) > 0) {
+        meta <- dplyr::filter(meta, !!!parse_exprs(case$subset))
+    }
+    meta <- meta %>%
         drop_na(case$group_by) %>%
-        filter(!if_all(all_of(cells_by), is.na))
+        dplyr::filter(!if_all(all_of(cells_by), is.na))
 
     if (nrow(meta) == 0) {
         stop(paste0("No cells left after filtering NAs for group_by and cells_by for case: ", name))
