@@ -1,3 +1,4 @@
+import hashlib
 import subprocess as sp
 from pathlib import Path
 from tempfile import gettempdir
@@ -9,9 +10,14 @@ EXDATA_FILE = Path(gettempdir()).joinpath("biopipen-test_utils-single_cell-exdat
 FLDATA_FILE = Path(gettempdir()).joinpath("biopipen-test_utils-single_cell-filtered.txt")
 REDATA_FILE = Path(gettempdir()).joinpath("biopipen-test_utils-single_cell-recovered.txt")
 
+
 def _run_rcode(rcode: str) -> str:
+    # Use sha256 of rcode to name the file
+    rcode_hash = hashlib.sha256(rcode.encode()).hexdigest()
+    script_file = Path(gettempdir()).joinpath(f"biopipen-test-utils-single_cell-{rcode_hash}.R")
+    script_file.write_text(rcode)
     try:
-        out = sp.check_output(["Rscript", "-e", rcode])
+        out = sp.check_output(["Rscript", str(script_file)])
     except sp.CalledProcessError:
         print("R code:")
         print("--------")
