@@ -32,6 +32,9 @@ volcano_genes <- {{ envs.volcano_genes | r }}
 subset <- {{ envs.subset | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
+overlap <- {{ envs.overlap | r }}
+
+overlaps <- list()
 
 if (is.character(volcano_genes) && length(volcano_genes) == 1) {
     volcano_genes <- trimws(strsplit(volcano_genes, ",")[[1]])
@@ -43,16 +46,16 @@ if (ncores > 1) {
     plan(strategy = "multicore", workers = ncores)
 }
 
-print("- Reading Seurat object ...")
+log_info("Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
-print("- Mutate meta data if needed ...")
+log_info("Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
 
-print("- Expanding cases ...")
+log_info("Expanding cases ...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
         DEFAULT = list(
@@ -173,6 +176,7 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
     # 2        HLA-DQB1 3.667713e-09  6.1543174 0.718 0.098 8.435740e-07
     # 3        HLA-DRB5 1.242993e-07  3.9032231 0.744 0.195 2.858885e-05
     # 4           CD79B 2.036731e-07  4.2748835 0.692 0.146 4.684482e-05
+    log_info("- Plotting volcano plot ...")
     markers = markers %>%
         mutate(
             Significant = if_else(
@@ -219,21 +223,21 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
 #   markers: markers dataframe
 #   sig: The expression to filter significant markers
 do_enrich <- function(case, markers, sig, volgenes) {
-    print(paste("  Running enrichment for case:", case))
+    log_info("- Running enrichment for case: {case}")
     parts <- strsplit(case, ":")[[1]]
     sec <- parts[1]
     case <- paste0(parts[-1], collapse = ":")
     casedir <- file.path(outdir, sec, case)
     dir.create(casedir, showWarnings = FALSE, recursive = TRUE)
     if (nrow(markers) == 0) {
-        print(paste("  No markers found for case:", case))
+        log_warn("  No markers found for case: {case}")
         cat("No markers found.", file = file.path(casedir, "error.txt"))
         return()
     }
     plot_volcano(markers, file.path(casedir, "volcano.png"), sig, volgenes)
     markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
-        print(paste("  No significant markers found for case:", case))
+        log_warn("  No significant markers found for case: {case}")
         cat("No significant markers.", file = file.path(casedir, "error.txt"))
         return()
     }
@@ -294,7 +298,9 @@ do_enrich <- function(case, markers, sig, volgenes) {
 
 
 do_case <- function(casename) {
-    cat(paste("- Dealing with case:", casename, "...\n"))
+    log_info("Dealing with case: {casename}...")
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
     case <- cases[[casename]]
     # ident1
     # ident2

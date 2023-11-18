@@ -2,6 +2,13 @@
 
 from ..core.proc import Proc
 from ..core.config import config
+from ..utils.common_docstrs import (
+    indent_docstr,
+    format_placeholder,
+    MUTATE_HELPERS_CLONESIZE,
+)
+
+MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
 
 
 class SeuratLoading(Proc):
