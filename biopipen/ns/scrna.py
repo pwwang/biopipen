@@ -930,6 +930,7 @@ class MarkersFinder(Proc):
         "prefix_each": True,
         "section": "DEFAULT",
         "assay": None,
+        "subset": None,
         "rest": {},
         "dbs": [
             "GO_Biological_Process_2021",

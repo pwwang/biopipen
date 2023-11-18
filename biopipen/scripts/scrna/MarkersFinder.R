@@ -29,6 +29,7 @@ dbs <- {{ envs.dbs | r }}
 assay <- {{ envs.assay | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
 volcano_genes <- {{ envs.volcano_genes | r }}
+subset <- {{ envs.subset | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
 
@@ -319,11 +320,10 @@ do_case <- function(casename) {
     if (is.null(args$min.pct)) {
         args$min.pct <- 0
     }
-    idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique()
-    if (anyNA(idents)) {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    if (!is.null(case$subset)) {
+        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
     } else {
-        args$object <- srtobj
+        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
     }
     markers <- tryCatch({
         do_call(FindMarkers, args) %>% rownames_to_column("gene")
