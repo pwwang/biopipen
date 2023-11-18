@@ -7,7 +7,15 @@
 
 
 {%- macro report_job(job, h=1) -%}
-    {%- set secdirs = job.out.outdir | glob: "*" -%}
+    {%- set alldirs = job.out.outdir | glob: "*" -%}
+    {%- set ovdir = job.out.outdir | joinpaths: "OVERLAPS" -%}
+    {%- set secdirs = [] -%}
+    {%- for adir in alldirs -%}
+        {%- if basename(adir) != "OVERLAPS" -%}
+            {%- set _ = secdirs.append(adir) -%}
+        {%- endif -%}
+    {%- endfor -%}
+
     {%- if len(secdirs) == 1 -%}
         {%- set secname = secdirs | first | basename -%}
         {%- for casedir in secdirs[0] | glob: "*" -%}
@@ -28,6 +36,7 @@
                 <Tabs>
                     <Tab label="Markers" />
                     <Tab label="Volcano Plot" />
+                    <Tab label="Dot Plot" />
                     <svelte:fragment slot="content">
                         <TabContent>
                             <DataTable
@@ -37,6 +46,9 @@
                         </TabContent>
                         <TabContent>
                             <Image src={{ casedir | joinpaths: "volcano.png" | quote }} />
+                        </TabContent>
+                        <TabContent>
+                            <Image src={{ casedir | joinpaths: "dotplot.png" | quote }} />
                         </TabContent>
                     </svelte:fragment>
                 </Tabs>
@@ -63,6 +75,7 @@
                     <Tabs>
                         <Tab label="Markers" />
                         <Tab label="Volcano Plot" />
+                        <Tab label="Dot Plot" />
                         <svelte:fragment slot="content">
                             <TabContent>
                                 <DataTable
@@ -72,6 +85,9 @@
                             </TabContent>
                             <TabContent>
                                 <Image src={{ casedir | joinpaths: "volcano.png" | quote }} />
+                            </TabContent>
+                            <TabContent>
+                                <Image src={{ casedir | joinpaths: "dotplot.png" | quote }} />
                             </TabContent>
                         </svelte:fragment>
                     </Tabs>

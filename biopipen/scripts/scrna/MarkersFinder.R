@@ -12,7 +12,10 @@ library(ggprism)
 library(ggrepel)
 library(future)
 library(tidyseurat)
+library(ggVennDiagram)
+library(UpSetR)
 
+log_info("Setting up EnrichR ...")
 setEnrichrSite("Enrichr")
 
 srtfile <- {{ in.srtobj | quote }}
@@ -31,6 +34,7 @@ sigmarkers <- {{ envs.sigmarkers | r }}
 volcano_genes <- {{ envs.volcano_genes | r }}
 subset <- {{ envs.subset | r }}
 rest <- {{ envs.rest | r: todot="-" }}
+dotplot <- {{ envs.dotplot | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
 overlap <- {{ envs.overlap | r }}
 
@@ -67,8 +71,10 @@ if (is.null(cases) || length(cases) == 0) {
             section = section,
             dbs = dbs,
             assay = assay,
+            subset = subset,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
+            dotplot = dotplot,
             rest = rest
         )
     )
@@ -84,11 +90,14 @@ if (is.null(cases) || length(cases) == 0) {
             section = section,
             dbs = dbs,
             assay = assay,
+            subset = subset,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
+            dotplot = dotplot,
             rest = rest
         )
-        case$rest <- list_setdefault(case$rest, rest)
+        case$rest <- list_update(rest, case$rest)
+        case$dotplot$devpars <- list_update(dotplot$devpars, case$dotplot$devpars)
         cases[[name]] <- case
     }
 }
@@ -335,9 +344,68 @@ do_case <- function(casename) {
         do_call(FindMarkers, args) %>% rownames_to_column("gene")
     }, error = function(e) {
         warning(e$message, immediate. = TRUE)
-        data.frame()
+        data.frame(
+            gene = character(),
+            p_val = numeric(),
+            avg_log2FC = numeric(),
+            pct.1 = numeric(),
+            pct.2 = numeric(),
+            p_val_adj=numeric()
+        )
     })
     do_enrich(casename, markers, case$sigmarkers, case$volcano_genes)
+
+    siggenes <- markers %>%
+        filter(!!parse_expr(case$sigmarkers)) %>%
+        pull(gene) %>%
+        unique()
+
+    if (length(siggenes) > 0) {
+        dotplot_devpars <- case$dotplot$devpars
+        if (is.null(args$ident.2)) {
+            case$dotplot$object <- args$object
+            case$dotplot$object@meta.data <- case$dotplot$object@meta.data %>%
+                mutate(
+                    !!sym(args$group.by) := if_else(
+                        !!sym(args$group.by) == args$ident.1,
+                        args$ident.1,
+                        ".Other"
+                    ),
+                    !!sym(args$group.by) := factor(
+                        !!sym(args$group.by),
+                        levels = c(args$ident.1, ".Other")
+                    )
+                )
+        } else {
+            case$dotplot$object <- args$object %>%
+                filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
+                mutate(!!sym(args$group.by) := factor(
+                    !!sym(args$group.by),
+                    levels = c(args$ident.1, args$ident.2)
+                ))
+        }
+        case$dotplot$devpars <- NULL
+        case$dotplot$features <- siggenes
+        case$dotplot$group.by <- args$group.by
+        case$dotplot$assay <- case$assay
+        dotplot_width = ifelse(
+            is.null(dotplot_devpars$width),
+            if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
+            dotplot_devpars$width
+        )
+        dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
+        dotplot_res = ifelse(is.null(dotplot_devpars$res), 100, dotplot_devpars$res)
+        dotplot_file <- file.path(outdir, sec_case_names[1], cname, "dotplot.png")
+        png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
+        # rotate x axis labels
+        print(
+            do_call(DotPlot, case$dotplot) +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            coord_flip()
+        )
+        dev.off()
+    }
+
     if (sec_case_names[1] %in% overlap) {
         if (is.null(overlaps[[sec_case_names[1]]])) {
             overlaps[[sec_case_names[1]]] <<- list()
