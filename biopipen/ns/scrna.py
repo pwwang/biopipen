@@ -940,6 +940,7 @@ class MarkersFinder(Proc):
         "sigmarkers": "p_val_adj < 0.05",
         "volcano_genes": True,
         "cases": {},
+        "overlap": [],
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"

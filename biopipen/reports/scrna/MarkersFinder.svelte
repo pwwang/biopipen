@@ -82,6 +82,36 @@
             {%- endfor -%}
         {%- endfor -%}
     {%- endif -%}
+
+    {%- if ovdir | exists -%}
+        <h{{h}}>Overlapping Markers</h{{h}}>
+        {%- for casedir in ovdir | glob: "*" -%}
+            <h{{h+1}}>{{casedir | basename | escape}}</h{{h+1}}>
+            <Tabs>
+                {%- if casedir | joinpaths: "venn.png" | exists -%}
+                <Tab label="Venn Diagram" />
+                {%- endif -%}
+                <Tab label="UpSet Plot" />
+                <Tab label="Marks" />
+                <svelte:fragment slot="content">
+                    {%- if casedir | joinpaths: "venn.png" | exists -%}
+                    <TabContent>
+                        <Image src={{ casedir | joinpaths: "venn.png" | quote }} />
+                    </TabContent>
+                    {%- endif -%}
+                    <TabContent>
+                        <Image src={{ casedir | joinpaths: "upset.png" | quote }} />
+                    </TabContent>
+                    <TabContent>
+                        <DataTable
+                            src={{ casedir | joinpaths: "markers.txt" | quote }}
+                            data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t" }} }
+                            />
+                    </TabContent>
+                </svelte:fragment>
+            </Tabs>
+        {%- endfor -%}
+    {%- endif -%}
 {%- endmacro -%}
 
 

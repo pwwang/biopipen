@@ -332,6 +332,62 @@ do_case <- function(casename) {
         data.frame()
     })
     do_enrich(casename, markers, case$sigmarkers, case$volcano_genes)
+    if (sec_case_names[1] %in% overlap) {
+        if (is.null(overlaps[[sec_case_names[1]]])) {
+            overlaps[[sec_case_names[1]]] <<- list()
+        }
+        overlaps[[sec_case_names[1]]][[cname]] <<- siggenes
+    }
+}
+
+do_overlap <- function(section) {
+    log_info("Dealing with overlap: {section}...")
+
+    ov_dir <- file.path(outdir, "OVERLAPS", section)
+    dir.create(ov_dir, showWarnings = FALSE, recursive = TRUE)
+
+    ov_cases <- overlaps[[section]]
+    if (length(ov_cases) < 2) {
+        stop(sprintf("  Not enough cases for overlap: %s", section))
+    }
+
+    if (length(ov_cases) <= 4) {
+        venn_plot <- file.path(ov_dir, "venn.png")
+        venn_p <- ggVennDiagram(ov_cases, label_percent_digit = 1) +
+            scale_fill_distiller(palette = "Reds", direction = 1) +
+            scale_x_continuous(expand = expansion(mult = .2))
+        png(venn_plot, res = 100, width = 1000, height = 600)
+        print(venn_p)
+        dev.off()
+    }
+
+    df_markers <- fromList(ov_cases)
+    #  A  B  MARKERS
+    #  1  0  G1
+    #  1  0  G2
+    #  0  1  G3
+    #  0  1  G4
+    #  1  1  G5
+    df_markers$MARKERS = Reduce(union, ov_cases)
+    df_markers = df_markers %>%
+        group_by(across(-MARKERS)) %>%
+        summarise(MARKERS = paste0(MARKERS, collapse = ","), .groups = "drop")
+
+    write.table(
+        df_markers,
+        file.path(ov_dir, "markers.txt"),
+        sep = "\t",
+        row.names = FALSE,
+        col.names = TRUE,
+        quote = FALSE
+    )
+
+    upset_plot <- file.path(ov_dir, "upset.png")
+    upset_p <- upset(fromList(ov_cases))
+    png(upset_plot, res = 100, width = 800, height = 600)
+    print(upset_p)
+    dev.off()
 }
 
 sapply(sort(names(cases)), do_case)
+sapply(sort(names(overlaps)), do_overlap)
