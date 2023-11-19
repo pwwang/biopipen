@@ -27,6 +27,12 @@ def _run_size_fun(
             for arg, value in fun_args.items()
         ]
     )
+    if fun == "expanded+":
+        fun = "expanded"
+        fun_r_repr = f"{fun_r_repr}, include_emerged = TRUE"
+    elif fun == "collapsed+":
+        fun = "collapsed"
+        fun_r_repr = f"{fun_r_repr}, include_vanished = TRUE"
     if mutate:
         rcode = f"""
             source("{R_FILE}")
@@ -101,7 +107,7 @@ def run_size(
         mutate=mutate,
         if_else=if_else,
     )
-    assert out == expected, f"{out} != {expected}"
+    assert out == expected, f"{out!r} != {expected!r}"
     print("    PASSED")
     print("")
 
@@ -132,14 +138,14 @@ if __name__ == "__main__":
     run_size(
         df_values=df_values,
         expected="A D",
-        fun="expanded",
+        fun="expanded+",
         group_by="Source",
         idents='c("Tumor", "Normal")',
     )
     run_size(
         df_values=df_values,
         expected="A NA NA NA D NA NA NA NA NA A A",
-        fun="expanded",
+        fun="expanded+",
         group_by="Source",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
@@ -147,7 +153,7 @@ if __name__ == "__main__":
     run_size(
         df_values=df_values,
         expected="A NA NA NA D NA NA NA NA NA A A",
-        fun="expanded",
+        fun="expanded+",
         mutate=True,
         group_by="Source",
         idents='c("Tumor", "Normal")',
@@ -156,14 +162,14 @@ if __name__ == "__main__":
     run_size(
         df_values=df_values,
         expected="B E C",
-        fun="collapsed",
+        fun="collapsed+",
         group_by="Source",
         idents='c("Tumor", "Normal")',
     )
     run_size(
         df_values=df_values,
         expected="NA C B E NA E E B B B NA NA",
-        fun="collapsed",
+        fun="collapsed+",
         group_by="Source",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
