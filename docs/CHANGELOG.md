@@ -1,3 +1,27 @@
+## 0.21.0
+
+- tcr.Immunarch: Fix empty groups in diversity plot after filtering
+- tcr.Immunarch: Add `in.metafile` to allow other meta info (i.e. seurat clusters) for future subsetting
+- tcr.Immunarch: Change `envs.mutaters` now on expanded (cell-level) data
+- tcr.Immunarch: Add `subset` for cases to do analysis on a subset of data
+- tcr.Immunarch: Add `separate_by` also works on other diversity plots
+- tcr.Immunarch: Add `ymin` and `ymax` to align diversity plots by `separate_by`
+- tcr.Immunarch: Add `ncol` to specify # columns in the combined plots
+- scrna.RadarPlots: Fix `envs.order` not working
+- scrna.MarkersFinder: Add `overlap` to find overlapping markers between cases (pwwang/immunopipe#24)
+- scrna.MarkersFinder: Add `subset` for each case to subset cells
+- scrna.MarkersFinder: Add dot plots for cases
+- scrna.CellsDistribution: Allow multiple columns for `cells_by`
+- scrna.CellsDistribution: Add `subset` for cases to subset cells
+- cnv.AneuploidyScoreSummary: Ignore `.call` suffix to get sample name by default
+- cnv.AneuploidyScoreSummary: Fix image path in report while `envs.group_cols` is a string (not an array)
+- utils.single_cell.R: Add functions to expand, filter and restore immunarch objects
+- utils.common_docstrs: Extract some common docstrings for procs
+- utils.misc.R: Use r-logger for logging for R scripts
+- utils.mutate_helpers.R: Add include_emerged for `expanded()` and include_vanished for `collapsed()`
+- utils.mutate_helpers.R: Fix tests
+- tests: Add r-logger to test dependencies
+
 ## 0.20.7
 
 - (delim.SampleInfo) Add `distinct` to case to perform stats on distinct records
