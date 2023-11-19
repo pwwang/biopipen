@@ -42,10 +42,12 @@ class TCRClusteringClusTCR(TCRClustering):
 
 class TCRClusterStatsGIANA(TCRClusterStats):
     requires = TCRClusteringGIANA
+    order = 98
 
 
 class TCRClusterStatsClusTCR(TCRClusterStats):
     requires = TCRClusteringClusTCR
+    order = 99
 
 
 def pipeline():
@@ -66,7 +68,7 @@ def testing(pipen):
                 "shared_clusters.txt",
             )
         )
-        assert outfile.is_file()
+        assert outfile.is_file(), outfile
 
 
 if __name__ == "__main__":

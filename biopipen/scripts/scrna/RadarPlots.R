@@ -89,6 +89,13 @@ run_one_case = function(casename) {
         colnames(counts) = paste0("Cluster", colnames(counts))
     }
 
+    if (!is.null(case$order) && length(case$order) > 0) {
+        counts = counts[case$order, ]
+        if (nrow(counts) == 0) {
+            stop("No data after reordering. Are items in `order` correct?")
+        }
+    }
+
     # Save the counts
     write.table(
         counts,

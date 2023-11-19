@@ -7,7 +7,15 @@
 
 
 {%- macro report_job(job, h=1) -%}
-    {%- set secdirs = job.out.outdir | glob: "*" -%}
+    {%- set alldirs = job.out.outdir | glob: "*" -%}
+    {%- set ovdir = job.out.outdir | joinpaths: "OVERLAPS" -%}
+    {%- set secdirs = [] -%}
+    {%- for adir in alldirs -%}
+        {%- if basename(adir) != "OVERLAPS" -%}
+            {%- set _ = secdirs.append(adir) -%}
+        {%- endif -%}
+    {%- endfor -%}
+
     {%- if len(secdirs) == 1 -%}
         {%- set secname = secdirs | first | basename -%}
         {%- for casedir in secdirs[0] | glob: "*" -%}
@@ -28,6 +36,7 @@
                 <Tabs>
                     <Tab label="Markers" />
                     <Tab label="Volcano Plot" />
+                    <Tab label="Dot Plot" />
                     <svelte:fragment slot="content">
                         <TabContent>
                             <DataTable
@@ -37,6 +46,9 @@
                         </TabContent>
                         <TabContent>
                             <Image src={{ casedir | joinpaths: "volcano.png" | quote }} />
+                        </TabContent>
+                        <TabContent>
+                            <Image src={{ casedir | joinpaths: "dotplot.png" | quote }} />
                         </TabContent>
                     </svelte:fragment>
                 </Tabs>
@@ -63,6 +75,7 @@
                     <Tabs>
                         <Tab label="Markers" />
                         <Tab label="Volcano Plot" />
+                        <Tab label="Dot Plot" />
                         <svelte:fragment slot="content">
                             <TabContent>
                                 <DataTable
@@ -73,6 +86,9 @@
                             <TabContent>
                                 <Image src={{ casedir | joinpaths: "volcano.png" | quote }} />
                             </TabContent>
+                            <TabContent>
+                                <Image src={{ casedir | joinpaths: "dotplot.png" | quote }} />
+                            </TabContent>
                         </svelte:fragment>
                     </Tabs>
 
@@ -80,6 +96,36 @@
                     {{ enrichr_report(casedir) }}
                 {%- endif -%}
             {%- endfor -%}
+        {%- endfor -%}
+    {%- endif -%}
+
+    {%- if ovdir | exists -%}
+        <h{{h}}>Overlapping Markers</h{{h}}>
+        {%- for casedir in ovdir | glob: "*" -%}
+            <h{{h+1}}>{{casedir | basename | escape}}</h{{h+1}}>
+            <Tabs>
+                {%- if casedir | joinpaths: "venn.png" | exists -%}
+                <Tab label="Venn Diagram" />
+                {%- endif -%}
+                <Tab label="UpSet Plot" />
+                <Tab label="Marks" />
+                <svelte:fragment slot="content">
+                    {%- if casedir | joinpaths: "venn.png" | exists -%}
+                    <TabContent>
+                        <Image src={{ casedir | joinpaths: "venn.png" | quote }} />
+                    </TabContent>
+                    {%- endif -%}
+                    <TabContent>
+                        <Image src={{ casedir | joinpaths: "upset.png" | quote }} />
+                    </TabContent>
+                    <TabContent>
+                        <DataTable
+                            src={{ casedir | joinpaths: "markers.txt" | quote }}
+                            data={ {{ casedir | joinpaths: "markers.txt" | datatable: sep="\t" }} }
+                            />
+                    </TabContent>
+                </svelte:fragment>
+            </Tabs>
         {%- endfor -%}
     {%- endif -%}
 {%- endmacro -%}

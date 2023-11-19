@@ -1,4 +1,12 @@
 # Misc utilities for R
+library(logger)
+
+.logger_layout <- layout_glue_generator(
+    format = '{sprintf("%-7s", level)} [{format(time, "%Y-%m-%d %H:%M:%S")}] {msg}'
+)
+log_layout(.logger_layout)
+log_appender(appender_stdout)
+log_errors()
 
 .isBQuoted <- function(x) {
     # Check if x is backtick-quoted

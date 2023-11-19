@@ -12,7 +12,10 @@ library(ggprism)
 library(ggrepel)
 library(future)
 library(tidyseurat)
+library(ggVennDiagram)
+library(UpSetR)
 
+log_info("Setting up EnrichR ...")
 setEnrichrSite("Enrichr")
 
 srtfile <- {{ in.srtobj | quote }}
@@ -29,8 +32,13 @@ dbs <- {{ envs.dbs | r }}
 assay <- {{ envs.assay | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
 volcano_genes <- {{ envs.volcano_genes | r }}
+subset <- {{ envs.subset | r }}
 rest <- {{ envs.rest | r: todot="-" }}
+dotplot <- {{ envs.dotplot | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
+overlap <- {{ envs.overlap | r }}
+
+overlaps <- list()
 
 if (is.character(volcano_genes) && length(volcano_genes) == 1) {
     volcano_genes <- trimws(strsplit(volcano_genes, ",")[[1]])
@@ -42,16 +50,16 @@ if (ncores > 1) {
     plan(strategy = "multicore", workers = ncores)
 }
 
-print("- Reading Seurat object ...")
+log_info("Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
-print("- Mutate meta data if needed ...")
+log_info("Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
 
-print("- Expanding cases ...")
+log_info("Expanding cases ...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
         DEFAULT = list(
@@ -63,8 +71,10 @@ if (is.null(cases) || length(cases) == 0) {
             section = section,
             dbs = dbs,
             assay = assay,
+            subset = subset,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
+            dotplot = dotplot,
             rest = rest
         )
     )
@@ -80,11 +90,14 @@ if (is.null(cases) || length(cases) == 0) {
             section = section,
             dbs = dbs,
             assay = assay,
+            subset = subset,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
+            dotplot = dotplot,
             rest = rest
         )
-        case$rest <- list_setdefault(case$rest, rest)
+        case$rest <- list_update(rest, case$rest)
+        case$dotplot$devpars <- list_update(dotplot$devpars, case$dotplot$devpars)
         cases[[name]] <- case
     }
 }
@@ -172,6 +185,7 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
     # 2        HLA-DQB1 3.667713e-09  6.1543174 0.718 0.098 8.435740e-07
     # 3        HLA-DRB5 1.242993e-07  3.9032231 0.744 0.195 2.858885e-05
     # 4           CD79B 2.036731e-07  4.2748835 0.692 0.146 4.684482e-05
+    log_info("- Plotting volcano plot ...")
     markers = markers %>%
         mutate(
             Significant = if_else(
@@ -218,21 +232,21 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
 #   markers: markers dataframe
 #   sig: The expression to filter significant markers
 do_enrich <- function(case, markers, sig, volgenes) {
-    print(paste("  Running enrichment for case:", case))
+    log_info("- Running enrichment for case: {case}")
     parts <- strsplit(case, ":")[[1]]
     sec <- parts[1]
     case <- paste0(parts[-1], collapse = ":")
     casedir <- file.path(outdir, sec, case)
     dir.create(casedir, showWarnings = FALSE, recursive = TRUE)
     if (nrow(markers) == 0) {
-        print(paste("  No markers found for case:", case))
+        log_warn("  No markers found for case: {case}")
         cat("No markers found.", file = file.path(casedir, "error.txt"))
         return()
     }
     plot_volcano(markers, file.path(casedir, "volcano.png"), sig, volgenes)
     markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
-        print(paste("  No significant markers found for case:", case))
+        log_warn("  No significant markers found for case: {case}")
         cat("No significant markers.", file = file.path(casedir, "error.txt"))
         return()
     }
@@ -293,7 +307,9 @@ do_enrich <- function(case, markers, sig, volgenes) {
 
 
 do_case <- function(casename) {
-    cat(paste("- Dealing with case:", casename, "...\n"))
+    log_info("Dealing with case: {casename}...")
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
     case <- cases[[casename]]
     # ident1
     # ident2
@@ -319,19 +335,133 @@ do_case <- function(casename) {
     if (is.null(args$min.pct)) {
         args$min.pct <- 0
     }
-    idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique()
-    if (anyNA(idents)) {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    if (!is.null(case$subset)) {
+        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
     } else {
-        args$object <- srtobj
+        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
     }
     markers <- tryCatch({
         do_call(FindMarkers, args) %>% rownames_to_column("gene")
     }, error = function(e) {
         warning(e$message, immediate. = TRUE)
-        data.frame()
+        data.frame(
+            gene = character(),
+            p_val = numeric(),
+            avg_log2FC = numeric(),
+            pct.1 = numeric(),
+            pct.2 = numeric(),
+            p_val_adj=numeric()
+        )
     })
     do_enrich(casename, markers, case$sigmarkers, case$volcano_genes)
+
+    siggenes <- markers %>%
+        filter(!!parse_expr(case$sigmarkers)) %>%
+        pull(gene) %>%
+        unique()
+
+    if (length(siggenes) > 0) {
+        dotplot_devpars <- case$dotplot$devpars
+        if (is.null(args$ident.2)) {
+            case$dotplot$object <- args$object
+            case$dotplot$object@meta.data <- case$dotplot$object@meta.data %>%
+                mutate(
+                    !!sym(args$group.by) := if_else(
+                        !!sym(args$group.by) == args$ident.1,
+                        args$ident.1,
+                        ".Other"
+                    ),
+                    !!sym(args$group.by) := factor(
+                        !!sym(args$group.by),
+                        levels = c(args$ident.1, ".Other")
+                    )
+                )
+        } else {
+            case$dotplot$object <- args$object %>%
+                filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
+                mutate(!!sym(args$group.by) := factor(
+                    !!sym(args$group.by),
+                    levels = c(args$ident.1, args$ident.2)
+                ))
+        }
+        case$dotplot$devpars <- NULL
+        case$dotplot$features <- siggenes
+        case$dotplot$group.by <- args$group.by
+        case$dotplot$assay <- case$assay
+        dotplot_width = ifelse(
+            is.null(dotplot_devpars$width),
+            if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
+            dotplot_devpars$width
+        )
+        dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
+        dotplot_res = ifelse(is.null(dotplot_devpars$res), 100, dotplot_devpars$res)
+        dotplot_file <- file.path(outdir, sec_case_names[1], cname, "dotplot.png")
+        png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
+        # rotate x axis labels
+        print(
+            do_call(DotPlot, case$dotplot) +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            coord_flip()
+        )
+        dev.off()
+    }
+
+    if (sec_case_names[1] %in% overlap) {
+        if (is.null(overlaps[[sec_case_names[1]]])) {
+            overlaps[[sec_case_names[1]]] <<- list()
+        }
+        overlaps[[sec_case_names[1]]][[cname]] <<- siggenes
+    }
+}
+
+do_overlap <- function(section) {
+    log_info("Dealing with overlap: {section}...")
+
+    ov_dir <- file.path(outdir, "OVERLAPS", section)
+    dir.create(ov_dir, showWarnings = FALSE, recursive = TRUE)
+
+    ov_cases <- overlaps[[section]]
+    if (length(ov_cases) < 2) {
+        stop(sprintf("  Not enough cases for overlap: %s", section))
+    }
+
+    if (length(ov_cases) <= 4) {
+        venn_plot <- file.path(ov_dir, "venn.png")
+        venn_p <- ggVennDiagram(ov_cases, label_percent_digit = 1) +
+            scale_fill_distiller(palette = "Reds", direction = 1) +
+            scale_x_continuous(expand = expansion(mult = .2))
+        png(venn_plot, res = 100, width = 1000, height = 600)
+        print(venn_p)
+        dev.off()
+    }
+
+    df_markers <- fromList(ov_cases)
+    #  A  B  MARKERS
+    #  1  0  G1
+    #  1  0  G2
+    #  0  1  G3
+    #  0  1  G4
+    #  1  1  G5
+    df_markers$MARKERS = Reduce(union, ov_cases)
+    df_markers = df_markers %>%
+        group_by(across(-MARKERS)) %>%
+        summarise(MARKERS = paste0(MARKERS, collapse = ","), .groups = "drop")
+
+    write.table(
+        df_markers,
+        file.path(ov_dir, "markers.txt"),
+        sep = "\t",
+        row.names = FALSE,
+        col.names = TRUE,
+        quote = FALSE
+    )
+
+    upset_plot <- file.path(ov_dir, "upset.png")
+    upset_p <- upset(fromList(ov_cases))
+    png(upset_plot, res = 100, width = 800, height = 600)
+    print(upset_p)
+    dev.off()
 }
 
 sapply(sort(names(cases)), do_case)
+sapply(sort(names(overlaps)), do_overlap)

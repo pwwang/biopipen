@@ -2,6 +2,13 @@
 
 from ..core.proc import Proc
 from ..core.config import config
+from ..utils.common_docstrs import (
+    indent_docstr,
+    format_placeholder,
+    MUTATE_HELPERS_CLONESIZE,
+)
+
+MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
 
 
 class SeuratLoading(Proc):
@@ -576,6 +583,7 @@ class ModuleScoreCalculator(Proc):
     script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
 
+@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
 class CellsDistribution(Proc):
     """Distribution of cells (i.e. in a TCR clone) from different groups
     for each cluster
@@ -612,27 +620,14 @@ class CellsDistribution(Proc):
         mutaters (type=json): The mutaters to mutate the metadata
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
-            There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
-            to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
-            with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
-            Those functions take following arguments:
-            * `df`: The metadata data frame. You can use the `.` to refer to it.
-            * `group-by`: The column name in metadata to group the cells.
-            * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
-            * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`).
-            * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
-            * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
-            * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
-                Two kinds of modifiers can be added, including `desc` and `abs`.
-                For example, `sum,desc` means the sum of `compare` between idents in descending order.
-                Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
-                ids will be in the same order as in `df`.
-            Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+            %(mutate_helpers_clonesize)s
         group_by: The column name in metadata to group the cells for the columns of the plot.
         group_order (list): The order of the groups (columns) to show on the plot
         cells_by: The column name in metadata to group the cells for the rows of the plot.
+            If your cell groups have overlapping cells, you can also use multiple columns, separated by comma (`,`).
+            These columns will be concatenated to form the cell groups. For the overlapping cells, they will be
+            counted multiple times for different groups. So make sure the cell group names in different columns
+            are unique.
         cells_order (list): The order of the cells (rows) to show on the plot
         cells_orderby: An expression passed to `dplyr::arrange()` to order the cells (rows) of the plot.
             Only works when `cells-order` is not specified.
@@ -645,6 +640,8 @@ class CellsDistribution(Proc):
             * `CloneGroupClusterSize`: The clone size in each group and cluster (identified by `group_by` and `seurat_clusters`)
         cells_n (type=int): The max number of groups to show for each cell group identity (row).
             Ignored if `cells_order` is specified.
+        subset: An expression to subset the cells, will be passed to `dplyr::filter()` on metadata.
+            This will be applied prior to `each`.
         devpars (ns): The device parameters for the plots.
             - res (type=int): The resolution of the plots
             - height (type=int): The height of the plots
@@ -678,6 +675,7 @@ class CellsDistribution(Proc):
         "cells_order": [],
         "cells_orderby": None,
         "cells_n": 10,
+        "subset": None,
         "devpars": {},
         "each": None,
         "section": "DEFAULT",
@@ -691,6 +689,7 @@ class CellsDistribution(Proc):
     }
 
 
+@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
 class SeuratMetadataMutater(Proc):
     """Mutate the metadata of the seurat object
 
@@ -706,28 +705,7 @@ class SeuratMetadataMutater(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
-            There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
-            to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
-            with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
-            Those functions take following arguments:
-            * `df`: The metadata data frame. You can use the `.` to refer to it.
-            * `group-by`: The column name in metadata to group the cells.
-            * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
-            * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
-            * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
-            * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
-            * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
-                Two kinds of modifiers can be added, including `desc` and `abs`.
-                For example, `sum,desc` means the sum of `compare` between idents in descending order.
-                Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
-                ids will be in the same order as in `df`.
-
-            /// Note
-            Note that the numeric column should be the same for all cells in the same group.
-            This will not be checked (only the first value is used).
-            ///
+            %(mutate_helpers_clonesize)s
 
     Requires:
         r-seurat:
@@ -826,6 +804,7 @@ class DimPlots(Proc):
     }
 
 
+@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
@@ -847,24 +826,7 @@ class MarkersFinder(Proc):
             * Used in `future::plan(strategy = "multicore", workers = <ncores>)` to parallelize some Seurat procedures.
             * See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         mutaters (type=json): The mutaters to mutate the metadata
-            There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
-            to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
-            with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
-            Those functions take following arguments:
-            * `df`: The metadata data frame. You can use the `.` to refer to it.
-            * `group-by`: The column name in metadata to group the cells.
-            * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
-            * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
-            * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
-            * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
-            * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
-                Two kinds of modifiers can be added, including `desc` and `abs`.
-                For example, `sum,desc` means the sum of `compare` between idents in descending order.
-                Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
-                ids will be in the same order as in `df`.
-            Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+            %(mutate_helpers_clonesize)s
         ident-1: The first group of cells to compare
         ident-2: The second group of cells to compare
             If not provided, the rest of the cells are used for `ident-2`.
@@ -893,22 +855,34 @@ class MarkersFinder(Proc):
             genes will be labeled. Otherwise, specify the genes to label.
             It could be either a string with comma separated genes, or a list
             of genes.
-        section: The section name for the report.
-            Worked only when `each` is not specified and `ident-2` is specified.
-            Otherwise, the section name will be constructed from `each` and
-            `group-by`.
-            If `DEFAULT`, and it's the only section, it not included in the
-            case/section names.
+        section: The section name for the report. It must not contain colon (`:`).
+            Ignored when `each` is not specified and `ident-1` is specified.
+            When neither `each` nor `ident-1` is specified, case name will be used
+            as section name.
+            If `each` is specified, the section name will be constructed from
+            `each` and case name.
+        subset: An expression to subset the cells for each case.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
+        dotplot (ns): Arguments for `Seurat::DotPlot()`.
+            Use `-` to replace `.` in the argument name. For example,
+            use `group-bar` instead of `group.bar`.
+            Note that `object`, `features`, and `group-by` are already specified
+            by this process. So you don't need to specify them here.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://satijalab.org/seurat/reference/doheatmap>
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
             above options except `ncores` and `mutaters`. If some options are
             not specified, the default values specified above will be used.
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
+        overlap (list): The sections to do overlap analysis.
     """  # noqa: E501
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem0}}.markers"
@@ -923,6 +897,7 @@ class MarkersFinder(Proc):
         "prefix_each": True,
         "section": "DEFAULT",
         "assay": None,
+        "subset": None,
         "rest": {},
         "dbs": [
             "GO_Biological_Process_2021",
@@ -932,7 +907,9 @@ class MarkersFinder(Proc):
         ],
         "sigmarkers": "p_val_adj < 0.05",
         "volcano_genes": True,
+        "dotplot": {},
         "cases": {},
+        "overlap": [],
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
@@ -1264,6 +1241,7 @@ class Write10X(Proc):
     script = "file://../scripts/scrna/Write10X.R"
 
 
+@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
 class ScFGSEA(Proc):
     """Gene set enrichment analysis for cells in different groups using `fgsea`
 
@@ -1292,24 +1270,7 @@ class ScFGSEA(Proc):
             Passed to `nproc` of `fgseaMultilevel()`.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
-            There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
-            to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
-            with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
-            Those functions take following arguments:
-            * `df`: The metadata data frame. You can use the `.` to refer to it.
-            * `group-by`: The column name in metadata to group the cells.
-            * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
-            * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
-            * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
-            * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
-            * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
-                Two kinds of modifiers can be added, including `desc` and `abs`.
-                For example, `sum,desc` means the sum of `compare` between idents in descending order.
-                Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
-                ids will be in the same order as in `df`.
-            Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+            %(mutate_helpers_clonesize)s
         group-by: The column name in metadata to group the cells.
         ident-1: The first group of cells to compare
         ident-2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
@@ -1721,6 +1682,7 @@ class RadarPlots(Proc):
     }
 
 
+@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
 class MetaMarkers(Proc):
     """Find markers between three or more groups of cells, using one-way ANOVA
     or Kruskal-Wallis test.
@@ -1745,24 +1707,8 @@ class MetaMarkers(Proc):
     Envs:
         ncores (type=int): Number of cores to use to parallelize for genes
         mutaters (type=json): The mutaters to mutate the metadata
-            There are also also 4 helper functions, `expanded`, `collapsed`, `emerged` and `vanished`, that can be used to identify the expanded/collpased/emerged/vanished groups (i.e. TCR clones).
-            For example, you can use `{"Patient1_Tumor_Collapsed_Clones": "expanded(., Source, 'Tumor', subset = Patent == 'Patient1')"}`
-            to create a new column in metadata named `Patient1_Tumor_Collapsed_Clones`
-            with the collapsed clones in the tumor sample (compared to the normal sample) of patient 1. The values in this columns for other clones will be `NA`.
-            Those functions take following arguments:
-            * `df`: The metadata data frame. You can use the `.` to refer to it.
-            * `group-by`: The column name in metadata to group the cells.
-            * `idents`: The first group or both groups of cells to compare (value in `group-by` column). If only the first group is given, the rest of the cells (with non-NA in `group-by` column) will be used as the second group.
-            * `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
-            * `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`)
-            * `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
-            * `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
-            * `order`: The order of the returned ids. It could be `sum` or `diff`, which is the sum or diff of the `compare` between idents.
-                Two kinds of modifiers can be added, including `desc` and `abs`.
-                For example, `sum,desc` means the sum of `compare` between idents in descending order.
-                Default is `diff,abs,desc`. It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
-                ids will be in the same order as in `df`.
-            Note that the numeric column should be the same for all cells in the same group. This will not be checked (only the first value is used).
+            The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+            %(mutate_helpers_clonesize)s
         group-by: The column name in metadata to group the cells.
             If only `group-by` is specified, and `idents` are
             not specified, markers will be found for all groups in this column.

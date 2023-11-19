@@ -32,6 +32,10 @@ suppressPackageStartupMessages(library(dplyr))
 #'  Default is `diff,abs,desc`.
 #'  It only works when `uniq` is `TRUE`. If `uniq` is `FALSE`, the returned
 #'  ids will be in the same order as in `df`.
+#' @param include_emerged Whether to include emerged clones for the expanded clones.
+#'  Default is `FALSE`. It only works for `"expanded"`.
+#' @param include_vanished Whether to include vanished clones for the collapsed clones.
+#'  Default is `FALSE`. It only works for `"collapsed"`.
 #'
 #' @return A vector of expanded or collapsed clones (in `id` column)
 #'  If uniq is `FALSE`, the vector will be the same length as `df`.
@@ -124,8 +128,12 @@ suppressPackageStartupMessages(library(dplyr))
 
     predicate <- function(comp) {
         if (fun == "expanded") {
+            comp[1] > comp[2] && comp[2] > 0
+        } else if (fun == "expanded+") {
             comp[1] > comp[2]
         } else if (fun == "collapsed") {
+            comp[1] < comp[2] && comp[1] > 0
+        } else if (fun == "collapsed+") {
             comp[1] < comp[2]
         } else if (fun == "emerged") {
             comp[1] > 0 && comp[2] == 0
@@ -216,12 +224,14 @@ expanded <- function(
     id = CDR3.aa,
     compare = Clones,
     uniq = TRUE,
-    order = "diff+desc"
+    order = "diff+desc",
+    include_emerged = FALSE
 ) {
     lbl <- as_label(enquo(df))
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
+    fun = if (include_emerged) "expanded+" else "expanded"
     .size_compare(
         df,
         enquo(group.by),
@@ -229,7 +239,7 @@ expanded <- function(
         enquo(subset),
         enquo(id),
         enquo(compare),
-        "expanded",
+        fun,
         uniq = uniq,
         order = order
     )
@@ -244,12 +254,14 @@ collapsed <- function(
     id = CDR3.aa,
     compare = Clones,
     uniq = TRUE,
-    order = "diff+desc"
+    order = "diff+desc",
+    include_vanished = FALSE
 ) {
     lbl <- as_label(enquo(df))
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
+    fun = if (include_vanished) "collapsed+" else "collapsed"
     .size_compare(
         df,
         enquo(group.by),
@@ -257,7 +269,7 @@ collapsed <- function(
         enquo(subset),
         enquo(id),
         enquo(compare),
-        "collapsed",
+        fun,
         uniq = uniq,
         order = order
     )

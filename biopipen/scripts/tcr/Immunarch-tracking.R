@@ -22,6 +22,9 @@ if (length(trackings$cases) == 0) {
         if (is.null(trackings$cases[[name]]$subjects)) {
             trackings$cases[[name]]$subjects = trackings$subjects
         }
+        if (is.null(trackings$cases[[name]]$subset)) {
+            trackings$cases[[name]]$subset = trackings$subset
+        }
     }
 }
 
@@ -31,11 +34,17 @@ dir.create(tracking_dir, showWarnings = FALSE)
 run_tracking_case = function(casename) {
     case = trackings$cases[[casename]]
 
+    if (!is.null(case$subset)) {
+        d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
+    } else {
+        d = immdata
+    }
+
     if (is.null(case$targets)) {
         print(paste0("  ", casename, ", skip, no targets"))
     } else {
         print(paste0("  ", casename))
-        allsubjects = immdata$meta %>% pull(case$subject_col) %>% unlist() %>% unique() %>% na.omit()
+        allsubjects = d$meta %>% pull(case$subject_col) %>% unlist() %>% unique() %>% na.omit()
         if (is.null(case$subjects) || length(case$subjects) == 0) {
             subjects = allsubjects
         } else {
@@ -44,9 +53,9 @@ run_tracking_case = function(casename) {
         if (length(allsubjects) == 1) {
             stop(paste0("Cannot track clonotypes for only one subject: ", subjects))
         }
-        samples = immdata$meta[immdata$meta[[case$subject_col]] %in% subjects, ] %>% pull(Sample) %>% unlist()
+        samples = d$meta[d$meta[[case$subject_col]] %in% subjects, ] %>% pull(Sample) %>% unlist()
         if (is.numeric(case$targets)) {
-            targets = do_call(rbind, lapply(samples, function(s) immdata$data[[s]])) %>%
+            targets = do_call(rbind, lapply(samples, function(s) d$data[[s]])) %>%
                 group_by(CDR3.aa) %>%
                 summarise(Clones = sum(Clones)) %>%
                 arrange(desc(Clones)) %>%
@@ -56,17 +65,17 @@ run_tracking_case = function(casename) {
             targets = case$targets
         }
         if (case$subject_col == "Sample") {
-            imm_tracking = trackClonotypes(immdata$data, targets, .col = "aa")
+            imm_tracking = trackClonotypes(d$data, targets, .col = "aa")
         } else {
             # Construct a data with names as subjects
             # For each subject, get the samples and merge the data
             # Then track
             newdata = list()
             for (subject in subjects) {
-                subject_samples = immdata$meta[immdata$meta[[case$subject_col]] == subject, ] %>%
+                subject_samples = d$meta[d$meta[[case$subject_col]] == subject, ] %>%
                     pull(Sample) %>%
                     na.omit()
-                newdata[[subject]] = do_call(rbind, lapply(subject_samples, function(s) immdata$data[[s]]))
+                newdata[[subject]] = do_call(rbind, lapply(subject_samples, function(s) d$data[[s]]))
             }
             imm_tracking = trackClonotypes(newdata, targets, .col = "aa")
         }

@@ -6,10 +6,10 @@ lens = {{envs.lens | r}}
 counts = {{envs.counts | r}}
 
 # Fill up cases
-fill_up_cases = function(config) {
+fill_up_cases_basic = function(config) {
     cases = config$cases
     if (is.null(cases) || length(cases) == 0) {
-        cases$DEFAULT = list(by = config$by, devpars = config$devpars)
+        cases$DEFAULT = list(by = config$by, devpars = config$devpars, subset = config$subset)
     } else {
         for (case in names(cases)) {
             if (is.null(cases[[case]]$by)) {
@@ -27,6 +27,9 @@ fill_up_cases = function(config) {
             if (is.null(cases[[case]]$devpars$res)) {
                 cases[[case]]$devpars$res = config$devpars$res
             }
+            if (is.null(cases[[case]]$subset)) {
+                cases[[case]]$subset = config$subset
+            }
         }
     }
     for (case in names(cases)) {
@@ -38,19 +41,26 @@ fill_up_cases = function(config) {
     cases
 }
 
-do_one_case = function(name, case, method) {
+do_one_case_basic = function(name, case, method) {
     print(paste0("  Case: ", name))
     odir = file.path(outdir, method)
     dir.create(odir, showWarnings = FALSE)
-    if (method == "len") {
-        exp = repExplore(immdata$data, .method = method, .col = "aa")
+
+    if (!is.null(case$subset)) {
+        d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
     } else {
-        exp = repExplore(immdata$data, .method = method)
+        d = immdata
+    }
+
+    if (method == "len") {
+        exp = repExplore(d$data, .method = method, .col = "aa")
+    } else {
+        exp = repExplore(d$data, .method = method)
     }
     if (is.null(case$by)) {
         p = vis(exp)
     } else {
-        p = vis(exp, .by = case$by, .meta = immdata$meta)
+        p = vis(exp, .by = case$by, .meta = d$meta)
     }
     ofig = file.path(odir, paste0(name, ".png"))
     png(ofig, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
@@ -59,18 +69,18 @@ do_one_case = function(name, case, method) {
 }
 
 # Do cases
-do_cases = function(cases, method) {
+do_cases_basic = function(cases, method) {
     print(paste0("- Basic analysls: ", method))
     for (name in names(cases)) {
-        do_one_case(name, cases[[name]], method)
+        do_one_case_basic(name, cases[[name]], method)
     }
 }
 
-volumes = fill_up_cases(volumes)
-do_cases(volumes, "volume")
+volumes = fill_up_cases_basic(volumes)
+do_cases_basic(volumes, "volume")
 
-lens = fill_up_cases(lens)
-do_cases(lens, "len")
+lens = fill_up_cases_basic(lens)
+do_cases_basic(lens, "len")
 
-counts = fill_up_cases(counts)
-do_cases(counts, "count")
+counts = fill_up_cases_basic(counts)
+do_cases_basic(counts, "count")

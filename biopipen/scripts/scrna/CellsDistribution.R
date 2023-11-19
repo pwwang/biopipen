@@ -18,6 +18,7 @@ cells_by <- {{envs.cells_by | r}}  # nolint
 cells_order <- {{envs.cells_order | r}}  # nolint
 cells_orderby <- {{envs.cells_orderby | r}}  # nolint
 cells_n <- {{envs.cells_n | r}}  # nolint
+subset <- {{envs.subset | r}}  # nolint
 devpars <- {{envs.devpars | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
@@ -53,7 +54,8 @@ expand_cases <- function() {
                 cells_n = cells_n,
                 devpars = devpars,
                 each = each,
-                section = section
+                section = section,
+                subset = subset
             )
         )
     } else {
@@ -69,7 +71,8 @@ expand_cases <- function() {
                 cells_n = cells_n,
                 devpars = devpars,
                 each = each,
-                section = section
+                section = section,
+                subset = subset
             )
             case$devpars <- list_setdefault(case$devpars, devpars)
             filled_cases[[name]] <- case
@@ -109,6 +112,7 @@ do_case <- function(name, case) {
     if (is.null(case$cells_by) || nchar(case$cells_by) == 0) {
         stop(paste0("`cells_by` must be specified for case", name))
     }
+    cells_by <- trimws(strsplit(case$cells_by, ",")[[1]])
 
     sec_case_names <- strsplit(name, ":")[[1]]
     sec_dir <- file.path(outdir, sec_case_names[1])
@@ -118,13 +122,30 @@ do_case <- function(name, case) {
     txtfile <- file.path(sec_dir, paste0("case-", casename, ".txt"))
 
     # subset the seurat object
-    meta <- srtobj@meta.data %>% dplyr::filter(
-        !is.na(!!sym(case$group_by)) &
-        !is.na(!!sym(case$cells_by))
-    )
+    meta <- srtobj@meta.data
+    if (!is.null(case$subset) && nchar(case$subset) > 0) {
+        meta <- dplyr::filter(meta, !!!parse_exprs(case$subset))
+    }
+    meta <- meta %>%
+        drop_na(case$group_by) %>%
+        dplyr::filter(!if_all(all_of(cells_by), is.na))
 
     if (nrow(meta) == 0) {
         stop(paste0("No cells left after filtering NAs for group_by and cells_by for case: ", name))
+    }
+
+    if (length(cells_by) > 1) {
+        new_cells_by <- paste0(".", paste(cells_by, collapse = "_"))
+        meta1 <- meta %>% drop_na(cells_by[1])
+        meta1[[new_cells_by]] <- meta1[[cells_by[1]]]
+        for (i in 2:length(cells_by)) {
+            meta2 <- meta %>% drop_na(cells_by[i])
+            meta2[[new_cells_by]] <- meta2[[cells_by[i]]]
+            meta1 <- rbind(meta1, meta2)
+        }
+
+        cells_by <- new_cells_by
+        meta <- meta1
     }
 
     if (sec_case_names[1] %in% overlap) {
@@ -136,10 +157,10 @@ do_case <- function(name, case) {
 
     # add sizes
     meta <- meta %>%
-        add_count(!!sym(case$cells_by), name = "CloneSize") %>%
-        add_count(!!sym(case$cells_by), !!sym(case$group_by), name = "CloneGroupSize") %>%
-        add_count(!!sym(case$cells_by), seurat_clusters, name = "CloneClusterSize") %>%
-        add_count(!!sym(case$cells_by), !!sym(case$group_by), seurat_clusters, name = "CloneGroupClusterSize")
+        add_count(!!sym(cells_by), name = "CloneSize") %>%
+        add_count(!!sym(cells_by), !!sym(case$group_by), name = "CloneGroupSize") %>%
+        add_count(!!sym(cells_by), seurat_clusters, name = "CloneClusterSize") %>%
+        add_count(!!sym(cells_by), !!sym(case$group_by), seurat_clusters, name = "CloneGroupClusterSize")
 
     # filter group_by values not in group_order
     if (!is.null(case$group_order) && length(case$group_order) > 0) {
@@ -164,17 +185,15 @@ do_case <- function(name, case) {
     if (!is.null(case$cells_order) && length(case$cells_order) > 0) {
         # filter cells_by values not in cells_order
         meta <- meta %>%
-            dplyr::filter(!!sym(case$cells_by) %in% case$cells_order) %>%
-            mutate(!!sym(case$cells_by) := factor(!!sym(case$cells_by), levels = case$cells_order))
+            dplyr::filter(!!sym(cells_by) %in% case$cells_order) %>%
+            mutate(!!sym(cells_by) := factor(!!sym(cells_by), levels = case$cells_order))
     } else if (!is.null(case$cells_orderby)) {
         # otherwise use cells_orderby to order cells_by
         ordered_meta <- meta %>%
-            group_by(!!sym(case$cells_by)) %>%
-            arrange(!!!parse_exprs(case$cells_orderby)) %>%
-            ungroup()
-        cells <- ordered_meta %>% pull(case$cells_by) %>% unique() %>% head(case$cells_n)
-        meta <- ordered_meta %>% dplyr::filter(!!sym(case$cells_by) %in% cells)
-        meta[[case$cells_by]] = factor(meta[[case$cells_by]], levels = cells)
+            arrange(!!!parse_exprs(case$cells_orderby))
+        cells <- ordered_meta %>% pull(cells_by) %>% unique() %>% head(case$cells_n)
+        meta <- ordered_meta %>% dplyr::filter(!!sym(cells_by) %in% cells)
+        meta[[cells_by]] = factor(meta[[cells_by]], levels = cells)
     }
 
     write.table(
@@ -186,7 +205,7 @@ do_case <- function(name, case) {
         quote = FALSE
     )
 
-    nrows <- length(unique(meta[[case$cells_by]]))
+    nrows <- length(unique(meta[[cells_by]]))
     ncols <- length(unique(meta[[case$group_by]]))
 
     devpars <- case$devpars
@@ -214,7 +233,7 @@ do_case <- function(name, case) {
             legend.text = element_text(size=8),
             legend.title = element_text(size=10)
         )  +
-        facet_grid(vars(!!sym(case$cells_by)), vars(!!sym(case$group_by)), switch="y")
+        facet_grid(vars(!!sym(cells_by)), vars(!!sym(case$group_by)), switch="y")
 
     png(outfile, res = devpars$res, width = devpars$width, height = devpars$height)
     print(p)
