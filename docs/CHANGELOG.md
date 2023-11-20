@@ -1,3 +1,10 @@
+## 0.21.1
+
+- deps: Update pipen-board and pygments versions
+- docs: Adopt mkdocs-rtd 0.0.10
+- docs: Fix internal reference in API docs
+- delim.SampleInfo: Refactor data subset logic in SampleInfo class
+
 ## 0.21.0
 
 - tcr.Immunarch: Fix empty groups in diversity plot after filtering
