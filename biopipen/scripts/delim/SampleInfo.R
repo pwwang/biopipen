@@ -44,8 +44,8 @@ for (name in names(stats)) {
     plotfile <- file.path(outdir, paste0(name, ".png"))
 
     is_continuous <- FALSE
-    if (!is.null(stat$distinct)) {
-        data <- mutdata %>% distinct(!!sym(stat$distinct), .keep_all = TRUE)
+    if (!is.null(stat$subset)) {
+        data <- mutdata %>% filter(!!parse_expr(stat$subset))
     } else {
         data <- mutdata
     }

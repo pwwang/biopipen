@@ -81,16 +81,9 @@ class SampleInfo(Proc):
         defaults (ns): The default parameters for `envs.stats`.
             - on: The column name in the data for the stats.
                 Default is `Sample`. The column could be either continuous or not.
-            - distinct: The column name in the data for the distinct records.
-                For example, you may have multiple `Sample`s for each patient.
-                In this case, you can set `distinct` to `Patient` to get the
-                stats for each patient, instead of each sample with duplicated
-                values. Default is `None`, which means all records are distinct.
-                Note that when `distinct` is provided, your `group` and `each` should
-                be the same for each distinct record. For example, it doesn't make
-                sense if you are doing statistics for each patient (`on = "Sample"`),
-                but your `group` is `SampleSource`, defining the source of each
-                sample.
+            - subset: An R expression to subset the data.
+                If you want to keep the distinct records, you can use
+                `!duplicated(<col>)`.
             - group: The column name in the data for the group ids.
                 If not provided, all records will be regarded as one group.
             - na_group (flag): Whether to include `NA`s in the group.
