@@ -956,13 +956,13 @@ pipen-annotate = ">=0.11,<0.12"
 
 [[package]]
 name = "pipen-board"
-version = "0.13.4"
+version = "0.13.6"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.13.4-py3-none-any.whl", hash = "sha256:cd15471c00133348d2a4c4b10cdabb8b78036a04280a6a4956e1fd77b512b03c"},
-    {file = "pipen_board-0.13.4.tar.gz", hash = "sha256:2638a139da4f9be6989e85d541c6965256825917d7d3925db43b33bb64d8c3fe"},
+    {file = "pipen_board-0.13.6-py3-none-any.whl", hash = "sha256:c80b6de1b1d5190c400315e3436f783fd35998157a44410e20acf8498cdaa010"},
+    {file = "pipen_board-0.13.6.tar.gz", hash = "sha256:6fb272cd140dfde28f6d40adb3ccb95b32937fb9a79a60c548dcb6ddcaa6cc39"},
 ]
 
 [package.dependencies]
@@ -1288,13 +1288,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pygments"
-version = "2.17.0"
+version = "2.17.1"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pygments-2.17.0-py3-none-any.whl", hash = "sha256:cd0c46944b2551af02ecc15961050182ea120d3895000e2676160820f3421527"},
-    {file = "pygments-2.17.0.tar.gz", hash = "sha256:edaa0fa2453d055d0ac94449d1f73ec7bc52c5e318204da1377c1392978c4a8d"},
+    {file = "pygments-2.17.1-py3-none-any.whl", hash = "sha256:1b37f1b1e1bff2af52ecaf28cc601e2ef7077000b227a0675da25aef85784bc4"},
+    {file = "pygments-2.17.1.tar.gz", hash = "sha256:e45a0e74bf9c530f564ca81b8952343be986a29f6afe7f5ad95c5f06b7bdf5e8"},
 ]
 
 [package.extras]
@@ -1457,13 +1457,13 @@ toml = ["toml"]
 
 [[package]]
 name = "quart"
-version = "0.19.3"
+version = "0.19.4"
 description = "A Python ASGI web microframework with the same API as Flask"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "quart-0.19.3-py3-none-any.whl", hash = "sha256:3bfb433bb4edfcb13eb908096e579cb99eaae0b57ef05a3edfde797a2b12518a"},
-    {file = "quart-0.19.3.tar.gz", hash = "sha256:530ab6cc9b9e694ba48c00085a7bf881e2f7f23bdc51e27281e6739eee36c13f"},
+    {file = "quart-0.19.4-py3-none-any.whl", hash = "sha256:959da9371b44b6f48d952661863f8f64e68a893481ef3f2ef45b177629dc0928"},
+    {file = "quart-0.19.4.tar.gz", hash = "sha256:22ff186cf164955a7bf7483ff42a739a9fad3b119041846b15dc9597ec74c85c"},
 ]
 
 [package.dependencies]
