@@ -13,7 +13,7 @@ from ..core.config import config
 from ..core.proc import Proc
 
 
-class _MetabolicPathwayActivity(Proc):
+class MetabolicPathwayActivity(Proc):
     """This process calculates the pathway activities in different groups and subsets.
 
     The cells are first grouped by subsets and then the metabolic activities are
@@ -106,7 +106,7 @@ class _MetabolicPathwayActivity(Proc):
     }
 
 
-class _MetabolicFeatures(Proc):
+class MetabolicFeatures(Proc):
     """This process performs enrichment analysis for the metabolic pathways
     for each group in each subset.
 
@@ -190,14 +190,12 @@ class _MetabolicFeatures(Proc):
     }
 
 
-class _MetabolicFeaturesIntraSubset(Proc):
+class MetabolicFeaturesIntraSubset(Proc):
     """Intra-subset metabolic features - Enrichment analysis in details
 
-    Similar to the [`MetabolicFeatures`](./MetabolicFeatures.md) process,
-    this process performs enrichment analysis for the metabolic pathways for
+    Similar to the [`MetabolicFeatures`](!!#biopipennsscrna_metabolic_landscapemetabolicfeatures)
+    process, this process performs enrichment analysis for the metabolic pathways for
     each subset in each group, instead of each group in each subset.
-
-    See also: [`MetabolicFeatures`](./MetabolicFeatures.md)
 
     Envs:
         ncores (type=int; pgarg): Number of cores to use for parallelization
@@ -254,7 +252,7 @@ class _MetabolicFeaturesIntraSubset(Proc):
             - check: {{proc.lang}} <(echo "library(scater)")
         r-fgsea:
             - check: {{proc.lang}} <(echo "library(fgsea)")
-    """
+    """  # noqa: E501
     input = "sobjfile:file"
     output = (
         "outdir:dir:{{in.sobjfile | stem}}.intra-subset-pathwayfeatures"
@@ -284,7 +282,7 @@ class _MetabolicFeaturesIntraSubset(Proc):
     }
 
 
-class _MetabolicPathwayHeterogeneity(Proc):
+class MetabolicPathwayHeterogeneity(Proc):
     """Calculate Metabolic Pathway heterogeneity.
 
     For each subset, the normalized enrichment score (NES) of each metabolic pathway
@@ -593,7 +591,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     def p_pathway_activity(self) -> Type[Proc]:
         """Build MetabolicPathwayActivity process"""
         return Proc.from_proc(
-            _MetabolicPathwayActivity,
+            MetabolicPathwayActivity,
             "MetabolicPathwayActivity",
             requires=self.p_expr_impute,
             order=-1,
@@ -611,7 +609,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     def p_pathway_heterogeneity(self) -> Type[Proc]:
         """Build MetabolicPathwayHeterogeneity process"""
         return Proc.from_proc(
-            _MetabolicPathwayHeterogeneity,
+            MetabolicPathwayHeterogeneity,
             "MetabolicPathwayHeterogeneity",
             requires=self.p_expr_impute,
             envs={
@@ -628,7 +626,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     def p_features(self) -> Type[Proc]:
         """Build MetabolicFeatures process"""
         return Proc.from_proc(
-            _MetabolicFeatures,
+            MetabolicFeatures,
             "MetabolicFeatures",
             requires=self.p_expr_impute,
             envs={
@@ -650,7 +648,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             )
 
         return Proc.from_proc(
-            _MetabolicFeaturesIntraSubset,
+            MetabolicFeaturesIntraSubset,
             "MetabolicFeaturesIntraSubset",
             requires=self.p_expr_impute,
             envs={

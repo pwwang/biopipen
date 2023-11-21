@@ -168,7 +168,7 @@ class Immunarch(Proc):
 
     See <https://immunarch.com/articles/web_only/v3_basic_analysis.html>
 
-    After [`ImmunarchLoading`](./ImmunarchLoading.md) loads the raw data into an [immunarch](https://immunarch.com) object,
+    After [`ImmunarchLoading`](!!#biopipennstcrimmunarchloading) loads the raw data into an [immunarch](https://immunarch.com) object,
     this process wraps the functions from [`immunarch`](https://immunarch.com) to do the following:
 
     - Basic statistics, provided by [`immunarch::repExplore`](https://immunarch.com/reference/repExplore.html), such as number of clones or distributions of lengths and counts.
@@ -218,7 +218,7 @@ class Immunarch(Proc):
         vis_args = { "-plot": "heatmap2" }
         ```
 
-        `-plot` will be translated to `.plot` and then passed to `vis`. See also [Namespace and Environment Variables](../configurations.md#namespace-environment-variables).
+        `-plot` will be translated to `.plot` and then passed to `vis`.
 
         If multiple cases share the same arguments, we can use the following configuration:
 
@@ -967,7 +967,8 @@ class Immunarch2VDJtools(Proc):
 
     This process converts the [`immunarch`](https://immunarch.com/) object to the
     [`VDJtools`](https://vdjtools-doc.readthedocs.io/en/master/) input files,
-    in order to perform the VJ gene usage analysis by [`VJUsage`](./VJUsage.md) process.
+    in order to perform the VJ gene usage analysis by
+    [`VJUsage`](!!#biopipennstcrvjusage) process.
 
     This process will generally generate a tab-delimited file for each sample,
     with the following columns.
@@ -1125,9 +1126,8 @@ class TCRClustering(Proc):
 
     A text file will be generated with the cluster assignments for each cell, together
     with the `immunarch` object (in `R`) with the cluster assignments at `TCR_Clsuter`
-    column. This information will then be merged to the `Seurat` object by
-    [TCRClusters2Seurat](./TCRClusters2Seurat.md).
-    Futher downstream analysis can be performed using the cluster assignments.
+    column. This information will then be merged to a `Seurat` object for further
+    downstream analysis.
 
     The cluster assignments are prefixed with `S_` or `M_` to indicate whether a
     cluster has only one unique CDR3 sequence or multiple CDR3 sequences.

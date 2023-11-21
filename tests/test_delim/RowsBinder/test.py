@@ -44,9 +44,14 @@ class SampleInfo(SampleInfo_):
                 "plot": "bar",
                 "each": "Source",
             },
+            "Subjects_per_Filename": {
+                "group": "Filename",
+                "plot": "bar",
+                "subset": "!duplicated(Subject)",
+            },
             "Score": {
                 "on": "Score",
-                "distinct": "Subject",
+                "subset": "!duplicated(Subject)"
             },
             "Score_Source": {
                 "on": "Score",
@@ -60,7 +65,7 @@ class SampleInfo(SampleInfo_):
             "Score_violin": {
                 "on": "Score",
                 "plot": "violin",
-                "distinct": "Subject",
+                "subset": "!duplicated(Subject)"
             },
             "Score_Source_violin": {
                 "on": "Score",
