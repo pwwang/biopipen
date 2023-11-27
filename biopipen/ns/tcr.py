@@ -180,6 +180,7 @@ class Immunarch(Proc):
     - The dynamics of repertoires across time points/samples, provided by [`immunarch::trackClonotypes`](https://immunarch.com/reference/trackClonotypes.html)
     - The spectratype of clonotypes, provided by [`immunarch::spectratype`](https://immunarch.com/reference/spectratype.html)
     - The distributions of kmers and sequence profiles, provided by [`immunarch::getKmers`](https://immunarch.com/reference/getKmers.html)
+    - The V-J junction circos plots, implemented within the script of this process.
 
     Environment Variable Design:
         With different sets of arguments, a single function of the above can perform different tasks.
@@ -657,6 +658,24 @@ class Immunarch(Proc):
                 The values will be passed to the corresponding arguments above.
                 If any of these arguments are not specified, the default case will be added, with the name `DEFAULT` and the
                 values of `envs.kmers.k`, `envs.kmers.head`, `envs.kmers.vis_args` and `envs.kmers.devpars`.
+        vj_junc (ns): Arguments for VJ junction circos plots.
+            This analysis is not included in `immunarch`. It is a separate implementation using [`circlize`](https://github.com/jokergoo/circlize).
+            - by: Groupings to show VJ usages. Typically, this is the `Sample` column, so that the VJ usages are shown for each sample.
+                But you can also use other columns, such as `Subject` to show the VJ usages for each subject.
+                Multiple columns should be separated by `,`.
+            - by_clones (flag): If True, the VJ usages will be calculated based on the distinct clonotypes, instead of the individual cells.
+            - subset: Subset the data before plotting VJ usages.
+                The whole data will be expanded to cell level, and then subsetted.
+                Clone sizes will be re-calculated based on the subsetted data, which will affect the VJ usages at cell level (by_clones=False).
+            - devpars (ns): The parameters for the plotting device.
+                - width (type=int): The width of the plot.
+                - height (type=int): The height of the plot.
+                - res (type=int): The resolution of the plot.
+            - cases (type=json;order=9): If you have multiple cases, you can use this argument to specify them.
+                The keys will be used as the names of the cases. The values will be passed to the corresponding arguments above.
+                If any of these arguments are not specified, the values in `envs.vj_junc` will be used.
+                If NO cases are specified, the default case will be added, with the name `DEFAULT` and the
+                values of `envs.vj_junc.by`, `envs.vj_junc.by_clones` `envs.vj_junc.subset` and `envs.vj_junc.devpars`.
     """  # noqa: E501
     input = "immdata:file,metafile:file"
     output = "outdir:dir:{{in.immdata | stem}}.immunarch"
@@ -799,6 +818,14 @@ class Immunarch(Proc):
                 "devpars": {"width": 1000, "height": 1000, "res": 100},
                 "cases": {},
             },
+            "cases": {},
+        },
+        # VJ junction
+        "vj_junc": {
+            "by": "Sample",
+            "by_clones": True,
+            "devpars": {"width": 800, "height": 800, "res": 100},
+            "subset": None,
             "cases": {},
         },
     }

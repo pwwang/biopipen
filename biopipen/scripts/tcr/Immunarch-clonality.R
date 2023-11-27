@@ -1,6 +1,11 @@
 # loaded variables
 # immfile, outdir, mutaters, immdata, n_samples
 
+log_info("")
+log_info("#####################################")
+log_info("# Clonality analysis                #")
+log_info("#####################################")
+
 top_clones = {{envs.top_clones | r}}
 rare_clones = {{envs.rare_clones | r}}
 hom_clones = {{envs.hom_clones | r}}
@@ -45,9 +50,10 @@ fill_up_cases_clonality = function(config) {
 }
 
 do_one_case_clonality = function(name, case, method) {
-    print(paste0("  Case: ", name))
+    log_info("- Processing case: {name} ...")
     odir = file.path(outdir, paste0(method, "_clones"))
     dir.create(odir, showWarnings = FALSE)
+
     if (is.null(case$subset)) {
         d = immdata
     } else {
@@ -80,7 +86,7 @@ do_one_case_clonality = function(name, case, method) {
 
 # Do cases
 do_cases_clonality = function(cases, method) {
-    print(paste0("- Clonality analysls: ", method))
+    log_info("Handling cases (method={method}) ...")
     for (name in names(cases)) {
         do_one_case_clonality(name, cases[[name]], method)
     }

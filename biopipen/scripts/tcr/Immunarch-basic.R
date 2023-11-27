@@ -1,12 +1,18 @@
 # loaded variables
 # immfile, outdir, mutaters, immdata, n_samples
 
+log_info("")
+log_info("#####################################")
+log_info("# Basic analysis                    #")
+log_info("#####################################")
+
 volumes = {{envs.volumes | r}}
 lens = {{envs.lens | r}}
 counts = {{envs.counts | r}}
 
 # Fill up cases
 fill_up_cases_basic = function(config) {
+    log_info("Filling up cases ...")
     cases = config$cases
     if (is.null(cases) || length(cases) == 0) {
         cases$DEFAULT = list(by = config$by, devpars = config$devpars, subset = config$subset)
@@ -42,7 +48,7 @@ fill_up_cases_basic = function(config) {
 }
 
 do_one_case_basic = function(name, case, method) {
-    print(paste0("  Case: ", name))
+    log_info("- Processing case: {name} ...")
     odir = file.path(outdir, method)
     dir.create(odir, showWarnings = FALSE)
 
@@ -70,7 +76,7 @@ do_one_case_basic = function(name, case, method) {
 
 # Do cases
 do_cases_basic = function(cases, method) {
-    print(paste0("- Basic analysls: ", method))
+    log_info("Handling cases (method={method}) ...")
     for (name in names(cases)) {
         do_one_case_basic(name, cases[[name]], method)
     }

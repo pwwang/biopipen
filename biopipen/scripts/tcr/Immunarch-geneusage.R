@@ -1,9 +1,15 @@
 # loaded variables
 # immfile, outdir, mutaters, immdata, n_samples
 
+log_info("")
+log_info("#####################################")
+log_info("# Gene usage analysis               #")
+log_info("#####################################")
+
 gene_usages = {{ envs.gene_usages | r: todot="-" }}
 
 # Fill up cases
+log_info("Filling up cases ...")
 cases = gene_usages$cases
 if (is.null(cases) || length(cases) == 0) {
     cases$DEFAULT = list(
@@ -92,7 +98,8 @@ for (name in names(cases)) {
 }
 
 do_one_case_geneusage = function(name, case, gu_dir) {
-    print(paste0("  Case: ", name))
+    # print(paste0("  Case: ", name))
+    log_info("Processing case: {name} ...")
     odir = file.path(gu_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
@@ -127,7 +134,8 @@ do_one_case_geneusage = function(name, case, gu_dir) {
             if (case$analyses$cases[[aname]]$method == "none") {
                 next
             }
-            print(paste0("    Analysis: ", aname))
+            # print(paste0("    Analysis: ", aname))
+            log_info("- Processing analysis: {aname} ...")
             tryCatch({
                 imm_gua = geneUsageAnalysis(imm_gu, .method = case$analyses$cases[[aname]]$method)
             }, error = function(e) {
@@ -159,7 +167,6 @@ do_one_case_geneusage = function(name, case, gu_dir) {
 gu_dir = file.path(outdir, "gene_usage")
 dir.create(gu_dir, showWarnings = FALSE)
 
-print("- Gene usage")
 for (name in names(cases)) {
     do_one_case_geneusage(name, cases[[name]], gu_dir)
 }

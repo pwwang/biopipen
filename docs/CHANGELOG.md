@@ -1,3 +1,8 @@
+## 0.21.2
+
+- tcr.Immunarch: Add V-J junction circos plots
+- tcr.Immunarch: Refactor logging statements using `r-logger`
+
 ## 0.21.1
 
 - deps: Update pipen-board and pygments versions

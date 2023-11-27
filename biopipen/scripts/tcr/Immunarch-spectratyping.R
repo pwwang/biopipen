@@ -1,9 +1,15 @@
 # loaded variables
 # immfile, outdir, mutaters, immdata, n_samples
 
+log_info("")
+log_info("#####################################")
+log_info("# Spectratyping analysis            #")
+log_info("#####################################")
+
 spects = {{ envs.spects | r }}
 
 # Fill up cases
+log_info("Filling up cases ...")
 if (is.null(spects$cases) || length(spects$cases) == 0) {
     spects$cases$DEFAULT = list(
         quant = spects$quant,
@@ -37,7 +43,8 @@ if (is.null(spects$cases) || length(spects$cases) == 0) {
 }
 
 do_one_case_spectratyping = function(name, case, spect_dir) {
-    print(paste0("  Case: ", name))
+    # print(paste0("  Case: ", name))
+    log_info("- Processing case: {name} ...")
     odir = file.path(spect_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
@@ -48,7 +55,8 @@ do_one_case_spectratyping = function(name, case, spect_dir) {
     }
 
     for (sample in names(d$data)) {
-        print(paste0("    Sample: ", sample))
+        # print(paste0("    Sample: ", sample))
+        log_info("  Sample: {sample} ...")
         spec_obj = spectratype(
             d$data[[sample]],
             .quant = case$quant,
@@ -65,7 +73,6 @@ do_one_case_spectratyping = function(name, case, spect_dir) {
     }
 }
 
-print("- Spectratyping")
 spect_dir = file.path(outdir, "spectratyping")
 dir.create(spect_dir, showWarnings = FALSE)
 

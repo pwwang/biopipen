@@ -11,7 +11,9 @@ library(dplyr)
 library(glue)
 library(tidyr)
 library(tibble)
+library(logger)
 
+log_info("Loading arguments ...")
 theme_set(theme_prism())
 
 immfile = {{ in.immdata | r }}
@@ -20,9 +22,13 @@ outdir = {{ out.outdir | r }}
 mutaters = {{ envs.mutaters | r }}
 prefix = {{ envs.prefix | r }}
 
+log_info("Loading immdata ...")
 immdata = readRDS(immfile)
+
+log_info("Expanding immdata ...")
 exdata = expand_immdata(immdata)
 
+log_info("Loading metadata if provided ...")
 if (endsWith(metafile, ".rds") || endsWith(metafile, ".RDS")) {
     meta = readRDS(metafile)@meta.data
 } else if (!is.null(metafile) && nchar(metafile) > 0) {
@@ -31,6 +37,7 @@ if (endsWith(metafile, ".rds") || endsWith(metafile, ".RDS")) {
     meta = NULL
 }
 
+log_info("Merging metadata if provided ...")
 if (!is.null(meta)) {
     cell_ids = glue_data(exdata, paste0(prefix, "{Barcode}"))
     dup_names = intersect(colnames(meta), colnames(exdata))
@@ -43,6 +50,7 @@ if (!is.null(meta)) {
 }
 rm(meta)
 
+log_info("Mutating data if `envs.mutaters` is provided ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     exdata = mutate(exdata, !!!lapply(mutaters, parse_expr))
 }
@@ -88,3 +96,8 @@ n_samples = length(immdata$data)
 # K-mer analysis     #
 ######################
 {% include biopipen_dir + "/scripts/tcr/Immunarch-kmer.R" %}
+
+######################
+# VJ junction        #
+######################
+{% include biopipen_dir + "/scripts/tcr/Immunarch-vjjunc.R" %}

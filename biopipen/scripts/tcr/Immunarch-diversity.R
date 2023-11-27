@@ -1,6 +1,11 @@
 # Diversity estimation
 # https://immunarch.com/articles/web_only/v6_diversity.html
 
+log_info("")
+log_info("#####################################")
+log_info("# Diversity estimation              #")
+log_info("#####################################")
+
 # Other variables are loaded in the parent template
 # immdata is already loaded, meta is mutated
 div_method = {{envs.divs.method | r}}
@@ -22,10 +27,9 @@ div_ymax = {{envs.divs.ymax | r}}
 div_dir = file.path(outdir, "diversity")
 dir.create(div_dir, showWarnings = FALSE)
 
-print("- Diversity estimation ...")
-
 # Fill up the cases
 update_case = function(case) {
+    log_info("Filling up cases ...")
     if (is.null(case$subset)) {
         case$subset = div_subset
     }
@@ -421,7 +425,8 @@ run_raref_multi = function(d, case, ddir) {
     widths = list()
     plots = list()
     for (sepvar in sepvars) {
-        print(paste0("  ", case$separate_by, ": ", sepvar))
+        # print(paste0("  ", case$separate_by, ": ", sepvar))
+        log_info("  {case$separate_by}: {sepvar}")
         q = list(include(sepvar))
         names(q) = case$separate_by
         single_run = run_raref_single(
@@ -473,7 +478,7 @@ run_raref_multi = function(d, case, ddir) {
 
 # Run the diversity estimation for one case
 run_div_case = function(casename) {
-    print(paste0("  Case: ", casename))
+    log_info("Processing case: {casename} ...")
     case = div_cases[[casename]]
     if (case$method == "raref") {
         ddir = file.path(outdir, "rarefraction", casename)
