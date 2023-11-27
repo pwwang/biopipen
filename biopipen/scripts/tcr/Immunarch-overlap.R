@@ -1,6 +1,11 @@
 # loaded variables
 # immfile, outdir, mutaters, immdata, n_samples
 
+log_info("")
+log_info("#####################################")
+log_info("# Overlap analysis                  #")
+log_info("#####################################")
+
 overlaps = {{ envs.overlaps | r: todot="-" }}
 
 # Fill up cases
@@ -76,7 +81,8 @@ for (name in names(cases)) {
 }
 
 do_one_case_overlap = function(name, case, ov_dir) {
-    print(paste0("  Case: ", name))
+    # print(paste0("  Case: ", name))
+    log_info("Processing case: {name} ...")
     odir = file.path(ov_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
@@ -100,7 +106,8 @@ do_one_case_overlap = function(name, case, ov_dir) {
         for (aname in names(case$analyses$cases)) {
             if (case$analyses$cases[[aname]]$method == "none") next
 
-            print(paste0("    Analysis: ", aname))
+            # print(paste0("    Analysis: ", aname))
+            log_info("- Processing analysis: {aname} ...")
             k = min(n_samples - 1, 2)
             tryCatch({
                 imm_ova = repOverlapAnalysis(
@@ -135,7 +142,7 @@ do_one_case_overlap = function(name, case, ov_dir) {
 ov_dir = file.path(outdir, "overlap")
 dir.create(ov_dir, showWarnings = FALSE)
 
-print("- Overlap")
+# print("- Overlap")
 for (name in names(cases)) {
     do_one_case_overlap(name, cases[[name]], ov_dir)
 }

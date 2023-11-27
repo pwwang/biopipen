@@ -1,7 +1,11 @@
-print("- Clonotype tracking")
+log_info("")
+log_info("#####################################")
+log_info("# Clonotype tracking                #")
+log_info("#####################################")
 
 trackings = {{ envs.trackings | r }}
 
+log_info("Filling up cases ...")
 if (is.null(trackings$subjects)) {
     trackings$subjects = c()
 }
@@ -41,9 +45,11 @@ run_tracking_case = function(casename) {
     }
 
     if (is.null(case$targets)) {
-        print(paste0("  ", casename, ", skip, no targets"))
+        # print(paste0("  ", casename, ", skip, no targets"))
+        log_info("- Case: {casename}, skip, no targets")
     } else {
-        print(paste0("  ", casename))
+        # print(paste0("  ", casename))
+        log_info("- Case: {casename}")
         allsubjects = d$meta %>% pull(case$subject_col) %>% unlist() %>% unique() %>% na.omit()
         if (is.null(case$subjects) || length(case$subjects) == 0) {
             subjects = allsubjects

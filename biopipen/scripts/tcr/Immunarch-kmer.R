@@ -1,9 +1,15 @@
 # loaded variables
 # immfile, outdir, mutaters, immdata, n_samples
 
+log_info("")
+log_info("#####################################")
+log_info("# K-mer analysis                    #")
+log_info("#####################################")
+
 kmers = {{ envs.kmers | r: todot="-" }}
 
 # Fill up cases
+log_info("Filling up cases ...")
 cases = kmers$cases
 if (is.null(cases) || length(cases) == 0) {
     cases$DEFAULT = list(
@@ -80,7 +86,8 @@ for (name in names(cases)) {
 }
 
 do_one_case_kmer = function(name, case, kmer_dir) {
-    print(paste0("  Case: ", name))
+    # print(paste0("  Case: ", name))
+    log_info("Processing case: {name} ...")
     odir = file.path(kmer_dir, name)
     dir.create(odir, showWarnings = FALSE)
 
@@ -102,12 +109,14 @@ do_one_case_kmer = function(name, case, kmer_dir) {
     dev.off()
 
     for (sample in names(d$data)) {
-        print(paste0("    Sample: ", sample))
+        # print(paste0("    Sample: ", sample))
+        log_info("- Sample: {sample} ...")
         imm_kmer = getKmers(d$data[[sample]], case$k)
 
         if (!is.null(case$profiles$cases) && length(case$profiles$cases) > 0) {
             for (aname in names(case$profiles$cases)) {
-                print(paste0("    Profiling: ", aname))
+                # print(paste0("    Profiling: ", aname))
+                log_info("  Profiling: {aname} ...")
                 imm_kmera = kmer_profile(imm_kmer, case$profiles$cases[[aname]]$method)
                 avis_args = case$profiles$cases[[aname]]$vis_args
                 avis_args$.data = imm_kmera
@@ -128,7 +137,6 @@ do_one_case_kmer = function(name, case, kmer_dir) {
 kmer_dir = file.path(outdir, "kmer")
 dir.create(kmer_dir, showWarnings = FALSE)
 
-print("- K-mer analysis")
 for (name in names(cases)) {
     do_one_case_kmer(name, cases[[name]], kmer_dir)
 }
