@@ -157,6 +157,19 @@
         {{ table_of_images(kmerpngs) }}
     {% endfor %}
 
+<h{{h}}>V-J Junction Circos Plots</h{{h}}>
+    {% set vjjunc_case_dirs = job.out.outdir | glob: "vj_junc", "*" %}
+    {% if len(vjjunc_case_dirs) > 1 or basename(vjjunc_case_dirs[0]) != "DEFAULT" %}
+        {% for vjjunc_case_dir in vjjunc_case_dirs %}
+            <h{{h+1}}>{{vjjunc_case_dir | basename | escape}}</h{{h+1}}>
+            {% assign vjjuncpngs = vjjunc_case_dir | glob: "*.png" | sort %}
+            {{ table_of_images(vjjuncpngs) }}
+        {% endfor %}
+    {% else %}
+        {% assign vjjuncpngs = vjjunc_case_dirs[0] | glob: "*.png" | sort %}
+        {{ table_of_images(vjjuncpngs) }}
+    {% endif %}
+
 {%- endmacro -%}
 
 
