@@ -956,19 +956,19 @@ pipen-annotate = ">=0.11,<0.12"
 
 [[package]]
 name = "pipen-board"
-version = "0.13.6"
+version = "0.13.7"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.13.6-py3-none-any.whl", hash = "sha256:c80b6de1b1d5190c400315e3436f783fd35998157a44410e20acf8498cdaa010"},
-    {file = "pipen_board-0.13.6.tar.gz", hash = "sha256:6fb272cd140dfde28f6d40adb3ccb95b32937fb9a79a60c548dcb6ddcaa6cc39"},
+    {file = "pipen_board-0.13.7-py3-none-any.whl", hash = "sha256:c675f2fcc601ab87f6d386941eeab80b6aa3f93f03165c8f81e61679513d2966"},
+    {file = "pipen_board-0.13.7.tar.gz", hash = "sha256:22c9e3912f415cb84daf362ef9375f1ad868dab74e0984f21cd6af21401883b4"},
 ]
 
 [package.dependencies]
 pipen-args = ">=0.12,<0.13"
 pipen-log2file = ">=0.5,<0.6"
-pipen-report = {version = ">=0.14,<0.15", optional = true, markers = "extra == \"report\""}
+pipen-report = {version = ">=0.15,<0.16", optional = true, markers = "extra == \"report\""}
 psutil = ">=5.9.6,<6.0.0"
 python-slugify = ">=8.0.1,<9.0.0"
 quart = ">=0.19,<0.20"
@@ -977,7 +977,7 @@ websocket-client = ">=1.6,<2.0"
 [package.extras]
 diagram = ["pipen-diagram (>=0.9,<0.10)"]
 filters = ["pipen-filters (>=0.10,<0.11)"]
-report = ["pipen-report (>=0.14,<0.15)"]
+report = ["pipen-report (>=0.15,<0.16)"]
 
 [[package]]
 name = "pipen-cli-run"
@@ -1023,13 +1023,13 @@ pipen = ">=0.12,<0.13"
 
 [[package]]
 name = "pipen-report"
-version = "0.14.0"
+version = "0.15.0"
 description = "Report generation system for pipen"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_report-0.14.0-py3-none-any.whl", hash = "sha256:78ec8b86e9abf11868f9a0f7f480fd3dbd774c5fb9a333247dd574dcaee8970f"},
-    {file = "pipen_report-0.14.0.tar.gz", hash = "sha256:25d315dc0748da8780531877dd4c51f21a8dffc548bbceaf637d5daf7ec2c0ff"},
+    {file = "pipen_report-0.15.0-py3-none-any.whl", hash = "sha256:dbb561519c2ac8f349a3451515e0117ed75086d320213c7f1662ca2edc3c04a8"},
+    {file = "pipen_report-0.15.0.tar.gz", hash = "sha256:09ba8f62241755b2920c48e4fc63f3f6ee71d2fde7ad7ebd2f69bd46afb4f7c8"},
 ]
 
 [package.dependencies]
@@ -1701,13 +1701,13 @@ test = ["Cython (>=0.29.36,<0.30.0)", "aiohttp (==3.9.0b0)", "aiohttp (>=3.8.1)"
 
 [[package]]
 name = "varname"
-version = "0.12.1"
+version = "0.12.2"
 description = "Dark magics about variable names in python."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "varname-0.12.1-py3-none-any.whl", hash = "sha256:c044057d45522dae312f49f06c34e6df0eaae478874defb685a5fdb4d3c246da"},
-    {file = "varname-0.12.1.tar.gz", hash = "sha256:3ec8620dba316c73a0eca9631c3d94c6be717222fe6e0c57b1c56fca7a0e9bed"},
+    {file = "varname-0.12.2-py3-none-any.whl", hash = "sha256:7edf7d8e22fbde6f0f813d5e3a8f6c723122921d16dedf1568fcacb84b91386d"},
+    {file = "varname-0.12.2.tar.gz", hash = "sha256:f29c0ffdeab5a439d96222d3a52a0b281083f22528142dc36a69ad112a530c9f"},
 ]
 
 [package.dependencies]
