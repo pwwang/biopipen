@@ -418,6 +418,7 @@ class SeuratClusterStats(Proc):
             - group-by: Same as `ident`. How the points are colored.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.
+            - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -482,6 +483,7 @@ class SeuratClusterStats(Proc):
             "group-by": None,
             "split-by": None,
             "shape-by": None,
+            "subset": None,
             "reduction": "dim",
             "devpars": {"res": 100, "height": 800, "width": 1000},
         },
