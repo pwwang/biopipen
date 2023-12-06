@@ -48,7 +48,7 @@ dir.create(vjjunc_dir, showWarnings = FALSE)
 
 do_one_case_vjjunc <- function(name, case) {
     log_info("Processing case: {name} ...")
-    odir = file.path(vjjunc_dir, name)
+    odir = file.path(vjjunc_dir, slugify(name, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE)
 
     if (!is.null(case$subset)) {
@@ -76,7 +76,7 @@ do_one_case_vjjunc <- function(name, case) {
             filter(!is.na(V.name) & !is.na(J.name) & V.name != "None" & J.name != "None") %>%
             arrange(V.name, J.name)
 
-        figfile <- file.path(odir, paste0(by_name, ".png"))
+        figfile <- file.path(odir, paste0(slugify(by_name), ".png"))
         png(figfile, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
         chordDiagram(
             gsd,
@@ -96,8 +96,23 @@ do_one_case_vjjunc <- function(name, case) {
         }, bg.border = NA) # here set bg.border to NA is important
         dev.off()
 
+        add_report(
+            list(src = figfile, name = by_name),
+            h1 = "V-J Junction Circos Plots",
+            h2 = ifelse(name == "DEFAULT", "#" , name),
+            ui = "table_of_images"
+        )
+
         NULL
     })
 }
+
+add_report(
+    list(
+        kind = "descr",
+        content = "V-J usage plot displaying the frequency of various V-J junctions."
+    ),
+    h1 = "V-J Junction Circos Plots"
+)
 
 sapply(names(cases), function(name) do_one_case_vjjunc(name, cases[[name]]))

@@ -10,6 +10,7 @@ library(ggplot2)
 library(ggprism)
 library(ggVennDiagram)
 library(UpSetR)
+library(slugify)
 
 theme_set(theme_prism())
 
@@ -17,6 +18,7 @@ theme_set(theme_prism())
 immfile <- {{ in.immdata | quote }}
 metafile <- {{ in.metafile | r }}
 outdir <- {{ out.outdir | quote }}
+joboutdir <- {{ job.outdir | quote }}
 
 subject_key <- {{ envs.subject | r }}
 group_key <- {{ envs.group | r }}
@@ -29,7 +31,7 @@ cases <- {{ envs.cases | r }}
 
 # Fill up cases using `envs.xxx` if not provided and compose a DEFAULT case
 # if no cases are provided
-print("- Preparing cases...")
+log_info("Preparing cases...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
         DEFAULT = list(
@@ -60,11 +62,11 @@ if (is.null(cases) || length(cases) == 0) {
     }
 }
 
-print("- Preparing data ...")
-print("  Loading immdata ...")
+log_info("Preparing data ...")
+log_info("- Loading immdata ...")
 immdata <- readRDS(immfile)
 
-print("  Expanding immdata$data to cell-level ...")
+log_info("- Expanding immdata$data to cell-level ...")
 cldata <- do_call(rbind, lapply(names(immdata$data), function(name) {
     dat <- immdata$data[[name]] %>% separate_rows(Barcode, sep = ";") # Split barcodes
     dat$Sample <- name
@@ -76,7 +78,7 @@ cldata <- do_call(rbind, lapply(names(immdata$data), function(name) {
 }))
 
 if (!is.null(metafile)) {
-    print("  Loading metafile ...")
+    log_info("- Loading metafile ...")
     # Check if extension is rds/RDS, if so, it should be a Seurat object
     if (endsWith(metafile, ".rds") || endsWith(metafile, ".RDS")) {
         meta <- readRDS(metafile)@meta.data
@@ -86,14 +88,14 @@ if (!is.null(metafile)) {
         )
     }
 
-    print("  Merging metafile to cldata ...")
+    log_info("- Merging metafile to cldata ...")
     cldata <- cbind(
         cldata,
         meta[cldata$Barcode, setdiff(colnames(meta), colnames(cldata)), drop = FALSE]
     )
 }
 
-print("- Applying mutaters ...")
+log_info("Applying mutaters ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     cldata <- cldata %>% mutate(!!!lapply(mutaters, parse_expr))
 }
@@ -115,7 +117,7 @@ get_groups <- function(order) {
 }
 
 perpare_case <- function(casename, case) {
-    print(paste("- Preparing case:", casename, "..."))
+    log_info("Preparing case: {casename} ...")
     # Check if required keys are provided
     if (is.null(case$subject) || length(case$subject) == 0) {
         stop(paste("`subject` is required for case:", casename))
@@ -133,13 +135,12 @@ perpare_case <- function(casename, case) {
             ))
         } else if (!any(has_comma)) {
             if (length(case$order) > 2) {
-                warning(
+                log_warn(
                     paste0(
                         "- Order of groups in case:", casename,
                         " is not recommended, please use comma to separate groups. \n",
                         "Instead of `['A', 'B', 'C']`, use `['A,B', 'A,C', 'B,C']`."
-                    ),
-                    immediate. = TRUE
+                    )
                 )
                 case$order <- sapply(
                     combn(case$order, 2, simplify = FALSE),
@@ -162,19 +163,19 @@ perpare_case <- function(casename, case) {
 
     # Create case-specific directories
     # Scatter plots
-    scatter_dir <- file.path(outdir, casename, "scatter")
+    scatter_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "scatter")
     dir.create(scatter_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Venn diagrams
-    venn_dir <- file.path(outdir, casename, "venn")
+    venn_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "venn")
     dir.create(venn_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Upset plots
-    upset_dir <- file.path(outdir, casename, "upset")
+    upset_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "upset")
     dir.create(upset_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Counts
-    counts_dir <- file.path(outdir, casename, "counts")
+    counts_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "counts")
     dir.create(counts_dir, recursive = TRUE, showWarnings = FALSE)
 
     case
@@ -376,6 +377,7 @@ plot_upset <- function(counts, singletons) {
 }
 
 handle_subject <- function(i, subjects, casename, case) {
+    casedir = file.path(outdir, slugify(casename, tolower = FALSE))
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
     # | SEABESRWEFAEF | 0     | 10     |
@@ -387,7 +389,7 @@ handle_subject <- function(i, subjects, casename, case) {
         as.character() %>%
         paste(collapse = "-")
 
-    print(paste("- Handling", i, case$subject, "..."))
+    log_info("Handling {i} {case$subject} ...")
 
     if (!is.null(case$subset)) {
         counts <- cldata %>% filter(!!parse_expr(case$subset))
@@ -412,10 +414,7 @@ handle_subject <- function(i, subjects, casename, case) {
         case$order <- sapply(combn(groups, 2, simplify = FALSE), function(x) paste(x, collapse = ","))
     }
     if (length(unique(counts[[case$group]])) < 2) {
-        warning(
-            paste0("-", casename, ", Subject doesn't have enough groups:", subject),
-            immediate. = TRUE
-        )
+        log_warn("{casename}, Subject doesn't have enough groups: {subject}")
         return()
     }
     singletons = counts %>%
@@ -437,7 +436,7 @@ handle_subject <- function(i, subjects, casename, case) {
 
     # Save samples to group_by so they can be aligned accordingly in the report
     if (!is.null(section)) {
-        group_dir <- file.path(outdir, casename, "section")
+        group_dir <- file.path(casedir, "section")
         dir.create(group_dir, showWarnings = FALSE)
 
         sgroups <- subject_row %>%
@@ -445,60 +444,90 @@ handle_subject <- function(i, subjects, casename, case) {
             pull(section) %>%
             unique() %>%
             paste(collapse = "-")
-        group_file <- file.path(group_dir, paste0(sgroups, ".txt"))
+        group_file <- file.path(group_dir, paste0(slugify(sgroups), ".txt"))
         cat(subject, file = group_file, sep = "\n", append = TRUE)
     }
 
     # Save counts
-    counts_dir <- file.path(outdir, casename, "counts")
+    counts_dir <- file.path(casedir, "counts")
+    countfile <- file.path(counts_dir, paste0(slugify(subject), ".txt"))
     write.table(
         counts,
-        file = file.path(counts_dir, paste0(subject, ".txt")),
+        file = countfile,
         sep = "\t",
         row.names = TRUE,
         col.names = TRUE,
         quote = FALSE
     )
+    add_report(
+        list(kind = "table", src = countfile, ds_name = subject),
+        h1 = ifelse(casename == "DEFAULT", "Clone Size Tables", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Clone size Tables"),
+        ui = "dropdown_switcher"
+    )
 
     # scatter plot
     # Make plots B ~ A, C ~ B, and C ~ A for order A, B, C
     # combns <- combn(groups, 2, simplify = FALSE)
-    scatter_dir <- file.path(outdir, casename, "scatter")
+    scatter_dir <- file.path(casedir, "scatter")
     for (j in seq_along(case$order)) {
         pair <- strsplit(case$order[j], ",")[[1]]
         if (length(setdiff(pair, groups)) > 0) {
-            warning(
+            log_warn(
                 paste0(
                     "- One of the comparisons doesn't exist in case (", casename,
                     ") for subject (", subject, "): ",
                     case$order[j]
-                ),
-                immediate. = TRUE
+                )
             )
             next
         }
         scatter_p <- plot_scatter(counts, subject, pair[1], pair[2])
         scatter_png <- file.path(
             scatter_dir,
-            paste0("scatter_", subject, "_", pair[1], "_", pair[2], ".png")
+            paste0("scatter_", slugify(subject), "_", slugify(pair[1]), "_", slugify(pair[2]), ".png")
         )
         png(scatter_png, res = 100, height = 800, width = 1000)
         print(scatter_p)
         dev.off()
+
+        add_report(
+            list(
+                name = paste0(subject, " (", pair[1], " - ", pair[2], ")"),
+                src = scatter_png
+            ),
+            h1 = ifelse(casename == "DEFAULT", "Residency Plots", casename),
+            h2 = ifelse(casename == "DEFAULT", "#", "Residency Plots"),
+            ui = "table_of_images:3"
+        )
     }
 
     # upset/venn
-    venn_dir <- file.path(outdir, casename, "venn")
-    venn_png <- file.path(venn_dir, paste0("venn_", subject, ".png"))
+    venn_dir <- file.path(casedir, "venn")
+    venn_png <- file.path(venn_dir, paste0("venn_", slugify(subject), ".png"))
     png(venn_png, res = 100, height = 600, width = 800)
     print(plot_venndg(counts, groups, singletons))
     dev.off()
 
-    upset_dir <- file.path(outdir, casename, "upset")
-    upset_png <- file.path(upset_dir, paste0("upset_", subject, ".png"))
+    add_report(
+        list(src = venn_png),
+        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (Venn Diagram)", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (Venn Diagram)"),
+        ui = "table_of_images:3"
+    )
+
+    upset_dir <- file.path(casedir, "upset")
+    upset_png <- file.path(upset_dir, paste0("upset_", slugify(subject), ".png"))
     png(upset_png, res = 100, height = 600, width = 800)
     print(plot_upset(counts, singletons))
     dev.off()
+
+    add_report(
+        list(src = upset_png),
+        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (UpSet Plots)", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (UpSet Plots)"),
+        ui = "table_of_images:3"
+    )
 }
 
 handle_case <- function(casename, case) {
@@ -513,9 +542,60 @@ handle_case <- function(casename, case) {
             distinct(!!!syms(case$subject)) %>%
             drop_na()
     }
+    add_report(
+        list(ds_name = "Select a subject ..."),
+        h1 = ifelse(casename == "DEFAULT", "Clone Size Tables", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Clone size Tables"),
+        ui = "dropdown_switcher"
+    )
+    add_report(
+        list(
+            kind = "descr",
+            content = paste0(
+                "The residency plots showing the clones of paired samples (x-axis and y-axis). ",
+                "The size of the dot represents the relative abundance of the clone. ",
+                "The color of the dot represents the type of the clone: "
+            )
+        ),
+        list(
+            kind = "list",
+            items = c(
+                "Collapsed (clones that are less abundant in the y-axis sample)",
+                "Dual (clones that are equally abundant in both samples)",
+                "Expanded (clones that are more abundant in the y-axis sample)",
+                "(x-axis sample) Multiplet (clones that are only present in the x-axis sample, with multiple cells)",
+                "(x-axis sample) Singleton (clones that are only present in the x-axis sample, with a single cell)",
+                "(y-axis sample) Multiplet (clones that are only present in the y-axis sample, with multiple cells)",
+                "(y-axis sample) Singleton (clones that are only present in the y-axis sample, with a single cell)"
+            )
+        ),
+        h1 = ifelse(casename == "DEFAULT", "Residency Plots", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Residency Plots"),
+        ui = "flat"
+    )
+    add_report(
+        list(
+            kind = "descr",
+            content = "For samples in each subject, showing the overlapping clones between samples in Venn diagrams."
+        ),
+        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (Venn Diagram)", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (Venn Diagram)"),
+        ui = "flat"
+    )
+    add_report(
+        list(
+            kind = "descr",
+            content = "For samples in each subject, showing the overlapping clones between samples in UpSet plots."
+        ),
+        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (UpSet Plots)", casename),
+        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (UpSet Plots)"),
+        ui = "flat"
+    )
     sapply(seq_len(nrow(subjects)), handle_subject, subjects, casename, case)
 }
 
 for (casename in names(cases)) {
     handle_case(casename, cases[[casename]])
 }
+
+save_report(joboutdir)

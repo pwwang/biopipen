@@ -126,8 +126,22 @@ do_one_case_geneusage = function(name, case, gu_dir) {
 
     ofig = file.path(odir, paste0(name, ".png"))
     png(ofig, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
-    print(p)
+    print(p + scale_fill_biopipen())
     dev.off()
+
+    add_report(
+        list(
+            kind = "table_image",
+            src = ofig,
+            descr = paste0(
+                 "Distribution of known gene segments following the ",
+                 '<a href="http://www.imgt.org/IMGTrepertoire/LocusGenes/" target="_blank">IMGT</a> ',
+                 "nomenclature."
+            )
+        ),
+        h1 = "Gene Usage",
+        h2 = ifelse(name == "DEFAULT", "#", name)
+    )
 
     if (!is.null(case$analyses$cases) && length(case$analyses$cases) > 0) {
         for (aname in names(case$analyses$cases)) {
@@ -160,6 +174,14 @@ do_one_case_geneusage = function(name, case, gu_dir) {
             png(aofig, width = case$analyses$cases[[aname]]$devpars$width, height = case$analyses$cases[[aname]]$devpars$height, res = case$analyses$cases[[aname]]$devpars$res)
             print(ap)
             dev.off()
+
+            add_report(
+                list(src = aofig, name = aname),
+                h1 = "Gene Usage",
+                h2 = ifelse(name == "DEFAULT", "#", name),
+                h3 = "Gene Usage Analysis",
+                ui = "table_of_images"
+            )
         }
     }
 }

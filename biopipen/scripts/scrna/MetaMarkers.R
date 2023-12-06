@@ -17,6 +17,7 @@ setEnrichrSite("Enrichr")
 
 srtfile <- {{ in.srtobj | quote }}
 outdir <- {{ out.outdir | quote }}
+joboutdir <- {{ job.outdir | quote }}
 ncores <- {{ envs.ncores | int }}
 mutaters <- {{ envs.mutaters | r }}
 idents <- {{ envs.idents | r }}
@@ -240,18 +241,89 @@ do_case <- function(casename) {
     plotdir <- file.path(outdir, sec, casename, "plots")
     dir.create(plotdir, showWarnings = FALSE, recursive = TRUE)
 
-    # Plot the top 10 genes in each group with violin plots
-    for (gene in markers$gene) {
-        outfile = file.path(plotdir, paste0(gene, ".png"))
-        p = ggplot(df, aes_string(x="GROUP", y=bQuote(gene), fill="GROUP")) +
-            geom_violin(alpha = .8) +
-            geom_boxplot(width=0.1, fill="white") +
-            theme_prism() +
-            ylab(paste0("Expression of ", gene))
-        png(outfile, res = 100, height = 800, width = 1000)
-        print(p)
-        dev.off()
+        # Plot the top 10 genes in each group with violin plots
+        geneplots = list()
+        for (gene in markers$gene) {
+            outfile = file.path(plotdir, paste0(slugify(gene, tolower = FALSE), ".png"))
+            p = ggplot(df, aes_string(x="GROUP", y=bQuote(gene), fill="GROUP")) +
+                geom_violin(alpha = .8) +
+                geom_boxplot(width=0.1, fill="white") +
+                theme_prism() +
+                ylab(paste0("Expression of ", gene))
+            png(outfile, res = 100, height = 600, width = 800)
+            print(p)
+            dev.off()
+
+            geneplots[[length(geneplots) + 1]] <- list(
+                kind = "table_image",
+                src = outfile,
+                name = gene
+            )
+        }
+
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "Top 100 genes selected by ",
+                    "<code>", case$method, "</code> across ",
+                    "<code>", case$group_by, "</code> and filtered by ",
+                    "<code>", html_escape(case$sigmarkers), "</code>"
+                )
+            ),
+            h1 = ifelse(
+                info$section == "DEFAULT",
+                info$case,
+                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+            ),
+            h2 = ifelse(single_section, "Meta-Markers", info$case),
+            h3 = ifelse(single_section, "#", "Meta-Markers")
+        )
+        add_report(
+            list(
+                name = "Meta-Markers",
+                contents = list(list(
+                    kind = "table",
+                    src = file.path(info$casedir, "markers.txt"),
+                    data = list(nrows = 100)
+                ))
+            ),
+            list(
+                name = "Volin Plots (Top 10)",
+                ui = "table_of_images:4",
+                contents = geneplots
+            ),
+            h1 = ifelse(
+                info$section == "DEFAULT",
+                info$case,
+                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+            ),
+            h2 = ifelse(single_section, "Meta-Markers", info$case),
+            h3 = ifelse(single_section, "#", "Meta-Markers")
+            ui = "tabs"
+        )
+        add_report(
+            list(kind = "enrichr", dir = info$casedir),
+            h1 = ifelse(
+                info$section == "DEFAULT",
+                info$case,
+                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+            ),
+            h2 = ifelse(single_section, "Enrichment Analysis", info$case),
+            h3 = ifelse(single_section, "#", "Enrichment Analysis")
+        )
+    } else {
+        add_report(
+            list(kind = "error", content = msg),
+            h1 = ifelse(
+                info$section == "DEFAULT",
+                info$case,
+                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+            ),
+            h2 = ifelse(single_section, "#", info$case)
+        )
     }
 }
 
 sapply(sort(names(cases)), do_case)
+save_report(joboutdir)

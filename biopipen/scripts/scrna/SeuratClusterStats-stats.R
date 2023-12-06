@@ -5,22 +5,9 @@ stats = {{envs.stats | r: todot="-", skip=1}}
 
 odir = file.path(outdir, "stats")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
-report_toc_file = file.path(odir, "report_toc.json")
-# Realname => {bar: ..., pie: ..., table: ...}
-report_toc = list()
-
-.add_toc = function(name, toc) {
-    report_toc[[name]] <<- toc
-}
-
-.save_toc = function() {
-    writeLines(toJSON(report_toc, pretty = TRUE, auto_unbox = TRUE), report_toc_file)
-}
 
 do_one_stats = function(name) {
-    print(paste0("Doing stats for: ", name))
-
-    toc = list()
+    log_info("Doing stats for: {name}")
 
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)
@@ -45,7 +32,6 @@ do_one_stats = function(name) {
         mutate(.frac = .n / sum(.n))
 
     if (isTRUE(case$table)) {
-        toc$table = basename(tablefile)
         write.table(df_cells, tablefile, sep="\t", quote=FALSE, row.names=FALSE)
     }
     if (isTRUE(case$pie)) {
@@ -54,7 +40,7 @@ do_one_stats = function(name) {
             ggplot(aes(x="", y=.n, fill=!!sym(case$ident))) +
             geom_bar(stat="identity", width=1, alpha=.8, position = position_stack(reverse = TRUE)) +
             coord_polar("y", start=0) +
-            scale_fill_ucscgb(alpha=.8) +
+            scale_fill_biopipen() +
             guides(fill = guide_legend(title = case$ident)) +
             theme_void() +
             geom_label(
@@ -72,7 +58,6 @@ do_one_stats = function(name) {
             p_pie = p_pie + facet_wrap(case$split.by)
         }
 
-        toc$pie = basename(piefile)
         png(piefile, width=case$devpars$width, height=case$devpars$height, res=case$devpars$res)
         print(p_pie)
         dev.off()
@@ -89,20 +74,53 @@ do_one_stats = function(name) {
         )) +
         geom_bar(stat="identity", position=bar_position, alpha=.8) +
         theme_prism(axis_text_angle = 90) +
-        scale_fill_manual(values=rep(pal_ucscgb(alpha=.8)(26), 10)[1:max(ngroups, nidents)]) +
+        scale_fill_biopipen() +
         ylab(ifelse(isTRUE(case$frac), "Fraction of cells", "Number of cells"))
 
     if (!is.null(case$split.by)) {
         p = p + facet_wrap(case$split.by)
     }
 
-    toc$bar = basename(figfile)
     png(figfile, width=case$devpars$width, height=case$devpars$height, res=case$devpars$res)
     print(p)
     dev.off()
 
-    .add_toc(name, toc)
+    add_report(
+        list(
+            kind = "descr",
+            content = paste0(
+                "Plots showing the ",
+                ifelse(isTRUE(case$frac), "number/faction", "number"),
+                " of cells per cluster",
+                ifelse(
+                    is.null(case$group.by),
+                    "",
+                    paste0(", by ", paste0(case$group.by, collapse = ", "))
+                )
+            )
+        ),
+        h1 = name
+    )
+
+    add_report(
+        list(
+            name = "Bar Plot",
+            contents = list(list(kind = "image", src = figfile))
+        ),
+        h1 = name,
+        ui = "tabs"
+    )
+
+    if (isTRUE(case$pie)) {
+        add_report(
+            list(
+                name = "Pie Chart",
+                contents = list(list(kind = "image", src = piefile))
+            ),
+            h1 = name,
+            ui = "tabs"
+        )
+    }
 }
 
 sapply(names(stats), do_one_stats)
-.save_toc()

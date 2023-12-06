@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/gsea.R")
 source("{{biopipen_dir}}/utils/plot.R")
 
@@ -7,9 +8,11 @@ library(ggprism)
 library(Matrix)
 library(sparseMatrixStats)
 library(Seurat)
+library(slugify)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
+joboutdir <- {{ job.outdir | r }}
 gmtfile <- {{ envs.gmtfile | r }}
 select_pcs <- {{ envs.select_pcs | r }}
 ncores <- {{ envs.ncores | r }}
@@ -43,12 +46,12 @@ metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
-    print(paste0("  Handling subset value: ", s, " ..."))
+    log_info(paste0("  Handling subset value: ", s, " ..."))
     if (is.null(s)) {
         subset_dir = file.path(outdir, "ALL")
         subset_obj = sobj
     } else {
-        subset_dir = file.path(outdir, paste0(subset_prefix, s))
+        subset_dir = file.path(outdir, slugify(paste0(subset_prefix, s), tolower = FALSE))
         subset_code = paste0("subset(sobj, subset = ", subset_col, " == '", s, "')")
         subset_obj = eval(parse(text = subset_code))
     }
@@ -214,10 +217,16 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         )
 
     ggsave(file.path(subset_dir, "PC_variance_plot.pdf"), p, device = "pdf", useDingbats = FALSE)
+
+    add_report(
+        list(kind = "descr", content = "Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities"),
+        list(kind = "image", src = bubblefile),
+        h1 = ifelse(is.null(s), "Metabolic pathway heterogeneity", paste0(subset_prefix, s))
+    )
 }
 
 do_one_subset_col <- function(subset_col, subset_prefix) {
-    print(paste0("- Handling subset column: ", subset_col, " ..."))
+    log_info(paste0("- Handling subset column: ", subset_col, " ..."))
     if (is.null(subset_col)) {
         do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
     }
@@ -240,3 +249,5 @@ if (is.null(subsetting_cols)) {
         do_one_subset_col(subsetting_cols[i], subsetting_prefix[i])
     }
 }
+
+save_report(joboutdir)

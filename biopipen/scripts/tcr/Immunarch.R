@@ -12,6 +12,7 @@ library(glue)
 library(tidyr)
 library(tibble)
 library(logger)
+library(slugify)
 
 log_info("Loading arguments ...")
 theme_set(theme_prism())
@@ -19,6 +20,7 @@ theme_set(theme_prism())
 immfile = {{ in.immdata | r }}
 metafile = {{ in.metafile | r }}
 outdir = {{ out.outdir | r }}
+joboutdir = {{ job.outdir | r }}
 mutaters = {{ envs.mutaters | r }}
 prefix = {{ envs.prefix | r }}
 
@@ -101,3 +103,5 @@ n_samples = length(immdata$data)
 # VJ junction        #
 ######################
 {% include biopipen_dir + "/scripts/tcr/Immunarch-vjjunc.R" %}
+
+save_report(joboutdir)

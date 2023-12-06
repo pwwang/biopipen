@@ -1,105 +1,15 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
-    import { Image, DataTable } from "$libs";
-    import { Dropdown } from "$ccs";
+    import { Image, DataTable, Descr } from "$libs";
+    import { Dropdown, UnorderedList, ListItem } from "$ccs";
 
     let count_subject;
 
 </script>
 
-{%- macro report_case(casename, h=2) -%}
-    <h{{h}}>Count table</h{{h}}>
-    <Dropdown
-        selectedId="-1"
-        items={[
-            { id: "-1", text: "Select a subject" },
-            {% for i, countfile in job.out.outdir | glob: casename, "counts", "*.txt" | enumerate -%}
-                { id: "{{i}}", text: "{{countfile | stem}}" },
-            {% endfor %}
-        ]}
-        on:select={({ detail }) => {
-            count_subject = `{{casename}}-${detail.selectedItem.text}`;
-        }}
-    />
-    {% for countfile in job.out.outdir | glob: casename, "counts", "*.txt" -%}
-        {#if count_subject == {{ countfile | stem | prepend: casename + '-' | quote }} }
-        <DataTable src={{
-            job.out.outdir
-            | joinpaths: casename, "counts", stem(countfile) + ".txt"
-            | quote
-        }} data={ {{
-            job.out.outdir
-            | joinpaths: casename, "counts", stem(countfile) + ".txt"
-            | datatable: sep="\t", nrows=20, index_col=None
-        }} } />
-        {/if}
-    {%- endfor %}
-
-    <h{{h}}>Residency plots</h{{h}}>
-
-    {% if job.out.outdir | joinpaths: casename, "section" | exists %}
-        {% for groupfile in job.out.outdir | glob: casename, "section", "*.txt" %}
-            {% set group = groupfile | stem %}
-            <h{{h+1}}>{{group}}</h{{h+1}}>
-            {% set scatter_pngs = [] %}
-            {% for sample in groupfile | readlines %}
-                {% set spngs = job.out.outdir | glob: casename, "scatter", "scatter_" + sample + "_*.png" %}
-                {% set _ = scatter_pngs.extend(spngs) %}
-            {% endfor %}
-            {{ table_of_images(scatter_pngs, col=3, caps=false) }}
-        {% endfor %}
-    {% else %}
-        {% assign scatter_pngs = job.out.outdir | joinpaths: casename, "scatter", "scatter_*.png" | glob %}
-        {{ table_of_images(scatter_pngs, col=3, caps=false) }}
-    {% endif %}
-
-    <h{{h}}>Clonotype overlapping (Venn plots)</h{{h}}>
-
-    {% if job.out.outdir | joinpaths: casename, "section" | exists %}
-        {% for groupfile in job.out.outdir | glob: casename, "section", "*.txt" %}
-            {% set group = groupfile | stem %}
-            <h{{h+1}}>{{group}}</h{{h+1}}>
-            {% set venn_pngs = [] %}
-            {% for sample in groupfile | readlines %}
-                {% set spng = job.out.outdir | glob0: casename, "venn", "venn_" + sample + ".png" %}
-                {% set _ = venn_pngs.append(spng) %}
-            {% endfor %}
-            {{ table_of_images(venn_pngs, col=3) }}
-        {% endfor %}
-    {% else %}
-        {% assign venn_pngs = job.out.outdir | joinpaths: casename, "venn", "*.png" | glob %}
-        {{ table_of_images(venn_pngs, col=3) }}
-    {% endif %}
-
-    <h{{h}}>Clonotype overlapping (Upset plots)</h{{h}}>
-
-    {% if job.out.outdir | joinpaths: casename, "section" | exists %}
-        {% for groupfile in job.out.outdir | glob: casename, "section", "*.txt" %}
-            {% set group = groupfile | stem %}
-            <h{{h+1}}>{{group}}</h{{h+1}}>
-            {% set venn_pngs = [] %}
-            {% for sample in groupfile | readlines %}
-                {% set spng = job.out.outdir | glob0: casename, "upset", "upset_" + sample + ".png" %}
-                {% set _ = venn_pngs.append(spng) %}
-            {% endfor %}
-            {{ table_of_images(venn_pngs, col=3) }}
-        {% endfor %}
-    {% else %}
-        {% assign venn_pngs = job.out.outdir | joinpaths: casename, "upset", "*.png" | glob %}
-        {{ table_of_images(venn_pngs, col=3) }}
-    {% endif %}
-{%- endmacro -%}
 
 {%- macro report_job(job, h=1) -%}
-    {% set casedirs = job.out.outdir | glob: "*" %}
-    {% if len(casedirs) == 1 %}
-        {{ report_case(stem(casedirs[0]), h) }}
-    {% else %}
-        {% for casedir in casedirs %}
-            <h{{h}}>{{casedir | stem}}</h{{h}}>
-            {{ report_case(stem(casedir), h+1) }}
-        {% endfor %}
-    {% endif %}
+    {{ job | render_job: h=h }}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

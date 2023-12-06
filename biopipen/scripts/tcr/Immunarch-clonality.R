@@ -82,6 +82,20 @@ do_one_case_clonality = function(name, case, method) {
     png(ofig, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
     print(p)
     dev.off()
+
+    add_report(
+        list(
+            src = ofig,
+            name = if (name == "DEFAULT") NULL else name
+        ),
+        h1 = "Clonality Analysis",
+        h2 = switch(method,
+            top = "Top Clones",
+            rare = "Rare Clones",
+            homeo = "Clonal Space Homeostasis"
+        ),
+        ui = "table_of_images"
+    )
 }
 
 # Do cases

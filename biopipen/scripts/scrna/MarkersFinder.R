@@ -20,6 +20,7 @@ setEnrichrSite("Enrichr")
 
 srtfile <- {{ in.srtobj | quote }}
 outdir <- {{ out.outdir | quote }}
+joboutdir <- {{ job.outdir | quote }}
 ncores <- {{ envs.ncores | int }}
 mutaters <- {{ envs.mutaters | r }}
 ident.1 <- {{ envs["ident-1"] | r }}
@@ -285,23 +286,101 @@ do_enrich <- function(case, markers, sig, volgenes) {
             dev.off()
         }
     } else {
-        enriched <- enrichr(markers_sig$gene, dbs)
-        for (db in dbs) {
-            write.table(
-                enriched[[db]],
-                file.path(casedir, paste0("Enrichr-", db, ".txt")),
-                sep = "\t",
-                row.names = FALSE,
-                col.names = TRUE,
-                quote = FALSE
+
+
+add_case_report <- function(info, sigmarkers, siggenes) {
+    h1 = ifelse(
+        info$section == "DEFAULT",
+        info$case,
+        ifelse(
+            single_section,
+            paste0(
+                ifelse(info$section == "seurat_clusters", "Cluster", info$section),
+                " - ",
+                info$case
+            ),
+            info$section
+        )
+    )
+    h2 = ifelse(
+        info$section == "DEFAULT",
+        "#",
+        ifelse(single_section, "#", info$case)
+    )
+    add_report(
+        list(
+            title = "Significant Markers",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "descr",
+                    content = paste0(
+                        "The markers are found using Seurat's FindMarkers function, ",
+                        "and filtered by: ",
+                        html_escape(sigmarkers)
+                    )
+                ),
+                list(
+                    kind = "table",
+                    data = list(nrows = 100),
+                    src = file.path(info$casedir, "markers.txt")
+                )
             )
-            png(
-                file.path(casedir, paste0("Enrichr-", db, ".png")),
-                res = 100, height = 1000, width = 1000
+        ),
+        list(
+            title = "Volcano Plot",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(info$casedir, "volcano.png")
+                )
             )
-            print(plotEnrich(enriched[[db]], showTerms = 20, title = db))
-            dev.off()
-        }
+        ),
+        list(
+            title = "Dot Plot",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(info$casedir, "dotplot.png")
+                )
+            )
+        ),
+        h1 = h1,
+        h2 = ifelse(h2 == "#", "Markers", h2),
+        h3 = ifelse(h2 == "#", "#", "Markers"),
+        ui = "tabs"
+    )
+    if (is.null(siggenes)) {
+        add_report(
+            list(
+                kind = "error",
+                content = "No enough significant markers found for enrichment analysis"
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
+            h3 = ifelse(h2 == "#", "#", "Enrichment Analysis"),
+            ui = "flat"
+        )
+    } else {
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "The enrichment analysis is done using Enrichr. ",
+                    "The significant markers are used as input. "
+                )
+            ),
+            list(
+                kind = "enrichr",
+                dir = info$casedir
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
+            h3 = ifelse(h2 == "#", "#", "Enrichment Analysis"),
+            ui = "flat"
+        )
     }
 }
 
@@ -361,57 +440,7 @@ do_case <- function(casename) {
         unique()
 
     if (length(siggenes) > 0) {
-        dotplot_devpars <- case$dotplot$devpars
-        if (is.null(args$ident.2)) {
-            case$dotplot$object <- args$object
-            case$dotplot$object@meta.data <- case$dotplot$object@meta.data %>%
-                mutate(
-                    !!sym(args$group.by) := if_else(
-                        !!sym(args$group.by) == args$ident.1,
-                        args$ident.1,
-                        ".Other"
-                    ),
-                    !!sym(args$group.by) := factor(
-                        !!sym(args$group.by),
-                        levels = c(args$ident.1, ".Other")
-                    )
-                )
-        } else {
-            case$dotplot$object <- args$object %>%
-                filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
-                mutate(!!sym(args$group.by) := factor(
-                    !!sym(args$group.by),
-                    levels = c(args$ident.1, args$ident.2)
-                ))
-        }
-        case$dotplot$devpars <- NULL
-        case$dotplot$features <- siggenes
-        case$dotplot$group.by <- args$group.by
-        case$dotplot$assay <- case$assay
-        dotplot_width = ifelse(
-            is.null(dotplot_devpars$width),
-            if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
-            dotplot_devpars$width
-        )
-        dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
-        dotplot_res = ifelse(is.null(dotplot_devpars$res), 100, dotplot_devpars$res)
-        dotplot_file <- file.path(outdir, sec_case_names[1], cname, "dotplot.png")
-        png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
-        # rotate x axis labels
-        print(
-            do_call(DotPlot, case$dotplot) +
-            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            coord_flip()
-        )
-        dev.off()
-    }
-
-    if (sec_case_names[1] %in% overlap) {
-        if (is.null(overlaps[[sec_case_names[1]]])) {
-            overlaps[[sec_case_names[1]]] <<- list()
-        }
-        overlaps[[sec_case_names[1]]][[cname]] <<- siggenes
-    }
+    add_case_report(info, case$sigmarkers, siggenes)
 }
 
 do_overlap <- function(section) {
@@ -461,7 +490,46 @@ do_overlap <- function(section) {
     png(upset_plot, res = 100, width = 800, height = 600)
     print(upset_p)
     dev.off()
+
+    add_report(
+        list(
+            title = "Venn Diagram",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(ov_dir, "venn.png")
+                )
+            )
+        ),
+        list(
+            title = "UpSet Plot",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(ov_dir, "upset.png")
+                )
+            )
+        ),
+        list(
+            title = "Marker Table",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "table",
+                    data = list(nrows = 100),
+                    src = file.path(ov_dir, "markers.txt")
+                )
+            )
+        ),
+        h1 = "Overlapping Markers",
+        h2 = section,
+        ui = "tabs"
+    )
 }
 
 sapply(sort(names(cases)), do_case)
 sapply(sort(names(overlaps)), do_overlap)
+
+save_report(joboutdir)

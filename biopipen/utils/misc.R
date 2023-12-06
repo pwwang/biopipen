@@ -112,3 +112,50 @@ list_update <- function(x, y) {
     }
     x
 }
+
+add_report <- function(..., h1, h2 = "#", h3 = "#", ui = "flat") {
+    if (is.null(.report[[h1]])) {
+        .report[[h1]] <<- list()
+    }
+    if (is.null(.report[[h1]][[h2]])) {
+        .report[[h1]][[h2]] <<- list()
+    }
+    if (is.null(.report[[h1]][[h2]][[h3]])) {
+        .report[[h1]][[h2]][[h3]] <<- list()
+    }
+    if (is.null(.report[[h1]][[h2]][[h3]][[ui]])) {
+        .report[[h1]][[h2]][[h3]][[ui]] <<- list()
+    }
+    content = list(...)
+    for (i in seq_along(content)) {
+        .report[[h1]][[h2]][[h3]][[ui]] <<- c(
+            .report[[h1]][[h2]][[h3]][[ui]],
+            list(content[[i]])
+        )
+    }
+}
+
+save_report <- function(path, clear = TRUE) {
+    if (dir.exists(path)) {
+        path <- file.path(path, "report.json")
+    }
+
+    writeLines(toJSON(.report, pretty = TRUE, auto_unbox = TRUE), path)
+    if (clear) {
+        .report <<- list()
+    }
+}
+
+
+# Escape html
+html_escape <- function(text) {
+    if (is.null(text)) {
+        return("")
+    }
+    text = gsub("&", "&amp;", text)
+    text = gsub("<", "&lt;", text)
+    text = gsub(">", "&gt;", text)
+    text = gsub("\"", "&quot;", text)
+    text = gsub("'", "&#039;", text)
+    text
+}

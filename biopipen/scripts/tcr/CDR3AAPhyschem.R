@@ -1,3 +1,4 @@
+source("{{biopipen_dir}}/utils/misc.R")
 library(dplyr)
 library(tidyr)
 library(tibble)
@@ -8,10 +9,12 @@ library(hash)
 library(glmnet)
 library(broom.mixed)
 library(stringr)
+library(slugify)
 
 immdatafile = {{in.immdata | quote}}
 srtobjfile = {{in.srtobj | r}}
 outdir = {{out.outdir | quote}}
+joboutdir = {{job.outdir | quote}}
 group_name = {{envs.group | r}}
 comparison = {{envs.comparison | r}}
 prefix = {{envs.prefix | r}}
@@ -141,7 +144,7 @@ for (i in 1:3){
 }
 
 # Loading metadata from srtobjfile
-print("Loading metadata from srtobjfile")
+log_info("Loading metadata from srtobjfile")
 if (is.null(srtobjfile)) {
     metadata = NULL
 } else {
@@ -161,7 +164,7 @@ if (is.null(srtobjfile)) {
     }
 }
 
-print("Loading immdata from immdatafile")
+log_info("Loading immdata from immdatafile")
 immdata = readRDS(immdatafile)
 
 
@@ -215,17 +218,17 @@ merge_data = function(sam) {
 
 # Expanded and merged with metadata
 # Now we are able to select the cells using group and comparison
-print("Merging data with metadata for each sample")
+log_info("Merging data with metadata for each sample")
 merged = NULL
 for (sam in immdata$meta$Sample) {
-    print(glue("- For sample {sam}"))
+    log_info("- For sample {sam}")
     md = merge_data(sam)
     merged = if (is.null(merged)) md else rbind(merged, md)
 }
 
 # Statistics about the cell numbers with groups avaiable in metadata
 # !!group_name, TotalCells, AvailCells, AvailCellsPct
-print("Calculating statistics")
+log_info("Calculating statistics")
 if (is.null(subset_cols)) {
     stats = merged %>%
         # group by group_name
@@ -259,9 +262,45 @@ if (is.null(subset_cols)) {
 }
 
 # save the stats
-write.table(stats, file = file.path(outdir, "stats.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(
+    stats,
+    file = file.path(outdir, "stats.txt"),
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE,
+)
 
-print("Add amino acid features")
+add_report(
+    list(
+        kind = "descr",
+        content = "Statistics about the cells mapped to the comparison groups. Columns:"
+    ),
+    list(
+        kind = "list",
+        items = c(
+            "_Group: The group name in the comparison, or null, if cells are not mapped to any group",
+            "TotalCells: The total number of cells. This number should be the same for all groups",
+            "CellsPerGroup: The number of cells in the mapped group",
+            paste0(
+                "AvailCellsPerGroup: The number of cells with CDR3 length between ",
+                CDR3_MINLEN,
+                " and ",
+                CDR3_MAXLEN,
+                " for each group. These cells are used for the analysis"
+            ),
+            "AvailCellsPct: The percentage of AvailCellsPerGroup over CellsPerGroup"
+        )
+    ),
+    list(
+        kind = "table",
+        src = file.path(outdir, "stats.txt")
+    ),
+    h1 = "Available Cells"
+)
+
+
+
+log_info("Add amino acid features")
 merged = merged %>%
     filter(!is.na(.Group) & length >= CDR3_MINLEN & length <= CDR3_MAXLEN) %>%
     add_percentAA() %>%
@@ -269,13 +308,13 @@ merged = merged %>%
 
 
 do_one_subset = function(s) {
-    print(paste("Processing subset", s))
+    log_info(paste("Processing subset", s))
     if (is.null(s)) {
         data = merged
         odir = file.path(outdir, "ALL")
     } else {
         data = merged %>% filter(.Subset == s)
-        odir = file.path(outdir, s)
+        odir = file.path(outdir, slugify(s))
     }
     dir.create(odir, recursive = TRUE, showWarnings = FALSE)
 
@@ -342,6 +381,55 @@ do_one_subset = function(s) {
     print(g)
     dev.off()
 
+    add_report(
+        list(
+            kind = "descr",
+            content = "Estimated coefficients for each feature and position in the CDR3"
+        ),
+        h1 = ifelse(
+            is.null(s),
+            "Estimated OR (per s.d.)",
+            paste0(paste(subset_cols, collapse = ", "), " - ", s)
+        ),
+        h2 = ifelse(
+            is.null(s),
+            "#",
+            "Estimated OR (per s.d.)"
+        )
+    )
+
+    add_report(
+        list(
+            name = "Plot",
+            contents = list(
+                list(
+                    kind = "image",
+                    src = file.path(odir, "estimated_coefficients.png")
+                )
+            )
+        ),
+        list(
+            name = "Estimates",
+            contents = list(
+                list(
+                    kind = "table",
+                    src = file.path(odir, "estimates.txt")
+                )
+            )
+        ),
+        h1 = ifelse(
+            is.null(s),
+            "Estimated OR (per s.d.)",
+            paste0(paste(subset_cols, collapse = ", "), " - ", s)
+        ),
+        h2 = ifelse(
+            is.null(s),
+            "#",
+            "Estimated OR (per s.d.)"
+        ),
+        ui = "tabs"
+    )
+
     # distributions
     data$mid_hydro = sapply(data$midseq, function(x) get_feat_score(x, AA_MAPS[[2]]))
     data$smid_hydro = scale(data$mid_hydro)[,1]
@@ -372,6 +460,29 @@ do_one_subset = function(s) {
     png(file.path(odir, "distribution.png"), width=1000, height=1000, res=100)
     print(g)
     dev.off()
+
+    add_report(
+        list(
+            kind = "table_image",
+            descr = paste0(
+                "Hydrophobicity values are averaged over the CDR3 for each TCR and ",
+                "then scaled to have a mean of 0 and a variance of 1. ",
+                "Horizontal lines depict the mean for each population"
+            ),
+            src = file.path(odir, "distribution.png")
+        ),
+        h1 = ifelse(
+            is.null(s),
+            "Hydrophobicity Distribution",
+            paste0(paste(subset_cols, collapse = ", "), " - ", s)
+        ),
+        h2 = ifelse(
+            is.null(s),
+            "#",
+            "Hydrophobicity Distribution"
+        )
+    )
+
 }
 
 if (is.null(subset_cols)) {
@@ -380,3 +491,5 @@ if (is.null(subset_cols)) {
     subsets = na.omit(unique(merged$.Subset))
     sapply(subsets, do_one_subset)
 }
+
+save_report(joboutdir)

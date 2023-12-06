@@ -2,26 +2,27 @@
 {% from "utils/gsea.liq" import fgsea_report_script, fgsea_report, gsea_report -%}
 
 <script>
-{{ fgsea_report_script() }}
+  import { Image, DataTable, Descr } from "$libs";
+  import { Tabs, Tab, TabContent, Accordion, AccordionItem } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=2) -%}
-  {%- for ssdir in job.out.outdir | glob: "*" -%}
-    {%- if basename(ssdir) == "ALL" -%}
-      {%- set h = 1 -%}
-    {%- else -%}
-      <h{{h}}>{{ ssdir | stem }}</h{{h}}>
-    {%- endif -%}
+  {% if envs.fgsea %}
+    {{ job | render_job: h=h }}
+  {% else %}
+    {%- for ssdir in job.out.outdir | glob: "*" -%}
+      {%- if basename(ssdir) == "ALL" -%}
+        {%- set h = 1 -%}
+      {%- else -%}
+        <h{{h}}>{{ ssdir | stem }}</h{{h}}>
+      {%- endif -%}
 
-    {% for cldir in ssdir | glob: '*' %}
-      <h{{h+1}}>{{ cldir | basename }}</h{{h+1}}>
-      {% if envs.fgsea %}
-          {{ fgsea_report(cldir, h+2, envs, envs.top) }}
-      {% else %}
-          {{ gsea_report(cldir, h+2, envs, envs.top) }}
-      {% endif %}
-    {% endfor %}
-  {%- endfor -%}
+      {% for cldir in ssdir | glob: '*' %}
+        <h{{h+1}}>{{ cldir | basename }}</h{{h+1}}>
+        {{ gsea_report(cldir, h+2, envs, envs.top) }}
+      {% endfor %}
+    {%- endfor -%}
+  {% endif %}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

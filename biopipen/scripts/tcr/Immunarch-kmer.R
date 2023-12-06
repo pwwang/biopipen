@@ -88,7 +88,7 @@ for (name in names(cases)) {
 do_one_case_kmer = function(name, case, kmer_dir) {
     # print(paste0("  Case: ", name))
     log_info("Processing case: {name} ...")
-    odir = file.path(kmer_dir, name)
+    odir = file.path(kmer_dir, slugify(name, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE)
 
     if (!is.null(case$subset)) {
@@ -108,6 +108,29 @@ do_one_case_kmer = function(name, case, kmer_dir) {
     print(p)
     dev.off()
 
+    add_report(
+        list(
+            kind = "descr",
+            content = "K-mer sequence occurrences and motif analysis of CDR3 amino acid sequences"
+        ),
+        h1 = "Kmer and sequence motif analysis",
+        h2 = ifelse(name == "DEFAULT", "#", name),
+        h3 = "Kmer sequence occurrences"
+    )
+
+    add_report(
+        list(kind = "image", src = ofig),
+        h1 = "Kmer and sequence motif analysis",
+        h2 = ifelse(name == "DEFAULT", "#", name),
+        h3 = "Kmer sequence occurrences"
+    )
+
+    add_report(
+        h1 = "Kmer and sequence motif analysis",
+        h2 = ifelse(name == "DEFAULT", "#", name),
+        h3 = "Motif analysis"
+    )
+
     for (sample in names(d$data)) {
         # print(paste0("    Sample: ", sample))
         log_info("- Sample: {sample} ...")
@@ -122,17 +145,36 @@ do_one_case_kmer = function(name, case, kmer_dir) {
                 avis_args$.data = imm_kmera
                 ap = do_call(vis, avis_args)
                 if (aname == "DEFAULT") {
-                    aofig = file.path(odir, paste0(sample, "-profile.png"))
+                    aofig = file.path(odir, paste0(slugify(sample), "-profile.png"))
                 } else {
-                    aofig = file.path(odir, paste0(sample, "-", aname, "-profile.png"))
+                    aofig = file.path(odir, paste0(slugify(sample), "-", slugify(aname), "-profile.png"))
                 }
                 png(aofig, width = case$profiles$cases[[aname]]$devpars$width, height = case$profiles$cases[[aname]]$devpars$height, res = case$profiles$cases[[aname]]$devpars$res)
                 print(ap)
                 dev.off()
+
+                add_report(
+                    list(
+                        src = aofig,
+                        name = paste0(sample, ifelse(aname == "DEFAULT", "", paste0(" - ", aname)))
+                    ),
+                    h1 = "Kmer and sequence motif analysis",
+                    h2 = ifelse(name == "DEFAULT", "#", name),
+                    h3 = "Motif analysis",
+                    ui = "table_of_images"
+                )
             }
         }
     }
 }
+
+add_report(
+    list(
+        kind = "descr",
+        content = "Counting k-mer occurrences"
+    ),
+    h1 = "Kmer and sequence motif analysis"
+)
 
 kmer_dir = file.path(outdir, "kmer")
 dir.create(kmer_dir, showWarnings = FALSE)

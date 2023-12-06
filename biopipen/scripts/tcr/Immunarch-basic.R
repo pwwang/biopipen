@@ -70,8 +70,22 @@ do_one_case_basic = function(name, case, method) {
     }
     ofig = file.path(odir, paste0(name, ".png"))
     png(ofig, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
-    print(p)
+    print(p + scale_fill_biopipen())
     dev.off()
+
+    add_report(
+        list(
+            src = ofig,
+            name = if (name == "DEFAULT") NULL else name
+        ),
+        h1 = "Exploratory Analysis",
+        h2 = switch(method,
+            len = "CDR3 length distribution",
+            volume = "Clonotype volume (Number of clonotypes)",
+            count = "Clonotype abundances"
+        ),
+        ui = "table_of_images"
+    )
 }
 
 # Do cases
@@ -82,11 +96,11 @@ do_cases_basic = function(cases, method) {
     }
 }
 
-volumes = fill_up_cases_basic(volumes)
-do_cases_basic(volumes, "volume")
-
 lens = fill_up_cases_basic(lens)
 do_cases_basic(lens, "len")
+
+volumes = fill_up_cases_basic(volumes)
+do_cases_basic(volumes, "volume")
 
 counts = fill_up_cases_basic(counts)
 do_cases_basic(counts, "count")

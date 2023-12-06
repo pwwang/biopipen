@@ -11,6 +11,7 @@ library(UpSetR)
 
 srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
+joboutdir <- {{job.outdir | r}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
 group_by <- {{envs.group_by | r}}  # nolint
 group_order <- {{envs.group_order | r}}  # nolint
@@ -238,6 +239,53 @@ do_case <- function(name, case) {
     png(outfile, res = devpars$res, width = devpars$width, height = devpars$height)
     print(p)
     dev.off()
+
+    add_report(
+        list(
+            kind = "descr",
+            content = ifelse(
+                is.null(case$descr) || nchar(case$descr) == 0,
+                paste0(
+                    "Distribution for cells in ",
+                    "<code>", html_escape(cells_by), "</code>",
+                    " for ",
+                    "<code>", html_escape(case$group_by), "</code>"
+                ),
+                case$descr
+            )
+        ),
+        h1 = ifelse(
+            info$section == "DEFAULT",
+            info$case,
+            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+        ),
+        h2 = ifelse(single_section, "#", info$case),
+    )
+
+    add_report(
+        list(
+            name = "Distribution Plot",
+            contents = list(list(
+                kind = "image",
+                src = outfile
+            ))
+        ),
+        list(
+            name = "Distribution Table",
+            contents = list(list(
+                kind = "table",
+                data = list(nrows = 100),
+                src = txtfile
+            ))
+        ),
+        h1 = ifelse(
+            info$section == "DEFAULT",
+            info$case,
+            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+        ),
+        h2 = ifelse(single_section, "#", info$case),
+        ui = "tabs"
+    )
 }
 
 do_overlap <- function(section) {
@@ -261,8 +309,30 @@ do_overlap <- function(section) {
     png(upset_plot, res = 100, width = 800, height = 600)
     print(upset_p)
     dev.off()
+
+    add_report(
+        list(
+            name = "Venn Plot",
+            contents = list(list(
+                kind = "image",
+                src = venn_plot
+            ))
+        ),
+        list(
+            name = "UpSet Plot",
+            contents = list(list(
+                kind = "image",
+                src = upset_plot
+            ))
+        ),
+        h1 = "Overlapping Groups",
+        h2 = section,
+        ui = "tabs"
+    )
 }
 
 cases <- expand_cases()
 sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
 sapply(sort(names(overlaps)), do_overlap)
+
+save_report(joboutdir)

@@ -6,13 +6,16 @@ library(dplyr)
 library(rlang)
 library(immunarch)
 library(ggprism)
+library(slugify)
 
 immfile = {{in.immfile | quote}}
 outdir = {{out.outdir | quote}}
 cluster_size_envs = {{envs.cluster_size | r}}
 shared_clusters_envs = {{envs.shared_clusters | r}}
 sample_diversity_envs = {{envs.sample_diversity | r}}
+joboutdir = {{job.outdir | r}}
 
+log_info("Expanding analysis cases ...")
 expand_cases = function(envs) {
     cases = envs$cases
     envs$cases = NULL
@@ -51,8 +54,9 @@ shared_clusters_cases = expand_cases(shared_clusters_envs)
 sample_diversity_cases = expand_cases(sample_diversity_envs)
 
 cluster_size_distribution = function(name) {
-    print(paste0("- Working on cluster size distribution: ", name))
-    odir = file.path(outdir, "ClusterSizeDistribution", name)
+    log_info("- Working on cluster size distribution: {name}")
+
+    odir = file.path(outdir, "ClusterSizeDistribution", slugify(name, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE, recursive = TRUE)
     case = cluster_size_cases[[name]]
 
@@ -75,16 +79,28 @@ cluster_size_distribution = function(name) {
         ggs = c(
             "theme_prism()",
             "scale_y_continuous(trans='log10')",
-            "labs(x='TCR cluster size', y='Count')"
+            "labs(x='TCR cluster size', y='Count')",
+            "scale_fill_biopipen()"
         ),
         devpars = case$devpars,
         outfile = outplot
     )
+
+    add_report(
+        list(
+            src = outplot,
+            name = ifelse(name == "DEFAULT", FALSE, name),
+            descr = paste0("Cluster size distribution for each ", case$by)
+        ),
+        ui = "table_of_images",
+        h1 = "Cluster Size Distribution"
+    )
 }
 
 shared_clusters = function(name) {
-    print(paste0("- Working on shared clusters: ", name))
-    odir = file.path(outdir, "SharedClusters", name)
+    log_info("- Working on shared clusters: {name}")
+
+    odir = file.path(outdir, "SharedClusters", slugify(name, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE, recursive = TRUE)
     case = shared_clusters_cases[[name]]
     if (!is.null(case$grouping)) {
@@ -139,12 +155,21 @@ shared_clusters = function(name) {
         ),
         devpars = case$devpars,
         outfile = file.path(odir, "shared_clusters.png")
+    )
 
+    add_report(
+        list(
+            src = file.path(odir, "shared_clusters.png"),
+            name = ifelse(name == "DEFAULT", FALSE, name),
+            descr = paste0("Shared TCR clusters across samples")
+        ),
+        ui = "table_of_images",
+        h1 = "Shared TCR Clusters"
     )
 }
 
 shared_clusters_by_grouping = function(name) {
-    odir = file.path(outdir, "SharedClusters", name)
+    odir = file.path(outdir, "SharedClusters", slugify(name, tolower = FALSE))
     case = shared_clusters_cases[[name]]
 
     data = list()
@@ -176,12 +201,47 @@ shared_clusters_by_grouping = function(name) {
         devpars = case$devpars,
         outfile = outfile
     )
+
+    add_report(
+        list(
+            src = outfile,
+            name = ifelse(name == "DEFAULT", FALSE, name),
+            descr = paste0("Shared TCR clusters across ", grouping)
+        ),
+        ui = "table_of_images",
+        h1 = "Shared TCR Clusters"
+    )
 }
 
 
+div_methods = list(
+    gini = list(
+        name = "The Gini coefficient",
+        descr = "The Gini coefficient is a measure of statistical dispersion intended to represent the income or wealth distribution of a nation's residents, and is the most commonly used measurement of inequality."
+    ),
+    gini.simp = list(
+        name = "The Gini-Simpson index",
+        descr = "The Gini-Simpson index is a measure of diversity. It is one of the most commonly used in ecology. It is also known as the Simpson index, the Simpson concentration index, the Simpson dominance index, or the Simpson diversity index."
+    ),
+    inv.simp = list(
+        name = "The inverse Simpson index",
+        descr = "It is the effective number of types that is obtained when
+                 the weighted arithmetic mean is used to quantify average
+                 proportional abundance of types in the dataset of interest."
+    ),
+    div = list(
+        name = "The true diversity",
+        descr = "It refers to the number of equally abundant types needed
+                 for the average proportional abundance of the types to
+                 equal that observed in the dataset of interest where all
+                 types may not be equally abundant."
+    )
+)
+
 sample_diversity = function(name) {
-    print(paste0("- Working on sample diversity: ", name))
-    odir = file.path(outdir, "SampleDiversity", name)
+    log_info("- Working on sample diversity: {name}")
+
+    odir = file.path(outdir, "SampleDiversity", slugify(name, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE, recursive = TRUE)
     case = sample_diversity_cases[[name]]
 
@@ -192,7 +252,19 @@ sample_diversity = function(name) {
     outfile = file.path(odir, "diversity.txt")
     outplot = file.path(odir, "diversity.png")
     div = repDiversity(data, .method = case$method)
-    write.table(div, outfile, row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t")
+    write.table(
+        if (ncol(div) == 1) {
+            as.data.frame(div) %>% rownames_to_column("Sample")
+        } else {
+            div
+        },
+        outfile,
+        row.names=TRUE,
+        col.names=TRUE,
+        quote=FALSE,
+        sep="\t"
+    )
+
     if (case$method == "gini") {
         div = as.data.frame(div) %>% rownames_to_column("Sample")
         colnames(div)[2] = "gini"
@@ -201,7 +273,8 @@ sample_diversity = function(name) {
         mapping = aes(x = Sample, y = gini, fill = Sample)
         ggs = c(
             "theme_prism(axis_text_angle = 90)",
-            "labs(title='Gini coefficient', subtitle='Sample diversity estimation using the Gini coefficient')"
+            "labs(title='Gini coefficient', subtitle='Sample diversity estimation using the Gini coefficient')",
+            "scale_fill_biopipen()"
         )
         if (is.null(case$by) || length(case$by) == 0) {
 
@@ -225,7 +298,6 @@ sample_diversity = function(name) {
             devpars = case$devpars,
             outfile = outplot
         )
-
     } else {
         if (is.null(case$by) || length(case$by) == 0) {
             p = vis(div)
@@ -243,6 +315,41 @@ sample_diversity = function(name) {
         print(p)
         dev.off()
     }
+
+    add_report(
+        list(
+            ui = "flat",
+            label = "Diversity Plot",
+            contents = list(
+                list(
+                    kind = "descr",
+                    content = paste(
+                        div_methods[[case$method]]$name,
+                        ifelse(
+                            is.null(case$by) || length(case$by) == 0,
+                            "",
+                            paste0(" grouped by ", paste(case$by, collapse = ", "))
+                        ),
+                        div_methods[[case$method]]$descr
+                    )
+                ),
+                list(
+                    kind = "image",
+                    src = outplot
+                )
+            )
+        ),
+        list(
+            ui = "flat",
+            label = "Diversity Table",
+            contents = list(
+                list(kind = "table", src = outfile, data = list(index_col = 0))
+            )
+        ),
+        ui = "tabs",
+        h2 = ifelse(name == "DEFAULT", "#", name),
+        h1 = "Sample Diversity using TCR clusters"
+    )
 }
 
 
@@ -250,14 +357,20 @@ sample_diversity = function(name) {
     # main
     # --------------------------------------------------
     # Load immunarch data
+    log_info("Loading immunarch data ...")
     immdata = readRDS(immfile)
 
     # Cluster size distribution
+    log_info("Performing cluster size distribution analysis ...")
     sapply(names(cluster_size_cases), cluster_size_distribution)
 
     # Shared clusters
+    log_info("Performing shared clusters analysis ...")
     sapply(names(shared_clusters_cases), shared_clusters)
 
     # Diversity
+    log_info("Performing sample diversity analysis ...")
     sapply(names(sample_diversity_cases), sample_diversity)
+
+    save_report(joboutdir)
 }

@@ -37,6 +37,20 @@ write.table(
     col.names = TRUE,
     quote = FALSE
 )
+add_report(
+    list(
+        kind = "descr",
+        content = "The samples used in the analysis. Each row is a sample, and columns are the meta information about the sample. This is literally the input sample information file, but the paths to the scRNA-seq and scTCR-seq data are hidden.",
+        once = TRUE
+    ),
+    list(
+        kind = "table",
+        pageSize = 50,
+        data = list(file = outfile, sep = sep, excluded = exclude_cols),
+        src = FALSE
+    ),
+    h1 = "Sample Information"
+)
 
 theme_set(theme_prism())
 for (name in names(stats)) {
@@ -159,4 +173,18 @@ for (name in names(stats)) {
     }
     print(p)
     dev.off()
+
+    by_desc <- ifelse(is.null(stat$by), "", paste0(" by ", stat$by))
+    descr <- ifelse(
+        is_continuous,
+        paste0("The distribution of ", stat$on, by_desc),
+        paste0("The number of ", stat$on, by_desc)
+    )
+    add_report(
+        list(kind = "table_image", src = plotfile, name = name, descr = descr),
+        h1 = "Statistics",
+        ui = "table_of_images:2"
+    )
 }
+
+save_report(outdir)

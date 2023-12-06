@@ -11,6 +11,7 @@ library(ggprism)
 immfile <- {{in.immdata | r}}
 exprfile <- {{in.srtobj | r}}
 outfile <- {{out.outfile | r}}
+joboutdir <- {{job.outdir | r}}
 python <- {{envs.python | r}}
 within_sample <- {{envs.within_sample | r}}
 assay <- {{envs.assay | r}}
@@ -27,7 +28,7 @@ if (!dir.exists(tessa_dir)) dir.create(tessa_dir)
 
 ### Start preparing input files for TESSA
 # Prepare input files
-print("Preparing TCR input file ...")
+log_info("Preparing TCR input file ...")
 immdata <- readRDS(immfile)
 
 has_VJ <- "V.name" %in% colnames(immdata$data[[1]]) && "J.name" %in% colnames(immdata$data[[1]])
@@ -76,7 +77,7 @@ if (has_VJ) {
 }
 
 
-print("Preparing expression input file ...")
+log_info("Preparing expression input file ...")
 is_seurat <- endsWith(tolower(exprfile), ".rds")
 is_gz <- endsWith(tolower(exprfile), ".gz")
 
@@ -94,10 +95,10 @@ cell_ids <- intersect(tcrdata$contig_id, colnames(expr))
 unused_tcr_cells <- setdiff(tcrdata$contig_id, cell_ids)
 unused_expr_cells <- setdiff(colnames(expr), cell_ids)
 if (length(unused_tcr_cells) > 0) {
-    warning(glue("{length(unused_tcr_cells)}/{nrow(tcrdata)} TCR cells are not used."), immediate. = TRUE)
+    log_warn(glue("{length(unused_tcr_cells)}/{nrow(tcrdata)} TCR cells are not used."))
 }
 if (length(unused_expr_cells) > 0) {
-    warning(glue("{length(unused_expr_cells)}/{ncol(expr)} expression cells are not used."), immediate. = TRUE)
+    log_warn(glue("{length(unused_expr_cells)}/{ncol(expr)} expression cells are not used."))
 }
 if (length(cell_ids) == 0) {
     stop("No common cells between TCR and expression data. Are you using the correct prefix?")
@@ -106,19 +107,19 @@ tcrdata <- tcrdata[tcrdata$contig_id %in% cell_ids, , drop=FALSE]
 expr <- as.matrix(expr)[, tcrdata$contig_id, drop=FALSE]
 
 # Write input files
-print("Writing input files ...")
+log_info("Writing input files ...")
 write.table(tcrdata, file.path(tessa_dir, "tcrdata.txt"), sep=",", quote=FALSE, row.names=FALSE)
 write.table(expr, file.path(tessa_dir, "exprdata.txt"), sep=",", quote=FALSE, row.names=TRUE, col.names=TRUE)
 
 ### End preparing input files for TESSA
 
 ### Start running TESSA
-print("Running TESSA ...")
+log_info("Running TESSA ...")
 
 # The original TESSA uses a python wrapper to run the encoder and tessa model
 # here we run those two steps directly here
 
-print("- Running encoder ...")
+log_info("- Running encoder ...")
 cmd_encoder <- paste(
     python,
     file.path(tessa_srcdir, "BriseisEncoder.py"),
@@ -140,14 +141,14 @@ if (has_VJ) {
         file.path(tessa_dir, "tcr_vj.txt")
     )
 }
-print(paste("- ", cmd_encoder))
+log_info(paste("- ", cmd_encoder))
 
 rc <- system(cmd_encoder)
 if (rc != 0) {
     stop("Error: Failed to run encoder.")
 }
 
-print("- Running TESSA model ...")
+log_info("- Running TESSA model ...")
 source(file.path(tessa_srcdir, "real_data.R"))
 
 tessa <- run_tessa(
@@ -162,7 +163,7 @@ tessa <- run_tessa(
 )
 
 # Save TESSA results
-print("Saving TESSA results ...")
+log_info("Saving TESSA results ...")
 if (is_seurat) {
     cells <- rownames(sobj@meta.data)
     sobj@meta.data <- sobj@meta.data %>%
@@ -187,7 +188,7 @@ if (is_seurat) {
 }
 
 # Post analysis
-print("Post analysis ...")
+log_info("Post analysis ...")
 plot_tessa(tessa, result_dir)
 plot_Tessa_clusters(tessa, result_dir)
 
@@ -201,3 +202,34 @@ p <- tessa$meta %>%
 png(file.path(result_dir, "Cluster_size_dist.png"), width=8, height=8, units="in", res=100)
 print(p)
 dev.off()
+
+add_report(
+    list(
+        src = file.path(result_dir, "Cluster_size_dist.png"),
+        descr = "Histogram of cluster size distribution"
+    ),
+    list(
+        src = file.path(result_dir, "clone_size.png"),
+        descr = "Center cluster size vs. non-center cluster size"
+    ),
+    list(
+        src = file.path(result_dir, "exp_TCR_pair_plot.png"),
+        descr = "Expression-TCR distance plot"
+    ),
+    list(
+        src = file.path(result_dir, "TCR_dist_density.png"),
+        descr = "TCR distance density plot"
+    ),
+    list(
+        src = file.path(result_dir, "TCR_explore.png"),
+        descr = "Exploratory plot at the TCR level"
+    ),
+    list(
+        src = file.path(result_dir, "TCR_explore_clusters.png"),
+        descr = "TESSA clusters"
+    ),
+    h1 = "TESSA Results",
+    ui = "table_of_images"
+)
+
+save_report(joboutdir)

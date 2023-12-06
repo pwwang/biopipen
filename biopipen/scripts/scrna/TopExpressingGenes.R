@@ -5,11 +5,14 @@ library(tibble)
 library(enrichR)
 library(rlang)
 library(dplyr)
+library(slugify)
+library(ggprism)
 
 setEnrichrSite("Enrichr")
 
 srtfile <- {{in.srtobj | r}}
 outdir <- {{out.outdir | r}}
+joboutdir <- {{job.outdir | r}}
 mutaters <- {{ envs.mutaters | r }}
 ident <- {{ envs.ident | r }}
 group.by <- {{ envs["group-by"] | r }}  # nolint
@@ -22,16 +25,16 @@ cases <- {{ envs.cases | r: todot = "-" }}  # nolint
 
 set.seed(8525)
 
-print("- Loading Seurat object ...")
+log_info("Loading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
-print("- Mutate meta data if needed ...")
+log_info("Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters)) {
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
 
-print("- Expanding cases ...")
+log_info("Expanding cases ...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
         DEFAULT = list(
@@ -61,11 +64,14 @@ if (is.null(cases) || length(cases) == 0) {
 
 # Expand each and ident
 newcases <- list()
+sections <- c()
 for (name in names(cases)) {  # nolint
     case <- cases[[name]]
     if (is.null(case$each) && !is.null(case$ident)) {
+        sections <- c(sections, case$section)
         newcases[[paste0(case$section, ":", name)]] <- case
     } else if (is.null(case$each)) {
+        sections <- c(sections, name)
         idents <- srtobj@meta.data %>%
             pull(case$group.by) %>%
             unique() %>%
@@ -93,15 +99,21 @@ for (name in names(cases)) {  # nolint
                     na.omit()
                 for (ident in idents) {
                     kname <- if (name == "DEFAULT") "" else paste0("-", name)
+                    sections <- c(sections, paste0(each, kname))
                     key <- paste0(each, kname, ":", ident)
                     if (case$prefix_each) {
-                        key <- paste0(case$each, "-", key)
+                        key <- paste0(
+                            ifelse(case$each == "seurat_clusters", "Cluster", case$each),
+                            " - ",
+                            key
+                        )
                     }
                     newcases[[key]] <- case
                     newcases[[key]]$ident <- ident
                     newcases[[key]]$group.by <- by  # nolint
                 }
             } else {
+                sections <- c(sections, case$each)
                 key <- paste0(case$each, ":", each)
                 if (name != "DEFAULT") {
                     key <- paste0(key, " - ", name)
@@ -112,11 +124,33 @@ for (name in names(cases)) {  # nolint
     }
 }
 cases <- newcases
+single_section <- length(unique(sections)) == 1
+
+casename_info <- function(casename, create = FALSE) {
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
+
+    out <- list(
+        casename = casename,
+        section = sec_case_names[1],
+        case = cname,
+        section_slug = slugify(sec_case_names[1], tolower = FALSE),
+        case_slug = slugify(cname, tolower = FALSE)
+    )
+    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+    if (create) {
+        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+    }
+    out
+}
 
 do_enrich <- function(expr, odir) {
-    print("  Saving expressions ...")
+    log_info("  Saving expressions ...")
+    expr <- expr %>% as.data.frame()
+    colnames(expr) <- c("Expression")
+    expr <- expr %>% rownames_to_column("Gene") %>% select(Gene, Expression)
     write.table(
-        expr %>% as.data.frame() %>% rownames_to_column("Gene"),
+        expr,
         file.path(odir, "expr.txt"),
         sep = "\t",
         row.names = TRUE,
@@ -124,7 +158,7 @@ do_enrich <- function(expr, odir) {
         quote = FALSE
     )
     write.table(
-        expr %>% as.data.frame() %>% rownames_to_column("Gene") %>% head(n),
+        expr %>% head(n),
         file.path(odir, "exprn.txt"),
         sep = "\t",
         row.names = TRUE,
@@ -132,8 +166,8 @@ do_enrich <- function(expr, odir) {
         quote = FALSE
     )
 
-    print("  Running enrichment ...")
-    enriched <- enrichr(rownames(head(expr, n)), dbs)  # nolint
+    log_info("  Running enrichment ...")
+    enriched <- enrichr(head(expr$Gene, n), dbs)  # nolint
     for (db in dbs) {
         write.table(
             enriched[[db]],
@@ -147,29 +181,77 @@ do_enrich <- function(expr, odir) {
             file.path(odir, paste0("Enrichr-", db, ".png")),
             res = 100, height = 1000, width = 1000
         )
-        print(plotEnrich(enriched[[db]], showTerms = 20, title = db))  # nolint
+        print(
+            plotEnrich(enriched[[db]], showTerms = 20, title = db) +
+            theme_prism()
+        )
         dev.off()
     }
 }
 
 do_case <- function(casename) {
-    print(paste("- Running for case:", casename))
+    log_info("- Running for case: {casename} ...")
     case <- cases[[casename]]
-    parts <- unlist(strsplit(casename, ":"))
-    section <- parts[1]
-    casename <- paste(parts[-1], collapse = ":")
+    info <- casename_info(casename, create = TRUE)
 
-    print("  Calculating average expression ...")
+    log_info("  Calculating average expression ...")
     avgexpr <- AverageExpression(
         srtobj,
         group.by = case$group.by
     )$RNA[, case$ident, drop = FALSE]
     avgexpr <- avgexpr[order(-avgexpr), , drop = FALSE]
 
-    odir <- file.path(outdir, section, casename)
-    dir.create(odir, recursive = TRUE, showWarnings = FALSE)
+    do_enrich(avgexpr, info$casedir)
 
-    do_enrich(avgexpr, odir)
+    add_case_report(info)
+}
+
+add_case_report <- function(info) {
+    log_info("  Adding case report ...")
+    h1 = ifelse(
+        info$section == "DEFAULT",
+        info$case,
+        ifelse(
+            single_section,
+            paste0(
+                ifelse(info$section == "seurat_clusters", "Cluster", info$section),
+                " - ",
+                info$case
+            ),
+            info$section
+        )
+    )
+    h2 = ifelse(
+        info$section == "DEFAULT",
+        "#",
+        ifelse(single_section, "#", info$case)
+    )
+
+    add_report(
+        list(
+            kind = "descr",
+            content = paste0("Top ", n, " expressing genes")
+        ),
+        list(
+            kind = "table",
+            src = file.path(info$casedir, "exprn.txt")
+        ),
+        h1 = h1,
+        h2 = ifelse(h2 == "#", "Top Expressing Genes", h2),
+        h3 = ifelse(h2 == "#", "#", "Top Expressing Genes")
+    )
+
+    add_report(
+        list(
+            kind = "descr",
+            content = paste0("Enrichment analysis for the top ", n, " expressing genes")
+        ),
+        list(kind = "enrichr", dir = info$casedir),
+        h1 = h1,
+        h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
+        h3 = ifelse(h2 == "#", "#", "Enrichment Analysis")
+    )
 }
 
 sapply(sort(names(cases)), do_case)
+save_report(joboutdir)
