@@ -294,7 +294,7 @@ do_case <- function(name, case) {
             info$case,
             ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
         ),
-        h2 = ifelse(single_section, "#", info$case),
+        h2 = ifelse(single_section, "#", info$case)
     )
 
     add_report(
