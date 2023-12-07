@@ -15,7 +15,11 @@ defaults <- {{envs.defaults | r}}
 stats <- {{envs.stats | r}}
 exclude_cols <- {{envs.exclude_cols | r}}
 
-exclude_cols <- trimws(unlist(strsplit(exclude_cols, ",")))
+if (is.null(exclude_cols)) {
+    exclude_cols <- c()
+} else {
+    exclude_cols <- trimws(unlist(strsplit(exclude_cols, ",")))
+}
 
 outdir <- dirname(outfile)
 indata <- read.delim(infile, sep = sep, header = TRUE, row.names = NULL)
