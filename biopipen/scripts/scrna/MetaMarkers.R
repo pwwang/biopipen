@@ -12,6 +12,7 @@ library(ggplot2)
 library(ggprism)
 library(parallel)
 library(tidyseurat)
+library(slugify)
 
 setEnrichrSite("Enrichr")
 
@@ -23,6 +24,7 @@ mutaters <- {{ envs.mutaters | r }}
 idents <- {{ envs.idents | r }}
 group_by <- {{ envs["group-by"] | r }}
 each <- {{ envs.each | r }}
+subset <- {{ envs.subset | r }}
 prefix_each <- {{ envs.prefix_each | r }}
 p_adjust <- {{ envs.p_adjust | r }}
 section <- {{ envs.section | r }}
@@ -33,15 +35,15 @@ cases <- {{ envs.cases | r: todot = "-" }}
 
 set.seed(8525)
 
-print("- Reading Seurat object ...")
+log_info("- Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
-print("- Mutate meta data if needed ...")
+log_info("- Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters)) {
     srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
-print("- Expanding cases ...")
+log_info("- Expanding cases ...")
 if (is.null(cases) || length(cases) == 0) {
     cases <- list(
         DEFAULT = list(
@@ -50,6 +52,7 @@ if (is.null(cases) || length(cases) == 0) {
             each = each,
             prefix_each = prefix_each,
             p_adjust = p_adjust,
+            subset = subset,
             section = section,
             dbs = dbs,
             sigmarkers = sigmarkers,
@@ -66,6 +69,7 @@ if (is.null(cases) || length(cases) == 0) {
             prefix_each = prefix_each,
             p_adjust = p_adjust,
             section = section,
+            subset = subset,
             dbs = dbs,
             sigmarkers = sigmarkers,
             method = method
@@ -75,12 +79,19 @@ if (is.null(cases) || length(cases) == 0) {
 }
 
 newcases <- list()
+sections <- c()
 for (name in names(cases)) {
     case <- cases[[name]]
     if (is.null(case$each)) {
+        sections <- c(sections, case$section)
         newcases[[paste0(case$section, ":", name)]] <- case
     } else {
-        eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
+        if (is.null(case$subset)) {
+            eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
+        } else {
+            eachs <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>% pull(case$each) %>% unique() %>% na.omit()
+        }
+        sections <- c(sections, case$each)
         for (each in eachs) {
             by = make.names(paste0(".", name, "_", case$each, "_", each))
             idents <- case$idents
@@ -112,98 +123,98 @@ for (name in names(cases)) {
     }
 }
 cases <- newcases
+single_section <- length(unique(sections)) == 1
 
+casename_info <- function(casename, create = FALSE) {
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
+
+    out <- list(
+        casename = casename,
+        section = sec_case_names[1],
+        case = cname,
+        section_slug = slugify(sec_case_names[1], tolower = FALSE),
+        case_slug = slugify(cname, tolower = FALSE)
+    )
+    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+    if (create) {
+        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+    }
+    out
+}
 
 # Do enrichment analysis for a case using Enrichr
 # Args:
 #   case: case name
 #   markers: markers dataframe
 #   sig: The expression to filter significant markers
-do_enrich <- function(case, markers, sig) {
-    print(paste("  Running enrichment for case:", case))
-    parts <- strsplit(case, ":")[[1]]
-    sec <- parts[1]
-    case <- paste0(parts[-1], collapse = ":")
-    casedir <- file.path(outdir, sec, case)
-    dir.create(casedir, showWarnings = FALSE, recursive = TRUE)
+do_enrich <- function(info, markers, sig) {
+    log_info("  Running enrichment for case: {info$casename}")
     if (nrow(markers) == 0) {
-        print(paste("  No markers found for case:", case))
-        cat("No markers found.", file = file.path(casedir, "error.txt"))
-        return()
+        msg <- paste0("No markers found for case: ", info$casename)
+        log_warn("  {msg}")
+        return(msg)
     }
     markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
-        print(paste("  No significant markers found for case:", case))
-        cat("No significant markers.", file = file.path(casedir, "error.txt"))
-        return()
+        msg <- paste0("No significant markers found for case: ", info$casename)
+        log_warn("  {msg}")
+        return(msg)
     }
     write.table(
         markers_sig,
-        file.path(casedir, "markers.txt"),
+        file.path(info$casedir, "markers.txt"),
         sep = "\t",
         row.names = FALSE,
         col.names = TRUE,
         quote = FALSE
     )
+
     if (nrow(markers_sig) < 5) {
-        for (db in dbs) {
-            write.table(
-                data.frame(Warning = "Not enough significant markers."),
-                file.path(casedir, paste0("Enrichr-", db, ".txt")),
-                sep = "\t",
-                row.names = FALSE,
-                col.names = TRUE,
-                quote = FALSE
-            )
-            png(
-                file.path(casedir, paste0("Enrichr-", db, ".png")),
-                res = 100, height = 200, width = 1000
-            )
-            print(
-                ggplot() +
-                    annotate(
-                        "text",
-                        x = 1,
-                        y = 1,
-                        label = "Not enough significant markers."
-                    ) +
-                    theme_classic()
-            )
-            dev.off()
-        }
-    } else {
-        enriched <- enrichr(markers_sig$gene, dbs)
-        for (db in dbs) {
-            write.table(
-                enriched[[db]],
-                file.path(casedir, paste0("Enrichr-", db, ".txt")),
-                sep = "\t",
-                row.names = FALSE,
-                col.names = TRUE,
-                quote = FALSE
-            )
-            png(
-                file.path(casedir, paste0("Enrichr-", db, ".png")),
-                res = 100, height = 1000, width = 1000
-            )
-            print(plotEnrich(enriched[[db]], showTerms = 20, title = db))
-            dev.off()
-        }
+        msg <- paste0("Too few significant markers found for case: ", info$casename)
+        log_warn(msg)
+        return(msg)
+    }
+
+    enriched <- enrichr(markers_sig$gene, dbs)
+    for (db in dbs) {
+        write.table(
+            enriched[[db]],
+            file.path(info$casedir, paste0("Enrichr-", db, ".txt")),
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE,
+            quote = FALSE
+        )
+        png(
+            file.path(info$casedir, paste0("Enrichr-", db, ".png")),
+            res = 100, height = 600, width = 800
+        )
+        print(
+            plotEnrich(enriched[[db]], showTerms = 20, title = db) +
+            theme_prism()
+        )
+        dev.off()
     }
 }
 
 
 do_case <- function(casename) {
-    cat(paste("- Dealing with case:", casename, "...\n"))
+    log_info("- Dealing with case: {casename} ...")
+    info <- casename_info(casename, create = TRUE)
     case <- cases[[casename]]
+
     sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
+    if (!is.null(case$subset)) {
+        sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)), !!parse_expr(case$subset))
+    }
     df <- GetAssayData(sobj, slot = "data", assay = "RNA")
     genes <- rownames(df)
     # rows: cells, cols: genes
     df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
     colnames(df)[ncol(df)] <- "GROUP"
 
-    cat(paste("  Running tests for case...\n"))
+    log_info("  Running tests for case...")
     test_result <- mclapply(genes, function(gene) {
         fm <- as.formula(paste(bQuote(gene), "~ GROUP"))
         res <- tryCatch({
@@ -231,15 +242,13 @@ do_case <- function(casename) {
     markers <- do_call(rbind, test_result)
     markers$p_adjust <- p.adjust(markers$p.value, method = case$p_adjust)
     markers <- markers %>% arrange(p_adjust)
-    do_enrich(casename, markers, case$sigmarkers)
 
-    print(paste("  Plotting top 10 genes ...\n"))
-    markers <- markers %>% head(10)
-    parts <- strsplit(casename, ":")[[1]]
-    sec <- parts[1]
-    casename <- paste0(parts[-1], collapse = ":")
-    plotdir <- file.path(outdir, sec, casename, "plots")
-    dir.create(plotdir, showWarnings = FALSE, recursive = TRUE)
+    msg <- do_enrich(info, markers, case$sigmarkers)
+    if (is.null(msg)) {
+        log_info("  Plotting top 10 genes ...")
+        markers <- markers %>% head(10)
+        plotdir <- file.path(info$casedir, "expr_plots")
+        dir.create(plotdir, showWarnings = FALSE, recursive = TRUE)
 
         # Plot the top 10 genes in each group with violin plots
         geneplots = list()
@@ -299,7 +308,7 @@ do_case <- function(casename) {
                 ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
             ),
             h2 = ifelse(single_section, "Meta-Markers", info$case),
-            h3 = ifelse(single_section, "#", "Meta-Markers")
+            h3 = ifelse(single_section, "#", "Meta-Markers"),
             ui = "tabs"
         )
         add_report(
