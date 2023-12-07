@@ -86,10 +86,33 @@ run_tracking_case = function(casename) {
             imm_tracking = trackClonotypes(newdata, targets, .col = "aa")
         }
 
-        tracking_png = file.path(tracking_dir, paste0(casename, ".png"))
+        tracking_png = file.path(tracking_dir, paste0(slugify(casename), ".png"))
         png(tracking_png, res=100, height=1000, width=600 + 150 * length(subjects))
         print(vis(imm_tracking))
         dev.off()
+
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "Clonotype tracking is a popular approach to monitor changes in the frequency of ",
+                    "clonotypes of interest in vaccination and cancer immunology. ",
+                    "For example, a researcher can track a clonotype across different time points ",
+                    "in pre- and post-vaccination repertoires, or analyse the growth of ",
+                    "malignant clonotypes in a tumor sample."
+                )
+            ),
+            h1 = "Tracking of clonotypes"
+        )
+
+        add_report(
+            list(
+                src = tracking_png,
+                name = if (casename == "DEFAULT") NULL else casename
+            ),
+            h1 = "Tracking of clonotypes",
+            ui = "table_of_images"
+        )
     }
 }
 

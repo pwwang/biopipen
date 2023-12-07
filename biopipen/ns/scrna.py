@@ -257,6 +257,16 @@ class SeuratClustering(Proc):
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - resolution (type=float): The resolution of the clustering
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
+        cache (type=auto): Whether to cache the seurat object with cluster information.
+            If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
+            The cached seurat object will be saved as `<signature>.cached.RDS` file, where `<signature>` is the signature determined by
+            the input and envs of the process.
+            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
+            <https://github.com/satijalab/seurat/issues/6748> for more details.
+            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
+            `.pipen/<Pipeline>/SeuratClustering/0/output/<signature>.cached.RDS`.
+            You can also specify the directory to save the cached seurat object by setting `cache` to the directory path.
+
 
     Requires:
         r-seurat:
@@ -286,6 +296,7 @@ class SeuratClustering(Proc):
         "RunUMAP": {"reduction": "pca", "dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
+        "cache": True,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
 
@@ -418,6 +429,7 @@ class SeuratClusterStats(Proc):
             - group-by: Same as `ident`. How the points are colored.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.
+            - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -482,6 +494,7 @@ class SeuratClusterStats(Proc):
             "group-by": None,
             "split-by": None,
             "shape-by": None,
+            "subset": None,
             "reduction": "dim",
             "devpars": {"res": 100, "height": 800, "width": 1000},
         },
@@ -642,6 +655,7 @@ class CellsDistribution(Proc):
             Ignored if `cells_order` is specified.
         subset: An expression to subset the cells, will be passed to `dplyr::filter()` on metadata.
             This will be applied prior to `each`.
+        descr: The description of the case, will be shown in the report.
         devpars (ns): The device parameters for the plots.
             - res (type=int): The resolution of the plots
             - height (type=int): The height of the plots
@@ -676,6 +690,7 @@ class CellsDistribution(Proc):
         "cells_orderby": None,
         "cells_n": 10,
         "subset": None,
+        "descr": None,
         "devpars": {},
         "each": None,
         "section": "DEFAULT",
@@ -1669,7 +1684,7 @@ class RadarPlots(Proc):
         "cluster_order": [],
         "breaks": [],
         "direction": "intra-cluster",
-        "section": None,
+        "section": "DEFAULT",
         "devpars": {
             "res": 100,
             "width": 1200,
@@ -1719,6 +1734,8 @@ class MetaMarkers(Proc):
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
+        subset: The subset of the cells to do the analysis.
+            An expression passed to `dplyr::filter()`.
         p_adjust (choice): The method to adjust the p values, which can be used to filter the significant markers.
             See also <https://rdrr.io/r/stats/p.adjust.html>
             - holm: Holm-Bonferroni method
@@ -1759,6 +1776,7 @@ class MetaMarkers(Proc):
         "group-by": None,
         "idents": None,
         "each": None,
+        "subset": None,
         "prefix_each": True,
         "p_adjust": "BH",
         "dbs": [

@@ -80,6 +80,45 @@ for (name in names(cases)) {
     cases[[name]]$analyses = analyses
 }
 
+get_method_descr <- function(method) {
+    descr <- switch(method,
+        public = paste0(
+            "number of public (shared) clonotypes, ",
+            "a classic measure of overlap similarity"
+        ),
+        overlap = paste0(
+            "overlap coefficient, a normalised measure of overlap similarity. ",
+            "It is defined as the size of the intersection divided by the smaller of ",
+            "the size of the two sets."
+        ),
+        jaccard = paste0(
+            "Jaccard index, measures the similarity between finite sample sets, ",
+            "and is defined as the size of the intersection divided by the size of ",
+            "the union of the sample sets."
+        ),
+        tversky = paste0(
+            "Tversky index, an asymmetric similarity measure on sets that compares ",
+            "a variant to a prototype. ",
+            "If using default arguments, it’s similar to Dice’s coefficient."
+        ),
+        cosine = "cosine similarity, a measure of similarity between two non-zero vectors",
+        morisita = paste0(
+            "Morisita's overlap index, a statistical measure of dispersion of ",
+            "individuals in a population. ",
+            "It is used to compare overlap among samples."
+        )
+    )
+
+    if (!is.null(descr)) {
+        return(descr)
+    }
+
+    return(paste0(
+        "incremental overlap, ",
+        "overlaps of the N most abundant clonotypes with incrementally growing N"
+    ))
+}
+
 do_one_case_overlap = function(name, case, ov_dir) {
     # print(paste0("  Case: ", name))
     log_info("Processing case: {name} ...")
@@ -101,6 +140,20 @@ do_one_case_overlap = function(name, case, ov_dir) {
     png(ofig, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
     print(p)
     dev.off()
+
+    add_report(
+        list(
+            kind = "table_image",
+            src = ofig,
+            descr = paste0(
+                "Repertoire overlap is the most common approach to measure repertoire similarity, ",
+                "using method <code>", case$method, "</code>, ",
+                get_method_descr(case$method)
+            )
+        ),
+        h1 = "Repertoire Overlaps",
+        h2 = ifelse(name == "DEFAULT", "#", name)
+    )
 
     if (!is.null(case$analyses$cases) && length(case$analyses$cases) > 0) {
         for (aname in names(case$analyses$cases)) {
@@ -135,6 +188,15 @@ do_one_case_overlap = function(name, case, ov_dir) {
             png(aofig, width = case$analyses$cases[[aname]]$devpars$width, height = case$analyses$cases[[aname]]$devpars$height, res = case$analyses$cases[[aname]]$devpars$res)
             print(ap)
             dev.off()
+
+            add_report(
+                list(src = aofig, name = aname),
+                h1 = "Repertoire Overlaps",
+                h2 = ifelse(name == "DEFAULT", "#", name),
+                h3 = "Repertoire Overlap Analysis",
+                ui = "table_of_images"
+            )
+
         }
     }
 }

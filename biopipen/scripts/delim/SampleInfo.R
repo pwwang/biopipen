@@ -4,7 +4,6 @@ library(rlang)
 library(dplyr)
 library(ggplot2)
 library(ggprism)
-library(ggsci)
 library(ggrepel)
 
 infile <- {{in.infile | r}}
@@ -14,6 +13,13 @@ mutaters <- {{envs.mutaters | r}}
 save_mutated <- {{envs.save_mutated | r}}
 defaults <- {{envs.defaults | r}}
 stats <- {{envs.stats | r}}
+exclude_cols <- {{envs.exclude_cols | r}}
+
+if (is.null(exclude_cols)) {
+    exclude_cols <- c()
+} else {
+    exclude_cols <- trimws(unlist(strsplit(exclude_cols, ",")))
+}
 
 outdir <- dirname(outfile)
 indata <- read.delim(infile, sep = sep, header = TRUE, row.names = NULL)
@@ -36,6 +42,20 @@ write.table(
     row.names = FALSE,
     col.names = TRUE,
     quote = FALSE
+)
+add_report(
+    list(
+        kind = "descr",
+        content = "The samples used in the analysis. Each row is a sample, and columns are the meta information about the sample. This is literally the input sample information file, but the paths to the scRNA-seq and scTCR-seq data are hidden.",
+        once = TRUE
+    ),
+    list(
+        kind = "table",
+        pageSize = 50,
+        data = list(file = outfile, sep = sep, excluded = exclude_cols),
+        src = FALSE
+    ),
+    h1 = "Sample Information"
 )
 
 theme_set(theme_prism())
@@ -93,14 +113,14 @@ for (name in names(stats)) {
     if (stat$plot == "boxplot" || stat$plot == "box") {
         p <- ggplot(data, aes(x=!!group, y=!!sym(stat$on), fill=!!group)) +
             geom_boxplot(position = "dodge") +
-            scale_fill_ucscgb(alpha = .8) +
+            scale_fill_biopipen() +
             xlab("")
     } else if (stat$plot == "violin" ||
                stat$plot == "violinplot" ||
                stat$plot == "vlnplot") {
         p <- ggplot(data, aes(x = !!group, y = !!sym(stat$on), fill=!!group)) +
             geom_violin(position = "dodge") +
-            scale_fill_ucscgb(alpha = .8) +
+            scale_fill_biopipen() +
             xlab("")
     } else if (
         (grepl("violin", stat$plot) || grepl("vln", stat$plot)) &&
@@ -109,12 +129,12 @@ for (name in names(stats)) {
         p <- ggplot(data, aes(x = !!group, y = !!sym(stat$on), fill = !!group)) +
             geom_violin(position = "dodge") +
             geom_boxplot(width = 0.1, position = position_dodge(0.9), fill="white") +
-            scale_fill_ucscgb(alpha = .8) +
+            scale_fill_biopipen() +
             xlab("")
     } else if (stat$plot == "histogram" || stat$plot == "hist") {
         p <- ggplot(data, aes(x = !!sym(stat$on), fill = !!group)) +
             geom_histogram(bins = 10, position = "dodge", alpha = 0.8, color = "white") +
-            scale_fill_ucscgb(alpha = .8)
+            scale_fill_biopipen()
     } else if (stat$plot == "pie" || stat$plot == "piechart") {
         if (is.null(stat$each)) {
             data <- data %>% distinct(!!group, .keep_all = TRUE)
@@ -137,7 +157,7 @@ for (name in names(stats)) {
                 fill="#EEEEEE",
                 size=4
             ) +
-            scale_fill_ucscgb(alpha = .7, name = group) +
+            scale_fill_biopipen(name = group) +
             ggtitle(paste0("# ", stat$on))
     } else if (stat$plot == "bar" || stat$plot == "barplot") {
         if (is.null(stat$each)) {
@@ -149,7 +169,7 @@ for (name in names(stats)) {
             data,
             aes(x = !!group, y = !!sym(count_on), fill = !!group)) +
             geom_bar(stat = "identity") +
-            scale_fill_ucscgb(alpha = .8) +
+            scale_fill_biopipen() +
             ylab(paste0("# ", stat$on))
     } else {
         stop("Unknown plot type: ", stat$plot)
@@ -159,4 +179,18 @@ for (name in names(stats)) {
     }
     print(p)
     dev.off()
+
+    by_desc <- ifelse(is.null(stat$by), "", paste0(" by ", stat$by))
+    descr <- ifelse(
+        is_continuous,
+        paste0("The distribution of ", stat$on, by_desc),
+        paste0("The number of ", stat$on, by_desc)
+    )
+    add_report(
+        list(kind = "table_image", src = plotfile, name = name, descr = descr),
+        h1 = "Statistics",
+        ui = "table_of_images:2"
+    )
 }
+
+save_report(outdir)

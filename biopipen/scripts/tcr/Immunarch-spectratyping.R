@@ -45,7 +45,7 @@ if (is.null(spects$cases) || length(spects$cases) == 0) {
 do_one_case_spectratyping = function(name, case, spect_dir) {
     # print(paste0("  Case: ", name))
     log_info("- Processing case: {name} ...")
-    odir = file.path(spect_dir, name)
+    odir = file.path(spect_dir, slugify(name, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE)
 
     if (!is.null(case$subset)) {
@@ -62,16 +62,32 @@ do_one_case_spectratyping = function(name, case, spect_dir) {
             .quant = case$quant,
             .col = case$col
         )
+        spectfile = file.path(odir, paste0(slugify(sample, tolower = FALSE), ".spect"))
         png(
-            file.path(odir, paste0(sample, ".png")),
+            spectfile,
             res = case$devpars$res,
             width = case$devpars$width,
             height = case$devpars$height
         )
         print(vis(spec_obj))
         dev.off()
+
+        add_report(
+            list(src = spectfile, name = sample),
+            h1 = "Spectratyping",
+            h2 = name,
+            ui = "table_of_images"
+        )
     }
 }
+
+add_report(
+    list(
+        kind = "descr",
+        content = "Spectratype is a useful way to represent distributions of genes per sequence length."
+    ),
+    h1 = "Spectratyping"
+)
 
 spect_dir = file.path(outdir, "spectratyping")
 dir.create(spect_dir, showWarnings = FALSE)

@@ -1,10 +1,13 @@
+source("{{biopipen_dir}}/utils/misc.R")
 source("{{biopipen_dir}}/utils/gsea.R")
 
 library(parallel)
 library(Seurat)
+library(slugify)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
+joboutdir <- {{ job.outdir | r }}
 gmtfile <- {{ envs.gmtfile | r }}
 ncores <- {{ envs.ncores | r }}
 fgsea <- {{ envs.fgsea | r }}
@@ -37,10 +40,10 @@ pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
-do_one_group <- function(obj, group, outputdir) {
-    print(paste("- Processing group", grouping, ":", group))
+do_one_group <- function(obj, group, outputdir, h1) {
+    log_info(paste("- Processing group", grouping, ":", group))
     groupname = paste0(grouping_prefix, group)
-    odir = file.path(outputdir, groupname)
+    odir = file.path(outputdir, slugify(groupname, tolower = FALSE))
     dir.create(odir, showWarnings = FALSE)
 
     classes = as.character(obj@meta.data[[grouping]])
@@ -65,19 +68,24 @@ do_one_group <- function(obj, group, outputdir) {
         }
     }, error=function(e) {
         unlink(odir, recursive = T, force = T)
-        warning(paste("Unable to run for", group))
-        warning(e)
+        log_warn(paste("Unable to run for", group))
+        log_warn(e)
     })
 
+    add_report(
+        list(kind = "fgsea", dir = odir),
+        h1 = ifelse(is.null(h1), groupname, h1),
+        h2 = ifelse(is.null(h1), "#", groupname)
+    )
 }
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
-    print(paste("Processing subset", subset_col, ":", s))
+    log_info(paste("Processing subset", subset_col, ":", s))
     if (is.null(s)) {
         outputdir <- file.path(outdir, "ALL")
         subset_obj <- sobj
     } else {
-        outputdir <- file.path(outdir, paste0(subset_prefix, s))
+        outputdir <- file.path(outdir, slugify(paste0(subset_prefix, s), tolower = FALSE))
         subset_code <- paste0("subset(sobj, subset = ", subset_col, "=='", s, "')")
         subset_obj <- eval(parse(text = subset_code))
     }
@@ -85,9 +93,13 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
 
     subset_obj <- subset(subset_obj, features = intersect(rownames(subset_obj), metabolics))
 
+    h1 <- NULL
+    if (!is.null(s)) {
+        h1 <- paste0(subset_prefix, s)
+    }
     groups = subset_obj@meta.data[[grouping]]
     x = mclapply(as.character(unique(groups)), function(group) {
-        do_one_group(subset_obj, group, outputdir)
+        do_one_group(subset_obj, group, outputdir, h1)
     }, mc.cores = ncores)
     if (any(unlist(lapply(x, class)) == "try-error")) {
         stop("mclapply error")
@@ -110,3 +122,4 @@ if (is.null(subsetting_cols)) {
     }
 }
 
+save_report(joboutdir)

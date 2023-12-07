@@ -1,34 +1,11 @@
-{% from "utils/misc.liq" import report_jobs, table_of_images -%}
+{% from "utils/misc.liq" import report_jobs -%}
 {% from_ os import path %}
 <script>
-    import { Image, DataTable } from "$libs";
-    import { Tile } from "$ccs";
+    import { Image, DataTable, Descr } from "$libs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
-    <h{{h}}>Applied filters</h{{h}}>
-    <Tile>
-        <p>Cell filters: {{envs.cell_qc | str | escape}}</p>
-        <p>Gene filters: {{
-            proc.envs.gene_qc
-            | str
-            | replace: "{", "&#123"
-            | replace: "}", "&#125"
-        }}</p>
-
-        <DataTable
-            src={{job.outdir | joinpaths: 'plots', 'dim.txt' | quote}}
-            data={ {{job.outdir | joinpaths: 'plots', 'dim.txt' | datatable: sep="\t"}} } />
-    </Tile>
-
-    <h{{h}}>Violin plots</h{{h}}>
-    {% set qcimgs = job.outdir | glob: "plots", "*.vln.png" %}
-    {{ table_of_images(qcimgs) }}
-
-    <h{{h}}>Scatter plots</h{{h}}>
-    {% set qcimgs = job.outdir | glob: "plots", "*.scatter.png" %}
-    {{ table_of_images(qcimgs) }}
-
+    {{ job | render_job: h=h }}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

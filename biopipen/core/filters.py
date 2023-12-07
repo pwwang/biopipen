@@ -7,6 +7,7 @@ from typing import Any, List, Mapping
 
 from argx import Namespace
 from liquid.filters.manager import FilterManager
+from pipen_report.filters import register_component, render_ui, _tag
 
 filtermanager = FilterManager()
 
@@ -206,3 +207,144 @@ def r(
         return r(vars(obj), ignoreintkey, todot, sortkeys, skip, _i)
 
     return repr(obj)
+
+
+@register_component("fgsea")
+def _render_fgsea(
+    cont: Mapping[str, Any],
+    job: Mapping[str, Any],
+    level: int,
+    na_arg: str = "10",
+) -> str:
+    """Render fgsea report"""
+    # cont["dir"] is required
+    n_pathways = int(na_arg)
+    pathways = []
+    with Path(cont["dir"]).joinpath("fgsea.txt").open() as f:
+        next(f)  # skip header
+        for line in f:
+            pathway, _ = line.split("\t", 1)
+            pathways.append(pathway)
+            if len(pathways) >= n_pathways:
+                break
+
+    components = [
+        # Summary
+        {
+            "title": "Enrichment Analysis Summary",
+            "ui": "tabs",
+            "contents": [
+                {
+                    "title": "Plot",
+                    "ui": "flat",
+                    "contents": [
+                        {
+                            "kind": "image",
+                            "src": str(Path(cont["dir"]).joinpath("gsea_table.png")),
+                        }
+                    ],
+                },
+                {
+                    "title": "Table",
+                    "ui": "flat",
+                    "contents": [
+                        {
+                            "kind": "table",
+                            "src": str(Path(cont["dir"]).joinpath("fgsea.txt")),
+                        }
+                    ],
+                },
+            ]
+        },
+        # Pathways
+        {
+            "title": f"Enriched Pathways (Top {n_pathways})",
+            "ui": "table_of_images",
+            "contents": [
+                {
+                    "src": str(Path(cont["dir"]) / f"fgsea_{pw.replace('/', '-')}.png"),
+                    "title": pw,
+                }
+                for pw in pathways
+            ]
+        },
+    ]
+
+    return render_ui(components, "accordion", job, level)
+
+
+@register_component("pdf")
+def _render_pdf(
+    cont: Mapping[str, Any],
+    job: Mapping[str, Any],
+    level: int,
+) -> str:
+    """Render pdf report"""
+    # cont["src"] is required
+    height = cont.get("height", "600")
+    return _tag(
+        "embed",
+        src=str(cont["src"]),
+        type="application/pdf",
+        width="100%",
+        height=height,
+    )
+
+
+@register_component("gsea")
+def _render_gsea(
+    cont: Mapping[str, Any],
+    job: Mapping[str, Any],
+    level: int,
+) -> str:
+    """Render gsea report"""
+    # cont["dir"] is required
+    raise NotImplementedError()
+
+
+@register_component("enrichr")
+def _render_enrichr(
+    cont: Mapping[str, Any],
+    job: Mapping[str, Any],
+    level: int,
+) -> str:
+    """Render enrichr report"""
+    # cont["dir"] is required
+    dbs = [sumfile.stem[8:] for sumfile in Path(cont["dir"]).glob("Enrichr-*.txt")]
+    components = []
+
+    for db in dbs:
+        components.append(
+            {
+                "title": db,
+                "ui": "tabs",
+                "contents": [
+                    {
+                        "title": "Plot",
+                        "ui": "flat",
+                        "contents": [
+                            {
+                                "kind": "image",
+                                "src": str(
+                                    Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
+                                ),
+                            }
+                        ],
+                    },
+                    {
+                        "title": "Table",
+                        "ui": "flat",
+                        "contents": [
+                            {
+                                "kind": "table",
+                                "src": str(
+                                    Path(cont["dir"]).joinpath(f"Enrichr-{db}.txt")
+                                ),
+                            }
+                        ],
+                    },
+                ],
+            }
+        )
+
+    return render_ui(components, "accordion", job, level)

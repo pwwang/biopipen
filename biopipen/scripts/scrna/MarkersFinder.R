@@ -14,12 +14,14 @@ library(future)
 library(tidyseurat)
 library(ggVennDiagram)
 library(UpSetR)
+library(slugify)
 
 log_info("Setting up EnrichR ...")
 setEnrichrSite("Enrichr")
 
 srtfile <- {{ in.srtobj | quote }}
 outdir <- {{ out.outdir | quote }}
+joboutdir <- {{ job.outdir | quote }}
 ncores <- {{ envs.ncores | int }}
 mutaters <- {{ envs.mutaters | r }}
 ident.1 <- {{ envs["ident-1"] | r }}
@@ -130,13 +132,17 @@ if (is.null(cases) || length(cases) == 0) {
 #  )
 # Otherwise if section is specified, the case name will be changed to `section:case`
 
+sections <- c()
+
 newcases <- list()
 for (name in names(cases)) {
     case <- cases[[name]]
     if (is.null(case$each) && !is.null(case$ident.1)) {
+        sections <- c(sections, case$section)
         newcases[[paste0(case$section, ":", name)]] <- case
     } else if (is.null(case$each)) {
         # is.null(case$ident.1)
+        sections <- c(sections, name)
         idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
         for (ident in idents) {
             newcases[[paste0(name, ":", ident)]] <- case
@@ -156,16 +162,18 @@ for (name in names(cases)) {
             if (is.null(case$ident.1)) {
                 idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
                 for (ident in idents) {
-                    kname <- if (name == "DEFAULT") "" else paste0("-", name)
+                    kname <- if (name == "DEFAULT") "" else paste0(" - ", name)
+                    sections <- c(sections, paste0(each, kname))
                     key <- paste0(each, kname, ":", ident)
                     if (case$prefix_each) {
-                        key <- paste0(case$each, "-", key)
+                        key <- paste0(case$each, " - ", key)
                     }
                     newcases[[key]] <- case
                     newcases[[key]]$ident.1 <- ident
                     newcases[[key]]$group.by <- by
                 }
             } else {
+                sections <- c(sections, case$each)
                 key <- paste0(case$each, ":", each)
                 if (name != "DEFAULT") {
                     key <- paste0(key, " - ", name)
@@ -176,7 +184,27 @@ for (name in names(cases)) {
         }
     }
 }
+
 cases <- newcases
+single_section <- length(unique(sections)) == 1
+
+casename_info <- function(casename, create = FALSE) {
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
+
+    out <- list(
+        casename = casename,
+        section = sec_case_names[1],
+        case = cname,
+        section_slug = slugify(sec_case_names[1], tolower = FALSE),
+        case_slug = slugify(cname, tolower = FALSE)
+    )
+    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+    if (create) {
+        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+    }
+    out
+}
 
 plot_volcano = function(markers, volfile, sig, volgenes) {
     # markers
@@ -221,7 +249,7 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
             y = "-log10 Adjusted P-value"
         )
 
-    png(volfile, res = 100, height = 800, width = 900)
+    png(volfile, res = 100, height = 1200, width = 900)
     print(p_vol)
     dev.off()
 }
@@ -231,85 +259,207 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
 #   case: case name
 #   markers: markers dataframe
 #   sig: The expression to filter significant markers
-do_enrich <- function(case, markers, sig, volgenes) {
-    log_info("- Running enrichment for case: {case}")
-    parts <- strsplit(case, ":")[[1]]
-    sec <- parts[1]
-    case <- paste0(parts[-1], collapse = ":")
-    casedir <- file.path(outdir, sec, case)
-    dir.create(casedir, showWarnings = FALSE, recursive = TRUE)
+do_enrich <- function(info, markers, sig, volgenes) {
+    log_info("- Running enrichment for case: {info$casename}")
+
     if (nrow(markers) == 0) {
-        log_warn("  No markers found for case: {case}")
-        cat("No markers found.", file = file.path(casedir, "error.txt"))
-        return()
+        log_warn("  No markers found for case: {info$casename}")
+        return(NULL)
     }
-    plot_volcano(markers, file.path(casedir, "volcano.png"), sig, volgenes)
+
+    plot_volcano(markers, file.path(info$casedir, "volcano.png"), sig, volgenes)
+
     markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
-        log_warn("  No significant markers found for case: {case}")
-        cat("No significant markers.", file = file.path(casedir, "error.txt"))
-        return()
+        log_warn("  No significant markers found for case: {info$casename}")
+        return(NULL)
     }
+
     write.table(
         markers_sig,
-        file.path(casedir, "markers.txt"),
+        file.path(info$casedir, "markers.txt"),
         sep = "\t",
         row.names = FALSE,
         col.names = TRUE,
         quote = FALSE
     )
     if (nrow(markers_sig) < 5) {
-        for (db in dbs) {
-            write.table(
-                data.frame(Warning = "Not enough significant markers."),
-                file.path(casedir, paste0("Enrichr-", db, ".txt")),
-                sep = "\t",
-                row.names = FALSE,
-                col.names = TRUE,
-                quote = FALSE
-            )
-            png(
-                file.path(casedir, paste0("Enrichr-", db, ".png")),
-                res = 100, height = 200, width = 1000
-            )
-            print(
-                ggplot() +
-                    annotate(
-                        "text",
-                        x = 1,
-                        y = 1,
-                        label = "Not enough significant markers."
-                    ) +
-                    theme_classic()
-            )
-            dev.off()
-        }
+        log_warn("  Too few significant markers found for case: {info$casename}")
+        return(NULL)
     } else {
-        enriched <- enrichr(markers_sig$gene, dbs)
+        enriched <- enrichr(unique(markers_sig$gene), dbs)
         for (db in dbs) {
             write.table(
                 enriched[[db]],
-                file.path(casedir, paste0("Enrichr-", db, ".txt")),
+                file.path(info$casedir, paste0("Enrichr-", db, ".txt")),
                 sep = "\t",
                 row.names = FALSE,
                 col.names = TRUE,
                 quote = FALSE
             )
             png(
-                file.path(casedir, paste0("Enrichr-", db, ".png")),
+                file.path(info$casedir, paste0("Enrichr-", db, ".png")),
                 res = 100, height = 1000, width = 1000
             )
-            print(plotEnrich(enriched[[db]], showTerms = 20, title = db))
+            print(
+                plotEnrich(enriched[[db]], showTerms = 20, title = db) +
+                theme_prism()
+            )
             dev.off()
         }
+    }
+    unique(markers_sig$gene)
+}
+
+
+do_dotplot <- function(info, siggenes, case, args) {
+    dotplot_devpars <- case$dotplot$devpars
+    if (is.null(args$ident.2)) {
+        case$dotplot$object <- args$object
+        case$dotplot$object@meta.data <- case$dotplot$object@meta.data %>%
+            mutate(
+                !!sym(args$group.by) := if_else(
+                    !!sym(args$group.by) == args$ident.1,
+                    args$ident.1,
+                    ".Other"
+                ),
+                !!sym(args$group.by) := factor(
+                    !!sym(args$group.by),
+                    levels = c(args$ident.1, ".Other")
+                )
+            )
+    } else {
+        case$dotplot$object <- args$object %>%
+            filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
+            mutate(!!sym(args$group.by) := factor(
+                !!sym(args$group.by),
+                levels = c(args$ident.1, args$ident.2)
+            ))
+    }
+    case$dotplot$devpars <- NULL
+    case$dotplot$features <- siggenes
+    case$dotplot$group.by <- args$group.by
+    case$dotplot$assay <- case$assay
+    dotplot_width = ifelse(
+        is.null(dotplot_devpars$width),
+        if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
+        dotplot_devpars$width
+    )
+    dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
+    dotplot_res = ifelse(is.null(dotplot_devpars$res), 100, dotplot_devpars$res)
+    dotplot_file <- file.path(info$casedir, "dotplot.png")
+    png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
+    # rotate x axis labels
+    print(
+        do_call(DotPlot, case$dotplot) +
+        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+        coord_flip()
+    )
+    dev.off()
+}
+
+
+add_case_report <- function(info, sigmarkers, siggenes) {
+    h1 = ifelse(
+        info$section == "DEFAULT",
+        info$case,
+        ifelse(
+            single_section,
+            paste0(
+                ifelse(info$section == "seurat_clusters", "Cluster", info$section),
+                " - ",
+                info$case
+            ),
+            info$section
+        )
+    )
+    h2 = ifelse(
+        info$section == "DEFAULT",
+        "#",
+        ifelse(single_section, "#", info$case)
+    )
+    add_report(
+        list(
+            title = "Significant Markers",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "descr",
+                    content = paste0(
+                        "The markers are found using Seurat's FindMarkers function, ",
+                        "and filtered by: ",
+                        html_escape(sigmarkers)
+                    )
+                ),
+                list(
+                    kind = "table",
+                    data = list(nrows = 100),
+                    src = file.path(info$casedir, "markers.txt")
+                )
+            )
+        ),
+        list(
+            title = "Volcano Plot",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(info$casedir, "volcano.png")
+                )
+            )
+        ),
+        list(
+            title = "Dot Plot",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(info$casedir, "dotplot.png")
+                )
+            )
+        ),
+        h1 = h1,
+        h2 = ifelse(h2 == "#", "Markers", h2),
+        h3 = ifelse(h2 == "#", "#", "Markers"),
+        ui = "tabs"
+    )
+    if (is.null(siggenes)) {
+        add_report(
+            list(
+                kind = "error",
+                content = "No enough significant markers found for enrichment analysis"
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
+            h3 = ifelse(h2 == "#", "#", "Enrichment Analysis"),
+            ui = "flat"
+        )
+    } else {
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "The enrichment analysis is done using Enrichr. ",
+                    "The significant markers are used as input. "
+                )
+            ),
+            list(
+                kind = "enrichr",
+                dir = info$casedir
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
+            h3 = ifelse(h2 == "#", "#", "Enrichment Analysis"),
+            ui = "flat"
+        )
     }
 }
 
 
 do_case <- function(casename) {
     log_info("Dealing with case: {casename}...")
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
+
+    info <- casename_info(casename, create = TRUE)
     case <- cases[[casename]]
     # ident1
     # ident2
@@ -343,7 +493,7 @@ do_case <- function(casename) {
     markers <- tryCatch({
         do_call(FindMarkers, args) %>% rownames_to_column("gene")
     }, error = function(e) {
-        warning(e$message, immediate. = TRUE)
+        log_warn(e$message)
         data.frame(
             gene = character(),
             p_val = numeric(),
@@ -353,65 +503,21 @@ do_case <- function(casename) {
             p_val_adj=numeric()
         )
     })
-    do_enrich(casename, markers, case$sigmarkers, case$volcano_genes)
 
-    siggenes <- markers %>%
-        filter(!!parse_expr(case$sigmarkers)) %>%
-        pull(gene) %>%
-        unique()
+    siggenes <- do_enrich(info, markers, case$sigmarkers, case$volcano_genes)
 
     if (length(siggenes) > 0) {
-        dotplot_devpars <- case$dotplot$devpars
-        if (is.null(args$ident.2)) {
-            case$dotplot$object <- args$object
-            case$dotplot$object@meta.data <- case$dotplot$object@meta.data %>%
-                mutate(
-                    !!sym(args$group.by) := if_else(
-                        !!sym(args$group.by) == args$ident.1,
-                        args$ident.1,
-                        ".Other"
-                    ),
-                    !!sym(args$group.by) := factor(
-                        !!sym(args$group.by),
-                        levels = c(args$ident.1, ".Other")
-                    )
-                )
-        } else {
-            case$dotplot$object <- args$object %>%
-                filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
-                mutate(!!sym(args$group.by) := factor(
-                    !!sym(args$group.by),
-                    levels = c(args$ident.1, args$ident.2)
-                ))
-        }
-        case$dotplot$devpars <- NULL
-        case$dotplot$features <- siggenes
-        case$dotplot$group.by <- args$group.by
-        case$dotplot$assay <- case$assay
-        dotplot_width = ifelse(
-            is.null(dotplot_devpars$width),
-            if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
-            dotplot_devpars$width
-        )
-        dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
-        dotplot_res = ifelse(is.null(dotplot_devpars$res), 100, dotplot_devpars$res)
-        dotplot_file <- file.path(outdir, sec_case_names[1], cname, "dotplot.png")
-        png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
-        # rotate x axis labels
-        print(
-            do_call(DotPlot, case$dotplot) +
-            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            coord_flip()
-        )
-        dev.off()
+        do_dotplot(info, siggenes, case, args)
     }
 
-    if (sec_case_names[1] %in% overlap) {
-        if (is.null(overlaps[[sec_case_names[1]]])) {
-            overlaps[[sec_case_names[1]]] <<- list()
+    if (info$section %in% overlap) {
+        if (is.null(overlaps[[info$section]])) {
+            overlaps[[info$section]] <<- list()
         }
-        overlaps[[sec_case_names[1]]][[cname]] <<- siggenes
+        overlaps[[info$section]][[info$case]] <<- siggenes
     }
+
+    add_case_report(info, case$sigmarkers, siggenes)
 }
 
 do_overlap <- function(section) {
@@ -461,7 +567,46 @@ do_overlap <- function(section) {
     png(upset_plot, res = 100, width = 800, height = 600)
     print(upset_p)
     dev.off()
+
+    add_report(
+        list(
+            title = "Venn Diagram",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(ov_dir, "venn.png")
+                )
+            )
+        ),
+        list(
+            title = "UpSet Plot",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "img",
+                    src = file.path(ov_dir, "upset.png")
+                )
+            )
+        ),
+        list(
+            title = "Marker Table",
+            ui = "flat",
+            contents = list(
+                list(
+                    kind = "table",
+                    data = list(nrows = 100),
+                    src = file.path(ov_dir, "markers.txt")
+                )
+            )
+        ),
+        h1 = "Overlapping Markers",
+        h2 = section,
+        ui = "tabs"
+    )
 }
 
 sapply(sort(names(cases)), do_case)
 sapply(sort(names(overlaps)), do_overlap)
+
+save_report(joboutdir)

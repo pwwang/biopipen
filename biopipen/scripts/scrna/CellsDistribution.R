@@ -5,12 +5,13 @@ library(rlang)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
-library(ggsci)
 library(ggVennDiagram)
 library(UpSetR)
+library(slugify)
 
 srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
+joboutdir <- {{job.outdir | r}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
 group_by <- {{envs.group_by | r}}  # nolint
 group_order <- {{envs.group_order | r}}  # nolint
@@ -19,6 +20,7 @@ cells_order <- {{envs.cells_order | r}}  # nolint
 cells_orderby <- {{envs.cells_orderby | r}}  # nolint
 cells_n <- {{envs.cells_n | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
+descr <- {{envs.descr | r}}  # nolint
 devpars <- {{envs.devpars | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
@@ -27,11 +29,11 @@ cases <- {{envs.cases | r}}  # nolint
 
 if (is.null(overlap)) { overlap = c() }
 overlaps <- list()
-print("- Loading seurat object ...")
+log_info("- Loading seurat object ...")
 srtobj <- readRDS(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
-    print("- Mutating seurat object ...")
+    log_info("- Mutating seurat object ...")
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
@@ -41,6 +43,7 @@ if (!is.factor(all_clusters)) {
     all_clusters = factor(all_clusters, levels = sort(unique(all_clusters)))
 }
 
+single_section <- TRUE
 expand_cases <- function() {
     # fill up cases with missing parameters
     if (is.null(cases) || length(cases) == 0) {
@@ -55,7 +58,8 @@ expand_cases <- function() {
                 devpars = devpars,
                 each = each,
                 section = section,
-                subset = subset
+                subset = subset,
+                descr = descr
             )
         )
     } else {
@@ -72,7 +76,8 @@ expand_cases <- function() {
                 devpars = devpars,
                 each = each,
                 section = section,
-                subset = subset
+                subset = subset,
+                descr = descr
             )
             case$devpars <- list_setdefault(case$devpars, devpars)
             filled_cases[[name]] <- case
@@ -80,12 +85,15 @@ expand_cases <- function() {
     }
 
     outcases <- list()
+    sections <- c()
     # expand each
     for (name in names(filled_cases)) {
         case <- filled_cases[[name]]
         if (is.null(case$each) || nchar(case$each) == 0) {
+            sections <- c(sections, case$section)
             outcases[[paste0(case$section, ":", name)]] <- case
         } else {
+            sections <- c(sections, case$each)
             eachs <- srtobj@meta.data %>% pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
             for (ea in eachs) {
                 by <- make.names(paste0(".", name, "_", case$each,"_", ea))
@@ -101,25 +109,46 @@ expand_cases <- function() {
             }
         }
     }
+    single_section <<- length(unique(sections)) == 1
     outcases
 }
 
+casename_info <- function(casename, create = FALSE) {
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
+
+    out <- list(
+        casename = casename,
+        section = sec_case_names[1],
+        case = cname,
+        section_slug = slugify(sec_case_names[1], tolower = FALSE),
+        case_slug = slugify(cname, tolower = FALSE)
+    )
+    out$sec_dir <- file.path(outdir, out$section_slug)
+    if (create) {
+        dir.create(out$sec_dir, showWarnings = FALSE, recursive = TRUE)
+    }
+    out
+}
+
 do_case <- function(name, case) {
-    print(paste("- Running for case:", name))
+    log_info(paste("- Running for case:", name))
     if (is.null(case$group_by) || nchar(case$group_by) == 0) {
         stop(paste0("`group_by` must be specified for case", name))
     }
     if (is.null(case$cells_by) || nchar(case$cells_by) == 0) {
         stop(paste0("`cells_by` must be specified for case", name))
     }
+    info <- casename_info(name, create = TRUE)
     cells_by <- trimws(strsplit(case$cells_by, ",")[[1]])
 
     sec_case_names <- strsplit(name, ":")[[1]]
     sec_dir <- file.path(outdir, sec_case_names[1])
     casename <- paste(sec_case_names[-1], collapse = ":")
     dir.create(sec_dir, showWarnings = FALSE, recursive = TRUE)
-    outfile <- file.path(sec_dir, paste0("case-", casename, ".png"))
-    txtfile <- file.path(sec_dir, paste0("case-", casename, ".txt"))
+
+    outfile <- file.path(info$sec_dir, paste0("case-", info$case_slug, ".png"))
+    txtfile <- file.path(info$sec_dir, paste0("case-", info$case_slug, ".txt"))
 
     # subset the seurat object
     meta <- srtobj@meta.data
@@ -148,11 +177,11 @@ do_case <- function(name, case) {
         meta <- meta1
     }
 
-    if (sec_case_names[1] %in% overlap) {
-        if (is.null(overlaps[[sec_case_names[1]]])) {
-            overlaps[[sec_case_names[1]]] <<- list()
+    if (info$section %in% overlap) {
+        if (is.null(overlaps[[info$section]])) {
+            overlaps[[info$section]] <<- list()
         }
-        overlaps[[sec_case_names[1]]][[casename]] <<- meta %>% pull(case$cells_by) %>% unique()
+        overlaps[[info$section]][[info$case]] <<- meta %>% pull(case$cells_by) %>% unique()
     }
 
     # add sizes
@@ -197,7 +226,14 @@ do_case <- function(name, case) {
     }
 
     write.table(
-        meta,
+        meta %>% select(
+            !!sym(cells_by),
+            !!sym(case$group_by),
+            CloneSize,
+            CloneGroupSize,
+            CloneClusterSize,
+            CloneGroupClusterSize,
+        ),
         txtfile,
         sep = "\t",
         row.names = TRUE,
@@ -226,7 +262,7 @@ do_case <- function(name, case) {
         geom_col(width=.01, position="fill", color = "#888888") +
         geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
         coord_polar("y", start = 0) +
-        scale_fill_ucscgb(name = "Cluster", alpha = 1, limits = levels(all_clusters)) +
+        scale_fill_biopipen(name = "Cluster", limits = levels(all_clusters)) +
         theme_void() +
         theme(
             plot.margin = unit(c(1,1,1,1), "cm"),
@@ -238,16 +274,63 @@ do_case <- function(name, case) {
     png(outfile, res = devpars$res, width = devpars$width, height = devpars$height)
     print(p)
     dev.off()
+
+    add_report(
+        list(
+            kind = "descr",
+            content = ifelse(
+                is.null(case$descr) || nchar(case$descr) == 0,
+                paste0(
+                    "Distribution for cells in ",
+                    "<code>", html_escape(cells_by), "</code>",
+                    " for ",
+                    "<code>", html_escape(case$group_by), "</code>"
+                ),
+                case$descr
+            )
+        ),
+        h1 = ifelse(
+            info$section == "DEFAULT",
+            info$case,
+            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+        ),
+        h2 = ifelse(single_section, "#", info$case)
+    )
+
+    add_report(
+        list(
+            name = "Distribution Plot",
+            contents = list(list(
+                kind = "image",
+                src = outfile
+            ))
+        ),
+        list(
+            name = "Distribution Table",
+            contents = list(list(
+                kind = "table",
+                data = list(nrows = 100),
+                src = txtfile
+            ))
+        ),
+        h1 = ifelse(
+            info$section == "DEFAULT",
+            info$case,
+            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+        ),
+        h2 = ifelse(single_section, "#", info$case),
+        ui = "tabs"
+    )
 }
 
 do_overlap <- function(section) {
-    print(paste("- Running overlaps for section:", section))
+    log_info(paste("- Running overlaps for section:", section))
     overlap_cases <- overlaps[[section]]
     if (length(overlap_cases) < 2) {
         stop(paste0("Not enough cases for overlap for section: ", section))
     }
 
-    sec_dir <- file.path(outdir, section)
+    sec_dir <- file.path(outdir, slugify(section, tolower = FALSE))
     venn_plot <- file.path(sec_dir, "venn.png")
     venn_p <- ggVennDiagram(overlap_cases, label_percent_digit = 1) +
         scale_fill_distiller(palette = "Reds", direction = 1) +
@@ -261,8 +344,30 @@ do_overlap <- function(section) {
     png(upset_plot, res = 100, width = 800, height = 600)
     print(upset_p)
     dev.off()
+
+    add_report(
+        list(
+            name = "Venn Plot",
+            contents = list(list(
+                kind = "image",
+                src = venn_plot
+            ))
+        ),
+        list(
+            name = "UpSet Plot",
+            contents = list(list(
+                kind = "image",
+                src = upset_plot
+            ))
+        ),
+        h1 = "Overlapping Groups",
+        h2 = section,
+        ui = "tabs"
+    )
 }
 
 cases <- expand_cases()
 sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
 sapply(sort(names(overlaps)), do_overlap)
+
+save_report(joboutdir)

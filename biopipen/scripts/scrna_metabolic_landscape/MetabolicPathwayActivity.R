@@ -296,6 +296,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
                 size = 1,
                 color = "black"
             )',
+            "scale_fill_biopipen()",
             "theme_prism(axis_text_angle = 90)"
         ),
         devpars = vio_devpars,

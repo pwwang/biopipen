@@ -1,4 +1,4 @@
-scrna-basic# Basic Analysis of scRNA-seq data
+# Basic Analysis of scRNA-seq data
 
 This pipeline is used to process single-cell RNA-seq data with some basic analysis, including:
 

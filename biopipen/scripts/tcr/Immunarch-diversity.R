@@ -165,7 +165,7 @@ filter_div = function(div, samples) {
 #   case: the case with argument to be run
 #   ddir: the directory to save the results
 #   value_col: the column name of the value
-run_general = function(d, case, ddir, value_col = "Value") {
+run_general = function(casename, d, case, ddir, value_col = "Value") {
     args = case$args
     args$.data = d$data
     args$.method = case$method
@@ -282,6 +282,63 @@ run_general = function(d, case, ddir, value_col = "Value") {
     print(p)
     dev.off()
 
+    add_report(
+        list(
+            kind = "descr",
+            content = paste0(
+                "Diversity estimation using ",
+                "<code>",
+                case$method,
+                "</code>: ",
+                switch(case$method,
+                    chao1 = paste0(
+                        "a nonparameteric asymptotic estimator of species richness ",
+                        "(number of species in a population)."),
+                    hill = paste0(
+                        "Hill numbers are a mathematically unified family of ",
+                        "diversity indices (differing only by an exponent q)."),
+                    div = paste0(
+                        "true diversity, or the effective number of types, ",
+                        "refers to the number of equally abundant types needed for ",
+                        "the average proportional abundance of the types to equal that ",
+                        "observed in the dataset of interest where all types may ",
+                        "not be equally abundant."),
+                    gini.simp = paste0(
+                        "the Gini-Simpson index is the probability of interspecific ",
+                        "encounter, i.e., probability that two entities represent different types."),
+                    inv.simp = paste0(
+                        "Inverse Simpson index is the effective number of types ",
+                        "that is obtained when the weighted arithmetic mean is used ",
+                        "to quantify average proportional abundance of types in ",
+                        "the dataset of interest."),
+                    gini = paste0(
+                        "the Gini coefficient measures the inequality among ",
+                        "values of a frequency distribution (for example levels of income). ",
+                        "A Gini coefficient of zero expresses perfect equality, ",
+                        "where all values are the same (for example, where everyone has ",
+                        "the same income). A Gini coefficient of one (or 100 percents ) ",
+                        "expresses maximal inequality among values (for example where only ",
+                        "one person has all the income).")
+                )
+            )
+        ),
+        h1 = "Diversity Estimation",
+        h2 = casename
+    )
+    add_report(
+        list(
+            name = "Diversity Plot",
+            contents = list(list(kind = "image", src = file.path(ddir, "diversity.png")))
+        ),
+        list(
+            name = "Diversity Table",
+            contents = list(list(kind = "table", src = file.path(ddir, "diversity.txt")))
+        ),
+        h1 = "Diversity Estimation",
+        h2 = casename,
+        ui = "tabs"
+    )
+
     # Test
     if (!is.null(case$test) && case$test$method != "none") {
         # Use pairwise.t.test or pairwise.wilcox.test
@@ -343,6 +400,19 @@ run_general = function(d, case, ddir, value_col = "Value") {
             sep = "\t",
             row.names = FALSE,
             col.names = TRUE
+        )
+
+        add_report(
+            list(
+                name = paste0("Test (", case$test$method, ")"),
+                contents = list(list(
+                    kind = "table",
+                    src = file.path(ddir, paste0("diversity.test.", case$test$method, ".txt"))
+                ))
+            ),
+            h1 = "Diversity Estimation",
+            h2 = casename,
+            ui = "tabs"
         )
     }
 }
@@ -471,7 +541,12 @@ run_raref_multi = function(d, case, ddir) {
     } else {
         height = case$devpars$height
     }
-    png(file.path(ddir, paste0("raref-", case$separate_by, ".png")), width = width, height = height, res = res)
+    png(
+        file.path(ddir, paste0("raref-", slugify(case$separate_by), ".png")),
+        width = width,
+        height = height,
+        res = res
+    )
     print(p)
     dev.off()
 }
@@ -481,9 +556,9 @@ run_div_case = function(casename) {
     log_info("Processing case: {casename} ...")
     case = div_cases[[casename]]
     if (case$method == "raref") {
-        ddir = file.path(outdir, "rarefraction", casename)
+        ddir = file.path(outdir, "rarefraction", slugify(casename, tolower = FALSE))
     } else {
-        ddir = file.path(div_dir, casename)
+        ddir = file.path(div_dir, slugify(casename, tolower = FALSE))
     }
     dir.create(ddir, recursive = TRUE, showWarnings = FALSE)
 
@@ -495,26 +570,56 @@ run_div_case = function(casename) {
     }
 
     # Run repDiversity
-    if (case$method == "chao1") {
-        run_general(d, case, ddir, "Estimator")
-    } else if (case$method == "hill") {
-        run_general(d, case, ddir)
-    } else if (case$method == "div") {
-        run_general(d, case, ddir)
-    } else if (case$method == "gini.simp") {
-        run_general(d, case, ddir)
-    } else if (case$method == "inv.simp") {
-        run_general(d, case, ddir)
-    } else if (case$method == "gini") {
-        run_general(d, case, ddir, "V1")
-    } else if (case$method == "raref") {
+    if (case$method == "raref") {
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "Rarefaction is a technique to assess species richness from the ",
+                    "results of sampling through extrapolation. "
+                )
+            ),
+            h1 = "Rarefraction",
+            h2 = casename
+        )
+
         if (!is.null(case$separate_by)) {
             run_raref_multi(d, case, ddir)
+            add_report(
+                list(
+                    kind = "image",
+                    src = file.path(ddir, paste0("raref-", slugify(case$separate_by), ".png"))
+                ),
+                h1 = "Rarefraction",
+                h2 = casename
+            )
         } else {
             run_raref_single(d, case, ddir)
+            add_report(
+                list(
+                    kind = "image",
+                    src = file.path(ddir, "raref.png")
+                ),
+                h1 = "Rarefraction",
+                h2 = casename
+            )
         }
     } else {
-        stop(paste0("Unknown diversity method: ", case$method))
+        if (case$method == "chao1") {
+            run_general(casename, d, case, ddir, "Estimator")
+        } else if (case$method == "hill") {
+            run_general(casename, d, case, ddir)
+        } else if (case$method == "div") {
+            run_general(casename, d, case, ddir)
+        } else if (case$method == "gini.simp") {
+            run_general(casename, d, case, ddir)
+        } else if (case$method == "inv.simp") {
+            run_general(casename, d, case, ddir)
+        } else if (case$method == "gini") {
+            run_general(casename, d, case, ddir, "V1")
+        } else {
+            stop(paste0("Unknown diversity method: ", case$method))
+        }
     }
 }
 

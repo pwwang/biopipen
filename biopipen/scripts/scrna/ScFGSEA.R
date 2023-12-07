@@ -4,9 +4,11 @@ source("{{biopipen_dir}}/utils/mutate_helpers.R")
 library(rlang)
 library(Seurat)
 library(tidyseurat)
+library(slugify)
 
 srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
+joboutdir <- {{job.outdir | r}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
 group.by <- {{envs["group-by"] | r}}  # nolint
 ident.1 <- {{envs["ident-1"] | r}}  # nolint
@@ -23,10 +25,14 @@ ncores <- {{envs.ncores | r}}  # nolint
 rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
 
+log_info("Reading srtobj...")
+
 srtobj <- readRDS(srtfile)
 if (!is.null(mutaters) && length(mutaters) > 0) {
     srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
+
+single_section <- TRUE
 
 expand_cases <- function() {
     # fill up cases with missing parameters
@@ -73,13 +79,16 @@ expand_cases <- function() {
     }
 
     outcases <- list()
+    sections <- c()
     # expand each
     for (name in names(filled_cases)) {
         case <- filled_cases[[name]]
         if (is.null(case$each) || nchar(case$each) == 0) {
+            sections <- c(sections, case$section)
             outcases[[paste0(case$section, ":", name)]] <- case
         } else {
             eachs <- srtobj@meta.data %>% pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+            sections <- c(sections, case$each)
             for (each in eachs) {
                 by <- make.names(paste0(".", name, "_", case$each,"_", each))
                 srtobj@meta.data <<- srtobj@meta.data %>%
@@ -98,19 +107,34 @@ expand_cases <- function() {
             }
         }
     }
+    single_section <- length(unique(sections)) == 1
     outcases
 }
 
+casename_info <- function(casename, create = FALSE) {
+    sec_case_names <- strsplit(casename, ":")[[1]]
+    cname <- paste(sec_case_names[-1], collapse = ":")
+
+    out <- list(
+        casename = casename,
+        section = sec_case_names[1],
+        case = cname,
+        section_slug = slugify(sec_case_names[1], tolower = FALSE),
+        case_slug = slugify(cname, tolower = FALSE)
+    )
+    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+    if (create) {
+        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+    }
+    out
+}
+
 do_case <- function(name, case) {
-    print(paste("- Processing case:", name, "..."))
-    section_case <- unlist(strsplit(name, ":"))
-    section <- section_case[1]
-    casename <- paste(section_case[-1], collapse = ":")
-    case_dir <- file.path(outdir, section, casename)
-    dir.create(case_dir, showWarnings = FALSE, recursive = TRUE)
+    log_info("- Doing case: {name} ...")
+    info <- casename_info(name, create = TRUE)
 
     # prepare expression matrix
-    print("  Preparing expression matrix...")
+    log_info("  Preparing expression matrix...")
     sobj <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
     if (!is.null(case$ident.2)) {
         sobj <- sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
@@ -124,11 +148,11 @@ do_case <- function(name, case) {
     exprs <- GetAssayData(sobj, slot = "data", assay = "RNA")
 
     # get preranks
-    print("  Getting preranks...")
+    log_info("  Getting preranks...")
     ranks <- prerank(exprs, case$ident.1, case$ident.2, allclasses, case$method)
     write.table(
         ranks,
-        file.path(case_dir, "fgsea.rank"),
+        file.path(info$casedir, "fgsea.rank"),
         row.names = FALSE,
         col.names = TRUE,
         sep = "\t",
@@ -136,13 +160,29 @@ do_case <- function(name, case) {
     )
 
     # run fgsea
-    print("  Running fgsea...")
+    log_info("  Running fgsea...")
     case$rest$minSize <- case$minsize
     case$rest$maxSize <- case$maxsize
     case$rest$eps <- case$eps
     case$rest$nproc <- case$ncores
-    runFGSEA(ranks, gmtfile, case$top, case_dir, case$rest)
+    runFGSEA(ranks, gmtfile, case$top, info$casedir, case$rest)
+
+    add_report(
+        list(kind = "fgsea", dir = info$casedir),
+        h1 = ifelse(
+            info$section == "DEFAULT",
+            info$case,
+            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+        ),
+        h2 = ifelse(
+            info$section == "DEFAULT",
+            "#",
+            ifelse(single_section, "#", info$case)
+        )
+    )
 }
 
 cases <- expand_cases()
 sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
+
+save_report(joboutdir)

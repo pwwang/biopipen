@@ -1,17 +1,11 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 
 <script>
-    import { Image } from "$libs";
+    import { Image, Descr } from "$libs";
 </script>
 
 {%- macro report_job(job, h=2) -%}
-  {%- for ssdir in job.out.outdir | glob: "*" -%}
-  <h{{h}}>{{ ssdir | stem }}</h{{h}}>
-
-  <h{{h+1}}>Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities</h{{h+1}}>
-  <Image src="{{ssdir | joinpaths: 'pathway_heterogeneity.png'}}" />
-
-  {%- endfor -%}
+  {{ job | render_job: h=h }}
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

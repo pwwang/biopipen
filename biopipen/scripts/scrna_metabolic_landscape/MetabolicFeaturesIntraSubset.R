@@ -4,9 +4,11 @@ source("{{biopipen_dir}}/utils/gsea.R")
 library(parallel)
 library(scater)
 library(Seurat)
+library(slugify)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
+joboutdir <- {{ job.outdir | r }}
 gmtfile <- {{ envs.gmtfile | r }}
 ncores <- {{ envs.ncores | r }}
 fgsea <- {{ envs.fgsea | r }}
@@ -47,7 +49,8 @@ do_one_comparison <- function(
     control,
     groupdir,
     subset_col,
-    subset_prefix
+    subset_prefix,
+    groupname
 ) {
     print(paste("  Design:", compname, "(", case, ",", control, ")"))
     case_code = paste0("subset(obj, subset = ", subset_col, " == '", case, "')")
@@ -68,6 +71,11 @@ do_one_comparison <- function(
     })
     if (is.null(control_obj)) {
         print("          Skip (not enough cells in control)")
+        add_report(
+            list(kind = "error", content = "Not enough cells in control"),
+            h1 = groupname,
+            h2 = compname
+        )
         return (NULL)
     }
     exprs_case = GetAssayData(case_obj)
@@ -77,6 +85,11 @@ do_one_comparison <- function(
     dir.create(odir, showWarnings = FALSE)
     if (ncol(exprs_case) < 3 || ncol(exprs_control) < 3) {
         print("          Skip (not enough cells)")
+        add_report(
+            list(kind = "error", content = "Not enough cells"),
+            h1 = groupname,
+            h2 = compname
+        )
         return (NULL)
     }
     if (fgsea) {
@@ -94,6 +107,12 @@ do_one_comparison <- function(
             top = top,
             outdir = odir,
             envs = list(nproc = 1)
+        )
+
+        add_report(
+            list(kind = "fgsea", dir = odir),
+            h1 = groupname,
+            h2 = compname
         )
     } else {
         runGSEA(
@@ -114,7 +133,7 @@ do_one_group <- function(group) {
     )
     obj = eval(parse(text = group_code))
     groupname = paste0(grouping_prefix, group)
-    groupdir = file.path(outdir, groupname)
+    groupdir = file.path(outdir, slugify(groupname, tolower = FALSE))
     dir.create(groupdir, showWarnings = FALSE)
 
     for (i in seq_along(subsetting_comparison)) {
@@ -132,7 +151,8 @@ do_one_group <- function(group) {
                     sci[[compname]][2],
                     groupdir,
                     subsetting_cols[i],
-                    subsetting_prefix[i]
+                    subsetting_prefix[i],
+                    groupname
                 )
             }
         )
@@ -148,3 +168,5 @@ if (ncores == 1) {
         stop("mclapply error")
     }
 }
+
+save_report(joboutdir)
