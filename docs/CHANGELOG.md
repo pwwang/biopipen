@@ -1,3 +1,19 @@
+# Change Log
+
+## 0.22.0
+
+- Bump pipen-board to 0.13.8 (pipen-report to 0.16)
+- Use `render_job` filter to generate report
+- utils: Add biopipen palette
+- scrna.SeuratClusterStats: Add subset for dimplots to
+- scrna.CellsDistribution: Add descr for cases in report
+- scrna.CellsDistribution: Save the table only with  necessary columns
+- scrna.MarkersFinder: Add dot plot
+- scrna.MetaMarkers: Use logger to log messages
+- scrna.SeuratClustering: Use logger to log messages
+- scrna.SeuratClustering: Add cache option to cache the clustering results if nothing changed except ncores
+- delim.SampleInfo: Fix handling of null `exclude_cols`
+
 ## 0.21.2
 
 - tcr.Immunarch: Add V-J junction circos plots
