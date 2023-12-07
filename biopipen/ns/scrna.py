@@ -257,6 +257,14 @@ class SeuratClustering(Proc):
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - resolution (type=float): The resolution of the clustering
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
+        cache (flag): Whether to cache the seurat object with cluster information.
+            If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
+            The cached seurat object will be saved as `<signature>.RDS` file, where `<signature>` is the signature determined by
+            the input and envs of the process.
+            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
+            <https://github.com/satijalab/seurat/issues/6748> for more details.
+            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
+            `.pipen/<Pipeline>/SeuratClustering/0/output/<signature>.RDS`.
 
     Requires:
         r-seurat:
@@ -286,6 +294,7 @@ class SeuratClustering(Proc):
         "RunUMAP": {"reduction": "pca", "dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
+        "cache": True,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
 

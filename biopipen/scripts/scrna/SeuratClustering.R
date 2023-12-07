@@ -4,11 +4,13 @@ library(Seurat)
 library(future)
 library(tidyr)
 library(dplyr)
+library(digest)
 
 set.seed(8525)
 
 srtfile = {{in.srtobj | quote}}
 rdsfile = {{out.rdsfile | quote}}
+joboutdir = {{job.outdir | quote}}
 envs = {{envs | r: todot="-"}}
 
 options(future.globals.maxSize = 80000 * 1024^2)
@@ -28,6 +30,41 @@ envs$FindNeighbors = .expand_dims(envs$FindNeighbors)
 
 log_info("Reading Seurat object ...")
 sobj = readRDS(srtfile)
+
+if (envs$cache) {
+    log_info("Obtainning the signature ...")
+    envs2 = envs
+    envs2$ncores <- NULL
+    envs2$cache <- NULL
+    sig = c(
+        capture.output(str(sobj)),
+        "\n\n-------------------\n\n",
+        capture.output(str(envs2)),
+        "\n"
+    )
+    digested_sig = digest::digest(sig, algo = "md5")
+    cached_file = file.path(joboutdir, paste0(digested_sig, ".cached.RDS"))
+    if (file.exists(cached_file)) {
+        log_info("Using cached results ...")
+        # copy cached file to rdsfile
+        file.copy(cached_file, rdsfile, copy.date = TRUE)
+        quit()
+    } else {
+        log_info("Cached results not found, logging the current and cached signatures.")
+        log_info("- Current signature:")
+        print(sig)
+        writeLines(sig, file.path(joboutdir, paste0(digested_sig, ".signature.txt")))
+        sigfiles = Sys.glob(file.path(joboutdir, "*.signature.txt"))
+        for (sigfile in sigfiles) {
+            log_info("- Found cached signature file: {sigfile}")
+            cached_sig = readLines(sigfile)
+            log_info("- Cached signature:")
+            print(cached_sig)
+        }
+    }
+}
+
+
 obj_list = SplitObject(sobj, split.by = "Sample")
 rm(sobj)
 
@@ -240,3 +277,8 @@ log_info("Identified {nclusters} clusters.")
 
 log_info("Saving results ...")
 saveRDS(obj_list, file = rdsfile)
+
+if (envs$cache) {
+    log_info("Caching results ...")
+    file.copy(rdsfile, cached_file, overwrite = TRUE)
+}

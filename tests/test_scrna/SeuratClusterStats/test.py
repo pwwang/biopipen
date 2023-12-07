@@ -33,6 +33,7 @@ class PrepareSeurat(Proc):
 class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
     envs = {
+        "ncores": 2,
         "FindIntegrationAnchors": {"reduction": "cca"},
         "IntegrateData": {"k-weight": 5},
     }
