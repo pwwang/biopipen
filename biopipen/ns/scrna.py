@@ -644,6 +644,7 @@ class CellsDistribution(Proc):
             Ignored if `cells_order` is specified.
         subset: An expression to subset the cells, will be passed to `dplyr::filter()` on metadata.
             This will be applied prior to `each`.
+        descr: The description of the case, will be shown in the report.
         devpars (ns): The device parameters for the plots.
             - res (type=int): The resolution of the plots
             - height (type=int): The height of the plots
@@ -678,6 +679,7 @@ class CellsDistribution(Proc):
         "cells_orderby": None,
         "cells_n": 10,
         "subset": None,
+        "descr": None,
         "devpars": {},
         "each": None,
         "section": "DEFAULT",
@@ -1671,7 +1673,7 @@ class RadarPlots(Proc):
         "cluster_order": [],
         "breaks": [],
         "direction": "intra-cluster",
-        "section": None,
+        "section": "DEFAULT",
         "devpars": {
             "res": 100,
             "width": 1200,
@@ -1721,6 +1723,8 @@ class MetaMarkers(Proc):
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
+        subset: The subset of the cells to do the analysis.
+            An expression passed to `dplyr::filter()`.
         p_adjust (choice): The method to adjust the p values, which can be used to filter the significant markers.
             See also <https://rdrr.io/r/stats/p.adjust.html>
             - holm: Holm-Bonferroni method
@@ -1761,6 +1765,7 @@ class MetaMarkers(Proc):
         "group-by": None,
         "idents": None,
         "each": None,
+        "subset": None,
         "prefix_each": True,
         "p_adjust": "BH",
         "dbs": [
