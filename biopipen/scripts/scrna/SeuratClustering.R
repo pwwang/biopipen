@@ -31,11 +31,14 @@ envs$FindNeighbors = .expand_dims(envs$FindNeighbors)
 log_info("Reading Seurat object ...")
 sobj = readRDS(srtfile)
 
-if (envs$cache) {
+if (isTRUE(envs$cache)) {
+    envs$cache = joboutdir
+}
+
+if (is.character(envs$cache) && nchar(envs$cache) > 0) {
     log_info("Obtainning the signature ...")
     envs2 = envs
     envs2$ncores <- NULL
-    envs2$cache <- NULL
     sig = c(
         capture.output(str(sobj)),
         "\n\n-------------------\n\n",
@@ -43,9 +46,9 @@ if (envs$cache) {
         "\n"
     )
     digested_sig = digest::digest(sig, algo = "md5")
-    cached_file = file.path(joboutdir, paste0(digested_sig, ".cached.RDS"))
+    cached_file = file.path(envs$cache, paste0(digested_sig, ".cached.RDS"))
     if (file.exists(cached_file)) {
-        log_info("Using cached results ...")
+        log_info("Using cached results {cached_file}")
         # copy cached file to rdsfile
         file.copy(cached_file, rdsfile, copy.date = TRUE)
         quit()
@@ -53,14 +56,14 @@ if (envs$cache) {
         log_info("Cached results not found, logging the current and cached signatures.")
         log_info("- Current signature:")
         print(sig)
-        writeLines(sig, file.path(joboutdir, paste0(digested_sig, ".signature.txt")))
-        sigfiles = Sys.glob(file.path(joboutdir, "*.signature.txt"))
+        sigfiles = Sys.glob(file.path(envs$cache, "*.signature.txt"))
         for (sigfile in sigfiles) {
             log_info("- Found cached signature file: {sigfile}")
             cached_sig = readLines(sigfile)
             log_info("- Cached signature:")
             print(cached_sig)
         }
+        writeLines(sig, file.path(envs$cache, paste0(digested_sig, ".signature.txt")))
     }
 }
 
@@ -278,7 +281,7 @@ log_info("Identified {nclusters} clusters.")
 log_info("Saving results ...")
 saveRDS(obj_list, file = rdsfile)
 
-if (envs$cache) {
+if (is.character(envs$cache) && nchar(envs$cache) > 0) {
     log_info("Caching results ...")
     file.copy(rdsfile, cached_file, overwrite = TRUE)
 }
