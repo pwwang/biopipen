@@ -26,6 +26,7 @@ envs$IntegrateData = .expand_dims(envs$IntegrateData)
 envs$RunUMAP = .expand_dims(envs$RunUMAP)
 envs$FindNeighbors = .expand_dims(envs$FindNeighbors)
 
+log_info("Reading Seurat object ...")
 sobj = readRDS(srtfile)
 obj_list = SplitObject(sobj, split.by = "Sample")
 rm(sobj)
@@ -51,27 +52,28 @@ if (!is.null(envs$FindIntegrationAnchors$reference)) {
 # ############################
 # Using SCT
 # https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1
-print("- Performing SCTransform on each sample ...")
+log_info("########## Using SCT route ##########")
+log_info("Performing SCTransform on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {
-    print(paste("  Performing SCTransform on sample:", x@meta.data$Sample[1], "..."))
+    log_info("- On sample: {x@meta.data$Sample[1]} ...")
     # # Needed?
     # DefaultAssay(x) <- "RNA"
     args = list_update(envs$SCTransform, list(object = x))
     do_call(SCTransform, args)
 })
 
-print("- Running SelectIntegrationFeatures ...")
+log_info("Running SelectIntegrationFeatures ...")
 envs$SelectIntegrationFeatures$object.list = obj_list
 features = do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
 
-print("- Running PrepSCTIntegration ...")
+log_info("Running PrepSCTIntegration ...")
 envs$PrepSCTIntegration$object.list = obj_list
 envs$PrepSCTIntegration$anchor.features = features
 obj_list = do_call(PrepSCTIntegration, envs$PrepSCTIntegration)
 
-print("- Running PCA on each sample ...")
+log_info("Running PCA on each sample ...")
 obj_list = lapply(X = obj_list, FUN = function(x) {
-    print(paste("  On sample:", x@meta.data$Sample[1], "..."))
+    log_info("- On sample: {x@meta.data$Sample[1]} ...")
     npcs = if (is.null(envs$RunPCA1$npcs)) 50 else envs$RunPCA1$npcs
     args = list_setdefault(
         envs$RunPCA1,
@@ -83,11 +85,11 @@ obj_list = lapply(X = obj_list, FUN = function(x) {
     do_call(RunPCA, args)
 })
 
-print("- Running FindIntegrationAnchors ...")
+log_info("Running FindIntegrationAnchors ...")
 if (!is.null(envs$FindIntegrationAnchors$reference)) {
-    print(
+    log_info(
         paste(
-            "  Using samples as reference:",
+            "- Using samples as reference:",
             paste(envs$FindIntegrationAnchors$reference, collapse = ", ")
         )
     )
@@ -106,7 +108,7 @@ fia_args$dims = 1:min(min_dim, max(fia_args$dims))
 fia_args$k.score = min(30, min_dim - 1)
 anchors = do_call(FindIntegrationAnchors, fia_args)
 
-print("- Running IntegrateData ...")
+log_info("Running IntegrateData ...")
 envs$IntegrateData$anchorset = anchors
 id_args = list_setdefault(
     envs$IntegrateData,
@@ -139,9 +141,10 @@ tryCatch({
 # ############################
 # Using rpca
 # https://satijalab.org/seurat/articles/integration_rpca.html
-print("- Performing NormalizeData + FindVariableFeatures on each sample ...")
+log_info("########## Using rpca route ##########")
+log_info("Performing NormalizeData + FindVariableFeatures on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {
-    print(paste("  On sample:", x@meta.data$Sample[1], "..."))
+    log_info("- On sample: {x@meta.data$Sample[1]} ...")
     DefaultAssay(x) <- "RNA"
     args = list_update(envs$NormalizeData, list(object = x))
     x <- do_call(NormalizeData, args)
@@ -150,14 +153,13 @@ obj_list <- lapply(X = obj_list, FUN = function(x) {
     do_call(FindVariableFeatures, args)
 })
 
-
-print("- Running SelectIntegrationFeatures ...")
+log_info("Running SelectIntegrationFeatures ...")
 envs$SelectIntegrationFeatures$object.list = obj_list
 features = do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
 
-print("- Running ScaleData + RunPCA on each sample ...")
+log_info("Running ScaleData + RunPCA on each sample ...")
 obj_list <- lapply(X = obj_list, FUN = function(x) {
-    print(paste("  On sample:", x@meta.data$Sample[1], "..."))
+    log_info("- On sample: {x@meta.data$Sample[1]} ...")
     args = list_setdefault(envs$ScaleData1, object = x, features = features)
     x <- do_call(ScaleData, args)
 
@@ -172,11 +174,11 @@ obj_list <- lapply(X = obj_list, FUN = function(x) {
     do_call(RunPCA, args)
 })
 
-print("- Running FindIntegrationAnchors ...")
+log_info("Running FindIntegrationAnchors ...")
 if (!is.null(envs$FindIntegrationAnchors$reference)) {
-    print(
+    log_info(
         paste(
-            "  Using samples as reference:",
+            "- Using samples as reference:",
             paste(envs$FindIntegrationAnchors$reference, collapse = ", ")
         )
     )
@@ -194,7 +196,7 @@ fia_args$dims = 1:min(min_dim, max(fia_args$dims))
 fia_args$k.score = min(30, min_dim - 1)
 anchors = do_call(FindIntegrationAnchors, fia_args)
 
-print("- Running IntegrateData ...")
+log_info("Running IntegrateData ...")
 envs$IntegrateData$anchorset = anchors
 id_args = list_setdefault(envs$IntegrateData, dims = 1:30)
 id_args$dims = 1:min(min_dim, max(id_args$dims))
@@ -207,7 +209,7 @@ obj_list = do_call(ScaleData, envs$ScaleData)
 
 {%- endif %}
 
-print("- Running RunPCA ...")
+log_info("Running RunPCA ...")
 pca_args = list_setdefault(
     envs$RunPCA,
     object = obj_list,
@@ -216,7 +218,7 @@ pca_args = list_setdefault(
 pca_args$npcs = min(pca_args$npcs, ncol(obj_list) - 1)
 obj_list = do_call(RunPCA, pca_args)
 
-print("- Running RunUMAP ...")
+log_info("Running RunUMAP ...")
 umap_args = list_setdefault(
     envs$RunUMAP,
     object = obj_list,
@@ -225,16 +227,16 @@ umap_args = list_setdefault(
 umap_args$dims = 1:min(max(umap_args$dims), ncol(obj_list) - 1)
 obj_list = do_call(RunUMAP, umap_args)
 
-print("- Running FindNeighbors ...")
+log_info("Running FindNeighbors ...")
 envs$FindNeighbors$object = obj_list
 obj_list = do_call(FindNeighbors, envs$FindNeighbors)
 
-print("- Running FindClusters ...")
+log_info("Running FindClusters ...")
 envs$FindClusters$object = obj_list
 obj_list = do_call(FindClusters, envs$FindClusters)
 
 nclusters = length(unique(Idents(obj_list)))
-print(paste0("- Identified ", nclusters, " clusters."))
+log_info("Identified {nclusters} clusters.")
 
-print("- Saving results ...")
+log_info("Saving results ...")
 saveRDS(obj_list, file = rdsfile)
