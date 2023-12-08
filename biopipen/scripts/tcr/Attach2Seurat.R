@@ -11,6 +11,7 @@ immfile = {{in.immfile | r}}
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 metacols = {{envs.metacols | r}}
+prefix = {{envs.prefix | r}}
 
 immdata = readRDS(immfile)
 sobj = readRDS(sobjfile)
@@ -31,7 +32,7 @@ metadf = do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
 
     cldata %>%
         separate_rows(Barcode, sep=";") %>%
-        mutate(Barcode = glue("{{envs.prefix}}{Barcode}"))
+        mutate(Barcode = glue(paste0(prefix, "{Barcode}")))
 
 }))
 
