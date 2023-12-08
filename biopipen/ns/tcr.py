@@ -330,6 +330,7 @@ class Immunarch(Proc):
         prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
             The prefixed barcodes will be used to match the barcodes in `in.metafile`.
             Not used if `in.metafile` is not specified.
+            If `None` (default), `immdata$prefix` will be used.
         volumes (ns): Explore clonotype volume (sizes).
             - by: Groupings when visualize clonotype volumes, passed to the `.by` argument of `vis(imm_vol, .by = <values>)`.
                 Multiple columns should be separated by `,`.
@@ -690,7 +691,7 @@ class Immunarch(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
-        "prefix": "{Sample}_",
+        "prefix": None,
         # basic statistics
         "volumes": {
             "by": None,

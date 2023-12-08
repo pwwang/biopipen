@@ -27,6 +27,9 @@ prefix = {{ envs.prefix | r }}
 log_info("Loading immdata ...")
 immdata = readRDS(immfile)
 
+if (is.null(prefix)) { prefix = immdata$prefix }
+if (is.null(prefix)) { prefix = "" }
+
 log_info("Expanding immdata ...")
 exdata = expand_immdata(immdata)
 
