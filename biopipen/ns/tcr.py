@@ -40,11 +40,13 @@ class ImmunarchLoading(Proc):
 
     Output:
         rdsfile: The RDS file with the data and metadata
-        metatxt: The meta data of the cells, used to attach to the Seurat object
+        metatxt: The meta data at cell level, which can be used to attach to the Seurat object
 
     Envs:
         prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
-            to use the meta data from the `immunarch` object.
+            to use the meta data from the `immunarch` object. The prefixed barcodes will
+            be saved in `out.metatxt`. The `immunarch` object keeps the original barcodes, but
+            the prefix is saved at `immdata$prefix`.
 
             /// Note
             This option is useful because the barcodes for the cells from scRNA-seq
@@ -65,10 +67,16 @@ class ImmunarchLoading(Proc):
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
             saved at `immdata$tra` and `immdata$multi`.
-        metacols (list): The columns to be exported to the text file.
+        extracols (list): The extra columns to be exported to the text file.
             You can refer to the
             [immunarch documentation](https://immunarch.com/articles/v2_data.html#immunarch-data-format)
-            for the full list of the columns.
+            to get a sense for the full list of the columns.
+            The columns may vary depending on the data source.
+            The columns from `immdata$meta` and some core columns, including
+            `Barcode`, `CDR3.aa`, `Clones`, `Proportion`, `V.name`, `J.name`, and
+            `D.name` will be exported by default. You can use this option to
+            specify the extra columns to be exported.
+
     """  # noqa: E501
     input = "metafile:file"
     output = [
@@ -80,7 +88,7 @@ class ImmunarchLoading(Proc):
         "tmpdir": config.path.tmpdir,
         "prefix": "{Sample}_",
         "mode": "single",
-        "metacols": ["Clones", "Proportion", "CDR3.aa"],
+        "extracols": [],
     }
     script = "file://../scripts/tcr/ImmunarchLoading.R"
 

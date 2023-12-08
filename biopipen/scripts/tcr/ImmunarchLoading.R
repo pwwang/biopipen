@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/single_cell.R")
 
 # Loading 10x data into immunarch
 library(immunarch)
@@ -13,7 +14,8 @@ rdsfile = {{ out.rdsfile | quote }}
 metatxt = {{ out.metatxt | quote }}
 tmpdir = {{ envs.tmpdir | quote }}
 mode = {{ envs.mode | quote }}
-metacols = {{ envs.metacols | r}}
+extracols = {{ envs.extracols | r}}
+prefix = {{ envs.prefix | r }}
 
 metadata = read.table(
     metafile,
@@ -164,27 +166,24 @@ immdata$meta = left_join(
     by = "Sample"
 )
 
+immdata$prefix = prefix
+
 saveRDS(immdata, file=rdsfile)
 
-metadf = do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
-    # Clones  Proportion   CDR3.aa                       Barcode
-    # 5      4 0.008583691 CAVRDTGNTPLVF;CASSEYSNQPQHF   GTTCGGGCACTTACGA-1;TCTCTAAGTACCAGTT-1
-    # 6      4 0.008583691 CALTQAAGNKLTF;CASRPEDLRGQPQHF GCTTGAAGTCGGCACT-1;TACTCGCTCCTAAGTG-1
-    cldata = immdata$data[[i]][, unique(c(metacols, "Barcode"))]
-    # # A tibble: 4 × 5
-    # Sample                  Patient     Timepoint Tissue
-    # <chr>                   <chr>       <chr>     <chr>
-    # 1 MC1685Pt011-Baseline-PB MC1685Pt011 Baseline  PB
-    mdata = as.list(immdata$meta[i, , drop=FALSE])
-    for (mname in names(mdata)) {
-        assign(mname, mdata[[mname]])
-    }
+exdata <- expand_immdata(immdata, cell_id = "Barcode") %>%
+    distinct(Sample, Barcode, .keep_all = TRUE) %>%
+    mutate(Barcode = glue(paste0(prefix, "{Barcode}"))) %>%
+    select(any_of(c(
+        colnames(immdata$meta),
+        "Barcode",
+        "CDR3.aa",
+        "Clones",
+        "Proportion",
+        "V.name",
+        "D.name",
+        "J.name",
+        extracols
+    ))) %>%
+    column_to_rownames("Barcode")
 
-    cldata %>%
-        separate_rows(Barcode, sep=";") %>%
-        distinct(Barcode, .keep_all = TRUE) %>%
-        mutate(Barcode = glue("{{envs.prefix}}{Barcode}")) %>%
-        column_to_rownames("Barcode")
-
-}))
-write.table(metadf, metatxt, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
+write.table(exdata, metatxt, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
