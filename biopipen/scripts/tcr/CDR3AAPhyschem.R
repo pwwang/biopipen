@@ -193,7 +193,7 @@ merge_data = function(sam) {
     if (!is.null(prefix) && nchar(prefix) > 0) {
         # Replace the placeholder like {Sample} with the data in other columns
         # in the same row
-        sdata = sdata %>% mutate(.prefix_len = nchar(glue("{{envs.prefix}}")))
+        sdata = sdata %>% mutate(.prefix_len = nchar(glue(prefix)))
         # Remove the prefix in the rownames of sdata
         rownames(sdata) = substring(rownames(sdata), sdata$.prefix_len + 1)
         sdata = sdata %>% select(-.prefix_len)
