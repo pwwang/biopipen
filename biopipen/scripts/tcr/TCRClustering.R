@@ -3,11 +3,13 @@
 # python = Sys.which({{envs.python | r}})
 # Sys.setenv(RETICULATE_PYTHON = python)
 # library(reticulate)
+source("{{biopipen_dir}}/utils/single_cell.R")
 
 library(immunarch)
 library(dplyr)
 library(tidyr)
 library(tibble)
+library(glue)
 
 immfile = {{in.immfile | r}}
 outdir = normalizePath({{job.outdir | r}})
@@ -17,6 +19,7 @@ tool = {{envs.tool | r}}
 python = {{envs.python | r}}
 on_multi = {{envs.on_multi | r}}
 args = {{envs.args | r}}
+prefix = {{envs.prefix | r}}
 
 setwd(outdir)
 
@@ -26,17 +29,13 @@ if (on_multi) {
 } else {
     seqdata = immdata$data
 }
+if (is.null(prefix)) { prefix = immdata$prefix }
+if (is.null(prefix)) { prefix = "" }
 
 get_cdr3aa_df = function() {
-    out = NULL
-    for (sample in names(immdata$data)) {
-        tmpdf = immdata$data[[sample]] %>%
-            select(Barcode, CDR3.aa) %>%
-            separate_rows(Barcode, sep = ";") %>%
-            mutate(Barcode = paste0(sample, "_", Barcode))
-        out = bind_rows(out, tmpdf)
-    }
-    out
+    expand_immdata(immdata, cell_id = "Barcode") %>%
+        mutate(Barcode = glue(paste0(prefix, "{Barcode}"))) %>%
+        select(Barcode, CDR3.aa)
 }
 cdr3aa_df = get_cdr3aa_df()
 

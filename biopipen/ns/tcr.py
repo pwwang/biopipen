@@ -1188,6 +1188,10 @@ class TCRClustering(Proc):
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
+        prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
+            The prefixed barcodes will be used to match the barcodes in `in.metafile`.
+            Not used if `in.metafile` is not specified.
+            If `None` (default), `immdata$prefix` will be used.
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
         args (type=json): The arguments for the clustering tool
@@ -1211,6 +1215,7 @@ class TCRClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "GIANA",  # or ClusTCR
+        "prefix": None,
         "on_multi": False,
         "python": config.lang.python,
         "args": {},
