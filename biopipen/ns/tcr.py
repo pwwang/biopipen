@@ -1521,7 +1521,8 @@ class TESSA(Proc):
             [link](https://www.nature.com/articles/s42256-021-00383-2)
 
     Input:
-        immdata: The data loaded by `immunarch::repLoad()`, saved in RDS format
+        immdata: The immunarch object in RDS file or text file of TCR data loaded by
+            [`ImmunarchLoading`](!!#biopipennstcrimmunarchloading)
         srtobj: The `Seurat` object, saved in RDS format, with dimension
             reduction performed if you want to use them to represent the
             transcriptome of T cells.
@@ -1536,8 +1537,13 @@ class TESSA(Proc):
 
     Envs:
         python: The path of python with `TESSA`'s dependencies installed
-        prefix: The prefix to the barcodes of TCR data. You can use placeholder
-            like `{Sample}_` to use the meta data from the immunarch object.
+        prefix: The prefix of the cell barcodes in the `Seurat` object.
+            Once could use a fixed prefix, or a placeholder with the column
+            name in meta data. For example, `"{Sample}_"` will replace the
+            placeholder with the value of the column `Sample` in meta data.
+            If `in.immdata` is text file, the prefix will be ignored and the
+            barcode should be already prefixed.
+            If `None` and `in.immdata` is RDS file, `immdata$prefix` will be used.
         within_sample (flag): Whether the TCR networks are constructed only
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
@@ -1562,7 +1568,7 @@ class TESSA(Proc):
     lang = config.lang.rscript
     envs = {
         "python": config.lang.python,
-        "prefix": "{Sample}_",
+        "prefix": None,
         "assay": "RNA",
         "within_sample": False,
         "predefined_b": False,
