@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.22.1
+
+- scrna.CellsDistribution: Export table with distinct columns
+- scrna.SeuratMetadataMutater: Warn about existing columns in seurat object
+- tcr.ImmunarchLoading: Change `metacols` to `extracols` so essential columns get exported
+- tcr.Attach2Seurat: Detach prefix from template in code
+- tcr.CDR3AAPhyschem: Detach prefix from template in code
+- tcr.Immunarch: Use `immdata$prefix` as prefix by default
+- tcr.TCRClustering: Use `immdata$prefix` as prefix by default
+- tcr.TESSA: Allow `in.immdata` to be either an RDS file of immunarch object or a text file of cell-level expanded data
+
 ## 0.22.0
 
 - Bump pipen-board to 0.13.8 (pipen-report to 0.16)

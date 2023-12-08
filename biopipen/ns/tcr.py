@@ -40,11 +40,13 @@ class ImmunarchLoading(Proc):
 
     Output:
         rdsfile: The RDS file with the data and metadata
-        metatxt: The meta data of the cells, used to attach to the Seurat object
+        metatxt: The meta data at cell level, which can be used to attach to the Seurat object
 
     Envs:
         prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
-            to use the meta data from the `immunarch` object.
+            to use the meta data from the `immunarch` object. The prefixed barcodes will
+            be saved in `out.metatxt`. The `immunarch` object keeps the original barcodes, but
+            the prefix is saved at `immdata$prefix`.
 
             /// Note
             This option is useful because the barcodes for the cells from scRNA-seq
@@ -65,10 +67,16 @@ class ImmunarchLoading(Proc):
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
             saved at `immdata$tra` and `immdata$multi`.
-        metacols (list): The columns to be exported to the text file.
+        extracols (list): The extra columns to be exported to the text file.
             You can refer to the
             [immunarch documentation](https://immunarch.com/articles/v2_data.html#immunarch-data-format)
-            for the full list of the columns.
+            to get a sense for the full list of the columns.
+            The columns may vary depending on the data source.
+            The columns from `immdata$meta` and some core columns, including
+            `Barcode`, `CDR3.aa`, `Clones`, `Proportion`, `V.name`, `J.name`, and
+            `D.name` will be exported by default. You can use this option to
+            specify the extra columns to be exported.
+
     """  # noqa: E501
     input = "metafile:file"
     output = [
@@ -80,7 +88,7 @@ class ImmunarchLoading(Proc):
         "tmpdir": config.path.tmpdir,
         "prefix": "{Sample}_",
         "mode": "single",
-        "metacols": ["Clones", "Proportion", "CDR3.aa"],
+        "extracols": [],
     }
     script = "file://../scripts/tcr/ImmunarchLoading.R"
 
@@ -322,6 +330,7 @@ class Immunarch(Proc):
         prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
             The prefixed barcodes will be used to match the barcodes in `in.metafile`.
             Not used if `in.metafile` is not specified.
+            If `None` (default), `immdata$prefix` will be used.
         volumes (ns): Explore clonotype volume (sizes).
             - by: Groupings when visualize clonotype volumes, passed to the `.by` argument of `vis(imm_vol, .by = <values>)`.
                 Multiple columns should be separated by `,`.
@@ -682,7 +691,7 @@ class Immunarch(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
-        "prefix": "{Sample}_",
+        "prefix": None,
         # basic statistics
         "volumes": {
             "by": None,
@@ -1179,6 +1188,10 @@ class TCRClustering(Proc):
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
+        prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
+            The prefixed barcodes will be used to match the barcodes in `in.metafile`.
+            Not used if `in.metafile` is not specified.
+            If `None` (default), `immdata$prefix` will be used.
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
         args (type=json): The arguments for the clustering tool
@@ -1202,6 +1215,7 @@ class TCRClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "GIANA",  # or ClusTCR
+        "prefix": None,
         "on_multi": False,
         "python": config.lang.python,
         "args": {},
@@ -1507,7 +1521,8 @@ class TESSA(Proc):
             [link](https://www.nature.com/articles/s42256-021-00383-2)
 
     Input:
-        immdata: The data loaded by `immunarch::repLoad()`, saved in RDS format
+        immdata: The immunarch object in RDS file or text file of TCR data loaded by
+            [`ImmunarchLoading`](!!#biopipennstcrimmunarchloading)
         srtobj: The `Seurat` object, saved in RDS format, with dimension
             reduction performed if you want to use them to represent the
             transcriptome of T cells.
@@ -1522,8 +1537,13 @@ class TESSA(Proc):
 
     Envs:
         python: The path of python with `TESSA`'s dependencies installed
-        prefix: The prefix to the barcodes of TCR data. You can use placeholder
-            like `{Sample}_` to use the meta data from the immunarch object.
+        prefix: The prefix of the cell barcodes in the `Seurat` object.
+            Once could use a fixed prefix, or a placeholder with the column
+            name in meta data. For example, `"{Sample}_"` will replace the
+            placeholder with the value of the column `Sample` in meta data.
+            If `in.immdata` is text file, the prefix will be ignored and the
+            barcode should be already prefixed.
+            If `None` and `in.immdata` is RDS file, `immdata$prefix` will be used.
         within_sample (flag): Whether the TCR networks are constructed only
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
@@ -1548,7 +1568,7 @@ class TESSA(Proc):
     lang = config.lang.rscript
     envs = {
         "python": config.lang.python,
-        "prefix": "{Sample}_",
+        "prefix": None,
         "assay": "RNA",
         "within_sample": False,
         "predefined_b": False,

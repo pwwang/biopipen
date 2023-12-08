@@ -1,8 +1,10 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/single_cell.R")
 
 library(glue)
 library(dplyr)
 library(tidyr)
+library(tibble)
 library(immunarch)
 library(Seurat)
 library(ggplot2)
@@ -13,6 +15,7 @@ exprfile <- {{in.srtobj | r}}
 outfile <- {{out.outfile | r}}
 joboutdir <- {{job.outdir | r}}
 python <- {{envs.python | r}}
+prefix <- {{envs.prefix | r}}
 within_sample <- {{envs.within_sample | r}}
 assay <- {{envs.assay | r}}
 predefined_b <- {{envs.predefined_b | r}}
@@ -29,34 +32,21 @@ if (!dir.exists(tessa_dir)) dir.create(tessa_dir)
 ### Start preparing input files for TESSA
 # Prepare input files
 log_info("Preparing TCR input file ...")
-immdata <- readRDS(immfile)
+# If immfile endswith .rds, then it is an immunarch object
+if (endsWith(tolower(immfile), ".rds")) {
+    immdata <- readRDS(immfile)
+    if (is.null(prefix)) { prefix = immdata$prefix }
+    if (is.null(prefix)) { prefix = "" }
+    tcrdata <- expand_immdata(immdata) %>%
+        mutate(Barcode = glue(paste0(prefix, "{Barcode}")))
+    rm(immdata)
+} else {
+    tcrdata <- read.table(immfile, sep="\t", header=TRUE, row.names=1) %>%
+        rownames_to_column("Barcode")
+}
 
-has_VJ <- "V.name" %in% colnames(immdata$data[[1]]) && "J.name" %in% colnames(immdata$data[[1]])
-# Merge all samples
-tcrdata <- do_call(rbind, lapply(seq_len(nrow(immdata$meta)), function(i) {
-    # Clones  Proportion   CDR3.aa                       Barcode
-    # 5      4 0.008583691 CAVRDTGNTPLVF;CASSEYSNQPQHF   GTTCGGGCACTTACGA-1;TCTCTAAGTACCAGTT-1
-    # 6      4 0.008583691 CALTQAAGNKLTF;CASRPEDLRGQPQHF GCTTGAAGTCGGCACT-1;TACTCGCTCCTAAGTG-1
-    if (has_VJ) {
-        cldata = immdata$data[[i]][, c("Barcode", "CDR3.aa", "V.name", "J.name")]
-    } else {
-        cldata = immdata$data[[i]][, c("Barcode", "CDR3.aa")]
-    }
-    # # A tibble: 4 × 5
-    # Sample                  Patient     Timepoint Tissue
-    # <chr>                   <chr>       <chr>     <chr>
-    # 1 MC1685Pt011-Baseline-PB MC1685Pt011 Baseline  PB
-    mdata = as.list(immdata$meta[i, , drop=FALSE])
-    for (mname in names(mdata)) {
-        assign(mname, mdata[[mname]])
-    }
+has_VJ <- "V.name" %in% colnames(tcrdata) && "J.name" %in% colnames(tcrdata)
 
-    cldata %>%
-        separate_rows(Barcode, sep=";") %>%
-        # Just in case there are duplicated barcodes
-        distinct(Barcode, .keep_all = TRUE) %>%
-        mutate(Barcode = glue("{{envs.prefix}}{Barcode}"), sample = Sample)
-}))
 if (has_VJ) {
     tcrdata <- tcrdata %>% dplyr::mutate(
         v_gene = sub("-\\d+$", "", V.name),
@@ -66,13 +56,13 @@ if (has_VJ) {
         cdr3 = CDR3.aa,
         v_gene,
         j_gene,
-        sample
+        sample = Sample
     )
 } else {
     tcrdata <- tcrdata %>% dplyr::select(
         contig_id = Barcode,
         cdr3 = CDR3.aa,
-        sample
+        sample = Sample
     )
 }
 
@@ -101,7 +91,10 @@ if (length(unused_expr_cells) > 0) {
     log_warn(glue("{length(unused_expr_cells)}/{ncol(expr)} expression cells are not used."))
 }
 if (length(cell_ids) == 0) {
-    stop("No common cells between TCR and expression data. Are you using the correct prefix?")
+    stop(paste0(
+        "No common cells between TCR and expression data. ",
+        "Are you using the correct `envs.prefix` here or in `ImmunarchLoading`?"
+    ))
 }
 tcrdata <- tcrdata[tcrdata$contig_id %in% cell_ids, , drop=FALSE]
 expr <- as.matrix(expr)[, tcrdata$contig_id, drop=FALSE]

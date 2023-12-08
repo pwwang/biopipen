@@ -229,10 +229,16 @@ do_case <- function(name, case) {
         meta %>% select(
             !!sym(cells_by),
             !!sym(case$group_by),
+            seurat_clusters,
             CloneSize,
             CloneGroupSize,
             CloneClusterSize,
             CloneGroupClusterSize,
+        ) %>% distinct(
+            !!sym(cells_by),
+            !!sym(case$group_by),
+            seurat_clusters,
+            .keep_all = TRUE
         ),
         txtfile,
         sep = "\t",
