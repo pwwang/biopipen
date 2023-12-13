@@ -28,6 +28,7 @@ runinfo = ["pipen-runinfo"]
 bam = "biopipen.ns.bam"
 bcftools = "biopipen.ns.bcftools"
 bed = "biopipen.ns.bed"
+cellranger = "biopipen.ns.cellranger"
 cnv = "biopipen.ns.cnv"
 cnvkit = "biopipen.ns.cnvkit"
 cnvkit_pipeline = "biopipen.ns.cnvkit_pipeline"
