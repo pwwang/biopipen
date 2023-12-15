@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.22.2
+
+- docs: Update logo and favicon
+- docs: Update logo height in README.md
+- core.filters: Add `exclude` argument to dict_to_cli_args filter
+- cellranger: Add CellRangerCount and CellRangerVdj
+- scrna.CellTypeAnnotation: Allow using NA to exclude clusters from output Seurat object
+- scrna.SeuratClusterStats: Fix path of expression table file
+- scrna.MarkersFinder: Use `FindAllMarkers` if `ident.1` is not specified
+- scrna.CellsDistribution: Don't add rownames to the output table file
+- utils.mutate_helpers: Add `debug` and `each` to expanded, collapsed, vanished and emerged
+
 ## 0.22.1
 
 - scrna.CellsDistribution: Export table with distinct columns
