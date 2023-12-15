@@ -142,13 +142,8 @@ do_case <- function(name, case) {
     info <- casename_info(name, create = TRUE)
     cells_by <- trimws(strsplit(case$cells_by, ",")[[1]])
 
-    sec_case_names <- strsplit(name, ":")[[1]]
-    sec_dir <- file.path(outdir, sec_case_names[1])
-    casename <- paste(sec_case_names[-1], collapse = ":")
-    dir.create(sec_dir, showWarnings = FALSE, recursive = TRUE)
-
-    outfile <- file.path(info$sec_dir, paste0("case-", info$case_slug, ".png"))
-    txtfile <- file.path(info$sec_dir, paste0("case-", info$case_slug, ".txt"))
+    outfile <- file.path(info$sec_dir, paste0(info$case_slug, ".png"))
+    txtfile <- file.path(info$sec_dir, paste0(info$case_slug, ".txt"))
 
     # subset the seurat object
     meta <- srtobj@meta.data
@@ -242,7 +237,7 @@ do_case <- function(name, case) {
         ),
         txtfile,
         sep = "\t",
-        row.names = TRUE,
+        row.names = FALSE,
         col.names = TRUE,
         quote = FALSE
     )
