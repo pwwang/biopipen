@@ -1,3 +1,4 @@
+from calendar import c
 from typing import Any
 
 import subprocess as sp
@@ -140,6 +141,7 @@ if __name__ == "__main__":
         expected="A D",
         fun="expanded+",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
     )
     run_size(
@@ -147,12 +149,13 @@ if __name__ == "__main__":
         expected="A NA NA NA D NA NA NA NA NA A A",
         fun="expanded+",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
     )
     run_size(
         df_values=df_values,
-        expected="A NA NA NA D NA NA NA NA NA A A",
+        expected="A NA NA E D E E NA NA NA A A",
         fun="expanded+",
         mutate=True,
         group_by="Source",
@@ -164,6 +167,8 @@ if __name__ == "__main__":
         expected="B E C",
         fun="collapsed+",
         group_by="Source",
+        compare="Clones",
+        order="desc(.diff)",
         idents='c("Tumor", "Normal")',
     )
     run_size(
@@ -171,6 +176,7 @@ if __name__ == "__main__":
         expected="NA C B E NA E E B B B NA NA",
         fun="collapsed+",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
     )
@@ -179,6 +185,7 @@ if __name__ == "__main__":
         expected="A D",
         fun="emerged",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
     )
     run_size(
@@ -186,6 +193,7 @@ if __name__ == "__main__":
         expected="A NA NA NA D NA NA NA NA NA A A",
         fun="emerged",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
     )
@@ -194,6 +202,8 @@ if __name__ == "__main__":
         expected="B C",
         fun="vanished",
         group_by="Source",
+        compare="Clones",
+        order="desc(.diff)",
         idents='c("Tumor", "Normal")',
     )
     run_size(
@@ -201,6 +211,7 @@ if __name__ == "__main__":
         expected="NA C B NA NA NA NA B B B NA NA",
         fun="vanished",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
     )
@@ -210,6 +221,8 @@ if __name__ == "__main__":
         expected="B C",
         fun="vanished",
         group_by='"Source"',
+        compare="Clones",
+        order="desc(.diff)",
         idents='c("Tumor", "Normal")',
     )
     run_size(
@@ -217,6 +230,7 @@ if __name__ == "__main__":
         expected="Y X X Y Y Y Y X X X Y Y",
         fun="vanished",
         group_by="Source",
+        compare="Clones",
         idents='c("Tumor", "Normal")',
         uniq='FALSE',
         if_else=True,
