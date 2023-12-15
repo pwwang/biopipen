@@ -55,11 +55,17 @@ command = [
 
 run_command(command, fg=True, cwd=str(Path(outdir).parent))
 
+web_summary_html = Path(outdir) / "outs" / "web_summary.html"
+if not web_summary_html.exists():
+    raise RuntimeError(
+        f"web_summary.html does not exist in {outdir}/outs. "
+        "cellranger count failed."
+    )
+
 # Modify web_summary.html to move javascript to a separate file
 # to void vscode live server breaking the page by injecting some code
 print("# Modify web_summary.html to move javascript to a separate file")
 try:
-    web_summary_html = Path(outdir) / "outs" / "web_summary.html"
     web_summary_js = Path(outdir) / "outs" / "web_summary.js"
     web_summary_content = web_summary_html.read_text()
     regex = re.compile(r"<script>(?=/\*! For license)(.+)</script>", re.DOTALL)
