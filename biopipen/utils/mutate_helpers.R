@@ -198,9 +198,16 @@ suppressPackageStartupMessages(library(tidyr))
         return(uniq_ids)
     }
 
-    out <- df %>% pull(!!id)
-    out[!out %in% uniq_ids] <- NA
-    out
+    df %>%
+        mutate(
+            .group = if_else(
+                !!group.by == ident_1,
+                "ident_1",
+                if_else(ident_2 != "<NULL>" & !!group.by != ident_2, NA, "ident_2")
+            ),
+            .out = if_else(!!id %in% uniq_ids & !!subset & !is.na(.group), !!id, NA)
+        ) %>%
+        pull(.out)
 }
 
 #' @export
