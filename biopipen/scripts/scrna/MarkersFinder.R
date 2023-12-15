@@ -143,11 +143,13 @@ for (name in names(cases)) {
     } else if (is.null(case$each)) {
         # is.null(case$ident.1)
         sections <- c(sections, name)
-        idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
-        for (ident in idents) {
-            newcases[[paste0(name, ":", ident)]] <- case
-            newcases[[paste0(name, ":", ident)]]$ident.1 <- ident
-        }
+        newcases[[name]] <- case
+        newcases[[name]]$findall <- TRUE
+        # idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
+        # for (ident in idents) {
+        #     newcases[[paste0(name, ":", ident)]] <- case
+        #     newcases[[paste0(name, ":", ident)]]$ident.1 <- ident
+        # }
     } else {
         eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
         for (each in eachs) {
@@ -160,18 +162,22 @@ for (name in names(cases)) {
                 )
             )
             if (is.null(case$ident.1)) {
-                idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
-                for (ident in idents) {
-                    kname <- if (name == "DEFAULT") "" else paste0(" - ", name)
-                    sections <- c(sections, paste0(each, kname))
-                    key <- paste0(each, kname, ":", ident)
-                    if (case$prefix_each) {
-                        key <- paste0(case$each, " - ", key)
-                    }
-                    newcases[[key]] <- case
-                    newcases[[key]]$ident.1 <- ident
-                    newcases[[key]]$group.by <- by
-                }
+                kname <- if (name == "DEFAULT") "" else paste0(" - ", name)
+                sections <- c(sections, paste0(each, kname))
+                key <- paste0(each, kname)
+                newcases[[key]] <- case
+                newcases[[key]]$group.by <- by
+                newcases[[key]]$findall <- TRUE
+                # idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
+                # for (ident in idents) {
+                #     key <- paste0(each, kname, ":", ident)
+                #     if (case$prefix_each) {
+                #         key <- paste0(case$each, " - ", key)
+                #     }
+                #     newcases[[key]] <- case
+                #     newcases[[key]]$ident.1 <- ident
+                #     newcases[[key]]$group.by <- by
+                # }
             } else {
                 sections <- c(sections, case$each)
                 key <- paste0(case$each, ":", each)
@@ -312,11 +318,11 @@ do_enrich <- function(info, markers, sig, volgenes) {
 }
 
 
-do_dotplot <- function(info, siggenes, case, args) {
-    dotplot_devpars <- case$dotplot$devpars
+do_dotplot <- function(info, siggenes, dotplot, args) {
+    dotplot_devpars <- dotplot$devpars
     if (is.null(args$ident.2)) {
-        case$dotplot$object <- args$object
-        case$dotplot$object@meta.data <- case$dotplot$object@meta.data %>%
+        dotplot$object <- args$object
+        dotplot$object@meta.data <- dotplot$object@meta.data %>%
             mutate(
                 !!sym(args$group.by) := if_else(
                     !!sym(args$group.by) == args$ident.1,
@@ -329,17 +335,16 @@ do_dotplot <- function(info, siggenes, case, args) {
                 )
             )
     } else {
-        case$dotplot$object <- args$object %>%
+        dotplot$object <- args$object %>%
             filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
             mutate(!!sym(args$group.by) := factor(
                 !!sym(args$group.by),
                 levels = c(args$ident.1, args$ident.2)
             ))
     }
-    case$dotplot$devpars <- NULL
-    case$dotplot$features <- siggenes
-    case$dotplot$group.by <- args$group.by
-    case$dotplot$assay <- case$assay
+    dotplot$devpars <- NULL
+    dotplot$features <- siggenes
+    dotplot$group.by <- args$group.by
     dotplot_width = ifelse(
         is.null(dotplot_devpars$width),
         if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
@@ -351,7 +356,7 @@ do_dotplot <- function(info, siggenes, case, args) {
     png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
     # rotate x axis labels
     print(
-        do_call(DotPlot, case$dotplot) +
+        do_call(DotPlot, dotplot) +
         theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
         coord_flip()
     )
@@ -456,8 +461,78 @@ add_case_report <- function(info, sigmarkers, siggenes) {
 }
 
 
+do_case_findall <- function(casename) {
+    log_info("- Using FindAllMarkers for case: {casename}...")
+
+    case = cases[[casename]]
+    args <- case$rest
+    args$group.by <- case$group.by
+    if (is.null(args$logfc.threshold)) {
+        args$locfc.threshold <- 0
+    }
+    if (is.null(args$min.cells.group)) {
+        args$min.cells.group <- 1
+    }
+    if (is.null(args$min.cells.feature)) {
+        args$min.cells.feature <- 1
+    }
+    if (is.null(args$min.pct)) {
+        args$min.pct <- 0
+    }
+    if (!is.null(case$subset)) {
+        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
+    } else {
+        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    }
+    Idents(args$object) <- case$group.by
+    markers <- tryCatch({
+        do_call(FindAllMarkers, args)
+        # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
+    }, error = function(e) {
+        log_warn(e$message)
+        data.frame(
+            gene = character(),
+            p_val = numeric(),
+            avg_log2FC = numeric(),
+            pct.1 = numeric(),
+            pct.2 = numeric(),
+            p_val_adj=numeric(),
+            cluster = character()
+        )
+    })
+
+    if (is.null(case$dotplot$assay)) {
+        case$dotplot$assay <- assay
+    }
+    idents <- unique(markers$cluster)
+    for (ident in idents) {
+        log_info("- Dealing with ident: {ident}...")
+        info <- casename_info(paste0(casename, ":", ident), create = TRUE)
+        siggenes <- do_enrich(info, markers %>% filter(cluster == ident), case$sigmarkers, case$volcano_genes)
+
+        if (length(siggenes) > 0) {
+            args$ident.1 <- as.character(ident)
+            do_dotplot(info, siggenes, case$dotplot, args)
+        }
+        add_case_report(info, case$sigmarkers, siggenes)
+
+        if (info$section %in% overlap) {
+            if (is.null(overlaps[[info$section]])) {
+                overlaps[[info$section]] <<- list()
+            }
+            overlaps[[info$section]][[info$case]] <<- siggenes
+        }
+    }
+}
+
+
 do_case <- function(casename) {
     log_info("Dealing with case: {casename}...")
+
+    if (isTRUE(cases[[casename]]$findall)) {
+        do_case_findall(casename)
+        return()
+    }
 
     info <- casename_info(casename, create = TRUE)
     case <- cases[[casename]]
@@ -507,7 +582,10 @@ do_case <- function(casename) {
     siggenes <- do_enrich(info, markers, case$sigmarkers, case$volcano_genes)
 
     if (length(siggenes) > 0) {
-        do_dotplot(info, siggenes, case, args)
+        if (is.null(case$dotplot$assay)) {
+            case$dotplot$assay <- assay
+        }
+        do_dotplot(info, siggenes, case$dotplot, args)
     }
 
     if (info$section %in% overlap) {
