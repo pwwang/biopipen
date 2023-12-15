@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.22.4
+
+- utils.mutate_helpers: Update docs
+
 ## 0.22.3
 
 - utils.mutate_helpers: Return ids only when subset is true and group is not NA for  `uniq = TRUE` in expanded, collapsed, emerged and vanished
