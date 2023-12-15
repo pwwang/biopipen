@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.22.6
+
+- deps: Bump pipen-board to 0.13.10 (pipen-report to 0.16.2)
+
 ## 0.22.5
 
 - docs: Bump pipen-board to 0.13.9 (pipen-report to 0.16.1)
