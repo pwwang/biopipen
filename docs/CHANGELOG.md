@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.22.3
+
+- utils.mutate_helpers: Return ids only when subset is true and group is not NA for  `uniq = TRUE` in expanded, collapsed, emerged and vanished
+
 ## 0.22.2
 
 - docs: Update logo and favicon
