@@ -1023,13 +1023,13 @@ pipen-annotate = ">=0.11,<0.12"
 
 [[package]]
 name = "pipen-board"
-version = "0.13.8"
+version = "0.13.9"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_board-0.13.8-py3-none-any.whl", hash = "sha256:b75d2bd058d8acfe8e8a3a639d43e252e00dd0faf2e2030328f381b545727ceb"},
-    {file = "pipen_board-0.13.8.tar.gz", hash = "sha256:097fcd5076fbbf9013f03e9736912364b2206ab48bdc7f527521c0f6c89dfcb7"},
+    {file = "pipen_board-0.13.9-py3-none-any.whl", hash = "sha256:841d4295fb141c5c37a506047689fc8765c6a41fcd7b7d1734e79c1e62f4bb58"},
+    {file = "pipen_board-0.13.9.tar.gz", hash = "sha256:bc93662279c525ef857d2122308fe7f1c1d96344623c713ea4056d2914b8f530"},
 ]
 
 [package.dependencies]
@@ -1090,13 +1090,13 @@ pipen = ">=0.12,<0.13"
 
 [[package]]
 name = "pipen-report"
-version = "0.16.0"
+version = "0.16.1"
 description = "Report generation system for pipen"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_report-0.16.0-py3-none-any.whl", hash = "sha256:287417c7f0fb79d4d2b5511dec638801aa2f98a10d088c5bdc297335cea4c023"},
-    {file = "pipen_report-0.16.0.tar.gz", hash = "sha256:6c06b406e7368dbb8b8efe30582d7afce1c6d54304433538cbb56a9c6c43ae2e"},
+    {file = "pipen_report-0.16.1-py3-none-any.whl", hash = "sha256:f54ec3915fb2caf291446bf04d671c05a307482ca8a5dd4dd9d8c261a8a5b44d"},
+    {file = "pipen_report-0.16.1.tar.gz", hash = "sha256:1a4befa945b2e6ba933e1a64397f8770eb69d77a4249b50d082d34c1195810a8"},
 ]
 
 [package.dependencies]
