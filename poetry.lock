@@ -995,13 +995,13 @@ xqute = ">=0.2.4,<0.3.0"
 
 [[package]]
 name = "pipen-annotate"
-version = "0.11.5"
+version = "0.11.6"
 description = "Use docstring to annotate pipen processes"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "pipen_annotate-0.11.5-py3-none-any.whl", hash = "sha256:4668104b9ad200fd5885f494ae96efb4887618fe71914b404858d6366b53e19a"},
-    {file = "pipen_annotate-0.11.5.tar.gz", hash = "sha256:e0b490449dd42e35c6e94e4363e1bd16c4e8b8b9a65eb5b313b6a3e912511fc5"},
+    {file = "pipen_annotate-0.11.6-py3-none-any.whl", hash = "sha256:2b2680feae6bc8a24f416ea562f5ff85e8ce5228724fabdce1a8517878b03be4"},
+    {file = "pipen_annotate-0.11.6.tar.gz", hash = "sha256:de3360783b6e1677aa69698048fdeea6c19f2fc301911080f56b32f03ad0683b"},
 ]
 
 [package.dependencies]
