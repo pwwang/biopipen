@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.22.5
+
+- docs: Bump pipen-board to 0.13.9 (pipen-report to 0.16.1)
+- cellranger.CellRangerCount: Update iframe height in report
+- cellranger.CellRangerVdj: Update iframe height in report
+
 ## 0.22.4
 
 - utils.mutate_helpers: Update docs
