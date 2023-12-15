@@ -1,6 +1,7 @@
 suppressPackageStartupMessages(library(rlang))
 suppressPackageStartupMessages(library(tidyselect))
 suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(tidyr))
 
 #' Get expanded, collapsed, emerged or vanished clones from a meta data frame
 #'
@@ -15,6 +16,8 @@ suppressPackageStartupMessages(library(dplyr))
 #'  be used as `ident_2`.
 #' @param subset An expression to subset the cells, will be passed to
 #'  `dplyr::filter()`. Default is `TRUE` (no filtering).
+#' @param each A column name (without quotes) in metadata to split the cells.
+#'  Each comparison will be done for each value in this column.
 #' @param id The column name (without quotes) in metadata for the
 #'  group ids (i.e. `CDR3.aa`)
 #' @param compare Either a (numeric) column name (i.e. `Clones`, without quotes)
@@ -25,6 +28,7 @@ suppressPackageStartupMessages(library(dplyr))
 #' @param uniq Whether to return unique ids or not. Default is `TRUE`.
 #'  If `FALSE`, you can mutate the meta data frame with the returned ids.
 #'  For example, `df %>% mutate(expanded = expanded(...))`.
+#' @param debug Return the transformed data frame with counts, predicates, sum, and diff.
 #' @param order The order of the returned ids. It could be `sum` or `diff`,
 #'  which is the sum or diff of the `compare` between idents. Two kinds of
 #'  modifiers can be added, including `desc` and `abs`. For example,
@@ -82,8 +86,10 @@ suppressPackageStartupMessages(library(dplyr))
     id,
     compare,
     fun,
+    each,
     uniq,
-    order
+    order,
+    debug
 ) {
     if (length(idents) == 1) {
         ident_1 <- idents[1]
@@ -119,100 +125,82 @@ suppressPackageStartupMessages(library(dplyr))
 
     if (!compare_is_count && !compare_label %in% colnames(df)) {
         stop(paste0(
-            "`compare` must be either a column name in df, or 'count'/'n'. ",
+            "`compare` must be either a column name in df, or 'count'/'.n'. ",
             'Got "',
             compare_label,
             '"'
         ))
     }
 
-    predicate <- function(comp) {
+    predicate <- function(ident_1, ident_2) {
         if (fun == "expanded") {
-            comp[1] > comp[2] && comp[2] > 0
+            ident_1 > ident_2 && ident_2 > 0
         } else if (fun == "expanded+") {
-            comp[1] > comp[2]
+            ident_1 > ident_2
         } else if (fun == "collapsed") {
-            comp[1] < comp[2] && comp[1] > 0
+            ident_1 < ident_2 && ident_1 > 0
         } else if (fun == "collapsed+") {
-            comp[1] < comp[2]
+            ident_1 < ident_2
         } else if (fun == "emerged") {
-            comp[1] > 0 && comp[2] == 0
+            ident_1 > 0 && ident_2 == 0
         } else if (fun == "vanished") {
-            comp[1] == 0 && comp[2] > 0
+            ident_1 == 0 && ident_2 > 0
         }
     }
 
     # subset the data frame
-    trans <- df %>% dplyr::filter(!!subset) %>%
-        # remove NA values in group.by column
-        dplyr::filter(!is.na(!!group.by)) %>%
-        # mark the group.by column (as ..group) as ident_1 or ident_2 or NA
+    trans <- df %>%
+        dplyr::filter(!!subset) %>%
+        drop_na(!!id) %>%
+        # # remove NA values in group.by column
+        # dplyr::filter(!is.na(!!group.by)) %>%
+        # mark the group.by column (as .group) as ident_1 or ident_2 or NA
         mutate(
-            ..group = if_else(
+            .group = if_else(
                 !!group.by == ident_1,
                 "ident_1",
                 if_else(ident_2 != "<NULL>" & !!group.by != ident_2, NA, "ident_2")
             )
         ) %>%
         # remove NA values in ..group column
-        dplyr::filter(!is.na(..group)) %>%
-        # for each clone and group (ident_1 and ident_2)
-        group_by(!!id, ..group) %>%
-        # summarise the number of cells in each clone and group
-        # so that we can compare between groups later
-        summarise(
-            ..compare = ifelse(compare_is_count, n(), first(!!compare)),
-            .groups = "drop"
-        ) %>%
-        # for each clone, either compare Clones or ..count between groups
-        # (ident_1 and ident_2)
-        group_by(!!id) %>%
-        # add missing group (either ident_1 or ident_2)
-        group_modify(function(d, ...) {
-            if (nrow(d) == 1) {
-                d <- d %>% add_row(
-                    ..group = ifelse(
-                        d$..group == "ident_1", "ident_2", "ident_1"
-                    ),
-                    ..compare = 0
-                )
-            }
-            d
-        }) %>%
-        # make sure ident_1 and ident_2 are in order
-        arrange(..group, .by_group = TRUE) %>%
-        # add the predicates, sums and diffs
-        summarise(
-            ..predicate = predicate(..compare),
-            ..sum = sum(..compare),
-            ..diff = ..compare[1] - ..compare[2]
-        ) %>%
-        # filter the clones
-        dplyr::filter(..predicate)
+        drop_na(.group)
 
-    order_sum <- grepl("sum", order)
-    order_diff <- grepl("diff", order)
-    order_desc <- grepl("desc", order)
-    order_abs <- grepl("abs", order)
-    if (order_sum && !order_desc) {
-        out <- trans %>% arrange(..sum) %>% pull(!!id)
-    } else if (order_sum) {
-        out <- trans %>% arrange(desc(..sum)) %>% pull(!!id)
-    } else if (order_diff && !order_desc && !order_abs) {
-        out <- trans %>% arrange(..diff) %>% pull(!!id)
-    } else if (order_diff && !order_desc && order_abs) {
-        out <- trans %>% arrange(abs(..diff)) %>% pull(!!id)
-    } else if (order_diff && order_desc && !order_abs) {
-        out <- trans %>% arrange(desc(..diff)) %>% pull(!!id)
-    } else if (order_diff && order_desc && order_abs) {
-        out <- trans %>% arrange(desc(abs(..diff))) %>% pull(!!id)
+    if (is.null(each)) {
+        trans <- trans %>% group_by(!!id, .group)
     } else {
-        out <- trans %>% pull(!!id)
+        trans <- trans %>% group_by(!!each, !!id, .group)
     }
 
-    if (uniq) { return(out) }
+    if (compare_is_count) {
+        trans <- trans %>% summarise(.n = n(), .groups = "drop")
+    } else {
+        trans <- trans %>% summarise(.n = first(!!compare), .groups = "drop")
+    }
 
-    df %>% mutate(..out = if_else(!!id %in% out, !!id, NA)) %>% pull(..out)
+    trans <- trans %>% pivot_wider(names_from = .group, values_from = .n) %>%
+        replace_na(list(ident_1 = 0, ident_2 = 0)) %>%
+        rowwise() %>%
+        # add the predicates, sums and diffs
+        mutate(
+            .predicate = predicate(ident_1, ident_2),
+            .sum = ident_1 + ident_2,
+            .diff = ident_1 - ident_2
+        ) %>%
+        ungroup() %>%
+        arrange(!!order)
+
+    if (debug) {
+        return(trans)
+    }
+
+    uniq_ids <- trans %>% filter(.predicate) %>% pull(!!id) %>% as.vector() %>% unique()
+    if (uniq) {
+        return(uniq_ids)
+    }
+
+    out <- df %>% pull(!!id)
+    out[!out %in% uniq_ids] <- NA
+    out
 }
 
 #' @export
@@ -221,10 +209,12 @@ expanded <- function(
     group.by, # nolint
     idents,
     subset = TRUE,
+    each = NULL,
     id = CDR3.aa,
-    compare = Clones,
+    compare = .n,
     uniq = TRUE,
-    order = "diff+desc",
+    debug = FALSE,
+    order = desc(.sum),
     include_emerged = FALSE
 ) {
     lbl <- as_label(enquo(df))
@@ -233,15 +223,17 @@ expanded <- function(
     }
     fun = if (include_emerged) "expanded+" else "expanded"
     .size_compare(
-        df,
-        enquo(group.by),
-        idents,
-        enquo(subset),
-        enquo(id),
-        enquo(compare),
-        fun,
+        df = df,
+        group.by = enquo(group.by),
+        idents = idents,
+        subset = enquo(subset),
+        id = enquo(id),
+        compare = enquo(compare),
+        fun = fun,
+        each = tryCatch(enquo(each), error = function(e) NULL),
         uniq = uniq,
-        order = order
+        order = enexpr(order),
+        debug = debug
     )
 }
 
@@ -251,10 +243,12 @@ collapsed <- function(
     group.by, # nolint
     idents,
     subset = TRUE,
+    each = NULL,
     id = CDR3.aa,
-    compare = Clones,
+    compare = .n,
     uniq = TRUE,
-    order = "diff+desc",
+    debug = FALSE,
+    order = desc(.sum),
     include_vanished = FALSE
 ) {
     lbl <- as_label(enquo(df))
@@ -263,15 +257,17 @@ collapsed <- function(
     }
     fun = if (include_vanished) "collapsed+" else "collapsed"
     .size_compare(
-        df,
-        enquo(group.by),
-        idents,
-        enquo(subset),
-        enquo(id),
-        enquo(compare),
-        fun,
+        df = df,
+        group.by = enquo(group.by),
+        idents = idents,
+        subset = enquo(subset),
+        id = enquo(id),
+        compare = enquo(compare),
+        fun = fun,
+        each = tryCatch(enquo(each), error = function(e) NULL),
         uniq = uniq,
-        order = order
+        order = enexpr(order),
+        debug = debug
     )
 }
 
@@ -281,25 +277,29 @@ emerged <- function(
     group.by, # nolint
     idents,
     subset = TRUE,
+    each = NULL,
     id = CDR3.aa,
-    compare = Clones,
+    compare = .n,
     uniq = TRUE,
-    order = "diff+desc"
+    debug = FALSE,
+    order = desc(.sum)
 ) {
     lbl <- as_label(enquo(df))
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
     .size_compare(
-        df,
-        enquo(group.by),
-        idents,
-        enquo(subset),
-        enquo(id),
-        enquo(compare),
-        "emerged",
+        df = df,
+        group.by = enquo(group.by),
+        idents = idents,
+        subset = enquo(subset),
+        id = enquo(id),
+        compare = enquo(compare),
+        fun = "emerged",
+        each = tryCatch(enquo(each), error = function(e) NULL),
         uniq = uniq,
-        order = order
+        order = enexpr(order),
+        debug = debug
     )
 }
 
@@ -309,25 +309,29 @@ vanished <- function(
     group.by, # nolint
     idents,
     subset = TRUE,
+    each = NULL,
     id = CDR3.aa,
-    compare = Clones,
+    compare = .n,
     uniq = TRUE,
-    order = "diff+desc"
+    debug = FALSE,
+    order = desc(.sum)
 ) {
     lbl <- as_label(enquo(df))
     if (length(lbl) == 1 && lbl == ".") {
         df <- across(everything())
     }
     .size_compare(
-        df,
-        enquo(group.by),
-        idents,
-        enquo(subset),
-        enquo(id),
-        enquo(compare),
-        "vanished",
+        df = df,
+        group.by = enquo(group.by),
+        idents = idents,
+        subset = enquo(subset),
+        id = enquo(id),
+        compare = enquo(compare),
+        fun = "vanished",
+        each = tryCatch(enquo(each), error = function(e) NULL),
         uniq = uniq,
-        order = order
+        order = enexpr(order),
+        debug = debug
     )
 }
 

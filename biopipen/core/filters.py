@@ -15,6 +15,7 @@ filtermanager = FilterManager()
 @filtermanager.register
 def dict_to_cli_args(
     dic: Mapping[str, Any],
+    exclude: List[str] = None,
     prefix: str | None = None,
     sep: str | None = " ",
     dup_key: bool = True,
@@ -27,6 +28,7 @@ def dict_to_cli_args(
 
     Args:
         dic: The dict to convert
+        exclude: The keys to exclude
         prefix: The prefix of the keys after conversion
             Defaults to `None`, mean `-` for short keys and `--` for long keys
         sep: The separator between key and value
@@ -37,12 +39,22 @@ def dict_to_cli_args(
             If `sep` is `None` or `=`, this must be True, otherwise an error
             will be raised
         join: Whether to join the arguments into a single string
+        start_key: The key to start the arguments
+            This is useful when you want to put some arguments at the beginning
+            of the command line
+        end_key: The key to end the arguments
+            This is useful when you want to put some arguments at the end
+            of the command line
+        dashify: Whether to replace `_` with `-` in the keys
 
     Returns:
         The converted string or list of strings
     """
     if sep in [None, "="] and not dup_key:
         raise ValueError("`dup_key` must be True when sep is `None` or `=`")
+
+    if exclude:
+        dic = {k: v for k, v in dic.items() if k not in exclude}
 
     starts = []
     ends = []

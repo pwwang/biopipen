@@ -1422,6 +1422,8 @@ class CellTypeAnnotation(Proc):
             If the length of `cell_types` is shorter than the number of
             clusters, the remaining clusters will be kept as the original cell
             types.
+            You can also use `NA` to remove the clusters from downstream analysis. This
+            only works when `envs.newcol` is not specified.
 
             /// Note
             If `tool` is `direct` and `cell_types` is not specified or an empty list,

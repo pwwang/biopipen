@@ -173,8 +173,8 @@ do_one_features = function(name) {
             rownames_to_column("Feature") %>%
             select(Feature, everything())
 
-        exprfile = paste0(slugify(name), ".txt")
-        write.table(expr, file.path(odir, exprfile), sep="\t", quote=FALSE, row.names=FALSE)
+        exprfile = file.path(odir, paste0(slugify(name), ".txt"))
+        write.table(expr, exprfile, sep="\t", quote=FALSE, row.names=FALSE)
 
         add_report(
             list(
