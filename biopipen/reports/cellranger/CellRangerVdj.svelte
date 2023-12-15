@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 
 {%- macro report_job(job, h=1) -%}
-    <h{{h}}>{{job.out.outdir | basename | escapse}}</h{{h}}>
+    <h{{h}}>{{job.out.outdir | basename | escape}}</h{{h}}>
     <iframe
         src="{{job.out.outdir}}/outs/web_summary.html"
         width="100%"
