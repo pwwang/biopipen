@@ -212,7 +212,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     sort_column <- c()
 
     for (i in colnames(dat)) {
-        select_row <- which(rowMaxs(dat, na.rm = T) == dat[, i])
+        select_row <- which(rowMaxs(dat, na.rm = T, useNames = F) == dat[, i])
         tmp <- rownames(dat)[select_row][order(dat[select_row, i], decreasing = T)]
         sort_row <- c(sort_row, tmp)
     }
@@ -282,7 +282,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         args = list(
             mapping = aes(x = variable, y = value, fill = variable),
             trim = F,
-            size = 0.2,
+            linewidth = 0.2,
             show.legend = F,
             width = 1.2
         ),
@@ -357,7 +357,7 @@ do_one_subset_col <- function(subset_col, subset_prefix) {
                     row_names_max_width = max_text_width(pws, gp = gpar(fontsize = 12)),
                     row_dend_reorder = TRUE,
                     row_dend_width = unit(30, "mm"),
-                    column_split = do_call(c, lapply(1:length(subsets), function(i) {rep(subsets[i], ncol(x[[i]]$hmdata))})),
+                    column_split = unlist(lapply(1:length(subsets), function(i) {rep(subsets[i], ncol(x[[i]]$hmdata))})),
                     cluster_columns = FALSE
                 ),
                 devpars = hm_devpars,
