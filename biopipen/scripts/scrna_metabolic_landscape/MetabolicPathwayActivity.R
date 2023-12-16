@@ -203,7 +203,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
             pvalues_mat[p, c] <- pval
         }
     }
-    all_NA <- rowAlls(is.na(mean_expression_shuffle))
+    all_NA <- rowAlls(is.na(mean_expression_shuffle), useNames = F)
     mean_expression_shuffle <- mean_expression_shuffle[!all_NA, , drop = F]
     # heatmap
     dat <- mean_expression_shuffle
