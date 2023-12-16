@@ -128,7 +128,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         mean_exp_eachCellType <- AverageExpression(pathway_metabolic_obj)$RNA
 
         # remove genes which are zeros in any celltype to avoid extreme ratio value
-        keep <- rownames(mean_exp_eachCellType)[rowAlls(mean_exp_eachCellType > 0.001)]
+        keep <- rownames(mean_exp_eachCellType)[rowAlls(mean_exp_eachCellType > 0.001, useNames = F)]
         if (length(keep) < 3) next
 
         # using the loweset value to replace zeros for avoiding extreme ratio value

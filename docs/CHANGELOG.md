@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.22.7
+
+- scrna_metabolic_landscape.MetabolicPathwayActivity: Fix `useNames = NA` being deprecated in matrixStats v1.2
+
 ## 0.22.6
 
 - deps: Bump pipen-board to 0.13.10 (pipen-report to 0.16.2)
