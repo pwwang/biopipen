@@ -14,8 +14,8 @@ prerank = function(
     # See: https://gseapy.readthedocs.io/en/latest/_modules/gseapy/algorithm.html#ranking_metric
     expr_pos_mean = rowMeans(exprdata[, classes == pos, drop=F], na.rm=TRUE)
     expr_neg_mean = rowMeans(exprdata[, classes == neg, drop=F], na.rm=TRUE)
-    expr_pos_std = rowSds(as.matrix(exprdata[, classes == pos, drop=F]), na.rm=TRUE)
-    expr_neg_std = rowSds(as.matrix(exprdata[, classes == neg, drop=F]), na.rm=TRUE)
+    expr_pos_std = rowSds(as.matrix(exprdata[, classes == pos, drop=F]), na.rm=TRUE, useNames = T)
+    expr_neg_std = rowSds(as.matrix(exprdata[, classes == neg, drop=F]), na.rm=TRUE, useNames = T)
     rands = rnorm(length(expr_neg_std)) * 1e-6
 
     if (method %in% c("s2n", "signal_to_noise")) {

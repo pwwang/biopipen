@@ -159,7 +159,7 @@ do_one_group <- function(group) {
     }
 }
 
-groups = as.character(unique(sobj@meta.data[[grouping]]))
+groups = sort(as.character(unique(sobj@meta.data[[grouping]])))
 if (ncores == 1) {
     lapply(groups, do_one_group)
 } else {

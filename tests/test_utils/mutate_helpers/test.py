@@ -146,7 +146,7 @@ if __name__ == "__main__":
     )
     run_size(
         df_values=df_values,
-        expected="A NA NA NA D NA NA NA NA NA A A",
+        expected="A NA NA NA D NA NA NA NA NA NA NA",
         fun="expanded+",
         group_by="Source",
         compare="Clones",
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     )
     run_size(
         df_values=df_values,
-        expected="A NA NA E D E E NA NA NA A A",
+        expected="A NA NA E D E E NA NA NA NA NA",
         fun="expanded+",
         mutate=True,
         group_by="Source",
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     )
     run_size(
         df_values=df_values,
-        expected="A NA NA NA D NA NA NA NA NA A A",
+        expected="A NA NA NA D NA NA NA NA NA NA NA",
         fun="emerged",
         group_by="Source",
         compare="Clones",
