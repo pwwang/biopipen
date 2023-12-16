@@ -6,6 +6,7 @@
 - scrna_metabolic_landscape.MetabolicPathwayActivity: Fix heatmap `column_split`
 - scrna_metabolic_landscape.MetabolicFeaturesIntraSubset: Sort groups when being processed
 - utils.gsea: Fix `useNames = NA` in rowSds for matrixStats v1.2
+- utils.mutate_helpers: Fix tests
 
 ## 0.22.7
 
