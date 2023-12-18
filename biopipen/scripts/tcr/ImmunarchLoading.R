@@ -36,6 +36,11 @@ if (!"TCRData" %in% colnames(metadata)) {
 ## Helpers
 
 get_contig_annofile = function(dir, sample, warn=TRUE) {
+    if (is.na(dir) || !is.character(dir) || nchar(dir) == 0 || dir == "NA") {
+        warning(paste0("No path found for sample: ", sample), immediate. = TRUE)
+        return (NULL)
+    }
+
     annofilepat = paste0(
         "*", "{all,filtered}", "_contig_annotations.csv*"  # .gz
     )
@@ -88,6 +93,9 @@ for (i in seq_len(nrow(metadata))) {
     sample = as.character(metadata[i, "Sample"])
 
     annofile = get_contig_annofile(metadata[i, "TCRData"], sample)
+    if (is.null(annofile)) {
+        next
+    }
     anno = read.delim2(annofile, sep=",", header=TRUE, stringsAsFactors=FALSE)
     # Add cdr1, cdr2, fwr1, fwr2, etc columns
     if (!"cdr1" %in% colnames(anno)) {
