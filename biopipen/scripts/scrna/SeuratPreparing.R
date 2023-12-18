@@ -73,7 +73,7 @@ load_sample = function(sample) {
     log_info("- Loading sample: {sample} ...")
     mdata = as.data.frame(metadata)[metadata$Sample == sample, , drop=TRUE]
     path = as.character(mdata$RNAData)
-    if (is.na(path) || !is.character(path) || nchar(path) == 0) {
+    if (is.na(path) || !is.character(path) || nchar(path) == 0 || path == "NA") {
         warning(paste0("No path found for sample: ", sample))
         return (NULL)
     }
