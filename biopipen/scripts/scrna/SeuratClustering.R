@@ -13,6 +13,7 @@ rdsfile = {{out.rdsfile | quote}}
 joboutdir = {{job.outdir | quote}}
 envs = {{envs | r: todot="-"}}
 
+options(str = strOptions(vec.len = 5, digits.d = 5))
 options(future.globals.maxSize = 80000 * 1024^2)
 plan(strategy = "multicore", workers = envs$ncores)
 
