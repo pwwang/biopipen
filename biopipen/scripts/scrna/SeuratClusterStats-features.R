@@ -145,7 +145,23 @@ do_one_features = function(name) {
                 res = 100
             )
         }
-    } else if ("table" %in% case$kind) {
+    } else if (case$kind %in% c("bar", "barplot")) {
+        case$kind = "bar"
+        if (is.null(case$features) || length(case$features) == 0) {
+            stop("No features is specified for barplot")
+        }
+        if (length(case$features) > 1) {
+            stop("Only one feature is allowed for barplot")
+        }
+        default_devpars = function(features, ncol) {
+            if (is.null(ncol)) { ncol = 1 }
+            list(
+                height = 500 * ncol,
+                width = n_uidents * 60 + 150,
+                res = 100
+            )
+        }
+    } else if ("table" == case$kind) {
         case$kind = "table"
         excluded_args = c(excluded_args, "group.by", "split.by", "assay")
         case$assays = case$assay
@@ -160,6 +176,65 @@ do_one_features = function(name) {
     for (arg in excluded_args) {
         assign(arg, case[[arg]])
         case[[arg]] = NULL
+    }
+
+    if (kind == "bar") {
+        figfile <- file.path(odir, paste0(slugify(name), ".bar.png"))
+        genes <- rownames(GetAssayData(case$object, assay = "RNA"))
+        genes <- genes[sapply(genes, function(x) grepl(x, case$features))]
+        if (length(genes) == 0) {
+            p <- case$object@meta.data %>%
+                group_by(Idents = Idents(case$object)) %>%
+                summarise(!!sym(name) := !!parse_expr(case$features)) %>%
+                ggplot(aes(x = Idents, y = !!sym(name)))
+        } else {
+            p <- case$object@meta.data %>%
+                bind_cols(FetchData(case$object, vars = genes, slot = case$slot, cells = rownames(case$object@meta.data))) %>%
+                group_by(Idents = Idents(case$object)) %>%
+                summarise(!!sym(name) := !!parse_expr(case$features)) %>%
+                ggplot(aes(x = Idents, y = !!sym(name)))
+        }
+
+        if (!is.null(case$group.by)) {
+            p <- p + geom_bar(aes(fill = !!sym(case$group.by)), stat = "identity", position = "dodge")
+        } else {
+            p <- p + geom_bar(aes(fill = Idents), stat = "identity")
+        }
+
+        p <- p +
+            scale_fill_biopipen() +
+            theme_prism() +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            labs(x = "Idents", y = name)
+
+        if (!is.null(case$split.by)) {
+            p <- p + facet_wrap(~ !!sym(case$split.by), ncol = case$ncol)
+        } else {
+            case$ncol = 1
+        }
+
+        if (!is.null(case$plus)) {
+            p <- p + eval(parse(text = case$plus))
+        }
+        devpars = list_update(default_devpars(NULL, case$ncol), devpars)
+        png(figfile, res = devpars$res, width = devpars$width, height = devpars$height)
+        print(p)
+        dev.off()
+
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0(kind, "plots for selected features <code>", case$features, "</code>, by ", ident)
+            ),
+            list(
+                kind = "image",
+                src = figfile
+            ),
+            h1 = ifelse(is.null(section), name, section),
+            h2 = ifelse(is.null(section), "#", name)
+        )
+
+        return(NULL)
     }
 
     case$features = .get_features(case$features)
@@ -188,55 +263,56 @@ do_one_features = function(name) {
             h1 = ifelse(is.null(case$section), name, case$section),
             h2 = ifelse(is.null(case$section), "#", name)
         )
-    } else {
-        devpars = list_update(default_devpars(case$features, case$ncol), devpars)
-        if (kind == "heatmap") {
-            if (!exists("downsample") || is.null(downsample)) {
-                downsample = "average"
-            }
-            if (downsample %in% c("average", "mean")) {
-                case$object = AverageExpression(case$object, return.seurat = TRUE)
-            } else if (is.integer(downsample)) {
-                case$object = base::subset(case$object, downsample = downsample)
-            } else {
-                stop(paste0("Unknown downsample method: ", downsample))
-            }
-        }
-        p = do_call(fn, case)
-        if (!is.null(plus)) {
-            for (pls in plus) {
-                p = p + eval(parse(text = pls))
-            }
-        }
-        figfile = file.path(odir, paste0(slugify(name), ".", slugify(case$kind), ".png"))
-        png(figfile, width=devpars$width, height=devpars$height, res=devpars$res)
-        tryCatch({
-            print(p)
-        }, error = function(e) {
-            stop(
-                paste(
-                    paste(names(devpars), collapse=" "),
-                    paste(devpars, collapse=" "),
-                    e,
-                    sep = "\n"
-                )
-            )
-        })
-        dev.off()
-
-        add_report(
-            list(
-                kind = "descr",
-                content = paste0(kind, "plots for selected features, by ", ident)
-            ),
-            list(
-                kind = "image",
-                src = figfile
-            ),
-            h1 = ifelse(is.null(section), name, section),
-            h2 = ifelse(is.null(section), "#", name)
-        )
+        return(NULL)
     }
+
+    devpars = list_update(default_devpars(case$features, case$ncol), devpars)
+    if (kind == "heatmap") {
+        if (!exists("downsample") || is.null(downsample)) {
+            downsample = "average"
+        }
+        if (downsample %in% c("average", "mean")) {
+            case$object = AverageExpression(case$object, return.seurat = TRUE)
+        } else if (is.integer(downsample)) {
+            case$object = base::subset(case$object, downsample = downsample)
+        } else {
+            stop(paste0("Unknown downsample method: ", downsample))
+        }
+    }
+    p = do_call(fn, case)
+    if (!is.null(plus)) {
+        for (pls in plus) {
+            p = p + eval(parse(text = pls))
+        }
+    }
+    figfile = file.path(odir, paste0(slugify(name), ".", slugify(case$kind), ".png"))
+    png(figfile, width=devpars$width, height=devpars$height, res=devpars$res)
+    tryCatch({
+        print(p)
+    }, error = function(e) {
+        stop(
+            paste(
+                paste(names(devpars), collapse=" "),
+                paste(devpars, collapse=" "),
+                e,
+                sep = "\n"
+            )
+        )
+    })
+    dev.off()
+
+    add_report(
+        list(
+            kind = "descr",
+            content = paste0(kind, "plots for selected features, by ", ident)
+        ),
+        list(
+            kind = "image",
+            src = figfile
+        ),
+        h1 = ifelse(is.null(section), name, section),
+        h2 = ifelse(is.null(section), "#", name)
+    )
 }
 
 sapply(names(features), do_one_features)

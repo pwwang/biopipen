@@ -369,8 +369,7 @@ class SeuratClusterStats(Proc):
             - ident: The column name in metadata to use as the identity.
             - group-by: The column name in metadata to group the cells.
                 Does NOT support for pie charts.
-            - split-by: The column name in metadata to split the cells into
-                different plots.
+            - split-by: The column name in metadata to split the cells into different plots.
             - subset: An expression to subset the cells, will be passed to
                 `dplyr::filter()` on metadata.
             - devpars (ns): The device parameters for the plots.
@@ -429,6 +428,10 @@ class SeuratClusterStats(Proc):
                 - featureplot: Same as `feature`.
                 - dot: Use `Seurat::DotPlot`.
                 - dotplot: Same as `dot`.
+                - bar: Bar plot on an aggregated feature.
+                    The features must be a single feature, which will be either an  existing feature or an expression
+                    passed to `dplyr::summarise()` (grouped by `ident`) on the existing features to create a new feature.
+                - barplot: Same as `bar`.
                 - heatmap: Use `Seurat::DoHeatmap`.
                     You can specify `average=True` to plot on the average of the expressions.
                 - table: The table for the features, only gene expressions are supported.
