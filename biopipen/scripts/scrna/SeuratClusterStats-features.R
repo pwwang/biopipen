@@ -61,7 +61,7 @@ do_one_features = function(name) {
 
     fn = NULL
     default_devpars = NULL
-    if ("ridge" %in% case$kind) {
+    if (case$kind %in% c("ridge", "ridgeplot")) {
         case$kind = "ridge"
         if (is.null(case$cols)) {
             case$cols = pal_biopipen()(32)
@@ -76,7 +76,7 @@ do_one_features = function(name) {
                 res = 100
             )
         }
-    } else if ("vln" %in% case$kind || "violin" %in% case$kind) {
+    } else if (case$kind %in% c("vln", "violin", "vlnplot", "violinplot")) {
         case$kind = "violin"
         if (is.null(case$cols)) {
             case$cols = pal_biopipen()(n_uidents)
@@ -90,7 +90,7 @@ do_one_features = function(name) {
                 res = 100
             )
         }
-    } else if ("feature" %in% case$kind) {
+    } else if (case$kind %in% c("feature", "featureplot")) {
         case$kind = "feature"
         if (is.null(case$cols)) {
             case$cols = c("lightgrey", pal_biopipen()(1))
@@ -106,7 +106,7 @@ do_one_features = function(name) {
                 res = 100
             )
         }
-    } else if ("dot" %in% case$kind) {
+    } else if (case$kind %in% c("dot", "dotplot")) {
         case$kind = "dot"
         if (is.null(case$cols)) {
             case$cols = c("lightgrey", pal_biopipen()(1))
@@ -123,7 +123,7 @@ do_one_features = function(name) {
                 res = 100
             )
         }
-    } else if ("heatmap" %in% case$kind) {
+    } else if ("heatmap" == case$kind) {
         case$kind = "heatmap"
         case = list_update(
             list(
