@@ -386,7 +386,7 @@ handle_subject <- function(i, subjects, casename, case) {
     subject_row <- subjects[i, , drop = FALSE]
     subject <- subject_row %>%
         select(all_of(case$subject)) %>%
-        as.character() %>%
+        mutate(across(everything(), as.character)) %>%
         paste(collapse = "-")
 
     log_info("Handling {i} {case$subject} ...")
