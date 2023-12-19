@@ -38,19 +38,22 @@ for (key in names(modules)) {
     module$agg <- NULL
     print(paste0("Calculating module '", key, "' ..."))
     is_cc <- FALSE
-    if (module$features == "cc.genes") {
+    if (length(module$features) == 1 && module$features == "cc.genes") {
         is_cc <- TRUE
         module$features <- NULL
         module$s.features <- cc.genes$s.genes
         module$g2m.features <- cc.genes$g2m.genes
-    } else if (module$features == "cc.genes.updated.2019") {
+    } else if (length(module$features) == 1 && module$features == "cc.genes.updated.2019") {
         is_cc <- TRUE
         module$features <- NULL
         module$s.features <- cc.genes.updated.2019$s.genes
         module$g2m.features <- cc.genes.updated.2019$g2m.genes
     } else {
         module$name <- key
-        module$features <- trimws(strsplit(module$features, ",")[[1]])
+        if (length(module$features) == 1) {
+            module$features <- trimws(strsplit(module$features, ",")[[1]])
+        }
+        module$features <- list(module$features)
     }
     if (isTRUE(is_cc)) {
         sobj <- do_call(CellCycleScoring, module)
