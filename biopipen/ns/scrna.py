@@ -385,6 +385,19 @@ class SeuratClusterStats(Proc):
             >>>     "nCells_Sample": {"kind": "num", "group-by": "Sample"},
             >>>     "fracCells_Sample": {"kind": "frac", "group-by": "Sample"},
             >>> }
+        ngenes_defaults (ns): The default parameters for `ngenes`.
+            The default parameters to plot the number of genes expressed in each cell.
+            - ident: The column name in metadata to use as the identity.
+            - group-by: The column name in metadata to group the cells.
+                Dodge position will be used to separate the groups.
+            - split-by: The column name in metadata to split the cells into different plots.
+            - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+        ngenes (type=json): The number of genes expressed in each cell.
+            Keys are the names of the plots and values are the dicts inherited from `env.ngenes_defaults`.
         features_defaults (ns): The default parameters for `features`.
             - features: The features to plot.
                 It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
@@ -473,6 +486,16 @@ class SeuratClusterStats(Proc):
                 "table": True,
                 "frac": True,
             },
+        },
+        "ngenes_defaults": {
+            "ident": "seurat_clusters",
+            "group-by": None,
+            "split-by": None,
+            "subset": None,
+            "devpars": {"res": 100, "height": 800, "width": 1000},
+        },
+        "ngenes": {
+            "Number of genes expressed in each cluster": {},
         },
         "features_defaults": {
             "features": None,

@@ -16,8 +16,16 @@ joboutdir = {{job.outdir | r}}
 log_info("Loading Seurat object ...")
 srtobj = readRDS(srtfile)
 
+############## stats ##############
 {% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-stats.R" %}
+
+############## ngenes ##############
+{% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-ngenes.R" %}
+
+############## features ##############
 {% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-features.R" %}
+
+############## dimplots ##############
 {% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-dimplots.R" %}
 
 save_report(joboutdir)
