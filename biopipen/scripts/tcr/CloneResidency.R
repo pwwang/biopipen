@@ -376,6 +376,25 @@ plot_upset <- function(counts, singletons) {
     ))
 }
 
+headings <- function(section, casename, subject) {
+    list(h1 = ifelse(
+            is.null(section),
+            ifelse(casename == "DEFAULT", subject, casename),
+            section
+        ),
+        h2 = ifelse(
+            is.null(section),
+            ifelse(casename == "DEFAULT", "#", subject),
+            ifelse(casename == "DEFAULT", subject, casename)
+        ),
+        h3 = ifelse(
+            is.null(section),
+            "#",
+            ifelse(casename == "DEFAULT", "#", subject)
+        )
+    )
+}
+
 handle_subject <- function(i, subjects, casename, case) {
     casedir = file.path(outdir, slugify(casename, tolower = FALSE))
     # Generate a residency table
@@ -434,19 +453,19 @@ handle_subject <- function(i, subjects, casename, case) {
         select(CDR3.aa, !!!syms(groups))
     counts[is.na(counts)] <- 0
 
-    # Save samples to group_by so they can be aligned accordingly in the report
-    if (!is.null(section)) {
-        group_dir <- file.path(casedir, "section")
-        dir.create(group_dir, showWarnings = FALSE)
+    # # Save samples to group_by so they can be aligned accordingly in the report
+    # if (!is.null(section)) {
+    #     group_dir <- file.path(casedir, "section")
+    #     dir.create(group_dir, showWarnings = FALSE)
 
-        sgroups <- subject_row %>%
-            left_join(cldata) %>%
-            pull(section) %>%
-            unique() %>%
-            paste(collapse = "-")
-        group_file <- file.path(group_dir, paste0(slugify(sgroups), ".txt"))
-        cat(subject, file = group_file, sep = "\n", append = TRUE)
-    }
+    #     sgroups <- subject_row %>%
+    #         left_join(cldata) %>%
+    #         pull(section) %>%
+    #         unique() %>%
+    #         paste(collapse = "-")
+    #     group_file <- file.path(group_dir, paste0(slugify(sgroups), ".txt"))
+    #     cat(subject, file = group_file, sep = "\n", append = TRUE)
+    # }
 
     # Save counts
     counts_dir <- file.path(casedir, "counts")
@@ -459,16 +478,20 @@ handle_subject <- function(i, subjects, casename, case) {
         col.names = TRUE,
         quote = FALSE
     )
+
+    h <- headings(case$section, casename, "Clone Size Tables")
     add_report(
         list(kind = "table", src = countfile, ds_name = subject),
-        h1 = ifelse(casename == "DEFAULT", "Clone Size Tables", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Clone size Tables"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "dropdown_switcher"
     )
 
     # scatter plot
     # Make plots B ~ A, C ~ B, and C ~ A for order A, B, C
     # combns <- combn(groups, 2, simplify = FALSE)
+    h <- headings(case$section, casename, "Residency Plots")
     scatter_dir <- file.path(casedir, "scatter")
     for (j in seq_along(case$order)) {
         pair <- strsplit(case$order[j], ",")[[1]]
@@ -496,8 +519,9 @@ handle_subject <- function(i, subjects, casename, case) {
                 name = paste0(subject, " (", pair[1], " - ", pair[2], ")"),
                 src = scatter_png
             ),
-            h1 = ifelse(casename == "DEFAULT", "Residency Plots", casename),
-            h2 = ifelse(casename == "DEFAULT", "#", "Residency Plots"),
+            h1 = h$h1,
+            h2 = h$h2,
+            h3 = h$h3,
             ui = "table_of_images:3"
         )
     }
@@ -509,10 +533,12 @@ handle_subject <- function(i, subjects, casename, case) {
     print(plot_venndg(counts, groups, singletons))
     dev.off()
 
+    h <- headings(case$section, casename, "Overlapping Clones (Venn Diagram)")
     add_report(
         list(src = venn_png),
-        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (Venn Diagram)", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (Venn Diagram)"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "table_of_images:3"
     )
 
@@ -522,10 +548,12 @@ handle_subject <- function(i, subjects, casename, case) {
     print(plot_upset(counts, singletons))
     dev.off()
 
+    h <- headings(case$section, casename, "Overlapping Clones (UpSet Plots)")
     add_report(
         list(src = upset_png),
-        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (UpSet Plots)", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (UpSet Plots)"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "table_of_images:3"
     )
 }
@@ -542,12 +570,17 @@ handle_case <- function(casename, case) {
             distinct(!!!syms(case$subject)) %>%
             drop_na()
     }
+
+    h <- headings(case$section, casename, "Clone Size Tables")
     add_report(
         list(ds_name = "Select a subject ..."),
-        h1 = ifelse(casename == "DEFAULT", "Clone Size Tables", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Clone size Tables"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "dropdown_switcher"
     )
+
+    h <- headings(case$section, casename, "Residency Plots")
     add_report(
         list(
             kind = "descr",
@@ -569,32 +602,39 @@ handle_case <- function(casename, case) {
                 "(y-axis sample) Singleton (clones that are only present in the y-axis sample, with a single cell)"
             )
         ),
-        h1 = ifelse(casename == "DEFAULT", "Residency Plots", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Residency Plots"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "flat"
     )
+
+    h <- headings(case$section, casename, "Overlapping Clones (Venn Diagram)")
     add_report(
         list(
             kind = "descr",
             content = "For samples in each subject, showing the overlapping clones between samples in Venn diagrams."
         ),
-        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (Venn Diagram)", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (Venn Diagram)"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "flat"
     )
+
+    h <- headings(case$section, casename, "Overlapping Clones (UpSet Plots)")
     add_report(
         list(
             kind = "descr",
             content = "For samples in each subject, showing the overlapping clones between samples in UpSet plots."
         ),
-        h1 = ifelse(casename == "DEFAULT", "Overlapping Clones (UpSet Plots)", casename),
-        h2 = ifelse(casename == "DEFAULT", "#", "Overlapping Clones (UpSet Plots)"),
+        h1 = h$h1,
+        h2 = h$h2,
+        h3 = h$h3,
         ui = "flat"
     )
     sapply(seq_len(nrow(subjects)), handle_subject, subjects, casename, case)
 }
 
-for (casename in names(cases)) {
+for (casename in sort(names(cases))) {
     handle_case(casename, cases[[casename]])
 }
 
