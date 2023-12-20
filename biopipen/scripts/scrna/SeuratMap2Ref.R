@@ -15,8 +15,12 @@ ref = {{envs.ref | r}}
 ncores = {{envs.ncores | r}}
 sctransform_args = {{envs.SCTransform | r: todot="-"}}
 findtransferanchors_args = {{envs.FindTransferAnchors | r: todot="-"}}
-mapquery_args = {{envs.MapQuery | r: todot="-"}}
 mappingscore_args = {{envs.MappingScore | r: todot="-"}}
+mapquery_args = {{envs.MapQuery | r: todot="-"}}
+
+if (is.null(mapquery_args$refdata) || length(mapquery_args$refdata) == 0) {
+    stop("No refdata provided for MapQuery (envs.MapQuery.refdata)")
+}
 
 outdir = dirname(outfile)
 options(future.globals.maxSize = 80000 * 1024^2)
