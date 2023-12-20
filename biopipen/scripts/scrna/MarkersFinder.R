@@ -472,7 +472,7 @@ do_case_findall <- function(casename) {
         log_info("- Using presto::wilcoxauc for case: {casename}...")
         args = list(
             object = if (!is.null(case$subset)) {
-                srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
+                srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
             } else {
                 srtobj %>% filter(!is.na(!!sym(case$group.by)))
             },
@@ -526,7 +526,7 @@ do_case_findall <- function(casename) {
             args$min.pct <- 0
         }
         if (!is.null(case$subset)) {
-            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
+            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
         } else {
             args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
         }
@@ -653,7 +653,7 @@ do_case <- function(casename) {
             args$min.pct <- 0
         }
         if (!is.null(case$subset)) {
-            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
+            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
         } else {
             args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
         }
