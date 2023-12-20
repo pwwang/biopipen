@@ -12,12 +12,15 @@ outfile = {{out.outfile | r}}
 use = {{envs.use | r}}
 name = {{envs.name | r}}
 ref = {{envs.ref | r}}
+ncores = {{envs.ncores | r}}
 sctransform_args = {{envs.SCTransform | r: todot="-"}}
 findtransferanchors_args = {{envs.FindTransferAnchors | r: todot="-"}}
 mapquery_args = {{envs.MapQuery | r: todot="-"}}
 mappingscore_args = {{envs.MappingScore | r: todot="-"}}
 
 outdir = dirname(outfile)
+options(future.globals.maxSize = 80000 * 1024^2)
+plan(strategy = "multicore", workers = ncores)
 
 # See if we have a reference
 if (is.null(ref)) {

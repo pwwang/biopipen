@@ -1518,6 +1518,10 @@ class SeuratMap2Ref(Proc):
         outfile: The rds file of seurat object with cell type annotated
 
     Envs:
+        ncores (type=int;order=-100): Number of cores to use.
+            Used in `future::plan(strategy = "multicore", workers = <ncores>)`
+            to parallelize some Seurat procedures.
+            See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         use: A column name (e.g. `predicted.celltype.l1`, `predicted.celltype.l2`)
             to use as the final cell types in downstream analysis, which will be stored
             in the `name` column and set as the `Idents` of the seurat object.
@@ -1561,6 +1565,7 @@ class SeuratMap2Ref(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "use": "predicted.celltype.l2",
         "name": "seurat_clusters",
         "ref": None,
