@@ -1579,12 +1579,12 @@ class SeuratMap2Ref(Proc):
             "reference-reduction": "spca",
         },
         "MapQuery": {
-            "reference-reduction": "spca",
-            "reduction-model": "wnn.umap",
+            # "reference-reduction": "spca",
+            # "reduction-model": "wnn.umap",
             "refdata": {
-                "celltype-l1": "celltype.l1",
-                "celltype-l2": "celltype.l2",
-                "predicted_ADT": "ADT",
+                # "celltype-l1": "celltype.l1",
+                # "celltype-l2": "celltype.l2",
+                # "predicted_ADT": "ADT",
             }
         },
         "MappingScore": {"ndim": 30},
