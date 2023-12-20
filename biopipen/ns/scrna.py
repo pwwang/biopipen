@@ -1518,13 +1518,12 @@ class SeuratMap2Ref(Proc):
         outfile: The rds file of seurat object with cell type annotated
 
     Envs:
-        use (choice): Which level of cell type to use for further analysis and
-            being aliased to `alias`
-            - predicted.celltype.l1: The first level of predicted cell type
-            - predicted.celltype.l2: The second level of predicted cell type
-        alias: The name of an aliasied column to `use`.
-            This is helpful for the downstream analysis where the column name
-            is used as the cluster.
+        use: A column name (e.g. `predicted.celltype.l1`, `predicted.celltype.l2`)
+            to use as the final cell types in downstream analysis, which will be stored
+            in the `name` column and set as the `Idents` of the seurat object.
+            Or an expression to pass to `mutate()` to create a new column.
+        name: The name of the final cell type column.
+            This will be set as the `Idents` of the seurat object.
         ref: The reference seurat object file.
             Either an RDS file or a h5seurat file that can be loaded by
             `Seurat::LoadH5Seurat()`.
@@ -1563,7 +1562,7 @@ class SeuratMap2Ref(Proc):
     lang = config.lang.rscript
     envs = {
         "use": "predicted.celltype.l2",
-        "alias": "seurat_clusters",
+        "name": "seurat_clusters",
         "ref": None,
         "SCTransform": {
             "do-correct-umi": False,
