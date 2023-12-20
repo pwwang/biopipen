@@ -2,7 +2,7 @@
 {% from "utils/misc.liq" import report_jobs -%}
 <script>
     import { Image, DataTable, Descr } from "$libs";
-    import { Accordion, AccordionItem, Tabs, Tab, TabContent } from "$ccs";
+    import { Accordion, AccordionItem, Tabs, Tab, TabContent, InlineNotification } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}

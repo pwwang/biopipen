@@ -158,6 +158,40 @@ do_case <- function(name, case) {
         sep = "\t",
         quote = FALSE
     )
+    if (sum(is.na(ranks[, 2])) == nrow(ranks)) {
+        if (length(allclasses) < 100) {
+            log_warn("  Ignoring this case because all gene ranks are NA and there are <100 cells.")
+            cat(
+                paste0("Not enough cells (n = ", length(allclasses), ") to run fgsea."),
+                file = file.path(info$casedir, "fgsea.log")
+            )
+            add_report(
+                list(
+                    kind = "error",
+                    content = paste0("Not enough cells (n = ", length(allclasses), ") to run fgsea.")
+                ),
+                h1 = ifelse(
+                    info$section == "DEFAULT",
+                    info$case,
+                    ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+                ),
+                h2 = ifelse(
+                    info$section == "DEFAULT",
+                    "#",
+                    ifelse(single_section, "#", info$case)
+                )
+            )
+            return()
+        } else {
+            stop(paste0(
+                "All gene ranks are NA (# cells = ",
+                length(allclasses),
+                "). ",
+                "It's probably due to high missing rate in the data. ",
+                "You may want to try a different `envs$method` for pre-ranking."
+            ))
+        }
+    }
 
     # run fgsea
     log_info("  Running fgsea...")
