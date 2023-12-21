@@ -63,7 +63,7 @@ class ImmunarchLoading(Proc):
             are not in the same directory, we can link them to a temporary directory
             and pass the temporary directory to `Immunarch`.
             This option is useful when the data files are in different directories.
-        mode (hidden): Either "single" for single chain data or "paired" for
+        mode: Either "single" for single chain data or "paired" for
             paired chain data. For `single`, only TRB chain will be kept
             at `immdata$data`, information for other chains will be
             saved at `immdata$tra` and `immdata$multi`.
