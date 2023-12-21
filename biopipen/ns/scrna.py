@@ -1526,6 +1526,8 @@ class SeuratMap2Ref(Proc):
             to use as the final cell types in downstream analysis, which will be stored
             in the `name` column and set as the `Idents` of the seurat object.
             Or an expression to pass to `mutate()` to create a new column.
+            When not specified, `predicted.<key>` will be used if
+            `envs.MapQuery.refdata` has only one key, otherwise an error will be raised.
         name: The name of the final cell type column.
             This will be set as the `Idents` of the seurat object.
         ref: The reference seurat object file.
@@ -1566,7 +1568,8 @@ class SeuratMap2Ref(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "use": "predicted.celltype.l2",
+        # "use": "predicted.celltype.l2",
+        "use": None,
         "name": "seurat_clusters",
         "ref": None,
         "SCTransform": {
@@ -1579,8 +1582,8 @@ class SeuratMap2Ref(Proc):
             "reference-reduction": "spca",
         },
         "MapQuery": {
-            # "reference-reduction": "spca",
-            # "reduction-model": "wnn.umap",
+            "reference-reduction": "spca",
+            "reduction-model": "wnn.umap",
             "refdata": {
                 # "celltype-l1": "celltype.l1",
                 # "celltype-l2": "celltype.l2",

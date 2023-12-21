@@ -22,14 +22,22 @@ if (is.null(mapquery_args$refdata) || length(mapquery_args$refdata) == 0) {
     stop("No refdata provided for MapQuery (envs.MapQuery.refdata)")
 }
 
+# See if we have a reference
+if (is.null(ref)) {
+    stop("No reference provided (envs.ref)")
+}
+
+if (is.null(use)) {
+    if (length(mapquery_args$refdata) == 1) {
+        use = paste0("predicted.", names(mapquery_args$refdata)[1])
+    } else {
+        stop("No use provided (envs.use), don't know which column to use as cluster")
+    }
+}
+
 outdir = dirname(outfile)
 options(future.globals.maxSize = 80000 * 1024^2)
 plan(strategy = "multicore", workers = ncores)
-
-# See if we have a reference
-if (is.null(ref)) {
-  stop("No reference provided")
-}
 
 .expand_dims = function(args, name = "dims") {
     # Expand dims from 30 to 1:30
