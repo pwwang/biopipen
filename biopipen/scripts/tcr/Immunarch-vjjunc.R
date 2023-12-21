@@ -74,15 +74,32 @@ do_one_case_vjjunc <- function(name, case) {
             group_by(V.name, J.name) %>%
             summarise(Size = n(), .groups = "drop") %>%
             filter(!is.na(V.name) & !is.na(J.name) & V.name != "None" & J.name != "None") %>%
-            arrange(V.name, J.name)
+            # if it's multiple chains, then split the chains
+            separate_rows(V.name, J.name, sep = ";") %>%
+            filter(!is.na(V.name) & !is.na(J.name) & V.name != "None" & J.name != "None") %>%
+            group_by(V.name, J.name) %>%
+            summarise(Size = sum(Size), .groups = "drop") %>%
+            arrange(desc(Size), V.name, J.name)
 
         figfile <- file.path(odir, paste0(slugify(by_name), ".png"))
         png(figfile, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
-        chordDiagram(
-            gsd,
-            annotationTrack = c("grid", "axis"),
-            preAllocateTracks = list(track.height = 0.25)
-        )
+        circos.clear()
+        tryCatch({
+            chordDiagram(
+                gsd,
+                annotationTrack = c("grid", "axis"),
+                preAllocateTracks = list(track.height = 0.25)
+            )
+        }, error = function(e) {
+            log_warn("Error encountered: {e$message}, setting gap.after ...")
+            circos.par(gap.after = c(rep(1, nrow(gsd) - 1), 5, rep(1, nrow(gsd) - 1), 5))
+            chordDiagram(
+                gsd,
+                annotationTrack = c("grid", "axis"),
+                preAllocateTracks = list(track.height = 0.25)
+            )
+
+        })
         circos.track(track.index = 1, panel.fun = function(x, y) {
             circos.text(
                 CELL_META$xcenter,
