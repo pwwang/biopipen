@@ -274,6 +274,9 @@ obj_list = do_call(FindNeighbors, envs$FindNeighbors)
 
 log_info("Running FindClusters ...")
 envs$FindClusters$object = obj_list
+if (is.null(envs$FindClusters$random.seed)) {
+    envs$FindClusters$random.seed = 8525
+}
 obj_list = do_call(FindClusters, envs$FindClusters)
 
 nclusters = length(unique(Idents(obj_list)))
