@@ -286,13 +286,15 @@ if (!is.null(envs$FindClusters$resolution) && length(envs$FindClusters$resolutio
         obj_list <- do_call(FindClusters, findclusters_args)
         obj_list[[paste0("seurat_clusters_", res)]] <- Idents(obj_list)
         nclusters <- length(unique(Idents(obj_list)))
-        log_info("- Find {nclusters} at resolution: {res}")
+        log_info("- Found {nclusters} at resolution: {res}:")
+        print(table(Idents(obj_list)))
     }
 } else {
     envs$FindClusters$object <- obj_list
     obj_list <- do_call(FindClusters, envs$FindClusters)
     nclusters <- length(unique(Idents(obj_list)))
-    log_info("- Find {nclusters} clusters.")
+    log_info("- Found {nclusters} clusters:")
+    print(table(Idents(obj_list)))
 }
 
 log_info("Saving results ...")
