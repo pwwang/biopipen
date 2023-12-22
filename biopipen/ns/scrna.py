@@ -946,12 +946,7 @@ class MarkersFinder(Proc):
         "subset": None,
         "use_presto": False,
         "rest": {},
-        "dbs": [
-            "GO_Biological_Process_2021",
-            "GO_Cellular_Component_2021",
-            "GO_Molecular_Function_2021",
-            "KEGG_2021_Human",
-        ],
+        "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
         "volcano_genes": True,
         "dotplot": {},
