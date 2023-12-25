@@ -531,11 +531,13 @@ do_case_findall <- function(casename) {
             args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
         }
         Idents(args$object) <- case$group.by
+
         markers <- tryCatch({
             do_call(FindAllMarkers, args)
             # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
         }, error = function(e) {
             log_warn(e$message)
+
             data.frame(
                 gene = character(),
                 p_val = numeric(),
@@ -546,6 +548,25 @@ do_case_findall <- function(casename) {
                 cluster = character()
             )
         })
+
+        if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
+            log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
+            args$recorrect_umi <- FALSE
+            markers <- tryCatch({
+                do_call(FindAllMarkers, args)
+            }, error = function(e) {
+                log_warn(e$message)
+                data.frame(
+                    gene = character(),
+                    p_val = numeric(),
+                    avg_log2FC = numeric(),
+                    pct.1 = numeric(),
+                    pct.2 = numeric(),
+                    p_val_adj=numeric(),
+                    cluster = character()
+                )
+            })
+        }
     }
 
     if (is.null(case$dotplot$assay)) {
@@ -657,6 +678,7 @@ do_case <- function(casename) {
         } else {
             args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
         }
+
         markers <- tryCatch({
             do_call(FindMarkers, args) %>% rownames_to_column("gene")
         }, error = function(e) {
@@ -670,6 +692,25 @@ do_case <- function(casename) {
                 p_val_adj = numeric()
             )
         })
+
+        if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
+            log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
+            args$recorrect_umi <- FALSE
+            markers <- tryCatch({
+                do_call(FindMarkers, args) %>% rownames_to_column("gene")
+            }, error = function(e) {
+                log_warn(e$message)
+                data.frame(
+                    gene = character(),
+                    p_val = numeric(),
+                    avg_log2FC = numeric(),
+                    pct.1 = numeric(),
+                    pct.2 = numeric(),
+                    p_val_adj=numeric(),
+                    cluster = character()
+                )
+            })
+        }
     }
 
     siggenes <- do_enrich(info, markers, case$sigmarkers, case$volcano_genes)

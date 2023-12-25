@@ -902,6 +902,9 @@ class MarkersFinder(Proc):
 
     Input:
         srtobj: The seurat object loaded by `SeuratPreparing`
+            If you have your `Seurat` object prepared by yourself, you can also
+            use it here, but you should make sure that the object has been processed
+            by `PrepSCTFindMarkers` if data is not normalized using `SCTransform`.
 
     Output:
         outdir: The output directory for the markers
