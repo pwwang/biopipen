@@ -19,7 +19,7 @@ do_one_ngenes <- function(name) {
     } else {
         sobj <- srtobj
     }
-    df_cells <- sobj@meta.data %>% mutate(.nexpr = colSums(GetAssayData(sobj, assay = "RNA") > 0))
+    df_cells <- sobj@meta.data %>% mutate(.nexpr = colSums(GetAssayData(sobj) > 0))
 
     select_cols = c(case$ident, case$group.by, case$split.by, ".nexpr")
     df_cells = df_cells %>% select(all_of(select_cols))
