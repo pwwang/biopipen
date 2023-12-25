@@ -32,11 +32,7 @@ class PrepareSeurat(Proc):
 
 class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
-    envs = {
-        "ncores": 1,
-        "FindIntegrationAnchors": {"reduction": "cca"},
-        "IntegrateData": {"k-weight": 5},
-    }
+    envs = {"ncores": 1}
 
 
 class CellTypeAnnotation(CellTypeAnnotation):
