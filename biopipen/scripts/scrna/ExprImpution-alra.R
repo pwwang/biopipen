@@ -7,22 +7,23 @@ infile = {{in.infile | r}}
 outfile = {{out.outfile | r}}
 envs = {{envs.alra_args | r}}
 
-print("Loading Seurat object")
+log_info("Loading Seurat object")
 sobj = readRDS(infile)
-DefaultAssay(sobj) <- "RNA"
+assay <- DefaultAssay(sobj)
 
-print("Imputing expression values, using ALRA")
+log_info("Imputing expression values, using ALRA")
 envs$object = sobj
 sobj = do_call(RunALRA, envs)
 
 # sobj = RunALRA(sobj)
-print("Renaming assays")
-sobj = RenameAssays(sobj, RNA = "UNIMPUTED_RNA")
-sobj = RenameAssays(sobj, alra = "RNA")
-DefaultAssay(sobj) <- "RNA"
+log_info("Renaming assays")
+sobj = RenameAssays(sobj, assay.name = assay, new.assay.name = "RAW")
+sobj = RenameAssays(sobj, assay.name = "alra", new.assay.name = assay)
+DefaultAssay(sobj) <- assay
 
-attr(sobj, "impute") = "alra"
-print("Saving Seurat object")
+sobj@misc$impute = "alra"
+
+log_info("Saving Seurat object")
 saveRDS(sobj, outfile)
 
 # choosek_plot_file = file.path(dirname(outfile), "choosek.png")

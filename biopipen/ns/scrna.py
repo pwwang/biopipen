@@ -1080,9 +1080,9 @@ class ExprImpution(Proc):
 
     Output:
         outfile: The output file in RDS format of Seurat object
-            Note that with rmagic and alra, the original RNA assay will be
-            renamed to `UNIMPUTED_RNA` and the imputed RNA assay will be
-            renamed to `RNA`
+            Note that with rmagic and alra, the original default assay will be
+            renamed to `RAW` and the imputed RNA assay will be
+            renamed to `RNA` and set as default assay.
 
     Envs:
         tool (choice): Either alra, scimpute or rmagic
