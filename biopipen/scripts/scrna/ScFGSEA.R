@@ -145,7 +145,7 @@ do_case <- function(name, case) {
         case$ident.2 <- ".rest"
         allclasses[allclasses != case$ident.1] <- ".rest"
     }
-    exprs <- GetAssayData(sobj, slot = "data", assay = "RNA")
+    exprs <- GetAssayData(sobj, layer = "data")
 
     # get preranks
     log_info("  Getting preranks...")
