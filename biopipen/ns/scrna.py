@@ -683,6 +683,17 @@ class ModuleScoreCalculator(Proc):
             >>>     "Activation": {"features": "IFNG"},
             >>>     "Proliferation": {"features": "STMN1,TUBB"}
             >>> }
+
+            You can also add Diffusion Components (DC) to the modules
+            >>> {"DC": {"features": 2, "kind": "diffmap"}}
+            will perform diffusion map as a reduction and add the first 2
+            components as `DC_1` and `DC_2` to the metadata. `diffmap` is a shortcut
+            for `diffusion_map`. Other key-value pairs will pass to
+            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap%20class).
+            You can later plot the diffusion map by using
+            `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
+            This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
+            and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
     """  # noqa: E501
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
@@ -693,7 +704,7 @@ class ModuleScoreCalculator(Proc):
             "nbin": 24,
             "ctrl": 100,
             "k": False,
-            "assay": "RNA",
+            "assay": None,
             "seed": 8525,
             "search": False,
             "keep": False,
@@ -848,60 +859,6 @@ class SeuratMetadataMutater(Proc):
     lang = config.lang.rscript
     envs = {"mutaters": {}}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
-
-
-class GeneExpressionInvestigation(Proc):
-    """Investigation of expressions of genes of interest
-
-    Input:
-        srtobj: The seurat object loaded by `SeuratPreparing`
-        genefile: The genes to show their expressions in the plots
-            Either one column or two columns.
-            If one column, the column name will be used as both the gene names
-            to match the expressions and the names to show in the plots
-            If two columns, the first column will be used as the gene names
-            to match the expressions and the second column will be used to
-            show in the plots.
-        configfile: The configuration file (toml). See `envs.config`
-            If not provided, use `envs.config`
-
-    Output:
-        outdir: The output directory with the plots
-
-    Envs:
-        gopts: Options for `read.table()` to read `in.genefile`
-        config: The configurations to do the plots
-            name: The name of the job, mostly used in report
-            mutaters: The mutater to mutate the metadata
-            groupby: Which meta columns to group the data
-            subset: Select a subset of cells, will be passed to
-                `subset(obj, subset=<subset>)`
-            plots: Plots to generate
-                Currently supported
-                `boxplot`:
-                - `ncol`: Split the plot to how many columns?
-                - `res`, `height` and `width` the parameters for `png()`
-                `heatmap`:
-                - `res`, `height` and `width` the parameters for `png()`
-                - other arguments for `ComplexHeatmap::Heatmap()`
-    """
-    input = "srtobj:file, genefile:file, configfile:file"
-    output = "outdir:dir:{{in.configfile | stem0}}.gei"
-    lang = config.lang.rscript
-    order = 4
-    envs = {
-        "config": {},
-        "gopts": {
-            "header": False,
-            "row.names": None,
-            "sep": "\t",
-            "check.names": False,
-        },
-    }
-    script = "file://../scripts/scrna/GeneExpressionInvistigation.R"
-    plugin_opts = {
-        "report": "file://../reports/scrna/GeneExpressionInvistigation.svelte"
-    }
 
 
 class DimPlots(Proc):
@@ -1476,7 +1433,7 @@ class CellTypeAnnotation(Proc):
     The annotated cell types will replace the original `seurat_clusters` column in the metadata,
     so that the downstream processes will use the annotated cell types.
 
-    The old `seurat_clusters` column will be renamed to `seurat_clusters_old`.
+    The old `seurat_clusters` column will be renamed to `seurat_clusters_id`.
 
     If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
     the old `seurat_clusters` to the new cell types will be generated and saved to
