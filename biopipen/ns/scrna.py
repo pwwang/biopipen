@@ -233,128 +233,58 @@ class SeuratClustering(Proc):
     """Determine the clusters of cells without reference using Seurat FindClusters
     procedure.
 
-    To perform the clustering, you have two routes to choose from:
-
-    1. Performing integration on datasets normalized with `SCTransform`
-        - See: [https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1](https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1)
-    2. Fast integration using reciprocal PCA (`RPCA`)
-        - See: [https://satijalab.org/seurat/articles/integration_rpca.html](https://satijalab.org/seurat/articles/integration_rpca.html)
-
     Input:
         srtobj: The seurat object loaded by SeuratPreparing
 
     Output:
-        rdsfile: The seurat object with cluster information
+        rdsfile: The seurat object with cluster information at `seurat_clusters`
+            If `SCTransform` was used, the default Assay will be reset to `RNA`.
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
-        use_sct (flag;order=-99): Whether use SCTransform routine or not
-            If `True`, following procedures will be performed in the order:
-            * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
-            * [`SCTransform*`](https://satijalab.org/seurat/reference/sctransform).
-            * [`SelectIntegrationFeatures`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
-            * [`PrepSCTIntegration`](https://satijalab.org/seurat/reference/prepsctintegration).
-            * [`RunPCA*`](https://satijalab.org/seurat/reference/runpca).
-            * [`FindIntegrationAnchors`](https://satijalab.org/seurat/reference/findintegrationanchors).
-            * [`IntegrateData`](https://satijalab.org/seurat/reference/integratedata).
-            * [`RunPCA`](https://satijalab.org/seurat/reference/runpca).
-            * [`RunUMAP`](https://satijalab.org/seurat/reference/runumap).
-            * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
-            * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
-            * `*`: On each sample
-            See <https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1>.
-            If `False`, fast integration will be performed, using reciprocal PCA (RPCA) and
-            following procedures will be performed in the order:
-            * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
-            * [`NormalizeData*`](https://satijalab.org/seurat/reference/normalizedata).
-            * [`FindVariableFeatures*`](https://satijalab.org/seurat/reference/findvariablefeatures).
-            * [`SelectIntegrationFeatures`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
-            * [`ScaleData*`](https://satijalab.org/seurat/reference/scaledata).
-            * [`RunPCA*`](https://satijalab.org/seurat/reference/runpca).
-            * [`FindIntegrationAnchors`](https://satijalab.org/seurat/reference/findintegrationanchors).
-            * [`IntegrateData`](https://satijalab.org/seurat/reference/integratedata).
-            * [`ScaleData`](https://satijalab.org/seurat/reference/scaledata).
-            * [`RunPCA`](https://satijalab.org/seurat/reference/runpca).
-            * [`RunUMAP`](https://satijalab.org/seurat/reference/runumap).
-            * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
-            * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
-            * `*`: On each sample.
-            See <https://satijalab.org/seurat/articles/integration_rpca.html>.
-        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
-            `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
-        SelectIntegrationFeatures (ns): Arguments for [`SelectIntegrationFeatures()`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
-            `object.list` is specified internally, and `-` in the key will be replaced with `.`.
-            - nfeatures (type=int): The number of features to select
-            - <more>: See <https://satijalab.org/seurat/reference/selectintegrationfeatures>
-        PrepSCTIntegration (ns): Arguments for [`PrepSCTIntegration()`](https://satijalab.org/seurat/reference/prepsctintegration).
-            `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/prepsctintegration>
-        NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
-            `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
-        FindVariableFeatures (ns): Arguments for [`FindVariableFeatures()`](https://satijalab.org/seurat/reference/findvariablefeatures).
-            `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/findvariablefeatures>
-        FindIntegrationAnchors (ns): Arguments for [`FindIntegrationAnchors()`](https://satijalab.org/seurat/reference/findintegrationanchors).
-            `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
-            `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
-            Sample names can also be specified in `reference` instead of indices only.
-            `reduction` defaults to `rpca`.
-            `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-            **If you want to use reference-based integration, you can also set `reference` to a list of sample names, instead of a list of indices.**
-            - <more>: See <https://satijalab.org/seurat/reference/findintegrationanchors>
-        IntegrateData (ns): Arguments for [`IntegrateData()`](https://satijalab.org/seurat/reference/integratedata).
-            `anchorset` is specified internally, and `-` in the key will be replaced with `.`.
-            `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
-            `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-            - <more>: See <https://satijalab.org/seurat/reference/integratedata>
         ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - verbose (flag): Whether to print the progress
+            If you want to re-scale the data by regressing to some variables, `Seurat::ScaleData`
+            will be called. If nothing is specified, `Seurat::ScaleData` will not be called.
+            - vars-to-regress: The variables to regress on.
             - <more>: See <https://satijalab.org/seurat/reference/scaledata>
-        ScaleData1 (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata) that runs on each sample.
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - verbose (flag): Whether to print the progress
-            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
-        RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - npcs (type=int): The number of PCs to compute.
-                For each sample, `npcs` will be no larger than the number of columns - 1.
-            - verbose (flag): Whether to print the progress
-            - <more>: See <https://satijalab.org/seurat/reference/runpca>
-        RunPCA1 (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca) on each sample.
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - npcs (type=int): The number of PCs to compute.
-                For each sample, `npcs` will be no larger than the number of columns - 1.
-            - verbose (flag): Whether to print the progress
-            - <more>: See <https://satijalab.org/seurat/reference/runpca>
+        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
+            If you want to re-scale the data by regressing to some variables, `Seurat::SCTransform`
+            will be called. If nothing is specified, `Seurat::SCTransform` will not be called.
+            - vars-to-regress: The variables to regress on.
+            - <more>: See <https://satijalab.org/seurat/reference/sctransform>
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
             - dims (type=int): The number of PCs to use
-            - reduction: The reduction to use for UMAP
+            - reduction: The reduction to use for UMAP.
+                If not provided, `sobj@misc$integrated_new_reduction` will be used.
             - <more>: See <https://satijalab.org/seurat/reference/runumap>
         FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - reduction: The reduction to use.
+                If not provided, `sobj@misc$integrated_new_reduction` will be used.
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - resolution (type=float): The resolution of the clustering
+            - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
+                The results will be saved in `seurat_clusters_<resolution>`.
+                The final resolution will be used to define the clusters at `seurat_clusters`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
         cache (type=auto): Whether to cache the seurat object with cluster information.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
             The cached seurat object will be saved as `<signature>.cached.RDS` file, where `<signature>` is the signature determined by
             the input and envs of the process.
-            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
-            <https://github.com/satijalab/seurat/issues/6748> for more details.
+            See -
+            * <https://github.com/satijalab/seurat/issues/7849>
+            * <https://github.com/satijalab/seurat/issues/5358> and
+            * <https://github.com/satijalab/seurat/issues/6748> for more details.
             To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
-            `.pipen/<Pipeline>/SeuratClustering/0/output/<signature>.cached.RDS`.
-            You can also specify the directory to save the cached seurat object by setting `cache` to the directory path.
-
+            `<signature>.cached.RDS` in the cache directory.
+            If `True`, the cache directory is `.pipen/<Pipeline>/SeuratClustering/0/output/`
+            You can also specify customized directory to save the cached seurat object by setting `cache` to the directory path.
 
     Requires:
         r-seurat:
@@ -369,19 +299,9 @@ class SeuratClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "use_sct": False,
+        "ScaleData": {},
         "SCTransform": {},
-        "SelectIntegrationFeatures": {"nfeatures": 3000},
-        "PrepSCTIntegration": {},
-        "NormalizeData": {},
-        "FindVariableFeatures": {},
-        "FindIntegrationAnchors": {},
-        "IntegrateData": {},
-        "ScaleData": {"verbose": False},
-        "ScaleData1": {"verbose": False},
-        "RunPCA": {"verbose": False},
-        "RunPCA1": {"verbose": False},
-        "RunUMAP": {"reduction": "pca", "dims": 30},
+        "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
         "cache": True,

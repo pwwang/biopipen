@@ -13,6 +13,10 @@ rdsfile <- {{out.rdsfile | quote}}
 joboutdir <- {{job.outdir | quote}}
 envs <- {{envs | r: todot="-"}}
 
+if (length(envs$ScaleData) > 0 && length(envs$SCTransform) > 0) {
+    stop("Cannot specify both ScaleData and SCTransform")
+}
+
 options(str = strOptions(vec.len = 5, digits.d = 5))
 options(future.globals.maxSize = 80000 * 1024^2)
 plan(strategy = "multicore", workers = envs$ncores)
@@ -24,8 +28,7 @@ plan(strategy = "multicore", workers = envs$ncores)
     }
     args
 }
-envs$FindIntegrationAnchors <- .expand_dims(envs$FindIntegrationAnchors)
-envs$IntegrateData <- .expand_dims(envs$IntegrateData)
+
 envs$RunUMAP <- .expand_dims(envs$RunUMAP)
 envs$FindNeighbors <- .expand_dims(envs$FindNeighbors)
 
@@ -68,237 +71,85 @@ if (is.character(envs$cache) && nchar(envs$cache) > 0) {
     }
 }
 
-
-obj_list <- SplitObject(sobj, split.by = "Sample")
-rm(sobj)
-
-# Convert envs$FindIntegrationAnchors$reference to index of given as sample names
-samples <- unlist(lapply(obj_list, function(x) x@meta.data$Sample[1]))
-if (!is.null(envs$FindIntegrationAnchors$reference)) {
-    ref <- envs$FindIntegrationAnchors$reference
-    if (length(ref) == 1) {
-        ref <- trimws(strsplit(ref, ",")[[1]])
+if (length(envs$ScaleData) > 0) {
+    if (DefaultAssay(sobj) == "SCT") {
+        stop("SCT assay detected, but ScaleData is specified. Use SCTransform instead.")
     }
-    ref <- sapply(ref, function(x) {
-        x_int <- as.integer(x)
-        if (!is.na(x_int)) {
-            return(x_int)
-        }
-        which(samples == x)
-    })
-    envs$FindIntegrationAnchors$reference <- ref
-}
-
-{% if envs.use_sct -%}
-# ############################
-# Using SCT
-# https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1
-log_info("########## Using SCT route ##########")
-log_info("Performing SCTransform on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    log_info("- On sample: {x@meta.data$Sample[1]} ...")
-    # # Needed?
-    # DefaultAssay(x) <- "RNA"
-    args <- list_update(envs$SCTransform, list(object = x))
-    do_call(SCTransform, args)
-})
-
-log_info("Running SelectIntegrationFeatures ...")
-envs$SelectIntegrationFeatures$object.list <- obj_list
-features <- do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
-
-log_info("Running PrepSCTIntegration ...")
-envs$PrepSCTIntegration$object.list <- obj_list
-envs$PrepSCTIntegration$anchor.features <- features
-obj_list <- do_call(PrepSCTIntegration, envs$PrepSCTIntegration)
-
-log_info("Running PCA on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    log_info("- On sample: {x@meta.data$Sample[1]} ...")
-    npcs <- if (is.null(envs$RunPCA1$npcs)) 50 else envs$RunPCA1$npcs
-    args <- list_setdefault(
-        envs$RunPCA1,
-        object = x,
-        features = features,
-        verbose = FALSE,
-        npcs = min(npcs, ncol(x) - 1)
-    )
-    do_call(RunPCA, args)
-})
-
-log_info("Running FindIntegrationAnchors ...")
-if (!is.null(envs$FindIntegrationAnchors$reference)) {
-    log_info(
-        paste(
-            "- Using samples as reference:",
-            paste(envs$FindIntegrationAnchors$reference, collapse = ", ")
-        )
-    )
-}
-fia_args <- list_setdefault(
-    envs$FindIntegrationAnchors,
-    object.list = obj_list,
-    anchor.features = features,
-    normalization.method = "SCT",
-    reduction = "rpca",
-    dims = 1:30,
-    k.score = 30
-)
-min_dim <- min(unlist(lapply(obj_list, ncol))) - 1
-fia_args$dims <- 1:min(min_dim, max(fia_args$dims))
-fia_args$k.score <- min(30, min_dim - 1)
-anchors <- do_call(FindIntegrationAnchors, fia_args)
-
-log_info("Running IntegrateData ...")
-envs$IntegrateData$anchorset <- anchors
-id_args <- list_setdefault(
-    envs$IntegrateData,
-    normalization.method = "SCT",
-    dims = 1:30
-)
-id_args$dims <- 1:min(min_dim, max(id_args$dims))
-tryCatch({
-    obj_list <- do_call(IntegrateData, id_args)
-}, error = function(e) {
-    msg <- ""
-    if (grepl("number of items to replace is not a multiple of replacement length", e)) {
-        default_kweight <- 100
-        if (!is.null(envs$IntegrateData$k.weight)) {
-            default_kweight <- envs$IntegrateData$k.weight
-        }
-        msg <- paste0(
-            "It's possible that you have too few cells in some samples, ",
-            "causing a small number of anchor cells in the anchorset. \n",
-            "  Try changing `k.weight` for `IntegrateData` by setting ",
-            "`envs.IntegrateData.k-weight` to a smaller number (it's now ",
-            default_kweight, "). \n",
-            "  See also https://github.com/satijalab/seurat/issues/6341"
-        )
+    log_info("Running ScaleData ...")
+    envs$ScaleData$object <- sobj
+    sobj <- do_call(ScaleData, envs$ScaleData)
+} else if (length(envs$SCTransform) > 0) {
+    if (DefaultAssay(sobj) != "SCT") {
+        stop("SCT assay not detected, but SCTransform is specified. Use ScaleData instead.")
     }
-    stop(paste0(msg, "\n", e))
-})
-
-{%- else -%}
-# ############################
-# Using rpca
-# https://satijalab.org/seurat/articles/integration_rpca.html
-log_info("########## Using rpca route ##########")
-log_info("Performing NormalizeData + FindVariableFeatures on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    log_info("- On sample: {x@meta.data$Sample[1]} ...")
-    DefaultAssay(x) <- "RNA"
-    args <- list_update(envs$NormalizeData, list(object = x))
-    x <- do_call(NormalizeData, args)
-
-    args <- list_update(envs$FindVariableFeatures, list(object = x))
-    do_call(FindVariableFeatures, args)
-})
-
-log_info("Running SelectIntegrationFeatures ...")
-envs$SelectIntegrationFeatures$object.list <- obj_list
-features <- do_call(SelectIntegrationFeatures, envs$SelectIntegrationFeatures)
-
-log_info("Running ScaleData + RunPCA on each sample ...")
-obj_list <- lapply(X = obj_list, FUN = function(x) {
-    log_info("- On sample: {x@meta.data$Sample[1]} ...")
-    args <- list_setdefault(envs$ScaleData1, object = x, features = features)
-    x <- do_call(ScaleData, args)
-
-    npcs <- if (is.null(envs$RunPCA1$npcs)) 50 else envs$RunPCA1$npcs
-    args <- list_setdefault(
-        envs$RunPCA1,
-        object = x,
-        features = features,
-        verbose = FALSE,
-        npcs = min(npcs, ncol(x) - 1)
-    )
-    do_call(RunPCA, args)
-})
-
-log_info("Running FindIntegrationAnchors ...")
-if (!is.null(envs$FindIntegrationAnchors$reference)) {
-    log_info(
-        paste(
-            "- Using samples as reference:",
-            paste(envs$FindIntegrationAnchors$reference, collapse = ", ")
-        )
-    )
+    log_info("Running SCTransform ...")
+    envs$SCTransform$object <- sobj
+    sobj <- do_call(SCTransform, envs$SCTransform)
 }
-fia_args <- list_setdefault(
-    envs$FindIntegrationAnchors,
-    object.list = obj_list,
-    anchor.features = features,
-    reduction = "rpca",
-    dims = 1:30,
-    k.score = 30
-)
-min_dim <- min(unlist(lapply(obj_list, ncol))) - 1
-fia_args$dims <- 1:min(min_dim, max(fia_args$dims))
-fia_args$k.score <- min(30, min_dim - 1)
-anchors <- do_call(FindIntegrationAnchors, fia_args)
-
-log_info("Running IntegrateData ...")
-envs$IntegrateData$anchorset <- anchors
-id_args <- list_setdefault(envs$IntegrateData, dims = 1:30)
-id_args$dims <- 1:min(min_dim, max(id_args$dims))
-obj_list <- do_call(IntegrateData, id_args)
-
-DefaultAssay(obj_list) <- "integrated"
-
-envs$ScaleData$object <- obj_list
-obj_list <- do_call(ScaleData, envs$ScaleData)
-
-{%- endif %}
-
-log_info("Running RunPCA ...")
-pca_args <- list_setdefault(
-    envs$RunPCA,
-    object = obj_list,
-    npcs = 50
-)
-pca_args$npcs <- min(pca_args$npcs, ncol(obj_list) - 1)
-obj_list <- do_call(RunPCA, pca_args)
 
 log_info("Running RunUMAP ...")
 umap_args <- list_setdefault(
     envs$RunUMAP,
-    object = obj_list,
-    dims = 1:30
+    object = sobj,
+    dims = 1:30,
+    reduction = sobj@misc$integrated_new_reduction
 )
-umap_args$dims <- 1:min(max(umap_args$dims), ncol(obj_list) - 1)
-obj_list <- do_call(RunUMAP, umap_args)
+umap_args$dims <- 1:min(max(umap_args$dims), ncol(sobj) - 1)
+sobj <- do_call(RunUMAP, umap_args)
 
 log_info("Running FindNeighbors ...")
-envs$FindNeighbors$object <- obj_list
-obj_list <- do_call(FindNeighbors, envs$FindNeighbors)
+envs$FindNeighbors$object <- sobj
+if (is.null(envs$FindNeighbors$reduction)) {
+    envs$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction
+}
+sobj <- do_call(FindNeighbors, envs$FindNeighbors)
 
 log_info("Running FindClusters ...")
 if (is.null(envs$FindClusters$random.seed)) {
     envs$FindClusters$random.seed <- 8525
 }
-if (!is.null(envs$FindClusters$resolution) && length(envs$FindClusters$resolution) > 1) {
+resolution <- envs$FindClusters$resolution
+if (is.character(resolution)) {
+    if (grepl(",", resolution)) {
+        resolution <- as.numeric(trimws(unlist(strsplit(resolution, ","))))
+    } else {
+        resolution <- as.numeric(resolution)
+    }
+}
+if (is.null(resolution) || length(resolution) == 1) {
+    envs$FindClusters$resolution <- resolution
+    envs$FindClusters$object <- sobj
+    sobj <- do_call(FindClusters, envs$FindClusters)
+    levels(sobj$seurat_clusters) <- paste0("g", levels(sobj$seurat_clusters))
+    Idents(sobj) <- "seurat_clusters"
+    ident_table <- table(sobj$seurat_clusters)
+    log_info("- Found {length(ident_table)} clusters:")
+    print(ident_table)
+} else {
     log_info("- Multiple resolutions detected ...")
-    resolutions <- envs$FindClusters$resolution
-    for (res in resolutions) {
+    res_key <- NULL
+    for (res in resolution) {
         findclusters_args <- envs$FindClusters
         findclusters_args$resolution <- res
-        findclusters_args$object <- obj_list
-        obj_list <- do_call(FindClusters, findclusters_args)
-        obj_list[[paste0("seurat_clusters_", res)]] <- Idents(obj_list)
-        nclusters <- length(unique(Idents(obj_list)))
-        log_info("- Found {nclusters} at resolution: {res}:")
-        print(table(Idents(obj_list)))
+        findclusters_args$object <- sobj
+        sobj <- do_call(FindClusters, findclusters_args)
+        res_key <- paste0("seurat_clusters_", res)
+        sobj[[res_key]] <- Idents(sobj)
+        levels(sobj[[res_key]]) <- paste0("g", levels(sobj[[res_key]]))
+        ident_table <- table(sobj[[res_key]])
+        log_info("- Found {length(ident_table)} at resolution: {res}:")
+        print(ident_table)
     }
-} else {
-    envs$FindClusters$object <- obj_list
-    obj_list <- do_call(FindClusters, envs$FindClusters)
-    nclusters <- length(unique(Idents(obj_list)))
-    log_info("- Found {nclusters} clusters:")
-    print(table(Idents(obj_list)))
+    Idents(sobj) <- res_key
+}
+
+if (DefaultAssay(sobj) == "SCT") {
+    log_info("Running PrepSCTFindMarkers ...")
+    sobj <- PrepSCTFindMarkers(sobj)
 }
 
 log_info("Saving results ...")
-saveRDS(obj_list, file = rdsfile)
+saveRDS(sobj, file = rdsfile)
 
 if (is.character(envs$cache) && nchar(envs$cache) > 0) {
     log_info("Caching results ...")
