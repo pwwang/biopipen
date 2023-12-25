@@ -1573,7 +1573,7 @@ class SeuratMap2Ref(Proc):
             The file type is determined by the extension. `.rds` or `.RDS` for
             RDS file, `.h5seurat` or `.h5` for h5seurat file.
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
-            - do-correct-umi (flag): Place corrected UMI matrix in assay counts slot?
+            - do-correct-umi (flag): Place corrected UMI matrix in assay counts layer?
             - do-scale (flag): Whether to scale residuals to have unit variance?
             - do-center (flag): Whether to center residuals to have mean zero?
             - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
