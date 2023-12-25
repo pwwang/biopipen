@@ -20,6 +20,10 @@ do_one_dimplot = function(name) {
     if (is.null(case$group.by) && !is.null(case$ident)) {
         case$group.by = case$ident
     }
+    key <- paste0("sub_umap_", case$group.by)
+    if (key %in% names(case$object@reductions) && is.null(case$reduction)) {
+        case$reduction = key
+    }
 
     n_uidents = length(unique(case$object@meta.data[[case$group.by]]))
     if (is.null(case$cols)) {

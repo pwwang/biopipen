@@ -564,6 +564,7 @@ class SeuratClusterStats(Proc):
                 It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
                 (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
             - ident: The column name in metadata to use as the identity.
+                If it is from subclustering (reduction `sub_umap_<ident>` exists), the reduction will be used.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots. Does not work for `table`.
                 - res (type=int): The resolution of the plots.
@@ -575,7 +576,8 @@ class SeuratClusterStats(Proc):
             - split-by: The column name in metadata to split the cells into different plots.
                 It works for `vln`, `feature`, and `dot`.
             - assay: The assay to use.
-            - slot: The slot to use.
+            - layer: The layer to use.
+            - reduction: The reduction to use. Only works for `feature`.
             - section: The section to put the plot in the report.
                 If not specified, the case title will be used.
             - ncol (type=int): The number of columns for the plots.
@@ -604,6 +606,7 @@ class SeuratClusterStats(Proc):
         dimplots_defaults (ns): The default parameters for `dimplots`.
             - ident: The column name in metadata to use as the identity.
                 Ignored if `group-by` is specified.
+                If it is from subclustering (reduction `sub_umap_<ident>` exists), the reduction will be used.
             - group-by: Same as `ident`. How the points are colored.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.
@@ -615,6 +618,7 @@ class SeuratClusterStats(Proc):
             - reduction (choice): Which dimensionality reduction to use.
                 - dim: Use `Seurat::DimPlot`.
                     First searches for `umap`, then `tsne`, then `pca`.
+                    If `ident` is from subclustering, `sub_umap_<ident>` will be used.
                 - auto: Same as `dim`
                 - umap: Use `Seurat::UMAPPlot`.
                 - tsne: Use `Seurat::TSNEPlot`.
@@ -672,7 +676,8 @@ class SeuratClusterStats(Proc):
             "split-by": None,
             "assay": None,
             "section": None,
-            "slot": None,
+            "layer": None,
+            "reduction": None,
             "kind": None,
             "ncol": 2,
         },

@@ -54,6 +54,7 @@ do_one_features = function(name) {
     } else {
         case$object = srtobj
     }
+
     if (!is.null(case$ident)) {
         Idents(case$object) = case$ident
     }
@@ -66,7 +67,7 @@ do_one_features = function(name) {
         if (is.null(case$cols)) {
             case$cols = pal_biopipen()(32)
         }
-        excluded_args = c(excluded_args, "split.by")
+        excluded_args = c(excluded_args, "split.by", "reduction")
         fn = RidgePlot
         default_devpars = function(features, ncol) {
             if (is.null(ncol)) { ncol = 1 }
@@ -81,6 +82,7 @@ do_one_features = function(name) {
         if (is.null(case$cols)) {
             case$cols = pal_biopipen()(n_uidents)
         }
+        excluded_args = c(excluded_args, "reduction")
         fn = VlnPlot
         default_devpars = function(features, ncol) {
             if (is.null(ncol)) { ncol = 1 }
@@ -95,8 +97,14 @@ do_one_features = function(name) {
         if (is.null(case$cols)) {
             case$cols = c("lightgrey", pal_biopipen()(1))
         }
-        excluded_args = c(excluded_args, "group.by", "assay")
+        excluded_args = c(excluded_args, "group.by", "assay", "layer")
         case$shape.by = case$group.by
+        if (!is.null(case$ident)) {
+            key <- paste0("sub_umap_", case$ident)
+            if (key %in% names(case$object@reductions) && is.null(case$reduction)) {
+                case$reduction = key
+            }
+        }
         fn = FeaturePlot
         default_devpars = function(features, ncol) {
             if (is.null(ncol)) { ncol = 1 }
@@ -114,7 +122,7 @@ do_one_features = function(name) {
         if (is.null(case$plus)) {
             case$plus = 'theme_prism(axis_text_angle=90)'
         }
-        excluded_args = c(excluded_args, "slot", "ncol")
+        excluded_args = c(excluded_args, "layer", "ncol", "reduction")
         fn = DotPlot
         default_devpars = function(features, ncol) {
             list(
@@ -136,7 +144,7 @@ do_one_features = function(name) {
         if (is.null(case$plus)) {
             case$plus = 'scale_fill_gradientn(colors = c("lightgrey", pal_biopipen()(1)), na.value = "white")'
         }
-        excluded_args = c(excluded_args, "group.by", "split.by", "downsample", "ncol")
+        excluded_args = c(excluded_args, "group.by", "split.by", "downsample", "ncol", "reduction")
         fn = DoHeatmap
         default_devpars = function(features, ncol) {
             list(
@@ -153,6 +161,7 @@ do_one_features = function(name) {
         if (length(case$features) > 1) {
             stop("Only one feature is allowed for barplot")
         }
+        excluded_args = c(excluded_args, "reduction")
         default_devpars = function(features, ncol) {
             if (is.null(ncol)) { ncol = 1 }
             list(
@@ -163,12 +172,10 @@ do_one_features = function(name) {
         }
     } else if ("table" == case$kind) {
         case$kind = "table"
-        excluded_args = c(excluded_args, "group.by", "split.by", "assay")
+        excluded_args = c(excluded_args, "group.by", "split.by", "assay", "reduction")
         case$assays = case$assay
         fn = AverageExpression
-        if (is.null(case$slot)) {
-            case$slot = "data"
-        }
+        if (is.null(case$layer)) { case$layer = "data" }
     } else {
         stop(paste0("Unknown kind of plot: ", case$kind))
     }
@@ -180,7 +187,7 @@ do_one_features = function(name) {
 
     if (kind == "bar") {
         figfile <- file.path(odir, paste0(slugify(name), ".bar.png"))
-        genes <- rownames(GetAssayData(case$object, assay = "RNA"))
+        genes <- rownames(GetAssayData(case$object))
         genes <- genes[sapply(genes, function(x) grepl(x, case$features))]
         if (length(genes) == 0) {
             p <- case$object@meta.data %>%
@@ -189,7 +196,7 @@ do_one_features = function(name) {
                 ggplot(aes(x = Idents, y = !!sym(name)))
         } else {
             p <- case$object@meta.data %>%
-                bind_cols(FetchData(case$object, vars = genes, slot = case$slot, cells = rownames(case$object@meta.data))) %>%
+                bind_cols(FetchData(case$object, vars = genes, layer = case$layer, cells = rownames(case$object@meta.data))) %>%
                 group_by(Idents = Idents(case$object)) %>%
                 summarise(!!sym(name) := !!parse_expr(case$features)) %>%
                 ggplot(aes(x = Idents, y = !!sym(name)))
@@ -243,7 +250,7 @@ do_one_features = function(name) {
     }
 
     if (kind == "table") {
-        expr = do_call(fn, case)$RNA %>%
+        expr = do_call(fn, case)[[DefaultAssay(case$object)]] %>%
             as.data.frame() %>%
             rownames_to_column("Feature") %>%
             select(Feature, everything())
