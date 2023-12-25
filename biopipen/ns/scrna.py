@@ -47,6 +47,7 @@ class SeuratPreparing(Proc):
     This process will -
     - Prepare the seurat object
     - Apply QC to the data
+    - Integrate the data from different samples
 
     See also
     - <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)>
@@ -69,6 +70,19 @@ class SeuratPreparing(Proc):
     - `precent.hb`: The percentage of hemoglobin genes.
     - `percent.plat`: The percentage of platelet genes.
 
+    For integration, two routes are available:
+
+    - [Performing integration on datasets normalized with `SCTransform`](https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis)
+    - [Using `NormalizeData` and `FindIntegrationAnchors`](https://satijalab.org/seurat/articles/seurat5_integration#layers-in-the-seurat-v5-object)
+
+    /// Note
+    When using `SCTransform`, the default Assay will be set to `SCT` in output, rather than `RNA`.
+    ///
+
+    /// Note
+    From `biopipen` v0.23.0, this requires `Seurat` v5.0.0 or higher.
+    ///
+
     Input:
         metafile: The metadata of the samples
             A tab-delimited file
@@ -79,10 +93,9 @@ class SeuratPreparing(Proc):
             to the h5 file that can be read by `Read10X_h5()` from `Seurat`.
 
     Output:
-        rdsfile: The RDS file with the Seurat object
-            Note that the cell ids are preficed with sample names
-            QC plots will be saved in `<job.outdir>/before-qc` and
-            `<job.outdir>/after-qc`
+        rdsfile: The RDS file with the Seurat object with all samples integrated.
+            Note that the cell ids are preficed with sample names QC plots will be
+            saved in `<job.outdir>/before-qc` and `<job.outdir>/after-qc`.
 
     Envs:
         ncores (type=int): Number of cores to use.
@@ -119,6 +132,70 @@ class SeuratPreparing(Proc):
             will keep genes that are expressed in at least 3 cells.
             ///
 
+        use_sct (flag): Whether use SCTransform routine to integrate samples or not.
+            Before the following procedures, the `RNA` layer will be split by samples.
+
+            If `False`, following procedures will be performed in the order:
+            * [`NormalizeData`](https://satijalab.org/seurat/reference/normalizedata).
+            * [`FindVariableFeatures`](https://satijalab.org/seurat/reference/findvariablefeatures).
+            * [`ScaleData`](https://satijalab.org/seurat/reference/scaledata).
+            See <https://satijalab.org/seurat/articles/seurat5_integration#layers-in-the-seurat-v5-object>
+            and <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html>
+
+            If `True`, following procedures will be performed in the order:
+            * [`SCTransform`](https://satijalab.org/seurat/reference/sctransform).
+            See <https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis>
+
+        no_integration (flag): Whether to skip integration or not.
+        NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
+
+        FindVariableFeatures (ns): Arguments for [`FindVariableFeatures()`](https://satijalab.org/seurat/reference/findvariablefeatures).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/findvariablefeatures>
+
+        ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
+            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
+
+        RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
+            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            - npcs (type=int): The number of PCs to compute.
+                For each sample, `npcs` will be no larger than the number of columns - 1.
+            - <more>: See <https://satijalab.org/seurat/reference/runpca>
+
+        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - `return-only-var-genes`: Whether to return only variable genes.
+            - `min_cells`: The minimum number of cells that a gene must be expressed in to be kept.
+                A hidden argument of `SCTransform` to filter genes.
+                If you try to keep all genes in the `RNA` assay, you can set `min_cells` to `0` and
+                `return-only-var-genes` to `False`.
+                See <https://github.com/satijalab/seurat/issues/3598#issuecomment-715505537>
+            - <more>: See <https://satijalab.org/seurat/reference/sctransform>
+
+        IntegrateLayers (ns): Arguments for [`IntegrateLayers()`](https://satijalab.org/seurat/reference/integratelayers).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            When `use_sct` is `True`, `normalization-method` defaults to `SCT`.
+            - method (choice): The method to use for integration.
+                - CCAIntegration: Use `Seurat::CCAIntegration`.
+                - CCA: Same as `CCAIntegration`.
+                - cca: Same as `CCAIntegration`.
+                - RPCAIntegration: Use `Seurat::RPCAIntegration`.
+                - RPCA: Same as `RPCAIntegration`.
+                - rpca: Same as `RPCAIntegration`.
+                - HarmonyIntegration: Use `Seurat::HarmonyIntegration`.
+                - Harmony: Same as `HarmonyIntegration`.
+                - harmony: Same as `HarmonyIntegration`.
+                - FastMNNIntegration: Use `Seurat::FastMNNIntegration`.
+                - FastMNN: Same as `FastMNNIntegration`.
+                - fastmnn: Same as `FastMNNIntegration`.
+                - scVIIntegration: Use `Seurat::scVIIntegration`.
+                - scVI: Same as `scVIIntegration`.
+                - scvi: Same as `scVIIntegration`.
+            - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
+
     Requires:
         r-seurat:
             - check: {{proc.lang}} <(echo "library(Seurat)")
@@ -134,6 +211,17 @@ class SeuratPreparing(Proc):
         "ncores": config.misc.ncores,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "gene_qc": {"min_cells": 0},
+        "use_sct": True,
+        "no_integration": False,
+        "NormalizeData": {},
+        "FindVariableFeatures": {},
+        "ScaleData": {},
+        "RunPCA": {},
+        "SCTransform": {
+            "return-only-var-genes": True,
+            "min_cells": 5,
+        },
+        "IntegrateLayers": {"method": "harmony"},
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
     plugin_opts = {
