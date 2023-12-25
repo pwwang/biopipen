@@ -1549,6 +1549,7 @@ class TESSA(Proc):
             TCRs in the meta data matrix (False).
         assay: Which assay to use to extract the expression matrix.
             Only works if `in.srtobj` is an RDS file of a Seurat object.
+            By default, if `SCTransform` is performed, `SCT` will be used.
         predefined_b (flag): Whether use the predefined `b` or not.
             Please check the paper of tessa for more details about the b vector.
             If True, the tessa will not update b in the MCMC iterations.
@@ -1569,7 +1570,7 @@ class TESSA(Proc):
     envs = {
         "python": config.lang.python,
         "prefix": None,
-        "assay": "RNA",
+        "assay": None,
         "within_sample": False,
         "predefined_b": False,
         "max_iter": 1000,
