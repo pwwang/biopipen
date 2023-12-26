@@ -201,67 +201,71 @@ do_case <- function(casename) {
     info <- casename_info(casename, create = TRUE)
     case <- cases[[casename]]
 
-    sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
-    if (!is.null(case$subset)) {
-        sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)), !!parse_expr(case$subset))
-    }
-    df <- tryCatch({
-            GetAssayData(sobj, layer = "data")
-        }, error = function(e) {
-            log_warn("  Error when fetching assay data: {e}")
-            NULL
-        })
-    if (is.null(df)) {
-        msg <- "No markers found. May be due to too few cells or features."
+    if (sum(!is.na(srtobj@meta.data[[case$group_by]])) == 0) {
+        msg = "Not enough cells to run tests."
     } else {
-        genes <- rownames(df)
-        # rows: cells, cols: genes
-        df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
-        colnames(df)[ncol(df)] <- "GROUP"
-
-        log_info("  Running tests for case...")
-        warn_count <- 0
-        test_result <- mclapply(genes, function(gene) {
-            fm <- as.formula(paste(bQuote(gene), "~ GROUP"))
-            res <- tryCatch({
-                if (case$method == "anova") {
-                    r <- summary(aov(fm, data = df))[[1]]
-                    data.frame(
-                        statistic = r[1, "F value"],
-                        p.value = r[1, "Pr(>F)"],
-                        sumsq = r[1, "Sum Sq"],
-                        meansq = r[1, "Mean Sq"]
-                    )
-                } else {
-                    r <- kruskal.test(fm, data = df)
-                    data.frame(statistic = r$statistic, p.value = r$p.value)
-                }
+        sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
+        if (!is.null(case$subset)) {
+            sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)), !!parse_expr(case$subset))
+        }
+        df <- tryCatch({
+                GetAssayData(sobj, layer = "data")
             }, error = function(e) {
-                warn_count <<- warn_count + 1
-                if (warn_count < 10) {
-                    log_warn("  Error when testing gene: {gene}")
-                    log_warn("  {e}")
-                } else if (warn_count == 10) {
-                    log_warn("  Too many errors, will not print more.")
-                }
+                log_warn("  Error when fetching assay data: {e}")
                 NULL
             })
-            if (is.null(res)) {
-                return(NULL)
-            }
-            res$gene <- gene
-            res$method <- case$method
-            rownames(res) <- NULL
-            res
-        }, mc.cores = ncores)
-        markers <- do_call(rbind, test_result)
-        if (is.null(markers)) {
-            msg <- "No markers found. May be due to too few cells."
+        if (is.null(df)) {
+            msg <- "No markers found. May be due to too few cells or features."
         } else {
-            markers$p_adjust <- p.adjust(markers$p.value, method = case$p_adjust)
-            markers <- markers %>% arrange(p_adjust)
+            genes <- rownames(df)
+            # rows: cells, cols: genes
+            df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
+            colnames(df)[ncol(df)] <- "GROUP"
 
-            msg <- do_enrich(info, markers, case$sigmarkers)
+            log_info("  Running tests for case...")
+            warn_count <- 0
+            test_result <- mclapply(genes, function(gene) {
+                fm <- as.formula(paste(bQuote(gene), "~ GROUP"))
+                res <- tryCatch({
+                    if (case$method == "anova") {
+                        r <- summary(aov(fm, data = df))[[1]]
+                        data.frame(
+                            statistic = r[1, "F value"],
+                            p.value = r[1, "Pr(>F)"],
+                            sumsq = r[1, "Sum Sq"],
+                            meansq = r[1, "Mean Sq"]
+                        )
+                    } else {
+                        r <- kruskal.test(fm, data = df)
+                        data.frame(statistic = r$statistic, p.value = r$p.value)
+                    }
+                }, error = function(e) {
+                    warn_count <<- warn_count + 1
+                    if (warn_count < 10) {
+                        log_warn("  Error when testing gene: {gene}")
+                        log_warn("  {e}")
+                    } else if (warn_count == 10) {
+                        log_warn("  Too many errors, will not print more.")
+                    }
+                    NULL
+                })
+                if (is.null(res)) {
+                    return(NULL)
+                }
+                res$gene <- gene
+                res$method <- case$method
+                rownames(res) <- NULL
+                res
+            }, mc.cores = ncores)
+            markers <- do_call(rbind, test_result)
+            if (is.null(markers)) {
+                msg <- "No markers found. May be due to too few cells."
+            } else {
+                markers$p_adjust <- p.adjust(markers$p.value, method = case$p_adjust)
+                markers <- markers %>% arrange(p_adjust)
+
+                msg <- do_enrich(info, markers, case$sigmarkers)
+            }
         }
     }
     if (is.null(msg)) {
