@@ -211,7 +211,7 @@ class SeuratPreparing(Proc):
         "ncores": config.misc.ncores,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "gene_qc": {"min_cells": 0},
-        "use_sct": True,
+        "use_sct": False,
         "no_integration": False,
         "NormalizeData": {},
         "FindVariableFeatures": {},
