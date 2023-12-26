@@ -40,7 +40,7 @@ pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
-do_one_group <- function(obj, group, outputdir, h1) {
+do_one_group <- function(obj, features, group, outputdir, h1) {
     log_info(paste("- Processing group", grouping, ":", group))
     groupname = paste0(grouping_prefix, group)
     odir = file.path(outputdir, slugify(groupname, tolower = FALSE))
@@ -49,7 +49,18 @@ do_one_group <- function(obj, group, outputdir, h1) {
     classes = as.character(obj@meta.data[[grouping]])
     classes[classes != group] <- "_REST"
     classes[classes == group] <- groupname
-    exprs = GetAssayData(obj)
+    if (any(table(classes) < 5)) {
+        msg <- paste("Group", group, "has less than 5 cells, or only 5 cells left.")
+        log_warn(msg)
+        add_report(
+            list(kind = "error", content = msg),
+            h1 = ifelse(is.null(h1), groupname, h1),
+            h2 = ifelse(is.null(h1), "#", groupname)
+        )
+        return()
+    }
+
+    exprs = GetAssayData(obj)[features, , drop = FALSE]
     tryCatch({
         if (fgsea) {
             runFGSEA(
@@ -66,17 +77,27 @@ do_one_group <- function(obj, group, outputdir, h1) {
                 odir
             )
         }
+
+        add_report(
+            list(kind = "fgsea", dir = odir),
+            h1 = ifelse(is.null(h1), groupname, h1),
+            h2 = ifelse(is.null(h1), "#", groupname)
+        )
     }, error=function(e) {
         unlink(odir, recursive = T, force = T)
         log_warn(paste("Unable to run for", group))
-        log_warn(e)
+        log_warn(e$message)
+
+        add_report(
+            list(
+                kind = "error",
+                content = paste0("Error running GSEA for ", group, ": ", e$message)
+            ),
+            h1 = ifelse(is.null(h1), groupname, h1),
+            h2 = ifelse(is.null(h1), "#", groupname)
+        )
     })
 
-    add_report(
-        list(kind = "fgsea", dir = odir),
-        h1 = ifelse(is.null(h1), groupname, h1),
-        h2 = ifelse(is.null(h1), "#", groupname)
-    )
 }
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
@@ -91,7 +112,8 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     }
     dir.create(outputdir, showWarnings = FALSE)
 
-    subset_obj <- subset(subset_obj, features = intersect(rownames(subset_obj), metabolics))
+    # subset_obj <- subset(subset_obj, features = intersect(rownames(subset_obj), metabolics))
+    features = intersect(rownames(subset_obj), metabolics)
 
     h1 <- NULL
     if (!is.null(s)) {
@@ -99,7 +121,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     }
     groups = subset_obj@meta.data[[grouping]]
     x = mclapply(as.character(unique(groups)), function(group) {
-        do_one_group(subset_obj, group, outputdir, h1)
+        do_one_group(subset_obj, features, group, outputdir, h1)
     }, mc.cores = ncores)
     if (any(unlist(lapply(x, class)) == "try-error")) {
         stop("mclapply error")
