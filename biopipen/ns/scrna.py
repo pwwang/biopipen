@@ -443,6 +443,8 @@ class SeuratClusterStats(Proc):
         outdir: The output directory
 
     Envs:
+        mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
+            The mutaters will be applied in the order specified.
         stats_defaults (ns): The default parameters for `stats`.
             The parameters from the cases can overwrite the default parameters.
             - frac (flag): Whether to output the fraction of cells instead of number.
@@ -556,6 +558,7 @@ class SeuratClusterStats(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
     envs = {
+        "mutaters": {},
         "stats_defaults": {
             "frac": False,
             "pie": False,
