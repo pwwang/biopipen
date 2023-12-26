@@ -1307,7 +1307,7 @@ class Subset10X(Proc):
     script = "file://../scripts/scrna/Subset10X.R"
 
 
-class Write10X(Proc):
+class SeuratTo10X(Proc):
     """Write a Seurat object to 10X format
 
     using `write10xCounts` from `DropletUtils`
@@ -1325,7 +1325,7 @@ class Write10X(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}"
     envs = {"version": "3"}
     lang = config.lang.rscript
-    script = "file://../scripts/scrna/Write10X.R"
+    script = "file://../scripts/scrna/SeuratTo10X.R"
 
 
 @format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
