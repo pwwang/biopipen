@@ -133,14 +133,13 @@ if (is.null(resolution) || length(resolution) == 1) {
         findclusters_args$resolution <- res
         findclusters_args$object <- sobj
         sobj <- do_call(FindClusters, findclusters_args)
+        levels(sobj$seurat_clusters) <- paste0("g", levels(sobj$seurat_clusters))
         res_key <- paste0("seurat_clusters_", res)
-        sobj[[res_key]] <- Idents(sobj)
-        levels(sobj[[res_key]]) <- paste0("g", levels(sobj[[res_key]]))
+        sobj[[res_key]] <- sobj$seurat_clusters
         ident_table <- table(sobj[[res_key]])
         log_info("- Found {length(ident_table)} at resolution: {res}:")
         print(ident_table)
     }
-    Idents(sobj) <- res_key
 }
 
 if (DefaultAssay(sobj) == "SCT") {
