@@ -838,7 +838,11 @@ class CellsDistribution(Proc):
         subset: An expression to subset the cells, will be passed to `dplyr::filter()` on metadata.
             This will be applied prior to `each`.
         descr: The description of the case, will be shown in the report.
-        devpars (ns): The device parameters for the plots.
+        hm_devpars (ns): The device parameters for the heatmaps.
+            - res (type=int): The resolution of the heatmaps.
+            - height (type=int): The height of the heatmaps.
+            - width (type=int): The width of the heatmaps.
+        devpars (ns): The device parameters for the plots of pie charts.
             - res (type=int): The resolution of the plots
             - height (type=int): The height of the plots
             - width (type=int): The width of the plots
@@ -875,6 +879,7 @@ class CellsDistribution(Proc):
         "subset": None,
         "descr": None,
         "devpars": {},
+        "hm_devpars": {},
         "each": None,
         "section": "DEFAULT",
         "overlap": [],

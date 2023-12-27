@@ -3,11 +3,14 @@ source("{{biopipen_dir}}/utils/mutate_helpers.R")
 library(Seurat)
 library(rlang)
 library(tidyr)
+library(tibble)
 library(dplyr)
 library(ggplot2)
 library(ggVennDiagram)
 library(UpSetR)
 library(slugify)
+library(circlize)
+library(ComplexHeatmap)
 
 srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
@@ -134,6 +137,74 @@ casename_info <- function(casename, create = FALSE) {
     out
 }
 
+plot_heatmap <- function(group, meta, case, info, cluster_order_val) {
+    log_info(paste("- Running heatmap for case:", info$casename, "group:", group))
+    hmfile <- file.path(info$sec_dir, paste0(info$case_slug, ".", slugify(group, tolower = FALSE), ".heatmap.png"))
+
+    # A matrix: 10 × 8 of type int
+    #                   g3	g6	g0	g1	g7	g5	g4	g8
+    # CSARDATNNEQFF	    8	32	17	26	7	1	NA	NA
+    # CASRQNRGSYNEQFF	2	1	20	16	NA	NA	1	NA
+    # CSATSYNEQFF	    2	6	3	7	1	8	6	NA
+    hmdata <- meta %>% filter(!!sym(case$group_by) == group) %>%
+        select(!!sym(case$cells_by), CloneGroupClusterSize, seurat_clusters) %>%
+        distinct(!!sym(case$cells_by), seurat_clusters, .keep_all = TRUE) %>%
+        pivot_wider(names_from = seurat_clusters, values_from = CloneGroupClusterSize) %>%
+        tibble::column_to_rownames(case$cells_by)
+
+    hmdata[, setdiff(levels(meta$seurat_clusters), colnames(hmdata))] <- NA
+    # order
+    hmdata <- select(hmdata, all_of(levels(meta$seurat_clusters)))
+
+    row_ha <- rowAnnotation(
+        Total = anno_barplot(
+            hmdata %>% rowSums(na.rm = T),
+            gp = gpar(fill = "lightblue", col = NA),
+            width = unit(2, "cm")
+        )
+    )
+    ha <- NULL
+    extra_height <- 0
+    extra_width <- 0  # legend
+    if (!is.null(cluster_order_val)) {
+        ha <- list()
+        ha[[case$cluster_orderby]] <- cluster_order_val
+        if (is.numeric(cluster_order_val)) {
+            col_fun <- colorRamp2(
+                c(min(cluster_order_val), max(cluster_order_val)),
+                c("lightyellow", "red"))
+            ha$col <- list()
+            ha$col[[case$cluster_orderby]] <- col_fun
+        }
+        ha <- do_call(HeatmapAnnotation, ha)
+        extra_height <- 40
+        extra_width <- 120
+    }
+    hm_devpars <- case$hm_devpars
+    if (is.null(hm_devpars$res)) { hm_devpars$res = 100 }
+    if (is.null(hm_devpars$width)) { hm_devpars$width = ncol(hmdata) * 30 + 400 + extra_width }
+    if (is.null(hm_devpars$height)) { hm_devpars$height = nrow(hmdata) * 30 + 60 + extra_height }
+
+    col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
+    png(hmfile, res = hm_devpars$res, width = hm_devpars$width, height = hm_devpars$height)
+    p <- Heatmap(
+        hmdata,
+        name = "Size",
+        col = col_fun,
+        na_col = "lightyellow",
+        row_names_side = "left",
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        rect_gp = gpar(col = "white", lwd = 1),
+        row_names_max_width = max_text_width(rownames(hmdata)),
+        right_annotation = row_ha,
+        top_annotation = ha
+    )
+    print(p)
+    dev.off()
+    hmfile
+}
+
 do_case <- function(name, case) {
     log_info(paste("- Running for case:", name))
     if (is.null(case$group_by) || nchar(case$group_by) == 0) {
@@ -168,7 +239,6 @@ do_case <- function(name, case) {
     }
 
     # subset the seurat object
-    meta <- srtobj@meta.data
     if (!is.null(case$subset) && nchar(case$subset) > 0) {
         meta <- dplyr::filter(meta, !!!parse_exprs(case$subset))
     }
@@ -298,6 +368,10 @@ do_case <- function(name, case) {
     print(p)
     dev.off()
 
+    # heatmaps
+    groups = as.character(unique(meta[[case$group_by]]))
+    hmfigs = sapply(groups, plot_heatmap, meta, case, info, cluster_order_val)
+
     add_report(
         list(
             kind = "descr",
@@ -322,11 +396,18 @@ do_case <- function(name, case) {
 
     add_report(
         list(
-            name = "Distribution Plot",
+            name = "Pie Charts",
             contents = list(list(
                 kind = "image",
                 src = outfile
             ))
+        ),
+        list(
+            name = "Heatmaps",
+            ui = "table_of_images",
+            contents = lapply(seq_along(groups), function(i) {
+                list(descr = groups[i], src = hmfigs[i])
+            })
         ),
         list(
             name = "Distribution Table",
