@@ -130,7 +130,7 @@ for (key in names(envs$cases)) {
         case$FindClusters$resolution <- resolution
         case$FindClusters$object <- sobj
         sobj <- do_call(FindClusters, case$FindClusters)
-        levels(sobj$seurat_clusters) <- paste0("s", levels(sobj$seurat_clusters))
+        levels(sobj$seurat_clusters) <- paste0("s", as.numeric(levels(sobj$seurat_clusters)) + 1)
         Idents(sobj) <- "seurat_clusters"
         sobj[[key]] <- sobj$seurat_clusters
         ident_table <- table(sobj[[key]])
@@ -150,7 +150,7 @@ for (key in names(envs$cases)) {
             findclusters_args$object <- sobj
             sobj <- do_call(FindClusters, findclusters_args)
             res_key <- paste0(key, "_", res)
-            level(sobj$seurat_clusters) <- paste0("s", level(sobj$seurat_clusters))
+            level(sobj$seurat_clusters) <- paste0("s", as.numeric(level(sobj$seurat_clusters)) + 1)
             Idents(sobj) <- "seurat_clusters"
             sobj[[res_key]] <- sobj$seurat_clusters
             ident_table <- table(sobj[[res_key]])
