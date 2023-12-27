@@ -308,7 +308,7 @@ class SeuratClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "cache": True,
+        "cache": False,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
 
@@ -386,7 +386,7 @@ class SeuratSubClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "cache": True,
+        "cache": False,
         "cases": {"subcluster": {}},
     }
     script = "file://../scripts/scrna/SeuratSubClustering.R"
@@ -563,7 +563,7 @@ class SeuratClusterStats(Proc):
                     passed to `dplyr::summarise()` (grouped by `ident`) on the existing features to create a new feature.
                 - barplot: Same as `bar`.
                 - heatmap: Use `Seurat::DoHeatmap`.
-                    You can specify `average=True` to plot on the average of the expressions.
+                - avgheatmap: Plot the average expression of the features in each cluster as a heatmap.
                 - table: The table for the features, only gene expressions are supported.
                     (supported keys: ident, subset, and features).
         features (type=json): The plots for features, include gene expressions, and columns from metadata.

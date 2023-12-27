@@ -28,7 +28,7 @@ do_one_stats = function(name) {
     piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
     tablefile = file.path(odir, paste0(slugify(name), ".txt"))
 
-    df_cells = srtobj@meta.data
+    df_cells = srtobj@meta.data %>% drop_na(!!sym(case$ident))
     if (!is.null(case$subset)) {
         df_cells = df_cells %>% filter(!!rlang::parse_expr(case$subset))
     }

@@ -9,6 +9,8 @@ library(tibble)
 library(ggprism)
 library(ggrepel)
 library(tidyseurat)
+library(circlize)
+library(ComplexHeatmap)
 
 srtfile <- {{in.srtobj | r}}
 outdir <- {{out.outdir | r}}

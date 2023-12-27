@@ -88,7 +88,7 @@ do_one_features = function(name) {
             if (is.null(ncol)) { ncol = 1 }
             list(
                 width = 400 * ncol,
-                height = ceiling(length(features) / ncol) * 400,
+                height = ceiling(length(features) / ncol) * 200,
                 res = 100
             )
         }
@@ -143,7 +143,11 @@ do_one_features = function(name) {
             case
         )
         if (is.null(case$plus)) {
-            case$plus = 'scale_fill_gradientn(colors = c("lightgrey", pal_biopipen()(1)), na.value = "white")'
+            case$plus = 'scale_fill_gradient2(
+                low = "lightblue",
+                high = "darkblue",
+                na.value = "white"
+            )'
         }
         excluded_args = c(excluded_args, "group.by", "split.by", "downsample", "ncol", "reduction", "layer")
         fn = DoHeatmap
@@ -151,6 +155,15 @@ do_one_features = function(name) {
             list(
                 width = n_uidents * 60 + 150,
                 height = length(features) * 40 + 150,
+                res = 100
+            )
+        }
+    } else if (case$kind == "avgheatmap") {
+        case$kind = "avgheatmap"
+        default_devpars = function(features, ncol) {
+            list(
+                width = n_uidents * 30 + 250,
+                height = length(features) * 15 + 150,
                 res = 100
             )
         }
@@ -246,6 +259,62 @@ do_one_features = function(name) {
     }
 
     case$features = .get_features(case$features)
+    if (kind == "avgheatmap") {
+        figfile <- file.path(odir, paste0(slugify(name), ".avgheatmap.png"))
+        assay <- DefaultAssay(case$object)
+        layer <- "scale.data"
+        if (!layer %in% Layers(case$object, assay = assay)) {
+            layer <- "data"
+        }
+        exprs <- AverageExpression(
+            case$object,
+            assays = assay,
+            layer = layer,
+            features = case$features,
+            group.by = ident)[[assay]]
+
+        col_fun <- colorRamp2(
+            c(min(exprs, na.rm = T), 0, max(exprs, na.rm = T)),
+            c("lightblue", "white", "darkred"))
+
+        ha <- list()
+        ha[[ident]] <- colnames(exprs)
+        ha$col <- list()
+        ha$col[[ident]] <- setNames(pal_biopipen()(length(ha[[ident]])), ha[[ident]])
+        ha <- do_call(HeatmapAnnotation, ha)
+
+        p <- Heatmap(
+            as.matrix(exprs),
+            name = "Average expression",
+            col = col_fun,
+            na_col = "white",
+            row_names_side = "right",
+            cluster_rows = TRUE,
+            cluster_columns = FALSE,
+            rect_gp = gpar(col = "gray", lwd = 1),
+            row_names_max_width = max_text_width(rownames(exprs)),
+            top_annotation = ha
+        )
+        devpars = list_update(default_devpars(case$features, NULL), devpars)
+        png(figfile, res = devpars$res, width = devpars$width, height = devpars$height)
+        print(p)
+        dev.off()
+
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0("Average expression values for selected features, by ", ident)
+            ),
+            list(
+                kind = "image",
+                src = figfile
+            ),
+            h1 = ifelse(is.null(case$section), name, case$section),
+            h2 = ifelse(is.null(case$section), "#", name)
+        )
+        return(NULL)
+    }
+
     if (!is.null(case$ncol)) {
         case$ncol = min(case$ncol, length(case$features))
     }
@@ -277,11 +346,10 @@ do_one_features = function(name) {
     devpars = list_update(default_devpars(case$features, case$ncol), devpars)
     if (kind == "heatmap") {
         if (!exists("downsample") || is.null(downsample)) {
-            downsample = "average"
+            log_warn("- `downsample` is not specified for `heatmap`, using `downsample=1000`")
+            downsample = 1000
         }
-        if (downsample %in% c("average", "mean")) {
-            case$object = AverageExpression(case$object, return.seurat = TRUE)
-        } else if (is.integer(downsample)) {
+        if (is.integer(downsample)) {
             case$object = base::subset(case$object, downsample = downsample)
         } else {
             stop(paste0("Unknown downsample method: ", downsample))
