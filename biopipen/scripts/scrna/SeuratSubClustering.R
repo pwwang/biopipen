@@ -102,7 +102,7 @@ for (key in names(envs$cases)) {
         case$RunUMAP,
         object = sobj,
         dims = 1:30,
-        reduction = sobj@misc$integrated_new_reduction
+        reduction = sobj@misc$integrated_new_reduction %||% "pca"
     )
     umap_args$dims <- 1:min(max(umap_args$dims), ncol(sobj) - 1)
     sobj <- do_call(RunUMAP, umap_args)
@@ -110,7 +110,7 @@ for (key in names(envs$cases)) {
     log_info("- Running FindNeighbors ...")
     case$FindNeighbors$object <- sobj
     if (is.null(case$FindNeighbors$reduction)) {
-        case$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction
+        case$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction %||% "pca"
     }
     sobj <- do_call(FindNeighbors, case$FindNeighbors)
 
@@ -129,9 +129,10 @@ for (key in names(envs$cases)) {
     if (is.null(resolution) || length(resolution) == 1) {
         case$FindClusters$resolution <- resolution
         case$FindClusters$object <- sobj
-        case$FindClusters$cluster.name <- key
         sobj <- do_call(FindClusters, case$FindClusters)
-        levels(sobj[[key]]) <- paste0("g", levels(sobj[[key]]))
+        levels(sobj$seurat_clusters) <- paste0("s", levels(sobj$seurat_clusters))
+        Idents(sobj) <- "seurat_clusters"
+        sobj[[key]] <- sobj$seurat_clusters
         ident_table <- table(sobj[[key]])
         log_info("- Found {length(ident_table)} clusters:")
         print(ident_table)
@@ -147,11 +148,11 @@ for (key in names(envs$cases)) {
             findclusters_args <- case$FindClusters
             findclusters_args$resolution <- res
             findclusters_args$object <- sobj
-            findclusters_args$cluster.name <- paste0(key, "_", res)
             sobj <- do_call(FindClusters, findclusters_args)
-            res_key <- findclusters_args$cluster.name
-            sobj[[res_key]] <- Idents(sobj)
-            levels(sobj[[res_key]]) <- paste0("g", levels(sobj[[res_key]]))
+            res_key <- paste0(key, "_", res)
+            level(sobj$seurat_clusters) <- paste0("s", level(sobj$seurat_clusters))
+            Idents(sobj) <- "seurat_clusters"
+            sobj[[res_key]] <- sobj$seurat_clusters
             ident_table <- table(sobj[[res_key]])
             log_info("- Found {length(ident_table)} at resolution: {res}:")
             print(ident_table)
@@ -167,7 +168,7 @@ for (key in names(envs$cases)) {
 }
 
 log_info("Saving results ...")
-saveRDS(sobj, file = rdsfile)
+saveRDS(srtobj, file = rdsfile)
 
 if (is.character(envs$cache) && nchar(envs$cache) > 0) {
     log_info("Caching results ...")
