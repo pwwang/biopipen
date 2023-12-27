@@ -766,6 +766,12 @@ class CellsDistribution(Proc):
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+        cluster_orderby: The order of the clusters to show on the plot.
+            An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
+            The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
+            For example, you can order the clusters by the activation score of
+            the cluster: `desc(mean(ActivationScore, na.rm = TRUE))`, suppose you have a column
+            `ActivationScore` in the metadata.
         group_by: The column name in metadata to group the cells for the columns of the plot.
         group_order (list): The order of the groups (columns) to show on the plot
         cells_by: The column name in metadata to group the cells for the rows of the plot.
@@ -815,6 +821,7 @@ class CellsDistribution(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "cluster_orderby": None,
         "group_by": None,
         "group_order": [],
         "cells_by": None,

@@ -13,6 +13,7 @@ srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
 joboutdir <- {{job.outdir | r}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
+cluster_orderby <- {{envs.cluster_orderby | r}}  # nolint
 group_by <- {{envs.group_by | r}}  # nolint
 group_order <- {{envs.group_order | r}}  # nolint
 cells_by <- {{envs.cells_by | r}}  # nolint
@@ -49,6 +50,7 @@ expand_cases <- function() {
     if (is.null(cases) || length(cases) == 0) {
         filled_cases <- list(
             DEFAULT = list(
+                cluster_orderby = cluster_orderby,
                 group_by = group_by,
                 group_order = group_order,
                 cells_by = cells_by,
@@ -67,6 +69,7 @@ expand_cases <- function() {
         for (name in names(cases)) {
             case <- list_setdefault(
                 cases[[name]],
+                cluster_orderby = cluster_orderby,
                 group_by = group_by,
                 group_order = group_order,
                 cells_by = cells_by,
@@ -144,6 +147,25 @@ do_case <- function(name, case) {
 
     outfile <- file.path(info$sec_dir, paste0(info$case_slug, ".png"))
     txtfile <- file.path(info$sec_dir, paste0(info$case_slug, ".txt"))
+
+    meta <- srtobj@meta.data
+    # order the clusters if cluster_orderby is specified
+    cluster_order_val <- NULL
+    if (!is.null(case$cluster_orderby) && length(case$cluster_orderby) > 0) {
+        cluster_order_df <- meta %>%
+            group_by(seurat_clusters) %>%
+            summarise(
+                !!sym(case$cluster_orderby) := !!parse_expr(case$cluster_orderby),
+                .groups = "drop") %>%
+            arrange(!!sym(case$cluster_orderby))
+
+        cluster_order_val <- pull(cluster_order_df, case$cluster_orderby)
+
+        meta$seurat_clusters <- factor(
+            meta$seurat_clusters,
+            levels = cluster_order_df %>% pull(seurat_clusters) %>% as.character()
+        )
+    }
 
     # subset the seurat object
     meta <- srtobj@meta.data
