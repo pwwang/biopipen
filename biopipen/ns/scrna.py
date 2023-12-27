@@ -329,6 +329,9 @@ class SeuratSubClustering(Proc):
         rdsfile: The seurat object with the subclustering information.
 
     Envs:
+        ncores (type=int;order=-100): Number of cores to use.
+            Used in `future::plan(strategy = "multicore", workers = <ncores>)`
+            to parallelize some Seurat procedures.
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
         subset: An expression to subset the cells, will be passed to
@@ -348,6 +351,7 @@ class SeuratSubClustering(Proc):
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
+            The cluster labels will be prefixed with "s".
             - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
                 The results will be saved in `<casename>_<resolution>`.
                 The final resolution will be used to define the clusters at `<casename>`.
@@ -372,6 +376,7 @@ class SeuratSubClustering(Proc):
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "mutaters": {},
         "subset": None,
         "RunUMAP": {"dims": 30},
