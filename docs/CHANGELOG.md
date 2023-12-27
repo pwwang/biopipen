@@ -1,5 +1,77 @@
 # Change Log
 
+## 0.23.0
+
+- deps: bump pipen to 0.12.5
+- deps: Update seurat to 5.0.1 in test env file
+- chore: Add `/tmp` to .gitignore
+- scrna.MarkersFinder: Add `envs.use_presto` to use presto to speed up finding markers
+- scrna.MarkersFinder: Fix a bug when subsetting cells
+- scrna.MarkersFinder: Set `envs.dbs` to `KEGG_2021_Human` and `MSigDB_Hallmark_2020` by default
+- scrna.MarkersFinder: Fix FindAllMarkers/FindMarkers for SCTransform'ed data
+- scrna.SeuratPreparing: Fix handling of empty path in `RNAData`
+- scrna.SeuratPreparing: Set `envs.gene_qc.min_cells` to 0 by default (instead of 3)
+- scrna.SeuratPreparing: Add sample integration procedures
+- scrna.SeuratPreparing: Allow to filter genes directly
+- scrna.SeuratClustering: Add options to limit string and numeric output length to have more exact caching signature
+- scrna.SeuratClustering: Set default `random.seed` to `8525` for `FindClusters`
+- scrna.SeuratClustering: Allow multiple resolutions for `FindClusters`
+- scrna.SeuratClustering: Print table of idents in log for found clusters
+- scrna.SeuratClustering: Move integration procedues to `SeuratPreparing` and do only clustering
+- scrna.SeuratClustering: Update tests
+- scrna.SeuratClustering: Make the cluster labels start with "c1" instead of "0"
+- scrna.SeuratClustering: Default reduction of `RunUMAP` and `FindNeighbors` to pca
+- scrna.SeuratClustering: Fix test
+- scrna.SeuratClusterStats: Add `ngenes` to plot the number of genes expressed
+- scrna.SeuratClusterStats: Add barplot for `features` and allow aggregation of features
+- scrna.SeuratClusterStats: Fix matching kind for plots of features
+- scrna.SeuratClusterStats: Use new umap for plotting feature and dimplots for sub-clustering
+- scrna.SeuratClusterStats: Use default assay for plotting of number of genes expressed
+- scrna.SeuratClusterStats: Add `envs.mutaters` to mutate meta data
+- scrna.SeuratClusterStats: Add histograms to plot number of cells against another variable
+- scrna.SeuratClusterStats: Fix reduction for subclustering for dimplots
+- scrna.SeuratClusterStats: Subset seurat object for featureplots when ident is subclusters
+- scrna.SeuratClusterStats: Fix argument layer not excluded for heatmaps in features
+- scrna.SeuratClusterStats: Add `frac_ofall` and `transpose` for `stats` to calculate fraction within group or against all cells, and transpose ident and group, respectively
+- scrna.ModuleScoreCalculator: Fix features not being passed to `AddModuleScore` as a list
+- scrna.ModuleScoreCalculator: Support calculating diffusion map components
+- scrna.SeuratMap2Ref: Rename `envs.alias` to `envs.name
+- scrna.SeuratMap2Ref: Set default value of `envs.MappingScore.ndim` to 30
+- scrna.SeuratMap2Ref: Add `envs.ncores` for parallelization
+- scrna.SeuratMap2Ref: Remove preset MapQuery arguments
+- scrna.SeuratMap2Ref: Raise an error when envs.MapQuery.refdata is not provided
+- scrna.SeuratMap2Ref: Default `envs.use` to the key of `envs.MapQuery.refdata` with single key
+- scrna.SeuratMap2Ref: Use layer instead of slot in docstring (Seurat v5)
+- scrna.SeuratMap2Ref: Make sure the column of cluster labels is a factor
+- scrna.ScFGSEA: Allow to ignore small group when fgsea fails due to all NAs for pre-ranks
+- scrna.ScFGSEA: Use default assay and use layer instead of slot (Seurat v5)
+- scrna.TopExpressingGenes: Use default assay of Seurat object and fix column names of average expression (Seurat v5)
+- scrna.TopExpressingGenes: Change default enrichment gene sets to `KEGG_2021_Human` and `MSigDB_Hallmark_2020`
+- scrna.MetaMarkers: Change default enrichment gene sets to `KEGG_2021_Human` and `MSigDB_Hallmark_2020`
+- scrna.MetaMarkers: Give better message when tests for genes fail
+- scrna.MetaMarkers: Give error message when not enough cells in case
+- scrna.CellsDistribution: Allow to order clusters by `envs.cluster_orderby`
+- scrna.CellsDistribution: Add heatmaps
+- scrna.SeuratSubClustering: Add process
+- scrna_metabolic_landscape: Add `InlineNotification` component to imports for report
+- scrna_metabolic_landscape.MetabolicFeatures: Fix when default assay is SCT
+- scrna_metabolic_landscape.MetabolicFeaturesIntraSubset: Fix when default assay is SCT
+- scrna_metabolic_landscape.MetabolicPathwayActivity: Fix when default assay is SCT
+- scrna_metabolic_landscape.MetabolicPathwayActivity: Use default assay of Seurat object
+- scrna_metabolic_landscape.MetabolicPathwayHeterogenetiy: Fix when default assay is SCT
+- scrna.CellTypeAnnotation: Use layer instead of slot of Seurat object (Seurat v5) for sctype
+- tcr.ImmunarchLoading: Allow empty path in TCRData column in input file
+- tcr.ImmunarchLoading: Do not hide `envs.mode` anymore in docs
+- tcr.CloneResidency: Fix stringifying the subject in case it is a factor
+- tcr.CloneResidency: Make `section` works in report
+- tcr.Immunarch: Support paired chain data for VJ conjuction plots
+- tcr.TESSA: Change `envs.assay` to None to use default assay of Seurat object
+- scrna_basic: remove scrna_basic pipeline, use immunopipe instead
+- scrna.GeneExpressionInvestigation: Remove deprecated code
+- scrna.Write10X: Use layer instead of slot (Seurat v5)
+- scrna.ExprImputation: Use default assay of seurat object
+- scrna.SeuratTo10X: Rename `Write10X` to `SeuratTo10X`
+
 ## 0.22.8
 
 - scrna_metabolic_landscape.MetabolicPathwayActivity: Fix `useNames = NA` being deprecated in matrixStats v1.2 (more locations)
