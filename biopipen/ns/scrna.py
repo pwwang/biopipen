@@ -450,6 +450,35 @@ class SeuratClusterStats(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
+        hists_defaults (ns): The default parameters for histograms.
+            This will plot histograms for the number of cells along `x`.
+            For example, you can plot the number of cells along cell activity score.
+            - x: The column name in metadata to plot as the x-axis.
+                The NA values will be removed.
+                It could be either numeric or factor/character.
+            - x_order (list): The order of the x-axis, only works for factor/character `x`.
+                You can also use it to subset `x` (showing only a subset values of `x`).
+            - cells_by: A column name in metadata to group the cells.
+                The NA values will be removed. It should be a factor/character.
+                if not specified, all cells will be used.
+            - cells_order (list): The order of the cell groups for the plots.
+                It should be a list of strings. You can also use `cells_orderby` and `cells_n`
+                to determine the order.
+            - cells_orderby: An expression passed to `dplyr::arrange()` to order the cell groups.
+            - cells_n: The number of cell groups to show.
+                Ignored if `cells_order` is specified.
+            - ncol (type=int): The number of columns for the plots, split by `cells_by`.
+            - subset: An expression to subset the cells, will be passed to `dplyr::filter()`.
+            - each: Whether to plot each group separately.
+            - bins: The number of bins to use, only works for numeric `x`.
+            - plus (list): The extra elements to add to the `ggplot` object.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+        hists (type=json): The cases for histograms.
+            Keys are the names of the plots and values are the dicts inherited from `env.hists_defaults`.
+            There is no default case.
         stats_defaults (ns): The default parameters for `stats`.
             The parameters from the cases can overwrite the default parameters.
             - frac (flag): Whether to output the fraction of cells instead of number.
@@ -564,6 +593,21 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "hists_defaults": {
+            "x": None,
+            "x_order": [],
+            "cells_by": None,
+            "cells_order": [],
+            "cells_orderby": None,
+            "cells_n": 10,
+            "subset": None,
+            "ncol": 2,
+            "each": None,
+            "bins": 30,
+            "plus": [],
+            "devpars": {"res": 100, "height": None, "width": None},
+        },
+        "hists": {},
         "stats_defaults": {
             "frac": False,
             "pie": False,

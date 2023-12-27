@@ -4,6 +4,7 @@ library(slugify)
 library(Seurat)
 library(rlang)
 library(dplyr)
+library(tidyr)
 library(tibble)
 library(ggprism)
 library(ggrepel)
@@ -25,6 +26,9 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
 
 ############## stats ##############
 {% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-stats.R" %}
+
+############## hists ##############
+{% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-hists.R" %}
 
 ############## ngenes ##############
 {% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-ngenes.R" %}
