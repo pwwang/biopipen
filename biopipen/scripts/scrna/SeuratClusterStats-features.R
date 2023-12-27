@@ -145,7 +145,7 @@ do_one_features = function(name) {
         if (is.null(case$plus)) {
             case$plus = 'scale_fill_gradientn(colors = c("lightgrey", pal_biopipen()(1)), na.value = "white")'
         }
-        excluded_args = c(excluded_args, "group.by", "split.by", "downsample", "ncol", "reduction")
+        excluded_args = c(excluded_args, "group.by", "split.by", "downsample", "ncol", "reduction", "layer")
         fn = DoHeatmap
         default_devpars = function(features, ncol) {
             list(
