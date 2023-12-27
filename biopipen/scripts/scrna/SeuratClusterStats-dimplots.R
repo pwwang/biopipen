@@ -21,8 +21,11 @@ do_one_dimplot = function(name) {
         case$group.by = case$ident
     }
     key <- paste0("sub_umap_", case$group.by)
-    if (key %in% names(case$object@reductions) && is.null(case$reduction)) {
+    if (
+        key %in% names(case$object@reductions) &&
+        (is.null(case$reduction) || case$reduction %in% c("dim", "auto"))) {
         case$reduction = key
+        case$object = filter(case$object, !is.na(!!sym(case$group.by)))
     }
 
     n_uidents = length(unique(case$object@meta.data[[case$group.by]]))
