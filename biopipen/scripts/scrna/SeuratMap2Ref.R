@@ -107,7 +107,7 @@ query = AddMetaData(
 
 # Add the alias to the metadata for the clusters
 log_info("Adding name to metadata and set as ident")
-query@meta.data = query@meta.data %>% mutate(!!sym(name) := !!parse_expr(use))
+query@meta.data = query@meta.data %>% mutate(!!sym(name) := as.factor(!!parse_expr(use)))
 Idents(query) = name
 
 # Save
