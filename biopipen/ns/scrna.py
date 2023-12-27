@@ -488,6 +488,12 @@ class SeuratClusterStats(Proc):
             - frac (flag): Whether to output the fraction of cells instead of number.
             - pie (flag): Also output a pie chart?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
+            - frac_ofall(flag): Whether to output the fraction against all cells,
+                instead of the fraction in each group.
+                Only works when `frac` is `True` and `group-by` is specified.
+            - transpose (flag): Whether to transpose the cluster and group, that is,
+                using group as the x-axis and cluster to fill the plot.
+                Only works when `group-by` is specified.
             - ident: The column name in metadata to use as the identity.
             - group-by: The column name in metadata to group the cells.
                 Does NOT support for pie charts.
@@ -503,7 +509,7 @@ class SeuratClusterStats(Proc):
             Here are some examples -
             >>> {
             >>>     "nCells_All": {},
-            >>>     "nCells_Sample": {"kind": "num", "group-by": "Sample"},
+            >>>     "nCells_Sample": {"group-by": "Sample"},
             >>>     "fracCells_Sample": {"kind": "frac", "group-by": "Sample"},
             >>> }
         ngenes_defaults (ns): The default parameters for `ngenes`.
@@ -616,6 +622,8 @@ class SeuratClusterStats(Proc):
             "frac": False,
             "pie": False,
             "table": False,
+            "frac_ofall": False,
+            "transpose": False,
             "ident": "seurat_clusters",
             "group-by": None,
             "split-by": None,

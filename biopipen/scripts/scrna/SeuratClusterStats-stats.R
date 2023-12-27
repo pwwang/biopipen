@@ -14,6 +14,15 @@ do_one_stats = function(name) {
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
         stop(paste0(name, ": pie charts are not supported for group-by"))
     }
+    if (!isTRUE(case$frac) && isTRUE(case$frac_ofall)) {
+        stop(paste0(name, ": frac_ofall is only supported for frac"))
+    }
+    if (isTRUE(case$frac_ofall) && is.null(case$group.by)) {
+        stop(paste0(name, ": frac_ofall is only supported for group-by"))
+    }
+    if (isTRUE(case$transpose) && is.null(case$group.by)) {
+        stop(paste0(name, ": transpose is only supported for group-by"))
+    }
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
     piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
@@ -24,12 +33,39 @@ do_one_stats = function(name) {
         df_cells = df_cells %>% filter(!!rlang::parse_expr(case$subset))
     }
 
-    select_cols = c(case$ident, case$group.by, case$split.by)
-    df_cells = df_cells %>%
-        select(all_of(select_cols)) %>%
-        group_by(!!!syms(select_cols)) %>%
-        summarise(.n = n(), .groups = "drop")  %>%
-        mutate(.frac = .n / sum(.n))
+    select_cols = c(case$ident, case$group.by)
+    if (!is.null(case$split.by)) {
+        df_cells = do_call(rbind, lapply(group_split(
+            df_cells,
+            !!!syms(case$split.by)
+        ), function(df) {
+            out <- df %>% group_by(!!!syms(select_cols)) %>% summarise(.n = n(), .groups = "drop")
+            if (!is.null(case$group.by) && isTRUE(case$frac)) {
+                if (isTRUE(case$frac_ofall)) {
+                    out <- out %>% mutate(.frac = .n / sum(.n))
+                } else if (isTRUE(case$transpose)) {
+                    out <- out %>% group_by(!!sym(case$ident)) %>% mutate(.frac = .n / sum(.n))
+                } else {
+                    out <- out %>% group_by(!!sym(case$group.by)) %>% mutate(.frac = .n / sum(.n))
+                }
+            }
+        }))
+    } else if (!is.null(case$group.by) && isTRUE(case$frac)) {
+        df_cells <- df_cells %>%
+            group_by(!!!syms(select_cols)) %>%
+            summarise(.n = n(), .groups = "drop")
+        if (isTRUE(case$frac_ofall)) {
+            df_cells = df_cells %>% mutate(.frac = .n / sum(.n))
+        } else {
+            df_cells = df_cells %>%
+                group_by(!!sym(ifelse(isTRUE(case$transpose), case$group.by, case$ident))) %>%
+                mutate(.frac = .n / sum(.n))
+        }
+    } else {
+        df_cells <- df_cells %>%
+            group_by(!!!syms(select_cols)) %>%
+            summarise(.n = n(), .groups = "drop")
+    }
 
     if (isTRUE(case$table)) {
         write.table(df_cells, tablefile, sep="\t", quote=FALSE, row.names=FALSE)
@@ -68,9 +104,9 @@ do_one_stats = function(name) {
     bar_position = ifelse(ngroups > 5, "stack", "dodge")
     p = df_cells %>%
         ggplot(aes(
-            x=!!sym(case$ident),
+            x=!!sym(ifelse(case$transpose, case$group.by, case$ident)),
             y=if (isTRUE(case$frac)) .frac else .n,
-            fill=!!sym(ifelse(is.null(case$group.by), case$ident, case$group.by))
+            fill=!!sym(ifelse(is.null(case$group.by) || isTRUE(case$transpose), case$ident, case$group.by))
         )) +
         geom_bar(stat="identity", position=bar_position, alpha=.8) +
         theme_prism(axis_text_angle = 90) +
