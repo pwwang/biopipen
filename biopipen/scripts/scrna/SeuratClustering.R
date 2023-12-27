@@ -92,7 +92,7 @@ umap_args <- list_setdefault(
     envs$RunUMAP,
     object = sobj,
     dims = 1:30,
-    reduction = sobj@misc$integrated_new_reduction
+    reduction = sobj@misc$integrated_new_reduction %||% "pca"
 )
 umap_args$dims <- 1:min(max(umap_args$dims), ncol(sobj) - 1)
 sobj <- do_call(RunUMAP, umap_args)
@@ -100,7 +100,7 @@ sobj <- do_call(RunUMAP, umap_args)
 log_info("Running FindNeighbors ...")
 envs$FindNeighbors$object <- sobj
 if (is.null(envs$FindNeighbors$reduction)) {
-    envs$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction
+    envs$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction %||% "pca"
 }
 sobj <- do_call(FindNeighbors, envs$FindNeighbors)
 
