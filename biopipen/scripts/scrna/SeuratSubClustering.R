@@ -21,7 +21,7 @@ plan(strategy = "multicore", workers = envs$ncores)
 
 .expand_dims <- function(args, name = "dims") {
     # Expand dims from 30 to 1:30
-    if (is.numeric(args[[name]]) && length(args[[name]] == 1)) {
+    if (!is.null(args) && is.numeric(args[[name]]) && length(args[[name]] == 1)) {
         args[[name]] <- 1:args[[name]]
     }
     args
@@ -55,16 +55,16 @@ if (is.character(envs$cache) && nchar(envs$cache) > 0) {
         file.copy(cached_file, rdsfile, copy.date = TRUE)
         quit()
     } else {
-        log_info("Cached results not found, logging the current and cached signatures.")
-        log_info("- Current signature:")
-        print(sig)
-        sigfiles <- Sys.glob(file.path(envs$cache, "*.signature.txt"))
-        for (sigfile in sigfiles) {
-            log_info("- Found cached signature file: {sigfile}")
-            cached_sig <- readLines(sigfile)
-            log_info("- Cached signature:")
-            print(cached_sig)
-        }
+        log_info("Cached results not found.")
+        log_info("- Current signature: {digested_sig}")
+        # print(sig)
+        # sigfiles <- Sys.glob(file.path(envs$cache, "*.signature.txt"))
+        # for (sigfile in sigfiles) {
+        #     log_info("- Found cached signature file: {sigfile}")
+        #     cached_sig <- readLines(sigfile)
+        #     log_info("- Cached signature:")
+        #     print(cached_sig)
+        # }
         writeLines(sig, file.path(envs$cache, paste0(digested_sig, ".signature.txt")))
     }
 }
@@ -76,19 +76,26 @@ if (!is.null(envs$mutaters) && length(envs$mutaters) > 0) {
 }
 
 if (length(envs$cases) == 0) {
-    envs$cases <- list(
-        subcluster = list(
+    envs$cases <- list(subcluster = list())
+}
+
+for (key in names(envs$cases)) {
+    log_info("")
+    log_info("Running case '{key}' ...")
+    log_info("===========================================")
+    case <- envs$cases[[key]]
+    case$RunUMAP <- .expand_dims(case$RunUMAP)
+    case$FindNeighbors <- .expand_dims(case$FindNeighbors)
+
+    case <- list_update(
+        list(
             subset = envs$subset,
             RunUMAP = envs$RunUMAP,
             FindNeighbors = envs$FindNeighbors,
             FindClusters = envs$FindClusters
-        )
+        ),
+        case
     )
-}
-
-for (key in names(envs$cases)) {
-    log_info("Running case '{key}' ...")
-    case <- envs$cases[[key]]
 
     if (is.null(case$subset) || length(case$subset) == 0) {
         stop(paste0("`subset` for case '", key, "' is empty."))
@@ -136,33 +143,36 @@ for (key in names(envs$cases)) {
         ident_table <- table(sobj[[key]])
         log_info("- Found {length(ident_table)} clusters:")
         print(ident_table)
+        cat("\n")
 
         log_info("- Updating meta.data with subclusters...")
         srtobj <- AddMetaData(srtobj, metadata = sobj@meta.data[, key, drop = FALSE])
-        srtobj@reductions[[paste0("sub_umap_", key)]] <- sobj@reductions$umap
+        srtobj[[paste0("sub_umap_", key)]] <- sobj@reductions$umap
     } else {
         log_info("- Multiple resolutions detected ...")
+        log_info("")
         metadata <- NULL
         for (res in resolution) {
             findclusters_args <- case$FindClusters
             findclusters_args$resolution <- res
             findclusters_args$object <- sobj
-            sobj <- do_call(FindClusters, findclusters_args)
+            sobj1 <- do_call(FindClusters, findclusters_args)
             res_key <- paste0(key, "_", res)
-            levels(sobj$seurat_clusters) <- paste0("s", as.numeric(levels(sobj$seurat_clusters)) + 1)
-            Idents(sobj) <- "seurat_clusters"
-            sobj[[res_key]] <- sobj$seurat_clusters
-            ident_table <- table(sobj[[res_key]])
+            levels(sobj1$seurat_clusters) <- paste0("s", as.numeric(levels(sobj1$seurat_clusters)) + 1)
+            Idents(sobj1) <- "seurat_clusters"
+            sobj1[[res_key]] <- sobj1$seurat_clusters
+            ident_table <- table(sobj1[[res_key]])
             log_info("- Found {length(ident_table)} at resolution: {res}:")
             print(ident_table)
+            cat("\n")
 
             log_info("- Updating meta.data with subclusters...")
-            metadata <- sobj@meta.data[, res_key, drop = FALSE]
+            metadata <- sobj1@meta.data[, res_key, drop = FALSE]
             srtobj <- AddMetaData(srtobj, metadata = metadata)
-            srtobj@reductions[[paste0("sub_umap_", res_key)]] <- sobj@reductions$umap
+            srtobj[[paste0("sub_umap_", res_key)]] <- sobj1@reductions$umap
         }
         srtobj <- AddMetaData(srtobj, metadata = metadata, col.name = key)
-        srtobj@reductions[[paste0("sub_umap_", key)]] <- sobj@reductions$umap
+        srtobj[[paste0("sub_umap_", key)]] <- sobj1@reductions$umap
     }
 }
 
@@ -170,6 +180,6 @@ log_info("Saving results ...")
 saveRDS(srtobj, file = rdsfile)
 
 if (is.character(envs$cache) && nchar(envs$cache) > 0) {
-    log_info("Caching results ...")
-    file.copy(rdsfile, cached_file, overwrite = TRUE)
+    log_info("Caching results to {cached_file} ...")
+    invisible(file.copy(rdsfile, cached_file, overwrite = TRUE))
 }
