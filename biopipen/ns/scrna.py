@@ -119,10 +119,12 @@ class SeuratPreparing(Proc):
             genes.
             ///
 
-        gene_qc (ns): Filter genes. Currently only `min_cells` is supported.
+        gene_qc (ns): Filter genes.
             `gene_qc` is applied after `cell_qc`.
             - min_cells: The minimum number of cells that a gene must be
                 expressed in to be kept.
+            - excludes: The genes to exclude. Multiple genes can be specified by
+                comma separated values, or as a list.
 
             /// Tip | Example
             ```toml
@@ -210,7 +212,7 @@ class SeuratPreparing(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
-        "gene_qc": {"min_cells": 0},
+        "gene_qc": {"min_cells": 0, "excludes": []},
         "use_sct": False,
         "no_integration": False,
         "NormalizeData": {},

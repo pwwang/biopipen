@@ -245,8 +245,23 @@ sobj$.QC = NULL
 
 log_info("Filtering genes ...")
 if (is.list(envs$gene_qc)) {
-    if ("min_cells" %in% names(envs$gene_qc)) {
-        genes = rownames(sobj)[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
+    genes <- rownames(sobj)
+    filtered <- FALSE
+    if (!is.null(envs$gene_qc$min_cells) && envs$gene_qc$min_cells > 0) {
+        genes = genes[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
+        filtered <- TRUE
+    }
+    excludes <- envs$gene_qc$excludes
+    if (!is.null(excludes)) {
+        if (length(excludes) == 1) {
+            excludes <- trimws(unlist(strsplit(excludes, ",")))
+        }
+        for (ex in excludes) {
+            genes <- genes[!grepl(ex, genes)]
+        }
+        filtered <- TRUE
+    }
+    if (filtered) {
         sobj = subset(sobj, features = genes)
     }
 }
