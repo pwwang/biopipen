@@ -120,7 +120,7 @@ if (is.null(resolution) || length(resolution) == 1) {
     envs$FindClusters$resolution <- resolution
     envs$FindClusters$object <- sobj
     sobj <- do_call(FindClusters, envs$FindClusters)
-    levels(sobj$seurat_clusters) <- paste0("g", levels(sobj$seurat_clusters))
+    levels(sobj$seurat_clusters) <- paste0("c", as.numeric(levels(sobj$seurat_clusters)) + 1)
     Idents(sobj) <- "seurat_clusters"
     ident_table <- table(sobj$seurat_clusters)
     log_info("- Found {length(ident_table)} clusters:")
@@ -133,7 +133,7 @@ if (is.null(resolution) || length(resolution) == 1) {
         findclusters_args$resolution <- res
         findclusters_args$object <- sobj
         sobj <- do_call(FindClusters, findclusters_args)
-        levels(sobj$seurat_clusters) <- paste0("g", levels(sobj$seurat_clusters))
+        levels(sobj$seurat_clusters) <- paste0("c", as.numeric(levels(sobj$seurat_clusters)) + 1)
         res_key <- paste0("seurat_clusters_", res)
         sobj[[res_key]] <- sobj$seurat_clusters
         ident_table <- table(sobj[[res_key]])

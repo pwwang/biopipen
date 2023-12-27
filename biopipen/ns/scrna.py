@@ -269,6 +269,8 @@ class SeuratClustering(Proc):
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
+            The cluster labels will be saved in `seurat_clusters` and prefixed with "c".
+            The first cluster will be "c1", instead of "c0".
             - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
                 The results will be saved in `seurat_clusters_<resolution>`.
                 The final resolution will be used to define the clusters at `seurat_clusters`.
