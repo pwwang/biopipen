@@ -143,14 +143,13 @@ for (key in names(envs$cases)) {
     } else {
         log_info("- Multiple resolutions detected ...")
         metadata <- NULL
-        sobj <- NULL
         for (res in resolution) {
             findclusters_args <- case$FindClusters
             findclusters_args$resolution <- res
             findclusters_args$object <- sobj
             sobj <- do_call(FindClusters, findclusters_args)
             res_key <- paste0(key, "_", res)
-            level(sobj$seurat_clusters) <- paste0("s", as.numeric(level(sobj$seurat_clusters)) + 1)
+            levels(sobj$seurat_clusters) <- paste0("s", as.numeric(levels(sobj$seurat_clusters)) + 1)
             Idents(sobj) <- "seurat_clusters"
             sobj[[res_key]] <- sobj$seurat_clusters
             ident_table <- table(sobj[[res_key]])
