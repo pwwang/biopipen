@@ -4,10 +4,10 @@ channels:
   - aroth85
   - pwwang
   - pytorch
-  - bioconda
   - conda-forge
   - r
-  - defaults
+  - bioconda
+  - nodefaults
 dependencies:
   - python=3.10
   - poetry
@@ -32,7 +32,8 @@ dependencies:
   - r-ggupset
   - r-ggvenndiagram
   - r-gtools
-  - r-immunarch
+  # - r-igraph=1.5.1
+  - r-immunarch=0.9
   - r-matrix
   - r-rmagic
   - r-scimpute
