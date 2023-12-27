@@ -103,6 +103,7 @@ do_one_features = function(name) {
             key <- paste0("sub_umap_", case$ident)
             if (key %in% names(case$object@reductions) && is.null(case$reduction)) {
                 case$reduction = key
+                case$object = filter(case$object, !is.na(!!sym(case$ident)))
             }
         }
         fn = FeaturePlot
