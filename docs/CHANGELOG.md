@@ -71,6 +71,8 @@
 - scrna.Write10X: Use layer instead of slot (Seurat v5)
 - scrna.ExprImputation: Use default assay of seurat object
 - scrna.SeuratTo10X: Rename `Write10X` to `SeuratTo10X`
+- scrna.SeuratSubClustering: Fix original reduction being poluted by subclustering
+- scrna.SeuratClusterStats: Add `avgheatmap` to plot more elegant heatmap for average gene expressions
 
 ## 0.22.8
 
