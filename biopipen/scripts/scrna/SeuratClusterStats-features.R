@@ -56,6 +56,7 @@ do_one_features = function(name) {
     }
 
     if (!is.null(case$ident)) {
+        case$object = case$object %>% filter(!is.na(!!sym(case$ident)))
         Idents(case$object) = case$ident
     }
     n_uidents = length(unique(Idents(case$object)))
@@ -79,9 +80,8 @@ do_one_features = function(name) {
         }
     } else if (case$kind %in% c("vln", "violin", "vlnplot", "violinplot")) {
         case$kind = "violin"
-        if (is.null(case$cols)) {
-            case$cols = pal_biopipen()(n_uidents)
-        }
+        if (is.null(case$cols)) { case$cols = pal_biopipen()(n_uidents) }
+        if (is.null(case$pt.size)) { case$pt.size = 0 }
         excluded_args = c(excluded_args, "reduction")
         fn = VlnPlot
         default_devpars = function(features, ncol) {
@@ -289,7 +289,7 @@ do_one_features = function(name) {
             col = col_fun,
             na_col = "white",
             row_names_side = "right",
-            cluster_rows = TRUE,
+            cluster_rows = FALSE,
             cluster_columns = FALSE,
             rect_gp = gpar(col = "gray", lwd = 1),
             row_names_max_width = max_text_width(rownames(exprs)),
@@ -349,7 +349,7 @@ do_one_features = function(name) {
             log_warn("- `downsample` is not specified for `heatmap`, using `downsample=1000`")
             downsample = 1000
         }
-        if (is.integer(downsample)) {
+        if (is.numeric(downsample)) {
             case$object = base::subset(case$object, downsample = downsample)
         } else {
             stop(paste0("Unknown downsample method: ", downsample))

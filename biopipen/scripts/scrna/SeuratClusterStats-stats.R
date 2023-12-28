@@ -11,11 +11,13 @@ do_one_stats = function(name) {
 
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)
+    case$pie_devpars = list_update(stats_defaults$pie_devpars, case$pie_devpars)
+    case$box_devpars = list_update(stats_defaults$box_devpars, case$box_devpars)
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
         stop(paste0(name, ": pie charts are not supported for group-by"))
     }
     if (!isTRUE(case$frac) && isTRUE(case$frac_ofall)) {
-        stop(paste0(name, ": frac_ofall is only supported for frac"))
+        stop(paste0(name, ": frac_ofall is only supported when frac is true"))
     }
     if (isTRUE(case$frac_ofall) && is.null(case$group.by)) {
         stop(paste0(name, ": frac_ofall is only supported for group-by"))
@@ -23,9 +25,17 @@ do_one_stats = function(name) {
     if (isTRUE(case$transpose) && is.null(case$group.by)) {
         stop(paste0(name, ": transpose is only supported for group-by"))
     }
+    if (isTRUE(case$box) && !isTRUE(case$frac)) {
+        stop(paste0(name, ": box is only supported when frac is true"))
+    }
+    if (isTRUE(case$box) && !is.null(case$group.by) && case$group.by == "Sample") {
+        stop(paste0(name, ": box is not supported for group-by Sample"))
+    }
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
     piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
+    boxfile = file.path(odir, paste0(slugify(name), ".box.png"))
+    samtablefile = file.path(odir, paste0(slugify(name), ".bysample.txt"))
     tablefile = file.path(odir, paste0(slugify(name), ".txt"))
 
     df_cells = srtobj@meta.data %>% drop_na(!!sym(case$ident))
@@ -35,8 +45,8 @@ do_one_stats = function(name) {
 
     select_cols = c(case$ident, case$group.by)
     if (!is.null(case$split.by)) {
-        df_cells = do_call(rbind, lapply(group_split(
-            df_cells,
+        plot_df = do_call(rbind, lapply(group_split(
+            df_cells %>% select(all_of(select_cols)),
             !!!syms(case$split.by)
         ), function(df) {
             out <- df %>% group_by(!!!syms(select_cols)) %>% summarise(.n = n(), .groups = "drop")
@@ -51,58 +61,30 @@ do_one_stats = function(name) {
             }
         }))
     } else if (!is.null(case$group.by) && isTRUE(case$frac)) {
-        df_cells <- df_cells %>%
+        plot_df <- df_cells %>%
+            select(all_of(select_cols)) %>%
             group_by(!!!syms(select_cols)) %>%
             summarise(.n = n(), .groups = "drop")
         if (isTRUE(case$frac_ofall)) {
-            df_cells = df_cells %>% mutate(.frac = .n / sum(.n))
+            plot_df = plot_df %>% mutate(.frac = .n / sum(.n))
         } else {
-            df_cells = df_cells %>%
+            plot_df = plot_df %>%
                 group_by(!!sym(ifelse(isTRUE(case$transpose), case$group.by, case$ident))) %>%
                 mutate(.frac = .n / sum(.n))
         }
     } else {
-        df_cells <- df_cells %>%
+        plot_df <- df_cells %>%
+            select(all_of(select_cols)) %>%
             group_by(!!!syms(select_cols)) %>%
             summarise(.n = n(), .groups = "drop")
     }
 
-    if (isTRUE(case$table)) {
-        write.table(df_cells, tablefile, sep="\t", quote=FALSE, row.names=FALSE)
-    }
-    if (isTRUE(case$pie)) {
-        p_pie = df_cells %>%
-            arrange(!!sym(case$ident)) %>%
-            ggplot(aes(x="", y=.n, fill=!!sym(case$ident))) +
-            geom_bar(stat="identity", width=1, alpha=.8, position = position_stack(reverse = TRUE)) +
-            coord_polar("y", start=0) +
-            scale_fill_biopipen() +
-            guides(fill = guide_legend(title = case$ident)) +
-            theme_void() +
-            geom_label(
-                if (isTRUE(case$frac))
-                    aes(label=sprintf("%.1f%%", .frac * 100))
-                else
-                    aes(label=.n),
-                position = position_stack(vjust = 0.5),
-                color="#333333",
-                fill="#EEEEEE",
-                size=5
-            )
+    write.table(plot_df, tablefile, sep="\t", quote=FALSE, row.names=FALSE)
 
-        if (!is.null(case$split.by)) {
-            p_pie = p_pie + facet_wrap(case$split.by)
-        }
-
-        png(piefile, width=case$devpars$width, height=case$devpars$height, res=case$devpars$res)
-        print(p_pie)
-        dev.off()
-    }
-
-    ngroups = ifelse(is.null(case$group.by), 1, length(unique(df_cells[[case$group.by]])))
-    nidents = length(unique(df_cells[[case$ident]]))
+    ngroups = ifelse(is.null(case$group.by), 1, length(unique(plot_df[[case$group.by]])))
+    nidents = length(unique(plot_df[[case$ident]]))
     bar_position = ifelse(ngroups > 5, "stack", "dodge")
-    p = df_cells %>%
+    p = plot_df %>%
         ggplot(aes(
             x=!!sym(ifelse(case$transpose, case$group.by, case$ident)),
             y=if (isTRUE(case$frac)) .frac else .n,
@@ -146,12 +128,105 @@ do_one_stats = function(name) {
         h1 = name,
         ui = "tabs"
     )
+    if (isTRUE(case$table)) {
+        add_report(
+            list(
+                name = "Table",
+                contents = list(list(kind = "table", src = tablefile))
+            ),
+            h1 = name,
+            ui = "tabs"
+        )
+    }
 
     if (isTRUE(case$pie)) {
+        p_pie = plot_df %>%
+            arrange(!!sym(case$ident)) %>%
+            ggplot(aes(x="", y=.n, fill=!!sym(case$ident))) +
+            geom_bar(stat="identity", width=1, alpha=.8, position = position_stack(reverse = TRUE)) +
+            coord_polar("y", start=0) +
+            scale_fill_biopipen() +
+            guides(fill = guide_legend(title = case$ident)) +
+            theme_void() +
+            geom_label(
+                if (isTRUE(case$frac))
+                    aes(label=sprintf("%.1f%%", .frac * 100))
+                else
+                    aes(label=.n),
+                position = position_stack(vjust = 0.5),
+                color="#333333",
+                fill="#EEEEEE",
+                size=5
+            )
+
+        if (!is.null(case$split.by)) {
+            p_pie = p_pie + facet_wrap(case$split.by)
+        }
+
+        png(piefile, width=case$pie_devpars$width, height=case$pie_devpars$height, res=case$pie_devpars$res)
+        print(p_pie)
+        dev.off()
+
         add_report(
             list(
                 name = "Pie Chart",
                 contents = list(list(kind = "image", src = piefile))
+            ),
+            h1 = name,
+            ui = "tabs"
+        )
+    }
+
+    if (isTRUE(case$box)) {
+        ## df_cells
+        #       Sample ident group.by
+        # cell1 s1     c1    A
+        # cell2 s1     c1    A
+        # cell3 s1     c2    A
+        # cell4 s1     c1    B
+        # cell5 s2     c1    A
+        # cell6 s2     c2    B
+        # cell7 s2     c2    B
+        ## box_df
+        # Sample ident group.by .n .frac
+        # s1     c1    A        2  .5
+        # s1     c2    A        1  .25
+        # s2     c1    A        1  .25
+        # s1     c1    B        1  .33
+        # s2     c2    B        2  .67
+        box_df = df_cells %>%
+            group_by(Sample, !!!syms(select_cols)) %>%
+            summarise(.n = n(), .groups = "drop")
+        if (isTRUE(case$frac_ofall)) {
+            box_df = box_df %>% mutate(.frac = .n / sum(.n))
+        } else {
+            box_df = box_df %>%
+                group_by(Sample) %>%
+                mutate(.frac = .n / sum(.n)) %>%
+                ungroup()
+        }
+
+        write.table(box_df, samtablefile, sep="\t", quote=FALSE, row.names=FALSE)
+
+        if (isTRUE(case$transpose)) {
+            p = ggplot(box_df, aes(x = !!sym(case$group.by), y = .frac, fill = !!sym(case$ident)))
+        } else {
+            p = ggplot(box_df, aes(x = !!sym(case$ident), y = .frac, fill = !!sym(case$group.by)))
+        }
+        p = p +
+            geom_boxplot(alpha=.8) +
+            theme_prism(axis_text_angle = 90) +
+            scale_fill_biopipen() +
+            ylab("Fraction of cells")
+
+        png(boxfile, width=case$box_devpars$width, height=case$box_devpars$height, res=case$box_devpars$res)
+        print(p)
+        dev.off()
+
+        add_report(
+            list(
+                name = "Box Plot",
+                contents = list(list(kind = "image", src = boxfile))
             ),
             h1 = name,
             ui = "tabs"
