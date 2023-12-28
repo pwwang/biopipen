@@ -73,6 +73,8 @@
 - scrna.SeuratTo10X: Rename `Write10X` to `SeuratTo10X`
 - scrna.SeuratSubClustering: Fix original reduction being poluted by subclustering
 - scrna.SeuratClusterStats: Add `avgheatmap` to plot more elegant heatmap for average gene expressions
+- scrna.SeuratClusterStats: Fix ident not working for dimplots
+- scrna.SeuratClusterStats: Add boxplots for stats
 
 ## 0.22.8
 
