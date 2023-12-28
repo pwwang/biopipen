@@ -162,7 +162,7 @@ do_one_features = function(name) {
         case$kind = "avgheatmap"
         default_devpars = function(features, ncol) {
             list(
-                width = n_uidents * 30 + 250,
+                width = n_uidents * 30 + 350,
                 height = length(features) * 15 + 150,
                 res = 100
             )
