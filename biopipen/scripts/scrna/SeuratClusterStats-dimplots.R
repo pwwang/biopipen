@@ -17,10 +17,10 @@ do_one_dimplot = function(name) {
         case$object = srtobj
     }
 
-    if (is.null(case$group.by) && !is.null(case$ident)) {
+    if (is.null(case$group.by)) {
         case$group.by = case$ident
     }
-    key <- paste0("sub_umap_", case$group.by)
+    key <- paste0("sub_umap_", case$ident)
     if (
         key %in% names(case$object@reductions) &&
         (is.null(case$reduction) || case$reduction %in% c("dim", "auto"))) {

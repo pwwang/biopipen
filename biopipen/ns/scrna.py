@@ -570,10 +570,10 @@ class SeuratClusterStats(Proc):
             Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`. It can also have other parameters from
             each Seurat function used by `kind`. Note that for argument name with `.`, you should use `-` instead.
         dimplots_defaults (ns): The default parameters for `dimplots`.
-            - ident: The column name in metadata to use as the identity.
-                Ignored if `group-by` is specified.
-                If it is from subclustering (reduction `sub_umap_<ident>` exists), the reduction will be used.
-            - group-by: Same as `ident`. How the points are colored.
+            - ident: The identity to use.
+                If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
+                is set to `dim` or `auto`.
+            - group-by: Same as `ident` if not specified, to define how the points are colored.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
