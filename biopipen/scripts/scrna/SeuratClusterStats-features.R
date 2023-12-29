@@ -303,7 +303,7 @@ do_one_features = function(name) {
                 layer = layer,
                 features = expr_feats,
                 group.by = ident)[[assay]]
-            exprs <- bind_rows(exprs, exprs_tmp)
+            exprs <- bind_rows(exprs, as.data.frame(exprs_tmp))
         }
 
         ha <- NULL
