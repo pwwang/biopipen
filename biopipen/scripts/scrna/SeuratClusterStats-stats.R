@@ -12,7 +12,6 @@ do_one_stats = function(name) {
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)
     case$pie_devpars = list_update(stats_defaults$pie_devpars, case$pie_devpars)
-    case$box_devpars = list_update(stats_defaults$box_devpars, case$box_devpars)
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
         stop(paste0(name, ": pie charts are not supported for group-by"))
     }
@@ -25,16 +24,9 @@ do_one_stats = function(name) {
     if (isTRUE(case$transpose) && is.null(case$group.by)) {
         stop(paste0(name, ": transpose is only supported for group-by"))
     }
-    if (isTRUE(case$box) && !isTRUE(case$frac)) {
-        stop(paste0(name, ": box is only supported when frac is true"))
-    }
-    if (isTRUE(case$box) && !is.null(case$group.by) && case$group.by == "Sample") {
-        stop(paste0(name, ": box is not supported for group-by Sample"))
-    }
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
     piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
-    boxfile = file.path(odir, paste0(slugify(name), ".box.png"))
     samtablefile = file.path(odir, paste0(slugify(name), ".bysample.txt"))
     tablefile = file.path(odir, paste0(slugify(name), ".txt"))
 
@@ -171,62 +163,6 @@ do_one_stats = function(name) {
             list(
                 name = "Pie Chart",
                 contents = list(list(kind = "image", src = piefile))
-            ),
-            h1 = name,
-            ui = "tabs"
-        )
-    }
-
-    if (isTRUE(case$box)) {
-        ## df_cells
-        #       Sample ident group.by
-        # cell1 s1     c1    A
-        # cell2 s1     c1    A
-        # cell3 s1     c2    A
-        # cell4 s1     c1    B
-        # cell5 s2     c1    A
-        # cell6 s2     c2    B
-        # cell7 s2     c2    B
-        ## box_df
-        # Sample ident group.by .n .frac
-        # s1     c1    A        2  .5
-        # s1     c2    A        1  .25
-        # s2     c1    A        1  .25
-        # s1     c1    B        1  .33
-        # s2     c2    B        2  .67
-        box_df = df_cells %>%
-            group_by(Sample, !!!syms(select_cols)) %>%
-            summarise(.n = n(), .groups = "drop")
-        if (isTRUE(case$frac_ofall)) {
-            box_df = box_df %>% mutate(.frac = .n / sum(.n))
-        } else {
-            box_df = box_df %>%
-                group_by(Sample) %>%
-                mutate(.frac = .n / sum(.n)) %>%
-                ungroup()
-        }
-
-        write.table(box_df, samtablefile, sep="\t", quote=FALSE, row.names=FALSE)
-
-        if (isTRUE(case$transpose)) {
-            p = ggplot(box_df, aes(x = !!sym(case$group.by), y = .frac, fill = !!sym(case$ident)))
-        } else {
-            p = ggplot(box_df, aes(x = !!sym(case$ident), y = .frac, fill = !!sym(case$group.by)))
-        }
-        p = p +
-            geom_boxplot(alpha=.8) +
-            theme_prism(axis_text_angle = 90) +
-            scale_fill_biopipen() +
-            ylab("Fraction of cells")
-
-        png(boxfile, width=case$box_devpars$width, height=case$box_devpars$height, res=case$box_devpars$res)
-        print(p)
-        dev.off()
-
-        add_report(
-            list(
-                name = "Box Plot",
-                contents = list(list(kind = "image", src = boxfile))
             ),
             h1 = name,
             ui = "tabs"

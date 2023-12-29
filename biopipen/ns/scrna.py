@@ -484,15 +484,12 @@ class SeuratClusterStats(Proc):
             Keys are the names of the plots and values are the dicts inherited from `env.hists_defaults`.
             There is no default case.
         stats_defaults (ns): The default parameters for `stats`.
+            This is to do some basic statistics on the clusters. For more comprehensive analysis,
+            see `RadarPlots` and `CellsDistribution`.
             The parameters from the cases can overwrite the default parameters.
             - frac (flag): Whether to output the fraction of cells instead of number.
             - pie (flag): Also output a pie chart?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
-            - box (flag): Whether to output a box plot?
-                Only works when `frac` is `True`. It plots the fraction of cells from
-                individual samples in each group (`group-by`) in each cluster (`ident`).
-                The groups are dodge-positioned. If `group-by` is not specified, all cells form
-                a single group.
             - frac_ofall(flag): Whether to output the fraction against all cells,
                 instead of the fraction in each group.
                 Only works when `frac` is `True` and `group-by` is specified.
@@ -506,10 +503,6 @@ class SeuratClusterStats(Proc):
             - subset: An expression to subset the cells, will be passed to
                 `dplyr::filter()` on metadata.
             - pie_devpars (ns): The device parameters for the pie charts.
-                - res (type=int): The resolution of the plots.
-                - height (type=int): The height of the plots.
-                - width (type=int): The width of the plots.
-            - box_devpars (ns): The device parameters for the box plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
@@ -643,7 +636,6 @@ class SeuratClusterStats(Proc):
             "frac": False,
             "pie": False,
             "table": False,
-            "box": False,
             "frac_ofall": False,
             "transpose": False,
             "ident": "seurat_clusters",
@@ -652,7 +644,6 @@ class SeuratClusterStats(Proc):
             "subset": None,
             "devpars": {"res": 100, "height": 600, "width": 800},
             "pie_devpars": {"res": 100, "height": 600, "width": 800},
-            "box_devpars": {"res": 100, "height": 600, "width": 800},
         },
         "stats": {
             "Number of cells in each cluster": {
