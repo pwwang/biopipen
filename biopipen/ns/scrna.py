@@ -594,6 +594,7 @@ class SeuratClusterStats(Proc):
                 If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
                 is set to `dim` or `auto`.
             - group-by: Same as `ident` if not specified, to define how the points are colored.
+            - na_group: The group name for NA values, use `None` to ignore NA values.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
@@ -693,6 +694,7 @@ class SeuratClusterStats(Proc):
         "dimplots_defaults": {
             "ident": "seurat_clusters",
             "group-by": None,
+            "na_group": None,
             "split-by": None,
             "shape-by": None,
             "subset": None,
