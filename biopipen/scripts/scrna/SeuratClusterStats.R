@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/mutate_helpers.R")
 source("{{biopipen_dir}}/utils/plot.R")
 library(slugify)
 library(Seurat)
