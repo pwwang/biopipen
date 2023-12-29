@@ -346,19 +346,19 @@ vanished <- function(
 #'
 #' @rdname Get paired entities
 #' @param df The data frame. Use `.` if the function is called in a dplyr pipe.
-#' @param id_col The column name in `df` for the ids to be returned in the
+#' @param id The column name in `df` for the ids to be returned in the
 #'   final output
-#' @param compare_col The column name in `df` to compare the values for each
-#'   id in `id_col`.
-#' @param idents The values in `compare_col` to compare. It could be either an
+#' @param compare The column name in `df` to compare the values for each
+#'   id in `id`.
+#' @param idents The values in `compare` to compare. It could be either an
 #'   an integer or a vector. If it is an integer, the number of values in
-#'   `compare_col` must be the same as the integer for the `id` to be regarded
-#'   as paired. If it is a vector, the values in `compare_col` must be the same
+#'   `compare` must be the same as the integer for the `id` to be regarded
+#'   as paired. If it is a vector, the values in `compare` must be the same
 #'   as the values in `idents` for the `id` to be regarded as paired.
 #' @param uniq Whether to return unique ids or not. Default is `TRUE`.
 #'   If `FALSE`, you can mutate the meta data frame with the returned ids.
 #'   Non-paired ids will be `NA`.
-#' @return A vector of paired ids (in `id_col` column)
+#' @return A vector of paired ids (in `id` column)
 #' @examples
 #' df <- tibble(
 #'   id = c("A", "A", "B", "B", "C", "C", "D", "D"),
@@ -372,9 +372,9 @@ vanished <- function(
 #' # [1] "A" "A" NA NA "C" "C" "D" "D"
 #'
 paired <- function(
-    df,
-    id_col,
-    compare_col,
+    df = .,
+    id,
+    compare,
     idents = 2,
     uniq = TRUE
 ) {
@@ -383,25 +383,25 @@ paired <- function(
         df <- across(everything())
     }
 
-    id_col <- enquo(id_col)
-    compare_col <- enquo(compare_col)
-    if (is_empty(attr(id_col, ".Environment"))) {
-        id_col <- sym(as_name(id_col))
+    id <- enquo(id)
+    compare <- enquo(compare)
+    if (is_empty(attr(id, ".Environment"))) {
+        id <- sym(as_name(id))
     }
-    if (is_empty(attr(compare_col, ".Environment"))) {
-        compare_col <- sym(as_name(compare_col))
+    if (is_empty(attr(compare, ".Environment"))) {
+        compare <- sym(as_name(compare))
     }
-    if (!as_name(id_col) %in% colnames(df)) {
+    if (!as_name(id) %in% colnames(df)) {
         stop(paste0(
-            '`id_col` must be a column name in df. Got "',
-            as_name(id_col),
+            '`id` must be a column name in df. Got "',
+            as_name(id),
             '"'
         ))
     }
-    if (!as_name(compare_col) %in% colnames(df)) {
+    if (!as_name(compare) %in% colnames(df)) {
         stop(paste0(
-            '`compare_col` must be a column name in df. Got "',
-            as_name(compare_col),
+            '`compare` must be a column name in df. Got "',
+            as_name(compare),
             '"'
         ))
     }
@@ -414,8 +414,8 @@ paired <- function(
             ))
         }
         out <- df %>%
-            add_count(!!id_col, name = "..count") %>%
-            mutate(..paired = if_else(..count == idents, !!id_col, NA))
+            add_count(!!id, name = "..count") %>%
+            mutate(..paired = if_else(..count == idents, !!id, NA))
     } else {
         if (length(idents) <= 1) {
             stop(paste0(
@@ -424,11 +424,11 @@ paired <- function(
             ))
         }
         out <- df %>%
-            group_by(!!id_col) %>%
+            group_by(!!id) %>%
             mutate(
                 ..paired = if_else(
-                    rep(setequal(!!compare_col, idents), n()),
-                    !!id_col,
+                    rep(setequal(!!compare, idents), n()),
+                    !!id,
                     NA
                 )
             ) %>%

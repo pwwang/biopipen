@@ -243,22 +243,22 @@ if __name__ == "__main__":
     run_paired(
         df_values=paired_df_values,
         expected="A B C D",
-        id_col="id",
-        compare_col="compare",
+        id="id",
+        compare="compare",
         idents=2,
     )
     run_paired(
         df_values=paired_df_values,
         expected="A C D",
-        id_col="id",
-        compare_col="compare",
+        id="id",
+        compare="compare",
         idents="1:2",
     )
     run_paired(
         df_values=paired_df_values,
         expected="A A NA NA C C D D",
-        id_col="id",
-        compare_col="compare",
+        id="id",
+        compare="compare",
         idents="1:2",
         uniq="FALSE",
     )
