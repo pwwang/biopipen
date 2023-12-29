@@ -75,6 +75,16 @@
 - scrna.SeuratClusterStats: Add `avgheatmap` to plot more elegant heatmap for average gene expressions
 - scrna.SeuratClusterStats: Fix ident not working for dimplots
 - scrna.SeuratClusterStats: Add boxplots for stats
+- utils.mutate_helpers: Change arguments id_col and compare_col to id and compare, respectively
+- utils.mutate_helpers: Fix that subset can't be an expression for expanded family
+- utils.mutate_helpers: Add top to select top entities (e.g clones)
+- scrna.SeuratClusterStats: Fix for hists when x is a factor/character vector
+- scrna.ModuleScoreCalculator: Fix other scores being ignored after diffusion map
+- scrna.SeuratClusterStats: Add cluster_orderby to order clusters for features
+- scrna.SeuratClusterStats: Add na_group to keep NA values in group-by
+- scrna.SeuratClustering: Print less verbosal log
+- scrna.SeuratClusterStats: Allow avgheatmap to plot features other than gene expressions
+- scrna.SeuratClusterStats: Add mutate_helpers.R source file
 
 ## 0.22.8
 
