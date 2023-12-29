@@ -8,6 +8,7 @@ library(tibble)
 library(ggplot2)
 library(ggradar)
 library(slugify)
+library(ggprism)
 
 # input/output
 srtfile = {{in.srtobj | r}}
@@ -19,11 +20,14 @@ mutaters = {{envs.mutaters | r}}
 by = {{envs.by | r}}
 each = {{envs.each | r}}
 order = {{envs.order | r}}
-cluster_col = {{envs.cluster_col | r}}
+ident = {{envs.ident | r}}
 cluster_order = {{envs.cluster_order | r}}
 breaks = {{envs.breaks | r}}
+breakdown = {{envs.breakdown | r}}
+test = {{envs.test | r}}
 direction = {{envs.direction | r}}
 section = {{envs.section | r}}
+bar_devpars = {{envs.bar_devpars | r}}
 devpars = {{envs.devpars | r}}
 cases = {{envs.cases | r}}
 
@@ -36,62 +40,47 @@ meta = srtobj@meta.data
 
 log_info("Mutating meta data if needed ...")
 if (is.list(mutaters) && length(mutaters) > 0) {
-    mutaters = lapply(mutaters, function(x) parse_expr(x))
-    meta = meta %>% mutate(!!!mutaters)
+    mutaters <- lapply(mutaters, function(x) parse_expr(x))
+    meta <- meta %>% mutate(!!!mutaters)
 }
 
 # fill up the cases
 if (length(cases) == 0) {
-    cases[[DEFAULT_CASE]] = list(
+    cases[[DEFAULT_CASE]] <- list(
         by = by,
         each = each,
         order = order,
-        cluster_col = cluster_col,
+        ident = ident,
         cluster_order = cluster_order,
         breaks = breaks,
+        breakdown = breakdown,
+        test = test,
         direction = direction,
         section = section,
+        bar_devpars = bar_devpars,
         devpars = devpars
     )
 } else {
     # Use the values given directly under `envs` as default
     for (key in names(cases)) {
-        if (is.null(cases[[key]]$by)) {
-            cases[[key]]$by = by
-        }
-        if (is.null(cases[[key]]$each)) {
-            cases[[key]]$each = each
-        }
-        if (is.null(cases[[key]]$order)) {
-            cases[[key]]$order = order
-        }
-        if (is.null(cases[[key]]$cluster_col)) {
-            cases[[key]]$cluster_col = cluster_col
-        }
-        if (is.null(cases[[key]]$cluster_order)) {
-            cases[[key]]$cluster_order = cluster_order
-        }
-        if (is.null(cases[[key]]$breaks)) {
-            cases[[key]]$breaks = breaks
-        }
-        if (is.null(cases[[key]]$direction)) {
-            cases[[key]]$direction = direction
-        }
-        if (is.null(cases[[key]]$section)) {
-            cases[[key]]$section = section
-        }
-        if (is.null(cases[[key]]$devpars)) {
-            cases[[key]]$devpars = devpars
-        }
-        if (is.null(cases[[key]]$devpars$width)) {
-            cases[[key]]$devpars$width = devpars$width
-        }
-        if (is.null(cases[[key]]$devpars$height)) {
-            cases[[key]]$devpars$height = devpars$height
-        }
-        if (is.null(cases[[key]]$devpars$res)) {
-            cases[[key]]$devpars$res = devpars$res
-        }
+        cases[[key]]$by <- cases[[key]]$by %||% by
+        cases[[key]]$each <- cases[[key]]$each %||% each
+        cases[[key]]$order <- cases[[key]]$order %||% order
+        cases[[key]]$ident <- cases[[key]]$ident %||% ident
+        cases[[key]]$cluster_order <- cases[[key]]$cluster_order %||% cluster_order
+        cases[[key]]$breaks <- cases[[key]]$breaks %||% breaks
+        cases[[key]]$breakdown <- cases[[key]]$breakdown %||% breakdown
+        cases[[key]]$test <- cases[[key]]$test %||% test
+        cases[[key]]$direction <- cases[[key]]$direction %||% direction
+        cases[[key]]$section <- cases[[key]]$section %||% section
+        cases[[key]]$bar_devpars <- cases[[key]]$bar_devpars %||% bar_devpars
+        cases[[key]]$bar_devpars$res <- cases[[key]]$bar_devpars$res %||% devpars$res
+        cases[[key]]$bar_devpars$width <- cases[[key]]$bar_devpars$width %||% devpars$width
+        cases[[key]]$bar_devpars$height <- cases[[key]]$bar_devpars$height %||% devpars$height
+        cases[[key]]$devpars <- cases[[key]]$devpars %||% devpars
+        cases[[key]]$devpars$width <- cases[[key]]$devpars$width %||% devpars$width
+        cases[[key]]$devpars$height <- cases[[key]]$devpars$height %||% devpars$height
+        cases[[key]]$devpars$res <- cases[[key]]$devpars$res %||% devpars$res
     }
 }
 
@@ -161,20 +150,13 @@ casename_info <- function(casename, create = FALSE) {
     out
 }
 
-run_one_case = function(casename) {
-    info = casename_info(casename, create = TRUE)
-    case = newcases[[casename]]
-    log_info("Running for case: {casename}")
-
-    # Get the counts
-    counts = if (!is.null(case$each)) meta %>% filter(!!sym(case$each) == case$each_value) else meta
-    counts = counts %>%
-        filter(!is.na(!!sym(case$by))) %>%
-        group_by(!!sym(case$cluster_col), !!sym(case$by)) %>%
+do_radarplot <- function(info, case, counts) {
+    rdr_data = counts %>%
+        group_by(!!sym(case$ident), !!sym(case$by)) %>%
         count() %>%
         pivot_wider(
             id_cols = case$by,
-            names_from = !!sym(case$cluster_col),
+            names_from = !!sym(case$ident),
             values_from = n,
             values_fill = 0
         ) %>%
@@ -186,17 +168,17 @@ run_one_case = function(casename) {
 
     # Reorder the clusters if needed
     if (!is.null(case$cluster_order) && length(case$cluster_order) > 0) {
-        counts = counts[, case$cluster_order]
+        rdr_data = rdr_data[, case$cluster_order]
     }
 
     # If clusters are numbers, add a prefix "Cluster"
-    if (all(grepl("^\\d+$", colnames(counts)))) {
-        colnames(counts) = paste0("Cluster", colnames(counts))
+    if (all(grepl("^\\d+$", colnames(rdr_data)))) {
+        colnames(rdr_data) = paste0("Cluster", colnames(rdr_data))
     }
 
     if (!is.null(case$order) && length(case$order) > 0) {
-        counts = counts[case$order, ]
-        if (nrow(counts) == 0) {
+        rdr_data = rdr_data[case$order, ]
+        if (nrow(rdr_data) == 0) {
             stop("No data after reordering. Are items in `order` correct?")
         }
     }
@@ -204,7 +186,7 @@ run_one_case = function(casename) {
     # Save the counts
     counts_file = file.path(info$casedir, "counts.tsv")
     write.table(
-        counts,
+        rdr_data,
         counts_file,
         sep = "\t",
         quote = FALSE,
@@ -213,17 +195,17 @@ run_one_case = function(casename) {
     )
 
     # Calculate the percentage
-    counts = as.matrix(counts)
+    rdr_data = as.matrix(rdr_data)
     if (case$direction == "inter-cluster") {
-        counts = t(t(counts) / rowSums(t(counts)))
+        rdr_data = t(t(rdr_data) / rowSums(t(rdr_data)))
     } else {
-        counts = counts / rowSums(counts)
+        rdr_data = rdr_data / rowSums(rdr_data)
     }
 
     # Save the percentages
     perc_file = file.path(info$casedir, "percentages.tsv")
     write.table(
-        counts,
+        rdr_data,
         perc_file,
         sep = "\t",
         quote = FALSE,
@@ -233,7 +215,7 @@ run_one_case = function(casename) {
 
     # Get the breaks
     breaks = if (is.null(case$breaks) || length(case$breaks) == 0) {
-        auto_breaks(max(counts))
+        auto_breaks(max(rdr_data))
     } else {
         case$breaks
     }
@@ -241,12 +223,12 @@ run_one_case = function(casename) {
     # Plot
     plotfile = file.path(info$casedir, "plot.png")
     p = ggradar(
-        counts %>% as.data.frame() %>% rownames_to_column("group"),
+        rdr_data %>% as.data.frame() %>% rownames_to_column("group"),
         values.radar = paste0(breaks, "%"),
         grid.min = breaks[1] / 100,
         grid.mid = breaks[2] / 100,
         grid.max = breaks[3] / 100,
-        group.colours = pal_biopipen()(nrow(counts))
+        group.colours = pal_biopipen()(nrow(rdr_data))
     )
     png(
         plotfile,
@@ -256,12 +238,115 @@ run_one_case = function(casename) {
     )
     print(p)
     dev.off()
-
-    add_case_report(info)
 }
 
-add_case_report = function(info) {
-    add_report(
+do_barplot_and_tests <- function(info, case, counts) {
+    bardata <- counts %>%
+        group_by(!!sym(case$by), !!sym(case$breakdown), !!sym(case$ident)) %>%
+        summarise(.n = n(), .groups = "drop")
+
+    write.table(
+        bardata,
+        file.path(info$casedir, "breakdown-counts.txt"),
+        sep = "\t",
+        quote = FALSE,
+        col.names = TRUE,
+        row.names = FALSE
+    )
+    if (case$direction == "inter-cluster") {
+        bardata <- bardata %>%
+            group_by(!!sym(case$ident)) %>%
+            mutate(.frac = .n / sum(.n)) %>%
+            ungroup()
+    } else {
+        bardata <- bardata %>%
+            group_by(!!sym(case$by), !!sym(case$breakdown)) %>%
+            mutate(.frac = .n / sum(.n)) %>%
+            ungroup()
+    }
+
+    # Save the percentages
+    write.table(
+        bardata,
+        file.path(info$casedir, "breakdown-percentages.txt"),
+        sep = "\t",
+        quote = FALSE,
+        col.names = TRUE,
+        row.names = FALSE
+    )
+
+    # Reorder the clusters if needed
+    if (!is.null(case$cluster_order) && length(case$cluster_order) > 0) {
+        bardata <- bardata %>%
+            mutate(!!sym(case$ident) := factor(!!sym(case$ident), levels = case$cluster_order))
+    }
+    # Calculate the mean, mean-sd, mean+sd
+    plotdata <- bardata %>%
+        group_by(!!sym(case$by), !!sym(case$ident)) %>%
+        summarise(.mean = mean(.frac), .sd = sd(.frac), .groups = "drop") %>%
+        rowwise() %>%
+        mutate(mean_sd1 = max(.mean - .sd, 0), mean_sd2 = .mean + .sd)
+
+    # Plot the barplot
+    plotfile = file.path(info$casedir, "barplot.png")
+    p = ggplot(plotdata, aes(x = !!sym(case$ident), y = .mean, fill = !!sym(case$by))) +
+        geom_bar(stat = "identity", position = "dodge") +
+        geom_errorbar(
+            aes(ymin = mean_sd1, ymax = mean_sd2),
+            width = 0.4,
+            position = position_dodge(0.9),
+            color = "#333333"
+        ) +
+        theme_prism(axis_text_angle = 90) +
+        scale_fill_biopipen(alpha = .8) +
+        ylab("Fraction of cells")
+
+    png(
+        plotfile,
+        width = case$bar_devpars$width,
+        height = case$bar_devpars$height,
+        res = case$bar_devpars$res
+    )
+    print(p)
+    dev.off()
+
+    # Do the tests in each cluster between groups on .frac
+    bys <- bardata %>% pull(!!sym(case$by)) %>% unique()
+    if (!is.null(case$test) && test != "none") {
+        if (length(bys) < 2) {
+            stop("Cannot do tests with only one group.")
+        }
+
+        pairs <- combn(bys, 2, simplify = FALSE)
+        test_results <- NULL
+        for (pair in pairs) {
+            dat <- bardata %>%
+                filter(!!sym(case$by) %in% pair) %>%
+                select(!!sym(case$by), !!sym(case$ident), .frac) %>%
+                group_by(!!sym(case$ident)) %>%
+                summarise(
+                    comparison = paste0(pair, collapse = " - "),
+                    !!sym(paste0(case$test, "_pval")) := ifelse(
+                        case$test == "wilcox",
+                        wilcox.test(.frac ~ !!sym(case$by))$p.value,
+                        t.test(.frac ~ !!sym(case$by))$p.value
+                    )
+                )
+            test_results <- rbind(test_results, dat)
+        }
+        write.table(
+            test_results,
+            file.path(info$casedir, "tests.txt"),
+            sep = "\t",
+            quote = FALSE,
+            col.names = TRUE,
+            row.names = FALSE
+        )
+    }
+}
+
+add_case_report = function(info, breakdown, test) {
+    report = list(
         list(
             name = "Radar Plot",
             contents = list(
@@ -276,6 +361,7 @@ add_case_report = function(info) {
             contents = list(
                 list(
                     kind = "table",
+                    data = list(index_col = 0),
                     src = file.path(info$casedir, "counts.tsv")
                 )
             )
@@ -285,24 +371,73 @@ add_case_report = function(info) {
             contents = list(
                 list(
                     kind = "table",
+                    data = list(index_col = 0),
                     src = file.path(info$casedir, "percentages.tsv")
                 )
             )
-        ),
-        h1 = ifelse(
-            info$section == "DEFAULT",
-            info$case,
-            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-        ),
-        h2 = ifelse(
-            info$section == "DEFAULT",
-            "#",
-            ifelse(single_section, "#", info$case)
-        ),
-        ui = "tabs"
+        )
     )
+    if (!is.null(breakdown)) {
+        report = c(
+            report,
+            list(list(
+                name = "Barplot",
+                contents = list(
+                    list(
+                        kind = "image",
+                        src = file.path(info$casedir, "barplot.png")
+                    )
+                )
+            ))
+        )
+    }
+    if (!is.null(test) && test != "none") {
+        report = c(
+            report,
+            list(list(
+                name = "Tests",
+                contents = list(
+                    list(
+                        kind = "table",
+                        src = file.path(info$casedir, "tests.txt")
+                    )
+                )
+            ))
+        )
+    }
+    report$h1 = ifelse(
+        info$section == "DEFAULT",
+        info$case,
+        ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
+    )
+    report$h2 = ifelse(
+        info$section == "DEFAULT",
+        "#",
+        ifelse(single_section, "#", info$case)
+    )
+    report$ui = "tabs"
+    do_call(add_report, report)
 }
 
+run_one_case <- function(casename) {
+    info <- casename_info(casename, create = TRUE)
+    case <- newcases[[casename]]
+    log_info("Running for case: {casename}")
+
+    # Get the counts
+    if (!is.null(case$each)) {
+        counts <- meta %>% filter(!!sym(case$each) == case$each_value) %>% drop_na(!!sym(case$by))
+    } else {
+        counts <- meta %>% drop_na(!!sym(case$by))
+    }
+    do_radarplot(info, case, counts)
+
+    if (!is.null(case$breakdown)) {
+        do_barplot_and_tests(info, case, counts)
+    }
+
+    add_case_report(info, case$breakdown, case$test)
+}
 
 casenames = names(newcases)
 sapply(casenames, run_one_case)

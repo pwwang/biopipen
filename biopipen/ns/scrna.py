@@ -1817,13 +1817,26 @@ class RadarPlots(Proc):
             each value in the column.
             If specified, `section` will be ignored, and the case name will
             be used as the section name.
+        breakdown: An additional column with groups to break down the cells
+            distribution in each cluster. For example, if you want to see the
+            distribution of the cells in each cluster in different samples. In
+            this case, you should have multiple values in each `by`. These values
+            won't be plotted in the radar plot, but a barplot will be generated
+            with the mean value of each group and the error bar.
+        test (choice): The test to use to calculate the p values.
+            If there are more than 2 groups in `by`, the p values will be calculated
+            pairwise group by group. Only works when `breakdown` is specified and
+            `by` has 2 groups or more.
+            - wilcox: Wilcoxon rank sum test
+            - t: T test
+            - none: No test will be performed
         order (list): The order of the values in `by`. You can also limit
             (filter) the values we have in `by`. For example, if column `Source`
             has values `Tumor`, `Blood`, `Spleen`, and you only want to plot
             `Tumor` and `Blood`, you can set `order` to `["Tumor", "Blood"]`.
             This will also have `Tumor` as the first item in the legend and `Blood`
             as the second item.
-        cluster_col: The column name of the cluster information.
+        ident: The column name of the cluster information.
         cluster_order (list): The order of the clusters.
             You may also use it to filter the clusters. If not given,
             all clusters will be used.
@@ -1839,6 +1852,10 @@ class RadarPlots(Proc):
         section: If you want to put multiple cases into a same section
             in the report, you can set this option to the name of the section.
             Only used in the report.
+        bar_devpars (ns): The parameters for `png()` for the barplot
+            - res (type=int): The resolution of the plot
+            - height (type=int): The height of the plot
+            - width (type=int): The width of the plot
         devpars (ns): The parameters for `png()`
             - res (type=int): The resolution of the plot
             - height (type=int): The height of the plot
@@ -1846,7 +1863,7 @@ class RadarPlots(Proc):
         cases (type=json): The cases for the multiple radar plots.
             Keys are the names of the cases and values are the arguments for
             the plots (`each`, `by`, `order`, `breaks`, `direction`,
-            `cluster_col`, `cluster_order` and `devpars`).
+            `ident`, `cluster_order` and `devpars`).
             If not cases are given, a default case will be used, with the
             key `DEFAULT`.
             The keys must be valid string as part of the file name.
@@ -1860,11 +1877,18 @@ class RadarPlots(Proc):
         "by": None,
         "each": None,
         "order": None,
-        "cluster_col": "seurat_clusters",
+        "ident": "seurat_clusters",
         "cluster_order": [],
+        "breakdown": None,
+        "test": "wilcox",
         "breaks": [],
         "direction": "intra-cluster",
         "section": "DEFAULT",
+        "bar_devpars": {
+            "res": 100,
+            "width": 1200,
+            "height": 800,
+        },
         "devpars": {
             "res": 100,
             "width": 1200,
