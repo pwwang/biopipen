@@ -544,6 +544,13 @@ class SeuratClusterStats(Proc):
                 (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
             - ident: The column name in metadata to use as the identity.
                 If it is from subclustering (reduction `sub_umap_<ident>` exists), the reduction will be used.
+            - cluster_orderby (type=auto): The order of the clusters to show on the plot.
+                An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
+                The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
+                For example, you can order the clusters by the activation score of
+                the cluster: `desc(mean(ActivationScore, na.rm = TRUE))`, suppose you have a column
+                `ActivationScore` in the metadata.
+                You may also specify the literal order of the clusters by a list of strings.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots. Does not work for `table`.
                 - res (type=int): The resolution of the plots.
@@ -669,6 +676,7 @@ class SeuratClusterStats(Proc):
         "features_defaults": {
             "features": None,
             "ident": "seurat_clusters",
+            "cluster_orderby": None,
             "subset": None,
             "devpars": {"res": 100},
             "plus": None,

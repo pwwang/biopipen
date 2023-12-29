@@ -46,6 +46,7 @@ do_one_features = function(name) {
         "subset",
         "plus",
         "ident",
+        "cluster_orderby",
         "kind"
     )
 
@@ -57,6 +58,20 @@ do_one_features = function(name) {
 
     if (!is.null(case$ident)) {
         case$object = case$object %>% filter(!is.na(!!sym(case$ident)))
+        Idents(case$object) = case$ident
+    }
+    cluster_order_val <- NULL
+    if (!is.null(case$cluster_orderby) && length(case$cluster_orderby) > 1) {
+        case$object@meta.data[[case$ident]] = factor(Idents(case$object), levels = case$cluster_orderby)
+        Idents(case$object) = case$ident
+    } else if (!is.null(case$cluster_orderby)) {
+        cluster_order_df = case$object@meta.data %>%
+            group_by(!!sym(case$ident)) %>%
+            summarise(!!sym(case$cluster_orderby) := !!parse_expr(case$cluster_orderby)) %>%
+            arrange(!!sym(case$cluster_orderby))
+        cluster_order_val = cluster_order_df[[case$cluster_orderby]]
+        clusters = cluster_order_df[[case$ident]] %>% as.character() %>% unique()
+        case$object@meta.data[[case$ident]] = factor(Idents(case$object), levels = clusters)
         Idents(case$object) = case$ident
     }
     n_uidents = length(unique(Idents(case$object)))
