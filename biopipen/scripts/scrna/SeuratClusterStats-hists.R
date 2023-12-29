@@ -10,7 +10,8 @@ do_one_hists <- function(m, case, odir, h1, each = NULL) {
         geom_histogram(
             bins = case$bins,
             fill = "white",
-            color = "#3a9ddc"
+            color = "#3a9ddc",
+            stat = ifelse(is.numeric(m[[case$x]]), "bin", "count")
         ) +
         theme_prism() +
         xlab(case$x) +
