@@ -390,20 +390,20 @@ add_case_report = function(info, breakdown, test) {
                 )
             ))
         )
-    }
-    if (!is.null(test) && test != "none") {
-        report = c(
-            report,
-            list(list(
-                name = "Tests",
-                contents = list(
-                    list(
-                        kind = "table",
-                        src = file.path(info$casedir, "tests.txt")
+        if (!is.null(test) && test != "none") {
+            report = c(
+                report,
+                list(list(
+                    name = "Tests",
+                    contents = list(
+                        list(
+                            kind = "table",
+                            src = file.path(info$casedir, "tests.txt")
+                        )
                     )
-                )
-            ))
-        )
+                ))
+            )
+        }
     }
     report$h1 = ifelse(
         info$section == "DEFAULT",
