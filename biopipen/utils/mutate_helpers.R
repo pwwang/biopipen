@@ -165,6 +165,13 @@ suppressPackageStartupMessages(library(tidyr))
         # remove NA values in ..group column
         drop_na(.group)
 
+    if (is_empty(attr(each, ".Environment"))) {
+        if (as_label(each) == "NULL") {
+            each <- NULL
+        } else {
+            each <- sym(as_name(each))
+        }
+    }
     if (is.null(each)) {
         trans <- trans %>% group_by(!!id, .group)
     } else {
@@ -212,7 +219,7 @@ suppressPackageStartupMessages(library(tidyr))
 
 #' @export
 expanded <- function(
-    df,
+    df = .,
     group.by, # nolint
     idents,
     subset = TRUE,
@@ -233,7 +240,7 @@ expanded <- function(
         df = df,
         group.by = enquo(group.by),
         idents = idents,
-        subset = enquo(subset),
+        subset = enexpr(subset),
         id = enquo(id),
         compare = enquo(compare),
         fun = fun,
@@ -246,7 +253,7 @@ expanded <- function(
 
 #' @export
 collapsed <- function(
-    df,
+    df = .,
     group.by, # nolint
     idents,
     subset = TRUE,
@@ -267,7 +274,7 @@ collapsed <- function(
         df = df,
         group.by = enquo(group.by),
         idents = idents,
-        subset = enquo(subset),
+        subset = enexpr(subset),
         id = enquo(id),
         compare = enquo(compare),
         fun = fun,
@@ -280,7 +287,7 @@ collapsed <- function(
 
 #' @export
 emerged <- function(
-    df,
+    df = .,
     group.by, # nolint
     idents,
     subset = TRUE,
@@ -299,7 +306,7 @@ emerged <- function(
         df = df,
         group.by = enquo(group.by),
         idents = idents,
-        subset = enquo(subset),
+        subset = enexpr(subset),
         id = enquo(id),
         compare = enquo(compare),
         fun = "emerged",
@@ -312,7 +319,7 @@ emerged <- function(
 
 #' @export
 vanished <- function(
-    df,
+    df = .,
     group.by, # nolint
     idents,
     subset = TRUE,
@@ -331,7 +338,7 @@ vanished <- function(
         df = df,
         group.by = enquo(group.by),
         idents = idents,
-        subset = enquo(subset),
+        subset = enexpr(subset),
         id = enquo(id),
         compare = enquo(compare),
         fun = "vanished",
