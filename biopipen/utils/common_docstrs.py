@@ -68,4 +68,27 @@ Those functions take following arguments:
     * `.predicate`: Showing whether the clone is expanded/collapsed/emerged/vanished.
 * `include_emerged`: Whether to include the emerged group for `expanded` (only works for `expanded`). Default is `FALSE`.
 * `include_vanished`: Whether to include the vanished group for `collapsed` (only works for `collapsed`). Default is `FALSE`.
+
+You can also use `top()` to get the top clones (i.e. the clones with the largest size) in each group.
+For example, you can use
+`{"Patient1_Top10_Clones": "top(subset = Patent == 'Patient1', uniq = FALSE)"}`
+to create a new column in metadata named `Patient1_Top10_Clones`.
+The values in this columns for other clones will be `NA`.
+This function takes following arguments:
+* `df`: The metadata data frame. You can use the `.` to refer to it.
+* `id`: The column name in metadata for the group ids (i.e. `CDR3.aa`).
+* `n`: The number of top clones to return. Default is `10`.
+    If n < 1, it will be treated as the percentage of the size of the group.
+    Specify `0` to get all clones.
+* `compare`: Either a (numeric) column name (i.e. `Clones`) in metadata to compare between groups, or `.n` to compare the number of cells in each group.
+    If numeric column is given, the values should be the same for all cells in the same group.
+    This will not be checked (only the first value is used).
+    It is helpful to use `Clones` to use the raw clone size from TCR data, in case the cells are not completely mapped to RNA data.
+    Also if you have `subset` set or `NA`s in `group.by` column, you should use `.n` to compare the number of cells in each group.
+* `subset`: An expression to subset the cells, will be passed to `dplyr::filter()`. Default is `TRUE` (no filtering).
+* `each`: A column name (without quotes) in metadata to split the cells.
+    Each comparison will be done for each value in this column (typically each patient or subject).
+* `uniq`: Whether to return unique ids or not. Default is `TRUE`. If `FALSE`, you can mutate the meta data frame with the returned ids. For example, `df |> mutate(expanded = expanded(...))`.
+* `debug`: Return the data frame with intermediate columns instead of the ids. Default is `FALSE`.
+* `with_ties`: Whether to include ties (i.e. clones with the same size as the last clone) or not. Default is `FALSE`.
 """

@@ -449,3 +449,133 @@ paired <- function(
         return(out)
     }
 }
+
+#' @export
+#' @rdname Get top entities by size of group
+#' @param df The data frame. Use `.` if the function is called in a dplyr pipe.
+#' @param id The column name in `df` for the groups.
+#' @param compare The column name in `df` to compare the values for each group.
+#'   It could be either a numeric column or `.n` to compare the number of
+#'   entities in each group. If a column is passed, the values in the column
+#'   must be numeric and the same in each group. This won't be checked.
+#' @param n The number of top entities to return. if `n` < 1, it will be
+#'  regarded as the percentage of the total number of entities in each group
+#'  (after subsetting or each applied).
+#'  Specify 0 to return all entities.
+#' @param subset An expression to subset the entities, will be passed to
+#'   `dplyr::filter()`. Default is `TRUE` (no filtering).
+#' @param with_ties Whether to return all entities with the same size as the
+#'  last entity in the top list. Default is `FALSE`.
+#' @param each A column name (without quotes) in metadata to split the cells.
+#' @param debug Return the transformed data frame with counts and predicates
+#' @param uniq Whether to return unique ids or not. Default is `TRUE`.
+#'   If `FALSE`, you can mutate the meta data frame with the returned ids.
+top <- function(
+    df = .,
+    id = CDR3.aa,
+    n = 10,
+    compare = .n,
+    subset = TRUE,
+    with_ties = FALSE,
+    each = NULL,
+    debug = FALSE,
+    uniq = TRUE
+) {
+    lbl <- as_label(enquo(df))
+    if (length(lbl) == 1 && lbl == ".") {
+        df <- across(everything())
+    }
+
+    id <- enquo(id)
+    compare <- enquo(compare)
+    if (is.character(subset)) {
+        subset <- parse_expr(subset)
+    } else {
+        subset <- enexpr(subset)
+    }
+
+    each <- tryCatch(enquo(each), error = function(e) NULL)
+    if (is_empty(attr(id, ".Environment"))) {
+        id <- sym(as_name(id))
+    }
+    if (is_empty(attr(compare, ".Environment"))) {
+        compare <- sym(as_name(compare))
+    }
+    if (!as_name(id) %in% colnames(df)) {
+        stop(paste0(
+            '`id` must be a column name in df. Got "',
+            as_name(id),
+            '"'
+        ))
+    }
+    if (!as_name(compare) %in% colnames(df) && as_name(compare) != '.n') {
+        stop(paste0(
+            '`compare` must be a column name in df. Got "',
+            as_name(compare),
+            '"'
+        ))
+    }
+    if (is_empty(attr(each, ".Environment"))) {
+        if (as_label(each) == "NULL") {
+            each <- NULL
+        } else {
+            each <- sym(as_name(each))
+        }
+    }
+    if (!is.null(each) && !as_name(each) %in% colnames(df)) {
+        stop(paste0(
+            '`each` must be a column name in df. Got "',
+            as_name(each),
+            '"'
+        ))
+    }
+
+    subdf <- df %>% dplyr::filter(!!subset) %>% tidyr::drop_na(!!id)
+
+    handle_one_each <- function(d) {
+        if (!is.null(each)) {
+            d <- d %>% group_by(!!each, !!id)
+        } else {
+            d <- d %>% group_by(!!id)
+        }
+        d <- d %>%
+            dplyr::summarise(.n = dplyr::n(), .groups = "drop") %>%
+            dplyr::arrange(dplyr::desc(!!compare))
+
+        if (n > 0 && n < 1) {
+            o <- d %>% dplyr::slice_max(prop = n, order_by = !!compare, with_ties = with_ties)
+        } else if (n >= 1) {
+            o <- d %>% dplyr::slice_max(n = n, order_by = !!compare, with_ties = with_ties)
+        } else {
+            o <- d
+        }
+        d %>% dplyr::mutate(.predicate = !!id %in% dplyr::pull(o, !!id))
+    }
+
+    if (is.null(each)) {
+        out <- handle_one_each(subdf)
+    } else {
+        out <- subdf %>% dplyr::group_by(!!each) %>%
+            dplyr::group_split() %>%
+            purrr::map(handle_one_each) %>%
+            dplyr::bind_rows()
+    }
+
+    if (isTRUE(debug)) {
+        return(out)
+    }
+
+    uniq_ids <- out %>% dplyr::filter(.predicate) %>%
+        dplyr::pull(!!id) %>% as.vector() %>% unique()
+    if (isTRUE(uniq)) {
+        return(uniq_ids)
+    }
+
+    df <- df %>% left_join(
+        out,
+        by = if(is.null(each)) as_name(id) else c(as_name(each), as_name(id)))
+
+    df %>% dplyr::mutate(
+        .out = if_else(.predicate & !!subset, !!id, NA)
+    ) %>% dplyr::pull(.out)
+}
