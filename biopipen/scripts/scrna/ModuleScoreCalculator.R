@@ -76,7 +76,7 @@ for (key in names(modules)) {
             col.name = colnames(sobj[[key]]@cell.embeddings)
         )
 
-        return()
+        next
     }
 
     module$object <- sobj
