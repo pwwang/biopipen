@@ -3,6 +3,7 @@
 ## 0.23.0
 
 - deps: bump pipen to 0.12.5
+- deps: bump pipen-report to 0.16.3
 - deps: Update seurat to 5.0.1 in test env file
 - chore: Add `/tmp` to .gitignore
 - scrna.MarkersFinder: Add `envs.use_presto` to use presto to speed up finding markers
@@ -22,6 +23,7 @@
 - scrna.SeuratClustering: Make the cluster labels start with "c1" instead of "0"
 - scrna.SeuratClustering: Default reduction of `RunUMAP` and `FindNeighbors` to pca
 - scrna.SeuratClustering: Fix test
+- scrna.SeuratClustering: Print less verbosal log
 - scrna.SeuratClusterStats: Add `ngenes` to plot the number of genes expressed
 - scrna.SeuratClusterStats: Add barplot for `features` and allow aggregation of features
 - scrna.SeuratClusterStats: Fix matching kind for plots of features
@@ -74,17 +76,16 @@
 - scrna.SeuratSubClustering: Fix original reduction being poluted by subclustering
 - scrna.SeuratClusterStats: Add `avgheatmap` to plot more elegant heatmap for average gene expressions
 - scrna.SeuratClusterStats: Fix ident not working for dimplots
-- scrna.SeuratClusterStats: Add boxplots for stats
+- scrna.SeuratClusterStats: Fix for hists when x is a factor/character vector
+- scrna.SeuratClusterStats: Add cluster_orderby to order clusters for features
+- scrna.SeuratClusterStats: Add na_group to keep NA values in group-by
+- scrna.SeuratClusterStats: Allow avgheatmap to plot features other than gene expressions
+- scrna.SeuratClusterStats: Add mutate_helpers.R source file
+- scrna.SeuratClusterStats: Fix data binding for avgheatmap in features
 - utils.mutate_helpers: Change arguments id_col and compare_col to id and compare, respectively
 - utils.mutate_helpers: Fix that subset can't be an expression for expanded family
 - utils.mutate_helpers: Add top to select top entities (e.g clones)
-- scrna.SeuratClusterStats: Fix for hists when x is a factor/character vector
-- scrna.ModuleScoreCalculator: Fix other scores being ignored after diffusion map
-- scrna.SeuratClusterStats: Add cluster_orderby to order clusters for features
-- scrna.SeuratClusterStats: Add na_group to keep NA values in group-by
-- scrna.SeuratClustering: Print less verbosal log
-- scrna.SeuratClusterStats: Allow avgheatmap to plot features other than gene expressions
-- scrna.SeuratClusterStats: Add mutate_helpers.R source file
+- scrna.RadarPlots: Add `breakdown` and `test` to break down the cell distribution and run statistic test on the fractions
 
 ## 0.22.8
 
