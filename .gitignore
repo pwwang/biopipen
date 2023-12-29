@@ -124,3 +124,4 @@ local_tests/
 /*.config.toml
 
 docker/*/images
+/tmp

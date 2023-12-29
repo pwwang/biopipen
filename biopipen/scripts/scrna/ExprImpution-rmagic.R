@@ -14,16 +14,17 @@ Sys.setenv(RETICULATE_PYTHON = Sys.which(python))
 library(Rmagic)
 library(Seurat)
 
-infile = {{in.infile | r}}
-outfile = {{out.outfile | r}}
+infile <- {{in.infile | r}}
+outfile <- {{out.outfile | r}}
 
-sobj = readRDS(infile)
-DefaultAssay(sobj) <- "RNA"
+sobj <- readRDS(infile)
+assay <- DefaultAssay(sobj)
 
-sobj = magic(sobj)
-sobj = RenameAssays(sobj, RNA = "UNIMPUTED_RNA", MAGIC_RNA = "RNA")
+sobj <- magic(sobj)
+sobj <- RenameAssays(sobj, assay.name = assay, new.assay.name = "RAW")
+sobj <- RenameAssays(sobj, assay.name = "MAGIC_RNA", new.assay.name = assay)
 
-DefaultAssay(sobj) <- "RNA"
+DefaultAssay(sobj) <- assay
 
 attr(sobj, "impute") = "rmagic"
 saveRDS(sobj, outfile)

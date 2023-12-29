@@ -42,9 +42,11 @@ pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
+
 do_one_comparison <- function(
     obj,
     compname,
+    genes,
     case,
     control,
     groupdir,
@@ -78,8 +80,8 @@ do_one_comparison <- function(
         )
         return (NULL)
     }
-    exprs_case = GetAssayData(case_obj)
-    exprs_control = GetAssayData(control_obj)
+    exprs_case = GetAssayData(case_obj)[genes, , drop = FALSE]
+    exprs_control = GetAssayData(control_obj)[genes, , drop = FALSE]
 
     odir = file.path(groupdir, paste0(subset_prefix, compname))
     dir.create(odir, showWarnings = FALSE)
@@ -129,7 +131,7 @@ do_one_group <- function(group) {
 
     genes = intersect(metabolics, rownames(sobj))
     group_code = paste0(
-        "subset(sobj, subset = ", grouping, " == '", group, "', features = genes)"
+        "subset(sobj, subset = ", grouping, " == '", group, "')"
     )
     obj = eval(parse(text = group_code))
     groupname = paste0(grouping_prefix, group)
@@ -147,6 +149,7 @@ do_one_group <- function(group) {
                 do_one_comparison(
                     obj,
                     compname,
+                    genes,
                     sci[[compname]][1],
                     sci[[compname]][2],
                     groupdir,

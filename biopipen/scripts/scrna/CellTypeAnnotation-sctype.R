@@ -20,7 +20,7 @@ sobj = readRDS(sobjfile)
 print("- Preparing gene sets...")
 gs_list = gene_sets_prepare(db, tissue)
 
-scRNAseqData = GetAssayData(sobj, slot = "scale.data")
+scRNAseqData = GetAssayData(sobj, layer = "scale.data")
 idents = as.character(unique(Idents(sobj)))
 idents = idents[order(as.numeric(idents))]
 

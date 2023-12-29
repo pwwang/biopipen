@@ -35,6 +35,7 @@ assay <- {{ envs.assay | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
 volcano_genes <- {{ envs.volcano_genes | r }}
 subset <- {{ envs.subset | r }}
+use_presto <- {{ envs.use_presto | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 dotplot <- {{ envs.dotplot | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
@@ -74,6 +75,7 @@ if (is.null(cases) || length(cases) == 0) {
             dbs = dbs,
             assay = assay,
             subset = subset,
+            use_presto = use_presto,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
             dotplot = dotplot,
@@ -93,6 +95,7 @@ if (is.null(cases) || length(cases) == 0) {
             dbs = dbs,
             assay = assay,
             subset = subset,
+            use_presto = use_presto,
             sigmarkers = sigmarkers,
             volcano_genes = volcano_genes,
             dotplot = dotplot,
@@ -347,7 +350,7 @@ do_dotplot <- function(info, siggenes, dotplot, args) {
     dotplot$group.by <- args$group.by
     dotplot_width = ifelse(
         is.null(dotplot_devpars$width),
-        if (length(siggenes) <= 20) length(siggenes) * 60 else length(siggenes) * 30,
+        if (length(siggenes) <= 20) length(siggenes) * 60 else min(1000, length(siggenes)) * 30,
         dotplot_devpars$width
     )
     dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
@@ -464,42 +467,107 @@ add_case_report <- function(info, sigmarkers, siggenes) {
 do_case_findall <- function(casename) {
     log_info("- Using FindAllMarkers for case: {casename}...")
 
-    case = cases[[casename]]
-    args <- case$rest
-    args$group.by <- case$group.by
-    if (is.null(args$logfc.threshold)) {
-        args$locfc.threshold <- 0
-    }
-    if (is.null(args$min.cells.group)) {
-        args$min.cells.group <- 1
-    }
-    if (is.null(args$min.cells.feature)) {
-        args$min.cells.feature <- 1
-    }
-    if (is.null(args$min.pct)) {
-        args$min.pct <- 0
-    }
-    if (!is.null(case$subset)) {
-        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
-    } else {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
-    }
-    Idents(args$object) <- case$group.by
-    markers <- tryCatch({
-        do_call(FindAllMarkers, args)
-        # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
-    }, error = function(e) {
-        log_warn(e$message)
-        data.frame(
-            gene = character(),
-            p_val = numeric(),
-            avg_log2FC = numeric(),
-            pct.1 = numeric(),
-            pct.2 = numeric(),
-            p_val_adj=numeric(),
-            cluster = character()
+    case <- cases[[casename]]
+    if (case$use_presto) {
+        log_info("- Using presto::wilcoxauc for case: {casename}...")
+        args = list(
+            object = if (!is.null(case$subset)) {
+                srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+            } else {
+                srtobj %>% filter(!is.na(!!sym(case$group.by)))
+            },
+            group.by = case$group.by,
+            ident.1 = case$ident.1,
+            ident.2 = case$ident.2
         )
-    })
+        markers <- tryCatch({
+            # FindAllMarkers:
+            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
+            # wilcoxauc:
+            # feature, group, avgExpr, logFC, statistic, auc, pval, padj, pct_in, pct_out
+            presto::wilcoxauc(
+                args$object,
+                group_by = case$group.by,
+                seurat_assay = case$assay
+            ) %>% select(
+                gene = feature,
+                p_val = pval,
+                avg_log2FC = logFC,
+                pct.1 = pct_in,
+                pct.2 = pct_out,
+                p_val_adj = padj,
+                cluster = group
+            )
+        }, error = function(e) {
+            log_warn(e$message)
+            data.frame(
+                gene = character(),
+                p_val = numeric(),
+                avg_log2FC = numeric(),
+                pct.1 = numeric(),
+                pct.2 = numeric(),
+                p_val_adj=numeric(),
+                cluster = character()
+            )
+        })
+    } else {
+        args <- case$rest
+        args$group.by <- case$group.by
+        if (is.null(args$logfc.threshold)) {
+            args$locfc.threshold <- 0
+        }
+        if (is.null(args$min.cells.group)) {
+            args$min.cells.group <- 1
+        }
+        if (is.null(args$min.cells.feature)) {
+            args$min.cells.feature <- 1
+        }
+        if (is.null(args$min.pct)) {
+            args$min.pct <- 0
+        }
+        if (!is.null(case$subset)) {
+            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+        } else {
+            args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        }
+        Idents(args$object) <- case$group.by
+
+        markers <- tryCatch({
+            do_call(FindAllMarkers, args)
+            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
+        }, error = function(e) {
+            log_warn(e$message)
+
+            data.frame(
+                gene = character(),
+                p_val = numeric(),
+                avg_log2FC = numeric(),
+                pct.1 = numeric(),
+                pct.2 = numeric(),
+                p_val_adj=numeric(),
+                cluster = character()
+            )
+        })
+
+        if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
+            log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
+            args$recorrect_umi <- FALSE
+            markers <- tryCatch({
+                do_call(FindAllMarkers, args)
+            }, error = function(e) {
+                log_warn(e$message)
+                data.frame(
+                    gene = character(),
+                    p_val = numeric(),
+                    avg_log2FC = numeric(),
+                    pct.1 = numeric(),
+                    pct.2 = numeric(),
+                    p_val_adj=numeric(),
+                    cluster = character()
+                )
+            })
+        }
+    }
 
     if (is.null(case$dotplot$assay)) {
         case$dotplot$assay <- assay
@@ -544,40 +612,106 @@ do_case <- function(casename) {
     # dbs
     # sigmarkers
     # rest
-    args <- case$rest
-    args$group.by <- case$group.by
-    args$ident.1 <- case$ident.1
-    args$ident.2 <- case$ident.2
-    if (is.null(args$logfc.threshold)) {
-        args$locfc.threshold <- 0
-    }
-    if (is.null(args$min.cells.group)) {
-        args$min.cells.group <- 1
-    }
-    if (is.null(args$min.cells.feature)) {
-        args$min.cells.feature <- 1
-    }
-    if (is.null(args$min.pct)) {
-        args$min.pct <- 0
-    }
-    if (!is.null(case$subset)) {
-        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & filter(!is.na(!!sym(case$group.by))))
+    if (case$use_presto) {
+        log_info("- Using presto::wilcoxauc for case: {casename}...")
+        args = list()
+        markers <- tryCatch({
+            if (!is.null(case$subset)) {
+                args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+            } else {
+                args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+            }
+            if (!is.null(case$ident.2)) {
+                args$object <- args$object %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
+            }
+            args$group.by <- case$group.by
+            args$ident.1 <- case$ident.1
+            args$ident.2 <- case$ident.2
+            # FindMarkers:
+            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj
+            # wilcoxauc:
+            # feature, group, avgExpr, logFC, statistic, auc, pval, padj, pct_in, pct_out
+            presto::wilcoxauc(
+                args$object,
+                group_by = case$group.by,
+                seurat_assay = case$assay
+            ) %>%
+            filter(group == case$ident.1) %>%
+            select(
+                gene = feature,
+                p_val = pval,
+                avg_log2FC = logFC,
+                pct.1 = pct_in,
+                pct.2 = pct_out,
+                p_val_adj = padj
+            )
+        }, error = function(e) {
+            log_warn(e$message)
+            data.frame(
+                gene = character(),
+                p_val = numeric(),
+                avg_log2FC = numeric(),
+                pct.1 = numeric(),
+                pct.2 = numeric(),
+                p_val_adj=numeric()
+            )
+        })
     } else {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        args <- case$rest
+        args$group.by <- case$group.by
+        args$ident.1 <- case$ident.1
+        args$ident.2 <- case$ident.2
+        if (is.null(args$logfc.threshold)) {
+            args$locfc.threshold <- 0
+        }
+        if (is.null(args$min.cells.group)) {
+            args$min.cells.group <- 1
+        }
+        if (is.null(args$min.cells.feature)) {
+            args$min.cells.feature <- 1
+        }
+        if (is.null(args$min.pct)) {
+            args$min.pct <- 0
+        }
+        if (!is.null(case$subset)) {
+            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+        } else {
+            args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        }
+
+        markers <- tryCatch({
+            do_call(FindMarkers, args) %>% rownames_to_column("gene")
+        }, error = function(e) {
+            log_warn(e$message)
+            data.frame(
+                gene = character(),
+                p_val = numeric(),
+                avg_log2FC = numeric(),
+                pct.1 = numeric(),
+                pct.2 = numeric(),
+                p_val_adj = numeric()
+            )
+        })
+
+        if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
+            log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
+            args$recorrect_umi <- FALSE
+            markers <- tryCatch({
+                do_call(FindMarkers, args) %>% rownames_to_column("gene")
+            }, error = function(e) {
+                log_warn(e$message)
+                data.frame(
+                    gene = character(),
+                    p_val = numeric(),
+                    avg_log2FC = numeric(),
+                    pct.1 = numeric(),
+                    pct.2 = numeric(),
+                    p_val_adj=numeric(),
+                    cluster = character()
+                )
+            })
+        }
     }
-    markers <- tryCatch({
-        do_call(FindMarkers, args) %>% rownames_to_column("gene")
-    }, error = function(e) {
-        log_warn(e$message)
-        data.frame(
-            gene = character(),
-            p_val = numeric(),
-            avg_log2FC = numeric(),
-            pct.1 = numeric(),
-            pct.2 = numeric(),
-            p_val_adj=numeric()
-        )
-    })
 
     siggenes <- do_enrich(info, markers, case$sigmarkers, case$volcano_genes)
 

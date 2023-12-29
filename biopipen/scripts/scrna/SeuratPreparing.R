@@ -10,10 +10,11 @@ library(slugify)
 metafile = {{in.metafile | quote}}
 rdsfile = {{out.rdsfile | quote}}
 joboutdir = {{job.outdir | quote}}
-envs = {{envs | r}}
+envs = {{envs | r: todot = "-", skip = 1}}
 
 set.seed(8525)
 options(future.globals.maxSize = 80000 * 1024^2)
+options(Seurat.object.assay.version = "v5")
 plan(strategy = "multicore", workers = envs$ncores)
 
 add_report(
@@ -73,7 +74,7 @@ load_sample = function(sample) {
     log_info("- Loading sample: {sample} ...")
     mdata = as.data.frame(metadata)[metadata$Sample == sample, , drop=TRUE]
     path = as.character(mdata$RNAData)
-    if (is.na(path) || !is.character(path) || nchar(path) == 0) {
+    if (is.na(path) || !is.character(path) || nchar(path) == 0 || path == "NA") {
         warning(paste0("No path found for sample: ", sample))
         return (NULL)
     }
@@ -96,7 +97,7 @@ load_sample = function(sample) {
     if ("Gene Expression" %in% names(exprs)) {
         exprs = exprs[["Gene Expression"]]
     }
-    obj = CreateSeuratObject(counts=exprs, project=sample)
+    obj <- CreateSeuratObject(exprs, project=sample)
     # filter the cells that don't have any gene expressions
     cell_exprs = colSums(obj@assays$RNA)
     obj = subset(obj, cells = names(cell_exprs[cell_exprs > 0]))
@@ -244,8 +245,23 @@ sobj$.QC = NULL
 
 log_info("Filtering genes ...")
 if (is.list(envs$gene_qc)) {
-    if ("min_cells" %in% names(envs$gene_qc)) {
-        genes = rownames(sobj)[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
+    genes <- rownames(sobj)
+    filtered <- FALSE
+    if (!is.null(envs$gene_qc$min_cells) && envs$gene_qc$min_cells > 0) {
+        genes = genes[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
+        filtered <- TRUE
+    }
+    excludes <- envs$gene_qc$excludes
+    if (!is.null(excludes)) {
+        if (length(excludes) == 1) {
+            excludes <- trimws(unlist(strsplit(excludes, ",")))
+        }
+        for (ex in excludes) {
+            genes <- genes[!grepl(ex, genes)]
+        }
+        filtered <- TRUE
+    }
+    if (filtered) {
         sobj = subset(sobj, features = genes)
     }
 }
@@ -276,6 +292,72 @@ add_report(
     h1 = "Filters and QC"
 )
 
+log_info("Perform integration ...")
+# Not joined yet
+# sobj[["RNA"]] <- split(sobj[["RNA"]], f = sobj$Sample)
+if (envs$use_sct) {
+    log_info("- Running SCTransform ...")
+    SCTransformArgs <- envs$SCTransform
+    SCTransformArgs$object <- sobj
+    sobj <- do_call(SCTransform, SCTransformArgs)
+    # Default is to use the SCT assay
+} else {
+    log_info("- Running NormalizeData ...")
+    NormalizeDataArgs <- envs$NormalizeData
+    NormalizeDataArgs$object <- sobj
+    sobj <- do_call(NormalizeData, NormalizeDataArgs)
+
+    log_info("- Running FindVariableFeatures ...")
+    FindVariableFeaturesArgs <- envs$FindVariableFeatures
+    FindVariableFeaturesArgs$object <- sobj
+    sobj <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
+
+    log_info("- Running ScaleData ...")
+    ScaleDataArgs <- envs$ScaleData
+    ScaleDataArgs$object <- sobj
+    sobj <- do_call(ScaleData, ScaleDataArgs)
+}
+
+log_info("- Running RunPCA ...")
+RunPCAArgs <- envs$RunPCA
+RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(sobj) - 1) }
+RunPCAArgs$object <- sobj
+sobj <- do_call(RunPCA, RunPCAArgs)
+
+if (!envs$no_integration) {
+    log_info("- Running IntegrateLayers ...")
+    IntegrateLayersArgs <- envs$IntegrateLayers
+    IntegrateLayersArgs$object <- sobj
+    method <- IntegrateLayersArgs$method
+    if (method %in% c("CCA", "cca")) { method <- "CCAIntegration" } else
+    if (method %in% c("RPCA", "rpca")) { method <- "RPCAIntegration" } else
+    if (method %in% c("Harmony", "harmony")) { method <- "HarmonyIntegration" } else
+    if (method %in% c("FastMNN", "fastmnn")) { method <- "FastMNNIntegration" } else
+    if (method %in% c("scVI", "scvi")) { method <- "scVIIntegration" } else
+    { stop(paste0("Unknown integration method: ", method)) }
+    if (envs$use_sct && is.null(IntegrateLayersArgs$normalization.method)) {
+        IntegrateLayersArgs$normalization.method <- "SCT"
+    }
+    IntegrateLayersArgs$method <- eval(parse(text = method))
+    new_reductions <- list(
+        "CCAIntegration" = "integrated.cca",
+        "RPCAIntegration" = "integrated.rpca",
+        "HarmonyIntegration" = "harmony",
+        "FastMNNIntegration" = "integration.mnn",
+        "scVIIntegration" = "integrated.scvi"
+    )
+    if (is.null(IntegrateLayersArgs$new.reduction)) {
+        IntegrateLayersArgs$new.reduction <- new_reductions[[method]]
+    }
+    sobj <- do_call(IntegrateLayers, IntegrateLayersArgs)
+    # Save it for dimension reduction plots
+    sobj@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
+}
+
+if (!envs$use_sct) {
+    log_info("- Joining layers ...")
+    sobj <- JoinLayers(sobj)
+}
 
 log_info("Saving filtered seurat object ...")
 saveRDS(sobj, rdsfile)

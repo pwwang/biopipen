@@ -6,6 +6,6 @@ outdir = {{out.outdir | r}}
 version = {{envs.version | r}}
 
 srtobj = readRDS(srtobjfile)
-counts = GetAssayData(object = srtobj, slot = "counts")
+counts = GetAssayData(object = srtobj, layer = "counts")
 
 write10xCounts(outdir, counts, version = version, overwrite = TRUE)

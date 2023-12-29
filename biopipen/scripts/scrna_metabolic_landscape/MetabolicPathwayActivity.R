@@ -43,7 +43,6 @@ pathways <- gmt_pathways(gmtfile)
 pathway_names <- names(pathways)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
-DefaultAssay(sobj) <- "RNA"
 
 ## calculate how many pathways of one gene involved.
 num_of_pathways <- function(gmtfile, overlapgenes) {
@@ -124,24 +123,28 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         genes_comm <- intersect(genes_comm, genes_expressed)
         if (length(genes_comm) < 5) next
 
-        pathway_metabolic_obj <- subset(subset_obj, features = genes_comm)
-        mean_exp_eachCellType <- AverageExpression(pathway_metabolic_obj)$RNA
+        # Errored if default assay is SCT
+        # Issue with Seurat?
+        # pathway_metabolic_obj <- subset(subset_obj, features = genes_comm)
+        assay <- DefaultAssay(subset_obj)
+        mean_exp_eachCellType <- AverageExpression(subset_obj, features = genes_comm, assays = assay)[[assay]]
 
         # remove genes which are zeros in any celltype to avoid extreme ratio value
         keep <- rownames(mean_exp_eachCellType)[rowAlls(mean_exp_eachCellType > 0.001, useNames = F)]
         if (length(keep) < 3) next
 
         # using the loweset value to replace zeros for avoiding extreme ratio value
-        pathway_metabolic_obj <- subset(pathway_metabolic_obj, features = keep)
-        assay_data = GetAssayData(pathway_metabolic_obj)
+        # pathway_metabolic_obj <- subset(subset_obj, features = keep)
+        assay_data = GetAssayData(subset_obj, assay = assay, layer = "data")[keep, , drop = F]
         assay_data <- t(apply(assay_data, 1, function(x) {
             x[x <= 0] <- min(x[x > 0])
             x
         }))
-        pathway_metabolic_obj <- SetAssayData(pathway_metabolic_obj, new.data = assay_data)
+        pathway_metabolic_obj <- CreateSeuratObject(CreateAssayObject(data = assay_data), assay = assay)
+        Idents(pathway_metabolic_obj) <- Idents(subset_obj)
         pathway_number_weight <- 1 / gene_pathway_number[keep, ]
         #
-        mean_exp_eachCellType <- t(AverageExpression(pathway_metabolic_obj)$RNA)
+        mean_exp_eachCellType <- t(AverageExpression(pathway_metabolic_obj, assays = assay)[[assay]])
         ratio_exp_eachCellType <- t(mean_exp_eachCellType) / colMeans(mean_exp_eachCellType)
         # exclude the extreme ratios
         col_quantile <- apply(ratio_exp_eachCellType, 2, function(x) quantile(x, na.rm = T))
@@ -158,7 +161,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         keep <- names(outliers)[!outliers]
         pathway_metabolic_obj <- subset(pathway_metabolic_obj, features = keep)
         pathway_number_weight <- 1 / gene_pathway_number[keep, ]
-        mean_exp_eachCellType <- t(AverageExpression(pathway_metabolic_obj)$RNA)
+        mean_exp_eachCellType <- t(AverageExpression(pathway_metabolic_obj, assays = assay)[[assay]])
         ratio_exp_eachCellType <- t(mean_exp_eachCellType) / colMeans(mean_exp_eachCellType)
         mean_exp_pathway <- apply(ratio_exp_eachCellType, 2, function(x) weighted.mean(x, pathway_number_weight / sum(pathway_number_weight)))
         mean_expression_shuffle[p, ] <- mean_exp_pathway[cell_types]

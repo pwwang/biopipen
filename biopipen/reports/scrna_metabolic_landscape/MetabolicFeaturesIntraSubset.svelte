@@ -3,7 +3,7 @@
 
 <script>
   import { Image, DataTable, Descr } from "$libs";
-  import { Tabs, Tab, TabContent, Accordion, AccordionItem } from "$ccs";
+  import { Tabs, Tab, TabContent, Accordion, AccordionItem, InlineNotification } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=2) -%}

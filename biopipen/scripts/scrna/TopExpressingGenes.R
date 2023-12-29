@@ -195,10 +195,19 @@ do_case <- function(casename) {
     info <- casename_info(casename, create = TRUE)
 
     log_info("  Calculating average expression ...")
+    assay <- DefaultAssay(srtobj)
     avgexpr <- AverageExpression(
         srtobj,
-        group.by = case$group.by
-    )$RNA[, case$ident, drop = FALSE]
+        group.by = case$group.by,
+        assays = assay
+    )[[assay]]
+    # https://github.com/satijalab/seurat/issues/7893
+    # Set the colnames to unqiue(srtobj@meta.data[[case$group_by]]) ?
+    # How about the order?
+    if (!case$ident %in% colnames(avgexpr) && grepl("_", case$ident)) {
+        colnames(avgexpr) <- gsub("-", "_", colnames(avgexpr))
+    }
+    avgexpr <- avgexpr[, case$ident, drop = FALSE]
     avgexpr <- avgexpr[order(-avgexpr), , drop = FALSE]
 
     do_enrich(avgexpr, info$casedir)

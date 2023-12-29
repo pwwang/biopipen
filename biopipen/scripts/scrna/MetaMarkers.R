@@ -152,13 +152,11 @@ do_enrich <- function(info, markers, sig) {
     log_info("  Running enrichment for case: {info$casename}")
     if (nrow(markers) == 0) {
         msg <- paste0("No markers found for case: ", info$casename)
-        log_warn("  {msg}")
         return(msg)
     }
     markers_sig <- markers %>% filter(!!parse_expr(sig))
     if (nrow(markers_sig) == 0) {
         msg <- paste0("No significant markers found for case: ", info$casename)
-        log_warn("  {msg}")
         return(msg)
     }
     write.table(
@@ -172,7 +170,6 @@ do_enrich <- function(info, markers, sig) {
 
     if (nrow(markers_sig) < 5) {
         msg <- paste0("Too few significant markers found for case: ", info$casename)
-        log_warn(msg)
         return(msg)
     }
 
@@ -204,46 +201,73 @@ do_case <- function(casename) {
     info <- casename_info(casename, create = TRUE)
     case <- cases[[casename]]
 
-    sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
-    if (!is.null(case$subset)) {
-        sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)), !!parse_expr(case$subset))
-    }
-    df <- GetAssayData(sobj, slot = "data", assay = "RNA")
-    genes <- rownames(df)
-    # rows: cells, cols: genes
-    df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
-    colnames(df)[ncol(df)] <- "GROUP"
-
-    log_info("  Running tests for case...")
-    test_result <- mclapply(genes, function(gene) {
-        fm <- as.formula(paste(bQuote(gene), "~ GROUP"))
-        res <- tryCatch({
-            if (case$method == "anova") {
-                r <- summary(aov(fm, data = df))[[1]]
-                data.frame(
-                    statistic = r[1, "F value"],
-                    p.value = r[1, "Pr(>F)"],
-                    sumsq = r[1, "Sum Sq"],
-                    meansq = r[1, "Mean Sq"]
-                )
-            } else {
-                r <- kruskal.test(fm, data = df)
-                data.frame(statistic = r$statistic, p.value = r$p.value)
-            }
-        }, error = function(e) NULL)
-        if (is.null(res)) {
-            return(NULL)
+    if (sum(!is.na(srtobj@meta.data[[case$group_by]])) == 0) {
+        msg = "Not enough cells to run tests."
+    } else {
+        sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
+        if (!is.null(case$subset)) {
+            sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)), !!parse_expr(case$subset))
         }
-        res$gene <- gene
-        res$method <- case$method
-        rownames(res) <- NULL
-        res
-    }, mc.cores = ncores)
-    markers <- do_call(rbind, test_result)
-    markers$p_adjust <- p.adjust(markers$p.value, method = case$p_adjust)
-    markers <- markers %>% arrange(p_adjust)
+        df <- tryCatch({
+                GetAssayData(sobj, layer = "data")
+            }, error = function(e) {
+                log_warn("  Error when fetching assay data: {e}")
+                NULL
+            })
+        if (is.null(df)) {
+            msg <- "No markers found. May be due to too few cells or features."
+        } else {
+            genes <- rownames(df)
+            # rows: cells, cols: genes
+            df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
+            colnames(df)[ncol(df)] <- "GROUP"
 
-    msg <- do_enrich(info, markers, case$sigmarkers)
+            log_info("  Running tests for case...")
+            warn_count <- 0
+            test_result <- mclapply(genes, function(gene) {
+                fm <- as.formula(paste(bQuote(gene), "~ GROUP"))
+                res <- tryCatch({
+                    if (case$method == "anova") {
+                        r <- summary(aov(fm, data = df))[[1]]
+                        data.frame(
+                            statistic = r[1, "F value"],
+                            p.value = r[1, "Pr(>F)"],
+                            sumsq = r[1, "Sum Sq"],
+                            meansq = r[1, "Mean Sq"]
+                        )
+                    } else {
+                        r <- kruskal.test(fm, data = df)
+                        data.frame(statistic = r$statistic, p.value = r$p.value)
+                    }
+                }, error = function(e) {
+                    warn_count <<- warn_count + 1
+                    if (warn_count < 10) {
+                        log_warn("  Error when testing gene: {gene}")
+                        log_warn("  {e}")
+                    } else if (warn_count == 10) {
+                        log_warn("  Too many errors, will not print more.")
+                    }
+                    NULL
+                })
+                if (is.null(res)) {
+                    return(NULL)
+                }
+                res$gene <- gene
+                res$method <- case$method
+                rownames(res) <- NULL
+                res
+            }, mc.cores = ncores)
+            markers <- do_call(rbind, test_result)
+            if (is.null(markers)) {
+                msg <- "No markers found. May be due to too few cells."
+            } else {
+                markers$p_adjust <- p.adjust(markers$p.value, method = case$p_adjust)
+                markers <- markers %>% arrange(p_adjust)
+
+                msg <- do_enrich(info, markers, case$sigmarkers)
+            }
+        }
+    }
     if (is.null(msg)) {
         log_info("  Plotting top 10 genes ...")
         markers <- markers %>% head(10)
@@ -251,10 +275,10 @@ do_case <- function(casename) {
         dir.create(plotdir, showWarnings = FALSE, recursive = TRUE)
 
         # Plot the top 10 genes in each group with violin plots
-        geneplots = list()
+        geneplots <- list()
         for (gene in markers$gene) {
-            outfile = file.path(plotdir, paste0(slugify(gene, tolower = FALSE), ".png"))
-            p = ggplot(df, aes_string(x="GROUP", y=bQuote(gene), fill="GROUP")) +
+            outfile <- file.path(plotdir, paste0(slugify(gene, tolower = FALSE), ".png"))
+            p <- ggplot(df, aes_string(x="GROUP", y=bQuote(gene), fill="GROUP")) +
                 geom_violin(alpha = .8) +
                 geom_boxplot(width=0.1, fill="white") +
                 theme_prism() +
@@ -322,6 +346,7 @@ do_case <- function(casename) {
             h3 = ifelse(single_section, "#", "Enrichment Analysis")
         )
     } else {
+        log_warn("  {msg}")
         add_report(
             list(kind = "error", content = msg),
             h1 = ifelse(

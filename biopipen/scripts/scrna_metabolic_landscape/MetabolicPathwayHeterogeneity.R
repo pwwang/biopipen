@@ -45,6 +45,7 @@ pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
+
 do_one_subset <- function(s, subset_col, subset_prefix) {
     log_info(paste0("  Handling subset value: ", s, " ..."))
     if (is.null(s)) {
@@ -57,11 +58,8 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     }
     dir.create(subset_dir, showWarnings = FALSE)
 
-    metabolic_obj <- subset(
-        subset_obj,
-        features = intersect(rownames(subset_obj), metabolics)
-    )
-    all_groups = as.character(metabolic_obj@meta.data[[grouping]])
+    features = intersect(rownames(subset_obj), metabolics)
+    all_groups = as.character(subset_obj@meta.data[[grouping]])
     groups <- unique(all_groups)
 
     enrich_data_df <- data.frame(x = NULL, y = NULL, NES = NULL, PVAL = NULL)
@@ -73,9 +71,9 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     )
 
     for (group in groups) {
-        group_code = paste0("subset(metabolic_obj, subset = ", grouping, " == '", group, "')")
+        group_code = paste0("subset(subset_obj, subset = ", grouping, " == '", group, "')")
         each_metabolic_obj <- eval(parse(text = group_code))
-        each_metabolic_exprs <- GetAssayData(each_metabolic_obj)
+        each_metabolic_exprs <- GetAssayData(each_metabolic_obj)[features, , drop=F]
         each_metabolic_exprs <- each_metabolic_exprs[rowSums(each_metabolic_exprs) > 0, , drop=F]
         if (ncol(each_metabolic_exprs) == 1) { next }
         x <- each_metabolic_exprs

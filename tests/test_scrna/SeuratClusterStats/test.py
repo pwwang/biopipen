@@ -6,6 +6,7 @@ from biopipen.ns.scrna import (
     CellTypeAnnotation,
     ModuleScoreCalculator,
     MarkersFinder,
+    SeuratSubClustering,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -25,18 +26,20 @@ class PrepareSeurat(Proc):
     lang = config.lang.rscript
     script = """
         library(Seurat)
-        pbmc_small$Sample = pbmc_small$letter.idents
+        pbmc_small$Sample <- pbmc_small$letter.idents
+        pbmc_small$RNA <- split(pbmc_small$RNA, pbmc_small$Sample)
+        pbmc_small <- NormalizeData(pbmc_small)
+        pbmc_small <- FindVariableFeatures(pbmc_small, selection.method = "vst", nfeatures = 2000)
+        pbmc_small <- ScaleData(pbmc_small)
+        pbmc_small <- RunPCA(pbmc_small, npcs = 30, verbose = FALSE)
+        pbmc_small <- JoinLayers(pbmc_small)
         saveRDS(pbmc_small, {{out.outfile | quote}})
-    """
+    """  # noqa: E501
 
 
 class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
-    envs = {
-        "ncores": 1,
-        "FindIntegrationAnchors": {"reduction": "cca"},
-        "IntegrateData": {"k-weight": 5},
-    }
+    envs = {"ncores": 1}
 
 
 class CellTypeAnnotation(CellTypeAnnotation):
@@ -48,12 +51,23 @@ class CellTypeAnnotation(CellTypeAnnotation):
     }
 
 
-class MarkersFinder(MarkersFinder):
+class SeuratSubClustering(SeuratSubClustering):
     requires = CellTypeAnnotation
+    envs = {
+        "cases": {
+            "nk_subcluster": {"subset": "seurat_clusters == 'NK'"},
+            "dc_subcluster": {"subset": "seurat_clusters == 'DC'"},
+        }
+    }
+
+
+class MarkersFinder(MarkersFinder):
+    requires = SeuratSubClustering
+    order = 9
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator):
-    requires = CellTypeAnnotation
+    requires = SeuratSubClustering
     envs = {
         "modules": {
             # "CellCycle": {"features": "cc.genes.updated.2019"},
@@ -108,6 +122,11 @@ class SeuratClusterStats(SeuratClusterStats):
             "Dot plot": {"kind": "dot", "plus": "RotatedAxis()"},
             "Heatmap": {"kind": "heatmap"},
             "Gene expression table": {"kind": "table"},
+        },
+        "dimplots": {
+            "seurat_clusters": {},
+            "nk_subcluster": {"ident": "nk_subcluster"},
+            "dc_subcluster": {"ident": "dc_subcluster"},
         }
     }
 
@@ -124,7 +143,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small.markers/DEFAULT/B/markers.txt",
+            "pbmc_small.markers/DEFAULT/NK/markers.txt",
         )
     )
     assert outfile.is_file(), str(outfile)

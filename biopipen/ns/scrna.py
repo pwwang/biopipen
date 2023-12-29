@@ -47,6 +47,7 @@ class SeuratPreparing(Proc):
     This process will -
     - Prepare the seurat object
     - Apply QC to the data
+    - Integrate the data from different samples
 
     See also
     - <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)>
@@ -69,6 +70,19 @@ class SeuratPreparing(Proc):
     - `precent.hb`: The percentage of hemoglobin genes.
     - `percent.plat`: The percentage of platelet genes.
 
+    For integration, two routes are available:
+
+    - [Performing integration on datasets normalized with `SCTransform`](https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis)
+    - [Using `NormalizeData` and `FindIntegrationAnchors`](https://satijalab.org/seurat/articles/seurat5_integration#layers-in-the-seurat-v5-object)
+
+    /// Note
+    When using `SCTransform`, the default Assay will be set to `SCT` in output, rather than `RNA`.
+    ///
+
+    /// Note
+    From `biopipen` v0.23.0, this requires `Seurat` v5.0.0 or higher.
+    ///
+
     Input:
         metafile: The metadata of the samples
             A tab-delimited file
@@ -79,10 +93,9 @@ class SeuratPreparing(Proc):
             to the h5 file that can be read by `Read10X_h5()` from `Seurat`.
 
     Output:
-        rdsfile: The RDS file with the Seurat object
-            Note that the cell ids are preficed with sample names
-            QC plots will be saved in `<job.outdir>/before-qc` and
-            `<job.outdir>/after-qc`
+        rdsfile: The RDS file with the Seurat object with all samples integrated.
+            Note that the cell ids are preficed with sample names QC plots will be
+            saved in `<job.outdir>/before-qc` and `<job.outdir>/after-qc`.
 
     Envs:
         ncores (type=int): Number of cores to use.
@@ -106,10 +119,12 @@ class SeuratPreparing(Proc):
             genes.
             ///
 
-        gene_qc (ns): Filter genes. Currently only `min_cells` is supported.
+        gene_qc (ns): Filter genes.
             `gene_qc` is applied after `cell_qc`.
             - min_cells: The minimum number of cells that a gene must be
                 expressed in to be kept.
+            - excludes: The genes to exclude. Multiple genes can be specified by
+                comma separated values, or as a list.
 
             /// Tip | Example
             ```toml
@@ -118,6 +133,70 @@ class SeuratPreparing(Proc):
             ```
             will keep genes that are expressed in at least 3 cells.
             ///
+
+        use_sct (flag): Whether use SCTransform routine to integrate samples or not.
+            Before the following procedures, the `RNA` layer will be split by samples.
+
+            If `False`, following procedures will be performed in the order:
+            * [`NormalizeData`](https://satijalab.org/seurat/reference/normalizedata).
+            * [`FindVariableFeatures`](https://satijalab.org/seurat/reference/findvariablefeatures).
+            * [`ScaleData`](https://satijalab.org/seurat/reference/scaledata).
+            See <https://satijalab.org/seurat/articles/seurat5_integration#layers-in-the-seurat-v5-object>
+            and <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html>
+
+            If `True`, following procedures will be performed in the order:
+            * [`SCTransform`](https://satijalab.org/seurat/reference/sctransform).
+            See <https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis>
+
+        no_integration (flag): Whether to skip integration or not.
+        NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
+
+        FindVariableFeatures (ns): Arguments for [`FindVariableFeatures()`](https://satijalab.org/seurat/reference/findvariablefeatures).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/findvariablefeatures>
+
+        ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
+            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
+
+        RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
+            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            - npcs (type=int): The number of PCs to compute.
+                For each sample, `npcs` will be no larger than the number of columns - 1.
+            - <more>: See <https://satijalab.org/seurat/reference/runpca>
+
+        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - `return-only-var-genes`: Whether to return only variable genes.
+            - `min_cells`: The minimum number of cells that a gene must be expressed in to be kept.
+                A hidden argument of `SCTransform` to filter genes.
+                If you try to keep all genes in the `RNA` assay, you can set `min_cells` to `0` and
+                `return-only-var-genes` to `False`.
+                See <https://github.com/satijalab/seurat/issues/3598#issuecomment-715505537>
+            - <more>: See <https://satijalab.org/seurat/reference/sctransform>
+
+        IntegrateLayers (ns): Arguments for [`IntegrateLayers()`](https://satijalab.org/seurat/reference/integratelayers).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            When `use_sct` is `True`, `normalization-method` defaults to `SCT`.
+            - method (choice): The method to use for integration.
+                - CCAIntegration: Use `Seurat::CCAIntegration`.
+                - CCA: Same as `CCAIntegration`.
+                - cca: Same as `CCAIntegration`.
+                - RPCAIntegration: Use `Seurat::RPCAIntegration`.
+                - RPCA: Same as `RPCAIntegration`.
+                - rpca: Same as `RPCAIntegration`.
+                - HarmonyIntegration: Use `Seurat::HarmonyIntegration`.
+                - Harmony: Same as `HarmonyIntegration`.
+                - harmony: Same as `HarmonyIntegration`.
+                - FastMNNIntegration: Use `Seurat::FastMNNIntegration`.
+                - FastMNN: Same as `FastMNNIntegration`.
+                - fastmnn: Same as `FastMNNIntegration`.
+                - scVIIntegration: Use `Seurat::scVIIntegration`.
+                - scVI: Same as `scVIIntegration`.
+                - scvi: Same as `scVIIntegration`.
+            - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
 
     Requires:
         r-seurat:
@@ -133,7 +212,18 @@ class SeuratPreparing(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
-        "gene_qc": {"min_cells": 3},
+        "gene_qc": {"min_cells": 0, "excludes": []},
+        "use_sct": False,
+        "no_integration": False,
+        "NormalizeData": {},
+        "FindVariableFeatures": {},
+        "ScaleData": {},
+        "RunPCA": {},
+        "SCTransform": {
+            "return-only-var-genes": True,
+            "min_cells": 5,
+        },
+        "IntegrateLayers": {"method": "harmony"},
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
     plugin_opts = {
@@ -145,128 +235,60 @@ class SeuratClustering(Proc):
     """Determine the clusters of cells without reference using Seurat FindClusters
     procedure.
 
-    To perform the clustering, you have two routes to choose from:
-
-    1. Performing integration on datasets normalized with `SCTransform`
-        - See: [https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1](https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1)
-    2. Fast integration using reciprocal PCA (`RPCA`)
-        - See: [https://satijalab.org/seurat/articles/integration_rpca.html](https://satijalab.org/seurat/articles/integration_rpca.html)
-
     Input:
         srtobj: The seurat object loaded by SeuratPreparing
 
     Output:
-        rdsfile: The seurat object with cluster information
+        rdsfile: The seurat object with cluster information at `seurat_clusters`
+            If `SCTransform` was used, the default Assay will be reset to `RNA`.
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
-        use_sct (flag;order=-99): Whether use SCTransform routine or not
-            If `True`, following procedures will be performed in the order:
-            * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
-            * [`SCTransform*`](https://satijalab.org/seurat/reference/sctransform).
-            * [`SelectIntegrationFeatures`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
-            * [`PrepSCTIntegration`](https://satijalab.org/seurat/reference/prepsctintegration).
-            * [`RunPCA*`](https://satijalab.org/seurat/reference/runpca).
-            * [`FindIntegrationAnchors`](https://satijalab.org/seurat/reference/findintegrationanchors).
-            * [`IntegrateData`](https://satijalab.org/seurat/reference/integratedata).
-            * [`RunPCA`](https://satijalab.org/seurat/reference/runpca).
-            * [`RunUMAP`](https://satijalab.org/seurat/reference/runumap).
-            * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
-            * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
-            * `*`: On each sample
-            See <https://satijalab.org/seurat/articles/integration_rpca.html#performing-integration-on-datasets-normalized-with-sctransform-1>.
-            If `False`, fast integration will be performed, using reciprocal PCA (RPCA) and
-            following procedures will be performed in the order:
-            * [`SplitObject`](https://satijalab.org/seurat/reference/splitobject).
-            * [`NormalizeData*`](https://satijalab.org/seurat/reference/normalizedata).
-            * [`FindVariableFeatures*`](https://satijalab.org/seurat/reference/findvariablefeatures).
-            * [`SelectIntegrationFeatures`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
-            * [`ScaleData*`](https://satijalab.org/seurat/reference/scaledata).
-            * [`RunPCA*`](https://satijalab.org/seurat/reference/runpca).
-            * [`FindIntegrationAnchors`](https://satijalab.org/seurat/reference/findintegrationanchors).
-            * [`IntegrateData`](https://satijalab.org/seurat/reference/integratedata).
-            * [`ScaleData`](https://satijalab.org/seurat/reference/scaledata).
-            * [`RunPCA`](https://satijalab.org/seurat/reference/runpca).
-            * [`RunUMAP`](https://satijalab.org/seurat/reference/runumap).
-            * [`FindNeighbors`](https://satijalab.org/seurat/reference/findneighbors).
-            * [`FindClusters`](https://satijalab.org/seurat/reference/findclusters).
-            * `*`: On each sample.
-            See <https://satijalab.org/seurat/articles/integration_rpca.html>.
-        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
-            `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
-        SelectIntegrationFeatures (ns): Arguments for [`SelectIntegrationFeatures()`](https://satijalab.org/seurat/reference/selectintegrationfeatures).
-            `object.list` is specified internally, and `-` in the key will be replaced with `.`.
-            - nfeatures (type=int): The number of features to select
-            - <more>: See <https://satijalab.org/seurat/reference/selectintegrationfeatures>
-        PrepSCTIntegration (ns): Arguments for [`PrepSCTIntegration()`](https://satijalab.org/seurat/reference/prepsctintegration).
-            `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/prepsctintegration>
-        NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
-            `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
-        FindVariableFeatures (ns): Arguments for [`FindVariableFeatures()`](https://satijalab.org/seurat/reference/findvariablefeatures).
-            `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - <more>: See <https://satijalab.org/seurat/reference/findvariablefeatures>
-        FindIntegrationAnchors (ns): Arguments for [`FindIntegrationAnchors()`](https://satijalab.org/seurat/reference/findintegrationanchors).
-            `object.list` and `anchor.features` is specified internally, and `-` in the key will be replaced with `.`.
-            `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
-            Sample names can also be specified in `reference` instead of indices only.
-            `reduction` defaults to `rpca`.
-            `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-            **If you want to use reference-based integration, you can also set `reference` to a list of sample names, instead of a list of indices.**
-            - <more>: See <https://satijalab.org/seurat/reference/findintegrationanchors>
-        IntegrateData (ns): Arguments for [`IntegrateData()`](https://satijalab.org/seurat/reference/integratedata).
-            `anchorset` is specified internally, and `-` in the key will be replaced with `.`.
-            `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns for each sample.
-            `normalization.method` defaults to `SCT` if `use_sct` is `True`.
-            - <more>: See <https://satijalab.org/seurat/reference/integratedata>
         ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - verbose (flag): Whether to print the progress
+            If you want to re-scale the data by regressing to some variables, `Seurat::ScaleData`
+            will be called. If nothing is specified, `Seurat::ScaleData` will not be called.
+            - vars-to-regress: The variables to regress on.
             - <more>: See <https://satijalab.org/seurat/reference/scaledata>
-        ScaleData1 (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata) that runs on each sample.
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - verbose (flag): Whether to print the progress
-            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
-        RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - npcs (type=int): The number of PCs to compute.
-                For each sample, `npcs` will be no larger than the number of columns - 1.
-            - verbose (flag): Whether to print the progress
-            - <more>: See <https://satijalab.org/seurat/reference/runpca>
-        RunPCA1 (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca) on each sample.
-            `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
-            - npcs (type=int): The number of PCs to compute.
-                For each sample, `npcs` will be no larger than the number of columns - 1.
-            - verbose (flag): Whether to print the progress
-            - <more>: See <https://satijalab.org/seurat/reference/runpca>
+        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
+            If you want to re-scale the data by regressing to some variables, `Seurat::SCTransform`
+            will be called. If nothing is specified, `Seurat::SCTransform` will not be called.
+            - vars-to-regress: The variables to regress on.
+            - <more>: See <https://satijalab.org/seurat/reference/sctransform>
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
             - dims (type=int): The number of PCs to use
-            - reduction: The reduction to use for UMAP
+            - reduction: The reduction to use for UMAP.
+                If not provided, `sobj@misc$integrated_new_reduction` will be used.
             - <more>: See <https://satijalab.org/seurat/reference/runumap>
         FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - reduction: The reduction to use.
+                If not provided, `sobj@misc$integrated_new_reduction` will be used.
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - resolution (type=float): The resolution of the clustering
+            The cluster labels will be saved in `seurat_clusters` and prefixed with "c".
+            The first cluster will be "c1", instead of "c0".
+            - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
+                The results will be saved in `seurat_clusters_<resolution>`.
+                The final resolution will be used to define the clusters at `seurat_clusters`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
         cache (type=auto): Whether to cache the seurat object with cluster information.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
             The cached seurat object will be saved as `<signature>.cached.RDS` file, where `<signature>` is the signature determined by
             the input and envs of the process.
-            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
-            <https://github.com/satijalab/seurat/issues/6748> for more details.
+            See -
+            * <https://github.com/satijalab/seurat/issues/7849>
+            * <https://github.com/satijalab/seurat/issues/5358> and
+            * <https://github.com/satijalab/seurat/issues/6748> for more details.
             To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
-            `.pipen/<Pipeline>/SeuratClustering/0/output/<signature>.cached.RDS`.
-            You can also specify the directory to save the cached seurat object by setting `cache` to the directory path.
-
+            `<signature>.cached.RDS` in the cache directory.
+            If `True`, the cache directory is `.pipen/<Pipeline>/SeuratClustering/0/output/`
+            You can also specify customized directory to save the cached seurat object by setting `cache` to the directory path.
 
     Requires:
         r-seurat:
@@ -281,24 +303,93 @@ class SeuratClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "use_sct": False,
+        "ScaleData": {},
         "SCTransform": {},
-        "SelectIntegrationFeatures": {"nfeatures": 3000},
-        "PrepSCTIntegration": {},
-        "NormalizeData": {},
-        "FindVariableFeatures": {},
-        "FindIntegrationAnchors": {},
-        "IntegrateData": {},
-        "ScaleData": {"verbose": False},
-        "ScaleData1": {"verbose": False},
-        "RunPCA": {"verbose": False},
-        "RunPCA1": {"verbose": False},
-        "RunUMAP": {"reduction": "pca", "dims": 30},
+        "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "cache": True,
+        "cache": False,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
+
+
+class SeuratSubClustering(Proc):
+    """Find clusters of a subset of cells.
+
+    It's unlike [`Seurat::FindSubCluster`], which only finds subclusters of a single
+    cluster. Instead, it will perform the whole clustering procedure on the subset of
+    cells. One can use metadata to specify the subset of cells to perform clustering on.
+
+    For the subset of cells, the reductions will be re-performed on the subset of cells,
+    and then the clustering will be performed on the subset of cells. The reduction
+    will be saved in `sobj@reduction$sub_umap_<casename>` of the original object and the
+    clustering will be saved in the metadata of the original object using the casename \
+    as the column name.
+
+    Input:
+        srtobj: The seurat object
+
+    Output:
+        rdsfile: The seurat object with the subclustering information.
+
+    Envs:
+        ncores (type=int;order=-100): Number of cores to use.
+            Used in `future::plan(strategy = "multicore", workers = <ncores>)`
+            to parallelize some Seurat procedures.
+        mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
+            The mutaters will be applied in the order specified.
+        subset: An expression to subset the cells, will be passed to
+            [`tidyseurat::filter()`](https://stemangiola.github.io/tidyseurat/reference/filter.html).
+
+        RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
+            `object` is specified internally as the subset object, and `-` in the key will be replaced with `.`.
+            `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
+            - dims (type=int): The number of PCs to use
+            - reduction: The reduction to use for UMAP.
+                If not provided, `sobj@misc$integrated_new_reduction` will be used.
+            - <more>: See <https://satijalab.org/seurat/reference/runumap>
+        FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            - reduction: The reduction to use.
+                If not provided, `sobj@misc$integrated_new_reduction` will be used.
+            - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
+        FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
+            `object` is specified internally, and `-` in the key will be replaced with `.`.
+            The cluster labels will be prefixed with "s". The first cluster will be "s1", instead of "s0".
+            - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
+                The results will be saved in `<casename>_<resolution>`.
+                The final resolution will be used to define the clusters at `<casename>`.
+            - <more>: See <https://satijalab.org/seurat/reference/findclusters>
+        cache (type=auto): Whether to cache the seurat object with cluster information.
+            If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
+            The cached seurat object will be saved as `<signature>.cached.RDS` file, where `<signature>` is the signature determined by
+            the input and envs of the process.
+            See -
+            * <https://github.com/satijalab/seurat/issues/7849>
+            * <https://github.com/satijalab/seurat/issues/5358> and
+            * <https://github.com/satijalab/seurat/issues/6748> for more details.
+            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
+            `<signature>.cached.RDS` in the cache directory.
+            If `True`, the cache directory is `.pipen/<Pipeline>/SeuratClustering/0/output/`
+            You can also specify customized directory to save the cached seurat object by setting `cache` to the directory path.
+        cases (type=json): The cases to perform subclustering.
+            Keys are the names of the cases and values are the dicts inherited from `envs` except `mutaters` and `cache`.
+            If empty, a case with name `subcluster` will be created with default parameters.
+    """  # noqa: E501
+    input = "srtobj:file"
+    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "mutaters": {},
+        "subset": None,
+        "RunUMAP": {"dims": 30},
+        "FindNeighbors": {},
+        "FindClusters": {"resolution": 0.8},
+        "cache": False,
+        "cases": {"subcluster": {}},
+    }
+    script = "file://../scripts/scrna/SeuratSubClustering.R"
 
 
 class SeuratClusterStats(Proc):
@@ -361,18 +452,60 @@ class SeuratClusterStats(Proc):
         outdir: The output directory
 
     Envs:
+        mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
+            The mutaters will be applied in the order specified.
+        hists_defaults (ns): The default parameters for histograms.
+            This will plot histograms for the number of cells along `x`.
+            For example, you can plot the number of cells along cell activity score.
+            - x: The column name in metadata to plot as the x-axis.
+                The NA values will be removed.
+                It could be either numeric or factor/character.
+            - x_order (list): The order of the x-axis, only works for factor/character `x`.
+                You can also use it to subset `x` (showing only a subset values of `x`).
+            - cells_by: A column name in metadata to group the cells.
+                The NA values will be removed. It should be a factor/character.
+                if not specified, all cells will be used.
+            - cells_order (list): The order of the cell groups for the plots.
+                It should be a list of strings. You can also use `cells_orderby` and `cells_n`
+                to determine the order.
+            - cells_orderby: An expression passed to `dplyr::arrange()` to order the cell groups.
+            - cells_n: The number of cell groups to show.
+                Ignored if `cells_order` is specified.
+            - ncol (type=int): The number of columns for the plots, split by `cells_by`.
+            - subset: An expression to subset the cells, will be passed to `dplyr::filter()`.
+            - each: Whether to plot each group separately.
+            - bins: The number of bins to use, only works for numeric `x`.
+            - plus (list): The extra elements to add to the `ggplot` object.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+        hists (type=json): The cases for histograms.
+            Keys are the names of the plots and values are the dicts inherited from `env.hists_defaults`.
+            There is no default case.
         stats_defaults (ns): The default parameters for `stats`.
+            This is to do some basic statistics on the clusters. For more comprehensive analysis,
+            see `RadarPlots` and `CellsDistribution`.
             The parameters from the cases can overwrite the default parameters.
             - frac (flag): Whether to output the fraction of cells instead of number.
             - pie (flag): Also output a pie chart?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
+            - frac_ofall(flag): Whether to output the fraction against all cells,
+                instead of the fraction in each group.
+                Only works when `frac` is `True` and `group-by` is specified.
+            - transpose (flag): Whether to transpose the cluster and group, that is,
+                using group as the x-axis and cluster to fill the plot.
+                Only works when `group-by` is specified.
             - ident: The column name in metadata to use as the identity.
             - group-by: The column name in metadata to group the cells.
                 Does NOT support for pie charts.
-            - split-by: The column name in metadata to split the cells into
-                different plots.
+            - split-by: The column name in metadata to split the cells into different plots.
             - subset: An expression to subset the cells, will be passed to
                 `dplyr::filter()` on metadata.
+            - pie_devpars (ns): The device parameters for the pie charts.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -382,14 +515,35 @@ class SeuratClusterStats(Proc):
             Here are some examples -
             >>> {
             >>>     "nCells_All": {},
-            >>>     "nCells_Sample": {"kind": "num", "group-by": "Sample"},
-            >>>     "fracCells_Sample": {"kind": "frac", "group-by": "Sample"},
+            >>>     "nCells_Sample": {"group-by": "Sample"},
+            >>>     "fracCells_Sample": {"frac": True, "group-by": "Sample"},
             >>> }
+        ngenes_defaults (ns): The default parameters for `ngenes`.
+            The default parameters to plot the number of genes expressed in each cell.
+            - ident: The column name in metadata to use as the identity.
+            - group-by: The column name in metadata to group the cells.
+                Dodge position will be used to separate the groups.
+            - split-by: The column name in metadata to split the cells into different plots.
+            - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+        ngenes (type=json): The number of genes expressed in each cell.
+            Keys are the names of the plots and values are the dicts inherited from `env.ngenes_defaults`.
         features_defaults (ns): The default parameters for `features`.
             - features: The features to plot.
                 It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
                 (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
             - ident: The column name in metadata to use as the identity.
+                If it is from subclustering (reduction `sub_umap_<ident>` exists), the reduction will be used.
+            - cluster_orderby (type=auto): The order of the clusters to show on the plot.
+                An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
+                The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
+                For example, you can order the clusters by the activation score of
+                the cluster: `desc(mean(ActivationScore, na.rm = TRUE))`, suppose you have a column
+                `ActivationScore` in the metadata.
+                You may also specify the literal order of the clusters by a list of strings.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots. Does not work for `table`.
                 - res (type=int): The resolution of the plots.
@@ -401,7 +555,8 @@ class SeuratClusterStats(Proc):
             - split-by: The column name in metadata to split the cells into different plots.
                 It works for `vln`, `feature`, and `dot`.
             - assay: The assay to use.
-            - slot: The slot to use.
+            - layer: The layer to use.
+            - reduction: The reduction to use. Only works for `feature`.
             - section: The section to put the plot in the report.
                 If not specified, the case title will be used.
             - ncol (type=int): The number of columns for the plots.
@@ -416,17 +571,23 @@ class SeuratClusterStats(Proc):
                 - featureplot: Same as `feature`.
                 - dot: Use `Seurat::DotPlot`.
                 - dotplot: Same as `dot`.
+                - bar: Bar plot on an aggregated feature.
+                    The features must be a single feature, which will be either an  existing feature or an expression
+                    passed to `dplyr::summarise()` (grouped by `ident`) on the existing features to create a new feature.
+                - barplot: Same as `bar`.
                 - heatmap: Use `Seurat::DoHeatmap`.
-                    You can specify `average=True` to plot on the average of the expressions.
+                - avgheatmap: Plot the average expression of the features in each cluster as a heatmap.
                 - table: The table for the features, only gene expressions are supported.
                     (supported keys: ident, subset, and features).
         features (type=json): The plots for features, include gene expressions, and columns from metadata.
             Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`. It can also have other parameters from
             each Seurat function used by `kind`. Note that for argument name with `.`, you should use `-` instead.
         dimplots_defaults (ns): The default parameters for `dimplots`.
-            - ident: The column name in metadata to use as the identity.
-                Ignored if `group-by` is specified.
-            - group-by: Same as `ident`. How the points are colored.
+            - ident: The identity to use.
+                If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
+                is set to `dim` or `auto`.
+            - group-by: Same as `ident` if not specified, to define how the points are colored.
+            - na_group: The group name for NA values, use `None` to ignore NA values.
             - split-by: The column name in metadata to split the cells into different plots.
             - shape-by: The column name in metadata to use as the shape.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
@@ -437,6 +598,7 @@ class SeuratClusterStats(Proc):
             - reduction (choice): Which dimensionality reduction to use.
                 - dim: Use `Seurat::DimPlot`.
                     First searches for `umap`, then `tsne`, then `pca`.
+                    If `ident` is from subclustering, `sub_umap_<ident>` will be used.
                 - auto: Same as `dim`
                 - umap: Use `Seurat::UMAPPlot`.
                 - tsne: Use `Seurat::TSNEPlot`.
@@ -454,15 +616,34 @@ class SeuratClusterStats(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
     envs = {
+        "mutaters": {},
+        "hists_defaults": {
+            "x": None,
+            "x_order": [],
+            "cells_by": None,
+            "cells_order": [],
+            "cells_orderby": None,
+            "cells_n": 10,
+            "subset": None,
+            "ncol": 2,
+            "each": None,
+            "bins": 30,
+            "plus": [],
+            "devpars": {"res": 100, "height": None, "width": None},
+        },
+        "hists": {},
         "stats_defaults": {
             "frac": False,
             "pie": False,
             "table": False,
+            "frac_ofall": False,
+            "transpose": False,
             "ident": "seurat_clusters",
             "group-by": None,
             "split-by": None,
             "subset": None,
-            "devpars": {"res": 100, "height": 800, "width": 1000},
+            "devpars": {"res": 100, "height": 600, "width": 800},
+            "pie_devpars": {"res": 100, "height": 600, "width": 800},
         },
         "stats": {
             "Number of cells in each cluster": {
@@ -474,9 +655,20 @@ class SeuratClusterStats(Proc):
                 "frac": True,
             },
         },
+        "ngenes_defaults": {
+            "ident": "seurat_clusters",
+            "group-by": None,
+            "split-by": None,
+            "subset": None,
+            "devpars": {"res": 100, "height": 800, "width": 1000},
+        },
+        "ngenes": {
+            "Number of genes expressed in each cluster": {},
+        },
         "features_defaults": {
             "features": None,
             "ident": "seurat_clusters",
+            "cluster_orderby": None,
             "subset": None,
             "devpars": {"res": 100},
             "plus": None,
@@ -484,7 +676,8 @@ class SeuratClusterStats(Proc):
             "split-by": None,
             "assay": None,
             "section": None,
-            "slot": None,
+            "layer": None,
+            "reduction": None,
             "kind": None,
             "ncol": 2,
         },
@@ -492,6 +685,7 @@ class SeuratClusterStats(Proc):
         "dimplots_defaults": {
             "ident": "seurat_clusters",
             "group-by": None,
+            "na_group": None,
             "split-by": None,
             "shape-by": None,
             "subset": None,
@@ -570,6 +764,17 @@ class ModuleScoreCalculator(Proc):
             >>>     "Activation": {"features": "IFNG"},
             >>>     "Proliferation": {"features": "STMN1,TUBB"}
             >>> }
+
+            You can also add Diffusion Components (DC) to the modules
+            >>> {"DC": {"features": 2, "kind": "diffmap"}}
+            will perform diffusion map as a reduction and add the first 2
+            components as `DC_1` and `DC_2` to the metadata. `diffmap` is a shortcut
+            for `diffusion_map`. Other key-value pairs will pass to
+            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap%20class).
+            You can later plot the diffusion map by using
+            `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
+            This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
+            and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
     """  # noqa: E501
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
@@ -580,7 +785,7 @@ class ModuleScoreCalculator(Proc):
             "nbin": 24,
             "ctrl": 100,
             "k": False,
-            "assay": "RNA",
+            "assay": None,
             "seed": 8525,
             "search": False,
             "keep": False,
@@ -634,6 +839,12 @@ class CellsDistribution(Proc):
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+        cluster_orderby: The order of the clusters to show on the plot.
+            An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
+            The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
+            For example, you can order the clusters by the activation score of
+            the cluster: `desc(mean(ActivationScore, na.rm = TRUE))`, suppose you have a column
+            `ActivationScore` in the metadata.
         group_by: The column name in metadata to group the cells for the columns of the plot.
         group_order (list): The order of the groups (columns) to show on the plot
         cells_by: The column name in metadata to group the cells for the rows of the plot.
@@ -656,7 +867,11 @@ class CellsDistribution(Proc):
         subset: An expression to subset the cells, will be passed to `dplyr::filter()` on metadata.
             This will be applied prior to `each`.
         descr: The description of the case, will be shown in the report.
-        devpars (ns): The device parameters for the plots.
+        hm_devpars (ns): The device parameters for the heatmaps.
+            - res (type=int): The resolution of the heatmaps.
+            - height (type=int): The height of the heatmaps.
+            - width (type=int): The width of the heatmaps.
+        devpars (ns): The device parameters for the plots of pie charts.
             - res (type=int): The resolution of the plots
             - height (type=int): The height of the plots
             - width (type=int): The width of the plots
@@ -683,6 +898,7 @@ class CellsDistribution(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "cluster_orderby": None,
         "group_by": None,
         "group_order": [],
         "cells_by": None,
@@ -692,6 +908,7 @@ class CellsDistribution(Proc):
         "subset": None,
         "descr": None,
         "devpars": {},
+        "hm_devpars": {},
         "each": None,
         "section": "DEFAULT",
         "overlap": [],
@@ -737,60 +954,6 @@ class SeuratMetadataMutater(Proc):
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
-class GeneExpressionInvestigation(Proc):
-    """Investigation of expressions of genes of interest
-
-    Input:
-        srtobj: The seurat object loaded by `SeuratPreparing`
-        genefile: The genes to show their expressions in the plots
-            Either one column or two columns.
-            If one column, the column name will be used as both the gene names
-            to match the expressions and the names to show in the plots
-            If two columns, the first column will be used as the gene names
-            to match the expressions and the second column will be used to
-            show in the plots.
-        configfile: The configuration file (toml). See `envs.config`
-            If not provided, use `envs.config`
-
-    Output:
-        outdir: The output directory with the plots
-
-    Envs:
-        gopts: Options for `read.table()` to read `in.genefile`
-        config: The configurations to do the plots
-            name: The name of the job, mostly used in report
-            mutaters: The mutater to mutate the metadata
-            groupby: Which meta columns to group the data
-            subset: Select a subset of cells, will be passed to
-                `subset(obj, subset=<subset>)`
-            plots: Plots to generate
-                Currently supported
-                `boxplot`:
-                - `ncol`: Split the plot to how many columns?
-                - `res`, `height` and `width` the parameters for `png()`
-                `heatmap`:
-                - `res`, `height` and `width` the parameters for `png()`
-                - other arguments for `ComplexHeatmap::Heatmap()`
-    """
-    input = "srtobj:file, genefile:file, configfile:file"
-    output = "outdir:dir:{{in.configfile | stem0}}.gei"
-    lang = config.lang.rscript
-    order = 4
-    envs = {
-        "config": {},
-        "gopts": {
-            "header": False,
-            "row.names": None,
-            "sep": "\t",
-            "check.names": False,
-        },
-    }
-    script = "file://../scripts/scrna/GeneExpressionInvistigation.R"
-    plugin_opts = {
-        "report": "file://../reports/scrna/GeneExpressionInvistigation.svelte"
-    }
-
-
 class DimPlots(Proc):
     """Seurat - Dimensional reduction plots
 
@@ -832,6 +995,9 @@ class MarkersFinder(Proc):
 
     Input:
         srtobj: The seurat object loaded by `SeuratPreparing`
+            If you have your `Seurat` object prepared by yourself, you can also
+            use it here, but you should make sure that the object has been processed
+            by `PrepSCTFindMarkers` if data is not normalized using `SCTransform`.
 
     Output:
         outdir: The output directory for the markers
@@ -877,9 +1043,14 @@ class MarkersFinder(Proc):
             If `each` is specified, the section name will be constructed from
             `each` and case name.
         subset: An expression to subset the cells for each case.
+        use_presto: Whether to use [`presto::wilcoxauc`](https://rdrr.io/github/immunogenomics/presto/man/wilcoxauc.html)
+            to find markers.
+            [`presto`](https://github.com/immunogenomics/presto) is a package performs
+            fast Wilcoxon rank sum test and auROC analysis.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
+            This only works when `use_presto` is `False`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
         dotplot (ns): Arguments for `Seurat::DotPlot()`.
             Use `-` to replace `.` in the argument name. For example,
@@ -913,13 +1084,9 @@ class MarkersFinder(Proc):
         "section": "DEFAULT",
         "assay": None,
         "subset": None,
+        "use_presto": False,
         "rest": {},
-        "dbs": [
-            "GO_Biological_Process_2021",
-            "GO_Cellular_Component_2021",
-            "GO_Molecular_Function_2021",
-            "KEGG_2021_Human",
-        ],
+        "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
         "volcano_genes": True,
         "dotplot": {},
@@ -983,12 +1150,7 @@ class TopExpressingGenes(Proc):
         "each": None,
         "prefix_each": True,
         "section": "DEFAULT",
-        "dbs": [
-            "GO_Biological_Process_2021",
-            "GO_Cellular_Component_2021",
-            "GO_Molecular_Function_2021",
-            "KEGG_2021_Human",
-        ],
+        "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
         "cases": {},
     }
@@ -1014,9 +1176,9 @@ class ExprImpution(Proc):
 
     Output:
         outfile: The output file in RDS format of Seurat object
-            Note that with rmagic and alra, the original RNA assay will be
-            renamed to `UNIMPUTED_RNA` and the imputed RNA assay will be
-            renamed to `RNA`
+            Note that with rmagic and alra, the original default assay will be
+            renamed to `RAW` and the imputed RNA assay will be
+            renamed to `RNA` and set as default assay.
 
     Envs:
         tool (choice): Either alra, scimpute or rmagic
@@ -1235,7 +1397,7 @@ class Subset10X(Proc):
     script = "file://../scripts/scrna/Subset10X.R"
 
 
-class Write10X(Proc):
+class SeuratTo10X(Proc):
     """Write a Seurat object to 10X format
 
     using `write10xCounts` from `DropletUtils`
@@ -1253,7 +1415,7 @@ class Write10X(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}"
     envs = {"version": "3"}
     lang = config.lang.rscript
-    script = "file://../scripts/scrna/Write10X.R"
+    script = "file://../scripts/scrna/SeuratTo10X.R"
 
 
 @format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
@@ -1367,7 +1529,7 @@ class CellTypeAnnotation(Proc):
     The annotated cell types will replace the original `seurat_clusters` column in the metadata,
     so that the downstream processes will use the annotated cell types.
 
-    The old `seurat_clusters` column will be renamed to `seurat_clusters_old`.
+    The old `seurat_clusters` column will be renamed to `seurat_clusters_id`.
 
     If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
     the old `seurat_clusters` to the new cell types will be generated and saved to
@@ -1486,20 +1648,25 @@ class SeuratMap2Ref(Proc):
         outfile: The rds file of seurat object with cell type annotated
 
     Envs:
-        use (choice): Which level of cell type to use for further analysis and
-            being aliased to `alias`
-            - predicted.celltype.l1: The first level of predicted cell type
-            - predicted.celltype.l2: The second level of predicted cell type
-        alias: The name of an aliasied column to `use`.
-            This is helpful for the downstream analysis where the column name
-            is used as the cluster.
+        ncores (type=int;order=-100): Number of cores to use.
+            Used in `future::plan(strategy = "multicore", workers = <ncores>)`
+            to parallelize some Seurat procedures.
+            See also: <https://satijalab.org/seurat/articles/future_vignette.html>
+        use: A column name (e.g. `predicted.celltype.l1`, `predicted.celltype.l2`)
+            to use as the final cell types in downstream analysis, which will be stored
+            in the `name` column and set as the `Idents` of the seurat object.
+            Or an expression to pass to `mutate()` to create a new column.
+            When not specified, `predicted.<key>` will be used if
+            `envs.MapQuery.refdata` has only one key, otherwise an error will be raised.
+        name: The name of the final cell type column.
+            This will be set as the `Idents` of the seurat object.
         ref: The reference seurat object file.
             Either an RDS file or a h5seurat file that can be loaded by
             `Seurat::LoadH5Seurat()`.
             The file type is determined by the extension. `.rds` or `.RDS` for
             RDS file, `.h5seurat` or `.h5` for h5seurat file.
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
-            - do-correct-umi (flag): Place corrected UMI matrix in assay counts slot?
+            - do-correct-umi (flag): Place corrected UMI matrix in assay counts layer?
             - do-scale (flag): Whether to scale residuals to have unit variance?
             - do-center (flag): Whether to center residuals to have mean zero?
             - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
@@ -1530,8 +1697,10 @@ class SeuratMap2Ref(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript
     envs = {
-        "use": "predicted.celltype.l2",
-        "alias": "seurat_clusters",
+        "ncores": config.misc.ncores,
+        # "use": "predicted.celltype.l2",
+        "use": None,
+        "name": "seurat_clusters",
         "ref": None,
         "SCTransform": {
             "do-correct-umi": False,
@@ -1546,12 +1715,12 @@ class SeuratMap2Ref(Proc):
             "reference-reduction": "spca",
             "reduction-model": "wnn.umap",
             "refdata": {
-                "celltype-l1": "celltype.l1",
-                "celltype-l2": "celltype.l2",
-                "predicted_ADT": "ADT",
+                # "celltype-l1": "celltype.l1",
+                # "celltype-l2": "celltype.l2",
+                # "predicted_ADT": "ADT",
             }
         },
-        "MappingScore": {},
+        "MappingScore": {"ndim": 30},
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"
     plugin_opts = {"report": "file://../reports/scrna/SeuratMap2Ref.svelte"}
@@ -1639,13 +1808,26 @@ class RadarPlots(Proc):
             each value in the column.
             If specified, `section` will be ignored, and the case name will
             be used as the section name.
+        breakdown: An additional column with groups to break down the cells
+            distribution in each cluster. For example, if you want to see the
+            distribution of the cells in each cluster in different samples. In
+            this case, you should have multiple values in each `by`. These values
+            won't be plotted in the radar plot, but a barplot will be generated
+            with the mean value of each group and the error bar.
+        test (choice): The test to use to calculate the p values.
+            If there are more than 2 groups in `by`, the p values will be calculated
+            pairwise group by group. Only works when `breakdown` is specified and
+            `by` has 2 groups or more.
+            - wilcox: Wilcoxon rank sum test
+            - t: T test
+            - none: No test will be performed
         order (list): The order of the values in `by`. You can also limit
             (filter) the values we have in `by`. For example, if column `Source`
             has values `Tumor`, `Blood`, `Spleen`, and you only want to plot
             `Tumor` and `Blood`, you can set `order` to `["Tumor", "Blood"]`.
             This will also have `Tumor` as the first item in the legend and `Blood`
             as the second item.
-        cluster_col: The column name of the cluster information.
+        ident: The column name of the cluster information.
         cluster_order (list): The order of the clusters.
             You may also use it to filter the clusters. If not given,
             all clusters will be used.
@@ -1661,6 +1843,10 @@ class RadarPlots(Proc):
         section: If you want to put multiple cases into a same section
             in the report, you can set this option to the name of the section.
             Only used in the report.
+        bar_devpars (ns): The parameters for `png()` for the barplot
+            - res (type=int): The resolution of the plot
+            - height (type=int): The height of the plot
+            - width (type=int): The width of the plot
         devpars (ns): The parameters for `png()`
             - res (type=int): The resolution of the plot
             - height (type=int): The height of the plot
@@ -1668,7 +1854,7 @@ class RadarPlots(Proc):
         cases (type=json): The cases for the multiple radar plots.
             Keys are the names of the cases and values are the arguments for
             the plots (`each`, `by`, `order`, `breaks`, `direction`,
-            `cluster_col`, `cluster_order` and `devpars`).
+            `ident`, `cluster_order` and `devpars`).
             If not cases are given, a default case will be used, with the
             key `DEFAULT`.
             The keys must be valid string as part of the file name.
@@ -1682,11 +1868,18 @@ class RadarPlots(Proc):
         "by": None,
         "each": None,
         "order": None,
-        "cluster_col": "seurat_clusters",
+        "ident": "seurat_clusters",
         "cluster_order": [],
+        "breakdown": None,
+        "test": "wilcox",
         "breaks": [],
         "direction": "intra-cluster",
         "section": "DEFAULT",
+        "bar_devpars": {
+            "res": 100,
+            "width": 1200,
+            "height": 800,
+        },
         "devpars": {
             "res": 100,
             "width": 1200,
@@ -1781,12 +1974,7 @@ class MetaMarkers(Proc):
         "subset": None,
         "prefix_each": True,
         "p_adjust": "BH",
-        "dbs": [
-            "GO_Biological_Process_2021",
-            "GO_Cellular_Component_2021",
-            "GO_Molecular_Function_2021",
-            "KEGG_2021_Human",
-        ],
+        "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_adjust < 0.05",
         "section": "DEFAULT",
         "method": "anova",

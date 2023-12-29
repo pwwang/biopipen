@@ -4,20 +4,20 @@ channels:
   - aroth85
   - pwwang
   - pytorch
-  - bioconda
   - conda-forge
   - r
-  - defaults
+  - bioconda
+  - nodefaults
 dependencies:
   - python=3.10
-  - poetry  # =1.1.13  # awaiting 1.2 being released on conda
+  - poetry
   - nodejs  # for pipen-report
   - curl
   - samtools
   - r-slugify
   - r-logger
   - r-hitype
-  - r-base=4.1.3
+  - r-base=4.2.0
   - r-ggplot2
   - r-tidyr
   - r-dplyr
@@ -32,11 +32,12 @@ dependencies:
   - r-ggupset
   - r-ggvenndiagram
   - r-gtools
-  - r-immunarch
+  # - r-igraph=1.5.1
+  - r-immunarch=0.9
   - r-matrix
   - r-rmagic
   - r-scimpute
-  - r-seurat
+  - r-seurat=5.0.1
   - r-snow
   - r-upsetr
   - r-vegan

@@ -73,7 +73,7 @@ is_gz <- endsWith(tolower(exprfile), ".gz")
 
 if (is_seurat) {
     sobj <- readRDS(exprfile)
-    expr <- GetAssayData(sobj, slot = "data", assay = assay)
+    expr <- GetAssayData(sobj, layer = "data")
 } else if (is_gz) {
     expr <- read.table(gzfile(exprfile), sep="\t", header=TRUE, row.names=1)
 } else {
