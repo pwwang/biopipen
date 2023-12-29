@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.23.1
+
+- scrna.RadarPlots: fix error when generating report for tests when breakdown is not provided
+
 ## 0.23.0
 
 - deps: bump pipen to 0.12.5
