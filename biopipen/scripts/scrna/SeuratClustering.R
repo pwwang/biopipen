@@ -58,15 +58,15 @@ if (is.character(envs$cache) && nchar(envs$cache) > 0) {
         quit()
     } else {
         log_info("Cached results not found, logging the current and cached signatures.")
-        log_info("- Current signature:")
-        print(sig)
-        sigfiles <- Sys.glob(file.path(envs$cache, "*.signature.txt"))
-        for (sigfile in sigfiles) {
-            log_info("- Found cached signature file: {sigfile}")
-            cached_sig <- readLines(sigfile)
-            log_info("- Cached signature:")
-            print(cached_sig)
-        }
+        log_info("- Current signature: {digested_sig}")
+        # print(sig)
+        # sigfiles <- Sys.glob(file.path(envs$cache, "*.signature.txt"))
+        # for (sigfile in sigfiles) {
+        #     log_info("- Found cached signature file: {sigfile}")
+        #     cached_sig <- readLines(sigfile)
+        #     log_info("- Cached signature:")
+        #     print(cached_sig)
+        # }
         writeLines(sig, file.path(envs$cache, paste0(digested_sig, ".signature.txt")))
     }
 }
