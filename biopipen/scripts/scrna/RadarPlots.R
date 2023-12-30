@@ -294,6 +294,7 @@ do_barplot_and_tests <- function(info, case, counts) {
         geom_errorbar(
             aes(ymin = mean_sd1, ymax = mean_sd2),
             width = 0.4,
+            linewidth = 0.8,
             position = position_dodge(0.9),
             color = "#333333"
         ) +
@@ -326,6 +327,17 @@ do_barplot_and_tests <- function(info, case, counts) {
                 group_by(!!sym(case$ident)) %>%
                 summarise(
                     comparison = paste0(pair, collapse = " - "),
+                    n = paste(as.list(table(!!sym(case$by)))[pair], collapse = "; "),
+                    mean = paste(
+                        (tibble(.frac, !!sym(case$by)) %>%
+                            group_by(!!sym(case$by)) %>%
+                            summarise(mean = mean(.frac)) %>%
+                            column_to_rownames(case$by) %>%
+                            t() %>%
+                            as.data.frame() %>%
+                            as.list())[pair] %>% unlist() %>% round(3),
+                        collapse = "; "
+                    ),
                     !!sym(paste0(case$test, "_pval")) := ifelse(
                         case$test == "wilcox",
                         tryCatch(wilcox.test(.frac ~ !!sym(case$by))$p.value, error = function(e) NA),
