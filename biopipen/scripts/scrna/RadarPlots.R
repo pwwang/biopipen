@@ -328,8 +328,8 @@ do_barplot_and_tests <- function(info, case, counts) {
                     comparison = paste0(pair, collapse = " - "),
                     !!sym(paste0(case$test, "_pval")) := ifelse(
                         case$test == "wilcox",
-                        wilcox.test(.frac ~ !!sym(case$by))$p.value,
-                        t.test(.frac ~ !!sym(case$by))$p.value
+                        tryCatch(wilcox.test(.frac ~ !!sym(case$by))$p.value, error = function(e) NA),
+                        tryCatch(t.test(.frac ~ !!sym(case$by))$p.value, error = function(e) NA)
                     )
                 )
             test_results <- rbind(test_results, dat)
@@ -426,10 +426,11 @@ run_one_case <- function(casename) {
 
     # Get the counts
     if (!is.null(case$each)) {
-        counts <- meta %>% filter(!!sym(case$each) == case$each_value) %>% drop_na(!!sym(case$by))
+        counts <- meta %>% filter(!!sym(case$each) == case$each_value)
     } else {
-        counts <- meta %>% drop_na(!!sym(case$by))
+        counts <- meta
     }
+    counts <- counts %>% drop_na(!!sym(case$by)) %>% drop_na(!!sym(case$ident))
     do_radarplot(info, case, counts)
 
     if (!is.null(case$breakdown)) {
