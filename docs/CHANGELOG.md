@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.23.2
+
+- scrna.RadarPlots: fix test error when not enough observations
+- scrna.RadarPlots: add `n` and `mean` to test table
+
 ## 0.23.1
 
 - scrna.RadarPlots: fix error when generating report for tests when breakdown is not provided
