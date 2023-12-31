@@ -87,7 +87,7 @@ class ImmunarchLoading(Proc):
     envs = {
         "tmpdir": config.path.tmpdir,
         "prefix": "{Sample}_",
-        "mode": "single",
+        "mode": "paired",
         "extracols": [],
     }
     script = "file://../scripts/tcr/ImmunarchLoading.R"
