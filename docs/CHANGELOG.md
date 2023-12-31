@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.23.3
+
+- tcr.ImmunarchLoading: change mode from `single` to `paired` by default
+
 ## 0.23.2
 
 - scrna.RadarPlots: fix test error when not enough observations
