@@ -14,8 +14,12 @@ if (is.null(celltypes) || length(celltypes) == 0) {
 } else {
     log_info("Loading Seurat object ...")
     sobj <- readRDS(sobjfile)
-    idents <- as.character(unique(Idents(sobj)))
-    idents <- idents[order(as.numeric(idents))]
+    idents <- Idents(sobj)
+    if (is.factor(idents)) {
+        idents <- levels(idents)
+    } else {
+        idents <- as.character(unique(idents))
+    }
 
     if (length(celltypes) < length(idents)) {
         celltypes <- c(celltypes, idents[(length(celltypes) + 1):length(idents)])
