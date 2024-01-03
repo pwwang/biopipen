@@ -202,11 +202,7 @@ do_case <- function(casename) {
         assays = assay
     )[[assay]]
     # https://github.com/satijalab/seurat/issues/7893
-    # Set the colnames to unqiue(srtobj@meta.data[[case$group_by]]) ?
-    # How about the order?
-    if (!case$ident %in% colnames(avgexpr) && grepl("_", case$ident)) {
-        colnames(avgexpr) <- gsub("-", "_", colnames(avgexpr))
-    }
+    colnames(avgexpr) <- as.character(unique(srtobj@meta.data[[case$group.by]]))
     avgexpr <- avgexpr[, case$ident, drop = FALSE]
     avgexpr <- avgexpr[order(-avgexpr), , drop = FALSE]
 
