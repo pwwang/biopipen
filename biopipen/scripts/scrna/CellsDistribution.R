@@ -261,6 +261,7 @@ do_case <- function(name, case) {
         }
 
         cells_by <- new_cells_by
+        case$cells_by <- cells_by
         meta <- meta1
     }
 
@@ -268,7 +269,7 @@ do_case <- function(name, case) {
         if (is.null(overlaps[[info$section]])) {
             overlaps[[info$section]] <<- list()
         }
-        overlaps[[info$section]][[info$case]] <<- meta %>% pull(case$cells_by) %>% unique()
+        overlaps[[info$section]][[info$case]] <<- meta %>% pull(cells_by) %>% unique()
     }
 
     # add sizes
