@@ -75,7 +75,7 @@ do_one_stats = function(name) {
 
     ngroups = ifelse(is.null(case$group.by), 1, length(unique(plot_df[[case$group.by]])))
     nidents = length(unique(plot_df[[case$ident]]))
-    bar_position = ifelse(ngroups > 5, "stack", "dodge")
+    bar_position = ifelse(case$position == "auto", ifelse(ngroups > 5, "stack", "dodge"), case$position)
     p = plot_df %>%
         ggplot(aes(
             x=!!sym(ifelse(case$transpose, case$group.by, case$ident)),

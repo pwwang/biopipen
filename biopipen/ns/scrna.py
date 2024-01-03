@@ -496,6 +496,11 @@ class SeuratClusterStats(Proc):
             - transpose (flag): Whether to transpose the cluster and group, that is,
                 using group as the x-axis and cluster to fill the plot.
                 Only works when `group-by` is specified.
+            - position (choice): The position of the bars.
+                - stack: Use `position_stack()`.
+                - fill: Use `position_fill()`.
+                - dodge: Use `position_dodge()`.
+                - auto: Use `stack` when there are more than 5 groups, otherwise use `dodge`.
             - ident: The column name in metadata to use as the identity.
             - group-by: The column name in metadata to group the cells.
                 Does NOT support for pie charts.
@@ -636,6 +641,7 @@ class SeuratClusterStats(Proc):
             "frac": False,
             "pie": False,
             "table": False,
+            "position": "auto",
             "frac_ofall": False,
             "transpose": False,
             "ident": "seurat_clusters",
