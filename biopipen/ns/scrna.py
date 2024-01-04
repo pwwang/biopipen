@@ -1833,6 +1833,10 @@ class RadarPlots(Proc):
             `Tumor` and `Blood`, you can set `order` to `["Tumor", "Blood"]`.
             This will also have `Tumor` as the first item in the legend and `Blood`
             as the second item.
+        colors: The colors for the groups in `by`. If not specified,
+            the default colors will be used.
+            Multiple colors can be separated by comma (`,`).
+            You can specify `biopipen` to use the `biopipen` palette.
         ident: The column name of the cluster information.
         cluster_order (list): The order of the clusters.
             You may also use it to filter the clusters. If not given,
@@ -1874,6 +1878,7 @@ class RadarPlots(Proc):
         "by": None,
         "each": None,
         "order": None,
+        "colors": None,
         "ident": "seurat_clusters",
         "cluster_order": [],
         "breakdown": None,
