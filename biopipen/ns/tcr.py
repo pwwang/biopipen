@@ -596,6 +596,13 @@ class Immunarch(Proc):
                     - fdr: Benjamini & Hochberg (non-negative)
                     - none: no correction.
             - separate_by: A column name used to separate the samples into different plots.
+            - split_by: A column name used to split the samples into different subplots.
+                Like `separate_by`, but the plots will be put in the same figure.
+                y-axis will be shared, even if `align_y` is `False` or `ymin`/`ymax` are not specified.
+                `ncol` will be ignored.
+            - split_order: The order of the values in `split_by` on the x-axis of the plots.
+                It can also be used for `separate_by` to control the order of the plots.
+                Values can be separated by `,`.
             - align_x (flag): Align the x-axis of multiple plots. Only works for `raref`.
             - align_y (flag): Align the y-axis of multiple plots.
             - ymin (type=float): The minimum value of the y-axis.
@@ -792,6 +799,8 @@ class Immunarch(Proc):
                 "padjust": "none",
             },
             "separate_by": None,
+            "split_by": None,
+            "split_order": None,
             "align_x": False,
             "align_y": False,
             "log": False,

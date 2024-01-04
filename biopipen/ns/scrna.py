@@ -496,6 +496,11 @@ class SeuratClusterStats(Proc):
             - transpose (flag): Whether to transpose the cluster and group, that is,
                 using group as the x-axis and cluster to fill the plot.
                 Only works when `group-by` is specified.
+            - position (choice): The position of the bars.
+                - stack: Use `position_stack()`.
+                - fill: Use `position_fill()`.
+                - dodge: Use `position_dodge()`.
+                - auto: Use `stack` when there are more than 5 groups, otherwise use `dodge`.
             - ident: The column name in metadata to use as the identity.
             - group-by: The column name in metadata to group the cells.
                 Does NOT support for pie charts.
@@ -636,6 +641,7 @@ class SeuratClusterStats(Proc):
             "frac": False,
             "pie": False,
             "table": False,
+            "position": "auto",
             "frac_ofall": False,
             "transpose": False,
             "ident": "seurat_clusters",
@@ -1827,6 +1833,10 @@ class RadarPlots(Proc):
             `Tumor` and `Blood`, you can set `order` to `["Tumor", "Blood"]`.
             This will also have `Tumor` as the first item in the legend and `Blood`
             as the second item.
+        colors: The colors for the groups in `by`. If not specified,
+            the default colors will be used.
+            Multiple colors can be separated by comma (`,`).
+            You can specify `biopipen` to use the `biopipen` palette.
         ident: The column name of the cluster information.
         cluster_order (list): The order of the clusters.
             You may also use it to filter the clusters. If not given,
@@ -1868,6 +1878,7 @@ class RadarPlots(Proc):
         "by": None,
         "each": None,
         "order": None,
+        "colors": None,
         "ident": "seurat_clusters",
         "cluster_order": [],
         "breakdown": None,

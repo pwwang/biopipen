@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.23.4
+
+- scrna.TopExpressingGenes: fix colnames while pulling average expression
+- scrna.CellsDistribution: fix when cells_by has multiple column names
+- scrna.CellTypeAnnotation: fix the order of the clusters for direct method
+- scrna.SeuratClusterStats: add `position` options for bar plots for stats
+- scrna.RadarPlots: add `colors` to set the colors of the loops in radar and bar plots
+- tcr.Immunarch: add `split_by` and `split_order` to put subplots together in one single plots
+
 ## 0.23.3
 
 - tcr.ImmunarchLoading: change mode from `single` to `paired` by default

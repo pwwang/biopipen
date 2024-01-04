@@ -20,6 +20,7 @@ mutaters = {{envs.mutaters | r}}
 by = {{envs.by | r}}
 each = {{envs.each | r}}
 order = {{envs.order | r}}
+colors = {{envs.colors | r}}
 ident = {{envs.ident | r}}
 cluster_order = {{envs.cluster_order | r}}
 breaks = {{envs.breaks | r}}
@@ -50,6 +51,7 @@ if (length(cases) == 0) {
         by = by,
         each = each,
         order = order,
+        colors = colors,
         ident = ident,
         cluster_order = cluster_order,
         breaks = breaks,
@@ -66,6 +68,7 @@ if (length(cases) == 0) {
         cases[[key]]$by <- cases[[key]]$by %||% by
         cases[[key]]$each <- cases[[key]]$each %||% each
         cases[[key]]$order <- cases[[key]]$order %||% order
+        cases[[key]]$colors <- cases[[key]]$colors %||% colors
         cases[[key]]$ident <- cases[[key]]$ident %||% ident
         cases[[key]]$cluster_order <- cases[[key]]$cluster_order %||% cluster_order
         cases[[key]]$breaks <- cases[[key]]$breaks %||% breaks
@@ -222,13 +225,18 @@ do_radarplot <- function(info, case, counts) {
 
     # Plot
     plotfile = file.path(info$casedir, "plot.png")
+    if (!is.null(case$colors) && length(case$colors) == 1 && case$colors == "biopipen") {
+        colors = pal_biopipen()(nrow(rdr_data))
+    } else if (!is.null(case$colors) && length(case$colors) > 0) {
+        colors = trimws(unlist(strsplit(case$colors, ",")))
+    }
     p = ggradar(
         rdr_data %>% as.data.frame() %>% rownames_to_column("group"),
         values.radar = paste0(breaks, "%"),
         grid.min = breaks[1] / 100,
         grid.mid = breaks[2] / 100,
         grid.max = breaks[3] / 100,
-        group.colours = pal_biopipen()(nrow(rdr_data))
+        group.colours = colors
     )
     png(
         plotfile,
@@ -299,8 +307,13 @@ do_barplot_and_tests <- function(info, case, counts) {
             color = "#333333"
         ) +
         theme_prism(axis_text_angle = 90) +
-        scale_fill_biopipen(alpha = .8) +
         ylab("Fraction of cells")
+
+    if (!is.null(case$colors) && length(case$colors) == 1 && case$colors == "biopipen") {
+        p <- p + scale_fill_biopipen(.8)
+    } else if (!is.null(case$colors) && length(case$colors) > 0) {
+        p <- p + scale_fill_manual(values = trimws(unlist(strsplit(case$colors, ","))))
+    }
 
     png(
         plotfile,

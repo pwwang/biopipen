@@ -16,6 +16,8 @@ div_test = {{envs.divs.test | r}}
 div_cases = {{envs.divs.cases | r: todot="-"}}
 div_devpars = {{envs.divs.devpars | r}}
 div_separate_by = {{envs.divs.separate_by | r}}
+div_split_by = {{envs.divs.split_by | r}}
+div_split_order = {{envs.divs.split_order | r}}
 div_align_x = {{envs.divs.align_x | r}}
 div_align_y = {{envs.divs.align_y | r}}
 div_subset = {{envs.divs.subset | r}}
@@ -28,37 +30,21 @@ div_dir = file.path(outdir, "diversity")
 dir.create(div_dir, showWarnings = FALSE)
 
 # Fill up the cases
-update_case = function(case) {
-    log_info("Filling up cases ...")
-    if (is.null(case$subset)) {
-        case$subset = div_subset
-    }
-    if (is.null(case$method)) {
-        case$method = div_method
-    }
-    if (is.null(case$by)) {
-        case$by = div_by
-    }
+update_case = function(case, name) {
+    log_info("Filling up case: {name} ...")
+    case$subset <- case$subset %||% div_subset
+    case$method <- case$method %||% div_method
+    case$by <- case$by %||% div_by
     if (!is.null(case$by) && nchar(case$by) > 0) {
         case$by = unlist(strsplit(case$by, ",")) %>% trimws()
     }
-    if (is.null(case$order)) {
-        case$order = div_order
-    }
-    if (is.null(case$args)) {
-        case$args = div_args
-    }
+    case$order <- case$order %||% div_order
+    case$args <- case$args %||% div_args
     for (name in names(case$args)) {
-        if (is.null(case$args[[name]])) {
-            case$args[[name]] = div_args[[name]]
-        }
+        case$args[[name]] = case$args[[name]] %||% div_args[[name]]
     }
-    if (is.null(case$test)) {
-        case$test = div_test
-    }
-    if (is.null(case$test$method)) {
-        case$test$method = div_test$method
-    }
+    case$test <- case$test %||% div_test
+    case$test$method <- case$test$method %||% div_test$method
     if (!case$test$method %in% c("none", "t.test", "wilcox.test")) {
         stop(paste0(
             "Diversity estimation: Unknown test method: ",
@@ -66,42 +52,23 @@ update_case = function(case) {
             ". Expected: t.test, wilcox.test"
         ))
     }
-    if (is.null(case$test$padjust)) {
-        case$test$group = div_test$padjust
+    case$test$padjust <- case$test$padjust %||% div_test$padjust
+    case$devpars <- case$devpars %||% div_devpars
+    case$devpars$res <- case$devpars$res %||% div_devpars$res
+    case$devpars$width <- case$devpars$width %||% div_devpars$width
+    case$devpars$height <- case$devpars$height %||% div_devpars$height
+    case$separate_by <- case$separate_by %||% div_separate_by
+    case$split_by <- case$split_by %||% div_split_by
+    case$split_order <- case$split_order %||% div_split_order
+    if (!is.null(case$separate_by) && !is.null(case$split_by)) {
+        stop("Diversity estimation: `separate_by` and `split_by` cannot be specified at the same time")
     }
-    if (is.null(case$devpars)) {
-        case$devpars = div_devpars
-    }
-    if (is.null(case$devpars$res)) {
-        case$devpars$res = div_devpars$res
-    }
-    if (is.null(case$devpars$width)) {
-        case$devpars$width = div_devpars$width
-    }
-    if (is.null(case$devpars$height)) {
-        case$devpars$height = div_devpars$height
-    }
-    if (is.null(case$separate_by)) {
-        case$separate_by = div_separate_by
-    }
-    if (is.null(case$align_x)) {
-        case$align_x = div_align_x
-    }
-    if (is.null(case$align_y)) {
-        case$align_y = div_align_y
-    }
-    if (is.null(case$log)) {
-        case$log = div_log
-    }
-    if (is.null(case$ncol)) {
-        case$ncol = div_ncol
-    }
-    if (is.null(case$ymin)) {
-        case$ymin = div_ymin
-    }
-    if (is.null(case$ymax)) {
-        case$ymax = div_ymax
-    }
+    case$align_x <- case$align_x %||% div_align_x
+    case$align_y <- case$align_y %||% div_align_y
+    case$log <- case$log %||% div_log
+    case$ncol <- case$ncol %||% div_ncol
+    case$ymin <- case$ymin %||% div_ymin
+    case$ymax <- case$ymax %||% div_ymax
     if (!is.null(case$args) && length(case$args) > 0) {
         names(case$args) = paste0(".", names(case$args))
     }
@@ -139,12 +106,12 @@ if (is.null(div_cases) || length(div_cases) == 0) {
     if (is.null(div_method) || length(div_method) == 0 || nchar(div_method) == 0) {
         stop("No method is specified for diversity estimation")
     }
-    default_case = update_case(list())
+    default_case = update_case(list(), name = "DEFAULT")
     div_cases = list(x = default_case)
     names(div_cases) = div_method
 } else {
     for (name in names(div_cases)) {
-        div_cases[[name]] = update_case(div_cases[[name]])
+        div_cases[[name]] = update_case(div_cases[[name]], name = name)
     }
 }
 
@@ -192,6 +159,14 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
         )
     }
 
+    if (!is.null(case$split_by)) {
+        newdiv = newdiv %>% left_join(
+            d$meta[, c("Sample", case$split_by), drop = FALSE],
+            by = "Sample",
+            suffix = c(".div", "")
+        )
+    }
+
     write.table(
         newdiv,
         file = file.path(ddir, "diversity.txt"),
@@ -207,10 +182,16 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
     if (!is.null(case$by) && length(case$by) > 0) {
         if (!is.null(case$separate_by)) {
             metas = split(d$meta, d$meta[[case$separate_by]])
+            if (!is.null(case$split_order)) {
+                if (is.character(case$split_order) && length(case$split_order) == 1) {
+                    case$split_order = trimws(unlist(strsplit(case$split_order, ",")))
+                }
+                metas = metas[intersect(case$split_order, names(metas))]
+            }
             ps = lapply(metas, function(meta) {
                 .test = length(unique(meta[[case$by]])) > 1
                 p = vis(filter_div(div, meta$Sample), .by = case$by, .meta = meta, .test = .test)
-                p = p + ggtitle(paste0(p$labels$title, " (" , case$separate_by, ": ", meta[[case$separate_by]][1], ")"))
+                p = p + xlab(paste0(case$separate_by, ": ", meta[[case$separate_by]][1], ")"))
                 if (!is.null(case$order) && length(case$order) > 0) {
                     p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
                 }
@@ -226,6 +207,51 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
             })
             n_seps = length(ps)
             p = wrap_plots(ps, ncol = case$ncol)
+        } else if (!is.null(case$split_by)) {
+            metas = split(d$meta, d$meta[[case$split_by]])
+            if (!is.null(case$split_order)) {
+                if (is.character(case$split_order) && length(case$split_order) == 1) {
+                    case$split_order = trimws(unlist(strsplit(case$split_order, ",")))
+                }
+                metas = metas[intersect(case$split_order, names(metas))]
+            }
+            .i = 0
+            ps = lapply(metas, function(meta) {
+                nby = length(unique(meta[[case$by]]))
+                p = vis(filter_div(div, meta$Sample), .by = case$by, .meta = meta, .test = nby > 1)
+                if (!is.null(case$order) && length(case$order) > 0) {
+                    p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
+                }
+                p = p + xlab(meta[[case$split_by]][1]) + theme(
+                    axis.text.x = element_blank(),
+                    plot.title = element_blank(),
+                    plot.subtitle = element_blank(),
+                    legend.position = "right"
+                )
+                if (.i > 0) {
+                    p = p + theme(
+                        axis.text.y = element_blank(),
+                        axis.title.y = element_blank(),
+                        axis.ticks.y = element_blank(),
+                        axis.line.y = element_blank()
+                    )
+                }
+                .i <<- .i + 1
+                list(
+                    p = p,
+                    ymin = case$ymin %||% min(newdiv[[value_col]]),
+                    ymax = case$ymax %||% max(newdiv[[value_col]]),
+                    nby = nby
+                )
+            })
+            n_seps = length(ps)
+            ymin = do.call(min, lapply(ps, function(x) x$ymin))
+            ymin = max(0, ymin - 0.1)
+            ymax = do.call(max, lapply(ps, function(x) x$ymax))
+            ymax = ymax + 0.3 * (ymax - ymin)  # for the pvalue marks
+            widths = sapply(ps, function(x) ifelse(x$nby == 1, 1.2, x$nby))
+            plots = lapply(ps, function(x) x$p + ylim(c(ymin, ymax)))
+            p = wrap_plots(plots, widths = widths, guides = "collect")
         } else {
             .test = length(unique(d$meta[[case$by]])) > 1
             p = vis(div, .by = case$by, .meta = d$meta, .test = .test)
@@ -235,11 +261,17 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
         }
     } else if (!is.null(case$separate_by)) {
         metas = split(d$meta, d$meta[[case$separate_by]])
+        if (!is.null(case$split_order)) {
+            if (is.character(case$split_order) && length(case$split_order) == 1) {
+                case$split_order = trimws(unlist(strsplit(case$split_order, ",")))
+            }
+            metas = metas[intersect(case$split_order, names(metas))]
+        }
         ps = lapply(metas, function(meta) {
             p = vis(filter_div(div, meta$Sample))
             p = p + ggtitle(paste0(p$labels$title, " (" , case$separate_by, ": ", meta[[case$separate_by]][1], ")"))
             if (!is.null(case$order) && length(case$order) > 0) {
-                p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
+                p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[Sample]])))
             }
             if (!is.null(case$ymin) && !is.null(case$ymax)) {
                 p = p + ylim(c(case$ymin, case$ymax))
@@ -253,6 +285,51 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
         })
         n_seps = length(ps)
         p = wrap_plots(ps, ncol = case$ncol)
+    } else if (!is.null(case$split_by)) {
+        metas = split(d$meta, d$meta[[case$split_by]])
+        if (!is.null(case$split_order)) {
+            if (is.character(case$split_order) && length(case$split_order) == 1) {
+                case$split_order = trimws(unlist(strsplit(case$split_order, ",")))
+            }
+            metas = metas[intersect(case$split_order, names(metas))]
+        }
+        .i = 0
+        ps = lapply(metas, function(meta) {
+            nby = length(unique(meta$Sample))
+            p = vis(filter_div(div, meta$Sample))
+            if (!is.null(case$order) && length(case$order) > 0) {
+                p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[Sample]])))
+            }
+            p = p + xlab(meta[[case$split_by]][1]) + theme(
+                axis.text.x = element_blank(),
+                plot.title = element_blank(),
+                plot.subtitle = element_blank(),
+                legend.position = "right"
+            )
+            if (.i > 0) {
+                p = p + theme(
+                    axis.text.y = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    axis.line.y = element_blank()
+                )
+            }
+            .i <<- .i + 1
+            list(
+                p = p,
+                ymin = case$ymin %||% min(newdiv[[value_col]]),
+                ymax = case$ymax %||% max(newdiv[[value_col]]) + 0.1 * max(newdiv[[value_col]]),
+                nby = nby
+            )
+        })
+        n_seps = length(ps)
+        ymin = do.call(min, lapply(ps, function(x) x$ymin))
+        ymin = max(0, ymin - 0.1)
+        ymax = do.call(max, lapply(ps, function(x) x$ymax))
+        ymax = ymax + 0.3 * (ymax - ymin)  # for the pvalue marks
+        widths = sapply(ps, function(x) ifelse(x$nby == 1, 1.2, x$nby))
+        plots = lapply(ps, function(x) x$p + ylim(c(ymin, ymax)))
+        p = wrap_plots(plots, widths = widths, guides = "collect")
     } else {
         p = vis(div)
         if (!is.null(case$order) && length(case$order) > 0) {
@@ -264,9 +341,13 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
     width = case$devpars$width
     height = case$devpars$height
     res = case$devpars$res
-    if (is.null(res)) { res = 100 }
+    res = res %||% 100
     if (is.null(height)) {
-        height = if (n_seps == 1) 800 else 600 * ceiling(n_seps / case$ncol)
+        if (!is.nulL(case$split_by)) {
+            height = 800
+        } else {
+            height = if (n_seps == 1) 800 else 600 * ceiling(n_seps / case$ncol)
+        }
     }
     if (is.null(width)) {
         if (!is.null(case$by) && length(case$by) > 0) {
@@ -274,6 +355,7 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
         } else {
             width = 100 * length(unique(d$meta$Sample)) + 120
         }
+        if (!is.null(case$split_by)) { width = width / 2 }
         if (n_seps > 1) {
             width = width * case$ncol
         }
