@@ -101,7 +101,6 @@ load_sample = function(sample) {
     # filter the cells that don't have any gene expressions
     cell_exprs = colSums(obj@assays$RNA)
     obj = subset(obj, cells = names(cell_exprs[cell_exprs > 0]))
-    # obj = SCTransform(object=obj, return.only.var.genes=FALSE, verbose=FALSE)
     obj = RenameCells(obj, add.cell.id = sample)
     # Attach meta data
     for (mname in names(mdata)) {
@@ -110,9 +109,15 @@ load_sample = function(sample) {
         if (is.factor(mdt)) { mdt = levels(mdt)[mdt] }
         obj[[mname]] = mdt
     }
-    # obj_list[[sample]] = obj
 
-    # obj_list
+    if (isTRUE(envs$use_sct)) {
+        # so that we have data and scale.data layers on RNA assay
+        # useful for visualization in case some genes are not in
+        # the SCT assay
+        obj = NormalizeData(obj, verbose = FALSE)
+        obj = FindVariableFeatures(obj, verbose = FALSE)
+        obj = ScaleData(obj, verbose = FALSE)
+    }
     obj
 }
 
