@@ -23,6 +23,7 @@ class DownloadData(Download):
     """Download the data"""
     envs = {"tool": "aria2c"}
 
+
 class PrepareData(Proc):
     """Prepare the data
 

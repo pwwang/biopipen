@@ -1465,7 +1465,8 @@ class ScFGSEA(Proc):
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         section: The section name for the report. Worked only when `each` is not specified. Otherwise, the section name will be constructed from `each` and its value.
             This allows different cases to be put into the same section in the report.
-        gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object
+        gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
+            One could also use a URL to a GMT file. For example, from <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/Pathways/>.
         method (choice): The method to do the preranking.
             - signal_to_noise: Signal to noise.
                 The larger the differences of the means (scaled by the standard deviations);

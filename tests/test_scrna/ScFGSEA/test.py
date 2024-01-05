@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pipen import Proc
 from biopipen.core.config import config
 from biopipen.core.testing import get_pipeline
@@ -33,8 +31,12 @@ class ScFGSEA(ScFGSEA):
         "ident-1": "g1",
         "ident-2": "g2",
         "group-by": "groups",
-        "gmtfile": Path(__file__).parent.parent.parent.joinpath(
-            "data/reference/KEGG_metabolism.gmt"
+        # "gmtfile": Path(__file__).parent.parent.parent.joinpath(
+        #     "data/reference/KEGG_metabolism.gmt"
+        # ),
+        "gmtfile": (
+            "https://download.baderlab.org/EM_Genesets/January_01_2024/"
+            "Human/symbol/Pathways/Human_Hallmark_MSigdb_January_01_2024_symbol.gmt"
         ),
     }
 
