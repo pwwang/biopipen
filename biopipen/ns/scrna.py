@@ -772,6 +772,10 @@ class ModuleScoreCalculator(Proc):
             >>>     "Proliferation": {"features": "STMN1,TUBB"}
             >>> }
 
+            For `CellCycle`, the columns `S.Score`, `G2M.Score` and `Phase` will
+            be added to the metadata. `S.Score` and `G2M.Score` are the cell cycle
+            scores for each cell, and `Phase` is the cell cycle phase for each cell.
+
             You can also add Diffusion Components (DC) to the modules
             >>> {"DC": {"features": 2, "kind": "diffmap"}}
             will perform diffusion map as a reduction and add the first 2
