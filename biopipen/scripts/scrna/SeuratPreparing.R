@@ -334,6 +334,11 @@ if (!envs$no_integration) {
     IntegrateLayersArgs <- envs$IntegrateLayers
     IntegrateLayersArgs$object <- sobj
     method <- IntegrateLayersArgs$method
+    if (!is.null(IntegrateLayersArgs$reference) && is.character(IntegrateLayersArgs$reference)) {
+        log_info("  Using reference samples: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
+        IntegrateLayersArgs$reference <- match(IntegrateLayersArgs$reference, samples)
+        log_info("  Transferred to indices: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
+    }
     if (method %in% c("CCA", "cca")) { method <- "CCAIntegration" } else
     if (method %in% c("RPCA", "rpca")) { method <- "RPCAIntegration" } else
     if (method %in% c("Harmony", "harmony")) { method <- "HarmonyIntegration" } else
