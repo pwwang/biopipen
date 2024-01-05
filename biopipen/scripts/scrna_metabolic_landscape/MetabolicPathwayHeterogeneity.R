@@ -216,7 +216,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
 
     ggsave(file.path(subset_dir, "PC_variance_plot.pdf"), p, device = "pdf", useDingbats = FALSE)
 
-    add_report(
+    list(
         list(kind = "descr", content = "Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities"),
         list(kind = "image", src = bubblefile),
         h1 = ifelse(is.null(s), "Metabolic pathway heterogeneity", paste0(subset_prefix, s))
@@ -226,17 +226,20 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
 do_one_subset_col <- function(subset_col, subset_prefix) {
     log_info(paste0("- Handling subset column: ", subset_col, " ..."))
     if (is.null(subset_col)) {
-        do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
-    }
-    subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
-
-    if (ncores == 1) {
-        lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
+        x <- do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
+        do.call(add_report, x)
     } else {
-        x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
-        if (any(unlist(lapply(x, class)) == "try-error")) {
-            stop(paste0("\nmclapply error:", x))
+        subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
+
+        if (ncores == 1) {
+            x = lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
+        } else {
+            x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
+            if (any(unlist(lapply(x, class)) == "try-error")) {
+                stop(paste0("\nmclapply error:", x))
+            }
         }
+        for (r in x) { do.call(add_report, r) }
     }
 }
 
