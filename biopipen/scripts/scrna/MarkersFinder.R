@@ -306,6 +306,10 @@ do_enrich <- function(info, markers, sig, volgenes) {
                 col.names = TRUE,
                 quote = FALSE
             )
+            if (nrow(enriched[[db]]) == 0) {
+                log_warn("  No enrichment found for case: {info$casename} - {db}")
+                next
+            }
             png(
                 file.path(info$casedir, paste0("Enrichr-", db, ".png")),
                 res = 100, height = 1000, width = 1000
