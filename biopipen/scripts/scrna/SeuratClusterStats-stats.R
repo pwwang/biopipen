@@ -69,6 +69,10 @@ do_one_stats = function(name) {
             select(all_of(select_cols)) %>%
             group_by(!!!syms(select_cols)) %>%
             summarise(.n = n(), .groups = "drop")
+
+        if (isTRUE(case$frac) || isTRUE(case$frac_ofall)) {
+            plot_df <- plot_df %>% mutate(.frac = .n / sum(.n))
+        }
     }
 
     write.table(plot_df, tablefile, sep="\t", quote=FALSE, row.names=FALSE)
