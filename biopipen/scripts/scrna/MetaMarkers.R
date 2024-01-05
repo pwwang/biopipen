@@ -183,6 +183,12 @@ do_enrich <- function(info, markers, sig) {
             col.names = TRUE,
             quote = FALSE
         )
+
+        if (nrow(enriched[[db]]) == 0) {
+            log_info(paste0("  No enriched terms for ", db))
+            next
+        }
+
         png(
             file.path(info$casedir, paste0("Enrichr-", db, ".png")),
             res = 100, height = 600, width = 800
