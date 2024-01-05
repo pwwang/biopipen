@@ -78,7 +78,8 @@ do_one_group <- function(obj, features, group, outputdir, h1) {
             )
         }
 
-        add_report(
+        # Can't add report directly, mclapply can't modify global variables.
+        report = list(
             list(kind = "fgsea", dir = odir),
             h1 = ifelse(is.null(h1), groupname, h1),
             h2 = ifelse(is.null(h1), "#", groupname)
@@ -88,7 +89,7 @@ do_one_group <- function(obj, features, group, outputdir, h1) {
         log_warn(paste("Unable to run for", group))
         log_warn(e$message)
 
-        add_report(
+        report = list(
             list(
                 kind = "error",
                 content = paste0("Error running GSEA for ", group, ": ", e$message)
@@ -98,6 +99,7 @@ do_one_group <- function(obj, features, group, outputdir, h1) {
         )
     })
 
+    report
 }
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
@@ -126,6 +128,8 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     if (any(unlist(lapply(x, class)) == "try-error")) {
         stop("mclapply error")
     }
+
+    for (r in x) { do.call(add_report, r) }
 }
 
 do_one_subset_col <- function(subset_col, subset_prefix) {

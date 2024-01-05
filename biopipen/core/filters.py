@@ -326,37 +326,58 @@ def _render_enrichr(
     components = []
 
     for db in dbs:
-        components.append(
-            {
-                "title": db,
-                "ui": "tabs",
-                "contents": [
-                    {
-                        "title": "Plot",
-                        "ui": "flat",
-                        "contents": [
-                            {
-                                "kind": "image",
-                                "src": str(
-                                    Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
-                                ),
-                            }
-                        ],
-                    },
-                    {
-                        "title": "Table",
-                        "ui": "flat",
-                        "contents": [
-                            {
-                                "kind": "table",
-                                "src": str(
-                                    Path(cont["dir"]).joinpath(f"Enrichr-{db}.txt")
-                                ),
-                            }
-                        ],
-                    },
-                ],
-            }
-        )
+        enrichr_plot = Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
+        if enrichr_plot.exists():
+            components.append(
+                {
+                    "title": db,
+                    "ui": "tabs",
+                    "contents": [
+                        {
+                            "title": "Plot",
+                            "ui": "flat",
+                            "contents": [
+                                {
+                                    "kind": "image",
+                                    "src": str(
+                                        Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
+                                    ),
+                                }
+                            ],
+                        },
+                        {
+                            "title": "Table",
+                            "ui": "flat",
+                            "contents": [
+                                {
+                                    "kind": "table",
+                                    "src": str(
+                                        Path(cont["dir"]).joinpath(f"Enrichr-{db}.txt")
+                                    ),
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+        else:
+            components.append(
+                {
+                    "title": db,
+                    "ui": "tabs",
+                    "contents": [
+                        {
+                            "title": "Error",
+                            "ui": "flat",
+                            "contents": [
+                                {
+                                    "kind": "error",
+                                    "content": "No enriched terms found.",
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
 
     return render_ui(components, "accordion", job, level)

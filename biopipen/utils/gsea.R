@@ -63,6 +63,11 @@ runEnrichr = function(
         outfig = file.path(outdir, paste0("Enrichr_", db, ".png"))
         write.table(enr, outtable, row.names=T, col.names=F, sep="\t", quote=F)
 
+        if (nrow(enr) == 0) {
+            print(paste0("No enriched terms for ", db))
+            next
+        }
+
         png(outfig, res=100, height=1000, width=1400)
         print(
             plotEnrich(

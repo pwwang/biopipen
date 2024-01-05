@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.23.5
+
+- scrna.SeuratClusterStats: fix when `frac` or `frac_ofall` is true and no `group-by` nor `split-by` is specified for `stats`
+- core.filters: fix when no enriched items found for report component `enrichr`
+- scrna.MarkersFinder: fix when no enriched items found
+- scrna.MetaMarkers: fix when no enriched items found
+- scrna.TopExpressingGenes: fix when no enriched items found
+- utils.gsea.R: fix when no enriched items found for `runEnrichr`
+- scrna_metabolic_landscript: fix adding report when ncores > 1
+
 ## 0.23.4
 
 - scrna.TopExpressingGenes: fix colnames while pulling average expression

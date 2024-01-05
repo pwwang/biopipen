@@ -42,7 +42,6 @@ pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
 
-
 do_one_comparison <- function(
     obj,
     compname,
@@ -111,7 +110,7 @@ do_one_comparison <- function(
             envs = list(nproc = 1)
         )
 
-        add_report(
+        report = list(
             list(kind = "fgsea", dir = odir),
             h1 = groupname,
             h2 = compname
@@ -123,7 +122,11 @@ do_one_comparison <- function(
             gmtfile,
             odir
         )
+
+        report = list()
     }
+
+    report
 }
 
 do_one_group <- function(group) {
@@ -138,12 +141,13 @@ do_one_group <- function(group) {
     groupdir = file.path(outdir, slugify(groupname, tolower = FALSE))
     dir.create(groupdir, showWarnings = FALSE)
 
+    report = list()
     for (i in seq_along(subsetting_comparison)) {
         sci = subsetting_comparison[[i]]
         if (is.null(sci) || length(sci) == 0) {
             next
         }
-        sapply(
+        rs = lapply(
             names(sci),
             function(compname) {
                 do_one_comparison(
@@ -159,17 +163,23 @@ do_one_group <- function(group) {
                 )
             }
         )
+        if (length(rs) > 0) {
+            report = c(report, rs)
+        }
     }
+    report
 }
 
 groups = sort(as.character(unique(sobj@meta.data[[grouping]])))
 if (ncores == 1) {
-    lapply(groups, do_one_group)
+    x = lapply(groups, do_one_group)
 } else {
     x = mclapply(groups, do_one_group, mc.cores = ncores)
     if (any(unlist(lapply(x, class)) == "try-error")) {
         stop("mclapply error")
     }
 }
+report = unlist(x, recursive = FALSE)
+for (r in report) { do.call(add_report, r) }
 
 save_report(joboutdir)
