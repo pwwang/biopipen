@@ -177,6 +177,12 @@ do_enrich <- function(expr, odir) {
             col.names = TRUE,
             quote = FALSE
         )
+
+        if (nrow(enriched[[db]]) == 0) {
+            log_info(paste0("  No enriched terms for ", db))
+            next
+        }
+
         png(
             file.path(odir, paste0("Enrichr-", db, ".png")),
             res = 100, height = 1000, width = 1000
