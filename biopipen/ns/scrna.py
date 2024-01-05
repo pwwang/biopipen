@@ -77,6 +77,7 @@ class SeuratPreparing(Proc):
 
     /// Note
     When using `SCTransform`, the default Assay will be set to `SCT` in output, rather than `RNA`.
+    If you are using `cca` or `rpca` interation, the default assay will be `integrated`.
     ///
 
     /// Note
