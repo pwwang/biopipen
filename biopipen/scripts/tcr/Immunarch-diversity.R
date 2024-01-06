@@ -647,6 +647,12 @@ run_div_case = function(casename) {
     # Filter
     if (!is.null(case$subset)) {
         d = immdata_from_expanded(filter_expanded_immdata(exdata, case$subset))
+        if (nrow(d$meta) == 0) {
+            stop(paste0(
+                "No samples/cells left after filtering. ",
+                "Do you have the correct `subset` for case: ",
+                casename, "?"))
+        }
     } else {
         d = immdata
     }
