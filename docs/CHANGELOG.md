@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.23.7
+
+- scrna.SeuratPreparing: update log message for transformation/scaling step
+- scrna_metabolic_landscape.MetabolicPathwayHeterogeneity: add utils.gsea script source to support localizeGmtfile
+
 ## 0.23.6
 
 - feat: support url for gmtfile wherever GSEA is performed (#113)
