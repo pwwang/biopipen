@@ -297,7 +297,7 @@ add_report(
     h1 = "Filters and QC"
 )
 
-log_info("Perform integration ...")
+log_info("Performing transformation/scaling ...")
 # Not joined yet
 # sobj[["RNA"]] <- split(sobj[["RNA"]], f = sobj$Sample)
 if (envs$use_sct) {
