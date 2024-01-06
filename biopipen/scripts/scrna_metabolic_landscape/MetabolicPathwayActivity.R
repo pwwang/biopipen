@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/gsea.R")
 source("{{biopipen_dir}}/utils/plot.R")
 
 library(scater)
