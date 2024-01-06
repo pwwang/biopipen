@@ -402,7 +402,10 @@ class ScrnaMetabolicLandscape(ProcGroup):
             If False, the values will be left as is.
         gmtfile: The GMT file with the metabolic pathways. The gene names should
             match the gene names in the gene list in RNAData or
-            the Seurat object
+            the Seurat object.
+            You can also provide a URL to the GMT file.
+            For example, from
+            <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/>.
         grouping: defines the basic groups to investigate the metabolic activity
             Typically the clusters.
         grouping_prefix: Working as a prefix to group names

@@ -39,6 +39,7 @@ gmt_pathways <- function(gmt_file) {
     pathways
 }
 
+gmtfile <- localizeGmtfile(gmtfile)
 pathways <- gmt_pathways(gmtfile)
 pathway_names <- names(pathways)
 metabolics <- unique(as.vector(unname(unlist(pathways))))

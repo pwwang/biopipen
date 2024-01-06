@@ -1,8 +1,48 @@
 library(ggplot2)
 library(dplyr)
 library(tibble)
+library(slugify)
 
-prerank = function(
+
+localizeGmtfile <- function(gmturl, cachedir = tempdir()) {
+    # Download the GMT file and save it to cachedir
+    # Return the path to the GMT file
+    if (!startsWith(gmturl, "http") && !startsWith(gmturl, "ftp")) {
+        return(gmturl)
+    }
+    gmtfile = file.path(cachedir, basename(gmturl))
+    if (!file.exists(gmtfile)) {
+        download.file(gmturl, gmtfile)
+        items <- read.delim(gmtfile, header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+        if (ncol(items) < 3) {
+            stop(paste0("Invalid GMT file: ", gmtfile, ", from ", gmturl))
+        }
+        if (nrow(items) == 0) {
+            stop(paste0("Empty GMT file: ", gmtfile, ", from ", gmturl))
+        }
+        if (nchar(items$V2[1]) < nchar(items$V1[1]) && nchar(items$V2[1]) > 0) {
+            warning(paste0(
+                "The second column is shorter, switching the first and second columns in GMT file ",
+                gmtfile,
+                " from ",
+                gmturl
+            ))
+            items <- items[, c(2, 1, 3:ncol(items))]
+            write.table(
+                items,
+                gmtfile,
+                row.names = F,
+                col.names = F,
+                sep = "\t",
+                quote = F
+            )
+        }
+    }
+    return(gmtfile)
+}
+
+
+prerank <- function(
     exprdata,
     pos,
     neg,
@@ -100,6 +140,7 @@ runFGSEA = function(
         ranks = unlist(ranks)
     }
 
+    gmtfile = localizeGmtfile(gmtfile)
     envs$pathways = gmtPathways(gmtfile)
     envs$stats = ranks
     gsea_res = do.call(fgsea::fgsea, envs)
@@ -135,7 +176,7 @@ runFGSEA = function(
     dev.off()
 
     for (pathway in topPathways) {
-        enrfig = file.path(outdir, paste0("fgsea_", gsub("/", "-", pathway, fixed=T), ".png"))
+        enrfig = file.path(outdir, paste0("fgsea_", slugify(pathway), ".png"))
         png(enrfig, res=100, width=1000, height=800)
         print(plotEnrichment(
             envs$pathways[[pathway]],
@@ -191,7 +232,7 @@ runGSEA = function(
 
     envs$input.ds = gctfile
     envs$input.cls = clsfile
-    envs$gs.db = gmtfile
+    envs$gs.db = localizeGmtfile(gmtfile)
     envs$output.directory = outdir
 
     do.call(GSEA, envs)

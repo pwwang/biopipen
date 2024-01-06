@@ -143,6 +143,7 @@ if (is.null(resolution) || length(resolution) == 1) {
 }
 
 if (DefaultAssay(sobj) == "SCT") {
+    # https://github.com/satijalab/seurat/issues/6968
     log_info("Running PrepSCTFindMarkers ...")
     sobj <- PrepSCTFindMarkers(sobj)
 }

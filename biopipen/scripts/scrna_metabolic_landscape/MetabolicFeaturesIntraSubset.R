@@ -38,6 +38,7 @@ gmt_pathways <- function(gmt_file) {
     pathways
 }
 
+gmtfile <- localizeGmtfile(gmtfile)
 pathways <- gmt_pathways(gmtfile)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
 sobj <- readRDS(sobjfile)
