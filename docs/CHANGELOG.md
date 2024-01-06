@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.23.6
+
+- feat: support url for gmtfile wherever GSEA is performed (#113)
+- utils.gsea.R: fix file path in gsea.R
+- tcr.Immunarch: add error message for empty filtered/subset data in diversity
+- scrna.SeuratPreparing: correct description of default assay in docstr
+- scrna.SeuratPreparing: run also the normal normalization procedures when `SCTransform` is used (useful for visualization purposes on RNA assay)
+- scrna.SeuratClustering: add related issue link to `PrepSCTFindMarkers`
+- scrna.ModuleScoreCalculator: document the names added by cell cycle score (pwwang/immunopipe#34)
+- scrna.SeuratPreparing: support sample names as `reference` for `IntegrateLayers`
+
 ## 0.23.5
 
 - scrna.SeuratClusterStats: fix when `frac` or `frac_ofall` is true and no `group-by` nor `split-by` is specified for `stats`
