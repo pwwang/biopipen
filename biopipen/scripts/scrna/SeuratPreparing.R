@@ -99,8 +99,8 @@ load_sample = function(sample) {
     }
     obj <- CreateSeuratObject(exprs, project=sample)
     # filter the cells that don't have any gene expressions
-    cell_exprs = colSums(obj@assays$RNA)
-    obj = subset(obj, cells = names(cell_exprs[cell_exprs > 0]))
+    # cell_exprs = colSums(obj@assays$RNA)
+    # obj = subset(obj, cells = names(cell_exprs[cell_exprs > 0]))
     obj = RenameCells(obj, add.cell.id = sample)
     # Attach meta data
     for (mname in names(mdata)) {
@@ -128,13 +128,7 @@ log_info("Reading samples individually ...")
 obj_list = lapply(samples, load_sample)
 
 log_info("Merging samples ...")
-if (length(obj_list) >= 2) {
-    y = c()
-    for (i in 2:length(obj_list)) y = c(y, obj_list[[i]])
-    sobj = merge(obj_list[[1]], y)
-} else {
-    sobj = obj_list[[1]]
-}
+sobj = Reduce(merge, obj_list)
 
 log_info("Adding metadata for QC ...")
 sobj$percent.mt = PercentageFeatureSet(sobj, pattern = "^MT-")
@@ -297,28 +291,36 @@ add_report(
     h1 = "Filters and QC"
 )
 
+.formatArgs <- function(args) {
+    paste(capture.output(str(args)), collapse = ", ")
+}
+
 log_info("Performing transformation/scaling ...")
 # Not joined yet
 # sobj[["RNA"]] <- split(sobj[["RNA"]], f = sobj$Sample)
 if (envs$use_sct) {
     log_info("- Running SCTransform ...")
     SCTransformArgs <- envs$SCTransform
+    log_info("  SCTransform: {.formatArgs(SCTransformArgs)}")
     SCTransformArgs$object <- sobj
     sobj <- do_call(SCTransform, SCTransformArgs)
     # Default is to use the SCT assay
 } else {
     log_info("- Running NormalizeData ...")
     NormalizeDataArgs <- envs$NormalizeData
+    log_info("  NormalizeData: {.formatArgs(NormalizeDataArgs)}")
     NormalizeDataArgs$object <- sobj
     sobj <- do_call(NormalizeData, NormalizeDataArgs)
 
     log_info("- Running FindVariableFeatures ...")
     FindVariableFeaturesArgs <- envs$FindVariableFeatures
+    log_info("  FindVariableFeatures: {.formatArgs(FindVariableFeaturesArgs)}")
     FindVariableFeaturesArgs$object <- sobj
     sobj <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
 
     log_info("- Running ScaleData ...")
     ScaleDataArgs <- envs$ScaleData
+    log_info("  ScaleData: {.formatArgs(ScaleDataArgs)}")
     ScaleDataArgs$object <- sobj
     sobj <- do_call(ScaleData, ScaleDataArgs)
 }
@@ -326,13 +328,13 @@ if (envs$use_sct) {
 log_info("- Running RunPCA ...")
 RunPCAArgs <- envs$RunPCA
 RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(sobj) - 1) }
+log_info("  RunPCA: {.formatArgs(RunPCAArgs)}")
 RunPCAArgs$object <- sobj
 sobj <- do_call(RunPCA, RunPCAArgs)
 
 if (!envs$no_integration) {
     log_info("- Running IntegrateLayers ...")
     IntegrateLayersArgs <- envs$IntegrateLayers
-    IntegrateLayersArgs$object <- sobj
     method <- IntegrateLayersArgs$method
     if (!is.null(IntegrateLayersArgs$reference) && is.character(IntegrateLayersArgs$reference)) {
         log_info("  Using reference samples: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
@@ -359,6 +361,8 @@ if (!envs$no_integration) {
     if (is.null(IntegrateLayersArgs$new.reduction)) {
         IntegrateLayersArgs$new.reduction <- new_reductions[[method]]
     }
+    log_info("  IntegrateLayers: {.formatArgs(IntegrateLayersArgs)}")
+    IntegrateLayersArgs$object <- sobj
     sobj <- do_call(IntegrateLayers, IntegrateLayersArgs)
     # Save it for dimension reduction plots
     sobj@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
