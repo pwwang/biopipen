@@ -14,6 +14,7 @@ group.by <- {{envs["group-by"] | r}}  # nolint
 ident.1 <- {{envs["ident-1"] | r}}  # nolint
 ident.2 <- {{envs["ident-2"] | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
+subset <- {{envs.subset | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
 gmtfile <- {{envs.gmtfile | r}}  # nolint
 method <- {{envs.method | r}}  # nolint
@@ -43,6 +44,7 @@ expand_cases <- function() {
                 ident.1 = ident.1,
                 ident.2 = ident.2,
                 each = each,
+                subset = subset,
                 section = section,
                 gmtfile = gmtfile,
                 method = method,
@@ -63,6 +65,7 @@ expand_cases <- function() {
                 ident.1 = ident.1,
                 ident.2 = ident.2,
                 each = each,
+                subset = subset,
                 section = section,
                 gmtfile = gmtfile,
                 method = method,
@@ -136,6 +139,9 @@ do_case <- function(name, case) {
     # prepare expression matrix
     log_info("  Preparing expression matrix...")
     sobj <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    if (!is.null(case$subset)) {
+        sobj <- sobj %>% filter(!!!parse_exprs(case$subset))
+    }
     if (!is.null(case$ident.2)) {
         sobj <- sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
     }
