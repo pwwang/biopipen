@@ -27,13 +27,14 @@ class PrepareSeurat(Proc):
 class ScFGSEA(ScFGSEA):
     requires = PrepareSeurat
     envs = {
-        "each": "seurat_clusters",
+        # "each": "seurat_clusters",
         "ident-1": "g1",
         "ident-2": "g2",
         "group-by": "groups",
         # "gmtfile": Path(__file__).parent.parent.parent.joinpath(
         #     "data/reference/KEGG_metabolism.gmt"
         # ),
+        "subset": "seurat_clusters == '0'",
         "gmtfile": (
             "https://download.baderlab.org/EM_Genesets/January_01_2024/"
             "Human/symbol/Pathways/Human_Hallmark_MSigdb_January_01_2024_symbol.gmt"
