@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.23.8
+
+- scrna.SeuratPreparing: log `Seurat` procedure arguments
+- scrna.ScFGSEA: add `subset` to filter cells
+
 ## 0.23.7
 
 - scrna.SeuratPreparing: update log message for transformation/scaling step
