@@ -1152,6 +1152,20 @@ files = [
 pipen = ">=0.13,<0.14"
 
 [[package]]
+name = "pipen-poplog"
+version = "0.0.1"
+description = "Populate logs from jobs to running log of the pipeline"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "pipen_poplog-0.0.1-py3-none-any.whl", hash = "sha256:bed3726ab05d9f2d35ed622acf65494daedf4cde564d588c91f3364954bd21ad"},
+    {file = "pipen_poplog-0.0.1.tar.gz", hash = "sha256:1a9a123247e0c956695663ec3b319dea19d84525668bbd9ef6d22c0e641068d0"},
+]
+
+[package.dependencies]
+pipen = ">=0.13,<0.14"
+
+[[package]]
 name = "pipen-report"
 version = "0.17.1"
 description = "Report generation system for pipen"
@@ -1958,4 +1972,4 @@ runinfo = ["pipen-runinfo"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "92bca6c62ee235deaf06cf71616a288961d10354c8e3803dcb4ab84ec66b6554"
+content-hash = "6f470289afbef9307fea6908a13cfde1633b67e2175e2d826d4383acf779d6a4"
