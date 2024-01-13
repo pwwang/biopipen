@@ -278,18 +278,14 @@ class SeuratClustering(Proc):
                 The results will be saved in `seurat_clusters_<resolution>`.
                 The final resolution will be used to define the clusters at `seurat_clusters`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
-        cache (type=auto): Whether to cache the seurat object with cluster information.
+        cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
-            The cached seurat object will be saved as `<signature>.cached.RDS` file, where `<signature>` is the signature determined by
+            The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
             the input and envs of the process.
-            See -
-            * <https://github.com/satijalab/seurat/issues/7849>
-            * <https://github.com/satijalab/seurat/issues/5358> and
-            * <https://github.com/satijalab/seurat/issues/6748> for more details.
+            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
+            <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
             To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
-            `<signature>.cached.RDS` in the cache directory.
-            If `True`, the cache directory is `.pipen/<Pipeline>/SeuratClustering/0/output/`
-            You can also specify customized directory to save the cached seurat object by setting `cache` to the directory path.
+            `<signature>.RDS` in the cache directory.
 
     Requires:
         r-seurat:
@@ -309,7 +305,7 @@ class SeuratClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "cache": False,
+        "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
 
@@ -361,18 +357,14 @@ class SeuratSubClustering(Proc):
                 The results will be saved in `<casename>_<resolution>`.
                 The final resolution will be used to define the clusters at `<casename>`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
-        cache (type=auto): Whether to cache the seurat object with cluster information.
+        cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
-            The cached seurat object will be saved as `<signature>.cached.RDS` file, where `<signature>` is the signature determined by
+            The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
             the input and envs of the process.
-            See -
-            * <https://github.com/satijalab/seurat/issues/7849>
-            * <https://github.com/satijalab/seurat/issues/5358> and
-            * <https://github.com/satijalab/seurat/issues/6748> for more details.
+            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
+            <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
             To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
-            `<signature>.cached.RDS` in the cache directory.
-            If `True`, the cache directory is `.pipen/<Pipeline>/SeuratClustering/0/output/`
-            You can also specify customized directory to save the cached seurat object by setting `cache` to the directory path.
+            `<signature>.RDS` in the cache directory.
         cases (type=json): The cases to perform subclustering.
             Keys are the names of the cases and values are the dicts inherited from `envs` except `mutaters` and `cache`.
             If empty, a case with name `subcluster` will be created with default parameters.
@@ -387,7 +379,7 @@ class SeuratSubClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "cache": False,
+        "cache": config.path.tmpdir,
         "cases": {"subcluster": {}},
     }
     script = "file://../scripts/scrna/SeuratSubClustering.R"
