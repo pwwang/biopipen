@@ -97,7 +97,7 @@ clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
 }
 
 run_clustcr = function() {
-    print(paste("Using tool:", "ClusTCR"))
+    log_info("Running ClusTCR ...")
     clustcr_dir = file.path(outdir, "ClusTCR_Output")
     dir.create(clustcr_dir, showWarnings = FALSE)
     clustcr_file = prepare_clustcr(clustcr_dir)
@@ -110,6 +110,7 @@ run_clustcr = function() {
     )
     print("Running:")
     print(clustcr_cmd)
+    log_debug("- Running command: {clustcr_cmd}")
     rc = system(clustcr_cmd)
     if (rc != 0) {
         quit(status=rc)
@@ -196,7 +197,7 @@ clean_giana_output = function(giana_outfile, giana_infile) {
 }
 
 run_giana = function() {
-    print(paste("Using tool:", "GIANA"))
+    log_info("Running GIANA ...")
     giana_srcdir = prepare_giana()
     giana_input = prepare_input()
     giana_outdir = file.path(outdir, "GIANA_Output")
@@ -228,6 +229,7 @@ run_giana = function() {
     )
     print("Running:")
     print(giana_cmd)
+    log_debug("- Running command: {giana_cmd}")
     rc = system(giana_cmd)
     if (rc != 0) {
         quit(status=rc)
@@ -276,4 +278,5 @@ if (tolower(tool) == "clustcr") {
     stop(paste("Unknown tool:", tool))
 }
 
+log_info("Saving results ...")
 attach_to_immdata(out)
