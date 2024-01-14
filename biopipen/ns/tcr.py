@@ -852,6 +852,7 @@ class Immunarch(Proc):
     plugin_opts = {
         "report": "file://../reports/tcr/Immunarch.svelte",
         "report_paging": 3,
+        "poplog_max": 999,
     }
 
 

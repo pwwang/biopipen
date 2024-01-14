@@ -3,9 +3,8 @@ source("{{biopipen_dir}}/scripts/tcr/immunarch-patched.R")
 # https://immunarch.com/articles/web_only/v6_diversity.html
 
 log_info("")
-log_info("#####################################")
-log_info("# Diversity estimation              #")
-log_info("#####################################")
+log_info("# Diversity estimation")
+log_info("-----------------------------------")
 
 # Other variables are loaded in the parent template
 # immdata is already loaded, meta is mutated

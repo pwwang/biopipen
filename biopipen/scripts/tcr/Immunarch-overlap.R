@@ -2,9 +2,8 @@
 # immfile, outdir, mutaters, immdata, n_samples
 
 log_info("")
-log_info("#####################################")
-log_info("# Overlap analysis                  #")
-log_info("#####################################")
+log_info("# Overlap analysis")
+log_info("-----------------------------------")
 
 overlaps = {{ envs.overlaps | r: todot="-" }}
 

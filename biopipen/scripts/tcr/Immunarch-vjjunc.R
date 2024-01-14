@@ -1,7 +1,6 @@
 log_info("")
-log_info("#####################################")
-log_info("# VJ Junction Circos Plots          #")
-log_info("#####################################")
+log_info("# VJ Junction Circos Plots")
+log_info("-----------------------------------")
 
 # Already required by immunarch
 library(circlize)

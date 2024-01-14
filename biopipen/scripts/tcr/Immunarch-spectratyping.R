@@ -2,9 +2,8 @@
 # immfile, outdir, mutaters, immdata, n_samples
 
 log_info("")
-log_info("#####################################")
-log_info("# Spectratyping analysis            #")
-log_info("#####################################")
+log_info("# Spectratyping analysis")
+log_info("-----------------------------------")
 
 spects = {{ envs.spects | r }}
 
