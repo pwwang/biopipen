@@ -2,9 +2,8 @@
 # immfile, outdir, mutaters, immdata, n_samples
 
 log_info("")
-log_info("#####################################")
-log_info("# Clonality analysis                #")
-log_info("#####################################")
+log_info("# Clonality analysis")
+log_info("-----------------------------------")
 
 top_clones = {{envs.top_clones | r}}
 rare_clones = {{envs.rare_clones | r}}

@@ -134,7 +134,9 @@ if (has_VJ) {
         file.path(tessa_dir, "tcr_vj.txt")
     )
 }
-log_info(paste("- ", cmd_encoder))
+print("Running:")
+print(cmd_encoder)
+log_debug(paste("- ", cmd_encoder))
 
 rc <- system(cmd_encoder)
 if (rc != 0) {

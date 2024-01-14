@@ -2,9 +2,8 @@
 # immfile, outdir, mutaters, immdata, n_samples
 
 log_info("")
-log_info("#####################################")
-log_info("# K-mer analysis                    #")
-log_info("#####################################")
+log_info("# K-mer analysis")
+log_info("-----------------------------------")
 
 kmers = {{ envs.kmers | r: todot="-" }}
 

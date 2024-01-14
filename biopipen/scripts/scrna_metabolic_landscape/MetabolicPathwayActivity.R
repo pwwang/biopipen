@@ -71,7 +71,7 @@ num_of_pathways <- function(gmtfile, overlapgenes) {
 }
 
 do_one_subset <- function(s, subset_col, subset_prefix) {
-    print(paste0("  Processing subset: ", s, "..."))
+    log_info("  Processing subset: {s} ...")
     if (is.null(s)) {
         subset_dir <- file.path(outdir, "ALL")
         dir.create(subset_dir, showWarnings = FALSE)
@@ -118,7 +118,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
 
     for (pi in seq_along(pathway_names)) {
         p <- pathway_names[pi]
-        print(paste0("  * Pathway (", pi, "): ", p, "..."))
+        log_info("  * Pathway ({pi}): {p} ...")
         genes <- pathways[[p]]
         genes_comm <- intersect(genes, rownames(subset_obj))
         genes_expressed <- names(rowSums(subset_obj)[rowSums(subset_obj) > 0])
@@ -312,7 +312,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
 }
 
 do_one_subset_col <- function(subset_col, subset_prefix) {
-    print(paste0("- Handling subset column: ", subset_col, " ..."))
+    log_info("- Handling subset column: {subset_col} ...")
     if (is.null(subset_col)) {
         do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
     } else {

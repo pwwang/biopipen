@@ -2,9 +2,8 @@
 # immfile, outdir, mutaters, immdata, n_samples
 
 log_info("")
-log_info("#####################################")
-log_info("# Gene usage analysis               #")
-log_info("#####################################")
+log_info("# Gene usage analysis")
+log_info("-----------------------------------")
 
 gene_usages = {{ envs.gene_usages | r: todot="-" }}
 

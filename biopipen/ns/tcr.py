@@ -563,12 +563,13 @@ class Immunarch(Proc):
                     A Gini coefficient of one (or 100 percents) expresses maximal inequality among values (for example where only one person has all the income).
                 - d50: The D50 index.
                     It is the number of types that are needed to cover 50%% of the total abundance.
-                - dxx: The Dxx index.
-                    It is the number of types that are needed to cover xx%% of the total abundance.
-                    The percentage should be specified in the `args` argument using `perc` key.
                 - raref: Species richness from the results of sampling through extrapolation.
             - by: The variables (column names) to group samples.
                 Multiple columns should be separated by `,`.
+            - plot_type (choice): The type of the plot, works when `by` is specified.
+                Not working for `raref`.
+                - box: Boxplot
+                - bar: Barplot with error bars
             - subset: Subset the data before calculating the clonotype volumes.
                 The whole data will be expanded to cell level, and then subsetted.
                 Clone sizes will be re-calculated based on the subsetted data.
@@ -789,9 +790,9 @@ class Immunarch(Proc):
         },
         # Diversity
         "divs": {
-            "filter": None,
             "method": "gini",
             "by": None,
+            "plot_type": "bar",
             "args": {},
             "order": [],
             "test": {
@@ -805,8 +806,8 @@ class Immunarch(Proc):
             "align_y": False,
             "log": False,
             "devpars": {
-                "width": 1000,
-                "height": 1000,
+                "width": 800,
+                "height": 800,
                 "res": 100,
             },
             "subset": None,
@@ -851,6 +852,7 @@ class Immunarch(Proc):
     plugin_opts = {
         "report": "file://../reports/tcr/Immunarch.svelte",
         "report_paging": 3,
+        "poplog_max": 999,
     }
 
 

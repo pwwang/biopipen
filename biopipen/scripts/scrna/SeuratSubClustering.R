@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/caching.R")
 
 library(Seurat)
 library(future)
@@ -33,40 +34,10 @@ envs$FindNeighbors <- .expand_dims(envs$FindNeighbors)
 log_info("Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 
-if (isTRUE(envs$cache)) {
-    envs$cache <- joboutdir
-}
-
-if (is.character(envs$cache) && nchar(envs$cache) > 0) {
-    log_info("Obtainning the signature ...")
-    envs2 <- envs
-    envs2$ncores <- NULL
-    sig <- c(
-        capture.output(str(srtobj)),
-        "\n\n-------------------\n\n",
-        capture.output(str(envs2)),
-        "\n"
-    )
-    digested_sig <- digest::digest(sig, algo = "md5")
-    cached_file <- file.path(envs$cache, paste0(digested_sig, ".cached.RDS"))
-    if (file.exists(cached_file)) {
-        log_info("Using cached results {cached_file}")
-        # copy cached file to rdsfile
-        file.copy(cached_file, rdsfile, copy.date = TRUE)
-        quit()
-    } else {
-        log_info("Cached results not found.")
-        log_info("- Current signature: {digested_sig}")
-        # print(sig)
-        # sigfiles <- Sys.glob(file.path(envs$cache, "*.signature.txt"))
-        # for (sigfile in sigfiles) {
-        #     log_info("- Found cached signature file: {sigfile}")
-        #     cached_sig <- readLines(sigfile)
-        #     log_info("- Cached signature:")
-        #     print(cached_sig)
-        # }
-        writeLines(sig, file.path(envs$cache, paste0(digested_sig, ".signature.txt")))
-    }
+if (isTRUE(envs$cache)) { envs$cache <- joboutdir }
+if (length(envs$cache) > 1) {
+    log_warn("Multiple cache directories (envs.cache) detected, using the first one.")
+    envs$cache <- envs$cache[1]
 }
 
 if (!is.null(envs$mutaters) && length(envs$mutaters) > 0) {
@@ -102,30 +73,66 @@ for (key in names(envs$cases)) {
     }
 
     log_info("- Subsetting ...")
-    sobj <- srtobj %>% filter(!!parse_expr(case$subset))
-
-    log_info("- Running RunUMAP ...")
-    umap_args <- list_setdefault(
-        case$RunUMAP,
-        object = sobj,
-        dims = 1:30,
-        reduction = sobj@misc$integrated_new_reduction %||% "pca"
-    )
-    umap_args$dims <- 1:min(max(umap_args$dims), ncol(sobj) - 1)
-    sobj <- do_call(RunUMAP, umap_args)
-
-    log_info("- Running FindNeighbors ...")
-    case$FindNeighbors$object <- sobj
-    if (is.null(case$FindNeighbors$reduction)) {
-        case$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction %||% "pca"
+    sobj <- tryCatch({
+        srtobj %>% filter(!!parse_expr(case$subset))
+    }, error = function(e) {
+        stop(paste0("  Error in subset: ", e$message))
+    })
+    sobj_sig <- capture.output(str(sobj))
+    dig_sig <- digest::digest(sobj_sig, algo = "md5")
+    dig_sig <- substr(dig_sig, 1, 8)
+    cache_dir <- NULL
+    if (is.character(envs$cache)) {
+        cache_dir <- file.path(envs$cache, paste0(dig_sig, ".seurat_cache"))
+        dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+        writeLines(sobj_sig, file.path(cache_dir, "signature.txt"))
     }
-    sobj <- do_call(FindNeighbors, case$FindNeighbors)
 
-    log_info("- Running FindClusters ...")
-    if (is.null(case$FindClusters$random.seed)) {
-        case$FindClusters$random.seed <- 8525
+    cached <- get_cached(case$RunUMAP, "RunUMAP", cache_dir)
+    reduc_name <- case$RunUMAP$reduction.name %||% "umap"
+    if (is.null(cached$data)) {
+        log_info("- Running RunUMAP ...")
+        umap_args <- list_setdefault(
+            case$RunUMAP,
+            object = sobj,
+            dims = 1:30,
+            reduction = sobj@misc$integrated_new_reduction %||% "pca"
+        )
+        ncells <- ncol(sobj)
+        umap_args$dims <- 1:min(max(umap_args$dims), ncells - 1)
+        umap_method <- case$RunUMAP$umap.method %||% "uwot"
+        if (umap_method == "uwot" && is.null(case$RunUMAP$n.neighbors)) {
+            # https://github.com/satijalab/seurat/issues/4312
+            umap_args$n.neighbors <- min(ncells - 1, 30)
+        }
+        sobj <- do_call(RunUMAP, umap_args)
+        cached$data <- list(reduc = sobj@reductions[[reduc_name]], commands = sobj@commands)
+        save_to_cache(cached, "RunUMAP", cache_dir)
+    } else {
+        log_info("- Loading cached RunUMAP ...")
+        sobj@reductions[[reduc_name]] <- cached$data$reduc
+        sobj@commands <- cached$data$commands
     }
-    resolution <- case$FindClusters$resolution
+    reduc <- cached$data$reduc
+
+    cached <- get_cached(case$FindNeighbors, "FindNeighbors", cache_dir)
+    if (is.null(cached$data)) {
+        log_info("- Running FindNeighbors ...")
+        case$FindNeighbors$object <- sobj
+        if (is.null(case$FindNeighbors$reduction)) {
+            case$FindNeighbors$reduction <- sobj@misc$integrated_new_reduction %||% "pca"
+        }
+        sobj <- do_call(FindNeighbors, case$FindNeighbors)
+        cached$data <- list(graphs = sobj@graphs, commands = sobj@commands)
+        save_to_cache(cached, "FindNeighbors", cache_dir)
+    } else {
+        log_info("- Loading cached FindNeighbors ...")
+        sobj@graphs <- cached$data$graphs
+        sobj@commands <- cached$data$commands
+    }
+
+    case$FindClusters$random.seed <- case$FindClusters$random.seed %||% 8525
+    resolution <- case$FindClusters$resolution %||% 0.8
     if (is.character(resolution)) {
         if (grepl(",", resolution)) {
             resolution <- as.numeric(trimws(unlist(strsplit(resolution, ","))))
@@ -133,53 +140,30 @@ for (key in names(envs$cases)) {
             resolution <- as.numeric(resolution)
         }
     }
-    if (is.null(resolution) || length(resolution) == 1) {
-        case$FindClusters$resolution <- resolution
-        case$FindClusters$object <- sobj
-        sobj <- do_call(FindClusters, case$FindClusters)
-        levels(sobj$seurat_clusters) <- paste0("s", as.numeric(levels(sobj$seurat_clusters)) + 1)
-        Idents(sobj) <- "seurat_clusters"
-        sobj[[key]] <- sobj$seurat_clusters
-        ident_table <- table(sobj[[key]])
-        log_info("- Found {length(ident_table)} clusters:")
+    for (res in resolution) {
+        case$FindClusters$resolution <- res
+        cached <- get_cached(case$FindClusters, paste0("FindClusters_", res), cache_dir)
+        res_key <- paste0("seurat_clusters_", res)
+        if (is.null(cached$data)) {
+            log_info("- Running FindClusters at resolution: {res} ...")
+            case$FindClusters$object <- sobj
+            sobj1 <- do_call(FindClusters, case$FindClusters)
+            levels(sobj1$seurat_clusters) <- paste0("s", as.numeric(levels(sobj1$seurat_clusters)) + 1)
+            sobj1[[res_key]] <- sobj1$seurat_clusters
+            cached$data <- sobj1@meta.data[, res_key, drop = FALSE]
+            save_to_cache(cached, paste0("FindClusters_", res), cache_dir)
+        } else {
+            log_info("- Using cached FindClusters at resolution: {res} ...")
+        }
+        ident_table <- table(cached$data[[res_key]])
+        log_info("  Found {length(ident_table)} clusters")
         print(ident_table)
         cat("\n")
-
-        log_info("- Updating meta.data with subclusters...")
-        srtobj <- AddMetaData(srtobj, metadata = sobj@meta.data[, key, drop = FALSE])
-        srtobj[[paste0("sub_umap_", key)]] <- sobj@reductions$umap
-    } else {
-        log_info("- Multiple resolutions detected ...")
-        log_info("")
-        metadata <- NULL
-        for (res in resolution) {
-            findclusters_args <- case$FindClusters
-            findclusters_args$resolution <- res
-            findclusters_args$object <- sobj
-            sobj1 <- do_call(FindClusters, findclusters_args)
-            res_key <- paste0(key, "_", res)
-            levels(sobj1$seurat_clusters) <- paste0("s", as.numeric(levels(sobj1$seurat_clusters)) + 1)
-            Idents(sobj1) <- "seurat_clusters"
-            sobj1[[res_key]] <- sobj1$seurat_clusters
-            ident_table <- table(sobj1[[res_key]])
-            log_info("- Found {length(ident_table)} at resolution: {res}:")
-            print(ident_table)
-            cat("\n")
-
-            log_info("- Updating meta.data with subclusters...")
-            metadata <- sobj1@meta.data[, res_key, drop = FALSE]
-            srtobj <- AddMetaData(srtobj, metadata = metadata)
-            srtobj[[paste0("sub_umap_", res_key)]] <- sobj1@reductions$umap
-        }
-        srtobj <- AddMetaData(srtobj, metadata = metadata, col.name = key)
-        srtobj[[paste0("sub_umap_", key)]] <- sobj1@reductions$umap
     }
+    log_info("- Updating meta.data with subclusters...")
+    srtobj <- AddMetaData(srtobj, metadata = cached$data, col.name = key)
+    srtobj[[paste0("sub_umap_", key)]] <- reduc
 }
 
 log_info("Saving results ...")
 saveRDS(srtobj, file = rdsfile)
-
-if (is.character(envs$cache) && nchar(envs$cache) > 0) {
-    log_info("Caching results to {cached_file} ...")
-    invisible(file.copy(rdsfile, cached_file, overwrite = TRUE))
-}

@@ -1,30 +1,34 @@
 # Diversity estimation
+source("{{biopipen_dir}}/scripts/tcr/immunarch-patched.R")
 # https://immunarch.com/articles/web_only/v6_diversity.html
 
 log_info("")
-log_info("#####################################")
-log_info("# Diversity estimation              #")
-log_info("#####################################")
+log_info("# Diversity estimation")
+log_info("-----------------------------------")
 
 # Other variables are loaded in the parent template
 # immdata is already loaded, meta is mutated
-div_method = {{envs.divs.method | r}}
-div_by = {{envs.divs.by | r}}
-div_order = {{envs.divs.order | r}}
-div_args = {{envs.divs.args | r: todot="-"}}
-div_test = {{envs.divs.test | r}}
-div_cases = {{envs.divs.cases | r: todot="-"}}
-div_devpars = {{envs.divs.devpars | r}}
-div_separate_by = {{envs.divs.separate_by | r}}
-div_split_by = {{envs.divs.split_by | r}}
-div_split_order = {{envs.divs.split_order | r}}
-div_align_x = {{envs.divs.align_x | r}}
-div_align_y = {{envs.divs.align_y | r}}
-div_subset = {{envs.divs.subset | r}}
-div_log = {{envs.divs.log | r}}
-div_ncol = {{envs.divs.ncol | r}}
-div_ymin = {{envs.divs.ymin | r}}
-div_ymax = {{envs.divs.ymax | r}}
+div_method = {{envs.divs.method | default: "gini" | r}}
+div_by = {{envs.divs.by | default: None | r}}
+div_plot_type = {{envs.divs.plot_type | default: "bar" | r}}
+div_order = {{envs.divs.order | default: [] | r}}
+div_args = {{envs.divs.args | default: {} | r: todot="-"}}
+div_test = {{envs.divs.test | default: None | r}}
+div_cases = {{envs.divs.cases | default: {} | r: todot="-"}}
+div_devpars = {{envs.divs.devpars | default: None | r}}
+div_separate_by = {{envs.divs.separate_by | default: None | r}}
+div_split_by = {{envs.divs.split_by | default: None | r}}
+div_split_order = {{envs.divs.split_order | default: None | r}}
+div_align_x = {{envs.divs.align_x | default: False | r}}
+div_align_y = {{envs.divs.align_y | default: False | r}}
+div_subset = {{envs.divs.subset | default: None | r}}
+div_log = {{envs.divs.log | default: False | r}}
+div_ncol = {{envs.divs.ncol | default: 2 | r}}
+div_ymin = {{envs.divs.ymin | default: None | r}}
+div_ymax = {{envs.divs.ymax | default: None | r}}
+
+div_test = div_test %||% list(method = "none", padjust = "none")
+div_devpars = div_devpars %||% list(res = 100, width = 800, height = 800)
 
 div_dir = file.path(outdir, "diversity")
 dir.create(div_dir, showWarnings = FALSE)
@@ -38,6 +42,7 @@ update_case = function(case, name) {
     if (!is.null(case$by) && nchar(case$by) > 0) {
         case$by = unlist(strsplit(case$by, ",")) %>% trimws()
     }
+    case$plot_type <- case$plot_type %||% div_plot_type
     case$order <- case$order %||% div_order
     case$args <- case$args %||% div_args
     for (name in names(case$args)) {
@@ -83,23 +88,6 @@ update_case = function(case, name) {
     #     stop("For diversity estimation, `order` is not supported when `method` is `raref`")
     # }
     return (case)
-}
-
-# See https://github.com/immunomind/immunarch/pull/341
-vis.immunr_gini <- function(.data, .by = NA, .meta = NA,
-                            .errorbars = c(0.025, 0.975), .errorbars.off = FALSE,
-                            .points = TRUE, .test = TRUE, .signif.label.size = 3.5, ...) {
-  # repDiversity(..., .method = "gini") generates a matrix
-  .data = data.frame(Sample = rownames(.data), Value = .data[, 1])
-  vis_bar(
-    .data = .data, .by = .by, .meta = .meta,
-    .errorbars = .errorbars, .errorbars.off = .errorbars.off, .stack = FALSE,
-    .points = .points, .test = .test, .signif.label.size = .signif.label.size,
-    .defgroupby = "Sample", .grouping.var = "Group",
-    .labs = c(NA, "Gini coefficient"),
-    .title = "Gini coefficient", .subtitle = "Sample diversity estimation using the Gini coefficient",
-    .legend = NA, .leg.title = NA
-  )
 }
 
 if (is.null(div_cases) || length(div_cases) == 0) {
@@ -176,6 +164,15 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
         col.names = TRUE
     )
 
+    .meta_vals <- function(meta, cols) {
+        if (length(cols) == 1) {
+            return (meta[[cols]])
+        }
+
+        vlist = lapply(cols, function(.x) meta[[.x]])
+        do.call(function(...) paste(..., sep = "; "), vlist)
+    }
+
     # plot
     #  by, order, separate_by, align_y
     n_seps = 1
@@ -189,11 +186,19 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
                 metas = metas[intersect(case$split_order, names(metas))]
             }
             ps = lapply(metas, function(meta) {
-                .test = length(unique(meta[[case$by]])) > 1
-                p = vis(filter_div(div, meta$Sample), .by = case$by, .meta = meta, .test = .test)
+                .test = length(unique(.meta_vals(meta, case$by))) > 1
+                p = vis(
+                    filter_div(div, meta$Sample),
+                    .by = case$by,
+                    .meta = meta,
+                    .test = .test,
+                    .plot.type = case$plot_type
+                )
                 p = p + xlab(paste0(case$separate_by, ": ", meta[[case$separate_by]][1], ")"))
                 if (!is.null(case$order) && length(case$order) > 0) {
-                    p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
+                    p = p + scale_x_discrete(
+                        limits = intersect(case$order, unique(.meta_vals(meta, case$by)))
+                    )
                 }
                 if (!is.null(case$ymin) && !is.null(case$ymax)) {
                     p = p + ylim(c(case$ymin, case$ymax))
@@ -217,10 +222,18 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
             }
             .i = 0
             ps = lapply(metas, function(meta) {
-                nby = length(unique(meta[[case$by]]))
-                p = vis(filter_div(div, meta$Sample), .by = case$by, .meta = meta, .test = nby > 1)
+                nby = length(unique(.meta_vals(meta, case$by)))
+                p = vis(
+                    filter_div(div, meta$Sample),
+                    .by = case$by,
+                    .meta = meta,
+                    .test = nby > 1,
+                    .plot.type = case$plot_type
+                )
                 if (!is.null(case$order) && length(case$order) > 0) {
-                    p = p + scale_x_discrete(limits = intersect(case$order, unique(meta[[case$by]])))
+                    p = p + scale_x_discrete(
+                        limits = intersect(case$order, unique(.meta_vals(meta, case$by)))
+                    )
                 }
                 p = p + xlab(meta[[case$split_by]][1]) + theme(
                     axis.text.x = element_blank(),
@@ -253,10 +266,10 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
             plots = lapply(ps, function(x) x$p + ylim(c(ymin, ymax)))
             p = wrap_plots(plots, widths = widths, guides = "collect")
         } else {
-            .test = length(unique(d$meta[[case$by]])) > 1
-            p = vis(div, .by = case$by, .meta = d$meta, .test = .test)
+            .test = length(unique(.meta_vals(d$meta, case$by))) > 1
+            p = vis(div, .by = case$by, .meta = d$meta, .test = .test, .plot.type = case$plot_type)
             if (!is.null(case$order) && length(case$order) > 0) {
-                p = p + scale_x_discrete(limits = intersect(case$order, unique(d$meta[[case$by]])))
+                p = p + scale_x_discrete(limits = intersect(case$order, unique(.meta_vals(d$meta, case$by))))
             }
         }
     } else if (!is.null(case$separate_by)) {
@@ -333,7 +346,9 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
     } else {
         p = vis(div)
         if (!is.null(case$order) && length(case$order) > 0) {
-            p = p + scale_x_discrete(limits = intersect(case$order, unique(d$meta[[case$by]])))
+            p = p + scale_x_discrete(
+                limits = intersect(case$order, unique(.meta_vals(d$meta, case$by)))
+            )
         }
     }
 
@@ -351,7 +366,7 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
     }
     if (is.null(width)) {
         if (!is.null(case$by) && length(case$by) > 0) {
-            width = 200 * length(unique(d$meta[[case$by]])) + 120
+            width = 200 * length(unique(.meta_vals(d$meta, case$by))) + 120
         } else {
             width = 100 * length(unique(d$meta$Sample)) + 120
         }
@@ -400,7 +415,11 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
                         "where all values are the same (for example, where everyone has ",
                         "the same income). A Gini coefficient of one (or 100 percents ) ",
                         "expresses maximal inequality among values (for example where only ",
-                        "one person has all the income).")
+                        "one person has all the income)."),
+                    d50 = paste0(
+                        "the D50 index. ",
+                        "It is the number of types that are needed to cover 50% of the total
+                        abundance.")
                 )
             )
         ),
@@ -705,6 +724,8 @@ run_div_case = function(casename) {
             run_general(casename, d, case, ddir)
         } else if (case$method == "gini") {
             run_general(casename, d, case, ddir, "V1")
+        } else if (case$method == "d50") {
+            run_general(casename, d, case, ddir, "Clones")
         } else {
             stop(paste0("Unknown diversity method: ", case$method))
         }

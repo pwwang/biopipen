@@ -25,3 +25,10 @@ class Proc(PipenProc):
         "filters": {**FILTERS, **filtermanager.filters},
         "search_paths": SEARCH_PATHS + [str(REPORT_DIR)],
     }
+
+    plugin_opts = {
+        "poplog_pattern": (
+            r"^(?P<level>INFO|WARN|WARNING|CRITICAL|ERROR|DEBUG?)\s*"
+            r"\[\d+-\d+-\d+ \d+:\d+:\d+\] (?P<message>.*)$"
+        )
+    }

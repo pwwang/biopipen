@@ -1,7 +1,6 @@
 log_info("")
-log_info("#####################################")
-log_info("# Clonotype tracking                #")
-log_info("#####################################")
+log_info("# Clonotype tracking")
+log_info("-----------------------------------")
 
 trackings = {{ envs.trackings | r }}
 

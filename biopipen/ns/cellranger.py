@@ -35,7 +35,7 @@ class CellRangerCount(Proc):
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
         {%- set sample = commonprefix(*fastqs) |
-            regex_replace: "_L\\d+_$", "" |
+            regex_replace: "_L\\d+_?$", "" |
             regex_replace: "_S\\d+$", "" -%}
         {{- sample -}}
     """
@@ -84,7 +84,7 @@ class CellRangerVdj(Proc):
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
         {%- set sample = commonprefix(*fastqs) |
-            regex_replace: "_L\\d+_$", "" |
+            regex_replace: "_L\\d+_?$", "" |
             regex_replace: "_S\\d+$", "" -%}
         {{- sample -}}
     """

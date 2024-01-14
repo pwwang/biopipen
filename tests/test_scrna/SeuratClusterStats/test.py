@@ -28,18 +28,23 @@ class PrepareSeurat(Proc):
         library(Seurat)
         pbmc_small$Sample <- pbmc_small$letter.idents
         pbmc_small$RNA <- split(pbmc_small$RNA, pbmc_small$Sample)
-        pbmc_small <- NormalizeData(pbmc_small)
-        pbmc_small <- FindVariableFeatures(pbmc_small, selection.method = "vst", nfeatures = 2000)
-        pbmc_small <- ScaleData(pbmc_small)
+        # pbmc_small <- NormalizeData(pbmc_small)
+        # pbmc_small <- FindVariableFeatures(pbmc_small, selection.method = "vst", nfeatures = 2000)
+        # pbmc_small <- ScaleData(pbmc_small)
+        pbmc_small <- SCTransform(pbmc_small, verbose = FALSE)
         pbmc_small <- RunPCA(pbmc_small, npcs = 30, verbose = FALSE)
-        pbmc_small <- JoinLayers(pbmc_small)
+        # pbmc_small <- JoinLayers(pbmc_small)
         saveRDS(pbmc_small, {{out.outfile | quote}})
     """  # noqa: E501
 
 
 class SeuratClustering(SeuratClustering):
     requires = PrepareSeurat
-    envs = {"ncores": 1}
+    envs = {
+        "ncores": 1,
+        "FindNeighbors": {"dims": 5},
+        "FindClusters": {"resolution": "0.5, 0.8"},
+    }
 
 
 class CellTypeAnnotation(CellTypeAnnotation):
@@ -55,8 +60,14 @@ class SeuratSubClustering(SeuratSubClustering):
     requires = CellTypeAnnotation
     envs = {
         "cases": {
-            "nk_subcluster": {"subset": "seurat_clusters == 'NK'"},
-            "dc_subcluster": {"subset": "seurat_clusters == 'DC'"},
+            "mono_subcluster": {
+                "subset": "seurat_clusters == 'FCFR3A+ Mono'",
+                "FindClusters": {"resolution": "0.5,0.8"},
+            },
+            "dc_subcluster": {
+                "subset": "seurat_clusters == 'DC'",
+                "FindClusters": {"resolution": "0.5,0.8"},
+            },
         }
     }
 
@@ -125,7 +136,7 @@ class SeuratClusterStats(SeuratClusterStats):
         },
         "dimplots": {
             "seurat_clusters": {},
-            "nk_subcluster": {"ident": "nk_subcluster"},
+            "nk_subcluster": {"ident": "mono_subcluster"},
             "dc_subcluster": {"ident": "dc_subcluster"},
         }
     }
@@ -143,7 +154,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small.markers/DEFAULT/NK/markers.txt",
+            "pbmc_small.markers/DEFAULT/DC/markers.txt",
         )
     )
     assert outfile.is_file(), str(outfile)

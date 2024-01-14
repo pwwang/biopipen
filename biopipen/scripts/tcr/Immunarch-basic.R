@@ -2,9 +2,8 @@
 # immfile, outdir, mutaters, immdata, n_samples
 
 log_info("")
-log_info("#####################################")
-log_info("# Basic analysis                    #")
-log_info("#####################################")
+log_info("# Basic analysis")
+log_info("-----------------------------------")
 
 volumes = {{envs.volumes | r}}
 lens = {{envs.lens | r}}
