@@ -131,7 +131,7 @@ do_one_comparison <- function(
 }
 
 do_one_group <- function(group) {
-    log_warn("- Group: {group} ...")
+    log_info("- Group: {group} ...")
 
     genes = intersect(metabolics, rownames(sobj))
     group_code = paste0(
