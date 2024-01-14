@@ -144,6 +144,7 @@ for (i in seq_len(nrow(metadata))) {
     # file.symlink(normalizePath(annofile), file.path(datadir, paste0(sample, ext)))
 }
 
+log_info("Loading TCR data ...")
 immdata = repLoad(datadir, .mode=mode)
 if (mode == "single") {
     data = immdata$data
@@ -178,6 +179,7 @@ immdata$prefix = prefix
 
 saveRDS(immdata, file=rdsfile)
 
+log_info("Saving cell-level data ...")
 exdata <- expand_immdata(immdata, cell_id = "Barcode") %>%
     distinct(Sample, Barcode, .keep_all = TRUE) %>%
     mutate(Barcode = glue(paste0(prefix, "{Barcode}"))) %>%
