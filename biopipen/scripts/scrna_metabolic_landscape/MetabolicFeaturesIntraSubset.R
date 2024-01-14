@@ -54,7 +54,7 @@ do_one_comparison <- function(
     subset_prefix,
     groupname
 ) {
-    print(paste("  Design:", compname, "(", case, ",", control, ")"))
+    log_info(paste("  Design: {compname} ({case}, {control})"))
     case_code = paste0("subset(obj, subset = ", subset_col, " == '", case, "')")
     case_obj = tryCatch({
         eval(parse(text = case_code))
@@ -62,7 +62,7 @@ do_one_comparison <- function(
         NULL
     })
     if (is.null(case_obj)) {
-        print("          Skip (not enough cells in case)")
+        log_warn("          Skip (not enough cells in case)")
         return (NULL)
     }
     control_code = paste0("subset(obj, subset = ", subset_col, " == '", control, "')")
@@ -72,7 +72,7 @@ do_one_comparison <- function(
         NULL
     })
     if (is.null(control_obj)) {
-        print("          Skip (not enough cells in control)")
+        log_warn("          Skip (not enough cells in control)")
         add_report(
             list(kind = "error", content = "Not enough cells in control"),
             h1 = groupname,
@@ -86,7 +86,7 @@ do_one_comparison <- function(
     odir = file.path(groupdir, paste0(subset_prefix, compname))
     dir.create(odir, showWarnings = FALSE)
     if (ncol(exprs_case) < 3 || ncol(exprs_control) < 3) {
-        print("          Skip (not enough cells)")
+        log_warn("          Skip (not enough cells)")
         add_report(
             list(kind = "error", content = "Not enough cells"),
             h1 = groupname,
@@ -131,7 +131,7 @@ do_one_comparison <- function(
 }
 
 do_one_group <- function(group) {
-    print(paste("- Group:", group, "..."))
+    log_warn("- Group: {group} ...")
 
     genes = intersect(metabolics, rownames(sobj))
     group_code = paste0(
