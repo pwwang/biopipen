@@ -1,5 +1,25 @@
 # Change Log
 
+## 0.24.0
+
+- deps: bump up deps by pipen 0.13
+- deps: add pipen-poplog to populate job logs to running log
+- deps: bump pipen-poplog to 0.0.2
+- feat: add utils.caching.R
+- cellranger: fix inferring sample name when fastqs from mulitple lanes
+- scrna.SeuratClustering/SeuratSubClustering: cache Seurat procedures step by step
+- scrna.MetaMarkers: limit log messages to be populated to 15
+- scrna.SeuratPreparing: log procedure arguments at debug level
+- scrna_metabolic_landscape.MetabolicFeaturesIntraSubset: use logger to log so can be poplutated to running log
+- scrna_metabolic_landscape.MetabolicPathwayActivity: use logger to log so can be poplutated to running log
+- tcr.ImmunarchLoading: add logs for steps
+- tcr.TCRClustering: use logger to log so can be poplutated to running log
+- tcr.TESSA: log command at debug level
+- tcr.Immunarch: add plot_type for divs to support boxplots
+- tcr.TCRClustering: fix log_info not found
+- tcr.Immunarch: make poplog_max 999 to pop all job logs to running log
+- scrna_metabolic_landscape.MetabolicFeaturesIntraSubset: change log level for groups from warning to info
+
 ## 0.23.8
 
 - scrna.SeuratPreparing: log `Seurat` procedure arguments
