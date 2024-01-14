@@ -34,7 +34,7 @@ log_info("Expanding immdata ...")
 exdata = expand_immdata(immdata)
 
 log_info("Loading metadata if provided ...")
-if (endsWith(metafile, ".rds") || endsWith(metafile, ".RDS")) {
+if (!is.null(metafile) && (endsWith(metafile, ".rds") || endsWith(metafile, ".RDS"))) {
     meta = readRDS(metafile)@meta.data
 } else if (!is.null(metafile) && nchar(metafile) > 0) {
     meta = read.table(metafile, sep = "\t", header = TRUE, row.names = 1)
