@@ -1994,4 +1994,5 @@ class MetaMarkers(Proc):
     plugin_opts = {
         "report": "file://../reports/scrna/MetaMarkers.svelte",
         "report_paging": 8,
+        "poplog_max": 15,
     }
