@@ -17,13 +17,17 @@ options(future.globals.maxSize = 80000 * 1024^2)
 options(Seurat.object.assay.version = "v5")
 plan(strategy = "multicore", workers = envs$ncores)
 
+.stringify_list <- function(x) {
+    paste(sapply(names(x), function(n) paste(n, x[[n]], sep = " = ") ), collapse = "; ")
+}
+
 add_report(
     list(
         kind = "descr",
         name = "Filters applied",
         content = paste0(
             "<p>Cell filters: ", html_escape(envs$cell_qc), "</p>",
-            "<p>Gene filters: ", html_escape(envs$gene_qc), "</p>"
+            "<p>Gene filters: ", html_escape(.stringify_list(envs$gene_qc)), "</p>"
         )
     ),
     h1 = "Filters and QC"
