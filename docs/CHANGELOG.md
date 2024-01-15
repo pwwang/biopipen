@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.24.1
+
+- tcr.Immunarch: update spectratyping output file extension to png
+
 ## 0.24.0
 
 - deps: bump up deps by pipen 0.13
