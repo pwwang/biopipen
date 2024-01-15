@@ -61,7 +61,7 @@ do_one_case_spectratyping = function(name, case, spect_dir) {
             .quant = case$quant,
             .col = case$col
         )
-        spectfile = file.path(odir, paste0(slugify(sample, tolower = FALSE), ".spect"))
+        spectfile = file.path(odir, paste0(slugify(sample, tolower = FALSE), ".spect.png"))
         png(
             spectfile,
             res = case$devpars$res,
