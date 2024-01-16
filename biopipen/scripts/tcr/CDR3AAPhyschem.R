@@ -9,7 +9,6 @@ library(hash)
 library(glmnet)
 library(broom.mixed)
 library(stringr)
-library(slugify)
 
 immdatafile = {{in.immdata | quote}}
 srtobjfile = {{in.srtobj | r}}

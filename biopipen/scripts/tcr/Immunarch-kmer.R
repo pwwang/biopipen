@@ -87,7 +87,7 @@ for (name in names(cases)) {
 do_one_case_kmer = function(name, case, kmer_dir) {
     # print(paste0("  Case: ", name))
     log_info("Processing case: {name} ...")
-    odir = file.path(kmer_dir, slugify(name, tolower = FALSE))
+    odir = file.path(kmer_dir, slugify(name))
     dir.create(odir, showWarnings = FALSE)
 
     if (!is.null(case$subset)) {

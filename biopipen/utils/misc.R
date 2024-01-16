@@ -22,14 +22,17 @@ bQuote <- function(x) {
     }
 }
 
-slugify <- function(x, non_alphanum_replace="", space_replace="_", tolower=TRUE) {
-  x <- gsub("[^[:alnum:] ]", non_alphanum_replace, x)
-  x <- trimws(x)
-  x <- gsub("[[:space:]]", space_replace, x)
-
-  if(tolower) { x <- tolower(x) }
-
-  return(x)
+#' Slugify a string
+#' @param x A string
+#' @param non_alphanum_replace Replace non-alphanumeric characters
+#' @param collapse_replace Collapse consecutive non-alphanumeric character replacements
+#' @param tolower Convert to lowercase
+#' @return A slugified string
+slugify <- function(x, non_alphanum_replace="-", collapse_replace=TRUE, tolower=FALSE) {
+    x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
+    if(collapse_replace) x <- gsub(paste0(non_alphanum_replace, "+"), non_alphanum_replace, x)
+    if(tolower) x <- tolower(x)
+    x
 }
 
 do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {

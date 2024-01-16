@@ -5,7 +5,6 @@ library(tibble)
 library(enrichR)
 library(rlang)
 library(dplyr)
-library(slugify)
 library(ggprism)
 
 setEnrichrSite("Enrichr")
@@ -134,8 +133,8 @@ casename_info <- function(casename, create = FALSE) {
         casename = casename,
         section = sec_case_names[1],
         case = cname,
-        section_slug = slugify(sec_case_names[1], tolower = FALSE),
-        case_slug = slugify(cname, tolower = FALSE)
+        section_slug = slugify(sec_case_names[1]),
+        case_slug = slugify(cname)
     )
     out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
     if (create) {

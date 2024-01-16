@@ -5,7 +5,6 @@ library(future)
 library(bracer)
 library(ggplot2)
 library(tidyseurat)
-library(slugify)
 
 metafile = {{in.metafile | quote}}
 rdsfile = {{out.rdsfile | quote}}
@@ -181,7 +180,7 @@ for (feat in feats) {
             position = position_jitterdodge(jitter.width = 0.4, dodge.width = 0.9)
         ) + scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE))
 
-    vlnplot = file.path(plotsdir, paste0(slugify(feat, tolower = FALSE), ".vln.png"))
+    vlnplot = file.path(plotsdir, paste0(slugify(feat), ".vln.png"))
     png(
         vlnplot,
         width = 800 + length(samples) * 15, height = 600, res = 100
@@ -225,7 +224,7 @@ for (feat in setdiff(feats, "nCount_RNA")) {
     NoLegend() +
     scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE))
 
-    scatfile = file.path(plotsdir, paste0(slugify(feat, tolower = FALSE), "-nCount_RNA.scatter.png"))
+    scatfile = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter.png"))
     png(scatfile, width = 800, height = 600, res = 100)
     print(scat_p)
     dev.off()

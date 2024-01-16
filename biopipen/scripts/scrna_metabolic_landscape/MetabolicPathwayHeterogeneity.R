@@ -8,7 +8,6 @@ library(ggprism)
 library(Matrix)
 library(sparseMatrixStats)
 library(Seurat)
-library(slugify)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
@@ -53,7 +52,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         subset_dir = file.path(outdir, "ALL")
         subset_obj = sobj
     } else {
-        subset_dir = file.path(outdir, slugify(paste0(subset_prefix, s), tolower = FALSE))
+        subset_dir = file.path(outdir, slugify(paste0(subset_prefix, s)))
         subset_code = paste0("subset(sobj, subset = ", subset_col, " == '", s, "')")
         subset_obj = eval(parse(text = subset_code))
     }

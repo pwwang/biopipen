@@ -64,7 +64,7 @@ if (is.null(hists) || length(hists) == 0) {
         hists[[name]] <- list_update(hists_defaults, hists[[name]])
         case <- hists[[name]]
 
-        odir <- file.path(outdir, "hists", slugify(name, tolower = FALSE))
+        odir <- file.path(outdir, "hists", slugify(name))
         dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
         h1 <- name

@@ -47,7 +47,7 @@ dir.create(vjjunc_dir, showWarnings = FALSE)
 
 do_one_case_vjjunc <- function(name, case) {
     log_info("Processing case: {name} ...")
-    odir = file.path(vjjunc_dir, slugify(name, tolower = FALSE))
+    odir = file.path(vjjunc_dir, slugify(name))
     dir.create(odir, showWarnings = FALSE)
 
     if (!is.null(case$subset)) {

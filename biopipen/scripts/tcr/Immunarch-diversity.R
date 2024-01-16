@@ -657,9 +657,9 @@ run_div_case = function(casename) {
     log_info("Processing case: {casename} ...")
     case = div_cases[[casename]]
     if (case$method == "raref") {
-        ddir = file.path(outdir, "rarefraction", slugify(casename, tolower = FALSE))
+        ddir = file.path(outdir, "rarefraction", slugify(casename))
     } else {
-        ddir = file.path(div_dir, slugify(casename, tolower = FALSE))
+        ddir = file.path(div_dir, slugify(casename))
     }
     dir.create(ddir, recursive = TRUE, showWarnings = FALSE)
 

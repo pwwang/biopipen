@@ -6,7 +6,6 @@ library(dplyr)
 library(rlang)
 library(immunarch)
 library(ggprism)
-library(slugify)
 
 immfile = {{in.immfile | quote}}
 outdir = {{out.outdir | quote}}
@@ -56,7 +55,7 @@ sample_diversity_cases = expand_cases(sample_diversity_envs)
 cluster_size_distribution = function(name) {
     log_info("- Working on cluster size distribution: {name}")
 
-    odir = file.path(outdir, "ClusterSizeDistribution", slugify(name, tolower = FALSE))
+    odir = file.path(outdir, "ClusterSizeDistribution", slugify(name))
     dir.create(odir, showWarnings = FALSE, recursive = TRUE)
     case = cluster_size_cases[[name]]
 
@@ -100,7 +99,7 @@ cluster_size_distribution = function(name) {
 shared_clusters = function(name) {
     log_info("- Working on shared clusters: {name}")
 
-    odir = file.path(outdir, "SharedClusters", slugify(name, tolower = FALSE))
+    odir = file.path(outdir, "SharedClusters", slugify(name))
     dir.create(odir, showWarnings = FALSE, recursive = TRUE)
     case = shared_clusters_cases[[name]]
     if (!is.null(case$grouping)) {
@@ -169,7 +168,7 @@ shared_clusters = function(name) {
 }
 
 shared_clusters_by_grouping = function(name) {
-    odir = file.path(outdir, "SharedClusters", slugify(name, tolower = FALSE))
+    odir = file.path(outdir, "SharedClusters", slugify(name))
     case = shared_clusters_cases[[name]]
 
     data = list()
@@ -241,7 +240,7 @@ div_methods = list(
 sample_diversity = function(name) {
     log_info("- Working on sample diversity: {name}")
 
-    odir = file.path(outdir, "SampleDiversity", slugify(name, tolower = FALSE))
+    odir = file.path(outdir, "SampleDiversity", slugify(name))
     dir.create(odir, showWarnings = FALSE, recursive = TRUE)
     case = sample_diversity_cases[[name]]
 

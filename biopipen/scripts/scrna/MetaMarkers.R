@@ -12,7 +12,6 @@ library(ggplot2)
 library(ggprism)
 library(parallel)
 library(tidyseurat)
-library(slugify)
 
 setEnrichrSite("Enrichr")
 
@@ -133,8 +132,8 @@ casename_info <- function(casename, create = FALSE) {
         casename = casename,
         section = sec_case_names[1],
         case = cname,
-        section_slug = slugify(sec_case_names[1], tolower = FALSE),
-        case_slug = slugify(cname, tolower = FALSE)
+        section_slug = slugify(sec_case_names[1]),
+        case_slug = slugify(cname)
     )
     out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
     if (create) {
@@ -283,7 +282,7 @@ do_case <- function(casename) {
         # Plot the top 10 genes in each group with violin plots
         geneplots <- list()
         for (gene in markers$gene) {
-            outfile <- file.path(plotdir, paste0(slugify(gene, tolower = FALSE), ".png"))
+            outfile <- file.path(plotdir, paste0(slugify(gene), ".png"))
             p <- ggplot(df, aes_string(x="GROUP", y=bQuote(gene), fill="GROUP")) +
                 geom_violin(alpha = .8) +
                 geom_boxplot(width=0.1, fill="white") +
