@@ -305,7 +305,7 @@ if (envs$use_sct) {
     log_info("- Running SCTransform ...")
     SCTransformArgs <- envs$SCTransform
     # log to stdout but don't populate it to running log
-    print("  SCTransform: {.formatArgs(SCTransformArgs)}")
+    print(paste0("  SCTransform: ", .formatArgs(SCTransformArgs)))
     log_debug("  SCTransform: {.formatArgs(SCTransformArgs)}")
     SCTransformArgs$object <- sobj
     sobj <- do_call(SCTransform, SCTransformArgs)
@@ -313,21 +313,21 @@ if (envs$use_sct) {
 } else {
     log_info("- Running NormalizeData ...")
     NormalizeDataArgs <- envs$NormalizeData
-    print("  NormalizeData: {.formatArgs(NormalizeDataArgs)}")
+    print(paste0("  NormalizeData: ", .formatArgs(NormalizeDataArgs)))
     log_debug("  NormalizeData: {.formatArgs(NormalizeDataArgs)}")
     NormalizeDataArgs$object <- sobj
     sobj <- do_call(NormalizeData, NormalizeDataArgs)
 
     log_info("- Running FindVariableFeatures ...")
     FindVariableFeaturesArgs <- envs$FindVariableFeatures
-    print("  FindVariableFeatures: {.formatArgs(FindVariableFeaturesArgs)}")
+    print(paste0("  FindVariableFeatures: ", .formatArgs(FindVariableFeaturesArgs)))
     log_debug("  FindVariableFeatures: {.formatArgs(FindVariableFeaturesArgs)}")
     FindVariableFeaturesArgs$object <- sobj
     sobj <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
 
     log_info("- Running ScaleData ...")
     ScaleDataArgs <- envs$ScaleData
-    print("  ScaleData: {.formatArgs(ScaleDataArgs)}")
+    print(paste0("  ScaleData: ", .formatArgs(ScaleDataArgs)))
     log_debug("  ScaleData: {.formatArgs(ScaleDataArgs)}")
     ScaleDataArgs$object <- sobj
     sobj <- do_call(ScaleData, ScaleDataArgs)
@@ -336,7 +336,7 @@ if (envs$use_sct) {
 log_info("- Running RunPCA ...")
 RunPCAArgs <- envs$RunPCA
 RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(sobj) - 1) }
-print("  RunPCA: {.formatArgs(RunPCAArgs)}")
+print(paste0("  RunPCA: ", .formatArgs(RunPCAArgs)))
 log_debug("  RunPCA: {.formatArgs(RunPCAArgs)}")
 RunPCAArgs$object <- sobj
 sobj <- do_call(RunPCA, RunPCAArgs)
@@ -370,7 +370,7 @@ if (!envs$no_integration) {
     if (is.null(IntegrateLayersArgs$new.reduction)) {
         IntegrateLayersArgs$new.reduction <- new_reductions[[method]]
     }
-    print("  IntegrateLayers: {.formatArgs(IntegrateLayersArgs)}")
+    print(paste0("  IntegrateLayers: ", .formatArgs(IntegrateLayersArgs)))
     log_debug("  IntegrateLayers: {.formatArgs(IntegrateLayersArgs)}")
     IntegrateLayersArgs$object <- sobj
     sobj <- do_call(IntegrateLayers, IntegrateLayersArgs)
