@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.24.2
+
+- deps: bump pipen-report to 0.17.3
+- chore: use internal `slugify` instead of `slugify` library
+- scrna.SeuratPreparing: fix displaying filters in report
+- scrna.SeuratPreparing: fix logging Seurat procedure arguments
+- cellranger: add CellRangerSummary
+- cell_ranger: use `Iframe` in report to have loading indicators
+- cellranger_pipeline: add `CellRangerCountPipeline` and `CellRangerVdjPipeline`
+
 ## 0.24.1
 
 - tcr.Immunarch: update spectratyping output file extension to png
