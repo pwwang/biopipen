@@ -44,7 +44,7 @@ if (is.null(spects$cases) || length(spects$cases) == 0) {
 do_one_case_spectratyping = function(name, case, spect_dir) {
     # print(paste0("  Case: ", name))
     log_info("- Processing case: {name} ...")
-    odir = file.path(spect_dir, slugify(name, tolower = FALSE))
+    odir = file.path(spect_dir, slugify(name))
     dir.create(odir, showWarnings = FALSE)
 
     if (!is.null(case$subset)) {
@@ -61,7 +61,7 @@ do_one_case_spectratyping = function(name, case, spect_dir) {
             .quant = case$quant,
             .col = case$col
         )
-        spectfile = file.path(odir, paste0(slugify(sample, tolower = FALSE), ".spect.png"))
+        spectfile = file.path(odir, paste0(slugify(sample), ".spect.png"))
         png(
             spectfile,
             res = case$devpars$res,

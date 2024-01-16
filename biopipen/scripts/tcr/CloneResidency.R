@@ -10,7 +10,6 @@ library(ggplot2)
 library(ggprism)
 library(ggVennDiagram)
 library(UpSetR)
-library(slugify)
 
 theme_set(theme_prism())
 
@@ -163,19 +162,19 @@ perpare_case <- function(casename, case) {
 
     # Create case-specific directories
     # Scatter plots
-    scatter_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "scatter")
+    scatter_dir <- file.path(outdir, slugify(casename), "scatter")
     dir.create(scatter_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Venn diagrams
-    venn_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "venn")
+    venn_dir <- file.path(outdir, slugify(casename), "venn")
     dir.create(venn_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Upset plots
-    upset_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "upset")
+    upset_dir <- file.path(outdir, slugify(casename), "upset")
     dir.create(upset_dir, recursive = TRUE, showWarnings = FALSE)
 
     # Counts
-    counts_dir <- file.path(outdir, slugify(casename, tolower = FALSE), "counts")
+    counts_dir <- file.path(outdir, slugify(casename), "counts")
     dir.create(counts_dir, recursive = TRUE, showWarnings = FALSE)
 
     case
@@ -396,7 +395,7 @@ headings <- function(section, casename, subject) {
 }
 
 handle_subject <- function(i, subjects, casename, case) {
-    casedir = file.path(outdir, slugify(casename, tolower = FALSE))
+    casedir = file.path(outdir, slugify(casename))
     # Generate a residency table
     # |    CDR3.aa    | Tumor | Normal |
     # | SEABESRWEFAEF | 0     | 10     |

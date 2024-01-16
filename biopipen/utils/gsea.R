@@ -1,8 +1,13 @@
 library(ggplot2)
 library(dplyr)
 library(tibble)
-library(slugify)
 
+.slugify <- function(x, non_alphanum_replace="-", collapse_replace=TRUE, tolower=FALSE) {
+    x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
+    if(collapse_replace) x <- gsub(paste0(non_alphanum_replace, "+"), non_alphanum_replace, x)
+    if(tolower) x <- tolower(x)
+    x
+}
 
 localizeGmtfile <- function(gmturl, cachedir = tempdir()) {
     # Download the GMT file and save it to cachedir
@@ -176,7 +181,7 @@ runFGSEA = function(
     dev.off()
 
     for (pathway in topPathways) {
-        enrfig = file.path(outdir, paste0("fgsea_", slugify(pathway), ".png"))
+        enrfig = file.path(outdir, paste0("fgsea_", .slugify(pathway), ".png"))
         png(enrfig, res=100, width=1000, height=800)
         print(plotEnrichment(
             envs$pathways[[pathway]],

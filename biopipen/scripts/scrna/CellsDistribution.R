@@ -8,7 +8,6 @@ library(dplyr)
 library(ggplot2)
 library(ggVennDiagram)
 library(UpSetR)
-library(slugify)
 library(circlize)
 library(ComplexHeatmap)
 
@@ -127,8 +126,8 @@ casename_info <- function(casename, create = FALSE) {
         casename = casename,
         section = sec_case_names[1],
         case = cname,
-        section_slug = slugify(sec_case_names[1], tolower = FALSE),
-        case_slug = slugify(cname, tolower = FALSE)
+        section_slug = slugify(sec_case_names[1]),
+        case_slug = slugify(cname)
     )
     out$sec_dir <- file.path(outdir, out$section_slug)
     if (create) {
@@ -139,7 +138,7 @@ casename_info <- function(casename, create = FALSE) {
 
 plot_heatmap <- function(group, meta, case, info, cluster_order_val) {
     log_info(paste("- Running heatmap for case:", info$casename, "group:", group))
-    hmfile <- file.path(info$sec_dir, paste0(info$case_slug, ".", slugify(group, tolower = FALSE), ".heatmap.png"))
+    hmfile <- file.path(info$sec_dir, paste0(info$case_slug, ".", slugify(group), ".heatmap.png"))
 
     # A matrix: 10 × 8 of type int
     #                   g3	g6	g0	g1	g7	g5	g4	g8
@@ -435,7 +434,7 @@ do_overlap <- function(section) {
         stop(paste0("Not enough cases for overlap for section: ", section))
     }
 
-    sec_dir <- file.path(outdir, slugify(section, tolower = FALSE))
+    sec_dir <- file.path(outdir, slugify(section))
     venn_plot <- file.path(sec_dir, "venn.png")
     venn_p <- ggVennDiagram(overlap_cases, label_percent_digit = 1) +
         scale_fill_distiller(palette = "Reds", direction = 1) +

@@ -50,6 +50,7 @@ class CellRangerCount(Proc):
     script = "file://../scripts/cellranger/CellRangerCount.py"
     plugin_opts = {
         "report": "file://../reports/cellranger/CellRangerCount.svelte",
+        "report_paging": 5,
     }
 
 
@@ -98,4 +99,34 @@ class CellRangerVdj(Proc):
     script = "file://../scripts/cellranger/CellRangerVdj.py"
     plugin_opts = {
         "report": "file://../reports/cellranger/CellRangerVdj.svelte",
+        "report_paging": 5,
+    }
+
+
+class CellRangerSummary(Proc):
+    """Summarize cellranger metrics
+
+    Input:
+        indirs: The directories containing cellranger results
+            from `CellRangerCount`/`CellRangerVdj`.
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        group (type=auto): The group of the samples for boxplots.
+            If `None`, don't do boxplots.
+            It can be a dict of group names and sample names, e.g.
+            `{"group1": ["sample1", "sample2"], "group2": ["sample3"]}`
+            or a file containing the group information, with the first column
+            being the sample names and the second column being the group names.
+            The file should be tab-delimited with no header.
+    """
+    input = "indirs:dirs"
+    output = "outdir:dir:{{in.indirs | first | stem | append: '-etc.summary'}}"
+    lang = config.lang.rscript
+    script = "file://../scripts/cellranger/CellRangerSummary.R"
+    envs = {"group": None}
+    plugin_opts = {
+        "report": "file://../reports/cellranger/CellRangerSummary.svelte",
     }

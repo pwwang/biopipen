@@ -12,7 +12,6 @@ library(glue)
 library(tidyr)
 library(tibble)
 library(logger)
-library(slugify)
 
 log_info("Loading arguments ...")
 theme_set(theme_prism())

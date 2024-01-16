@@ -14,7 +14,7 @@ dependencies:
   - nodejs  # for pipen-report
   - curl
   - samtools
-  - r-slugify
+  # - r-slugify
   - r-logger
   - r-hitype
   - r-base=4.2.0

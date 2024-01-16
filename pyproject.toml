@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.24.1"
+version = "0.24.2"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -30,6 +30,7 @@ bam = "biopipen.ns.bam"
 bcftools = "biopipen.ns.bcftools"
 bed = "biopipen.ns.bed"
 cellranger = "biopipen.ns.cellranger"
+cellranger_pipeline = "biopipen.ns.cellranger_pipeline"
 cnv = "biopipen.ns.cnv"
 cnvkit = "biopipen.ns.cnvkit"
 cnvkit_pipeline = "biopipen.ns.cnvkit_pipeline"

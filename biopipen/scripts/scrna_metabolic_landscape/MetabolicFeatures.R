@@ -3,7 +3,6 @@ source("{{biopipen_dir}}/utils/gsea.R")
 
 library(parallel)
 library(Seurat)
-library(slugify)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
@@ -44,7 +43,7 @@ sobj <- readRDS(sobjfile)
 do_one_group <- function(obj, features, group, outputdir, h1) {
     log_info(paste("- Processing group", grouping, ":", group))
     groupname = paste0(grouping_prefix, group)
-    odir = file.path(outputdir, slugify(groupname, tolower = FALSE))
+    odir = file.path(outputdir, slugify(groupname))
     dir.create(odir, showWarnings = FALSE)
 
     classes = as.character(obj@meta.data[[grouping]])
@@ -109,7 +108,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         outputdir <- file.path(outdir, "ALL")
         subset_obj <- sobj
     } else {
-        outputdir <- file.path(outdir, slugify(paste0(subset_prefix, s), tolower = FALSE))
+        outputdir <- file.path(outdir, slugify(paste0(subset_prefix, s)))
         subset_code <- paste0("subset(sobj, subset = ", subset_col, "=='", s, "')")
         subset_obj <- eval(parse(text = subset_code))
     }

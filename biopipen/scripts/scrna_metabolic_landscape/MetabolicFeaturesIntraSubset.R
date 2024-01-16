@@ -4,7 +4,6 @@ source("{{biopipen_dir}}/utils/gsea.R")
 library(parallel)
 library(scater)
 library(Seurat)
-library(slugify)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
@@ -139,7 +138,7 @@ do_one_group <- function(group) {
     )
     obj = eval(parse(text = group_code))
     groupname = paste0(grouping_prefix, group)
-    groupdir = file.path(outdir, slugify(groupname, tolower = FALSE))
+    groupdir = file.path(outdir, slugify(groupname))
     dir.create(groupdir, showWarnings = FALSE)
 
     report = list()
