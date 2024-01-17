@@ -1072,6 +1072,10 @@ class MarkersFinder(Proc):
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
         overlap (list): The sections to do overlap analysis.
+        cache (type=auto): Where to cache to `FindAllMarkers` results.
+            If `True`, cache to `outdir` of the job. If `False`, don't cache.
+            Otherwise, specify the directory to cache to.
+            Only works when `use_presto` is `False` (presto works fast enough).
     """  # noqa: E501
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem0}}.markers"
@@ -1095,6 +1099,7 @@ class MarkersFinder(Proc):
         "dotplot": {},
         "cases": {},
         "overlap": [],
+        "cache": config.path.tmpdir,
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
