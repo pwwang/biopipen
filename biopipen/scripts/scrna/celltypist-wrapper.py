@@ -37,9 +37,10 @@ if __name__ == "__main__":
     )
 
     out_adata = annotated.to_adata()
-    if over_clustering and args.majority_voting:
-        # rename majority_voting column to over_clustering
-        out_adata.obs[over_clustering] = out_adata.obs["majority_voting"]
+    # leave as is
+    # if over_clustering and args.majority_voting:
+    #     # rename majority_voting column to over_clustering
+    #     out_adata.obs[over_clustering] = out_adata.obs["majority_voting"]
 
     if args.output.endswith(".h5ad"):
         try:
