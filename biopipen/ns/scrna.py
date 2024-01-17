@@ -372,6 +372,7 @@ class SeuratSubClustering(Proc):
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
+    envs_depth = 1
     envs = {
         "ncores": config.misc.ncores,
         "mutaters": {},
