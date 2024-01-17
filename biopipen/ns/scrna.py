@@ -2001,3 +2001,52 @@ class MetaMarkers(Proc):
         "report_paging": 8,
         "poplog_max": 15,
     }
+
+
+class Seurat2AnnData(Proc):
+    """Convert seurat object to AnnData
+
+    Input:
+        sobjfile: The seurat object file, in RDS or h5seurat format
+
+    Output:
+        outfile: The AnnData file
+
+    Envs:
+        assay: The assay to use for AnnData.
+            If not specified, the default assay will be used.
+    """
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.h5ad"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/Seurat2AnnData.R"
+    envs = {"assay": None}
+
+
+class AnnData2Seurat(Proc):
+    """Convert AnnData to seurat object
+
+    Input:
+        adfile: The AnnData file
+
+    Output:
+        outfile: The seurat object file in RDS format
+
+    Envs:
+        assay: The assay to use to convert to seurat object.
+        outtype (choice): The output file type.
+            - rds: RDS file
+            - h5seurat: h5seurat file
+        dotplot_check (type=auto): Whether to do a check with `Seurat::DotPlot`
+            to see if the conversion is successful.
+            Set to `False` to disable the check.
+            If `True`, top 10 variable genes will be used for the check.
+            You can give a list of genes or a string of genes with comma (`,`) separated
+            to use for the check.
+            Only works for `outtype = 'rds'`.
+    """
+    input = "adfile:file"
+    output = "outfile:file:{{in.adfile | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {"outtype": "rds", "assay": "RNA", "dotplot_check": True}
+    script = "file://../scripts/scrna/AnnData2Seurat.R"
