@@ -6,8 +6,10 @@ set.seed(8525)
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-sctype.R" %}
 {% elif envs.tool == "sccatch" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-sccatch.R" %}
+{% elif envs.tool == "celltypist" %}
+{% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-celltypist.R" %}
 {% elif envs.tool == "direct" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-direct.R" %}
 {% else %}
-stop(paste0("Unknown tool: ", {{envs.tool}}))
+stop("Unknown tool: {{envs.tool}}")
 {% endif %}

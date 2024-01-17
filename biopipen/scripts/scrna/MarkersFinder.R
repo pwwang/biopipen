@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/caching.R")
 source("{{biopipen_dir}}/utils/mutate_helpers.R")
 
 library(rlang)
@@ -39,6 +40,9 @@ rest <- {{ envs.rest | r: todot="-" }}
 dotplot <- {{ envs.dotplot | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-" }}
 overlap <- {{ envs.overlap | r }}
+cache <- {{ envs.cache | r }}
+
+if (isTRUE(cache)) { cache <- joboutdir }
 
 overlaps <- list()
 
@@ -221,7 +225,7 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
     # 2        HLA-DQB1 3.667713e-09  6.1543174 0.718 0.098 8.435740e-07
     # 3        HLA-DRB5 1.242993e-07  3.9032231 0.744 0.195 2.858885e-05
     # 4           CD79B 2.036731e-07  4.2748835 0.692 0.146 4.684482e-05
-    log_info("- Plotting volcano plot ...")
+    log_info("  Plotting volcano plot ...")
     markers = markers %>%
         mutate(
             Significant = if_else(
@@ -268,7 +272,7 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
 #   markers: markers dataframe
 #   sig: The expression to filter significant markers
 do_enrich <- function(info, markers, sig, volgenes) {
-    log_info("- Running enrichment for case: {info$casename}")
+    log_info("  Running enrichment for case: {info$casename}")
 
     if (nrow(markers) == 0) {
         log_warn("  No markers found for case: {info$casename}")
@@ -468,8 +472,6 @@ add_case_report <- function(info, sigmarkers, siggenes) {
 
 
 do_case_findall <- function(casename) {
-    log_info("- Using FindAllMarkers for case: {casename}...")
-
     case <- cases[[casename]]
     if (case$use_presto) {
         log_info("- Using presto::wilcoxauc for case: {casename}...")
@@ -514,6 +516,7 @@ do_case_findall <- function(casename) {
             )
         })
     } else {
+        log_info("- Using FindAllMarkers for case: {casename}...")
         args <- case$rest
         args$group.by <- case$group.by
         if (is.null(args$logfc.threshold)) {
@@ -535,22 +538,30 @@ do_case_findall <- function(casename) {
         }
         Idents(args$object) <- case$group.by
 
-        markers <- tryCatch({
-            do_call(FindAllMarkers, args)
-            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
-        }, error = function(e) {
-            log_warn(e$message)
+        cached <- get_cached(args, "FindAllMarkers", cache)
+        if (!is.null(cached$data)) {
+            log_info("  Using cached markers ...")
+            markers <- cached$data
+        } else {
+            markers <- tryCatch({
+                do_call(FindAllMarkers, args)
+                    # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
+                }, error = function(e) {
+                    log_warn(e$message)
 
-            data.frame(
-                gene = character(),
-                p_val = numeric(),
-                avg_log2FC = numeric(),
-                pct.1 = numeric(),
-                pct.2 = numeric(),
-                p_val_adj=numeric(),
-                cluster = character()
-            )
-        })
+                    data.frame(
+                        gene = character(),
+                        p_val = numeric(),
+                        avg_log2FC = numeric(),
+                        pct.1 = numeric(),
+                        pct.2 = numeric(),
+                        p_val_adj=numeric(),
+                        cluster = character()
+                    )
+                })
+            cached$data <- markers
+            save_to_cache(cached, "FindAllMarkers", cache)
+        }
 
         if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
             log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")

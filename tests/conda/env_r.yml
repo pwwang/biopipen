@@ -38,6 +38,7 @@ dependencies:
   - r-rmagic
   - r-scimpute
   - r-seurat=5.0.1
+  - r-seuratdisk
   - r-snow
   - r-upsetr
   - r-vegan
@@ -64,3 +65,4 @@ dependencies:
     - biopython==1.79
     # For clustcr
     - scikit-learn==1.1.3
+    - celltypist

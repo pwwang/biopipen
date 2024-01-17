@@ -372,6 +372,7 @@ class SeuratSubClustering(Proc):
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
+    envs_depth = 1
     envs = {
         "ncores": config.misc.ncores,
         "mutaters": {},
@@ -1072,6 +1073,10 @@ class MarkersFinder(Proc):
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
         overlap (list): The sections to do overlap analysis.
+        cache (type=auto): Where to cache to `FindAllMarkers` results.
+            If `True`, cache to `outdir` of the job. If `False`, don't cache.
+            Otherwise, specify the directory to cache to.
+            Only works when `use_presto` is `False` (presto works fast enough).
     """  # noqa: E501
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem0}}.markers"
@@ -1095,6 +1100,7 @@ class MarkersFinder(Proc):
         "dotplot": {},
         "cases": {},
         "overlap": [],
+        "cache": config.path.tmpdir,
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
@@ -1571,6 +1577,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/pwwang/hitype>
             - sccatch: Use `scCATCH` to annotate cell types.
                 See <https://github.com/ZJUFanLab/scCATCH>
+            - celltypist: Use `celltypist` to annotate cell types.
+                See <https://github.com/Teichlab/celltypist>
             - direct: Directly assign cell types
         sctype_tissue: The tissue to use for `sctype`.
             Avaiable tissues should be the first column (`tissueType`) of `sctype_db`.
@@ -1607,9 +1615,25 @@ class CellTypeAnnotation(Proc):
             - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
                 You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
+        celltypist_args (ns): The arguments for `celltypist::celltypist()` if `tool` is `celltypist`.
+            - model: The path to model file.
+            - python: The python path where celltypist is installed.
+            - majority_voting: When true, it refines cell identities within local subclusters after an over-clustering approach
+                at the cost of increased runtime.
+            - over_clustering (type=auto): The column name in metadata to use as clusters for majority voting.
+                Set to `False` to disable over-clustering.
+            - assay: When converting a Seurat object to AnnData, the assay to use.
+                If input is h5seurat, this defaults to RNA.
+                If input is Seurat object in RDS, this defaults to the default assay.
         newcol: The new column name to store the cell types.
             If not specified, the `seurat_clusters` column will be overwritten.
             If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
+        outtype (choice): The output file type. Currently only works for `celltypist`.
+            An RDS file will be generated for other tools.
+            - input: Use the same file type as the input.
+            - rds: Use RDS file.
+            - h5seurat: Use h5seurat file.
+            - h5ad: Use AnnData file.
 
     Requires:
         r-HGNChelper:
@@ -1626,7 +1650,11 @@ class CellTypeAnnotation(Proc):
             - check: {{proc.lang}} -e "library(openxlsx)"
     """  # noqa: E501
     input = "sobjfile:file"
-    output = "outfile:file:{{in.sobjfile | stem}}.annotated.RDS"
+    output = (
+        "outfile:file:"
+        "{{in.sobjfile | stem}}.annotated."
+        "{{- ext0(in.sobjfile) if envs.outtype == 'input' else envs.outtype -}}"
+    )
     lang = config.lang.rscript
     envs = {
         "tool": "hitype",
@@ -1636,7 +1664,15 @@ class CellTypeAnnotation(Proc):
         "sccatch_args": {},
         "hitype_tissue": None,
         "hitype_db": None,
+        "celltypist_args": {
+            "model": None,
+            "python": config.lang.python,
+            "majority_voting": True,
+            "over_clustering": "seurat_clusters",
+            "assay": None,
+        },
         "newcol": None,
+        "outtype": "input",
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"
 
@@ -1996,3 +2032,52 @@ class MetaMarkers(Proc):
         "report_paging": 8,
         "poplog_max": 15,
     }
+
+
+class Seurat2AnnData(Proc):
+    """Convert seurat object to AnnData
+
+    Input:
+        sobjfile: The seurat object file, in RDS or h5seurat format
+
+    Output:
+        outfile: The AnnData file
+
+    Envs:
+        assay: The assay to use for AnnData.
+            If not specified, the default assay will be used.
+    """
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.h5ad"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/Seurat2AnnData.R"
+    envs = {"assay": None}
+
+
+class AnnData2Seurat(Proc):
+    """Convert AnnData to seurat object
+
+    Input:
+        adfile: The AnnData file
+
+    Output:
+        outfile: The seurat object file in RDS format
+
+    Envs:
+        assay: The assay to use to convert to seurat object.
+        outtype (choice): The output file type.
+            - rds: RDS file
+            - h5seurat: h5seurat file
+        dotplot_check (type=auto): Whether to do a check with `Seurat::DotPlot`
+            to see if the conversion is successful.
+            Set to `False` to disable the check.
+            If `True`, top 10 variable genes will be used for the check.
+            You can give a list of genes or a string of genes with comma (`,`) separated
+            to use for the check.
+            Only works for `outtype = 'rds'`.
+    """
+    input = "adfile:file"
+    output = "outfile:file:{{in.adfile | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {"outtype": "rds", "assay": "RNA", "dotplot_check": True}
+    script = "file://../scripts/scrna/AnnData2Seurat.R"
