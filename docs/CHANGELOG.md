@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.25.1
+
+- scrna.CellTypeAnnotation: leave the meta data as is in celltypist wrapper
+
 ## 0.25.0
 
 - deps: bump pipen to 0.13.2
