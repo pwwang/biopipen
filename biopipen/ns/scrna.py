@@ -1576,6 +1576,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/pwwang/hitype>
             - sccatch: Use `scCATCH` to annotate cell types.
                 See <https://github.com/ZJUFanLab/scCATCH>
+            - celltypist: Use `celltypist` to annotate cell types.
+                See <https://github.com/Teichlab/celltypist>
             - direct: Directly assign cell types
         sctype_tissue: The tissue to use for `sctype`.
             Avaiable tissues should be the first column (`tissueType`) of `sctype_db`.
@@ -1612,9 +1614,25 @@ class CellTypeAnnotation(Proc):
             - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
                 You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
+        celltypist_args (ns): The arguments for `celltypist::celltypist()` if `tool` is `celltypist`.
+            - model: The path to model file.
+            - python: The python path where celltypist is installed.
+            - majority_voting: When true, it refines cell identities within local subclusters after an over-clustering approach
+                at the cost of increased runtime.
+            - over_clustering (type=auto): The column name in metadata to use as clusters for majority voting.
+                Set to `False` to disable over-clustering.
+            - assay: When converting a Seurat object to AnnData, the assay to use.
+                If input is h5seurat, this defaults to RNA.
+                If input is Seurat object in RDS, this defaults to the default assay.
         newcol: The new column name to store the cell types.
             If not specified, the `seurat_clusters` column will be overwritten.
             If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
+        outtype (choice): The output file type. Currently only works for `celltypist`.
+            An RDS file will be generated for other tools.
+            - input: Use the same file type as the input.
+            - rds: Use RDS file.
+            - h5seurat: Use h5seurat file.
+            - h5ad: Use AnnData file.
 
     Requires:
         r-HGNChelper:
@@ -1631,7 +1649,11 @@ class CellTypeAnnotation(Proc):
             - check: {{proc.lang}} -e "library(openxlsx)"
     """  # noqa: E501
     input = "sobjfile:file"
-    output = "outfile:file:{{in.sobjfile | stem}}.annotated.RDS"
+    output = (
+        "outfile:file:"
+        "{{in.sobjfile | stem}}.annotated."
+        "{{- ext0(in.sobjfile) if envs.outtype == 'input' else envs.outtype -}}"
+    )
     lang = config.lang.rscript
     envs = {
         "tool": "hitype",
@@ -1641,7 +1663,15 @@ class CellTypeAnnotation(Proc):
         "sccatch_args": {},
         "hitype_tissue": None,
         "hitype_db": None,
+        "celltypist_args": {
+            "model": None,
+            "python": config.lang.python,
+            "majority_voting": True,
+            "over_clustering": "seurat_clusters",
+            "assay": None,
+        },
         "newcol": None,
+        "outtype": "input",
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"
 
