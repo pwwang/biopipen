@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.25.0
+
+- deps: bump pipen to 0.13.2
+- feat: add scrna.AnnData2Seurat and scrna.Seurat2AnnData
+- scrna.MarkersFinder: allow to cache `FindAllMarkers` results
+- scrna.CellTypeAnnotation: support celltypist (#111)
+- scrna.SeuratSubClustering: add `envs_depth = 1` to replace whole `envs.cases` when new case assigned
+- test: add tests for celltypist of `CellTypeAnnotation`, `AnnData2Seurat` and `Seurat2AnnData`
+
 ## 0.24.2
 
 - deps: bump pipen-report to 0.17.3
