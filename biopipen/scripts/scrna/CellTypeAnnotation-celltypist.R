@@ -189,8 +189,7 @@ if (outtype == "h5ad") {
             sobj,
             celltypist_out[
                 rownames(sobj@meta.data),
-                # setdiff(colnames(celltypist_out), colnames(sobj@meta.data)),
-                ,
+                setdiff(colnames(celltypist_out), colnames(sobj@meta.data)),
                 drop = FALSE
             ]
         )
@@ -217,16 +216,19 @@ if (outtype == "h5ad") {
                     summarise(seurat_clusters = first(seurat_clusters), .groups = "drop") %>%
                     mutate(seurat_clusters = make.unique(seurat_clusters))
                 cluster_map <- split(cluster_map$seurat_clusters, cluster_map$seurat_clusters_id)
-                sobj@meta.data$seurat_clusters <- sobj@meta.data[[over_clustering]]
+                if (over_clustering != "seurat_clusters") {
+                    sobj@meta.data$seurat_clusters <- sobj@meta.data[[over_clustering]]
+                }
                 Idents(sobj) <- "seurat_clusters"
                 cluster_map$object <- sobj
+                log_info("Renaming clusters ...")
                 sobj <- do_call(RenameIdents, cluster_map)
                 sobj@meta.data$seurat_clusters <- Idents(sobj)
-                Idents(sobj) <- "seurat_clusters"
             }
         } else if (!is.null(newcol)) {
             sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]
         }
+        log_info("Saving Seurat object in RDS ...")
         saveRDS(sobj, outfile)
     }
 } else {
