@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.25.3
+
+- fix(scrna.CellTypeAnnotation): keep factor meta data when input and output are RDS for celltypist
+
 ## 0.25.2
 
 - fix(scrna_metabolic_landscape.MetabolicPathwayHeterogeneity): fix output directory path is not slugified
