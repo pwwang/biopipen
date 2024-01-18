@@ -100,7 +100,7 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:selected_pcs, drop=FALSE])))
         pre_rank_matrix <- as.list(as.data.frame(t(pre_rank_matrix)))
 
-        odir = file.path(subset_dir, paste0(grouping_prefix, group))
+        odir = file.path(subset_dir, paste0(grouping_prefix, slugify(group)))
         dir.create(odir, showWarnings = FALSE)
         runFGSEA(
             pre_rank_matrix,

@@ -11,7 +11,7 @@ counts = {{envs.counts | r}}
 
 # Fill up cases
 fill_up_cases_basic = function(config) {
-    log_info("Filling up cases ...")
+    log_debug("Filling up cases ...")
     cases = config$cases
     if (is.null(cases) || length(cases) == 0) {
         cases$DEFAULT = list(by = config$by, devpars = config$devpars, subset = config$subset)

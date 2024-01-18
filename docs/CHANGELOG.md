@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.25.2
+
+- fix(scrna_metabolic_landscape.MetabolicPathwayHeterogeneity): fix output directory path is not slugified
+- chore(tcr.Immunarch): change case filling log to debug level
+
 ## 0.25.1
 
 - scrna.CellTypeAnnotation: leave the meta data as is in celltypist wrapper
