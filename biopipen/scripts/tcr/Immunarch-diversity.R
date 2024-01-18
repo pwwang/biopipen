@@ -35,7 +35,7 @@ dir.create(div_dir, showWarnings = FALSE)
 
 # Fill up the cases
 update_case = function(case, name) {
-    log_info("Filling up case: {name} ...")
+    log_debug("Filling up case: {name} ...")
     case$subset <- case$subset %||% div_subset
     case$method <- case$method %||% div_method
     case$by <- case$by %||% div_by
