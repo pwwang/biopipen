@@ -55,8 +55,7 @@ filter_expanded_immdata <- function(exdata, filters, update_clones = FALSE) {
     if (length(filters) == 0) {
         return(exdata)
     }
-    out <- exdata %>%
-        dplyr::filter(!!parse_expr(filters))
+    out <- exdata %>% dplyr::filter(!!parse_expr(filters))
     if (update_clones) {
         out <- out %>%
             group_by(Sample, CDR3.aa) %>%
@@ -101,11 +100,13 @@ immdata_from_expanded <- function(
         ),
         function(dat) {
             ncells <- nrow(dat)
+            dat_cols <- setdiff(colnames(dat), c("Clones", "Proportion", cell_id))
             dat %>% group_by(CDR3.aa) %>%
                 summarise(
                     Clones = ifelse(update_clones, n(), first(Clones)),
                     Proportion = ifelse(update_clones, n() / ncells, first(Proportion)),
                     !!sym(cell_id) := paste0(!!sym(cell_id), collapse = ";"),
+                    !!!parse_exprs(sapply(dat_cols, function(x) paste0('first(`', x, '`)'))),
                     .groups = "drop"
                 ) %>%
                 arrange(desc(Clones))
