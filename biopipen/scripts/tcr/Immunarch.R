@@ -57,6 +57,7 @@ rm(meta)
 log_info("Mutating data if `envs.mutaters` is provided ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     exdata = mutate(exdata, !!!lapply(mutaters, parse_expr))
+    immdata = immdata_from_expanded(exdata)
 }
 
 n_samples = length(immdata$data)
