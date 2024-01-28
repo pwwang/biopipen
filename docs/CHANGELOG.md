@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.25.4
+
+- deps: bump datar to  0.15.4 (support pandas 2.2)
+- fix(utils.single_cell.R): fix `immdata_from_expanded` missing other data columns
+- fix(tcr.Immunarch): fix `mutaters` not working when no `subset` is set
+- fix(scrna.CellsDistribution): fix `hm_devpars` not working
+
 ## 0.25.3
 
 - fix(scrna.CellTypeAnnotation): keep factor meta data when input and output are RDS for celltypist
