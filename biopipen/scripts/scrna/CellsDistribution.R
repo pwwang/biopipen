@@ -25,6 +25,7 @@ cells_n <- {{envs.cells_n | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
 descr <- {{envs.descr | r}}  # nolint
 devpars <- {{envs.devpars | r}}  # nolint
+hm_devpars <- {{envs.hm_devpars | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
 overlap <- {{envs.overlap | r}}  # nolint
@@ -60,6 +61,7 @@ expand_cases <- function() {
                 cells_orderby = cells_orderby,
                 cells_n = cells_n,
                 devpars = devpars,
+                hm_devpars = hm_devpars,
                 each = each,
                 section = section,
                 subset = subset,
@@ -79,12 +81,14 @@ expand_cases <- function() {
                 cells_orderby = cells_orderby,
                 cells_n = cells_n,
                 devpars = devpars,
+                hm_devpars = hm_devpars,
                 each = each,
                 section = section,
                 subset = subset,
                 descr = descr
             )
             case$devpars <- list_setdefault(case$devpars, devpars)
+            case$hm_devpars <- list_setdefault(case$hm_devpars, hm_devpars)
             filled_cases[[name]] <- case
         }
     }
