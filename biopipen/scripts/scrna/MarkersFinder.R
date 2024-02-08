@@ -393,51 +393,6 @@ add_case_report <- function(info, sigmarkers, siggenes) {
         "#",
         ifelse(single_section, "#", info$case)
     )
-    add_report(
-        list(
-            title = "Significant Markers",
-            ui = "flat",
-            contents = list(
-                list(
-                    kind = "descr",
-                    content = paste0(
-                        "The markers are found using Seurat's FindMarkers function, ",
-                        "and filtered by: ",
-                        html_escape(sigmarkers)
-                    )
-                ),
-                list(
-                    kind = "table",
-                    data = list(nrows = 100),
-                    src = file.path(info$casedir, "markers.txt")
-                )
-            )
-        ),
-        list(
-            title = "Volcano Plot",
-            ui = "flat",
-            contents = list(
-                list(
-                    kind = "img",
-                    src = file.path(info$casedir, "volcano.png")
-                )
-            )
-        ),
-        list(
-            title = "Dot Plot",
-            ui = "flat",
-            contents = list(
-                list(
-                    kind = "img",
-                    src = file.path(info$casedir, "dotplot.png")
-                )
-            )
-        ),
-        h1 = h1,
-        h2 = ifelse(h2 == "#", "Markers", h2),
-        h3 = ifelse(h2 == "#", "#", "Markers"),
-        ui = "tabs"
-    )
     if (is.null(siggenes)) {
         add_report(
             list(
@@ -450,6 +405,52 @@ add_case_report <- function(info, sigmarkers, siggenes) {
             ui = "flat"
         )
     } else {
+        add_report(
+            list(
+                title = "Significant Markers",
+                ui = "flat",
+                contents = list(
+                    list(
+                        kind = "descr",
+                        content = paste0(
+                            "The markers are found using Seurat's FindMarkers function, ",
+                            "and filtered by: ",
+                            html_escape(sigmarkers)
+                        )
+                    ),
+                    list(
+                        kind = "table",
+                        data = list(nrows = 100),
+                        src = file.path(info$casedir, "markers.txt")
+                    )
+                )
+            ),
+            list(
+                title = "Volcano Plot",
+                ui = "flat",
+                contents = list(
+                    list(
+                        kind = "img",
+                        src = file.path(info$casedir, "volcano.png")
+                    )
+                )
+            ),
+            list(
+                title = "Dot Plot",
+                ui = "flat",
+                contents = list(
+                    list(
+                        kind = "img",
+                        src = file.path(info$casedir, "dotplot.png")
+                    )
+                )
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Markers", h2),
+            h3 = ifelse(h2 == "#", "#", "Markers"),
+            ui = "tabs"
+        )
+
         add_report(
             list(
                 kind = "descr",
