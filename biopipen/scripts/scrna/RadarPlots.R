@@ -230,7 +230,10 @@ do_radarplot <- function(info, case, counts) {
         colors = trimws(unlist(strsplit(case$colors, ",")))
     }
     p = ggradar(
-        rdr_data %>% as.data.frame() %>% rownames_to_column("group"),
+        rdr_data %>%
+            as.data.frame() %>%
+            rownames_to_column("group") %>%
+            mutate(group = factor(group, levels = rownames(rdr_data))),
         values.radar = paste0(breaks, "%"),
         grid.min = breaks[1] / 100,
         grid.mid = breaks[2] / 100,
