@@ -38,7 +38,7 @@ subset <- {{ envs.subset | r }}
 use_presto <- {{ envs.use_presto | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 dotplot <- {{ envs.dotplot | r: todot="-" }}
-cases <- {{ envs.cases | r: todot="-" }}
+cases <- {{ envs.cases | r: todot="-", skip=1 }}
 overlap <- {{ envs.overlap | r }}
 cache <- {{ envs.cache | r }}
 
