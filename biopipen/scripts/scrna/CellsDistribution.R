@@ -6,6 +6,7 @@ library(tidyr)
 library(tibble)
 library(dplyr)
 library(ggplot2)
+library(patchwork)
 library(ggVennDiagram)
 library(UpSetR)
 library(circlize)
@@ -33,11 +34,11 @@ cases <- {{envs.cases | r}}  # nolint
 
 if (is.null(overlap)) { overlap = c() }
 overlaps <- list()
-log_info("- Loading seurat object ...")
+log_info("Loading seurat object ...")
 srtobj <- readRDS(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
-    log_info("- Mutating seurat object ...")
+    log_info("Mutating seurat object ...")
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
@@ -140,24 +141,24 @@ casename_info <- function(casename, create = FALSE) {
     out
 }
 
-plot_heatmap <- function(group, meta, case, info, cluster_order_val) {
-    log_info(paste("- Running heatmap for case:", info$casename, "group:", group))
-    hmfile <- file.path(info$sec_dir, paste0(info$case_slug, ".", slugify(group), ".heatmap.png"))
-
+plot_heatmap <- function(m, cells_by, group_by, cluster_order_val, cluster_orderby) {
     # A matrix: 10 × 8 of type int
     #                   g3	g6	g0	g1	g7	g5	g4	g8
     # CSARDATNNEQFF	    8	32	17	26	7	1	NA	NA
     # CASRQNRGSYNEQFF	2	1	20	16	NA	NA	1	NA
     # CSATSYNEQFF	    2	6	3	7	1	8	6	NA
-    hmdata <- meta %>% filter(!!sym(case$group_by) == group) %>%
-        select(!!sym(case$cells_by), CloneGroupClusterSize, seurat_clusters) %>%
-        distinct(!!sym(case$cells_by), seurat_clusters, .keep_all = TRUE) %>%
+    hmdata <- m %>%
+        mutate(
+            !!sym(cells_by) := paste0("[", !!sym(group_by), "] ", !!sym(cells_by))
+        ) %>%
+        select(!!sym(cells_by), CloneGroupClusterSize, seurat_clusters) %>%
+        distinct(!!sym(cells_by), seurat_clusters, .keep_all = TRUE) %>%
         pivot_wider(names_from = seurat_clusters, values_from = CloneGroupClusterSize) %>%
-        tibble::column_to_rownames(case$cells_by)
+        tibble::column_to_rownames(cells_by)
 
-    hmdata[, setdiff(levels(meta$seurat_clusters), colnames(hmdata))] <- NA
+    hmdata[, setdiff(levels(m$seurat_clusters), colnames(hmdata))] <- NA
     # order
-    hmdata <- select(hmdata, all_of(levels(meta$seurat_clusters)))
+    hmdata <- select(hmdata, all_of(levels(m$seurat_clusters)))
 
     row_ha <- rowAnnotation(
         Total = anno_barplot(
@@ -171,28 +172,23 @@ plot_heatmap <- function(group, meta, case, info, cluster_order_val) {
     extra_width <- 0  # legend
     if (!is.null(cluster_order_val)) {
         ha <- list()
-        ha[[case$cluster_orderby]] <- cluster_order_val
+        ha[[cluster_orderby]] <- cluster_order_val
         if (is.numeric(cluster_order_val)) {
             col_fun <- colorRamp2(
                 c(min(cluster_order_val), max(cluster_order_val)),
                 c("lightyellow", "red"))
             ha$col <- list()
-            ha$col[[case$cluster_orderby]] <- col_fun
+            ha$col[[cluster_orderby]] <- col_fun
         }
         ha <- do_call(HeatmapAnnotation, ha)
         extra_height <- 40
         extra_width <- 120
     }
-    hm_devpars <- case$hm_devpars
-    if (is.null(hm_devpars$res)) { hm_devpars$res = 100 }
-    if (is.null(hm_devpars$width)) { hm_devpars$width = ncol(hmdata) * 30 + 400 + extra_width }
-    if (is.null(hm_devpars$height)) { hm_devpars$height = nrow(hmdata) * 30 + 60 + extra_height }
 
     col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
-    png(hmfile, res = hm_devpars$res, width = hm_devpars$width, height = hm_devpars$height)
-    p <- Heatmap(
-        hmdata,
-        name = "Size",
+    Heatmap(
+        as.matrix(hmdata),
+        name = cells_by,
         col = col_fun,
         na_col = "lightyellow",
         row_names_side = "left",
@@ -203,13 +199,10 @@ plot_heatmap <- function(group, meta, case, info, cluster_order_val) {
         right_annotation = row_ha,
         top_annotation = ha
     )
-    print(p)
-    dev.off()
-    hmfile
 }
 
 do_case <- function(name, case) {
-    log_info(paste("- Running for case:", name))
+    log_info(paste("Running case:", name))
     if (is.null(case$group_by) || nchar(case$group_by) == 0) {
         stop(paste0("`group_by` must be specified for case", name))
     }
@@ -218,9 +211,6 @@ do_case <- function(name, case) {
     }
     info <- casename_info(name, create = TRUE)
     cells_by <- trimws(strsplit(case$cells_by, ",")[[1]])
-
-    outfile <- file.path(info$sec_dir, paste0(info$case_slug, ".png"))
-    txtfile <- file.path(info$sec_dir, paste0(info$case_slug, ".txt"))
 
     meta <- srtobj@meta.data
     # order the clusters if cluster_orderby is specified
@@ -245,136 +235,224 @@ do_case <- function(name, case) {
     if (!is.null(case$subset) && nchar(case$subset) > 0) {
         meta <- dplyr::filter(meta, !!!parse_exprs(case$subset))
     }
-    meta <- meta %>%
-        drop_na(case$group_by) %>%
-        dplyr::filter(!if_all(all_of(cells_by), is.na))
+    meta <- meta %>% drop_na(case$group_by)
+        # dplyr::filter(!if_all(all_of(cells_by), is.na))
 
     if (nrow(meta) == 0) {
-        stop(paste0("No cells left after filtering NAs for group_by and cells_by for case: ", name))
+        stop(paste0("No cells left after filtering NAs for `group_by`"))
     }
 
-    if (length(cells_by) > 1) {
-        new_cells_by <- paste0(".", paste(cells_by, collapse = "_"))
-        meta1 <- meta %>% drop_na(cells_by[1])
-        meta1[[new_cells_by]] <- meta1[[cells_by[1]]]
-        for (i in 2:length(cells_by)) {
-            meta2 <- meta %>% drop_na(cells_by[i])
-            meta2[[new_cells_by]] <- meta2[[cells_by[i]]]
-            meta1 <- rbind(meta1, meta2)
-        }
-
-        cells_by <- new_cells_by
-        case$cells_by <- cells_by
-        meta <- meta1
+    if (info$section %in% overlap && length(cells_by) > 1) {
+        stop(paste0("Overlapping groups can only be done for a single `cells_by`"))
     }
-
-    if (info$section %in% overlap) {
-        if (is.null(overlaps[[info$section]])) {
-            overlaps[[info$section]] <<- list()
-        }
-        overlaps[[info$section]][[info$case]] <<- meta %>% pull(cells_by) %>% unique()
-    }
-
-    # add sizes
-    meta <- meta %>%
-        add_count(!!sym(cells_by), name = "CloneSize") %>%
-        add_count(!!sym(cells_by), !!sym(case$group_by), name = "CloneGroupSize") %>%
-        add_count(!!sym(cells_by), seurat_clusters, name = "CloneClusterSize") %>%
-        add_count(!!sym(cells_by), !!sym(case$group_by), seurat_clusters, name = "CloneGroupClusterSize")
 
     # filter group_by values not in group_order
     if (!is.null(case$group_order) && length(case$group_order) > 0) {
         meta <- meta %>%
             dplyr::filter(!!sym(case$group_by) %in% case$group_order) %>%
-            mutate(!!sym(case$group_by) := factor(!!sym(case$group_by), levels = case$group_order)) %>%
-            arrange(!!sym(case$group_by))
+            mutate(!!sym(case$group_by) := factor(!!sym(case$group_by), levels = case$group_order))
 
         if (nrow(meta) == 0) {
             stop(paste0(
                 "No items in `group_order` (",
                 paste0(case$group_order, collapse=", "),
-                ") in column `", case$group_by , "` for case: ",
-                name,
+                ") in column `", case$group_by ,
                 ". Did you specify the correct `group_by` and `group_order`?"
             ))
         }
     } else {
-        meta <- meta %>% arrange(!!sym(case$group_by))
+        meta <- meta %>% mutate(!!sym(case$group_by) := factor(!!sym(case$group_by)))
     }
+    ngroups <- length(unique(meta[[case$group_by]]))
 
-    if (!is.null(case$cells_order) && length(case$cells_order) > 0) {
-        # filter cells_by values not in cells_order
-        meta <- meta %>%
-            dplyr::filter(!!sym(cells_by) %in% case$cells_order) %>%
-            mutate(!!sym(cells_by) := factor(!!sym(cells_by), levels = case$cells_order))
-    } else if (!is.null(case$cells_orderby)) {
-        # otherwise use cells_orderby to order cells_by
-        ordered_meta <- meta %>%
-            arrange(!!!parse_exprs(case$cells_orderby))
-        cells <- ordered_meta %>% pull(cells_by) %>% unique() %>% head(case$cells_n)
-        meta <- ordered_meta %>% dplyr::filter(!!sym(cells_by) %in% cells)
-        meta[[cells_by]] = factor(meta[[cells_by]], levels = cells)
-    }
+    piecharts <- list()
+    hmdata <- NULL
+    hmrowlbls <- c()
+    hmsplits <- c()
+    hmfile <- file.path(info$sec_dir, paste0(info$case_slug, ".heatmap.png"))
+    cells_rows <- 0
+    table_files <- c()
+    for (n in seq_along(cells_by)) {
+        cby <- cells_by[n]
+        log_info("- Processing cells_by: {cby}")
+        m <- meta %>% drop_na(!!sym(cby))
 
-    write.table(
-        meta %>% select(
-            !!sym(cells_by),
-            !!sym(case$group_by),
-            seurat_clusters,
-            CloneSize,
-            CloneGroupSize,
-            CloneClusterSize,
-            CloneGroupClusterSize,
-        ) %>% distinct(
-            !!sym(cells_by),
-            !!sym(case$group_by),
-            seurat_clusters,
-            .keep_all = TRUE
-        ),
-        txtfile,
-        sep = "\t",
-        row.names = FALSE,
-        col.names = TRUE,
-        quote = FALSE
-    )
+        # check if there are enough cells
+        if (nrow(m) == 0) {
+            stop(paste0("  No cells left after filtering NAs for `", cby, "`"))
+        }
 
-    nrows <- length(unique(meta[[cells_by]]))
-    ncols <- length(unique(meta[[case$group_by]]))
+        if (info$section %in% overlap) {
+            overlaps[[info$section]] <<- overlaps[[info$section]] %||% list()
+            overlaps[[info$section]][[info$case]] <<- m %>% pull(cby) %>% unique()
+        }
 
-    devpars <- case$devpars
-    if (is.null(devpars)) { devpars = list() }
-    if (is.null(devpars$res)) { devpars$res = 100 }
-    if (is.null(devpars$width)) { devpars$width = ncols * 100 + 240 }
-    if (is.null(devpars$height)) { devpars$height = max(nrows * 100, 600) }
-
-    # plot
-    p = meta %>% ggplot(
-            aes(
-                x = sqrt(CloneGroupSize)/2,
-                y = CloneSize,
-                width = sqrt(CloneGroupSize),
-                fill = seurat_clusters
+        # add sizes
+        m <- m %>%
+            add_count(!!sym(cby), name = "CloneSize") %>%
+            add_count(!!sym(cby), !!sym(case$group_by), name = "CloneGroupSize") %>%
+            add_count(!!sym(cby), seurat_clusters, name = "CloneClusterSize") %>%
+            add_count(!!sym(cby), !!sym(case$group_by), seurat_clusters, name = "CloneGroupClusterSize") %>%
+            select(
+                !!sym(cby),
+                !!sym(case$group_by),
+                seurat_clusters,
+                CloneSize,
+                CloneGroupSize,
+                CloneClusterSize,
+                CloneGroupClusterSize,
+            ) %>% distinct(
+                !!sym(cby),
+                !!sym(case$group_by),
+                seurat_clusters,
+                .keep_all = TRUE
             )
-        ) +
-        geom_col(width=.01, position="fill", color = "#888888") +
-        geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
-        coord_polar("y", start = 0) +
-        scale_fill_biopipen(name = "Cluster", limits = levels(all_clusters)) +
-        theme_void() +
-        theme(
-            plot.margin = unit(c(1,1,1,1), "cm"),
-            legend.text = element_text(size=8),
-            legend.title = element_text(size=10)
-        )  +
-        facet_grid(vars(!!sym(cells_by)), vars(!!sym(case$group_by)), switch="y")
 
-    png(outfile, res = devpars$res, width = devpars$width, height = devpars$height)
-    print(p)
+
+        # apply cells order
+        if (!is.null(case$cells_order) && length(case$cells_order) > 0) {
+            m <- m %>%
+                dplyr::filter(!!sym(cby) %in% case$cells_order) %>%
+                mutate(!!sym(cby) := factor(!!sym(cby), levels = case$cells_order))
+        } else if (!is.null(case$cells_orderby)) {
+            ordered_m <- m %>% arrange(!!!parse_exprs(case$cells_orderby))
+            cells <- ordered_m %>% pull(cby) %>% unique() %>% head(case$cells_n)
+            m <- ordered_m %>% dplyr::filter(!!sym(cby) %in% cells)
+            m[[cby]] = factor(m[[cby]], levels = cells)
+        }
+
+        # save the filtered data
+        table_file <- file.path(info$sec_dir, paste0(info$case_slug, ".", slugify(cby), ".txt"))
+        table_files <- c(table_files, table_file)
+        write.table(
+            m, table_file,
+            sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE
+        )
+
+        log_debug("  Plotting pie charts ...")
+        cells_rows <- cells_rows + length(unique(m[[cby]]))
+        if (n == 1) {
+            plot.margin <- unit(c(1,1,0,1), "cm")
+            strip.text.x <- element_text(margin = margin(b = 0.5, unit = "cm"))
+        } else if (n == length(cells_by)) {
+            plot.margin <- unit(c(0,1,1,1), "cm")
+            strip.text.x <- element_blank()
+        } else {
+            plot.margin <- unit(c(0,1,0,1), "cm")
+            strip.text.x <- element_blank()
+        }
+        p = m %>% ggplot(
+                aes(
+                    x = sqrt(CloneGroupSize)/2,
+                    y = CloneGroupClusterSize,
+                    width = sqrt(CloneGroupSize),
+                    fill = seurat_clusters
+                )
+            ) +
+            geom_col(width=.01, position="fill", color = "#888888") +
+            geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
+            coord_polar("y", start = 0) +
+            scale_fill_biopipen(name = "Cluster", limits = levels(all_clusters)) +
+            theme_void() +
+            theme(
+                plot.margin = plot.margin,
+                legend.margin = margin(l = .8, unit = "cm"),
+                legend.text = element_text(size=6),
+                legend.title = element_text(size=8),
+                legend.key.size = unit(0.5, "cm"),
+                strip.text.x = strip.text.x,
+                strip.text.y = element_text(
+                    angle = 0, hjust = 1,
+                    margin = margin(r = 0.5, unit = "cm"))
+            )  +
+            facet_grid(vars(!!sym(cby)), vars(!!sym(case$group_by)), switch="y")
+
+        piecharts[[length(piecharts) + 1]] <- p
+
+        # heatmaps
+        log_debug("  Preparing pie charts ...")
+        hmd <- m %>%
+            mutate(!!sym(cby) := paste0("[", !!sym(case$group_by), "] ", !!sym(cby))) %>%
+            select(!!sym(cby), CloneGroupClusterSize, seurat_clusters) %>%
+            distinct(!!sym(cby), seurat_clusters, .keep_all = TRUE) %>%
+            pivot_wider(names_from = seurat_clusters, values_from = CloneGroupClusterSize) %>%
+            tibble::column_to_rownames(cby)
+        hmd[, setdiff(levels(m$seurat_clusters), colnames(hmd))] <- NA
+        hmd <- select(hmd, all_of(levels(m$seurat_clusters)))
+        hmsplits <- c(hmsplits, rep(cby, nrow(hmd)))
+        hmrowlbls <- c(hmrowlbls, rownames(hmd))
+        rownames(hmd) <- NULL
+
+        hmdata <- bind_rows(hmdata, hmd)
+    }
+
+    log_info("  Merging and saving pie charts ...")
+    # assemble and save pie chart plots
+    res <- devpars$res %||% 100
+    #                         legend, cells_by names
+    width <- devpars$width %||% (400 + 120 + 100 * ngroups)
+    #                         group_by names
+    height <- devpars$height %||% (120 + 100 * cells_rows)
+    piefile <- file.path(info$sec_dir, paste0(info$case_slug, ".png"))
+    png(piefile, res = res, width = width, height = height)
+    print(wrap_plots(piecharts, ncol = 1, guides = "collect"))
     dev.off()
 
-    # heatmaps
-    groups = as.character(unique(meta[[case$group_by]]))
-    hmfigs = sapply(groups, plot_heatmap, meta, case, info, cluster_order_val)
+    log_info("  Plotting and saving heatmap ...")
+    row_ha <- rowAnnotation(
+        Total = anno_barplot(
+            hmdata %>% rowSums(na.rm = T),
+            gp = gpar(fill = "lightblue", col = NA),
+            width = unit(1.5, "cm")
+        )
+    )
+    ha <- NULL
+    extra_height <- 0
+    extra_width <- 0  # legend
+    if (!is.null(cluster_order_val)) {
+        ha <- list()
+        ha[[cluster_orderby]] <- cluster_order_val
+        if (is.numeric(cluster_order_val)) {
+            col_fun <- colorRamp2(
+                c(min(cluster_order_val), max(cluster_order_val)),
+                c("lightyellow", "red"))
+            ha$col <- list()
+            ha$col[[cluster_orderby]] <- col_fun
+        }
+        ha <- do_call(HeatmapAnnotation, ha)
+        extra_height <- 40
+        extra_width <- 120
+    }
+    if (length(cells_by) == 1) {
+        hmsplits <- NULL
+        extra_width <- extra_width - 15
+    }
+
+    col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
+    hm_res <- hm_devpars$res %||% 100
+    hm_width <- hm_devpars$width %||% (600 + 15 * length(unique(meta$seurat_clusters)) + extra_width)
+    hm_height <- hm_devpars$height %||% (450 + 15 * cells_rows + extra_height)
+    png(hmfile, res = hm_res, width = hm_width, height = hm_height)
+    hm <- Heatmap(
+        as.matrix(hmdata),
+        name = "Size",
+        col = col_fun,
+        na_col = "lightyellow",
+        row_names_side = "left",
+        row_names_max_width = max_text_width(
+            hmrowlbls,
+            gp = gpar(fontsize = 12)
+        ),
+        row_labels = hmrowlbls,
+        row_split = hmsplits,
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        rect_gp = gpar(col = "white", lwd = 1),
+        right_annotation = row_ha,
+        top_annotation = ha
+    )
+    print(hm)
+    dev.off()
 
     add_report(
         list(
@@ -401,24 +479,20 @@ do_case <- function(name, case) {
     add_report(
         list(
             name = "Pie Charts",
-            contents = list(list(
-                kind = "image",
-                src = outfile
-            ))
+            contents = list(list(kind = "image", src = piefile))
         ),
         list(
-            name = "Heatmaps",
-            ui = "table_of_images",
-            contents = lapply(seq_along(groups), function(i) {
-                list(descr = groups[i], src = hmfigs[i])
-            })
+            name = "Heatmap",
+            contents = list(list(src = hmfile, kind = "image"))
         ),
         list(
             name = "Distribution Table",
-            contents = list(list(
-                kind = "table",
-                data = list(nrows = 100),
-                src = txtfile
+            contents = do.call(c, lapply(
+                seq_along(cells_by),
+                function(i) list(
+                    list(kind = "descr", content = paste0("Cells by: ", cells_by[i])),
+                    list(kind = "table", data = list(nrows = 100), src = table_files[i])
+                )
             ))
         ),
         h1 = ifelse(
@@ -435,7 +509,7 @@ do_overlap <- function(section) {
     log_info(paste("- Running overlaps for section:", section))
     overlap_cases <- overlaps[[section]]
     if (length(overlap_cases) < 2) {
-        stop(paste0("Not enough cases for overlap for section: ", section))
+        stop(paste0("  Not enough cases for overlap for section: ", section))
     }
 
     sec_dir <- file.path(outdir, slugify(section))

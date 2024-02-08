@@ -882,8 +882,9 @@ class CellsDistribution(Proc):
         each: The column name in metadata to separate the cells into different plots.
         section: The section to show in the report. This allows different cases to be put in the same section in report.
             Only works when `each` is not specified.
-        overlap (list): Plot the overlap of cells in different cases under the same section.
-            The section must have at least 2 cases.
+        overlap (list): Plot the overlap of cell groups (values of `cells_by`) in different cases
+            under the same section.
+            The section must have at least 2 cases, each case should have a single `cells_by` column.
         cases (type=json;order=99): If you have multiple cases, you can specify them here.
             Keys are the names of the cases and values are the options above except `mutaters`.
             If some options are not specified, the options in `envs` will be used.
