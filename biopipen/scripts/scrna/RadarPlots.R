@@ -188,7 +188,7 @@ do_radarplot <- function(info, case, counts) {
     # Save the counts
     counts_file = file.path(info$casedir, "counts.tsv")
     write.table(
-        rdr_data,
+        t(rdr_data),
         counts_file,
         sep = "\t",
         quote = FALSE,
@@ -207,7 +207,7 @@ do_radarplot <- function(info, case, counts) {
     # Save the percentages
     perc_file = file.path(info$casedir, "percentages.tsv")
     write.table(
-        rdr_data,
+        t(rdr_data),
         perc_file,
         sep = "\t",
         quote = FALSE,
