@@ -116,13 +116,13 @@ get_groups <- function(order) {
 }
 
 perpare_case <- function(casename, case) {
-    log_info("Preparing case: {casename} ...")
+    log_info("- Processing case: {casename} ...")
     # Check if required keys are provided
     if (is.null(case$subject) || length(case$subject) == 0) {
-        stop(paste("`subject` is required for case:", casename))
+        stop(paste("  `subject` is required for case:", casename))
     }
     if (is.null(case$group) || length(case$group) == 0) {
-        stop(paste("`group` is required for case:", casename))
+        stop(paste("  `group` is required for case:", casename))
     }
     if (!is.null(case$order) && length(case$order) > 0) {
         has_comma <- grepl(",", case$order)
@@ -134,13 +134,8 @@ perpare_case <- function(casename, case) {
             ))
         } else if (!any(has_comma)) {
             if (length(case$order) > 2) {
-                log_warn(
-                    paste0(
-                        "- Order of groups in case:", casename,
-                        " is not recommended, please use comma to separate groups. \n",
-                        "Instead of `['A', 'B', 'C']`, use `['A,B', 'A,C', 'B,C']`."
-                    )
-                )
+                log_warn("  Order of groups is not recommended, please use comma to separate groups.")
+                log_warn("  Instead of `['A', 'B', 'C']`, use `['A,B', 'A,C', 'B,C']`.")
                 case$order <- sapply(
                     combn(case$order, 2, simplify = FALSE),
                     function(x) paste(x, collapse = ",")
@@ -151,8 +146,8 @@ perpare_case <- function(casename, case) {
         } else {
             stop(
                 paste0(
-                    "- Order of groups in case:", casename,
-                    " is not consistent, please use comma to separate groups. \n",
+                    "  Order of groups in case:", casename,
+                    " is not consistent, please use comma to separate groups. ",
                     "Instead of `['A', 'B', 'C']`, use `['A,B', 'A,C', 'B,C']`, ",
                     "however, this is inconsistent: `['A,B', 'C']`"
                 )
@@ -255,14 +250,16 @@ plot_scatter <- function(counts, subject, suf1, suf2) {
     }
     ggplot(plotdata) +
         geom_point(
-            aes_string(
-                x = bQuote(suf1), y = bQuote(suf2), color = "Type", size = "Size", fill = "Type"
+            aes(
+                x = !!sym(suf1),
+                y = !!sym(suf2),
+                color = Type,
+                size = Size,
+                fill = Type
             ),
             alpha = .6,
             shape = 21
         ) +
-        # geom_point(aes_string(x=x, y=y, color='color'), shape=1) +
-        # scale_color_manual(values=color) +
         scale_x_continuous(
             trans = "log2",
             limits = c(minx, maxx),
@@ -277,7 +274,6 @@ plot_scatter <- function(counts, subject, suf1, suf2) {
         ) +
         theme_prism(base_size = 16) +
         scale_size(guide = "none") +
-        # theme(legend.position = "none") +
         labs(
             title = bquote(.(subject) ~ (italic(n) == .(n_formatted))),
             subtitle = subtitle
@@ -302,23 +298,12 @@ plot_venndg <- function(counts, groups, singletons) {
     venn <- Venn(venn_data)
     vdata <- process_data(venn)
     vregion <- venn_region(vdata)
-    sregion <- head(vregion, length(groups))
-    sregion$count = singletons[sregion$name, "count"]
-    sregion <- sregion %>% mutate(name = paste0(name, " singletons"))
+    vregion$singleton_count = singletons[vregion$name, "count"]
     vregion <- vregion %>% mutate(
         count_perc = round(count / sum(count) * 100, 1),
-        count_str = paste0(count, " (", count_perc, "%)")
+        count_str = paste0(count, " (", count_perc, "%)"),
+        count_str = if_else(is.na(singleton_count), count_str, paste0(count_str, "\nsingletons = ", singleton_count))
     )
-
-    # Align the catagory labels
-    cat_nudge_y <- 0
-    if (length(groups) == 3) { cat_nudge_y <- c(-400, 0, -400) }
-    # Shift Count labels
-    count_nudge_y <- -10
-    if (length(groups) == 3) { count_nudge_y <- c(20, -20, 20, rep(0, nrow(vregion) - 3))  }
-    # Shift the singletons stat labels
-    label_nudge_y <- 60
-    if (length(groups) == 3) { label_nudge_y <- c(60, -60, -60) }
 
     venn_p <- ggplot() +
         # 1. region count layer
@@ -326,31 +311,18 @@ plot_venndg <- function(counts, groups, singletons) {
         # 2. set edge layer
         # geom_sf(aes(color = factor(id)), data = venn_setedge(data), show.legend = FALSE) +
         # 3. set label layer
-        geom_sf_text(aes(label = name), data = venn_setlabel(vdata), nudge_y = cat_nudge_y) +
+        geom_sf_text(aes(label = name), data = venn_setlabel(vdata)) +
         # 4. region label layer
         geom_sf_label(
             aes(label = count_str),
             alpha = .8,
             label.padding = unit(.2, "lines"),
-            data = vregion,
-            nudge_y = count_nudge_y
+            data = vregion
         ) +
         # 5. singletons label layer
         scale_fill_distiller(palette = "Oranges", direction = 1) +
-        new_scale_fill() +
-        geom_sf_label(
-            aes(label = count, fill = name),
-            alpha = .6,
-            data = sregion,
-            nudge_y = label_nudge_y,
-            label.padding = unit(1, "lines"),
-            label.r = unit(1.2, "lines"),
-            label.size = 0.05,
-            show.legend = TRUE
-        ) +
         theme_void() +
-        theme(plot.margin = margin(1,1,1,1, "cm")) +
-        scale_fill_brewer(palette = "Reds", name = "Singletons")
+        theme(plot.margin = margin(1,1,1,1, "cm"))
 
     venn_p
 }
@@ -364,6 +336,10 @@ plot_upset <- function(counts, singletons) {
     cnts$Singletons <- "none"
     cnts[sgltns, "Singletons"] <- "true"
     sets <- setdiff(colnames(cnts), "Singletons")
+
+    # Fix: Error in fix.by(by.x, x) : 'by' must specify uniquely valid columns
+    colnames(cnts) <- make.names(colnames(cnts))
+    sets <- make.names(sets)
 
     upset(cnts, sets = sets, query.legend = "top", sets.x.label = "# clones", queries = list(
         list(
@@ -407,7 +383,7 @@ handle_subject <- function(i, subjects, casename, case) {
         mutate(across(everything(), as.character)) %>%
         paste(collapse = "-")
 
-    log_info("Handling {i} {case$subject} ...")
+    log_info("  Handling {subject} ({i}/{nrow(subjects)}) ...")
 
     if (!is.null(case$subset)) {
         counts <- cldata %>% filter(!!parse_expr(case$subset))
@@ -432,7 +408,7 @@ handle_subject <- function(i, subjects, casename, case) {
         case$order <- sapply(combn(groups, 2, simplify = FALSE), function(x) paste(x, collapse = ","))
     }
     if (length(unique(counts[[case$group]])) < 2) {
-        log_warn("{casename}, Subject doesn't have enough groups: {subject}")
+        log_warn("  - Subject doesn't have enough groups: {subject}")
         return()
     }
     singletons = counts %>%
@@ -451,20 +427,6 @@ handle_subject <- function(i, subjects, casename, case) {
         ) %>%
         select(CDR3.aa, !!!syms(groups))
     counts[is.na(counts)] <- 0
-
-    # # Save samples to group_by so they can be aligned accordingly in the report
-    # if (!is.null(section)) {
-    #     group_dir <- file.path(casedir, "section")
-    #     dir.create(group_dir, showWarnings = FALSE)
-
-    #     sgroups <- subject_row %>%
-    #         left_join(cldata) %>%
-    #         pull(section) %>%
-    #         unique() %>%
-    #         paste(collapse = "-")
-    #     group_file <- file.path(group_dir, paste0(slugify(sgroups), ".txt"))
-    #     cat(subject, file = group_file, sep = "\n", append = TRUE)
-    # }
 
     # Save counts
     counts_dir <- file.path(casedir, "counts")
@@ -495,13 +457,7 @@ handle_subject <- function(i, subjects, casename, case) {
     for (j in seq_along(case$order)) {
         pair <- strsplit(case$order[j], ",")[[1]]
         if (length(setdiff(pair, groups)) > 0) {
-            log_warn(
-                paste0(
-                    "- One of the comparisons doesn't exist in case (", casename,
-                    ") for subject (", subject, "): ",
-                    case$order[j]
-                )
-            )
+            log_warn("  - Comparison {case$order[j]} doesn't exist.")
             next
         }
         scatter_p <- plot_scatter(counts, subject, pair[1], pair[2])
@@ -534,7 +490,7 @@ handle_subject <- function(i, subjects, casename, case) {
 
     h <- headings(case$section, casename, "Overlapping Clones (Venn Diagram)")
     add_report(
-        list(src = venn_png),
+        list(src = venn_png, name = subject),
         h1 = h$h1,
         h2 = h$h2,
         h3 = h$h3,
@@ -549,7 +505,7 @@ handle_subject <- function(i, subjects, casename, case) {
 
     h <- headings(case$section, casename, "Overlapping Clones (UpSet Plots)")
     add_report(
-        list(src = upset_png),
+        list(src = upset_png, name = subject),
         h1 = h$h1,
         h2 = h$h2,
         h3 = h$h3,
