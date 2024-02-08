@@ -281,7 +281,7 @@ do_enrich <- function(info, markers, sig, volgenes) {
 
     plot_volcano(markers, file.path(info$casedir, "volcano.png"), sig, volgenes)
 
-    markers_sig <- markers %>% filter(!!parse_expr(sig))
+    markers_sig <- markers %>% filter(!!parse_expr(sig)) %>% arrange(p_val_adj)
     if (nrow(markers_sig) == 0) {
         log_warn("  No significant markers found for case: {info$casename}")
         return(NULL)
@@ -329,6 +329,11 @@ do_enrich <- function(info, markers, sig, volgenes) {
 
 
 do_dotplot <- function(info, siggenes, dotplot, args) {
+    max_dotplot_features <- 20
+    if (length(siggenes) > max_dotplot_features) {
+        log_warn("  Too many significant markers ({length(siggenes)}), using first {max_dotplot_features} for dotplot")
+        siggenes <- siggenes[1:max_dotplot_features]
+    }
     dotplot_devpars <- dotplot$devpars
     if (is.null(args$ident.2)) {
         dotplot$object <- args$object
