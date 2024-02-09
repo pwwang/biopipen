@@ -326,11 +326,15 @@ if (grepl('rawcounts|rawcount|counts|count', outunit)) {
 }
 
 log_info("Transforming data by resolving {inunit} ...")
-fun <- glue("{intype}2{outtype}")
-fun <- tryCatch(
-    { get(fun) },
-    error = function(e) { stop(glue("Unsupported conversion from {intype} to {outunit}\n")) }
-)
+if (intype == outtype) {
+    fun <- identity
+} else {
+    fun <- glue("{intype}2{outtype}")
+    fun <- tryCatch(
+        { get(fun) },
+        error = function(e) { stop(glue("Unsupported conversion from {intype} to {outunit}\n")) }
+    )
+}
 assign(outtype, fun(indata))
 out <- eval(parse_expr(outunit))
 

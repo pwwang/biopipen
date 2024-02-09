@@ -18,6 +18,10 @@ class UnitConversion(Proc):
     NOTE that during some conversions, `sum(counts/effLen)` is approximated to
     `sum(counts)/sum(effLen) * length(effLen))`
 
+    You can also use this process to just transform the expression values, e.g., take
+    log2 of the expression values. In this case, you can set `inunit` and `outunit` to
+    `count` and `log2(count + 1)` respectively.
+
     Input:
         infile: Input file containing expression values
             The file should be a matrix with rows representing genes and columns

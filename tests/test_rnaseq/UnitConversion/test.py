@@ -18,12 +18,20 @@ class UnitConversion2(UnitConversion_):
     }
 
 
+class UnitConversion3(UnitConversion_):
+    envs = {
+        "inunit": "count",
+        "outunit": "log2(count + 1)",
+    }
+
+
 def pipeline():
     return (
         get_pipeline(__file__, plugins=["no:report"])
         # get_pipeline(__file__)
-        .set_starts(UnitConversion, UnitConversion2)
+        .set_starts(UnitConversion, UnitConversion2, UnitConversion3)
         .set_data(
+            [Path(__file__).parent / "data" / "exprs.txt"],
             [Path(__file__).parent / "data" / "exprs.txt"],
             [Path(__file__).parent / "data" / "exprs.txt"],
         )
