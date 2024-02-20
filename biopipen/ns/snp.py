@@ -17,6 +17,8 @@ class PlinkSimulation(Proc):
     Output:
         outdir: Output directory containing the simulated data
             `plink_sim.bed`, `plink_sim.bim`, and `plink_sim.fam` will be generated.
+        gtmat: Genotype matrix file containing the simulated data with rows representing
+            SNPs and columns representing samples.
 
     Envs:
         plink: Path to PLINK v1.9
@@ -31,12 +33,25 @@ class PlinkSimulation(Proc):
         missing (type=float): Proportion of missing genotypes.
         args (ns): Additional arguments to pass to PLINK.
             - <more>: see <https://www.cog-genomics.org/plink/1.9/input#simulate>.
+        transpose_gtmat (flag): If set, the genotype matrix (`out.gtmat`) will
+            be transposed.
+        sample_prefix: Use this prefix for the sample names. If not set, the sample
+            names will be `per0_per0`, `per1_per1`, `per2_per2`, etc. If set, the
+            sample names will be `prefix0`, `prefix1`, `prefix2`, etc.
+            This only affects the sample names in the genotype matrix file
+            (`out.gtmat`).
     """
     input = "nsnps:var, ncases:var, nctrls:var"
-    output = (
-        "outdir:dir:{{in.nsnps | int}}_"
-        "{{in.ncases | int}}xcases_{{in.nctrls | int}}xctrls.plink_sim"
-    )
+    output = [
+        (
+            "outdir:dir:{{in.nsnps | int}}_"
+            "{{in.ncases | int}}xcases_{{in.nctrls | int}}xctrls.plink_sim"
+        ),
+        (
+            "gtmat:file:{{in.nsnps | int}}_"
+            "{{in.ncases | int}}xcases_{{in.nctrls | int}}xctrls.plink_sim/gtmat.txt"
+        ),
+    ]
     lang = config.lang.python
     envs = {
         "plink": config.exe.plink,
@@ -49,5 +64,7 @@ class PlinkSimulation(Proc):
         "homodds": 1.0,
         "missing": 0.0,
         "args": {},
+        "transpose_gtmat": False,
+        "sample_prefix": None,
     }
     script = "file://../scripts/snp/PlinkSimulation.py"
