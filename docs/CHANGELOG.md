@@ -1,5 +1,26 @@
 # Change Log
 
+## 0.26.0
+
+- deps: bump pipen to 0.14.1
+- deps: bump pipen-report to 0.18.1
+- fix(scrna.CellsDistribution): fix multiple `cells_by` columns and speed up plotting
+- choir(tcr.CloneResidency): mark singletons in Venn diagrams more clear
+- fix(scrna.RadarPlots): fix the order of groups on radar plots
+- choir(scrna.RadarPlots): transpose the count/percentage table to save to files
+- fix(scrna.MarkersFinder): fix generating report json file when no significant genes found
+- choir(scrna.MarkersFinder): Plot maximum 20 genes in dotplots
+- choir(scrna.MarkersFinder): Do not convert dashs in case names to dots
+- feat(utils.misc): add logger for python (which allows pipen-poplog to populate logs to running log)
+- feat: add rnaseq.UnitConversion and tests
+- feat: add rnaseq.Simulation to simulate RNAseq data
+- feat: add snp module and snp.PlinkSimulation process
+- feat: add stats module
+- feat: add stats.ChowTest
+- feat: add stats.LiquidAssoc
+- feat: add stats.DiffCoexpr
+- feat: add stats.MetaPvalue
+
 ## 0.25.4
 
 - deps: bump datar to  0.15.4 (support pandas 2.2)
