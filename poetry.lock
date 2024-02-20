@@ -119,13 +119,13 @@ trio = ["trio (<0.22)"]
 
 [[package]]
 name = "anyio"
-version = "4.2.0"
+version = "4.3.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "anyio-4.2.0-py3-none-any.whl", hash = "sha256:745843b39e829e108e518c489b31dc757de7d2131d53fac32bd8df268227bfee"},
-    {file = "anyio-4.2.0.tar.gz", hash = "sha256:e1875bb4b4e2de1669f4bc7869b6d3f54231cdced71605e6e64c9be77e3be50f"},
+    {file = "anyio-4.3.0-py3-none-any.whl", hash = "sha256:048e05d0f6caeed70d731f3db756d35dcc1f35747c8c403364a8332c630441b8"},
+    {file = "anyio-4.3.0.tar.gz", hash = "sha256:f75253795a87df48568485fd18cdd2a3fa5c4f7c5be8e5e36637733fce06fed6"},
 ]
 
 [package.dependencies]
@@ -282,13 +282,13 @@ pandas = ["datar-pandas (>=0.5.4,<0.6.0)"]
 
 [[package]]
 name = "datar-numpy"
-version = "0.3.3"
+version = "0.3.4"
 description = "The numpy backend for datar"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "datar_numpy-0.3.3-py3-none-any.whl", hash = "sha256:d5cba4f88ec213a06cb6696b5cfedf4960452d380035dc4f91faca8ca047883e"},
-    {file = "datar_numpy-0.3.3.tar.gz", hash = "sha256:87511dbac2cac029d7cea50850065c1c855bdf4aaad4439b8585fa8bcdb9beeb"},
+    {file = "datar_numpy-0.3.4-py3-none-any.whl", hash = "sha256:14eb8139e892e4c3ca6ee4fe6326fd55857d9695d0432112416d4efdbe70c564"},
+    {file = "datar_numpy-0.3.4.tar.gz", hash = "sha256:ce90ffeadf59e461367981b60335fe0d3e6eeec37915f8573033c776dcb8d63e"},
 ]
 
 [package.dependencies]
@@ -344,13 +344,13 @@ inflection = ">=0.5,<0.6"
 
 [[package]]
 name = "dunamai"
-version = "1.19.1"
+version = "1.19.2"
 description = "Dynamic version generation"
 optional = false
 python-versions = ">=3.5"
 files = [
-    {file = "dunamai-1.19.1-py3-none-any.whl", hash = "sha256:a6aa0ae3bdb01a12d6f219555d6e230ec02663afb43a7bd37933e6c4fecefc9b"},
-    {file = "dunamai-1.19.1.tar.gz", hash = "sha256:c8112efec15cd1a8e0384d5d6f3be97a01bf7bc45b54069533856aaaa33a9b9e"},
+    {file = "dunamai-1.19.2-py3-none-any.whl", hash = "sha256:bc126b17571a44d68ed826cec596e0f61dc01edca8b21486f70014936a5d44f2"},
+    {file = "dunamai-1.19.2.tar.gz", hash = "sha256:3be4049890763e19b8df1d52960dbea60b3e263eb0c96144a677ae0633734d2e"},
 ]
 
 [package.dependencies]
@@ -926,13 +926,13 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.14.0"
+version = "0.14.1"
 description = "A pipeline framework for python"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "pipen-0.14.0-py3-none-any.whl", hash = "sha256:07f153e7db7350b42634f4293f03ea8ca87dde14799cfda9539dc062cd54beb4"},
-    {file = "pipen-0.14.0.tar.gz", hash = "sha256:1597a148b0e6ef81b15307f80bfc608b8f2f9aba7c44f7fcc6a9e68e99562d80"},
+    {file = "pipen-0.14.1-py3-none-any.whl", hash = "sha256:55f67c97e54942dc50b57a9142ce05a3192ce47381891b95b5fd927e129732f7"},
+    {file = "pipen-0.14.1.tar.gz", hash = "sha256:cf0930c97dd406b9be2d7f4d7eca05c933ba5bf7ca87f4b1dd3fa0dfd6d36554"},
 ]
 
 [package.dependencies]
@@ -962,13 +962,13 @@ pipen = ">=0.14,<0.15"
 
 [[package]]
 name = "pipen-args"
-version = "0.14.0"
+version = "0.14.2"
 description = "Command-line argument parser for pipen."
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "pipen_args-0.14.0-py3-none-any.whl", hash = "sha256:7df209bc8dfa2e39e3146c97be56c9b93bb11d08ac3ec2ffc4c6319f27eaae06"},
-    {file = "pipen_args-0.14.0.tar.gz", hash = "sha256:87208435afcd0089e856e00e1fd68af39c1ed1c3a30289445c2d6597df430542"},
+    {file = "pipen_args-0.14.2-py3-none-any.whl", hash = "sha256:bb4b5adca6096ce03acc4606c506d491382dbc119149aa442b0e2c8b8cd65ad9"},
+    {file = "pipen_args-0.14.2.tar.gz", hash = "sha256:aeed543704419f1c4b324bb0ee6a618910e979461becc21ba145b60f377f2fff"},
 ]
 
 [package.dependencies]
@@ -1349,13 +1349,13 @@ yaml = ["pyyaml (>=6,<7)"]
 
 [[package]]
 name = "python-slugify"
-version = "8.0.3"
+version = "8.0.4"
 description = "A Python slugify application that also handles Unicode"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "python-slugify-8.0.3.tar.gz", hash = "sha256:e04cba5f1c562502a1175c84a8bc23890c54cdaf23fccaaf0bf78511508cabed"},
-    {file = "python_slugify-8.0.3-py2.py3-none-any.whl", hash = "sha256:c71189c161e8c671f1b141034d9a56308a8a5978cd13d40446c879569212fdd1"},
+    {file = "python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856"},
+    {file = "python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8"},
 ]
 
 [package.dependencies]
@@ -1665,13 +1665,13 @@ files = [
 
 [[package]]
 name = "tzdata"
-version = "2023.4"
+version = "2024.1"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
 files = [
-    {file = "tzdata-2023.4-py2.py3-none-any.whl", hash = "sha256:aa3ace4329eeacda5b7beb7ea08ece826c28d761cda36e747cfbf97996d39bf3"},
-    {file = "tzdata-2023.4.tar.gz", hash = "sha256:dd54c94f294765522c77399649b4fefd95522479a664a0cec87f41bebc6148c9"},
+    {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
+    {file = "tzdata-2024.1.tar.gz", hash = "sha256:2674120f8d891909751c38abcdfd386ac0a5a1127954fbc332af6b5ceae07efd"},
 ]
 
 [[package]]
