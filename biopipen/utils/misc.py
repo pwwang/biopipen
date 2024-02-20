@@ -2,8 +2,23 @@ from __future__ import annotations
 from pathlib import Path
 
 import sys
+import logging
 from typing import List
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
+
+logger = logging.getLogger("biopipen_job")
+logger.setLevel(logging.INFO)
+_handler = logging.StreamHandler(sys.stdout)
+# Use same log format as in R
+# {sprintf("%-7s", level)} [{format(time, "%Y-%m-%d %H:%M:%S")}] {msg}
+# so the logs can be populated by pipen-poplog
+_handler.setFormatter(
+    logging.Formatter(
+        "%(levelname)-7s [%(asctime)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+)
+logger.addHandler(_handler)
 
 
 def exec_code(code, global_vars=None, local_vars=None, return_var=None):

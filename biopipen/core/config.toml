@@ -27,6 +27,8 @@ convert = "convert"
 wget = "wget"
 # aria2c
 aria2c = "aria2c"
+# plink
+plink = "plink"
 # tabix
 tabix = "tabix"
 # sambamba

@@ -38,7 +38,7 @@ subset <- {{ envs.subset | r }}
 use_presto <- {{ envs.use_presto | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 dotplot <- {{ envs.dotplot | r: todot="-" }}
-cases <- {{ envs.cases | r: todot="-" }}
+cases <- {{ envs.cases | r: todot="-", skip=1 }}
 overlap <- {{ envs.overlap | r }}
 cache <- {{ envs.cache | r }}
 
@@ -281,7 +281,7 @@ do_enrich <- function(info, markers, sig, volgenes) {
 
     plot_volcano(markers, file.path(info$casedir, "volcano.png"), sig, volgenes)
 
-    markers_sig <- markers %>% filter(!!parse_expr(sig))
+    markers_sig <- markers %>% filter(!!parse_expr(sig)) %>% arrange(p_val_adj)
     if (nrow(markers_sig) == 0) {
         log_warn("  No significant markers found for case: {info$casename}")
         return(NULL)
@@ -329,6 +329,11 @@ do_enrich <- function(info, markers, sig, volgenes) {
 
 
 do_dotplot <- function(info, siggenes, dotplot, args) {
+    max_dotplot_features <- 20
+    if (length(siggenes) > max_dotplot_features) {
+        log_warn("  Too many significant markers ({length(siggenes)}), using first {max_dotplot_features} for dotplot")
+        siggenes <- siggenes[1:max_dotplot_features]
+    }
     dotplot_devpars <- dotplot$devpars
     if (is.null(args$ident.2)) {
         dotplot$object <- args$object
@@ -393,51 +398,6 @@ add_case_report <- function(info, sigmarkers, siggenes) {
         "#",
         ifelse(single_section, "#", info$case)
     )
-    add_report(
-        list(
-            title = "Significant Markers",
-            ui = "flat",
-            contents = list(
-                list(
-                    kind = "descr",
-                    content = paste0(
-                        "The markers are found using Seurat's FindMarkers function, ",
-                        "and filtered by: ",
-                        html_escape(sigmarkers)
-                    )
-                ),
-                list(
-                    kind = "table",
-                    data = list(nrows = 100),
-                    src = file.path(info$casedir, "markers.txt")
-                )
-            )
-        ),
-        list(
-            title = "Volcano Plot",
-            ui = "flat",
-            contents = list(
-                list(
-                    kind = "img",
-                    src = file.path(info$casedir, "volcano.png")
-                )
-            )
-        ),
-        list(
-            title = "Dot Plot",
-            ui = "flat",
-            contents = list(
-                list(
-                    kind = "img",
-                    src = file.path(info$casedir, "dotplot.png")
-                )
-            )
-        ),
-        h1 = h1,
-        h2 = ifelse(h2 == "#", "Markers", h2),
-        h3 = ifelse(h2 == "#", "#", "Markers"),
-        ui = "tabs"
-    )
     if (is.null(siggenes)) {
         add_report(
             list(
@@ -450,6 +410,52 @@ add_case_report <- function(info, sigmarkers, siggenes) {
             ui = "flat"
         )
     } else {
+        add_report(
+            list(
+                title = "Significant Markers",
+                ui = "flat",
+                contents = list(
+                    list(
+                        kind = "descr",
+                        content = paste0(
+                            "The markers are found using Seurat's FindMarkers function, ",
+                            "and filtered by: ",
+                            html_escape(sigmarkers)
+                        )
+                    ),
+                    list(
+                        kind = "table",
+                        data = list(nrows = 100),
+                        src = file.path(info$casedir, "markers.txt")
+                    )
+                )
+            ),
+            list(
+                title = "Volcano Plot",
+                ui = "flat",
+                contents = list(
+                    list(
+                        kind = "img",
+                        src = file.path(info$casedir, "volcano.png")
+                    )
+                )
+            ),
+            list(
+                title = "Dot Plot",
+                ui = "flat",
+                contents = list(
+                    list(
+                        kind = "img",
+                        src = file.path(info$casedir, "dotplot.png")
+                    )
+                )
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Markers", h2),
+            h3 = ifelse(h2 == "#", "#", "Markers"),
+            ui = "tabs"
+        )
+
         add_report(
             list(
                 kind = "descr",
