@@ -250,3 +250,71 @@ class DiffCoexpr(Proc):
     script = "file://../scripts/stats/DiffCoexpr.R"
 
 
+class MetaPvalue(Proc):
+    """Calulation of meta p-values.
+
+    If there is only one input file, only the p-value adjustment will be performed.
+
+    Input:
+        infiles: The input files. Each file is a tab-delimited file with multiple
+            columns. There should be ID column(s) to match the rows in other files and
+            p-value column(s) to be combined. The records will be full-joined by ID.
+            When only one file is provided, only the pvalue adjustment will be
+            performed when `envs.padj` is not `none`, otherwise the input file will
+            be copied to `out.outfile`.
+
+    Output:
+        outfile: The output file. It is a tab-delimited file with the first column as
+            the ID and the second column as the combined p-value.
+            ```
+            ID  ID1 ...  Pval   Padj
+            a   x   ...  0.123  0.123
+            b   y   ...  0.123  0.123
+            ...
+            ```
+
+    Envs:
+        id_cols: The column names used in all `in.infiles` as ID columns. Multiple
+            columns can be specified by comma-seperated values. For example, `ID1,ID2`.
+            If `id_expr` is specified, this should be a single column name for the new
+            ID column in each `in.infiles` and the final `out.outfile`.
+        id_exprs: The R expressions for each `in.infiles` to get ID column(s).
+        pval_cols: The column names used in all `in.infiles` as p-value columns.
+            Different columns can be specified by comma-seperated values for each
+            `in.infiles`. For example, `Pval1,Pval2`.
+        method (choice): The method used to calculate the meta-pvalue.
+            - fisher: Fisher's method.
+            - sumlog: Sum of logarithms (same as Fisher's method)
+            - logitp: Logit method.
+            - sumz: Sum of z method (Stouffer's method).
+            - meanz: Mean of z method.
+            - meanp: Mean of p method.
+            - invt: Inverse t method.
+            - sump: Sum of p method (Edgington's method).
+            - votep: Vote counting method.
+            - wilkinsonp: Wilkinson's method.
+            - invchisq: Inverse chi-square method.
+        na: The method to handle NA values. -1 to skip the record. Otherwise NA
+            will be replaced by the given value.
+        padj (choice): The method for p-value adjustment.
+            - none: No p-value adjustment (no Padj column in outfile).
+            - holm: Holm-Bonferroni method.
+            - hochberg: Hochberg method.
+            - hommel: Hommel method.
+            - bonferroni: Bonferroni method.
+            - BH: Benjamini-Hochberg method.
+            - BY: Benjamini-Yekutieli method.
+            - fdr: FDR correction method.
+    """
+    input = "infiles:files"
+    output = "outfile:file:{{in.infiles | first | stem}}.metapval.txt"
+    lang = config.lang.rscript
+    envs = {
+        "id_cols": None,
+        "id_exprs": None,
+        "pval_cols": None,
+        "method": "fisher",
+        "na": -1,
+        "padj": "none",
+    }
+    script = "file://../scripts/stats/MetaPvalue.R"
