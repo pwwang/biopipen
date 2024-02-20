@@ -177,3 +177,76 @@ class LiquidAssoc(Proc):
     script = "file://../scripts/stats/LiquidAssoc.R"
 
 
+class DiffCoexpr(Proc):
+    """Differential co-expression analysis.
+
+    See also <https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-497>
+    and <https://github.com/DavisLaboratory/dcanr/blob/8958d61788937eef3b7e2b4118651cbd7af7469d/R/inference_methods.R#L199>.
+
+    Input:
+        infile: The input data file. The rows are samples and the columns are
+            features. It must be tab-delimited.
+            ```
+            Sample   F1   F2   F3   ...   Fn
+            S1       1.2  3.4  5.6        7.8
+            S2       2.3  4.5  6.7        8.9
+            ...
+            Sm       5.6  7.8  9.0        1.2
+            ```
+        groupfile: The group file. The rows are the samples and the columns
+            are the groupings. It must be tab-delimited.
+            ```
+            Sample   G1   G2   G3   ...   Gk
+            S1       0    1    0          0
+            S2       2    1    0          NA  # exclude this sample
+            ...
+            Sm       1    0    0          0
+            ```
+
+    Output:
+        outfile: The output file. It is a tab-delimited file with the first
+            column as the feature pair and the second column as the p-value.
+            ```
+            Group  Feature1  Feature2  Pval  Padj
+            G1     F1        F2        0.123 0.123
+            G1     F1        F3        0.123 0.123
+            ...
+            ```
+
+    Envs:
+        method (choice): The method used to calculate the differential
+            co-expression.
+            - pearson: Pearson correlation.
+            - spearman: Spearman correlation.
+        beta: The beta value for the differential co-expression analysis.
+        padj (choice): The method for p-value adjustment.
+            - none: No p-value adjustment (no Padj column in outfile).
+            - holm: Holm-Bonferroni method.
+            - hochberg: Hochberg method.
+            - hommel: Hommel method.
+            - bonferroni: Bonferroni method.
+            - BH: Benjamini-Hochberg method.
+            - BY: Benjamini-Yekutieli method.
+            - fdr: FDR correction method.
+        perm_batch (type=int): The number of permutations to run in each batch
+        seed (type=int): The seed for random number generation
+        ncores (type=int): The number of cores to use for parallelization
+        transpose_input (flag): Whether to transpose the input file.
+        transpose_group (flag): Whether to transpose the group file.
+    """  # noqa: E501
+    input = "infile:file, groupfile:file"
+    output = "outfile:file:{{in.infile | stem}}.diffcoexpr.txt"
+    lang = config.lang.rscript
+    envs = {
+        "method": "pearson",
+        "beta": 6,
+        "padj": "none",
+        "perm_batch": 20,
+        "seed": 8525,
+        "ncores": config.misc.ncores,
+        "transpose_input": False,
+        "transpose_group": False,
+    }
+    script = "file://../scripts/stats/DiffCoexpr.R"
+
+
