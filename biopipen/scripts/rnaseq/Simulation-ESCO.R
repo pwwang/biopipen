@@ -1,10 +1,14 @@
 
 library(ESCO)
 library(rlang)
+library(glue)
 
 args <- {{envs.esco_args | r: todot="-"}}
-
 args <- args %||% list()
+
+save <- args$save
+args$save <- NULL
+
 if (!is.null(seed)) {
     set.seed(seed)
     args$seed <- seed
@@ -19,11 +23,12 @@ type <- args$type
 log_info("Running simulation ...")
 sim <- do_call(escoSimulate, args)
 attributes(sim) <- c(attributes(sim), c(simulation_tool = "ESCO"))
+saveRDS(sim, file.path(outdir, "sim.rds"))
 
 log_info("Plotting ...")
 if (type == "single") {
     asys <- assays(sim)
-    datalist = list(`simulated truth` = asys$TrueCounts)
+    datalist = list(`simulated-truth` = asys$TrueCounts)
     if (!is.null(asys$counts)) {
         datalist$`zero-inflated` = asys$counts
     }
@@ -36,7 +41,6 @@ if (type == "single") {
     png(dataplot, width=length(datalist) * 600, height=1200, res=30)
     heatdata(datalist, norm = FALSE, size = 2, ncol = 3)
     dev.off()
-
 
     rholist <- metadata(sim)$Params@corr
     if (length(rholist) > 0) {
@@ -63,7 +67,7 @@ if (type == "single") {
                           newcelltype= as.factor(colData(sim)$Group))
 
     # data
-    datalist = list(`simulated truth` = asys$TrueCounts)
+    datalist = list(`simulated-truth` = asys$TrueCounts)
     if (!is.null(asys$counts)) {
         datalist$`zero-inflated` = asys$counts
     }
@@ -163,3 +167,11 @@ if (type == "single") {
          colv = celltime, size = 1, ncol = 1)
     dev.off()
 }
+
+simulated <- switch(save,
+    `simulated-truth` = assays(sim)$TrueCounts,
+    `zero-inflated` = assays(sim)$counts,
+    `down-sampled` = assays(sim)$observedcounts,
+    { stop(glue("Unknown save option: {save}, expected one of 'simulated-truth', 'zero-inflated', 'down-sampled'")) }
+)
+

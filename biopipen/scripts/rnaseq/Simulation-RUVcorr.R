@@ -25,13 +25,18 @@ samples <- paste0("Sample", 1:nsamples)
 
 colnames(sim$Truth) <- genes
 rownames(sim$Truth) <- samples
+sim$Truth <- t(sim$Truth)
 colnames(sim$Y) <- genes
 rownames(sim$Y) <- samples
+sim$Y <- t(sim$Y)
 colnames(sim$Noise) <- genes
 rownames(sim$Noise) <- samples
+sim$Noise <- t(sim$Noise)
 colnames(sim$Sigma) <- genes
 rownames(sim$Sigma) <- genes
 
 log_info("Saving results ...")
 saveRDS(sim, file.path(outdir, "sim.rds"))
 saveRDS(sim$Truth, file.path(outdir, "Truth.rds"))
+
+simulated <- sim$Y

@@ -94,6 +94,8 @@ class Simulation(Proc):
             the simulation is designed for single-cell RNA-seq data).
 
     Output:
+        outfile: Output file containing the simulated data with rows representing
+            genes and columns representing samples.
         outdir: Output directory containing the simulated data
             `sim.rds` and `True.rds` will be generated.
             For `ESCO`, `sim.rds` contains the simulated data in a
@@ -115,6 +117,10 @@ class Simulation(Proc):
         seed (type=int): Random seed.
             If not set, seed will not be set.
         esco_args (ns): Additional arguments to pass to the simulation function.
+            - save (choice): Which type of data to save to `out.outfile`.
+                - `simulated-truth`: saves the simulated true counts.
+                - `zero-inflated`: saves the zero-inflated counts.
+                - `down-sampled`: saves the down-sampled counts.
             - type (choice): Which type of heterogenounity to use.
                 - single: produces a single population.
                 - group: produces distinct groups.
@@ -125,16 +131,28 @@ class Simulation(Proc):
         ruvcorr_args (ns): Additional arguments to pass to the simulation
             function.
             - <more>: See <https://rdrr.io/bioc/RUVcorr/man/simulateGEdata.html>.
+        transpose_output (flag): If set, the output will be transposed.
+        index_start (type=int): The index to start from when naming the samples.
+            Affects the sample names in `out.outfile` only.
     """
     input = "ngenes:var, nsamples:var"
-    output = "outdir:dir:{{in.ngenes}}x{{in.nsamples}}.sim"
+    output = [
+        "outfile:file:{{in.ngenes}}x{{in.nsamples}}.sim/simulated.txt",
+        "outdir:dir:{{in.ngenes}}x{{in.nsamples}}.sim",
+    ]
     lang = config.lang.rscript
     envs = {
         "tool": "RUVcorr",
         "ncores": config.misc.ncores,
         "type": "single",
-        "esco_args": {"dropout-type": "none"},
+        "esco_args": {
+            "dropout-type": "none",
+            "save": "simulated-truth",
+            "type": "single",
+        },
         "ruvcorr_args": {},
         "seed": None,
+        "transpose_output": False,
+        "index_start": 1,
     }
     script = "file://../scripts/rnaseq/Simulation.R"
