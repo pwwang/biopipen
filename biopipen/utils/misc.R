@@ -29,6 +29,25 @@ bQuote <- function(x) {
 #' @param tolower Convert to lowercase
 #' @return A slugified string
 slugify <- function(x, non_alphanum_replace="-", collapse_replace=TRUE, tolower=FALSE) {
+    subs <- list(
+        "š"="s", "œ"="oe", "ž"="z", "ß"="ss", "þ"="y", "à"="a", "á"="a", "â"="a",
+        "ã"="a", "ä"="a", "å"="a", "æ"="ae", "ç"="c", "è"="e", "é"="e", "ê"="e",
+        "ë"="e", "ì"="i", "í"="i", "î"="i", "ï"="i", "ð"="d", "ñ"="n", "ò"="o",
+        "ó"="o", "ô"="o", "õ"="o", "ö"="o", "ø"="oe", "ù"="u", "ú"="u", "û"="u",
+        "ü"="u", "ý"="y", "ÿ"="y", "ğ"="g", "ı"="i", "ĳ"="ij", "ľ"="l", "ň"="n",
+        "ř"="r", "ş"="s", "ť"="t", "ų"="u", "ů"="u", "ý"="y", "ź"="z", "ż"="z",
+        "ſ"="s", "α"="a", "β"="b", "γ"="g", "δ"="d", "ε"="e", "ζ"="z", "η"="h",
+        "θ"="th", "ι"="i", "κ"="k", "λ"="l", "μ"="m", "ν"="n", "ξ"="x", "ο"="o",
+        "π"="p", "ρ"="r", "σ"="s", "τ"="t", "υ"="u", "φ"="ph", "χ"="ch", "ψ"="ps",
+        "ω"="o", "ά"="a", "έ"="e", "ή"="h", "ί"="i", "ό"="o", "ύ"="u", "ώ"="o",
+        "ϐ"="b", "ϑ"="th", "ϒ"="y", "ϕ"="ph", "ϖ"="p", "Ϛ"="st", "ϛ"="st", "Ϝ"="f",
+        "ϝ"="f", "Ϟ"="k", "ϟ"="k", "Ϡ"="k", "ϡ"="k", "ϰ"="k", "ϱ"="r", "ϲ"="s",
+        "ϳ"="j", "ϴ"="th", "ϵ"="e", "϶"="p"
+    )
+    # replace latin and greek characters to the closest english character
+    for (k in names(subs)) {
+        x <- gsub(k, subs[[k]], x)
+    }
     x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
     if(collapse_replace) x <- gsub(paste0(non_alphanum_replace, "+"), non_alphanum_replace, x)
     if(tolower) x <- tolower(x)
