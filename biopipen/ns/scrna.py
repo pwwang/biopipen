@@ -1142,6 +1142,7 @@ class TopExpressingGenes(Proc):
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
         n (type=int): The number of top expressing genes to find.
+        subset: An expression to subset the cells for each case.
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
             above options except `mutaters`. If some options are
@@ -1162,6 +1163,7 @@ class TopExpressingGenes(Proc):
         "section": "DEFAULT",
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
+        "subset": None,
         "cases": {},
     }
     plugin_opts = {

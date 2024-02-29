@@ -20,6 +20,7 @@ prefix_each <- {{ envs.prefix_each | r }}
 section <- {{ envs.section | r }}
 dbs <- {{ envs.dbs | r }}
 n <- {{ envs.n | r }}
+sset <- {{ envs.subset | r }}
 cases <- {{ envs.cases | r: todot = "-" }}  # nolint
 
 set.seed(8525)
@@ -43,7 +44,8 @@ if (is.null(cases) || length(cases) == 0) {
             prefix_each = prefix_each,
             section = section,
             dbs = dbs,
-            n = n
+            n = n,
+            subset = sset
         )
     )
 } else {
@@ -56,7 +58,8 @@ if (is.null(cases) || length(cases) == 0) {
             prefix_each = prefix_each,
             section = section,
             dbs = dbs,
-            n = n
+            n = n,
+            subset = sset
         )
     })
 }
@@ -144,7 +147,7 @@ casename_info <- function(casename, create = FALSE) {
 }
 
 do_enrich <- function(expr, odir) {
-    log_info("  Saving expressions ...")
+    log_debug("  Saving expressions ...")
     expr <- expr %>% as.data.frame()
     colnames(expr) <- c("Expression")
     expr <- expr %>% rownames_to_column("Gene") %>% select(Gene, Expression)
@@ -165,7 +168,7 @@ do_enrich <- function(expr, odir) {
         quote = FALSE
     )
 
-    log_info("  Running enrichment ...")
+    log_debug("  Running enrichment ...")
     enriched <- enrichr(head(expr$Gene, n), dbs)  # nolint
     for (db in dbs) {
         write.table(
@@ -178,7 +181,7 @@ do_enrich <- function(expr, odir) {
         )
 
         if (nrow(enriched[[db]]) == 0) {
-            log_info(paste0("  No enriched terms for ", db))
+            log_warn(paste0("  No enriched terms for ", db))
             next
         }
 
@@ -199,15 +202,24 @@ do_case <- function(casename) {
     case <- cases[[casename]]
     info <- casename_info(casename, create = TRUE)
 
-    log_info("  Calculating average expression ...")
-    assay <- DefaultAssay(srtobj)
+    log_debug("  Calculating average expression ...")
+    if (!is.null(case$subset)) {
+        tryCatch({
+            sobj <- subset(srtobj, !!parse_expr(case$subset))
+        }, error = function(e) {
+            log_warn("  No cells found for the subset, skipping ...")
+        })
+    } else {
+        sobj <- srtobj
+    }
+    assay <- DefaultAssay(sobj)
     avgexpr <- AverageExpression(
-        srtobj,
+        sobj,
         group.by = case$group.by,
         assays = assay
     )[[assay]]
     # https://github.com/satijalab/seurat/issues/7893
-    colnames(avgexpr) <- as.character(unique(srtobj@meta.data[[case$group.by]]))
+    colnames(avgexpr) <- as.character(unique(sobj@meta.data[[case$group.by]]))
     avgexpr <- avgexpr[, case$ident, drop = FALSE]
     avgexpr <- avgexpr[order(-avgexpr), , drop = FALSE]
 
@@ -217,7 +229,7 @@ do_case <- function(casename) {
 }
 
 add_case_report <- function(info) {
-    log_info("  Adding case report ...")
+    log_debug("  Adding case report ...")
     h1 = ifelse(
         info$section == "DEFAULT",
         info$case,
@@ -237,30 +249,43 @@ add_case_report <- function(info) {
         ifelse(single_section, "#", info$case)
     )
 
-    add_report(
-        list(
-            kind = "descr",
-            content = paste0("Top ", n, " expressing genes")
-        ),
-        list(
-            kind = "table",
-            src = file.path(info$casedir, "exprn.txt")
-        ),
-        h1 = h1,
-        h2 = ifelse(h2 == "#", "Top Expressing Genes", h2),
-        h3 = ifelse(h2 == "#", "#", "Top Expressing Genes")
-    )
+    if (!is.null(info$error)) {
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0("Top ", n, " expressing genes")
+            ),
+            list(kind = "error", content = info$error),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Top Expressing Genes", h2),
+            h3 = ifelse(h2 == "#", "#", "Top Expressing Genes")
+        )
+    } else {
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0("Top ", n, " expressing genes")
+            ),
+            list(
+                kind = "table",
+                src = file.path(info$casedir, "exprn.txt")
+            ),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Top Expressing Genes", h2),
+            h3 = ifelse(h2 == "#", "#", "Top Expressing Genes")
+        )
 
-    add_report(
-        list(
-            kind = "descr",
-            content = paste0("Enrichment analysis for the top ", n, " expressing genes")
-        ),
-        list(kind = "enrichr", dir = info$casedir),
-        h1 = h1,
-        h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
-        h3 = ifelse(h2 == "#", "#", "Enrichment Analysis")
-    )
+        add_report(
+            list(
+                kind = "descr",
+                content = paste0("Enrichment analysis for the top ", n, " expressing genes")
+            ),
+            list(kind = "enrichr", dir = info$casedir),
+            h1 = h1,
+            h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
+            h3 = ifelse(h2 == "#", "#", "Enrichment Analysis")
+        )
+    }
 }
 
 sapply(sort(names(cases)), do_case)
