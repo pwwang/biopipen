@@ -427,6 +427,9 @@ do_case <- function(name, case) {
     if (length(cells_by) == 1) {
         hmsplits <- NULL
         extra_width <- extra_width - 15
+    } else {
+        # keep the row order
+        hmrowlbls <- factor(hmrowlbls, levels = unique(hmrowlbls))
     }
 
     col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
@@ -445,8 +448,7 @@ do_case <- function(name, case) {
             gp = gpar(fontsize = 12)
         ),
         row_labels = hmrowlbls,
-        # keep the order
-        row_split = factor(hmsplits, levels = unique(hmsplits)),
+        row_split = hmsplits,
         cluster_rows = FALSE,
         cluster_columns = FALSE,
         rect_gp = gpar(col = "white", lwd = 1),
