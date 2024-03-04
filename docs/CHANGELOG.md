@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.26.1
+
+- deps: bump pipen to 0.14.3
+- deps: pin ggplot2 to 3.4 due to breaking changes of 3.5 for test
+- fix(utils.misc.R): replace latin and greek characters with closest ascii chars for `slugify()`
+- feat(scrna.TopExpressingGenes): support `subset`
+- fix(scrna.CellsDistribution): fix the row order of the heatmaps.
+- enh(tcr.CloneResidency): add legend for multiplets in upset plots.
+- feat(scrna.SeuratClusterStats): add circos plot for cell composition stats (pwwang/immunopipe#46).
+
 ## 0.26.0
 
 - deps: bump pipen to 0.14.1

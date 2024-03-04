@@ -329,6 +329,7 @@ plot_venndg <- function(counts, groups, singletons) {
 
 plot_upset <- function(counts, singletons) {
     query_singleton <- function(row) { row["Singletons"] == "true" }
+    query_multiplet <- function(row) { rep(TRUE, length(row)) }
 
     cnts <- column_to_rownames(counts, "CDR3.aa") %>%
         mutate(across(everything(), ~ as.integer(as.logical(.x))))
@@ -342,6 +343,14 @@ plot_upset <- function(counts, singletons) {
     sets <- make.names(sets)
 
     upset(cnts, sets = sets, query.legend = "top", sets.x.label = "# clones", queries = list(
+        list(
+            # in order to add legend
+            # actually mark all, but singleton will override
+            query = query_multiplet,
+            color = "#3b3b3b",
+            active = TRUE,
+            query.name = "Multiplets"
+        ),
         list(
             query = query_singleton,
             color = "orange",

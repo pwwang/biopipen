@@ -101,6 +101,7 @@ class SeuratClusterStats(SeuratClusterStats):
                 "group-by": "Sample",
                 "table": True,
                 "frac": True,
+                "circos": True,
             },
             "Number of cells in each old cluster": {
                 "pie": True,

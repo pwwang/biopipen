@@ -372,6 +372,7 @@ do_case <- function(name, case) {
         # heatmaps
         log_debug("  Preparing pie charts ...")
         hmd <- m %>%
+            arrange(!!sym(case$group_by), !!sym(cby)) %>%
             mutate(!!sym(cby) := paste0("[", !!sym(case$group_by), "] ", !!sym(cby))) %>%
             select(!!sym(cby), CloneGroupClusterSize, seurat_clusters) %>%
             distinct(!!sym(cby), seurat_clusters, .keep_all = TRUE) %>%
@@ -426,6 +427,9 @@ do_case <- function(name, case) {
     if (length(cells_by) == 1) {
         hmsplits <- NULL
         extra_width <- extra_width - 15
+    } else {
+        # keep the row order
+        hmrowlbls <- factor(hmrowlbls, levels = unique(hmrowlbls))
     }
 
     col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
