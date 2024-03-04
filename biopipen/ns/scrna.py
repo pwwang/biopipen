@@ -483,14 +483,18 @@ class SeuratClusterStats(Proc):
             The parameters from the cases can overwrite the default parameters.
             - frac (flag): Whether to output the fraction of cells instead of number.
             - pie (flag): Also output a pie chart?
+            - circos (flag): Also output a circos plot?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
             - frac_ofall(flag): Whether to output the fraction against all cells,
                 instead of the fraction in each group.
+                Does not work for circos plot.
                 Only works when `frac` is `True` and `group-by` is specified.
             - transpose (flag): Whether to transpose the cluster and group, that is,
                 using group as the x-axis and cluster to fill the plot.
+                For circos plot, when transposed, the arrows will be drawn from the idents (by `ident`) to the
+                the groups (by `group-by`).
                 Only works when `group-by` is specified.
-            - position (choice): The position of the bars.
+            - position (choice): The position of the bars. Does not work for pie and circos plots.
                 - stack: Use `position_stack()`.
                 - fill: Use `position_fill()`.
                 - dodge: Use `position_dodge()`.
@@ -499,8 +503,13 @@ class SeuratClusterStats(Proc):
             - group-by: The column name in metadata to group the cells.
                 Does NOT support for pie charts.
             - split-by: The column name in metadata to split the cells into different plots.
+                Does NOT support for circos plots.
             - subset: An expression to subset the cells, will be passed to
                 `dplyr::filter()` on metadata.
+            - circos_devpars (ns): The device parameters for the circos plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
             - pie_devpars (ns): The device parameters for the pie charts.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -634,6 +643,7 @@ class SeuratClusterStats(Proc):
         "stats_defaults": {
             "frac": False,
             "pie": False,
+            "circos": False,
             "table": False,
             "position": "auto",
             "frac_ofall": False,
@@ -644,6 +654,7 @@ class SeuratClusterStats(Proc):
             "subset": None,
             "devpars": {"res": 100, "height": 600, "width": 800},
             "pie_devpars": {"res": 100, "height": 600, "width": 800},
+            "circos_devpars": {"res": 100, "height": 600, "width": 600},
         },
         "stats": {
             "Number of cells in each cluster": {

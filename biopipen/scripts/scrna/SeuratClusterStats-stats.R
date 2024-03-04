@@ -1,4 +1,5 @@
 # Loaded variables: srtfile, outdir, srtobj
+library(circlize)
 
 stats_defaults = {{envs.stats_defaults | r: todot="-"}}
 stats = {{envs.stats | r: todot="-", skip=1}}
@@ -12,6 +13,7 @@ do_one_stats = function(name) {
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)
     case$pie_devpars = list_update(stats_defaults$pie_devpars, case$pie_devpars)
+    case$circos_devpars = list_update(stats_defaults$circos_devpars, case$circos_devpars)
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
         stop(paste0(name, ": pie charts are not supported for group-by"))
     }
@@ -27,6 +29,7 @@ do_one_stats = function(name) {
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
     piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
+    circosfile = file.path(odir, paste0(slugify(name), ".circos.png"))
     samtablefile = file.path(odir, paste0(slugify(name), ".bysample.txt"))
     tablefile = file.path(odir, paste0(slugify(name), ".txt"))
 
@@ -167,6 +170,40 @@ do_one_stats = function(name) {
             list(
                 name = "Pie Chart",
                 contents = list(list(kind = "image", src = piefile))
+            ),
+            h1 = name,
+            ui = "tabs"
+        )
+    }
+
+    if (isTRUE(case$circos)) {
+        if (isTRUE(case$transpose)) {
+            circos_df <- plot_df %>%
+                select(from=!!sym(case$ident), to=!!sym(case$group.by), value=.n)
+        } else {
+            circos_df <- plot_df %>%
+                select(from=!!sym(case$group.by), to=!!sym(case$ident), value=.n)
+        }
+
+        png(
+            circosfile,
+            width=case$circos_devpars$width,
+            height=case$circos_devpars$height,
+            res=case$circos_devpars$res
+        )
+        circos.clear()
+        chordDiagram(
+            circos_df,
+            direction = 1,
+            direction.type = c("diffHeight", "arrows"),
+            link.arr.type = "big.arrow"
+        )
+        dev.off()
+
+        add_report(
+            list(
+                name = "Circos plot",
+                contents = list(list(kind = "image", src = circosfile))
             ),
             h1 = name,
             ui = "tabs"
