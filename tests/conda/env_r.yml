@@ -18,14 +18,14 @@ dependencies:
   - r-logger
   - r-hitype
   - r-base=4.2.0
-  - r-ggplot2
+  - r-ggplot2=3.4
   - r-tidyr
   - r-dplyr
   - r-tibble
   - r-enrichr
   - r-forcats
   - r-future
-  - r-ggprism
+  - r-ggprism=1.0.4
   - r-ggpubr
   - r-ggradar
   - r-ggrepel
