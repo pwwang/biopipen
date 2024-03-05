@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.26.2
+
+- deps: bump datar-pandas to 0.5.5 to dismiss deprecated warnings
+
 ## 0.26.1
 
 - deps: bump pipen to 0.14.3
