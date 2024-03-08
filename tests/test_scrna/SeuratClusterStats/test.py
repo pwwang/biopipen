@@ -106,7 +106,7 @@ class SeuratClusterStats(SeuratClusterStats):
             },
             "Number of cells in each old cluster": {
                 "pie": True,
-                "ident": "seurat_clusters_id",
+                "ident": "seurat_clusters_id"
             },
         },
         "features": {

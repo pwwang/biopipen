@@ -177,6 +177,9 @@ do_one_stats = function(name) {
     }
 
     if (isTRUE(case$circos)) {
+        if (is.null(case$group.by)) {
+            stop(paste0(name, ": circos plots require a group-by"))
+        }
         if (isTRUE(case$transpose)) {
             circos_df <- plot_df %>%
                 select(from=!!sym(case$ident), to=!!sym(case$group.by), value=.n)
@@ -184,6 +187,22 @@ do_one_stats = function(name) {
             circos_df <- plot_df %>%
                 select(from=!!sym(case$group.by), to=!!sym(case$ident), value=.n)
         }
+        groups <- if (is.factor(circos_df$from)) {
+            levels(circos_df$from)
+        } else {
+            unique(circos_df$from)
+        }
+        idents <- if (is.factor(circos_df$to)) {
+            levels(circos_df$to)
+        } else {
+            unique(circos_df$to)
+        }
+        grid_cols <- pal_biopipen()(length(idents))
+        names(grid_cols) <- idents
+        gcols <- rep("#565656", length(groups))
+        names(gcols) <- groups
+        grid_cols <- c(grid_cols, gcols)
+        link_cols <- grid_cols[circos_df$to]
 
         png(
             circosfile,
@@ -195,6 +214,8 @@ do_one_stats = function(name) {
         if (!isTRUE(case$circos_labels_rot)) {
             chordDiagram(
                 circos_df,
+                grid.col = grid_cols,
+                col = link_cols,
                 direction = 1,
                 direction.type = c("diffHeight", "arrows"),
                 link.arr.type = "big.arrow"
@@ -202,6 +223,8 @@ do_one_stats = function(name) {
         } else {
             chordDiagram(
                 circos_df,
+                grid.col = grid_cols,
+                col = link_cols,
                 direction = 1,
                 annotationTrack = "grid",
                 direction.type = c("diffHeight", "arrows"),
