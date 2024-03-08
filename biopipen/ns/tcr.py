@@ -983,6 +983,11 @@ class CloneResidency(Proc):
             before calculating the clone residency. For example, `Clones > 1` to filter
             out singletons.
         prefix: The prefix of the cell barcodes in the `Seurat` object.
+        upset_trans: The transformation to apply to the y axis of upset bar plots.
+            For example, `log10` or `sqrt`. If not specified, the y axis will be
+            plotted as is. Note that the position of the bar plots will be dodged
+            instead of stacked when the transformation is applied.
+            See also <https://github.com/tidyverse/ggplot2/issues/3671>
         cases (type=json): If you have multiple cases, you can use this argument
             to specify them. The keys will be used as the names of the cases.
             The values will be passed to the corresponding arguments.
@@ -1002,6 +1007,7 @@ class CloneResidency(Proc):
         "mutaters": {},
         "subset": None,
         "prefix": "{Sample}_",
+        "upset_trans": None,
         "cases": {},
     }
     script = "file://../scripts/tcr/CloneResidency.R"

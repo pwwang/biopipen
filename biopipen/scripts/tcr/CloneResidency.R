@@ -9,7 +9,7 @@ library(ggnewscale)
 library(ggplot2)
 library(ggprism)
 library(ggVennDiagram)
-library(UpSetR)
+library(ComplexUpset)
 
 theme_set(theme_prism())
 
@@ -26,6 +26,7 @@ section <- {{ envs.section | r }}
 mutaters <- {{ envs.mutaters | r }}
 subset <- {{ envs.subset | r }}
 prefix <- {{ envs.prefix | r }}
+upset_trans <- {{ envs.upset_trans | r }}
 cases <- {{ envs.cases | r }}
 
 # Fill up cases using `envs.xxx` if not provided and compose a DEFAULT case
@@ -38,26 +39,18 @@ if (is.null(cases) || length(cases) == 0) {
             group = group_key,
             order = sample_order,
             subset = subset,
-            section = section
+            section = section,
+            upset_trans = upset_trans
         )
     )
 } else {
     for (key in names(cases)) {
-        if (is.null(cases[[key]]$subject)) {
-            cases[[key]]$subject <- subject_key
-        }
-        if (is.null(cases[[key]]$group)) {
-            cases[[key]]$group <- group_key
-        }
-        if (is.null(cases[[key]]$order)) {
-            cases[[key]]$order <- sample_order
-        }
-        if (is.null(cases[[key]]$section)) {
-            cases[[key]]$section <- section
-        }
-        if (is.null(cases[[key]]$subset)) {
-            cases[[key]]$subset <- subset
-        }
+        cases[[key]]$subject <- cases[[key]]$subject %||% subject_key
+        cases[[key]]$group <- cases[[key]]$group %||% group_key
+        cases[[key]]$order <- cases[[key]]$order %||% sample_order
+        cases[[key]]$section <- cases[[key]]$section %||% section
+        cases[[key]]$subset <- cases[[key]]$subset %||% subset
+        cases[[key]]$upset_trans <- cases[[key]]$upset_trans %||% upset_trans
     }
 }
 
@@ -327,37 +320,54 @@ plot_venndg <- function(counts, groups, singletons) {
     venn_p
 }
 
-plot_upset <- function(counts, singletons) {
-    query_singleton <- function(row) { row["Singletons"] == "true" }
-    query_multiplet <- function(row) { rep(TRUE, length(row)) }
+plot_upset <- function(counts, singletons, upset_trans) {
 
     cnts <- column_to_rownames(counts, "CDR3.aa") %>%
         mutate(across(everything(), ~ as.integer(as.logical(.x))))
     sgltns <- unlist(singletons$CDR3.aa)
-    cnts$Singletons <- "none"
-    cnts[sgltns, "Singletons"] <- "true"
-    sets <- setdiff(colnames(cnts), "Singletons")
+    cnts$..type <- "Multiplets"
+    cnts[sgltns, "..type"] <- "Singletons"
+    sets <- setdiff(colnames(cnts), "..type")
 
-    # Fix: Error in fix.by(by.x, x) : 'by' must specify uniquely valid columns
-    colnames(cnts) <- make.names(colnames(cnts))
-    sets <- make.names(sets)
+    p <- ggplot(mapping = aes(x = intersection, fill = ..type)) +
+        theme(
+            legend.position = "top",
+            legend.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line.y = element_line(color = "#3b3b3b"),
+            axis.ticks.y = element_line(color = "#3b3b3b"),
+        ) +
+        scale_fill_manual(values = c("#3b3b3b", "orange")) +
+        ylab("Intersection size")
 
-    upset(cnts, sets = sets, query.legend = "top", sets.x.label = "# clones", queries = list(
-        list(
-            # in order to add legend
-            # actually mark all, but singleton will override
-            query = query_multiplet,
-            color = "#3b3b3b",
-            active = TRUE,
-            query.name = "Multiplets"
-        ),
-        list(
-            query = query_singleton,
-            color = "orange",
-            active = TRUE,
-            query.name = "Singletons"
+    if (is.null(upset_trans)) {
+        p <- p + geom_bar(stat = "count", position = "stack") +
+            geom_text(
+                aes(label = ..count.., vjust = ifelse(..type == "Multiplets", -0.25, +1.25)),
+                stat = "count", position = "stack", size = 2.8)
+    } else {
+        p <- p + geom_bar(stat = "count", position = "dodge2") +
+            geom_text(
+                aes(label = ..count..),
+                stat = "count", position = position_dodge(width = 0.9), vjust = -0.25, size = 2.5) +
+            scale_y_continuous(trans = "log10")
+    }
+
+    upset(
+        cnts, rev(sets),
+        sort_sets = FALSE,
+        # Remove the base annotations
+        base_annotations = list(),
+        annotations = list('IntersectSize' = p),
+        themes = upset_modify_themes(
+            list(
+                intersections_matrix = theme(
+                    axis.line = element_line(color = "#3b3b3b"),
+                    axis.ticks.y = element_line(color = "#3b3b3b"),
+                )
+            )
         )
-    ))
+    )
 }
 
 headings <- function(section, casename, subject) {
@@ -509,7 +519,7 @@ handle_subject <- function(i, subjects, casename, case) {
     upset_dir <- file.path(casedir, "upset")
     upset_png <- file.path(upset_dir, paste0("upset_", slugify(subject), ".png"))
     png(upset_png, res = 100, height = 600, width = 800)
-    print(plot_upset(counts, singletons))
+    print(plot_upset(counts, singletons, case$upset_trans))
     dev.off()
 
     h <- headings(case$section, casename, "Overlapping Clones (UpSet Plots)")
