@@ -429,7 +429,7 @@ do_case <- function(name, case) {
         extra_width <- extra_width - 15
     } else {
         # keep the row order
-        hmrowlbls <- factor(hmrowlbls, levels = unique(hmrowlbls))
+        hmsplits <- factor(hmsplits, levels = unique(hmsplits))
     }
 
     col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
