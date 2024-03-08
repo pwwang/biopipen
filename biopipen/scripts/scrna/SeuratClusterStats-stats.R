@@ -192,12 +192,31 @@ do_one_stats = function(name) {
             res=case$circos_devpars$res
         )
         circos.clear()
-        chordDiagram(
-            circos_df,
-            direction = 1,
-            direction.type = c("diffHeight", "arrows"),
-            link.arr.type = "big.arrow"
-        )
+        if (!isTRUE(case$circos_labels_rot)) {
+            chordDiagram(
+                circos_df,
+                direction = 1,
+                direction.type = c("diffHeight", "arrows"),
+                link.arr.type = "big.arrow"
+            )
+        } else {
+            chordDiagram(
+                circos_df,
+                direction = 1,
+                annotationTrack = "grid",
+                direction.type = c("diffHeight", "arrows"),
+                link.arr.type = "big.arrow",
+                preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(circos_df)))))
+            )
+            circos.track(track.index = 1, panel.fun = function(x, y) {
+                circos.text(
+                    CELL_META$xcenter, CELL_META$ylim[1],
+                    CELL_META$sector.index,
+                    facing = "clockwise",
+                    niceFacing = TRUE,
+                    adj = c(0, 0.5))
+            }, bg.border = NA) # here set bg.border to NA is important
+        }
         dev.off()
 
         add_report(

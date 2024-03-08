@@ -506,6 +506,8 @@ class SeuratClusterStats(Proc):
                 Does NOT support for circos plots.
             - subset: An expression to subset the cells, will be passed to
                 `dplyr::filter()` on metadata.
+            - circos_labels_rot (flag): Whether to rotate the labels in the circos plot.
+                In case the labels are too long.
             - circos_devpars (ns): The device parameters for the circos plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -652,6 +654,7 @@ class SeuratClusterStats(Proc):
             "group-by": None,
             "split-by": None,
             "subset": None,
+            "circos_labels_rot": False,
             "devpars": {"res": 100, "height": 600, "width": 800},
             "pie_devpars": {"res": 100, "height": 600, "width": 800},
             "circos_devpars": {"res": 100, "height": 600, "width": 600},
