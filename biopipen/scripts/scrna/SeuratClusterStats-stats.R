@@ -38,7 +38,7 @@ do_one_stats = function(name) {
         df_cells = df_cells %>% filter(!!rlang::parse_expr(case$subset))
     }
 
-    select_cols = c(case$ident, case$group.by)
+    select_cols = c(case$ident, case$group.by, case$split.by)
     if (!is.null(case$split.by)) {
         plot_df = do_call(rbind, lapply(group_split(
             df_cells %>% select(all_of(select_cols)),
@@ -54,6 +54,7 @@ do_one_stats = function(name) {
                     out <- out %>% group_by(!!sym(case$group.by)) %>% mutate(.frac = .n / sum(.n))
                 }
             }
+            out
         }))
     } else if (!is.null(case$group.by) && isTRUE(case$frac)) {
         plot_df <- df_cells %>%
