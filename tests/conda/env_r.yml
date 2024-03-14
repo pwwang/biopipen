@@ -25,6 +25,7 @@ dependencies:
   - r-enrichr
   - r-forcats
   - r-future
+  - r-presto
   - r-ggprism=1.0.4
   - r-ggpubr
   - r-ggradar
