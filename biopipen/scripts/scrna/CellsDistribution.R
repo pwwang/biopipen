@@ -29,117 +29,82 @@ devpars <- {{envs.devpars | r}}  # nolint
 hm_devpars <- {{envs.hm_devpars | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
+prefix_each <- {{envs.prefix_each | r}}  # nolint
 overlap <- {{envs.overlap | r}}  # nolint
 cases <- {{envs.cases | r}}  # nolint
 
-if (is.null(overlap)) { overlap = c() }
+overlap <- overlap %||% c()
 overlaps <- list()
-log_info("Loading seurat object ...")
+log_info("- Loading seurat object ...")
 srtobj <- readRDS(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
-    log_info("Mutating seurat object ...")
-    srtobj@meta.data <- srtobj@meta.data %>%
-        mutate(!!!lapply(mutaters, parse_expr))
+    log_info("- Mutating seurat object ...")
+    srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
-all_clusters = srtobj@meta.data %>% pull(seurat_clusters)
-if (!is.factor(all_clusters)) {
-    all_clusters = factor(all_clusters, levels = sort(unique(all_clusters)))
-}
+defaults <- list(
+    cluster_orderby = cluster_orderby,
+    group_by = group_by,
+    group_order = group_order,
+    cells_by = cells_by,
+    cells_order = cells_order,
+    cells_orderby = cells_orderby,
+    cells_n = cells_n,
+    devpars = devpars,
+    hm_devpars = hm_devpars,
+    each = each,
+    section = section,
+    prefix_each = prefix_each,
+    subset = subset,
+    descr = descr
+)
 
-single_section <- TRUE
-expand_cases <- function() {
-    # fill up cases with missing parameters
-    if (is.null(cases) || length(cases) == 0) {
-        filled_cases <- list(
-            DEFAULT = list(
-                cluster_orderby = cluster_orderby,
-                group_by = group_by,
-                group_order = group_order,
-                cells_by = cells_by,
-                cells_order = cells_order,
-                cells_orderby = cells_orderby,
-                cells_n = cells_n,
-                devpars = devpars,
-                hm_devpars = hm_devpars,
-                each = each,
-                section = section,
-                subset = subset,
-                descr = descr
-            )
-        )
-    } else {
-        filled_cases <- list()
-        for (name in names(cases)) {
-            case <- list_setdefault(
-                cases[[name]],
-                cluster_orderby = cluster_orderby,
-                group_by = group_by,
-                group_order = group_order,
-                cells_by = cells_by,
-                cells_order = cells_order,
-                cells_orderby = cells_orderby,
-                cells_n = cells_n,
-                devpars = devpars,
-                hm_devpars = hm_devpars,
-                each = each,
-                section = section,
-                subset = subset,
-                descr = descr
-            )
-            case$devpars <- list_setdefault(case$devpars, devpars)
-            case$hm_devpars <- list_setdefault(case$hm_devpars, hm_devpars)
-            filled_cases[[name]] <- case
-        }
-    }
-
+expand_each <- function(name, case) {
     outcases <- list()
-    sections <- c()
-    # expand each
-    for (name in names(filled_cases)) {
-        case <- filled_cases[[name]]
-        if (is.null(case$each) || nchar(case$each) == 0) {
-            sections <- c(sections, case$section)
-            outcases[[paste0(case$section, ":", name)]] <- case
+    if (is.null(case$each) || nchar(case$each) == 0) {
+        if (is.null(case$section) || case$section == "DEFAULT") {
+            outcases[[name]] <- case
         } else {
-            sections <- c(sections, case$each)
-            eachs <- srtobj@meta.data %>% pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
-            for (ea in eachs) {
-                by <- make.names(paste0(".", name, "_", case$each,"_", ea))
-                srtobj@meta.data <<- srtobj@meta.data %>%
-                    mutate(!!sym(by) := if_else(
-                        !!sym(case$each) == ea,
-                        !!sym(case$group_by),
-                        NA
-                    ))
-                key <- paste0(case$each, ":", name, " (", ea, ")")
-                outcases[[key]] <- case
-                outcases[[key]]$group_by <- by
+            outcases[[paste0(case$section, "::", name)]] <- case
+        }
+    } else {
+        if (!is.null(case$section) && case$section != "DEFAULT") {
+            log_warn("Ignoring `section` in case `{name}` when `each` is set.")
+            case$section <- NULL
+        }
+        if (!is.null(case$subset)) {
+            eachs <- srtobj@meta.data %>%
+                dplyr::filter(!!parse_expr(case$subset)) %>%
+                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        } else {
+            eachs <- srtobj@meta.data %>%
+                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        }
+
+        for (each in eachs) {
+            by <- make.names(paste0(".", name, "_", case$each,"_", each))
+            srtobj@meta.data <<- srtobj@meta.data %>%
+                mutate(!!sym(by) := if_else(
+                    !!sym(case$each) == each,
+                    !!sym(case$group_by),
+                    NA
+                ))
+            if (isTRUE(case$prefix_each)) {
+                key <- paste0(name, "::", case$each, " - ", each)
+            } else {
+                key <- paste0(name, "::", each)
             }
+            outcases[[key]] <- case
+            outcases[[key]]$section <- name
+            outcases[[key]]$group_by <- by
         }
     }
-    single_section <<- length(unique(sections)) == 1
     outcases
 }
 
-casename_info <- function(casename, create = FALSE) {
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
-
-    out <- list(
-        casename = casename,
-        section = sec_case_names[1],
-        case = cname,
-        section_slug = slugify(sec_case_names[1]),
-        case_slug = slugify(cname)
-    )
-    out$sec_dir <- file.path(outdir, out$section_slug)
-    if (create) {
-        dir.create(out$sec_dir, showWarnings = FALSE, recursive = TRUE)
-    }
-    out
-}
+log_info("- Expanding cases...")
+cases <- expand_cases(cases, defaults, expand_each)
 
 plot_heatmap <- function(m, cells_by, group_by, cluster_order_val, cluster_orderby) {
     # A matrix: 10 × 8 of type int
@@ -201,15 +166,17 @@ plot_heatmap <- function(m, cells_by, group_by, cluster_order_val, cluster_order
     )
 }
 
+sections <- c()
 do_case <- function(name, case) {
-    log_info(paste("Running case:", name))
+    log_info("- Handling case: {name}")
     if (is.null(case$group_by) || nchar(case$group_by) == 0) {
-        stop(paste0("`group_by` must be specified for case", name))
+        stop(paste0("  `group_by` must be specified for case", name))
     }
     if (is.null(case$cells_by) || nchar(case$cells_by) == 0) {
-        stop(paste0("`cells_by` must be specified for case", name))
+        stop(paste0("  `cells_by` must be specified for case", name))
     }
-    info <- casename_info(name, create = TRUE)
+
+    info <- casename_info(name, cases, outdir, create = TRUE)
     cells_by <- trimws(strsplit(case$cells_by, ",")[[1]])
 
     meta <- srtobj@meta.data
@@ -230,6 +197,10 @@ do_case <- function(name, case) {
             levels = cluster_order_df %>% pull(seurat_clusters) %>% as.character()
         )
     }
+    if (!is.factor(meta$seurat_clusters)) {
+        meta$seurat_clusters <- factor(meta$seurat_clusters, levels = sort(unique(meta$seurat_clusters)))
+    }
+    all_clusters <- meta$seurat_clusters
 
     # subset the seurat object
     if (!is.null(case$subset) && nchar(case$subset) > 0) {
@@ -264,12 +235,13 @@ do_case <- function(name, case) {
         meta <- meta %>% mutate(!!sym(case$group_by) := factor(!!sym(case$group_by)))
     }
     ngroups <- length(unique(meta[[case$group_by]]))
+    sections <<- union(sections, info$section)
 
     piecharts <- list()
     hmdata <- NULL
     hmrowlbls <- c()
     hmsplits <- c()
-    hmfile <- file.path(info$sec_dir, paste0(info$case_slug, ".heatmap.png"))
+    hmfile <- file.path(info$casedir, paste0(info$case_slug, ".heatmap.png"))
     cells_rows <- 0
     table_files <- c()
     for (n in seq_along(cells_by)) {
@@ -322,7 +294,7 @@ do_case <- function(name, case) {
         }
 
         # save the filtered data
-        table_file <- file.path(info$sec_dir, paste0(info$case_slug, ".", slugify(cby), ".txt"))
+        table_file <- file.path(info$casedir, paste0(info$case_slug, ".", slugify(cby), ".txt"))
         table_files <- c(table_files, table_file)
         write.table(
             m, table_file,
@@ -394,7 +366,7 @@ do_case <- function(name, case) {
     width <- devpars$width %||% (400 + 120 + 100 * ngroups)
     #                         group_by names
     height <- devpars$height %||% (120 + 100 * cells_rows)
-    piefile <- file.path(info$sec_dir, paste0(info$case_slug, ".png"))
+    piefile <- file.path(info$casedir, paste0(info$case_slug, ".png"))
     png(piefile, res = res, width = width, height = height)
     print(wrap_plots(piecharts, ncol = 1, guides = "collect"))
     dev.off()
@@ -472,12 +444,8 @@ do_case <- function(name, case) {
                 case$descr
             )
         ),
-        h1 = ifelse(
-            info$section == "DEFAULT",
-            info$case,
-            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-        ),
-        h2 = ifelse(single_section, "#", info$case)
+        h1 = info$h1,
+        h2 = info$h2
     )
 
     add_report(
@@ -499,12 +467,8 @@ do_case <- function(name, case) {
                 )
             ))
         ),
-        h1 = ifelse(
-            info$section == "DEFAULT",
-            info$case,
-            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-        ),
-        h2 = ifelse(single_section, "#", info$case),
+        h1 = info$h1,
+        h2 = info$h2,
         ui = "tabs"
     )
 }
@@ -516,7 +480,8 @@ do_overlap <- function(section) {
         stop(paste0("  Not enough cases for overlap for section: ", section))
     }
 
-    sec_dir <- file.path(outdir, slugify(section))
+    sec_dir <- file.path(outdir, paste0("overlap - ", slugify(section)))
+    dir.create(sec_dir, showWarnings = FALSE)
     venn_plot <- file.path(sec_dir, "venn.png")
     venn_p <- ggVennDiagram(overlap_cases, label_percent_digit = 1) +
         scale_fill_distiller(palette = "Reds", direction = 1) +
@@ -552,8 +517,13 @@ do_overlap <- function(section) {
     )
 }
 
-cases <- expand_cases()
 sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
+
+unhit_overlaps <- setdiff(overlap, names(overlaps))
+if (length(unhit_overlaps) > 0) {
+    log_warn("- No sections found for overlapping analysis: {paste(unhit_overlaps, collapse=', ')}")
+    log_warn("  Available sections: {paste(sections, collapse=', ')}")
+}
 sapply(sort(names(overlaps)), do_overlap)
 
 save_report(joboutdir)

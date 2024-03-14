@@ -25,126 +25,102 @@ cases <- {{ envs.cases | r: todot = "-" }}  # nolint
 
 set.seed(8525)
 
-log_info("Loading Seurat object ...")
+log_info("- Loading Seurat object ...")
 srtobj <- readRDS(srtfile)
+assay <- DefaultAssay(srtobj)
 
-log_info("Mutate meta data if needed ...")
+log_info("- Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters)) {
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
 
-log_info("Expanding cases ...")
-if (is.null(cases) || length(cases) == 0) {
-    cases <- list(
-        DEFAULT = list(
-            ident = ident,
-            group.by = group.by,
-            each = each,
-            prefix_each = prefix_each,
-            section = section,
-            dbs = dbs,
-            n = n,
-            subset = sset
-        )
-    )
-} else {
-    cases <- lapply(cases, function(cs) {
-        list_setdefault(
-            cs,
-            ident = ident,
-            group.by = group.by,
-            each = each,
-            prefix_each = prefix_each,
-            section = section,
-            dbs = dbs,
-            n = n,
-            subset = sset
-        )
-    })
-}
+defaults <- list(
+    ident = ident,
+    group.by = group.by,
+    each = each,
+    prefix_each = prefix_each,
+    section = section,
+    dbs = dbs,
+    n = n,
+    subset = sset
+)
 
-# Expand each and ident
-newcases <- list()
-sections <- c()
-for (name in names(cases)) {  # nolint
-    case <- cases[[name]]
-    if (is.null(case$each) && !is.null(case$ident)) {
-        sections <- c(sections, case$section)
-        newcases[[paste0(case$section, ":", name)]] <- case
-    } else if (is.null(case$each)) {
-        sections <- c(sections, name)
-        idents <- srtobj@meta.data %>%
-            pull(case$group.by) %>%
-            unique() %>%
-            na.omit()
-        for (ident in idents) {
-            key <- paste0(name, ":", ident)
-            newcases[[key]] <- case
-            newcases[[key]]$ident <- ident
+expand_each <- function(name, case) {
+    outcases <- list()
+    no_each <- is.null(case$each) || nchar(case$each) == 0
+    no_ident <- is.null(case$ident)
+    has_section <- !is.null(case$section) && case$section != "DEFAULT"
+    if (no_each && !no_ident) {
+        # single cases
+        if (is.null(case$section) || case$section == "DEFAULT") {
+            outcases[[name]] <- case
+        } else {
+            outcases[[paste0(case$section, "::", name)]] <- case
         }
-    } else {
-        eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
+    } else if (no_each) {  # no_ident
+        # expanding idents
+        if (has_section) {
+            log_warn("  Ignoring `section` in case `{name}` when no `ident` is set.")
+            case$section <- NULL
+        }
+        if (!is.null(case$subset)) {
+            idents <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>%
+                pull(case$group.by) %>% unique() %>% na.omit() %>% as.vector()
+        } else {
+            idents <- srtobj@meta.data %>%
+                pull(case$group.by) %>% unique() %>% na.omit() %>% as.vector()
+        }
+
+        for (ident in idents) {
+            key <- paste0(name, "::", ident)
+            outcases[[key]] <- case
+            outcases[[key]]$ident <- ident
+            outcases[[key]]$section <- name
+        }
+    } else {  # has_each
+        if (no_ident) {
+            stop("  `ident` must be set when `each` is set for case `{name}`.")
+        }
+        # expanding eachs
+        if (has_section) {
+            log_warn("  Ignoring `section` in case `{name}` when `each` is set.")
+            case$section <- NULL
+        }
+
+        if (!is.null(case$subset)) {
+            eachs <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>%
+                pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
+        } else {
+            eachs <- srtobj@meta.data %>%
+                pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
+        }
+
         for (each in eachs) {
-            by <- make.names(paste0(".", name, "_", each))
-            srtobj@meta.data <- srtobj@meta.data %>% mutate(
+            by <- make.names(paste0(".", name, "_", case$each,"_", each))
+            srtobj@meta.data <<- srtobj@meta.data %>% mutate(
                 !!sym(by) := if_else(
                     !!sym(case$each) == each,
                     !!sym(case$group.by),
                     NA
                 )
             )
-            if (is.null(case$ident)) {
-                idents <- srtobj@meta.data %>%
-                    pull(case$group.by) %>%
-                    unique() %>%
-                    na.omit()
-                for (ident in idents) {
-                    kname <- if (name == "DEFAULT") "" else paste0("-", name)
-                    sections <- c(sections, paste0(each, kname))
-                    key <- paste0(each, kname, ":", ident)
-                    if (case$prefix_each) {
-                        key <- paste0(
-                            ifelse(case$each == "seurat_clusters", "Cluster", case$each),
-                            " - ",
-                            key
-                        )
-                    }
-                    newcases[[key]] <- case
-                    newcases[[key]]$ident <- ident
-                    newcases[[key]]$group.by <- by  # nolint
-                }
+
+            if (isTRUE(case$prefix_each)) {
+                key <- paste0(name, "::", case$each, " - ", each)
             } else {
-                sections <- c(sections, case$each)
-                key <- paste0(case$each, ":", each)
-                if (name != "DEFAULT") {
-                    key <- paste0(key, " - ", name)
-                }
-                newcases[[key]] <- case
+                key <- paste0(name, "::", each)
             }
+            outcases[[key]] <- case
+            outcases[[key]]$section <- name
+            outcases[[key]]$group.by <- by
         }
     }
+    outcases
 }
-cases <- newcases
-single_section <- length(unique(sections)) == 1
 
-casename_info <- function(casename, create = FALSE) {
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
-
-    out <- list(
-        casename = casename,
-        section = sec_case_names[1],
-        case = cname,
-        section_slug = slugify(sec_case_names[1]),
-        case_slug = slugify(cname)
-    )
-    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
-    }
-    out
-}
+log_info("- Expanding cases ...")
+cases <- expand_cases(cases, defaults, expand_each)
 
 do_enrich <- function(expr, odir) {
     log_debug("  Saving expressions ...")
@@ -200,7 +176,7 @@ do_enrich <- function(expr, odir) {
 do_case <- function(casename) {
     log_info("- Running for case: {casename} ...")
     case <- cases[[casename]]
-    info <- casename_info(casename, create = TRUE)
+    info <- casename_info(casename, cases, outdir, create = TRUE)
 
     log_debug("  Calculating average expression ...")
     if (!is.null(case$subset)) {
@@ -212,7 +188,6 @@ do_case <- function(casename) {
     } else {
         sobj <- srtobj
     }
-    assay <- DefaultAssay(sobj)
     avgexpr <- AverageExpression(
         sobj,
         group.by = case$group.by,
@@ -230,24 +205,8 @@ do_case <- function(casename) {
 
 add_case_report <- function(info) {
     log_debug("  Adding case report ...")
-    h1 = ifelse(
-        info$section == "DEFAULT",
-        info$case,
-        ifelse(
-            single_section,
-            paste0(
-                ifelse(info$section == "seurat_clusters", "Cluster", info$section),
-                " - ",
-                info$case
-            ),
-            info$section
-        )
-    )
-    h2 = ifelse(
-        info$section == "DEFAULT",
-        "#",
-        ifelse(single_section, "#", info$case)
-    )
+    h1 = info$h1
+    h2 = info$h2
 
     if (!is.null(info$error)) {
         add_report(

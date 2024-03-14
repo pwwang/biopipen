@@ -29,23 +29,29 @@ ident.2 <- {{ envs["ident-2"] | r }}
 group.by <- {{ envs["group-by"] | r }}
 each <- {{ envs.each | r }}
 prefix_each <- {{ envs.prefix_each | r }}
+prefix_group <- {{ envs.prefix_group | r }}
 section <- {{ envs.section | r }}
 dbs <- {{ envs.dbs | r }}
 assay <- {{ envs.assay | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
 volcano_genes <- {{ envs.volcano_genes | r }}
 subset <- {{ envs.subset | r }}
-use_presto <- {{ envs.use_presto | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 dotplot <- {{ envs.dotplot | r: todot="-" }}
 cases <- {{ envs.cases | r: todot="-", skip=1 }}
-overlap <- {{ envs.overlap | r }}
+overlapping_defaults <- {{ envs.overlap_defaults | r }}
+overlapping <- {{ envs.overlap | r }}
 cache <- {{ envs.cache | r }}
 
 if (isTRUE(cache)) { cache <- joboutdir }
 
-overlaps <- list()
+# expand overlapping
+for (sec in names(overlapping)) {
+    overlapping[[sec]] <- list_update(overlapping_defaults, overlapping[[sec]])
+}
+overlapping_sections <- names(overlapping)
 
+overlaps <- list()
 if (is.character(volcano_genes) && length(volcano_genes) == 1) {
     volcano_genes <- trimws(strsplit(volcano_genes, ",")[[1]])
 }
@@ -56,167 +62,93 @@ if (ncores > 1) {
     plan(strategy = "multicore", workers = ncores)
 }
 
-log_info("Reading Seurat object ...")
+log_info("- Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
+defassay <- DefaultAssay(srtobj)
 
-log_info("Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
+    log_info("- Mutating meta data ...")
     srtobj@meta.data <- srtobj@meta.data %>%
         mutate(!!!lapply(mutaters, parse_expr))
 }
 
-log_info("Expanding cases ...")
-if (is.null(cases) || length(cases) == 0) {
-    cases <- list(
-        DEFAULT = list(
-            ident.1 = ident.1,
-            ident.2 = ident.2,
-            group.by = group.by,
-            each = each,
-            prefix_each = prefix_each,
-            section = section,
-            dbs = dbs,
-            assay = assay,
-            subset = subset,
-            use_presto = use_presto,
-            sigmarkers = sigmarkers,
-            volcano_genes = volcano_genes,
-            dotplot = dotplot,
-            rest = rest
-        )
-    )
-} else {
-    for (name in names(cases)) {
-        case <- list_setdefault(
-            cases[[name]],
-            ident.1 = ident.1,
-            ident.2 = ident.2,
-            group.by = group.by,
-            each = each,
-            prefix_each = prefix_each,
-            section = section,
-            dbs = dbs,
-            assay = assay,
-            subset = subset,
-            use_presto = use_presto,
-            sigmarkers = sigmarkers,
-            volcano_genes = volcano_genes,
-            dotplot = dotplot,
-            rest = rest
-        )
-        case$rest <- list_update(rest, case$rest)
-        case$dotplot$devpars <- list_update(dotplot$devpars, case$dotplot$devpars)
-        cases[[name]] <- case
-    }
-}
-# Expand each and with ident.1
-#  list(Cluster0 = list(each = "Sample", group.by = "seurat_clusters", ident.1 = "0"))
-# to
-#  list(
-#   `Sample-Sample1:Cluster0` = list(...),
-#   `Sample-Sample2:Cluster0` = list(...),
-#   ...
-#  )
-# Expand each and without ident.1
-#  list(Cluster = list(each = "Sample", group.by = "seurat_clusters"))
-# to
-#  list(
-#   `Sample-Sample1-Cluster:0` = list(...),
-#   `Sample-Sample1-Cluster:1` = list(...),
-#   ...
-#   `Sample2-Cluster:0` = list(...),
-#   `Sample2-Cluster:1` = list(...),
-#   ...
-#  )
-# If no each, and not ident.1
-#  list(Cluster = list(group.by = "seurat_clusters"))
-# to
-#  list(
-#   `Cluster:0` = list(...),
-#   `Cluster:1` = list(...),
-#   ...
-#  )
-# Otherwise if section is specified, the case name will be changed to `section:case`
+defaults <- list(
+    ident.1 = ident.1,
+    ident.2 = ident.2,
+    group.by = group.by,
+    each = each,
+    prefix_each = prefix_each,
+    prefix_group = prefix_group,
+    section = section,
+    dbs = dbs,
+    assay = assay %||% defassay,
+    subset = subset,
+    sigmarkers = sigmarkers,
+    volcano_genes = volcano_genes,
+    dotplot = dotplot,
+    rest = rest
+)
 
-sections <- c()
-
-newcases <- list()
-for (name in names(cases)) {
-    case <- cases[[name]]
-    if (is.null(case$each) && !is.null(case$ident.1)) {
-        sections <- c(sections, case$section)
-        newcases[[paste0(case$section, ":", name)]] <- case
-    } else if (is.null(case$each)) {
-        # is.null(case$ident.1)
-        sections <- c(sections, name)
-        newcases[[name]] <- case
-        newcases[[name]]$findall <- TRUE
-        # idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
-        # for (ident in idents) {
-        #     newcases[[paste0(name, ":", ident)]] <- case
-        #     newcases[[paste0(name, ":", ident)]]$ident.1 <- ident
-        # }
-    } else {
-        eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
-        for (each in eachs) {
-            by = make.names(paste0(".", name, "_", each))
-            srtobj@meta.data = srtobj@meta.data %>% mutate(
-                !!sym(by) := if_else(
-                    !!sym(case$each) == each,
-                    !!sym(case$group.by),
-                    NA
-                )
-            )
-            if (is.null(case$ident.1)) {
-                kname <- if (name == "DEFAULT") "" else paste0(" - ", name)
-                sections <- c(sections, paste0(each, kname))
-                key <- paste0(each, kname)
-                newcases[[key]] <- case
-                newcases[[key]]$group.by <- by
-                newcases[[key]]$findall <- TRUE
-                # idents <- srtobj@meta.data %>% pull(case$group.by) %>% unique() %>% na.omit()
-                # for (ident in idents) {
-                #     key <- paste0(each, kname, ":", ident)
-                #     if (case$prefix_each) {
-                #         key <- paste0(case$each, " - ", key)
-                #     }
-                #     newcases[[key]] <- case
-                #     newcases[[key]]$ident.1 <- ident
-                #     newcases[[key]]$group.by <- by
-                # }
+expand_each <- function(name, case) {
+    outcases <- list()
+    no_each <- is.null(case$each) || nchar(case$each) == 0
+    if (no_each && !is.null(case$ident.1)) {
+        # single cases, no need to expand
+        if (is.null(case$section) || case$section == "DEFAULT") {
+            outcases[[name]] <- case
+        } else {
+            outcases[[paste0(case$section, "::", name)]] <- case
+        }
+    } else {  # !no_each || is.null(case$ident.1)
+        if (!is.null(case$section) && case$section != "DEFAULT") {
+            log_warn("  Ignoring `section` in case `{name}` that will be expanded (`each` is set or `ident-1` is not set).")
+            case$section <- NULL
+        }
+        if (no_each) {  # is.null(ident.1)
+            # no each and no ident.1, use FindAllMarkers
+            key <- name
+            if (!is.null(case$section) && case$section != "DEFAULT") {
+                key <- paste0(case$section, "::", key)
+            }
+            outcases[[key]] <- case
+            outcases[[key]]$findall <- TRUE
+        } else if (!no_each) {
+            # expand each
+            if (is.null(case$subset)) {
+                eachs <- srtobj@meta.data %>%
+                    pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
             } else {
-                sections <- c(sections, case$each)
-                key <- paste0(case$each, ":", each)
-                if (name != "DEFAULT") {
-                    key <- paste0(key, " - ", name)
+                eachs <- srtobj@meta.data %>% dplyr::filter(!!parse_expr(case$subset)) %>%
+                    pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+            }
+            for (each in eachs) {
+                by <- make.names(paste0(".", name, "_", case$each,"_", each))
+                srtobj@meta.data <<- srtobj@meta.data %>% mutate(
+                    !!sym(by) := if_else(
+                        !!sym(case$each) == each,
+                        !!sym(case$group.by),
+                        NA
+                    )
+                )
+                if (isTRUE(case$prefix_each)) {
+                    key <- paste0(name, "::", case$each, " - ", each)
+                } else {
+                    key <- paste0(name, "::", each)
                 }
-                newcases[[key]] <- case
-                newcases[[key]]$group.by <- by
+                outcases[[key]] <- case
+                outcases[[key]]$section <- name
+                outcases[[key]]$group.by <- by
+                if (is.null(case$ident.1)) {
+                    outcases[[key]]$findall <- TRUE
+                }
             }
         }
     }
+    outcases
 }
 
-cases <- newcases
-single_section <- length(unique(sections)) == 1
-
-casename_info <- function(casename, create = FALSE) {
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
-
-    out <- list(
-        casename = casename,
-        section = sec_case_names[1],
-        case = cname,
-        section_slug = slugify(sec_case_names[1]),
-        case_slug = slugify(cname)
-    )
-    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
-    }
-    out
-}
+log_info("- Expanding cases ...")
+cases <- expand_cases(cases, defaults, expand_each)
 
 plot_volcano = function(markers, volfile, sig, volgenes) {
     # markers
@@ -283,7 +215,7 @@ do_enrich <- function(info, markers, sig, volgenes) {
 
     markers_sig <- markers %>% filter(!!parse_expr(sig)) %>% arrange(p_val_adj)
     if (nrow(markers_sig) == 0) {
-        log_warn("  No significant markers found for case: {info$casename}")
+        log_warn("  No significant markers found.")
         return(NULL)
     }
 
@@ -297,7 +229,6 @@ do_enrich <- function(info, markers, sig, volgenes) {
     )
     if (nrow(markers_sig) < 5) {
         log_warn("  Too few significant markers found for case: {info$casename}")
-        return(NULL)
     } else {
         enriched <- enrichr(unique(markers_sig$gene), dbs)
         for (db in dbs) {
@@ -327,46 +258,22 @@ do_enrich <- function(info, markers, sig, volgenes) {
     unique(markers_sig$gene)
 }
 
-
 do_dotplot <- function(info, siggenes, dotplot, args) {
-    max_dotplot_features <- 20
+    max_dotplot_features <- dotplot$maxgenes %||% 20
+    dotplot$maxgenes <- NULL
     if (length(siggenes) > max_dotplot_features) {
-        log_warn("  Too many significant markers ({length(siggenes)}), using first {max_dotplot_features} for dotplot")
+        log_debug("  Too many significant markers ({length(siggenes)}), using first {max_dotplot_features} for dotplot")
         siggenes <- siggenes[1:max_dotplot_features]
     }
     dotplot_devpars <- dotplot$devpars
-    if (is.null(args$ident.2)) {
-        dotplot$object <- args$object
-        dotplot$object@meta.data <- dotplot$object@meta.data %>%
-            mutate(
-                !!sym(args$group.by) := if_else(
-                    !!sym(args$group.by) == args$ident.1,
-                    args$ident.1,
-                    ".Other"
-                ),
-                !!sym(args$group.by) := factor(
-                    !!sym(args$group.by),
-                    levels = c(args$ident.1, ".Other")
-                )
-            )
-    } else {
-        dotplot$object <- args$object %>%
-            filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2)) %>%
-            mutate(!!sym(args$group.by) := factor(
-                !!sym(args$group.by),
-                levels = c(args$ident.1, args$ident.2)
-            ))
-    }
     dotplot$devpars <- NULL
+    dotplot$object <- args$object
     dotplot$features <- siggenes
     dotplot$group.by <- args$group.by
-    dotplot_width = ifelse(
-        is.null(dotplot_devpars$width),
-        if (length(siggenes) <= 20) length(siggenes) * 60 else min(1000, length(siggenes)) * 30,
-        dotplot_devpars$width
-    )
-    dotplot_height = ifelse(is.null(dotplot_devpars$height), 600, dotplot_devpars$height)
-    dotplot_res = ifelse(is.null(dotplot_devpars$res), 100, dotplot_devpars$res)
+    dotplot_width <- dotplot_devpars$width %||%
+        ifelse(length(siggenes) <= 20, length(siggenes) * 60, min(1000, length(siggenes)) * 30)
+    dotplot_height <- dotplot_devpars$height %||% 600
+    dotplot_res <- dotplot_devpars$res %||% 100
     dotplot_file <- file.path(info$casedir, "dotplot.png")
     png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
     # rotate x axis labels
@@ -378,35 +285,18 @@ do_dotplot <- function(info, siggenes, dotplot, args) {
     dev.off()
 }
 
-
 add_case_report <- function(info, sigmarkers, siggenes) {
-    h1 = ifelse(
-        info$section == "DEFAULT",
-        info$case,
-        ifelse(
-            single_section,
-            paste0(
-                ifelse(info$section == "seurat_clusters", "Cluster", info$section),
-                " - ",
-                info$case
-            ),
-            info$section
-        )
-    )
-    h2 = ifelse(
-        info$section == "DEFAULT",
-        "#",
-        ifelse(single_section, "#", info$case)
-    )
-    if (is.null(siggenes)) {
+    h1 = info$h1
+    h2 = info$h2
+    if (is.null(siggenes) || length(siggenes) == 0) {
         add_report(
             list(
                 kind = "error",
-                content = "No enough significant markers found for enrichment analysis"
+                content = "No significant markers found."
             ),
             h1 = h1,
-            h2 = ifelse(h2 == "#", "Enrichment Analysis", h2),
-            h3 = ifelse(h2 == "#", "#", "Enrichment Analysis"),
+            h2 = ifelse(h2 == "#", "Markers", h2),
+            h3 = ifelse(h2 == "#", "#", "Markers"),
             ui = "flat"
         )
     } else {
@@ -478,37 +368,57 @@ add_case_report <- function(info, sigmarkers, siggenes) {
 
 
 do_case_findall <- function(casename) {
+    info <- casename_info(casename, cases, outdir, create = TRUE)
+    if (info$section %in% overlapping_sections) {
+        stop(paste0("  Can't do overlapping analysis for case without `ident-1` set: ", casename))
+    }
+
     case <- cases[[casename]]
-    if (case$use_presto) {
-        log_info("- Using presto::wilcoxauc for case: {casename}...")
-        args = list(
-            object = if (!is.null(case$subset)) {
-                srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
-            } else {
-                srtobj %>% filter(!is.na(!!sym(case$group.by)))
-            },
-            group.by = case$group.by,
-            ident.1 = case$ident.1,
-            ident.2 = case$ident.2
-        )
+    log_info("  Using FindAllMarkers for case: {casename}...")
+    args <- case$rest
+    args$assay <- case$assay
+    args$group.by <- case$group.by
+    # args$logfc.threshold <- args$logfc.threshold %||% 0
+    # args$min.cells.group <- args$min.cells.group %||% 1
+    # args$min.cells.feature <- args$min.cells.feature %||% 1
+    # args$min.pct <- args$min.pct %||% 0
+    if (!is.null(case$subset)) {
+        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+    } else {
+        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    }
+    Idents(args$object) <- case$group.by
+
+    cached <- get_cached(args, "FindAllMarkers", cache)
+    if (!is.null(cached$data)) {
+        log_info("  Using cached markers ...")
+        markers <- cached$data
+    } else {
         markers <- tryCatch({
-            # FindAllMarkers:
-            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
-            # wilcoxauc:
-            # feature, group, avgExpr, logFC, statistic, auc, pval, padj, pct_in, pct_out
-            presto::wilcoxauc(
-                args$object,
-                group_by = case$group.by,
-                seurat_assay = case$assay
-            ) %>% select(
-                gene = feature,
-                p_val = pval,
-                avg_log2FC = logFC,
-                pct.1 = pct_in,
-                pct.2 = pct_out,
-                p_val_adj = padj,
-                cluster = group
-            )
+            do_call(FindAllMarkers, args)
+                # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
+            }, error = function(e) {
+                log_warn(e$message)
+
+                data.frame(
+                    gene = character(),
+                    p_val = numeric(),
+                    avg_log2FC = numeric(),
+                    pct.1 = numeric(),
+                    pct.2 = numeric(),
+                    p_val_adj=numeric(),
+                    cluster = character()
+                )
+            })
+        cached$data <- markers
+        save_to_cache(cached, "FindAllMarkers", cache)
+    }
+
+    if (nrow(markers) == 0 && defassay == "SCT") {
+        log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
+        args$recorrect_umi <- FALSE
+        markers <- tryCatch({
+            do_call(FindAllMarkers, args)
         }, error = function(e) {
             log_warn(e$message)
             data.frame(
@@ -521,108 +431,45 @@ do_case_findall <- function(casename) {
                 cluster = character()
             )
         })
-    } else {
-        log_info("- Using FindAllMarkers for case: {casename}...")
-        args <- case$rest
-        args$group.by <- case$group.by
-        if (is.null(args$logfc.threshold)) {
-            args$locfc.threshold <- 0
-        }
-        if (is.null(args$min.cells.group)) {
-            args$min.cells.group <- 1
-        }
-        if (is.null(args$min.cells.feature)) {
-            args$min.cells.feature <- 1
-        }
-        if (is.null(args$min.pct)) {
-            args$min.pct <- 0
-        }
-        if (!is.null(case$subset)) {
-            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
-        } else {
-            args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
-        }
-        Idents(args$object) <- case$group.by
-
-        cached <- get_cached(args, "FindAllMarkers", cache)
-        if (!is.null(cached$data)) {
-            log_info("  Using cached markers ...")
-            markers <- cached$data
-        } else {
-            markers <- tryCatch({
-                do_call(FindAllMarkers, args)
-                    # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
-                }, error = function(e) {
-                    log_warn(e$message)
-
-                    data.frame(
-                        gene = character(),
-                        p_val = numeric(),
-                        avg_log2FC = numeric(),
-                        pct.1 = numeric(),
-                        pct.2 = numeric(),
-                        p_val_adj=numeric(),
-                        cluster = character()
-                    )
-                })
-            cached$data <- markers
-            save_to_cache(cached, "FindAllMarkers", cache)
-        }
-
-        if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
-            log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
-            args$recorrect_umi <- FALSE
-            markers <- tryCatch({
-                do_call(FindAllMarkers, args)
-            }, error = function(e) {
-                log_warn(e$message)
-                data.frame(
-                    gene = character(),
-                    p_val = numeric(),
-                    avg_log2FC = numeric(),
-                    pct.1 = numeric(),
-                    pct.2 = numeric(),
-                    p_val_adj=numeric(),
-                    cluster = character()
-                )
-            })
-        }
     }
 
     if (is.null(case$dotplot$assay)) {
-        case$dotplot$assay <- assay
+        case$dotplot$assay <- case$assay
     }
+
     idents <- unique(markers$cluster)
     for (ident in idents) {
-        log_info("- Dealing with ident: {ident}...")
-        info <- casename_info(paste0(casename, ":", ident), create = TRUE)
-        siggenes <- do_enrich(info, markers %>% filter(cluster == ident), case$sigmarkers, case$volcano_genes)
+        log_debug("  * Dealing with ident: {ident}...")
+        info_ident <- info
+        info_ident$casename <- paste0(info$casename, "::", ident)
+        info_ident$casedir <- file.path(info$casedir, slugify(ident))
+        dir.create(info_ident$casedir, showWarnings = FALSE, recursive = TRUE)
+        siggenes <- do_enrich(info_ident, markers %>% filter(cluster == ident), case$sigmarkers, case$volcano_genes)
 
         if (length(siggenes) > 0) {
             args$ident.1 <- as.character(ident)
-            do_dotplot(info, siggenes, case$dotplot, args)
+            do_dotplot(info_ident, siggenes, case$dotplot, args)
         }
-        add_case_report(info, case$sigmarkers, siggenes)
 
-        if (info$section %in% overlap) {
-            if (is.null(overlaps[[info$section]])) {
-                overlaps[[info$section]] <<- list()
-            }
-            overlaps[[info$section]][[info$case]] <<- siggenes
+        if (info_ident$h2 == "#") {
+            info_ident$h2 <- html_escape(paste0(case$group.by, ": ", ident))
+        } else {
+            info_ident$h2 <- html_escape(paste0(info_ident$h2, ": ", ident))
         }
+        add_case_report(info_ident, case$sigmarkers, siggenes)
     }
 }
 
-
+sections <- c()
 do_case <- function(casename) {
-    log_info("Dealing with case: {casename}...")
-
     if (isTRUE(cases[[casename]]$findall)) {
+        log_info("- Dealing with case: {casename} (all idents) ...")
         do_case_findall(casename)
         return()
     }
+    log_info("- Dealing with case: {casename} ...")
 
-    info <- casename_info(casename, create = TRUE)
+    info <- casename_info(casename, cases, outdir, create = TRUE)
     case <- cases[[casename]]
     # ident1
     # ident2
@@ -632,41 +479,55 @@ do_case <- function(casename) {
     # dbs
     # sigmarkers
     # rest
-    if (case$use_presto) {
-        log_info("- Using presto::wilcoxauc for case: {casename}...")
-        args = list()
-        markers <- tryCatch({
-            if (!is.null(case$subset)) {
-                args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
-            } else {
-                args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
-            }
-            if (!is.null(case$ident.2)) {
-                args$object <- args$object %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
-            }
-            args$group.by <- case$group.by
-            args$ident.1 <- case$ident.1
-            args$ident.2 <- case$ident.2
-            # FindMarkers:
-            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj
-            # wilcoxauc:
-            # feature, group, avgExpr, logFC, statistic, auc, pval, padj, pct_in, pct_out
-            presto::wilcoxauc(
-                args$object,
-                group_by = case$group.by,
-                seurat_assay = case$assay
-            ) %>%
-            filter(group == case$ident.1) %>%
-            select(
-                gene = feature,
-                p_val = pval,
-                avg_log2FC = logFC,
-                pct.1 = pct_in,
-                pct.2 = pct_out,
-                p_val_adj = padj
+    args <- case$rest
+    if (!is.null(case$subset)) {
+        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+    } else {
+        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    }
+    args$assay <- case$assay
+    args$group.by <- case$group.by
+    args$ident.1 <- case$ident.1
+    args$ident.2 <- case$ident.2
+    if (is.null(args$ident.2)) {
+        args$ident.2 <- ".rest"
+        args$object <- args$object %>% mutate(
+            !!sym(args$group.by) := if_else(
+                !!sym(args$group.by) == args$ident.1,
+                args$ident.1,
+                args$ident.2
             )
+        )
+    } else {
+        args$object <- args$object %>%
+            filter(!!sym(args$group.by) %in% c(args$ident.1, args$ident.2))
+    }
+    # args$logfc.threshold <- args$logfc.threshold %||% 0
+    # args$min.cells.group <- args$min.cells.group %||% 1
+    # args$min.cells.feature <- args$min.cells.feature %||% 1
+    # args$min.pct <- args$min.pct %||% 0
+
+    markers <- tryCatch({
+        do_call(FindMarkers, args) %>% rownames_to_column("gene")
+    }, error = function(e) {
+        log_warn(paste0("  ", e$message))
+        data.frame(
+            gene = character(),
+            p_val = numeric(),
+            avg_log2FC = numeric(),
+            pct.1 = numeric(),
+            pct.2 = numeric(),
+            p_val_adj = numeric()
+        )
+    })
+
+    if (nrow(markers) == 0 && defassay == "SCT") {
+        log_warn("  No markers found from SCT assay, trying recorrect_umi = FALSE")
+        args$recorrect_umi <- FALSE
+        markers <- tryCatch({
+            do_call(FindMarkers, args) %>% rownames_to_column("gene")
         }, error = function(e) {
-            log_warn(e$message)
+            log_warn(paste0("  ", e$message))
             data.frame(
                 gene = character(),
                 p_val = numeric(),
@@ -676,86 +537,29 @@ do_case <- function(casename) {
                 p_val_adj=numeric()
             )
         })
-    } else {
-        args <- case$rest
-        args$group.by <- case$group.by
-        args$ident.1 <- case$ident.1
-        args$ident.2 <- case$ident.2
-        if (is.null(args$logfc.threshold)) {
-            args$locfc.threshold <- 0
-        }
-        if (is.null(args$min.cells.group)) {
-            args$min.cells.group <- 1
-        }
-        if (is.null(args$min.cells.feature)) {
-            args$min.cells.feature <- 1
-        }
-        if (is.null(args$min.pct)) {
-            args$min.pct <- 0
-        }
-        if (!is.null(case$subset)) {
-            args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
-        } else {
-            args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
-        }
-
-        markers <- tryCatch({
-            do_call(FindMarkers, args) %>% rownames_to_column("gene")
-        }, error = function(e) {
-            log_warn(e$message)
-            data.frame(
-                gene = character(),
-                p_val = numeric(),
-                avg_log2FC = numeric(),
-                pct.1 = numeric(),
-                pct.2 = numeric(),
-                p_val_adj = numeric()
-            )
-        })
-
-        if (nrow(markers) == 0 && DefaultAssay(srtobj) == "SCT") {
-            log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
-            args$recorrect_umi <- FALSE
-            markers <- tryCatch({
-                do_call(FindMarkers, args) %>% rownames_to_column("gene")
-            }, error = function(e) {
-                log_warn(e$message)
-                data.frame(
-                    gene = character(),
-                    p_val = numeric(),
-                    avg_log2FC = numeric(),
-                    pct.1 = numeric(),
-                    pct.2 = numeric(),
-                    p_val_adj=numeric(),
-                    cluster = character()
-                )
-            })
-        }
     }
 
     siggenes <- do_enrich(info, markers, case$sigmarkers, case$volcano_genes)
 
     if (length(siggenes) > 0) {
-        if (is.null(case$dotplot$assay)) {
-            case$dotplot$assay <- assay
-        }
+        case$dotplot$assay <- case$dotplot$assay %||% args$assay
         do_dotplot(info, siggenes, case$dotplot, args)
     }
 
-    if (info$section %in% overlap) {
-        if (is.null(overlaps[[info$section]])) {
-            overlaps[[info$section]] <<- list()
-        }
-        overlaps[[info$section]][[info$case]] <<- siggenes
+    sections <<- union(sections, info$section)
+    if (info$section %in% overlapping_sections) {
+        overlaps[[info$section]] <<- overlaps[[info$section]] %||% list()
+        overlaps[[info$section]][[info$case]] <<- siggenes %||% character()
     }
 
     add_case_report(info, case$sigmarkers, siggenes)
 }
 
 do_overlap <- function(section) {
-    log_info("Dealing with overlap: {section}...")
+    log_info("- Dealing with overlapping: {section}...")
 
-    ov_dir <- file.path(outdir, "OVERLAPS", section)
+    ov_args <- overlapping[[section]]
+    ov_dir <- file.path(outdir, "OVERLAPPING", section)
     dir.create(ov_dir, showWarnings = FALSE, recursive = TRUE)
 
     ov_cases <- overlaps[[section]]
@@ -763,12 +567,16 @@ do_overlap <- function(section) {
         stop(sprintf("  Not enough cases for overlap: %s", section))
     }
 
-    if (length(ov_cases) <= 4) {
+    if (is.list(ov_args$venn) && length(ov_cases) > 4) {
+        stop(paste0("  Too many cases (", length(ov_cases)," > 4) for venn plot for section: ", section))
+    }
+    if (is.list(ov_args$venn)) {
         venn_plot <- file.path(ov_dir, "venn.png")
         venn_p <- ggVennDiagram(ov_cases, label_percent_digit = 1) +
             scale_fill_distiller(palette = "Reds", direction = 1) +
             scale_x_continuous(expand = expansion(mult = .2))
-        png(venn_plot, res = 100, width = 1000, height = 600)
+        ov_args$venn$devpars$file <- venn_plot
+        do.call(png, ov_args$venn$devpars)
         print(venn_p)
         dev.off()
     }
@@ -794,11 +602,25 @@ do_overlap <- function(section) {
         quote = FALSE
     )
 
-    upset_plot <- file.path(ov_dir, "upset.png")
-    upset_p <- upset(fromList(ov_cases))
-    png(upset_plot, res = 100, width = 800, height = 600)
-    print(upset_p)
-    dev.off()
+    if (is.list(ov_args$upset)) {
+        upset_plot <- file.path(ov_dir, "upset.png")
+        if (nrow(df_markers) == 0) {
+            upset_p <- ggplot() +
+                theme_void() +
+                ggtitle("No overlapping markers found") +
+                # center the title, and make it red
+                theme(plot.title = element_text(hjust = 0.5, color = "red"))
+            ov_args$upset$devpars <- list(
+                res = 100, height = 42, width = 400
+            )
+        } else {
+            upset_p <- upset(fromList(ov_cases))
+        }
+        ov_args$upset$devpars$file <- upset_plot
+        do.call(png, ov_args$upset$devpars)
+        print(upset_p)
+        dev.off()
+    }
 
     add_report(
         list(
@@ -839,6 +661,12 @@ do_overlap <- function(section) {
 }
 
 sapply(sort(names(cases)), do_case)
+
+unhit_overlaps <- setdiff(overlapping_sections, names(overlaps))
+if (length(unhit_overlaps) > 0) {
+    log_warn(paste0("- No sections found for overlapping analysis: ", paste(unhit_overlaps, collapse = ", ")))
+    log_warn("  Available sections: ", paste(sections, collapse = ", "))
+}
 sapply(sort(names(overlaps)), do_overlap)
 
 save_report(joboutdir)
