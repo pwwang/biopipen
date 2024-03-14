@@ -1042,6 +1042,8 @@ class MarkersFinder(Proc):
             cases.
         prefix_each (flag): Whether to prefix the `each` column name to the
             value as the case/section name.
+        prefix_group (flag): When neither `ident-1` nor `ident-2` is specified,
+            should we prefix the group name to the section name?
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
@@ -1129,6 +1131,7 @@ class MarkersFinder(Proc):
         "group-by": "seurat_clusters",
         "each": None,
         "prefix_each": True,
+        "prefix_group": True,
         "section": "DEFAULT",
         "assay": None,
         "subset": None,
