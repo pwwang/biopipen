@@ -1,12 +1,15 @@
 """Provide utilities for testing."""
 import tempfile
+from functools import wraps
 from pathlib import Path
 
-from pipen import Pipen
+from pipen import Pipen, plugin
 
 TESTING_INDEX_INIT = 1
-TESTING_PARENT_DIR = tempfile.gettempdir()
-TESTING_DIR = f"{TESTING_PARENT_DIR}/biopipen-tests-%(index)s"
+TESTING_PARENT_DIR = Path(tempfile.gettempdir())
+TESTING_DIR = str(TESTING_PARENT_DIR.joinpath("biopipen-tests-%(index)s"))
+RSCRIPT_DIR = TESTING_PARENT_DIR.joinpath("biopipen-tests-rscripts")
+RSCRIPT_DIR.mkdir(exist_ok=True)
 
 
 def _find_testing_index(new):
@@ -60,3 +63,57 @@ def get_pipeline(testfile, loglevel="debug", **kwargs):
     }
     kws.update(kwargs)
     return Pipen(**kws)
+
+
+def _run_rcode(rcode: str) -> str:
+    """Run R code and return the output"""
+    import hashlib
+    import textwrap
+    import subprocess as sp
+
+    # Use sha256 of rcode to name the file
+    rcode_hash = hashlib.sha256(rcode.encode()).hexdigest()
+    script_file = RSCRIPT_DIR.joinpath(f"rcode-{rcode_hash}.R")
+    script_file.write_text(rcode)
+    p = sp.Popen(["Rscript", str(script_file)], stdout=sp.PIPE, stderr=sp.PIPE)
+    out, err = p.communicate()
+    if p.returncode != 0:
+        out = (
+            f"R codefile:\n  {script_file}\n"
+            f"Error:\n{textwrap.indent(err.decode(), '  ')}"
+        )
+        return out
+
+    return out.decode().strip()
+
+
+def r_test(mem: callable) -> callable:
+    """A decorator to test R code"""
+    @wraps(mem)
+    def decorator(self, *args, **kwargs):
+        rcode = mem(self, *args, **kwargs)
+        source = getattr(self, "SOURCE_FILE", None)
+        expect = (
+            "expect <- function(expr, ...) {\n"
+            "  if (!expr) {\n"
+            "    msg <- lapply(\n"
+            "      list(...),\n"
+            "      function(x) { ifelse(is.null(x), 'NULL', x) }\n"
+            "    )\n"
+            "    stop(paste0(unlist(msg), collapse = ' '))\n"
+            "  }\n"
+            "}\n"
+        )
+        rcode = f"{expect}\n\n{rcode}\n\ncat('PASSED')\n"
+        if source is not None:
+            rcode = f'suppressWarnings(source("{self.SOURCE_FILE}"))\n\n{rcode}'
+        out = _run_rcode(rcode)
+        self.assertEqual(
+            out,
+            "PASSED",
+            "\n-----------------------------\n"
+            f"{out}"
+            "\n-----------------------------\n"
+        )
+
+    return decorator
