@@ -1079,6 +1079,7 @@ class MarkersFinder(Proc):
             use `group-bar` instead of `group.bar`.
             Note that `object`, `features`, and `group-by` are already specified
             by this process. So you don't need to specify them here.
+            - maxgenes (type=int): The maximum number of genes to plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -1115,7 +1116,7 @@ class MarkersFinder(Proc):
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
         "volcano_genes": True,
-        "dotplot": {},
+        "dotplot": {"maxgenes": 20},
         "cases": {},
         "overlap": [],
         "cache": config.path.tmpdir,
