@@ -1091,7 +1091,32 @@ class MarkersFinder(Proc):
             not specified, the default values specified above will be used.
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
-        overlap (list): The sections to do overlap analysis.
+        overlap_defaults (ns): The default options for overlapping analysis.
+            - venn (ns): The options for the Venn diagram.
+                Venn diagram can only be plotted for sections with no more than 4 cases.
+                - devpars (ns): The device parameters for the plots.
+                    - res (type=int): The resolution of the plots.
+                    - height (type=int): The height of the plots.
+                    - width (type=int): The width of the plots.
+            - upset (ns): The options for the UpSet plot.
+                - devpars (ns): The device parameters for the plots.
+                    - res (type=int): The resolution of the plots.
+                    - height (type=int): The height of the plots.
+                    - width (type=int): The width of the plots.
+        overlap (json): The sections to do overlaping analysis, including
+            Venn diagram and UpSet plot. The Venn diagram and UpSet plot
+            will be plotted for the overlapping of significant markers between
+            different cases.
+            The keys of this option are the names of the sections. The values are
+            a dict of options with keys `venn` and `upset`, values will
+            be inherited from `envs.overlap_defaults`, recursively.
+            You can set `envs.overlap.<section>.venn` to `False`/`None` to disable
+            the Venn diagram for the section.
+            It works when `each` is specified. In such a case, the sections will be
+            the case names.
+            This does not work for the cases where `ident-1` is not specified. In case
+            you want to do such analysis for those cases, you should enumerate the
+            idents in different cases and specify them here.
         cache (type=auto): Where to cache to `FindAllMarkers` results.
             If `True`, cache to `outdir` of the job. If `False`, don't cache.
             Otherwise, specify the directory to cache to.
@@ -1118,7 +1143,11 @@ class MarkersFinder(Proc):
         "volcano_genes": True,
         "dotplot": {"maxgenes": 20},
         "cases": {},
-        "overlap": [],
+        "overlap_defaults": {
+            "venn": {"devpars": {"res": 100, "height": 600, "width": 1000}},
+            "upset": {"devpars": {"res": 100, "height": 600, "width": 800}},
+        },
+        "overlap": {},
         "cache": config.path.tmpdir,
     }
     order = 5
