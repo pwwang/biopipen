@@ -1175,6 +1175,7 @@ class TopExpressingGenes(Proc):
         group-by: The column name in metadata to group the cells.
         each: The column name in metadata to separate the cells into different
             cases.
+            When specified, `ident` must be specified
         prefix_each (flag): Whether to prefix the `each` column name to the
             value as the case/section name.
         section: The section name for the report.
@@ -1509,6 +1510,7 @@ class ScFGSEA(Proc):
         ident-1: The first group of cells to compare
         ident-2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
+        prefix_each (flag): Whether to prefix the `each` column name to the values as the case/section name.
         subset: An expression to subset the cells.
         section: The section name for the report. Worked only when `each` is not specified. Otherwise, the section name will be constructed from `each` and its value.
             This allows different cases to be put into the same section in the report.
@@ -1560,6 +1562,7 @@ class ScFGSEA(Proc):
         "ident-1": None,
         "ident-2": None,
         "each": None,
+        "prefix_each": True,
         "subset": None,
         "section": "DEFAULT",
         "gmtfile": "",
