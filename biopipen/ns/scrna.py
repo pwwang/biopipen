@@ -1065,10 +1065,6 @@ class MarkersFinder(Proc):
             If `each` is specified, the section name will be constructed from
             `each` and case name.
         subset: An expression to subset the cells for each case.
-        use_presto: Whether to use [`presto::wilcoxauc`](https://rdrr.io/github/immunogenomics/presto/man/wilcoxauc.html)
-            to find markers.
-            [`presto`](https://github.com/immunogenomics/presto) is a package performs
-            fast Wilcoxon rank sum test and auROC analysis.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
@@ -1136,7 +1132,6 @@ class MarkersFinder(Proc):
         "section": "DEFAULT",
         "assay": None,
         "subset": None,
-        "use_presto": False,
         "rest": {},
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
