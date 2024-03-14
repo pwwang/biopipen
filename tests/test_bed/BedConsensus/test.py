@@ -3,6 +3,7 @@ from pathlib import Path
 from biopipen.ns.bed import BedConsensus
 from biopipen.core.testing import get_pipeline
 
+
 class BedConsensus(BedConsensus):
 
     envs = {
@@ -13,6 +14,7 @@ class BedConsensus(BedConsensus):
             "data/reference/hg19/chrom.sizes"
         ).as_posix(),
     }
+
 
 class BedConsensus1(BedConsensus):
 
@@ -28,7 +30,7 @@ class BedConsensus1(BedConsensus):
 
 
 def pipeline():
-    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+    return get_pipeline(__file__).set_starts(
         BedConsensus,
         BedConsensus1,
     ).set_data(
@@ -43,6 +45,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", "in1_consensus.bed")
     )

@@ -7,6 +7,9 @@ from biopipen.ns.scrna import (
     ModuleScoreCalculator,
     MarkersFinder,
     SeuratSubClustering,
+    MetaMarkers,
+    RadarPlots,
+    TopExpressingGenes,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -34,6 +37,7 @@ class PrepareSeurat(Proc):
         pbmc_small <- SCTransform(pbmc_small, verbose = FALSE)
         pbmc_small <- RunPCA(pbmc_small, npcs = 30, verbose = FALSE)
         # pbmc_small <- JoinLayers(pbmc_small)
+        pbmc_small <- PrepSCTFindMarkers(pbmc_small)
         saveRDS(pbmc_small, {{out.outfile | quote}})
     """  # noqa: E501
 
@@ -56,6 +60,11 @@ class CellTypeAnnotation(CellTypeAnnotation):
     }
 
 
+class TopExpressingGenes(TopExpressingGenes):
+    requires = CellTypeAnnotation
+    envs = {"cases": {"Cluster": {}}}
+
+
 class SeuratSubClustering(SeuratSubClustering):
     requires = CellTypeAnnotation
     envs = {
@@ -72,9 +81,37 @@ class SeuratSubClustering(SeuratSubClustering):
     }
 
 
-class MarkersFinder(MarkersFinder):
+class ClusterMarkers(MarkersFinder):
     requires = SeuratSubClustering
-    order = 9
+    envs = {"prefix_each": False, "cases": {"Cluster": {}}}
+
+
+class DEG(MarkersFinder):
+    requires = SeuratSubClustering
+    envs = {
+        "prefix_each": False,
+        "cases": {
+            "Group": {
+                "group-by": "groups",
+                "each": "seurat_clusters",
+                "ident-1": "g1",
+            }
+        },
+        "overlap": {"Group": {}},
+    }
+    order = 99
+
+
+class MetaMarkers(MetaMarkers):
+    requires = SeuratSubClustering
+    envs = {
+        "group-by": "seurat_clusters",
+    }
+
+
+class RadarPlots(RadarPlots):
+    requires = SeuratSubClustering
+    envs = {"by": "groups"}
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator):
@@ -145,18 +182,16 @@ class SeuratClusterStats(SeuratClusterStats):
 
 
 def pipeline():
-    # return get_pipeline(__file__).set_starts(
-    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
-        PrepareSeurat
-    )
+    return get_pipeline(__file__).set_starts(PrepareSeurat)
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "pbmc_small.markers/DEFAULT/DC/markers.txt",
+            "pbmc_small.markers/OVERLAPPING/Group/markers.txt",
         )
     )
     assert outfile.is_file(), str(outfile)

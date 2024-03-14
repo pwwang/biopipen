@@ -119,7 +119,7 @@ class SampleInfo2(SampleInfo_):
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["no:report"])
+        get_pipeline(__file__)
         # get_pipeline(__file__)
         .set_starts(
             RowsBinder,
@@ -141,6 +141,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", "A_rbound.txt")
     )

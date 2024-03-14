@@ -37,6 +37,17 @@ def _get_test_dirs(testfile, new):
     return name, workdir, outdir
 
 
+class PipelineSucceeded:
+    """A plugin to check if the pipeline succeeded"""
+
+    name = "succeeded"
+    version = "0.1.0"
+
+    @plugin.impl
+    async def on_complete(pipen, succeeded):
+        pipen._succeeded = succeeded
+
+
 def get_pipeline(testfile, loglevel="debug", **kwargs):
     """Get a pipeline for a test file"""
     name, workdir, outdir = _get_test_dirs(testfile, False)
@@ -45,6 +56,7 @@ def get_pipeline(testfile, loglevel="debug", **kwargs):
         "workdir": workdir,
         "outdir": outdir,
         "loglevel": loglevel,
+        "plugins": [PipelineSucceeded, "-report"],
     }
     kws.update(kwargs)
     return Pipen(**kws)

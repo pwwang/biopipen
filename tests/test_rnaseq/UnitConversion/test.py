@@ -27,7 +27,7 @@ class UnitConversion3(UnitConversion_):
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["no:report"])
+        get_pipeline(__file__)
         # get_pipeline(__file__)
         .set_starts(UnitConversion, UnitConversion2, UnitConversion3)
         .set_data(
@@ -39,6 +39,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", "exprs.txt")
     )

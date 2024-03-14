@@ -43,10 +43,7 @@ class ScFGSEA(ScFGSEA):
 
 
 def pipeline():
-    return (
-        get_pipeline(__file__, plugins=["no:report"])
-        .set_start(PrepareSeurat)
-    )
+    return get_pipeline(__file__).set_start(PrepareSeurat)
 
 
 def testing(pipen):

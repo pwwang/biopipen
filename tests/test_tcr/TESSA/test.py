@@ -28,6 +28,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = pipen.procs[-1].workdir.joinpath(
         "0",
         "output",
