@@ -1901,6 +1901,8 @@ class RadarPlots(Proc):
             each value in the column.
             If specified, `section` will be ignored, and the case name will
             be used as the section name.
+        prefix_each (flag): Whether to prefix the `each` column name to the values as the
+            case/section name.
         breakdown: An additional column with groups to break down the cells
             distribution in each cluster. For example, if you want to see the
             distribution of the cells in each cluster in different samples. In
@@ -1940,6 +1942,7 @@ class RadarPlots(Proc):
         section: If you want to put multiple cases into a same section
             in the report, you can set this option to the name of the section.
             Only used in the report.
+        subset: The subset of the cells to do the analysis.
         bar_devpars (ns): The parameters for `png()` for the barplot
             - res (type=int): The resolution of the plot
             - height (type=int): The height of the plot
@@ -1964,6 +1967,7 @@ class RadarPlots(Proc):
         "mutaters": {},
         "by": None,
         "each": None,
+        "prefix_each": True,
         "order": None,
         "colors": None,
         "ident": "seurat_clusters",
@@ -1973,6 +1977,7 @@ class RadarPlots(Proc):
         "breaks": [],
         "direction": "intra-cluster",
         "section": "DEFAULT",
+        "subset": None,
         "bar_devpars": {
             "res": 100,
             "width": 1200,
