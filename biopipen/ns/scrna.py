@@ -894,6 +894,8 @@ class CellsDistribution(Proc):
             - height (type=int): The height of the plots
             - width (type=int): The width of the plots
         each: The column name in metadata to separate the cells into different plots.
+        prefix_each (flag): Whether to prefix the `each` column name to the
+            value as the case/section name.
         section: The section to show in the report. This allows different cases to be put in the same section in report.
             Only works when `each` is not specified.
         overlap (list): Plot the overlap of cell groups (values of `cells_by`) in different cases
@@ -929,6 +931,7 @@ class CellsDistribution(Proc):
         "devpars": {},
         "hm_devpars": {},
         "each": None,
+        "prefix_each": True,
         "section": "DEFAULT",
         "overlap": [],
         "cases": {},
