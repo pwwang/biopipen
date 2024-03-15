@@ -637,13 +637,13 @@ extra = ["markdown (>=3.4,<4.0)", "markdown (>=3.5,<4.0)", "python-dateutil (>=2
 
 [[package]]
 name = "markdown"
-version = "3.5.2"
+version = "3.6"
 description = "Python implementation of John Gruber's Markdown."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Markdown-3.5.2-py3-none-any.whl", hash = "sha256:d43323865d89fc0cb9b20c75fc8ad313af307cc087e84b657d9eec768eddeadd"},
-    {file = "Markdown-3.5.2.tar.gz", hash = "sha256:e1ac7b3dc550ee80e602e71c1d168002f062e49f1b11e26a36264dafd4df2ef8"},
+    {file = "Markdown-3.6-py3-none-any.whl", hash = "sha256:48f276f4d8cfb8ce6527c8f79e2ee29708508bf4d40aa410fbc3b4ee832c850f"},
+    {file = "Markdown-3.6.tar.gz", hash = "sha256:ed4f41f6daecbeeb96e576ce414c41d2d876daa9a16cb35fa8ed8c2ddfad0224"},
 ]
 
 [package.dependencies]
@@ -927,13 +927,13 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.14.4"
+version = "0.14.5"
 description = "A pipeline framework for python"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "pipen-0.14.4-py3-none-any.whl", hash = "sha256:0e05625af282810f2c891627e87b8c1002561a4f00d16e03a22aa471917594b4"},
-    {file = "pipen-0.14.4.tar.gz", hash = "sha256:0972f5ebfec093d4e456e730e52bc47c2b5b501498be6b614bf6cbc543ec55e1"},
+    {file = "pipen-0.14.5-py3-none-any.whl", hash = "sha256:e2ce1bf5c62e70556f2d7ad753f1ca744e06cf39565c13043b1d7e620c9a0e36"},
+    {file = "pipen-0.14.5.tar.gz", hash = "sha256:61807b5e03d5de8a845af6eabd1e4a47c53b5906d73e330421e586a685c1f0b3"},
 ]
 
 [package.dependencies]
@@ -1818,13 +1818,13 @@ uvloop = ">=0,<1"
 
 [[package]]
 name = "zipp"
-version = "3.18.0"
+version = "3.18.1"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.18.0-py3-none-any.whl", hash = "sha256:c1bb803ed69d2cce2373152797064f7e79bc43f0a3748eb494096a867e0ebf79"},
-    {file = "zipp-3.18.0.tar.gz", hash = "sha256:df8d042b02765029a09b157efd8e820451045890acc30f8e37dd2f94a060221f"},
+    {file = "zipp-3.18.1-py3-none-any.whl", hash = "sha256:206f5a15f2af3dbaee80769fb7dc6f249695e940acca08dfb2a4769fe61e538b"},
+    {file = "zipp-3.18.1.tar.gz", hash = "sha256:2884ed22e7d8961de1c9a05142eb69a247f120291bc0206a00a7642f09b5b715"},
 ]
 
 [package.extras]
