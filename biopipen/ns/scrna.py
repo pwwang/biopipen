@@ -6,9 +6,11 @@ from ..utils.common_docstrs import (
     indent_docstr,
     format_placeholder,
     MUTATE_HELPERS_CLONESIZE,
+    ENVS_SECTION_EACH,
 )
 
 MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
+ENVS_SECTION_EACH_INDENTED = indent_docstr(ENVS_SECTION_EACH, "    " * 3)
 
 
 class SeuratLoading(Proc):
@@ -819,7 +821,10 @@ class ModuleScoreCalculator(Proc):
     script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class CellsDistribution(Proc):
     """Distribution of cells (i.e. in a TCR clone) from different groups
     for each cluster
@@ -857,6 +862,7 @@ class CellsDistribution(Proc):
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+
         cluster_orderby: The order of the clusters to show on the plot.
             An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
             The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
@@ -898,6 +904,7 @@ class CellsDistribution(Proc):
             value as the case/section name.
         section: The section to show in the report. This allows different cases to be put in the same section in report.
             Only works when `each` is not specified.
+            %(envs_section_each)s
         overlap (list): Plot the overlap of cell groups (values of `cells_by`) in different cases
             under the same section.
             The section must have at least 2 cases, each case should have a single `cells_by` column.
@@ -1004,7 +1011,10 @@ class DimPlots(Proc):
     }
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
@@ -1066,6 +1076,7 @@ class MarkersFinder(Proc):
             as section name.
             If `each` is specified, the section name will be constructed from
             `each` and case name.
+            %(envs_section_each)s
         subset: An expression to subset the cells for each case.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
@@ -1476,7 +1487,10 @@ class SeuratTo10X(Proc):
     script = "file://../scripts/scrna/SeuratTo10X.R"
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class ScFGSEA(Proc):
     """Gene set enrichment analysis for cells in different groups using `fgsea`
 
@@ -1506,6 +1520,7 @@ class ScFGSEA(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+
         group-by: The column name in metadata to group the cells.
         ident-1: The first group of cells to compare
         ident-2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
@@ -1514,6 +1529,7 @@ class ScFGSEA(Proc):
         subset: An expression to subset the cells.
         section: The section name for the report. Worked only when `each` is not specified. Otherwise, the section name will be constructed from `each` and its value.
             This allows different cases to be put into the same section in the report.
+            %(envs_section_each)s
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
             One could also use a URL to a GMT file. For example, from <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/Pathways/>.
         method (choice): The method to do the preranking.
@@ -1995,7 +2011,10 @@ class RadarPlots(Proc):
     }
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class MetaMarkers(Proc):
     """Find markers between three or more groups of cells, using one-way ANOVA
     or Kruskal-Wallis test.
@@ -2022,6 +2041,7 @@ class MetaMarkers(Proc):
         mutaters (type=json): The mutaters to mutate the metadata
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+
         group-by: The column name in metadata to group the cells.
             If only `group-by` is specified, and `idents` are
             not specified, markers will be found for all groups in this column.
@@ -2054,6 +2074,7 @@ class MetaMarkers(Proc):
             Worked only when `each` is not specified.
             Otherwise, the section name will be constructed from `each` and `group-by`.
             If `DEFAULT`, and it's the only section, it not included in the case/section names.
+            %(envs_section_each)s
         method (choice): The method for the test.
             - anova: One-way ANOVA
             - kruskal: Kruskal-Wallis test
