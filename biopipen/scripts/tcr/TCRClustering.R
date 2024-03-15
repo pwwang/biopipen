@@ -55,6 +55,21 @@ prepare_clustcr = function(clustcr_dir) {
 import sys
 import pandas as pd
 import clustcr
+import atexit
+
+@atexit.register
+def clustcr_exit():
+    import pandas as pd
+    import numpy
+    import scipy
+    import sklearn
+    import matplotlib
+    sys.stderr.write("Session info:\\n")
+    sys.stderr.write(f"- pandas: {pd.__version__}\\n")
+    sys.stderr.write(f"- numpy: {numpy.__version__}\\n")
+    sys.stderr.write(f"- scipy: {scipy.__version__}\\n")
+    sys.stderr.write(f"- sklearn: {sklearn.__version__}\\n")
+    sys.stderr.write(f"- matplotlib: {matplotlib.__version__}\\n")
 
 clustcr_dir, clustcr_infile = sys.argv[1:3]
 cdr3df = pd.read_csv(clustcr_infile, index_col=None)
