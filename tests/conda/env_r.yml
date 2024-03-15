@@ -66,4 +66,5 @@ dependencies:
     - biopython==1.79
     # For clustcr
     - scikit-learn==1.1.3
+    - scipy==1.8.0
     - celltypist
