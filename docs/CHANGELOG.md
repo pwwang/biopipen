@@ -1,5 +1,36 @@
 # Change Log
 
+## 0.27.0
+
+- deps: bump pipen to 0.14.5
+- deps: bump datar to 0.15.6
+- depr(scrna.MarkersFinder): remove `use_presto` as it's used by Seurat v5 by default
+- enh(tcr.CloneResidency): support log scale for y axis of upset bar plots
+- enh(scrna.SeuratClusterStats): allow to rotate labels in circos plot (pwwang/immunopipe#48)
+- enh(scrna.SeuratClusterStats): use pal_biopipen for ident colors in circos plot
+- fix(scrna.CellsDistribution): fix the row order of the heatmaps
+- fix(scrna.SeuratClusterStats): fix when split-by is specified
+- feat(scrna.CellsDistribution): support `prefix_each`
+- feat(scrna.MarkersFinder): allow set max number of genes to plot in dotplots
+- feat(scrna.MarkersFinder): support setting detailed arguments for overlapping plots
+- feat(scrna.MarkersFinder): support `prefix_group`
+- feat(scrna.ScFGSEA): support `prefix_each`
+- feat(scrna.RadarPlots): support `prefix_each` and `subset`
+- choir(scrna.SeuratClusterStats): use logger instead of print for log messages
+- choir(tcr.TCRClustering): print session info for clustcr script
+- choir: extract case expansion pattern (scrna.CellsDistribution, scrna.MarkersFinder, scrna.MetaMarkers, scrna.RadarPlots, scrna.ScFGSEA, scrna.TopExpressingGenes)
+- docs: add more detailed docs for `envs.section`
+- tests: add assertion for success of the pipelines
+- tests: add tests for utils.misc.R
+- tests: add r-presto to env_r.yml
+- tests: simplify tests for r functions
+- tests: pin scipy to 1.8.0 for clustcr in env_r.yml
+- tests: refactor tests for core.filters using unittest
+- tests: refactor tests for utils.common_docstrs using unittest
+- tests: refactor tests for utils.gene using unittest
+- tests: refactor tests for utils.mutate_helpers using unittest
+- tests: refactor tests for utils.single_cell using unittest
+
 ## 0.26.2
 
 - deps: bump datar-pandas to 0.5.5 to dismiss deprecated warnings
