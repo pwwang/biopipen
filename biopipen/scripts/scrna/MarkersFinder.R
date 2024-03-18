@@ -106,11 +106,9 @@ expand_each <- function(name, case) {
         }
         if (no_each) {  # is.null(ident.1)
             # no each and no ident.1, use FindAllMarkers
-            key <- name
-            if (!is.null(case$section) && case$section != "DEFAULT") {
-                key <- paste0(case$section, "::", key)
-            }
+            key <- paste0(name, "::", name)
             outcases[[key]] <- case
+            outcases[[key]]$section <- name
             outcases[[key]]$findall <- TRUE
         } else if (!no_each) {
             # expand each
@@ -368,7 +366,9 @@ add_case_report <- function(info, sigmarkers, siggenes) {
 
 
 do_case_findall <- function(casename) {
-    info <- casename_info(casename, cases, outdir, create = TRUE)
+    # casename
+    ## Cluster::Cluster
+    info <- casename_info(casename, cases, outdir, create = FALSE)
     if (info$section %in% overlapping_sections) {
         stop(paste0("  Can't do overlapping analysis for case without `ident-1` set: ", casename))
     }
@@ -437,25 +437,31 @@ do_case_findall <- function(casename) {
         case$dotplot$assay <- case$assay
     }
 
-    idents <- unique(markers$cluster)
+    if (nrow(markers) == 0) {
+        idents <- unique(Idents(args$object))
+    } else {
+        idents <- unique(markers$cluster)
+    }
     for (ident in idents) {
         log_debug("  * Dealing with ident: {ident}...")
-        info_ident <- info
-        info_ident$casename <- paste0(info$casename, "::", ident)
-        info_ident$casedir <- file.path(info$casedir, slugify(ident))
-        dir.create(info_ident$casedir, showWarnings = FALSE, recursive = TRUE)
-        siggenes <- do_enrich(info_ident, markers %>% filter(cluster == ident), case$sigmarkers, case$volcano_genes)
+        if (case$prefix_group) {
+            key <- paste0(info$section, "::", case$group.by, " - ", ident)
+        } else {
+            key <- paste0(info$section, "::", ident)
+        }
+        info_ident <- casename_info(key, cases, outdir, create = TRUE)
+        if (nrow(markers) > 0) {
+            markers_ident <- markers %>% filter(cluster == ident)
+        } else {
+            markers_ident <- markers
+        }
+        siggenes <- do_enrich(info_ident, markers_ident, case$sigmarkers, case$volcano_genes)
 
         if (length(siggenes) > 0) {
             args$ident.1 <- as.character(ident)
             do_dotplot(info_ident, siggenes, case$dotplot, args)
         }
 
-        if (info_ident$h2 == "#") {
-            info_ident$h2 <- html_escape(paste0(case$group.by, ": ", ident))
-        } else {
-            info_ident$h2 <- html_escape(paste0(info_ident$h2, ": ", ident))
-        }
         add_case_report(info_ident, case$sigmarkers, siggenes)
     }
 }

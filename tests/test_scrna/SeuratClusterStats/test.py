@@ -83,7 +83,13 @@ class SeuratSubClustering(SeuratSubClustering):
 
 class ClusterMarkers(MarkersFinder):
     requires = SeuratSubClustering
-    envs = {"prefix_each": False, "cases": {"Cluster": {}}}
+    envs = {
+        "cases": {
+            # Test mixed types of cases
+            "Cluster": {"prefix_group": False},
+            "Comparison": {"group-by": "groups", "ident-1": "g1"},
+        }
+    }
 
 
 class DEG(MarkersFinder):

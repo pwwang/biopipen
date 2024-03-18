@@ -18,6 +18,7 @@
 - feat(scrna.RadarPlots): support `prefix_each` and `subset`
 - choir(scrna.SeuratClusterStats): use logger instead of print for log messages
 - choir(tcr.TCRClustering): print session info for clustcr script
+- choir(scrna.MarkersFinder): flatten toc when no `section` and no `ident-1` specified
 - choir: extract case expansion pattern (scrna.CellsDistribution, scrna.MarkersFinder, scrna.MetaMarkers, scrna.RadarPlots, scrna.ScFGSEA, scrna.TopExpressingGenes)
 - docs: add more detailed docs for `envs.section`
 - tests: add assertion for success of the pipelines
