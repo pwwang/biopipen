@@ -13,6 +13,7 @@ group.by <- {{envs["group-by"] | r}}  # nolint
 ident.1 <- {{envs["ident-1"] | r}}  # nolint
 ident.2 <- {{envs["ident-2"] | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
+prefix_each <- {{envs.prefix_each | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
 section <- {{envs.section | r}}  # nolint
 gmtfile <- {{envs.gmtfile | r}}  # nolint
@@ -25,115 +26,80 @@ ncores <- {{envs.ncores | r}}  # nolint
 rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
 
-log_info("Reading srtobj...")
+log_info("- Reading srtobj...")
 
 srtobj <- readRDS(srtfile)
 if (!is.null(mutaters) && length(mutaters) > 0) {
     srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
-single_section <- TRUE
+defaults <- list(
+    group.by = group.by,
+    ident.1 = ident.1,
+    ident.2 = ident.2,
+    each = each,
+    prefix_each = prefix_each,
+    subset = subset,
+    section = section,
+    gmtfile = gmtfile,
+    method = method,
+    top = top,
+    minsize = minsize,
+    maxsize = maxsize,
+    eps = eps,
+    ncores = ncores,
+    rest = rest
+)
 
-expand_cases <- function() {
-    # fill up cases with missing parameters
-    if (is.null(cases) || length(cases) == 0) {
-        filled_cases <- list(
-            DEFAULT = list(
-                group.by = group.by,
-                ident.1 = ident.1,
-                ident.2 = ident.2,
-                each = each,
-                subset = subset,
-                section = section,
-                gmtfile = gmtfile,
-                method = method,
-                top = top,
-                minsize = minsize,
-                maxsize = maxsize,
-                eps = eps,
-                ncores = ncores,
-                rest = rest
-            )
-        )
-    } else {
-        filled_cases <- list()
-        for (name in names(cases)) {
-            case <- list_setdefault(
-                cases[[name]],
-                group.by = group.by,
-                ident.1 = ident.1,
-                ident.2 = ident.2,
-                each = each,
-                subset = subset,
-                section = section,
-                gmtfile = gmtfile,
-                method = method,
-                top = top,
-                minsize = minsize,
-                maxsize = maxsize,
-                eps = eps,
-                ncores = ncores,
-                rest = rest
-            )
-            case$rest <- list_setdefault(case$rest, rest)
-            filled_cases[[name]] <- case
-        }
-    }
-
+expand_each <- function(name, case) {
     outcases <- list()
-    sections <- c()
-    # expand each
-    for (name in names(filled_cases)) {
-        case <- filled_cases[[name]]
-        if (is.null(case$each) || nchar(case$each) == 0) {
-            sections <- c(sections, case$section)
-            outcases[[paste0(case$section, ":", name)]] <- case
+    if (is.null(case$each) || nchar(case$each) == 0) {
+        if (is.null(case$section) || case$section == "DEFAULT") {
+            outcases[[name]] <- case
         } else {
-            eachs <- srtobj@meta.data %>% pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
-            sections <- c(sections, case$each)
-            for (each in eachs) {
-                by <- make.names(paste0(".", name, "_", case$each,"_", each))
-                srtobj@meta.data <<- srtobj@meta.data %>%
-                    mutate(!!sym(by) := if_else(
-                        !!sym(case$each) == each,
-                        !!sym(case$group.by),
-                        NA
-                    ))
+            outcases[[paste0(case$section, "::", name)]] <- case
+        }
+    } else {
+        if (!is.null(case$section) && case$section != "DEFAULT") {
+            log_warn("  Ignoring `section` in case `{name}` when `each` is set.")
+            case$section <- NULL
+        }
+        if (is.null(case$subset)) {
+            eachs <- srtobj@meta.data %>%
+                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        } else {
+            eachs <- srtobj@meta.data %>% dplyr::filter(!!!parse_exprs(case$subset)) %>%
+                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        }
+        for (each in eachs) {
+            by <- make.names(paste0(".", name, "_", case$each,"_", each))
+            srtobj@meta.data <<- srtobj@meta.data %>%
+                mutate(!!sym(by) := if_else(
+                    !!sym(case$each) == each,
+                    !!sym(case$group.by),
+                    NA
+                ))
 
-                key <- paste0(case$each, ":", each)
-                if (name != "DEFAULT") {
-                    key <- paste0(key, " - ", name)
-                }
-                outcases[[key]] <- case
-                outcases[[key]]$group.by <- by
+            if (isTRUE(case$prefix_each)) {
+                key <- paste0(name, "::", case$each, " - ", each)
+            } else {
+                key <- paste0(name, "::", each)
             }
+            outcases[[key]] <- case
+            outcases[[key]]$section <- name
+            outcases[[key]]$group.by <- by
         }
     }
-    single_section <- length(unique(sections)) == 1
     outcases
 }
 
-casename_info <- function(casename, create = FALSE) {
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
+log_info("- Expanding cases...")
+cases <- expand_cases(cases, defaults, expand_each)
 
-    out <- list(
-        casename = casename,
-        section = sec_case_names[1],
-        case = cname,
-        section_slug = slugify(sec_case_names[1]),
-        case_slug = slugify(cname)
-    )
-    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
-    }
-    out
-}
 
 do_case <- function(name, case) {
-    log_info("- Doing case: {name} ...")
-    info <- casename_info(name, create = TRUE)
+    log_info("- Handling case: {name} ...")
+    info <- casename_info(name, cases, outdir, create = TRUE)
 
     # prepare expression matrix
     log_info("  Preparing expression matrix...")
@@ -175,16 +141,8 @@ do_case <- function(name, case) {
                     kind = "error",
                     content = paste0("Not enough cells (n = ", length(allclasses), ") to run fgsea.")
                 ),
-                h1 = ifelse(
-                    info$section == "DEFAULT",
-                    info$case,
-                    ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-                ),
-                h2 = ifelse(
-                    info$section == "DEFAULT",
-                    "#",
-                    ifelse(single_section, "#", info$case)
-                )
+                h1 = info$h1,
+                h2 = info$h2
             )
             return()
         } else {
@@ -208,20 +166,11 @@ do_case <- function(name, case) {
 
     add_report(
         list(kind = "fgsea", dir = info$casedir),
-        h1 = ifelse(
-            info$section == "DEFAULT",
-            info$case,
-            ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-        ),
-        h2 = ifelse(
-            info$section == "DEFAULT",
-            "#",
-            ifelse(single_section, "#", info$case)
-        )
+        h1 = info$h1,
+        h2 = info$h2
     )
 }
 
-cases <- expand_cases()
 sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
 
 save_report(joboutdir)

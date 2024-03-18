@@ -5,16 +5,19 @@ from biopipen.core.testing import get_pipeline
 
 
 def pipeline():
-    return get_pipeline(__file__, plugins=["no:report"]).set_start(
+    return get_pipeline(__file__).set_start(
         File2Proc
     ).set_data([str(__file__)])
 
+
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", Path(__file__).name)
     )
     assert outfile.exists()
     assert outfile.is_symlink()
+
 
 if __name__ == "__main__":
     pipen = pipeline()

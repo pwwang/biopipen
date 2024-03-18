@@ -49,12 +49,11 @@ class Seurat2AnnData(Seurat2AnnData):
 
 
 def pipeline():
-    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
-        DownloadDemoData
-    )
+    return get_pipeline(__file__).set_starts(DownloadDemoData)
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath(
             "0",

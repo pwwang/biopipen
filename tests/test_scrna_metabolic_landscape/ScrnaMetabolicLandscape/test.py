@@ -1,7 +1,6 @@
 from pathlib import Path
 from datar.misc import flatten
 
-from pipen_args import args as _
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.core.testing import get_pipeline
@@ -80,6 +79,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.outdir.joinpath(
             "REPORTS",

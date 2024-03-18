@@ -42,55 +42,39 @@ if (!is.null(mutaters) && length(mutaters)) {
     srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
-log_info("- Expanding cases ...")
-if (is.null(cases) || length(cases) == 0) {
-    cases <- list(
-        DEFAULT = list(
-            idents = idents,
-            group_by = group_by,
-            each = each,
-            prefix_each = prefix_each,
-            p_adjust = p_adjust,
-            subset = subset,
-            section = section,
-            dbs = dbs,
-            sigmarkers = sigmarkers,
-            method = method
-        )
-    )
-} else {
-    for (name in names(cases)) {
-        case <- list_setdefault(
-            cases[[name]],
-            idents = idents,
-            group_by = group_by,
-            each = each,
-            prefix_each = prefix_each,
-            p_adjust = p_adjust,
-            section = section,
-            subset = subset,
-            dbs = dbs,
-            sigmarkers = sigmarkers,
-            method = method
-        )
-        cases[[name]] <- case
-    }
-}
+defaults <- list(
+    idents = idents,
+    group_by = group_by,
+    each = each,
+    prefix_each = prefix_each,
+    p_adjust = p_adjust,
+    subset = subset,
+    section = section,
+    dbs = dbs,
+    sigmarkers = sigmarkers,
+    method = method
+)
 
-newcases <- list()
-sections <- c()
-for (name in names(cases)) {
-    case <- cases[[name]]
-    if (is.null(case$each)) {
-        sections <- c(sections, case$section)
-        newcases[[paste0(case$section, ":", name)]] <- case
-    } else {
-        if (is.null(case$subset)) {
-            eachs <- srtobj@meta.data %>% pull(case$each) %>% unique() %>% na.omit()
+expand_each <- function(name, case) {
+    outcases <- list()
+    if (is.null(case$each) || nchar(case$each) == 0) {
+        if (is.null(case$section) || case$section == "DEFAULT") {
+            outcases[[name]] <- case
         } else {
-            eachs <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>% pull(case$each) %>% unique() %>% na.omit()
+            outcases[[paste0(case$section, "::", name)]] <- case
         }
-        sections <- c(sections, case$each)
+    } else {
+        if (!is.null(case$section) && case$section != "DEFAULT") {
+            log_warn("  Ignoring `section` in case `{name}` when `each` is set.")
+            case$section <- NULL
+        }
+        if (is.null(case$subset)) {
+            eachs <- srtobj@meta.data %>%
+                pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
+        } else {
+            eachs <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>%
+                pull(case$each) %>% unique() %>% na.omit()
+        }
         for (each in eachs) {
             by = make.names(paste0(".", name, "_", case$each, "_", each))
             idents <- case$idents
@@ -111,36 +95,21 @@ for (name in names(cases)) {
                     )
             }
 
-            key <- paste0(case$each, ":", each)
-            if (name != "DEFAULT") {
-                key <- paste0(key, " - ", name)
+            if (isTRUE(case$prefix_each)) {
+                key <- paste0(name, "::", case$each, " - ", each)
+            } else {
+                key <- paste0(name, "::", each)
             }
-            newcases[[key]] <- case
-            newcases[[key]]$group_by <- by
-            newcases[[key]]$idents <- idents
+            outcases[[key]] <- case
+            outcases[[key]]$section <- name
+            outcases[[key]]$group_by <- by
         }
     }
+    outcases
 }
-cases <- newcases
-single_section <- length(unique(sections)) == 1
 
-casename_info <- function(casename, create = FALSE) {
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
-
-    out <- list(
-        casename = casename,
-        section = sec_case_names[1],
-        case = cname,
-        section_slug = slugify(sec_case_names[1]),
-        case_slug = slugify(cname)
-    )
-    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
-    }
-    out
-}
+log_info("- Expanding cases ...")
+cases <- expand_cases(cases, defaults, expand_each)
 
 # Do enrichment analysis for a case using Enrichr
 # Args:
@@ -200,10 +169,9 @@ do_enrich <- function(info, markers, sig) {
     }
 }
 
-
 do_case <- function(casename) {
     log_info("- Dealing with case: {casename} ...")
-    info <- casename_info(casename, create = TRUE)
+    info <- casename_info(casename, cases, outdir, create = TRUE)
     case <- cases[[casename]]
 
     if (sum(!is.na(srtobj@meta.data[[case$group_by]])) == 0) {
@@ -309,13 +277,9 @@ do_case <- function(casename) {
                     "<code>", html_escape(case$sigmarkers), "</code>"
                 )
             ),
-            h1 = ifelse(
-                info$section == "DEFAULT",
-                info$case,
-                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-            ),
-            h2 = ifelse(single_section, "Meta-Markers", info$case),
-            h3 = ifelse(single_section, "#", "Meta-Markers")
+            h1 = info$h1,
+            h2 = ifelse(info$h2 == "#", "Meta-Markers", info$h2),
+            h3 = ifelse(info$h2 == "#", "#", "Meta-Markers")
         )
         add_report(
             list(
@@ -331,35 +295,23 @@ do_case <- function(casename) {
                 ui = "table_of_images:4",
                 contents = geneplots
             ),
-            h1 = ifelse(
-                info$section == "DEFAULT",
-                info$case,
-                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-            ),
-            h2 = ifelse(single_section, "Meta-Markers", info$case),
-            h3 = ifelse(single_section, "#", "Meta-Markers"),
+            h1 = info$h1,
+            h2 = ifelse(info$h2 == "#", "Meta-Markers", info$h2),
+            h3 = ifelse(info$h2 == "#", "#", "Meta-Markers"),
             ui = "tabs"
         )
         add_report(
             list(kind = "enrichr", dir = info$casedir),
-            h1 = ifelse(
-                info$section == "DEFAULT",
-                info$case,
-                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-            ),
-            h2 = ifelse(single_section, "Enrichment Analysis", info$case),
-            h3 = ifelse(single_section, "#", "Enrichment Analysis")
+            h1 = info$h1,
+            h2 = ifelse(info$h2 == "#", "Enrichment Analysis", info$h2),
+            h3 = ifelse(info$h2 == "#", "#", "Enrichment Analysis")
         )
     } else {
         log_warn("  {msg}")
         add_report(
             list(kind = "error", content = msg),
-            h1 = ifelse(
-                info$section == "DEFAULT",
-                info$case,
-                ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-            ),
-            h2 = ifelse(single_section, "#", info$case)
+            h1 = info$h1,
+            h2 = info$h2
         )
     }
 }

@@ -18,6 +18,7 @@ joboutdir = {{job.outdir | r}}
 mutaters = {{envs.mutaters | r}}
 by = {{envs.by | r}}
 each = {{envs.each | r}}
+prefix_each = {{envs.prefix_each | r}}
 order = {{envs.order | r}}
 colors = {{envs.colors | r}}
 ident = {{envs.ident | r}}
@@ -27,88 +28,74 @@ breakdown = {{envs.breakdown | r}}
 test = {{envs.test | r}}
 direction = {{envs.direction | r}}
 section = {{envs.section | r}}
+subset_ = {{envs.subset | r}}
 bar_devpars = {{envs.bar_devpars | r}}
 devpars = {{envs.devpars | r}}
 cases = {{envs.cases | r}}
 
-DEFAULT_CASE = "DEFAULT"
-sections = c()
+# DEFAULT_CASE = "DEFAULT"
+# sections = c()
 
-log_info("Reading srtobj ...")
+log_info("- Reading srtobj ...")
 srtobj = readRDS(srtfile)
 meta = srtobj@meta.data
 
-log_info("Mutating meta data if needed ...")
+log_info("- Mutating meta data if needed ...")
 if (is.list(mutaters) && length(mutaters) > 0) {
     mutaters <- lapply(mutaters, function(x) parse_expr(x))
     meta <- meta %>% mutate(!!!mutaters)
 }
 
-# fill up the cases
-if (length(cases) == 0) {
-    cases[[DEFAULT_CASE]] <- list(
-        by = by,
-        each = each,
-        order = order,
-        colors = colors,
-        ident = ident,
-        cluster_order = cluster_order,
-        breaks = breaks,
-        breakdown = breakdown,
-        test = test,
-        direction = direction,
-        section = section,
-        bar_devpars = bar_devpars,
-        devpars = devpars
-    )
-} else {
-    # Use the values given directly under `envs` as default
-    for (key in names(cases)) {
-        cases[[key]]$by <- cases[[key]]$by %||% by
-        cases[[key]]$each <- cases[[key]]$each %||% each
-        cases[[key]]$order <- cases[[key]]$order %||% order
-        cases[[key]]$colors <- cases[[key]]$colors %||% colors
-        cases[[key]]$ident <- cases[[key]]$ident %||% ident
-        cases[[key]]$cluster_order <- cases[[key]]$cluster_order %||% cluster_order
-        cases[[key]]$breaks <- cases[[key]]$breaks %||% breaks
-        cases[[key]]$breakdown <- cases[[key]]$breakdown %||% breakdown
-        cases[[key]]$test <- cases[[key]]$test %||% test
-        cases[[key]]$direction <- cases[[key]]$direction %||% direction
-        cases[[key]]$section <- cases[[key]]$section %||% section
-        cases[[key]]$bar_devpars <- cases[[key]]$bar_devpars %||% bar_devpars
-        cases[[key]]$bar_devpars$res <- cases[[key]]$bar_devpars$res %||% devpars$res
-        cases[[key]]$bar_devpars$width <- cases[[key]]$bar_devpars$width %||% devpars$width
-        cases[[key]]$bar_devpars$height <- cases[[key]]$bar_devpars$height %||% devpars$height
-        cases[[key]]$devpars <- cases[[key]]$devpars %||% devpars
-        cases[[key]]$devpars$width <- cases[[key]]$devpars$width %||% devpars$width
-        cases[[key]]$devpars$height <- cases[[key]]$devpars$height %||% devpars$height
-        cases[[key]]$devpars$res <- cases[[key]]$devpars$res %||% devpars$res
-    }
-}
+defaults <- list(
+    by = by,
+    each = each,
+    prefix_each = prefix_each,
+    order = order,
+    colors = colors,
+    ident = ident,
+    cluster_order = cluster_order,
+    breaks = breaks,
+    breakdown = breakdown,
+    test = test,
+    direction = direction,
+    section = section,
+    subset = subset_,
+    bar_devpars = bar_devpars,
+    devpars = devpars
+)
 
-# Expand the cases
-newcases = list()
-for (key in names(cases)) {
-    if (is.null(cases[[key]]$each)) {
-        sections <- c(sections, cases[[key]]$section)
-        newcases[[paste0(cases[[key]]$section, ":", key)]] = cases[[key]]
+expand_each <- function(name,  case) {
+    outcases <- list()
+    if (is.null(case$each) || nchar(case$each) == 0) {
+        if (is.null(case$section) || case$section == "DEFAULT") {
+            outcases[[name]] <- case
+        } else {
+            outcases[[paste0(case$section, "::", name)]] <- case
+        }
     } else {
-        each_values = meta %>% pull(!!sym(cases[[key]]$each)) %>% unique() %>% na.omit()
-        sections <- c(sections, key)
-        for (evalue in each_values) {
-            ekey = paste0(key, ":", evalue)
-            newcases[[ekey]] = cases[[key]]
-            newcases[[ekey]]$each_value = evalue
-            if (!is.null(cases[[key]]$section)) {
-                log_warn(
-                    sprintf("Case %s: `section` is ignored when `each` is specified.", key)
-                )
+        if (is.null(case$subset)) {
+            eachs <- srtobj@meta.data %>%
+                pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
+        } else {
+            eachs <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>%
+                pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
+        }
+        for (each in eachs) {
+            if (isTRUE(case$prefix_each)) {
+                key <- paste0(name, "::", case$each, " - ", each)
+            } else {
+                key <- paste0(name, "::", each)
             }
+            outcases[[key]] <- case
+            outcases[[key]]$section <- name
+            outcases[[key]]$each_value <- each
         }
     }
+    outcases
 }
 
-single_section <- length(sections) == 1 && sections[[1]] == "DEFAULT"
+log_info("- Expanding cases ...")
+cases <- expand_cases(cases, defaults, expand_each)
 
 auto_breaks = function(maxval) {
     if (maxval <= 0.1) {  # 10%
@@ -132,24 +119,6 @@ auto_breaks = function(maxval) {
     } else {
         c(0, 50, 100)
     }
-}
-
-casename_info <- function(casename, create = FALSE) {
-    sec_case_names <- strsplit(casename, ":")[[1]]
-    cname <- paste(sec_case_names[-1], collapse = ":")
-
-    out <- list(
-        casename = casename,
-        section = sec_case_names[1],
-        case = cname,
-        section_slug = slugify(sec_case_names[1]),
-        case_slug = slugify(cname)
-    )
-    out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
-    }
-    out
 }
 
 do_radarplot <- function(info, case, counts) {
@@ -330,7 +299,7 @@ do_barplot_and_tests <- function(info, case, counts) {
     bys <- bardata %>% pull(!!sym(case$by)) %>% unique()
     if (!is.null(case$test) && test != "none") {
         if (length(bys) < 2) {
-            stop("Cannot do tests with only one group.")
+            stop("  Cannot do tests with only one group.")
         }
 
         pairs <- combn(bys, 2, simplify = FALSE)
@@ -432,30 +401,27 @@ add_case_report = function(info, breakdown, test) {
             )
         }
     }
-    report$h1 = ifelse(
-        info$section == "DEFAULT",
-        info$case,
-        ifelse(single_section, paste0(info$section, " - ", info$case), info$section)
-    )
-    report$h2 = ifelse(
-        info$section == "DEFAULT",
-        "#",
-        ifelse(single_section, "#", info$case)
-    )
+    report$h1 = info$h1
+    report$h2 = info$h2
     report$ui = "tabs"
     do_call(add_report, report)
 }
 
 run_one_case <- function(casename) {
-    info <- casename_info(casename, create = TRUE)
-    case <- newcases[[casename]]
-    log_info("Running for case: {casename}")
+    info <- casename_info(casename, cases, outdir, create = TRUE)
+    case <- cases[[casename]]
+    log_info("- Running for case: {casename}")
 
+    if (!is.null(case$subset)) {
+        m <- meta %>% dplyr::filter(!!rlang::parse_expr(case$subset))
+    } else {
+        m <- meta
+    }
     # Get the counts
     if (!is.null(case$each)) {
-        counts <- meta %>% filter(!!sym(case$each) == case$each_value)
+        counts <- m %>% dplyr::filter(!!sym(case$each) == case$each_value)
     } else {
-        counts <- meta
+        counts <- m
     }
     counts <- counts %>% drop_na(!!sym(case$by)) %>% drop_na(!!sym(case$ident))
     do_radarplot(info, case, counts)
@@ -467,7 +433,6 @@ run_one_case <- function(casename) {
     add_case_report(info, case$breakdown, case$test)
 }
 
-casenames = names(newcases)
-sapply(casenames, run_one_case)
+sapply(sort(names(cases)), run_one_case)
 
 save_report(joboutdir)

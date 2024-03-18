@@ -6,9 +6,11 @@ from ..utils.common_docstrs import (
     indent_docstr,
     format_placeholder,
     MUTATE_HELPERS_CLONESIZE,
+    ENVS_SECTION_EACH,
 )
 
 MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
+ENVS_SECTION_EACH_INDENTED = indent_docstr(ENVS_SECTION_EACH, "    " * 3)
 
 
 class SeuratLoading(Proc):
@@ -506,6 +508,8 @@ class SeuratClusterStats(Proc):
                 Does NOT support for circos plots.
             - subset: An expression to subset the cells, will be passed to
                 `dplyr::filter()` on metadata.
+            - circos_labels_rot (flag): Whether to rotate the labels in the circos plot.
+                In case the labels are too long.
             - circos_devpars (ns): The device parameters for the circos plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -652,6 +656,7 @@ class SeuratClusterStats(Proc):
             "group-by": None,
             "split-by": None,
             "subset": None,
+            "circos_labels_rot": False,
             "devpars": {"res": 100, "height": 600, "width": 800},
             "pie_devpars": {"res": 100, "height": 600, "width": 800},
             "circos_devpars": {"res": 100, "height": 600, "width": 600},
@@ -816,7 +821,10 @@ class ModuleScoreCalculator(Proc):
     script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class CellsDistribution(Proc):
     """Distribution of cells (i.e. in a TCR clone) from different groups
     for each cluster
@@ -854,6 +862,7 @@ class CellsDistribution(Proc):
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+
         cluster_orderby: The order of the clusters to show on the plot.
             An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
             The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
@@ -891,8 +900,11 @@ class CellsDistribution(Proc):
             - height (type=int): The height of the plots
             - width (type=int): The width of the plots
         each: The column name in metadata to separate the cells into different plots.
+        prefix_each (flag): Whether to prefix the `each` column name to the
+            value as the case/section name.
         section: The section to show in the report. This allows different cases to be put in the same section in report.
             Only works when `each` is not specified.
+            %(envs_section_each)s
         overlap (list): Plot the overlap of cell groups (values of `cells_by`) in different cases
             under the same section.
             The section must have at least 2 cases, each case should have a single `cells_by` column.
@@ -926,6 +938,7 @@ class CellsDistribution(Proc):
         "devpars": {},
         "hm_devpars": {},
         "each": None,
+        "prefix_each": True,
         "section": "DEFAULT",
         "overlap": [],
         "cases": {},
@@ -998,7 +1011,10 @@ class DimPlots(Proc):
     }
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
@@ -1036,6 +1052,8 @@ class MarkersFinder(Proc):
             cases.
         prefix_each (flag): Whether to prefix the `each` column name to the
             value as the case/section name.
+        prefix_group (flag): When neither `ident-1` nor `ident-2` is specified,
+            should we prefix the group name to the section name?
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
@@ -1058,11 +1076,8 @@ class MarkersFinder(Proc):
             as section name.
             If `each` is specified, the section name will be constructed from
             `each` and case name.
+            %(envs_section_each)s
         subset: An expression to subset the cells for each case.
-        use_presto: Whether to use [`presto::wilcoxauc`](https://rdrr.io/github/immunogenomics/presto/man/wilcoxauc.html)
-            to find markers.
-            [`presto`](https://github.com/immunogenomics/presto) is a package performs
-            fast Wilcoxon rank sum test and auROC analysis.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
@@ -1073,6 +1088,7 @@ class MarkersFinder(Proc):
             use `group-bar` instead of `group.bar`.
             Note that `object`, `features`, and `group-by` are already specified
             by this process. So you don't need to specify them here.
+            - maxgenes (type=int): The maximum number of genes to plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -1084,7 +1100,32 @@ class MarkersFinder(Proc):
             not specified, the default values specified above will be used.
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
-        overlap (list): The sections to do overlap analysis.
+        overlap_defaults (ns): The default options for overlapping analysis.
+            - venn (ns): The options for the Venn diagram.
+                Venn diagram can only be plotted for sections with no more than 4 cases.
+                - devpars (ns): The device parameters for the plots.
+                    - res (type=int): The resolution of the plots.
+                    - height (type=int): The height of the plots.
+                    - width (type=int): The width of the plots.
+            - upset (ns): The options for the UpSet plot.
+                - devpars (ns): The device parameters for the plots.
+                    - res (type=int): The resolution of the plots.
+                    - height (type=int): The height of the plots.
+                    - width (type=int): The width of the plots.
+        overlap (json): The sections to do overlaping analysis, including
+            Venn diagram and UpSet plot. The Venn diagram and UpSet plot
+            will be plotted for the overlapping of significant markers between
+            different cases.
+            The keys of this option are the names of the sections. The values are
+            a dict of options with keys `venn` and `upset`, values will
+            be inherited from `envs.overlap_defaults`, recursively.
+            You can set `envs.overlap.<section>.venn` to `False`/`None` to disable
+            the Venn diagram for the section.
+            It works when `each` is specified. In such a case, the sections will be
+            the case names.
+            This does not work for the cases where `ident-1` is not specified. In case
+            you want to do such analysis for those cases, you should enumerate the
+            idents in different cases and specify them here.
         cache (type=auto): Where to cache to `FindAllMarkers` results.
             If `True`, cache to `outdir` of the job. If `False`, don't cache.
             Otherwise, specify the directory to cache to.
@@ -1101,17 +1142,21 @@ class MarkersFinder(Proc):
         "group-by": "seurat_clusters",
         "each": None,
         "prefix_each": True,
+        "prefix_group": True,
         "section": "DEFAULT",
         "assay": None,
         "subset": None,
-        "use_presto": False,
         "rest": {},
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
         "volcano_genes": True,
-        "dotplot": {},
+        "dotplot": {"maxgenes": 20},
         "cases": {},
-        "overlap": [],
+        "overlap_defaults": {
+            "venn": {"devpars": {"res": 100, "height": 600, "width": 1000}},
+            "upset": {"devpars": {"res": 100, "height": 600, "width": 800}},
+        },
+        "overlap": {},
         "cache": config.path.tmpdir,
     }
     order = 5
@@ -1141,6 +1186,7 @@ class TopExpressingGenes(Proc):
         group-by: The column name in metadata to group the cells.
         each: The column name in metadata to separate the cells into different
             cases.
+            When specified, `ident` must be specified
         prefix_each (flag): Whether to prefix the `each` column name to the
             value as the case/section name.
         section: The section name for the report.
@@ -1441,7 +1487,10 @@ class SeuratTo10X(Proc):
     script = "file://../scripts/scrna/SeuratTo10X.R"
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class ScFGSEA(Proc):
     """Gene set enrichment analysis for cells in different groups using `fgsea`
 
@@ -1471,13 +1520,16 @@ class ScFGSEA(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+
         group-by: The column name in metadata to group the cells.
         ident-1: The first group of cells to compare
         ident-2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
+        prefix_each (flag): Whether to prefix the `each` column name to the values as the case/section name.
         subset: An expression to subset the cells.
         section: The section name for the report. Worked only when `each` is not specified. Otherwise, the section name will be constructed from `each` and its value.
             This allows different cases to be put into the same section in the report.
+            %(envs_section_each)s
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
             One could also use a URL to a GMT file. For example, from <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/Pathways/>.
         method (choice): The method to do the preranking.
@@ -1526,6 +1578,7 @@ class ScFGSEA(Proc):
         "ident-1": None,
         "ident-2": None,
         "each": None,
+        "prefix_each": True,
         "subset": None,
         "section": "DEFAULT",
         "gmtfile": "",
@@ -1864,6 +1917,8 @@ class RadarPlots(Proc):
             each value in the column.
             If specified, `section` will be ignored, and the case name will
             be used as the section name.
+        prefix_each (flag): Whether to prefix the `each` column name to the values as the
+            case/section name.
         breakdown: An additional column with groups to break down the cells
             distribution in each cluster. For example, if you want to see the
             distribution of the cells in each cluster in different samples. In
@@ -1903,6 +1958,7 @@ class RadarPlots(Proc):
         section: If you want to put multiple cases into a same section
             in the report, you can set this option to the name of the section.
             Only used in the report.
+        subset: The subset of the cells to do the analysis.
         bar_devpars (ns): The parameters for `png()` for the barplot
             - res (type=int): The resolution of the plot
             - height (type=int): The height of the plot
@@ -1927,6 +1983,7 @@ class RadarPlots(Proc):
         "mutaters": {},
         "by": None,
         "each": None,
+        "prefix_each": True,
         "order": None,
         "colors": None,
         "ident": "seurat_clusters",
@@ -1936,6 +1993,7 @@ class RadarPlots(Proc):
         "breaks": [],
         "direction": "intra-cluster",
         "section": "DEFAULT",
+        "subset": None,
         "bar_devpars": {
             "res": 100,
             "width": 1200,
@@ -1953,7 +2011,10 @@ class RadarPlots(Proc):
     }
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
+@format_placeholder(
+    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
+    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+)
 class MetaMarkers(Proc):
     """Find markers between three or more groups of cells, using one-way ANOVA
     or Kruskal-Wallis test.
@@ -1980,6 +2041,7 @@ class MetaMarkers(Proc):
         mutaters (type=json): The mutaters to mutate the metadata
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             %(mutate_helpers_clonesize)s
+
         group-by: The column name in metadata to group the cells.
             If only `group-by` is specified, and `idents` are
             not specified, markers will be found for all groups in this column.
@@ -2012,6 +2074,7 @@ class MetaMarkers(Proc):
             Worked only when `each` is not specified.
             Otherwise, the section name will be constructed from `each` and `group-by`.
             If `DEFAULT`, and it's the only section, it not included in the case/section names.
+            %(envs_section_each)s
         method (choice): The method for the test.
             - anova: One-way ANOVA
             - kruskal: Kruskal-Wallis test

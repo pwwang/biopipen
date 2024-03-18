@@ -66,17 +66,19 @@ INFILE = Path(__file__).parent / "data" / "tofix.vcf"
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["no:report"])
+        get_pipeline(__file__)
         .set_start(VcfFix)
         .set_data([str(INFILE)])
     )
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", INFILE.name)
     )
     assert outfile.is_file()
+
 
 if __name__ == "__main__":
     pipen = pipeline()

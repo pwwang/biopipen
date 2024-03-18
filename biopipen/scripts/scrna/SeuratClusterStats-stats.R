@@ -38,7 +38,7 @@ do_one_stats = function(name) {
         df_cells = df_cells %>% filter(!!rlang::parse_expr(case$subset))
     }
 
-    select_cols = c(case$ident, case$group.by)
+    select_cols = c(case$ident, case$group.by, case$split.by)
     if (!is.null(case$split.by)) {
         plot_df = do_call(rbind, lapply(group_split(
             df_cells %>% select(all_of(select_cols)),
@@ -54,6 +54,7 @@ do_one_stats = function(name) {
                     out <- out %>% group_by(!!sym(case$group.by)) %>% mutate(.frac = .n / sum(.n))
                 }
             }
+            out
         }))
     } else if (!is.null(case$group.by) && isTRUE(case$frac)) {
         plot_df <- df_cells %>%
@@ -177,6 +178,9 @@ do_one_stats = function(name) {
     }
 
     if (isTRUE(case$circos)) {
+        if (is.null(case$group.by)) {
+            stop(paste0(name, ": circos plots require a group-by"))
+        }
         if (isTRUE(case$transpose)) {
             circos_df <- plot_df %>%
                 select(from=!!sym(case$ident), to=!!sym(case$group.by), value=.n)
@@ -184,6 +188,22 @@ do_one_stats = function(name) {
             circos_df <- plot_df %>%
                 select(from=!!sym(case$group.by), to=!!sym(case$ident), value=.n)
         }
+        groups <- if (is.factor(circos_df$from)) {
+            levels(circos_df$from)
+        } else {
+            unique(circos_df$from)
+        }
+        idents <- if (is.factor(circos_df$to)) {
+            levels(circos_df$to)
+        } else {
+            unique(circos_df$to)
+        }
+        grid_cols <- pal_biopipen()(length(idents))
+        names(grid_cols) <- idents
+        gcols <- rep("#565656", length(groups))
+        names(gcols) <- groups
+        grid_cols <- c(grid_cols, gcols)
+        link_cols <- grid_cols[circos_df$to]
 
         png(
             circosfile,
@@ -192,12 +212,35 @@ do_one_stats = function(name) {
             res=case$circos_devpars$res
         )
         circos.clear()
-        chordDiagram(
-            circos_df,
-            direction = 1,
-            direction.type = c("diffHeight", "arrows"),
-            link.arr.type = "big.arrow"
-        )
+        if (!isTRUE(case$circos_labels_rot)) {
+            chordDiagram(
+                circos_df,
+                grid.col = grid_cols,
+                col = link_cols,
+                direction = 1,
+                direction.type = c("diffHeight", "arrows"),
+                link.arr.type = "big.arrow"
+            )
+        } else {
+            chordDiagram(
+                circos_df,
+                grid.col = grid_cols,
+                col = link_cols,
+                direction = 1,
+                annotationTrack = "grid",
+                direction.type = c("diffHeight", "arrows"),
+                link.arr.type = "big.arrow",
+                preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(circos_df)))))
+            )
+            circos.track(track.index = 1, panel.fun = function(x, y) {
+                circos.text(
+                    CELL_META$xcenter, CELL_META$ylim[1],
+                    CELL_META$sector.index,
+                    facing = "clockwise",
+                    niceFacing = TRUE,
+                    adj = c(0, 0.5))
+            }, bg.border = NA) # here set bg.border to NA is important
+        }
         dev.off()
 
         add_report(

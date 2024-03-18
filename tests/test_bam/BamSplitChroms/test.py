@@ -41,14 +41,14 @@ BamMerge.envs.update({"ncores": 2, "tool": TOOL})
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["no:report"])
+        get_pipeline(__file__)
         .set_start(Download)
         .set_data([BAM_URL])
     )
 
 
 def testing(pipen):
-    ...
+    assert pipen._succeeded
 
 
 if __name__ == "__main__":

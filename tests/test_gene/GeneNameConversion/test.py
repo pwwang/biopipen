@@ -42,7 +42,7 @@ GeneNameConversion3 = Proc.from_proc(
 
 
 def pipeline():
-    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+    return get_pipeline(__file__).set_starts(
         Str2File
     ).set_data(
         [
@@ -62,6 +62,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     for proc in pipen.procs:
         outfile = proc.workdir.joinpath("0", "output", "data.txt")
         assert outfile.is_file()

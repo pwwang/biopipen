@@ -41,13 +41,14 @@ class Bed2Vcf(Bed2Vcf_):
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["no:report"])
+        get_pipeline(__file__)
         .set_starts(Bed2Vcf)
         .set_data([Path(__file__).parent / "data" / "in.bed"])
     )
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", "in.vcf.gz")
     )

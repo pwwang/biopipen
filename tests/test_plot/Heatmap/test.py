@@ -22,7 +22,7 @@ Heatmap = Proc.from_proc(
 
 
 def pipeline():
-    return get_pipeline(__file__, plugins=["no:report"]).set_starts(
+    return get_pipeline(__file__).set_starts(
         Download
     ).set_data(
         [
@@ -35,6 +35,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath(
             "0",

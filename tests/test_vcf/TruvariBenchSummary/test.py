@@ -34,17 +34,19 @@ class TruvariBenchSummary(TruvariBenchSummary):
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["no:report"])
+        get_pipeline(__file__)
         .set_start(DownloadList)
         .set_data([Path(__file__).parent / "data" / "vcfs.txt"])
     )
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath("0", "output", "truvari_bench.summary")
     )
     assert outfile.is_dir()
+
 
 if __name__ == "__main__":
     pipen = pipeline()

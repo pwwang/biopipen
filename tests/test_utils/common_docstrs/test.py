@@ -1,33 +1,24 @@
+from unittest import TestCase, main
 from biopipen.utils.common_docstrs import indent_docstr, format_placeholder
 
-TEST_NO = 1
 
+class TestCommonDocstrs(TestCase):
 
-def run_indent_docstr(in_, prefix, out):
-    global TEST_NO
-    print(f">>> TESTING indent_docstr #{TEST_NO}")
-    TEST_NO += 1
-    assert indent_docstr(in_, prefix) == out
-    print(">>> PASSED")
-    print(">>> ")
+    def test_indent_docstr(self):
+        self.assertEqual(indent_docstr("1\n2\n3", "    "), "1\n    2\n    3")
+        self.assertEqual(indent_docstr("  \n1\n2\n3\n  ", " "), "1\n 2\n 3")
 
+    def test_format_placeholder(self):
+        @format_placeholder(test="test")
+        class Test:
+            """%(test)s"""
+        self.assertEqual(Test.__doc__, "test")
 
-def run_format_placeholder(in_, out):
-    global TEST_NO
-    print(f">>> TESTING format_placeholder #{TEST_NO}")
-    TEST_NO += 1
-
-    @format_placeholder(**in_)
-    class Test:
-        """%(test)s"""
-
-    assert Test.__doc__ == out
-    print(">>> PASSED")
-    print(">>> ")
+        @format_placeholder(test="1\n2")
+        class Test:
+            """%(test)s"""
+        self.assertEqual(Test.__doc__, "1\n2")
 
 
 if __name__ == "__main__":
-    run_indent_docstr("1\n2\n3", "    ", "1\n    2\n    3")
-    run_indent_docstr("  \n1\n2\n3\n  ", " ", "1\n 2\n 3")
-    run_format_placeholder({"test": "test"}, "test")
-    run_format_placeholder({"test": "1\n2"}, "1\n2")
+    main(verbosity=2)

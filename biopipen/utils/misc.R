@@ -1,17 +1,22 @@
 # Misc utilities for R
-library(logger)
-library(jsonlite)
+suppressPackageStartupMessages({
+    library(logger)
+    library(rlang)
+    library(jsonlite)
+})
 
 .logger_layout <- layout_glue_generator(
     format = '{sprintf("%-7s", level)} [{format(time, "%Y-%m-%d %H:%M:%S")}] {msg}'
 )
+# print also debug messages, let pipen-poplog to filter
+log_threshold(DEBUG)
 log_layout(.logger_layout)
 log_appender(appender_stdout)
 tryCatch(log_errors(), error = function(e) {})
 
 .isBQuoted <- function(x) {
     # Check if x is backtick-quoted
-    nchar(x) >= 2 && x[1] == "`" && x[length(x)] == "`"
+    nchar(x) >= 2 && startsWith(x, "`") && endsWith(x, "`")
 }
 
 bQuote <- function(x) {
@@ -20,6 +25,11 @@ bQuote <- function(x) {
     } else {
         paste0("`", x, "`")
     }
+}
+
+.escape_regex <- function(x) {
+    # Escape regex special characters
+    gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", x)
 }
 
 #' Slugify a string
@@ -49,7 +59,11 @@ slugify <- function(x, non_alphanum_replace="-", collapse_replace=TRUE, tolower=
         x <- gsub(k, subs[[k]], x)
     }
     x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
-    if(collapse_replace) x <- gsub(paste0(non_alphanum_replace, "+"), non_alphanum_replace, x)
+    if(collapse_replace) x <- gsub(
+        paste0(gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", non_alphanum_replace), "+"),
+        non_alphanum_replace,
+        x
+    )
     if(tolower) x <- tolower(x)
     x
 }
@@ -99,14 +113,17 @@ do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {
 
 }
 
+#' Set the default value of a key in a list
+#'
+#' @param x A list
+#' @param ... A list of key-value pairs
+#' @return The updated list
+#' @export
 list_setdefault <- function(x, ...) {
     # Set the default value of a key in a list
-    if (is.null(x)) {
-        x <- list()
-    }
-    if (!is.list(x)) {
-        stop("list_setdefault: list expected")
-    }
+    x <- x %||% list()
+
+    stopifnot(is.list(x))
     y <- list(...)
     for (k in names(y)) {
         if (!k %in% names(x)) {
@@ -117,18 +134,24 @@ list_setdefault <- function(x, ...) {
     x
 }
 
-list_update <- function(x, y) {
+#' Update a list with another list
+#'
+#' @param x A list
+#' @param y A list
+#' @param depth The depth to update, -1 means update all
+#' @return The updated list
+#' @export
+list_update <- function(x, y, depth = -1L) {
     # Update the value in x from y
-    if (is.null(x)) {
-        x <- list()
-    }
-    if (is.null(y)) {
-        y <- list()
-    }
+    x <- x %||% list()
+    y <- y %||% list()
+
     for (k in names(y)) {
         if (is.null(y[[k]])) {
             x[[k]] <- NULL
             x <- c(x, y[k])
+        } else if (is.list(x[[k]]) && is.list(y[[k]]) && depth != 0L) {
+            x[[k]] <- list_update(x[[k]], y[[k]], depth - 1L)
         } else {
             x[[k]] <- y[[k]]
         }
@@ -137,7 +160,8 @@ list_update <- function(x, y) {
 }
 
 #’ Biopipen palette
-#’ @param alpha Alpha value
+#'
+#’ @param alpha The alpha value
 #’ @return A palette function
 #' @export
 pal_biopipen <- function(alpha = 1) {
@@ -219,13 +243,105 @@ save_report <- function(path, clear = TRUE) {
 
 # Escape html
 html_escape <- function(text) {
-    if (is.null(text)) {
-        return("")
-    }
-    text = gsub("&", "&amp;", text)
-    text = gsub("<", "&lt;", text)
-    text = gsub(">", "&gt;", text)
-    text = gsub("\"", "&quot;", text)
-    text = gsub("'", "&#039;", text)
+    if (is.null(text)) { return("") }
+    text <- gsub("&", "&amp;", text)
+    text <- gsub("<", "&lt;", text)
+    text <- gsub(">", "&gt;", text)
+    text <- gsub("\"", "&quot;", text)
+    text <- gsub("'", "&#039;", text)
     text
+}
+
+#' Expand the cases with default values
+#' If a case has a key `each`, then it will be expanded by `expand_each`
+#'
+#' @param cases A list of cases
+#' @param defaults A list of default values
+#' @param expand_each A function to expand each case, if NULL, then the `each` key will be ignored.
+#'   The function should take two arguments, `name` and `case`, and return a list of expanded cases.
+#' @return A list of expanded cases
+#' @export
+expand_cases <- function(cases, defaults, expand_each = NULL) {
+    if (is.null(cases) || length(cases) == 0) {
+        filled_cases <- list(DEFAULT = defaults)
+    } else {
+        filled_cases <- list()
+        for (name in names(cases)) {
+            case <- list_update(defaults, cases[[name]], depth = 5L)
+            filled_cases[[name]] <- case
+        }
+    }
+
+    if (is.null(expand_each)) {
+        return(filled_cases)
+    }
+
+    stopifnot(is.function(expand_each))
+
+    outcases <- list()
+    for (name in names(filled_cases)) {
+        case <- filled_cases[[name]]
+        each_cases <- expand_each(name, case)
+        outcases <- c(outcases, each_cases)
+    }
+    outcases
+}
+
+#' Create information for a casename
+#'
+#' @param casename A casename
+#' @param cases Used to check if there is only a single section in the cases
+#' @param section_key The key to check, default is `section`
+#' @param section The default section if no section if provided in the casename
+#' @param sep The separator in casename to split section and casename
+#' @param create Create the directory if not exists
+#' @return A list of information, including `casedir`, `section`, `case`,
+#'   `section_slug`, `case_slug` and the original `casename`.
+#' @export
+casename_info <- function(
+    casename, cases, outdir,
+    section_key = "section",
+    section = "DEFAULT",
+    sep = "::",
+    create = FALSE
+) {
+    # CR_vs_PD_in_BL:seurat_clusters - IM IL1
+    sec_case_names <- strsplit(casename, sep)[[1]]
+    # seurat_clusters - IM IL1
+    # In case we have more than one colon
+    cname <- paste(sec_case_names[-1], collapse = "::")
+    if (length(cname) == 0 || nchar(cname) == 0) {
+        # no sep
+        cname <- casename
+    } else {
+        section <- sec_case_names[1]
+    }
+    single_section <- length(unique(sapply(cases, function(x) x[[section_key]]))) == 1
+
+    out <- list(
+        casename = casename,
+        section = section,
+        case = cname,
+        section_slug = slugify(section),
+        case_slug = slugify(cname),
+        h1 = ifelse(
+            single_section && section == "DEFAULT",
+            html_escape(cname),
+            html_escape(ifelse(single_section, paste0(section, ": ", cname), section))
+        ),
+        h2 = ifelse(
+            single_section && section == "DEFAULT",
+            "#",
+            ifelse(single_section, "#", html_escape(cname))
+        )
+    )
+    if (single_section && section == "DEFAULT") {
+        out$casedir <- file.path(outdir, out$case_slug)
+    } else {
+        out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+    }
+    if (create) {
+        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+    }
+    out
 }
