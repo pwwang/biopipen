@@ -40,6 +40,7 @@ dependencies:
   - r-scimpute
   - r-seurat=5.0.1
   - r-seuratdisk
+  - r-seuratdata
   - r-snow
   - r-upsetr
   - r-vegan
