@@ -19,6 +19,9 @@ REFGENE_URL = (
 SCTYPE_DB_URL = (
     "https://github.com/IanevskiAleksandr/sc-type/raw/master/ScTypeDB_full.xlsx"
 )
+PBMC_MULTIMODEL_URL = (
+    "https://zenodo.org/records/7779017/files/pbmc_multimodal_2023.rds?download=1"
+)
 CHROMS = [
     "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9",
     "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17",
@@ -182,6 +185,19 @@ def download_sctype_db():
     run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
+@echo("Downloading pbmc_multimodal_2023.rds")
+def download_pbmc_multimodal():
+    """Download pbmc_multimodal_2023.rds"""
+    name = "pbmc_multimodal_2023.rds"
+    aria2c_args = dict(
+        o=name,
+        d=DESTDIR,
+        _=PBMC_MULTIMODEL_URL,
+    )
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
+
+
 if __name__ == "__main__":
     download_reffa_hg19()
     download_reffa_hg38()
@@ -191,3 +207,4 @@ if __name__ == "__main__":
     download_refgene("hg38")
     download_kegg_metabolism()
     download_sctype_db()
+    download_pbmc_multimodal()

@@ -1761,14 +1761,12 @@ class SeuratMap2Ref(Proc):
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
-        use: A column name (e.g. `predicted.celltype.l1`, `predicted.celltype.l2`)
-            to use as the final cell types in downstream analysis, which will be stored
-            in the `name` column and set as the `Idents` of the seurat object.
-            Or an expression to pass to `mutate()` to create a new column.
-            When not specified, `predicted.<key>` will be used if
-            `envs.MapQuery.refdata` has only one key, otherwise an error will be raised.
-        name: The name of the final cell type column.
-            This will be set as the `Idents` of the seurat object.
+        use: A column name of metadata from the reference
+            (e.g. `celltype.l1`, `celltype.l2`) to transfer to the query as the
+            cell types (ident) for downstream analysis. This field is required.
+            If you want to transfer multiple columns, you can use
+            `envs.MapQuery.refdata`.
+        ident: The name of the ident for query transferred from `envs.use` of the reference.
         ref: The reference seurat object file.
             Either an RDS file or a h5seurat file that can be loaded by
             `Seurat::LoadH5Seurat()`.
@@ -1790,8 +1788,8 @@ class SeuratMap2Ref(Proc):
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         MapQuery (ns): Arguments for [`MapQuery()`](https://satijalab.org/seurat/reference/mapquery)
             - reference-reduction: Name of reduction to use from the reference for neighbor finding
-            - reduction-model: `DimReduc` object that contains the umap model
-            - refdata (type=json): Data to transfer
+            - reduction-model: `DimReduc` object that contains the umap model.
+            - refdata (type=json): Extra data to transfer from the reference to the query.
             - <more>: See <https://satijalab.org/seurat/reference/mapquery>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         MappingScore (ns): Arguments for [`MappingScore()`](https://satijalab.org/seurat/reference/mappingscore)
@@ -1807,9 +1805,8 @@ class SeuratMap2Ref(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        # "use": "predicted.celltype.l2",
         "use": None,
-        "name": "seurat_clusters",
+        "ident": "seurat_clusters",
         "ref": None,
         "SCTransform": {
             "do-correct-umi": False,

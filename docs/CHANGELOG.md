@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.27.1
+
+- BREAKING(scrna.SeuratMap2Ref): rename `envs.name` to `envs.ident` so `envs.MapQuery.refdata` is not required anymore. It will be inferred from `envs.ident` and `envs.use`.
+
 ## 0.27.0
 
 - deps: bump pipen to 0.14.5
