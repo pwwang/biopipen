@@ -74,10 +74,10 @@ expand_each <- function(name,  case) {
         }
     } else {
         if (is.null(case$subset)) {
-            eachs <- srtobj@meta.data %>%
+            eachs <- meta %>%
                 pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
         } else {
-            eachs <- srtobj@meta.data %>% filter(!!parse_expr(case$subset)) %>%
+            eachs <- meta %>% filter(!!parse_expr(case$subset)) %>%
                 pull(case$each) %>% unique() %>% na.omit() %>% as.vector()
         }
         for (each in eachs) {
