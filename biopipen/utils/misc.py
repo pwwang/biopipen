@@ -7,7 +7,7 @@ from typing import List
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
 logger = logging.getLogger("biopipen_job")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 _handler = logging.StreamHandler(sys.stdout)
 # Use same log format as in R
 # {sprintf("%-7s", level)} [{format(time, "%Y-%m-%d %H:%M:%S")}] {msg}
