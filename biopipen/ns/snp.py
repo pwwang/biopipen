@@ -7,12 +7,15 @@ from ..core.config import config
 class PlinkSimulation(Proc):
     """Simulate SNPs using PLINK v1.9
 
-    See also <https://www.cog-genomics.org/plink/1.9/input#simulate>.
+    See also <https://www.cog-genomics.org/plink/1.9/input#simulate> and
+    <https://pwwang.github.io/biopipen/api/biopipen.ns.snp/#biopipen.ns.snp.PlinkSimulation>
 
     Input:
-        nsnps: Number of SNPs to simulate
-        ncases: Number of cases to simulate
-        nctrls: Number of controls to simulate
+        configfile: Configuration file containing the parameters for the simulation.
+            The configuration file (in toml, yaml or json format) should contain a
+            dictionary of parameters.  The parameters are listed in `envs` except
+            `ncores`, which is used for parallelization. You can set parameters
+            in `envs` and override them in the configuration file.
 
     Output:
         outdir: Output directory containing the simulated data
@@ -21,9 +24,11 @@ class PlinkSimulation(Proc):
             SNPs and columns representing samples.
 
     Envs:
+        nsnps (type=int): Number of SNPs to simulate
+        ncases (type=int): Number of cases to simulate
+        nctrls (type=int): Number of controls to simulate
         plink: Path to PLINK v1.9
-        seed (type=int): Random seed.
-            If not set, seed will not be set.
+        seed (type=int): Random seed. If not set, seed will not be set.
         label: Prefix label for the SNPs.
         prevalence  (type=float): Disease prevalence.
         minfreq (type=float): Minimum allele frequency.
@@ -41,19 +46,17 @@ class PlinkSimulation(Proc):
             This only affects the sample names in the genotype matrix file
             (`out.gtmat`).
     """
-    input = "nsnps:var, ncases:var, nctrls:var"
+    input = "configfile:file"
     output = [
-        (
-            "outdir:dir:{{in.nsnps | int}}_"
-            "{{in.ncases | int}}xcases_{{in.nctrls | int}}xctrls.plink_sim"
-        ),
-        (
-            "gtmat:file:{{in.nsnps | int}}_"
-            "{{in.ncases | int}}xcases_{{in.nctrls | int}}xctrls.plink_sim/gtmat.txt"
-        ),
+        "outdir:dir:{{in.configfile | stem}}.plink_sim",
+        "gtmat:file:{{in.configfile | stem}}.plink_sim/"
+        "{{in.configfile | stem}}-gtmat.txt",
     ]
     lang = config.lang.python
     envs = {
+        "nsnps": None,
+        "ncases": None,
+        "nctrls": None,
         "plink": config.exe.plink,
         "seed": None,
         "label": "SNP",
