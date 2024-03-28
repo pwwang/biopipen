@@ -26,6 +26,7 @@ section <- {{ envs.section | r }}
 mutaters <- {{ envs.mutaters | r }}
 subset <- {{ envs.subset | r }}
 prefix <- {{ envs.prefix | r }}
+upset_ymax <- {{ envs.upset_ymax | r }}
 upset_trans <- {{ envs.upset_trans | r }}
 cases <- {{ envs.cases | r }}
 
@@ -40,6 +41,7 @@ if (is.null(cases) || length(cases) == 0) {
             order = sample_order,
             subset = subset,
             section = section,
+            upset_ymax = upset_ymax,
             upset_trans = upset_trans
         )
     )
@@ -50,6 +52,7 @@ if (is.null(cases) || length(cases) == 0) {
         cases[[key]]$order <- cases[[key]]$order %||% sample_order
         cases[[key]]$section <- cases[[key]]$section %||% section
         cases[[key]]$subset <- cases[[key]]$subset %||% subset
+        cases[[key]]$upset_ymax <- cases[[key]]$upset_ymax %||% upset_ymax
         cases[[key]]$upset_trans <- cases[[key]]$upset_trans %||% upset_trans
     }
 }
@@ -320,7 +323,7 @@ plot_venndg <- function(counts, groups, singletons) {
     venn_p
 }
 
-plot_upset <- function(counts, singletons, upset_trans) {
+plot_upset <- function(counts, singletons, upset_ymax, upset_trans) {
 
     cnts <- column_to_rownames(counts, "CDR3.aa") %>%
         mutate(across(everything(), ~ as.integer(as.logical(.x))))
@@ -345,12 +348,21 @@ plot_upset <- function(counts, singletons, upset_trans) {
             geom_text(
                 aes(label = ..count.., vjust = ifelse(..type == "Multiplets", -0.25, +1.25)),
                 stat = "count", position = "stack", size = 2.8)
+        if (!is.null(upset_ymax)) {
+            p <- p + ylim(0, upset_ymax)
+        }
     } else {
         p <- p + geom_bar(stat = "count", position = "dodge2") +
             geom_text(
                 aes(label = ..count..),
-                stat = "count", position = position_dodge(width = 0.9), vjust = -0.25, size = 2.5) +
-            scale_y_continuous(trans = "log10")
+                stat = "count", position = position_dodge(width = 0.9), vjust = -0.25, size = 2.5)
+
+        # limit the y and do log10 transformation
+        if (!is.null(upset_ymax)) {
+            p <- p + scale_y_continuous(trans = "log10", limits = c(1, upset_ymax))
+        } else {
+            p <- p + scale_y_continuous(trans = "log10")
+        }
     }
 
     upset(
@@ -519,7 +531,7 @@ handle_subject <- function(i, subjects, casename, case) {
     upset_dir <- file.path(casedir, "upset")
     upset_png <- file.path(upset_dir, paste0("upset_", slugify(subject), ".png"))
     png(upset_png, res = 100, height = 600, width = 800)
-    print(plot_upset(counts, singletons, case$upset_trans))
+    print(plot_upset(counts, singletons, case$upset_ymax, case$upset_trans))
     dev.off()
 
     h <- headings(case$section, casename, "Overlapping Clones (UpSet Plots)")

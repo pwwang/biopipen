@@ -983,6 +983,7 @@ class CloneResidency(Proc):
             before calculating the clone residency. For example, `Clones > 1` to filter
             out singletons.
         prefix: The prefix of the cell barcodes in the `Seurat` object.
+        upset_ymax: The maximum value of the y-axis in the upset bar plots.
         upset_trans: The transformation to apply to the y axis of upset bar plots.
             For example, `log10` or `sqrt`. If not specified, the y axis will be
             plotted as is. Note that the position of the bar plots will be dodged
@@ -1007,6 +1008,7 @@ class CloneResidency(Proc):
         "mutaters": {},
         "subset": None,
         "prefix": "{Sample}_",
+        "upset_ymax": None,
         "upset_trans": None,
         "cases": {},
     }
