@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 
+import os
 import sys
 import logging
 from typing import List
@@ -99,6 +100,9 @@ def run_command(
         kwargs["stdout"] = sys.stdout
         kwargs["stderr"] = sys.stderr
         kwargs["universal_newlines"] = True
+
+    if "env" in kwargs:
+        kwargs["env"] = {**os.environ, **kwargs["env"]}
 
     try:
         p = Popen(cmd, **kwargs)
