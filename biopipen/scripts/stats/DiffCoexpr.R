@@ -42,21 +42,21 @@ diffcoex_score <- function(group) {
 
     gvals <- unique(gdata[, group, drop = TRUE])
     if (length(gvals) < 2) {
-        log_warn("  Less than 2 groups in the input. Skipping ...")
+        log_debug("  Less than 2 groups in the input. Skipping ...")
         return(NULL)
     }
     rs <- lapply(gvals, function(gval) {
         samples <- rownames(gdata[gdata[[group]] == gval, , drop = FALSE])
         expr <- indata[samples, , drop = FALSE]
         if (length(samples) < 3) {
-            log_warn("  Less than 3 samples in one of the groups. Skipping ...")
+            log_debug("  Less than 3 samples in one of the groups. Skipping ...")
             return(NULL)
         }
         cor.pairs(as.matrix(expr), cor.method = method)
     })
     rs[sapply(rs, is.null)] <- NULL
     if (length(rs) < 2) {
-        log_warn("  Less than 2 groups with at least 3 samples. Skipping ...")
+        log_debug("  Less than 2 groups with at least 3 samples. Skipping ...")
         return(NULL)
     }
     N <- length(rs)

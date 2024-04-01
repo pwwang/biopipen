@@ -983,6 +983,7 @@ class CloneResidency(Proc):
             before calculating the clone residency. For example, `Clones > 1` to filter
             out singletons.
         prefix: The prefix of the cell barcodes in the `Seurat` object.
+        upset_ymax: The maximum value of the y-axis in the upset bar plots.
         upset_trans: The transformation to apply to the y axis of upset bar plots.
             For example, `log10` or `sqrt`. If not specified, the y axis will be
             plotted as is. Note that the position of the bar plots will be dodged
@@ -1007,6 +1008,7 @@ class CloneResidency(Proc):
         "mutaters": {},
         "subset": None,
         "prefix": "{Sample}_",
+        "upset_ymax": None,
         "upset_trans": None,
         "cases": {},
     }
@@ -1595,3 +1597,74 @@ class TESSA(Proc):
     }
     script = "file://../scripts/tcr/TESSA.R"
     plugin_opts = {"report": "file://../reports/tcr/TESSA.svelte"}
+
+
+class TCRDock(Proc):
+    """Using TCRDock to predict the structure of MHC-peptide-TCR complexes
+
+    See <https://github.com/phbradley/TCRdock>.
+
+    Input:
+        configfile: The config file for TCRDock
+            It's should be a toml file with the keys listed in `envs`, including
+            `organism`, `mhc_class`, `mhc`, `peptide`, `va`, `ja`, `vb`, `jb`,
+            `cdr3a`, and `cdr3b`.
+            The values will overwrite the values in `envs`.
+
+    Output:
+        outdir: The output directory containing the results
+
+    Envs:
+        organism: The organism of the TCR, peptide and MHC
+        mhc_class (type=int): The MHC class, either `1` or `2`
+        mhc: The MHC allele, e.g., `A*02:01`
+        peptide: The peptide sequence
+        va: The V alpha gene
+        ja: The J alpha gene
+        vb: The V beta gene
+        jb: The J beta gene
+        cdr3a: The CDR3 alpha sequence
+        cdr3b: The CDR3 beta sequence
+        python: The path of python with dependencies for `tcrdock` installed.
+            If not provided, `TCRDock.lang` will be used (the same interpreter
+            used for the wrapper script).
+            It could also be a list to specify, for example, a python in a conda
+            environment (e.g., `["conda", "run", "-n", "myenv", "python"]`).
+        tmpdir: The temporary directory used to clone the `tcrdock` source code if
+            `envs.tcrdock` is not provided.
+        tcrdock: The path to the `tcrdock` source code repo.
+            You need to clone the source code from the github repository.
+            <https://github.com/phbradley/TCRdock> at
+            revision c5a7af42eeb0c2a4492a4d4fe803f1f9aafb6193 at main branch.
+            You also have to run `download_blast.py` after cloning to download the
+            blast database in the directory.
+            If not provided, we will clone the source code to the `envs.tmpdir`
+            directory and run the `download_blast.py` script.
+        model_name: The model name to use
+        model_file: The model file to use.
+            If provided as a relative path, it should be relative to the
+            `<envs.data_dir>/params/`, otherwise, it should be the full path.
+        data_dir: The data directory that contains the model files.
+            The model files should be in the `params` subdirectory.
+    """
+    input = "configfile:file"
+    output = "outdir:dir:{{in.configfile | stem}}.tcrdock"
+    lang = config.lang.python
+    envs = {
+        "tcrdock": None,
+        "organism": "human",
+        "mhc_class": 1,
+        "mhc": "A*02:01",
+        "peptide": None,
+        "va": None,
+        "ja": None,
+        "vb": None,
+        "jb": None,
+        "cdr3a": None,
+        "cdr3b": None,
+        "python": None,
+        "model_name": "model_2_ptm_ft4",
+        "model_file": "tcrpmhc_run4_af_mhc_params_891.pkl",
+        "data_dir": None,
+    }
+    script = "file://../scripts/tcr/TCRDock.py"

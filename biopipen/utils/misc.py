@@ -1,13 +1,14 @@
 from __future__ import annotations
 from pathlib import Path
 
+import os
 import sys
 import logging
 from typing import List
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
 logger = logging.getLogger("biopipen_job")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 _handler = logging.StreamHandler(sys.stdout)
 # Use same log format as in R
 # {sprintf("%-7s", level)} [{format(time, "%Y-%m-%d %H:%M:%S")}] {msg}
@@ -99,6 +100,9 @@ def run_command(
         kwargs["stdout"] = sys.stdout
         kwargs["stderr"] = sys.stderr
         kwargs["universal_newlines"] = True
+
+    if "env" in kwargs:
+        kwargs["env"] = {**os.environ, **kwargs["env"]}
 
     try:
         p = Popen(cmd, **kwargs)

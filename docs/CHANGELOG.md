@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.27.2
+
+- fix(utils.misc.py): inherit envs when `env` passed for `run_command()`
+- fix(scrna.RadarPlots): fix mutaters not working
+- feat(tcr.CloneResidency): support `envs.upset_ymax` to set the max value of y axis in upset bar plot.
+- feat(tcr.TCRDock): add process
+- choir(utils.misc.py): update level to DEBUG for python logger (leaving the filtering to pipen-poplog)
+- choir(stats.DiffCoexpr): change log_warn to debug for some verbosal logging messages
+- refactor(snp.PlinkSimulation): make the configuration files as input so multiple simulations could run in parallel easily.
+
 ## 0.27.1
 
 - BREAKING(scrna.SeuratMap2Ref): rename `envs.name` to `envs.ident` so `envs.MapQuery.refdata` is not required anymore. It will be inferred from `envs.ident` and `envs.use`.
