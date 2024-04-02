@@ -19,6 +19,7 @@ pipen-poplog = "^0.1"
 datar = { version = "^0.15.6", extras = ["pandas"] }
 pipen-board = { version = "^0.15", extras = ["report"] }
 pipen-runinfo = { version = "^0.6", optional = true }
+pyyaml-include = "1.*" # https://github.com/copier-org/copier/issues/1568
 
 [tool.poetry.extras]
 runinfo = ["pipen-runinfo"]

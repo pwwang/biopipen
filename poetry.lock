@@ -963,13 +963,13 @@ pipen = ">=0.14,<0.15"
 
 [[package]]
 name = "pipen-args"
-version = "0.14.3"
+version = "0.14.4"
 description = "Command-line argument parser for pipen."
 optional = false
-python-versions = ">=3.9,<4.0"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_args-0.14.3-py3-none-any.whl", hash = "sha256:9f8842ee1240b3640eaebb03a516c7060d460dc2568fbf8a7bd332cece53b3fd"},
-    {file = "pipen_args-0.14.3.tar.gz", hash = "sha256:fbbd83d0330275c709196636522f6ba96e471c28350cb8285c1a741d42a658f8"},
+    {file = "pipen_args-0.14.4-py3-none-any.whl", hash = "sha256:06e443f7c8623f6ce255f73e7bb02d70c04a1b3a3d05b4051e5d73b1e646e830"},
+    {file = "pipen_args-0.14.4.tar.gz", hash = "sha256:0f7f08c03e7fc36a4f01aef73146c19b8b59e1169fa2f33226e5b43ccfe17d9c"},
 ]
 
 [package.dependencies]
@@ -1467,13 +1467,13 @@ toml = ["toml"]
 
 [[package]]
 name = "quart"
-version = "0.19.4"
+version = "0.19.5"
 description = "A Python ASGI web microframework with the same API as Flask"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "quart-0.19.4-py3-none-any.whl", hash = "sha256:959da9371b44b6f48d952661863f8f64e68a893481ef3f2ef45b177629dc0928"},
-    {file = "quart-0.19.4.tar.gz", hash = "sha256:22ff186cf164955a7bf7483ff42a739a9fad3b119041846b15dc9597ec74c85c"},
+    {file = "quart-0.19.5-py3-none-any.whl", hash = "sha256:581d959bda40d3c45500c50007a6451a157fd381c70d3556811bdd334adb9657"},
+    {file = "quart-0.19.5.tar.gz", hash = "sha256:fbe3cff25cd18b5c0e8d82bbeeaa43d78f35e5221ca5c50bb0b7c20255c87ab8"},
 ]
 
 [package.dependencies]
@@ -1754,13 +1754,13 @@ test = ["websockets"]
 
 [[package]]
 name = "werkzeug"
-version = "3.0.1"
+version = "3.0.2"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "werkzeug-3.0.1-py3-none-any.whl", hash = "sha256:90a285dc0e42ad56b34e696398b8122ee4c681833fb35b8334a095d82c56da10"},
-    {file = "werkzeug-3.0.1.tar.gz", hash = "sha256:507e811ecea72b18a404947aded4b3390e1db8f826b494d76550ef45bb3b1dcc"},
+    {file = "werkzeug-3.0.2-py3-none-any.whl", hash = "sha256:3aac3f5da756f93030740bc235d3e09449efcf65f2f55e3602e1d851b8f48795"},
+    {file = "werkzeug-3.0.2.tar.gz", hash = "sha256:e39b645a6ac92822588e7b39a692e7828724ceae0b0d702ef96701f90e70128d"},
 ]
 
 [package.dependencies]
@@ -1826,4 +1826,4 @@ runinfo = ["pipen-runinfo"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "cb530a0ada4ae6b362a22fcb2508365a7b97b1439c57d6b77f69ddf397749555"
+content-hash = "dbc629c75a33dcf7721412a6ee06aa184bc66dc93cfc8d632a4e54314cba9008"
