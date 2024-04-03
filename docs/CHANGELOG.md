@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.27.3
+
+- deps: temporary fix copier breaks with pyyaml-include v2 (copier-org/copier#1568)
+- deps: bump pipen-poplog to 0.1.2 (quick fix for populating logs when job fails)
+
 ## 0.27.2
 
 - fix(utils.misc.py): inherit envs when `env` passed for `run_command()`
