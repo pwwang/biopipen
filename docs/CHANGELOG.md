@@ -4,6 +4,9 @@
 
 - deps: temporary fix copier breaks with pyyaml-include v2 (copier-org/copier#1568)
 - deps: bump pipen-poplog to 0.1.2 (quick fix for populating logs when job fails)
+- choir(scrna.ScFGSEA): Skip cases when no cells found (pwwang/immunopipe#50)
+- choir(scrna.MarkersFinder): Skip cases when no cells found (pwwang/immunopipe#50)
+- choir(scrna.MetaMarkers): Skip cases when no cells found (pwwang/immunopipe#50)
 
 ## 0.27.2
 
