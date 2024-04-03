@@ -201,6 +201,13 @@ class SeuratPreparing(Proc):
                 - scvi: Same as `scVIIntegration`.
             - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
 
+        DoubletFinder (ns): Arguments to run [`DoubletFinder`](https://github.com/chris-mcginnis-ucsf/DoubletFinder).
+            See also <https://demultiplexing-doublet-detecting-docs.readthedocs.io/en/latest/DoubletFinder.html>.
+            To disable `DoubletFinder`, set `envs.DoubletFinder` to `None` or `False`; or set `pcs` to `0`.
+            - PCs (type=int): Number of PCs to use for 'doubletFinder' function.
+            - doublets (type=float): Number of expected doublets as a proportion of the pool size.
+            - pN (type=float): Number of doublets to simulate as a proportion of the pool size.
+
     Requires:
         r-seurat:
             - check: {{proc.lang}} <(echo "library(Seurat)")
@@ -227,6 +234,7 @@ class SeuratPreparing(Proc):
             "min_cells": 5,
         },
         "IntegrateLayers": {"method": "harmony"},
+        "DoubletFinder": {"PCs": 0, "pN": 0.25, "doublets": 0.075},
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
     plugin_opts = {
