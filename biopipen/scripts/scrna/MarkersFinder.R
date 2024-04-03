@@ -120,7 +120,7 @@ expand_each <- function(name, case) {
                     pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
             }
             for (each in eachs) {
-                by <- make.names(paste0(".", name, "_", case$each,"_", each))
+                by <- make.names(paste0("..", name, "_", case$each,"_", each))
                 srtobj@meta.data <<- srtobj@meta.data %>% mutate(
                     !!sym(by) := if_else(
                         !!sym(case$each) == each,
@@ -364,6 +364,16 @@ add_case_report <- function(info, sigmarkers, siggenes) {
     }
 }
 
+ensure_sobj <- function(expr, allow_empty) {
+    tryCatch({ expr }, error = function(e) {
+        if (allow_empty) {
+            log_warn("  Ignoring this case: {e$message}")
+            return(NULL)
+        } else {
+            stop(e)
+        }
+    })
+}
 
 do_case_findall <- function(casename) {
     # casename
@@ -382,10 +392,17 @@ do_case_findall <- function(casename) {
     # args$min.cells.group <- args$min.cells.group %||% 1
     # args$min.cells.feature <- args$min.cells.feature %||% 1
     # args$min.pct <- args$min.pct %||% 0
+    allow_empty = startsWith(case$group.by, "..")
     if (!is.null(case$subset)) {
-        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+        args$object <- ensure_sobj({
+            srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+        }, allow_empty)
+        if (is.null(args$object)) { return() }
     } else {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        args$object <- ensure_sobj({
+            srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        }, allow_empty)
+        if (is.null(args$object)) { return() }
     }
     Idents(args$object) <- case$group.by
 
@@ -486,11 +503,19 @@ do_case <- function(casename) {
     # sigmarkers
     # rest
     args <- case$rest
+    allow_empty = startsWith(case$group.by, "..")
     if (!is.null(case$subset)) {
-        args$object <- srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+        args$object <- ensure_sobj({
+            srtobj %>% filter(!!parse_expr(case$subset) & !is.na(!!sym(case$group.by)))
+        }, allow_empty)
+        if (is.null(args$object)) { return() }
     } else {
-        args$object <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        args$object <- ensure_sobj({
+            srtobj %>% filter(!is.na(!!sym(case$group.by)))
+        }, allow_empty)
+        if (is.null(args$object)) { return() }
     }
+
     args$assay <- case$assay
     args$group.by <- case$group.by
     args$ident.1 <- case$ident.1
