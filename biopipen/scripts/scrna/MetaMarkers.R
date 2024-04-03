@@ -76,7 +76,7 @@ expand_each <- function(name, case) {
                 pull(case$each) %>% unique() %>% na.omit()
         }
         for (each in eachs) {
-            by = make.names(paste0(".", name, "_", case$each, "_", each))
+            by = make.names(paste0("..", name, "_", case$each, "_", each))
             idents <- case$idents
             if (is.null(idents) || length(idents) == 0) {
                 srtobj@meta.data = srtobj@meta.data %>%
@@ -169,17 +169,31 @@ do_enrich <- function(info, markers, sig) {
     }
 }
 
+ensure_sobj <- function(expr, allow_empty) {
+    tryCatch({ expr }, error = function(e) {
+        if (allow_empty) {
+            log_warn("  Ignoring this case: {e$message}")
+            return(NULL)
+        } else {
+            stop(e)
+        }
+    })
+}
+
 do_case <- function(casename) {
     log_info("- Dealing with case: {casename} ...")
     info <- casename_info(casename, cases, outdir, create = TRUE)
     case <- cases[[casename]]
+    allow_empty = startsWith(case$group_by, "..")
 
     if (sum(!is.na(srtobj@meta.data[[case$group_by]])) == 0) {
         msg = "Not enough cells to run tests."
     } else {
-        sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
+        sobj <- ensure_sobj({ srtobj %>% filter(!is.na(!!sym(case$group_by))) }, allow_empty)
+        if (is.null(sobj)) { return() }
         if (!is.null(case$subset)) {
-            sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)), !!parse_expr(case$subset))
+            sobj <- ensure_sobj({ sobj %>% filter(!!parse_expr(case$subset)) }, allow_empty)
+            if (is.null(sobj)) { return() }
         }
         df <- tryCatch({
                 GetAssayData(sobj, layer = "data")
