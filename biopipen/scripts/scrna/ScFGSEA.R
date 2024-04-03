@@ -72,7 +72,7 @@ expand_each <- function(name, case) {
                 pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
         }
         for (each in eachs) {
-            by <- make.names(paste0(".", name, "_", case$each,"_", each))
+            by <- make.names(paste0("..", name, "_", case$each,"_", each))
             srtobj@meta.data <<- srtobj@meta.data %>%
                 mutate(!!sym(by) := if_else(
                     !!sym(case$each) == each,
@@ -97,18 +97,35 @@ log_info("- Expanding cases...")
 cases <- expand_cases(cases, defaults, expand_each)
 
 
+ensure_sobj <- function(expr, allow_empty) {
+    tryCatch({ expr }, error = function(e) {
+        if (allow_empty) {
+            log_warn("  Ignoring this case: {e$message}")
+            return(NULL)
+        } else {
+            stop(e)
+        }
+    })
+}
+
+
 do_case <- function(name, case) {
     log_info("- Handling case: {name} ...")
     info <- casename_info(name, cases, outdir, create = TRUE)
 
+    allow_empty = startsWith(case$group.by, "..")
     # prepare expression matrix
     log_info("  Preparing expression matrix...")
-    sobj <- srtobj %>% filter(!is.na(!!sym(case$group.by)))
+    sobj <- ensure_sobj({ srtobj %>% filter(!is.na(!!sym(case$group.by))) }, allow_empty)
+    if (is.null(sobj)) { return() }
+
     if (!is.null(case$subset)) {
-        sobj <- sobj %>% filter(!!!parse_exprs(case$subset))
+        sobj <- ensure_sobj({ sobj %>% filter(!!!parse_exprs(case$subset)) }, allow_empty)
+        if (is.null(sobj)) { return() }
     }
     if (!is.null(case$ident.2)) {
-        sobj <- sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2))
+        sobj <- ensure_sobj({ sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2)) }, allow_empty)
+        if (is.null(sobj)) { return() }
     }
 
     allclasses <- sobj@meta.data[, case$group.by, drop = TRUE]

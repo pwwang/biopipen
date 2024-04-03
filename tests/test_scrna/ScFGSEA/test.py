@@ -24,7 +24,7 @@ class PrepareSeurat(Proc):
     """
 
 
-class ScFGSEA(ScFGSEA):
+class ScFGSEASingle(ScFGSEA):
     requires = PrepareSeurat
     envs = {
         # "each": "seurat_clusters",
@@ -40,6 +40,26 @@ class ScFGSEA(ScFGSEA):
             "Human/symbol/Pathways/Human_Hallmark_MSigdb_January_01_2024_symbol.gmt"
         ),
     }
+    order = 9
+
+
+class ScFGSEAEach(ScFGSEA):
+    requires = PrepareSeurat
+    envs = {
+        # Test if seurat_clusters == 1 gets ignored
+        "mutaters": {"groups2": "ifelse(seurat_clusters == '1', NA, groups)"},
+        "ident-1": "g1",
+        "ident-2": "g2",
+        "group-by": "groups2",
+        # "gmtfile": Path(__file__).parent.parent.parent.joinpath(
+        #     "data/reference/KEGG_metabolism.gmt"
+        # ),
+        "each": "seurat_clusters",
+        "gmtfile": (
+            "https://download.baderlab.org/EM_Genesets/January_01_2024/"
+            "Human/symbol/Pathways/Human_Hallmark_MSigdb_January_01_2024_symbol.gmt"
+        ),
+    }
 
 
 def pipeline():
@@ -47,6 +67,7 @@ def pipeline():
 
 
 def testing(pipen):
+    assert pipen._succeeded
     outfile = (
         pipen.procs[-1].workdir.joinpath(
             "0",
