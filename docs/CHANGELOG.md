@@ -7,6 +7,7 @@
 - choir(scrna.ScFGSEA): Skip cases when no cells found (pwwang/immunopipe#50)
 - choir(scrna.MarkersFinder): Skip cases when no cells found (pwwang/immunopipe#50)
 - choir(scrna.MetaMarkers): Skip cases when no cells found (pwwang/immunopipe#50)
+- feat(scrna.SeuratPreparing): support `DoubletFinder`
 
 ## 0.27.2
 
