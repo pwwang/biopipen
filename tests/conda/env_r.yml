@@ -48,6 +48,7 @@ dependencies:
   - r-gsea_r
   - r-hgnchelper
   - r-seuratwrappers
+  - r-plotroc
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater
