@@ -113,7 +113,7 @@ class SampleInfo(Proc):
         "exclude_cols": None,
         "defaults": {
             "on": "Sample",
-            "distinct": None,
+            # "distinct": None,
             "group": None,
             "na_group": False,
             "each": None,
