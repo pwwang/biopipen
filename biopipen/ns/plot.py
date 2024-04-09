@@ -114,3 +114,39 @@ class Heatmap(Proc):
         "globals": "",
     }
     script = "file://../scripts/plot/Heatmap.R"
+
+
+class ROC(Proc):
+    """Plot ROC curve using [`plotROC`](https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html).
+
+    Input:
+        infile: The input file for data, tab-separated.
+            The first column should be ids of the records (this is optional if `envs.noids` is True).
+            The second column should be the labels of the records (1 for positive, 0 for negative).
+            If they are not binary, you can specify the positive label by `envs.pos_label`.
+            From the third column, it should be the scores of the different models.
+
+    Output:
+        outfile: The output figure file
+
+    Envs:
+        noids: Whether the input file has ids (first column) or not.
+        pos_label: The positive label.
+        ci: Whether to use `geom_rocci()` instead of `geom_roc()`.
+        devpars: The parameters for `png()`
+        args: Additional arguments for `geom_roc()` or `geom_rocci()` if `envs.ci` is True.
+        style_roc: Arguments for `style_roc()`
+    """  # noqa: E501
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.roc.png"
+    lang = config.lang.rscript
+    envs = {
+        "noids": False,
+        "pos_label": 1,
+        "ci": False,
+        "devpars": {"res": 100, "width": 750, "height": 600},
+        "args": {"labels": False},
+        "style_roc": {},
+        "show_auc": True,
+    }
+    script = "file://../scripts/plot/ROC.R"

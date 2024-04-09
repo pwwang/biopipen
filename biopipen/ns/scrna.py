@@ -413,7 +413,7 @@ class SeuratClusterStats(Proc):
         nCells_All = { }
         ```
 
-        ![nCells_All](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_nCells_All.png){: width="80%" }
+        ![nCells_All](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_nCells_All.png){: width="80%" }
 
         ### Number of cells in each cluster by groups
 
@@ -422,7 +422,7 @@ class SeuratClusterStats(Proc):
         nCells_Sample = { group-by = "Sample" }
         ```
 
-        ![nCells_Sample](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_nCells_Sample.png){: width="80%" }
+        ![nCells_Sample](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_nCells_Sample.png){: width="80%" }
 
         ### Violin plots for the gene expressions
 
@@ -435,8 +435,8 @@ class SeuratClusterStats(Proc):
         vlnplots_1 = { features = ["FOXP3", "IL2RA"], pt-size = 0, kind = "vln" }
         ```
 
-        ![vlnplots](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_vlnplots.png){: width="80%" }
-        ![vlnplots_1](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_vlnplots_1.png){: width="80%" }
+        ![vlnplots](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_vlnplots.png){: width="80%" }
+        ![vlnplots_1](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_vlnplots_1.png){: width="80%" }
 
         ### Dimension reduction plot with labels
 
@@ -447,7 +447,7 @@ class SeuratClusterStats(Proc):
         repel = true
         ```
 
-        ![dimplots](https://pwwang.github.io/immunopipe/processes/images/SeuratClusterStats_dimplots.png){: width="80%" }
+        ![dimplots](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_dimplots.png){: width="80%" }
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -857,7 +857,7 @@ class CellsDistribution(Proc):
         group_order = [ "Tumor", "Normal" ]
         ```
 
-        ![CellsDistribution_example](https://pwwang.github.io/immunopipe/processes/images/CellsDistribution_example.png)
+        ![CellsDistribution_example](https://pwwang.github.io/immunopipe/latest/processes/images/CellsDistribution_example.png)
 
     Input:
         srtobj: The seurat object in RDS format
@@ -1870,7 +1870,7 @@ class RadarPlots(Proc):
 
         Then we will have a radar plots like this:
 
-        ![Radar plots](https://pwwang.github.io/immunopipe/processes/images/RadarPlots-default.png)
+        ![Radar plots](https://pwwang.github.io/immunopipe/latest/processes/images/RadarPlots-default.png)
 
         We can use `each` to separate the cells into different cases:
 
@@ -1882,7 +1882,7 @@ class RadarPlots(Proc):
 
         Then we will have two radar plots, one for `Pre` and one for `Post`:
 
-        ![Radar plots](https://pwwang.github.io/immunopipe/processes/images/RadarPlots-each.png)
+        ![Radar plots](https://pwwang.github.io/immunopipe/latest/processes/images/RadarPlots-each.png)
 
         Using `cluster_order` to change the order of the clusters and show only the first 3 clusters:
 
@@ -1893,7 +1893,7 @@ class RadarPlots(Proc):
         breaks = [0, 50, 100]  # also change the breaks
         ```
 
-        ![Radar plots cluster_order](https://pwwang.github.io/immunopipe/processes/images/RadarPlots-cluster_order.png)
+        ![Radar plots cluster_order](https://pwwang.github.io/immunopipe/latest/processes/images/RadarPlots-cluster_order.png)
 
 
         /// Attention

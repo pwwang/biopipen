@@ -22,11 +22,11 @@ class MetabolicPathwayActivity(Proc):
     For each subset, a heatmap and a violin plot will be generated.
     The heatmap shows the pathway activities for each group and each metabolic pathway
 
-    ![MetabolicPathwayActivity_heatmap](https://pwwang.github.io/immunopipe/processes/images/MetabolicPathwayActivity_heatmap.png){: width="80%"}
+    ![MetabolicPathwayActivity_heatmap](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayActivity_heatmap.png){: width="80%"}
 
     The violin plot shows the distribution of the pathway activities for each group
 
-    ![MetabolicPathwayActivity_violin](https://pwwang.github.io/immunopipe/processes/images/MetabolicPathwayActivity_violin.png){: width="45%"}
+    ![MetabolicPathwayActivity_violin](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayActivity_violin.png){: width="45%"}
 
     Envs:
         ntimes (type=int): Number of times to do the permutation
@@ -294,7 +294,7 @@ class MetabolicPathwayHeterogeneity(Proc):
     The heterogeneity can be reflected by the NES values and the p-values in
     different groups for the metabolic pathways.
 
-    ![MetabolicPathwayHeterogeneity](https://pwwang.github.io/immunopipe/processes/images/MetabolicPathwayHeterogeneity.png)
+    ![MetabolicPathwayHeterogeneity](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayHeterogeneity.png)
 
 
     Envs:
