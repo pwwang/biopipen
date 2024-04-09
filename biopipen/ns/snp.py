@@ -71,3 +71,68 @@ class PlinkSimulation(Proc):
         "sample_prefix": None,
     }
     script = "file://../scripts/snp/PlinkSimulation.py"
+
+
+class MatrixEQTL(Proc):
+    """Run Matrix eQTL
+
+    See also <https://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/>
+
+    Input:
+        geno: Genotype matrix file with rows representing SNPs and columns
+            representing samples.
+        expr: Expression matrix file with rows representing genes and columns
+            representing samples.
+        cov: Covariate matrix file with rows representing covariates and columns
+            representing samples.
+
+    Output:
+        alleqtls: Matrix eQTL output file
+        cisqtls: The cis-eQTL file if `snppos` and `genepos` are provided.
+            Otherwise it'll be empty.
+
+    Envs:
+        model (choice): The model to use.
+            - `linear`: Linear model
+            - `modelLINEAR`: Same as `linear`
+            - `anova`: ANOVA model
+            - `modelANOVA`: Same as `anova`
+        pval (type=float): P-value threshold for eQTLs
+        transp (type=float): P-value threshold for trans-eQTLs.
+            If cis-eQTLs are not enabled (`snppos` and `genepos` are not set),
+            this defaults to 1e-5.
+            If cis-eQTLs are enabled, this defaults to `None`, which will disable
+            trans-eQTL analysis.
+        fdr (flag): Do FDR calculation or not (save memory if not).
+        snppos: The path of the SNP position file.
+            It could be a BED, GFF, VCF or a tab-delimited file with
+            `snp`, `chr`, `pos` as the first 3 columns.
+        genepos: The path of the gene position file.
+            It could be a BED or GFF file.
+        dist (type=int): Distance threshold for cis-eQTLs.
+        transpose_geno (flag): If set, the genotype matrix (`in.geno`)
+            will be transposed.
+        transpose_expr (flag): If set, the expression matrix (`in.expr`)
+            will be transposed.
+        transpose_cov (flag): If set, the covariate matrix (`in.cov`)
+            will be transposed.
+    """
+    input = "geno:file, expr:file, cov:file"
+    output = [
+        "alleqtls:file:{{in.geno | stem}}.alleqtls.txt",
+        "cisqtls:file:{{in.geno | stem}}.cisqtls.txt",
+    ]
+    lang = config.lang.rscript
+    envs = {
+        "model": "linear",
+        "pval": 1e-3,
+        "transp": None,
+        "fdr": False,
+        "snppos": None,
+        "genepos": config.ref.refgene,
+        "dist": 250000,
+        "transpose_geno": False,
+        "transpose_expr": False,
+        "transpose_cov": False,
+    }
+    script = "file://../scripts/snp/MatrixEQTL.R"
