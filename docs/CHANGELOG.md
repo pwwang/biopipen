@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.27.4
+
+- feat: add plot.ROC
+- choir(delim.SampleInfo): add alpha to the colors of the plots using biopipen color pallete
+- feat: add snp.MatrixEQTL
+- docs(tcr/scrna/scrna_metabolic_landscape): update links of images in docs
+
 ## 0.27.3
 
 - deps: temporary fix copier breaks with pyyaml-include v2 (copier-org/copier#1568)
