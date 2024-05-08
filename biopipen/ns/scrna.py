@@ -122,6 +122,9 @@ class SeuratPreparing(Proc):
             genes.
             ///
 
+        cell_qc_per_sample (flag): Whether to perform cell QC per sample or not.
+            If `True`, the cell QC will be performed per sample, and the QC will be
+            applied to each sample before merging.
         gene_qc (ns): Filter genes.
             `gene_qc` is applied after `cell_qc`.
             - min_cells: The minimum number of cells that a gene must be
@@ -222,6 +225,7 @@ class SeuratPreparing(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
+        "cell_qc_per_sample": False,
         "gene_qc": {"min_cells": 0, "excludes": []},
         "use_sct": False,
         "no_integration": False,
@@ -1483,14 +1487,17 @@ class SeuratTo10X(Proc):
         srtobj: The seurat object in RDS
 
     Output:
-        outdir: The output directory
+        outdir: The output directory.
+            When `envs.split_by` is specified, the subdirectories will be
+            created for each distinct value of the column.
+            Otherwise, the matrices will be written to the output directory.
 
     Envs:
         version: The version of 10X format
     """
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}"
-    envs = {"version": "3"}
+    envs = {"version": "3", "split_by": None}
     lang = config.lang.rscript
     script = "file://../scripts/scrna/SeuratTo10X.R"
 
