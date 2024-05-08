@@ -49,11 +49,14 @@ dependencies:
   - r-hgnchelper
   - r-seuratwrappers
   - r-plotroc
+  - r-bracer
+  - r-harmony=1.2.0  # avoid v0.1 on bioconda
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater
   - bioconductor-scran
   - bioconductor-singlecellexperiment
+  - bioconductor-dropletutils
   # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2
   #         or libmkl_def.so.2.
   - libfaiss-avx2=1.7.2=h1234567_0_cpu
