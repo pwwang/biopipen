@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.27.5
+
+- fix(scrna.Subset10X/SeuratTo10X): correct the paths to the scripts
+- feat(testing): allow to enable report for testing pipelines
+- feat(scrna.SeuratPreparing): add `envs.cell_qc_per_sample` to filter cells before merging instead after
+- test: add tests to scrna.SeuratTo10X and scrna.SeuratPreparing
+- fix(scrna.SeuratClusterStats): fix color palette for ridge plots
+
 ## 0.27.4
 
 - feat: add plot.ROC

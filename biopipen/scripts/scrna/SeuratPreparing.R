@@ -4,6 +4,7 @@ library(Seurat)
 library(future)
 library(bracer)
 library(ggplot2)
+library(dplyr)
 library(tidyseurat)
 
 metafile = {{in.metafile | quote}}
@@ -49,6 +50,19 @@ if (!"RNAData" %in% meta_cols) {
     stop("Error: Column `RNAData` is not found in metafile.")
 }
 
+samples = as.character(metadata$Sample)
+
+# used for plotting
+cell_qc_df = NULL
+
+plotsdir = file.path(joboutdir, "plots")
+dir.create(plotsdir, showWarnings = FALSE, recursive = TRUE)
+
+# features for cell QC
+feats = c(
+    "nFeature_RNA", "nCount_RNA",
+    "percent.mt", "percent.ribo", "percent.hb", "percent.plat"
+)
 
 rename_files = function(e, sample, path) {
     tmpdatadir = file.path(joboutdir, "renamed", sample)
@@ -72,6 +86,143 @@ rename_files = function(e, sample, path) {
         file.path(tmpdatadir, "matrix.mtx.gz")
     )
     Read10X(data.dir = tmpdatadir)
+}
+
+
+perform_cell_qc <- function(sobj, per_sample = FALSE) {
+    log_prefix = ifelse(per_sample, "  ", "- ")
+    log_info("{log_prefix}Adding metadata for QC ...")
+    sobj$percent.mt = PercentageFeatureSet(sobj, pattern = "^MT-")
+    sobj$percent.ribo = PercentageFeatureSet(sobj, pattern = "^RP[SL]")
+    sobj$percent.hb = PercentageFeatureSet(sobj, pattern = "^HB[^(P)]")
+    sobj$percent.plat = PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
+
+    if (is.null(envs$cell_qc) || length(envs$cell_qc) == 0) {
+        log_warn("{log_prefix}No cell QC criteria is provided. All cells will be kept.")
+        cell_qc = "TRUE"
+    } else {
+        cell_qc = envs$cell_qc
+    }
+
+    sobj = sobj %>% mutate(.QC = !!rlang::parse_expr(cell_qc))
+
+    if (is.null(cell_qc_df)) {
+        cell_qc_df <<- sobj@meta.data[, c("Sample", ".QC", feats), drop = FALSE]
+    } else {
+        cell_qc_df <<- rbind(cell_qc_df, sobj@meta.data[, c("Sample", ".QC", feats), drop = FALSE])
+    }
+
+    # Do the filtering
+    log_info("{log_prefix}Filtering cells using QC criteria ...")
+    sobj = sobj %>% filter(.QC)
+    sobj$.QC = NULL
+
+    return(sobj)
+}
+
+report_cell_qc = function(ngenes) {
+    # uses cell_qc_df
+
+    # Violin plots
+    log_info("- Plotting violin plots ...")
+    add_report(
+        list(
+            kind = "descr",
+            content = paste(
+                "The violin plots for each feature. The cells are grouped by sample.",
+                "The cells that fail the QC criteria are colored in red, and",
+                "the cells that pass the QC criteria are colored in black.",
+                "The cells that fail the QC criteria are filtered out in the returned Seurat object."
+            )
+        ),
+        h1 = "Violin Plots"
+    )
+    for (feat in feats) {
+        log_info("  For feature: {feat}")
+        vln_p <- ggplot(cell_qc_df, aes(x = Sample, y = !!sym(feat), color = .QC)) +
+            geom_violin(fill = "white", width = 0.5) +
+            geom_jitter(width = 0.2, height = 0, alpha = 0.5) +
+            scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE)) +
+            labs(x = "Sample", y = feat) +
+            theme_minimal()
+
+        vlnplot = file.path(plotsdir, paste0(slugify(feat), ".vln.png"))
+        png(
+            vlnplot,
+            width = 800 + length(samples) * 15, height = 600, res = 100
+        )
+        print(vln_p)
+        dev.off()
+
+        add_report(
+            list(
+                src = vlnplot,
+                name = feat,
+                descr = paste0("Distribution of ", feat, " for each sample.")
+            ),
+            h1 = "Violin Plots",
+            ui = "table_of_images"
+        )
+    }
+
+    # Scatter plots against nCount_RNA
+    log_info("- Plotting scatter plots ...")
+    add_report(
+        list(
+            kind = "descr",
+            content = paste(
+                "The scatter plots for each feature against nCount_RNA. ",
+                "The cells that fail the QC criteria are colored in red, and",
+                "the cells that pass the QC criteria are colored in black.",
+                "The cells that fail the QC criteria are filtered out in the returned Seurat object."
+            )
+        ),
+        h1 = "Scatter Plots"
+    )
+    for (feat in setdiff(feats, "nCount_RNA")) {
+        log_info("  For feature: {feat}, against nCount_RNA")
+        scat_p <- ggplot(cell_qc_df, aes(x = nCount_RNA, y = !!sym(feat), color = .QC)) +
+            geom_point() +
+            scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE)) +
+            labs(x = "nCount_RNA", y = feat) +
+            theme_minimal()
+
+        scatfile = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter.png"))
+        png(scatfile, width = 800, height = 600, res = 100)
+        print(scat_p)
+        dev.off()
+
+        add_report(
+            list(
+                src = scatfile,
+                name = paste0(feat, " vs nCount_RNA"),
+                descr = paste0("Scatter plot for ", feat, " against nCount_RNA")
+            ),
+            h1 = "Scatter Plots",
+            ui = "table_of_images"
+        )
+    }
+
+    # return the dim_df calculated from the cell_qc_df
+    rbind(
+        cell_qc_df %>%
+            # group_by(Sample) %>%
+            summarise(
+                when = "Before_Cell_QC",
+                nCells = dplyr::n(),
+                nGenes = ngenes
+            ) %>%
+            ungroup(),
+        cell_qc_df %>%
+            filter(.QC) %>%
+            # group_by(Sample) %>%
+            summarise(
+                when = "After_Cell_QC",
+                nCells = dplyr::n(),
+                nGenes = ngenes
+            ) %>%
+            ungroup()
+    )
 }
 
 load_sample = function(sample) {
@@ -114,6 +265,11 @@ load_sample = function(sample) {
         obj[[mname]] = mdt
     }
 
+    if (isTRUE(envs$cell_qc_per_sample)) {
+        log_info("- Perform cell QC for sample: {sample} ...")
+        obj = perform_cell_qc(obj, TRUE)
+    }
+
     if (isTRUE(envs$use_sct)) {
         # so that we have data and scale.data layers on RNA assay
         # useful for visualization in case some genes are not in
@@ -126,125 +282,20 @@ load_sample = function(sample) {
 }
 
 # Load data
-samples = as.character(metadata$Sample)
-
 log_info("Reading samples individually ...")
 obj_list = lapply(samples, load_sample)
 
 log_info("Merging samples ...")
 sobj = Reduce(merge, obj_list)
 
-log_info("Adding metadata for QC ...")
-sobj$percent.mt = PercentageFeatureSet(sobj, pattern = "^MT-")
-sobj$percent.ribo = PercentageFeatureSet(sobj, pattern = "^RP[SL]")
-sobj$percent.hb = PercentageFeatureSet(sobj, pattern = "^HB[^(P)]")
-sobj$percent.plat = PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
-
-dim_df = data.frame(When = "Before_QC", nCells = ncol(sobj), nGenes = nrow(sobj))
-
-if (is.null(envs$cell_qc) || length(envs$cell_qc) == 0) {
-    log_warn("No cell QC criteria is provided. All cells will be kept.")
-    envs$cell_qc = "TRUE"
+if (!envs$cell_qc_per_sample) {
+    log_info("Performing cell QC ...")
+    sobj = perform_cell_qc(sobj)
 }
 
-sobj = sobj %>% mutate(.QC = !!rlang::parse_expr(envs$cell_qc))
-feats = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat")
-plotsdir = file.path(joboutdir, "plots")
-dir.create(plotsdir, showWarnings = FALSE)
-
-# Violin plots
-log_info("Plotting violin plots ...")
-add_report(
-    list(
-        kind = "descr",
-        content = paste(
-            "The violin plots for each feature. The cells are grouped by sample.",
-            "The cells that fail the QC criteria are colored in red, and",
-            "the cells that pass the QC criteria are colored in black.",
-            "The cells that fail the QC criteria are filtered out in the returned Seurat object."
-        )
-    ),
-    h1 = "Violin Plots"
-)
-for (feat in feats) {
-    log_info("- For feature: {feat}")
-    vln_p = VlnPlot(
-        sobj,
-        cols = rep("white", length(samples)),
-        group.by = "Sample",
-        features = feat,
-        pt.size = 0) + NoLegend()
-    vln_p$data$.QC = sobj@meta.data$.QC
-    vln_p = vln_p + geom_jitter(
-            aes(color = .QC),
-            data = vln_p$data,
-            position = position_jitterdodge(jitter.width = 0.4, dodge.width = 0.9)
-        ) + scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE))
-
-    vlnplot = file.path(plotsdir, paste0(slugify(feat), ".vln.png"))
-    png(
-        vlnplot,
-        width = 800 + length(samples) * 15, height = 600, res = 100
-    )
-    print(vln_p)
-    dev.off()
-
-    add_report(
-        list(
-            src = vlnplot,
-            name = feat,
-            descr = paste0("Distribution of ", feat, " for each sample.")
-        ),
-        h1 = "Violin Plots",
-        ui = "table_of_images"
-    )
-}
-
-# Scatter plots against nCount_RNA
-log_info("Plotting scatter plots ...")
-add_report(
-    list(
-        kind = "descr",
-        content = paste(
-            "The scatter plots for each feature against nCount_RNA. ",
-            "The cells that fail the QC criteria are colored in red, and",
-            "the cells that pass the QC criteria are colored in black.",
-            "The cells that fail the QC criteria are filtered out in the returned Seurat object."
-        )
-    ),
-    h1 = "Scatter Plots"
-)
-for (feat in setdiff(feats, "nCount_RNA")) {
-    log_info("- For feature: {feat}, against nCount_RNA")
-    scat_p = FeatureScatter(
-        sobj,
-        feature1 = "nCount_RNA",
-        feature2 = feat,
-        group.by = ".QC"
-    ) +
-    NoLegend() +
-    scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE))
-
-    scatfile = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter.png"))
-    png(scatfile, width = 800, height = 600, res = 100)
-    print(scat_p)
-    dev.off()
-
-    add_report(
-        list(
-            src = scatfile,
-            name = paste0(feat, " vs nCount_RNA"),
-            descr = paste0("Scatter plot for ", feat, " against nCount_RNA")
-        ),
-        h1 = "Scatter Plots",
-        ui = "table_of_images"
-    )
-}
-
-# Do the filtering
-log_info("Filtering cells using QC criteria ...")
-sobj = sobj %>% filter(.QC)
-sobj$.QC = NULL
+# plot and report the QC
+log_info("Plotting and reporting QC ...")
+dim_df = report_cell_qc(nrow(sobj))
 
 log_info("Filtering genes ...")
 if (is.list(envs$gene_qc)) {
@@ -271,7 +322,7 @@ if (is.list(envs$gene_qc)) {
 dim_df = rbind(
     dim_df,
     data.frame(
-        When = "After_Gene_QC",
+        when = "After_Gene_QC",
         nCells = ncol(sobj),
         nGenes = nrow(sobj)
     )
