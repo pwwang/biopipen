@@ -81,7 +81,7 @@ do_one_features = function(name) {
     if (case$kind %in% c("ridge", "ridgeplot")) {
         case$kind = "ridge"
         if (is.null(case$cols)) {
-            case$cols = pal_biopipen()(32)
+            case$cols = pal_biopipen()(n_uidents)
         }
         excluded_args = c(excluded_args, "split.by", "reduction")
         fn = RidgePlot
