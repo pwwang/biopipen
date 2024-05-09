@@ -62,7 +62,7 @@ def pipeline():
 
 
 def testing(pipen):
-    assert pipen._succeeded
+    # assert pipen._succeeded
     for proc in pipen.procs:
         outfile = proc.workdir.joinpath("0", "output", "data.txt")
         assert outfile.is_file()
@@ -70,5 +70,5 @@ def testing(pipen):
 
 if __name__ == "__main__":
     pipen = pipeline()
-    pipen.run()
+    assert pipen.run()
     testing(pipen)
