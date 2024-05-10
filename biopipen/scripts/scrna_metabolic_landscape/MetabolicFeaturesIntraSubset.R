@@ -84,14 +84,18 @@ do_one_comparison <- function(
 
     odir = file.path(groupdir, paste0(subset_prefix, compname))
     dir.create(odir, showWarnings = FALSE)
-    if (ncol(exprs_case) < 3 || ncol(exprs_control) < 3) {
-        log_warn("          Skip (not enough cells)")
-        add_report(
+    if (ncol(exprs_case) < 5 || ncol(exprs_control) < 5) {
+        log_warn("  Skipped (not enough cells).")
+        wfile <- file.path(odir, "warning.txt")
+        write("Skipped (not enough cells)\n\n", file = wfile)
+        write(paste0("n_cells (Case):", ncol(exprs_case)), file = wfile, append = TRUE)
+        write(paste0("n_cells (Control):", ncol(exprs_control)), file = wfile, append = TRUE)
+
+        return(list(
             list(kind = "error", content = "Not enough cells"),
             h1 = groupname,
             h2 = compname
-        )
-        return (NULL)
+        ))
     }
     if (fgsea) {
         ranks = prerank(
