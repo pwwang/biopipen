@@ -1241,7 +1241,7 @@ class TopExpressingGenes(Proc):
     }
 
 
-class ExprImpution(Proc):
+class ExprImputation(Proc):
     """This process imputes the dropout values in scRNA-seq data.
 
     It takes the Seurat object as input and outputs the Seurat object with
@@ -1317,13 +1317,13 @@ class ExprImpution(Proc):
         },
         "alra_args": {},
     }
-    script = "file://../scripts/scrna/ExprImpution.R"
+    script = "file://../scripts/scrna/ExprImputation.R"
 
 
 class SCImpute(Proc):
     """Impute the dropout values in scRNA-seq data.
 
-    Deprecated. Use `ExprImpution` instead.
+    Deprecated. Use `ExprImputation` instead.
 
     Input:
         infile: The input file for imputation

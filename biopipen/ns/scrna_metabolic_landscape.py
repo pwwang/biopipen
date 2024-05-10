@@ -577,10 +577,10 @@ class ScrnaMetabolicLandscape(ProcGroup):
         if self.opts.noimpute:
             return self.p_mutater
 
-        from .scrna import ExprImpution
+        from .scrna import ExprImputation
 
         @annotate.format_doc(indent=3)
-        class MetabolicExprImpution(ExprImpution):
+        class MetabolicExprImputation(ExprImputation):
             """{{Summary}}
 
             You can turn off the imputation by setting the `noimpute` option
@@ -588,7 +588,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             """
             requires = self.p_mutater
 
-        return MetabolicExprImpution
+        return MetabolicExprImputation
 
     @ProcGroup.add_proc
     def p_pathway_activity(self) -> Type[Proc]:
