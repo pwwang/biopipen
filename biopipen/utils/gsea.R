@@ -23,14 +23,14 @@ if (!exists("slugify")) {
         for (k in names(subs)) {
             x <- gsub(k, subs[[k]], x)
         }
-    x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
+        x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
         if(collapse_replace) x <- gsub(
             paste0(gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", non_alphanum_replace), "+"),
             non_alphanum_replace,
             x
         )
-    if(tolower) x <- tolower(x)
-    x
+        if(tolower) x <- tolower(x)
+        x
     }
 }
 
@@ -50,7 +50,12 @@ localizeGmtfile <- function(gmturl, cachedir = tempdir()) {
         if (nrow(items) == 0) {
             stop(paste0("Empty GMT file: ", gmtfile, ", from ", gmturl))
         }
-        if (nchar(items$V2[1]) < nchar(items$V1[1]) && nchar(items$V2[1]) > 0) {
+        if (
+            is.character(items$V2[1]) &&
+            nchar(items$V2[1]) < nchar(items$V1[1]) &&
+            nchar(items$V2[1]) > 0 &&
+            is.na(suppressWarnings(as.numeric(items$V2[1])))
+        ) {
             warning(paste0(
                 "The second column is shorter, switching the first and second columns in GMT file ",
                 gmtfile,
