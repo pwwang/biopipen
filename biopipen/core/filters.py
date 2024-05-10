@@ -235,8 +235,8 @@ def _render_fgsea(
     with Path(cont["dir"]).joinpath("fgsea.txt").open() as f:
         next(f)  # skip header
         for line in f:
-            pathway, _ = line.split("\t", 1)
-            pathways.append(pathway)
+            items = line.strip().split("\t")
+            pathways.append((items[0], items[-1]))
             if len(pathways) >= n_pathways:
                 break
 
@@ -263,6 +263,7 @@ def _render_fgsea(
                         {
                             "kind": "table",
                             "src": str(Path(cont["dir"]).joinpath("fgsea.txt")),
+                            "data": {"excluded": {"slug"}},
                         }
                     ],
                 },
@@ -274,10 +275,10 @@ def _render_fgsea(
             "ui": "table_of_images",
             "contents": [
                 {
-                    "src": str(Path(cont["dir"]) / f"fgsea_{pw.replace('/', '-')}.png"),
+                    "src": str(Path(cont["dir"]) / f"fgsea_{slug}.png"),
                     "title": pw,
                 }
-                for pw in pathways
+                for pw, slug in pathways
             ]
         },
     ]
