@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.27.6
+
+- fix(scrna_metabolic_landscape.MetabolicFeatures): fix return value of groups with less than 5 cells in `do_one_group`
+- choir(utils.gsea): avoid printing NULL for `runFGSEA`
+- tests: use the return value of `pipen.run()` to test the success
+
 ## 0.27.5
 
 - fix(scrna.Subset10X/SeuratTo10X): correct the paths to the scripts
