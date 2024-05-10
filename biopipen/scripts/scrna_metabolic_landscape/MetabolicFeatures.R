@@ -52,12 +52,13 @@ do_one_group <- function(obj, features, group, outputdir, h1) {
     if (any(table(classes) < 5)) {
         msg <- paste("Group", group, "has less than 5 cells, or only 5 cells left.")
         log_warn(msg)
-        add_report(
-            list(kind = "error", content = msg),
-            h1 = ifelse(is.null(h1), groupname, h1),
-            h2 = ifelse(is.null(h1), "#", groupname)
+        return(
+            list(
+                list(kind = "error", content = msg),
+                h1 = ifelse(is.null(h1), groupname, h1),
+                h2 = ifelse(is.null(h1), "#", groupname)
+            )
         )
-        return()
     }
 
     exprs = GetAssayData(obj)[features, , drop = FALSE]

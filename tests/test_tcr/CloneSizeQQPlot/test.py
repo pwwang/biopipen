@@ -26,10 +26,11 @@ def pipeline():
 
 
 def testing(pipen):
-    assert pipen._succeeded
+    # assert pipen._succeeded
+    ...
 
 
 if __name__ == "__main__":
     pipen = pipeline()
-    pipen.run()
+    assert pipen.run()
     testing(pipen)

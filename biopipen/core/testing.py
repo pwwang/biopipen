@@ -3,7 +3,7 @@ import tempfile
 from functools import wraps
 from pathlib import Path
 
-from pipen import Pipen, plugin
+from pipen import Pipen
 
 TESTING_INDEX_INIT = 1
 TESTING_PARENT_DIR = Path(tempfile.gettempdir())
@@ -40,17 +40,6 @@ def _get_test_dirs(testfile, new):
     return name, workdir, outdir
 
 
-class PipelineSucceeded:
-    """A plugin to check if the pipeline succeeded"""
-
-    name = "succeeded"
-    version = "0.1.0"
-
-    @plugin.impl
-    async def on_complete(pipen, succeeded):
-        pipen._succeeded = succeeded
-
-
 def get_pipeline(testfile, loglevel="debug", enable_report=False, **kwargs):
     """Get a pipeline for a test file"""
     name, workdir, outdir = _get_test_dirs(testfile, False)
@@ -60,7 +49,7 @@ def get_pipeline(testfile, loglevel="debug", enable_report=False, **kwargs):
         "workdir": workdir,
         "outdir": outdir,
         "loglevel": loglevel,
-        "plugins": [PipelineSucceeded, f"{report_plugin_prefix}report"],
+        "plugins": [f"{report_plugin_prefix}report"],
     }
     kws.update(kwargs)
     return Pipen(**kws)
