@@ -566,8 +566,8 @@ class ScrnaMetabolicLandscape(ProcGroup):
             input_data = lambda ch: tibble(
                 srtobj=ch.iloc[:, 0],
                 metafile=[None],
-                mutaters=[self.opts.mutaters],
             )
+            envs = {"mutaters": self.opts.mutaters}
 
         return MetabolicSeuratMetadataMutater
 
