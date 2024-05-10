@@ -172,12 +172,12 @@ runFGSEA = function(
 
     tablefig = file.path(outdir, "gsea_table.png")
     png(tablefig, res=100, width=1000, height=200 + 40 * length(topPathways))
-    plotGseaTable(
+    print(plotGseaTable(
         envs$pathways[topPathways],
         ranks,
         gsea_res,
         gseaParam = if (!is.null(envs$gseaParam)) envs$gseaParam else 1
-    )
+    ))
     dev.off()
 
     for (pathway in topPathways) {
