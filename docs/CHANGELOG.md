@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.27.7
+
+- fix(utils.gsea): fix gsea table not being printed for `runFGSEA`
+- fix(core.filters): fix slugified pathway plot file name in report
+- fix(scrna_metabolic_landscape): fix mutaters not working
+- fix(scrna_metabolic_landscape.MetabolicFeatures/MetabolicFeaturesIntraSubset): skip groups with less than 5 cells in `do_one_group` and save a warning file under the case
+- fix(utils.gsea): do not switch 1st and 2nd columns when 2nd column is numeric for `localizeGmtfile`
+- chore: fix typo in class name ExprImpution to ExprImputation
+- choir(tests): remove KEGG_metabolism.gmt for `prep_reference.py`
+- tests(scrna_metabolic_landscape): fix tests
+
 ## 0.27.6
 
 - fix(scrna_metabolic_landscape.MetabolicFeatures): fix return value of groups with less than 5 cells in `do_one_group`

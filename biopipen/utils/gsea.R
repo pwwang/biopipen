@@ -2,11 +2,36 @@ library(ggplot2)
 library(dplyr)
 library(tibble)
 
-.slugify <- function(x, non_alphanum_replace="-", collapse_replace=TRUE, tolower=FALSE) {
-    x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
-    if(collapse_replace) x <- gsub(paste0(non_alphanum_replace, "+"), non_alphanum_replace, x)
-    if(tolower) x <- tolower(x)
-    x
+if (!exists("slugify")) {
+    slugify <- function(x, non_alphanum_replace="-", collapse_replace=TRUE, tolower=FALSE) {
+        subs <- list(
+            "š"="s", "œ"="oe", "ž"="z", "ß"="ss", "þ"="y", "à"="a", "á"="a", "â"="a",
+            "ã"="a", "ä"="a", "å"="a", "æ"="ae", "ç"="c", "è"="e", "é"="e", "ê"="e",
+            "ë"="e", "ì"="i", "í"="i", "î"="i", "ï"="i", "ð"="d", "ñ"="n", "ò"="o",
+            "ó"="o", "ô"="o", "õ"="o", "ö"="o", "ø"="oe", "ù"="u", "ú"="u", "û"="u",
+            "ü"="u", "ý"="y", "ÿ"="y", "ğ"="g", "ı"="i", "ĳ"="ij", "ľ"="l", "ň"="n",
+            "ř"="r", "ş"="s", "ť"="t", "ų"="u", "ů"="u", "ý"="y", "ź"="z", "ż"="z",
+            "ſ"="s", "α"="a", "β"="b", "γ"="g", "δ"="d", "ε"="e", "ζ"="z", "η"="h",
+            "θ"="th", "ι"="i", "κ"="k", "λ"="l", "μ"="m", "ν"="n", "ξ"="x", "ο"="o",
+            "π"="p", "ρ"="r", "σ"="s", "τ"="t", "υ"="u", "φ"="ph", "χ"="ch", "ψ"="ps",
+            "ω"="o", "ά"="a", "έ"="e", "ή"="h", "ί"="i", "ό"="o", "ύ"="u", "ώ"="o",
+            "ϐ"="b", "ϑ"="th", "ϒ"="y", "ϕ"="ph", "ϖ"="p", "Ϛ"="st", "ϛ"="st", "Ϝ"="f",
+            "ϝ"="f", "Ϟ"="k", "ϟ"="k", "Ϡ"="k", "ϡ"="k", "ϰ"="k", "ϱ"="r", "ϲ"="s",
+            "ϳ"="j", "ϴ"="th", "ϵ"="e", "϶"="p"
+        )
+        # replace latin and greek characters to the closest english character
+        for (k in names(subs)) {
+            x <- gsub(k, subs[[k]], x)
+        }
+        x <- gsub("[^[:alnum:]_]", non_alphanum_replace, x)
+        if(collapse_replace) x <- gsub(
+            paste0(gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", non_alphanum_replace), "+"),
+            non_alphanum_replace,
+            x
+        )
+        if(tolower) x <- tolower(x)
+        x
+    }
 }
 
 localizeGmtfile <- function(gmturl, cachedir = tempdir()) {
@@ -25,7 +50,12 @@ localizeGmtfile <- function(gmturl, cachedir = tempdir()) {
         if (nrow(items) == 0) {
             stop(paste0("Empty GMT file: ", gmtfile, ", from ", gmturl))
         }
-        if (nchar(items$V2[1]) < nchar(items$V1[1]) && nchar(items$V2[1]) > 0) {
+        if (
+            is.character(items$V2[1]) &&
+            nchar(items$V2[1]) < nchar(items$V1[1]) &&
+            nchar(items$V2[1]) > 0 &&
+            is.na(suppressWarnings(as.numeric(items$V2[1])))
+        ) {
             warning(paste0(
                 "The second column is shorter, switching the first and second columns in GMT file ",
                 gmtfile,
@@ -153,7 +183,8 @@ runFGSEA = function(
 
     write.table(
         gsea_res %>%
-            mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse=","))),
+            mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse=",")),
+                   slug = sapply(pathway, slugify)),
         file = file.path(outdir, "fgsea.txt"),
         row.names = FALSE,
         col.names = TRUE,
@@ -172,16 +203,16 @@ runFGSEA = function(
 
     tablefig = file.path(outdir, "gsea_table.png")
     png(tablefig, res=100, width=1000, height=200 + 40 * length(topPathways))
-    plotGseaTable(
+    print(plotGseaTable(
         envs$pathways[topPathways],
         ranks,
         gsea_res,
         gseaParam = if (!is.null(envs$gseaParam)) envs$gseaParam else 1
-    )
+    ))
     dev.off()
 
     for (pathway in topPathways) {
-        enrfig = file.path(outdir, paste0("fgsea_", .slugify(pathway), ".png"))
+        enrfig = file.path(outdir, paste0("fgsea_", slugify(pathway), ".png"))
         png(enrfig, res=100, width=1000, height=800)
         print(plotEnrichment(
             envs$pathways[[pathway]],

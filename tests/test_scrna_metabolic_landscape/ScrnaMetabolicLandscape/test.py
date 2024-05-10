@@ -1,4 +1,3 @@
-from pathlib import Path
 from datar.misc import flatten
 
 from biopipen.core.proc import Proc
@@ -7,7 +6,6 @@ from biopipen.core.testing import get_pipeline
 from biopipen.ns.web import Download
 from biopipen.ns.scrna_metabolic_landscape import ScrnaMetabolicLandscape
 
-HERE = Path(__file__).parent.resolve()
 METADATA_URL = (
     "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE123nnn/GSE123813/"
     "suppl/GSE123813_bcc_tcell_metadata.txt.gz"
@@ -44,22 +42,21 @@ class PrepareData(Proc):
 
 
 scrna_ml_pipe = ScrnaMetabolicLandscape(
-    {
-        "is_seurat": True,
-        "gmtfile": HERE.parent.parent / "data/reference/KEGG_metabolism.gmt",
-        "grouping": "seurat_clusters",
-        "grouping_prefix": "Cluster",
-        "subsetting": "timepoint",
-        "subsetting_prefix": "Timepoint",
-        "subsetting_comparison": {"post_vs_pre": ["post", "pre"]},
-        "mutaters": {
-            "timepoint": "treatment"
-        },
-    }
+    is_seurat=True,
+    gmtfile=(
+        "https://raw.githubusercontent.com/pwwang/immunopipe-example/master/data/"
+        "KEGG_metabolism.short.gmt"
+    ),
+    grouping="seurat_clusters",
+    grouping_prefix="Cluster",
+    subsetting="timepoint",
+    subsetting_prefix="Timepoint",
+    subsetting_comparison={"post_vs_pre": ["post", "pre"]},
+    mutaters={"timepoint": "treatment"},
 )
 
 scrna_ml_pipe.procs.MetabolicExprImputation.envs["alra_args"] = {
-    "use.mkl": True,
+    "use.mkl": False,
     "mkl.seed": 8525,
 }
 

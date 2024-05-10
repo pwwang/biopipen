@@ -33,6 +33,7 @@ bQuote <- function(x) {
 }
 
 #' Slugify a string
+#' Remember also update the one in gsea.R
 #' @param x A string
 #' @param non_alphanum_replace Replace non-alphanumeric characters
 #' @param collapse_replace Collapse consecutive non-alphanumeric character replacements

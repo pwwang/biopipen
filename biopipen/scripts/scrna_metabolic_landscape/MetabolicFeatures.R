@@ -50,8 +50,18 @@ do_one_group <- function(obj, features, group, outputdir, h1) {
     classes[classes != group] <- "_REST"
     classes[classes == group] <- groupname
     if (any(table(classes) < 5)) {
-        msg <- paste("Group", group, "has less than 5 cells, or only 5 cells left.")
+        msg <- paste("  Skipped. One of the groups has less than 5 cells.")
         log_warn(msg)
+        # write a warning.txt to odir with the message and table(classes)
+        write(paste0(msg, "\n\n"), file = file.path(odir, "warning.txt"))
+        write.table(
+            table(classes),
+            file = file.path(odir, "warning.txt"),
+            sep = "\t",
+            quote = FALSE,
+            row.names = FALSE,
+            append = TRUE
+        )
         return(
             list(
                 list(kind = "error", content = msg),

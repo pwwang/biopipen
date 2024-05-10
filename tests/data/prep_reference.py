@@ -126,24 +126,24 @@ def download_refgene(genome):
     run_command(["awk", '$3 == "exon"', refgene_file], stdout=refexon_file)
 
 
-@echo("Downloading KEGG_metabolism.gmt")
-def download_kegg_metabolism():
-    """Download KEGG_metabolism.gmt"""
-    outfile = DESTDIR / "KEGG_metabolism.gmt"
-    url = (
-        "https://raw.githubusercontent.com/"
-        "LocasaleLab/Single-Cell-Metabolic-Landscape/"
-        "master/Data/KEGG_metabolism.gmt"
-    )
-    aria2c_args = dict(
-        s=2,
-        x=2,
-        o=outfile.name,
-        d=outfile.parent,
-        _=url,
-    )
-    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
-    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
+# @echo("Downloading KEGG_metabolism.gmt")
+# def download_kegg_metabolism():
+#     """Download KEGG_metabolism.gmt"""
+#     outfile = DESTDIR / "KEGG_metabolism.gmt"
+#     url = (
+#         "https://raw.githubusercontent.com/"
+#         "LocasaleLab/Single-Cell-Metabolic-Landscape/"
+#         "master/Data/KEGG_metabolism.gmt"
+#     )
+#     aria2c_args = dict(
+#         s=2,
+#         x=2,
+#         o=outfile.name,
+#         d=outfile.parent,
+#         _=url,
+#     )
+#     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+#     run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
 @echo("Downloading hg19 reference genome sequences")
@@ -205,6 +205,6 @@ if __name__ == "__main__":
     download_chrsize("hg38")
     download_refgene("hg19")
     download_refgene("hg38")
-    download_kegg_metabolism()
+    # download_kegg_metabolism()
     download_sctype_db()
     download_pbmc_multimodal()
