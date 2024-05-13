@@ -1787,11 +1787,20 @@ class SeuratMap2Ref(Proc):
             `Seurat::LoadH5Seurat()`.
             The file type is determined by the extension. `.rds` or `.RDS` for
             RDS file, `.h5seurat` or `.h5` for h5seurat file.
+        refnorm (choice): Normalization method the reference used. The same method will be used for the query.
+            - NormalizeData: Using [`NormalizeData`](https://satijalab.org/seurat/reference/normalizedata).
+            - SCTransform: Using [`SCTransform`](https://satijalab.org/seurat/reference/sctransform).
+            - auto: Automatically detect the normalization method.
+                If the default assay of reference is `SCT`, then `SCTransform` will be used.
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
             - do-correct-umi (flag): Place corrected UMI matrix in assay counts layer?
             - do-scale (flag): Whether to scale residuals to have unit variance?
             - do-center (flag): Whether to center residuals to have mean zero?
             - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
+                Note that the hyphen (`-`) will be transformed into `.` for the keys.
+        NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata)
+            - normalization-method: Normalization method.
+            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
         FindTransferAnchors (ns): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
             - normalization-method (choice): Name of normalization method used.
@@ -1823,13 +1832,16 @@ class SeuratMap2Ref(Proc):
         "use": None,
         "ident": "seurat_clusters",
         "ref": None,
+        "refnorm": "auto",
         "SCTransform": {
             "do-correct-umi": False,
             "do-scale": False,
             "do-center": True,
         },
+        "NormalizeData": {
+            "normalization-method": "LogNormalize",
+        },
         "FindTransferAnchors": {
-            "normalization-method": "SCT",
             "reference-reduction": "spca",
         },
         "MapQuery": {
