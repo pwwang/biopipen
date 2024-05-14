@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.27.8
+
+- fix(scrna.SeuratClusterStats): fix selected columns not unique for stats
+- feat(scrna.SeuratMap2Ref): allow non-SCTransform'ed reference
+- feat(scrna.SeuratMap2Ref): allow splitting query object for mapping (pwwang/immunopipe#61)
+- deps: update pipen-board to version 0.15.1
+
 ## 0.27.7
 
 - fix(utils.gsea): fix gsea table not being printed for `runFGSEA`
