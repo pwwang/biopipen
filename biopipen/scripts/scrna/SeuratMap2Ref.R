@@ -1,5 +1,6 @@
 source("{{biopipen_dir}}/utils/misc.R")
 
+library(parallel)
 library(Seurat)
 library(SeuratDisk)
 library(rlang)
@@ -12,8 +13,12 @@ outfile = {{out.outfile | r}}
 use = {{envs.use | r}}
 ident = {{envs.ident | r}}
 ref = {{envs.ref | r}}
+refnorm = {{envs.refnorm | r}}
 ncores = {{envs.ncores | r}}
+split_by = {{envs.split_by | r}}
+mutaters = {{envs.mutaters | r}}
 sctransform_args = {{envs.SCTransform | r: todot="-"}}
+normalizedata_args = {{envs.NormalizeData | r: todot="-"}}
 findtransferanchors_args = {{envs.FindTransferAnchors | r: todot="-"}}
 mappingscore_args = {{envs.MappingScore | r: todot="-"}}
 mapquery_args = {{envs.MapQuery | r: todot="-"}}
@@ -34,8 +39,10 @@ if (is.null(mapquery_args$refdata) || length(mapquery_args$refdata) == 0) {
 mapquery_args$refdata[[use]] = use
 
 outdir = dirname(outfile)
-options(future.globals.maxSize = 80000 * 1024^2)
-plan(strategy = "multicore", workers = ncores)
+if (is.null(split_by)) {
+    options(future.globals.maxSize = 80000 * 1024^2)
+    future::plan(strategy = "multicore", workers = ncores)
+}
 
 .expand_dims = function(args, name = "dims") {
     # Expand dims from 30 to 1:30
@@ -56,52 +63,191 @@ if (endsWith(ref, ".rds") || endsWith(ref, ".RDS")) {
     reference = LoadH5Seurat(ref)
 }
 
+if (refnorm == "auto" && DefaultAssay(reference) == "SCT") {
+    refnorm = "SCTransform"
+}
+log_info("  Normalization method used: {refnorm}")
+if (refnorm == "SCTransform") {
+    findtransferanchors_args$normalization.method = "SCT"
+} else if (refnorm == "NormalizeData") {
+    findtransferanchors_args$normalization.method = "LogNormalize"
+} else {
+    stop("Unknown normalization method: {refnorm}")
+}
+
 # Load Seurat object
 log_info("- Loading Seurat object")
 sobj = readRDS(sobjfile)
 
+if (!is.null(mutaters) && length(mutaters) > 0) {
+    log_info("- Applying mutaters")
+    sobj@meta.data <- sobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
+}
+
+if (!is.null(split_by)) {
+    # check if each split has more than 100 cells
+    cellno = table(sobj@meta.data[[split_by]])
+    cellno = cellno[cellno < 100]
+    if (length(cellno) > 0) {
+        # stop and print the splits with # cells
+        stop(paste0(
+            "The following splits have less than 100 cells: \n",
+            paste0("- ", names(cellno), ": ", cellno, collapse = "\n"),
+            "\n\n",
+            "You can use `envs.mutaters` to merge these splits and use `newsplit` as `envs.split_by`: \n",
+            "> mutaters = {\n",
+            ">   newsplit = \"if_else(oldsplit %in% c('split1', 'split2'), 'mergedsplit', oldsplit)\"\n",
+            "> }\n"
+        ))
+    }
+    sobj = SplitObject(sobj, split.by = split_by)
+}
+
 # Normalize data
 log_info("- Normalizing data")
-sctransform_args$object = sobj
-sctransform_args$residual.features = rownames(x = reference)
-query = do_call(SCTransform, sctransform_args)
+if (refnorm == "SCTransform") {
+    log_info("  Using SCTransform normalization")
+    sctransform_args$residual.features = rownames(x = reference)
+    if (is.null(split_by)) {
+        sctransform_args$object = sobj
+        query = do_call(SCTransform, sctransform_args)
+    } else {
+        query = mclapply(
+            X = sobj,
+            FUN = function(x) {
+                sctransform_args$object = x
+                do_call(SCTransform, sctransform_args)
+            },
+            mc.cores = ncores
+        )
+        if (any(unlist(lapply(query, class)) == "try-error")) {
+            stop(paste0("\nmclapply (SCTransform) error:", query))
+        }
+    }
+} else {
+    log_info("  Using NormalizeData normalization")
+    if (is.null(split_by)) {
+        normalizedata_args$object = sobj
+        query = do_call(NormalizeData, normalizedata_args)
+    } else {
+        query = mclapply(
+            X = sobj,
+            FUN = function(x) {
+                normalizedata_args$object = x
+                do_call(NormalizeData, normalizedata_args)
+            },
+            mc.cores = ncores
+        )
+        if (any(unlist(lapply(query, class)) == "try-error")) {
+            stop(paste0("\nmclapply (NormalizeData) error:", query))
+        }
+    }
+}
 
 # Find anchors between query and reference
 log_info("- Finding anchors")
 findtransferanchors_args$reference = reference
-findtransferanchors_args$query = query
-anchors = do_call(FindTransferAnchors, findtransferanchors_args)
+if (is.null(split_by)) {
+    findtransferanchors_args$query = query
+    anchors = do_call(FindTransferAnchors, findtransferanchors_args)
+} else {
+    anchors = mclapply(
+        X = query,
+        FUN = function(x) {
+            findtransferanchors_args$query = x
+            do_call(FindTransferAnchors, findtransferanchors_args)
+        },
+        mc.cores = ncores
+    )
+    if (any(unlist(lapply(anchors, class)) == "try-error")) {
+        stop(paste0("\nmclapply (FindTransferAnchors) error:", anchors))
+    }
+}
 
 # Map query to reference
 log_info("- Mapping query to reference")
 mapquery_args$reference = reference
-mapquery_args$query = query
-mapquery_args$anchorset = anchors
-query = do_call(MapQuery, mapquery_args)
+if (is.null(split_by)) {
+    mapquery_args$query = query
+    mapquery_args$anchorset = anchors
+    query = do_call(MapQuery, mapquery_args)
+} else {
+    query = mclapply(
+        X = seq_along(query),
+        FUN = function(i) {
+            mapquery_args$query = query[[i]]
+            mapquery_args$anchorset = anchors[[i]]
+            do_call(MapQuery, mapquery_args)
+        },
+        mc.cores = ncores
+    )
+    if (any(unlist(lapply(query, class)) == "try-error")) {
+        stop(paste0("\nmclapply (MapQuery) error:", query))
+    }
+}
 
 # Calculating mapping score
 log_info("- Calculating mapping score")
-mappingscore_args$anchors = anchors
-mappingscore = tryCatch({
-    do_call(MappingScore, mappingscore_args)
-}, error = function(e) {
-    if (e$message == "subscript out of bounds") {
-        stop(paste0(
-            "While calculating mapping score, the following error was encountered: \n",
-            "subscript out of bounds.  \n\n",
-            "You may want to try a smaller `ndim` (default: 50) in `envs.MappingScore`."
-        ))
+mappingscore_sob_msg = paste0(
+    "While calculating mapping score, the following error was encountered: \n",
+    "subscript out of bounds.  \n\n",
+    "You may want to try a smaller `ndim` (default: 50) in `envs.MappingScore`."
+)
+if (is.null(split_by)) {
+    mappingscore_args$anchors = anchors
+    mappingscore = tryCatch({
+        do_call(MappingScore, mappingscore_args)
+    }, error = function(e) {
+        if (e$message == "subscript out of bounds") stop(mappingscore_sob_msg)
+        stop(e)
+    })
+} else {
+    mappingscore = mclapply(
+        X = seq_along(query),
+        FUN = function(i) {
+            mappingscore_args$anchors = anchors[[i]]
+            tryCatch({
+                do_call(MappingScore, mappingscore_args)
+            }, error = function(e) {
+                if (e$message == "subscript out of bounds") stop(mappingscore_sob_msg)
+                stop(e)
+            })
+        },
+        mc.cores = ncores
+    )
+    if (any(unlist(lapply(mappingscore, class)) == "try-error")) {
+        stop(paste0("\nmclapply (MappingScore) error:", mappingscore))
     }
-    stop(e)
-})
+}
 
 # Calculate mapping score and add to metadata
-log_info("- Calculating mapping score")
-query = AddMetaData(
-  object = query,
-  metadata = mappingscore,
-  col.name = "mapping.score"
-)
+log_info("- Adding mapping score to metadata")
+if (is.null(split_by)) {
+    query = AddMetaData(
+        object = query,
+        metadata = mappingscore,
+        col.name = "mapping.score"
+    )
+} else {
+    query = mclapply(
+        X = seq_along(query),
+        FUN = function(i) {
+            AddMetaData(
+                object = query[[i]],
+                metadata = mappingscore[[i]],
+                col.name = "mapping.score"
+            )
+        },
+        mc.cores = ncores
+    )
+    if (any(unlist(lapply(query, class)) == "try-error")) {
+        stop(paste0("\nmclapply (AddMetaData) error:", query))
+    }
+
+    # Combine the results
+    log_info("- Merging the results")
+    query = merge(query[[1]], query[2:length(query)], merge.dr = "ref.umap")
+}
 
 # Add the alias to the metadata for the clusters
 log_info("- Adding ident to metadata and set as ident")

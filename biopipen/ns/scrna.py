@@ -1769,13 +1769,18 @@ class SeuratMap2Ref(Proc):
         sobjfile: The seurat object
 
     Output:
-        outfile: The rds file of seurat object with cell type annotated
+        outfile: The rds file of seurat object with cell type annotated.
+            Note that the reduction name will be `ref.umap` for the mapping.
+            To visualize the mapping, you should use `ref.umap` as the reduction name.
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
-            Used in `future::plan(strategy = "multicore", workers = <ncores>)`
+            When `split_by` is used, this will be the number of cores for each object to map to the reference.
+            When `split_by` is not used, this is used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
-            See also: <https://satijalab.org/seurat/articles/future_vignette.html>
+            See also: <https://satijalab.org/seurat/archive/v3.0/future_vignette.html>
+        mutaters (type=json): The mutaters to mutate the metadata.
+            This is helpful when we want to create new columns for `split_by`.
         use: A column name of metadata from the reference
             (e.g. `celltype.l1`, `celltype.l2`) to transfer to the query as the
             cell types (ident) for downstream analysis. This field is required.
@@ -1787,16 +1792,29 @@ class SeuratMap2Ref(Proc):
             `Seurat::LoadH5Seurat()`.
             The file type is determined by the extension. `.rds` or `.RDS` for
             RDS file, `.h5seurat` or `.h5` for h5seurat file.
+        refnorm (choice): Normalization method the reference used. The same method will be used for the query.
+            - NormalizeData: Using [`NormalizeData`](https://satijalab.org/seurat/reference/normalizedata).
+            - SCTransform: Using [`SCTransform`](https://satijalab.org/seurat/reference/sctransform).
+            - auto: Automatically detect the normalization method.
+                If the default assay of reference is `SCT`, then `SCTransform` will be used.
+        split_by: The column name in metadata to split the query into multiple objects.
+            This helps when the original query is too large to process.
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
             - do-correct-umi (flag): Place corrected UMI matrix in assay counts layer?
             - do-scale (flag): Whether to scale residuals to have unit variance?
             - do-center (flag): Whether to center residuals to have mean zero?
             - <more>: See <https://satijalab.org/seurat/reference/sctransform>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
+        NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata)
+            - normalization-method: Normalization method.
+            - <more>: See <https://satijalab.org/seurat/reference/normalizedata>.
+                Note that the hyphen (`-`) will be transformed into `.` for the keys.
         FindTransferAnchors (ns): Arguments for [`FindTransferAnchors()`](https://satijalab.org/seurat/reference/findtransferanchors)
             - normalization-method (choice): Name of normalization method used.
                 - LogNormalize: Log-normalize the data matrix
                 - SCT: Scale data using the SCTransform method
+                - auto: Automatically detect the normalization method.
+                    See `envs.refnorm`.
             - reference-reduction: Name of dimensional reduction to use from the reference if running the pcaproject workflow.
                 Optionally enables reuse of precomputed reference dimensional reduction.
             - <more>: See <https://satijalab.org/seurat/reference/findtransferanchors>.
@@ -1822,14 +1840,19 @@ class SeuratMap2Ref(Proc):
         "ncores": config.misc.ncores,
         "use": None,
         "ident": "seurat_clusters",
+        "mutaters": {},
         "ref": None,
+        "refnorm": "auto",
+        "split_by": None,
         "SCTransform": {
             "do-correct-umi": False,
             "do-scale": False,
             "do-center": True,
         },
+        "NormalizeData": {
+            "normalization-method": "LogNormalize",
+        },
         "FindTransferAnchors": {
-            "normalization-method": "SCT",
             "reference-reduction": "spca",
         },
         "MapQuery": {
