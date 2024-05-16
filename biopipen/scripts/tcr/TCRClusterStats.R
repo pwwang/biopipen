@@ -137,6 +137,26 @@ shared_clusters = function(name) {
         anno = do_call(ComplexHeatmap::HeatmapAnnotation, anno)
     }
 
+    if (!is.null(case$sample_order) && length(case$sample_order) > 0) {
+        if (length(case$sample_order) == 1) {
+            case$sample_order = trimws(strsplit(case$sample_order, ",")[[1]])
+        }
+        nonexisting = setdiff(case$sample_order, samples)
+        if (length(nonexisting) > 0) {
+            stop(paste("  The following samples do not exist in `sample_order`:", paste(nonexisting, collapse=", ")))
+        }
+        plotdata = plotdata[, case$sample_order, drop=FALSE]
+    }
+
+    cluster_rows = case$cluster_rows && nrow(plotdata) > 2
+    col_samples = colnames(plotdata)
+    if (!cluster_rows) {
+        plotdata = plotdata[col_samples, ]
+        row_samples = col_samples
+    } else {
+        row_samples = samples
+    }
+
     # Plot heatmap
     plotHeatmap(
         plotdata,
@@ -144,12 +164,12 @@ shared_clusters = function(name) {
             name = "Shared TCR Clusters",
             col = c("#ffe1e1", "red3"),
             cluster_columns = FALSE,
-            cluster_rows = nrow(plotdata) > 2,
+            cluster_rows = cluster_rows,
             top_annotation = anno,
             cell_fun = if (
                 is.null(case$numbers_on_heatmap) || !case$numbers_on_heatmap
             ) NULL else function(j, i, x, y, width, height, fill) {
-                grid.text(plotdata[samples[i], samples[j]], x, y, gp = gpar(fontsize = 10))
+                grid.text(row_samples[i], col_samples[j], x, y, gp = gpar(fontsize = 10))
             }
         ),
         devpars = case$devpars,

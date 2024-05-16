@@ -1310,6 +1310,10 @@ class TCRClusterStats(Proc):
                 numbers on the heatmap.
             - heatmap_meta (list): The columns of metadata to show on the
                 heatmap.
+            - cluster_rows (flag): Whether to cluster the rows on the heatmap.
+            - sample_order: The order of the samples on the heatmap.
+                Either a string separated by `,` or a list of sample names.
+                This only works for columns if `cluster_rows` is `True`.
             - grouping: The groups to investigate the shared clusters.
                 If specified, venn diagrams will be drawn instead of heatmaps.
                 In such case, `numbers_on_heatmap` and `heatmap_meta` will be
@@ -1373,6 +1377,9 @@ class TCRClusterStats(Proc):
         "shared_clusters": {
             "numbers_on_heatmap": True,
             "heatmap_meta": [],
+            "cluster_rows": True,
+            "sample_order": None,
+            "cluster_rows": True,
             "grouping": None,
             "devpars": {"width": 1000, "height": 1000, "res": 100},
             "cases": {},
