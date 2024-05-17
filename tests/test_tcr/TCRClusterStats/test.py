@@ -48,6 +48,12 @@ class TCRClusterStatsGIANA(TCRClusterStats):
 class TCRClusterStatsClusTCR(TCRClusterStats):
     requires = TCRClusteringClusTCR
     order = 99
+    envs = {
+        "shared_clusters": {
+            "cluster_rows": False,
+            "sample_order": ["MS3", "MS5", "MS1", "MS2"],
+        }
+    }
 
 
 def pipeline():

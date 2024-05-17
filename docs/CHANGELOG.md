@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.27.9
+
+- feat(tcr.TCRClusterStats): add `sample_order` to set sample order on heatmap and `cluster_rows` to switch row clustering on/off
+
 ## 0.27.8
 
 - fix(scrna.SeuratClusterStats): fix selected columns not unique for stats
