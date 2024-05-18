@@ -7,19 +7,12 @@ outfile = {{out.outfile | r}}
 sccatch_args = {{envs.sccatch_args | r}}
 newcol = {{envs.newcol | r}}
 
-if (is.null(sccatch_args$tissue)) { stop("`envs.sccatch_args.tissue` origin of cells must be defined.") }
-if (is.null(sccatch_args$species)) {
-    sccatch_args$species = "Human"
-}
 if (!is.null(sccatch_args$marker)) {
     cellmatch = readRDS(sccatch_args$marker)
     sccatch_args$if_use_custom_marker = TRUE
 }
 sccatch_args$marker = cellmatch
 
-if (is.null(sccatch_args$cancer)) {
-    sccatch_args$cancer = "Normal"
-}
 if (is.integer(sccatch_args$use_method)) {
     sccatch_args$use_method = as.character(sccatch_args$use_method)
 }
@@ -30,6 +23,8 @@ obj = createscCATCH(data = GetAssayData(sobj), cluster = as.character(Idents(sob
 sccatch_args$object = obj
 
 obj = do_call(findmarkergene, sccatch_args)
+obj = findcelltype(object = obj)
+
 write.table(
     obj@celltype,
     file = file.path(dirname(outfile), "cluster2celltype.tsv"),
