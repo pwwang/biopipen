@@ -10,7 +10,7 @@ RUN apt-get update && \
     python3 -m poetry config virtualenvs.create false && \
     python3 -m poetry install -v -E runinfo && \
     pipen report update && \
-    apt-get uninstall -y cargo
+    apt-get remove -y cargo
 
 # Add a user to avoid running as root
 RUN useradd -m -s /bin/bash biopipen
