@@ -5,23 +5,14 @@ from biopipen.utils.misc import run_command
 
 fastqs = {{in.fastqs | repr}}  # pyright: ignore  # noqa
 outdir = {{out.outdir | quote}}  # pyright: ignore
+sample = {{out.outdir | basename | quote}}  # pyright: ignore
 
 cellranger = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
 ref = {{envs.ref | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
 
-{% if "id" in envs -%}
-id = {{envs.id | quote}}  # pyright: ignore
-{%- else -%}
-id = {{out.outdir | basename | quote}}  # pyright: ignore
-{%- endif %}
-
-{% if "sample" in envs -%}
-sample = {{envs.sample | quote}}  # pyright: ignore
-{%- else -%}
-sample = {{out.outdir | basename | quote}}  # pyright: ignore
-{%- endif %}
+id = sample
 
 # create a temporary unique directory to store the soft-linked fastq files
 fastqdir = tmpdir / f"cellranger_count_{uuid.uuid4()}"
@@ -46,7 +37,7 @@ command = [
     "--fastqs",
     fastqdir,
     "--transcriptome",
-    ref,
+    Path(ref).resolve(),
     "--localcores",
     ncores,
     "--disable-ui",

@@ -13,6 +13,8 @@ class CellRangerCount(Proc):
             Either a list of fastq files or a directory containing fastq files
             If a directory is provided, it should be passed as a list with one
             element.
+        sample: The sample name. If not provided, the sample name is inferred
+            from the fastq files.
 
     Output:
         outdir: The output directory
@@ -28,16 +30,20 @@ class CellRangerCount(Proc):
             See `cellranger count --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#count
     """  # noqa: E501
-    input = "fastqs:files"
+    input = "fastqs:files, sample"
     output = """outdir:dir:
         {%- set fastqs = in.fastqs -%}
         {%- if len(fastqs) == 1 and isdir(fastqs[0]) -%}
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
-        {%- set sample = commonprefix(*fastqs) |
-            regex_replace: "_L\\d+_?$", "" |
-            regex_replace: "_S\\d+$", "" -%}
-        {{- sample -}}
+        {%- if in.sample -%}
+            {{in.sample}}
+        {%- else -%}
+            {%- set sample = commonprefix(*fastqs) |
+                regex_replace: "_L\\d+(:?_.*)?$", "" |
+                regex_replace: "_S\\d+$", "" -%}
+            {{- sample -}}
+        {%- endif -%}
     """
     lang = config.lang.python
     envs = {
@@ -64,6 +70,8 @@ class CellRangerVdj(Proc):
             Either a list of fastq files or a directory containing fastq files
             If a directory is provided, it should be passed as a list with one
             element.
+        sample: The sample name. If not provided, the sample name is inferred
+            from the fastq files.
 
     Output:
         outdir: The output directory
@@ -78,16 +86,20 @@ class CellRangerVdj(Proc):
             See `cellranger vdj --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#vdj
     """  # noqa: E501
-    input = "fastqs:files"
+    input = "fastqs:files, sample"
     output = """outdir:dir:
         {%- set fastqs = in.fastqs -%}
         {%- if len(fastqs) == 1 and isdir(fastqs[0]) -%}
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
-        {%- set sample = commonprefix(*fastqs) |
-            regex_replace: "_L\\d+_?$", "" |
-            regex_replace: "_S\\d+$", "" -%}
-        {{- sample -}}
+        {%- if in.sample -%}
+            {{in.sample}}
+        {%- else -%}
+            {%- set sample = commonprefix(*fastqs) |
+                regex_replace: "_L\\d+(:?_.*)?$", "" |
+                regex_replace: "_S\\d+$", "" -%}
+            {{- sample -}}
+        {%- endif -%}
     """
     lang = config.lang.python
     envs = {
