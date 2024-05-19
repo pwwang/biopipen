@@ -29,15 +29,15 @@ do
     fi
 done
 
-echo "+----------------------------------------+"
-echo "| Downloading reference data             |"
-echo "+----------------------------------------+"
-echo ""
-if [[ ! -f $WORKDIR/refdata-gex-GRCh38-2020-A.tar.gz ]]; then
-    wget -q wget https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz -O $WORKDIR/refdata-gex-GRCh38-2020-A.tar.gz
-fi
+# echo "+----------------------------------------+"
+# echo "| Downloading reference data             |"
+# echo "+----------------------------------------+"
+# echo ""
+# if [[ ! -f $WORKDIR/refdata-gex-GRCh38-2020-A.tar.gz ]]; then
+#     wget -q wget https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz -O $WORKDIR/refdata-gex-GRCh38-2020-A.tar.gz
+# fi
 
-echo "+----------------------------------------+"
-echo "| Extracting reference data              |"
-echo "+----------------------------------------+"
-tar -zxvf $WORKDIR/refdata-gex-GRCh38-2020-A.tar.gz -C $WORKDIR/
+# echo "+----------------------------------------+"
+# echo "| Extracting reference data              |"
+# echo "+----------------------------------------+"
+# tar -zxvf $WORKDIR/refdata-gex-GRCh38-2020-A.tar.gz -C $WORKDIR/
