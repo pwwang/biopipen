@@ -3,7 +3,9 @@ FROM nfcore/cellranger:7.2.0
 COPY . /biopipen
 
 WORKDIR /biopipen
-RUN python -m pip install -U poetry && \
+RUN apt update && \
+    apt install -y nodejs && \
+    python -m pip install -U poetry && \
     python -m poetry config virtualenvs.create false && \
     python -m poetry install -v -E runinfo && \
     pipen report update
