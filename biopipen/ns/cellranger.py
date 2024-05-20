@@ -7,6 +7,7 @@ class CellRangerCount(Proc):
     """Run cellranger count
 
     to count gene expression and/or feature barcode reads
+    requires cellranger v7+.
 
     Input:
         fastqs: The input fastq files
@@ -67,7 +68,8 @@ class CellRangerCount(Proc):
 class CellRangerVdj(Proc):
     """Run cellranger vdj
 
-    to perform sequence assembly and paired clonotype calling
+    to perform sequence assembly and paired clonotype calling.
+    requires cellranger v7+.
 
     Input:
         fastqs: The input fastq files

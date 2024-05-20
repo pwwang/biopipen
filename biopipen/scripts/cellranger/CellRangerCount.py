@@ -57,8 +57,8 @@ version = version.replace("cellranger", "").replace("-", "").strip()
 version = list(map(int, version.split(".")))
 if version[0] >= 8:
     command += ["--create-bam", create_bam]
-else:
-    command += ["--no-bam", "false" if create_bam == "true" else "true"]
+elif not create_bam:
+    command += ["--no-bam"]
 
 run_command(command, fg=True, cwd=str(Path(outdir).parent))
 
