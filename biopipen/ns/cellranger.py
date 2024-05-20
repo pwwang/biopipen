@@ -147,4 +147,5 @@ class CellRangerSummary(Proc):
     envs = {"group": None}
     plugin_opts = {
         "report": "file://../reports/cellranger/CellRangerSummary.svelte",
+        "report_paging": 8,
     }
