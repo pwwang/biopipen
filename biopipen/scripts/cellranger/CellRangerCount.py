@@ -5,7 +5,7 @@ from biopipen.utils.misc import run_command
 
 fastqs = {{in.fastqs | repr}}  # pyright: ignore  # noqa
 outdir = {{out.outdir | quote}}  # pyright: ignore
-sample = {{out.outdir | basename | quote}}  # pyright: ignore
+id = {{out.outdir | basename | quote}}  # pyright: ignore
 
 cellranger = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
@@ -16,7 +16,6 @@ create_bam = {{envs.create_bam | repr}}
 
 include_introns = str(include_introns).lower()
 create_bam = str(create_bam).lower()
-id = sample
 
 # create a temporary unique directory to store the soft-linked fastq files
 fastqdir = tmpdir / f"cellranger_count_{uuid.uuid4()}"
@@ -29,15 +28,13 @@ for fastq in fastqs:
     fastq = Path(fastq)
     (fastqdir / fastq.name).symlink_to(fastq)
 
-other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['no_bam', 'create_bam', 'include_introns', 'cellranger', 'transcriptome', 'ref', 'tmpdir', 'id', 'sample', 'ncores']}}  # pyright: ignore
+other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['no_bam', 'create_bam', 'include_introns', 'cellranger', 'transcriptome', 'ref', 'tmpdir', 'id', 'ncores']}}  # pyright: ignore
 
 command = [
     cellranger,
     "count",
     "--id",
     id,
-    "--sample",
-    sample,
     "--fastqs",
     fastqdir,
     "--transcriptome",

@@ -14,7 +14,7 @@ class CellRangerCount(Proc):
             Either a list of fastq files or a directory containing fastq files
             If a directory is provided, it should be passed as a list with one
             element.
-        sample: The sample name. If not provided, the sample name is inferred
+        id: The id defining output directory. If not provided, it is inferred
             from the fastq files.
 
     Output:
@@ -34,19 +34,19 @@ class CellRangerCount(Proc):
             See `cellranger count --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#count
     """  # noqa: E501
-    input = "fastqs:files, sample"
+    input = "fastqs:files, id"
     output = """outdir:dir:
         {%- set fastqs = in.fastqs -%}
         {%- if len(fastqs) == 1 and isdir(fastqs[0]) -%}
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
-        {%- if in.sample -%}
-            {{in.sample}}
+        {%- if in.id -%}
+            {{in.id}}
         {%- else -%}
-            {%- set sample = commonprefix(*fastqs) |
+            {%- set id = commonprefix(*fastqs) |
                 regex_replace: "_L\\d+(:?_.*)?$", "" |
                 regex_replace: "_S\\d+$", "" -%}
-            {{- sample -}}
+            {{- id -}}
         {%- endif -%}
     """
     lang = config.lang.python
@@ -76,7 +76,7 @@ class CellRangerVdj(Proc):
             Either a list of fastq files or a directory containing fastq files
             If a directory is provided, it should be passed as a list with one
             element.
-        sample: The sample name. If not provided, the sample name is inferred
+        id: The id determining the output directory. If not provided, it is inferred
             from the fastq files.
 
     Output:
@@ -92,19 +92,19 @@ class CellRangerVdj(Proc):
             See `cellranger vdj --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#vdj
     """  # noqa: E501
-    input = "fastqs:files, sample"
+    input = "fastqs:files, id"
     output = """outdir:dir:
         {%- set fastqs = in.fastqs -%}
         {%- if len(fastqs) == 1 and isdir(fastqs[0]) -%}
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
-        {%- if in.sample -%}
-            {{in.sample}}
+        {%- if in.id -%}
+            {{in.id}}
         {%- else -%}
-            {%- set sample = commonprefix(*fastqs) |
+            {%- set id = commonprefix(*fastqs) |
                 regex_replace: "_L\\d+(:?_.*)?$", "" |
                 regex_replace: "_S\\d+$", "" -%}
-            {{- sample -}}
+            {{- id -}}
         {%- endif -%}
     """
     lang = config.lang.python
