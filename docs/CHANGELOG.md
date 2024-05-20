@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.28.0
+
+- tests(scrna.CellTypeAnnotation): add tests for `CellTypeAnnotation` using `scCATCH`
+- feat(cellranger_pipeline): add docker image building for cellranger pipeline
+- chore(cellranger.CellRangerCount): add `envs.create_bam` to control whether create bams (supporting cellranger v8)
+- chore(cellranger): add `in.id` to `CellRangerCount` and `CellRangerVdj` to specify sample ids
+- chore(cellranger.CellRangerSummary): set the default value of `report_paging` to 8
+
 ## 0.27.9
 
 - feat(tcr.TCRClusterStats): add `sample_order` to set sample order on heatmap and `cluster_rows` to switch row clustering on/off

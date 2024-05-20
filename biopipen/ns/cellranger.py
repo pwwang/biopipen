@@ -7,12 +7,15 @@ class CellRangerCount(Proc):
     """Run cellranger count
 
     to count gene expression and/or feature barcode reads
+    requires cellranger v7+.
 
     Input:
         fastqs: The input fastq files
             Either a list of fastq files or a directory containing fastq files
             If a directory is provided, it should be passed as a list with one
             element.
+        id: The id defining output directory. If not provided, it is inferred
+            from the fastq files.
 
     Output:
         outdir: The output directory
@@ -23,21 +26,28 @@ class CellRangerCount(Proc):
         ref: Path of folder containing 10x-compatible transcriptome reference
         tmpdir: Path to temporary directory, used to save the soft-lined fastq files
             to pass to cellranger
-        include_introns: Set to false to exclude intronic reads in count.
+        include_introns (flag): Set to false to exclude intronic reads in count.
+        create_bam (flag): Enable or disable BAM file generation.
+            This is required by cellrange v8+. When using cellrange v8-, it will be
+            transformed to `--no-bam`.
         <more>: Other environment variables required by `cellranger count`
             See `cellranger count --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#count
     """  # noqa: E501
-    input = "fastqs:files"
+    input = "fastqs:files, id"
     output = """outdir:dir:
         {%- set fastqs = in.fastqs -%}
         {%- if len(fastqs) == 1 and isdir(fastqs[0]) -%}
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
-        {%- set sample = commonprefix(*fastqs) |
-            regex_replace: "_L\\d+_?$", "" |
-            regex_replace: "_S\\d+$", "" -%}
-        {{- sample -}}
+        {%- if in.id -%}
+            {{in.id}}
+        {%- else -%}
+            {%- set id = commonprefix(*fastqs) |
+                regex_replace: "_L\\d+(:?_.*)?$", "" |
+                regex_replace: "_S\\d+$", "" -%}
+            {{- id -}}
+        {%- endif -%}
     """
     lang = config.lang.python
     envs = {
@@ -45,7 +55,8 @@ class CellRangerCount(Proc):
         "cellranger": config.exe.cellranger,
         "ref": config.ref.ref_cellranger_gex,
         "tmpdir": config.path.tmpdir,
-        "include_introns": "true",
+        "include_introns": True,
+        "create_bam": False,
     }
     script = "file://../scripts/cellranger/CellRangerCount.py"
     plugin_opts = {
@@ -57,13 +68,16 @@ class CellRangerCount(Proc):
 class CellRangerVdj(Proc):
     """Run cellranger vdj
 
-    to perform sequence assembly and paired clonotype calling
+    to perform sequence assembly and paired clonotype calling.
+    requires cellranger v7+.
 
     Input:
         fastqs: The input fastq files
             Either a list of fastq files or a directory containing fastq files
             If a directory is provided, it should be passed as a list with one
             element.
+        id: The id determining the output directory. If not provided, it is inferred
+            from the fastq files.
 
     Output:
         outdir: The output directory
@@ -78,16 +92,20 @@ class CellRangerVdj(Proc):
             See `cellranger vdj --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#vdj
     """  # noqa: E501
-    input = "fastqs:files"
+    input = "fastqs:files, id"
     output = """outdir:dir:
         {%- set fastqs = in.fastqs -%}
         {%- if len(fastqs) == 1 and isdir(fastqs[0]) -%}
             {%- set fastqs = fastqs[0] | glob: "*.fastq.gz" -%}
         {%- endif -%}
-        {%- set sample = commonprefix(*fastqs) |
-            regex_replace: "_L\\d+_?$", "" |
-            regex_replace: "_S\\d+$", "" -%}
-        {{- sample -}}
+        {%- if in.id -%}
+            {{in.id}}
+        {%- else -%}
+            {%- set id = commonprefix(*fastqs) |
+                regex_replace: "_L\\d+(:?_.*)?$", "" |
+                regex_replace: "_S\\d+$", "" -%}
+            {{- id -}}
+        {%- endif -%}
     """
     lang = config.lang.python
     envs = {
@@ -129,4 +147,5 @@ class CellRangerSummary(Proc):
     envs = {"group": None}
     plugin_opts = {
         "report": "file://../reports/cellranger/CellRangerSummary.svelte",
+        "report_paging": 8,
     }

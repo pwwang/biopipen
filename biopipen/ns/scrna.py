@@ -1689,11 +1689,11 @@ class CellTypeAnnotation(Proc):
             ///
 
         sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
-            - species (choice): The specie of cells.
-                - Human: Human cells.
-                - Mouse: Mouse cells.
+            - species: The specie of cells.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
             - tissue: Tissue origin of cells must be defined.
+            - marker: The marker genes for cell type identification.
+            - if_use_custom_marker (flag): Whether to use custom marker genes. If `True`, no `species`, `cancer`, and `tissue` are needed.
             - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
                 You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
@@ -1743,7 +1743,13 @@ class CellTypeAnnotation(Proc):
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
         "cell_types": [],
-        "sccatch_args": {},
+        "sccatch_args": {
+            "species": None,
+            "cancer": "Normal",
+            "tissue": None,
+            "marker": None,
+            "if_use_custom_marker": False,
+        },
         "hitype_tissue": None,
         "hitype_db": None,
         "celltypist_args": {

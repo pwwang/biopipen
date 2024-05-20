@@ -5,23 +5,12 @@ from biopipen.utils.misc import run_command
 
 fastqs = {{in.fastqs | repr}}  # pyright: ignore  # noqa
 outdir = {{out.outdir | quote}}  # pyright: ignore
+id = {{out.outdir | basename | quote}}  # pyright: ignore
 
 cellranger = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
 ref = {{envs.ref | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
-
-{% if "id" in envs -%}
-id = {{envs.id | quote}}  # pyright: ignore
-{%- else -%}
-id = {{out.outdir | basename | quote}}  # pyright: ignore
-{%- endif %}
-
-{% if "sample" in envs -%}
-sample = {{envs.sample | quote}}  # pyright: ignore
-{%- else -%}
-sample = {{out.outdir | basename | quote}}  # pyright: ignore
-{%- endif %}
 
 # create a temporary unique directory to store the soft-linked fastq files
 fastqdir = tmpdir / f"cellranger_count_{uuid.uuid4()}"
@@ -34,19 +23,17 @@ for fastq in fastqs:
     fastq = Path(fastq)
     (fastqdir / fastq.name).symlink_to(fastq)
 
-other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['cellranger', 'reference', 'ref', 'tmpdir', 'id', 'sample', 'ncores']}}  # pyright: ignore
+other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['cellranger', 'reference', 'ref', 'tmpdir', 'id', 'ncores']}}  # pyright: ignore
 
 command = [
     cellranger,
     "vdj",
     "--id",
     id,
-    "--sample",
-    sample,
     "--fastqs",
     fastqdir,
     "--reference",
-    ref,
+    Path(ref).resolve(),
     "--localcores",
     ncores,
     "--disable-ui",
@@ -68,7 +55,7 @@ print("# Modify web_summary.html to move javascript to a separate file")
 try:
     web_summary_js = Path(outdir) / "outs" / "web_summary.js"
     web_summary_content = web_summary_html.read_text()
-    regex = re.compile(r"<script>(?=/\*! For license)(.+)</script>", re.DOTALL)
+    regex = re.compile(r"<script>(.+)</script>", re.DOTALL)
     web_summary_html.write_text(regex.sub(
         '<script src="web_summary.js"></script>',
         web_summary_content,
