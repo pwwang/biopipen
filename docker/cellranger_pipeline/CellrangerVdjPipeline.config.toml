@@ -1,0 +1,30 @@
+
+[plugin_opts]
+report_no_collapse_pgs=true
+
+[CellRangerVdjPipeline]
+input=[
+    # [
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L001_I1_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L001_I2_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L001_R1_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L001_R2_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L002_I1_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L002_I2_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L002_R1_001.fastq.gz",
+    #     "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_5gex_fastqs/sc5p_v2_hs_B_1k_5gex_S1_L002_R2_001.fastq.gz",
+    # ],
+    [
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L001_I1_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L001_I2_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L001_R1_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L001_R2_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L002_I1_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L002_I2_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L002_R1_001.fastq.gz",
+        "example-data/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs/sc5p_v2_hs_B_1k_b_fastqs/sc5p_v2_hs_B_1k_b_S1_L002_R2_001.fastq.gz",
+    ],
+]
+
+[CellRangerCount.envs]
+ref="example-data/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0"

@@ -1,9 +1,9 @@
 
 [plugin_opts]
-report_no_collapse_pgs = true
+report_no_collapse_pgs=true
 
 [CellRangerCountPipeline]
-input = [
+input=[
     [
         "example-data/Sample_X_S1_L001_R1_001.fastq.gz",
         "example-data/Sample_X_S1_L001_R2_001.fastq.gz",
@@ -13,8 +13,9 @@ input = [
         "example-data/Sample_Y_S1_L001_R2_001.fastq.gz",
         "example-data/Sample_Y_S1_L002_R1_001.fastq.gz",
         "example-data/Sample_Y_S1_L002_R2_001.fastq.gz",
-    ]
+    ],
 ]
+ids = ["SampleX", "SampleY"]
 
 [CellRangerCount.envs]
-ref = "example-data/refdata-gex-GRCh38-2020-A"
+ref="example-data/refdata-gex-GRCh38-2020-A"
