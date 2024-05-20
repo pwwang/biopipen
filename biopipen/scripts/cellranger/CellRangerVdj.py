@@ -55,7 +55,7 @@ print("# Modify web_summary.html to move javascript to a separate file")
 try:
     web_summary_js = Path(outdir) / "outs" / "web_summary.js"
     web_summary_content = web_summary_html.read_text()
-    regex = re.compile(r"<script>(?=/\*! For license)(.+)</script>", re.DOTALL)
+    regex = re.compile(r"<script>(.+)</script>", re.DOTALL)
     web_summary_html.write_text(regex.sub(
         '<script src="web_summary.js"></script>',
         web_summary_content,
