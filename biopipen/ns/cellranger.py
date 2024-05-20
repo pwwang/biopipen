@@ -25,7 +25,10 @@ class CellRangerCount(Proc):
         ref: Path of folder containing 10x-compatible transcriptome reference
         tmpdir: Path to temporary directory, used to save the soft-lined fastq files
             to pass to cellranger
-        include_introns: Set to false to exclude intronic reads in count.
+        include_introns (flag): Set to false to exclude intronic reads in count.
+        create_bam (flag): Enable or disable BAM file generation.
+            This is required by cellrange v8+. When using cellrange v8-, it will be
+            transformed to `--no-bam`.
         <more>: Other environment variables required by `cellranger count`
             See `cellranger count --help` for more details or
             https://www.10xgenomics.com/support/software/cell-ranger/advanced/cr-command-line-arguments#count
@@ -51,7 +54,8 @@ class CellRangerCount(Proc):
         "cellranger": config.exe.cellranger,
         "ref": config.ref.ref_cellranger_gex,
         "tmpdir": config.path.tmpdir,
-        "include_introns": "true",
+        "include_introns": True,
+        "create_bam": False,
     }
     script = "file://../scripts/cellranger/CellRangerCount.py"
     plugin_opts = {

@@ -11,7 +11,11 @@ cellranger = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
 ref = {{envs.ref | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
+include_introns = {{envs.include_introns | repr}}
+create_bam = {{envs.create_bam | repr}}
 
+include_introns = str(include_introns).lower()
+create_bam = str(create_bam).lower()
 id = sample
 
 # create a temporary unique directory to store the soft-linked fastq files
@@ -25,7 +29,7 @@ for fastq in fastqs:
     fastq = Path(fastq)
     (fastqdir / fastq.name).symlink_to(fastq)
 
-other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['cellranger', 'transcriptome', 'ref', 'tmpdir', 'id', 'sample', 'ncores']}}  # pyright: ignore
+other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['no_bam', 'create_bam', 'include_introns', 'cellranger', 'transcriptome', 'ref', 'tmpdir', 'id', 'sample', 'ncores']}}  # pyright: ignore
 
 command = [
     cellranger,
@@ -41,8 +45,20 @@ command = [
     "--localcores",
     ncores,
     "--disable-ui",
+    "--include-introns",
+    include_introns,
     *other_args,
 ]
+
+# check cellranger version
+#   cellranger cellranger-7.2.0
+version = run_command([cellranger, "--version"], stdout = "RETURN")
+version = version.replace("cellranger", "").replace("-", "").strip()
+version = list(map(int, version.split(".")))
+if version[0] >= 8:
+    command += ["--create-bam", create_bam]
+else:
+    command += ["--no-bam", "false" if create_bam == "true" else "true"]
 
 run_command(command, fg=True, cwd=str(Path(outdir).parent))
 
@@ -59,7 +75,7 @@ print("# Modify web_summary.html to move javascript to a separate file")
 try:
     web_summary_js = Path(outdir) / "outs" / "web_summary.js"
     web_summary_content = web_summary_html.read_text()
-    regex = re.compile(r"<script>(?=/\*! For license)(.+)</script>", re.DOTALL)
+    regex = re.compile(r"<script>(.+)</script>", re.DOTALL)
     web_summary_html.write_text(regex.sub(
         '<script src="web_summary.js"></script>',
         web_summary_content,
