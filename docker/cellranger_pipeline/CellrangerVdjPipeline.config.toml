@@ -26,5 +26,5 @@ input=[
     ],
 ]
 
-[CellRangerCount.envs]
+[CellRangerVdj.envs]
 ref="example-data/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0"
