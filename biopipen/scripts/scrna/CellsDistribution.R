@@ -360,6 +360,7 @@ do_case <- function(name, case) {
     }
 
     log_info("  Merging and saving pie charts ...")
+    devpars = case$devpars
     # assemble and save pie chart plots
     res <- devpars$res %||% 100
     #                         legend, cells_by names
@@ -405,6 +406,7 @@ do_case <- function(name, case) {
     }
 
     col_fun <- colorRamp2(c(0, max(hmdata, na.rm = T)), c("lightyellow", "purple"))
+    hm_devpars <- case$hm_devpars
     hm_res <- hm_devpars$res %||% 100
     hm_width <- hm_devpars$width %||% (600 + 15 * length(unique(meta$seurat_clusters)) + extra_width)
     hm_height <- hm_devpars$height %||% (450 + 15 * cells_rows + extra_height)

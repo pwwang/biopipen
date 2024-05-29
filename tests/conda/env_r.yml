@@ -50,6 +50,7 @@ dependencies:
   - r-seuratwrappers
   - r-plotroc
   - r-bracer
+  - r-sccatch
   - r-harmony=1.2.0  # avoid v0.1 on bioconda
   - bioconductor-complexheatmap
   - bioconductor-fgsea

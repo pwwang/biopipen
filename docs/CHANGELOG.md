@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.28.1
+
+- fix(scrna.CellsDistribution): fix `devpars` and `hm_devpars` not working
+
 ## 0.28.0
 
 - tests(scrna.CellTypeAnnotation): add tests for `CellTypeAnnotation` using `scCATCH`
