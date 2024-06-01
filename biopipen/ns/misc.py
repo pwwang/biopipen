@@ -80,7 +80,7 @@ class Str2File(Proc):
         name: The name of the output file
     """
     input = "str, name"
-    output = "outfile:file:{{in.name}}"
+    output = "outfile:file:{{in.name | default: 'unnamed.txt'}}"
     lang = config.lang.python
     envs = {"name": None}
     script = "file://../scripts/misc/Str2File.py"
