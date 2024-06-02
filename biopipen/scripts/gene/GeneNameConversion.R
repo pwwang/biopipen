@@ -15,10 +15,6 @@ if (is.na(notfound)) {
     notfound = "na"
 }
 
-if ((output == "append" || output == "replace") && (notfound == "skip" || notfound == "ignore")) {
-    stop("When output is 'append' or 'replace', notfound cannot be 'skip' or 'ignore'.")
-}
-
 df <- read.table(infile, header=TRUE, sep="\t", check.names=FALSE)
 
 if (genecol == 0) {
@@ -47,6 +43,10 @@ converted <- gene_name_conversion(
 # order the converted dataframe by the original gene column
 converted <- converted[order(match(converted$query, genes)), , drop=FALSE]
 outcol <- outfmt
+
+if (notfound == "skip" || notfound == "ignore") {
+    df <- df[df[[genecol]] %in% converted$query, , drop=FALSE]
+}
 
 if (output == "append") {
     if (outfmt %in% colnames(df)) {

@@ -27,8 +27,6 @@ class GeneNameConversion(Proc):
             combine: Combine all names using `;` as separator
         genecol: The index (1-based) or name of the column where genes are present
         output (choice): How to output.
-            Note that when it is `append` or `replace`, `envs.notfound` can't be
-            `skip` or `ignore`.
             append: Add the converted names as new columns at the end using `envs.outfmt`
                 as the column name.
             replace: Drop the original name column, and insert
