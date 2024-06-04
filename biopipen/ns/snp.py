@@ -93,10 +93,10 @@ class MatrixEQTL(Proc):
 
     Envs:
         model (choice): The model to use.
-            - `linear`: Linear model
-            - `modelLINEAR`: Same as `linear`
-            - `anova`: ANOVA model
-            - `modelANOVA`: Same as `anova`
+            - linear: Linear model
+            - modelLINEAR: Same as `linear`
+            - anova: ANOVA model
+            - modelANOVA: Same as `anova`
         pval (type=float): P-value threshold for eQTLs
         transp (type=float): P-value threshold for trans-eQTLs.
             If cis-eQTLs are not enabled (`snppos` and `genepos` are not set),

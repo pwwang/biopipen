@@ -29,6 +29,8 @@ wget = "wget"
 aria2c = "aria2c"
 # plink
 plink = "plink"
+# plink2
+plink2 = "plink2"
 # tabix
 tabix = "tabix"
 # sambamba
