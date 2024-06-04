@@ -33,14 +33,25 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
         index file in the same directory
     """
     if tmpdir is None:
-        tmpdir = Path(tempfile.mkdtemp(prefix="biopipen_tabix_index_"))
+        from hashlib import md5
+        # use a hash of infile to create the tempdir
+        tmpdir = Path(tempfile.gettempdir()).joinpath(
+            f"biopipen_tabix_index_{md5(str(infile).encode()).hexdigest()}"
+        )
     else:
         tmpdir = Path(tmpdir)
 
+    tmpdir.mkdir(exist_ok=True, parents=True)
+
     infile = Path(infile)
     gt = gztype(infile)
-
-    if gt == "bgzip" and infile.with_suffix(infile.suffix + ".tbi").is_file():
+    index_file = infile.with_suffix(infile.suffix + ".tbi")
+    # if index file exists, and it's newer than the infile, return infile
+    if (
+        gt == "bgzip"
+        and index_file.is_file()
+        and index_file.stat().st_mtime > infile.resolve().stat().st_mtime
+    ):
         # only bgzipped file is possible to have index file
         return infile
 
@@ -59,8 +70,17 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
     elif gt == "flat":
         run_command(["bgzip", "-c", infile], stdout=new_infile)
     else:
+        if new_infile.is_symlink():
+            new_infile.unlink()
         # directory of infile may not have write permission
         new_infile.symlink_to(infile)
+
+    new_index_file = new_infile.with_suffix(new_infile.suffix + ".tbi")
+    if (
+        new_index_file.is_file()
+        and new_index_file.stat().st_mtime > infile.resolve().stat().st_mtime
+    ):
+        return new_infile
 
     run_command([tabix, "-p", preset, new_infile], fg=True)
     return new_infile
