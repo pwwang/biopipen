@@ -13,6 +13,7 @@ dependencies:
   - poetry
   - nodejs  # for pipen-report
   - curl
+  - plink
   - samtools
   # - r-slugify
   - r-logger
