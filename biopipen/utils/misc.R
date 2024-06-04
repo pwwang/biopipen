@@ -346,3 +346,25 @@ casename_info <- function(
     }
     out
 }
+
+run_command <- function(
+    cmd,
+    wait = TRUE,
+    print_command = TRUE,
+    print_command_handler = message
+) {
+    if (length(cmd) > 1) {
+        cmd <- paste(cmd, collapse = " ")
+    }
+
+    if (print_command) {
+        message("RUNNING COMMAND:")
+        message(paste("  ", cmd))
+    }
+
+    if (wait) {
+        system(cmd, intern = TRUE, wait = FALSE)
+    } else {
+        system(cmd, intern = FALSE, wait = TRUE)
+    }
+}
