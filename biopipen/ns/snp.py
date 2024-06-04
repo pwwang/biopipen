@@ -262,3 +262,62 @@ class Plink2GTMat(Proc):
     script = "file://../scripts/snp/Plink2GTMat.py"
 
 
+class PlinkIBD(Proc):
+    """Run PLINK IBD analysis (identity by descent)
+
+    See also <https://www.cog-genomics.org/plink/1.9/ibd>
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Output:
+        outdir: Output file containing the IBD results.
+            Including [`.genome`](https://www.cog-genomics.org/plink/1.9/formats#genome)
+            file for the original IBD report from PLINK, and `.ibd.png` for the
+            heatmap of `PI_HAT` values.
+
+    Envs:
+        plink: Path to PLINK v1.9
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        highld: High LD regions to be excluded from the analysis.
+            If not set, no regions will be excluded.
+        samid: what to use as sample ID.
+            Placeholders include `{fid}` and `{iid}` for family and individual IDs,
+            respectively
+        indep (type=auto): LD pruning parameters. Either a list of numerics or a string
+            concatenated by `,` to specify
+            1) consider a window of N SNPs (e.g. 50),
+            2) calculate LD between each pair of SNPs in the window (e.g. 5),
+            3) remove one of a pair of SNPs if the LD is greater than X (e.g. 0.2).
+        pihat (type=float): PI_HAT threshold for IBD analysis.
+            See also <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007749/>
+        plot (flag): If set, plot the heatmap of `PI_HAT` values.
+        anno: The annotation file for the samples, used to plot on the heatmap.
+            Names must match the ones that are transformed by `args.samid`.
+        seed (type=int): Random seed for the analysis.
+        devpars (ns): The device parameters for the plot.
+            - width (type=int): Width of the plot
+            - height (type=int): Height of the plot
+            - res (type=int): Resolution of the plot
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}.ibd"
+    lang = config.lang.rscript
+    envs = {
+        "plink": config.exe.plink,
+        "ncores": config.misc.ncores,
+        "highld": None,
+        "samid": "{fid}_{iid}",
+        "indep": [50, 5, 0.2],
+        "pihat": 0.1875,
+        "plot": True,
+        "anno": None,
+        "seed": 8525,
+        "devpars": {"width": 1000, "height": 1000, "res": 100},
+    }
+    script = "file://../scripts/snp/PlinkIBD.R"
+    plugin_opts = {"report": "file://../reports/snp/PlinkIBD.svelte"}
+
+
