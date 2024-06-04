@@ -409,3 +409,50 @@ class PlinkHet(Proc):
     plugin_opts = {"report": "file://../reports/snp/PlinkHet.svelte"}
 
 
+class PlinkCallRate(Proc):
+    """Calculation of call rate for the samples and variants.
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Output:
+        outdir: Output file containing the call rate results.
+            Including [`.imiss`](https://www.cog-genomics.org/plink/1.9/formats#imiss)
+            file for missing calls for samples,
+            [`.lmiss`](https://www.cog-genomics.org/plink/1.9/formats#lmiss) for
+            missing calls for variants, `.samplecr.fail` for the samples fail
+            sample call rate cutoff (`args.samplecr`), and `.varcr.fail` for the SNPs
+            fail snp call rate cutoff (`args.varcr`).
+            It also includes binary files `.bed`, `.bim`, and `.fam`.
+
+    Envs:
+        plink: Path to PLINK v1.9
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        samplecr (type=float): Sample call rate cutoff
+        varcr (type=float): Variant call rate cutoff
+        max_iter (type=int): Maximum number of iterations to run the call rate
+            calculation.
+            Since the sample and variant call rates are affected by each other,
+            it may be necessary to iterate the calculation to get the stable results.
+        plot (flag): If set, plot the distribution of call rates.
+        devpars (ns): The device parameters for the plot.
+            - width (type=int): Width of the plot
+            - height (type=int): Height of the plot
+            - res (type=int): Resolution of the plot
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}.callrate"
+    lang = config.lang.rscript
+    envs = {
+        "plink": config.exe.plink,
+        "ncores": config.misc.ncores,
+        "samplecr": 0.95,
+        "varcr": 0.95,
+        "max_iter": 3,
+        "plot": True,
+        "devpars": {"width": 1000, "height": 800, "res": 100},
+    }
+    script = "file://../scripts/snp/PlinkCallRate.R"
+    plugin_opts = {"report": "file://../reports/snp/PlinkCallRate.svelte"}
