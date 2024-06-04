@@ -136,3 +136,79 @@ class MatrixEQTL(Proc):
         "transpose_cov": False,
     }
     script = "file://../scripts/snp/MatrixEQTL.R"
+
+
+class PlinkFromVcf(Proc):
+    """Convert VCF to PLINK format.
+
+    The PLINK format consists of 3 files: `.bed`, `.bim`, and `.fam`.
+
+    Requires PLINK v1.9
+
+    "--keep-allele-order" is used to keep the allele order consistent with the
+    reference allele first.
+
+    Input:
+        invcf: VCF file
+
+    Output:
+        outdir: Output directory containing the PLINK files
+
+    Envs:
+        plink: Path to PLINK v1.9
+        tabix: Path to tabix
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        vcf_half_call (choice): The current VCF standard does not specify
+            how '0/.' and similar GT values should be interpreted.
+            - error: error out and reports the line number of the anomaly
+            - e: alias for `error`
+            - haploid: treat half-calls as haploid/homozygous
+            - h: alias for `haploid`
+            - missing: treat half-calls as missing
+            - m: alias for `missing`
+            - reference: treat the missing part as reference
+            - r: alias for `reference`
+        double_id (flag): set both FIDs and IIDs to the VCF/BCF sample ID.
+        vcf_filter (auto): skip variants which failed one or more filters tracked
+            by the FILTER field.
+            If True, only FILTER with `PASS` or `.` will be kept.
+            Multiple filters can be specified by separating them with space or
+            as a list.
+        vcf_idspace_to: convert all spaces in sample IDs to this character.
+        set_missing_var_ids: update variant IDs using a template string,
+            with a '@' where the chromosome code should go, and a '#' where the
+            base-pair position belongs.
+            If `$1`, `$2` ... included, this will run a extra process to set the
+            var ids first since plink 1.x doesn't specify `$1` as ref, but
+            the first one of all alleles in ASCII-sort order.
+            Here `$1` will be bound to reference allele.
+            bcftools will be used to set the var ids by replacing `@` with `%CHROM`,
+            `#` with `%POS`, and `$1`, `$2`, ... with `%REF`, `%ALT{0}`, ...
+            Or you can directly use [bcftools expressions](https://samtools.github.io/bcftools/bcftools.html#query).
+        biallelic_only (choice): How to handle multi-allelic sites.
+            - true: simply skip all variants where at least two alternate alleles
+                are present in the dataset.
+            - strict: indiscriminately skip variants with 2+ alternate alleles
+                listed even when only one alternate allele actually shows up.
+            - list: dump a list of skipped variant IDs to plink.skip.3allele.
+        <more>: see <https://www.cog-genomics.org/plink/1.9/> for more options.
+            Note that `_` will be replaced by `-` in the argument names.
+    """  # noqa: E501
+    input = "invcf:file"
+    output = "outdir:dir:{{in.invcf | regex_replace: '\\.gz$', '' | stem}}"
+    lang = config.lang.python
+    envs = {
+        "plink": config.exe.plink,
+        "tabix": config.exe.tabix,
+        "ncores": config.misc.ncores,
+        "vcf_half_call": "missing",
+        "double_id": True,
+        "vcf_filter": True,
+        "vcf_idspace_to": "_",
+        "set_missing_var_ids": "@_#",
+        "biallelic_only": "strict",
+    }
+    script = "file://../scripts/snp/PlinkFromVcf.py"
+
+
