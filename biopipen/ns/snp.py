@@ -364,3 +364,48 @@ class PlinkHWE(Proc):
     script = "file://../scripts/snp/PlinkHWE.R"
     plugin_opts = {"report": "file://../reports/snp/PlinkHWE.svelte"}
 
+
+class PlinkHet(Proc):
+    """Calculation of sample heterozygosity.
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Output:
+        outdir: Output file containing the heterozygosity results.
+            Including [`.het`](https://www.cog-genomics.org/plink/1.9/formats#het)
+            file for the original heterozygosity report from PLINK and
+            `.het.fail` for the samples that failed the heterozygosity test.
+            It also includes binary files `.bed`, `.bim`, and `.fam` if `envs.filter`
+            is `True`.
+
+    Envs:
+        plink: Path to PLINK v1.9
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        cutoff (type=float): Heterozygosity cutoff, samples with heterozygosity
+            beyond `mean - cutoff * sd` or `mean + cutoff * sd` will be considered
+            as outliers.
+        filter (flag): If set, filter the samples that failed the heterozygosity test.
+        plot (flag): If set, plot the distribution of heterozygosity values.
+        devpars (ns): The device parameters for the plot.
+            - width (type=int): Width of the plot
+            - height (type=int): Height of the plot
+            - res (type=int): Resolution of the plot
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}.het"
+    lang = config.lang.rscript
+    envs = {
+        "plink": config.exe.plink,
+        "ncores": config.misc.ncores,
+        "cutoff": 3.0,
+        "filter": False,
+        "plot": True,
+        "devpars": {"width": 1000, "height": 800, "res": 100},
+    }
+    script = "file://../scripts/snp/PlinkHet.R"
+    plugin_opts = {"report": "file://../reports/snp/PlinkHet.svelte"}
+
+
