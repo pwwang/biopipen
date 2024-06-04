@@ -50,7 +50,8 @@ class PlinkCallRate1(PlinkCallRate_):
 
 def pipeline():
     return (
-        get_pipeline(__file__, plugins=["+report"])
+        # get_pipeline(__file__, plugins=["+report"])
+        get_pipeline(__file__)
         .set_starts(File2Proc)
         .set_data([Path(__file__).parent / "data" / "sample.vcf.gz"])
     )
