@@ -68,6 +68,9 @@ def run_command(
             print_command_handler(f"  {cmd}")
         else:
             print_command_handler(f"  {shlex.join(cmd)}")
+        # flush the output if print_command_handler is print
+        if print_command_handler is print:
+            sys.stdout.flush()
 
     if isinstance(cmd, str):
         kwargs["shell"] = True
