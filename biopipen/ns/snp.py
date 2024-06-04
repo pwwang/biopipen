@@ -321,3 +321,46 @@ class PlinkIBD(Proc):
     plugin_opts = {"report": "file://../reports/snp/PlinkIBD.svelte"}
 
 
+class PlinkHWE(Proc):
+    """Hardy-Weinberg Equilibrium report and filtering
+
+    See also <https://www.cog-genomics.org/plink/1.9/basic_stats#hardy>
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Output:
+        outdir: Output file containing the HWE results.
+            Including [`.hwe`](https://www.cog-genomics.org/plink/1.9/formats#hwe)
+            file for the original HWE report from PLINK and
+            `.hardy.fail` for the variants that failed the HWE test.
+            It also includes binary files `.bed`, `.bim`, and `.fam` if `envs.filter`
+            is `True`.
+
+    Envs:
+        plink: Path to PLINK v1.9
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        cutoff (type=float): P-value cutoff for HWE test
+        filter (flag): If set, filter the variants that failed the HWE test.
+        plot (flag): If set, plot the distribution of HWE p-values.
+        devpars (ns): The device parameters for the plot.
+            - width (type=int): Width of the plot
+            - height (type=int): Height of the plot
+            - res (type=int): Resolution of the plot
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}.hwe"
+    lang = config.lang.rscript
+    envs = {
+        "plink": config.exe.plink,
+        "ncores": config.misc.ncores,
+        "cutoff": 1e-5,
+        "filter": False,
+        "plot": True,
+        "devpars": {"width": 1000, "height": 800, "res": 100},
+    }
+    script = "file://../scripts/snp/PlinkHWE.R"
+    plugin_opts = {"report": "file://../reports/snp/PlinkHWE.svelte"}
+
