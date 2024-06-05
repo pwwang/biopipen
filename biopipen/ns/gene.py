@@ -16,23 +16,23 @@ class GeneNameConversion(Proc):
 
     Envs:
         notfound (choice): What to do if a conversion cannot be done.
-            use-query: Ignore the conversion and use the original name
-            skip: Ignore the conversion and skip the entire row in input file
-            ignore: Same as skip
-            error: Report error
-            na: Use NA
+            - use-query: Ignore the conversion and use the original name
+            - skip: Ignore the conversion and skip the entire row in input file
+            - ignore: Same as skip
+            - error: Report error
+            - na: Use NA
         dup (choice): What to do if a conversion results in multiple names.
-            first: Use the first name, sorted by matching score descendingly (default)
-            last: Use the last name, sorted by matching score descendingly
-            combine: Combine all names using `;` as separator
+            - first: Use the first name, sorted by matching score descendingly (default)
+            - last: Use the last name, sorted by matching score descendingly
+            - combine: Combine all names using `;` as separator
         genecol: The index (1-based) or name of the column where genes are present
         output (choice): How to output.
-            append: Add the converted names as new columns at the end using `envs.outfmt`
+            - append: Add the converted names as new columns at the end using `envs.outfmt`
                 as the column name.
-            replace: Drop the original name column, and insert
+            - replace: Drop the original name column, and insert
                 the converted names at the original position.
-            converted: Only keep the converted names.
-            with-query: Output 2 columns with original and converted names.
+            - converted: Only keep the converted names.
+            - with-query: Output 2 columns with original and converted names.
         infmt: What's the original gene name format
             Available fields
             https://docs.mygene.info/en/latest/doc/query_service.html#available-fields
@@ -55,3 +55,42 @@ class GeneNameConversion(Proc):
         "species": "human",
     }
     script = "file://../scripts/gene/GeneNameConversion.R"
+
+
+class GenePromoters(Proc):
+    """Get gene promoter regions by specifying the flanking regions of TSS
+
+    Input:
+        infile: The input file with gene ids/names
+
+    Output:
+        outfile: The output file with promoter regions in BED format
+
+    Envs:
+        up (type=int): The upstream distance from TSS
+        down (type=int): The downstream distance from TSS
+            If not specified, the default is `envs.up`
+        withbody (flag): Whether to include the gene body in the output
+        notfound (choice): What to do if a gene is not found.
+            - skip: Skip the gene
+            - error: Report error
+        refgene: The reference gene annotation file in GTF format
+        header (flag): Whether the input file has a header
+        genecol (type=int): The index (1-based) of the gene column
+        match_id (flag): Should we match the genes in `in.infile` by `gene_id`
+            instead of `gene_name` in `envs.refgene`
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}-promoters.bed"
+    lang = config.lang.rscript
+    envs = {
+        "up": 2000,
+        "down": None,
+        "withbody": False,
+        "notfound": "error",
+        "refgene": config.ref.refgene,
+        "header": True,
+        "genecol": 1,
+        "match_id": False,
+    }
+    script = "file://../scripts/gene/GenePromoters.R"
