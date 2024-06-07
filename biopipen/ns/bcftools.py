@@ -109,3 +109,49 @@ class BcftoolsSort(Proc):
         "args": {},
     }
     script = "file://../scripts/bcftools/BcftoolsSort.py"
+
+
+class BcftoolsView(Proc):
+    """View, subset and filter VCF files by position and filtering expression.
+
+    Also convert between VCF and BCF.
+
+    Input:
+        infile: The input VCF file
+        regions_file: The region file used to subset the input VCF file.
+        samples_file: The samples file used to subset the input VCF file.
+
+    Output:
+        outfile: The output VCF file.
+
+    Envs:
+        bcftools: Path to bcftools
+        tabix: Path to tabix, used to index infile/outfile
+        ncores (type=int): Number of cores (`--threads`) to use
+        regions_file: The region file used to subset the input VCF file.
+            If `in.regions_file` is provided, this is ignored.
+        samples_file: The samples file used to subset the input VCF file.
+            If `in.samples_file` is provided, this is ignored.
+        gz (flag): Whether to gzip the output file
+        index (flag): Whether to index the output file (tbi) (`envs.gz` forced to True)
+        <more>: Other arguments for `bcftools view`.
+            See also https://samtools.github.io/bcftools/bcftools.html#view
+            Note that the underscore `_` will be replaced with dash `-` in the
+            argument name.
+    """
+    input = "infile:file, regions_file:file, samples_file:file"
+    output = (
+        "outfile:file:{{in.infile | stem: 'gz'}}.vcf"
+        "{{'.gz' if envs.index or envs.gz else ''}}"
+    )
+    lang = config.lang.python
+    envs = {
+        "bcftools": config.exe.bcftools,
+        "tabix": config.exe.tabix,
+        "ncores": config.misc.ncores,
+        "regions_file": None,
+        "samples_file": None,
+        "gz": True,
+        "index": True,
+    }
+    script = "file://../scripts/bcftools/BcftoolsView.py"
