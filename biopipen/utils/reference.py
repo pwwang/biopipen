@@ -1,5 +1,10 @@
+"""Utilities for indexing reference files"""
+from __future__ import annotations
+
 import tempfile
+from os import PathLike
 from pathlib import Path
+from typing import Literal
 
 from ..core.config import config
 from biopipen.utils.misc import run_command
@@ -18,7 +23,12 @@ def gztype(gzfile):
     return "flat"
 
 
-def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
+def tabix_index(
+    infile: str | PathLike,
+    preset: Literal["gff", "bed", "sam", "vcf", "gaf"],
+    tmpdir: bool | str | PathLike | None = None,
+    tabix: str = config.exe.tabix,
+) -> str | PathLike:
     """Index input file using tabix
 
     1. Try to check if there is an index file in the same directory where infile
@@ -28,20 +38,18 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
        it in tmpdir
     4. Index the bgzipped file and return the bgzipped file
 
+    Args:
+        infile: The input file to be indexed
+        preset: The preset used to index the file
+        tmpdir: The directory to link the infile there and index it
+            If False, try to index the infile directly. The directory where
+            the infile is should be writable.
+        tabix: The path to tabix
+
     Returns:
         The infile itself or re-bgzipped infile. This file comes with the
         index file in the same directory
     """
-    if tmpdir is None:
-        from hashlib import md5
-        # use a hash of infile to create the tempdir
-        tmpdir = Path(tempfile.gettempdir()).joinpath(
-            f"biopipen_tabix_index_{md5(str(infile).encode()).hexdigest()}"
-        )
-    else:
-        tmpdir = Path(tmpdir)
-
-    tmpdir.mkdir(exist_ok=True, parents=True)
 
     infile = Path(infile)
     gt = gztype(infile)
@@ -54,6 +62,22 @@ def tabix_index(infile, preset, tmpdir=None, tabix=config.exe.tabix):
     ):
         # only bgzipped file is possible to have index file
         return infile
+
+    if tmpdir is False:
+        # index the infile directly
+        run_command([tabix, "-p", preset, infile], fg=True)
+        return infile
+
+    if tmpdir is None:
+        from hashlib import md5
+        # use a hash of infile to create the tempdir
+        tmpdir = Path(tempfile.gettempdir()).joinpath(
+            f"biopipen_tabix_index_{md5(str(infile).encode()).hexdigest()}"
+        )
+    else:
+        tmpdir = Path(tmpdir)
+
+    tmpdir.mkdir(exist_ok=True, parents=True)
 
     # /path/to/some.vcf -> some.vcf
     # /path/to/some.vcf.gz -> some.vcf
