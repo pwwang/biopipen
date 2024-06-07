@@ -1,32 +1,22 @@
-import shutil
-from pathlib import Path
-from hashlib import md5
+from pathlib import Path, PosixPath  # noqa: F401
 
-from biopipen.core.filters import dict_to_cli_args, run_command
+from biopipen.utils.misc import logger
+from biopipen.scripts.bcftools.utils import run_bcftools
 
-infile = {{in.infile | repr}}  # pyright: ignore
+infile = {{in.infile | repr}}  # pyright: ignore # noqa: #999
 outfile = {{out.outfile | repr}}  # pyright: ignore
-bcftools = {{envs.bcftools | repr}}  # pyright: ignore
-keep = {{envs.keep | repr}}  # pyright: ignore
-args = {{envs.args | repr}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
-tmpdir = {{envs.tmpdir | repr}}  # pyright: ignore
-includes = {{envs.includes | repr}}  # pyright: ignore
-excludes = {{envs.excludes | repr}}  # pyright: ignore
+outdir = Path(outfile).parent
 
-args[""] = bcftools
-args["_"] = infile
-args["o"] = outfile
-args["threads"] = ncores
-if "O" not in args and "output-type" not in args:
-    args["O"] = "z" if infile.endswith(".gz") else "v"
-if "m" not in args and "mode" not in args:
-    args["m"] = "+"
+envs = {{envs | dict | repr}}  # pyright: ignore
+bcftools = envs.pop("bcftools")
+tabix = envs.pop("tabix")
+keep = envs.pop("keep")
+ncores = envs.pop("ncores")
+includes = envs.pop("includes")
+excludes = envs.pop("excludes")
+gz = envs.pop("gz")
+index = envs.pop("index")
 
-tmpdir = (
-    Path(tmpdir) / f"biopipen-bcftoolsfilter-{md5(infile.encode()).hexdigest()}"
-)
-tmpdir.mkdir(parents=True, exist_ok=True)
 # a.vcf.gz -> a
 # a.vcf -> a
 stem = Path(infile).stem
@@ -34,46 +24,67 @@ if stem.endswith(".vcf"):
     stem = stem[:-4]
 # .vcf.gz
 # .gz
-ext = Path(infile).name[len(stem):]
-
-FILTER_INDEX = [1]
-
-def handle_filter(vcf, fname, filt, flag):
-    print("- Handling filter ", fname, ": ", filt, " ...")
-
-    arguments = args.copy()
-    arguments[flag] = filt
-    arguments["_"] = vcf
-    arguments["o"] = tmpdir / f"{stem}.{fname}{ext}"
-    if keep:
-        arguments["s"] = fname
-
-    run_command(dict_to_cli_args(arguments, dashify=True), fg=True)
-    return arguments["o"]
+ext = ".vcf.gz" if index or gz else '.vcf'
 
 
-def normalize_expr(expr, flag):
+def normalize_expr(expr, flag, prev_n_filters=0):
     out = {}
     if not expr:
         return out
     if isinstance(expr, list):
         for ex in expr:
-            out[f"FILTER{FILTER_INDEX[0]}"] = (ex, flag)
-            FILTER_INDEX[0] += 1
+            out[f"FILTER_{flag.upper()}_{len(out) + 1 + prev_n_filters}"] = (ex, flag)
     elif isinstance(expr, dict):
         for name, ex in expr.items():
             out[name] = (ex, flag)
     else: # str
-        out[f"FILTER{FILTER_INDEX[0]}"] = (expr, flag)
-        FILTER_INDEX[0] += 1
+        out[f"FILTER_{flag.upper()}_{len(out) + 1 + prev_n_filters}"] = (expr, flag)
     return out
 
+
+def handle_filter(vcf, fname, filt, flag, final):
+    logger.info("- Handling filter %s: %s ...", fname, filt)
+
+    arguments = envs.copy()
+    arguments[flag] = filt
+    arguments["_"] = vcf
+    arguments["o"] = outfile if final else outdir / f"{stem}.{fname}{ext}"
+    if keep:
+        arguments["s"] = fname
+
+    run_bcftools(arguments, bcftools=bcftools, index=index and final, tabix=tabix)
+
+    if final:
+        flagfile = outdir.joinpath(f"{stem}.{fname}{ext}")
+        if flagfile.is_symlink():
+            flagfile.unlink()
+        outdir.joinpath(f"{stem}.{fname}{ext}").symlink_to(outfile)
+
+    return arguments["o"]
+
+
 includes = normalize_expr(includes, "include")
-excludes = normalize_expr(excludes, "exclude")
+excludes = normalize_expr(excludes, "exclude", len(includes))
 includes.update(excludes)
 
-# bcftools can be only done once at one filter
-for fname, (filt, flag) in includes.items():
-    infile = handle_filter(infile, fname, filt, flag)
+if index and not gz:
+    logger.warning("Forcing envs.gz to True because envs.index is True.")
+    gz = True
 
-shutil.copy2(infile, outfile)
+envs[""] = [bcftools, "filter"]
+envs["_"] = infile
+envs["o"] = outfile
+envs["threads"] = ncores
+
+if "O" not in envs and "output-type" not in envs and "output_type" not in envs:
+    envs["O"] = "z" if gz else "v"
+
+if keep:
+    envs["soft_filter"] = "+"
+
+if "m" not in envs and "mode" not in envs:
+    envs["m"] = "+"
+
+# bcftools can be only done once at one filter
+for i, (fname, (filt, flag)) in enumerate(includes.items()):
+    infile = handle_filter(infile, fname, filt, flag, i == len(includes) - 1)

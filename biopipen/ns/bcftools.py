@@ -50,30 +50,37 @@ class BcftoolsFilter(Proc):
 
     Envs:
         bcftools: Path to bcftools
-        ncores: Number of cores (`--nthread`) to use
+        tabix: Path to tabix, used to index infile/outfile
+        ncores (type=int): Number of cores (`--threads`) to use
         keep: Whether we should keep the filtered variants or not.
-        args: Other arguments for `bcftools annotate`
-        ncores: `nthread`
-        tmpdir: Path to save the intermediate files
-            Since the filters need to be applied one by one by bcftools
+            If True, the filtered variants will be kept in the output file, but
+            with a new FILTER.
         includes: and
         excludes: include/exclude only sites for which EXPRESSION is true.
-            See: https://samtools.github.io/bcftools/bcftools.html#expressions
-            If provided, `envs.args.include/exclude` will be ignored.
-            If `str`/`list` used, The filter names will be `Filter%d`
-            A dict is used when keys are filter names and values are expressions
+            See: <https://samtools.github.io/bcftools/bcftools.html#expressions>
+            If provided, `envs.include/exclude` will be ignored.
+            If `str`/`list` used, The filter names will be `Filter_<type>_<index>`.
+            A dict is used where keys are filter names and values are expressions
+        gz (flag): Whether to gzip the output file
+        index (flag): Whether to index the output file (tbi) (`envs.gz` forced to True)
+        <more>: Other arguments for `bcftools filter`
+            See also <https://samtools.github.io/bcftools/bcftools.html#filter>
     """
     input = "infile:file"
-    output = "outfile:file:{{in.infile | basename}}"
+    output = (
+        "outfile:file:{{in.infile | stem: 'gz'}}.vcf"
+        "{{'.gz' if envs.index or envs.gz else ''}}"
+    )
     lang = config.lang.python
     envs = {
         "bcftools": config.exe.bcftools,
-        "keep": True,
+        "tabix": config.exe.tabix,
         "ncores": config.misc.ncores,
+        "keep": True,
         "includes": None,
         "excludes": None,
-        "tmpdir": config.path.tmpdir,
-        "args": {},
+        "gz": True,
+        "index": True,
     }
     script = "file://../scripts/bcftools/BcftoolsFilter.py"
 
