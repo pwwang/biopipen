@@ -1,42 +1,91 @@
 from os import path
+from contextlib import suppress
+from pathlib import PosixPath  # noqa: F401
 
 from biopipen.utils.reference import tabix_index
-from biopipen.utils.misc import dict_to_cli_args, run_command
+from biopipen.utils.misc import logger
+from biopipen.scripts.bcftools.utils import run_bcftools
 
-infile = {{in.infile | repr}}  # pyright: ignore
-annfile = {{(in.annfile or envs.annfile) | repr}}  # pyright: ignore
+infile = {{in.infile | repr}}  # pyright: ignore # noqa: E999
+annfile = {{in.annfile | repr}}  # pyright: ignore
 outfile = {{out.outfile | repr}}  # pyright: ignore
 joboutdir = {{job.outdir | repr}}  # pyright: ignore
-bcftools = {{envs.bcftools | repr}}  # pyright: ignore
-tabix = {{envs.tabix | repr}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
-cols = {{envs.cols | repr}}  # pyright: ignore
-header = {{envs.header | repr}}  # pyright: ignore
-args = {{envs.args | repr}}  # pyright: ignore
+envs = {{envs | dict | repr}}  # pyright: ignore
 
-args[""] = bcftools
-args["_"] = tabix_index(infile, "vcf")
-args["o"] = outfile
-args["threads"] = ncores
+bcftools = envs.pop("bcftools")
+tabix = envs.pop("tabix")
+ncores = envs.pop("ncores")
+columns = envs.pop("columns")
+remove = envs.pop("remove")
+header = envs.pop("header")
+gz = envs.pop("gz")
+index = envs.pop("index")
+
+if isinstance(columns, list):
+    columns = ",".join(columns)
+
+if "c" in envs:
+    logger.warning("Ignoring envs\[c], use envs\[columns] instead.")
+    del envs["c"]
+
+if isinstance(remove, list):
+    remove = ",".join(remove)
+
+if "x" in envs:
+    logger.warning("Ignoring envs\[x], use envs\[remove] instead.")
+    del envs["x"]
+
+envs_has_annfile = "a" in envs or "annotations" in envs
+headerfile = path.join(joboutdir, "header.txt")
+if header:
+    with open(headerfile, "w") as fh:
+        fh.writelines(header)
+
+if annfile and envs_has_annfile:
+    logger.warning(
+        "Ignoring envs\[a/annotations] because in.annfile is provided."
+    )
+    with suppress(KeyError):
+        del envs["a"]
+    with suppress(KeyError):
+        del envs["annotations"]
+elif not annfile and envs_has_annfile:
+    annfile = envs.pop("annotations", None) or envs.pop("a", None)
+
+
+if index and not gz:
+    logger.warning("Forcing envs.gz to True because envs.index is True.")
+    gz = True
+
+envs[""] = [bcftools, "annotate"]
+envs["o"] = outfile
+envs["threads"] = ncores
+
+if "O" not in envs and "output-type" not in envs and "output_type" not in envs:
+    envs["O"] = "z" if gz else "v"
+
+if columns:
+    envs["columns"] = columns
+    if not annfile:
+        raise ValueError(
+            "envs.columns specified but no in.annfile/envs.annfile provided."
+        )
+    envs["_"] = tabix_index(infile, "vcf", tabix=tabix)
+
+if remove:
+    envs["remove"] = remove
+    # no need to index it
+    envs["_"] = infile
+
+if "columns" not in envs and "remove" not in envs:
+    logger.warning(
+        "No columns/remove specified, no columns will be carried over or removed."
+    )
 
 if annfile:
-    abname = path.basename(annfile)
-    ext = path.splitext(
-        abname[:-3] if abname.endswith('.gz') else abname
-    )[-1][1:]
-    args["a"] = tabix_index(annfile, ext, tabix)
-
-if cols and isinstance(cols, list):
-    args["c"] = ",".join(cols)
+    envs["annotations"] = tabix_index(annfile, "vcf", tabix=tabix)
 
 if header:
-    if not isinstance(header, list):
-        header = [header]
+    envs["header_lines"] = headerfile
 
-    headerfile = path.join(joboutdir, "header.txt")
-    with open(headerfile, "w") as fh:
-        for head in header:
-            fh.write(f"{head}\n")
-    args["h"] = headerfile
-
-run_command(dict_to_cli_args(args, dashify=True), fg=True)
+run_bcftools(envs, bcftools=bcftools, index=index, tabix=tabix)

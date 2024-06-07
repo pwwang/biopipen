@@ -6,33 +6,48 @@ from ..core.config import config
 class BcftoolsAnnotate(Proc):
     """Add or remove annotations from VCF files
 
+    See also: <https://samtools.github.io/bcftools/bcftools.html#annotate>
+
     Input:
         infile: The input VCF file
-        annfile: The annotation file
+        annfile: The annotation file.
+            Currently only VCF files are supported.
 
     Output:
-        outfile: The annotated VCF file
+        outfile: The VCF file with annotations added or removed.
 
     Envs:
         bcftools: Path to bcftools
         tabix: Path to tabix, used to index infile and annfile
         annfile: The annotation file. If `in.annfile` is provided,
             this is ignored
-        ncores: Number of cores (`--nthread`) to use
-        cols: Overwrite `-c/--columns`
-        header: Headers to be added
-        args: Other arguments for `bcftools annotate`
+        ncores (type=int): Number of cores (`--threads`) to use
+        columns (auto): Comma-separated or list of columns or tags to carry over from
+            the annotation file. Overrides `-c, --columns`
+        remove (auto): Remove the specified columns from the input file
+        header (type=list): Headers to be added
+        gz (flag): Whether to gzip the output file
+        index (flag): Whether to index the output file (tbi) (`envs.gz` forced to True)
+        <more>: Other arguments for `bcftools annotate`
+            See also <https://samtools.github.io/bcftools/bcftools.html#annotate>
+            Note that the underscore `_` will be replaced with dash `-` in the
+            argument name.
     """
     input = "infile:file, annfile:file"
-    output = "outfile:file:{{in.infile | basename}}"
+    output = (
+        "outfile:file:{{in.infile | stem: 'gz'}}.vcf"
+        "{{'.gz' if envs.index or envs.gz else ''}}"
+    )
     lang = config.lang.python
     envs = {
         "bcftools": config.exe.bcftools,
         "tabix": config.exe.tabix,
-        "annfile": "",
-        "cols": [],
+        "annfile": None,
+        "columns": [],
+        "remove": [],
         "header": [],
-        "args": {},
+        "gz": True,
+        "index": True,
         "ncores": config.misc.ncores,
     }
     script = "file://../scripts/bcftools/BcftoolsAnnotate.py"
