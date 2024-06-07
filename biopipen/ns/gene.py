@@ -79,6 +79,9 @@ class GenePromoters(Proc):
         genecol (type=int): The index (1-based) of the gene column
         match_id (flag): Should we match the genes in `in.infile` by `gene_id`
             instead of `gene_name` in `envs.refgene`
+        sort (flag): Sort the output by chromosome and start position
+        chrsize: The chromosome size file, from which the chromosome order is
+            used to sort the output
     """
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}-promoters.bed"
@@ -92,5 +95,7 @@ class GenePromoters(Proc):
         "header": True,
         "genecol": 1,
         "match_id": False,
+        "sort": False,
+        "chrsize": config.ref.chrsize,
     }
     script = "file://../scripts/gene/GenePromoters.R"

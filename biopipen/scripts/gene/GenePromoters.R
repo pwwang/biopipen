@@ -11,6 +11,8 @@ refgene <- {{envs.refgene | r}}
 header <- {{envs.header | r}}
 genecol <- {{envs.genecol | r}}
 match_id <- {{envs.match_id | r}}
+sort_ <- {{envs.sort | r}}
+chrsize <- {{envs.chrsize | r}}
 
 down <- down %||% up
 
@@ -57,6 +59,13 @@ if (withbody) {
         start = ifelse(refgenes$strand == "+", refgenes$start - up, refgenes$start - down),
         end = ifelse(refgenes$strand == "+", refgenes$end + down, refgenes$end + up)
     )
+}
+
+if (sort_) {
+    chrom_sizes <- read.table(chrsize, header=FALSE, stringsAsFactors=FALSE, sep="\t")
+    seqs <- chrom_sizes[chrom_sizes$V1 %in% seqlevels(promoters), 1, drop=TRUE]
+    seqlevels(promoters) <- seqs
+    promoters <- sort(promoters, ignore.strand = TRUE)
 }
 
 export.bed(promoters, outfile)
