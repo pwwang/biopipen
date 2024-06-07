@@ -65,9 +65,9 @@ def run_command(
     if print_command:
         print_command_handler("RUNNING COMMAND:")
         if isinstance(cmd, str):
-            print_command_handler(f"  {cmd}")
+            print_command_handler(f"  {cmd}\n")
         else:
-            print_command_handler(f"  {shlex.join(cmd)}")
+            print_command_handler(f"  {shlex.join(cmd)}\n")
         # flush the output if print_command_handler is print
         if print_command_handler is print:
             sys.stdout.flush()
