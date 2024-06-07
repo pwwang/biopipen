@@ -5,6 +5,7 @@ from shutil import copy2
 
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 from biopipen.utils.reference import tabix_index
+from biopipen.scripts.bcftools.utils import run_bcftools
 
 infile = {{in.infile | repr}}  # pyright: ignore # noqa: #999
 regions_file = {{in.regions_file | repr}}  # pyright: ignore
@@ -70,14 +71,4 @@ envs["threads"] = ncores
 envs["regions_file"] = regions_file
 envs["samples_file"] = samples_file
 
-if index:
-    # requires bcftools 1.20+
-    # '--write-index tbi' not working
-    # it has to be '--write-index=tbi'
-    envs["write_index=tbi"] = True
-
-try:
-    run_command(dict_to_cli_args(envs, dashify=True), fg=True)
-finally:
-    run_command(["which", bcftools], fg=True)
-    run_command([bcftools, "version"], fg=True)
+run_bcftools(envs, bcftools=bcftools, index=index, tabix=tabix)
