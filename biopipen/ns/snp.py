@@ -541,3 +541,72 @@ class PlinkFilter(Proc):
     }
     script = "file://../scripts/snp/PlinkFilter.py"
 
+
+class PlinkFreq(Proc):
+    """Calculate allele frequencies for the variants.
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Output:
+        outdir: Output file containing the allele frequency results.
+            By default, it includes
+            [`.frq`](https://www.cog-genomics.org/plink/1.9/formats#frq)
+            file for the allele frequency report from PLINK.
+            Modifiers can be added to change this behavior.
+            See `envs.modifier` for more information.
+            When `envs.filter != no`, it also includes binary files `.bed`, `.bim`,
+            and `.fam` after filtering with `envs.cutoff`.
+
+    Envs:
+        plink: Path to PLINK v1.9
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        modifier (choice): The modifier of `--freq` to control the output behavior.
+            - none: No modifier, only the `.frq` file will be generated.
+            - counts: write allele count report to `.frq.count`.
+            - case-control: write case-control association report to `.frq.cc`.
+            - cc: Alias for `case-control`.
+            - x: write genotype count report to `.frqx`
+        gz (flag): If set, compress the output files.
+        cutoff (auto): Cutoffs to mark or filter the variants.
+            If a float is given, default column will be used based on the modifier.
+            For `modifier="none"`, it defaults to `MAF`.
+            For `modifier="counts"`, it defaults to `C1`.
+            For `modifier="case-control"`, it defaults to `MAF_A`.
+            For `modifier="cc"`, it defaults to `MAF_A`.
+            For `modifier="x"`, it defaults to `C(HOM A1)`.
+            Or this could be a dictionary to specify the column names and cutoffs.
+            For example, `{"MAF": 0.05}`.
+        filter (auto): The direction of filtering variants based on `cutoff`.
+            If a single value is given, it will apply to all columns provided in
+            `cutoff`. If a dictionary is given, it will apply to the corresponding
+            column. If a column cannot be found in the dictionary, it defaults to
+            `no`.
+            no: Do not filter variants (no binary files are generated in outdir).
+            gt: Filter variants with MAF greater than `cutoff`.
+            lt: Filter variants with MAF less than `cutoff`.
+            ge: Filter variants with MAF greater than or equal to `cutoff`.
+            le: Filter variants with MAF less than or equal to `cutoff`.
+        plot (flag): If set, plot the distribution of allele frequencies.
+        devpars (ns): The device parameters for the plot.
+            - width (type=int): Width of the plot
+            - height (type=int): Height of the plot
+            - res (type=int): Resolution of the plot
+    """
+    input = "indir:dir"
+    output = "outdir:dir:{{in.indir | stem}}.freq"
+    lang = config.lang.rscript
+    envs = {
+        "plink": config.exe.plink,
+        "ncores": config.misc.ncores,
+        "modifier": "none",
+        "gz": False,
+        "cutoff": {},
+        "filter": {},
+        "plot": True,
+        "devpars": {"width": 1000, "height": 800, "res": 100},
+    }
+    script = "file://../scripts/snp/PlinkFreq.R"
+    plugin_opts = {"report": "file://../reports/snp/PlinkFreq.svelte"}

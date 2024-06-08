@@ -8,6 +8,7 @@ from biopipen.ns.snp import (
     PlinkHWE as PlinkHWE_,
     PlinkHet as PlinkHet_,
     PlinkCallRate as PlinkCallRate_,
+    PlinkFreq as PlinkFreq_,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -42,6 +43,49 @@ class PlinkHWE1(PlinkHWE_):
 class PlinkHet1(PlinkHet_):
     requires = PlinkFromVcf1
     envs = {"filter": True, "cutoff": 1}
+
+
+class PlinkFreqNoFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {"cutoff": 0.2}
+
+
+class PlinkFreqGtFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {"cutoff": 0.2, "filter": "gt"}
+
+
+class PlinkFreqCountsNoFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {"cutoff": 0.2, "modifier": "counts"}
+
+
+class PlinkFreqCountsLtFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {"cutoff": 0.2, "filter": "lt", "modifier": "counts"}
+
+
+class PlinkFreqCCNoFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {"cutoff": 0.2, "modifier": "cc"}
+
+
+class PlinkFreqCCLeFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {
+        "cutoff": {"NCHROBS_A": 0, "NCHROBS_U": 0},
+        "filter": "lt",
+        "modifier": "cc",
+    }
+
+
+class PlinkFreqXLeFilter(PlinkFreq_):
+    requires = PlinkFromVcf1
+    envs = {
+        "cutoff": {"C(HET)": 2, "C(HOM A2)": 2},
+        "filter": "lt",
+        "modifier": "x",
+    }
 
 
 class PlinkCallRate1(PlinkCallRate_):
