@@ -1,7 +1,6 @@
 
 from os import path
 from glob import glob
-from biopipen.core.filters import dict_to_cli_args
 from biopipen.utils.misc import run_command, logger
 
 indir = {{in.indir | repr}}  # noqa: E999 # pyright: ignore
