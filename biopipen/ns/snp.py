@@ -456,3 +456,88 @@ class PlinkCallRate(Proc):
     }
     script = "file://../scripts/snp/PlinkCallRate.R"
     plugin_opts = {"report": "file://../reports/snp/PlinkCallRate.svelte"}
+
+
+class PlinkFilter(Proc):
+    """Filter samples and variants for PLINK files.
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+        samples_file_keep: File containing the sample IDs to keep.
+        variants_file_keep: File containing the variant IDs to keep.
+        samples_file_remove: File containing the sample IDs to remove.
+        variants_file_remove: File containing the variant IDs to remove.
+
+    Output:
+        outdir: Output directory containing the filtered PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Envs:
+        plink: Path to PLINK v1.9
+        ncores (type=int): Number of cores/threads to use, will pass to plink
+            `--threads` option
+        samples_keep (auto): Sample IDs to keep.
+            A list of sample IDs or string concatenated by `,`.
+            If either `in.samples_file_keep` or `envs.samples_file_keep` is set,
+            this will be ignored.
+        variants_keep (auto): Variant IDs to keep.
+            A list of variant IDs or string concatenated by `,`.
+            If either `in.variants_file` or `envs.variants_file` is set,
+            this will be ignored.
+        samples_remove (auto): Sample IDs to remove.
+            A list of sample IDs or string concatenated by `,`.
+            If either `in.samples_file_remove` or `envs.samples_file_remove` is set,
+            this will be ignored.
+        variants_remove (auto): Variant IDs to remove.
+            A list of variant IDs or string concatenated by `,`.
+            If either `in.variants_file_remove` or `envs.variants_file_remove` is set,
+            this will be ignored.
+        samples_file_keep: File containing the sample IDs to keep.
+            If `in.samples_file_keep` is set, this will be ignored.
+        variants_file_keep: File containing the variant IDs to keep.
+            If `in.variants_file_keep` is set, this will be ignored.
+        samples_file_remove: File containing the sample IDs to remove.
+            If `in.samples_file_remove` is set, this will be ignored.
+        variants_file_remove: File containing the variant IDs to remove.
+            If `in.variants_file_remove` is set, this will be ignored.
+        chr: Chromosome to keep.
+            For example, `1-4 22 XY` will keep chromosomes 1 to 4, 22, and XY.
+        not_chr: Chromosome to remove.
+            For example, `1-4 22 XY` will remove chromosomes 1 to 4, 22, and XY.
+        autosome (flag): Excludes all unplaced and non-autosomal variants
+        autosome_xy (flag): Does `autosome` but does not exclude the pseudo-autosomal
+            region of X.
+        snps_only (auto): Excludes all variants with one or more multi-character
+            allele codes. With 'just-acgt', variants with single-character allele codes
+            outside of {'A', 'C', 'G', 'T', 'a', 'c', 'g', 't', <missing code>}
+            are also excluded.
+    """
+    input = [
+        "indir:dir",
+        "samples_file_keep:file",
+        "variants_file_keep:file",
+        "samples_file_remove:file",
+        "variants_file_remove:file",
+    ]
+    output = "outdir:dir:{{in.indir | stem}}.filtered"
+    lang = config.lang.python
+    envs = {
+        "plink": config.exe.plink,
+        "ncores": config.misc.ncores,
+        "samples_keep": None,
+        "variants_keep": None,
+        "samples_remove": None,
+        "variants_remove": None,
+        "samples_file_keep": None,
+        "variants_file_keep": None,
+        "samples_file_remove": None,
+        "variants_file_remove": None,
+        "chr": None,
+        "not_chr": None,
+        "autosome": False,
+        "autosome_xy": False,
+        "snps_only": False,
+    }
+    script = "file://../scripts/snp/PlinkFilter.py"
+
