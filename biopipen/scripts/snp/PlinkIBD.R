@@ -39,7 +39,7 @@ cmd <- c(
 if (!is.null(highld) && !isFALSE(highld)) {
     cmd <- c(cmd, "--range", "--exclude", highld)
 }
-run_command(cmd)
+run_command(cmd, fg = TRUE)
 
 prunein <- paste0(output, '.prune.in')
 cmd <- c(
@@ -50,7 +50,7 @@ cmd <- c(
     "--genome",
     "--out", output
 )
-run_command(cmd)
+run_command(cmd, fg = TRUE)
 
 genome <- read.table(
     paste0(output, '.genome'),

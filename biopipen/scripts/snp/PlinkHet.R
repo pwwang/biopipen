@@ -29,7 +29,7 @@ cmd <- c(
     "--het",
     "--out", output
 )
-run_command(cmd)
+run_command(cmd, fg = TRUE)
 
 phet <- read.table(
     paste0(output, '.het'),
@@ -79,5 +79,5 @@ if (filter) {
         "--make-bed",
         "--out", output
     )
-    run_command(cmd)
+    run_command(cmd, fg = TRUE)
 }

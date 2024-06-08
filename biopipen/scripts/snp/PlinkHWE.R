@@ -29,7 +29,7 @@ cmd <- c(
     "--hardy",
     "--out", output
 )
-run_command(cmd)
+run_command(cmd, fg = TRUE)
 
 hardy <- read.table(
     paste0(output, '.hwe'),
@@ -78,5 +78,5 @@ if (filter) {
         "--make-bed",
         "--out", output
     )
-    run_command(cmd)
+    run_command(cmd, fg = TRUE)
 }

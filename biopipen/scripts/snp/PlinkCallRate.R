@@ -40,7 +40,7 @@ for (i in 1:max_iter) {
         "--missing",
         "--out", iter_out
     )
-    run_command(cmd)
+    run_command(cmd, fg = TRUE)
 
     imissfile <- paste0(iter_out, '.imiss')
     imiss <- read.table(
@@ -124,7 +124,7 @@ for (i in 1:max_iter) {
         "--make-bed",
         "--out", iter_out
     )
-    run_command(cmd)
+    run_command(cmd, fg = TRUE)
     input <- iter_out
 }
 
