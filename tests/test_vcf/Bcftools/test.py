@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from biopipen.ns.bcftools import (
+from biopipen.ns.vcf import (
     BcftoolsAnnotate as BcftoolsAnnotate_,
     BcftoolsFilter as BcftoolsFilter_,
     BcftoolsView as BcftoolsView_,

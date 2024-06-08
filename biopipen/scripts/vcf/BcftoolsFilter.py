@@ -1,7 +1,7 @@
 from pathlib import Path, PosixPath  # noqa: F401
 
 from biopipen.utils.misc import logger
-from biopipen.scripts.bcftools.utils import run_bcftools
+from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
 infile = {{in.infile | repr}}  # pyright: ignore # noqa: #999
 outfile = {{out.outfile | repr}}  # pyright: ignore

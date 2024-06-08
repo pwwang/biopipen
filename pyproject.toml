@@ -27,7 +27,6 @@ runinfo = ["pipen-runinfo"]
 
 [tool.poetry.plugins.pipen_cli_run]
 bam = "biopipen.ns.bam"
-bcftools = "biopipen.ns.bcftools"
 bed = "biopipen.ns.bed"
 cellranger = "biopipen.ns.cellranger"
 cellranger_pipeline = "biopipen.ns.cellranger_pipeline"

@@ -1,11 +1,10 @@
 from contextlib import suppress
 # In case there are paths passed to envs
 from pathlib import PosixPath  # noqa: F401
-from shutil import copy2
 
-from biopipen.utils.misc import run_command, dict_to_cli_args, logger
+from biopipen.utils.misc import logger
 from biopipen.utils.reference import tabix_index
-from biopipen.scripts.bcftools.utils import run_bcftools
+from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
 infile = {{in.infile | repr}}  # pyright: ignore # noqa: #999
 regions_file = {{in.regions_file | repr}}  # pyright: ignore

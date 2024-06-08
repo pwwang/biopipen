@@ -4,7 +4,7 @@ from pathlib import PosixPath  # noqa: F401
 
 from biopipen.utils.reference import tabix_index
 from biopipen.utils.misc import logger
-from biopipen.scripts.bcftools.utils import run_bcftools
+from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
 infile = {{in.infile | repr}}  # pyright: ignore # noqa: E999
 annfile = {{in.annfile | repr}}  # pyright: ignore

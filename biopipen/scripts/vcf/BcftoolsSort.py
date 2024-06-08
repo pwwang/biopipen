@@ -1,8 +1,8 @@
 from typing import Literal
-from pathlib import Path
+from pathlib import Path, PosixPath  # noqa: F401
 
 from biopipen.utils.misc import run_command, logger
-from biopipen.scripts.bcftools.utils import run_bcftools
+from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
 infile = {{in.infile | quote}}  # pyright: ignore # noqa: E999
 outfile = {{out.outfile | quote}}  # pyright: ignore
