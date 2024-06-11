@@ -499,7 +499,7 @@ class SeuratClusterStats(Proc):
             - pie (flag): Also output a pie chart?
             - circos (flag): Also output a circos plot?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
-            - frac_ofall(flag): Whether to output the fraction against all cells,
+            - frac_ofall (flag): Whether to output the fraction against all cells,
                 instead of the fraction in each group.
                 Does not work for circos plot.
                 Only works when `frac` is `True` and `group-by` is specified.
