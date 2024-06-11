@@ -23,6 +23,8 @@ cnvpytor = "cnvpytor"
 cnvnator2vcf = "cnvnator2VCF.pl"
 # convert
 convert = "convert"
+# fimo from meme
+fimo = "fimo"
 # wget
 wget = "wget"
 # aria2c
@@ -88,6 +90,8 @@ genome = ""
 # Database file for scType
 # https://github.com/IanevskiAleksandr/sc-type/
 sctype_db = ""
+# TF Motif database
+tf_motifdb = ""
 
 [misc]
 # Number of cores used for each job
