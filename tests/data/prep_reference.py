@@ -1,7 +1,19 @@
+from __future__ import annotations
+
+import sys
 import hashlib
 from pathlib import Path
+from typing import Callable
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
+
+LOCAL_FLAG = "--local"
+
+if len(sys.argv) > 1 and sys.argv[1] != LOCAL_FLAG:
+    print(f"Usage: python prep_reference.py [{LOCAL_FLAG}]")
+    sys.exit(1)
+
+LOCAL = len(sys.argv) > 1 and sys.argv[1] == LOCAL_FLAG
 
 DESTDIR = Path(__file__).parent / "reference"
 REFFA_URL = (
@@ -29,6 +41,7 @@ CHROMS = [
 ]
 REFFA_HG19_MD5SUM = "0f680f92acef0774052a4a5392817860"
 REFFA_HG38_MD5SUM = "31da86e5ed328dec9fb528799f6658e6"
+PBMC_MULTIMODEL_MD5SUM = "45f0cc1c4e977bb49698a697e9b71543"
 ARIA2C_OPTS = [
     "--file-allocation=falloc",
     "--auto-file-renaming=false",
@@ -36,15 +49,24 @@ ARIA2C_OPTS = [
 ]
 
 
-def echo(msg):
-    def _echo(func):
+def decor(msg: str, local_only: bool | Callable = False):
+    def _decor(func):
         def wrapper(*args, **kwargs):
             print(f"::group::{msg.format(*args, **kwargs)}")
-            if func(*args, **kwargs):
+            if callable(local_only):
+                is_local_only = local_only(*args, **kwargs)
+            else:
+                is_local_only = local_only
+
+            if is_local_only and not LOCAL:
+                print("Skipping local-only task, as --local flag is not set.")
+            elif func(*args, **kwargs):
                 print("Cached")
             print("::endgroup::")
+            print()
+            print()
         return wrapper
-    return _echo
+    return _decor
 
 
 def md5sum(file):
@@ -83,7 +105,7 @@ def download_reffa(genome):
     run_command(["rm", "-f", outfile])
 
 
-@echo("Downloading {0} chromosome sizes")
+@decor("Downloading {0} chromosome sizes", local_only=lambda genome: genome == "hg38")
 def download_chrsize(genome):
     """Download genome size file"""
     outdir = DESTDIR / genome
@@ -102,7 +124,7 @@ def download_chrsize(genome):
     run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
-@echo("Downloading {0} refgenes")
+@decor("Downloading {0} refgenes", local_only=lambda genome: genome == "hg38")
 def download_refgene(genome):
     """Download genome size file"""
     outdir = DESTDIR / genome
@@ -126,7 +148,7 @@ def download_refgene(genome):
     run_command(["awk", '$3 == "exon"', refgene_file], stdout=refexon_file)
 
 
-# @echo("Downloading KEGG_metabolism.gmt")
+# @decor("Downloading KEGG_metabolism.gmt")
 # def download_kegg_metabolism():
 #     """Download KEGG_metabolism.gmt"""
 #     outfile = DESTDIR / "KEGG_metabolism.gmt"
@@ -146,7 +168,7 @@ def download_refgene(genome):
 #     run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
-@echo("Downloading hg19 reference genome sequences")
+@decor("Downloading hg19 reference genome sequences")
 def download_reffa_hg19():
     """Download hg19 reference sequences if not cached"""
     genome = "hg19"
@@ -159,7 +181,7 @@ def download_reffa_hg19():
     return download_reffa(genome)
 
 
-@echo("Downloading hg38 reference genome sequences")
+@decor("Downloading hg38 reference genome sequences", local_only=True)
 def download_reffa_hg38():
     """Download hg38 reference sequences if not cached"""
     genome = "hg38"
@@ -172,7 +194,7 @@ def download_reffa_hg38():
     return download_reffa(genome)
 
 
-@echo("Downloading scType database")
+@decor("Downloading scType database")
 def download_sctype_db():
     """Download scType database"""
     name = "ScTypeDB_full.xlsx"
@@ -185,10 +207,14 @@ def download_sctype_db():
     run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
-@echo("Downloading pbmc_multimodal_2023.rds")
+@decor("Downloading pbmc_multimodal_2023.rds")
 def download_pbmc_multimodal():
     """Download pbmc_multimodal_2023.rds"""
     name = "pbmc_multimodal_2023.rds"
+    destfile = DESTDIR / name
+    if md5sum(destfile) == PBMC_MULTIMODEL_MD5SUM:
+        return True
+
     aria2c_args = dict(
         o=name,
         d=DESTDIR,
@@ -200,11 +226,11 @@ def download_pbmc_multimodal():
 
 if __name__ == "__main__":
     download_reffa_hg19()
-    # download_reffa_hg38()
+    download_reffa_hg38()
     download_chrsize("hg19")
-    # download_chrsize("hg38")
+    download_chrsize("hg38")
     download_refgene("hg19")
-    # download_refgene("hg38")
+    download_refgene("hg38")
     # download_kegg_metabolism()
     download_sctype_db()
     download_pbmc_multimodal()
