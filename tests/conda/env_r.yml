@@ -12,9 +12,10 @@ dependencies:
   - python=3.10
   - poetry
   - nodejs  # for pipen-report
-  - curl
+  - curl=7.83
   - plink
   - samtools
+  - bedtools
   # - r-slugify
   - r-logger
   - r-hitype
@@ -61,6 +62,10 @@ dependencies:
   - bioconductor-singlecellexperiment
   - bioconductor-dropletutils
   - bioconductor-rtracklayer
+  - bioconductor-universalmotif
+  - bioconductor-motifbreakr
+  - bioconductor-atsnp
+  - bioconductor-bsgenome.hsapiens.ucsc.hg19
   # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2
   #         or libmkl_def.so.2.
   - libfaiss-avx2=1.7.2=h1234567_0_cpu
