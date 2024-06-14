@@ -18,6 +18,7 @@ class MotifAffinityTestMotifBreakR(MotifAffinityTest_):
         "motif_col": "Motif",
         "notfound": "ignore",
         "motifdb": motifdb,
+        "genome": "hg19",
     }
 
 
@@ -29,6 +30,7 @@ class MotifAffinityTestAtSNP(MotifAffinityTest_):
         "notfound": "ignore",
         "motifdb": motifdb,
         "cutoff": 0.2,
+        "genome": "hg19",
         "atsnp_args": {"padj": "none"},
     }
 
