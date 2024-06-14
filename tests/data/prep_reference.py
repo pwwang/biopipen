@@ -200,11 +200,11 @@ def download_pbmc_multimodal():
 
 if __name__ == "__main__":
     download_reffa_hg19()
-    download_reffa_hg38()
+    # download_reffa_hg38()
     download_chrsize("hg19")
-    download_chrsize("hg38")
+    # download_chrsize("hg38")
     download_refgene("hg19")
-    download_refgene("hg38")
+    # download_refgene("hg38")
     # download_kegg_metabolism()
     download_sctype_db()
     download_pbmc_multimodal()
