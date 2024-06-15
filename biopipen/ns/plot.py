@@ -150,3 +150,77 @@ class ROC(Proc):
         "show_auc": True,
     }
     script = "file://../scripts/plot/ROC.R"
+
+
+class Manhattan(Proc):
+    """Plot Manhattan plot.
+
+    Using the [`ggmanh`](https://bioconductor.org/packages/devel/bioc/vignettes/ggmanh/inst/doc/ggmanh.html) package.
+
+    Input:
+        infile: The input file for data
+            It should contain at least three columns, the chromosome, the position
+            and the p-value of the SNPs.
+            Header is required.
+
+    Output:
+        outfile: The output figure file
+
+    Envs:
+        chrom_col: The column for chromosome
+            An integer (1-based) or a string indicating the column name.
+        pos_col: The column for position
+            An integer (1-based) or a string indicating the column name.
+        pval_col: The column for p-value
+            An integer (1-based) or a string indicating the column name.
+        label_col: The column for label.
+            Once specified, the significant SNPs will be labeled on the plot.
+        devpars (ns): The parameters for `png()`
+            - res (type=int): The resolution
+            - width (type=int): The width
+            - height (type=int): The height
+        title: The title of the plot
+        ylabel: The y-axis label
+        rescale (flag): Whether to rescale the p-values
+        signif (auto): A single value or a list of values to indicate the significance levels
+            Multiple values should be also separated by comma (`,`).
+            The minimum value will be used as the cutoff to determine if the SNPs are significant.
+        hicolors (auto): The colors for significant and non-significant SNPs
+            If a single color is given, the non-significant SNPs will be in grey.
+            Set it to None to disable the highlighting.
+        thin_n (type=int): Number of max points per horizontal partitions of the plot.
+            `0` or `None` to disable thinning.
+        thin_bins (type=int): Number of bins to partition the data.
+        zoom (auto): Chromosomes to zoom in
+            Each chromosome should be separated by comma (`,`) or in a list. Single chromosome is also accepted.
+            Ranges are also accepted, see `envs.chroms`.
+            Each chromosome will be saved in a separate file.
+        chroms (auto): The chromosomes and order to plot
+            A hyphen (`-`) can be used to indicate a range.
+            For example `chr1-22,chrX,chrY,chrM` will plot all autosomes, X, Y and M.
+        args (ns): Additional arguments for `manhattan_plot()`.
+            See <https://rdrr.io/github/leejs-abv/ggmanh/man/manhattan_plot.html>.
+            Note that `-` will be replaced by `.` in the argument names.
+            - <more>: Additional arguments for `manhattan_plot()`
+    """  # noqa: E501
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem0}}.manhattan.png"
+    lang = config.lang.rscript
+    envs = {
+        "chrom_col": 1,
+        "pos_col": 2,
+        "pval_col": 3,
+        "label_col": None,
+        "devpars": {"res": 100, "width": 1000, "height": 500},
+        "title": "Manhattan Plot",
+        "ylabel": "-log10(p-value)",
+        "rescale": False,
+        "signif": [5e-8, 1e-5],
+        "hicolors": None,
+        "thin_n": None,
+        "thin_bins": 200,
+        "zoom": None,
+        "chroms": "chr1-22,chrX,chrY",
+        "args": {},
+    }
+    script = "file://../scripts/plot/Manhattan.R"
