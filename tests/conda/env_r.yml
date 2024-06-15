@@ -55,6 +55,7 @@ dependencies:
   - r-sccatch
   - r-harmony=1.2.0  # avoid v0.1 on bioconda
   - bioconductor-mygene
+  - bioconductor-ggmanh
   - bioconductor-complexheatmap
   - bioconductor-fgsea
   - bioconductor-scater
