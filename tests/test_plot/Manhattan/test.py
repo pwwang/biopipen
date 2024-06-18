@@ -1,8 +1,6 @@
 
-from datar.all import tibble, flatten
 from biopipen.core.config import config
 from biopipen.core.proc import Proc
-from biopipen.ns.web import Download
 from biopipen.ns.plot import Manhattan as Manhattan_
 from biopipen.core.testing import get_pipeline
 
@@ -37,6 +35,7 @@ class PrepareData(Proc):
 
 class Manhattan(Manhattan_):
     requires = PrepareData
+    envs = {"rescale": False}
 
 
 class Manhattan2(Manhattan_):
@@ -44,18 +43,38 @@ class Manhattan2(Manhattan_):
     envs = {
         "label_col": "label",
         "zoom": ["chr1", "chr2"],
+        "rescale": False,
         "signif": [1e-5, 1e-3],
     }
 
 
-class Manhattan3(Manhattan_):
+class PrepareForRescale(Proc):
     requires = PrepareData
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}-forrescale.txt"
+    lang = config.lang.rscript
+    script = """
+        data <- read.table(
+            "{{in.infile}}", header = TRUE, sep = "\\t", check.names = FALSE)
+        chr5_pvals <- data$P.value[data$chromosome == "chr5"]
+        chr5_pvals[sample(1:length(chr5_pvals), 15)] <- exp(-rnorm(15, 50, 2))
+        data$P.value[data$chromosome == "chr5"] <- chr5_pvals
+        write.table(
+            data,
+            file = "{{out.outfile}}", sep = "\\t", quote = FALSE, row.names = FALSE
+        )
+    """
+
+
+class Manhattan3(Manhattan_):
+    requires = PrepareForRescale
     envs = {
         "label_col": "label",
         "hicolors": "red",
-        "signif": [1e-5, 1e-3],
         "chroms": ["chr1-chr10", "chrX"],
         "devpars": {"width": 600},
+        "rescale": True,
+        "rescale_ratio_threshold": 3,
     }
 
 

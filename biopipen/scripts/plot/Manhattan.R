@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+library(rlang)
 library(ggmanh)
 
 infile <- {{in.infile | r}}
@@ -11,11 +12,13 @@ devpars <- {{envs.devpars | r}}
 title <- {{envs.title | r}}
 ylabel <- {{envs.ylabel | r}}
 rescale <- {{envs.rescale | r}}
+rescale_ratio_threshold <- {{envs.rescale_ratio_threshold | r}}
 signif <- {{envs.signif | r}}
 hicolors <- {{envs.hicolors | r}}
 thin_n <- {{envs.thin_n | r}}
 thin_bins <- {{envs.thin_bins | r}}
 zoom <- {{envs.zoom | r}}
+zoom_devpars <- {{envs.zoom_devpars | r}}
 chroms <- {{envs.chroms | r}}
 args <- {{envs.args | r: todot="-"}}
 
@@ -96,6 +99,8 @@ log_info("Plotting Manhattan plot ...")
 args$x <- mpdata
 args$signif <- signif
 args$plot.title <- title
+args$rescale <- rescale
+args$rescale.ratio.threshold <- rescale_ratio_threshold
 if (!is.null(hicolors)) { args$color.by.highlight <- TRUE }
 if (!is.null(label_col)) { args$label.colname <- ".label" }
 g <- do_call(manhattan_plot, args)
@@ -110,10 +115,21 @@ if (!is.null(zoom)) {
     zoom <- norm_chroms(zoom)
     for (z in zoom) {
         log_info("- {z}")
-        args_z <- c(args, chromosome = z)
+        args_z <- args
+        args_z$chromosome <- z
+        args_z$plot.title <- paste0(title, " (", z, ")")
+        args_z$x.label <- "Position"
         g_z <- do_call(manhattan_plot, args_z)
         outfile_z <- gsub("\\.png$", paste0("-", z, ".png"), outfile)
-        png(outfile_z, width=devpars$width, height=devpars$height, res=devpars$res)
+        zm_devpars <- zoom_devpars
+        zm_devpars$res <- zm_devpars$res %||% devpars$res
+        zm_devpars$height <- zm_devpars$height %||% devpars$height
+        png(
+            outfile_z,
+            width=zm_devpars$width,
+            height=zm_devpars$height,
+            res=zm_devpars$res
+        )
         print(g_z)
         dev.off()
     }

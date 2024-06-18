@@ -156,6 +156,7 @@ class Manhattan(Proc):
     """Plot Manhattan plot.
 
     Using the [`ggmanh`](https://bioconductor.org/packages/devel/bioc/vignettes/ggmanh/inst/doc/ggmanh.html) package.
+    Requires `ggmanh` v1.9.6 or later.
 
     Input:
         infile: The input file for data
@@ -182,6 +183,7 @@ class Manhattan(Proc):
         title: The title of the plot
         ylabel: The y-axis label
         rescale (flag): Whether to rescale the p-values
+        rescale_ratio_threshold (type=float): Threshold of that triggers the rescale
         signif (auto): A single value or a list of values to indicate the significance levels
             Multiple values should be also separated by comma (`,`).
             The minimum value will be used as the cutoff to determine if the SNPs are significant.
@@ -195,6 +197,10 @@ class Manhattan(Proc):
             Each chromosome should be separated by comma (`,`) or in a list. Single chromosome is also accepted.
             Ranges are also accepted, see `envs.chroms`.
             Each chromosome will be saved in a separate file.
+        zoom_devpars (ns): The parameters for the zoomed plot
+            - width (type=int): The width
+            - height (type=int): The height, inherited from `devpars` by default
+            - res (type=int): The resolution, inherited from `devpars` by default
         chroms (auto): The chromosomes and order to plot
             A hyphen (`-`) can be used to indicate a range.
             For example `chr1-22,chrX,chrY,chrM` will plot all autosomes, X, Y and M.
@@ -212,9 +218,11 @@ class Manhattan(Proc):
         "pval_col": 3,
         "label_col": None,
         "devpars": {"res": 100, "width": 1000, "height": 500},
+        "zoom_devpars": {"width": 500, "height": None, "res": None},
         "title": "Manhattan Plot",
         "ylabel": "-log10(p-value)",
-        "rescale": False,
+        "rescale": True,
+        "rescale_ratio_threshold": 5,
         "signif": [5e-8, 1e-5],
         "hicolors": None,
         "thin_n": None,
