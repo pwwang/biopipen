@@ -13,9 +13,9 @@ outdir = Path(outfile).parent
 
 if chrsize and "g" in envs:
     logger.warning("Ignoring envs.g because envs.chrsize is provided.")
-    envs["g"] = chrsize
+    envs["g"] = Path(chrsize).expanduser()
 elif chrsize:
-    envs["g"] = chrsize
+    envs["g"] = Path(chrsize).expanduser()
 
 if sort:
     afile_sorted = outdir / f"{afile.stem}_sorted{afile.suffix}"
