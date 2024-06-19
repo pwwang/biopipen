@@ -51,6 +51,7 @@ class TCRClusterStatsClusTCR(TCRClusterStats):
     envs = {
         "shared_clusters": {
             "cluster_rows": False,
+            "heatmap_meta": "Sex",
             "sample_order": ["MS3", "MS5", "MS1", "MS2"],
         }
     }
