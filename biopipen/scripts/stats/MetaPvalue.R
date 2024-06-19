@@ -11,6 +11,7 @@ id_exprs <- {{envs.id_exprs | r}}
 pval_cols <- {{envs.pval_cols | r}}
 method <- {{envs.method | r}}
 na <- {{envs.na | r}}
+keep_single <- {{envs.keep_single | r}}
 padj <- {{envs.padj | r}}
 
 if (method == "fisher") { method = "sumlog" }
@@ -102,7 +103,7 @@ if (length(infiles) == 1 && padj == "none") {
         if (length(ps) == 0) {
             metaps <- c(metaps, NA)
             ns <- c(ns, NA)
-        } else if (length(ps) == 1) {
+        } else if (length(ps) == 1 && keep_single) {
             metaps <- c(metaps, ps)
             ns <- c(ns, 1)
         } else {
