@@ -62,7 +62,11 @@ norm_chroms <- function(chrs) {
 }
 
 log_info("Preparing data for plotting ...")
-chroms <- norm_chroms(chroms)
+if (length(chroms) == 1 && chroms == "auto") {
+    chroms <- unique(data[[chrom_col]])
+} else {
+    chroms <- norm_chroms(chroms)
+}
 
 # prepare data
 mp_prep_args = list()

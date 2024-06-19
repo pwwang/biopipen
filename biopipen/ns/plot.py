@@ -204,6 +204,8 @@ class Manhattan(Proc):
         chroms (auto): The chromosomes and order to plot
             A hyphen (`-`) can be used to indicate a range.
             For example `chr1-22,chrX,chrY,chrM` will plot all autosomes, X, Y and M.
+            if `auto`, only the chromosomes in the data will be plotted in the order
+            they appear in the data.
         args (ns): Additional arguments for `manhattan_plot()`.
             See <https://rdrr.io/github/leejs-abv/ggmanh/man/manhattan_plot.html>.
             Note that `-` will be replaced by `.` in the argument names.
@@ -228,7 +230,7 @@ class Manhattan(Proc):
         "thin_n": None,
         "thin_bins": 200,
         "zoom": None,
-        "chroms": "chr1-22,chrX,chrY",
+        "chroms": "auto",
         "args": {},
     }
     script = "file://../scripts/plot/Manhattan.R"
