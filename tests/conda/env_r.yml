@@ -28,6 +28,7 @@ dependencies:
   - r-forcats
   - r-future
   - r-presto
+  - r-metap
   - r-ggprism=1.0.4
   - r-ggpubr
   - r-ggradar
