@@ -75,7 +75,7 @@ if chrsize:
         return new_ctgs
 
     chroms = []
-    with open(chrsize) as fh:
+    with Path(chrsize).expanduser().open() as fh:
         for line in fh:
             chrom = line.strip().split()[0]
             chroms.append(chrom)
