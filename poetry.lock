@@ -804,13 +804,13 @@ files = [
 
 [[package]]
 name = "packaging"
-version = "24.0"
+version = "24.1"
 description = "Core utilities for Python packages"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "packaging-24.0-py3-none-any.whl", hash = "sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5"},
-    {file = "packaging-24.0.tar.gz", hash = "sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9"},
+    {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
+    {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
 ]
 
 [[package]]
@@ -977,19 +977,19 @@ pipen-annotate = ">=0.13,<0.14"
 
 [[package]]
 name = "pipen-board"
-version = "0.15.1"
+version = "0.15.2"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_board-0.15.1-py3-none-any.whl", hash = "sha256:1fc023a98c41f0bf8a443bbba39aa2ad4a9fc285c9a2a6c0a9125d4b73a1159d"},
-    {file = "pipen_board-0.15.1.tar.gz", hash = "sha256:1303d6824f32166ad090155cd1ea737026c910f59d9caf145c87a78559938079"},
+    {file = "pipen_board-0.15.2-py3-none-any.whl", hash = "sha256:bdaca4b43a3881cd0ee4a5230de758296d628abd023bc1da027dd72debaebaad"},
+    {file = "pipen_board-0.15.2.tar.gz", hash = "sha256:c3737f1988bb245bf6eddb4998519ee01f1bd4e6ff7c294969feb785f1b2543a"},
 ]
 
 [package.dependencies]
 pipen-args = ">=0.14,<0.15"
 pipen-log2file = ">=0.7,<0.8"
-pipen-report = {version = ">=0.18,<0.19", optional = true, markers = "extra == \"report\""}
+pipen-report = {version = ">=0.19,<0.20", optional = true, markers = "extra == \"report\""}
 psutil = ">=5.9,<6.0"
 python-slugify = ">=8.0,<9.0"
 quart = ">=0.19,<0.20"
@@ -998,7 +998,7 @@ websocket-client = ">=1.7,<2.0"
 [package.extras]
 diagram = ["pipen-diagram (>=0.11,<0.12)"]
 filters = ["pipen-filters (>=0.12,<0.13)"]
-report = ["pipen-report (>=0.18,<0.19)"]
+report = ["pipen-report (>=0.19,<0.20)"]
 
 [[package]]
 name = "pipen-cli-run"
@@ -1058,13 +1058,13 @@ pipen = ">=0.14,<0.15"
 
 [[package]]
 name = "pipen-report"
-version = "0.18.5"
+version = "0.19.0"
 description = "Report generation system for pipen"
 optional = false
-python-versions = ">=3.9,<4.0"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_report-0.18.5-py3-none-any.whl", hash = "sha256:a6c679be6906dd04e0daa7f9020d428a4a320a3677a8fb24ad6c14d34c15bd52"},
-    {file = "pipen_report-0.18.5.tar.gz", hash = "sha256:004e933c5c08ddc1ab5ebea6acae95ca3fe926a90b82ac18c9a455237f4b6f6f"},
+    {file = "pipen_report-0.19.0-py3-none-any.whl", hash = "sha256:b94dbac3d295e92aa532909e07ea34b685afd7148013b6367863f34d595abf45"},
+    {file = "pipen_report-0.19.0.tar.gz", hash = "sha256:358b58fa1c9c9d8b98da03f729ed32a13459042e85920edd714a4058667ef3ac"},
 ]
 
 [package.dependencies]
@@ -1188,13 +1188,13 @@ test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
 [[package]]
 name = "pydantic"
-version = "2.7.3"
+version = "2.7.4"
 description = "Data validation using Python type hints"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pydantic-2.7.3-py3-none-any.whl", hash = "sha256:ea91b002777bf643bb20dd717c028ec43216b24a6001a280f83877fd2655d0b4"},
-    {file = "pydantic-2.7.3.tar.gz", hash = "sha256:c46c76a40bb1296728d7a8b99aa73dd70a48c3510111ff290034f860c99c419e"},
+    {file = "pydantic-2.7.4-py3-none-any.whl", hash = "sha256:ee8538d41ccb9c0a9ad3e0e5f07bf15ed8015b481ced539a1759d8cc89ae90d0"},
+    {file = "pydantic-2.7.4.tar.gz", hash = "sha256:0c84efd9548d545f63ac0060c1e4d39bb9b14db8b3c0652338aecc07b5adec52"},
 ]
 
 [package.dependencies]
@@ -1637,13 +1637,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.12.1"
+version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.12.1-py3-none-any.whl", hash = "sha256:6024b58b69089e5a89c347397254e35f1bf02a907728ec7fee9bf0fe837d203a"},
-    {file = "typing_extensions-4.12.1.tar.gz", hash = "sha256:915f5e35ff76f56588223f15fdd5938f9a1cf9195c0de25130c627e4d597f6d1"},
+    {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
+    {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
 ]
 
 [[package]]
