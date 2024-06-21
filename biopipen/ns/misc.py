@@ -105,17 +105,4 @@ class Shell(Proc):
     output = "outfile:file:{{in.infile | basename}}"
     envs = {"cmd": "", "outdir": False}
     lang = config.lang.bash
-    script = """
-        infile={{in.infile | quote}}
-        outfile={{out.outfile | quote}}
-        is_outdir={{envs.outdir | int}}
-        cmd={{envs.cmd | quote}}
-        if [[ -z "$cmd" ]]; then
-            echo "No command given." 1>&2
-            exit 1
-        fi
-        if [[ $is_outdir -eq 1 ]]; then
-            mkdir -p "$outfile"
-        fi
-        eval "$cmd"
-    """
+    script = "file://../scripts/misc/Shell.sh"
