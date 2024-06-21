@@ -88,11 +88,11 @@ def tabix_index(
     if gt == "gzip":
         # re-bgzip
         run_command(
-            ["gunzip", "-c", infile], stdout=new_infile.with_suffix(""),
+            ["gunzip", "-f", "-c", infile], stdout=new_infile.with_suffix(""),
         )
-        run_command(["bgzip", new_infile.with_suffix("")], fg=True)
+        run_command(["bgzip", "-f", new_infile.with_suffix("")], fg=True)
     elif gt == "flat":
-        run_command(["bgzip", "-c", infile], stdout=new_infile)
+        run_command(["bgzip", "-f", "-c", infile], stdout=new_infile)
     else:
         if new_infile.is_symlink():
             new_infile.unlink()
