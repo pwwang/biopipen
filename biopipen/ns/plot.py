@@ -234,3 +234,63 @@ class Manhattan(Proc):
         "args": {},
     }
     script = "file://../scripts/plot/Manhattan.R"
+
+
+class QQPlot(Proc):
+    """Generate QQ-plot or PP-plot using qqplotr.
+
+    See <https://cran.r-project.org/web/packages/qqplotr/vignettes/introduction.html>.
+
+    Input:
+        infile: The input file for data
+            It should contain at least one column of p-values or the values to be
+            plotted. Header is required.
+
+    Output:
+        outfile: The output figure file
+
+    Envs:
+        val_col: The column for values to be plotted
+            An integer (1-based) or a string indicating the column name.
+        devpars (ns): The parameters for `png()`
+            - res (type=int): The resolution
+            - width (type=int): The width
+            - height (type=int): The height
+        xlabel: The x-axis label
+        ylabel: The y-axis label
+        title: The title of the plot
+        trans: The transformation of the values
+            You can use `-log10` to transform the values to `-log10(values)`.
+            Otherwise you can a direct R function or a custom R function.
+            For example `function(x) -log10(x)`.
+        kind (choice): The kind of the plot, `qq` or `pp`
+            - qq: QQ-plot
+            - pp: PP-plot
+        band (ns): The arguments for `stat_qq_band()` or `stat_pp_band()`
+            See <https://rdrr.io/cran/qqplotr/man/stat_qq_band.html> and
+            <https://rdrr.io/cran/qqplotr/man/stat_pp_band.html>.
+            - <more>: Additional arguments for `stat_qq_band()` or `stat_pp_band()`
+        line (ns): The arguments for `stat_qq_line()` or `stat_pp_line()`
+            See <https://rdrr.io/cran/qqplot/man/stat_qq_line.html> and
+            <https://rdrr.io/cran/qqplot/man/stat_pp_line.html>.
+            - <more>: Additional arguments for `stat_qq_line()` or `stat_pp_line()`
+        point (ns): The arguments for `geom_qq_point()` or `geom_pp_point()`
+            See <https://rdrr.io/cran/qqplot/man/stat_qq_point.html> and
+            <https://rdrr.io/cran/qqplot/man/stat_pp_point.html>.
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.{{envs.kind}}.png"
+    lang = config.lang.rscript
+    envs = {
+        "val_col": 1,
+        "devpars": {"res": 100, "width": 1000, "height": 1000},
+        "xlabel": "Theoretical Quantiles",
+        "ylabel": "Observed Quantiles",
+        "title": "QQ-plot",
+        "trans": None,
+        "kind": "qq",
+        "band": {},
+        "line": {},
+        "point": {},
+    }
+    script = "file://../scripts/plot/QQPlot.R"
