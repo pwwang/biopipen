@@ -277,6 +277,7 @@ class QQPlot(Proc):
         point (ns): The arguments for `geom_qq_point()` or `geom_pp_point()`
             See <https://rdrr.io/cran/qqplot/man/stat_qq_point.html> and
             <https://rdrr.io/cran/qqplot/man/stat_pp_point.html>.
+        ggs (list): Additional ggplot expression to adjust the plot.
     """
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}.{{envs.kind}}.png"
@@ -292,5 +293,6 @@ class QQPlot(Proc):
         "band": {},
         "line": {},
         "point": {},
+        "ggs": None,
     }
     script = "file://../scripts/plot/QQPlot.R"

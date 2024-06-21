@@ -18,6 +18,7 @@ trans <- {{envs.trans | r}}
 band_args <- {{envs.band | r}}
 line_args <- {{envs.line | r}}
 point_args <- {{envs.point | r}}
+ggs <- {{envs.ggs | r}}
 
 indata <- read.table(infile, header=TRUE, sep="\t", stringsAsFactors=FALSE, check.names = FALSE)
 if (is.numeric(val_col)) { val_col <- colnames(indata)[val_col] }
@@ -49,6 +50,12 @@ p <- ggplot(data = indata, mapping = aes(sample = !!sym(val_col))) +
     do_call(line_fun, line_args) +
     do_call(point_fun, point_args) +
     labs(title = title, x = xlabel, y = ylabel)
+
+if (!is.null(ggs)) {
+    for (gg in ggs) {
+        p <- p + eval(parse(text = gg))
+    }
+}
 
 png(outfile, width=devpars$width, height=devpars$height, res=devpars$res)
 print(p)
