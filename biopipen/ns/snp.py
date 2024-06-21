@@ -98,6 +98,10 @@ class MatrixEQTL(Proc):
             - anova: ANOVA model
             - modelANOVA: Same as `anova`
         pval (type=float): P-value threshold for eQTLs
+        match_samples (flag): Match samples in the genotype and expression matrices.
+            If True, an error will be raised if samples from `in.geno`, `in.expr`,
+            and `in.cov` (if provided) are not the same.
+            If False, common samples will be used to subset the matrices.
         transp (type=float): P-value threshold for trans-eQTLs.
             If cis-eQTLs are not enabled (`snppos` and `genepos` are not set),
             this defaults to 1e-5.
@@ -126,6 +130,7 @@ class MatrixEQTL(Proc):
     envs = {
         "model": "linear",
         "pval": 1e-3,
+        "match_samples": False,
         "transp": None,
         "fdr": False,
         "snppos": None,

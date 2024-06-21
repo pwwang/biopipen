@@ -73,6 +73,26 @@ if (!is.null(covfile) && file.exists(covfile)) {
     cvrt$CreateFromMatrix( as.matrix(covmatrix) )
 }
 
+log_info("Matching samples ...")
+if (match_samples) {
+    # let matrixEQTL raise an error if samples do not match
+} else {
+    n_sample_snps = snps$nCols()
+    n_sample_gene = gene$nCols()
+    common_samples = intersect(snps$columnNames, gene$columnNames)
+    if (!is.null(covfile)) {
+        common_samples = intersect(common_samples, cvrt$columnNames)
+        n_sample_cov = cvrt$nCols()
+        cvrt = cvrt$ColumnSubsample(match(common_samples, cvrt$columnNames))
+    }
+    snps = snps$ColumnSubsample(match(common_samples, snps$columnNames))
+    gene = gene$ColumnSubsample(match(common_samples, gene$columnNames))
+    log_info("- Samples used in SNP data: {n_sample_snps} -> {snps$nCols()}")
+    log_info("- Samples used in gene expression data: {n_sample_gene} -> {gene$nCols()}")
+    if (!is.null(covfile)) {
+        log_info("- Samples used in covariate data: {n_sample_cov} -> {cvrt$nCols()}")
+    }
+}
 engine_params = list()
 engine_params$snps = snps
 engine_params$gene = gene
