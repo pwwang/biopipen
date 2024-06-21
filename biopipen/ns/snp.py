@@ -615,3 +615,51 @@ class PlinkFreq(Proc):
     }
     script = "file://../scripts/snp/PlinkFreq.R"
     plugin_opts = {"report": "file://../reports/snp/PlinkFreq.svelte"}
+
+
+class PlinkUpdateName(Proc):
+    """Update variant names in PLINK files.
+
+    See also <https://www.cog-genomics.org/plink/2.0/data#update_map>.
+
+    Input:
+        indir: Input directory containing the PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+        namefile: File containing the variant names to update.
+            Either a file containing two columns, the first column is the old
+            variant name, and the second column is the new variant name.
+            Or a VCF file containing the variant names to update.
+            When a VCF file is given, the chromosome, position, and reference and
+            alternate alleles will be used to match the variants.
+
+    Output:
+        outdir: Output directory containing the updated PLINK files.
+            Including `.bed`, `.bim`, and `.fam` files
+
+    Envs:
+        ncores: Number of cores/threads to use, will pass to plink `--threads` option
+        plink: Path to PLINK v2
+        bcftools: Path to bcftools
+        match_alt (choice): How to match alternate alleles when `in.namefile`
+            is a VCF file.
+            - exact: Matches alternate alleles exactly.
+            - all: Matches alternate alleles regardless of the order.
+                `chr1:100:A:T,G` matches `chr1:100:A:G,T` or `chr1:100:A:T,G`.
+            - any: Matches any alternate allele.
+                For example, `chr1:100:A:T,G` matches `chr1:100:A:G,C`
+            - first_included: Matches when the first allele is included.
+                For example, `chr1:100:A:T,G` matches `chr1:100:A:C,T`.
+            - first: Match first alternate allele
+                For example, `chr1:100:A:T,G` matches `chr1:100:A:T`.
+            - none: Do not match alternate alleles
+    """
+    input = "indir:dir, namefile:file"
+    output = "outdir:dir:{{in.indir | stem}}.newnames"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "plink": config.exe.plink2,
+        "bcftools": config.exe.bcftools,
+        "match_alt": "exact",
+    }
+    script = "file://../scripts/snp/PlinkUpdateName.py"
