@@ -1,5 +1,6 @@
 source("{{biopipen_dir}}/utils/misc.R")
 library(rlang)
+library(rtracklayer)
 library(MatrixEQTL)
 
 snpfile = {{in.geno | r}}
@@ -11,6 +12,7 @@ outfile = {{out.cisqtls | r}}
 
 model = {{envs.model | r}}
 pval = {{envs.pval | r}}
+match_samples = {{envs.match_samples | r}}
 transp = {{envs.transp | r}}
 fdr = {{envs.fdr | r}}
 snppos = {{envs.snppos | r}}
@@ -36,7 +38,9 @@ if (!trans_enabled && !cis_enabled) {
     transp <- 1e-5
 }
 
-transpose_file <- function(file) {
+transpose_file <- function(file, what) {
+    if (is.null(file)) return(NULL)
+    log_info("Transposing {what} file ...")
     out <- file.path(joboutdir, paste0(
         tools::file_path_sans_ext(basename(file)),
         ".transposed.",
@@ -47,10 +51,11 @@ transpose_file <- function(file) {
     out
 }
 
-if (transpose_geno) snpfile = transpose_file(snpfile)
-if (transpose_expr) expfile = transpose_file(expfile)
-if (transpose_cov) covfile = transpose_file(covfile)
+if (transpose_geno) snpfile = transpose_file(snpfile, "geno")
+if (transpose_expr) expfile = transpose_file(expfile, "expr")
+if (transpose_cov) covfile = transpose_file(covfile, "cov")
 
+log_info("Loading SNP data ...")
 snps = SlicedData$new();
 snps$fileDelimiter = "\t";       # the TAB character
 snps$fileOmitCharacters = "NA";  # denote missing values;
@@ -59,6 +64,7 @@ snps$fileSkipColumns = 1;        # one column of row labels
 snps$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
 snps$LoadFile( snpfile );
 
+log_info("Loading gene expression data ...")
 gene = SlicedData$new();
 gene$fileDelimiter = "\t";       # the TAB character
 gene$fileOmitCharacters = "NA";  # denote missing values;
@@ -69,6 +75,7 @@ gene$LoadFile( expfile );
 
 cvrt = SlicedData$new();
 if (!is.null(covfile) && file.exists(covfile)) {
+    log_info("Loading covariate data ...")
     covmatrix = read.table(covfile, header=TRUE, stringsAsFactors=FALSE, row.names=1, sep="\t", quote="", check.names=FALSE)
     cvrt$CreateFromMatrix( as.matrix(covmatrix) )
 }
@@ -93,12 +100,14 @@ if (match_samples) {
         log_info("- Samples used in covariate data: {n_sample_cov} -> {cvrt$nCols()}")
     }
 }
+
+log_info("Composing engine parameters ...")
 engine_params = list()
 engine_params$snps = snps
 engine_params$gene = gene
 engine_params$cvrt = cvrt
-engine_params$output_file_name = ifelse(trans_enabled, alleqtl, NULL)
-engine_params$pvOutputThreshold = ifelse(trans_enabled, transp, 0)
+engine_params$output_file_name = if(trans_enabled) alleqtl else NULL
+engine_params$pvOutputThreshold = if(trans_enabled) transp else 0
 engine_params$useModel = model
 engine_params$errorCovariance = numeric()
 engine_params$verbose = TRUE
@@ -109,66 +118,78 @@ noq = function(s) {
 }
 
 if (cis_enabled) {
+    log_info("Loading SNP positions ...")
     if (endsWith(snppos, ".bed")) {
-        snppos_data = read.table.inopts(snppos,
-                                        list(cnames=FALSE, rnames=FALSE))
-        snppos_data = snppos_data[, c(4, 1, 2)]
-        colnames(snppos_data) = c("snp", "chr", "pos")
+        snppos_data = import(snppos)
+        snppos_data = data.frame(
+            snp = snppos_data$name,
+            chr = as.character(seqnames(snppos_data)),
+            pos = end(snppos_data)
+        )
     } else if (endsWith(snppos, ".gff") || endsWith(snppos, ".gtf")) {
-        snppos_data = read.table.inopts(snppos,
-                                        list(cnames=FALSE, rnames=FALSE));
-        snppos_data = snppos_data[, c(9, 1, 4)]
-        colnames(snppos_data) = c("snp", "chr", "pos")
-        snppos_data$snp = unlist(lapply(snppos_data$snp, function(x) {
-            for (s in unlist(strsplit(x, '; ', fixed=T))) {
-                if (startsWith(s, "snp_id "))
-                    return(noq(substring(s, 8)))
-                else if (startsWith(s, "rs_id "))
-                    return(noq(substring(s, 7)))
-                else if (startsWith(s, "rs "))
-                    return(noq(substring(s, 4)))
-            }
-        }))
+        snppos_data = import(snppos)
+        elem_meta = elementMetadata(snppos_data)
+        snppos_data = data.frame(
+            snp = elem_meta$snp_id %||% elem_meta$rs_id %||% elem_meta$rs,
+            chr = as.character(seqnames(snppos_data)),
+            pos = start(snppos_data)
+        )
     } else if (endsWith(snppos, ".vcf") || endsWith(snppos, ".vcf.gz")) {
-        snppos_data = read.table.inopts(snppos,
-                                        list(cnames=FALSE, rnames=FALSE))
+        snppos_data = read.table(
+            snppos,
+            header=FALSE,
+            row.names=NULL,
+            stringsAsFactors=FALSE,
+            check.names=FALSE
+        )
         snppos_data = snppos_data[, c(3, 1, 2)]
         colnames(snppos_data) = c("snp", "chr", "pos")
     } else {
-        snppos_data = read.table.inopts(snppos, list(cnames=TRUE))
+        snppos_data = read.table(
+            snppos,
+            header=FALSE,
+            row.names=NULL,
+            stringsAsFactors=FALSE,
+            check.names=FALSE
+        )
         colnames(snppos_data) = c("snp", "chr", "pos")
     }
 
+    log_info("Loading gene positions ...")
     if (endsWith(genepos, ".bed")) {
-        genepos_data = read.table.inopts(genepos,
-                                         list(cnames=FALSE, rnames=FALSE))
-        genepos_data = genepos_data[, c(4, 1:3)]
-        colnames(genepos_data) = c("geneid", "chr", "s1", "s2")
+        genepos_data = import(genepos)
+        genepos_data = data.frame(
+            geneid = elementMetadata(genepos_data)$gene_id,
+            chr = as.character(seqnames(genepos_data)),
+            s1 = start(genepos_data),
+            s2 = end(genepos_data)
+        )
     } else if (endsWith(genepos, ".gff") || endsWith(genepos, ".gtf")) {
-        genepos_data = read.table.inopts(genepos,
-                                         list(cnames=FALSE, rnames=FALSE))
-        genepos_data = genepos_data[, c(9, 1, 4, 5)]
-        colnames(genepos_data) = c("geneid", "chr", "s1", "s2")
-        genepos_data$geneid = noquote(unlist(lapply(genepos_data$geneid, function(x) {
-            for (s in unlist(strsplit(x, '; ', fixed=T))) {
-                if (startsWith(s, "gene_id "))
-                    return(noq(substring(s, 9)))
-            }
-        })))
+        genepos_data = import(genepos)
+        elem_meta = elementMetadata(genepos_data)
+        genepos_data = data.frame(
+            geneid = elem_meta$gene_id %||% elem_meta$gene_name,
+            chr = as.character(seqnames(genepos_data)),
+            s1 = start(genepos_data),
+            s2 = end(genepos_data)
+        )
     } else {
         genepos_data = read.table(genepos, header = TRUE, stringsAsFactors = FALSE);
         colnames(genepos_data) = c("geneid", "chr", "s1", "s2")
     }
 
+    log_info("Running MatrixEQTL with cis-eQTLs enabled ...")
     engine_params$output_file_name.cis = outfile
     engine_params$pvOutputThreshold.cis = pval
     engine_params$cisDist = dist
     engine_params$snpspos = snppos_data
     engine_params$genepos = genepos_data
     do_call(Matrix_eQTL_main, engine_params)
+    if (!file.exists(alleqtl)) file.create(alleqtl)
 } else {
+    log_info("Running MatrixEQTL without cis-eQTLs ...")
     do_call(Matrix_eQTL_engine, engine_params)
-    file.create(outfile)
+    if (!file.exists(outfile)) file.create(outfile)
 }
 
 if (pval == 0) {
