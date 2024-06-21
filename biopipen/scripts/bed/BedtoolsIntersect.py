@@ -21,8 +21,14 @@ elif chrsize:
 if sort:
     afile_sorted = outdir / f"{afile.stem}_sorted{afile.suffix}"
     bfile_sorted = outdir / f"{bfile.stem}_sorted{bfile.suffix}"
-    run_command(f'sort -k1,1 -k2,2n -o "{afile_sorted}" "{afile}"', fg=True)
-    run_command(f'sort -k1,1 -k2,2n -o "{bfile_sorted}" "{bfile}"', fg=True)
+    run_command(
+        [bedtools, "sort", "-g", envs["g"], "-i", afile],
+        stdout=afile_sorted,
+    )
+    run_command(
+        [bedtools, "sort", "-g", envs["g"], "-i", bfile],
+        stdout=bfile_sorted,
+    )
     afile = afile_sorted
     bfile = bfile_sorted
 
