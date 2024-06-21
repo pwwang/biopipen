@@ -13,6 +13,7 @@ dependencies:
   - poetry
   - nodejs  # for pipen-report
   - curl=7.83
+  - bcftools
   - plink
   - plink2
   - samtools
