@@ -150,8 +150,8 @@ class PlinkFromVcf(Proc):
 
     Requires PLINK v2
 
-    "--keep-allele-order" is used to keep the allele order consistent with the
-    reference allele first.
+    TODO:
+        Handle sex when sex chromosomes are included.
 
     Input:
         invcf: VCF file

@@ -21,7 +21,8 @@ if isinstance(args["vcf_filter"], str):
 args.setdefault("max_alleles", 2)
 
 # This makes it possible to keep the allele order in the output
-args["keep_allele_order"] = True
+# no need for plink2
+# args["keep_allele_order"] = True
 
 # resolve plink 1.x --set-missing-var-ids doesn't distinguish $1, $2,...
 # for ref and alts
