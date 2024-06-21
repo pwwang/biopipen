@@ -32,8 +32,8 @@ cmd = [
     "--keep-allele-order",
     "--recode", "A-transpose" if not transpose else "A",
 ]
-if transpose:
-    cmd += ["tabx"]
+# if transpose:
+#     cmd += ["tabx"]
 
 run_command(cmd, fg=True, env={"cwd": path.dirname(outfile)})
 

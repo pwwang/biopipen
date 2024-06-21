@@ -14,6 +14,7 @@ dependencies:
   - nodejs  # for pipen-report
   - curl=7.83
   - plink
+  - plink2
   - samtools
   - bedtools
   # - r-slugify

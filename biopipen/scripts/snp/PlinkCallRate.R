@@ -23,10 +23,12 @@ if (length(bedfile) > 1) {
 input <- tools::file_path_sans_ext(bedfile)
 output <- file.path(outdir, basename(input))
 
-all_imiss_file = paste0(output, '.imiss')
-all_lmiss_file = paste0(output, '.lmiss')
+all_smiss_file = paste0(output, '.smiss')
+all_vmiss_file = paste0(output, '.vmiss')
 all_samplecr_fail_file = paste0(output, '.samplecr.fail')
 all_varcr_fail_file = paste0(output, '.varcr.fail')
+if (file.exists(all_smiss_file)) invisible(file.remove(all_smiss_file))
+if (file.exists(all_vmiss_file)) invisible(file.remove(all_vmiss_file))
 for (i in 1:max_iter) {
     log_info("Iteration {i} ...")
     # iter_out <- paste0(output, "-", i)
@@ -42,26 +44,27 @@ for (i in 1:max_iter) {
     )
     run_command(cmd, fg = TRUE)
 
-    imissfile <- paste0(iter_out, '.imiss')
-    imiss <- read.table(
-        imissfile,
+    smissfile <- paste0(iter_out, '.smiss')
+    smiss <- read.table(
+        smissfile,
         header = TRUE,
         row.names = NULL,
-        check.names = FALSE
+        check.names = FALSE,
+        comment.char = ""
     )
-    imiss$Iteration <- i
-    # append it to all_imiss_file
+    smiss$Iteration <- i
+    # append it to all_smiss_file
     write.table(
-        imiss,
-        all_imiss_file,
+        smiss,
+        all_smiss_file,
         append = i > 1,
-        col.names = !file.exists(all_imiss_file),
+        col.names = !file.exists(all_smiss_file),
         row.names = FALSE,
         sep = "\t",
         quote = FALSE
     )
-    callrate.sample <- data.frame(Callrate = 1 - imiss$F_MISS)
-    rownames(callrate.sample) <- paste(imiss$FID, imiss$IID, sep = "\t")
+    callrate.sample <- data.frame(Callrate = 1 - smiss$F_MISS)
+    rownames(callrate.sample) <- paste(smiss$FID, smiss$IID, sep = "\t")
     callrate.sample.fail = rownames(callrate.sample[
         callrate.sample$Callrate < samplecr, , drop = FALSE
     ])
@@ -76,25 +79,26 @@ for (i in 1:max_iter) {
         append = i > 1
     )
 
-    lmiss <- read.table(
-        paste0(iter_out, '.lmiss'),
+    vmiss <- read.table(
+        paste0(iter_out, '.vmiss'),
         header = TRUE,
         row.names = NULL,
-        check.names = FALSE
+        check.names = FALSE,
+        comment.char = ""
     )
-    lmiss$Iteration <- i
-    # append it to all_lmiss_file
+    vmiss$Iteration <- i
+    # append it to all_vmiss_file
     write.table(
-        lmiss,
-        all_lmiss_file,
+        vmiss,
+        all_vmiss_file,
         append = i > 1,
-        col.names = !file.exists(all_lmiss_file),
+        col.names = !file.exists(all_vmiss_file),
         row.names = FALSE,
         sep = "\t",
         quote = FALSE
     )
-    lmiss$Callrate <- 1 - lmiss$F_MISS
-    callrate.var.fail <- lmiss[which(lmiss$Callrate < varcr), 'SNP', drop = TRUE]
+    vmiss$Callrate <- 1 - vmiss$F_MISS
+    callrate.var.fail <- vmiss[which(vmiss$Callrate < varcr), 'ID', drop = TRUE]
     writeLines(callrate.var.fail, con = file(paste0(iter_out, '.varcr.fail')))
     # append it to all_varcr_fail_file
     write(
@@ -128,22 +132,24 @@ for (i in 1:max_iter) {
     input <- iter_out
 }
 
-imiss <- read.table(
-    imissfile,
+smiss <- read.table(
+    smissfile,
     header = TRUE,
     row.names = NULL,
-    check.names = FALSE
+    check.names = FALSE,
+    comment.char = ""
 )
-callrate.sample <- data.frame(Callrate = 1 - imiss$F_MISS)
-rownames(callrate.sample) <- paste(imiss$FID, imiss$IID, sep = "\t")
+callrate.sample <- data.frame(Callrate = 1 - smiss$F_MISS)
+rownames(callrate.sample) <- paste(smiss$FID, smiss$IID, sep = "\t")
 
-lmiss <- read.table(
-    paste0(iter_out, '.lmiss'),
+vmiss <- read.table(
+    paste0(iter_out, '.vmiss'),
     header = TRUE,
     row.names = NULL,
-    check.names = FALSE
+    check.names = FALSE,
+    comment.char = ""
 )
-lmiss$Callrate <- 1 - lmiss$F_MISS
+vmiss$Callrate <- 1 - vmiss$F_MISS
 
 if (doplot) {
     log_info("Plotting ...")
@@ -164,10 +170,10 @@ if (doplot) {
         )
     )
 
-    lmiss$Status <- "Pass"
-    lmiss[which(lmiss$Callrate < varcr), "Status"] <- "Fail"
+    vmiss$Status <- "Pass"
+    vmiss[which(vmiss$Callrate < varcr), "Status"] <- "Fail"
     plotGG(
-        data = lmiss,
+        data = vmiss,
         geom = "histogram",
         outfile = paste0(output, '.varcr.png'),
         args = list(aes(fill = Status, x = Callrate), alpha = 0.8, bins = 50),

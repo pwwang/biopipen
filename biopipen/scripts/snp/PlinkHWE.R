@@ -8,7 +8,6 @@ outdir <- {{out.outdir | r}}
 plink <- {{envs.plink | r}}
 ncores <- {{envs.ncores | r}}
 cutoff <- {{envs.cutoff | r}}
-filter <- {{envs.filter | r}}
 doplot <- {{envs.plot | r}}
 devpars <- {{envs.devpars | r}}
 
@@ -32,12 +31,13 @@ cmd <- c(
 run_command(cmd, fg = TRUE)
 
 hardy <- read.table(
-    paste0(output, '.hwe'),
+    paste0(output, '.hardy'),
     header = TRUE,
     row.names = NULL,
-    check.names = FALSE
+    check.names = FALSE,
+    comment.char = ""
 )
-hardy.fail <- hardy[which(hardy$P < cutoff), 'SNP', drop = FALSE]
+hardy.fail <- hardy[which(hardy$P < cutoff), 'ID', drop = FALSE]
 write.table(
     hardy.fail,
     paste0(output, '.hardy.fail'),
@@ -69,14 +69,12 @@ if (doplot) {
     )
 }
 
-if (filter) {
-    cmd <- c(
-        plink,
-        "--threads", ncores,
-        "--bfile", input,
-        "--exclude", paste0(output, '.hardy.fail'),
-        "--make-bed",
-        "--out", output
-    )
-    run_command(cmd, fg = TRUE)
-}
+cmd <- c(
+    plink,
+    "--threads", ncores,
+    "--bfile", input,
+    "--exclude", paste0(output, '.hardy.fail'),
+    "--make-bed",
+    "--out", output
+)
+run_command(cmd, fg = TRUE)

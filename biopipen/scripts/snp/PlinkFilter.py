@@ -4,63 +4,54 @@ from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
 indir = {{in.indir | repr}}  # pyright: ignore # noqa: #999
-samples_file_keep = {{in.samples_file_keep | repr}}  # pyright: ignore
-variants_file_keep = {{in.variants_file_keep | repr}}  # pyright: ignore
-samples_file_remove = {{in.samples_file_remove | repr}}  # pyright: ignore
-variants_file_remove = {{in.variants_file_remove | repr}}  # pyright: ignore
+samples_file = {{in.samples_file | repr}}  # pyright: ignore
+variants_file = {{in.variants_file | repr}}  # pyright: ignore
 outdir = {{out.outdir | repr}}  # pyright: ignore
 
 plink = {{envs.plink | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
-samples_keep = {{envs.samples_keep | repr}}  # pyright: ignore
-variants_keep = {{envs.variants_keep | repr}}  # pyright: ignore
-samples_remove = {{envs.samples_remove | repr}}  # pyright: ignore
-variants_remove = {{envs.variants_remove | repr}}  # pyright: ignore
-e_samples_file_keep = {{envs.samples_file_keep | repr}}  # pyright: ignore
-e_variants_file_keep = {{envs.variants_file_keep | repr}}  # pyright: ignore
-e_samples_file_remove = {{envs.samples_file_remove | repr}}  # pyright: ignore
-e_variants_file_remove = {{envs.variants_file_remove | repr}}  # pyright: ignore
+samples = {{envs.samples | repr}}  # pyright: ignore
+variants = {{envs.variants | repr}}  # pyright: ignore
+e_samples_file = {{envs.samples_file | repr}}  # pyright: ignore
+e_variants_file = {{envs.variants_file | repr}}  # pyright: ignore
+keep = {{envs.keep | repr}}  # pyright: ignore
+vfile_type = {{envs.vfile_type | repr}}  # pyright: ignore
 chr = {{envs.chr | repr}}  # pyright: ignore
 not_chr = {{envs.not_chr | repr}}  # pyright: ignore
 autosome = {{envs.autosome | repr}}  # pyright: ignore
 autosome_xy = {{envs.autosome_xy | repr}}  # pyright: ignore
 snps_only = {{envs.snps_only | repr}}  # pyright: ignore
 
-samples_file_keep = samples_file_keep or e_samples_file_keep
-if not samples_file_keep and samples_keep:
-    samples_file_keep = Path(outdir) / "samples_keep.txt"
-    if isinstance(samples_keep, str):
-        samples_keep = [s.strip() for s in samples_keep.split(",")]
+samples_file = samples_file or e_samples_file
+if not samples_file and samples:
+    samples_file = Path(outdir) / "_samples.txt"
+    if isinstance(samples, str):
+        samples = [s.strip() for s in samples.split(",")]
 
-    with open(samples_file_keep, "w") as fh:
-        fh.writelines(samples_keep)
+    with open(samples_file, "w") as fh:
+        fh.writelines(
+            [
+                line.replace("/", "\t") + "\n"
+                if "/" in line
+                else line + "\t" + line + "\n"
+                for line in samples
+            ]
+        )
 
-variants_file_keep = variants_file_keep or e_variants_file_keep
-if not variants_file_keep and variants_keep:
-    variants_file_keep = Path(outdir) / "variants_keep.txt"
-    if isinstance(variants_keep, str):
-        variants_keep = [v.strip() for v in variants_keep.split(",")]
+variants_file = variants_file or e_variants_file
+if not variants_file and variants:
+    if vfile_type != "id":
+        logger.warning(
+            "envs.vfile_type should be 'id' if only envs.variants is provided."
+        )
+        vfile_type = "id"
 
-    with open(variants_file_keep, "w") as fh:
-        fh.writelines(variants_keep)
+    variants_file = Path(outdir) / "_variants.txt"
+    if isinstance(variants, str):
+        variants = [v.strip() for v in variants.split(",")]
 
-samples_file_remove = samples_file_remove or e_samples_file_remove
-if not samples_file_remove and samples_remove:
-    samples_file_remove = Path(outdir) / "samples_remove.txt"
-    if isinstance(samples_remove, str):
-        samples_remove = [s.strip() for s in samples_remove.split(",")]
-
-    with open(samples_file_remove, "w") as fh:
-        fh.writelines(samples_remove)
-
-variants_file_remove = variants_file_remove or e_variants_file_remove
-if not variants_file_remove and variants_remove:
-    variants_file_remove = Path(outdir) / "variants_remove.txt"
-    if isinstance(variants_remove, str):
-        variants_remove = [v.strip() for v in variants_remove.split(",")]
-
-    with open(variants_file_remove, "w") as fh:
-        fh.writelines(variants_remove)
+    with open(variants_file, "w") as fh:
+        fh.writelines([line + "\n" for line in variants])
 
 bedfile = list(Path(indir).glob("*.bed"))
 if len(bedfile) == 0:
@@ -77,18 +68,24 @@ args = {
     "bfile": input,
     "out": output,
     "threads": ncores,
-    "keep_allele_order": True,
     "make-bed": True,
 }
 
-if samples_file_keep:
-    args["keep"] = samples_file_keep
-if variants_file_keep:
-    args["extract"] = variants_file_keep
-if samples_file_remove:
-    args["remove"] = samples_file_remove
-if variants_file_remove:
-    args["exclude"] = variants_file_remove
+if keep:
+    if samples_file:
+        args["keep"] = samples_file
+    if variants_file:
+        args["extract"] = (
+            variants_file if vfile_type == "id" else [vfile_type, variants_file]
+        )
+else:
+    if samples_file:
+        args["remove"] = samples_file
+    if variants_file:
+        args["exclude"] = (
+            variants_file if vfile_type == "id" else [vfile_type, variants_file]
+        )
+
 if chr:
     args["chr"] = chr
 if not_chr:
@@ -100,4 +97,4 @@ if autosome_xy:
 if snps_only:
     args["snps_only"] = snps_only
 
-run_command(dict_to_cli_args(args, dashify=True), fg=True)
+run_command(dict_to_cli_args(args, dashify=True, dup_key=False), fg=True)

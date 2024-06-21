@@ -8,18 +8,45 @@ from biopipen.ns.snp import (
     PlinkHWE as PlinkHWE_,
     PlinkHet as PlinkHet_,
     PlinkCallRate as PlinkCallRate_,
+    PlinkFilter as PlinkFilter_,
     PlinkFreq as PlinkFreq_,
+    PlinkUpdateName as PlinkUpdateName_,
 )
 from biopipen.core.testing import get_pipeline
 
 
+class VCFFile(File2Proc):
+    ...
+
+
+class NameFile1(File2Proc):
+    ...
+
+
+class NameFile2(File2Proc):
+    ...
+
+
 class PlinkFromVcf1(PlinkFromVcf_):
-    requires = File2Proc
+    requires = VCFFile
 
 
 class PlinkFromVcf2(PlinkFromVcf_):
-    requires = File2Proc
+    requires = VCFFile
     envs = {"set_missing_var_ids": None}
+
+
+class PlinkUpdateName1(PlinkUpdateName_):
+    requires = PlinkFromVcf1, NameFile1
+
+
+class PlinkUpdateName2(PlinkUpdateName_):
+    requires = PlinkFromVcf1, NameFile2
+
+
+class PlinkFilter(PlinkFilter_):
+    requires = PlinkFromVcf1
+    envs = {"samples": ["A", "B"], "keep": True}
 
 
 class Plink2GTMat1(Plink2GTMat_):
@@ -57,32 +84,32 @@ class PlinkFreqGtFilter(PlinkFreq_):
 
 class PlinkFreqCountsNoFilter(PlinkFreq_):
     requires = PlinkFromVcf1
-    envs = {"cutoff": 0.2, "modifier": "counts"}
+    envs = {"cutoff": 3, "modifier": "counts"}
 
 
 class PlinkFreqCountsLtFilter(PlinkFreq_):
     requires = PlinkFromVcf1
-    envs = {"cutoff": 0.2, "filter": "lt", "modifier": "counts"}
+    envs = {"cutoff": 3, "filter": "lt", "modifier": "counts"}
 
 
-class PlinkFreqCCNoFilter(PlinkFreq_):
-    requires = PlinkFromVcf1
-    envs = {"cutoff": 0.2, "modifier": "cc"}
+# class PlinkFreqCCNoFilter(PlinkFreq_):
+#     requires = PlinkFromVcf1
+#     envs = {"cutoff": 0.2, "modifier": "cc"}
 
 
-class PlinkFreqCCLeFilter(PlinkFreq_):
-    requires = PlinkFromVcf1
-    envs = {
-        "cutoff": {"NCHROBS_A": 0, "NCHROBS_U": 0},
-        "filter": "lt",
-        "modifier": "cc",
-    }
+# class PlinkFreqCCLeFilter(PlinkFreq_):
+#     requires = PlinkFromVcf1
+#     envs = {
+#         "cutoff": {"NCHROBS_A": 0, "NCHROBS_U": 0},
+#         "filter": "lt",
+#         "modifier": "cc",
+#     }
 
 
 class PlinkFreqXLeFilter(PlinkFreq_):
     requires = PlinkFromVcf1
     envs = {
-        "cutoff": {"C(HET)": 2, "C(HOM A2)": 2},
+        "cutoff": {"HET_REF_ALT1_CT": 2, "HOM_ALT1_CT": 2},
         "filter": "lt",
         "modifier": "x",
     }
@@ -96,8 +123,12 @@ def pipeline():
     return (
         # get_pipeline(__file__, plugins=["+report"])
         get_pipeline(__file__)
-        .set_starts(File2Proc)
-        .set_data([Path(__file__).parent / "data" / "sample.vcf.gz"])
+        .set_starts(VCFFile, NameFile1, NameFile2)
+        .set_data(
+            [Path(__file__).parent / "data" / "sample.vcf.gz"],
+            [Path(__file__).parent / "data" / "name_to_rs.txt"],
+            [Path(__file__).parent / "data" / "name_to_rs.vcf.gz"],
+        )
     )
 
 

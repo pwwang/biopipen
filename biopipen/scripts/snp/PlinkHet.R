@@ -10,7 +10,6 @@ ncores <- {{envs.ncores | r}}
 cutoff <- {{envs.cutoff | r}}
 doplot <- {{envs.plot | r}}
 devpars <- {{envs.devpars | r}}
-filter <- {{envs.filter | r}}
 
 bedfile = Sys.glob(file.path(indir, '*.bed'))
 if (length(bedfile) == 0)
@@ -22,12 +21,23 @@ if (length(bedfile) > 1) {
 input <- tools::file_path_sans_ext(bedfile)
 output <- file.path(outdir, basename(input))
 
+# need .afreq for --het for plink2
+freq_cmd <- cmd <- c(
+    plink,
+    "--threads", ncores,
+    "--bfile", input,
+    "--freq",
+    "--out", output
+)
+run_command(freq_cmd, fg = TRUE)
+
 cmd <- c(
     plink,
     "--threads", ncores,
     "--bfile", input,
     "--het",
-    "--out", output
+    "--out", output,
+    "--read-freq", paste0(output, '.afreq')
 )
 run_command(cmd, fg = TRUE)
 
@@ -35,9 +45,10 @@ phet <- read.table(
     paste0(output, '.het'),
     header = TRUE,
     row.names = NULL,
-    check.names = FALSE
+    check.names = FALSE,
+    comment.char = ""
 )
-het <- data.frame(Het = 1 - phet[, "O(HOM)"]/phet[, "N(NM)"])
+het <- data.frame(Het = 1 - phet[, "O(HOM)"]/phet[, "OBS_CT"])
 rownames(het) <- paste(phet$FID, phet$IID, sep = "\t")
 het.mean <- mean(het$Het, na.rm = TRUE)
 het.sd <- sd(het$Het, na.rm = TRUE)
@@ -70,14 +81,12 @@ if (doplot) {
     )
 }
 
-if (filter) {
-    cmd <- c(
-        plink,
-        "--threads", ncores,
-        "--bfile", input,
-        "--remove", paste0(output, '.het.fail'),
-        "--make-bed",
-        "--out", output
-    )
-    run_command(cmd, fg = TRUE)
-}
+cmd <- c(
+    plink,
+    "--threads", ncores,
+    "--bfile", input,
+    "--remove", paste0(output, '.het.fail'),
+    "--make-bed",
+    "--out", output
+)
+run_command(cmd, fg = TRUE)

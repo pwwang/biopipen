@@ -18,9 +18,7 @@ if isinstance(args["vcf_filter"], str):
     args["vcf_filter"] = args["vcf_filter"].split()
 
 # normalize biallelic-only
-args.setdefault("biallelic_only", "strict")
-if args["biallelic_only"] == "true":
-    args["biallelic_only"] = True
+args.setdefault("max_alleles", 2)
 
 # This makes it possible to keep the allele order in the output
 args["keep_allele_order"] = True

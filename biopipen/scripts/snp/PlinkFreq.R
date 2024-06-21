@@ -25,8 +25,7 @@ if (length(bedfile) > 1) {
 input <- tools::file_path_sans_ext(bedfile)
 output <- file.path(outdir, basename(input))
 
-modifier <- match.arg(modifier, c("none", "counts", "case-control", "cc", "x"))
-if (modifier == "cc") { modifier <- "case-control"}
+modifier <- match.arg(modifier, c("none", "counts", "x"))
 
 cmd <- c(
     plink,
@@ -36,13 +35,13 @@ cmd <- c(
 )
 if (modifier == "counts") {
     cmd <- c(cmd, "--freq", "counts")
-    if (!is.list(cutoffs)) { cutoffs <- list(C1 = cutoffs) }
-} else if (modifier == "case-control") {
-    cmd <- c(cmd, "--freq", "case-control")
-    if (!is.list(cutoffs)) { cutoffs <- list(MAF_A = cutoffs) }
+    if (!is.list(cutoffs)) { cutoffs <- list(ALT1_CT = cutoffs) }
+# } else if (modifier == "case-control") {
+#     cmd <- c(cmd, "--freq", "case-control")
+#     if (!is.list(cutoffs)) { cutoffs <- list(MAF_A = cutoffs) }
 } else if (modifier == "x") {
-    cmd <- c(cmd, "--freqx")
-    if (!is.list(cutoffs)) { cutoffs <- list("C(HOM A1)" = cutoffs) }
+    cmd <- c(cmd, "--geno-counts")
+    if (!is.list(cutoffs)) { cutoffs <- list("HOM_ALT1_CT" = cutoffs) }
 } else {
     cmd <- c(cmd, "--freq")
     if (!is.list(cutoffs)) { cutoffs <- list(MAF = cutoffs) }
@@ -62,25 +61,35 @@ if (!is.list(filters)) {
 
 run_command(cmd, fg = TRUE)
 
-post_process <- function(suffix, snp_col = "SNP", sep = "") {
+post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
     freq <- read.table(
         paste0(output, suffix),
         header=TRUE,
         check.names=FALSE,
         row.names = NULL,
-        sep = sep
+        sep = sep,
+        comment = ""
     )
+    colnames(freq)[1] <- sub("#", "", colnames(freq)[1])
+    if (!is.null(modifier)) { freq <- modifier(freq) }
     iter_in <- input
     n <- 0
     for (metric_col in names(cutoffs)) {
+        if (is.null(cutoffs[[metric_col]])) {
+            stop(paste0(
+                "Cutoff for metric ",
+                metric_col,
+                " is not provided in ",
+                suffix, "(x) file."))
+        }
 
         freq[[metric_col]] <- as.numeric(freq[[metric_col]])
         cutoff <- cutoffs[[metric_col]]
         filter <- filters[[metric_col]] %||% "no"
 
         if (filter == "no") {
-            ge_flag <- paste0(metric_col, " >= cutoff")
-            lt_flag <- paste0(metric_col, " < cutoff")
+            ge_flag <- paste0(metric_col, " >= ", cutoff)
+            lt_flag <- paste0(metric_col, " < ", cutoff)
             freq$GE <- freq[[metric_col]] >= cutoff
             freq$Flag <- ifelse(freq$GE, ge_flag, lt_flag)
             freq$Flag <- factor(freq$Flag, levels = c(ge_flag, lt_flag))
@@ -192,12 +201,98 @@ post_process <- function(suffix, snp_col = "SNP", sep = "") {
     }
 }
 
+splitup <- function(x, agg = NULL) {
+    sp <- strsplit(as.character(x), ",")
+    if (is.null(agg)) {
+        return(sp)
+    }
+    return(sapply(sp, agg))
+}
 if (modifier == "none") {
-    post_process(".frq")
+    mod <- function(freq) {
+        # Add ALT1, ALT1_FREQ, REF_FREQ and MAF columns
+        writing = FALSE
+        if (is.null(freq$ALT1)) {
+            # should be the first allele of ALT
+            freq$ALT1 <- splitup(freq$ALT, agg = function(s) s[1])
+            writing = TRUE
+        }
+        if (is.null(freq$ALT1_FREQ)) {
+            freq$ALT1_FREQ <- as.double(splitup(freq$ALT_FREQS, agg = function(s) s[1]))
+            writing = TRUE
+        }
+        if (is.null(freq$REF_FREQ)) {
+            freq$REF_FREQ <- 1 - splitup(freq$ALT_FREQS, agg = function(s) sum(as.double(s)))
+            writing = TRUE
+        }
+        if (is.null(freq$MAF)) {
+            min_alt_freqs <- splitup(freq$ALT_FREQS, agg = function(s) min(as.double(s)))
+            freq$MAF <- pmin(freq$REF_FREQ, min_alt_freqs)
+            writing = TRUE
+        }
+        if (writing) {
+            write.table(
+                freq,
+                file = paste0(output, ".afreqx"),
+                col.names=TRUE,
+                row.names=FALSE,
+                quote=FALSE,
+                sep = "\t"
+            )
+        }
+        return(freq)
+    }
+    post_process(".afreq", modifier = mod)
 } else if (modifier == "counts") {
-    post_process(".frq.counts")
-} else if (modifier == "case-control") {
-    post_process(".frq.cc")
+    mod <- function(freq) {
+        # Add ALT1, ALT1_CT, and REF_CT columns
+        writing = FALSE
+        if (is.null(freq$ALT1)) {
+            # should be the first allele of ALT
+            freq$ALT1 <- splitup(freq$ALT, agg = function(s) s[1])
+            writing = TRUE
+        }
+        if (is.null(freq$ALT1_CT)) {
+            freq$ALT1_CT <- as.integer(splitup(freq$ALT_CTS, agg = function(s) s[1]))
+            writing = TRUE
+        }
+        if (is.null(freq$REF_CT)) {
+            freq$REF_CT <- freq$OBS_CT - splitup(freq$ALT_CTS, agg = function(s) sum(as.integer(s)))
+            writing = TRUE
+        }
+        if (writing) {
+            write.table(
+                freq,
+                file = paste0(output, ".acountx"),
+                col.names=TRUE,
+                row.names=FALSE,
+                quote=FALSE,
+                sep = "\t"
+            )
+        }
+        return(freq)
+    }
+    post_process(".acount", modifier = mod)
+# } else if (modifier == "case-control") {
+#     post_process(".frq.cc")
 } else if (modifier == "x") {
-    post_process(".frqx", sep = "\t")
+    mod <- function(freq) {
+        # Add ALT1, HET_REF_ALT1_CT, HOM_ALT1_CT
+        writing = FALSE
+        if (is.null(freq$ALT1)) {
+            # should be the first allele of ALT
+            freq$ALT1 <- splitup(freq$ALT, agg = function(s) s[1])
+            writing = TRUE
+        }
+        if (is.null(freq$HET_REF_ALT1_CT)) {
+            freq$HET_REF_ALT1_CT <- as.integer(splitup(freq$HET_REF_ALT_CTS, agg = function(s) s[1]))
+            writing = TRUE
+        }
+        if (is.null(freq$HOM_ALT1_CT)) {
+            freq$HOM_ALT1_CT <- as.integer(splitup(freq$TWO_ALT_GENO_CTS, agg = function(s) s[1]))
+            writing = TRUE
+        }
+        return(freq)
+    }
+    post_process(".gcount", modifier = mod)
 }

@@ -34,6 +34,8 @@ cmd <- c(
     "--threads", ncores,
     "--bfile", input,
     "--indep-pairwise", indep,
+	# One should be mindful of running this with < 50 samples
+	# "--bad-ld",
     "--out", output
 )
 if (!is.null(highld) && !isFALSE(highld)) {
@@ -112,8 +114,18 @@ while (sum(failflags) < nrow(marks)) {
 			failflags[i] <<- TRUE
 	})
 }
-if (!is.null(ibd.fail))
-	writeLines(ibd.fail, con = file(paste0(output, '.ibd.fail')))
+
+ibd_fail_file <- paste0(output, '.ibd.fail')
+writeLines(ibd.fail, ibd_fail_file)
+cmd <- c(
+    plink,
+    "--threads", ncores,
+    "--bfile", input,
+    "--remove", ibd_fail_file,
+	"--make-bed",
+    "--out", output
+)
+run_command(cmd, fg = TRUE)
 
 if (doplot) {
 	set.seed(seed)
