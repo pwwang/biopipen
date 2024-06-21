@@ -182,7 +182,10 @@ class BedtoolsIntersect(Proc):
         sort: Sort `afile` and `bfile` before intersecting.
             By default, `-sorted` is used, assuming the input files are sorted.
             If error occurs, try to set `sort` to `True`.
-        chrsize: Alias for `g` in `bedtools intersect`
+        chrsize: Alias for `g` in `bedtools intersect`.
+        postcmd: The command to be executed for the output file after intersecting.
+            You can use `$infile`, `$outfile`, and `$outdir` to refer to the input,
+            output, and output directory, respectively.
         <more>: Other options to be passed to `bedtools intersect`
     """  # noqa: E501
     input = "afile:file", "bfile:file"
@@ -192,5 +195,6 @@ class BedtoolsIntersect(Proc):
         "bedtools": config.exe.bedtools,
         "sort": False,
         "chrsize": config.ref.chrsize,
+        "postcmd": None,
     }
     script = "file://../scripts/bed/BedtoolsIntersect.py"
