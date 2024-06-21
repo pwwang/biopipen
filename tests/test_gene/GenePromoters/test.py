@@ -27,8 +27,17 @@ class GenePromoters(GenePromoters_):
     }
 
 
+class GenePromotersAll(GenePromoters_):
+    input_data = ["/dev/null"]
+    envs = {
+        "refgene": Path(__file__).parent.parent.parent.joinpath(
+            "data", "reference", "hg19", "refgene.gtf"
+        )
+    }
+
+
 def pipeline():
-    return get_pipeline(__file__).set_starts(InputFile)
+    return get_pipeline(__file__).set_starts(InputFile, GenePromotersAll)
 
 
 def testing(pipen):

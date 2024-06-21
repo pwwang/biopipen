@@ -70,7 +70,6 @@ class GenePromoters(Proc):
         up (type=int): The upstream distance from TSS
         down (type=int): The downstream distance from TSS
             If not specified, the default is `envs.up`
-        withbody (flag): Whether to include the gene body in the output
         notfound (choice): What to do if a gene is not found.
             - skip: Skip the gene
             - error: Report error
@@ -89,7 +88,6 @@ class GenePromoters(Proc):
     envs = {
         "up": 2000,
         "down": None,
-        "withbody": False,
         "notfound": "error",
         "refgene": config.ref.refgene,
         "header": True,

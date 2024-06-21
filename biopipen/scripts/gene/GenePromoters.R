@@ -5,7 +5,6 @@ infile <- {{in.infile | r}}
 outfile <- {{out.outfile | r}}
 up <- {{envs.up | r}}
 down <- {{envs.down | r}}
-withbody <- {{envs.withbody | r}}
 notfound <- {{envs.notfound | r}}
 refgene <- {{envs.refgene | r}}
 header <- {{envs.header | r}}
@@ -16,12 +15,16 @@ chrsize <- {{envs.chrsize | r}}
 
 down <- down %||% up
 
-data <- read.table(infile, header=header, sep="\t", stringsAsFactors=FALSE, check.names=FALSE)
-genes <- data[[genecol]]
-rm(data)
-
 refgenes <- readGFF(refgene)
 refcol <- ifelse(match_id, "gene_id", "gene_name")
+
+if (infile == "/dev/null") {
+    genes <- unique(refgenes[[refcol]])
+} else {
+    data <- read.table(infile, header=header, sep="\t", stringsAsFactors=FALSE, check.names=FALSE)
+    genes <- data[[genecol]]
+    rm(data)
+}
 
 notfound_genes <- setdiff(genes, refgenes[[refcol]])
 if (notfound == "error" && length(notfound_genes) > 0) {
@@ -31,41 +34,28 @@ if (notfound == "error" && length(notfound_genes) > 0) {
     ))
 } else if (notfound == 'skip') {
     genes <- genes[!genes %in% notfound_genes]
-
 }
 
 # Select the genes that are in the reference annotation and keep the order
 # of the records in genes
 refgenes <- refgenes[match(genes, refgenes[[refcol]]), , drop = FALSE]
+refgenes <- unique(makeGRangesFromDataFrame(refgenes, keep.extra.columns=TRUE))
 
-# if withbody is FALSE:
-#  make the promoters as start - up and start + down if strand is +
-#  and end - down and end + up if strand is -
-# if withbody is TRUE:
-#  make the promoters as start - up and end + down if strand is +
-#  and start - down and end + up if strand is -
-promoters <- GRanges(
-    seqnames = refgenes$seqid,
-    ranges = IRanges(
-        start = ifelse(refgenes$strand == "+", refgenes$start - up, refgenes$end - down),
-        end = ifelse(refgenes$strand == "+", refgenes$start + down, refgenes$end + up)
-    ),
-    strand = refgenes$strand,
-    name = refgenes[[refcol]]
-)
-
-if (withbody) {
-    promoters$ranges <- IRanges(
-        start = ifelse(refgenes$strand == "+", refgenes$start - up, refgenes$start - down),
-        end = ifelse(refgenes$strand == "+", refgenes$end + down, refgenes$end + up)
-    )
-}
+proms <- promoters(refgenes, up=up, down=down)
+# Scores must be non-NA numeric values
+elementMetadata(proms)$name <- elementMetadata(proms)[[refcol]]
+score(proms) <- 0
+start(proms) <- pmax(1, start(proms))
 
 if (sort_) {
     chrom_sizes <- read.table(chrsize, header=FALSE, stringsAsFactors=FALSE, sep="\t")
-    seqs <- chrom_sizes[chrom_sizes$V1 %in% seqlevels(promoters), 1, drop=TRUE]
-    seqlevels(promoters) <- seqs
-    promoters <- sort(promoters, ignore.strand = TRUE)
+    common_chroms <- intersect(chrom_sizes$V1, seqlevels(proms))
+    if (length(common_chroms) == 0) {
+        stop("No common chromosomes found between the promoters and the chromosome sizes. Do you use the correct chromosome sizes file?")
+    }
+    proms <- keepSeqlevels(proms, common_chroms, pruning.mode="coarse")
+    seqlevels(proms) <- common_chroms
+    proms <- sort(proms, ignore.strand = TRUE)
 }
 
-export.bed(promoters, outfile)
+export.bed(proms, outfile)
