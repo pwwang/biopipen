@@ -69,7 +69,7 @@ gene$LoadFile( expfile );
 
 cvrt = SlicedData$new();
 if (!is.null(covfile) && file.exists(covfile)) {
-    covmatrix = t(read.table.inopts(covfile, list(cnames=TRUE, rnames=TRUE)))
+    covmatrix = read.table(covfile, header=TRUE, stringsAsFactors=FALSE, row.names=1, sep="\t", quote="", check.names=FALSE)
     cvrt$CreateFromMatrix( as.matrix(covmatrix) )
 }
 
