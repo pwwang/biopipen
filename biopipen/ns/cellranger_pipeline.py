@@ -20,9 +20,9 @@ class CellRangerCountPipeline(ProcGroup):
     Run cellranger count for multiple samples and summarize the metrics.
 
     Args:
-        input (type=list): The list of lists of fastq files.
+        input (list): The list of lists of fastq files.
             or the list of comma-separated string of fastq files.
-        ids (type=list): The list of ids for the samples.
+        ids (list): The list of ids for the samples.
     """
     DEFAULTS = Diot(input=None, ids=None)
 
@@ -76,9 +76,9 @@ class CellRangerVdjPipeline(ProcGroup):
     Run cellranger vdj for multiple samples and summarize the metrics.
 
     Args:
-        input (type=list): The list of lists of fastq files.
+        input (list): The list of lists of fastq files.
             or the list of comma-separated string of fastq files.
-        ids (type=list): The list of ids for the samples.
+        ids (list): The list of ids for the samples.
     """
     DEFAULTS = Diot(input=None, ids=None)
 
