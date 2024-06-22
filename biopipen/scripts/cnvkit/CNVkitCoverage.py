@@ -1,3 +1,4 @@
+from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfile = {{in.bamfile | quote}}  # pyright: ignore
@@ -13,7 +14,7 @@ ncores = {{envs.ncores | repr}}  # pyright: ignore
 def main():
 
     args = dict(
-        f=reffile,
+        f=Path(reffile).expanduser(),
         c=count,
         q=min_mapq,
         p=ncores,

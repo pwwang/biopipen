@@ -1,3 +1,4 @@
+from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfiles = {{in.bamfiles | repr}}  # pyright: ignore
@@ -20,7 +21,7 @@ short_names = {{envs.short_names | repr}}  # pyright: ignore
 def main():
 
     args = dict(
-        f=reffile,
+        f=Path(reffile).expanduser(),
         m=method,
         g=accfile,
         t=baitfile,
@@ -29,7 +30,7 @@ def main():
         target_min_size=target_min_size,
         antitarget_max_size=antitarget_max_size,
         antitarget_min_size=antitarget_min_size,
-        annotate=annotate,
+        annotate=Path(annotate).expanduser(),
         short_names=short_names,
         target_output_bed=target_file,
         antitarget_output_bed=antitarget_file,

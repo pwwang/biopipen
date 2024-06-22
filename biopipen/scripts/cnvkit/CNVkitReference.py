@@ -1,3 +1,4 @@
+from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 covfiles = {{in.covfiles | repr}}  # pyright: ignore
@@ -18,7 +19,7 @@ no_rmask = {{envs.no_rmask | repr}}  # pyright: ignore
 def main():
 
     args = dict(
-        f=reffile,
+        f=Path(reffile).expanduser(),
         o=outfile,
         c=cluster,
         min_cluster_size=min_cluster_size,
