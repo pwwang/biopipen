@@ -52,8 +52,11 @@ if (!is.null(group_cols)) {
 
 if (!is.null(metafile)) {
     metadf = read.table(metafile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
-    sample_col = colnames(metadf)[1]
-    colnames(metadf)[1] = "Sample"
+    if (!is.null(metadf$Sample)) {
+        metadf$Sample = as.character(metadf$Sample)
+    } else {
+        colnames(metadf)[1] = "Sample"
+    }
     metadf = metadf[metadf$Sample %in% sams, c("Sample", meta_cols), drop=FALSE]
     if (nrow(metadf) != length(sams)) {
         stop(paste("Not all samples in metafile:", paste(setdiff(sams, metadf$Sample), collapse=", ")))
