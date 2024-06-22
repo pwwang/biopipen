@@ -12,7 +12,15 @@ class AneuploidyScore(Proc):
 
     Input:
         segfile: The seg file, generally including chrom, start, end and
-            seg.mean (the log2 ratio)
+            seg.mean (the log2 ratio).
+            It is typically a tab-delimited file or a BED file.
+            If so, envs.chrom_col, envs.start_col, envs.end_col and envs.seg_col
+            are the 1st, 2nd, 3rd and 5th columns, respectively.
+            It can also be a VCF file. If so, envs.chrom_col and envs.start_col
+            are not required.
+            `end_col` and `envs.seg_col` will be a field in the INFO column.
+            [`VariantAnnotation`](https://rdrr.io/bioc/VariantAnnotation/)
+            is required to extract the INFO field.
 
     Output:
         outdir: The output directory containing the CAAs, AS and a histogram
