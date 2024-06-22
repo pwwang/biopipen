@@ -49,8 +49,12 @@ if (!is.null(group_cols)) {
 data = data.frame(Sample = sams, tMAD = tmads)
 if (file.exists(metafile) && length(meta_cols) > 0) {
     metadf = read.table(metafile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
-    sample_col = colnames(metadf)[1]
-    meta = metadf[, c(sample_col, meta_cols), drop=FALSE]
+    if (!is.null(metadf$Sample)) {
+        metadf$Sample = as.character(metadf$Sample)
+    } else {
+        colnames(metadf)[1] = "Sample"
+    }
+    meta = metadf[, c("Sample", meta_cols), drop=FALSE]
     colnames(meta) = c("Sample", meta_cols)
     data = data %>% left_join(meta, by="Sample")
 }
