@@ -130,7 +130,15 @@ class TMADScore(Proc):
     Input:
         segfile: The seg file, two columns are required:
             * chrom: The chromosome name, used for filtering
-            * seg.mean: The log2 ratio
+            * seg.mean: The log2 ratio.
+            It is typically a tab-delimited file or a BED file.
+            If so, envs.chrom_col and envs.seg_col
+            are the 1st and 5th columns, respectively.
+            It can also be a VCF file. If so, envs.chrom_col and envs.start_col
+            are not required.
+            `end_col` and `envs.seg_col` will be a field in the INFO column.
+            [`VariantAnnotation`](https://rdrr.io/bioc/VariantAnnotation/)
+            is required to extract the INFO field.
 
     Output:
         outfile: The output file containing the TMAD score
