@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from diot import Diot
-from pipen.utils import mark, is_loading_pipeline
+from pipen.utils import is_loading_pipeline
 from pipen_args.procgroup import ProcGroup
 
 if TYPE_CHECKING:
