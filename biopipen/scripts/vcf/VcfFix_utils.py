@@ -63,7 +63,7 @@ def fix_vcffile(vcffile, outfile, fixes):
         else:
             modify_fixes.append(fix)
 
-    inopen = gzip.open if vcffile.endswith(".gz") else open
+    inopen = gzip.open if str(vcffile).endswith(".gz") else open
     with inopen(vcffile, "rt") as fin, open(outfile, "w") as fout:
         for line in fin:
             obj = line_to_obj(line)
