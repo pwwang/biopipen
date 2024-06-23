@@ -120,11 +120,11 @@ noq = function(s) {
 if (cis_enabled) {
     log_info("Loading SNP positions ...")
     if (endsWith(snppos, ".bed")) {
-        snppos_data = import(snppos)
+        snppos_data = read.table(snppos, header = FALSE, stringsAsFactors = FALSE, sep = "\t")
         snppos_data = data.frame(
-            snp = snppos_data$name,
-            chr = as.character(seqnames(snppos_data)),
-            pos = end(snppos_data)
+            snp = snppos_data$V4,
+            chr = snppos_data$V1,
+            pos = snppos_data$V3
         )
     } else if (endsWith(snppos, ".gff") || endsWith(snppos, ".gtf")) {
         snppos_data = import(snppos)
@@ -157,12 +157,12 @@ if (cis_enabled) {
 
     log_info("Loading gene positions ...")
     if (endsWith(genepos, ".bed")) {
-        genepos_data = import(genepos)
+        genepos_data = read.table(genepos, header = FALSE, stringsAsFactors = FALSE, sep = "\t")
         genepos_data = data.frame(
-            geneid = elementMetadata(genepos_data)$gene_id,
-            chr = as.character(seqnames(genepos_data)),
-            s1 = start(genepos_data),
-            s2 = end(genepos_data)
+            geneid = genepos_data$V4,
+            chr = genepos_data$V1,
+            s1 = genepos_data$V2,
+            s2 = genepos_data$V3
         )
     } else if (endsWith(genepos, ".gff") || endsWith(genepos, ".gtf")) {
         genepos_data = import(genepos)
