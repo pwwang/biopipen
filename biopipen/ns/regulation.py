@@ -112,6 +112,7 @@ class MotifAffinityTest(Proc):
     Output:
         outdir: Directory containing the results.
             For motifBreakR, `motifbreakr.txt` will be created. Records with effect `strong`/`weak` are written (`neutral` is not).
+            For atSNP, `atsnp.txt` will be created. Records with p-value (`envs.atsnp_args.p`) < `envs.cutoff` are written.
 
     Envs:
         ncores (type=int): The number of cores to use.
@@ -123,12 +124,17 @@ class MotifAffinityTest(Proc):
         bcftools: The path to bcftools binary.
             Used to convert the VCF file to the BED file when the input is a VCF file.
         motif_col: The column name in the motif file containing the motif names.
+            If this is not provided, `envs.regulator_col` and `envs.regmotifs` are required,
+            which are used to infer the motif names from the regulator names.
         regulator_col: The column name in the motif file containing the regulator names.
             Both `motif_col` and `regulator_col` should be the direct column names or
             the index (1-based) of the columns.
             If no `regulator_col` is provided, no regulator information is written in
-            the output.
-        notfound (choice): What to do if a motif is not found in the database.
+            the output. Otherwise, the regulator information is written in the output in
+            the `Regulator` column.
+        notfound (choice): What to do if a motif is not found in the database,
+            or a regulator is not found in the regulator-motif mapping (envs.regmotifs)
+            file.
             - error: Report error and stop the process.
             - ignore: Ignore the motif and continue.
         motifdb: The path to the motif database. This is required.
@@ -153,6 +159,9 @@ class MotifAffinityTest(Proc):
             which: An expression passed to `subset(results, subset = ...)` to get the motifs for the variant to plot.
                 Or an integer to get the top `which` motifs.
                 For example, `effect == "strong"` to get the motifs with strong effect in motifBreakR result.
+        regmotifs: The path to the regulator-motif mapping file.
+            It must have header and the columns `Motif` or `Model` for motif names and
+            `TF`, `Regulator` or `Transcription factor`  for regulator names.
         motifbreakr_args (ns): Additional arguments to pass to motifBreakR.
             - method (choice): The method to use.
                 See details of <https://rdrr.io/bioc/motifbreakR/man/motifbreakR.html>
@@ -189,10 +198,11 @@ class MotifAffinityTest(Proc):
         "ncores": config.misc.ncores,
         "tool": "atsnp",
         "bcftools": config.exe.bcftools,
-        "motif_col": 1,
+        "motif_col": None,
         "regulator_col": None,
         "notfound": "error",
-        "motifdb": config.tf_motifdb,
+        "motifdb": config.ref.tf_motifdb,
+        "regmotifs": config.ref.tf_motifs,
         "genome": config.ref.genome,
         "cutoff": 0.05,
         "devpars": {"width": None, "height": None, "res": 100},

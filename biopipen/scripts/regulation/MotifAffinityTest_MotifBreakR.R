@@ -77,6 +77,13 @@ results <- calculatePvalue(results)
 results_to_save <- as.data.frame(unname(results))
 results_to_save$motifPos <- lapply(results_to_save$motifPos, function(x) paste(x, collapse = ","))
 results_to_save$altPos <- lapply(results_to_save$altPos, function(x) paste(x, collapse = ","))
+if (!is.null(regulator_col)) {
+    results_to_save$Regulator <- in_motifs[
+        match(results_to_save$providerId, in_motifs[[motif_col]]),
+        regulator_col,
+        drop = TRUE
+    ]
+}
 results_to_save <- apply(results_to_save, 2, as.character)
 
 write.table(
@@ -86,5 +93,4 @@ write.table(
 )
 rm(results_to_save)
 
-log_info("Plotting variants ...")
 plot_variant(results)

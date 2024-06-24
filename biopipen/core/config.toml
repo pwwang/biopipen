@@ -92,6 +92,8 @@ genome = ""
 sctype_db = ""
 # TF Motif database
 tf_motifdb = ""
+# TF motif pairs
+tf_motifs = ""
 
 [misc]
 # Number of cores used for each job

@@ -100,6 +100,13 @@ atsnp_result$varType <- "SNV"
 atsnp_result$motifPos <- sapply(1:nrow(atsnp_result), function(i) {
     paste(c(atsnp_result$ref_start[i] - k, atsnp_result$ref_end[i] - k), collapse = ",")
 })
+if (!is.null(regulator_col)) {
+    atsnp_result$Regulator <- in_motifs[
+        match(atsnp_result$providerId, in_motifs[[motif_col]]),
+        regulator_col,
+        drop = TRUE
+    ]
+}
 
 write.table(
     atsnp_result,
