@@ -63,6 +63,24 @@ if (endsWith(ref, ".rds") || endsWith(ref, ".RDS")) {
     reference = LoadH5Seurat(ref)
 }
 
+# check if refdata exists in the reference
+for (rname in names(mapquery_args$refdata)) {
+    use_name <- mapquery_args$refdata[[rname]]
+    if (use_name %in% names(reference@assays)) { next }
+    if (!use_name %in% colnames(reference@meta.data)) {
+        stop(paste0(
+            "The reference does not have the column '",
+            use_name,
+            "' in either assays or metadata. "
+        ))
+        if (startsWith(use_name, "predicted.")) {
+            stop(paste0(
+                "Do you mean: ", substring(use_name, 11),
+            ))
+        }
+    }
+}
+
 if (refnorm == "auto" && DefaultAssay(reference) == "SCT") {
     refnorm = "SCTransform"
 }
