@@ -66,7 +66,9 @@ if (endsWith(ref, ".rds") || endsWith(ref, ".RDS")) {
 # check if refdata exists in the reference
 for (rname in names(mapquery_args$refdata)) {
     use_name <- mapquery_args$refdata[[rname]]
-    if (use_name %in% names(reference@assays)) { next }
+    # transferring an assay
+    if (use_name %in% names(reference)) { next }
+    # transferring a metadata column
     if (!use_name %in% colnames(reference@meta.data)) {
         stop(paste0(
             "The reference does not have the column '",
