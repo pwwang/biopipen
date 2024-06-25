@@ -148,7 +148,7 @@ expand_resolution <- function(resolution) {
                     }
                     parts <- as.numeric(parts)
                     expanded_res <- c(expanded_res, seq(parts[1], parts[2], by = parts[3]))
-    } else {
+                } else {
                     expanded_res <- c(expanded_res, as.numeric(part))
                 }
             }
@@ -177,12 +177,25 @@ for (res in resolution) {
     sobj@meta.data[[new_cluster_name]] <- recode_clusters(sobj@meta.data[[cluster_name]])
 }
 sobj@meta.data$seurat_clusters <- recode_clusters(sobj@meta.data$seurat_clusters)
-        Idents(sobj) <- "seurat_clusters"
+Idents(sobj) <- "seurat_clusters"
 
-    ident_table <- table(Idents(sobj))
+ident_table <- table(Idents(sobj))
 log_info("- Found {length(ident_table)} clusters at resolution {resolution[length(resolution)]}")
-    print(ident_table)
-    cat("\n")
+print(ident_table)
+cat("\n")
+
+# plot the tree
+if (length(resolution) > 1) {
+    log_info("Plotting clustree ...")
+    png(
+        file.path(joboutdir, "clustree.png"),
+        res = envs$clustree_devpars$res,
+        width = envs$clustree_devpars$width,
+        height = envs$clustree_devpars$height
+    )
+    p <- clustree(sobj, prefix = "seurat_clusters.")
+    print(p)
+    dev.off()
 }
 
 if (DefaultAssay(sobj) == "SCT") {
