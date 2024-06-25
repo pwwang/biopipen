@@ -28,6 +28,40 @@ plan(strategy = "multicore", workers = envs$ncores)
     args
 }
 
+.expand_resolution <- function(resolution) {
+    expanded_res <- c()
+    for (res in resolution) {
+        if (is.numeric(res)) {
+            expanded_res <- c(expanded_res, res)
+        } else {
+            # is.character
+            parts <- trimws(unlist(strsplit(res, ",")))
+            for (part in parts) {
+                if (grepl(":", part)) {
+                    parts <- trimws(unlist(strsplit(part, ":")))
+                    if (length(parts) == 2) { parts <- c(parts, 0.1) }
+                    if (length(parts) != 3) {
+                        stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
+                    }
+                    parts <- as.numeric(parts)
+                    expanded_res <- c(expanded_res, seq(parts[1], parts[2], by = parts[3]))
+                } else {
+                    expanded_res <- c(expanded_res, as.numeric(part))
+                }
+            }
+        }
+    }
+    # keep the last resolution at last
+    rev(unique(rev(expanded_res)))
+}
+
+# recode clusters from 0, 1, 2, ... to s1, s2, s3, ...
+.recode_clusters <- function(clusters) {
+    recode <- function(x) paste0("s", as.integer(as.character(x)) + 1)
+    clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
+    clusters
+}
+
 envs$RunUMAP <- .expand_dims(envs$RunUMAP)
 envs$FindNeighbors <- .expand_dims(envs$FindNeighbors)
 
@@ -63,7 +97,8 @@ for (key in names(envs$cases)) {
             subset = envs$subset,
             RunUMAP = envs$RunUMAP,
             FindNeighbors = envs$FindNeighbors,
-            FindClusters = envs$FindClusters
+            FindClusters = envs$FindClusters,
+            clustree_devpars = envs$clustree_devpars
         ),
         case
     )
@@ -132,30 +167,30 @@ for (key in names(envs$cases)) {
     }
 
     case$FindClusters$random.seed <- case$FindClusters$random.seed %||% 8525
-    resolution <- case$FindClusters$resolution %||% 0.8
-    if (is.character(resolution)) {
-        if (grepl(",", resolution)) {
-            resolution <- as.numeric(trimws(unlist(strsplit(resolution, ","))))
-        } else {
-            resolution <- as.numeric(resolution)
-        }
-    }
-    for (res in resolution) {
-        case$FindClusters$resolution <- res
-        cached <- get_cached(case$FindClusters, paste0("FindClusters_", res), cache_dir)
-        res_key <- paste0("seurat_clusters_", res)
+    resolution <- case$FindClusters$resolution <- .expand_resolution(case$FindClusters$resolution %||% 0.8)
+    cached <- get_cached(case$FindClusters, "FindClusters", cache_dir)
         if (is.null(cached$data)) {
-            log_info("- Running FindClusters at resolution: {res} ...")
+        log_info("- Running FindClusters at resolution: {paste(resolution, collapse = ',')} ...")
             case$FindClusters$object <- sobj
+        # avoid overwriting the previous clustering results (as they have the same graph name
             sobj1 <- do_call(FindClusters, case$FindClusters)
-            levels(sobj1$seurat_clusters) <- paste0("s", as.numeric(levels(sobj1$seurat_clusters)) + 1)
-            sobj1[[res_key]] <- sobj1$seurat_clusters
-            cached$data <- sobj1@meta.data[, res_key, drop = FALSE]
-            save_to_cache(cached, paste0("FindClusters_", res), cache_dir)
-        } else {
-            log_info("- Using cached FindClusters at resolution: {res} ...")
+        graph_name <- case$FindClusters$graph.name %||% paste0(DefaultAssay(sobj), "_snn_res.")
+        for (res in resolution) {
+            cluster_name <- paste0(graph_name, res)
+            new_cluster_name <- paste0(key, ".", res)
+            sobj1@meta.data[[new_cluster_name]] <- .recode_clusters(sobj1@meta.data[[cluster_name]])
         }
-        ident_table <- table(cached$data[[res_key]])
+        sobj1@meta.data[[key]] <- .recode_clusters(sobj1@meta.data$seurat_clusters)
+        keys <- sapply(resolution, function(res) paste0(key, ".", res))
+        keys <- c(keys, key)
+        cached$data <- sobj1@meta.data[, keys, drop = FALSE]
+        save_to_cache(cached, "FindClusters", cache_dir)
+        rm(sobj1)
+    } else {
+        log_info("- Using cached FindClusters at resolution: {paste(resolution, collapse = ',')} ...")
+        }
+
+    ident_table <- table(cached$data[[key]])
         log_info("  Found {length(ident_table)} clusters")
         print(ident_table)
         cat("\n")
