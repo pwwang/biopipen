@@ -411,43 +411,9 @@ do_case_findall <- function(casename) {
         log_info("  Using cached markers ...")
         markers <- cached$data
     } else {
-        markers <- tryCatch({
-            do_call(FindAllMarkers, args)
-                # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, cluster
-            }, error = function(e) {
-                log_warn(e$message)
-
-                data.frame(
-                    gene = character(),
-                    p_val = numeric(),
-                    avg_log2FC = numeric(),
-                    pct.1 = numeric(),
-                    pct.2 = numeric(),
-                    p_val_adj=numeric(),
-                    cluster = character()
-                )
-            })
+        markers <- find_markers(args, find_all = TRUE)
         cached$data <- markers
         save_to_cache(cached, "FindAllMarkers", cache)
-    }
-
-    if (nrow(markers) == 0 && defassay == "SCT") {
-        log_warn("  No markers found from SCT assay, try recorrect_umi = FALSE")
-        args$recorrect_umi <- FALSE
-        markers <- tryCatch({
-            do_call(FindAllMarkers, args)
-        }, error = function(e) {
-            log_warn(e$message)
-            data.frame(
-                gene = character(),
-                p_val = numeric(),
-                avg_log2FC = numeric(),
-                pct.1 = numeric(),
-                pct.2 = numeric(),
-                p_val_adj=numeric(),
-                cluster = character()
-            )
-        })
     }
 
     if (is.null(case$dotplot$assay)) {
@@ -481,6 +447,63 @@ do_case_findall <- function(casename) {
 
         add_case_report(info_ident, case$sigmarkers, siggenes)
     }
+}
+
+find_markers <- function(findmarkers_args, find_all = FALSE) {
+    if (find_all) {
+        fun <- FindAllMarkers
+        empty <- data.frame(
+            gene = character(),
+            p_val = numeric(),
+            avg_log2FC = numeric(),
+            pct.1 = numeric(),
+            pct.2 = numeric(),
+            p_val_adj = numeric(),
+            cluster = character()
+        )
+    } else {
+        fun <- FindMarkers
+        empty <- data.frame(
+            gene = character(),
+            p_val = numeric(),
+            avg_log2FC = numeric(),
+            pct.1 = numeric(),
+            pct.2 = numeric(),
+            p_val_adj = numeric()
+        )
+    }
+    markers <- tryCatch({
+        do_call(fun, findmarkers_args) %>% rownames_to_column("gene")
+    }, error = function(e) {
+        # Object contains multiple models with unequal library sizes.
+        # Run `PrepSCTFindMarkers()` before running `FindMarkers()`.
+        if (grepl("PrepSCTFindMarkers", e$message)) {
+            log_warn("  Running PrepSCTFindMarkers ...")
+            findmarkers_args$object <<- PrepSCTFindMarkers(findmarkers_args$object)
+            tryCatch({
+                do_call(fun, findmarkers_args) %>% rownames_to_column("gene")
+            }, error = function(err) {
+                log_warn(paste0("  ", err$message))
+                empty
+            })
+        } else {
+            log_warn(paste0("  ", e$message))
+            empty
+        }
+    })
+
+    if (nrow(markers) == 0 && defassay == "SCT") {
+        log_warn("  No markers found from SCT assay, trying recorrect_umi = FALSE")
+        findmarkers_args$recorrect_umi <- FALSE
+        markers <- tryCatch({
+            do_call(fun, findmarkers_args) %>% rownames_to_column("gene")
+        }, error = function(e) {
+            log_warn(paste0("  ", e$message))
+            empty
+        })
+    }
+
+    markers
 }
 
 sections <- c()
@@ -538,38 +561,7 @@ do_case <- function(casename) {
     # args$min.cells.feature <- args$min.cells.feature %||% 1
     # args$min.pct <- args$min.pct %||% 0
 
-    markers <- tryCatch({
-        do_call(FindMarkers, args) %>% rownames_to_column("gene")
-    }, error = function(e) {
-        log_warn(paste0("  ", e$message))
-        data.frame(
-            gene = character(),
-            p_val = numeric(),
-            avg_log2FC = numeric(),
-            pct.1 = numeric(),
-            pct.2 = numeric(),
-            p_val_adj = numeric()
-        )
-    })
-
-    if (nrow(markers) == 0 && defassay == "SCT") {
-        log_warn("  No markers found from SCT assay, trying recorrect_umi = FALSE")
-        args$recorrect_umi <- FALSE
-        markers <- tryCatch({
-            do_call(FindMarkers, args) %>% rownames_to_column("gene")
-        }, error = function(e) {
-            log_warn(paste0("  ", e$message))
-            data.frame(
-                gene = character(),
-                p_val = numeric(),
-                avg_log2FC = numeric(),
-                pct.1 = numeric(),
-                pct.2 = numeric(),
-                p_val_adj=numeric()
-            )
-        })
-    }
-
+    markers <- find_markers(args)
     siggenes <- do_enrich(info, markers, case$sigmarkers, case$volcano_genes)
 
     if (length(siggenes) > 0) {
