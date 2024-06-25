@@ -163,3 +163,38 @@ class BedtoolsMerge(Proc):
         "bedtools": config.exe.bedtools,
     }
     script = "file://../scripts/bed/BedtoolsMerge.py"
+
+
+class BedtoolsIntersect(Proc):
+    """Find the intersection of two BED files, using `bedtools intersect`
+
+    See <https://bedtools.readthedocs.io/en/latest/content/tools/intersect.html>
+
+    Input:
+        afile: The first BED file
+        bfile: The second BED file
+
+    Output:
+        outfile: The output BED file
+
+    Envs:
+        bedtools: The path to bedtools
+        sort: Sort `afile` and `bfile` before intersecting.
+            By default, `-sorted` is used, assuming the input files are sorted.
+            If error occurs, try to set `sort` to `True`.
+        chrsize: Alias for `g` in `bedtools intersect`.
+        postcmd: The command to be executed for the output file after intersecting.
+            You can use `$infile`, `$outfile`, and `$outdir` to refer to the input,
+            output, and output directory, respectively.
+        <more>: Other options to be passed to `bedtools intersect`
+    """  # noqa: E501
+    input = "afile:file", "bfile:file"
+    output = "outfile:file:{{in.afile | stem0}}_{{in.bfile | stem0}}-intersect.bt"
+    lang = config.lang.python
+    envs = {
+        "bedtools": config.exe.bedtools,
+        "sort": False,
+        "chrsize": config.ref.chrsize,
+        "postcmd": None,
+    }
+    script = "file://../scripts/bed/BedtoolsIntersect.py"

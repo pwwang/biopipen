@@ -127,13 +127,32 @@ getCAA <- function(segf, cytoarm, tcn_col,
   return(as(seg_cyto_chr, "GRangesList"))
 }
 
-segments = read.table(segfile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
-seg = data.frame(
-    seqnames = segments[, chrom_col],
-    start = segments[, start_col],
-    end = segments[, end_col],
-    seg.mean = segments[, seg_col]
-)
+if (endsWith(segfile, ".vcf") || endsWith(segfile, ".vcf.gz")) {
+  library(VariantAnnotation)
+  vcf = readVcf(segfile)
+  seg = data.frame(
+      seqnames = as.character(seqnames(vcf)),
+      start = start(vcf),
+      end = vcf@info[[end_col]],
+      seg.mean = vcf@info[[seg_col]]
+  )
+} else if (endsWith(segfile, ".bed")) {
+  segments = read.table(segfile, header=F, row.names=NULL, sep="\t", stringsAsFactors=F)
+  seg = data.frame(
+      seqnames = segments[, 1],
+      start = segments[, 2],
+      end = segments[, 3],
+      seg.mean = segments[, 5]
+  )
+} else {
+  segments = read.table(segfile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
+  seg = data.frame(
+      seqnames = segments[, chrom_col],
+      start = segments[, start_col],
+      end = segments[, end_col],
+      seg.mean = segments[, seg_col]
+  )
+}
 
 {% if envs.segmean_transform %}
 segmean_transform = {{envs.segmean_transform}}
@@ -167,6 +186,10 @@ if (is.character(cn_transform)) {
     seg$TCN = TCN
 }
 {% endif %}
+
+seg <- seg[
+  !is.na(seg$seg.mean) & !is.na(seg$TCN) & !is.infinite(seg$seg.mean) & !is.infinite(seg$TCN),,
+  drop=FALSE]
 
 write.table(seg, file.path(outdir, "seg.txt"), sep="\t", quote=F, row.names=F, col.names=T)
 

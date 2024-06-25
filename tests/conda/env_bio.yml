@@ -13,6 +13,7 @@ dependencies:
   - mygene
   - seqkit
   - aria2=1.36
+  - meme=5.5.5
   - tabix
   - samtools
   - openssl

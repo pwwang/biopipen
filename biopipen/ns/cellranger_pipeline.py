@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from diot import Diot
-from pipen.utils import mark, is_loading_pipeline
+from pipen.utils import is_loading_pipeline
 from pipen_args.procgroup import ProcGroup
 
 if TYPE_CHECKING:
@@ -20,9 +20,9 @@ class CellRangerCountPipeline(ProcGroup):
     Run cellranger count for multiple samples and summarize the metrics.
 
     Args:
-        input (type=list): The list of lists of fastq files.
+        input (list): The list of lists of fastq files.
             or the list of comma-separated string of fastq files.
-        ids (type=list): The list of ids for the samples.
+        ids (list): The list of ids for the samples.
     """
     DEFAULTS = Diot(input=None, ids=None)
 
@@ -76,9 +76,9 @@ class CellRangerVdjPipeline(ProcGroup):
     Run cellranger vdj for multiple samples and summarize the metrics.
 
     Args:
-        input (type=list): The list of lists of fastq files.
+        input (list): The list of lists of fastq files.
             or the list of comma-separated string of fastq files.
-        ids (type=list): The list of ids for the samples.
+        ids (list): The list of ids for the samples.
     """
     DEFAULTS = Diot(input=None, ids=None)
 

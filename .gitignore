@@ -126,3 +126,4 @@ local_tests/
 docker/*/images
 /tmp
 Rplots.pdf
+/biopipen-tests-*

@@ -60,7 +60,7 @@ params.update({
     "o": targetfile,
     "c": covfile,
     "p": ncores,
-    "f": ref,
+    "f": Path(ref).expanduser(),
     "s": samtools,
     "_": bamfiles,
 })

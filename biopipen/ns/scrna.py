@@ -288,10 +288,15 @@ class SeuratClustering(Proc):
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             The cluster labels will be saved in `seurat_clusters` and prefixed with "c".
             The first cluster will be "c1", instead of "c0".
-            - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
+            - resolution (type=auto): The resolution of the clustering. You can have multiple resolutions as a list or as a string separated by comma.
+                Ranges are also supported, for example: `0.1:0.5:0.1` will generate `0.1, 0.2, 0.3, 0.4, 0.5`. The step can be omitted, defaulting to 0.1.
                 The results will be saved in `seurat_clusters_<resolution>`.
                 The final resolution will be used to define the clusters at `seurat_clusters`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
+        clustree_devpars (ns): The device parameters for the clustree plots.
+            - res (type=int): The resolution of the plots.
+            - height (type=int): The height of the plots.
+            - width (type=int): The width of the plots.
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
             The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
@@ -319,6 +324,7 @@ class SeuratClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
+        "clustree_devpars": {"res": 100, "height": 1000, "width": 800},
         "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
@@ -367,10 +373,15 @@ class SeuratSubClustering(Proc):
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             The cluster labels will be prefixed with "s". The first cluster will be "s1", instead of "s0".
-            - resolution: The resolution of the clustering. You can have multiple resolutions separated by comma.
+            - resolution (type=auto): The resolution of the clustering. You can have multiple resolutions as a list or as a string separated by comma.
+                Ranges are also supported, for example: `0.1:0.5:0.1` will generate `0.1, 0.2, 0.3, 0.4, 0.5`. The step can be omitted, defaulting to 0.1.
                 The results will be saved in `<casename>_<resolution>`.
                 The final resolution will be used to define the clusters at `<casename>`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
+        clustree_devpars (ns): The device parameters for the clustree plots.
+            - res (type=int): The resolution of the plots.
+            - height (type=int): The height of the plots.
+            - width (type=int): The width of the plots.
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
             The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
@@ -394,6 +405,7 @@ class SeuratSubClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
+        "clustree_devpars": {"res": 100, "height": 1000, "width": 800},
         "cache": config.path.tmpdir,
         "cases": {"subcluster": {}},
     }
@@ -499,7 +511,7 @@ class SeuratClusterStats(Proc):
             - pie (flag): Also output a pie chart?
             - circos (flag): Also output a circos plot?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
-            - frac_ofall(flag): Whether to output the fraction against all cells,
+            - frac_ofall (flag): Whether to output the fraction against all cells,
                 instead of the fraction in each group.
                 Does not work for circos plot.
                 Only works when `frac` is `True` and `group-by` is specified.

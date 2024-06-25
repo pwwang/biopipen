@@ -1,3 +1,4 @@
+from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 excfiles = {{in.excfiles | repr}}  # pyright: ignore
@@ -12,7 +13,7 @@ def main():
         "": [cnvkit, "access"],
         "s": min_gap_size,
         "o": outfile,
-        "_": reffile,
+        "_": Path(reffile).expanduser(),
     }
     if excfiles:
         other_args["exclude"] = excfiles

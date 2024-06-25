@@ -4,7 +4,7 @@ from diot import Diot
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-segfiles = {{in.segfiles | repr}}  # pyright: ignore
+segfiles = {{in.segfiles | repr}}  # pyright: ignore # noqa
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
 outdir = {{out.outdir | repr}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore

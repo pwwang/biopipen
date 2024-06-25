@@ -130,13 +130,6 @@ shared_clusters = function(name) {
         row.names=TRUE, col.names=TRUE, quote=FALSE, sep="\t"
     )
 
-    if (is.null(case$heatmap_meta) || length(case$heatmap_meta) == 0) {
-        anno = NULL
-    } else {
-        anno = as.list(immdata$meta[, case$heatmap_meta, drop=FALSE])
-        anno = do_call(ComplexHeatmap::HeatmapAnnotation, anno)
-    }
-
     if (!is.null(case$sample_order) && length(case$sample_order) > 0) {
         if (length(case$sample_order) == 1) {
             case$sample_order = trimws(strsplit(case$sample_order, ",")[[1]])
@@ -146,6 +139,18 @@ shared_clusters = function(name) {
             stop(paste("  The following samples do not exist in `sample_order`:", paste(nonexisting, collapse=", ")))
         }
         plotdata = plotdata[, case$sample_order, drop=FALSE]
+    }
+
+    if (is.null(case$heatmap_meta) || length(case$heatmap_meta) == 0) {
+        anno = NULL
+    } else {
+        anno = as.list(
+            immdata$meta[
+                match(colnames(plotdata), immdata$meta$Sample),
+                case$heatmap_meta,
+                drop=FALSE
+            ])
+        anno = do_call(ComplexHeatmap::HeatmapAnnotation, anno)
     }
 
     cluster_rows = case$cluster_rows && nrow(plotdata) > 2

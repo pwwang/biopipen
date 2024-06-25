@@ -487,7 +487,8 @@ class CNVkitPipeline(ProcGroup):
                 target_file = None
                 antitarget_file = None
                 if self.col.sex in metadf:
-                    sample_sex = ",".join(metadf[self.col.sex][control_masks])
+                    all_sex = metadf[self.col.sex][control_masks].unique()
+                    sample_sex = [None] if len(all_sex) > 1 else all_sex[0]
                 else:
                     sample_sex = [None]
             else:
@@ -774,13 +775,15 @@ class CNVkitPipeline(ProcGroup):
             else:
                 tumor_masks = metadf[self.col.group] == self.opts.case
 
+            if self.col.sex in metadf:
+                all_sex = metadf[self.col.sex][tumor_masks].unique()
+                sample_sex = [None] if len(all_sex) > 1 else all_sex[0]
+            else:
+                sample_sex = [None]
+
             return tibble(
                 segfiles=[ch2.outfile.tolist()],
-                sample_sex=(
-                    ",".join(metadf[self.col.sex][tumor_masks])
-                    if self.col.sex in metadf
-                    else [None]
-                ),
+                sample_sex=sample_sex,
             )
 
         @annotate.format_doc(indent=3)
@@ -823,13 +826,15 @@ class CNVkitPipeline(ProcGroup):
             else:
                 tumor_masks = metadf[self.col.group] == self.opts.case
 
+            if self.col.sex in metadf:
+                all_sex = metadf[self.col.sex][tumor_masks].unique()
+                sample_sex = [None] if len(all_sex) > 1 else all_sex[0]
+            else:
+                sample_sex = [None]
+
             return tibble(
                 segfiles=[ch2.outfile.tolist()],
-                sample_sex=(
-                    ",".join(metadf[self.col.sex][tumor_masks])
-                    if self.col.sex in metadf
-                    else [None]
-                ),
+                sample_sex=sample_sex,
             )
 
         @annotate.format_doc(indent=3)

@@ -3,9 +3,11 @@ source("{{biopipen_dir}}/utils/caching.R")
 
 library(Seurat)
 library(future)
+library(rlang)
 library(tidyr)
 library(dplyr)
 library(digest)
+library(clustree)
 
 set.seed(8525)
 
@@ -129,39 +131,71 @@ if (is.null(cached$data)) {
 }
 
 envs$FindClusters$random.seed <- envs$FindClusters$random.seed %||% 8525
-resolution <- envs$FindClusters$resolution %||% 0.8
-if (is.character(resolution)) {
-    if (grepl(",", resolution)) {
-        resolution <- as.numeric(trimws(unlist(strsplit(resolution, ","))))
-    } else {
-        resolution <- as.numeric(resolution)
+expand_resolution <- function(resolution) {
+    expanded_res <- c()
+    for (res in resolution) {
+        if (is.numeric(res)) {
+            expanded_res <- c(expanded_res, res)
+        } else {
+            # is.character
+            parts <- trimws(unlist(strsplit(res, ",")))
+            for (part in parts) {
+                if (grepl(":", part)) {
+                    parts <- trimws(unlist(strsplit(part, ":")))
+                    if (length(parts) == 2) { parts <- c(parts, 0.1) }
+                    if (length(parts) != 3) {
+                        stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
+                    }
+                    parts <- as.numeric(parts)
+                    expanded_res <- c(expanded_res, seq(parts[1], parts[2], by = parts[3]))
+                } else {
+                    expanded_res <- c(expanded_res, as.numeric(part))
+                }
+            }
+        }
     }
+    # keep the last resolution at last
+    rev(unique(rev(expanded_res)))
+}
+resolution <- envs$FindClusters$resolution <- expand_resolution(envs$FindClusters$resolution %||% 0.8)
+log_info("Running FindClusters at resolution: {paste(resolution, collapse=',')} ...")
+
+envs$FindClusters$object <- sobj
+sobj <- do_call(FindClusters, envs$FindClusters)
+
+# recode clusters from 0, 1, 2, ... to c1, c2, c3, ...
+recode_clusters <- function(clusters) {
+    recode <- function(x) paste0("c", as.integer(as.character(x)) + 1)
+    clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
+    clusters
 }
 
+graph_name <- envs$FindClusters$graph.name %||% paste0(DefaultAssay(sobj), "_snn_res.")
 for (res in resolution) {
-    envs$FindClusters$resolution <- res
-    cached <- get_cached(envs$FindClusters, paste0("FindClusters_", res), cache_dir)
-    res_key <- paste0("seurat_clusters_", res)
-    if (is.null(cached$data)) {
-        log_info("Running FindClusters at resolution: {res} ...")
-        envs$FindClusters$object <- sobj
-        sobj <- do_call(FindClusters, envs$FindClusters)
-        levels(sobj$seurat_clusters) <- paste0("c", as.numeric(levels(sobj$seurat_clusters)) + 1)
-        sobj[[res_key]] <- sobj$seurat_clusters
-        Idents(sobj) <- "seurat_clusters"
-        cached$data <- list(clusters = sobj$seurat_clusters, commands = sobj@commands)
-        save_to_cache(cached, paste0("FindClusters_", res), cache_dir)
-    } else {
-        log_info("Loading cached FindClusters at resolution: {res} ...")
-        sobj@commands <- cached$data$commands
-        sobj[[res_key]] <- cached$data$clusters
-        sobj$seurat_clusters <- cached$data$clusters
-        Idents(sobj) <- "seurat_clusters"
-    }
-    ident_table <- table(Idents(sobj))
-    log_info("- Found {length(ident_table)} clusters")
-    print(ident_table)
-    cat("\n")
+    cluster_name <- paste0(graph_name, res)
+    new_cluster_name <- paste0("seurat_clusters.", res)
+    sobj@meta.data[[new_cluster_name]] <- recode_clusters(sobj@meta.data[[cluster_name]])
+}
+sobj@meta.data$seurat_clusters <- recode_clusters(sobj@meta.data$seurat_clusters)
+Idents(sobj) <- "seurat_clusters"
+
+ident_table <- table(Idents(sobj))
+log_info("- Found {length(ident_table)} clusters at resolution {resolution[length(resolution)]}")
+print(ident_table)
+cat("\n")
+
+# plot the tree
+if (length(resolution) > 1) {
+    log_info("Plotting clustree ...")
+    png(
+        file.path(joboutdir, "clustree.png"),
+        res = envs$clustree_devpars$res,
+        width = envs$clustree_devpars$width,
+        height = envs$clustree_devpars$height
+    )
+    p <- clustree(sobj, prefix = "seurat_clusters.")
+    print(p)
+    dev.off()
 }
 
 if (DefaultAssay(sobj) == "SCT") {

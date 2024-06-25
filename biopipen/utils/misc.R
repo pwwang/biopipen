@@ -346,3 +346,59 @@ casename_info <- function(
     }
     out
 }
+
+run_command <- function(
+    cmd,
+    fg = FALSE,
+    wait = TRUE,
+    print_command = TRUE,
+    print_command_handler = cat,
+    ...
+) {
+    if (print_command) {
+        print_command_handler("RUNNING COMMAND:\n")
+        print_command_handler(paste0("  ", paste(cmd, collapse = " "), "\n\n"))
+    }
+
+    kwargs <- list(...)
+    stdin <- kwargs$stdin %||% ""
+    stdout <- kwargs$stdout %||% ""
+    stderr <- kwargs$stderr %||% ""
+    input <- kwargs$input %||% NULL
+    k_env <- kwargs$env %||% list()
+    env <- ""
+    if (is.list(k_env)) {
+        for (k in names(env)) { env <- paste0(env, k, "=", k_env[[k]], ";")}
+    } else {
+        env <- k_env
+    }
+    if (fg) {
+        stdout <- ""
+        stderr <- ""
+    } else {
+        if (stdout == "") { stdout <- FALSE }
+    }
+
+    command = cmd[1]
+    args = cmd[-1]
+    out <- system2(
+        command,
+        args = args,
+        stdout = stdout,
+        stderr = stderr,
+        stdin = stdin,
+        env = env,
+        wait = wait,
+        input = input
+    )
+    if (!isTRUE(stdout) && !isTRUE(stderr)) {
+        if(out != 0) stop(sprintf("Command failed with exit code %s", out))
+        if (!fg) { return(out) }
+    } else {
+        status <- attr(out, "status")
+        if (is.integer(status) && status != 0) {
+            stop(sprintf("Command failed: code (%s): %s", status, out))
+        }
+        return(out)
+    }
+}

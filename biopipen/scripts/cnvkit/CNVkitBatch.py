@@ -42,7 +42,7 @@ def gen_access():
         exclude=access_excludes or False,
         s=access_min_gap_size or False,
         o=accessfile,
-        _=ref,
+        _=Path(ref).expanduser(),
     )
     args[""] = [cnvkit, "access"]
     run_command(dict_to_cli_args(args, dashify=True), fg=True)

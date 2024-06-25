@@ -1,15 +1,15 @@
 from pathlib import Path
 
+import warnings
 import pandas
-from biopipen.scripts.vcf.VcfFix_utils import HeaderContig, fix_vcffile
+from datetime import datetime
 from biopipen.utils.reference import bam_index
-from biopipen.utils.misc import run_command, dict_to_cli_args
+from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
-bamfile = {{in.bamfile | quote}}  # pyright: ignore
+bamfile = {{in.bamfile | quote}}  # pyright: ignore # noqa
 snpfile = {{in.snpfile | repr}}  # pyright: ignore
 outdir = Path({{out.outdir | quote}})  # pyright: ignore
 cnvpytor = {{envs.cnvpytor | quote}}  # pyright: ignore
-cnvnator2vcf = {{envs.cnvnator2vcf | quote}}  # pyright: ignore
 samtools = {{envs.samtools | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
 refdir = {{envs.refdir | quote}}  # pyright: ignore
@@ -20,7 +20,6 @@ args = {{envs | repr}}  # pyright: ignore
 
 del args['cnvpytor']
 del args['ncores']
-del args['cnvnator2vcf']
 del args['samtools']
 del args['refdir']
 del args['genome']
@@ -236,47 +235,138 @@ def load_chrsize():
                 yield chrom, int(size)
 
 
-def cnvpytor2vcf(infile, snp, fix=True):
-    unfixedfile = Path(infile).with_suffix(f".unfixed.vcf")
+def parse_chrom(chrom, chromdir):
+    file = Path(chromdir) / f"{chrom}.fa"
+    if not file.exists():
+        warnings.warn(f"Chromosome file not found in refdir: {chrom}")
+        return ""
+
+    seq = ""
+    with open(file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(">"):
+                seq = ""
+            else:
+                seq += line
+    return seq
+
+
+def cnvpytor2vcf(infile, snp):
+    # snp: in case to be used in the future
     outfile = Path(infile).with_suffix(f".vcf")
-    stdout = run_command(
-        dict_to_cli_args(
-            {
-                "": cnvpytor2vcf,
-                "reference": genome,
-                "_": [infile, refdir],
-            },
-            prefix="-",
-        ),
-        stdout="return",
-    )
-    if fix:
-        unfixedfile.write_text(stdout)
-
-        fixes = [
-            {
-                "kind": "format",
-                "id": "PE",
-                "fix": lambda obj: setattr(obj, 'Type', 'String')
-            },
-            {
-                "kind": "fields",
-                "fix": lambda items: items.__setitem__(-1, Path(bamfile).stem)
-            }
-        ]
+    # stdout = run_command(
+    #     dict_to_cli_args(
+    #         {
+    #             "": cnvnator2vcf,
+    #             "reference": genome,
+    #             "_": [infile, refdir],
+    #         },
+    #         prefix="-",
+    #     ),
+    #     stdout="return",
+    # )
+    ## command hangs
+    with open(infile) as fin, open(outfile, "w") as fout:
+        fout.write("##fileformat=VCFv4.2\n")
+        fout.write(f"##fileDate={datetime.now().strftime('%Y%m%d')}\n")
+        fout.write(f"##reference={genome}\n")
+        fout.write(f"##source=CNVpytor\n")
         for chrom, size in load_chrsize():
-            fixes.append({
-                "kind": "contig",
-                "append": True,
-                "fix": (
-                    lambda obj, chrom=chrom, size=size:
-                    HeaderContig(ID=chrom, length=size)
-                )
-            })
+            fout.write(f"##contig=<ID={chrom},length={size}>\n")
+        fout.write('##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">\n')
+        fout.write('##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">\n')
+        fout.write('##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Difference in length between REF and ALT alleles">\n')
+        fout.write('##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n')
+        fout.write('##INFO=<ID=natorRD,Number=1,Type=Float,Description="Normalized RD">\n')
+        fout.write('##INFO=<ID=natorP1,Number=1,Type=Float,Description="e-val by t-test">\n')
+        fout.write('##INFO=<ID=natorP2,Number=1,Type=Float,Description="e-val by Gaussian tail">\n')
+        fout.write('##INFO=<ID=natorP3,Number=1,Type=Float,Description="e-val by t-test (middle)">\n')
+        fout.write('##INFO=<ID=natorP4,Number=1,Type=Float,Description="e-val by Gaussian tail (middle)">\n')
+        fout.write('##INFO=<ID=natorQ0,Number=1,Type=Float,Description="Fraction of reads with 0 mapping quality">\n')
+        fout.write('##INFO=<ID=natorPE,Number=1,Type=Integer,Description="Number of paired-ends support the event">\n')
+        fout.write('##INFO=<ID=SAMPLES,Number=.,Type=String,Description="Sample genotyped to have the variant">\n')
+        fout.write('##ALT=<ID=DEL,Description="Deletion">\n')
+        fout.write('##ALT=<ID=DUP,Description="Duplication">\n')
+        fout.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+        fout.write('##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">\n')
+        fout.write('##FORMAT=<ID=PE,Number=1,Type=String,Description="Number of paired-ends that support the event">\n')
+        fout.write(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{Path(bamfile).stem}\n")
+        prev_chrom, chrom_seq, count = "", "", 0
+        for line in fin:
+            # type, coor, length, rd, p1, p2, p3, p4, q0, pe = line.strip("\n").split()
+            items = line.strip("\n").split()
+            type, coor, length = items[:3]
+            rd = float(items[3]) if len(items) > 3 else False
+            p1 = items[4] if len(items) > 4 else ""
+            p2 = items[5] if len(items) > 5 else ""
+            p3 = items[6] if len(items) > 6 else ""
+            p4 = items[7] if len(items) > 7 else ""
+            q0 = items[8] if len(items) > 8 else ""
+            pe = items[9] if len(items) > 9 else ""
+            chrom, pos = coor.split(":")
+            start, end = pos.split("-")
+            start, end = int(start), int(end)
+            is_del = type == "deletion"
+            is_dup = type == "duplication"
 
-        fix_vcffile(unfixedfile, outfile, fixes)
-    else:
-        outfile.write_text(stdout)
+            if not is_del and not is_dup:
+                warnings.warn(f"Skipping unrecognized CNV type: {type}")
+                continue
+
+            if chrom != prev_chrom:
+                chrom_seq = parse_chrom(chrom, refdir)
+                prev_chrom = chrom
+
+            count += 1
+            info = f"END={end}"
+            info += f";SVTYPE=DEL;SVLEN=-{length}" if is_del else f";SVTYPE=DUP;SVLEN={length}"
+            info += ";IMPRECISE"
+            info += f";natorRD={rd}" if rd is not False else ""
+            info += f";natorP1={p1}" if p1 else ""
+            info += f";natorP2={p2}" if p2 else ""
+            info += f";natorP3={p3}" if p3 else ""
+            info += f";natorP4={p4}" if p4 else ""
+            info += f";natorQ0={q0}" if q0 else ""
+            info += f";natorPE={pe}" if pe else ""
+
+            gt = "GT"
+            if rd is not False:
+                gt += ":CN"
+                gt += ":PE" if pe else ""
+                gt += "\t"
+                if is_del and rd < 0.25:
+                    gt += "1/1:0"
+                elif is_del and rd >= 0.25:
+                    gt += "0/1:1"
+                elif rd <= 1.75:
+                    gt += "0/1:2"
+                elif rd > 1.75 and rd <= 2.25:
+                    gt += "1/1:2"
+                elif rd > 2.25:
+                    gt += f"./2:{rd:.0f}"
+                else:
+                    gt = "GT:PE\t./." if pe else "GT\t./."
+
+                gt += f":{pe}" if pe else ""
+            else:
+                gt += "\t./."
+
+            fout.write("\t".join(
+                [
+                    chrom,
+                    str(start),
+                    f"CNVpytor_{'del_' if is_del else 'dup_'}{count}",
+                    chrom_seq[start - 1] if start < len(chrom_seq) else "N",
+                    "<DEL>" if is_del else "<DUP>",
+                    ".",
+                    "PASS",
+                    info,
+                    gt,
+                ]
+            ) + "\n")
 
 
 def do_case():
@@ -290,7 +380,7 @@ def do_case():
     rootfile = outdir / "file.pytor"
     case["j"] = case.get("j", ncores)
 
-    # read depth signal
+    logger.info("Reading depth signals ...")
     run_command(
         dict_to_cli_args(
             {
@@ -305,7 +395,7 @@ def do_case():
         fg=True,
     )
 
-    # predicting cnv
+    logger.info("Predicting CNVs ...")
     run_command(
         dict_to_cli_args(
             {
@@ -314,6 +404,7 @@ def do_case():
                 "his": binsizes,
             },
             prefix="-",
+            dup_key=False,
         ),
         fg=True,
     )
@@ -326,6 +417,7 @@ def do_case():
                 "partition": binsizes,
             },
             prefix="-",
+            dup_key=False,
         ),
         fg=True,
     )
@@ -336,6 +428,7 @@ def do_case():
         mask_snps = snp.pop("mask_snps", True)
         baf_nomask = snp.pop("baf_nomask", False)
 
+        logger.info("Importing SNP data ...")
         run_command(
             dict_to_cli_args(
                 {
@@ -350,6 +443,7 @@ def do_case():
         )
 
         if mask_snps:
+            logger.info("Masking 1000 Genome SNPs ...")
             run_command(
                 dict_to_cli_args(
                     {
@@ -362,6 +456,7 @@ def do_case():
                 fg=True,
             )
 
+        logger.info("Calculating BAF histograms ...")
         run_command(
             dict_to_cli_args(
                 {
@@ -375,8 +470,9 @@ def do_case():
             fg=True,
         )
 
-    # call
+    logger.info("Predicting CNV regions using joint caller ...")
     for binsize in binsizes:
+        logger.info(f"- binsize: {binsize}")
         outfile = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.tsv"
         outfile_filtered = outdir / f"calls{'.combined' if snp is not False else ''}.{binsize}.filtered.tsv"
         run_command(
@@ -392,6 +488,7 @@ def do_case():
             stdout=outfile,
         )
 
+        logger.info("  Converting to other formats ...")
         cnvpytor2other(outfile, bool(snp), "gff")
         cnvpytor2other(outfile, bool(snp), "bed")
         cnvpytor2vcf(outfile, bool(snp))
@@ -424,6 +521,7 @@ def do_case():
         cnvpytor2vcf(outfile_filtered, bool(snp))
 
         # plots
+        logger.info("  Plotting ...")
         manplot = outdir / f"manhattan.{binsize}.png"
         run_command(
             dict_to_cli_args(

@@ -11,11 +11,27 @@ if (is.character(segmean_transform)) {
     segmean_transform = eval(parse(text=segmean_transform))
 } # otherwise NULL
 
-segments = read.table(segfile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
-seg = data.frame(
-    chrom = segments[, chrom_col],
-    log2 = segments[, seg_col]
-)
+
+if (endsWith(segfile, ".vcf") || endsWith(segfile, ".vcf.gz")) {
+  library(VariantAnnotation)
+  segments = readVcf(segfile)
+  seg = data.frame(
+      chrom = as.character(seqnames(segments)),
+      log2 = segments@info[[seg_col]]
+  )
+} else if (endsWith(segfile, ".bed")) {
+  segments = read.table(segfile, header=F, row.names=NULL, sep="\t", stringsAsFactors=F)
+  seg = data.frame(
+      chrom = segments[, 1],
+      log2 = segments[, 5]
+  )
+} else {
+  segments = read.table(segfile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
+  seg = data.frame(
+      chrom = segments[, chrom_col],
+      log2 = segments[, seg_col]
+  )
+}
 rm(segments)
 
 if (!is.null(excl_chroms) && length(excl_chroms) > 0) {

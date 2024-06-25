@@ -23,12 +23,16 @@ cnvpytor = "cnvpytor"
 cnvnator2vcf = "cnvnator2VCF.pl"
 # convert
 convert = "convert"
+# fimo from meme
+fimo = "fimo"
 # wget
 wget = "wget"
 # aria2c
 aria2c = "aria2c"
 # plink
 plink = "plink"
+# plink2
+plink2 = "plink2"
 # tabix
 tabix = "tabix"
 # sambamba
@@ -86,6 +90,10 @@ genome = ""
 # Database file for scType
 # https://github.com/IanevskiAleksandr/sc-type/
 sctype_db = ""
+# TF Motif database
+tf_motifdb = ""
+# TF motif pairs
+tf_motifs = ""
 
 [misc]
 # Number of cores used for each job

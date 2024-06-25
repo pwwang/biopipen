@@ -1,0 +1,14 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##FILTER=<ID=MinMQ,Description="Minimum RMS mapping quality for SNPs (INFO/MQ) [30]">
+##contig=<ID=1,length=249250621>
+##contig=<ID=2,length=243199373>
+##INFO=<ID=ADP,Number=1,Type=Integer,Description="(Annotated) Raw read depth">
+##INFO=<ID=AUGT,Number=1,Type=String,Description="(Annotated) The most probable unconstrained genotype configuration in the trio">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	10177	.	A	C	37	MinMQ	ADP=495;AUGT=1/1/1
+1	10250	.	A	C	61	MinMQ	ADP=271;AUGT=abc
+1	10352	.	TACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCC	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCC	253	MinMQ	ADP=413;AUGT=123
+1	10257	.	A	C	31.9	MinMQ	ADP=400;AUGT=x/y/z
+1	10329	.	ACCCC	ACCC	26.4	MinMQ	ADP=315;AUGT=added
+2	14907	.	A	G	999	MinMQ	ADP=461;AUGT=1/1/2
