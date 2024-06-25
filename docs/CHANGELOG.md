@@ -1,5 +1,107 @@
 # Change Log
 
+## 0.29.0
+
+### Depedencies
+
+- deps: update `pipen-filters` to version 0.13
+- deps: add `meme` to `env_bio.yml` for tests
+- deps: bump pipen-board to 0.15.2
+- ci: update GitHub Actions versions and dependencies
+
+### BREAKING
+
+- BREAKING: merge namespace bcftools to vcf
+
+### New Features/Processes
+
+- feat(snp): add `PlinkFromVcf` to convert VCF files to PLINK format
+- feat(snp): add `Plink2GTMat` for converting PLINK files to genotype matrix
+- feat(snp): add `PlinkIBD` analysis for identity by descent
+- feat(snp): add `PlinkHWE` for Hardy-Weinberg Equilibrium test
+- feat(snp): add `PlinkHet` for calculating sample heterozygosity
+- feat(snp): add `PlinkCallRate` for calculating call rate of samples and variants
+- feat(snp): add `PlinkFilter` process for filtering PLINK files
+- feat(snp): add `PlinkFreq` process for calculating and filtering by allele frequencies
+- feat(snp): add `PlinkUpdateName` proc to update variant names in PLINK files
+- feat(gene): add `GenePromoters` for retrieving gene promoter regions and tests for it
+- feat(bed): add `BedtoolsIntersect` process for finding the intersection of two BED files
+- feat(regulation): add the namespace and `MotifScan` to use fimo for motif scanning
+- feat(regulation): add `MotifAffinityTest` to test the affinity of motifs to the sequences and the affinity change due the mutations.
+- feat(cnv.AneuploidyScore): allow BED and VCF files as in.segfile
+- feat(cnv.TMADScore): allow BED and VCF files as in.segfile
+- feat(cnvkit): allow user home directory (~) to be used in `envs.ref` in mulitple processes
+- feat(plot): add `ManhattanPlot` to for support for plotting Manhattan plots
+- feat(plot): add `QQPlot` proc for generating QQ-plot or PP-plot
+- feat(vcf): add `BcftoolsView` process for viewing, subsetting, and filtering VCF files
+- feat(vcf): add `run_bcftools` function for running bcftools with given arguments
+- feat(vcf.BcftoolsSort): allow sorting contigs based on a chrom size file
+- feat(vcf.BcftoolsFilter): allow indexing output file
+- feat(vcf.BcftoolsAnnotate): allow providing annotation file as input file and allow indexing output file
+- feat(stats): add `MetaPvalue1` to combine pvalues from the same file
+- feat(stats.MetaPvalue): add `envs.keep_single` flag to keep the single p-values
+- feat(utils.misc.R): add `run_command` function for R
+- feat(utils.reference): allow `tabix_index` to index infile directly
+- feat(snp.MatrixEQTL): add envs.match_samples flag to subset snp, expr and cov data with common samples
+- feat(snp.MatrixEQTL): fix cov data being wrongly transposed
+- feat(snp.MatrixEQTL): allow extra columns when snp and gene position file is BED
+- feat(tests): add lazy loading for reference data download and --local flag for downloading more references locally
+
+### Refactors/Improvements
+
+- refactor(utils.gene): redesign `gene_name_conversion` functions for both python and R
+- refactor(gene.GeneNameConversion): use R for implementation
+- refactor(misc.Shell): save envs.cmd to a file and run it to fix the escaping issues of the command
+- enh(snp.MatrixEQTL): use rtracklayer to read the position files
+
+### Minor
+
+- choir(misc.Str2File): add default for `in.name`
+- choir(gene.GeneNameConversion): allow `envs.notfound` to be `ignore` or `skip` when `envs.output` is `append` or `replace`
+- choir(utils.misc.py): flush output for command printing in `run_command` function
+- choir(utils.misc.py): print command with a new line for `run_command` function
+- choir(snp.PlinkFromVcf): indicate sex is to be handled
+- choir(cellranger_pipeline): remove unused import
+- choir(bam.CNVpytor): implement cnvnator2vcf directly instead of using cnvnator2vcf.pl
+
+### Tests
+
+- tests(utils.gene): update tests for `gene_name_conversion`
+- tests(gene.GeneNameConversion): use right environment for tests
+- tests(snp): add tests for plink related processes
+- tests(snp): disable report generation for plink related tests
+- tests(regulation): specify envs.genome for MotifAffinityTest
+- tests: add python package mygene to conda environment `biopipen-r`
+- tests: add tests for bcftools processes
+- tests: do not download reference data for hg38 at CI
+- tests: update `bioconductor-ggmanh` dependency to version 1.9.6
+- tests: add bcftools to conda environment dependencies for tests
+
+### Docs
+
+- docs(MatrixEQTL): fix choice items of `envs.model`
+- docs(cellranger_pipeline): fix types of some items in docs, which should be 'list', instead of 'type=list'
+
+### Fixes
+
+- fix(utils.reference): avoid index file to be created again for the same infile for `tabix_index` function
+- fix(utils.reference): pass `-f` to bgzip or gunzip to overwrite the output if exists
+- fix(vcf): fix passing vcffile as a string in fix_vcffile in VcfFix_utils.py
+- fix(cnvkit_pipeline): fix sex in process channels
+- fix(cnv.AneuploidyScoreSummary): fix when Sample column is already in metafile
+- fix(cnv.TMADScoreSummary): fix when Sample column is already in metafile
+
+### Immunopipe-related
+
+- fix(tcr.TCRClusterStats): fix `envs.shared_clusters.heatmap_meta` being broken by `envs.shared_clusters.sample_order`
+- choir(scrna.SeuratMap2Ref): present better error message when `envs.use` or values of `envs.MapQuery.refdata` not in reference
+- fix(scrna.MarkersFinder): run PrepSCTFindMarkers when needed
+- choir(scrna.SeuratClustering): use `FindClusters` to run for multiple resolutions
+- choir(scrna.SeuratSubClustering): use `FindClusters` to run for multiple resolutions
+- feat(scrna.SeuratClustering): add clustree plot
+- feat(scrna.SeuratSubClustering): add clustree plot
+- tests(scrna.SeuratClusterStats): add assertion for clustree plot generation
+
 ## 0.28.1
 
 - fix(scrna.CellsDistribution): fix `devpars` and `hm_devpars` not working
@@ -1039,11 +1141,13 @@
 ## 0.4.1
 
 ### General
+
 - 👷 [Housekeeping] Add deploy in CI
 - 🚚 [Housekeeping] Move tests/test_tcr/TCRClustering to tests/test_tcr/TCRClusteringStats
 - 🔧 [Tests] Add r-tidyseurat to env_r.toml
 
 ### Processes
+
 - 🩹 [scrna.CellsDistribution] Reduce envs.cases levels
 - 🩹 [scrna.CellsDistribution] Allow acurate sizes to be used in orderby
 - 🩹 [scrna.ScFGSEA] Reduce envs.cases levels
