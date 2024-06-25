@@ -1,4 +1,4 @@
-from pipen import Proc
+from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
     SeuratClustering,
@@ -14,6 +14,34 @@ from biopipen.ns.scrna import (
 from biopipen.core.testing import get_pipeline
 
 
+# class PrepareSeurat(Proc):
+#     """Prepare the data
+
+#     Requires:
+#         - name: Seurat
+#           check: |
+#             {{proc.lang}} <(echo "library(Seurat)")
+#     """
+
+#     input = "name"
+#     input_data = ["pbmc_small"]
+#     output = "outfile:file:{{in.name}}.RDS"
+#     lang = config.lang.rscript
+#     script = """
+#         library(Seurat)
+#         pbmc_small$Sample <- pbmc_small$letter.idents
+#         pbmc_small$RNA <- split(pbmc_small$RNA, pbmc_small$Sample)
+#         # pbmc_small <- NormalizeData(pbmc_small)
+#         # pbmc_small <- FindVariableFeatures(pbmc_small, selection.method = "vst", nfeatures = 2000)
+#         # pbmc_small <- ScaleData(pbmc_small)
+#         pbmc_small <- SCTransform(pbmc_small, verbose = FALSE)
+#         pbmc_small <- RunPCA(pbmc_small, npcs = 30, verbose = FALSE)
+#         # pbmc_small <- JoinLayers(pbmc_small)
+#         pbmc_small <- PrepSCTFindMarkers(pbmc_small)
+#         saveRDS(pbmc_small, {{out.outfile | quote}})
+#     """  # noqa: E501
+
+
 class PrepareSeurat(Proc):
     """Prepare the data
 
@@ -24,21 +52,30 @@ class PrepareSeurat(Proc):
     """
 
     input = "name"
-    input_data = ["pbmc_small"]
+    input_data = ["pbmc3k"]
     output = "outfile:file:{{in.name}}.RDS"
     lang = config.lang.rscript
     script = """
         library(Seurat)
-        pbmc_small$Sample <- pbmc_small$letter.idents
-        pbmc_small$RNA <- split(pbmc_small$RNA, pbmc_small$Sample)
+        library(SeuratData)
+        set.seed(1234)
+        name <- {{in.name | r}}
+        InstallData(name)
+        data <- LoadData(name)
+        data <- UpdateSeuratObject(data)
+        data$Sample <- paste0("S", sample(1:2, ncol(data), replace = TRUE))
+        n_g1 <- floor(ncol(data) / 3)
+        data$groups <- c(rep("g1", n_g1), rep("g2", ncol(data) - n_g1))
+        data$groups <- sample(sample(data$groups))
+        data$RNA <- split(data$RNA, data$Sample)
         # pbmc_small <- NormalizeData(pbmc_small)
         # pbmc_small <- FindVariableFeatures(pbmc_small, selection.method = "vst", nfeatures = 2000)
         # pbmc_small <- ScaleData(pbmc_small)
-        pbmc_small <- SCTransform(pbmc_small, verbose = FALSE)
-        pbmc_small <- RunPCA(pbmc_small, npcs = 30, verbose = FALSE)
+        data <- SCTransform(data, verbose = FALSE)
+        data <- RunPCA(data, npcs = 30, verbose = FALSE)
         # pbmc_small <- JoinLayers(pbmc_small)
-        pbmc_small <- PrepSCTFindMarkers(pbmc_small)
-        saveRDS(pbmc_small, {{out.outfile | quote}})
+        # data <- PrepSCTFindMarkers(data)
+        saveRDS(data, {{out.outfile | quote}})
     """  # noqa: E501
 
 
@@ -47,7 +84,7 @@ class SeuratClustering(SeuratClustering):
     envs = {
         "ncores": 1,
         "FindNeighbors": {"dims": 5},
-        "FindClusters": {"resolution": "0.5, 0.8"},
+        "FindClusters": {"resolution": "0.1:1,.5"},
     }
 
 
@@ -71,11 +108,11 @@ class SeuratSubClustering(SeuratSubClustering):
         "cases": {
             "mono_subcluster": {
                 "subset": "seurat_clusters == 'FCFR3A+ Mono'",
-                "FindClusters": {"resolution": "0.5,0.8"},
+                "FindClusters": {"resolution": "0.5:0.8"},
             },
             "dc_subcluster": {
                 "subset": "seurat_clusters == 'DC'",
-                "FindClusters": {"resolution": "0.5,0.8"},
+                "FindClusters": {"resolution": "0.5:0.8"},
             },
         }
     }
@@ -95,11 +132,13 @@ class ClusterMarkers(MarkersFinder):
 class DEG(MarkersFinder):
     requires = SeuratSubClustering
     envs = {
+        # "mutaters": {"Cluster": "if_else(seurat_clusters %in% c('c1', 'c2', 'c3'), seurat_clusters, NA)"},
         "prefix_each": False,
         "cases": {
             "Group": {
                 "group-by": "groups",
-                "each": "seurat_clusters",
+                "each": "mono_subcluster",
+                # "each": "Cluster",
                 "ident-1": "g1",
             }
         },
