@@ -8,6 +8,7 @@ library(tidyr)
 library(dplyr)
 library(tidyseurat)
 library(digest)
+library(clustree)
 
 set.seed(8525)
 
@@ -169,11 +170,11 @@ for (key in names(envs$cases)) {
     case$FindClusters$random.seed <- case$FindClusters$random.seed %||% 8525
     resolution <- case$FindClusters$resolution <- .expand_resolution(case$FindClusters$resolution %||% 0.8)
     cached <- get_cached(case$FindClusters, "FindClusters", cache_dir)
-        if (is.null(cached$data)) {
+    if (is.null(cached$data)) {
         log_info("- Running FindClusters at resolution: {paste(resolution, collapse = ',')} ...")
-            case$FindClusters$object <- sobj
+        case$FindClusters$object <- sobj
         # avoid overwriting the previous clustering results (as they have the same graph name
-            sobj1 <- do_call(FindClusters, case$FindClusters)
+        sobj1 <- do_call(FindClusters, case$FindClusters)
         graph_name <- case$FindClusters$graph.name %||% paste0(DefaultAssay(sobj), "_snn_res.")
         for (res in resolution) {
             cluster_name <- paste0(graph_name, res)
@@ -188,15 +189,28 @@ for (key in names(envs$cases)) {
         rm(sobj1)
     } else {
         log_info("- Using cached FindClusters at resolution: {paste(resolution, collapse = ',')} ...")
-        }
+    }
 
     ident_table <- table(cached$data[[key]])
-        log_info("  Found {length(ident_table)} clusters")
-        print(ident_table)
-        cat("\n")
+    log_info("  Found {length(ident_table)} clusters")
+    print(ident_table)
+    cat("\n")
+
+    if (length(resolution) > 1) {
+        log_info("- Plotting clustree ...")
+        png(
+            file.path(joboutdir, paste0(key, ".clustree.png")),
+            res = case$clustree_devpars$res,
+            width = case$clustree_devpars$width,
+            height = case$clustree_devpars$height
+        )
+        p <- clustree(cached$data, prefix = paste0(key, "."))
+        print(p)
+        dev.off()
     }
+
     log_info("- Updating meta.data with subclusters...")
-    srtobj <- AddMetaData(srtobj, metadata = cached$data, col.name = key)
+    srtobj <- AddMetaData(srtobj, metadata = cached$data)
     srtobj[[paste0("sub_umap_", key)]] <- reduc
 }
 
