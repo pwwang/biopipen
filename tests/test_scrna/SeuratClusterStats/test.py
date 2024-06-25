@@ -232,13 +232,7 @@ def pipeline():
 
 def testing(pipen):
     # assert pipen._succeeded
-    outfile = (
-        pipen.procs[-1].workdir.joinpath(
-            "0",
-            "output",
-            "pbmc_small.markers/OVERLAPPING/Group/markers.txt",
-        )
-    )
+    outfile = pipen.procs[1].workdir.joinpath("0", "output", "clustree.png")
     assert outfile.is_file(), str(outfile)
 
 
