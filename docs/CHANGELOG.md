@@ -1004,7 +1004,6 @@
 - 👷 [tests] Exclude test_scrna_metabolic_landscape from CI
 - ⬆️ Upgrade pipen-cli-run to 0.4.1
 - ⬆️ Upgrade pipen to 0.3.11
--
 
 ## 0.6.2
 
