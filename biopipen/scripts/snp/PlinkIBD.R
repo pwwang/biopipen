@@ -34,6 +34,7 @@ cmd <- c(
     "--threads", ncores,
     "--bfile", input,
     "--indep-pairwise", indep,
+	"--keep-allele-order",
 	# One should be mindful of running this with < 50 samples
 	# "--bad-ld",
     "--out", output
@@ -49,6 +50,7 @@ cmd <- c(
     "--threads", ncores,
     "--bfile", input,
     "--extract", prunein,
+	"--keep-allele-order",
     "--genome",
     "--out", output
 )
@@ -122,6 +124,7 @@ cmd <- c(
     "--threads", ncores,
     "--bfile", input,
     "--remove", ibd_fail_file,
+	"--keep-allele-order",
 	"--make-bed",
     "--out", output
 )
