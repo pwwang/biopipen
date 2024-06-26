@@ -91,7 +91,7 @@ for (name in names(stats)) {
         if (!is.null(stat$each)) {
             data <- data %>% add_count(!!group, !!sym(stat$each), name = count_on)
         } else {
-        data <- data %>% add_count(!!group, name = count_on)
+            data <- data %>% add_count(!!group, name = count_on)
         }
     }
 
@@ -145,18 +145,19 @@ for (name in names(stats)) {
         } else {
             data <- data %>%
                 distinct(!!group, !!sym(stat$each), .keep_all = TRUE) %>%
+                mutate(!!group := factor(!!group, levels = unique(!!group))) %>%
                 group_by(!!sym(stat$each))
         }
         p <- ggplot(
-            data %>% arrange(!!group),
-            aes(x = "", y = !!sym(count_on), fill = !!group, label = !!sym(count_on))
+            data %>% mutate(.size = sum(!!sym(count_on))),
+            aes(x = sqrt(.size) / 2, width = sqrt(.size), y = !!sym(count_on), fill = !!group, label = !!sym(count_on))
         ) +
-            geom_bar(stat="identity", width=1, color="white", position = position_stack(reverse = TRUE)) +
+            geom_bar(stat="identity", color="white", position = position_fill(reverse = TRUE)) +
             coord_polar("y", start = 0) +
             theme_void() +
             theme(plot.title = element_text(hjust = 0.5)) +
             geom_label_repel(
-                position = position_stack(vjust = 0.5),
+                position = position_fill(reverse = TRUE,vjust = .5),
                 color="#333333",
                 fill="#EEEEEE",
                 size=4
