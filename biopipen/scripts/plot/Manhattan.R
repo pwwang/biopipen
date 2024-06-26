@@ -105,6 +105,7 @@ args$signif <- signif
 args$plot.title <- title
 args$rescale <- rescale
 args$rescale.ratio.threshold <- rescale_ratio_threshold
+args$y.label <- ylabel
 if (!is.null(hicolors)) { args$color.by.highlight <- TRUE }
 if (!is.null(label_col)) { args$label.colname <- ".label" }
 g <- do_call(manhattan_plot, args)
