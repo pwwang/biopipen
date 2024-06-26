@@ -88,7 +88,11 @@ for (name in names(stats)) {
     group <- if (is.null(stat$group)) sym("..group") else sym(stat$group)
     count_on <- paste0("..count.", stat$on)
     if (!is_continuous) {
+        if (!is.null(stat$each)) {
+            data <- data %>% add_count(!!group, !!sym(stat$each), name = count_on)
+        } else {
         data <- data %>% add_count(!!group, name = count_on)
+        }
     }
 
     if (is.null(stat$devpars)) {
