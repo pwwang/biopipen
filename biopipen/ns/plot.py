@@ -221,7 +221,7 @@ class Manhattan(Proc):
         "label_col": None,
         "devpars": {"res": 100, "width": 1000, "height": 500},
         "zoom_devpars": {"width": 500, "height": None, "res": None},
-        "title": "Manhattan Plot",
+        "title": None,
         "ylabel": "-log10(p-value)",
         "rescale": True,
         "rescale_ratio_threshold": 5,
