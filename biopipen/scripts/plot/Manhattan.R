@@ -115,10 +115,15 @@ print(g)
 dev.off()
 
 # zoom into chromosomes
+all_chroms <- as.character(unique(mpdata$data[[mpdata$chr.colname]]))
 if (!is.null(zoom)) {
     log_info("Zooming into chromosomes ...")
     zoom <- norm_chroms(zoom)
     for (z in zoom) {
+        if (!z %in% all_chroms) {
+            log_warn("- {z}: not found in data")
+            next
+        }
         log_info("- {z}")
         args_z <- args
         args_z$chromosome <- z
