@@ -32,6 +32,7 @@ dependencies:
   - r-future
   - r-presto
   - r-metap
+  - r-qqplotr
   - r-ggprism=1.0.4
   - r-ggpubr
   - r-ggradar
