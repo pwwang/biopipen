@@ -1,4 +1,5 @@
 source("{{biopipen_dir}}/utils/misc.R")
+source("{{biopipen_dir}}/utils/caching.R")
 
 library(Seurat)
 library(future)
@@ -312,18 +313,18 @@ if (!is.null(cached$data)) {
     rm(cached)
     gc()
 } else {
-# Load data
-log_info("Reading samples individually ...")
-obj_list = lapply(samples, load_sample)
+    # Load data
+    log_info("Reading samples individually ...")
+    obj_list = lapply(samples, load_sample)
 
-log_info("Merging samples ...")
-sobj = Reduce(merge, obj_list)
+    log_info("Merging samples ...")
+    sobj = Reduce(merge, obj_list)
     rm(obj_list)
     gc()
 
-if (!envs$cell_qc_per_sample) {
-    log_info("Performing cell QC ...")
-    sobj = perform_cell_qc(sobj)
+    if (!envs$cell_qc_per_sample) {
+        log_info("Performing cell QC ...")
+        sobj = perform_cell_qc(sobj)
     }
 
     cached$data = list(sobj = sobj, cell_qc_df = cell_qc_df)
@@ -353,24 +354,24 @@ if (is.list(envs$gene_qc)) {
         gc()
     } else {
         log_info("Filtering genes ...")
-    genes <- rownames(sobj)
-    filtered <- FALSE
-    if (!is.null(envs$gene_qc$min_cells) && envs$gene_qc$min_cells > 0) {
-        genes = genes[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
-        filtered <- TRUE
-    }
-    excludes <- envs$gene_qc$excludes
-    if (!is.null(excludes)) {
-        if (length(excludes) == 1) {
-            excludes <- trimws(unlist(strsplit(excludes, ",")))
+        genes <- rownames(sobj)
+        filtered <- FALSE
+        if (!is.null(envs$gene_qc$min_cells) && envs$gene_qc$min_cells > 0) {
+            genes = genes[Matrix::rowSums(sobj) >= envs$gene_qc$min_cells]
+            filtered <- TRUE
         }
-        for (ex in excludes) {
-            genes <- genes[!grepl(ex, genes)]
+        excludes <- envs$gene_qc$excludes
+        if (!is.null(excludes)) {
+            if (length(excludes) == 1) {
+                excludes <- trimws(unlist(strsplit(excludes, ",")))
+            }
+            for (ex in excludes) {
+                genes <- genes[!grepl(ex, genes)]
+            }
+            filtered <- TRUE
         }
-        filtered <- TRUE
-    }
-    if (filtered) {
-        sobj = subset(sobj, features = genes)
+        if (filtered) {
+            sobj = subset(sobj, features = genes)
         }
         cached$data <- sobj
         save_to_cache(cached, "GeneQC", cache_dir)
@@ -419,68 +420,68 @@ if (!is.null(cached$data)) {
     rm(cached)
     gc()
 } else {
-log_info("Performing transformation/scaling ...")
-# Not joined yet
-# sobj[["RNA"]] <- split(sobj[["RNA"]], f = sobj$Sample)
-if (envs$use_sct) {
-    log_info("- Running SCTransform ...")
-    SCTransformArgs <- envs$SCTransform
-    # log to stdout but don't populate it to running log
-    print(paste0("  SCTransform: ", .formatArgs(SCTransformArgs)))
-    log_debug("  SCTransform: {.formatArgs(SCTransformArgs)}")
-    SCTransformArgs$object <- sobj
-    sobj <- do_call(SCTransform, SCTransformArgs)
-    # Default is to use the SCT assay
+    log_info("Performing transformation/scaling ...")
+    # Not joined yet
+    # sobj[["RNA"]] <- split(sobj[["RNA"]], f = sobj$Sample)
+    if (envs$use_sct) {
+        log_info("- Running SCTransform ...")
+        SCTransformArgs <- envs$SCTransform
+        # log to stdout but don't populate it to running log
+        print(paste0("  SCTransform: ", .formatArgs(SCTransformArgs)))
+        log_debug("  SCTransform: {.formatArgs(SCTransformArgs)}")
+        SCTransformArgs$object <- sobj
+        sobj <- do_call(SCTransform, SCTransformArgs)
+        # Default is to use the SCT assay
 
         # Cleanup memory
         SCTransformArgs$object <- NULL
         rm(SCTransformArgs)
         gc()
-} else {
-    log_info("- Running NormalizeData ...")
-    NormalizeDataArgs <- envs$NormalizeData
-    print(paste0("  NormalizeData: ", .formatArgs(NormalizeDataArgs)))
-    log_debug("  NormalizeData: {.formatArgs(NormalizeDataArgs)}")
-    NormalizeDataArgs$object <- sobj
-    sobj <- do_call(NormalizeData, NormalizeDataArgs)
+    } else {
+        log_info("- Running NormalizeData ...")
+        NormalizeDataArgs <- envs$NormalizeData
+        print(paste0("  NormalizeData: ", .formatArgs(NormalizeDataArgs)))
+        log_debug("  NormalizeData: {.formatArgs(NormalizeDataArgs)}")
+        NormalizeDataArgs$object <- sobj
+        sobj <- do_call(NormalizeData, NormalizeDataArgs)
 
         # Cleanup memory
         NormalizeDataArgs$object <- NULL
         rm(NormalizeDataArgs)
         gc()
 
-    log_info("- Running FindVariableFeatures ...")
-    FindVariableFeaturesArgs <- envs$FindVariableFeatures
-    print(paste0("  FindVariableFeatures: ", .formatArgs(FindVariableFeaturesArgs)))
-    log_debug("  FindVariableFeatures: {.formatArgs(FindVariableFeaturesArgs)}")
-    FindVariableFeaturesArgs$object <- sobj
-    sobj <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
+        log_info("- Running FindVariableFeatures ...")
+        FindVariableFeaturesArgs <- envs$FindVariableFeatures
+        print(paste0("  FindVariableFeatures: ", .formatArgs(FindVariableFeaturesArgs)))
+        log_debug("  FindVariableFeatures: {.formatArgs(FindVariableFeaturesArgs)}")
+        FindVariableFeaturesArgs$object <- sobj
+        sobj <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
 
         # Cleanup memory
         FindVariableFeaturesArgs$object <- NULL
         rm(FindVariableFeaturesArgs)
         gc()
 
-    log_info("- Running ScaleData ...")
-    ScaleDataArgs <- envs$ScaleData
-    print(paste0("  ScaleData: ", .formatArgs(ScaleDataArgs)))
-    log_debug("  ScaleData: {.formatArgs(ScaleDataArgs)}")
-    ScaleDataArgs$object <- sobj
-    sobj <- do_call(ScaleData, ScaleDataArgs)
+        log_info("- Running ScaleData ...")
+        ScaleDataArgs <- envs$ScaleData
+        print(paste0("  ScaleData: ", .formatArgs(ScaleDataArgs)))
+        log_debug("  ScaleData: {.formatArgs(ScaleDataArgs)}")
+        ScaleDataArgs$object <- sobj
+        sobj <- do_call(ScaleData, ScaleDataArgs)
 
         # Cleanup memory
         ScaleDataArgs$object <- NULL
         rm(ScaleDataArgs)
         gc()
-}
+    }
 
-log_info("- Running RunPCA ...")
-RunPCAArgs <- envs$RunPCA
-RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(sobj) - 1) }
-print(paste0("  RunPCA: ", .formatArgs(RunPCAArgs)))
-log_debug("  RunPCA: {.formatArgs(RunPCAArgs)}")
-RunPCAArgs$object <- sobj
-sobj <- do_call(RunPCA, RunPCAArgs)
+    log_info("- Running RunPCA ...")
+    RunPCAArgs <- envs$RunPCA
+    RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(sobj) - 1) }
+    print(paste0("  RunPCA: ", .formatArgs(RunPCAArgs)))
+    log_debug("  RunPCA: {.formatArgs(RunPCAArgs)}")
+    RunPCAArgs$object <- sobj
+    sobj <- do_call(RunPCA, RunPCAArgs)
 
     # Cleanup memory
     RunPCAArgs$object <- NULL
@@ -505,52 +506,52 @@ if (!is.null(cached$data)) {
 
 } else {
 
-if (!envs$no_integration) {
-    log_info("- Running IntegrateLayers (method = {envs$IntegrateLayers$method}) ...")
-    IntegrateLayersArgs <- envs$IntegrateLayers
-    method <- IntegrateLayersArgs$method
-    if (!is.null(IntegrateLayersArgs$reference) && is.character(IntegrateLayersArgs$reference)) {
-        log_info("  Using reference samples: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
-        IntegrateLayersArgs$reference <- match(IntegrateLayersArgs$reference, samples)
-        log_info("  Transferred to indices: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
-    }
-    if (method %in% c("CCA", "cca")) { method <- "CCAIntegration" } else
-    if (method %in% c("RPCA", "rpca")) { method <- "RPCAIntegration" } else
-    if (method %in% c("Harmony", "harmony")) { method <- "HarmonyIntegration" } else
-    if (method %in% c("FastMNN", "fastmnn")) { method <- "FastMNNIntegration" } else
-    if (method %in% c("scVI", "scvi")) { method <- "scVIIntegration" } else
-    { stop(paste0("Unknown integration method: ", method)) }
-    if (envs$use_sct && is.null(IntegrateLayersArgs$normalization.method)) {
-        IntegrateLayersArgs$normalization.method <- "SCT"
-    }
-    IntegrateLayersArgs$method <- eval(parse(text = method))
-    new_reductions <- list(
-        "CCAIntegration" = "integrated.cca",
-        "RPCAIntegration" = "integrated.rpca",
-        "HarmonyIntegration" = "harmony",
-        "FastMNNIntegration" = "integration.mnn",
-        "scVIIntegration" = "integrated.scvi"
-    )
-    if (is.null(IntegrateLayersArgs$new.reduction)) {
-        IntegrateLayersArgs$new.reduction <- new_reductions[[method]]
-    }
-    print(paste0("  IntegrateLayers: ", .formatArgs(IntegrateLayersArgs)))
-    log_debug("  IntegrateLayers: {.formatArgs(IntegrateLayersArgs)}")
-    IntegrateLayersArgs$object <- sobj
-    sobj <- do_call(IntegrateLayers, IntegrateLayersArgs)
-    # Save it for dimension reduction plots
-    sobj@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
+    if (!envs$no_integration) {
+        log_info("- Running IntegrateLayers (method = {envs$IntegrateLayers$method}) ...")
+        IntegrateLayersArgs <- envs$IntegrateLayers
+        method <- IntegrateLayersArgs$method
+        if (!is.null(IntegrateLayersArgs$reference) && is.character(IntegrateLayersArgs$reference)) {
+            log_info("  Using reference samples: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
+            IntegrateLayersArgs$reference <- match(IntegrateLayersArgs$reference, samples)
+            log_info("  Transferred to indices: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
+        }
+        if (method %in% c("CCA", "cca")) { method <- "CCAIntegration" } else
+        if (method %in% c("RPCA", "rpca")) { method <- "RPCAIntegration" } else
+        if (method %in% c("Harmony", "harmony")) { method <- "HarmonyIntegration" } else
+        if (method %in% c("FastMNN", "fastmnn")) { method <- "FastMNNIntegration" } else
+        if (method %in% c("scVI", "scvi")) { method <- "scVIIntegration" } else
+        { stop(paste0("Unknown integration method: ", method)) }
+        if (envs$use_sct && is.null(IntegrateLayersArgs$normalization.method)) {
+            IntegrateLayersArgs$normalization.method <- "SCT"
+        }
+        IntegrateLayersArgs$method <- eval(parse(text = method))
+        new_reductions <- list(
+            "CCAIntegration" = "integrated.cca",
+            "RPCAIntegration" = "integrated.rpca",
+            "HarmonyIntegration" = "harmony",
+            "FastMNNIntegration" = "integration.mnn",
+            "scVIIntegration" = "integrated.scvi"
+        )
+        if (is.null(IntegrateLayersArgs$new.reduction)) {
+            IntegrateLayersArgs$new.reduction <- new_reductions[[method]]
+        }
+        print(paste0("  IntegrateLayers: ", .formatArgs(IntegrateLayersArgs)))
+        log_debug("  IntegrateLayers: {.formatArgs(IntegrateLayersArgs)}")
+        IntegrateLayersArgs$object <- sobj
+        sobj <- do_call(IntegrateLayers, IntegrateLayersArgs)
+        # Save it for dimension reduction plots
+        sobj@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
 
         # Cleanup memory
         IntegrateLayersArgs$object <- NULL
         rm(IntegrateLayersArgs)
         gc()
-}
+    }
 
-if (!envs$use_sct) {
-    log_info("- Joining layers ...")
-    sobj <- JoinLayers(sobj)
-}
+    if (!envs$use_sct) {
+        log_info("- Joining layers ...")
+        sobj <- JoinLayers(sobj)
+    }
 
     cached$data <- sobj
     save_to_cache(cached, "Integrated", cache_dir)
@@ -563,6 +564,15 @@ if (!is.null(envs$DoubletFinder) && is.list(envs$DoubletFinder) && envs$DoubletF
 
     log_info("Running DoubletFinder ...")
     log_info("- Preparing Seurat object ...")
+
+    if (is.null(envs$DoubletFinder$ncores)) {
+        envs$DoubletFinder$ncores <- envs$ncores
+    }
+    if (envs$DoubletFinder$ncores != envs$ncores) {
+        # Change the number of cores
+        plan(strategy = "multicore", workers = envs$DoubletFinder$ncores)
+    }
+
     # More controls from envs?
     sobj <- FindNeighbors(sobj, dims = 1:envs$DoubletFinder$PCs)
     sobj <- FindClusters(sobj)
@@ -572,7 +582,7 @@ if (!is.null(envs$DoubletFinder) && is.list(envs$DoubletFinder) && envs$DoubletF
         sobj,
         PCs = 1:envs$DoubletFinder$PCs,
         sct = envs$use_sct,
-        num.cores = envs$ncores
+        num.cores = envs$DoubletFinder$ncores
     )
     sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
     bcmvn <- find.pK(sweep.stats)

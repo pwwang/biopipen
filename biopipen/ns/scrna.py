@@ -210,6 +210,10 @@ class SeuratPreparing(Proc):
             - PCs (type=int): Number of PCs to use for 'doubletFinder' function.
             - doublets (type=float): Number of expected doublets as a proportion of the pool size.
             - pN (type=float): Number of doublets to simulate as a proportion of the pool size.
+            - ncores (type=int): Number of cores to use for `DoubletFinder::paramSweep` and `DoubletFinder::doubletFinder`.
+                Set to `None` to use `envs.ncores`.
+                Since parallelization of the function usually exhausts memory, if big `envs.ncores` does not work
+                for `DoubletFinder`, set this to a smaller number.
 
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
@@ -247,6 +251,7 @@ class SeuratPreparing(Proc):
             "min_cells": 5,
         },
         "IntegrateLayers": {"method": "harmony"},
+        "DoubletFinder": {"PCs": 0, "pN": 0.25, "doublets": 0.075, "ncores": 1},
         "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
