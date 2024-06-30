@@ -21,6 +21,7 @@ dependencies:
   - r-clustree
   # - r-slugify
   - r-logger
+  - r-doubletfinder
   - r-hitype
   - r-base=4.2.0
   - r-ggplot2=3.4
