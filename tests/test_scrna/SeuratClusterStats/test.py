@@ -140,6 +140,7 @@ class DEG(MarkersFinder):
                 "each": "seurat_clusters",
                 # "each": "Cluster",
                 "ident-1": "g1",
+                "sigmarkers": "p_val < 0.5",
             }
         },
         "overlap": {"Group": {}},
