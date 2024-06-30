@@ -65,6 +65,19 @@ if (ncores > 1) {
 log_info("- Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
 defassay <- DefaultAssay(srtobj)
+if (defassay == "SCT" && !"PrepSCTFindMarkers" %in% names(srtobj@commands)) {
+    log_warn("  SCTransform used but PrepSCTFindMarkers not applied, running ...")
+
+    srtobj <- PrepSCTFindMarkers(srtobj)
+    # compose a new SeuratCommand to record it to srtobj@commands
+    scommand <- srtobj@commands$FindClusters
+    scommand@name <- "PrepSCTFindMarkers"
+    scommand@time.stamp <- Sys.time()
+    scommand@assay.used <- "SCT"
+    scommand@call.string <- "PrepSCTFindMarkers(object = srtobj)"
+    scommand@params <- list()
+    srtobj@commands$PrepSCTFindMarkers <- scommand
+}
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log_info("- Mutating meta data ...")
@@ -472,33 +485,30 @@ find_markers <- function(findmarkers_args, find_all = FALSE) {
             p_val_adj = numeric()
         )
     }
-    markers <- tryCatch({
-        do_call(fun, findmarkers_args) %>% rownames_to_column("gene")
-    }, error = function(e) {
-        # Object contains multiple models with unequal library sizes.
-        # Run `PrepSCTFindMarkers()` before running `FindMarkers()`.
-        if (grepl("PrepSCTFindMarkers", e$message)) {
-            log_warn("  Running PrepSCTFindMarkers ...")
-            findmarkers_args$object <<- PrepSCTFindMarkers(findmarkers_args$object)
-            tryCatch({
-                do_call(fun, findmarkers_args) %>% rownames_to_column("gene")
-            }, error = function(err) {
-                log_warn(paste0("  ", err$message))
-                empty
-            })
+
+    call_findmarkers <- function(fn, args) {
+        if (find_all) {
+            do_call(fn, args)
         } else {
-            log_warn(paste0("  ", e$message))
-            empty
+            do_call(fn, args) %>% rownames_to_column("gene")
         }
+    }
+    markers <- tryCatch({
+        call_findmarkers(fun, findmarkers_args)
+    }, error = function(e) {
+        if (!grepl("PrepSCTFindMarkers", e$message) && defassay == "SCT") {
+            log_warn(paste0("  ! ", e$message))
+        }
+        empty
     })
 
     if (nrow(markers) == 0 && defassay == "SCT") {
-        log_warn("  No markers found from SCT assay, trying recorrect_umi = FALSE")
+        log_warn("  ! No markers found from SCT assay, trying recorrect_umi = FALSE")
         findmarkers_args$recorrect_umi <- FALSE
         markers <- tryCatch({
-            do_call(fun, findmarkers_args) %>% rownames_to_column("gene")
+            call_findmarkers(fun, findmarkers_args)
         }, error = function(e) {
-            log_warn(paste0("  ", e$message))
+            log_warn(paste0("  ! ", e$message))
             empty
         })
     }
