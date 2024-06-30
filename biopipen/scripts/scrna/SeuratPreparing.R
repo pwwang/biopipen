@@ -20,7 +20,8 @@ if (length(envs$cache) > 1) {
 }
 
 set.seed(8525)
-options(future.globals.maxSize = 80000 * 1024^2)
+# 8TB
+options(future.globals.maxSize = 8 * 1024 ^ 4)
 options(future.rng.onMisuse="ignore")
 options(Seurat.object.assay.version = "v5")
 plan(strategy = "multicore", workers = envs$ncores)
@@ -567,10 +568,6 @@ if (!is.null(envs$DoubletFinder) && is.list(envs$DoubletFinder) && envs$DoubletF
 
     if (is.null(envs$DoubletFinder$ncores)) {
         envs$DoubletFinder$ncores <- envs$ncores
-    }
-    if (envs$DoubletFinder$ncores != envs$ncores) {
-        # Change the number of cores
-        plan(strategy = "multicore", workers = envs$DoubletFinder$ncores)
     }
 
     # More controls from envs?

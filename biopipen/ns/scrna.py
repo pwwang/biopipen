@@ -210,7 +210,7 @@ class SeuratPreparing(Proc):
             - PCs (type=int): Number of PCs to use for 'doubletFinder' function.
             - doublets (type=float): Number of expected doublets as a proportion of the pool size.
             - pN (type=float): Number of doublets to simulate as a proportion of the pool size.
-            - ncores (type=int): Number of cores to use for `DoubletFinder::paramSweep` and `DoubletFinder::doubletFinder`.
+            - ncores (type=int): Number of cores to use for `DoubletFinder::paramSweep`.
                 Set to `None` to use `envs.ncores`.
                 Since parallelization of the function usually exhausts memory, if big `envs.ncores` does not work
                 for `DoubletFinder`, set this to a smaller number.
