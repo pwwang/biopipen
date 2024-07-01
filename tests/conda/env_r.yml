@@ -21,9 +21,11 @@ dependencies:
   - r-clustree
   # - r-slugify
   - r-logger
+  - r-doubletfinder
   - r-hitype
   - r-base=4.2.0
   - r-ggplot2=3.4
+  - r-mediation
   - r-tidyr
   - r-dplyr
   - r-tibble
@@ -32,6 +34,7 @@ dependencies:
   - r-future
   - r-presto
   - r-metap
+  - r-qqplotr
   - r-ggprism=1.0.4
   - r-ggpubr
   - r-ggradar

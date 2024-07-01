@@ -1,4 +1,4 @@
-# Script for regulation.MotifAffinityTest
+# Script for regulatory.MotifAffinityTest
 
 source("{{biopipen_dir}}/utils/misc.R")
 library(BiocParallel)
@@ -215,12 +215,12 @@ tool <- match.arg(tool, c("motifbreakr", "atsnp"))
 
 if (tool == "motifbreakr") {
     motifbreakr_args <- {{envs.motifbreakr_args | r}}
-    {% set sourcefile = biopipen_dir | joinpaths: "scripts", "regulation", "MotifAffinityTest_MotifBreakR.R" %}
+    {% set sourcefile = biopipen_dir | joinpaths: "scripts", "regulatory", "MotifAffinityTest_MotifBreakR.R" %}
     # {{ sourcefile | getmtime }}
     source("{{sourcefile}}")
 } else {  # atsnp
     atsnp_args <- {{envs.atsnp_args | r}}
-    {% set sourcefile = biopipen_dir | joinpaths: "scripts", "regulation", "MotifAffinityTest_AtSNP.R" %}
+    {% set sourcefile = biopipen_dir | joinpaths: "scripts", "regulatory", "MotifAffinityTest_AtSNP.R" %}
     # {{ sourcefile | getmtime }}
     source("{{sourcefile}}")
 }

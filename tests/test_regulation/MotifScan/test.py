@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from biopipen.ns.regulation import (
+from biopipen.ns.regulatory import (
     MotifScan as MotifScan_,
 )
 from biopipen.core.testing import get_pipeline

@@ -73,11 +73,103 @@ class ChowTest(Proc):
     script = "file://../scripts/stats/ChowTest.R"
 
 
+class Mediation(Proc):
+    """Mediation analysis.
+
+    The flowchart of mediation analysis:
+
+    ![Mediation Analysis](https://library.virginia.edu/sites/default/files/inline-images/mediation_flowchart-1.png)
+
+    Reference:
+        - <https://library.virginia.edu/data/articles/introduction-to-mediation-analysis>
+        - <https://en.wikipedia.org/wiki/Mediation_(statistics)>
+        - <https://tilburgsciencehub.com/topics/analyze/regression/linear-regression/mediation-analysis/>
+        - <https://ademos.people.uic.edu/Chapter14.html>
+
+    Input:
+        infile: The input data file. The rows are samples and the columns are
+            features. It must be tab-delimited.
+            ```
+            Sample   F1   F2   F3   ...   Fn
+            S1       1.2  3.4  5.6        7.8
+            S2       2.3  4.5  6.7        8.9
+            ...
+            Sm       5.6  7.8  9.0        1.2
+            ```
+        fmlfile: The formula file.
+            ```
+            Case   M   Y   X   Cov     Model_M    Model_Y
+            Case1  F1  F2  F3  F4,F5   glm        lm
+            ...
+            ```
+            Where Y is the outcome variable, X is the predictor variable, M is the
+            mediator variable, and Case is the case name. Model_M and Model_Y are the
+            models for M and Y, respectively.
+            `envs.cases` will be ignored if this is provided.
+
+    Output:
+        outfile: The output file.
+            Columns to help understand the results:
+            Total Effect: a total effect of X on Y (without M) (`Y ~ X`).
+            ADE: A Direct Effect of X on Y after taking into account a mediation effect of M (`Y ~ X + M`).
+            ACME: The Mediation Effect, the total effect minus the direct effect,
+            which equals to a product of a coefficient of X in the second step and a coefficient of M in the last step.
+            The goal of mediation analysis is to obtain this indirect effect and see if it's statistically significant.
+
+    Envs:
+        ncores (type=int): Number of cores to use for parallelization for cases.
+        sims (type=int): Number of Monte Carlo draws for nonparametric bootstrap or quasi-Bayesian approximation.
+            Will be passed to `mediation::mediate` function.
+        args (ns): Other arguments passed to `mediation::mediate` function.
+            - <more>: More arguments passed to `mediation::mediate` function.
+                See: <https://rdrr.io/cran/mediation/man/mediate.html>
+        padj (choice): The method for (ACME) p-value adjustment.
+            - none: No p-value adjustment (no Padj column in outfile).
+            - holm: Holm-Bonferroni method.
+            - hochberg: Hochberg method.
+            - hommel: Hommel method.
+            - bonferroni: Bonferroni method.
+            - BH: Benjamini-Hochberg method.
+            - BY: Benjamini-Yekutieli method.
+            - fdr: FDR correction method.
+        cases (type=json): The cases for mediation analysis.
+            Ignored if `in.fmlfile` is provided.
+            A json/dict with case names as keys and values as a dict of M, Y, X, Cov, Model_M, Model_Y.
+            For example:
+            ```json
+            {
+                "Case1": {
+                    "M": "F1",
+                    "Y": "F2",
+                    "X": "F3",
+                    "Cov": "F4,F5",
+                    "Model_M": "glm",
+                    "Model_Y": "lm"
+                },
+                ...
+            }
+            ```
+        transpose_input (flag): Whether to transpose the input file.
+    """  # noqa: E501
+    input = "infile:file, fmlfile:file"
+    output = "outfile:file:{{in.infile | stem}}.mediation.txt"
+    lang = config.lang.rscript
+    envs = {
+        "ncores": config.misc.ncores,
+        "sims": 1000,
+        "args": {},
+        "padj": "none",
+        "cases": {},
+        "transpose_input": False,
+    }
+    script = "file://../scripts/stats/Mediation.R"
+
+
 class LiquidAssoc(Proc):
     """Liquid association tests.
 
     See Also https://github.com/gundt/fastLiquidAssociation
-    Requieres https://github.com/pwwang/fastLiquidAssociation
+    Requires https://github.com/pwwang/fastLiquidAssociation
 
     Input:
         infile: The input data file. The rows are samples and the columns are

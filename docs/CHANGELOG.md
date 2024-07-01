@@ -1,5 +1,25 @@
 # Change Log
 
+## 0.29.1
+
+- BREAKING: rename namespace `regulation` to `regulatory`
+- choir(plot.Manhattan): default `envs.title` to `None` (don't add title to the plot by default)
+- enh(plot.Manhattan): give warnings instead of errors about zooming chromosomes not existing
+- fix(plot.Manhattan): fix `envs.ylabel` not working
+- feat(stats): add `Mediation` for mediation analysis
+- feat(plot.QQPlot): add support for custom theoratical values
+- tests(plot.QQPlot): add tests
+- chore(snp.MatrixEQTL): allow pvalue cutoffs to be greater than 1 (but 1 will be used anyway)
+- fix(snp.PlinkIBD): add `--keep-allele-order` to keep the allele order
+- fix(delim.SampleInfo): fix numbers not split up when `each` is specified.
+- enh(delim.SampleInfo): make sizes of pie charts proportional to number of samples when `each` is specified
+- enh(scrna.MarkersFinder): run `PrepSCTFindMarkers` when necessary before calling FindMarkers
+- feat(scrna.SeuratPreparing): add option to cache Seurat object at different steps
+- feat(scrna.SeuratPreparing): allow `doubletfinder` to run with a different number of cores
+- chore(scrna.SeuratClustering): record `PrepSCTFindMarkers` command in `sobj@commands`
+- tests(scrna.SeuratClusterStats): use less stringent p-value cutoff for DEG/MarkersFinder
+- tests(scrna.SeuratPreparing): add `doubletfinder` in tests
+
 ## 0.29.0
 
 ### Depedencies
@@ -1004,7 +1024,6 @@
 - 👷 [tests] Exclude test_scrna_metabolic_landscape from CI
 - ⬆️ Upgrade pipen-cli-run to 0.4.1
 - ⬆️ Upgrade pipen to 0.3.11
--
 
 ## 0.6.2
 

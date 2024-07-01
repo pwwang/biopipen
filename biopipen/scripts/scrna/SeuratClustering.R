@@ -202,6 +202,14 @@ if (DefaultAssay(sobj) == "SCT") {
         # https://github.com/satijalab/seurat/issues/6968
     log_info("Running PrepSCTFindMarkers ...")
     sobj <- PrepSCTFindMarkers(sobj)
+    # compose a new SeuratCommand to record it to sobj@commands
+    scommand <- sobj@commands$FindClusters
+    scommand@name <- "PrepSCTFindMarkers"
+    scommand@time.stamp <- Sys.time()
+    scommand@assay.used <- "SCT"
+    scommand@call.string <- "PrepSCTFindMarkers(object = sobj)"
+    scommand@params <- list()
+    sobj@commands$PrepSCTFindMarkers <- scommand
 }
 
 log_info("Saving results ...")

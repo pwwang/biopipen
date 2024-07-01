@@ -221,7 +221,7 @@ class Manhattan(Proc):
         "label_col": None,
         "devpars": {"res": 100, "width": 1000, "height": 500},
         "zoom_devpars": {"width": 500, "height": None, "res": None},
-        "title": "Manhattan Plot",
+        "title": None,
         "ylabel": "-log10(p-value)",
         "rescale": True,
         "rescale_ratio_threshold": 5,
@@ -245,6 +245,11 @@ class QQPlot(Proc):
         infile: The input file for data
             It should contain at least one column of p-values or the values to be
             plotted. Header is required.
+        theorfile: The file for theoretical values (optional)
+            This file should contain at least one column of theoretical values.
+            The values will be passed to `envs.theor_qfunc` to calculate the theoretical
+            quantiles.
+            Header is required.
 
     Output:
         outfile: The output figure file
@@ -266,33 +271,86 @@ class QQPlot(Proc):
         kind (choice): The kind of the plot, `qq` or `pp`
             - qq: QQ-plot
             - pp: PP-plot
-        band (ns): The arguments for `stat_qq_band()` or `stat_pp_band()`
+        theor_col: The column for theoretical values in `in.theorfile` if provided,
+            otherwise in `in.infile`.
+            An integer (1-based) or a string indicating the column name.
+            If `distribution` of `band`, `line`, or `point` is `custom`, this column
+            must be provided.
+        theor_trans: The transformation of the theoretical values.
+            The `theor_funs` have default functions to take the theoretical values.
+            This transformation will be applied to the theoretical values before
+            passing to the `theor_funs`.
+        theor_funs (ns): The R functions to generate density, quantile and deviates
+            of the theoretical distribution base on the theoretical values
+            if `distribution` of `band`, `line`, or `point` is `custom`.
+            - dcustom: The density function, used by band
+            - qcustom: The quantile function, used by point
+            - rcustom: The deviates function, used by line
+        args (ns): The common arguments for `envs.band`, `envs.line` and `envs.point`.
+            - distribution: The distribution of the theoretical quantiles
+                When `custom` is used, the `envs.theor_col` should be provided and
+                `values` will be added to `dparams` automatically.
+            - dparams (type=json): The parameters for the distribution
+            - <more>: Other shared arguments between `stat_*_band`, `stat_*_line`
+                and `stat_*_point`.
+        band (ns): The arguments for `stat_qq_band()` or `stat_pp_band()`.
             See <https://rdrr.io/cran/qqplotr/man/stat_qq_band.html> and
             <https://rdrr.io/cran/qqplotr/man/stat_pp_band.html>.
+            Set to `None` or `band.disabled` to True to disable the band.
+            - disabled (flag): Disable the band
+            - distribution: The distribution of the theoretical quantiles
+                When `custom` is used, the `envs.theor_col` should be provided and
+                `values` will be added to `dparams` automatically.
+            - dparams (type=json): The parameters for the distribution
             - <more>: Additional arguments for `stat_qq_band()` or `stat_pp_band()`
-        line (ns): The arguments for `stat_qq_line()` or `stat_pp_line()`
+        line (ns): The arguments for `stat_qq_line()` or `stat_pp_line()`.
             See <https://rdrr.io/cran/qqplot/man/stat_qq_line.html> and
             <https://rdrr.io/cran/qqplot/man/stat_pp_line.html>.
+            Set to `None` or `line.disabled` to True to disable the line.
+            - disabled (flag): Disable the line
+            - distribution: The distribution of the theoretical quantiles
+                When `custom` is used, the `envs.theor_col` should be provided and
+                `values` will be added to `dparams` automatically.
+            - dparams (type=json): The parameters for the distribution
             - <more>: Additional arguments for `stat_qq_line()` or `stat_pp_line()`
-        point (ns): The arguments for `geom_qq_point()` or `geom_pp_point()`
+        point (ns): The arguments for `geom_qq_point()` or `geom_pp_point()`.
             See <https://rdrr.io/cran/qqplot/man/stat_qq_point.html> and
             <https://rdrr.io/cran/qqplot/man/stat_pp_point.html>.
+            Set to `None` or `point.disabled` to True to disable the point.
+            - disabled (flag): Disable the point
+            - distribution: The distribution of the theoretical quantiles
+                When `custom` is used, the `envs.theor_col` should be provided and
+                `values` will be added to `dparams` automatically.
+            - dparams (type=json): The parameters for the distribution
+            - <more>: Additional arguments for `geom_qq_point()` or `geom_pp_point()`
         ggs (list): Additional ggplot expression to adjust the plot.
     """
-    input = "infile:file"
+    input = "infile:file, theorfile:file"
     output = "outfile:file:{{in.infile | stem}}.{{envs.kind}}.png"
     lang = config.lang.rscript
     envs = {
         "val_col": 1,
+        "theor_col": None,
+        "theor_trans": None,
+        "theor_funs": {
+            "dcustom": """
+              function(x, values, ...) {
+                density(values, from = min(values), to = max(values), n = length(x))$y
+              }
+            """,
+            "qcustom": "function(p, values, ...) {quantile(values, probs = p)}",
+            "rcustom": "function(n, values, ...) { sample(values, n, replace = TRUE) }",
+        },
+        "args": {"distribution": "norm", "dparams": {}},
         "devpars": {"res": 100, "width": 1000, "height": 1000},
         "xlabel": "Theoretical Quantiles",
         "ylabel": "Observed Quantiles",
         "title": "QQ-plot",
         "trans": None,
         "kind": "qq",
-        "band": {},
-        "line": {},
-        "point": {},
+        "band": {"disabled": False, "distribution": None, "dparams": None},
+        "line": {"disabled": False, "distribution": None, "dparams": None},
+        "point": {"disabled": False, "distribution": None, "dparams": None},
         "ggs": None,
     }
     script = "file://../scripts/plot/QQPlot.R"

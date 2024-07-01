@@ -45,13 +45,17 @@ def gen_input(ch):
 class SeuratPreparing(SeuratPreparing_):
     requires = SeuratTo10X
     input_data = gen_input
-    envs = {"cell_qc": "runif(n()) < 0.5"}
+    envs = {"cell_qc": "runif(n()) < 0.5", "IntegrateLayers": {"method": "rpca"}}
 
 
 class SeuratPreparing2(SeuratPreparing_):
     requires = SeuratTo10X
     input_data = gen_input
-    envs = {"cell_qc": "runif(n()) < 0.5", "cell_qc_per_sample": True}
+    envs = {
+        "cell_qc": "runif(n()) < 0.5",
+        "cell_qc_per_sample": True,
+        "DoubletFinder": {"PCs": 3},
+    }
 
 
 def pipeline():

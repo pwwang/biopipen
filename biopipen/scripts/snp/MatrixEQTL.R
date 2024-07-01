@@ -107,7 +107,7 @@ engine_params$snps = snps
 engine_params$gene = gene
 engine_params$cvrt = cvrt
 engine_params$output_file_name = if(trans_enabled) alleqtl else NULL
-engine_params$pvOutputThreshold = if(trans_enabled) transp else 0
+engine_params$pvOutputThreshold = if(trans_enabled) min(transp, 1) else 0
 engine_params$useModel = model
 engine_params$errorCovariance = numeric()
 engine_params$verbose = TRUE
@@ -180,7 +180,7 @@ if (cis_enabled) {
 
     log_info("Running MatrixEQTL with cis-eQTLs enabled ...")
     engine_params$output_file_name.cis = outfile
-    engine_params$pvOutputThreshold.cis = pval
+    engine_params$pvOutputThreshold.cis = min(pval, 1)
     engine_params$cisDist = dist
     engine_params$snpspos = snppos_data
     engine_params$genepos = genepos_data

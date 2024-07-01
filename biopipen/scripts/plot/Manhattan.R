@@ -105,6 +105,7 @@ args$signif <- signif
 args$plot.title <- title
 args$rescale <- rescale
 args$rescale.ratio.threshold <- rescale_ratio_threshold
+args$y.label <- ylabel
 if (!is.null(hicolors)) { args$color.by.highlight <- TRUE }
 if (!is.null(label_col)) { args$label.colname <- ".label" }
 g <- do_call(manhattan_plot, args)
@@ -114,10 +115,15 @@ print(g)
 dev.off()
 
 # zoom into chromosomes
+all_chroms <- as.character(unique(mpdata$data[[mpdata$chr.colname]]))
 if (!is.null(zoom)) {
     log_info("Zooming into chromosomes ...")
     zoom <- norm_chroms(zoom)
     for (z in zoom) {
+        if (!z %in% all_chroms) {
+            log_warn("- {z}: not found in data")
+            next
+        }
         log_info("- {z}")
         args_z <- args
         args_z$chromosome <- z

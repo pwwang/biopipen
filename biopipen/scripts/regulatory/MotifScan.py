@@ -1,4 +1,4 @@
-"""Script for regulation.MotifScan"""
+"""Script for regulatory.MotifScan"""
 import re
 
 # Paths may be passed in args or to motifdb

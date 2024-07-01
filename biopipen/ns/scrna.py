@@ -53,7 +53,7 @@ class SeuratPreparing(Proc):
 
     See also
     - <https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#standard-pre-processing-workflow-1)>
-    - <https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Create_one_merged_object>
+    - <https://satijalab.org/seurat/articles/integration_introduction>
 
     This process will read the scRNA-seq data, based on the information provided by
     `SampleInfo`, specifically, the paths specified by the `RNAData` column.
@@ -210,6 +210,19 @@ class SeuratPreparing(Proc):
             - PCs (type=int): Number of PCs to use for 'doubletFinder' function.
             - doublets (type=float): Number of expected doublets as a proportion of the pool size.
             - pN (type=float): Number of doublets to simulate as a proportion of the pool size.
+            - ncores (type=int): Number of cores to use for `DoubletFinder::paramSweep`.
+                Set to `None` to use `envs.ncores`.
+                Since parallelization of the function usually exhausts memory, if big `envs.ncores` does not work
+                for `DoubletFinder`, set this to a smaller number.
+
+        cache (type=auto): Whether to cache the information at different steps.
+            If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
+            The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
+            the input and envs of the process.
+            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
+            <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
+            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
+            `<signature>.RDS` in the cache directory.
 
     Requires:
         r-seurat:
@@ -238,7 +251,8 @@ class SeuratPreparing(Proc):
             "min_cells": 5,
         },
         "IntegrateLayers": {"method": "harmony"},
-        "DoubletFinder": {"PCs": 0, "pN": 0.25, "doublets": 0.075},
+        "DoubletFinder": {"PCs": 0, "pN": 0.25, "doublets": 0.075, "ncores": 1},
+        "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
     plugin_opts = {

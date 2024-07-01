@@ -1,4 +1,4 @@
-"""Provides processes for the regulation related"""
+"""Provides processes for the regulatory related"""
 
 from ..core.proc import Proc
 from ..core.config import config
@@ -86,7 +86,7 @@ class MotifScan(Proc):
         "q_cutoff": False,
         "args": {},
     }
-    script = "file://../scripts/regulation/MotifScan.py"
+    script = "file://../scripts/regulatory/MotifScan.py"
 
 
 class MotifAffinityTest(Proc):
@@ -211,4 +211,4 @@ class MotifAffinityTest(Proc):
         "motifbreakr_args": {"method": "default"},
         "atsnp_args": {"padj_cutoff": True, "padj": "BH", "p": "pval_diff"},
     }
-    script = "file://../scripts/regulation/MotifAffinityTest.R"
+    script = "file://../scripts/regulatory/MotifAffinityTest.R"
