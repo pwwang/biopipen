@@ -35,9 +35,20 @@ if (!is.null(fmlfile)) {
 
 args <- args %||% list()
 
-medanalysis = function(casename) {
+medanalysis <- function(i, total) {
+    casename <- names(cases)[i]
     case <- cases[[casename]]
-    log_info("- Case:", casename)
+    if (total < 50) {
+        log_info("- Case: ", casename)
+    } else if (total < 500) {
+        if (i %% 10 == 0) {
+            log_info("- Processing case {i}/{total} ...")
+        }
+    } else {
+        if (i %% 100 == 0) {
+            log_info("- Processing case {i}/{total} ...")
+        }
+    }
     M <- case$M
     Y <- case$Y
     X <- case$X
@@ -85,7 +96,8 @@ medanalysis = function(casename) {
     }
 }
 
-out <- do_call(rbind, mclapply(names(cases), medanalysis, mc.cores = ncores))
+total <- length(cases)
+out <- do_call(rbind, mclapply(1:total, medanalysis, total = total, mc.cores = ncores))
 
 if (padj != "none") {
     out$Padj <- p.adjust(out$Pval, method = padj)
