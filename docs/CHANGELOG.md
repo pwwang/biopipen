@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.29.2
+
+- chore(stats.Mediation): make better logging strategy for various number of cases
+- chore(scrna.SeuratClusterStats): use ident label length to adjust default height for feature plots
+- fix(scrna.MetaMarkers): fix seurat object not updated when expanding cases and run `PrepSCTFindMarkers` when necessary before calling meta-markers
+- fix(scrna.MarkersFinder): fix fetching command when composing the PrepSCTFindMarkers command
+- fix(scrna_metabolic_landscape): handle null values in for loop in MetabolicFeatures and MetabolicFeaturesIntraSubset for report generation
+
 ## 0.29.1
 
 - BREAKING: rename namespace `regulation` to `regulatory`
