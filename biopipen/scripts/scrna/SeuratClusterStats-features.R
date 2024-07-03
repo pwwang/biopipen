@@ -75,6 +75,7 @@ do_one_features = function(name) {
         Idents(case$object) = case$ident
     }
     n_uidents = length(unique(Idents(case$object)))
+    max_nchar_idents = max(nchar(unique(as.character(Idents(case$object)))))
 
     fn = NULL
     default_devpars = NULL
@@ -97,13 +98,14 @@ do_one_features = function(name) {
         case$kind = "violin"
         if (is.null(case$cols)) { case$cols = pal_biopipen()(n_uidents) }
         if (is.null(case$pt.size)) { case$pt.size = 0 }
+
         excluded_args = c(excluded_args, "reduction")
         fn = VlnPlot
         default_devpars = function(features, ncol) {
             if (is.null(ncol)) { ncol = 1 }
             list(
                 width = 400 * ncol,
-                height = ceiling(length(features) / ncol) * 200,
+                height = ceiling(length(features) / ncol + max_nchar_idents * .05) * 150,
                 res = 100
             )
         }
