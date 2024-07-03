@@ -139,8 +139,11 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     if (any(unlist(lapply(x, class)) == "try-error")) {
         stop("mclapply error")
     }
-
-    for (r in x) { do.call(add_report, r) }
+    for (r in x) {
+        if (!is.null(r)) {
+            do.call(add_report, r)
+        }
+    }
 }
 
 do_one_subset_col <- function(subset_col, subset_prefix) {

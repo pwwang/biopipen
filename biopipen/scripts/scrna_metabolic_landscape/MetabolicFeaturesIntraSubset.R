@@ -184,6 +184,10 @@ if (ncores == 1) {
     }
 }
 report = unlist(x, recursive = FALSE)
-for (r in report) { do.call(add_report, r) }
+for (r in report) {
+    if (!is.null(r)) {
+        do.call(add_report, r)
+    }
+}
 
 save_report(joboutdir)
