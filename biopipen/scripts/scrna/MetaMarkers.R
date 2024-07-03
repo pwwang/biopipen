@@ -36,6 +36,20 @@ set.seed(8525)
 
 log_info("- Reading Seurat object ...")
 srtobj <- readRDS(srtfile)
+if (DefaultAssay(srtobj) == "SCT" && !"PrepSCTFindMarkers" %in% names(srtobj@commands)) {
+    log_warn("- SCTransform used but PrepSCTFindMarkers not applied, running ...")
+
+    srtobj <- PrepSCTFindMarkers(srtobj)
+    # compose a new SeuratCommand to record it to srtobj@commands
+    commands <- names(srtobj@commands)
+    scommand <- srtobj@commands[[commands[length(commands)]]]
+    scommand@name <- "PrepSCTFindMarkers"
+    scommand@time.stamp <- Sys.time()
+    scommand@assay.used <- "SCT"
+    scommand@call.string <- "PrepSCTFindMarkers(object = srtobj)"
+    scommand@params <- list()
+    srtobj@commands$PrepSCTFindMarkers <- scommand
+}
 
 log_info("- Mutate meta data if needed ...")
 if (!is.null(mutaters) && length(mutaters)) {
@@ -79,13 +93,13 @@ expand_each <- function(name, case) {
             by = make.names(paste0("..", name, "_", case$each, "_", each))
             idents <- case$idents
             if (is.null(idents) || length(idents) == 0) {
-                srtobj@meta.data = srtobj@meta.data %>%
+                srtobj@meta.data <<- srtobj@meta.data %>%
                     mutate(
                         !!sym(by) := if_else(!!sym(case$each) == each, !!sym(case$group_by), NA)
                     )
                 idents <- srtobj@meta.data %>% pull(case$group_by) %>% unique() %>% na.omit()
             } else {
-                srtobj@meta.data = srtobj@meta.data %>%
+                srtobj@meta.data <<- srtobj@meta.data %>%
                     mutate(
                         !!sym(by) := if_else(
                             !!sym(case$each) == each & !!sym(case$group_by) %in% case$idents,
@@ -204,6 +218,10 @@ do_case <- function(casename) {
         if (is.null(df)) {
             msg <- "No markers found. May be due to too few cells or features."
         } else {
+            df <- df[
+                apply(df, 1, function(x) !all(is.na(x)) && !all(x == x[1])), ,
+                drop = FALSE
+            ]
             genes <- rownames(df)
             # rows: cells, cols: genes
             df <- cbind(as.data.frame(scale(Matrix::t(df))), sobj@meta.data[, case$group_by])
