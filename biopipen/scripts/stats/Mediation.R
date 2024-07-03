@@ -66,17 +66,19 @@ medanalysis <- function(i, total) {
         fmly <- update.formula(fmly, cov_fml)
     }
 
+    data <- indata[, c(M, X, Y, covs), drop = FALSE]
+    data <- data[complete.cases(data), , drop = FALSE]
     margs <- args
-    args$sims <- sims
-    args$model.m <- modelm(fmlm, data = indata)
-    args$model.y <- modely(fmly, data = indata)
-    args$treat <- X
-    args$mediator <- M
-    args$outcome <- Y
+    margs$sims <- sims
+    margs$model.m <- modelm(fmlm, data = data)
+    margs$model.y <- modely(fmly, data = data)
+    margs$treat <- X
+    margs$mediator <- M
+    margs$outcome <- Y
     if (!is.null(covs)) {
-        args$covariates <- indata[, covs, drop = FALSE]
+        margs$covariates <- data[, covs, drop = FALSE]
     }
-    med <- do_call(mediate, args)
+    med <- do_call(mediate, margs)
     if (is.na(med$d1.p) || is.na(med$n1)) {
         NULL
     } else {
