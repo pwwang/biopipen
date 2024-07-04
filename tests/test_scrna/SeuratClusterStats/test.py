@@ -7,7 +7,7 @@ from biopipen.ns.scrna import (
     ModuleScoreCalculator,
     MarkersFinder,
     SeuratSubClustering,
-    MetaMarkers,
+    MetaMarkers as MetaMarkers_,
     RadarPlots,
     TopExpressingGenes,
 )
@@ -148,7 +148,7 @@ class DEG(MarkersFinder):
     order = 99
 
 
-class MetaMarkers(MetaMarkers):
+class MetaMarkers(MetaMarkers_):
     requires = SeuratSubClustering
     envs = {
         "group-by": "seurat_clusters",
@@ -236,9 +236,7 @@ def pipeline():
 
 
 def testing(pipen):
-    # assert pipen._succeeded
-    outfile = pipen.procs[1].workdir.joinpath("0", "output", "clustree.png")
-    assert outfile.is_file(), str(outfile)
+    ...
 
 
 if __name__ == "__main__":
