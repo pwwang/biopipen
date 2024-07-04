@@ -40,7 +40,7 @@ mapquery_args$refdata[[use]] = use
 
 outdir = dirname(outfile)
 if (is.null(split_by)) {
-    options(future.globals.maxSize = 80000 * 1024^2)
+    options(future.globals.maxSize = 8 * 1024 ^ 4)
     future::plan(strategy = "multicore", workers = ncores)
 }
 

@@ -1,7 +1,8 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-features_defaults = {{envs.features_defaults | r: todot="-"}}
-features = {{envs.features | r: todot="-", skip=1}}
+# features_defaults = {{envs.features_defaults | r: todot="-"}}
+# features = {{envs.features | r: todot="-", skip=1}}
+log_info("features:")
 
 odir = file.path(outdir, "features")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
@@ -36,7 +37,7 @@ dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 }
 
 do_one_features = function(name) {
-    log_info("Doing features for: {name}")
+    log_info("- Case: {name}")
 
     case = list_update(features_defaults, features[[name]])
     case$devpars = list_update(features_defaults$devpars, features[[name]]$devpars)
@@ -105,7 +106,7 @@ do_one_features = function(name) {
             if (is.null(ncol)) { ncol = 1 }
             list(
                 width = 400 * ncol,
-                height = ceiling(length(features) / ncol + max_nchar_idents * .05) * 150,
+                height = ceiling(length(features) / ncol) * (max_nchar_idents * .1 + 275),
                 res = 100
             )
         }
@@ -398,7 +399,7 @@ do_one_features = function(name) {
     devpars = list_update(default_devpars(case$features, case$ncol), devpars)
     if (kind == "heatmap") {
         if (!exists("downsample") || is.null(downsample)) {
-            log_warn("- `downsample` is not specified for `heatmap`, using `downsample=1000`")
+            log_warn("  'downsample' is not specified for `heatmap`, using `downsample=1000`")
             downsample = 1000
         }
         if (is.numeric(downsample)) {

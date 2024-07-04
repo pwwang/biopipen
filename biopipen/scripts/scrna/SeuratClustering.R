@@ -7,7 +7,6 @@ library(rlang)
 library(tidyr)
 library(dplyr)
 library(digest)
-library(clustree)
 
 set.seed(8525)
 
@@ -161,42 +160,26 @@ resolution <- envs$FindClusters$resolution <- expand_resolution(envs$FindCluster
 log_info("Running FindClusters at resolution: {paste(resolution, collapse=',')} ...")
 
 envs$FindClusters$object <- sobj
+envs$FindClusters$cluster.name <- paste0("seurat_clusters.", resolution)
 sobj <- do_call(FindClusters, envs$FindClusters)
 
 # recode clusters from 0, 1, 2, ... to c1, c2, c3, ...
-recode_clusters <- function(clusters) {
+.recode_clusters <- function(clusters) {
     recode <- function(x) paste0("c", as.integer(as.character(x)) + 1)
     clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
     clusters
 }
 
-graph_name <- envs$FindClusters$graph.name %||% paste0(DefaultAssay(sobj), "_snn_res.")
-for (res in resolution) {
-    cluster_name <- paste0(graph_name, res)
-    new_cluster_name <- paste0("seurat_clusters.", res)
-    sobj@meta.data[[new_cluster_name]] <- recode_clusters(sobj@meta.data[[cluster_name]])
+for (clname in envs$FindClusters$cluster.name) {
+    sobj@meta.data[[clname]] <- .recode_clusters(sobj@meta.data[[clname]])
 }
-sobj@meta.data$seurat_clusters <- recode_clusters(sobj@meta.data$seurat_clusters)
+sobj@meta.data$seurat_clusters <- .recode_clusters(sobj@meta.data$seurat_clusters)
 Idents(sobj) <- "seurat_clusters"
 
 ident_table <- table(Idents(sobj))
 log_info("- Found {length(ident_table)} clusters at resolution {resolution[length(resolution)]}")
 print(ident_table)
 cat("\n")
-
-# plot the tree
-if (length(resolution) > 1) {
-    log_info("Plotting clustree ...")
-    png(
-        file.path(joboutdir, "clustree.png"),
-        res = envs$clustree_devpars$res,
-        width = envs$clustree_devpars$width,
-        height = envs$clustree_devpars$height
-    )
-    p <- clustree(sobj, prefix = "seurat_clusters.")
-    print(p)
-    dev.off()
-}
 
 if (DefaultAssay(sobj) == "SCT") {
         # https://github.com/satijalab/seurat/issues/6968

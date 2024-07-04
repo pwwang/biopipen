@@ -1,14 +1,15 @@
 # Loaded variables: srtfile, outdir, srtobj
 library(circlize)
 
-stats_defaults = {{envs.stats_defaults | r: todot="-"}}
-stats = {{envs.stats | r: todot="-", skip=1}}
+# stats_defaults = {{envs.stats_defaults | r: todot="-"}}
+# stats = {{envs.stats | r: todot="-", skip=1}}
+log_info("stats:")
 
 odir = file.path(outdir, "stats")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
 do_one_stats = function(name) {
-    log_info("Doing stats for: {name}")
+    log_info("- Case: {name}")
 
     case = list_update(stats_defaults, stats[[name]])
     case$devpars = list_update(stats_defaults$devpars, case$devpars)

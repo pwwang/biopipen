@@ -1,13 +1,14 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
-dimplots = {{envs.dimplots | r: todot="-", skip=1}}
+# dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
+# dimplots = {{envs.dimplots | r: todot="-", skip=1}}
+log_info("dimplots:")
 
 odir = file.path(outdir, "dimplots")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
 do_one_dimplot = function(name) {
-    log_info(paste0("Doing dimplots for: ", name))
+    log_info("- Case: {name}")
 
     case = list_update(dimplots_defaults, dimplots[[name]])
     case$devpars = list_update(dimplots_defaults$devpars, dimplots[[name]]$devpars)
