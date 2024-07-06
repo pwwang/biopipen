@@ -38,13 +38,13 @@ plan(strategy = "multicore", workers = envs$ncores)
             parts <- trimws(unlist(strsplit(res, ",")))
             for (part in parts) {
                 if (grepl(":", part)) {
-                    parts <- trimws(unlist(strsplit(part, ":")))
-                    if (length(parts) == 2) { parts <- c(parts, 0.1) }
-                    if (length(parts) != 3) {
+                    ps <- trimws(unlist(strsplit(part, ":")))
+                    if (length(ps) == 2) { ps <- c(ps, 0.1) }
+                    if (length(ps) != 3) {
                         stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
                     }
-                    parts <- as.numeric(parts)
-                    expanded_res <- c(expanded_res, seq(parts[1], parts[2], by = parts[3]))
+                    ps <- as.numeric(ps)
+                    expanded_res <- c(expanded_res, seq(ps[1], ps[2], by = ps[3]))
                 } else {
                     expanded_res <- c(expanded_res, as.numeric(part))
                 }
@@ -52,7 +52,7 @@ plan(strategy = "multicore", workers = envs$ncores)
         }
     }
     # keep the last resolution at last
-    rev(unique(rev(expanded_res)))
+    rev(unique(rev(round(expanded_res, 2))))
 }
 
 # recode clusters from 0, 1, 2, ... to s1, s2, s3, ...

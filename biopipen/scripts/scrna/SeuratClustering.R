@@ -31,6 +31,40 @@ plan(strategy = "multicore", workers = envs$ncores)
     args
 }
 
+.expand_resolution <- function(resolution) {
+    expanded_res <- c()
+    for (res in resolution) {
+        if (is.numeric(res)) {
+            expanded_res <- c(expanded_res, res)
+        } else {
+            # is.character
+            parts <- trimws(unlist(strsplit(res, ",")))
+            for (part in parts) {
+                if (grepl(":", part)) {
+                    ps <- trimws(unlist(strsplit(part, ":")))
+                    if (length(ps) == 2) { ps <- c(ps, 0.1) }
+                    if (length(ps) != 3) {
+                        stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
+                    }
+                    ps <- as.numeric(ps)
+                    expanded_res <- c(expanded_res, seq(ps[1], ps[2], by = ps[3]))
+                } else {
+                    expanded_res <- c(expanded_res, as.numeric(part))
+                }
+            }
+        }
+    }
+    # keep the last resolution at last
+    rev(unique(rev(round(expanded_res, 2))))
+}
+
+# recode clusters from 0, 1, 2, ... to c1, c2, c3, ...
+.recode_clusters <- function(clusters) {
+    recode <- function(x) paste0("c", as.integer(as.character(x)) + 1)
+    clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
+    clusters
+}
+
 envs$RunUMAP <- .expand_dims(envs$RunUMAP)
 envs$FindNeighbors <- .expand_dims(envs$FindNeighbors)
 
@@ -130,45 +164,12 @@ if (is.null(cached$data)) {
 }
 
 envs$FindClusters$random.seed <- envs$FindClusters$random.seed %||% 8525
-expand_resolution <- function(resolution) {
-    expanded_res <- c()
-    for (res in resolution) {
-        if (is.numeric(res)) {
-            expanded_res <- c(expanded_res, res)
-        } else {
-            # is.character
-            parts <- trimws(unlist(strsplit(res, ",")))
-            for (part in parts) {
-                if (grepl(":", part)) {
-                    parts <- trimws(unlist(strsplit(part, ":")))
-                    if (length(parts) == 2) { parts <- c(parts, 0.1) }
-                    if (length(parts) != 3) {
-                        stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
-                    }
-                    parts <- as.numeric(parts)
-                    expanded_res <- c(expanded_res, seq(parts[1], parts[2], by = parts[3]))
-                } else {
-                    expanded_res <- c(expanded_res, as.numeric(part))
-                }
-            }
-        }
-    }
-    # keep the last resolution at last
-    rev(unique(rev(expanded_res)))
-}
-resolution <- envs$FindClusters$resolution <- expand_resolution(envs$FindClusters$resolution %||% 0.8)
+resolution <- envs$FindClusters$resolution <- .expand_resolution(envs$FindClusters$resolution %||% 0.8)
 log_info("Running FindClusters at resolution: {paste(resolution, collapse=',')} ...")
 
 envs$FindClusters$object <- sobj
 envs$FindClusters$cluster.name <- paste0("seurat_clusters.", resolution)
 sobj <- do_call(FindClusters, envs$FindClusters)
-
-# recode clusters from 0, 1, 2, ... to c1, c2, c3, ...
-.recode_clusters <- function(clusters) {
-    recode <- function(x) paste0("c", as.integer(as.character(x)) + 1)
-    clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
-    clusters
-}
 
 for (clname in envs$FindClusters$cluster.name) {
     sobj@meta.data[[clname]] <- .recode_clusters(sobj@meta.data[[clname]])
