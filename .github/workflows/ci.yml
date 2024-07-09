@@ -25,9 +25,9 @@ jobs:
           miniforge-variant: Mambaforge
       - name: Create conda environments and install biopipen
         run: |
-          for envfile in tests/conda/env*.yml; do
+          for envfile in tests/conda/env_*.yml; do
             bname=$(basename $envfile .yml)
-            envname=biopipen-${bname:4}
+            envname=${bname:4}
             echo "::group::Creating environment: $envname"
             mamba env create -f $envfile
             echo "::endgroup::"
