@@ -5,8 +5,6 @@ log_info("")
 log_info("# K-mer analysis")
 log_info("-----------------------------------")
 
-kmers = {{ envs.kmers | r: todot="-" }}
-
 # Fill up cases
 log_info("Filling up cases ...")
 cases = kmers$cases

@@ -5,8 +5,6 @@ log_info("")
 log_info("# Overlap analysis")
 log_info("-----------------------------------")
 
-overlaps = {{ envs.overlaps | r: todot="-" }}
-
 # Fill up cases
 cases = overlaps$cases
 if (is.null(cases) || length(cases) == 0) {

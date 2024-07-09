@@ -5,8 +5,6 @@ log_info("")
 log_info("# Gene usage analysis")
 log_info("-----------------------------------")
 
-gene_usages = {{ envs.gene_usages | r: todot="-" }}
-
 # Fill up cases
 log_info("Filling up cases ...")
 cases = gene_usages$cases

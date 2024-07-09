@@ -5,8 +5,6 @@ log_info("-----------------------------------")
 # Already required by immunarch
 library(circlize)
 
-vj_juncs <- {{envs.vj_junc | r}}
-
 log_info("Filling up cases ...")
 cases <- vj_juncs$cases
 if (is.null(cases) || length(cases) == 0) {

@@ -5,10 +5,6 @@ log_info("")
 log_info("# Clonality analysis")
 log_info("-----------------------------------")
 
-top_clones = {{envs.top_clones | r}}
-rare_clones = {{envs.rare_clones | r}}
-hom_clones = {{envs.hom_clones | r}}
-
 # Fill up cases
 fill_up_cases_clonality = function(config) {
     cases = config$cases
