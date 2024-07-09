@@ -354,3 +354,58 @@ class QQPlot(Proc):
         "ggs": None,
     }
     script = "file://../scripts/plot/QQPlot.R"
+
+
+class Scatter(Proc):
+    """Generate scatter plot using ggplot2.
+
+    [`ggpmisc`](https://cran.r-project.org/web/packages/ggpmisc/index.html) is used
+    for the stats and labels.
+    See also https://cran.r-project.org/web/packages/ggpmisc/vignettes/model-based-annotations.html
+
+    Input:
+        infile: The input file for data
+            It should contain at least two columns for x and y values.
+            Header is required.
+
+    Output:
+        outfile: The output figure file
+
+    Envs:
+        x_col: The column for x values
+            An integer (1-based) or a string indicating the column name.
+        y_col: The column for y values
+            An integer (1-based) or a string indicating the column name.
+        devpars (ns): The parameters for `png()`
+            - res (type=int): The resolution
+            - width (type=int): The width
+            - height (type=int): The height
+        args (ns): Additional arguments for `geom_point()`
+            See <https://ggplot2.tidyverse.org/reference/geom_point.html>.
+            - <more>: Additional arguments for `geom_point()`
+        mapping: Extra mapping for all geoms, including `stats`.
+            Should be `aes(color = group)` but all these are valid: `color = group` or
+            `(color = group)`.
+        ggs (list): Additional ggplot expression to adjust the plot.
+        formula: The formula for the model
+        stats (type=json): The stats to add to the plot.
+            A dict with keys available stats in `ggpmisc` (without `stat_`).
+            See <https://cran.r-project.org/web/packages/ggpmisc/vignettes/model-based-annotations.html#statistics>.
+            The values should be the arguments for the stats.
+            If you want a stat to be added multiple times, add a suffix `#x` to the key.
+            For example, `poly_line#1` and `poly_line#2` will add two polynomial lines.
+    """  # noqa: E501
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.scatter.png"
+    lang = config.lang.rscript
+    envs = {
+        "x_col": 1,
+        "y_col": 2,
+        "devpars": {"res": 100, "width": 1000, "height": 800},
+        "args": {},
+        "mapping": None,
+        "ggs": [],
+        "formula": "y ~ x",
+        "stats": {},
+    }
+    script = "file://../scripts/plot/Scatter.R"

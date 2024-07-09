@@ -37,6 +37,7 @@ dependencies:
   - r-qqplotr
   - r-ggprism=1.0.4
   - r-ggpubr
+  - r-ggpmisc
   - r-ggradar
   - r-ggrepel
   - r-ggupset
