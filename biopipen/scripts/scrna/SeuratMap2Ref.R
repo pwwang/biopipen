@@ -131,6 +131,9 @@ if (refnorm == "SCTransform") {
     if (is.null(split_by)) {
         sctransform_args$object = sobj
         query = do_call(SCTransform, sctransform_args)
+        sctransform_args$object <- NULL
+        rm(sctransform_args)
+        gc()
     } else {
         query = mclapply(
             X = sobj,
@@ -162,7 +165,12 @@ if (refnorm == "SCTransform") {
             stop(paste0("\nmclapply (NormalizeData) error:", query))
         }
     }
+    normalizedata_args$object <- NULL
+    rm(normalizedata_args)
+    gc()
 }
+rm(sobj)
+gc()
 
 # Find anchors between query and reference
 log_info("- Finding anchors")
@@ -170,6 +178,10 @@ findtransferanchors_args$reference = reference
 if (is.null(split_by)) {
     findtransferanchors_args$query = query
     anchors = do_call(FindTransferAnchors, findtransferanchors_args)
+    findtransferanchors_args$reference = NULL
+    findtransferanchors_args$query = NULL
+    rm(findtransferanchors_args)
+    gc()
 } else {
     anchors = mclapply(
         X = query,
@@ -191,6 +203,10 @@ if (is.null(split_by)) {
     mapquery_args$query = query
     mapquery_args$anchorset = anchors
     query = do_call(MapQuery, mapquery_args)
+    mapquery_args$reference = NULL
+    mapquery_args$query = NULL
+    mapquery_args$anchorset = NULL
+    gc()
 } else {
     query = mclapply(
         X = seq_along(query),
@@ -221,6 +237,9 @@ if (is.null(split_by)) {
         if (e$message == "subscript out of bounds") stop(mappingscore_sob_msg)
         stop(e)
     })
+    mappingscore_args$anchors = NULL
+    rm(mappingscore_args)
+    gc()
 } else {
     mappingscore = mclapply(
         X = seq_along(query),
@@ -266,6 +285,8 @@ if (is.null(split_by)) {
 
     # Combine the results
     log_info("- Merging the results")
+    # Memory efficient way to merge the results
+    # query = Reduce(function(x, y) merge(x, y, merge.dr = "ref.umap"), query)
     query = merge(query[[1]], query[2:length(query)], merge.dr = "ref.umap")
 }
 
