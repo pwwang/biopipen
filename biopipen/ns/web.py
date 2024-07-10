@@ -13,8 +13,11 @@ class Download(Proc):
         outfile: The file downloaded
 
     Envs:
-        tool: Which tool to use to download the data
-            wget, aria2c or python's urllib
+        tool (choice): Which tool to use to download the data
+            - wget: Use wget
+            - aria2c: Use aria2c
+            - urllib: Use python's urllib
+            - aria: Alias for aria2c
         wget: Path to wget
         aria2c: Path to aria2c
         args: The arguments to pass to the tool
@@ -52,8 +55,11 @@ class DownloadList(Proc):
         outdir: The directory containing the downloaded files
 
     Envs:
-        tool: Which tool to use to download the data
-            wget, aria2c or python's urllib
+        tool (choice): Which tool to use to download the data
+            - wget: Use wget
+            - aria2c: Use aria2c
+            - urllib: Use python's urllib
+            - aria: Alias for aria2c
         wget: Path to wget
         aria2c: Path to aria2c
         args: The arguments to pass to the tool
