@@ -17,6 +17,7 @@ refnorm = {{envs.refnorm | r}}
 ncores = {{envs.ncores | r}}
 split_by = {{envs.split_by | r}}
 mutaters = {{envs.mutaters | r}}
+skip_if_normalized = {{envs.skip_if_normalized | r}}
 sctransform_args = {{envs.SCTransform | r: todot="-"}}
 normalizedata_args = {{envs.NormalizeData | r: todot="-"}}
 findtransferanchors_args = {{envs.FindTransferAnchors | r: todot="-"}}
@@ -98,6 +99,7 @@ if (refnorm == "SCTransform") {
 # Load Seurat object
 log_info("- Loading Seurat object")
 sobj = readRDS(sobjfile)
+defassay <- DefaultAssay(sobj)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log_info("- Applying mutaters")
@@ -126,48 +128,56 @@ if (!is.null(split_by)) {
 # Normalize data
 log_info("- Normalizing data")
 if (refnorm == "SCTransform") {
-    log_info("  Using SCTransform normalization")
-    sctransform_args$residual.features = rownames(x = reference)
-    if (is.null(split_by)) {
-        sctransform_args$object = sobj
-        query = do_call(SCTransform, sctransform_args)
-        sctransform_args$object <- NULL
-        rm(sctransform_args)
-        gc()
+    if (defassay == "SCT" && skip_if_normalized) {
+        log_warn("  Skipping normalization as the object is already SCTransform'ed")
     } else {
-        query = mclapply(
-            X = sobj,
-            FUN = function(x) {
-                sctransform_args$object = x
-                do_call(SCTransform, sctransform_args)
-            },
-            mc.cores = ncores
-        )
-        if (any(unlist(lapply(query, class)) == "try-error")) {
-            stop(paste0("\nmclapply (SCTransform) error:", query))
+        log_info("  Using SCTransform normalization")
+        sctransform_args$residual.features = rownames(x = reference)
+        if (is.null(split_by)) {
+            sctransform_args$object = sobj
+            query = do_call(SCTransform, sctransform_args)
+            sctransform_args$object <- NULL
+            rm(sctransform_args)
+            gc()
+        } else {
+            query = mclapply(
+                X = sobj,
+                FUN = function(x) {
+                    sctransform_args$object = x
+                    do_call(SCTransform, sctransform_args)
+                },
+                mc.cores = ncores
+            )
+            if (any(unlist(lapply(query, class)) == "try-error")) {
+                stop(paste0("\nmclapply (SCTransform) error:", query))
+            }
         }
     }
 } else {
-    log_info("  Using NormalizeData normalization")
-    if (is.null(split_by)) {
-        normalizedata_args$object = sobj
-        query = do_call(NormalizeData, normalizedata_args)
+    if (defassay == "RNA" && skip_if_normalized) {
+        log_warn("  Skipping normalization as the object is already LogNormalize'd")
     } else {
-        query = mclapply(
-            X = sobj,
-            FUN = function(x) {
-                normalizedata_args$object = x
-                do_call(NormalizeData, normalizedata_args)
-            },
-            mc.cores = ncores
-        )
-        if (any(unlist(lapply(query, class)) == "try-error")) {
-            stop(paste0("\nmclapply (NormalizeData) error:", query))
+        log_info("  Using NormalizeData normalization")
+        if (is.null(split_by)) {
+            normalizedata_args$object = sobj
+            query = do_call(NormalizeData, normalizedata_args)
+        } else {
+            query = mclapply(
+                X = sobj,
+                FUN = function(x) {
+                    normalizedata_args$object = x
+                    do_call(NormalizeData, normalizedata_args)
+                },
+                mc.cores = ncores
+            )
+            if (any(unlist(lapply(query, class)) == "try-error")) {
+                stop(paste0("\nmclapply (NormalizeData) error:", query))
+            }
         }
+        normalizedata_args$object <- NULL
+        rm(normalizedata_args)
+        gc()
     }
-    normalizedata_args$object <- NULL
-    rm(normalizedata_args)
-    gc()
 }
 rm(sobj)
 gc()
