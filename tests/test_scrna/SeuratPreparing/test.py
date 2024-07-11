@@ -54,7 +54,18 @@ class SeuratPreparing2(SeuratPreparing_):
     envs = {
         "cell_qc": "runif(n()) < 0.5",
         "cell_qc_per_sample": True,
+        "doublet_detector": "DoubletFinder",
         "DoubletFinder": {"PCs": 3},
+    }
+
+
+class SeuratPreparing3(SeuratPreparing_):
+    requires = SeuratTo10X
+    input_data = gen_input
+    envs = {
+        "cell_qc": "runif(n()) < 0.5",
+        "cell_qc_per_sample": True,
+        "doublet_detector": "scDblFinder",
     }
 
 

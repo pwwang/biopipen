@@ -86,6 +86,7 @@ dependencies:
   - bioconductor-motifbreakr
   - bioconductor-atsnp
   - bioconductor-bsgenome.hsapiens.ucsc.hg19
+  - bioconductor-scdblfinder
   # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2
   #         or libmkl_def.so.2.
   - libfaiss-avx2=1.7.2=h1234567_0_cpu

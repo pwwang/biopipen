@@ -328,8 +328,13 @@ if (!is.null(cached$data)) {
         sobj = perform_cell_qc(sobj)
     }
 
-    cached$data = list(sobj = sobj, cell_qc_df = cell_qc_df)
+    cached$data <- list(sobj = sobj, cell_qc_df = cell_qc_df)
     save_to_cache(cached, "CellQC", cache_dir)
+    cached$data$sobj <- NULL
+    cached$data$cell_qc_df <- NULL
+    cached$data <- NULL
+    rm(cached)
+    gc()
 }
 
 # plot and report the QC
@@ -376,6 +381,9 @@ if (is.list(envs$gene_qc)) {
         }
         cached$data <- sobj
         save_to_cache(cached, "GeneQC", cache_dir)
+        cached$data <- NULL
+        rm(cached)
+        gc()
     }
 }
 dim_df = rbind(
@@ -411,7 +419,9 @@ add_report(
 
 envs_cache <- envs
 envs_cache$ncores <- NULL
+envs_cache$doublet_detector <- NULL
 envs_cache$DoubletFinder <- NULL
+envs_cache$scDblFinder <- NULL
 envs_cache$IntegrateLayers <- NULL
 cached <- get_cached(envs_cache, "Transformed", cache_dir)
 if (!is.null(cached$data)) {
@@ -491,11 +501,16 @@ if (!is.null(cached$data)) {
 
     cached$data <- sobj
     save_to_cache(cached, "Transformed", cache_dir)
+    cached$data <- NULL
+    rm(cached)
+    gc()
 }
 
 envs_cache <- envs
 envs_cache$ncores <- NULL
+envs_cache$doublet_detector <- NULL
 envs_cache$DoubletFinder <- NULL
+envs_cache$scDblFinder <- NULL
 cached <- get_cached(envs_cache, "Integrated", cache_dir)
 
 if (!is.null(cached$data)) {
@@ -556,125 +571,27 @@ if (!is.null(cached$data)) {
 
     cached$data <- sobj
     save_to_cache(cached, "Integrated", cache_dir)
+    cached$data <- NULL
+    rm(cached)
+    gc()
 }
 
 
 # This is the last step, doesn't need to be cached
-if (!is.null(envs$DoubletFinder) && is.list(envs$DoubletFinder) && envs$DoubletFinder$PCs > 0) {
-    library(DoubletFinder)
-
-    log_info("Running DoubletFinder ...")
-    log_info("- Preparing Seurat object ...")
-
-    if (is.null(envs$DoubletFinder$ncores)) {
-        envs$DoubletFinder$ncores <- envs$ncores
+if (!is.null(envs$doublet_detector) && envs$doublet_detector != "none") {
+    if (tolower(envs$doublet_detector) == "doubletfinder") {
+        {% set dbtfinder_source = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratPreparing-doubletfinder.R" %}
+        # {{dbtfinder_source | getmtime}}
+        source("{{dbtfinder_source}}")
+    } else if (tolower(envs$doublet_detector) == "scdblfinder") {
+        {% set scdblfinder_source = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratPreparing-scdblfinder.R" %}
+        # {{scdblfinder_source | getmtime}}
+        source("{{scdblfinder_source}}")
+    } else {
+        stop("Unknown doublet detector: ", envs$doublet_detector)
     }
-
-    # More controls from envs?
-    sobj <- FindNeighbors(sobj, dims = 1:envs$DoubletFinder$PCs)
-    sobj <- FindClusters(sobj)
-
-    log_info("- pK Indentification ...")
-    sweep.res.list <- paramSweep(
-        sobj,
-        PCs = 1:envs$DoubletFinder$PCs,
-        sct = envs$use_sct,
-        num.cores = envs$DoubletFinder$ncores
-    )
-    sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
-    bcmvn <- find.pK(sweep.stats)
-
-    bcmvn$Selected <- bcmvn$pK == bcmvn$pK[which.max(bcmvn$BCmetric)[1]]
-    plot <- ggplot(bcmvn, aes(x = pK, y = BCmetric, color = Selected)) +
-        geom_point() +
-        # rotate x axis labels
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
-    ggsave(plot, filename = file.path(plotsdir, "pK_BCmetric.png"))
-
-    pK <- bcmvn$pK[which.max(bcmvn$BCmetric)[1]]
-    pK <- as.numeric(as.character(pK))
-    pN <- envs$DoubletFinder$pN
-    log_info("- Homotypic Doublet Proportion Estimate ...")
-    homotypic.prop <- modelHomotypic(Idents(sobj))
-    nExp_poi <- round(nrow(sobj@meta.data) * envs$DoubletFinder$doublets)
-    nExp_poi.adj <- round(nExp_poi * (1 - homotypic.prop))
-
-    log_info("- Running DoubletFinder ...")
-    sobj <- doubletFinder(
-        sobj,
-        PCs = 1:envs$DoubletFinder$PCs,
-        pN = pN,
-        pK = pK,
-        nExp = nExp_poi.adj,
-        reuse.pANN = FALSE,
-        sct = envs$use_sct
-    )
-    pANN_col <- paste0("pANN_", pN, "_", pK)
-    pANN_col <- colnames(sobj@meta.data)[grepl(pANN_col, colnames(sobj@meta.data))]
-    DF_col <- paste0("DF.classifications_", pN, "_", pK)
-    DF_col <- colnames(sobj@meta.data)[grepl(DF_col, colnames(sobj@meta.data))]
-    doublets <- as.data.frame(
-        cbind(
-            colnames(sobj),
-            sobj@meta.data[, pANN_col],
-            sobj@meta.data[, DF_col]
-        )
-    )
-    colnames(doublets) <-  c("Barcode","DoubletFinder_score","DoubletFinder_DropletType")
-    write.table(
-        doublets,
-        file.path(joboutdir, "DoubletFinder_doublets_singlets.txt"),
-        row.names = FALSE,
-        quote = FALSE,
-        sep = "\t"
-    )
-
-    summary <- as.data.frame(table(doublets$DoubletFinder_DropletType))
-    colnames(summary) <- c("Classification", "Droplet_N")
-    write.table(
-        summary,
-        file.path(joboutdir, "DoubletFinder_summary.txt"),
-        row.names = FALSE,
-        quote = FALSE,
-        sep = "\t"
-    )
-
-    # Do a dimplot
-    log_info("- Plotting dimension reduction ...")
-    dimp <- DimPlot(
-        sobj, group.by = DF_col, order = "Doublet",
-        cols = c("#333333", "#FF3333"), pt.size = 0.8, alpha = 0.5)
-    ggsave(dimp, filename = file.path(plotsdir, "DoubletFinder_dimplot.png"))
-
-    log_info("- Filtering doublets ...")
-    sobj <- subset(sobj, cells = doublets$Barcode[doublets$DoubletFinder_DropletType == "Singlet"])
-
-    add_report(
-        list(
-            kind = "descr",
-            content = "The table contains the number of cells classified as singlets and doublets."
-        ),
-        list(
-            kind = "table",
-            data = list(path = file.path(joboutdir, "DoubletFinder_summary.txt"))
-        ),
-        h1 = "DoubletFinder Results",
-        h2 = "The DoubletFinder Summary"
-    )
-    add_report(
-        list(
-            name = "pK vs BCmetric",
-            src = file.path(plotsdir, "pK_BCmetric.png")
-        ),
-        list(
-            name = "Dimension Reduction Plot",
-            src = file.path(plotsdir, "DoubletFinder_dimplot.png")
-        ),
-        ui = "table_of_images",
-        h1 = "DoubletFinder Results",
-        h2 = "Plots"
-    )
 }
+
 
 log_info("Saving QC'ed seurat object ...")
 saveRDS(sobj, rdsfile)

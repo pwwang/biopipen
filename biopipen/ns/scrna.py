@@ -204,9 +204,15 @@ class SeuratPreparing(Proc):
                 - scvi: Same as `scVIIntegration`.
             - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
 
+        doublet_detector (choice): The doublet detector to use.
+            - none: Do not use any doublet detector.
+            - DoubletFinder: Use `DoubletFinder` to detect doublets.
+            - doubletfinder: Same as `DoubletFinder`.
+            - scDblFinder: Use `scDblFinder` to detect doublets.
+            - scdblfinder: Same as `scDblFinder`.
+
         DoubletFinder (ns): Arguments to run [`DoubletFinder`](https://github.com/chris-mcginnis-ucsf/DoubletFinder).
             See also <https://demultiplexing-doublet-detecting-docs.readthedocs.io/en/latest/DoubletFinder.html>.
-            To disable `DoubletFinder`, set `envs.DoubletFinder` to `None` or `False`; or set `pcs` to `0`.
             - PCs (type=int): Number of PCs to use for 'doubletFinder' function.
             - doublets (type=float): Number of expected doublets as a proportion of the pool size.
             - pN (type=float): Number of doublets to simulate as a proportion of the pool size.
@@ -214,6 +220,12 @@ class SeuratPreparing(Proc):
                 Set to `None` to use `envs.ncores`.
                 Since parallelization of the function usually exhausts memory, if big `envs.ncores` does not work
                 for `DoubletFinder`, set this to a smaller number.
+
+        scDblFinder (ns): Arguments to run [`scDblFinder`](https://rdrr.io/bioc/scDblFinder/man/scDblFinder.html).
+            - dbr (type=float): The expected doublet rate.
+            - ncores (type=int): Number of cores to use for `scDblFinder`.
+                Set to `None` to use `envs.ncores`.
+            - <more>: See <https://rdrr.io/bioc/scDblFinder/man/scDblFinder.html>.
 
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
@@ -251,7 +263,9 @@ class SeuratPreparing(Proc):
             "min_cells": 5,
         },
         "IntegrateLayers": {"method": "harmony"},
-        "DoubletFinder": {"PCs": 0, "pN": 0.25, "doublets": 0.075, "ncores": 1},
+        "doublet_detector": "none",
+        "DoubletFinder": {"PCs": 10, "pN": 0.25, "doublets": 0.075, "ncores": 1},
+        "scDblFinder": {"dbr": 0.075, "ncores": 1},
         "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
