@@ -11,8 +11,8 @@ cellranger = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
 ref = {{envs.ref | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
-include_introns = {{envs.include_introns | repr}}
-create_bam = {{envs.create_bam | repr}}
+include_introns = {{envs.include_introns | repr}}  # pyright: ignore
+create_bam = {{envs.create_bam | repr}}  # pyright: ignore
 
 include_introns = str(include_introns).lower()
 create_bam = str(create_bam).lower()
@@ -54,7 +54,7 @@ version = version.replace("cellranger", "").replace("-", "").strip()
 version = list(map(int, version.split(".")))
 if version[0] >= 8:
     command += ["--create-bam", create_bam]
-elif not create_bam:
+elif create_bam != "true":
     command += ["--no-bam"]
 
 run_command(command, fg=True, cwd=str(Path(outdir).parent))
