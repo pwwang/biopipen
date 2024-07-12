@@ -221,6 +221,27 @@ def r(
     return repr(obj)
 
 
+@filtermanager.register
+def source_r(path: str | Path) -> str:
+    """Source an R script.
+
+    In addition to generating `source(path)`, we also include the mtime for the script
+    to trigger the job not cached when the script is updated.
+
+    Args:
+        path: The path to the R script
+
+    Returns:
+        The R code to source the script
+    """
+    path = Path(path)
+    mtime = path.stat().st_mtime
+    return (
+        f"# Last modified: {mtime}\n"
+        f"source('{path}')"
+    )
+
+
 @register_component("fgsea")
 def _render_fgsea(
     cont: Mapping[str, Any],
