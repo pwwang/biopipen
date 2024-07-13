@@ -1,5 +1,5 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/single_cell.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "single_cell.R" | source_r }}
 # Basic analysis and clonality
 # TODO: How about TRA chain?
 library(rlang)
@@ -68,9 +68,7 @@ n_samples = length(immdata$data)
 volumes = {{envs.volumes | r}}
 lens = {{envs.lens | r}}
 counts = {{envs.counts | r}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-basic.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-basic.R" | source_r }}
 
 ##################
 # Clonality      #
@@ -78,33 +76,25 @@ source("{{sourcefile}}")
 top_clones = {{envs.top_clones | r}}
 rare_clones = {{envs.rare_clones | r}}
 hom_clones = {{envs.hom_clones | r}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-clonality.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-clonality.R" | source_r }}
 
 ##################
 # Overlap        #
 ##################
 overlaps = {{ envs.overlaps | r: todot="-" }}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-overlap.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-overlap.R" | source_r }}
 
 ##################
 # Gene usage     #
 ##################
 gene_usages = {{ envs.gene_usages | r: todot="-" }}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-geneusage.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-geneusage.R" | source_r }}
 
 ##################
 # Spectratyping  #
 ##################
 spects = {{ envs.spects | r }}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-spectratyping.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-spectratyping.R" | source_r }}
 
 ########################
 # Diversity estimation #
@@ -128,36 +118,25 @@ div_ncol = {{envs.divs.ncol | default: 2 | r}}
 div_ymin = {{envs.divs.ymin | default: None | r}}
 div_ymax = {{envs.divs.ymax | default: None | r}}
 
-{% set patchfile = biopipen_dir | joinpaths: "scripts", "tcr", "immunarch-patched.R" %}
-# {{ patchfile | getmtime }}
-source("{{patchfile}}")
-
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-diversity.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "immunarch-patched.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-diversity.R" | source_r }}
 
 ######################
 # Clonotype tracking #
 ######################
 trackings = {{ envs.trackings | r }}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-tracking.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-tracking.R" | source_r }}
 
 ######################
 # K-mer analysis     #
 ######################
 kmers = {{ envs.kmers | r: todot="-" }}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-kmer.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-kmer.R" | source_r }}
 
 ######################
 # VJ junction        #
 ######################
 vj_juncs <- {{envs.vj_junc | r}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-vjjunc.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-vjjunc.R" | source_r }}
 
 save_report(joboutdir)

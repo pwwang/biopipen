@@ -2,8 +2,8 @@ library(dplyr)
 library(HGNChelper)
 library(Seurat)
 
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/scripts/scrna/sctype.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "sctype.R" | source_r }}
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}

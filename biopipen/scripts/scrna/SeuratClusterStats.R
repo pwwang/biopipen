@@ -1,6 +1,7 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/mutate_helpers.R")
-source("{{biopipen_dir}}/utils/plot.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "mutate_helpers.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
+
 library(Seurat)
 library(rlang)
 library(dplyr)
@@ -29,44 +30,31 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
 ############## clustree ##############
 clustrees_defaults <- {{envs.clustrees_defaults | r}}
 clustrees <- {{envs.clustrees | r}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-clustree.R" %}
-# force update when sourcefile changes
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-clustree.R" | source_r }}
 
 ############## stats ##############
 stats_defaults = {{envs.stats_defaults | r: todot="-"}}
 stats = {{envs.stats | r: todot="-", skip=1}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-stats.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-stats.R" | source_r }}
 
 ############## hists ##############
 hists_defaults <- {{envs.hists_defaults | r: todot="-"}}
 hists <- {{envs.hists | r: todot="-", skip=1}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-hists.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-hists.R" | source_r }}
 
 ############## ngenes ##############
 ngenes_defaults <- {{envs.ngenes_defaults | r: todot="-"}}
 ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-ngenes.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-ngenes.R" | source_r }}
 
 ############## features ##############
 features_defaults = {{envs.features_defaults | r: todot="-"}}
 features = {{envs.features | r: todot="-", skip=1}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-features.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-features.R" | source_r }}
 
 ############## dimplots ##############
 dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
 dimplots = {{envs.dimplots | r: todot="-", skip=1}}
-{% set sourcefile = biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-dimplots.R" %}
-# {{ sourcefile | getmtime }}
-source("{{sourcefile}}")
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-dimplots.R" | source_r }}
 
 save_report(joboutdir)

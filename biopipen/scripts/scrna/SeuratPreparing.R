@@ -1,5 +1,5 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/caching.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "caching.R" | source_r }}
 
 library(Seurat)
 library(future)
@@ -26,9 +26,7 @@ options(future.rng.onMisuse="ignore")
 options(Seurat.object.assay.version = "v5")
 plan(strategy = "multicore", workers = envs$ncores)
 
-.stringify_list <- function(x) {
-    paste(sapply(names(x), function(n) paste(n, x[[n]], sep = " = ") ), collapse = "; ")
-}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratPreparing-common.R" | source_r }}
 
 add_report(
     list(
@@ -36,7 +34,7 @@ add_report(
         name = "Filters applied",
         content = paste0(
             "<p>Cell filters: ", html_escape(envs$cell_qc), "</p>",
-            "<p>Gene filters: ", html_escape(.stringify_list(envs$gene_qc)), "</p>"
+            "<p>Gene filters: ", html_escape(stringify_list(envs$gene_qc)), "</p>"
         )
     ),
     h1 = "Filters and QC"

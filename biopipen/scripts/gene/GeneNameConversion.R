@@ -1,5 +1,5 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/gene.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "gene.R" | source_r }}
 
 infile <- {{in.infile | quote}}
 outfile <- {{out.outfile | quote}}

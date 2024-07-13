@@ -1,8 +1,8 @@
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+
 library(Seurat)
 library(dplyr)
 library(hitype)
-
-source("{{biopipen_dir}}/utils/misc.R")
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}

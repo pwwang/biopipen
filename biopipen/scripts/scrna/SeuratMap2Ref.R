@@ -1,4 +1,4 @@
-source("{{biopipen_dir}}/utils/misc.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 
 library(parallel)
 library(Seurat)
@@ -130,6 +130,7 @@ log_info("- Normalizing data")
 if (refnorm == "SCTransform") {
     if (defassay == "SCT" && skip_if_normalized) {
         log_warn("  Skipping normalization as the object is already SCTransform'ed")
+        query = sobj
     } else {
         log_info("  Using SCTransform normalization")
         sctransform_args$residual.features = rownames(x = reference)
@@ -156,6 +157,7 @@ if (refnorm == "SCTransform") {
 } else {
     if (defassay == "RNA" && skip_if_normalized) {
         log_warn("  Skipping normalization as the object is already LogNormalize'd")
+        query = sobj
     } else {
         log_info("  Using NormalizeData normalization")
         if (is.null(split_by)) {
@@ -295,6 +297,7 @@ if (is.null(split_by)) {
 
     # Combine the results
     log_info("- Merging the results")
+    gc()
     # Memory efficient way to merge the results
     # query = Reduce(function(x, y) merge(x, y, merge.dr = "ref.umap"), query)
     query = merge(query[[1]], query[2:length(query)], merge.dr = "ref.umap")

@@ -235,7 +235,7 @@ def source_r(path: str | Path) -> str:
         The R code to source the script
     """
     path = Path(path)
-    mtime = path.stat().st_mtime
+    mtime = int(path.stat().st_mtime)
     return (
         f"# Last modified: {mtime}\n"
         f"source('{path}')"

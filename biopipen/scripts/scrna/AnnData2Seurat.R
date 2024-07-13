@@ -1,4 +1,4 @@
-source("{{biopipen_dir}}/utils/misc.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 
 library(rlang)
 library(Seurat)
