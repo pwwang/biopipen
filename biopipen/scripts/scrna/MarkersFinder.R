@@ -70,8 +70,8 @@ if (defassay == "SCT" && !"PrepSCTFindMarkers" %in% names(srtobj@commands)) {
 
     srtobj <- PrepSCTFindMarkers(srtobj)
     # compose a new SeuratCommand to record it to srtobj@commands
-    commands <- names(srtobj@commands)
-    scommand <- srtobj@commands[[commands[length(commands)]]]
+    commands <- names(pbmc_small@commands)
+    scommand <- pbmc_small@commands[[commands[length(commands)]]]
     scommand@name <- "PrepSCTFindMarkers"
     scommand@time.stamp <- Sys.time()
     scommand@assay.used <- "SCT"
