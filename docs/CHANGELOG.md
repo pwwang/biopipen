@@ -1,5 +1,37 @@
 # Change Log
 
+## 0.30.0
+
+### scrna/tcr
+
+- BREAKING(scrna): move clustree plots from `SeuratClustering/SeuratSubClustering` to `SeuratClusterStats`
+- feat(scrna.CellTypeAnnotation): allow to merge/not to merge (envs.merge) the clusters with the same labels predicted
+- feat(scrna.SeuratPreparing): add scDblFinder to detect doublets
+- feat(scrna.SeuratMap2Ref): add `envs.skip_if_normalized` option to skip normalization if query is already normalized using the same method as the reference
+- refactor(tcr.Immunarch): source the files for Immunarch scripts for better debugging
+- refactor(scnra.SeuratClustering): refactor the script for better debugging
+- refactor(scnra.SeuratPreparing): refactor the script for better debugging
+- fix(scrna): fix resolution expansion for `SeuratClustering` and `SeuratSubClustering`
+- fix(cellranger.CellRangerCount): fix falsy `envs.create_bam` not working for cellranger v7
+- fix(scrna): Fix generating PrepSCTFindMarkers  command when no previous commands present
+- tests(scrna.ScFGSEA): fix unavailable urls to GMT files
+- chore(scrna.SeuratMap2Ref): optimize memory usage
+- chore(scrna.MetaMarkers): remove `plugin_opts.poplog_max`
+- chore(tcr.CloneResidency): improve logging when handling subjects
+
+### other
+
+- fix(stats.Mediation): fix when NAs in the data
+- feat(plot): add Scatter for scatter plots
+- tests: use single conda env for tests
+- ci: fix CI due to conda env changes
+- docs(web): update docs of `envs.tool` for Download/DownloadList
+- feat(web): add GCloudStorageDownloadFile and GCloudStorageDownloadBucket to download files from GCP
+- chore(regulatory.MotifAffinityTest): use template filter source_r to source R files
+- tests(regulatory.MotifAffinityTest): rename regulation to regulatory
+- chore: use template filter source_r to source R files
+- fix(stats): handle case when p-value is 0 for MetaPvalue and MetaPvalue1
+
 ## 0.29.2
 
 - chore(stats.Mediation): make better logging strategy for various number of cases
