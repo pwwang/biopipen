@@ -1,6 +1,6 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/gsea.R")
-source("{{biopipen_dir}}/utils/plot.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 
 library(gtools)
 library(parallel)

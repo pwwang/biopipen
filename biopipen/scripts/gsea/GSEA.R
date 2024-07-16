@@ -1,7 +1,7 @@
 # devtools::install_github("GSEA-MSigDB/GSEA_R")
 
-source("{{biopipen_dir}}/utils/io.R")
-source("{{biopipen_dir}}/utils/gsea.R")
+{{ biopipen_dir | joinpaths: "utils", "io.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
 
 library(dplyr)
 library(tibble)

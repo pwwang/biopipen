@@ -5,10 +5,6 @@ log_info("")
 log_info("# Basic analysis")
 log_info("-----------------------------------")
 
-volumes = {{envs.volumes | r}}
-lens = {{envs.lens | r}}
-counts = {{envs.counts | r}}
-
 # Fill up cases
 fill_up_cases_basic = function(config) {
     log_debug("Filling up cases ...")

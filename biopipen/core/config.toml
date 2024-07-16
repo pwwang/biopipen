@@ -13,6 +13,8 @@ liftover = "liftOver"
 # gatk, installed via conda
 gatk = "gatk"
 gatk4 = "gatk"
+# google cloud sdk
+gcloud = "gcloud"
 # vdjtools, installed via conda
 vdjtools = "vdjtools"
 # cnvkit.py

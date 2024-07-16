@@ -1,31 +1,9 @@
-# Diversity estimation
-source("{{biopipen_dir}}/scripts/tcr/immunarch-patched.R")
+
 # https://immunarch.com/articles/web_only/v6_diversity.html
 
 log_info("")
 log_info("# Diversity estimation")
 log_info("-----------------------------------")
-
-# Other variables are loaded in the parent template
-# immdata is already loaded, meta is mutated
-div_method = {{envs.divs.method | default: "gini" | r}}
-div_by = {{envs.divs.by | default: None | r}}
-div_plot_type = {{envs.divs.plot_type | default: "bar" | r}}
-div_order = {{envs.divs.order | default: [] | r}}
-div_args = {{envs.divs.args | default: {} | r: todot="-"}}
-div_test = {{envs.divs.test | default: None | r}}
-div_cases = {{envs.divs.cases | default: {} | r: todot="-"}}
-div_devpars = {{envs.divs.devpars | default: None | r}}
-div_separate_by = {{envs.divs.separate_by | default: None | r}}
-div_split_by = {{envs.divs.split_by | default: None | r}}
-div_split_order = {{envs.divs.split_order | default: None | r}}
-div_align_x = {{envs.divs.align_x | default: False | r}}
-div_align_y = {{envs.divs.align_y | default: False | r}}
-div_subset = {{envs.divs.subset | default: None | r}}
-div_log = {{envs.divs.log | default: False | r}}
-div_ncol = {{envs.divs.ncol | default: 2 | r}}
-div_ymin = {{envs.divs.ymin | default: None | r}}
-div_ymax = {{envs.divs.ymax | default: None | r}}
 
 div_test = div_test %||% list(method = "none", padjust = "none")
 div_devpars = div_devpars %||% list(res = 100, width = 800, height = 800)
@@ -77,7 +55,7 @@ update_case = function(case, name) {
     if (!is.null(case$args) && length(case$args) > 0) {
         names(case$args) = paste0(".", names(case$args))
     }
-    if (!is.null(case$test) && case$test != "none" && (is.null(case$by) || length(case$by) == 0)) {
+    if (!is.null(case$test) && case$test$method != "none" && (is.null(case$by) || length(case$by) == 0)) {
         stop("For diversity estimation, `test` is only supported when `by` is specified")
     }
     # Just ignore them for rarefraction

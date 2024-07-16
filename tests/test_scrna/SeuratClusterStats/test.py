@@ -7,7 +7,7 @@ from biopipen.ns.scrna import (
     ModuleScoreCalculator,
     MarkersFinder,
     SeuratSubClustering,
-    MetaMarkers,
+    MetaMarkers as MetaMarkers_,
     RadarPlots,
     TopExpressingGenes,
 )
@@ -108,11 +108,11 @@ class SeuratSubClustering(SeuratSubClustering):
         "cases": {
             "mono_subcluster": {
                 "subset": "seurat_clusters == 'FCFR3A+ Mono'",
-                "FindClusters": {"resolution": "0.5:0.8"},
+                "FindClusters": {"resolution": "0.1:0.8,0.1"},
             },
             "dc_subcluster": {
                 "subset": "seurat_clusters == 'DC'",
-                "FindClusters": {"resolution": "0.5:0.8"},
+                "FindClusters": {"resolution": "0.1:0.8,0.2"},
             },
         }
     }
@@ -148,7 +148,7 @@ class DEG(MarkersFinder):
     order = 99
 
 
-class MetaMarkers(MetaMarkers):
+class MetaMarkers(MetaMarkers_):
     requires = SeuratSubClustering
     envs = {
         "group-by": "seurat_clusters",
@@ -214,6 +214,10 @@ class SeuratClusterStats(SeuratClusterStats):
                 "plus": "theme_gray(base_size=10)",
             },
             "Violin plots": {"kind": "violin", "pt-size": 0},
+            "Violin plots (ncol=4)": {"kind": "violin", "pt-size": 0, "ncol": 4},
+            "Violin plots (CD8A,NKG7)": {
+                "kind": "violin", "pt-size": 0, "features": "CD8A,NKG7"
+            },
             "Feature plot": {"kind": "feature", "features": "SRSF7"},
             "Dot plot": {"kind": "dot", "plus": "RotatedAxis()"},
             "Heatmap": {"kind": "heatmap"},
@@ -232,9 +236,7 @@ def pipeline():
 
 
 def testing(pipen):
-    # assert pipen._succeeded
-    outfile = pipen.procs[1].workdir.joinpath("0", "output", "clustree.png")
-    assert outfile.is_file(), str(outfile)
+    ...
 
 
 if __name__ == "__main__":

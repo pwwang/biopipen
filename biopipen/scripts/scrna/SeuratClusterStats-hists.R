@@ -1,7 +1,8 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-hists_defaults <- {{envs.hists_defaults | r: todot="-"}}
-hists <- {{envs.hists | r: todot="-", skip=1}}
+# hists_defaults <- {{envs.hists_defaults | r: todot="-"}}
+# hists <- {{envs.hists | r: todot="-", skip=1}}
+log_info("hists:")
 
 do_one_hists <- function(m, case, odir, h1, each = NULL) {
     ofile <- file.path(odir, paste0(slugify(h1), ifelse(is.null(each), "", paste0("-", slugify(each))), ".png"))
@@ -57,7 +58,7 @@ do_one_hists <- function(m, case, odir, h1, each = NULL) {
 }
 
 if (is.null(hists) || length(hists) == 0) {
-    log_warn("No hists cases specified, skipping ...")
+    log_warn("- no cases specified, skipping ...")
 } else {
 
     for (name in names(hists)) {
@@ -112,12 +113,12 @@ if (is.null(hists) || length(hists) == 0) {
                 h1 = h1
             )
             for (each in eachs) {
-                log_info("Doing hists for: {h1} - {each} ...")
+                log_info("- Case: {h1} - {each} ...")
                 m <- meta %>% filter(!!sym(case$each) == each)
                 do_one_hists(m, case, odir, h1, each)
             }
         } else {
-            log_info("Doing hists for: {h1} ...")
+            log_info("- Case: {h1} ...")
             add_report(
                 list(
                     kind = "descr",

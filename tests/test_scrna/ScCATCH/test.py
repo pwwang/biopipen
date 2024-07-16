@@ -47,6 +47,7 @@ class CellTypeAnnotation2(CellTypeAnnotation_):
     requires = PrepareQuery
     envs = {
         "tool": "sccatch",
+        "merge": True,
         "sccatch_args": {
             "marker": str(Path(__file__).parent.joinpath("data", "tcell.sccatch.RDS")),
         },

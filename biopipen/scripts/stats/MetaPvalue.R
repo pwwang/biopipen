@@ -1,4 +1,4 @@
-source("{{biopipen_dir}}/utils/misc.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 
 library(metap)
 library(rlang)
@@ -106,6 +106,9 @@ if (length(infiles) == 1 && padj == "none") {
         } else if (length(ps) == 1 && keep_single) {
             metaps <- c(metaps, ps)
             ns <- c(ns, 1)
+        } else if (any(ps == 0)) {
+            metaps <- c(metaps, 0)
+            ns <- c(ns, length(ps))
         } else {
             metaps <- c(metaps, do.call(method, list(ps))$p)
             ns <- c(ns, length(ps))

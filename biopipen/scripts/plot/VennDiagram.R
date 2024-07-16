@@ -1,7 +1,7 @@
-library(dplyr)
+{{ biopipen_dir | joinpaths: "utils", "io.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 
-source("{{biopipen_dir}}/utils/io.R")
-source("{{biopipen_dir}}/utils/plot.R")
+library(dplyr)
 
 infile = {{in.infile | quote}}
 outfile = {{out.outfile | quote}}

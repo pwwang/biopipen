@@ -36,8 +36,8 @@ class ScFGSEASingle(ScFGSEA):
         # ),
         "subset": "seurat_clusters == '0'",
         "gmtfile": (
-            "https://download.baderlab.org/EM_Genesets/January_01_2024/"
-            "Human/symbol/Pathways/Human_Hallmark_MSigdb_January_01_2024_symbol.gmt"
+            "https://raw.githubusercontent.com/pwwang/immunopipe-example/"
+            "master/data/KEGG_metabolism.short.gmt"
         ),
     }
     order = 9
@@ -56,8 +56,8 @@ class ScFGSEAEach(ScFGSEA):
         # ),
         "each": "seurat_clusters",
         "gmtfile": (
-            "https://download.baderlab.org/EM_Genesets/January_01_2024/"
-            "Human/symbol/Pathways/Human_Hallmark_MSigdb_January_01_2024_symbol.gmt"
+            "https://raw.githubusercontent.com/pwwang/immunopipe-example/"
+            "master/data/KEGG_metabolism.short.gmt"
         ),
     }
 

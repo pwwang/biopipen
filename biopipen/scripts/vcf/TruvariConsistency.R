@@ -1,4 +1,4 @@
-source("{{biopipen_dir}}/utils/plot.R")
+{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 # to compile the expressions
 library(ComplexHeatmap)
 

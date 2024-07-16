@@ -1,5 +1,5 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/caching.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "caching.R" | source_r }}
 
 library(Seurat)
 library(future)
@@ -8,7 +8,6 @@ library(tidyr)
 library(dplyr)
 library(tidyseurat)
 library(digest)
-library(clustree)
 
 set.seed(8525)
 
@@ -39,13 +38,13 @@ plan(strategy = "multicore", workers = envs$ncores)
             parts <- trimws(unlist(strsplit(res, ",")))
             for (part in parts) {
                 if (grepl(":", part)) {
-                    parts <- trimws(unlist(strsplit(part, ":")))
-                    if (length(parts) == 2) { parts <- c(parts, 0.1) }
-                    if (length(parts) != 3) {
+                    ps <- trimws(unlist(strsplit(part, ":")))
+                    if (length(ps) == 2) { ps <- c(ps, 0.1) }
+                    if (length(ps) != 3) {
                         stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
                     }
-                    parts <- as.numeric(parts)
-                    expanded_res <- c(expanded_res, seq(parts[1], parts[2], by = parts[3]))
+                    ps <- as.numeric(ps)
+                    expanded_res <- c(expanded_res, seq(ps[1], ps[2], by = ps[3]))
                 } else {
                     expanded_res <- c(expanded_res, as.numeric(part))
                 }
@@ -53,7 +52,7 @@ plan(strategy = "multicore", workers = envs$ncores)
         }
     }
     # keep the last resolution at last
-    rev(unique(rev(expanded_res)))
+    rev(unique(rev(round(expanded_res, 2))))
 }
 
 # recode clusters from 0, 1, 2, ... to s1, s2, s3, ...
@@ -98,8 +97,7 @@ for (key in names(envs$cases)) {
             subset = envs$subset,
             RunUMAP = envs$RunUMAP,
             FindNeighbors = envs$FindNeighbors,
-            FindClusters = envs$FindClusters,
-            clustree_devpars = envs$clustree_devpars
+            FindClusters = envs$FindClusters
         ),
         case
     )
@@ -169,49 +167,36 @@ for (key in names(envs$cases)) {
 
     case$FindClusters$random.seed <- case$FindClusters$random.seed %||% 8525
     resolution <- case$FindClusters$resolution <- .expand_resolution(case$FindClusters$resolution %||% 0.8)
-    cached <- get_cached(case$FindClusters, "FindClusters", cache_dir)
+    cached <- get_cached(case$FindClusters, "SubClustering", cache_dir)
     if (is.null(cached$data)) {
         log_info("- Running FindClusters at resolution: {paste(resolution, collapse = ',')} ...")
         case$FindClusters$object <- sobj
-        # avoid overwriting the previous clustering results (as they have the same graph name
+        case$FindClusters$cluster.name <- paste0(key, ".", resolution)
+        # use sobj1 to avoid overwriting the previous clustering results (as they have the same graph name
         sobj1 <- do_call(FindClusters, case$FindClusters)
-        graph_name <- case$FindClusters$graph.name %||% paste0(DefaultAssay(sobj), "_snn_res.")
-        for (res in resolution) {
-            cluster_name <- paste0(graph_name, res)
-            new_cluster_name <- paste0(key, ".", res)
-            sobj1@meta.data[[new_cluster_name]] <- .recode_clusters(sobj1@meta.data[[cluster_name]])
-        }
         sobj1@meta.data[[key]] <- .recode_clusters(sobj1@meta.data$seurat_clusters)
-        keys <- sapply(resolution, function(res) paste0(key, ".", res))
-        keys <- c(keys, key)
-        cached$data <- sobj1@meta.data[, keys, drop = FALSE]
-        save_to_cache(cached, "FindClusters", cache_dir)
+        for (clname in case$FindClusters$cluster.name) {
+            sobj1@meta.data[[clname]] <- .recode_clusters(sobj1@meta.data[[clname]])
+        }
+        cached$data <- list(
+            clusters = sobj1@meta.data[, c(case$FindClusters$cluster.name, key), drop = FALSE],
+            command = sobj1@commands$FindClusters
+        )
+        save_to_cache(cached, "SubClustering", cache_dir)
         rm(sobj1)
     } else {
         log_info("- Using cached FindClusters at resolution: {paste(resolution, collapse = ',')} ...")
     }
 
-    ident_table <- table(cached$data[[key]])
-    log_info("  Found {length(ident_table)} clusters")
+    ident_table <- table(cached$data$clusters[[key]])
+    log_info("  Found {length(ident_table)} clusters at resolution: {resolution[length(resolution)]}")
     print(ident_table)
     cat("\n")
 
-    if (length(resolution) > 1) {
-        log_info("- Plotting clustree ...")
-        png(
-            file.path(joboutdir, paste0(key, ".clustree.png")),
-            res = case$clustree_devpars$res,
-            width = case$clustree_devpars$width,
-            height = case$clustree_devpars$height
-        )
-        p <- clustree(cached$data, prefix = paste0(key, "."))
-        print(p)
-        dev.off()
-    }
-
     log_info("- Updating meta.data with subclusters...")
-    srtobj <- AddMetaData(srtobj, metadata = cached$data)
+    srtobj <- AddMetaData(srtobj, metadata = cached$data$clusters)
     srtobj[[paste0("sub_umap_", key)]] <- reduc
+    srtobj@commands[[paste0("FindClusters.", key)]] <- cached$data$command
 }
 
 log_info("Saving results ...")

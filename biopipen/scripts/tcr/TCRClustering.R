@@ -3,8 +3,8 @@
 # python = Sys.which({{envs.python | r}})
 # Sys.setenv(RETICULATE_PYTHON = python)
 # library(reticulate)
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/single_cell.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "single_cell.R" | source_r }}
 
 library(immunarch)
 library(dplyr)

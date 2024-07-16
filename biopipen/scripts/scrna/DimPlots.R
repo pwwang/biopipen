@@ -1,7 +1,7 @@
 library(Seurat)
 library(dplyr)
 
-source("{{biopipen_dir}}/utils/misc.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 
 srtfile = {{in.srtobj | r}}
 {% if in.configfile %}

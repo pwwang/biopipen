@@ -1,13 +1,14 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-ngenes_defaults <- {{envs.ngenes_defaults | r: todot="-"}}
-ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
+# ngenes_defaults <- {{envs.ngenes_defaults | r: todot="-"}}
+# ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
+log_info("ngenes:")
 
 odir <- file.path(outdir, "ngenes")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
 do_one_ngenes <- function(name) {
-    log_info("Doing ngenes for: {name}")
+    log_info("- Case: {name}")
 
     case <- list_update(ngenes_defaults, ngenes[[name]])
     case$devpars <- list_update(ngenes_defaults$devpars, case$devpars)

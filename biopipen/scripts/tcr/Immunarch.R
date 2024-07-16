@@ -1,5 +1,5 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/single_cell.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "single_cell.R" | source_r }}
 # Basic analysis and clonality
 # TODO: How about TRA chain?
 library(rlang)
@@ -65,46 +65,78 @@ n_samples = length(immdata$data)
 ##################
 # Basic analysis #
 ##################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-basic.R" %}
+volumes = {{envs.volumes | r}}
+lens = {{envs.lens | r}}
+counts = {{envs.counts | r}}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-basic.R" | source_r }}
 
 ##################
 # Clonality      #
 ##################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-clonality.R" %}
+top_clones = {{envs.top_clones | r}}
+rare_clones = {{envs.rare_clones | r}}
+hom_clones = {{envs.hom_clones | r}}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-clonality.R" | source_r }}
 
 ##################
 # Overlap        #
 ##################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-overlap.R" %}
+overlaps = {{ envs.overlaps | r: todot="-" }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-overlap.R" | source_r }}
 
 ##################
 # Gene usage     #
 ##################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-geneusage.R" %}
+gene_usages = {{ envs.gene_usages | r: todot="-" }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-geneusage.R" | source_r }}
 
 ##################
 # Spectratyping  #
 ##################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-spectratyping.R" %}
+spects = {{ envs.spects | r }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-spectratyping.R" | source_r }}
 
 ########################
 # Diversity estimation #
 ########################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-diversity.R" %}
+div_method = {{envs.divs.method | default: "gini" | r}}
+div_by = {{envs.divs.by | default: None | r}}
+div_plot_type = {{envs.divs.plot_type | default: "bar" | r}}
+div_order = {{envs.divs.order | default: [] | r}}
+div_args = {{envs.divs.args | default: {} | r: todot="-"}}
+div_test = {{envs.divs.test | default: None | r}}
+div_cases = {{envs.divs.cases | default: {} | r: todot="-"}}
+div_devpars = {{envs.divs.devpars | default: None | r}}
+div_separate_by = {{envs.divs.separate_by | default: None | r}}
+div_split_by = {{envs.divs.split_by | default: None | r}}
+div_split_order = {{envs.divs.split_order | default: None | r}}
+div_align_x = {{envs.divs.align_x | default: False | r}}
+div_align_y = {{envs.divs.align_y | default: False | r}}
+div_subset = {{envs.divs.subset | default: None | r}}
+div_log = {{envs.divs.log | default: False | r}}
+div_ncol = {{envs.divs.ncol | default: 2 | r}}
+div_ymin = {{envs.divs.ymin | default: None | r}}
+div_ymax = {{envs.divs.ymax | default: None | r}}
+
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "immunarch-patched.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-diversity.R" | source_r }}
 
 ######################
 # Clonotype tracking #
 ######################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-tracking.R" %}
+trackings = {{ envs.trackings | r }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-tracking.R" | source_r }}
 
 ######################
 # K-mer analysis     #
 ######################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-kmer.R" %}
+kmers = {{ envs.kmers | r: todot="-" }}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-kmer.R" | source_r }}
 
 ######################
 # VJ junction        #
 ######################
-{% include biopipen_dir + "/scripts/tcr/Immunarch-vjjunc.R" %}
+vj_juncs <- {{envs.vj_junc | r}}
+{{ biopipen_dir | joinpaths: "scripts", "tcr", "Immunarch-vjjunc.R" | source_r }}
 
 save_report(joboutdir)

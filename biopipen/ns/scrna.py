@@ -204,9 +204,15 @@ class SeuratPreparing(Proc):
                 - scvi: Same as `scVIIntegration`.
             - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
 
+        doublet_detector (choice): The doublet detector to use.
+            - none: Do not use any doublet detector.
+            - DoubletFinder: Use `DoubletFinder` to detect doublets.
+            - doubletfinder: Same as `DoubletFinder`.
+            - scDblFinder: Use `scDblFinder` to detect doublets.
+            - scdblfinder: Same as `scDblFinder`.
+
         DoubletFinder (ns): Arguments to run [`DoubletFinder`](https://github.com/chris-mcginnis-ucsf/DoubletFinder).
             See also <https://demultiplexing-doublet-detecting-docs.readthedocs.io/en/latest/DoubletFinder.html>.
-            To disable `DoubletFinder`, set `envs.DoubletFinder` to `None` or `False`; or set `pcs` to `0`.
             - PCs (type=int): Number of PCs to use for 'doubletFinder' function.
             - doublets (type=float): Number of expected doublets as a proportion of the pool size.
             - pN (type=float): Number of doublets to simulate as a proportion of the pool size.
@@ -214,6 +220,12 @@ class SeuratPreparing(Proc):
                 Set to `None` to use `envs.ncores`.
                 Since parallelization of the function usually exhausts memory, if big `envs.ncores` does not work
                 for `DoubletFinder`, set this to a smaller number.
+
+        scDblFinder (ns): Arguments to run [`scDblFinder`](https://rdrr.io/bioc/scDblFinder/man/scDblFinder.html).
+            - dbr (type=float): The expected doublet rate.
+            - ncores (type=int): Number of cores to use for `scDblFinder`.
+                Set to `None` to use `envs.ncores`.
+            - <more>: See <https://rdrr.io/bioc/scDblFinder/man/scDblFinder.html>.
 
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
@@ -251,7 +263,9 @@ class SeuratPreparing(Proc):
             "min_cells": 5,
         },
         "IntegrateLayers": {"method": "harmony"},
-        "DoubletFinder": {"PCs": 0, "pN": 0.25, "doublets": 0.075, "ncores": 1},
+        "doublet_detector": "none",
+        "DoubletFinder": {"PCs": 10, "pN": 0.25, "doublets": 0.075, "ncores": 1},
+        "scDblFinder": {"dbr": 0.075, "ncores": 1},
         "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
@@ -307,10 +321,6 @@ class SeuratClustering(Proc):
                 The results will be saved in `seurat_clusters_<resolution>`.
                 The final resolution will be used to define the clusters at `seurat_clusters`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
-        clustree_devpars (ns): The device parameters for the clustree plots.
-            - res (type=int): The resolution of the plots.
-            - height (type=int): The height of the plots.
-            - width (type=int): The width of the plots.
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
             The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
@@ -338,7 +348,6 @@ class SeuratClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "clustree_devpars": {"res": 100, "height": 1000, "width": 800},
         "cache": config.path.tmpdir,
     }
     script = "file://../scripts/scrna/SeuratClustering.R"
@@ -392,10 +401,6 @@ class SeuratSubClustering(Proc):
                 The results will be saved in `<casename>_<resolution>`.
                 The final resolution will be used to define the clusters at `<casename>`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
-        clustree_devpars (ns): The device parameters for the clustree plots.
-            - res (type=int): The resolution of the plots.
-            - height (type=int): The height of the plots.
-            - width (type=int): The width of the plots.
         cache (type=auto): Whether to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
             The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
@@ -419,7 +424,6 @@ class SeuratSubClustering(Proc):
         "RunUMAP": {"dims": 30},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
-        "clustree_devpars": {"res": 100, "height": 1000, "width": 800},
         "cache": config.path.tmpdir,
         "cases": {"subcluster": {}},
     }
@@ -488,6 +492,22 @@ class SeuratClusterStats(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
+        clustrees_defaults (ns): The parameters for the clustree plots.
+            - devpars (ns): The device parameters for the clustree plot.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - prefix: string indicating columns containing clustering information.
+                The trailing dot is not necessary and will be added automatically.
+                When `_auto`, clustrees will be plotted when there is `FindClusters` or
+                `FindClusters.*` in the `obj@commands`.
+                The latter is generated by `SeuratSubClustering`.
+                This will be ignored when `envs.clustrees` is specified.
+            - <more>: Other arguments passed to `clustree::clustree()`.
+                See <https://rdrr.io/cran/clustree/man/clustree.html>
+        clustrees (type=json): The cases for clustree plots.
+            Keys are the names of the plots and values are the dicts inherited from `env.clustrees_defaults` except `prefix`.
+            There is no default case for `clustrees`.
         hists_defaults (ns): The default parameters for histograms.
             This will plot histograms for the number of cells along `x`.
             For example, you can plot the number of cells along cell activity score.
@@ -667,6 +687,11 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "clustrees_defaults": {
+            "devpars": {"res": 100, "height": 1000, "width": 800},
+            "prefix": "_auto",
+        },
+        "clustrees": {},
         "hists_defaults": {
             "x": None,
             "x_order": [],
@@ -1733,6 +1758,8 @@ class CellTypeAnnotation(Proc):
             - assay: When converting a Seurat object to AnnData, the assay to use.
                 If input is h5seurat, this defaults to RNA.
                 If input is Seurat object in RDS, this defaults to the default assay.
+        merge (flag): Whether to merge the clusters with the same cell types.
+            Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
         newcol: The new column name to store the cell types.
             If not specified, the `seurat_clusters` column will be overwritten.
             If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
@@ -1785,6 +1812,7 @@ class CellTypeAnnotation(Proc):
             "over_clustering": "seurat_clusters",
             "assay": None,
         },
+        "merge": False,
         "newcol": None,
         "outtype": "input",
     }
@@ -1831,6 +1859,14 @@ class SeuratMap2Ref(Proc):
                 If the default assay of reference is `SCT`, then `SCTransform` will be used.
         split_by: The column name in metadata to split the query into multiple objects.
             This helps when the original query is too large to process.
+        skip_if_normalized: Skip normalization if the query is already normalized.
+            Since the object is supposed to be generated by `SeuratPreparing`, it is already normalized.
+            However, a different normalization method may be used.
+            If the reference is normalized by the same method as the query, the normalization can be skipped.
+            Otherwise, the normalization cannot be skipped.
+            The normalization method used for the query set is determined by the default assay.
+            If `SCT`, then `SCTransform` is used; otherwise, `NormalizeData` is used.
+            You can set this to `False` to force re-normalization (with or without the arguments previously used).
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform)
             - do-correct-umi (flag): Place corrected UMI matrix in assay counts layer?
             - do-scale (flag): Whether to scale residuals to have unit variance?
@@ -1876,6 +1912,7 @@ class SeuratMap2Ref(Proc):
         "ref": None,
         "refnorm": "auto",
         "split_by": None,
+        "skip_if_normalized": True,
         "SCTransform": {
             "do-correct-umi": False,
             "do-scale": False,
@@ -2174,7 +2211,6 @@ class MetaMarkers(Proc):
     plugin_opts = {
         "report": "file://../reports/scrna/MetaMarkers.svelte",
         "report_paging": 8,
-        "poplog_max": 15,
     }
 
 

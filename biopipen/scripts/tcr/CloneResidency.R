@@ -1,4 +1,4 @@
-source("{{biopipen_dir}}/utils/misc.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 
 library(rlang)
 library(dplyr)
@@ -414,7 +414,7 @@ handle_subject <- function(i, subjects, casename, case) {
         mutate(across(everything(), as.character)) %>%
         paste(collapse = "-")
 
-    log_info("  Handling {subject} ({i}/{nrow(subjects)}) ...")
+    log_info("  Handling {i}/{nrow(subjects)}: {subject} ...")
 
     if (!is.null(case$subset)) {
         counts <- cldata %>% filter(!!parse_expr(case$subset))

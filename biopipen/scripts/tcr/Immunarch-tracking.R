@@ -2,8 +2,6 @@ log_info("")
 log_info("# Clonotype tracking")
 log_info("-----------------------------------")
 
-trackings = {{ envs.trackings | r }}
-
 log_info("Filling up cases ...")
 if (is.null(trackings$subjects)) {
     trackings$subjects = c()

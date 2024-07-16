@@ -5,8 +5,6 @@ log_info("")
 log_info("# Spectratyping analysis")
 log_info("-----------------------------------")
 
-spects = {{ envs.spects | r }}
-
 # Fill up cases
 log_info("Filling up cases ...")
 if (is.null(spects$cases) || length(spects$cases) == 0) {

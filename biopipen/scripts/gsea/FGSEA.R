@@ -1,7 +1,7 @@
 # PreRank the genes for GSEA analysis
 # See: https://gseapy.readthedocs.io/en/latest/_modules/gseapy/algorithm.html#ranking_metric
-source("{{biopipen_dir}}/utils/io.R")
-source("{{biopipen_dir}}/utils/gsea.R")
+{{ biopipen_dir | joinpaths: "utils", "io.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
 
 infile = {{in.infile | quote}}
 metafile = {{in.metafile | quote}}

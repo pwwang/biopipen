@@ -1,5 +1,3 @@
-source("{{biopipen_dir}}/utils/misc.R")
-
 library(rlang)
 library(hdf5r)
 library(dplyr)
@@ -8,6 +6,7 @@ library(Seurat)
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
 newcol <- {{envs.newcol | r}}
+merge_same_labels <- {{envs.merge | r}}
 celltypist_args <- {{envs.celltypist_args | r}}
 
 outdir <- dirname(outfile)
@@ -33,6 +32,7 @@ if (!file.exists(modelfile)) {
 sobj <- NULL
 outtype <- tolower(tools::file_ext(outfile))  # .rds, .h5ad, .h5seurat
 if (!endsWith(sobjfile, ".h5ad")) {
+    log_info("Convert input to H5AD ...")
     library(SeuratDisk)
 
     assay <- celltypist_args$assay
@@ -123,8 +123,7 @@ if (file.exists(celltypist_outfile) &&
     if (isTRUE(celltypist_args$majority_voting)) {
         command <- paste(command, "-v")
     }
-    print("Running celltypist:")
-    print(command)
+    log_info("Running celltypist:")
     log_debug("- {command}")
     rc <- system(command)
     if (rc != 0) {
@@ -135,11 +134,21 @@ if (file.exists(celltypist_outfile) &&
 if (outtype == "h5ad") {
     # log_info("Using H5AD from celltypist as output directly ...")
     # file.rename(paste0(out_prefix, ".h5ad"), outfile)
+    if (merge_same_labels) {
+        log_warn("- Merging clusters with the same labels is not supported for h5ad outfile ...")
+    }
 } else if (outtype == "h5seurat") {
     log_info("Converting H5AD from celltypist to H5Seurat ...")
     # outfile is cleaned by the pipeline anyway
     Convert(
-        celltypist_outfile, assay = assay %||% 'RNA', dest = outfile, overwrite = TRUE)
+        celltypist_outfile,
+        assay = assay %||% 'RNA',
+        dest = outfile,
+        overwrite = TRUE
+    )
+    if (merge_same_labels) {
+        log_warn("- Merging clusters with the same labels is not supported for h5seurat outfile ...")
+    }
 } else if (outtype == "rds") {
     if (is.null(sobj)) {
         log_info("Converting H5AD from celltypist to RDS ...")
@@ -178,7 +187,10 @@ if (outtype == "h5ad") {
         # end
 
         sobj <- LoadH5Seurat(h5seurat_file)
-        saveRDS(sobj, outfile)
+        if (merge_same_labels) {
+            log_info("Merging clusters with the same labels ...")
+            sobj <- merge_clusters_with_same_labels(sobj, newcol)
+        }
     } else {
         log_info("Attaching celltypist results to Seurat object ...")
 
@@ -228,9 +240,13 @@ if (outtype == "h5ad") {
         } else if (!is.null(newcol)) {
             sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]
         }
-        log_info("Saving Seurat object in RDS ...")
-        saveRDS(sobj, outfile)
+        if (merge_same_labels) {
+            log_info("Merging clusters with the same labels ...")
+            sobj <- merge_clusters_with_same_labels(sobj, newcol)
+        }
     }
+    log_info("Saving Seurat object in RDS ...")
+    saveRDS(sobj, outfile)
 } else {
     stop(paste0("Unknown output type: ", outtype))
 }

@@ -1,5 +1,5 @@
-source("{{biopipen_dir}}/utils/misc.R")
-source("{{biopipen_dir}}/utils/mutate_helpers.R")
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "mutate_helpers.R" | source_r }}
 
 library(rlang)
 library(dplyr)
@@ -41,8 +41,8 @@ if (DefaultAssay(srtobj) == "SCT" && !"PrepSCTFindMarkers" %in% names(srtobj@com
 
     srtobj <- PrepSCTFindMarkers(srtobj)
     # compose a new SeuratCommand to record it to srtobj@commands
-    commands <- names(srtobj@commands)
-    scommand <- srtobj@commands[[commands[length(commands)]]]
+    commands <- names(pbmc_small@commands)
+    scommand <- pbmc_small@commands[[commands[length(commands)]]]
     scommand@name <- "PrepSCTFindMarkers"
     scommand@time.stamp <- Sys.time()
     scommand@assay.used <- "SCT"
