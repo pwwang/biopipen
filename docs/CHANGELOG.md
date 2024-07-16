@@ -1294,7 +1294,6 @@
 - ⬆️ Upgrade pipen to v0.3
 - ⚡️ Load 10X TCR and RNA-seq data files more robustly for scrna.SeuratPreparing and tcr.ImmunarchLoading
 
-
 ## 0.1.9
 
 - 🐛 Load `all_config_annotations.csv` if `filtered_contig_annotations.csv` doesn't exist for `tcr.ImmunarchLoad`
@@ -1347,7 +1346,6 @@
 - Add envs.group_subset for scrna.GeneExpressionInvestigation
 - Fix typo for scrna.GeneExpressionInvestigation
 - Add docs
-
 
 ## 0.1.2
 
