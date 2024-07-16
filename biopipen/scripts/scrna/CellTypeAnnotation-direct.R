@@ -1,15 +1,17 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(Seurat)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
 celltypes <- {{envs.cell_types | r}}
 newcol <- {{envs.newcol | r}}
+merge_same_labels <- {{envs.merge | r}}
 
 if (is.null(celltypes) || length(celltypes) == 0) {
     log_warn("No cell types are given!")
 
+    if (merge_same_labels) {
+        log_warn("Ignoring 'envs.merge' because no cell types are given!")
+    }
     # create a symbolic link to the input file
     file.symlink(sobjfile, outfile)
 } else {
@@ -54,6 +56,11 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         sobj <- do_call(RenameIdents, celltypes)
         sobj[[newcol]] <- Idents(sobj)
         Idents(sobj) <- "seurat_clusters"
+    }
+
+    if (merge_same_labels) {
+        log_info("Merging clusters with the same labels ...")
+        sobj <- merge_clusters_with_same_labels(sobj, newcol)
     }
 
     saveRDS(sobj, outfile)

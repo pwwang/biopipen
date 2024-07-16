@@ -1,5 +1,8 @@
 set.seed(8525)
 
+{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-common.R" | source_r }}
+
 {% if envs.tool == "hitype" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-hitype.R" %}
 {% elif envs.tool == "sctype" %}

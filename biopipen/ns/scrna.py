@@ -1758,6 +1758,8 @@ class CellTypeAnnotation(Proc):
             - assay: When converting a Seurat object to AnnData, the assay to use.
                 If input is h5seurat, this defaults to RNA.
                 If input is Seurat object in RDS, this defaults to the default assay.
+        merge (flag): Whether to merge the clusters with the same cell types.
+            Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
         newcol: The new column name to store the cell types.
             If not specified, the `seurat_clusters` column will be overwritten.
             If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
@@ -1810,6 +1812,7 @@ class CellTypeAnnotation(Proc):
             "over_clustering": "seurat_clusters",
             "assay": None,
         },
+        "merge": False,
         "newcol": None,
         "outtype": "input",
     }

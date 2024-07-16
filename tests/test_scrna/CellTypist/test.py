@@ -40,6 +40,7 @@ class CellTypeAnnotationSeurat(CellTypeAnnotation):
     requires = AnnData2Seurat
     envs = {
         "tool": "celltypist",
+        "merge": True,
         "celltypist_args": {"model": MODEL},
     }
 
