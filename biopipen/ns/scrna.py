@@ -541,14 +541,19 @@ class SeuratClusterStats(Proc):
             This is to do some basic statistics on the clusters. For more comprehensive analysis,
             see `RadarPlots` and `CellsDistribution`.
             The parameters from the cases can overwrite the default parameters.
-            - frac (flag): Whether to output the fraction of cells instead of number.
+            - frac (choice): How to calculate the fraction of cells.
+                - group: calculate the fraction in each group.
+                    The total fraction of the cells of idents in each group will be 1.
+                    When `group-by` is not specified, it will be the same as `all`.
+                - ident: calculate the fraction in each ident.
+                    The total fraction of the cells of groups in each ident will be 1.
+                    Only works when `group-by` is specified.
+                - cluster: alias of `ident`.
+                - all: calculate the fraction against all cells.
+                - none: do not calculate the fraction, use the number of cells instead.
             - pie (flag): Also output a pie chart?
             - circos (flag): Also output a circos plot?
             - table (flag): Whether to output a table (in tab-delimited format) and in the report.
-            - frac_ofall (flag): Whether to output the fraction against all cells,
-                instead of the fraction in each group.
-                Does not work for circos plot.
-                Only works when `frac` is `True` and `group-by` is specified.
             - transpose (flag): Whether to transpose the cluster and group, that is,
                 using group as the x-axis and cluster to fill the plot.
                 For circos plot, when transposed, the arrows will be drawn from the idents (by `ident`) to the
@@ -708,12 +713,11 @@ class SeuratClusterStats(Proc):
         },
         "hists": {},
         "stats_defaults": {
-            "frac": False,
+            "frac": "none",
             "pie": False,
             "circos": False,
             "table": False,
             "position": "auto",
-            "frac_ofall": False,
             "transpose": False,
             "ident": "seurat_clusters",
             "group-by": None,
@@ -731,7 +735,7 @@ class SeuratClusterStats(Proc):
             "Number of cells in each cluster by Sample": {
                 "group-by": "Sample",
                 "table": True,
-                "frac": True,
+                "frac": "group",
             },
         },
         "ngenes_defaults": {

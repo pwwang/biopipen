@@ -18,12 +18,6 @@ do_one_stats = function(name) {
     if (isTRUE(case$pie) && !is.null(case$group.by)) {
         stop(paste0(name, ": pie charts are not supported for group-by"))
     }
-    if (!isTRUE(case$frac) && isTRUE(case$frac_ofall)) {
-        stop(paste0(name, ": frac_ofall is only supported when frac is true"))
-    }
-    if (isTRUE(case$frac_ofall) && is.null(case$group.by)) {
-        stop(paste0(name, ": frac_ofall is only supported for group-by"))
-    }
     if (isTRUE(case$transpose) && is.null(case$group.by)) {
         stop(paste0(name, ": transpose is only supported for group-by"))
     }
@@ -46,28 +40,28 @@ do_one_stats = function(name) {
             !!!syms(case$split.by)
         ), function(df) {
             out <- df %>% group_by(!!!syms(select_cols)) %>% summarise(.n = n(), .groups = "drop")
-            if (!is.null(case$group.by) && isTRUE(case$frac)) {
-                if (isTRUE(case$frac_ofall)) {
+            if (!is.null(case$group.by) && case$frac != "none") {
+                if (case$frac == "all") {
                     out <- out %>% mutate(.frac = .n / sum(.n))
-                } else if (isTRUE(case$transpose)) {
-                    out <- out %>% group_by(!!sym(case$ident)) %>% mutate(.frac = .n / sum(.n))
-                } else {
+                } else if (case$frac == "group") {
                     out <- out %>% group_by(!!sym(case$group.by)) %>% mutate(.frac = .n / sum(.n))
+                } else {  # case$frac == "ident" or "cluster"
+                    out <- out %>% group_by(!!sym(case$ident)) %>% mutate(.frac = .n / sum(.n))
                 }
             }
             out
         }))
-    } else if (!is.null(case$group.by) && isTRUE(case$frac)) {
+    } else if (!is.null(case$group.by) && case$frac != "none") {  # no split.by
         plot_df <- df_cells %>%
             select(all_of(select_cols)) %>%
             group_by(!!!syms(select_cols)) %>%
             summarise(.n = n(), .groups = "drop")
-        if (isTRUE(case$frac_ofall)) {
+        if (case$frac == "all") {
             plot_df = plot_df %>% mutate(.frac = .n / sum(.n))
-        } else {
-            plot_df = plot_df %>%
-                group_by(!!sym(ifelse(isTRUE(case$transpose), case$group.by, case$ident))) %>%
-                mutate(.frac = .n / sum(.n))
+        } else if (case$frac == "group") {
+            plot_df = plot_df %>% group_by(!!sym(case$group.by)) %>% mutate(.frac = .n / sum(.n))
+        } else {  # case$frac == "ident" or "cluster"
+            plot_df = plot_df %>% group_by(!!sym(case$ident)) %>% mutate(.frac = .n / sum(.n))
         }
     } else {
         plot_df <- df_cells %>%
@@ -75,7 +69,7 @@ do_one_stats = function(name) {
             group_by(!!!syms(select_cols)) %>%
             summarise(.n = n(), .groups = "drop")
 
-        if (isTRUE(case$frac) || isTRUE(case$frac_ofall)) {
+        if (case$frac != "none") {
             plot_df <- plot_df %>% mutate(.frac = .n / sum(.n))
         }
     }
@@ -88,13 +82,13 @@ do_one_stats = function(name) {
     p = plot_df %>%
         ggplot(aes(
             x=!!sym(ifelse(case$transpose, case$group.by, case$ident)),
-            y=if (isTRUE(case$frac)) .frac else .n,
+            y=if (case$frac != "none") .frac else .n,
             fill=!!sym(ifelse(is.null(case$group.by) || isTRUE(case$transpose), case$ident, case$group.by))
         )) +
         geom_bar(stat="identity", position=bar_position, alpha=.8) +
         theme_prism(axis_text_angle = 90) +
         scale_fill_biopipen() +
-        ylab(ifelse(isTRUE(case$frac), "Fraction of cells", "Number of cells"))
+        ylab(ifelse(case$frac != "none", "Fraction of cells", "Number of cells"))
 
     if (!is.null(case$split.by)) {
         p = p + facet_wrap(case$split.by)
@@ -109,7 +103,7 @@ do_one_stats = function(name) {
             kind = "descr",
             content = paste0(
                 "Plots showing the ",
-                ifelse(isTRUE(case$frac), "number/faction", "number"),
+                ifelse(case$frac != "none", "number/faction", "number"),
                 " of cells per cluster",
                 ifelse(
                     is.null(case$group.by),
@@ -150,7 +144,7 @@ do_one_stats = function(name) {
             guides(fill = guide_legend(title = case$ident)) +
             theme_void() +
             geom_label(
-                if (isTRUE(case$frac))
+                if (case$frac != "none")
                     aes(label=sprintf("%.1f%%", .frac * 100))
                 else
                     aes(label=.n),
