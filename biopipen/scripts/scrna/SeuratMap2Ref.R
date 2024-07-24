@@ -130,18 +130,17 @@ log_info("- Normalizing data")
 if (refnorm == "SCTransform") {
     if (defassay == "SCT" && skip_if_normalized) {
         log_warn("  Skipping normalization as the object is already SCTransform'ed")
-        query = sobj
     } else {
         log_info("  Using SCTransform normalization")
         sctransform_args$residual.features = rownames(x = reference)
         if (is.null(split_by)) {
             sctransform_args$object = sobj
-            query = do_call(SCTransform, sctransform_args)
+            sobj = do_call(SCTransform, sctransform_args)
             sctransform_args$object <- NULL
             rm(sctransform_args)
             gc()
         } else {
-            query = mclapply(
+            sobj = mclapply(
                 X = sobj,
                 FUN = function(x) {
                     sctransform_args$object = x
@@ -149,22 +148,21 @@ if (refnorm == "SCTransform") {
                 },
                 mc.cores = ncores
             )
-            if (any(unlist(lapply(query, class)) == "try-error")) {
-                stop(paste0("\nmclapply (SCTransform) error:", query))
+            if (any(unlist(lapply(sobj, class)) == "try-error")) {
+                stop(paste0("\nmclapply (SCTransform) error:", sobj))
             }
         }
     }
 } else {
     if (defassay == "RNA" && skip_if_normalized) {
         log_warn("  Skipping normalization as the object is already LogNormalize'd")
-        query = sobj
     } else {
         log_info("  Using NormalizeData normalization")
         if (is.null(split_by)) {
             normalizedata_args$object = sobj
-            query = do_call(NormalizeData, normalizedata_args)
+            sobj = do_call(NormalizeData, normalizedata_args)
         } else {
-            query = mclapply(
+            sobj = mclapply(
                 X = sobj,
                 FUN = function(x) {
                     normalizedata_args$object = x
@@ -172,8 +170,8 @@ if (refnorm == "SCTransform") {
                 },
                 mc.cores = ncores
             )
-            if (any(unlist(lapply(query, class)) == "try-error")) {
-                stop(paste0("\nmclapply (NormalizeData) error:", query))
+            if (any(unlist(lapply(sobj, class)) == "try-error")) {
+                stop(paste0("\nmclapply (NormalizeData) error:", sobj))
             }
         }
         normalizedata_args$object <- NULL
@@ -181,14 +179,12 @@ if (refnorm == "SCTransform") {
         gc()
     }
 }
-rm(sobj)
-gc()
 
 # Find anchors between query and reference
 log_info("- Finding anchors")
 findtransferanchors_args$reference = reference
 if (is.null(split_by)) {
-    findtransferanchors_args$query = query
+    findtransferanchors_args$query = sobj
     anchors = do_call(FindTransferAnchors, findtransferanchors_args)
     findtransferanchors_args$reference = NULL
     findtransferanchors_args$query = NULL
@@ -196,7 +192,7 @@ if (is.null(split_by)) {
     gc()
 } else {
     anchors = mclapply(
-        X = query,
+        X = sobj,
         FUN = function(x) {
             findtransferanchors_args$query = x
             do_call(FindTransferAnchors, findtransferanchors_args)
@@ -212,25 +208,25 @@ if (is.null(split_by)) {
 log_info("- Mapping query to reference")
 mapquery_args$reference = reference
 if (is.null(split_by)) {
-    mapquery_args$query = query
+    mapquery_args$query = sobj
     mapquery_args$anchorset = anchors
-    query = do_call(MapQuery, mapquery_args)
+    sobj = do_call(MapQuery, mapquery_args)
     mapquery_args$reference = NULL
     mapquery_args$query = NULL
     mapquery_args$anchorset = NULL
     gc()
 } else {
-    query = mclapply(
-        X = seq_along(query),
+    sobj = mclapply(
+        X = seq_along(sobj),
         FUN = function(i) {
-            mapquery_args$query = query[[i]]
+            mapquery_args$query = sobj[[i]]
             mapquery_args$anchorset = anchors[[i]]
             do_call(MapQuery, mapquery_args)
         },
         mc.cores = ncores
     )
-    if (any(unlist(lapply(query, class)) == "try-error")) {
-        stop(paste0("\nmclapply (MapQuery) error:", query))
+    if (any(unlist(lapply(sobj, class)) == "try-error")) {
+        stop(paste0("\nmclapply (MapQuery) error:", sobj))
     }
 }
 
@@ -254,7 +250,7 @@ if (is.null(split_by)) {
     gc()
 } else {
     mappingscore = mclapply(
-        X = seq_along(query),
+        X = seq_along(sobj),
         FUN = function(i) {
             mappingscore_args$anchors = anchors[[i]]
             tryCatch({
@@ -274,25 +270,25 @@ if (is.null(split_by)) {
 # Calculate mapping score and add to metadata
 log_info("- Adding mapping score to metadata")
 if (is.null(split_by)) {
-    query = AddMetaData(
-        object = query,
+    sobj = AddMetaData(
+        object = sobj,
         metadata = mappingscore,
         col.name = "mapping.score"
     )
 } else {
-    query = mclapply(
-        X = seq_along(query),
+    sobj = mclapply(
+        X = seq_along(sobj),
         FUN = function(i) {
             AddMetaData(
-                object = query[[i]],
+                object = sobj[[i]],
                 metadata = mappingscore[[i]],
                 col.name = "mapping.score"
             )
         },
         mc.cores = ncores
     )
-    if (any(unlist(lapply(query, class)) == "try-error")) {
-        stop(paste0("\nmclapply (AddMetaData) error:", query))
+    if (any(unlist(lapply(sobj, class)) == "try-error")) {
+        stop(paste0("\nmclapply (AddMetaData) error:", sobj))
     }
 
     # Combine the results
@@ -300,19 +296,33 @@ if (is.null(split_by)) {
     gc()
     # Memory efficient way to merge the results
     # query = Reduce(function(x, y) merge(x, y, merge.dr = "ref.umap"), query)
-    query = merge(query[[1]], query[2:length(query)], merge.dr = "ref.umap")
+    sobj = merge(sobj[[1]], sobj[2:length(sobj)], merge.dr = "ref.umap")
 }
 
 # Add the alias to the metadata for the clusters
 log_info("- Adding ident to metadata and set as ident")
-query@meta.data = query@meta.data %>% mutate(
+sobj@meta.data = sobj@meta.data %>% mutate(
     !!sym(ident) := as.factor(!!parse_expr(paste0("predicted.", use)))
 )
-Idents(query) = ident
+Idents(sobj) = ident
+
+# Check if PrepSCTFindMarkers is done
+if (DefaultAssay(sobj) == "SCT") {
+    log_info("- Running PrepSCTFindMarkers ...")
+    sobj <- PrepSCTFindMarkers(sobj)
+    # compose a new SeuratCommand to record it to sobj@commands
+    commands <- names(pbmc_small@commands)
+    scommand <- pbmc_small@commands[[commands[length(commands)]]]
+    scommand@time.stamp <- Sys.time()
+    scommand@assay.used <- "SCT"
+    scommand@call.string <- "PrepSCTFindMarkers(object = sobj)"
+    scommand@params <- list()
+    sobj@commands$PrepSCTFindMarkers <- scommand
+}
 
 # Save
 log_info("- Saving result ...")
-saveRDS(query, file = outfile)
+saveRDS(sobj, file = outfile)
 
 
 # ############################
@@ -325,7 +335,7 @@ ref.reduction = mapquery_args$reduction.model %||% "wnn.umap"
 for (qname in names(mapquery_args$refdata)) {
     rname <- mapquery_args$refdata[[qname]]
 
-    if (grepl("Array", class(reference[[rname]])) && grepl("Array", class(query[[qname]]))) {
+    if (grepl("Array", class(reference[[rname]])) && grepl("Array", class(sobj[[qname]]))) {
         log_warn("  Skipping transferred array: {qname} -> {rname}")
         next
     }
@@ -342,7 +352,7 @@ for (qname in names(mapquery_args$refdata)) {
     ) + NoLegend()
 
     query_p <- DimPlot(
-        object = query,
+        object = sobj,
         reduction = "ref.umap",
         group.by = paste0("predicted.", qname),
         label = TRUE,

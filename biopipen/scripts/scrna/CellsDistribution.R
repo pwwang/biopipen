@@ -325,7 +325,7 @@ do_case <- function(name, case) {
             geom_col(width=.01, position="fill", color = "#888888") +
             geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
             coord_polar("y", start = 0) +
-            scale_fill_biopipen(name = "Cluster", limits = levels(all_clusters)) +
+            scale_fill_manual(name = "Cluster", values = pal_biopipen()(length(levels(all_clusters)))) +
             theme_void() +
             theme(
                 plot.margin = plot.margin,

@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.31.0
+
+- deps: bump pipen to 0.15.0
+
 ## 0.30.0
 
 ### scrna/tcr

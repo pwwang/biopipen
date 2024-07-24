@@ -71,6 +71,7 @@ dependencies:
   - r-bracer
   - r-sccatch
   - r-harmony=1  #=1.2.0  # avoid v0.1 on bioconda
+  - bioconductor-splatter
   - bioconductor-data-packages  # use the one from pwwang
   - bioconductor-mygene
   - bioconductor-ggmanh=1.9.6  # force pwwang
