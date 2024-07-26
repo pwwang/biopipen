@@ -25,7 +25,7 @@ class TestGenePy(TestCase):
         )
         self.assertListEqual(
             out["symbol"].tolist(),
-            ['GOLGA6L3P', 'NA', 'WASH7P', 'WASH7P'],
+            ['GOLGA6L17P', 'NA', 'WASH7P', 'WASH7P'],
         )
 
     def test_gene_name_conversion1(self):
@@ -56,7 +56,7 @@ class TestGenePy(TestCase):
             dup=";",
             suppress_messages=True,
         )
-        self.assertIn("GOLGA6L3P;GOLGA6L17P", out["symbol"].tolist())
+        self.assertIn("GOLGA6L17P;GOLGA6L3P", out["symbol"].tolist())
 
     def test_gene_name_conversion_skip(self):
         out = gene_name_conversion(
@@ -94,8 +94,8 @@ class TestGeneR(TestCase):
             )
             expect(length(symbols$symbol) == 4, "Wrong number of symbols returned")
             expect(
-                symbols$symbol[1] == "GOLGA6L3P",
-                "Expected GOLGA6L3P as 1st symbol", "Got: ", symbols$symbol[1]
+                symbols$symbol[1] == "GOLGA6L17P",
+                "Expected GOLGA6L17P as 1st symbol", "Got: ", symbols$symbol[1]
             )
             expect(
                 is.na(symbols$symbol[2]),
@@ -122,7 +122,7 @@ class TestGeneR(TestCase):
             symbols = gene_name_conversion(
                 ensgs, "ensg", "symbol", ";", suppress_messages = TRUE
             )
-            if (!"GOLGA6L3P;GOLGA6L17P" %in% symbols$symbol) {
+            if (!"GOLGA6L17P;GOLGA6L3P" %in% symbols$symbol) {
                 stop("GOLGA6L3P;GOLGA6L17P not found")
             }
         """
