@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.31.2
+
+- fix(tcr.CDR3AAPhyschem): use sequence from TRB chain only
+- fix(tcr.TCRClustering): fix for multi-chain TCRs, use TRB only if on_multi is false
+
 ## 0.31.1
 
 - enh(scrna.SeuratMap2Ref): check if reference has SCTModel if SCTransform'ed (likely prepared by old Seurat)

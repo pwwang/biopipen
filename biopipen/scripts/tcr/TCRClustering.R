@@ -34,9 +34,17 @@ if (is.null(prefix)) { prefix = immdata$prefix }
 if (is.null(prefix)) { prefix = "" }
 
 get_cdr3aa_df = function() {
-    expand_immdata(immdata, cell_id = "Barcode") %>%
+    out = expand_immdata(immdata, cell_id = "Barcode") %>%
         mutate(Barcode = glue(paste0(prefix, "{Barcode}"))) %>%
-        select(Barcode, CDR3.aa)
+        select(Barcode, CDR3.aa, chain)
+
+    if (on_multi) {
+        out$CDR3.aa = sub(";", "", out$CDR3.aa)
+    } else {
+        out = out %>% separate_rows(chain, CDR3.aa, sep = ";") %>%
+            filter(chain == "TRB")
+    }
+    out %>% select(Barcode, CDR3.aa)
 }
 cdr3aa_df = get_cdr3aa_df()
 
@@ -159,12 +167,14 @@ prepare_input = function() {
     # cdr3col = if (!on_multi) "cdr3" else "CDR3.aa"
     cdr3col = "CDR3.aa"
     for (sample in names(seqdata)) {
-        # cdr3 = bind_rows(cdr3, seqdata[[sample]] %>%
-        #     transmute(aminoAcid=CDR3.aa, vMaxResolved=paste0(V.name, "*01"), Sample=sample))
-        cdr3 = union(
-            cdr3,
-            seqdata[[sample]] %>% pull(cdr3col) %>% unique()
-        )
+        sdata = seqdata[[sample]]
+        if (on_multi) {
+            sdata[[cdr3col]] = sub(";", "", sdata[[cdr3col]])
+        } else {
+            sdata = sdata %>% separate_rows(chain, cdr3col, sep = ";") %>%
+                filter(chain == "TRB")
+        }
+        cdr3 = union(cdr3, unique(sdata[[cdr3col]]))
     }
     cdr3 = unique(cdr3)
 
