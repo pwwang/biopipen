@@ -45,6 +45,10 @@ if (is.null(split_by)) {
     future::plan(strategy = "multicore", workers = ncores)
 }
 
+.is_sct <- function(x) {
+    return(Seurat:::IsSCT(assay = x@assays[[DefaultAssay(x)]]))
+}
+
 .expand_dims = function(args, name = "dims") {
     # Expand dims from 30 to 1:30
     if (is.numeric(args[[name]]) && length(args[[name]] == 1)) {
@@ -63,6 +67,8 @@ if (endsWith(ref, ".rds") || endsWith(ref, ".RDS")) {
 } else {
     reference = LoadH5Seurat(ref)
 }
+reference = UpdateSeuratObject(reference)
+reference = UpdateSCTAssays(reference)
 
 # check if refdata exists in the reference
 for (rname in names(mapquery_args$refdata)) {
@@ -84,9 +90,20 @@ for (rname in names(mapquery_args$refdata)) {
     }
 }
 
-if (refnorm == "auto" && DefaultAssay(reference) == "SCT") {
+if (refnorm == "auto" && .is_sct(reference)) {
     refnorm = "SCTransform"
 }
+if (refnorm == "SCTransform") {
+    # Check if the reference is SCTransform'ed
+    if (!.is_sct(reference)) {
+        stop("Reference is not SCTransform'ed")
+    }
+    n_models = length(x = slot(object = reference[[DefaultAssay(reference)]], name = "SCTModel.list"))
+    if (n_models == 0) {
+        stop("Reference doesn't contain SCTModel.")
+    }
+}
+
 log_info("  Normalization method used: {refnorm}")
 if (refnorm == "SCTransform") {
     findtransferanchors_args$normalization.method = "SCT"
@@ -307,14 +324,14 @@ sobj@meta.data = sobj@meta.data %>% mutate(
 Idents(sobj) = ident
 
 # Check if PrepSCTFindMarkers is done
-if (DefaultAssay(sobj) == "SCT") {
+if (.is_sct(sobj) && is.null(sobj@commands$PrepSCTFindMarkers)) {
     log_info("- Running PrepSCTFindMarkers ...")
     sobj <- PrepSCTFindMarkers(sobj)
     # compose a new SeuratCommand to record it to sobj@commands
     commands <- names(pbmc_small@commands)
     scommand <- pbmc_small@commands[[commands[length(commands)]]]
     scommand@time.stamp <- Sys.time()
-    scommand@assay.used <- "SCT"
+    scommand@assay.used <- DefaultAssay(sobj)
     scommand@call.string <- "PrepSCTFindMarkers(object = sobj)"
     scommand@params <- list()
     sobj@commands$PrepSCTFindMarkers <- scommand

@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.31.1
+
+- enh(scrna.SeuratMap2Ref): check if reference has SCTModel if SCTransform'ed (likely prepared by old Seurat)
+
 ## 0.31.0
 
 - deps: bump pipen to 0.15.0
