@@ -5,7 +5,7 @@ PROC_TARGETS := $(subst tests/test_,,$(foreach ns,$(NS_TARGETS),$(wildcard tests
 
 all: $(NS_TARGETS)
 
-.list:
+list:
 	$(info Tests for namespaces: $(NS_TARGETS))
 	$(info Tests for processes: $(PROC_TARGETS))
 
@@ -13,11 +13,17 @@ all: $(NS_TARGETS)
 	@echo "::group::Running tests for namespace: $@";                             \
 	for procdir in $</*; do                                                       \
 		bash tests/conda/run_test.sh $$procdir VERBOSE=$(VERBOSE) FORCE=$(FORCE); \
-	done &&                                                                       \
-	echo "::endgroup::"
+		if [ $$? -ne 0 ]; then                                                    \
+			should_fail=1;                                                        \
+		fi;                                                                       \
+	done;                                                                         \
+	echo "::endgroup::";                                                          \
+	if [ -n "$$should_fail" ]; then                                               \
+		exit 1;                                                                   \
+	fi;
 
 $(PROC_TARGETS): %: tests/test_%
 	@bash tests/conda/run_test.sh $< VERBOSE=$(VERBOSE) FORCE=$(FORCE);
 
 
-.PHONY: all .list
+.PHONY: all list

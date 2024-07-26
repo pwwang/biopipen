@@ -169,9 +169,12 @@ immdata = readRDS(immdatafile)
 
 merge_data = function(sam) {
     # Merge the data for one sample from immdata and metadata
-    out = immdata$data[[sam]] %>%
-        separate_rows(chain, CDR3.aa, V.name, J.name, sep = ";") %>%
-        filter(chain == "TRB") %>%
+    out = immdata$data[[sam]]
+    if ("chain" %in% colnames(out)) {
+        out = out %>% separate_rows(chain, CDR3.aa, V.name, J.name, sep = ";") %>%
+            filter(chain == "TRB")
+    }
+    out = out %>%
         mutate(
             Sample = sam,
             locus = "TCRB",

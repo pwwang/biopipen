@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.31.3
+
+- test: fix test not failing when tests failed
+- test: fix gene name conversion tests due to external API change
+- fix(tcr.CDR3AAPhyschem): fix when chain is not available
+- fix(tcr.TCRClustering): fix when chain is not available
+
 ## 0.31.2
 
 - fix(tcr.CDR3AAPhyschem): use sequence from TRB chain only

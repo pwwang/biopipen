@@ -72,7 +72,7 @@ def _testing_proc(proc: str, exp: str):
 def testing(pipen):
     exp1 = (
         "Meta\tEnsg\tsymbol\n"
-        "a\tENSG00000230373\tGOLGA6L3P\n"
+        "a\tENSG00000230373\tGOLGA6L17P\n"
         "b\tENSG00000236269\tENSG00000236269\n"
         "c\tENSG00000227232.5\tWASH7P\n"
         "c1\tENSG00000227232.5\tWASH7P\n"
@@ -82,7 +82,7 @@ def testing(pipen):
 
     exp2 = (
         "Meta\tEnsg\n"
-        "a\tGOLGA6L3P\n"
+        "a\tGOLGA6L17P\n"
         "b\tNA\n"
         "c\tWASH7P\n"
         "c1\tWASH7P\n"
@@ -92,7 +92,7 @@ def testing(pipen):
 
     exp3 = (
         "query\tsymbol\n"
-        "ENSG00000230373\tGOLGA6L3P;GOLGA6L17P\n"
+        "ENSG00000230373\tGOLGA6L17P;GOLGA6L3P\n"
         "ENSG00000236269\tNA\n"
         "ENSG00000227232.5\tWASH7P\n"
         "ENSG00000227232.5\tWASH7P\n"
