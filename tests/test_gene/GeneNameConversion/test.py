@@ -82,7 +82,7 @@ def testing(pipen):
 
     exp2 = (
         "Meta\tEnsg\n"
-        "a\tGOLGA6L3P\n"
+        "a\tGOLGA6L17P\n"
         "b\tNA\n"
         "c\tWASH7P\n"
         "c1\tWASH7P\n"
