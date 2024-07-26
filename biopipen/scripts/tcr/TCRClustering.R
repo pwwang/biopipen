@@ -35,12 +35,11 @@ if (is.null(prefix)) { prefix = "" }
 
 get_cdr3aa_df = function() {
     out = expand_immdata(immdata, cell_id = "Barcode") %>%
-        mutate(Barcode = glue(paste0(prefix, "{Barcode}"))) %>%
-        select(Barcode, CDR3.aa, chain)
+        mutate(Barcode = glue(paste0(prefix, "{Barcode}")))
 
     if (on_multi) {
         out$CDR3.aa = sub(";", "", out$CDR3.aa)
-    } else {
+    } else if ("chain" %in% colnames(out)) {
         out = out %>% separate_rows(chain, CDR3.aa, sep = ";") %>%
             filter(chain == "TRB")
     }
@@ -170,7 +169,7 @@ prepare_input = function() {
         sdata = seqdata[[sample]]
         if (on_multi) {
             sdata[[cdr3col]] = sub(";", "", sdata[[cdr3col]])
-        } else {
+        } else if ("chain" %in% colnames(sdata)) {
             sdata = sdata %>% separate_rows(chain, cdr3col, sep = ";") %>%
                 filter(chain == "TRB")
         }
