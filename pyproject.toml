@@ -18,7 +18,7 @@ pipen-verbose = "^0.12"
 pipen-poplog = "^0.2.0"
 datar = { version = "^0.15.6", extras = ["pandas"] }
 pipen-board = { version = "^0.16", extras = ["report"] }
-pipen-runinfo = { version = "^0.7", optional = true }
+pipen-runinfo = { version = "^0.8", optional = true }
 
 [tool.poetry.extras]
 runinfo = ["pipen-runinfo"]
