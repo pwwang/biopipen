@@ -35,7 +35,7 @@ class VennDiagram(Proc):
     envs = {
         "inopts": {"row.names": -1, "header": False},
         "intype": "raw",
-        "devpars": {"res": 100, "width": 1000, "height": 1000},
+        "devpars": {"res": 100, "width": 800, "height": 600},
         "args": {},
         "ggs": None,
     }

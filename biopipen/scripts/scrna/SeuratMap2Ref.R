@@ -90,8 +90,8 @@ for (rname in names(mapquery_args$refdata)) {
     }
 }
 
-if (refnorm == "auto" && .is_sct(reference)) {
-    refnorm = "SCTransform"
+if (refnorm == "auto") {
+    refnorm = ifelse (.is_sct(reference), "SCTransform", "NormalizeData")
 }
 if (refnorm == "SCTransform") {
     # Check if the reference is SCTransform'ed
@@ -110,7 +110,7 @@ if (refnorm == "SCTransform") {
 } else if (refnorm == "NormalizeData") {
     findtransferanchors_args$normalization.method = "LogNormalize"
 } else {
-    stop("Unknown normalization method: {refnorm}")
+    stop(paste0("Unknown normalization method: ", refnorm))
 }
 
 # Load Seurat object

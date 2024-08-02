@@ -10,7 +10,7 @@ plotVenn = function(
     # Extra ggplot components in string
     ggs = NULL,
     # Parameters for device (res, width, height) for `png()`
-    devpars = list(res=100, width=1000, height=1000),
+    devpars = list(res=100, width=800, height=600),
     # The output file. If NULL, will return the plot object
     outfile = NULL
 ) {

@@ -1,8 +1,6 @@
 {{ biopipen_dir | joinpaths: "utils", "io.R" | source_r }}
 {{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 
-library(dplyr)
-
 infile = {{in.infile | quote}}
 outfile = {{out.outfile | quote}}
 inopts = {{envs.inopts | r}}
@@ -18,9 +16,7 @@ if (intype == "raw") {
     indata = lapply(indata, function(x) unlist(strsplit(x, ",", fixed=TRUE)))
 } else { # computed
     elems = rownames(indata)
-    indata = indata %>%
-        mutate(across(everything(), function(x) elems[as.logical(x)])) %>%
-        as.list()
+    indata = apply(indata, 2, function(x) elems[as.logical(x)])
 }
 
 plotVenn(
