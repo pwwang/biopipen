@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.31.4
+
+- deps: bump pipen-report to 0.20.1 (pipen to 0.15.2)
+- fix(plot.VennDiagram): update default devpars and fix issues with computed data
+- fix(scrna.SeuratMap2Ref): fix identifying the normalization method of reference
+
 ## 0.31.3
 
 - test: fix test not failing when tests failed
