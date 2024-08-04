@@ -927,13 +927,13 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.15.2"
+version = "0.15.3"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen-0.15.2-py3-none-any.whl", hash = "sha256:9c6b64a13dbc8fd8e63518387c2718a8210fef69d4de92aa38e65a93b558de82"},
-    {file = "pipen-0.15.2.tar.gz", hash = "sha256:ac495ee63f5c5099a1a5ce89a39e0d43d373e0d296b7dce373dd9abd613d4618"},
+    {file = "pipen-0.15.3-py3-none-any.whl", hash = "sha256:efbd7ac09787b60ab2699c9e3acc5448f1801dc8ebed3feae27f2916f56d5bdf"},
+    {file = "pipen-0.15.3.tar.gz", hash = "sha256:e7f51797eddcb57ad274a7930b1743264fbae9989d20b7d5c2698d68ec2fc3af"},
 ]
 
 [package.dependencies]
@@ -1782,13 +1782,13 @@ h11 = ">=0.9.0,<1"
 
 [[package]]
 name = "xqute"
-version = "0.5.1"
+version = "0.5.2"
 description = "A job management system for python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "xqute-0.5.1-py3-none-any.whl", hash = "sha256:bb77cbeacf4468030fc0201a0953556f60d056c9a11e7b67a47f0a7cc649575b"},
-    {file = "xqute-0.5.1.tar.gz", hash = "sha256:1d96875060283b60bb2bec801fa5d4adbd1884e29a39cfae1791fbc50c7ac04a"},
+    {file = "xqute-0.5.2-py3-none-any.whl", hash = "sha256:1161e724e867b08a338db98c3c64cae4225f3a71151e8e458309586561b1ddd2"},
+    {file = "xqute-0.5.2.tar.gz", hash = "sha256:fdab122130cd71982468f7d2f0f4e70b27c8002e7014987322f0d2141aece43a"},
 ]
 
 [package.dependencies]
