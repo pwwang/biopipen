@@ -463,7 +463,7 @@ class BcftoolsAnnotate(Proc):
         columns (auto): Comma-separated or list of columns or tags to carry over from
             the annotation file. Overrides `-c, --columns`
         remove (auto): Remove the specified columns from the input file
-        header (type=list): Headers to be added
+        header (list): Headers to be added
         gz (flag): Whether to gzip the output file
         index (flag): Whether to index the output file (tbi) (`envs.gz` forced to True)
         <more>: Other arguments for `bcftools annotate`
