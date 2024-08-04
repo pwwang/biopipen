@@ -260,3 +260,44 @@ class BamMerge(Proc):
         "sort_args": [],
     }
     script = "file://../scripts/bam/BamMerge.py"
+
+
+class BamSampling(Proc):
+    """Keeping only a fraction of read pairs from a bam file
+
+    Input:
+        bamfile: The bam file
+
+    Output:
+        outfile: The output bam file
+
+    Envs:
+        ncores: Number of cores to use
+        samtools: Path to samtools executable
+        tool: The tool to use, currently only "samtools" is supported
+        fraction (type=float): The fraction of reads to keep.
+            If `0 < fraction <= 1`, it's the fraction of reads to keep.
+            If `fraction > 1`, it's the number of reads to keep.
+            Note that when fraction > 1, you may not get the exact number
+            of reads specified but a close number.
+        seed: The seed for random number generator
+        index: Whether to index the output bam file
+        sort: Whether to sort the output bam file
+        sort_args: The arguments for sorting bam file using `samtools sort`.
+            These keys are not allowed: `-o`, `-@`,
+            and `--threads`, as they are managed by the script.
+    """
+    input = "bamfile:file"
+    output = "outfile:file:{{in.bamfile | stem}}.sampled{{envs.fraction}}.bam"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "samtools": config.exe.samtools,
+        "tool": "samtools",
+        "fraction": None,
+        "seed": 8525,
+        "index": True,
+        "sort": True,
+        "sort_args": [],
+    }
+    script = "file://../scripts/bam/BamSampling.py"
