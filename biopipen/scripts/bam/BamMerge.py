@@ -1,7 +1,7 @@
 from pathlib import Path
-from biopipen.utils.misc import run_command
+from biopipen.utils.misc import run_command, logger
 
-bamfiles = {{in.bamfiles | repr}}  # pyright: ignore
+bamfiles = {{in.bamfiles | repr}}  # pyright: ignore # noqa
 outfile = Path({{out.outfile | repr}})  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
 tool = {{envs.tool | quote}}  # pyright: ignore
@@ -18,7 +18,7 @@ if should_index and not should_sort:
 
 def use_samtools():
     """Use samtools to merge bam files"""
-    print("Using samtools")
+    logger.info("Using samtools ...")
     ofile = (
         outfile
         if not should_sort
@@ -43,11 +43,11 @@ def use_samtools():
         *merge_args,
         *bamfiles,
     ]
-    print("- Merging")
+    logger.info("- Merging the bam files ...")
     run_command(cmd)
 
     if should_sort:
-        print("- Sorting")
+        logger.info("- Sorting the merged bam file ...")
         for key in ["-o", "-@", "--threads"]:
             if key in sort_args:
                 raise ValueError(
@@ -67,16 +67,14 @@ def use_samtools():
         run_command(cmd)
 
     if should_index:
-        print("- Indexing")
+        logger.info("- Indexing the output bam file ...")
         cmd = [samtools, "index", "-@", ncores, outfile]
         run_command(cmd)
-
-    print("Done")
 
 
 def use_sambamba():
     """Use sambamba to merge bam files"""
-    print("Using sambamba")
+    logger.info("Using sambamba ...")
     ofile = (
         outfile
         if not should_sort
@@ -90,11 +88,11 @@ def use_sambamba():
             )
 
     cmd = [sambamba, "merge", "-t", ncores, *merge_args, ofile, *bamfiles]
-    print("- Merging")
+    logger.info("- Merging the bam files ...")
     run_command(cmd)
 
     if should_sort:
-        print("- Sorting")
+        logger.info("- Sorting the merged bam file ...")
         for key in ["-t", "--nthreads", "-o", "--out"]:
             if key in sort_args:
                 raise ValueError(
@@ -115,11 +113,9 @@ def use_sambamba():
         run_command(cmd)
 
     if should_index:
-        print("- Indexing")
+        logger.info("- Indexing the output bam file ...")
         cmd = [sambamba, "index", "-t", ncores, outfile]
         run_command(cmd)
-
-    print("Done")
 
 
 if __name__ == "__main__":
