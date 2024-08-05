@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.31.5
+
+- deps: update pipen to version 0.15.3 and xqute to version 0.5.2
+- feat(bam): add BamSampling process for sampling a fraction of reads from a bam file
+- feat(protein): add the protein module and Prodigy and ProdigySummary to calculate the binding affinity of a complex structure
+- ci: do not print verbose logs for tests
+- chore(bam.BamMerge): use logger instead of print for logging
+
 ## 0.31.4
 
 - deps: bump pipen-report to 0.20.1 (pipen to 0.15.2)
