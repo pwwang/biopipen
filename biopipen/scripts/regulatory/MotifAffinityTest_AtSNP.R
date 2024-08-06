@@ -1,36 +1,6 @@
 library(atSNP)
 library(rtracklayer)
 
-log_info("Converting universalmotif object to motif_library ...")
-
-motifdb_names <- sapply(meme, function(m) m@name)
-motifs <- check_motifs(motifdb_names)
-meme <- filter_motifs(meme, name = motifs)
-# Get the right order of motif names
-motifs <- sapply(meme, function(m) m@name)
-
-# used for atSNP
-mdb <- lapply(meme, function(m) t(m@motif))
-names(mdb) <- motifs
-
-# compose one used for plotting using motifbreakR
-motifdb_matrices <- lapply(meme, function(m) m@motif)
-names(motifdb_matrices) <- motifs
-motifdb_meta <- do.call(rbind, lapply(meme, function(m) {
-    ats <- attributes(m)
-    ats$dataSource <- basename(motifdb)
-    ats$class <- NULL
-    ats$motif <- NULL
-    ats$gapinfo <- NULL
-    ats$sequenceCount <- ats$nsites
-    ats$providerId <- ats$name
-    ats$providerName <- ats$name
-    ats$organism <- if (is.null(ats$organism) || length(ats$organism) == 0) "Unknown" else ats$organism
-    unlist(ats)
-}))
-rownames(motifdb_meta) <- motifs
-pmotifs <- MotifDb:::MotifList(motifdb_matrices, tbl.metadata = motifdb_meta)
-
 log_info("Converting snpinfo to atSNP object ...")
 
 # c("chrom", "start", "end", "name", "score", "strand", "ref", "alt", "ref_seq", "alt_seq")
@@ -53,7 +23,9 @@ write.table(
     file = atsnp_bed,
     sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE
 )
-k <- max(sapply(mdb, nrow))
+
+motif_lib <- motifdb_to_motiflib(mdb)
+k <- max(sapply(motif_lib, nrow))
 snps <- LoadSNPData(
     atsnp_bed,
     genome.lib = genome_pkg,
@@ -62,13 +34,12 @@ snps <- LoadSNPData(
     half.window.size = k
 )
 
-# run motifbreakR
 log_info("Running atSNP ...")
-atsnp_scores <- ComputeMotifScore(mdb, snps, ncores = ncores)
+atsnp_scores <- ComputeMotifScore(motif_lib, snps, ncores = ncores)
 
 log_info("Calculating p values ...")
 atsnp_result <- ComputePValues(
-    motif.lib = mdb,
+    motif.lib = motif_lib,
     snp.info = snps,
     motif.scores = atsnp_scores$motif.scores,
     ncores = ncores,
@@ -101,7 +72,7 @@ atsnp_result$motifPos <- sapply(1:nrow(atsnp_result), function(i) {
     paste(c(atsnp_result$ref_start[i] - k, atsnp_result$ref_end[i] - k), collapse = ",")
 })
 if (!is.null(regulator_col)) {
-    atsnp_result$Regulator <- in_motifs[
+    atsnp_result$geneSymbol <- atsnp_result$Regulator <- in_motifs[
         match(atsnp_result$providerId, in_motifs[[motif_col]]),
         regulator_col,
         drop = TRUE
@@ -120,7 +91,30 @@ atsnp_result$alleleDiff <- -atsnp_result[[cutoff_col]]
 atsnp_result$effect <- "strong"
 atsnp_result$motifPos <- lapply(atsnp_result$motifPos, function(x) as.integer(unlist(strsplit(x, ","))))
 atsnp_result <- makeGRangesFromDataFrame(atsnp_result, keep.extra.columns = TRUE, starts.in.df.are.0based = TRUE)
+genome(atsnp_result) <- genome
 attributes(atsnp_result)$genome.package <- genome_pkg
-attributes(atsnp_result)$motifs <- pmotifs
+attributes(atsnp_result)$motifs <- mdb
 
-plot_variant(atsnp_result)
+if (is.null(plots) || length(plots) == 0) {
+    atsnp_result <- atsnp_result[order(-abs(atsnp_result$alleleDiff)), , drop = FALSE]
+    atsnp_result <- atsnp_result[1:min(plot_nvars, length(atsnp_result)), , drop = FALSE]
+    variants <- unique(atsnp_result$SNP_id)
+} else {
+    variants <- names(plots)
+}
+for (variant in variants) {
+    log_info("- Variant: {variant}")
+    if (is.null(plots[[variant]])) {
+        plots[[variant]] <- list(devpars = devpars, which = "TRUE")
+    }
+    if (is.null(plots[[variant]]$which)) {
+        plots[[variant]]$which <- "TRUE"
+    }
+    if (is.null(plots[[variant]]$devpars)) {
+        plots[[variant]]$devpars <- devpars
+    }
+    res <- atsnp_result[atsnp_result$SNP_id == variant, , drop = FALSE]
+    res <- subset(res, subset = eval(parse(text = plots[[variant]]$which)))
+
+    plot_variant_motifs(res, variant, plots[[variant]]$devpars, outdir)
+}
