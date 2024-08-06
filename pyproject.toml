@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.31.4"
+version = "0.31.5"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -38,6 +38,7 @@ gene = "biopipen.ns.gene"
 gsea = "biopipen.ns.gsea"
 misc = "biopipen.ns.misc"
 plot = "biopipen.ns.plot"
+protein = "biopipen.ns.protein"
 regulatory = "biopipen.ns.regulatory"
 rnaseq = "biopipen.ns.rnaseq"
 scrna = "biopipen.ns.scrna"
