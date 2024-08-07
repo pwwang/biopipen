@@ -212,3 +212,75 @@ class MotifAffinityTest(Proc):
         "atsnp_args": {"padj_cutoff": True, "padj": "BH", "p": "pval_diff"},
     }
     script = "file://../scripts/regulatory/MotifAffinityTest.R"
+
+
+class VariantMotifPlot(Proc):
+    """A plot with a genomic region surrounding a genomic variant, and
+    potentially disrupted motifs.
+
+    Currently only SNVs are supported.
+
+    Input:
+        infile: File containing the variants and motifs.
+            It is a TAB-delimited file with the following columns:
+            - chrom: The chromosome of the SNV. Alias: chr, seqnames.
+            - start: The start position of the SNV, no matter 0- or 1-based.
+            - end: The end position of the SNV, which will be used as the position of the SNV.
+            - strand: Indicating the direction of the surrounding sequence matching the motif.
+            - SNP_id: The name of the SNV.
+            - REF: The reference allele of the SNV.
+            - ALT: The alternative allele of the SNV.
+            - providerId: The motif id. It can be specified by `envs.motif_col`.
+            - providerName: The name of the motif provider. Optional.
+            - Regulator: The regulator name. Optional, can be specified by `envs.regulator_col`.
+            - motifPos: The position of the motif, relative to the position of the SNV.
+                For example, '-8, 4' means the motif is 8 bp upstream and 4 bp downstream of the SNV.
+
+    Envs:
+        genome: The genome assembly.
+            Used to fetch the sequences around the variants by package, for example, `BSgenome.Hsapiens.UCSC.hg19` is required if
+            `hg19`. If it is an organism other than human, please specify the full name of the package, for example, `BSgenome.Mmusculus.UCSC.mm10`.
+        motifdb: The path to the motif database. This is required.
+            It should be in the format of MEME motif database.
+            Databases can be downloaded here: <https://meme-suite.org/meme/doc/download.html>.
+            See also introduction to the databases: <https://meme-suite.org/meme/db/motifs>.
+            [universalmotif](https://github.com/bjmt/universalmotif) is required to read the motif database.
+        motif_col: The column name in the motif file containing the motif names.
+            If this is not provided, `envs.regulator_col` and `envs.regmotifs` are required,
+            which are used to infer the motif names from the regulator names.
+        regulator_col: The column name in the motif file containing the regulator names.
+            Both `motif_col` and `regulator_col` should be the direct column names or
+            the index (1-based) of the columns.
+            If no `regulator_col` is provided, no regulator information is written in
+            the output. Otherwise, the regulator information is written in the output in
+            the `Regulator` column.
+        regmotifs: The path to the regulator-motif mapping file.
+            It must have header and the columns `Motif` or `Model` for motif names and
+            `TF`, `Regulator` or `Transcription factor`  for regulator names.
+        notfound (choice): What to do if a motif is not found in the database,
+            or a regulator is not found in the regulator-motif mapping (envs.regmotifs)
+            file.
+            - error: Report error and stop the process.
+            - ignore: Ignore the motif and continue.
+        devpars (ns): The default device parameters for the plot.
+            - width (type=int): The width of the plot.
+            - height (type=int): The height of the plot.
+            - res (type=int): The resolution of the plot.
+        plot_vars (type=auto): The variants (SNP_id) to plot.
+            A list of variant names to plot or a string with the variant names separated by comma.
+            When not specified, all variants are plotted.
+    """  # noqa: E501
+    input = "infile:file"
+    output = "outdir:dir:{{in.infile | stem}}.vmplots"
+    lang = config.lang.rscript
+    envs = {
+        "genome": config.ref.genome,
+        "motifdb": config.ref.tf_motifdb,
+        "motif_col": "providerId",
+        "regulator_col": None,
+        "regmotifs": config.ref.tf_motifs,
+        "notfound": "error",
+        "devpars": {"width": 800, "height": None, "res": 100},
+        "plot_vars": None,
+    }
+    script = "file://../scripts/regulatory/VariantMotifPlot.R"

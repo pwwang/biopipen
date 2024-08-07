@@ -2,6 +2,7 @@ from pathlib import Path
 
 from biopipen.ns.regulatory import (
     MotifAffinityTest as MotifAffinityTest_,
+    VariantMotifPlot as VariantMotifPlot_,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -22,6 +23,15 @@ class MotifAffinityTestMotifBreakR(MotifAffinityTest_):
     }
 
 
+class VariantMotifPlotBreakR(VariantMotifPlot_):
+    requires = MotifAffinityTestMotifBreakR
+    input_data = lambda ch: [ch.iloc[0, 0] + "/motifbreakr.txt"]
+    envs = {
+        "genome": "hg19",
+        "motifdb": motifdb,
+    }
+
+
 class MotifAffinityTestMotifBreakR_WithTF(MotifAffinityTest_):
     envs = {
         "tool": "motifbreakr",
@@ -33,6 +43,16 @@ class MotifAffinityTestMotifBreakR_WithTF(MotifAffinityTest_):
     }
 
 
+class VariantMotifPlotBreakR_WithTF(VariantMotifPlot_):
+    requires = MotifAffinityTestMotifBreakR_WithTF
+    input_data = lambda ch: [ch.iloc[0, 0] + "/motifbreakr.txt"]
+    envs = {
+        "genome": "hg19",
+        "regulator_col": "Regulator",
+        "motifdb": motifdb,
+    }
+
+
 class MotifAffinityTestMotifBreakR_WithTFOnly(MotifAffinityTest_):
     envs = {
         "tool": "motifbreakr",
@@ -40,6 +60,18 @@ class MotifAffinityTestMotifBreakR_WithTFOnly(MotifAffinityTest_):
         "notfound": "ignore",
         "motifdb": motifdb,
         "genome": "hg19",
+        "regmotifs": motiffile1,
+    }
+
+
+class VariantMotifPlotBreakR_WithTFOnly(VariantMotifPlot_):
+    requires = MotifAffinityTestMotifBreakR_WithTFOnly
+    input_data = lambda ch: [ch.iloc[0, 0] + "/motifbreakr.txt"]
+    envs = {
+        "genome": "hg19",
+        "motif_col": None,
+        "regulator_col": "Regulator",
+        "motifdb": motifdb,
         "regmotifs": motiffile1,
     }
 
@@ -56,6 +88,15 @@ class MotifAffinityTestAtSNP(MotifAffinityTest_):
     }
 
 
+class VariantMotifPlotAtSNP(VariantMotifPlot_):
+    requires = MotifAffinityTestAtSNP
+    input_data = lambda ch: [ch.iloc[0, 0] + "/atsnp.txt"]
+    envs = {
+        "genome": "hg19",
+        "motifdb": motifdb,
+    }
+
+
 class MotifAffinityTestAtSNP_WithTF(MotifAffinityTest_):
     envs = {
         "tool": "atsnp",
@@ -69,6 +110,16 @@ class MotifAffinityTestAtSNP_WithTF(MotifAffinityTest_):
     }
 
 
+class VariantMotifPlotAtSNP_WithTF(VariantMotifPlot_):
+    requires = MotifAffinityTestAtSNP_WithTF
+    input_data = lambda ch: [ch.iloc[0, 0] + "/atsnp.txt"]
+    envs = {
+        "genome": "hg19",
+        "regulator_col": "Regulator",
+        "motifdb": motifdb,
+    }
+
+
 class MotifAffinityTestAtSNP_WithTFOnly(MotifAffinityTest_):
     envs = {
         "tool": "atsnp",
@@ -78,6 +129,18 @@ class MotifAffinityTestAtSNP_WithTFOnly(MotifAffinityTest_):
         "cutoff": 0.2,
         "genome": "hg19",
         "atsnp_args": {"padj": "none"},
+        "regmotifs": motiffile1,
+    }
+
+
+class VariantMotifPlotAtSNP_WithTFOnly(VariantMotifPlot_):
+    requires = MotifAffinityTestAtSNP_WithTFOnly
+    input_data = lambda ch: [ch.iloc[0, 0] + "/atsnp.txt"]
+    envs = {
+        "genome": "hg19",
+        "motif_col": None,
+        "regulator_col": "Regulator",
+        "motifdb": motifdb,
         "regmotifs": motiffile1,
     }
 

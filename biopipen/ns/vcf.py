@@ -335,6 +335,8 @@ class TruvariBench(Proc):
     """Run `truvari bench` to compare a VCF with CNV calls and
     base CNV standards
 
+    Requires truvari v4+
+
     See https://github.com/ACEnglish/truvari/wiki/bench
 
     Input:
@@ -358,7 +360,7 @@ class TruvariBench(Proc):
         "truvari": config.exe.truvari,
         "ref": config.ref.reffa,
         "refdist": 500,
-        "pctsim": 0.7,
+        "pctseq": 0.7,
         "pctsize": 0.7,
         "pctovl": 0.0,
         "typeignore": False,
@@ -402,7 +404,7 @@ class TruvariBenchSummary(Proc):
     output = "outdir:dir:truvari_bench.summary"
     lang = config.lang.rscript
     envs = {
-        "plots": ["call cnt", "base cnt", "precision", "recall", "f1"],
+        "plots": ["comp cnt", "base cnt", "precision", "recall", "f1"],
         "devpars": None,
     }
     script = "file://../scripts/vcf/TruvariBenchSummary.R"
@@ -413,6 +415,8 @@ class TruvariConsistency(Proc):
     """Run `truvari consistency` to check consistency of CNV calls
 
     See https://github.com/ACEnglish/truvari/wiki/consistency
+
+    Requires truvari v4+
 
     Input:
         vcfs: The vcf files with CNV calls

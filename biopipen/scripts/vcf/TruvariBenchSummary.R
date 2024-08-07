@@ -17,7 +17,7 @@ read_summary = function() {
 
     summaries = NULL
     for (indir in indirs) {
-        summary = fromJSON(file=file.path(indir, "summary.txt"))
+        summary = fromJSON(file=file.path(indir, "summary.json"))
         summary$gt_matrix = NULL
         summary$Sample = sub(".truvari_bench", "", basename(indir), fixed=T)
         summaries = bind_rows(summaries, summary)
@@ -43,7 +43,6 @@ plot_summary = function(col) {
         summaries,
         "col",
         list(mapping = aes_string(x = "Sample", y = bQuote(col), fill = "Sample")),
-
         devpars = get_devpars(),
         outfile = outfile
     )

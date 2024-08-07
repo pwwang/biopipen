@@ -1,30 +1,6 @@
 library(motifbreakR)
+
 bsgenome <- getBSgenome(genome_pkg)
-
-log_info("Converting universalmotif object to MotifDb object ...")
-
-motifdb_names <- sapply(meme, function(m) m@name)
-motifs <- check_motifs(motifdb_names)
-meme <- filter_motifs(meme, name = motifs)
-# Get the right order of motif names
-motifs <- sapply(meme, function(m) m@name)
-motifdb_matrices <- lapply(meme, function(m) m@motif)
-names(motifdb_matrices) <- motifs
-
-motifdb_meta <- do.call(rbind, lapply(meme, function(m) {
-    ats <- attributes(m)
-    ats$dataSource <- basename(motifdb)
-    ats$class <- NULL
-    ats$motif <- NULL
-    ats$gapinfo <- NULL
-    ats$sequenceCount <- ats$nsites
-    ats$providerId <- ats$name
-    ats$providerName <- ats$name
-    ats$organism <- if (is.null(ats$organism) || length(ats$organism) == 0) "Unknown" else ats$organism
-    unlist(ats)
-}))
-rownames(motifdb_meta) <- motifs
-mdb <- MotifDb:::MotifList(motifdb_matrices, tbl.metadata = motifdb_meta)
 
 # `chrom`, `start`, `end`, `name`, `score`, `strand`, `ref`, `alt`.
 is_indel <- nchar(snpinfo$ref) != 1 | nchar(snpinfo$alt) != 1
@@ -93,4 +69,27 @@ write.table(
 )
 rm(results_to_save)
 
-plot_variant(results)
+log_info("Plotting variants ...")
+if (is.null(plots) || length(plots) == 0) {
+    results <- results[order(-abs(results$alleleDiff)), , drop = FALSE]
+    results <- results[1:min(plot_nvars, length(results)), , drop = FALSE]
+    variants <- unique(results$SNP_id)
+} else {
+    variants <- names(plots)
+}
+for (variant in variants) {
+    log_info("- Variant: {variant}")
+    if (is.null(plots[[variant]])) {
+        plots[[variant]] <- list(devpars = devpars, which = "TRUE")
+    }
+    if (is.null(plots[[variant]]$which)) {
+        plots[[variant]]$which <- "TRUE"
+    }
+    if (is.null(plots[[variant]]$devpars)) {
+        plots[[variant]]$devpars <- devpars
+    }
+    res <- results[results$SNP_id == variant, , drop = FALSE]
+    res <- subset(res, subset = eval(parse(text = plots[[variant]]$which)))
+
+    plot_variant_motifs(res, variant, plots[[variant]]$devpars, outdir)
+}
