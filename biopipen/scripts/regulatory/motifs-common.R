@@ -1,3 +1,5 @@
+# make sure biopipen/utils/misc.R is loaded, log_warn is defined, and slugify is defined
+
 library(rlang)
 library(universalmotif)
 library(MotifDb)
@@ -138,10 +140,11 @@ motifdb_to_motiflib <- function(motifdb) {
 #' @param motif_col Column name for the motif
 #' @param regulator_col Column name for the regulator
 #' @param regmotifs Regulator-motif mapping file
+#' @param log_indent Indentation for log messages
 #' @param notfound Action to take if regulators are not found in the mapping file
 #' @return Data frame with regulators and motifs
 #' @export
-ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, regmotifs, log_warn, log_indent = "", notfound = "error") {
+ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, regmotifs, log_indent = "", notfound = "error") {
     if (is.null(motif_col)) {
         if (is.null(regmotifs)) {
             stop("Regulator-motif mapping file (envs.regmotifs) is required when no motif column (envs.motif_col) is provided")
