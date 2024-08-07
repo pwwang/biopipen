@@ -52,7 +52,7 @@ jobs:
           conda run --no-capture-output -n biopipen python tests/data/prep_reference.py
       - name: Run tests
         run: |
-          make --keep-going all
+          make --keep-going all VERBOSE=true
 
   deploy:
     runs-on: ubuntu-latest
