@@ -170,7 +170,7 @@ ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, r
         # update motif column
         motif_col <<- rm_motif_col
     } else if (is.null(regulator_col)) {
-        if (is.null(regmotifs)) {
+        if (is.null(regmotifs) || (is.character(regmotifs) && nchar(regmotifs) == 0)) {
             # make motifs unique
             indata <- indata[!duplicated(indata[[motif_col]]), , drop = FALSE]
         } else if (!file.exists(regmotifs)) {
