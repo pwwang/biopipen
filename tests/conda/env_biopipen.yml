@@ -94,9 +94,9 @@ dependencies:
   - libfaiss=1.7.2=hde9c08d_1_cpu
   - faiss-cpu
   - clustcr
-  - truvari==3.4.0
   - pip
   - pip:
+    - truvari==4.3.0
     - magic-impute
     # For GIANA
     - biopython==1.79
