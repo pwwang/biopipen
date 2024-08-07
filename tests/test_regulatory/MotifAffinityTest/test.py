@@ -72,6 +72,7 @@ class VariantMotifPlotBreakR_WithTFOnly(VariantMotifPlot_):
         "motif_col": None,
         "regulator_col": "Regulator",
         "motifdb": motifdb,
+        "regmotifs": motiffile1,
     }
 
 
