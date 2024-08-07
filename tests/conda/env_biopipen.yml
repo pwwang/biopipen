@@ -1,102 +1,89 @@
 name: biopipen
-channels:
-  - svalkiers
-  - aroth85
-  - pwwang
-  - pytorch
-  - conda-forge
-  - r
-  - bioconda
-  - nodefaults
 dependencies:
-  - python=3.10
-  - poetry
-  - nodejs  # for pipen-report
-  - curl  #=7.83
-  - cyvcf2
-  - pysam
-  - bcftools
-  - mygene
-  - openssl
-  - aria2=1.36
-  - meme  #=5.5.5
-  - tabix
-  - seqkit
-  - plink
-  - plink2
-  - samtools
-  - bedtools
-  - r-clustree
-  # - r-slugify
-  - r-logger
-  - r-doubletfinder
-  - r-hitype
-  - r-base=4.3
-  - r-ggplot2
-  - r-mediation
-  - r-tidyr
-  - r-dplyr
-  - r-tibble
-  - r-enrichr
-  - r-forcats
-  - r-future
-  - r-presto
-  - r-metap
-  - r-qqplotr
-  - r-ggprism  #=1.0.5
-  - r-ggpubr
-  - r-ggpmisc
-  - r-ggradar
-  - r-ggrepel
-  - r-ggupset
-  - r-ggvenndiagram
-  - r-gtools
-  # - r-igraph=1.5.1
-  - r-immunarch  #=0.9
-  - r-matrix
-  - r-matrixstats=1.1.0
-  - r-rmagic
-  - r-scimpute
-  - r-seurat=5  #=5.0.1
-  - r-seuratdisk
-  - r-seuratdata
-  - r-snow
-  - r-upsetr
-  - r-vegan
-  - r-tidyseurat
-  - r-gsea_r
-  - r-hgnchelper
-  - r-seuratwrappers
-  - r-plotroc
-  - r-bracer
-  - r-sccatch
-  - r-harmony=1  #=1.2.0  # avoid v0.1 on bioconda
-  - bioconductor-splatter
-  - bioconductor-data-packages  # use the one from pwwang
-  - bioconductor-mygene
-  - bioconductor-ggmanh=1.9.6  # force pwwang
-  - bioconductor-complexheatmap
-  - bioconductor-glmgampoi
-  - bioconductor-fgsea
-  - bioconductor-scater
-  - bioconductor-scran
-  - bioconductor-singlecellexperiment
-  - bioconductor-dropletutils
-  - bioconductor-rtracklayer
-  - bioconductor-universalmotif
-  - bioconductor-motifbreakr
-  - bioconductor-atsnp
-  - bioconductor-bsgenome.hsapiens.ucsc.hg19
-  - bioconductor-scdblfinder
-  # Causes: Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so.2
-  #         or libmkl_def.so.2.
-  - libfaiss-avx2=1.7.2=h1234567_0_cpu
-  - libfaiss=1.7.2=hde9c08d_1_cpu
-  - faiss-cpu
-  - clustcr
-  - pip
+  - conda-forge::python=3.10
+  - conda-forge::nodejs=20  # for pipen-report
+  - conda-forge::curl  #=7.83
+  - conda-forge::openssl
+  - conda-forge::aria2=1.36
+  - conda-forge::r-clustree
+  - conda-forge::r-logger
+  - conda-forge::r-base=4.3
+  - conda-forge::r-ggplot2
+  - conda-forge::r-mediation
+  - conda-forge::r-tidyr
+  - conda-forge::r-dplyr
+  - conda-forge::r-tibble
+  - conda-forge::r-enrichr
+  - conda-forge::r-forcats
+  - conda-forge::r-future
+  - conda-forge::r-metap
+  - conda-forge::r-qqplotr
+  - conda-forge::r-ggprism  #=1.0.5
+  - conda-forge::r-ggpubr
+  - conda-forge::r-ggpmisc
+  - conda-forge::r-ggrepel
+  - conda-forge::r-ggupset
+  - conda-forge::r-ggvenndiagram
+  - conda-forge::r-gtools
+  - conda-forge::r-immunarch  #=0.9
+  - conda-forge::r-matrix
+  - conda-forge::r-matrixstats=1.1.0
+  - conda-forge::r-rmagic
+  - conda-forge::r-seurat=5  #=5.0.1
+  - conda-forge::r-snow
+  - conda-forge::r-upsetr
+  - conda-forge::r-vegan
+  - conda-forge::r-tidyseurat
+  - conda-forge::r-hgnchelper
+  - conda-forge::r-plotroc
+  - conda-forge::libfaiss-avx2=1.7.2=h1234567_0_cpu
+  - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
+  - conda-forge::faiss-cpu
+  - conda-forge::pip
+  - bioconda::cyvcf2
+  - bioconda::pysam
+  - bioconda::bcftools
+  - bioconda::mygene
+  - bioconda::meme  #=5.5.5
+  - bioconda::tabix
+  - bioconda::seqkit
+  - bioconda::plink
+  - bioconda::plink2
+  - bioconda::samtools
+  - bioconda::bedtools
+  - bioconda::r-presto
+  - bioconda::r-scimpute
+  - bioconda::bioconductor-splatter
+  - bioconda::bioconductor-mygene
+  - bioconda::bioconductor-complexheatmap
+  - bioconda::bioconductor-glmgampoi
+  - bioconda::bioconductor-fgsea
+  - bioconda::bioconductor-scater
+  - bioconda::bioconductor-scran
+  - bioconda::bioconductor-singlecellexperiment
+  - bioconda::bioconductor-dropletutils
+  - bioconda::bioconductor-rtracklayer
+  - bioconda::bioconductor-universalmotif
+  - bioconda::bioconductor-motifbreakr
+  - bioconda::bioconductor-atsnp
+  - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
+  - bioconda::bioconductor-scdblfinder
+  - bioconda::truvari
+  - pwwang::r-doubletfinder
+  - pwwang::r-hitype
+  - pwwang::r-ggradar
+  - pwwang::r-seuratdisk
+  - pwwang::r-seuratdata
+  - pwwang::r-gsea_r
+  - pwwang::r-seuratwrappers
+  - pwwang::r-bracer
+  - pwwang::r-sccatch
+  - pwwang::r-harmony
+  - pwwang::bioconductor-data-packages
+  - pwwang::bioconductor-ggmanh
+  - svalkiers::clustcr
   - pip:
-    - truvari==4.3.0
+    - poetry
     - magic-impute
     # For GIANA
     - biopython==1.79

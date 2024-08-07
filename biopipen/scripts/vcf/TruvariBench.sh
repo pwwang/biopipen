@@ -24,10 +24,10 @@ multimatch=""
 {% endif %}
 
 rm -rf $outdir
-$truvari bench \
-    -c "$compvcf" \
-    -b "$basevcf" \
-    -f "$ref" \
+cmd="$truvari bench \
+    -c '$compvcf' \
+    -b '$basevcf' \
+    -f '$ref' \
     --refdist $refdist \
     --pctseq $pctseq \
     --pctsize $pctsize \
@@ -35,4 +35,7 @@ $truvari bench \
     --sizemax $sizemax \
     $typeignore \
     $multimatch \
-    -o $outdir
+    -o $outdir"
+
+echo "$cmd"
+eval "$cmd"
