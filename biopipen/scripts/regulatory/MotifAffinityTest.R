@@ -46,7 +46,7 @@ log_info("Reading input regulator/motif file ...")
 in_motifs <- read.table(motiffile, header=TRUE, sep="\t", stringsAsFactors=FALSE, check.names = FALSE)
 
 log_info("Ensuring motifs and regulators in the input data ...")
-in_motifs <- ensure_regulator_motifs(in_motifs, outdir, motif_col, regulator_col, regmotifs, notfound)
+in_motifs <- ensure_regulator_motifs(in_motifs, outdir, motif_col, regulator_col, regmotifs, notfound = notfound)
 genome_pkg <- get_genome_pkg(genome)
 
 log_info("Reading variant file ...")
