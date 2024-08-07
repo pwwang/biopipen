@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.31.6
+
+- deps: pin the channels of conda dependencies for tests
+- feat(vcf): adopt truvari v4+ for related processes
+- feat(regulatory): add VariantMotifPlot to plot motif and surrounding sequences with mutations
+- refactor(regulatory.MotifAffinityTest): optimize code base
+- ci: add verbosal output for tests
+
 ## 0.31.5
 
 - deps: update pipen to version 0.15.3 and xqute to version 0.5.2
