@@ -49,6 +49,7 @@ class VariantMotifPlotBreakR_WithTF(VariantMotifPlot_):
     envs = {
         "genome": "hg19",
         "regulator_col": "Regulator",
+        "motifdb": motifdb,
     }
 
 
@@ -70,6 +71,7 @@ class VariantMotifPlotBreakR_WithTFOnly(VariantMotifPlot_):
         "genome": "hg19",
         "motif_col": None,
         "regulator_col": "Regulator",
+        "motifdb": motifdb,
     }
 
 
@@ -113,6 +115,7 @@ class VariantMotifPlotAtSNP_WithTF(VariantMotifPlot_):
     envs = {
         "genome": "hg19",
         "regulator_col": "Regulator",
+        "motifdb": motifdb,
     }
 
 
@@ -136,6 +139,7 @@ class VariantMotifPlotAtSNP_WithTFOnly(VariantMotifPlot_):
         "genome": "hg19",
         "motif_col": None,
         "regulator_col": "Regulator",
+        "motifdb": motifdb,
     }
 
 
