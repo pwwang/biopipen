@@ -301,3 +301,31 @@ class BamSampling(Proc):
         "sort_args": [],
     }
     script = "file://../scripts/bam/BamSampling.py"
+
+
+class BamSubsetByBed(Proc):
+    """Subset bam file by the regions in a bed file
+
+    Input:
+        bamfile: The bam file
+        bedfile: The bed file
+
+    Output:
+        outfile: The output bam file
+
+    Envs:
+        ncores: Number of cores to use
+        samtools: Path to samtools executable
+        tool: The tool to use, currently only "samtools" is supported
+        index: Whether to index the output bam file
+    """
+    input = "bamfile:file, bedfile:file"
+    output = "outfile:file:{{in.bamfile | stem}}-subset.bam"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "samtools": config.exe.samtools,
+        "tool": "samtools",
+        "index": True,
+    }
+    script = "file://../scripts/bam/BamSubsetByBed.py"
