@@ -58,3 +58,6 @@ build-backend = "poetry.core.masonry.api"
 line-length = 88
 target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
+
+[tool.pyright]
+include = [ "biopipen/**/*.py" ]
