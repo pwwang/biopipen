@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.31.7
+
+- deps: bump pipen-args to 0.16
+- chore: update pyright configuration to include `biopipen/**/*.py`
+- feat(bam): add BamSubsetByBed process for subsetting bam file by regions in a bed file
+- feat(bed): add BedtoolsMakeWindows process for generating windows from a BED file or genome size file
+
 ## 0.31.6
 
 - deps: pin the channels of conda dependencies for tests
