@@ -198,3 +198,43 @@ class BedtoolsIntersect(Proc):
         "postcmd": None,
     }
     script = "file://../scripts/bed/BedtoolsIntersect.py"
+
+
+class BedtoolsMakeWindows(Proc):
+    """Make windows from a BED file or genome size file, using `bedtools makewindows`.
+
+    Input:
+        infile: The input BED file or a genome size file
+            Type will be detected by the number of columns in the file.
+            If it has 3+ columns, it is treated as a BED file, otherwise
+            a genome size file.
+
+    Output:
+        outfile: The output BED file
+
+    Envs:
+        bedtools: The path to bedtools
+        window (type=int): The size of the windows
+        step (type=int): The step size of the windows
+        nwin (type=int): The number of windows to be generated
+            Exclusive with `window` and `step`.
+            Either `nwin` or `window` and `step` should be provided.
+        reverse (flag): Reverse numbering of windows in the output
+        name (choice): How to name the generated windows/regions
+            - none: Do not add any name
+            - src: Use the source interval's name
+            - winnum: Use the window number
+            - srcwinnum: Use the source interval's name and window number
+    """  # noqa: E501
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}_windows.bed"
+    lang = config.lang.python
+    envs = {
+        "bedtools": config.exe.bedtools,
+        "window": None,
+        "step": None,
+        "nwin": None,
+        "reverse": False,
+        "name": "none",
+    }
+    script = "file://../scripts/bed/BedtoolsMakeWindows.py"

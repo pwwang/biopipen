@@ -139,13 +139,13 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "argx"
-version = "0.2.10"
+version = "0.2.11"
 description = "Super-charged argparse for python"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = "<4.0,>=3.7"
 files = [
-    {file = "argx-0.2.10-py3-none-any.whl", hash = "sha256:85c6b150c5ec86dd5aefaca260dcf8bd8445a3c6d174eaaacb5835638d207083"},
-    {file = "argx-0.2.10.tar.gz", hash = "sha256:72ab5511163870eeb589c007fb11cb2c5cc91b9faa553ed45e7404f6c1e7a238"},
+    {file = "argx-0.2.11-py3-none-any.whl", hash = "sha256:1236154bdad6832c1fecdea363f9cc67692fb50ee106b63fa70a7776fe4922ec"},
+    {file = "argx-0.2.11.tar.gz", hash = "sha256:6ae35dbd3ee3be4036022bc67eb8f2d5f87411c4398cee5fa022d85910833f7d"},
 ]
 
 [package.dependencies]
@@ -927,13 +927,13 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.15.3"
+version = "0.15.5"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen-0.15.3-py3-none-any.whl", hash = "sha256:efbd7ac09787b60ab2699c9e3acc5448f1801dc8ebed3feae27f2916f56d5bdf"},
-    {file = "pipen-0.15.3.tar.gz", hash = "sha256:e7f51797eddcb57ad274a7930b1743264fbae9989d20b7d5c2698d68ec2fc3af"},
+    {file = "pipen-0.15.5-py3-none-any.whl", hash = "sha256:397c5fd2537e13296a0ba13ff18a0000d3835af8e3a374b0a3c947e1190c1b92"},
+    {file = "pipen-0.15.5.tar.gz", hash = "sha256:01f6995a823518fe524f2b9867cfb65be46cd39b6d4fdca05e9e7f45e44c0f2d"},
 ]
 
 [package.dependencies]
@@ -963,13 +963,13 @@ pipen = ">=0.15.0,<0.16.0"
 
 [[package]]
 name = "pipen-args"
-version = "0.15.0"
+version = "0.16.0"
 description = "Command-line argument parser for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_args-0.15.0-py3-none-any.whl", hash = "sha256:a437784c9f8f78aa0409750237c596d524a698fd9b5348bdd4e1c239ed0536a2"},
-    {file = "pipen_args-0.15.0.tar.gz", hash = "sha256:362f4df6984e124ae336aa999c2816dda5c3edb9e758813181bf1a582980b17a"},
+    {file = "pipen_args-0.16.0-py3-none-any.whl", hash = "sha256:7d02cd4de99340c8ca073d793579f123d56f0292e3aa4f815bc120b53d1dba55"},
+    {file = "pipen_args-0.16.0.tar.gz", hash = "sha256:19564c41f45fb181c953e79485830981d7468545b852800df29b0cb07f67dcb1"},
 ]
 
 [package.dependencies]
@@ -977,17 +977,17 @@ pipen-annotate = ">=0.14,<0.15"
 
 [[package]]
 name = "pipen-board"
-version = "0.16.0"
+version = "0.16.1"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_board-0.16.0-py3-none-any.whl", hash = "sha256:3731dc446806ec0d6b3bac3bfc32dddb92c656bc3da5f9f27073510e69d69832"},
-    {file = "pipen_board-0.16.0.tar.gz", hash = "sha256:b9317e0156cd59a1994cc4cc7cc959598bcb8b04e85f6ea6c0c210bb4b85198e"},
+    {file = "pipen_board-0.16.1-py3-none-any.whl", hash = "sha256:8304ba9fa67ec96ce9476d451f2583dafcc367b1ebf617e19f284cf6c4ef7458"},
+    {file = "pipen_board-0.16.1.tar.gz", hash = "sha256:0bedf2346dc2174649f7c35da4c9f6f28eea934e186d4d43f484768cdc59f808"},
 ]
 
 [package.dependencies]
-pipen-args = ">=0.15,<0.16"
+pipen-args = ">=0.16,<0.17"
 pipen-log2file = ">=0.8,<0.9"
 pipen-report = {version = ">=0.20,<0.21", optional = true, markers = "extra == \"report\""}
 psutil = ">=5.9,<6.0"
@@ -1002,17 +1002,17 @@ report = ["pipen-report (>=0.20,<0.21)"]
 
 [[package]]
 name = "pipen-cli-run"
-version = "0.14.0"
+version = "0.14.1"
 description = "A pipen cli plugin to run a process or a pipeline"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_cli_run-0.14.0-py3-none-any.whl", hash = "sha256:d894609158e5a10f8a4f340834ff22d2ea8b751f97d7ccaf4d2cc4d262c319e7"},
-    {file = "pipen_cli_run-0.14.0.tar.gz", hash = "sha256:bd86a248f71648be971c39b1e0480d31d390f8342fdd258d12b608d0ae0a10be"},
+    {file = "pipen_cli_run-0.14.1-py3-none-any.whl", hash = "sha256:df008dc00c060277ed20edce4bc727379a76058233e664eaed01873ae8fce2e7"},
+    {file = "pipen_cli_run-0.14.1.tar.gz", hash = "sha256:b3a0fb681ce06b1885ce6fc61b7693fb31c0b1168474a47d5585859ac78c90f0"},
 ]
 
 [package.dependencies]
-pipen-args = ">=0.15.0,<0.16.0"
+pipen-args = ">=0.16.0,<0.17.0"
 
 [[package]]
 name = "pipen-filters"
@@ -1126,13 +1126,13 @@ ssh = ["paramiko"]
 
 [[package]]
 name = "prefixed"
-version = "0.7.1"
+version = "0.8.0"
 description = "Prefixed alternative numeric library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "prefixed-0.7.1-py2.py3-none-any.whl", hash = "sha256:530cb380c9d90f3436e68bddcde1aca6ea5babc6a4445ce692d7a605fa88efaf"},
-    {file = "prefixed-0.7.1.tar.gz", hash = "sha256:d10ac90acfc4cc14d82c1408b330b2fda85ed7cec2206a800d43899f8c385265"},
+    {file = "prefixed-0.8.0-py2.py3-none-any.whl", hash = "sha256:d78fe17bbed8b2e8eb07ed9e611961c96338b4135b45fdd2bd6a3113f5a9f9cf"},
+    {file = "prefixed-0.8.0.tar.gz", hash = "sha256:135b93d4d18a2ca49243cc5b62f7a02969759e170135cd0121759f4a666cd369"},
 ]
 
 [[package]]
@@ -1817,13 +1817,13 @@ uvloop = ">=0,<1"
 
 [[package]]
 name = "zipp"
-version = "3.19.2"
+version = "3.20.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.19.2-py3-none-any.whl", hash = "sha256:f091755f667055f2d02b32c53771a7a6c8b47e1fdbc4b72a8b9072b3eef8015c"},
-    {file = "zipp-3.19.2.tar.gz", hash = "sha256:bf1dcf6450f873a13e952a29504887c89e6de7506209e5b1bcc3460135d4de19"},
+    {file = "zipp-3.20.0-py3-none-any.whl", hash = "sha256:58da6168be89f0be59beb194da1250516fdaa062ccebd30127ac65d30045e10d"},
+    {file = "zipp-3.20.0.tar.gz", hash = "sha256:0145e43d89664cfe1a2e533adc75adafed82fe2da404b4bbb6b026c0157bdb31"},
 ]
 
 [package.extras]

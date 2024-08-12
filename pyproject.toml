@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.31.6"
+version = "0.31.7"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -58,3 +58,6 @@ build-backend = "poetry.core.masonry.api"
 line-length = 88
 target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
+
+[tool.pyright]
+include = [ "biopipen/**/*.py" ]
