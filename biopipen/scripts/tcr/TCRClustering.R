@@ -60,9 +60,11 @@ prepare_clustcr = function(clustcr_dir) {
     }
     clustcr_source = '
 import sys
-import pandas as pd
-import clustcr
 import atexit
+
+import pandas as pd
+from scipy import sparse as scipy_sparse
+
 
 @atexit.register
 def clustcr_exit():
@@ -78,13 +80,32 @@ def clustcr_exit():
     sys.stderr.write(f"- sklearn: {sklearn.__version__}\\n")
     sys.stderr.write(f"- matplotlib: {matplotlib.__version__}\\n")
 
+
+# Monkey-patch scipy.sparse.isspmatrix to adopt latest scipy v1.14
+# If not, an error is raised:
+#   numpy.linalg.LinAlgError: 0-dimensional array given.
+#   Array must be at least two-dimensional
+scipy_sparse.isspmatrix = lambda x: isinstance(
+    x,
+    (
+        scipy_sparse.spmatrix,
+        scipy_sparse.csr_array,
+        scipy_sparse.csr_matrix,
+        scipy_sparse.csc_array,
+        scipy_sparse.csc_matrix,
+    ),
+)
+
+
+import clustcr  # noqa: #402
+
 clustcr_dir, clustcr_infile = sys.argv[1:3]
 cdr3df = pd.read_csv(clustcr_infile, index_col=None)
 cdr3 = cdr3df.iloc[:, 0]
 
-clustering = clustcr.Clustering(%s)
+clustering = clustcr.Clustering()
 output = clustering.fit(cdr3)
-output.clusters_df.to_csv(clustcr_dir + "/clusters.txt", sep="\\t", index=False)
+output.clusters_df.to_csv(clustcr_dir + "/clusters.txt", sep="\t", index=False)
 '
     clustcr_file = file.path(clustcr_dir, "_clustcr.py")
     cat(sprintf(clustcr_source, clustering_args), file=clustcr_file)
