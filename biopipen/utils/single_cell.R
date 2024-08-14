@@ -1,7 +1,7 @@
 suppressPackageStartupMessages(library(rlang))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(immunarch))
+try(suppressPackageStartupMessages(library(immunarch)))
 
 #' Expand a Immunarch object into cell-level
 #'
@@ -125,6 +125,7 @@ immdata_from_expanded <- function(
 seurat_to_anndata <- function(sobjfile, outfile, assay = NULL, log_info, tmpdir = NULL, log_indent = "") {
     library(Seurat)
     library(SeuratDisk)
+    library(hdf5r)
     if (endsWith(sobjfile, ".rds") || endsWith(sobjfile, ".RDS")) {
         library(digest)
 
@@ -173,4 +174,34 @@ seurat_to_anndata <- function(sobjfile, outfile, assay = NULL, log_info, tmpdir 
 
     log_info("{log_indent}Converting to Anndata ...")
     Convert(sobjfile, dest = outfile, assay = assay %||% "RNA", overwrite = TRUE)
+
+    log_info("{log_indent}Fixing categorical data ...")
+    # See: https://github.com/mojaveazure/seurat-disk/issues/183
+    H5.create_reference <- function(self, ...) {
+        space <- self$get_space()
+        do.call("[", c(list(space), list(...)))
+        ref_type <- hdf5r::h5const$H5R_OBJECT
+        ref_obj <- hdf5r::H5R_OBJECT$new(1, self)
+        res <- .Call("R_H5Rcreate", ref_obj$ref, self$id, ".", ref_type,
+                    space$id, FALSE, PACKAGE = "hdf5r")
+        if (res$return_val < 0) {
+            stop("Error creating object reference")
+        }
+        ref_obj$ref <- res$ref
+        return(ref_obj)
+    }
+
+    h5ad <- H5File$new(outfile, "r+")
+    cats <- names(h5ad[["obs/__categories"]])
+    for (cat in cats) {
+        catname <- paste0("obs/__categories/", cat)
+        obsname <- paste0("obs/", cat)
+        ref <- H5.create_reference(h5ad[[catname]])
+        h5ad[[obsname]]$create_attr(
+            attr_name = "categories",
+            robj = ref,
+            space = H5S$new(type = "scalar")
+        )
+    }
+    h5ad$close()
 }
