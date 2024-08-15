@@ -1,7 +1,7 @@
 suppressPackageStartupMessages(library(rlang))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(immunarch))
+try(suppressPackageStartupMessages(library(immunarch)))
 
 #' Expand a Immunarch object into cell-level
 #'
@@ -113,4 +113,95 @@ immdata_from_expanded <- function(
         }
     )
     out
+}
+
+#' Convert Seurat object to Anndata
+#'
+#' @param sobjfile Seurat object file
+#' @param outfile Output file
+#' @param assay Assay to be used
+#'
+#' @export
+seurat_to_anndata <- function(sobjfile, outfile, assay = NULL, log_info, tmpdir = NULL, log_indent = "") {
+    library(Seurat)
+    library(SeuratDisk)
+    library(hdf5r)
+    if (endsWith(sobjfile, ".rds") || endsWith(sobjfile, ".RDS")) {
+        library(digest)
+
+        dig <- digest::digest(sobjfile, algo = "md5")
+        dig <- substr(dig, 1, 8)
+        assay_name <- ifelse(is.null(assay), "", paste0("_", assay))
+        tmpdir <- tmpdir %||% dirname(outfile)
+        dir.create(tmpdir, showWarnings = FALSE)
+        h5seurat_file <- file.path(
+            tmpdir,
+            paste0(
+                tools::file_path_sans_ext(basename(outfile)),
+                assay_name, ".", dig, ".h5seurat"
+            )
+        )
+        if (file.exists(h5seurat_file) &&
+            (file.mtime(h5seurat_file) < file.mtime(sobjfile))) {
+            file.remove(h5seurat_file)
+        }
+        if (!file.exists(h5seurat_file)) {
+            log_info("{log_indent}Reading RDS file ...")
+            sobj <- readRDS(sobjfile)
+            assay <- assay %||% DefaultAssay(sobj)
+            # In order to convert to h5ad
+            # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
+            sobj$RNAv3 <- as(object = sobj[[assay]], Class = "Assay")
+            DefaultAssay(sobj) <- "RNAv3"
+            sobj$RNA <- NULL
+            sobj <- RenameAssays(sobj, RNAv3 = "RNA")
+
+            log_info("{log_indent}Saving to H5Seurat file ...")
+            SaveH5Seurat(sobj, h5seurat_file)
+            rm(sobj)
+            gc()
+            sobjfile <- h5seurat_file
+        } else {
+            log_info("{log_indent}Using existing H5Seurat file ...")
+        }
+    }
+
+    if (!endsWith(sobjfile, ".h5seurat")) {
+        stop(paste0("Unknown input file format: ",
+            tools::file_ext(sobjfile),
+            ". Supported formats: .rds, .RDS, .h5seurat"))
+    }
+
+    log_info("{log_indent}Converting to Anndata ...")
+    Convert(sobjfile, dest = outfile, assay = assay %||% "RNA", overwrite = TRUE)
+
+    log_info("{log_indent}Fixing categorical data ...")
+    # See: https://github.com/mojaveazure/seurat-disk/issues/183
+    H5.create_reference <- function(self, ...) {
+        space <- self$get_space()
+        do.call("[", c(list(space), list(...)))
+        ref_type <- hdf5r::h5const$H5R_OBJECT
+        ref_obj <- hdf5r::H5R_OBJECT$new(1, self)
+        res <- .Call("R_H5Rcreate", ref_obj$ref, self$id, ".", ref_type,
+                    space$id, FALSE, PACKAGE = "hdf5r")
+        if (res$return_val < 0) {
+            stop("Error creating object reference")
+        }
+        ref_obj$ref <- res$ref
+        return(ref_obj)
+    }
+
+    h5ad <- H5File$new(outfile, "r+")
+    cats <- names(h5ad[["obs/__categories"]])
+    for (cat in cats) {
+        catname <- paste0("obs/__categories/", cat)
+        obsname <- paste0("obs/", cat)
+        ref <- H5.create_reference(h5ad[[catname]])
+        h5ad[[obsname]]$create_attr(
+            attr_name = "categories",
+            robj = ref,
+            space = H5S$new(type = "scalar")
+        )
+    }
+    h5ad$close()
 }

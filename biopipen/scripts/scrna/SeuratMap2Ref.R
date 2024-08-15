@@ -5,6 +5,7 @@ library(Seurat)
 library(SeuratDisk)
 library(rlang)
 library(dplyr)
+library(tidyr)
 
 set.seed(8525)
 
@@ -377,7 +378,25 @@ for (qname in names(mapquery_args$refdata)) {
         repel = TRUE,
     ) + NoLegend()
 
-    png(file.path(outdir, paste0("UMAPs.png")), width = 1400, height = 700, res = 100)
+    png(file.path(outdir, paste0("UMAPs-", slugify(qname), ".png")), width = 1500, height = 700, res = 100)
     print(ref_p | query_p)
     dev.off()
+
+    # summarize the stats
+    log_info("  Summarizing stats: {qname} -> {rname}")
+    ref_stats <- as.data.frame(table(reference@meta.data[[rname]]))
+    colnames(ref_stats) <- c("CellType", "Count_Ref")
+    query_stats <- as.data.frame(table(sobj@meta.data[[paste0("predicted.", qname)]]))
+    colnames(query_stats) <- c("CellType", "Count_Query")
+    stats <- left_join(ref_stats, query_stats, by = "CellType") %>%
+        replace_na(list(Count_Query = 0)) %>%
+        arrange(desc(Count_Query), desc(Count_Ref))
+
+    write.table(
+        stats,
+        file = file.path(outdir, paste0("stats-", slugify(qname), ".txt")),
+        row.names = FALSE,
+        quote = FALSE,
+        sep = "\t"
+    )
 }

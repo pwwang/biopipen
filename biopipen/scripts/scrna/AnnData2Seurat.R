@@ -41,25 +41,33 @@ if (outtype == "rds") {
     f <- H5File$new(h5seurat_file, "r+")
     groups <- f$ls(recursive = TRUE)
 
-    for (name in groups$name[grepl("categories", groups$name)]) {
-        names <- strsplit(name, "/")[[1]]
-        names <- c(names[1:length(names) - 1], "levels")
-        new_name <- paste(names, collapse = "/")
-        f[[new_name]] <- f[[name]]
-    }
+    for (name in groups$name[grepl("/categories$", groups$name)]) {
+        valuenames <- levelnames <- codenames <- strsplit(name, "/")[[1]]
+        valuenames[length(valuenames)] <- "values"
+        valuenames <- paste(valuenames, collapse = "/")
+        levelnames[length(levelnames)] <- "levels"
+        levelnames <- paste(levelnames, collapse = "/")
+        codenames[length(codenames)] <- "codes"
+        codenames <- paste(codenames, collapse = "/")
+        if (!f$exists(codenames)) {
+            # No codes, skip
+            next
+        }
 
-    for (name in groups$name[grepl("codes", groups$name)]) {
-        names <- strsplit(name, "/")[[1]]
-        names <- c(names[1:length(names) - 1], "values")
-        new_name <- paste(names, collapse = "/")
-        f[[new_name]] <- f[[name]]
-        grp <- f[[new_name]]
-        grp$write(args = list(1:grp$dims), value = grp$read() + 1)
+        if (!f$exists(levelnames)) {
+            f[[levelnames]] <- f[[name]]
+        }
+
+        if (!f$exists(valuenames)) {
+            f[[valuenames]] <- f[[codenames]]
+            grp <- f[[valuenames]]
+            grp$write(args = list(1:grp$dims), value = grp$read() + 1)
+        }
     }
     f$close_all()
     # end
 
-    sobj <- LoadH5Seurat(h5seurat_file)
+    sobj <- LoadH5Seurat(h5seurat_file, assays = assay)
     if (!isFALSE(dotplot_check)) {
         log_info("Checking dotplot ...")
         dotfig <- file.path(outdir, "dotplot.png")

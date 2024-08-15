@@ -68,6 +68,7 @@ dependencies:
   - bioconda::bioconductor-atsnp
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
   - bioconda::bioconductor-scdblfinder
+  - bioconda::bioconductor-ccplotr
   - bioconda::truvari
   - pwwang::r-doubletfinder
   - pwwang::r-hitype
@@ -86,9 +87,10 @@ dependencies:
     - poetry
     - magic-impute
     # For GIANA
-    - biopython==1.79
+    - biopython  #==1.79
     # For clustcr
-    - scikit-learn==1.1.3
-    - scipy==1.8.0
+    - scikit-learn  #==1.1.3
+    - scipy  #==1.8.0
     - celltypist
     - mygene
+    - liana

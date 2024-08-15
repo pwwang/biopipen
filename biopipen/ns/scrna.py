@@ -2314,3 +2314,156 @@ class ScSimulation(Proc):
         "params": {},
     }
     script = "file://../scripts/scrna/ScSimulation.R"
+
+
+class CellCellCommunication(Proc):
+    """Cell-cell communication inference
+
+    This is implemented based on [LIANA](https://liana-py.readthedocs.io/en/latest/index.html),
+    which is a Python package for cell-cell communication inference and provides a list of existing
+    methods including [CellPhoneDB](https://github.com/ventolab/CellphoneDB),
+    [Connectome](https://github.com/msraredon/Connectome/), log2FC,
+    [NATMI](https://github.com/forrest-lab/NATMI),
+    [SingleCellSignalR](https://github.com/SCA-IRCM/SingleCellSignalR), Rank_Aggregate, Geometric Mean,
+    [scSeqComm](https://gitlab.com/sysbiobig/scseqcomm), and [CellChat](https://github.com/jinworks/CellChat).
+
+    You can also try `python -c 'import liana; liana.mt.show_methods()'` to see the methods available.
+
+    Note that this process does not do any visualization. You can use `CellCellCommunicationPlots`
+    to visualize the results.
+
+    Reference:
+    - [Review](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9184522/).
+    - [LIANA](https://www.biorxiv.org/content/10.1101/2023.08.19.553863v1).
+
+    Input:
+        sobjfile: The seurat object file in RDS or h5seurat format or AnnData file.
+
+    Output:
+        outfile: The output file with the 'liana_res' data frame.
+            Stats are provided for both ligand and receptor entities, more specifically: ligand and receptor are
+            the two entities that potentially interact. As a reminder, CCC events are not limited to secreted signalling,
+            but we refer to them as ligand and receptor for simplicity.
+            Also, in the case of heteromeric complexes, the ligand and receptor columns represent the subunit with minimum
+            expression, while *_complex corresponds to the actual complex, with subunits being separated by _.
+            source and target columns represent the source/sender and target/receiver cell identity for each interaction, respectively
+            * `*_props`: represents the proportion of cells that express the entity.
+                By default, any interactions in which either entity is not expressed in above 10% of cells per cell type
+                is considered as a false positive, under the assumption that since CCC occurs between cell types, a sufficient
+                proportion of cells within should express the genes.
+            * `*_means`: entity expression mean per cell type.
+            * `lr_means`: mean ligand-receptor expression, as a measure of ligand-receptor interaction magnitude.
+            * `cellphone_pvals`: permutation-based p-values, as a measure of interaction specificity.
+
+    Envs:
+        method (choice): The method to use for cell-cell communication inference.
+            - CellPhoneDB: Use CellPhoneDB method.
+                Magnitude Score: lr_means; Specificity Score: cellphone_pvals.
+            - Connectome: Use Connectome method.
+            - log2FC: Use log2FC method.
+            - NATMI: Use NATMI method.
+            - SingleCellSignalR: Use SingleCellSignalR method.
+            - Rank_Aggregate: Use Rank_Aggregate method.
+            - Geometric_Mean: Use Geometric Mean method.
+            - scSeqComm: Use scSeqComm method.
+            - CellChat: Use CellChat method.
+            - cellphonedb: alias for `CellPhoneDB`
+            - connectome: alias for `Connectome`
+            - log2fc: alias for `log2FC`
+            - natmi: alias for `NATMI`
+            - singlesignaler: alias for `SingleCellSignalR`
+            - rank_aggregate: alias for `Rank_Aggregate`
+            - geometric_mean: alias for `Geometric_Mean`
+            - scseqcomm: alias for `scSeqComm`
+            - cellchat: alias for `CellChat`
+        assay: The assay to use for the analysis.
+            Only works for Seurat object.
+        seed (type=int): The seed for the random number generator.
+        ncores (type=int): The number of cores to use.
+        groupby: The column name in metadata to group the cells.
+            Typically, this column should be the cluster id.
+        species (choice): The species of the cells.
+            - human: Human cells, the 'consensus' resource will be used.
+            - mouse: Mouse cells, the 'mouseconsensus' resource will be used.
+        expr_prop (type=float): Minimum expression proportion for the ligands and
+            receptors (+ their subunits) in the corresponding cell identities. Set to 0
+            to return unfiltered results.
+        min_cells (type=int): Minimum cells (per cell identity if grouped by `groupby`)
+            to be considered for downstream analysis.
+        n_perms (type=int): Number of permutations for the permutation test.
+            Relevant only for permutation-based methods (e.g., `CellPhoneDB`).
+            If `0` is passed, no permutation testing is performed.
+        rscript: The path to the Rscript executable used to convert RDS file to AnnData.
+            if `in.sobjfile` is an RDS file, it will be converted to AnnData file (h5ad).
+            You need `Seurat`, `SeuratDisk` and `digest` installed.
+        <more>: Other arguments for the method.
+            The arguments are passed to the method directly.
+            See the method documentation for more details and also
+            `help(liana.mt.<method>.__call__)` in Python.
+    """  # noqa: E501
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}-ccc.txt"
+    lang = config.lang.python
+    envs = {
+        "method": "cellchat",
+        "assay": None,
+        "seed": 1337,
+        "ncores": config.misc.ncores,
+        "groupby": "seurat_clusters",
+        "species": "human",
+        "expr_prop": 0.1,
+        "min_cells": 5,
+        "n_perms": 1000,
+        "rscript": config.lang.rscript,
+    }
+    script = "file://../scripts/scrna/CellCellCommunication.py"
+
+
+class CellCellCommunicationPlots(Proc):
+    """Visualization for cell-cell communication inference.
+
+    R package [`CCPlotR`](https://github.com/Sarah145/CCPlotR) is used to visualize
+    the results.
+
+    Input:
+        cccfile: The output file from `CellCellCommunication`
+            or a tab-separated file with the following columns: `source`, `target`,
+            `ligand`, `receptor`, and `score`.
+            If so, `in.expfile` can be provided where `exp_df` is needed.
+        expfile: The expression file with the expression of ligands and receptors.
+            Columns include: `cell_type`, `gene` and `mean_exp`.
+
+    Output:
+        outdir: The output directory for the plots.
+
+    Envs:
+        score_col: The column name in the input file that contains the score, if
+            the input file is from `CellCellCommunication`.
+            Two alias columns are added in the result file of `CellCellCommunication`,
+            `mag_score` and `spec_score`, which are the magnitude and specificity
+            scores.
+        subset: An expression to pass to `dplyr::filter()` to subset the ccc data.
+        cases (type=json): The cases for the plots.
+            The keys are the names of the cases and the values are the arguments for
+            the plots. The arguments include:
+            * kind: one of `arrow`, `circos`, `dotplot`, `heatmap`, `network`,
+                and `sigmoid`.
+            * devpars: The parameters for `png()` for the plot, including `res`,
+                `width`, and `height`.
+            * section: The section name for the report to group the plots.
+            * <other>: Other arguments for `cc_<kind>` function in `CCPlotR`.
+                See the documentation for more details.
+                Or you can use `?CCPlotR::cc_<kind>` in R.
+    """
+    input = "cccfile:file, expfile:file"
+    output = "outdir:dir:{{in.cccfile | stem}}-ccc_plots"
+    lang = config.lang.rscript
+    envs = {
+        "score_col": "mag_score",
+        "subset": None,
+        "cases": {},
+    }
+    script = "file://../scripts/scrna/CellCellCommunicationPlots.R"
+    plugin_opts = {
+        "report": "file://../reports/scrna/CellCellCommunicationPlots.svelte",
+    }
