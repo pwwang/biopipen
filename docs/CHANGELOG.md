@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.32.0
+
+- deps: update pipen-runinfo dependency to version 0.8.1
+- feat(scrna): add CellCellCommunication and CellCellCommunicationPlots
+- fix(scrna.SeuratMap2Ref): fix report and add stats to report
+- fix(utils.single_cell.R): fix categorical data when converting seurat to anndata format
+- refactor(scrna.Seurat2AnnData): abstract seurat_to_anndata() for reuse
+- enh(tcr.TCRClustering): make GIANA compatible with latest BioPython (v1.84)
+- fix(tcr.TCRClstering): fix clusTCR error due to scipy update (v1.14)
+
 ## 0.31.7
 
 - deps: bump pipen-args to 0.16
