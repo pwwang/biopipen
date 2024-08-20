@@ -114,6 +114,45 @@ do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {
 
 }
 
+#' Save the plot into multiple formats
+#'
+#' @param plot The plot object
+#' @param prefix The prefix of the file
+#' @param formats The formats to save
+#' @param devpars The device parameters
+#' @export
+save_plot <- function(plot, prefix, devpars, formats = c("png", "pdf")) {
+    for (fmt in formats) {
+        ggsave(
+            paste0(prefix, ".", fmt),
+            plot,
+            device = fmt,
+            width = devpars$width,
+            height = devpars$height,
+            dpi = devpars$res,
+            units = "px")
+    }
+}
+
+#' Save the code to generate the data
+#'
+#' @param code The code
+#' @param prefix The prefix of the file
+#' @param ... Additional data frame to save
+#'
+#' @export
+save_plotcode <- function(code, prefix, ..., envir = parent.frame()) {
+    codedir <- paste0(prefix, ".code")
+    dir.create(codedir, showWarnings = FALSE)
+    codefile <- file.path(codedir, "plot.R")
+    writeLines(code, codefile)
+    save(..., file = file.path(codedir, "data.RData"), envir = envir)
+
+    zip_file <- paste0(prefix, ".code.zip")
+    zip::zip(zip_file, c("plot.R", "data.RData"), root = codedir)
+    unlink(codedir, recursive = TRUE)
+}
+
 #' Set the default value of a key in a list
 #'
 #' @param x A list
