@@ -157,7 +157,10 @@ class MetaMarkers(MetaMarkers_):
 
 class RadarPlots(RadarPlots):
     requires = SeuratSubClustering
-    envs = {"by": "groups"}
+    envs = {
+        "by": "groups",
+        "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}}
+    }
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator):

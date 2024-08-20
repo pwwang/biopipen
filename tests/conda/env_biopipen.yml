@@ -2,9 +2,9 @@ name: biopipen
 dependencies:
   - conda-forge::python=3.10
   - conda-forge::nodejs=20  # for pipen-report
-  - conda-forge::curl  #=7.83
+  - conda-forge::curl
   - conda-forge::openssl
-  - conda-forge::aria2=1.36
+  - conda-forge::aria2
   - conda-forge::r-clustree
   - conda-forge::r-logger
   - conda-forge::r-base=4.3
@@ -18,6 +18,7 @@ dependencies:
   - conda-forge::r-future
   - conda-forge::r-metap
   - conda-forge::r-qqplotr
+  - conda-forge::r-ggnewscale
   - conda-forge::r-ggprism  #=1.0.5
   - conda-forge::r-ggpubr
   - conda-forge::r-ggpmisc
@@ -72,6 +73,7 @@ dependencies:
   - bioconda::truvari
   - pwwang::r-doubletfinder
   - pwwang::r-hitype
+  - pwwang::r-gglogger
   - pwwang::r-ggradar
   - pwwang::r-seuratdisk
   - pwwang::r-seuratdata
