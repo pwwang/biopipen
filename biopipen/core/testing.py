@@ -96,7 +96,10 @@ def r_test(mem: callable) -> callable:
         )
         rcode = f"{expect}\n\n{rcode}\n\ncat('PASSED')\n"
         if source is not None:
-            rcode = f'suppressWarnings(source("{self.SOURCE_FILE}"))\n\n{rcode}'
+            if isinstance(source, str):
+                source = [source]
+            libs = "\n".join([f"suppressWarnings(source('{s}'))" for s in source])
+            rcode = f'{libs}\n\n{rcode}'
         out = _run_rcode(rcode)
         self.assertEqual(
             out,
