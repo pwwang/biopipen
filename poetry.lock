@@ -1058,13 +1058,13 @@ pipen = ">=0.15.0,<0.16.0"
 
 [[package]]
 name = "pipen-report"
-version = "0.21.2"
+version = "0.21.3"
 description = "Report generation system for pipen"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pipen_report-0.21.2-py3-none-any.whl", hash = "sha256:0617958386ef7ab2d8ee29c828a83f7406f1e172ed4f3f706143584ffbd2a9f6"},
-    {file = "pipen_report-0.21.2.tar.gz", hash = "sha256:8f502effb2d06dc22c0efc79f0f9c5dbfdeea5e59c312534e3e1ee4f7311e67c"},
+    {file = "pipen_report-0.21.3-py3-none-any.whl", hash = "sha256:cf8f5818fcc76e222c90b8311548efcd42c6dd4314d0fb6e5c85d83a4d3e6ddd"},
+    {file = "pipen_report-0.21.3.tar.gz", hash = "sha256:1125c853283950ccfd1ccb118b52e0dcd5ac9b5889a869c2efb9fbd16bc19c3a"},
 ]
 
 [package.dependencies]
