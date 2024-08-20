@@ -658,13 +658,24 @@ class SeuratClusterStats(Proc):
             Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`. It can also have other parameters from
             each Seurat function used by `kind`. Note that for argument name with `.`, you should use `-` instead.
         dimplots_defaults (ns): The default parameters for `dimplots`.
+            - use (choice): The function from which package to use for the plot.
+                - seurat: Use `Seurat::DimPlot`.
+                - scp: Use `SCP::CellDimPlot`.
+                - scp3d: Use `SCP::CellDimPlot3D`.
+                - Seurat: Same as `seurat`.
+                - SCP: Same as `scp`.
+                - SCP3D: Same as `scp3d`.
             - ident: The identity to use.
                 If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
                 is set to `dim` or `auto`.
             - group-by: Same as `ident` if not specified, to define how the points are colored.
             - na_group: The group name for NA values, use `None` to ignore NA values.
+                When `use` is `scp`, any non-None values will be translated as `show_na = True` for `SCP::CellDimPlot`.
+                You can use `show_na` directly for `SCP::CellDimPlot`. This option is ignored when `use` is `scp3d`.
             - split-by: The column name in metadata to split the cells into different plots.
+                Not supported for `scp3d`.
             - shape-by: The column name in metadata to use as the shape.
+                Ignored if `use` is `scp` or `scp3d`.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -678,6 +689,7 @@ class SeuratClusterStats(Proc):
                 - umap: Use `Seurat::UMAPPlot`.
                 - tsne: Use `Seurat::TSNEPlot`.
                 - pca: Use `Seurat::PCAPlot`.
+            - theme_use: The theme to use for the plot.
             - <more>: See <https://satijalab.org/seurat/reference/dimplot>
         dimplots (type=json): The dimensional reduction plots.
             Keys are the titles of the plots and values are the dicts inherited from `env.dimplots_defaults`. It can also have other parameters from
@@ -766,6 +778,7 @@ class SeuratClusterStats(Proc):
         },
         "features": {},
         "dimplots_defaults": {
+            "use": "scp",
             "ident": "seurat_clusters",
             "group-by": None,
             "na_group": None,
@@ -773,13 +786,13 @@ class SeuratClusterStats(Proc):
             "shape-by": None,
             "subset": None,
             "reduction": "dim",
+            "theme_use": "theme_blank",
             "devpars": {"res": 100, "height": 800, "width": 1000},
         },
         "dimplots": {
             "Dimensional reduction plot": {
                 "label": True,
-                "label-box": True,
-                "repel": True,
+                "label_repel": True,
             },
         },
     }
@@ -2093,7 +2106,7 @@ class RadarPlots(Proc):
         "each": None,
         "prefix_each": True,
         "order": None,
-        "colors": None,
+        "colors": "biopipen",
         "ident": "seurat_clusters",
         "cluster_order": [],
         "breakdown": None,

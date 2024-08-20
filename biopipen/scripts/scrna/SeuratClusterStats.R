@@ -1,6 +1,7 @@
 {{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 {{ biopipen_dir | joinpaths: "utils", "mutate_helpers.R" | source_r }}
 {{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SCP-plot.R" | source_r }}
 
 library(Seurat)
 library(rlang)

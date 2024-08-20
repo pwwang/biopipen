@@ -228,6 +228,8 @@ class SeuratClusterStats(SeuratClusterStats):
         },
         "dimplots": {
             "seurat_clusters": {},
+            "seurat_clusters_use_seurat": {"use": "seurat"},
+            "scp_3d": {"use": "scp3d"},
             "nk_subcluster": {"ident": "mono_subcluster"},
             "dc_subcluster": {"ident": "dc_subcluster"},
         }
@@ -235,7 +237,7 @@ class SeuratClusterStats(SeuratClusterStats):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareSeurat)
+    return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
 
 
 def testing(pipen):
