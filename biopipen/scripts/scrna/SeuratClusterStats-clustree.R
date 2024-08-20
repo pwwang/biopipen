@@ -1,4 +1,5 @@
 # srtobj, clustrees_defaults, clustrees
+
 log_info("clustrees:")
 if (
     (is.null(clustrees) || length(clustrees) == 0) &&
@@ -46,12 +47,6 @@ if (
             command <- srtobj@commands[[paste0("FindClusters.", prefix)]] %||%
                 (if(prefix == "seurat_clusters") srtobj@commands$FindClusters else NULL)
 
-            clustree_file <- file.path(odir, paste0(prefix, ".clustree.png"))
-            png(clustree_file, width = devpars$width, height = devpars$height, res = devpars$res)
-            p <- do_call(clustree, case)
-            print(p)
-            dev.off()
-
             if (is.null(command)) {
                 resolution <- substring(colnames(case$x), nchar(case$prefix) + 1)
             } else {
@@ -59,10 +54,15 @@ if (
             }
             resolution_used <- resolution[length(resolution)]
 
+            plot_prefix <- file.path(odir, paste0(prefix, ".clustree"))
+            p <- do_call(clustree, case)
+            save_plot(p, plot_prefix, devpars)
+
             reports[[length(reports) + 1]] <- list(
                 kind = "table_image",
-                src = clustree_file,
+                src = paste0(plot_prefix, ".png"),
                 name = name,
+                download = paste0(plot_prefix, ".pdf"),
                 descr = paste0("Resolutions: ", paste(resolution, collapse = ", "), "; resolution used: ", resolution_used)
             )
         }
