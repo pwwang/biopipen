@@ -142,7 +142,7 @@ do_one_stats = function(name) {
                     download = list(
                         paste0(bar_prefix, ".pdf"),
                         list(src = paste0(bar_prefix, ".code.zip"),
-                             tip = "Download the code the generate this plot",
+                             tip = "Download the code the reproduce this plot",
                              icon = "Code")
                     )
                 )
@@ -211,7 +211,7 @@ do_one_stats = function(name) {
                     download = list(
                         paste0(pie_prefix, ".pdf"),
                         list(src = paste0(pie_prefix, ".code.zip"),
-                             tip = "Download the code the generate this plot",
+                             tip = "Download the code the reproduce this plot",
                              icon = "Code")
                     )
                 ))

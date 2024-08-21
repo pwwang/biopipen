@@ -379,7 +379,7 @@ add_case_report = function(info, breakdown, test) {
                         file.path(info$casedir, "plot.pdf"),
                         list(
                             src = file.path(info$casedir, "plot.R"),
-                            tip = "Download the code used to generate the plot",
+                            tip = "Download the code used to reproduce the plot",
                             icon = "Code"))
                 )
             )
@@ -418,7 +418,7 @@ add_case_report = function(info, breakdown, test) {
                             file.path(info$casedir, "barplot.pdf"),
                             list(
                                 src = file.path(info$casedir, "barplot.code.zip"),
-                                tip = "Download the code used to generate the plot",
+                                tip = "Download the code used to reproduce the plot",
                                 icon = "Code"
                             )
                         )
