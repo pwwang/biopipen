@@ -487,7 +487,10 @@ class SeuratClusterStats(Proc):
         srtobj: The seurat object loaded by `SeuratClustering`
 
     Output:
-        outdir: The output directory
+        outdir: The output directory.
+            Different types of plots will be saved in different subdirectories.
+            For example, `clustree` plots will be saved in `clustrees` subdirectory.
+            For each case in `envs.clustrees`, both the png and pdf files will be saved.
 
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
