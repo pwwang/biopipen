@@ -137,6 +137,8 @@ save_plot <- function(plot, prefix, devpars, formats = c("png", "pdf")) {
 #' Save the code to generate the data
 #'
 #' @param code The code
+#' @param plot The plot object
+#' @param setup The setup code to generate the plot
 #' @param prefix The prefix of the file
 #' @param ... Additional data frame to save
 #'
@@ -156,6 +158,9 @@ save_plotcode.character <- function(code, prefix, ..., envir = parent.frame()) {
 }
 
 save_plotcode.ggplot <- function(plot, setup, prefix, ..., envir = parent.frame()) {
+    if (is.null(plot$logs)) {
+        stop("The plot object does not have logs, did you use gglogger?")
+    }
     code <- plot$logs$gen_code(setup = setup)
     save_plotcode(code, prefix, ..., envir = envir)
 }

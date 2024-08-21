@@ -51,6 +51,10 @@ class SampleInfo(Proc):
     Output:
         outfile: The output file with sample information, with mutated columns
             if `envs.save_mutated` is True.
+            The basename of the output file will be the same as the input file.
+            The file name of each plot will be slugified from the case name.
+            Each plot has 3 formats: pdf, png and code.zip, which contains the
+            data and R code to reproduce the plot.
 
     Envs:
         sep: The separator of the input file.

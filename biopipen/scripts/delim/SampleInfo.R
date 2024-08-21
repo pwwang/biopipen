@@ -6,6 +6,7 @@ library(dplyr)
 library(ggplot2)
 library(ggprism)
 library(ggrepel)
+library(gglogger)
 
 infile <- {{in.infile | r}}
 outfile <- {{out.outfile | r}}
@@ -29,6 +30,7 @@ if (colnames(indata)[1] == "row.names") {
     stop("Wrong number of column names. Do you have the right `sep`?")
 }
 
+log_info("Applying mutaters to the data if any ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     mutdata <- indata %>%
         mutate(!!!lapply(mutaters, parse_expr))
@@ -61,8 +63,9 @@ add_report(
 
 theme_set(theme_prism())
 for (name in names(stats)) {
+    log_info("- Statistic: ", name)
     stat <- list_update(defaults, stats[[name]])
-    plotfile <- file.path(outdir, paste0(name, ".png"))
+    prefix <- file.path(outdir, slugify(name))
 
     is_continuous <- FALSE
     if (!is.null(stat$subset)) {
@@ -109,12 +112,6 @@ for (name in names(stats)) {
         stat$devpars$res <- 100
     }
 
-    png(
-        plotfile,
-        width = stat$devpars$width,
-        height = stat$devpars$height,
-        res = stat$devpars$res
-    )
     if (stat$plot == "boxplot" || stat$plot == "box") {
         p <- ggplot(data, aes(x=!!group, y=!!sym(stat$on), fill=!!group)) +
             geom_boxplot(position = "dodge") +
@@ -138,7 +135,7 @@ for (name in names(stats)) {
             xlab("")
     } else if (stat$plot == "histogram" || stat$plot == "hist") {
         p <- ggplot(data, aes(x = !!sym(stat$on), fill = !!group)) +
-            geom_histogram(bins = 10, position = "dodge", alpha = 0.8, color = "white") +
+            geom_histogram(bins = 10, position = "dodge", color = "#333333", alpha = 0.6, color = "white") +
             scale_fill_biopipen(alpha = .6)
     } else if (stat$plot == "pie" || stat$plot == "piechart") {
         if (is.null(stat$each)) {
@@ -174,7 +171,7 @@ for (name in names(stats)) {
         p <- ggplot(
             data,
             aes(x = !!group, y = !!sym(count_on), fill = !!group)) +
-            geom_bar(stat = "identity") +
+            geom_bar(stat = "identity", color = "#333333") +
             scale_fill_biopipen(alpha = .6) +
             ylab(paste0("# ", stat$on))
     } else {
@@ -183,8 +180,22 @@ for (name in names(stats)) {
     if (!is.null(stat$each)) {
         p <- p + facet_wrap(vars(!!sym(stat$each)), ncol = stat$ncol)
     }
-    print(p)
-    dev.off()
+    save_plot(p, prefix, stat$devpars)
+    save_plotcode(
+        p,
+        setup = c(
+            'library(rlang)',
+            'library(dplyr)',
+            'library(ggplot2)',
+            'library(ggprism)',
+            'library(ggrepel)',
+            'theme_set(theme_prism())',
+            '',
+            'load("data.RData")'
+        ),
+        prefix = prefix,
+        "data", "stat", "group", "count_on", "scale_fill_biopipen", "pal_biopipen"
+    )
 
     by_desc <- ifelse(is.null(stat$by), "", paste0(" by ", stat$by))
     descr <- ifelse(
@@ -193,7 +204,19 @@ for (name in names(stats)) {
         paste0("The number of ", stat$on, by_desc)
     )
     add_report(
-        list(kind = "table_image", src = plotfile, name = name, descr = descr),
+        list(
+            kind = "table_image",
+            src = paste0(prefix, ".png"),
+            download = list(
+                paste0(prefix, ".pdf"),
+                list(
+                    src = paste0(prefix, ".code.zip"),
+                    tip = "Download the code to reproduce the plot",
+                    icon = "Code"
+                )
+            ),
+            name = name,
+            descr = descr),
         h1 = "Statistics",
         ui = "table_of_images:2"
     )
