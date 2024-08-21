@@ -13,6 +13,7 @@ library(ggrepel)
 library(tidyseurat)
 library(circlize)
 library(ComplexHeatmap)
+library(gglogger)
 
 srtfile <- {{in.srtobj | r}}
 outdir <- {{out.outdir | r}}

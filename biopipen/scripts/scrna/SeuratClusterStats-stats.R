@@ -22,9 +22,6 @@ do_one_stats = function(name) {
         stop(paste0(name, ": transpose is only supported for group-by"))
     }
 
-    figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
-    piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
-    circosfile = file.path(odir, paste0(slugify(name), ".circos.png"))
     samtablefile = file.path(odir, paste0(slugify(name), ".bysample.txt"))
     tablefile = file.path(odir, paste0(slugify(name), ".txt"))
 
@@ -76,17 +73,18 @@ do_one_stats = function(name) {
 
     write.table(plot_df, tablefile, sep="\t", quote=FALSE, row.names=FALSE)
 
+    bar_prefix = file.path(odir, paste0(slugify(name), ".bar"))
     ngroups = ifelse(is.null(case$group.by), 1, length(unique(plot_df[[case$group.by]])))
     nidents = length(unique(plot_df[[case$ident]]))
     bar_position = ifelse(case$position == "auto", ifelse(ngroups > 5, "stack", "dodge"), case$position)
-    p = plot_df %>%
+    p = plot_df |>
         ggplot(aes(
             x=!!sym(ifelse(case$transpose, case$group.by, case$ident)),
             y=if (case$frac != "none") .frac else .n,
             fill=!!sym(ifelse(is.null(case$group.by) || isTRUE(case$transpose), case$ident, case$group.by))
         )) +
-        geom_bar(stat="identity", position=bar_position, alpha=.8) +
-        theme_prism(axis_text_angle = 90) +
+        geom_bar(stat="identity", position=bar_position, alpha=.6, color="#333333") +
+        theme_prism(axis_text_angle = 45) +
         scale_fill_biopipen() +
         ylab(ifelse(case$frac != "none", "Fraction of cells", "Number of cells"))
 
@@ -94,9 +92,28 @@ do_one_stats = function(name) {
         p = p + facet_wrap(case$split.by)
     }
 
-    png(figfile, width=case$devpars$width, height=case$devpars$height, res=case$devpars$res)
-    print(p)
-    dev.off()
+    save_plot(p, bar_prefix, case$devpars)
+
+    plot_case <- list(
+        transpose = case$transpose,
+        group.by = case$group.by,
+        ident = case$ident,
+        frac = case$frac,
+        split.by = case$split.by
+    )
+    save_plotcode(
+        p,
+        setup = c(
+            "library(rlang)",
+            "library(ggplot2)",
+            "library(ggprism)",
+            "",
+            "load('data.RData')",
+            "case <- plot_case"
+        ),
+        prefix = bar_prefix,
+        "plot_df", "plot_case", "bar_position", "scale_fill_biopipen", "pal_biopipen"
+    )
 
     add_report(
         list(
@@ -118,7 +135,18 @@ do_one_stats = function(name) {
     add_report(
         list(
             name = "Bar Plot",
-            contents = list(list(kind = "image", src = figfile))
+            contents = list(
+                list(
+                    kind = "image",
+                    src = paste0(bar_prefix, ".png"),
+                    download = list(
+                        paste0(bar_prefix, ".pdf"),
+                        list(src = paste0(bar_prefix, ".code.zip"),
+                             tip = "Download the code the generate this plot",
+                             icon = "Code")
+                    )
+                )
+            )
         ),
         h1 = name,
         ui = "tabs"
@@ -135,10 +163,10 @@ do_one_stats = function(name) {
     }
 
     if (isTRUE(case$pie)) {
-        p_pie = plot_df %>%
-            arrange(!!sym(case$ident)) %>%
+        plot_df <- plot_df %>% arrange(!!sym(case$ident))
+        p_pie = plot_df |>
             ggplot(aes(x="", y=.n, fill=!!sym(case$ident))) +
-            geom_bar(stat="identity", width=1, alpha=.8, position = position_stack(reverse = TRUE)) +
+            geom_bar(stat="identity", width=1, color = "#dddddd", alpha=.8, position = position_stack(reverse = TRUE)) +
             coord_polar("y", start=0) +
             scale_fill_biopipen() +
             guides(fill = guide_legend(title = case$ident)) +
@@ -158,14 +186,35 @@ do_one_stats = function(name) {
             p_pie = p_pie + facet_wrap(case$split.by)
         }
 
-        png(piefile, width=case$pie_devpars$width, height=case$pie_devpars$height, res=case$pie_devpars$res)
-        print(p_pie)
-        dev.off()
+        pie_prefix = file.path(odir, paste0(slugify(name), ".pie"))
+        save_plot(p_pie, pie_prefix, case$pie_devpars)
+        save_plotcode(
+            p_pie,
+            setup = c(
+                "library(rlang)",
+                "library(ggplot2)",
+                "library(ggprism)",
+                "",
+                "load('data.RData')",
+                "case <- plot_case"
+            ),
+            prefix = pie_prefix,
+            "plot_df", "plot_case", "scale_fill_biopipen", "pal_biopipen"
+        )
 
         add_report(
             list(
                 name = "Pie Chart",
-                contents = list(list(kind = "image", src = piefile))
+                contents = list(list(
+                    kind = "image",
+                    src = paste0(pie_prefix, ".png"),
+                    download = list(
+                        paste0(pie_prefix, ".pdf"),
+                        list(src = paste0(pie_prefix, ".code.zip"),
+                             tip = "Download the code the generate this plot",
+                             icon = "Code")
+                    )
+                ))
             ),
             h1 = name,
             ui = "tabs"
@@ -200,48 +249,64 @@ do_one_stats = function(name) {
         grid_cols <- c(grid_cols, gcols)
         link_cols <- grid_cols[circos_df$to]
 
+        plot_circos <- function() {
+            circos.clear()
+            if (!isTRUE(case$circos_labels_rot)) {
+                chordDiagram(
+                    circos_df,
+                    grid.col = grid_cols,
+                    col = link_cols,
+                    direction = 1,
+                    direction.type = c("diffHeight", "arrows"),
+                    link.arr.type = "big.arrow"
+                )
+            } else {
+                chordDiagram(
+                    circos_df,
+                    grid.col = grid_cols,
+                    col = link_cols,
+                    direction = 1,
+                    annotationTrack = "grid",
+                    direction.type = c("diffHeight", "arrows"),
+                    link.arr.type = "big.arrow",
+                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(circos_df)))))
+                )
+                circos.track(track.index = 1, panel.fun = function(x, y) {
+                    circos.text(
+                        CELL_META$xcenter, CELL_META$ylim[1],
+                        CELL_META$sector.index,
+                        facing = "clockwise",
+                        niceFacing = TRUE,
+                        adj = c(0, 0.5))
+                }, bg.border = NA) # here set bg.border to NA is important
+            }
+        }
+        circos_prefix = file.path(odir, paste0(slugify(name), ".circos"))
         png(
-            circosfile,
+            paste0(circos_prefix, ".png"),
             width=case$circos_devpars$width,
             height=case$circos_devpars$height,
             res=case$circos_devpars$res
         )
-        circos.clear()
-        if (!isTRUE(case$circos_labels_rot)) {
-            chordDiagram(
-                circos_df,
-                grid.col = grid_cols,
-                col = link_cols,
-                direction = 1,
-                direction.type = c("diffHeight", "arrows"),
-                link.arr.type = "big.arrow"
-            )
-        } else {
-            chordDiagram(
-                circos_df,
-                grid.col = grid_cols,
-                col = link_cols,
-                direction = 1,
-                annotationTrack = "grid",
-                direction.type = c("diffHeight", "arrows"),
-                link.arr.type = "big.arrow",
-                preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(circos_df)))))
-            )
-            circos.track(track.index = 1, panel.fun = function(x, y) {
-                circos.text(
-                    CELL_META$xcenter, CELL_META$ylim[1],
-                    CELL_META$sector.index,
-                    facing = "clockwise",
-                    niceFacing = TRUE,
-                    adj = c(0, 0.5))
-            }, bg.border = NA) # here set bg.border to NA is important
-        }
+        plot_circos()
+        dev.off()
+
+        pdf(
+            file = paste0(circos_prefix, ".pdf"),
+            width = case$circos_devpars$width / case$circos_devpars$res,
+            height = case$circos_devpars$height / case$circos_devpars$res
+        )
+        plot_circos()
         dev.off()
 
         add_report(
             list(
                 name = "Circos plot",
-                contents = list(list(kind = "image", src = circosfile))
+                contents = list(list(
+                    kind = "image",
+                    src = paste0(circos_prefix, ".png"),
+                    download = paste0(circos_prefix, ".pdf")
+                ))
             ),
             h1 = name,
             ui = "tabs"
