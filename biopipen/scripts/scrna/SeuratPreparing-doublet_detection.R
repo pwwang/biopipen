@@ -157,7 +157,11 @@ plot_dd <- function(sobj, dd, detector) {
     dimp <- DimPlot(
         sobj, group.by = paste0(detector, "_DropletType"), order = "doublet",
         cols = c("#333333", "#FF3333"), pt.size = 0.8, alpha = 0.5)
-    ggsave(dimp, filename = file.path(plotsdir, paste0(detector, "_dimplot.png")))
+    save_plot(
+        dimp,
+        file.path(plotsdir, paste0(detector, "_dimplot")),
+        list(width = 800, height = 600, res = 100)
+    )
 }
 
 filter_dd <- function(sobj, dd, detector) {
@@ -185,14 +189,20 @@ report_dd <- function(detector) {
     if (detector == "DoubletFinder") {
         add_report(
             list(name = "pK vs BCmetric", src = file.path(plotsdir, "pK_BCmetric.png")),
-            list(name = "Dimension Reduction Plot", src = file.path(plotsdir, "DoubletFinder_dimplot.png")),
+            list(
+                name = "Dimension Reduction Plot",
+                src = file.path(plotsdir, "DoubletFinder_dimplot.png"),
+                download = file.path(plotsdir, "DoubletFinder_dimplot.pdf")),
             ui = "table_of_images",
             h1 = "DoubletFinder Results",
             h2 = "Plots"
         )
     } else {
         add_report(
-            list(name = "Dimension Reduction Plot",src = file.path(plotsdir, "scDblFinder_dimplot.png")),
+            list(
+                name = "Dimension Reduction Plot",
+                src = file.path(plotsdir, "scDblFinder_dimplot.png"),
+                download = file.path(plotsdir, "scDblFinder_dimplot.pdf")),
             ui = "table_of_images",
             h1 = "scDblFinder Results",
             h2 = "Plots"

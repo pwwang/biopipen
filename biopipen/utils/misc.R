@@ -119,9 +119,15 @@ do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {
 #' @param plot The plot object
 #' @param prefix The prefix of the file
 #' @param formats The formats to save
+#' @param bg The background color
 #' @param devpars The device parameters
 #' @export
-save_plot <- function(plot, prefix, devpars, formats = c("png", "pdf")) {
+save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("png", "pdf")) {
+    devpars <- devpars %||% list(width = 800, height = 600, res = 100)
+    devpars$width <- devpars$width %||% 800
+    devpars$height <- devpars$height %||% 600
+    devpars$res <- devpars$res %||% 100
+
     for (fmt in formats) {
         ggsave(
             paste0(prefix, ".", fmt),
@@ -130,6 +136,7 @@ save_plot <- function(plot, prefix, devpars, formats = c("png", "pdf")) {
             width = devpars$width,
             height = devpars$height,
             dpi = devpars$res,
+            bg = bg,
             units = "px")
     }
 }

@@ -89,18 +89,14 @@ report_cell_qc = function(ngenes) {
             labs(x = "Sample", y = feat) +
             theme_minimal()
 
-        vlnplot = file.path(plotsdir, paste0(slugify(feat), ".vln.png"))
-        png(
-            vlnplot,
-            width = 800 + length(samples) * 15, height = 600, res = 100
-        )
-        print(vln_p)
-        dev.off()
+        vlnplot = file.path(plotsdir, paste0(slugify(feat), ".vln"))
+        save_plot(vln_p, vlnplot, list(width = 800 + length(samples) * 15))
 
         add_report(
             list(
-                src = vlnplot,
+                src = paste0(vlnplot, ".png"),
                 name = feat,
+                download = paste0(vlnplot, ".pdf"),
                 descr = paste0("Distribution of ", feat, " for each sample.")
             ),
             h1 = "Violin Plots",
@@ -130,14 +126,13 @@ report_cell_qc = function(ngenes) {
             labs(x = "nCount_RNA", y = feat) +
             theme_minimal()
 
-        scatfile = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter.png"))
-        png(scatfile, width = 800, height = 600, res = 100)
-        print(scat_p)
-        dev.off()
+        scatfile = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter"))
+        save_plot(scat_p, scatfile)
 
         add_report(
             list(
-                src = scatfile,
+                src = paste0(scatfile, ".png"),
+                download = paste0(scatfile, ".pdf"),
                 name = paste0(feat, " vs nCount_RNA"),
                 descr = paste0("Scatter plot for ", feat, " against nCount_RNA")
             ),
