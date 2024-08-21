@@ -83,7 +83,7 @@ do_one_features = function(name) {
     if (case$kind %in% c("ridge", "ridgeplot")) {
         case$kind = "ridge"
         if (is.null(case$cols)) {
-            case$cols = pal_biopipen()(n_uidents)
+            case$cols = pal_biopipen(0.6)(n_uidents)
         }
         excluded_args = c(excluded_args, "split.by", "reduction")
         fn = RidgePlot
@@ -97,7 +97,7 @@ do_one_features = function(name) {
         }
     } else if (case$kind %in% c("vln", "violin", "vlnplot", "violinplot")) {
         case$kind = "violin"
-        if (is.null(case$cols)) { case$cols = pal_biopipen()(n_uidents) }
+        if (is.null(case$cols)) { case$cols = pal_biopipen(0.6)(n_uidents) }
         if (is.null(case$pt.size)) { case$pt.size = 0 }
 
         excluded_args = c(excluded_args, "reduction")
@@ -171,8 +171,8 @@ do_one_features = function(name) {
         fn = DoHeatmap
         default_devpars = function(features, ncol) {
             list(
-                width = n_uidents * 60 + 150,
-                height = length(features) * 40 + 150,
+                width = n_uidents * 100 + 150,
+                height = length(features) * 30 + 150,
                 res = 100
             )
         }
@@ -223,7 +223,7 @@ do_one_features = function(name) {
     }
 
     if (kind == "bar") {
-        figfile <- file.path(odir, paste0(slugify(name), ".bar.png"))
+        figprefix <- file.path(odir, paste0(slugify(name), ".bar"))
         genes <- rownames(GetAssayData(case$object))
         genes <- genes[sapply(genes, function(x) grepl(x, case$features))]
         if (length(genes) == 0) {
@@ -261,9 +261,7 @@ do_one_features = function(name) {
             p <- p + eval(parse(text = case$plus))
         }
         devpars = list_update(default_devpars(NULL, case$ncol), devpars)
-        png(figfile, res = devpars$res, width = devpars$width, height = devpars$height)
-        print(p)
-        dev.off()
+        save_plot(p, figprefix, devpars)
 
         add_report(
             list(
@@ -272,7 +270,8 @@ do_one_features = function(name) {
             ),
             list(
                 kind = "image",
-                src = figfile
+                src = paste0(figprefix, ".png"),
+                download = paste0(figprefix, ".pdf")
             ),
             h1 = ifelse(is.null(section), name, section),
             h2 = ifelse(is.null(section), "#", name)
@@ -283,7 +282,7 @@ do_one_features = function(name) {
 
     case$features = .get_features(case$features)
     if (kind == "avgheatmap") {
-        figfile <- file.path(odir, paste0(slugify(name), ".avgheatmap.png"))
+        figprefix <- file.path(odir, paste0(slugify(name), ".avgheatmap"))
         assay <- assay %||% DefaultAssay(object)
         layer <- layer %||% ifelse("scale.data" %in% Layers(object, assay = assay), "scale.data", "data")
 
@@ -349,9 +348,7 @@ do_one_features = function(name) {
         def_devpars$width = def_devpars$width + extra_width
         def_devpars$height = def_devpars$height + extra_height
         devpars = list_update(def_devpars, devpars)
-        png(figfile, res = devpars$res, width = devpars$width, height = devpars$height)
-        print(p)
-        dev.off()
+        save_plot(p, figprefix, devpars)
 
         add_report(
             list(
@@ -360,7 +357,8 @@ do_one_features = function(name) {
             ),
             list(
                 kind = "image",
-                src = figfile
+                src = paste0(figprefix, ".png"),
+                download = paste0(figprefix, ".pdf")
             ),
             h1 = ifelse(is.null(section), name, section),
             h2 = ifelse(is.null(section), "#", name)
@@ -414,10 +412,9 @@ do_one_features = function(name) {
             p = p + eval(parse(text = pls))
         }
     }
-    figfile = file.path(odir, paste0(slugify(name), ".", slugify(case$kind), ".png"))
-    png(figfile, width=devpars$width, height=devpars$height, res=devpars$res)
+    figprefix = file.path(odir, paste0(slugify(name), ".", slugify(case$kind)))
     tryCatch({
-        print(p)
+        save_plot(p, figprefix, devpars)
     }, error = function(e) {
         stop(
             paste(
@@ -428,7 +425,6 @@ do_one_features = function(name) {
             )
         )
     })
-    dev.off()
 
     add_report(
         list(
@@ -437,7 +433,8 @@ do_one_features = function(name) {
         ),
         list(
             kind = "image",
-            src = figfile
+            src = paste0(figprefix, ".png"),
+            download = paste0(figprefix, ".pdf")
         ),
         h1 = ifelse(is.null(section), name, section),
         h2 = ifelse(is.null(section), "#", name)
