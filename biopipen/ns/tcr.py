@@ -39,7 +39,8 @@ class ImmunarchLoading(Proc):
             information.
 
     Output:
-        rdsfile: The RDS file with the data and metadata
+        rdsfile: The RDS file with the data and metadata, which can be processed by
+            other `immunarch` functions.
         metatxt: The meta data at cell level, which can be used to attach to the Seurat object
 
     Envs:
