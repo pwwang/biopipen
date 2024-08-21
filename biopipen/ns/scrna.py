@@ -822,7 +822,7 @@ class ModuleScoreCalculator(Proc):
         srtobj: The seurat object loaded by `SeuratClustering`
 
     Output:
-        rdsfile: The seurat object with module scores
+        rdsfile: The seurat object with module scores added to the metadata.
 
     Envs:
         defaults (ns): The default parameters for `modules`.
