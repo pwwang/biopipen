@@ -97,8 +97,8 @@ class SeuratPreparing(Proc):
 
     Output:
         rdsfile: The RDS file with the Seurat object with all samples integrated.
-            Note that the cell ids are preficed with sample names QC plots will be
-            saved in `<job.outdir>/before-qc` and `<job.outdir>/after-qc`.
+            Note that the cell ids are prefixied with sample names.
+            QC plots will be saved in `<job.outdir>/plots`.
 
     Envs:
         ncores (type=int): Number of cores to use.
