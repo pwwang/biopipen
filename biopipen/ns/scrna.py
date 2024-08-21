@@ -938,7 +938,8 @@ class CellsDistribution(Proc):
         srtobj: The seurat object in RDS format
 
     Output:
-        outdir: The output directory
+        outdir: The output directory.
+            The results for each case will be saved in a subdirectory.
 
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata
