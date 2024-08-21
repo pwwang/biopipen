@@ -1116,7 +1116,7 @@ class MarkersFinder(Proc):
             by `PrepSCTFindMarkers` if data is not normalized using `SCTransform`.
 
     Output:
-        outdir: The output directory for the markers
+        outdir: The output directory for the markers and plots
 
     Envs:
         ncores (type=int): Number of cores to use for parallel computing for some `Seurat` procedures.
@@ -1599,7 +1599,7 @@ class ScFGSEA(Proc):
         srtobj: The seurat object in RDS format
 
     Output:
-        outdir: The output directory for the results
+        outdir: The output directory for the results and plots
 
     Envs:
         ncores (type=int): Number of cores for parallelization
@@ -1721,7 +1721,9 @@ class CellTypeAnnotation(Proc):
         sobjfile: The seurat object
 
     Output:
-        outfile: The rds file of seurat object with cell type annotated
+        outfile: The rds file of seurat object with cell type annotated.
+            A text file containing the mapping from the old `seurat_clusters` to the new cell types
+            will be generated and saved to `cluster2celltype.tsv` under the job output directory.
 
     Envs:
         tool (choice): The tool to use for cell type annotation.
