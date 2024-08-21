@@ -127,3 +127,5 @@ docker/*/images
 /tmp
 Rplots.pdf
 /biopipen-tests-*
+# used for plot code testing
+/data.RData

@@ -308,15 +308,18 @@ do_barplot_and_tests <- function(info, case, counts) {
     prefix = file.path(info$casedir, "barplot")
     save_plot(p, prefix, case$bar_devpars)
     neat_case <- list(by = case$by, ident = case$ident)
-    code <- p$logs$gen_code(setup = glue("
-library(rlang)
-library(ggplot2)
-library(ggprism)
-
-load('data.RData')
-case <- neat_case
-    "))
-    save_plotcode(code, prefix, "plotdata", "neat_case", "colors")
+    save_plotcode(
+        p,
+        setup = c(
+            'library(rlang)',
+            'library(ggplot2)',
+            'library(ggprism)',
+            '',
+            'load("data.RData")',
+            'case <- neat_case'
+        ),
+        prefix,
+        "plotdata", "neat_case", "colors")
 
     # Do the tests in each cluster between groups on .frac
     bys <- bardata %>% pull(!!sym(case$by)) %>% unique()

@@ -141,7 +141,9 @@ save_plot <- function(plot, prefix, devpars, formats = c("png", "pdf")) {
 #' @param ... Additional data frame to save
 #'
 #' @export
-save_plotcode <- function(code, prefix, ..., envir = parent.frame()) {
+save_plotcode <- function(...) UseMethod("save_plotcode")
+
+save_plotcode.character <- function(code, prefix, ..., envir = parent.frame()) {
     codedir <- paste0(prefix, ".code")
     dir.create(codedir, showWarnings = FALSE)
     codefile <- file.path(codedir, "plot.R")
@@ -151,6 +153,11 @@ save_plotcode <- function(code, prefix, ..., envir = parent.frame()) {
     zip_file <- paste0(prefix, ".code.zip")
     zip::zip(zip_file, c("plot.R", "data.RData"), root = codedir)
     unlink(codedir, recursive = TRUE)
+}
+
+save_plotcode.ggplot <- function(plot, setup, prefix, ..., envir = parent.frame()) {
+    code <- plot$logs$gen_code(setup = setup)
+    save_plotcode(code, prefix, ..., envir = envir)
 }
 
 #' Set the default value of a key in a list
