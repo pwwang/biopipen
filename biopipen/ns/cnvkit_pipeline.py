@@ -276,7 +276,10 @@ class CNVkitPipeline(ProcGroup):
         """Build CNVkitGuessBaits process"""
         from .cnvkit import CNVkitGuessBaits
 
-        if not self.opts.guessbaits and not is_loading_pipeline():
+        if (
+            not self.opts.guessbaits and
+            not is_loading_pipeline("-h", "-h+", "--help", "--help+")
+        ):
             return None
 
         def _guess_baits_bams(ch):
