@@ -28,7 +28,7 @@ class CellRangerCountPipeline(ProcGroup):
 
     def post_init(self):
         """Check if the input is a list of fastq files"""
-        if not is_loading_pipeline() and (
+        if not is_loading_pipeline("-h", "-h+", "--help", "--help+") and (
             not isinstance(self.opts.input, (list, tuple))
             or len(self.opts.input) == 0
         ):
@@ -84,7 +84,7 @@ class CellRangerVdjPipeline(ProcGroup):
 
     def post_init(self):
         """Check if the input is a list of fastq files"""
-        if not is_loading_pipeline() and (
+        if not is_loading_pipeline("-h", "-h+", "--help", "--help+") and (
             not isinstance(self.opts.input, (list, tuple))
             or len(self.opts.input) == 0
         ):
