@@ -180,7 +180,7 @@ do_case <- function(name, case) {
     case$rest$maxSize <- case$maxsize
     case$rest$eps <- case$eps
     case$rest$nproc <- case$ncores
-    runFGSEA(ranks, gmtfile, case$top, info$casedir, case$rest)
+    runFGSEA(ranks, case$gmtfile, case$top, info$casedir, case$rest)
 
     add_report(
         list(kind = "fgsea", dir = info$casedir),
