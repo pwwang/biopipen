@@ -10,12 +10,13 @@ from biopipen.utils.misc import run_command, dict_to_cli_args
 LOCAL_FLAG = "--local"
 
 if len(sys.argv) > 1 and sys.argv[1] != LOCAL_FLAG:
-    print(f"Usage: python prep_reference.py [{LOCAL_FLAG}]")
+    print(f"Usage: python prep_data.py [{LOCAL_FLAG}]")
     sys.exit(1)
 
 LOCAL = len(sys.argv) > 1 and sys.argv[1] == LOCAL_FLAG
 
-DESTDIR = Path(__file__).parent / "reference"
+REFDIR = Path(__file__).parent / "reference"
+DATADIR = Path(__file__).parent / "data"
 REFFA_URL = (
     "http://hgdownload.cse.ucsc.edu/"
     "goldenPath/%(genome)s/bigZips/%(genome)s.fa.gz"
@@ -47,6 +48,7 @@ ARIA2C_OPTS = [
     "--auto-file-renaming=false",
     "--allow-overwrite=true",
 ]
+IFNB_SUB_URL = "https://github.com/zhanghao-njmu/SCP/raw/main/data/ifnb_sub.rda"
 
 
 def decor(msg: str, local_only: bool | Callable = False):
@@ -78,7 +80,7 @@ def md5sum(file):
 
 def download_reffa(genome):
     """Download genome reference sequences"""
-    outdir = DESTDIR / genome
+    outdir = REFDIR / genome
     outdir.mkdir(exist_ok=True, parents=True)
     url = REFFA_URL % {"genome": genome}
     outfile = outdir / "allchrs.fa.gz"
@@ -108,7 +110,7 @@ def download_reffa(genome):
 @decor("Downloading {0} chromosome sizes", local_only=lambda genome: genome == "hg38")
 def download_chrsize(genome):
     """Download genome size file"""
-    outdir = DESTDIR / genome
+    outdir = REFDIR / genome
     outdir.mkdir(exist_ok=True, parents=True)
     url = CHRSIZE_URL % {"genome": genome}
     outfile = outdir / "chrom.sizes"
@@ -127,7 +129,7 @@ def download_chrsize(genome):
 @decor("Downloading {0} refgenes", local_only=lambda genome: genome == "hg38")
 def download_refgene(genome):
     """Download genome size file"""
-    outdir = DESTDIR / genome
+    outdir = REFDIR / genome
     outdir.mkdir(exist_ok=True, parents=True)
     url = REFGENE_URL % {"genome": genome}
     outfile = outdir / "refgene.gtf.gz"
@@ -151,7 +153,7 @@ def download_refgene(genome):
 # @decor("Downloading KEGG_metabolism.gmt")
 # def download_kegg_metabolism():
 #     """Download KEGG_metabolism.gmt"""
-#     outfile = DESTDIR / "KEGG_metabolism.gmt"
+#     outfile = REFDIR / "KEGG_metabolism.gmt"
 #     url = (
 #         "https://raw.githubusercontent.com/"
 #         "LocasaleLab/Single-Cell-Metabolic-Landscape/"
@@ -172,7 +174,7 @@ def download_refgene(genome):
 def download_reffa_hg19():
     """Download hg19 reference sequences if not cached"""
     genome = "hg19"
-    outdir = DESTDIR / genome
+    outdir = REFDIR / genome
     outdir.mkdir(exist_ok=True, parents=True)
     reffa = outdir / "chrs.fa"
     if md5sum(reffa) == REFFA_HG19_MD5SUM:
@@ -185,7 +187,7 @@ def download_reffa_hg19():
 def download_reffa_hg38():
     """Download hg38 reference sequences if not cached"""
     genome = "hg38"
-    outdir = DESTDIR / genome
+    outdir = REFDIR / genome
     outdir.mkdir(exist_ok=True, parents=True)
     reffa = outdir / "chrs.fa"
     if md5sum(reffa) == REFFA_HG38_MD5SUM:
@@ -200,24 +202,65 @@ def download_sctype_db():
     name = "ScTypeDB_full.xlsx"
     aria2c_args = dict(
         o=name,
-        d=DESTDIR,
+        d=REFDIR,
         _=SCTYPE_DB_URL,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
     run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
 
 
+@decor("Downloading ifnb_sub.rda and convert to .rds")
+def download_ifnb_sub():
+    """Download ifnb_sub.rda"""
+    name = "ifnb_sub.rda"
+    destname = "ifnb_sub.rds"
+    file = DATADIR / name
+    destfile = DATADIR / destname
+    if file.is_file() and destfile.is_file():
+        return True
+
+    aria2c_args = dict(
+        o=name,
+        d=DATADIR,
+        _=IFNB_SUB_URL,
+    )
+    aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
+    run_command(dict_to_cli_args(aria2c_args, dashify=True), fg=True)
+    run_command(
+        [
+            "Rscript",
+            "-e",
+            f"""
+                library(Seurat)
+                load('{file}');
+                ifnb_sub <- NormalizeData(ifnb_sub)
+                ifnb_sub <- FindVariableFeatures(ifnb_sub)
+                ifnb_sub <- ScaleData(ifnb_sub)
+                ifnb_sub <- RunPCA(ifnb_sub)
+                ifnb_sub <- FindNeighbors(ifnb_sub)
+                ifnb_sub <- FindClusters(
+                    ifnb_sub,
+                    resolution = c(setdiff(seq(0.2, 1.2, 0.2), 0.4), 0.4)
+                )
+                ifnb_sub <- RunUMAP(ifnb_sub, dims = 1:30)
+                saveRDS(ifnb_sub, '{destfile}')
+            """,
+        ],
+        fg=True,
+    )
+
+
 @decor("Downloading pbmc_multimodal_2023.rds")
 def download_pbmc_multimodal():
     """Download pbmc_multimodal_2023.rds"""
     name = "pbmc_multimodal_2023.rds"
-    destfile = DESTDIR / name
+    destfile = REFDIR / name
     if md5sum(destfile) == PBMC_MULTIMODEL_MD5SUM:
         return True
 
     aria2c_args = dict(
         o=name,
-        d=DESTDIR,
+        d=REFDIR,
         _=PBMC_MULTIMODEL_URL,
     )
     aria2c_args[""] = ["aria2c", *ARIA2C_OPTS]
@@ -233,4 +276,5 @@ if __name__ == "__main__":
     download_refgene("hg38")
     # download_kegg_metabolism()
     download_sctype_db()
+    download_ifnb_sub()
     download_pbmc_multimodal()

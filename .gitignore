@@ -114,6 +114,7 @@ default-*-*-*-*-*.ipynb
 *-output/
 *_results/
 tests/data/reference/
+tests/data/data/
 
 docs/index.md
 docs/api/
