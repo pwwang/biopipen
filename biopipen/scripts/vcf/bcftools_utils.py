@@ -25,7 +25,7 @@ def bcftools_version(bcftools: str) -> tuple[int, ...]:
 
 def run_bcftools(
     args: dict[str, object],
-    bcftools: str,
+    bcftools: str,  # TODO: get from the first argument of args
     index: bool,
     tabix: str
 ) -> None:
