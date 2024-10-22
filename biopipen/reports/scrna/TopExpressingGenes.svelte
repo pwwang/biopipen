@@ -2,7 +2,7 @@
 {% from "utils/gsea.liq" import enrichr_report -%}
 <script>
     import { Image, DataTable, Descr } from "$libs";
-    import { Accordion, AccordionItem, Tabs, Tab, TabContent } from "$ccs";
+    import { Accordion, AccordionItem, Tabs, Tab, TabContent, InlineNotification } from "$ccs";
 </script>
 
 
