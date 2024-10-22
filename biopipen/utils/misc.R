@@ -123,22 +123,28 @@ do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {
 #' @param devpars The device parameters
 #' @export
 save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("png", "pdf")) {
-    devpars <- devpars %||% list(width = 800, height = 600, res = 100)
-    devpars$width <- devpars$width %||% 800
-    devpars$height <- devpars$height %||% 600
+    devpars <- devpars %||% list()
     devpars$res <- devpars$res %||% 100
-
-    for (fmt in formats) {
-        ggsave(
-            paste0(prefix, ".", fmt),
-            plot,
-            device = fmt,
-            width = devpars$width,
-            height = devpars$height,
-            dpi = devpars$res,
-            bg = bg,
-            units = "px")
+    if (!is.null(attr(plot, "width"))) {
+        devpars$width <- devpars$width %||% (attr(plot, "width") * devpars$res)
+        devpars$height <- devpars$height %||% (attr(plot, "height") * devpars$res)
+    } else {
+        devpars$width <- devpars$width %||% 800
+        devpars$height <- devpars$height %||% 600
     }
+
+    old_dev <- grDevices::dev.cur()
+    for (fmt in formats) {
+        filename = paste0(prefix, ".", fmt)
+        dev <- ggplot2:::plot_dev(fmt, filename, dpi = devpars$res)
+        dim <- ggplot2:::plot_dim(c(devpars$width, devpars$height), units = "px", limitsize = FALSE, dpi = devpars$res)
+        dev(filename = filename, width = dim[1], height = dim[2], bg = bg)
+        print(plot)
+        grDevices::dev.off()
+    }
+    on.exit(utils::capture.output({
+        if (old_dev > 1) grDevices::dev.set(old_dev) # restore old device unless null device
+    }))
 }
 
 #' Save the code to generate the data
@@ -362,8 +368,10 @@ casename_info <- function(
     section_key = "section",
     section = "DEFAULT",
     sep = "::",
+    case_type = c("dir", "prefix"),
     create = FALSE
 ) {
+    case_type <- match.arg(case_type)
     # CR_vs_PD_in_BL:seurat_clusters - IM IL1
     sec_case_names <- strsplit(casename, sep)[[1]]
     # seurat_clusters - IM IL1
@@ -394,13 +402,25 @@ casename_info <- function(
             ifelse(single_section, "#", html_escape(cname))
         )
     )
-    if (single_section && section == "DEFAULT") {
-        out$casedir <- file.path(outdir, out$case_slug)
+
+    if (case_type == "dir") {
+        if (single_section && section == "DEFAULT") {
+            out$casedir <- file.path(outdir, out$case_slug)
+        } else {
+            out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+        }
+        if (create) {
+            dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+        }
     } else {
-        out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    }
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+        if (single_section && section == "DEFAULT") {
+            out$caseprefix <- file.path(outdir, out$case_slug)
+        } else {
+            out$caseprefix <- file.path(outdir, out$section_slug, out$case_slug)
+            if (create) {
+                dir.create(file.path(outdir, out$section_slug), showWarnings = FALSE, recursive = TRUE)
+            }
+        }
     }
     out
 }
@@ -459,4 +479,44 @@ run_command <- function(
         }
         return(out)
     }
+}
+
+#' Expand the dims usually used in single-cell analysis to specific dimensions
+#'
+#' @param dims The dimensions to expand
+#' @return A vector of expanded dimensions
+#' @export
+#' @examples
+#' expand_dims(NULL) # c(1, 2)
+#' expand_dims(1:2) # c(1, 2)
+#' expand_dims(1) # c(1)
+#' expand_dims("1:2") # c(1, 2)
+#' expand_dims("1") # c(1)
+#' # dash works as the same as colon
+#' expand_dims("1-3") # c(1, 2, 3)
+#' expand_dims("1,3") # c(1, 3)
+#' expand_dims("1,3:5") # c(1, 3, 4, 5)
+#' expand_dims(c(1, "3:5", 7)) # c(1, 3, 4, 5, 7)
+expand_dims <- function(dims, default = 1:2) {
+    if (is.null(dims)) {
+        return(default)
+    }
+    if (is.numeric(dims)) {
+        return(dims)
+    }
+    dims <- unlist(strsplit(dims, ","))
+    out <- c()
+    for (d in dims) {
+        if (grepl(":", d)) {
+            d <- unlist(strsplit(d, ":"))
+            d <- as.integer(d[1]):as.integer(d[2])
+        } else if (grepl("-", d)) {
+            d <- unlist(strsplit(d, "-"))
+            d <- as.integer(d[1]):as.integer(d[2])
+        } else {
+            d <- as.integer(d)
+        }
+        out <- c(out, d)
+    }
+    out
 }
