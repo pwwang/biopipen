@@ -1,9 +1,13 @@
 # Executables or binaries
 [exe]
+# BeEM: https://github.com/kad-ecoli/BeEM
+beem = "BeEM"
 # bedtools to handle bed files
 bedtools = "bedtools"
 # bcftools to handle bcf/vcf files
 bcftools = "bcftools"
+# calculate_rmsd: https://github.com/charnley/rmsd
+calculate_rmsd = "calculate_rmsd"
 # cellranger
 cellranger = "cellranger"
 # Control-FREEC to call cnvs
@@ -27,6 +31,8 @@ cnvnator2vcf = "cnvnator2VCF.pl"
 convert = "convert"
 # fimo from meme
 fimo = "fimo"
+# MAXIT: https://sw-tools.rcsb.org/apps/MAXIT/
+maxit = "maxit"
 # wget
 wget = "wget"
 # aria2c
