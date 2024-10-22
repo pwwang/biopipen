@@ -2367,7 +2367,7 @@ class CellCellCommunication(Proc):
             expression, while *_complex corresponds to the actual complex, with subunits being separated by _.
             source and target columns represent the source/sender and target/receiver cell identity for each interaction, respectively
             * `*_props`: represents the proportion of cells that express the entity.
-                By default, any interactions in which either entity is not expressed in above 10% of cells per cell type
+                By default, any interactions in which either entity is not expressed in above 10%% of cells per cell type
                 is considered as a false positive, under the assumption that since CCC occurs between cell types, a sufficient
                 proportion of cells within should express the genes.
             * `*_means`: entity expression mean per cell type.
@@ -2486,3 +2486,133 @@ class CellCellCommunicationPlots(Proc):
     plugin_opts = {
         "report": "file://../reports/scrna/CellCellCommunicationPlots.svelte",
     }
+
+
+class ScVelo(Proc):
+    """Velocity analysis for single-cell RNA-seq data
+
+    This process is implemented based on the Python package `scvelo`.
+
+    Input:
+        sobjfile: The seurat object file in RDS or h5seurat format or AnnData file.
+
+    Output:
+        outfile: The output object with the velocity embeddings and information.
+            In either RDS, h5seurat or h5ad format, depending on the `envs.outtype`.
+        outdir: The output directory for the plots
+
+    Envs:
+        ncores (type=int): Number of cores to use.
+        group_by: The column name in metadata to group the cells.
+            Typically, this column should be the cluster id.
+        reduction: The nonlinear reduction to use for the velocity analysis.
+            Typically, `umap` will be used.
+            If this is not provided, 'pca' will be used if exists, otherwise a
+            PCA will be performed.
+        modes (type=auto): The modes to use for the analysis.
+            A list or a string with comma separated values.
+        fitting_by (choice): The mode to use for fitting the velocities.
+            - stochastic: Stochastic mode
+            - deterministic: Deterministic mode
+        min_shared_counts (type=int): Minimum number of counts
+            (both unspliced and spliced) required for a gene.
+        n_neighbors (type=int): The number of neighbors to use for the velocity graph.
+        n_pcs (type=int): The number of PCs to use for the velocity graph.
+        stream_smooth (type=float): Multiplication factor for scale in Gaussian kernel
+            around grid point.
+        stream_density (type=float): Controls the closeness of streamlines.
+            When density = 2.0, the domain is divided into a 60x60 grid, whereas
+            density linearly scales this grid. Each cell in the grid can have,
+            at most, one traversing streamline. For different densities in each
+            direction, use a tuple (density_x, density_y).
+        arrow_size (type=float): Scaling factor for the arrow size.
+        arrow_length (type=float): Length of arrows.
+        arrow_density (type=float): Density of arrows.
+        denoise (flag): Whether to denoise the data.
+        denoise_topn (type=int): Number of genes with highest likelihood selected to
+            infer velocity directions.
+        kinetics (flag): Whether to compute the RNA velocity kinetics.
+        kinetics_topn (type=int): Number of genes with highest likelihood selected to
+            infer velocity directions.
+        calculate_velocity_genes (flag): Whether to calculate the velocity genes.
+        top_n (type=int): The number of top features to plot.
+        res (type=int): The resolution of the plots.
+        rscript: The path to the Rscript executable used to convert RDS file to AnnData.
+            if `in.sobjfile` is an RDS file, it will be converted to AnnData file
+            (h5ad). You need `Seurat`, `SeuratDisk` and `digest` installed.
+        outtype (choice): The output file type.
+            - input: The same as the input file type.
+            - anndata: AnnData object
+            - h5seurat: h5seurat object
+            - h5ad: h5ad object
+    """
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}-scvelo.{{envs.outtype}}"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "group_by": "seurat_clusters",
+        "reduction": "umap",
+        "modes": ["stochastic", "deterministic", "dynamical"],
+        "fitting_by": "stochastic",
+        "min_shared_counts": 30,
+        "n_neighbors": 30,
+        "n_pcs": 30,
+        "stream_smooth": 0.5,
+        "stream_density": 2.0,
+        "arrow_size": 5.0,
+        "arrow_length": 5.0,
+        "arrow_density": 0.5,
+        "denoise": False,
+        "denoise_topn": 3,
+        "kinetics": False,
+        "kinetics_topn": 100,
+        "calculate_velocity_genes": False,
+        "top_n": 6,
+        "res": 100,
+        "rscript": config.lang.rscript,
+        "outtype": "input",
+    }
+    script = "file://../scripts/scrna/ScVelo.py"
+
+
+class SlingShot(Proc):
+    """Trajectory inference using SlingShot
+
+    This process is implemented based on the R package `slingshot`.
+
+    Input:
+        sobjfile: The seurat object file in RDS.
+
+    Output:
+        outfile: The output object with the trajectory information.
+
+    Envs:
+        group_by: The column name in metadata to group the cells.
+            Typically, this column should be the cluster id.
+        reduction: The nonlinear reduction to use for the trajectory analysis.
+        dims (type=auto): The dimensions to use for the analysis.
+            A list or a string with comma separated values.
+            Consecutive numbers can be specified with a colon (`:`) or a dash (`-`).
+        start: The starting group for the SlingShot analysis.
+        end: The ending group for the SlingShot analysis.
+        prefix: The prefix to add to the column names of the resulting pseudotime variable.
+        reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
+        align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
+        seed (type=int): The seed for the random number generator.
+    """  # noqa: E501
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "group_by": "seurat_clusters",
+        "reduction": None,
+        "dims": [1, 2],
+        "start": None,
+        "end": None,
+        "prefix": None,
+        "reverse": False,
+        "align_start": False,
+        "seed": 8525,
+    }
+    script = "file://../scripts/scrna/SlingShot.R"
