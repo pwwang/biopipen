@@ -520,3 +520,82 @@ expand_dims <- function(dims, default = 1:2) {
     }
     out
 }
+
+
+#' Get plotthis function from plot_type
+#'
+#' @param plot_type The plot type
+#' @param gglogger_register Register the plotthis function to gglogger
+#' @param return_name Return the name of the function instead of the function
+#' @return The plotthis function
+#' @export
+get_plotthis_fn <- function(plot_type, gglogger_register = TRUE, return_name = FALSE) {
+    fn_name <- switch(plot_type,
+        hist = "Histogram",
+        histo = "Histogram",
+        histogram = "Histogram",
+        featuredim = "FeatureDimPlot",
+        splitbar = "SplitBarPlot",
+        enrichmap = "EnrichMap",
+        enrichnet = "EnrichNetwork",
+        enrichnetwork = "EnrichNetwork",
+        gsea = "GSEAPlot",
+        gseasummary = "GSEASummaryPlot",
+        gseasum = "GSEASummaryPlot",
+        heatmap = "Heatmap",
+        network = "Network",
+        pie = "PieChart",
+        wordcloud = "WordCloudPlot",
+        venn = "VennDiagram",
+        paste0(tools::toTitleCase(plot_type), "Plot")
+    )
+    if (return_name) {
+        return(fn_name)
+    }
+    fn <- tryCatch({
+        utils::getFromNamespace(fn_name, "plotthis")
+    }, error = function(e) {
+        stop("Unknown plot type: ", plot_type)
+    })
+
+    if (gglogger_register) {
+        gglogger::register(fn, fn_name)
+    } else {
+        fn
+    }
+}
+
+
+#' Extract variables from a named list
+#'
+#' @param x A named list
+#' @param ... The names of the variables
+#' @param keep Keep the extracted variables in the list
+#' @param env The environment to assign the extracted variables
+#' @return The list with/ithout the extracted variables
+#'
+#' @export
+extract_vars <- function(x, ..., keep = FALSE, env = parent.frame()) {
+    stopifnot("extract_vars: 'x' must be a named list" = is.list(x) && !is.null(names(x)))
+    vars <- list(...)
+    if (is.null(names(vars))) {
+        names(vars) <- unlist(vars)
+    }
+    for (i in seq_along(vars)) {
+        if (nchar(names(vars)[i]) == 0) {
+            names(vars)[i] <- vars[[i]]
+        }
+    }
+    # list2env?
+    for (n in names(vars)) {
+        if (!n %in% names(x)) {
+            stop(sprintf("Variable '%s' not found in the list", n))
+        }
+        assign(vars[[n]], x[[n]], envir = env)
+        if (!isTRUE(keep)) {
+            x[[n]] <- NULL
+        }
+    }
+
+    x
+}
