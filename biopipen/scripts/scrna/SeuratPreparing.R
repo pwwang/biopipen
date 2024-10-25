@@ -4,9 +4,7 @@
 library(Seurat)
 library(future)
 library(bracer)
-library(ggplot2)
 library(dplyr)
-# library(tidyseurat)
 
 metafile <- {{in.metafile | quote}}
 rdsfile <- {{out.rdsfile | quote}}

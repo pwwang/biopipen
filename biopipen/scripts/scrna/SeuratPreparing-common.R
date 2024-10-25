@@ -80,17 +80,27 @@ report_cell_qc = function(ngenes) {
         ),
         h1 = "Violin Plots"
     )
+
     for (feat in feats) {
         log_info("  For feature: {feat}")
-        vln_p <- ggplot(cell_qc_df, aes(x = Sample, y = !!sym(feat), color = .QC)) +
-            geom_violin(fill = "white", width = 0.5) +
-            geom_jitter(width = 0.2, height = 0, alpha = 0.5) +
-            scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE)) +
-            labs(x = "Sample", y = feat) +
-            theme_minimal()
+        # vln_p <- ggplot(cell_qc_df, aes(x = Sample, y = !!sym(feat), color = .QC)) +
+        #     geom_violin(fill = "white", width = 0.5) +
+        #     geom_jitter(width = 0.2, height = 0, alpha = 0.5) +
+        #     scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE)) +
+        #     labs(x = "Sample", y = feat) +
+        #     theme_minimal()
+        vln_p <- plotthis::ViolinPlot(
+            data = cell_qc_df,
+            x = "Sample",
+            y = feat,
+            highlight = '!.QC',
+            add_point = TRUE,
+            alpha = 0.8,
+            add_box = TRUE
+        )
 
         vlnplot = file.path(plotsdir, paste0(slugify(feat), ".vln"))
-        save_plot(vln_p, vlnplot, list(width = 800 + length(samples) * 15))
+        save_plot(vln_p, vlnplot)
 
         add_report(
             list(
@@ -120,11 +130,18 @@ report_cell_qc = function(ngenes) {
     )
     for (feat in setdiff(feats, "nCount_RNA")) {
         log_info("  For feature: {feat}, against nCount_RNA")
-        scat_p <- ggplot(cell_qc_df, aes(x = nCount_RNA, y = !!sym(feat), color = .QC)) +
-            geom_point() +
-            scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE)) +
-            labs(x = "nCount_RNA", y = feat) +
-            theme_minimal()
+        # scat_p <- ggplot(cell_qc_df, aes(x = nCount_RNA, y = !!sym(feat), color = .QC)) +
+        #     geom_point() +
+        #     scale_color_manual(values = c("#181818", pal_biopipen()(1)), breaks = c(TRUE, FALSE)) +
+        #     labs(x = "nCount_RNA", y = feat) +
+        #     theme_minimal()
+        scat_p <- plotthis::ScatterPlot(
+            data = cell_qc_df,
+            x = "nCount_RNA",
+            y = feat,
+            highlight = '!.QC',
+            highlight_alpha = 0.7
+        )
 
         scatfile = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter"))
         save_plot(scat_p, scatfile)
