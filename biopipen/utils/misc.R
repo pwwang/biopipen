@@ -132,6 +132,7 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
         devpars$width <- devpars$width %||% 800
         devpars$height <- devpars$height %||% 600
     }
+    print(devpars)
 
     old_dev <- grDevices::dev.cur()
     for (fmt in formats) {
@@ -366,11 +367,12 @@ expand_cases <- function(cases, defaults, expand_each = NULL) {
 casename_info <- function(
     casename, cases, outdir,
     section_key = "section",
-    section = "DEFAULT",
+    section = NULL,
     sep = "::",
     case_type = c("dir", "prefix"),
     create = FALSE
 ) {
+    section <- section %||% "DEFAULT"
     case_type <- match.arg(case_type)
     # CR_vs_PD_in_BL:seurat_clusters - IM IL1
     sec_case_names <- strsplit(casename, sep)[[1]]

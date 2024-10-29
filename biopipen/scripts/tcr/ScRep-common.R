@@ -14,7 +14,7 @@ screp_mutate <- function(screp, mutaters) {
         return (screp)
     }
 
-    if (inherits(screp_data, "Seurat")) {
+    if (inherits(screp, "Seurat")) {
         mutaters <- lapply(mutaters, parse_expr)
         screp@meta.data <- mutate(screp@meta.data, !!!mutaters)
     } else {
@@ -33,12 +33,13 @@ screp_mutate <- function(screp, mutaters) {
 #' @param subset A character expression to filter the data
 #' @return A Seurat object or a list of data.frames
 screp_subset <- function(screp, subset) {
-    if (inherits(screp_data, "Seurat")) {
+    if (inherits(screp, "Seurat")) {
         screp <- eval(parse(text = paste('subset(screp, subset = "', subset, '")')))
     } else {
         screp <- lapply(screp, function(x) {
             dplyr::filter(x, !!parse_expr(subset))
         })
+        screp <- screp[sapply(screp, nrow) > 0]
     }
 
     screp

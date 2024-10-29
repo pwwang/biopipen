@@ -1761,12 +1761,16 @@ class ClonalStats(Proc):
             - width (type=int): The width of the device
             - height (type=int): The height of the device
             - res (type=int): The resolution of the device
-        pdf (flag): Whether also save the plots as PDF files
-        code (flag): Whether to save the code used to generate the plots
+        more_formats (list): The extra formats to save the plots in, other than PNG.
+        save_code (flag): Whether to save the code used to generate the plots
             Note that the data directly used to generate the plots will also be saved in an `rda` file.
             Be careful if the data is large as it may take a lot of disk space.
         section: The name of the section in the report if you want to put multiple plots
             in the same section.
+            When there are multiple cases for the same 'viz_type', the name of the 'viz_type' will be used
+            as the default section name (for example, when 'viz_type' is 'volume', the section name will be 'Clonal Volume').
+            When there is only a single case, the section name will default to 'DEFAULT', which will not be shown
+            in the report.
         <more>: The arguments for the plot function
             See the documentation of the corresponding plot function for the details
         cases (type=json): The cases to generate the plots if we have multiple cases.
@@ -1774,15 +1778,15 @@ class ClonalStats(Proc):
             The arguments in `envs` will be used if not specified in `cases`, except for `mutaters`.
     """  # noqa: E501
     input = "screpfile:file"
-    output = "outdir:dir:{{in.screpfile | stem}}.clonal_visualization"
+    output = "outdir:dir:{{in.screpfile | stem}}.clonalstats"
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
         "subset": None,
         "viz_type": None,
         "devpars": {"width": None, "height": None, "res": 100},
-        "pdf": False,
-        "code": False,
+        "more_formats": [],
+        "save_code": False,
         "section": None,
         "cases": {
             "Clonal Volume": {"viz_type": "volume"},
@@ -1792,3 +1796,4 @@ class ClonalStats(Proc):
         }
     }
     script = "file://../scripts/tcr/ClonalStats.R"
+    plugin_opts = {"report": "file://../reports/tcr/ClonalStats.svelte"}
