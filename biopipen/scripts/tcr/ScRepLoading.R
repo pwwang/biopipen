@@ -89,6 +89,7 @@ contig_list <- lapply(seq_len(nrow(metadata)), function(i) {
     annofile <- get_contig_annofile(metadata$TCRData[i], sample)
     if (is.null(annofile)) { return (NULL) }
 
+    log_info("- Sample: {sample} ...")
     anno <- read.delim2(annofile, sep = ",", header = TRUE, stringsAsFactors = FALSE)
     # Add cdr1, cdr2, fwr1, fwr2, etc columns for compatibility
     anno$cdr1 <- anno$cdr1 %||% ""
@@ -106,10 +107,12 @@ contig_list <- lapply(seq_len(nrow(metadata)), function(i) {
 
     anno
 })
+names(contig_list) <- as.character(metadata$Sample)
+contig_list <- contig_list[!sapply(contig_list, is.null)]
 
 log_info("Combining TCR data and adding meta data ...")
 if (isTRUE(combineTCR_args$samples)) {
-    combineTCR_args$samples <- as.character(metadata$Sample)
+    combineTCR_args$samples <- names(contig_list)
 }
 combineTCR_args$input.data <- contig_list
 screp_data <- do_call(combineTCR, combineTCR_args)
