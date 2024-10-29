@@ -6,6 +6,7 @@ library(dplyr)
 
 infile <- {{in.infile | r}}
 outfile <- {{out.outfile | r}}
+joboutdir <- {{job.outdir | r}}
 sep <- {{envs.sep | r}}
 mutaters <- {{envs.mutaters | r}}
 save_mutated <- {{envs.save_mutated | r}}
@@ -77,14 +78,7 @@ if (length(stats) > 0) {
 
         p <- do_call(plot_fn, case)
         save_plot(p, info$caseprefix, devpars, formats = more_formats)
-        if (save_code) {
-            save_plotcode(
-                p,
-                setup = c('library(plotthis)', '', 'load("data.RData")', 'list2env(case, envir = .GlobalEnv)'),
-                prefix = info$caseprefix,
-                "case"
-            )
-        }
+
         report <- list(
             kind = "table_image",
             src = paste0(info$caseprefix, ".png"),
@@ -99,6 +93,13 @@ if (length(stats) > 0) {
             })
         }
         if (save_code) {
+            save_plotcode(
+                p,
+                setup = c('library(plotthis)', '', 'load("data.RData")', 'list2env(case, envir = .GlobalEnv)'),
+                prefix = info$caseprefix,
+                "case"
+            )
+
             report$download <- c(report$download, list(list(
                 src = paste0(info$caseprefix, ".code.zip"),
                 tip = "Download the code to reproduce the plot",
@@ -110,4 +111,4 @@ if (length(stats) > 0) {
     }
 }
 
-save_report(outdir)
+save_report(joboutdir)

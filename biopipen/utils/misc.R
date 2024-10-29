@@ -132,7 +132,6 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
         devpars$width <- devpars$width %||% 800
         devpars$height <- devpars$height %||% 600
     }
-    print(devpars)
 
     old_dev <- grDevices::dev.cur()
     for (fmt in formats) {
