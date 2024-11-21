@@ -1,6 +1,7 @@
 """Additional filters for pipen"""
 from __future__ import annotations
 
+import re
 import shlex
 from pathlib import Path
 from typing import Any, List, Mapping
@@ -173,6 +174,8 @@ def r(
             return "FALSE"
         if obj.upper() == "NA" or obj.upper() == "NULL":
             return obj.upper()
+        if re.match(r"^\d+:\d+$", obj):
+            return obj
         if obj.startswith("r:") or obj.startswith("R:"):
             return str(obj)[2:]
         return repr(str(obj))
@@ -240,8 +243,8 @@ def source_r(path: str | Path) -> str:
     mtime = int(path.stat().st_mtime)
     return (
         f"# Last modified: {mtime}\n"
-        f"biopipen_dir = {r(BIOPIPEN_DIR)}\n"
-        f"source('{path}')"
+        # f"biopipen_dir = {r(BIOPIPEN_DIR)}\n"
+        f"source('{path}', chdir = TRUE)"
     )
 
 
