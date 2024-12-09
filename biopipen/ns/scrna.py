@@ -1292,7 +1292,7 @@ class MarkersFinder(Proc):
             "devpars": {"res": 100},
         },
         "enrich_plots": {
-            "Bar Plot": {"plot_type": "bar", "ncol": 1},
+            "Bar Plot": {"plot_type": "bar", "ncol": 1, "top_term": 10},
         },
         "cases": {},
         "overlaps_defaults": {

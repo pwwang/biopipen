@@ -209,17 +209,19 @@ process_markers <- function(markers, info, case) {
 
         # Visualize enriched terms
         if (length(case$enrich_plots) > 0) {
-            for (plotname in names(case$enrich_plots)) {
-                plotargs <- case$enrich_plots[[plotname]]
-                plotargs$enrich <- enrich
-                plotargs$outprefix <- file.path(info$prefix, paste0("enrich.", slugify(plotname)))
+            for (db in case$dbs) {
+                plots <- list()
+                for (plotname in names(case$enrich_plots)) {
+                    plotargs <- case$enrich_plots[[plotname]]
+                    plotargs$enrich <- enrich[enrich$db == db, , drop = FALSE]
+                    plotargs$outprefix <- file.path(info$prefix, paste0("enrich.", slugify(db), ".", slugify(plotname)))
 
-                do_call(VizEnrich, plotargs)
+                    do_call(VizEnrich, plotargs)
+
+                    plots[[length(plots) + 1]] <- reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code)
+                }
                 reporter$add2(
-                    list(
-                        name = plotname,
-                        contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))
-                    ),
+                    list(name = db, contents = plots),
                     hs = c(info$section, info$name),
                     hs2 = "Enrichment Analysis",
                     ui = "tabs"
