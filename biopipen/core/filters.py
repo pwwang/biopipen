@@ -10,7 +10,7 @@ from argx import Namespace
 from liquid.filters.manager import FilterManager
 from pipen_report.filters import register_component, render_ui, _tag
 
-from .defaults import BIOPIPEN_DIR
+# from .defaults import BIOPIPEN_DIR
 
 filtermanager = FilterManager()
 
@@ -121,7 +121,7 @@ def dict_to_cli_args(
 def r(
     obj: Any,
     ignoreintkey: bool = True,
-    todot: str = None,
+    todot: str | None = None,
     sortkeys: bool = False,
     skip: int = 0,
     _i: int = 0,
@@ -227,7 +227,7 @@ def r(
 
 
 @filtermanager.register
-def source_r(path: str | Path) -> str:
+def source_r(path: str | Path, chdir: bool = False) -> str:
     """Source an R script.
 
     In addition to generating `source(path)`, we also include the mtime for the script
@@ -244,7 +244,7 @@ def source_r(path: str | Path) -> str:
     return (
         f"# Last modified: {mtime}\n"
         # f"biopipen_dir = {r(BIOPIPEN_DIR)}\n"
-        f"source('{path}', chdir = TRUE)"
+        f"source('{path}', chdir = {r(chdir)})"
     )
 
 
@@ -310,7 +310,7 @@ def _render_fgsea(
         },
     ]
 
-    return render_ui(components, "accordion", job, level)
+    return render_ui(components, "accordion", job, level)  # type: ignore
 
 
 @register_component("pdf")
