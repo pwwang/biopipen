@@ -80,7 +80,7 @@ feats = c(
     "percent.mt", "percent.ribo", "percent.hb", "percent.plat"
 )
 
-sobj <- run_cell_qc(sobj)
+sobj <- run_cell_qc(sobj, envs$species)
 
 # plot and report the QC
 log_info("Plotting and reporting QC ...")
