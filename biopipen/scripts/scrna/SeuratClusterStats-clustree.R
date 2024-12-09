@@ -1,16 +1,16 @@
 # srtobj, clustrees_defaults, clustrees
 
-log_info("clustrees:")
+log$info("clustrees:")
+
 if (
     (is.null(clustrees) || length(clustrees) == 0) &&
-    (is.null(clustrees_defaults$prefix) || clustrees_defaults$prefix == "")) {
-    log_warn("- no cases, skipping intentionally ...")
+    (is.null(clustrees_defaults$prefix) || isFALSE(clustrees_defaults$prefix))) {
+    log$warn("- no case specified, skipping ...")
 } else {  # clustrees set or prefix is not empty
-    library(clustree)
     odir = file.path(outdir, "clustrees")
     dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
-    if ((is.null(clustrees) || length(clustrees) == 0) && clustrees_defaults$prefix == "_auto") {
+    if ((is.null(clustrees) || length(clustrees) == 0) && isTRUE(clustrees_defaults$prefix)) {
         clustrees <- list()
         for (key in names(srtobj@commands)) {
             if (startsWith(key, "FindClusters") && length(srtobj@commands[[key]]$resolution) > 1) {
@@ -24,25 +24,20 @@ if (
         }
     }
     if (length(clustrees) == 0) {
-        log_warn("- no cases found, skipping ...")
+        log$warn("- no case found, skipping ...")
     } else {
         reports <- list()
         for (name in names(clustrees)) {
             if (is.null(clustrees[[name]]$prefix)) {
                 stop(paste0("clustrees: prefix is required for case: ", name))
             }
+            log$info("- Case: {name} ...")
             case <- list_update(clustrees_defaults, clustrees[[name]])
+            extract_vars(case, "devpars", "more_formats", "save_code")
 
-            devpars <- case$devpars
-            devpars$width <- devpars$width %||% clustrees_defaults$devpars$width %||% 800
-            devpars$height <- devpars$height %||% clustrees_defaults$devpars$height %||% 1000
-            devpars$res <- devpars$res %||% clustrees_defaults$devpars$res %||% 100
-            case$devpars <- NULL
             prefix <- sub("\\.$", "", case$prefix)
-            log_info("- Case: {name} ...")
             case$prefix <- paste0(prefix, ".")
-            case$x <- srtobj@meta.data %>% select(starts_with(case$prefix))
-            case$x <- case$x[complete.cases(case$x), , drop = FALSE]
+            case$object <- srtobj
 
             command <- srtobj@commands[[paste0("FindClusters.", prefix)]] %||%
                 (if(prefix == "seurat_clusters") srtobj@commands$FindClusters else NULL)
@@ -54,20 +49,23 @@ if (
             }
             resolution_used <- resolution[length(resolution)]
 
-            plot_prefix <- file.path(odir, paste0(prefix, ".clustree"))
-            p <- do_call(clustree, case)
-            save_plot(p, plot_prefix, devpars)
+            plot_prefix <- file.path(odir, paste0(slugify(prefix), ".clustree"))
+            p <- do_call(gglogger::register(ClustreePlot), case)
+            save_plot(p, plot_prefix, devpars, formats = c("png", more_formats))
 
-            reports[[length(reports) + 1]] <- list(
-                kind = "table_image",
-                src = paste0(plot_prefix, ".png"),
-                name = name,
-                download = paste0(plot_prefix, ".pdf"),
+            if (save_code) {
+                save_plotcode(p, plot_prefix,
+                    setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
+                    "case",
+                    auto_data_setup = FALSE)
+            }
+            reports[[length(reports) + 1]] <- reporter$image(
+                plot_prefix, c("png", more_formats), save_code, kind = "image",
                 descr = paste0("Resolutions: ", paste(resolution, collapse = ", "), "; resolution used: ", resolution_used)
             )
         }
         reports$h1 <- "Clustree plots"
         reports$ui <- "table_of_images"
-        do.call(add_report, reports)
+        do_call(reporter$add, reports)
     }
 }

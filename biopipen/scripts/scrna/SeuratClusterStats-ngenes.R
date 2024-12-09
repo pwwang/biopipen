@@ -2,13 +2,13 @@
 
 # ngenes_defaults <- {{envs.ngenes_defaults | r: todot="-"}}
 # ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
-log_info("ngenes:")
+log$info("ngenes:")
 
 odir <- file.path(outdir, "ngenes")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
 do_one_ngenes <- function(name) {
-    log_info("- Case: {name}")
+    log$info("- Case: {name}")
 
     case <- list_update(ngenes_defaults, ngenes[[name]])
     case$devpars <- list_update(ngenes_defaults$devpars, case$devpars)
@@ -35,8 +35,8 @@ do_one_ngenes <- function(name) {
             width = .1,
             fill = "white"
         ) +
-        theme_prism(axis_text_angle = 45) +
-        scale_fill_biopipen() +
+        plotthis::theme_this() +
+        # scale_fill_biopipen() +
         ylab("Number of genes expressed")
 
     if (!is.null(case$split.by)) {
@@ -48,6 +48,7 @@ do_one_ngenes <- function(name) {
     save_plot(p, figprefix, case$devpars)
     save_plotcode(
         p,
+        figprefix,
         c(
             'library(rlang)',
             'library(ggplot2)',
@@ -55,11 +56,10 @@ do_one_ngenes <- function(name) {
             '',
             'load("data.RData")'
         ),
-        figprefix,
-        "df_cells", "case", "scale_fill_biopipen", "pal_biopipen"
+        "df_cells", "case"
     )
 
-    add_report(
+    reporter$add(
         list(
             kind = "descr",
             content = paste0(
