@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.32.1
+
+- fix(scrna.ScFGSEA): fix case gmtfile not working
+- fix(TopExpressingGenes): add `InlineNotification` component to TopExpressingGenes.svelte
+- feat(scrna.SeuratPreparing): add `envs.species` so that `percent.mt`, `percent.ribo`, `percent.hb` and `percent.plat` can be correctly calculated for mouse
+- fix(scrna.SeuratClusterStats): fix `kind` not being added to the figure file name for plots of features
+
 ## 0.32.0
 
 - deps: update pipen-runinfo dependency to version 0.8.1

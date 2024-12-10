@@ -414,7 +414,7 @@ do_one_features = function(name) {
             p = p + eval(parse(text = pls))
         }
     }
-    figfile = file.path(odir, paste0(slugify(name), ".", slugify(case$kind), ".png"))
+    figfile = file.path(odir, paste0(slugify(name), ".", slugify(kind), ".png"))
     png(figfile, width=devpars$width, height=devpars$height, res=devpars$res)
     tryCatch({
         print(p)
