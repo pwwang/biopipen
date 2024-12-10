@@ -29,7 +29,7 @@ jobs:
             bname=$(basename $envfile .yml)
             envname=${bname:4}
             echo "::group::Creating environment: $envname"
-            mamba env create -f $envfile
+            conda env create -f $envfile
             echo "::endgroup::"
             echo "::group::Installing biopipen in environment: $envname"
             # conda run --no-capture-output -n $envname bash tests/conda/patch_poetry.sh
