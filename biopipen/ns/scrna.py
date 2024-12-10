@@ -104,10 +104,6 @@ class SeuratPreparing(Proc):
         ncores (type=int): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
-        species (choice): The species of the data, used to determine `percent.mt`, `percent.ribo`, `percent.hb` and `percent.plat`.
-            Currently, only `human` and `mouse` are supported.
-            - human: The data is human data.
-            - mouse: The data is mouse data.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
@@ -253,7 +249,6 @@ class SeuratPreparing(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "species": "human",
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "cell_qc_per_sample": False,
         "gene_qc": {"min_cells": 0, "excludes": []},

@@ -32,20 +32,13 @@ rename_files = function(e, sample, path) {
 }
 
 
-perform_cell_qc <- function(sobj, species, per_sample = FALSE) {
+perform_cell_qc <- function(sobj, per_sample = FALSE) {
     log_prefix <- ifelse(per_sample, "  ", "- ")
     log_info("{log_prefix}Adding metadata for QC ...")
-    if (species == "human") {
-        sobj$percent.mt <- PercentageFeatureSet(sobj, pattern = "^MT-")
-        sobj$percent.ribo <- PercentageFeatureSet(sobj, pattern = "^RP[SL]")
-        sobj$percent.hb <- PercentageFeatureSet(sobj, pattern = "^HB[^(P)]")
-        sobj$percent.plat <- PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
-    } else if (species == "mouse") {
-        sobj$percent.mt <- PercentageFeatureSet(sobj, pattern = "^mt-")
-        sobj$percent.ribo <- PercentageFeatureSet(sobj, pattern = "^Rp[sl]")
-        sobj$percent.hb <- PercentageFeatureSet(sobj, pattern = "^Hb[^(p)]")
-        sobj$percent.plat <- PercentageFeatureSet(sobj, pattern = "Peacam1|Pf4")
-    }
+    sobj$percent.mt <- PercentageFeatureSet(sobj, pattern = "^MT-|^Mt-|^mt-")
+    sobj$percent.ribo <- PercentageFeatureSet(sobj, pattern = "^RP[SL]|^Rp[sl]")
+    sobj$percent.hb <- PercentageFeatureSet(sobj, pattern = "^HB[^P]|^Hb[^p]")
+    sobj$percent.plat <- PercentageFeatureSet(sobj, pattern = "PECAM1|PF4|Pecam1|Pf4")
 
     if (is.null(envs$cell_qc) || length(envs$cell_qc) == 0) {
         log_warn("{log_prefix}No cell QC criteria is provided. All cells will be kept.")
@@ -175,7 +168,7 @@ report_cell_qc = function(ngenes) {
     )
 }
 
-load_sample = function(sample, species) {
+load_sample = function(sample) {
     log_info("- Loading sample: {sample} ...")
     mdata = as.data.frame(metadata)[metadata$Sample == sample, , drop=TRUE]
     path = as.character(mdata$RNAData)
@@ -217,7 +210,7 @@ load_sample = function(sample, species) {
 
     if (isTRUE(envs$cell_qc_per_sample)) {
         log_info("- Perform cell QC for sample: {sample} ...")
-        obj = perform_cell_qc(obj, species, per_sample = TRUE)
+        obj = perform_cell_qc(obj, per_sample = TRUE)
     }
 
     if (isTRUE(envs$use_sct)) {
@@ -272,7 +265,7 @@ run_gene_qc <- function(sobj) {
     sobj
 }
 
-run_cell_qc <- function(sobj, species) {
+run_cell_qc <- function(sobj) {
     cached <- get_cached(
         list(cell_qc = envs$cell_qc, cell_qc_per_sample = envs$cell_qc_per_sample, use_sct = envs$use_sct),
         "CellQC",
@@ -285,7 +278,7 @@ run_cell_qc <- function(sobj, species) {
     } else {
         # Load data
         log_info("Reading samples individually ...")
-        obj_list = lapply(samples, load_sample, species = species)
+        obj_list = lapply(samples, load_sample)
 
         log_info("Merging samples ...")
         sobj = Reduce(merge, obj_list)
@@ -294,7 +287,7 @@ run_cell_qc <- function(sobj, species) {
 
         if (!envs$cell_qc_per_sample) {
             log_info("Performing cell QC ...")
-            sobj = perform_cell_qc(sobj, per_sample = FALSE, species = species)
+            sobj = perform_cell_qc(sobj, per_sample = FALSE)
         }
 
         cached$data <- list(sobj = sobj, cell_qc_df = cell_qc_df)
