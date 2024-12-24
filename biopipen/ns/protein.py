@@ -82,3 +82,79 @@ class ProdigySummary(Proc):
     envs = {"group": None}
     script = "file://../scripts/protein/ProdigySummary.R"
     plugin_opts = {"report": "file://../reports/protein/ProdigySummary.svelte"}
+
+
+class MMCIF2PDB(Proc):
+    """Convert mmCIF or PDBx file to PDB file.
+
+    Using [BeEM](https://github.com/kad-ecoli/BeEM)
+
+    Input:
+        infile: The input mmCIF or PDBx file.
+
+    Output:
+        outfile: The output PDB file.
+            The "outfmt" set to 3 to always output a single PDB file.
+
+    Envs:
+        tool (choice): The tool to use for conversion.
+            - maxit: Use MAXIT.
+            - beem: Use BeEM.
+        maxit: The path to the MAXIT executable.
+        beem: The path to the BeEM executable.
+        <more>: Other options for MAXIT/BeEM.
+            For BeEM, "outfmt" will not be used as it is set to 3.
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.pdb"
+    lang = config.lang.python
+    envs = {
+        "tool": "maxit",
+        "maxit": config.exe.maxit,
+        "beem": config.exe.beem,
+    }
+    script = "file://../scripts/protein/MMCIF2PDB.py"
+
+
+class RMSD(Proc):
+    """Calculate the RMSD between two structures.
+
+    See also https://github.com/charnley/rmsd.
+
+    If the input is in mmCIF format, convert it to PDB first.
+
+    Input:
+        infile1: The first structure file.
+        infile2: The second structure file.
+
+    Output:
+        outfile: The output file containing the RMSD value.
+
+    Envs:
+        beem: The path to the BeEM executable.
+        calculate_rmsd: The path to the calculate_rmsd executable.
+        conv_tool (choice): The tool to use for conversion.
+            - maxit: Use MAXIT.
+            - beem: Use BeEM.
+        ca_only (flag): Whether to calculate RMSD using only C-alpha atoms.
+        duel (choice): How to handle the duel atoms. Default is "keep".
+            - keep: Keep both atoms.
+            - keep_first: Keep the first atom.
+            - keep_last: Keep the last atom.
+            - average: Average the coordinates.
+        reorder (flag): Whether to reorder the atoms in the structures.
+        <more>: Other options for calculate_rmsd.
+    """
+    input = "infile1:file, infile2:file"
+    output = "outfile:file:{{in.infile1 | stem}}-{{in.infile2 | stem}}.rmsd.txt"
+    lang = config.lang.python
+    envs = {
+        "maxit": config.exe.maxit,
+        "beem": config.exe.beem,
+        "calculate_rmsd": config.exe.calculate_rmsd,
+        "conv_tool": "maxit",
+        "ca_only": False,
+        "duel": "keep",
+        "reorder": True,
+    }
+    script = "file://../scripts/protein/RMSD.py"

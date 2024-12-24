@@ -1,4 +1,5 @@
 {{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+{{ biopipen_dir | joinpaths: "utils", "repr.R" | source_r }}
 
 library(Seurat)
 library(rlang)
@@ -8,6 +9,8 @@ library(tibble)
 library(ggplot2)
 library(ggradar)
 library(ggprism)
+library(glue)
+library(gglogger)
 
 # input/output
 srtfile = {{in.srtobj | r}}
@@ -192,31 +195,46 @@ do_radarplot <- function(info, case, counts) {
     }
 
     # Plot
-    plotfile = file.path(info$casedir, "plot.png")
     if (!is.null(case$colors) && length(case$colors) == 1 && case$colors == "biopipen") {
         colors = pal_biopipen()(nrow(rdr_data))
     } else if (!is.null(case$colors) && length(case$colors) > 0) {
         colors = trimws(unlist(strsplit(case$colors, ",")))
     }
+
+    plotdf <- rdr_data %>%
+        as.data.frame() %>%
+        rownames_to_column("group") %>%
+        mutate(group = factor(group, levels = rownames(rdr_data)))
+
     p = ggradar(
-        rdr_data %>%
-            as.data.frame() %>%
-            rownames_to_column("group") %>%
-            mutate(group = factor(group, levels = rownames(rdr_data))),
+        plotdf,
         values.radar = paste0(breaks, "%"),
         grid.min = breaks[1] / 100,
         grid.mid = breaks[2] / 100,
         grid.max = breaks[3] / 100,
         group.colours = colors
     )
-    png(
-        plotfile,
-        width = case$devpars$width,
-        height = case$devpars$height,
-        res = case$devpars$res
+    prefix <- file.path(info$casedir, "plot")
+    save_plot(p, prefix, case$devpars)
+
+    code_file <- paste0(prefix, ".R")
+    code = glue(
+        "library(ggradar)
+
+        plotdf <- {repr(plotdf)}
+        breaks <- {repr(breaks)}
+        colors <- {repr(colors)}
+
+        ggradar(
+            plotdf,
+            values.radar = paste0(breaks, '%'),
+            grid.min = breaks[1] / 100,
+            grid.mid = breaks[2] / 100,
+            grid.max = breaks[3] / 100,
+            group.colours = colors
+        )"
     )
-    print(p)
-    dev.off()
+    writeLines(code, code_file)
 }
 
 do_barplot_and_tests <- function(info, case, counts) {
@@ -266,34 +284,42 @@ do_barplot_and_tests <- function(info, case, counts) {
         rowwise() %>%
         mutate(mean_sd1 = max(.mean - .sd, 0), mean_sd2 = .mean + .sd)
 
+    if (!is.null(case$colors) && length(case$colors) == 1 && case$colors == "biopipen") {
+        colors <- pal_biopipen(.8)(length(unique(plotdata[[case$by]])))
+    } else if (!is.null(case$colors) && length(case$colors) > 0) {
+        colors <- trimws(unlist(strsplit(case$colors, ",")))
+    }
+
     # Plot the barplot
-    plotfile = file.path(info$casedir, "barplot.png")
     p = ggplot(plotdata, aes(x = !!sym(case$ident), y = .mean, fill = !!sym(case$by))) +
-        geom_bar(stat = "identity", position = "dodge") +
+        geom_bar(stat = "identity", position = "dodge", color = "#333333") +
         geom_errorbar(
             aes(ymin = mean_sd1, ymax = mean_sd2),
-            width = 0.4,
-            linewidth = 0.8,
+            width = 0.2,
+            alpha = 0.5,
+            linewidth = 0.6,
             position = position_dodge(0.9),
             color = "#333333"
         ) +
-        theme_prism(axis_text_angle = 90) +
-        ylab("Fraction of cells")
+        theme_prism(axis_text_angle = 45) +
+        ylab("Fraction of cells") +
+        scale_fill_manual(values = colors)
 
-    if (!is.null(case$colors) && length(case$colors) == 1 && case$colors == "biopipen") {
-        p <- p + scale_fill_biopipen(.8)
-    } else if (!is.null(case$colors) && length(case$colors) > 0) {
-        p <- p + scale_fill_manual(values = trimws(unlist(strsplit(case$colors, ","))))
-    }
-
-    png(
-        plotfile,
-        width = case$bar_devpars$width,
-        height = case$bar_devpars$height,
-        res = case$bar_devpars$res
-    )
-    print(p)
-    dev.off()
+    prefix = file.path(info$casedir, "barplot")
+    save_plot(p, prefix, case$bar_devpars)
+    neat_case <- list(by = case$by, ident = case$ident)
+    save_plotcode(
+        p,
+        setup = c(
+            'library(rlang)',
+            'library(ggplot2)',
+            'library(ggprism)',
+            '',
+            'load("data.RData")',
+            'case <- neat_case'
+        ),
+        prefix,
+        "plotdata", "neat_case", "colors")
 
     # Do the tests in each cluster between groups on .frac
     bys <- bardata %>% pull(!!sym(case$by)) %>% unique()
@@ -348,7 +374,13 @@ add_case_report = function(info, breakdown, test) {
             contents = list(
                 list(
                     kind = "image",
-                    src = file.path(info$casedir, "plot.png")
+                    src = file.path(info$casedir, "plot.png"),
+                    download = list(
+                        file.path(info$casedir, "plot.pdf"),
+                        list(
+                            src = file.path(info$casedir, "plot.R"),
+                            tip = "Download the code used to reproduce the plot",
+                            icon = "Code"))
                 )
             )
         ),
@@ -381,7 +413,15 @@ add_case_report = function(info, breakdown, test) {
                 contents = list(
                     list(
                         kind = "image",
-                        src = file.path(info$casedir, "barplot.png")
+                        src = file.path(info$casedir, "barplot.png"),
+                        download = list(
+                            file.path(info$casedir, "barplot.pdf"),
+                            list(
+                                src = file.path(info$casedir, "barplot.code.zip"),
+                                tip = "Download the code used to reproduce the plot",
+                                icon = "Code"
+                            )
+                        )
                     )
                 )
             ))

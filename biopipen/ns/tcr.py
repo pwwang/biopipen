@@ -39,7 +39,8 @@ class ImmunarchLoading(Proc):
             information.
 
     Output:
-        rdsfile: The RDS file with the data and metadata
+        rdsfile: The RDS file with the data and metadata, which can be processed by
+            other `immunarch` functions.
         metatxt: The meta data at cell level, which can be used to attach to the Seurat object
 
     Envs:
@@ -1675,3 +1676,124 @@ class TCRDock(Proc):
         "data_dir": None,
     }
     script = "file://../scripts/tcr/TCRDock.py"
+
+
+class ScRepLoading(Proc):
+    """Load the single cell TCR/BCR data into a `scRepertoire` compatible object
+
+    This process loads the single cell TCR/BCR data into a `scRepertoire`
+    compatible object. Later, `scRepertoire::combineExpression` can be used to
+    combine the expression data with the TCR/BCR data.
+
+    For the data path specified at `TCRData` in the input file, we will first find
+    `filtered_contig_annotations.csv` and `filtered_config_annotations.csv.gz` in the
+    path. If neighter of them exists, we will find `all_contig_annotations.csv` and
+    `all_contig_annotations.csv.gz` in the path and a warning will be raised
+    (You can find it at `./.pipen/<pipeline-name>/ImmunarchLoading/<job.index>/job.stderr`).
+
+    If none of the files exists, an error will be raised.
+
+    Input:
+        metafile: The meta data of the samples
+            A tab-delimited file
+            Two columns are required:
+            * `Sample` to specify the sample names.
+            * `TCRData` to assign the path of the data to the samples,
+            and this column will be excluded as metadata.
+            Immunarch is able to fetch the sample names from the names of
+            the target files. However, 10x data yields result like
+            `filtered_contig_annotations.csv`, which doesn't have any name
+            information.
+
+    Output:
+        outfile: The `scRepertoire` compatible object in RDS format
+
+    Envs:
+        combineTCR (type=json): The extra arguments for `scRepertoire::combineTCR` function.
+            See also <https://www.borch.dev/uploads/screpertoire/reference/combinetcr>
+        exclude (auto): The columns to exclude from the metadata to add to the object.
+            A list of column names to exclude or a string with column names separated by `,`.
+            By default, `TCRData` and `RNAData` will be excluded.
+
+    """  # noqa: E501
+    input = "metafile:file"
+    output = "outfile:file:{{in.metafile | stem}}.scRep.RDS"
+    lang = config.lang.rscript
+    envs = {"combineTCR": {"samples": True}, "exclude": ["TCRData", "RNAData"]}
+    script = "file://../scripts/tcr/ScRepLoading.R"
+
+
+class ClonalStats(Proc):
+    """Visualize the clonal information.
+
+    Using [`scplotter`](https://github.com/pwwang/scplotter) to visualize the clonal
+    information.
+
+    Input:
+        screpfile: The `scRepertoire` object in RDS format
+
+    Output:
+        outdir: The output directory containing the plots
+
+    Envs:
+        mutaters (type=json;order=-9): The mutaters passed to `dplyr::mutate()` to add new variables.
+            When the object loaded form `in.screpfile` is a list, the mutaters will be applied to each element.
+            The keys are the names of the new variables, and the values are the expressions.
+            When it is a `Seurat` object, typically an output of `scRepertoire::combineExpression()`,
+            the mutaters will be applied to the `meta.data`.
+        viz_type (choice): The type of visualization to generate.
+            - volume: The volume of the clones using [`ClonalVolumePlot`](https://pwwang.github.io/scplotter/reference/ClonalVolumePlot.html)
+            - abundance: The abundance of the clones using [`ClonalAbundancePlot`](https://pwwang.github.io/scplotter/reference/ClonalAbundancePlot.html)
+            - length: The length of the CDR3 sequences using [`ClonalLengthPlot`](https://pwwang.github.io/scplotter/reference/ClonalLengthPlot.html)
+            - residency: The residency of the clones using [`ClonalResidencyPlot`](https://pwwang.github.io/scplotter/reference/ClonalResidencyPlot.html)
+            - composition: The composition of the clones using [`ClonalCompositionPlot`](https://pwwang.github.io/scplotter/reference/ClonalCompositionPlot.html)
+            - overlap: The overlap of the clones using [`ClonalOverlapPlot`](https://pwwang.github.io/scplotter/reference/ClonalOverlapPlot.html)
+            - diversity: The diversity of the clones using [`ClonalDiversityPlot`](https://pwwang.github.io/scplotter/reference/ClonalDiversityPlot.html)
+            - geneusage: The gene usage of the clones using [`ClonalGeneUsagePlot`](https://pwwang.github.io/scplotter/reference/ClonalGeneUsagePlot.html)
+            - positional: The positional information of the clones using [`ClonalPositionalPlot`](https://pwwang.github.io/scplotter/reference/ClonalPositionalPlot.html)
+            - kmer: The kmer information of the clones using [`ClonalKmerPlot`](https://pwwang.github.io/scplotter/reference/ClonalKmerPlot.html)
+            - rarefaction: The rarefaction curve of the clones using [`ClonalRarefactionPlot`](https://pwwang.github.io/scplotter/reference/ClonalRarefactionPlot.html)
+        subset: An expression to subset the data before plotting.
+            Similar to `mutaters`, it will be applied to each element by `dplyr::filter()` if the object
+            loaded form `in.screpfile` is a list; otherwise, it will be applied to
+            `subset(sobj, subset = <expr>)` if the object is a `Seurat` object.
+        devpars (ns): The parameters for the plotting device.
+            - width (type=int): The width of the device
+            - height (type=int): The height of the device
+            - res (type=int): The resolution of the device
+        more_formats (list): The extra formats to save the plots in, other than PNG.
+        save_code (flag): Whether to save the code used to generate the plots
+            Note that the data directly used to generate the plots will also be saved in an `rda` file.
+            Be careful if the data is large as it may take a lot of disk space.
+        section: The name of the section in the report if you want to put multiple plots
+            in the same section.
+            When there are multiple cases for the same 'viz_type', the name of the 'viz_type' will be used
+            as the default section name (for example, when 'viz_type' is 'volume', the section name will be 'Clonal Volume').
+            When there is only a single case, the section name will default to 'DEFAULT', which will not be shown
+            in the report.
+        <more>: The arguments for the plot function
+            See the documentation of the corresponding plot function for the details
+        cases (type=json): The cases to generate the plots if we have multiple cases.
+            The keys are the names of the cases, and the values are the arguments for the plot function.
+            The arguments in `envs` will be used if not specified in `cases`, except for `mutaters`.
+    """  # noqa: E501
+    input = "screpfile:file"
+    output = "outdir:dir:{{in.screpfile | stem}}.clonalstats"
+    lang = config.lang.rscript
+    envs = {
+        "mutaters": {},
+        "subset": None,
+        "viz_type": None,
+        "devpars": {"width": None, "height": None, "res": 100},
+        "more_formats": [],
+        "save_code": False,
+        "section": None,
+        "cases": {
+            "Clonal Volume": {"viz_type": "volume"},
+            "Clonal Abundance": {"viz_type": "abundance"},
+            "CDR3 Length": {"viz_type": "length"},
+            "Clonal Diversity": {"viz_type": "diversity"},
+        }
+    }
+    script = "file://../scripts/tcr/ClonalStats.R"
+    plugin_opts = {"report": "file://../reports/tcr/ClonalStats.svelte"}

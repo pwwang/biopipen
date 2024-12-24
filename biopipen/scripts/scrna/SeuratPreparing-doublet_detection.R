@@ -65,10 +65,16 @@
     colnames(doublets) <-  c("DoubletFinder_score","DoubletFinder_DropletType")
     doublets$DoubletFinder_DropletType <- tolower(doublets$DoubletFinder_DropletType)
 
-    pk_plot <- ggplot(bcmvn, aes(x = pK, y = BCmetric, color = Selected)) +
-        geom_point() +
-        # rotate x axis labels
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    # pk_plot <- ggplot(bcmvn, aes(x = pK, y = BCmetric, color = Selected)) +
+    #     geom_point() +
+    #     # rotate x axis labels
+    #     theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    bcmvn$pK <- as.numeric(as.character(bcmvn$pK))
+    bcmvn$BCmetric <- as.numeric(bcmvn$BCmetric)
+    pk_plot <- plotthis::LinePlot(
+        data = bcmvn, x = "pK", y = "BCmetric", group_by = "Selected",
+        x_text_angle = 90
+    )
     list(doublets = doublets, pk_plot = pk_plot)
 }
 
@@ -150,14 +156,24 @@ add_dd_to_seurat <- function(sobj, dd) {
 plot_dd <- function(sobj, dd, detector) {
     if (detector == "DoubletFinder") {
         log_debug("- Plotting pK vs BCmetric ...")
-        ggsave(dd$pk_plot, filename = file.path(plotsdir, "DoubletFinder_pK_BCmetric.png"))
+        save_plot(dd$pk_plot, file.path(plotsdir, "pK_BCmetric"), formats = "png")
+        # ggsave(dd$pk_plot, filename = file.path(plotsdir, "DoubletFinder_pK_BCmetric.png"))
     }
 
     log_info("- Plotting dimension reduction ...")
-    dimp <- DimPlot(
-        sobj, group.by = paste0(detector, "_DropletType"), order = "doublet",
-        cols = c("#333333", "#FF3333"), pt.size = 0.8, alpha = 0.5)
-    ggsave(dimp, filename = file.path(plotsdir, paste0(detector, "_dimplot.png")))
+    # dimp <- DimPlot(
+    #     sobj, group.by = paste0(detector, "_DropletType"), order = "doublet",
+    #     cols = c("#333333", "#FF3333"), pt.size = 0.8, alpha = 0.5)
+    dimp <- scplotter::CellDimPlot(
+        object = sobj,
+        group_by = paste0(detector, "_DropletType"),
+        alpha = 0.8,
+        highlight = paste0(detector, "_DropletType == 'singlet'")
+    )
+    save_plot(
+        dimp,
+        file.path(plotsdir, paste0(detector, "_dimplot"))
+    )
 }
 
 filter_dd <- function(sobj, dd, detector) {
@@ -185,14 +201,20 @@ report_dd <- function(detector) {
     if (detector == "DoubletFinder") {
         add_report(
             list(name = "pK vs BCmetric", src = file.path(plotsdir, "pK_BCmetric.png")),
-            list(name = "Dimension Reduction Plot", src = file.path(plotsdir, "DoubletFinder_dimplot.png")),
+            list(
+                name = "Dimension Reduction Plot",
+                src = file.path(plotsdir, "DoubletFinder_dimplot.png"),
+                download = file.path(plotsdir, "DoubletFinder_dimplot.pdf")),
             ui = "table_of_images",
             h1 = "DoubletFinder Results",
             h2 = "Plots"
         )
     } else {
         add_report(
-            list(name = "Dimension Reduction Plot",src = file.path(plotsdir, "scDblFinder_dimplot.png")),
+            list(
+                name = "Dimension Reduction Plot",
+                src = file.path(plotsdir, "scDblFinder_dimplot.png"),
+                download = file.path(plotsdir, "scDblFinder_dimplot.pdf")),
             ui = "table_of_images",
             h1 = "scDblFinder Results",
             h2 = "Plots"

@@ -29,84 +29,94 @@ class SampleInfo(SampleInfo_):
         "mutaters": {"Part": "paste0('Part_', Filename)"},
         "stats": {
             "Samples_Source": {
-                "group": "Source",
+                "plot_type": "pie",
+                "x": "Source",
+                "xlab": "",
+                "ylab": "Number of Samples",
             },
             "Samples_Subject": {
-                "group": "Subject",
-                "plot": "bar",
+                "plot_type": "pie",
+                "x": "Subject",
+                "xlab": "",
+                "ylab": "Number of Samples",
             },
             "Samples_Source_each_Subject": {
-                "group": "Source",
-                "each": "Subject",
+                "plot_type": "bar",
+                "x": "Source",
+                "xlab": "",
+                "ylab": "Number of Samples",
+                "facet_by": "Subject",
             },
             "Samples_Subject_each_Source": {
-                "group": "Subject",
-                "plot": "bar",
-                "each": "Source",
+                "plot_type": "bar",
+                "x": "Subject",
+                "xlab": "",
+                "ylab": "Number of Samples",
+                "facet_by": "Source",
             },
             "Subjects_per_Filename": {
-                "group": "Filename",
-                "plot": "bar",
+                "plot_type": "bar",
+                "x": "Filename",
                 "subset": "!duplicated(Subject)",
             },
             "Score": {
-                "on": "Score",
-                "subset": "!duplicated(Subject)"
+                "plot_type": "density",
+                "x": "Score",
+                "subset": "!duplicated(Subject)",
             },
             "Score_Source": {
-                "on": "Score",
-                "group": "Source",
+                "plot_type": "density",
+                "x": "Score",
+                "group_by": "Source",
             },
             "Score_Source_each_Subject": {
-                "on": "Score",
-                "group": "Source",
-                "each": "Subject",
+                "plot_type": "density",
+                "x": "Score",
+                "group_by": "Source",
+                "facet_by": "Subject",
             },
             "Score_violin": {
-                "on": "Score",
-                "plot": "violin",
-                "subset": "!duplicated(Subject)"
-            },
-            "Score_Source_violin": {
-                "on": "Score",
-                "group": "Source",
-                "plot": "violin",
+                "plot_type": "violin",
+                "y": "Score",
+                "x": "Source",
+                "subset": "!duplicated(Subject)",
             },
             "Score_Source_each_Subject_violin": {
-                "on": "Score",
-                "group": "Source",
-                "each": "Subject",
-                "plot": "violin",
+                "plot_type": "violin",
+                "y": "Score",
+                "x": "Source",
+                "facet_by": "Subject",
             },
-            "Score_vlnbox": {
-                "on": "Score",
-                "plot": "violin+box",
+            "Score_violin_box": {
+                "plot_type": "violin",
+                "y": "Score",
+                "x": "Source",
+                "add_box": True,
+                "devpars": {"width": 800, "height": 600},
             },
-            "Score_Source_vlnbox": {
-                "on": "Score",
-                "group": "Source",
-                "plot": "violin+box",
-            },
-            "Score_Source_each_Subject_vlnbox": {
-                "on": "Score",
-                "group": "Source",
-                "each": "Subject",
-                "plot": "violin+box",
+            "Score_Source_each_Subject_violin_box": {
+                "plot_type": "violin",
+                "y": "Score",
+                "x": "Source",
+                "split_by": "Subject",
+                "add_box": True,
             },
             "Score_hist": {
-                "on": "Score",
-                "plot": "hist",
+                "plot_type": "hist",
+                "x": "Score",
             },
             "Score_Source_hist": {
-                "on": "Score",
-                "group": "Source",
-                "plot": "hist",
+                "plot_type": "hist",
+                "x": "Score",
+                "group_by": "Source",
             },
             "Score_Source_each_Subject_hist": {
-                "on": "Score",
-                "group": "Source",
-                "each": "Subject",
-                "plot": "hist",
+                "plot_type": "hist",
+                "x": "Score",
+                "group_by": "Source",
+                "facet_by": "Subject",
+                "more_formats": "pdf",
+                "save_code": True,
             },
         }
     }
@@ -119,7 +129,7 @@ class SampleInfo2(SampleInfo_):
 
 def pipeline():
     return (
-        get_pipeline(__file__)
+        get_pipeline(__file__, enable_report=True)
         # get_pipeline(__file__)
         .set_starts(
             RowsBinder,

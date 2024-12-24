@@ -51,6 +51,10 @@ class SampleInfo(Proc):
     Output:
         outfile: The output file with sample information, with mutated columns
             if `envs.save_mutated` is True.
+            The basename of the output file will be the same as the input file.
+            The file name of each plot will be slugified from the case name.
+            Each plot has 3 formats: pdf, png and code.zip, which contains the
+            data and R code to reproduce the plot.
 
     Envs:
         sep: The separator of the input file.
@@ -76,30 +80,34 @@ class SampleInfo(Proc):
                 If `FALSE`, you can mutate the meta data frame with the
                 returned ids. Non-paired ids will be `NA`.
         save_mutated (flag): Whether to save the mutated columns.
-        exclude_cols: The columns to exclude in the table in the report.
+        exclude_cols (auto): The columns to exclude in the table in the report.
             Could be a list or a string separated by comma.
         defaults (ns): The default parameters for `envs.stats`.
-            - on: The column name in the data for the stats.
-                Default is `Sample`. The column could be either continuous or not.
-            - subset: An R expression to subset the data.
-                If you want to keep the distinct records, you can use
-                `!duplicated(<col>)`.
-            - group: The column name in the data for the group ids.
-                If not provided, all records will be regarded as one group.
-            - na_group (flag): Whether to include `NA`s in the group.
-            - each: The column in the data to split the analysis in different
-                plots.
-            - ncol (type=int): The number of columns in the plot when `each`
-                is not `NULL`. Default is 2.
-            - na_each (flag): Whether to include `NA`s in the `each` column.
-            - plot: Type of plot. If `on` is continuous, it could be
-                `boxplot` (default), `violin`, `violin+boxplot` or `histogram`.
-                If `on` is not continuous, it could be `barplot` or
-                `pie` (default).
+            - plot_type: The type of the plot.
+                See the supported plot types here:
+                <https://pwwang.github.io/plotthis/reference/index.html>
+                The plot_type should be lower case and the plot function used in
+                `plotthis` should be used. The mapping from plot_type to the
+                plot function is like `bar -> BarPlot`, `box -> BoxPlot`, etc.
+            - more_formats (list): The additional formats to save the plot.
+                By default, the plot will be saved in png, which is also used to
+                display in the report. You can add more formats to save the plot.
+                For example, `more_formats = ["pdf", "svg"]`.
+            - save_code (flag): Whether to save the R code to reproduce the plot.
+                The data used to plot will also be saved.
+            - subset: An expression to subset the data frame before plotting.
+                The expression should be a string of R expression that will be passed
+                to `dplyr::filter`. For example, `subset = "Sample == 'A'"`.
+            - section: The section name in the report.
+                In case you want to group the plots in the report.
             - devpars (ns): The device parameters for the plot.
                 - width (type=int): The width of the plot.
                 - height (type=int): The height of the plot.
                 - res (type=int): The resolution of the plot.
+            - descr: The description of the plot, shown in the report.
+            - <more>: You can add more parameters to the defaults.
+                These parameters will be expanded to the `envs.stats` for each case,
+                and passed to individual plot functions.
         stats (type=json): The statistics to perform.
             The keys are the case names and the values are the parameters
             inheirted from `envs.defaults`.
@@ -112,15 +120,13 @@ class SampleInfo(Proc):
         "save_mutated": False,
         "exclude_cols": None,
         "defaults": {
-            "on": "Sample",
-            # "distinct": None,
-            "group": None,
-            "na_group": False,
-            "each": None,
-            "ncol": 2,
-            "na_each": False,
-            "plot": None,
-            "devpars": {"width": 800, "height": 600, "res": 100},
+            "plot_type": "bar",
+            "more_formats": [],
+            "save_code": False,
+            "subset": None,
+            "section": None,
+            "descr": None,
+            "devpars": {"width": None, "height": None, "res": 100},
         },
         "stats": {},
     }

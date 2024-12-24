@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import sys
 import logging
+from subprocess import Popen
 from typing import List
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
@@ -40,7 +41,7 @@ def run_command(
     print_command: bool = True,
     print_command_handler: callable = print,
     **kwargs,
-):
+) -> Popen | str:
     """Run a command.
 
     Args:
@@ -57,7 +58,7 @@ def run_command(
         The `Popen` object, or str when `stdout` is `RETURN` or `return`.
     """
     import shlex
-    from subprocess import Popen, PIPE, STDOUT
+    from subprocess import PIPE, STDOUT
 
     if isinstance(cmd, list):
         cmd = [str(c) for c in cmd]

@@ -2,68 +2,47 @@
 
 # dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
 # dimplots = {{envs.dimplots | r: todot="-", skip=1}}
-log_info("dimplots:")
+log$info("dimplots:")
 
-odir = file.path(outdir, "dimplots")
+odir <- file.path(outdir, "dimplots")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
 do_one_dimplot = function(name) {
-    log_info("- Case: {name}")
+    log$info("- Case: {name}")
 
-    case = list_update(dimplots_defaults, dimplots[[name]])
-    case$devpars = list_update(dimplots_defaults$devpars, dimplots[[name]]$devpars)
-    if (!is.null(case$subset)) {
-        case$object = srtobj %>% filter(!!rlang::parse_expr(case$subset))
+    case <- list_update(dimplots_defaults, dimplots[[name]])
+
+    # Get functional arguments and inconsistent arguments
+    subset <- case$subset; case$subset <- NULL
+    reduction <- case$reduction; case$reduction <- NULL
+    devpars <- case$devpars; case$devpars <- NULL
+
+    # Normalize arguments
+    reduction <- if (reduction %in% c("dim", "auto")) DefaultDimReduc(srtobj) else reduction
+    devpars <- list_update(dimplots_defaults$devpars, devpars)
+    key <- paste0("sub_umap_", case$group_by)
+
+    if (!is.null(subset)) {
+        case$object <- srtobj %>% filter(!!parse_expr(subset))
     } else {
-        case$object = srtobj
+        case$object <- srtobj
     }
-
-    if (is.null(case$group.by)) { case$group.by = case$ident }
-    key <- paste0("sub_umap_", case$ident)
-    if (
-        key %in% names(case$object@reductions) &&
-        (is.null(case$reduction) || case$reduction %in% c("dim", "auto"))) {
+    if (key %in% names(case$object@reductions) && is.null(reduction)) {
         case$reduction = key
-    }
-    if (is.null(case$na_group)) {
-        case$object = filter(case$object, !is.na(!!sym(case$group.by)))
-    } else if (is.null(case$order)) {
-        case$order = case$object@meta.data[[case$group.by]] %>%
-            unique() %>% na.omit() %>% as.character() %>% sort()
-        case$object@meta.data = replace_na(
-            case$object@meta.data,
-            setNames(list(case$na_group), case$group.by)
-        )
-    }
-    case$cols = case$cols %||% pal_biopipen()(length(unique(case$object@meta.data[[case$group.by]])))
-    if (!is.null(case$na_group)) {
-        # Is the NA value in the first position?
-        case$cols = c("lightgrey", case$cols[1:(length(case$cols) - 1)])
+    } else {
+        case$reduction = reduction
     }
 
-    excluded_args = c("devpars", "ident", "subset")
-    for (arg in excluded_args) {
-        assign(arg, case[[arg]])
-        case[[arg]] = NULL
-    }
+    p <- do_call(CellDimPlot, case)
+    prefix <- file.path(odir, paste0(slugify(name), ".dim"))
+    save_plot(p, prefix, devpars)
 
-    if (case$reduction %in% c("dim", "auto")) { case$reduction = NULL }
-    case$na_group <- NULL
-    figfile = file.path(odir, paste0(slugify(name), ".dim.png"))
-    png(figfile, width=devpars$width, height=devpars$height, res=devpars$res)
-    p = do_call(DimPlot, case)
-    print(p)
-    dev.off()
-
-    add_report(
+    reporter$add(
         list(
             kind = "descr",
             content = paste0("Dimensionality reduction plot for ", case$group.by)
         ),
-        list(
-            kind = "image",
-            src = figfile
-        ),
+        reporter$image(prefix, c("png", "pdf"), FALSE),
         h1 = name
     )
 }

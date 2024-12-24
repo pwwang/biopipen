@@ -44,12 +44,12 @@ jobs:
         id: cache-reference
         uses: actions/cache@v4
         with:
-          path: tests/data/reference
-          key: reference-${{ hashFiles('tests/data/prep_reference.py') }}
+          path: tests/data/
+          key: reference-${{ hashFiles('tests/data/prep_data.py') }}
       - name: Download reference data
         if: steps.cache-reference.outputs.cache-hit != 'true'
         run: |
-          conda run --no-capture-output -n biopipen python tests/data/prep_reference.py
+          conda run --no-capture-output -n biopipen python tests/data/prep_data.py
       - name: Run tests
         run: |
           make --keep-going all VERBOSE=true

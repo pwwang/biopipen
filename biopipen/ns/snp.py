@@ -183,7 +183,7 @@ class PlinkFromVcf(Proc):
         vcf_idspace_to: convert all spaces in sample IDs to this character.
         set_missing_var_ids: update variant IDs using a template string,
             with a '@' where the chromosome code should go, and a '#' where the
-            base-pair position belongs. You can also specify `\$r` and `\$a` for
+            base-pair position belongs. You can also specify `\\$r` and `\\$a` for
             the reference and alternate alleles, respectively.
             See <https://www.cog-genomics.org/plink/2.0/data#set_all_var_ids>
         max_alleles (type=int): Maximum number of alleles per variant.

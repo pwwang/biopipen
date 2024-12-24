@@ -1,6 +1,7 @@
 """Additional filters for pipen"""
 from __future__ import annotations
 
+import re
 import shlex
 from pathlib import Path
 from typing import Any, List, Mapping
@@ -9,13 +10,15 @@ from argx import Namespace
 from liquid.filters.manager import FilterManager
 from pipen_report.filters import register_component, render_ui, _tag
 
+# from .defaults import BIOPIPEN_DIR
+
 filtermanager = FilterManager()
 
 
 @filtermanager.register
 def dict_to_cli_args(
     dic: Mapping[str, Any],
-    exclude: List[str] = None,
+    exclude: List[str] | None = None,
     prefix: str | None = None,
     sep: str | None = " ",
     dup_key: bool = True,
@@ -118,7 +121,7 @@ def dict_to_cli_args(
 def r(
     obj: Any,
     ignoreintkey: bool = True,
-    todot: str = None,
+    todot: str | None = None,
     sortkeys: bool = False,
     skip: int = 0,
     _i: int = 0,
@@ -171,6 +174,8 @@ def r(
             return "FALSE"
         if obj.upper() == "NA" or obj.upper() == "NULL":
             return obj.upper()
+        if re.match(r"^\d+:\d+$", obj):
+            return obj
         if obj.startswith("r:") or obj.startswith("R:"):
             return str(obj)[2:]
         return repr(str(obj))
@@ -222,7 +227,7 @@ def r(
 
 
 @filtermanager.register
-def source_r(path: str | Path) -> str:
+def source_r(path: str | Path, chdir: bool = False) -> str:
     """Source an R script.
 
     In addition to generating `source(path)`, we also include the mtime for the script
@@ -238,7 +243,8 @@ def source_r(path: str | Path) -> str:
     mtime = int(path.stat().st_mtime)
     return (
         f"# Last modified: {mtime}\n"
-        f"source('{path}')"
+        # f"biopipen_dir = {r(BIOPIPEN_DIR)}\n"
+        f"source('{path}', chdir = {r(chdir)})"
     )
 
 
@@ -304,7 +310,7 @@ def _render_fgsea(
         },
     ]
 
-    return render_ui(components, "accordion", job, level)
+    return render_ui(components, "accordion", job, level)  # type: ignore
 
 
 @register_component("pdf")
@@ -348,41 +354,8 @@ def _render_enrichr(
     components = []
 
     for db in dbs:
-        enrichr_plot = Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
-        if enrichr_plot.exists():
-            components.append(
-                {
-                    "title": db,
-                    "ui": "tabs",
-                    "contents": [
-                        {
-                            "title": "Plot",
-                            "ui": "flat",
-                            "contents": [
-                                {
-                                    "kind": "image",
-                                    "src": str(
-                                        Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
-                                    ),
-                                }
-                            ],
-                        },
-                        {
-                            "title": "Table",
-                            "ui": "flat",
-                            "contents": [
-                                {
-                                    "kind": "table",
-                                    "src": str(
-                                        Path(cont["dir"]).joinpath(f"Enrichr-{db}.txt")
-                                    ),
-                                }
-                            ],
-                        },
-                    ],
-                }
-            )
-        else:
+        enrichr_plots = list(Path(cont["dir"]).glob(f"Enrichr-{db}.*.png"))
+        if len(enrichr_plots) == 0:
             components.append(
                 {
                     "title": db,
@@ -395,6 +368,44 @@ def _render_enrichr(
                                 {
                                     "kind": "error",
                                     "content": "No enriched terms found.",
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+        else:
+            contents = []
+            for enrichr_plot in enrichr_plots:
+                plot_type = enrichr_plot.stem.split(".")[-1]
+                pdf = enrichr_plot.with_suffix(".pdf")
+                contents.append(
+                    {
+                        "src": str(enrichr_plot),
+                        "title": f"{plot_type.title()} Plot",
+                        "download": str(pdf),
+                    }
+                )
+
+            components.append(
+                {
+                    "title": db,
+                    "ui": "tabs",
+                    "contents": [
+                        {
+                            "title": "Plots",
+                            "ui": "table_of_images",
+                            "contents": contents,
+                        },
+                        {
+                            "title": "Table",
+                            "ui": "flat",
+                            "contents": [
+                                {
+                                    "kind": "table",
+                                    "src": str(
+                                        Path(cont["dir"]).joinpath(f"Enrichr-{db}.txt")
+                                    ),
                                 }
                             ],
                         },

@@ -114,6 +114,70 @@ do_call <- function (what, args, quote = FALSE, envir = parent.frame())  {
 
 }
 
+#' Save the plot into multiple formats
+#'
+#' @param plot The plot object
+#' @param prefix The prefix of the file
+#' @param formats The formats to save
+#' @param bg The background color
+#' @param devpars The device parameters
+#' @export
+save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("png", "pdf")) {
+    devpars <- devpars %||% list()
+    devpars$res <- devpars$res %||% 100
+    if (!is.null(attr(plot, "width"))) {
+        devpars$width <- devpars$width %||% (attr(plot, "width") * devpars$res)
+        devpars$height <- devpars$height %||% (attr(plot, "height") * devpars$res)
+    } else {
+        devpars$width <- devpars$width %||% 800
+        devpars$height <- devpars$height %||% 600
+    }
+
+    old_dev <- grDevices::dev.cur()
+    for (fmt in formats) {
+        filename = paste0(prefix, ".", fmt)
+        dev <- ggplot2:::plot_dev(fmt, filename, dpi = devpars$res)
+        dim <- ggplot2:::plot_dim(c(devpars$width, devpars$height), units = "px", limitsize = FALSE, dpi = devpars$res)
+        dev(filename = filename, width = dim[1], height = dim[2], bg = bg)
+        print(plot)
+        grDevices::dev.off()
+    }
+    on.exit(utils::capture.output({
+        if (old_dev > 1) grDevices::dev.set(old_dev) # restore old device unless null device
+    }))
+}
+
+#' Save the code to generate the data
+#'
+#' @param code The code
+#' @param plot The plot object
+#' @param setup The setup code to generate the plot
+#' @param prefix The prefix of the file
+#' @param ... Additional data frame to save
+#'
+#' @export
+save_plotcode <- function(...) UseMethod("save_plotcode")
+
+save_plotcode.character <- function(code, prefix, ..., envir = parent.frame()) {
+    codedir <- paste0(prefix, ".code")
+    dir.create(codedir, showWarnings = FALSE)
+    codefile <- file.path(codedir, "plot.R")
+    writeLines(code, codefile)
+    save(..., file = file.path(codedir, "data.RData"), envir = envir)
+
+    zip_file <- paste0(prefix, ".code.zip")
+    zip::zip(zip_file, c("plot.R", "data.RData"), root = codedir)
+    unlink(codedir, recursive = TRUE)
+}
+
+save_plotcode.ggplot <- function(plot, setup, prefix, ..., envir = parent.frame()) {
+    if (is.null(plot$logs)) {
+        stop("The plot object does not have logs, did you use gglogger?")
+    }
+    code <- plot$logs$gen_code(setup = setup)
+    save_plotcode(code, prefix, ..., envir = envir)
+}
+
 #' Set the default value of a key in a list
 #'
 #' @param x A list
@@ -302,10 +366,13 @@ expand_cases <- function(cases, defaults, expand_each = NULL) {
 casename_info <- function(
     casename, cases, outdir,
     section_key = "section",
-    section = "DEFAULT",
+    section = NULL,
     sep = "::",
+    case_type = c("dir", "prefix"),
     create = FALSE
 ) {
+    section <- section %||% "DEFAULT"
+    case_type <- match.arg(case_type)
     # CR_vs_PD_in_BL:seurat_clusters - IM IL1
     sec_case_names <- strsplit(casename, sep)[[1]]
     # seurat_clusters - IM IL1
@@ -336,13 +403,25 @@ casename_info <- function(
             ifelse(single_section, "#", html_escape(cname))
         )
     )
-    if (single_section && section == "DEFAULT") {
-        out$casedir <- file.path(outdir, out$case_slug)
+
+    if (case_type == "dir") {
+        if (single_section && section == "DEFAULT") {
+            out$casedir <- file.path(outdir, out$case_slug)
+        } else {
+            out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
+        }
+        if (create) {
+            dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+        }
     } else {
-        out$casedir <- file.path(outdir, out$section_slug, out$case_slug)
-    }
-    if (create) {
-        dir.create(out$casedir, showWarnings = FALSE, recursive = TRUE)
+        if (single_section && section == "DEFAULT") {
+            out$caseprefix <- file.path(outdir, out$case_slug)
+        } else {
+            out$caseprefix <- file.path(outdir, out$section_slug, out$case_slug)
+            if (create) {
+                dir.create(file.path(outdir, out$section_slug), showWarnings = FALSE, recursive = TRUE)
+            }
+        }
     }
     out
 }
@@ -401,4 +480,123 @@ run_command <- function(
         }
         return(out)
     }
+}
+
+#' Expand the dims usually used in single-cell analysis to specific dimensions
+#'
+#' @param dims The dimensions to expand
+#' @return A vector of expanded dimensions
+#' @export
+#' @examples
+#' expand_dims(NULL) # c(1, 2)
+#' expand_dims(1:2) # c(1, 2)
+#' expand_dims(1) # c(1)
+#' expand_dims("1:2") # c(1, 2)
+#' expand_dims("1") # c(1)
+#' # dash works as the same as colon
+#' expand_dims("1-3") # c(1, 2, 3)
+#' expand_dims("1,3") # c(1, 3)
+#' expand_dims("1,3:5") # c(1, 3, 4, 5)
+#' expand_dims(c(1, "3:5", 7)) # c(1, 3, 4, 5, 7)
+expand_dims <- function(dims, default = 1:2) {
+    if (is.null(dims)) {
+        return(default)
+    }
+    if (is.numeric(dims)) {
+        return(dims)
+    }
+    dims <- unlist(strsplit(dims, ","))
+    out <- c()
+    for (d in dims) {
+        if (grepl(":", d)) {
+            d <- unlist(strsplit(d, ":"))
+            d <- as.integer(d[1]):as.integer(d[2])
+        } else if (grepl("-", d)) {
+            d <- unlist(strsplit(d, "-"))
+            d <- as.integer(d[1]):as.integer(d[2])
+        } else {
+            d <- as.integer(d)
+        }
+        out <- c(out, d)
+    }
+    out
+}
+
+
+#' Get plotthis function from plot_type
+#'
+#' @param plot_type The plot type
+#' @param gglogger_register Register the plotthis function to gglogger
+#' @param return_name Return the name of the function instead of the function
+#' @return The plotthis function
+#' @export
+get_plotthis_fn <- function(plot_type, gglogger_register = TRUE, return_name = FALSE) {
+    fn_name <- switch(plot_type,
+        hist = "Histogram",
+        histo = "Histogram",
+        histogram = "Histogram",
+        featuredim = "FeatureDimPlot",
+        splitbar = "SplitBarPlot",
+        enrichmap = "EnrichMap",
+        enrichnet = "EnrichNetwork",
+        enrichnetwork = "EnrichNetwork",
+        gsea = "GSEAPlot",
+        gseasummary = "GSEASummaryPlot",
+        gseasum = "GSEASummaryPlot",
+        heatmap = "Heatmap",
+        network = "Network",
+        pie = "PieChart",
+        wordcloud = "WordCloudPlot",
+        venn = "VennDiagram",
+        paste0(tools::toTitleCase(plot_type), "Plot")
+    )
+    if (return_name) {
+        return(fn_name)
+    }
+    fn <- tryCatch({
+        utils::getFromNamespace(fn_name, "plotthis")
+    }, error = function(e) {
+        stop("Unknown plot type: ", plot_type)
+    })
+
+    if (gglogger_register) {
+        gglogger::register(fn, fn_name)
+    } else {
+        fn
+    }
+}
+
+
+#' Extract variables from a named list
+#'
+#' @param x A named list
+#' @param ... The names of the variables
+#' @param keep Keep the extracted variables in the list
+#' @param env The environment to assign the extracted variables
+#' @return The list with/ithout the extracted variables
+#'
+#' @export
+extract_vars <- function(x, ..., keep = FALSE, env = parent.frame()) {
+    stopifnot("extract_vars: 'x' must be a named list" = is.list(x) && !is.null(names(x)))
+    vars <- list(...)
+    if (is.null(names(vars))) {
+        names(vars) <- unlist(vars)
+    }
+    for (i in seq_along(vars)) {
+        if (nchar(names(vars)[i]) == 0) {
+            names(vars)[i] <- vars[[i]]
+        }
+    }
+    # list2env?
+    for (n in names(vars)) {
+        if (!n %in% names(x)) {
+            stop(sprintf("Variable '%s' not found in the list", n))
+        }
+        assign(vars[[n]], x[[n]], envir = env)
+        if (!isTRUE(keep)) {
+            x[[n]] <- NULL
+        }
+    }
+
+    x
 }

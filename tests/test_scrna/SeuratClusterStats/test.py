@@ -123,8 +123,12 @@ class ClusterMarkers(MarkersFinder):
     envs = {
         "cases": {
             # Test mixed types of cases
-            "Cluster": {"prefix_group": False},
-            "Comparison": {"group-by": "groups", "ident-1": "g1"},
+            "Cluster": {
+                "prefix_group": False,
+                "error": False,
+                "allmarker_plots": {"Heatmap": {"plot_type": "heatmap"}},
+            },
+            "Comparison": {"group-by": "groups", "error": False, "ident-1": "g1"},
         }
     }
 
@@ -143,7 +147,14 @@ class DEG(MarkersFinder):
                 "sigmarkers": "p_val < 0.5",
             }
         },
-        "overlap": {"Group": {}},
+        "overlaps": {
+            "Group": {
+                "sigmarkers": 'abs(avg_log2FC) > 1',
+                "cases": ["Group::FCFR3A+ Mono", "Group::DC", "Group::Platelet"],
+                "venn": {"save_code": True},
+                "upset": {"save_code": True},
+            }
+        },
     }
     order = 99
 
@@ -157,7 +168,10 @@ class MetaMarkers(MetaMarkers_):
 
 class RadarPlots(RadarPlots):
     requires = SeuratSubClustering
-    envs = {"by": "groups"}
+    envs = {
+        "by": "groups",
+        "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}},
+    }
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator):
@@ -189,7 +203,7 @@ class SeuratClusterStats(SeuratClusterStats):
             },
             "Number of cells in each old cluster": {
                 "pie": True,
-                "ident": "seurat_clusters_id"
+                "ident": "seurat_clusters_id",
             },
         },
         "features": {
@@ -216,7 +230,9 @@ class SeuratClusterStats(SeuratClusterStats):
             "Violin plots": {"kind": "violin", "pt-size": 0},
             "Violin plots (ncol=4)": {"kind": "violin", "pt-size": 0, "ncol": 4},
             "Violin plots (CD8A,NKG7)": {
-                "kind": "violin", "pt-size": 0, "features": "CD8A,NKG7"
+                "kind": "violin",
+                "pt-size": 0,
+                "features": "CD8A,NKG7",
             },
             "Feature plot": {"kind": "feature", "features": "SRSF7"},
             "Dot plot": {"kind": "dot", "plus": "RotatedAxis()"},
@@ -225,18 +241,20 @@ class SeuratClusterStats(SeuratClusterStats):
         },
         "dimplots": {
             "seurat_clusters": {},
+            "seurat_clusters_use_seurat": {"use": "seurat"},
+            "scp_3d": {"use": "scp3d"},
             "nk_subcluster": {"ident": "mono_subcluster"},
             "dc_subcluster": {"ident": "dc_subcluster"},
-        }
+        },
     }
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareSeurat)
+    return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
+    # return get_pipeline(__file__).set_starts(PrepareSeurat)
 
 
-def testing(pipen):
-    ...
+def testing(pipen): ...
 
 
 if __name__ == "__main__":

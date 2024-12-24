@@ -114,6 +114,7 @@ default-*-*-*-*-*.ipynb
 *-output/
 *_results/
 tests/data/reference/
+tests/data/data/
 
 docs/index.md
 docs/api/
@@ -127,3 +128,5 @@ docker/*/images
 /tmp
 Rplots.pdf
 /biopipen-tests-*
+# used for plot code testing
+/data.RData

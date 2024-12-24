@@ -6,8 +6,21 @@
 {%- macro report_job(job, h=1) -%}
 
 <h{{h}}>UMAPs</h{{h}}>
-{% set imgs = job.outdir | glob: "UMAPs-*.png" %}
-{{ table_of_images(imgs) }}
+{% set imgs = [] %}
+{% set caps = [] %}
+{% for png in job.outdir | glob: "UMAPs-*.png" %}
+    {% set pdf = png | regex_replace: "\\.png$", ".pdf" %}
+    {% set stm = png | stem %}
+    {% set _ = imgs.append({"src": png, "download": pdf}) %}
+    {% set _ = caps.append(stm | replace: "UMAPs-", "") %}
+{% endfor %}
+{{ table_of_images(imgs, caps) }}
+
+<h{{h}}>Mapping Score</h{{h}}>
+<Image
+    src="{{job.outdir | joinpath: 'mapping_score.png'}}"
+    download="{{job.outdir | joinpath: 'mapping_score.pdf'}}"
+    />
 
 <h{{h}}>Stats</h{{h}}>
 {% for stfile in job.outdir | glob: "stats-*.txt" %}
