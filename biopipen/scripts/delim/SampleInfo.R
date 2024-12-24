@@ -1,8 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "mutate_helpers.R" | source_r }}
-
 library(rlang)
 library(dplyr)
+library(biopipen.utils)
+library(plotthis)
 
 infile <- {{in.infile | r}}
 outfile <- {{out.outfile | r}}
@@ -13,6 +12,9 @@ save_mutated <- {{envs.save_mutated | r}}
 defaults <- {{envs.defaults | r}}
 stats <- {{envs.stats | r}}
 exclude_cols <- {{envs.exclude_cols | r}}
+
+log <- get_logger()
+reporter <- get_reporter()
 
 if (is.null(exclude_cols)) {
     exclude_cols <- c()
@@ -27,7 +29,50 @@ if (colnames(indata)[1] == "row.names") {
     stop("Wrong number of column names. Do you have the right `sep`?")
 }
 
-log_info("Applying mutaters to the data if any ...")
+#' Get plotthis function from plot_type
+#'
+#' @param plot_type The plot type
+#' @param gglogger_register Register the plotthis function to gglogger
+#' @param return_name Return the name of the function instead of the function
+#' @return The plotthis function
+#' @export
+get_plotthis_fn <- function(plot_type, gglogger_register = TRUE, return_name = FALSE) {
+    fn_name <- switch(plot_type,
+        hist = "Histogram",
+        histo = "Histogram",
+        histogram = "Histogram",
+        featuredim = "FeatureDimPlot",
+        splitbar = "SplitBarPlot",
+        enrichmap = "EnrichMap",
+        enrichnet = "EnrichNetwork",
+        enrichnetwork = "EnrichNetwork",
+        gsea = "GSEAPlot",
+        gseasummary = "GSEASummaryPlot",
+        gseasum = "GSEASummaryPlot",
+        heatmap = "Heatmap",
+        network = "Network",
+        pie = "PieChart",
+        wordcloud = "WordCloudPlot",
+        venn = "VennDiagram",
+        paste0(tools::toTitleCase(plot_type), "Plot")
+    )
+    if (return_name) {
+        return(fn_name)
+    }
+    fn <- tryCatch({
+        utils::getFromNamespace(fn_name, "plotthis")
+    }, error = function(e) {
+        stop("Unknown plot type: ", plot_type)
+    })
+
+    if (gglogger_register) {
+        gglogger::register(fn, fn_name)
+    } else {
+        fn
+    }
+}
+
+log$info("Applying mutaters to the data if any ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
     mutdata <- indata %>%
         mutate(!!!lapply(mutaters, parse_expr))
@@ -43,7 +88,9 @@ write.table(
     col.names = TRUE,
     quote = FALSE
 )
-add_report(
+
+
+reporter$add(
     list(
         kind = "descr",
         content = "The samples used in the analysis. Each row is a sample, and columns are the meta information about the sample. This is literally the input sample information file, but the paths to the scRNA-seq and scTCR-seq data are hidden.",
@@ -61,54 +108,41 @@ add_report(
 if (length(stats) > 0) {
     cases <- expand_cases(stats, defaults)
     for (name in names(cases)) {
-        log_info("- Statistic: {name}")
+        log$info("- Statistic: {name}")
 
         case <- cases[[name]]
-        info <- casename_info(name, cases, outdir, case_type = "prefix", create = TRUE)
-        case <- extract_vars(case, "plot_type", "more_formats", "save_code", "section", subset = "subset_", "devpars", "descr")
+        info <- case_info(name, outdir, is_dir = FALSE, create = TRUE)
+        case <- extract_vars(case, "plot_type", "more_formats", "save_code", "section", "subset", "devpars", "descr")
 
         plot_fn <- get_plotthis_fn(plot_type)
         more_formats <- unique(c("png", more_formats))
 
-        if (!is.null(subset_)) {
-            case$data <- mutdata %>% dplyr::filter(!!parse_expr(subset_))
+        if (!is.null(subset)) {
+            case$data <- mutdata %>% dplyr::filter(!!parse_expr(subset))
         } else {
             case$data <- mutdata
         }
 
-        p <- do_call(plot_fn, case)
-        save_plot(p, info$caseprefix, devpars, formats = more_formats)
-
-        report <- list(
-            kind = "table_image",
-            src = paste0(info$caseprefix, ".png"),
-            download = list(),
-            name = name,
-            descr = descr
-        )
-        exformats <- setdiff(more_formats, "png")
-        if (length(exformats) > 0) {
-            report$download <- lapply(exformats, function(fmt) {
-                paste0(info$caseprefix, ".", fmt)
-            })
-        }
+        p <- do_call(gglogger::register(plot_fn, name = plot_type), case)
+        save_plot(p, info$prefix, devpars, formats = more_formats)
         if (save_code) {
             save_plotcode(
                 p,
                 setup = c('library(plotthis)', '', 'load("data.RData")', 'list2env(case, envir = .GlobalEnv)'),
                 prefix = info$caseprefix,
-                "case"
+                "case",
+                auto_data_setup = FALSE
             )
-
-            report$download <- c(report$download, list(list(
-                src = paste0(info$caseprefix, ".code.zip"),
-                tip = "Download the code to reproduce the plot",
-                icon = "Code"
-            )))
         }
 
-        add_report(report, h1 = "Statistics", ui = "table_of_images:2")
+        reporter$add(
+            reporter$image(
+                info$prefix,
+                c("png", more_formats),
+                save_code,
+                kind = "table_image"
+            ),
+            h1 = "Statistics", ui = "table_of_images:2"
+        )
     }
 }
-
-save_report(joboutdir)
