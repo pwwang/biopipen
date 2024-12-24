@@ -84,7 +84,7 @@ dependencies:
   - pwwang::r-harmony
   - pwwang::r-biopipen.utils
   # - pwwang::r-scplotter
-  # - pwwang::bioconductor-screpertoire  # required by r-scplotter
+  - pwwang::bioconductor-screpertoire  # required by r-scplotter
   - pwwang::bioconductor-data-packages
   - pwwang::bioconductor-ggmanh
   - svalkiers::clustcr

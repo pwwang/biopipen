@@ -129,8 +129,8 @@ class SampleInfo2(SampleInfo_):
 
 def pipeline():
     return (
-        get_pipeline(__file__, enable_report=True)
-        # get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True)
+        get_pipeline(__file__)
         .set_starts(
             RowsBinder,
             RowsBinderWithFilenames,
