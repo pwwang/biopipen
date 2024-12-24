@@ -35,10 +35,10 @@ rename_files = function(e, sample, path) {
 perform_cell_qc <- function(sobj, per_sample = FALSE) {
     log_prefix <- ifelse(per_sample, "  ", "- ")
     log_info("{log_prefix}Adding metadata for QC ...")
-    sobj$percent.mt <- PercentageFeatureSet(sobj, pattern = "^MT-")
-    sobj$percent.ribo <- PercentageFeatureSet(sobj, pattern = "^RP[SL]")
-    sobj$percent.hb <- PercentageFeatureSet(sobj, pattern = "^HB[^(P)]")
-    sobj$percent.plat <- PercentageFeatureSet(sobj, pattern = "PECAM1|PF4")
+    sobj$percent.mt <- PercentageFeatureSet(sobj, pattern = "^MT-|^Mt-|^mt-")
+    sobj$percent.ribo <- PercentageFeatureSet(sobj, pattern = "^RP[SL]|^Rp[sl]")
+    sobj$percent.hb <- PercentageFeatureSet(sobj, pattern = "^HB[^P]|^Hb[^p]")
+    sobj$percent.plat <- PercentageFeatureSet(sobj, pattern = "PECAM1|PF4|Pecam1|Pf4")
 
     if (is.null(envs$cell_qc) || length(envs$cell_qc) == 0) {
         log_warn("{log_prefix}No cell QC criteria is provided. All cells will be kept.")
@@ -222,7 +222,7 @@ load_sample = function(sample) {
 
     if (isTRUE(envs$cell_qc_per_sample)) {
         log_info("- Perform cell QC for sample: {sample} ...")
-        obj = perform_cell_qc(obj, TRUE)
+        obj = perform_cell_qc(obj, per_sample = TRUE)
     }
 
     if (isTRUE(envs$use_sct)) {
@@ -299,7 +299,7 @@ run_cell_qc <- function(sobj) {
 
         if (!envs$cell_qc_per_sample) {
             log_info("Performing cell QC ...")
-            sobj = perform_cell_qc(sobj)
+            sobj = perform_cell_qc(sobj, per_sample = FALSE)
         }
 
         cached$data <- list(sobj = sobj, cell_qc_df = cell_qc_df)
