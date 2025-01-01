@@ -42,7 +42,7 @@ do_one_dimplot = function(name) {
             kind = "descr",
             content = paste0("Dimensionality reduction plot for ", case$group.by)
         ),
-        reporter$image(prefix, c("png", "pdf"), FALSE),
+        reporter$image(prefix, "pdf", FALSE),
         h1 = name
     )
 }

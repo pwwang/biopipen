@@ -101,7 +101,7 @@ do_one_features <- function(name) {
                 name = "Plot",
                 contents = list(
                     reporter$image(
-                        info$prefix, c("png", more_formats), save_code, kind = "image")
+                        info$prefix, more_formats, save_code, kind = "image")
                 )
             ),
             list(
@@ -123,7 +123,7 @@ do_one_features <- function(name) {
         )
     } else {
         reporter$add2(
-            reporter$image(info$prefix, c("png", more_formats), save_code, kind = "image"),
+            reporter$image(info$prefix, more_formats, save_code, kind = "image"),
             hs = c(info$section, info$name)
         )
     }

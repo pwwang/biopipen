@@ -60,7 +60,7 @@ if (
                     auto_data_setup = FALSE)
             }
             reports[[length(reports) + 1]] <- reporter$image(
-                plot_prefix, c("png", more_formats), save_code, kind = "image",
+                plot_prefix, more_formats, save_code, kind = "image",
                 descr = paste0("Resolutions: ", paste(resolution, collapse = ", "), "; resolution used: ", resolution_used)
             )
         }
