@@ -140,6 +140,19 @@ class SeuratPreparing(Proc):
             will keep genes that are expressed in at least 3 cells.
             ///
 
+        qc_plots (type=json): The plots for QC metrics.
+            It should be a json (or python dict) with the keys as the names of the plots and
+            the values also as dicts with the following keys:
+            * kind: The kind of QC. Either `gene` or `cell` (default).
+            * devpars: The device parameters for the plot. A dict with `res`, `height`, and `width`.
+            * more_formats: The formats to save the plots other than `png`.
+            * save_code: Whether to save the code to reproduce the plot.
+            * other arguments passed to
+            [`biopipen.utils::VizSeuratCellQC`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html)
+            when `kind` is `cell` or
+            [`biopipen.utils::VizSeuratGeneQC`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.html)
+            when `kind` is `gene`.
+
         use_sct (flag): Whether use SCTransform routine to integrate samples or not.
             Before the following procedures, the `RNA` layer will be split by samples.
 
@@ -252,6 +265,28 @@ class SeuratPreparing(Proc):
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "cell_qc_per_sample": False,
         "gene_qc": {"min_cells": 0, "excludes": []},
+        "qc_plots": {
+            "Violin Plots of QC Metrics": {
+                "kind": "cell",
+                "plot_type": "violin",
+                "devpars": {"res": 100, "height": 600, "width": 1200}
+            },
+            "Scatter Plots of QC Metrics": {
+                "kind": "cell",
+                "plot_type": "scatter",
+                "devpars": {"res": 100, "height": 800, "width": 1200}
+            },
+            "Ridge Plots of QC Metrics": {
+                "kind": "cell",
+                "plot_type": "ridge",
+                "devpars": {"res": 100, "height": 800, "width": 1200}
+            },
+            # "Number of Expressing Cells for Excluded Genes (10)": {
+            #     "kind": "gene",
+            #     "features": 10,
+            #     "devpars": {"res": 100, "height": 1200, "width": 1200}
+            # },
+        },
         "use_sct": False,
         "no_integration": False,
         "NormalizeData": {},
