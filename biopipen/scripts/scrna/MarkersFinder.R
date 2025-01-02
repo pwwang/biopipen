@@ -259,7 +259,7 @@ run_case <- function(name) {
     args$error <- case$error
     args$subset <- case$subset
 
-    markers <- do_call(RunDEAnalysis, args)
+    markers <- do_call(RunSeuratDEAnalysis, args)
     if (isTRUE(case_markers[[name]])) {
         case_markers[[name]] <<- markers
     }
