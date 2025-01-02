@@ -29,6 +29,9 @@ do_one_stats <- function(name) {
     }
 
     if (save_data) {
+        if (!inherits(p$data, "data.frame") && !inherits(p$data, "matrix")) {
+            stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
+        }
         write.table(p$data, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
         reporter$add2(
             list(

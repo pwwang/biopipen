@@ -195,56 +195,51 @@ class SeuratClusterStats(SeuratClusterStats):
                 "pie": True,
             },
             "Number of cells in each cluster by Sample": {
-                "group-by": "Sample",
-                "table": True,
-                "frac": True,
-                "circos": True,
-                "circos_labels_rot": True,
+                "group_by": "Sample",
+                # "save_data": True,
+                "frac": "group",
+                "plot_type": "circos",
+                "labels_rot": True,
             },
             "Number of cells in each old cluster": {
-                "pie": True,
+                "plot_type": "pie",
                 "ident": "seurat_clusters_id",
             },
         },
         "features": {
             "Gene expressions in g1": {
-                "kind": "ridge",
+                "plot_type": "ridge",
                 "subset": "groups == 'g1'",
             },
             "Gene expressions in g2": {
-                "kind": "ridge",
-                "ncol": 4,
+                "plot_type": "ridge",
+                "facet_ncol": 4,
                 "subset": "groups == 'g2'",
             },
             "Ridge plots with ident groups": {
-                "kind": "ridge",
+                "plot_type": "ridge",
                 "ident": "groups",
-                "features": "CD1C,RGS1",
+                "features": ["CD79A", "CD79B"],
             },
             "Ridge plots with single feature": {
                 # ncol automatically set to 1
-                "kind": "ridge",
+                "plot_type": "ridge",
                 "features": "SRSF7",
-                "plus": "theme_gray(base_size=10)",
             },
-            "Violin plots": {"kind": "violin", "pt-size": 0},
-            "Violin plots (ncol=4)": {"kind": "violin", "pt-size": 0, "ncol": 4},
+            "Violin plots": {"plot_type": "violin"},
+            "Violin plots (ncol=4)": {"plot_type": "violin", "facet_ncol": 4},
             "Violin plots (CD8A,NKG7)": {
-                "kind": "violin",
-                "pt-size": 0,
-                "features": "CD8A,NKG7",
+                "plot_type": "violin",
+                "features": ["CD8A", "NKG7"],
             },
-            "Feature plot": {"kind": "feature", "features": "SRSF7"},
-            "Dot plot": {"kind": "dot", "plus": "RotatedAxis()"},
-            "Heatmap": {"kind": "heatmap"},
-            "Gene expression table": {"kind": "table"},
+            "Feature plot": {"plot_type": "dim", "features": "SRSF7"},
+            "Dot plot": {"plot_type": "dot"},
+            "Heatmap": {"plot_type": "heatmap"},
         },
         "dimplots": {
-            "seurat_clusters": {},
-            "seurat_clusters_use_seurat": {"use": "seurat"},
-            "scp_3d": {"use": "scp3d"},
-            "nk_subcluster": {"ident": "mono_subcluster"},
-            "dc_subcluster": {"ident": "dc_subcluster"},
+            "seurat_clusters": {"group_by": "seurat_clusters"},
+            "nk_subcluster": {"group_by": "mono_subcluster"},
+            "dc_subcluster": {"group_by": "dc_subcluster"},
         },
     }
 
@@ -254,7 +249,8 @@ def pipeline():
     return get_pipeline(__file__).set_starts(PrepareSeurat)
 
 
-def testing(pipen): ...
+def testing(pipen):
+    ...
 
 
 if __name__ == "__main__":
