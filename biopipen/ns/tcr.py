@@ -1746,6 +1746,7 @@ class ClonalStats(Proc):
             - abundance: The abundance of the clones using [`ClonalAbundancePlot`](https://pwwang.github.io/scplotter/reference/ClonalAbundancePlot.html)
             - length: The length of the CDR3 sequences using [`ClonalLengthPlot`](https://pwwang.github.io/scplotter/reference/ClonalLengthPlot.html)
             - residency: The residency of the clones using [`ClonalResidencyPlot`](https://pwwang.github.io/scplotter/reference/ClonalResidencyPlot.html)
+            - dynamics: The dynamics of the clones using [`ClonalDynamicsPlot`](https://pwwang.github.io/scplotter/reference/ClonalDynamicsPlot.html)
             - composition: The composition of the clones using [`ClonalCompositionPlot`](https://pwwang.github.io/scplotter/reference/ClonalCompositionPlot.html)
             - overlap: The overlap of the clones using [`ClonalOverlapPlot`](https://pwwang.github.io/scplotter/reference/ClonalOverlapPlot.html)
             - diversity: The diversity of the clones using [`ClonalDiversityPlot`](https://pwwang.github.io/scplotter/reference/ClonalDiversityPlot.html)
@@ -1765,17 +1766,18 @@ class ClonalStats(Proc):
         save_code (flag): Whether to save the code used to generate the plots
             Note that the data directly used to generate the plots will also be saved in an `rda` file.
             Be careful if the data is large as it may take a lot of disk space.
-        section: The name of the section in the report if you want to put multiple plots
-            in the same section.
-            When there are multiple cases for the same 'viz_type', the name of the 'viz_type' will be used
-            as the default section name (for example, when 'viz_type' is 'volume', the section name will be 'Clonal Volume').
-            When there is only a single case, the section name will default to 'DEFAULT', which will not be shown
-            in the report.
+        descr: The description of the plot, used to show in the report.
         <more>: The arguments for the plot function
             See the documentation of the corresponding plot function for the details
         cases (type=json): The cases to generate the plots if we have multiple cases.
             The keys are the names of the cases, and the values are the arguments for the plot function.
             The arguments in `envs` will be used if not specified in `cases`, except for `mutaters`.
+            Sections can be specified as the prefix of the case name, separated by `::`.
+            For example, if you have a case named `Clonal Volume::Case1`, the plot will be put in the
+            section `Clonal Volume`. By default, when there are multiple cases for the same 'viz_type', the name of the 'viz_type' will be used
+            as the default section name (for example, when 'viz_type' is 'volume', the section name will be 'Clonal Volume').
+            When there is only a single case, the section name will default to 'DEFAULT', which will not be shown
+            in the report.
     """  # noqa: E501
     input = "screpfile:file"
     output = "outdir:dir:{{in.screpfile | stem}}.clonalstats"
@@ -1787,7 +1789,7 @@ class ClonalStats(Proc):
         "devpars": {"width": None, "height": None, "res": 100},
         "more_formats": [],
         "save_code": False,
-        "section": None,
+        "descr": None,
         "cases": {
             "Clonal Volume": {"viz_type": "volume"},
             "Clonal Abundance": {"viz_type": "abundance"},
