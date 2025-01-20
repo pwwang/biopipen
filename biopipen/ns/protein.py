@@ -158,3 +158,24 @@ class RMSD(Proc):
         "reorder": True,
     }
     script = "file://../scripts/protein/RMSD.py"
+
+
+class PDB2Fasta(Proc):
+    """Convert PDB file to FASTA file.
+
+    Input:
+        infile: The input PDB file.
+
+    Output:
+        outfile: The output FASTA file.
+
+    Envs:
+        chains (auto): The chains to extract. A list of chain IDs or separated by
+            commas.
+            If None, extract all chains.
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.fasta"
+    lang = config.lang.python
+    envs = {"chains": None}
+    script = "file://../scripts/protein/PDB2Fasta.py"

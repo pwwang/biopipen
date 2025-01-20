@@ -70,6 +70,7 @@ dependencies:
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
   - bioconda::bioconductor-scdblfinder
   - bioconda::bioconductor-ccplotr
+  - bioconda::maxit
   - bioconda::truvari
   - pwwang::r-doubletfinder
   - pwwang::r-hitype
