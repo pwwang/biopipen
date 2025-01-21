@@ -17,6 +17,7 @@ from pathlib import Path
 infile: str = {{in.infile | repr}}  # pyright: ignore # noqa: E999
 outfile: str = {{out.outfile | repr}}  # pyright: ignore
 chains: str | list | None = {{envs.chains | repr}}  # pyright: ignore
+wrap: int = {{envs.wrap | repr}}  # pyright: ignore
 
 if isinstance(chains, str):
     chains = [chain.strip() for chain in chains.split(",")]
@@ -36,7 +37,7 @@ ca_pattern = re.compile(
 filename = Path(infile).stem
 chain_dict = defaultdict(str)
 
-with open(infile, 'rU') as fp:
+with open(infile, 'r') as fp:
     for line in fp:
         if line.startswith("ENDMDL"):
             break
@@ -52,5 +53,8 @@ with open(outfile, 'w') as fp:
     for chain in chain_dict:
         fp.write(f">{filename}:{chain}\n")
         sequence = chain_dict[chain]
-        for i in range(0, len(sequence), 80):
-            fp.write(sequence[i:i+80] + "\n")
+        if wrap > 0:
+            for i in range(0, len(sequence), 80):
+                fp.write(sequence[i:i+80] + "\n")
+        else:
+            fp.write(sequence + "\n")

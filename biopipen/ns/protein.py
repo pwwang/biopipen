@@ -173,9 +173,11 @@ class PDB2Fasta(Proc):
         chains (auto): The chains to extract. A list of chain IDs or separated by
             commas.
             If None, extract all chains.
+        wrap (type=int): The number of residues per line in the output FASTA
+            file. Set to 0 to disable wrapping.
     """
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}.fasta"
     lang = config.lang.python
-    envs = {"chains": None}
+    envs = {"chains": None, "wrap": 80}
     script = "file://../scripts/protein/PDB2Fasta.py"

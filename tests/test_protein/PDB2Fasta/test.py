@@ -18,7 +18,7 @@ class MMCIF2PDB(MMCIF2PDB_):
 
 class PDB2Fasta1A2M(PDB2Fasta_):
     requires = MMCIF2PDB
-    envs = {"chains": "B"}
+    envs = {"chains": "B", "wrap": 0}
 
 
 class PDB2Fasta3NIR(PDB2Fasta_):
