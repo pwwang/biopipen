@@ -257,6 +257,7 @@ class SeuratPreparing(Proc):
         r-bracer:
             - check: {{proc.lang}} <(echo "library(bracer)")
     """  # noqa: E501
+
     input = "metafile:file"
     output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
     lang = config.lang.rscript
@@ -269,17 +270,17 @@ class SeuratPreparing(Proc):
             "Violin Plots of QC Metrics": {
                 "kind": "cell",
                 "plot_type": "violin",
-                "devpars": {"res": 100, "height": 600, "width": 1200}
+                "devpars": {"res": 100, "height": 600, "width": 1200},
             },
             "Scatter Plots of QC Metrics": {
                 "kind": "cell",
                 "plot_type": "scatter",
-                "devpars": {"res": 100, "height": 800, "width": 1200}
+                "devpars": {"res": 100, "height": 800, "width": 1200},
             },
             "Ridge Plots of QC Metrics": {
                 "kind": "cell",
                 "plot_type": "ridge",
-                "devpars": {"res": 100, "height": 800, "width": 1200}
+                "devpars": {"res": 100, "height": 800, "width": 1200},
             },
             # "Number of Expressing Cells for Excluded Genes (10)": {
             #     "kind": "gene",
@@ -373,6 +374,7 @@ class SeuratClustering(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library(dplyr)")
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -448,6 +450,7 @@ class SeuratSubClustering(Proc):
             Keys are the names of the cases and values are the dicts inherited from `envs` except `mutaters` and `cache`.
             If empty, a case with name `subcluster` will be created with default parameters.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -599,6 +602,7 @@ class SeuratClusterStats(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
+            - descr: The description of the plot, showing in the report.
             - more_formats (list): The formats to save the plots other than `png`.
             - save_code (flag): Whether to save the code to reproduce the plot.
             - save_data (flag): Whether to save the data used to generate the plot.
@@ -633,6 +637,7 @@ class SeuratClusterStats(Proc):
         r-seurat:
             - check: {{proc.lang}} -e "library(Seurat)"
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
@@ -676,6 +681,7 @@ class SeuratClusterStats(Proc):
             "order_by": None,
             "subset": None,
             "devpars": {"res": 100},
+            "descr": None,
             "more_formats": [],
             "save_code": False,
             "save_data": False,
@@ -696,9 +702,7 @@ class SeuratClusterStats(Proc):
         },
     }
     script = "file://../scripts/scrna/SeuratClusterStats.R"
-    plugin_opts = {
-        "report": "file://../reports/scrna/SeuratClusterStats.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/scrna/SeuratClusterStats.svelte"}
 
 
 class ModuleScoreCalculator(Proc):
@@ -775,6 +779,7 @@ class ModuleScoreCalculator(Proc):
             This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -901,6 +906,7 @@ class CellsDistribution(Proc):
         r-tidyr:
             - check: {{proc.lang}} -e "library(tidyr)"
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
@@ -956,6 +962,7 @@ class SeuratMetadataMutater(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library(dplyr)")
     """  # noqa: E501
+
     input = "srtobj:file, metafile:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -980,6 +987,7 @@ class DimPlots(Proc):
             Keys are the names and values are the arguments to
             `Seurat::Dimplots`
     """
+
     input = "srtobj:file, configfile:file, name:var"
     output = "outdir:dir:{{in.srtobj | stem}}.dimplots"
     lang = config.lang.rscript
@@ -1140,6 +1148,7 @@ class MarkersFinder(Proc):
         overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases.
             The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem0}}.markers"
     lang = config.lang.rscript
@@ -1194,8 +1203,18 @@ class MarkersFinder(Proc):
         "overlaps_defaults": {
             "cases": [],
             "sigmarkers": None,
-            "venn": {"enabled": "auto", "more_formats": [], "save_code": False, "devpars": {"res": 100}},
-            "upset": {"enabled": True, "more_formats": [], "save_code": False, "devpars": {"res": 100}},
+            "venn": {
+                "enabled": "auto",
+                "more_formats": [],
+                "save_code": False,
+                "devpars": {"res": 100},
+            },
+            "upset": {
+                "enabled": True,
+                "more_formats": [],
+                "save_code": False,
+                "devpars": {"res": 100},
+            },
         },
         "overlaps": {},
     }
@@ -1247,6 +1266,7 @@ class TopExpressingGenes(Proc):
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
     """
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
     lang = config.lang.rscript
@@ -1331,6 +1351,7 @@ class ExprImputation(Proc):
             - if: {{proc.envs.tool == "alra"}}
             - check: {{proc.lang}} <(echo "library(SeuratWrappers)")
     """  # noqa: E501
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
     lang = config.lang.rscript
@@ -1366,10 +1387,10 @@ class SCImpute(Proc):
         infmt: The input format.
             Either `seurat` or `matrix`
     """
+
     input = "infile:file, groupfile:file"
     output = [
-        "outfile:file:{{in.infile | stem | replace: '.seurat', ''}}."
-        "{{envs.outfmt}}"
+        "outfile:file:{{in.infile | stem | replace: '.seurat', ''}}." "{{envs.outfmt}}"
     ]
     lang = config.lang.rscript
     envs = {
@@ -1407,6 +1428,7 @@ class SeuratFilter(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library('dplyr')")
     """
+
     input = "srtobj:file, filters:var"
     output = "outfile:file:{{in.srtobj | stem}}.filtered.RDS"
     lang = config.lang.rscript
@@ -1441,6 +1463,7 @@ class SeuratSubset(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library('dplyr')")
     """
+
     input = "srtobj:file, subsets:var"
     output = "outdir:dir:{{in.srtobj | stem}}.subsets"
     envs = {"ignore_nas": True}
@@ -1464,6 +1487,7 @@ class SeuratSplit(Proc):
         recell: Rename the cell ids using the `by` column
             A string of R function taking the original cell ids and `by`
     """
+
     input = "srtobj:file, by:var"
     output = "outdir:dir:{{in.srtobj | stem}}.subsets"
     envs = {
@@ -1494,6 +1518,7 @@ class Subset10X(Proc):
         feats_to_keep: The features/genes to keep.
             The final features list will be `feats_to_keep` + `nfeats`
     """
+
     input = "indir:dir"
     output = "outdir:dir:{{in.indir | stem}}"
     envs = {
@@ -1523,6 +1548,7 @@ class SeuratTo10X(Proc):
     Envs:
         version: The version of 10X format
     """
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}"
     envs = {"version": "3", "split_by": None}
@@ -1611,6 +1637,7 @@ class ScFGSEA(Proc):
         r-seurat:
             - check: {{proc.lang}} -e "library(seurat)"
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.fgsea"
     lang = config.lang.rscript
@@ -1763,6 +1790,7 @@ class CellTypeAnnotation(Proc):
             - if: {{proc.envs.tool == 'sctype'}}
             - check: {{proc.lang}} -e "library(openxlsx)"
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = (
         "outfile:file:"
@@ -1880,6 +1908,7 @@ class SeuratMap2Ref(Proc):
         r-seurat:
             - check: {{proc.lang}} -e "library(Seurat)"
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript
@@ -1910,7 +1939,7 @@ class SeuratMap2Ref(Proc):
                 # "celltype-l1": "celltype.l1",
                 # "celltype-l2": "celltype.l2",
                 # "predicted_ADT": "ADT",
-            }
+            },
         },
         "MappingScore": {"ndim": 30},
     }
@@ -2058,6 +2087,7 @@ class RadarPlots(Proc):
             key `DEFAULT`.
             The keys must be valid string as part of the file name.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.radar_plots"
     lang = config.lang.rscript
@@ -2168,6 +2198,7 @@ class MetaMarkers(Proc):
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.meta_markers"
     lang = config.lang.rscript
@@ -2206,6 +2237,7 @@ class Seurat2AnnData(Proc):
         assay: The assay to use for AnnData.
             If not specified, the default assay will be used.
     """
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.h5ad"
     lang = config.lang.rscript
@@ -2235,6 +2267,7 @@ class AnnData2Seurat(Proc):
             to use for the check.
             Only works for `outtype = 'rds'`.
     """
+
     input = "adfile:file"
     output = "outfile:file:{{in.adfile | stem}}.RDS"
     lang = config.lang.rscript
@@ -2277,6 +2310,7 @@ class ScSimulation(Proc):
             See <https://rdrr.io/bioc/splatter/man/SplatParams.html>.
             Hyphens (`-`) will be transformed into dots (`.`) for the keys.
     """  # noqa: E501
+
     input = "seed:var"
     output = "outfile:file:simulatied_{{in.seed}}.RDS"
     lang = config.lang.rscript
@@ -2376,6 +2410,7 @@ class CellCellCommunication(Proc):
             See the method documentation for more details and also
             `help(liana.mt.<method>.__call__)` in Python.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}-ccc.txt"
     lang = config.lang.python
@@ -2430,6 +2465,7 @@ class CellCellCommunicationPlots(Proc):
                 See the documentation for more details.
                 Or you can use `?CCPlotR::cc_<kind>` in R.
     """
+
     input = "cccfile:file, expfile:file"
     output = "outdir:dir:{{in.cccfile | stem}}-ccc_plots"
     lang = config.lang.rscript
@@ -2502,6 +2538,7 @@ class ScVelo(Proc):
             - h5seurat: h5seurat object
             - h5ad: h5ad object
     """
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}-scvelo.{{envs.outtype}}"
     lang = config.lang.python
@@ -2557,6 +2594,7 @@ class SlingShot(Proc):
         align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
         seed (type=int): The seed for the random number generator.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript

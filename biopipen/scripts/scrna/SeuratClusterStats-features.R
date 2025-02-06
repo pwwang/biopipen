@@ -60,7 +60,10 @@ do_one_features <- function(name) {
     log$info("- Case: {name}")
 
     case <- list_update(features_defaults, features[[name]])
-    case <- extract_vars(case, "devpars", "more_formats", "save_code", "save_data", "order_by", "subset", "features")
+    case <- extract_vars(
+        case,
+        "devpars", "more_formats", "save_code", "save_data", "order_by",
+        "subset", "features", "descr")
 
     if (!is.null(subset)) {
         case$object <- srtobj %>% filter(!!parse_expr(subset))
@@ -92,6 +95,15 @@ do_one_features <- function(name) {
             setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
             "case",
             auto_data_setup = FALSE)
+    }
+    if (exists("descr") && !is.null(descr)) {
+        reporter$add2(
+            list(
+                kind = "descr",
+                content = descr
+            ),
+            hs = c(info$section, info$name)
+        )
     }
 
     if (save_data) {
