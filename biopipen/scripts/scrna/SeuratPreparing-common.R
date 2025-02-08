@@ -97,10 +97,19 @@ report_cell_qc = function(ngenes) {
         print(vln_p)
         dev.off()
 
+        vlnplot_pdf = file.path(plotsdir, paste0(slugify(feat), ".vln.pdf"))
+        pdf(
+            vlnplot_pdf,
+            width = (800 + length(samples) * 15) / 100, height = 600 / 100
+        )
+        print(vln_p)
+        dev.off()
+
         add_report(
             list(
                 src = vlnplot,
                 name = feat,
+                download = vlnplot_pdf,
                 descr = paste0("Distribution of ", feat, " for each sample.")
             ),
             h1 = "Violin Plots",
@@ -135,10 +144,16 @@ report_cell_qc = function(ngenes) {
         print(scat_p)
         dev.off()
 
+        scatfile_pdf = file.path(plotsdir, paste0(slugify(feat), "-nCount_RNA.scatter.pdf"))
+        pdf(scatfile_pdf, width = 8, height = 6)
+        print(scat_p)
+        dev.off()
+
         add_report(
             list(
                 src = scatfile,
                 name = paste0(feat, " vs nCount_RNA"),
+                download = scatfile_pdf,
                 descr = paste0("Scatter plot for ", feat, " against nCount_RNA")
             ),
             h1 = "Scatter Plots",
