@@ -353,7 +353,14 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
             width = width * case$ncol
         }
     }
-    png(file.path(ddir, "diversity.png"), width = width, height = height, res = res)
+
+    div_plot = file.path(ddir, "diversity.png")
+    png(div_plot, width = width, height = height, res = res)
+    print(p)
+    dev.off()
+
+    div_plot_pdf = file.path(ddir, "diversity.pdf")
+    pdf(div_plot_pdf, width = width / res, height = height / res)
     print(p)
     dev.off()
 
@@ -407,7 +414,7 @@ run_general = function(casename, d, case, ddir, value_col = "Value") {
     add_report(
         list(
             name = "Diversity Plot",
-            contents = list(list(kind = "image", src = file.path(ddir, "diversity.png")))
+            contents = list(list(kind = "image", src = div_plot, download = div_plot_pdf))
         ),
         list(
             name = "Diversity Table",
@@ -559,6 +566,10 @@ run_raref_single = function(d, case, ddir, suffix = "", save_p = TRUE) {
         png(file.path(ddir, "raref.png"), width = devpars$width, height = devpars$height, res = devpars$res)
         print(p)
         dev.off()
+
+        pdf(file.path(ddir, "raref.pdf"), width = devpars$width / devpars$res, height = devpars$height / devpars$res)
+        print(p)
+        dev.off()
     } else {
         return (list(p = p, width = devpars$width))
     }
@@ -628,6 +639,14 @@ run_raref_multi = function(d, case, ddir) {
     )
     print(p)
     dev.off()
+
+    pdf(
+        file.path(ddir, paste0("raref-", slugify(case$separate_by), ".pdf")),
+        width = width / res,
+        height = height / res
+    )
+    print(p)
+    dev.off()
 }
 
 # Run the diversity estimation for one case
@@ -673,7 +692,8 @@ run_div_case = function(casename) {
             add_report(
                 list(
                     kind = "image",
-                    src = file.path(ddir, paste0("raref-", slugify(case$separate_by), ".png"))
+                    src = file.path(ddir, paste0("raref-", slugify(case$separate_by), ".png")),
+                    download = file.path(ddir, paste0("raref-", slugify(case$separate_by), ".pdf"))
                 ),
                 h1 = "Rarefraction",
                 h2 = casename
@@ -683,7 +703,8 @@ run_div_case = function(casename) {
             add_report(
                 list(
                     kind = "image",
-                    src = file.path(ddir, "raref.png")
+                    src = file.path(ddir, "raref.png"),
+                    download = file.path(ddir, "raref.pdf")
                 ),
                 h1 = "Rarefraction",
                 h2 = casename

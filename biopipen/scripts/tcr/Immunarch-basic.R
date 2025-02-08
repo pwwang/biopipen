@@ -63,15 +63,22 @@ do_one_case_basic = function(name, case, method) {
     } else {
         p = vis(exp, .by = case$by, .meta = d$meta)
     }
+
     ofig = file.path(odir, paste0(name, ".png"))
     png(ofig, width = case$devpars$width, height = case$devpars$height, res = case$devpars$res)
+    print(p + scale_fill_biopipen())
+    dev.off()
+
+    ofig_pdf = file.path(odir, paste0(name, ".pdf"))
+    pdf(ofig_pdf, width = case$devpars$width / case$devpars$res, height = case$devpars$height / case$devpars$res)
     print(p + scale_fill_biopipen())
     dev.off()
 
     add_report(
         list(
             src = ofig,
-            name = if (name == "DEFAULT") NULL else name
+            name = if (name == "DEFAULT") NULL else name,
+            download = ofig_pdf
         ),
         h1 = "Exploratory Analysis",
         h2 = switch(method,

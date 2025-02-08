@@ -105,6 +105,11 @@ do_one_case_kmer = function(name, case, kmer_dir) {
     print(p)
     dev.off()
 
+    ofig_pdf = file.path(odir, "Allsamples.pdf")
+    pdf(ofig_pdf, width = case$devpars$width / case$devpars$res, height = case$devpars$height / case$devpars$res)
+    print(p)
+    dev.off()
+
     add_report(
         list(
             kind = "descr",
@@ -116,7 +121,7 @@ do_one_case_kmer = function(name, case, kmer_dir) {
     )
 
     add_report(
-        list(kind = "image", src = ofig),
+        list(kind = "image", src = ofig, download = ofig_pdf),
         h1 = "Kmer and sequence motif analysis",
         h2 = ifelse(name == "DEFAULT", "#", name),
         h3 = "Kmer sequence occurrences"
@@ -150,9 +155,17 @@ do_one_case_kmer = function(name, case, kmer_dir) {
                 print(ap)
                 dev.off()
 
+                aofig_pdf = gsub(".png$", ".pdf", aofig)
+                pdf(aofig_pdf,
+                    width = case$profiles$cases[[aname]]$devpars$width / case$profiles$cases[[aname]]$devpars$res,
+                    height = case$profiles$cases[[aname]]$devpars$height / case$profiles$cases[[aname]]$devpars$res)
+                print(ap)
+                dev.off()
+
                 add_report(
                     list(
                         src = aofig,
+                        download = aofig_pdf,
                         name = paste0(sample, ifelse(aname == "DEFAULT", "", paste0(" - ", aname)))
                     ),
                     h1 = "Kmer and sequence motif analysis",

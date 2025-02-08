@@ -88,6 +88,11 @@ run_tracking_case = function(casename) {
         print(vis(imm_tracking))
         dev.off()
 
+        tracking_pdf = file.path(tracking_dir, paste0(slugify(casename), ".pdf"))
+        pdf(tracking_pdf, height=10, width=6 + 1.5 * length(subjects))
+        print(vis(imm_tracking))
+        dev.off()
+
         add_report(
             list(
                 kind = "descr",
@@ -105,6 +110,7 @@ run_tracking_case = function(casename) {
         add_report(
             list(
                 src = tracking_png,
+                download = tracking_pdf,
                 name = if (casename == "DEFAULT") NULL else casename
             ),
             h1 = "Tracking of clonotypes",

@@ -126,10 +126,16 @@ do_one_case_geneusage = function(name, case, gu_dir) {
     print(p + scale_fill_biopipen())
     dev.off()
 
+    ofig_pdf = file.path(odir, paste0(name, ".pdf"))
+    pdf(ofig_pdf, width = case$devpars$width / case$devpars$res, height = case$devpars$height / case$devpars$res)
+    print(p + scale_fill_biopipen())
+    dev.off()
+
     add_report(
         list(
             kind = "table_image",
             src = ofig,
+            download = ofig_pdf,
             descr = paste0(
                  "Distribution of known gene segments following the ",
                  '<a href="http://www.imgt.org/IMGTrepertoire/LocusGenes/" target="_blank">IMGT</a> ',
@@ -165,15 +171,23 @@ do_one_case_geneusage = function(name, case, gu_dir) {
             ap = do_call(vis, avis_args)
             if (aname == "DEFAULT") {
                 aofig = file.path(odir, paste0(name, "-analysis.png"))
+                aofig_pdf = file.path(odir, paste0(name, "-analysis.pdf"))
             } else {
                 aofig = file.path(odir, paste0(name, "-", aname, "-analysis.png"))
+                aofig_pdf = file.path(odir, paste0(name, "-", aname, "-analysis.pdf"))
             }
             png(aofig, width = case$analyses$cases[[aname]]$devpars$width, height = case$analyses$cases[[aname]]$devpars$height, res = case$analyses$cases[[aname]]$devpars$res)
             print(ap)
             dev.off()
 
+            pdf(aofig_pdf,
+                width = case$analyses$cases[[aname]]$devpars$width / case$analyses$cases[[aname]]$devpars$res,
+                height = case$analyses$cases[[aname]]$devpars$height / case$analyses$cases[[aname]]$devpars$res)
+            print(ap)
+            dev.off()
+
             add_report(
-                list(src = aofig, name = aname),
+                list(src = aofig, name = aname, download = aofig_pdf),
                 h1 = "Gene Usage",
                 h2 = ifelse(name == "DEFAULT", "#", name),
                 h3 = "Gene Usage Analysis",

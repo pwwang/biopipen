@@ -78,6 +78,11 @@ do_one_case_clonality = function(name, case, method) {
     print(p)
     dev.off()
 
+    ofig_pdf = file.path(odir, paste0(name, ".pdf"))
+    pdf(ofig_pdf, width = case$devpars$width / case$devpars$res, height = case$devpars$height / case$devpars$res)
+    print(p)
+    dev.off()
+
     add_report(
         list(
             src = ofig,
