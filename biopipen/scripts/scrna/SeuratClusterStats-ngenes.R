@@ -14,6 +14,7 @@ do_one_ngenes <- function(name) {
     case$devpars <- list_update(ngenes_defaults$devpars, case$devpars)
 
     figfile = file.path(odir, paste0(slugify(name), ".boxplot.png"))
+    figfile_pdf = file.path(odir, paste0(slugify(name), ".boxplot.pdf"))
 
     if (!is.null(case$subset)) {
         sobj <- srtobj %>% filter(!!rlang::parse_expr(case$subset))
@@ -49,6 +50,10 @@ do_one_ngenes <- function(name) {
     print(p)
     dev.off()
 
+    pdf(figfile_pdf, width=case$devpars$width / case$devpars$res, height=case$devpars$height / case$devpars$res)
+    print(p)
+    dev.off()
+
     add_report(
         list(
             kind = "descr",
@@ -62,7 +67,7 @@ do_one_ngenes <- function(name) {
                 )
             )
         ),
-        list(kind = "image", src = figfile),
+        list(kind = "image", src = figfile, download = figfile_pdf),
         h1 = name
     )
 }

@@ -224,6 +224,7 @@ do_one_features = function(name) {
 
     if (kind == "bar") {
         figfile <- file.path(odir, paste0(slugify(name), ".bar.png"))
+        figfile_pdf <- file.path(odir, paste0(slugify(name), ".bar.pdf"))
         genes <- rownames(GetAssayData(case$object))
         genes <- genes[sapply(genes, function(x) grepl(x, case$features))]
         if (length(genes) == 0) {
@@ -265,6 +266,10 @@ do_one_features = function(name) {
         print(p)
         dev.off()
 
+        pdf(figfile_pdf, width = devpars$width / devpars$res, height = devpars$height / devpars$res)
+        print(p)
+        dev.off()
+
         add_report(
             list(
                 kind = "descr",
@@ -272,7 +277,8 @@ do_one_features = function(name) {
             ),
             list(
                 kind = "image",
-                src = figfile
+                src = figfile,
+                download = figfile_pdf
             ),
             h1 = ifelse(is.null(section), name, section),
             h2 = ifelse(is.null(section), "#", name)
@@ -284,6 +290,7 @@ do_one_features = function(name) {
     case$features = .get_features(case$features)
     if (kind == "avgheatmap") {
         figfile <- file.path(odir, paste0(slugify(name), ".avgheatmap.png"))
+        figfile_pdf <- file.path(odir, paste0(slugify(name), ".avgheatmap.pdf"))
         assay <- assay %||% DefaultAssay(object)
         layer <- layer %||% ifelse("scale.data" %in% Layers(object, assay = assay), "scale.data", "data")
 
@@ -353,6 +360,10 @@ do_one_features = function(name) {
         print(p)
         dev.off()
 
+        pdf(figfile_pdf, width = devpars$width / devpars$res, height = devpars$height / devpars$res)
+        print(p)
+        dev.off()
+
         add_report(
             list(
                 kind = "descr",
@@ -360,7 +371,8 @@ do_one_features = function(name) {
             ),
             list(
                 kind = "image",
-                src = figfile
+                src = figfile,
+                download = figfile_pdf
             ),
             h1 = ifelse(is.null(section), name, section),
             h2 = ifelse(is.null(section), "#", name)
@@ -430,6 +442,11 @@ do_one_features = function(name) {
     })
     dev.off()
 
+    figfile_pdf = gsub(".png$", ".pdf", figfile)
+    pdf(figfile_pdf, width=devpars$width / devpars$res, height=devpars$height / devpars$res)
+    print(p)
+    dev.off()
+
     add_report(
         list(
             kind = "descr",
@@ -437,7 +454,8 @@ do_one_features = function(name) {
         ),
         list(
             kind = "image",
-            src = figfile
+            src = figfile,
+            download = figfile_pdf
         ),
         h1 = ifelse(is.null(section), name, section),
         h2 = ifelse(is.null(section), "#", name)

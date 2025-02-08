@@ -23,8 +23,11 @@ do_one_stats = function(name) {
     }
 
     figfile = file.path(odir, paste0(slugify(name), ".bar.png"))
+    figfile_pdf = file.path(odir, paste0(slugify(name), ".bar.pdf"))
     piefile = file.path(odir, paste0(slugify(name), ".pie.png"))
+    piefile_pdf = file.path(odir, paste0(slugify(name), ".pie.pdf"))
     circosfile = file.path(odir, paste0(slugify(name), ".circos.png"))
+    circosfile_pdf = file.path(odir, paste0(slugify(name), ".circos.pdf"))
     samtablefile = file.path(odir, paste0(slugify(name), ".bysample.txt"))
     tablefile = file.path(odir, paste0(slugify(name), ".txt"))
 
@@ -98,6 +101,10 @@ do_one_stats = function(name) {
     print(p)
     dev.off()
 
+    pdf(figfile_pdf, width=case$devpars$width / case$devpars$res, height=case$devpars$height / case$devpars$res)
+    print(p)
+    dev.off()
+
     add_report(
         list(
             kind = "descr",
@@ -118,7 +125,7 @@ do_one_stats = function(name) {
     add_report(
         list(
             name = "Bar Plot",
-            contents = list(list(kind = "image", src = figfile))
+            contents = list(list(kind = "image", src = figfile, download = figfile_pdf))
         ),
         h1 = name,
         ui = "tabs"
@@ -162,10 +169,14 @@ do_one_stats = function(name) {
         print(p_pie)
         dev.off()
 
+        pdf(piefile_pdf, width=case$pie_devpars$width / case$pie_devpars$res, height=case$pie_devpars$height / case$pie_devpars$res)
+        print(p_pie)
+        dev.off()
+
         add_report(
             list(
                 name = "Pie Chart",
-                contents = list(list(kind = "image", src = piefile))
+                contents = list(list(kind = "image", src = piefile, download = piefile_pdf))
             ),
             h1 = name,
             ui = "tabs"

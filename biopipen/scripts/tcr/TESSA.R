@@ -198,10 +198,15 @@ png(file.path(result_dir, "Cluster_size_dist.png"), width=8, height=8, units="in
 print(p)
 dev.off()
 
+pdf(file.path(result_dir, "Cluster_size_dist.pdf"), width=8, height=8)
+print(p)
+dev.off()
+
 add_report(
     list(
         src = file.path(result_dir, "Cluster_size_dist.png"),
-        descr = "Histogram of cluster size distribution"
+        descr = "Histogram of cluster size distribution",
+        download = file.path(result_dir, "Cluster_size_dist.pdf")
     ),
     list(
         src = file.path(result_dir, "clone_size.png"),
