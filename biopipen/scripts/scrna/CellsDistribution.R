@@ -368,9 +368,17 @@ do_case <- function(name, case) {
     width <- devpars$width %||% (400 + 120 + 100 * ngroups)
     #                         group_by names
     height <- devpars$height %||% (120 + 100 * cells_rows)
+
+    p <- wrap_plots(piecharts, ncol = 1, guides = "collect")
+
     piefile <- file.path(info$casedir, paste0(info$case_slug, ".png"))
     png(piefile, res = res, width = width, height = height)
-    print(wrap_plots(piecharts, ncol = 1, guides = "collect"))
+    print(p)
+    dev.off()
+
+    piefile_pdf <- file.path(info$casedir, paste0(info$case_slug, ".pdf"))
+    pdf(piefile_pdf, width = width / res, height = height / res)
+    print(p)
     dev.off()
 
     log_info("  Plotting and saving heatmap ...")
@@ -411,7 +419,6 @@ do_case <- function(name, case) {
     hm_res <- hm_devpars$res %||% 100
     hm_width <- hm_devpars$width %||% (600 + 15 * length(unique(meta$seurat_clusters)) + extra_width)
     hm_height <- hm_devpars$height %||% (450 + 15 * cells_rows + extra_height)
-    png(hmfile, res = hm_res, width = hm_width, height = hm_height)
     hm <- Heatmap(
         as.matrix(hmdata),
         name = "Size",
@@ -430,6 +437,12 @@ do_case <- function(name, case) {
         right_annotation = row_ha,
         top_annotation = ha
     )
+    png(hmfile, res = hm_res, width = hm_width, height = hm_height)
+    print(hm)
+    dev.off()
+
+    hmfile_pdf <- gsub(".png$", ".pdf", hmfile)
+    pdf(hmfile_pdf, width = hm_width / hm_res, height = hm_height / hm_res)
     print(hm)
     dev.off()
 
@@ -454,11 +467,11 @@ do_case <- function(name, case) {
     add_report(
         list(
             name = "Pie Charts",
-            contents = list(list(kind = "image", src = piefile))
+            contents = list(list(kind = "image", src = piefile, download = piefile_pdf))
         ),
         list(
             name = "Heatmap",
-            contents = list(list(src = hmfile, kind = "image"))
+            contents = list(list(src = hmfile, kind = "image", download = hmfile_pdf))
         ),
         list(
             name = "Distribution Table",
@@ -493,9 +506,19 @@ do_overlap <- function(section) {
     print(venn_p)
     dev.off()
 
+    venn_plot_pdf <- gsub(".png$", ".pdf", venn_plot)
+    pdf(venn_plot_pdf, width = 10, height = 6)
+    print(venn_p)
+    dev.off()
+
     upset_plot <- file.path(sec_dir, "upset.png")
     upset_p <- upset(fromList(overlap_cases))
     png(upset_plot, res = 100, width = 800, height = 600)
+    print(upset_p)
+    dev.off()
+
+    upset_plot_pdf <- gsub(".png$", ".pdf", upset_plot)
+    pdf(upset_plot_pdf, width = 8, height = 6)
     print(upset_p)
     dev.off()
 
@@ -504,14 +527,16 @@ do_overlap <- function(section) {
             name = "Venn Plot",
             contents = list(list(
                 kind = "image",
-                src = venn_plot
+                src = venn_plot,
+                download = venn_plot_pdf
             ))
         ),
         list(
             name = "UpSet Plot",
             contents = list(list(
                 kind = "image",
-                src = upset_plot
+                src = upset_plot,
+                download = upset_plot_pdf
             ))
         ),
         h1 = "Overlapping Groups",
