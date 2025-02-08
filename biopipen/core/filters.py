@@ -15,7 +15,7 @@ filtermanager = FilterManager()
 @filtermanager.register
 def dict_to_cli_args(
     dic: Mapping[str, Any],
-    exclude: List[str] = None,
+    exclude: List[str] | None = None,
     prefix: str | None = None,
     sep: str | None = " ",
     dup_key: bool = True,
@@ -118,7 +118,7 @@ def dict_to_cli_args(
 def r(
     obj: Any,
     ignoreintkey: bool = True,
-    todot: str = None,
+    todot: str | None = None,
     sortkeys: bool = False,
     skip: int = 0,
     _i: int = 0,
@@ -304,7 +304,7 @@ def _render_fgsea(
         },
     ]
 
-    return render_ui(components, "accordion", job, level)
+    return render_ui(components, "accordion", job, level)  # type: ignore
 
 
 @register_component("pdf")
@@ -361,9 +361,8 @@ def _render_enrichr(
                             "contents": [
                                 {
                                     "kind": "image",
-                                    "src": str(
-                                        Path(cont["dir"]).joinpath(f"Enrichr-{db}.png")
-                                    ),
+                                    "src": str(enrichr_plot),
+                                    "download": str(enrichr_plot.with_suffix(".pdf")),
                                 }
                             ],
                         },
