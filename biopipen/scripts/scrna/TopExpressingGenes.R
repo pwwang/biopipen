@@ -161,14 +161,16 @@ do_enrich <- function(expr, odir) {
             next
         }
 
-        png(
-            file.path(odir, paste0("Enrichr-", db, ".png")),
-            res = 100, height = 1000, width = 1000
-        )
-        print(
-            plotEnrich(enriched[[db]], showTerms = 20, title = db) +
+        enrich_p <- plotEnrich(enriched[[db]], showTerms = 20, title = db) +
             theme_prism()
-        )
+        enrich_plot <- file.path(odir, paste0("Enrichr-", db, ".png"))
+        png(enrich_plot, res = 100, height = 1000, width = 1000)
+        print(enrich_p)
+        dev.off()
+
+        enrich_plot_pdf <- file.path(odir, paste0("Enrichr-", db, ".pdf"))
+        pdf(enrich_plot_pdf, height = 10, width = 10)
+        print(enrich_p)
         dev.off()
     }
 }
