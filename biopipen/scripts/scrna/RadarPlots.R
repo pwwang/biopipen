@@ -193,6 +193,7 @@ do_radarplot <- function(info, case, counts) {
 
     # Plot
     plotfile = file.path(info$casedir, "plot.png")
+    plotfile_pdf = file.path(info$casedir, "plot.pdf")
     if (!is.null(case$colors) && length(case$colors) == 1 && case$colors == "biopipen") {
         colors = pal_biopipen()(nrow(rdr_data))
     } else if (!is.null(case$colors) && length(case$colors) > 0) {
@@ -214,6 +215,14 @@ do_radarplot <- function(info, case, counts) {
         width = case$devpars$width,
         height = case$devpars$height,
         res = case$devpars$res
+    )
+    print(p)
+    dev.off()
+
+    pdf(
+        plotfile_pdf,
+        width = case$devpars$width / case$devpars$res,
+        height = case$devpars$height / case$devpars$res
     )
     print(p)
     dev.off()
@@ -268,6 +277,7 @@ do_barplot_and_tests <- function(info, case, counts) {
 
     # Plot the barplot
     plotfile = file.path(info$casedir, "barplot.png")
+    plotfile_pdf = file.path(info$casedir, "barplot.pdf")
     p = ggplot(plotdata, aes(x = !!sym(case$ident), y = .mean, fill = !!sym(case$by))) +
         geom_bar(stat = "identity", position = "dodge") +
         geom_errorbar(
@@ -291,6 +301,14 @@ do_barplot_and_tests <- function(info, case, counts) {
         width = case$bar_devpars$width,
         height = case$bar_devpars$height,
         res = case$bar_devpars$res
+    )
+    print(p)
+    dev.off()
+
+    pdf(
+        plotfile_pdf,
+        width = case$bar_devpars$width / case$bar_devpars$res,
+        height = case$bar_devpars$height / case$bar_devpars$res
     )
     print(p)
     dev.off()
@@ -348,7 +366,8 @@ add_case_report = function(info, breakdown, test) {
             contents = list(
                 list(
                     kind = "image",
-                    src = file.path(info$casedir, "plot.png")
+                    src = file.path(info$casedir, "plot.png"),
+                    download = file.path(info$casedir, "plot.pdf")
                 )
             )
         ),
@@ -381,7 +400,8 @@ add_case_report = function(info, breakdown, test) {
                 contents = list(
                     list(
                         kind = "image",
-                        src = file.path(info$casedir, "barplot.png")
+                        src = file.path(info$casedir, "barplot.png"),
+                        download = file.path(info$casedir, "barplot.pdf")
                     )
                 )
             ))
