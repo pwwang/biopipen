@@ -500,10 +500,16 @@ handle_subject <- function(i, subjects, casename, case) {
         print(scatter_p)
         dev.off()
 
+        scatter_pdf <- gsub(".png$", ".pdf", scatter_png)
+        pdf(scatter_pdf, width = 10, height = 8)
+        print(scatter_p)
+        dev.off()
+
         add_report(
             list(
                 name = paste0(subject, " (", pair[1], " - ", pair[2], ")"),
-                src = scatter_png
+                src = scatter_png,
+                download = scatter_pdf
             ),
             h1 = h$h1,
             h2 = h$h2,
@@ -515,13 +521,19 @@ handle_subject <- function(i, subjects, casename, case) {
     # upset/venn
     venn_dir <- file.path(casedir, "venn")
     venn_png <- file.path(venn_dir, paste0("venn_", slugify(subject), ".png"))
+    venn_pdf <- gsub(".png$", ".pdf", venn_png)
+    p <- plot_venndg(counts, groups, singletons)
     png(venn_png, res = 100, height = 600, width = 800)
-    print(plot_venndg(counts, groups, singletons))
+    print(p)
+    dev.off()
+
+    pdf(venn_pdf, width = 8, height = 6)
+    print(p)
     dev.off()
 
     h <- headings(case$section, casename, "Overlapping Clones (Venn Diagram)")
     add_report(
-        list(src = venn_png, name = subject),
+        list(src = venn_png, name = subject, download = venn_pdf),
         h1 = h$h1,
         h2 = h$h2,
         h3 = h$h3,
@@ -530,13 +542,19 @@ handle_subject <- function(i, subjects, casename, case) {
 
     upset_dir <- file.path(casedir, "upset")
     upset_png <- file.path(upset_dir, paste0("upset_", slugify(subject), ".png"))
+    upset_pdf <- gsub(".png$", ".pdf", upset_png)
+    p <- plot_upset(counts, singletons, case$upset_ymax, case$upset_trans)
     png(upset_png, res = 100, height = 600, width = 800)
-    print(plot_upset(counts, singletons, case$upset_ymax, case$upset_trans))
+    print(p)
+    dev.off()
+
+    pdf(upset_pdf, width = 8, height = 6)
+    print(p)
     dev.off()
 
     h <- headings(case$section, casename, "Overlapping Clones (UpSet Plots)")
     add_report(
-        list(src = upset_png, name = subject),
+        list(src = upset_png, name = subject, download = upset_pdf),
         h1 = h$h1,
         h2 = h$h2,
         h3 = h$h3,
