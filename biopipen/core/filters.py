@@ -274,6 +274,7 @@ def _render_fgsea(
                         {
                             "kind": "image",
                             "src": str(Path(cont["dir"]).joinpath("gsea_table.png")),
+                            "download": str(Path(cont["dir"]).joinpath("gsea_table.pdf"))
                         }
                     ],
                 },
@@ -297,6 +298,7 @@ def _render_fgsea(
             "contents": [
                 {
                     "src": str(Path(cont["dir"]) / f"fgsea_{slug}.png"),
+                    "download": str(Path(cont["dir"]) / f"fgsea_{slug}.pdf"),
                     "title": pw,
                 }
                 for pw, slug in pathways
