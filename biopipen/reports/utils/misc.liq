@@ -43,10 +43,12 @@ import { Image } from "$libs";
                 {{ caps[i] }}
             </div>
             {% endif %}
-            <Image
-                style="max-width: 90%"
-                src={{src | quote}}
-            />
+            {% if src | replace: ".png", ".pdf" | exists %}
+                <Image style="max-width: 90%" src={{src | quote}}
+                    download={{src | replace: ".png", ".pdf" | quote}} />
+            {% else %}
+                <Image style="max-width: 90%" src={{src | quote}} />
+            {% endif %}
         </td>
         {% endif %}
     {% endfor %}

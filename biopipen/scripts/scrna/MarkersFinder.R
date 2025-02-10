@@ -208,6 +208,11 @@ plot_volcano = function(markers, volfile, sig, volgenes) {
     png(volfile, res = 100, height = 1200, width = 900)
     print(p_vol)
     dev.off()
+
+    volfile_pdf <- gsub(".png$", ".pdf", volfile)
+    pdf(volfile_pdf, width = 9, height = 12)
+    print(p_vol)
+    dev.off()
 }
 
 # Do enrichment analysis for a case using Enrichr
@@ -256,14 +261,16 @@ do_enrich <- function(info, markers, sig, volgenes) {
                 log_warn("  No enrichment found for case: {info$casename} - {db}")
                 next
             }
-            png(
-                file.path(info$casedir, paste0("Enrichr-", db, ".png")),
-                res = 100, height = 1000, width = 1000
-            )
-            print(
-                plotEnrich(enriched[[db]], showTerms = 20, title = db) +
+            enrich_p <- plotEnrich(enriched[[db]], showTerms = 20, title = db) +
                 theme_prism()
-            )
+            enrich_plot <- file.path(info$casedir, paste0("Enrichr-", db, ".png"))
+            png(enrich_plot, res = 100, height = 1000, width = 1000)
+            print(enrich_p)
+            dev.off()
+
+            enrich_plot_pdf <- gsub(".png$", ".pdf", enrich_plot)
+            pdf(enrich_plot_pdf, width = 10, height = 10)
+            print(enrich_p)
             dev.off()
         }
     }
@@ -287,13 +294,17 @@ do_dotplot <- function(info, siggenes, dotplot, args) {
     dotplot_height <- dotplot_devpars$height %||% 600
     dotplot_res <- dotplot_devpars$res %||% 100
     dotplot_file <- file.path(info$casedir, "dotplot.png")
-    png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
-    # rotate x axis labels
-    print(
-        do_call(DotPlot, dotplot) +
+    dot_p <- do_call(DotPlot, dotplot) +
         theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
         coord_flip()
-    )
+    png(dotplot_file, res = dotplot_res, width = dotplot_height, height = dotplot_width)
+    # rotate x axis labels
+    print(dot_p)
+    dev.off()
+
+    dotplot_file_pdf <- gsub(".png$", ".pdf", dotplot_file)
+    pdf(dotplot_file_pdf, width = dotplot_height / dotplot_res, height = dotplot_width / dotplot_res)
+    print(dot_p)
     dev.off()
 }
 
@@ -338,7 +349,8 @@ add_case_report <- function(info, sigmarkers, siggenes) {
                 contents = list(
                     list(
                         kind = "img",
-                        src = file.path(info$casedir, "volcano.png")
+                        src = file.path(info$casedir, "volcano.png"),
+                        download = file.path(info$casedir, "volcano.pdf")
                     )
                 )
             ),
@@ -348,7 +360,8 @@ add_case_report <- function(info, sigmarkers, siggenes) {
                 contents = list(
                     list(
                         kind = "img",
-                        src = file.path(info$casedir, "dotplot.png")
+                        src = file.path(info$casedir, "dotplot.png"),
+                        download = file.path(info$casedir, "dotplot.pdf")
                     )
                 )
             ),
@@ -613,6 +626,14 @@ do_overlap <- function(section) {
         do.call(png, ov_args$venn$devpars)
         print(venn_p)
         dev.off()
+
+        venn_plot_pdf <- file.path(ov_dir, "venn.pdf")
+        pdf(
+            venn_plot_pdf,
+            width = ov_args$venn$devpars$width / ov_args$venn$devpars$res,
+            height = ov_args$venn$devpars$height / ov_args$venn$devpars$res)
+        print(venn_p)
+        dev.off()
     }
 
     df_markers <- fromList(ov_cases)
@@ -654,6 +675,14 @@ do_overlap <- function(section) {
         do.call(png, ov_args$upset$devpars)
         print(upset_p)
         dev.off()
+
+        upset_plot_pdf <- file.path(ov_dir, "upset.pdf")
+        pdf(
+            upset_plot_pdf,
+            width = ov_args$upset$devpars$width / ov_args$upset$devpars$res,
+            height = ov_args$upset$devpars$height / ov_args$upset$devpars$res)
+        print(upset_p)
+        dev.off()
     }
 
     add_report(
@@ -663,7 +692,8 @@ do_overlap <- function(section) {
             contents = list(
                 list(
                     kind = "img",
-                    src = file.path(ov_dir, "venn.png")
+                    src = file.path(ov_dir, "venn.png"),
+                    download = file.path(ov_dir, "venn.pdf")
                 )
             )
         ),
@@ -673,7 +703,8 @@ do_overlap <- function(section) {
             contents = list(
                 list(
                     kind = "img",
-                    src = file.path(ov_dir, "upset.png")
+                    src = file.path(ov_dir, "upset.png"),
+                    download = file.path(ov_dir, "upset.pdf")
                 )
             )
         ),

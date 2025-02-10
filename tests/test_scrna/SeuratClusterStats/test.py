@@ -232,7 +232,11 @@ class SeuratClusterStats(SeuratClusterStats):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareSeurat)
+    return (
+        get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True)
+        .set_starts(PrepareSeurat)
+    )
 
 
 def testing(pipen):

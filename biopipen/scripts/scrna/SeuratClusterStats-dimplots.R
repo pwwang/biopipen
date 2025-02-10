@@ -49,9 +49,15 @@ do_one_dimplot = function(name) {
 
     if (case$reduction %in% c("dim", "auto")) { case$reduction = NULL }
     case$na_group <- NULL
+
+    p = do_call(DimPlot, case)
     figfile = file.path(odir, paste0(slugify(name), ".dim.png"))
     png(figfile, width=devpars$width, height=devpars$height, res=devpars$res)
-    p = do_call(DimPlot, case)
+    print(p)
+    dev.off()
+
+    figfile_pdf = file.path(odir, paste0(slugify(name), ".dim.pdf"))
+    pdf(figfile_pdf, width=devpars$width / devpars$res, height=devpars$height / devpars$res)
     print(p)
     dev.off()
 
@@ -62,7 +68,8 @@ do_one_dimplot = function(name) {
         ),
         list(
             kind = "image",
-            src = figfile
+            src = figfile,
+            download = figfile_pdf
         ),
         h1 = name
     )

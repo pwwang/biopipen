@@ -385,6 +385,10 @@ do_one_subset = function(s) {
     print(g)
     dev.off()
 
+    pdf(file.path(odir, "estimated_coefficients.pdf"), width=10, height=10)
+    print(g)
+    dev.off()
+
     add_report(
         list(
             kind = "descr",
@@ -408,7 +412,8 @@ do_one_subset = function(s) {
             contents = list(
                 list(
                     kind = "image",
-                    src = file.path(odir, "estimated_coefficients.png")
+                    src = file.path(odir, "estimated_coefficients.png"),
+                    download = file.path(odir, "estimated_coefficients.pdf")
                 )
             )
         ),
@@ -465,6 +470,10 @@ do_one_subset = function(s) {
     print(g)
     dev.off()
 
+    pdf(file.path(odir, "distribution.pdf"), width=10, height=10)
+    print(g)
+    dev.off()
+
     add_report(
         list(
             kind = "table_image",
@@ -473,7 +482,8 @@ do_one_subset = function(s) {
                 "then scaled to have a mean of 0 and a variance of 1. ",
                 "Horizontal lines depict the mean for each population"
             ),
-            src = file.path(odir, "distribution.png")
+            src = file.path(odir, "distribution.png"),
+            download = file.path(odir, "distribution.pdf")
         ),
         h1 = ifelse(
             is.null(s),

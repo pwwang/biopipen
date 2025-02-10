@@ -79,7 +79,11 @@ class SeuratClusterStats2(SeuratClusterStats):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareQuery)
+    return (
+        get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True)
+        .set_starts(PrepareQuery)
+    )
 
 
 def testing(pipen):

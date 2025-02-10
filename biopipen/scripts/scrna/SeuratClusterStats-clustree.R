@@ -46,9 +46,14 @@ if (
             command <- srtobj@commands[[paste0("FindClusters.", prefix)]] %||%
                 (if(prefix == "seurat_clusters") srtobj@commands$FindClusters else NULL)
 
+            p <- do_call(clustree, case)
             clustree_file <- file.path(odir, paste0(prefix, ".clustree.png"))
             png(clustree_file, width = devpars$width, height = devpars$height, res = devpars$res)
-            p <- do_call(clustree, case)
+            print(p)
+            dev.off()
+
+            clustree_file_pdf <- file.path(odir, paste0(prefix, ".clustree.pdf"))
+            pdf(clustree_file_pdf, width = devpars$width / devpars$res, height = devpars$height / devpars$res)
             print(p)
             dev.off()
 
@@ -62,6 +67,7 @@ if (
             reports[[length(reports) + 1]] <- list(
                 kind = "table_image",
                 src = clustree_file,
+                download = clustree_file_pdf,
                 name = name,
                 descr = paste0("Resolutions: ", paste(resolution, collapse = ", "), "; resolution used: ", resolution_used)
             )

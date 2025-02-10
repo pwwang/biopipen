@@ -6,6 +6,7 @@ log_info("hists:")
 
 do_one_hists <- function(m, case, odir, h1, each = NULL) {
     ofile <- file.path(odir, paste0(slugify(h1), ifelse(is.null(each), "", paste0("-", slugify(each))), ".png"))
+    ofile_pdf <- gsub(".png$", ".pdf", ofile)
 
     p <- ggplot(m, aes(x=!!sym(case$x))) +
         geom_histogram(
@@ -42,16 +43,20 @@ do_one_hists <- function(m, case, odir, h1, each = NULL) {
     print(p)
     dev.off()
 
+    pdf(ofile_pdf, width=devpars$width / devpars$res, height=devpars$height / devpars$res)
+    print(p)
+    dev.off()
+
     # Add report
     if (!is.null(each)) {
         add_report(
-            list(src = ofile, descr = first(m[[case$each]])),
+            list(src = ofile, descr = first(m[[case$each]]), download = ofile_pdf),
             h1 = h1,
             ui = "table_of_images"
         )
     } else {
         add_report(
-            list(kind = "image", src = ofile),
+            list(kind = "image", src = ofile, download = ofile_pdf),
             h1 = h1
         )
     }

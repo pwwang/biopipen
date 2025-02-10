@@ -69,8 +69,17 @@ do_one_case_spectratyping = function(name, case, spect_dir) {
         print(vis(spec_obj))
         dev.off()
 
+        spectfile_pdf = file.path(odir, paste0(slugify(sample), ".spect.pdf"))
+        pdf(
+            spectfile_pdf,
+            width = case$devpars$width / case$devpars$res,
+            height = case$devpars$height / case$devpars$res
+        )
+        print(vis(spec_obj))
+        dev.off()
+
         add_report(
-            list(src = spectfile, name = sample),
+            list(src = spectfile, name = sample, download = spectfile_pdf),
             h1 = "Spectratyping",
             h2 = name,
             ui = "table_of_images"

@@ -201,24 +201,38 @@ runFGSEA = function(
     }
     topPathways = unlist(topPathways)
 
-    tablefig = file.path(outdir, "gsea_table.png")
-    png(tablefig, res=100, width=1000, height=200 + 40 * length(topPathways))
-    print(plotGseaTable(
+    p <- plotGseaTable(
         envs$pathways[topPathways],
         ranks,
         gsea_res,
         gseaParam = if (!is.null(envs$gseaParam)) envs$gseaParam else 1
-    ))
+    )
+
+    tablefig = file.path(outdir, "gsea_table.png")
+    png(tablefig, res=100, width=1000, height=200 + 40 * length(topPathways))
+    print(p)
+    dev.off()
+
+    tablefig_pdf = file.path(outdir, "gsea_table.pdf")
+    pdf(tablefig_pdf, width=10, height=2 + 0.4 * length(topPathways))
+    print(p)
     dev.off()
 
     for (pathway in topPathways) {
         enrfig = file.path(outdir, paste0("fgsea_", slugify(pathway), ".png"))
-        png(enrfig, res=100, width=1000, height=800)
-        print(plotEnrichment(
+        p <- plotEnrichment(
             envs$pathways[[pathway]],
             ranks,
             gseaParam = if (!is.null(envs$gseaParam)) envs$gseaParam else 1
-        ) + labs(title = pathway))
+        ) + labs(title = pathway)
+
+        png(enrfig, res=100, width=1000, height=800)
+        print(p)
+        dev.off()
+
+        enrfig_pdf = gsub(".png$", ".pdf", enrfig)
+        pdf(enrfig_pdf, width=10, height=8)
+        print(p)
         dev.off()
     }
 }

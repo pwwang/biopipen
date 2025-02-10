@@ -138,10 +138,16 @@ do_one_case_overlap = function(name, case, ov_dir) {
     print(p)
     dev.off()
 
+    ofig_pdf = file.path(odir, paste0(name, ".pdf"))
+    pdf(ofig_pdf, width = case$devpars$width / case$devpars$res, height = case$devpars$height / case$devpars$res)
+    print(p)
+    dev.off()
+
     add_report(
         list(
             kind = "table_image",
             src = ofig,
+            download = ofig_pdf,
             descr = paste0(
                 "Repertoire overlap is the most common approach to measure repertoire similarity, ",
                 "using method <code>", case$method, "</code>, ",
@@ -179,15 +185,23 @@ do_one_case_overlap = function(name, case, ov_dir) {
             ap = do_call(vis, avis_args)
             if (aname == "DEFAULT") {
                 aofig = file.path(odir, paste0(name, "-analysis.png"))
+                aofig_pdf = file.path(odir, paste0(name, "-analysis.pdf"))
             } else {
                 aofig = file.path(odir, paste0(name, "-", aname, "-analysis.png"))
+                aofig_pdf = file.path(odir, paste0(name, "-", aname, "-analysis.pdf"))
             }
             png(aofig, width = case$analyses$cases[[aname]]$devpars$width, height = case$analyses$cases[[aname]]$devpars$height, res = case$analyses$cases[[aname]]$devpars$res)
             print(ap)
             dev.off()
 
+            pdf(aofig_pdf,
+                width = case$analyses$cases[[aname]]$devpars$width / case$analyses$cases[[aname]]$devpars$res,
+                height = case$analyses$cases[[aname]]$devpars$height / case$analyses$cases[[aname]]$devpars$res)
+            print(ap)
+            dev.off()
+
             add_report(
-                list(src = aofig, name = aname),
+                list(src = aofig, name = aname, download = aofig_pdf),
                 h1 = "Repertoire Overlaps",
                 h2 = ifelse(name == "DEFAULT", "#", name),
                 h3 = "Repertoire Overlap Analysis",

@@ -1,5 +1,24 @@
 # Change Log
 
+## 0.32.2
+
+- chore: update dependencies to latest versions
+- feat: add PDF output option for SampleInfo plots
+- feat: add PDF output options for violin and scatter plots in Seurat preparation scripts
+- feat: add PDF output options for volcano, dotplot, venn, and upset plots; update filters for type hints
+- feat: add PDF output option for Enrichr plots in TopExpressingGenes script
+- feat: add PDF output options for UMAP plots in SeuratMap2Ref script; update image handling in misc.liq
+- feat: add PDF output options for cluster size distribution, shared clusters, and sample diversity plots; update plotting functions to handle multiple output formats
+- feat: add PDF output options for various Immunarch scripts; enhance reporting with downloadable PDF files
+- feat: add PDF output options for cluster size distribution, dimension plots, and feature plots; enhance reporting with downloadable PDF files
+- feat: add PDF output options for radar and bar plots; enhance reporting with downloadable PDF files
+- feat: add PDF output options for CloneResidency script; enhance reporting with downloadable PDF files
+- feat: add PDF output options for GSEA table and enrichment plots; enhance reporting with downloadable PDF files
+- feat: add PDF output options for pie charts, heatmaps, Venn plots, and UpSet plots; enhance reporting with downloadable PDF files
+- feat: add PDF output options for Enrichr plots; enhance reporting with downloadable PDF files
+- feat: add PDF output options for estimated coefficients and distribution plots; enhance reporting with downloadable PDF files
+- chore: add gcc to cnvkit pipeline docker deps
+
 ## 0.32.1
 
 - fix(scrna.ScFGSEA): fix case gmtfile not working

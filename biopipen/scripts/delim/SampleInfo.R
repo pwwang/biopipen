@@ -186,6 +186,15 @@ for (name in names(stats)) {
     print(p)
     dev.off()
 
+    plotfile_pdf <- file.path(outdir, paste0(name, ".pdf"))
+    pdf(
+        plotfile_pdf,
+        width = stat$devpars$width / stat$devpars$res,
+        height = stat$devpars$height / stat$devpars$res
+    )
+    print(p)
+    dev.off()
+
     by_desc <- ifelse(is.null(stat$by), "", paste0(" by ", stat$by))
     descr <- ifelse(
         is_continuous,
@@ -193,7 +202,7 @@ for (name in names(stats)) {
         paste0("The number of ", stat$on, by_desc)
     )
     add_report(
-        list(kind = "table_image", src = plotfile, name = name, descr = descr),
+        list(kind = "table_image", src = plotfile, name = name, descr = descr, download = plotfile_pdf),
         h1 = "Statistics",
         ui = "table_of_images:2"
     )

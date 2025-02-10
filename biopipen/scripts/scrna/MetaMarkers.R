@@ -171,14 +171,17 @@ do_enrich <- function(info, markers, sig) {
             next
         }
 
-        png(
-            file.path(info$casedir, paste0("Enrichr-", db, ".png")),
-            res = 100, height = 600, width = 800
-        )
-        print(
-            plotEnrich(enriched[[db]], showTerms = 20, title = db) +
+        p <- plotEnrich(enriched[[db]], showTerms = 20, title = db) +
             theme_prism()
-        )
+
+        plotfile <- file.path(info$casedir, paste0("Enrichr-", db, ".png"))
+        png(plotfile, res = 100, height = 600, width = 800)
+        print(p)
+        dev.off()
+
+        plotfile_pdf <- gsub(".png$", ".pdf", plotfile)
+        pdf(plotfile_pdf, height = 6, width = 8)
+        print(p)
         dev.off()
     }
 }
@@ -292,9 +295,15 @@ do_case <- function(casename) {
             print(p)
             dev.off()
 
+            outfile_pdf <- gsub(".png$", ".pdf", outfile)
+            pdf(outfile_pdf, height = 6, width = 8)
+            print(p)
+            dev.off()
+
             geneplots[[length(geneplots) + 1]] <- list(
                 kind = "table_image",
                 src = outfile,
+                download = outfile_pdf,
                 name = gene
             )
         }

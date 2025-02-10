@@ -378,7 +378,13 @@ for (qname in names(mapquery_args$refdata)) {
         repel = TRUE,
     ) + NoLegend()
 
-    png(file.path(outdir, paste0("UMAPs-", slugify(qname), ".png")), width = 1500, height = 700, res = 100)
+    plotfile <- file.path(outdir, paste0("UMAPs-", slugify(qname), ".png"))
+    png(plotfile, width = 1500, height = 700, res = 100)
+    print(ref_p | query_p)
+    dev.off()
+
+    plotfile_pdf <- file.path(outdir, paste0("UMAPs-", slugify(qname), ".pdf"))
+    pdf(plotfile_pdf, width = 15, height = 7)
     print(ref_p | query_p)
     dev.off()
 

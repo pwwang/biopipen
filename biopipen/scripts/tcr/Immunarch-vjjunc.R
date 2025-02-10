@@ -110,7 +110,40 @@ do_one_case_vjjunc <- function(name, case) {
         }, bg.border = NA) # here set bg.border to NA is important
         dev.off()
 
+        # figfile_pdf <- file.path(odir, paste0(slugify(by_name), ".pdf"))
+        # png(figfile_pdf, width = case$devpars$width / case$devpars$res, height = case$devpars$height / case$devpars$res)
+        # circos.clear()
+        # tryCatch({
+        #     chordDiagram(
+        #         gsd,
+        #         annotationTrack = c("grid", "axis"),
+        #         preAllocateTracks = list(track.height = 0.25)
+        #     )
+        # }, error = function(e) {
+        #     log_warn("Error encountered: {e$message}, setting gap.after ...")
+        #     circos.par(gap.after = c(rep(1, nrow(gsd) - 1), 5, rep(1, nrow(gsd) - 1), 5))
+        #     chordDiagram(
+        #         gsd,
+        #         annotationTrack = c("grid", "axis"),
+        #         preAllocateTracks = list(track.height = 0.25)
+        #     )
+
+        # })
+        # circos.track(track.index = 1, panel.fun = function(x, y) {
+        #     circos.text(
+        #         CELL_META$xcenter,
+        #         CELL_META$ylim[1],
+        #         CELL_META$sector.index,
+        #         cex = .8,
+        #         facing = "clockwise",
+        #         niceFacing = TRUE,
+        #         adj = c(-0.2, 0.5)
+        #     )
+        # }, bg.border = NA) # here set bg.border to NA is important
+        # dev.off()
+
         add_report(
+            # list(src = figfile, name = by_name, download = figfile_pdf),
             list(src = figfile, name = by_name),
             h1 = "V-J Junction Circos Plots",
             h2 = ifelse(name == "DEFAULT", "#" , name),

@@ -69,6 +69,7 @@ cluster_size_distribution = function(name) {
 
     outfile = file.path(odir, "cluster_size_distribution.txt")
     outplot = file.path(odir, "cluster_size_distribution.png")
+    outplot_pdf = file.path(odir, "cluster_size_distribution.pdf")
     write.table(clsizes, outfile, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
     plotGG(
@@ -82,14 +83,15 @@ cluster_size_distribution = function(name) {
             "scale_fill_biopipen()"
         ),
         devpars = case$devpars,
-        outfile = outplot
+        outfile = c(outplot, outplot_pdf)
     )
 
     add_report(
         list(
             src = outplot,
             name = ifelse(name == "DEFAULT", FALSE, name),
-            descr = paste0("Cluster size distribution for each ", case$by)
+            descr = paste0("Cluster size distribution for each ", case$by),
+            download = outplot_pdf
         ),
         ui = "table_of_images",
         h1 = "Cluster Size Distribution"
@@ -162,6 +164,8 @@ shared_clusters = function(name) {
         row_samples = samples
     }
 
+    hmplot = file.path(odir, "shared_clusters.png")
+    hmplot_pdf = file.path(odir, "shared_clusters.pdf")
     # Plot heatmap
     plotHeatmap(
         plotdata,
@@ -178,12 +182,13 @@ shared_clusters = function(name) {
             }
         ),
         devpars = case$devpars,
-        outfile = file.path(odir, "shared_clusters.png")
+        outfile = c(hmplot, hmplot_pdf)
     )
 
     add_report(
         list(
-            src = file.path(odir, "shared_clusters.png"),
+            src = hmplot,
+            download = hmplot_pdf,
             name = ifelse(name == "DEFAULT", FALSE, name),
             descr = paste0("Shared TCR clusters across samples")
         ),
@@ -219,16 +224,18 @@ shared_clusters_by_grouping = function(name) {
     }
 
     outfile = file.path(odir, "shared_clusters.png")
+    outfile_pdf = file.path(odir, "shared_clusters.pdf")
     plotVenn(
         data,
         ggs = 'ggtitle("Shared TCR Clusters")',
         devpars = case$devpars,
-        outfile = outfile
+        outfile = c(outfile, outfile_pdf)
     )
 
     add_report(
         list(
             src = outfile,
+            download = outfile_pdf,
             name = ifelse(name == "DEFAULT", FALSE, name),
             descr = paste0("Shared TCR clusters across ", grouping)
         ),
@@ -275,6 +282,7 @@ sample_diversity = function(name) {
     }
     outfile = file.path(odir, "diversity.txt")
     outplot = file.path(odir, "diversity.png")
+    outplot_pdf = file.path(odir, "diversity.pdf")
     div = repDiversity(data, .method = case$method)
     write.table(
         if (ncol(div) == 1) {
@@ -320,7 +328,7 @@ sample_diversity = function(name) {
             args = list(mapping = mapping),
             ggs = ggs,
             devpars = case$devpars,
-            outfile = outplot
+            outfile = c(outplot, outplot_pdf)
         )
     } else {
         if (is.null(case$by) || length(case$by) == 0) {
@@ -335,6 +343,14 @@ sample_diversity = function(name) {
         png(
             outplot,
             width=case$devpars$width, height=case$devpars$height, res=case$devpars$res
+        )
+        print(p)
+        dev.off()
+
+        pdf(
+            outplot_pdf,
+            width=case$devpars$width / case$devpars$res,
+            height=case$devpars$height / case$devpars$res
         )
         print(p)
         dev.off()
@@ -359,7 +375,8 @@ sample_diversity = function(name) {
                 ),
                 list(
                     kind = "image",
-                    src = outplot
+                    src = outplot,
+                    download = outplot_pdf
                 )
             )
         ),
