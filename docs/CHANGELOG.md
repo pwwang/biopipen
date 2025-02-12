@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.32.3
+
+- chore: add descriptive summaries for fgsea and enrichr results
+
 ## 0.32.2
 
 - chore: update dependencies to latest versions
