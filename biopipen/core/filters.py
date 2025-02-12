@@ -272,6 +272,18 @@ def _render_fgsea(
                     "ui": "flat",
                     "contents": [
                         {
+                            "kind": "descr",
+                            "content": (
+                                "This table presents a comprehensive summary of the "
+                                "top enriched pathways derived from the fgsea. "
+                                "Each row corresponds to a pathway, and the gene ranks "
+                                "are shown based on the ranking metric used in the "
+                                "analysis. The enrichment score, p-value, and adjusted "
+                                "p-value are also provided to assess the significance "
+                                "of the enrichment."
+                            )
+                        },
+                        {
                             "kind": "image",
                             "src": str(Path(cont["dir"]).joinpath("gsea_table.png")),
                             "download": str(Path(cont["dir"]).joinpath("gsea_table.pdf"))
@@ -282,6 +294,19 @@ def _render_fgsea(
                     "title": "Table",
                     "ui": "flat",
                     "contents": [
+                        {
+                            "kind": "descr",
+                            "content": (
+                                "This plot represents the GSEA results for a specified "
+                                "gene set, illustrating the distribution and impact of "
+                                "the gene set along the ranked list of genes. "
+                                "The running enrichment score curve shows the "
+                                "cumulative enrichment score as genes from the input "
+                                "list are encountered. Positive peaks on the curve "
+                                "indicate regions where members of the gene set are "
+                                "predominantly found."
+                            )
+                        },
                         {
                             "kind": "table",
                             "src": str(Path(cont["dir"]).joinpath("fgsea.txt")),
@@ -361,6 +386,19 @@ def _render_enrichr(
                             "title": "Plot",
                             "ui": "flat",
                             "contents": [
+                                {
+                                    "kind": "descr",
+                                    "content": (
+                                        "The enrichment analysis results of the top "
+                                        "biological pathways associated with the input "
+                                        "gene set. Each bar represents a pathway, "
+                                        "with the length of the bar indicating the "
+                                        "number of input genes overlapping with genes "
+                                        "in that pathway. The color intensity of the "
+                                        "bars reflects the statistical significance of "
+                                        "the enrichment (p-value). "
+                                    )
+                                },
                                 {
                                     "kind": "image",
                                     "src": str(enrichr_plot),
