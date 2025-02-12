@@ -348,6 +348,15 @@ add_case_report <- function(info, sigmarkers, siggenes) {
                 ui = "flat",
                 contents = list(
                     list(
+                        kind = "descr",
+                        content = paste0(
+                            "The volcano plot is generated using ggplot2. ",
+                            "The significant markers are highlighted in blue and red, ",
+                            "indicating up-regulated and down-regulated genes, respectively. ",
+                            "The non-significant genes are shown in grey. "
+                        )
+                    ),
+                    list(
                         kind = "img",
                         src = file.path(info$casedir, "volcano.png"),
                         download = file.path(info$casedir, "volcano.pdf")
@@ -358,6 +367,17 @@ add_case_report <- function(info, sigmarkers, siggenes) {
                 title = "Dot Plot",
                 ui = "flat",
                 contents = list(
+                    list(
+                        kind = "descr",
+                        content = paste0(
+                            "The dot plot is generated using Seurat's DotPlot function. ",
+                            "The top significant markers are used as input. ",
+                            "The sizes of the dots are proportional to the percentage of cells ",
+                            "expressing the gene in each group. ",
+                            "The colors of the dots are proportional to the average expression ",
+                            "of the gene in each group. "
+                        )
+                    ),
                     list(
                         kind = "img",
                         src = file.path(info$casedir, "dotplot.png"),
