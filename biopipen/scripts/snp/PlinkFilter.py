@@ -1,4 +1,3 @@
-"""Script for snp.PlinkFilter"""
 from __future__ import annotations
 
 from pathlib import Path
