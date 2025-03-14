@@ -1,5 +1,6 @@
 import uuid
 import re
+import os.path
 from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command
 
@@ -26,7 +27,17 @@ if len(fastqs) == 1 and fastqs[0].is_dir():
 # soft-link the fastq files to the temporary directory
 for fastq in fastqs:
     fastq = Path(fastq)
-    (fastqdir / fastq.name).symlink_to(fastq)
+    fqnames = re.split(r"(_S\d+_)", fastq.name)
+    if len(fqnames) != 3:
+        raise ValueError(
+            fr"Expect one and only one '_S\d+_' in fastq file name: {fastq.name}"
+        )
+
+    linked = fastqdir / f"{id}{fqnames[1]}{fqnames[2]}"
+    if linked.exists():
+        linked.unlink()
+
+    linked.symlink_to(fastq)
 
 other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['no_bam', 'create_bam', 'include_introns', 'cellranger', 'transcriptome', 'ref', 'tmpdir', 'id', 'ncores']}}  # pyright: ignore
 
