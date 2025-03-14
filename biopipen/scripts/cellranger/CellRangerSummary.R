@@ -1,16 +1,15 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(dplyr)
-library(ggplot2)
-library(ggprism)
-
-theme_set(theme_prism())
+library(plotthis)
+library(biopipen.utils)
 
 indirs <- {{in.indirs | r}}
 outdir <- {{out.outdir | r}}
 joboutdir <- {{job.outdir | r}}
 group <- {{envs.group | r}}
+
+logger <- get_logger()
+reporter <- get_reporter()
 
 if (is.character(group)) {
     group <- read.csv(group, header = FALSE, row.names = NULL)
@@ -25,11 +24,11 @@ if (is.character(group)) {
 }
 
 cellranger_type <- NULL
-log_info("Reading and merging metrics for each sample ...")
+logger$info("Reading and merging metrics for each sample ...")
 metrics <- NULL
 for (indir in indirs) {
     sample <- basename(indir)
-    log_debug("- Reading metrics for sample: ", sample)
+    logger$debug("- Reading metrics for sample: ", sample)
     metric <- read.csv(
         file.path(indir, "outs", "metrics_summary.csv"),
         header = TRUE, row.names = NULL, check.names = FALSE)
@@ -46,12 +45,12 @@ for (indir in indirs) {
     if (!is.null(metrics)) {
         missing_cols <- setdiff(colnames(metrics), colnames(metric))
         if (length(missing_cols) > 0) {
-            log_warn('- Missing columns: {paste0(missing_cols, collapse = ", ")} in sample: {sample}')
+            logger$warn('- Missing columns: {paste0(missing_cols, collapse = ", ")} in sample: {sample}')
             metric[missing_cols] <- NA
         }
         missing_cols <- setdiff(colnames(metric), colnames(metrics))
         if (length(missing_cols) > 0) {
-            log_warn('- Missing columns: {paste0(missing_cols, collapse = ", ")} in samples before {sample}')
+            logger$warn('- Missing columns: {paste0(missing_cols, collapse = ", ")} in samples before {sample}')
             metrics[missing_cols] <- NA
         }
     }
@@ -81,7 +80,7 @@ write.table(
     row.names = FALSE
 )
 
-add_report(
+reporter$add(
     list(kind = "descr", content = "Metrics for all samples"),
     list(kind = "table", src = file.path(outdir, "metrics.txt")),
     h1 = "Metrics of all samples"
@@ -132,13 +131,13 @@ if (cellranger_type == "vdj") {
         `Total Genes Detected Median UMI Counts per Cell` = "The number of genes with at least one UMI count in any cell."
     )
 }
-log_info("Plotting metrics ...")
+logger$info("Plotting metrics ...")
 for (metric in colnames(metrics)) {
     if (metric == "Sample") { next }
     metric_name <- sub(" \\(%\\)$", "", metric)
-    log_info("- {metric_name}")
+    logger$info("- {metric_name}")
 
-    add_report(
+    reporter$add(
         list(
             kind = "descr",
             content = METRIC_DESCR[[metric_name]] %||% paste0("Metric: ", metric)
@@ -147,17 +146,13 @@ for (metric in colnames(metrics)) {
     )
 
     # barplot
-    p <- ggplot(metrics, aes(x = Sample, y = !!sym(metric))) +
-        geom_bar(stat = "identity", fill = "steelblue") +
-        labs(x = "Sample", y = metric) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
+    p <- BarPlot(metrics, x = "Sample", y = metric, x_text_angle = 90)
     figfile <- file.path(outdir, paste0(slugify(metric), ".barplot.png"))
-    png(figfile, height = 600, res = 100, width = nrow(metrics) * 30 + 200)
+    png(figfile, height = 600, res = 100, width = max(nrow(metrics) * 30 + 200, 400))
     print(p)
     dev.off()
 
-    add_report(
+    reporter$add(
         list(src = figfile, name = "By Sample"),
         ui = "table_of_images",
         h1 = metric
@@ -170,21 +165,17 @@ for (metric in colnames(metrics)) {
         left_join(metrics, by = "Sample") %>%
         mutate(Group = factor(Group, levels = unique(Group)))
 
-    p <- ggplot(pdata, aes(x = Group, y = !!sym(metric))) +
-        geom_boxplot(fill = "steelblue") +
-        labs(x = "Group", y = metric) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
+    p <- BoxPlot(pdata, x = "Group", y = metric, x_text_angle = 90)
     figfile <- file.path(outdir, paste0(slugify(metric), ".boxplot.png"))
-    png(figfile, height = 600, res = 100, width = length(unique(pdata$Group)) * 30 + 200)
+    png(figfile, height = 600, res = 100, width = max(length(unique(pdata$Group)) * 30 + 200, 400))
     print(p)
     dev.off()
 
-    add_report(
+    reporter$add(
         list(src = figfile, name = "By Group"),
         ui = "table_of_images",
         h1 = metric
     )
 }
 
-save_report(joboutdir)
+reporter$save(joboutdir)
