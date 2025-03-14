@@ -29,10 +29,10 @@ jobs:
         id: restore-conda
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.CONDA }}/envs
+          path: ${{ env.CONDA }}/envs/
           key: conda-${{ hashFiles('tests/conda/env_*.yml') }}
 
-      - name: Create conda environments and install biopipen
+      - name: Create conda environments (if not cached)
         if: steps.restore-conda.outputs.cache-hit != 'true'
         run: |
           for envfile in tests/conda/env_*.yml; do
@@ -48,7 +48,7 @@ jobs:
         if: steps.restore-conda.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: ${{ env.CONDA }}/envs
+          path: ${{ env.CONDA }}/envs/
           key: ${{ steps.restore-conda.outputs.cache-primary-key }}
 
       - name: List conda information
