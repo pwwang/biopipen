@@ -111,12 +111,20 @@ def run_command(
     try:
         p = Popen(cmd, **kwargs)
     except Exception as e:
-        raise RuntimeError(f"Failed to run command: {e}")
+        raise RuntimeError(
+            f"Failed to run command: {e}\n"
+            f"Command (list): {cmd}\n"
+            f"Command (str): {shlex.join(cmd)}"
+        )
 
     if fg or wait or return_stdout:
         rc = p.wait()
         if rc != 0:
-            raise RuntimeError(f"Failed to run command: {cmd}")
+            raise RuntimeError(
+                f"Failed to run command: rc={rc}\n"
+                f"Command (list): {cmd}\n"
+                f"Command (str): {shlex.join(cmd)}"
+            )
 
         if return_stdout:
             return p.stdout.read().decode()  # type: ignore
