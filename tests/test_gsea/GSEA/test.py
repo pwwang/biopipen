@@ -52,8 +52,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "acc.gse179367.format.file.file"
-            ".gse179367.5fgene.5fcount.real.txt.gsea",
+            "acc.GSE179367.format.file.file.GSE179367_gene_count.real.txt.gsea",
         )
     )
     assert outfile.is_dir()

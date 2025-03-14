@@ -15,6 +15,7 @@ class PrepareQuery(Proc):
     output = "outfile:file:{{in.name}}.RDS"
     lang = config.lang.rscript
     script = """
+        options(timeout=600)
         library(Seurat)
         library(SeuratData)
         name <- {{in.name | r}}
