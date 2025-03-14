@@ -14,7 +14,7 @@ python = "^3.9"
 # pipen = "^0.16"
 pipen-filters = "^0.15"
 pipen-cli-run = "^0.15"
-pipen-verbose = "^0.13"
+pipen-verbose = "^0.14"
 pipen-poplog = "^0.3"
 datar = { version = "^0.15.8", extras = ["pandas"] }
 pipen-board = { version = "^0.17", extras = ["report"] }
