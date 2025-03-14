@@ -15,6 +15,7 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: "3.10"
@@ -23,7 +24,16 @@ jobs:
           channels: conda-forge,defaults
           # mamba-version: "*"
           # miniforge-variant: Mambaforge
+
+      - name: Restore conda environments
+        id: restore-conda
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CONDA }}/envs
+          key: conda-${{ hashFiles('tests/conda/env_*.yml') }}
+
       - name: Create conda environments and install biopipen
+        if: steps.restore-conda.outputs.cache-hit != 'true'
         run: |
           for envfile in tests/conda/env_*.yml; do
             bname=$(basename $envfile .yml)
@@ -31,25 +41,51 @@ jobs:
             echo "::group::Creating environment: $envname"
             conda env create --file=$envfile
             echo "::endgroup::"
-            echo "::group::Installing biopipen in environment: $envname"
-            # conda run --no-capture-output -n $envname bash tests/conda/patch_poetry.sh
-            conda run --no-capture-output -n $envname poetry install -v
-            echo "::endgroup::"
           done
+
+      - name: Save conda environments
+        id: save-conda
+        if: steps.restore-conda.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CONDA }}/envs
+          key: ${{ steps.restore-conda.outputs.cache-primary-key }}
+
       - name: List conda information
         run: |
           conda info
           conda env list
-      - name: Cache reference data
-        id: cache-reference
-        uses: actions/cache@v4
+
+      - name: Install biopipen in conda environments
+        run: |
+          for envfile in tests/conda/env_*.yml; do
+            bname=$(basename $envfile .yml)
+            envname=${bname:4}
+            echo "::group::Installing biopipen in environment: $envname"
+            conda run --no-capture-output -n $envname poetry install -E runinfo -v
+            echo "::endgroup::"
+          done
+
+      - name: Restore reference data
+        id: restore-reference
+        uses: actions/cache/restore@v4
         with:
-          path: tests/data/
+          path: tests/data
           key: reference-${{ hashFiles('tests/data/prep_data.py') }}
-      - name: Download reference data
-        if: steps.cache-reference.outputs.cache-hit != 'true'
+
+      - name: Prepare reference data
+        if: steps.restore-reference.outputs.cache-hit != 'true'
         run: |
           conda run --no-capture-output -n biopipen python tests/data/prep_data.py
+
+      - name: Save reference data
+        id: save-reference
+        if: steps.restore-reference.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: tests/data
+          key: ${{ steps.restore-reference.outputs.cache-primary-key }}
+
       - name: Run tests
         run: |
           make --keep-going all VERBOSE=true
