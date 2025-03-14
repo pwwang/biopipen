@@ -1,11 +1,11 @@
-from pathlib import Path
+from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-excfiles = {{in.excfiles | repr}}  # pyright: ignore
-outfile = {{out.outfile | quote}}  # pyright: ignore
-reffile = {{envs.ref | quote}}  # pyright: ignore
-cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
-min_gap_size = {{envs.min_gap_size | quote}}  # pyright: ignore
+excfiles: list[Path] = {{in.excfiles | each: as_path}}  # pyright: ignore # noqa
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
+reffile: str = {{envs.ref | quote}}  # pyright: ignore
+cnvkit: str = {{envs.cnvkit | quote}}  # pyright: ignore
+min_gap_size: str = {{envs.min_gap_size | quote}}  # pyright: ignore
 
 
 def main():

@@ -3,12 +3,12 @@ import shlex
 import concurrent.futures
 from subprocess import Popen, check_output
 
-infile = {{in.infile | repr}}  # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
-bcftools = {{envs.bcftools | repr}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore  # noqa
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
+bcftools: str = {{envs.bcftools | repr}}  # pyright: ignore
 gz = {{envs.gz | repr}}  # pyright: ignore
 index = {{envs.index | repr}}  # pyright: ignore
-ncores = {{envs.ncores | int}}  # pyright: ignore
+ncores: int = {{envs.ncores | int}}  # pyright: ignore
 private = {{envs.private | repr}}  # pyright: ignore
 
 if index:

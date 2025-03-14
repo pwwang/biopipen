@@ -1,13 +1,13 @@
 from cyvcf2 import VCF, Writer, Variant
 
-infile = {{in.invcf | repr}}  # pyright: ignore
-outfile = {{out.outfile | repr}}  # pyright: ignore
+infile: str = {{in.invcf | quote}}  # pyright: ignore  # noqa: E999
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 
-{{envs.helper}}
+{{envs.helper}}  # pyright: ignore  # noqa: E999
 
 keep = {{envs.keep | repr}}  # pyright: ignore
-filters = {{envs.filters | repr}}  # pyright: ignore
-filter_descs = {{envs.filter_descs | repr}}  # pyright: ignore
+filters: dict = {{envs.filters | repr}}  # pyright: ignore
+filter_descs: dict = {{envs.filter_descs | repr}}  # pyright: ignore
 
 # builtin filters
 BUILTIN_FILTERS = {}

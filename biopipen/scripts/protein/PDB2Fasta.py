@@ -14,8 +14,8 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-infile: str = {{in.infile | repr}}  # pyright: ignore # noqa: E999
-outfile: str = {{out.outfile | repr}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore # noqa: E999
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 chains: str | list | None = {{envs.chains | repr}}  # pyright: ignore
 wrap: int = {{envs.wrap | repr}}  # pyright: ignore
 

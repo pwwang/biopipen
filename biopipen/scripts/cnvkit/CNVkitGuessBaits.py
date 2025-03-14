@@ -5,16 +5,16 @@ from pathlib import Path, PosixPath  # for as_path
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-bamfiles = {{in.bamfiles | repr}}  # pyright: ignore
+bamfiles = {{in.bamfiles | repr}}  # pyright: ignore  # noqa
 atfile = {{in.atfile | repr}}  # pyright: ignore
 
 targetfile = {{out.targetfile | repr}}  # pyright: ignore
 covfile = {{out.targetfile | as_path | attr: "with_suffix" | call: ".cnn" | repr}}  # pyright: ignore
 
-cnvkit = {{envs.cnvkit | repr}}  # pyright: ignore
+cnvkit: str = {{envs.cnvkit | repr}}  # pyright: ignore
 samtools = {{envs.samtools | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
-ref = {{envs.ref | repr}}  # pyright: ignore
+ref: str = {{envs.ref | repr}}  # pyright: ignore
 guided = {{envs.guided | repr}}  # pyright: ignore
 min_depth = {{envs.min_depth | repr}}  # pyright: ignore
 min_gap = {{envs.min_gap | repr}}  # pyright: ignore
@@ -32,10 +32,14 @@ else:
     params["min-gap"] = min_gap
     params["min-length"] = min_length
 
-biopipen_dir = {{biopipen_dir | repr}}  # pyright: ignore
+biopipen_dir: str = {{biopipen_dir | quote}}  # pyright: ignore
 
 # get the python path from cnvkit.py
-cnvkit_path = Path(which(cnvkit))
+cnvkit_found = which(cnvkit)
+if cnvkit_found is None:
+    raise ValueError(f"cnvkit executable not found: {cnvkit}")
+
+cnvkit_path = Path(cnvkit_found)
 # Modify cnvkit.py to a unique tmp path, named with timestamp
 # to find the python path
 tmp_cnvkit_path = Path("/tmp/cnvkit-{}.py".format(time.time()))

@@ -5,10 +5,10 @@ from biopipen.core.filters import dict_to_cli_args
 from biopipen.utils.reference import tabix_index
 from biopipen.utils.misc import run_command
 
-invcf: str | PathLike = {{in.invcf | repr}}  # noqa: E999 # pyright: ignore
-outprefix: str = {{in.invcf | stem0 | repr}} # pyright: ignore
-outdir: str = {{out.outdir | repr}}  # pyright: ignore
-args: dict = {{envs | dict | repr}}  # pyright: ignore
+invcf: str | PathLike = {{in.invcf | quote}}  # noqa: E999 # pyright: ignore
+outprefix: str = {{in.invcf | stem0 | quote}} # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
+args: dict = {{envs | dict}}  # pyright: ignore
 
 plink = args.pop("plink")
 tabix = args.pop("tabix")

@@ -3,9 +3,9 @@ from os import path
 from glob import glob
 from biopipen.utils.misc import run_command, logger
 
-indir: str = {{in.indir | repr}}  # noqa: E999 # pyright: ignore
-outfile: str = {{out.outfile | repr}}  # pyright: ignore
-plink: str = {{envs.plink | repr}}  # pyright: ignore
+indir: str = {{in.indir | quote}}  # noqa: E999 # pyright: ignore
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
+plink: str = {{envs.plink | quote}}  # pyright: ignore
 ncores: int = {{envs.ncores | repr}}  # pyright: ignore
 transpose: bool = {{envs.transpose | repr}}  # pyright: ignore
 samid: str = {{envs.samid | repr}}  # pyright: ignore

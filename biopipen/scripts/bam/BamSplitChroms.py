@@ -2,12 +2,12 @@ from pathlib import Path
 from biopipen.utils.misc import run_command
 from biopipen.utils.reference import bam_index
 
-bamfile = {{in.bamfile | quote}}  # pyright: ignore
-outdir = {{out.outdir | quote}}  # pyright: ignore
-tool = {{envs.tool | quote}}  # pyright: ignore
-samtools = {{envs.samtools | quote}}  # pyright: ignore
-sambamba = {{envs.sambamba | quote}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
+bamfile: str = {{in.bamfile | quote}}  # pyright: ignore  # noqa
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
+tool: str = {{envs.tool | quote}}  # pyright: ignore
+samtools: str = {{envs.samtools | quote}}  # pyright: ignore
+sambamba: str = {{envs.sambamba | quote}}  # pyright: ignore
+ncores: int = {{envs.ncores | repr}}  # pyright: ignore
 keep_other_sq = {{envs.keep_other_sq | repr}}  # pyright: ignore
 chroms_to_keep = {{envs.chroms | repr}}  # pyright: ignore
 should_index = {{envs.index | bool}}  # pyright: ignore
@@ -17,13 +17,13 @@ def _remove_other_sq(infile, chrom, outfile):
     exe = samtools if tool == "samtools" else sambamba
     print("\nRemoving other chromosomes in @SQ in header")
     header_cmd = [exe, "view", "-H", infile]
-    header_p = run_command(
+    header_p = run_command(  # type: ignore
         header_cmd,
         stdout=True,
         wait=False,
         print_command=True,
     )
-    header = header_p.stdout.read().decode().strip().splitlines()
+    header = header_p.stdout.read().decode().strip().splitlines()  # type: ignore
     new_header = []
     for line in header:
         if line.startswith("@SQ"):
@@ -63,7 +63,7 @@ def use_samtools():
             "| grep '^@SQ' | cut -f 2 | cut -d ':' -f 2"
         )
         p = run_command(cmd, stdout=True, wait=False)
-        chroms = p.stdout.read().decode().strip().splitlines()
+        chroms = p.stdout.read().decode().strip().splitlines()  # type: ignore
     else:
         print("\nUsing provided chromosomes")
         chroms = chroms_to_keep
@@ -121,7 +121,7 @@ def use_sambamba():
             "| grep '^@SQ' | cut -f 2 | cut -d ':' -f 2"
         )
         p = run_command(cmd, stdout=True, wait=False)
-        chroms = p.stdout.read().decode().splitlines()
+        chroms = p.stdout.read().decode().splitlines()  # type: ignore
     else:
         print("\nUsing provided chromosomes")
         chroms = chroms_to_keep

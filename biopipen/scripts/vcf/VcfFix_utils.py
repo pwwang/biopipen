@@ -1,6 +1,15 @@
 import re
 import gzip
-from biopipen.utils.vcf import *  # noqa: F401, F403
+from biopipen.utils.vcf import (
+    HeaderInfo,
+    HeaderFormat,
+    HeaderFilter,
+    HeaderContig,
+    HeaderGeneral,
+    Fields,
+    Variant,
+    HeaderItem,
+)
 
 
 def line_to_obj(line: str):
@@ -41,7 +50,7 @@ def handle_obj(obj, fixes: dict):
 
         regex = fix.get("regex")
         if regex:
-            if not re.search(regex, obj.raw):
+            if not re.search(regex, obj.raw):  # type: ignore
                 continue
 
             return fix["fix"](obj.raw if kind is None else obj)
@@ -67,7 +76,7 @@ def fix_vcffile(vcffile, outfile, fixes):
     with inopen(vcffile, "rt") as fin, open(outfile, "w") as fout:
         for line in fin:
             obj = line_to_obj(line)
-            out = handle_obj(obj, modify_fixes)
+            out = handle_obj(obj, modify_fixes)  # type: ignore
             if obj.kind == "fields":
                 for fix in header_append_fixes:
                     fout.write(str(fix["fix"](None)).rstrip("\n") + "\n")

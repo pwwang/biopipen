@@ -167,7 +167,7 @@ idx_nh = index_of(envs, "--nh")
 if idx_nh != -1:
     envs[idx_nh] = "-nh"
 
-out: str = run_command([calculate_rmsd, *envs], stdout="return")
+out: str = run_command([calculate_rmsd, *envs], stdout="return")  # type: ignore
 out = out.strip()
 
 try:

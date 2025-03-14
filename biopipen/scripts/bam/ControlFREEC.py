@@ -5,20 +5,20 @@ import shutil
 from diot import Diot
 from biopipen.utils.misc import dict_to_cli_args, run_command
 
-bamfile = {{ in.bamfile | repr }}  # pyright: ignore
-snpfile = {{ in.snpfile | repr }}  # pyright: ignore
-outdir = {{ out.outdir | repr }}  # pyright: ignore
-freec = {{ envs.freec | repr }}  # pyright: ignore
+bamfile = {{ in.bamfile | quote }}  # pyright: ignore # noqa
+snpfile = {{ in.snpfile | quote }}  # pyright: ignore
+outdir = {{ out.outdir | quote }}  # pyright: ignore
+freec: str = {{ envs.freec | repr }}  # pyright: ignore
 ncores = {{ envs.ncores | repr }}  # pyright: ignore
 bedtools = {{ envs.bedtools | repr }}  # pyright: ignore
 sambamba = {{ envs.sambamba | repr }}  # pyright: ignore
 samtools = {{ envs.samtools | repr }}  # pyright: ignore
 tabix = {{ envs.tabix | repr }}  # pyright: ignore
-rscript = {{ envs.rscript | repr }}  # pyright: ignore
-ref = {{ envs.ref | repr }}  # pyright: ignore
-refdir = {{ envs.refdir | repr }}  # pyright: ignore
+rscript: str = {{ envs.rscript | repr }}  # pyright: ignore
+ref = {{ envs.ref | quote }}  # pyright: ignore
+refdir = {{ envs.refdir | quote }}  # pyright: ignore
 binsize = {{ envs.binsize | repr }}  # pyright: ignore
-args = {{ envs.args | repr }}  # pyright: ignore
+args = {{ envs.args | dict }}  # pyright: ignore
 
 chrLenFile = f"{ref}.fai"
 if snpfile:
@@ -33,7 +33,7 @@ if snpfile:
             }
         ),
         stdout="return",
-    ).strip().splitlines()
+    ).strip().splitlines()  # type: ignore
 
     kept_seqs = []
     with open(chrLenFile, "r") as fin, open(chrLenFile2, "w") as fout:
@@ -92,7 +92,7 @@ run_command(
 
 # plot cnvs
 # get makeGraph.R
-freec_path = os.path.realpath(shutil.which(freec).strip())
+freec_path = os.path.realpath(shutil.which(freec).strip())  # type: ignore
 mkgraph = os.path.join(os.path.dirname(freec_path), "makeGraph.R")
 if not os.path.exists(mkgraph):
     raise RuntimeError("makeGraph.R not found")
@@ -102,7 +102,7 @@ try:
 except IndexError:
     raise RuntimeError("Control-FREEC failed to run") from None
 
-rscript_path = os.path.realpath(shutil.which(rscript).strip())
+rscript_path = os.path.realpath(shutil.which(rscript).strip())  # type: ignore
 rpath = os.path.join(os.path.dirname(rscript_path), "R")
 
 plotcmd = f"cat {mkgraph} | R --slave --args {config.general.ploidy} {ratiofile}"

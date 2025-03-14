@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # run the command and capture the stdout
-out=$(command $@)
+out=$(command "$@")
 
 echo "$out"
 

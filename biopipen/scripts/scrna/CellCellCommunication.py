@@ -21,9 +21,9 @@ def _trimean(a, axis=0):
 _liana_pipe._trimean = _trimean
 
 
-sobjfile = Path({{in.sobjfile | repr}})  # pyright: ignore  # noqa: E999
-outfile = Path({{out.outfile | repr}})  # pyright: ignore
-envs = {{envs | repr}}  # pyright: ignore
+sobjfile = Path({{in.sobjfile | quote}})  # pyright: ignore  # noqa: E999
+outfile = Path({{out.outfile | quote}})  # pyright: ignore
+envs = {{envs | dict}}  # pyright: ignore
 
 method = envs.pop("method")
 assay = envs.pop("assay")

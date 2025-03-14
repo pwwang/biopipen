@@ -3,7 +3,7 @@ from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 infile: str = {{ in.bamfile | quote }} # pyright: ignore # noqa
-outfile = Path({{ out.outfile | repr }}) # pyright: ignore
+outfile = Path({{ out.outfile | quote }}) # pyright: ignore
 args: dict = {{ envs | dict | repr }} # pyright: ignore
 ncores = args.pop("ncores")
 tool = args.pop("tool")

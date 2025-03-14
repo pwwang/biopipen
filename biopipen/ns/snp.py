@@ -191,7 +191,7 @@ class PlinkFromVcf(Proc):
             Note that `_` will be replaced by `-` in the argument names.
     """  # noqa: E501
     input = "invcf:file"
-    output = "outdir:dir:{{in.invcf | regex_replace: '\\.gz$', '' | stem}}"
+    output = "outdir:dir:{{in.invcf.stem | regex_replace: '\\.gz$', ''}}"
     lang = config.lang.python
     envs = {
         "plink": config.exe.plink2,

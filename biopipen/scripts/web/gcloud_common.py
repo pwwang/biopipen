@@ -12,7 +12,7 @@ def is_logged_in(gcloud: str) -> bool:
         bool: True if the user is logged in, False otherwise.
     """
     out = run_command([gcloud, "auth", "list"], stdout="RETURN")
-    return "ACTIVE" in out
+    return "ACTIVE" in out  # type: ignore
 
 
 def is_valid_gs_bucket_url(url: str) -> bool:

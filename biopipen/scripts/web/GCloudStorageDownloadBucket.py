@@ -8,12 +8,12 @@ from biopipen.scripts.web.gcloud_common import (
     get_file_path,
 )
 
-url = {{in.url | repr}}  # pyright: ignore  # noqa: E999
+url: str = {{in.url | quote}}  # pyright: ignore  # noqa: E999
 outdir = Path({{out.outdir | repr}})  # pyright: ignore
-gcloud = {{envs.gcloud | repr}}  # pyright: ignore
+gcloud: str = {{envs.gcloud | quote}}  # pyright: ignore
 keep_structure = {{envs.keep_structure | repr}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
-args = {{envs.args | repr}}  # pyright: ignore
+ncores: int = {{envs.ncores | repr}}  # pyright: ignore
+args: dict = {{envs.args | repr}}  # pyright: ignore
 
 if not is_valid_gs_bucket_url(url):
     raise Exception(
@@ -65,7 +65,7 @@ def download_file(i: int, line: str, total: int):
 def download_bucket():
     out = run_command([gcloud, "storage", "ls", "--recursive", url], stdout="RETURN")
     # remove empty lines and skip the root
-    out = list(filter(None, out.splitlines()[1:]))
+    out = list(filter(None, out.splitlines()[1:]))  # type: ignore
     if keep_structure:
         # create folders first
         logger.info(f"Creating folders to keep structure.")

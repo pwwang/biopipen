@@ -1,16 +1,16 @@
 import sys
 from math import ceil
-from pathlib import Path
+from pathlib import Path, PosixPath  # noqa: F401
 
 from biopipen.utils.misc import run_command
 
-bedfiles = {{in.bedfiles | repr}}  # pyright: ignore
-outfile = Path({{out.outbed | repr}})  # pyright: ignore
+bedfiles: list[Path] = {{in.bedfiles | each: as_path}}  # pyright: ignore # noqa
+outfile = Path({{out.outbed | quote}})  # pyright: ignore
 bedtools_path = {{envs.bedtools | repr}}  # pyright: ignore
-cutoff = {{envs.cutoff | repr}}  # pyright: ignore
+cutoff: float = {{envs.cutoff | repr}}  # pyright: ignore
 distance = {{envs.distance | repr}}  # pyright: ignore
 chrsize = {{envs.chrsize | repr}}  # pyright: ignore
-bedfiles = [Path(bedfile) for bedfile in bedfiles]
+# bedfiles = [Path(bedfile) for bedfile in bedfiles]
 # In case there are duplicated stems
 stems = [f"{bedfile.stem}__{i}" for i, bedfile in enumerate(bedfiles)]
 

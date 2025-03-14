@@ -6,10 +6,10 @@ from biopipen.utils.misc import logger
 from biopipen.utils.reference import tabix_index
 from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
-infile = {{in.infile | repr}}  # pyright: ignore # noqa: #999
-regions_file = {{in.regions_file | repr}}  # pyright: ignore
-samples_file = {{in.samples_file | repr}}  # pyright: ignore
-outfile = {{out.outfile | repr}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore # noqa: #999
+regions_file: str = {{in.regions_file | quote}}  # pyright: ignore
+samples_file: str = {{in.samples_file | quote}}  # pyright: ignore
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 envs: dict = {{envs | dict | repr}}  # pyright: ignore
 
 bcftools = envs.pop("bcftools")
@@ -21,7 +21,7 @@ index = envs.pop("index")
 if regions_file:
     if "R" in envs or "regions_file" in envs or "regions-file" in envs:
         logger.warning(
-            "Ignoring envs\[regions_file/regions-file/R] "
+            r"Ignoring envs\[regions_file/regions-file/R] "
             "because in.regionsfile is provided."
         )
         with suppress(KeyError):

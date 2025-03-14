@@ -6,17 +6,17 @@ from datetime import datetime
 from biopipen.utils.reference import bam_index
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
-bamfile = {{in.bamfile | quote}}  # pyright: ignore # noqa
-snpfile = {{in.snpfile | repr}}  # pyright: ignore
+bamfile: str = {{in.bamfile | quote}}  # pyright: ignore # noqa
+snpfile: str = {{in.snpfile | quote}}  # pyright: ignore
 outdir = Path({{out.outdir | quote}})  # pyright: ignore
-cnvpytor = {{envs.cnvpytor | quote}}  # pyright: ignore
-samtools = {{envs.samtools | quote}}  # pyright: ignore
-ncores = {{envs.ncores | int}}  # pyright: ignore
+cnvpytor: str = {{envs.cnvpytor | quote}}  # pyright: ignore
+samtools: str = {{envs.samtools | quote}}  # pyright: ignore
+ncores: int = {{envs.ncores | int}}  # pyright: ignore
 refdir = {{envs.refdir | quote}}  # pyright: ignore
 genome = {{envs.genome | quote}}  # pyright: ignore
-chrsize = {{envs.chrsize | quote}}  # pyright: ignore
-filters = {{envs.filters | repr}}  # pyright: ignore
-args = {{envs | repr}}  # pyright: ignore
+chrsize: str = {{envs.chrsize | quote}}  # pyright: ignore
+filters: dict = {{envs.filters | repr}}  # pyright: ignore
+args: dict = {{envs | dict}}  # pyright: ignore
 
 del args['cnvpytor']
 del args['ncores']
@@ -27,7 +27,7 @@ del args['chrsize']
 del args['filters']
 
 
-bamfile = bam_index(bamfile, outdir, samtools, ncores)
+bamfile: Path = bam_index(bamfile, str(outdir), samtools, ncores=ncores)
 
 NOSNP_COLS = [
     "CNVtype",
@@ -293,7 +293,7 @@ def cnvpytor2vcf(infile, snp):
         fout.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
         fout.write('##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">\n')
         fout.write('##FORMAT=<ID=PE,Number=1,Type=String,Description="Number of paired-ends that support the event">\n')
-        fout.write(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{Path(bamfile).stem}\n")
+        fout.write(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{bamfile.stem}\n")
         prev_chrom, chrom_seq, count = "", "", 0
         for line in fin:
             # type, coor, length, rd, p1, p2, p3, p4, q0, pe = line.strip("\n").split()

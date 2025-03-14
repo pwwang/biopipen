@@ -1,7 +1,7 @@
 from cyvcf2 import VCF, Variant
 
-infile = {{in.infile | quote}}  # pyright: ignore
-outfile = {{out.outfile | quote}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore  # noqa: E999
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 # vcf, default 1
 inbase = {{envs.inbase | int}}  # pyright: ignore
 # bed, default 0

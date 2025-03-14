@@ -4,12 +4,12 @@ from biopipen.utils.misc import run_command, logger
 # using:
 # samtools view --subsample 0.1 --subsample-seed 1234 --threads 4 -b -o out.bam in.bam
 
-bamfile = {{ in.bamfile | repr }} # pyright: ignore # noqa
-outfile = Path({{ out.outfile | repr }}) # pyright: ignore
+bamfile = {{ in.bamfile | quote }} # pyright: ignore # noqa
+outfile = Path({{ out.outfile | quote }}) # pyright: ignore
 ncores = {{ envs.ncores | int }} # pyright: ignore
 samtools = {{ envs.samtools | repr }} # pyright: ignore
 tool = {{ envs.tool | repr }} # pyright: ignore
-fraction = {{ envs.fraction | repr }} # pyright: ignore
+fraction: float = {{ envs.fraction | repr }} # pyright: ignore
 seed = {{ envs.seed | int }} # pyright: ignore
 should_index = {{ envs.index | repr }} # pyright: ignore
 should_sort = {{ envs.sort | repr }} # pyright: ignore
@@ -38,7 +38,7 @@ if fraction > 1:
         "-c",
         bamfile
     ]
-    nreads = run_command(cmd, stdout="return").strip()
+    nreads = run_command(cmd, stdout="return").strip()  # type: ignore
     fraction = fraction / float(int(nreads))
 
 ofile = (

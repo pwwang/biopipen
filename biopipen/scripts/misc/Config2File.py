@@ -1,8 +1,8 @@
 import json
 import rtoml
 
-configstr = {{in.config | repr}}  # pyright: ignore
-outfile = {{out.outfile | quote}}  # pyright: ignore
+configstr: str = {{in.config | quote}}  # pyright: ignore  # noqa
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 infmt = {{envs.infmt | quote}}  # pyright: ignore
 outfmt = {{envs.outfmt | quote}}  # pyright: ignore
 

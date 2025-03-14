@@ -2,13 +2,13 @@ from pathlib import Path
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-url = {{in.url | repr}}  # pyright: ignore
-outfile = Path({{out.outfile | repr}})  # pyright: ignore
+url = {{in.url | quote}}  # pyright: ignore # noqa
+outfile = Path({{out.outfile | quote}})  # pyright: ignore
 tool = {{envs.tool | repr}}  # pyright: ignore
 wget = {{envs.wget | repr}}  # pyright: ignore
 aria2c = {{envs.aria2c | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
-args = {{envs.args | dict}}  # pyright: ignore
+args: dict = {{envs.args | dict}}  # pyright: ignore
 
 if tool == "wget":
     args["_"] = url
@@ -28,4 +28,8 @@ elif tool == "aria2c":
 
 else: # use python
     import urllib
-    urllib.urlretrieve(url, outfile)
+
+    try:
+        urllib.urlretrieve(url, outfile)  # type: ignore
+    except AttributeError:
+        urllib.request.urlretrieve(url, outfile)  # type: ignore

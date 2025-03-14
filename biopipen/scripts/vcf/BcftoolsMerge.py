@@ -2,10 +2,10 @@ from biopipen.utils.reference import tabix_index
 from biopipen.utils.misc import logger
 from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
-infiles = {{in.infiles | repr}}  # pyright: ignore # noqa: E999
+infiles: list = {{in.infiles | each: as_path}}  # pyright: ignore # noqa: E999
 outfile = {{out.outfile | repr}}  # pyright: ignore
 joboutdir = {{job.outdir | repr}}  # pyright: ignore
-envs = {{envs | dict | repr}}  # pyright: ignore
+envs: dict = {{envs | dict | repr}}  # pyright: ignore
 
 bcftools = envs.pop("bcftools")
 tabix = envs.pop("tabix")

@@ -1,10 +1,10 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
-afile = Path({{in.afile | repr}})  # pyright: ignore # noqa: #999
-bfile = Path({{in.bfile | repr}})  # pyright: ignore
-outfile = {{out.outfile | repr}}  # pyright: ignore
-envs = {{envs | repr}}  # pyright: ignore
+afile = Path({{in.afile | quote}})  # pyright: ignore # noqa: #999
+bfile = Path({{in.bfile | quote}})  # pyright: ignore
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
+envs: dict = {{envs | dict}}  # pyright: ignore
 
 bedtools = envs.pop("bedtools")
 sort = envs.pop("sort")

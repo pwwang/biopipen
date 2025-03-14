@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
@@ -7,10 +9,10 @@ import pandas as pd
 from tempfile import gettempdir
 from biopipen.utils.misc import logger, run_command
 
-configfile = {{in.configfile | repr}}  # pyright: ignore
-outdir = Path({{out.outdir | repr}})  # pyright: ignore
-envs = {{envs | dict | repr}}  # pyright: ignore
-python = sys.executable
+configfile: str = {{in.configfile | quote}}  # pyright: ignore  # noqa
+outdir = Path({{out.outdir | quote}})  # pyright: ignore
+envs: dict = {{envs | dict | repr}}  # pyright: ignore
+python: str | list[str] = sys.executable
 
 args = envs.copy()
 config = rtoml.load(Path(configfile))
@@ -18,8 +20,8 @@ args.update(config)
 model_name = args.pop("model_name")
 model_file = Path(args.pop("model_file"))
 data_dir = args.pop("data_dir", None)
-tcrdock = args.pop("tcrdock", None)
-tmpdir = args.pop("tmpdir", gettempdir())
+tcrdock: Path | str | None = args.pop("tcrdock", None)
+tmpdir: str = args.pop("tmpdir", gettempdir())
 python = args.pop("python", python)
 
 if not isinstance(python, (list, tuple)):
@@ -45,6 +47,8 @@ if not tcrdock:
         tcrdock / "download_blast.py",
     ]
     run_command(cmd, fg=True, cwd=str(tcrdock))
+
+tcrdock = str(tcrdock)
 
 if not model_file.is_absolute():
     model_file = Path(data_dir) / "params" / model_file

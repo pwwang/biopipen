@@ -11,8 +11,12 @@ maxit: str = envs.pop("maxit", "maxit")
 beem = envs.pop("beem", "BeEM")
 
 if tool == "maxit":
-    maxit = Path(which(maxit)).resolve()
-    rcsbroot = Path(maxit).parent.parent
+    maxit_found = which(maxit)
+    if not maxit_found:
+        raise ValueError(f"maxit executable not found: {maxit}")
+
+    maxit_exe = Path(maxit_found).expanduser().resolve()
+    rcsbroot = maxit_exe.parent.parent
     envs["input"] = infile
     envs["output"] = outfile
     envs["o"] = 2

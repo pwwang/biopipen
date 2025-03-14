@@ -5,7 +5,7 @@ import os
 import sys
 import logging
 from subprocess import Popen
-from typing import List
+from typing import List, Callable, Any
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
 logger = logging.getLogger("biopipen_job")
@@ -35,11 +35,11 @@ def exec_code(code, global_vars=None, local_vars=None, return_var=None):
 
 
 def run_command(
-    cmd: str | List[str],
+    cmd: str | List[Any],
     fg: bool = False,
     wait: bool = True,
     print_command: bool = True,
-    print_command_handler: callable = print,
+    print_command_handler: Callable = print,
     **kwargs,
 ) -> Popen | str:
     """Run a command.
@@ -119,7 +119,7 @@ def run_command(
             raise RuntimeError(f"Failed to run command: {cmd}")
 
         if return_stdout:
-            return p.stdout.read().decode()
+            return p.stdout.read().decode()  # type: ignore
 
         return p
 

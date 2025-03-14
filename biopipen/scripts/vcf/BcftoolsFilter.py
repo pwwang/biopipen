@@ -3,11 +3,11 @@ from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import logger
 from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
-infile = {{in.infile | repr}}  # pyright: ignore # noqa: #999
-outfile = {{out.outfile | repr}}  # pyright: ignore
+infile: str | Path = {{in.infile | quote}}  # pyright: ignore # noqa: #999
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 outdir = Path(outfile).parent
 
-envs = {{envs | dict | repr}}  # pyright: ignore
+envs: dict = {{envs | dict | repr}}  # pyright: ignore
 bcftools = envs.pop("bcftools")
 tabix = envs.pop("tabix")
 keep = envs.pop("keep")

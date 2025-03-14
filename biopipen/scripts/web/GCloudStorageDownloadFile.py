@@ -1,10 +1,10 @@
 from biopipen.utils.misc import run_command, dict_to_cli_args
 from biopipen.scripts.web.gcloud_common import is_logged_in, is_valid_gs_file_url
 
-url = {{in.url | repr}}  # pyright: ignore  # noqa: E999
+url: str = {{in.url | repr}}  # pyright: ignore  # noqa: E999
 outfile = {{out.outfile | repr}}  # pyright: ignore
-gcloud = {{envs.gcloud | repr}}  # pyright: ignore
-args = {{envs.args | repr}}  # pyright: ignore
+gcloud: str = {{envs.gcloud | repr}}  # pyright: ignore
+args: dict = {{envs.args | repr}}  # pyright: ignore
 
 if not is_valid_gs_file_url(url):
     raise Exception(

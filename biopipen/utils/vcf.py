@@ -326,7 +326,7 @@ class Variant:
         if isinstance(samples, str):
             samples = Samples.from_str(samples, format)
         elif isinstance(samples[0], str):
-            samples = Samples.from_strs(samples, format)
+            samples = Samples.from_strs(samples, format)  # type: ignore
         else:
             samples = Samples.from_strss(samples, format)
 
