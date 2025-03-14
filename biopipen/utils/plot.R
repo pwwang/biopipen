@@ -31,10 +31,19 @@ plotVenn = function(
     if (is.null(outfile)) {
         return (p)
     } else {
-        devpars$filename = outfile
-        do.call(png, devpars)
-        print(p)
-        dev.off()
+        for (outf in outfile) {
+            if (endsWith(outf, ".pdf")) {
+                pdf(outf, width = devpars$width / devpars$res, height=devpars$height / devpars$res)
+                print(p)
+                dev.off()
+            } else {
+                fmt = substring(outf, nchar(outf) - 2)
+                devpars$filename = outf
+                do.call(fmt, devpars)
+                print(p)
+                dev.off()
+            }
+        }
     }
 }
 
@@ -69,10 +78,19 @@ plotGG = function(
     if (is.null(outfile)) {
         return (p)
     } else {
-        devpars$filename = outfile
-        do.call(png, devpars)
-        print(p)
-        dev.off()
+        for (outf in outfile) {
+            if (endsWith(outf, ".pdf")) {
+                pdf(outf, width = devpars$width / devpars$res, height=devpars$height / devpars$res)
+                print(p)
+                dev.off()
+            } else {
+                fmt = substring(outf, nchar(outf) - 2)
+                devpars$filename = outf
+                do.call(fmt, devpars)
+                print(p)
+                dev.off()
+            }
+        }
     }
 }
 
@@ -135,10 +153,19 @@ plotUpset = function(
     if (is.null(outfile)) {
         return (p)
     } else {
-        devpars$filename = outfile
-        do.call(png, devpars)
-        print(p)
-        dev.off()
+        for (outf in outfile) {
+            if (endsWith(outf, ".pdf")) {
+                pdf(outf, width = devpars$width / devpars$res, height=devpars$height / devpars$res)
+                print(p)
+                dev.off()
+            } else {
+                fmt = substring(outf, nchar(outf) - 2)
+                devpars$filename = outf
+                do.call(fmt, devpars)
+                print(p)
+                dev.off()
+            }
+        }
     }
 }
 
@@ -162,12 +189,21 @@ plotHeatmap = function(
 
     if (is.null(outfile)) {
         return(hm)
-    } else if (outfile == "draw") {
+    } else if (identical(outfile, "draw")) {
         do.call(ComplexHeatmap::draw, c(list(hm), draw))
     } else {
-        devpars$filename = outfile
-        do.call(png, devpars)
-        do.call(ComplexHeatmap::draw, c(list(hm), draw))
-        dev.off()
+        for (outf in outfile) {
+            if (endsWith(outf, ".pdf")) {
+                pdf(outf, width = devpars$width / devpars$res, height=devpars$height / devpars$res)
+                do.call(ComplexHeatmap::draw, c(list(hm), draw))
+                dev.off()
+            } else {
+                fmt = substring(outf, nchar(outf) - 2)
+                devpars$filename = outf
+                do.call(fmt, devpars)
+                do.call(ComplexHeatmap::draw, c(list(hm), draw))
+                dev.off()
+            }
+        }
     }
 }

@@ -1,15 +1,16 @@
+import os
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
-    SeuratClustering,
-    SeuratClusterStats,
-    CellTypeAnnotation,
-    ModuleScoreCalculator,
+    SeuratClustering as SeuratClustering_,
+    SeuratClusterStats as SeuratClusterStats_,
+    CellTypeAnnotation as CellTypeAnnotation_,
+    ModuleScoreCalculator as ModuleScoreCalculator_,
     MarkersFinder,
-    SeuratSubClustering,
+    SeuratSubClustering as SeuratSubClustering_,
     MetaMarkers as MetaMarkers_,
-    RadarPlots,
-    TopExpressingGenes,
+    RadarPlots as RadarPlots_,
+    TopExpressingGenes as TopExpressingGenes_,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -79,7 +80,7 @@ class PrepareSeurat(Proc):
 #     """  # noqa: E501
 
 
-class SeuratClustering(SeuratClustering):
+class SeuratClustering(SeuratClustering_):
     requires = PrepareSeurat
     envs = {
         "ncores": 1,
@@ -88,7 +89,7 @@ class SeuratClustering(SeuratClustering):
     }
 
 
-class CellTypeAnnotation(CellTypeAnnotation):
+class CellTypeAnnotation(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {
         "tool": "hitype",
@@ -97,12 +98,12 @@ class CellTypeAnnotation(CellTypeAnnotation):
     }
 
 
-class TopExpressingGenes(TopExpressingGenes):
+class TopExpressingGenes(TopExpressingGenes_):
     requires = CellTypeAnnotation
     envs = {"cases": {"Cluster": {}}}
 
 
-class SeuratSubClustering(SeuratSubClustering):
+class SeuratSubClustering(SeuratSubClustering_):
     requires = CellTypeAnnotation
     envs = {
         "cases": {
@@ -166,7 +167,7 @@ class MetaMarkers(MetaMarkers_):
     }
 
 
-class RadarPlots(RadarPlots):
+class RadarPlots(RadarPlots_):
     requires = SeuratSubClustering
     envs = {
         "by": "groups",
@@ -174,7 +175,7 @@ class RadarPlots(RadarPlots):
     }
 
 
-class ModuleScoreCalculator(ModuleScoreCalculator):
+class ModuleScoreCalculator(ModuleScoreCalculator_):
     requires = SeuratSubClustering
     envs = {
         "modules": {
@@ -187,7 +188,7 @@ class ModuleScoreCalculator(ModuleScoreCalculator):
     }
 
 
-class SeuratClusterStats(SeuratClusterStats):
+class SeuratClusterStats(SeuratClusterStats_):
     requires = ModuleScoreCalculator
     envs = {
         "stats": {

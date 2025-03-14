@@ -1,3 +1,4 @@
+import os
 from pipen import Proc
 from biopipen.core.config import config
 from biopipen.core.testing import get_pipeline
@@ -63,7 +64,11 @@ class ScFGSEAEach(ScFGSEA):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_start(PrepareSeurat)
+    enable_report = os.environ.get("BIOPIPEN_TEST_ENABLE_REPORT", "0") == "1"
+    return (
+        get_pipeline(__file__, enable_report=enable_report)
+        .set_start(PrepareSeurat)
+    )
 
 
 def testing(pipen):
