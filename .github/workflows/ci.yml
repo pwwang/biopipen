@@ -25,6 +25,11 @@ jobs:
           # mamba-version: "*"
           # miniforge-variant: Mambaforge
 
+      - name: Change conda envs permissions
+        # https://github.com/actions/cache/issues/133
+        run: |
+          sudo chmod -R 0777 $CONDA/envs
+
       - name: Restore conda environments
         id: restore-conda
         uses: actions/cache/restore@v4
