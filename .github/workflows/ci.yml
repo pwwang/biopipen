@@ -28,6 +28,7 @@ jobs:
       - name: Change conda envs permissions
         # https://github.com/actions/cache/issues/133
         run: |
+          sudo chown -R $USER $CONDA/envs
           sudo chmod -R 0777 $CONDA/envs
 
       - name: Restore conda environments
@@ -36,6 +37,8 @@ jobs:
         with:
           path: ${{ env.CONDA }}/envs/
           key: conda-${{ hashFiles('tests/conda/env_*.yml') }}
+        env:
+          TAR_OPTIONS: "--no-same-owner --no-same-permissions"
 
       - name: Create conda environments (if not cached)
         if: steps.restore-conda.outputs.cache-hit != 'true'
