@@ -2385,6 +2385,21 @@ class CellCellCommunication(Proc):
             - geometric_mean: alias for `Geometric_Mean`
             - scseqcomm: alias for `scSeqComm`
             - cellchat: alias for `CellChat`
+        subset: An expression in string to subset the cells.
+            When a `.rds` or `.h5seurat` file is provided for `in.sobjfile`, you can provide an expression in `R`,
+            which will be passed to `base::subset()` in `R` to subset the cells.
+            But you can always pass an expression in `python` to subset the cells.
+            See <https://anndata.readthedocs.io/en/latest/tutorials/notebooks/getting-started.html#subsetting-using-metadata>.
+            You should use `adata` to refer to the AnnData object. For example, `adata.obs.groups == "g1"` will subset the cells
+            with `groups` equal to `g1`.
+        subset_using: The method to subset the cells.
+            - auto: Automatically detect the method to use.
+                Note that this is not always accurate. We simply check if `[` is in the expression.
+                If so, we use `python` to subset the cells; otherwise, we use `R`.
+            - python: Use python to subset the cells.
+            - r: Use R to subset the cells.
+        split_by: The column name in metadata to split the cells to run the method separately.
+            The results will be combined together with this column in the final output.
         assay: The assay to use for the analysis.
             Only works for Seurat object.
         seed (type=int): The seed for the random number generator.
@@ -2418,6 +2433,9 @@ class CellCellCommunication(Proc):
         "method": "cellchat",
         "assay": None,
         "seed": 1337,
+        "subset": None,
+        "subset_using": "auto",
+        "split_by": None,
         "ncores": config.misc.ncores,
         "groupby": "seurat_clusters",
         "species": "human",

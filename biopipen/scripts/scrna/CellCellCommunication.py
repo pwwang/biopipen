@@ -1,6 +1,8 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, logger
+import os
 import numpy as np
+import pandas as pd
 import scanpy
 import liana
 import liana.method.sc._liana_pipe as _liana_pipe
@@ -23,33 +25,50 @@ _liana_pipe._trimean = _trimean
 
 sobjfile = Path({{in.sobjfile | quote}})  # pyright: ignore  # noqa: E999
 outfile = Path({{out.outfile | quote}})  # pyright: ignore
-envs = {{envs | dict}}  # pyright: ignore
+envs: dict = {{envs | dict}}  # pyright: ignore
 
+# https://github.com/h5py/h5py/issues/1082#issuecomment-1311498466
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 method = envs.pop("method")
 assay = envs.pop("assay")
 ncores = envs.pop("ncores")
 species = envs.pop("species")
 rscript = envs.pop("rscript")
+subset = envs.pop("subset")
+subset_using = envs.pop("subset_using", "auto")
+if subset_using == "auto":
+    subset_using = "python" if subset and "[" in subset else "r"
+split_by = envs.pop("split_by")
 
 if sobjfile.suffix.lower() == ".rds" or sobjfile.suffix.lower() == ".h5seurat":
+    logger.info("Converting the Seurat object to h5ad ...")
+
     annfile = outfile.parent / f"{sobjfile.stem}.h5ad"
-    r_script_convert_to_anndata = f"""
-    {{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-    {{ biopipen_dir | joinpaths: "utils", "single_cell.R" | source_r }}
-
-    seurat_to_anndata(
-        "{sobjfile}",
-        "{annfile}",
-        assay = {{ envs.assay | r }},
-        log_info = log_info
-    )
-    """
+    if subset and subset_using == "r":
+        r_script_convert_to_anndata = (
+            "biopipen.utils::ConvertSeuratToAnnData"
+            f"({str(sobjfile)!r}, {str(annfile)!r}, "
+            f"assay = {{envs['assay'] | r}}, subset = {{envs['subset'] | r}})"
+        )
+    else:
+        r_script_convert_to_anndata = (
+            "biopipen.utils::ConvertSeuratToAnnData"
+            f"({str(sobjfile)!r}, {str(annfile)!r}, assay = {{envs['assay'] | r}})"
+        )
     run_command([rscript, "-e", r_script_convert_to_anndata], fg=True)
-
     sobjfile = annfile
+elif subset and subset == "r":
+    raise ValueError(
+        "h5ad file is provided as input, ",
+        "'subset' can only be a 'python' expression (`envs.subset_using = 'python'`)."
+    )
 
 logger.info("Reading the h5ad file ...")
 adata = scanpy.read_h5ad(sobjfile)
+
+if subset and subset_using == "python":
+    logger.info("Subsetting the data ...")
+    adata = adata[{{envs['subset']}}]  # pyright: ignore
 
 method = method.lower()
 if method == "log2fc":
@@ -57,16 +76,34 @@ if method == "log2fc":
 else:
     method_fun = getattr(liana.mt, method)
 
-logger.info(f"Running {method} ...")
-envs["adata"] = adata
 envs["resource_name"] = "consensus" if species == "human" else "mouseconsensus"
 envs["n_jobs"] = ncores
 envs["inplace"] = True
 envs["verbose"] = True
 envs["key_added"] = "liana_ccc"
-method_fun(**envs)
 
-res = adata.uns['liana_ccc']
+if split_by:
+    split_vals = adata.obs[split_by].unique()
+    result: pd.DataFrame = None  # type: ignore
+    for split_val in split_vals:
+        logger.info(f"Running {method} for {split_by} = {split_val} ...")
+        adata_split = adata[adata.obs[split_by] == split_val]
+        envs["adata"] = adata_split
+
+        method_fun(**envs)
+        res = adata_split.uns['liana_ccc']
+        res[split_by] = split_val
+
+        if result is None:
+            result = res
+        else:
+            result = pd.concat([result, res], ignore_index=True)
+else:
+    logger.info("Running {method} ...")
+    envs["adata"] = adata
+    method_fun(**envs)
+
+    result = adata.uns['liana_ccc']
 
 mag_score_names = {
     "cellphonedb": "lr_means",
@@ -93,9 +130,9 @@ spec_score_names = {
 }
 
 if mag_score_names[method] is not None:
-    res['mag_score'] = res[mag_score_names[method]]
+    result['mag_score'] = result[mag_score_names[method]]
 if spec_score_names[method] is not None:
-    res['spec_score'] = res[spec_score_names[method]]
+    result['spec_score'] = result[spec_score_names[method]]
 
 logger.info("Saving the result ...")
-res.to_csv(outfile, sep="\t", index=False)
+result.to_csv(outfile, sep="\t", index=False)
