@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.32.3"
+version = "0.33.0"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -11,19 +11,19 @@ generate-setup-file = true
 [tool.poetry.dependencies]
 python = "^3.9"
 # # required by other plugins
-# pipen = "^0.15"
-pipen-filters = "^0.14"
-pipen-cli-run = "^0.14"
-pipen-verbose = "^0.12"
-pipen-poplog = "^0.2.0"
-datar = { version = "^0.15.6", extras = ["pandas"] }
-pipen-board = { version = "^0.16", extras = ["report"] }
-pipen-runinfo = { version = "^0.8", optional = true }
+# pipen = "^0.16"
+pipen-filters = "^0.15"
+pipen-cli-run = "^0.15"
+pipen-verbose = "^0.14"
+pipen-poplog = "^0.3"
+datar = { version = "^0.15.8", extras = ["pandas"] }
+pipen-board = { version = "^0.17", extras = ["report"] }
+pipen-runinfo = { version = "^0.9", optional = true }
 
 [tool.poetry.extras]
 runinfo = ["pipen-runinfo"]
 
-[tool.poetry.dev-dependencies]
+# [tool.poetry.dev-dependencies]
 
 [tool.poetry.plugins.pipen_cli_run]
 bam = "biopipen.ns.bam"

@@ -6,8 +6,11 @@ library(SeuratDisk)
 library(rlang)
 library(dplyr)
 library(tidyr)
+library(ggplot2)
+library(ggprism)
 
 set.seed(8525)
+theme_set(theme_prism())
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
@@ -346,8 +349,16 @@ saveRDS(sobj, file = outfile)
 # ############################
 # Some plots
 # ############################
+log_info("- Plotting mapping score ...")
+p <- FeaturePlot(
+    object = sobj,
+    reduction = "ref.umap",
+    features = "mapping.score",
+    cols = c("white", "blue"),
+    pt.size = 0.5
+) + ggtitle("Mapping score for query cells")
+save_plot(p, file.path(outdir, "mapping_score"), list(width = 800, height = 600, res = 100))
 
-# # Plot the UMAP
 log_info("- Plotting for transferred data ...")
 ref.reduction = mapquery_args$reduction.model %||% "wnn.umap"
 for (qname in names(mapquery_args$refdata)) {
@@ -358,8 +369,7 @@ for (qname in names(mapquery_args$refdata)) {
         next
     }
 
-    log_info("  Plotting transferred data: {qname} -> {rname}")
-
+    log_info("  UMAP for transferred data: {qname} -> {rname}")
     ref_p <- DimPlot(
         object = reference,
         reduction = ref.reduction,
@@ -378,15 +388,9 @@ for (qname in names(mapquery_args$refdata)) {
         repel = TRUE,
     ) + NoLegend()
 
-    plotfile <- file.path(outdir, paste0("UMAPs-", slugify(qname), ".png"))
-    png(plotfile, width = 1500, height = 700, res = 100)
-    print(ref_p | query_p)
-    dev.off()
-
-    plotfile_pdf <- file.path(outdir, paste0("UMAPs-", slugify(qname), ".pdf"))
-    pdf(plotfile_pdf, width = 15, height = 7)
-    print(ref_p | query_p)
-    dev.off()
+    p <- ref_p | query_p
+    prefix <- file.path(outdir, paste0("UMAPs-", slugify(qname)))
+    save_plot(p, prefix, list(width = 1500, height = 700, res = 100))
 
     # summarize the stats
     log_info("  Summarizing stats: {qname} -> {rname}")

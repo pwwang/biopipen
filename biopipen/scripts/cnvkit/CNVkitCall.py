@@ -1,14 +1,14 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command
 
-cnsfile = {{in.cnsfile | quote}}  # pyright: ignore
-cnrfile = {{in.cnrfile | quote}}  # pyright: ignore
+cnsfile: str = {{in.cnsfile | quote}}  # pyright: ignore  # noqa
+cnrfile: str = {{in.cnrfile | quote}}  # pyright: ignore
 vcf = {{in.vcf | repr}}  # pyright: ignore
 sample_id = {{in.sample_id | repr}}  # pyright: ignore
 normal_id = {{in.normal_id | repr}}  # pyright: ignore
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
 purity = {{in.purity | repr}}  # pyright: ignore
-outdir = {{out.outdir | quote}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 center = {{envs.center | repr}}  # pyright: ignore
 center_at = {{envs.center_at | repr}}  # pyright: ignore

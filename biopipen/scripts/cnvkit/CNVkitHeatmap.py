@@ -4,9 +4,9 @@ from diot import Diot
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-segfiles = {{in.segfiles | repr}}  # pyright: ignore # noqa
+segfiles = {{in.segfiles | repr}}  # pyright: ignore # noqa  # noqa
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
+outdir: str = {{out.outdir | repr}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 convert = {{envs.convert | quote}}  # pyright: ignore
 convert_args = {{envs.convert_args | repr}}  # pyright: ignore
@@ -16,7 +16,7 @@ desaturate= {{ envs.desaturate | repr}}  # pyright: ignore
 male_reference= {{ envs.male_reference | repr}}  # pyright: ignore
 no_shift_xy= {{ envs.no_shift_xy | repr}}  # pyright: ignore
 order = {{envs.order | repr}}  # pyright: ignore
-cases = {{envs.cases | repr}}  # pyright: ignore
+cases: dict | None = {{envs.cases | repr}}  # pyright: ignore
 
 
 def parse_order(files, orderfile):
@@ -70,7 +70,7 @@ def do_case(name, case):
     args[""] = [cnvkit, "heatmap"]
     run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
-    conv_args = dict(**conv_args, _=[pdffile, pngfile])
+    conv_args: dict = dict(**conv_args, _=[pdffile, pngfile])
     conv_args[""] = [convert]
     run_command(
         dict_to_cli_args(conv_args, dashify=True, prefix="-"),

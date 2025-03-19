@@ -3,15 +3,16 @@ from os import path
 from glob import glob
 from biopipen.utils.misc import run_command, logger
 
-indir = {{in.indir | repr}}  # noqa: E999 # pyright: ignore
-outfile = {{out.outfile | repr}}  # pyright: ignore
-plink = {{envs.plink | repr}}  # pyright: ignore
-ncores = {{envs.ncores | repr}}  # pyright: ignore
-transpose = {{envs.transpose | repr}}  # pyright: ignore
-samid = {{envs.samid | repr}}  # pyright: ignore
-varid = {{envs.varid | repr}}  # pyright: ignore
-trans_chr = {{envs.trans_chr | repr}}  # pyright: ignore
-missing_id = {{envs.missing_id | repr}}  # pyright: ignore
+indir: str = {{in.indir | quote}}  # noqa: E999 # pyright: ignore
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
+plink: str = {{envs.plink | quote}}  # pyright: ignore
+ncores: int = {{envs.ncores | repr}}  # pyright: ignore
+transpose: bool = {{envs.transpose | repr}}  # pyright: ignore
+samid: str = {{envs.samid | repr}}  # pyright: ignore
+varid: str = {{envs.varid | repr}}  # pyright: ignore
+trans_chr: dict = {{envs.trans_chr | repr}}  # pyright: ignore
+missing_id: str = {{envs.missing_id | repr}}  # pyright: ignore
+gtcoding: str = {{envs.gtcoding | repr}}  # pyright: ignore
 trans_chr = trans_chr or {}
 
 bedfile = glob(path.join(indir, '*.bed'))
@@ -36,6 +37,14 @@ cmd = [
 #     cmd += ["tabx"]
 
 run_command(cmd, fg=True, env={"cwd": path.dirname(outfile)})
+
+
+def _vcf_gtcoding(gt):
+    try:
+        return str(2 - int(gt))
+    except (ValueError, TypeError):
+        return "NA"
+
 
 if not transpose:  # rows are variants, columns are samples
     # .traw file is created, tab-separated, with the following columns:
@@ -82,7 +91,10 @@ if not transpose:  # rows are variants, columns are samples
                     .replace('{ref}', ref)
                     .replace('{alt}', alt)
                 )
-                record = [variant] + line[6:]
+                if gtcoding == "plink":
+                    record = [variant] + line[6:]
+                else:  # vcf
+                    record = [variant] + [_vcf_gtcoding(x) for x in line[6:]]
                 fout.write('\t'.join(record) + '\n')
 
 else:
@@ -129,5 +141,8 @@ else:
                 fid = line[0]
                 iid = line[1]
                 sam = samid.replace('{fid}', fid).replace('{iid}', iid)
-                record = [sam] + line[6:]
+                if gtcoding == "plink":
+                    record = [sam] + line[6:]
+                else:  # vcf
+                    record = [sam] + [_vcf_gtcoding(x) for x in line[6:]]
                 fout.write('\t'.join(record) + '\n')

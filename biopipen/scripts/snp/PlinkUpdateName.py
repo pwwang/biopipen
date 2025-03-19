@@ -1,9 +1,9 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
-indir = {{in.indir | repr}}  # pyright: ignore # noqa: #999
-namefile = {{in.namefile | repr}}  # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
+indir: str = {{in.indir | quote}}  # pyright: ignore # noqa: #999
+namefile: str = {{in.namefile | quote}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 plink = {{envs.plink | repr}}  # pyright: ignore
 bcftools = {{envs.bcftools | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
@@ -111,7 +111,7 @@ if namefile.endswith(".vcf") or namefile.endswith(".vcf.gz"):
             else:
                 info = readline(finfo)
 
-    namefile = namefile_tmp
+    namefile = str(namefile_tmp)
 
 args = {
     "": plink,

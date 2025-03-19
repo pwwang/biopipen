@@ -16,6 +16,10 @@ class CellRangerCount(Proc):
             element.
         id: The id defining output directory. If not provided, it is inferred
             from the fastq files.
+            Note that, unlike the `--id` argument of cellranger, this will not select
+            the samples from `in.fastqs`. In stead, it will symlink the fastq files
+            to a temporary directory with this `id` as prefix and pass that to
+            cellranger.
 
     Output:
         outdir: The output directory
@@ -141,6 +145,7 @@ class CellRangerSummary(Proc):
             The file should be tab-delimited with no header.
     """
     input = "indirs:dirs"
+    input_data = lambda ch: [list(ch.iloc[:, 0])]
     output = "outdir:dir:{{in.indirs | first | stem | append: '-etc.summary'}}"
     lang = config.lang.rscript
     script = "file://../scripts/cellranger/CellRangerSummary.R"

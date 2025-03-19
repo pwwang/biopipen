@@ -8,14 +8,14 @@ from pysam import FastaFile
 
 from biopipen.utils.misc import run_command
 
-inbed = {{in.inbed | quote}}  # pyright: ignore
-outvcf = {{out.outvcf | quote}}  # pyright: ignore
-tmpoutvcf = {{out.outvcf | append: ".tmp" | quote}}  # pyright: ignore
+inbed: str = {{in.inbed | quote}}  # pyright: ignore # noqa
+outvcf: str = {{out.outvcf | quote}}  # pyright: ignore
+tmpoutvcf: str = {{out.outvcf | str | append: ".tmp" | quote}}  # pyright: ignore
 joboutdir = Path({{job.outdir | quote}})  # pyright: ignore
-ref = {{envs.ref | quote}}  # pyright: ignore
+ref: str = {{envs.ref | quote}}  # pyright: ignore
 headers = {{envs.headers | repr}}  # pyright: ignore
 infos = {{envs.infos | repr}}  # pyright: ignore
-base = {{envs.base | int}}  # pyright: ignore
+base: int = {{envs.base | int}}  # pyright: ignore
 formats = {{envs.formats | repr}}  # pyright: ignore
 index = {{envs.index | repr}}  # pyright: ignore
 bcftools = {{envs.bcftools | quote}}  # pyright: ignore

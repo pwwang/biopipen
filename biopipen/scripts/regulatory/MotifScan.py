@@ -5,20 +5,20 @@ import re
 from pathlib import PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
-motiffile = {{in.motiffile | repr}}  # pyright: ignore # noqa: #999
-seqfile = {{in.seqfile | repr}}  # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
+motiffile: str = {{in.motiffile | quote}}  # pyright: ignore # noqa: #999
+seqfile: str = {{in.seqfile | quote}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 
 tool = {{envs.tool | repr}}  # pyright: ignore
 fimo = {{envs.fimo | repr}}  # pyright: ignore
-motif_col = {{envs.motif_col | repr}}  # pyright: ignore
-regulator_col = {{envs.regulator_col | repr}}  # pyright: ignore
+motif_col: str | int = {{envs.motif_col | repr}}  # pyright: ignore
+regulator_col: str | int = {{envs.regulator_col | repr}}  # pyright: ignore
 notfound = {{envs.notfound | repr}}  # pyright: ignore
-motifdb = {{envs.motifdb | repr}}  # pyright: ignore
+motifdb: str | None = {{envs.motifdb | repr}}  # pyright: ignore
 cutoff = {{envs.cutoff | repr}}  # pyright: ignore
 q = {{envs.q | repr}}  # pyright: ignore
 q_cutoff = {{envs.q_cutoff | repr}}  # pyright: ignore
-args = {{envs.args | dict | repr}}  # pyright: ignore
+args: dict = {{envs.args | dict | repr}}  # pyright: ignore
 
 # Check if the tool is supported
 if tool != "fimo":
@@ -41,7 +41,7 @@ if isinstance(motif_col, str) or isinstance(regulator_col, str):
     with open(motiffile, "r") as f:
         header = f.readline().strip().split("\t")
         if isinstance(motif_col, str):
-            motif_col = header.index(motif_col) + 1
+            motif_col: int = header.index(motif_col) + 1
         if isinstance(regulator_col, str):
             regulator_col = header.index(regulator_col) + 1
 if isinstance(motif_col, int):

@@ -2,11 +2,11 @@ from pathlib import Path
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-cnrfile = {{in.cnrfile | quote}}  # pyright: ignore
+cnrfile = {{in.cnrfile | quote}}  # pyright: ignore  # noqa
 vcf = {{in.vcf | repr}}  # pyright: ignore
 sample_id = {{in.sample_id | repr}}  # pyright: ignore
 normal_id = {{in.normal_id | repr}}  # pyright: ignore
-outfile = {{out.outfile | quote}}  # pyright: ignore
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 method = {{envs.method | quote}}  # pyright: ignore
 threshold = {{envs.threshold | repr}}  # pyright: ignore
@@ -21,7 +21,7 @@ zygosity_freq = {{envs.zygosity_freq | repr}}  # pyright: ignore
 
 def main():
 
-    args = dict(
+    args: dict = dict(
         o=outfile,
         d=Path(outfile).parent / "intermediate.rds",
         m=method,
@@ -39,8 +39,8 @@ def main():
         _=cnrfile,
     )
     args[""] = [cnvkit, "segment"]
-    args = dict_to_cli_args(args, dashify=True)
-    run_command(args, fg=True)
+    cmd_args = dict_to_cli_args(args, dashify=True)
+    run_command(cmd_args, fg=True)
 
 
 if __name__ == "__main__":

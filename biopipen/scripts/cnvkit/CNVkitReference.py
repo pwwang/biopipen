@@ -1,12 +1,12 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-covfiles = {{in.covfiles | repr}}  # pyright: ignore
+covfiles = {{in.covfiles | repr}}  # pyright: ignore  # noqa
 target_file = {{in.target_file | repr}}  # pyright: ignore
 antitarget_file = {{in.antitarget_file | repr}}  # pyright: ignore
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
-reffile = {{envs.ref | repr}}  # pyright: ignore
+reffile: str = {{envs.ref | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 cluster = {{envs.cluster | repr}}  # pyright: ignore
 min_cluster_size = {{envs.min_cluster_size | repr}}  # pyright: ignore

@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 {% from_ os import path %}
 <script>
-    import { DataTable, Image, Descr } from "$libs";
+    import { DataTable, Image, Descr, Plotly } from "$libs";
     import { Tabs, Tab, TabContent } from "$ccs";
 </script>
 

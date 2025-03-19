@@ -12,10 +12,12 @@ list:
 %: tests/test_%
 	@echo "::group::Running tests for namespace: $@";                             \
 	for procdir in $</*; do                                                       \
+		echo "::group::├─ $@/$$(basename $$procdir)";                             \
 		bash tests/conda/run_test.sh $$procdir VERBOSE=$(VERBOSE) FORCE=$(FORCE); \
 		if [ $$? -ne 0 ]; then                                                    \
 			should_fail=1;                                                        \
 		fi;                                                                       \
+		echo "::endgroup::";                                                      \
 	done;                                                                         \
 	echo "::endgroup::";                                                          \
 	if [ -n "$$should_fail" ]; then                                               \

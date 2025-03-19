@@ -595,6 +595,40 @@ class BcftoolsSort(Proc):
     script = "file://../scripts/vcf/BcftoolsSort.py"
 
 
+class BcftoolsMerge(Proc):
+    """Merge multiple VCF files using `bcftools merge`.
+
+    Input:
+        infiles: The input VCF files
+
+    Output:
+        outfile: The merged VCF file.
+
+    Envs:
+        bcftools: Path to bcftools
+        tabix: Path to tabix, used to index infile/outfile
+        ncores (type=int): Number of cores (`--threads`) to use
+        gz (flag): Whether to gzip the output file
+        index (flag): Whether to index the output file (tbi) (`envs.gz` forced to True)
+        <more>: Other arguments for `bcftools merge`.
+            See also <https://samtools.github.io/bcftools/bcftools.html#merge>
+    """
+    input = "infiles:files"
+    output = (
+        "outfile:file:{{in.infiles | first | stem | append: '_etc_merged'}}.vcf"
+        "{{'.gz' if envs.index or envs.gz else ''}}"
+    )
+    lang = config.lang.python
+    envs = {
+        "bcftools": config.exe.bcftools,
+        "tabix": config.exe.tabix,
+        "ncores": config.misc.ncores,
+        "gz": True,
+        "index": True,
+    }
+    script = "file://../scripts/vcf/BcftoolsMerge.py"
+
+
 class BcftoolsView(Proc):
     """View, subset and filter VCF files by position and filtering expression.
 

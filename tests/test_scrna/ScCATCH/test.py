@@ -15,6 +15,7 @@ class PrepareQuery(Proc):
     output = "outfile:file:{{in.name}}.RDS"
     lang = config.lang.rscript
     script = """
+        options(timeout=600)
         library(Seurat)
         library(SeuratData)
         name <- {{in.name | r}}
@@ -27,6 +28,7 @@ class PrepareQuery(Proc):
         data <- RunPCA(data)
         data <- FindNeighbors(data)
         data <- FindClusters(data)
+        data$Sample <- "Sample"
 
         saveRDS(data, {{out.outfile | quote}})
     """
@@ -59,7 +61,7 @@ class SeuratClusterStats(SeuratClusterStats_):
     envs = {
         "stats": {
             "Number of cells in each cluster by Sample": {
-                "group-by": "seurat_clusters",
+                "group_by": "seurat_clusters",
             }
         }
     }
@@ -70,7 +72,7 @@ class SeuratClusterStats2(SeuratClusterStats_):
     envs = {
         "stats": {
             "Number of cells in each cluster by Sample": {
-                "group-by": "seurat_clusters",
+                "group_by": "seurat_clusters",
             }
         }
     }

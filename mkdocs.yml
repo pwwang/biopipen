@@ -3,7 +3,7 @@ repo_url: https://github.com/pwwang/biopipen
 repo_name: pwwang/biopipen
 theme:
     name: 'rtd'
-    logo: 'img/rtd-logo.png'
+    logo: 'img/logo.png'
     # palette:
     #     # Palette toggle for light mode
     #     - scheme: default

@@ -7,17 +7,17 @@ from biopipen.scripts.vcf.VcfFix_utils import (  # noqa: F401
     HeaderContig,
     HeaderGeneral,
     Fields,
-    Info,
-    Format,
-    Alt,
-    Filter,
-    Sample,
-    Samples,
+    # Info,
+    # Format,
+    # Alt,
+    # Filter,
+    # Sample,
+    # Samples,
     Variant,
 )
 from biopipen.scripts.vcf.VcfFix_utils import fix_vcffile
 
-infile = {{in.infile | quote}}  # pyright: ignore
+infile = {{in.infile | quote}}  # pyright: ignore  # noqa: E999
 instem = {{in.infile | stem | quote}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
 

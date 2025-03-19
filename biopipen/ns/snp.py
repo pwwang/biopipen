@@ -183,7 +183,7 @@ class PlinkFromVcf(Proc):
         vcf_idspace_to: convert all spaces in sample IDs to this character.
         set_missing_var_ids: update variant IDs using a template string,
             with a '@' where the chromosome code should go, and a '#' where the
-            base-pair position belongs. You can also specify `\$r` and `\$a` for
+            base-pair position belongs. You can also specify `\\$r` and `\\$a` for
             the reference and alternate alleles, respectively.
             See <https://www.cog-genomics.org/plink/2.0/data#set_all_var_ids>
         max_alleles (type=int): Maximum number of alleles per variant.
@@ -191,7 +191,7 @@ class PlinkFromVcf(Proc):
             Note that `_` will be replaced by `-` in the argument names.
     """  # noqa: E501
     input = "invcf:file"
-    output = "outdir:dir:{{in.invcf | regex_replace: '\\.gz$', '' | stem}}"
+    output = "outdir:dir:{{in.invcf.stem | regex_replace: '\\.gz$', ''}}"
     lang = config.lang.python
     envs = {
         "plink": config.exe.plink2,
@@ -217,7 +217,14 @@ class Plink2GTMat(Proc):
 
     The allelic dosage is used as the values of genotype matrix.
     "--keep-allele-order" is used to keep the allele order consistent with the
-    reference allele first.
+    reference allele first. This way, the genotype of homozygous reference alleles
+    will be encoded as 2, heterozygous as 1, and homozygous alternate alleles as 0.
+    This is the PLINK dosage encoding. If you want to use this encoding, you can
+    set `envs.gtcoding` to `plink`. Otherwise, the default encoding is `vcf`, which
+    will encode the genotype as 0, 1, and 2 for homozygous reference, heterozygous,
+    and homozygous alternate alleles, respectively.
+
+    Note that `envs.gtcoding = "vcf"` only works for biallelic variants for now.
 
     Input:
         indir: Input directory containing the PLINK files.
@@ -241,6 +248,11 @@ class Plink2GTMat(Proc):
             respectively.
         trans_chr: A dictionary to translate chromosome numbers to chromosome names.
         missing_id: what to use as the rs if missing.
+        gtcoding (choice): The genotype coding to use.
+            - vcf: 0/1/2 for homozygous reference, heterozygous, and homozygous
+                alternate alleles, respectively.
+            - plink: 2/1/0 for homozygous reference, heterozygous, and homozygous
+                alternate alleles, respectively.
     """
     input = "indir:dir"
     output = "outfile:file:{{in.indir | stem}}-gtmat.txt"
@@ -253,6 +265,7 @@ class Plink2GTMat(Proc):
         "varid": "{chr}_{pos}_{varid}_{ref}_{alt}",
         "trans_chr": {"23": "X", "24": "Y", "25": "XY", "26": "M"},
         "missing_id": "NA",
+        "gtcoding": "vcf",
     }
     script = "file://../scripts/snp/Plink2GTMat.py"
 

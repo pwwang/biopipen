@@ -1,16 +1,16 @@
 import uuid
 import re
-from pathlib import Path
+from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command
 
-fastqs = {{in.fastqs | repr}}  # pyright: ignore  # noqa
-outdir = {{out.outdir | quote}}  # pyright: ignore
-id = {{out.outdir | basename | quote}}  # pyright: ignore
+fastqs: list[Path] = {{in.fastqs | each: as_path}}  # pyright: ignore  # noqa
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
+id: str = {{out.outdir | basename | quote}}  # pyright: ignore
 
-cellranger = {{envs.cellranger | quote}}  # pyright: ignore
+cellranger: str = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
-ref = {{envs.ref | quote}}  # pyright: ignore
-ncores = {{envs.ncores | int}}  # pyright: ignore
+ref: str = {{envs.ref | quote}}  # pyright: ignore
+ncores: int = {{envs.ncores | int}}  # pyright: ignore
 
 # create a temporary unique directory to store the soft-linked fastq files
 fastqdir = tmpdir / f"cellranger_count_{uuid.uuid4()}"
@@ -60,7 +60,7 @@ try:
         '<script src="web_summary.js"></script>',
         web_summary_content,
     ))
-    web_summary_js.write_text(regex.search(web_summary_content).group(1))
+    web_summary_js.write_text(regex.search(web_summary_content).group(1))  # type: ignore
 except Exception as e:
     print(f"Error modifying web_summary.html: {e}")
     raise e

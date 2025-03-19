@@ -4,9 +4,9 @@ from slugify import slugify
 from simpleconf import Config
 from biopipen.utils.misc import logger, run_command, dict_to_cli_args
 
-configfile = {{in.configfile | repr}}  # pyright: ignore # noqa: E999
-outdir = {{out.outdir | repr}}  # pyright: ignore
-gtmatfile = {{out.gtmat | repr}}  # pyright: ignore
+configfile: str = {{in.configfile | quote}}  # pyright: ignore # noqa: E999
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
+gtmatfile: str = {{out.gtmat | quote}}  # pyright: ignore
 config = Config.load(configfile)
 
 default_nsnps = {{envs.nsnps | repr}}  # pyright: ignore
@@ -21,7 +21,7 @@ default_maxfreq = {{envs.maxfreq | repr}}  # pyright: ignore
 default_hetodds = {{envs.hetodds | repr}}  # pyright: ignore
 default_homodds = {{envs.homodds | repr}}  # pyright: ignore
 default_missing = {{envs.missing | repr}}  # pyright: ignore
-default_args = {{envs.args | repr}}  # pyright: ignore
+default_args: dict = {{envs.args | repr}}  # pyright: ignore
 default_transpose_gtmat = {{envs.transpose_gtmat | repr}}  # pyright: ignore
 default_sample_prefix = {{envs.sample_prefix | repr}}  # pyright: ignore
 

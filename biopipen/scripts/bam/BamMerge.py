@@ -1,8 +1,8 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, logger
 
-bamfiles = {{in.bamfiles | repr}}  # pyright: ignore # noqa
-outfile = Path({{out.outfile | repr}})  # pyright: ignore
+bamfiles = {{in.bamfiles | default: [] | each: str}}  # pyright: ignore # noqa
+outfile = Path({{out.outfile | quote}})  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
 tool = {{envs.tool | quote}}  # pyright: ignore
 samtools = {{envs.samtools | quote}}  # pyright: ignore

@@ -1,8 +1,8 @@
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-infile1 = {{in.infile1 | repr}}  # pyright: ignore
-infile2 = {{in.infile2 | repr}}  # pyright: ignore
-outfile = {{out.outfile | repr}}  # pyright: ignore
+infile1: str = {{in.infile1 | quote}}  # pyright: ignore  # noqa
+infile2 = {{in.infile2 | quote}}  # pyright: ignore
+outfile = {{out.outfile | quote}}  # pyright: ignore
 bcftools = {{envs.bcftools | repr}}  # pyright: ignore
 gz = {{envs.gz | repr}}  # pyright: ignore
 index = {{envs.index | repr}}  # pyright: ignore

@@ -7,14 +7,13 @@ parser.add_argument(
 parser.add_argument("-o", "--output", required=True, help="Output file")
 parser.add_argument("-m", "--model", required=True, help="Model file")
 parser.add_argument(
-    "-v", "--majority_voting",
-    action="store_true",
-    help="Majority voting"
+    "-v", "--majority_voting", action="store_true", help="Majority voting"
 )
 parser.add_argument(
-    "-c", "--over_clustering",
+    "-c",
+    "--over_clustering",
     default="seurat_clusters",
-    help="Over clustering. Ignored if the column does not exist."
+    help="Over clustering. Ignored if the column does not exist.",
 )
 
 
@@ -44,7 +43,9 @@ if __name__ == "__main__":
 
     if args.output.endswith(".h5ad"):
         try:
-            out_adata._raw._var.rename(columns={"_index": "features"}, inplace=True)
+            out_adata._raw._var.rename(  # type: ignore
+                columns={"_index": "features"}, inplace=True
+            )
             del out_adata.raw
         except (KeyError, AttributeError):
             pass

@@ -1,6 +1,6 @@
 
-infile = {{in.infile | quote}}  # pyright: ignore
-outfile = {{out.outfile | quote}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore  # noqa
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 
 with open(infile) as fin, open(outfile, "w") as fout:
     for line in fin:

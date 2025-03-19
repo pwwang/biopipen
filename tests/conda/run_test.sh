@@ -58,9 +58,13 @@ else
     fi
 
     if [[ $? -eq 0 ]]; then
-        echo "  v Success :)"
+        echo ""
+        echo "  VVVVVVVVVVVV Succeeded :) VVVVVVVVVVVV"
+        echo ""
     else
-        echo "  x Failure :("
+        echo ""
+        echo "  XXXXXXXXXXXXX Failed :( XXXXXXXXXXXXXX"
+        echo ""
         exit 1
     fi
 fi

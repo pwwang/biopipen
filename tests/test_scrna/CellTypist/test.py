@@ -59,7 +59,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "demo.2000.cells.annotated.h5ad",
+            "demo_2000_cells.annotated.h5ad",
         )
     )
     assert outfile.is_file()

@@ -25,7 +25,14 @@ import { Image } from "$libs";
 {% for batch_srcs in srcs | batch: col, "" %}
 {% set outer_loop = loop %}
 <tr>
-    {% for src in batch_srcs %}
+    {% for srcinfo in batch_srcs %}
+        {% if srcinfo | isinstance: str %}
+            {% set src = srcinfo %}
+            {% set download = None %}
+        {% else %}
+            {% set src = srcinfo['src'] %}
+            {% set download = srcinfo.get('download', None) %}
+        {% endif %}
         {% set i = col * outer_loop.index0 + loop.index0 %}
         {% if i >= len(srcs) %}
             <td style="width: {{table_width / col}}%"></td>
@@ -33,21 +40,27 @@ import { Image } from "$libs";
         <td style="width: {{table_width / col}}%; vertical-align:top;">
             {% if caps is none %}
             <div
-                style="padding-left: 28px; font-weight: bold; padding-top: 10px; margin-bottom: -10px;">
+                style="padding-left: 28px; font-weight: bold; padding-top: 16px;">
                 {{ src | stem }}
             </div>
             {% elif caps is false %}
             {% else %}
             <div
-                style="padding-left: 28px; font-weight: bold; padding-top: 10px; margin-bottom: -10px;">
+                style="padding-left: 28px; font-weight: bold; padding-top: 16px;">
                 {{ caps[i] }}
             </div>
             {% endif %}
-            {% if src | replace: ".png", ".pdf" | exists %}
-                <Image style="max-width: 90%" src={{src | quote}}
-                    download={{src | replace: ".png", ".pdf" | quote}} />
+            {% if download %}
+                <Image
+                    style="max-width: 90%"
+                    src={{src | quote}}
+                    download={ {{download | json}} }
+                />
             {% else %}
-                <Image style="max-width: 90%" src={{src | quote}} />
+                <Image
+                    style="max-width: 90%"
+                    src={{src | quote}}
+                />
             {% endif %}
         </td>
         {% endif %}

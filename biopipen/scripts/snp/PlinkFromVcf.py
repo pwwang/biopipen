@@ -1,12 +1,14 @@
-from os import path
+from __future__ import annotations
+
+from os import path, PathLike
 from biopipen.core.filters import dict_to_cli_args
 from biopipen.utils.reference import tabix_index
 from biopipen.utils.misc import run_command
 
-invcf = {{in.invcf | repr}}  # noqa: E999 # pyright: ignore
-outprefix = {{in.invcf | stem0 | repr}} # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
-args = {{envs | dict | repr}}  # pyright: ignore
+invcf: str | PathLike = {{in.invcf | quote}}  # noqa: E999 # pyright: ignore
+outprefix: str = {{in.invcf | stem0 | quote}} # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
+args: dict = {{envs | dict}}  # pyright: ignore
 
 plink = args.pop("plink")
 tabix = args.pop("tabix")
@@ -23,6 +25,7 @@ args.setdefault("max_alleles", 2)
 # This makes it possible to keep the allele order in the output
 # no need for plink2
 # args["keep_allele_order"] = True
+args.setdefault("keep_allele_order", True)
 
 # resolve plink 1.x --set-missing-var-ids doesn't distinguish $1, $2,...
 # for ref and alts

@@ -17,7 +17,7 @@ class PrepareAnnData(Proc):
         import scanpy as sc
 
         adata = sc.datasets.pbmc68k_reduced()
-        adata.write_h5ad({{out.outfile | repr}})
+        adata.write_h5ad({{out.outfile | quote}})
     """
 
 

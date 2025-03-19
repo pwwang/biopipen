@@ -124,8 +124,12 @@ class ClusterMarkers(MarkersFinder):
     envs = {
         "cases": {
             # Test mixed types of cases
-            "Cluster": {"prefix_group": False},
-            "Comparison": {"group-by": "groups", "ident-1": "g1"},
+            "Cluster": {
+                "prefix_group": False,
+                "error": False,
+                "allmarker_plots": {"Heatmap": {"plot_type": "heatmap"}},
+            },
+            "Comparison": {"group-by": "groups", "error": False, "ident-1": "g1"},
         }
     }
 
@@ -144,7 +148,14 @@ class DEG(MarkersFinder):
                 "sigmarkers": "p_val < 0.5",
             }
         },
-        "overlap": {"Group": {}},
+        "overlaps": {
+            "Group": {
+                "sigmarkers": 'abs(avg_log2FC) > 1',
+                "cases": ["Group::FCFR3A+ Mono", "Group::DC", "Group::Platelet"],
+                "venn": {"save_code": True},
+                "upset": {"save_code": True},
+            }
+        },
     }
     order = 99
 
@@ -158,7 +169,10 @@ class MetaMarkers(MetaMarkers_):
 
 class RadarPlots(RadarPlots_):
     requires = SeuratSubClustering
-    envs = {"by": "groups"}
+    envs = {
+        "by": "groups",
+        "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}},
+    }
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator_):
@@ -182,62 +196,58 @@ class SeuratClusterStats(SeuratClusterStats_):
                 "pie": True,
             },
             "Number of cells in each cluster by Sample": {
-                "group-by": "Sample",
-                "table": True,
-                "frac": True,
-                "circos": True,
-                "circos_labels_rot": True,
+                "group_by": "Sample",
+                # "save_data": True,
+                "frac": "group",
+                "plot_type": "circos",
+                "labels_rot": True,
             },
             "Number of cells in each old cluster": {
-                "pie": True,
-                "ident": "seurat_clusters_id"
+                "plot_type": "pie",
+                "ident": "seurat_clusters_id",
             },
         },
         "features": {
             "Gene expressions in g1": {
-                "kind": "ridge",
+                "plot_type": "ridge",
                 "subset": "groups == 'g1'",
             },
             "Gene expressions in g2": {
-                "kind": "ridge",
-                "ncol": 4,
+                "plot_type": "ridge",
+                "facet_ncol": 4,
                 "subset": "groups == 'g2'",
             },
             "Ridge plots with ident groups": {
-                "kind": "ridge",
+                "plot_type": "ridge",
                 "ident": "groups",
-                "features": "CD1C,RGS1",
+                "features": ["CD79A", "CD79B"],
             },
             "Ridge plots with single feature": {
                 # ncol automatically set to 1
-                "kind": "ridge",
+                "plot_type": "ridge",
                 "features": "SRSF7",
-                "plus": "theme_gray(base_size=10)",
             },
-            "Violin plots": {"kind": "violin", "pt-size": 0},
-            "Violin plots (ncol=4)": {"kind": "violin", "pt-size": 0, "ncol": 4},
+            "Violin plots": {"plot_type": "violin"},
+            "Violin plots (ncol=4)": {"plot_type": "violin", "facet_ncol": 4},
             "Violin plots (CD8A,NKG7)": {
-                "kind": "violin", "pt-size": 0, "features": "CD8A,NKG7"
+                "plot_type": "violin",
+                "features": ["CD8A", "NKG7"],
             },
-            "Feature plot": {"kind": "feature", "features": "SRSF7"},
-            "Dot plot": {"kind": "dot", "plus": "RotatedAxis()"},
-            "Heatmap": {"kind": "heatmap"},
-            "Gene expression table": {"kind": "table"},
+            "Feature plot": {"plot_type": "dim", "features": "SRSF7"},
+            "Dot plot": {"plot_type": "dot"},
+            "Heatmap": {"plot_type": "heatmap"},
         },
         "dimplots": {
-            "seurat_clusters": {},
-            "nk_subcluster": {"ident": "mono_subcluster"},
-            "dc_subcluster": {"ident": "dc_subcluster"},
-        }
+            "seurat_clusters": {"group_by": "seurat_clusters"},
+            "nk_subcluster": {"group_by": "mono_subcluster"},
+            "dc_subcluster": {"group_by": "dc_subcluster"},
+        },
     }
 
 
 def pipeline():
-    enable_report = os.environ.get("BIOPIPEN_TEST_ENABLE_REPORT", "0") == "1"
-    return (
-        get_pipeline(__file__, enable_report=enable_report)
-        .set_starts(PrepareSeurat)
-    )
+    # return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
+    return get_pipeline(__file__).set_starts(PrepareSeurat)
 
 
 def testing(pipen):

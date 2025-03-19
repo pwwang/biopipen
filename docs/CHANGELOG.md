@@ -1,5 +1,24 @@
 # Change Log
 
+## 0.33.0
+
+- chore(dependencies): update pipen (v0.17) and related package versions in pyproject.toml
+- fix: update all template filters in script to adopt pipen 0.17, which passes in.file etc as a MountedPath
+- ci: add caching for conda environments to improve workflow efficiency
+- test: improve test output grouping for better readability
+- chore: add descriptive summaries for fgsea and enrichr results (#158)
+- chore(snp.PlinkFromVcf): enhance type annotations and set default for keep_allele_order
+- feat(snp.Plink2GTMat): enhance genotype coding options and improve documentation
+- feat(stats.ChowTest): separate groups in output and add pvalues for the coefficient for the subregressions
+- fix(utils/misc.py): enhance error messages in command execution for better debugging
+- fix(web.Download): enhance output filename generation by adding URL decoding and improved slugification
+- fix(cellranger.CellRangerCount): fix inconsistency between in.id and in.fastqs
+- chore(snp.PlinkFilter): remove unnecessary docstring from PlinkFilter script
+- fix(cellranger.CellRangerSummary): use plotthis and biopipen.utils.R for plotting, logging and report content generation
+- test(cellranger): add tests for CellRangerCount and CellRangerSummary with data download setup
+- chore: comment out dev-dependencies section in pyproject.toml
+- feat(scrna.CellCellCommunication): add subset and split_by options for CellCellCommunication and update conversion logic
+
 ## 0.32.3
 
 - chore: add descriptive summaries for fgsea and enrichr results

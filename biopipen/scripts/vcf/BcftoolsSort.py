@@ -4,9 +4,9 @@ from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command, logger
 from biopipen.scripts.vcf.bcftools_utils import run_bcftools
 
-infile = {{in.infile | quote}}  # pyright: ignore # noqa: E999
-outfile = {{out.outfile | quote}}  # pyright: ignore
-envs = {{envs | dict | repr}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore # noqa: E999
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
+envs: dict = {{envs | dict | repr}}  # pyright: ignore
 
 outdir = Path(outfile).parent
 bcftools = envs.pop("bcftools")
@@ -97,7 +97,7 @@ if chrsize:
         infile
     ], fg=True)
 
-    infile = reheader_vcf
+    infile = str(reheader_vcf)
 
 envs[""] = [bcftools, "sort"]
 envs["_"] = infile

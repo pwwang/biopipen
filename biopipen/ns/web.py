@@ -32,7 +32,11 @@ class Download(Proc):
     input = "url"
     output = (
         "outfile:file:"
-        "{{in.url | basename | replace: '%2E', '.' | slugify: separator='.'}}"
+        """{{in.url
+            | basename
+            | url_decode
+            | slugify: separator='.', lowercase=False, regex_pattern='[^-a-zA-Z0-9_]+'
+        }}"""
     )
     lang = config.lang.python
     envs = {

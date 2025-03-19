@@ -12,15 +12,17 @@ transpose_input <- {{envs.transpose_input | r}}
 transpose_group <- {{envs.transpose_group | r}}
 
 log_info("Reading input files ...")
-indata <- read.table(infile, header = TRUE, sep = "\t", row.names = 1)
+indata <- read.table(infile, header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 if (transpose_input) {
 	indata <- t(indata)
 }
-groupdata <- read.table(groupfile, header = TRUE, sep = "\t", row.names = 1)
+groupdata <- read.table(groupfile, header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 if (transpose_group) {
 	groupdata <- t(groupdata)
 }
-fmldata <- read.table(fmlfile, header = TRUE, sep = "\t", row.names = NULL)
+allgroups = na.omit(unique(unlist(groupdata)))
+
+fmldata <- read.table(fmlfile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE)
 colnames(fmldata)[1:2] <- c("Group", "Formula")
 
 chow.test <- function(fml, grouping) {
@@ -63,26 +65,43 @@ chow.test <- function(fml, grouping) {
 	)
 }
 
-formatlm <- function(m) {
-	if (class(m) == 'lm') {
-		coeff <- as.list(m$coefficients)
+formatlm <- function(m, g = NULL, type = "coeff") {
+	if (is.null(g)) {
 		vars <- all.vars(m$terms)
-		terms <- unlist(sapply(na.omit(c(vars[2:length(vars)], '(Intercept)', 'N')), function(x) {
-			ce <- coeff[[x]] %||% coeff[[bQuote(x)]]
-			if (x == 'N') {
-				paste0('N=', nrow(m$model))
-			} else if (is.null(ce)) {
-				NULL
-			} else {
-				l <- ifelse(x == '(Intercept)', '_', x)
-				paste0(l, '=', round(ce, 3))
-			}
-		}))
+		if (type == "pval") {
+			df <- as.data.frame(summary(m)$coefficients)
+			terms <- unlist(sapply(na.omit(c(vars[2:length(vars)], '(Intercept)', 'N')), function(x) {
+				pv <- df[x, 4] %||% df[bQuote(x), 4]
+				if (x == 'N') {
+					paste0('N=', nrow(m$model))
+				} else if (is.null(pv)) {
+					NULL
+				} else {
+					l <- ifelse(x == '(Intercept)', '_', x)
+					paste0(l, '=', signif(pv, digits = 4))
+				}
+			}))
+		} else {
+			coeff <- as.list(m$coefficients)
+			terms <- unlist(sapply(na.omit(c(vars[2:length(vars)], '(Intercept)', 'N')), function(x) {
+				ce <- coeff[[x]] %||% coeff[[bQuote(x)]]
+				if (x == 'N') {
+					paste0('N=', nrow(m$model))
+				} else if (is.null(ce)) {
+					NULL
+				} else {
+					l <- ifelse(x == '(Intercept)', '_', x)
+					paste0(l, '=', round(ce, 3))
+				}
+			}))
+		}
 		paste(terms[!is.null(terms)], collapse = ', ')
 	} else {
-		paste(sapply(names(m), function(x) {
-			paste0(x, ': ', formatlm(m[[x]]))
-		}), collapse = ' // ')
+		gm <- m[[as.character(g)]]
+		if (is.null(gm)) {
+			return(NA)
+		}
+		formatlm(gm, type = type)
 	}
 }
 
@@ -98,8 +117,15 @@ results <- do_call(rbind, lapply(
         log_debug("  Running Chow test for formula: {fmlrow$Formula} (grouping = {fmlrow$Group})")
 
         res <- chow.test(fmlrow$Formula, fmlrow$Group)
-		fmlrow$Pooled <- formatlm(res$pooled.lm)
-		fmlrow$Groups <- formatlm(res$group.lms)
+		fmlrow$Pooled_Coef <- formatlm(res$pooled.lm)
+		for (g in allgroups) {
+			fmlrow[[paste0("Group_", g, "_Coef")]] <- formatlm(res$group.lms, g)
+		}
+		# fmlrow$Groups <- formatlm(res$group.lms)
+		fmlrow$Pooled_Pval <- formatlm(res$pooled.lm, type="pval")
+		for (g in allgroups) {
+			fmlrow[[paste0("Group_", g, "_Pval")]] <- formatlm(res$group.lms, g, type="pval")
+		}
 		fmlrow$SSR <- res$group.ssr
 		fmlrow$SumSSR <- res$pooled.ssr
 		fmlrow$Fstat <- res$Fstat

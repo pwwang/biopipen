@@ -2,15 +2,15 @@ import json
 import logging
 import sys
 from pathlib import Path
-from prodigy_prot.predict_IC import (
+from prodigy_prot.predict_IC import (  # type: ignore
     Prodigy,
     check_path,
     parse_structure,
 )
 
-infile = {{in.infile | repr}}  # pyright: ignore # noqa
-outfile = {{out.outfile | repr}}  # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
+infile: str = {{in.infile | quote}}  # pyright: ignore # noqa
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 distance_cutoff = {{envs.distance_cutoff | float}}  # pyright: ignore
 acc_threshold = {{envs.acc_threshold | float}}  # pyright: ignore
 temperature = {{envs.temperature | float}}  # pyright: ignore

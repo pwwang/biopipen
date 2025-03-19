@@ -27,8 +27,8 @@ def pipeline():
             "?acc=GSE179367"
             "&format=file"
             "&file=GSE179367%5Fgene%5Fcount%2Ereal%2Etxt%2Egz",
-            "https://www.genepattern.org/tutorial/linkedFiles/"
-            "export_gnf.GENE_SYMBOL.gmt",
+            "https://github.com/pwwang/immunopipe-example/raw/refs/heads/master/data/"
+            "KEGG_metabolism.short.gmt",
         ],
         [(
             (
@@ -51,8 +51,7 @@ def testing(pipen):
         pipen.procs[-1].workdir.joinpath(
             "0",
             "output",
-            "acc.gse179367.format.file.file"
-            ".gse179367.5fgene.5fcount.real.txt.fgsea",
+            "acc.GSE179367.format.file.file.GSE179367_gene_count.real.txt.fgsea",
         )
     )
     assert outfile.is_dir()

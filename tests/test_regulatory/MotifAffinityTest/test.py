@@ -25,7 +25,7 @@ class MotifAffinityTestMotifBreakR(MotifAffinityTest_):
 
 class VariantMotifPlotBreakR(VariantMotifPlot_):
     requires = MotifAffinityTestMotifBreakR
-    input_data = lambda ch: [ch.iloc[0, 0] + "/motifbreakr.txt"]
+    input_data = lambda ch: [ch.iloc[0, 0] / "motifbreakr.txt"]
     envs = {
         "genome": "hg19",
         "motifdb": motifdb,
@@ -45,7 +45,7 @@ class MotifAffinityTestMotifBreakR_WithTF(MotifAffinityTest_):
 
 class VariantMotifPlotBreakR_WithTF(VariantMotifPlot_):
     requires = MotifAffinityTestMotifBreakR_WithTF
-    input_data = lambda ch: [ch.iloc[0, 0] + "/motifbreakr.txt"]
+    input_data = lambda ch: [ch.iloc[0, 0] / "motifbreakr.txt"]
     envs = {
         "genome": "hg19",
         "regulator_col": "Regulator",
@@ -66,7 +66,7 @@ class MotifAffinityTestMotifBreakR_WithTFOnly(MotifAffinityTest_):
 
 class VariantMotifPlotBreakR_WithTFOnly(VariantMotifPlot_):
     requires = MotifAffinityTestMotifBreakR_WithTFOnly
-    input_data = lambda ch: [ch.iloc[0, 0] + "/motifbreakr.txt"]
+    input_data = lambda ch: [ch.iloc[0, 0] / "motifbreakr.txt"]
     envs = {
         "genome": "hg19",
         "motif_col": None,
@@ -90,7 +90,7 @@ class MotifAffinityTestAtSNP(MotifAffinityTest_):
 
 class VariantMotifPlotAtSNP(VariantMotifPlot_):
     requires = MotifAffinityTestAtSNP
-    input_data = lambda ch: [ch.iloc[0, 0] + "/atsnp.txt"]
+    input_data = lambda ch: [ch.iloc[0, 0] / "atsnp.txt"]
     envs = {
         "genome": "hg19",
         "motifdb": motifdb,
@@ -112,7 +112,7 @@ class MotifAffinityTestAtSNP_WithTF(MotifAffinityTest_):
 
 class VariantMotifPlotAtSNP_WithTF(VariantMotifPlot_):
     requires = MotifAffinityTestAtSNP_WithTF
-    input_data = lambda ch: [ch.iloc[0, 0] + "/atsnp.txt"]
+    input_data = lambda ch: [ch.iloc[0, 0] / "atsnp.txt"]
     envs = {
         "genome": "hg19",
         "regulator_col": "Regulator",
@@ -135,7 +135,7 @@ class MotifAffinityTestAtSNP_WithTFOnly(MotifAffinityTest_):
 
 class VariantMotifPlotAtSNP_WithTFOnly(VariantMotifPlot_):
     requires = MotifAffinityTestAtSNP_WithTFOnly
-    input_data = lambda ch: [ch.iloc[0, 0] + "/atsnp.txt"]
+    input_data = lambda ch: [ch.iloc[0, 0] / "atsnp.txt"]
     envs = {
         "genome": "hg19",
         "motif_col": None,

@@ -15,7 +15,7 @@ def bcftools_version(bcftools: str) -> tuple[int, ...]:
     """
     bversion = (
         run_command([bcftools, "version"], stdout="return")
-        .splitlines()[0]  # bcftools 1.20
+        .splitlines()[0]  # bcftools 1.20  # type: ignore
         .replace("bcftools", "")
         .strip()  # 1.20
         .split(".")
@@ -24,8 +24,8 @@ def bcftools_version(bcftools: str) -> tuple[int, ...]:
 
 
 def run_bcftools(
-    args: dict[str, object],
-    bcftools: str,
+    args: dict,
+    bcftools: str,  # TODO: get from the first argument of args
     index: bool,
     tabix: str
 ) -> None:

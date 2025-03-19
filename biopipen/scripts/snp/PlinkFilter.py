@@ -1,17 +1,17 @@
-"""Script for snp.PlinkFilter"""
+from __future__ import annotations
 
 from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
-indir = {{in.indir | repr}}  # pyright: ignore # noqa: #999
-samples_file = {{in.samples_file | repr}}  # pyright: ignore
-variants_file = {{in.variants_file | repr}}  # pyright: ignore
-outdir = {{out.outdir | repr}}  # pyright: ignore
+indir: str = {{in.indir | quote}}  # pyright: ignore # noqa: #999
+samples_file = {{in.samples_file | quote}}  # pyright: ignore
+variants_file = {{in.variants_file | quote}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 
 plink = {{envs.plink | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
-samples = {{envs.samples | repr}}  # pyright: ignore
-variants = {{envs.variants | repr}}  # pyright: ignore
+samples: list[str] | str = {{envs.samples | repr}}  # pyright: ignore
+variants: list[str] | str = {{envs.variants | repr}}  # pyright: ignore
 e_samples_file = {{envs.samples_file | repr}}  # pyright: ignore
 e_variants_file = {{envs.variants_file | repr}}  # pyright: ignore
 keep = {{envs.keep | repr}}  # pyright: ignore

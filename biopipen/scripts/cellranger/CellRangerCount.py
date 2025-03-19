@@ -1,15 +1,16 @@
 import uuid
 import re
-from pathlib import Path
+import os.path
+from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command
 
-fastqs = {{in.fastqs | repr}}  # pyright: ignore  # noqa
-outdir = {{out.outdir | quote}}  # pyright: ignore
+fastqs: list[Path] = {{in.fastqs | each: as_path}}  # pyright: ignore  # noqa
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 id = {{out.outdir | basename | quote}}  # pyright: ignore
 
 cellranger = {{envs.cellranger | quote}}  # pyright: ignore
 tmpdir = Path({{envs.tmpdir | quote}})  # pyright: ignore
-ref = {{envs.ref | quote}}  # pyright: ignore
+ref: str = {{envs.ref | quote}}  # pyright: ignore
 ncores = {{envs.ncores | int}}  # pyright: ignore
 include_introns = {{envs.include_introns | repr}}  # pyright: ignore
 create_bam = {{envs.create_bam | repr}}  # pyright: ignore
@@ -26,7 +27,17 @@ if len(fastqs) == 1 and fastqs[0].is_dir():
 # soft-link the fastq files to the temporary directory
 for fastq in fastqs:
     fastq = Path(fastq)
-    (fastqdir / fastq.name).symlink_to(fastq)
+    fqnames = re.split(r"(_S\d+_)", fastq.name)
+    if len(fqnames) != 3:
+        raise ValueError(
+            fr"Expect one and only one '_S\d+_' in fastq file name: {fastq.name}"
+        )
+
+    linked = fastqdir / f"{id}{fqnames[1]}{fqnames[2]}"
+    if linked.exists():
+        linked.unlink()
+
+    linked.symlink_to(fastq)
 
 other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['no_bam', 'create_bam', 'include_introns', 'cellranger', 'transcriptome', 'ref', 'tmpdir', 'id', 'ncores']}}  # pyright: ignore
 
@@ -49,9 +60,9 @@ command = [
 
 # check cellranger version
 #   cellranger cellranger-7.2.0
-version = run_command([cellranger, "--version"], stdout = "RETURN")
-version = version.replace("cellranger", "").replace("-", "").strip()
-version = list(map(int, version.split(".")))
+version: str = run_command([cellranger, "--version"], stdout = "RETURN")  # type: ignore
+version = version.replace("cellranger", "").replace("-", "").strip()  # type: ignore
+version: list[int] = list(map(int, version.split(".")))  # type: ignore
 if version[0] >= 8:
     command += ["--create-bam", create_bam]
 elif create_bam != "true":
@@ -77,7 +88,7 @@ try:
         '<script src="web_summary.js"></script>',
         web_summary_content,
     ))
-    web_summary_js.write_text(regex.search(web_summary_content).group(1))
+    web_summary_js.write_text(regex.search(web_summary_content).group(1))  # type: ignore
 except Exception as e:
     print(f"Error modifying web_summary.html: {e}")
     raise e

@@ -1,9 +1,9 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, logger
 
-infile = Path({{in.afile | repr}})  # pyright: ignore # noqa: #999
-outfile = Path({{in.bfile | repr}})  # pyright: ignore
-bedtools = {{envs.bedtools | repr}}  # pyright: ignore
+infile = Path({{in.afile | quote}})  # pyright: ignore # noqa: #999
+outfile = Path({{in.bfile | quote}})  # pyright: ignore
+bedtools: str = {{envs.bedtools | quote}}  # pyright: ignore
 window = {{envs.window | repr}}  # pyright: ignore
 step = {{envs.step | repr}}  # pyright: ignore
 nwin = {{envs.nwin | repr}}  # pyright: ignore

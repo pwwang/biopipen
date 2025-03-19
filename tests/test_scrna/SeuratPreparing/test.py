@@ -16,6 +16,7 @@ class PrepareSeurat(Proc):
     output = "outfile:file:{{in.name}}.RDS"
     lang = config.lang.rscript
     script = """
+        options(timeout=600)
         library(SeuratData)
         InstallData("pbmc3k")
         pbmc3k <- Seurat::UpdateSeuratObject(pbmc3k)

@@ -97,8 +97,8 @@ class SeuratPreparing(Proc):
 
     Output:
         rdsfile: The RDS file with the Seurat object with all samples integrated.
-            Note that the cell ids are preficed with sample names QC plots will be
-            saved in `<job.outdir>/before-qc` and `<job.outdir>/after-qc`.
+            Note that the cell ids are prefixied with sample names.
+            QC plots will be saved in `<job.outdir>/plots`.
 
     Envs:
         ncores (type=int): Number of cores to use.
@@ -139,6 +139,19 @@ class SeuratPreparing(Proc):
             ```
             will keep genes that are expressed in at least 3 cells.
             ///
+
+        qc_plots (type=json): The plots for QC metrics.
+            It should be a json (or python dict) with the keys as the names of the plots and
+            the values also as dicts with the following keys:
+            * kind: The kind of QC. Either `gene` or `cell` (default).
+            * devpars: The device parameters for the plot. A dict with `res`, `height`, and `width`.
+            * more_formats: The formats to save the plots other than `png`.
+            * save_code: Whether to save the code to reproduce the plot.
+            * other arguments passed to
+            [`biopipen.utils::VizSeuratCellQC`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html)
+            when `kind` is `cell` or
+            [`biopipen.utils::VizSeuratGeneQC`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.html)
+            when `kind` is `gene`.
 
         use_sct (flag): Whether use SCTransform routine to integrate samples or not.
             Before the following procedures, the `RNA` layer will be split by samples.
@@ -244,6 +257,7 @@ class SeuratPreparing(Proc):
         r-bracer:
             - check: {{proc.lang}} <(echo "library(bracer)")
     """  # noqa: E501
+
     input = "metafile:file"
     output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
     lang = config.lang.rscript
@@ -252,6 +266,28 @@ class SeuratPreparing(Proc):
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "cell_qc_per_sample": False,
         "gene_qc": {"min_cells": 0, "excludes": []},
+        "qc_plots": {
+            "Violin Plots of QC Metrics": {
+                "kind": "cell",
+                "plot_type": "violin",
+                "devpars": {"res": 100, "height": 600, "width": 1200},
+            },
+            "Scatter Plots of QC Metrics": {
+                "kind": "cell",
+                "plot_type": "scatter",
+                "devpars": {"res": 100, "height": 800, "width": 1200},
+            },
+            "Ridge Plots of QC Metrics": {
+                "kind": "cell",
+                "plot_type": "ridge",
+                "devpars": {"res": 100, "height": 800, "width": 1200},
+            },
+            # "Number of Expressing Cells for Excluded Genes (10)": {
+            #     "kind": "gene",
+            #     "features": 10,
+            #     "devpars": {"res": 100, "height": 1200, "width": 1200}
+            # },
+        },
         "use_sct": False,
         "no_integration": False,
         "NormalizeData": {},
@@ -338,6 +374,7 @@ class SeuratClustering(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library(dplyr)")
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -413,6 +450,7 @@ class SeuratSubClustering(Proc):
             Keys are the names of the cases and values are the dicts inherited from `envs` except `mutaters` and `cache`.
             If empty, a case with name `subcluster` will be created with default parameters.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -487,7 +525,10 @@ class SeuratClusterStats(Proc):
         srtobj: The seurat object loaded by `SeuratClustering`
 
     Output:
-        outdir: The output directory
+        outdir: The output directory.
+            Different types of plots will be saved in different subdirectories.
+            For example, `clustree` plots will be saved in `clustrees` subdirectory.
+            For each case in `envs.clustrees`, both the png and pdf files will be saved.
 
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
@@ -497,101 +538,41 @@ class SeuratClusterStats(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - prefix: string indicating columns containing clustering information.
+            - more_formats (list): The formats to save the plots other than `png`.
+            - save_code (flag): Whether to save the code to reproduce the plot.
+            - prefix (type=auto): string indicating columns containing clustering information.
                 The trailing dot is not necessary and will be added automatically.
-                When `_auto`, clustrees will be plotted when there is `FindClusters` or
+                When `TRUE`, clustrees will be plotted when there is `FindClusters` or
                 `FindClusters.*` in the `obj@commands`.
                 The latter is generated by `SeuratSubClustering`.
-                This will be ignored when `envs.clustrees` is specified.
-            - <more>: Other arguments passed to `clustree::clustree()`.
-                See <https://rdrr.io/cran/clustree/man/clustree.html>
+                This will be ignored when `envs.clustrees` is specified
+                (the prefix of each case must be specified separately).
+            - <more>: Other arguments passed to `scplotter::ClustreePlot`.
+                See <https://pwwang.github.io/scplotter/reference/ClustreePlot.html>
         clustrees (type=json): The cases for clustree plots.
             Keys are the names of the plots and values are the dicts inherited from `env.clustrees_defaults` except `prefix`.
             There is no default case for `clustrees`.
-        hists_defaults (ns): The default parameters for histograms.
-            This will plot histograms for the number of cells along `x`.
-            For example, you can plot the number of cells along cell activity score.
-            - x: The column name in metadata to plot as the x-axis.
-                The NA values will be removed.
-                It could be either numeric or factor/character.
-            - x_order (list): The order of the x-axis, only works for factor/character `x`.
-                You can also use it to subset `x` (showing only a subset values of `x`).
-            - cells_by: A column name in metadata to group the cells.
-                The NA values will be removed. It should be a factor/character.
-                if not specified, all cells will be used.
-            - cells_order (list): The order of the cell groups for the plots.
-                It should be a list of strings. You can also use `cells_orderby` and `cells_n`
-                to determine the order.
-            - cells_orderby: An expression passed to `dplyr::arrange()` to order the cell groups.
-            - cells_n: The number of cell groups to show.
-                Ignored if `cells_order` is specified.
-            - ncol (type=int): The number of columns for the plots, split by `cells_by`.
-            - subset: An expression to subset the cells, will be passed to `dplyr::filter()`.
-            - each: Whether to plot each group separately.
-            - bins: The number of bins to use, only works for numeric `x`.
-            - plus (list): The extra elements to add to the `ggplot` object.
-            - devpars (ns): The device parameters for the plots.
-                - res (type=int): The resolution of the plots.
-                - height (type=int): The height of the plots.
-                - width (type=int): The width of the plots.
-        hists (type=json): The cases for histograms.
-            Keys are the names of the plots and values are the dicts inherited from `env.hists_defaults`.
-            There is no default case.
         stats_defaults (ns): The default parameters for `stats`.
-            This is to do some basic statistics on the clusters. For more comprehensive analysis,
-            see `RadarPlots` and `CellsDistribution`.
+            This is to do some basic statistics on the clusters/cells. For more comprehensive analysis,
+            see <https://pwwang.github.io/scplotter/reference/CellStatPlot.html>.
             The parameters from the cases can overwrite the default parameters.
-            - frac (choice): How to calculate the fraction of cells.
-                - group: calculate the fraction in each group.
-                    The total fraction of the cells of idents in each group will be 1.
-                    When `group-by` is not specified, it will be the same as `all`.
-                - ident: calculate the fraction in each ident.
-                    The total fraction of the cells of groups in each ident will be 1.
-                    Only works when `group-by` is specified.
-                - cluster: alias of `ident`.
-                - all: calculate the fraction against all cells.
-                - none: do not calculate the fraction, use the number of cells instead.
-            - pie (flag): Also output a pie chart?
-            - circos (flag): Also output a circos plot?
-            - table (flag): Whether to output a table (in tab-delimited format) and in the report.
-            - transpose (flag): Whether to transpose the cluster and group, that is,
-                using group as the x-axis and cluster to fill the plot.
-                For circos plot, when transposed, the arrows will be drawn from the idents (by `ident`) to the
-                the groups (by `group-by`).
-                Only works when `group-by` is specified.
-            - position (choice): The position of the bars. Does not work for pie and circos plots.
-                - stack: Use `position_stack()`.
-                - fill: Use `position_fill()`.
-                - dodge: Use `position_dodge()`.
-                - auto: Use `stack` when there are more than 5 groups, otherwise use `dodge`.
-            - ident: The column name in metadata to use as the identity.
-            - group-by: The column name in metadata to group the cells.
-                Does NOT support for pie charts.
-            - split-by: The column name in metadata to split the cells into different plots.
-                Does NOT support for circos plots.
-            - subset: An expression to subset the cells, will be passed to
-                `dplyr::filter()` on metadata.
-            - circos_labels_rot (flag): Whether to rotate the labels in the circos plot.
-                In case the labels are too long.
-            - circos_devpars (ns): The device parameters for the circos plots.
+            - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
+            - devpars (ns): The device parameters for the clustree plot.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - pie_devpars (ns): The device parameters for the pie charts.
-                - res (type=int): The resolution of the plots.
-                - height (type=int): The height of the plots.
-                - width (type=int): The width of the plots.
-            - devpars (ns): The device parameters for the plots.
-                - res (type=int): The resolution of the plots.
-                - height (type=int): The height of the plots.
-                - width (type=int): The width of the plots.
+            - more_formats (list): The formats to save the plots other than `png`.
+            - save_code (flag): Whether to save the code to reproduce the plot.
+            - save_data (flag): Whether to save the data used to generate the plot.
+            - <more>: Other arguments passed to `scplotter::CellStatPlot`.
+                See <https://pwwang.github.io/scplotter/reference/CellStatPlot.html>.
         stats (type=json): The number/fraction of cells to plot.
             Keys are the names of the plots and values are the dicts inherited from `env.stats_defaults`.
             Here are some examples -
             >>> {
             >>>     "nCells_All": {},
-            >>>     "nCells_Sample": {"group-by": "Sample"},
-            >>>     "fracCells_Sample": {"frac": True, "group-by": "Sample"},
+            >>>     "nCells_Sample": {"group_by": "Sample"},
+            >>>     "fracCells_Sample": {"scale_y": True, "group_by": "Sample", plot_type = "pie"},
             >>> }
         ngenes_defaults (ns): The default parameters for `ngenes`.
             The default parameters to plot the number of genes expressed in each cell.
@@ -610,61 +591,30 @@ class SeuratClusterStats(Proc):
             - features: The features to plot.
                 It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
                 (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
-            - ident: The column name in metadata to use as the identity.
-                If it is from subclustering (reduction `sub_umap_<ident>` exists), the reduction will be used.
-            - cluster_orderby (type=auto): The order of the clusters to show on the plot.
-                An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
-                The summary stat will be passed to `dplyr::arrange()` to order the clusters. It's applied on the whole meta.data before grouping and subsetting.
+            - order_by (type=auto): The order of the clusters to show on the plot.
+                An expression passed to `dplyr::arrange()` on the grouped meta data frame (by `ident`).
                 For example, you can order the clusters by the activation score of
                 the cluster: `desc(mean(ActivationScore, na.rm = TRUE))`, suppose you have a column
                 `ActivationScore` in the metadata.
-                You may also specify the literal order of the clusters by a list of strings.
+                You may also specify the literal order of the clusters by a list of strings (at least two).
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots. Does not work for `table`.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - plus: The extra elements to add to the `ggplot` object. Does not work for `table`.
-            - group-by: Group cells in different ways (for example, orig.ident). Works for `ridge`, `vln`, and `dot`.
-                It also works for `feature` as `shape.by` being passed to [`Seurat::FeaturePlot`](https://satijalab.org/seurat/reference/featureplot).
-            - split-by: The column name in metadata to split the cells into different plots.
-                It works for `vln`, `feature`, and `dot`.
-            - assay: The assay to use.
-            - layer: The layer to use.
-            - reduction: The reduction to use. Only works for `feature`.
-            - section: The section to put the plot in the report.
-                If not specified, the case title will be used.
-            - ncol (type=int): The number of columns for the plots.
-            - kind (choice): The kind of the plot or table.
-                - ridge: Use `Seurat::RidgePlot`.
-                - ridgeplot: Same as `ridge`.
-                - vln: Use `Seurat::VlnPlot`.
-                - vlnplot: Same as `vln`.
-                - violin: Same as `vln`.
-                - violinplot: Same as `vln`.
-                - feature: Use `Seurat::FeaturePlot`.
-                - featureplot: Same as `feature`.
-                - dot: Use `Seurat::DotPlot`.
-                - dotplot: Same as `dot`.
-                - bar: Bar plot on an aggregated feature.
-                    The features must be a single feature, which will be either an  existing feature or an expression
-                    passed to `dplyr::summarise()` (grouped by `ident`) on the existing features to create a new feature.
-                - barplot: Same as `bar`.
-                - heatmap: Use `Seurat::DoHeatmap`.
-                - avgheatmap: Plot the average expression of the features in each cluster as a heatmap.
-                - table: The table for the features, only gene expressions are supported.
-                    (supported keys: ident, subset, and features).
+            - descr: The description of the plot, showing in the report.
+            - more_formats (list): The formats to save the plots other than `png`.
+            - save_code (flag): Whether to save the code to reproduce the plot.
+            - save_data (flag): Whether to save the data used to generate the plot.
+            - <more>: Other arguments passed to `scplotter::FeatureStatPlot`.
+                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>
         features (type=json): The plots for features, include gene expressions, and columns from metadata.
-            Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`. It can also have other parameters from
-            each Seurat function used by `kind`. Note that for argument name with `.`, you should use `-` instead.
+            Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`.
         dimplots_defaults (ns): The default parameters for `dimplots`.
-            - ident: The identity to use.
+            - group_by: The identity to use.
                 If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
                 is set to `dim` or `auto`.
-            - group-by: Same as `ident` if not specified, to define how the points are colored.
-            - na_group: The group name for NA values, use `None` to ignore NA values.
-            - split-by: The column name in metadata to split the cells into different plots.
-            - shape-by: The column name in metadata to use as the shape.
+            - split_by: The column name in metadata to split the cells into different plots.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -678,64 +628,42 @@ class SeuratClusterStats(Proc):
                 - umap: Use `Seurat::UMAPPlot`.
                 - tsne: Use `Seurat::TSNEPlot`.
                 - pca: Use `Seurat::PCAPlot`.
-            - <more>: See <https://satijalab.org/seurat/reference/dimplot>
+            - <more>: See <https://pwwang.github.io/scplotter/reference/CellDimPlot.html>
         dimplots (type=json): The dimensional reduction plots.
             Keys are the titles of the plots and values are the dicts inherited from `env.dimplots_defaults`. It can also have other parameters from
-            [`Seurat::DimPlot`](https://satijalab.org/seurat/reference/dimplot).
+            [`scplotter::CellDimPlot`](https://pwwang.github.io/scplotter/reference/CellDimPlot.html).
 
     Requires:
         r-seurat:
             - check: {{proc.lang}} -e "library(Seurat)"
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
         "clustrees_defaults": {
-            "devpars": {"res": 100, "height": 1000, "width": 800},
-            "prefix": "_auto",
+            "devpars": {"res": 100},
+            "more_formats": [],
+            "save_code": False,
+            "prefix": True,
         },
         "clustrees": {},
-        "hists_defaults": {
-            "x": None,
-            "x_order": [],
-            "cells_by": None,
-            "cells_order": [],
-            "cells_orderby": None,
-            "cells_n": 10,
-            "subset": None,
-            "ncol": 2,
-            "each": None,
-            "bins": 30,
-            "plus": [],
-            "devpars": {"res": 100, "height": None, "width": None},
-        },
-        "hists": {},
         "stats_defaults": {
-            "frac": "none",
-            "pie": False,
-            "circos": False,
-            "table": False,
-            "position": "auto",
-            "transpose": False,
-            "ident": "seurat_clusters",
-            "group-by": None,
-            "split-by": None,
             "subset": None,
-            "circos_labels_rot": False,
-            "devpars": {"res": 100, "height": 600, "width": 800},
-            "pie_devpars": {"res": 100, "height": 600, "width": 800},
-            "circos_devpars": {"res": 100, "height": 600, "width": 600},
+            "devpars": {"res": 100},
+            "more_formats": [],
+            "save_code": False,
+            "save_data": False,
         },
         "stats": {
-            "Number of cells in each cluster": {
-                "pie": True,
+            "Number of cells in each cluster (Bar Chart)": {
+                "plot_type": "bar",
             },
-            "Number of cells in each cluster by Sample": {
-                "group-by": "Sample",
-                "table": True,
-                "frac": "group",
+            "Number of cells in each cluster by Sample (Bar Chart)": {
+                "plot_type": "bar",
+                "group_by": "Sample",
             },
         },
         "ngenes_defaults": {
@@ -750,43 +678,31 @@ class SeuratClusterStats(Proc):
         },
         "features_defaults": {
             "features": None,
-            "ident": "seurat_clusters",
-            "cluster_orderby": None,
+            "order_by": None,
             "subset": None,
             "devpars": {"res": 100},
-            "plus": None,
-            "group-by": None,
-            "split-by": None,
-            "assay": None,
-            "section": None,
-            "layer": None,
-            "reduction": None,
-            "kind": None,
-            "ncol": 2,
+            "descr": None,
+            "more_formats": [],
+            "save_code": False,
+            "save_data": False,
         },
         "features": {},
         "dimplots_defaults": {
-            "ident": "seurat_clusters",
-            "group-by": None,
-            "na_group": None,
-            "split-by": None,
-            "shape-by": None,
+            "group_by": "seurat_clusters",
+            "split_by": None,
             "subset": None,
             "reduction": "dim",
-            "devpars": {"res": 100, "height": 800, "width": 1000},
+            "devpars": {"res": 100},
         },
         "dimplots": {
             "Dimensional reduction plot": {
                 "label": True,
-                "label-box": True,
-                "repel": True,
+                "label_insitu": True,
             },
         },
     }
     script = "file://../scripts/scrna/SeuratClusterStats.R"
-    plugin_opts = {
-        "report": "file://../reports/scrna/SeuratClusterStats.svelte"
-    }
+    plugin_opts = {"report": "file://../reports/scrna/SeuratClusterStats.svelte"}
 
 
 class ModuleScoreCalculator(Proc):
@@ -806,7 +722,7 @@ class ModuleScoreCalculator(Proc):
         srtobj: The seurat object loaded by `SeuratClustering`
 
     Output:
-        rdsfile: The seurat object with module scores
+        rdsfile: The seurat object with module scores added to the metadata.
 
     Envs:
         defaults (ns): The default parameters for `modules`.
@@ -863,6 +779,7 @@ class ModuleScoreCalculator(Proc):
             This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -922,7 +839,8 @@ class CellsDistribution(Proc):
         srtobj: The seurat object in RDS format
 
     Output:
-        outdir: The output directory
+        outdir: The output directory.
+            The results for each case will be saved in a subdirectory.
 
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata
@@ -988,6 +906,7 @@ class CellsDistribution(Proc):
         r-tidyr:
             - check: {{proc.lang}} -e "library(tidyr)"
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.cells_distribution"
     lang = config.lang.rscript
@@ -1043,6 +962,7 @@ class SeuratMetadataMutater(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library(dplyr)")
     """  # noqa: E501
+
     input = "srtobj:file, metafile:file"
     output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
     lang = config.lang.rscript
@@ -1067,6 +987,7 @@ class DimPlots(Proc):
             Keys are the names and values are the arguments to
             `Seurat::Dimplots`
     """
+
     input = "srtobj:file, configfile:file, name:var"
     output = "outdir:dir:{{in.srtobj | stem}}.dimplots"
     lang = config.lang.rscript
@@ -1080,7 +1001,6 @@ class DimPlots(Proc):
 
 @format_placeholder(
     mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
-    envs_section_each=ENVS_SECTION_EACH_INDENTED,
 )
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
@@ -1099,7 +1019,7 @@ class MarkersFinder(Proc):
             by `PrepSCTFindMarkers` if data is not normalized using `SCTransform`.
 
     Output:
-        outdir: The output directory for the markers
+        outdir: The output directory for the markers and plots
 
     Envs:
         ncores (type=int): Number of cores to use for parallel computing for some `Seurat` procedures.
@@ -1131,73 +1051,104 @@ class MarkersFinder(Proc):
             to select markers with adjusted p-value < 0.05 and absolute log2
             fold change > 1.
         assay: The assay to use.
-        volcano_genes (type=auto): The genes to label in the volcano plot if they are
-            significant markers.
-            If `True`, all significant markers will be labeled. If `False`, no
-            genes will be labeled. Otherwise, specify the genes to label.
-            It could be either a string with comma separated genes, or a list
-            of genes.
-        section: The section name for the report. It must not contain colon (`:`).
-            Ignored when `each` is not specified and `ident-1` is specified.
-            When neither `each` nor `ident-1` is specified, case name will be used
-            as section name.
-            If `each` is specified, the section name will be constructed from
-            `each` and case name.
-            %(envs_section_each)s
+        error (flag): Error out if no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
+        site: The site to use for the `enrichR` enrichment analysis.
         subset: An expression to subset the cells for each case.
+        cache (type=auto): Where to cache to `FindAllMarkers` results.
+            If `True`, cache to `outdir` of the job. If `False`, don't cache.
+            Otherwise, specify the directory to cache to.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
             This only works when `use_presto` is `False`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
-        dotplot (ns): Arguments for `Seurat::DotPlot()`.
-            Use `-` to replace `.` in the argument name. For example,
-            use `group-bar` instead of `group.bar`.
-            Note that `object`, `features`, and `group-by` are already specified
-            by this process. So you don't need to specify them here.
-            - maxgenes (type=int): The maximum number of genes to plot.
+        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
+                Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
+            - more_formats (list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - <more>: See <https://satijalab.org/seurat/reference/doheatmap>
-        cases (type=json): If you have multiple cases, you can specify them
-            here. The keys are the names of the cases and the values are the
-            above options except `ncores` and `mutaters`. If some options are
-            not specified, the default values specified above will be used.
-            If no cases are specified, the default case will be added with
-            the default values under `envs` with the name `DEFAULT`.
-        overlap_defaults (ns): The default options for overlapping analysis.
+            - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
+            - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
+            - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
+        allmarker_plots (type=json): All marker plot cases.
+            The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
+        marker_plots_defaults (ns): Default options for the plots to generate for the markers.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
+                Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
+                There are two additional types available - `volcano_pct` and `volcano_log2fc`.
+            - more_formats (list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
+            - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
+            - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
+                If `plot_type` is `volcano_pct` or `volcano_log2fc`, they will be passed to
+                [`scplotter::VolcanoPlot()`](https://pwwang.github.io/plotthis/reference/VolcanoPlot.html).
+        marker_plots (type=json): Cases of the plots to generate for the markers.
+            Plot cases. The keys are the names of the cases and the values are the dicts inherited from `marker_plots_defaults`.
+        enrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
+                Available types are `bar`, `dot`, `lollipop`, `network`, `enrichmap` and `wordcloud`.
+            - more_formats (list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.htmll>.
+        enrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
+            The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
+        cases (type=json): If you have multiple cases for marker discovery, you can specify them
+            here. The keys are the names of the cases and the values are the above options. If some options are
+            not specified, the default values specified above (under `envs`) will be used.
+            If no cases are specified, the default case will be added with the default values under `envs` with the name `DEFAULT`.
+            If you want to put some cases under the same section in the report, you can specify the section name in the case name
+            as a prefix separated by `::`. For example, `section1::case1` and `section1::case2` will be put `case1` and `case2`
+            under the section `section1`.
+        overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases.
+            - cases (list): The cases to do the overlapping analysis, including the prefix section name.
+                The case must have `ident-1` specified. When `each` is specified, the case will be expanded.
+                For example, `case1` with `each = "group"`, where `group` has `g1` and `g2`, will be expanded to
+                `case1::g1` and `case1::g2`, or `case1::group - g1` and `case1::group - g2` if `prefix_each` is `True`.
+                There must be at least 2 cases to do the overlapping analysis.
+            - sigmarkers: The expression to filter the significant markers for each case.
+                If not provided, `envs.sigmarkers` will be used.
             - venn (ns): The options for the Venn diagram.
-                Venn diagram can only be plotted for sections with no more than 4 cases.
+                - enabled (flag): Whether to enable the Venn diagram.
+                    Default is "auto", which means enabled when there are no more than 5 cases.
+                - more_formats (list): The extra formats to save the plot in.
+                - save_code (flag): Whether to save the code to generate the plot.
                 - devpars (ns): The device parameters for the plots.
                     - res (type=int): The resolution of the plots.
                     - height (type=int): The height of the plots.
                     - width (type=int): The width of the plots.
+                - <more>: More arguments pased to `plotthis::VennDiagram()`.
+                    https://pwwang.github.io/plotthis/reference/venndiagram1.html
             - upset (ns): The options for the UpSet plot.
+                - enabled (flag): Whether to enable the UpSet plot.
+                - more_formats (list): The extra formats to save the plot in.
+                - save_code (flag): Whether to save the code to generate the plot.
                 - devpars (ns): The device parameters for the plots.
                     - res (type=int): The resolution of the plots.
                     - height (type=int): The height of the plots.
                     - width (type=int): The width of the plots.
-        overlap (json): The sections to do overlaping analysis, including
-            Venn diagram and UpSet plot. The Venn diagram and UpSet plot
-            will be plotted for the overlapping of significant markers between
-            different cases.
-            The keys of this option are the names of the sections. The values are
-            a dict of options with keys `venn` and `upset`, values will
-            be inherited from `envs.overlap_defaults`, recursively.
-            You can set `envs.overlap.<section>.venn` to `False`/`None` to disable
-            the Venn diagram for the section.
-            It works when `each` is specified. In such a case, the sections will be
-            the case names.
-            This does not work for the cases where `ident-1` is not specified. In case
-            you want to do such analysis for those cases, you should enumerate the
-            idents in different cases and specify them here.
-        cache (type=auto): Where to cache to `FindAllMarkers` results.
-            If `True`, cache to `outdir` of the job. If `False`, don't cache.
-            Otherwise, specify the directory to cache to.
-            Only works when `use_presto` is `False` (presto works fast enough).
+                - <more>: More arguments pased to `plotthis::UpsetPlot()`.
+                    https://pwwang.github.io/plotthis/reference/upsetplot1.html
+        overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases.
+            The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem0}}.markers"
     lang = config.lang.rscript
@@ -1210,21 +1161,62 @@ class MarkersFinder(Proc):
         "each": None,
         "prefix_each": True,
         "prefix_group": True,
-        "section": "DEFAULT",
         "assay": None,
         "subset": None,
+        "error": True,
+        "site": "Enrichr",
         "rest": {},
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
-        "volcano_genes": True,
-        "dotplot": {"maxgenes": 20},
-        "cases": {},
-        "overlap_defaults": {
-            "venn": {"devpars": {"res": 100, "height": 600, "width": 1000}},
-            "upset": {"devpars": {"res": 100, "height": 600, "width": 800}},
-        },
-        "overlap": {},
         "cache": config.path.tmpdir,
+        "allmarker_plots_defaults": {
+            "plot_type": None,
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+            "order_by": "desc(abs(avg_log2FC))",
+            "genes": 10,
+        },
+        "allmarker_plots": {},
+        "marker_plots_defaults": {
+            "plot_type": None,
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+            "order_by": "desc(abs(avg_log2FC))",
+            "genes": 10,
+        },
+        "marker_plots": {
+            "Volcano Plot (diff_pct)": {"plot_type": "volcano_pct"},
+            "Volcano Plot (log2FC)": {"plot_type": "volcano_log2fc"},
+            "Dot Plot": {"plot_type": "dot"},
+        },
+        "enrich_plots_defaults": {
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+        },
+        "enrich_plots": {
+            "Bar Plot": {"plot_type": "bar", "ncol": 1, "top_term": 10},
+        },
+        "cases": {},
+        "overlaps_defaults": {
+            "cases": [],
+            "sigmarkers": None,
+            "venn": {
+                "enabled": "auto",
+                "more_formats": [],
+                "save_code": False,
+                "devpars": {"res": 100},
+            },
+            "upset": {
+                "enabled": True,
+                "more_formats": [],
+                "save_code": False,
+                "devpars": {"res": 100},
+            },
+        },
+        "overlaps": {},
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
@@ -1274,6 +1266,7 @@ class TopExpressingGenes(Proc):
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
     """
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
     lang = config.lang.rscript
@@ -1358,6 +1351,7 @@ class ExprImputation(Proc):
             - if: {{proc.envs.tool == "alra"}}
             - check: {{proc.lang}} <(echo "library(SeuratWrappers)")
     """  # noqa: E501
+
     input = "infile:file"
     output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
     lang = config.lang.rscript
@@ -1393,10 +1387,10 @@ class SCImpute(Proc):
         infmt: The input format.
             Either `seurat` or `matrix`
     """
+
     input = "infile:file, groupfile:file"
     output = [
-        "outfile:file:{{in.infile | stem | replace: '.seurat', ''}}."
-        "{{envs.outfmt}}"
+        "outfile:file:{{in.infile | stem | replace: '.seurat', ''}}." "{{envs.outfmt}}"
     ]
     lang = config.lang.rscript
     envs = {
@@ -1434,6 +1428,7 @@ class SeuratFilter(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library('dplyr')")
     """
+
     input = "srtobj:file, filters:var"
     output = "outfile:file:{{in.srtobj | stem}}.filtered.RDS"
     lang = config.lang.rscript
@@ -1468,6 +1463,7 @@ class SeuratSubset(Proc):
         r-dplyr:
             - check: {{proc.lang}} <(echo "library('dplyr')")
     """
+
     input = "srtobj:file, subsets:var"
     output = "outdir:dir:{{in.srtobj | stem}}.subsets"
     envs = {"ignore_nas": True}
@@ -1491,6 +1487,7 @@ class SeuratSplit(Proc):
         recell: Rename the cell ids using the `by` column
             A string of R function taking the original cell ids and `by`
     """
+
     input = "srtobj:file, by:var"
     output = "outdir:dir:{{in.srtobj | stem}}.subsets"
     envs = {
@@ -1521,6 +1518,7 @@ class Subset10X(Proc):
         feats_to_keep: The features/genes to keep.
             The final features list will be `feats_to_keep` + `nfeats`
     """
+
     input = "indir:dir"
     output = "outdir:dir:{{in.indir | stem}}"
     envs = {
@@ -1550,6 +1548,7 @@ class SeuratTo10X(Proc):
     Envs:
         version: The version of 10X format
     """
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}"
     envs = {"version": "3", "split_by": None}
@@ -1582,7 +1581,7 @@ class ScFGSEA(Proc):
         srtobj: The seurat object in RDS format
 
     Output:
-        outdir: The output directory for the results
+        outdir: The output directory for the results and plots
 
     Envs:
         ncores (type=int): Number of cores for parallelization
@@ -1638,6 +1637,7 @@ class ScFGSEA(Proc):
         r-seurat:
             - check: {{proc.lang}} -e "library(seurat)"
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{(in.casefile or in.srtobj) | stem0}}.fgsea"
     lang = config.lang.rscript
@@ -1704,7 +1704,9 @@ class CellTypeAnnotation(Proc):
         sobjfile: The seurat object
 
     Output:
-        outfile: The rds file of seurat object with cell type annotated
+        outfile: The rds file of seurat object with cell type annotated.
+            A text file containing the mapping from the old `seurat_clusters` to the new cell types
+            will be generated and saved to `cluster2celltype.tsv` under the job output directory.
 
     Envs:
         tool (choice): The tool to use for cell type annotation.
@@ -1788,6 +1790,7 @@ class CellTypeAnnotation(Proc):
             - if: {{proc.envs.tool == 'sctype'}}
             - check: {{proc.lang}} -e "library(openxlsx)"
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = (
         "outfile:file:"
@@ -1905,6 +1908,7 @@ class SeuratMap2Ref(Proc):
         r-seurat:
             - check: {{proc.lang}} -e "library(Seurat)"
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript
@@ -1935,7 +1939,7 @@ class SeuratMap2Ref(Proc):
                 # "celltype-l1": "celltype.l1",
                 # "celltype-l2": "celltype.l2",
                 # "predicted_ADT": "ADT",
-            }
+            },
         },
         "MappingScore": {"ndim": 30},
     }
@@ -2083,6 +2087,7 @@ class RadarPlots(Proc):
             key `DEFAULT`.
             The keys must be valid string as part of the file name.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.radar_plots"
     lang = config.lang.rscript
@@ -2093,7 +2098,7 @@ class RadarPlots(Proc):
         "each": None,
         "prefix_each": True,
         "order": None,
-        "colors": None,
+        "colors": "biopipen",
         "ident": "seurat_clusters",
         "cluster_order": [],
         "breakdown": None,
@@ -2193,6 +2198,7 @@ class MetaMarkers(Proc):
             If no cases are specified, the default case will be added with
             the default values under `envs` with the name `DEFAULT`.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.meta_markers"
     lang = config.lang.rscript
@@ -2231,6 +2237,7 @@ class Seurat2AnnData(Proc):
         assay: The assay to use for AnnData.
             If not specified, the default assay will be used.
     """
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.h5ad"
     lang = config.lang.rscript
@@ -2260,6 +2267,7 @@ class AnnData2Seurat(Proc):
             to use for the check.
             Only works for `outtype = 'rds'`.
     """
+
     input = "adfile:file"
     output = "outfile:file:{{in.adfile | stem}}.RDS"
     lang = config.lang.rscript
@@ -2302,6 +2310,7 @@ class ScSimulation(Proc):
             See <https://rdrr.io/bioc/splatter/man/SplatParams.html>.
             Hyphens (`-`) will be transformed into dots (`.`) for the keys.
     """  # noqa: E501
+
     input = "seed:var"
     output = "outfile:file:simulatied_{{in.seed}}.RDS"
     lang = config.lang.rscript
@@ -2348,7 +2357,7 @@ class CellCellCommunication(Proc):
             expression, while *_complex corresponds to the actual complex, with subunits being separated by _.
             source and target columns represent the source/sender and target/receiver cell identity for each interaction, respectively
             * `*_props`: represents the proportion of cells that express the entity.
-                By default, any interactions in which either entity is not expressed in above 10% of cells per cell type
+                By default, any interactions in which either entity is not expressed in above 10%% of cells per cell type
                 is considered as a false positive, under the assumption that since CCC occurs between cell types, a sufficient
                 proportion of cells within should express the genes.
             * `*_means`: entity expression mean per cell type.
@@ -2376,6 +2385,21 @@ class CellCellCommunication(Proc):
             - geometric_mean: alias for `Geometric_Mean`
             - scseqcomm: alias for `scSeqComm`
             - cellchat: alias for `CellChat`
+        subset: An expression in string to subset the cells.
+            When a `.rds` or `.h5seurat` file is provided for `in.sobjfile`, you can provide an expression in `R`,
+            which will be passed to `base::subset()` in `R` to subset the cells.
+            But you can always pass an expression in `python` to subset the cells.
+            See <https://anndata.readthedocs.io/en/latest/tutorials/notebooks/getting-started.html#subsetting-using-metadata>.
+            You should use `adata` to refer to the AnnData object. For example, `adata.obs.groups == "g1"` will subset the cells
+            with `groups` equal to `g1`.
+        subset_using: The method to subset the cells.
+            - auto: Automatically detect the method to use.
+                Note that this is not always accurate. We simply check if `[` is in the expression.
+                If so, we use `python` to subset the cells; otherwise, we use `R`.
+            - python: Use python to subset the cells.
+            - r: Use R to subset the cells.
+        split_by: The column name in metadata to split the cells to run the method separately.
+            The results will be combined together with this column in the final output.
         assay: The assay to use for the analysis.
             Only works for Seurat object.
         seed (type=int): The seed for the random number generator.
@@ -2401,6 +2425,7 @@ class CellCellCommunication(Proc):
             See the method documentation for more details and also
             `help(liana.mt.<method>.__call__)` in Python.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}-ccc.txt"
     lang = config.lang.python
@@ -2408,6 +2433,9 @@ class CellCellCommunication(Proc):
         "method": "cellchat",
         "assay": None,
         "seed": 1337,
+        "subset": None,
+        "subset_using": "auto",
+        "split_by": None,
         "ncores": config.misc.ncores,
         "groupby": "seurat_clusters",
         "species": "human",
@@ -2455,6 +2483,7 @@ class CellCellCommunicationPlots(Proc):
                 See the documentation for more details.
                 Or you can use `?CCPlotR::cc_<kind>` in R.
     """
+
     input = "cccfile:file, expfile:file"
     output = "outdir:dir:{{in.cccfile | stem}}-ccc_plots"
     lang = config.lang.rscript
@@ -2467,3 +2496,135 @@ class CellCellCommunicationPlots(Proc):
     plugin_opts = {
         "report": "file://../reports/scrna/CellCellCommunicationPlots.svelte",
     }
+
+
+class ScVelo(Proc):
+    """Velocity analysis for single-cell RNA-seq data
+
+    This process is implemented based on the Python package `scvelo`.
+
+    Input:
+        sobjfile: The seurat object file in RDS or h5seurat format or AnnData file.
+
+    Output:
+        outfile: The output object with the velocity embeddings and information.
+            In either RDS, h5seurat or h5ad format, depending on the `envs.outtype`.
+        outdir: The output directory for the plots
+
+    Envs:
+        ncores (type=int): Number of cores to use.
+        group_by: The column name in metadata to group the cells.
+            Typically, this column should be the cluster id.
+        reduction: The nonlinear reduction to use for the velocity analysis.
+            Typically, `umap` will be used.
+            If this is not provided, 'pca' will be used if exists, otherwise a
+            PCA will be performed.
+        modes (type=auto): The modes to use for the analysis.
+            A list or a string with comma separated values.
+        fitting_by (choice): The mode to use for fitting the velocities.
+            - stochastic: Stochastic mode
+            - deterministic: Deterministic mode
+        min_shared_counts (type=int): Minimum number of counts
+            (both unspliced and spliced) required for a gene.
+        n_neighbors (type=int): The number of neighbors to use for the velocity graph.
+        n_pcs (type=int): The number of PCs to use for the velocity graph.
+        stream_smooth (type=float): Multiplication factor for scale in Gaussian kernel
+            around grid point.
+        stream_density (type=float): Controls the closeness of streamlines.
+            When density = 2.0, the domain is divided into a 60x60 grid, whereas
+            density linearly scales this grid. Each cell in the grid can have,
+            at most, one traversing streamline. For different densities in each
+            direction, use a tuple (density_x, density_y).
+        arrow_size (type=float): Scaling factor for the arrow size.
+        arrow_length (type=float): Length of arrows.
+        arrow_density (type=float): Density of arrows.
+        denoise (flag): Whether to denoise the data.
+        denoise_topn (type=int): Number of genes with highest likelihood selected to
+            infer velocity directions.
+        kinetics (flag): Whether to compute the RNA velocity kinetics.
+        kinetics_topn (type=int): Number of genes with highest likelihood selected to
+            infer velocity directions.
+        calculate_velocity_genes (flag): Whether to calculate the velocity genes.
+        top_n (type=int): The number of top features to plot.
+        res (type=int): The resolution of the plots.
+        rscript: The path to the Rscript executable used to convert RDS file to AnnData.
+            if `in.sobjfile` is an RDS file, it will be converted to AnnData file
+            (h5ad). You need `Seurat`, `SeuratDisk` and `digest` installed.
+        outtype (choice): The output file type.
+            - input: The same as the input file type.
+            - anndata: AnnData object
+            - h5seurat: h5seurat object
+            - h5ad: h5ad object
+    """
+
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}-scvelo.{{envs.outtype}}"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "group_by": "seurat_clusters",
+        "reduction": "umap",
+        "modes": ["stochastic", "deterministic", "dynamical"],
+        "fitting_by": "stochastic",
+        "min_shared_counts": 30,
+        "n_neighbors": 30,
+        "n_pcs": 30,
+        "stream_smooth": 0.5,
+        "stream_density": 2.0,
+        "arrow_size": 5.0,
+        "arrow_length": 5.0,
+        "arrow_density": 0.5,
+        "denoise": False,
+        "denoise_topn": 3,
+        "kinetics": False,
+        "kinetics_topn": 100,
+        "calculate_velocity_genes": False,
+        "top_n": 6,
+        "res": 100,
+        "rscript": config.lang.rscript,
+        "outtype": "input",
+    }
+    script = "file://../scripts/scrna/ScVelo.py"
+
+
+class SlingShot(Proc):
+    """Trajectory inference using SlingShot
+
+    This process is implemented based on the R package `slingshot`.
+
+    Input:
+        sobjfile: The seurat object file in RDS.
+
+    Output:
+        outfile: The output object with the trajectory information.
+
+    Envs:
+        group_by: The column name in metadata to group the cells.
+            Typically, this column should be the cluster id.
+        reduction: The nonlinear reduction to use for the trajectory analysis.
+        dims (type=auto): The dimensions to use for the analysis.
+            A list or a string with comma separated values.
+            Consecutive numbers can be specified with a colon (`:`) or a dash (`-`).
+        start: The starting group for the SlingShot analysis.
+        end: The ending group for the SlingShot analysis.
+        prefix: The prefix to add to the column names of the resulting pseudotime variable.
+        reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
+        align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
+        seed (type=int): The seed for the random number generator.
+    """  # noqa: E501
+
+    input = "sobjfile:file"
+    output = "outfile:file:{{in.sobjfile | stem}}.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "group_by": "seurat_clusters",
+        "reduction": None,
+        "dims": [1, 2],
+        "start": None,
+        "end": None,
+        "prefix": None,
+        "reverse": False,
+        "align_start": False,
+        "seed": 8525,
+    }
+    script = "file://../scripts/scrna/SlingShot.R"

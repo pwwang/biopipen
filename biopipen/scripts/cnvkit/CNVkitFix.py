@@ -2,11 +2,11 @@ from pathlib import Path
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-target_file = {{in.target_file | quote}}  # pyright: ignore
+target_file = {{in.target_file | quote}}  # pyright: ignore  # noqa
 antitarget_file = {{in.antitarget_file | quote}}  # pyright: ignore
 reference_file = {{in.reference | quote}}  # pyright: ignore
 sample_id = {{in.sample_id | repr}}  # pyright: ignore
-outfile = {{out.outfile | quote}}  # pyright: ignore
+outfile: str = {{out.outfile | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 cluster = {{envs.cluster | repr}}  # pyright: ignore
 no_gc = {{envs.no_gc | repr}}  # pyright: ignore
@@ -18,7 +18,7 @@ emptyfile.touch()
 
 def main():
 
-    args = dict(
+    args: dict = dict(
         i=sample_id,
         o=outfile,
         c=cluster,

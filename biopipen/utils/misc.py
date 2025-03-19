@@ -4,7 +4,8 @@ from pathlib import Path
 import os
 import sys
 import logging
-from typing import List
+from subprocess import Popen
+from typing import List, Callable, Any
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
 logger = logging.getLogger("biopipen_job")
@@ -34,13 +35,13 @@ def exec_code(code, global_vars=None, local_vars=None, return_var=None):
 
 
 def run_command(
-    cmd: str | List[str],
+    cmd: str | List[Any],
     fg: bool = False,
     wait: bool = True,
     print_command: bool = True,
-    print_command_handler: callable = print,
+    print_command_handler: Callable = print,
     **kwargs,
-):
+) -> Popen | str:
     """Run a command.
 
     Args:
@@ -57,7 +58,7 @@ def run_command(
         The `Popen` object, or str when `stdout` is `RETURN` or `return`.
     """
     import shlex
-    from subprocess import Popen, PIPE, STDOUT
+    from subprocess import PIPE, STDOUT
 
     if isinstance(cmd, list):
         cmd = [str(c) for c in cmd]
@@ -110,15 +111,23 @@ def run_command(
     try:
         p = Popen(cmd, **kwargs)
     except Exception as e:
-        raise RuntimeError(f"Failed to run command: {e}")
+        raise RuntimeError(
+            f"Failed to run command: {e}\n"
+            f"Command (list): {cmd}\n"
+            f"Command (str): {shlex.join(cmd)}"
+        )
 
     if fg or wait or return_stdout:
         rc = p.wait()
         if rc != 0:
-            raise RuntimeError(f"Failed to run command: {cmd}")
+            raise RuntimeError(
+                f"Failed to run command: rc={rc}\n"
+                f"Command (list): {cmd}\n"
+                f"Command (str): {shlex.join(cmd)}"
+            )
 
         if return_stdout:
-            return p.stdout.read().decode()
+            return p.stdout.read().decode()  # type: ignore
 
         return p
 

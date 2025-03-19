@@ -3,8 +3,8 @@ from pathlib import Path
 import pandas
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-metafile = {{in.cnsfile | quote}}  # pyright: ignore
-outdir = {{out.outdir | quote}}  # pyright: ignore
+metafile: str = {{in.cnsfile | quote}}  # pyright: ignore  # noqa
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 method = {{envs.method | quote}}  # pyright: ignore
 segment_method = {{envs.segment_method | quote}}  # pyright: ignore
@@ -13,7 +13,7 @@ count_reads = {{envs.count_reads | repr}}  # pyright: ignore
 drop_low_coverage = {{envs.drop_low_coverage | repr}}  # pyright: ignore
 ncores = {{envs.ncores | repr}}  # pyright: ignore
 rscript = {{envs.rscript | quote}}  # pyright: ignore
-ref = {{envs.ref | quote}}  # pyright: ignore
+ref: str = {{envs.ref | quote}}  # pyright: ignore
 targets = {{envs.targets | repr}}  # pyright: ignore
 antitargets = {{envs.antitargets | repr}}  # pyright: ignore
 annotate = {{envs.annotate | repr}}  # pyright: ignore
@@ -30,7 +30,7 @@ scatter = {{envs.scatter | repr}}  # pyright: ignore
 diagram = {{envs.diagram | repr}}  # pyright: ignore
 type_tumor = {{envs.type_tumor | repr}}  # pyright: ignore
 type_normal = {{envs.type_normal | repr}}  # pyright: ignore
-type_col = {{envs.type_col | quote}}  # pyright: ignore
+type_col: str = {{envs.type_col | quote}}  # pyright: ignore
 
 
 def gen_access():
@@ -38,7 +38,7 @@ def gen_access():
         return access
 
     accessfile = Path(outdir) / "access.bed"
-    args = dict(
+    args: dict = dict(
         exclude=access_excludes or False,
         s=access_min_gap_size or False,
         o=accessfile,

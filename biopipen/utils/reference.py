@@ -26,7 +26,7 @@ def gztype(gzfile):
 def tabix_index(
     infile: str | PathLike,
     preset: Literal["gff", "bed", "sam", "vcf", "gaf"],
-    tmpdir: bool | str | PathLike | None = None,
+    tmpdir: Literal[False] | str | PathLike | None = None,
     tabix: str = config.exe.tabix,
 ) -> str | PathLike:
     """Index input file using tabix
@@ -126,15 +126,15 @@ def _run_bam_index(
 
 
 def bam_index(
-    bam,
-    bamdir=tempfile.gettempdir(),
-    tool="samtools",
-    samtools=config.exe.samtools,
-    sambamba=config.exe.sambamba,
-    ncores=1,
-    ext=".bam.bai",
-    force=False,
-):
+    bam: str | Path,
+    bamdir: Path | str = tempfile.gettempdir(),
+    tool: str = "samtools",
+    samtools: str = config.exe.samtools,
+    sambamba: str = config.exe.sambamba,
+    ncores: int = 1,
+    ext: str = ".bam.bai",
+    force: bool = False,
+) -> Path:
     """Index a bam file
 
     First look for the index file in the same directory as the bam file,
@@ -175,7 +175,7 @@ def bam_index(
         return bam
 
     if indexfile.is_file():
-        return str(bam)
+        return bam
 
     linkfile = Path(bamdir).joinpath(bam.name)
     indexfile = linkfile.with_suffix(ext)

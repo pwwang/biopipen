@@ -34,46 +34,85 @@ if (!exists("slugify")) {
     }
 }
 
+#' Download the GMT file and save it to cachedir
+#' Return the path to the GMT file
+#' We also check if the second column is shorter than the first column.
+#' If so, we switch the first and second columns.
+#' In case some providers provide the GMT file with the first and second columns switched.
+#' We also replace the "/" in the gene names with "-" if any. This is because the "/" is
+#' not allowed in a path, but GSEA uses the gene names as the file name.
+#'
+#' @param gmturl The URL or path of the GMT file
+#' @param cachedir The directory to save the GMT file
+#' @return The path to the GMT file
 localizeGmtfile <- function(gmturl, cachedir = tempdir()) {
     # Download the GMT file and save it to cachedir
     # Return the path to the GMT file
-    if (!startsWith(gmturl, "http") && !startsWith(gmturl, "ftp")) {
-        return(gmturl)
+    in_gmtfile <- out_gmtfile <- file.path(cachedir, basename(gmturl))
+    if (startsWith(gmturl, "http") || startsWith(gmturl, "ftp")) {
+        download.file(gmturl, in_gmtfile)
+        remote <- TRUE
+    } else {
+        in_gmtfile <- gmturl
+        remote <- FALSE
     }
-    gmtfile = file.path(cachedir, basename(gmturl))
-    if (!file.exists(gmtfile)) {
-        download.file(gmturl, gmtfile)
-        items <- read.delim(gmtfile, header = FALSE, stringsAsFactors = FALSE, sep = "\t")
-        if (ncol(items) < 3) {
-            stop(paste0("Invalid GMT file: ", gmtfile, ", from ", gmturl))
-        }
-        if (nrow(items) == 0) {
-            stop(paste0("Empty GMT file: ", gmtfile, ", from ", gmturl))
-        }
-        if (
-            is.character(items$V2[1]) &&
-            nchar(items$V2[1]) < nchar(items$V1[1]) &&
-            nchar(items$V2[1]) > 0 &&
-            is.na(suppressWarnings(as.numeric(items$V2[1])))
-        ) {
-            warning(paste0(
-                "The second column is shorter, switching the first and second columns in GMT file ",
-                gmtfile,
-                " from ",
-                gmturl
-            ))
-            items <- items[, c(2, 1, 3:ncol(items))]
-            write.table(
-                items,
-                gmtfile,
-                row.names = F,
-                col.names = F,
-                sep = "\t",
-                quote = F
-            )
-        }
+
+    items <- readLines(in_gmtfile)
+    items <- items[!grepl("^#", items) & nchar(items) > 0]
+    items <- lapply(strsplit(items, "\t"), function(x) c(x[1:2], paste0(x[3:length(x)], collapse = "\t")))
+    items <- as.data.frame(t(as.data.frame(items)))
+    rownames(items) <- NULL
+    colnames(items) <- c("V1", "V2", "V3")
+
+    if (ncol(items) < 3) {
+        stop(paste0("Invalid GMT file: ", gmturl))
     }
-    return(gmtfile)
+    if (nrow(items) == 0) {
+        stop(paste0("Empty GMT file: ", gmturl))
+    }
+
+    # Check if the second column is shorter than the first column
+    nchars1 <- sum(nchar(items$V1))
+    nchars2 <- sum(nchar(items$V2))
+    prefix <- gsub("[0-9]+$", "", items$V2[1])
+
+    if (is.character(items$V2) &&     # Only when V2 is character, as pathway names
+        nchars2 < nchars1 &&          # Only when V2 is shorter than V1
+        all(nchar(items$V2) > 0) &&   # Only when V2 is not empty
+        !all(grepl("^[0-9]+$", items$V2)) && # Only when V2 is not all numbers
+        (nchar(prefix) == 0 || !all(startsWith(items$V2, prefix))) # Only when they are not like hsa00001, hsa00002, etc.
+    ) {
+        warning(paste0(
+            "The second column is shorter, switching the first and second columns in ",
+            "GMT file ", gmturl
+        ))
+        items <- items[, c(2, 1, 3:ncol(items))]
+        switched <- TRUE
+    } else {
+        switched <- FALSE
+    }
+
+    if (any(grepl("/", items$V1))) {
+        items$V1 <- gsub("/", "-", items$V1)
+        replaced <- TRUE
+    } else {
+        replaced <- FALSE
+    }
+
+    if (remote || switched || replaced) {
+        write.table(
+            items,
+            out_gmtfile,
+            row.names = FALSE,
+            col.names = FALSE,
+            sep = "\t",
+            quote = FALSE
+        )
+    } else {
+        out_gmtfile <- in_gmtfile
+    }
+
+    return(out_gmtfile)
 }
 
 
@@ -261,6 +300,7 @@ runGSEA = function(
         mutate(Description = "na") %>%
         rownames_to_column("NAME") %>%
         select(NAME, Description, everything())
+
     write.table(
         indata,
         gctfile,

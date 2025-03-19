@@ -329,3 +329,42 @@ class BamSubsetByBed(Proc):
         "index": True,
     }
     script = "file://../scripts/bam/BamSubsetByBed.py"
+
+
+class BamSort(Proc):
+    """Sort bam file
+
+    Input:
+        bamfile: The bam file
+
+    Output:
+        outfile: The output bam file
+
+    Envs:
+        tool (choice): The tool to use.
+            - samtools: Use `samtools`
+            - sambamba: Use `sambamba`
+        ncores (type=int): Number of cores to use
+        samtools: Path to samtools executable
+        sambamba: Path to sambamba executable
+        tmpdir: The temporary directory to use
+        byname (flag): Whether to sort by read name
+        index (flag): Whether to index the output bam file
+            The index file will be created in the same directory as the output
+            bam file
+        <more>: Other arguments passed to the sorting tool
+            See `samtools sort` or `sambamba sort`
+    """
+    input = "bamfile:file"
+    output = "outfile:file:{{in.bamfile | stem}}.sorted.bam"
+    lang = config.lang.python
+    envs = {
+        "tool": "samtools",
+        "ncores": config.misc.ncores,
+        "samtools": config.exe.samtools,
+        "sambamba": config.exe.sambamba,
+        "tmpdir": config.path.tmpdir,
+        "byname": False,
+        "index": True,
+    }
+    script = "file://../scripts/bam/BamSort.py"

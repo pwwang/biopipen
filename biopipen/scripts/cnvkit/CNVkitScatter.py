@@ -4,14 +4,14 @@ from diot import Diot
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-cnrfile = {{in.cnrfile | quote}}  # pyright: ignore
+cnrfile = {{in.cnrfile | quote}}  # pyright: ignore  # noqa
 cnsfile = {{in.cnsfile | quote}}  # pyright: ignore
 convert = {{envs.convert | quote}}  # pyright: ignore
 convert_args = {{envs.convert_args | repr}}  # pyright: ignore
 vcf = {{in.vcf | repr}}  # pyright: ignore
 sample_id = {{in.sample_id | repr}}  # pyright: ignore
 normal_id = {{in.normal_id | repr}}  # pyright: ignore
-outdir = {{out.outdir | quote}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 chromosome = {{envs.chromosome | repr}}  # pyright: ignore
 gene = {{envs.gene | repr}}  # pyright: ignore
@@ -25,7 +25,7 @@ y_min = {{envs.y_min | repr}}  # pyright: ignore
 min_variant_depth = {{envs.min_variant_depth | repr}}  # pyright: ignore
 zygosity_freq = {{envs.zygosity_freq | repr}}  # pyright: ignore
 title = {{envs.title | repr}}  # pyright: ignore
-cases = {{envs.cases | repr}}  # pyright: ignore
+cases: dict | None = {{envs.cases | repr}}  # pyright: ignore
 
 
 def do_case(name, case):
@@ -50,7 +50,7 @@ def do_case(name, case):
     pdffile = Path(outdir).joinpath(f"{name}.heatmap.pdf")
     pngfile = Path(outdir).joinpath(f"{name}.heatmap.png")
 
-    args = dict(
+    args: dict = dict(
         **case,
         s=cnsfile,
         o=pdffile,
@@ -62,7 +62,7 @@ def do_case(name, case):
     args[""] = [cnvkit, "scatter"]
     run_command(dict_to_cli_args(args, dashify=True), fg=True)
 
-    conv_args = dict(**conv_args, _=[pdffile, pngfile])
+    conv_args: dict = dict(**conv_args, _=[pdffile, pngfile])
     conv_args[""] = [convert]
     run_command(
         dict_to_cli_args(conv_args, dashify=True, prefix="-"),

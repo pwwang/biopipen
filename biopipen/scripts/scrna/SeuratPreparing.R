@@ -1,12 +1,9 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "caching.R" | source_r }}
-
 library(Seurat)
 library(future)
 library(bracer)
-library(ggplot2)
 library(dplyr)
-# library(tidyseurat)
+library(glue)
+library(biopipen.utils)
 
 metafile <- {{in.metafile | quote}}
 rdsfile <- {{out.rdsfile | quote}}
@@ -14,10 +11,9 @@ joboutdir <- {{job.outdir | quote}}
 envs <- {{envs | r: todot = "-", skip = 1}}
 
 if (isTRUE(envs$cache)) { envs$cache <- joboutdir }
-if (length(envs$cache) > 1) {
-    log_warn("Multiple cache directories (envs.cache) detected, using the first one.")
-    envs$cache <- envs$cache[1]
-}
+
+log <- get_logger()
+reporter <- get_reporter()
 
 set.seed(8525)
 # 8TB
@@ -26,15 +22,15 @@ options(future.rng.onMisuse="ignore")
 options(Seurat.object.assay.version = "v5")
 plan(strategy = "multicore", workers = envs$ncores)
 
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratPreparing-common.R" | source_r }}
-
-add_report(
+reporter$add(
     list(
         kind = "descr",
         name = "Filters applied",
         content = paste0(
             "<p>Cell filters: ", html_escape(envs$cell_qc), "</p>",
-            "<p>Gene filters: ", html_escape(stringify_list(envs$gene_qc)), "</p>"
+            "<p>Gene filters: </p>",
+            "<p>- Min Cells: ", envs$gene_qc$min_cells, "</p>",
+            "<p>- Excludes: ", html_escape(envs$gene_qc$excludes %||% "Not set"), "</p>"
         )
     ),
     h1 = "Filters and QC"
@@ -48,16 +44,6 @@ metadata <- read.table(
     check.names = FALSE
 )
 
-cache_sig <- capture.output(str(metadata))
-dig_sig <- digest::digest(cache_sig, algo = "md5")
-dig_sig <- substr(dig_sig, 1, 8)
-cache_dir <- NULL
-if (is.character(envs$cache)) {
-    cache_dir <- file.path(envs$cache, paste0(dig_sig, ".seuratpreparing_cache"))
-    dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
-    writeLines(cache_sig, file.path(cache_dir, "signature.txt"))
-}
-
 meta_cols = colnames(metadata)
 if (!"Sample" %in% meta_cols) {
     stop("Error: Column `Sample` is not found in metafile.")
@@ -66,77 +52,148 @@ if (!"RNAData" %in% meta_cols) {
     stop("Error: Column `RNAData` is not found in metafile.")
 }
 
-samples = as.character(metadata$Sample)
+qcdir = file.path(joboutdir, "qc")
+dir.create(qcdir, showWarnings = FALSE, recursive = TRUE)
 
-# used for plotting
-cell_qc_df = NULL
+sobj <- LoadSeuratAndPerformQC(
+    metadata,
+    per_sample_qc = envs$cell_qc_per_sample,
+    cell_qc = envs$cell_qc,
+    gene_qc = envs$gene_qc,
+    tmpdir = joboutdir,
+    log = log,
+    cache = envs$cache)
 
-plotsdir = file.path(joboutdir, "plots")
-dir.create(plotsdir, showWarnings = FALSE, recursive = TRUE)
-
-# features for cell QC
-feats = c(
-    "nFeature_RNA", "nCount_RNA",
-    "percent.mt", "percent.ribo", "percent.hb", "percent.plat"
+log$info("Saving dimension table ...")
+dim_df <- data.frame(
+    when = c("Before QC", "After QC"),
+    nCells = c(nrow(sobj@misc$cell_qc_df), sum(sobj@misc$cell_qc_df$.QC)),
+    nGenes = c(sobj@misc$gene_qc$before, sobj@misc$gene_qc$after)
 )
-
-sobj <- run_cell_qc(sobj)
-
-# plot and report the QC
-log_info("Plotting and reporting QC ...")
-dim_df = report_cell_qc(nrow(sobj))
-
-if (is.list(envs$gene_qc)) {
-    sobj <- run_gene_qc(sobj)
-}
-
-dim_df = rbind(
-    dim_df,
-    data.frame(
-        when = "After_Gene_QC",
-        nCells = ncol(sobj),
-        nGenes = nrow(sobj)
-    )
-)
-
-log_info("Saving dimension table ...")
-write.table(dim_df, file = file.path(plotsdir, "dim.txt"),
+write.table(dim_df, file = file.path(qcdir, "dim.txt"),
             row.names = FALSE, quote = FALSE, sep = "\t")
 
-add_report(
+reporter$add(
     list(
         kind = "descr",
-        content = paste(
-            "The dimension table for the Seurat object. The table contains the number of cells and genes before and after QC."
-        )
+        content = "The dimension table for the Seurat object. The table contains the number of cells and genes before and after QC. Note that the cell QC is performed before gene QC."
     ),
     list(
         kind = "table",
-        data = list(path = file.path(plotsdir, "dim.txt"))
+        data = list(path = file.path(qcdir, "dim.txt"))
     ),
-    h1 = "Filters and QC"
+    h1 = "Filters and QC",
+    h2 = "Dimension table"
 )
 
-sobj <- run_transformation(sobj)
-sobj <- run_integration(sobj)
-
-# This is the last step, doesn't need to be cached
-if (!is.null(envs$doublet_detector) && envs$doublet_detector != "none") {
-    {{* biopipen_dir | joinpaths: "scripts", "scrna", "SeuratPreparing-doublet_detection.R" | source_r }}
-
-    detector <- tolower(envs$doublet_detector)
-    if (detector == "doubletfinder") detector <- "DoubletFinder"
-    if (detector == "scdblfinder") detector <- "scDblFinder"
-    dd <- run_dd(detector)
-    save_dd(dd, detector)
-    sobj <- add_dd_to_seurat(sobj, dd)
-    plot_dd(sobj, dd, detector)
-    sobj <- filter_dd(sobj, dd, detector)
-    report_dd(detector)
+log$info("Visualizing QC metrics ...")
+for (pname in names(envs$qc_plots)) {
+    args <- envs$qc_plots[[pname]]
+    args$kind <- args$kind %||% "cell"
+    args$devpars <- args$devpars %||% list()
+    args$more_formats <- args$more_formats %||% character()
+    args$save_code <- args$save_code %||% FALSE
+    extract_vars(args, "kind", "devpars", "more_formats", "save_code")
+    if (kind == "gene") kind <- "gene_qc"
+    if (kind == "cell") kind <- "cell_qc"
+    args$object <- sobj
+    plot_fn <- if (kind == "cell_qc") {
+        gglogger::register(VizSeuratCellQC)
+    } else {
+        gglogger::register(VizSeuratGeneQC)
+    }
+    p <- do_call(plot_fn, args)
+    prefix <- file.path(qcdir, paste0(slugify(pname), "_", kind))
+    save_plot(p, prefix, devpars, formats = c("png", more_formats))
+    if (save_code) {
+        save_plotcode(p, prefix,
+            setup = c("library(biopipen.utils)", "load('data.RData')", "invisible(list2env('args'))"),
+            "args",
+            auto_data_setup = FALSE)
+    }
+    reporter$add(
+        reporter$image(prefix, more_formats, save_code, kind = "image"),
+        h1 = "Filters and QC",
+        h2 = html_escape(pname)
+    )
 }
 
+sobj <- RunSeuratTransformation(
+    sobj,
+    use_sct = envs$use_sct,
+    SCTransformArgs = envs$SCTransform,
+    NormalizeDataArgs = envs$NormalizeData,
+    FindVariableFeaturesArgs = envs$FindVariableFeatures,
+    ScaleDataArgs = envs$ScaleData,
+    RunPCAArgs = envs$RunPCA,
+    log = log,
+    cache = envs$cache
+)
+sobj <- RunSeuratIntegration(
+    sobj,
+    no_integration = envs$no_integration,
+    IntegrateLayersArgs = envs$IntegrateLayers,
+    log = log,
+    cache = envs$cache
+)
 
-log_info("Saving QC'ed seurat object ...")
+# This is the last step, doesn't need to be cached
+if (!identical(envs$doublet_detector, "none")) {
+    dbldir <- file.path(joboutdir, "doublets")
+    dir.create(dbldir, showWarnings = FALSE, recursive = TRUE)
+
+    sobj <- RunSeuratDoubletDetection(
+        sobj,
+        tool = envs$doublet_detector,
+        DoubletFinderArgs = envs$DoubletFinder,
+        scDblFinderArgs = envs$scDblFinder,
+        filter = FALSE,
+        log = log,
+        cache = envs$cache
+    )
+
+    log$info("Visualizing doublet detection results ...")
+    if (identical(tolower(envs$doublet_detector), "doubletfinder")) {
+        p <- VizSeuratDoublets(sobj, plot_type = "pK", x_text_angle = 90)
+        save_plot(
+            p, file.path(dbldir, "doubletfinder_pk"),
+            devpars = list(res = 100, width = 800, height = 600),
+            formats = "png")
+        reporter$add(
+            list(
+                kind = "descr",
+                content = paste(
+                    "The pK plot from DoubletFinder to select the optimal pK value.",
+                    "See more at https://github.com/chris-mcginnis-ucsf/DoubletFinder"
+                )
+            ),
+            list(
+                kind = "image",
+                src = file.path(dbldir, "doubletfinder_pk.png")
+            ),
+            h1 = glue("Doublet detection using {envs$doublet_detector}"),
+            h2 = "BC metric vs pK"
+        )
+    }
+
+    for (pt in c("dim", "pie")) {
+        p <- VizSeuratDoublets(sobj, plot_type = pt)
+        save_plot(p, file.path(dbldir, paste0("doublets_", pt)), formats = "png")
+
+        reporter$add(
+            list(
+                src = file.path(dbldir, paste0("doublets_", pt, ".png")),
+                descr = ifelse(pt == "dim", "Dimention Reduction Plot", "Pie Chart")
+            ),
+            h1 = glue("Doublet detection using {envs$doublet_detector}"),
+            h2 = "Doublets distribution",
+            ui = "table_of_images"
+        )
+    }
+
+    sobj <- subset(sobj, subset = !!sym(paste0(sobj@misc$doublets$tool, "_DropletType")) != "doublet")
+}
+
+log$info("Saving QC'ed seurat object ...")
+reporter$save(joboutdir)
 saveRDS(sobj, rdsfile)
-
-save_report(joboutdir)
