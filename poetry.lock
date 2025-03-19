@@ -1020,14 +1020,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-report"
-version = "0.23.0"
+version = "0.23.1"
 description = "Report generation system for pipen"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_report-0.23.0-py3-none-any.whl", hash = "sha256:bd1edec4edf96cfa0f71dd804faf98bd08673752ef1969d11391c0f80f475f9c"},
-    {file = "pipen_report-0.23.0.tar.gz", hash = "sha256:34922acaef1ea88bfa174a5d61b808e57cf9cdc1e7388aba045ca92cdd01cb05"},
+    {file = "pipen_report-0.23.1-py3-none-any.whl", hash = "sha256:39068802c76d58dff65964097d20f7fb0ef74890de4340005ed8075e96a15eb3"},
+    {file = "pipen_report-0.23.1.tar.gz", hash = "sha256:5ae2c95d88f4178b1a94b182abbdd30e7629727075f3faf9ac25c90f955c74a3"},
 ]
 
 [package.dependencies]
