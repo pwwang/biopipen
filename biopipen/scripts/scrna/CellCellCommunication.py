@@ -99,7 +99,7 @@ if split_by:
         else:
             result = pd.concat([result, res], ignore_index=True)
 else:
-    logger.info("Running {method} ...")
+    logger.info(f"Running {method} ...")
     envs["adata"] = adata
     method_fun(**envs)
 
