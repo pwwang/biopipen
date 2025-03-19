@@ -36,9 +36,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CONDA }}/envs/
-          key: conda-${{ hashFiles('tests/conda/env_*.yml') }}
+          key: conda-${{ hashFiles('tests/conda/env_*.yml') }}-${{ env.CACHE_NUMBER }}
         env:
           TAR_OPTIONS: "--no-same-owner --no-same-permissions"
+          CACHE_NUMBER: 1
 
       - name: Create conda environments (if not cached)
         if: steps.restore-conda.outputs.cache-hit != 'true'
@@ -79,7 +80,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: tests/data
-          key: reference-${{ hashFiles('tests/data/prep_data.py') }}
+          key: reference-${{ hashFiles('tests/data/prep_data.py') }}-${{ env.CACHE_NUMBER }}
+        env:
+          CACHE_NUMBER: 1
 
       - name: Prepare reference data
         if: steps.restore-reference.outputs.cache-hit != 'true'
