@@ -54,7 +54,16 @@ get_plotthis_fn <- function(plot_type, gglogger_register = TRUE, return_name = F
         pie = "PieChart",
         wordcloud = "WordCloudPlot",
         venn = "VennDiagram",
-        paste0(tools::toTitleCase(plot_type), "Plot")
+        {
+            title_case_plot_type <- tools::toTitleCase(plot_type)
+            if (endsWith(title_case_plot_type, "Plot")) {
+                title_case_plot_type
+            } else if (endsWith(title_case_plot_type, "plot")) {
+                paste0(substr(title_case_plot_type, 1, nchar(title_case_plot_type) - 4), "Plot")
+            } else {
+                paste0(title_case_plot_type, "Plot")
+            }
+        }
     )
     if (return_name) {
         return(fn_name)
