@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.33.1
+
+- fix(delim.SampleInfo): fix when plot_type ending with "plot"
+- feat(scrna.LoomTo10X): add LoomTo10X to convert loom format of scRNA-seq data to 10X format
+- ci: update conditions for build and deploy jobs based on event type
+
 ## 0.33.0
 
 - chore(dependencies): update pipen (v0.17) and related package versions in pyproject.toml
