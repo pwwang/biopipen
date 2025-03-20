@@ -54,6 +54,7 @@ dependencies:
   - bioconda::bedtools
   - bioconda::r-presto
   - bioconda::r-scimpute
+  - bioconda::r-loomr
   - bioconda::bioconductor-splatter
   - bioconda::bioconductor-mygene
   - bioconda::bioconductor-complexheatmap

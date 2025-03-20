@@ -2628,3 +2628,20 @@ class SlingShot(Proc):
         "seed": 8525,
     }
     script = "file://../scripts/scrna/SlingShot.R"
+
+
+class LoomTo10X(Proc):
+    """Convert Loom file to 10X format
+
+    Input:
+        loomfile: The Loom file
+
+    Output:
+        outdir: The output directory for the 10X format files,
+            including the `matrix.mtx.gz`, `barcodes.tsv.gz` and `features.tsv.gz`
+            files.
+    """
+    input = "loomfile:file"
+    output = "outdir:dir:{{in.loomfile | stem}}.10X"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/LoomTo10X.R"
