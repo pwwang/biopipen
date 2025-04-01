@@ -49,8 +49,8 @@ class TMADScoreSummary(TMADScoreSummary_):
 
 def pipeline():
     return (
-        # get_pipeline(__file__)
-        get_pipeline(__file__, enable_report=True)
+        get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True)
         .set_start(Download)
         .set_data(CNS_URL)
     )
