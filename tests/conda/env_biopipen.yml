@@ -84,6 +84,7 @@ dependencies:
   - pwwang::r-bracer
   - pwwang::r-sccatch
   - pwwang::r-harmony
+  - pwwang::r-aneuploidyscore
   - pwwang::r-biopipen.utils
   # - pwwang::r-scplotter
   - pwwang::bioconductor-screpertoire  # required by r-scplotter
