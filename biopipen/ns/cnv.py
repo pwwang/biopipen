@@ -150,7 +150,7 @@ class TMADScore(Proc):
         excl_chroms (list): The chromosomes to be excluded
     """
     input = "segfile:file"
-    output = "outfile:file:{{in.segfile | stem0}}.tmad.txt"
+    output = "outfile:file:{{in.segfile | stem}}.tmad.txt"
     lang = config.lang.rscript
     envs = {
         "chrom_col": "chrom",
