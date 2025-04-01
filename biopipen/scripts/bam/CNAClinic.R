@@ -109,7 +109,7 @@ do_one_sample = function(i) {
         bamfile,
         sample,
         refSamples=refSamples,
-        binSize=binsize
+        binSize=binsize / 1000
     )
 
     run_args_i = run_args
