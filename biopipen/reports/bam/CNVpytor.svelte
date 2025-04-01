@@ -4,19 +4,16 @@
     import { Tabs, Tab, TabContent } from "$ccs";
 </script>
 
-{% for case in envs.cases %}
-<h1>{{case}}</h1>
-
-{%  for binsize in envs.cases[case].binsizes %}
-<h2>Binsize: {{binsize}}</h2>
+{% for binsize in envs.binsizes %}
+<h1>Binsize: {{binsize}}</h1>
 
 {% from_ os.path import join, basename %}
 {% assign manplots = [] %}
 {% assign circplots = [] %}
 {% assign samples = [] %}
 {% for job in jobs %}
-{%  set manplot = job.out.outdir | joinpaths: case, "manhattan."+str(binsize)+".*.png" | glob %}
-{%  set circplot = job.out.outdir | joinpaths: case, "circular."+str(binsize)+".*.png" | glob %}
+{%  set manplot = job.out.outdir | glob: "manhattan."+str(binsize)+".*.png" %}
+{%  set circplot = job.out.outdir | glob: "circular."+str(binsize)+".*.png" %}
 {%  set _ = manplots.append(manplot[0]) %}
 {%  if len(circplot) > 0 %}
 {%      set _ = circplots.append(circplot[0]) %}
@@ -44,7 +41,5 @@
         {% endif %}
     </div>
 </Tabs>
-
-{%  endfor %}
 
 {% endfor %}
