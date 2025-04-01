@@ -24,6 +24,7 @@ class AneuploidyScore(AneuploidyScore_):
         "start_col": "start",
         "end_col": "end",
         "seg_col": "log2",
+        "genome": "hg19",
     }
 
 
