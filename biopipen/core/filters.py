@@ -6,7 +6,7 @@ import shlex
 from pathlib import Path
 from typing import Any, List, Mapping
 
-from argx import Namespace
+from argx import Namespace  # pyright: ignore[reportPrivateImportUsage]
 from liquid.filters.manager import FilterManager
 from pipen_report.filters import register_component, render_ui, _tag
 
