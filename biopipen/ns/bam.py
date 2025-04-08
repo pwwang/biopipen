@@ -373,3 +373,34 @@ class BamSort(Proc):
         "index": True,
     }
     script = "file://../scripts/bam/BamSort.py"
+
+
+class SamtoolsView(Proc):
+    """View bam file using samtools, mostly used for filtering
+
+    This is a wrapper for `samtools view` command.
+    It will create a new bam file with the same name as the input bam file.
+
+    Input:
+        bamfile: The bam file
+
+    Output:
+        outfile: The output bam file
+
+    Envs:
+        ncores: Number of cores to use
+        samtools: Path to samtools executable
+        index: Whether to index the output bam file
+            Requires the input bam file to be sorted.
+        <more>: Other arguments passed to the view tool
+            See `samtools view` or `sambamba view`.
+    """
+    input = "bamfile:file"
+    output = "outfile:file:{{in.bamfile | stem}}.bam"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "samtools": config.exe.samtools,
+        "index": True,
+    }
+    script = "file://../scripts/bam/SamtoolsView.py"
