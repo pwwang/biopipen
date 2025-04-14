@@ -132,4 +132,4 @@ class SampleInfo(Proc):
     }
     lang = config.lang.rscript
     script = "file://../scripts/delim/SampleInfo.R"
-    plugin_opts = {"report": "file://../reports/delim/SampleInfo.svelte"}
+    plugin_opts = {"report": "file://../reports/common.svelte"}
