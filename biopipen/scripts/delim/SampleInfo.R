@@ -1,5 +1,6 @@
 library(rlang)
 library(dplyr)
+library(gglogger)
 library(biopipen.utils)
 library(plotthis)
 
@@ -132,7 +133,7 @@ if (length(stats) > 0) {
             case$data <- mutdata
         }
 
-        p <- do_call(gglogger::register(plot_fn, name = plot_type), case)
+        p <- do_call(plot_fn, case)
         save_plot(p, info$prefix, devpars, formats = more_formats)
         if (save_code) {
             save_plotcode(
