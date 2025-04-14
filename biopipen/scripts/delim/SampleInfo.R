@@ -156,3 +156,5 @@ if (length(stats) > 0) {
         )
     }
 }
+
+reporter$save(joboutdir)
