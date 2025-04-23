@@ -1689,7 +1689,7 @@ class ScRepLoading(Proc):
     `filtered_contig_annotations.csv` and `filtered_config_annotations.csv.gz` in the
     path. If neighter of them exists, we will find `all_contig_annotations.csv` and
     `all_contig_annotations.csv.gz` in the path and a warning will be raised
-    (You can find it at `./.pipen/<pipeline-name>/ImmunarchLoading/<job.index>/job.stderr`).
+    (You can find it at `./.pipen/<pipeline-name>/ScRepLoading/<job.index>/job.stderr`).
 
     If none of the files exists, an error will be raised.
 
@@ -1709,13 +1709,14 @@ class ScRepLoading(Proc):
         outfile: The `scRepertoire` compatible object in RDS format
 
     Envs:
-        combineTCR (type=json): The extra arguments for `scRepertoire::combineTCR` function.
+        combineTCR (type=json): The extra arguments for `scRepertoire::combineTCR`
+            function.
             See also <https://www.borch.dev/uploads/screpertoire/reference/combinetcr>
         exclude (auto): The columns to exclude from the metadata to add to the object.
-            A list of column names to exclude or a string with column names separated by `,`.
-            By default, `TCRData` and `RNAData` will be excluded.
+            A list of column names to exclude or a string with column names separated
+            by `,`. By default, `TCRData` and `RNAData` will be excluded.
 
-    """  # noqa: E501
+    """
     input = "metafile:file"
     output = "outfile:file:{{in.metafile | stem}}.scRep.RDS"
     lang = config.lang.rscript
