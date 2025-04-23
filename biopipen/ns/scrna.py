@@ -1865,8 +1865,9 @@ class SeuratMap2Ref(Proc):
             The file type is determined by the extension. `.rds` or `.RDS` for
             RDS file, `.h5seurat` or `.h5` for h5seurat file.
         refnorm (choice): Normalization method the reference used. The same method will be used for the query.
-            - NormalizeData: Using [`NormalizeData`](https://satijalab.org/seurat/reference/normalizedata).
+            - LogNormalize: Using [`NormalizeData`](https://satijalab.org/seurat/reference/normalizedata).
             - SCTransform: Using [`SCTransform`](https://satijalab.org/seurat/reference/sctransform).
+            - SCT: Alias of SCTransform.
             - auto: Automatically detect the normalization method.
                 If the default assay of reference is `SCT`, then `SCTransform` will be used.
         split_by: The column name in metadata to split the query into multiple objects.
@@ -1905,9 +1906,19 @@ class SeuratMap2Ref(Proc):
             - refdata (type=json): Extra data to transfer from the reference to the query.
             - <more>: See <https://satijalab.org/seurat/reference/mapquery>.
                 Note that the hyphen (`-`) will be transformed into `.` for the keys.
-        MappingScore (ns): Arguments for [`MappingScore()`](https://satijalab.org/seurat/reference/mappingscore)
-            - <more>: See <https://satijalab.org/seurat/reference/mappingscore>.
-                Note that the hyphen (`-`) will be transformed into `.` for the keys.
+        cache (type=auto): Whether to cache the information at different steps.
+            If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
+            The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
+            the input and envs of the process.
+            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
+            <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
+            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
+            `<signature>.RDS` in the cache directory.
+        plots (type=json): The plots to generate.
+            The keys are the names of the plots and the values are the arguments for the plot.
+            The arguments will be passed to `biopipen.utils::VizSeuratMap2Ref()` to generate the plots.
+            The plots will be saved to the output directory.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratMap2Ref.html>.
 
     Requires:
         r-seurat:
@@ -1917,6 +1928,7 @@ class SeuratMap2Ref(Proc):
     input = "sobjfile:file"
     output = "outfile:file:{{in.sobjfile | stem}}.RDS"
     lang = config.lang.rscript
+    envs_depth = 3
     envs = {
         "ncores": config.misc.ncores,
         "use": None,
@@ -1935,21 +1947,29 @@ class SeuratMap2Ref(Proc):
             "normalization-method": "LogNormalize",
         },
         "FindTransferAnchors": {
-            "reference-reduction": "spca",
+            # "reference-reduction": "spca",
         },
         "MapQuery": {
-            "reference-reduction": "spca",
-            "reduction-model": "wnn.umap",
+            # "reference-reduction": "spca",
+            # "reduction-model": "wnn.umap",
             "refdata": {
                 # "celltype-l1": "celltype.l1",
                 # "celltype-l2": "celltype.l2",
                 # "predicted_ADT": "ADT",
             },
         },
-        "MappingScore": {"ndim": 30},
+        "cache": config.path.tmpdir,
+        "plots": {
+            "Mapped Identity": {
+                "features": "{ident}:{use}",
+            },
+            "Mapping Score": {
+                "features": "{ident}.score",
+            }
+        }
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"
-    plugin_opts = {"report": "file://../reports/scrna/SeuratMap2Ref.svelte"}
+    plugin_opts = {"report": "file://../reports/common.svelte"}
 
 
 class RadarPlots(Proc):
