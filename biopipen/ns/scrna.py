@@ -104,6 +104,12 @@ class SeuratPreparing(Proc):
         ncores (type=int): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
+        min_cells (type=int): The minimum number of cells that a gene must be
+            expressed in to be kept. This is used in `Seurat::CreateSeuratObject()`.
+            Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
+        min_features (type=int): The minimum number of features that a cell must
+            express to be kept. This is used in `Seurat::CreateSeuratObject()`.
+            Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
@@ -122,9 +128,6 @@ class SeuratPreparing(Proc):
             genes.
             ///
 
-        cell_qc_per_sample (flag): Whether to perform cell QC per sample or not.
-            If `True`, the cell QC will be performed per sample, and the QC will be
-            applied to each sample before merging.
         gene_qc (ns): Filter genes.
             `gene_qc` is applied after `cell_qc`.
             - min_cells: The minimum number of cells that a gene must be
@@ -261,32 +264,34 @@ class SeuratPreparing(Proc):
     input = "metafile:file"
     output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
     lang = config.lang.rscript
+    envs_depth = 4
     envs = {
         "ncores": config.misc.ncores,
+        "min_cells": 0,
+        "min_features": 0,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
-        "cell_qc_per_sample": False,
         "gene_qc": {"min_cells": 0, "excludes": []},
         "qc_plots": {
-            "Violin Plots of QC Metrics": {
+            "Violin Plots": {
                 "kind": "cell",
                 "plot_type": "violin",
                 "devpars": {"res": 100, "height": 600, "width": 1200},
             },
-            "Scatter Plots of QC Metrics": {
+            "Scatter Plots": {
                 "kind": "cell",
                 "plot_type": "scatter",
                 "devpars": {"res": 100, "height": 800, "width": 1200},
             },
-            "Ridge Plots of QC Metrics": {
+            "Ridge Plots": {
                 "kind": "cell",
                 "plot_type": "ridge",
                 "devpars": {"res": 100, "height": 800, "width": 1200},
             },
-            # "Number of Expressing Cells for Excluded Genes (10)": {
-            #     "kind": "gene",
-            #     "features": 10,
-            #     "devpars": {"res": 100, "height": 1200, "width": 1200}
-            # },
+            "Distribution of number of cells a gene is expressed in": {
+                "kind": "gene",
+                "plot_type": "histogram",
+                "devpars": {"res": 100, "height": 1200, "width": 1200}
+            },
         },
         "use_sct": False,
         "no_integration": False,
@@ -306,7 +311,7 @@ class SeuratPreparing(Proc):
     }
     script = "file://../scripts/scrna/SeuratPreparing.R"
     plugin_opts = {
-        "report": "file://../reports/scrna/SeuratPreparing.svelte",
+        "report": "file://../reports/common.svelte",
     }
 
 

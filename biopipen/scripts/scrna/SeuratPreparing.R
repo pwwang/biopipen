@@ -30,7 +30,9 @@ reporter$add(
             "<p>Cell filters: ", html_escape(envs$cell_qc), "</p>",
             "<p>Gene filters: </p>",
             "<p>- Min Cells: ", envs$gene_qc$min_cells, "</p>",
-            "<p>- Excludes: ", html_escape(envs$gene_qc$excludes %||% "Not set"), "</p>"
+            "<p>- Excludes: ",
+            ifelse(is.null(envs$gene_qc$excludes), "Not set", paste(envs$gene_qc$excludes, collapse = ", ")),
+            "</p>"
         )
     ),
     h1 = "Filters and QC"
@@ -57,43 +59,77 @@ dir.create(qcdir, showWarnings = FALSE, recursive = TRUE)
 
 sobj <- LoadSeuratAndPerformQC(
     metadata,
-    per_sample_qc = envs$cell_qc_per_sample,
+    min_cells = envs$min_cells,
+    min_features = envs$min_features,
     cell_qc = envs$cell_qc,
     gene_qc = envs$gene_qc,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)
 
-log$info("Saving dimension table ...")
-dim_df <- data.frame(
-    when = c("Before QC", "After QC"),
-    nCells = c(nrow(sobj@misc$cell_qc_df), sum(sobj@misc$cell_qc_df$.QC)),
-    nGenes = c(sobj@misc$gene_qc$before, sobj@misc$gene_qc$after)
-)
-write.table(dim_df, file = file.path(qcdir, "dim.txt"),
+log$info("Saving and visualizing QC results ...")
+cell_qc_df <- VizSeuratCellQC(sobj, plot_type = "table")
+write.table(cell_qc_df, file = file.path(qcdir, "cell_qc.txt"),
             row.names = FALSE, quote = FALSE, sep = "\t")
 
 reporter$add(
     list(
-        kind = "descr",
-        content = "The dimension table for the Seurat object. The table contains the number of cells and genes before and after QC. Note that the cell QC is performed before gene QC."
-    ),
-    list(
-        kind = "table",
-        data = list(path = file.path(qcdir, "dim.txt"))
+        name = "Cell QC metrics",
+        contents = list(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "The table below show the number of cells in each sample that failed and passed the QC filters. ",
+                    "The last row shows the total number of cells that failed and passed the QC filters across all samples. "
+                )
+            ),
+            list(kind = "table", src = file.path(qcdir, "cell_qc.txt"))
+        )
     ),
     h1 = "Filters and QC",
-    h2 = "Dimension table"
+    h2 = "Cell-level Quality Control",
+    ui = "tabs"
 )
 
-log$info("Visualizing QC metrics ...")
+gene_qc_df <- VizSeuratGeneQC(sobj, plot_type = "table")
+write.table(gene_qc_df, file = file.path(qcdir, "gene_qc.txt"),
+            row.names = FALSE, quote = FALSE, sep = "\t")
+
+reporter$add(
+    list(
+        name = "Gene QC metrics",
+        contents = list(
+            list(
+                kind = "descr",
+                content = paste0(
+                    "The table below show the number of genes in each sample that failed and passed the QC filters. ",
+                    "The last row shows the final number of genes that failed and passed the QC filters across all samples. ",
+                    "Any gene that failed the QC filters will be excluded in the merged Seurat object."
+                )
+            ),
+            list(kind = "table", src = file.path(qcdir, "gene_qc.txt")),
+            list(kind = "list", items = list(paste0(
+                "We may still end up with features slightly less than the final passed ones. ",
+                "For example, when SCTransform is used, the number of features may be less than the number of genes that passed the QC filters. ",
+                "This is because SCTransform selects the top N features based on variance. "
+            )))
+        )
+    ),
+    h1 = "Filters and QC",
+    h2 = "Gene-level Quality Control",
+    ui = "tabs"
+)
+
 for (pname in names(envs$qc_plots)) {
+    if (is.null(envs$qc_plots[[pname]])) next
+    log$info("- {pname} ...")
     args <- envs$qc_plots[[pname]]
     args$kind <- args$kind %||% "cell"
     args$devpars <- args$devpars %||% list()
     args$more_formats <- args$more_formats %||% character()
     args$save_code <- args$save_code %||% FALSE
-    extract_vars(args, "kind", "devpars", "more_formats", "save_code")
+    args$descr <- args$descr %||% pname
+    extract_vars(args, "kind", "devpars", "more_formats", "save_code", "descr")
     if (kind == "gene") kind <- "gene_qc"
     if (kind == "cell") kind <- "cell_qc"
     args$object <- sobj
@@ -103,7 +139,7 @@ for (pname in names(envs$qc_plots)) {
         gglogger::register(VizSeuratGeneQC)
     }
     p <- do_call(plot_fn, args)
-    prefix <- file.path(qcdir, paste0(slugify(pname), "_", kind))
+    prefix <- file.path(qcdir, paste0(slugify(pname), ".", kind))
     save_plot(p, prefix, devpars, formats = c("png", more_formats))
     if (save_code) {
         save_plotcode(p, prefix,
@@ -112,11 +148,21 @@ for (pname in names(envs$qc_plots)) {
             auto_data_setup = FALSE)
     }
     reporter$add(
-        reporter$image(prefix, more_formats, save_code, kind = "image"),
+        list(
+            name = pname,
+            contents = list(
+                list(kind = "descr", content = descr),
+                reporter$image(prefix, more_formats, save_code, kind = "image")
+            )
+        ),
         h1 = "Filters and QC",
-        h2 = html_escape(pname)
+        h2 = ifelse(kind == "cell_qc", "Cell-level Quality Control", "Gene-level Quality Control"),
+        ui = "tabs"
     )
 }
+
+log$info("Filtering with QC criteria ...")
+sobj <- FinishSeuratQC(sobj)
 
 sobj <- RunSeuratTransformation(
     sobj,
