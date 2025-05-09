@@ -702,7 +702,10 @@ class SeuratClusterStats(Proc):
         },
     }
     script = "file://../scripts/scrna/SeuratClusterStats.R"
-    plugin_opts = {"report": "file://../reports/scrna/SeuratClusterStats.svelte"}
+    plugin_opts = {
+        "report": "file://../reports/common.svelte",
+        "report_paging": 8,
+    }
 
 
 class ModuleScoreCalculator(Proc):
