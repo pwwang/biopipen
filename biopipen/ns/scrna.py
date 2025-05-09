@@ -581,10 +581,7 @@ class SeuratClusterStats(Proc):
             >>> }
         ngenes_defaults (ns): The default parameters for `ngenes`.
             The default parameters to plot the number of genes expressed in each cell.
-            - ident: The column name in metadata to use as the identity.
-            - group-by: The column name in metadata to group the cells.
-                Dodge position will be used to separate the groups.
-            - split-by: The column name in metadata to split the cells into different plots.
+            - more_formats (list): The formats to save the plots other than `png`.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -672,10 +669,8 @@ class SeuratClusterStats(Proc):
             },
         },
         "ngenes_defaults": {
-            "ident": "seurat_clusters",
-            "group-by": None,
-            "split-by": None,
             "subset": None,
+            "more_formats": [],
             "devpars": {"res": 100, "height": 800, "width": 1000},
         },
         "ngenes": {

@@ -12,79 +12,69 @@ do_one_ngenes <- function(name) {
 
     case <- list_update(ngenes_defaults, ngenes[[name]])
     case$devpars <- list_update(ngenes_defaults$devpars, case$devpars)
+    case$more_formats <- case$more_formats %||% character(0)
+    case$save_code <- case$save_code %||% FALSE
+    case$descr <- case$descr %||% name
+    case$save_data <- case$save_data %||% FALSE
+    case$ylab <- case$ylab %||% "Number of expressed genes"
+    case$features <- "Number of expressed genes"
+    extract_vars(case, "devpars", "more_formats", "descr", "save_code", "save_data", subset_ = "subset")
 
     if (!is.null(case$subset)) {
-        sobj <- srtobj %>% filter(!!rlang::parse_expr(case$subset))
+        case$object <- srtobj %>% filter(!!rlang::parse_expr(subset_))
     } else {
-        sobj <- srtobj
+        case$object <- srtobj
     }
-    df_cells <- sobj@meta.data %>% mutate(.nexpr = colSums(GetAssayData(sobj) > 0))
+    case$object <- AddMetaData(case$object, Matrix::colSums(GetAssayData(case$object) > 0), col.name = "Number of expressed genes")
 
-    select_cols = c(case$ident, case$group.by, case$split.by, ".nexpr")
-    df_cells = df_cells %>% select(all_of(select_cols))
-
-    p = df_cells |>
-        ggplot(aes(
-            x=!!sym(case$ident),
-            y=.nexpr,
-            fill=!!sym(ifelse(is.null(case$group.by), case$ident, case$group.by))
-        )) +
-        geom_violin(alpha = 0.6, position = ifelse(is.null(case$group.by), "identity", "dodge")) +
-        geom_boxplot(
-            position = ifelse(is.null(case$group.by), "identity", "dodge"),
-            width = .1,
-            fill = "white"
-        ) +
-        plotthis::theme_this() +
-        # scale_fill_biopipen() +
-        ylab("Number of genes expressed")
-
-    if (!is.null(case$split.by)) {
-        p = p + facet_wrap(case$split.by)
+    info <- case_info(name, odir, is_dir = FALSE, create = TRUE)
+    p <- do_call(gglogger::register(FeatureStatPlot), case)
+    save_plot(p, info$prefix, case$devpars, formats = c("png", more_formats))
+    if (save_code) {
+        save_plotcode(p, info$prefix,
+            setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
+            "case",
+            auto_data_setup = FALSE
+        )
     }
-
-    figprefix = file.path(odir, paste0(slugify(name), ".boxplot"))
-
-    save_plot(p, figprefix, case$devpars)
-    save_plotcode(
-        p,
-        figprefix,
-        c(
-            'library(rlang)',
-            'library(ggplot2)',
-            'library(ggprism)',
-            '',
-            'load("data.RData")'
-        ),
-        "df_cells", "case"
-    )
-
-    reporter$add(
-        list(
-            kind = "descr",
-            content = paste0(
-                "Plots showing the number of genes expressed in each ",
-                case$ident,
-                ifelse(
-                    is.null(case$group.by),
-                    "",
-                    paste0(", by ", paste0(case$group.by, collapse = ", "))
+    if (save_data) {
+        if (!inherits(p$data, "data.frame") && !inherits(p$data, "matrix")) {
+            stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
+        }
+        write.table(p$data, paste0(info$prefix, ".data.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+        reporter$add2(
+            list(
+                name = "Plot",
+                contents = list(
+                    list(kind = "descr", content = case$descr),
+                    reporter$image(info$prefix, more_formats, save_code, kind = "image")
                 )
-            )
-        ),
-        list(
-            kind = "image",
-            src = paste0(figprefix, ".png"),
-            download = list(
-                paste0(figprefix, ".pdf"),
-                list(
-                    src = paste0(figprefix, ".code.zip"),
-                    tip = "Download the code to reproduce the plot",
-                    icon = "Code"
+            ),
+            list(
+                name = "Data",
+                contents = list(
+                    list(
+                        kind = "descr",
+                        content = "Data used directly for the plot"
+                    ),
+                    list(
+                        kind = "table",
+                        src = paste0(info$prefix, ".data.txt"),
+                        data = list(nrows = 100)
+                    )
                 )
-            )),
-        h1 = name
-    )
+            ),
+            hs = c(info$section, info$name),
+            ui = "tabs"
+        )
+    }
+    else {
+        reporter$add2(
+            list(kind = "descr", content = case$descr),
+            reporter$image(info$prefix, more_formats, save_code, kind = "image"),
+            hs = c(info$section, info$name)
+        )
+    }
 }
 
 sapply(names(ngenes), do_one_ngenes)
