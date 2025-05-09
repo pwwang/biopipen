@@ -1,5 +1,4 @@
 # Loaded variables: srtfile, outdir, srtobj
-library(circlize)
 
 log$info("stats:")
 
