@@ -1,8 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(bracer)
 library(scRepertoire)
+library(biopipen.utils)
 
 metafile <- {{in.metafile | quote}}
 outfile <- {{out.outfile | quote}}
@@ -12,7 +11,9 @@ if (length(exclude) == 1) {
     exclude <- strsplit(exclude, ",")[[1]]
 }
 
-log_info("Loading metadata ...")
+log <- get_logger()
+
+log$info("Loading metadata ...")
 metadata <- read.table(metafile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE)
 stopifnot("Error: Column `Sample` is not found in metafile." = "Sample" %in% colnames(metadata))
 stopifnot("Error: Column `TCRData` is not found in metafile." = "TCRData" %in% colnames(metadata))
@@ -83,13 +84,13 @@ get_contig_annofile <- function(dir, sample, warn = TRUE) {
 #     write.table(anno, annotfile, sep = ",", quote = FALSE, row.names = FALSE, col.names = TRUE)
 # }
 
-log_info("Reading TCR data ...")
+log$info("Reading TCR data ...")
 contig_list <- lapply(seq_len(nrow(metadata)), function(i) {
     sample <- as.character(metadata$Sample[i])
     annofile <- get_contig_annofile(metadata$TCRData[i], sample)
     if (is.null(annofile)) { return (NULL) }
 
-    log_info("- Sample: {sample} ...")
+    log$info("- Sample: {sample} ...")
     anno <- read.delim2(annofile, sep = ",", header = TRUE, stringsAsFactors = FALSE)
     # Add cdr1, cdr2, fwr1, fwr2, etc columns for compatibility
     anno$cdr1 <- anno$cdr1 %||% ""
@@ -110,7 +111,7 @@ contig_list <- lapply(seq_len(nrow(metadata)), function(i) {
 names(contig_list) <- as.character(metadata$Sample)
 contig_list <- contig_list[!sapply(contig_list, is.null)]
 
-log_info("Combining TCR data and adding meta data ...")
+log$info("Combining TCR data and adding meta data ...")
 if (isTRUE(combineTCR_args$samples)) {
     combineTCR_args$samples <- names(contig_list)
 }
@@ -123,5 +124,5 @@ for (col in colnames(metadata)) {
 
 rm(contig_list, combineTCR_args)
 
-log_info("Saving TCR data ...")
-saveRDS(screp_data, outfile)
+log$info("Saving TCR data ...")
+save_obj(screp_data, outfile)
