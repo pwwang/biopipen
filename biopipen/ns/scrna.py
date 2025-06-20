@@ -96,9 +96,8 @@ class SeuratPreparing(Proc):
             to the h5 file that can be read by `Read10X_h5()` from `Seurat`.
 
     Output:
-        rdsfile: The RDS file with the Seurat object with all samples integrated.
+        outfile: The qs2 file with the Seurat object with all samples integrated.
             Note that the cell ids are prefixied with sample names.
-            QC plots will be saved in `<job.outdir>/plots`.
 
     Envs:
         ncores (type=int): Number of cores to use.
@@ -262,7 +261,7 @@ class SeuratPreparing(Proc):
     """  # noqa: E501
 
     input = "metafile:file"
-    output = "rdsfile:file:{{in.metafile | stem}}.seurat.RDS"
+    output = "outfile:file:{{in.metafile | stem}}.seurat.qs"
     lang = config.lang.rscript
     envs_depth = 4
     envs = {
@@ -302,6 +301,7 @@ class SeuratPreparing(Proc):
         "SCTransform": {
             "return-only-var-genes": True,
             "min_cells": 5,
+            "verbose": True,
         },
         "IntegrateLayers": {"method": "harmony"},
         "doublet_detector": "none",
@@ -323,24 +323,13 @@ class SeuratClustering(Proc):
         srtobj: The seurat object loaded by SeuratPreparing
 
     Output:
-        rdsfile: The seurat object with cluster information at `seurat_clusters`
-            If `SCTransform` was used, the default Assay will be reset to `RNA`.
+        outfile: The seurat object with cluster information at `seurat_clusters`.
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
-        ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
-            If you want to re-scale the data by regressing to some variables, `Seurat::ScaleData`
-            will be called. If nothing is specified, `Seurat::ScaleData` will not be called.
-            - vars-to-regress: The variables to regress on.
-            - <more>: See <https://satijalab.org/seurat/reference/scaledata>
-        SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
-            If you want to re-scale the data by regressing to some variables, `Seurat::SCTransform`
-            will be called. If nothing is specified, `Seurat::SCTransform` will not be called.
-            - vars-to-regress: The variables to regress on.
-            - <more>: See <https://satijalab.org/seurat/reference/sctransform>
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
@@ -348,6 +337,7 @@ class SeuratClustering(Proc):
             - reduction: The reduction to use for UMAP.
                 If not provided, `sobj@misc$integrated_new_reduction` will be used.
             - <more>: See <https://satijalab.org/seurat/reference/runumap>
+        RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
         FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - reduction: The reduction to use.
@@ -381,13 +371,12 @@ class SeuratClustering(Proc):
     """  # noqa: E501
 
     input = "srtobj:file"
-    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "ScaleData": {},
-        "SCTransform": {},
-        "RunUMAP": {"dims": 30},
+        "RunPCA": {},
+        "RunUMAP": {},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
         "cache": config.path.tmpdir,
@@ -538,6 +527,11 @@ class SeuratClusterStats(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
+        cache (type=auto): Whether to cache the plots.
+            Currently only plots for features are supported, since creating the those
+            plots can be time consuming.
+            If `True`, the plots will be cached in the job output directory, which will
+            be not cleaned up when job is rerunning.
         clustrees_defaults (ns): The parameters for the clustree plots.
             - devpars (ns): The device parameters for the clustree plot.
                 - res (type=int): The resolution of the plots.
@@ -645,6 +639,7 @@ class SeuratClusterStats(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "cache": config.path.tmpdir,
         "clustrees_defaults": {
             "devpars": {"res": 100},
             "more_formats": [],
@@ -950,7 +945,7 @@ class SeuratMetadataMutater(Proc):
             cells.
 
     Output:
-        rdsfile: The seurat object with the additional metadata
+        outfile: The seurat object with the additional metadata
 
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata.
@@ -967,7 +962,7 @@ class SeuratMetadataMutater(Proc):
     """  # noqa: E501
 
     input = "srtobj:file, metafile:file"
-    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
     envs = {"mutaters": {}}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
@@ -1304,7 +1299,7 @@ class ExprImputation(Proc):
     - [Dijk, David van, et al. "MAGIC: A diffusion-based imputation method reveals gene-gene interactions in single-cell RNA-sequencing data." BioRxiv (2017): 111591.](https://www.cell.com/cell/abstract/S0092-8674(18)30724-4)
 
     Input:
-        infile: The input file in RDS format of Seurat object
+        infile: The input file in RDS/qs format of Seurat object
 
     Output:
         outfile: The output file in RDS format of Seurat object
@@ -1324,6 +1319,9 @@ class ExprImputation(Proc):
             - refgene: The reference gene file
         rmagic_args (ns): The arguments for rmagic
             - python: The python path where magic-impute is installed.
+            - threshold (type=float): The threshold for magic imputation.
+              Only the genes with dropout rates greater than this threshold (No. of
+              cells with non-zero expression / total number of cells) will be imputed.
         alra_args (type=json): The arguments for `RunALRA()`
 
     Requires:
@@ -1356,11 +1354,11 @@ class ExprImputation(Proc):
     """  # noqa: E501
 
     input = "infile:file"
-    output = "outfile:file:{{in.infile | stem}}.imputed.RDS"
+    output = "outfile:file:{{in.infile | stem}}.imputed.qs"
     lang = config.lang.rscript
     envs = {
         "tool": "alra",
-        "rmagic_args": {"python": config.exe.magic_python},
+        "rmagic_args": {"python": config.exe.magic_python, "threshold": 0.5},
         "scimpute_args": {
             "drop_thre": 0.5,
             "kcluster": None,
@@ -1924,7 +1922,7 @@ class SeuratMap2Ref(Proc):
     """  # noqa: E501
 
     input = "sobjfile:file"
-    output = "outfile:file:{{in.sobjfile | stem}}.RDS"
+    output = "outfile:file:{{in.sobjfile | stem}}.qs"
     lang = config.lang.rscript
     envs_depth = 3
     envs = {

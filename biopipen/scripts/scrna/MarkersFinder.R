@@ -45,7 +45,7 @@ if (ncores > 1) {
 }
 
 log$info("Reading Seurat object ...")
-srtobj <- readRDS(srtfile)
+srtobj <- read_obj(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating meta data ...")

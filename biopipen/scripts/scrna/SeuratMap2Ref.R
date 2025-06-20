@@ -47,45 +47,35 @@ if (is.null(split_by)) {
     future::plan(strategy = "multicore", workers = ncores)
 }
 
-.expand_dims = function(args, name = "dims") {
-    # Expand dims from 30 to 1:30
-    if (is.numeric(args[[name]]) && length(args[[name]] == 1)) {
-        args[[name]] = 1:args[[name]]
-    }
-    args
-}
-findtransferanchors_args = .expand_dims(findtransferanchors_args)
-
 log$info("Loading reference ...")
-if (endsWith(ref, ".rds") || endsWith(ref, ".RDS")) {
-    reference <- readRDS(ref)
+if (endsWith(ref, ".rds") || endsWith(ref, ".RDS") || endsWith(ref, ".qs") || endsWith(ref, ".qs2")) {
+    reference <- read_obj(ref)
 } else if (endsWith(ref, ".h5seurat") || endsWith(ref, ".H5Seurat")) {
-log$info("Loading reference ...")
     reference <- SeuratDisk::LoadH5Seurat(ref)
 } else {
-    stop("Reference file must be .rds, .RDS, .h5seurat or .H5Seurat")
+    stop("Reference file must be .qs, .qs2, .rds, .RDS, .h5seurat or .H5Seurat")
 }
 reference <- tryCatch(JoinLayers(reference), error = function(e) {reference})
 Idents(reference) <- reference@meta.data[[use]]
 
 log$info("Loading query data ...")
-sobj <- readRDS(sobjfile)
+sobj <- read_obj(sobjfile)
 
 sobj <- RunSeuratMap2Ref(
     object = sobj, ref = reference, use = use,
     ident = ident, refnorm = refnorm, skip_if_normalized = skip_if_normalized,
     split_by = split_by, ncores = ncores,
-    SCTransform_args = sctransform_args,
-    NormalizeData_args = normalizedata_args,
-    FindTransferAnchors_args = findtransferanchors_args,
-    MapQuery_args = mapquery_args,
+    SCTransformArgs = sctransform_args,
+    NormalizeDataArgs = normalizedata_args,
+    FindTransferAnchorsArgs = findtransferanchors_args,
+    MapQueryArgs = mapquery_args,
     log = log, cache = cache
 )
 
 # Save
 gc()
 log$info("Saving result ...")
-saveRDS(sobj, file = outfile)
+save_obj(sobj, file = outfile)
 
 
 ### Plotting

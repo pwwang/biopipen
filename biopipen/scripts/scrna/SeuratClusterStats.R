@@ -16,9 +16,12 @@ srtfile <- {{in.srtobj | r}}
 outdir <- {{out.outdir | r}}
 joboutdir <- {{job.outdir | r}}
 mutaters <- {{envs.mutaters | r}}
+cache <- {{envs.cache | r}}
+
+if (isTRUE(cache)) { cache = joboutdir }
 
 log$info("Loading Seurat object ...")
-srtobj = readRDS(srtfile)
+srtobj = read_obj(srtfile)
 
 log$info("Applying mutaters if any ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {

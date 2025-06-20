@@ -6,7 +6,7 @@ library(glue)
 library(biopipen.utils)
 
 metafile <- {{in.metafile | quote}}
-rdsfile <- {{out.rdsfile | quote}}
+outfile <- {{out.outfile | quote}}
 joboutdir <- {{job.outdir | quote}}
 envs <- {{envs | r: todot = "-", skip = 1}}
 
@@ -242,4 +242,4 @@ if (!identical(envs$doublet_detector, "none")) {
 
 log$info("Saving QC'ed seurat object ...")
 reporter$save(joboutdir)
-saveRDS(sobj, rdsfile)
+save_obj(sobj, outfile)
