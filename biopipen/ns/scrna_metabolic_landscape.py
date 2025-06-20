@@ -1,9 +1,10 @@
 """Metabolic landscape analysis for scRNA-seq data"""
+
 from __future__ import annotations
 from pathlib import Path
 from typing import Type
 
-from diot import Diot
+from diot import Diot  # type: ignore
 from datar.tibble import tibble
 from pipen.utils import mark
 from pipen_args import ProcGroup
@@ -28,81 +29,76 @@ class MetabolicPathwayActivity(Proc):
 
     ![MetabolicPathwayActivity_violin](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayActivity_violin.png){: width="45%"}
 
+    Input:
+        sobjfile: The Seurat object file.
+            It should be loaded as a Seurat object
+
+    Output:
+        outdir: The output directory.
+            It will contain the pathway activity score files and plots.
+
     Envs:
-        ntimes (type=int): Number of times to do the permutation
+        ntimes (type=int): Number of permutations to estimate the p-values
         ncores (type=int;pgarg): Number of cores to use for parallelization
             Defaults to `ScrnaMetabolicLandscape.ncores`
-        heatmap_devpars (ns): Device parameters for the heatmap
-            - width (type=int): Width of the heatmap
-            - height (type=int): Height of the heatmap
-            - res (type=int): Resolution of the heatmap
-        violin_devpars (ns): Device parameters for the violin plot
-            - width (type=int): Width of the violin plot
-            - height (type=int): Height of the violin plot
-            - res (type=int): Resolution of the violin plot
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        grouping (type=auto;pgarg;readonly): Defines the basic groups to
-            investigate the metabolic activity, typically the clusters.
-            Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to group
-            names. For example, if we have `grouping_prefix = "cluster"` and
-            we have `1` and `2` in the `grouping` column, the groups
-            will be named as `cluster_1` and `cluster_2`.
-            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg;readonly): How do we subset the data. Other
-            columns in the metadata to do comparisons. For example,
-            `"TimePoint"` or `["TimePoint", "Response"]`.
-            Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
-            subset names.
-            For example, if we have `subsetting_prefix = "timepoint"` and
-            we have `pre` and `post` in the `subsetting` column, the subsets
-            will be named as `timepoint_pre` and `timepoint_post`.
-            If `subsetting` is a list, then this should also be a
-            same-length list. If a single string is given, it will be
-            repeated to a list with the same length as `subsetting`.
-            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-
-    Requires:
-        r-scater:
-            - check: {{proc.lang}} <(echo "library(scater)")
-        r-reshape2:
-            - check: {{proc.lang}} <(echo "library(reshape2)")
-        r-rcolorbrewer:
-            - check: {{proc.lang}} <(echo "library(RColorBrewer)")
-        r-ggplot2:
-            - check: {{proc.lang}} <(echo "library(ggplot2)")
-        r-ggprism:
-            - check: {{proc.lang}} <(echo "library(ggprism)")
-        r-complexheatmap:
-            - check: {{proc.lang}} <(echo "library(ComplexHeatmap)")
-        r-parallel:
-            - check: {{proc.lang}} <(echo "library(parallel)")
+        subset_by (pgarg;readonly): Subset the data by the given column in the
+            metadata. For example, `Response`.
+            `NA` values will be removed in this column.
+            Defaults to `ScrnaMetabolicLandscape.subset_by`
+            If None, the data will not be subsetted.
+        group_by (pgarg;readonly): Group the data by the given column in the
+            metadata. For example, `cluster`.
+            Defaults to `ScrnaMetabolicLandscape.group_by`
+        plots (type=json): The plots to generate.
+            Names will be used as the prefix for the output files. Values will be
+            a dictionary with the following keys:
+            * `plot_type` is the type of plot to generate. One of `heatmap`,
+            `box`, `violin` or `merged_heatmap` (all subsets in one plot).
+            * `devpars` is a dictionary with the device parameters for the plot.
+            * Other arguments for `plotthis::Heatmap()`, `plotthis::BoxPlot()`
+            or `plotthis::ViolinPlot()`, depending on the `plot_type`.
+        cases (type=json): Multiple cases for the analysis.
+            If you only have one case, you can specify the parameters directly to
+            `envs.ntimes`, `envs.subset_by`, `envs.group_by`, `envs.group1`,
+            `envs.group2`, and `envs.plots`. The name of the case will be
+            `envs.subset_by`.
+            If you have multiple cases, you can specify the parameters for each case
+            in a dictionary. The keys will be the names of the cases and the values
+            will be dictionaries with the parameters for each case, where the values
+            will be inherited from `envs.ntimes`, `envs.subset_by`, `envs.group_by`,
+            `envs.group1`, `envs.group2`, and `envs.plots`.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pathwayactivity"
     envs = {
         "ntimes": 5000,
         "ncores": config.misc.ncores,
-        "heatmap_devpars": {},
-        "violin_devpars": {},
         "gmtfile": None,
-        "grouping": None,
-        "grouping_prefix": "",
-        "subsetting": None,
-        "subsetting_prefix": "",
+        "subset_by": None,
+        "group_by": None,
+        "plots": {
+            "Pathway Activity (violin plot)": {
+                "plot_type": "violin",
+                "add_box": True,
+                "devpars": {"res": 100},
+            },
+            "Pathway Activity (heatmap)": {
+                "plot_type": "heatmap",
+                "devpars": {"res": 100},
+            },
+        },
+        "cases": {},
     }
     lang = config.lang.rscript
     script = (
-        "file://../scripts/"
-        "scrna_metabolic_landscape/MetabolicPathwayActivity.R"
+        "file://../scripts/scrna_metabolic_landscape/MetabolicPathwayActivity.R"
     )
     plugin_opts = {
-        "report": (
-            "file://../reports/"
-            "scrna_metabolic_landscape/MetabolicPathwayActivity.svelte"
-        )
+        "report":
+        "file://../reports/scrna_metabolic_landscape/MetabolicPathwayActivity.svelte"
     }
 
 
@@ -113,11 +109,18 @@ class MetabolicFeatures(Proc):
     The enrichment analysis is done with [`fgsea`](https://bioconductor.org/packages/release/bioc/html/fgsea.html)
     package or the [`GSEA_R`](https://github.com/GSEA-MSigDB/GSEA_R) package.
 
+    Input:
+        sobjfile: The Seurat object file in rds.
+            It should be loaded as a Seurat object
+
+    Output:
+        outdir: The output directory.
+            It will contain the GSEA results and plots.
+
     Envs:
-        ncores (type=int;pgarg): Number of cores to use for parallelization.
-            Defaults to `ScrnaMetabolicLandscape.ncores`
-        fgsea (flag): Whether to do fast gsea analysis using `fgsea` package.
-            If `False`, the `GSEA_R` package will be used.
+        ncores (type=int;pgarg): Number of cores to use for parallelization for
+            the comparisons for each subset and group.
+            Defaults to `ScrnaMetabolicLandscape.ncores`.
         prerank_method (choice): Method to use for gene preranking.
             Signal to noise: the larger the differences of the means
             (scaled by the standard deviations); that is, the more distinct
@@ -143,143 +146,80 @@ class MetabolicFeatures(Proc):
             - ratio_of_classes: Also referred to as fold change
             - diff_of_classes: Difference of class means
             - log2_ratio_of_classes: Log2 ratio of class means
-        top (type=int): N top of enriched pathways to show
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        grouping (type=auto;pgarg;readonly): Defines the basic groups to
-            investigate the metabolic activity.
-            Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to
-            group names.
-            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg;readonly): How do we subset the data.
-            Another column(s) in the metadata.
-            Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
-            subset names.
-            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-
-    Requires:
-        r-parallel:
-            - check: {{proc.lang}} <(echo "library(parallel)")
-        r-fgsea:
-            - check: {{proc.lang}} <(echo "library(fgsea)")
+        subset_by (pgarg;readonly): Subset the data by the given column in the
+            metadata. For example, `Response`.
+            `NA` values will be removed in this column.
+            Defaults to `ScrnaMetabolicLandscape.subset_by`
+            If None, the data will not be subsetted.
+        group_by (pgarg;readonly): Group the data by the given column in the
+            metadata. For example, `cluster`.
+            Defaults to `ScrnaMetabolicLandscape.group_by`
+        comparisons (type=list): The comparison groups to use for the analysis.
+            If not provided, each group in the `group_by` column will be used
+            to compare with the other groups.
+            If a single group is provided as an element, it will be used to
+            compare with all the other groups.
+            For example, if we have `group_by = "cluster"` and we have
+            `1`, `2` and `3` in the `group_by` column, we could have
+            `comparisons = ["1", "2"]`, which will compare the group `1` with groups
+            `2` and `3`, and the group `2` with groups `1` and `3`. We could also
+            have `comparisons = ["1,2", "1,3"]`, which will compare the group `1` with
+            group `2` and group `1` with group `3`.
+        fgsea_args (type=json): Other arguments for the `fgsea::fgsea()` function.
+            For example, `{"minSize": 15, "maxSize": 500}`.
+            See <https://rdrr.io/bioc/fgsea/man/fgsea.html> for more details.
+        plots (type=json): The plots to generate.
+            Names will be used as the title for the plot. Values will be the arguments
+            passed to `biopipen.utils::VizGSEA()` function.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.html>.
+            A key `level` is supported to specify the level of the plot.
+            Possible values are `case`, which includes all subsets and groups in the
+            case; `subset`, which includes all groups in the subset; otherwise, it
+            will plot for the groups.
+            For `case`/`subset` level plots, current `plot_type` only "dot" is supported
+            for now, then the values will be passed to `plotthis::DotPlot()`
+        cases (type=json): Multiple cases for the analysis.
+            If you only have one case, you can specify the parameters directly to
+            `envs.prerank_method`, `envs.subset_by`, `envs.group_by`,
+            `envs.comparisons`, `envs.fgsea_args` and `envs.plots`.
+            The name of this default case will be `envs.subset_by`.
+            If you have multiple cases, you can specify the parameters for each case
+            in a dictionary. The keys will be the names of the cases and the values
+            will be dictionaries with the parameters for each case, where the values
+            will be inherited from `envs.prerank_method`,
+            `envs.subset_by`, `envs.group_by`, `envs.comparisons`, `envs.fgsea_args`
+            and `envs.plots`.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pathwayfeatures"
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
-        "fgsea": True,
         "prerank_method": "signal_to_noise",
-        "top": 10,
         "gmtfile": None,
-        "grouping": None,
-        "grouping_prefix": "",
-        "subsetting": None,
-        "subsetting_prefix": "",
+        "subset_by": None,
+        "group_by": None,
+        "comparisons": [],
+        "fgsea_args": {},
+        "plots": {
+            "Summary Plot": {
+                "plot_type": "summary",
+                "top_term": 10,
+                "devpars": {"res": 100},
+            },
+            "Enrichment Plots": {
+                "plot_type": "gsea",
+                "top_term": 10,
+                "devpars": {"res": 100},
+            },
+        },
+        "cases": {},
     }
-    script = (
-        "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
-    )
-    plugin_opts = {
-        "report": (
-            "file://../reports/"
-            "scrna_metabolic_landscape/MetabolicFeatures.svelte"
-        )
-    }
-
-
-class MetabolicFeaturesIntraSubset(Proc):
-    """Intra-subset metabolic features - Enrichment analysis in details
-
-    Similar to the [`MetabolicFeatures`](!!#biopipennsscrna_metabolic_landscapemetabolicfeatures)
-    process, this process performs enrichment analysis for the metabolic pathways for
-    each subset in each group, instead of each group in each subset.
-
-    Envs:
-        ncores (type=int; pgarg): Number of cores to use for parallelization
-            Defaults to `ScrnaMetabolicLandscape.ncores`
-        fgsea (flag): Whether to do fast gsea analysis
-        prerank_method (choice): Method to use for gene preranking
-            Signal to noise: the larger the differences of the means
-            (scaled by the standard deviations); that is, the more distinct
-            the gene expression is in each phenotype and the more the gene
-            acts as a “class marker.”.
-            Absolute signal to noise: the absolute value of the signal to
-            noise.
-            T test: Uses the difference of means scaled by the standard
-            deviation and number of samples.
-            Ratio of classes: Uses the ratio of class means to calculate
-            fold change for natural scale data.
-            Diff of classes: Uses the difference of class means to calculate
-            fold change for nature scale data
-            Log2 ratio of classes: Uses the log2 ratio of class means to
-            calculate fold change for natural scale data. This is the
-            recommended statistic for calculating fold change for log scale
-            data.
-            - signal_to_noise: Signal to noise
-            - s2n: Alias of signal_to_noise
-            - abs_signal_to_noise: absolute signal to noise
-            - abs_s2n: Alias of abs_signal_to_noise
-            - t_test: T test
-            - ratio_of_classes: Also referred to as fold change
-            - diff_of_classes: Difference of class means
-            - log2_ratio_of_classes: Log2 ratio of class means
-        top (type=int): N top of enriched pathways to show
-        gmtfile (pgarg): The GMT file with the metabolic pathways.
-            Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        grouping (type=auto;pgarg;readonly): Defines the basic groups to
-            investigate the metabolic activity.
-            Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to group
-            names.
-            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg;readonly): How do we subset the data.
-            Another column(s) in the metadata.
-            Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
-            subset names.
-            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-        subsetting_comparison (type=json;pgarg;readonly): How do we compare the
-            subsets.
-            Defaults to `ScrnaMetabolicLandscape.subsetting_comparison`
-
-    Requires:
-        r-parallel:
-            - check: {{proc.lang}} <(echo "library(parallel)")
-        r-scater:
-            - check: {{proc.lang}} <(echo "library(scater)")
-        r-fgsea:
-            - check: {{proc.lang}} <(echo "library(fgsea)")
-    """  # noqa: E501
-    input = "sobjfile:file"
-    output = (
-        "outdir:dir:{{in.sobjfile | stem}}.intra-subset-pathwayfeatures"
-    )
-    lang = config.lang.rscript
-    envs = {
-        "ncores": config.misc.ncores,
-        "gmtfile": None,
-        "fgsea": True,
-        "prerank_method": "signal_to_noise",
-        "top": 10,
-        "grouping": None,
-        "grouping_prefix": "",
-        "subsetting": None,
-        "subsetting_prefix": "",
-        "subsetting_comparison": {},
-    }
-    script = (
-        "file://../scripts/scrna_metabolic_landscape/"
-        "MetabolicFeaturesIntraSubset.R"
-    )
-    plugin_opts = {
-        "report": (
-            "file://../reports/scrna_metabolic_landscape/"
-            "MetabolicFeaturesIntraSubset.svelte"
-        )
-    }
+    script = "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
+    plugin_opts = {"report": "file://../reports/scrna_metabolic_landscape/MetabolicFeatures.svelte"}
 
 
 class MetabolicPathwayHeterogeneity(Proc):
@@ -296,7 +236,6 @@ class MetabolicPathwayHeterogeneity(Proc):
 
     ![MetabolicPathwayHeterogeneity](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayHeterogeneity.png)
 
-
     Envs:
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
@@ -305,43 +244,33 @@ class MetabolicPathwayHeterogeneity(Proc):
             the enriched pathways
         ncores (type=int;pgarg): Number of cores to use for parallelization
             Defaults to `ScrnaMetabolicLandscape.ncores`
-        bubble_devpars (ns): The devpars for the bubble plot
-            - width (type=int): The width of the plot
-            - height (type=int): The height of the plot
-            - res (type=int): The resolution of the plot
-        grouping (type=auto;pgarg;readonly): Defines the basic groups to
-            investigate the metabolic activity.
-            Defaults to `ScrnaMetabolicLandscape.grouping`
-        grouping_prefix (type=auto;pgarg;readonly): Working as a prefix to group
-            names.
-            Defaults to `ScrnaMetabolicLandscape.grouping_prefix`
-        subsetting (type=auto;pgarg;readonly): How do we subset the data.
-            Another column(s) in the metadata.
-            Defaults to `ScrnaMetabolicLandscape.subsetting`
-        subsetting_prefix (type=auto;pgarg;readonly): Working as a prefix to
-            subset names.
-            Defaults to `ScrnaMetabolicLandscape.subsetting_prefix`
-
-    Requires:
-        r-gtools:
-            - check: {{proc.lang}} <(echo "library(gtools)")
-        r-ggplot2:
-            - check: {{proc.lang}} <(echo "library(ggplot2)")
-        r-ggprism:
-            - check: {{proc.lang}} <(echo "library(ggprism)")
-        r-parallel:
-            - check: {{proc.lang}} <(echo "library(parallel)")
-        r-dplyr:
-            - check: {{proc.lang}} <(echo "library(dplyr)")
-        r-tibble:
-            - check: {{proc.lang}} <(echo "library(tibble)")
-        r-enrichr:
-            - check: {{proc.lang}} <(echo "library(enrichR)")
-        r-data.table:
-            - check: {{proc.lang}} <(echo "library(data.table)")
-        r-fgsea:
-            - check: {{proc.lang}} <(echo "library(fgsea)")
+        subset_by (pgarg;readonly): Subset the data by the given column in the
+            metadata. For example, `Response`.
+            `NA` values will be removed in this column.
+            Defaults to `ScrnaMetabolicLandscape.subset_by`
+            If None, the data will not be subsetted.
+        group_by (pgarg;readonly): Group the data by the given column in the
+            metadata. For example, `cluster`.
+            Defaults to `ScrnaMetabolicLandscape.group_by`
+        fgsea_args (type=json): Other arguments for the `fgsea::fgsea()` function.
+            For example, `{"minSize": 15, "maxSize": 500}`.
+            See <https://rdrr.io/bioc/fgsea/man/fgsea.html> for more details.
+        plots (type=json): The plots to generate.
+            Names will be used as the title for the plot. Values will be the arguments
+            passed to `biopipen.utils::VizGSEA()` function.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.html>.
+        cases (type=json): Multiple cases for the analysis.
+            If you only have one case, you can specify the parameters directly to
+            `envs.subset_by`, `envs.group_by`, `envs.fgsea_args`, `envs.plots`,
+            `envs.select_pcs`, and `envs.pathway_pval_cutoff`.
+            The name of this default case will be `envs.subset_by`.
+            If you have multiple cases, you can specify the parameters for each case
+            in a dictionary. The keys will be the names of the cases and the values
+            will be dictionaries with the parameters for each case, where the values
+            will be inherited from `envs.subset_by`, `envs.group_by`, `envs.fgsea_args`,
+            `envs.plots`, `envs.select_pcs`, and `envs.pathway_pval_cutoff`.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pathwayhetero"
     lang = config.lang.rscript
@@ -350,22 +279,22 @@ class MetabolicPathwayHeterogeneity(Proc):
         "select_pcs": 0.8,
         "pathway_pval_cutoff": 0.01,
         "ncores": config.misc.ncores,
-        "bubble_devpars": {},
-        "grouping": None,
-        "grouping_prefix": "",
-        "subsetting": None,
-        "subsetting_prefix": "",
+        "subset_by": None,
+        "group_by": None,
+        "fgsea_args": {"scoreType": "std", "nproc": 1},
+        "plots": {
+            "Pathway Heterogeneity": {
+                "plot_type": "dot",
+                "devpars": {"res": 100},
+            },
+        },
+        "cases": {},
     }
     script = (
         "file://../scripts/scrna_metabolic_landscape/"
         "MetabolicPathwayHeterogeneity.R"
     )
-    plugin_opts = {
-        "report": (
-            "file://../reports/scrna_metabolic_landscape/"
-            "MetabolicPathwayHeterogeneity.svelte"
-        )
-    }
+    plugin_opts = {"report": "file://../reports/scrna_metabolic_landscape/MetabolicPathwayHeterogeneity.svelte"}
 
 
 class ScrnaMetabolicLandscape(ProcGroup):
@@ -399,49 +328,19 @@ class ScrnaMetabolicLandscape(ProcGroup):
             dependent on other processes, this option will be used to determine
             whether the input is a seurat object or not.
         noimpute (flag): Whether to do imputation for the dropouts.
-            If False, the values will be left as is.
+            If True, the values will be left as is.
         gmtfile: The GMT file with the metabolic pathways. The gene names should
             match the gene names in the gene list in RNAData or
             the Seurat object.
             You can also provide a URL to the GMT file.
             For example, from
             <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/>.
-        grouping: defines the basic groups to investigate the metabolic activity
-            Typically the clusters.
-        grouping_prefix: Working as a prefix to group names
-            For example, if we have `grouping_prefix = "cluster"` and
-            we have `1` and `2` in the `grouping` column, the groups
-            will be named as `cluster_1` and `cluster_2`
-        subsetting (type=auto): How do we subset the data. Other columns in the
-            metadata to do comparisons. For example, `"TimePoint"` or
-            `["TimePoint", "Response"]`
-        subsetting_prefix (type=auto): Working as a prefix to subset names
-            For example, if we have `subsetting_prefix = "timepoint"` and
-            we have `pre` and `post` in the `subsetting` column, the subsets
-            will be named as `timepoint_pre` and `timepoint_post`
-            If `subsetting` is a list, then this should also be a same-length
-            list. If a single string is given, it will be repeated to a list
-            with the same length as `subsetting`
-        subsetting_comparison (type=json): What kind of comparisons are we
-            doing to compare cells from different subsets.
-            It should be dict with keys as the names of the comparisons and
-            values as the 2 comparison groups from the `subsetting` column.
-            For example, if we have `pre` and `post` in the `subsetting` column,
-            we could have
-            `subsetting_comparison = {"pre_vs_post": ["post", "pre"]}`
-            The second group will be the control group in the comparison.
-            If we also have `1`, `2` and `3` in the `grouping` column,
-            by default, the comparisons are done within each subset for
-            each group. For example, for group `1`, groups `2` and `3`
-            will be used as control, and for group `2`, groups `1` and `3`
-            will be used as control, and for group `3`, groups `1` and `2`
-            will be used as control. It is similar to `Seurat::FindMarkers`
-            procedure. With this option, the comparisons are also done to
-            compare cells from different subsets within each group. With the
-            example above, we will have `pre_vs_post` comparisons within
-            each group.
-            If `subsetting` is a list, this must be a list of dicts with the
-            same length.
+        subset_by (pgarg;readonly): Subset the data by the given column in the
+            metadata. For example, `Response`.
+            `NA` values will be removed in this column.
+            If None, the data will not be subsetted.
+        group_by (pgarg;readonly): Group the data by the given column in the
+            metadata. For example, `cluster`.
         mutaters (type=json): Add new columns to the metadata for
             grouping/subsetting.
             They are passed to `sobj@meta.data |> mutate(...)`. For example,
@@ -451,65 +350,25 @@ class ScrnaMetabolicLandscape(ProcGroup):
         ncores (type=int): Number of cores to use for parallelization for
             each process
     """
+
     DEFAULTS = Diot(
         metafile=None,
         is_seurat=None,
         gmtfile=None,
-        grouping=None,
-        grouping_prefix="",
-        subsetting=None,
-        subsetting_prefix=None,
-        subsetting_comparison={},
         mutaters=None,
-        noimpute=False,
+        noimpute=True,
         ncores=config.misc.ncores,
+        subset_by=None,
+        group_by=None,
     )
 
     def post_init(self):
         """Load runtime processes"""
         if self.opts.metafile:
             suffix = Path(self.opts.metafile).suffix
-            self.opts.is_seurat = suffix in (".rds", ".RDS")
+            self.opts.is_seurat = suffix in (".rds", ".RDS", ".qs", ".qs2")
 
-        # Make sure the grouping is a list
-        if self.opts.subsetting and not isinstance(self.opts.subsetting, list):
-            self.opts.subsetting = [self.opts.subsetting]
-
-        # Make sure the grouping is a list with the same length as subsetting
-        if (
-            self.opts.subsetting
-            and not isinstance(self.opts.subsetting_prefix, list)
-        ):
-            self.opts.subsetting_prefix = [
-                self.opts.subsetting_prefix
-            ] * len(self.opts.subsetting)
-
-        # Make sure the lengths of subsetting and subsetting_comparison the same
-        if self.opts.subsetting:
-            if len(self.opts.subsetting) == 1 and isinstance(
-                self.opts.subsetting_comparison, dict
-            ):
-                self.opts.subsetting_comparison = [
-                    self.opts.subsetting_comparison
-                ]
-
-            if len(self.opts.subsetting) > 1 and not isinstance(
-                self.opts.subsetting_comparison, list
-            ):
-                raise ValueError(
-                    "The length of `subsetting` is larger than 1, "
-                    "but `subsetting_comparison` is not a list of dicts."
-                )
-
-            if len(self.opts.subsetting) != len(
-                self.opts.subsetting_comparison
-            ):
-                raise ValueError(
-                    "The length of `subsetting` and `subsetting_comparison` "
-                    "are not the same"
-                )
-
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_input(self) -> Type[Proc]:
         """Build MetabolicInputs process"""
         from .misc import File2Proc
@@ -527,8 +386,8 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         return MetabolicInput
 
-    @ProcGroup.add_proc
-    def p_preparing(self) -> Type[Proc]:
+    @ProcGroup.add_proc  # type: ignore
+    def p_preparing(self) -> Type[Proc] | None:
         """Build SeuratPreparing process"""
         if self.opts.is_seurat:
             return None
@@ -540,11 +399,11 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         return MetabolicSeuratPreparing
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_clustering(self) -> Type[Proc]:
         """Build SeuratClustering process"""
         if self.opts.is_seurat:
-            return self.p_input
+            return self.p_input  # type: ignore
 
         from .scrna import SeuratClustering
 
@@ -553,11 +412,11 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         return MetabolicSeuratClustering
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_mutater(self) -> Type[Proc]:
         """Build SeuratMetadataMutater process"""
         if not self.opts.mutaters:
-            return self.p_clustering
+            return self.p_clustering  # type: ignore
 
         from .scrna import SeuratMetadataMutater
 
@@ -571,97 +430,72 @@ class ScrnaMetabolicLandscape(ProcGroup):
 
         return MetabolicSeuratMetadataMutater
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_expr_impute(self) -> Type[Proc]:
         """Build  process"""
         if self.opts.noimpute:
-            return self.p_mutater
+            return self.p_mutater  # type: ignore
 
         from .scrna import ExprImputation
 
-        @annotate.format_doc(indent=3)
+        @annotate.format_doc(indent=3)  # type: ignore
         class MetabolicExprImputation(ExprImputation):
             """{{Summary}}
 
             You can turn off the imputation by setting the `noimpute` option
             of the process group to `True`.
             """
+
             requires = self.p_mutater
 
         return MetabolicExprImputation
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_pathway_activity(self) -> Type[Proc]:
         """Build MetabolicPathwayActivity process"""
-        return Proc.from_proc(
+        return Proc.from_proc(  # type: ignore
             MetabolicPathwayActivity,
             "MetabolicPathwayActivity",
-            requires=self.p_expr_impute,
+            requires=self.p_expr_impute,  # type: ignore
             order=-1,
+            envs_depth=5,
             envs={
                 "ncores": self.opts.ncores,
                 "gmtfile": self.opts.gmtfile,
-                "grouping": self.opts.grouping,
-                "grouping_prefix": self.opts.grouping_prefix,
-                "subsetting": self.opts.subsetting,
-                "subsetting_prefix": self.opts.subsetting_prefix,
+                "group_by": self.opts.group_by,
+                "subset_by": self.opts.subset_by,
             },
         )
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_pathway_heterogeneity(self) -> Type[Proc]:
         """Build MetabolicPathwayHeterogeneity process"""
-        return Proc.from_proc(
+        return Proc.from_proc(  # type: ignore
             MetabolicPathwayHeterogeneity,
             "MetabolicPathwayHeterogeneity",
-            requires=self.p_expr_impute,
+            requires=self.p_mutater,  # type: ignore
+            envs_depth=5,
             envs={
                 "ncores": self.opts.ncores,
                 "gmtfile": self.opts.gmtfile,
-                "grouping": self.opts.grouping,
-                "grouping_prefix": self.opts.grouping_prefix,
-                "subsetting": self.opts.subsetting,
-                "subsetting_prefix": self.opts.subsetting_prefix,
+                "group_by": self.opts.group_by,
+                "subset_by": self.opts.subset_by,
             },
         )
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_features(self) -> Type[Proc]:
         """Build MetabolicFeatures process"""
-        return Proc.from_proc(
+        return Proc.from_proc(  # type: ignore
             MetabolicFeatures,
             "MetabolicFeatures",
-            requires=self.p_expr_impute,
+            requires=self.p_expr_impute,  # type: ignore
+            envs_depth=5,
             envs={
                 "ncores": self.opts.ncores,
                 "gmtfile": self.opts.gmtfile,
-                "grouping": self.opts.grouping,
-                "grouping_prefix": self.opts.grouping_prefix,
-                "subsetting": self.opts.subsetting,
-                "subsetting_prefix": self.opts.subsetting_prefix,
-            },
-        )
-
-    @ProcGroup.add_proc
-    def p_features_intra_subset(self) -> Type[Proc]:
-        """Build MetabolicFeaturesIntraSubset process"""
-        if self.opts.subsetting_comparison and not self.opts.subsetting:
-            raise ValueError(
-                "Cannot use `subsetting_comparison` without `subsetting`."
-            )
-
-        return Proc.from_proc(
-            MetabolicFeaturesIntraSubset,
-            "MetabolicFeaturesIntraSubset",
-            requires=self.p_expr_impute,
-            envs={
-                "ncores": self.opts.ncores,
-                "gmtfile": self.opts.gmtfile,
-                "grouping": self.opts.grouping,
-                "grouping_prefix": self.opts.grouping_prefix,
-                "subsetting": self.opts.subsetting,
-                "subsetting_prefix": self.opts.subsetting_prefix,
-                "subsetting_comparison": self.opts.subsetting_comparison,
+                "group_by": self.opts.group_by,
+                "subset_by": self.opts.subset_by,
             },
         )
 

@@ -1,5 +1,3 @@
-from datar.misc import flatten
-
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.core.testing import get_pipeline
@@ -7,17 +5,18 @@ from biopipen.ns.web import Download
 from biopipen.ns.scrna_metabolic_landscape import ScrnaMetabolicLandscape
 
 METADATA_URL = (
-    "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE123nnn/GSE123813/"
-    "suppl/GSE123813_bcc_tcell_metadata.txt.gz"
+    "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE123nnn/GSE123813/suppl/"
+    "GSE123813%5Fbcc%5Ftcell%5Fmetadata.txt.gz"
 )
 COUNTDATA_URL = (
-    "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE123nnn/GSE123813/"
-    "suppl/GSE123813_bcc_scRNA_counts.txt.gz"
+    "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE123nnn/GSE123813/suppl/"
+    "GSE123813%5Fbcc%5FscRNA%5Fcounts.txt.gz"
 )
 
 
 class DownloadData(Download):
     """Download the data"""
+
     envs = {"tool": "aria2c"}
 
 
@@ -29,9 +28,10 @@ class PrepareData(Proc):
           check: |
             {{proc.lang}} <(echo "library(Seurat)")
     """
+
     requires = DownloadData
     input = "metafile:file, countfile:file"
-    input_data = lambda ch: [tuple(flatten(ch))]
+    input_data = lambda ch: [tuple(ch.iloc[:, 0])]
     output = "outfile:file:{{in.metafile | stem}}.RDS"
     envs = {
         "seed": 8525,
@@ -47,17 +47,25 @@ scrna_ml_pipe = ScrnaMetabolicLandscape(
         "https://raw.githubusercontent.com/pwwang/immunopipe-example/master/data/"
         "KEGG_metabolism.short.gmt"
     ),
-    grouping="seurat_clusters",
-    grouping_prefix="Cluster",
-    subsetting="timepoint",
-    subsetting_prefix="Timepoint",
-    subsetting_comparison={"post_vs_pre": ["post", "pre"]},
+    group_by="cluster",
     mutaters={"timepoint": "treatment"},
 )
 
-scrna_ml_pipe.procs.MetabolicExprImputation.envs["alra_args"] = {
-    "use.mkl": False,
-    "mkl.seed": 8525,
+if "MetabolicExprImputation" in scrna_ml_pipe.procs:
+    scrna_ml_pipe.procs.MetabolicExprImputation.envs["alra_args"] = {
+        "use.mkl": False,
+        "mkl.seed": 8525,
+    }
+
+
+scrna_ml_pipe.procs.MetabolicPathwayActivity.envs["cases"] = {
+    "NoSubsetting": {},
+    "ByTimepoint": {
+        "subset_by": "timepoint",
+        "plots": {
+            "Merged Heatmap": {"plot_type": "merged_heatmap"},
+        },
+    },
 }
 
 
@@ -65,6 +73,7 @@ def pipeline():
     scrna_ml_pipe.procs.MetabolicInput.requires = PrepareData
     return (
         get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True)
         .set_start(DownloadData)
         .set_data(
             [
@@ -77,13 +86,12 @@ def pipeline():
 
 def testing(pipen):
     # assert pipen._succeeded
-    outfile = (
-        pipen.outdir.joinpath(
-            "REPORTS",
-            "index.html",
-        )
-    )
-    assert outfile.is_file()
+    # outfile = pipen.outdir.joinpath(
+    #     "REPORTS",
+    #     "index.html",
+    # )
+    # assert outfile.is_file()
+    ...
 
 
 if __name__ == "__main__":

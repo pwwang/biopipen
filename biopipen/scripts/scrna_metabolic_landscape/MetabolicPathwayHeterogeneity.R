@@ -1,13 +1,10 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
-
 library(gtools)
-library(parallel)
-library(ggprism)
+library(rlang)
 library(Matrix)
 library(sparseMatrixStats)
 library(Seurat)
+library(tidyseurat)
+library(biopipen.utils)
 
 sobjfile <- {{ in.sobjfile | r }}
 outdir <- {{ out.outdir | r }}
@@ -16,53 +13,81 @@ gmtfile <- {{ envs.gmtfile | r }}
 select_pcs <- {{ envs.select_pcs | r }}
 ncores <- {{ envs.ncores | r }}
 pathway_pval_cutoff <- {{ envs.pathway_pval_cutoff | r }}
-bubble_devpars <- {{ envs.bubble_devpars | r }}
-grouping <- {{ envs.grouping | r }}
-grouping_prefix <- {{ envs.grouping_prefix | r }}
-subsetting_cols <- {{ envs.subsetting | r }}
-subsetting_prefix <- {{ envs.subsetting_prefix | r }}
-
-if (!is.null(grouping_prefix) && nchar(grouping_prefix) > 0) {
-    grouping_prefix = paste0(grouping_prefix, "_")
-}
-
-if (!is.null(subsetting_prefix) && nchar(subsetting_prefix) > 0) {
-    subsetting_prefix = paste0(subsetting_prefix, "_")
-}
+subset_by <- {{ envs.subset_by | r }}
+group_by <- {{ envs.group_by | r }}
+fgsea_args <- {{ envs.fgsea_args | r }}
+plots <- {{ envs.plots | r }}
+cases <- {{ envs.cases | r }}
 
 set.seed(8525)
 
-## gmt_pathways is copied from fgsea package.
-gmt_pathways <- function(gmt_file) {
-    pathway_lines <- strsplit(readLines(gmt_file), "\t")
-    pathways <- lapply(pathway_lines, tail, -2)
-    names(pathways) <- sapply(pathway_lines, head, 1)
-    pathways
-}
+log <- get_logger()
+reporter <- get_reporter()
 
-gmtfile <- localizeGmtfile(gmtfile)
-pathways <- gmt_pathways(gmtfile)
+log$info("Loading Seurat object ...")
+sobj <- read_obj(sobjfile)
+
+defaults <- list(
+    subset_by = subset_by,
+    group_by = group_by,
+    fgsea_args = fgsea_args,
+    plots = plots,
+    select_pcs = select_pcs,
+    pathway_pval_cutoff = pathway_pval_cutoff
+)
+log$info("Expanding cases ...")
+default_case <- subset_by %||% "DEFAULT"
+cases <- expand_cases(
+    cases,
+    defaults,
+    function(name, case) {
+        if (is.null(case$group_by)) {
+            stop("'group_by' is required in case: ", name)
+        }
+        stats::setNames(list(case), name)
+    },
+    default_case = default_case)
+
+log$info("Loading metabolic pathways ...")
+pathways <- ParseGMT(gmtfile)
+pathway_names <- names(pathways)
 metabolics <- unique(as.vector(unname(unlist(pathways))))
-sobj <- readRDS(sobjfile)
 
 
-do_one_subset <- function(s, subset_col, subset_prefix) {
-    log_info(paste0("  Handling subset value: ", s, " ..."))
-    if (is.null(s)) {
-        subset_dir = file.path(outdir, "ALL")
-        subset_obj = sobj
-    } else {
-        subset_dir = file.path(outdir, slugify(paste0(subset_prefix, s)))
-        subset_code = paste0("subset(sobj, subset = ", subset_col, " == '", s, "')")
-        subset_obj = eval(parse(text = subset_code))
+do_subset <- function(object, caseinfo, subset_by, subset_val, group_by, plots, select_pcs, pathway_pval_cutoff) {
+    if (!is.null(subset_by)) {
+        log$info("- Handling subset: {subset_by} = {subset_val} ...")
+        object <- tryCatch(
+            filter(object, !!sym(subset_by) == subset_val & !is.na(!!sym(group_by))),
+            error = function(e) NULL
+        )
     }
-    dir.create(subset_dir, showWarnings = FALSE)
+    if (!is.null(subset_by)) {
+        h1 <- paste0(subset_by, ": ", subset_val)
+        h2 <- group_by
+        odir <- file.path(caseinfo$prefix, slugify(paste0(subset_by, "_", subset_val)))
+    } else if (length(cases) > 1) {
+        h1 <- "No Subsetting"
+        h2 <- group_by
+        odir <- file.path(caseinfo$prefix, "No_Subsetting")
+    } else {
+        h1 <- group_by
+        h2 <- "#"
+        odir <- caseinfo$prefix
+    }
+    if (is.null(object) || ncol(object) < 5) {
+        msg <- paste0("  ! skipped. Subset has less than 5 cells: ", subset_by, " = ", subset_val)
+        log$warn(msg)
+        reporter$add(list(kind = "error", content = msg), h1 = h1, h2 = h2)
+        return(NULL)
+    }
 
-    features = intersect(rownames(subset_obj), metabolics)
-    all_groups = as.character(subset_obj@meta.data[[grouping]])
-    groups <- unique(all_groups)
+    dir.create(odir, showWarnings = FALSE)
 
-    enrich_data_df <- data.frame(x = NULL, y = NULL, NES = NULL, PVAL = NULL)
+    features <- intersect(rownames(object), metabolics)
+    groups <- unique(as.character(object@meta.data[[group_by]]))
+
+    enrich_data_df <- NULL
     pc_plotdata <- data.frame(
         x = numeric(),
         y = numeric(),
@@ -71,11 +96,18 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
     )
 
     for (group in groups) {
-        group_code = paste0("subset(subset_obj, subset = ", grouping, " == '", group, "')")
-        each_metabolic_obj <- eval(parse(text = group_code))
-        each_metabolic_exprs <- GetAssayData(each_metabolic_obj)[features, , drop=F]
-        each_metabolic_exprs <- each_metabolic_exprs[rowSums(each_metabolic_exprs) > 0, , drop=F]
-        if (ncol(each_metabolic_exprs) == 1) { next }
+        log$info("  {group_by}: {group} ...")
+        each_metabolic_obj <- subset(object, subset = !!sym(group_by) == group)
+        if (ncol(each_metabolic_obj) < 5) {
+            log$warn("  ! skipped. Group has less than 5 cells: {group}")
+            next()
+        }
+        each_metabolic_exprs <- GetAssayData(each_metabolic_obj)[features, , drop = FALSE]
+        each_metabolic_exprs <- each_metabolic_exprs[rowSums(each_metabolic_exprs) > 0, , drop=FALSE]
+        if (ncol(each_metabolic_obj) < 5) {
+            log$warn("  ! skipped. Group has less than 5 active cells: {group}")
+            next()
+        }
         x <- each_metabolic_exprs
         ntop <- nrow(x)
         rv <- rowVars(x)
@@ -97,158 +129,135 @@ do_one_subset <- function(s, subset_col, subset_prefix) {
         pc_plotdata <- rbind(pc_plotdata, tmp_plotdata)
 
         ####
-        pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:selected_pcs, drop=FALSE])))
-        pre_rank_matrix <- as.list(as.data.frame(t(pre_rank_matrix)))
+        pre_rank_matrix <- as.matrix(rowSums(abs(pca$rotation[, 1:selected_pcs, drop = FALSE])))
+        pre_rank_matrix <- unlist(as.list(as.data.frame(t(pre_rank_matrix))))
 
-        odir = file.path(subset_dir, paste0(grouping_prefix, slugify(group)))
-        dir.create(odir, showWarnings = FALSE)
-        runFGSEA(
-            pre_rank_matrix,
-            gmtfile = gmtfile,
-            top = 100,
-            outdir = odir,
-            plot = FALSE,
-            envs = list(scoreType = "std", nproc=1)
-        )
-        ############ Motify this
-        result_file = file.path(odir, "fgsea.txt")
-        gsea_result = read.table(result_file, header=T, row.names = NULL, sep="\t", check.names=F)
-        # get the result
-        enrich_data_df <- rbind(
-            enrich_data_df,
-            data.frame(x = group, y = gsea_result$pathway, NES = gsea_result$NES, PVAL = gsea_result$pval)
-        )
+        fgsea_args <- fgsea_args %||% list()
+        fgsea_args$ranks <- pre_rank_matrix
+        fgsea_args$genesets <- pathways
+        fgsea_args$nproc <- fgsea_args$nproc %||% ncores
+
+        tmp <- do_call(RunGSEA, fgsea_args)
+        tmp[[group_by]] <- group
+
+        if (is.null(enrich_data_df)) {
+            enrich_data_df <- tmp
+        } else {
+            enrich_data_df <- rbind(enrich_data_df, tmp)
+        }
     }
 
     # remove pvalue < 0.01 pathways
-    min_pval <- by(enrich_data_df$PVAL, enrich_data_df$y, FUN = min)
+    min_pval <- by(enrich_data_df$pval, enrich_data_df$pathway, FUN = min)
     select_pathways <- names(min_pval)[(min_pval <= pathway_pval_cutoff)]
-    select_enrich_data_df <- enrich_data_df[enrich_data_df$y %in% select_pathways, ]
+    select_enrich_data_df <- enrich_data_df[enrich_data_df$pathway %in% select_pathways, ]
     # converto pvalue to -log10
-    pvals <- select_enrich_data_df$PVAL
+    pvals <- select_enrich_data_df$pval
     pvals[pvals <= 0] <- 1e-10
-    select_enrich_data_df$PVAL <- -log10(pvals)
+    select_enrich_data_df$pval <- -log10(pvals)
 
     # sort
-    pathway_pv_sum <- by(select_enrich_data_df$PVAL, select_enrich_data_df$y, FUN = sum)
+    pathway_pv_sum <- by(select_enrich_data_df$pval, select_enrich_data_df$pathway, FUN = sum)
     pathway_order <- names(pathway_pv_sum)[order(pathway_pv_sum, decreasing = T)]
     ########################### top 10
     pathway_order <- pathway_order[1:10]
-    select_enrich_data_df <- select_enrich_data_df[select_enrich_data_df$y %in% pathway_order, ]
+    select_enrich_data_df <- select_enrich_data_df[select_enrich_data_df$pathway %in% pathway_order, ]
     ########################################
-    select_enrich_data_df$x <- factor(select_enrich_data_df$x, levels = mixedsort(groups))
-    select_enrich_data_df$y <- factor(select_enrich_data_df$y, levels = pathway_order)
+    select_enrich_data_df[[group_by]] <- factor(select_enrich_data_df[[group_by]], levels = gtools::mixedsort(groups))
+    select_enrich_data_df$pathway <- factor(select_enrich_data_df$pathway, levels = pathway_order)
 
-    ## buble plot
-    select_enrich_data_df$x = sapply(select_enrich_data_df$x, function(x) { paste0(grouping_prefix, x) })
-    bubblefile = file.path(subset_dir, "pathway_heterogeneity.png")
-    bub_devpars = list() # bubble_devpars
-    if (is.null(bub_devpars$res)) {
-        bub_devpars$res = 100
-    }
-    if (is.null(bub_devpars$width)) {
-        bub_devpars$width = 300 +
-            max(nchar(as.character(select_enrich_data_df$y))) * 8 +
-            length(unique(select_enrich_data_df$x)) * 25
-    }
-    if (is.null(bub_devpars$height)) {
-        bub_devpars$height = 400 +
-            max(nchar(unique(select_enrich_data_df$x))) * 8 +
-            length(unique(select_enrich_data_df$y)) * 25
-    }
-    bub_devpars$height = max(bub_devpars$height, 480)
-    # For debug purposes
     write.table(
-        select_enrich_data_df,
-        file.path(subset_dir, "pathway_heterogeneity.txt"),
-        sep="\t",
-        quote=F,
-        row.names=F
+        as.data.frame(select_enrich_data_df),
+        file = file.path(odir, "pathway_heterogeneity.txt"),
+        sep = "\t",
+        quote = FALSE,
+        row.names = FALSE
     )
-    if (nrow(select_enrich_data_df) == 0) {
-        p = ggplot(data.frame(text = "No significant pathways found")) +
-            geom_text(aes(x = 0, y = 0, label = text), size = 10) +
-            theme_void() +
-            theme(
-                plot.margin = unit(c(0, 0, 0, 0), "cm"),
-                plot.background = element_rect(fill = "white", colour = NA)
-            )
-        png(bubblefile, width = 600, height = 100, res = 70)
+
+    for (plot in names(plots)) {
+        plotargs <- plots[[plot]]
+        plotargs$devpars <- plotargs$devpars %||% list()
+        plotargs$devpars$res <- plotargs$devpars$res %||% 100
+
+        if (plotargs$plot_type == "dot") {
+            plotargs$x <- plotargs$x %||% group_by
+            plotargs$y <- plotargs$y %||% "pathway"
+            plotargs$fill_by <- plotargs$fill_by %||% "NES"
+            plotargs$size_by <- plotargs$size_by %||% "pval"
+            plotargs$add_bg <- plotargs$add_bg %||% TRUE
+            plotargs$x_text_angle <- plotargs$x_text_angle %||% 90
+            plotfn <- plotthis::DotPlot
+        } else {
+            stop("Unknown plot type: ", plotargs$plot_type)
+        }
+
+        p <- do_call(plotfn, c(list(select_enrich_data_df), plotargs))
+        plotprefix <- file.path(odir, slugify(plot))
+        plotargs$devpars$width <- plotargs$devpars$width %||% (attr(p, "width") * plotargs$devpars$res) %||% 800
+        plotargs$devpars$height <- plotargs$devpars$height %||% (attr(p, "height") * plotargs$devpars$res) %||% 600
+        png(
+            filename = paste0(plotprefix, ".png"),
+            width = plotargs$devpars$width,
+            height = plotargs$devpars$height,
+            res = plotargs$devpars$res
+        )
         print(p)
         dev.off()
-    } else {
-        plotGG(
-            select_enrich_data_df,
-            "point",
-            args = list(aes(x=x, y=y, size=PVAL, color=NES), shape=19),
-            ggs = c(
-                'scale_size(range = c(2, 10))',
-                'scale_color_gradient(low = "white", high = "red")',
-                'labs(
-                    x = NULL, y = NULL, color="NES", size="-log10(pval)"
-                )',
-                'theme_prism(axis_text_angle = 90)',
-                'theme(legend.title = element_text())'
+
+        reporter$add(
+            list(
+                name = plot,
+                contents = list(
+                    list(kind = "descr", content = plotargs$descr %||% plot),
+                    reporter$image(plotprefix, c(), FALSE, kind = "image")
+                )
             ),
-            devpars = bub_devpars,
-            outfile = bubblefile
+            h1 = h1,
+            h2 = h2,
+            ui = "tabs"
         )
     }
-
-    ## plot variance
-    pc_plotdata$group <- factor(pc_plotdata$group, levels = mixedsort(groups))
-    p <- ggplot(pc_plotdata) +
-        geom_point(aes(x, y, colour = factor(sel)), size = 0.5) +
-        scale_color_manual(values = c("gray", "#ff4000")) +
-        facet_wrap(~group, scales = "free", ncol = 4) +
-        theme_bw() +
-        labs(x = "Principal components", y = "Explained variance (%)") +
-        theme(
-            legend.position = "none", panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            axis.line = element_line(linewidth = 0.2, colour = "black"),
-            axis.ticks = element_line(colour = "black", linewidth = 0.2),
-            axis.text.x = element_text(colour = "black", size = 6),
-            axis.text.y = element_text(colour = "black", size = 6),
-            strip.background = element_rect(fill = "white", linewidth = 0.2, colour = NULL),
-            strip.text = element_text(size = 6)
-        )
-
-    ggsave(file.path(subset_dir, "PC_variance_plot.pdf"), p, device = "pdf", useDingbats = FALSE)
-
-    list(
-        list(kind = "descr", content = "Metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities"),
-        list(kind = "image", src = bubblefile),
-        h1 = ifelse(is.null(s), "Metabolic pathway heterogeneity", paste0(subset_prefix, s))
-    )
 }
 
-do_one_subset_col <- function(subset_col, subset_prefix) {
-    log_info(paste0("- Handling subset column: ", subset_col, " ..."))
-    if (is.null(subset_col)) {
-        x <- do_one_subset(NULL, subset_col = NULL, subset_prefix = NULL)
-        do.call(add_report, x)
+
+do_case <- function(casename) {
+    log$info("Processing case: {casename} ...")
+    case <- cases[[casename]]
+    caseinfo <- case_info(casename, outdir, create = TRUE)
+
+    if (is.null(case$subset_by)) {
+        result <- do_subset(
+            sobj,
+            caseinfo = caseinfo,
+            subset_by = NULL,
+            subset_val = NULL,
+            group_by = case$group_by,
+            plots = case$plots,
+            select_pcs = case$select_pcs,
+            pathway_pval_cutoff = case$pathway_pval_cutoff
+        )
     } else {
-        subsets <- na.omit(unique(sobj@meta.data[[subset_col]]))
+        sobj_avail <- filter(sobj, !is.na(!!sym(case$subset_by)))
+        subsets <- unique(sobj@meta.data[[case$subset_by]])
 
-        if (ncores == 1) {
-            x = lapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix)
-        } else {
-            x <- mclapply(subsets, do_one_subset, subset_col = subset_col, subset_prefix = subset_prefix, mc.cores = ncores)
-            if (any(unlist(lapply(x, class)) == "try-error")) {
-                stop(paste0("\nmclapply error:", x))
+        lapply(
+            subsets,
+            function(ss) {
+                do_subset(
+                    sobj_avail,
+                    caseinfo = caseinfo,
+                    subset_by = case$subset_by,
+                    subset_val = ss,
+                    group_by = case$group_by,
+                    plots = case$plots,
+                    select_pcs = case$select_pcs,
+                    pathway_pval_cutoff = case$pathway_pval_cutoff
+                )
             }
-        }
-        for (r in x) { do.call(add_report, r) }
+        )
     }
 }
 
-if (is.null(subsetting_cols)) {
-    do_one_subset_col(NULL)
-} else {
-    for (i in seq_along(subsetting_cols)) {
-        do_one_subset_col(subsetting_cols[i], subsetting_prefix[i])
-    }
-}
+sapply(names(cases), do_case)
 
-save_report(joboutdir)
+reporter$save(dirname(outdir))
