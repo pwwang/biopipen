@@ -3,7 +3,7 @@ library(Seurat)
 
 infile = {{in.infile | r}}
 outfile = {{out.outfile | r}}
-joboutdir = "{{job.outdir}}/"
+joboutdir = {{job.outdir | append: "/" | r}}
 drop_thre = {{envs.scimpute_args.drop_thre | r}}
 kcluster = {{(envs.scimpute_args.kcluster | default: None | r}}
 ncores = {{envs.scimpute_args.ncores | r}}
@@ -12,7 +12,7 @@ refgene = {{envs.scimpute_args.refgene | r}}
 setwd(joboutdir)
 
 labels = NULL
-sobj = readRDS(infile)
+sobj = read_obj(infile)
 counts = as.data.frame(sobj@assays$RNA@counts)
 kc = length(unique(Idents(sobj)))
 if (kc > 0) {
@@ -38,6 +38,9 @@ scimpute(
 imputed = readRDS(file.path(joboutdir, "scimpute_count.rds"))
 outobj = CreateSeuratObject(counts = imputed)
 
-outobj@meta.data = sobj@meta.data[rownames(outobj@meta.data),,drop=FALSE]
-attr(outobj, "impute") = "scimpute"
-saveRDS(outobj, outfile)
+outobj@meta.data = sobj@meta.data[rownames(outobj@meta.data), , drop=FALSE]
+# remember that it is the counts being imputed, we still need to
+# normalize the data
+outobj@misc$impute_method = "scimpute"
+
+save_obj(outobj, outfile)
