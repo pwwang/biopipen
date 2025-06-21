@@ -70,6 +70,7 @@ dependencies:
   - bioconda::bioconductor-atsnp
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
   - bioconda::bioconductor-scdblfinder
+  - bioconda::bioconductor-slingshot
   - bioconda::bioconductor-ccplotr
   - bioconda::maxit
   - bioconda::truvari

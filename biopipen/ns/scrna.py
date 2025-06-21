@@ -2608,16 +2608,22 @@ class ScVelo(Proc):
     script = "file://../scripts/scrna/ScVelo.py"
 
 
-class SlingShot(Proc):
-    """Trajectory inference using SlingShot
+class Slingshot(Proc):
+    """Trajectory inference using Slingshot
 
     This process is implemented based on the R package `slingshot`.
 
     Input:
-        sobjfile: The seurat object file in RDS.
+        sobjfile: The seurat object file in RDS or qs format.
 
     Output:
         outfile: The output object with the trajectory information.
+            The lineages are stored in the metadata of the seurat object at
+            columns `LineageX`, where X is the lineage number. The `BranchID`
+            column contains the branch id for each cell.
+            One can use
+            `scplotter::CellDimPlot(object, lineages = c("Lineage1", "Lineage2", ...))`
+            to visualize the trajectories.
 
     Envs:
         group_by: The column name in metadata to group the cells.
@@ -2626,8 +2632,8 @@ class SlingShot(Proc):
         dims (type=auto): The dimensions to use for the analysis.
             A list or a string with comma separated values.
             Consecutive numbers can be specified with a colon (`:`) or a dash (`-`).
-        start: The starting group for the SlingShot analysis.
-        end: The ending group for the SlingShot analysis.
+        start: The starting group for the Slingshot analysis.
+        end: The ending group for the Slingshot analysis.
         prefix: The prefix to add to the column names of the resulting pseudotime variable.
         reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
         align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
@@ -2635,7 +2641,7 @@ class SlingShot(Proc):
     """  # noqa: E501
 
     input = "sobjfile:file"
-    output = "outfile:file:{{in.sobjfile | stem}}.RDS"
+    output = "outfile:file:{{in.sobjfile | stem}}.qs"
     lang = config.lang.rscript
     envs = {
         "group_by": "seurat_clusters",
@@ -2648,7 +2654,7 @@ class SlingShot(Proc):
         "align_start": False,
         "seed": 8525,
     }
-    script = "file://../scripts/scrna/SlingShot.R"
+    script = "file://../scripts/scrna/Slingshot.R"
 
 
 class LoomTo10X(Proc):

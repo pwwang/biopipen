@@ -1,8 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(Seurat)
 library(slingshot)
+library(biopipen.utils)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
@@ -21,15 +20,17 @@ if (is.null(group_by)) {
     stop("envs.group_by is required")
 }
 
-log_info("Reading Seurat object ...")
-srt <- readRDS(sobjfile)
+log <- get_logger()
+
+log$info("Reading Seurat object ...")
+srt <- read_obj(sobjfile)
 
 if (!group_by %in% colnames(srt@meta.data)) {
     stop(paste("Grouping column", group_by, "not found in the Seurat object"))
 }
 
 reduction <- reduction %||% DefaultDimReduc(srt)
-dims <- expand_dims(dims)
+dims <- biopipen.utils:::.expand_number(dims)
 
 if (is.null(prefix)) {
     prefix <- ""
@@ -37,22 +38,15 @@ if (is.null(prefix)) {
     prefix <- paste0(prefix, "_")
 }
 
-log_info("Filtering cells in NA group_by ...")
+log$info("Filtering cells in NA group_by ...")
 srt_sub <- srt[, !is.na(srt[[group_by, drop = TRUE]])]
 
-log_info("Running Slingshot ...")
+log$info("Running Slingshot ...")
 sl <- slingshot(
     data = as.data.frame(srt_sub[[reduction]]@cell.embeddings[, dims]),
     clusterLabels = as.character(srt_sub[[group_by, drop = TRUE]]),
     start.clus = start, end.clus = end
 )
-
-command <- pbmc_small@commands[[1]]
-attr(command, "name") <- "SlingShot"
-attr(command, "call.string") <- "slingshot(...)"
-attr(command, "params") <- list()
-srt@commands <- srt@commands %||% list()
-srt@commands$Slingshot <- command
 
 df <- as.data.frame(slingPseudotime(sl))
 colnames(df) <- paste0(prefix, colnames(df))
@@ -67,5 +61,7 @@ if (isTRUE(reverse)) {
 srt <- AddMetaData(srt, metadata = df)
 srt <- AddMetaData(srt, metadata = slingBranchID(sl), col.name = paste0(prefix, "BranchID"))
 
-log_info("Saving Seurat object ...")
-saveRDS(srt, outfile)
+srt <- AddSeuratCommand(srt, "Slingshot", "slingshot(...)")
+
+log$info("Saving Seurat object ...")
+save_obj(srt, outfile)
