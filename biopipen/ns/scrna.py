@@ -2522,7 +2522,8 @@ class CellCellCommunicationPlots(Proc):
 class ScVelo(Proc):
     """Velocity analysis for single-cell RNA-seq data
 
-    This process is implemented based on the Python package `scvelo`.
+    This process is implemented based on the Python package `scvelo` (v0.3.3).
+    Note that it doesn't work with `numpy>=2`.
 
     Input:
         sobjfile: The seurat object file in RDS or h5seurat format or AnnData file.
@@ -2530,18 +2531,20 @@ class ScVelo(Proc):
     Output:
         outfile: The output object with the velocity embeddings and information.
             In either RDS, h5seurat or h5ad format, depending on the `envs.outtype`.
-        outdir: The output directory for the plots
+            There will be also plots generated in the output directory
+            (parent directory of `outfile`).
+            Note that these plots will not be used in the report, but can be used as
+            supplementary information for the velocity analysis.
+            To visualize the velocity embeddings, you can use the `SeuratClusterStats`
+            process with `v_reduction` provided to one of the `envs.dimplots`.
 
     Envs:
         ncores (type=int): Number of cores to use.
         group_by: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
-        reduction: The nonlinear reduction to use for the velocity analysis.
-            Typically, `umap` will be used.
-            If this is not provided, 'pca' will be used if exists, otherwise a
-            PCA will be performed.
-        modes (type=auto): The modes to use for the analysis.
-            A list or a string with comma separated values.
+        mode (type=list): The mode to use for the velocity analysis.
+            It should be a subset of `['deterministic', 'stochastic', 'dynamical']`,
+            meaning that we can perform the velocity analysis in multiple modes.
         fitting_by (choice): The mode to use for fitting the velocities.
             - stochastic: Stochastic mode
             - deterministic: Deterministic mode
@@ -2549,16 +2552,6 @@ class ScVelo(Proc):
             (both unspliced and spliced) required for a gene.
         n_neighbors (type=int): The number of neighbors to use for the velocity graph.
         n_pcs (type=int): The number of PCs to use for the velocity graph.
-        stream_smooth (type=float): Multiplication factor for scale in Gaussian kernel
-            around grid point.
-        stream_density (type=float): Controls the closeness of streamlines.
-            When density = 2.0, the domain is divided into a 60x60 grid, whereas
-            density linearly scales this grid. Each cell in the grid can have,
-            at most, one traversing streamline. For different densities in each
-            direction, use a tuple (density_x, density_y).
-        arrow_size (type=float): Scaling factor for the arrow size.
-        arrow_length (type=float): Length of arrows.
-        arrow_density (type=float): Density of arrows.
         denoise (flag): Whether to denoise the data.
         denoise_topn (type=int): Number of genes with highest likelihood selected to
             infer velocity directions.
@@ -2567,43 +2560,40 @@ class ScVelo(Proc):
             infer velocity directions.
         calculate_velocity_genes (flag): Whether to calculate the velocity genes.
         top_n (type=int): The number of top features to plot.
-        res (type=int): The resolution of the plots.
         rscript: The path to the Rscript executable used to convert RDS file to AnnData.
             if `in.sobjfile` is an RDS file, it will be converted to AnnData file
             (h5ad). You need `Seurat`, `SeuratDisk` and `digest` installed.
         outtype (choice): The output file type.
-            - input: The same as the input file type.
-            - anndata: AnnData object
-            - h5seurat: h5seurat object
-            - h5ad: h5ad object
+            - <input>: The same as the input file type.
+            - h5seurat: h5seurat file
+            - h5ad: h5ad file
+            - qs: qs/qs2 file
+            - qs2: qs2 file
+            - rds: RDS file
     """
 
     input = "sobjfile:file"
-    output = "outfile:file:{{in.sobjfile | stem}}-scvelo.{{envs.outtype}}"
+    output = (
+        "outfile:file:{{in.sobjfile | stem}}-scvelo."
+        "{{ext0(in.sobjfile) if envs.outtype == '<input>' else envs.outtype}}"
+    )
     lang = config.lang.python
     envs = {
         "ncores": config.misc.ncores,
         "group_by": "seurat_clusters",
-        "reduction": "umap",
-        "modes": ["stochastic", "deterministic", "dynamical"],
+        "mode": ["deterministic", "stochastic", "dynamical"],
         "fitting_by": "stochastic",
         "min_shared_counts": 30,
         "n_neighbors": 30,
         "n_pcs": 30,
-        "stream_smooth": 0.5,
-        "stream_density": 2.0,
-        "arrow_size": 5.0,
-        "arrow_length": 5.0,
-        "arrow_density": 0.5,
         "denoise": False,
         "denoise_topn": 3,
         "kinetics": False,
         "kinetics_topn": 100,
         "calculate_velocity_genes": False,
         "top_n": 6,
-        "res": 100,
         "rscript": config.lang.rscript,
-        "outtype": "input",
+        "outtype": "<input>",
     }
     script = "file://../scripts/scrna/ScVelo.py"
 
