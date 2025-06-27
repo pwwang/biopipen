@@ -1,7 +1,15 @@
 """Plotting data"""
 
+import warnings
+
 from ..core.proc import Proc
 from ..core.config import config
+
+warnings.warn(
+    "The `biopipen.ns.plot` module is deprecated and will be removed in the future. "
+    "Please use `biopipen.ns.misc.Plot` process instead.",
+    DeprecationWarning,
+)
 
 
 class VennDiagram(Proc):
