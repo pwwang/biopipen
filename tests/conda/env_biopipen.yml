@@ -92,6 +92,7 @@ dependencies:
   - pwwang::bioconductor-data-packages
   # - pwwang::bioconductor-ggmanh
   - svalkiers::clustcr
+  - conda::r-globals=0.18
   - pip:
     - poetry
     - magic-impute
