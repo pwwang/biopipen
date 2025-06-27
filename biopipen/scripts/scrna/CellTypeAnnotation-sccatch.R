@@ -8,7 +8,7 @@ newcol = {{envs.newcol | r}}
 merge_same_labels = {{envs.merge | r}}
 
 if (!is.null(sccatch_args$marker)) {
-    cellmatch = readRDS(sccatch_args$marker)
+    cellmatch = biopipen.utils::read_obj(sccatch_args$marker)
     sccatch_args$if_use_custom_marker = TRUE
 }
 sccatch_args$marker = cellmatch
@@ -63,4 +63,4 @@ if (length(celltypes) == 0) {
 }
 
 log_info("Saving Seurat object ...")
-saveRDS(sobj, outfile)
+biopipen.utils::save_obj(sobj, outfile)

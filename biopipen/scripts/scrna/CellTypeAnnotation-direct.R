@@ -16,7 +16,7 @@ if (is.null(celltypes) || length(celltypes) == 0) {
     file.symlink(sobjfile, outfile)
 } else {
     log_info("Loading Seurat object ...")
-    sobj <- readRDS(sobjfile)
+    sobj <- biopipen.utils::read_obj(sobjfile)
     idents <- Idents(sobj)
     if (is.factor(idents)) {
         idents <- levels(idents)
@@ -63,5 +63,5 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         sobj <- merge_clusters_with_same_labels(sobj, newcol)
     }
 
-    saveRDS(sobj, outfile)
+    biopipen.utils::save_obj(sobj, outfile)
 }

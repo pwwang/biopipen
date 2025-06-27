@@ -12,7 +12,7 @@ merge_same_labels = {{envs.merge | r}}
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
 
 log_info("Reading Seurat object...")
-sobj = readRDS(sobjfile)
+sobj = biopipen.utils::read_obj(sobjfile)
 
 # prepare gene sets
 log_info("Preparing gene sets...")
@@ -47,7 +47,7 @@ if (merge_same_labels) {
 }
 
 log_info("Saving Seurat object...")
-saveRDS(sobj, outfile)
+biopipen.utils::save_obj(sobj, outfile)
 
 log_info("Saving the mappings ...")
 if (is.null(newcol)) {

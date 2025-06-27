@@ -1,4 +1,3 @@
-import os
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
