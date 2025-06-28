@@ -219,7 +219,9 @@ class MetabolicFeatures(Proc):
         "cases": {},
     }
     script = "file://../scripts/scrna_metabolic_landscape/MetabolicFeatures.R"
-    plugin_opts = {"report": "file://../reports/scrna_metabolic_landscape/MetabolicFeatures.svelte"}
+    plugin_opts = {
+        "report": "file://../reports/scrna_metabolic_landscape/MetabolicFeatures.svelte"
+    }
 
 
 class MetabolicPathwayHeterogeneity(Proc):
@@ -294,7 +296,12 @@ class MetabolicPathwayHeterogeneity(Proc):
         "file://../scripts/scrna_metabolic_landscape/"
         "MetabolicPathwayHeterogeneity.R"
     )
-    plugin_opts = {"report": "file://../reports/scrna_metabolic_landscape/MetabolicPathwayHeterogeneity.svelte"}
+    plugin_opts = {
+        "report": (
+            "file://../reports/scrna_metabolic_landscape/"
+            "MetabolicPathwayHeterogeneity.svelte"
+        )
+    }
 
 
 class ScrnaMetabolicLandscape(ProcGroup):
