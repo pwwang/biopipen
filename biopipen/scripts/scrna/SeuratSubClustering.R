@@ -66,7 +66,7 @@ envs$RunUMAP <- .expand_dims(envs$RunUMAP)
 envs$FindNeighbors <- .expand_dims(envs$FindNeighbors)
 
 log_info("Reading Seurat object ...")
-srtobj <- readRDS(srtfile)
+srtobj <- biopipen.utils::read_obj(srtfile)
 
 if (isTRUE(envs$cache)) { envs$cache <- joboutdir }
 if (length(envs$cache) > 1) {
@@ -200,4 +200,4 @@ for (key in names(envs$cases)) {
 }
 
 log_info("Saving results ...")
-saveRDS(srtobj, file = rdsfile)
+biopipen.utils::save_obj(srtobj, file = rdsfile)

@@ -26,7 +26,7 @@ cases <- {{ envs.cases | r: todot = "-" }}  # nolint
 set.seed(8525)
 
 log_info("- Loading Seurat object ...")
-srtobj <- readRDS(srtfile)
+srtobj <- biopipen.utils::read_obj(srtfile)
 assay <- DefaultAssay(srtobj)
 
 log_info("- Mutate meta data if needed ...")
