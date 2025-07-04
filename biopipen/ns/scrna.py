@@ -1025,20 +1025,24 @@ class MarkersFinder(Proc):
             * See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         mutaters (type=json): The mutaters to mutate the metadata
             %(mutate_helpers_clonesize)s
-        ident-1: The first group of cells to compare
-        ident-2: The second group of cells to compare
-            If not provided, the rest of the cells are used for `ident-2`.
         group-by: The column name in metadata to group the cells.
             If only `group-by` is specified, and `ident-1` and `ident-2` are
             not specified, markers will be found for all groups in this column
             in the manner of "group vs rest" comparison.
             `NA` group will be ignored.
+            If `None`, `Seurat::Idents(srtobj)` will be used, which is usually
+            `"seurat_clusters"` after unsupervised clustering.
+        ident-1: The first group of cells to compare
+            When this is empty, the comparisons will be expanded to each group v.s. the rest of the cells in `group-by`.
+        ident-2: The second group of cells to compare
+            If not provided, the rest of the cells are used for `ident-2`.
         each: The column name in metadata to separate the cells into different
             cases.
-        prefix_each (flag): Whether to prefix the `each` column name to the
-            value as the case/section name.
-        prefix_group (flag): When neither `ident-1` nor `ident-2` is specified,
-            should we prefix the group name to the section name?
+            When this is specified, the case will be expanded for each value of
+            the column in metadata. For example, when you have `envs.cases."Cluster Markers".each = "Sample"`,
+            then the case will be expanded as `envs.cases."Cluster Markers - Sample1"`, `envs.cases."Cluster Markers - Sample2"`, etc.
+            You can specify `allmarker_plots` and `overlaps` to plot the markers for all cases in the same plot and plot the overlaps of the markers
+            between different cases by values in this column.
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
@@ -1048,18 +1052,22 @@ class MarkersFinder(Proc):
             `p_val_adj`. For example, `"p_val_adj < 0.05 & abs(avg_log2FC) > 1"`
             to select markers with adjusted p-value < 0.05 and absolute log2
             fold change > 1.
+        enrich_style (choice): The style of the enrichment analysis.
+            The enrichment analysis will be done by `EnrichIt()` from [`enrichit`](https://pwwang.github.io/enrichit/).
+            Two styles are available:
+            - enrichr: `enrichr` style enrichment analysis (fisher's exact test will be used).
+            - clusterprofiler: `clusterProfiler` style enrichment analysis (hypergeometric test will be used).
+            - clusterProfiler: alias for `clusterprofiler`
         assay: The assay to use.
         error (flag): Error out if no/not enough markers are found or no pathways are enriched.
             If `False`, empty results will be returned.
-        site: The site to use for the `enrichR` enrichment analysis.
         subset: An expression to subset the cells for each case.
-        cache (type=auto): Where to cache to `FindAllMarkers` results.
+        cache (type=auto): Where to cache the results.
             If `True`, cache to `outdir` of the job. If `False`, don't cache.
             Otherwise, specify the directory to cache to.
         rest (ns): Rest arguments for `Seurat::FindMarkers()`.
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
-            This only works when `use_presto` is `False`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
         allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
             - plot_type: The type of the plot.
@@ -1094,6 +1102,7 @@ class MarkersFinder(Proc):
                 [`scplotter::VolcanoPlot()`](https://pwwang.github.io/plotthis/reference/VolcanoPlot.html).
         marker_plots (type=json): Cases of the plots to generate for the markers.
             Plot cases. The keys are the names of the cases and the values are the dicts inherited from `marker_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
         enrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
@@ -1107,44 +1116,33 @@ class MarkersFinder(Proc):
             - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.htmll>.
         enrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
+        overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases or comparisons.
+            This means either `ident-1` should be empty, so that they can be expanded to multiple comparisons.
+            - sigmarkers: The expression to filter the significant markers for each case.
+                If not provided, `envs.sigmarkers` will be used.
+            - plot_type (choice): The type of the plot to generate for the overlaps.
+                - venn: Use `plotthis::VennDiagram()`.
+                - upset: Use `plotthis::UpsetPlot()`.
+            - more_formats (list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: More arguments pased to `plotthis::VennDiagram()`
+                (<https://pwwang.github.io/plotthis/reference/venndiagram1.html>)
+                or `plotthis::UpsetPlot()`
+                (<https://pwwang.github.io/plotthis/reference/upsetplot1.html>)
+        overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases or comparisons.
+            The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
+            There are two situations that we can perform overlaps:
+            1. If `ident-1` is not specified, the overlaps can be performed between different comparisons.
+            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident-1` must be specified.
         cases (type=json): If you have multiple cases for marker discovery, you can specify them
             here. The keys are the names of the cases and the values are the above options. If some options are
             not specified, the default values specified above (under `envs`) will be used.
-            If no cases are specified, the default case will be added with the default values under `envs` with the name `DEFAULT`.
-            If you want to put some cases under the same section in the report, you can specify the section name in the case name
-            as a prefix separated by `::`. For example, `section1::case1` and `section1::case2` will be put `case1` and `case2`
-            under the section `section1`.
-        overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases.
-            - cases (list): The cases to do the overlapping analysis, including the prefix section name.
-                The case must have `ident-1` specified. When `each` is specified, the case will be expanded.
-                For example, `case1` with `each = "group"`, where `group` has `g1` and `g2`, will be expanded to
-                `case1::g1` and `case1::g2`, or `case1::group - g1` and `case1::group - g2` if `prefix_each` is `True`.
-                There must be at least 2 cases to do the overlapping analysis.
-            - sigmarkers: The expression to filter the significant markers for each case.
-                If not provided, `envs.sigmarkers` will be used.
-            - venn (ns): The options for the Venn diagram.
-                - enabled (flag): Whether to enable the Venn diagram.
-                    Default is "auto", which means enabled when there are no more than 5 cases.
-                - more_formats (list): The extra formats to save the plot in.
-                - save_code (flag): Whether to save the code to generate the plot.
-                - devpars (ns): The device parameters for the plots.
-                    - res (type=int): The resolution of the plots.
-                    - height (type=int): The height of the plots.
-                    - width (type=int): The width of the plots.
-                - <more>: More arguments pased to `plotthis::VennDiagram()`.
-                    https://pwwang.github.io/plotthis/reference/venndiagram1.html
-            - upset (ns): The options for the UpSet plot.
-                - enabled (flag): Whether to enable the UpSet plot.
-                - more_formats (list): The extra formats to save the plot in.
-                - save_code (flag): Whether to save the code to generate the plot.
-                - devpars (ns): The device parameters for the plots.
-                    - res (type=int): The resolution of the plots.
-                    - height (type=int): The height of the plots.
-                    - width (type=int): The width of the plots.
-                - <more>: More arguments pased to `plotthis::UpsetPlot()`.
-                    https://pwwang.github.io/plotthis/reference/upsetplot1.html
-        overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases.
-            The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
+            If no cases are specified, the default case will be added with the default values under `envs` with the name `Marker Discovery`.
     """  # noqa: E501
 
     input = "srtobj:file"
@@ -1153,20 +1151,18 @@ class MarkersFinder(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "mutaters": {},
+        "group-by": None,
         "ident-1": None,
         "ident-2": None,
-        "group-by": "seurat_clusters",
         "each": None,
-        "prefix_each": True,
-        "prefix_group": True,
-        "assay": None,
-        "subset": None,
-        "error": True,
-        "site": "Enrichr",
-        "rest": {},
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
+        "enrich_style": "enrichr",
+        "assay": None,
+        "error": True,
+        "subset": None,
         "cache": config.path.tmpdir,
+        "rest": {},
         "allmarker_plots_defaults": {
             "plot_type": None,
             "more_formats": [],
@@ -1197,24 +1193,15 @@ class MarkersFinder(Proc):
         "enrich_plots": {
             "Bar Plot": {"plot_type": "bar", "ncol": 1, "top_term": 10},
         },
-        "cases": {},
         "overlaps_defaults": {
-            "cases": [],
             "sigmarkers": None,
-            "venn": {
-                "enabled": "auto",
-                "more_formats": [],
-                "save_code": False,
-                "devpars": {"res": 100},
-            },
-            "upset": {
-                "enabled": True,
-                "more_formats": [],
-                "save_code": False,
-                "devpars": {"res": 100},
-            },
+            "plot_type": "venn",
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
         },
         "overlaps": {},
+        "cases": {},
     }
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"

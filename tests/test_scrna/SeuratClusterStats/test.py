@@ -124,12 +124,50 @@ class ClusterMarkers(MarkersFinder):
         "cases": {
             # Test mixed types of cases
             "Cluster": {
-                "prefix_group": False,
                 "error": False,
-                "allmarker_plots": {"Heatmap": {"plot_type": "heatmap"}},
+                "sigmarkers": "p_val_adj < 0.05 & avg_log2FC > 0",
+                "marker_plots": {
+                    "Heatmap": {"plot_type": "heatmap"},
+                },
+                "allmarker_plots": {
+                    "Heatmap": {
+                        "plot_type": "heatmap",
+                    },
+                },
             },
-            "Comparison": {"group-by": "groups", "error": False, "ident-1": "g1"},
+            "Comparison": {
+                "sigmarkers": "p_val < 0.1",
+                "group-by": "groups", "error": False, "ident-1": "g1"
+            },
         }
+    }
+
+
+class DEGSingleComparison(MarkersFinder):
+    requires = SeuratSubClustering
+    envs = {
+        "group-by": "groups",
+        "ident-1": "g1",
+        "ident-2": "g2",
+        "sigmarkers": "p_val < 0.5",
+    }
+
+
+class DEGSingleComparisonWithEach(MarkersFinder):
+    requires = SeuratSubClustering
+    envs = {
+        "group-by": "groups",
+        "each": "seurat_clusters",
+        "ident-1": "g1",
+        "sigmarkers": "p_val < 0.5",
+        "allmarker_plots": {
+            "Heatmap": {
+                "plot_type": "heatmap",
+            },
+            "Dot": {
+                "plot_type": "dot",
+            },
+        },
     }
 
 
@@ -137,7 +175,6 @@ class DEG(MarkersFinder):
     requires = SeuratSubClustering
     envs = {
         # "mutaters": {"Cluster": "if_else(seurat_clusters %in% c('c1', 'c2', 'c3'), seurat_clusters, NA)"},
-        "prefix_each": False,
         "cases": {
             "Group": {
                 "group-by": "groups",
@@ -145,15 +182,13 @@ class DEG(MarkersFinder):
                 # "each": "Cluster",
                 "ident-1": "g1",
                 "sigmarkers": "p_val < 0.5",
-            }
-        },
-        "overlaps": {
-            "Group": {
-                "sigmarkers": 'abs(avg_log2FC) > 1',
-                "cases": ["Group::FCFR3A+ Mono", "Group::DC", "Group::Platelet"],
-                "venn": {"save_code": True},
-                "upset": {"save_code": True},
-            }
+                "overlaps": {
+                    "Venn": {
+                        "sigmarkers": 'abs(avg_log2FC) > 1',
+                        "plot_type": "venn",
+                    },
+                },
+            },
         },
     }
     order = 99
@@ -245,8 +280,8 @@ class SeuratClusterStats(SeuratClusterStats_):
 
 
 def pipeline():
-    # return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
-    return get_pipeline(__file__).set_starts(PrepareSeurat)
+    return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
+    # return get_pipeline(__file__).set_starts(PrepareSeurat)
 
 
 def testing(pipen):
