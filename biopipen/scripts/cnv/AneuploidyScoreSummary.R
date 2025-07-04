@@ -374,7 +374,7 @@ for (heatmap_name in names(heatmap_cases)) {
         caa_df,
         rows_data = metadf,
         name = "CAA",
-        rows = setdiff(colnames(caa_df), "Arms"),
+        rows_by = setdiff(colnames(caa_df), "Arms"),
         columns_by = "Arms",
         cluster_rows = FALSE,
         cluster_columns = FALSE,
