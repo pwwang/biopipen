@@ -42,6 +42,7 @@ class HeatmapPlot(Plot_):
     requires = PrepareHeatmapData
     envs = {
         "fn": "Heatmap",
+        "in_form": "wide-rows",
         "columns_by": "Gene",
         "flip": True,
     }
