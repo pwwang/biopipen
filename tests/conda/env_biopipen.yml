@@ -93,7 +93,7 @@ dependencies:
   # - pwwang::bioconductor-ggmanh
   - svalkiers::clustcr
   # package to specify version to avoid old versions
-  # - pwwang::bioconductor-ggmanh=1.12
+  - pwwang::bioconductor-ggmanh=1.12
   # - conda-forge::r-globals=0.18
   - pip:
     - poetry
