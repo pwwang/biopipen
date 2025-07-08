@@ -240,6 +240,12 @@ if (!identical(envs$doublet_detector, "none")) {
     sobj <- subset(sobj, subset = !!sym(paste0(sobj@misc$doublets$tool, "_DropletType")) != "doublet")
 }
 
+if (!is.null(envs$mutaters) && length(envs$mutaters) > 0) {
+    log$info("Mutating metadata ...")
+    sobj@meta.data <- sobj@meta.data %>%
+        mutate(!!!lapply(envs$mutaters, rlang::parse_expr))
+}
+
 log$info("Saving QC'ed seurat object ...")
 reporter$save(joboutdir)
 save_obj(sobj, outfile)

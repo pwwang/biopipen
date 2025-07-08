@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pipen import Proc
+from pipen import Proc  # type: ignore
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
     SeuratTo10X as SeuratTo10X_,
@@ -64,6 +64,7 @@ class SeuratPreparing3(SeuratPreparing_):
     requires = SeuratTo10X
     input_data = gen_input
     envs = {
+        "mutaters": {"X": "1"},
         "cell_qc": "runif(n()) < 0.5",
         "cell_qc_per_sample": True,
         "doublet_detector": "scDblFinder",

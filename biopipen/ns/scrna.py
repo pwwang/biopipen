@@ -103,6 +103,9 @@ class SeuratPreparing(Proc):
         ncores (type=int): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
+        mutaters (type=json): The mutaters to mutate the metadata to the cells.
+            These new columns will be added to the metadata of the Seurat object and
+            will be saved in the output file.
         min_cells (type=int): The minimum number of cells that a gene must be
             expressed in to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
@@ -266,6 +269,7 @@ class SeuratPreparing(Proc):
     envs_depth = 4
     envs = {
         "ncores": config.misc.ncores,
+        "mutaters": {},
         "min_cells": 0,
         "min_features": 0,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
@@ -2016,7 +2020,7 @@ class RadarPlots(Proc):
         ///
 
     Input:
-        srtobj: The seurat object in RDS format
+        srtobj: The seurat object in RDS or qs/qs2 format
 
     Output:
         outdir: The output directory for the plots
