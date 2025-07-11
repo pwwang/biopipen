@@ -32,7 +32,7 @@ do_one_ngenes <- function(name) {
     save_plot(p, info$prefix, case$devpars, formats = c("png", more_formats))
     if (save_code) {
         save_plotcode(p, info$prefix,
-            setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
+            setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env(case, envir = .GlobalEnv))"),
             "case",
             auto_data_setup = FALSE
         )

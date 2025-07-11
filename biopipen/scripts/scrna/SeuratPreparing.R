@@ -143,7 +143,7 @@ for (pname in names(envs$qc_plots)) {
     save_plot(p, prefix, devpars, formats = c("png", more_formats))
     if (save_code) {
         save_plotcode(p, prefix,
-            setup = c("library(biopipen.utils)", "load('data.RData')", "invisible(list2env('args'))"),
+            setup = c("library(biopipen.utils)", "load('data.RData')", "invisible(list2env(args, envir = .GlobalEnv))"),
             "args",
             auto_data_setup = FALSE)
     }
