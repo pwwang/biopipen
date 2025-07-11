@@ -1682,45 +1682,82 @@ class ScRepLoading(Proc):
     """Load the single cell TCR/BCR data into a `scRepertoire` compatible object
 
     This process loads the single cell TCR/BCR data into a `scRepertoire`
-    compatible object. Later, `scRepertoire::combineExpression` can be used to
-    combine the expression data with the TCR/BCR data.
+    (>= v2.0.8, < v2.3.2) compatible object. Later, `scRepertoire::combineExpression`
+    can be used to combine the expression data with the TCR/BCR data.
 
-    For the data path specified at `TCRData` in the input file, we will first find
-    `filtered_contig_annotations.csv` and `filtered_config_annotations.csv.gz` in the
-    path. If neighter of them exists, we will find `all_contig_annotations.csv` and
-    `all_contig_annotations.csv.gz` in the path and a warning will be raised
-    (You can find it at `./.pipen/<pipeline-name>/ScRepLoading/<job.index>/job.stderr`).
+    For the data path specified at `TCRData`/`BCRData` in the input file
+    (`in.metafile`), will be used to find the TCR/BCR data files and
+    `scRepertoire::loadContigs()` will be used to load the data.
 
-    If none of the files exists, an error will be raised.
+    A directory can be specified in `TCRData`/`BCRData`, then
+    `scRepertoire::loadContigs()` will be used directly to load the data from the
+    directory. Otherwise if a file is specified, it will be symbolically linked to
+    a directory for `scRepertoire::loadContigs()` to load.
+    Note that when the file name can not be recognized by `scRepertoire::loadContigs()`,
+    `envs.format` must be set for the correct format of the data.
 
     Input:
         metafile: The meta data of the samples
             A tab-delimited file
             Two columns are required:
             * `Sample` to specify the sample names.
-            * `TCRData` to assign the path of the data to the samples,
+            * `TCRData`/`BCRData` to assign the path of the data to the samples,
             and this column will be excluded as metadata.
-            Immunarch is able to fetch the sample names from the names of
-            the target files. However, 10x data yields result like
-            `filtered_contig_annotations.csv`, which doesn't have any name
-            information.
 
     Output:
-        outfile: The `scRepertoire` compatible object in qs2 format
+        outfile: The `scRepertoire` compatible object in qs/qs2 format
 
     Envs:
+        type (choice): The type of the data to load.
+            - TCR: T cell receptor data
+            - BCR: B cell receptor data
         combineTCR (type=json): The extra arguments for `scRepertoire::combineTCR`
             function.
             See also <https://www.borch.dev/uploads/screpertoire/reference/combinetcr>
+        combineBCR (type=json): The extra arguments for `scRepertoire::combineBCR`
+            function.
+            See also <https://www.borch.dev/uploads/screpertoire/reference/combinebcr>
         exclude (auto): The columns to exclude from the metadata to add to the object.
             A list of column names to exclude or a string with column names separated
-            by `,`. By default, `TCRData` and `RNAData` will be excluded.
-
-    """
+            by `,`. By default, `BCRData`, `TCRData` and `RNAData` will be excluded.
+        tmpdir: The temporary directory to store the symbolic links to the
+            TCR/BCR data files.
+        format (choice): The format of the TCR/BCR data files.
+            - 10X: 10X Genomics data, which is usually in a directory with
+                `filtered_contig_annotations.csv` file.
+            - AIRR: AIRR format, which is usually in a file with
+                `airr_rearrangement.tsv` file.
+            - BD: Becton Dickinson data, which is usually in a file with
+                `Contigs_AIRR.tsv` file.
+            - Dandelion: Dandelion data, which is usually in a file with
+                `all_contig_dandelion.tsv` file.
+            - Immcantation: Immcantation data, which is usually in a file with
+                `data.tsv` file.
+            - JSON: JSON format, which is usually in a file with `.json` extension.
+            - ParseBio: ParseBio data, which is usually in a file with
+                `barcode_report.tsv` file.
+            - MiXCR: MiXCR data, which is usually in a file with `clones.tsv` file.
+            - Omniscope: Omniscope data, which is usually in a file with `.csv`
+                extension.
+            - TRUST4: TRUST4 data, which is usually in a file with
+                `barcode_report.tsv` file.
+            - WAT3R: WAT3R data, which is usually in a file with
+                `barcode_results.csv` file.
+            See also: <https://rdrr.io/github/ncborcherding/scRepertoire/man/loadContigs.html>
+            If not provided, the format will be guessed from the file name by `scRepertoire::loadContigs()`.
+    """  # noqa: E501
     input = "metafile:file"
     output = "outfile:file:{{in.metafile | stem}}.scRep.qs"
     lang = config.lang.rscript
-    envs = {"combineTCR": {"samples": True}, "exclude": ["TCRData", "RNAData"]}
+    envs = {
+        "type": "TCR",  # or BCR
+        "combineTCR": {"samples": True},
+        "combineBCR": {"samples": True},
+        "exclude": ["BCRData", "TCRData", "RNAData"],
+        "format": None,
+        "tmpdir": config.path.tmpdir,
+
+    }
     script = "file://../scripts/tcr/ScRepLoading.R"
 
 
