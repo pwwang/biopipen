@@ -209,12 +209,29 @@ cases <- expand_cases(cases, defaults, post_casing, default_case = "Marker Disco
 log$info("Running cases ...")
 
 process_markers <- function(markers, info, case) {
+    ## Attributes lost
+    # markers <- markers %>%
+    #     mutate(gene = as.character(gene)) %>%
+    #     arrange(p_val_adj, desc(abs(avg_log2FC)))
+    markers$gene <- as.character(markers$gene)
+    markers <- markers[order(markers$p_val_adj, -abs(markers$avg_log2FC)), ]
+
     # Save markers
     write.table(markers, file.path(info$prefix, "markers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+    sigmarkers <- markers %>% filter(!!parse_expr(case$sigmarkers))
+    write.table(sigmarkers, file.path(info$prefix, "sigmarkers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
     reporter$add2(
         list(
             name = "Table",
-            contents = list(list(kind = "table", src = file.path(info$prefix, "markers.tsv"), data = list(nrows = 100)))
+            contents = list(
+                list(kind = "descr", content = paste0(
+                    "Showing top 100 markers ordered by p_val_adj ascendingly, then abs(avg_log2FC) descendingly. ",
+                    "Use 'Download the entire data' button to download all significant markers by '",
+                    html_escape(case$sigmarkers), "'."
+                )),
+                list(kind = "table", src = file.path(info$prefix, "sigmarkers.tsv"), data = list(nrows = 100))
+            )
         ),
         hs = c(info$section, info$name),
         hs2 = "Markers",
@@ -238,9 +255,7 @@ process_markers <- function(markers, info, case) {
     }
 
     # Do enrichment analysis
-    significant_markers <- markers %>%
-        filter(!!parse_expr(case$sigmarkers)) %>%
-        pull("gene") %>% unique()
+    significant_markers <- unique(sigmarkers$gene)
 
     if (length(significant_markers) < 5) {
         if (case$error) {
@@ -260,7 +275,7 @@ process_markers <- function(markers, info, case) {
     } else {
         tryCatch({
             enrich <- RunEnrichment(
-                markers %>% filter(!!parse_expr(case$sigmarkers)) %>% pull("gene") %>% unique(),
+                significant_markers,
                 dbs = case$dbs, style = case$enrich_style)
 
             write.table(enrich, file.path(info$prefix, "enrich.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
