@@ -234,7 +234,7 @@ process_markers <- function(markers, info, case) {
             )
         ),
         hs = c(info$section, info$name),
-        hs2 = "Markers",
+        hs2 = paste0("Markers ", case$ident),
         ui = "tabs"
     )
 
@@ -249,7 +249,7 @@ process_markers <- function(markers, info, case) {
                 name = plotname,
                 contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
             hs = c(info$section, info$name),
-            hs2 = "Markers",
+            hs2 = paste0("Markers ", case$ident),
             ui = "tabs"
         )
     }
@@ -467,7 +467,8 @@ run_case <- function(name) {
                 enrich_style = enrich_style,
                 marker_plots = marker_plots,
                 enrich_plots = enrich_plots,
-                error = case$error
+                error = case$error,
+                ident = ident
             ))
         }
 
@@ -488,7 +489,8 @@ run_case <- function(name) {
             enrich_style = enrich_style,
             marker_plots = marker_plots,
             enrich_plots = enrich_plots,
-            error = case$error
+            error = case$error,
+            ident = if (is.null(case$ident.2)) case$ident.1 else paste0(case$ident.1, " vs ", case$ident.2)
         ))
 
         if (!is.null(original_case)) {
