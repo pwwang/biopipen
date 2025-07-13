@@ -94,7 +94,8 @@ get_contig_dir <- function(input, sample, fmt) {
         return(list(input, fmt))
     }
     # file
-    filedir <- file.path(tmpdir, sluggify(sample))
+    filedir <- file.path(tmpdir, slugify(sample))
+    dir.create(filedir, recursive = TRUE, showWarnings = FALSE)
 
     # if it is gzipped
     if (grepl("\\.gz$", input)) {
