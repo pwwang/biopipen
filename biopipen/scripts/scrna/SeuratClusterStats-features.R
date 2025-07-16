@@ -112,10 +112,11 @@ do_one_features <- function(name) {
         }
 
         if (save_data) {
-            if (!inherits(p$data, "data.frame") && !inherits(p$data, "matrix")) {
+            pdata <- attr(p, "data") %||% p$data
+            if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
                 stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
             }
-            write.table(p$data, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+            write.table(pdata, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
         }
 
         caching$save(info$prefix)
