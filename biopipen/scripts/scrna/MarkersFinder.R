@@ -234,7 +234,7 @@ process_markers <- function(markers, info, case) {
             )
         ),
         hs = c(info$section, info$name),
-        hs2 = paste0("Markers ", case$ident),
+        hs2 = paste0("Markers (", case$ident, ")"),
         ui = "tabs"
     )
 
@@ -249,7 +249,7 @@ process_markers <- function(markers, info, case) {
                 name = plotname,
                 contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
             hs = c(info$section, info$name),
-            hs2 = paste0("Markers ", case$ident),
+            hs2 = paste0("Markers (", case$ident, ")"),
             ui = "tabs"
         )
     }
