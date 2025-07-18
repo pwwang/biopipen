@@ -2462,51 +2462,47 @@ class CellCellCommunication(Proc):
 class CellCellCommunicationPlots(Proc):
     """Visualization for cell-cell communication inference.
 
-    R package [`CCPlotR`](https://github.com/Sarah145/CCPlotR) is used to visualize
-    the results.
-
     Input:
         cccfile: The output file from `CellCellCommunication`
-            or a tab-separated file with the following columns: `source`, `target`,
-            `ligand`, `receptor`, and `score`.
-            If so, `in.expfile` can be provided where `exp_df` is needed.
-        expfile: The expression file with the expression of ligands and receptors.
-            Columns include: `cell_type`, `gene` and `mean_exp`.
 
     Output:
         outdir: The output directory for the plots.
 
     Envs:
-        score_col: The column name in the input file that contains the score, if
-            the input file is from `CellCellCommunication`.
-            Two alias columns are added in the result file of `CellCellCommunication`,
-            `mag_score` and `spec_score`, which are the magnitude and specificity
-            scores.
         subset: An expression to pass to `dplyr::filter()` to subset the ccc data.
+        magnitude: The column name in the data to use as the magnitude of the
+            communication. By default, the second last column will be used.
+            See `li.mt.show_methods()` for the available methods in LIANA. or
+            <https://liana-py.readthedocs.io/en/latest/notebooks/basic_usage.html#Tileplot>
+        specificity: The column name in the data to use as the specificity of the communication.
+            By default, the last column will be used. If the method doesn't have a specificity, set it to None.
+        devpars (ns): The parameters for the plot.
+            - res (type=int): The resolution of the plot
+            - height (type=int): The height of the plot
+            - width (type=int): The width of the plot
+        more_formats (type=list): The additional formats to save the plots.
+        descr: The description of the plot.
         cases (type=json): The cases for the plots.
             The keys are the names of the cases and the values are the arguments for
-            the plots. The arguments include:
-            * kind: one of `arrow`, `circos`, `dotplot`, `heatmap`, `network`,
-                and `sigmoid`.
-            * devpars: The parameters for `png()` for the plot, including `res`,
-                `width`, and `height`.
-            * section: The section name for the report to group the plots.
-            * <other>: Other arguments for `cc_<kind>` function in `CCPlotR`.
-                See the documentation for more details.
-                Or you can use `?CCPlotR::cc_<kind>` in R.
-    """
-
-    input = "cccfile:file, expfile:file"
-    output = "outdir:dir:{{in.cccfile | stem}}-ccc_plots"
+            the plots. The arguments include the ones inherited from `envs`.
+        <more>: Other arguments passed to
+            [scplotter::CCCPlot](https://pwwang.github.io/scplotter/reference/CCCPlot.html)
+    """  # noqa: E501
+    input = "cccfile:file"
+    output = "outdir:dir:{{in.cccfile | stem}}_plots"
     lang = config.lang.rscript
     envs = {
-        "score_col": "mag_score",
         "subset": None,
+        "magnitude": None,
+        "specificity": None,
+        "devpars": {"res": 100},
+        "more_formats": [],
+        "descr": "Cell-cell communication plot",
         "cases": {},
     }
     script = "file://../scripts/scrna/CellCellCommunicationPlots.R"
     plugin_opts = {
-        "report": "file://../reports/scrna/CellCellCommunicationPlots.svelte",
+        "report": "file://../reports/common.svelte",
     }
 
 
