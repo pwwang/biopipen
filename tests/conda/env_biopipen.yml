@@ -25,6 +25,8 @@ dependencies:
   # - conda-forge::r-ggrepel
   # - conda-forge::r-ggupset
   # - conda-forge::r-ggvenndiagram
+  - conda-forge::r-glmnet  # tcr.CDR3AAPhyschem
+  - conda-forge::r-broom.mixed  # tcr.CDR3AAPhyschem
   - conda-forge::r-gtools
   - conda-forge::r-immunarch  #=0.9
   # - conda-forge::r-matrix

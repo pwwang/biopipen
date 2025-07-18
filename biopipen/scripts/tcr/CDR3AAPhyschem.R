@@ -1,35 +1,45 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+library(rlang)
 library(dplyr)
 library(tidyr)
 library(tibble)
-library(ggplot2)
-library(ggridges)
 library(glue)
 library(hash)
 library(glmnet)
 library(broom.mixed)
 library(stringr)
+library(plotthis)
+library(biopipen.utils)
 
-immdatafile = {{in.immdata | quote}}
-srtobjfile = {{in.srtobj | r}}
-outdir = {{out.outdir | quote}}
-joboutdir = {{job.outdir | quote}}
-group_name = {{envs.group | r}}
-comparison = {{envs.comparison | r}}
-prefix = {{envs.prefix | r}}
-target = {{envs.target | r}}
-subset_cols = {{envs.subset | r}}
+scrfile <- {{in.scrfile | quote}}
+outdir <- {{out.outdir | quote}}
+joboutdir <- {{job.outdir | quote}}
+group_name <- {{envs.group | r}}
+comparison <- {{envs.comparison | r}}
+target <- {{envs.target | r}}
+each_cols <- {{envs.each | r}}
+
+log <- get_logger()
+reporter <- get_reporter()
 
 if (is.null(group_name) || is.null(comparison)) {
     stop("envs.group and envs.comparison must be specified")
 }
 
-if (is.null(target)) {
-    stop("envs.target must be specified, which should be one of the keys in `envs.comparison`")
+if (length(comparison) != 2) {
+    stop("envs.comparison must have exactly two elements or keys, representing the two groups to compare")
 }
 
-if (is.character(subset_cols) && length(subset_cols) == 1) {
-    subset_cols = trimws(strsplit(subset_cols, ",")[[1]])
+if (!is.list(comparison)) {
+    comparison <- stats::setNames(as.list(comparison), comparison)
+}
+
+target <- target %||% names(comparison)[1]
+if (!(target %in% names(comparison))) {
+    stop(paste0("Target group '", target, "' not found in the comparison groups."))
+}
+
+if (is.character(each_cols) && length(each_cols) == 1) {
+    each_cols = trimws(strsplit(each_cols, ",")[[1]])
 }
 
 ### Helpers
@@ -142,103 +152,43 @@ for (i in 1:3){
   AA_MAPS[[i]] <- create_hashmap(as.character(RF$AA), as.vector(RF[,(i+1),drop=TRUE]))
 }
 
-# Loading metadata from srtobjfile
-log_info("Loading metadata from srtobjfile")
-if (is.null(srtobjfile)) {
-    metadata = NULL
-} else {
-    # Get the extension (lowercase) of srtobjfile, see if it is .rds file
-    srtobjfile_ext = tolower(tools::file_ext(srtobjfile))
-    if (srtobjfile_ext != "rds") {
-        metadata = read.table(
-            srtobjfile,
-            sep = "\t",
-            header = TRUE,
-            row.names = 1,
-            stringsAsFactors = FALSE,
-            check.names = FALSE,
-        )
-    } else {
-        metadata = readRDS(srtobjfile)@meta.data
-    }
+log$info("Loading data from input file")
+mdata <- read_obj(scrfile)@meta.data
+
+if (!group_name %in% colnames(mdata)) {
+    stop(paste0("Group name '", group_name, "' not found in the data."))
 }
 
-log_info("Loading immdata from immdatafile")
-immdata = readRDS(immdatafile)
+# check if valuess of comparison is in the group_name column
+if (!all(unlist(comparison) %in% as.character(mdata[[group_name]]))) {
+    stop(paste0("Some values in comparison are not found in the group_name column: ",
+                paste(setdiff(unlist(comparison), mdata[[group_name]]), collapse = ", ")))
+}
 
-
-merge_data = function(sam) {
-    # Merge the data for one sample from immdata and metadata
-    out = immdata$data[[sam]]
-    if ("chain" %in% colnames(out)) {
-        out = out %>% separate_rows(chain, CDR3.aa, V.name, J.name, sep = ";") %>%
-            filter(chain == "TRB")
-    }
-    out = out %>%
-        mutate(
-            Sample = sam,
-            locus = "TCRB",
-            sequence = CDR3.aa,
-            length = nchar(sequence),
-            vgene = V.name,
-            jgene = J.name,
-        ) %>%
-        select(Sample, Barcode, locus, sequence, length, vgene, jgene) %>%
-        separate_longer_delim(Barcode, delim = ";") %>%
-        left_join(immdata$meta, by = "Sample")
-
-    if (is.null(metadata)) {
-        # No metadata, just return
-        return (out)
-    }
-
-    # Merge with metadata
-    sdata = metadata %>% filter(Sample == sam)
-    if (!is.null(prefix) && nchar(prefix) > 0) {
-        # Replace the placeholder like {Sample} with the data in other columns
-        # in the same row
-        sdata = sdata %>% mutate(.prefix_len = nchar(glue(prefix)))
-        # Remove the prefix in the rownames of sdata
-        rownames(sdata) = substring(rownames(sdata), sdata$.prefix_len + 1)
-        sdata = sdata %>% select(-.prefix_len)
-    }
-    sdata = rownames_to_column(sdata, "Barcode")
-    out = out %>% left_join(sdata, by = "Barcode", suffix = c("", "_seurat"))
-    out$.Group = NA_character_
-    for (k in names(comparison)) {
-        group_mask = out[[group_name]] %in% comparison[[k]]
-        if (sum(group_mask) == 0) {
-            stop(
-                glue("No cells in comparison group {k}. Please check if the group items {comparison[[k]]} exist.")
-            )
+# add a new column with the keys of comparison, when their values are in the group_name column
+mdata$.Group <- sapply(as.character(mdata[[group_name]]), function(x) {
+    for (key in names(comparison)) {
+        if (x %in% comparison[[key]]) {
+            return(key)
         }
-        out$.Group[out[[group_name]] %in% comparison[[k]]] = k
     }
-    if (!is.null(subset_cols)) {
-        out = out %>% unite(".Subset", all_of(subset_cols), sep = "_", remove = FALSE)
-    }
-    return (out)
-}
-
-# Expanded and merged with metadata
-# Now we are able to select the cells using group and comparison
-log_info("Merging data with metadata for each sample")
-merged = NULL
-for (sam in immdata$meta$Sample) {
-    log_info("- For sample {sam}")
-    md = merge_data(sam)
-    merged = if (is.null(merged)) md else rbind(merged, md)
-}
+    return(NA)
+})
+mdata <- mdata %>%
+    separate(CTaa, into = c(NA, "sequence"), sep = "_", remove = FALSE) %>%
+    separate(CTgene, into = c(NA, "vjgene"), sep = "_", remove = FALSE) %>%
+    separate(vjgene, into = c("vgene", NA, "jgene", NA), sep = "\\.", remove = FALSE) %>%
+    mutate(length = nchar(sequence))
 
 # Statistics about the cell numbers with groups avaiable in metadata
 # !!group_name, TotalCells, AvailCells, AvailCellsPct
-log_info("Calculating statistics")
-if (is.null(subset_cols)) {
-    stats = merged %>%
+log$info("Calculating statistics")
+if (is.null(each_cols)) {
+    stats = mdata %>%
         # group by group_name
         group_by(.Group) %>%
         summarise(
-            TotalCells = nrow(merged),
+            TotalCells = nrow(mdata),
             CellsPerGroup = n(),
             AvailCellsPerGroup = sum(length >= CDR3_MINLEN & length <= CDR3_MAXLEN),
             # Percentage with % in character
@@ -246,14 +196,15 @@ if (is.null(subset_cols)) {
             .groups = "drop"
         )
 } else {
-    stats = merged %>%
+    stats = mdata %>%
+        unite(".Subset", all_of(each_cols), sep = "_", remove = FALSE) %>%
         group_by(.Subset) %>%
         group_map(function(df, .y) {
             df %>%
                 group_by(.Group) %>%
                 summarise(
                     .Subset = .y$.Subset[1],
-                    AllCells = nrow(merged),
+                    AllCells = nrow(mdata),
                     TotalCells = nrow(df),
                     CellsPerGroup = n(),
                     AvailCellsPerGroup = sum(length >= CDR3_MINLEN & length <= CDR3_MAXLEN),
@@ -274,7 +225,7 @@ write.table(
     row.names = FALSE,
 )
 
-add_report(
+reporter$add(
     list(
         kind = "descr",
         content = "Statistics about the cells mapped to the comparison groups. Columns:"
@@ -304,20 +255,22 @@ add_report(
 
 
 
-log_info("Add amino acid features")
-merged = merged %>%
+log$info("Add amino acid features")
+mdata = mdata %>%
     filter(!is.na(.Group) & length >= CDR3_MINLEN & length <= CDR3_MAXLEN) %>%
     add_percentAA() %>%
     add_positionalAA()
 
 
 do_one_subset = function(s) {
-    log_info(paste("Processing subset", s))
+    if (!is.null(s)) {
+        log$info(paste("Processing subset", s))
+    }
     if (is.null(s)) {
-        data = merged
+        data = mdata
         odir = file.path(outdir, "ALL")
     } else {
-        data = merged %>% filter(.Subset == s)
+        data = mdata %>% filter(.Subset == s)
         odir = file.path(outdir, slugify(s))
     }
     dir.create(odir, recursive = TRUE, showWarnings = FALSE)
@@ -342,6 +295,13 @@ do_one_subset = function(s) {
             }
         }
         y = ifelse(data_fit$.Group == target, 1, 0)
+        if (any(table(y) <= 3) || length(table(y)) < 2) {
+            if (is.null(s)) {
+                log$warn(paste0("Not enough observations for target group '", target, "' with CDR3 length ", len, ". At least 4 observations are required."))
+            } else {
+                log$warn(paste0("Not enough observations for target group '", target, "' in subset '", s, "' with CDR3 length ", len, ". At least 4 observations are required."))
+            }
+        }
         # one multinomial or binomial class has 1 or 0 observations; not allowed
         if (any(table(y) <= 1)) { next }
         fit = glmnet(x, y, data=data_fit, alpha=0, lambda=0.01, family="binomial")
@@ -370,26 +330,22 @@ do_one_subset = function(s) {
     write.table(alldf, file = file.path(odir, "estimates.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
     # save the plots
-    gr = alldf %>%
-        group_by(imgt_pos, feature) |>
+    gr <- alldf %>%
+        group_by(imgt_pos, feature) %>%
         summarise(coef = mean(estimate))
     # Avoid too large values
-    gr$coef[gr$coef > 1.5] = 1.5
+    gr$coef[gr$coef > 1.5] <- 1.5
+    gr$coef <- exp(gr$coef)  # Exponentiate the coefficients
 
-    g = ggplot(gr, aes(imgt_pos, exp(coef), color=feature))
-    g = g + geom_point() + geom_line(aes(group=feature)) + theme_classic() + geom_hline(yintercept=1)
-    g = g + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + scale_color_manual(values=c("#eead0c", "#ed6a51", "#02868a"))
-    g = g + xlab("TCR position") + ylab(paste("Coefficient for", target, "prediction")) + ggtitle(s)
+    g <- LinePlot(gr, x = "imgt_pos", y = "coef", group_by = "feature",
+        add_line = 1, x_text_angle = 90, xlab = "TCR position",
+        ylab = paste("Coefficient for", target, "prediction"), title = s)
 
-    png(file.path(odir, "estimated_coefficients.png"), width=1000, height=1000, res=100)
-    print(g)
-    dev.off()
+    save_plot(g, file.path(odir, "estimated_coefficients"),
+        devpars = list(width = 1000, height = 1000, res = 100),
+        formats = c("png", "pdf"))
 
-    pdf(file.path(odir, "estimated_coefficients.pdf"), width=10, height=10)
-    print(g)
-    dev.off()
-
-    add_report(
+    reporter$add(
         list(
             kind = "descr",
             content = "Estimated coefficients for each feature and position in the CDR3"
@@ -397,7 +353,7 @@ do_one_subset = function(s) {
         h1 = ifelse(
             is.null(s),
             "Estimated OR (per s.d.)",
-            paste0(paste(subset_cols, collapse = ", "), " - ", s)
+            paste0(paste(each_cols, collapse = ", "), " - ", s)
         ),
         h2 = ifelse(
             is.null(s),
@@ -406,7 +362,7 @@ do_one_subset = function(s) {
         )
     )
 
-    add_report(
+    reporter$add(
         list(
             name = "Plot",
             contents = list(
@@ -429,7 +385,7 @@ do_one_subset = function(s) {
         h1 = ifelse(
             is.null(s),
             "Estimated OR (per s.d.)",
-            paste0(paste(subset_cols, collapse = ", "), " - ", s)
+            paste0(paste(each_cols, collapse = ", "), " - ", s)
         ),
         h2 = ifelse(
             is.null(s),
@@ -443,38 +399,23 @@ do_one_subset = function(s) {
     data$mid_hydro = sapply(data$midseq, function(x) get_feat_score(x, AA_MAPS[[2]]))
     data$smid_hydro = scale(data$mid_hydro)[,1]
 
-    g = ggplot()
-    # Give colors for different groups
-    cols = c("turquoise3", "darkmagenta", "darkorange", "darkgreen", "darkblue", "darkred")
-    groups = unique(data$.Group)
-    if (length(groups) > length(cols)) {
-        cols = c(cols, c("darkcyan", "darkviolet", "darkgoldenrod", "darkolivegreen", "darkslategray", "darkkhaki"))
-    }
-    cols = cols[1:length(groups)]
-    for (i in seq_along(groups)) {
-        g = g + geom_vline(
-          xintercept = mean(data$smid_hydro[data$.Group==groups[i]]),
-          color=cols[i]
-        )
-    }
-    g = g + geom_density_ridges(
-      aes(x=data$smid_hydro, y=data$.Group, color=data$.Group, fill=data$.Group),
-      bandwidth=0.5,
-      alpha=0.4,
-      show.legend = FALSE
-    ) + scale_color_manual(values=cols)
-    g = g + scale_fill_manual(values=cols) + theme_bw(base_size=12)
-    g = g + xlim(c(-4,4)) + xlab("CDR3bmr hydrophobicity") + ylab("") + coord_flip() + ggtitle(s)
+    g <- RidgePlot(
+        data = data,
+        x = "smid_hydro",
+        group_by = ".Group",
+        xlab = "CDR3bmr hydrophobicity",
+        ylab = "",
+        add_vline = TRUE,
+        alpha = 0.5,
+        title = s,
+        flip = TRUE
+    )
 
-    png(file.path(odir, "distribution.png"), width=1000, height=1000, res=100)
-    print(g)
-    dev.off()
+    save_plot(g, file.path(odir, "distribution"),
+        devpars = list(width = 1000, height = 1000, res = 100),
+        formats = c("png", "pdf"))
 
-    pdf(file.path(odir, "distribution.pdf"), width=10, height=10)
-    print(g)
-    dev.off()
-
-    add_report(
+    reporter$add(
         list(
             kind = "table_image",
             descr = paste0(
@@ -488,7 +429,7 @@ do_one_subset = function(s) {
         h1 = ifelse(
             is.null(s),
             "Hydrophobicity Distribution",
-            paste0(paste(subset_cols, collapse = ", "), " - ", s)
+            paste0(paste(each_cols, collapse = ", "), " - ", s)
         ),
         h2 = ifelse(
             is.null(s),
@@ -499,11 +440,11 @@ do_one_subset = function(s) {
 
 }
 
-if (is.null(subset_cols)) {
+if (is.null(each_cols)) {
     do_one_subset(NULL)
 } else {
-    subsets = na.omit(unique(merged$.Subset))
+    subsets = na.omit(unique(obj$.Subset))
     sapply(subsets, do_one_subset)
 }
 
-save_report(joboutdir)
+reporter$save(joboutdir)
