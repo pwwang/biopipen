@@ -1,16 +1,17 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(Seurat)
 library(dplyr)
+library(biopipen.utils)
 
 sobjfile <- {{in.srtobj | r}}
 outfile <- {{out.rdsfile | r}}
 defaults <- {{envs.defaults | r}}
 modules <- {{envs.modules | r}}
 
+log <- get_logger()
+
 # load seurat object
-log_info("Loading Seurat object ...")
-sobj <- readRDS(sobjfile)
+log$info("Loading Seurat object ...")
+sobj <- read_obj(sobjfile)
 
 aggs <- list(
     mean = mean,
@@ -36,7 +37,7 @@ for (key in names(modules)) {
     agg <- aggs[[module$agg]]
     module$keep <- NULL
     module$agg <- NULL
-    log_info("Calculating module '{key}' ...")
+    log$info("Calculating module '{key}' ...")
     is_cc <- FALSE
     if (!is.null(module$kind) && module$kind %in% c("diffmap", "diffusion_map")) {
         library(destiny)
@@ -47,30 +48,30 @@ for (key in names(modules)) {
         module$kind <- NULL
 
         if (!is.null(module$n_pcs)) {
-            log_info("- Using cell embeddings from PCA reduction ...")
+            log$info("- Using cell embeddings from PCA reduction ...")
             module$data <- Embeddings(sobj, reduction = "pca")
             if (module$n_pcs > ncol(module$data)) {
-                log_warn("- `n_pcs` ({module$n_pcs}) is larger than the number of PCs, using all {ncol(module$data)} PCs ...")
+                log$warn("- `n_pcs` ({module$n_pcs}) is larger than the number of PCs, using all {ncol(module$data)} PCs ...")
             }
             module$data <- module$data[, 1:min(module$n_pcs, ncol(module$data))]
             module$n_pcs <- NULL
         } else {
-            log_info("- Using assay data ...")
+            log$info("- Using assay data ...")
             module$data <- GetAssayData(sobj, layer = "data")
         }
 
-        log_info("- Calculating diffusion map ...")
+        log$info("- Calculating diffusion map ...")
         dm <- do_call(DiffusionMap, module)
         ev <- eigenvectors(dm)
 
-        log_info("- Creating DimReduc object ...")
+        log$info("- Creating DimReduc object ...")
         sobj[[key]] <- CreateDimReducObject(
             embeddings = data.matrix(as.data.frame(ev[, 1:features])),
             key = paste0(key, "_")
         )
 
         # add to meta.data
-        log_info("- Adding to meta.data ...")
+        log$info("- Adding to meta.data ...")
         sobj <- AddMetaData(
             sobj,
             sobj[[key]]@cell.embeddings,
@@ -134,5 +135,5 @@ for (key in names(modules)) {
 }
 
 # save seurat object
-print("Saving Seurat object ...")
-saveRDS(sobj, outfile)
+log$info("Saving Seurat object ...")
+save_obj(sobj, outfile)

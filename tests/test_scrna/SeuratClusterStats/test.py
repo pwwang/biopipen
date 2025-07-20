@@ -7,8 +7,8 @@ from biopipen.ns.scrna import (
     ModuleScoreCalculator as ModuleScoreCalculator_,
     MarkersFinder,
     SeuratSubClustering as SeuratSubClustering_,
-    MetaMarkers as MetaMarkers_,
-    RadarPlots as RadarPlots_,
+    # MetaMarkers as MetaMarkers_,
+    # RadarPlots as RadarPlots_,
     TopExpressingGenes as TopExpressingGenes_,
 )
 from biopipen.core.testing import get_pipeline
@@ -105,6 +105,7 @@ class TopExpressingGenes(TopExpressingGenes_):
 class SeuratSubClustering(SeuratSubClustering_):
     requires = CellTypeAnnotation
     envs = {
+        "cache": False,
         "cases": {
             "mono_subcluster": {
                 "subset": "seurat_clusters == 'FCFR3A+ Mono'",
@@ -194,19 +195,19 @@ class DEG(MarkersFinder):
     order = 99
 
 
-class MetaMarkers(MetaMarkers_):
-    requires = SeuratSubClustering
-    envs = {
-        "group-by": "seurat_clusters",
-    }
+# class MetaMarkers(MetaMarkers_):
+#     requires = SeuratSubClustering
+#     envs = {
+#         "group-by": "seurat_clusters",
+#     }
 
 
-class RadarPlots(RadarPlots_):
-    requires = SeuratSubClustering
-    envs = {
-        "by": "groups",
-        "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}},
-    }
+# class RadarPlots(RadarPlots_):
+#     requires = SeuratSubClustering
+#     envs = {
+#         "by": "groups",
+#         "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}},
+#     }
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator_):
@@ -273,15 +274,15 @@ class SeuratClusterStats(SeuratClusterStats_):
         },
         "dimplots": {
             "seurat_clusters": {"group_by": "seurat_clusters"},
-            "nk_subcluster": {"group_by": "mono_subcluster"},
-            "dc_subcluster": {"group_by": "dc_subcluster"},
+            "nk_subcluster": {"group_by": "mono_subcluster", "reduction": "mono_subcluster.umap"},
+            "dc_subcluster": {"group_by": "dc_subcluster", "reduction": "dc_subcluster.umap"},
         },
     }
 
 
 def pipeline():
-    # return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
-    return get_pipeline(__file__).set_starts(PrepareSeurat)
+    return get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
+    # return get_pipeline(__file__).set_starts(PrepareSeurat)
 
 
 def testing(pipen):

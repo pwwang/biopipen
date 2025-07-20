@@ -32,26 +32,26 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
 ############## clustree ##############
 clustrees_defaults <- {{envs.clustrees_defaults | r: todot="-"}}
 clustrees <- {{envs.clustrees | r: todot="-", skip=1}}
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-clustree.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-clustree.R" | read }}
 
 ############## stats ##############
 stats_defaults = {{envs.stats_defaults | r: todot="-"}}
 stats = {{envs.stats | r: todot="-", skip=1}}
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-stats.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-stats.R" | read }}
 
 ############## ngenes ##############
 ngenes_defaults <- {{envs.ngenes_defaults | r: todot="-"}}
 ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-ngenes.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-ngenes.R" | read }}
 
 ############## features ##############
 features_defaults = {{envs.features_defaults | r: todot="-"}}
 features = {{envs.features | r: todot="-", skip=1}}
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-features.R" | source_r: chdir = False }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-features.R" | read }}
 
 ############## dimplots ##############
 dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
 dimplots = {{envs.dimplots | r: todot="-", skip=1}}
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-dimplots.R" | source_r }}
+{{ biopipen_dir | joinpaths: "scripts", "scrna", "SeuratClusterStats-dimplots.R" | read }}
 
 reporter$save(joboutdir)

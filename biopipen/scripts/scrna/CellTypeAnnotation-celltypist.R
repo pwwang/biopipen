@@ -2,6 +2,7 @@ library(rlang)
 library(hdf5r)
 library(dplyr)
 library(Seurat)
+library(biopipen.utils)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
@@ -11,6 +12,8 @@ celltypist_args <- {{envs.celltypist_args | r}}
 
 outdir <- dirname(outfile)
 outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
+
+log <- get_logger()
 
 if (is.null(celltypist_args$model)) {
     stop("Please specify a model for celltypist (envs.celltypist_args.model)")
@@ -30,20 +33,20 @@ if (!file.exists(modelfile)) {
 }
 
 sobj <- NULL
-outtype <- tolower(tools::file_ext(outfile))  # .rds, .h5ad, .h5seurat
+outtype <- tolower(tools::file_ext(outfile))  # .rds, .h5ad, .h5seurat, .qs/.qs2
 if (!endsWith(sobjfile, ".h5ad")) {
-    log_info("Convert input to H5AD ...")
+    log$info("Convert input to H5AD ...")
     library(SeuratDisk)
 
     assay <- celltypist_args$assay
-    if (endsWith(sobjfile, ".rds") || endsWith(sobjfile, ".RDS")) {
+    if (endsWith(sobjfile, ".rds") || endsWith(sobjfile, ".RDS") || endsWith(sobjfile, ".qs") || endsWith(sobjfile, ".qs2")) {
         h5s_file <- paste0(outprefix, ".h5seurat")
         if (file.exists(h5s_file) && (file.mtime(h5s_file) < file.mtime(sobjfile))) {
             file.remove(h5s_file)
         }
         if (!file.exists(h5s_file)) {
-            log_info("Reading RDS file ...")
-            sobj <- readRDS(sobjfile)
+            log$info("Reading input file ...")
+            sobj <- read_obj(sobjfile)
             assay <- assay %||% DefaultAssay(sobj)
             # In order to convert to h5ad
             # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
@@ -53,16 +56,16 @@ if (!endsWith(sobjfile, ".h5ad")) {
             sobj_v3$RNA <- NULL
             sobj_v3 <- RenameAssays(sobj_v3, RNAv3 = "RNA")
 
-            log_info("Saving to H5Seurat file ...")
+            log$info("Saving to H5Seurat file ...")
             SaveH5Seurat(sobj_v3, h5s_file)
             rm(sobj_v3)
         } else if (outtype == "rds") {
-            log_info("Reading RDS file ...")
+            log$info("Reading input file ...")
             sobj <- readRDS(sobjfile)
             assay <- assay %||% DefaultAssay(sobj)
-            log_info("Using existing H5Seurat file ...")
+            log$info("Using existing H5Seurat file ...")
         } else {
-            log_info("Using existing H5Seurat file ...")
+            log$info("Using existing H5Seurat file ...")
         }
         sobjfile <- h5s_file
     }
@@ -77,9 +80,9 @@ if (!endsWith(sobjfile, ".h5ad")) {
             file.remove(destfile)
         }
         if (file.exists(destfile)) {
-            log_info("Using existing H5AD file ...")
+            log$info("Using existing H5AD file ...")
         } else {
-            log_info("Converting to H5AD file ...")
+            log$info("Converting to H5AD file ...")
             Convert(sobjfile, dest = destfile, assay = assay %||% "RNA")
         }
         sobjfile <- destfile
@@ -88,7 +91,7 @@ if (!endsWith(sobjfile, ".h5ad")) {
 
 # sobjfile h5ad ensured
 # use celltypist to annotate
-log_info("Annotating cell types using celltypist ...")
+log$info("Annotating cell types using celltypist ...")
 celltypist_script <- file.path(
     "{{biopipen_dir}}", "scripts", "scrna", "celltypist-wrapper.py"
 )
@@ -106,7 +109,7 @@ if (outtype == "h5ad") {
 
 if (file.exists(celltypist_outfile) &&
     (file.mtime(celltypist_outfile) > file.mtime(sobjfile))) {
-    log_info("Using existing celltypist results ...")
+    log$info("Using existing celltypist results ...")
 } else {
     command <- paste(
         paste0("CELLTYPIST_FOLDER='", outdir, "'"),
@@ -123,8 +126,8 @@ if (file.exists(celltypist_outfile) &&
     if (isTRUE(celltypist_args$majority_voting)) {
         command <- paste(command, "-v")
     }
-    log_info("Running celltypist:")
-    log_debug("- {command}")
+    log$info("Running celltypist:")
+    log$debug("- {command}")
     rc <- system(command)
     if (rc != 0) {
         stop("Failed to run celltypist")
@@ -132,13 +135,13 @@ if (file.exists(celltypist_outfile) &&
 }
 
 if (outtype == "h5ad") {
-    # log_info("Using H5AD from celltypist as output directly ...")
+    # log$info("Using H5AD from celltypist as output directly ...")
     # file.rename(paste0(out_prefix, ".h5ad"), outfile)
     if (merge_same_labels) {
-        log_warn("- Merging clusters with the same labels is not supported for h5ad outfile ...")
+        log$warn("- Merging clusters with the same labels is not supported for h5ad outfile ...")
     }
 } else if (outtype == "h5seurat") {
-    log_info("Converting H5AD from celltypist to H5Seurat ...")
+    log$info("Converting H5AD from celltypist to H5Seurat ...")
     # outfile is cleaned by the pipeline anyway
     Convert(
         celltypist_outfile,
@@ -147,22 +150,22 @@ if (outtype == "h5ad") {
         overwrite = TRUE
     )
     if (merge_same_labels) {
-        log_warn("- Merging clusters with the same labels is not supported for h5seurat outfile ...")
+        log$warn("- Merging clusters with the same labels is not supported for h5seurat outfile ...")
     }
-} else if (outtype == "rds") {
+} else if (outtype == "rds" || outtype == "qs" || outtype == "qs2") {
     if (is.null(sobj)) {
-        log_info("Converting H5AD from celltypist to RDS ...")
+        log$info("Converting H5AD from celltypist to RDS ...")
         h5seurat_file <- paste0(outprefix, ".celltypist.h5seurat")
         if (file.exists(h5seurat_file) &&
             (file.mtime(h5seurat_file) > file.mtime(celltypist_outfile))) {
-            log_info("- Using existing H5Seurat file ...")
+            log$info("- Using existing H5Seurat file ...")
         } else {
-            log_info("- Converting to h5seurat ...")
+            log$info("- Converting to h5seurat ...")
             Convert(
                 celltypist_outfile,
                 assay = assay %||% 'RNA', dest = h5seurat_file, overwrite = TRUE)
         }
-        log_info("- Converting to RDS ...")
+        log$info("- Converting to RDS ...")
         # Fix Missing required datasets 'levels' and 'values'
         # https://github.com/mojaveazure/seurat-disk/issues/109#issuecomment-1722394184
         f <- H5File$new(h5seurat_file, "r+")
@@ -188,11 +191,11 @@ if (outtype == "h5ad") {
 
         sobj <- LoadH5Seurat(h5seurat_file)
         if (merge_same_labels) {
-            log_info("Merging clusters with the same labels ...")
+            log$info("Merging clusters with the same labels ...")
             sobj <- merge_clusters_with_same_labels(sobj, newcol)
         }
     } else {
-        log_info("Attaching celltypist results to Seurat object ...")
+        log$info("Attaching celltypist results to Seurat object ...")
 
         celltypist_out <- read.table(
             celltypist_outfile, sep = "\t", header = TRUE, row.names = 1)
@@ -233,7 +236,7 @@ if (outtype == "h5ad") {
                 }
                 Idents(sobj) <- "seurat_clusters"
                 cluster_map$object <- sobj
-                log_info("Renaming clusters ...")
+                log$info("Renaming clusters ...")
                 sobj <- do_call(RenameIdents, cluster_map)
                 sobj@meta.data$seurat_clusters <- Idents(sobj)
             }
@@ -241,12 +244,12 @@ if (outtype == "h5ad") {
             sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]
         }
         if (merge_same_labels) {
-            log_info("Merging clusters with the same labels ...")
+            log$info("Merging clusters with the same labels ...")
             sobj <- merge_clusters_with_same_labels(sobj, newcol)
         }
     }
-    log_info("Saving Seurat object in RDS ...")
-    saveRDS(sobj, outfile)
+    log$info("Saving Seurat object in RDS ...")
+    save_obj(sobj, outfile)
 } else {
     stop(paste0("Unknown output type: ", outtype))
 }

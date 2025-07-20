@@ -132,7 +132,6 @@ post_casing <- function(name, case) {
         )
         case$overlaps_defaults <- NULL
 
-
         outcases[[name]] <- case
     } else {  # !no_each
         eachs <- if (!is.null(case$subset)) {
@@ -234,7 +233,7 @@ process_markers <- function(markers, info, case) {
             )
         ),
         hs = c(info$section, info$name),
-        hs2 = paste0("Markers (", case$ident, ")"),
+        hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
         ui = "tabs"
     )
 
@@ -249,7 +248,7 @@ process_markers <- function(markers, info, case) {
                 name = plotname,
                 contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
             hs = c(info$section, info$name),
-            hs2 = paste0("Markers (", case$ident, ")"),
+            hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
             ui = "tabs"
         )
     }
@@ -299,6 +298,7 @@ process_markers <- function(markers, info, case) {
 
                         p <- do_call(VizEnrichment, plotargs)
 
+                        attr(p, "height") <- attr(p, "height") / 1.5
                         outprefix <- file.path(info$prefix, paste0("enrich.", slugify(db), ".", slugify(plotname)))
                         save_plot(p, outprefix, plotargs$devpars, formats = "png")
                         plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
@@ -468,7 +468,7 @@ run_case <- function(name) {
                 marker_plots = marker_plots,
                 enrich_plots = enrich_plots,
                 error = case$error,
-                ident = ident
+                ident = NULL
             ))
         }
 

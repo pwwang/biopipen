@@ -1,6 +1,7 @@
 library(Seurat)
 library(dplyr)
 library(hitype)
+library(biopipen.utils)
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
@@ -11,11 +12,13 @@ merge_same_labels = {{envs.merge | r}}
 
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
 
-log_info("Reading Seurat object...")
+log <- get_logger()
+
+log$info("Reading Seurat object...")
 sobj = biopipen.utils::read_obj(sobjfile)
 
 # prepare gene sets
-log_info("Preparing gene sets...")
+log$info("Preparing gene sets...")
 if (startsWith(db, "hitypedb_") && !grepl(".", db, fixed = TRUE)) {
     gs_list = gs_prepare(eval(as.symbol(db)), tissue)
 } else {
@@ -23,10 +26,10 @@ if (startsWith(db, "hitypedb_") && !grepl(".", db, fixed = TRUE)) {
 }
 
 # run RunHitype
-log_info("Running RunHitype...")
+log$info("Running RunHitype...")
 sobj = RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
 
-log_info("Renaming cell types...")
+log$info("Renaming cell types...")
 hitype_levels = sobj@meta.data %>%
     select(seurat_clusters, hitype) %>%
     distinct(seurat_clusters, .keep_all = TRUE) %>%
@@ -42,14 +45,14 @@ if (is.null(newcol)) {
 }
 
 if (merge_same_labels) {
-    log_info("Merging clusters with the same labels...")
+    log$info("Merging clusters with the same labels...")
     sobj = merge_clusters_with_same_labels(sobj, newcol)
 }
 
-log_info("Saving Seurat object...")
+log$info("Saving Seurat object...")
 biopipen.utils::save_obj(sobj, outfile)
 
-log_info("Saving the mappings ...")
+log$info("Saving the mappings ...")
 if (is.null(newcol)) {
     celltypes = sobj@meta.data %>%
         group_by(seurat_clusters_id) %>%
