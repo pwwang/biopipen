@@ -253,6 +253,7 @@ do_subset <- function(
         h2 <- paste0(subset_by, ": ", subset_val)
     } else if (length(cases) > 1) {
         prefix <- paste0(caseinfo$prefix, "/No_Subsetting/")
+        dir.create(prefix, showWarnings = FALSE, recursive = TRUE)
         h2 <- "No Subsetting"
     } else {
         prefix <- paste0(caseinfo$prefix, "/")
@@ -326,6 +327,7 @@ do_subset <- function(
             dat[[group_by]] <- rownames(dat)
             plotargs$data <- dat
             plotargs$columns_by <- group_by
+            plotargs$in_form <- "wide-rows"
             plotargs$name <- plotargs$name %||% "Pathway Activity"
             plotargs$rows_name <- plotargs$rows_name %||% "Pathways"
             plotargs$show_row_names <- plotargs$show_row_names %||% TRUE
@@ -448,6 +450,7 @@ do_case <- function(casename) {
 
         plotargs$data <- result
         plotargs$name <- plotargs$name %||% "Pathway Activity"
+        plotargs$in_form <- "wide-rows"
         plotargs$columns_by <- case$group_by
         plotargs$show_row_names <- plotargs$show_row_names %||% TRUE
         minval <- min(as.matrix(result[, setdiff(colnames(result), c(case$group_by, case$subset_by))]))

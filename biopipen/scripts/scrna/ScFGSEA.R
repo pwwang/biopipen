@@ -1,36 +1,38 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "mutate_helpers.R" | source_r }}
-
 library(rlang)
 library(Seurat)
 library(tidyseurat)
+library(biopipen.utils)
 
-srtfile <- {{in.srtobj | r}}  # nolint
-outdir <- {{out.outdir | r}}  # nolint
-joboutdir <- {{job.outdir | r}}  # nolint
+srtfile <- {{in.srtobj | quote}}  # nolint
+outdir <- {{out.outdir | quote}}  # nolint
+joboutdir <- {{job.outdir | quote}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
 group.by <- {{envs["group-by"] | r}}  # nolint
 ident.1 <- {{envs["ident-1"] | r}}  # nolint
 ident.2 <- {{envs["ident-2"] | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
-prefix_each <- {{envs.prefix_each | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
-section <- {{envs.section | r}}  # nolint
 gmtfile <- {{envs.gmtfile | r}}  # nolint
 method <- {{envs.method | r}}  # nolint
 top <- {{envs.top | r}}  # nolint
-minsize <- {{envs.minsize | r}}  # nolint
-maxsize <- {{envs.maxsize | r}}  # nolint
+minsize <- {{envs.minSize | default: envs.minsize | r}}  # nolint
+maxsize <- {{envs.maxSize | default: envs.maxsize | r}}  # nolint
 eps <- {{envs.eps | r}}  # nolint
 ncores <- {{envs.ncores | r}}  # nolint
 rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
 
-log_info("- Reading srtobj...")
+log <- get_logger()
+reporter <- get_reporter()
 
-srtobj <- readRDS(srtfile)
+log$info("Reading Seurat object ...")
+srtobj <- read_obj(srtfile)
+if (!"Identity" %in% colnames(srtobj@meta.data)) {
+    srtobj@meta.data$Identity <- Idents(srtobj)
+}
+
 if (!is.null(mutaters) && length(mutaters) > 0) {
+    log$info("Mutating metadata columns ...")
     srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
@@ -39,9 +41,7 @@ defaults <- list(
     ident.1 = ident.1,
     ident.2 = ident.2,
     each = each,
-    prefix_each = prefix_each,
     subset = subset,
-    section = section,
     gmtfile = gmtfile,
     method = method,
     top = top,
@@ -54,54 +54,53 @@ defaults <- list(
 
 expand_each <- function(name, case) {
     outcases <- list()
-    if (is.null(case$each) || nchar(case$each) == 0) {
-        if (is.null(case$section) || case$section == "DEFAULT") {
-            outcases[[name]] <- case
-        } else {
-            outcases[[paste0(case$section, "::", name)]] <- case
-        }
-    } else {
-        if (!is.null(case$section) && case$section != "DEFAULT") {
-            log_warn("  Ignoring `section` in case `{name}` when `each` is set.")
-            case$section <- NULL
-        }
-        if (is.null(case$subset)) {
-            eachs <- srtobj@meta.data %>%
-                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
-        } else {
-            eachs <- srtobj@meta.data %>% dplyr::filter(!!!parse_exprs(case$subset)) %>%
-                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
-        }
-        for (each in eachs) {
-            by <- make.names(paste0("..", name, "_", case$each,"_", each))
-            srtobj@meta.data <<- srtobj@meta.data %>%
-                mutate(!!sym(by) := if_else(
-                    !!sym(case$each) == each,
-                    !!sym(case$group.by),
-                    NA
-                ))
 
-            if (isTRUE(case$prefix_each)) {
-                key <- paste0(name, "::", case$each, " - ", each)
+    case$group.by <- case$group.by %||% "Identity"
+
+    if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
+        outcases[[name]] <- case
+    } else {
+        eachs <- if (!is.null(case$subset)) {
+            srtobj@meta.data %>%
+                filter(!!parse_expr(case$subset)) %>%
+                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        } else {
+            srtobj@meta.data %>%
+                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        }
+
+        if (length(cases) == 0 && name == "GSEA") {
+            name <- case$each
+        }
+
+        for (each in eachs) {
+            newname <- paste0(case$each, "::", each)
+            newcase <- case
+
+            newcase$original_case <- name
+            newcase$each_name <- case$each
+            newcase$each <- each
+
+            if (!is.null(case$subset)) {
+                newcase$subset <- paste0(case$subset, " & ", bQuote(case$each), " == '", each, "'")
             } else {
-                key <- paste0(name, "::", each)
+                newcase$subset <- paste0(bQuote(case$each), " == '", each, "'")
             }
-            outcases[[key]] <- case
-            outcases[[key]]$section <- name
-            outcases[[key]]$group.by <- by
+
+            outcases[[newname]] <- newcase
         }
     }
     outcases
 }
 
-log_info("- Expanding cases...")
-cases <- expand_cases(cases, defaults, expand_each)
+log$info("Expanding cases...")
+cases <- expand_cases(cases, defaults, expand_each, default_case = "GSEA")
 
 
 ensure_sobj <- function(expr, allow_empty) {
     tryCatch({ expr }, error = function(e) {
         if (allow_empty) {
-            log_warn("  Ignoring this case: {e$message}")
+            log$warn("  Ignoring this case: {e$message}")
             return(NULL)
         } else {
             stop(e)
@@ -110,59 +109,82 @@ ensure_sobj <- function(expr, allow_empty) {
 }
 
 
-do_case <- function(name, case) {
-    log_info("- Handling case: {name} ...")
-    info <- casename_info(name, cases, outdir, create = TRUE)
+do_case <- function(name) {
+    log$info("- Processing case: {name} ...")
+    case <- cases[[name]]
+    info <- case_info(name, outdir, create = TRUE)
 
-    allow_empty = startsWith(case$group.by, "..")
+    allow_empty = !is.null(case$each)
     # prepare expression matrix
-    log_info("  Preparing expression matrix...")
+    log$info("  Preparing expression matrix...")
     sobj <- ensure_sobj({ srtobj %>% filter(!is.na(!!sym(case$group.by))) }, allow_empty)
-    if (is.null(sobj)) { return() }
+    if (is.null(sobj)) {
+        reporter$add2(
+            list(
+                kind = "error",
+                content = paste0("No cells with non-NA `", case$group.by, "` in the Seurat object.")
+            ),
+            hs = c(info$section, info$name)
+        )
+        return(NULL)
+    }
 
     if (!is.null(case$subset)) {
         sobj <- ensure_sobj({ sobj %>% filter(!!!parse_exprs(case$subset)) }, allow_empty)
-        if (is.null(sobj)) { return() }
+        if (is.null(sobj)) {
+            reporter$add2(
+                list(
+                    kind = "error",
+                    content = paste0("No cells with non-NA `", case$group.by, "` in the Seurat object.")
+                ),
+                hs = c(info$section, info$name)
+            )
+            return(NULL)
+        }
     }
     if (!is.null(case$ident.2)) {
         sobj <- ensure_sobj({ sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2)) }, allow_empty)
-        if (is.null(sobj)) { return() }
+        if (is.null(sobj)) {
+            reporter$add2(
+                list(
+                    kind = "error",
+                    content = paste0("No cells with non-NA `", case$group.by, "` in the Seurat object.")
+                ),
+                hs = c(info$section, info$name)
+            )
+            return(NULL)
+        }
     }
 
     allclasses <- sobj@meta.data[, case$group.by, drop = TRUE]
     if (is.null(case$ident.2)) {
-        case$ident.2 <- ".rest"
-        allclasses[allclasses != case$ident.1] <- ".rest"
+        case$ident.2 <- "Other"
+        allclasses[allclasses != case$ident.1] <- "Other"
     }
     exprs <- GetAssayData(sobj, layer = "data")
 
     # get preranks
-    log_info("  Getting preranks...")
-    ranks <- prerank(exprs, case$ident.1, case$ident.2, allclasses, case$method)
+    log$info("  Getting preranks...")
+    ranks <- RunGSEAPreRank(exprs, allclasses, case$ident.1, case$ident.2, case$method)
     write.table(
         ranks,
-        file.path(info$casedir, "fgsea.rank"),
+        file.path(info$prefix, "fgsea.rank"),
         row.names = FALSE,
         col.names = TRUE,
         sep = "\t",
         quote = FALSE
     )
-    if (sum(is.na(ranks[, 2])) == nrow(ranks)) {
+    if (all(is.na(ranks))) {
         if (length(allclasses) < 100) {
-            log_warn("  Ignoring this case because all gene ranks are NA and there are <100 cells.")
-            cat(
-                paste0("Not enough cells (n = ", length(allclasses), ") to run fgsea."),
-                file = file.path(info$casedir, "fgsea.log")
-            )
-            add_report(
+            log$warn("  Ignoring this case because all gene ranks are NA and there are <100 cells.")
+            reporter$add2(
                 list(
                     kind = "error",
                     content = paste0("Not enough cells (n = ", length(allclasses), ") to run fgsea.")
                 ),
-                h1 = info$h1,
-                h2 = info$h2
+                hs = c(info$section, info$name)
             )
-            return()
+            return(NULL)
         } else {
             stop(paste0(
                 "All gene ranks are NA (# cells = ",
@@ -175,20 +197,78 @@ do_case <- function(name, case) {
     }
 
     # run fgsea
-    log_info("  Running fgsea...")
-    case$rest$minSize <- case$minsize
-    case$rest$maxSize <- case$maxsize
+    log$info("  Running fgsea...")
+    case$rest$ranks <- ranks
+    case$rest$genesets <- ParseGMT(case$gmtfile)
+    case$rest$minSize <- case$minSize %||% case$minsize
+    case$rest$maxSize <- case$maxsize %||% case$maxsize
     case$rest$eps <- case$eps
     case$rest$nproc <- case$ncores
-    runFGSEA(ranks, case$gmtfile, case$top, info$casedir, case$rest)
+    result <- do_call(RunGSEA, case$rest)
+    write.table(
+        result,
+        file.path(info$prefix, "fgsea.tsv"),
+        row.names = FALSE,
+        col.names = TRUE,
+        sep = "\t",
+        quote = FALSE
+    )
 
-    add_report(
-        list(kind = "fgsea", dir = info$casedir),
-        h1 = info$h1,
-        h2 = info$h2
+    p_summary <- VizGSEA(
+        result,
+        plot_type = "summary",
+        top_term = case$top
+    )
+    save_plot(
+        p_summary,
+        file.path(info$prefix, "summary"),
+        devpars = list(res = 100, height = attr(p_summary, "height") * 100, width = attr(p_summary, "width") * 100),
+        formats = "png"
+    )
+
+    p_gsea <- VizGSEA(
+        result,
+        plot_type = "gsea",
+        gs = result$pathway[1:min(case$top, nrow(result))]
+    )
+    save_plot(
+        p_gsea,
+        file.path(info$prefix, "pathways"),
+        devpars = list(res = 100, height = attr(p_gsea, "height") * 100, width = attr(p_gsea, "width") * 100),
+        formats = "png"
+    )
+
+
+    reporter$add2(
+        list(
+            name = "Table",
+            contents = list(
+                list(kind = "descr", content = paste0(
+                    "Showing top 50 pathways by padj in descending order. ",
+                    "Use 'Download the entire data' button to download all pathways."
+                )),
+                list(kind = "table", src = file.path(info$prefix, "fgsea"), data = list(nrows = 50))
+            )
+        ),
+        list(
+            name = "Summary Plot",
+            contents = list(
+                list(kind = "descr", content = paste0("Showing top ", case$top, " pathways.")),
+                list(kind = "image", src = file.path(info$prefix, "summary.png"))
+            )
+        ),
+        list(
+            name = "GSEA Plots",
+            contents = list(
+                list(kind = "descr", content = paste0("Showing top ", case$top, " pathways.")),
+                list(kind = "image", src = file.path(info$prefix, "pathways.png"))
+            )
+        ),
+        hs = c(info$section, info$name),
+        ui = "tabs"
     )
 }
 
-sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
+sapply(sort(names(cases)), function(name) do_case(name))
 
-save_report(joboutdir)
+reporter$save(joboutdir)

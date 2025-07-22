@@ -1,6 +1,9 @@
 
 library(rlang)
 library(RUVcorr)
+library(biopipen.utils)
+
+log <- get_logger()
 
 args <- {{envs.ruvcorr_args | r: todot="-"}}
 if (!is.null(seed)) { set.seed(seed) }
@@ -17,7 +20,7 @@ args$check <- args$check %||% TRUE
 args$n = ngenes
 args$m = nsamples
 
-log_info("Running simulation ...")
+log$info("Running simulation ...")
 sim <- do_call(simulateGEdata, args)
 attributes(sim) <- c(attributes(sim), c(simulation_tool = "RUVcorr"))
 genes <- paste0("Gene", 1:ngenes)
@@ -35,8 +38,8 @@ sim$Noise <- t(sim$Noise)
 colnames(sim$Sigma) <- genes
 rownames(sim$Sigma) <- genes
 
-log_info("Saving results ...")
-saveRDS(sim, file.path(outdir, "sim.rds"))
-saveRDS(sim$Truth, file.path(outdir, "Truth.rds"))
+log$info("Saving results ...")
+save_obj(sim, file.path(outdir, "sim.rds"))
+save_obj(sim$Truth, file.path(outdir, "Truth.rds"))
 
 simulated <- sim$Y

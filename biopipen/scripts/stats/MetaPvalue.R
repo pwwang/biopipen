@@ -1,11 +1,10 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(metap)
 library(rlang)
 library(dplyr)
+library(biopipen.utils)
 
-infiles <- {{in.infiles | r}}
-outfile <- {{out.outfile | r}}
+infiles <- {{in.infiles | each: str | r}}
+outfile <- {{out.outfile | quote}}
 id_cols <- {{envs.id_cols | r}}
 id_exprs <- {{envs.id_exprs | r}}
 pval_cols <- {{envs.pval_cols | r}}
@@ -16,11 +15,13 @@ padj <- {{envs.padj | r}}
 
 if (method == "fisher") { method = "sumlog" }
 
+log <- get_logger()
+
 if (length(infiles) == 1 && padj == "none") {
-    log_info("Only one input file, copying to output ...")
+    log$info("Only one input file, copying to output ...")
     file.copy(infiles, outfile)
 } else if (length(infiles) == 1) {
-    log_info("Only one input file, performing p-value adjustment ...")
+    log$info("Only one input file, performing p-value adjustment ...")
     if (is.null(pval_cols)) {
         stop("Must provide envs.pval_cols")
     }
@@ -30,7 +31,7 @@ if (length(infiles) == 1 && padj == "none") {
     }
     indata$Padj <- p.adjust(indata[, pval_cols], method = padj)
 
-    log_info("Writing output ...")
+    log$info("Writing output ...")
     write.table(indata, outfile, quote = FALSE, sep = "\t", row.names = FALSE)
 } else {
     # Check pval_cols
@@ -68,7 +69,7 @@ if (length(infiles) == 1 && padj == "none") {
         }
     }
 
-    log_info("Reading and preparing data ...")
+    log$info("Reading and preparing data ...")
     outdata <- NULL
     for (i in seq_along(infiles)) {
         infile <- infiles[i]
@@ -89,7 +90,7 @@ if (length(infiles) == 1 && padj == "none") {
         }
     }
 
-    log_info("Running metap on each row ...")
+    log$info("Running metap on each row ...")
     metaps <- c()
     ns <- c()
     pval_columns <- setdiff(colnames(outdata), id_cols)
@@ -119,14 +120,11 @@ if (length(infiles) == 1 && padj == "none") {
     outdata <- outdata %>% arrange(MetaPval)
 
     if (padj != "none") {
-        log_info("Calculating adjusted p-values ...")
+        log$info("Calculating adjusted p-values ...")
         outdata$MetaPadj <- p.adjust(outdata$MetaPval, method = padj)
 
     }
 
-    log_info("Writing output ...")
+    log$info("Writing output ...")
     write.table(outdata, outfile, quote = FALSE, sep = "\t", row.names = FALSE)
 }
-
-
-

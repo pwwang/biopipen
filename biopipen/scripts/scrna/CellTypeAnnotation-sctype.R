@@ -4,7 +4,7 @@ library(Seurat)
 library(rlang)
 library(biopipen.utils)
 
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "sctype.R" | read }}
+{% include biopipen_dir + "/scripts/scrna/sctype.R" %}
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}

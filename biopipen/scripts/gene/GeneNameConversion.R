@@ -1,5 +1,4 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "gene.R" | source_r }}
+library(biopipen.utils)
 
 infile <- {{in.infile | quote}}
 outfile <- {{out.outfile | quote}}
@@ -11,6 +10,8 @@ infmt <- {{envs.infmt | r}}
 outfmt <- {{envs.outfmt | r}}
 species <- {{envs.species | r}}
 
+log <- get_logger()
+
 if (is.na(notfound)) {
     notfound = "na"
 }
@@ -18,7 +19,7 @@ if (is.na(notfound)) {
 df <- read.table(infile, header=TRUE, sep="\t", check.names=FALSE)
 
 if (genecol == 0) {
-    log_warn("envs.genecol should be 1-based, but 0 was given. Using 1 instead.")
+    log$warn("envs.genecol should be 1-based, but 0 was given. Using 1 instead.")
     genecol <- 1
 }
 
@@ -27,12 +28,13 @@ if (dup == "combine") { dup <- ";" }
 
 genes <- df[[genecol]]
 converted <- gene_name_conversion(
-    genes=genes,
-    species=species,
-    infmt=infmt,
-    outfmt=outfmt,
-    notfound=notfound,
-    dup=dup
+    genes = genes,
+    species = species,
+    infmt = infmt,
+    outfmt = outfmt,
+    notfound = notfound,
+    dup = dup,
+    suppress_messages = FALSE
 )
 #    <genecol> <outfmt>
 # 1  1255_g_at   GUCA1A
@@ -50,7 +52,7 @@ if (notfound == "skip" || notfound == "ignore") {
 
 if (output == "append") {
     if (outfmt %in% colnames(df)) {
-        log_warn("The output column name already exists in the input dataframe. Appending with a suffix `_1`.")
+        log$warn("The output column name already exists in the input dataframe. Appending with a suffix `_1`.")
         outcol <- paste(outfmt, "_1", sep="")
     }
     df[[outcol]] <- converted[[outfmt]]

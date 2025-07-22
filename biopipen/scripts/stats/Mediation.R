@@ -1,8 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(parallel)
 library(mediation)
+library(biopipen.utils)
 
 infile <- {{in.infile | r}}
 fmlfile <- {{in.fmlfile | r}}
@@ -16,15 +15,16 @@ cases <- {{envs.cases | r}}
 transpose_input <- {{envs.transpose_input | r}}
 
 set.seed(123)
+log <- get_logger()
 
-log_info("Reading input file ...")
+log$info("Reading input file ...")
 indata <- read.table(infile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE)
 if (transpose_input) { indata <- t(indata) }
 
-log_info("Reading formula file/cases ...")
+log$info("Reading formula file/cases ...")
 if (!is.null(fmlfile)) {
     if (!is.null(cases) && length(cases) > 0) {
-        log_warn("envs.cases ignored as in.fmlfile is provided")
+        log$warn("envs.cases ignored as in.fmlfile is provided")
     }
     fmldata <- read.table(fmlfile, header = TRUE, sep = "\t", row.names = NULL)
     # Case   M   Y   X   Cov     Model_M    Model_Y
@@ -39,14 +39,14 @@ medanalysis <- function(i, total) {
     casename <- names(cases)[i]
     case <- cases[[casename]]
     if (total < 50) {
-        log_info("- Case: ", casename)
+        log$info("- Case: ", casename)
     } else if (total < 500) {
         if (i %% 10 == 0) {
-            log_info("- Processing case {i}/{total} ...")
+            log$info("- Processing case {i}/{total} ...")
         }
     } else {
         if (i %% 100 == 0) {
-            log_info("- Processing case {i}/{total} ...")
+            log$info("- Processing case {i}/{total} ...")
         }
     }
     M <- case$M

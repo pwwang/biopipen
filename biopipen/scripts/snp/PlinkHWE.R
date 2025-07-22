@@ -1,11 +1,9 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
-library(ggprism)
-theme_set(theme_prism())
+library(plotthis)
+library(biopipen.utils)
 
-indir <- {{in.indir | r}}
-outdir <- {{out.outdir | r}}
-plink <- {{envs.plink | r}}
+indir <- {{in.indir | quote}}
+outdir <- {{out.outdir | quote}}
+plink <- {{envs.plink | quote}}
 ncores <- {{envs.ncores | r}}
 cutoff <- {{envs.cutoff | r}}
 doplot <- {{envs.plot | r}}
@@ -51,22 +49,29 @@ if (doplot) {
     hardy$Pval <- -log10(hardy$P)
     hardy$Status <- "Pass"
     hardy[which(hardy$SNP %in% hardy.fail$SNP), "Status"] <- "Fail"
+    hardy$Status <- factor(hardy$Status, levels = c("Fail", "Pass"))
 
-    plotGG(
-        data = hardy,
-        geom = "histogram",
-        outfile = paste0(output, '.hardy.png'),
-        args = list(aes(x = Pval, fill = Status), alpha = 0.8, bins = 50),
-        ggs = c(
-            'xlab("-log10(HWE p-value)")',
-            'ylab("Count")',
-            'geom_vline(xintercept = -log10(cutoff), color = "red", linetype="dashed")',
-            'theme(legend.position = "none")',
-            'geom_text(aes(x = -log10(cutoff), y = Inf, label = cutoff), colour="red", angle=90, vjust = 1.2, hjust = 1.2)',
-            'scale_fill_manual(values = c("Pass" = "blue3", "Fail" = "red3"))'  # Added line to set "Fail" color to red
-        ),
-        devpars = devpars
+    p <- Histogram(
+        hardy,
+        x = "Pval",
+        group_by = "Status",
+        alpha = 0.8,
+        bins = 50,
+        xlab = "-log10(HWE p-value)",
+        ylab = "Count",
+        palette = "Set1"
     )
+    res <- 70
+    height <- attr(p, "height") * res
+    width <- attr(p, "width") * res
+    png(
+        filename = paste0(output, '.hardy.png'),
+        width = width,
+        height = height,
+        res = res
+    )
+    print(p)
+    dev.off()
 }
 
 cmd <- c(

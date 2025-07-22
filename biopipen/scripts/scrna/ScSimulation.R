@@ -1,12 +1,11 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(splatter)
 library(scater)
+library(biopipen.utils)
 
 # Load template variables
 seed <- {{ in.seed | r }}
-outfile <- {{ out.outfile | r }}
+outfile <- {{ out.outfile | quote }}
 ngenes <- {{ envs.ngenes | r }}
 ncells <- {{ envs.ncells | r }}
 nspikes <- {{ envs.nspikes | r }}
@@ -14,11 +13,13 @@ outtype <- {{ envs.outtype | r }}
 method <- {{ envs.method | r }}
 user_params <- {{ envs.params | r: todot="-" }}
 
-log_info("Generating simulation parameters ...")
+log <- get_logger()
+
+log$info("Generating simulation parameters ...")
 
 seed <- seed %||% 1
 if (length(seed) > 1) {
-    log_warn("- multiple seeds provided, using the first one")
+    log$warn("- multiple seeds provided, using the first one")
     seed <- seed[1]
 }
 if (is.character(seed)) {
@@ -41,7 +42,7 @@ user_params$object = params
 do_call(setParams, user_params)
 
 
-log_info("Saving simulation parameters to file ...")
+log$info("Saving simulation parameters to file ...")
 
 sim <- splatSimulate(params, method = method, verbose = TRUE)
 
@@ -49,16 +50,16 @@ outtype <- tolower(outtype)
 if (outtype == "sce") outtype <- "singlecellexperiment"
 
 if (outtype == "singlecellexperiment") {
-    log_info("Saving simulation to file ...")
-    saveRDS(sim, file = outfile)
+    log$info("Saving simulation to file ...")
+    save_obj(sim, file = outfile)
 } else {
-    log_info("Converting simulation to Seurat object ...")
+    log$info("Converting simulation to Seurat object ...")
     cnts <- SingleCellExperiment::counts(sim)
     sobj <- Seurat::CreateSeuratObject(counts = cnts, project = proj)
     rm(sim)
     rm(cnts)
     gc()
 
-    log_info("Saving simulation to file ...")
-    saveRDS(sobj, file = outfile)
+    log$info("Saving simulation to file ...")
+    save_obj(sobj, file = outfile)
 }

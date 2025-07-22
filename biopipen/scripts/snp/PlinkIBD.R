@@ -1,14 +1,14 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 suppressPackageStartupMessages({
     library(dplyr)
     library(tidyr)
     library(tibble)
+	library(plotthis)
+	library(biopipen.utils)
 })
 
-indir    <- {{in.indir | r}}
-outdir   <- {{out.outdir | r}}
-plink    <- {{envs.plink | r}}
+indir    <- {{in.indir | quote}}
+outdir   <- {{out.outdir | quote}}
+plink    <- {{envs.plink | quote}}
 indep    <- {{envs.indep | r}}
 highld   <- {{envs.highld | r}}
 devpars  <- {{envs.devpars | r}}
@@ -19,11 +19,13 @@ doplot   <- {{envs.plot | r}}
 seed     <- {{envs.seed | r}}
 ncores   <- {{envs.ncores | r}}
 
+log <- get_logger()
+
 bedfile <- Sys.glob(file.path(indir, '*.bed'))
 if (length(bedfile) == 0)
     stop("No bed files found in the input directory.")
 if (length(bedfile) > 1) {
-    log_warn("Multiple bed files found in the input directory. Using the first one.")
+    log$warn("Multiple bed files found in the input directory. Using the first one.")
     bedfile <- bedfile[1]
 }
 input  <- tools::file_path_sans_ext(bedfile)
@@ -153,48 +155,42 @@ if (doplot) {
 	rownames(similarity) <- samids
 	colnames(similarity) <- samids
 
-	annos <- list()
+	andata <- NULL
+	column_annotation <- NULL
 	if (!is.null(annofile) && !isFALSE(annofile)) {
 		options(stringsAsFactors = TRUE)
 		andata <- read.table(annofile, header = TRUE, row.names = 1, sep = "\t", check.names = FALSE)
 		andata <- andata[samids, , drop = FALSE]
 		for (anname in colnames(andata)) {
-			annos[[anname]] <- as.matrix(andata[, anname])
+			column_annotation <- c(column_annotation, anname)
 		}
-		annos$annotation_name_gp <- fontsize8
-		annos <- do.call(HeatmapAnnotation, annos)
 	}
 
-	args <- list(
+	p <- plotthis::Heatmap(
+		similarity,
 		name = "PI_HAT",
-		cell_fun = function(j, i, x, y, width, height, fill) {
-			if (similarity[i, j] > pihat && i != j)
-				grid.points(x, y, pch = 4, size = unit(.5, "char"))
-		},
-		#heatmap_legend_param = list(
-		#	title_gp  = fontsize9,
-		#	labels_gp = fontsize8
-		#),
+        in_form = "matrix",
+        cell_type = "label",
+		rows_data = andata,
+		label = function(x) ifelse (x > pihat, '*', NA),
+        title = paste0("(*) PI_HAT > ", pihat),
 		clustering_distance_rows = function(m) as.dist(1-m),
 		clustering_distance_columns = function(m) as.dist(1-m),
-		top_annotation = if (length(annos) == 0) NULL else annos
+        show_row_names = TRUE,
+        show_column_names = TRUE,
+		column_annotation = column_annotation
 	)
 
-	plotHeatmap(
-		similarity,
-		outfile = paste0(output, '.ibd.png'),
-		args = args,
-		draw = list(
-			annotation_legend_list = list(
-				Legend(
-					labels = paste(">", pihat),
-					title = "",
-					type = "points",
-					pch = 4,
-					title_gp = fontsize9,
-					labels_gp = fontsize8)),
-			merge_legend = TRUE
-        ),
-		devpars = devpars
-    )
+	res <- 100
+	height <- attr(p, "height") * res
+	width <- attr(p, "width") * res
+	png(
+		filename = paste0(output, '.ibd.png'),
+		width = width,
+		height = height,
+		res = res
+	)
+	print(p)
+	dev.off()
+
 }

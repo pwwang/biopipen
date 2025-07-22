@@ -12,8 +12,9 @@ parser.add_argument(
 parser.add_argument(
     "-c",
     "--over_clustering",
-    default="seurat_clusters",
-    help="Over clustering. Ignored if the column does not exist.",
+    required=False,
+    default=None,
+    help="Over clustering. Error if the column does not exist.",
 )
 
 
@@ -25,8 +26,9 @@ if __name__ == "__main__":
     adata = sc.read_h5ad(args.input)
     over_clustering = args.over_clustering
     if over_clustering and over_clustering not in adata.obs.columns:
-        print("WARNING: Over clustering column not found. Ignoring over clustering.")
-        over_clustering = None
+        raise ValueError(
+            f"Over clustering column '{over_clustering}' not found in AnnData object."
+        )
 
     annotated = celltypist.annotate(
         adata,

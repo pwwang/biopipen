@@ -1,7 +1,6 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(dplyr)
+library(biopipen.utils)
 
 infile <- {{in.infile | r}}
 groupfile <- {{in.groupfile | r}}
@@ -11,7 +10,9 @@ padj <- {{envs.padj | r}}
 transpose_input <- {{envs.transpose_input | r}}
 transpose_group <- {{envs.transpose_group | r}}
 
-log_info("Reading input files ...")
+log <- get_logger()
+
+log$info("Reading input files ...")
 indata <- read.table(infile, header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 if (transpose_input) {
 	indata <- t(indata)
@@ -105,16 +106,16 @@ formatlm <- function(m, g = NULL, type = "coeff") {
 	}
 }
 
-log_info("Running Chow tests ...")
+log$info("Running Chow tests ...")
 ncases <- nrow(fmldata)
 results <- do_call(rbind, lapply(
     seq_len(ncases),
     function(i) {
 		fmlrow <- fmldata[i, , drop=TRUE]
         if (i %% 100 == 0) {
-            log_info("- {i} / {ncases} ...")
+            log$info("- {i} / {ncases} ...")
         }
-        log_debug("  Running Chow test for formula: {fmlrow$Formula} (grouping = {fmlrow$Group})")
+        log$debug("  Running Chow test for formula: {fmlrow$Formula} (grouping = {fmlrow$Group})")
 
         res <- chow.test(fmlrow$Formula, fmlrow$Group)
 		fmlrow$Pooled_Coef <- formatlm(res$pooled.lm)
@@ -135,11 +136,11 @@ results <- do_call(rbind, lapply(
 )) %>% as.data.frame()
 
 if (padj != "none") {
-    log_info("Adjusting p-values ...")
+    log$info("Adjusting p-values ...")
     results$Padj <- p.adjust(results$Pval, method = padj)
 }
 
-log_info("Writing output ...")
+log$info("Writing output ...")
 # unimplemented type 'list' in 'EncodeElement'
 results <- apply(results, 2, as.character)
 write.table(results, file = outfile, sep = "\t", quote = FALSE, row.names = FALSE)

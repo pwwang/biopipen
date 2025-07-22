@@ -1,7 +1,17 @@
+import os
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
-from biopipen.ns.tcr import CDR3AAPhyschem as CDR3AAPhyschem_
+from biopipen.ns.tcr import CDR3AAPhyschem as CDR3AAPhyschem_, TESSA as TESSA_
 from biopipen.core.testing import get_pipeline
+
+conda_exe = os.environ.get("CONDA_EXE", "")
+if conda_exe:
+    # Make sure we have scvelo 0.3.3 and numpy<2
+    python = os.path.join(
+        os.path.dirname(os.path.dirname(conda_exe)), "bin", "python"
+    )
+else:
+    python = "python"
 
 
 class DataPreparation(Proc):
@@ -40,6 +50,11 @@ class CDR3AAPhyschem(CDR3AAPhyschem_):
             "Tconv": ["6", "7", "8"],
         }
     }
+
+
+class TESSA(TESSA_):
+    requires = DataPreparation
+    envs = {"max_iter": 100, "python": python}
 
 
 def pipeline():

@@ -1,7 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 library(rlang)
 library(rtracklayer)
 library(MatrixEQTL)
+library(biopipen.utils)
 
 snpfile = {{in.geno | r}}
 expfile = {{in.expr | r}}
@@ -23,6 +23,8 @@ transpose_geno = {{envs.transpose_geno | r}}
 transpose_expr = {{envs.transpose_expr | r}}
 transpose_cov = {{envs.transpose_cov | r}}
 
+log <- get_logger()
+
 arg_match(model, c("modelANOVA", "modelLINEAR", "linear", "anova"))
 if (model == "linear") model = "modelLINEAR"
 if (model == "anova") model = "modelANOVA"
@@ -33,14 +35,14 @@ cis_enabled = !is.null(snppos) && !is.null(genepos) && dist > 0
 
 # if trans is disabled, all files needed for cis should be provided
 if (!trans_enabled && !cis_enabled) {
-    log_warn("Using `envs.transp = 1e-5` since cis-eQTL is disabled.")
+    log$warn("Using `envs.transp = 1e-5` since cis-eQTL is disabled.")
     trans_enabled <- TRUE
     transp <- 1e-5
 }
 
 transpose_file <- function(file, what) {
     if (is.null(file)) return(NULL)
-    log_info("Transposing {what} file ...")
+    log$info("Transposing {what} file ...")
     out <- file.path(joboutdir, paste0(
         tools::file_path_sans_ext(basename(file)),
         ".transposed.",
@@ -55,7 +57,7 @@ if (transpose_geno) snpfile = transpose_file(snpfile, "geno")
 if (transpose_expr) expfile = transpose_file(expfile, "expr")
 if (transpose_cov) covfile = transpose_file(covfile, "cov")
 
-log_info("Loading SNP data ...")
+log$info("Loading SNP data ...")
 snps = SlicedData$new();
 snps$fileDelimiter = "\t";       # the TAB character
 snps$fileOmitCharacters = "NA";  # denote missing values;
@@ -64,7 +66,7 @@ snps$fileSkipColumns = 1;        # one column of row labels
 snps$fileSliceSize = 10000;      # read file in pieces of 2,000 rows
 snps$LoadFile( snpfile );
 
-log_info("Loading gene expression data ...")
+log$info("Loading gene expression data ...")
 gene = SlicedData$new();
 gene$fileDelimiter = "\t";       # the TAB character
 gene$fileOmitCharacters = "NA";  # denote missing values;
@@ -75,12 +77,12 @@ gene$LoadFile( expfile );
 
 cvrt = SlicedData$new();
 if (!is.null(covfile) && file.exists(covfile)) {
-    log_info("Loading covariate data ...")
+    log$info("Loading covariate data ...")
     covmatrix = read.table(covfile, header=TRUE, stringsAsFactors=FALSE, row.names=1, sep="\t", quote="", check.names=FALSE)
     cvrt$CreateFromMatrix( as.matrix(covmatrix) )
 }
 
-log_info("Matching samples ...")
+log$info("Matching samples ...")
 if (match_samples) {
     # let matrixEQTL raise an error if samples do not match
 } else {
@@ -94,14 +96,14 @@ if (match_samples) {
     }
     snps = snps$ColumnSubsample(match(common_samples, snps$columnNames))
     gene = gene$ColumnSubsample(match(common_samples, gene$columnNames))
-    log_info("- Samples used in SNP data: {n_sample_snps} -> {snps$nCols()}")
-    log_info("- Samples used in gene expression data: {n_sample_gene} -> {gene$nCols()}")
+    log$info("- Samples used in SNP data: {n_sample_snps} -> {snps$nCols()}")
+    log$info("- Samples used in gene expression data: {n_sample_gene} -> {gene$nCols()}")
     if (!is.null(covfile)) {
-        log_info("- Samples used in covariate data: {n_sample_cov} -> {cvrt$nCols()}")
+        log$info("- Samples used in covariate data: {n_sample_cov} -> {cvrt$nCols()}")
     }
 }
 
-log_info("Composing engine parameters ...")
+log$info("Composing engine parameters ...")
 engine_params = list()
 engine_params$snps = snps
 engine_params$gene = gene
@@ -118,7 +120,7 @@ noq = function(s) {
 }
 
 if (cis_enabled) {
-    log_info("Loading SNP positions ...")
+    log$info("Loading SNP positions ...")
     if (endsWith(snppos, ".bed")) {
         snppos_data = read.table(snppos, header = FALSE, stringsAsFactors = FALSE, sep = "\t")
         snppos_data = data.frame(
@@ -145,17 +147,25 @@ if (cis_enabled) {
         snppos_data = snppos_data[, c(3, 1, 2)]
         colnames(snppos_data) = c("snp", "chr", "pos")
     } else {
+        # snp	chr	pos
+        # Snp_01	chr1	721289
+        # Snp_02	chr1	752565
+        # check if 3rd column of the first line is numeric.
+        # if it is, there is no header; otherwise, it is a header.
+        header <- is.na(suppressWarnings(as.numeric(strsplit(readLines(snppos, n = 1), "\t")[[1]][3])))
+
         snppos_data = read.table(
             snppos,
-            header=FALSE,
-            row.names=NULL,
-            stringsAsFactors=FALSE,
-            check.names=FALSE
+            sep = "\t",
+            header = header,
+            row.names = NULL,
+            stringsAsFactors = FALSE,
+            check.names = FALSE
         )
         colnames(snppos_data) = c("snp", "chr", "pos")
     }
 
-    log_info("Loading gene positions ...")
+    log$info("Loading gene positions ...")
     if (endsWith(genepos, ".bed")) {
         genepos_data = read.table(genepos, header = FALSE, stringsAsFactors = FALSE, sep = "\t")
         genepos_data = data.frame(
@@ -174,11 +184,20 @@ if (cis_enabled) {
             s2 = end(genepos_data)
         )
     } else {
-        genepos_data = read.table(genepos, header = TRUE, stringsAsFactors = FALSE);
+        parts <- strsplit(readLines(genepos, n = 1), "\t")[[1]]
+        header <- is.na(suppressWarnings(as.numeric(parts[3]))) || is.na(suppressWarnings(as.numeric(parts[4])))
+        genepos_data = read.table(
+            genepos,
+            sep = "\t",
+            header = header,
+            row.names = NULL,
+            stringsAsFactors = FALSE,
+            check.names = FALSE
+        )
         colnames(genepos_data) = c("geneid", "chr", "s1", "s2")
     }
 
-    log_info("Running MatrixEQTL with cis-eQTLs enabled ...")
+    log$info("Running MatrixEQTL with cis-eQTLs enabled ...")
     engine_params$output_file_name.cis = outfile
     engine_params$pvOutputThreshold.cis = min(pval, 1)
     engine_params$cisDist = dist
@@ -187,7 +206,7 @@ if (cis_enabled) {
     do_call(Matrix_eQTL_main, engine_params)
     if (!file.exists(alleqtl)) file.create(alleqtl)
 } else {
-    log_info("Running MatrixEQTL without cis-eQTLs ...")
+    log$info("Running MatrixEQTL without cis-eQTLs ...")
     do_call(Matrix_eQTL_engine, engine_params)
     if (!file.exists(outfile)) file.create(outfile)
 }

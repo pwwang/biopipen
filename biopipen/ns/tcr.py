@@ -1,10 +1,11 @@
 """Tools to analyze single-cell TCR sequencing data"""
-
+from pipen.utils import mark
 from ..core.defaults import SCRIPT_DIR
 from ..core.proc import Proc
 from ..core.config import config
 
 
+@mark(deprecated="{proc.name} is deprecated, use ScRepLoading instead.")
 class ImmunarchLoading(Proc):
     """Immuarch - Loading data
 
@@ -94,6 +95,7 @@ class ImmunarchLoading(Proc):
     script = "file://../scripts/tcr/ImmunarchLoading.R"
 
 
+@mark(deprecated=True)
 class ImmunarchFilter(Proc):
     """Immunarch - Filter data
 
@@ -172,6 +174,7 @@ class ImmunarchFilter(Proc):
     script = "file://../scripts/tcr/ImmunarchFilter.R"
 
 
+@mark(deprecated="{proc.name} is deprecated, use ClonalStats instead.")
 class Immunarch(Proc):
     """Exploration of Single-cell and Bulk T-cell/Antibody Immune Repertoires
 
@@ -857,6 +860,7 @@ class Immunarch(Proc):
     }
 
 
+@mark(deprecated="{proc.name} is deprecated, use ClonalStats instead.")
 class SampleDiversity(Proc):
     """Sample diversity and rarefaction analysis
 
@@ -905,6 +909,7 @@ class SampleDiversity(Proc):
     }
 
 
+@mark(deprecated="{proc.name} is deprecated, use ClonalStats instead.")
 class CloneResidency(Proc):
     """Identification of clone residency
 
@@ -1018,6 +1023,7 @@ class CloneResidency(Proc):
     plugin_opts = {"report": "file://../reports/tcr/CloneResidency.svelte"}
 
 
+@mark(deprecated=True)
 class Immunarch2VDJtools(Proc):
     """Convert immuarch format into VDJtools input formats.
 
@@ -1054,6 +1060,7 @@ class Immunarch2VDJtools(Proc):
     script = "file://../scripts/tcr/Immunarch2VDJtools.R"
 
 
+@mark(deprecated=True)
 class ImmunarchSplitIdents(Proc):
     """Split the data into multiple immunarch datasets by Idents from Seurat
 
@@ -1087,6 +1094,7 @@ class ImmunarchSplitIdents(Proc):
     script = "file://../scripts/tcr/ImmunarchSplitIdents.R"
 
 
+@mark(deprecated="{proc.name} is deprecated, use ClonalStats instead.")
 class VJUsage(Proc):
     """Circos-style V-J usage plot displaying the frequency of
     various V-J junctions using vdjtools.
@@ -1129,6 +1137,7 @@ class VJUsage(Proc):
     plugin_opts = {"report": "file://../reports/tcr/VJUsage.svelte"}
 
 
+@mark(deprecated=True)
 class Attach2Seurat(Proc):
     """Attach the clonal information to a Seurat object as metadata
 
@@ -1191,58 +1200,58 @@ class TCRClustering(Proc):
     CDR3 sequence may be shared by multiple cells.
 
     Input:
-        immfile: The immunarch object in RDS
+        screpfile: The TCR data object loaded by `scRepertoire::CombineTCR()` or
+            `scRepertoire::CombineExpression()`
 
     Output:
-        immfile: The immnuarch object in RDS with TCR cluster information
-        clusterfile: The cluster file.
-            Columns are CDR3.aa, TCR_Cluster, TCR_Cluster_Size and
-            TCR_Cluster_Size1.
-            TCR_Cluster_Size is the number of cells in the cluster.
-            TCR_Cluster_Size1 is the unique CDR3 sequences in the cluster.
+        outfile: The `scRepertoire` object in qs with TCR cluster information.
+            Column `TCR_Cluster` will be added to the metadata.
 
     Envs:
+        ncores (type=int): The number of cores to use for clustering.
+            Only used when `envs.within_sample` is `True`. It is used to parallelize
+            the clustering for each sample.
         tool (choice): The tool used to do the clustering, either
             [GIANA](https://github.com/s175573/GIANA) or
             [ClusTCR](https://github.com/svalkiers/clusTCR).
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
-        prefix: The prefix to the barcodes. You can use placeholder like `{Sample}_`
-            The prefixed barcodes will be used to match the barcodes in `in.metafile`.
-            Not used if `in.metafile` is not specified.
-            If `None` (default), `immdata$prefix` will be used.
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
+        within_sample (flag): Whether to cluster the TCR clones within each sample.
+            When `in.screpfile` is a `Seurat` object, the samples are marked by
+            the `Sample` column in the metadata.
         args (type=json): The arguments for the clustering tool
             For GIANA, they will be passed to `python GIAna.py`
             See <https://github.com/s175573/GIANA#usage>.
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
             See <https://svalkiers.github.io/clusTCR/docs/clustering/how-to-use.html#clustering>.
-        on_multi (flag;hidden): Whether to run clustering on
-            multi-chain seq or the seq read and processed by immunarch
+        chain (choice): The TCR chain to use for clustering.
+            - alpha: TCR alpha chain (the first sequence in CTaa, separated by `_`)
+            - beta: TCR beta chain (the second sequence in CTaa, separated by `_`)
+            - both: Both TCR alpha and beta chains
 
     Requires:
         clusTCR:
             - if: {{ proc.envs.tool == 'ClusTCR' }}
             - check: {{ proc.envs.python }} -c "import clustcr"
     """  # noqa: E501
-    input = "immfile:file"
-    output = [
-        "immfile:file:{{in.immfile | basename}}",
-        "clusterfile:file:{{in.immfile | stem}}.clusters.txt",
-    ]
+    input = "screpfile:file"
+    output = "outfile:file:{{in.screpfile | stem}}.tcr_clustered.qs"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "tool": "GIANA",  # or ClusTCR
-        "prefix": None,
-        "on_multi": False,
         "python": config.lang.python,
+        "within_sample": True,  # whether to cluster the TCR clones within each sample
         "args": {},
+        "chain": "both",  # alpha, beta, both
     }
     script = "file://../scripts/tcr/TCRClustering.R"
 
 
+@mark(deprecated="{proc.name} is deprecated, use ClonalStats instead.")
 class TCRClusterStats(Proc):
     """Statistics of TCR clusters, generated by `TCRClustering`.
 
@@ -1398,6 +1407,7 @@ class TCRClusterStats(Proc):
     }
 
 
+@mark(deprecated=True)
 class CloneSizeQQPlot(Proc):
     """QQ plot of the clone sizes
 
@@ -1533,29 +1543,17 @@ class TESSA(Proc):
             [link](https://www.nature.com/articles/s42256-021-00383-2)
 
     Input:
-        immdata: The immunarch object in RDS file or text file of TCR data loaded by
-            [`ImmunarchLoading`](!!#biopipennstcrimmunarchloading)
-        srtobj: The `Seurat` object, saved in RDS format, with dimension
-            reduction performed if you want to use them to represent the
-            transcriptome of T cells.
-            This could also be a tab delimited file (can be gzipped) with
-            expression matrix or dimension reduction results.
+        screpdata: The data loaded by `ScRepCombiningExpression`, saved in RDS or
+            qs/qs2 format.
+            The data is actually generated by `scRepertiore::combineExpression()`.
+            The data must have both TRA and TRB chains.
 
     Output:
-        outfile: The tab-delimited file with three columns
-            (`barcode`, `TESSA_Cluster` and `TESSA_Cluster_Size`) or
-            an RDS file if  `in.srtobj` is an RDS file of a Seurat object, with
+        outfile: a qs fileof a Seurat object, with
             `TESSA_Cluster` and `TESSA_Cluster_Size` added to the `meta.data`
 
     Envs:
         python: The path of python with `TESSA`'s dependencies installed
-        prefix: The prefix of the cell barcodes in the `Seurat` object.
-            Once could use a fixed prefix, or a placeholder with the column
-            name in meta data. For example, `"{Sample}_"` will replace the
-            placeholder with the value of the column `Sample` in meta data.
-            If `in.immdata` is text file, the prefix will be ignored and the
-            barcode should be already prefixed.
-            If `None` and `in.immdata` is RDS file, `immdata$prefix` will be used.
         within_sample (flag): Whether the TCR networks are constructed only
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
@@ -1567,21 +1565,13 @@ class TESSA(Proc):
             If True, the tessa will not update b in the MCMC iterations.
         max_iter (type=int): The maximum number of iterations for MCMC.
         save_tessa (flag): Save tessa detailed results to seurat object?
-            Only works if `in.srtobj` is an RDS file of a Seurat object.
             It will be saved to `sobj@misc$tessa`.
     """
-    input = "immdata:file,srtobj:file"
-    output = """outfile:file:
-        {%- if in.srtobj.lower().endswith(".rds") -%}
-        {{in.srtobj | stem}}.tessa.RDS
-        {%- else -%}
-        {{in.immdata | stem}}.tessa.txt
-        {%- endif -%}
-    """
+    input = "screpdata:file"
+    output = "outfile:file:{{in.screpdata | stem}}.tessa.qs"
     lang = config.lang.rscript
     envs = {
         "python": config.lang.python,
-        "prefix": None,
         "assay": None,
         "within_sample": False,
         "predefined_b": False,

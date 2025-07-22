@@ -1,7 +1,7 @@
 library(atSNP)
 library(rtracklayer)
 
-log_info("Converting snpinfo to atSNP object ...")
+log$info("Converting snpinfo to atSNP object ...")
 
 # c("chrom", "start", "end", "name", "score", "strand", "ref", "alt", "ref_seq", "alt_seq")
 if (any(nchar(snpinfo$ref) != 1) || any(nchar(snpinfo$alt) != 1)) {
@@ -34,10 +34,10 @@ snps <- LoadSNPData(
     half.window.size = k
 )
 
-log_info("Running atSNP ...")
+log$info("Running atSNP ...")
 atsnp_scores <- ComputeMotifScore(motif_lib, snps, ncores = ncores)
 
-log_info("Calculating p values ...")
+log$info("Calculating p values ...")
 atsnp_result <- ComputePValues(
     motif.lib = motif_lib,
     snp.info = snps,
@@ -85,7 +85,7 @@ write.table(
     sep = "\t", quote = FALSE, row.names = FALSE
 )
 
-log_info("Plotting variants ...")
+log$info("Plotting variants ...")
 # Convert result to GRanges object
 atsnp_result$alleleDiff <- -atsnp_result[[cutoff_col]]
 atsnp_result$effect <- "strong"
@@ -103,7 +103,7 @@ if (is.null(plots) || length(plots) == 0) {
     variants <- names(plots)
 }
 for (variant in variants) {
-    log_info("- Variant: {variant}")
+    log$info("- Variant: {variant}")
     if (is.null(plots[[variant]])) {
         plots[[variant]] <- list(devpars = devpars, which = "TRUE")
     }

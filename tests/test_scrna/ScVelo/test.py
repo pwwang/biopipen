@@ -4,10 +4,12 @@ from biopipen.core.config import config
 from biopipen.ns.scrna import ScVelo as ScVelo_
 from biopipen.core.testing import get_pipeline
 
-conda_prefix = os.environ.get("CONDA_PREFIX", "")
-if conda_prefix:
+conda_exe = os.environ.get("CONDA_EXE", "")
+if conda_exe:
     # Make sure we have scvelo 0.3.3 and numpy<2
-    python = os.path.join(conda_prefix, "envs", "bio39", "bin", "python")
+    python = os.path.join(
+        os.path.dirname(os.path.dirname(conda_exe)), "envs", "bio39", "bin", "python"
+    )
 else:
     python = "python"
 

@@ -1,49 +1,68 @@
-
-# # https://stackoverflow.com/questions/50145643/unable-to-change-python-path-in-reticulate
-# python = Sys.which({{envs.python | r}})
-# Sys.setenv(RETICULATE_PYTHON = python)
-# library(reticulate)
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "single_cell.R" | source_r }}
-
-library(immunarch)
 library(dplyr)
 library(tidyr)
 library(tibble)
 library(glue)
+library(biopipen.utils)
 
-immfile = {{in.immfile | r}}
-outdir = normalizePath({{job.outdir | r}})
-outfile = {{out.immfile | r}}
-clusterfile = {{out.clusterfile | r}}
-tool = {{envs.tool | r}}
-python = {{envs.python | r}}
-on_multi = {{envs.on_multi | r}}
-args = {{envs.args | r}}
-prefix = {{envs.prefix | r}}
+screpfile <- {{in.screpfile | r}}
+outdir <- normalizePath({{job.outdir | r}})
+outfile <- {{out.outfile | r}}
+
+ncores <- {{envs.ncores | r}}
+tool <- {{envs.tool | r}}
+python <- {{envs.python | r}}
+within_sample <- {{envs.within_sample | r}}
+args <- {{envs.args | r}}
+chain <- {{envs.chain | r}}
 
 setwd(outdir)
 
-immdata = readRDS(immfile)
-if (on_multi) {
-    seqdata = immdata$multi
-} else {
-    seqdata = immdata$data
-}
-if (is.null(prefix)) { prefix = immdata$prefix }
-if (is.null(prefix)) { prefix = "" }
+log <- get_logger()
+
+log$info("Reading input file ...")
+obj <- read_obj(screpfile)
+is_seurat <- inherits(obj, "Seurat")
 
 get_cdr3aa_df = function() {
-    out = expand_immdata(immdata, cell_id = "Barcode") %>%
-        mutate(Barcode = glue(paste0(prefix, "{Barcode}")))
-
-    if (on_multi) {
-        out$CDR3.aa = sub(";", "", out$CDR3.aa)
-    } else if ("chain" %in% colnames(out)) {
-        out = out %>% separate_rows(chain, CDR3.aa, sep = ";") %>%
-            filter(chain == "TRB")
+    if (!is_seurat) {
+        out <- NULL
+        for (sample in names(obj)) {
+            df <- data.frame(
+                Sample = sample,
+                Barcode = obj[[sample]]$barcode
+            )
+            if (chain == "both") {
+                df$CDR3.aa <- obj[[sample]]$CTaa
+            } else if (chain == "alpha") {
+                df$CDR3.aa <- obj[[sample]]$cdr3_aa1
+            } else if (chain == "beta") {
+                df$CDR3.aa <- obj[[sample]]$cdr3_aa2
+            }
+            out <- rbind(out, df)
+        }
+    } else {
+        out <- obj@meta.data
+        out$Barcode <- rownames(out)
+        out <- out %>% filter(!is.na(CTaa))
+        if (grepl("_", out$CTaa[1])) {
+            if (chain == "both") {
+                out$CDR3.aa <- out$CTaa
+            } else {
+                out <- separate(out, CTaa, into = c("alpha.aa", "beta.aa"), sep = "_")
+                if (chain == "alpha") {
+                    out$CDR3.aa <- out$alpha.aa
+                } else if (chain == "beta") {
+                    out$CDR3.aa <- out$beta.aa
+                }
+            }
+        } else {
+            out$CDR3.aa <- out$CTaa
+        }
+        out <- select(out, Sample, Barcode, CDR3.aa)
     }
-    out %>% select(Barcode, CDR3.aa)
+
+    # Sample, Barcode, CDR3.aa
+    out
 }
 cdr3aa_df = get_cdr3aa_df()
 
@@ -124,24 +143,16 @@ clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
                 paste0("M_", as.character(TCR_Cluster))
             )
         )
-    out = left_join(
-        cdr3aa_df,
-        out,
-        by = "CDR3.aa"
-    )
-    df = out %>%
-        select(Barcode, TCR_Cluster) %>%
-        add_count(TCR_Cluster, name="TCR_Cluster_Size") %>%
-        distinct(Barcode, .keep_all = TRUE) %>%
-        add_count(TCR_Cluster, name="TCR_Cluster_Size1") %>%
-        column_to_rownames("Barcode")
 
-    write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")
-    out
+    if (within_sample) {
+        out <- mutate(out, TCR_Cluster = paste0(Sample, ".", TCR_Cluster))
+    }
+
+    left_join(cdr3aa_df, out, by = "CDR3.aa")
 }
 
 run_clustcr = function() {
-    log_info("Running ClusTCR ...")
+    log$info("Running ClusTCR ...")
     clustcr_dir = file.path(outdir, "ClusTCR_Output")
     dir.create(clustcr_dir, showWarnings = FALSE)
     clustcr_file = prepare_clustcr(clustcr_dir)
@@ -154,7 +165,7 @@ run_clustcr = function() {
     )
     print("Running:")
     print(clustcr_cmd)
-    log_debug("- Running command: {clustcr_cmd}")
+    log$debug("- Running command: {clustcr_cmd}")
     rc = system(clustcr_cmd)
     if (rc != 0) {
         quit(status=rc)
@@ -164,7 +175,8 @@ run_clustcr = function() {
 }
 
 prepare_giana = function() {
-    giana_srcdir = "{{biopipen_dir}}/scripts/tcr/GIANA"
+    biopipen_dir <- get_biopipen_dir(python)
+    giana_srcdir = file.path(biopipen_dir, "scripts", "tcr", "GIANA")
 
     # # The source code of GIANA is downloaded now to giana_srcdir
     # giana_file = file.path(giana_srcdir, "GIANA.py")
@@ -226,24 +238,15 @@ clean_giana_output = function(giana_outfile, giana_infile) {
             )
         )
 
-    out = left_join(
-        cdr3aa_df,
-        out,
-        by = "CDR3.aa"
-    )
-    df = out %>%
-        select(Barcode, TCR_Cluster) %>%
-        add_count(TCR_Cluster, name="TCR_Cluster_Size") %>%
-        distinct(Barcode, .keep_all = TRUE) %>%
-        add_count(TCR_Cluster, name="TCR_Cluster_Size1") %>%
-        column_to_rownames("Barcode")
+    if (within_sample) {
+        out <- mutate(out, TCR_Cluster = paste0(Sample, ".", TCR_Cluster))
+    }
 
-    write.table(df, clusterfile, row.names=T, col.names=T, quote=F, sep="\t")
-    out
+    left_join(cdr3aa_df, out, by = "CDR3.aa")
 }
 
 run_giana = function() {
-    log_info("Running GIANA ...")
+    log$info("Running GIANA ...")
     giana_srcdir = prepare_giana()
     giana_input = prepare_input()
     giana_outdir = file.path(outdir, "GIANA_Output")
@@ -275,7 +278,7 @@ run_giana = function() {
     )
     print("Running:")
     print(giana_cmd)
-    log_debug("- Running command: {giana_cmd}")
+    log$debug("- Running command: {giana_cmd}")
     rc = system(giana_cmd)
     if (rc != 0) {
         quit(status=rc)
@@ -284,35 +287,19 @@ run_giana = function() {
     clean_giana_output(giana_outfile, giana_input)
 }
 
-attach_to_immdata = function(out) {
-    seqdata2 = list()
-    # by = if (!on_multi) c(cdr3 = "CDR3.aa") else "CDR3.aa"
-    by = "CDR3.aa"
-    for (sample in names(seqdata)) {
-        sample_out = left_join(seqdata[[sample]], out, by=by)
-        seqdata2[[sample]] = sample_out
-        if (!on_multi) {
-            immdata$data[[sample]] = immdata$data[[sample]] %>% left_join(
-                out, by = "CDR3.aa"
-            )
-        } else {
-            immdata$multi[[sample]] = immdata$multi[[sample]] %>% left_join(
-                out, by = c(cdr3 = "CDR3.aa")
-            )
-        }
-        # if ("single" %in% names(immdata)) {
-        #     immdata$data[[sample]] = immdata$data[[sample]] %>% left_join(
-        #         out, by = "CDR3.aa"
-        #     )
-        # }
-    }
-    if (!on_multi) {
-        immdata$data = seqdata2
+attach_to_obj = function(obj, out) {
+    rownames(out) <- out$Barcode
+    if (is_seurat) {
+        # Attach results to Seurat object
+        obj@meta.data$TCR_Cluster <- out[rownames(obj@meta.data), "TCR_Cluster"]
     } else {
-        immdata$multi = seqdata2
+        # Attach results to the list of data frames
+        for (sample in names(obj)) {
+            sout <- filter(out, Sample == sample)
+            obj[[sample]]$TCR_Cluster <- sout[obj[[sample]]$barcode, "TCR_Cluster"]
+        }
     }
-    saveRDS(immdata, file = outfile)
-    # seqdata2
+    obj
 }
 
 
@@ -324,5 +311,8 @@ if (tolower(tool) == "clustcr") {
     stop(paste("Unknown tool:", tool))
 }
 
-log_info("Saving results ...")
-attach_to_immdata(out)
+log$info("Attaching results to the input object ...")
+out <- attach_to_obj(obj, out)
+
+log$info("Saving results ...")
+save_obj(out, outfile)

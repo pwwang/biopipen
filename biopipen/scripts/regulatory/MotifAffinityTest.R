@@ -1,13 +1,13 @@
 # Script for regulatory.MotifAffinityTest
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "scripts", "regulatory", "motifs-common.R" | source_r }}
+{% include biopipen_dir + "/scripts/regulatory/motifs-common.R" %}
 
 library(BiocParallel)
 library(BSgenome)
+library(biopipen.utils)
 
-motiffile <- {{in.motiffile | r}}
-varfile <- {{in.varfile | r}}
-outdir <- {{out.outdir | r}}
+motiffile <- {{in.motiffile | quote}}
+varfile <- {{in.varfile | quote}}
+outdir <- {{out.outdir | quote}}
 ncores <- {{envs.ncores | r}}
 tool <- {{envs.tool | r}}
 bcftools <- {{envs.bcftools | r}}
@@ -42,16 +42,18 @@ if (is.null(motif_col) && is.null(regulator_col)) {
     stop("Either motif (envs.motif_col) or regulator (envs.regulator_col) column must be provided")
 }
 
-log_info("Reading input regulator/motif file ...")
+log <- get_logger()
+
+log$info("Reading input regulator/motif file ...")
 in_motifs <- read.table(motiffile, header=TRUE, sep="\t", stringsAsFactors=FALSE, check.names = FALSE)
 
-log_info("Ensuring motifs and regulators in the input data ...")
+log$info("Ensuring motifs and regulators in the input data ...")
 in_motifs <- ensure_regulator_motifs(in_motifs, outdir, motif_col, regulator_col, regmotifs, notfound = notfound)
 genome_pkg <- get_genome_pkg(genome)
 
-log_info("Reading variant file ...")
+log$info("Reading variant file ...")
 if (grepl("\\.vcf$", varfile) || grepl("\\.vcf\\.gz$", varfile)) {
-    log_info("Converting VCF file to BED file ...")
+    log$info("Converting VCF file to BED file ...")
     varfile_bed <- file.path(outdir, gsub("\\.vcf(\\.gz)?$", ".bed", basename(varfile)))
     cmd <- c(
         bcftools, "query",
@@ -69,7 +71,7 @@ if (grepl("\\.vcf$", varfile) || grepl("\\.vcf\\.gz$", varfile)) {
 snpinfo <- read.table(varfile, header=FALSE, stringsAsFactors=FALSE)
 colnames(snpinfo) <- c("chrom", "start", "end", "name", "score", "strand", "ref", "alt")
 
-log_info("Reading motif database ...")
+log$info("Reading motif database ...")
 mdb <- read_meme_to_motifdb(motifdb, in_motifs, motif_col, regulator_col, notfound, outdir)
 
 tool <- tolower(tool)
@@ -77,8 +79,8 @@ tool <- match.arg(tool, c("motifbreakr", "atsnp"))
 
 if (tool == "motifbreakr") {
     motifbreakr_args <- {{envs.motifbreakr_args | r}}
-    {{ biopipen_dir | joinpaths: "scripts", "regulatory", "MotifAffinityTest_MotifBreakR.R" | source_r }}
+    {% include biopipen_dir + "/scripts/regulatory/MotifAffinityTest_MotifBreakR.R" %}
 } else {  # atsnp
     atsnp_args <- {{envs.atsnp_args | r}}
-    {{ biopipen_dir | joinpaths: "scripts", "regulatory", "MotifAffinityTest_AtSNP.R" | source_r }}
+    {% include biopipen_dir + "/scripts/regulatory/MotifAffinityTest_AtSNP.R" %}
 }

@@ -1,12 +1,10 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 library(rlang)
-library(ggprism)
-theme_set(theme_prism())
+library(plotthis)
+library(biopipen.utils)
 
-indir <- {{in.indir | r}}
-outdir <- {{out.outdir | r}}
-plink <- {{envs.plink | r}}
+indir <- {{in.indir | quote}}
+outdir <- {{out.outdir | quote}}
+plink <- {{envs.plink | quote}}
 ncores <- {{envs.ncores | r}}
 modifier <- {{envs.modifier | r}}
 gz <- {{envs.gz | r}}
@@ -92,7 +90,7 @@ post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
             lt_flag <- paste0(metric_col, " < ", cutoff)
             freq$GE <- freq[[metric_col]] >= cutoff
             freq$Flag <- ifelse(freq$GE, ge_flag, lt_flag)
-            freq$Flag <- factor(freq$Flag, levels = c(ge_flag, lt_flag))
+            freq$Flag <- factor(freq$Flag, levels = c(lt_flag, ge_flag))
             write.table(
                 freq[[snp_col]][freq$GE],
                 file = paste0(output, suffix, ".", metric_col, ".ge"),
@@ -109,26 +107,22 @@ post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
             )
 
             if (doplot) {
-                plotGG(
-                    data = freq,
-                    geom = "histogram",
-                    outfile = paste0(output, suffix, ".", metric_col, ".png"),
-                    args = list(aes(x = !!sym(metric_col), fill = Flag), alpha = 0.8, bins = 50),
-                    ggs = c(
-                        sprintf('xlab("%s")', metric_col),
-                        'ylab("Count")',
-                        sprintf('geom_vline(xintercept = %.3f, color = "red", linetype="dashed")', cutoff),
-                        sprintf(
-                            'geom_text(aes(x = %.3f, y = Inf, label = as.character(%.3f)), colour="blue", vjust = 1.5, hjust = -.1)',
-                            cutoff, cutoff
-                        ),
-                        sprintf(
-                            'scale_fill_manual(values = c("%s" = "blue3", "%s" = "green3"))',
-                            ge_flag, lt_flag
-                        )
-                    ),
-                    devpars = devpars
+                p <- Histogram(
+                    freq,
+                    x = metric_col,
+                    group_by = "Flag",
+                    alpha = 0.8,
+                    bins = 50,
+                    xlab = metric_col,
+                    ylab = "Count",
+                    palette = "Set1"
                 )
+                res <- 70
+                height <- attr(p, "height") * res
+                width <- attr(p, "width") * res
+                png(paste0(output, suffix, ".", metric_col, ".png"), width = width, height = height, res = res)
+                print(p)
+                dev.off()
             }
         } else {
             iter_dir <- file.path(outdir, paste0(metric_col, "_filtered"))
@@ -148,6 +142,7 @@ post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
                 }
             }
             freq$Flag <- ifelse(indicate(freq), "Fail", "Pass")
+            freq$Flag <- factor(freq$Flag, levels = c("Fail", "Pass"))
             failfile <- paste0(output, suffix, ".", metric_col, ".fail")
             write.table(
                 freq[[snp_col]][freq$Flag == "Fail"],
@@ -158,24 +153,22 @@ post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
             )
 
             if (doplot) {
-                plotGG(
-                    data = freq,
-                    geom = "histogram",
-                    outfile = paste0(output, suffix, ".", metric_col, ".png"),
-                    args = list(aes(x = !!sym(metric_col), fill = Flag), alpha = 0.8, bins = 50),
-                    ggs = c(
-                        sprintf('xlab("%s")', metric_col),
-                        'ylab("Count")',
-                        sprintf('geom_vline(xintercept = %.3f, color = "blue", linetype="dashed")', cutoff),
-                        sprintf(
-                            'geom_text(aes(x = %.3f, y = Inf, label = as.character(%.3f)), colour="blue", vjust = 1.5, hjust = -.1)',
-                            cutoff, cutoff
-                        ),
-                        'theme(legend.position = "none")',
-                        'scale_fill_manual(values = c("Pass" = "blue3", "Fail" = "red3"))'
-                    ),
-                    devpars = devpars
+                p <- Histogram(
+                    freq,
+                    x = metric_col,
+                    group_by = "Flag",
+                    alpha = 0.8,
+                    bins = 50,
+                    xlab = metric_col,
+                    ylab = "Count",
+                    palette = "Set1"
                 )
+                res <- 70
+                height <- attr(p, "height") * res
+                width <- attr(p, "width") * res
+                png(paste0(output, suffix, ".", metric_col, ".png"), width = width, height = height, res = res)
+                print(p)
+                dev.off()
             }
 
             filter_cmd <- c(

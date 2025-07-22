@@ -30,6 +30,7 @@ dependencies:
   - conda-forge::r-gtools
   - conda-forge::r-immunarch  #=0.9
   # - conda-forge::r-matrix
+  - conda-forge::r-matrixeqtl
   - conda-forge::r-matrixstats=1.1.0
   - conda-forge::r-rmagic
   # - conda-forge::r-seurat=5  #=5.0.1
@@ -47,7 +48,7 @@ dependencies:
   - bioconda::pysam
   - bioconda::bcftools
   - bioconda::mygene
-  - bioconda::meme  #=5.5.5
+  - bioconda::meme>5.5  #=5.5.5
   - bioconda::tabix
   - bioconda::seqkit
   - bioconda::plink

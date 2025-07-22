@@ -1,9 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 ngenes <- {{in.ngenes | r}}
 nsamples <- {{in.nsamples | r}}
-outfile <- {{out.outfile | r}}
-outdir <- {{out.outdir | r}}
+outfile <- {{out.outfile | quote}}
+outdir <- {{out.outdir | quote}}
 seed <- {{envs.seed | r}}
 ncores <- {{envs.ncores | r}}
 transpose_output <- {{envs.transpose_output | r}}

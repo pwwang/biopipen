@@ -40,7 +40,7 @@ if subset_using == "auto":
     subset_using = "python" if subset and "[" in subset else "r"
 split_by = envs.pop("split_by")
 
-if sobjfile.suffix.lower() == ".rds" or sobjfile.suffix.lower() == ".h5seurat":
+if sobjfile.suffix.lower() in (".rds", ".qs", "qs2"):
     logger.info("Converting the Seurat object to h5ad ...")
 
     annfile = outfile.parent / f"{sobjfile.stem}.h5ad"

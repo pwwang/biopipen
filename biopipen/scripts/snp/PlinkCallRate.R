@@ -1,11 +1,9 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
-library(ggprism)
-theme_set(theme_prism())
+library(plotthis)
+library(biopipen.utils)
 
-indir <- {{in.indir | r}}
-outdir <- {{out.outdir | r}}
-plink <- {{envs.plink | r}}
+indir <- {{in.indir | quote}}
+outdir <- {{out.outdir | quote}}
+plink <- {{envs.plink | quote}}
 ncores <- {{envs.ncores | r}}
 doplot <- {{envs.plot | r}}
 devpars <- {{envs.devpars | r}}
@@ -13,11 +11,13 @@ samplecr <- {{envs.samplecr | r}}
 varcr <- {{envs.varcr | r}}
 max_iter <- {{envs.max_iter | r}}
 
+log <- get_logger()
+
 bedfile = Sys.glob(file.path(indir, '*.bed'))
 if (length(bedfile) == 0)
     stop("No bed files found in the input directory.")
 if (length(bedfile) > 1) {
-    log_warn("Multiple bed files found in the input directory. Using the first one.")
+    log$warn("Multiple bed files found in the input directory. Using the first one.")
     bedfile <- bedfile[1]
 }
 input <- tools::file_path_sans_ext(bedfile)
@@ -30,7 +30,7 @@ all_varcr_fail_file = paste0(output, '.varcr.fail')
 if (file.exists(all_smiss_file)) invisible(file.remove(all_smiss_file))
 if (file.exists(all_vmiss_file)) invisible(file.remove(all_vmiss_file))
 for (i in 1:max_iter) {
-    log_info("Iteration {i} ...")
+    log$info("Iteration {i} ...")
     # iter_out <- paste0(output, "-", i)
     iter_dir <- file.path(outdir, paste0("iter", i))
     dir.create(iter_dir, showWarnings = FALSE)
@@ -152,39 +152,48 @@ vmiss <- read.table(
 vmiss$Callrate <- 1 - vmiss$F_MISS
 
 if (doplot) {
-    log_info("Plotting ...")
+    log$info("Plotting ...")
     callrate.sample$Status <- "Pass"
     callrate.sample[callrate.sample.fail, "Status"] <- "Fail"
-    plotGG(
-        data = callrate.sample,
-        geom = "histogram",
-        outfile = paste0(output, '.samplecr.png'),
-        args = list(aes(fill = Status, x = Callrate), alpha = 0.8, bins = 50),
-        ggs = c(
-            'xlab("Sample Call Rate")',
-            'ylab("Count")',
-            'geom_vline(xintercept = samplecr, color = "red", linetype="dashed")',
-            'theme(legend.position = "none")',
-            'geom_text(aes(x = samplecr, y = Inf, label = samplecr), colour="red", angle=90, vjust = 1.2, hjust = 1.2)',
-            'scale_fill_manual(values = c("Pass" = "blue3", "Fail" = "red3"))'
-        )
+    callrate.sample$Status <- factor(callrate.sample$Status, levels = c("Fail", "Pass"))
+
+    p_callrate_file <- paste0(output, '.samplecr.png')
+    p_callrate <- Histogram(
+        callrate.sample,
+        x = "Callrate",
+        group_by = "Status",
+        xlab = "Sample Call Rate",
+        ylab = "Count",
+        palette = "Set1",
+        alpha = 0.8,
+        bins = 50
     )
+    res <- 70
+    height <- attr(p_callrate, "height") * res
+    width <- attr(p_callrate, "width") * res
+    png(p_callrate_file, width = width, height = height, res = res)
+    print(p_callrate)
+    dev.off()
 
     vmiss$Status <- "Pass"
     vmiss[which(vmiss$Callrate < varcr), "Status"] <- "Fail"
-    plotGG(
-        data = vmiss,
-        geom = "histogram",
-        outfile = paste0(output, '.varcr.png'),
-        args = list(aes(fill = Status, x = Callrate), alpha = 0.8, bins = 50),
-        ggs = c(
-            'xlab("Variant Call Rate")',
-            'ylab("Count")',
-            'geom_vline(xintercept = varcr, color = "red", linetype="dashed")',
-            'theme(legend.position = "none")',
-            'geom_text(aes(x = varcr, y = Inf, label = varcr), colour="red", angle=90, vjust = 1.2, hjust = 1.2)',
-            'scale_fill_manual(values = c("Pass" = "blue3", "Fail" = "red3"))'
-        ),
-        devpars = devpars
+    vmiss$Status <- factor(vmiss$Status, levels = c("Fail", "Pass"))
+
+    p_varcr_file <- paste0(output, '.varcr.png')
+    p_varcr <- Histogram(
+        vmiss,
+        x = "Callrate",
+        group_by = "Status",
+        xlab = "Variant Call Rate",
+        ylab = "Count",
+        palette = "Set1",
+        alpha = 0.8,
+        bins = 50
     )
+    res <- 70
+    height <- attr(p_varcr, "height") * res
+    width <- attr(p_varcr, "width") * res
+    png(p_varcr_file, width = width, height = height, res = res)
+    print(p_varcr)
+    dev.off()
 }

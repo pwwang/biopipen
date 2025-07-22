@@ -1,16 +1,17 @@
 """Tools to analyze single-cell RNA"""
 
+from pipen.utils import mark
 from ..core.proc import Proc
 from ..core.config import config
-from ..utils.common_docstrs import (
-    indent_docstr,
-    format_placeholder,
-    MUTATE_HELPERS_CLONESIZE,
-    ENVS_SECTION_EACH,
-)
+# from ..utils.common_docstrs import (
+#     indent_docstr,
+#     format_placeholder,
+#     MUTATE_HELPERS_CLONESIZE,
+#     ENVS_SECTION_EACH,
+# )
 
-MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
-ENVS_SECTION_EACH_INDENTED = indent_docstr(ENVS_SECTION_EACH, "    " * 3)
+# MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
+# ENVS_SECTION_EACH_INDENTED = indent_docstr(ENVS_SECTION_EACH, "    " * 3)
 
 
 class SeuratLoading(Proc):
@@ -293,7 +294,7 @@ class SeuratPreparing(Proc):
             "Distribution of number of cells a gene is expressed in": {
                 "kind": "gene",
                 "plot_type": "histogram",
-                "devpars": {"res": 100, "height": 1200, "width": 1200}
+                "devpars": {"res": 100, "height": 1200, "width": 1200},
             },
         },
         "use_sct": False,
@@ -356,14 +357,9 @@ class SeuratClustering(Proc):
                 The results will be saved in `seurat_clusters_<resolution>`.
                 The final resolution will be used to define the clusters at `seurat_clusters`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
-        cache (type=auto): Whether to cache the information at different steps.
+        cache (type=auto): Where to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
-            The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
-            the input and envs of the process.
-            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
-            <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
-            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
-            `<signature>.RDS` in the cache directory.
+            Set to `False` to not cache the results.
 
     Requires:
         r-seurat:
@@ -397,15 +393,15 @@ class SeuratSubClustering(Proc):
 
     For the subset of cells, the reductions will be re-performed on the subset of cells,
     and then the clustering will be performed on the subset of cells. The reduction
-    will be saved in `sobj@reduction$sub_umap_<casename>` of the original object and the
-    clustering will be saved in the metadata of the original object using the casename \
+    will be saved in `object@reduction$<casename>.<reduction>` of the original object and the
+    clustering will be saved in the metadata of the original object using the casename
     as the column name.
 
     Input:
-        srtobj: The seurat object
+        srtobj: The seurat object in RDS or qs/qs2 format.
 
     Output:
-        rdsfile: The seurat object with the subclustering information.
+        outfile: The seurat object with the subclustering information in qs/qs2 format.
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
@@ -415,7 +411,9 @@ class SeuratSubClustering(Proc):
             The mutaters will be applied in the order specified.
         subset: An expression to subset the cells, will be passed to
             [`tidyseurat::filter()`](https://stemangiola.github.io/tidyseurat/reference/filter.html).
-
+        RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
+            `object` is specified internally as the subset object, and `-` in the key will be replaced with `.`.
+            - <more>: See <https://satijalab.org/seurat/reference/runpca>
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally as the subset object, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
@@ -426,7 +424,7 @@ class SeuratSubClustering(Proc):
         FindNeighbors (ns): Arguments for [`FindNeighbors()`](https://satijalab.org/seurat/reference/findneighbors).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - reduction: The reduction to use.
-                If not provided, `sobj@misc$integrated_new_reduction` will be used.
+                If not provided, `object@misc$integrated_new_reduction` will be used.
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
@@ -436,32 +434,33 @@ class SeuratSubClustering(Proc):
                 The results will be saved in `<casename>_<resolution>`.
                 The final resolution will be used to define the clusters at `<casename>`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
-        cache (type=auto): Whether to cache the information at different steps.
+        cache (type=auto): Whether to cache the results.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
-            The cached seurat object will be saved as `<signature>.<kind>.RDS` file, where `<signature>` is the signature determined by
-            the input and envs of the process.
-            See <https://github.com/satijalab/seurat/issues/7849>, <https://github.com/satijalab/seurat/issues/5358> and
-            <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
-            To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
-            `<signature>.RDS` in the cache directory.
+            Set to `False` to not cache the results.
         cases (type=json): The cases to perform subclustering.
             Keys are the names of the cases and values are the dicts inherited from `envs` except `mutaters` and `cache`.
             If empty, a case with name `subcluster` will be created with default parameters.
+            The case name will be passed to `biopipen.utils::SeuratSubCluster()` as `name`.
+            It will be used as the prefix for the reduction name, keys and cluster names.
+            For reduction keys, it will be `toupper(<name>)` + "PC_" and `toupper(<name>)` + "UMAP_".
+            For cluster names, it will be `<name>` + "." + resolution.
+            And the final cluster name will be `<name>`.
+            Note that the `name` should be alphanumeric and anything other than alphanumeric will be removed.
     """  # noqa: E501
-
     input = "srtobj:file"
-    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
     envs_depth = 1
     envs = {
         "ncores": config.misc.ncores,
         "mutaters": {},
         "subset": None,
-        "RunUMAP": {"dims": 30},
+        "RunPCA": {},
+        "RunUMAP": {},
         "FindNeighbors": {},
         "FindClusters": {"resolution": 0.8},
         "cache": config.path.tmpdir,
-        "cases": {"subcluster": {}},
+        "cases": {},
     }
     script = "file://../scripts/scrna/SeuratSubClustering.R"
 
@@ -541,7 +540,7 @@ class SeuratClusterStats(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - more_formats (list): The formats to save the plots other than `png`.
+            - more_formats (type=list): The formats to save the plots other than `png`.
             - save_code (flag): Whether to save the code to reproduce the plot.
             - prefix (type=auto): string indicating columns containing clustering information.
                 The trailing dot is not necessary and will be added automatically.
@@ -564,7 +563,7 @@ class SeuratClusterStats(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - more_formats (list): The formats to save the plots other than `png`.
+            - more_formats (type=list): The formats to save the plots other than `png`.
             - save_code (flag): Whether to save the code to reproduce the plot.
             - save_data (flag): Whether to save the data used to generate the plot.
             - <more>: Other arguments passed to `scplotter::CellStatPlot`.
@@ -579,7 +578,7 @@ class SeuratClusterStats(Proc):
             >>> }
         ngenes_defaults (ns): The default parameters for `ngenes`.
             The default parameters to plot the number of genes expressed in each cell.
-            - more_formats (list): The formats to save the plots other than `png`.
+            - more_formats (type=list): The formats to save the plots other than `png`.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -603,7 +602,7 @@ class SeuratClusterStats(Proc):
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
             - descr: The description of the plot, showing in the report.
-            - more_formats (list): The formats to save the plots other than `png`.
+            - more_formats (type=list): The formats to save the plots other than `png`.
             - save_code (flag): Whether to save the code to reproduce the plot.
             - save_data (flag): Whether to save the data used to generate the plot.
             - <more>: Other arguments passed to `scplotter::FeatureStatPlot`.
@@ -783,7 +782,7 @@ class ModuleScoreCalculator(Proc):
     """  # noqa: E501
 
     input = "srtobj:file"
-    output = "rdsfile:file:{{in.srtobj | stem}}.RDS"
+    output = "rdsfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
     envs = {
         "defaults": {
@@ -807,9 +806,11 @@ class ModuleScoreCalculator(Proc):
     script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
 
-@format_placeholder(
-    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
-    envs_section_each=ENVS_SECTION_EACH_INDENTED,
+@mark(
+    deprecated=(
+        "[{proc.name}] is deprecated, "
+        "use [SeuratClusterStats] or [ClonalStats] instead."
+    )
 )
 class CellsDistribution(Proc):
     """Distribution of cells (i.e. in a TCR clone) from different groups
@@ -848,7 +849,6 @@ class CellsDistribution(Proc):
         mutaters (type=json): The mutaters to mutate the metadata
             Keys are the names of the mutaters and values are the R expressions
             passed by `dplyr::mutate()` to mutate the metadata.
-            %(mutate_helpers_clonesize)s
 
         cluster_orderby: The order of the clusters to show on the plot.
             An expression passed to `dplyr::summarise()` on the grouped data frame (by `seurat_clusters`).
@@ -891,7 +891,6 @@ class CellsDistribution(Proc):
             value as the case/section name.
         section: The section to show in the report. This allows different cases to be put in the same section in report.
             Only works when `each` is not specified.
-            %(envs_section_each)s
         overlap (list): Plot the overlap of cell groups (values of `cells_by`) in different cases
             under the same section.
             The section must have at least 2 cases, each case should have a single `cells_by` column.
@@ -938,7 +937,6 @@ class CellsDistribution(Proc):
     }
 
 
-@format_placeholder(mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED)
 class SeuratMetadataMutater(Proc):
     """Mutate the metadata of the seurat object
 
@@ -954,7 +952,6 @@ class SeuratMetadataMutater(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
-            %(mutate_helpers_clonesize)s
 
     Requires:
         r-seurat:
@@ -972,6 +969,7 @@ class SeuratMetadataMutater(Proc):
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
+@mark(deprecated="[{proc.name}] is deprecated, use [SeuratClusterStats] instead.")
 class DimPlots(Proc):
     """Seurat - Dimensional reduction plots
 
@@ -1001,9 +999,6 @@ class DimPlots(Proc):
     }
 
 
-@format_placeholder(
-    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
-)
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
@@ -1028,7 +1023,6 @@ class MarkersFinder(Proc):
             * Used in `future::plan(strategy = "multicore", workers = <ncores>)` to parallelize some Seurat procedures.
             * See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         mutaters (type=json): The mutaters to mutate the metadata
-            %(mutate_helpers_clonesize)s
         group-by: The column name in metadata to group the cells.
             If only `group-by` is specified, and `ident-1` and `ident-2` are
             not specified, markers will be found for all groups in this column
@@ -1077,7 +1071,7 @@ class MarkersFinder(Proc):
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
-            - more_formats (list): The extra formats to save the plot in.
+            - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -1093,7 +1087,7 @@ class MarkersFinder(Proc):
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
                 There are two additional types available - `volcano_pct` and `volcano_log2fc`.
-            - more_formats (list): The extra formats to save the plot in.
+            - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -1111,7 +1105,7 @@ class MarkersFinder(Proc):
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
                 Available types are `bar`, `dot`, `lollipop`, `network`, `enrichmap` and `wordcloud`.
-            - more_formats (list): The extra formats to save the plot in.
+            - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -1128,7 +1122,7 @@ class MarkersFinder(Proc):
             - plot_type (choice): The type of the plot to generate for the overlaps.
                 - venn: Use `plotthis::VennDiagram()`.
                 - upset: Use `plotthis::UpsetPlot()`.
-            - more_formats (list): The extra formats to save the plot in.
+            - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
@@ -1219,7 +1213,7 @@ class TopExpressingGenes(Proc):
     """Find the top expressing genes in each cluster
 
     Input:
-        srtobj: The seurat object in RDS format
+        srtobj: The seurat object in RDS or qs/qs2 format
 
     Output:
         outdir: The output directory for the tables and plots
@@ -1234,27 +1228,38 @@ class TopExpressingGenes(Proc):
         group-by: The column name in metadata to group the cells.
         each: The column name in metadata to separate the cells into different
             cases.
-            When specified, `ident` must be specified
-        prefix_each (flag): Whether to prefix the `each` column name to the
-            value as the case/section name.
-        section: The section name for the report.
-            Worked only when `each` is not specified and `ident` is specified.
-            Otherwise, the section name will be constructed from `each` and
-            `group-by`.
-            If `DEFAULT`, and it's the only section, it not included in the
-            case/section names.
         dbs (list): The dbs to do enrichment analysis for significant
             markers See below for all libraries.
             <https://maayanlab.cloud/Enrichr/#libraries>
         n (type=int): The number of top expressing genes to find.
+        enrich_style (choice): The style of the enrichment analysis.
+            The enrichment analysis will be done by `EnrichIt()` from [`enrichit`](https://pwwang.github.io/enrichit/).
+            Two styles are available:
+            - enrichr: `enrichr` style enrichment analysis (fisher's exact test will be used).
+            - clusterprofiler: `clusterProfiler` style enrichment analysis (hypergeometric test will be used).
+            - clusterProfiler: alias for `clusterprofiler`
+        enrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
+                Available types are `bar`, `dot`, `lollipop`, `network`, `enrichmap` and `wordcloud`.
+            - more_formats (type=list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.htmll>.
+        enrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
+            The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
         subset: An expression to subset the cells for each case.
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
             above options except `mutaters`. If some options are
             not specified, the default values specified above will be used.
             If no cases are specified, the default case will be added with
-            the default values under `envs` with the name `DEFAULT`.
-    """
+            the default values under `envs` with the name `Top Expressing Genes`.
+    """  # noqa: E501
 
     input = "srtobj:file"
     output = "outdir:dir:{{in.srtobj | stem}}.top_expressing_genes"
@@ -1263,13 +1268,20 @@ class TopExpressingGenes(Proc):
     envs = {
         "mutaters": {},
         "ident": None,
-        "group-by": "seurat_clusters",
+        "group-by": None,
         "each": None,
-        "prefix_each": True,
-        "section": "DEFAULT",
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
         "subset": None,
+        "enrich_style": "enrichr",
+        "enrich_plots_defaults": {
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+        },
+        "enrich_plots": {
+            "Bar Plot": {"plot_type": "bar", "ncol": 1, "top_term": 10},
+        },
         "cases": {},
     }
     plugin_opts = {
@@ -1548,10 +1560,6 @@ class SeuratTo10X(Proc):
     script = "file://../scripts/scrna/SeuratTo10X.R"
 
 
-@format_placeholder(
-    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
-    envs_section_each=ENVS_SECTION_EACH_INDENTED,
-)
 class ScFGSEA(Proc):
     """Gene set enrichment analysis for cells in different groups using `fgsea`
 
@@ -1580,17 +1588,12 @@ class ScFGSEA(Proc):
             Passed to `nproc` of `fgseaMultilevel()`.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
-            %(mutate_helpers_clonesize)s
 
         group-by: The column name in metadata to group the cells.
         ident-1: The first group of cells to compare
         ident-2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
-        prefix_each (flag): Whether to prefix the `each` column name to the values as the case/section name.
         subset: An expression to subset the cells.
-        section: The section name for the report. Worked only when `each` is not specified. Otherwise, the section name will be constructed from `each` and its value.
-            This allows different cases to be put into the same section in the report.
-            %(envs_section_each)s
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
             One could also use a URL to a GMT file. For example, from <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/Pathways/>.
         method (choice): The method to do the preranking.
@@ -1621,7 +1624,7 @@ class ScFGSEA(Proc):
         cases (type=json;order=99): If you have multiple cases, you can specify them here.
             The keys are the names of the cases and the values are the above options except `mutaters`.
             If some options are not specified, the default values specified above will be used.
-            If no cases are specified, the default case will be added with the name `DEFAULT`.
+            If no cases are specified, the default case will be added with the name `GSEA`.
 
     Requires:
         bioconductor-fgsea:
@@ -1640,9 +1643,7 @@ class ScFGSEA(Proc):
         "ident-1": None,
         "ident-2": None,
         "each": None,
-        "prefix_each": True,
         "subset": None,
-        "section": "DEFAULT",
         "gmtfile": "",
         "method": "s2n",
         "top": 20,
@@ -1693,10 +1694,10 @@ class CellTypeAnnotation(Proc):
         ```
 
     Input:
-        sobjfile: The seurat object
+        sobjfile: The single-cell object in RDS/qs/qs2/h5ad format.
 
     Output:
-        outfile: The rds file of seurat object with cell type annotated.
+        outfile: The rds/qs/qs2/h5ad file of seurat object with cell type annotated.
             A text file containing the mapping from the old `seurat_clusters` to the new cell types
             will be generated and saved to `cluster2celltype.tsv` under the job output directory.
 
@@ -1753,6 +1754,8 @@ class CellTypeAnnotation(Proc):
                 at the cost of increased runtime.
             - over_clustering (type=auto): The column name in metadata to use as clusters for majority voting.
                 Set to `False` to disable over-clustering.
+                When `in.sobjfile` is rds/qs/qs2 (supposing we have a Seurat object), the default ident is used by default.
+                Otherwise, it is False by default.
             - assay: When converting a Seurat object to AnnData, the assay to use.
                 If input is h5seurat, this defaults to RNA.
                 If input is Seurat object in RDS, this defaults to the default assay.
@@ -1765,7 +1768,8 @@ class CellTypeAnnotation(Proc):
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
             - rds: Use RDS file.
-            - h5seurat: Use h5seurat file.
+            - qs: Use qs2 file.
+            - qs2: Use qs2 file.
             - h5ad: Use AnnData file.
 
     Requires:
@@ -1808,7 +1812,7 @@ class CellTypeAnnotation(Proc):
             "model": None,
             "python": config.lang.python,
             "majority_voting": True,
-            "over_clustering": "seurat_clusters",
+            "over_clustering": None,
             "assay": None,
         },
         "merge": False,
@@ -1952,8 +1956,8 @@ class SeuratMap2Ref(Proc):
             },
             "Mapping Score": {
                 "features": "{ident}.score",
-            }
-        }
+            },
+        },
     }
     script = "file://../scripts/scrna/SeuratMap2Ref.R"
     plugin_opts = {"report": "file://../reports/common.svelte"}
@@ -2136,10 +2140,7 @@ class RadarPlots(Proc):
     }
 
 
-@format_placeholder(
-    mutate_helpers_clonesize=MUTATE_HELPERS_CLONESIZE_INDENTED,
-    envs_section_each=ENVS_SECTION_EACH_INDENTED,
-)
+@mark(deprecated=True)
 class MetaMarkers(Proc):
     """Find markers between three or more groups of cells, using one-way ANOVA
     or Kruskal-Wallis test.
@@ -2165,7 +2166,6 @@ class MetaMarkers(Proc):
         ncores (type=int): Number of cores to use to parallelize for genes
         mutaters (type=json): The mutaters to mutate the metadata
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
-            %(mutate_helpers_clonesize)s
 
         group-by: The column name in metadata to group the cells.
             If only `group-by` is specified, and `idents` are
@@ -2199,7 +2199,6 @@ class MetaMarkers(Proc):
             Worked only when `each` is not specified.
             Otherwise, the section name will be constructed from `each` and `group-by`.
             If `DEFAULT`, and it's the only section, it not included in the case/section names.
-            %(envs_section_each)s
         method (choice): The method for the test.
             - anova: One-way ANOVA
             - kruskal: Kruskal-Wallis test
@@ -2240,7 +2239,7 @@ class Seurat2AnnData(Proc):
     """Convert seurat object to AnnData
 
     Input:
-        sobjfile: The seurat object file, in RDS or h5seurat format
+        sobjfile: The seurat object file, in RDS or qs/qs2 format
 
     Output:
         outfile: The AnnData file
@@ -2261,29 +2260,26 @@ class AnnData2Seurat(Proc):
     """Convert AnnData to seurat object
 
     Input:
-        adfile: The AnnData file
+        adfile: The AnnData .h5ad file
 
     Output:
-        outfile: The seurat object file in RDS format
+        outfile: The seurat object file in RDS or qs/qs2 format
 
     Envs:
         assay: The assay to use to convert to seurat object.
-        outtype (choice): The output file type.
-            - rds: RDS file
-            - h5seurat: h5seurat file
-        dotplot_check (type=auto): Whether to do a check with `Seurat::DotPlot`
+        dotplot_check (type=auto): Whether to do a check with a dot plot.
+            (`scplotter::FeatureStatPlot(plot_type = "dot", ..)` will be used)
             to see if the conversion is successful.
             Set to `False` to disable the check.
             If `True`, top 10 variable genes will be used for the check.
             You can give a list of genes or a string of genes with comma (`,`) separated
             to use for the check.
-            Only works for `outtype = 'rds'`.
     """
 
     input = "adfile:file"
-    output = "outfile:file:{{in.adfile | stem}}.RDS"
+    output = "outfile:file:{{in.adfile | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"outtype": "rds", "assay": "RNA", "dotplot_check": True}
+    envs = {"assay": "RNA", "dotplot_check": True}
     script = "file://../scripts/scrna/AnnData2Seurat.R"
 
 
@@ -2299,7 +2295,7 @@ class ScSimulation(Proc):
             So this could also work as a unique identifier for the simulation (ie. Sample ID).
 
     Output:
-        outfile: The output Seurat object/SingleCellExperiment in RDS format
+        outfile: The output Seurat object/SingleCellExperiment in qs/qs2 format
 
     Envs:
         ngenes (type=int): The number of genes to simulate
@@ -2488,6 +2484,7 @@ class CellCellCommunicationPlots(Proc):
         <more>: Other arguments passed to
             [scplotter::CCCPlot](https://pwwang.github.io/scplotter/reference/CCCPlot.html)
     """  # noqa: E501
+
     input = "cccfile:file"
     output = "outdir:dir:{{in.cccfile | stem}}_plots"
     lang = config.lang.rscript
@@ -2645,6 +2642,7 @@ class LoomTo10X(Proc):
             including the `matrix.mtx.gz`, `barcodes.tsv.gz` and `features.tsv.gz`
             files.
     """
+
     input = "loomfile:file"
     output = "outdir:dir:{{in.loomfile | stem}}.10X"
     lang = config.lang.rscript
