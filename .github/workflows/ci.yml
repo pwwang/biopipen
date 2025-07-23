@@ -37,7 +37,7 @@ jobs:
           key: conda-${{ hashFiles('tests/conda/env_*.yml') }}-${{ env.CACHE_NUMBER }}
         env:
           TAR_OPTIONS: "--no-same-owner --no-same-permissions"
-          CACHE_NUMBER: 2
+          CACHE_NUMBER: 1
 
       - name: Create conda environments (if not cached)
         if: steps.restore-conda.outputs.cache-hit != 'true'
