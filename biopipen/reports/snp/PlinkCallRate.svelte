@@ -5,13 +5,13 @@
 
 {%- macro report_job(job, h=1) -%}
     <h{{h+1}}>Sample Call Rate</h{{h+1}}>
-    {%- for pngfile in job.out.outdir | joinpaths: '*.samplecr.png' | glob -%}
+    {%- for pngfile in job.out.outdir | glob: '*.samplecr.png' -%}
     <Descr>Cutoff: {{envs.samplecr}}</Descr>
     <Image src="{{pngfile}}" />
     {%- endfor -%}
 
     <h{{h+1}}>Variant Call Rate</h{{h+1}}>
-    {%- for pngfile in job.out.outdir | joinpaths: '*.varcr.png' | glob -%}
+    {%- for pngfile in job.out.outdir | glob: '*.varcr.png' -%}
     <Descr>Cutoff: {{envs.varcr}}</Descr>
     <Image src="{{pngfile}}" />
     {%- endfor -%}

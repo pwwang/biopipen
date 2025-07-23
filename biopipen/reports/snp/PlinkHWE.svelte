@@ -4,7 +4,7 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-    {%- for pngfile in job.out.outdir | joinpaths: '*.png' | glob -%}
+    {%- for pngfile in job.out.outdir | glob: '*.png' -%}
     <h{{h+1}}>Distribution</h{{h+1}}>
     <Descr>Cutoff: {{envs.cutoff}}</Descr>
     <Image src="{{pngfile}}" />

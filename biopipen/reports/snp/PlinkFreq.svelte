@@ -4,7 +4,7 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-    {%- for pngfile in job.out.outdir | joinpaths: '*.png' | glob -%}
+    {%- for pngfile in job.out.outdir | glob: '*.png' -%}
         {% set metric_col = pngfile | stem | ext0 %}
         <h{{h+1}}>{{metric_col}} distribution</h{{h+1}}>
         <Image src="{{pngfile}}" />

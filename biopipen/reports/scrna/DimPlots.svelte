@@ -4,7 +4,7 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-{% set images = job.out.outdir | joinpaths: "*.png" | glob %}
+{% set images = job.out.outdir | glob: "*.png" %}
 {{ table_of_images(images) }}
 {%- endmacro -%}
 

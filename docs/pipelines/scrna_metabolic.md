@@ -13,49 +13,90 @@ An abstract from https://github.com/LocasaleLab/Single-Cell-Metabolic-Landscape
 ### Run from CLI:
 
 ```shell
-pipen run scrna_metabolic metabolic_landscape [options]
+pipen run scrna_metabolic_landscape ScrnaMetabolicLandscape [options]
 ```
 
 ### Serve as part of a pipeline:
 
 ```python
-from biopipen.namespace.scrna_metabolic import build_processes
+from biopipen.ns.scrna_metabolic_landscape import ScrnaMetabolicLandscape
 
-MetabolicInputs = build_processes(<options>)
+pipeline = ScrnaMetabolicLandscape(<options>)
 
-# MetabolicInputs is a process
-# You can specify it's dependents so that the whole metabolic landscape pipeline
+# You can specify dependencies so that the whole metabolic landscape pipeline
 # works as a part of another pipeline
 ```
 
 ## Inputs
 
-- `metafile`: A metafile indicating the metadata or the rds file with seruat object if `config.pipeline.scrna_metabolic.clustered` is `True`.
-    For a meta file, Two columns are required: `Sample` and `RNAData`
-    `Sample` should be the first column with unique identifiers
-    for the samples and `RNAData` indicates where the expression
-    matrices are.
+- `metafile`: Either a metafile or an rds file of a Seurat object.
+    If it is a metafile, it should have two columns: `Sample` and `RNAData`.
+    `Sample` should be the first column with unique identifiers for the samples
+    and `RNAData` indicates where the barcodes, genes, expression matrices are.
+    The data will be loaded and an unsupervised clustering will be done.
+    Currently only 10X data is supported.
+    If it is an rds file, the seurat object will be used directly.
 
-    Currently only 10X data is supported
+- `gmtfile`: The GMT file with the metabolic pathways. The gene names should
+    match the gene names in the gene list in RNAData or the Seurat object.
+    You can also provide a URL to the GMT file.
 
-- `gmtfile`: The GMT file with the metabolic pathways
+- `group_by`: Group the data by the given column in the metadata. For example, `cluster`.
 
-- `config`: The configuration file, string in TOML format or a python
-    dictionary as config for the analysis
-    (based on `envs.config_fmt`)
-    They keys include:
-    - grouping: How do we group the cells
-        groupby - The column used to group by if it exists
-        mutaters - Add new columns to the metadata to group by
-        They are passed to `sobj@meta.data |> mutate(...)`
-    - subsetting: How do we subset the data. The imputation
-        will be done in each subset separately
-        groupby - The column used to subset if it exists
-        alias - The alias of the subset working as a prefix to subset
-        names
-        mutaters - Add new columns to the metadata to subset by
-    - design: What kind of comparisons are we doing?
-        It should be the values of subsetting `groupby`s
+- `subset_by`: (Optional) Subset the data by the given column in the metadata.
+    For example, `Response`. `NA` values will be removed in this column.
+    If None, the data will not be subsetted.
+
+- `mutaters`: (Optional) Add new columns to the metadata for grouping/subsetting.
+    They are passed to `sobj@meta.data |> mutate(...)`. For example,
+    `{"timepoint": "if_else(treatment == 'control', 'pre', 'post')"}`
+    will add a new column `timepoint` to the metadata with values of
+    `pre` and `post` based on the `treatment` column.
+
+- `cases`: (Optional) Multiple cases for the analysis. If you have multiple different
+    grouping/subsetting scenarios, you can specify them here. Each case can have
+    its own `subset_by`, `group_by`, and analysis parameters.
+
+## Advanced Configuration
+
+### Multiple Cases
+
+You can define multiple analysis cases with different grouping/subsetting strategies:
+
+```toml
+[ScrnaMetabolicLandscape]
+metafile = "test_data/scrna_metabolic/seurat_obj.rds"
+gmtfile = "test_data/scrna_metabolic/KEGG_metabolism.gmt"
+
+[ScrnaMetabolicLandscape.MetabolicPathwayActivity.envs.cases]
+"By Treatment" = { group_by = "seurat_clusters", subset_by = "treatment" }
+"By Response" = { group_by = "seurat_clusters", subset_by = "response" }
+```
+
+### Custom Plotting
+
+Each process supports customizable plots:
+
+```toml
+[ScrnaMetabolicLandscape.MetabolicPathwayActivity.envs.plots]
+"Custom Heatmap" = {
+    plot_type = "heatmap",
+    show_row_names = true,
+    devpars = { width = 1200, height = 800, res = 150 }
+}
+"Custom Violin" = {
+    plot_type = "violin",
+    add_box = true,
+    devpars = { width = 1000, height = 600 }
+}
+
+[ScrnaMetabolicLandscape.MetabolicFeatures.envs.plots]
+"Top 5 Summary" = {
+    plot_type = "summary",
+    top_term = 5,
+    level = "subset"
+}
+```
 
 ## A step-by-step example
 
@@ -79,7 +120,7 @@ metadata <- read.table(meta_file, header = TRUE, row.names = 1, sep = "\t", chec
 ```
 
 ```r
-# Subset 1000 cells for jusb demo purpose
+# Subset 1000 cells for just demo purpose
 counts = counts[, sample(1:ncol(counts), 1000)]
 metadata = metadata[colnames(counts),]
 ```
@@ -131,15 +172,9 @@ seurat_obj <- RunPCA(seurat_obj, features = VariableFeatures(object = seurat_obj
 ```
 
 ```r
-# By default, the pipeline assumes the cells are not clustered
-# and it will do the clustering using the scrna.SeuratClustering process
-#
-# If you want to do the clustering yourself, remember to add following
-#
-# [pipeline.scrna_metabolic]
-# clustered = false
-#
-# to your `.biopipen.toml` either in your home directory or current directory.
+# By default, the pipeline will do the clustering using the SeuratClustering process
+# If you want to do the clustering yourself, you can set `is_seurat = true`
+# when running the pipeline, which will skip the clustering step.
 
 seurat_obj <- FindNeighbors(seurat_obj, dims = 1:10)
 seurat_obj <- FindClusters(seurat_obj, resolution = 0.5)
@@ -199,47 +234,39 @@ Download and save it to `test_data/scrna_metabolic/KEGG_metabolism.gmt`
 Save at `test_data/scrna_metabolic/config.toml`:
 
 ```toml
-# Set input data
-[MetabolicInputs.in]
-metafile = ["test_data/scrna_metabolic/seurat_obj.rds"]
-gmtfile = ["test_data/scrna_metabolic/KEGG_metabolism.gmt"]
+# Pipeline configuration
+[ScrnaMetabolicLandscape]
+metafile = "test_data/scrna_metabolic/seurat_obj.rds"
+gmtfile = "test_data/scrna_metabolic/KEGG_metabolism.gmt"
+group_by = "seurat_clusters"
+subset_by = "timepoint"
 
-[[MetabolicInputs.in.config]]
-# optional, used to identify the subset objects from the same case
-name = "case1"
-
-[MetabolicInputs.in.config.grouping]
-groupby = "Idents"
-
-[MetabolicInputs.in.config.subsetting]
-alias = "Timepoint"
-groupby = "timepoint"
-
-[MetabolicInputs.in.config.subsetting.mutaters]
+[ScrnaMetabolicLandscape.mutaters]
 timepoint = "if_else(patient != 'su001', NA_character_, treatment)"
 
-[MetabolicInputs.in.config.design]
-# we also want to do some intra-subset comparisons
-post_vs_pre = ["post", "pre"]
+# Optional: Configure individual processes
+[ScrnaMetabolicLandscape.MetabolicPathwayActivity.envs]
+ntimes = 1000
+
+[ScrnaMetabolicLandscape.MetabolicFeatures.envs.plots]
+"Summary Plot" = { plot_type = "summary", top_term = 5 }
 ```
 
 ### Run the pipeline
 
 ```shell
-# Make sure `pipeline.scrna_metabolic.clustered` is `false` in
-# `./.biopipen.toml` or `~/.biopipen.toml`
-pipen run scrna_metabolic metabolic_landscape --config test_data/scrna_metabolic/config.toml
+pipen run scrna_metabolic_landscape ScrnaMetabolicLandscape --config test_data/scrna_metabolic/config.toml
 ```
 
 ### Check out the results/reports
 
-The results can be found at `./metabolic-landscape_results/`, and reports can be found at `./metabolic-landscape_results/REPORTS`. To check out the reports, open `./metabolic-landscape_results/REPORTS/index.html` in your browser.
+The results can be found at `./ScrnaMetabolicLandscape_results/`, and reports can be found at `./ScrnaMetabolicLandscape_results/REPORTS`. To check out the reports, open `./ScrnaMetabolicLandscape_results/REPORTS/index.html` in your browser.
 
-There are 4 parts of the results:
+There are 3 parts of the results:
 
 - `MetabolicPathwayActivity`:
 
-    The pathway activities for groups (defined by `grouping` in the configration) for each subset (defined by `subsetting`)
+    The pathway activities for groups (defined by `group_by` in the configuration) for each subset (defined by `subset_by`)
 
 - `MetabolicPathwayHeterogeneity`:
 
@@ -247,9 +274,4 @@ There are 4 parts of the results:
 
 - `MetabolicFeatures`:
 
-    The pathway enrichment analysis in detail for each group against the rest of the groups in each subset (inter-subset).
-
-- `MetabolicFeaturesIntraSubsets`:
-
-    The pathway enrichment analysis in detail by the designs (defined by `design` in the configration) for each group.
-    The designs are basically comparisons between subsets, and that'ss why this is called `intra-subsets`
+    The pathway enrichment analysis in detail for each group against the rest of the groups in each subset.
