@@ -44,7 +44,6 @@ dependencies:
   - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
   - conda-forge::faiss-cpu
   - conda-forge::pip
-  - bioconda::cyvcf2=0.31.1  # works with numpy v2+
   - bioconda::pysam
   - bioconda::bcftools
   - bioconda::mygene
@@ -110,3 +109,4 @@ dependencies:
     - celltypist
     - mygene
     - liana
+    - cyvcf2==0.31.1  # works with numpy v2+
