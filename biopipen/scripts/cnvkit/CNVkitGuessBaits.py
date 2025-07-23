@@ -5,10 +5,10 @@ from pathlib import Path, PosixPath  # for as_path
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-bamfiles = {{in.bamfiles | repr}}  # pyright: ignore  # noqa
-atfile = {{in.atfile | repr}}  # pyright: ignore
+bamfiles = {{in.bamfiles | each: str | repr}}  # pyright: ignore  # noqa
+atfile = {{in.atfile | quote}}  # pyright: ignore
 
-targetfile = {{out.targetfile | repr}}  # pyright: ignore
+targetfile = {{out.targetfile | quote}}  # pyright: ignore
 covfile = {{out.targetfile | as_path | attr: "with_suffix" | call: ".cnn" | repr}}  # pyright: ignore
 
 cnvkit: str = {{envs.cnvkit | repr}}  # pyright: ignore

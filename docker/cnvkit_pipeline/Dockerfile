@@ -1,27 +1,23 @@
-FROM mambaorg/micromamba:1.4.3
+FROM biopipen/base:dev
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
-
-# Install dependencies
-RUN micromamba install -y -n base -f /biopipen/docker/cnvkit_pipeline/env.yml && \
-    micromamba clean --all --yes
+# in case we have updates about the pipeline
+COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cellranger_pipeline /biopipen/docker/cellranger_pipeline
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-WORKDIR /biopipen
-RUN python -m pip install -U poetry && \
-    python -m poetry config virtualenvs.create false && \
-    python -m poetry install -v && \
-    pipen report update && \
+# Install dependencies
+RUN micromamba install -y -n base -f /biopipen/docker/cnvkit_pipeline/env.yml && \
+    micromamba clean --all --yes && \
     patch $(python -c 'from cnvlib.segmentation import cbs; print(cbs.__file__)') \
         /biopipen/docker/cnvkit_pipeline/cnvkit-cbs.patch && \
-    patch $(python -c 'from cnvlib import export; print(export.__file__)') \
-        /biopipen/docker/cnvkit_pipeline/cnvkit-export.patch
-    # Patch pipen-board to use a non-home directory to avoid failure in singularity
+    chmod +x /biopipen/docker/cnvkit_pipeline/entry.sh && \
+    ln -s /biopipen/docker/cnvkit_pipeline/entry.sh /opt/conda/bin/entry.sh
 
 WORKDIR /example
-RUN bash /biopipen/docker/cnvkit_pipeline/make-examples.sh
+RUN /bin/bash /biopipen/docker/cnvkit_pipeline/make-examples.sh && \
+    cp /biopipen/docker/cnvkit_pipeline/board.toml /example/board.toml && \
+    cp /biopipen/docker/cnvkit_pipeline/CNVkitPipeline.config.toml /example/CNVkitPipeline.config.toml
 
 WORKDIR /workdir
 
-ENTRYPOINT [ "/usr/local/bin/_entrypoint.sh", "bash", "/biopipen/docker/cnvkit_pipeline/entry.sh" ]
+ENTRYPOINT [ "/bin/bash", "/biopipen/docker/cnvkit_pipeline/entry.sh" ]

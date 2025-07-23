@@ -482,7 +482,7 @@ class CNVkitDiagram(Proc):
     }
     script = "file://../scripts/cnvkit/CNVkitDiagram.py"
     plugin_opts = {
-        "report": "file://../reports/cnvkit/CNVkitScatter.svelte",
+        "report": "file://../reports/cnvkit/CNVkitDiagram.svelte",
         "report_paging": 10,
     }
 

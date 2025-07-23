@@ -1,9 +1,9 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-covfiles = {{in.covfiles | repr}}  # pyright: ignore  # noqa
-target_file = {{in.target_file | repr}}  # pyright: ignore
-antitarget_file = {{in.antitarget_file | repr}}  # pyright: ignore
+covfiles = {{in.covfiles | default: [] | each: str | repr}}  # pyright: ignore  # noqa
+target_file = {{in.target_file | quote: quote_none=False}}  # pyright: ignore
+antitarget_file = {{in.antitarget_file | quote: quote_none=False}}  # pyright: ignore
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
 outfile = {{out.outfile | quote}}  # pyright: ignore
 reffile: str = {{envs.ref | quote}}  # pyright: ignore
