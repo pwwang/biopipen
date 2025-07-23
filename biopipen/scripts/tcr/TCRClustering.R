@@ -8,7 +8,6 @@ screpfile <- {{in.screpfile | r}}
 outdir <- normalizePath({{job.outdir | r}})
 outfile <- {{out.outfile | r}}
 
-ncores <- {{envs.ncores | r}}
 tool <- {{envs.tool | r}}
 python <- {{envs.python | r}}
 within_sample <- {{envs.within_sample | r}}

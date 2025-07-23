@@ -200,10 +200,12 @@ do_case <- function(name) {
     log$info("  Running fgsea...")
     case$rest$ranks <- ranks
     case$rest$genesets <- ParseGMT(case$gmtfile)
-    case$rest$minSize <- case$minSize %||% case$minsize
-    case$rest$maxSize <- case$maxsize %||% case$maxsize
+    case$rest$minSize <- case$rest$minSize %||% case$rest$minsize %||% case$minsize
+    case$rest$maxSize <- case$rest$maxSize %||% case$rest$maxsize %||% case$maxsize
     case$rest$eps <- case$eps
     case$rest$nproc <- case$ncores
+    case$rest$minsize <- NULL
+    case$rest$maxsize <- NULL
     result <- do_call(RunGSEA, case$rest)
     write.table(
         result,

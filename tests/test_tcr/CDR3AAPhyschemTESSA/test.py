@@ -1,4 +1,5 @@
 import os
+import sys
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.ns.tcr import CDR3AAPhyschem as CDR3AAPhyschem_, TESSA as TESSA_
@@ -53,12 +54,17 @@ class CDR3AAPhyschem(CDR3AAPhyschem_):
 
 
 class TESSA(TESSA_):
-    requires = DataPreparation
+    # Need gpu dependencies
+    if "--tessa" in sys.argv:
+        requires = DataPreparation
     envs = {"max_iter": 100, "python": python}
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(DataPreparation)
+    return get_pipeline(
+        __file__,
+        plugins=["-args"]  # allow passing --tessa
+    ).set_starts(DataPreparation)
 
 
 def testing(pipen):

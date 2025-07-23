@@ -1,3 +1,4 @@
+import sys
 from biopipen.ns.rnaseq import Simulation as Simulation_
 from biopipen.core.testing import get_pipeline
 
@@ -11,11 +12,16 @@ class SimulationESCO(Simulation_):
     envs = {"tool": "ESCO"}
 
 
+starts = [SimulationRUVcorr]
+if "--esco" in sys.argv:
+    starts.append(SimulationESCO)  # type: ignore
+
+
 def pipeline():
     return (
-        get_pipeline(__file__)
+        get_pipeline(__file__, plugins=["-args"])  # allow passing --esco
         # get_pipeline(__file__)
-        .set_starts(SimulationRUVcorr, SimulationESCO)
+        .set_starts(starts)
     )
 
 

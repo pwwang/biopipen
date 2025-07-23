@@ -1208,9 +1208,6 @@ class TCRClustering(Proc):
             Column `TCR_Cluster` will be added to the metadata.
 
     Envs:
-        ncores (type=int): The number of cores to use for clustering.
-            Only used when `envs.within_sample` is `True`. It is used to parallelize
-            the clustering for each sample.
         tool (choice): The tool used to do the clustering, either
             [GIANA](https://github.com/s175573/GIANA) or
             [ClusTCR](https://github.com/svalkiers/clusTCR).
@@ -1241,7 +1238,6 @@ class TCRClustering(Proc):
     output = "outfile:file:{{in.screpfile | stem}}.tcr_clustered.qs"
     lang = config.lang.rscript
     envs = {
-        "ncores": config.misc.ncores,
         "tool": "GIANA",  # or ClusTCR
         "python": config.lang.python,
         "within_sample": True,  # whether to cluster the TCR clones within each sample

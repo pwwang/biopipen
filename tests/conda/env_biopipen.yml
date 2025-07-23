@@ -44,7 +44,7 @@ dependencies:
   - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
   - conda-forge::faiss-cpu
   - conda-forge::pip
-  - bioconda::cyvcf2
+  - bioconda::cyvcf2=0.31.1  # works with numpy v2+
   - bioconda::pysam
   - bioconda::bcftools
   - bioconda::mygene
@@ -72,6 +72,7 @@ dependencies:
   - bioconda::bioconductor-motifbreakr
   - bioconda::bioconductor-atsnp
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
+  - bioconda::bioconductor-ruvcorr
   # - bioconda::bioconductor-scdblfinder
   - bioconda::bioconductor-slingshot
   - bioconda::bioconductor-ccplotr
@@ -89,7 +90,7 @@ dependencies:
   - pwwang::r-sccatch
   - pwwang::r-harmony
   - pwwang::r-aneuploidyscore
-  - pwwang::r-biopipen.utils
+  - pwwang::r-biopipen.utils  # R utilities for biopipen
   # - pwwang::r-scplotter
   - pwwang::bioconductor-screpertoire  # required by r-scplotter
   - pwwang::bioconductor-data-packages
