@@ -1,4 +1,4 @@
-FROM biopipen/cellranger:8.0.1
+FROM biopipen/cellranger:9.0.1
 
 # docker build /path/to/biopipen \
 #   -f /path/to/biopipen/docker/cellranger_pipeline/Dockerfile
