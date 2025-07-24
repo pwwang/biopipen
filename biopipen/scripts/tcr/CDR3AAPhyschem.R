@@ -10,9 +10,9 @@ library(stringr)
 library(plotthis)
 library(biopipen.utils)
 
-scrfile <- {{in.scrfile | quote}}
-outdir <- {{out.outdir | quote}}
-joboutdir <- {{job.outdir | quote}}
+scrfile <- {{in.scrfile | r}}
+outdir <- {{out.outdir | r}}
+joboutdir <- {{job.outdir | r}}
 group_name <- {{envs.group | r}}
 comparison <- {{envs.comparison | r}}
 target <- {{envs.target | r}}

@@ -4,8 +4,8 @@ library(dplyr)
 library(Seurat)
 library(biopipen.utils)
 
-sobjfile <- {{in.sobjfile | quote}}
-outfile <- {{out.outfile | quote}}
+sobjfile <- {{in.sobjfile | r}}
+outfile <- {{out.outfile | r}}
 newcol <- {{envs.newcol | r}}
 merge_same_labels <- {{envs.merge | r}}
 celltypist_args <- {{envs.celltypist_args | r}}

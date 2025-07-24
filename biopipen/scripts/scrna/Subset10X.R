@@ -1,7 +1,7 @@
 library(Matrix)
 
-indir = {{in.indir | quote}}
-outdir = {{out.outdir | quote}}
+indir = {{in.indir | r}}
+outdir = {{out.outdir | r}}
 envs = {{envs | r}}
 
 set.seed(envs$seed)

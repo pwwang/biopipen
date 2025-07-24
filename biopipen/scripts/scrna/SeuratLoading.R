@@ -1,7 +1,7 @@
 library(Seurat)
 
-metafile = {{in.metafile | quote}}
-rdsfile = {{out.rdsfile | quote}}
+metafile = {{in.metafile | r}}
+rdsfile = {{out.rdsfile | r}}
 
 metadata = read.table(
     metafile,

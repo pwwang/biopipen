@@ -4,11 +4,11 @@ library(tidyr)
 library(fastLiquidAssociation)
 library(biopipen.utils)
 
-infile <- {{in.infile | quote}}
-covfile <- {{in.covfile | quote: quote_none=False | r}}
-groupfile <- {{in.groupfile | quote}}
-fmlfile <- {{in.fmlfile | quote}}
-outfile <- {{out.outfile | quote}}
+infile <- {{in.infile | r}}
+covfile <- {{in.covfile | r: quote_none=False | r}}
+groupfile <- {{in.groupfile | r}}
+fmlfile <- {{in.fmlfile | r}}
+outfile <- {{out.outfile | r}}
 x <- {{envs.x | r}}
 nvec <- {{envs.nvec | r}}
 topn <- {{envs.topn | r}}

@@ -4,13 +4,13 @@ library(BSgenome)
 library(GenomicRanges)
 library(biopipen.utils)
 
-infile <- {{in.infile | quote}}
-outdir <- {{out.outdir | quote}}
+infile <- {{in.infile | r}}
+outdir <- {{out.outdir | r}}
 genome <- {{envs.genome | r}}
-motifdb <- {{envs.motifdb | quote}}
+motifdb <- {{envs.motifdb | r}}
 motif_col <- {{envs.motif_col | r}}
 regulator_col <- {{envs.regulator_col | r}}
-regmotifs <- {{envs.regmotifs | quote}}
+regmotifs <- {{envs.regmotifs | r}}
 notfound <- {{envs.notfound | r}}
 devpars <- {{envs.devpars | r}}
 plot_vars <- {{envs.plot_vars | r}}

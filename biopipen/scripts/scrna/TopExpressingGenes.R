@@ -4,9 +4,9 @@ library(dplyr)
 library(tidyselect)
 library(biopipen.utils)
 
-srtfile <- {{in.srtobj | quote}}
-outdir <- {{out.outdir | quote}}
-joboutdir <- {{job.outdir | quote}}
+srtfile <- {{in.srtobj | r}}
+outdir <- {{out.outdir | r}}
+joboutdir <- {{job.outdir | r}}
 mutaters <- {{ envs.mutaters | r }}
 ident <- {{ envs.ident | r }}
 group.by <- {{ envs["group-by"] | r }}  # nolint

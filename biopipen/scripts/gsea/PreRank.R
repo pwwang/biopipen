@@ -3,14 +3,14 @@
 {{ biopipen_dir | joinpaths: "utils", "io.R" | source_r }}
 {{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
 
-infile = {{in.infile | quote}}
-metafile = {{in.metafile | quote}}
+infile = {{in.infile | r}}
+metafile = {{in.metafile | r}}
 {% if in.configfile %}
 config = {{in.config | read | toml_loads | r}}
 {% else %}
 config = list()
 {% endif %}
-outfile = {{out.outfile | quote}}
+outfile = {{out.outfile | r}}
 envs = {{envs | r}}
 clscol <- if (is.null(config$clscol)) envs$clscol else config$clscol
 classes <- if (is.null(config$classes)) envs$classes else config$classes

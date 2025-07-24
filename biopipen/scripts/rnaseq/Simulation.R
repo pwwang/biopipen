@@ -1,7 +1,7 @@
 ngenes <- {{in.ngenes | r}}
 nsamples <- {{in.nsamples | r}}
-outfile <- {{out.outfile | quote}}
-outdir <- {{out.outdir | quote}}
+outfile <- {{out.outfile | r}}
+outdir <- {{out.outdir | r}}
 seed <- {{envs.seed | r}}
 ncores <- {{envs.ncores | r}}
 transpose_output <- {{envs.transpose_output | r}}

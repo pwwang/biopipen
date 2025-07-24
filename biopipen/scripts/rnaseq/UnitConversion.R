@@ -2,8 +2,8 @@ library(rlang)
 library(glue)
 library(biopipen.utils)
 
-infile <- {{in.infile | quote}}
-outfile <- {{out.outfile | quote}}
+infile <- {{in.infile | r}}
+outfile <- {{out.outfile | r}}
 inunit <- {{envs.inunit | r}}
 outunit <- {{envs.outunit | r}}
 refexon <- {{envs.refexon | r}}

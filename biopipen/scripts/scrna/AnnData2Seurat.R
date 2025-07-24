@@ -3,8 +3,8 @@ library(Seurat)
 library(scplotter)
 library(biopipen.utils)
 
-adfile <- {{in.adfile | quote}}
-outfile <- {{out.outfile | quote}}
+adfile <- {{in.adfile | r}}
+outfile <- {{out.outfile | r}}
 dotplot_check <- {{envs.dotplot_check | r}}
 outdir <- dirname(outfile)
 assay <- {{envs.assay | r}}

@@ -7,8 +7,8 @@ library(rlang)
 library(dplyr)
 library(biopipen.utils)
 
-infile <- {{in.infile | quote}}
-groupfile <- {{in.groupfile | quote}}
+infile <- {{in.infile | r}}
+groupfile <- {{in.groupfile | r}}
 outfile <- {{out.outfile | r}}
 method <- {{envs.method | r}}
 beta <- {{envs.beta | r}}

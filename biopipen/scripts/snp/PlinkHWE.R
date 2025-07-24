@@ -1,9 +1,9 @@
 library(plotthis)
 library(biopipen.utils)
 
-indir <- {{in.indir | quote}}
-outdir <- {{out.outdir | quote}}
-plink <- {{envs.plink | quote}}
+indir <- {{in.indir | r}}
+outdir <- {{out.outdir | r}}
+plink <- {{envs.plink | r}}
 ncores <- {{envs.ncores | r}}
 cutoff <- {{envs.cutoff | r}}
 doplot <- {{envs.plot | r}}

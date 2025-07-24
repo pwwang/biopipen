@@ -4,9 +4,9 @@ library(dplyr)
 library(scplotter)
 library(biopipen.utils)
 
-screpfile <- {{in.screpfile | quote}}
-outdir <- {{out.outdir | quote}}
-joboutdir <- {{job.outdir | quote}}
+screpfile <- {{in.screpfile | r}}
+outdir <- {{out.outdir | r}}
+joboutdir <- {{job.outdir | r}}
 envs <- {{envs | r}}
 mutaters <- envs$mutaters
 cases <- envs$cases

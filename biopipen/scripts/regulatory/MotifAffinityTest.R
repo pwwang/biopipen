@@ -5,9 +5,9 @@ library(BiocParallel)
 library(BSgenome)
 library(biopipen.utils)
 
-motiffile <- {{in.motiffile | quote}}
-varfile <- {{in.varfile | quote}}
-outdir <- {{out.outdir | quote}}
+motiffile <- {{in.motiffile | r}}
+varfile <- {{in.varfile | r}}
+outdir <- {{out.outdir | r}}
 ncores <- {{envs.ncores | r}}
 tool <- {{envs.tool | r}}
 bcftools <- {{envs.bcftools | r}}

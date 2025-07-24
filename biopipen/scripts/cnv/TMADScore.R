@@ -1,10 +1,10 @@
 library(dplyr)
 
-segfile = {{in.segfile | quote}}
-outfile = {{out.outfile | quote}}
-chrom_col = {{envs.chrom_col | quote}}
+segfile = {{in.segfile | r}}
+outfile = {{out.outfile | r}}
+chrom_col = {{envs.chrom_col | r}}
 excl_chroms = {{envs.excl_chroms | r}}
-seg_col = {{envs.seg_col | quote}}
+seg_col = {{envs.seg_col | r}}
 segmean_transform = {{envs.segmean_transform | r}}
 
 if (is.character(segmean_transform)) {

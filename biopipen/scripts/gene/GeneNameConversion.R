@@ -1,7 +1,7 @@
 library(biopipen.utils)
 
-infile <- {{in.infile | quote}}
-outfile <- {{out.outfile | quote}}
+infile <- {{in.infile | r}}
+outfile <- {{out.outfile | r}}
 notfound <- {{envs.notfound | r}}
 genecol <- {{envs.genecol | r}}
 output <- {{envs.output | r}}

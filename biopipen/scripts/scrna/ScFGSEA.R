@@ -3,9 +3,9 @@ library(Seurat)
 library(tidyseurat)
 library(biopipen.utils)
 
-srtfile <- {{in.srtobj | quote}}  # nolint
-outdir <- {{out.outdir | quote}}  # nolint
-joboutdir <- {{job.outdir | quote}}  # nolint
+srtfile <- {{in.srtobj | r}}  # nolint
+outdir <- {{out.outdir | r}}  # nolint
+joboutdir <- {{job.outdir | r}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
 group.by <- {{envs["group-by"] | r}}  # nolint
 ident.1 <- {{envs["ident-1"] | r}}  # nolint

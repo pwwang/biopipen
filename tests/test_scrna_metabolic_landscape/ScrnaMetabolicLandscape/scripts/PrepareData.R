@@ -3,9 +3,9 @@ library(Seurat)
 # Download data (tcell rds and metadata) from
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123813
 
-meta_file <- {{in.metafile | quote}}
-count_file <- {{in.countfile | quote}}
-outfile <- {{out.outfile | quote}}
+meta_file <- {{in.metafile | r}}
+count_file <- {{in.countfile | r}}
+outfile <- {{out.outfile | r}}
 seed = {{envs.seed}}
 patients = {{envs.patients | r}}
 

@@ -4,10 +4,10 @@ library(dplyr)
 library(Seurat)
 library(biopipen.utils)
 
-srtobj = {{in.srtobj | quote}}
+srtobj = {{in.srtobj | r}}
 metafile = {{in.metafile | r}}
 mutaters = {{envs.mutaters | r}}
-outfile = {{out.outfile | quote}}
+outfile = {{out.outfile | r}}
 
 srt = read_obj(srtobj)
 metadata = srt@meta.data

@@ -3,8 +3,8 @@ library(bracer)
 library(scRepertoire)
 library(biopipen.utils)
 
-metafile <- {{in.metafile | quote}}
-outfile <- {{out.outfile | quote}}
+metafile <- {{in.metafile | r}}
+outfile <- {{out.outfile | r}}
 combineTCR_args <- {{envs.combineTCR | r}}
 combineBCR_args <- {{envs.combineBCR | r}}
 type <- {{envs.type | r}}

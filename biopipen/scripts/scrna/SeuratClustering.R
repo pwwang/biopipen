@@ -4,9 +4,9 @@ library(biopipen.utils)
 
 set.seed(8525)
 
-srtfile <- {{in.srtobj | quote}}
-outfile <- {{out.outfile | quote}}
-joboutdir <- {{job.outdir | quote}}
+srtfile <- {{in.srtobj | r}}
+outfile <- {{out.outfile | r}}
+joboutdir <- {{job.outdir | r}}
 RunPCAArgs <- {{envs.RunPCA | r: todot="-"}}
 FindNeighborsArgs <- {{envs.FindNeighbors | r: todot="-"}}
 FindClustersArgs <- {{envs.FindClusters | r: todot="-"}}

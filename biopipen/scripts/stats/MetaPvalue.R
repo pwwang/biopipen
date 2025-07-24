@@ -4,7 +4,7 @@ library(dplyr)
 library(biopipen.utils)
 
 infiles <- {{in.infiles | each: str | r}}
-outfile <- {{out.outfile | quote}}
+outfile <- {{out.outfile | r}}
 id_cols <- {{envs.id_cols | r}}
 id_exprs <- {{envs.id_exprs | r}}
 pval_cols <- {{envs.pval_cols | r}}

@@ -5,9 +5,9 @@ library(dplyr)
 library(glue)
 library(biopipen.utils)
 
-metafile <- {{in.metafile | quote}}
-outfile <- {{out.outfile | quote}}
-joboutdir <- {{job.outdir | quote}}
+metafile <- {{in.metafile | r}}
+outfile <- {{out.outfile | r}}
+joboutdir <- {{job.outdir | r}}
 envs <- {{envs | r: todot = "-", skip = 1}}
 
 if (isTRUE(envs$cache)) { envs$cache <- joboutdir }

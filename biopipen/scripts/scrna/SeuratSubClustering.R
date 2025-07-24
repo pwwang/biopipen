@@ -5,8 +5,8 @@ library(biopipen.utils)
 
 set.seed(8525)
 
-srtfile <- {{in.srtobj | quote}}
-outfile <- {{out.outfile | quote}}
+srtfile <- {{in.srtobj | r}}
+outfile <- {{out.outfile | r}}
 ncores <- {{envs.ncores | r}}
 mutaters <- {{envs.mutaters | r}}
 subset <- {{envs.subset | r}}

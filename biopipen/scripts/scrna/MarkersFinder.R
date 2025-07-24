@@ -7,9 +7,9 @@ library(biopipen.utils)
 log <- get_logger()
 reporter <- get_reporter()
 
-srtfile <- {{ in.srtobj | quote }}
-outdir <- {{ out.outdir | quote }}
-joboutdir <- {{ job.outdir | quote }}
+srtfile <- {{ in.srtobj | r }}
+outdir <- {{ out.outdir | r }}
+joboutdir <- {{ job.outdir | r }}
 
 ncores <- {{ envs.ncores | int }}
 mutaters <- {{ envs.mutaters | r }}

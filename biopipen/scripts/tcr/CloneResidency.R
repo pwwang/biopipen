@@ -14,10 +14,10 @@ library(ComplexUpset)
 theme_set(theme_prism())
 
 
-immfile <- {{ in.immdata | quote }}
+immfile <- {{ in.immdata | r }}
 metafile <- {{ in.metafile | r }}
-outdir <- {{ out.outdir | quote }}
-joboutdir <- {{ job.outdir | quote }}
+outdir <- {{ out.outdir | r }}
+joboutdir <- {{ job.outdir | r }}
 
 subject_key <- {{ envs.subject | r }}
 group_key <- {{ envs.group | r }}

@@ -7,8 +7,8 @@ library(rlang)
 library(immunarch)
 library(ggprism)
 
-immfile = {{in.immfile | quote}}
-outdir = {{out.outdir | quote}}
+immfile = {{in.immfile | r}}
+outdir = {{out.outdir | r}}
 cluster_size_envs = {{envs.cluster_size | r}}
 shared_clusters_envs = {{envs.shared_clusters | r}}
 sample_diversity_envs = {{envs.sample_diversity | r}}

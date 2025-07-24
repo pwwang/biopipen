@@ -6,9 +6,9 @@ suppressPackageStartupMessages({
 	library(biopipen.utils)
 })
 
-indir    <- {{in.indir | quote}}
-outdir   <- {{out.outdir | quote}}
-plink    <- {{envs.plink | quote}}
+indir    <- {{in.indir | r}}
+outdir   <- {{out.outdir | r}}
+plink    <- {{envs.plink | r}}
 indep    <- {{envs.indep | r}}
 highld   <- {{envs.highld | r}}
 devpars  <- {{envs.devpars | r}}

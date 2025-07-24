@@ -2,8 +2,8 @@
 {{ biopipen_dir | joinpaths: "utils", "gene.R" | source_r }}
 {{ biopipen_dir | joinpaths: "utils", "gsea.R" | source_r }}
 
-infile = {{in.infile | quote}}
-outdir = {{out.outdir | quote}}
+infile = {{in.infile | r}}
+outdir = {{out.outdir | r}}
 genecol = {{envs.genecol | r}}
 genename = {{envs.genename | r}}
 dbs = {{envs.dbs | r}}

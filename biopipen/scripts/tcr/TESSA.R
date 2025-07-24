@@ -5,10 +5,10 @@ library(tibble)
 library(Seurat)
 library(biopipen.utils)
 
-screpdata <- {{in.screpdata | quote}}
-outfile <- {{out.outfile | quote}}
-joboutdir <- {{job.outdir | quote}}
-python <- {{envs.python | quote}}
+screpdata <- {{in.screpdata | r}}
+outfile <- {{out.outfile | r}}
+joboutdir <- {{job.outdir | r}}
+python <- {{envs.python | r}}
 within_sample <- {{envs.within_sample | r}}
 assay <- {{envs.assay | r}}
 predefined_b <- {{envs.predefined_b | r}}

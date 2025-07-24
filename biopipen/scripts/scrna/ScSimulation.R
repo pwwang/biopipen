@@ -5,7 +5,7 @@ library(biopipen.utils)
 
 # Load template variables
 seed <- {{ in.seed | r }}
-outfile <- {{ out.outfile | quote }}
+outfile <- {{ out.outfile | r }}
 ngenes <- {{ envs.ngenes | r }}
 ncells <- {{ envs.ncells | r }}
 nspikes <- {{ envs.nspikes | r }}

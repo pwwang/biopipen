@@ -2,9 +2,9 @@ library(rlang)
 library(plotthis)
 library(biopipen.utils)
 
-indir <- {{in.indir | quote}}
-outdir <- {{out.outdir | quote}}
-plink <- {{envs.plink | quote}}
+indir <- {{in.indir | r}}
+outdir <- {{out.outdir | r}}
+plink <- {{envs.plink | r}}
 ncores <- {{envs.ncores | r}}
 modifier <- {{envs.modifier | r}}
 gz <- {{envs.gz | r}}
