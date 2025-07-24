@@ -1,5 +1,49 @@
 # Change Log
 
+## 0.34.0
+
+### New Features
+- feat(scrna): add ScVelo analysis for RNA velocity and Slingshot for trajectory inference
+- feat(tcr): add ScRepCombiningExpression for combining TCR/BCR and expression data, and ScRepLoading for multiple TCR/BCR data formats
+- feat(scrna): add ScRepLoading with support for multiple formats and improved logging
+- feat(plot): add Plot class and associated R script for data visualization
+- feat(bam): add SamtoolsView for BAM file processing
+- feat(utils): implement Reporter class for generating JSON reports for processes
+- feat(scrna): support qs2 format for input and output in various processes
+- feat(scrna.SeuratPreparing): add mutaters parameter for metadata mutation
+- feat(scrna.MarkersFinder): enhance parameter handling and marker processing
+- feat: add common Svelte report template for job reporting using JSON reports
+
+### Enhancements
+- enh(bam.CNAClinic): change `envs.binsize` to bp instead of kbp
+- enh(cnv): replace ggplot2 with plotthis for improved plotting in AneuploidyScoreSummary and TMADScoreSummary
+- enh(scrna): adopt biopipen.utils.R v0.1.0 across multiple processes
+- enh(scrna_metabolic_landscape): improve flexibility and stability of metabolic landscape analysis
+- enh(scrna.ExprImputation): improve error handling and threshold handling for cell imputation
+- enh(tcr.ClonalStats): support qs2 format for output
+
+### Bug Fixes
+- fix(cnv.TMADScore): correct output filename
+- fix(bam): fix report template and argument handling in CNVpytor, CNAClinic, and ControlFREEC
+- fix(cnv.AneuploidyScore): replace ggplot with plotthis and add error handling for chromosome detection
+- fix(cnv.AneuploidyScoreSummary): rename 'rows' to 'rows_by' for clarity in heatmap function
+- fix(delim.SampleInfo): fix plot functions being registered twice to gglogger and ensure reporter saves to correct directory
+- fix(scrna): replace readRDS/saveRDS with biopipen.utils functions for consistency across processes
+- fix(scrna.SeuratClusterStats): improve data handling and plot saving functionality
+
+### Refactoring
+- refactor(scrna.CellCellCommunicationPlots): use scplotter::CCCPlot
+- refactor(tcr.CDR3AAPhyschem): adopt input from ScRepCombiningExpression
+- refactor: remove utility R scripts and use biopipen.utils.R package
+
+### Development & Infrastructure
+- chore(deps): update dependencies and specify versions for bioconductor packages
+- chore(docker): refactor Dockerfiles to streamline base image usage and dependency installation
+- chore: use filter 'r' for R input/output paths instead of 'quote' in scripts
+- test: add comprehensive tests for bam, cnv, and scrna processes (local tests only for some)
+- test: add docker-test job and Dockerfile for test image building
+- ci: update environment cache and reference data cache
+
 ## 0.33.1
 
 - fix(delim.SampleInfo): fix when plot_type ending with "plot"
