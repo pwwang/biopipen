@@ -30,73 +30,12 @@ class CellCellCommunicationAnndataPlots(CellCellCommunicationPlots_):
     requires = CellCellCommunicationAnndata
     envs = {
         "cases": {
-            "Heatmap": {
-                "kind": "heatmap",
-                "section": "Heatmap",
-            },
-            "HeatmapB": {
-                "kind": "heatmap",
-                "option": "B",
-                "n_top_ints": 10,
-                "section": "Heatmap",
-            },
-            "HeatmapCellPhoneDB": {
-                "kind": "heatmap",
-                "option": "CellPhoneDB",
-                "section": "Heatmap",
-            },
-            "DotPlot": {
-                "kind": "dotplot",
-                "section": "DotPlot",
-            },
-            "DotPlotB": {
-                "kind": "dotplot",
-                "option": "B",
-                "section": "DotPlot",
-            },
-            "DotPlotLiana": {
-                "kind": "dotplot",
-                "option": "Liana",
-                "section": "DotPlot",
-            },
-            "Network": {
-                "kind": "network",
-                "section": "Network",
-            },
-            "NetworkB": {
-                "kind": "network",
-                "option": "B",
-                "section": "Network",
-            },
-            "Circos": {
-                "kind": "circos",
-                "section": "Circos",
-            },
-            "CircosB": {
-                "kind": "circos",
-                "option": "B",
-                "section": "Circos",
-            },
-            "CircosC": {
-                "kind": "circos",
-                "option": "C",
-                "section": "Circos",
-            },
-            "Arrow": {
-                "kind": "arrow",
-                "section": "Arrow",
-                "cell_types": ["CD34+", "CD19+ B"],
-            },
-            "ArrowB": {
-                "kind": "arrow",
-                "section": "Arrow",
-                "option": "B",
-                "cell_types": ["CD34+", "CD19+ B"],
-            },
-            "Sigmoid": {
-                "kind": "sigmoid",
-                "section": "Sigmoid",
-            },
+            "Heatmap::Heatmap": {"plot_type": "heatmap"},
+            "Heatmap::HeatmapB": {"plot_type": "heatmap", "method": "interaction"},
+            "DotPlot::DotPlot": {"plot_type": "dot"},
+            "DotPlot::DotPlotB": {"plot_type": "dot", "method": "interaction"},
+            "Network::Network": {"plot_type": "network"},
+            "Circos::Circos": {"plot_type": "circos"},
         }
     }
 
@@ -114,79 +53,22 @@ class CellCellCommunicationSeuratPlots(CellCellCommunicationPlots_):
     requires = CellCellCommunicationSeurat
     envs = {
         "cases": {
-            "Heatmap": {
-                "kind": "heatmap",
-                "section": "Heatmap",
-            },
-            "HeatmapB": {
-                "kind": "heatmap",
-                "option": "B",
-                "n_top_ints": 10,
-                "section": "Heatmap",
-            },
-            "HeatmapCellPhoneDB": {
-                "kind": "heatmap",
-                "option": "CellPhoneDB",
-                "section": "Heatmap",
-            },
-            "DotPlot": {
-                "kind": "dotplot",
-                "section": "DotPlot",
-            },
-            "DotPlotB": {
-                "kind": "dotplot",
-                "option": "B",
-                "section": "DotPlot",
-            },
-            "DotPlotLiana": {
-                "kind": "dotplot",
-                "option": "Liana",
-                "section": "DotPlot",
-            },
-            "Network": {
-                "kind": "network",
-                "section": "Network",
-            },
-            "NetworkB": {
-                "kind": "network",
-                "option": "B",
-                "section": "Network",
-            },
-            "Circos": {
-                "kind": "circos",
-                "section": "Circos",
-            },
-            "CircosB": {
-                "kind": "circos",
-                "option": "B",
-                "section": "Circos",
-            },
-            "CircosC": {
-                "kind": "circos",
-                "option": "C",
-                "section": "Circos",
-            },
-            "Arrow": {
-                "kind": "arrow",
-                "section": "Arrow",
-                "cell_types": ["CD34+", "CD19+ B"],
-            },
-            "ArrowB": {
-                "kind": "arrow",
-                "section": "Arrow",
-                "option": "B",
-                "cell_types": ["CD34+", "CD19+ B"],
-            },
-            "Sigmoid": {
-                "kind": "sigmoid",
-                "section": "Sigmoid",
-            },
+            "Heatmap::Heatmap": {"plot_type": "heatmap"},
+            "Heatmap::HeatmapB": {"plot_type": "heatmap", "method": "interaction"},
+            "DotPlot::DotPlot": {"plot_type": "dot"},
+            "DotPlot::DotPlotB": {"plot_type": "dot", "method": "interaction"},
+            "Network::Network": {"plot_type": "network"},
+            "Circos::Circos": {"plot_type": "circos"},
         }
     }
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepareAnnData)
+    return (
+        get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True)
+        .set_starts(PrepareAnnData)
+    )
 
 
 def testing(pipen):

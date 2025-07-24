@@ -106,3 +106,41 @@ class Shell(Proc):
     envs = {"cmd": "", "outdir": False}
     lang = config.lang.bash
     script = "file://../scripts/misc/Shell.sh"
+
+
+class Plot(Proc):
+    """Plot given data using plotthis package in R
+
+    Input:
+        datafile: The input data file in RDS or qs/qs2 format.
+            If it is not in RDS nor qs/qs2 format, read.table will be used
+            to read the data file with the options provided by `envs.read_opts`.
+
+    Output:
+        plotfile: The output plot file in PNG format
+
+    envs:
+        fn: The plot function to use. Required.
+        devpars (ns): The device parameters for the plot.
+            - width: The width of the plot in pixels.
+            - height: The height of the plot in pixels.
+            - res: The resolution of the plot in DPI.
+        more_formats: The additional formats to save the plot in other than PNG.
+            The file will be saved in the same directory as the plotfile.
+        save_code: Whether to save the R code used for plotting.
+        read_opts: Options to read the data file.
+            If the data file is not in RDS nor qs/qs2 format, these options
+            will be passed to `read.table`.
+        <more>: Additional parameters to the plot function.
+    """
+    input = "datafile:file"
+    output = "plotfile:file:{{in.datafile | stem}}.png"
+    envs = {
+        "fn": None,
+        "devpars": {"res": 100},
+        "more_formats": [],
+        "save_code": False,
+        "read_opts": {},
+    }
+    lang = config.lang.rscript
+    script = "file://../scripts/misc/Plot.R"

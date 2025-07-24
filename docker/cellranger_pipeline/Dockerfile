@@ -1,29 +1,25 @@
-FROM biopipen/cellranger:8.0.1
+FROM biopipen/cellranger:9.0.1 AS cellranger
+FROM biopipen/base:dev
 
-# docker build /path/to/biopipen \
-#   -f /path/to/biopipen/docker/cellranger_pipeline/Dockerfile
-COPY . /biopipen
+COPY --from=cellranger /cellranger /cellranger
 
-WORKDIR /biopipen
-RUN apt-get update && \
-    apt-get install -y python3.10 python3-pip npm cargo r-base && \
-    Rscript -e 'install.packages(c("logger", "rlang", "jsonlite", "dplyr", "ggplot2", "ggprism"))' && \
-    # alias python3 to python
-    ln -s /usr/bin/python3 /usr/bin/python && \
-    python -m pip config set global.break_system_packages on && \
-    python -m pip install -U poetry setuptools_rust && \
-    python -m poetry config virtualenvs.create false && \
-    python -m poetry install -v -E runinfo && \
-    pipen report update && \
-    apt-get clean
+# in case we have updates about the pipeline
+COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cellranger_pipeline /biopipen/docker/cellranger_pipeline
 
-# Add a user to avoid running as root
-RUN useradd -m -s /bin/bash biopipen
-USER biopipen
+RUN micromamba env update -n base -f /biopipen/docker/cellranger_pipeline/env.yml && \
+    micromamba clean --all --yes && \
+    ln -s /cellranger/cellranger-*/bin/cellranger /opt/conda/bin/cellranger && \
+    chmod +x /biopipen/docker/cellranger_pipeline/entry.sh && \
+    ln -s /biopipen/docker/cellranger_pipeline/entry.sh /opt/conda/bin/entry.sh
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 WORKDIR /example
-RUN bash /biopipen/docker/cellranger_pipeline/make-examples.sh
+RUN /bin/bash /biopipen/docker/cellranger_pipeline/make-examples.sh && \
+    cp /biopipen/docker/cellranger_pipeline/board.toml /example/board.toml && \
+    cp /biopipen/docker/cellranger_pipeline/CellrangerCountPipeline.config.toml /example/CellrangerCountPipeline.config.toml  && \
+    cp /biopipen/docker/cellranger_pipeline/CellrangerVdjPipeline.config.toml /example/CellrangerVdjPipeline.config.toml
 
 WORKDIR /workdir
 
-ENTRYPOINT [ "bash", "/biopipen/docker/cellranger_pipeline/entry.sh" ]
+ENTRYPOINT [ "/bin/bash", "/biopipen/docker/cellranger_pipeline/entry.sh" ]

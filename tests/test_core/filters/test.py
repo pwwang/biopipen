@@ -57,7 +57,7 @@ class TestFilters(TestCase):
         # Test dictionary with non-hashable keys
         ex = None
         try:
-            dict_to_cli_args({[1, 2]: "a"})
+            dict_to_cli_args({[1, 2]: "a"})  # type: ignore
         except TypeError as e:
             ex = e
         assert isinstance(ex, TypeError), "Expected TypeError"

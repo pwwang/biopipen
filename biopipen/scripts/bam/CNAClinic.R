@@ -1,14 +1,40 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(parallel)
 library(dplyr)
+library(biopipen.utils)
 library(CNAclinic)
+
+# https://github.com/sdchandra/CNAclinic/issues/4
+.reorderByChrom.patched <- function(x){
+    chromosome <- as.character(x$chromosome)
+    chromosome[which(chromosome == "X")] <- "23"
+    chromosome[which(chromosome == "Y")] <- "24"
+    chromosome[which(chromosome == "MT")] <- "25"
+
+    x$chromosome <- as.numeric(chromosome)
+    # Error in xtfrm.data.frame(x) : cannot xtfrm data frames
+    # x <- x[order(x["chromosome"], x["start"]), ]
+    x <- x[order(x[, "chromosome"], x[, "start"]), ]
+
+    x$chromosome <- as.character(x$chromosome)
+    # Replace 23 by X:
+    x$chromosome[which(x$chromosome == "23")] <- "X"
+
+    # Replace 24 by Y
+    x$chromosome[which(x$chromosome == "24")] <- "Y"
+
+    # Replace 25 by MT
+    x$chromosome[which(x$chromosome == "25")] <- "MT"
+
+    return(x)
+}
+
+monkey_patch("CNAclinic", ".reorderByChrom", .reorderByChrom.patched)
 
 metafile = {{in.metafile | r}}
 outdir = {{out.outdir | r}}
 ncores = {{envs.ncores | int}}
 binsizer = {{envs.binsizer | r}}
-binsize = {{envs.binsize | int}}
+binsize = {{envs.binsize | r}}
 seed = {{envs.seed | int}}
 genome = {{envs.genome | r}}
 run_args = {{envs.run_args | r}}
@@ -30,7 +56,11 @@ if (("Group" %in% metacols) && !("Patient" %in% metacols)) {
 }
 
 if (!("Binsizer" %in% metacols) && is.null(binsizer) && is.null(binsize)) {
-    stop("The metadata file must have a column named 'Binsizer' or the `envs.binsizer` must be specified")
+    stop(
+        "The metadata file must have a column named 'Binsizer' or ",
+        "the `envs.binsizer` must be specified when no `envs.binsize` is provided. ",
+        "The Binsizer column should indicate which samples are to be used for binsize selection."
+    )
 }
 
 # add missing columns
@@ -109,7 +139,7 @@ do_one_sample = function(i) {
         bamfile,
         sample,
         refSamples=refSamples,
-        binSize=binsize
+        binSize=binsize / 1000
     )
 
     run_args_i = run_args
@@ -119,7 +149,12 @@ do_one_sample = function(i) {
 
     plot_args_i = plot_args
     plot_args_i$object = CNAData
-    genomewide_plot = do_call(plotSampleData, plot_args_i)
+    genomewide_plot <- tryCatch({
+        do_call(plotSampleData, plot_args_i)
+    }, error = function(e) {
+        message("Error in plotting genomewide data for sample ", sample, ": ", e$message)
+        return(ggplot2::ggplot() + ggplot2::labs(title = paste("Error in plotting genomewide data for sample", sample)))
+    })
 
     odir = file.path(outdir, sample)
     dir.create(odir, recursive = TRUE, showWarnings = FALSE)

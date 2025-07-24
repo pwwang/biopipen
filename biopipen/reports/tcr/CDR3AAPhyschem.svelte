@@ -26,7 +26,7 @@
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}
-    <h1>{{job.out.outdir | stem | replace: ".immunarch", ""}}</h1>
+    <h1>{{job.out.outdir | stem | replace: ".scRep", ""}}</h1>
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}

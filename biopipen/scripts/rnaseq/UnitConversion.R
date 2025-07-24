@@ -1,7 +1,6 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(glue)
+library(biopipen.utils)
 
 infile <- {{in.infile | r}}
 outfile <- {{out.outfile | r}}
@@ -11,7 +10,9 @@ refexon <- {{envs.refexon | r}}
 meanfl <- {{envs.meanfl | r}}
 nreads <- {{envs.nreads | r}}
 
-log_info("Reading input data ...")
+log <- get_logger()
+
+log$info("Reading input data ...")
 indata = read.table(infile, header = TRUE, sep = "\t", row.names = 1, check.names = F)
 samples = colnames(indata)
 
@@ -326,7 +327,7 @@ if (grepl('rawcounts|rawcount|counts|count', outunit)) {
     stop(glue("Can't find a supported unit in the outunit: {outunit}\n"))
 }
 
-log_info("Transforming data by resolving {inunit} ...")
+log$info("Transforming data by resolving {inunit} ...")
 if (intype == outtype) {
     fun <- identity
 } else {
@@ -339,5 +340,5 @@ if (intype == outtype) {
 assign(outtype, fun(indata))
 out <- eval(parse_expr(outunit))
 
-log_info("Saving output data ...")
+log$info("Saving output data ...")
 write.table(out, outfile, quote=FALSE, row.names=TRUE, col.names=TRUE, sep="\t")

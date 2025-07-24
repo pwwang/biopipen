@@ -1,8 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(metap)
 library(rlang)
 library(dplyr)
+library(biopipen.utils)
 
 infile <- {{in.infile | r}}
 outfile <- {{out.outfile | r}}
@@ -12,6 +11,8 @@ method <- {{envs.method | r}}
 na <- {{envs.na | r}}
 keep_single <- {{envs.keep_single | r}}
 padj <- {{envs.padj | r}}
+
+log <- get_logger()
 
 if (method == "fisher") { method = "sumlog" }
 
@@ -24,7 +25,7 @@ if (length(id_cols) == 1) {
     id_cols <- trimws(strsplit(id_cols, ",")[[1]])
 }
 
-log_info("Reading input and performing meta-analysis ...")
+log$info("Reading input and performing meta-analysis ...")
 outdata <- read.table(
         infile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE
     ) %>%
@@ -64,10 +65,10 @@ outdata$.pvals <- NULL
 outdata <- outdata %>% arrange(MetaPval)
 
 if (padj != "none") {
-    log_info("Calculating adjusted p-values ...")
+    log$info("Calculating adjusted p-values ...")
     outdata$MetaPadj <- p.adjust(outdata$MetaPval, method = padj)
 
 }
 
-log_info("Writing output ...")
+log$info("Writing output ...")
 write.table(outdata, outfile, quote = FALSE, sep = "\t", row.names = FALSE)

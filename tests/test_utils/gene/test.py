@@ -1,10 +1,10 @@
 from unittest import TestCase, main
 from biopipen.utils.gene import gene_name_conversion
 
-from pathlib import Path
+# from pathlib import Path
 
 # from biopipen.core.filters import r
-from biopipen.core.testing import r_test
+# from biopipen.core.testing import r_test
 
 
 class TestGenePy(TestCase):
@@ -73,76 +73,6 @@ class TestGenePy(TestCase):
             suppress_messages=True,
         )
         self.assertNotIn("NA", out["symbol"].tolist())
-
-
-class TestGeneR(TestCase):
-
-    SOURCE_FILE = Path(__file__).parent.parent.parent.parent.joinpath(
-        "biopipen", "utils", "gene.R"
-    )
-
-    @r_test
-    def test_gene_name_conversion(self):
-        return """
-            ensgs = c(
-                #"ENSG00000230373",
-                "ENSG00000236269",
-                "ENSG00000227232.5",
-                "ENSG00000227232.5"
-            )
-            symbols = gene_name_conversion(
-                ensgs, "ensg", "symbol", suppress_messages = TRUE
-            )
-            expect(length(symbols$symbol) == 3, "Wrong number of symbols returned")
-            # expect(
-            #     symbols$symbol[1] == "GOLGA6L17P",
-            #     "Expected GOLGA6L17P as 1st symbol", "Got: ", symbols$symbol[1]
-            # )
-            expect(
-                is.na(symbols$symbol[1]),
-                "Expected NA as 1st symbol", "Got: ", symbols$symbol[2]
-            )
-            expect(
-                symbols$symbol[2] == "WASH7P",
-                "Expected WASH7P as 2nd symbol", "Got: ", symbols$symbol[3]
-            )
-            expect(
-                symbols$symbol[3] == "WASH7P",
-                "Expected WASH7P as 3rd symbol", "Got: ", symbols$symbol[4]
-            )
-        """
-
-    @r_test
-    def test_gene_name_conversion_keep_dup(self):
-        return """
-            ensgs = c(
-                # "ENSG00000230373",
-                "ENSG00000236269",
-                "ENSG00000227232.5"
-            )
-            symbols = gene_name_conversion(
-                ensgs, "ensg", "symbol", ";", suppress_messages = TRUE
-            )
-            if (!"WASH7P" %in% symbols$symbol) {
-                stop("WASH7P not found")
-            }
-        """
-
-    @r_test
-    def test_gene_name_conversion_skip(self):
-        return """
-            ensgs = c(
-                # "ENSG00000230373",
-                "ENSG00000236269",
-                "ENSG00000227232.5"
-            )
-            symbols = gene_name_conversion(
-                ensgs, "ensg", "symbol", notfound="skip", suppress_messages = TRUE
-            )
-            if (anyNA(symbols$symbol)) {
-                stop("Missing queries were not skipped")
-            }
-        """
 
 
 if __name__ == "__main__":

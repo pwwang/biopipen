@@ -55,7 +55,7 @@ if (
 
             if (save_code) {
                 save_plotcode(p, plot_prefix,
-                    setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
+                    setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env(case, envir = .GlobalEnv))"),
                     "case",
                     auto_data_setup = FALSE)
             }

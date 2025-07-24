@@ -4,7 +4,7 @@
 </script>
 
 {%- macro report_job(job, h=1) -%}
-    {%- for pngfile in job.out.outdir | joinpaths: '*.png' | glob -%}
+    {%- for pngfile in job.out.outdir | glob: '*.png' -%}
     <h{{h+1}}>{{pngfile | stem0 | title}}</h{{h+1}}>
     <Image src="{{pngfile}}" />
     {%- endfor -%}

@@ -44,12 +44,19 @@ def get_pipeline(testfile, loglevel="debug", enable_report=False, **kwargs):
     """Get a pipeline for a test file"""
     name, workdir, outdir = _get_test_dirs(testfile, False)
     report_plugin_prefix = "+" if enable_report else "-"
+    plugins = kwargs.pop("plugins", [])
+    if any("report" in p for p in plugins if isinstance(p, str)):
+        raise ValueError(
+            "Do not pass `report` plugin to `get_pipeline(plugins=[...])`, "
+            "use `enable_report` instead."
+        )
+    plugins.append(f"{report_plugin_prefix}report")
     kws = {
         "name": name,
         "workdir": workdir,
         "outdir": outdir,
         "loglevel": loglevel,
-        "plugins": [f"{report_plugin_prefix}report"],
+        "plugins": plugins,
     }
     kws.update(kwargs)
     return Pipen(**kws)

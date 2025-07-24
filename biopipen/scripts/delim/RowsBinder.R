@@ -1,4 +1,4 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
+library(biopipen.utils)
 
 infiles <- {{in.infiles | r}}
 outfile <- {{out.outfile | r}}

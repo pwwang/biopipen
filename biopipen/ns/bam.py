@@ -4,6 +4,9 @@ from ..core.proc import Proc
 from ..core.config import config
 
 
+# +-------------------------------------------------------------------+
+# | CNV callers                                                       |
+# +-------------------------------------------------------------------+
 class CNVpytor(Proc):
     """Detect CNV using CNVpytor
 
@@ -26,15 +29,14 @@ class CNVpytor(Proc):
         binsizes: The binsizes
         snp: How to read snp data
         filters: The filters to filter the result
-            See - https://github.com/abyzovlab/CNVpytor/blob/master
-            /GettingStarted.md#predicting-cnv-regions
+            See - https://github.com/abyzovlab/CNVpytor/blob/master/GettingStarted.md#predicting-cnv-regions
         mask_snps: Whether mask 1000 Genome snps
         baf_nomask: Do not use P mask in BAF histograms
 
     Requires:
         cnvpytor:
            - check: {{proc.envs.cnvpytor}} --version
-    """
+    """  # noqa: E501
     input = "bamfile:file, snpfile:file"
     output = "outdir:dir:{{in.bamfile | stem}}.cnvpytor"
     lang = config.lang.python
@@ -150,7 +152,7 @@ class CNAClinic(Proc):
             A list of sample names
             A float number (0 < x <= 1), the fraction of samples to use
             A integer number (x > 1), the number of samples to use
-        binsize: Directly use this binsize for CNAClinic, in kbp.
+        binsize: Directly use this binsize for CNAClinic, in bp.
         genome: The genome assembly
         run_args: The arguments for CNAClinic::runSegmentation
         plot_args: The arguments for CNAClinic::plotSampleData
@@ -181,6 +183,9 @@ class CNAClinic(Proc):
     }
 
 
+# +-------------------------------------------------------------------+
+# | Bam processing tools                                              |
+# +-------------------------------------------------------------------+
 class BamSplitChroms(Proc):
     """Split bam file by chromosomes
 
@@ -368,3 +373,34 @@ class BamSort(Proc):
         "index": True,
     }
     script = "file://../scripts/bam/BamSort.py"
+
+
+class SamtoolsView(Proc):
+    """View bam file using samtools, mostly used for filtering
+
+    This is a wrapper for `samtools view` command.
+    It will create a new bam file with the same name as the input bam file.
+
+    Input:
+        bamfile: The bam file
+
+    Output:
+        outfile: The output bam file
+
+    Envs:
+        ncores: Number of cores to use
+        samtools: Path to samtools executable
+        index: Whether to index the output bam file
+            Requires the input bam file to be sorted.
+        <more>: Other arguments passed to the view tool
+            See `samtools view` or `sambamba view`.
+    """
+    input = "bamfile:file"
+    output = "outfile:file:{{in.bamfile | stem}}.bam"
+    lang = config.lang.python
+    envs = {
+        "ncores": config.misc.ncores,
+        "samtools": config.exe.samtools,
+        "index": True,
+    }
+    script = "file://../scripts/bam/SamtoolsView.py"

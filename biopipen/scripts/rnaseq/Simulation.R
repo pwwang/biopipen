@@ -1,5 +1,3 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 ngenes <- {{in.ngenes | r}}
 nsamples <- {{in.nsamples | r}}
 outfile <- {{out.outfile | r}}

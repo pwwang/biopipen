@@ -6,8 +6,8 @@ library(tidyr)
 library(ggprism)
 
 
-immfile <- {{ in.immdata | quote }}
-outdir <- {{ out.outdir | quote }}
+immfile <- {{ in.immdata | r }}
+outdir <- {{ out.outdir | r }}
 
 subject_key <- {{ envs.subject | r }}
 group_key <- {{ envs.group | r }}

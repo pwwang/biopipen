@@ -9,11 +9,11 @@ library(tibble)
 library(glue)
 library(bracer)
 
-metafile = {{ in.metafile | quote }}
-rdsfile = {{ out.rdsfile | quote }}
-metatxt = {{ out.metatxt | quote }}
-tmpdir = {{ envs.tmpdir | quote }}
-mode = {{ envs.mode | quote }}
+metafile = {{ in.metafile | r }}
+rdsfile = {{ out.rdsfile | r }}
+metatxt = {{ out.metatxt | r }}
+tmpdir = {{ envs.tmpdir | r }}
+mode = {{ envs.mode | r }}
 extracols = {{ envs.extracols | r}}
 prefix = {{ envs.prefix | r }}
 

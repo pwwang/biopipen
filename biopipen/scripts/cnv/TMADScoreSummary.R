@@ -1,9 +1,7 @@
-library(ggplot2)
-library(ggprism)
 library(dplyr)
 library(tidyr)
 library(tibble)
-library(patchwork)
+library(plotthis)
 
 tmadfiles = {{in.tmadfiles | r}}
 metafile  = {{in.metafile | r}}
@@ -47,7 +45,7 @@ if (!is.null(group_cols)) {
 }
 
 data = data.frame(Sample = sams, tMAD = tmads)
-if (file.exists(metafile) && length(meta_cols) > 0) {
+if (is.character(metafile) && file.exists(metafile) && length(meta_cols) > 0) {
     metadf = read.table(metafile, header=T, row.names=NULL, sep="\t", stringsAsFactors=F)
     if (!is.null(metadf$Sample)) {
         metadf$Sample = as.character(metadf$Sample)
@@ -63,20 +61,12 @@ if (file.exists(metafile) && length(meta_cols) > 0) {
 write.table(data, file=file.path(outdir, "tMAD.txt"), sep="\t", quote=F, row.names=F)
 
 # bar plot for all samples without grouping
-p = ggplot(data, aes(x=Sample, y=tMAD)) +
-    geom_bar(stat="identity", fill="steelblue") +
-    theme_prism() +
-    theme(
-        axis.text.x = element_text(angle=90, hjust=1, vjust=0.5),
-        axis.title.x = element_blank(),
-        axis.title.y = element_text(size=12),
-        axis.text.y = element_text(size=12),
-        legend.position = "none",
-    ) +
-    labs(
-        x = NULL,
-        y = "tMAD",
-    )
+p <- BarPlot(
+    data = data,
+    x = "Sample",
+    y = "tMAD",
+    x_text_angle = 90
+)
 
 png(file.path(outdir, "tMAD.png"), width=400 + length(sams) * 12, height=800, res=100)
 print(p)
@@ -88,41 +78,30 @@ if (!is.null(group_cols)) {
         if (!grepl(",", group_col, fixed = TRUE)) {
             # Bar plot with this group_col, but with different fill colors
             # for each group, and samples from the same group are next to each other
-            p = ggplot(
-                    data %>% arrange(!!sym(group_col)) %>% mutate(Sample=factor(Sample, levels=Sample)),
-                    aes(x=Sample, y=tMAD, fill=!!sym(group_col))
-                ) +
-                geom_bar(stat="identity") +
-                theme_prism() +
-                theme(
-                    axis.text.x = element_text(angle=90, hjust=1, vjust=0.5),
-                    axis.title.x = element_blank(),
-                    axis.title.y = element_text(size=12),
-                    axis.text.y = element_text(size=12),
-                ) +
-                labs(
-                    x = NULL,
-                    y = "tMAD",
-                )
+            gdata <- data %>% arrange(!!sym(group_col)) %>% mutate(Sample=factor(Sample, levels=unique(Sample)))
+            p <- BarPlot(
+                data = gdata,
+                x = "Sample",
+                y = "tMAD",
+                fill = group_col,
+                x_text_angle = 90
+            )
 
             png(file.path(outdir, paste0("tMAD_", group_col, "_bar.png")), width=400 + length(sams) * 12, height=600, res=100)
             print(p)
             dev.off()
 
             # Box plot overlays with violin plot with this group_col
-            p = ggplot(data, aes(x=!!sym(group_col), y=tMAD)) +
-                geom_boxplot(outlier.shape=NA, fill="white", color="black") +
-                geom_violin(fill="steelblue", alpha=0.5) +
-                theme_prism() +
-                theme(
-                    axis.title.x = element_text(size=12),
-                    axis.title.y = element_text(size=12),
-                    axis.text.y = element_text(size=12),
-                ) +
-                labs(
-                    x = group_col,
-                    y = "tMAD",
-                )
+            p <- ViolinPlot(
+                data = gdata,
+                x = group_col,
+                y = "tMAD",
+                x_text_angle = 90,
+                add_box = TRUE,
+                add_point = TRUE,
+                comparisons = TRUE,
+                sig_label = "p.format"
+            )
 
             png(file.path(outdir, paste0("tMAD_", group_col, "_box_violin.png")), width=1000, height=600, res=100)
             print(p)
@@ -137,25 +116,17 @@ if (!is.null(group_cols)) {
             # concatenate them together using patch work, with ncol=2
             # calcuate the height and width of the plot based on the number of
             # groups
-            ps = data %>%
-                group_by(!!sym(group_col1)) %>%
-                group_map(function(.x, .y) {
-                    p = ggplot(
-                            .x %>% arrange(!!sym(group_col2)) %>% mutate(Sample=factor(Sample, levels=Sample)),
-                            aes(x=Sample, y=tMAD, fill=!!sym(group_col2))
-                        ) +
-                        geom_bar(stat="identity") +
-                        theme_prism() +
-                        theme(
-                            axis.text.x = element_text(angle=90, hjust=1, vjust=0.5),
-                            axis.title.x = element_blank(),
-                            axis.title.y = element_text(size=12),
-                            axis.text.y = element_text(size=12),
-                        ) +
-                        labs(x = NULL, y = "tMAD") +
-                        ggtitle(.y[[group_col1]][1])
-                    p
-                })
+            gdata <- data %>% arrange(!!sym(group_col1), !!sym(group_col2)) %>%
+                mutate(Sample=factor(Sample, levels=unique(Sample)))
+            p <- BarPlot(
+                data = gdata,
+                x = "Sample",
+                y = "tMAD",
+                split_by = group_col1,
+                fill = group_col2,
+                x_text_angle = 90,
+                ncol = 2
+            )
 
             png(
                 file.path(outdir, paste0("tMAD_", group_col, "_bar.png")),
@@ -163,26 +134,22 @@ if (!is.null(group_cols)) {
                 height=length(unique(data[[group_col1]])) * 200,
                 res=100
             )
-            print(wrap_plots(ps, ncol=2))
+            print(p)
             dev.off()
 
             # Do the same for Voilin + boxplot
-            ps = data %>%
-                group_by(!!sym(group_col1)) %>%
-                group_map(function(.x, .y) {
-                    p = ggplot(.x, aes(x=!!sym(group_col2), y=tMAD)) +
-                        geom_boxplot(outlier.shape=NA, fill="white", color="black") +
-                        geom_violin(fill="steelblue", alpha=0.5) +
-                        theme_prism() +
-                        theme(
-                            axis.title.x = element_text(size=12),
-                            axis.title.y = element_text(size=12),
-                            axis.text.y = element_text(size=12),
-                        ) +
-                        labs(x = group_col2, y = "tMAD") +
-                        ggtitle(.y[[group_col1]][1])
-                    p
-                })
+            p <- ViolinPlot(
+                data = gdata,
+                x = group_col2,
+                y = "tMAD",
+                split_by = group_col1,
+                x_text_angle = 90,
+                add_box = TRUE,
+                add_point = TRUE,
+                comparisons = TRUE,
+                sig_label = "p.format",
+                ncol = 2
+            )
 
             png(
                 file.path(outdir, paste0("tMAD_", group_col, "_box_violin.png")),
@@ -190,7 +157,7 @@ if (!is.null(group_cols)) {
                 height=length(unique(data[[group_col1]])) * 200,
                 res=100
             )
-            print(wrap_plots(ps, ncol=2))
+            print(p)
             dev.off()
         }
     }

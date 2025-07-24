@@ -37,7 +37,7 @@ cases <- {{envs.cases | r}}  # nolint
 overlap <- overlap %||% c()
 overlaps <- list()
 log_info("- Loading seurat object ...")
-srtobj <- readRDS(srtfile)
+srtobj <- biopipen.utils::read_obj(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log_info("- Mutating seurat object ...")

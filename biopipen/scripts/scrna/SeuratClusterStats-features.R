@@ -60,6 +60,7 @@ do_one_features <- function(name) {
     log$info("- Case: {name}")
 
     case <- list_update(features_defaults, features[[name]])
+    case$descr <- case$descr %||% ""
     case <- extract_vars(
         case,
         "devpars", "more_formats", "save_code", "save_data", "order_by",
@@ -87,50 +88,58 @@ do_one_features <- function(name) {
     }
 
     info <- case_info(name, odir, is_dir = FALSE, create = TRUE)
-    case$features <- .get_features(features, case$object)
-    p <- do_call(gglogger::register(FeatureStatPlot), case)
-    save_plot(p, info$prefix, devpars, formats = c("png", more_formats))
-    if (save_code) {
-        save_plotcode(p, info$prefix,
-            setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
-            "case",
-            auto_data_setup = FALSE)
+
+    caching <- Cache$new(
+        c(case, list(devpars, more_formats, save_code, save_data, order_by, subset, features, descr)),
+        prefix = "biopipen.scrna.SeuratClusterStats.features",
+        cache_dir = cache,
+        kind = "prefix",
+        path = info$prefix
+    )
+
+    if (caching$is_cached()) {
+        log$info("  plots are cached, restoring ...")
+        caching$restore()
+    } else {
+        case$features <- .get_features(features, case$object)
+        p <- do_call(gglogger::register(FeatureStatPlot), case)
+        save_plot(p, info$prefix, devpars, formats = c("png", more_formats))
+        if (save_code) {
+            save_plotcode(p, info$prefix,
+                setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env(case, envir = .GlobalEnv))"),
+                "case",
+                auto_data_setup = FALSE)
+        }
+
+        if (save_data) {
+            pdata <- attr(p, "data") %||% p$data
+            if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
+                stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
+            }
+            write.table(pdata, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+        }
+
+        caching$save(info$prefix)
     }
-    if (exists("descr") && !is.null(descr)) {
+    # add reports
+    if (!is.null(descr) && nchar(descr) > 0) {
         reporter$add2(
-            list(
-                kind = "descr",
-                content = descr
-            ),
+            list(kind = "descr", content = descr),
             hs = c(info$section, info$name)
         )
     }
 
     if (save_data) {
-        if (!inherits(p$data, "data.frame") && !inherits(p$data, "matrix")) {
-            stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
-        }
-        write.table(p$data, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
         reporter$add2(
             list(
                 name = "Plot",
-                contents = list(
-                    reporter$image(
-                        info$prefix, more_formats, save_code, kind = "image")
-                )
+                contents = list(reporter$image(info$prefix, more_formats, save_code, kind = "image"))
             ),
             list(
                 name = "Data",
                 contents = list(
-                    list(
-                        kind = "descr",
-                        content = "Data used directly for the plot"
-                    ),
-                    list(
-                        kind = "table",
-                        src = paste0(info$prefix, ".data.txt"),
-                        data = list(nrows = 100)
-                    )
+                    list(kind = "descr", content = "Data used directly for the plot"),
+                    list(kind = "table", src = paste0(info$prefix, ".data.txt"), data = list(nrows = 100))
                 )
             ),
             hs = c(info$section, info$name),

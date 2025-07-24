@@ -1,12 +1,11 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(dplyr)
 library(tidyr)
 library(fastLiquidAssociation)
+library(biopipen.utils)
 
 infile <- {{in.infile | r}}
-covfile <- {{in.covfile | r}}
+covfile <- {{in.covfile | r: quote_none=False | r}}
 groupfile <- {{in.groupfile | r}}
 fmlfile <- {{in.fmlfile | r}}
 outfile <- {{out.outfile | r}}
@@ -32,7 +31,7 @@ if (!is.null(groupfile) && !is.null(nvec)) {
 	stop("Must provide either in.groupfile or envs.nvec, not both")
 }
 
-log_info("Reading and preparing data ...")
+log$info("Reading and preparing data ...")
 indata <- read.table(infile, header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 if (transpose_input) {
 	indata <- t(indata)
@@ -76,7 +75,7 @@ if (!is.null(groupfile)) {
 	nvec <- expand_range(nvec)
 }
 
-log_info("Running fastLiquidAssociation ...")
+log$info("Running fastLiquidAssociation ...")
 indata <- as.matrix(indata)
 mla <- fastMLA(
 	data = indata,
@@ -88,7 +87,7 @@ mla <- fastMLA(
 )
 
 if (nrow(mla) == 0) {
-	log_warn("No significant associations found")
+	log$warn("No significant associations found")
 	out <- data.frame(
 		X12 = character(),
 		X21 = character(),
@@ -128,9 +127,9 @@ if (!is.null(xyz_names)) {
 }
 
 if (padj != "none") {
-	log_info("Calculating adjusted p-values ...")
+	log$info("Calculating adjusted p-values ...")
 	out$Padj <- p.adjust(out$Pval, method = padj)
 }
 
-log_info("Writing output ...")
+log$info("Writing output ...")
 write.table(out, file = outfile, sep = "\t", quote = FALSE, row.names = FALSE)

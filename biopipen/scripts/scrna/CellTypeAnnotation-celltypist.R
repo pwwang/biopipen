@@ -2,15 +2,22 @@ library(rlang)
 library(hdf5r)
 library(dplyr)
 library(Seurat)
+library(biopipen.utils)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
 newcol <- {{envs.newcol | r}}
 merge_same_labels <- {{envs.merge | r}}
 celltypist_args <- {{envs.celltypist_args | r}}
+outtype <- {{envs.outtype | r }}
+if (identical(outtype, "input")) {
+    outtype <- tolower(tools::file_ext(outfile))  # rds, h5ad, qs/qs2
+}
 
 outdir <- dirname(outfile)
 outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
+
+log <- get_logger()
 
 if (is.null(celltypist_args$model)) {
     stop("Please specify a model for celltypist (envs.celltypist_args.model)")
@@ -30,74 +37,61 @@ if (!file.exists(modelfile)) {
 }
 
 sobj <- NULL
-outtype <- tolower(tools::file_ext(outfile))  # .rds, .h5ad, .h5seurat
 if (!endsWith(sobjfile, ".h5ad")) {
-    log_info("Convert input to H5AD ...")
-    library(SeuratDisk)
-
-    assay <- celltypist_args$assay
-    if (endsWith(sobjfile, ".rds") || endsWith(sobjfile, ".RDS")) {
-        h5s_file <- paste0(outprefix, ".h5seurat")
-        if (file.exists(h5s_file) && (file.mtime(h5s_file) < file.mtime(sobjfile))) {
-            file.remove(h5s_file)
+    sobj <- read_obj(sobjfile)
+    if (is.null(celltypist_args$over_clustering)) {
+        # find the default ident name in meta.data
+        for (col in colnames(sobj@meta.data)) {
+            if (!is.factor(sobj@meta.data[[col]])) { next }
+            if (isTRUE(all.equal(Idents(sobj), sobj@meta.data[[col]]))) {
+                celltypist_args$over_clustering <- col
+                break
+            }
         }
-        if (!file.exists(h5s_file)) {
-            log_info("Reading RDS file ...")
-            sobj <- readRDS(sobjfile)
-            assay <- assay %||% DefaultAssay(sobj)
-            # In order to convert to h5ad
-            # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
-            sobj_v3 <- sobj
-            sobj_v3$RNAv3 <- as(object = sobj[[assay]], Class = "Assay")
-            DefaultAssay(sobj_v3) <- "RNAv3"
-            sobj_v3$RNA <- NULL
-            sobj_v3 <- RenameAssays(sobj_v3, RNAv3 = "RNA")
-
-            log_info("Saving to H5Seurat file ...")
-            SaveH5Seurat(sobj_v3, h5s_file)
-            rm(sobj_v3)
-        } else if (outtype == "rds") {
-            log_info("Reading RDS file ...")
-            sobj <- readRDS(sobjfile)
-            assay <- assay %||% DefaultAssay(sobj)
-            log_info("Using existing H5Seurat file ...")
-        } else {
-            log_info("Using existing H5Seurat file ...")
-        }
-        sobjfile <- h5s_file
     }
-    if (!endsWith(sobjfile, ".h5seurat")) {
-        stop(paste0("Unknown input file format: ",
-            tools::file_ext(sobjfile),
-            ". Supported formats: .rds, .RDS, .h5ad, .h5seurat"))
+    if (is.null(celltypist_args$over_clustering)) {
+        celltypist_args$over_clustering <- FALSE
     }
-    if (!endsWith(sobjfile, ".h5ad")) {  # .h5seurat
+    if (!isFALSE(celltypist_args$over_clustering)) {
+        destfile <- paste0(outprefix, ".", celltypist_args$over_clustering, ".h5ad")
+    } else {
         destfile <- paste0(outprefix, ".h5ad")
-        if (file.exists(destfile) && (file.mtime(destfile) < file.mtime(sobjfile))) {
-            file.remove(destfile)
-        }
-        if (file.exists(destfile)) {
-            log_info("Using existing H5AD file ...")
-        } else {
-            log_info("Converting to H5AD file ...")
-            Convert(sobjfile, dest = destfile, assay = assay %||% "RNA")
-        }
-        sobjfile <- destfile
     }
+
+    if (file.exists(destfile) && (file.mtime(destfile) < file.mtime(sobjfile))) {
+        file.remove(destfile)
+    }
+    if (file.exists(destfile)) {
+        log$warn("Using existing H5AD file: {destfile} ...")
+    } else {
+        log$info("Converting to H5AD file ...")
+        ConvertSeuratToAnnData(
+            sobj,
+            outfile = destfile,
+            assay = celltypist_args$assay %||% "RNA",
+            log = log
+        )
+    }
+    sobjfile <- destfile
 }
 
 # sobjfile h5ad ensured
 # use celltypist to annotate
-log_info("Annotating cell types using celltypist ...")
+log$info("Annotating cell types using celltypist ...")
+# celltypist_script <- file.path(
+#     "{ {biopipen_dir} }", "scripts", "scrna", "celltypist-wrapper.py"
+# )
+# In case this script is running in the cloud and <biopipen_dir> can not be found in there
+# In stead, we use the python command, which is associated with the cloud environment,
+# to get the biopipen directory
+biopipen_dir <- get_biopipen_dir(celltypist_args$python)
 celltypist_script <- file.path(
-    "{{biopipen_dir}}", "scripts", "scrna", "celltypist-wrapper.py"
+    biopipen_dir, "scripts", "scrna", "celltypist-wrapper.py"
 )
 
 if (outtype == "h5ad") {
     celltypist_outfile <- outfile
-} else if (outtype == "h5seurat") {
-    celltypist_outfile <- paste0(outprefix, ".celltypist.h5ad")
-} else if (outtype == "rds") {
+} else if (outtype == "rds" || outtype == "qs" || outtype == "qs2") {
     ext <- if (is.null(sobj)) ".h5ad" else ".txt"
     celltypist_outfile <- paste0(outprefix, ".celltypist", ext)
 } else {
@@ -106,7 +100,7 @@ if (outtype == "h5ad") {
 
 if (file.exists(celltypist_outfile) &&
     (file.mtime(celltypist_outfile) > file.mtime(sobjfile))) {
-    log_info("Using existing celltypist results ...")
+    log$warn("Using existing celltypist results: {celltypist_outfile} ...")
 } else {
     command <- paste(
         paste0("CELLTYPIST_FOLDER='", outdir, "'"),
@@ -123,76 +117,29 @@ if (file.exists(celltypist_outfile) &&
     if (isTRUE(celltypist_args$majority_voting)) {
         command <- paste(command, "-v")
     }
-    log_info("Running celltypist:")
-    log_debug("- {command}")
+    log$info("Running celltypist:")
+    log$debug("- {command}")
     rc <- system(command)
     if (rc != 0) {
-        stop("Failed to run celltypist")
+        stop("Failed to run celltypist. Check the job.stderr file to see the error message.")
     }
 }
 
 if (outtype == "h5ad") {
-    # log_info("Using H5AD from celltypist as output directly ...")
-    # file.rename(paste0(out_prefix, ".h5ad"), outfile)
     if (merge_same_labels) {
-        log_warn("- Merging clusters with the same labels is not supported for h5ad outfile ...")
+        log$warn("- Merging clusters with the same labels is not supported and is ignored for h5ad outfile ...")
     }
-} else if (outtype == "h5seurat") {
-    log_info("Converting H5AD from celltypist to H5Seurat ...")
-    # outfile is cleaned by the pipeline anyway
-    Convert(
-        celltypist_outfile,
-        assay = assay %||% 'RNA',
-        dest = outfile,
-        overwrite = TRUE
-    )
-    if (merge_same_labels) {
-        log_warn("- Merging clusters with the same labels is not supported for h5seurat outfile ...")
-    }
-} else if (outtype == "rds") {
+} else if (outtype == "rds" || outtype == "qs" || outtype == "qs2") {
     if (is.null(sobj)) {
-        log_info("Converting H5AD from celltypist to RDS ...")
-        h5seurat_file <- paste0(outprefix, ".celltypist.h5seurat")
-        if (file.exists(h5seurat_file) &&
-            (file.mtime(h5seurat_file) > file.mtime(celltypist_outfile))) {
-            log_info("- Using existing H5Seurat file ...")
-        } else {
-            log_info("- Converting to h5seurat ...")
-            Convert(
-                celltypist_outfile,
-                assay = assay %||% 'RNA', dest = h5seurat_file, overwrite = TRUE)
-        }
-        log_info("- Converting to RDS ...")
-        # Fix Missing required datasets 'levels' and 'values'
-        # https://github.com/mojaveazure/seurat-disk/issues/109#issuecomment-1722394184
-        f <- H5File$new(h5seurat_file, "r+")
-        groups <- f$ls(recursive = TRUE)
-
-        for (name in groups$name[grepl("categories", groups$name)]) {
-            names <- strsplit(name, "/")[[1]]
-            names <- c(names[1:length(names) - 1], "levels")
-            new_name <- paste(names, collapse = "/")
-            f[[new_name]] <- f[[name]]
-        }
-
-        for (name in groups$name[grepl("codes", groups$name)]) {
-            names <- strsplit(name, "/")[[1]]
-            names <- c(names[1:length(names) - 1], "values")
-            new_name <- paste(names, collapse = "/")
-            f[[new_name]] <- f[[name]]
-            grp <- f[[new_name]]
-            grp$write(args = list(1:grp$dims), value = grp$read() + 1)
-        }
-        f$close_all()
-        # end
-
-        sobj <- LoadH5Seurat(h5seurat_file)
-        if (merge_same_labels) {
-            log_info("Merging clusters with the same labels ...")
-            sobj <- merge_clusters_with_same_labels(sobj, newcol)
-        }
+        log$info("Reading H5AD from celltypist ...")
+        sobj <- ConvertAnnDataToSeurat(
+            infile = celltypist_outfile,
+            outfile = NULL,
+            assay = celltypist_args$assay %||% "RNA",
+            log = log
+        )
     } else {
-        log_info("Attaching celltypist results to Seurat object ...")
+        log$info("Attaching celltypist results to Seurat object ...")
 
         celltypist_out <- read.table(
             celltypist_outfile, sep = "\t", header = TRUE, row.names = 1)
@@ -205,48 +152,50 @@ if (outtype == "h5ad") {
                 drop = FALSE
             ]
         )
-
-        if (celltypist_args$majority_voting) {
-            prediction <- "majority_voting"
-
-            if (!is.null(newcol)) {
-                sobj@meta.data[[newcol]] <- sobj@meta.data[[prediction]]
-            } else {
-                over_clustering <- celltypist_args$over_clustering
-                if (over_clustering %in% colnames(sobj@meta.data)) {
-                    sobj@meta.data$seurat_clusters_id <- sobj@meta.data[[over_clustering]]
-                } else {
-                    over_clustering <- "over_clustering"
-                }
-
-                # make a map of original cluster id to new cluster id
-                cluster_map <- data.frame(
-                    seurat_clusters_id = sobj@meta.data[[over_clustering]],
-                    seurat_clusters = sobj@meta.data[[prediction]]
-                    ) %>%
-                    group_by(seurat_clusters_id) %>%
-                    summarise(seurat_clusters = first(seurat_clusters), .groups = "drop") %>%
-                    mutate(seurat_clusters = make.unique(seurat_clusters))
-                cluster_map <- split(cluster_map$seurat_clusters, cluster_map$seurat_clusters_id)
-                if (over_clustering != "seurat_clusters") {
-                    sobj@meta.data$seurat_clusters <- sobj@meta.data[[over_clustering]]
-                }
-                Idents(sobj) <- "seurat_clusters"
-                cluster_map$object <- sobj
-                log_info("Renaming clusters ...")
-                sobj <- do_call(RenameIdents, cluster_map)
-                sobj@meta.data$seurat_clusters <- Idents(sobj)
-            }
-        } else if (!is.null(newcol)) {
-            sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]
-        }
-        if (merge_same_labels) {
-            log_info("Merging clusters with the same labels ...")
-            sobj <- merge_clusters_with_same_labels(sobj, newcol)
-        }
     }
-    log_info("Saving Seurat object in RDS ...")
-    saveRDS(sobj, outfile)
+
+    if (celltypist_args$majority_voting) {
+        prediction <- "majority_voting"
+
+        if (!is.null(newcol)) {
+            sobj@meta.data[[newcol]] <- sobj@meta.data[[prediction]]
+        } else {
+            over_clustering <- celltypist_args$over_clustering
+            if (over_clustering %in% colnames(sobj@meta.data)) {
+                sobj@meta.data$seurat_clusters_id <- sobj@meta.data[[over_clustering]]
+            } else {
+                over_clustering <- "over_clustering"
+            }
+
+            # make a map of original cluster id to new cluster id
+            cluster_map <- data.frame(
+                seurat_clusters_id = sobj@meta.data[[over_clustering]],
+                seurat_clusters = sobj@meta.data[[prediction]]
+                ) %>%
+                group_by(seurat_clusters_id) %>%
+                summarise(seurat_clusters = first(seurat_clusters), .groups = "drop") %>%
+                mutate(seurat_clusters = make.unique(seurat_clusters))
+            cluster_map <- split(cluster_map$seurat_clusters, cluster_map$seurat_clusters_id)
+            if (over_clustering != "seurat_clusters") {
+                sobj@meta.data$seurat_clusters <- sobj@meta.data[[over_clustering]]
+            }
+            Idents(sobj) <- "seurat_clusters"
+            cluster_map$object <- sobj
+            log$info("Renaming clusters ...")
+            sobj <- do_call(RenameIdents, cluster_map)
+            sobj@meta.data$seurat_clusters <- Idents(sobj)
+        }
+    } else if (!is.null(newcol)) {
+        sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]
+    }
+
+    if (merge_same_labels) {
+        log$info("Merging clusters with the same labels ...")
+        sobj <- merge_clusters_with_same_labels(sobj, newcol)
+    }
+
+    log$info("Saving the object ...")
+    save_obj(sobj, outfile)
 } else {
     stop(paste0("Unknown output type: ", outtype))
 }

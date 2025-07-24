@@ -1,5 +1,5 @@
 import os
-from pipen import Proc
+from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.core.testing import get_pipeline
 from biopipen.ns.scrna import ScFGSEA
@@ -36,6 +36,7 @@ class ScFGSEASingle(ScFGSEA):
         #     "data/reference/KEGG_metabolism.gmt"
         # ),
         "subset": "seurat_clusters == '0'",
+        "minSize": 1,
         "gmtfile": (
             "https://raw.githubusercontent.com/pwwang/immunopipe-example/"
             "master/data/KEGG_metabolism.short.gmt"
@@ -52,6 +53,7 @@ class ScFGSEAEach(ScFGSEA):
         "ident-1": "g1",
         "ident-2": "g2",
         "group-by": "groups2",
+        "minsize": 1,
         # "gmtfile": Path(__file__).parent.parent.parent.joinpath(
         #     "data/reference/KEGG_metabolism.gmt"
         # ),

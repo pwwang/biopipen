@@ -3,6 +3,7 @@ from pathlib import Path
 import warnings
 import pandas
 from datetime import datetime
+from diot import Diot  # pyright: ignore
 from biopipen.utils.reference import bam_index
 from biopipen.utils.misc import run_command, dict_to_cli_args, logger
 
@@ -16,7 +17,7 @@ refdir = {{envs.refdir | quote}}  # pyright: ignore
 genome = {{envs.genome | quote}}  # pyright: ignore
 chrsize: str = {{envs.chrsize | quote}}  # pyright: ignore
 filters: dict = {{envs.filters | repr}}  # pyright: ignore
-args: dict = {{envs | dict}}  # pyright: ignore
+args: Diot = {{envs | repr}}  # pyright: ignore
 
 del args['cnvpytor']
 del args['ncores']

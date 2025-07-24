@@ -1,11 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(dplyr)
-library(ggplot2)
-library(ggprism)
-
-theme_set(theme_prism())
+library(biopipen.utils)
+library(plotthis)
 
 infiles <- {{in.infiles | r}}
 outdir <- {{out.outdir | r}}
@@ -24,12 +20,15 @@ if (is.character(group)) {
     stop(paste0("Invalid group: ", paste0(group, collapse = ", ")))
 }
 
-log_info("Reading and merging metrics for each sample ...")
+log <- get_logger()
+reporter <- get_reporter()
+
+log$info("Reading and merging metrics for each sample ...")
 metrics <- NULL
 
 for (infile in infiles) {
     sample <- sub("_prodigy$", "", basename(dirname(infile)))
-    log_debug("- Reading metrics from {sample}")
+    log$debug("- Reading metrics from {sample}")
     metric <- read.table(
         infile,
         header = TRUE,
@@ -55,7 +54,7 @@ write.table(
     row.names = FALSE
 )
 
-add_report(
+reporter$add(
     list(kind = "descr", content = "Metrics for all samples"),
     list(kind = "table", src = file.path(outdir, "metrics.txt")),
     h1 = "Metrics of all samples"
@@ -76,17 +75,17 @@ METRIC_DESCR = list(
 )
 
 if (!is.null(group)) {
-    log_info("Merging group information ...")
+    log$info("Merging group information ...")
     metrics <- group %>%
         left_join(metrics, by = "Sample") %>%
         mutate(Group = factor(Group, levels = unique(Group)))
 }
 
-log_info("Plotting Prodigy metrics ...")
+log$info("Plotting Prodigy metrics ...")
 for (metric in names(METRIC_DESCR)) {
-    log_info("- {metric}: {METRIC_DESCR[[metric]]}")
+    log$info("- {metric}: {METRIC_DESCR[[metric]]}")
 
-    add_report(
+    reporter$add(
         list(
             kind = "descr",
             content = METRIC_DESCR[[metric]] %||% paste0("Metric: ", metric)
@@ -94,18 +93,22 @@ for (metric in names(METRIC_DESCR)) {
         h1 = metric
     )
 
-    # barplot
-    p <- ggplot(metrics, aes(x = Sample, y = !!sym(metric))) +
-        geom_bar(stat = "identity", fill = "steelblue") +
-        labs(x = "Sample", y = metric) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    p <- plotthis::BarPlot(
+        x = "Sample",
+        y = metric,
+        x_text_angle = 90,
+        fill = "Group",
+        data = metrics
+    )
 
     figfile <- file.path(outdir, paste0(slugify(metric), ".barplot.png"))
-    png(figfile, height = 600, res = 100, width = nrow(metrics) * 30 + 200)
+    height <- attr(p, "height") %||% 6
+    width <- attr(p, "width") %||% (nrow(metrics) * .3 + 2)
+    png(figfile, height = height * 100, res = 100, width = width * 100)
     print(p)
     dev.off()
 
-    add_report(
+    reporter$add(
         list(src = figfile, name = "By Sample"),
         ui = "table_of_images",
         h1 = metric
@@ -113,21 +116,25 @@ for (metric in names(METRIC_DESCR)) {
 
     if (is.null(group)) { next }
     # group: Sample, Group
-    p <- ggplot(metrics, aes(x = Group, y = !!sym(metric))) +
-        geom_boxplot(fill = "steelblue") +
-        labs(x = "Group", y = metric) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    p <- plotthis::BarPlot(
+        data = metrics,
+        x = "Group",
+        y = metric,
+        x_text_angle = 90
+    )
 
     figfile <- file.path(outdir, paste0(slugify(metric), ".boxplot.png"))
-    png(figfile, height = 600, res = 100, width = length(unique(metrics$Group)) * 30 + 200)
+    height <- attr(p, "height") %||% 6
+    width <- attr(p, "width") %||% (length(unique(metrics$Group)) * 0.3 + 2)
+    png(figfile, height = height * 100, res = 100, width = width * 100)
     print(p)
     dev.off()
 
-    add_report(
+    reporter$add(
         list(src = figfile, name = "By Group"),
         ui = "table_of_images",
         h1 = metric
     )
 }
 
-save_report(joboutdir)
+reporter$save(joboutdir)

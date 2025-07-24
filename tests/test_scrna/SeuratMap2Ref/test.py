@@ -4,7 +4,7 @@ from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
     SeuratMap2Ref as SeuratMap2Ref_,
-    SeuratClusterStats,
+    SeuratClusterStats as SeuratClusterStats_,
 )
 from biopipen.core.testing import get_pipeline
 
@@ -38,6 +38,7 @@ class SeuratMap2Ref(SeuratMap2Ref_):
             / "reference"
             / "pbmc_multimodal_2023.rds"
         ),
+        "MapQuery": {"reduction.model": "wnn.umap"},
     }
 
 
@@ -53,10 +54,11 @@ class SeuratMap2Ref2(SeuratMap2Ref_):
             / "reference"
             / "pbmc_multimodal_2023.rds"
         ),
+        "MapQuery": {"reduction.model": "wnn.umap"},
     }
 
 
-class SeuratClusterStats(SeuratClusterStats):
+class SeuratClusterStats(SeuratClusterStats_):
     requires = SeuratMap2Ref
     envs = {
         "stats": {
@@ -67,7 +69,7 @@ class SeuratClusterStats(SeuratClusterStats):
     }
 
 
-class SeuratClusterStats2(SeuratClusterStats):
+class SeuratClusterStats2(SeuratClusterStats_):
     requires = SeuratMap2Ref2
     envs = {
         "stats": {

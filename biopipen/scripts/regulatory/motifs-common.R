@@ -1,8 +1,7 @@
-# make sure biopipen/utils/misc.R is loaded, log_warn is defined, and slugify is defined
-
 library(rlang)
 library(universalmotif)
 library(MotifDb)
+library(biopipen.utils)
 
 #' @title Common functions for regulatory analysis
 #' @name regulatory-common
@@ -144,11 +143,12 @@ motifdb_to_motiflib <- function(motifdb) {
 #' @param notfound Action to take if regulators are not found in the mapping file
 #' @return Data frame with regulators and motifs
 #' @export
-ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, regmotifs, log_indent = "", notfound = "error") {
+ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, regmotifs, log_indent = "", notfound = "error", log = NULL) {
     if (is.null(motif_col)) {
         if (is.null(regmotifs)) {
             stop("Regulator-motif mapping file (envs.regmotifs) is required when no motif column (envs.motif_col) is provided")
         }
+        log <- log %||% get_logger()
         regmotifs <- .read_regmotifs(regmotifs)
         rm_motif_col <- colnames(regmotifs)[1]
         rm_reg_col <- colnames(regmotifs)[2]
@@ -158,7 +158,7 @@ ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, r
         notfound_regs <- setdiff(regulators, rm_regs)
         .handle_notfound_items(
             notfound_regs,
-            log_warn,
+            log$warn,
             "The following regulators were not found in the regulator-motif mapping file",
             notfound,
             file.path(outdir, "notfound_regulators.txt"),
@@ -185,7 +185,7 @@ ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, r
             notfound_motifs <- setdiff(motifs, rm_motifs)
             .handle_notfound_items(
                 notfound_motifs,
-                log_warn,
+                log$warn,
                 "The following motifs were not found in the regulator-motif mapping file",
                 notfound,
                 file.path(outdir, "notfound_motifs.txt"),
@@ -232,7 +232,8 @@ get_genome_pkg <- function(genome) {
 #' @param outdir Output directory, used to save un-matched motifs
 #' @return Motifs that are found
 #' @export
-check_motifs <- function(motifs, all_motifs, notfound, outdir) {
+check_motifs <- function(motifs, all_motifs, notfound, outdir, log = NULL) {
+    log <- log %||% get_logger()
     notfound_motifs <- setdiff(motifs, all_motifs)
     if (length(notfound_motifs) > 0) {
         first_notfound <- head(notfound_motifs, 3)
@@ -246,15 +247,15 @@ check_motifs <- function(motifs, all_motifs, notfound, outdir) {
             if (notfound == "error") {
                 stop(msg1, "\n", msg2)
             } else if (notfound == "ignore") {
-                log_warn(msg1)
-                log_warn(msg2)
+                log$warn(msg1)
+                log$warn(msg2)
             }
         } else {
             msg <- paste0("The following motifs were not found in the motif database: ", paste(first_notfound, collapse = ", "))
             if (notfound == "error") {
                 stop(msg)
             } else if (notfound == "ignore") {
-                log_warn(msg)
+                log$warn(msg)
             }
         }
 

@@ -6,15 +6,15 @@ library(tidyr)
 library(tibble)
 library(immunarch)
 
-immfile = {{in.immdata | quote}}
+immfile = {{in.immdata | r}}
 {% if in.filterfile %}
 filters = {{in.filterfile | toml_load | r}}
 {% else %}
 filters = {{envs.filters | r}}
 {% endif %}
 metacols = {{envs.metacols | r}}
-outfile = {{out.outfile | quote}}
-groupfile = {{out.groupfile | quote}}
+outfile = {{out.outfile | r}}
+groupfile = {{out.groupfile | r}}
 
 immdata0 = readRDS(immfile)
 groupname = filters$name

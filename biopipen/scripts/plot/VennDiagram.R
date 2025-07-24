@@ -1,8 +1,8 @@
 {{ biopipen_dir | joinpaths: "utils", "io.R" | source_r }}
 {{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
 
-infile = {{in.infile | quote}}
-outfile = {{out.outfile | quote}}
+infile = {{in.infile | r}}
+outfile = {{out.outfile | r}}
 inopts = {{envs.inopts | r}}
 intype = {{envs.intype | r}}
 devpars = {{envs.devpars | r}}

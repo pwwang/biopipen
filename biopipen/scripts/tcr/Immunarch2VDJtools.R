@@ -3,8 +3,8 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 
-immfile = {{in.immdata | quote}}
-outdir = {{out.outdir | quote}}
+immfile = {{in.immdata | r}}
+outdir = {{out.outdir | r}}
 
 immdata = readRDS(immfile)
 

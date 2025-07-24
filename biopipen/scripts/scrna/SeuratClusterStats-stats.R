@@ -1,5 +1,4 @@
 # Loaded variables: srtfile, outdir, srtobj
-library(circlize)
 
 log$info("stats:")
 
@@ -23,16 +22,17 @@ do_one_stats <- function(name) {
     save_plot(p, info$prefix, devpars, formats = c("png", more_formats))
     if (save_code) {
         save_plotcode(p, info$prefix,
-            setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env('case'))"),
+            setup = c("library(scplotter)", "load('data.RData')", "invisible(list2env(case, envir = .GlobalEnv))"),
             "case",
             auto_data_setup = FALSE)
     }
 
     if (save_data) {
-        if (!inherits(p$data, "data.frame") && !inherits(p$data, "matrix")) {
+        pdata <- attr(p, "data") %||% p$data
+        if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
             stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
         }
-        write.table(p$data, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+        write.table(pdata, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
         reporter$add2(
             list(
                 name = "Plot",

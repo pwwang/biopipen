@@ -1,11 +1,12 @@
 library(rlang)
 library(glue)
+library(dplyr)
 library(scplotter)
 library(biopipen.utils)
 
-screpfile <- {{in.screpfile | quote}}
-outdir <- {{out.outdir | quote}}
-joboutdir <- {{job.outdir | quote}}
+screpfile <- {{in.screpfile | r}}
+outdir <- {{out.outdir | r}}
+joboutdir <- {{job.outdir | r}}
 envs <- {{envs | r}}
 mutaters <- envs$mutaters
 cases <- envs$cases
@@ -397,7 +398,7 @@ get_plot_descr <- function(viz_type, case) {
 }
 
 log$info("Loading scRepertoire object ...")
-screp <- readRDS(screpfile)
+screp <- read_obj(screpfile)
 
 log$info("Applying mutaters if any ...")
 screp <- ScRepMutate(screp, mutaters)

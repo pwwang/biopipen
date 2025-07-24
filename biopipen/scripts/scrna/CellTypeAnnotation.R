@@ -1,7 +1,15 @@
 set.seed(8525)
 
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-common.R" | source_r }}
+merge_clusters_with_same_labels <- function(sobj, newcol) {
+    if (is.null(newcol)) {
+        sobj@meta.data$seurat_clusters <- sub("\\.\\d+$", "", sobj@meta.data$seurat_clusters)
+        Idents(sobj) <- "seurat_clusters"
+    } else {
+        sobj@meta.data[[newcol]] <- sub("\\.\\d+$", "", sobj@meta.data[[newcol]])
+    }
+
+    sobj
+}
 
 {% if envs.tool == "hitype" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-hitype.R" %}

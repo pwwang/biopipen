@@ -1,7 +1,9 @@
 """Provides a base class for the processes to subclass"""
-from diot import Diot
+from __future__ import annotations
+
+from diot import Diot  # type: ignore
 from liquid.defaults import SEARCH_PATHS
-from pipen import Proc as PipenProc
+from pipen import Proc as PipenProc  # type: ignore
 from pipen_filters.filters import FILTERS
 
 from .filters import filtermanager
@@ -23,7 +25,7 @@ class Proc(PipenProc):
     template_opts = {
         "globals": {**FILTERS, "biopipen_dir": str(BIOPIPEN_DIR)},
         "filters": {**FILTERS, **filtermanager.filters},
-        "search_paths": SEARCH_PATHS + [str(REPORT_DIR)],
+        "search_paths": SEARCH_PATHS + [str(REPORT_DIR)],  # type: ignore
     }
 
     plugin_opts = {

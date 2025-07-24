@@ -1,4 +1,3 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
 library(dcanr)
 library(scuttle)
 library(doRNG)
@@ -6,6 +5,7 @@ library(doParallel)
 library(snpStats)
 library(rlang)
 library(dplyr)
+library(biopipen.utils)
 
 infile <- {{in.infile | r}}
 groupfile <- {{in.groupfile | r}}
@@ -19,12 +19,14 @@ ncores <- {{envs.ncores | r}}
 transpose_input <- {{envs.transpose_input | r}}
 transpose_group <- {{envs.transpose_group | r}}
 
-log_info("Setting seed and parallel backend ...")
+log <- get_logger()
+
+log$info("Setting seed and parallel backend ...")
 set.seed(seed)
 registerDoParallel(cores = ncores)
 registerDoRNG(seed)
 
-log_info("Reading input files ...")
+log$info("Reading input files ...")
 indata <- read.table(infile, header = TRUE, row.names = 1, sep = "\t", check.names = FALSE)
 if (transpose_input) {
     indata <- t(indata)
@@ -42,21 +44,21 @@ diffcoex_score <- function(group) {
 
     gvals <- unique(gdata[, group, drop = TRUE])
     if (length(gvals) < 2) {
-        log_debug("  Less than 2 groups in the input. Skipping ...")
+        log$debug("  Less than 2 groups in the input. Skipping ...")
         return(NULL)
     }
     rs <- lapply(gvals, function(gval) {
         samples <- rownames(gdata[gdata[[group]] == gval, , drop = FALSE])
         expr <- indata[samples, , drop = FALSE]
         if (length(samples) < 3) {
-            log_debug("  Less than 3 samples in one of the groups. Skipping ...")
+            log$debug("  Less than 3 samples in one of the groups. Skipping ...")
             return(NULL)
         }
         cor.pairs(as.matrix(expr), cor.method = method)
     })
     rs[sapply(rs, is.null)] <- NULL
     if (length(rs) < 2) {
-        log_debug("  Less than 2 groups with at least 3 samples. Skipping ...")
+        log$debug("  Less than 2 groups with at least 3 samples. Skipping ...")
         return(NULL)
     }
     N <- length(rs)
@@ -130,21 +132,21 @@ perm_test <- function(dcscores, group, B = perm_batch) {
 
 do_one_group <- function(i) {
     group <- colnames(gdata)[i]
-    log_info("- Processing group {i}/{ngroups}: {group} ...")
-    log_info("  Calculating differential co-expression scores ...")
+    log$info("- Processing group {i}/{ngroups}: {group} ...")
+    log$info("  Calculating differential co-expression scores ...")
     dcscores <- diffcoex_score(group)
 
     if (!is.null(dcscores)) {
-        log_info("  Calculating p-values ...")
+        log$info("  Calculating p-values ...")
         perm_test(dcscores, group)
     }
 }
 
 trios <- do_call(rbind, lapply(seq_len(ngroups), do_one_group))
 if (padj != "none") {
-    log_info("Correcting p-values ...")
+    log$info("Correcting p-values ...")
     trios$Padj <- p.adjust(trios$Pval, method = padj)
 }
 
-log_info("Writing output ...")
+log$info("Writing output ...")
 write.table(trios, file = outfile, sep = "\t", quote = FALSE, row.names = FALSE)

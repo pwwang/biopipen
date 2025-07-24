@@ -1,17 +1,15 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "mutate_helpers.R" | source_r }}
-
 library(rlang)
 library(tibble)
 library(dplyr)
 library(Seurat)
+library(biopipen.utils)
 
-srtobj = {{in.srtobj | quote}}
+srtobj = {{in.srtobj | r}}
 metafile = {{in.metafile | r}}
 mutaters = {{envs.mutaters | r}}
-rdsfile = {{out.rdsfile | quote}}
+outfile = {{out.outfile | r}}
 
-srt = readRDS(srtobj)
+srt = read_obj(srtobj)
 metadata = srt@meta.data
 
 if (!is.null(metafile)) {
@@ -40,4 +38,4 @@ if (!is.null(expr) && length(expr) > 0) {
     srt@meta.data = metadata
 }
 
-saveRDS(srt, rdsfile)
+save_obj(srt, outfile)

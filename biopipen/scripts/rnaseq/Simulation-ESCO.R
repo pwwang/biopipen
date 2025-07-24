@@ -2,12 +2,15 @@
 library(ESCO)
 library(rlang)
 library(glue)
+library(biopipen.utils)
 
 args <- {{envs.esco_args | r: todot="-"}}
 args <- args %||% list()
 
 save <- args$save
 args$save <- NULL
+
+log <- get_logger()
 
 if (!is.null(seed)) {
     set.seed(seed)
@@ -20,12 +23,12 @@ args$verbose <- TRUE
 args$numCores <- ncores
 type <- args$type
 
-log_info("Running simulation ...")
+log$info("Running simulation ...")
 sim <- do_call(escoSimulate, args)
 attributes(sim) <- c(attributes(sim), c(simulation_tool = "ESCO"))
-saveRDS(sim, file.path(outdir, "sim.rds"))
+save_obj(sim, file.path(outdir, "sim.rds"))
 
-log_info("Plotting ...")
+log$info("Plotting ...")
 if (type == "single") {
     asys <- assays(sim)
     datalist = list(`simulated-truth` = asys$TrueCounts)
@@ -36,7 +39,7 @@ if (type == "single") {
         datalist$`down-sampled` = asys$observedcounts
     }
 
-    log_info("- Plotting the data ...")
+    log$info("- Plotting the data ...")
     dataplot <- file.path(outdir, "data.png")
     png(dataplot, width=length(datalist) * 600, height=1200, res=30)
     heatdata(datalist, norm = FALSE, size = 2, ncol = 3)
@@ -44,7 +47,7 @@ if (type == "single") {
 
     rholist <- metadata(sim)$Params@corr
     if (length(rholist) > 0) {
-        log_info("- Plotting the GCN ...")
+        log$info("- Plotting the GCN ...")
         corrgenes <- rownames(rholist[[1]])
         gcnlist = lapply(datalist, function(data)gcn(data, genes = corrgenes))
         gcnlist = append(gcnlist, list("given truth" = rholist[[1]]), 1)
@@ -75,13 +78,13 @@ if (type == "single") {
         datalist$`down-sampled` = asys$observedcounts
     }
 
-    log_info("- Plotting the data ...")
+    log$info("- Plotting the data ...")
     dataplot <- file.path(outdir, "data.png")
     png(dataplot, width=length(datalist) * 600, height=1200, res=30)
     heatdata(datalist, cellinfo = cellinfo, geneinfo = geneinfo, size = 1, ncol = 3)
     dev.off()
 
-    log_info("- Plotting the GCN for all marker genes (i.e. DE genes) across all cell groups ...")
+    log$info("- Plotting the GCN for all marker genes (i.e. DE genes) across all cell groups ...")
     degeneinfo = geneinfo[which(geneinfo$newcelltype!="None"),]
     degeneinfo$newcelltype = droplevels(degeneinfo$newcelltype)
     degcnlist = lapply(datalist, function(data)gcn(data, genes = degeneinfo$genes))
@@ -90,7 +93,7 @@ if (type == "single") {
     heatgcn(degcnlist, geneinfo = degeneinfo, size = 2, ncol = 3)
     dev.off()
 
-    log_info("- Plotting the GCN for marker genes within one cell group ...")
+    log$info("- Plotting the GCN for marker genes within one cell group ...")
     rholist = metadata(sim)$Params@corr
     group2_gcnlist = lapply(datalist,
                             function(data){
@@ -126,7 +129,7 @@ if (type == "single") {
     DEgene.name = as.character(rowData(sim)$Gene[which(group.facs.gene[,1]>1)])
     degeneinfo = geneinfo[match(DEgene.name, geneinfo$genes),]
 
-    log_info("- Plotting the data ...")
+    log$info("- Plotting the data ...")
     dataplot <- file.path(outdir, "data.png")
     png(dataplot, width=2000, height=1200, res=30)
     # plot the data
@@ -151,7 +154,7 @@ if (type == "single") {
     # get the geneinfo
     degenes = which(metadata(sim)$Params@paths.DEgenes==1)
 
-    log_info("- Plotting the trajectory ...")
+    log$info("- Plotting the trajectory ...")
     trajplot <- file.path(outdir, "traj.png")
     png(trajplot, width=1600, height=1200, res=30)
     # plot the data
@@ -160,7 +163,7 @@ if (type == "single") {
             labels = levels(as.factor(colData(sim)$Path)))
     dev.off()
 
-    log_info("- Plotting the data ...")
+    log$info("- Plotting the data ...")
     dataplot <- file.path(outdir, "data.png")
     heatdata(list("simulated truth" = datatrue[degenes,]),
          cellinfo = cellinfo,

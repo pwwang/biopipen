@@ -1,8 +1,7 @@
 import os
 import glob
-import rtoml
 import shutil
-from diot import Diot
+from diot import Diot  # type: ignore
 from biopipen.utils.misc import dict_to_cli_args, run_command
 
 bamfile = {{ in.bamfile | quote }}  # pyright: ignore # noqa
@@ -79,7 +78,7 @@ config.BAF |= Diot(
 
 os.makedirs(f"{outdir}/FREEC-output", exist_ok=True)
 
-config_ini = rtoml.dumps(config).replace('"', "")
+config_ini = config.to_toml().replace('"', "")   # type: ignore
 
 with open(configfile, "w") as fconf:
     fconf.write(config_ini)

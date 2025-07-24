@@ -36,7 +36,7 @@ get_bkg <- function(base) {
 bkg <- c(A = get_bkg("A"), C = get_bkg("C"), G = get_bkg("G"), T = get_bkg("T"))
 
 # run motifbreakR
-log_info("Running motifbreakR ...")
+log$info("Running motifbreakR ...")
 results <- motifbreakR(
     snpList = snps,
     pwmList = mdb,
@@ -48,7 +48,7 @@ results <- motifbreakR(
     BPPARAM = MulticoreParam(ncores)
 )
 
-log_info("Calculating p values ...")
+log$info("Calculating p values ...")
 results <- calculatePvalue(results)
 results_to_save <- as.data.frame(unname(results))
 results_to_save$motifPos <- lapply(results_to_save$motifPos, function(x) paste(x, collapse = ","))
@@ -69,7 +69,7 @@ write.table(
 )
 rm(results_to_save)
 
-log_info("Plotting variants ...")
+log$info("Plotting variants ...")
 if (is.null(plots) || length(plots) == 0) {
     results <- results[order(-abs(results$alleleDiff)), , drop = FALSE]
     results <- results[1:min(plot_nvars, length(results)), , drop = FALSE]
@@ -78,7 +78,7 @@ if (is.null(plots) || length(plots) == 0) {
     variants <- names(plots)
 }
 for (variant in variants) {
-    log_info("- Variant: {variant}")
+    log$info("- Variant: {variant}")
     if (is.null(plots[[variant]])) {
         plots[[variant]] <- list(devpars = devpars, which = "TRUE")
     }

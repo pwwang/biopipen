@@ -1,11 +1,9 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(AneuploidyScore)
 library(dplyr)
 library(tidyr)
 library(tibble)
-library(ggplot2)
-library(ggprism)
+library(plotthis)
+library(biopipen.utils)
 
 segfile = {{in.segfile | r}}
 outdir = {{out.outdir | r}}
@@ -59,7 +57,15 @@ getCAA <- function(segf, cytoarm, tcn_col,
     }
 
     ## Create a GRanges object with all unique intervals between segc and cytoc
-    starts <- sort(c(GenomicRanges::start(segc), GenomicRanges::start(cytoc)))
+    starts <- tryCatch({
+      sort(c(GenomicRanges::start(segc), GenomicRanges::start(cytoc)))
+    }, error=function(e) {
+      warning("Error to detect start on chromosome: ", chr_id, immediate. = TRUE)
+      NULL
+    })
+    if (is.null(starts)) {
+      return(NULL)
+    }
     ends <- sort(c(GenomicRanges::end(segc), GenomicRanges::end(cytoc)))
     combc <- GRanges(seqnames=chr_id,
                      IRanges(start=unique(sort(c(starts, ends[-length(ends)]+1))),
@@ -123,7 +129,7 @@ getCAA <- function(segf, cytoarm, tcn_col,
     return(combc_arms)
   })
   names(seg_cyto_chr) <- names(seg_chr)
-
+  seg_cyto_chr <- seg_cyto_chr[!sapply(seg_cyto_chr, is.null)]
   return(as(seg_cyto_chr, "GRangesList"))
 }
 
@@ -250,11 +256,17 @@ sig_min = min(-1, plotdata$Signal, na.rm=TRUE)
 sig_max = max(1, plotdata$Signal, na.rm=TRUE)
 
 png(file.path(outdir, "AneuploidyScore.png"), width=1000, height=600, res=100)
-ggplot(plotdata) +
-    geom_bar(aes(x=Arms, y=Signal, fill=Type), stat="identity") +
-    geom_hline(yintercept=0, color="black", size=0.1) +
-    ylim(c(sig_min, sig_max)) +
-    theme_prism() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    facet_wrap(~SignalType, scales="free_y", nrow=2)
+p <- BarPlot(
+    plotdata,
+    x = "Arms",
+    y = "Signal",
+    fill = "Type",
+    facet_by = "SignalType",
+    facet_nrow = 2,
+    y_min = sig_min,
+    y_max = sig_max,
+    x_text_angle = 90,
+    aspect.ratio = 0.2
+)
+print(p)
 dev.off()

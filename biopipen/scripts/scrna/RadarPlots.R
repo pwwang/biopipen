@@ -40,7 +40,7 @@ cases = {{envs.cases | r}}
 # sections = c()
 
 log_info("- Reading srtobj ...")
-srtobj = readRDS(srtfile)
+srtobj = biopipen.utils::read_obj(srtfile)
 meta = srtobj@meta.data
 
 log_info("- Mutating meta data if needed ...")

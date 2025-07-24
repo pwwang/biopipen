@@ -1,9 +1,9 @@
 
-infile = {{in.infile | quote}}
-outprefix = {{out.outfile | prefix | replace: ".fancyvj.wt", "" | quote}}
-vdjtools = {{ envs.vdjtools | quote }}
-vdjtools_patch = {{ envs.vdjtools_patch | quote }}
-joboutdir = {{job.outdir | quote}}
+infile = {{in.infile | r}}
+outprefix = {{out.outfile | prefix | replace: ".fancyvj.wt", "" | r}}
+vdjtools = {{ envs.vdjtools | r }}
+vdjtools_patch = {{ envs.vdjtools_patch | r }}
+joboutdir = {{job.outdir | r}}
 
 command = sprintf(
     "cd %s && bash %s %s PlotFancyVJUsage --plot-type png %s %s",

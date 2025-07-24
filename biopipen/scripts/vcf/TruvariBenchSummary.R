@@ -1,11 +1,7 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-{{ biopipen_dir | joinpaths: "utils", "plot.R" | source_r }}
-
-library(ggprism)
 library(rjson)
+library(rlang)
 library(dplyr)
-
-theme_set(theme_prism(axis_text_angle = 90))
+library(plotthis)
 
 indirs = {{in.indirs | r}}
 outdir = {{out.outdir | r}}
@@ -39,13 +35,21 @@ get_devpars = function() {
 
 plot_summary = function(col) {
     outfile = file.path(outdir, paste0(col, ".png"))
-    plotGG(
+    p <- plotthis::BarPlot(
         summaries,
-        "col",
-        list(mapping = aes_string(x = "Sample", y = bQuote(col), fill = "Sample")),
-        devpars = get_devpars(),
-        outfile = outfile
+        x = "Sample",
+        y = col,
+        x_text_angle = 90
     )
+    devpars <- get_devpars()
+    png(
+        filename = outfile,
+        width = devpars$width,
+        height = devpars$height,
+        res = devpars$res
+    )
+    print(p)
+    dev.off()
 }
 
 main = function() {

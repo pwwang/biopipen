@@ -1,127 +1,149 @@
-{{ biopipen_dir | joinpaths: "utils", "misc.R" | source_r }}
-
 library(rlang)
 library(bracer)
 library(scRepertoire)
+library(biopipen.utils)
 
-metafile <- {{in.metafile | quote}}
-outfile <- {{out.outfile | quote}}
+metafile <- {{in.metafile | r}}
+outfile <- {{out.outfile | r}}
 combineTCR_args <- {{envs.combineTCR | r}}
+combineBCR_args <- {{envs.combineBCR | r}}
+type <- {{envs.type | r}}
 exclude <- {{envs.exclude | r}}
+format <- {{envs.format | r}}
+tmpdir <- {{envs.tmpdir | r}}
+
+type = toupper(type)
 if (length(exclude) == 1) {
     exclude <- strsplit(exclude, ",")[[1]]
 }
 
-log_info("Loading metadata ...")
+log <- get_logger()
+
+log$info("Loading metadata ...")
 metadata <- read.table(metafile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE)
+
+data_column <- ifelse(type == "TCR", "TCRData", "BCRData")
+combine_fn <- ifelse(type == "TCR", combineTCR, combineBCR)
+combine_args <- if (type == "TCR") { combineTCR_args } else { combineBCR_args }
+
 stopifnot("Error: Column `Sample` is not found in metafile." = "Sample" %in% colnames(metadata))
-stopifnot("Error: Column `TCRData` is not found in metafile." = "TCRData" %in% colnames(metadata))
+if (!data_column %in% colnames(metadata)) {
+    stop(paste0("Error: Column `", data_column, "` is not found in metafile."))
+}
 rownames(metadata) <- metadata$Sample
 
-# helper function
-get_contig_annofile <- function(dir, sample, warn = TRUE) {
-    if (is.na(dir) || !is.character(dir) || nchar(dir) == 0 || dir == "NA") {
-        warning(paste0("No path found for sample: ", sample), immediate. = TRUE)
-        return (NULL)
-    }
-    if (file.exists(dir) && !dir.exists(dir)) {
-        return(dir)
+.gunzip <- function(input, output) {
+    # Open connections
+    con_in <- gzfile(input, "rt")   # "rt" = read text mode
+    con_out <- file(output, "wt")  # "wt" = write text mode
+
+    # Read line by line and write
+    while(length(line <- readLines(con_in, n = 10, warn = FALSE)) > 0) {
+        writeLines(line, con_out)
     }
 
-    annofilepat <- paste0("*", "{all,filtered}", "_contig_annotations.csv*")  # .gz
-    annofiles <- glob(file.path(as.character(dir), annofilepat))
-    if (length(annofiles) == 0) {
-        stop(
-            "Cannot find neither `filtered_contig_annotations.csv[.gz]` nor",
-            "`all_contig_annotations.csv[.gz]` in given TCRData for sample: ",
-            sample
-        )
-    }
-    if (length(annofiles) > 1) {
-        if (warn) {
-            warning("Found more than one file in given TCRData for sample: ", sample, immediate. = TRUE)
-        }
-        for (annofile in annofiles) {
-            # use filtered if both filtered_ and all_ are found
-            if (grepl("filtered", annofile)) {
-                annofiles <- annofile
-                break
-            }
-            # give a warning if only all_ is found
-            if (warn) {
-                warning("Using all_contig_annotations as filtred_config_annotations not found ",
-                        "in given TCRData for sample: ", sample,
-                        immediate. = TRUE
-                )
-            }
-        }
-    }
-    annofiles[1]
+    # Close connections
+    close(con_in)
+    close(con_out)
 }
 
-# for (i in seq_len(nrow(metadata))) {
-#     sample <- as.character(metadata$Sample[i])
-#     annofile <- get_contig_annofile(metadata$TCRData[i], sample)
-#     if (is.null(annofile)) { next }
+get_file_name <- function(fmt) {
+    if (is.null(fmt)) { return("filtered_contig_annotations.csv") }
+    fmt <- tolower(fmt)
+    if (fmt == "10x") { return("filtered_contig_annotations.csv") }
+    if (fmt == "airr") { return("airr_rearrangement.tsv") }
+    if (fmt == "bd") { return("Contigs_AIRR.tsv") }
+    if (fmt == "dandelion") { return("all_contig_dandelion.tsv") }
+    if (fmt == "immcantation") { return("data.tsv") }
+    if (fmt == "json") { return("contigs.json") }
+    if (fmt == "parsebio") { return("barcode_report.tsv") }
+    if (fmt == "mixcr") { return("clones.tsv") }
+    if (fmt == "omniscope") { return("contigs.csv") }
+    if (fmt == "trust4") { return("barcode_report.tsv") }
+    if (fmt == "wat3r") { return("barcode_results.csv") }
 
-#     anno <- read.delim2(annofile, sep = ",", header = TRUE, stringsAsFactors = FALSE)
-#     # Add cdr1, cdr2, fwr1, fwr2, etc columns
-#     anno$cdr1 <- anno$cdr1 %||% ""
-#     anno$cdr1_nt <- anno$cdr1_nt %||% ""
-#     anno$cdr2 <- anno$cdr2 %||% ""
-#     anno$cdr2_nt <- anno$cdr2_nt %||% ""
-#     anno$fwr1 <- anno$fwr1 %||% ""
-#     anno$fwr1_nt <- anno$fwr1_nt %||% ""
-#     anno$fwr2 <- anno$fwr2 %||% ""
-#     anno$fwr2_nt <- anno$fwr2_nt %||% ""
-#     anno$fwr3 <- anno$fwr3 %||% ""
-#     anno$fwr3_nt <- anno$fwr3_nt %||% ""
-#     anno$fwr4 <- anno$fwr4 %||% ""
-#     anno$fwr4_nt <- anno$fwr4_nt %||% ""
+    stop("Unsupported format: ", fmt)
+}
 
-#     annotfile = file.path(datadir, paste0(sample, ".csv"))
-#     write.table(anno, annotfile, sep = ",", quote = FALSE, row.names = FALSE, col.names = TRUE)
-# }
+get_format <- function(filename) {
+    if (identical(filename, "filtered_contig_annotations.csv")) { return("10X") }
+    if (identical(filename, "airr_rearrangement.tsv")) { return("AIRR") }
+    if (identical(filename, "Contigs_AIRR.tsv")) { return("BD") }
+    if (identical(filename, "all_contig_dandelion.tsv")) { return("Dandelion") }
+    if (identical(filename, "data.tsv")) { return("Immcantation") }
+    if (endsWith(filename, ".json")) { return("JSON") }
+    if (identical(filename, "barcode_report.tsv")) { return("ParseBio") }
+    if (identical(filename, "clones.tsv")) { return("MiXCR") }
+    if (identical(filename, "contigs.csv")) { return("Omniscope") }
+    # if (identical(filename, "barcode_report.tsv")) { return("TRUST4") }
+    if (identical(filename, "barcode_results.csv")) { return("WAT3R") }
 
-log_info("Reading TCR data ...")
+    return("10X")
+}
+
+# helper function
+get_contig_dir <- function(input, sample, fmt) {
+    if (is.na(input) || !is.character(input) || nchar(input) == 0 || input == "NA") {
+        warning(paste0("No path found for sample: ", sample), immediate. = TRUE)
+        return(list(NULL, fmt))
+    }
+    if (!file.exists(input)) {
+        stop(paste0("Input path does not exist for sample: ", sample, ": ", input))
+    }
+    if (dir.exists(input)) {
+        return(list(input, fmt))
+    }
+    # file
+    filedir <- file.path(tmpdir, slugify(sample))
+    dir.create(filedir, recursive = TRUE, showWarnings = FALSE)
+
+    # if it is gzipped
+    if (grepl("\\.gz$", input)) {
+        flatfile <- file.path(filedir, sub("\\.gz$", "", basename(input)))
+        .gunzip(input, flatfile)
+        input <- flatfile
+    }
+
+    fmt <- fmt %||% get_format(basename(input))
+    filename <- get_file_name(fmt)
+    file.symlink(input, file.path(filedir, filename))
+
+    return(list(filedir, fmt))
+}
+
+load_contig <- function(input, sample, fmt) {
+    log$info("- Sample: {sample}")
+    dirfmt <- get_contig_dir(input, sample, fmt)
+    dir <- dirfmt[[1]]
+    fmt <- dirfmt[[2]]
+    if (is.null(dir)) { return(NULL) }
+    x <- loadContigs(dir, format = fmt %||% "10X")
+    x[[1]]$sample <- NULL
+    x[[1]]
+}
+
+
+log$info("Reading {type} data ...")
 contig_list <- lapply(seq_len(nrow(metadata)), function(i) {
     sample <- as.character(metadata$Sample[i])
-    annofile <- get_contig_annofile(metadata$TCRData[i], sample)
-    if (is.null(annofile)) { return (NULL) }
-
-    log_info("- Sample: {sample} ...")
-    anno <- read.delim2(annofile, sep = ",", header = TRUE, stringsAsFactors = FALSE)
-    # Add cdr1, cdr2, fwr1, fwr2, etc columns for compatibility
-    anno$cdr1 <- anno$cdr1 %||% ""
-    anno$cdr1_nt <- anno$cdr1_nt %||% ""
-    anno$cdr2 <- anno$cdr2 %||% ""
-    anno$cdr2_nt <- anno$cdr2_nt %||% ""
-    anno$fwr1 <- anno$fwr1 %||% ""
-    anno$fwr1_nt <- anno$fwr1_nt %||% ""
-    anno$fwr2 <- anno$fwr2 %||% ""
-    anno$fwr2_nt <- anno$fwr2_nt %||% ""
-    anno$fwr3 <- anno$fwr3 %||% ""
-    anno$fwr3_nt <- anno$fwr3_nt %||% ""
-    anno$fwr4 <- anno$fwr4 %||% ""
-    anno$fwr4_nt <- anno$fwr4_nt %||% ""
-
-    anno
+    path <- metadata[[data_column]][i]
+    load_contig(path, sample, fmt = format)
 })
 names(contig_list) <- as.character(metadata$Sample)
 contig_list <- contig_list[!sapply(contig_list, is.null)]
 
-log_info("Combining TCR data and adding meta data ...")
-if (isTRUE(combineTCR_args$samples)) {
-    combineTCR_args$samples <- names(contig_list)
+log$info("Combining {type} data and adding meta data ...")
+if (isTRUE(combine_args$samples)) {
+    combine_args$samples <- names(contig_list)
 }
-combineTCR_args$input.data <- contig_list
-screp_data <- do_call(combineTCR, combineTCR_args)
+combine_args$input.data <- contig_list
+screp_data <- do_call(combine_fn, combine_args)
 for (col in colnames(metadata)) {
     if (col %in% exclude) { next }
     screp_data <- addVariable(screp_data, col, metadata[names(screp_data), col])
 }
 
-rm(contig_list, combineTCR_args)
+rm(contig_list, combine_args)
 
-log_info("Saving TCR data ...")
-saveRDS(screp_data, outfile)
+log$info("Saving {type} data ...")
+save_obj(screp_data, outfile)

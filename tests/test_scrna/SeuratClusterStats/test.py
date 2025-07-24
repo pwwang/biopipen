@@ -1,4 +1,3 @@
-import os
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.ns.scrna import (
@@ -8,8 +7,8 @@ from biopipen.ns.scrna import (
     ModuleScoreCalculator as ModuleScoreCalculator_,
     MarkersFinder,
     SeuratSubClustering as SeuratSubClustering_,
-    MetaMarkers as MetaMarkers_,
-    RadarPlots as RadarPlots_,
+    # MetaMarkers as MetaMarkers_,
+    # RadarPlots as RadarPlots_,
     TopExpressingGenes as TopExpressingGenes_,
 )
 from biopipen.core.testing import get_pipeline
@@ -106,6 +105,7 @@ class TopExpressingGenes(TopExpressingGenes_):
 class SeuratSubClustering(SeuratSubClustering_):
     requires = CellTypeAnnotation
     envs = {
+        "cache": False,
         "cases": {
             "mono_subcluster": {
                 "subset": "seurat_clusters == 'FCFR3A+ Mono'",
@@ -125,12 +125,50 @@ class ClusterMarkers(MarkersFinder):
         "cases": {
             # Test mixed types of cases
             "Cluster": {
-                "prefix_group": False,
                 "error": False,
-                "allmarker_plots": {"Heatmap": {"plot_type": "heatmap"}},
+                "sigmarkers": "p_val_adj < 0.05 & avg_log2FC > 0",
+                "marker_plots": {
+                    "Heatmap": {"plot_type": "heatmap"},
+                },
+                "allmarker_plots": {
+                    "Heatmap": {
+                        "plot_type": "heatmap",
+                    },
+                },
             },
-            "Comparison": {"group-by": "groups", "error": False, "ident-1": "g1"},
+            "Comparison": {
+                "sigmarkers": "p_val < 0.1",
+                "group-by": "groups", "error": False, "ident-1": "g1"
+            },
         }
+    }
+
+
+class DEGSingleComparison(MarkersFinder):
+    requires = SeuratSubClustering
+    envs = {
+        "group-by": "groups",
+        "ident-1": "g1",
+        "ident-2": "g2",
+        "sigmarkers": "p_val < 0.5",
+    }
+
+
+class DEGSingleComparisonWithEach(MarkersFinder):
+    requires = SeuratSubClustering
+    envs = {
+        "group-by": "groups",
+        "each": "seurat_clusters",
+        "ident-1": "g1",
+        "sigmarkers": "p_val < 0.5",
+        "allmarker_plots": {
+            "Heatmap": {
+                "plot_type": "heatmap",
+            },
+            "Dot": {
+                "plot_type": "dot",
+            },
+        },
     }
 
 
@@ -138,7 +176,6 @@ class DEG(MarkersFinder):
     requires = SeuratSubClustering
     envs = {
         # "mutaters": {"Cluster": "if_else(seurat_clusters %in% c('c1', 'c2', 'c3'), seurat_clusters, NA)"},
-        "prefix_each": False,
         "cases": {
             "Group": {
                 "group-by": "groups",
@@ -146,33 +183,31 @@ class DEG(MarkersFinder):
                 # "each": "Cluster",
                 "ident-1": "g1",
                 "sigmarkers": "p_val < 0.5",
-            }
-        },
-        "overlaps": {
-            "Group": {
-                "sigmarkers": 'abs(avg_log2FC) > 1',
-                "cases": ["Group::FCFR3A+ Mono", "Group::DC", "Group::Platelet"],
-                "venn": {"save_code": True},
-                "upset": {"save_code": True},
-            }
+                "overlaps": {
+                    "Venn": {
+                        "sigmarkers": 'abs(avg_log2FC) > 1',
+                        "plot_type": "venn",
+                    },
+                },
+            },
         },
     }
     order = 99
 
 
-class MetaMarkers(MetaMarkers_):
-    requires = SeuratSubClustering
-    envs = {
-        "group-by": "seurat_clusters",
-    }
+# class MetaMarkers(MetaMarkers_):
+#     requires = SeuratSubClustering
+#     envs = {
+#         "group-by": "seurat_clusters",
+#     }
 
 
-class RadarPlots(RadarPlots_):
-    requires = SeuratSubClustering
-    envs = {
-        "by": "groups",
-        "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}},
-    }
+# class RadarPlots(RadarPlots_):
+#     requires = SeuratSubClustering
+#     envs = {
+#         "by": "groups",
+#         "cases": {"nobreakdown": {}, "breakdown": {"breakdown": "letter.idents"}},
+#     }
 
 
 class ModuleScoreCalculator(ModuleScoreCalculator_):
@@ -239,8 +274,8 @@ class SeuratClusterStats(SeuratClusterStats_):
         },
         "dimplots": {
             "seurat_clusters": {"group_by": "seurat_clusters"},
-            "nk_subcluster": {"group_by": "mono_subcluster"},
-            "dc_subcluster": {"group_by": "dc_subcluster"},
+            "nk_subcluster": {"group_by": "mono_subcluster", "reduction": "mono_subcluster.umap"},
+            "dc_subcluster": {"group_by": "dc_subcluster", "reduction": "dc_subcluster.umap"},
         },
     }
 

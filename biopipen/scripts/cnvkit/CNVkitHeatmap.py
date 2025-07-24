@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from diot import Diot
+from diot import Diot  # type: ignore[import]
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
-segfiles = {{in.segfiles | repr}}  # pyright: ignore # noqa  # noqa
+segfiles = {{in.segfiles | default: [] | each: str | repr}}  # pyright: ignore # noqa  # noqa
 sample_sex = {{in.sample_sex | repr}}  # pyright: ignore
-outdir: str = {{out.outdir | repr}}  # pyright: ignore
+outdir: str = {{out.outdir | quote}}  # pyright: ignore
 cnvkit = {{envs.cnvkit | quote}}  # pyright: ignore
 convert = {{envs.convert | quote}}  # pyright: ignore
 convert_args = {{envs.convert_args | repr}}  # pyright: ignore
