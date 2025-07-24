@@ -8,8 +8,6 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 # Install dependencies
 RUN micromamba install -y -n base -f /biopipen/docker/cnvkit_pipeline/env.yml && \
     micromamba clean --all --yes && \
-    patch $(python -c 'from cnvlib.segmentation import cbs; print(cbs.__file__)') \
-        /biopipen/docker/cnvkit_pipeline/cnvkit-cbs.patch && \
     chmod +x /biopipen/docker/cnvkit_pipeline/entry.sh && \
     ln -s /biopipen/docker/cnvkit_pipeline/entry.sh /opt/conda/bin/entry.sh
 
