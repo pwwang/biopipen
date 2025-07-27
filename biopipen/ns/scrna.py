@@ -587,9 +587,11 @@ class SeuratClusterStats(Proc):
         ngenes (type=json): The number of genes expressed in each cell.
             Keys are the names of the plots and values are the dicts inherited from `env.ngenes_defaults`.
         features_defaults (ns): The default parameters for `features`.
-            - features: The features to plot.
+            - features (type=auto): The features to plot.
                 It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
                 (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
+                It can also be a dict with the keys as the feature group names and the values as the features, which
+                is used for heatmap to group the features.
             - order_by (type=auto): The order of the clusters to show on the plot.
                 An expression passed to `dplyr::arrange()` on the grouped meta data frame (by `ident`).
                 For example, you can order the clusters by the activation score of

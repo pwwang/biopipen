@@ -53,6 +53,10 @@ hvf <- NULL
         }
     }
 
+    if (is.list(features)) {
+        return(lapply(features, function(x) {.get_features(x, object) }))
+    }
+
     return (trimws(unlist(strsplit(features, ","))))
 }
 
