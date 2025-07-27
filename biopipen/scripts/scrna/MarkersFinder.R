@@ -27,6 +27,8 @@ cache <- {{ envs.cache | r }}
 rest <- {{ envs.rest | r: todot="-" }}
 allmarker_plots_defaults <- {{ envs.allmarker_plots_defaults | r }}
 allmarker_plots <- {{ envs.allmarker_plots | r }}
+allenrich_plots_defaults <- {{ envs.allenrich_plots_defaults | r }}
+allenrich_plots <- {{ envs.allenrich_plots | r }}
 marker_plots_defaults <- {{ envs.marker_plots_defaults | r }}
 marker_plots <- {{ envs.marker_plots | r }}
 enrich_plots_defaults <- {{ envs.enrich_plots_defaults | r }}
@@ -59,6 +61,9 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
 allmarker_plots <- lapply(allmarker_plots, function(x) {
     list_update(allmarker_plots_defaults, x)
 })
+allenrich_plots <- lapply(allenrich_plots, function(x) {
+    list_update(allenrich_plots_defaults, x)
+})
 marker_plots <- lapply(marker_plots, function(x) {
     list_update(marker_plots_defaults, x)
 })
@@ -82,6 +87,8 @@ defaults <- list(
     subset = subset,
     allmarker_plots_defaults = allmarker_plots_defaults,
     allmarker_plots = allmarker_plots,
+    allenrich_plots_defaults = allenrich_plots_defaults,
+    allenrich_plots = allenrich_plots,
     marker_plots_defaults = marker_plots_defaults,
     marker_plots = marker_plots,
     enrich_plots_defaults = enrich_plots_defaults,
@@ -107,12 +114,21 @@ post_casing <- function(name, case) {
         if (length(case$ident.1) > 0 && length(case$allmarker_plots) > 0) {
             stop("Cannot perform 'allmarker_plots' with a single comparison (ident-1 is set) in case '", name, "'")
         }
+        if (length(case$ident.1) > 0 && length(case$allenrich_plots) > 0) {
+            stop("Cannot perform 'allenrich_plots' with a single comparison (ident-1 is set) in case '", name, "'")
+        }
 
         case$allmarker_plots <- lapply(
             case$allmarker_plots,
             function(x) { list_update(case$allmarker_plots_defaults, x) }
         )
         case$allmarker_plots_defaults <- NULL
+
+        case$allenrich_plots <- lapply(
+            case$allenrich_plots,
+            function(x) { list_update(case$allenrich_plots_defaults, x) }
+        )
+        case$allenrich_plots_defaults <- NULL
 
         case$marker_plots <- lapply(
             case$marker_plots,
@@ -179,20 +195,31 @@ post_casing <- function(name, case) {
             # Will be processed by the case itself, which collects the markers
             newcase$allmarker_plots <- NULL
             newcase$allmarker_plots_defaults <- NULL
+            newcase$allenrich_plots <- NULL
+            newcase$allenrich_plots_defaults <- NULL
             newcase$overlaps <- NULL
             newcase$overlaps_defaults <- NULL
 
             outcases[[newname]] <- newcase
         }
 
-        if (length(case$overlaps) > 0 || length(case$allmarker_plots) > 0) {
+        if (length(case$overlaps) > 0 || length(case$allmarker_plots) > 0 || length(case$allenrich_plots) > 0) {
             ovcase <- case
+
             ovcase$markers <- list()
             ovcase$allmarker_plots <- lapply(
                 ovcase$allmarker_plots,
                 function(x) { list_update(ovcase$allmarker_plots_defaults, x) }
             )
             ovcase$allmarker_plots_defaults <- NULL
+
+            ovcase$enriches <- list()
+            ovcase$allenrich_plots <- lapply(
+                ovcase$allenrich_plots,
+                function(x) { list_update(ovcase$allenrich_plots_defaults, x) }
+            )
+            ovcase$allenrich_plots_defaults <- NULL
+
             ovcase$overlaps <- lapply(
                 ovcase$overlaps,
                 function(x) { list_update(ovcase$overlaps_defaults, x) }
@@ -255,6 +282,32 @@ process_markers <- function(markers, info, case) {
 
     # Do enrichment analysis
     significant_markers <- unique(sigmarkers$gene)
+    empty <- if (case$enrich_style == "enrichr") {
+        data.frame(
+            Database = character(0),
+            Term = character(0),
+            Overlap = character(0),
+            P.value = numeric(0),
+            Adjusted.P.value = numeric(0),
+            Odds.Ratio = numeric(0),
+            Combined.Score = numeric(0),
+            Genes = character(0),
+            Rank = numeric(0)
+        )
+    } else {  # clusterProfiler
+        data.frame(
+            ID = character(0),
+            Description = character(0),
+            GeneRatio = character(0),
+            BgRatio = character(0),
+            Count = integer(0),
+            pvalue = numeric(0),
+            p.adjust = numeric(0),
+            qvalue = numeric(0),
+            geneID = character(0),
+            Database = character(0)
+        )
+    }
 
     if (length(significant_markers) < 5) {
         if (case$error) {
@@ -271,6 +324,7 @@ process_markers <- function(markers, info, case) {
                 ui = "tabs"
             )
         }
+        return(empty)
     } else {
         tryCatch({
             enrich <- RunEnrichment(
@@ -298,7 +352,9 @@ process_markers <- function(markers, info, case) {
 
                         p <- do_call(VizEnrichment, plotargs)
 
-                        attr(p, "height") <- attr(p, "height") / 1.5
+                        if (plotargs$plot_type == "bar") {
+                            attr(p, "height") <- attr(p, "height") / 1.5
+                        }
                         outprefix <- file.path(info$prefix, paste0("enrich.", slugify(db), ".", slugify(plotname)))
                         save_plot(p, outprefix, plotargs$devpars, formats = "png")
                         plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
@@ -311,6 +367,7 @@ process_markers <- function(markers, info, case) {
                     )
                 }
             }
+            return(enrich)
         }, error = function(e) {
             if (case$error) {
                 stop("Error: ", e$message)
@@ -325,6 +382,7 @@ process_markers <- function(markers, info, case) {
                     ui = "tabs"
                 )
             }
+            return(empty)
         })
     }
 }
@@ -332,6 +390,7 @@ process_markers <- function(markers, info, case) {
 process_allmarkers <- function(markers, plotcases, casename, groupname) {
     name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
     info <- case_info(name, outdir, create = TRUE)
+
     for (plotname in names(plotcases)) {
         plotargs <- plotcases[[plotname]]
         plotargs$degs <- markers
@@ -343,6 +402,41 @@ process_allmarkers <- function(markers, plotcases, casename, groupname) {
                 contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))
             ),
             hs = c(info$section, info$name),
+            ui = "tabs"
+        )
+    }
+}
+
+process_allenriches <- function(enriches, plotcases, casename, groupname) {
+    name <- paste0(casename, "::", paste0(groupname, " (All Enrichments)"))
+    info <- case_info(name, outdir, create = TRUE)
+    dbs <- unique(as.character(enriches$Database))
+
+    for (db in dbs) {
+        plots <- list()
+        for (plotname in names(plotcases)) {
+            plotargs <- plotcases[[plotname]]
+            plotargs <- extract_vars(plotargs, "devpars")
+            plotargs$data <- enriches[enriches$Database == db, , drop = FALSE]
+            if (plotargs$plot_type == "heatmap") {
+                plotargs$group_by <- groupname
+                plotargs$show_row_names = plotargs$show_row_names %||% TRUE
+                plotargs$show_column_names = plotargs$show_column_names %||% TRUE
+            }
+
+            p <- do_call(VizEnrichment, plotargs)
+
+            if (plotargs$plot_type == "bar") {
+                attr(p, "height") <- attr(p, "height") / 1.5
+            }
+            outprefix <- file.path(info$prefix, paste0("allenrich.", slugify(db), ".", slugify(plotname)))
+            save_plot(p, outprefix, devpars, formats = "png")
+            plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
+        }
+        reporter$add2(
+            list(name = db, contents = plots),
+            hs = c(info$section, info$name),
+            hs2 = plotname,
             ui = "tabs"
         )
     }
@@ -415,38 +509,71 @@ run_case <- function(name) {
 
     case <- extract_vars(
         case,
-        "dbs", "sigmarkers", "allmarker_plots", "marker_plots", "enrich_plots", "overlaps",
-        "original_case", "markers", "each_name", "each", "enrich_style",
+        "dbs", "sigmarkers", "allmarker_plots", "allenrich_plots", "marker_plots", "enrich_plots",
+        "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style",
         allow_nonexisting = TRUE
     )
-    if (!is.null(markers)) {  # It is the overlap/allmarker case
-        log$info("- Summarizing markers in subcases (by each: {each}) ...")
-        # handle the overlaps / allmarkers analysis here
-        if (!is.data.frame(markers)) {
-            markers <- do_call(rbind, lapply(names(markers), function(x) {
-                markers_df <- markers[[x]]
-                markers_df[[each]] <- x
-                markers_df
-            }))
-        }
-        # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, diff_pct, <each>
 
-        if (length(allmarker_plots) > 0) {
-            log$info("- Visualizing all markers together ...")
-            attr(markers, "object") <- srtobj
-            attr(markers, "group.by") <- each
-            attr(markers, "ident.1") <- NULL
-            attr(markers, "ident.2") <- NULL
-            process_allmarkers(markers, allmarker_plots, name, each)
+    if (!is.null(markers) || !is.null(enriches)) {
+        if (!is.null(markers)) {  # It is the overlap/allmarker case
+            log$info("- Summarizing markers in subcases (by each: {each}) ...")
+            # handle the overlaps / allmarkers analysis here
+            if (!is.data.frame(markers)) {
+                each_levels <- names(markers)
+                markers <- do_call(rbind, lapply(each_levels, function(x) {
+                    markers_df <- markers[[x]]
+                    if (nrow(markers_df) > 0) {
+                        markers_df[[each]] <- x
+                    } else {
+                        markers_df[[each]] <- character(0)  # Empty case
+                    }
+                    markers_df
+                }))
+                markers[[each]] <- factor(markers[[each]], levels = each_levels)
+            }
+            # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, diff_pct, <each>
+
+            if (length(allmarker_plots) > 0) {
+                log$info("- Visualizing all markers together ...")
+                attr(markers, "object") <- srtobj
+                attr(markers, "group.by") <- each
+                attr(markers, "ident.1") <- NULL
+                attr(markers, "ident.2") <- NULL
+                process_allmarkers(markers, allmarker_plots, name, each)
+            }
+
+            if (length(overlaps) > 0) {
+                log$info("- Visualizing overlaps between subcases ...")
+                process_overlaps(markers, overlaps, name, each)
+            }
+
         }
 
-        if (length(overlaps) > 0) {
-            log$info("- Visualizing overlaps between subcases ...")
-            process_overlaps(markers, overlaps, name, each)
+        if (!is.null(enriches)) {
+            log$info("- Summarizing enrichments in subcases (by each: {each}) ...")
+            if (!is.data.frame(enriches)) {
+                each_levels <- names(enriches)
+                enriches <- do_call(rbind, lapply(each_levels, function(x) {
+                    enrich_df <- enriches[[x]]
+                    if (nrow(enrich_df) > 0) {
+                        enrich_df[[each]] <- x
+                    } else {
+                        enrich_df[[each]] <- character(0)  # Empty case
+                    }
+                    enrich_df
+                }))
+                enriches[[each]] <- factor(enriches[[each]], levels = each_levels)
+            }
+
+            if (length(allenrich_plots) > 0) {
+                log$info("- Visualizing all enrichments together ...")
+                process_allenriches(enriches, allenrich_plots, name, each)
+            }
         }
 
         return(invisible())
     }
+
     case$object <- srtobj
     markers <- do_call(RunSeuratDEAnalysis, case)
     case$object <- NULL
@@ -454,6 +581,7 @@ run_case <- function(name) {
 
     if (is.null(case$ident.1)) {
         all_idents <- unique(as.character(markers[[case$group.by]]))
+        enriches <- list()
         for (ident in all_idents) {
             log$info("- {case$group.by}: {ident} ...")
             ident_markers <- markers[markers[[case$group.by]] == ident, , drop = TRUE]
@@ -461,7 +589,7 @@ run_case <- function(name) {
             info <- case_info(casename, outdir, create = TRUE)
 
             attr(ident_markers, "ident.1") <- ident
-            process_markers(ident_markers, info = info, case = list(
+            enrich <- process_markers(ident_markers, info = info, case = list(
                 dbs = dbs,
                 sigmarkers = sigmarkers,
                 enrich_style = enrich_style,
@@ -470,6 +598,7 @@ run_case <- function(name) {
                 error = case$error,
                 ident = NULL
             ))
+            enriches[[ident]] <- enrich
         }
 
         if (length(allmarker_plots) > 0) {
@@ -481,9 +610,14 @@ run_case <- function(name) {
             log$info("- Visualizing overlaps between subcases ...")
             process_overlaps(markers, overlaps, name, case$group.by)
         }
+
+        if (length(allenrich_plots) > 0) {
+            log$info("- Visualizing all enrichments together ...")
+            process_allenriches(enriches, allenrich_plots, name, case$group.by)
+        }
     } else {
         info <- case_info(name, outdir, create = TRUE)
-        process_markers(markers, info = info, case = list(
+        enrich <- process_markers(markers, info = info, case = list(
             dbs = dbs,
             sigmarkers = sigmarkers,
             enrich_style = enrich_style,
@@ -493,9 +627,10 @@ run_case <- function(name) {
             ident = if (is.null(case$ident.2)) case$ident.1 else paste0(case$ident.1, " vs ", case$ident.2)
         ))
 
-        if (!is.null(original_case)) {
+        if (!is.null(original_case) && !is.null(cases[[original_case]])) {
             markers[[each_name]] <- each
             cases[[original_case]]$markers[[each]] <<- markers
+            cases[[original_case]]$enriches[[each]] <<- enrich
         }
     }
 

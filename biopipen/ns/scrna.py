@@ -1084,6 +1084,16 @@ class MarkersFinder(Proc):
             - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
         allmarker_plots (type=json): All marker plot cases.
             The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
+        allenrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
+            - plot_type: The type of the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
+        allenrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
+            The keys are the names of the cases and the values are the dicts inherited from `allenrich_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
         marker_plots_defaults (ns): Default options for the plots to generate for the markers.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
@@ -1172,6 +1182,11 @@ class MarkersFinder(Proc):
             "genes": 10,
         },
         "allmarker_plots": {},
+        "allenrich_plots_defaults": {
+            "plot_type": "heatmap",
+            "devpars": {"res": 100},
+        },
+        "allenrich_plots": {},
         "marker_plots_defaults": {
             "plot_type": None,
             "more_formats": [],
