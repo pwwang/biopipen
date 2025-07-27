@@ -1634,6 +1634,15 @@ class ScFGSEA(Proc):
             If it is < 1, will apply it to `padj`, selecting pathways with `padj` < `top`.
         eps (type=float): This parameter sets the boundary for calculating the p value.
             See <https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html>
+        allpathway_plots_defaults (ns): Default options for the plots to generate for all pathways.
+            - plot_type: The type of the plot, currently either dot or heatmap (default)
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.html>.
+        allpathway_plots (type=json): Cases of the plots to generate for all pathways.
+            The keys are the names of the cases and the values are the dicts inherited from `allpathway_plots_defaults`.
         minsize (type=int): Minimal size of a gene set to test. All pathways below the threshold are excluded.
         maxsize (type=int): Maximal size of a gene set to test. All pathways above the threshold are excluded.
         rest (type=json;order=98): Rest arguments for [`fgsea()`](https://rdrr.io/bioc/fgsea/man/fgsea.html)
@@ -1661,18 +1670,23 @@ class ScFGSEA(Proc):
         "ident-2": None,
         "each": None,
         "subset": None,
-        "gmtfile": "",
+        "gmtfile": "KEGG_2021_Human",
         "method": "s2n",
         "top": 20,
         "minsize": 10,
         "maxsize": 100,
         "eps": 0,
+        "allpathway_plots_defaults": {
+            "plot_type": "heatmap",
+            "devpars": {"res": 100},
+        },
+        "allpathway_plots": {},
         "rest": {},
         "cases": {},
     }
     script = "file://../scripts/scrna/ScFGSEA.R"
     plugin_opts = {
-        "report": "file://../reports/scrna/ScFGSEA.svelte",
+        "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
 
