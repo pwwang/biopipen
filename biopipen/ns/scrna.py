@@ -61,7 +61,8 @@ class SeuratPreparing(Proc):
     Those paths should be either paths to directoies containing `matrix.mtx`,
     `barcodes.tsv` and `features.tsv` files that can be loaded by
     [`Seurat::Read10X()`](https://satijalab.org/seurat/reference/read10x),
-    or paths to `h5` files that can be loaded by
+    or paths of loom files that can be loaded by `SeuratDisk::LoadLoom()`, or paths to
+    `h5` files that can be loaded by
     [`Seurat::Read10X_h5()`](https://satijalab.org/seurat/reference/read10x_h5).
 
     Each sample will be loaded individually and then merged into one `Seurat` object, and then perform QC.
@@ -110,9 +111,11 @@ class SeuratPreparing(Proc):
         min_cells (type=int): The minimum number of cells that a gene must be
             expressed in to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
+            It doesn't work when data is loaded from loom files.
         min_features (type=int): The minimum number of features that a cell must
             express to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
+            It doesn't work when data is loaded from loom files.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
