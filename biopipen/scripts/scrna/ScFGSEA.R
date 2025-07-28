@@ -18,8 +18,8 @@ top <- {{envs.top | r}}  # nolint
 minsize <- {{envs.minSize | default: envs.minsize | r}}  # nolint
 maxsize <- {{envs.maxSize | default: envs.maxsize | r}}  # nolint
 eps <- {{envs.eps | r}}  # nolint
-allpathway_plots_defaults <- {{envs.allpathway_plots_defaults | r}}  # nolint
-allpathway_plots <- {{envs.allpathway_plots | r}}  #
+alleach_plots_defaults <- {{envs.alleach_plots_defaults | r}}  # nolint
+alleach_plots <- {{envs.alleach_plots | r}}  #
 ncores <- {{envs.ncores | r}}  # nolint
 rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
@@ -27,8 +27,8 @@ cases <- {{envs.cases | r: todot="-"}}  # nolint
 log <- get_logger()
 reporter <- get_reporter()
 
-allpathway_plots <- lapply(allpathway_plots, function(x) {
-    list_update(allpathway_plots_defaults, x)
+alleach_plots <- lapply(alleach_plots, function(x) {
+    list_update(alleach_plots_defaults, x)
 })
 
 log$info("Reading Seurat object ...")
@@ -54,8 +54,8 @@ defaults <- list(
     minsize = minsize,
     maxsize = maxsize,
     eps = eps,
-    allpathway_plots_defaults = allpathway_plots_defaults,
-    allpathway_plots = allpathway_plots,
+    alleach_plots_defaults = alleach_plots_defaults,
+    alleach_plots = alleach_plots,
     ncores = ncores,
     rest = rest
 )
@@ -66,8 +66,8 @@ expand_each <- function(name, case) {
     case$group.by <- case$group.by %||% "Identity"
 
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
-        if (length(case$allpathway_plots) > 0) {
-            stop("Cannot perform `allpathway_plots` without `each` defined.")
+        if (length(case$alleach_plots) > 0) {
+            stop("Cannot perform `alleach_plots` without `each` defined.")
         }
 
         outcases[[name]] <- case
@@ -93,8 +93,8 @@ expand_each <- function(name, case) {
             newcase$each_name <- case$each
             newcase$each <- each
 
-            newcase$allpathway_plots_defaults <- NULL
-            newcase$allpathway_plots <- NULL
+            newcase$alleach_plots_defaults <- NULL
+            newcase$alleach_plots <- NULL
 
             if (!is.null(case$subset)) {
                 newcase$subset <- paste0(case$subset, " & ", bQuote(case$each), " == '", each, "'")
@@ -105,13 +105,13 @@ expand_each <- function(name, case) {
             outcases[[newname]] <- newcase
         }
 
-        if (length(case$allpathway_plots) > 0) {
+        if (length(case$alleach_plots) > 0) {
             newcase <- case
 
             newcase$gseas <- list()
-            newcase$allpathway_plots <- lapply(
-                newcase$allpathway_plots,
-                function(x) { list_update(newcase$allpathway_plots_defaults, x) }
+            newcase$alleach_plots <- lapply(
+                newcase$alleach_plots,
+                function(x) { list_update(newcase$alleach_plots_defaults, x) }
             )
 
             outcases[[paste0(name, " (all ", case$each,")")]] <- newcase
@@ -154,8 +154,8 @@ do_case <- function(name) {
         }))
         gseas[[case$each]] <- factor(gseas[[case$each]], levels = each_levels)
 
-        for (plotname in names(case$allpathway_plots)) {
-            plotargs <- case$allpathway_plots[[plotname]]
+        for (plotname in names(case$alleach_plots)) {
+            plotargs <- case$alleach_plots[[plotname]]
             plotargs <- extract_vars(plotargs, "devpars")
             plotargs$gsea_results <- gseas
             plotargs$group_by <- case$each
