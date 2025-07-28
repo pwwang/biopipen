@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.34.1
+
+- fix(tcr.ClonalStats): update envs assignment to handle todot parameter
+- chore(deps): bump up pipen to 0.17.8
+- fix(SeuratClusterStats): fix when features are given as a dict (used in heatmap)
+- feat(MarkersFinder): add enrichment plot across all subsets by each or all ident.1 in group.by
+- feat(ScFGSEA): add support for all pathway plots for all subsets by each
+- chore(TopExpressingGenes): adjust plot height for bar plots
+- docs(SeuratPreparing): update docs for support loading loom files
+
 ## 0.34.0
 
 ### New Features
