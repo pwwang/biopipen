@@ -132,3 +132,5 @@ Rplots.pdf
 /data.RData
 
 /data
+# apptainer images
+*.sif

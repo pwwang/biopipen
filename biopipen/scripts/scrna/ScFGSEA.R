@@ -18,12 +18,18 @@ top <- {{envs.top | r}}  # nolint
 minsize <- {{envs.minSize | default: envs.minsize | r}}  # nolint
 maxsize <- {{envs.maxSize | default: envs.maxsize | r}}  # nolint
 eps <- {{envs.eps | r}}  # nolint
+allpathway_plots_defaults <- {{envs.allpathway_plots_defaults | r}}  # nolint
+allpathway_plots <- {{envs.allpathway_plots | r}}  #
 ncores <- {{envs.ncores | r}}  # nolint
 rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
 
 log <- get_logger()
 reporter <- get_reporter()
+
+allpathway_plots <- lapply(allpathway_plots, function(x) {
+    list_update(allpathway_plots_defaults, x)
+})
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
@@ -48,6 +54,8 @@ defaults <- list(
     minsize = minsize,
     maxsize = maxsize,
     eps = eps,
+    allpathway_plots_defaults = allpathway_plots_defaults,
+    allpathway_plots = allpathway_plots,
     ncores = ncores,
     rest = rest
 )
@@ -58,6 +66,10 @@ expand_each <- function(name, case) {
     case$group.by <- case$group.by %||% "Identity"
 
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
+        if (length(case$allpathway_plots) > 0) {
+            stop("Cannot perform `allpathway_plots` without `each` defined.")
+        }
+
         outcases[[name]] <- case
     } else {
         eachs <- if (!is.null(case$subset)) {
@@ -77,9 +89,12 @@ expand_each <- function(name, case) {
             newname <- paste0(case$each, "::", each)
             newcase <- case
 
-            newcase$original_case <- name
+            newcase$original_case <- paste0(name, " (all ", case$each,")")
             newcase$each_name <- case$each
             newcase$each <- each
+
+            newcase$allpathway_plots_defaults <- NULL
+            newcase$allpathway_plots <- NULL
 
             if (!is.null(case$subset)) {
                 newcase$subset <- paste0(case$subset, " & ", bQuote(case$each), " == '", each, "'")
@@ -88,6 +103,18 @@ expand_each <- function(name, case) {
             }
 
             outcases[[newname]] <- newcase
+        }
+
+        if (length(case$allpathway_plots) > 0) {
+            newcase <- case
+
+            newcase$gseas <- list()
+            newcase$allpathway_plots <- lapply(
+                newcase$allpathway_plots,
+                function(x) { list_update(newcase$allpathway_plots_defaults, x) }
+            )
+
+            outcases[[paste0(name, " (all ", case$each,")")]] <- newcase
         }
     }
     outcases
@@ -108,11 +135,49 @@ ensure_sobj <- function(expr, allow_empty) {
     })
 }
 
-
 do_case <- function(name) {
     log$info("- Processing case: {name} ...")
     case <- cases[[name]]
     info <- case_info(name, outdir, create = TRUE)
+
+    if (!is.null(case$gseas)) {
+
+        each_levels <- names(case$gseas)
+        gseas <- do_call(rbind, lapply(each_levels, function(x) {
+            gsea_df <- case$gseas[[x]]
+            if (nrow(gsea_df) > 0) {
+                gsea_df[[case$each]] <- x
+            } else {
+                gsea_df[[case$each]] <- character(0)  # Empty case
+            }
+            gsea_df
+        }))
+        gseas[[case$each]] <- factor(gseas[[case$each]], levels = each_levels)
+
+        for (plotname in names(case$allpathway_plots)) {
+            plotargs <- case$allpathway_plots[[plotname]]
+            plotargs <- extract_vars(plotargs, "devpars")
+            plotargs$gsea_results <- gseas
+            plotargs$group_by <- case$each
+            if (plotargs$plot_type == "heatmap") {
+                plotargs$show_row_names <- plotargs$show_row_names %||% TRUE
+                plotargs$show_column_names <- plotargs$show_column_names %||% TRUE
+            }
+
+            p <- do_call(VizGSEA, plotargs)
+
+            outprefix <- file.path(info$prefix, paste0("all.", slugify(plotname)))
+            save_plot(p, outprefix, devpars, formats = "png")
+            reporter$add2(
+                list(kind = "descr", content = paste0("Pathways for all ", case$each, ".")),
+                list(kind = "image", src = paste0(outprefix, ".png")),
+                hs = c(info$section, info$name),
+                hs2 = plotname
+            )
+        }
+
+        return(invisible(NULL))
+    }
 
     allow_empty = !is.null(case$each)
     # prepare expression matrix
@@ -167,9 +232,9 @@ do_case <- function(name) {
     log$info("  Getting preranks...")
     ranks <- RunGSEAPreRank(exprs, allclasses, case$ident.1, case$ident.2, case$method)
     write.table(
-        ranks,
-        file.path(info$prefix, "fgsea.rank"),
-        row.names = FALSE,
+        as.data.frame(ranks),
+        file.path(info$prefix, "fgsea.rank.txt"),
+        row.names = TRUE,
         col.names = TRUE,
         sep = "\t",
         quote = FALSE
@@ -216,15 +281,17 @@ do_case <- function(name) {
         quote = FALSE
     )
 
+    aspect.ratio <- sqrt(case$top) / sqrt(10)
     p_summary <- VizGSEA(
         result,
         plot_type = "summary",
-        top_term = case$top
+        top_term = case$top,
+        aspect.ratio = aspect.ratio
     )
     save_plot(
         p_summary,
         file.path(info$prefix, "summary"),
-        devpars = list(res = 100, height = attr(p_summary, "height") * 100, width = attr(p_summary, "width") * 100),
+        devpars = list(res = 100, height = attr(p_summary, "height") * 100 / 1.5, width = attr(p_summary, "width") * 100),
         formats = "png"
     )
 
@@ -243,13 +310,13 @@ do_case <- function(name) {
 
     reporter$add2(
         list(
-            name = "Table",
+            name = paste0("Table (", case$ident.1, " vs ", case$ident.2, ")"),
             contents = list(
                 list(kind = "descr", content = paste0(
                     "Showing top 50 pathways by padj in descending order. ",
                     "Use 'Download the entire data' button to download all pathways."
                 )),
-                list(kind = "table", src = file.path(info$prefix, "fgsea"), data = list(nrows = 50))
+                list(kind = "table", src = file.path(info$prefix, "fgsea.tsv"), data = list(nrows = 50))
             )
         ),
         list(
@@ -269,8 +336,14 @@ do_case <- function(name) {
         hs = c(info$section, info$name),
         ui = "tabs"
     )
+
+    if (!is.null(case$original_case) && !is.null(cases[[case$original_case]])) {
+        cases[[case$original_case]]$gseas[[case$each]] <<- result
+    }
+
+    invisible()
 }
 
-sapply(sort(names(cases)), function(name) do_case(name))
+sapply(names(cases), function(name) do_case(name))
 
 reporter$save(joboutdir)

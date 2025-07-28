@@ -7,7 +7,7 @@ library(biopipen.utils)
 screpfile <- {{in.screpfile | r}}
 outdir <- {{out.outdir | r}}
 joboutdir <- {{job.outdir | r}}
-envs <- {{envs | r}}
+envs <- {{envs | r: todot="-"}}
 mutaters <- envs$mutaters
 cases <- envs$cases
 envs$mutaters <- NULL

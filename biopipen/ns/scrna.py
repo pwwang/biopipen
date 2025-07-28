@@ -61,7 +61,8 @@ class SeuratPreparing(Proc):
     Those paths should be either paths to directoies containing `matrix.mtx`,
     `barcodes.tsv` and `features.tsv` files that can be loaded by
     [`Seurat::Read10X()`](https://satijalab.org/seurat/reference/read10x),
-    or paths to `h5` files that can be loaded by
+    or paths of loom files that can be loaded by `SeuratDisk::LoadLoom()`, or paths to
+    `h5` files that can be loaded by
     [`Seurat::Read10X_h5()`](https://satijalab.org/seurat/reference/read10x_h5).
 
     Each sample will be loaded individually and then merged into one `Seurat` object, and then perform QC.
@@ -110,9 +111,11 @@ class SeuratPreparing(Proc):
         min_cells (type=int): The minimum number of cells that a gene must be
             expressed in to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
+            It doesn't work when data is loaded from loom files.
         min_features (type=int): The minimum number of features that a cell must
             express to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
+            It doesn't work when data is loaded from loom files.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
@@ -587,9 +590,11 @@ class SeuratClusterStats(Proc):
         ngenes (type=json): The number of genes expressed in each cell.
             Keys are the names of the plots and values are the dicts inherited from `env.ngenes_defaults`.
         features_defaults (ns): The default parameters for `features`.
-            - features: The features to plot.
+            - features (type=auto): The features to plot.
                 It can be either a string with comma separated features, a list of features, a file path with `file://` prefix with features
                 (one per line), or an integer to use the top N features from `VariantFeatures(srtobj)`.
+                It can also be a dict with the keys as the feature group names and the values as the features, which
+                is used for heatmap to group the features.
             - order_by (type=auto): The order of the clusters to show on the plot.
                 An expression passed to `dplyr::arrange()` on the grouped meta data frame (by `ident`).
                 For example, you can order the clusters by the activation score of
@@ -1082,6 +1087,16 @@ class MarkersFinder(Proc):
             - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
         allmarker_plots (type=json): All marker plot cases.
             The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
+        allenrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
+            - plot_type: The type of the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
+        allenrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
+            The keys are the names of the cases and the values are the dicts inherited from `allenrich_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
         marker_plots_defaults (ns): Default options for the plots to generate for the markers.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
@@ -1170,6 +1185,11 @@ class MarkersFinder(Proc):
             "genes": 10,
         },
         "allmarker_plots": {},
+        "allenrich_plots_defaults": {
+            "plot_type": "heatmap",
+            "devpars": {"res": 100},
+        },
+        "allenrich_plots": {},
         "marker_plots_defaults": {
             "plot_type": None,
             "more_formats": [],
@@ -1617,6 +1637,15 @@ class ScFGSEA(Proc):
             If it is < 1, will apply it to `padj`, selecting pathways with `padj` < `top`.
         eps (type=float): This parameter sets the boundary for calculating the p value.
             See <https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html>
+        allpathway_plots_defaults (ns): Default options for the plots to generate for all pathways.
+            - plot_type: The type of the plot, currently either dot or heatmap (default)
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.html>.
+        allpathway_plots (type=json): Cases of the plots to generate for all pathways.
+            The keys are the names of the cases and the values are the dicts inherited from `allpathway_plots_defaults`.
         minsize (type=int): Minimal size of a gene set to test. All pathways below the threshold are excluded.
         maxsize (type=int): Maximal size of a gene set to test. All pathways above the threshold are excluded.
         rest (type=json;order=98): Rest arguments for [`fgsea()`](https://rdrr.io/bioc/fgsea/man/fgsea.html)
@@ -1644,18 +1673,23 @@ class ScFGSEA(Proc):
         "ident-2": None,
         "each": None,
         "subset": None,
-        "gmtfile": "",
+        "gmtfile": "KEGG_2021_Human",
         "method": "s2n",
         "top": 20,
         "minsize": 10,
         "maxsize": 100,
         "eps": 0,
+        "allpathway_plots_defaults": {
+            "plot_type": "heatmap",
+            "devpars": {"res": 100},
+        },
+        "allpathway_plots": {},
         "rest": {},
         "cases": {},
     }
     script = "file://../scripts/scrna/ScFGSEA.R"
     plugin_opts = {
-        "report": "file://../reports/scrna/ScFGSEA.svelte",
+        "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
 

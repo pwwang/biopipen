@@ -144,7 +144,9 @@ process_markers <- function(markers, info, case) {
                 p <- do_call(VizEnrichment, plotargs)
 
                 outprefix <- file.path(info$prefix, paste0("enrich.", slugify(db), ".", slugify(plotname)))
-                attr(p, "height") <- attr(p, "height") / 1.5
+                if (plotargs$plot_type == "bar") {
+                    attr(p, "height") <- attr(p, "height") / 1.5
+                }
                 save_plot(p, outprefix, plotargs$devpars, formats = "png")
                 plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
             }
