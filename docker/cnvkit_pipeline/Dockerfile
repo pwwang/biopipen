@@ -1,4 +1,6 @@
-FROM biopipen/base:dev
+ARG REF_NAME=dev
+
+FROM biopipen/base:${REF_NAME}
 
 # in case we have updates about the pipeline
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cellranger_pipeline /biopipen/docker/cellranger_pipeline
