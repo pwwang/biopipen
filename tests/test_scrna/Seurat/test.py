@@ -469,8 +469,8 @@ class ScFGSEAEach(ScFGSEA_):
 
 def pipeline():
     return (
-        # get_pipeline(__file__)
-        get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
+        get_pipeline(__file__)
+        # get_pipeline(__file__, enable_report=True).set_starts(PrepareSeurat)
     )
 
 
