@@ -7,7 +7,7 @@ srtobjfile <- {{in.srtobj | r}}
 outfile <- {{out.outfile | r}}
 cloneCall <- {{envs.cloneCall | r}}
 chain <- {{envs.chain | r}}
-group.by <- {{envs["group-by"] | r}}
+group_by <- {{envs.group_by | default: envs["group-by"] | default: None | r}}
 proportion <- {{envs.proportion | r}}
 filterNA <- {{envs.filterNA | r}}
 cloneSize <- {{envs.cloneSize | r}}
@@ -28,7 +28,7 @@ obj <- combineExpression(
     sc.data = srtobj,
     cloneCall = cloneCall,
     chain = chain,
-    group.by = group.by,
+    group.by = group_by,
     proportion = proportion,
     filterNA = filterNA,
     cloneSize = unlist(cloneSize),

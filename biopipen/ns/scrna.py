@@ -197,8 +197,8 @@ class SeuratPreparing(Proc):
 
         SCTransform (ns): Arguments for [`SCTransform()`](https://satijalab.org/seurat/reference/sctransform).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            - `return-only-var-genes`: Whether to return only variable genes.
-            - `min_cells`: The minimum number of cells that a gene must be expressed in to be kept.
+            - return-only-var-genes: Whether to return only variable genes.
+            - min_cells: The minimum number of cells that a gene must be expressed in to be kept.
                 A hidden argument of `SCTransform` to filter genes.
                 If you try to keep all genes in the `RNA` assay, you can set `min_cells` to `0` and
                 `return-only-var-genes` to `False`.
@@ -491,7 +491,7 @@ class SeuratClusterStats(Proc):
 
         ```toml
         [SeuratClusterStats.envs.stats]
-        nCells_Sample = { group-by = "Sample" }
+        nCells_Sample = { group_by = "Sample" }
         ```
 
         ![nCells_Sample](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_nCells_Sample.png){: width="80%" }
@@ -515,8 +515,6 @@ class SeuratClusterStats(Proc):
         ```toml
         [SeuratClusterStats.envs.dimplots.Idents]
         label = true
-        label-box = true
-        repel = true
         ```
 
         ![dimplots](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_dimplots.png){: width="80%" }
@@ -1007,11 +1005,11 @@ class DimPlots(Proc):
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
-    When only `group-by` is specified as `"seurat_clusters"` in
+    When only `group_by` is specified as `"seurat_clusters"` in
     `envs.cases`, the markers will be found for all the clusters.
 
     You can also find the differentially expressed genes between
-    any two groups of cells by setting `group-by` to a different
+    any two groups of cells by setting `group_by` to a different
     column name in metadata. Follow `envs.cases` for more details.
 
     Input:
@@ -1028,16 +1026,16 @@ class MarkersFinder(Proc):
             * Used in `future::plan(strategy = "multicore", workers = <ncores>)` to parallelize some Seurat procedures.
             * See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         mutaters (type=json): The mutaters to mutate the metadata
-        group-by: The column name in metadata to group the cells.
-            If only `group-by` is specified, and `ident-1` and `ident-2` are
+        group_by: The column name in metadata to group the cells.
+            If only `group_by` is specified, and `ident-1` and `ident-2` are
             not specified, markers will be found for all groups in this column
             in the manner of "group vs rest" comparison.
             `NA` group will be ignored.
             If `None`, `Seurat::Idents(srtobj)` will be used, which is usually
             `"seurat_clusters"` after unsupervised clustering.
-        ident-1: The first group of cells to compare
-            When this is empty, the comparisons will be expanded to each group v.s. the rest of the cells in `group-by`.
-        ident-2: The second group of cells to compare
+        ident_1: The first group of cells to compare
+            When this is empty, the comparisons will be expanded to each group v.s. the rest of the cells in `group_by`.
+        ident_2: The second group of cells to compare
             If not provided, the rest of the cells are used for `ident-2`.
         each: The column name in metadata to separate the cells into different
             cases.
@@ -1164,9 +1162,9 @@ class MarkersFinder(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "mutaters": {},
-        "group-by": None,
-        "ident-1": None,
-        "ident-2": None,
+        "group_by": None,
+        "ident_1": None,
+        "ident_2": None,
         "each": None,
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "sigmarkers": "p_val_adj < 0.05",
@@ -1241,11 +1239,11 @@ class TopExpressingGenes(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata
         ident: The group of cells to find the top expressing genes.
-            The cells will be selected by the `group-by` column with this
+            The cells will be selected by the `group_by` column with this
             `ident` value in metadata.
             If not provided, the top expressing genes will be found for all
-            groups of cells in the `group-by` column.
-        group-by: The column name in metadata to group the cells.
+            groups of cells in the `group_by` column.
+        group_by: The column name in metadata to group the cells.
         each: The column name in metadata to separate the cells into different
             cases.
         dbs (list): The dbs to do enrichment analysis for significant
@@ -1288,7 +1286,7 @@ class TopExpressingGenes(Proc):
     envs = {
         "mutaters": {},
         "ident": None,
-        "group-by": None,
+        "group_by": None,
         "each": None,
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
@@ -1609,9 +1607,9 @@ class ScFGSEA(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
 
-        group-by: The column name in metadata to group the cells.
-        ident-1: The first group of cells to compare
-        ident-2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group-by` column are used for `ident-2`.
+        group_by: The column name in metadata to group the cells.
+        ident_1: The first group of cells to compare
+        ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident-2`.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
@@ -1668,9 +1666,9 @@ class ScFGSEA(Proc):
     envs = {
         "mutaters": {},
         "ncores": config.misc.ncores,
-        "group-by": None,
-        "ident-1": None,
-        "ident-2": None,
+        "group_by": None,
+        "ident_1": None,
+        "ident_2": None,
         "each": None,
         "subset": None,
         "gmtfile": "KEGG_2021_Human",

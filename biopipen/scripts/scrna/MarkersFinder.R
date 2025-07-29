@@ -1,6 +1,7 @@
 library(rlang)
 library(dplyr)
 library(Seurat)
+library(tidyseurat)
 library(plotthis)
 library(biopipen.utils)
 
@@ -13,9 +14,9 @@ joboutdir <- {{ job.outdir | r }}
 
 ncores <- {{ envs.ncores | int }}
 mutaters <- {{ envs.mutaters | r }}
-group.by <- {{ envs["group-by"] | r }}
-ident.1 <- {{ envs["ident-1"] | r }}
-ident.2 <- {{ envs["ident-2"] | r }}
+group_by <- {{ envs.group_by | default: envs["group-by"] | default: None | r }}
+ident_1 <- {{ envs.ident_1 | default: envs["ident-1"] | default: None | r }}
+ident_2 <- {{ envs.ident_2 | default: envs["ident-2"] | default: None | r }}
 each <- {{ envs.each | r }}
 dbs <- {{ envs.dbs | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
@@ -75,9 +76,9 @@ overlaps <- lapply(overlaps, function(x) {
 })
 
 defaults <- list(
-    group.by = group.by,
-    ident.1 = ident.1,
-    ident.2 = ident.2,
+    group_by = group_by,
+    ident_1 = ident_1,
+    ident_2 = ident_2,
     dbs = dbs,
     sigmarkers = sigmarkers,
     enrich_style = enrich_style,
@@ -104,17 +105,17 @@ log$info("Expanding cases ...")
 post_casing <- function(name, case) {
     outcases <- list()
 
-    case$group.by <- case$group.by %||% "Identity"
+    case$group_by <- case$group_by %||% "Identity"
 
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
         # single cases, no need to expand
-        if (length(case$ident.1) > 0 && length(case$overlaps) > 0) {
+        if (length(case$ident_1) > 0 && length(case$overlaps) > 0) {
             stop("Cannot perform 'overlaps' with a single comparison (ident-1 is set) in case '", name, "'")
         }
-        if (length(case$ident.1) > 0 && length(case$allmarker_plots) > 0) {
+        if (length(case$ident_1) > 0 && length(case$allmarker_plots) > 0) {
             stop("Cannot perform 'allmarker_plots' with a single comparison (ident-1 is set) in case '", name, "'")
         }
-        if (length(case$ident.1) > 0 && length(case$allenrich_plots) > 0) {
+        if (length(case$ident_1) > 0 && length(case$allenrich_plots) > 0) {
             stop("Cannot perform 'allenrich_plots' with a single comparison (ident-1 is set) in case '", name, "'")
         }
 
@@ -158,8 +159,8 @@ post_casing <- function(name, case) {
             srtobj@meta.data %>%
                 pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
         }
-        if (length(case$overlaps) > 0 && is.null(case$ident.1)) {
-            stop("Cannot perform 'overlaps' analysis with 'each' and without 'ident.1' in case '", name, "'")
+        if (length(case$overlaps) > 0 && is.null(case$ident_1)) {
+            stop("Cannot perform 'overlaps' analysis with 'each' and without 'ident_1' in case '", name, "'")
         }
 
         if (length(cases) == 0 && name == "Marker Discovery") {
@@ -173,6 +174,7 @@ post_casing <- function(name, case) {
             newcase$original_case <- name
             newcase$each_name <- case$each
             newcase$each <- each
+            newcase$original_subset <- case$subset
 
             if (!is.null(case$subset)) {
                 newcase$subset <- paste0(case$subset, " & ", bQuote(case$each), " == '", each, "'")
@@ -443,7 +445,7 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
 }
 
 process_overlaps <- function(markers, ovcases, casename, groupname) {
-    name <- paste0(casename, "::", paste0(groupname, ": Overlaps"))
+    name <- paste0(casename, "::", paste0(groupname, " (Overlaps)"))
     info <- case_info(name, outdir, create = TRUE)
 
     for (plotname in names(ovcases)) {
@@ -510,7 +512,7 @@ run_case <- function(name) {
     case <- extract_vars(
         case,
         "dbs", "sigmarkers", "allmarker_plots", "allenrich_plots", "marker_plots", "enrich_plots",
-        "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style",
+        "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style", "original_subset",
         allow_nonexisting = TRUE
     )
 
@@ -535,10 +537,14 @@ run_case <- function(name) {
 
             if (length(allmarker_plots) > 0) {
                 log$info("- Visualizing all markers together ...")
-                attr(markers, "object") <- srtobj
-                attr(markers, "group.by") <- each
-                attr(markers, "ident.1") <- NULL
-                attr(markers, "ident.2") <- NULL
+                if (is.null(original_subset)) {
+                    attr(markers, "object") <- srtobj
+                } else {
+                    attr(markers, "object") <- filter(srtobj, !!parse_expr(original_subset))
+                }
+                attr(markers, "group_by") <- each
+                attr(markers, "ident_1") <- NULL
+                attr(markers, "ident_2") <- NULL
                 process_allmarkers(markers, allmarker_plots, name, each)
             }
 
@@ -579,16 +585,16 @@ run_case <- function(name) {
     case$object <- NULL
     gc()
 
-    if (is.null(case$ident.1)) {
-        all_idents <- unique(as.character(markers[[case$group.by]]))
+    if (is.null(case$ident_1)) {
+        all_idents <- unique(as.character(markers[[case$group_by]]))
         enriches <- list()
         for (ident in all_idents) {
-            log$info("- {case$group.by}: {ident} ...")
-            ident_markers <- markers[markers[[case$group.by]] == ident, , drop = TRUE]
-            casename <- paste0(name, "::", paste0(case$group.by, ": ", ident))
+            log$info("- {case$group_by}: {ident} ...")
+            ident_markers <- markers[markers[[case$group_by]] == ident, , drop = TRUE]
+            casename <- paste0(name, "::", paste0(case$group_by, ": ", ident))
             info <- case_info(casename, outdir, create = TRUE)
 
-            attr(ident_markers, "ident.1") <- ident
+            attr(ident_markers, "ident_1") <- ident
             enrich <- process_markers(ident_markers, info = info, case = list(
                 dbs = dbs,
                 sigmarkers = sigmarkers,
@@ -603,17 +609,17 @@ run_case <- function(name) {
 
         if (length(allmarker_plots) > 0) {
             log$info("- Visualizing all markers together ...")
-            process_allmarkers(markers, allmarker_plots, name, case$group.by)
+            process_allmarkers(markers, allmarker_plots, name, case$group_by)
         }
 
         if (length(overlaps) > 0) {
             log$info("- Visualizing overlaps between subcases ...")
-            process_overlaps(markers, overlaps, name, case$group.by)
+            process_overlaps(markers, overlaps, name, case$group_by)
         }
 
         if (length(allenrich_plots) > 0) {
             log$info("- Visualizing all enrichments together ...")
-            process_allenriches(enriches, allenrich_plots, name, case$group.by)
+            process_allenriches(enriches, allenrich_plots, name, case$group_by)
         }
     } else {
         info <- case_info(name, outdir, create = TRUE)
@@ -624,7 +630,7 @@ run_case <- function(name) {
             marker_plots = marker_plots,
             enrich_plots = enrich_plots,
             error = case$error,
-            ident = if (is.null(case$ident.2)) case$ident.1 else paste0(case$ident.1, " vs ", case$ident.2)
+            ident = if (is.null(case$ident_2)) case$ident_1 else paste0(case$ident_1, " vs ", case$ident_2)
         ))
 
         if (!is.null(original_case) && !is.null(cases[[original_case]])) {

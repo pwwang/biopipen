@@ -7,9 +7,9 @@ srtfile <- {{in.srtobj | r}}  # nolint
 outdir <- {{out.outdir | r}}  # nolint
 joboutdir <- {{job.outdir | r}}  # nolint
 mutaters <- {{envs.mutaters | r}}  # nolint
-group.by <- {{envs["group-by"] | r}}  # nolint
-ident.1 <- {{envs["ident-1"] | r}}  # nolint
-ident.2 <- {{envs["ident-2"] | r}}  # nolint
+group_by <- {{envs.group_by | default: envs["group-by"] | default: None | r}}  # nolint
+ident_1 <- {{envs.ident_1 | default: envs["ident-1"] | default: None | r}}  # nolint
+ident_2 <- {{envs.ident_2 | default: envs["ident-2"] | default: None | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
 gmtfile <- {{envs.gmtfile | r}}  # nolint
@@ -43,9 +43,9 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
 }
 
 defaults <- list(
-    group.by = group.by,
-    ident.1 = ident.1,
-    ident.2 = ident.2,
+    group_by = group_by,
+    ident_1 = ident_1,
+    ident_2 = ident_2,
     each = each,
     subset = subset,
     gmtfile = gmtfile,
@@ -63,7 +63,7 @@ defaults <- list(
 expand_each <- function(name, case) {
     outcases <- list()
 
-    case$group.by <- case$group.by %||% "Identity"
+    case$group_by <- case$group_by %||% "Identity"
 
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
         if (length(case$alleach_plots) > 0) {
@@ -182,12 +182,12 @@ do_case <- function(name) {
     allow_empty = !is.null(case$each)
     # prepare expression matrix
     log$info("  Preparing expression matrix...")
-    sobj <- ensure_sobj({ srtobj %>% filter(!is.na(!!sym(case$group.by))) }, allow_empty)
+    sobj <- ensure_sobj({ srtobj %>% filter(!is.na(!!sym(case$group_by))) }, allow_empty)
     if (is.null(sobj)) {
         reporter$add2(
             list(
                 kind = "error",
-                content = paste0("No cells with non-NA `", case$group.by, "` in the Seurat object.")
+                content = paste0("No cells with non-NA `", case$group_by, "` in the Seurat object.")
             ),
             hs = c(info$section, info$name)
         )
@@ -200,20 +200,20 @@ do_case <- function(name) {
             reporter$add2(
                 list(
                     kind = "error",
-                    content = paste0("No cells with non-NA `", case$group.by, "` in the Seurat object.")
+                    content = paste0("No cells with non-NA `", case$group_by, "` in the Seurat object.")
                 ),
                 hs = c(info$section, info$name)
             )
             return(NULL)
         }
     }
-    if (!is.null(case$ident.2)) {
-        sobj <- ensure_sobj({ sobj %>% filter(!!sym(case$group.by) %in% c(case$ident.1, case$ident.2)) }, allow_empty)
+    if (!is.null(case$ident_2)) {
+        sobj <- ensure_sobj({ sobj %>% filter(!!sym(case$group_by) %in% c(case$ident_1, case$ident_2)) }, allow_empty)
         if (is.null(sobj)) {
             reporter$add2(
                 list(
                     kind = "error",
-                    content = paste0("No cells with non-NA `", case$group.by, "` in the Seurat object.")
+                    content = paste0("No cells with non-NA `", case$group_by, "` in the Seurat object.")
                 ),
                 hs = c(info$section, info$name)
             )
@@ -221,16 +221,16 @@ do_case <- function(name) {
         }
     }
 
-    allclasses <- sobj@meta.data[, case$group.by, drop = TRUE]
-    if (is.null(case$ident.2)) {
-        case$ident.2 <- "Other"
-        allclasses[allclasses != case$ident.1] <- "Other"
+    allclasses <- sobj@meta.data[, case$group_by, drop = TRUE]
+    if (is.null(case$ident_2)) {
+        case$ident_2 <- "Other"
+        allclasses[allclasses != case$ident_1] <- "Other"
     }
     exprs <- GetAssayData(sobj, layer = "data")
 
     # get preranks
     log$info("  Getting preranks...")
-    ranks <- RunGSEAPreRank(exprs, allclasses, case$ident.1, case$ident.2, case$method)
+    ranks <- RunGSEAPreRank(exprs, allclasses, case$ident_1, case$ident_2, case$method)
     write.table(
         as.data.frame(ranks),
         file.path(info$prefix, "fgsea.rank.txt"),
@@ -310,7 +310,7 @@ do_case <- function(name) {
 
     reporter$add2(
         list(
-            name = paste0("Table (", case$ident.1, " vs ", case$ident.2, ")"),
+            name = paste0("Table (", case$ident_1, " vs ", case$ident_2, ")"),
             contents = list(
                 list(kind = "descr", content = paste0(
                     "Showing top 50 pathways by padj in descending order. ",
