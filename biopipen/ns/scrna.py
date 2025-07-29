@@ -1303,7 +1303,7 @@ class TopExpressingGenes(Proc):
         "cases": {},
     }
     plugin_opts = {
-        "report": "file://../reports/scrna/TopExpressingGenes.svelte",
+        "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
 
