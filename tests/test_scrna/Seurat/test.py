@@ -12,7 +12,6 @@ from biopipen.ns.scrna import (
     MarkersFinder,
     ModuleScoreCalculator as ModuleScoreCalculator_,
     SeuratClusterStats as SeuratClusterStats_,
-    SeuratMap2Ref as SeuratMap2Ref_,
     ScFGSEA as ScFGSEA_,
 )
 from biopipen.core.testing import get_pipeline
@@ -330,61 +329,6 @@ class PseudoBulkDEGEach(PseudoBulkDEG_):
                 "plot_type": "venn",
             },
         },
-    }
-
-
-class SeuratMap2Ref(SeuratMap2Ref_):
-    requires = SeuratClustering
-    envs = {
-        "ncores": 2,
-        "use": "celltype.l2",
-        "ref": str(
-            Path(__file__).parent.parent.parent
-            / "data"
-            / "reference"
-            / "pbmc_multimodal_2023.rds"
-        ),
-        "MapQuery": {"reduction.model": "wnn.umap"},
-    }
-
-
-class SeuratMap2Ref2(SeuratMap2Ref_):
-    requires = SeuratClustering
-    envs = {
-        "ncores": 2,
-        "split_by": "Sample",
-        "use": "celltype.l2",
-        "ref": str(
-            Path(__file__).parent.parent.parent
-            / "data"
-            / "reference"
-            / "pbmc_multimodal_2023.rds"
-        ),
-        "MapQuery": {"reduction.model": "wnn.umap"},
-    }
-
-
-class SeuratClusterStatsM2R(SeuratClusterStats_):
-    requires = SeuratMap2Ref
-    envs = {
-        "clustrees": False,
-        "stats": {
-            "Number of cells in each cluster by Sample": {
-                "group_by": "seurat_clusters",
-            }
-        }
-    }
-
-
-class SeuratClusterStatsM2R2(SeuratClusterStats_):
-    requires = SeuratMap2Ref2
-    envs = {
-        "clustrees": False,
-        "stats": {
-            "Number of cells in each cluster by Sample": {
-                "group_by": "seurat_clusters",
-            }
-        }
     }
 
 
