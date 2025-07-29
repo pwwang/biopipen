@@ -2679,3 +2679,217 @@ class LoomTo10X(Proc):
     output = "outdir:dir:{{in.loomfile | stem}}.10X"
     lang = config.lang.rscript
     script = "file://../scripts/scrna/LoomTo10X.R"
+
+
+class PseudoBulkDEG(Proc):
+    """Pseduo-bulk differential gene expression analysis
+
+    This process performs differential gene expression analysis, instead of
+    on single-cell level, on the pseudo-bulk data, aggregated from the single-cell data.
+
+    Input:
+        sobjfile: The seurat object file in RDS or qs/qs2 format.
+
+    Output:
+        outdir: The output containing the results of the differential gene expression
+            analysis.
+
+    Envs:
+        mutaters (type=json): Mutaters to mutate the metadata of the
+            seurat object. Keys are the new column names and values are the
+            expressions to mutate the columns. These new columns can be
+            used to define your cases.
+        each: The column name in metadata to separate the cells into different cases.
+            When specified, the case will be expanded to multiple cases for
+            each value in the column.
+        subset: An expression in string to subset the cells.
+        aggregate_by: The column names in metadata to aggregate the cells.
+        layer: The layer to pull and aggregate the data.
+        assay: The assay to pull and aggregate the data.
+        error (flag): Error out if no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
+        group_by: The column name in metadata to group the cells.
+        ident_1: The first identity to compare.
+        ident_2: The second identity to compare.
+            If not specified, the rest of the identities will be compared with `ident_1`.
+        paired_by: The column name in metadata to mark the paired samples.
+            For example, subject. If specified, the paired test will be performed.
+        dbs (list): The databases to use for enrichment analysis.
+            The databases are passed to `biopipen.utils::Enrichr()` to do the
+            enrichment analysis. The default databases are `KEGG_2021_Human` and
+            `MSigDB_Hallmark_2020`.
+            See <https://maayanlab.cloud/Enrichr/#libraries> for the available
+            libraries.
+        sigmarkers: An expression passed to `dplyr::filter()` to filter the
+            significant markers for enrichment analysis.
+            The default is `p_val_adj < 0.05`.
+            If `tool = 'DESeq2'`, the variables that can be used for filtering
+            are: `baseMean`, `log2FC`, `lfcSE`, `stat`, `p_val`, `p_val_adj`.
+            If `tool = 'edgeR'`, the variables that can be used for filtering
+            are: `logCPM`, `log2FC`, `LR`, `p_val`, `p_val_adj`.
+        enrich_style (choice): The style of the enrichment analysis.
+            - enrichr: Use `enrichr`-style for the enrichment analysis.
+            - clusterProfiler: Use `clusterProfiler`-style for the enrichment analysis.
+        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
+                Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
+            - more_formats (type=list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
+            - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
+            - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
+        allmarker_plots (type=json): All marker plot cases.
+            The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
+        allenrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
+            - plot_type: The type of the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
+        allenrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
+            The keys are the names of the cases and the values are the dicts inherited from `allenrich_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
+        marker_plots_defaults (ns): Default options for the plots to generate for the markers.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
+                Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
+                There are two additional types available - `volcano_pct` and `volcano_log2fc`.
+            - more_formats (type=list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
+            - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
+            - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
+                If `plot_type` is `volcano_pct` or `volcano_log2fc`, they will be passed to
+                [`scplotter::VolcanoPlot()`](https://pwwang.github.io/plotthis/reference/VolcanoPlot.html).
+        marker_plots (type=json): Cases of the plots to generate for the markers.
+            Plot cases. The keys are the names of the cases and the values are the dicts inherited from `marker_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
+        enrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
+            - plot_type: The type of the plot.
+                See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
+                Available types are `bar`, `dot`, `lollipop`, `network`, `enrichmap` and `wordcloud`.
+            - more_formats (type=list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.htmll>.
+        enrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
+            The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
+            The cases under `envs.cases` can inherit this options.
+        overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases or comparisons.
+            This means either `ident-1` should be empty, so that they can be expanded to multiple comparisons.
+            - sigmarkers: The expression to filter the significant markers for each case.
+                If not provided, `envs.sigmarkers` will be used.
+            - plot_type (choice): The type of the plot to generate for the overlaps.
+                - venn: Use `plotthis::VennDiagram()`.
+                - upset: Use `plotthis::UpsetPlot()`.
+            - more_formats (type=list): The extra formats to save the plot in.
+            - save_code (flag): Whether to save the code to generate the plot.
+            - devpars (ns): The device parameters for the plots.
+                - res (type=int): The resolution of the plots.
+                - height (type=int): The height of the plots.
+                - width (type=int): The width of the plots.
+            - <more>: More arguments pased to `plotthis::VennDiagram()`
+                (<https://pwwang.github.io/plotthis/reference/venndiagram1.html>)
+                or `plotthis::UpsetPlot()`
+                (<https://pwwang.github.io/plotthis/reference/upsetplot1.html>)
+        overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases or comparisons.
+            The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
+            There are two situations that we can perform overlaps:
+            1. If `ident-1` is not specified, the overlaps can be performed between different comparisons.
+            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident-1` must be specified.
+        tool (choice): The method to use for the differential expression analysis.
+            - DESeq2: Use DESeq2 for the analysis.
+            - edgeR: Use edgeR for the analysis.
+        plots_defaults (ns): The default parameters for the plots.
+            - <more>: Parameters passed to `biopipen.utils::VizBulkDEGs()`.
+                See: <https://pwwang.github.io/biopipen.utils.R/reference/VizBulkDEGs.html>
+        plots (type=json): The parameters for the plots.
+            The keys are the names of the plots and the values are the parameters
+            for the plots. The parameters will override the defaults in `plots_defaults`.
+            If not specified, no plots will be generated.
+        cases (type=json): The cases for the analysis.
+            The keys are the names of the cases and the values are the arguments for
+            the analysis. The arguments include the ones inherited from `envs`.
+            If no cases are specified, a default case will be added with
+            the name `DEG Analysis` and the default values specified above.
+    """  # noqa: E501
+    input = "sobjfile:file"
+    output = "outdir:dir:{{in.sobjfile | stem}}.pseudobulk_deg"
+    lang = config.lang.rscript
+    script = "file://../scripts/scrna/PseudoBulkDEG.R"
+    envs = {
+        "mutaters": {},
+        "each": None,
+        "subset": None,
+        "aggregate_by": None,
+        "layer": "counts",
+        "assay": "RNA",
+        "error": True,
+        "group_by": None,
+        "ident_1": None,
+        "ident_2": None,
+        "paired_by": None,
+        "tool": "DESeq2",
+        "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
+        "sigmarkers": "p_val_adj < 0.05",
+        "enrich_style": "enrichr",
+        "allmarker_plots_defaults": {
+            "plot_type": None,
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+            "order_by": "desc(abs(log2FC))",
+            "genes": 10,
+        },
+        "allmarker_plots": {},
+        "allenrich_plots_defaults": {
+            "plot_type": "heatmap",
+            "devpars": {"res": 100},
+        },
+        "allenrich_plots": {},
+        "marker_plots_defaults": {
+            "plot_type": None,
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+            "order_by": "desc(abs(log2FC))",
+            "genes": 10,
+        },
+        "marker_plots": {
+            "Volcano Plot": {"plot_type": "volcano"},
+        },
+        "enrich_plots_defaults": {
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+        },
+        "enrich_plots": {
+            "Bar Plot": {"plot_type": "bar", "ncol": 1, "top_term": 10},
+        },
+        "overlaps_defaults": {
+            "sigmarkers": None,
+            "plot_type": "venn",
+            "more_formats": [],
+            "save_code": False,
+            "devpars": {"res": 100},
+        },
+        "overlaps": {},
+        "cases": {},
+    }
+    plugin_opts = {
+        "report": "file://../reports/common.svelte",
+        "report_paging": 8,
+    }
