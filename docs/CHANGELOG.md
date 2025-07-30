@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.34.2
+
+- chore(scrna.ScFGSEA): rename allpathway_plots to alleach_plots
+- chore(scrna/tcr): update parameter naming for consistency
+- chore(scrna.TopExpressingGenes): use common report template
+- feat(scrna): add PseudoBulkDEG process for differential gene expression analysis
+- test(scrna): merge tests for Seurat processes to avoid repeatedly load pbmc3k dataset
+- chore(test): update pipeline function to remove report enabling
+- ci(docker): update Dockerfiles to use dynamic REF_NAME argument
+- fix(test.Seurat): update pipeline function to set starts for PrepareSeurat
+- test(scrna): move map2ref tests out of tests/scrna/Seurat for being tested locally only
+
 ## 0.34.1
 
 - fix(tcr.ClonalStats): update envs assignment to handle todot parameter

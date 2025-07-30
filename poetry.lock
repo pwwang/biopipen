@@ -176,18 +176,18 @@ typing-extensions = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3
 
 [[package]]
 name = "datar"
-version = "0.15.9"
+version = "0.15.10"
 description = "A Grammar of Data Manipulation in python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "datar-0.15.9-py3-none-any.whl", hash = "sha256:dddc89d56050c50311393853d816a52de5ebe636136c7a6de00e88901e89e20a"},
-    {file = "datar-0.15.9.tar.gz", hash = "sha256:073e1935d4c5347cb439adc19e0186cf27d956d7e285d249ffef018deb571722"},
+    {file = "datar-0.15.10-py3-none-any.whl", hash = "sha256:e6d2b07427d624d3f8159bc4459156583764182274ada6ce90b34d84fe6fc548"},
+    {file = "datar-0.15.10.tar.gz", hash = "sha256:cc730d6eb7036527e517b948cb21b40416e6dc79109b24dfdde3ef25980269fe"},
 ]
 
 [package.dependencies]
-datar-pandas = {version = ">=0.5.5,<0.6.0", optional = true, markers = "extra == \"pandas\""}
+datar-pandas = {version = ">=0.5.6,<0.6.0", optional = true, markers = "extra == \"pandas\""}
 pipda = ">=0.13.1,<0.14.0"
 python-simpleconf = {version = ">=0.7,<0.8", extras = ["toml"]}
 simplug = ">=0.5,<0.6"
@@ -195,7 +195,7 @@ simplug = ">=0.5,<0.6"
 [package.extras]
 arrow = ["datar-arrow (>=0.1,<0.2)"]
 numpy = ["datar-numpy (>=0.3.4,<0.4.0)"]
-pandas = ["datar-pandas (>=0.5.5,<0.6.0)"]
+pandas = ["datar-pandas (>=0.5.6,<0.6.0)"]
 
 [[package]]
 name = "datar-numpy"
@@ -218,18 +218,18 @@ all = ["scipy (>=1.8,<2.0)", "wcwidth (>=0.2,<0.3)"]
 
 [[package]]
 name = "datar-pandas"
-version = "0.5.6"
+version = "0.5.7"
 description = "The pandas backend for datar"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "datar_pandas-0.5.6-py3-none-any.whl", hash = "sha256:2bf5224e80fd741f6cf7451973233f1f42f9f3bdd4fe3f31476a81fa4199d955"},
-    {file = "datar_pandas-0.5.6.tar.gz", hash = "sha256:b0a9f3df046cc11e2c6fde86ae686ae18a604c7dab1375493d076b8a0611a489"},
+    {file = "datar_pandas-0.5.7-py3-none-any.whl", hash = "sha256:adcd02a708a56d322de35e9a508d371a27b7514e369c24f24e4b69f5fcc406c8"},
+    {file = "datar_pandas-0.5.7.tar.gz", hash = "sha256:3ff1d8a47001e1bdd543a760a1027907b19e3f87bb0b62f2e58ee5cc4dab19a7"},
 ]
 
 [package.dependencies]
-datar = ">=0.15.9,<0.16.0"
+datar = ">=0.15.10,<0.16.0"
 datar-numpy = ">=0.3.6,<0.4.0"
 pdtypes = ">=0.2.3,<0.3.0"
 
@@ -1049,23 +1049,23 @@ pipen-annotate = ">=0.15,<0.16"
 
 [[package]]
 name = "pipen-board"
-version = "0.17.1"
+version = "0.17.2"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_board-0.17.1-py3-none-any.whl", hash = "sha256:d8c71b09543a310c603c13380a4ab0f1661cf6f259dbc6a589e2f7ff99e40757"},
-    {file = "pipen_board-0.17.1.tar.gz", hash = "sha256:78d75ce9877f60889213ed802600729d9edd2b64cf591ce379c84c11bbc0a99c"},
+    {file = "pipen_board-0.17.2-py3-none-any.whl", hash = "sha256:ae8233d99c1e88edf465bb138eea16387c9aa84a6929bc026729b54c19fd8ae1"},
+    {file = "pipen_board-0.17.2.tar.gz", hash = "sha256:fdbb8f31433037c554661604493f41b92cb3dde4d5bb3f771fb8a8d60f12314e"},
 ]
 
 [package.dependencies]
 pipen-args = ">=0.17,<0.18"
 pipen-log2file = ">=0.10,<0.11"
 pipen-report = {version = ">=0.23,<0.24", optional = true, markers = "extra == \"report\" or extra == \"all\""}
-psutil = ">=5.9,<6.0"
+psutil = ">=7,<8"
 python-slugify = ">=8.0,<9.0"
-quart = ">=0.19,<0.20"
+quart = ">=0.20,<0.21"
 websocket-client = ">=1.8,<2.0"
 
 [package.extras]
@@ -1151,14 +1151,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-report"
-version = "0.23.4"
+version = "0.23.5"
 description = "Report generation system for pipen"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_report-0.23.4-py3-none-any.whl", hash = "sha256:25f97580d4d30618e4425c44e10b65e5e1bf118654f66ab89f64956e79431cc8"},
-    {file = "pipen_report-0.23.4.tar.gz", hash = "sha256:0fdb4547daa2d174dbc5ca1d1cdd882ed62ccfb2a4e1352e64b504c66d6418cf"},
+    {file = "pipen_report-0.23.5-py3-none-any.whl", hash = "sha256:9ac14be5e980191929284398fb4f490f8cb379155afa298df41361a0f84dec9c"},
+    {file = "pipen_report-0.23.5.tar.gz", hash = "sha256:fb64bfac262aab145eeff577590263f2ec01e49125e0060c927224a886fc6092"},
 ]
 
 [package.dependencies]
@@ -1281,32 +1281,27 @@ wcwidth = "*"
 
 [[package]]
 name = "psutil"
-version = "5.9.8"
-description = "Cross-platform lib for process and system monitoring in Python."
+version = "7.0.0"
+description = "Cross-platform lib for process and system monitoring in Python.  NOTE: the syntax of this script MUST be kept compatible with Python 2.7."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.6"
 groups = ["main"]
 files = [
-    {file = "psutil-5.9.8-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:26bd09967ae00920df88e0352a91cff1a78f8d69b3ecabbfe733610c0af486c8"},
-    {file = "psutil-5.9.8-cp27-cp27m-manylinux2010_i686.whl", hash = "sha256:05806de88103b25903dff19bb6692bd2e714ccf9e668d050d144012055cbca73"},
-    {file = "psutil-5.9.8-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:611052c4bc70432ec770d5d54f64206aa7203a101ec273a0cd82418c86503bb7"},
-    {file = "psutil-5.9.8-cp27-cp27mu-manylinux2010_i686.whl", hash = "sha256:50187900d73c1381ba1454cf40308c2bf6f34268518b3f36a9b663ca87e65e36"},
-    {file = "psutil-5.9.8-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:02615ed8c5ea222323408ceba16c60e99c3f91639b07da6373fb7e6539abc56d"},
-    {file = "psutil-5.9.8-cp27-none-win32.whl", hash = "sha256:36f435891adb138ed3c9e58c6af3e2e6ca9ac2f365efe1f9cfef2794e6c93b4e"},
-    {file = "psutil-5.9.8-cp27-none-win_amd64.whl", hash = "sha256:bd1184ceb3f87651a67b2708d4c3338e9b10c5df903f2e3776b62303b26cb631"},
-    {file = "psutil-5.9.8-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:aee678c8720623dc456fa20659af736241f575d79429a0e5e9cf88ae0605cc81"},
-    {file = "psutil-5.9.8-cp36-abi3-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8cb6403ce6d8e047495a701dc7c5bd788add903f8986d523e3e20b98b733e421"},
-    {file = "psutil-5.9.8-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d06016f7f8625a1825ba3732081d77c94589dca78b7a3fc072194851e88461a4"},
-    {file = "psutil-5.9.8-cp36-cp36m-win32.whl", hash = "sha256:7d79560ad97af658a0f6adfef8b834b53f64746d45b403f225b85c5c2c140eee"},
-    {file = "psutil-5.9.8-cp36-cp36m-win_amd64.whl", hash = "sha256:27cc40c3493bb10de1be4b3f07cae4c010ce715290a5be22b98493509c6299e2"},
-    {file = "psutil-5.9.8-cp37-abi3-win32.whl", hash = "sha256:bc56c2a1b0d15aa3eaa5a60c9f3f8e3e565303b465dbf57a1b730e7a2b9844e0"},
-    {file = "psutil-5.9.8-cp37-abi3-win_amd64.whl", hash = "sha256:8db4c1b57507eef143a15a6884ca10f7c73876cdf5d51e713151c1236a0e68cf"},
-    {file = "psutil-5.9.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:d16bbddf0693323b8c6123dd804100241da461e41d6e332fb0ba6058f630f8c8"},
-    {file = "psutil-5.9.8.tar.gz", hash = "sha256:6be126e3225486dff286a8fb9a06246a5253f4c7c53b475ea5f5ac934e64194c"},
+    {file = "psutil-7.0.0-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:101d71dc322e3cffd7cea0650b09b3d08b8e7c4109dd6809fe452dfd00e58b25"},
+    {file = "psutil-7.0.0-cp36-abi3-macosx_11_0_arm64.whl", hash = "sha256:39db632f6bb862eeccf56660871433e111b6ea58f2caea825571951d4b6aa3da"},
+    {file = "psutil-7.0.0-cp36-abi3-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:1fcee592b4c6f146991ca55919ea3d1f8926497a713ed7faaf8225e174581e91"},
+    {file = "psutil-7.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4b1388a4f6875d7e2aff5c4ca1cc16c545ed41dd8bb596cefea80111db353a34"},
+    {file = "psutil-7.0.0-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a5f098451abc2828f7dc6b58d44b532b22f2088f4999a937557b603ce72b1993"},
+    {file = "psutil-7.0.0-cp36-cp36m-win32.whl", hash = "sha256:84df4eb63e16849689f76b1ffcb36db7b8de703d1bc1fe41773db487621b6c17"},
+    {file = "psutil-7.0.0-cp36-cp36m-win_amd64.whl", hash = "sha256:1e744154a6580bc968a0195fd25e80432d3afec619daf145b9e5ba16cc1d688e"},
+    {file = "psutil-7.0.0-cp37-abi3-win32.whl", hash = "sha256:ba3fcef7523064a6c9da440fc4d6bd07da93ac726b5733c29027d7dc95b39d99"},
+    {file = "psutil-7.0.0-cp37-abi3-win_amd64.whl", hash = "sha256:4cf3d4eb1aa9b348dec30105c55cd9b7d4629285735a102beb4441e38db90553"},
+    {file = "psutil-7.0.0.tar.gz", hash = "sha256:7be9c3eba38beccb6495ea33afd982a44074b78f28c434a1f51cc07fd315c456"},
 ]
 
 [package.extras]
-test = ["enum34 ; python_version <= \"3.4\"", "ipaddress ; python_version < \"3.0\"", "mock ; python_version < \"3.0\"", "pywin32 ; sys_platform == \"win32\"", "wmi ; sys_platform == \"win32\""]
+dev = ["abi3audit", "black (==24.10.0)", "check-manifest", "coverage", "packaging", "pylint", "pyperf", "pypinfo", "pytest", "pytest-cov", "pytest-xdist", "requests", "rstcheck", "ruff", "setuptools", "sphinx", "sphinx_rtd_theme", "toml-sort", "twine", "virtualenv", "vulture", "wheel"]
+test = ["pytest", "pytest-xdist", "setuptools"]
 
 [[package]]
 name = "pydantic"
@@ -1622,31 +1617,30 @@ files = [
 
 [[package]]
 name = "quart"
-version = "0.19.9"
-description = "A Python ASGI web microframework with the same API as Flask"
+version = "0.20.0"
+description = "A Python ASGI web framework with the same API as Flask"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "quart-0.19.9-py3-none-any.whl", hash = "sha256:8acb8b299c72b66ee9e506ae141498bbbfcc250b5298fbdb712e97f3d7e4082f"},
-    {file = "quart-0.19.9.tar.gz", hash = "sha256:30a61a0d7bae1ee13e6e99dc14c929b3c945e372b9445d92d21db053e91e95a5"},
+    {file = "quart-0.20.0-py3-none-any.whl", hash = "sha256:003c08f551746710acb757de49d9b768986fd431517d0eb127380b656b98b8f1"},
+    {file = "quart-0.20.0.tar.gz", hash = "sha256:08793c206ff832483586f5ae47018c7e40bdd75d886fee3fabbdaa70c2cf505d"},
 ]
 
 [package.dependencies]
 aiofiles = "*"
 blinker = ">=1.6"
-click = ">=8.0.0"
-flask = ">=3.0.0"
+click = ">=8.0"
+flask = ">=3.0"
 hypercorn = ">=0.11.2"
-importlib_metadata = {version = "*", markers = "python_version < \"3.10\""}
+importlib-metadata = {version = "*", markers = "python_version < \"3.10\""}
 itsdangerous = "*"
 jinja2 = "*"
 markupsafe = "*"
-typing_extensions = {version = "*", markers = "python_version < \"3.10\""}
-werkzeug = ">=3.0.0"
+typing-extensions = {version = "*", markers = "python_version < \"3.10\""}
+werkzeug = ">=3.0"
 
 [package.extras]
-docs = ["pydata_sphinx_theme"]
 dotenv = ["python-dotenv"]
 
 [[package]]
