@@ -25,6 +25,7 @@ class PrepareSeurat(Proc):
     output = "outfile:file:{{in.name}}.RDS"
     lang = config.lang.rscript
     script = """
+        set.seed(8525)
         options(timeout=600)
         library(SeuratData)
         InstallData("pbmc3k")
