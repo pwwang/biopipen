@@ -80,7 +80,7 @@ jobs:
           path: tests/data
           key: reference-${{ hashFiles('tests/data/prep_data.py') }}-${{ env.CACHE_NUMBER }}
         env:
-          CACHE_NUMBER: 2
+          CACHE_NUMBER: 1
 
       - name: Prepare reference data
         if: steps.restore-reference.outputs.cache-hit != 'true'
